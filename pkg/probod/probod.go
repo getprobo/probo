@@ -42,6 +42,7 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.gearno.de/kit/unit"
 	"go.opentelemetry.io/otel/trace"
+	"go.probo.inc/probo/pkg/accessreview"
 	"go.probo.inc/probo/pkg/awsconfig"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/certmanager"
@@ -52,6 +53,7 @@ import (
 	"go.probo.inc/probo/pkg/crypto/passwdhash"
 	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/filemanager"
+	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/html2pdf"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/mailer"
@@ -132,6 +134,22 @@ var (
 	_ unit.Configurable = (*Implm)(nil)
 	_ unit.Runnable     = (*Implm)(nil)
 )
+
+type accessReviewTenantRuntime struct {
+	tenantService *probo.TenantService
+}
+
+func (r *accessReviewTenantRuntime) AccessReviewCampaigns() accessreview.CampaignReader {
+	return r.tenantService.AccessReviewCampaigns
+}
+
+func (r *accessReviewTenantRuntime) SnapshotSource(
+	ctx context.Context,
+	campaign *coredata.AccessReviewCampaign,
+	sourceID gid.GID,
+) (int, error) {
+	return r.tenantService.ReviewEngine.SnapshotSource(ctx, campaign, sourceID)
+}
 
 func New() *Implm {
 	return &Implm{
@@ -574,6 +592,25 @@ func (impl *Implm) Run(
 		},
 	)
 
+	accessReviewWorkerCtx, stopAccessReviewWorker := context.WithCancel(context.Background())
+	accessReviewService := accessreview.NewService(
+		pgClient,
+		l.Named("access-review-source-fetcher"),
+		30*time.Second,
+		func(tenantID gid.TenantID) accessreview.TenantRuntime {
+			return &accessReviewTenantRuntime{
+				tenantService: proboService.WithTenant(tenantID),
+			}
+		},
+	)
+	wg.Go(
+		func() {
+			if err := accessReviewService.Run(accessReviewWorkerCtx); err != nil {
+				cancel(fmt.Errorf("access review source fetcher crashed: %w", err))
+			}
+		},
+	)
+
 	iamServiceCtx, stopIAMService := context.WithCancel(context.Background())
 	wg.Go(
 		func() {
@@ -630,6 +667,7 @@ func (impl *Implm) Run(
 	stopESignService()
 	stopMailingListWorker()
 	stopExportJobExporter()
+	stopAccessReviewWorker()
 	stopIAMService()
 	stopMailer()
 	stopSlackSender()

@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -300,6 +300,7 @@ const (
 	ActionSlackConnectionList = "core:slack-connection:list"
 
 	// Connector actions (generic)
+	ActionConnectorCreate = "core:connector:create"
 	ActionConnectorList   = "core:connector:list"
 	ActionConnectorDelete = "core:connector:delete"
 
@@ -349,4 +350,31 @@ const (
 	ActionWebhookSubscriptionCreate = "core:webhook-subscription:create"
 	ActionWebhookSubscriptionUpdate = "core:webhook-subscription:update"
 	ActionWebhookSubscriptionDelete = "core:webhook-subscription:delete"
+
+	// AccessReview actions
+	ActionAccessReviewGet    = "core:access-review:get"
+	ActionAccessReviewUpdate = "core:access-review:update"
+
+	// AccessReviewCampaign actions
+	ActionAccessReviewCampaignGet    = "core:access-review-campaign:get"
+	ActionAccessReviewCampaignList   = "core:access-review-campaign:list"
+	ActionAccessReviewCampaignCreate = "core:access-review-campaign:create"
+	ActionAccessReviewCampaignUpdate = "core:access-review-campaign:update"
+	ActionAccessReviewCampaignDelete = "core:access-review-campaign:delete"
+	ActionAccessReviewCampaignStart  = "core:access-review-campaign:start"
+	ActionAccessReviewCampaignClose  = "core:access-review-campaign:close"
+	ActionAccessReviewCampaignCancel = "core:access-review-campaign:cancel"
+
+	// AccessEntry actions
+	ActionAccessEntryGet    = "core:access-entry:get"
+	ActionAccessEntryList   = "core:access-entry:list"
+	ActionAccessEntryDecide = "core:access-entry:decide"
+
+	// AccessSource actions
+	ActionAccessSourceGet    = "core:access-source:get"
+	ActionAccessSourceList   = "core:access-source:list"
+	ActionAccessSourceCreate = "core:access-source:create"
+	ActionAccessSourceUpdate = "core:access-source:update"
+	ActionAccessSourceDelete = "core:access-source:delete"
+	ActionAccessSourceSync   = "core:access-source:sync"
 )

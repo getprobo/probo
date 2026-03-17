@@ -971,3 +971,161 @@ func (b *ProcessingActivityBuilder) WithSpecialOrCriminalData(value string) *Pro
 func (b *ProcessingActivityBuilder) Create() string {
 	return CreateProcessingActivity(b.client, b.attrs)
 }
+
+func CreateAccessReview(c *testutil.Client) string {
+	c.T.Helper()
+
+	const query = `
+		mutation($input: CreateAccessReviewInput!) {
+			createAccessReview(input: $input) {
+				accessReview {
+					id
+				}
+			}
+		}
+	`
+
+	var result struct {
+		CreateAccessReview struct {
+			AccessReview struct {
+				ID string `json:"id"`
+			} `json:"accessReview"`
+		} `json:"createAccessReview"`
+	}
+
+	err := c.Execute(query, map[string]any{
+		"input": map[string]any{
+			"organizationId": c.GetOrganizationID().String(),
+		},
+	}, &result)
+	require.NoError(c.T, err, "createAccessReview mutation failed")
+
+	return result.CreateAccessReview.AccessReview.ID
+}
+
+func CreateAccessSource(c *testutil.Client, accessReviewID string, attrs ...Attrs) string {
+	c.T.Helper()
+
+	var a Attrs
+	if len(attrs) > 0 {
+		a = attrs[0]
+	}
+
+	const query = `
+		mutation($input: CreateAccessSourceInput!) {
+			createAccessSource(input: $input) {
+				accessSourceEdge {
+					node { id }
+				}
+			}
+		}
+	`
+
+	input := map[string]any{
+		"accessReviewId": accessReviewID,
+		"name":           a.getString("name", SafeName("AccessSource")),
+	}
+	if csvData := a.getStringPtr("csvData"); csvData != nil {
+		input["csvData"] = *csvData
+	}
+	if connectorID := a.getStringPtr("connectorId"); connectorID != nil {
+		input["connectorId"] = *connectorID
+	}
+
+	var result struct {
+		CreateAccessSource struct {
+			AccessSourceEdge struct {
+				Node struct {
+					ID string `json:"id"`
+				} `json:"node"`
+			} `json:"accessSourceEdge"`
+		} `json:"createAccessSource"`
+	}
+
+	err := c.Execute(query, map[string]any{"input": input}, &result)
+	require.NoError(c.T, err, "createAccessSource mutation failed")
+
+	return result.CreateAccessSource.AccessSourceEdge.Node.ID
+}
+
+type AccessSourceBuilder struct {
+	client         *testutil.Client
+	accessReviewID string
+	attrs          Attrs
+}
+
+func NewAccessSource(c *testutil.Client, accessReviewID string) *AccessSourceBuilder {
+	return &AccessSourceBuilder{client: c, accessReviewID: accessReviewID, attrs: Attrs{}}
+}
+
+func (b *AccessSourceBuilder) WithName(name string) *AccessSourceBuilder {
+	b.attrs["name"] = name
+	return b
+}
+
+func (b *AccessSourceBuilder) WithCsvData(csvData string) *AccessSourceBuilder {
+	b.attrs["csvData"] = csvData
+	return b
+}
+
+func (b *AccessSourceBuilder) Create() string {
+	return CreateAccessSource(b.client, b.accessReviewID, b.attrs)
+}
+
+func CreateAccessReviewCampaign(c *testutil.Client, accessReviewID string, attrs ...Attrs) string {
+	c.T.Helper()
+
+	var a Attrs
+	if len(attrs) > 0 {
+		a = attrs[0]
+	}
+
+	const query = `
+		mutation($input: CreateAccessReviewCampaignInput!) {
+			createAccessReviewCampaign(input: $input) {
+				accessReviewCampaignEdge {
+					node { id }
+				}
+			}
+		}
+	`
+
+	input := map[string]any{
+		"accessReviewId": accessReviewID,
+		"name":           a.getString("name", SafeName("Campaign")),
+	}
+
+	var result struct {
+		CreateAccessReviewCampaign struct {
+			AccessReviewCampaignEdge struct {
+				Node struct {
+					ID string `json:"id"`
+				} `json:"node"`
+			} `json:"accessReviewCampaignEdge"`
+		} `json:"createAccessReviewCampaign"`
+	}
+
+	err := c.Execute(query, map[string]any{"input": input}, &result)
+	require.NoError(c.T, err, "createAccessReviewCampaign mutation failed")
+
+	return result.CreateAccessReviewCampaign.AccessReviewCampaignEdge.Node.ID
+}
+
+type AccessReviewCampaignBuilder struct {
+	client         *testutil.Client
+	accessReviewID string
+	attrs          Attrs
+}
+
+func NewAccessReviewCampaign(c *testutil.Client, accessReviewID string) *AccessReviewCampaignBuilder {
+	return &AccessReviewCampaignBuilder{client: c, accessReviewID: accessReviewID, attrs: Attrs{}}
+}
+
+func (b *AccessReviewCampaignBuilder) WithName(name string) *AccessReviewCampaignBuilder {
+	b.attrs["name"] = name
+	return b
+}
+
+func (b *AccessReviewCampaignBuilder) Create() string {
+	return CreateAccessReviewCampaign(b.client, b.accessReviewID, b.attrs)
+}
