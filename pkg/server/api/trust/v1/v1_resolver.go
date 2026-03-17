@@ -956,12 +956,14 @@ func (r *queryResolver) CurrentTrustCenter(ctx context.Context) (*types.TrustCen
 
 	org, err := trustService.Organizations.Get(ctx, trustCenter.OrganizationID)
 	if err != nil {
-		panic(fmt.Errorf("cannot get organization: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot get organization", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	trustCenter, err = trustService.TrustCenters.Get(ctx, trustCenter.ID)
 	if err != nil {
-		panic(fmt.Errorf("cannot get trust center: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot get trust center", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	response := types.NewTrustCenter(trustCenter)
@@ -1368,7 +1370,8 @@ func (r *trustCenterReferenceResolver) LogoURL(ctx context.Context, obj *types.T
 
 	logoURL, err := trustService.TrustCenterReferences.GenerateLogoURL(ctx, obj.ID, 1*time.Hour)
 	if err != nil {
-		panic(fmt.Errorf("cannot generate logo URL: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot generate logo URL", log.Error(err))
+		return "", gqlutils.Internal(ctx)
 	}
 
 	return logoURL, nil
@@ -1382,12 +1385,14 @@ func (r *vendorConnectionResolver) TotalCount(ctx context.Context, obj *types.Ve
 	case *trustCenterResolver:
 		count, err := trustService.Vendors.CountForTrustCenterId(ctx, obj.ParentID)
 		if err != nil {
-			panic(fmt.Errorf("cannot count vendors: %w", err))
+			r.logger.ErrorCtx(ctx, "cannot count vendors", log.Error(err))
+			return 0, gqlutils.Internal(ctx)
 		}
 		return count, nil
 	}
 
-	panic(fmt.Errorf("not implemented: TotalCount for parent type %T", obj.Resolver))
+	r.logger.ErrorCtx(ctx, "not implemented: TotalCount for parent type")
+	return 0, gqlutils.Internal(ctx)
 }
 
 // Audit returns schema.AuditResolver implementation.
