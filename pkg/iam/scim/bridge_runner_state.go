@@ -85,7 +85,9 @@ func (r *BridgeRunner) transitionToSuccess(
 			bridge.UpdatedAt = now
 
 			if err := bridge.Update(ctx, conn, scope); err != nil {
-				logger.ErrorCtx(ctx, "cannot update bridge after successful sync",
+				logger.ErrorCtx(
+					ctx,
+					"cannot update bridge after successful sync",
 					log.Error(err),
 				)
 				return err
@@ -94,14 +96,18 @@ func (r *BridgeRunner) transitionToSuccess(
 			if connector != nil {
 				connector.UpdatedAt = now
 				if err := connector.Update(ctx, conn, scope, r.encryptionKey); err != nil {
-					logger.WarnCtx(ctx, "cannot persist refreshed OAuth2 token",
+					logger.WarnCtx(
+						ctx,
+						"cannot persist refreshed OAuth2 token",
 						log.String("connector_id", connector.ID.String()),
 						log.Error(err),
 					)
 				}
 			}
 
-			logger.InfoCtx(ctx, "sync completed successfully",
+			logger.InfoCtx(
+				ctx,
+				"sync completed successfully",
 				log.Duration("sync_duration", duration),
 				log.Int("users_created", stats.Created),
 				log.Int("users_updated", stats.Updated),
@@ -141,7 +147,9 @@ func (r *BridgeRunner) transitionToFailed(
 				bridge.State = coredata.SCIMBridgeStateDisabled
 				bridge.NextSyncAt = nil
 
-				logger.ErrorCtx(ctx, "bridge disabled due to max consecutive failures",
+				logger.ErrorCtx(
+					ctx,
+					"bridge disabled due to max consecutive failures",
 					log.Duration("sync_duration", duration),
 					log.Int("consecutive_failures", bridge.ConsecutiveFailures),
 					log.Int("max_consecutive_failures", r.cfg.MaxConsecutiveFailures),
@@ -153,7 +161,9 @@ func (r *BridgeRunner) transitionToFailed(
 				nextSync := now.Add(backoff)
 				bridge.NextSyncAt = &nextSync
 
-				logger.ErrorCtx(ctx, "sync failed, will retry with backoff",
+				logger.ErrorCtx(
+					ctx,
+					"sync failed, will retry with backoff",
 					log.Duration("sync_duration", duration),
 					log.Int("consecutive_failures", bridge.ConsecutiveFailures),
 					log.Duration("next_retry_in", backoff),
@@ -162,7 +172,9 @@ func (r *BridgeRunner) transitionToFailed(
 			}
 
 			if err := bridge.Update(ctx, conn, scope); err != nil {
-				logger.ErrorCtx(ctx, "cannot update bridge after failed sync",
+				logger.ErrorCtx(
+					ctx,
+					"cannot update bridge after failed sync",
 					log.String("new_state", string(bridge.State)),
 					log.Error(err),
 				)

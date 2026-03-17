@@ -26,13 +26,17 @@ import (
 func LoggingMiddleware(logger *log.Logger) func(mcp.MethodHandler) mcp.MethodHandler {
 	return func(next mcp.MethodHandler) mcp.MethodHandler {
 		return func(ctx context.Context, method string, req mcp.Request) (mcp.Result, error) {
-			logger.InfoCtx(ctx, fmt.Sprintf("mcp %q method started", method),
+			logger.InfoCtx(
+				ctx,
+				fmt.Sprintf("mcp %q method started", method),
 				log.String("method", method),
 				log.Bool("has_params", req.GetParams() != nil),
 			)
 
 			if ctr, ok := req.(*mcp.CallToolRequest); ok {
-				logger.InfoCtx(ctx, fmt.Sprintf("calling %q tool", ctr.Params.Name),
+				logger.InfoCtx(
+					ctx,
+					fmt.Sprintf("calling %q tool", ctr.Params.Name),
 					log.String("tool_name", ctr.Params.Name),
 				)
 			}
@@ -42,21 +46,27 @@ func LoggingMiddleware(logger *log.Logger) func(mcp.MethodHandler) mcp.MethodHan
 			duration := time.Since(start)
 
 			if err != nil {
-				logger.ErrorCtx(ctx, fmt.Sprintf("mcp %q method failed", method),
+				logger.ErrorCtx(
+					ctx,
+					fmt.Sprintf("mcp %q method failed", method),
 					log.String("method", method),
 					log.Int64("duration_ms", duration.Milliseconds()),
 					log.Error(err),
 				)
 			} else {
 
-				logger.InfoCtx(ctx, fmt.Sprintf("mcp %q method completed", method),
+				logger.InfoCtx(
+					ctx,
+					fmt.Sprintf("mcp %q method completed", method),
 					log.String("method", method),
 					log.Int64("duration_ms", duration.Milliseconds()),
 					log.Bool("has_result", result != nil),
 				)
 
 				if ctr, ok := result.(*mcp.CallToolResult); ok {
-					logger.InfoCtx(ctx, "tool call result",
+					logger.InfoCtx(
+						ctx,
+						"tool call result",
 						log.Bool("is_error", ctr.IsError),
 					)
 				}

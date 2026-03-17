@@ -293,7 +293,9 @@ func (w *SendingWorker) failEmail(
 	email *coredata.Email,
 	processingError error,
 ) error {
-	w.logger.ErrorCtx(ctx, "sending worker failure",
+	w.logger.ErrorCtx(
+		ctx,
+		"sending worker failure",
 		log.Error(processingError),
 		log.String("email_id", email.ID.String()),
 	)

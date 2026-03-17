@@ -347,7 +347,8 @@ func (s *Service) lockExportJob(ctx context.Context) (*coredata.ExportJob, error
 	exportJob := &coredata.ExportJob{}
 	var scope coredata.Scoper
 
-	err := s.pg.WithTx(ctx,
+	err := s.pg.WithTx(
+		ctx,
 		func(tx pg.Conn) error {
 			if err := exportJob.LoadNextPendingForUpdateSkipLocked(ctx, tx); err != nil {
 				return fmt.Errorf("cannot load next pending export job: %w", err)

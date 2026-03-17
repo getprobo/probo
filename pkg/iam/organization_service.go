@@ -250,7 +250,8 @@ func (s *OrganizationService) UpdateMempership(
 	scope := coredata.NewScopeFromObjectID(organizationID)
 
 	membership := coredata.Membership{}
-	if err := s.pg.WithTx(ctx,
+	if err := s.pg.WithTx(
+		ctx,
 		func(tx pg.Conn) error {
 
 			if err := membership.LoadByID(ctx, tx, scope, membershipID); err != nil {

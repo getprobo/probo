@@ -22,24 +22,32 @@ import (
 
 func Example_definingPolicies() {
 	// Define a viewer policy - can read everything
-	viewerPolicy := policy.NewPolicy("viewer", "Viewer Policy",
+	viewerPolicy := policy.NewPolicy(
+		"viewer",
+		"Viewer Policy",
 		policy.Allow("*:*:read", "*:*:list"),
 	).WithDescription("Read-only access to all resources")
 
 	// Define an admin policy - can do everything except delete organization
-	adminPolicy := policy.NewPolicy("admin", "Admin Policy",
+	adminPolicy := policy.NewPolicy(
+		"admin",
+		"Admin Policy",
 		policy.Allow("*"),
 		policy.Deny("iam:organization:delete"),
 	).WithDescription("Full access except organization deletion")
 
 	// Define a self-manage policy - users can manage their own identity
-	selfManagePolicy := policy.NewPolicy("self-manage", "Self Management Policy",
+	selfManagePolicy := policy.NewPolicy(
+		"self-manage",
+		"Self Management Policy",
 		policy.Allow("iam:identity:get", "iam:identity:update").
 			When(policy.Equals("principal.id", "resource.id")),
 	).WithDescription("Users can view and update their own identity")
 
 	// Define a document owner policy - owners can do anything to their documents
-	documentOwnerPolicy := policy.NewPolicy("doc-owner", "Document Owner Policy",
+	documentOwnerPolicy := policy.NewPolicy(
+		"doc-owner",
+		"Document Owner Policy",
 		policy.Allow("documents:document:*").
 			When(policy.Equals("principal.id", "resource.owner_id")),
 	).WithDescription("Document owners have full control over their documents")
@@ -60,11 +68,15 @@ func Example_evaluatingPolicies() {
 	evaluator := policy.NewEvaluator()
 
 	// Define policies
-	viewerPolicy := policy.NewPolicy("viewer", "Viewer",
+	viewerPolicy := policy.NewPolicy(
+		"viewer",
+		"Viewer",
 		policy.Allow("*:*:read", "*:*:list"),
 	)
 
-	adminPolicy := policy.NewPolicy("admin", "Admin",
+	adminPolicy := policy.NewPolicy(
+		"admin",
+		"Admin",
 		policy.Allow("*"),
 		policy.Deny("iam:organization:delete").WithSID("prevent-org-deletion"),
 	)
@@ -119,7 +131,9 @@ func Example_conditionBasedAccess() {
 	evaluator := policy.NewEvaluator()
 
 	// Policy: users can only update their own profile
-	selfManagePolicy := policy.NewPolicy("self-manage", "Self Management",
+	selfManagePolicy := policy.NewPolicy(
+		"self-manage",
+		"Self Management",
 		policy.Allow("iam:identity:update").
 			When(policy.Equals("principal.id", "resource.id")),
 	)

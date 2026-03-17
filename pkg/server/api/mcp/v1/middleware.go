@@ -35,7 +35,9 @@ func RequireAPIKeyHandler(
 			correlationID = r.Header.Get("X-Correlation-ID")
 		}
 
-		logger.InfoCtx(ctx, "MCP authentication attempt",
+		logger.InfoCtx(
+			ctx,
+			"MCP authentication attempt",
 			log.String("correlation_id", correlationID),
 			log.String("path", r.URL.Path),
 		)
@@ -48,7 +50,9 @@ func RequireAPIKeyHandler(
 			return
 		}
 
-		logger.InfoCtx(ctx, "MCP authentication successful",
+		logger.InfoCtx(
+			ctx,
+			"MCP authentication successful",
 			log.String("correlation_id", correlationID),
 			log.String("identity_id", identity.ID.String()),
 			log.String("api_key_id", apiKey.ID.String()),

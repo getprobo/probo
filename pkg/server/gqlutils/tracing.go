@@ -114,7 +114,8 @@ func (t TracingExtension) InterceptOperation(ctx context.Context, next graphql.O
 		}
 
 		if resp.Errors != nil {
-			t.logger.ErrorCtx(ctx,
+			t.logger.ErrorCtx(
+				ctx,
 				fmt.Sprintf("%s %s failed %s", operationType, operationName, duration.String()),
 				log.String("graphql_operation_name", operationName),
 				log.String("graphql_operation_type", operationType),
@@ -122,7 +123,8 @@ func (t TracingExtension) InterceptOperation(ctx context.Context, next graphql.O
 				log.Any("graphql_operation_errors", resp.Errors),
 			)
 		} else {
-			t.logger.InfoCtx(ctx,
+			t.logger.InfoCtx(
+				ctx,
 				fmt.Sprintf("%s %s succeed %s", operationType, operationName, duration.String()),
 				log.String("graphql_operation_name", operationName),
 				log.String("graphql_operation_type", operationType),

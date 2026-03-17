@@ -57,7 +57,9 @@ func convertPanicToError(ctx context.Context, logger *log.Logger, panicValue any
 	}
 
 	// Log unexpected panics with stack trace
-	logger.ErrorCtx(ctx, "unexpected panic in MCP method handler",
+	logger.ErrorCtx(
+		ctx,
+		"unexpected panic in MCP method handler",
 		log.Any("panic", panicValue),
 		log.String("stack", string(debug.Stack())),
 	)

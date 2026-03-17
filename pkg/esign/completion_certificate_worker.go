@@ -346,7 +346,9 @@ func (w *CompletionCertificateWorker) handleCertFailure(
 	scope coredata.Scoper,
 	processingError error,
 ) error {
-	w.logger.ErrorCtx(ctx, "certificate worker failure",
+	w.logger.ErrorCtx(
+		ctx,
+		"certificate worker failure",
 		log.Error(processingError),
 		log.String("signature_id", signature.ID.String()),
 	)

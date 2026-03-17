@@ -148,13 +148,17 @@ func (w *MailingListWorker) processNext(ctx context.Context, sem chan struct{}, 
 		defer func() { <-sem }()
 
 		if err := w.sendAndCommit(nonCancelableCtx, &mlu); err != nil {
-			w.logger.ErrorCtx(nonCancelableCtx, "cannot send mailing list update",
+			w.logger.ErrorCtx(
+				nonCancelableCtx,
+				"cannot send mailing list update",
 				log.Error(err),
 				log.String("mailing_list_update_id", mlu.ID.String()),
 			)
 
 			if err := w.resetEnqueued(nonCancelableCtx, &mlu); err != nil {
-				w.logger.ErrorCtx(nonCancelableCtx, "cannot reset mailing list update to enqueued",
+				w.logger.ErrorCtx(
+					nonCancelableCtx,
+					"cannot reset mailing list update to enqueued",
 					log.Error(err),
 					log.String("mailing_list_update_id", mlu.ID.String()),
 				)

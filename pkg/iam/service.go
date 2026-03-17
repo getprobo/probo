@@ -132,17 +132,21 @@ func NewService(
 	}
 	svc.SAMLService = samlService
 
-	svc.SCIMService = scim.NewService(svc.pg, cfg.Logger.Named("scim"), scim.ServiceConfig{
-		TracerProvider:    cfg.TracerProvider,
-		Registerer:        cfg.Registerer,
-		EncryptionKey:     cfg.EncryptionKey,
-		ConnectorRegistry: cfg.ConnectorRegistry,
-		BridgeRunner: scim.BridgeRunnerConfig{
-			Interval:     cfg.SCIMBridgeSyncInterval,
-			PollInterval: cfg.SCIMBridgePollInterval,
-			BaseURL:      cfg.BaseURL,
+	svc.SCIMService = scim.NewService(
+		svc.pg,
+		cfg.Logger.Named("scim"),
+		scim.ServiceConfig{
+			TracerProvider:    cfg.TracerProvider,
+			Registerer:        cfg.Registerer,
+			EncryptionKey:     cfg.EncryptionKey,
+			ConnectorRegistry: cfg.ConnectorRegistry,
+			BridgeRunner: scim.BridgeRunnerConfig{
+				Interval:     cfg.SCIMBridgeSyncInterval,
+				PollInterval: cfg.SCIMBridgePollInterval,
+				BaseURL:      cfg.BaseURL,
+			},
 		},
-	})
+	)
 
 	svc.samlDomainVerifier = NewSAMLDomainVerifier(
 		pgClient,

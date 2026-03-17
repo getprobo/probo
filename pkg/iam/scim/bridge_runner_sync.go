@@ -156,7 +156,9 @@ func (r *BridgeRunner) createGoogleWorkspaceProvider(
 	providerName := dbConnector.Provider.String()
 	refreshCfg := r.connectorRegistry.GetOAuth2RefreshConfig(providerName)
 	if refreshCfg == nil {
-		logger.WarnCtx(ctx, "no OAuth2 refresh config found, using static token",
+		logger.WarnCtx(
+			ctx,
+			"no OAuth2 refresh config found, using static token",
 			log.String("connector_id", dbConnector.ID.String()),
 			log.String("connector_provider", providerName),
 		)

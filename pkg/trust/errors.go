@@ -17,12 +17,12 @@ package trust
 import "errors"
 
 var (
-	ErrCustomDomainNotFound   = errors.New("custom domain not found")
-	ErrPageNotFound           = errors.New("page not found")
-	ErrMembershipNotFound     = errors.New("membership not found")
-	ErrUserNotFound           = errors.New("user not found")
-	ErrUserInactive           = errors.New("user inactive")
-	ErrDocumentAccessNotFound = errors.New("document access not found")
+	ErrCustomDomainNotFound      = errors.New("custom domain not found")
+	ErrPageNotFound              = errors.New("page not found")
+	ErrMembershipNotFound        = errors.New("membership not found")
+	ErrUserNotFound              = errors.New("user not found")
+	ErrUserInactive              = errors.New("user inactive")
+	ErrDocumentAccessNotFound    = errors.New("document access not found")
 	ErrNDAFileNotFound           = errors.New("NDA file not found")
 	ErrDocumentNotFound          = errors.New("document not found")
 	ErrDocumentNotVisible        = errors.New("document not visible")

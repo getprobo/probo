@@ -107,7 +107,9 @@ func NewBridgeRunner(
 
 // Run starts the runner loop that processes SCIM bridges.
 func (r *BridgeRunner) Run(ctx context.Context) error {
-	r.logger.InfoCtx(ctx, "starting SCIM bridge runner",
+	r.logger.InfoCtx(
+		ctx,
+		"starting SCIM bridge runner",
 		log.Duration("poll_interval", r.cfg.PollInterval),
 		log.Duration("sync_interval", r.cfg.Interval),
 		log.Duration("sync_timeout", r.cfg.SyncTimeout),

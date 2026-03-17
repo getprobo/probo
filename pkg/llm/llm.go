@@ -115,7 +115,9 @@ func (c *Client) ChatCompletion(ctx context.Context, req *ChatCompletionRequest)
 func (c *Client) ChatCompletionStream(ctx context.Context, req *ChatCompletionRequest) (ChatCompletionStream, error) {
 	ctx, span := startChatSpan(ctx, c.tracer, c.system, req)
 
-	c.logger.InfoCtx(ctx, "chat completion stream request",
+	c.logger.InfoCtx(
+		ctx,
+		"chat completion stream request",
 		log.String("model", req.Model),
 		log.Int("message_count", len(req.Messages)),
 		log.Int("tool_count", len(req.Tools)),

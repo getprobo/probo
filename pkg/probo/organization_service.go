@@ -261,10 +261,15 @@ func (s OrganizationService) Update(
 					UpdatedAt:  now,
 				}
 
-				fileSize, err = s.svc.fileManager.PutFile(ctx, fileRecord, req.File.Content, map[string]string{
-					"type":            "organization-logo",
-					"organization-id": organization.ID.String(),
-				})
+				fileSize, err = s.svc.fileManager.PutFile(
+					ctx,
+					fileRecord,
+					req.File.Content,
+					map[string]string{
+						"type":            "organization-logo",
+						"organization-id": organization.ID.String(),
+					},
+				)
 				if err != nil {
 					return fmt.Errorf("cannot upload logo file: %w", err)
 				}
@@ -316,10 +321,15 @@ func (s OrganizationService) Update(
 					UpdatedAt:  now,
 				}
 
-				fileSize, err = s.svc.fileManager.PutFile(ctx, fileRecord, req.HorizontalLogoFile.Content, map[string]string{
-					"type":            "organization-horizontal-logo",
-					"organization-id": organization.ID.String(),
-				})
+				fileSize, err = s.svc.fileManager.PutFile(
+					ctx,
+					fileRecord,
+					req.HorizontalLogoFile.Content,
+					map[string]string{
+						"type":            "organization-horizontal-logo",
+						"organization-id": organization.ID.String(),
+					},
+				)
 				if err != nil {
 					return fmt.Errorf("cannot upload horizontal logo file: %w", err)
 				}

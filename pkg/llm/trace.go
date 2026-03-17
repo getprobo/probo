@@ -46,7 +46,9 @@ func startChatSpan(ctx context.Context, tracer trace.Tracer, system string, req 
 		attrs = append(attrs, semconv.GenAIRequestStopSequences(req.StopSequences...))
 	}
 
-	return tracer.Start(ctx, spanName,
+	return tracer.Start(
+		ctx,
+		spanName,
 		trace.WithSpanKind(trace.SpanKindClient),
 		trace.WithAttributes(attrs...),
 	)

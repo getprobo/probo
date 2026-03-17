@@ -149,8 +149,11 @@ var (
 )
 
 func (e ErrSignatureNotCancellable) Error() string {
-	return fmt.Sprintf("cannot cancel signature request: signature is in state %v, expected %v",
-		e.currentState, e.expectedState)
+	return fmt.Sprintf(
+		"cannot cancel signature request: signature is in state %v, expected %v",
+		e.currentState,
+		e.expectedState,
+	)
 }
 
 func (e ErrDocumentVersionNoChanges) Error() string {

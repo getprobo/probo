@@ -39,10 +39,13 @@ func buildLLMClient(cfg LLMConfig, l *log.Logger, tp trace.TracerProvider, r pro
 
 	switch provider {
 	case "openai":
-		p := llmopenai.NewProvider(cfg.APIKey,
+		p := llmopenai.NewProvider(
+			cfg.APIKey,
 			llmopenai.WithHTTPClient(httpClient),
 		)
-		return llm.NewClient(p, "openai",
+		return llm.NewClient(
+			p,
+			"openai",
 			llm.WithLogger(l),
 			llm.WithTracerProvider(tp),
 		), nil

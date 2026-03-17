@@ -21,10 +21,15 @@ import (
 )
 
 func allApproversCursor() *page.Cursor[coredata.MembershipProfileOrderField] {
-	return page.NewCursor(100, nil, page.Head, page.OrderBy[coredata.MembershipProfileOrderField]{
-		Field:     coredata.MembershipProfileOrderFieldCreatedAt,
-		Direction: page.OrderDirectionDesc,
-	})
+	return page.NewCursor(
+		100,
+		nil,
+		page.Head,
+		page.OrderBy[coredata.MembershipProfileOrderField]{
+			Field:     coredata.MembershipProfileOrderFieldCreatedAt,
+			Direction: page.OrderDirectionDesc,
+		},
+	)
 }
 
 func profileIDs(p *page.Page[*coredata.MembershipProfile, coredata.MembershipProfileOrderField]) []gid.GID {

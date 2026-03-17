@@ -21,7 +21,9 @@ import (
 func TestEvaluator_Evaluate_AllowDecision(t *testing.T) {
 	evaluator := NewEvaluator()
 
-	policy := NewPolicy("test", "Test Policy",
+	policy := NewPolicy(
+		"test",
+		"Test Policy",
 		Allow("iam:identity:get", "iam:identity:update"),
 	)
 
@@ -68,7 +70,9 @@ func TestEvaluator_Evaluate_AllowDecision(t *testing.T) {
 func TestEvaluator_Evaluate_DenyDecision(t *testing.T) {
 	evaluator := NewEvaluator()
 
-	policy := NewPolicy("test", "Test Policy",
+	policy := NewPolicy(
+		"test",
+		"Test Policy",
 		Allow("iam:*:*"),
 		Deny("iam:organization:delete").WithSID("deny-org-delete"),
 	)
@@ -112,10 +116,14 @@ func TestEvaluator_Evaluate_DenyWinsOverAllow(t *testing.T) {
 	evaluator := NewEvaluator()
 
 	// Two policies: one allows, one denies the same action
-	allowPolicy := NewPolicy("allow", "Allow Policy",
+	allowPolicy := NewPolicy(
+		"allow",
+		"Allow Policy",
 		Allow("iam:organization:delete"),
 	)
-	denyPolicy := NewPolicy("deny", "Deny Policy",
+	denyPolicy := NewPolicy(
+		"deny",
+		"Deny Policy",
 		Deny("iam:organization:delete"),
 	)
 
@@ -147,7 +155,9 @@ func TestEvaluator_Evaluate_WithConditions(t *testing.T) {
 	evaluator := NewEvaluator()
 
 	// Policy that only allows users to update their own identity
-	selfManagePolicy := NewPolicy("self-manage", "Self Manage",
+	selfManagePolicy := NewPolicy(
+		"self-manage",
+		"Self Manage",
 		Allow("iam:identity:update").
 			When(Equals("principal.id", "resource.id")),
 	)
@@ -194,7 +204,9 @@ func TestEvaluator_Evaluate_MultipleConditions(t *testing.T) {
 	evaluator := NewEvaluator()
 
 	// Policy that requires both conditions to be met
-	policy := NewPolicy("test", "Test",
+	policy := NewPolicy(
+		"test",
+		"Test",
 		Allow("documents:document:update").
 			When(
 				Equals("principal.id", "resource.owner_id"),
@@ -358,7 +370,9 @@ func TestEvaluator_Evaluate_NilPolicies(t *testing.T) {
 func TestEvaluator_Evaluate_MatchedStatementAndPolicy(t *testing.T) {
 	evaluator := NewEvaluator()
 
-	policy := NewPolicy("test-policy", "Test Policy",
+	policy := NewPolicy(
+		"test-policy",
+		"Test Policy",
 		Allow("iam:identity:get").WithSID("allow-get"),
 		Deny("iam:identity:delete").WithSID("deny-delete"),
 	)

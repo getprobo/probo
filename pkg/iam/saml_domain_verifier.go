@@ -115,12 +115,16 @@ func (v *SAMLDomainVerifier) checkUnverifiedDomains(ctx context.Context) error {
 
 		if err := v.tryVerifyDomain(ctx, config.ID); err != nil {
 			if errors.Is(err, errDomainTXTRecordNotFound) || errors.Is(err, errDomainTXTRecordMismatch) {
-				v.logger.InfoCtx(ctx, "domain verification pending",
+				v.logger.InfoCtx(
+					ctx,
+					"domain verification pending",
 					log.String("config_id", config.ID.String()),
 					log.Error(err),
 				)
 			} else {
-				v.logger.ErrorCtx(ctx, "cannot verify domain",
+				v.logger.ErrorCtx(
+					ctx,
+					"cannot verify domain",
 					log.String("config_id", config.ID.String()),
 					log.Error(err),
 				)
@@ -160,7 +164,9 @@ func (v *SAMLDomainVerifier) tryVerifyDomain(ctx context.Context, configID gid.G
 				return err
 			}
 
-			v.logger.InfoCtx(ctx, "domain verified",
+			v.logger.InfoCtx(
+				ctx,
+				"domain verified",
 				log.String("config_id", config.ID.String()),
 			)
 

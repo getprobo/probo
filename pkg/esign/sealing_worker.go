@@ -289,7 +289,9 @@ func (w *SealingWorker) failSignature(
 ) error {
 	scope := coredata.NewScopeFromObjectID(signature.ID)
 
-	w.logger.ErrorCtx(ctx, "sealing worker failure",
+	w.logger.ErrorCtx(
+		ctx,
+		"sealing worker failure",
 		log.Error(processingError),
 		log.String("signature_id", signature.ID.String()),
 	)

@@ -332,8 +332,11 @@ func TestFileCategories(t *testing.T) {
 
 				err := v.Validate("test"+otherTC.validExt, otherTC.validMimeType, 1024)
 				if err == nil {
-					t.Errorf("Expected error when validating %s file with %s validator, but got none",
-						otherTC.category, tc.category)
+					t.Errorf(
+						"Expected error when validating %s file with %s validator, but got none",
+						otherTC.category,
+						tc.category,
+					)
 				}
 			}
 		})

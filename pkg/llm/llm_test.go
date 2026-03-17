@@ -73,7 +73,9 @@ func newTestClient(provider llm.Provider) (*llm.Client, *tracetest.SpanRecorder)
 	recorder := tracetest.NewSpanRecorder()
 	tp := sdktrace.NewTracerProvider(sdktrace.WithSpanProcessor(recorder))
 
-	client := llm.NewClient(provider, "test",
+	client := llm.NewClient(
+		provider,
+		"test",
 		llm.WithTracerProvider(tp),
 	)
 	return client, recorder

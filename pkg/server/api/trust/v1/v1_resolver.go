@@ -283,9 +283,13 @@ func (r *mutationResolver) UpdateFullName(ctx context.Context, input types.Updat
 		return nil, gqlutils.Unauthenticatedf(ctx, "authentication is required to request access")
 	}
 
-	identity, err := r.iam.AccountService.UpdateIdentity(ctx, identity.ID, &iam.UpdateIdentityRequest{
-		FullName: input.FullName,
-	})
+	identity, err := r.iam.AccountService.UpdateIdentity(
+		ctx,
+		identity.ID,
+		&iam.UpdateIdentityRequest{
+			FullName: input.FullName,
+		},
+	)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot update identity", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
