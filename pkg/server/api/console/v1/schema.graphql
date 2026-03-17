@@ -3764,6 +3764,7 @@ type Mutation {
     updateDocument(input: UpdateDocumentInput!): UpdateDocumentPayload!
     archiveDocument(input: ArchiveDocumentInput!): ArchiveDocumentPayload!
     unarchiveDocument(input: UnarchiveDocumentInput!): UnarchiveDocumentPayload!
+    updateDocumentVersionContent(input: UpdateDocumentVersionContentInput!): UpdateDocumentVersionContentPayload!
     deleteDocument(input: DeleteDocumentInput!): DeleteDocumentPayload!
     # Meeting mutations
     createMeeting(input: CreateMeetingInput!): CreateMeetingPayload!
@@ -4464,6 +4465,7 @@ input CreateDocumentInput {
     organizationId: ID!
     title: String!
     content: String!
+    approverIds: [ID!]!
     documentType: DocumentType!
     classification: DocumentClassification!
     trustCenterVisibility: TrustCenterVisibility
@@ -4476,6 +4478,11 @@ input UpdateDocumentInput {
     documentType: DocumentType
     classification: DocumentClassification
     trustCenterVisibility: TrustCenterVisibility
+}
+
+input UpdateDocumentVersionContentInput {
+    id: ID!
+    content: String!
 }
 
 input ExportDocumentVersionPDFInput {
@@ -5241,6 +5248,10 @@ type ArchiveDocumentPayload {
 
 type UnarchiveDocumentPayload {
     document: Document!
+}
+
+type UpdateDocumentVersionContentPayload {
+    content: String!
 }
 
 type DeleteDocumentPayload {

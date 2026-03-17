@@ -1,7 +1,12 @@
-import { RichEditor } from "@probo/ui";
-import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
+import { formatError } from "@probo/helpers";
+import { useTranslate } from "@probo/i18n";
+import { RichEditor, useToast } from "@probo/ui";
+import { useCallback } from "react";
+import { type PreloadedQuery, useMutation, usePreloadedQuery } from "react-relay";
 import { graphql } from "relay-runtime";
+import { useDebounceCallback } from "usehooks-ts";
 
+import type { DocumentDescriptionPage_updateContentMutation } from "#/__generated__/core/DocumentDescriptionPage_updateContentMutation.graphql";
 import type { DocumentDescriptionPageQuery } from "#/__generated__/core/DocumentDescriptionPageQuery.graphql";
 
 export const documentDescriptionPageQuery = graphql`
@@ -10,6 +15,7 @@ export const documentDescriptionPageQuery = graphql`
     version: node(id: $versionId) @include(if: $versionSpecified) {
       __typename
       ... on DocumentVersion {
+        id
         content
       }
     }
@@ -20,6 +26,7 @@ export const documentDescriptionPageQuery = graphql`
         lastVersion: versions(first: 1 orderBy: { field: CREATED_AT, direction: DESC }) @skip(if: $versionSpecified) {
           edges {
             node {
+              id
               content
             }
           }
@@ -29,8 +36,19 @@ export const documentDescriptionPageQuery = graphql`
   }
 `;
 
+const updateContentMutation = graphql`
+  mutation DocumentDescriptionPage_updateContentMutation($input: UpdateDocumentVersionContentInput!) {
+    updateDocumentVersionContent(input: $input) {
+      content
+    }
+  }
+`;
+
 export function DocumentDescriptionPage(props: { queryRef: PreloadedQuery<DocumentDescriptionPageQuery> }) {
   const { queryRef } = props;
+
+  const { __ } = useTranslate();
+  const { toast } = useToast();
 
   const { document, version } = usePreloadedQuery<DocumentDescriptionPageQuery>(
     documentDescriptionPageQuery,
@@ -40,12 +58,54 @@ export function DocumentDescriptionPage(props: { queryRef: PreloadedQuery<Docume
     throw new Error("invalid type for node");
   }
 
-  // const lastVersion = document.lastVersion?.edges[0].node;
-  // const currentVersion = lastVersion ?? version as NonNullable<typeof lastVersion | typeof version>;
+  const lastVersion = document.lastVersion?.edges[0].node;
+  const currentVersion = lastVersion ?? version as NonNullable<typeof lastVersion | typeof version>;
+
+  const [updateContent, _] = useMutation<DocumentDescriptionPage_updateContentMutation>(updateContentMutation);
+
+  const handleUpdate = useDebounceCallback(
+    useCallback((content: string) => {
+      updateContent({
+        variables: {
+          input: {
+            id: currentVersion.id,
+            content,
+          },
+        },
+        onCompleted: (_, errors) => {
+          if (errors?.length) {
+            toast({
+              title: __("Error"),
+              description: formatError(__("Content not saved"), errors),
+              variant: "error",
+            });
+            return;
+          }
+
+          toast({
+            title: __("Success"),
+            description: __("Content saved"),
+            variant: "success",
+          });
+        },
+        onError: (error) => {
+          toast({
+            title: __("Error"),
+            description: error.message ?? __("Content not saved"),
+            variant: "error",
+          });
+        },
+      });
+    }, [currentVersion.id, updateContent, toast, __]),
+    500,
+  );
 
   return (
     <div>
-      <RichEditor />
+      <RichEditor
+        content={currentVersion.content}
+        onChange={handleUpdate}
+      />
       {/* <Markdown content={currentVersion.content} /> */}
     </div>
   );
