@@ -26,3 +26,12 @@ Not every commit needs a body -- a single line is fine when the change is self-e
 ```
 Fix typo in vendor assessment prompt
 ```
+
+## Signing and Authorship
+
+All commits **must** be signed (`-s -S`):
+
+- `-s` adds a `Signed-off-by` trailer (DCO).
+- `-S` creates a GPG/SSH signature.
+
+The commit author must be the **human responsible for the change**, not the AI assistant. Do **not** add `Co-Authored-By` trailers crediting bots.
