@@ -237,8 +237,13 @@ func WithPresencePenalty(p float64) Option {
 	}
 }
 
+const DefaultMaxTokens = 4096
+
 func WithMaxTokens(n int) Option {
 	return func(a *Agent) {
+		if n <= 0 {
+			n = DefaultMaxTokens
+		}
 		a.modelSettings.MaxTokens = &n
 	}
 }
