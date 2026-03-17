@@ -6770,7 +6770,16 @@ func (r *organizationResolver) TrustCenter(ctx context.Context, obj *types.Organ
 		panic(fmt.Errorf("cannot get trust center: %w", err))
 	}
 
-	return types.NewTrustCenter(trustCenter, nil), nil
+	var file *coredata.File
+	if trustCenter.NonDisclosureAgreementFileID != nil {
+		file, err = prb.Files.Get(ctx, *trustCenter.NonDisclosureAgreementFileID)
+		if err != nil {
+			// TODO no panic use gqlutils.InternalError
+			panic(fmt.Errorf("cannot get NDA file: %w", err))
+		}
+	}
+
+	return types.NewTrustCenter(trustCenter, file), nil
 }
 
 // CustomDomain is the resolver for the customDomain field.
@@ -7239,7 +7248,16 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			if err != nil {
 				return nil, err
 			}
-			return types.NewTrustCenter(trustCenter, nil), nil
+
+			var file *coredata.File
+			if trustCenter.NonDisclosureAgreementFileID != nil {
+				file, err = prb.Files.Get(ctx, *trustCenter.NonDisclosureAgreementFileID)
+				if err != nil {
+					return nil, fmt.Errorf("cannot get NDA file: %w", err)
+				}
+			}
+
+			return types.NewTrustCenter(trustCenter, file), nil
 		}
 	case coredata.TrustCenterAccessEntityType:
 		action = probo.ActionTrustCenterAccessGet
