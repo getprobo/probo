@@ -22,7 +22,7 @@ import {
   useDialogRef,
   useToast,
 } from "@probo/ui";
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import {
   graphql,
