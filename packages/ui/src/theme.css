@@ -277,3 +277,8 @@ button[data-cell]:focus-visible {
     background: var(--color-txt-tertiary);
     border-radius: 4px;
 }
+
+.ProseMirror-focused {
+    outline-width: 0 !important;
+    outline-color: transparent !important;
+}
