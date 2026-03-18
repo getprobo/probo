@@ -14,23 +14,76 @@ import { Strike } from "@tiptap/extension-strike";
 import { Text } from "@tiptap/extension-text";
 import { Underline } from "@tiptap/extension-underline";
 import { Dropcursor, Gapcursor, UndoRedo } from "@tiptap/extensions";
-import { type Content, EditorContent, useEditor, useEditorState } from "@tiptap/react";
+import { Plugin, PluginKey } from "@tiptap/pm/state";
+import { type Content, EditorContent, getAttributes, useEditor, useEditorState } from "@tiptap/react";
 import { BubbleMenu, FloatingMenu } from "@tiptap/react/menus";
 import { type ComponentProps, useEffect } from "react";
 import { tv } from "tailwind-variants";
 
+export const ControlClickLink = Link.extend({
+  addProseMirrorPlugins: () => {
+    return [
+      new Plugin({
+        key: new PluginKey("handleControlClick"),
+        props: {
+          handleKeyDown: (view, event) => {
+            if (event.key === "Control" || event.key === "Meta") {
+              view.dom.classList.add("pointer-on-hovered-link");
+            }
+          },
+          handleDOMEvents: {
+            keyup: (view, event) => {
+              if (event.key === "Control" || event.key === "Meta") {
+                view.dom.classList.remove("pointer-on-hovered-link");
+              }
+            },
+          },
+          handleClick: (view, _, event) => {
+            const { ctrlKey, metaKey } = event; // Check for Ctrl (Windows) or Cmd (Mac)
+            const keyPressed = ctrlKey || metaKey;
+
+            if (keyPressed) {
+              // Get attributes of the mark at the clicked position
+              const attrs = getAttributes(view.state, "link");
+              const link = (event.target as Element | null)?.closest("a");
+
+              if (link && attrs.href) {
+                window.open(attrs.href as string, "_blank", "noopener,noreferrer"); // Open link in a new tab
+                return true; // Handle the event
+              }
+            }
+            return false; // Let other handlers run
+          },
+        },
+      }),
+    ];
+  },
+}).configure({
+  openOnClick: false,
+});
+
 const extensions = [
   Document,
-  Paragraph,
-  Text,
-  Heading.configure({ levels: [1, 2, 3] }),
+  Paragraph.configure({
+    HTMLAttributes: {
+      class: "text-base py-2",
+    },
+  }),
+  Text.configure({
+    HTMLAttributes: {
+      class: "text-base",
+    },
+  }),
+  Heading.configure({
+    levels: [1, 2, 3],
+  }),
   Bold,
   Italic,
   Strike,
   Underline,
   Code,
   CodeBlock,
-  Link.configure({ openOnClick: false }),
+  ControlClickLink,
   Blockquote,
   BulletList,
   OrderedList,
@@ -189,6 +242,11 @@ export function RichEditor(props: RichEditorProps) {
           label="Ordered List"
           active={editor.isActive("orderedList")}
           onClick={() => editor.chain().focus().toggleOrderedList().run()}
+        />
+        <MenuButton
+          label="Code"
+          active={editor.isActive("code")}
+          onClick={() => editor.chain().focus().toggleCode().run()}
         />
         <MenuButton
           label="Code Block"
