@@ -23,6 +23,8 @@ networks:
 
 mounts: []
 
+portForwards: []
+
 ssh:
   forwardAgent: true
 
