@@ -23,34 +23,14 @@ import {
 } from "@probo/ui";
 import { Suspense } from "react";
 import { type Control, Controller } from "react-hook-form";
-import { useLazyLoadQuery, useMutation } from "react-relay";
+import { useLazyLoadQuery } from "react-relay";
 import { graphql } from "relay-runtime";
 import { z } from "zod";
 
 import type { CreateAuditDialogFrameworksQuery } from "#/__generated__/core/CreateAuditDialogFrameworksQuery.graphql";
-import type { CreateAuditDialogUploadReportMutation } from "#/__generated__/core/CreateAuditDialogUploadReportMutation.graphql";
 import { ControlledField } from "#/components/form/ControlledField";
 import { useCreateAudit } from "#/hooks/graph/AuditGraph";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
-
-const uploadAuditReportMutation = graphql`
-  mutation CreateAuditDialogUploadReportMutation(
-    $input: UploadAuditReportInput!
-  ) {
-    uploadAuditReport(input: $input) {
-      audit {
-        id
-        report {
-          id
-          filename
-          downloadUrl
-          createdAt
-        }
-        updatedAt
-      }
-    }
-  }
-`;
 
 const frameworksQuery = graphql`
   query CreateAuditDialogFrameworksQuery($organizationId: ID!) {
@@ -115,68 +95,29 @@ export function CreateAuditDialog({
   const internalRef = useDialogRef();
   const ref = externalRef ?? internalRef;
   const createAudit = useCreateAudit(connection);
-  const [uploadMutate] = useMutation<CreateAuditDialogUploadReportMutation>(uploadAuditReportMutation);
 
   const onSubmit = async (data: z.infer<typeof schema>) => {
     try {
-      const response = await createAudit({
+      await createAudit({
         organizationId,
         frameworkId: data.frameworkId,
         name: data.name || null,
         validFrom: formatDatetime(data.validFrom),
         validUntil: formatDatetime(data.validUntil),
         state: data.state,
+        file: file ?? null,
       });
-
-      const auditId = (response as { createAudit: { auditEdge: { node: { id: string } } } })
-        .createAudit.auditEdge.node.id;
-
-      if (file && auditId) {
-        try {
-          await new Promise<void>((resolve, reject) => {
-            uploadMutate({
-              variables: {
-                input: {
-                  auditId,
-                  file: null,
-                },
-              },
-              uploadables: {
-                "input.file": file,
-              },
-              onCompleted: (_response, errors) => {
-                if (errors) {
-                  reject(errors);
-                } else {
-                  resolve();
-                }
-              },
-              onError: error => reject(error),
-            });
-          });
-          toast({
-            title: __("Success"),
-            description: __("Audit created and report uploaded successfully"),
-            variant: "success",
-          });
-        } catch {
-          toast({
-            title: __("Warning"),
-            description: __("Audit created but report upload failed. You can upload the report from the audit detail page."),
-            variant: "warning",
-          });
-        }
-      } else {
-        toast({
-          title: __("Success"),
-          description: __("Audit created successfully"),
-          variant: "success",
-        });
-      }
 
       ref.current?.close();
       reset();
       onClose?.();
+      toast({
+        title: __("Success"),
+        description: file
+          ? __("Audit created and report uploaded successfully")
+          : __("Audit created successfully"),
+        variant: "success",
+      });
     } catch (error) {
       toast({
         title: __("Error"),

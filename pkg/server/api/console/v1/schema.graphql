@@ -4459,6 +4459,7 @@ input CreateAuditInput {
     validUntil: Datetime
     state: AuditState
     trustCenterVisibility: TrustCenterVisibility
+    file: Upload
 }
 
 input UpdateAuditInput {

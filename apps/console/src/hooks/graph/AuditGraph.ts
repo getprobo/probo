@@ -170,6 +170,7 @@ export const useCreateAudit = (connectionId: string) => {
     validUntil?: string;
     reportKey?: string;
     state?: string;
+    file?: File | null;
   }) => {
     if (!input.organizationId) {
       return alert(__("Failed to create audit: organization is required"));
@@ -188,9 +189,11 @@ export const useCreateAudit = (connectionId: string) => {
           validUntil: input.validUntil,
           reportKey: input.reportKey,
           state: input.state || "NOT_STARTED",
+          file: input.file ? null : undefined,
         },
         connections: [connectionId],
       },
+      ...(input.file ? { uploadables: { "input.file": input.file } } : {}),
     });
   };
 };

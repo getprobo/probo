@@ -5338,6 +5338,27 @@ func (r *mutationResolver) CreateAudit(ctx context.Context, input types.CreateAu
 		return nil, gqlutils.Internal(ctx)
 	}
 
+	if input.File != nil {
+		uploadReq := probo.UploadAuditReportRequest{
+			AuditID: audit.ID,
+			File: probo.File{
+				Content:     input.File.File,
+				Filename:    input.File.Filename,
+				Size:        input.File.Size,
+				ContentType: input.File.ContentType,
+			},
+		}
+
+		audit, err = prb.Audits.UploadReport(ctx, uploadReq)
+		if err != nil {
+			if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+				return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			}
+			r.logger.ErrorCtx(ctx, "cannot upload audit report", log.Error(err))
+			return nil, gqlutils.Internal(ctx)
+		}
+	}
+
 	return &types.CreateAuditPayload{
 		AuditEdge: types.NewAuditEdge(audit, coredata.AuditOrderFieldCreatedAt),
 	}, nil
