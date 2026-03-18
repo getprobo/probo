@@ -1434,6 +1434,9 @@ components:
             state:
               $ref: "#/components/schemas/MeasureState"
               description: Measure state filter
+            category:
+              type: string
+              description: Filter by measure category
 
     ListMeasuresOutput:
       type: object

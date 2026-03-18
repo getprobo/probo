@@ -380,9 +380,9 @@ func (r *Resolver) ListMeasuresTool(ctx context.Context, req *mcp.CallToolReques
 
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
-	var measureFilter = coredata.NewMeasureFilter(nil, nil)
+	var measureFilter = coredata.NewMeasureFilter(nil, nil, nil)
 	if input.Filter != nil {
-		measureFilter = coredata.NewMeasureFilter(input.Filter.Query, input.Filter.State)
+		measureFilter = coredata.NewMeasureFilter(input.Filter.Query, input.Filter.State, input.Filter.Category)
 	}
 
 	page, err := prb.Measures.ListForOrganizationID(ctx, input.OrganizationID, cursor, measureFilter)
@@ -1624,7 +1624,7 @@ func (r *Resolver) ListControlMeasuresTool(ctx context.Context, req *mcp.CallToo
 
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
-	measurePage, err := prb.Measures.ListForControlID(ctx, input.ControlID, cursor, coredata.NewMeasureFilter(nil, nil))
+	measurePage, err := prb.Measures.ListForControlID(ctx, input.ControlID, cursor, coredata.NewMeasureFilter(nil, nil, nil))
 	if err != nil {
 		return nil, types.ListControlMeasuresOutput{}, fmt.Errorf("failed to list control measures: %w", err)
 	}

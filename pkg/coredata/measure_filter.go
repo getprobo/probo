@@ -20,22 +20,25 @@ import (
 
 type (
 	MeasureFilter struct {
-		query *string
-		state *MeasureState
+		query    *string
+		state    *MeasureState
+		category *string
 	}
 )
 
-func NewMeasureFilter(query *string, state *MeasureState) *MeasureFilter {
+func NewMeasureFilter(query *string, state *MeasureState, category *string) *MeasureFilter {
 	return &MeasureFilter{
-		query: query,
-		state: state,
+		query:    query,
+		state:    state,
+		category: category,
 	}
 }
 
 func (f *MeasureFilter) SQLArguments() pgx.NamedArgs {
 	return pgx.NamedArgs{
-		"query": f.query,
-		"state": f.state,
+		"query":    f.query,
+		"state":    f.state,
+		"category": f.category,
 	}
 }
 
@@ -60,6 +63,15 @@ AND
 		ELSE
 			state = @state::mitigation_state
 	END
-		)
+)
+AND
+(
+	CASE
+		WHEN @category::text IS NULL OR @category::text = '' THEN
+			TRUE
+		ELSE
+			category = @category::text
+	END
+)
 	`
 }

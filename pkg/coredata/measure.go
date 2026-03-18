@@ -326,6 +326,41 @@ WHERE
 	return count, nil
 }
 
+func (m *Measures) LoadDistinctCategoriesByOrganizationID(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	organizationID gid.GID,
+) ([]string, error) {
+	q := `
+SELECT DISTINCT
+    category
+FROM
+    measures
+WHERE
+    %s
+    AND organization_id = @organization_id
+ORDER BY
+    category ASC
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.NamedArgs{"organization_id": organizationID}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query measure categories: %w", err)
+	}
+
+	categories, err := pgx.CollectRows(rows, pgx.RowTo[string])
+	if err != nil {
+		return nil, fmt.Errorf("cannot collect measure categories: %w", err)
+	}
+
+	return categories, nil
+}
+
 func (m *Measures) LoadByOrganizationID(
 	ctx context.Context,
 	conn pg.Conn,

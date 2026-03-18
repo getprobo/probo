@@ -7,18 +7,7 @@ import { useMutationWithToasts } from "../useMutationWithToasts";
 
 /* eslint-disable relay/unused-fields, relay/must-colocate-fragment-spreads */
 
-export const measuresQuery = graphql`
-  query MeasureGraphListQuery($organizationId: ID!) {
-    organization: node(id: $organizationId) @required(action: THROW) {
-      __typename
-      ... on Organization {
-        id
-        canCreateMeasure: permission(action: "core:measure:create")
-        ...MeasuresPageFragment
-      }
-    }
-  }
-`;
+export const MeasureConnectionKey = "MeasuresPage_measures";
 
 const deleteMeasureMutation = graphql`
   mutation MeasureGraphDeleteMutation(
@@ -30,8 +19,6 @@ const deleteMeasureMutation = graphql`
     }
   }
 `;
-
-export const MeasureConnectionKey = "MeasuresGraphListQuery__measures";
 
 export function useDeleteMeasureMutation() {
   const { __ } = useTranslate();
