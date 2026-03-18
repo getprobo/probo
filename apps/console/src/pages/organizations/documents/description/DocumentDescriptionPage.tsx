@@ -103,13 +103,11 @@ export function DocumentDescriptionPage(props: { queryRef: PreloadedQuery<Docume
   );
 
   return (
-    <div>
-      <RichEditor
-        content={currentVersion.content}
-        disabled={currentVersion.status !== "DRAFT"}
-        onChange={handleUpdate}
-      />
-      {/* <Markdown content={currentVersion.content} /> */}
-    </div>
+    <RichEditor
+      className="flex-1"
+      content={currentVersion.content}
+      disabled={currentVersion.status !== "DRAFT"}
+      onChangeContent={handleUpdate}
+    />
   );
 }
