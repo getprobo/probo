@@ -534,6 +534,7 @@ func (s FrameworkService) Import(
 					MimeType:   contentType,
 					FileName:   filename,
 					FileKey:    objectKey.String(),
+					Visibility: coredata.FileVisibilityPublic,
 					CreatedAt:  now,
 					UpdatedAt:  now,
 				}
@@ -761,6 +762,7 @@ func (s *FrameworkService) BuildAndUploadExport(ctx context.Context, exportJobID
 				FileName:   fmt.Sprintf("Framework Export %s.zip", now.Format("2006-01-02")),
 				FileKey:    uuid.String(),
 				FileSize:   fileInfo.Size(),
+				Visibility: coredata.FileVisibilityPrivate,
 				CreatedAt:  now,
 				UpdatedAt:  now,
 			}

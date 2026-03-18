@@ -142,6 +142,7 @@ func (s FileService) UploadAndSaveFile(
 				FileName:       req.Filename,
 				FileKey:        objectKey.String(),
 				FileSize:       *headOutput.ContentLength,
+				Visibility:     coredata.FileVisibilityPrivate,
 				CreatedAt:      now,
 				UpdatedAt:      now,
 			}

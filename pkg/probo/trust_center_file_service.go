@@ -396,6 +396,7 @@ func (s TrustCenterFileService) uploadFile(
 		FileName:   filename,
 		FileKey:    objectKey.String(),
 		FileSize:   fileSize,
+		Visibility: coredata.FileVisibilityPrivate,
 		CreatedAt:  now,
 		UpdatedAt:  now,
 	}

@@ -262,6 +262,7 @@ func (s TrustCenterService) UploadNDA(
 				FileName:   req.FileName,
 				FileKey:    objectKey.String(),
 				FileSize:   *headOutput.ContentLength,
+				Visibility: coredata.FileVisibilityPrivate,
 				CreatedAt:  now,
 				UpdatedAt:  now,
 			}
@@ -441,6 +442,7 @@ func (s TrustCenterService) uploadFile(
 		FileName:       fileUpload.Filename,
 		FileKey:        objectKey.String(),
 		FileSize:       *headOutput.ContentLength,
+		Visibility:     coredata.FileVisibilityPublic,
 		CreatedAt:      now,
 		UpdatedAt:      now,
 	}

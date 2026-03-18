@@ -521,6 +521,7 @@ func (s *OrganizationService) CreateOrganization(
 			FileName:   filename,
 			FileKey:    objectKey.String(),
 			FileSize:   req.LogoFile.Size,
+			Visibility: coredata.FileVisibilityPublic,
 			CreatedAt:  now,
 			UpdatedAt:  now,
 		}
@@ -558,6 +559,7 @@ func (s *OrganizationService) CreateOrganization(
 			FileName:   filename,
 			FileKey:    objectKey.String(),
 			FileSize:   req.HorizontalLogoFile.Size,
+			Visibility: coredata.FileVisibilityPublic,
 			CreatedAt:  now,
 			UpdatedAt:  now,
 		}
@@ -698,6 +700,7 @@ func (s *OrganizationService) UpdateOrganization(ctx context.Context, organizati
 			FileName:   filename,
 			FileKey:    objectKey.String(),
 			FileSize:   (*req.LogoFile).Size,
+			Visibility: coredata.FileVisibilityPublic,
 			CreatedAt:  now,
 			UpdatedAt:  now,
 		}
@@ -735,6 +738,7 @@ func (s *OrganizationService) UpdateOrganization(ctx context.Context, organizati
 			FileName:   filename,
 			FileKey:    objectKey.String(),
 			FileSize:   (*req.HorizontalLogoFile).Size,
+			Visibility: coredata.FileVisibilityPublic,
 			CreatedAt:  now,
 			UpdatedAt:  now,
 		}

@@ -29,9 +29,11 @@ import (
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/probo"
+	"go.probo.inc/probo/pkg/file"
 	"go.probo.inc/probo/pkg/securecookie"
 	connect_v1 "go.probo.inc/probo/pkg/server/api/connect/v1"
 	console_v1 "go.probo.inc/probo/pkg/server/api/console/v1"
+	files_v1 "go.probo.inc/probo/pkg/server/api/files/v1"
 	mcp_v1 "go.probo.inc/probo/pkg/server/api/mcp/v1"
 	slack_v1 "go.probo.inc/probo/pkg/server/api/slack/v1"
 	trust_v1 "go.probo.inc/probo/pkg/server/api/trust/v1"
@@ -44,6 +46,7 @@ type (
 		BaseURL           *baseurl.BaseURL
 		AllowedOrigins    []string
 		Probo             *probo.Service
+		File              *file.Service
 		IAM               *iam.Service
 		Trust             *trust.Service
 		ESign             *esign.Service
@@ -66,6 +69,7 @@ type (
 		cfg                   Config
 		compliancePageHandler http.Handler
 		consoleHandler        http.Handler
+		filesHandler          http.Handler
 		mcpHandler            http.Handler
 		slackHandler          http.Handler
 		connectHandler        http.Handler
@@ -139,6 +143,10 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.BaseURL,
 			cfg.CustomDomainCname,
 		),
+		filesHandler: files_v1.NewMux(
+			cfg.Logger.Named("files.v1"),
+			cfg.File,
+		),
 		mcpHandler: mcp_v1.NewMux(
 			cfg.Logger.Named("mcp.v1"),
 			cfg.Probo,
@@ -191,6 +199,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	router.Mount("/console/v1", http.StripPrefix("/console/v1", s.consoleHandler))
 	router.Mount("/connect/v1", http.StripPrefix("/connect/v1", s.connectHandler))
+	router.Mount("/files/v1", http.StripPrefix("/files/v1", s.filesHandler))
 	router.Mount("/trust/v1", http.StripPrefix("/trust/v1", s.compliancePageHandler))
 	router.Mount("/mcp/v1", http.StripPrefix("/mcp/v1", s.mcpHandler))
 	router.Mount("/slack/v1", http.StripPrefix("/slack/v1", s.slackHandler))

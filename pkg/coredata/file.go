@@ -30,16 +30,17 @@ import (
 
 type (
 	File struct {
-		ID             gid.GID    `db:"id"`
-		OrganizationID gid.GID    `db:"organization_id"`
-		BucketName     string     `db:"bucket_name"`
-		MimeType       string     `db:"mime_type"`
-		FileName       string     `db:"file_name"`
-		FileKey        string     `db:"file_key"`
-		FileSize       int64      `db:"file_size"`
-		CreatedAt      time.Time  `db:"created_at"`
-		UpdatedAt      time.Time  `db:"updated_at"`
-		DeletedAt      *time.Time `db:"deleted_at"`
+		ID             gid.GID        `db:"id"`
+		OrganizationID gid.GID        `db:"organization_id"`
+		BucketName     string         `db:"bucket_name"`
+		MimeType       string         `db:"mime_type"`
+		FileName       string         `db:"file_name"`
+		FileKey        string         `db:"file_key"`
+		FileSize       int64          `db:"file_size"`
+		Visibility     FileVisibility `db:"visibility"`
+		CreatedAt      time.Time      `db:"created_at"`
+		UpdatedAt      time.Time      `db:"updated_at"`
+		DeletedAt      *time.Time     `db:"deleted_at"`
 	}
 
 	Files []*File
@@ -93,6 +94,7 @@ SELECT
     file_name,
     file_key,
     file_size,
+    visibility,
     created_at,
     updated_at,
     deleted_at
@@ -145,6 +147,7 @@ INSERT INTO
         file_name,
         file_key,
         file_size,
+        visibility,
         created_at,
         updated_at,
         deleted_at
@@ -158,6 +161,7 @@ VALUES (
     @file_name,
     @file_key,
     @file_size,
+    @visibility,
     @created_at,
     @updated_at,
     @deleted_at
@@ -173,6 +177,7 @@ VALUES (
 		"file_name":       f.FileName,
 		"file_key":        f.FileKey,
 		"file_size":       f.FileSize,
+		"visibility":      f.Visibility,
 		"created_at":      f.CreatedAt,
 		"updated_at":      f.UpdatedAt,
 		"deleted_at":      f.DeletedAt,
@@ -188,6 +193,55 @@ VALUES (
 		}
 		return fmt.Errorf("cannot insert file: %w", err)
 	}
+
+	return nil
+}
+
+func (f *File) LoadPublicByID(
+	ctx context.Context,
+	conn pg.Conn,
+	fileID gid.GID,
+) error {
+	q := `
+SELECT
+    id,
+    organization_id,
+    bucket_name,
+    mime_type,
+    file_name,
+    file_key,
+    file_size,
+    visibility,
+    created_at,
+    updated_at,
+    deleted_at
+FROM
+    files
+WHERE
+    id = @file_id
+    AND visibility = 'PUBLIC'
+    AND deleted_at IS NULL
+LIMIT 1;
+`
+
+	args := pgx.StrictNamedArgs{"file_id": fileID}
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query file: %w", err)
+	}
+	defer rows.Close()
+
+	file, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[File])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect file: %w", err)
+	}
+
+	*f = file
 
 	return nil
 }
