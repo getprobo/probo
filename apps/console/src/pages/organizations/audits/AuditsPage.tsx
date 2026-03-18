@@ -184,7 +184,7 @@ export default function AuditsPage(props: Props) {
       {isDragging && canCreateAudit && (
         <div
           {...getRootProps()}
-          className="border-primary bg-primary/5 pointer-events-auto fixed inset-0 z-40 flex flex-col items-center justify-center border-2 border-dashed"
+          className="border-primary bg-primary/5 pointer-events-auto fixed inset-0 top-12 z-40 flex flex-col items-center justify-center border-2 border-dashed"
         >
           <input {...getInputProps()} />
           <IconUpload className="text-primary mb-2 size-8" />
