@@ -1572,6 +1572,7 @@ input DocumentFilter {
 input MeasureFilter {
     query: String
     state: MeasureState
+    category: String
 }
 
 input RiskFilter {
@@ -1856,6 +1857,8 @@ type Organization implements Node {
         orderBy: StateOfApplicabilityOrder
         filter: StateOfApplicabilityFilter = { snapshotId: null }
     ): StateOfApplicabilityConnection! @goField(forceResolver: true)
+
+    measureCategories: [String!]! @goField(forceResolver: true)
 
     measures(
         first: Int

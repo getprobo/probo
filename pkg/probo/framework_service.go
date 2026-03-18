@@ -208,7 +208,7 @@ func (s FrameworkService) Export(
 							Direction: page.OrderDirectionAsc,
 						},
 					),
-					coredata.NewMeasureFilter(nil, nil),
+					coredata.NewMeasureFilter(nil, nil, nil),
 				)
 				if err != nil {
 					return fmt.Errorf("cannot load measures: %w", err)

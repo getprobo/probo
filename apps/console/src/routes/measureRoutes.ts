@@ -8,24 +8,19 @@ import { Fragment } from "react";
 import { loadQuery } from "react-relay";
 import { redirect } from "react-router";
 
-import type { MeasureGraphListQuery } from "#/__generated__/core/MeasureGraphListQuery.graphql";
 import type { MeasureGraphNodeQuery } from "#/__generated__/core/MeasureGraphNodeQuery.graphql";
 import { LinkCardSkeleton } from "#/components/skeletons/LinkCardSkeleton";
 import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
 import { coreEnvironment } from "#/environments";
-import { measureNodeQuery, measuresQuery } from "#/hooks/graph/MeasureGraph";
+import { measureNodeQuery } from "#/hooks/graph/MeasureGraph";
 
 export const measureRoutes = [
   {
     path: "measures",
     Fallback: PageSkeleton,
-    loader: loaderFromQueryLoader(({ organizationId }) =>
-      loadQuery<MeasureGraphListQuery>(coreEnvironment, measuresQuery, {
-        organizationId: organizationId,
-      }),
-    ),
-    Component: withQueryRef(
-      lazy(() => import("#/pages/organizations/measures/MeasuresPage")),
+    Component: lazy(
+      () =>
+        import("#/pages/organizations/measures/MeasuresPageLoader"),
     ),
     children: [
       {

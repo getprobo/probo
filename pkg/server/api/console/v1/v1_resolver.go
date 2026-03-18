@@ -530,9 +530,9 @@ func (r *controlResolver) Measures(ctx context.Context, obj *types.Control, firs
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	var measureFilter = coredata.NewMeasureFilter(nil, nil)
+	var measureFilter = coredata.NewMeasureFilter(nil, nil, nil)
 	if filter != nil {
-		measureFilter = coredata.NewMeasureFilter(filter.Query, filter.State)
+		measureFilter = coredata.NewMeasureFilter(filter.Query, filter.State, filter.Category)
 	}
 
 	page, err := prb.Measures.ListForControlID(ctx, obj.ID, cursor, measureFilter)
@@ -6554,6 +6554,23 @@ func (r *organizationResolver) StatesOfApplicability(ctx context.Context, obj *t
 	return types.NewStateOfApplicabilityConnection(page, r, obj.ID, stateOfApplicabilityFilter), nil
 }
 
+// MeasureCategories is the resolver for the measureCategories field.
+func (r *organizationResolver) MeasureCategories(ctx context.Context, obj *types.Organization) ([]string, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionMeasureList); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	categories, err := prb.Measures.ListDistinctCategoriesForOrganizationID(ctx, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list measure categories", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return categories, nil
+}
+
 // Measures is the resolver for the measures field.
 func (r *organizationResolver) Measures(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MeasureOrderBy, filter *types.MeasureFilter) (*types.MeasureConnection, error) {
 	if err := r.authorize(ctx, obj.ID, probo.ActionMeasureList); err != nil {
@@ -6575,9 +6592,9 @@ func (r *organizationResolver) Measures(ctx context.Context, obj *types.Organiza
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	var measureFilter = coredata.NewMeasureFilter(nil, nil)
+	var measureFilter = coredata.NewMeasureFilter(nil, nil, nil)
 	if filter != nil {
-		measureFilter = coredata.NewMeasureFilter(filter.Query, filter.State)
+		measureFilter = coredata.NewMeasureFilter(filter.Query, filter.State, filter.Category)
 	}
 
 	page, err := prb.Measures.ListForOrganizationID(ctx, obj.ID, cursor, measureFilter)
@@ -7790,9 +7807,9 @@ func (r *riskResolver) Measures(ctx context.Context, obj *types.Risk, first *int
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	var measureFilter = coredata.NewMeasureFilter(nil, nil)
+	var measureFilter = coredata.NewMeasureFilter(nil, nil, nil)
 	if filter != nil {
-		measureFilter = coredata.NewMeasureFilter(filter.Query, filter.State)
+		measureFilter = coredata.NewMeasureFilter(filter.Query, filter.State, filter.Category)
 	}
 
 	page, err := prb.Measures.ListForRiskID(ctx, obj.ID, cursor, measureFilter)

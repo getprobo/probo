@@ -237,6 +237,43 @@ func (s MeasureService) CountForOrganizationID(
 	return count, nil
 }
 
+func (s MeasureService) ListDistinctCategoriesForOrganizationID(
+	ctx context.Context,
+	organizationID gid.GID,
+) ([]string, error) {
+	var categories []string
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			organization := &coredata.Organization{}
+			if err := organization.LoadByID(ctx, conn, s.svc.scope, organizationID); err != nil {
+				return fmt.Errorf("cannot load organization: %w", err)
+			}
+
+			var measures coredata.Measures
+			var err error
+			categories, err = measures.LoadDistinctCategoriesByOrganizationID(
+				ctx,
+				conn,
+				s.svc.scope,
+				organization.ID,
+			)
+			if err != nil {
+				return fmt.Errorf("cannot load measure categories: %w", err)
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return categories, nil
+}
+
 func (s MeasureService) ListForOrganizationID(
 	ctx context.Context,
 	organizationID gid.GID,
