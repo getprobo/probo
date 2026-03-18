@@ -67,11 +67,11 @@ export function Layout({
           {sidebar && <Sidebar>{sidebar}</Sidebar>}
           <main
             className={clsx(
-              "overflow-y-auto w-full mt-12 transition-all duration-300",
+              "overflow-y-auto w-full mt-12 transition-all duration-300 h-[calc(100vh-48px)]",
               hasDrawer && "pr-105",
             )}
           >
-            <div className="py-12 px-8 max-w-[1200px] w-full mx-auto">
+            <div className="py-12 px-8 max-w-[1200px] w-full mx-auto h-full">
               {children}
             </div>
           </main>
