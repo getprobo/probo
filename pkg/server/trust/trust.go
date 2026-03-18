@@ -31,6 +31,7 @@ type (
 		Title       string
 		Description string
 		OGURL       string
+		FaviconURL  string
 	}
 
 	HeadDataFunc func(r *http.Request) HeadData

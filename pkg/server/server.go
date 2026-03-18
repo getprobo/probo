@@ -98,7 +98,7 @@ func NewServer(cfg Config) (*Server, error) {
 		return nil, err
 	}
 
-	trustWebServer, err := trust_web.NewServer(compliancePageHeadData(cfg.Trust))
+	trustWebServer, err := trust_web.NewServer(compliancePageHeadData(cfg.BaseURL, cfg.Trust))
 	if err != nil {
 		return nil, err
 	}
@@ -197,7 +197,7 @@ func (s *Server) TrustCenterHandler() http.Handler {
 	return r
 }
 
-func compliancePageHeadData(trustService *trust.Service) trust_web.HeadDataFunc {
+func compliancePageHeadData(baseURL *baseurl.BaseURL, trustService *trust.Service) trust_web.HeadDataFunc {
 	return func(r *http.Request) trust_web.HeadData {
 		tc := compliancepage.CompliancePageFromContext(r.Context())
 		if tc == nil {
@@ -209,12 +209,21 @@ func compliancePageHeadData(trustService *trust.Service) trust_web.HeadDataFunc 
 			return trust_web.HeadData{Title: "Compliance Page"}
 		}
 
-		baseURL := compliancepage.CompliancePageBaseURLFromContext(r.Context())
+		compliancePageBaseURL := compliancepage.CompliancePageBaseURLFromContext(r.Context())
 
-		return trust_web.HeadData{
+		headData := trust_web.HeadData{
 			Title:       org.Name + " — Compliance",
 			Description: org.Name + " Compliance Page",
-			OGURL:       ref.UnrefOrZero(baseURL),
+			OGURL:       ref.UnrefOrZero(compliancePageBaseURL),
 		}
+
+		if tc.LogoFileID != nil {
+			faviconURL, err := baseURL.WithPath("/api/files/v1/" + tc.LogoFileID.String()).String()
+			if err == nil {
+				headData.FaviconURL = faviconURL
+			}
+		}
+
+		return headData
 	}
 }
