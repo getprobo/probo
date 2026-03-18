@@ -16,7 +16,7 @@ import { Underline } from "@tiptap/extension-underline";
 import { Dropcursor, Gapcursor, UndoRedo } from "@tiptap/extensions";
 import { type Content, EditorContent, useEditor, useEditorState } from "@tiptap/react";
 import { BubbleMenu, FloatingMenu } from "@tiptap/react/menus";
-import { useEffect } from "react";
+import { type ComponentProps, useEffect } from "react";
 import { tv } from "tailwind-variants";
 
 const extensions = [
@@ -47,6 +47,7 @@ const richEditorVariants = tv({
     bubbleMenu: ["flex items-center gap-1 rounded-lg border border-border-mid bg-level-0 p-1 shadow-md"],
     floatingMenu: ["flex items-center gap-1 rounded-lg border border-border-mid bg-level-0 p-1 shadow-md"],
     menuButton: ["px-2 py-1 text-sm rounded-sm font-semibold bg-level-0 hover:bg-subtle"],
+    editor: ["h-full"],
   },
   variants: {
     active: {
@@ -57,7 +58,7 @@ const richEditorVariants = tv({
   },
 });
 
-const { bubbleMenu, floatingMenu, menuButton } = richEditorVariants();
+const { bubbleMenu, floatingMenu, editor: editorVariants, menuButton } = richEditorVariants();
 
 type MenuButtonProps = {
   label: string;
@@ -77,16 +78,21 @@ function MenuButton({ label, active, onClick }: MenuButtonProps) {
   );
 }
 
-interface RichEditorProps {
+type RichEditorProps = ComponentProps<"div"> & {
   content: string;
   disabled?: boolean;
-  onChange: (content: string) => void;
-}
+  onChangeContent: (content: string) => void;
+};
 
 export function RichEditor(props: RichEditorProps) {
-  const { content, disabled = false, onChange } = props;
+  const { className, content, disabled = false, onChangeContent } = props;
 
   const editor = useEditor({
+    editorProps: {
+      attributes: {
+        class: "h-full",
+      },
+    },
     editable: !disabled,
     extensions,
     content: (content ? JSON.parse(content) : "") as Content,
@@ -101,12 +107,12 @@ export function RichEditor(props: RichEditorProps) {
 
   useEffect(() => {
     if (watchedContent !== content) {
-      onChange(watchedContent);
+      onChangeContent(watchedContent);
     }
-  }, [content, watchedContent, onChange]);
+  }, [content, watchedContent, onChangeContent]);
 
   return (
-    <div>
+    <div className={editorVariants({ className })}>
       <BubbleMenu
         editor={editor}
         className={bubbleMenu()}
@@ -200,7 +206,7 @@ export function RichEditor(props: RichEditorProps) {
         />
       </FloatingMenu>
 
-      <EditorContent editor={editor} />
+      <EditorContent className={editorVariants()} editor={editor} />
     </div>
   );
 }
