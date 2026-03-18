@@ -19,15 +19,15 @@ brew install lima jq
 # Check status and get the VM IP
 ./contrib/lima/sandbox.sh status
 
-# Start the Docker stack inside the VM
-./contrib/lima/sandbox.sh exec -- make stack-up
-
-# Build and run the dev server
+# Build the backend binary (probo-stack starts automatically on boot)
 ./contrib/lima/sandbox.sh exec -- make build
-./contrib/lima/sandbox.sh exec -- make dev
+
+# Start probod and the console dev server
+./contrib/lima/sandbox.sh exec -- sudo systemctl start probod probo-console
 
 # Access services from your host browser using the VM IP
-# e.g. http://192.168.105.2:5173
+# e.g. http://192.168.105.2:5173 (console)
+# e.g. http://192.168.105.2:8080 (API)
 ```
 
 ## Commands

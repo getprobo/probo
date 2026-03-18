@@ -45,6 +45,8 @@ if ! command -v docker &>/dev/null; then
         containerd.io \
         docker-buildx-plugin \
         docker-compose-plugin
+
+    systemctl enable --now docker
 fi
 
 usermod -aG docker "${LIMA_CIDATA_USER:-lima}" 2>/dev/null || true
@@ -107,3 +109,63 @@ AWS_USE_PATH_STYLE=true \
 
 echo "VITE_API_URL=http://${VM_IP}:8080" > /workspace/apps/console/.env
 echo "VITE_API_URL=http://${VM_IP}:8080" > /workspace/apps/trust/.env
+
+# Install systemd services for the sandbox
+cat > /etc/systemd/system/probo-stack.service << 'EOF'
+[Unit]
+Description=Probo Docker Compose Stack
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/workspace
+ExecStart=/usr/bin/docker compose -f compose.yaml up
+ExecStop=/usr/bin/docker compose -f compose.yaml down
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+cat > /etc/systemd/system/probod.service << EOF
+[Unit]
+Description=Probo API Server
+Requires=probo-stack.service
+After=probo-stack.service
+
+[Service]
+Type=simple
+User=${LIMA_USER}
+WorkingDirectory=/workspace
+ExecStart=/usr/local/bin/gow -r=false run ./cmd/probod -cfg-file /etc/probod/config.yml
+Restart=on-failure
+RestartSec=3s
+Environment=PATH=/usr/local/go/bin:/usr/local/bin:/usr/bin:/bin
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+cat > /etc/systemd/system/probo-console.service << EOF
+[Unit]
+Description=Probo Console Dev Server
+After=probod.service
+
+[Service]
+Type=simple
+User=${LIMA_USER}
+WorkingDirectory=/workspace
+ExecStart=/usr/bin/npm --workspace @probo/console run dev -- --host 0.0.0.0
+Restart=on-failure
+RestartSec=3s
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl daemon-reload
+systemctl enable --now probo-stack.service
+systemctl enable probod.service probo-console.service

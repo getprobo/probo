@@ -3,8 +3,8 @@
 ## When to use
 
 Use a sandbox when you need to:
-- Run `make stack-up` (Docker services: Postgres, SeaweedFS, etc.)
-- Test changes end-to-end with `make dev` or `make test-e2e`
+- Run the full service stack (Docker services, probod, console)
+- Test changes end-to-end with `make test-e2e`
 - Build the full binary with `make build`
 - Run any command that requires Docker or the full service stack
 
@@ -17,11 +17,9 @@ Use a sandbox when you need to:
 # Start an existing sandbox
 ./contrib/lima/sandbox.sh start
 
-# Run commands inside the sandbox
-./contrib/lima/sandbox.sh exec -- make stack-up
+# Build and start the app (probo-stack starts automatically on boot)
 ./contrib/lima/sandbox.sh exec -- make build
-./contrib/lima/sandbox.sh exec -- make dev
-./contrib/lima/sandbox.sh exec -- make test
+./contrib/lima/sandbox.sh exec -- sudo systemctl start probod probo-console
 
 # Get the VM IP and service URLs
 ./contrib/lima/sandbox.sh status
@@ -56,27 +54,53 @@ During provisioning, the sandbox automatically generates:
 - **`/etc/probod/config.yml`** — probod config with the VM IP as cookie domain, `secure: false`, and correct CORS origins
 - **`apps/console/.env`** and **`apps/trust/.env`** — `VITE_API_URL` pointing to the VM IP
 
-Use `-cfg-file /etc/probod/config.yml` when running probod in the sandbox.
+Probod config is at `/etc/probod/config.yml`.
+
+## Systemd services
+
+The sandbox provisions three systemd services:
+
+| Service | Description | Starts on boot |
+|---|---|---|
+| `probo-stack` | Docker Compose stack (Postgres, SeaweedFS, Keycloak, etc.) | Yes |
+| `probod` | Probo API server (depends on `probo-stack`) | No |
+| `probo-console` | Console frontend dev server | No |
+
+`probo-stack` starts automatically when the VM boots. `probod` and `probo-console` must be started manually after building.
+
+Manage them with `systemctl`:
+```bash
+./contrib/lima/sandbox.sh exec -- sudo systemctl start probod probo-console
+./contrib/lima/sandbox.sh exec -- sudo systemctl stop probod
+./contrib/lima/sandbox.sh exec -- sudo systemctl restart probod
+./contrib/lima/sandbox.sh exec -- sudo systemctl status probod
+./contrib/lima/sandbox.sh exec -- sudo journalctl -u probod -f
+```
 
 ## Common workflows
 
-**Build and test:**
+**Start the app:**
 ```bash
-./contrib/lima/sandbox.sh exec -- make stack-up
+./contrib/lima/sandbox.sh exec -- make build
+./contrib/lima/sandbox.sh exec -- sudo systemctl start probod probo-console
+```
+
+**Run tests:**
+```bash
 ./contrib/lima/sandbox.sh exec -- make build
 ./contrib/lima/sandbox.sh exec -- make test
 ```
 
 **Run e2e tests:**
 ```bash
-./contrib/lima/sandbox.sh exec -- make stack-up
 ./contrib/lima/sandbox.sh exec -- make test-e2e
 ```
 
 **Restart after code changes:**
-Code changes are reflected immediately (virtiofs mount). Just re-run the
-relevant make target — no need to restart the VM.
+Code changes are reflected immediately (virtiofs mount). Just rebuild and
+restart probod — no need to restart the VM.
 
 ```bash
-./contrib/lima/sandbox.sh exec -- make dev
+./contrib/lima/sandbox.sh exec -- make build
+./contrib/lima/sandbox.sh exec -- sudo systemctl restart probod
 ```

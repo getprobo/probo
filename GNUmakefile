@@ -244,10 +244,6 @@ pkg/server/api/mcp/v1/types/types.go: pkg/server/api/mcp/v1/specification.yaml p
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
-.PHONY:dev
-dev: ## Start the development server
-	parallel -j 2 --line-buffer ::: "gow -r=false run cmd/probod/main.go" "cd apps/console && npm run dev"
-
 .PHONY: fmt
 fmt: fmt-go ## Format Go code
 

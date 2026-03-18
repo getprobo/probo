@@ -11,7 +11,6 @@
 | `make test-verbose` | Tests with verbose output |
 | `make lint` | Vet + Go lint + npm lint |
 | `make fmt` | Format Go code |
-| `make dev` | Start dev server (Go + console hot-reload) |
 | `make test-e2e` | Run console end-to-end tests (requires `bin/probod`) |
 | `make deadcode` | Detect dead code — run after removing or renaming exported functions |
 | `make stack-up` / `make stack-down` | Start / stop Docker compose infra |
