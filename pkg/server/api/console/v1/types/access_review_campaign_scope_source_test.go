@@ -28,7 +28,7 @@ func TestNewAccessReviewCampaignScopeSource_DefaultFetchState(t *testing.T) {
 	tenantID := gid.NewTenantID()
 	source := &coredata.AccessSource{
 		ID:             gid.New(tenantID, coredata.AccessSourceEntityType),
-		AccessReviewID: gid.New(tenantID, coredata.AccessReviewEntityType),
+		OrganizationID: gid.New(tenantID, coredata.OrganizationEntityType),
 		Name:           "Google Workspace",
 	}
 
@@ -52,7 +52,7 @@ func TestNewAccessReviewCampaignScopeSource_UsesFetchState(t *testing.T) {
 	tenantID := gid.NewTenantID()
 	source := &coredata.AccessSource{
 		ID:             gid.New(tenantID, coredata.AccessSourceEntityType),
-		AccessReviewID: gid.New(tenantID, coredata.AccessReviewEntityType),
+		OrganizationID: gid.New(tenantID, coredata.OrganizationEntityType),
 		Name:           "Linear",
 	}
 	fetch := &coredata.AccessReviewCampaignSourceFetch{

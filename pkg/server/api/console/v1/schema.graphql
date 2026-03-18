@@ -2063,6 +2063,7 @@ type Organization implements Node {
     ): WebhookSubscriptionConnection! @goField(forceResolver: true)
 
     auditLogEntries(
+    accessSources(
         first: Int
         after: CursorKey
         last: Int
@@ -2072,6 +2073,16 @@ type Organization implements Node {
     ): AuditLogEntryConnection! @goField(forceResolver: true)
 
     accessReview: AccessReview @goField(forceResolver: true)
+        orderBy: AccessSourceOrder
+    ): AccessSourceConnection! @goField(forceResolver: true)
+
+    accessReviewCampaigns(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: AccessReviewCampaignOrder
+    ): AccessReviewCampaignConnection! @goField(forceResolver: true)
 
     createdAt: Datetime!
     updatedAt: Datetime!
@@ -3921,13 +3932,6 @@ type Mutation {
     deleteCustomDomain(
         input: DeleteCustomDomainInput!
     ): DeleteCustomDomainPayload!
-    # Access Review mutations
-    createAccessReview(
-        input: CreateAccessReviewInput!
-    ): CreateAccessReviewPayload!
-    updateAccessReview(
-        input: UpdateAccessReviewInput!
-    ): UpdateAccessReviewPayload!
     # Access Source mutations
     createAccessSource(
         input: CreateAccessSourceInput!
@@ -3957,6 +3961,12 @@ type Mutation {
     cancelAccessReviewCampaign(
         input: CancelAccessReviewCampaignInput!
     ): CancelAccessReviewCampaignPayload!
+    addAccessReviewCampaignScopeSource(
+        input: AddAccessReviewCampaignScopeSourceInput!
+    ): AddAccessReviewCampaignScopeSourcePayload!
+    removeAccessReviewCampaignScopeSource(
+        input: RemoveAccessReviewCampaignScopeSourceInput!
+    ): RemoveAccessReviewCampaignScopeSourcePayload!
     # Access Entry mutations
     recordAccessEntryDecision(
         input: RecordAccessEntryDecisionInput!
@@ -6341,7 +6351,7 @@ type AuditLogEntryEdge {
     node: AuditLogEntry!
 type AccessSource implements Node {
     id: ID!
-    accessReview: AccessReview! @goField(forceResolver: true)
+    organization: Organization! @goField(forceResolver: true)
     connectorId: ID
     connector: Connector @goField(forceResolver: true)
     name: String!
@@ -6395,7 +6405,7 @@ enum AccessSourceOrderField
 
 type AccessReviewCampaign implements Node {
     id: ID!
-    accessReview: AccessReview! @goField(forceResolver: true)
+    organization: Organization! @goField(forceResolver: true)
     name: String!
     status: AccessReviewCampaignStatus!
     startedAt: Datetime
@@ -6403,6 +6413,8 @@ type AccessReviewCampaign implements Node {
     frameworkControls: [String!]
     createdAt: Datetime!
     updatedAt: Datetime!
+
+    identitySource: AccessSource @goField(forceResolver: true)
 
     scopeSources: [AccessReviewCampaignScopeSource!]! @goField(forceResolver: true)
 
@@ -6535,25 +6547,8 @@ type AccessEntryIncrementalTagCount {
 
 # Access Review Inputs & Payloads
 
-input CreateAccessReviewInput {
-    organizationId: ID!
-}
-
-type CreateAccessReviewPayload {
-    accessReview: AccessReview!
-}
-
-input UpdateAccessReviewInput {
-    accessReviewId: ID!
-    identitySourceId: ID @goField(omittable: true)
-}
-
-type UpdateAccessReviewPayload {
-    accessReview: AccessReview!
-}
-
 input CreateAccessSourceInput {
-    accessReviewId: ID!
+    organizationId: ID!
     connectorId: ID
     name: String!
     csvData: String
@@ -6583,9 +6578,11 @@ type DeleteAccessSourcePayload {
 }
 
 input CreateAccessReviewCampaignInput {
-    accessReviewId: ID!
+    organizationId: ID!
     name: String!
     frameworkControls: [String!]
+    identitySourceId: ID
+    accessSourceIds: [ID!]
 }
 
 type CreateAccessReviewCampaignPayload {
@@ -6612,7 +6609,24 @@ type DeleteAccessReviewCampaignPayload {
 
 input StartAccessReviewCampaignInput {
     accessReviewCampaignId: ID!
-    accessSourceIds: [ID!]
+}
+
+input AddAccessReviewCampaignScopeSourceInput {
+    accessReviewCampaignId: ID!
+    accessSourceId: ID!
+}
+
+type AddAccessReviewCampaignScopeSourcePayload {
+    accessReviewCampaign: AccessReviewCampaign!
+}
+
+input RemoveAccessReviewCampaignScopeSourceInput {
+    accessReviewCampaignId: ID!
+    accessSourceId: ID!
+}
+
+type RemoveAccessReviewCampaignScopeSourcePayload {
+    accessReviewCampaign: AccessReviewCampaign!
 }
 
 type StartAccessReviewCampaignPayload {
@@ -6663,6 +6677,9 @@ input CreateAPIKeyConnectorInput {
     organizationId: ID!
     provider: ConnectorProvider!
     apiKey: String!
+    tallyOrganizationId: String
+    cloudflareAccountId: String
+    sentryOrganizationSlug: String
 }
 
 type CreateAPIKeyConnectorPayload {

@@ -30,19 +30,23 @@ type AccessReviewCampaignService interface {
 	Get(ctx context.Context, campaignID gid.GID) (*coredata.AccessReviewCampaign, error)
 	Update(ctx context.Context, req UpdateAccessReviewCampaignRequest) (*coredata.AccessReviewCampaign, error)
 	Delete(ctx context.Context, campaignID gid.GID) error
-	Start(ctx context.Context, req StartAccessReviewCampaignRequest) (*coredata.AccessReviewCampaign, error)
+	AddScopeSource(ctx context.Context, req AddCampaignScopeSourceRequest) (*coredata.AccessReviewCampaign, error)
+	RemoveScopeSource(ctx context.Context, req RemoveCampaignScopeSourceRequest) (*coredata.AccessReviewCampaign, error)
+	Start(ctx context.Context, campaignID gid.GID) (*coredata.AccessReviewCampaign, error)
 	Close(ctx context.Context, campaignID gid.GID) (*coredata.AccessReviewCampaign, error)
 	Cancel(ctx context.Context, campaignID gid.GID) (*coredata.AccessReviewCampaign, error)
-	ListForAccessReviewID(ctx context.Context, accessReviewID gid.GID, cursor *page.Cursor[coredata.AccessReviewCampaignOrderField]) (*page.Page[*coredata.AccessReviewCampaign, coredata.AccessReviewCampaignOrderField], error)
+	ListForOrganizationID(ctx context.Context, organizationID gid.GID, cursor *page.Cursor[coredata.AccessReviewCampaignOrderField]) (*page.Page[*coredata.AccessReviewCampaign, coredata.AccessReviewCampaignOrderField], error)
 	ListSourceFetches(ctx context.Context, campaignID gid.GID) (coredata.AccessReviewCampaignSourceFetches, error)
-	CountForAccessReviewID(ctx context.Context, accessReviewID gid.GID) (int, error)
+	CountForOrganizationID(ctx context.Context, organizationID gid.GID) (int, error)
 }
 
 type (
 	CreateAccessReviewCampaignRequest struct {
-		AccessReviewID    gid.GID
+		OrganizationID    gid.GID
 		Name              string
 		FrameworkControls []string
+		IdentitySourceID  *gid.GID
+		AccessSourceIDs   []gid.GID
 	}
 
 	UpdateAccessReviewCampaignRequest struct {
@@ -51,16 +55,21 @@ type (
 		FrameworkControls *[]string
 	}
 
-	StartAccessReviewCampaignRequest struct {
-		CampaignID      gid.GID
-		AccessSourceIDs []gid.GID
+	AddCampaignScopeSourceRequest struct {
+		CampaignID     gid.GID
+		AccessSourceID gid.GID
+	}
+
+	RemoveCampaignScopeSourceRequest struct {
+		CampaignID     gid.GID
+		AccessSourceID gid.GID
 	}
 )
 
 func (r *CreateAccessReviewCampaignRequest) Validate() error {
 	v := validator.New()
 
-	v.Check(r.AccessReviewID, "access_review_id", validator.Required(), validator.GID(coredata.AccessReviewEntityType))
+	v.Check(r.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
 	v.Check(r.Name, "name", validator.SafeTextNoNewLine(campaignNameMaxLength))
 
 	return v.Error()

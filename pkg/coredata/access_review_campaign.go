@@ -30,7 +30,8 @@ import (
 type (
 	AccessReviewCampaign struct {
 		ID                gid.GID                    `db:"id"`
-		AccessReviewID    gid.GID                    `db:"access_review_id"`
+		OrganizationID    gid.GID                    `db:"organization_id"`
+		IdentitySourceID  *gid.GID                   `db:"identity_source_id"`
 		Name              string                     `db:"name"`
 		Status            AccessReviewCampaignStatus `db:"status"`
 		StartedAt         *time.Time                 `db:"started_at"`
@@ -53,13 +54,7 @@ func (c AccessReviewCampaign) CursorKey(orderBy AccessReviewCampaignOrderField) 
 }
 
 func (c *AccessReviewCampaign) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
-	q := `
-SELECT ar.organization_id
-FROM access_review_campaigns arc
-JOIN access_reviews ar ON ar.id = arc.access_review_id
-WHERE arc.id = $1
-LIMIT 1;
-`
+	q := `SELECT organization_id FROM access_review_campaigns WHERE id = $1 LIMIT 1;`
 
 	var organizationID gid.GID
 	if err := conn.QueryRow(ctx, q, c.ID).Scan(&organizationID); err != nil {
@@ -81,7 +76,8 @@ func (c *AccessReviewCampaign) LoadByID(
 	q := `
 SELECT
     id,
-    access_review_id,
+    organization_id,
+    identity_source_id,
     name,
     status,
     started_at,
@@ -129,7 +125,8 @@ INSERT INTO
     access_review_campaigns (
         id,
         tenant_id,
-        access_review_id,
+        organization_id,
+        identity_source_id,
         name,
         status,
         started_at,
@@ -141,7 +138,8 @@ INSERT INTO
 VALUES (
     @id,
     @tenant_id,
-    @access_review_id,
+    @organization_id,
+    @identity_source_id,
     @name,
     @status,
     @started_at,
@@ -155,7 +153,8 @@ VALUES (
 	args := pgx.StrictNamedArgs{
 		"id":                 c.ID,
 		"tenant_id":          scope.GetTenantID(),
-		"access_review_id":   c.AccessReviewID,
+		"organization_id":    c.OrganizationID,
+		"identity_source_id": c.IdentitySourceID,
 		"name":               c.Name,
 		"status":             c.Status,
 		"started_at":         c.StartedAt,
@@ -241,17 +240,18 @@ WHERE %s AND id = @id
 	return nil
 }
 
-func (campaigns *AccessReviewCampaigns) LoadByAccessReviewID(
+func (campaigns *AccessReviewCampaigns) LoadByOrganizationID(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
-	accessReviewID gid.GID,
+	organizationID gid.GID,
 	cursor *page.Cursor[AccessReviewCampaignOrderField],
 ) error {
 	q := `
 SELECT
     id,
-    access_review_id,
+    organization_id,
+    identity_source_id,
     name,
     status,
     started_at,
@@ -263,12 +263,12 @@ FROM
     access_review_campaigns
 WHERE
     %s
-    AND access_review_id = @access_review_id
+    AND organization_id = @organization_id
     AND %s
 `
 	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
 
-	args := pgx.StrictNamedArgs{"access_review_id": accessReviewID}
+	args := pgx.StrictNamedArgs{"organization_id": organizationID}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
@@ -287,22 +287,22 @@ WHERE
 	return nil
 }
 
-func (campaigns *AccessReviewCampaigns) CountByAccessReviewID(
+func (campaigns *AccessReviewCampaigns) CountByOrganizationID(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
-	accessReviewID gid.GID,
+	organizationID gid.GID,
 ) (int, error) {
 	q := `
 SELECT COUNT(id)
 FROM access_review_campaigns
 WHERE
     %s
-    AND access_review_id = @access_review_id;
+    AND organization_id = @organization_id;
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
-	args := pgx.StrictNamedArgs{"access_review_id": accessReviewID}
+	args := pgx.StrictNamedArgs{"organization_id": organizationID}
 	maps.Copy(args, scope.SQLArguments())
 
 	var count int
@@ -313,16 +313,17 @@ WHERE
 	return count, nil
 }
 
-func (c *AccessReviewCampaign) LoadLastCompletedByAccessReviewID(
+func (c *AccessReviewCampaign) LoadLastCompletedByOrganizationID(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
-	accessReviewID gid.GID,
+	organizationID gid.GID,
 ) error {
 	q := `
 SELECT
     id,
-    access_review_id,
+    organization_id,
+    identity_source_id,
     name,
     status,
     started_at,
@@ -334,14 +335,14 @@ FROM
     access_review_campaigns
 WHERE
     %s
-    AND access_review_id = @access_review_id
+    AND organization_id = @organization_id
     AND status = 'COMPLETED'
 ORDER BY completed_at DESC
 LIMIT 1;
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
-	args := pgx.StrictNamedArgs{"access_review_id": accessReviewID}
+	args := pgx.StrictNamedArgs{"organization_id": organizationID}
 	maps.Copy(args, scope.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)

@@ -32,7 +32,7 @@ type (
 	}
 
 	CreateAccessSourceRequest struct {
-		AccessReviewID gid.GID
+		OrganizationID gid.GID
 		ConnectorID    *gid.GID
 		Name           string
 		Category       coredata.AccessSourceCategory
@@ -51,7 +51,7 @@ type (
 func (r *CreateAccessSourceRequest) Validate() error {
 	v := validator.New()
 
-	v.Check(r.AccessReviewID, "access_review_id", validator.Required(), validator.GID(coredata.AccessReviewEntityType))
+	v.Check(r.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
 	v.Check(r.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(r.Category, "category", validator.OneOfSlice(coredata.AccessSourceCategories()))
 
@@ -79,7 +79,7 @@ func (s AccessSourceService) Create(
 	now := time.Now()
 	source := &coredata.AccessSource{
 		ID:             gid.New(s.svc.scope.GetTenantID(), coredata.AccessSourceEntityType),
-		AccessReviewID: req.AccessReviewID,
+		OrganizationID: req.OrganizationID,
 		ConnectorID:    req.ConnectorID,
 		Name:           req.Name,
 		Category:       req.Category,
@@ -91,12 +91,6 @@ func (s AccessSourceService) Create(
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(conn pg.Conn) error {
-			// Validate parent access review exists
-			review := &coredata.AccessReview{}
-			if err := review.LoadByID(ctx, conn, s.svc.scope, req.AccessReviewID); err != nil {
-				return fmt.Errorf("cannot load access review: %w", err)
-			}
-
 			// Validate connector exists if provided
 			if req.ConnectorID != nil {
 				connector := &coredata.Connector{}
@@ -207,9 +201,9 @@ func (s AccessSourceService) Delete(
 	)
 }
 
-func (s AccessSourceService) ListForAccessReviewID(
+func (s AccessSourceService) ListForOrganizationID(
 	ctx context.Context,
-	accessReviewID gid.GID,
+	organizationID gid.GID,
 	cursor *page.Cursor[coredata.AccessSourceOrderField],
 ) (*page.Page[*coredata.AccessSource, coredata.AccessSourceOrderField], error) {
 	var sources coredata.AccessSources
@@ -217,7 +211,7 @@ func (s AccessSourceService) ListForAccessReviewID(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {
-			return sources.LoadByAccessReviewID(ctx, conn, s.svc.scope, accessReviewID, cursor)
+			return sources.LoadByOrganizationID(ctx, conn, s.svc.scope, organizationID, cursor)
 		},
 	)
 	if err != nil {
@@ -227,9 +221,9 @@ func (s AccessSourceService) ListForAccessReviewID(
 	return page.NewPage(sources, cursor), nil
 }
 
-func (s AccessSourceService) CountForAccessReviewID(
+func (s AccessSourceService) CountForOrganizationID(
 	ctx context.Context,
-	accessReviewID gid.GID,
+	organizationID gid.GID,
 ) (int, error) {
 	var count int
 
@@ -237,7 +231,7 @@ func (s AccessSourceService) CountForAccessReviewID(
 		ctx,
 		func(conn pg.Conn) (err error) {
 			sources := coredata.AccessSources{}
-			count, err = sources.CountByAccessReviewID(ctx, conn, s.svc.scope, accessReviewID)
+			count, err = sources.CountByOrganizationID(ctx, conn, s.svc.scope, organizationID)
 			return err
 		},
 	)

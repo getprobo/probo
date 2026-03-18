@@ -19,6 +19,7 @@ package probo
 const (
 	// Organization actions
 	ActionOrganizationGet                  = "core:organization:get"
+	ActionOrganizationUpdate               = "core:organization:update"
 	ActionOrganizationGetLogoUrl           = "core:organization:get-logo-url"
 	ActionOrganizationGetHorizontalLogoUrl = "core:organization:get-horizontal-logo-url"
 
@@ -348,19 +349,17 @@ const (
 	ActionWebhookSubscriptionUpdate = "core:webhook-subscription:update"
 	ActionWebhookSubscriptionDelete = "core:webhook-subscription:delete"
 
-	// AccessReview actions
-	ActionAccessReviewGet    = "core:access-review:get"
-	ActionAccessReviewUpdate = "core:access-review:update"
-
 	// AccessReviewCampaign actions
 	ActionAccessReviewCampaignGet    = "core:access-review-campaign:get"
 	ActionAccessReviewCampaignList   = "core:access-review-campaign:list"
 	ActionAccessReviewCampaignCreate = "core:access-review-campaign:create"
 	ActionAccessReviewCampaignUpdate = "core:access-review-campaign:update"
 	ActionAccessReviewCampaignDelete = "core:access-review-campaign:delete"
-	ActionAccessReviewCampaignStart  = "core:access-review-campaign:start"
-	ActionAccessReviewCampaignClose  = "core:access-review-campaign:close"
-	ActionAccessReviewCampaignCancel = "core:access-review-campaign:cancel"
+	ActionAccessReviewCampaignStart            = "core:access-review-campaign:start"
+	ActionAccessReviewCampaignClose            = "core:access-review-campaign:close"
+	ActionAccessReviewCampaignCancel           = "core:access-review-campaign:cancel"
+	ActionAccessReviewCampaignAddScopeSource   = "core:access-review-campaign:add-scope-source"
+	ActionAccessReviewCampaignRemoveScopeSource = "core:access-review-campaign:remove-scope-source"
 
 	// AccessEntry actions
 	ActionAccessEntryGet    = "core:access-entry:get"

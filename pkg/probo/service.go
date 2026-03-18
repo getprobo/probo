@@ -119,7 +119,6 @@ type (
 		Files                             *FileService
 		CustomDomains                     *CustomDomainService
 		SlackMessages                     *slack.SlackMessageService
-		AccessReviews                     *AccessReviewService
 		AccessSources                     *AccessSourceService
 		AccessReviewCampaigns             AccessReviewCampaignService
 		AccessEntries                     *AccessEntryService
@@ -290,7 +289,6 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 		logger:        s.logger.Named("custom_domains"),
 	}
 	tenantService.SlackMessages = s.slack.WithTenant(tenantID).SlackMessages
-	tenantService.AccessReviews = &AccessReviewService{svc: tenantService}
 	tenantService.AccessSources = &AccessSourceService{svc: tenantService}
 	tenantService.AccessReviewCampaigns = newAccessReviewCampaignAdapter(accessreview.NewCampaignService(s.pg, tenantService.scope))
 	tenantService.AccessEntries = &AccessEntryService{svc: tenantService}

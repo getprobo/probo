@@ -47,13 +47,10 @@ export default function CreateCsvAccessSourcePage({
     throw new Error("Organization not found");
   }
 
-  const accessReviewId = organization.accessReview?.id;
-  const connectionId = accessReviewId
-    ? ConnectionHandler.getConnectionID(
-        accessReviewId,
-        "AccessReviewPage_accessSources",
-      )
-    : null;
+  const connectionId = ConnectionHandler.getConnectionID(
+    organization.id,
+    "AccessReviewPage_accessSources",
+  );
 
   const [createAccessSource, isCreating]
     = useMutationWithToasts<CreateAccessSourceDialogMutation>(
@@ -64,7 +61,7 @@ export default function CreateCsvAccessSourcePage({
       },
     );
 
-  if (!organization.accessReview?.canCreateSource) {
+  if (!organization.canCreateSource) {
     return (
       <Card padded>
         <p className="text-txt-secondary text-sm">
@@ -78,7 +75,7 @@ export default function CreateCsvAccessSourcePage({
     await createAccessSource({
       variables: {
         input: {
-          accessReviewId: accessReviewId!,
+          organizationId,
           connectorId: null,
           name: data.name,
           csvData: data.csvData,

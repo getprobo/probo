@@ -6546,7 +6546,7 @@ components:
       type: object
       required:
         - id
-        - access_review_id
+        - organization_id
         - name
         - status
         - created_at
@@ -6555,9 +6555,9 @@ components:
         id:
           $ref: "#/components/schemas/GID"
           description: Campaign ID
-        access_review_id:
+        organization_id:
           $ref: "#/components/schemas/GID"
-          description: Access review ID
+          description: Organization ID
         name:
           type: string
           description: Campaign name

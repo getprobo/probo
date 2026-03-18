@@ -22,7 +22,7 @@ import (
 func NewAccessReviewCampaign(c *coredata.AccessReviewCampaign) *AccessReviewCampaign {
 	return &AccessReviewCampaign{
 		ID:                c.ID,
-		AccessReviewID:    c.AccessReviewID,
+		OrganizationID:    c.OrganizationID,
 		Name:              c.Name,
 		Status:            c.Status,
 		StartedAt:         c.StartedAt,

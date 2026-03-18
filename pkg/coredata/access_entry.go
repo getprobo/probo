@@ -69,10 +69,9 @@ func (e AccessEntry) CursorKey(orderBy AccessEntryOrderField) page.CursorKey {
 
 func (e *AccessEntry) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
 	q := `
-SELECT ar.organization_id
+SELECT arc.organization_id
 FROM access_entries ae
 JOIN access_review_campaigns arc ON arc.id = ae.access_review_campaign_id
-JOIN access_reviews ar ON ar.id = arc.access_review_id
 WHERE ae.id = $1
 LIMIT 1;
 `
@@ -530,10 +529,9 @@ func (e *AccessEntry) LoadOrganizationID(
 	entryID gid.GID,
 ) (gid.GID, error) {
 	q := `
-SELECT ar.organization_id
+SELECT arc.organization_id
 FROM access_entries ae
 JOIN access_review_campaigns arc ON arc.id = ae.access_review_campaign_id
-JOIN access_reviews ar ON ar.id = arc.access_review_id
 WHERE ae.id = $1
 LIMIT 1;
 `

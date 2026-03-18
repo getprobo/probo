@@ -987,38 +987,7 @@ func (b *ProcessingActivityBuilder) Create() string {
 	return CreateProcessingActivity(b.client, b.attrs)
 }
 
-func CreateAccessReview(c *testutil.Client) string {
-	c.T.Helper()
-
-	const query = `
-		mutation($input: CreateAccessReviewInput!) {
-			createAccessReview(input: $input) {
-				accessReview {
-					id
-				}
-			}
-		}
-	`
-
-	var result struct {
-		CreateAccessReview struct {
-			AccessReview struct {
-				ID string `json:"id"`
-			} `json:"accessReview"`
-		} `json:"createAccessReview"`
-	}
-
-	err := c.Execute(query, map[string]any{
-		"input": map[string]any{
-			"organizationId": c.GetOrganizationID().String(),
-		},
-	}, &result)
-	require.NoError(c.T, err, "createAccessReview mutation failed")
-
-	return result.CreateAccessReview.AccessReview.ID
-}
-
-func CreateAccessSource(c *testutil.Client, accessReviewID string, attrs ...Attrs) string {
+func CreateAccessSource(c *testutil.Client, organizationID string, attrs ...Attrs) string {
 	c.T.Helper()
 
 	var a Attrs
@@ -1037,7 +1006,7 @@ func CreateAccessSource(c *testutil.Client, accessReviewID string, attrs ...Attr
 	`
 
 	input := map[string]any{
-		"accessReviewId": accessReviewID,
+		"organizationId": organizationID,
 		"name":           a.getString("name", SafeName("AccessSource")),
 	}
 	if csvData := a.getStringPtr("csvData"); csvData != nil {
@@ -1065,12 +1034,12 @@ func CreateAccessSource(c *testutil.Client, accessReviewID string, attrs ...Attr
 
 type AccessSourceBuilder struct {
 	client         *testutil.Client
-	accessReviewID string
+	organizationID string
 	attrs          Attrs
 }
 
-func NewAccessSource(c *testutil.Client, accessReviewID string) *AccessSourceBuilder {
-	return &AccessSourceBuilder{client: c, accessReviewID: accessReviewID, attrs: Attrs{}}
+func NewAccessSource(c *testutil.Client, organizationID string) *AccessSourceBuilder {
+	return &AccessSourceBuilder{client: c, organizationID: organizationID, attrs: Attrs{}}
 }
 
 func (b *AccessSourceBuilder) WithName(name string) *AccessSourceBuilder {
@@ -1084,10 +1053,10 @@ func (b *AccessSourceBuilder) WithCsvData(csvData string) *AccessSourceBuilder {
 }
 
 func (b *AccessSourceBuilder) Create() string {
-	return CreateAccessSource(b.client, b.accessReviewID, b.attrs)
+	return CreateAccessSource(b.client, b.organizationID, b.attrs)
 }
 
-func CreateAccessReviewCampaign(c *testutil.Client, accessReviewID string, attrs ...Attrs) string {
+func CreateAccessReviewCampaign(c *testutil.Client, organizationID string, attrs ...Attrs) string {
 	c.T.Helper()
 
 	var a Attrs
@@ -1106,8 +1075,12 @@ func CreateAccessReviewCampaign(c *testutil.Client, accessReviewID string, attrs
 	`
 
 	input := map[string]any{
-		"accessReviewId": accessReviewID,
+		"organizationId": organizationID,
 		"name":           a.getString("name", SafeName("Campaign")),
+	}
+
+	if v, ok := a["accessSourceIds"]; ok {
+		input["accessSourceIds"] = v
 	}
 
 	var result struct {
@@ -1128,12 +1101,12 @@ func CreateAccessReviewCampaign(c *testutil.Client, accessReviewID string, attrs
 
 type AccessReviewCampaignBuilder struct {
 	client         *testutil.Client
-	accessReviewID string
+	organizationID string
 	attrs          Attrs
 }
 
-func NewAccessReviewCampaign(c *testutil.Client, accessReviewID string) *AccessReviewCampaignBuilder {
-	return &AccessReviewCampaignBuilder{client: c, accessReviewID: accessReviewID, attrs: Attrs{}}
+func NewAccessReviewCampaign(c *testutil.Client, organizationID string) *AccessReviewCampaignBuilder {
+	return &AccessReviewCampaignBuilder{client: c, organizationID: organizationID, attrs: Attrs{}}
 }
 
 func (b *AccessReviewCampaignBuilder) WithName(name string) *AccessReviewCampaignBuilder {
@@ -1141,6 +1114,11 @@ func (b *AccessReviewCampaignBuilder) WithName(name string) *AccessReviewCampaig
 	return b
 }
 
+func (b *AccessReviewCampaignBuilder) WithAccessSourceIDs(ids []string) *AccessReviewCampaignBuilder {
+	b.attrs["accessSourceIds"] = ids
+	return b
+}
+
 func (b *AccessReviewCampaignBuilder) Create() string {
-	return CreateAccessReviewCampaign(b.client, b.accessReviewID, b.attrs)
+	return CreateAccessReviewCampaign(b.client, b.organizationID, b.attrs)
 }

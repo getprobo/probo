@@ -33,9 +33,11 @@ func newAccessReviewCampaignAdapter(svc accessreview.AccessReviewCampaignService
 
 func (a *accessReviewCampaignAdapter) Create(ctx context.Context, req CreateAccessReviewCampaignRequest) (*coredata.AccessReviewCampaign, error) {
 	return a.svc.Create(ctx, accessreview.CreateAccessReviewCampaignRequest{
-		AccessReviewID:    req.AccessReviewID,
+		OrganizationID:    req.OrganizationID,
 		Name:              req.Name,
 		FrameworkControls: req.FrameworkControls,
+		IdentitySourceID:  req.IdentitySourceID,
+		AccessSourceIDs:   req.AccessSourceIDs,
 	})
 }
 
@@ -55,11 +57,22 @@ func (a *accessReviewCampaignAdapter) Delete(ctx context.Context, campaignID gid
 	return a.svc.Delete(ctx, campaignID)
 }
 
-func (a *accessReviewCampaignAdapter) Start(ctx context.Context, req StartAccessReviewCampaignRequest) (*coredata.AccessReviewCampaign, error) {
-	return a.svc.Start(ctx, accessreview.StartAccessReviewCampaignRequest{
-		CampaignID:      req.CampaignID,
-		AccessSourceIDs: req.AccessSourceIDs,
+func (a *accessReviewCampaignAdapter) AddScopeSource(ctx context.Context, req AddCampaignScopeSourceRequest) (*coredata.AccessReviewCampaign, error) {
+	return a.svc.AddScopeSource(ctx, accessreview.AddCampaignScopeSourceRequest{
+		CampaignID:     req.CampaignID,
+		AccessSourceID: req.AccessSourceID,
 	})
+}
+
+func (a *accessReviewCampaignAdapter) RemoveScopeSource(ctx context.Context, req RemoveCampaignScopeSourceRequest) (*coredata.AccessReviewCampaign, error) {
+	return a.svc.RemoveScopeSource(ctx, accessreview.RemoveCampaignScopeSourceRequest{
+		CampaignID:     req.CampaignID,
+		AccessSourceID: req.AccessSourceID,
+	})
+}
+
+func (a *accessReviewCampaignAdapter) Start(ctx context.Context, campaignID gid.GID) (*coredata.AccessReviewCampaign, error) {
+	return a.svc.Start(ctx, campaignID)
 }
 
 func (a *accessReviewCampaignAdapter) Close(ctx context.Context, campaignID gid.GID) (*coredata.AccessReviewCampaign, error) {
@@ -70,18 +83,18 @@ func (a *accessReviewCampaignAdapter) Cancel(ctx context.Context, campaignID gid
 	return a.svc.Cancel(ctx, campaignID)
 }
 
-func (a *accessReviewCampaignAdapter) ListForAccessReviewID(
+func (a *accessReviewCampaignAdapter) ListForOrganizationID(
 	ctx context.Context,
-	accessReviewID gid.GID,
+	organizationID gid.GID,
 	cursor *page.Cursor[coredata.AccessReviewCampaignOrderField],
 ) (*page.Page[*coredata.AccessReviewCampaign, coredata.AccessReviewCampaignOrderField], error) {
-	return a.svc.ListForAccessReviewID(ctx, accessReviewID, cursor)
+	return a.svc.ListForOrganizationID(ctx, organizationID, cursor)
 }
 
 func (a *accessReviewCampaignAdapter) ListSourceFetches(ctx context.Context, campaignID gid.GID) (coredata.AccessReviewCampaignSourceFetches, error) {
 	return a.svc.ListSourceFetches(ctx, campaignID)
 }
 
-func (a *accessReviewCampaignAdapter) CountForAccessReviewID(ctx context.Context, accessReviewID gid.GID) (int, error) {
-	return a.svc.CountForAccessReviewID(ctx, accessReviewID)
+func (a *accessReviewCampaignAdapter) CountForOrganizationID(ctx context.Context, organizationID gid.GID) (int, error) {
+	return a.svc.CountForOrganizationID(ctx, organizationID)
 }

@@ -30,7 +30,7 @@ import (
 type (
 	AccessSource struct {
 		ID             gid.GID              `db:"id"`
-		AccessReviewID gid.GID              `db:"access_review_id"`
+		OrganizationID gid.GID              `db:"organization_id"`
 		ConnectorID    *gid.GID             `db:"connector_id"`
 		Name           string               `db:"name"`
 		Category       AccessSourceCategory `db:"category"`
@@ -52,13 +52,7 @@ func (as AccessSource) CursorKey(orderBy AccessSourceOrderField) page.CursorKey 
 }
 
 func (as *AccessSource) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
-	q := `
-SELECT ar.organization_id
-FROM access_sources s
-JOIN access_reviews ar ON ar.id = s.access_review_id
-WHERE s.id = $1
-LIMIT 1;
-`
+	q := `SELECT organization_id FROM access_sources WHERE id = $1 LIMIT 1;`
 
 	var organizationID gid.GID
 	if err := conn.QueryRow(ctx, q, as.ID).Scan(&organizationID); err != nil {
@@ -80,7 +74,7 @@ func (as *AccessSource) LoadByID(
 	q := `
 SELECT
     id,
-    access_review_id,
+    organization_id,
     connector_id,
     name,
     category,
@@ -127,7 +121,7 @@ INSERT INTO
     access_sources (
         id,
         tenant_id,
-        access_review_id,
+        organization_id,
         connector_id,
         name,
         category,
@@ -138,7 +132,7 @@ INSERT INTO
 VALUES (
     @id,
     @tenant_id,
-    @access_review_id,
+    @organization_id,
     @connector_id,
     @name,
     @category,
@@ -151,7 +145,7 @@ VALUES (
 	args := pgx.StrictNamedArgs{
 		"id":               as.ID,
 		"tenant_id":        scope.GetTenantID(),
-		"access_review_id": as.AccessReviewID,
+		"organization_id":  as.OrganizationID,
 		"connector_id":     as.ConnectorID,
 		"name":             as.Name,
 		"category":         as.Category,
@@ -234,17 +228,17 @@ WHERE %s AND id = @id
 	return nil
 }
 
-func (sources *AccessSources) LoadByAccessReviewID(
+func (sources *AccessSources) LoadByOrganizationID(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
-	accessReviewID gid.GID,
+	organizationID gid.GID,
 	cursor *page.Cursor[AccessSourceOrderField],
 ) error {
 	q := `
 SELECT
     id,
-    access_review_id,
+    organization_id,
     connector_id,
     name,
     category,
@@ -255,12 +249,12 @@ FROM
     access_sources
 WHERE
     %s
-    AND access_review_id = @access_review_id
+    AND organization_id = @organization_id
     AND %s
 `
 	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
 
-	args := pgx.StrictNamedArgs{"access_review_id": accessReviewID}
+	args := pgx.StrictNamedArgs{"organization_id": organizationID}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
@@ -279,22 +273,22 @@ WHERE
 	return nil
 }
 
-func (sources *AccessSources) CountByAccessReviewID(
+func (sources *AccessSources) CountByOrganizationID(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
-	accessReviewID gid.GID,
+	organizationID gid.GID,
 ) (int, error) {
 	q := `
 SELECT COUNT(id)
 FROM access_sources
 WHERE
     %s
-    AND access_review_id = @access_review_id;
+    AND organization_id = @organization_id;
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
-	args := pgx.StrictNamedArgs{"access_review_id": accessReviewID}
+	args := pgx.StrictNamedArgs{"organization_id": organizationID}
 	maps.Copy(args, scope.SQLArguments())
 
 	var count int
@@ -317,7 +311,7 @@ func (sources *AccessSources) LoadScopeSourcesByCampaignID(
 	q := `
 SELECT
     id,
-    access_review_id,
+    organization_id,
     connector_id,
     name,
     category,
@@ -339,7 +333,7 @@ WHERE
 
             SELECT src.id AS scoped_source_id
             FROM access_sources src
-            JOIN access_review_campaigns arc ON arc.access_review_id = src.access_review_id
+            JOIN access_review_campaigns arc ON arc.organization_id = src.organization_id
             WHERE arc.id = @campaign_id
               AND NOT EXISTS (
                 SELECT 1

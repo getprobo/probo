@@ -41,7 +41,7 @@ type AccountRecord struct {
 // identity source. Each driver implementation corresponds to a specific
 // system (e.g. Google Workspace, AWS IAM, Probo memberships, CSV).
 //
-// The access_reviews.identity_source_id FK determines which source is
+// The access_review_campaigns.identity_source_id FK determines which source is
 // the identity provider ("who should have access"). All other sources
 // in a campaign's scope return "who actually has access" data.
 type Driver interface {

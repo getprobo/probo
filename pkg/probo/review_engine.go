@@ -65,8 +65,8 @@ func (e *ReviewEngine) SnapshotSource(
 		if err := source.LoadByID(ctx, conn, e.scope, sourceID); err != nil {
 			return fmt.Errorf("cannot load access source %s: %w", sourceID, err)
 		}
-		if source.AccessReviewID != campaign.AccessReviewID {
-			return fmt.Errorf("cannot process access source: %s does not belong to campaign access review", sourceID)
+		if source.OrganizationID != campaign.OrganizationID {
+			return fmt.Errorf("cannot process access source: %s does not belong to campaign organization", sourceID)
 		}
 
 		var err error
@@ -76,7 +76,7 @@ func (e *ReviewEngine) SnapshotSource(
 		}
 
 		lastCompletedCampaign := &coredata.AccessReviewCampaign{}
-		if err := lastCompletedCampaign.LoadLastCompletedByAccessReviewID(ctx, conn, e.scope, campaign.AccessReviewID); err != nil {
+		if err := lastCompletedCampaign.LoadLastCompletedByOrganizationID(ctx, conn, e.scope, campaign.OrganizationID); err != nil {
 			if !errors.Is(err, coredata.ErrResourceNotFound) {
 				return fmt.Errorf("cannot load last completed campaign: %w", err)
 			}
@@ -207,12 +207,7 @@ func (e *ReviewEngine) resolveDriver(
 		}
 
 		// Built-in driver: default to ProboMemberships
-		review := &coredata.AccessReview{}
-		if err := review.LoadByID(ctx, conn, e.scope, source.AccessReviewID); err != nil {
-			return nil, fmt.Errorf("cannot load access review: %w", err)
-		}
-
-		return accesssource.NewProboMembershipsDriver(e.pg, e.scope, review.OrganizationID), nil
+		return accesssource.NewProboMembershipsDriver(e.pg, e.scope, source.OrganizationID), nil
 	}
 
 	// Connector-backed: look up the connector and resolve driver by provider

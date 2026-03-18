@@ -89,8 +89,8 @@ func NewAccessSourceEdge(s *coredata.AccessSource, orderBy coredata.AccessSource
 func NewAccessSource(s *coredata.AccessSource) *AccessSource {
 	return &AccessSource{
 		ID: s.ID,
-		AccessReview: &AccessReview{
-			ID: s.AccessReviewID,
+		Organization: &Organization{
+			ID: s.OrganizationID,
 		},
 		ConnectorID: s.ConnectorID,
 		Name:        s.Name,
@@ -162,10 +162,10 @@ func NewAccessReviewCampaignEdge(c *coredata.AccessReviewCampaign, orderBy cored
 }
 
 func NewAccessReviewCampaign(c *coredata.AccessReviewCampaign) *AccessReviewCampaign {
-	return &AccessReviewCampaign{
+	campaign := &AccessReviewCampaign{
 		ID: c.ID,
-		AccessReview: &AccessReview{
-			ID: c.AccessReviewID,
+		Organization: &Organization{
+			ID: c.OrganizationID,
 		},
 		Name:              c.Name,
 		Status:            c.Status,
@@ -175,6 +175,14 @@ func NewAccessReviewCampaign(c *coredata.AccessReviewCampaign) *AccessReviewCamp
 		CreatedAt:         c.CreatedAt,
 		UpdatedAt:         c.UpdatedAt,
 	}
+
+	if c.IdentitySourceID != nil {
+		campaign.IdentitySource = &AccessSource{
+			ID: *c.IdentitySourceID,
+		}
+	}
+
+	return campaign
 }
 
 // AccessEntry helpers
@@ -246,23 +254,3 @@ func NewAccessEntry(e *coredata.AccessEntry) *AccessEntry {
 	return entry
 }
 
-// AccessReview helper
-
-func NewAccessReview(ar *coredata.AccessReview) *AccessReview {
-	review := &AccessReview{
-		ID: ar.ID,
-		Organization: &Organization{
-			ID: ar.OrganizationID,
-		},
-		CreatedAt: ar.CreatedAt,
-		UpdatedAt: ar.UpdatedAt,
-	}
-
-	if ar.IdentitySourceID != nil {
-		review.IdentitySource = &AccessSource{
-			ID: *ar.IdentitySourceID,
-		}
-	}
-
-	return review
-}

@@ -4,22 +4,30 @@ import {
   Badge,
   Button,
   Card,
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  Field,
   PageHeader,
+  useDialogRef,
   useToast,
 } from "@probo/ui";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   type PreloadedQuery,
+  useMutation,
   usePaginationFragment,
   usePreloadedQuery,
 } from "react-relay";
 import { Link, useSearchParams } from "react-router";
+import { graphql } from "react-relay";
 
 import type { AccessReviewPageQuery } from "#/__generated__/core/AccessReviewPageQuery.graphql";
 import type { AccessReviewPageSourcesFragment$key } from "#/__generated__/core/AccessReviewPageSourcesFragment.graphql";
 import type { AccessReviewPageSourcesPaginationQuery } from "#/__generated__/core/AccessReviewPageSourcesPaginationQuery.graphql";
 import type { AccessSourceRowDeleteMutation } from "#/__generated__/core/AccessSourceRowDeleteMutation.graphql";
 import type { CreateAccessSourceDialogMutation } from "#/__generated__/core/CreateAccessSourceDialogMutation.graphql";
+import type { CreateAccessSourcePageCreateAPIKeyConnectorMutation } from "#/__generated__/core/CreateAccessSourcePageCreateAPIKeyConnectorMutation.graphql";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
@@ -27,40 +35,79 @@ import { deleteAccessSourceMutation } from "./_components/AccessSourceRow";
 import { accessReviewPageQuery, sourcesPaginatedFragment } from "./AccessReviewPage";
 import { createAccessSourceMutation } from "./dialogs/CreateAccessSourceDialog";
 
-type OAuthProvider = "GOOGLE_WORKSPACE" | "LINEAR";
-type ConnectedProvider = OAuthProvider | "SLACK";
+const createAPIKeyConnectorMutation = graphql`
+  mutation CreateAccessSourcePageCreateAPIKeyConnectorMutation(
+    $input: CreateAPIKeyConnectorInput!
+  ) {
+    createAPIKeyConnector(input: $input) {
+      connector {
+        id
+        provider
+      }
+    }
+  }
+`;
 
-const OAUTH_PROVIDERS: OAuthProvider[] = ["GOOGLE_WORKSPACE", "LINEAR"];
+type OAuthProvider = "GOOGLE_WORKSPACE" | "LINEAR" | "SLACK";
+type APIKeyProvider = "BREX" | "TALLY" | "CLOUDFLARE" | "SENTRY";
+type SourceProvider = OAuthProvider | APIKeyProvider;
 
-function providerLabel(provider: OAuthProvider): string {
+const OAUTH_PROVIDERS: OAuthProvider[] = ["GOOGLE_WORKSPACE", "LINEAR", "SLACK"];
+const API_KEY_PROVIDERS: APIKeyProvider[] = ["BREX", "TALLY", "CLOUDFLARE", "SENTRY"];
+
+function providerLabel(provider: SourceProvider): string {
   switch (provider) {
     case "GOOGLE_WORKSPACE":
       return "Google Workspace";
     case "LINEAR":
       return "Linear";
+    case "SLACK":
+      return "Slack";
+    case "BREX":
+      return "Brex";
+    case "TALLY":
+      return "Tally";
+    case "CLOUDFLARE":
+      return "Cloudflare";
+    case "SENTRY":
+      return "Sentry";
     default:
       return provider;
   }
 }
 
-function providerDescription(provider: OAuthProvider): string {
+function providerDescription(provider: SourceProvider): string {
   switch (provider) {
     case "GOOGLE_WORKSPACE":
       return "Connect Google Workspace to import users and access data.";
     case "LINEAR":
       return "Connect Linear to review team and project access.";
+    case "SLACK":
+      return "Connect Slack to review workspace member access.";
+    case "BREX":
+      return "Connect Brex to review financial platform access.";
+    case "TALLY":
+      return "Connect Tally to review form and workspace access.";
+    case "CLOUDFLARE":
+      return "Connect Cloudflare to review infrastructure access.";
+    case "SENTRY":
+      return "Connect Sentry to review error monitoring access.";
     default:
       return "Connect this provider to sync access data.";
   }
 }
 
-function isConnectedProvider(provider: string | null): provider is ConnectedProvider {
+function isConnectedProvider(provider: string | null): provider is SourceProvider {
   return provider === "GOOGLE_WORKSPACE"
     || provider === "LINEAR"
-    || provider === "SLACK";
+    || provider === "SLACK"
+    || provider === "BREX"
+    || provider === "TALLY"
+    || provider === "CLOUDFLARE"
+    || provider === "SENTRY";
 }
 
-function defaultSourceName(provider: ConnectedProvider, __: (input: string) => string): string {
+function defaultSourceName(provider: SourceProvider, __: (input: string) => string): string {
   switch (provider) {
     case "GOOGLE_WORKSPACE":
       return __("Google Workspace source");
@@ -68,6 +115,14 @@ function defaultSourceName(provider: ConnectedProvider, __: (input: string) => s
       return __("Linear source");
     case "SLACK":
       return __("Slack source");
+    case "BREX":
+      return __("Brex source");
+    case "TALLY":
+      return __("Tally source");
+    case "CLOUDFLARE":
+      return __("Cloudflare source");
+    case "SENTRY":
+      return __("Sentry source");
     default:
       return __("Connected source");
   }
@@ -83,6 +138,11 @@ export default function CreateAccessSourcePage({
   const organizationId = useOrganizationId();
   const [searchParams, setSearchParams] = useSearchParams();
   const processedConnectorIdRef = useRef<string | null>(null);
+  const apiKeyDialogRef = useDialogRef();
+  const [apiKeyProvider, setApiKeyProvider] = useState<APIKeyProvider | null>(null);
+  const [apiKeyValue, setApiKeyValue] = useState("");
+  const [providerSettingValue, setProviderSettingValue] = useState("");
+  const [isConnectingAPIKey, setIsConnectingAPIKey] = useState(false);
 
   usePageTitle(__("Add Access Source"));
 
@@ -90,14 +150,13 @@ export default function CreateAccessSourcePage({
   if (organization.__typename !== "Organization") {
     throw new Error("Organization not found");
   }
-  const accessReview = organization.accessReview;
 
   const {
     data: { accessSources },
   } = usePaginationFragment<
     AccessReviewPageSourcesPaginationQuery,
     AccessReviewPageSourcesFragment$key
-  >(sourcesPaginatedFragment, accessReview!);
+  >(sourcesPaginatedFragment, organization);
 
   const [deleteAccessSource, isDeletingSource]
     = useMutationWithToasts<AccessSourceRowDeleteMutation>(
@@ -115,16 +174,21 @@ export default function CreateAccessSourcePage({
         errorMessage: __("Failed to create access source"),
       },
     );
+  const [createAPIKeyConnector]
+    = useMutation<CreateAccessSourcePageCreateAPIKeyConnectorMutation>(
+      createAPIKeyConnectorMutation,
+    );
 
-  const sourceIdsByProvider = useMemo<Record<OAuthProvider, string[]>>(
-    () => ({
-      GOOGLE_WORKSPACE: accessSources?.edges
-        .filter(edge => edge.node.connector?.provider === "GOOGLE_WORKSPACE")
-        .map(edge => edge.node.id) ?? [],
-      LINEAR: accessSources?.edges
-        .filter(edge => edge.node.connector?.provider === "LINEAR")
-        .map(edge => edge.node.id) ?? [],
-    }),
+  const sourceIdsByProvider = useMemo<Record<SourceProvider, string[]>>(
+    () => {
+      const result: Record<string, string[]> = {};
+      for (const p of [...OAUTH_PROVIDERS, ...API_KEY_PROVIDERS]) {
+        result[p] = accessSources?.edges
+          .filter(edge => edge.node.connector?.provider === p)
+          .map(edge => edge.node.id) ?? [];
+      }
+      return result as Record<SourceProvider, string[]>;
+    },
     [accessSources?.edges],
   );
   const callbackConnectorId = searchParams.get("connector_id");
@@ -133,7 +197,7 @@ export default function CreateAccessSourcePage({
     && accessSources?.edges.some(edge => edge.node.connectorId === callbackConnectorId);
 
   useEffect(() => {
-    if (!callbackConnectorId || !accessReview) {
+    if (!callbackConnectorId) {
       return;
     }
 
@@ -153,7 +217,7 @@ export default function CreateAccessSourcePage({
     void createAccessSource({
       variables: {
         input: {
-          accessReviewId: accessReview.id,
+          organizationId,
           connectorId: callbackConnectorId,
           name: isConnectedProvider(callbackProvider)
             ? defaultSourceName(callbackProvider, __)
@@ -171,7 +235,6 @@ export default function CreateAccessSourcePage({
     });
   }, [
     __,
-    accessReview,
     accessSources?.__id,
     accessSources?.edges,
     callbackConnectorId,
@@ -179,10 +242,11 @@ export default function CreateAccessSourcePage({
     createAccessSource,
     hasSourceForCallbackConnector,
     isCreatingSource,
+    organizationId,
     setSearchParams,
   ]);
 
-  if (!accessReview?.canCreateSource) {
+  if (!organization.canCreateSource) {
     return (
       <Card padded>
         <p className="text-txt-secondary text-sm">
@@ -192,7 +256,7 @@ export default function CreateAccessSourcePage({
     );
   }
 
-  const connectProvider = (provider: OAuthProvider) => {
+  const connectOAuthProvider = (provider: OAuthProvider) => {
     const baseURL = import.meta.env.VITE_API_URL || window.location.origin;
     const url = new URL("/api/console/v1/connectors/initiate", baseURL);
     url.searchParams.append("organization_id", organizationId);
@@ -202,6 +266,84 @@ export default function CreateAccessSourcePage({
       `/organizations/${organizationId}/access-reviews/sources/new`,
     );
     window.location.assign(url.toString());
+  };
+
+  const openAPIKeyDialog = (provider: APIKeyProvider) => {
+    setApiKeyProvider(provider);
+    setApiKeyValue("");
+    setProviderSettingValue("");
+    apiKeyDialogRef.current?.open();
+  };
+
+  const providerNeedsExtraSetting = (provider: APIKeyProvider | null): boolean => {
+    return provider === "TALLY" || provider === "CLOUDFLARE" || provider === "SENTRY";
+  };
+
+  const connectAPIKeyProvider = () => {
+    if (!apiKeyProvider || !apiKeyValue.trim()) {
+      return;
+    }
+
+    if (providerNeedsExtraSetting(apiKeyProvider) && !providerSettingValue.trim()) {
+      return;
+    }
+
+    setIsConnectingAPIKey(true);
+
+    const extraSettings: Record<string, string> = {};
+    if (apiKeyProvider === "TALLY" && providerSettingValue.trim()) {
+      extraSettings.tallyOrganizationId = providerSettingValue.trim();
+    }
+    if (apiKeyProvider === "CLOUDFLARE" && providerSettingValue.trim()) {
+      extraSettings.cloudflareAccountId = providerSettingValue.trim();
+    }
+    if (apiKeyProvider === "SENTRY" && providerSettingValue.trim()) {
+      extraSettings.sentryOrganizationSlug = providerSettingValue.trim();
+    }
+
+    createAPIKeyConnector({
+      variables: {
+        input: {
+          organizationId,
+          provider: apiKeyProvider,
+          apiKey: apiKeyValue.trim(),
+          ...extraSettings,
+        },
+      },
+      onCompleted: (response) => {
+        const connectorId = response.createAPIKeyConnector.connector.id;
+
+        void createAccessSource({
+          variables: {
+            input: {
+              organizationId,
+              connectorId,
+              name: defaultSourceName(apiKeyProvider, __),
+              csvData: null,
+            },
+            connections: accessSources?.__id ? [accessSources.__id] : [],
+          },
+          onCompleted: () => {
+            setIsConnectingAPIKey(false);
+            setApiKeyValue("");
+            setProviderSettingValue("");
+            setApiKeyProvider(null);
+            apiKeyDialogRef.current?.close();
+          },
+          onError: () => {
+            setIsConnectingAPIKey(false);
+          },
+        });
+      },
+      onError: () => {
+        setIsConnectingAPIKey(false);
+        toast({
+          title: __("Connection failed"),
+          description: __("Failed to connect provider. Please check your API key and try again."),
+          variant: "destructive",
+        });
+      },
+    });
   };
 
   const disconnectProviderSource = async (sourceIds: string[]) => {
@@ -224,8 +366,49 @@ export default function CreateAccessSourcePage({
       });
     }
 
-    // Keep user on the same page, but refresh data from server.
     window.location.assign(`/organizations/${organizationId}/access-reviews/sources/new`);
+  };
+
+  const renderProviderCard = (
+    provider: SourceProvider,
+    onConnect: () => void,
+  ) => {
+    const sourceIds = sourceIdsByProvider[provider];
+    const isConnected = sourceIds.length > 0;
+
+    return (
+      <Card key={provider} padded className="flex items-center gap-3">
+        <div className="mr-auto">
+          <h3 className="font-medium">{providerLabel(provider)}</h3>
+          <p className="text-sm text-txt-secondary">
+            {__(providerDescription(provider))}
+          </p>
+        </div>
+        {isConnected
+          ? (
+              <div className="flex items-center gap-2">
+                <Badge variant="success" size="md">
+                  {__("Connected")}
+                </Badge>
+                <Button
+                  variant="danger"
+                  disabled={isDeletingSource}
+                  onClick={() => void disconnectProviderSource(sourceIds)}
+                >
+                  {__("Disconnect")}
+                </Button>
+              </div>
+            )
+          : (
+              <Button
+                variant="secondary"
+                onClick={onConnect}
+              >
+                {__("Connect")}
+              </Button>
+            )}
+      </Card>
+    );
   };
 
   return (
@@ -238,44 +421,12 @@ export default function CreateAccessSourcePage({
       />
 
       <div className="space-y-3">
-        {OAUTH_PROVIDERS.map((provider) => {
-          const sourceIds = sourceIdsByProvider[provider];
-          const isConnected = sourceIds.length > 0;
-
-          return (
-            <Card key={provider} padded className="flex items-center gap-3">
-              <div className="mr-auto">
-                <h3 className="font-medium">{providerLabel(provider)}</h3>
-                <p className="text-sm text-txt-secondary">
-                  {__(providerDescription(provider))}
-                </p>
-              </div>
-              {isConnected
-                ? (
-                    <div className="flex items-center gap-2">
-                      <Badge variant="success" size="md">
-                        {__("Connected")}
-                      </Badge>
-                      <Button
-                        variant="danger"
-                        disabled={isDeletingSource}
-                        onClick={() => void disconnectProviderSource(sourceIds)}
-                      >
-                        {__("Disconnect")}
-                      </Button>
-                    </div>
-                  )
-                : (
-                    <Button
-                      variant="secondary"
-                      onClick={() => connectProvider(provider)}
-                    >
-                      {__("Connect")}
-                    </Button>
-                  )}
-            </Card>
-          );
-        })}
+        {OAUTH_PROVIDERS.map(provider =>
+          renderProviderCard(provider, () => connectOAuthProvider(provider)),
+        )}
+        {API_KEY_PROVIDERS.map(provider =>
+          renderProviderCard(provider, () => openAPIKeyDialog(provider)),
+        )}
 
         <Card padded className="flex items-center gap-3">
           <div className="mr-auto">
@@ -291,6 +442,64 @@ export default function CreateAccessSourcePage({
           </Button>
         </Card>
       </div>
+
+      <Dialog
+        ref={apiKeyDialogRef}
+        title={apiKeyProvider ? __("Connect %s", providerLabel(apiKeyProvider)) : __("Connect provider")}
+      >
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            connectAPIKeyProvider();
+          }}
+        >
+          <DialogContent padded className="space-y-4">
+            <p className="text-txt-secondary text-sm">
+              {__("Enter the API key for %s to connect it as an access source.", apiKeyProvider ? providerLabel(apiKeyProvider) : "")}
+            </p>
+            <Field
+              label={__("API Key")}
+              type="password"
+              value={apiKeyValue}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setApiKeyValue(e.target.value)}
+              required
+              autoFocus
+            />
+            {apiKeyProvider === "TALLY" && (
+              <Field
+                label={__("Organization ID")}
+                value={providerSettingValue}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setProviderSettingValue(e.target.value)}
+                required
+              />
+            )}
+            {apiKeyProvider === "CLOUDFLARE" && (
+              <Field
+                label={__("Account ID")}
+                value={providerSettingValue}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setProviderSettingValue(e.target.value)}
+                required
+              />
+            )}
+            {apiKeyProvider === "SENTRY" && (
+              <Field
+                label={__("Organization Slug")}
+                value={providerSettingValue}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setProviderSettingValue(e.target.value)}
+                required
+              />
+            )}
+          </DialogContent>
+          <DialogFooter>
+            <Button
+              type="submit"
+              disabled={isConnectingAPIKey || !apiKeyValue.trim() || (providerNeedsExtraSetting(apiKeyProvider) && !providerSettingValue.trim())}
+            >
+              {isConnectingAPIKey ? __("Connecting...") : __("Connect")}
+            </Button>
+          </DialogFooter>
+        </form>
+      </Dialog>
     </div>
   );
 }

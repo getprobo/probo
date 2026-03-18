@@ -41,7 +41,6 @@ export const createAccessSourceMutation = graphql`
 type Props = {
   children: ReactNode;
   organizationId: string;
-  accessReviewId: string;
   connectionId: string;
   connectors: ReadonlyArray<{
     readonly id: string;
@@ -98,7 +97,6 @@ function providerLabel(provider: "GOOGLE_WORKSPACE" | "LINEAR") {
 export function CreateAccessSourceDialog({
   children,
   organizationId,
-  accessReviewId,
   connectionId,
   connectors,
   preselectedConnectorId,
@@ -206,7 +204,7 @@ export function CreateAccessSourceDialog({
     await createAccessSource({
       variables: {
         input: {
-          accessReviewId,
+          organizationId,
           connectorId: isOAuth ? data.connectorId : null,
           name: data.name,
           csvData: isOAuth ? null : (data.csvData || null),

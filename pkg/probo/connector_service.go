@@ -53,6 +53,7 @@ type (
 		Provider       coredata.ConnectorProvider
 		Protocol       coredata.ConnectorProtocol
 		Connection     connector.Connection
+		Settings       map[string]any
 	}
 )
 
@@ -200,6 +201,7 @@ func (s *ConnectorService) Create(
 		Provider:       req.Provider,
 		Protocol:       req.Protocol,
 		Connection:     req.Connection,
+		Settings:       req.Settings,
 		CreatedAt:      now,
 		UpdatedAt:      now,
 	}

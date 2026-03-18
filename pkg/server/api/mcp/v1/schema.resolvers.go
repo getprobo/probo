@@ -3378,11 +3378,6 @@ func (r *Resolver) ListAccessReviewCampaignsTool(ctx context.Context, req *mcp.C
 
 	prb := r.ProboService(ctx, input.OrganizationID)
 
-	review, err := prb.AccessReviews.GetByOrganizationID(ctx, input.OrganizationID)
-	if err != nil {
-		return nil, types.ListAccessReviewCampaignsOutput{Campaigns: []*types.AccessReviewCampaign{}}, nil
-	}
-
 	pageOrderBy := page.OrderBy[coredata.AccessReviewCampaignOrderField]{
 		Field:     coredata.AccessReviewCampaignOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
@@ -3395,7 +3390,8 @@ func (r *Resolver) ListAccessReviewCampaignsTool(ctx context.Context, req *mcp.C
 	}
 
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
-	p, err := prb.AccessReviewCampaigns.ListForAccessReviewID(ctx, review.ID, cursor)
+
+	p, err := prb.AccessReviewCampaigns.ListForOrganizationID(ctx, input.OrganizationID, cursor)
 	if err != nil {
 		panic(fmt.Errorf("cannot list access review campaigns: %w", err))
 	}

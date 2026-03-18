@@ -16,6 +16,7 @@ package root
 
 import (
 	"github.com/spf13/cobra"
+	"go.probo.inc/probo/pkg/cmd/accessreview"
 	cmdapi "go.probo.inc/probo/pkg/cmd/api"
 	"go.probo.inc/probo/pkg/cmd/auditlog"
 	"go.probo.inc/probo/pkg/cmd/auth"
@@ -65,6 +66,7 @@ func NewCmdRoot(f *cmdutil.Factory) *cobra.Command {
 		"Disable ANSI color output (also set via NO_COLOR or TERM=dumb)",
 	)
 
+	cmd.AddCommand(accessreview.NewCmdAccessReview(f))
 	cmd.AddCommand(cmdapi.NewCmdAPI(f))
 	cmd.AddCommand(auditlog.NewCmdAuditLog(f))
 	cmd.AddCommand(auth.NewCmdAuth(f))

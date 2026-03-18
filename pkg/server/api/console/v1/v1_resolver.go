@@ -99,35 +99,17 @@ func (r *accessEntryConnectionResolver) TotalCount(ctx context.Context, obj *typ
 }
 
 // Organization is the resolver for the organization field.
-func (r *accessReviewResolver) Organization(ctx context.Context, obj *types.AccessReview) (*types.Organization, error) {
-	if err := r.authorize(ctx, obj.Organization.ID, probo.ActionOrganizationGet); err != nil {
-		return nil, err
-	}
-
-	prb := r.ProboService(ctx, obj.Organization.ID.TenantID())
-
-	organization, err := prb.Organizations.Get(ctx, obj.Organization.ID)
-	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
-		}
-		panic(fmt.Errorf("cannot get organization: %w", err))
-	}
-
-	return types.NewOrganization(organization), nil
+func (r *accessReviewCampaignResolver) Organization(ctx context.Context, obj *types.AccessReviewCampaign) (*types.Organization, error) {
+	panic(fmt.Errorf("not implemented: Organization - organization"))
 }
 
 // IdentitySource is the resolver for the identitySource field.
-func (r *accessReviewResolver) IdentitySource(ctx context.Context, obj *types.AccessReview) (*types.AccessSource, error) {
+func (r *accessReviewCampaignResolver) IdentitySource(ctx context.Context, obj *types.AccessReviewCampaign) (*types.AccessSource, error) {
 	if obj.IdentitySource == nil {
 		return nil, nil
 	}
 
-	if err := r.authorize(ctx, obj.IdentitySource.ID, probo.ActionAccessSourceGet); err != nil {
-		return nil, err
-	}
-
-	prb := r.ProboService(ctx, obj.IdentitySource.ID.TenantID())
+	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	source, err := prb.AccessSources.Get(ctx, obj.IdentitySource.ID)
 	if err != nil {
@@ -138,88 +120,6 @@ func (r *accessReviewResolver) IdentitySource(ctx context.Context, obj *types.Ac
 	}
 
 	return types.NewAccessSource(source), nil
-}
-
-// AccessSources is the resolver for the accessSources field.
-func (r *accessReviewResolver) AccessSources(ctx context.Context, obj *types.AccessReview, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AccessSourceOrder) (*types.AccessSourceConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionAccessSourceList); err != nil {
-		return nil, err
-	}
-
-	prb := r.ProboService(ctx, obj.ID.TenantID())
-
-	pageOrderBy := page.OrderBy[coredata.AccessSourceOrderField]{
-		Field:     coredata.AccessSourceOrderFieldCreatedAt,
-		Direction: page.OrderDirectionDesc,
-	}
-	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.AccessSourceOrderField]{
-			Field:     orderBy.Field,
-			Direction: orderBy.Direction,
-		}
-	}
-
-	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
-
-	p, err := prb.AccessSources.ListForAccessReviewID(ctx, obj.ID, cursor)
-	if err != nil {
-		panic(fmt.Errorf("cannot list access sources: %w", err))
-	}
-
-	return types.NewAccessSourceConnection(p, r, obj.ID), nil
-}
-
-// Campaigns is the resolver for the campaigns field.
-func (r *accessReviewResolver) Campaigns(ctx context.Context, obj *types.AccessReview, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AccessReviewCampaignOrder) (*types.AccessReviewCampaignConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionAccessReviewCampaignList); err != nil {
-		return nil, err
-	}
-
-	prb := r.ProboService(ctx, obj.ID.TenantID())
-
-	pageOrderBy := page.OrderBy[coredata.AccessReviewCampaignOrderField]{
-		Field:     coredata.AccessReviewCampaignOrderFieldCreatedAt,
-		Direction: page.OrderDirectionDesc,
-	}
-	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.AccessReviewCampaignOrderField]{
-			Field:     orderBy.Field,
-			Direction: orderBy.Direction,
-		}
-	}
-
-	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
-
-	p, err := prb.AccessReviewCampaigns.ListForAccessReviewID(ctx, obj.ID, cursor)
-	if err != nil {
-		panic(fmt.Errorf("cannot list access review campaigns: %w", err))
-	}
-
-	return types.NewAccessReviewCampaignConnection(p, r, obj.ID), nil
-}
-
-// Permission is the resolver for the permission field.
-func (r *accessReviewResolver) Permission(ctx context.Context, obj *types.AccessReview, action string) (bool, error) {
-	return r.Resolver.Permission(ctx, obj, action)
-}
-
-// AccessReview is the resolver for the accessReview field.
-func (r *accessReviewCampaignResolver) AccessReview(ctx context.Context, obj *types.AccessReviewCampaign) (*types.AccessReview, error) {
-	if err := r.authorize(ctx, obj.AccessReview.ID, probo.ActionAccessReviewGet); err != nil {
-		return nil, err
-	}
-
-	prb := r.ProboService(ctx, obj.AccessReview.ID.TenantID())
-
-	review, err := prb.AccessReviews.Get(ctx, obj.AccessReview.ID)
-	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
-		}
-		panic(fmt.Errorf("cannot get access review: %w", err))
-	}
-
-	return types.NewAccessReview(review), nil
 }
 
 // ScopeSources is the resolver for the scopeSources field.
@@ -342,8 +242,8 @@ func (r *accessReviewCampaignConnectionResolver) TotalCount(ctx context.Context,
 	prb := r.ProboService(ctx, obj.ParentID.TenantID())
 
 	switch obj.Resolver.(type) {
-	case *accessReviewResolver:
-		count, err := prb.AccessReviewCampaigns.CountForAccessReviewID(ctx, obj.ParentID)
+	case *organizationResolver:
+		count, err := prb.AccessReviewCampaigns.CountForOrganizationID(ctx, obj.ParentID)
 		if err != nil {
 			panic(fmt.Errorf("cannot count access review campaigns: %w", err))
 		}
@@ -353,23 +253,9 @@ func (r *accessReviewCampaignConnectionResolver) TotalCount(ctx context.Context,
 	panic(fmt.Errorf("unsupported resolver: %T", obj.Resolver))
 }
 
-// AccessReview is the resolver for the accessReview field.
-func (r *accessSourceResolver) AccessReview(ctx context.Context, obj *types.AccessSource) (*types.AccessReview, error) {
-	if err := r.authorize(ctx, obj.AccessReview.ID, probo.ActionAccessReviewGet); err != nil {
-		return nil, err
-	}
-
-	prb := r.ProboService(ctx, obj.AccessReview.ID.TenantID())
-
-	review, err := prb.AccessReviews.Get(ctx, obj.AccessReview.ID)
-	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
-		}
-		panic(fmt.Errorf("cannot get access review: %w", err))
-	}
-
-	return types.NewAccessReview(review), nil
+// Organization is the resolver for the organization field.
+func (r *accessSourceResolver) Organization(ctx context.Context, obj *types.AccessSource) (*types.Organization, error) {
+	return obj.Organization, nil
 }
 
 // Connector is the resolver for the connector field.
@@ -401,8 +287,8 @@ func (r *accessSourceConnectionResolver) TotalCount(ctx context.Context, obj *ty
 	prb := r.ProboService(ctx, obj.ParentID.TenantID())
 
 	switch obj.Resolver.(type) {
-	case *accessReviewResolver:
-		count, err := prb.AccessSources.CountForAccessReviewID(ctx, obj.ParentID)
+	case *organizationResolver:
+		count, err := prb.AccessSources.CountForOrganizationID(ctx, obj.ParentID)
 		if err != nil {
 			panic(fmt.Errorf("cannot count access sources: %w", err))
 		}
@@ -6696,58 +6582,16 @@ func (r *mutationResolver) DeleteCustomDomain(ctx context.Context, input types.D
 	}, nil
 }
 
-// CreateAccessReview is the resolver for the createAccessReview field.
-func (r *mutationResolver) CreateAccessReview(ctx context.Context, input types.CreateAccessReviewInput) (*types.CreateAccessReviewPayload, error) {
-	if err := r.authorize(ctx, input.OrganizationID, probo.ActionAccessReviewUpdate); err != nil {
+// CreateAccessSource is the resolver for the createAccessSource field.
+func (r *mutationResolver) CreateAccessSource(ctx context.Context, input types.CreateAccessSourceInput) (*types.CreateAccessSourcePayload, error) {
+	if err := r.authorize(ctx, input.OrganizationID, probo.ActionAccessSourceCreate); err != nil {
 		return nil, err
 	}
 
 	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
 
-	review, err := prb.AccessReviews.GetOrCreate(ctx, input.OrganizationID)
-	if err != nil {
-		panic(fmt.Errorf("cannot create access review: %w", err))
-	}
-
-	return &types.CreateAccessReviewPayload{
-		AccessReview: types.NewAccessReview(review),
-	}, nil
-}
-
-// UpdateAccessReview is the resolver for the updateAccessReview field.
-func (r *mutationResolver) UpdateAccessReview(ctx context.Context, input types.UpdateAccessReviewInput) (*types.UpdateAccessReviewPayload, error) {
-	if err := r.authorize(ctx, input.AccessReviewID, probo.ActionAccessReviewUpdate); err != nil {
-		return nil, err
-	}
-
-	prb := r.ProboService(ctx, input.AccessReviewID.TenantID())
-
-	review, err := prb.AccessReviews.Update(ctx, probo.UpdateAccessReviewRequest{
-		AccessReviewID:   input.AccessReviewID,
-		IdentitySourceID: gqlutils.UnwrapOmittable(input.IdentitySourceID),
-	})
-	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
-		}
-		panic(fmt.Errorf("cannot update access review: %w", err))
-	}
-
-	return &types.UpdateAccessReviewPayload{
-		AccessReview: types.NewAccessReview(review),
-	}, nil
-}
-
-// CreateAccessSource is the resolver for the createAccessSource field.
-func (r *mutationResolver) CreateAccessSource(ctx context.Context, input types.CreateAccessSourceInput) (*types.CreateAccessSourcePayload, error) {
-	if err := r.authorize(ctx, input.AccessReviewID, probo.ActionAccessSourceCreate); err != nil {
-		return nil, err
-	}
-
-	prb := r.ProboService(ctx, input.AccessReviewID.TenantID())
-
 	source, err := prb.AccessSources.Create(ctx, probo.CreateAccessSourceRequest{
-		AccessReviewID: input.AccessReviewID,
+		OrganizationID: input.OrganizationID,
 		ConnectorID:    input.ConnectorID,
 		Name:           input.Name,
 		Category:       coredata.AccessSourceCategorySaaS,
@@ -6818,16 +6662,18 @@ func (r *mutationResolver) DeleteAccessSource(ctx context.Context, input types.D
 
 // CreateAccessReviewCampaign is the resolver for the createAccessReviewCampaign field.
 func (r *mutationResolver) CreateAccessReviewCampaign(ctx context.Context, input types.CreateAccessReviewCampaignInput) (*types.CreateAccessReviewCampaignPayload, error) {
-	if err := r.authorize(ctx, input.AccessReviewID, probo.ActionAccessReviewCampaignCreate); err != nil {
+	if err := r.authorize(ctx, input.OrganizationID, probo.ActionAccessReviewCampaignCreate); err != nil {
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, input.AccessReviewID.TenantID())
+	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
 
 	campaign, err := prb.AccessReviewCampaigns.Create(ctx, probo.CreateAccessReviewCampaignRequest{
-		AccessReviewID:    input.AccessReviewID,
+		OrganizationID:    input.OrganizationID,
 		Name:              input.Name,
 		FrameworkControls: input.FrameworkControls,
+		IdentitySourceID:  input.IdentitySourceID,
+		AccessSourceIDs:   input.AccessSourceIds,
 	})
 	if err != nil {
 		panic(fmt.Errorf("cannot create access review campaign: %w", err))
@@ -6898,10 +6744,7 @@ func (r *mutationResolver) StartAccessReviewCampaign(ctx context.Context, input 
 
 	prb := r.ProboService(ctx, input.AccessReviewCampaignID.TenantID())
 
-	campaign, err := prb.AccessReviewCampaigns.Start(ctx, probo.StartAccessReviewCampaignRequest{
-		CampaignID:      input.AccessReviewCampaignID,
-		AccessSourceIDs: input.AccessSourceIds,
-	})
+	campaign, err := prb.AccessReviewCampaigns.Start(ctx, input.AccessReviewCampaignID)
 	if err != nil {
 		panic(fmt.Errorf("cannot start access review campaign: %w", err))
 	}
@@ -6943,6 +6786,48 @@ func (r *mutationResolver) CancelAccessReviewCampaign(ctx context.Context, input
 	}
 
 	return &types.CancelAccessReviewCampaignPayload{
+		AccessReviewCampaign: types.NewAccessReviewCampaign(campaign),
+	}, nil
+}
+
+// AddAccessReviewCampaignScopeSource is the resolver for the addAccessReviewCampaignScopeSource field.
+func (r *mutationResolver) AddAccessReviewCampaignScopeSource(ctx context.Context, input types.AddAccessReviewCampaignScopeSourceInput) (*types.AddAccessReviewCampaignScopeSourcePayload, error) {
+	if err := r.authorize(ctx, input.AccessReviewCampaignID, probo.ActionAccessReviewCampaignAddScopeSource); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, input.AccessReviewCampaignID.TenantID())
+
+	campaign, err := prb.AccessReviewCampaigns.AddScopeSource(ctx, probo.AddCampaignScopeSourceRequest{
+		CampaignID:     input.AccessReviewCampaignID,
+		AccessSourceID: input.AccessSourceID,
+	})
+	if err != nil {
+		panic(fmt.Errorf("cannot add scope source to access review campaign: %w", err))
+	}
+
+	return &types.AddAccessReviewCampaignScopeSourcePayload{
+		AccessReviewCampaign: types.NewAccessReviewCampaign(campaign),
+	}, nil
+}
+
+// RemoveAccessReviewCampaignScopeSource is the resolver for the removeAccessReviewCampaignScopeSource field.
+func (r *mutationResolver) RemoveAccessReviewCampaignScopeSource(ctx context.Context, input types.RemoveAccessReviewCampaignScopeSourceInput) (*types.RemoveAccessReviewCampaignScopeSourcePayload, error) {
+	if err := r.authorize(ctx, input.AccessReviewCampaignID, probo.ActionAccessReviewCampaignRemoveScopeSource); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, input.AccessReviewCampaignID.TenantID())
+
+	campaign, err := prb.AccessReviewCampaigns.RemoveScopeSource(ctx, probo.RemoveCampaignScopeSourceRequest{
+		CampaignID:     input.AccessReviewCampaignID,
+		AccessSourceID: input.AccessSourceID,
+	})
+	if err != nil {
+		panic(fmt.Errorf("cannot remove scope source from access review campaign: %w", err))
+	}
+
+	return &types.RemoveAccessReviewCampaignScopeSourcePayload{
 		AccessReviewCampaign: types.NewAccessReviewCampaign(campaign),
 	}, nil
 }
@@ -7056,6 +6941,17 @@ func (r *mutationResolver) CreateAPIKeyConnector(ctx context.Context, input type
 
 	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
 
+	settings := make(map[string]any)
+	if input.TallyOrganizationID != nil {
+		settings["organization_id"] = *input.TallyOrganizationID
+	}
+	if input.CloudflareAccountID != nil {
+		settings["account_id"] = *input.CloudflareAccountID
+	}
+	if input.SentryOrganizationSlug != nil {
+		settings["organization_slug"] = *input.SentryOrganizationSlug
+	}
+
 	cnnctr, err := prb.Connectors.Create(
 		ctx,
 		probo.CreateConnectorRequest{
@@ -7063,6 +6959,7 @@ func (r *mutationResolver) CreateAPIKeyConnector(ctx context.Context, input type
 			Provider:       input.Provider,
 			Protocol:       coredata.ConnectorProtocolAPIKey,
 			Connection:     &connector.APIKeyConnection{APIKey: input.APIKey},
+			Settings:       settings,
 		},
 	)
 	if err != nil {
@@ -8153,20 +8050,62 @@ func (r *organizationResolver) AuditLogEntries(ctx context.Context, obj *types.O
 // AccessReview is the resolver for the accessReview field.
 func (r *organizationResolver) AccessReview(ctx context.Context, obj *types.Organization) (*types.AccessReview, error) {
 	if err := r.authorize(ctx, obj.ID, probo.ActionAccessReviewGet); err != nil {
+// AccessSources is the resolver for the accessSources field.
+func (r *organizationResolver) AccessSources(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AccessSourceOrder) (*types.AccessSourceConnection, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionAccessSourceList); err != nil {
 		return nil, err
 	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
-	review, err := prb.AccessReviews.GetByOrganizationID(ctx, obj.ID)
-	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, nil
+	pageOrderBy := page.OrderBy[coredata.AccessSourceOrderField]{
+		Field:     coredata.AccessSourceOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.AccessSourceOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
 		}
-		panic(fmt.Errorf("cannot get access review: %w", err))
 	}
 
-	return types.NewAccessReview(review), nil
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	p, err := prb.AccessSources.ListForOrganizationID(ctx, obj.ID, cursor)
+	if err != nil {
+		panic(fmt.Errorf("cannot list access sources: %w", err))
+	}
+
+	return types.NewAccessSourceConnection(p, r, obj.ID), nil
+}
+
+// AccessReviewCampaigns is the resolver for the accessReviewCampaigns field.
+func (r *organizationResolver) AccessReviewCampaigns(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AccessReviewCampaignOrder) (*types.AccessReviewCampaignConnection, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionAccessReviewCampaignList); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.AccessReviewCampaignOrderField]{
+		Field:     coredata.AccessReviewCampaignOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.AccessReviewCampaignOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	p, err := prb.AccessReviewCampaigns.ListForOrganizationID(ctx, obj.ID, cursor)
+	if err != nil {
+		panic(fmt.Errorf("cannot list access review campaigns: %w", err))
+	}
+
+	return types.NewAccessReviewCampaignConnection(p, r, obj.ID), nil
 }
 
 // Permission is the resolver for the permission field.
@@ -8652,15 +8591,6 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 				return nil, err
 			}
 			return types.NewWebhookSubscription(wc), nil
-		}
-	case coredata.AccessReviewEntityType:
-		action = probo.ActionAccessReviewGet
-		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
-			review, err := prb.AccessReviews.Get(ctx, id)
-			if err != nil {
-				return nil, err
-			}
-			return types.NewAccessReview(review), nil
 		}
 	case coredata.AccessReviewCampaignEntityType:
 		action = probo.ActionAccessReviewCampaignGet
@@ -10709,9 +10639,6 @@ func (r *Resolver) AccessEntryConnection() schema.AccessEntryConnectionResolver 
 	return &accessEntryConnectionResolver{r}
 }
 
-// AccessReview returns schema.AccessReviewResolver implementation.
-func (r *Resolver) AccessReview() schema.AccessReviewResolver { return &accessReviewResolver{r} }
-
 // AccessReviewCampaign returns schema.AccessReviewCampaignResolver implementation.
 func (r *Resolver) AccessReviewCampaign() schema.AccessReviewCampaignResolver {
 	return &accessReviewCampaignResolver{r}
@@ -11075,7 +11002,6 @@ func (r *Resolver) WebhookSubscriptionConnection() schema.WebhookSubscriptionCon
 
 type accessEntryResolver struct{ *Resolver }
 type accessEntryConnectionResolver struct{ *Resolver }
-type accessReviewResolver struct{ *Resolver }
 type accessReviewCampaignResolver struct{ *Resolver }
 type accessReviewCampaignConnectionResolver struct{ *Resolver }
 type accessSourceResolver struct{ *Resolver }
