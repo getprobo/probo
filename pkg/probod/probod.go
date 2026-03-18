@@ -57,6 +57,7 @@ import (
 	"go.probo.inc/probo/pkg/mailer"
 	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/probo"
+	"go.probo.inc/probo/pkg/file"
 	"go.probo.inc/probo/pkg/securecookie"
 	"go.probo.inc/probo/pkg/server"
 	"go.probo.inc/probo/pkg/slack"
@@ -473,11 +474,14 @@ func (impl *Implm) Run(
 		slackService,
 	)
 
+	fileService := file.NewService(pgClient, fileManagerService)
+
 	serverHandler, err := server.NewServer(
 		server.Config{
 			AllowedOrigins:    impl.cfg.Api.Cors.AllowedOrigins,
 			ExtraHeaderFields: impl.cfg.Api.ExtraHeaderFields,
 			Probo:             proboService,
+			File:              fileService,
 			IAM:               iamService,
 			Trust:             trustService,
 			ESign:             esignService,

@@ -1767,6 +1767,7 @@ func (s *DocumentService) BuildAndUploadExport(ctx context.Context, exportJobID 
 				FileName:   fmt.Sprintf("Documents Export %s.zip", now.Format("2006-01-02")),
 				FileKey:    uuid.String(),
 				FileSize:   fileInfo.Size(),
+				Visibility: coredata.FileVisibilityPrivate,
 				CreatedAt:  now,
 				UpdatedAt:  now,
 			}

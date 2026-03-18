@@ -271,6 +271,7 @@ func (w *CompletionCertificateWorker) generateCertificate(
 		MimeType:       "application/pdf",
 		FileName:       certificateFilename,
 		FileKey:        uuid.MustNewV4().String(),
+		Visibility:     coredata.FileVisibilityPrivate,
 		CreatedAt:      time.Now(),
 		UpdatedAt:      time.Now(),
 	}

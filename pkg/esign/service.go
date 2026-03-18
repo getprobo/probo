@@ -209,6 +209,7 @@ func (s *Service) createStampedDocument(
 		MimeType:       "application/pdf",
 		FileName:       originalFile.FileName,
 		FileKey:        uuid.MustNewV4().String(),
+		Visibility:     coredata.FileVisibilityPrivate,
 		CreatedAt:      now,
 		UpdatedAt:      now,
 	}

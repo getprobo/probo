@@ -257,6 +257,7 @@ func (s OrganizationService) Update(
 					MimeType:   contentType,
 					FileName:   filename,
 					FileKey:    objectKey.String(),
+					Visibility: coredata.FileVisibilityPublic,
 					CreatedAt:  now,
 					UpdatedAt:  now,
 				}
@@ -317,6 +318,7 @@ func (s OrganizationService) Update(
 					MimeType:   contentType,
 					FileName:   filename,
 					FileKey:    objectKey.String(),
+					Visibility: coredata.FileVisibilityPublic,
 					CreatedAt:  now,
 					UpdatedAt:  now,
 				}

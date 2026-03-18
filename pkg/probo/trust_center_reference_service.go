@@ -416,6 +416,7 @@ func (s TrustCenterReferenceService) uploadLogoFile(
 		FileName:   filename,
 		FileKey:    objectKey.String(),
 		FileSize:   fileSize,
+		Visibility: coredata.FileVisibilityPublic,
 		CreatedAt:  now,
 		UpdatedAt:  now,
 	}

@@ -159,6 +159,7 @@ func (s VendorBusinessAssociateAgreementService) Upload(
 				FileName:   req.FileName,
 				FileKey:    objectKey.String(),
 				FileSize:   *headOutput.ContentLength,
+				Visibility: coredata.FileVisibilityPrivate,
 				CreatedAt:  now,
 				UpdatedAt:  now,
 			}
