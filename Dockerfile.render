@@ -23,9 +23,13 @@ COPY . .
 COPY --from=frontend /app/apps/console/dist apps/console/dist
 COPY --from=frontend /app/apps/trust/dist apps/trust/dist
 COPY --from=frontend /app/packages/emails/dist packages/emails/dist
+RUN go generate ./pkg/server/api/...
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
     -ldflags="-w -s -X 'main.version=dev' -X 'main.env=prod'" \
     -o /probod ./cmd/probod
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
+    -ldflags="-w -s" \
+    -o /probod-bootstrap ./cmd/probod-bootstrap
 
 # Stage 3: Runtime (Alpine — required for Render)
 FROM alpine:latest
@@ -36,6 +40,7 @@ RUN apk --no-cache add ca-certificates openssl bash && \
     chown probo:probo /etc/probod
 WORKDIR /app
 COPY --from=backend --chown=probo:probo /probod ./probod
+COPY --from=backend --chown=probo:probo /probod-bootstrap ./probod-bootstrap
 COPY --chown=probo:probo entrypoint.sh ./entrypoint.sh
 COPY --chown=probo:probo rds-ca-bundle.pem ./rds-ca-bundle.pem
 USER probo

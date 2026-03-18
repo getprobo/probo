@@ -10,7 +10,7 @@ if [ -f "$CONFIG_FILE" ]; then
 else
   echo "Generating configuration file from environment variables at: $CONFIG_FILE"
   # Generate configuration from environment variables
-  probod-bootstrap -output "$CONFIG_FILE"
+  ./probod-bootstrap -output "$CONFIG_FILE"
 fi
 
 # Execute probod with the generated config
