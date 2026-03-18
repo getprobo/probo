@@ -4,13 +4,18 @@ set -e
 # Configuration file path
 CONFIG_FILE="${CONFIG_FILE:-/etc/probod/config.yml}"
 
-# Check if config file already exists (e.g., mounted from ConfigMap)
-if [ -f "$CONFIG_FILE" ]; then
+# If bootstrap env vars are set, always (re)generate the config from them.
+# This ensures that updated env vars take effect even when a stale config
+# file exists on a persistent volume.  When no env vars are present, fall
+# back to an existing config file (e.g., mounted from a ConfigMap).
+if [ -n "$PROBOD_ENCRYPTION_KEY" ]; then
+  echo "Generating configuration file from environment variables at: $CONFIG_FILE"
+  probod-bootstrap -output "$CONFIG_FILE"
+elif [ -f "$CONFIG_FILE" ]; then
   echo "Using existing configuration file at: $CONFIG_FILE"
 else
-  echo "Generating configuration file from environment variables at: $CONFIG_FILE"
-  # Generate configuration from environment variables
-  probod-bootstrap -output "$CONFIG_FILE"
+  echo "Error: no bootstrap env vars set and no config file found at $CONFIG_FILE" >&2
+  exit 1
 fi
 
 # Execute probod with the generated config
