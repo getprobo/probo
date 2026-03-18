@@ -123,7 +123,7 @@ export function DocumentLayout(props: { queryRef: PreloadedQuery<DocumentLayoutQ
 
   return (
     <>
-      <div className="space-y-6">
+      <div className="flex flex-col gap-6 h-full">
         <div className="flex justify-between items-center mb-4">
           <Breadcrumb
             items={[
