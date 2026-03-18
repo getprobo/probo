@@ -20,8 +20,10 @@ import {
   Thead,
   Tr,
   useDialogRef,
+  useToast,
 } from "@probo/ui";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useDropzone } from "react-dropzone";
 import {
   graphql,
@@ -91,6 +93,7 @@ type Props = {
 
 export default function AuditsPage(props: Props) {
   const { __ } = useTranslate();
+  const { toast } = useToast();
   const organizationId = useOrganizationId();
 
   const data = usePreloadedQuery(auditsQuery, props.queryRef);
@@ -115,14 +118,22 @@ export default function AuditsPage(props: Props) {
   const dragCounterRef = useRef(0);
 
   const onDrop = useCallback(
-    (acceptedFiles: File[]) => {
+    (acceptedFiles: File[], fileRejections: { file: File }[]) => {
       setIsDragging(false);
       dragCounterRef.current = 0;
+      if (fileRejections.length > 0) {
+        toast({
+          title: __("Unsupported file type"),
+          description: __("Only PDF files are supported."),
+          variant: "error",
+        });
+        return;
+      }
       if (!canCreateAudit || acceptedFiles.length === 0) return;
       setDroppedFile(acceptedFiles[0]);
       dropDialogRef.current?.open();
     },
-    [canCreateAudit, dropDialogRef],
+    [canCreateAudit, dropDialogRef, toast, __],
   );
 
   useEffect(() => {
@@ -138,8 +149,8 @@ export default function AuditsPage(props: Props) {
 
     const handleDragLeave = (e: DragEvent) => {
       e.preventDefault();
-      dragCounterRef.current--;
-      if (dragCounterRef.current === 0) {
+      dragCounterRef.current = Math.max(0, dragCounterRef.current - 1);
+      if (dragCounterRef.current <= 0) {
         setIsDragging(false);
       }
     };
@@ -179,19 +190,28 @@ export default function AuditsPage(props: Props) {
     setDroppedFile(null);
   };
 
+  const mainRef = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    mainRef.current = document.querySelector("main");
+    if (mainRef.current) {
+      mainRef.current.style.position = "relative";
+    }
+  }, []);
+
   return (
     <div className="space-y-6">
-      {isDragging && canCreateAudit && (
+      {isDragging && canCreateAudit && mainRef.current && createPortal(
         <div
           {...getRootProps()}
-          className="border-primary bg-primary/5 pointer-events-auto fixed inset-0 top-12 z-40 flex flex-col items-center justify-center border-2 border-dashed"
+          className="border-primary bg-primary/5 pointer-events-auto absolute inset-0 z-40 flex flex-col items-center justify-center border-2 border-dashed"
         >
           <input {...getInputProps()} />
           <IconUpload className="text-primary mb-2 size-8" />
           <p className="text-primary text-sm font-medium">
             {__("Drop a PDF to create an audit with a report")}
           </p>
-        </div>
+        </div>,
+        mainRef.current,
       )}
       <PageHeader
         title={__("Audits")}
