@@ -185,7 +185,8 @@ func (c *Config) Save() error {
 }
 
 func normalizeHost(host string) string {
-	if strings.HasPrefix(host, "http://") || strings.HasPrefix(host, "https://") {
+	lower := strings.ToLower(host)
+	if strings.HasPrefix(lower, "http://") || strings.HasPrefix(lower, "https://") {
 		if u, err := url.Parse(host); err == nil {
 			return u.Host
 		}

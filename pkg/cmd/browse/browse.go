@@ -58,7 +58,8 @@ func NewCmdBrowse(f *cmdutil.Factory) *cobra.Command {
 				flagOrg = hc.Organization
 			}
 
-			if !strings.HasPrefix(host, "http://") && !strings.HasPrefix(host, "https://") {
+			lowerHost := strings.ToLower(host)
+			if !strings.HasPrefix(lowerHost, "http://") && !strings.HasPrefix(lowerHost, "https://") {
 				host = "https://" + host
 			}
 
