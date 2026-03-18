@@ -12,13 +12,17 @@ import {
   DropdownItem,
   IconPlusLarge,
   IconTrashCan,
+  IconUpload,
   PageHeader,
   Tbody,
   Td,
   Th,
   Thead,
   Tr,
+  useDialogRef,
 } from "@probo/ui";
+import { useCallback, useState } from "react";
+import { useDropzone } from "react-dropzone";
 import {
   graphql,
   type PreloadedQuery,
@@ -104,15 +108,50 @@ export default function AuditsPage(props: Props) {
     audit => audit.canDelete || audit.canUpdate,
   );
 
+  const canCreateAudit = data.node.canCreateAudit;
+  const [droppedFile, setDroppedFile] = useState<File | null>(null);
+  const dropDialogRef = useDialogRef();
+
+  const onDrop = useCallback(
+    (acceptedFiles: File[]) => {
+      if (!canCreateAudit || acceptedFiles.length === 0) return;
+      setDroppedFile(acceptedFiles[0]);
+      dropDialogRef.current?.open();
+    },
+    [canCreateAudit, dropDialogRef],
+  );
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    noClick: true,
+    noKeyboard: true,
+    accept: { "application/pdf": [".pdf"] },
+    multiple: false,
+    onDrop,
+    disabled: !canCreateAudit,
+  });
+
+  const handleDropDialogClose = () => {
+    setDroppedFile(null);
+  };
+
   return (
-    <div className="space-y-6">
+    <div {...getRootProps()} className="relative space-y-6">
+      <input {...getInputProps()} />
+      {isDragActive && canCreateAudit && (
+        <div className="border-primary bg-primary/5 pointer-events-none absolute inset-0 z-40 flex flex-col items-center justify-center rounded-xl border-2 border-dashed">
+          <IconUpload className="text-primary mb-2 size-8" />
+          <p className="text-primary text-sm font-medium">
+            {__("Drop a PDF to create an audit with a report")}
+          </p>
+        </div>
+      )}
       <PageHeader
         title={__("Audits")}
         description={__(
           "Manage your organization's compliance audits and their progress.",
         )}
       >
-        {data.node.canCreateAudit && (
+        {canCreateAudit && (
           <CreateAuditDialog
             connection={connectionId}
             organizationId={organizationId}
@@ -144,6 +183,15 @@ export default function AuditsPage(props: Props) {
           ))}
         </Tbody>
       </SortableTable>
+      {canCreateAudit && (
+        <CreateAuditDialog
+          ref={dropDialogRef}
+          connection={connectionId}
+          organizationId={organizationId}
+          file={droppedFile}
+          onClose={handleDropDialogClose}
+        />
+      )}
     </div>
   );
 }

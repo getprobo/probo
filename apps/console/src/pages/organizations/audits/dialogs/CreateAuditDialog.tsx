@@ -4,15 +4,18 @@ import {
   formatError,
   getAuditStateLabel,
   type GraphQLError,
+  promisifyMutation,
 } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import {
   Breadcrumb,
   Button,
+  type DialogRef,
   Dialog,
   DialogContent,
   DialogFooter,
   Field,
+  IconUpload,
   Input,
   Option,
   Select,
@@ -21,13 +24,16 @@ import {
 } from "@probo/ui";
 import { Suspense } from "react";
 import { type Control, Controller } from "react-hook-form";
-import { useLazyLoadQuery } from "react-relay";
+import { useLazyLoadQuery, useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 import { z } from "zod";
 
 import type { CreateAuditDialogFrameworksQuery } from "#/__generated__/core/CreateAuditDialogFrameworksQuery.graphql";
 import { ControlledField } from "#/components/form/ControlledField";
-import { useCreateAudit } from "#/hooks/graph/AuditGraph";
+import {
+  useCreateAudit,
+  uploadAuditReportMutation,
+} from "#/hooks/graph/AuditGraph";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 
 const frameworksQuery = graphql`
@@ -62,15 +68,21 @@ const schema = z.object({
 });
 
 type Props = {
-  children: React.ReactNode;
+  children?: React.ReactNode;
   connection: string;
   organizationId: string;
+  file?: File | null;
+  ref?: DialogRef;
+  onClose?: () => void;
 };
 
 export function CreateAuditDialog({
   children,
   connection,
   organizationId,
+  file,
+  ref: externalRef,
+  onClose,
 }: Props) {
   const { __ } = useTranslate();
   const { toast } = useToast();
@@ -84,12 +96,15 @@ export function CreateAuditDialog({
         state: "NOT_STARTED",
       },
     });
-  const ref = useDialogRef();
+  const internalRef = useDialogRef();
+  const ref = externalRef ?? internalRef;
   const createAudit = useCreateAudit(connection);
+  // eslint-disable-next-line relay/generated-typescript-types
+  const [uploadMutate] = useMutation(uploadAuditReportMutation);
 
   const onSubmit = async (data: z.infer<typeof schema>) => {
     try {
-      await createAudit({
+      const response = await createAudit({
         organizationId,
         frameworkId: data.frameworkId,
         name: data.name || null,
@@ -97,13 +112,46 @@ export function CreateAuditDialog({
         validUntil: formatDatetime(data.validUntil),
         state: data.state,
       });
+
+      const auditId = (response as { createAudit: { auditEdge: { node: { id: string } } } })
+        .createAudit.auditEdge.node.id;
+
+      if (file && auditId) {
+        try {
+          await promisifyMutation(uploadMutate)({
+            variables: {
+              input: {
+                auditId,
+                file: null,
+              },
+            },
+            uploadables: {
+              "input.file": file,
+            },
+          });
+          toast({
+            title: __("Success"),
+            description: __("Audit created and report uploaded successfully"),
+            variant: "success",
+          });
+        } catch {
+          toast({
+            title: __("Warning"),
+            description: __("Audit created but report upload failed. You can upload the report from the audit detail page."),
+            variant: "warning",
+          });
+        }
+      } else {
+        toast({
+          title: __("Success"),
+          description: __("Audit created successfully"),
+          variant: "success",
+        });
+      }
+
       ref.current?.close();
       reset();
-      toast({
-        title: __("Success"),
-        description: __("Audit created successfully"),
-        variant: "success",
-      });
+      onClose?.();
     } catch (error) {
       toast({
         title: __("Error"),
@@ -116,14 +164,33 @@ export function CreateAuditDialog({
     }
   };
 
+  const handleClose = () => {
+    onClose?.();
+  };
+
   return (
     <Dialog
       ref={ref}
       trigger={children}
       title={<Breadcrumb items={[__("Audits"), __("New Audit")]} />}
+      onClose={handleClose}
     >
       <form onSubmit={e => void handleSubmit(onSubmit)(e)} className="space-y-4">
         <DialogContent padded className="space-y-4">
+          {file && (
+            <div className="flex items-center gap-3 rounded-lg border border-border-low bg-level-1 p-3">
+              <IconUpload className="text-txt-secondary size-5 shrink-0" />
+              <div className="min-w-0">
+                <p className="text-txt-primary truncate text-sm font-medium">
+                  {file.name}
+                </p>
+                <p className="text-txt-tertiary text-xs">
+                  {(file.size / 1024 / 1024).toFixed(2)} MB
+                </p>
+              </div>
+            </div>
+          )}
+
           <Field label={__("Framework")}>
             <Suspense
               fallback={
