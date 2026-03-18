@@ -1,0 +1,42 @@
+# Stage 1: Build frontend assets
+FROM node:24-alpine AS frontend
+RUN apk add --no-cache findutils
+WORKDIR /app
+COPY package.json package-lock.json turbo.json ./
+COPY apps/ apps/
+COPY packages/ packages/
+COPY pkg/server/api/connect/v1/schema.graphql pkg/server/api/connect/v1/schema.graphql
+COPY pkg/server/api/console/v1/schema.graphql pkg/server/api/console/v1/schema.graphql
+COPY pkg/server/api/trust/v1/schema.graphql pkg/server/api/trust/v1/schema.graphql
+RUN npm ci
+RUN npx turbo run relay
+RUN npx turbo run build
+
+# Stage 2: Build Go binary
+FROM golang:1.25-alpine AS backend
+RUN apk add --no-cache git
+WORKDIR /app
+COPY go.mod go.sum ./
+RUN go mod download
+COPY . .
+COPY --from=frontend /app/apps/console/dist apps/console/dist
+COPY --from=frontend /app/apps/trust/dist apps/trust/dist
+COPY --from=frontend /app/packages/emails/dist packages/emails/dist
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
+    -ldflags="-w -s -X 'main.version=dev' -X 'main.env=prod'" \
+    -o /probod ./cmd/probod
+
+# Stage 3: Runtime (Alpine — required for Render)
+FROM alpine:latest
+RUN apk --no-cache add ca-certificates openssl bash && \
+    addgroup -g 1000 probo && \
+    adduser -D -u 1000 -G probo probo && \
+    mkdir -p /etc/probod && \
+    chown probo:probo /etc/probod
+WORKDIR /app
+COPY --from=backend --chown=probo:probo /probod ./probod
+COPY --chown=probo:probo entrypoint.sh ./entrypoint.sh
+COPY --chown=probo:probo rds-ca-bundle.pem ./rds-ca-bundle.pem
+USER probo
+EXPOSE 8080
+CMD ["bash", "./entrypoint.sh"]
