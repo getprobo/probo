@@ -26,16 +26,21 @@ GraphQL and MCP codegen is triggered by `go generate`:
 ## Reference Documentation
 
 Detailed guides for specific subsystems live in `contrib/claude/`:
-- [`contrib/claude/relay.md`](contrib/claude/relay.md) — Frontend Relay client (queries, fragments, mutations, pagination)
-- [`contrib/claude/graphql.md`](contrib/claude/graphql.md) — Go GraphQL backend (gqlgen, @goModel, connection types, cursor pagination)
+- [`contrib/claude/authorization.md`](contrib/claude/authorization.md) — IAM policy-based authorization (policies, conditions, roles, AuthorizationAttributer)
+- [`contrib/claude/cli.md`](contrib/claude/cli.md) — CLI command patterns (cobra, huh prompts, pagination, output formatting)
 - [`contrib/claude/commit.md`](contrib/claude/commit.md) — Commit message conventions
-- [`contrib/claude/license.md`](contrib/claude/license.md) — ISC license header (all file types)
+- [`contrib/claude/coredata.md`](contrib/claude/coredata.md) — Data access layer (Scoper, SQL patterns, filters, order fields, migrations)
+- [`contrib/claude/e2e.md`](contrib/claude/e2e.md) — End-to-end testing (factory builders, RBAC tests, tenant isolation, assertions)
+- [`contrib/claude/go-service.md`](contrib/claude/go-service.md) — Go service orchestration (Run, graceful shutdown, crash propagation)
 - [`contrib/claude/go-testing.md`](contrib/claude/go-testing.md) — Go test conventions (parallel, require vs assert, naming)
 - [`contrib/claude/go-worker.md`](contrib/claude/go-worker.md) — Go worker pattern (poll-based, bounded concurrency, FOR UPDATE SKIP LOCKED)
-- [`contrib/claude/go-service.md`](contrib/claude/go-service.md) — Go service orchestration (Run, graceful shutdown, crash propagation)
-- [`contrib/claude/sandbox.md`](contrib/claude/sandbox.md) — Lima sandbox environments (create, manage, access services)
+- [`contrib/claude/graphql.md`](contrib/claude/graphql.md) — Go GraphQL backend (gqlgen, @goModel, connection types, cursor pagination)
+- [`contrib/claude/license.md`](contrib/claude/license.md) — ISC license header (all file types)
+- [`contrib/claude/mcp.md`](contrib/claude/mcp.md) — MCP API patterns (specification.yaml, mcpgen, resolvers, type helpers)
+- [`contrib/claude/relay.md`](contrib/claude/relay.md) — Frontend Relay client (queries, fragments, mutations, pagination)
 - [`contrib/claude/release.md`](contrib/claude/release.md) — Release process (version bump, changelog, tag, push)
 - [`contrib/claude/sandbox.md`](contrib/claude/sandbox.md) — Lima sandbox environments (create, manage, access services)
+- [`contrib/claude/validation.md`](contrib/claude/validation.md) — Validation framework (fluent API, validators, error codes, propagation)
 
 ## API Surface Rules
 
