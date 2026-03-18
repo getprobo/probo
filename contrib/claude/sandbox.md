@@ -49,6 +49,15 @@ After `sandbox.sh status`, use the VM IP to access services from the host:
 | Keycloak | `http://<vm-ip>:8082` |
 | PostgreSQL | `psql -h <vm-ip> -U probod` |
 
+## Auto-generated configuration
+
+During provisioning, the sandbox automatically generates:
+
+- **`/etc/probod/config.yml`** — probod config with the VM IP as cookie domain, `secure: false`, and correct CORS origins
+- **`apps/console/.env`** and **`apps/trust/.env`** — `VITE_API_URL` pointing to the VM IP
+
+Use `-cfg-file /etc/probod/config.yml` when running probod in the sandbox.
+
 ## Common workflows
 
 **Build and test:**

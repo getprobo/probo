@@ -49,6 +49,9 @@ PROBOD_SRC=	cmd/probod/main.go
 PRB_BIN=	bin/prb
 PRB_SRC=	cmd/prb/main.go
 
+PROBOD_BOOTSTRAP_BIN=	bin/probod-bootstrap
+PROBOD_BOOTSTRAP_SRC=	cmd/probod-bootstrap/main.go
+
 ifndef SKIP_APPS
 PROBOD_BIN_EXTRA_DEPS += \
 	@probo/console \
@@ -123,7 +126,7 @@ coverage-combined: coverage-report test-e2e-coverage ## Generate combined covera
 	$(GO) tool cover -html=coverage-combined.out -o=coverage-combined.html
 
 .PHONY: build
-build: bin/probod bin/prb
+build: bin/probod bin/prb bin/probod-bootstrap
 
 .PHONY: sbom-docker
 sbom-docker: docker-build
@@ -183,6 +186,10 @@ bin/probod: pkg/server/api/connect/v1/schema/schema.go \
 .PHONY: bin/prb
 bin/prb:
 	$(GO_BUILD) -o $(PRB_BIN) $(PRB_SRC)
+
+.PHONY: bin/probod-bootstrap
+bin/probod-bootstrap:
+	$(GO_BUILD) -o $(PROBOD_BOOTSTRAP_BIN) $(PROBOD_BOOTSTRAP_SRC)
 
 .PHONY: @probo/emails
 @probo/emails:

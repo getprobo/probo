@@ -84,3 +84,26 @@ LIMA_HOME=$(eval echo "~${LIMA_USER}")
 mkdir -p /root/.parallel "${LIMA_HOME}/.parallel"
 touch /root/.parallel/will-cite "${LIMA_HOME}/.parallel/will-cite"
 chown -R "${LIMA_USER}:${LIMA_USER}" "${LIMA_HOME}/.parallel"
+
+# Generate sandbox-specific probod config and frontend .env files
+VM_IP=$(ip -4 -j addr show dev lima0 | jq -r '.[0].addr_info[0].local')
+
+su - "${LIMA_USER}" -c "cd /workspace && make bin/probod-bootstrap"
+
+mkdir -p /etc/probod
+
+PROBOD_BASE_URL="http://${VM_IP}:8080" \
+AUTH_COOKIE_DOMAIN="${VM_IP}" \
+AUTH_COOKIE_SECURE=false \
+AUTH_COOKIE_SECRET="this-is-a-secure-secret-for-cookie-signing-at-least-32-bytes" \
+AUTH_PASSWORD_PEPPER="this-is-a-secure-pepper-for-password-hashing-at-least-32-bytes" \
+PROBOD_ENCRYPTION_KEY="thisisnotasecretAAAAAAAAAAAAAAAAAAAAAAAAAAA=" \
+API_CORS_ALLOWED_ORIGINS="http://${VM_IP}:8080,http://${VM_IP}:5173,http://${VM_IP}:5174" \
+AWS_ENDPOINT="http://127.0.0.1:8333" \
+AWS_ACCESS_KEY_ID="probod" \
+AWS_SECRET_ACCESS_KEY="thisisnotasecret" \
+AWS_USE_PATH_STYLE=true \
+    /workspace/bin/probod-bootstrap -output /etc/probod/config.yml
+
+echo "VITE_API_URL=http://${VM_IP}:8080" > /workspace/apps/console/.env
+echo "VITE_API_URL=http://${VM_IP}:8080" > /workspace/apps/trust/.env

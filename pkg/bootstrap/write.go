@@ -20,7 +20,7 @@ import (
 	"path/filepath"
 
 	"go.probo.inc/probo/pkg/probod"
-	"gopkg.in/yaml.v3"
+	"sigs.k8s.io/yaml"
 )
 
 func WriteConfig(cfg *probod.FullConfig, path string) error {
