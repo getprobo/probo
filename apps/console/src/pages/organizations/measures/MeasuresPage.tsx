@@ -1,8 +1,8 @@
 import {
   formatError,
   getMeasureStateLabel,
-  sprintf,
   type GraphQLError,
+  sprintf,
 } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
