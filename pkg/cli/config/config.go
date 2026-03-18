@@ -17,9 +17,11 @@ package config
 import (
 	"fmt"
 	"maps"
+	"net/url"
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 	"time"
 
 	"gopkg.in/yaml.v3"
@@ -147,6 +149,16 @@ func Load() (*Config, error) {
 		cfg.Hosts = make(map[string]*HostConfig)
 	}
 
+	normalized := make(map[string]*HostConfig, len(cfg.Hosts))
+	for host, hc := range cfg.Hosts {
+		normalized[normalizeHost(host)] = hc
+	}
+	cfg.Hosts = normalized
+
+	if cfg.ActiveHost != "" {
+		cfg.ActiveHost = normalizeHost(cfg.ActiveHost)
+	}
+
 	return &cfg, nil
 }
 
@@ -172,8 +184,19 @@ func (c *Config) Save() error {
 	return nil
 }
 
+func normalizeHost(host string) string {
+	if strings.HasPrefix(host, "http://") || strings.HasPrefix(host, "https://") {
+		if u, err := url.Parse(host); err == nil {
+			return u.Host
+		}
+	}
+
+	return strings.TrimRight(host, "/")
+}
+
 func (c *Config) DefaultHost() (string, *HostConfig, error) {
 	if host := os.Getenv("PROBO_HOST"); host != "" {
+		host = normalizeHost(host)
 		hc := &HostConfig{}
 		if saved, ok := c.Hosts[host]; ok {
 			*hc = *saved

@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"os/exec"
 	"runtime"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
@@ -57,11 +58,15 @@ func NewCmdBrowse(f *cmdutil.Factory) *cobra.Command {
 				flagOrg = hc.Organization
 			}
 
+			if !strings.HasPrefix(host, "http://") && !strings.HasPrefix(host, "https://") {
+				host = "https://" + host
+			}
+
 			var url string
 			if flagOrg != "" {
-				url = fmt.Sprintf("https://%s/organizations/%s", host, flagOrg)
+				url = fmt.Sprintf("%s/organizations/%s", host, flagOrg)
 			} else {
-				url = fmt.Sprintf("https://%s", host)
+				url = host
 			}
 
 			if flagNoBrowser || f.IOStreams.ForceNonInteractive {
