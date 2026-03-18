@@ -4,7 +4,6 @@ import {
   formatError,
   getAuditStateLabel,
   type GraphQLError,
-  promisifyMutation,
 } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import {
@@ -30,11 +29,27 @@ import { z } from "zod";
 
 import type { CreateAuditDialogFrameworksQuery } from "#/__generated__/core/CreateAuditDialogFrameworksQuery.graphql";
 import { ControlledField } from "#/components/form/ControlledField";
-import {
-  useCreateAudit,
-  uploadAuditReportMutation,
-} from "#/hooks/graph/AuditGraph";
+import { useCreateAudit } from "#/hooks/graph/AuditGraph";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
+
+const uploadAuditReportMutation = graphql`
+  mutation CreateAuditDialogUploadReportMutation(
+    $input: UploadAuditReportInput!
+  ) {
+    uploadAuditReport(input: $input) {
+      audit {
+        id
+        report {
+          id
+          filename
+          downloadUrl
+          createdAt
+        }
+        updatedAt
+      }
+    }
+  }
+`;
 
 const frameworksQuery = graphql`
   query CreateAuditDialogFrameworksQuery($organizationId: ID!) {
@@ -99,7 +114,6 @@ export function CreateAuditDialog({
   const internalRef = useDialogRef();
   const ref = externalRef ?? internalRef;
   const createAudit = useCreateAudit(connection);
-  // eslint-disable-next-line relay/generated-typescript-types
   const [uploadMutate] = useMutation(uploadAuditReportMutation);
 
   const onSubmit = async (data: z.infer<typeof schema>) => {
@@ -118,16 +132,20 @@ export function CreateAuditDialog({
 
       if (file && auditId) {
         try {
-          await promisifyMutation(uploadMutate)({
-            variables: {
-              input: {
-                auditId,
-                file: null,
+          await new Promise<void>((resolve, reject) => {
+            uploadMutate({
+              variables: {
+                input: {
+                  auditId,
+                  file: null,
+                },
               },
-            },
-            uploadables: {
-              "input.file": file,
-            },
+              uploadables: {
+                "input.file": file,
+              },
+              onCompleted: () => resolve(),
+              onError: (error) => reject(error),
+            });
           });
           toast({
             title: __("Success"),
