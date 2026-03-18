@@ -16,6 +16,7 @@
 package statichandler
 
 import (
+	"bytes"
 	"compress/gzip"
 	"crypto/md5"
 	"encoding/hex"
@@ -144,8 +145,14 @@ func (s *Server) serveIndex(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
 
 	if renderer, ok := s.fileRenderers["/index.html"]; ok {
+		var buf bytes.Buffer
+		if err := renderer(&buf, r); err != nil {
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+
 		w.WriteHeader(http.StatusOK)
-		_ = renderer(w, r)
+		_, _ = w.Write(buf.Bytes())
 		return
 	}
 
@@ -183,10 +190,16 @@ func (s *Server) ServeSPA(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if renderer, ok := s.fileRenderers[path]; ok {
+		var buf bytes.Buffer
+		if err := renderer(&buf, r); err != nil {
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
 		w.WriteHeader(http.StatusOK)
-		_ = renderer(w, r)
+		_, _ = w.Write(buf.Bytes())
 		return
 	}
 
