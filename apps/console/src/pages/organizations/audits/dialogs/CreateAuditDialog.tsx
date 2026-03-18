@@ -9,9 +9,9 @@ import { useTranslate } from "@probo/i18n";
 import {
   Breadcrumb,
   Button,
-  type DialogRef,
   Dialog,
   DialogContent,
+  type DialogRef,
   DialogFooter,
   Field,
   IconUpload,
@@ -28,6 +28,7 @@ import { graphql } from "relay-runtime";
 import { z } from "zod";
 
 import type { CreateAuditDialogFrameworksQuery } from "#/__generated__/core/CreateAuditDialogFrameworksQuery.graphql";
+import type { CreateAuditDialogUploadReportMutation } from "#/__generated__/core/CreateAuditDialogUploadReportMutation.graphql";
 import { ControlledField } from "#/components/form/ControlledField";
 import { useCreateAudit } from "#/hooks/graph/AuditGraph";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
@@ -114,7 +115,7 @@ export function CreateAuditDialog({
   const internalRef = useDialogRef();
   const ref = externalRef ?? internalRef;
   const createAudit = useCreateAudit(connection);
-  const [uploadMutate] = useMutation(uploadAuditReportMutation);
+  const [uploadMutate] = useMutation<CreateAuditDialogUploadReportMutation>(uploadAuditReportMutation);
 
   const onSubmit = async (data: z.infer<typeof schema>) => {
     try {
@@ -144,7 +145,7 @@ export function CreateAuditDialog({
                 "input.file": file,
               },
               onCompleted: () => resolve(),
-              onError: (error) => reject(error),
+              onError: error => reject(error),
             });
           });
           toast({
@@ -203,7 +204,8 @@ export function CreateAuditDialog({
                   {file.name}
                 </p>
                 <p className="text-txt-tertiary text-xs">
-                  {(file.size / 1024 / 1024).toFixed(2)} MB
+                  {(file.size / 1024 / 1024).toFixed(2)}
+                  {" MB"}
                 </p>
               </div>
             </div>
