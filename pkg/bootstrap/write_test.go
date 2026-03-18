@@ -22,7 +22,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/pkg/probod"
-	"gopkg.in/yaml.v3"
+	"sigs.k8s.io/yaml"
 )
 
 func TestWriteConfig(t *testing.T) {
@@ -149,5 +149,5 @@ func TestWriteConfig_CompleteConfig(t *testing.T) {
 	assert.Equal(t, cfg.Probod.Api.Cors.AllowedOrigins, loaded.Probod.Api.Cors.AllowedOrigins)
 	assert.Equal(t, cfg.Probod.Pg.PoolSize, loaded.Probod.Pg.PoolSize)
 	require.Len(t, loaded.Probod.Connectors, 1)
-	assert.Equal(t, "slack", loaded.Probod.Connectors[0].Provider)
+	assert.Equal(t, "SLACK", loaded.Probod.Connectors[0].Provider)
 }
