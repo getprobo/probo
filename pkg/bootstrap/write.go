@@ -15,12 +15,13 @@
 package bootstrap
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
 
 	"go.probo.inc/probo/pkg/probod"
-	"gopkg.in/yaml.v3"
+	"sigs.k8s.io/yaml"
 )
 
 func WriteConfig(cfg *probod.FullConfig, path string) error {
@@ -29,9 +30,14 @@ func WriteConfig(cfg *probod.FullConfig, path string) error {
 		return fmt.Errorf("create directory %s: %w", dir, err)
 	}
 
-	data, err := yaml.Marshal(cfg)
+	jsonData, err := json.Marshal(cfg)
 	if err != nil {
 		return fmt.Errorf("marshal config: %w", err)
+	}
+
+	data, err := yaml.JSONToYAML(jsonData)
+	if err != nil {
+		return fmt.Errorf("convert to yaml: %w", err)
 	}
 
 	if err := os.WriteFile(path, data, 0600); err != nil {
