@@ -196,6 +196,11 @@ export default function AuditsPage(props: Props) {
     if (mainRef.current) {
       mainRef.current.style.position = "relative";
     }
+    return () => {
+      if (mainRef.current) {
+        mainRef.current.style.position = "";
+      }
+    };
   }, []);
 
   return (
