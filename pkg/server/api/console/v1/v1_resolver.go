@@ -86,7 +86,7 @@ func (r *applicabilityStatementConnectionResolver) TotalCount(ctx context.Contex
 		return count, nil
 	}
 
-	r.logger.ErrorCtx(ctx, "not implemented: TotalCount for parent type %T")
+	r.logger.ErrorCtx(ctx, "unsupported resolver for applicability statement connection", log.String("resolver", fmt.Sprintf("%T", obj.Resolver)))
 	return 0, gqlutils.Internal(ctx)
 }
 
@@ -1771,7 +1771,7 @@ func (r *mailingListSubscriberConnectionResolver) TotalCount(ctx context.Context
 		return count, nil
 	}
 
-	r.logger.ErrorCtx(ctx, "not implemented: TotalCount for parent type %T")
+	r.logger.ErrorCtx(ctx, "unsupported resolver for mailing list subscriber connection", log.String("resolver", fmt.Sprintf("%T", obj.Resolver)))
 	return 0, gqlutils.Internal(ctx)
 }
 
@@ -7278,7 +7278,7 @@ func (r *profileConnectionResolver) TotalCount(ctx context.Context, obj *types.P
 		return count, nil
 	}
 
-	r.logger.ErrorCtx(ctx, "not implemented: TotalCount for parent type %T")
+	r.logger.ErrorCtx(ctx, "unsupported resolver for profile connection", log.String("resolver", fmt.Sprintf("%T", obj.Resolver)))
 	return 0, gqlutils.Internal(ctx)
 }
 
