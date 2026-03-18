@@ -37,6 +37,7 @@ import (
 	console_web "go.probo.inc/probo/pkg/server/web"
 	"go.probo.inc/probo/pkg/slack"
 	"go.probo.inc/probo/pkg/trust"
+	"go.gearno.de/x/ref"
 )
 
 type Config struct {
@@ -97,7 +98,7 @@ func NewServer(cfg Config) (*Server, error) {
 		return nil, err
 	}
 
-	trustWebServer, err := trust_web.NewServer()
+	trustWebServer, err := trust_web.NewServer(compliancePageHeadData(cfg.Trust))
 	if err != nil {
 		return nil, err
 	}
@@ -194,4 +195,26 @@ func (s *Server) TrustCenterHandler() http.Handler {
 	r.Mount("/", s.trustCenterRouter())
 
 	return r
+}
+
+func compliancePageHeadData(trustService *trust.Service) trust_web.HeadDataFunc {
+	return func(r *http.Request) trust_web.HeadData {
+		tc := compliancepage.CompliancePageFromContext(r.Context())
+		if tc == nil {
+			return trust_web.HeadData{Title: "Compliance Page"}
+		}
+
+		org, err := trustService.GetOrganizationByTrustCenterID(r.Context(), tc.ID)
+		if err != nil || org == nil {
+			return trust_web.HeadData{Title: "Compliance Page"}
+		}
+
+		baseURL := compliancepage.CompliancePageBaseURLFromContext(r.Context())
+
+		return trust_web.HeadData{
+			Title:       org.Name + " — Compliance",
+			Description: org.Name + " Compliance Page",
+			OGURL:       ref.UnrefOrZero(baseURL),
+		}
+	}
 }

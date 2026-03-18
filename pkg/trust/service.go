@@ -273,6 +273,30 @@ func (s *Service) EmailPresenterConfigByOrganizationID(ctx context.Context, orgI
 	return s.WithTenant(orgID.TenantID()).TrustCenters.EmailPresenterConfig(ctx, trustCenter.ID)
 }
 
+func (s *Service) GetOrganizationByTrustCenterID(
+	ctx context.Context,
+	trustCenterID gid.GID,
+) (*coredata.Organization, error) {
+	trustCenter, err := s.Get(ctx, trustCenterID)
+	if err != nil {
+		return nil, fmt.Errorf("cannot load trust center: %w", err)
+	}
+
+	org := &coredata.Organization{}
+
+	err = s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			return org.LoadByID(ctx, conn, coredata.NewNoScope(), trustCenter.OrganizationID)
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot load organization: %w", err)
+	}
+
+	return org, nil
+}
+
 func (s *Service) GetMembershipByCompliancePageIDAndIdentityID(ctx context.Context, compliancePageID gid.GID, identityID gid.GID) (*coredata.TrustCenterAccess, error) {
 	membership := &coredata.TrustCenterAccess{}
 

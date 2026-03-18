@@ -16,29 +16,72 @@
 package trust
 
 import (
+	"fmt"
+	"html/template"
+	"io"
+	"io/fs"
 	"net/http"
 
 	truststatics "go.probo.inc/probo/apps/trust"
 	"go.probo.inc/probo/pkg/server/statichandler"
 )
 
-type Server struct {
-	*statichandler.Server
-}
+type (
+	HeadData struct {
+		Title       string
+		Description string
+		OGURL       string
+	}
 
-func NewServer() (*Server, error) {
+	HeadDataFunc func(r *http.Request) HeadData
+
+	Server struct {
+		*statichandler.Server
+	}
+)
+
+func NewServer(headDataFunc HeadDataFunc) (*Server, error) {
+	renderer, err := buildIndexRenderer(headDataFunc)
+	if err != nil {
+		return nil, err
+	}
+
 	gzipOptions := statichandler.GzipOptions{
 		EnableFileTypeCheck: true,
 		FileTypes:           []string{".js", ".css", ".html"},
 	}
 
-	spaServer, err := statichandler.NewServer(truststatics.StaticFiles, "dist", gzipOptions)
+	spaServer, err := statichandler.NewServer(
+		truststatics.StaticFiles,
+		"dist",
+		gzipOptions,
+		statichandler.WithFileRenderer("/index.html", renderer),
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	return &Server{
-		Server: spaServer,
+	return &Server{Server: spaServer}, nil
+}
+
+func buildIndexRenderer(headDataFunc HeadDataFunc) (statichandler.FileRenderer, error) {
+	subFS, err := fs.Sub(truststatics.StaticFiles, "dist")
+	if err != nil {
+		return nil, fmt.Errorf("cannot open dist: %w", err)
+	}
+
+	indexBytes, err := fs.ReadFile(subFS, "index.html")
+	if err != nil {
+		return nil, fmt.Errorf("cannot read index.html: %w", err)
+	}
+
+	tmpl, err := template.New("index").Parse(string(indexBytes))
+	if err != nil {
+		return nil, fmt.Errorf("cannot parse index.html template: %w", err)
+	}
+
+	return func(w io.Writer, r *http.Request) error {
+		return tmpl.Execute(w, headDataFunc(r))
 	}, nil
 }
 

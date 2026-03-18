@@ -27,20 +27,39 @@ import (
 	"strings"
 )
 
-type GzipOptions struct {
-	EnableFileTypeCheck bool
-	FileTypes           []string
+type (
+	// FileRenderer renders dynamic content for a given file path. When
+	// registered via WithFileRenderer, the server calls it instead of serving
+	// the static embedded bytes. The renderer writes the response body to w.
+	FileRenderer func(w io.Writer, r *http.Request) error
+
+	Option func(*Server)
+
+	GzipOptions struct {
+		EnableFileTypeCheck bool
+		FileTypes           []string
+	}
+
+	Server struct {
+		spaFS         http.FileSystem
+		etags         map[string]string
+		indexETag     string
+		indexContent  []byte
+		gzipOptions   GzipOptions
+		fileRenderers map[string]FileRenderer
+	}
+)
+
+// WithFileRenderer registers a dynamic renderer for the given path (e.g.
+// "/index.html"). When the server would serve that file, it calls the
+// renderer instead. ETag-based caching is disabled for rendered files.
+func WithFileRenderer(path string, renderer FileRenderer) Option {
+	return func(s *Server) {
+		s.fileRenderers[path] = renderer
+	}
 }
 
-type Server struct {
-	spaFS        http.FileSystem
-	etags        map[string]string
-	indexETag    string
-	indexContent []byte
-	gzipOptions  GzipOptions
-}
-
-func NewServer(staticFiles fs.FS, distPath string, gzipOptions GzipOptions) (*Server, error) {
+func NewServer(staticFiles fs.FS, distPath string, gzipOptions GzipOptions, opts ...Option) (*Server, error) {
 	subFS, err := fs.Sub(staticFiles, distPath)
 	if err != nil {
 		return nil, err
@@ -104,13 +123,41 @@ func NewServer(staticFiles fs.FS, distPath string, gzipOptions GzipOptions) (*Se
 		return nil, err
 	}
 
-	return &Server{
-		spaFS:        http.FS(subFS),
-		indexETag:    indexETag,
-		indexContent: indexContent,
-		etags:        etags,
-		gzipOptions:  gzipOptions,
-	}, nil
+	s := &Server{
+		spaFS:         http.FS(subFS),
+		indexETag:     indexETag,
+		indexContent:  indexContent,
+		etags:         etags,
+		gzipOptions:   gzipOptions,
+		fileRenderers: make(map[string]FileRenderer),
+	}
+
+	for _, opt := range opts {
+		opt(s)
+	}
+
+	return s, nil
+}
+
+func (s *Server) serveIndex(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+
+	if renderer, ok := s.fileRenderers["/index.html"]; ok {
+		w.WriteHeader(http.StatusOK)
+		_ = renderer(w, r)
+		return
+	}
+
+	w.Header().Set("ETag", `"`+s.indexETag+`"`)
+
+	if r.Header.Get("If-None-Match") == `"`+s.indexETag+`"` {
+		w.WriteHeader(http.StatusNotModified)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write(s.indexContent)
 }
 
 func (s *Server) ServeSPA(w http.ResponseWriter, r *http.Request) {
@@ -118,18 +165,7 @@ func (s *Server) ServeSPA(w http.ResponseWriter, r *http.Request) {
 
 	f, err := s.spaFS.Open(path)
 	if err != nil {
-		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		w.Header().Set("ETag", `"`+s.indexETag+`"`)
-
-		if r.Header.Get("If-None-Match") == `"`+s.indexETag+`"` {
-			w.WriteHeader(http.StatusNotModified)
-			return
-		}
-
-		w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
-
-		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write(s.indexContent)
+		s.serveIndex(w, r)
 		return
 	}
 
@@ -142,20 +178,15 @@ func (s *Server) ServeSPA(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if info.IsDir() {
+		s.serveIndex(w, r)
+		return
+	}
+
+	if renderer, ok := s.fileRenderers[path]; ok {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		w.Header().Set("ETag", `"`+s.indexETag+`"`)
-
-		if r.Header.Get("If-None-Match") == `"`+s.indexETag+`"` {
-			w.WriteHeader(http.StatusNotModified)
-			return
-		}
-
 		w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
-		w.Header().Set("Pragma", "no-cache")
-		w.Header().Set("Expires", "0")
-
 		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write(s.indexContent)
+		_ = renderer(w, r)
 		return
 	}
 
