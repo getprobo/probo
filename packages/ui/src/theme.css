@@ -281,4 +281,68 @@ button[data-cell]:focus-visible {
 .ProseMirror-focused {
     outline-width: 0 !important;
     outline-color: transparent !important;
+    outline-style: none !important;
+}
+
+.tiptap p { @apply py-2; }
+
+.tiptap strong { @apply font-semibold; }
+
+.tiptap h1 {
+    @apply text-4xl font-semibold pt-4;
+}
+
+.tiptap h2 {
+    @apply text-3xl font-semibold pt-3;
+}
+
+.tiptap h3 {
+    @apply text-2xl font-semibold pt-2;
+}
+
+.tiptap ul {
+    @apply list-disc list-inside py-2;
+
+    li {
+        p { @apply inline-block py-0 }
+    }
+    li::marker { @apply mx-2!; }
+}
+
+.tiptap ol {
+    @apply list-decimal list-inside py-2;
+
+    li {
+        p { @apply inline-block py-0 }
+    }
+    li::marker { @apply mx-2!; }
+}
+
+.tiptap a {
+    @apply text-txt-info underline font-normal;
+}
+
+.tiptap.pointer-on-hovered-link {
+    a:hover { cursor: pointer; }
+}
+
+.tiptap blockquote {
+    @apply py-2 pl-4 border-l-4 border-l-border-solid;
+    p { @apply py-0; }
+}
+
+.tiptap hr {
+    @apply my-4 border-t-border-solid border-t;
+}
+
+.tiptap pre {
+    @apply py-4 px-6 bg-border-solid rounded-lg text-sm;
+}
+
+.tiptap code {
+    @apply text-inherit font-mono bg-border-solid rounded-md;
+}
+
+.tiptap p code {
+    @apply py-0.5 px-1;
 }
