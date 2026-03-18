@@ -190,22 +190,23 @@ export default function AuditsPage(props: Props) {
     setDroppedFile(null);
   };
 
-  const mainRef = useRef<HTMLElement | null>(null);
+  const [mainEl, setMainEl] = useState<HTMLElement | null>(null);
   useEffect(() => {
-    mainRef.current = document.querySelector("main");
-    if (mainRef.current) {
-      mainRef.current.style.position = "relative";
+    const el = document.querySelector("main");
+    if (el) {
+      el.style.position = "relative";
+      setMainEl(el);
     }
     return () => {
-      if (mainRef.current) {
-        mainRef.current.style.position = "";
+      if (el) {
+        el.style.position = "";
       }
     };
   }, []);
 
   return (
     <div className="space-y-6">
-      {isDragging && canCreateAudit && mainRef.current && createPortal(
+      {isDragging && canCreateAudit && mainEl && createPortal(
         <div
           {...getRootProps()}
           className="border-primary bg-primary/5 pointer-events-auto absolute inset-0 z-40 flex flex-col items-center justify-center border-2 border-dashed"
@@ -216,7 +217,7 @@ export default function AuditsPage(props: Props) {
             {__("Drop a PDF to create an audit with a report")}
           </p>
         </div>,
-        mainRef.current,
+        mainEl,
       )}
       <PageHeader
         title={__("Audits")}
