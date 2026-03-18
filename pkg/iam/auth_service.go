@@ -628,21 +628,12 @@ func (s AuthService) OpenSessionWithMagicLink(ctx context.Context, tokenString s
 			hashedValue := HashToken(tokenString)
 			token := &coredata.Token{}
 
-			if err := s.pg.WithConn(
-				ctx,
-				func(conn pg.Conn) error {
-					if err := token.LoadByHashedValueForUpdate(ctx, conn, hashedValue); err != nil {
-						if errors.Is(err, coredata.ErrResourceNotFound) {
-							return NewInvalidTokenError()
-						}
+			if err := token.LoadByHashedValueForUpdate(ctx, tx, hashedValue); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return NewInvalidTokenError()
+				}
 
-						return fmt.Errorf("cannot load token by hashed value: %w", err)
-					}
-
-					return nil
-				},
-			); err != nil {
-				return fmt.Errorf("cannot load token: %w", err)
+				return fmt.Errorf("cannot load token by hashed value: %w", err)
 			}
 
 			err := identity.LoadByEmail(ctx, tx, payload.Data.Email)

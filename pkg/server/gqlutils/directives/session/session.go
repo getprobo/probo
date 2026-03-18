@@ -92,7 +92,7 @@ func Directive(ctx context.Context, obj any, next graphql.Resolver, required Ses
 		if identity == nil {
 			return nil, gqlutils.Unauthenticatedf(
 				ctx,
-				"authentication is required to access this resouce",
+				"authentication is required to access this resource",
 			)
 		}
 	case SessionRequirementNone:

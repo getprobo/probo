@@ -37,7 +37,7 @@ func NewIdentityPresenceMiddleware() func(next http.Handler) http.Handler {
 							Errors: gqlerror.List{
 								gqlutils.Unauthenticatedf(
 									r.Context(),
-									"authentication is required to access this resouce",
+									"authentication is required to access this resource",
 								),
 							},
 						},
