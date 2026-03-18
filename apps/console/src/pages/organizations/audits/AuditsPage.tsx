@@ -21,7 +21,7 @@ import {
   Tr,
   useDialogRef,
 } from "@probo/ui";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import {
   graphql,
@@ -110,10 +110,14 @@ export default function AuditsPage(props: Props) {
 
   const canCreateAudit = data.node.canCreateAudit;
   const [droppedFile, setDroppedFile] = useState<File | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
   const dropDialogRef = useDialogRef();
+  const dragCounterRef = useRef(0);
 
   const onDrop = useCallback(
     (acceptedFiles: File[]) => {
+      setIsDragging(false);
+      dragCounterRef.current = 0;
       if (!canCreateAudit || acceptedFiles.length === 0) return;
       setDroppedFile(acceptedFiles[0]);
       dropDialogRef.current?.open();
@@ -121,7 +125,48 @@ export default function AuditsPage(props: Props) {
     [canCreateAudit, dropDialogRef],
   );
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+  useEffect(() => {
+    if (!canCreateAudit) return;
+
+    const handleDragEnter = (e: DragEvent) => {
+      e.preventDefault();
+      dragCounterRef.current++;
+      if (e.dataTransfer?.types.includes("Files")) {
+        setIsDragging(true);
+      }
+    };
+
+    const handleDragLeave = (e: DragEvent) => {
+      e.preventDefault();
+      dragCounterRef.current--;
+      if (dragCounterRef.current === 0) {
+        setIsDragging(false);
+      }
+    };
+
+    const handleDragOver = (e: DragEvent) => {
+      e.preventDefault();
+    };
+
+    const handleDrop = () => {
+      setIsDragging(false);
+      dragCounterRef.current = 0;
+    };
+
+    window.addEventListener("dragenter", handleDragEnter);
+    window.addEventListener("dragleave", handleDragLeave);
+    window.addEventListener("dragover", handleDragOver);
+    window.addEventListener("drop", handleDrop);
+
+    return () => {
+      window.removeEventListener("dragenter", handleDragEnter);
+      window.removeEventListener("dragleave", handleDragLeave);
+      window.removeEventListener("dragover", handleDragOver);
+      window.removeEventListener("drop", handleDrop);
+    };
+  }, [canCreateAudit]);
+
+  const { getRootProps, getInputProps } = useDropzone({
     noClick: true,
     noKeyboard: true,
     accept: { "application/pdf": [".pdf"] },
@@ -135,10 +180,13 @@ export default function AuditsPage(props: Props) {
   };
 
   return (
-    <div {...getRootProps()} className="relative space-y-6">
-      <input {...getInputProps()} />
-      {isDragActive && canCreateAudit && (
-        <div className="border-primary bg-primary/5 pointer-events-none absolute inset-0 z-40 flex flex-col items-center justify-center rounded-xl border-2 border-dashed">
+    <div className="space-y-6">
+      {isDragging && canCreateAudit && (
+        <div
+          {...getRootProps()}
+          className="border-primary bg-primary/5 pointer-events-auto fixed inset-0 z-40 flex flex-col items-center justify-center border-2 border-dashed"
+        >
+          <input {...getInputProps()} />
           <IconUpload className="text-primary mb-2 size-8" />
           <p className="text-primary text-sm font-medium">
             {__("Drop a PDF to create an audit with a report")}
