@@ -4,6 +4,11 @@
 
 set -euo pipefail
 
+# Read Lima user from cidata (values are unquoted so we cannot source the file
+# directly — LIMA_CIDATA_COMMENT may contain spaces).
+LIMA_CIDATA_USER="$(sed -n 's/^LIMA_CIDATA_USER=//p' /mnt/lima-cidata/lima.env)"
+export LIMA_CIDATA_USER
+
 export DEBIAN_FRONTEND=noninteractive
 
 GO_VERSION="1.26.1"
@@ -64,6 +69,7 @@ GOEOF
 chmod +x /etc/profile.d/go.sh
 
 export PATH="/usr/local/go/bin:$PATH"
+export HOME="${HOME:-/root}"
 
 GOBIN=/usr/local/bin /usr/local/go/bin/go install "gotest.tools/gotestsum@${GOTESTSUM_VERSION}"
 GOBIN=/usr/local/bin /usr/local/go/bin/go install "github.com/golangci/golangci-lint/v2/cmd/golangci-lint@${GOLANGCI_LINT_VERSION}"
@@ -90,7 +96,7 @@ chown -R "${LIMA_USER}:${LIMA_USER}" "${LIMA_HOME}/.parallel"
 # Generate sandbox-specific probod config and frontend .env files
 VM_IP=$(ip -4 -j addr show dev lima0 | jq -r '.[0].addr_info[0].local')
 
-su - "${LIMA_USER}" -c "cd /workspace && make bin/probod-bootstrap"
+su - "${LIMA_USER}" -c "export PATH=/usr/local/go/bin:\$HOME/go/bin:\$PATH && cd /workspace && make bin/probod-bootstrap"
 
 mkdir -p /etc/probod
 
