@@ -11,8 +11,8 @@ import {
   Button,
   Dialog,
   DialogContent,
-  type DialogRef,
   DialogFooter,
+  type DialogRef,
   Field,
   IconUpload,
   Input,
@@ -144,7 +144,13 @@ export function CreateAuditDialog({
               uploadables: {
                 "input.file": file,
               },
-              onCompleted: () => resolve(),
+              onCompleted: (_response, errors) => {
+                if (errors) {
+                  reject(errors);
+                } else {
+                  resolve();
+                }
+              },
               onError: error => reject(error),
             });
           });
