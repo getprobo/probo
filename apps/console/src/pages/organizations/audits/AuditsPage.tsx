@@ -22,8 +22,7 @@ import {
   useDialogRef,
   useToast,
 } from "@probo/ui";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
+import { useCallback, useEffect, useRef } from "react";
 import { useDropzone } from "react-dropzone";
 import {
   graphql,
@@ -190,34 +189,19 @@ export default function AuditsPage(props: Props) {
     setDroppedFile(null);
   };
 
-  const [mainEl, setMainEl] = useState<HTMLElement | null>(null);
-  useEffect(() => {
-    const el = document.querySelector("main");
-    if (el) {
-      el.style.position = "relative";
-      setMainEl(el);
-    }
-    return () => {
-      if (el) {
-        el.style.position = "";
-      }
-    };
-  }, []);
-
   return (
     <div className="space-y-6">
-      {isDragging && canCreateAudit && mainEl && createPortal(
+      {isDragging && canCreateAudit && (
         <div
           {...getRootProps()}
-          className="border-primary bg-primary/5 pointer-events-auto absolute inset-0 z-40 flex flex-col items-center justify-center border-2 border-dashed"
+          className="border-primary bg-primary/5 pointer-events-auto fixed inset-0 top-12 z-40 flex flex-col items-center justify-center border-2 border-dashed"
         >
           <input {...getInputProps()} />
           <IconUpload className="text-primary mb-2 size-8" />
           <p className="text-primary text-sm font-medium">
             {__("Drop a PDF to create an audit with a report")}
           </p>
-        </div>,
-        mainEl,
+        </div>
       )}
       <PageHeader
         title={__("Audits")}
