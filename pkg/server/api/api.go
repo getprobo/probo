@@ -16,6 +16,7 @@ package api
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -67,6 +68,7 @@ type (
 
 	Server struct {
 		cfg                   Config
+		csrf                  *http.CrossOriginProtection
 		compliancePageHandler http.Handler
 		consoleHandler        http.Handler
 		filesHandler          http.Handler
@@ -119,8 +121,26 @@ func NewServer(cfg Config) (*Server, error) {
 		return nil, ErrMissingSlackService
 	}
 
+	csrf := http.NewCrossOriginProtection()
+	for _, origin := range cfg.AllowedOrigins {
+		if err := csrf.AddTrustedOrigin(origin); err != nil {
+			return nil, fmt.Errorf("cannot add trusted origin %q: %w", origin, err)
+		}
+	}
+
+	csrf.SetDenyHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		httpserver.RenderJSON(
+			w,
+			http.StatusForbidden,
+			map[string]string{
+				"error": "cross-origin request denied",
+			},
+		)
+	}))
+
 	return &Server{
-		cfg: cfg,
+		cfg:  cfg,
+		csrf: csrf,
 		compliancePageHandler: trust_v1.NewMux(
 			cfg.Logger.Named("trust.v1"),
 			cfg.IAM,
@@ -204,5 +224,5 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	router.Mount("/mcp/v1", http.StripPrefix("/mcp/v1", s.mcpHandler))
 	router.Mount("/slack/v1", http.StripPrefix("/slack/v1", s.slackHandler))
 
-	router.ServeHTTP(w, r)
+	s.csrf.Handler(router).ServeHTTP(w, r)
 }
