@@ -4,6 +4,30 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.145.0] - 2026-03-19
+
+### Added
+
+- Add unified findings system with GraphQL, MCP, and CLI support
+- Add PDF dropzone to audit list for streamlined report upload
+- Add dynamic favicon for trust center
+- Add SSR for compliance page with dynamic title and meta tags
+- Add cross-origin protection for CSRF defense
+- Add file visibility (PRIVATE/PUBLIC) and public files API
+
+### Changed
+
+- Rename NONCONFORMITY to MINOR_NONCONFORMITY and add MAJOR_NONCONFORMITY
+
+### Fixed
+
+- Fix race condition in magic link token verification
+- Fix sandbox provisioning issues
+- Fix CLI URL scheme handling with http:// addresses
+- Fix NDA file display on page reload
+- Fix audit report buttons visibility when no file attached
+- Fix drag-and-drop issues in audit list dropzone
+
 ## [0.144.0] - 2026-03-17
 
 ### Added
