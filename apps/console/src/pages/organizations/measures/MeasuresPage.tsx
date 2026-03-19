@@ -100,7 +100,7 @@ const measuresPageFragment = graphql`
   fragment MeasuresPageFragment on Organization
   @refetchable(queryName: "MeasuresPageRefetchQuery")
   @argumentDefinitions(
-    first: { type: "Int", defaultValue: 20 }
+    first: { type: "Int", defaultValue: 500 }
     after: { type: "CursorKey" }
     query: { type: "String", defaultValue: null }
     state: { type: "MeasureState", defaultValue: null }

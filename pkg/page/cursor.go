@@ -36,7 +36,7 @@ type (
 
 const (
 	DefaultCursorSize = 25
-	MaxCursorSize     = 100
+	MaxCursorSize     = 500
 
 	Tail Position = "TAIL"
 	Head Position = "HEAD"
