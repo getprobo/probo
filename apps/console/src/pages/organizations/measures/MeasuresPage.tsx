@@ -13,9 +13,11 @@ import {
   DropdownItem,
   FileButton,
   IconFolderUpload,
+  IconMagnifyingGlass,
   IconPencil,
   IconPlusLarge,
   IconTrashCan,
+  Input,
   Option,
   PageHeader,
   Select,
@@ -99,6 +101,7 @@ const measuresPageFragment = graphql`
   @argumentDefinitions(
     first: { type: "Int", defaultValue: 20 }
     after: { type: "CursorKey" }
+    query: { type: "String", defaultValue: null }
     state: { type: "MeasureState", defaultValue: null }
     category: { type: "String", defaultValue: null }
   ) {
@@ -106,7 +109,7 @@ const measuresPageFragment = graphql`
     measures(
       first: $first
       after: $after
-      filter: { state: $state, category: $category }
+      filter: { query: $query, state: $state, category: $category }
     )
       @connection(
         key: "MeasuresPage_measures"
@@ -162,6 +165,7 @@ export default function MeasuresPage({ queryRef }: MeasuresPageProps) {
   }
 
   const [isPending, startTransition] = useTransition();
+  const [queryFilter, setQueryFilter] = useState<string | null>(null);
   const [stateFilter, setStateFilter] = useState<MeasureState | null>(null);
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
 
@@ -175,6 +179,7 @@ export default function MeasuresPage({ queryRef }: MeasuresPageProps) {
     startTransition(() => {
       refetch(
         {
+          query: queryFilter,
           state: stateFilter,
           category: categoryFilter,
           ...overrides,
@@ -182,6 +187,12 @@ export default function MeasuresPage({ queryRef }: MeasuresPageProps) {
         { fetchPolicy: "network-only" },
       );
     });
+  };
+
+  const handleQueryFilterChange = (value: string) => {
+    const newQuery = value === "" ? null : value;
+    setQueryFilter(newQuery);
+    refetchFilters({ query: newQuery });
   };
 
   const handleStateFilterChange = (value: string) => {
@@ -197,6 +208,7 @@ export default function MeasuresPage({ queryRef }: MeasuresPageProps) {
   };
 
   const currentFilter = {
+    query: queryFilter,
     state: stateFilter,
     category: categoryFilter,
   };
@@ -209,9 +221,9 @@ export default function MeasuresPage({ queryRef }: MeasuresPageProps) {
   const allFiltersNullConnectionId = ConnectionHandler.getConnectionID(
     organizationId,
     MeasuresConnectionKey,
-    { filter: { state: null, category: null } },
+    { filter: { query: null, state: null, category: null } },
   );
-  const hasActiveFilter = stateFilter || categoryFilter;
+  const hasActiveFilter = queryFilter || stateFilter || categoryFilter;
   const createConnectionIds = hasActiveFilter
     ? [allFiltersNullConnectionId, connectionId]
     : [connectionId];
@@ -282,6 +294,12 @@ export default function MeasuresPage({ queryRef }: MeasuresPageProps) {
       </PageHeader>
 
       <div className="flex items-center gap-4">
+        <Input
+          icon={IconMagnifyingGlass}
+          placeholder={__("Search measures...")}
+          value={queryFilter ?? ""}
+          onValueChange={handleQueryFilterChange}
+        />
         <Select
           value={stateFilter ?? "ALL"}
           onValueChange={handleStateFilterChange}
