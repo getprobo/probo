@@ -36,14 +36,17 @@ type (
 
 const (
 	DefaultCursorSize = 25
+	MaxCursorSize     = 100
 
 	Tail Position = "TAIL"
 	Head Position = "HEAD"
 )
 
 func NewCursor[T OrderField](size int, from *CursorKey, pos Position, orderBy OrderBy[T]) *Cursor[T] {
-	if size == 0 {
+	if size <= 0 {
 		size = DefaultCursorSize
+	} else if size > MaxCursorSize {
+		size = MaxCursorSize
 	}
 
 	return &Cursor[T]{
