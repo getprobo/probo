@@ -932,7 +932,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			r.logger.ErrorCtx(ctx, "cannot get vendor", log.Error(err))
 			return nil, gqlutils.Internal(ctx)
 		}
-		return types.NewVendor(vendor), nil
+		return types.NewSubprocessor(vendor), nil
 
 	case coredata.TrustCenterEntityType:
 		trustCenter, err := trustService.TrustCenters.Get(ctx, id)
@@ -1071,6 +1071,24 @@ func (r *reportResolver) Access(ctx context.Context, obj *types.Report) (*types.
 	}, nil
 }
 
+// TotalCount is the resolver for the totalCount field.
+func (r *subprocessorConnectionResolver) TotalCount(ctx context.Context, obj *types.SubprocessorConnection) (int, error) {
+	trustService := r.TrustService(ctx, obj.ParentID.TenantID())
+
+	switch obj.Resolver.(type) {
+	case *trustCenterResolver:
+		count, err := trustService.Vendors.CountForTrustCenterId(ctx, obj.ParentID)
+		if err != nil {
+			r.logger.ErrorCtx(ctx, "cannot count subprocessors", log.Error(err))
+			return 0, gqlutils.Internal(ctx)
+		}
+		return count, nil
+	}
+
+	r.logger.ErrorCtx(ctx, "not implemented: TotalCount for parent type")
+	return 0, gqlutils.Internal(ctx)
+}
+
 // LogoFileURL is the resolver for the logoFileUrl field.
 func (r *trustCenterResolver) LogoFileURL(ctx context.Context, obj *types.TrustCenter) (*string, error) {
 	trustService := r.TrustService(ctx, obj.ID.TenantID())
@@ -1174,8 +1192,8 @@ func (r *trustCenterResolver) Audits(ctx context.Context, obj *types.TrustCenter
 	return types.NewAuditConnection(auditPage), nil
 }
 
-// Vendors is the resolver for the vendors field.
-func (r *trustCenterResolver) Vendors(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.VendorConnection, error) {
+// Subprocessors is the resolver for the subprocessors field.
+func (r *trustCenterResolver) Subprocessors(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.SubprocessorConnection, error) {
 	trustService := r.TrustService(ctx, obj.ID.TenantID())
 
 	pageOrderBy := page.OrderBy[coredata.VendorOrderField]{
@@ -1186,11 +1204,11 @@ func (r *trustCenterResolver) Vendors(ctx context.Context, obj *types.TrustCente
 
 	vendorPage, err := trustService.Vendors.ListForOrganizationId(ctx, obj.Organization.ID, cursor)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list public vendors", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot list subprocessors", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewVendorConnection(vendorPage, r, obj.ID), nil
+	return types.NewSubprocessorConnection(vendorPage, r, obj.ID), nil
 }
 
 // References is the resolver for the references field.
@@ -1398,24 +1416,6 @@ func (r *trustCenterReferenceResolver) LogoURL(ctx context.Context, obj *types.T
 	return logoURL, nil
 }
 
-// TotalCount is the resolver for the totalCount field.
-func (r *vendorConnectionResolver) TotalCount(ctx context.Context, obj *types.VendorConnection) (int, error) {
-	trustService := r.TrustService(ctx, obj.ParentID.TenantID())
-
-	switch obj.Resolver.(type) {
-	case *trustCenterResolver:
-		count, err := trustService.Vendors.CountForTrustCenterId(ctx, obj.ParentID)
-		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot count vendors", log.Error(err))
-			return 0, gqlutils.Internal(ctx)
-		}
-		return count, nil
-	}
-
-	r.logger.ErrorCtx(ctx, "not implemented: TotalCount for parent type")
-	return 0, gqlutils.Internal(ctx)
-}
-
 // Audit returns schema.AuditResolver implementation.
 func (r *Resolver) Audit() schema.AuditResolver { return &auditResolver{r} }
 
@@ -1447,6 +1447,11 @@ func (r *Resolver) Query() schema.QueryResolver { return &queryResolver{r} }
 // Report returns schema.ReportResolver implementation.
 func (r *Resolver) Report() schema.ReportResolver { return &reportResolver{r} }
 
+// SubprocessorConnection returns schema.SubprocessorConnectionResolver implementation.
+func (r *Resolver) SubprocessorConnection() schema.SubprocessorConnectionResolver {
+	return &subprocessorConnectionResolver{r}
+}
+
 // TrustCenter returns schema.TrustCenterResolver implementation.
 func (r *Resolver) TrustCenter() schema.TrustCenterResolver { return &trustCenterResolver{r} }
 
@@ -1460,11 +1465,6 @@ func (r *Resolver) TrustCenterReference() schema.TrustCenterReferenceResolver {
 	return &trustCenterReferenceResolver{r}
 }
 
-// VendorConnection returns schema.VendorConnectionResolver implementation.
-func (r *Resolver) VendorConnection() schema.VendorConnectionResolver {
-	return &vendorConnectionResolver{r}
-}
-
 type auditResolver struct{ *Resolver }
 type complianceFrameworkResolver struct{ *Resolver }
 type documentResolver struct{ *Resolver }
@@ -1474,7 +1474,7 @@ type nonDisclosureAgreementResolver struct{ *Resolver }
 type organizationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type reportResolver struct{ *Resolver }
+type subprocessorConnectionResolver struct{ *Resolver }
 type trustCenterResolver struct{ *Resolver }
 type trustCenterFileResolver struct{ *Resolver }
 type trustCenterReferenceResolver struct{ *Resolver }
-type vendorConnectionResolver struct{ *Resolver }

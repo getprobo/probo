@@ -4,10 +4,10 @@ import { IconPin } from "@probo/ui";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
-import type { VendorRowFragment$key } from "./__generated__/VendorRowFragment.graphql";
+import type { SubprocessorRowFragment$key } from "./__generated__/SubprocessorRowFragment.graphql";
 
-const vendorRowFragment = graphql`
-  fragment VendorRowFragment on Vendor {
+const subprocessorRowFragment = graphql`
+  fragment SubprocessorRowFragment on Subprocessor {
     name
     description
     websiteUrl
@@ -15,9 +15,9 @@ const vendorRowFragment = graphql`
   }
 `;
 
-export function VendorRow(props: { vendor: VendorRowFragment$key; hasAnyCountries?: boolean }) {
-  const vendor = useFragment(vendorRowFragment, props.vendor);
-  const logo = faviconUrl(vendor.websiteUrl);
+export function SubprocessorRow(props: { subprocessor: SubprocessorRowFragment$key; hasAnyCountries?: boolean }) {
+  const subprocessor = useFragment(subprocessorRowFragment, props.subprocessor);
+  const logo = faviconUrl(subprocessor.websiteUrl);
   const { __ } = useTranslate();
 
   return (
@@ -34,16 +34,16 @@ export function VendorRow(props: { vendor: VendorRowFragment$key; hasAnyCountrie
             <div className="size-8 flex-none rounded-lg" />
           )}
       <div className="flex flex-col gap-2 flex-1">
-        <span className="text-sm">{vendor.name}</span>
-        <div className="text-xs text-txt-secondary w-full">{vendor.description}</div>
+        <span className="text-sm">{subprocessor.name}</span>
+        <div className="text-xs text-txt-secondary w-full">{subprocessor.description}</div>
         {props.hasAnyCountries
           && (
             <div className="text-xs flex gap-1 items-start text-txt-quaternary">
-              {vendor.countries.length > 0 && (
+              {subprocessor.countries.length > 0 && (
                 <>
                   <IconPin size={16} className="flex-none" />
                   <span>
-                    {vendor.countries
+                    {subprocessor.countries
                       .map(country => getCountryName(__, country))
                       .join(", ")}
                   </span>

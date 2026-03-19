@@ -409,7 +409,7 @@ enum CountryCode
   ZW @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeZW")
 }
 
-enum VendorCategory
+enum SubprocessorCategory
   @goModel(model: "go.probo.inc/probo/pkg/coredata.VendorCategory") {
   ANALYTICS
     @goEnum(value: "go.probo.inc/probo/pkg/coredata.VendorCategoryAnalytics")
@@ -480,28 +480,28 @@ enum VendorCategory
     )
 }
 
-type Vendor implements Node @nda {
+type Subprocessor implements Node @nda {
   id: ID!
   name: String!
   description: String
-  category: VendorCategory!
+  category: SubprocessorCategory!
   websiteUrl: String
   privacyPolicyUrl: String
   countries: [CountryCode!]!
 }
 
-type VendorConnection
+type SubprocessorConnection
   @goModel(
-    model: "go.probo.inc/probo/pkg/server/api/trust/v1/types.VendorConnection"
+    model: "go.probo.inc/probo/pkg/server/api/trust/v1/types.SubprocessorConnection"
   ) @nda {
-  edges: [VendorEdge!]!
+  edges: [SubprocessorEdge!]!
   pageInfo: PageInfo!
   totalCount: Int! @goField(forceResolver: true)
 }
 
-type VendorEdge @nda {
+type SubprocessorEdge @nda {
   cursor: CursorKey!
-  node: Vendor!
+  node: Subprocessor!
 }
 
 type TrustCenterReference implements Node @nda {
@@ -572,12 +572,12 @@ type TrustCenter implements Node {
     before: CursorKey
   ): AuditConnection! @goField(forceResolver: true)
 
-  vendors(
+  subprocessors(
     first: Int
     after: CursorKey
     last: Int
     before: CursorKey
-  ): VendorConnection! @goField(forceResolver: true)
+  ): SubprocessorConnection! @goField(forceResolver: true)
 
   references(
     first: Int

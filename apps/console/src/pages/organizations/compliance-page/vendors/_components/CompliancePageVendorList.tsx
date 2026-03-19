@@ -42,7 +42,7 @@ export function CompliancePageVendorList(props: { fragmentRef: CompliancePageVen
           {vendors.edges.length === 0 && (
             <Tr>
               <Td colSpan={4} className="text-center text-txt-secondary">
-                {__("No vendors available")}
+                {__("No subprocessors available")}
               </Td>
             </Tr>
           )}

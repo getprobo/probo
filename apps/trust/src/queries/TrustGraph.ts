@@ -43,7 +43,7 @@ export const currentTrustGraphQuery = graphql`
         }
       }
       ...OverviewPageFragment
-      vendorInfo: vendors(first: 0) {
+      subprocessorInfo: subprocessors(first: 0) {
         totalCount
       }
       audits(first: 50) {
@@ -97,19 +97,19 @@ export const currentTrustDocumentsQuery = graphql`
   }
 `;
 
-export const currentTrustVendorsQuery = graphql`
-  query TrustGraphCurrentVendorsQuery {
+export const currentTrustSubprocessorsQuery = graphql`
+  query TrustGraphCurrentSubprocessorsQuery {
     currentTrustCenter {
       id
       organization {
         name
       }
-      vendors(first: 50) {
+      subprocessors(first: 50) {
         edges {
           node {
             id
             countries
-            ...VendorRowFragment
+            ...SubprocessorRowFragment
           }
         }
       }

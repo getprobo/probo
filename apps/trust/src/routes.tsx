@@ -17,7 +17,7 @@ import { currentTrustUpdatesQuery, UpdatesPage } from "#/pages/UpdatesPage";
 import {
   currentTrustDocumentsQuery,
   currentTrustGraphQuery,
-  currentTrustVendorsQuery,
+  currentTrustSubprocessorsQuery,
 } from "#/queries/TrustGraph";
 
 import { DocumentPageErrorBoundary } from "./components/DocumentPageErrorBoundary";
@@ -112,7 +112,7 @@ const routes = [
       {
         path: "",
         loader: loaderFromQueryLoader(() =>
-          loadQuery(consoleEnvironment, currentTrustVendorsQuery, {}),
+          loadQuery(consoleEnvironment, currentTrustSubprocessorsQuery, {}),
         ),
         Fallback: TabSkeleton,
         Component: withQueryRef(SubprocessorsPage),

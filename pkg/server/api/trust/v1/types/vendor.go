@@ -21,9 +21,9 @@ import (
 )
 
 type (
-	VendorConnection struct {
+	SubprocessorConnection struct {
 		TotalCount int
-		Edges      []*VendorEdge
+		Edges      []*SubprocessorEdge
 		PageInfo   PageInfo
 
 		Resolver any
@@ -31,17 +31,17 @@ type (
 	}
 )
 
-func NewVendorConnection(
+func NewSubprocessorConnection(
 	p *page.Page[*coredata.Vendor, coredata.VendorOrderField],
 	parentType any,
 	parentID gid.GID,
-) *VendorConnection {
-	edges := make([]*VendorEdge, len(p.Data))
+) *SubprocessorConnection {
+	edges := make([]*SubprocessorEdge, len(p.Data))
 	for i, vendor := range p.Data {
-		edges[i] = NewVendorEdge(vendor, p.Cursor.OrderBy.Field)
+		edges[i] = NewSubprocessorEdge(vendor, p.Cursor.OrderBy.Field)
 	}
 
-	return &VendorConnection{
+	return &SubprocessorConnection{
 		Edges:    edges,
 		PageInfo: *NewPageInfo(p),
 
@@ -50,8 +50,8 @@ func NewVendorConnection(
 	}
 }
 
-func NewVendor(v *coredata.Vendor) *Vendor {
-	return &Vendor{
+func NewSubprocessor(v *coredata.Vendor) *Subprocessor {
+	return &Subprocessor{
 		ID:               v.ID,
 		Name:             v.Name,
 		Description:      v.Description,
@@ -62,9 +62,9 @@ func NewVendor(v *coredata.Vendor) *Vendor {
 	}
 }
 
-func NewVendorEdge(v *coredata.Vendor, orderField coredata.VendorOrderField) *VendorEdge {
-	return &VendorEdge{
-		Node:   NewVendor(v),
+func NewSubprocessorEdge(v *coredata.Vendor, orderField coredata.VendorOrderField) *SubprocessorEdge {
+	return &SubprocessorEdge{
+		Node:   NewSubprocessor(v),
 		Cursor: v.CursorKey(orderField),
 	}
 }

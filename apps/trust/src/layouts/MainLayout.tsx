@@ -37,7 +37,7 @@ export function MainLayout(props: Props) {
           <Tabs className="mb-8">
             <TabLink to="/overview">{__("Overview")}</TabLink>
             <TabLink to="/documents">{__("Documents")}</TabLink>
-            {trustCenter.vendorInfo.totalCount > 0
+            {trustCenter.subprocessorInfo.totalCount > 0
               && <TabLink to="/subprocessors">{__("Subprocessors")}</TabLink>}
             <TabLink to="/updates">{__("Updates")}</TabLink>
           </Tabs>

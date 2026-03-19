@@ -78,7 +78,7 @@ export function CompliancePageLayout(props: { queryRef: PreloadedQuery<Complianc
         </TabLink>
         <TabLink to={`/organizations/${organizationId}/compliance-page/vendors`}>
           <IconStore className="size-4" />
-          {__("Vendors")}
+          {__("Subprocessors")}
         </TabLink>
         <TabLink to={`/organizations/${organizationId}/compliance-page/access`}>
           <IconPeopleAdd className="size-4" />

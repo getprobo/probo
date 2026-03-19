@@ -47,8 +47,8 @@ export function CompliancePageVendorListItem(props: {
   >(
     updateVendorVisibilityMutation,
     {
-      successMessage: __("Vendor visibility updated successfully."),
-      errorMessage: __("Failed to update vendor visibility"),
+      successMessage: __("Subprocessor visibility updated successfully."),
+      errorMessage: __("Failed to update subprocessor visibility"),
     },
   );
 

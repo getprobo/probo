@@ -29,9 +29,9 @@ export function CompliancePageVendorsPage(props: {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-base font-medium">{__("Vendors")}</h3>
+          <h3 className="text-base font-medium">{__("Subprocessors")}</h3>
           <p className="text-sm text-txt-tertiary">
-            {__("Manage vendor assessments and third-party risk information")}
+            {__("Manage subprocessor assessments and third-party risk information")}
           </p>
         </div>
       </div>
