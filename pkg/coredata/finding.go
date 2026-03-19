@@ -243,9 +243,19 @@ func (f *Finding) Insert(
 	conn pg.Conn,
 	scope Scoper,
 ) error {
+	lockQuery := `SELECT pg_advisory_xact_lock(hashtext(@organization_id::text))`
+
+	lockArgs := pgx.StrictNamedArgs{
+		"organization_id": f.OrganizationID,
+	}
+
+	if _, err := conn.Exec(ctx, lockQuery, lockArgs); err != nil {
+		return fmt.Errorf("cannot acquire advisory lock: %w", err)
+	}
+
 	q := `
 WITH next_ref AS (
-	SELECT pg_advisory_xact_lock(hashtext(@organization_id::text)),
+	SELECT
 		COALESCE(
 			MAX(CAST(SUBSTRING(reference_id FROM 5) AS INTEGER)),
 			0
@@ -306,7 +316,7 @@ RETURNING reference_id
 		"identified_on":       f.IdentifiedOn,
 		"root_cause":          f.RootCause,
 		"corrective_action":   f.CorrectiveAction,
-		"owner_id":    f.OwnerID,
+		"owner_id":            f.OwnerID,
 		"due_date":            f.DueDate,
 		"status":              f.Status,
 		"priority":            f.Priority,
