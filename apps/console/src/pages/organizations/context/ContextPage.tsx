@@ -16,7 +16,6 @@ import type { ContextPage_UpdateMutation } from "#/__generated__/core/ContextPag
 import type { ContextPageFragment$key } from "#/__generated__/core/ContextPageFragment.graphql";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 
-/* eslint-disable relay/unused-fields */
 const fragment = graphql`
   fragment ContextPageFragment on Organization {
     id
@@ -30,7 +29,6 @@ const fragment = graphql`
     }
   }
 `;
-/* eslint-enable relay/unused-fields */
 
 const updateMutation = graphql`
   mutation ContextPage_UpdateMutation(
@@ -65,6 +63,7 @@ type Props = {
 export default function ContextPage(props: Props) {
   const { __ } = useTranslate();
   const organization = useFragment(fragment, props.organization);
+  const context = organization.context;
 
   const sections: SectionConfig[] = [
     {
@@ -99,6 +98,14 @@ export default function ContextPage(props: Props) {
     },
   ];
 
+  const values: Record<SectionKey, string | null> = {
+    product: context?.product ?? null,
+    architecture: context?.architecture ?? null,
+    team: context?.team ?? null,
+    processes: context?.processes ?? null,
+    customers: context?.customers ?? null,
+  };
+
   return (
     <div className="space-y-6">
       {sections.map(section => (
@@ -106,7 +113,7 @@ export default function ContextPage(props: Props) {
           key={section.key}
           section={section}
           organizationId={organization.id}
-          value={organization.context?.[section.key] ?? null}
+          value={values[section.key]}
           canEdit={organization.canUpdateContext}
         />
       ))}
