@@ -24,7 +24,7 @@ func NewOrganizationContext(oc *coredata.OrganizationContext) *OrganizationConte
 		Product:        oc.Product,
 		Architecture:   oc.Architecture,
 		Team:           oc.Team,
-		Processes:       oc.Processes,
+		Processes:      oc.Processes,
 		Customers:      oc.Customers,
 	}
 }
