@@ -129,12 +129,35 @@ func (s *Service) RenderCompliancePageMarkdown(
 		data.Details = append(data.Details, compliancePageDetail{Label: "Headquarters", Value: *org.HeadquarterAddress})
 	}
 
-	data.Frameworks = s.fetchComplianceFrameworks(ctx, tenantSvc, trustCenterID)
-	data.Documents = s.fetchDocuments(ctx, tenantSvc, org.ID)
-	data.Audits = s.fetchAudits(ctx, tenantSvc, org.ID)
-	data.Vendors = s.fetchVendors(ctx, tenantSvc, org.ID)
-	data.References = s.fetchReferences(ctx, tenantSvc, trustCenterID)
-	data.ExternalLinks = s.fetchExternalLinks(ctx, tenantSvc, trustCenterID)
+	data.Frameworks, err = s.fetchComplianceFrameworks(ctx, tenantSvc, trustCenterID)
+	if err != nil {
+		return fmt.Errorf("cannot fetch compliance frameworks: %w", err)
+	}
+
+	data.Documents, err = s.fetchDocuments(ctx, tenantSvc, org.ID)
+	if err != nil {
+		return fmt.Errorf("cannot fetch documents: %w", err)
+	}
+
+	data.Audits, err = s.fetchAudits(ctx, tenantSvc, org.ID)
+	if err != nil {
+		return fmt.Errorf("cannot fetch audits: %w", err)
+	}
+
+	data.Vendors, err = s.fetchVendors(ctx, tenantSvc, org.ID)
+	if err != nil {
+		return fmt.Errorf("cannot fetch vendors: %w", err)
+	}
+
+	data.References, err = s.fetchReferences(ctx, tenantSvc, trustCenterID)
+	if err != nil {
+		return fmt.Errorf("cannot fetch references: %w", err)
+	}
+
+	data.ExternalLinks, err = s.fetchExternalLinks(ctx, tenantSvc, trustCenterID)
+	if err != nil {
+		return fmt.Errorf("cannot fetch external links: %w", err)
+	}
 
 	if err := complianceTmpl.Execute(w, data); err != nil {
 		return fmt.Errorf("cannot render compliance page markdown: %w", err)
@@ -143,7 +166,7 @@ func (s *Service) RenderCompliancePageMarkdown(
 	return nil
 }
 
-func (s *Service) fetchComplianceFrameworks(ctx context.Context, tenantSvc *TenantService, trustCenterID gid.GID) []compliancePageFramework {
+func (s *Service) fetchComplianceFrameworks(ctx context.Context, tenantSvc *TenantService, trustCenterID gid.GID) ([]compliancePageFramework, error) {
 	var frameworks []compliancePageFramework
 
 	var cursorKey *page.CursorKey
@@ -160,7 +183,7 @@ func (s *Service) fetchComplianceFrameworks(ctx context.Context, tenantSvc *Tena
 
 		result, err := tenantSvc.ComplianceFrameworks.ListByTrustCenterID(ctx, trustCenterID, cursor)
 		if err != nil {
-			break
+			return nil, fmt.Errorf("cannot list compliance frameworks: %w", err)
 		}
 
 		for _, cf := range result.Data {
@@ -170,7 +193,7 @@ func (s *Service) fetchComplianceFrameworks(ctx context.Context, tenantSvc *Tena
 
 			fw, err := tenantSvc.Frameworks.Get(ctx, cf.FrameworkID)
 			if err != nil {
-				continue
+				return nil, fmt.Errorf("cannot get framework %s: %w", cf.FrameworkID, err)
 			}
 
 			fi := compliancePageFramework{Name: fw.Name}
@@ -189,10 +212,10 @@ func (s *Service) fetchComplianceFrameworks(ctx context.Context, tenantSvc *Tena
 		cursorKey = &ck
 	}
 
-	return frameworks
+	return frameworks, nil
 }
 
-func (s *Service) fetchDocuments(ctx context.Context, tenantSvc *TenantService, orgID gid.GID) []compliancePageDocument {
+func (s *Service) fetchDocuments(ctx context.Context, tenantSvc *TenantService, orgID gid.GID) ([]compliancePageDocument, error) {
 	var docs []compliancePageDocument
 
 	var cursorKey *page.CursorKey
@@ -209,7 +232,7 @@ func (s *Service) fetchDocuments(ctx context.Context, tenantSvc *TenantService, 
 
 		result, err := tenantSvc.Documents.ListForOrganizationId(ctx, orgID, cursor)
 		if err != nil {
-			break
+			return nil, fmt.Errorf("cannot list documents: %w", err)
 		}
 
 		for _, doc := range result.Data {
@@ -234,10 +257,10 @@ func (s *Service) fetchDocuments(ctx context.Context, tenantSvc *TenantService, 
 		cursorKey = &ck
 	}
 
-	return docs
+	return docs, nil
 }
 
-func (s *Service) fetchAudits(ctx context.Context, tenantSvc *TenantService, orgID gid.GID) []compliancePageAudit {
+func (s *Service) fetchAudits(ctx context.Context, tenantSvc *TenantService, orgID gid.GID) ([]compliancePageAudit, error) {
 	var audits []compliancePageAudit
 
 	var cursorKey *page.CursorKey
@@ -254,7 +277,7 @@ func (s *Service) fetchAudits(ctx context.Context, tenantSvc *TenantService, org
 
 		result, err := tenantSvc.Audits.ListForOrganizationId(ctx, orgID, cursor)
 		if err != nil {
-			break
+			return nil, fmt.Errorf("cannot list audits: %w", err)
 		}
 
 		for _, audit := range result.Data {
@@ -290,10 +313,10 @@ func (s *Service) fetchAudits(ctx context.Context, tenantSvc *TenantService, org
 		cursorKey = &ck
 	}
 
-	return audits
+	return audits, nil
 }
 
-func (s *Service) fetchVendors(ctx context.Context, tenantSvc *TenantService, orgID gid.GID) []compliancePageVendor {
+func (s *Service) fetchVendors(ctx context.Context, tenantSvc *TenantService, orgID gid.GID) ([]compliancePageVendor, error) {
 	var vendors []compliancePageVendor
 
 	var cursorKey *page.CursorKey
@@ -310,7 +333,7 @@ func (s *Service) fetchVendors(ctx context.Context, tenantSvc *TenantService, or
 
 		result, err := tenantSvc.Vendors.ListForOrganizationId(ctx, orgID, cursor)
 		if err != nil {
-			break
+			return nil, fmt.Errorf("cannot list vendors: %w", err)
 		}
 
 		for _, v := range result.Data {
@@ -339,10 +362,10 @@ func (s *Service) fetchVendors(ctx context.Context, tenantSvc *TenantService, or
 		cursorKey = &ck
 	}
 
-	return vendors
+	return vendors, nil
 }
 
-func (s *Service) fetchReferences(ctx context.Context, tenantSvc *TenantService, trustCenterID gid.GID) []compliancePageReference {
+func (s *Service) fetchReferences(ctx context.Context, tenantSvc *TenantService, trustCenterID gid.GID) ([]compliancePageReference, error) {
 	var refs []compliancePageReference
 
 	var cursorKey *page.CursorKey
@@ -359,7 +382,7 @@ func (s *Service) fetchReferences(ctx context.Context, tenantSvc *TenantService,
 
 		result, err := tenantSvc.TrustCenterReferences.ListForTrustCenterID(ctx, trustCenterID, cursor)
 		if err != nil {
-			break
+			return nil, fmt.Errorf("cannot list references: %w", err)
 		}
 
 		for _, r := range result.Data {
@@ -382,10 +405,10 @@ func (s *Service) fetchReferences(ctx context.Context, tenantSvc *TenantService,
 		cursorKey = &ck
 	}
 
-	return refs
+	return refs, nil
 }
 
-func (s *Service) fetchExternalLinks(ctx context.Context, tenantSvc *TenantService, trustCenterID gid.GID) []compliancePageExternalLink {
+func (s *Service) fetchExternalLinks(ctx context.Context, tenantSvc *TenantService, trustCenterID gid.GID) ([]compliancePageExternalLink, error) {
 	var links []compliancePageExternalLink
 
 	var cursorKey *page.CursorKey
@@ -402,7 +425,7 @@ func (s *Service) fetchExternalLinks(ctx context.Context, tenantSvc *TenantServi
 
 		result, err := tenantSvc.ComplianceExternalURLs.ListForTrustCenterID(ctx, trustCenterID, cursor)
 		if err != nil {
-			break
+			return nil, fmt.Errorf("cannot list external links: %w", err)
 		}
 
 		for _, l := range result.Data {
@@ -424,5 +447,5 @@ func (s *Service) fetchExternalLinks(ctx context.Context, tenantSvc *TenantServi
 		cursorKey = &ck
 	}
 
-	return links
+	return links, nil
 }
