@@ -33,7 +33,6 @@ import {
 } from "@probo/ui";
 import { MeasureBadge } from "@probo/ui/src/Molecules/Badge/MeasureBadge";
 import { type ChangeEventHandler, useEffect, useRef, useState, useTransition } from "react";
-import { useSearchParams } from "react-router";
 import {
   ConnectionHandler,
   graphql,
@@ -43,6 +42,7 @@ import {
   usePaginationFragment,
   usePreloadedQuery,
 } from "react-relay";
+import { useSearchParams } from "react-router";
 
 import type { MeasuresPageDeleteMutation } from "#/__generated__/core/MeasuresPageDeleteMutation.graphql";
 import type { MeasuresPageFragment$key } from "#/__generated__/core/MeasuresPageFragment.graphql";
@@ -166,12 +166,12 @@ export default function MeasuresPage({ queryRef }: MeasuresPageProps) {
   }
 
   const [searchParams, setSearchParams] = useSearchParams();
-  const initialCategory = searchParams.get("category");
+  const urlCategory = searchParams.get("category") ?? null;
 
   const [isPending, startTransition] = useTransition();
   const [queryFilter, setQueryFilter] = useState<string | null>(null);
   const [stateFilter, setStateFilter] = useState<MeasureState | null>(null);
-  const [categoryFilter, setCategoryFilter] = useState<string | null>(initialCategory);
+  const [categoryFilter, setCategoryFilter] = useState<string | null>(urlCategory);
 
   const { data, loadNext, hasNext, isLoadingNext, refetch }
     = usePaginationFragment<MeasuresPageRefetchQuery, MeasuresPageFragment$key>(
@@ -194,11 +194,12 @@ export default function MeasuresPage({ queryRef }: MeasuresPageProps) {
   };
 
   useEffect(() => {
-    if (initialCategory) {
-      refetchFilters({ category: initialCategory });
+    if (urlCategory !== categoryFilter) {
+      setCategoryFilter(urlCategory);
+      refetchFilters({ category: urlCategory });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [urlCategory]);
 
   const handleQueryFilterChange = (value: string) => {
     const newQuery = value === "" ? null : value;
@@ -215,7 +216,7 @@ export default function MeasuresPage({ queryRef }: MeasuresPageProps) {
   const handleCategoryFilterChange = (value: string) => {
     const newCategory = value === "ALL" ? null : value;
     setCategoryFilter(newCategory);
-    setSearchParams(prev => {
+    setSearchParams((prev) => {
       const next = new URLSearchParams(prev);
       if (newCategory) {
         next.set("category", newCategory);
