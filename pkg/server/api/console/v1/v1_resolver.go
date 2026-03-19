@@ -2404,6 +2404,7 @@ func (r *mutationResolver) CreateMailingListSubscriber(ctx context.Context, inpu
 			MailingListID: input.MailingListID,
 			Email:         input.Email,
 			FullName:      input.FullName,
+			Confirmed:     input.Confirmed != nil && *input.Confirmed,
 		},
 	)
 	if err != nil {

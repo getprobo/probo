@@ -1,5 +1,5 @@
 import { useTranslate } from "@probo/i18n";
-import { Button, Dialog, DialogContent, DialogFooter, type DialogRef, Field, Spinner } from "@probo/ui";
+import { Button, Checkbox, Dialog, DialogContent, DialogFooter, type DialogRef, Field, Spinner } from "@probo/ui";
 import { type DataID, graphql } from "relay-runtime";
 import { z } from "zod";
 
@@ -42,10 +42,11 @@ export function NewCompliancePageSubscriberDialog(props: {
       .min(1, __("Email is required"))
       .trim()
       .email(__("Please enter a valid email address")),
+    confirmed: z.boolean(),
   });
 
   const form = useFormWithSchema(schema, {
-    defaultValues: { fullName: "", email: "" },
+    defaultValues: { fullName: "", email: "", confirmed: false },
   });
 
   const [createSubscriber, isCreating] = useMutationWithToasts<NewCompliancePageSubscriberDialogMutation>(
@@ -63,6 +64,7 @@ export function NewCompliancePageSubscriberDialog(props: {
           mailingListId,
           fullName: data.fullName.trim(),
           email: data.email.trim(),
+          confirmed: data.confirmed || undefined,
         },
         connections: connectionId ? [connectionId] : [],
       },
@@ -102,6 +104,15 @@ export function NewCompliancePageSubscriberDialog(props: {
             {...form.register("email")}
             placeholder={__("john@example.com")}
           />
+          <label className="flex items-center gap-2 cursor-pointer">
+            <Checkbox
+              checked={form.watch("confirmed")}
+              onChange={checked => form.setValue("confirmed", checked)}
+            />
+            <span className="text-sm">
+              {__("Skip confirmation email (I already have consent)")}
+            </span>
+          </label>
         </DialogContent>
         <DialogFooter>
           <Button type="submit" disabled={isCreating}>

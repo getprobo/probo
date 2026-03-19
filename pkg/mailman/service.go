@@ -75,6 +75,7 @@ type (
 		MailingListID gid.GID
 		Email         mail.Addr
 		FullName      string
+		Confirmed     bool
 	}
 )
 
@@ -182,11 +183,18 @@ func (s *Service) CreateSubscriber(
 	mailingListID := req.MailingListID
 	email := req.Email
 	fullName := req.FullName
-
 	scope := coredata.NewScopeFromObjectID(mailingListID)
-	emailRecord, err := s.buildConfirmationMail(ctx, mailingListID, email, fullName)
-	if err != nil {
-		return nil, fmt.Errorf("cannot build confirmation mail: %w", err)
+
+	status := coredata.MailingListSubscriberStatusPending
+	var emailRecord *coredata.Email
+	if req.Confirmed {
+		status = coredata.MailingListSubscriberStatusConfirmed
+	} else {
+		var err error
+		emailRecord, err = s.buildConfirmationMail(ctx, mailingListID, email, fullName)
+		if err != nil {
+			return nil, fmt.Errorf("cannot build confirmation mail: %w", err)
+		}
 	}
 
 	now := time.Now()
@@ -195,7 +203,7 @@ func (s *Service) CreateSubscriber(
 		MailingListID: mailingListID,
 		FullName:      fullName,
 		Email:         email,
-		Status:        coredata.MailingListSubscriberStatusPending,
+		Status:        status,
 		CreatedAt:     now,
 		UpdatedAt:     now,
 	}
@@ -216,8 +224,10 @@ func (s *Service) CreateSubscriber(
 				return fmt.Errorf("cannot insert mailing list subscriber: %w", err)
 			}
 
-			if err := emailRecord.Insert(ctx, tx); err != nil {
-				return fmt.Errorf("cannot insert subscription confirmation email: %w", err)
+			if emailRecord != nil {
+				if err := emailRecord.Insert(ctx, tx); err != nil {
+					return fmt.Errorf("cannot insert subscription confirmation email: %w", err)
+				}
 			}
 
 			return nil

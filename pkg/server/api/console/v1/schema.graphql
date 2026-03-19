@@ -3925,6 +3925,7 @@ input CreateMailingListSubscriberInput {
     mailingListId: ID!
     fullName: String!
     email: EmailAddr!
+    confirmed: Boolean
 }
 
 input DeleteMailingListSubscriberInput {
