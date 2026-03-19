@@ -4,6 +4,25 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.146.0] - 2026-03-19
+
+### Added
+
+- Add document archiving
+- Add fulltext search to measures page
+- Add document types filtering
+
+### Changed
+
+- Rename ISMS to GOVERNANCE
+
+### Fixed
+
+- Fix owner deletion by qualifying ambiguous tenant_id column
+- Fix organization profile using owner's full name instead of org name
+- Fix measure count queries missing category column
+- Clamp pagination size
+
 ## [0.145.0] - 2026-03-19
 
 ### Added
