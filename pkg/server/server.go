@@ -17,6 +17,7 @@ package server
 import (
 	"errors"
 	"net/http"
+	"path"
 	"strings"
 
 	"github.com/go-chi/chi/v5"
@@ -156,7 +157,8 @@ func (s *Server) stripTrustPrefix(next http.Handler) http.Handler {
 		prefix := "/trust/" + slugOrId
 
 		if r.URL.Path == prefix {
-			http.Redirect(w, r, prefix+"/", http.StatusMovedPermanently)
+			cleanPath := path.Clean(prefix) + "/"
+			http.Redirect(w, r, cleanPath, http.StatusMovedPermanently)
 			return
 		}
 

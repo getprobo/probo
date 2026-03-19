@@ -767,7 +767,13 @@ func newTrustCenterHTTPRedirectHandler(proboService *probo.Service, l *log.Logge
 		}
 
 		// This is a trust center domain, redirect to HTTPS
-		httpsURL := "https://" + r.Host + r.URL.RequestURI()
+		base, err := baseurl.Parse("https://" + domain)
+		if err != nil {
+			httpserver.RenderError(w, http.StatusNotFound, errors.New("not found"))
+			return
+		}
+
+		httpsURL := base.WithPath(r.URL.Path).WithQueryValues(r.URL.Query()).MustString()
 		l.InfoCtx(
 			ctx,
 			"HTTP request to trust center custom domain, redirecting to HTTPS",
