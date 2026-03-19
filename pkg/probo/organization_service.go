@@ -162,39 +162,30 @@ func (s OrganizationService) UpdateContext(
 				return fmt.Errorf("cannot load organization context: %w", err)
 			}
 
-			updated := false
-
 			if req.Product != nil {
 				organizationContext.Product = *req.Product
-				updated = true
 			}
 
 			if req.Architecture != nil {
 				organizationContext.Architecture = *req.Architecture
-				updated = true
 			}
 
 			if req.Team != nil {
 				organizationContext.Team = *req.Team
-				updated = true
 			}
 
 			if req.Processes != nil {
 				organizationContext.Processes = *req.Processes
-				updated = true
 			}
 
 			if req.Customers != nil {
 				organizationContext.Customers = *req.Customers
-				updated = true
 			}
 
-			if updated {
-				organizationContext.UpdatedAt = time.Now()
+			organizationContext.UpdatedAt = time.Now()
 
-				if err := organizationContext.Update(ctx, tx, s.svc.scope); err != nil {
-					return fmt.Errorf("cannot update organization context: %w", err)
-				}
+			if err := organizationContext.Update(ctx, tx, s.svc.scope); err != nil {
+				return fmt.Errorf("cannot update organization context: %w", err)
 			}
 
 			return nil
