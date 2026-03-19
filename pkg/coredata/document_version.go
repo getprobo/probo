@@ -38,7 +38,7 @@ type (
 		Classification DocumentClassification `db:"classification"`
 		Content        string                 `db:"content"`
 		Changelog      string                 `db:"changelog"`
-		Status         DocumentStatus         `db:"status"`
+		Status         DocumentVersionStatus  `db:"status"`
 		PublishedAt    *time.Time             `db:"published_at"`
 		CreatedAt      time.Time              `db:"created_at"`
 		UpdatedAt      time.Time              `db:"updated_at"`
@@ -49,17 +49,29 @@ type (
 
 // AuthorizationAttributes returns the authorization attributes for policy evaluation.
 func (dv *DocumentVersion) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
-	q := `SELECT organization_id FROM document_versions WHERE id = $1 LIMIT 1;`
+	q := `
+SELECT
+	dv.organization_id,
+	d.status
+FROM document_versions dv
+INNER JOIN documents d ON d.id = dv.document_id
+WHERE dv.id = $1
+LIMIT 1;
+`
 
 	var organizationID gid.GID
-	if err := conn.QueryRow(ctx, q, dv.ID).Scan(&organizationID); err != nil {
+	var documentStatus DocumentStatus
+	if err := conn.QueryRow(ctx, q, dv.ID).Scan(&organizationID, &documentStatus); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrResourceNotFound
 		}
 		return nil, fmt.Errorf("cannot query document version authorization attributes: %w", err)
 	}
 
-	return map[string]string{"organization_id": organizationID.String()}, nil
+	return map[string]string{
+		"organization_id": organizationID.String(),
+		"document_status": documentStatus.String(),
+	}, nil
 }
 
 func (dv *DocumentVersions) LoadByDocumentID(
@@ -377,7 +389,7 @@ LIMIT 1;
 
 	args := pgx.StrictNamedArgs{
 		"document_id": documentID,
-		"status":      DocumentStatusPublished,
+		"status":      DocumentVersionStatusPublished,
 	}
 	maps.Copy(args, scope.SQLArguments())
 

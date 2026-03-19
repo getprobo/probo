@@ -61,7 +61,7 @@ const bulkDeleteDocumentsMutation = graphql`
     $input: BulkDeleteDocumentsInput!
   ) {
     bulkDeleteDocuments(input: $input) {
-      deletedDocumentIds @deleteRecord
+      deletedDocumentIds
     }
   }
 `;

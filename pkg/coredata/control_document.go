@@ -113,3 +113,33 @@ WHERE
 	_, err := conn.Exec(ctx, q, args)
 	return err
 }
+
+
+func (cp ControlDocument) DeleteByDocumentIDs(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	documentIDs []gid.GID,
+) error {
+	q := `
+DELETE
+FROM
+    controls_documents
+WHERE
+    %s
+    AND document_id = ANY(@document_ids);
+`
+
+	args := pgx.StrictNamedArgs{
+		"document_ids": documentIDs,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	if _, err := conn.Exec(ctx, q, args); err != nil {
+		return fmt.Errorf("cannot delete control document mappings by document ids: %w", err)
+	}
+
+	return nil
+}

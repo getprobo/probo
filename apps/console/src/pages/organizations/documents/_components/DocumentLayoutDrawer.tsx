@@ -21,6 +21,8 @@ const documentFragment = graphql`
   fragment DocumentLayoutDrawer_documentFragment on Document {
     id
     documentType
+    status
+    archivedAt
     canUpdate: permission(action: "core:document:update")
     approvers(first: 100) {
       edges {
@@ -87,6 +89,7 @@ export function DocumentLayoutDrawer(props: {
   const version = useFragment<DocumentLayoutDrawer_versionFragment$key>(versionFragment, versionFragmentRef);
 
   const isDraft = version.status === "DRAFT";
+  const canEdit = document.canUpdate;
 
   const approvers = document.approvers.edges.map(e => e.node);
 
@@ -184,7 +187,7 @@ export function DocumentLayoutDrawer(props: {
           : (
               <ReadOnlyPropertyContent
                 onEdit={() => setIsEditingApprover(true)}
-                canEdit={document.canUpdate}
+                canEdit={canEdit}
               >
                 <div className="flex flex-wrap gap-2">
                   {approvers.map(approver => (
@@ -220,7 +223,7 @@ export function DocumentLayoutDrawer(props: {
           : (
               <ReadOnlyPropertyContent
                 onEdit={() => setIsEditingType(true)}
-                canEdit={document.canUpdate}
+                canEdit={canEdit}
               >
                 <div className="text-sm text-txt-secondary">
                   {getDocumentTypeLabel(__, document.documentType)}
@@ -251,7 +254,7 @@ export function DocumentLayoutDrawer(props: {
           : (
               <ReadOnlyPropertyContent
                 onEdit={() => setIsEditingClassification(true)}
-                canEdit={document.canUpdate}
+                canEdit={canEdit}
               >
                 <div className="text-sm text-txt-secondary">
                   {getDocumentClassificationLabel(
@@ -286,6 +289,13 @@ export function DocumentLayoutDrawer(props: {
           <div className="text-sm text-txt-secondary">
             {formatDate(version.publishedAt)}
           </div>
+        </PropertyRow>
+      )}
+      {document.archivedAt && (
+        <PropertyRow label={__("Archived on")}>
+          <Badge variant="danger" size="md" className="gap-2">
+            {formatDate(document.archivedAt)}
+          </Badge>
         </PropertyRow>
       )}
     </Drawer>

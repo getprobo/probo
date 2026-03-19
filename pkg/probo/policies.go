@@ -19,12 +19,37 @@ import (
 	"go.probo.inc/probo/pkg/iam/policy"
 )
 
-var organizationCondition = policy.Equals("principal.organization_id", "resource.organization_id")
+var (
+	organizationCondition         = policy.Equals("principal.organization_id", "resource.organization_id")
+	documentWriteActiveOnly       = policy.Deny(
+		ActionDocumentUpdate,
+		ActionDocumentArchive,
+		ActionDocumentDraftVersionCreate,
+		ActionDocumentChangelogGenerate,
+		ActionDocumentSendSigningNotifications,
+		ActionDocumentVersionUpdate,
+		ActionDocumentVersionPublish,
+		ActionDocumentVersionDeleteDraft,
+		ActionDocumentVersionSignatureRequest,
+		ActionDocumentVersionCancelSignature,
+	).WithSID("document-write-active-only").When(
+		organizationCondition,
+		policy.Equals("resource.document_status", "ARCHIVED"),
+	)
+	documentUnarchiveArchivedOnly = policy.Deny(
+		ActionDocumentUnarchive,
+	).WithSID("document-unarchive-archived-only").When(
+		organizationCondition,
+		policy.Equals("resource.document_status", "ACTIVE"),
+	)
+)
 
 // OwnerPolicy defines permissions for organization owners.
 var OwnerPolicy = policy.NewPolicy(
 	"probo:owner",
 	"Probo Owner",
+	documentWriteActiveOnly,
+	documentUnarchiveArchivedOnly,
 	policy.Allow("core:*").WithSID("full-core-access").When(organizationCondition),
 ).WithDescription("Full probo access for organization owners")
 
@@ -32,6 +57,8 @@ var OwnerPolicy = policy.NewPolicy(
 var AdminPolicy = policy.NewPolicy(
 	"probo:admin",
 	"Probo Admin",
+	documentWriteActiveOnly,
+	documentUnarchiveArchivedOnly,
 	policy.Allow("core:*").WithSID("full-core-access").When(organizationCondition),
 ).WithDescription("Probo admin access - can manage core entities")
 

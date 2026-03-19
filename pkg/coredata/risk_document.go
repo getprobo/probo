@@ -99,3 +99,33 @@ WHERE
 	_, err := conn.Exec(ctx, q, args)
 	return err
 }
+
+
+func (rp RiskDocument) DeleteByDocumentIDs(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	documentIDs []gid.GID,
+) error {
+	q := `
+DELETE
+FROM
+    risks_documents
+WHERE
+    %s
+    AND document_id = ANY(@document_ids);
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"document_ids": documentIDs,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	if _, err := conn.Exec(ctx, q, args); err != nil {
+		return fmt.Errorf("cannot delete risk document mappings by document ids: %w", err)
+	}
+
+	return nil
+}

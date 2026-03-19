@@ -26,6 +26,7 @@ type (
 		published               *bool
 		userEmail               *mail.Addr
 		documentTypes           []DocumentType
+		status                  []DocumentStatus
 	}
 )
 
@@ -43,6 +44,7 @@ func NewDocumentTrustCenterFilter() *DocumentFilter {
 			TrustCenterVisibilityPublic,
 		},
 		published: &published,
+		status:    []DocumentStatus{DocumentStatusActive},
 	}
 }
 
@@ -58,6 +60,11 @@ func (f *DocumentFilter) WithUserEmail(userEmail *mail.Addr) *DocumentFilter {
 
 func (f *DocumentFilter) WithDocumentTypes(documentTypes []DocumentType) *DocumentFilter {
 	f.documentTypes = documentTypes
+	return f
+}
+
+func (f *DocumentFilter) WithStatus(status []DocumentStatus) *DocumentFilter {
+	f.status = status
 	return f
 }
 
@@ -78,12 +85,21 @@ func (f *DocumentFilter) SQLArguments() pgx.NamedArgs {
 		}
 	}
 
+	var status []string
+	if f.status != nil {
+		status = make([]string, len(f.status))
+		for i, s := range f.status {
+			status[i] = s.String()
+		}
+	}
+
 	return pgx.NamedArgs{
 		"query":                     f.query,
 		"trust_center_visibilities": visibilities,
 		"published":                 f.published,
 		"user_email":                f.userEmail,
 		"document_types":            documentTypes,
+		"document_status":           status,
 	}
 }
 
@@ -130,6 +146,11 @@ func (f *DocumentFilter) SQLFragment() string {
 		WHEN @document_types::document_type[] IS NOT NULL THEN
 			document_type = ANY(@document_types::document_type[])
 		ELSE TRUE
+	END
+	AND
+	CASE
+		WHEN @document_status::text[] IS NULL THEN TRUE
+		ELSE status::text = ANY(@document_status::text[])
 	END
 )`
 }

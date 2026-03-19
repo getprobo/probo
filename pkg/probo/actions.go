@@ -181,6 +181,8 @@ const (
 	ActionDocumentUpdate                   = "core:document:update"
 	ActionDocumentDelete                   = "core:document:delete"
 	ActionDocumentChangelogGenerate        = "core:document:generate-changelog"
+	ActionDocumentArchive                  = "core:document:archive"
+	ActionDocumentUnarchive                = "core:document:unarchive"
 	ActionDocumentDraftVersionCreate       = "core:document:create-draft-version"
 	ActionDocumentSendSigningNotifications = "core:document:send-signing-notifications"
 

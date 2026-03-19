@@ -36,6 +36,7 @@ export const documentLayoutQuery = graphql`
       ... on Document {
         id
         title
+        status
         canPublish: permission(action: "core:document-version:publish")
         controlInfo: controls(first: 0) {
           totalCount

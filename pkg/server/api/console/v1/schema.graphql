@@ -69,13 +69,24 @@ enum EvidenceState
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.EvidenceStateRequested")
 }
 
-enum DocumentStatus
-    @goModel(model: "go.probo.inc/probo/pkg/coredata.DocumentStatus") {
-    DRAFT @goEnum(value: "go.probo.inc/probo/pkg/coredata.DocumentStatusDraft")
+enum DocumentVersionStatus
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.DocumentVersionStatus") {
+    DRAFT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DocumentVersionStatusDraft"
+        )
     PUBLISHED
         @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.DocumentStatusPublished"
+            value: "go.probo.inc/probo/pkg/coredata.DocumentVersionStatusPublished"
         )
+}
+
+enum DocumentStatus
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.DocumentStatus") {
+    ACTIVE
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.DocumentStatusActive")
+    ARCHIVED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.DocumentStatusArchived")
 }
 
 enum EvidenceType
@@ -1569,7 +1580,7 @@ input ApplicabilityStatementOrder
 }
 
 input DocumentVersionFilter {
-    status: DocumentStatus
+    status: DocumentVersionStatus
 }
 
 # Input Types for Filtering
@@ -1580,6 +1591,7 @@ input ControlFilter {
 input DocumentFilter {
     query: String
     documentTypes: [DocumentType!]
+    status: [DocumentStatus!]
 }
 
 input MeasureFilter {
@@ -2401,6 +2413,9 @@ type Document implements Node {
         orderBy: ControlOrder
         filter: ControlFilter
     ): ControlConnection! @goField(forceResolver: true)
+
+    status: DocumentStatus!
+    archivedAt: Datetime
 
     createdAt: Datetime!
     updatedAt: Datetime!
@@ -3657,6 +3672,8 @@ type Mutation {
     # Document mutations
     createDocument(input: CreateDocumentInput!): CreateDocumentPayload!
     updateDocument(input: UpdateDocumentInput!): UpdateDocumentPayload!
+    archiveDocument(input: ArchiveDocumentInput!): ArchiveDocumentPayload!
+    unarchiveDocument(input: UnarchiveDocumentInput!): UnarchiveDocumentPayload!
     deleteDocument(input: DeleteDocumentInput!): DeleteDocumentPayload!
     # Meeting mutations
     createMeeting(input: CreateMeetingInput!): CreateMeetingPayload!
@@ -3694,6 +3711,12 @@ type Mutation {
     bulkDeleteDocuments(
         input: BulkDeleteDocumentsInput!
     ): BulkDeleteDocumentsPayload!
+    bulkArchiveDocuments(
+        input: BulkArchiveDocumentsInput!
+    ): BulkArchiveDocumentsPayload!
+    bulkUnarchiveDocuments(
+        input: BulkUnarchiveDocumentsInput!
+    ): BulkUnarchiveDocumentsPayload!
     bulkExportDocuments(
         input: BulkExportDocumentsInput!
     ): BulkExportDocumentsPayload!
@@ -4365,6 +4388,14 @@ input ExportDataProtectionImpactAssessmentsPDFInput {
 input ExportTransferImpactAssessmentsPDFInput {
     organizationId: ID!
     filter: TransferImpactAssessmentFilter
+}
+
+input ArchiveDocumentInput {
+    documentId: ID!
+}
+
+input UnarchiveDocumentInput {
+    documentId: ID!
 }
 
 input DeleteDocumentInput {
@@ -5086,6 +5117,14 @@ type UpdateDocumentPayload {
     document: Document!
 }
 
+type ArchiveDocumentPayload {
+    document: Document!
+}
+
+type UnarchiveDocumentPayload {
+    document: Document!
+}
+
 type DeleteDocumentPayload {
     deletedDocumentId: ID!
 }
@@ -5197,7 +5236,7 @@ type DeleteMeasurePayload {
 type DocumentVersion implements Node {
     id: ID!
     document: Document! @goField(forceResolver: true)
-    status: DocumentStatus!
+    status: DocumentVersionStatus!
     version: Int!
     content: String!
     changelog: String!
@@ -5324,6 +5363,22 @@ type BulkPublishDocumentVersionsPayload {
 
 input BulkDeleteDocumentsInput {
     documentIds: [ID!]!
+}
+
+input BulkArchiveDocumentsInput {
+    documentIds: [ID!]!
+}
+
+type BulkArchiveDocumentsPayload {
+    documents: [Document!]!
+}
+
+input BulkUnarchiveDocumentsInput {
+    documentIds: [ID!]!
+}
+
+type BulkUnarchiveDocumentsPayload {
+    documents: [Document!]!
 }
 
 input BulkExportDocumentsInput {

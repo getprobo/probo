@@ -30,6 +30,8 @@ func NewDocument(d *coredata.Document, approverIDs []gid.GID) *Document {
 		Classification:          d.Classification,
 		CurrentPublishedVersion: d.CurrentPublishedVersion,
 		TrustCenterVisibility:   d.TrustCenterVisibility,
+		Status:                  d.Status,
+		ArchivedAt:              d.ArchivedAt,
 		CreatedAt:               d.CreatedAt,
 		UpdatedAt:               d.UpdatedAt,
 	}

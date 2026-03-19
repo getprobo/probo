@@ -95,6 +95,12 @@ func (r *documentResolver) IsUserAuthorized(ctx context.Context, obj *types.Docu
 
 	document, err := trustService.Documents.Get(ctx, trustCenter.OrganizationID, obj.ID)
 	if err != nil {
+		if errors.Is(err, trust.ErrDocumentNotFound) || errors.Is(err, trust.ErrDocumentNotVisible) || errors.Is(err, coredata.ErrResourceNotFound) {
+			return false, gqlutils.NotFoundf(ctx, "document %q not found", obj.ID)
+		}
+		if _, ok := errors.AsType[*trust.ErrDocumentArchived](err); ok {
+			return false, gqlutils.NotFoundf(ctx, "document %q not found", obj.ID)
+		}
 		r.logger.ErrorCtx(ctx, "cannot load document", log.Error(err))
 		return false, gqlutils.Internal(ctx)
 	}
@@ -363,6 +369,12 @@ func (r *mutationResolver) ExportDocumentPDF(ctx context.Context, input types.Ex
 
 	document, err := trustService.Documents.Get(ctx, trustCenter.OrganizationID, input.DocumentID)
 	if err != nil {
+		if errors.Is(err, trust.ErrDocumentNotFound) || errors.Is(err, trust.ErrDocumentNotVisible) || errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFoundf(ctx, "document %q not found", input.DocumentID)
+		}
+		if _, ok := errors.AsType[*trust.ErrDocumentArchived](err); ok {
+			return nil, gqlutils.NotFoundf(ctx, "document %q not found", input.DocumentID)
+		}
 		r.logger.ErrorCtx(ctx, "cannot load document", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
@@ -525,6 +537,12 @@ func (r *mutationResolver) RequestDocumentAccess(ctx context.Context, input type
 
 	document, err := trustService.Documents.Get(ctx, trustCenter.OrganizationID, input.DocumentID)
 	if err != nil {
+		if errors.Is(err, trust.ErrDocumentNotFound) || errors.Is(err, trust.ErrDocumentNotVisible) || errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFoundf(ctx, "document %q not found", input.DocumentID)
+		}
+		if _, ok := errors.AsType[*trust.ErrDocumentArchived](err); ok {
+			return nil, gqlutils.NotFoundf(ctx, "document %q not found", input.DocumentID)
+		}
 		r.logger.ErrorCtx(ctx, "cannot load document", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
@@ -869,6 +887,9 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 		document, err := trustService.Documents.Get(ctx, trustCenter.OrganizationID, id)
 		if err != nil {
 			if errors.Is(err, trust.ErrDocumentNotFound) || errors.Is(err, trust.ErrDocumentNotVisible) || errors.Is(err, coredata.ErrResourceNotFound) {
+				return nil, gqlutils.NotFoundf(ctx, "node %q not found", id)
+			}
+			if _, ok := errors.AsType[*trust.ErrDocumentArchived](err); ok {
 				return nil, gqlutils.NotFoundf(ctx, "node %q not found", id)
 			}
 			r.logger.ErrorCtx(ctx, "cannot get document", log.Error(err))

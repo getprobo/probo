@@ -4286,6 +4286,9 @@ func (r *mutationResolver) UpdateDocument(ctx context.Context, input types.Updat
 	)
 
 	if err != nil {
+		if errArchived, ok := errors.AsType[*probo.ErrDocumentArchived](err); ok {
+			return nil, gqlutils.Conflict(ctx, errArchived)
+		}
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
@@ -4294,6 +4297,50 @@ func (r *mutationResolver) UpdateDocument(ctx context.Context, input types.Updat
 	}
 
 	return &types.UpdateDocumentPayload{
+		Document: types.NewDocument(document),
+	}, nil
+}
+
+// ArchiveDocument is the resolver for the archiveDocument field.
+func (r *mutationResolver) ArchiveDocument(ctx context.Context, input types.ArchiveDocumentInput) (*types.ArchiveDocumentPayload, error) {
+	if err := r.authorize(ctx, input.DocumentID, probo.ActionDocumentArchive); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, input.DocumentID.TenantID())
+
+	document, err := prb.Documents.Archive(ctx, input.DocumentID)
+	if err != nil {
+		if errArchived, ok := errors.AsType[*probo.ErrDocumentArchived](err); ok {
+			return nil, gqlutils.Conflict(ctx, errArchived)
+		}
+		r.logger.ErrorCtx(ctx, "cannot archive document", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.ArchiveDocumentPayload{
+		Document: types.NewDocument(document),
+	}, nil
+}
+
+// UnarchiveDocument is the resolver for the unarchiveDocument field.
+func (r *mutationResolver) UnarchiveDocument(ctx context.Context, input types.UnarchiveDocumentInput) (*types.UnarchiveDocumentPayload, error) {
+	if err := r.authorize(ctx, input.DocumentID, probo.ActionDocumentUnarchive); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, input.DocumentID.TenantID())
+
+	document, err := prb.Documents.Unarchive(ctx, input.DocumentID)
+	if err != nil {
+		if errNotArchived, ok := errors.AsType[*probo.ErrDocumentNotArchived](err); ok {
+			return nil, gqlutils.Conflict(ctx, errNotArchived)
+		}
+		r.logger.ErrorCtx(ctx, "cannot unarchive document", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.UnarchiveDocumentPayload{
 		Document: types.NewDocument(document),
 	}, nil
 }
@@ -4607,6 +4654,10 @@ func (r *mutationResolver) PublishDocumentVersion(ctx context.Context, input typ
 			return nil, gqlutils.Invalid(ctx, errNoChanges)
 		}
 
+		if errArchived, ok := errors.AsType[*probo.ErrDocumentArchived](err); ok {
+			return nil, gqlutils.Conflict(ctx, errArchived)
+		}
+
 		r.logger.ErrorCtx(ctx, "cannot publish document version", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
@@ -4684,6 +4735,58 @@ func (r *mutationResolver) BulkDeleteDocuments(ctx context.Context, input types.
 
 	return &types.BulkDeleteDocumentsPayload{
 		DeletedDocumentIds: input.DocumentIds,
+	}, nil
+}
+
+// BulkArchiveDocuments is the resolver for the bulkArchiveDocuments field.
+func (r *mutationResolver) BulkArchiveDocuments(ctx context.Context, input types.BulkArchiveDocumentsInput) (*types.BulkArchiveDocumentsPayload, error) {
+	if len(input.DocumentIds) == 0 {
+		return &types.BulkArchiveDocumentsPayload{
+			Documents: []*types.Document{},
+		}, nil
+	}
+
+	for _, documentID := range input.DocumentIds {
+		if err := r.authorize(ctx, documentID, probo.ActionDocumentArchive); err != nil {
+			return nil, err
+		}
+	}
+
+	prb := r.ProboService(ctx, input.DocumentIds[0].TenantID())
+
+	if err := prb.Documents.BulkArchive(ctx, input.DocumentIds); err != nil {
+		r.logger.ErrorCtx(ctx, "cannot bulk archive documents", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.BulkArchiveDocumentsPayload{
+		Documents: []*types.Document{},
+	}, nil
+}
+
+// BulkUnarchiveDocuments is the resolver for the bulkUnarchiveDocuments field.
+func (r *mutationResolver) BulkUnarchiveDocuments(ctx context.Context, input types.BulkUnarchiveDocumentsInput) (*types.BulkUnarchiveDocumentsPayload, error) {
+	if len(input.DocumentIds) == 0 {
+		return &types.BulkUnarchiveDocumentsPayload{
+			Documents: []*types.Document{},
+		}, nil
+	}
+
+	for _, documentID := range input.DocumentIds {
+		if err := r.authorize(ctx, documentID, probo.ActionDocumentUnarchive); err != nil {
+			return nil, err
+		}
+	}
+
+	prb := r.ProboService(ctx, input.DocumentIds[0].TenantID())
+
+	if err := prb.Documents.BulkUnarchive(ctx, input.DocumentIds); err != nil {
+		r.logger.ErrorCtx(ctx, "cannot bulk unarchive documents", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.BulkUnarchiveDocumentsPayload{
+		Documents: []*types.Document{},
 	}, nil
 }
 
@@ -4803,6 +4906,9 @@ func (r *mutationResolver) UpdateDocumentVersion(ctx context.Context, input type
 			return nil, gqlutils.Conflict(ctx, errNotDraft)
 		}
 
+		if errArchived, ok := errors.AsType[*probo.ErrDocumentArchived](err); ok {
+			return nil, gqlutils.Conflict(ctx, errArchived)
+		}
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
@@ -6479,7 +6585,8 @@ func (r *organizationResolver) Documents(ctx context.Context, obj *types.Organiz
 	var documentFilter = coredata.NewDocumentFilter(nil)
 	if filter != nil {
 		documentFilter = coredata.NewDocumentFilter(filter.Query).
-			WithDocumentTypes(filter.DocumentTypes)
+			WithDocumentTypes(filter.DocumentTypes).
+			WithStatus(filter.Status)
 	}
 
 	page, err := prb.Documents.ListByOrganizationID(ctx, obj.ID, cursor, documentFilter)

@@ -84,6 +84,8 @@ func NewDocument(document *coredata.Document) *Document {
 		Classification:          document.Classification,
 		CurrentPublishedVersion: document.CurrentPublishedVersion,
 		TrustCenterVisibility:   document.TrustCenterVisibility,
+		Status:                  document.Status,
+		ArchivedAt:              document.ArchivedAt,
 		CreatedAt:               document.CreatedAt,
 		UpdatedAt:               document.UpdatedAt,
 	}

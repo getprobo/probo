@@ -5057,11 +5057,18 @@ components:
         - SECRET
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.DocumentClassification
 
-    DocumentStatus:
+    DocumentVersionStatus:
       type: string
       enum:
         - DRAFT
         - PUBLISHED
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.DocumentVersionStatus
+
+    DocumentStatus:
+      type: string
+      enum:
+        - ACTIVE
+        - ARCHIVED
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.DocumentStatus
 
     DocumentVersionSignatureState:
@@ -5142,6 +5149,7 @@ components:
         - document_type
         - classification
         - trust_center_visibility
+        - status
         - created_at
         - updated_at
       properties:
@@ -5173,6 +5181,15 @@ components:
         trust_center_visibility:
           $ref: "#/components/schemas/TrustCenterVisibility"
           description: Trust center visibility
+        status:
+          $ref: "#/components/schemas/DocumentStatus"
+          description: Document status
+        archived_at:
+          type:
+            - string
+            - "null"
+          format: date-time
+          description: Archive timestamp
         created_at:
           type: string
           format: date-time
@@ -5228,8 +5245,8 @@ components:
           type: string
           description: Changelog
         status:
-          $ref: "#/components/schemas/DocumentStatus"
-          description: Document status
+          $ref: "#/components/schemas/DocumentVersionStatus"
+          description: Document version status
         published_at:
           type:
             - string
@@ -5427,6 +5444,40 @@ components:
           description: Trust center visibility
 
     UpdateDocumentOutput:
+      type: object
+      required:
+        - document
+      properties:
+        document:
+          $ref: "#/components/schemas/Document"
+
+    ArchiveDocumentInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Document ID
+
+    ArchiveDocumentOutput:
+      type: object
+      required:
+        - document
+      properties:
+        document:
+          $ref: "#/components/schemas/Document"
+
+    UnarchiveDocumentInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Document ID
+
+    UnarchiveDocumentOutput:
       type: object
       required:
         - document
@@ -7133,6 +7184,22 @@ tools:
       $ref: "#/components/schemas/UpdateDocumentInput"
     outputSchema:
       $ref: "#/components/schemas/UpdateDocumentOutput"
+  - name: archiveDocument
+    description: Archive a document to prevent further modifications
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/ArchiveDocumentInput"
+    outputSchema:
+      $ref: "#/components/schemas/ArchiveDocumentOutput"
+  - name: unarchiveDocument
+    description: Unarchive a document to allow modifications again
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/UnarchiveDocumentInput"
+    outputSchema:
+      $ref: "#/components/schemas/UnarchiveDocumentOutput"
   - name: listDocumentVersions
     description: List all versions for a document
     hints:

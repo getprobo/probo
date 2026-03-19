@@ -799,7 +799,7 @@ func (r *Resolver) AddFindingTool(ctx context.Context, req *mcp.CallToolRequest,
 			Kind:               input.Kind,
 			Description:        input.Description,
 			Source:             input.Source,
-			IdentifiedOn:     input.IdentifiedOn,
+			IdentifiedOn:       input.IdentifiedOn,
 			RootCause:          input.RootCause,
 			CorrectiveAction:   input.CorrectiveAction,
 			OwnerID:            input.OwnerID,
@@ -830,7 +830,7 @@ func (r *Resolver) UpdateFindingTool(ctx context.Context, req *mcp.CallToolReque
 			ID:                 input.ID,
 			Description:        UnwrapOmittable(input.Description),
 			Source:             UnwrapOmittable(input.Source),
-			IdentifiedOn:     UnwrapOmittable(input.IdentifiedOn),
+			IdentifiedOn:       UnwrapOmittable(input.IdentifiedOn),
 			RootCause:          UnwrapOmittable(input.RootCause),
 			CorrectiveAction:   UnwrapOmittable(input.CorrectiveAction),
 			OwnerID:            input.OwnerID,
@@ -3200,4 +3200,44 @@ func (r *Resolver) ListFindingAuditsTool(ctx context.Context, req *mcp.CallToolR
 	}
 
 	return nil, types.NewListFindingAuditsOutput(auditPage), nil
+}
+
+func (r *Resolver) ArchiveDocumentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ArchiveDocumentInput) (*mcp.CallToolResult, types.ArchiveDocumentOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionDocumentArchive)
+
+	svc := r.ProboService(ctx, input.ID)
+
+	document, err := svc.Documents.Archive(ctx, input.ID)
+	if err != nil {
+		return nil, types.ArchiveDocumentOutput{}, fmt.Errorf("cannot archive document: %w", err)
+	}
+
+	approverPage, err := svc.Documents.ListApprovers(ctx, input.ID, allApproversCursor())
+	if err != nil {
+		return nil, types.ArchiveDocumentOutput{}, fmt.Errorf("cannot list document approvers: %w", err)
+	}
+
+	return nil, types.ArchiveDocumentOutput{
+		Document: types.NewDocument(document, profileIDs(approverPage)),
+	}, nil
+}
+
+func (r *Resolver) UnarchiveDocumentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UnarchiveDocumentInput) (*mcp.CallToolResult, types.UnarchiveDocumentOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionDocumentUnarchive)
+
+	svc := r.ProboService(ctx, input.ID)
+
+	document, err := svc.Documents.Unarchive(ctx, input.ID)
+	if err != nil {
+		return nil, types.UnarchiveDocumentOutput{}, fmt.Errorf("cannot unarchive document: %w", err)
+	}
+
+	approverPage, err := svc.Documents.ListApprovers(ctx, input.ID, allApproversCursor())
+	if err != nil {
+		return nil, types.UnarchiveDocumentOutput{}, fmt.Errorf("cannot list document approvers: %w", err)
+	}
+
+	return nil, types.UnarchiveDocumentOutput{
+		Document: types.NewDocument(document, profileIDs(approverPage)),
+	}, nil
 }

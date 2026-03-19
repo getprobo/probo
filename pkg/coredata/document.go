@@ -37,6 +37,8 @@ type (
 		Classification          DocumentClassification `db:"classification"`
 		CurrentPublishedVersion *int                   `db:"current_published_version"`
 		TrustCenterVisibility   TrustCenterVisibility  `db:"trust_center_visibility"`
+		Status                  DocumentStatus         `db:"status"`
+		ArchivedAt              *time.Time             `db:"archived_at"`
 		CreatedAt               time.Time              `db:"created_at"`
 		UpdatedAt               time.Time              `db:"updated_at"`
 	}
@@ -59,17 +61,21 @@ func (p Document) CursorKey(orderBy DocumentOrderField) page.CursorKey {
 
 // AuthorizationAttributes returns the authorization attributes for policy evaluation.
 func (d *Document) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
-	q := `SELECT organization_id FROM documents WHERE id = $1 LIMIT 1;`
+	q := `SELECT organization_id, status FROM documents WHERE id = $1 LIMIT 1;`
 
 	var organizationID gid.GID
-	if err := conn.QueryRow(ctx, q, d.ID).Scan(&organizationID); err != nil {
+	var documentStatus DocumentStatus
+	if err := conn.QueryRow(ctx, q, d.ID).Scan(&organizationID, &documentStatus); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrResourceNotFound
 		}
 		return nil, fmt.Errorf("cannot query document authorization attributes: %w", err)
 	}
 
-	return map[string]string{"organization_id": organizationID.String()}, nil
+	return map[string]string{
+		"organization_id": organizationID.String(),
+		"document_status": documentStatus.String(),
+	}, nil
 }
 
 func (p *Document) LoadByID(
@@ -87,6 +93,8 @@ SELECT
     classification,
     current_published_version,
     trust_center_visibility,
+    status,
+    archived_at,
     created_at,
     updated_at
 FROM
@@ -138,6 +146,8 @@ SELECT
     classification,
     current_published_version,
     trust_center_visibility,
+    status,
+    archived_at,
     created_at,
     updated_at
 FROM
@@ -190,6 +200,8 @@ SELECT
     classification,
     current_published_version,
     trust_center_visibility,
+    status,
+    archived_at,
     created_at,
     updated_at
 FROM
@@ -271,6 +283,8 @@ SELECT
     classification,
     current_published_version,
     trust_center_visibility,
+    status,
+    archived_at,
     created_at,
     updated_at
 FROM
@@ -321,6 +335,8 @@ SELECT
     classification,
     current_published_version,
     trust_center_visibility,
+    status,
+    archived_at,
     created_at,
     updated_at
 FROM
@@ -384,6 +400,8 @@ SELECT
 	classification,
 	current_published_version,
 	trust_center_visibility,
+	status,
+	archived_at,
 	created_at,
 	updated_at
 FROM
@@ -431,6 +449,8 @@ INSERT INTO
 		classification,
 		current_published_version,
 		trust_center_visibility,
+		status,
+		archived_at,
 		created_at,
 		updated_at
     )
@@ -443,6 +463,8 @@ VALUES (
     @classification,
     @current_published_version,
     @trust_center_visibility,
+    @status,
+    @archived_at,
     @created_at,
     @updated_at
 );
@@ -457,6 +479,8 @@ VALUES (
 		"classification":            p.Classification,
 		"current_published_version": p.CurrentPublishedVersion,
 		"trust_center_visibility":   p.TrustCenterVisibility,
+		"status":                    p.Status,
+		"archived_at":               p.ArchivedAt,
 		"created_at":                p.CreatedAt,
 		"updated_at":                p.UpdatedAt,
 	}
@@ -515,6 +539,8 @@ SET
 	document_type = @document_type,
 	classification = @classification,
 	trust_center_visibility = @trust_center_visibility,
+	status = @status,
+	archived_at = @archived_at,
 	updated_at = @updated_at
 WHERE
 	%s
@@ -531,6 +557,8 @@ WHERE
 		"document_type":             p.DocumentType,
 		"classification":            p.Classification,
 		"trust_center_visibility":   p.TrustCenterVisibility,
+		"status":                    p.Status,
+		"archived_at":               p.ArchivedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -603,6 +631,8 @@ SELECT
 	scoped_documents.classification,
 	scoped_documents.current_published_version,
 	scoped_documents.trust_center_visibility,
+	scoped_documents.status,
+	scoped_documents.archived_at,
 	scoped_documents.created_at,
 	scoped_documents.updated_at
 FROM scoped_documents
@@ -692,6 +722,8 @@ SELECT
 	scoped_documents.classification,
 	scoped_documents.current_published_version,
 	scoped_documents.trust_center_visibility,
+	scoped_documents.status,
+	scoped_documents.archived_at,
 	scoped_documents.created_at,
 	scoped_documents.updated_at
 FROM scoped_documents
@@ -742,6 +774,59 @@ UPDATE documents SET deleted_at = @deleted_at WHERE %s AND id = ANY(@document_id
 
 	_, err := conn.Exec(ctx, q, args)
 	return err
+}
+
+func (p *Documents) BulkArchive(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+) error {
+	q := `
+UPDATE documents SET status = 'ARCHIVED', archived_at = @archived_at, trust_center_visibility = 'NONE' WHERE %s AND id = ANY(@document_ids)
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	ids := make([]gid.GID, len(*p))
+	for i, doc := range *p {
+		ids[i] = doc.ID
+	}
+
+	args := pgx.StrictNamedArgs{
+		"document_ids": ids,
+		"archived_at":  time.Now(),
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	if _, err := conn.Exec(ctx, q, args); err != nil {
+		return fmt.Errorf("cannot bulk archive documents: %w", err)
+	}
+	return nil
+}
+
+func (p *Documents) BulkUnarchive(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+) error {
+	q := `
+UPDATE documents SET status = 'ACTIVE', archived_at = NULL WHERE %s AND id = ANY(@document_ids)
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	ids := make([]gid.GID, len(*p))
+	for i, doc := range *p {
+		ids[i] = doc.ID
+	}
+
+	args := pgx.StrictNamedArgs{
+		"document_ids": ids,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	if _, err := conn.Exec(ctx, q, args); err != nil {
+		return fmt.Errorf("cannot bulk unarchive documents: %w", err)
+	}
+	return nil
 }
 
 func (p *Document) IsLastSignableVersionSignedByUserEmail(

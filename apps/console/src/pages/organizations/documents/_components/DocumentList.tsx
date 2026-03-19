@@ -1,16 +1,19 @@
 import { documentTypes, getDocumentTypeLabel, sprintf } from "@probo/helpers";
 import { useList } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
-import { Button, Card, Checkbox, IconArrowDown, IconCheckmark1, IconCrossLargeX, IconSignature, IconTrashCan, Option, Select, Tbody, Th, Thead, Tr, useConfirm } from "@probo/ui";
-import { type ComponentProps, use, useRef, useState, useTransition } from "react";
+import { Button, Card, Checkbox, IconArchive, IconArrowDown, IconCheckmark1, IconCrossLargeX, IconSignature, IconTrashCan, Option, Select, Tbody, Th, Thead, Tr, useConfirm } from "@probo/ui";
+import { type ComponentProps, use, useEffect, useRef, useState, useTransition } from "react";
 import { usePaginationFragment } from "react-relay";
 import { ConnectionHandler, graphql } from "relay-runtime";
 
+import type { DocumentListBulkArchiveMutation } from "#/__generated__/core/DocumentListBulkArchiveMutation.graphql";
+import type { DocumentListBulkUnarchiveMutation } from "#/__generated__/core/DocumentListBulkUnarchiveMutation.graphql";
 import type { DocumentListFragment$key } from "#/__generated__/core/DocumentListFragment.graphql";
-import type { DocumentsListQuery, DocumentType } from "#/__generated__/core/DocumentsListQuery.graphql";
+import type { DocumentType, DocumentsListQuery } from "#/__generated__/core/DocumentsListQuery.graphql";
 import { BulkExportDialog, type BulkExportDialogRef } from "#/components/documents/BulkExportDialog";
 import { type Order, SortableTable, SortableTh } from "#/components/SortableTable";
 import { useBulkDeleteDocumentsMutation, useBulkExportDocumentsMutation } from "#/hooks/graph/DocumentGraph";
+import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { CurrentUser } from "#/providers/CurrentUser";
 
@@ -30,6 +33,7 @@ const fragment = graphql`
     after: { type: "CursorKey", defaultValue: null }
     before: { type: "CursorKey", defaultValue: null }
     last: { type: "Int", defaultValue: null }
+    status: { type: "[DocumentStatus!]", defaultValue: [ACTIVE] }
     documentTypes: { type: "[DocumentType!]", defaultValue: null }
   ) {
     documents(
@@ -38,7 +42,7 @@ const fragment = graphql`
       last: $last
       before: $before
       orderBy: $order
-      filter: { documentTypes: $documentTypes }
+      filter: { status: $status documentTypes: $documentTypes }
     ) @connection(key: "DocumentsListQuery_documents" filters: ["orderBy", "filter"]) {
       __id
       edges {
@@ -49,8 +53,43 @@ const fragment = graphql`
           canRequestSignatures: permission(
             action: "core:document-version:request-signature"
           )
+          canArchive: permission(action: "core:document:archive")
+          canUnarchive: permission(action: "core:document:unarchive")
+          canSendSigningNotifications: permission(
+            action: "core:document:send-signing-notifications"
+          )
           ...DocumentListItemFragment
         }
+      }
+    }
+  }
+`;
+
+const bulkArchiveMutation = graphql`
+  mutation DocumentListBulkArchiveMutation($input: BulkArchiveDocumentsInput!) {
+    bulkArchiveDocuments(input: $input) {
+      documents {
+        id
+        status
+        archivedAt
+        canUpdate: permission(action: "core:document:update")
+        canArchive: permission(action: "core:document:archive")
+        canUnarchive: permission(action: "core:document:unarchive")
+      }
+    }
+  }
+`;
+
+const bulkUnarchiveMutation = graphql`
+  mutation DocumentListBulkUnarchiveMutation($input: BulkUnarchiveDocumentsInput!) {
+    bulkUnarchiveDocuments(input: $input) {
+      documents {
+        id
+        status
+        archivedAt
+        canUpdate: permission(action: "core:document:update")
+        canArchive: permission(action: "core:document:archive")
+        canUnarchive: permission(action: "core:document:unarchive")
       }
     }
   }
@@ -59,8 +98,10 @@ const fragment = graphql`
 export function DocumentList(props: {
   fKey: DocumentListFragment$key;
   onConnectionIdChange: (connectionId: string) => void;
+  onCanSendNotificationsChange?: (can: boolean) => void;
+  tab: "ACTIVE" | "ARCHIVED";
 }) {
-  const { fKey, onConnectionIdChange } = props;
+  const { fKey, onConnectionIdChange, onCanSendNotificationsChange, tab } = props;
 
   const organizationId = useOrganizationId();
   const { email: defaultEmail } = use(CurrentUser);
@@ -72,17 +113,48 @@ export function DocumentList(props: {
     fKey,
   );
 
-  const documents = pagination.data.documents.edges
-    .map(({ node }) => node);
+  const [documentTypeFilter, setDocumentTypeFilter] = useState<DocumentType | null>(null);
+  const [isPending, startTransition] = useTransition();
+
+  const refetch = pagination.refetch;
+  useEffect(() => {
+    refetch(
+      { status: [tab], documentTypes: documentTypeFilter ? [documentTypeFilter] : null },
+      { fetchPolicy: "store-and-network" },
+    );
+  }, [tab, refetch]);
+
+  const documents = pagination.data.documents.edges.map(({ node }) => node);
   const connectionId = pagination.data.documents.__id;
 
   const [bulkDeleteDocuments] = useBulkDeleteDocumentsMutation();
-  const [bulkExportDocuments, isBulkExporting]
-    = useBulkExportDocumentsMutation();
+  const [bulkExportDocuments, isBulkExporting] = useBulkExportDocumentsMutation();
+  const [bulkArchiveDocuments, isBulkArchiving] = useMutationWithToasts<DocumentListBulkArchiveMutation>(
+    bulkArchiveMutation,
+    { successMessage: __("Documents archived successfully."), errorMessage: __("Failed to archive documents") },
+  );
+  const [bulkUnarchiveDocuments, isBulkUnarchiving] = useMutationWithToasts<DocumentListBulkUnarchiveMutation>(
+    bulkUnarchiveMutation,
+    { successMessage: __("Documents unarchived successfully."), errorMessage: __("Failed to unarchive documents") },
+  );
   const { list: selection, toggle, clear, reset } = useList<string>([]);
   const confirm = useConfirm();
-  const [isPending, startTransition] = useTransition();
-  const [documentTypeFilter, setDocumentTypeFilter] = useState<DocumentType | null>(null);
+
+  const canDeleteAny = documents.some(({ canDelete }) => canDelete);
+  const canUpdateAny = documents.some(({ canUpdate }) => canUpdate);
+  const canRequestAnySignatures = documents.some(({ canRequestSignatures }) => canRequestSignatures);
+  const canArchiveAny = documents.some(({ canArchive }) => canArchive);
+  const canUnarchiveAny = documents.some(({ canUnarchive }) => canUnarchive);
+  const canSendAnySignatureNotifications = documents.some(({ canSendSigningNotifications }) => canSendSigningNotifications);
+  const hasAnyAction = tab === "ARCHIVED" ? canUnarchiveAny || canDeleteAny : canDeleteAny || canUpdateAny;
+
+  useEffect(() => {
+    onConnectionIdChange(connectionId);
+  }, [connectionId, onConnectionIdChange]);
+
+  useEffect(() => {
+    onCanSendNotificationsChange?.(canSendAnySignatureNotifications);
+  }, [canSendAnySignatureNotifications, onCanSendNotificationsChange]);
 
   const handleDocumentTypeFilterChange = (value: string) => {
     const newType = value === "ALL" ? null : (value as DocumentType);
@@ -94,46 +166,67 @@ export function DocumentList(props: {
         "DocumentsListQuery_documents",
         {
           orderBy: { direction: "ASC", field: "TITLE" },
-          filter: { documentTypes: newType ? [newType] : null },
+          filter: { status: [tab], documentTypes: newType ? [newType] : null },
         },
       ),
     );
     startTransition(() => {
       pagination.refetch(
-        { documentTypes: newType ? [newType] : null },
-        { fetchPolicy: "network-only" },
+        { status: [tab], documentTypes: newType ? [newType] : null },
+        { fetchPolicy: "store-and-network" },
       );
     });
   };
-
-  const canDeleteAny = documents.some(({ canDelete }) => canDelete);
-  const canUpdateAny = documents.some(({ canUpdate }) => canUpdate);
-  const canRequestAnySignatures = documents.some(
-    ({ canRequestSignatures }) => canRequestSignatures,
-  );
-  const hasAnyAction = canDeleteAny || canUpdateAny;
 
   const handleBulkDelete = () => {
     const documentCount = selection.length;
     confirm(
       () =>
         bulkDeleteDocuments({
-          variables: {
-            input: { documentIds: selection },
+          variables: { input: { documentIds: selection } },
+          updater: (store) => {
+            const conn = store.get(connectionId);
+            if (conn) {
+              selection.forEach(id => ConnectionHandler.deleteNode(conn, id));
+            }
           },
         }).then(() => {
           clear();
         }),
       {
         message: sprintf(
-          __(
-            "This will permanently delete %s document%s. This action cannot be undone.",
-          ),
+          __("This will permanently delete %s document%s. This action cannot be undone."),
           documentCount,
           documentCount > 1 ? "s" : "",
         ),
       },
     );
+  };
+
+  const handleBulkArchive = () => {
+    void bulkArchiveDocuments({
+      variables: { input: { documentIds: selection } },
+      updater: (store) => {
+        const conn = store.get(connectionId);
+        if (conn) {
+          selection.forEach(id => ConnectionHandler.deleteNode(conn, id));
+        }
+      },
+      onSuccess: clear,
+    });
+  };
+
+  const handleBulkUnarchive = () => {
+    void bulkUnarchiveDocuments({
+      variables: { input: { documentIds: selection } },
+      updater: (store) => {
+        const conn = store.get(connectionId);
+        if (conn) {
+          selection.forEach(id => ConnectionHandler.deleteNode(conn, id));
+        }
+      },
+      onSuccess: clear,
+    });
   };
 
   const handleBulkExport = async (options: {
@@ -145,13 +238,9 @@ export function DocumentList(props: {
       documentIds: selection,
       withWatermark: options.withWatermark,
       withSignatures: options.withSignatures,
-      ...(options.withWatermark
-        && options.watermarkEmail && { watermarkEmail: options.watermarkEmail }),
+      ...(options.withWatermark && options.watermarkEmail && { watermarkEmail: options.watermarkEmail }),
     };
-
-    await bulkExportDocuments({
-      variables: { input },
-    });
+    await bulkExportDocuments({ variables: { input } });
     clear();
   };
 
@@ -162,10 +251,19 @@ export function DocumentList(props: {
         "DocumentsListQuery_documents",
         {
           orderBy: order,
-          filter: { documentTypes: documentTypeFilter ? [documentTypeFilter] : null },
+          filter: { status: [tab], documentTypes: documentTypeFilter ? [documentTypeFilter] : null },
         },
       ),
     );
+  };
+
+  const refetchWithFilters: ComponentProps<typeof SortableTable>["refetch"] = ({ order }) => {
+    pagination.refetch({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      order: order as any,
+      status: [tab],
+      documentTypes: documentTypeFilter ? [documentTypeFilter] : null,
+    });
   };
 
   return (
@@ -188,7 +286,7 @@ export function DocumentList(props: {
           ? (
               <SortableTable
                 {...pagination}
-                refetch={pagination.refetch as ComponentProps<typeof SortableTable>["refetch"]}
+                refetch={refetchWithFilters}
               >
                 <Thead>
                   {selection.length === 0
@@ -196,10 +294,7 @@ export function DocumentList(props: {
                         <Tr>
                           <Th className="w-18">
                             <Checkbox
-                              checked={
-                                selection.length === documents.length
-                                && documents.length > 0
-                              }
+                              checked={selection.length === documents.length && documents.length > 0}
                               onChange={() => reset(documents.map(d => d.id))}
                             />
                           </Th>
@@ -235,58 +330,90 @@ export function DocumentList(props: {
                                 </button>
                               </div>
                               <div className="flex gap-2 items-center">
-                                {canUpdateAny && (
-                                  <PublishDocumentsDialog
-                                    documentIds={selection}
-                                    onSave={clear}
-                                  >
-                                    <Button
-                                      icon={IconCheckmark1}
-                                      className="py-0.5 px-2 text-xs h-6 min-h-6"
-                                    >
-                                      {__("Publish")}
-                                    </Button>
-                                  </PublishDocumentsDialog>
-                                )}
-                                {canRequestAnySignatures && (
-                                  <SignatureDocumentsDialog
-                                    documentIds={selection}
-                                    onSave={clear}
-                                  >
-                                    <Button
-                                      variant="secondary"
-                                      icon={IconSignature}
-                                      className="py-0.5 px-2 text-xs h-6 min-h-6"
-                                    >
-                                      {__("Request signature")}
-                                    </Button>
-                                  </SignatureDocumentsDialog>
-                                )}
-                                <BulkExportDialog
-                                  ref={bulkExportDialogRef}
-                                  onExport={handleBulkExport}
-                                  isLoading={isBulkExporting}
-                                  defaultEmail={defaultEmail}
-                                  selectedCount={selection.length}
-                                >
-                                  <Button
-                                    variant="secondary"
-                                    icon={IconArrowDown}
-                                    className="py-0.5 px-2 text-xs h-6 min-h-6"
-                                  >
-                                    {__("Export")}
-                                  </Button>
-                                </BulkExportDialog>
-                                {canDeleteAny && (
-                                  <Button
-                                    variant="danger"
-                                    icon={IconTrashCan}
-                                    onClick={handleBulkDelete}
-                                    className="py-0.5 px-2 text-xs h-6 min-h-6"
-                                  >
-                                    {__("Delete")}
-                                  </Button>
-                                )}
+                                {tab === "ARCHIVED"
+                                  ? (
+                                      <>
+                                        {canUnarchiveAny && (
+                                          <Button
+                                            variant="secondary"
+                                            icon={IconArchive}
+                                            onClick={handleBulkUnarchive}
+                                            disabled={isBulkUnarchiving}
+                                            className="py-0.5 px-2 text-xs h-6 min-h-6"
+                                          >
+                                            {__("Unarchive")}
+                                          </Button>
+                                        )}
+                                        {canDeleteAny && (
+                                          <Button
+                                            variant="danger"
+                                            icon={IconTrashCan}
+                                            onClick={handleBulkDelete}
+                                            className="py-0.5 px-2 text-xs h-6 min-h-6"
+                                          >
+                                            {__("Delete")}
+                                          </Button>
+                                        )}
+                                      </>
+                                    )
+                                  : (
+                                      <>
+                                        {canUpdateAny && (
+                                          <PublishDocumentsDialog documentIds={selection} onSave={clear}>
+                                            <Button icon={IconCheckmark1} className="py-0.5 px-2 text-xs h-6 min-h-6">
+                                              {__("Publish")}
+                                            </Button>
+                                          </PublishDocumentsDialog>
+                                        )}
+                                        {canRequestAnySignatures && (
+                                          <SignatureDocumentsDialog documentIds={selection} onSave={clear}>
+                                            <Button
+                                              variant="secondary"
+                                              icon={IconSignature}
+                                              className="py-0.5 px-2 text-xs h-6 min-h-6"
+                                            >
+                                              {__("Request signature")}
+                                            </Button>
+                                          </SignatureDocumentsDialog>
+                                        )}
+                                        <BulkExportDialog
+                                          ref={bulkExportDialogRef}
+                                          onExport={handleBulkExport}
+                                          isLoading={isBulkExporting}
+                                          defaultEmail={defaultEmail}
+                                          selectedCount={selection.length}
+                                        >
+                                          <Button
+                                            variant="secondary"
+                                            icon={IconArrowDown}
+                                            className="py-0.5 px-2 text-xs h-6 min-h-6"
+                                          >
+                                            {__("Export")}
+                                          </Button>
+                                        </BulkExportDialog>
+                                        {canArchiveAny && (
+                                          <Button
+                                            variant="secondary"
+                                            icon={IconArchive}
+                                            onClick={handleBulkArchive}
+                                            disabled={isBulkArchiving}
+                                            className="py-0.5 px-2 text-xs h-6 min-h-6"
+                                          >
+                                            {__("Archive")}
+                                          </Button>
+                                        )}
+                                        {canDeleteAny && (
+                                          <Button
+                                            variant="danger"
+                                            icon={IconTrashCan}
+                                            onClick={handleBulkDelete}
+                                            className="py-0.5 px-2 text-xs h-6 min-h-6"
+                                          >
+                                            {__("Delete")}
+                                          </Button>
+                                        )}
+                                      </>
+                                    )}
                               </div>
                             </div>
                           </Th>
@@ -311,11 +438,13 @@ export function DocumentList(props: {
               <Card padded>
                 <div className="text-center py-12">
                   <h3 className="text-lg font-semibold mb-2">
-                    {__("No documents yet")}
+                    {tab === "ARCHIVED" ? __("No archived documents") : __("No documents yet")}
                   </h3>
-                  <p className="text-txt-tertiary mb-4">
-                    {__("Create your first document to get started.")}
-                  </p>
+                  {tab !== "ARCHIVED" && (
+                    <p className="text-txt-tertiary mb-4">
+                      {__("Create your first document to get started.")}
+                    </p>
+                  )}
                 </div>
               </Card>
             )}

@@ -1,12 +1,14 @@
-import { sprintf } from "@probo/helpers";
+import { formatError, sprintf } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
-import { ActionDropdown, DropdownItem, IconArrowDown, IconPencil, IconTrashCan, useConfirm } from "@probo/ui";
+import { ActionDropdown, DropdownItem, IconArchive, IconArrowDown, IconPencil, IconTrashCan, useConfirm, useToast } from "@probo/ui";
 import { use, useRef } from "react";
-import { useFragment } from "react-relay";
+import { useFragment, useMutation } from "react-relay";
 import { useNavigate, useParams } from "react-router";
 import { ConnectionHandler, graphql } from "relay-runtime";
 
+import type { DocumentActionsDropdown_archiveMutation } from "#/__generated__/core/DocumentActionsDropdown_archiveMutation.graphql";
 import type { DocumentActionsDropdown_documentFragment$key } from "#/__generated__/core/DocumentActionsDropdown_documentFragment.graphql";
+import type { DocumentActionsDropdown_unarchiveMutation } from "#/__generated__/core/DocumentActionsDropdown_unarchiveMutation.graphql";
 import type { DocumentActionsDropdown_versionFragment$key } from "#/__generated__/core/DocumentActionsDropdown_versionFragment.graphql";
 import type { DocumentActionsDropdownn_exportVersionMutation } from "#/__generated__/core/DocumentActionsDropdownn_exportVersionMutation.graphql";
 import { PdfDownloadDialog, type PdfDownloadDialogRef } from "#/components/documents/PdfDownloadDialog";
@@ -21,13 +23,52 @@ const documentFragment = graphql`
   fragment DocumentActionsDropdown_documentFragment on Document {
     id
     title
+    status
     canUpdate: permission(action: "core:document:update")
+    canArchive: permission(action: "core:document:archive")
+    canUnarchive: permission(action: "core:document:unarchive")
     canDelete: permission(action: "core:document:delete")
     versions(first: 20) {
       __id
       totalCount
     }
     ...UpdateVersionDialogFragment
+  }
+`;
+
+const archiveDocumentMutation = graphql`
+  mutation DocumentActionsDropdown_archiveMutation(
+    $input: ArchiveDocumentInput!
+  ) {
+    archiveDocument(input: $input) {
+      document {
+        id
+        status
+        archivedAt
+        canUpdate: permission(action: "core:document:update")
+        canArchive: permission(action: "core:document:archive")
+        canUnarchive: permission(action: "core:document:unarchive")
+        canDelete: permission(action: "core:document:delete")
+      }
+    }
+  }
+`;
+
+const unarchiveDocumentMutation = graphql`
+  mutation DocumentActionsDropdown_unarchiveMutation(
+    $input: UnarchiveDocumentInput!
+  ) {
+    unarchiveDocument(input: $input) {
+      document {
+        id
+        status
+        archivedAt
+        canUpdate: permission(action: "core:document:update")
+        canArchive: permission(action: "core:document:archive")
+        canUnarchive: permission(action: "core:document:unarchive")
+        canDelete: permission(action: "core:document:delete")
+      }
+    }
   }
 `;
 
@@ -65,6 +106,7 @@ export function DocumentActionsDropdownn(props: {
   const updateDialogRef = useRef<{ open: () => void }>(null);
   const pdfDownloadDialogRef = useRef<PdfDownloadDialogRef>(null);
   const confirm = useConfirm();
+  const { toast } = useToast();
 
   const document = useFragment<DocumentActionsDropdown_documentFragment$key>(documentFragment, documentFragmentRef);
   const version = useFragment<DocumentActionsDropdown_versionFragment$key>(versionFragment, versionFragmentRef);
@@ -72,6 +114,10 @@ export function DocumentActionsDropdownn(props: {
   const isDraft = version.status === "DRAFT";
 
   const [deleteDocument, isDeleting] = useDeleteDocumentMutation();
+  const [archiveDocument, isArchiving]
+    = useMutation<DocumentActionsDropdown_archiveMutation>(archiveDocumentMutation);
+  const [unarchiveDocument, isUnarchiving]
+    = useMutation<DocumentActionsDropdown_unarchiveMutation>(unarchiveDocumentMutation);
   const [deleteDraftDocumentVersion, isDeletingDraft]
     = useDeleteDraftDocumentVersionMutation();
   const [exportDocumentVersion, isExporting]
@@ -82,6 +128,53 @@ export function DocumentActionsDropdownn(props: {
         errorMessage: __("Failed to generate PDF"),
       },
     );
+
+  const handleArchive = () => {
+    confirm(
+      () =>
+        new Promise<void>((resolve) => {
+          archiveDocument({
+            variables: { input: { documentId: document.id } },
+            onCompleted(_, errors) {
+              if (errors?.length) {
+                toast({ title: __("Error"), description: formatError(__("Failed to archive document"), errors), variant: "error" });
+              } else {
+                toast({ title: __("Success"), description: __("Document archived successfully."), variant: "success" });
+              }
+              resolve();
+            },
+            onError(error) {
+              toast({ title: __("Error"), description: error.message, variant: "error" });
+              resolve();
+            },
+          });
+        }),
+      {
+        message: sprintf(
+          __("This will archive the document \"%s\". It will no longer be editable."),
+          document.title,
+        ),
+        variant: "danger",
+        label: __("Archive"),
+      },
+    );
+  };
+
+  const handleUnarchive = () => {
+    unarchiveDocument({
+      variables: { input: { documentId: document.id } },
+      onCompleted(_, errors) {
+        if (errors?.length) {
+          toast({ title: __("Error"), description: formatError(__("Failed to unarchive document"), errors), variant: "error" });
+        } else {
+          toast({ title: __("Success"), description: __("Document unarchived successfully."), variant: "success" });
+        }
+      },
+      onError(error) {
+        toast({ title: __("Error"), description: error.message, variant: "error" });
+      },
+    });
+  };
 
   const handleDelete = () => {
     const connectionId = ConnectionHandler.getConnectionID(
@@ -214,6 +307,24 @@ export function DocumentActionsDropdownn(props: {
         >
           {__("Download PDF")}
         </DropdownItem>
+        {document.canArchive && (
+          <DropdownItem
+            icon={IconArchive}
+            disabled={isArchiving}
+            onClick={handleArchive}
+          >
+            {__("Archive document")}
+          </DropdownItem>
+        )}
+        {document.canUnarchive && (
+          <DropdownItem
+            icon={IconArchive}
+            disabled={isUnarchiving}
+            onClick={handleUnarchive}
+          >
+            {__("Unarchive document")}
+          </DropdownItem>
+        )}
         {document.canDelete && (
           <DropdownItem
             variant="danger"

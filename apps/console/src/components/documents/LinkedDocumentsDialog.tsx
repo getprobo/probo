@@ -52,6 +52,7 @@ const documentsFragment = graphql`
       last: $last
       before: $before
       orderBy: $order
+      filter: { status: [ACTIVE] }
     ) @connection(key: "LinkedDocumentsDialogQuery_documents") {
       edges {
         node {

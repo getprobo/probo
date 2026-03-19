@@ -34,7 +34,13 @@ type (
 		svc               *TenantService
 		html2pdfConverter *html2pdf.Converter
 	}
+
+	ErrDocumentArchived struct{}
 )
+
+func (e ErrDocumentArchived) Error() string {
+	return "cannot access an archived document"
+}
 
 func (s *DocumentService) ListForOrganizationId(
 	ctx context.Context,
@@ -103,6 +109,10 @@ func (s DocumentService) Get(
 				return fmt.Errorf("cannot load document: %w", err)
 			}
 
+			if document.ArchivedAt != nil {
+				return &ErrDocumentArchived{}
+			}
+
 			return nil
 		},
 	)
@@ -136,6 +146,10 @@ func (s *DocumentService) exportPDFData(
 		func(conn pg.Conn) error {
 			if err := document.LoadByID(ctx, conn, s.svc.scope, documentID); err != nil {
 				return fmt.Errorf("cannot load document: %w", err)
+			}
+
+			if document.ArchivedAt != nil {
+				return &ErrDocumentArchived{}
 			}
 
 			if document.TrustCenterVisibility == coredata.TrustCenterVisibilityNone {

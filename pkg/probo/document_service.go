@@ -49,6 +49,12 @@ type (
 	ErrDocumentVersionNotDraft struct {
 	}
 
+	ErrDocumentArchived struct {
+	}
+
+	ErrDocumentNotArchived struct {
+	}
+
 	ErrDocumentVersionSignatureAlreadySigned struct {
 	}
 
@@ -162,6 +168,14 @@ func (e ErrDocumentVersionNoChanges) Error() string {
 
 func (e ErrDocumentVersionNotDraft) Error() string {
 	return "cannot update a published document version"
+}
+
+func (e ErrDocumentArchived) Error() string {
+	return "cannot modify an archived document"
+}
+
+func (e ErrDocumentNotArchived) Error() string {
+	return "cannot unarchive a document that is not archived"
 }
 
 func (e ErrDocumentVersionSignatureAlreadySigned) Error() string {
@@ -331,7 +345,7 @@ func (s DocumentService) GenerateChangelog(
 				return fmt.Errorf("cannot load draft version: %w", err)
 			}
 
-			if draftVersion.Status != coredata.DocumentStatusDraft {
+			if draftVersion.Status != coredata.DocumentVersionStatusDraft {
 				return fmt.Errorf("latest version is not a draft")
 			}
 
@@ -450,15 +464,19 @@ func (s *DocumentService) publishVersionInTx(
 		return nil, nil, fmt.Errorf("cannot load document %q: %w", documentID, err)
 	}
 
+	if document.ArchivedAt != nil {
+		return nil, nil, &ErrDocumentArchived{}
+	}
+
 	if err := documentVersion.LoadLatestVersion(ctx, tx, s.svc.scope, documentID); err != nil {
 		return nil, nil, fmt.Errorf("cannot load current draft: %w", err)
 	}
 
-	if ignoreExisting && documentVersion.Status == coredata.DocumentStatusPublished {
+	if ignoreExisting && documentVersion.Status == coredata.DocumentVersionStatusPublished {
 		return document, documentVersion, nil
 	}
 
-	if documentVersion.Status != coredata.DocumentStatusDraft {
+	if documentVersion.Status != coredata.DocumentVersionStatusDraft {
 		return nil, nil, fmt.Errorf("cannot publish version")
 	}
 
@@ -479,7 +497,7 @@ func (s *DocumentService) publishVersionInTx(
 	document.CurrentPublishedVersion = &documentVersion.VersionNumber
 	document.UpdatedAt = now
 
-	documentVersion.Status = coredata.DocumentStatusPublished
+	documentVersion.Status = coredata.DocumentVersionStatusPublished
 	documentVersion.PublishedAt = &now
 	documentVersion.UpdatedAt = now
 
@@ -514,6 +532,7 @@ func (s *DocumentService) Create(
 		DocumentType:          req.DocumentType,
 		TrustCenterVisibility: coredata.TrustCenterVisibilityNone,
 		Classification:        req.Classification,
+		Status:                coredata.DocumentStatusActive,
 		CreatedAt:             now,
 		UpdatedAt:             now,
 	}
@@ -528,7 +547,7 @@ func (s *DocumentService) Create(
 		Title:          req.Title,
 		VersionNumber:  1,
 		Content:        req.Content,
-		Status:         coredata.DocumentStatusDraft,
+		Status:         coredata.DocumentVersionStatusDraft,
 		Classification: req.Classification,
 		CreatedAt:      now,
 		UpdatedAt:      now,
@@ -741,7 +760,7 @@ func (s *DocumentService) signDocumentVersionInTx(
 		return nil, fmt.Errorf("cannot load document version %q: %w", documentVersionID, err)
 	}
 
-	if documentVersion.Status != coredata.DocumentStatusPublished {
+	if documentVersion.Status != coredata.DocumentVersionStatusPublished {
 		return nil, fmt.Errorf("cannot sign unpublished version")
 	}
 
@@ -790,7 +809,11 @@ func (s *DocumentService) UpdateVersion(
 				return fmt.Errorf("cannot load document %q: %w", documentVersion.DocumentID, err)
 			}
 
-			if documentVersion.Status != coredata.DocumentStatusDraft {
+			if document.ArchivedAt != nil {
+				return &ErrDocumentArchived{}
+			}
+
+			if documentVersion.Status != coredata.DocumentVersionStatusDraft {
 				return &ErrDocumentVersionNotDraft{}
 			}
 
@@ -871,7 +894,7 @@ func (s *DocumentService) BulkRequestSignatures(
 					return fmt.Errorf("cannot load latest version for document %q: %w", documentID, err)
 				}
 
-				if documentVersion.Status != coredata.DocumentStatusPublished {
+				if documentVersion.Status != coredata.DocumentVersionStatusPublished {
 					return fmt.Errorf("cannot request signature for unpublished document %q", documentID)
 				}
 
@@ -948,7 +971,7 @@ func (s *DocumentService) RequestSignature(
 		return nil, fmt.Errorf("cannot get document version: %w", err)
 	}
 
-	if documentVersion.Status != coredata.DocumentStatusPublished {
+	if documentVersion.Status != coredata.DocumentVersionStatusPublished {
 		return nil, fmt.Errorf("cannot request signature for unpublished version")
 	}
 
@@ -1046,7 +1069,7 @@ func (s *DocumentService) CreateDraft(
 				return fmt.Errorf("cannot load latest version: %w", err)
 			}
 
-			if latestVersion.Status != coredata.DocumentStatusPublished {
+			if latestVersion.Status != coredata.DocumentVersionStatusPublished {
 				return fmt.Errorf("cannot create draft from unpublished version")
 			}
 
@@ -1057,7 +1080,7 @@ func (s *DocumentService) CreateDraft(
 			draftVersion.VersionNumber = latestVersion.VersionNumber + 1
 			draftVersion.Classification = document.Classification
 			draftVersion.Content = latestVersion.Content
-			draftVersion.Status = coredata.DocumentStatusDraft
+			draftVersion.Status = coredata.DocumentVersionStatusDraft
 			draftVersion.CreatedAt = now
 			draftVersion.UpdatedAt = now
 
@@ -1106,7 +1129,7 @@ func (s *DocumentService) DeleteDraft(
 				return fmt.Errorf("cannot load document version: %w", err)
 			}
 
-			if documentVersion.Status != coredata.DocumentStatusDraft {
+			if documentVersion.Status != coredata.DocumentVersionStatusDraft {
 				return fmt.Errorf("cannot delete published document version")
 			}
 
@@ -1151,6 +1174,52 @@ func (s *DocumentService) BulkSoftDelete(
 		ctx,
 		func(conn pg.Conn) error {
 			return documents.BulkSoftDelete(ctx, conn, s.svc.scope)
+		},
+	)
+}
+
+func (s *DocumentService) BulkArchive(
+	ctx context.Context,
+	documentIDs []gid.GID,
+) error {
+	documents := coredata.Documents{}
+
+	for _, documentID := range documentIDs {
+		documents = append(documents, &coredata.Document{ID: documentID})
+	}
+
+	return s.svc.pg.WithTx(
+		ctx,
+		func(tx pg.Conn) error {
+			controlDocument := coredata.ControlDocument{}
+			if err := controlDocument.DeleteByDocumentIDs(ctx, tx, s.svc.scope, documentIDs); err != nil {
+				return fmt.Errorf("cannot delete control mappings: %w", err)
+			}
+
+			riskDocument := coredata.RiskDocument{}
+			if err := riskDocument.DeleteByDocumentIDs(ctx, tx, s.svc.scope, documentIDs); err != nil {
+				return fmt.Errorf("cannot delete risk mappings: %w", err)
+			}
+
+			return documents.BulkArchive(ctx, tx, s.svc.scope)
+		},
+	)
+}
+
+func (s *DocumentService) BulkUnarchive(
+	ctx context.Context,
+	documentIDs []gid.GID,
+) error {
+	documents := coredata.Documents{}
+
+	for _, documentID := range documentIDs {
+		documents = append(documents, &coredata.Document{ID: documentID})
+	}
+
+	return s.svc.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			return documents.BulkUnarchive(ctx, conn, s.svc.scope)
 		},
 	)
 }
@@ -1519,6 +1588,10 @@ func (s *DocumentService) Update(
 				return fmt.Errorf("cannot load document %q: %w", req.DocumentID, err)
 			}
 
+			if document.ArchivedAt != nil {
+				return &ErrDocumentArchived{}
+			}
+
 			if req.Title != nil {
 				document.Title = *req.Title
 			}
@@ -1574,7 +1647,7 @@ func (s *DocumentService) Update(
 
 			draftVersion := &coredata.DocumentVersion{}
 			err := draftVersion.LoadLatestVersion(ctx, tx, s.svc.scope, req.DocumentID)
-			if err == nil && draftVersion.Status == coredata.DocumentStatusDraft {
+			if err == nil && draftVersion.Status == coredata.DocumentVersionStatusDraft {
 				draftVersion.Title = document.Title
 				draftVersion.Classification = document.Classification
 				draftVersion.UpdatedAt = now
@@ -1601,6 +1674,91 @@ func (s *DocumentService) Update(
 						}
 					}
 				}
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return document, nil
+}
+
+func (s *DocumentService) Archive(
+	ctx context.Context,
+	documentID gid.GID,
+) (*coredata.Document, error) {
+	document := &coredata.Document{}
+	now := time.Now()
+
+	err := s.svc.pg.WithTx(
+		ctx,
+		func(tx pg.Conn) error {
+			if err := document.LoadByID(ctx, tx, s.svc.scope, documentID); err != nil {
+				return fmt.Errorf("cannot load document %q: %w", documentID, err)
+			}
+
+			if document.ArchivedAt != nil {
+				return &ErrDocumentArchived{}
+			}
+
+			controlDocument := coredata.ControlDocument{}
+			if err := controlDocument.DeleteByDocumentIDs(ctx, tx, s.svc.scope, []gid.GID{documentID}); err != nil {
+				return fmt.Errorf("cannot delete control mappings: %w", err)
+			}
+
+			riskDocument := coredata.RiskDocument{}
+			if err := riskDocument.DeleteByDocumentIDs(ctx, tx, s.svc.scope, []gid.GID{documentID}); err != nil {
+				return fmt.Errorf("cannot delete risk mappings: %w", err)
+			}
+
+			document.Status = coredata.DocumentStatusArchived
+			document.ArchivedAt = &now
+			document.UpdatedAt = now
+			document.TrustCenterVisibility = coredata.TrustCenterVisibilityNone
+
+			if err := document.Update(ctx, tx, s.svc.scope); err != nil {
+				return fmt.Errorf("cannot archive document: %w", err)
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return document, nil
+}
+
+func (s *DocumentService) Unarchive(
+	ctx context.Context,
+	documentID gid.GID,
+) (*coredata.Document, error) {
+	document := &coredata.Document{}
+	now := time.Now()
+
+	err := s.svc.pg.WithTx(
+		ctx,
+		func(tx pg.Conn) error {
+			if err := document.LoadByID(ctx, tx, s.svc.scope, documentID); err != nil {
+				return fmt.Errorf("cannot load document %q: %w", documentID, err)
+			}
+
+			if document.ArchivedAt == nil {
+				return &ErrDocumentNotArchived{}
+			}
+
+			document.Status = coredata.DocumentStatusActive
+			document.ArchivedAt = nil
+			document.UpdatedAt = now
+
+			if err := document.Update(ctx, tx, s.svc.scope); err != nil {
+				return fmt.Errorf("cannot unarchive document: %w", err)
 			}
 
 			return nil

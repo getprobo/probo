@@ -12,7 +12,7 @@ const fragment = graphql`
     compliancePage: trustCenter @required(action: THROW) {
       ...CompliancePageDocumentListItem_compliancePageFragment
     }
-    documents(first: 100) {
+    documents(first: 100 filter: { status: [ACTIVE] }) {
       edges {
         node {
           id

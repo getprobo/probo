@@ -39,6 +39,12 @@ const createDocumentMutation = graphql`
       documentEdge @prependEdge(connections: $connections) {
         node {
           id
+          canUpdate: permission(action: "core:document:update")
+          canDelete: permission(action: "core:document:delete")
+          canRequestSignatures: permission(action: "core:document-version:request-signature")
+          canArchive: permission(action: "core:document:archive")
+          canUnarchive: permission(action: "core:document:unarchive")
+          canSendSigningNotifications: permission(action: "core:document:send-signing-notifications")
           ...DocumentListItemFragment
         }
       }

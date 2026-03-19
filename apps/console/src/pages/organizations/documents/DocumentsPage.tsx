@@ -5,8 +5,10 @@ import {
   IconBell2,
   IconPlusLarge,
   PageHeader,
+  TabItem,
+  Tabs,
 } from "@probo/ui";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import {
   type PreloadedQuery,
   usePreloadedQuery,
@@ -29,15 +31,6 @@ export const documentsPageQuery = graphql`
       ... on Organization {
         canCreateDocument: permission(action: "core:document:create")
         ...DocumentListFragment @arguments(first: 50, order: { field: TITLE, direction: ASC })
-        allDocuments: documents(first: 50, orderBy: { field: TITLE, direction: ASC }) {
-          edges {
-            node {
-              canSendSigningNotifications: permission(
-                action: "core:document:send-signing-notifications"
-              )
-            }
-          }
-        }
       }
     }
   }
@@ -63,24 +56,15 @@ export default function DocumentsPage(props: {
 
   usePageTitle(__("Documents"));
 
-  const canSendAnySignatureNotifications = organization.allDocuments.edges.some(
-    ({ node: { canSendSigningNotifications } }) => canSendSigningNotifications,
+  const [canSendAnySignatureNotifications, setCanSendAnySignatureNotifications] = useState(false);
+  const [tab, setTab] = useState<"ACTIVE" | "ARCHIVED">("ACTIVE");
+  const [documentListConnectionId, setDocumentListConnectionId] = useState(
+    ConnectionHandler.getConnectionID(
+      organizationId,
+      "DocumentsListQuery_documents",
+      { orderBy: { direction: "ASC", field: "TITLE" } },
+    ),
   );
-
-  const unfilteredConnectionId = useMemo(
-    () =>
-      ConnectionHandler.getConnectionID(
-        organizationId,
-        "DocumentsListQuery_documents",
-        {
-          orderBy: { direction: "ASC", field: "TITLE" },
-          filter: { documentTypes: null },
-        },
-      ),
-    [organizationId],
-  );
-
-  const [, setDocumentListConnectionId] = useState(unfilteredConnectionId);
 
   const handleSendSigningNotifications = async () => {
     await sendSigningNotifications({
@@ -106,9 +90,9 @@ export default function DocumentsPage(props: {
               {__("Send signing notifications")}
             </Button>
           )}
-          {organization.canCreateDocument && (
+          {organization.canCreateDocument && tab === "ACTIVE" && (
             <CreateDocumentDialog
-              connection={unfilteredConnectionId}
+              connection={documentListConnectionId}
               trigger={
                 <Button icon={IconPlusLarge}>{__("New document")}</Button>
               }
@@ -116,9 +100,19 @@ export default function DocumentsPage(props: {
           )}
         </div>
       </PageHeader>
+      <Tabs>
+        <TabItem active={tab === "ACTIVE"} onClick={() => setTab("ACTIVE")}>
+          {__("Active")}
+        </TabItem>
+        <TabItem active={tab === "ARCHIVED"} onClick={() => setTab("ARCHIVED")}>
+          {__("Archived")}
+        </TabItem>
+      </Tabs>
       <DocumentList
         fKey={organization}
         onConnectionIdChange={setDocumentListConnectionId}
+        onCanSendNotificationsChange={setCanSendAnySignatureNotifications}
+        tab={tab}
       />
     </div>
   );
