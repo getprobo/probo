@@ -595,7 +595,8 @@ func TestMeeting_Timestamps(t *testing.T) {
 		initialCreatedAt := getResult.Node.CreatedAt
 		initialUpdatedAt := getResult.Node.UpdatedAt
 
-		time.Sleep(10 * time.Millisecond)
+		// Wait long enough for timestamp to change (database may have second precision)
+		time.Sleep(1100 * time.Millisecond)
 
 		updateQuery := `
 			mutation UpdateMeeting($input: UpdateMeetingInput!) {
