@@ -9,7 +9,7 @@ import { ConnectionHandler, graphql } from "relay-runtime";
 import type { DocumentListBulkArchiveMutation } from "#/__generated__/core/DocumentListBulkArchiveMutation.graphql";
 import type { DocumentListBulkUnarchiveMutation } from "#/__generated__/core/DocumentListBulkUnarchiveMutation.graphql";
 import type { DocumentListFragment$key } from "#/__generated__/core/DocumentListFragment.graphql";
-import type { DocumentType, DocumentsListQuery } from "#/__generated__/core/DocumentsListQuery.graphql";
+import type { DocumentOrderField, DocumentsListQuery, DocumentType } from "#/__generated__/core/DocumentsListQuery.graphql";
 import { BulkExportDialog, type BulkExportDialogRef } from "#/components/documents/BulkExportDialog";
 import { type Order, SortableTable, SortableTh } from "#/components/SortableTable";
 import { useBulkDeleteDocumentsMutation, useBulkExportDocumentsMutation } from "#/hooks/graph/DocumentGraph";
@@ -259,8 +259,7 @@ export function DocumentList(props: {
 
   const refetchWithFilters: ComponentProps<typeof SortableTable>["refetch"] = ({ order }) => {
     pagination.refetch({
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      order: order as any,
+      order: { direction: order.direction, field: order.field as DocumentOrderField },
       status: [tab],
       documentTypes: documentTypeFilter ? [documentTypeFilter] : null,
     });
