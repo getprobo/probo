@@ -104,15 +104,22 @@ export function NewCompliancePageSubscriberDialog(props: {
             {...form.register("email")}
             placeholder={__("john@example.com")}
           />
-          <label className="flex items-center gap-2 cursor-pointer">
-            <Checkbox
-              checked={form.watch("confirmed")}
-              onChange={checked => form.setValue("confirmed", checked)}
-            />
-            <span className="text-sm">
-              {__("Skip confirmation email (I already have consent)")}
-            </span>
-          </label>
+          <div className="space-y-2">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <Checkbox
+                checked={form.watch("confirmed")}
+                onChange={checked => form.setValue("confirmed", checked)}
+              />
+              <span className="text-sm font-medium">
+                {__("Skip confirmation email")}
+              </span>
+            </label>
+            {form.watch("confirmed") && (
+              <p className="text-txt-secondary text-xs pl-6">
+                {__("By checking this box, you certify that you have obtained verifiable prior consent from this individual to receive these communications, in compliance with applicable data protection regulations (e.g. GDPR, CAN-SPAM). You accept full responsibility for demonstrating proof of consent if required.")}
+              </p>
+            )}
+          </div>
         </DialogContent>
         <DialogFooter>
           <Button type="submit" disabled={isCreating}>
