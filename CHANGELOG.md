@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.146.1] - 2026-03-19
+
+### Fixed
+
+- Fix SAML ACS endpoint CORS rejection
+
 ## [0.146.0] - 2026-03-19
 
 ### Added
