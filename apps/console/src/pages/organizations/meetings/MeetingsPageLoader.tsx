@@ -13,10 +13,8 @@ function MeetingsPageQueryLoader() {
   const [queryRef, loadQuery] = useQueryLoader<MeetingsPageQuery>(meetingsPageQuery);
 
   useEffect(() => {
-    if (!queryRef) {
-      loadQuery({ organizationId });
-    }
-  });
+    loadQuery({ organizationId });
+  }, [organizationId, loadQuery]);
 
   if (!queryRef) return <LinkCardSkeleton />;
 

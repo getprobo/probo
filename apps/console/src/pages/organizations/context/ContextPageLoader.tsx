@@ -24,10 +24,8 @@ function ContextPageQueryLoader() {
   const [queryRef, loadQuery] = useQueryLoader<ContextPageLoaderQuery>(contextPageQuery);
 
   useEffect(() => {
-    if (!queryRef) {
-      loadQuery({ organizationId });
-    }
-  });
+    loadQuery({ organizationId });
+  }, [organizationId, loadQuery]);
 
   if (!queryRef) return <LinkCardSkeleton />;
 

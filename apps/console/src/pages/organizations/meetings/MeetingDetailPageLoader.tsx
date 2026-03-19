@@ -13,10 +13,10 @@ function MeetingDetailPageQueryLoader() {
   const [queryRef, loadQuery] = useQueryLoader<MeetingDetailPageQuery>(meetingDetailPageQuery);
 
   useEffect(() => {
-    if (!queryRef && meetingId) {
+    if (meetingId) {
       loadQuery({ meetingId });
     }
-  });
+  }, [meetingId, loadQuery]);
 
   if (!queryRef) return <PageSkeleton />;
 
