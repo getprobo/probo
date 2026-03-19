@@ -462,7 +462,6 @@ func (s *OrganizationService) CreateOrganization(
 			OrganizationID: organization.ID,
 			Source:         coredata.ProfileSourceManual,
 			State:          coredata.ProfileStateActive,
-			FullName:       req.Name,
 			CreatedAt:      now,
 			UpdatedAt:      now,
 		}
@@ -589,6 +588,8 @@ func (s *OrganizationService) CreateOrganization(
 			if err != nil {
 				return fmt.Errorf("cannot load identity: %w", err)
 			}
+
+			profile.FullName = identity.FullName
 
 			err = organization.Insert(ctx, tx)
 			if err != nil {
