@@ -22,12 +22,6 @@ export const measureRoutes = [
       () =>
         import("#/pages/organizations/measures/MeasuresPageLoader"),
     ),
-    children: [
-      {
-        path: "category/:categoryId",
-        Component: Fragment,
-      },
-    ],
   },
   {
     path: "measures/:measureId",

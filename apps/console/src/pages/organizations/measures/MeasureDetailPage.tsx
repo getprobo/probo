@@ -1,7 +1,6 @@
 import {
   getMeasureStateLabel,
   measureStates,
-  slugify,
   sprintf,
 } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
@@ -148,7 +147,7 @@ export default function MeasureDetailPage(props: Props) {
             ? [
                 {
                   label: measure.category,
-                  to: `/organizations/${organizationId}/measures/category/${slugify(measure.category)}`,
+                  to: `/organizations/${organizationId}/measures?category=${encodeURIComponent(measure.category)}`,
                 },
               ]
             : []),

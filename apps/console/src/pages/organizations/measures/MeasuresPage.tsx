@@ -32,7 +32,8 @@ import {
   useToast,
 } from "@probo/ui";
 import { MeasureBadge } from "@probo/ui/src/Molecules/Badge/MeasureBadge";
-import { type ChangeEventHandler, useRef, useState, useTransition } from "react";
+import { type ChangeEventHandler, useEffect, useRef, useState, useTransition } from "react";
+import { useSearchParams } from "react-router";
 import {
   ConnectionHandler,
   graphql,
@@ -164,10 +165,13 @@ export default function MeasuresPage({ queryRef }: MeasuresPageProps) {
     throw new Error("invalid node type");
   }
 
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialCategory = searchParams.get("category");
+
   const [isPending, startTransition] = useTransition();
   const [queryFilter, setQueryFilter] = useState<string | null>(null);
   const [stateFilter, setStateFilter] = useState<MeasureState | null>(null);
-  const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
+  const [categoryFilter, setCategoryFilter] = useState<string | null>(initialCategory);
 
   const { data, loadNext, hasNext, isLoadingNext, refetch }
     = usePaginationFragment<MeasuresPageRefetchQuery, MeasuresPageFragment$key>(
@@ -189,6 +193,13 @@ export default function MeasuresPage({ queryRef }: MeasuresPageProps) {
     });
   };
 
+  useEffect(() => {
+    if (initialCategory) {
+      refetchFilters({ category: initialCategory });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const handleQueryFilterChange = (value: string) => {
     const newQuery = value === "" ? null : value;
     setQueryFilter(newQuery);
@@ -204,6 +215,15 @@ export default function MeasuresPage({ queryRef }: MeasuresPageProps) {
   const handleCategoryFilterChange = (value: string) => {
     const newCategory = value === "ALL" ? null : value;
     setCategoryFilter(newCategory);
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev);
+      if (newCategory) {
+        next.set("category", newCategory);
+      } else {
+        next.delete("category");
+      }
+      return next;
+    }, { replace: true });
     refetchFilters({ category: newCategory });
   };
 
