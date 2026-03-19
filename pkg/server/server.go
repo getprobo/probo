@@ -174,7 +174,10 @@ func (s *Server) stripTrustPrefix(next http.Handler) http.Handler {
 func (s *Server) trustCenterRouter() chi.Router {
 	r := chi.NewRouter()
 
+	h := compliancepage.NewHandler(s.trustService)
+
 	r.Mount("/api/trust/v1", s.apiServer.CompliancePageHandler())
+	r.Get("/llms.txt", h.HandleLLMsTxt)
 	r.Handle("/*", s.trustWebServer)
 
 	return r

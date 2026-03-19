@@ -1,0 +1,40 @@
+# {{ .OrgName }} — Compliance
+{{ if .Description }}
+{{ .Description }}
+{{ end }}{{ if .Details }}
+{{ range .Details }}- **{{ .Label }}**: {{ .Value }}
+{{ end }}{{ end }}{{ if .Frameworks }}
+## Compliance Frameworks
+
+{{ range .Frameworks }}- {{ .Name }}{{ if .Description }}: {{ .Description }}{{ end }}
+{{ end }}{{ end }}{{ if .Documents }}
+## Documents
+
+| Title | Type |
+|-------|------|
+{{ range .Documents }}| {{ .Title }} | {{ .Type }} |
+{{ end }}{{ end }}{{ if .Audits }}
+## Audits
+
+| Name | Framework | Valid From | Valid Until |
+|------|-----------|------------|-------------|
+{{ range .Audits }}| {{ .Name }} | {{ .Framework }} | {{ .ValidFrom }} | {{ .ValidUntil }} |
+{{ end }}{{ end }}{{ if .Vendors }}
+## Subprocessors
+
+| Name | Category | Countries | Website |
+|------|----------|-----------|---------|
+{{ range .Vendors }}| {{ .Name }} | {{ .Category }} | {{ .Countries }} | {{ .Website }} |
+{{ end }}{{ end }}{{ if .References }}
+## References
+
+| Name | Description | Website |
+|------|-------------|---------|
+{{ range .References }}| {{ .Name }} | {{ .Description }} | {{ .Website }} |
+{{ end }}{{ end }}{{ if .ExternalLinks }}
+## External Links
+
+| Name | URL |
+|------|-----|
+{{ range .ExternalLinks }}| {{ .Name }} | {{ .URL }} |
+{{ end }}{{ end }}
