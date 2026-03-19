@@ -1121,7 +1121,7 @@ FROM
     iam_membership_profiles p
 INNER JOIN iam_memberships m ON m.identity_id = p.identity_id AND m.organization_id = p.organization_id
 WHERE
-    %s
+    p.%s
     AND p.organization_id = @organization_id
     AND p.state = @state
     AND m.role = @role
