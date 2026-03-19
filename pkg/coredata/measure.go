@@ -84,7 +84,8 @@ WITH msrs AS (
 		m.id,
 		m.tenant_id,
 		m.search_vector,
-		m.state
+		m.state,
+		m.category
 	FROM
 		measures m
 	INNER JOIN
@@ -195,7 +196,8 @@ WITH mtgtns AS (
 			m.id,
 			m.tenant_id,
 			m.search_vector,
-			m.state
+			m.state,
+			m.category
 		FROM
 			measures m
 		INNER JOIN

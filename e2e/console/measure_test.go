@@ -1754,6 +1754,212 @@ func TestMeasure_Filtering(t *testing.T) {
 	})
 }
 
+func TestMeasure_FilterByCategory(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+
+	// Create measures with different categories
+	policyID := factory.NewMeasure(owner).WithName("Category Policy Measure").WithCategory("POLICY").Create()
+	factory.NewMeasure(owner).WithName("Category Technical Measure").WithCategory("TECHNICAL").Create()
+
+	t.Run("filter by category on organization", func(t *testing.T) {
+		t.Parallel()
+
+		const query = `
+			query($id: ID!, $filter: MeasureFilter) {
+				node(id: $id) {
+					... on Organization {
+						measures(first: 100, filter: $filter) {
+							edges {
+								node {
+									id
+									category
+								}
+							}
+							totalCount
+						}
+					}
+				}
+			}
+		`
+
+		var result struct {
+			Node struct {
+				Measures struct {
+					Edges []struct {
+						Node struct {
+							ID       string `json:"id"`
+							Category string `json:"category"`
+						} `json:"node"`
+					} `json:"edges"`
+					TotalCount int `json:"totalCount"`
+				} `json:"measures"`
+			} `json:"node"`
+		}
+
+		err := owner.Execute(query, map[string]any{
+			"id":     owner.GetOrganizationID().String(),
+			"filter": map[string]any{"category": "POLICY"},
+		}, &result)
+		require.NoError(t, err)
+
+		assert.GreaterOrEqual(t, result.Node.Measures.TotalCount, 1)
+		for _, edge := range result.Node.Measures.Edges {
+			assert.Equal(t, "POLICY", edge.Node.Category)
+		}
+
+		found := false
+		for _, edge := range result.Node.Measures.Edges {
+			if edge.Node.ID == policyID {
+				found = true
+				break
+			}
+		}
+		assert.True(t, found, "Expected to find POLICY measure in filtered results")
+	})
+
+	t.Run("filter by category on risk", func(t *testing.T) {
+		t.Parallel()
+
+		riskID := factory.NewRisk(owner).WithName("Category Filter Risk").Create()
+
+		policyMeasureID := factory.NewMeasure(owner).WithName("Risk Policy Measure").WithCategory("POLICY").Create()
+		techMeasureID := factory.NewMeasure(owner).WithName("Risk Technical Measure").WithCategory("TECHNICAL").Create()
+
+		// Link both measures to the risk
+		const linkQuery = `
+			mutation($input: CreateRiskMeasureMappingInput!) {
+				createRiskMeasureMapping(input: $input) {
+					riskEdge { node { id } }
+				}
+			}
+		`
+		for _, mID := range []string{policyMeasureID, techMeasureID} {
+			_, err := owner.Do(linkQuery, map[string]any{
+				"input": map[string]any{
+					"riskId":    riskID,
+					"measureId": mID,
+				},
+			})
+			require.NoError(t, err)
+		}
+
+		var err error
+
+		const query = `
+			query($id: ID!, $filter: MeasureFilter) {
+				node(id: $id) {
+					... on Risk {
+						measures(first: 100, filter: $filter) {
+							edges {
+								node {
+									id
+									category
+								}
+							}
+							totalCount
+						}
+					}
+				}
+			}
+		`
+
+		var result struct {
+			Node struct {
+				Measures struct {
+					Edges []struct {
+						Node struct {
+							ID       string `json:"id"`
+							Category string `json:"category"`
+						} `json:"node"`
+					} `json:"edges"`
+					TotalCount int `json:"totalCount"`
+				} `json:"measures"`
+			} `json:"node"`
+		}
+
+		err = owner.Execute(query, map[string]any{
+			"id":     riskID,
+			"filter": map[string]any{"category": "POLICY"},
+		}, &result)
+		require.NoError(t, err)
+
+		assert.Equal(t, 1, result.Node.Measures.TotalCount)
+		assert.Equal(t, policyMeasureID, result.Node.Measures.Edges[0].Node.ID)
+		assert.Equal(t, "POLICY", result.Node.Measures.Edges[0].Node.Category)
+	})
+
+	t.Run("filter by category on control", func(t *testing.T) {
+		t.Parallel()
+
+		frameworkID := factory.NewFramework(owner).WithName("Category Filter Framework").Create()
+		controlID := factory.NewControl(owner, frameworkID).WithName("Category Filter Control").Create()
+
+		policyMeasureID := factory.NewMeasure(owner).WithName("Control Policy Measure").WithCategory("POLICY").Create()
+		techMeasureID := factory.NewMeasure(owner).WithName("Control Technical Measure").WithCategory("TECHNICAL").Create()
+
+		// Link both measures to the control
+		const linkQuery = `
+			mutation($input: CreateControlMeasureMappingInput!) {
+				createControlMeasureMapping(input: $input) {
+					controlEdge { node { id } }
+				}
+			}
+		`
+		for _, mID := range []string{policyMeasureID, techMeasureID} {
+			_, err := owner.Do(linkQuery, map[string]any{
+				"input": map[string]any{
+					"controlId": controlID,
+					"measureId": mID,
+				},
+			})
+			require.NoError(t, err)
+		}
+
+		const query = `
+			query($id: ID!, $filter: MeasureFilter) {
+				node(id: $id) {
+					... on Control {
+						measures(first: 100, filter: $filter) {
+							edges {
+								node {
+									id
+									category
+								}
+							}
+							totalCount
+						}
+					}
+				}
+			}
+		`
+
+		var result struct {
+			Node struct {
+				Measures struct {
+					Edges []struct {
+						Node struct {
+							ID       string `json:"id"`
+							Category string `json:"category"`
+						} `json:"node"`
+					} `json:"edges"`
+					TotalCount int `json:"totalCount"`
+				} `json:"measures"`
+			} `json:"node"`
+		}
+
+		err := owner.Execute(query, map[string]any{
+			"id":     controlID,
+			"filter": map[string]any{"category": "POLICY"},
+		}, &result)
+		require.NoError(t, err)
+
+		assert.Equal(t, 1, result.Node.Measures.TotalCount)
+		assert.Equal(t, policyMeasureID, result.Node.Measures.Edges[0].Node.ID)
+		assert.Equal(t, "POLICY", result.Node.Measures.Edges[0].Node.Category)
+	})
+}
+
 func TestMeasure_TenantIsolation(t *testing.T) {
 	t.Parallel()
 
