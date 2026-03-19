@@ -10,11 +10,30 @@ import {
   useDialogRef,
 } from "@probo/ui";
 import { forwardRef, useImperativeHandle } from "react";
+import { graphql } from "relay-runtime";
 import { z } from "zod";
 
 import type { MeetingDetailPageMeetingFragment$data } from "#/__generated__/core/MeetingDetailPageMeetingFragment.graphql";
-import { useUpdateMeetingMutation } from "#/hooks/graph/MeetingGraph";
+import type { UpdateMeetingMinutesDialogMutation } from "#/__generated__/core/UpdateMeetingMinutesDialogMutation.graphql";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
+import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
+
+const updateMeetingMutation = graphql`
+  mutation UpdateMeetingMinutesDialogMutation($input: UpdateMeetingInput!) {
+    updateMeeting(input: $input) {
+      meeting {
+        id
+        name
+        date
+        minutes
+        attendees {
+          id
+          fullName
+        }
+      }
+    }
+  }
+`;
 
 type Props = {
   meeting: MeetingDetailPageMeetingFragment$data;
@@ -34,7 +53,14 @@ export const UpdateMeetingMinutesDialog = forwardRef<
 >(function UpdateMeetingMinutesDialog({ meeting }, ref) {
   const { __ } = useTranslate();
   const dialogRef = useDialogRef();
-  const [updateMeeting, isUpdating] = useUpdateMeetingMutation();
+  const [updateMeeting, isUpdating]
+    = useMutationWithToasts<UpdateMeetingMinutesDialogMutation>(
+      updateMeetingMutation,
+      {
+        successMessage: __("Meeting updated successfully."),
+        errorMessage: __("Failed to update meeting"),
+      },
+    );
   const { handleSubmit, register, reset } = useFormWithSchema(minutesSchema, {
     defaultValues: {
       minutes: meeting.minutes || "",

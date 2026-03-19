@@ -3,7 +3,6 @@ import {
   IconBank,
   IconBook,
   IconBox,
-  IconCalendar1,
   IconCircleProgress,
   IconClock,
   IconFire3,
@@ -15,6 +14,7 @@ import {
   IconMedal,
   IconPageCheck,
   IconPageTextLine,
+  IconPageTextSolid,
   IconSettingsGear2,
   IconShield,
   IconStore,
@@ -29,7 +29,7 @@ import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 const fragment = graphql`
     fragment SidebarFragment on Organization {
-        canListMeetings: permission(action: "core:meeting:list")
+        canGetContext: permission(action: "core:organization-context:get")
         canListTasks: permission(action: "core:task:list")
         canListMeasures: permission(action: "core:measure:list")
         canListRisks: permission(action: "core:risk:list")
@@ -67,11 +67,11 @@ export function Sidebar(props: { fKey: SidebarFragment$key }) {
 
   return (
     <ul className="space-y-[2px]">
-      {organization.canListMeetings && (
+      {organization.canGetContext && (
         <SidebarItem
-          label={__("Meetings")}
-          icon={IconCalendar1}
-          to={`${prefix}/meetings`}
+          label={__("Context")}
+          icon={IconPageTextSolid}
+          to={`${prefix}/context`}
         />
       )}
       {organization.canListTasks && (

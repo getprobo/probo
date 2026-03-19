@@ -3846,7 +3846,11 @@ type Mutation {
 # Input Types
 input UpdateOrganizationContextInput {
     organizationId: ID!
-    summary: String @goField(omittable: true)
+    product: String @goField(omittable: true)
+    architecture: String @goField(omittable: true)
+    team: String @goField(omittable: true)
+    processes: String @goField(omittable: true)
+    customers: String @goField(omittable: true)
 }
 
 input UpdateTrustCenterInput {
@@ -4753,7 +4757,11 @@ type UpdateOrganizationContextPayload {
 
 type OrganizationContext {
     organizationId: ID!
-    summary: String
+    product: String
+    architecture: String
+    team: String
+    processes: String
+    customers: String
 }
 
 type UpdateTrustCenterPayload {

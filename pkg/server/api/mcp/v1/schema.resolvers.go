@@ -3241,3 +3241,43 @@ func (r *Resolver) UnarchiveDocumentTool(ctx context.Context, req *mcp.CallToolR
 		Document: types.NewDocument(document, profileIDs(approverPage)),
 	}, nil
 }
+
+func (r *Resolver) GetOrganizationContextTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetOrganizationContextInput) (*mcp.CallToolResult, types.GetOrganizationContextOutput, error) {
+	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionOrganizationContextGet)
+
+	prb := r.ProboService(ctx, input.OrganizationID)
+
+	orgContext, err := prb.Organizations.GetContext(ctx, input.OrganizationID)
+	if err != nil {
+		return nil, types.GetOrganizationContextOutput{}, fmt.Errorf("cannot get organization context: %w", err)
+	}
+
+	return nil, types.GetOrganizationContextOutput{
+		OrganizationContext: types.NewOrganizationContext(orgContext),
+	}, nil
+}
+
+func (r *Resolver) UpdateOrganizationContextTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateOrganizationContextInput) (*mcp.CallToolResult, types.UpdateOrganizationContextOutput, error) {
+	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionOrganizationContextUpdate)
+
+	prb := r.ProboService(ctx, input.OrganizationID)
+
+	orgContext, err := prb.Organizations.UpdateContext(
+		ctx,
+		probo.UpdateOrganizationContextRequest{
+			OrganizationID: input.OrganizationID,
+			Product:        &input.Product,
+			Architecture:   &input.Architecture,
+			Team:           &input.Team,
+			Processes:      &input.Processes,
+			Customers:      &input.Customers,
+		},
+	)
+	if err != nil {
+		return nil, types.UpdateOrganizationContextOutput{}, fmt.Errorf("cannot update organization context: %w", err)
+	}
+
+	return nil, types.UpdateOrganizationContextOutput{
+		OrganizationContext: types.NewOrganizationContext(orgContext),
+	}, nil
+}

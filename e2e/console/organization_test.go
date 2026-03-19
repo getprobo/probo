@@ -145,7 +145,11 @@ func TestOrganization_UpdateContext(t *testing.T) {
 			updateOrganizationContext(input: $input) {
 				context {
 					organizationId
-					summary
+					product
+					architecture
+					team
+					processes
+					customers
 				}
 			}
 		}
@@ -155,7 +159,11 @@ func TestOrganization_UpdateContext(t *testing.T) {
 		UpdateOrganizationContext struct {
 			Context struct {
 				OrganizationID string  `json:"organizationId"`
-				Summary        *string `json:"summary"`
+				Product        *string `json:"product"`
+				Architecture   *string `json:"architecture"`
+				Team           *string `json:"team"`
+				Processes      *string `json:"processes"`
+				Customers      *string `json:"customers"`
 			} `json:"context"`
 		} `json:"updateOrganizationContext"`
 	}
@@ -163,14 +171,17 @@ func TestOrganization_UpdateContext(t *testing.T) {
 	err := owner.Execute(query, map[string]any{
 		"input": map[string]any{
 			"organizationId": owner.GetOrganizationID().String(),
-			"summary":        "Our organization provides compliance solutions.",
+			"product":        "Our product provides compliance solutions.",
+			"architecture":   "Microservices architecture on AWS.",
 		},
 	}, &result)
 	require.NoError(t, err)
 
 	assert.Equal(t, owner.GetOrganizationID().String(), result.UpdateOrganizationContext.Context.OrganizationID)
-	require.NotNil(t, result.UpdateOrganizationContext.Context.Summary)
-	assert.Equal(t, "Our organization provides compliance solutions.", *result.UpdateOrganizationContext.Context.Summary)
+	require.NotNil(t, result.UpdateOrganizationContext.Context.Product)
+	assert.Equal(t, "Our product provides compliance solutions.", *result.UpdateOrganizationContext.Context.Product)
+	require.NotNil(t, result.UpdateOrganizationContext.Context.Architecture)
+	assert.Equal(t, "Microservices architecture on AWS.", *result.UpdateOrganizationContext.Context.Architecture)
 }
 
 func TestOrganization_Get(t *testing.T) {

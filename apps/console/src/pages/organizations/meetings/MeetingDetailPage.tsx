@@ -16,18 +16,24 @@ import type { PreloadedQuery } from "react-relay";
 import { graphql, useFragment, usePreloadedQuery } from "react-relay";
 import { Link, Outlet, useNavigate } from "react-router";
 
+import type { MeetingDetailPageDeleteMutation } from "#/__generated__/core/MeetingDetailPageDeleteMutation.graphql";
 import type { MeetingDetailPageMeetingFragment$key } from "#/__generated__/core/MeetingDetailPageMeetingFragment.graphql";
-import type { MeetingGraphNodeQuery } from "#/__generated__/core/MeetingGraphNodeQuery.graphql";
-import {
-  meetingNodeQuery,
-  useDeleteMeetingMutation,
-} from "#/hooks/graph/MeetingGraph";
+import type { MeetingDetailPageQuery } from "#/__generated__/core/MeetingDetailPageQuery.graphql";
+import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import {
   UpdateMeetingMinutesDialog,
   type UpdateMeetingMinutesDialogRef,
 } from "./dialogs/UpdateMeetingMinutesDialog";
+
+export const meetingDetailPageQuery = graphql`
+  query MeetingDetailPageQuery($meetingId: ID!) {
+    node(id: $meetingId) {
+      ...MeetingDetailPageMeetingFragment
+    }
+  }
+`;
 
 const meetingFragment = graphql`
   fragment MeetingDetailPageMeetingFragment on Meeting {
@@ -45,12 +51,32 @@ const meetingFragment = graphql`
   }
 `;
 
+const deleteMeetingMutation = graphql`
+  mutation MeetingDetailPageDeleteMutation($input: DeleteMeetingInput!) {
+    deleteMeeting(input: $input) {
+      deletedMeetingId @deleteRecord
+    }
+  }
+`;
+
+function useDeleteMeetingMutation() {
+  const { __ } = useTranslate();
+
+  return useMutationWithToasts<MeetingDetailPageDeleteMutation>(
+    deleteMeetingMutation,
+    {
+      successMessage: __("Meeting deleted successfully."),
+      errorMessage: __("Failed to delete meeting"),
+    },
+  );
+}
+
 type Props = {
-  queryRef: PreloadedQuery<MeetingGraphNodeQuery>;
+  queryRef: PreloadedQuery<MeetingDetailPageQuery>;
 };
 
 export default function MeetingDetailPage(props: Props) {
-  const node = usePreloadedQuery(meetingNodeQuery, props.queryRef).node;
+  const node = usePreloadedQuery(meetingDetailPageQuery, props.queryRef).node;
   const meeting = useFragment<MeetingDetailPageMeetingFragment$key>(
     meetingFragment,
     node,
@@ -75,7 +101,7 @@ export default function MeetingDetailPage(props: Props) {
             input: { meetingId: meeting.id },
           },
           onSuccess: () => {
-            void navigate(`/organizations/${organizationId}/meetings`);
+            void navigate(`/organizations/${organizationId}/context/meetings`);
           },
         }),
       {
@@ -101,7 +127,7 @@ export default function MeetingDetailPage(props: Props) {
             items={[
               {
                 label: __("Meetings"),
-                to: `/organizations/${organizationId}/meetings`,
+                to: `/organizations/${organizationId}/context/meetings`,
               },
               {
                 label: meeting.name,

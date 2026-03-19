@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -24,7 +24,7 @@ func NewOrganizationContext(oc *coredata.OrganizationContext) *OrganizationConte
 		Product:        oc.Product,
 		Architecture:   oc.Architecture,
 		Team:           oc.Team,
-		Processes:       oc.Processes,
+		Processes:      oc.Processes,
 		Customers:      oc.Customers,
 	}
 }

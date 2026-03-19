@@ -49,7 +49,11 @@ type (
 
 	UpdateOrganizationContextRequest struct {
 		OrganizationID gid.GID
-		Summary        **string
+		Product        **string
+		Architecture   **string
+		Team           **string
+		Processes      **string
+		Customers      **string
 	}
 )
 
@@ -72,7 +76,11 @@ func (uocr *UpdateOrganizationContextRequest) Validate() error {
 	v := validator.New()
 
 	v.Check(uocr.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
-	v.Check(uocr.Summary, "summary", validator.SafeText(30_000))
+	v.Check(uocr.Product, "product", validator.SafeText(30_000))
+	v.Check(uocr.Architecture, "architecture", validator.SafeText(30_000))
+	v.Check(uocr.Team, "team", validator.SafeText(30_000))
+	v.Check(uocr.Processes, "processes", validator.SafeText(30_000))
+	v.Check(uocr.Customers, "customers", validator.SafeText(30_000))
 
 	return v.Error()
 }
@@ -102,7 +110,7 @@ func (s OrganizationService) Get(
 	return organization, nil
 }
 
-func (s OrganizationService) GetContextSummary(
+func (s OrganizationService) GetContext(
 	ctx context.Context,
 	organizationID gid.GID,
 ) (*coredata.OrganizationContext, error) {
@@ -154,8 +162,34 @@ func (s OrganizationService) UpdateContext(
 				return fmt.Errorf("cannot load organization context: %w", err)
 			}
 
-			if req.Summary != nil {
-				organizationContext.Summary = *req.Summary
+			updated := false
+
+			if req.Product != nil {
+				organizationContext.Product = *req.Product
+				updated = true
+			}
+
+			if req.Architecture != nil {
+				organizationContext.Architecture = *req.Architecture
+				updated = true
+			}
+
+			if req.Team != nil {
+				organizationContext.Team = *req.Team
+				updated = true
+			}
+
+			if req.Processes != nil {
+				organizationContext.Processes = *req.Processes
+				updated = true
+			}
+
+			if req.Customers != nil {
+				organizationContext.Customers = *req.Customers
+				updated = true
+			}
+
+			if updated {
 				organizationContext.UpdatedAt = time.Now()
 
 				if err := organizationContext.Update(ctx, tx, s.svc.scope); err != nil {

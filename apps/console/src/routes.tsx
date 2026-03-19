@@ -19,12 +19,12 @@ import { compliancePageRoutes } from "./pages/organizations/compliance-page/rout
 import { CurrentUser } from "./providers/CurrentUser";
 import { assetRoutes } from "./routes/assetRoutes";
 import { auditRoutes } from "./routes/auditRoutes";
+import { contextRoutes } from "./routes/contextRoutes";
 import { dataRoutes } from "./routes/dataRoutes";
 import { documentsRoutes } from "./routes/documentsRoutes";
 import { findingRoutes } from "./routes/findingRoutes";
 import { frameworkRoutes } from "./routes/frameworkRoutes";
 import { measureRoutes } from "./routes/measureRoutes";
-import { meetingsRoutes } from "./routes/meetingsRoutes";
 import { obligationRoutes } from "./routes/obligationRoutes";
 import { processingActivityRoutes } from "./routes/processingActivityRoutes";
 import { rightsRequestRoutes } from "./routes/rightsRequestRoutes";
@@ -222,7 +222,7 @@ const routes = [
           ...assetRoutes,
           ...dataRoutes,
           ...auditRoutes,
-          ...meetingsRoutes,
+          ...contextRoutes,
           ...findingRoutes,
           ...obligationRoutes,
           ...rightsRequestRoutes,

@@ -6323,6 +6323,79 @@ components:
           $ref: "#/components/schemas/GID"
           description: Deleted applicability statement ID
 
+    OrganizationContext:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        product:
+          type: string
+          description: Product description
+        architecture:
+          type: string
+          description: Architecture description
+        team:
+          type: string
+          description: Team description
+        processes:
+          type: string
+          description: Processes description
+        customers:
+          type: string
+          description: Customers description
+
+    GetOrganizationContextInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+
+    GetOrganizationContextOutput:
+      type: object
+      required:
+        - organization_context
+      properties:
+        organization_context:
+          $ref: "#/components/schemas/OrganizationContext"
+
+    UpdateOrganizationContextInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        product:
+          type: string
+          description: Product description
+        architecture:
+          type: string
+          description: Architecture description
+        team:
+          type: string
+          description: Team description
+        processes:
+          type: string
+          description: Processes description
+        customers:
+          type: string
+          description: Customers description
+
+    UpdateOrganizationContextOutput:
+      type: object
+      required:
+        - organization_context
+      properties:
+        organization_context:
+          $ref: "#/components/schemas/OrganizationContext"
+
 tools:
   - name: listOrganizations
     description: List all organizations the user has access to
@@ -7441,3 +7514,20 @@ tools:
       $ref: "#/components/schemas/DeleteApplicabilityStatementInput"
     outputSchema:
       $ref: "#/components/schemas/DeleteApplicabilityStatementOutput"
+  - name: getOrganizationContext
+    description: Get the organization context containing structured sections about the company
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/GetOrganizationContextInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetOrganizationContextOutput"
+  - name: updateOrganizationContext
+    description: Update the organization context sections (product, architecture, team, processes, customers)
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/UpdateOrganizationContextInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateOrganizationContextOutput"

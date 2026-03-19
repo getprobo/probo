@@ -2048,7 +2048,11 @@ func (r *mutationResolver) UpdateOrganizationContext(ctx context.Context, input 
 
 	req := probo.UpdateOrganizationContextRequest{
 		OrganizationID: input.OrganizationID,
-		Summary:        gqlutils.UnwrapOmittable(input.Summary),
+		Product:        gqlutils.UnwrapOmittable(input.Product),
+		Architecture:   gqlutils.UnwrapOmittable(input.Architecture),
+		Team:           gqlutils.UnwrapOmittable(input.Team),
+		Processes:      gqlutils.UnwrapOmittable(input.Processes),
+		Customers:      gqlutils.UnwrapOmittable(input.Customers),
 	}
 
 	organizationContext, err := prb.Organizations.UpdateContext(ctx, req)
@@ -6387,7 +6391,7 @@ func (r *organizationResolver) Context(ctx context.Context, obj *types.Organizat
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
-	orgContext, err := prb.Organizations.GetContextSummary(ctx, obj.ID)
+	orgContext, err := prb.Organizations.GetContext(ctx, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot load organization context", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
