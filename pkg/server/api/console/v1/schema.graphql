@@ -971,10 +971,18 @@ enum VendorCategory
 enum DocumentType
     @goModel(model: "go.probo.inc/probo/pkg/coredata.DocumentType") {
     OTHER @goEnum(value: "go.probo.inc/probo/pkg/coredata.DocumentTypeOther")
-    ISMS @goEnum(value: "go.probo.inc/probo/pkg/coredata.DocumentTypeISMS")
+    GOVERNANCE
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.DocumentTypeGovernance")
     POLICY @goEnum(value: "go.probo.inc/probo/pkg/coredata.DocumentTypePolicy")
     PROCEDURE
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.DocumentTypeProcedure")
+    PLAN @goEnum(value: "go.probo.inc/probo/pkg/coredata.DocumentTypePlan")
+    REGISTER
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.DocumentTypeRegister")
+    RECORD @goEnum(value: "go.probo.inc/probo/pkg/coredata.DocumentTypeRecord")
+    REPORT @goEnum(value: "go.probo.inc/probo/pkg/coredata.DocumentTypeReport")
+    TEMPLATE
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.DocumentTypeTemplate")
 }
 
 enum DocumentClassification
@@ -1571,6 +1579,7 @@ input ControlFilter {
 
 input DocumentFilter {
     query: String
+    documentTypes: [DocumentType!]
 }
 
 input MeasureFilter {

@@ -24,18 +24,28 @@ type (
 )
 
 const (
-	DocumentTypeOther     DocumentType = "OTHER"
-	DocumentTypeISMS      DocumentType = "ISMS"
-	DocumentTypePolicy    DocumentType = "POLICY"
-	DocumentTypeProcedure DocumentType = "PROCEDURE"
+	DocumentTypeOther      DocumentType = "OTHER"
+	DocumentTypeGovernance DocumentType = "GOVERNANCE"
+	DocumentTypePolicy     DocumentType = "POLICY"
+	DocumentTypeProcedure  DocumentType = "PROCEDURE"
+	DocumentTypePlan       DocumentType = "PLAN"
+	DocumentTypeRegister   DocumentType = "REGISTER"
+	DocumentTypeRecord     DocumentType = "RECORD"
+	DocumentTypeReport     DocumentType = "REPORT"
+	DocumentTypeTemplate   DocumentType = "TEMPLATE"
 )
 
 func DocumentTypes() []DocumentType {
 	return []DocumentType{
 		DocumentTypeOther,
-		DocumentTypeISMS,
+		DocumentTypeGovernance,
 		DocumentTypePolicy,
 		DocumentTypeProcedure,
+		DocumentTypePlan,
+		DocumentTypeRegister,
+		DocumentTypeRecord,
+		DocumentTypeReport,
+		DocumentTypeTemplate,
 	}
 }
 
@@ -49,12 +59,22 @@ func (dt *DocumentType) UnmarshalText(data []byte) error {
 	switch val {
 	case DocumentTypeOther.String():
 		*dt = DocumentTypeOther
-	case DocumentTypeISMS.String():
-		*dt = DocumentTypeISMS
+	case DocumentTypeGovernance.String():
+		*dt = DocumentTypeGovernance
 	case DocumentTypePolicy.String():
 		*dt = DocumentTypePolicy
 	case DocumentTypeProcedure.String():
 		*dt = DocumentTypeProcedure
+	case DocumentTypePlan.String():
+		*dt = DocumentTypePlan
+	case DocumentTypeRegister.String():
+		*dt = DocumentTypeRegister
+	case DocumentTypeRecord.String():
+		*dt = DocumentTypeRecord
+	case DocumentTypeReport.String():
+		*dt = DocumentTypeReport
+	case DocumentTypeTemplate.String():
+		*dt = DocumentTypeTemplate
 	default:
 		return fmt.Errorf("invalid DocumentType value: %q", val)
 	}

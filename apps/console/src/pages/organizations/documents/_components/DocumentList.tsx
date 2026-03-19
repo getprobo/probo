@@ -1,13 +1,13 @@
-import { sprintf } from "@probo/helpers";
+import { documentTypes, getDocumentTypeLabel, sprintf } from "@probo/helpers";
 import { useList } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
-import { Button, Card, Checkbox, IconArrowDown, IconCheckmark1, IconCrossLargeX, IconSignature, IconTrashCan, Tbody, Th, Thead, Tr, useConfirm } from "@probo/ui";
-import { type ComponentProps, use, useRef } from "react";
+import { Button, Card, Checkbox, IconArrowDown, IconCheckmark1, IconCrossLargeX, IconSignature, IconTrashCan, Option, Select, Tbody, Th, Thead, Tr, useConfirm } from "@probo/ui";
+import { type ComponentProps, use, useRef, useState, useTransition } from "react";
 import { usePaginationFragment } from "react-relay";
 import { ConnectionHandler, graphql } from "relay-runtime";
 
 import type { DocumentListFragment$key } from "#/__generated__/core/DocumentListFragment.graphql";
-import type { DocumentsListQuery } from "#/__generated__/core/DocumentsListQuery.graphql";
+import type { DocumentsListQuery, DocumentType } from "#/__generated__/core/DocumentsListQuery.graphql";
 import { BulkExportDialog, type BulkExportDialogRef } from "#/components/documents/BulkExportDialog";
 import { type Order, SortableTable, SortableTh } from "#/components/SortableTable";
 import { useBulkDeleteDocumentsMutation, useBulkExportDocumentsMutation } from "#/hooks/graph/DocumentGraph";
@@ -30,6 +30,7 @@ const fragment = graphql`
     after: { type: "CursorKey", defaultValue: null }
     before: { type: "CursorKey", defaultValue: null }
     last: { type: "Int", defaultValue: null }
+    documentTypes: { type: "[DocumentType!]", defaultValue: null }
   ) {
     documents(
       first: $first
@@ -37,7 +38,8 @@ const fragment = graphql`
       last: $last
       before: $before
       orderBy: $order
-    ) @connection(key: "DocumentsListQuery_documents" filters: ["orderBy"]) {
+      filter: { documentTypes: $documentTypes }
+    ) @connection(key: "DocumentsListQuery_documents" filters: ["orderBy", "filter"]) {
       __id
       edges {
         node {
@@ -79,6 +81,19 @@ export function DocumentList(props: {
     = useBulkExportDocumentsMutation();
   const { list: selection, toggle, clear, reset } = useList<string>([]);
   const confirm = useConfirm();
+  const [isPending, startTransition] = useTransition();
+  const [documentTypeFilter, setDocumentTypeFilter] = useState<DocumentType | null>(null);
+
+  const handleDocumentTypeFilterChange = (value: string) => {
+    const newType = value === "ALL" ? null : (value as DocumentType);
+    setDocumentTypeFilter(newType);
+    startTransition(() => {
+      pagination.refetch(
+        { documentTypes: newType ? [newType] : null },
+        { fetchPolicy: "network-only" },
+      );
+    });
+  };
 
   const canDeleteAny = documents.some(({ canDelete }) => canDelete);
   const canUpdateAny = documents.some(({ canUpdate }) => canUpdate);
@@ -134,12 +149,31 @@ export function DocumentList(props: {
       ConnectionHandler.getConnectionID(
         organizationId,
         "DocumentsListQuery_documents",
-        { orderBy: order },
+        {
+          orderBy: order,
+          filter: { documentTypes: documentTypeFilter ? [documentTypeFilter] : null },
+        },
       ),
     );
   };
 
-  return documents.length > 0
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-4">
+        <Select
+          value={documentTypeFilter ?? "ALL"}
+          onValueChange={handleDocumentTypeFilterChange}
+        >
+          <Option value="ALL">{__("All types")}</Option>
+          {documentTypes.map((type) => (
+            <Option key={type} value={type}>
+              {getDocumentTypeLabel(__, type) ?? type}
+            </Option>
+          ))}
+        </Select>
+      </div>
+      <div className={isPending ? "opacity-50 pointer-events-none transition-opacity" : ""}>
+        {documents.length > 0
     ? (
         <SortableTable
           {...pagination}
@@ -273,5 +307,8 @@ export function DocumentList(props: {
             </p>
           </div>
         </Card>
-      );
+      )}
+      </div>
+    </div>
+  );
 }

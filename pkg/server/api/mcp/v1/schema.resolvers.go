@@ -2019,7 +2019,8 @@ func (r *Resolver) ListDocumentsTool(ctx context.Context, req *mcp.CallToolReque
 			query = input.Filter.Query
 		}
 
-		documentFilter = coredata.NewDocumentFilter(query)
+		documentFilter = coredata.NewDocumentFilter(query).
+			WithDocumentTypes(input.Filter.DocumentTypes)
 	}
 
 	docPage, err := prb.Documents.ListByOrganizationID(ctx, input.OrganizationID, cursor, documentFilter)

@@ -25,6 +25,7 @@ type (
 		trustCenterVisibilities []TrustCenterVisibility
 		published               *bool
 		userEmail               *mail.Addr
+		documentTypes           []DocumentType
 	}
 )
 
@@ -55,6 +56,11 @@ func (f *DocumentFilter) WithUserEmail(userEmail *mail.Addr) *DocumentFilter {
 	return f
 }
 
+func (f *DocumentFilter) WithDocumentTypes(documentTypes []DocumentType) *DocumentFilter {
+	f.documentTypes = documentTypes
+	return f
+}
+
 func (f *DocumentFilter) SQLArguments() pgx.NamedArgs {
 	var visibilities []string
 	if f.trustCenterVisibilities != nil {
@@ -63,11 +69,21 @@ func (f *DocumentFilter) SQLArguments() pgx.NamedArgs {
 			visibilities[i] = v.String()
 		}
 	}
+
+	var documentTypes []string
+	if f.documentTypes != nil {
+		documentTypes = make([]string, len(f.documentTypes))
+		for i, dt := range f.documentTypes {
+			documentTypes[i] = dt.String()
+		}
+	}
+
 	return pgx.NamedArgs{
 		"query":                     f.query,
 		"trust_center_visibilities": visibilities,
 		"published":                 f.published,
 		"user_email":                f.userEmail,
+		"document_types":            documentTypes,
 	}
 }
 
@@ -108,6 +124,12 @@ func (f *DocumentFilter) SQLFragment() string {
 				AND i.email_address = @user_email::CITEXT
 				AND dvs.state IN ('REQUESTED', 'SIGNED')
 		)
+	END
+	AND
+	CASE
+		WHEN @document_types::document_type[] IS NOT NULL THEN
+			document_type = ANY(@document_types::document_type[])
+		ELSE TRUE
 	END
 )`
 }

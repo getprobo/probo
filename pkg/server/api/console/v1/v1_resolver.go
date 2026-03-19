@@ -567,7 +567,8 @@ func (r *controlResolver) Documents(ctx context.Context, obj *types.Control, fir
 
 	var documentFilter = coredata.NewDocumentFilter(nil)
 	if filter != nil {
-		documentFilter = coredata.NewDocumentFilter(filter.Query)
+		documentFilter = coredata.NewDocumentFilter(filter.Query).
+			WithDocumentTypes(filter.DocumentTypes)
 	}
 
 	page, err := prb.Documents.ListForControlID(ctx, obj.ID, cursor, documentFilter)
@@ -6477,7 +6478,8 @@ func (r *organizationResolver) Documents(ctx context.Context, obj *types.Organiz
 
 	var documentFilter = coredata.NewDocumentFilter(nil)
 	if filter != nil {
-		documentFilter = coredata.NewDocumentFilter(filter.Query)
+		documentFilter = coredata.NewDocumentFilter(filter.Query).
+			WithDocumentTypes(filter.DocumentTypes)
 	}
 
 	page, err := prb.Documents.ListByOrganizationID(ctx, obj.ID, cursor, documentFilter)
@@ -7844,7 +7846,8 @@ func (r *riskResolver) Documents(ctx context.Context, obj *types.Risk, first *in
 
 	var documentFilter = coredata.NewDocumentFilter(nil)
 	if filter != nil {
-		documentFilter = coredata.NewDocumentFilter(filter.Query)
+		documentFilter = coredata.NewDocumentFilter(filter.Query).
+			WithDocumentTypes(filter.DocumentTypes)
 	}
 
 	page, err := prb.Documents.ListForRiskID(ctx, obj.ID, cursor, documentFilter)

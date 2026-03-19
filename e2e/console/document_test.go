@@ -72,15 +72,15 @@ func TestDocument_Create(t *testing.T) {
 			assertValue: "PROCEDURE",
 		},
 		{
-			name: "with ISMS type",
+			name: "with GOVERNANCE type",
 			input: map[string]any{
-				"title":          "ISMS Document",
-				"content":        "ISMS content",
-				"documentType":   "ISMS",
+				"title":          "Governance Document",
+				"content":        "Governance content",
+				"documentType":   "GOVERNANCE",
 				"classification": "INTERNAL",
 			},
 			assertField: "documentType",
-			assertValue: "ISMS",
+			assertValue: "GOVERNANCE",
 		},
 		{
 			name: "with OTHER type",

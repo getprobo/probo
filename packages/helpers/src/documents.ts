@@ -1,17 +1,27 @@
 type Translator = (s: string) => string;
 
-export const documentTypes = ["OTHER", "ISMS", "POLICY", "PROCEDURE"] as const;
+export const documentTypes = ["OTHER", "GOVERNANCE", "POLICY", "PROCEDURE", "PLAN", "REGISTER", "RECORD", "REPORT", "TEMPLATE"] as const;
 
 export function getDocumentTypeLabel(__: Translator, type: string) {
     switch (type) {
         case "OTHER":
             return __("Other");
-        case "ISMS":
-            return __("ISMS");
+        case "GOVERNANCE":
+            return __("Governance");
         case "POLICY":
             return __("Policy");
         case "PROCEDURE":
             return __("Procedure");
+        case "PLAN":
+            return __("Plan");
+        case "REGISTER":
+            return __("Register");
+        case "RECORD":
+            return __("Record");
+        case "REPORT":
+            return __("Report");
+        case "TEMPLATE":
+            return __("Template");
     }
 }
 

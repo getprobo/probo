@@ -5038,9 +5038,14 @@ components:
       type: string
       enum:
         - OTHER
-        - ISMS
+        - GOVERNANCE
         - POLICY
         - PROCEDURE
+        - PLAN
+        - REGISTER
+        - RECORD
+        - REPORT
+        - TEMPLATE
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.DocumentType
 
     DocumentClassification:
@@ -5314,6 +5319,11 @@ components:
               items:
                 $ref: "#/components/schemas/TrustCenterVisibility"
               description: Trust center visibilities
+            document_types:
+              type: array
+              items:
+                $ref: "#/components/schemas/DocumentType"
+              description: Document types
 
     ListDocumentsOutput:
       type: object

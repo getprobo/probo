@@ -29,7 +29,7 @@ export const documentsPageQuery = graphql`
       ... on Organization {
         canCreateDocument: permission(action: "core:document:create")
         ...DocumentListFragment @arguments(first: 50, order: { field: TITLE, direction: ASC })
-        documents(first: 50, orderBy: { field: TITLE, direction: ASC }) {
+        allDocuments: documents(first: 50, orderBy: { field: TITLE, direction: ASC }) {
           edges {
             node {
               canSendSigningNotifications: permission(
@@ -63,7 +63,7 @@ export default function DocumentsPage(props: {
 
   usePageTitle(__("Documents"));
 
-  const canSendAnySignatureNotifications = organization.documents.edges.some(
+  const canSendAnySignatureNotifications = organization.allDocuments.edges.some(
     ({ node: { canSendSigningNotifications } }) => canSendSigningNotifications,
   );
 
@@ -71,7 +71,10 @@ export default function DocumentsPage(props: {
     ConnectionHandler.getConnectionID(
       organizationId,
       "DocumentsListQuery_documents",
-      { orderBy: { direction: "ASC", field: "TITLE" } },
+      {
+        orderBy: { direction: "ASC", field: "TITLE" },
+        filter: { documentTypes: null },
+      },
     ),
   );
 

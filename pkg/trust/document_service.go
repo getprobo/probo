@@ -177,7 +177,7 @@ func (s *DocumentService) exportPDFData(
 	switch document.DocumentType {
 	case coredata.DocumentTypePolicy:
 		classification = docgen.ClassificationConfidential
-	case coredata.DocumentTypeISMS:
+	case coredata.DocumentTypeGovernance:
 		classification = docgen.ClassificationSecret
 	}
 
