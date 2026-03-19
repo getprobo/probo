@@ -5,7 +5,7 @@ import { Outlet } from "react-router";
 
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
-export default function ContextLayout() {
+export default function ContextLayoutLoader() {
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
   const prefix = `/organizations/${organizationId}/context`;
@@ -21,7 +21,7 @@ export default function ContextLayout() {
         )}
       />
       <Tabs>
-        <TabLink to={`${prefix}/overview`}>{__("Context")}</TabLink>
+        <TabLink to={prefix} end>{__("Context")}</TabLink>
         <TabLink to={`${prefix}/meetings`}>{__("Meetings")}</TabLink>
       </Tabs>
       <Outlet />

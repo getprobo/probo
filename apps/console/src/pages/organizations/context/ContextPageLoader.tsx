@@ -1,11 +1,15 @@
-import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
+import { useEffect } from "react";
+import { type PreloadedQuery, usePreloadedQuery, useQueryLoader } from "react-relay";
 import { graphql } from "relay-runtime";
 
 import type { ContextPageLoaderQuery } from "#/__generated__/core/ContextPageLoaderQuery.graphql";
+import { LinkCardSkeleton } from "#/components/skeletons/LinkCardSkeleton";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
+import { CoreRelayProvider } from "#/providers/CoreRelayProvider";
 
 import ContextPage from "./ContextPage";
 
-export const contextPageQuery = graphql`
+const contextPageQuery = graphql`
   query ContextPageLoaderQuery($organizationId: ID!) {
     organization: node(id: $organizationId) {
       ... on Organization {
@@ -15,12 +19,31 @@ export const contextPageQuery = graphql`
   }
 `;
 
-type Props = {
-  queryRef: PreloadedQuery<ContextPageLoaderQuery>;
-};
+function ContextPageQueryLoader() {
+  const organizationId = useOrganizationId();
+  const [queryRef, loadQuery] = useQueryLoader<ContextPageLoaderQuery>(contextPageQuery);
 
-export default function ContextPageLoader(props: Props) {
-  const data = usePreloadedQuery(contextPageQuery, props.queryRef);
+  useEffect(() => {
+    if (!queryRef) {
+      loadQuery({ organizationId });
+    }
+  });
+
+  if (!queryRef) return <LinkCardSkeleton />;
+
+  return <ContextPageInner queryRef={queryRef} />;
+}
+
+function ContextPageInner({ queryRef }: { queryRef: PreloadedQuery<ContextPageLoaderQuery> }) {
+  const data = usePreloadedQuery(contextPageQuery, queryRef);
 
   return <ContextPage organization={data.organization} />;
+}
+
+export default function ContextPageLoader() {
+  return (
+    <CoreRelayProvider>
+      <ContextPageQueryLoader />
+    </CoreRelayProvider>
+  );
 }
