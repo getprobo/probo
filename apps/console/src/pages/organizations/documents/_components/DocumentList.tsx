@@ -86,7 +86,18 @@ export function DocumentList(props: {
 
   const handleDocumentTypeFilterChange = (value: string) => {
     const newType = value === "ALL" ? null : (value as DocumentType);
+    clear();
     setDocumentTypeFilter(newType);
+    onConnectionIdChange(
+      ConnectionHandler.getConnectionID(
+        organizationId,
+        "DocumentsListQuery_documents",
+        {
+          orderBy: { direction: "ASC", field: "TITLE" },
+          filter: { documentTypes: newType ? [newType] : null },
+        },
+      ),
+    );
     startTransition(() => {
       pagination.refetch(
         { documentTypes: newType ? [newType] : null },
@@ -165,7 +176,7 @@ export function DocumentList(props: {
           onValueChange={handleDocumentTypeFilterChange}
         >
           <Option value="ALL">{__("All types")}</Option>
-          {documentTypes.map((type) => (
+          {documentTypes.map(type => (
             <Option key={type} value={type}>
               {getDocumentTypeLabel(__, type) ?? type}
             </Option>
@@ -174,140 +185,140 @@ export function DocumentList(props: {
       </div>
       <div className={isPending ? "opacity-50 pointer-events-none transition-opacity" : ""}>
         {documents.length > 0
-    ? (
-        <SortableTable
-          {...pagination}
-          refetch={pagination.refetch as ComponentProps<typeof SortableTable>["refetch"]}
-        >
-          <Thead>
-            {selection.length === 0
-              ? (
-                  <Tr>
-                    <Th className="w-18">
-                      <Checkbox
-                        checked={
-                          selection.length === documents.length
-                          && documents.length > 0
-                        }
-                        onChange={() => reset(documents.map(d => d.id))}
-                      />
-                    </Th>
-                    <SortableTh field="TITLE" className="min-w-0" onOrderChange={handleOrderChange}>
-                      {__("Name")}
-                    </SortableTh>
-                    <Th className="w-24">{__("Status")}</Th>
-                    <Th className="w-20">{__("Version")}</Th>
-                    <SortableTh field="DOCUMENT_TYPE" className="w-28" onOrderChange={handleOrderChange}>
-                      {__("Type")}
-                    </SortableTh>
-                    <Th className="w-32">{__("Classification")}</Th>
-                    <Th className="w-60">{__("Approvers")}</Th>
-                    <Th className="w-60">{__("Last update")}</Th>
-                    <Th className="w-20">{__("Signatures")}</Th>
-                    {hasAnyAction && <Th className="w-18"></Th>}
-                  </Tr>
-                )
-              : (
-                  <Tr>
-                    <Th colspan={10} compact>
-                      <div className="flex justify-between items-center h-8">
-                        <div className="flex gap-2 items-center">
-                          {sprintf(__("%s documents selected"), selection.length)}
-                          {" "}
-                          -
-                          <button
-                            onClick={clear}
-                            className="flex gap-1 items-center hover:text-txt-primary"
-                          >
-                            <IconCrossLargeX size={12} />
-                            {__("Clear selection")}
-                          </button>
-                        </div>
-                        <div className="flex gap-2 items-center">
-                          {canUpdateAny && (
-                            <PublishDocumentsDialog
-                              documentIds={selection}
-                              onSave={clear}
-                            >
-                              <Button
-                                icon={IconCheckmark1}
-                                className="py-0.5 px-2 text-xs h-6 min-h-6"
-                              >
-                                {__("Publish")}
-                              </Button>
-                            </PublishDocumentsDialog>
-                          )}
-                          {canRequestAnySignatures && (
-                            <SignatureDocumentsDialog
-                              documentIds={selection}
-                              onSave={clear}
-                            >
-                              <Button
-                                variant="secondary"
-                                icon={IconSignature}
-                                className="py-0.5 px-2 text-xs h-6 min-h-6"
-                              >
-                                {__("Request signature")}
-                              </Button>
-                            </SignatureDocumentsDialog>
-                          )}
-                          <BulkExportDialog
-                            ref={bulkExportDialogRef}
-                            onExport={handleBulkExport}
-                            isLoading={isBulkExporting}
-                            defaultEmail={defaultEmail}
-                            selectedCount={selection.length}
-                          >
-                            <Button
-                              variant="secondary"
-                              icon={IconArrowDown}
-                              className="py-0.5 px-2 text-xs h-6 min-h-6"
-                            >
-                              {__("Export")}
-                            </Button>
-                          </BulkExportDialog>
-                          {canDeleteAny && (
-                            <Button
-                              variant="danger"
-                              icon={IconTrashCan}
-                              onClick={handleBulkDelete}
-                              className="py-0.5 px-2 text-xs h-6 min-h-6"
-                            >
-                              {__("Delete")}
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    </Th>
-                  </Tr>
-                )}
-          </Thead>
-          <Tbody>
-            {documents.map(document => (
-              <DocumentListItem
-                checked={selection.includes(document.id)}
-                onCheck={() => toggle(document.id)}
-                key={document.id}
-                fragmentRef={document}
-                connectionId={connectionId}
-                hasAnyAction={hasAnyAction}
-              />
-            ))}
-          </Tbody>
-        </SortableTable>
-      )
-    : (
-        <Card padded>
-          <div className="text-center py-12">
-            <h3 className="text-lg font-semibold mb-2">
-              {__("No documents yet")}
-            </h3>
-            <p className="text-txt-tertiary mb-4">
-              {__("Create your first document to get started.")}
-            </p>
-          </div>
-        </Card>
-      )}
+          ? (
+              <SortableTable
+                {...pagination}
+                refetch={pagination.refetch as ComponentProps<typeof SortableTable>["refetch"]}
+              >
+                <Thead>
+                  {selection.length === 0
+                    ? (
+                        <Tr>
+                          <Th className="w-18">
+                            <Checkbox
+                              checked={
+                                selection.length === documents.length
+                                && documents.length > 0
+                              }
+                              onChange={() => reset(documents.map(d => d.id))}
+                            />
+                          </Th>
+                          <SortableTh field="TITLE" className="min-w-0" onOrderChange={handleOrderChange}>
+                            {__("Name")}
+                          </SortableTh>
+                          <Th className="w-24">{__("Status")}</Th>
+                          <Th className="w-20">{__("Version")}</Th>
+                          <SortableTh field="DOCUMENT_TYPE" className="w-28" onOrderChange={handleOrderChange}>
+                            {__("Type")}
+                          </SortableTh>
+                          <Th className="w-32">{__("Classification")}</Th>
+                          <Th className="w-60">{__("Approvers")}</Th>
+                          <Th className="w-60">{__("Last update")}</Th>
+                          <Th className="w-20">{__("Signatures")}</Th>
+                          {hasAnyAction && <Th className="w-18"></Th>}
+                        </Tr>
+                      )
+                    : (
+                        <Tr>
+                          <Th colspan={10} compact>
+                            <div className="flex justify-between items-center h-8">
+                              <div className="flex gap-2 items-center">
+                                {sprintf(__("%s documents selected"), selection.length)}
+                                {" "}
+                                -
+                                <button
+                                  onClick={clear}
+                                  className="flex gap-1 items-center hover:text-txt-primary"
+                                >
+                                  <IconCrossLargeX size={12} />
+                                  {__("Clear selection")}
+                                </button>
+                              </div>
+                              <div className="flex gap-2 items-center">
+                                {canUpdateAny && (
+                                  <PublishDocumentsDialog
+                                    documentIds={selection}
+                                    onSave={clear}
+                                  >
+                                    <Button
+                                      icon={IconCheckmark1}
+                                      className="py-0.5 px-2 text-xs h-6 min-h-6"
+                                    >
+                                      {__("Publish")}
+                                    </Button>
+                                  </PublishDocumentsDialog>
+                                )}
+                                {canRequestAnySignatures && (
+                                  <SignatureDocumentsDialog
+                                    documentIds={selection}
+                                    onSave={clear}
+                                  >
+                                    <Button
+                                      variant="secondary"
+                                      icon={IconSignature}
+                                      className="py-0.5 px-2 text-xs h-6 min-h-6"
+                                    >
+                                      {__("Request signature")}
+                                    </Button>
+                                  </SignatureDocumentsDialog>
+                                )}
+                                <BulkExportDialog
+                                  ref={bulkExportDialogRef}
+                                  onExport={handleBulkExport}
+                                  isLoading={isBulkExporting}
+                                  defaultEmail={defaultEmail}
+                                  selectedCount={selection.length}
+                                >
+                                  <Button
+                                    variant="secondary"
+                                    icon={IconArrowDown}
+                                    className="py-0.5 px-2 text-xs h-6 min-h-6"
+                                  >
+                                    {__("Export")}
+                                  </Button>
+                                </BulkExportDialog>
+                                {canDeleteAny && (
+                                  <Button
+                                    variant="danger"
+                                    icon={IconTrashCan}
+                                    onClick={handleBulkDelete}
+                                    className="py-0.5 px-2 text-xs h-6 min-h-6"
+                                  >
+                                    {__("Delete")}
+                                  </Button>
+                                )}
+                              </div>
+                            </div>
+                          </Th>
+                        </Tr>
+                      )}
+                </Thead>
+                <Tbody>
+                  {documents.map(document => (
+                    <DocumentListItem
+                      checked={selection.includes(document.id)}
+                      onCheck={() => toggle(document.id)}
+                      key={document.id}
+                      fragmentRef={document}
+                      connectionId={connectionId}
+                      hasAnyAction={hasAnyAction}
+                    />
+                  ))}
+                </Tbody>
+              </SortableTable>
+            )
+          : (
+              <Card padded>
+                <div className="text-center py-12">
+                  <h3 className="text-lg font-semibold mb-2">
+                    {__("No documents yet")}
+                  </h3>
+                  <p className="text-txt-tertiary mb-4">
+                    {__("Create your first document to get started.")}
+                  </p>
+                </div>
+              </Card>
+            )}
       </div>
     </div>
   );

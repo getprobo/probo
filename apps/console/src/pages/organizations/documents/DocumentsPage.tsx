@@ -6,7 +6,7 @@ import {
   IconPlusLarge,
   PageHeader,
 } from "@probo/ui";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   type PreloadedQuery,
   usePreloadedQuery,
@@ -67,16 +67,20 @@ export default function DocumentsPage(props: {
     ({ node: { canSendSigningNotifications } }) => canSendSigningNotifications,
   );
 
-  const [documentListConnectionId, setDocumentListConnectionId] = useState(
-    ConnectionHandler.getConnectionID(
-      organizationId,
-      "DocumentsListQuery_documents",
-      {
-        orderBy: { direction: "ASC", field: "TITLE" },
-        filter: { documentTypes: null },
-      },
-    ),
+  const unfilteredConnectionId = useMemo(
+    () =>
+      ConnectionHandler.getConnectionID(
+        organizationId,
+        "DocumentsListQuery_documents",
+        {
+          orderBy: { direction: "ASC", field: "TITLE" },
+          filter: { documentTypes: null },
+        },
+      ),
+    [organizationId],
   );
+
+  const [, setDocumentListConnectionId] = useState(unfilteredConnectionId);
 
   const handleSendSigningNotifications = async () => {
     await sendSigningNotifications({
@@ -104,7 +108,7 @@ export default function DocumentsPage(props: {
           )}
           {organization.canCreateDocument && (
             <CreateDocumentDialog
-              connection={documentListConnectionId}
+              connection={unfilteredConnectionId}
               trigger={
                 <Button icon={IconPlusLarge}>{__("New document")}</Button>
               }
