@@ -12,29 +12,29 @@
 
 | Title | Type |
 |-------|------|
-{{ range .Documents }}| {{ .Title }} | {{ .Type }} |
+{{ range .Documents }}| {{ cell .Title }} | {{ cell .Type }} |
 {{ end }}{{ end }}{{ if .Audits }}
 ## Audits
 
 | Name | Framework | Valid From | Valid Until |
 |------|-----------|------------|-------------|
-{{ range .Audits }}| {{ .Name }} | {{ .Framework }} | {{ .ValidFrom }} | {{ .ValidUntil }} |
+{{ range .Audits }}| {{ cell .Name }} | {{ cell .Framework }} | {{ .ValidFrom }} | {{ .ValidUntil }} |
 {{ end }}{{ end }}{{ if .Vendors }}
 ## Subprocessors
 
 | Name | Category | Countries | Website |
 |------|----------|-----------|---------|
-{{ range .Vendors }}| {{ .Name }} | {{ .Category }} | {{ .Countries }} | {{ .Website }} |
+{{ range .Vendors }}| {{ cell .Name }} | {{ cell .Category }} | {{ cell .Countries }} | {{ cell .Website }} |
 {{ end }}{{ end }}{{ if .References }}
 ## References
 
 | Name | Description | Website |
 |------|-------------|---------|
-{{ range .References }}| {{ .Name }} | {{ .Description }} | {{ .Website }} |
+{{ range .References }}| {{ cell .Name }} | {{ cell .Description }} | {{ cell .Website }} |
 {{ end }}{{ end }}{{ if .ExternalLinks }}
 ## External Links
 
 | Name | URL |
 |------|-----|
-{{ range .ExternalLinks }}| {{ .Name }} | {{ .URL }} |
+{{ range .ExternalLinks }}| {{ cell .Name }} | {{ cell .URL }} |
 {{ end }}{{ end }}

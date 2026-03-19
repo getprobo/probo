@@ -31,7 +31,18 @@ import (
 //go:embed compliance.md.tmpl
 var complianceTmplContent string
 
-var complianceTmpl = template.Must(template.New("compliance").Parse(complianceTmplContent))
+var complianceTmpl = template.Must(
+	template.New("compliance").
+		Funcs(template.FuncMap{
+			"cell": func(s string) string {
+				s = strings.ReplaceAll(s, `|`, `\|`)
+				s = strings.ReplaceAll(s, "\n", " ")
+				s = strings.ReplaceAll(s, "\r", "")
+				return s
+			},
+		}).
+		Parse(complianceTmplContent),
+)
 
 type (
 	compliancePageData struct {
