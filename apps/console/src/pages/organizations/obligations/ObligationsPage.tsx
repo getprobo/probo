@@ -60,7 +60,7 @@ const obligationsPageFragment = graphql`
   fragment ObligationsPageFragment on Organization
   @refetchable(queryName: "ObligationsPageRefetchQuery")
   @argumentDefinitions(
-    first: { type: "Int", defaultValue: 10 }
+    first: { type: "Int", defaultValue: 500 }
     after: { type: "CursorKey" }
     snapshotId: { type: "ID", defaultValue: null }
   ) {
