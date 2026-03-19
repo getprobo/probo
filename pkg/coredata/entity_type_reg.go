@@ -227,3 +227,27 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return nil, false
 	}
 }
+
+func NewEntitiesFromIDs(ids []gid.GID) (any, bool) {
+	if len(ids) == 0 {
+		return nil, false
+	}
+
+	entityType := ids[0].EntityType()
+	for _, id := range ids[1:] {
+		if id.EntityType() != entityType {
+			return nil, false
+		}
+	}
+
+	switch entityType {
+	case DocumentEntityType:
+		docs := make(Documents, len(ids))
+		for i, id := range ids {
+			docs[i] = &Document{ID: id}
+		}
+		return docs, true
+	default:
+		return nil, false
+	}
+}

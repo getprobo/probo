@@ -29,6 +29,7 @@ import (
 type (
 	AuthorizeFuncOption func(*iam.AuthorizeParams)
 	AuthorizeFunc       func(context.Context, gid.GID, string, ...AuthorizeFuncOption) error
+	BulkAuthorizeFunc   func(context.Context, []gid.GID, string) error
 )
 
 func WithAttr(key, value string) AuthorizeFuncOption {
@@ -42,6 +43,50 @@ func WithAttr(key, value string) AuthorizeFuncOption {
 func WithSkipAssumptionCheck() AuthorizeFuncOption {
 	return func(params *iam.AuthorizeParams) {
 		params.Session = nil
+	}
+}
+
+func NewBulkAuthorizeFunc(
+	svc *iam.Service,
+	logger *log.Logger,
+) BulkAuthorizeFunc {
+	return func(
+		ctx context.Context,
+		resourceIDs []gid.GID,
+		action string,
+	) error {
+		identity := authn.IdentityFromContext(ctx)
+		session := authn.SessionFromContext(ctx)
+
+		params := iam.BulkAuthorizeParams{
+			Principal: identity.ID,
+			Resources: resourceIDs,
+			Action:    action,
+		}
+		if session != nil {
+			params.Session = &session.ID
+		}
+
+		if err := svc.Authorizer.BulkAuthorize(ctx, params); err != nil {
+			var errAssumptionRequired *iam.ErrAssumptionRequired
+			if errors.As(err, &errAssumptionRequired) {
+				return gqlutils.AssumptionRequired(ctx, err)
+			}
+
+			var errInsufficientPermissions *iam.ErrInsufficientPermissions
+			if errors.As(err, &errInsufficientPermissions) {
+				return gqlutils.Forbidden(ctx, err)
+			}
+
+			if errors.Is(err, coredata.ErrResourceNotFound) {
+				return gqlutils.NotFoundf(ctx, "resource not found")
+			}
+
+			logger.ErrorCtx(ctx, "cannot bulk authorize", log.Error(err))
+			return gqlutils.Internal(ctx)
+		}
+
+		return nil
 	}
 }
 

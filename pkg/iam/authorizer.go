@@ -27,29 +27,45 @@ import (
 	"go.probo.inc/probo/pkg/iam/policy"
 )
 
-// AuthorizationAttributer is implemented by entities that provide attributes
-// for policy condition evaluation.
-type AuthorizationAttributer interface {
-	AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error)
-}
+type (
+	AuthorizationAttributes     = map[string]string
+	AuthorizationAttributesByID = map[gid.GID]AuthorizationAttributes
 
-// AuthorizeParams contains the parameters for an authorization request.
-type AuthorizeParams struct {
-	Principal          gid.GID
-	Resource           gid.GID
-	Session            *gid.GID
-	Action             string
-	ResourceAttributes map[string]string
-}
+	AuthorizationAttributer interface {
+		AuthorizationAttributes(ctx context.Context, conn pg.Conn) (AuthorizationAttributes, error)
+	}
 
-// Authorizer evaluates authorization requests against registered policies.
-type Authorizer struct {
-	pg        *pg.Client
-	evaluator *policy.Evaluator
-	policySet *PolicySet
-}
+	BulkAuthorizationAttributer interface {
+		AuthorizationAttributes(ctx context.Context, conn pg.Conn) (AuthorizationAttributesByID, error)
+	}
 
-// NewAuthorizer creates a new Authorizer instance.
+	AuthorizeParams struct {
+		Principal          gid.GID
+		Resource           gid.GID
+		Session            *gid.GID
+		Action             string
+		ResourceAttributes AuthorizationAttributes
+	}
+
+	BulkAuthorizeParams struct {
+		Principal gid.GID
+		Resources []gid.GID
+		Session   *gid.GID
+		Action    string
+	}
+
+	Authorizer struct {
+		pg        *pg.Client
+		evaluator *policy.Evaluator
+		policySet *PolicySet
+	}
+
+	evaluationContext struct {
+		principalAttrs AuthorizationAttributes
+		policies       []*policy.Policy
+	}
+)
+
 func NewAuthorizer(pgClient *pg.Client) *Authorizer {
 	return &Authorizer{
 		pg:        pgClient,
@@ -58,12 +74,10 @@ func NewAuthorizer(pgClient *pg.Client) *Authorizer {
 	}
 }
 
-// RegisterPolicySet merges the given policy set into the authorizer.
 func (a *Authorizer) RegisterPolicySet(ps *PolicySet) {
 	a.policySet.Merge(ps)
 }
 
-// Authorize checks if the principal is allowed to perform the action on the resource.
 func (a *Authorizer) Authorize(ctx context.Context, params AuthorizeParams) error {
 	if params.Principal.EntityType() != coredata.IdentityEntityType {
 		return NewUnsupportedPrincipalTypeError(params.Principal.EntityType())
@@ -72,36 +86,135 @@ func (a *Authorizer) Authorize(ctx context.Context, params AuthorizeParams) erro
 	return a.pg.WithConn(ctx, func(conn pg.Conn) error { return a.authorize(ctx, conn, params) })
 }
 
+func (a *Authorizer) BulkAuthorize(ctx context.Context, params BulkAuthorizeParams) error {
+	if params.Principal.EntityType() != coredata.IdentityEntityType {
+		return NewUnsupportedPrincipalTypeError(params.Principal.EntityType())
+	}
+
+	return a.pg.WithConn(ctx, func(conn pg.Conn) error {
+		return a.bulkAuthorize(ctx, conn, params)
+	})
+}
+
 func (a *Authorizer) authorize(ctx context.Context, conn pg.Conn, params AuthorizeParams) error {
 	resourceAttrs, err := a.buildResourceAttributes(ctx, conn, params)
 	if err != nil {
 		return fmt.Errorf("cannot build resource attributes: %w", err)
 	}
 
-	resourceOrgID := resourceAttrs["organization_id"]
-
-	// Find role for resource's organization
-	membership, err := a.loadMembership(ctx, conn, params.Principal, resourceOrgID)
+	evalCtx, err := a.buildEvaluationContext(
+		ctx,
+		conn,
+		params.Principal,
+		params.Session,
+		resourceAttrs["organization_id"],
+	)
 	if err != nil {
-		return fmt.Errorf("cannot load memberships for principal: %w", err)
+		return err
 	}
 
-	// Check whether the viewer is currently assuming the org of the accessed resource
-	if membership != nil && params.Session != nil {
+	req := policy.AuthorizationRequest{
+		Principal: params.Principal,
+		Resource:  params.Resource,
+		Action:    params.Action,
+		ConditionContext: policy.ConditionContext{
+			Principal: evalCtx.principalAttrs,
+			Resource:  resourceAttrs,
+		},
+	}
+
+	if a.evaluator.Evaluate(req, evalCtx.policies).IsAllowed() {
+		return nil
+	}
+
+	return NewInsufficientPermissionsError(params.Principal, params.Resource, params.Action)
+}
+
+func (a *Authorizer) bulkAuthorize(ctx context.Context, conn pg.Conn, params BulkAuthorizeParams) error {
+	if len(params.Resources) == 0 {
+		return nil
+	}
+
+	entity, ok := coredata.NewEntitiesFromIDs(params.Resources)
+	if !ok {
+		return fmt.Errorf("unsupported or mixed resource types for bulk authorization")
+	}
+
+	collection, ok := entity.(BulkAuthorizationAttributer)
+	if !ok {
+		return fmt.Errorf("resource type %d does not implement BulkAuthorizationAttributer", params.Resources[0].EntityType())
+	}
+
+	allAttrs, err := collection.AuthorizationAttributes(ctx, conn)
+	if err != nil {
+		return fmt.Errorf("cannot load bulk resource attributes: %w", err)
+	}
+
+	orgID := allAttrs[params.Resources[0]]["organization_id"]
+	for id, attrs := range allAttrs {
+		if attrs["organization_id"] != orgID {
+			return fmt.Errorf("cannot bulk authorize resources from different organizations")
+		}
+		attrs["id"] = id.String()
+	}
+
+	evalCtx, err := a.buildEvaluationContext(
+		ctx,
+		conn,
+		params.Principal,
+		params.Session,
+		orgID,
+	)
+	if err != nil {
+		return err
+	}
+
+	for _, resourceID := range params.Resources {
+		req := policy.AuthorizationRequest{
+			Principal: params.Principal,
+			Resource:  resourceID,
+			Action:    params.Action,
+			ConditionContext: policy.ConditionContext{
+				Principal: evalCtx.principalAttrs,
+				Resource:  allAttrs[resourceID],
+			},
+		}
+
+		if !a.evaluator.Evaluate(req, evalCtx.policies).IsAllowed() {
+			return NewInsufficientPermissionsError(params.Principal, resourceID, params.Action)
+		}
+	}
+
+	return nil
+}
+
+func (a *Authorizer) buildEvaluationContext(
+	ctx context.Context,
+	conn pg.Conn,
+	principalID gid.GID,
+	session *gid.GID,
+	resourceOrgID string,
+) (*evaluationContext, error) {
+	membership, err := a.loadMembership(ctx, conn, principalID, resourceOrgID)
+	if err != nil {
+		return nil, fmt.Errorf("cannot load memberships for principal: %w", err)
+	}
+
+	if membership != nil && session != nil {
 		if _, err := a.getActiveChildSessionForMembership(
 			ctx,
 			conn,
-			*params.Session,
+			*session,
 			membership.ID,
 		); err != nil {
 			var errSessionNotFound *ErrSessionNotFound
 			var errSessionExpired *ErrSessionExpired
 
 			if errors.As(err, &errSessionNotFound) || errors.As(err, &errSessionExpired) {
-				return NewAssumptionRequiredError(params.Principal, membership.ID)
+				return nil, NewAssumptionRequiredError(principalID, membership.ID)
 			}
 
-			return fmt.Errorf("cannot get active child session for membership: %w", err)
+			return nil, fmt.Errorf("cannot get active child session for membership: %w", err)
 		}
 	}
 
@@ -110,37 +223,23 @@ func (a *Authorizer) authorize(ctx context.Context, conn pg.Conn, params Authori
 		role = membership.Role.String()
 	}
 
-	// Only set principal.organization_id if they have a role in this org
-	var scopedPrincipalAttrs map[string]string
+	var scopedPrincipalAttrs AuthorizationAttributes
 	if membership != nil && role != "" {
-		scopedPrincipalAttrs = map[string]string{
+		scopedPrincipalAttrs = AuthorizationAttributes{
 			"organization_id": membership.OrganizationID.String(),
 			"role":            membership.Role.String(),
 		}
 	}
 
-	principalAttrs, err := a.buildPrincipalAttributes(ctx, conn, params.Principal, scopedPrincipalAttrs)
+	principalAttrs, err := a.buildPrincipalAttributes(ctx, conn, principalID, scopedPrincipalAttrs)
 	if err != nil {
-		return fmt.Errorf("cannot build principal attributes: %w", err)
+		return nil, fmt.Errorf("cannot build principal attributes: %w", err)
 	}
 
-	policies := a.buildPoliciesForRole(role)
-
-	req := policy.AuthorizationRequest{
-		Principal: params.Principal,
-		Resource:  params.Resource,
-		Action:    params.Action,
-		ConditionContext: policy.ConditionContext{
-			Principal: principalAttrs,
-			Resource:  resourceAttrs,
-		},
-	}
-
-	if a.evaluator.Evaluate(req, policies).IsAllowed() {
-		return nil
-	}
-
-	return NewInsufficientPermissionsError(params.Principal, params.Resource, params.Action)
+	return &evaluationContext{
+		principalAttrs: principalAttrs,
+		policies:       a.buildPoliciesForRole(role),
+	}, nil
 }
 
 func (a *Authorizer) loadMembership(
@@ -197,9 +296,9 @@ func (a *Authorizer) buildPrincipalAttributes(
 	ctx context.Context,
 	conn pg.Conn,
 	principalID gid.GID,
-	defaultAttrs map[string]string,
-) (map[string]string, error) {
-	attrs := map[string]string{
+	defaultAttrs AuthorizationAttributes,
+) (AuthorizationAttributes, error) {
+	attrs := AuthorizationAttributes{
 		"id": principalID.String(),
 	}
 	maps.Copy(attrs, defaultAttrs)
@@ -221,8 +320,8 @@ func (a *Authorizer) buildResourceAttributes(
 	ctx context.Context,
 	conn pg.Conn,
 	params AuthorizeParams,
-) (map[string]string, error) {
-	attrs := map[string]string{
+) (AuthorizationAttributes, error) {
+	attrs := AuthorizationAttributes{
 		"id": params.Resource.String(),
 	}
 
