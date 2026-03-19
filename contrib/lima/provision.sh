@@ -100,6 +100,13 @@ su - "${LIMA_USER}" -c "export PATH=/usr/local/go/bin:\$HOME/go/bin:\$PATH && cd
 
 mkdir -p /etc/probod
 
+# Load developer-specific overrides (not committed to repo).
+if [ -f /workspace/.sandbox.env ]; then
+    set -a
+    . /workspace/.sandbox.env
+    set +a
+fi
+
 PROBOD_BASE_URL="http://${VM_IP}:8080" \
 AUTH_COOKIE_DOMAIN="${VM_IP}" \
 AUTH_COOKIE_SECURE=false \

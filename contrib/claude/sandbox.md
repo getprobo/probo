@@ -56,6 +56,19 @@ During provisioning, the sandbox automatically generates:
 
 Probod config is at `/etc/probod/config.yml`.
 
+### Custom environment variables
+
+To inject developer-specific secrets (SSO, API keys, etc.) into the sandbox, create a `.sandbox.env` file at the repo root:
+
+```bash
+# .sandbox.env (gitignored — never committed)
+AUTH_SAML_IDP_METADATA_URL=https://login.example.com/metadata
+AUTH_OIDC_CLIENT_ID=my-client-id
+AUTH_OIDC_CLIENT_SECRET=s3cret
+```
+
+This file is sourced during provisioning before `probod-bootstrap` runs. Any variable set here overrides the defaults. The sandbox must be recreated (`delete` + `create`) for changes to take effect.
+
 ## Systemd services
 
 The sandbox provisions three systemd services:

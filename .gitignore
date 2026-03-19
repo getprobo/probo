@@ -13,6 +13,7 @@ sbom-docker.json
 *.crt
 *.key
 compose/keycloak/probo-realm.json
+.sandbox.env
 
 # Generated files (codegen)
 __generated__/
