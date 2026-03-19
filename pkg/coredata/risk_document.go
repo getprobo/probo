@@ -100,7 +100,6 @@ WHERE
 	return err
 }
 
-
 func (rp RiskDocument) DeleteByDocumentIDs(
 	ctx context.Context,
 	conn pg.Conn,

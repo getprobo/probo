@@ -114,7 +114,6 @@ WHERE
 	return err
 }
 
-
 func (cp ControlDocument) DeleteByDocumentIDs(
 	ctx context.Context,
 	conn pg.Conn,

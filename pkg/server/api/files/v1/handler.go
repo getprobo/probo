@@ -22,8 +22,8 @@ import (
 	"github.com/go-chi/chi/v5"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/file"
+	"go.probo.inc/probo/pkg/gid"
 )
 
 const presignedURLExpiry = 1 * time.Hour

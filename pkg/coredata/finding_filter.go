@@ -47,16 +47,16 @@ func NewFindingFilter(
 
 func (f *FindingFilter) SQLArguments() pgx.StrictNamedArgs {
 	args := pgx.StrictNamedArgs{
-		"has_snapshot_filter":  false,
-		"filter_snapshot_id":   nil,
-		"has_kind_filter":      false,
-		"filter_kind":          nil,
-		"has_status_filter":    false,
-		"filter_status":        nil,
-		"has_priority_filter":  false,
-		"filter_priority":      nil,
-		"has_owner_filter":     false,
-		"filter_owner_id":      nil,
+		"has_snapshot_filter": false,
+		"filter_snapshot_id":  nil,
+		"has_kind_filter":     false,
+		"filter_kind":         nil,
+		"has_status_filter":   false,
+		"filter_status":       nil,
+		"has_priority_filter": false,
+		"filter_priority":     nil,
+		"has_owner_filter":    false,
+		"filter_owner_id":     nil,
 	}
 
 	if f.snapshotID != nil {

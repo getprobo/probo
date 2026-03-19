@@ -22,13 +22,14 @@ import (
 	"github.com/go-chi/chi/v5"
 	"go.gearno.de/kit/httpserver"
 	"go.gearno.de/kit/log"
+	"go.gearno.de/x/ref"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/esign"
+	"go.probo.inc/probo/pkg/file"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/probo"
-	"go.probo.inc/probo/pkg/file"
 	"go.probo.inc/probo/pkg/securecookie"
 	"go.probo.inc/probo/pkg/server/api"
 	"go.probo.inc/probo/pkg/server/api/compliancepage"
@@ -37,7 +38,6 @@ import (
 	console_web "go.probo.inc/probo/pkg/server/web"
 	"go.probo.inc/probo/pkg/slack"
 	"go.probo.inc/probo/pkg/trust"
-	"go.gearno.de/x/ref"
 )
 
 type Config struct {

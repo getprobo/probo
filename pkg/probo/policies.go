@@ -20,8 +20,8 @@ import (
 )
 
 var (
-	organizationCondition         = policy.Equals("principal.organization_id", "resource.organization_id")
-	documentWriteActiveOnly       = policy.Deny(
+	organizationCondition   = policy.Equals("principal.organization_id", "resource.organization_id")
+	documentWriteActiveOnly = policy.Deny(
 		ActionDocumentUpdate,
 		ActionDocumentArchive,
 		ActionDocumentDraftVersionCreate,

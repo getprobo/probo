@@ -76,7 +76,7 @@ func NewFinding(f *coredata.Finding) *Finding {
 		ReferenceID:        f.ReferenceID,
 		Description:        f.Description,
 		Source:             f.Source,
-		IdentifiedOn:     f.IdentifiedOn,
+		IdentifiedOn:       f.IdentifiedOn,
 		RootCause:          f.RootCause,
 		CorrectiveAction:   f.CorrectiveAction,
 		DueDate:            f.DueDate,

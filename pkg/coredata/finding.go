@@ -37,7 +37,7 @@ type (
 		ReferenceID        string          `db:"reference_id"`
 		Description        *string         `db:"description"`
 		Source             *string         `db:"source"`
-		IdentifiedOn     *time.Time      `db:"identified_on"`
+		IdentifiedOn       *time.Time      `db:"identified_on"`
 		RootCause          *string         `db:"root_cause"`
 		CorrectiveAction   *string         `db:"corrective_action"`
 		OwnerID            *gid.GID        `db:"owner_id"`
@@ -369,7 +369,7 @@ WHERE
 		"identified_on":       f.IdentifiedOn,
 		"root_cause":          f.RootCause,
 		"corrective_action":   f.CorrectiveAction,
-		"owner_id":    f.OwnerID,
+		"owner_id":            f.OwnerID,
 		"due_date":            f.DueDate,
 		"status":              f.Status,
 		"priority":            f.Priority,

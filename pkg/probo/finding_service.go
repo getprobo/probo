@@ -138,7 +138,7 @@ func (s *FindingService) Create(
 		Kind:               req.Kind,
 		Description:        req.Description,
 		Source:             req.Source,
-		IdentifiedOn:     req.IdentifiedOn,
+		IdentifiedOn:       req.IdentifiedOn,
 		RootCause:          req.RootCause,
 		CorrectiveAction:   req.CorrectiveAction,
 		OwnerID:            req.OwnerID,

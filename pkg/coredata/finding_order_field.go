@@ -21,13 +21,13 @@ import (
 type FindingOrderField string
 
 const (
-	FindingOrderFieldCreatedAt      FindingOrderField = "CREATED_AT"
+	FindingOrderFieldCreatedAt    FindingOrderField = "CREATED_AT"
 	FindingOrderFieldIdentifiedOn FindingOrderField = "IDENTIFIED_ON"
-	FindingOrderFieldDueDate        FindingOrderField = "DUE_DATE"
-	FindingOrderFieldStatus         FindingOrderField = "STATUS"
-	FindingOrderFieldPriority       FindingOrderField = "PRIORITY"
-	FindingOrderFieldReferenceId    FindingOrderField = "REFERENCE_ID"
-	FindingOrderFieldKind           FindingOrderField = "KIND"
+	FindingOrderFieldDueDate      FindingOrderField = "DUE_DATE"
+	FindingOrderFieldStatus       FindingOrderField = "STATUS"
+	FindingOrderFieldPriority     FindingOrderField = "PRIORITY"
+	FindingOrderFieldReferenceId  FindingOrderField = "REFERENCE_ID"
+	FindingOrderFieldKind         FindingOrderField = "KIND"
 )
 
 func (p FindingOrderField) Column() string {
