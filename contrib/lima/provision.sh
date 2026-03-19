@@ -116,6 +116,25 @@ AWS_USE_PATH_STYLE=true \
 echo "VITE_API_URL=http://${VM_IP}:8080" > /workspace/apps/console/.env
 echo "VITE_API_URL=http://${VM_IP}:8080" > /workspace/apps/trust/.env
 
+# Bind-mount VM-local node_modules over the shared workspace to avoid
+# platform conflicts between macOS host and Linux VM native binaries.
+cat > /etc/systemd/system/probo-node-modules.service << EOF
+[Unit]
+Description=Bind-mount VM-local node_modules over workspace
+DefaultDependencies=no
+Before=probo-console.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStartPre=/bin/mkdir -p /var/lib/probo/node_modules /workspace/node_modules
+ExecStart=/bin/mount --bind /var/lib/probo/node_modules /workspace/node_modules
+ExecStartPost=/bin/chown ${LIMA_USER}:${LIMA_USER} /var/lib/probo/node_modules
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
 # Install systemd services for the sandbox
 cat > /etc/systemd/system/probo-stack.service << 'EOF'
 [Unit]
@@ -158,7 +177,8 @@ EOF
 cat > /etc/systemd/system/probo-console.service << EOF
 [Unit]
 Description=Probo Console Dev Server
-After=probod.service
+Requires=probo-node-modules.service
+After=probod.service probo-node-modules.service
 
 [Service]
 Type=simple
@@ -174,4 +194,4 @@ EOF
 
 systemctl daemon-reload
 systemctl enable --now probo-stack.service
-systemctl enable probod.service probo-console.service
+systemctl enable probo-node-modules.service probod.service probo-console.service
