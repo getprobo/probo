@@ -271,7 +271,8 @@ export default function FindingsPage({ queryRef }: FindingsPageProps) {
           onValueChange={handleKindFilterChange}
         >
           <Option value="ALL">{__("All kinds")}</Option>
-          <Option value="NONCONFORMITY">{__("Nonconformity")}</Option>
+          <Option value="MINOR_NONCONFORMITY">{__("Minor nonconformity")}</Option>
+          <Option value="MAJOR_NONCONFORMITY">{__("Major nonconformity")}</Option>
           <Option value="OBSERVATION">{__("Observation")}</Option>
           <Option value="EXCEPTION">{__("Exception")}</Option>
         </Select>
@@ -366,8 +367,10 @@ export default function FindingsPage({ queryRef }: FindingsPageProps) {
 
 function getKindLabel(kind: string, __: (s: string) => string): string {
   switch (kind) {
-    case "NONCONFORMITY":
-      return __("Nonconformity");
+    case "MINOR_NONCONFORMITY":
+      return __("Minor nonconformity");
+    case "MAJOR_NONCONFORMITY":
+      return __("Major nonconformity");
     case "OBSERVATION":
       return __("Observation");
     case "EXCEPTION":

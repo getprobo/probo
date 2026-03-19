@@ -77,7 +77,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
   prb finding list --organization <organization-id>
 
   # Filter by kind and output as JSON
-  prb finding ls --organization <organization-id> --kind NONCONFORMITY --json`,
+  prb finding ls --organization <organization-id> --kind MINOR_NONCONFORMITY --json`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := cmdutil.ValidateOutputFlag(flagOutput); err != nil {
@@ -117,7 +117,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 
 			filter := map[string]any{}
 			if flagKind != "" {
-				if err := cmdutil.ValidateEnum("kind", flagKind, []string{"NONCONFORMITY", "OBSERVATION", "EXCEPTION"}); err != nil {
+				if err := cmdutil.ValidateEnum("kind", flagKind, []string{"MINOR_NONCONFORMITY", "MAJOR_NONCONFORMITY", "OBSERVATION", "EXCEPTION"}); err != nil {
 					return err
 				}
 				filter["kind"] = flagKind
@@ -200,7 +200,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().IntVarP(&flagLimit, "limit", "L", 30, "Maximum number of findings to list")
 	cmd.Flags().StringVar(&flagOrderBy, "order-by", "", "Order by field (CREATED_AT, REFERENCE_ID, IDENTIFIED_ON, DUE_DATE, STATUS, PRIORITY, KIND)")
 	cmd.Flags().StringVar(&flagOrderDir, "order-direction", "DESC", "Sort direction (ASC, DESC)")
-	cmd.Flags().StringVar(&flagKind, "kind", "", "Filter by kind (NONCONFORMITY, OBSERVATION, EXCEPTION)")
+	cmd.Flags().StringVar(&flagKind, "kind", "", "Filter by kind (MINOR_NONCONFORMITY, MAJOR_NONCONFORMITY, OBSERVATION, EXCEPTION)")
 	flagOutput = cmdutil.AddOutputFlag(cmd)
 
 	_ = cmd.MarkFlagRequired("organization")

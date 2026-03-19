@@ -2312,7 +2312,8 @@ components:
     FindingKind:
       type: string
       enum:
-        - NONCONFORMITY
+        - MINOR_NONCONFORMITY
+        - MAJOR_NONCONFORMITY
         - OBSERVATION
         - EXCEPTION
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.FindingKind
@@ -2491,7 +2492,7 @@ components:
               anyOf:
                 - $ref: "#/components/schemas/FindingKind"
                 - type: "null"
-              description: Filter by finding kind (NONCONFORMITY, OBSERVATION, EXCEPTION). Defaults to null which returns all kinds.
+              description: Filter by finding kind (MINOR_NONCONFORMITY, MAJOR_NONCONFORMITY, OBSERVATION, EXCEPTION). Defaults to null which returns all kinds.
             status:
               anyOf:
                 - $ref: "#/components/schemas/FindingStatus"

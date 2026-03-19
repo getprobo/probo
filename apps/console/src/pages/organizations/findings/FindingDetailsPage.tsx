@@ -131,8 +131,10 @@ type Props = {
 
 function getKindLabel(kind: string, __: (s: string) => string): string {
   switch (kind) {
-    case "NONCONFORMITY":
-      return __("Nonconformity");
+    case "MINOR_NONCONFORMITY":
+      return __("Minor nonconformity");
+    case "MAJOR_NONCONFORMITY":
+      return __("Major nonconformity");
     case "OBSERVATION":
       return __("Observation");
     case "EXCEPTION":

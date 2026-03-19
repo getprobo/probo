@@ -68,7 +68,7 @@ func TestFinding_CreateNonconformity(t *testing.T) {
 	err := owner.Execute(query, map[string]any{
 		"input": map[string]any{
 			"organizationId":   owner.GetOrganizationID().String(),
-			"kind":             "NONCONFORMITY",
+			"kind":             "MINOR_NONCONFORMITY",
 			"description":      "Unauthorized access detected",
 			"rootCause":        "Insufficient access controls",
 			"correctiveAction": "Implement MFA",
@@ -81,7 +81,7 @@ func TestFinding_CreateNonconformity(t *testing.T) {
 
 	node := result.CreateFinding.FindingEdge.Node
 	assert.NotEmpty(t, node.ID)
-	assert.Equal(t, "NONCONFORMITY", node.Kind)
+	assert.Equal(t, "MINOR_NONCONFORMITY", node.Kind)
 	assert.Equal(t, "Unauthorized access detected", node.Description)
 	assert.Equal(t, "Insufficient access controls", node.RootCause)
 	assert.Equal(t, "Implement MFA", node.CorrectiveAction)
@@ -178,7 +178,7 @@ func TestFinding_Update(t *testing.T) {
 	err := owner.Execute(createQuery, map[string]any{
 		"input": map[string]any{
 			"organizationId": owner.GetOrganizationID().String(),
-			"kind":           "NONCONFORMITY",
+			"kind":           "MINOR_NONCONFORMITY",
 			"description":    "Original description",
 			"ownerId":        profileID,
 			"status":         "OPEN",
@@ -330,7 +330,7 @@ func TestFinding_List(t *testing.T) {
 		err := owner.Execute(createQuery, map[string]any{
 			"input": map[string]any{
 				"organizationId": owner.GetOrganizationID().String(),
-				"kind":           "NONCONFORMITY",
+				"kind":           "MINOR_NONCONFORMITY",
 				"description":    fmt.Sprintf("Finding %d", i),
 				"ownerId":        profileID,
 				"status":         "OPEN",
@@ -402,7 +402,7 @@ func TestFinding_ListWithKindFilter(t *testing.T) {
 		}
 	`
 
-	kinds := []string{"NONCONFORMITY", "OBSERVATION", "EXCEPTION"}
+	kinds := []string{"MINOR_NONCONFORMITY", "MAJOR_NONCONFORMITY", "OBSERVATION", "EXCEPTION"}
 	for _, kind := range kinds {
 		var createResult struct {
 			CreateFinding struct {
@@ -503,7 +503,7 @@ func TestFinding_CreateAuditMapping(t *testing.T) {
 	err := owner.Execute(createQuery, map[string]any{
 		"input": map[string]any{
 			"organizationId": owner.GetOrganizationID().String(),
-			"kind":           "NONCONFORMITY",
+			"kind":           "MINOR_NONCONFORMITY",
 			"ownerId":        profileID,
 			"status":         "OPEN",
 			"priority":       "HIGH",
@@ -774,7 +774,7 @@ func TestFinding_StatusAndPriorityValues(t *testing.T) {
 
 						input := map[string]any{
 							"organizationId": owner.GetOrganizationID().String(),
-							"kind":           "NONCONFORMITY",
+							"kind":           "MINOR_NONCONFORMITY",
 							"ownerId":        profileID,
 							"status":         status,
 							"priority":       "LOW",

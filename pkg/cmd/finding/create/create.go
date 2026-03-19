@@ -74,10 +74,10 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 		Use:   "create",
 		Short: "Create a new finding",
 		Example: `  # Create a finding
-  prb finding create --organization ORG_ID --kind NONCONFORMITY --owner-id OWNER_ID --status OPEN --priority HIGH`,
+  prb finding create --organization ORG_ID --kind MINOR_NONCONFORMITY --owner-id OWNER_ID --status OPEN --priority HIGH`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := cmdutil.ValidateEnum("kind", flagKind, []string{"NONCONFORMITY", "OBSERVATION", "EXCEPTION"}); err != nil {
+			if err := cmdutil.ValidateEnum("kind", flagKind, []string{"MINOR_NONCONFORMITY", "MAJOR_NONCONFORMITY", "OBSERVATION", "EXCEPTION"}); err != nil {
 				return err
 			}
 			if err := cmdutil.ValidateEnum("status", flagStatus, []string{"OPEN", "IN_PROGRESS", "CLOSED", "RISK_ACCEPTED", "MITIGATED", "FALSE_POSITIVE"}); err != nil {
@@ -165,7 +165,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&flagOrganization, "organization", "", "Organization ID (required)")
-	cmd.Flags().StringVar(&flagKind, "kind", "", "Finding kind: NONCONFORMITY, OBSERVATION, EXCEPTION (required)")
+	cmd.Flags().StringVar(&flagKind, "kind", "", "Finding kind: MINOR_NONCONFORMITY, MAJOR_NONCONFORMITY, OBSERVATION, EXCEPTION (required)")
 	cmd.Flags().StringVar(&flagDescription, "description", "", "Finding description")
 	cmd.Flags().StringVar(&flagSource, "source", "", "Finding source")
 	cmd.Flags().StringVar(&flagIdentifiedOn, "identified-on", "", "Date identified (RFC3339)")

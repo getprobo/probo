@@ -165,9 +165,13 @@ enum TrustCenterDocumentAccessStatus
 
 enum FindingKind
     @goModel(model: "go.probo.inc/probo/pkg/coredata.FindingKind") {
-    NONCONFORMITY
+    MINOR_NONCONFORMITY
         @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.FindingKindNonconformity"
+            value: "go.probo.inc/probo/pkg/coredata.FindingKindMinorNonconformity"
+        )
+    MAJOR_NONCONFORMITY
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.FindingKindMajorNonconformity"
         )
     OBSERVATION
         @goEnum(

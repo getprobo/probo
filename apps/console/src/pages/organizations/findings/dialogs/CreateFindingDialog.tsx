@@ -63,7 +63,7 @@ const createFindingMutation = graphql`
 `;
 
 const schema = z.object({
-  kind: z.enum(["NONCONFORMITY", "OBSERVATION", "EXCEPTION"]),
+  kind: z.enum(["MINOR_NONCONFORMITY", "MAJOR_NONCONFORMITY", "OBSERVATION", "EXCEPTION"]),
   description: z.string().optional(),
   source: z.string().optional(),
   identifiedOn: z.string().optional(),
@@ -98,7 +98,8 @@ export function CreateFindingDialog({
   );
 
   const kindOptions = [
-    { value: "NONCONFORMITY", label: __("Nonconformity") },
+    { value: "MINOR_NONCONFORMITY", label: __("Minor nonconformity") },
+    { value: "MAJOR_NONCONFORMITY", label: __("Major nonconformity") },
     { value: "OBSERVATION", label: __("Observation") },
     { value: "EXCEPTION", label: __("Exception") },
   ];
@@ -111,7 +112,7 @@ export function CreateFindingDialog({
 
   const { register, handleSubmit, formState, reset, control } = useFormWithSchema(schema, {
     defaultValues: {
-      kind: "NONCONFORMITY" as const,
+      kind: "MINOR_NONCONFORMITY" as const,
       description: "",
       source: "",
       identifiedOn: "",
