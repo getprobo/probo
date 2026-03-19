@@ -128,6 +128,10 @@ func NewServer(cfg Config) (*Server, error) {
 		}
 	}
 
+	// The SAML Assertion Consumer Service endpoint receives cross-origin
+	// POSTs from external identity providers by design.
+	csrf.AddInsecureBypassPattern("POST /connect/v1/saml/2.0/consume")
+
 	csrf.SetDenyHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		httpserver.RenderJSON(
 			w,
