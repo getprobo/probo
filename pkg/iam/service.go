@@ -18,6 +18,7 @@ import (
 	"go.probo.inc/probo/pkg/crypto/passwdhash"
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/iam/oidc"
 	"go.probo.inc/probo/pkg/iam/saml"
 	"go.probo.inc/probo/pkg/iam/scim"
 	"golang.org/x/sync/errgroup"
@@ -46,6 +47,7 @@ type (
 		SessionService        *SessionService
 		AuthService           *AuthService
 		SAMLService           *saml.Service
+		OIDCService           *oidc.Service
 		SCIMService           *scim.Service
 		APIKeyService         *APIKeyService
 		Authorizer            *Authorizer
@@ -73,6 +75,8 @@ type (
 		DomainVerificationResolverAddr string
 		SCIMBridgeSyncInterval         time.Duration
 		SCIMBridgePollInterval         time.Duration
+		GoogleOIDC                     oidc.ProviderConfig
+		MicrosoftOIDC                  oidc.ProviderConfig
 	}
 )
 
@@ -135,6 +139,14 @@ func NewService(
 	}
 	svc.SAMLService = samlService
 
+	svc.OIDCService = oidc.NewService(
+		svc.pg,
+		svc.baseURL,
+		cfg.GoogleOIDC,
+		cfg.MicrosoftOIDC,
+		cfg.Logger,
+	)
+
 	svc.SCIMService = scim.NewService(
 		svc.pg,
 		cfg.Logger.Named("scim"),
@@ -166,6 +178,7 @@ func (s *Service) Run(ctx context.Context) error {
 	g, ctx := errgroup.WithContext(ctx)
 
 	g.Go(func() error { return s.SAMLService.Run(ctx) })
+	g.Go(func() error { return s.OIDCService.Run(ctx) })
 	g.Go(func() error { return s.samlDomainVerifier.Run(ctx) })
 	g.Go(func() error { return s.SCIMService.Run(ctx) })
 
