@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.148.0] - 2026-03-20
+
+### Added
+
+- Add MCP audit report metadata and getAuditReportUrl tool
+- Add Homebrew tap publishing for prb CLI
+
+### Fixed
+
+- Fix measure category filter not applying on initial page load
+
 ## [0.147.0] - 2026-03-20
 
 ### Added
