@@ -236,7 +236,7 @@ func (s *Service) fetchDocuments(ctx context.Context, tenantSvc *TenantService, 
 		}
 
 		for _, doc := range result.Data {
-			if doc.TrustCenterVisibility != coredata.TrustCenterVisibilityPublic {
+			if doc.TrustCenterVisibility == coredata.TrustCenterVisibilityNone {
 				continue
 			}
 			docs = append(
@@ -281,7 +281,7 @@ func (s *Service) fetchAudits(ctx context.Context, tenantSvc *TenantService, org
 		}
 
 		for _, audit := range result.Data {
-			if audit.TrustCenterVisibility != coredata.TrustCenterVisibilityPublic {
+			if audit.TrustCenterVisibility == coredata.TrustCenterVisibilityNone {
 				continue
 			}
 
