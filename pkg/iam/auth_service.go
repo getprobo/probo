@@ -444,6 +444,29 @@ func (s AuthService) OpenSessionWithSAML(ctx context.Context, identityID gid.GID
 	return session, nil
 }
 
+func (s AuthService) OpenSessionWithOIDC(ctx context.Context, identityID gid.GID, authMethod coredata.AuthMethod) (*coredata.Session, error) {
+	session := &coredata.Session{}
+
+	err := s.pg.WithTx(
+		ctx,
+		func(conn pg.Conn) (err error) {
+			session = coredata.NewRootSession(identityID, authMethod, s.sessionDuration)
+			err = session.Insert(ctx, conn)
+			if err != nil {
+				return fmt.Errorf("cannot insert session: %w", err)
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return session, nil
+}
+
 func (s AuthService) CheckCredentials(
 	ctx context.Context,
 	email mail.Addr,

@@ -1,6 +1,52 @@
 import { useTranslate } from "@probo/i18n";
 import { Button } from "@probo/ui";
+import { Suspense } from "react";
+import { useLazyLoadQuery } from "react-relay";
 import { Link, useLocation } from "react-router";
+import { graphql } from "relay-runtime";
+
+import type { SignInPageQuery } from "#/__generated__/iam/SignInPageQuery.graphql";
+import { useSafeContinueUrl } from "#/hooks/useSafeContinueUrl";
+
+const oidcProvidersQuery = graphql`
+  query SignInPageQuery {
+    oidcProviders {
+      name
+      loginURL
+    }
+  }
+`;
+
+function OIDCButtons() {
+  const { __ } = useTranslate();
+  const safeContinueUrl = useSafeContinueUrl();
+
+  const data = useLazyLoadQuery<SignInPageQuery>(oidcProvidersQuery, {});
+
+  if (data.oidcProviders.length === 0) {
+    return null;
+  }
+
+  return (
+    <>
+      {data.oidcProviders.map((provider) => (
+        <Button
+          key={provider.name}
+          variant="secondary"
+          className="w-xs h-10 mx-auto"
+          onClick={() => {
+            window.location.href =
+              provider.loginURL +
+              "?continue=" +
+              encodeURIComponent(safeContinueUrl.pathname + safeContinueUrl.search);
+          }}
+        >
+          {__("Continue with %s", provider.name.charAt(0).toUpperCase() + provider.name.slice(1))}
+        </Button>
+      ))}
+    </>
+  );
+}
 
 export default function SignInPage() {
   const { __ } = useTranslate();
@@ -22,6 +68,10 @@ export default function SignInPage() {
       >
         {__("Login with Email")}
       </Button>
+
+      <Suspense fallback={null}>
+        <OIDCButtons />
+      </Suspense>
 
       <div className="relative my-6 w-full">
         <div className="w-xs border-t border-border-mid mx-auto" />

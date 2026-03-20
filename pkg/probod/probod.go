@@ -55,6 +55,7 @@ import (
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/html2pdf"
 	"go.probo.inc/probo/pkg/iam"
+	"go.probo.inc/probo/pkg/iam/oidc"
 	"go.probo.inc/probo/pkg/mailer"
 	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/probo"
@@ -381,6 +382,16 @@ func (impl *Implm) Run(
 			DomainVerificationResolverAddr: impl.cfg.Auth.SAML.DomainVerificationResolverAddr,
 			SCIMBridgeSyncInterval:         time.Duration(impl.cfg.SCIMBridge.SyncInterval) * time.Second,
 			SCIMBridgePollInterval:         time.Duration(impl.cfg.SCIMBridge.PollInterval) * time.Second,
+			GoogleOIDC: oidc.ProviderConfig{
+				ClientID:     impl.cfg.Auth.Google.ClientID,
+				ClientSecret: impl.cfg.Auth.Google.ClientSecret,
+				Enabled:      impl.cfg.Auth.Google.Enabled,
+			},
+			MicrosoftOIDC: oidc.ProviderConfig{
+				ClientID:     impl.cfg.Auth.Microsoft.ClientID,
+				ClientSecret: impl.cfg.Auth.Microsoft.ClientSecret,
+				Enabled:      impl.cfg.Auth.Microsoft.Enabled,
+			},
 		},
 	)
 	if err != nil {

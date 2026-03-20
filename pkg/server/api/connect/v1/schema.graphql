@@ -41,10 +41,18 @@ interface Node {
   id: ID!
 }
 
+type OIDCProviderInfo {
+  name: String!
+  loginURL: String!
+}
+
 type Query {
   node(id: ID!): Node @session(required: PRESENT)
   viewer: Identity @session(required: PRESENT)
   ssoLoginURL(email: EmailAddr!): String
+    @goField(forceResolver: true)
+    @session(required: OPTIONAL)
+  oidcProviders: [OIDCProviderInfo!]!
     @goField(forceResolver: true)
     @session(required: OPTIONAL)
 }
