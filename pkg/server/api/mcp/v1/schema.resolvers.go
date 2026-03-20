@@ -1346,11 +1346,19 @@ func (r *Resolver) GetAuditTool(ctx context.Context, req *mcp.CallToolRequest, i
 
 	audit, err := prb.Audits.Get(ctx, input.ID)
 	if err != nil {
-		return nil, types.GetAuditOutput{}, fmt.Errorf("failed to get audit: %w", err)
+		return nil, types.GetAuditOutput{}, fmt.Errorf("cannot get audit: %w", err)
+	}
+
+	var report *coredata.Report
+	if audit.ReportID != nil {
+		report, err = prb.Reports.Get(ctx, *audit.ReportID)
+		if err != nil {
+			return nil, types.GetAuditOutput{}, fmt.Errorf("cannot get audit report: %w", err)
+		}
 	}
 
 	return nil, types.GetAuditOutput{
-		Audit: types.NewAudit(audit),
+		Audit: types.NewAudit(audit, report),
 	}, nil
 }
 
@@ -1375,16 +1383,16 @@ func (r *Resolver) AddAuditTool(ctx context.Context, req *mcp.CallToolRequest, i
 	}
 
 	return nil, types.AddAuditOutput{
-		Audit: types.NewAudit(audit),
+		Audit: types.NewAudit(audit, nil),
 	}, nil
 }
 
 func (r *Resolver) UpdateAuditTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateAuditInput) (*mcp.CallToolResult, types.UpdateAuditOutput, error) {
 	r.MustAuthorize(ctx, input.ID, probo.ActionAuditUpdate)
 
-	svc := r.ProboService(ctx, input.ID)
+	prb := r.ProboService(ctx, input.ID)
 
-	audit, err := svc.Audits.Update(
+	audit, err := prb.Audits.Update(
 		ctx,
 		&probo.UpdateAuditRequest{
 			ID:                    input.ID,
@@ -1396,11 +1404,19 @@ func (r *Resolver) UpdateAuditTool(ctx context.Context, req *mcp.CallToolRequest
 		},
 	)
 	if err != nil {
-		return nil, types.UpdateAuditOutput{}, fmt.Errorf("failed to update audit: %w", err)
+		return nil, types.UpdateAuditOutput{}, fmt.Errorf("cannot update audit: %w", err)
+	}
+
+	var report *coredata.Report
+	if audit.ReportID != nil {
+		report, err = prb.Reports.Get(ctx, *audit.ReportID)
+		if err != nil {
+			return nil, types.UpdateAuditOutput{}, fmt.Errorf("cannot get audit report: %w", err)
+		}
 	}
 
 	return nil, types.UpdateAuditOutput{
-		Audit: types.NewAudit(audit),
+		Audit: types.NewAudit(audit, report),
 	}, nil
 }
 
@@ -3156,7 +3172,7 @@ func (r *Resolver) LinkFindingAuditTool(ctx context.Context, req *mcp.CallToolRe
 
 	return nil, types.LinkFindingAuditOutput{
 		Finding: types.NewFinding(finding),
-		Audit:   types.NewAudit(audit),
+		Audit:   types.NewAudit(audit, nil),
 	}, nil
 }
 
@@ -3279,5 +3295,20 @@ func (r *Resolver) UpdateOrganizationContextTool(ctx context.Context, req *mcp.C
 
 	return nil, types.UpdateOrganizationContextOutput{
 		OrganizationContext: types.NewOrganizationContext(orgContext),
+	}, nil
+}
+
+func (r *Resolver) GetAuditReportUrlTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetAuditReportUrlInput) (*mcp.CallToolResult, types.GetAuditReportUrlOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionReportGetReportUrl)
+
+	prb := r.ProboService(ctx, input.ID)
+
+	url, err := prb.Audits.GenerateReportURL(ctx, input.ID, 15*time.Minute)
+	if err != nil {
+		return nil, types.GetAuditReportUrlOutput{}, fmt.Errorf("cannot generate audit report URL: %w", err)
+	}
+
+	return nil, types.GetAuditReportUrlOutput{
+		URL: *url,
 	}, nil
 }

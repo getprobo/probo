@@ -3935,6 +3935,7 @@ components:
         - framework_id
         - state
         - trust_center_visibility
+        - has_report
         - created_at
         - updated_at
       properties:
@@ -3970,6 +3971,19 @@ components:
         trust_center_visibility:
           $ref: "#/components/schemas/TrustCenterVisibility"
           description: Trust center visibility
+        has_report:
+          type: boolean
+          description: Whether the audit has an attached report
+        report_filename:
+          type:
+            - string
+            - "null"
+          description: Report filename, null if no report attached
+        report_mime_type:
+          type:
+            - string
+            - "null"
+          description: Report MIME type, null if no report attached
         created_at:
           type: string
           format: date-time
@@ -3978,6 +3992,24 @@ components:
           type: string
           format: date-time
           description: Update timestamp
+
+    GetAuditReportUrlInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Audit ID
+
+    GetAuditReportUrlOutput:
+      type: object
+      required:
+        - url
+      properties:
+        url:
+          type: string
+          description: Presigned download URL for the report (valid for 15 minutes)
 
     ListAuditsInput:
       type: object
@@ -7018,6 +7050,15 @@ tools:
       $ref: "#/components/schemas/UpdateAuditInput"
     outputSchema:
       $ref: "#/components/schemas/UpdateAuditOutput"
+  - name: getAuditReportUrl
+    description: Get a presigned download URL for an audit's attached report. Returns a time-limited URL valid for 15 minutes. The audit must have an attached report.
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/GetAuditReportUrlInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetAuditReportUrlOutput"
   - name: listControls
     description: List all controls for the organization or framework
     hints:

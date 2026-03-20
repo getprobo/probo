@@ -19,25 +19,33 @@ import (
 	"go.probo.inc/probo/pkg/page"
 )
 
-func NewAudit(a *coredata.Audit) *Audit {
-	return &Audit{
+func NewAudit(a *coredata.Audit, report *coredata.Report) *Audit {
+	audit := &Audit{
 		ID:                    a.ID,
 		Name:                  a.Name,
 		OrganizationID:        a.OrganizationID,
 		FrameworkID:           a.FrameworkID,
 		State:                 a.State,
 		TrustCenterVisibility: a.TrustCenterVisibility,
+		HasReport:             a.ReportID != nil,
 		ValidFrom:             a.ValidFrom,
 		ValidUntil:            a.ValidUntil,
 		CreatedAt:             a.CreatedAt,
 		UpdatedAt:             a.UpdatedAt,
 	}
+
+	if report != nil {
+		audit.ReportFilename = &report.Filename
+		audit.ReportMimeType = &report.MimeType
+	}
+
+	return audit
 }
 
 func NewListControlAuditsOutput(auditPage *page.Page[*coredata.Audit, coredata.AuditOrderField]) ListControlAuditsOutput {
 	audits := make([]*Audit, 0, len(auditPage.Data))
 	for _, v := range auditPage.Data {
-		audits = append(audits, NewAudit(v))
+		audits = append(audits, NewAudit(v, nil))
 	}
 
 	var nextCursor *page.CursorKey
@@ -55,7 +63,7 @@ func NewListControlAuditsOutput(auditPage *page.Page[*coredata.Audit, coredata.A
 func NewListAuditsOutput(auditPage *page.Page[*coredata.Audit, coredata.AuditOrderField]) ListAuditsOutput {
 	audits := make([]*Audit, 0, len(auditPage.Data))
 	for _, v := range auditPage.Data {
-		audits = append(audits, NewAudit(v))
+		audits = append(audits, NewAudit(v, nil))
 	}
 
 	var nextCursor *page.CursorKey
@@ -73,7 +81,7 @@ func NewListAuditsOutput(auditPage *page.Page[*coredata.Audit, coredata.AuditOrd
 func NewListFindingAuditsOutput(auditPage *page.Page[*coredata.Audit, coredata.AuditOrderField]) ListFindingAuditsOutput {
 	audits := make([]*Audit, 0, len(auditPage.Data))
 	for _, v := range auditPage.Data {
-		audits = append(audits, NewAudit(v))
+		audits = append(audits, NewAudit(v, nil))
 	}
 
 	var nextCursor *page.CursorKey
