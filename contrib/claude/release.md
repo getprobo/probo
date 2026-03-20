@@ -36,6 +36,18 @@ Keep the empty `## Unreleased` heading above it.
 - Documentation-only changes
 - Release commits (`Release v…`)
 
+**Only list fixes for pre-existing bugs.** If a "fix" commit repairs something
+introduced by another commit in the same release cycle, do NOT list it as a
+separate fix. To verify, check whether the affected file or feature existed
+at the previous tag:
+
+```shell
+git ls-tree <previous-tag> -- path/to/file
+```
+
+If the file did not exist at the previous tag, the fix is part of the new
+feature and should not appear in `### Fixed`.
+
 **Summarize** related commits into a single line when appropriate.
 For example a series of `Add proboctl X commands` commits becomes
 `Add CLI`.
