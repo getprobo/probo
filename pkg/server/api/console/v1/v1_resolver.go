@@ -407,6 +407,32 @@ func (r *auditConnectionResolver) TotalCount(ctx context.Context, obj *types.Aud
 	}
 }
 
+// Organization is the resolver for the organization field.
+func (r *auditLogEntryResolver) Organization(ctx context.Context, obj *types.AuditLogEntry) (*types.Organization, error) {
+	return obj.Organization, nil
+}
+
+// Permission is the resolver for the permission field.
+func (r *auditLogEntryResolver) Permission(ctx context.Context, obj *types.AuditLogEntry, action string) (bool, error) {
+	return r.Resolver.Permission(ctx, obj, action)
+}
+
+// TotalCount is the resolver for the totalCount field.
+func (r *auditLogEntryConnectionResolver) TotalCount(ctx context.Context, obj *types.AuditLogEntryConnection) (int, error) {
+	filter := coredata.NewAuditLogEntryFilter()
+	if obj.Filter != nil {
+		filter = obj.Filter
+	}
+
+	count, err := r.iam.OrganizationService.CountAuditLogEntries(ctx, obj.ParentID, filter)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot count audit log entries", log.Error(err))
+		return 0, gqlutils.Internal(ctx)
+	}
+
+	return count, nil
+}
+
 // Permission is the resolver for the permission field.
 func (r *complianceExternalURLResolver) Permission(ctx context.Context, obj *types.ComplianceExternalURL, action string) (bool, error) {
 	return r.Resolver.Permission(ctx, obj, action)
@@ -7246,6 +7272,50 @@ func (r *organizationResolver) WebhookSubscriptions(ctx context.Context, obj *ty
 	return types.NewWebhookSubscriptionConnection(page, r, obj.ID), nil
 }
 
+// AuditLogEntries is the resolver for the auditLogEntries field.
+func (r *organizationResolver) AuditLogEntries(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AuditLogEntryOrderBy, filter *types.AuditLogEntryFilter) (*types.AuditLogEntryConnection, error) {
+	if err := r.authorize(ctx, obj.ID, iam.ActionAuditLogEntryList); err != nil {
+		return nil, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.AuditLogEntryOrderField]{
+		Field:     coredata.AuditLogEntryOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.AuditLogEntryOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	coredataFilter := coredata.NewAuditLogEntryFilter()
+	if filter != nil {
+		if filter.Action != nil {
+			coredataFilter.WithAction(*filter.Action)
+		}
+		if filter.ActorID != nil {
+			coredataFilter.WithActorID(*filter.ActorID)
+		}
+		if filter.ResourceType != nil {
+			coredataFilter.WithResourceType(*filter.ResourceType)
+		}
+		if filter.ResourceID != nil {
+			coredataFilter.WithResourceID(*filter.ResourceID)
+		}
+	}
+
+	p, err := r.iam.OrganizationService.ListAuditLogEntries(ctx, obj.ID, cursor, coredataFilter)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list audit log entries", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewAuditLogEntryConnection(p, r, obj.ID, coredataFilter), nil
+}
+
 // Permission is the resolver for the permission field.
 func (r *organizationResolver) Permission(ctx context.Context, obj *types.Organization, action string) (bool, error) {
 	return r.Resolver.Permission(ctx, obj, action)
@@ -9752,6 +9822,14 @@ func (r *Resolver) AuditConnection() schema.AuditConnectionResolver {
 	return &auditConnectionResolver{r}
 }
 
+// AuditLogEntry returns schema.AuditLogEntryResolver implementation.
+func (r *Resolver) AuditLogEntry() schema.AuditLogEntryResolver { return &auditLogEntryResolver{r} }
+
+// AuditLogEntryConnection returns schema.AuditLogEntryConnectionResolver implementation.
+func (r *Resolver) AuditLogEntryConnection() schema.AuditLogEntryConnectionResolver {
+	return &auditLogEntryConnectionResolver{r}
+}
+
 // ComplianceExternalURL returns schema.ComplianceExternalURLResolver implementation.
 func (r *Resolver) ComplianceExternalURL() schema.ComplianceExternalURLResolver {
 	return &complianceExternalURLResolver{r}
@@ -10067,6 +10145,8 @@ type assetResolver struct{ *Resolver }
 type assetConnectionResolver struct{ *Resolver }
 type auditResolver struct{ *Resolver }
 type auditConnectionResolver struct{ *Resolver }
+type auditLogEntryResolver struct{ *Resolver }
+type auditLogEntryConnectionResolver struct{ *Resolver }
 type complianceExternalURLResolver struct{ *Resolver }
 type complianceFrameworkResolver struct{ *Resolver }
 type controlResolver struct{ *Resolver }

@@ -203,6 +203,14 @@ var IAMOwnerPolicy = policy.NewPolicy(
 	policy.Allow(ActionSCIMBridgeUpdate).
 		WithSID("scim-bridge-update-access").
 		When(policy.Equals("principal.organization_id", "resource.organization_id")),
+
+	// Full access to audit log entries (scoped to own organization)
+	policy.Allow(
+		ActionAuditLogEntryGet,
+		ActionAuditLogEntryList,
+	).
+		WithSID("audit-log-entry-access").
+		When(policy.Equals("principal.organization_id", "resource.organization_id")),
 ).
 	WithDescription("Full IAM access for organization owners")
 
@@ -301,6 +309,14 @@ var IAMAdminPolicy = policy.NewPolicy(
 		ActionSCIMConfigurationDelete,
 	).
 		WithSID("deny-scim-management"),
+
+	// Can view audit log entries (scoped to own organization)
+	policy.Allow(
+		ActionAuditLogEntryGet,
+		ActionAuditLogEntryList,
+	).
+		WithSID("audit-log-entry-admin-access").
+		When(policy.Equals("principal.organization_id", "resource.organization_id")),
 ).
 	WithDescription("IAM admin access - can manage members but cannot delete organization or manage SAML/SCIM")
 
@@ -334,6 +350,14 @@ var IAMViewerPolicy = policy.NewPolicy(
 	// Can view identities of members in the same organization
 	policy.Allow(ActionIdentityGet).
 		WithSID("view-member-identity").
+		When(policy.Equals("principal.organization_id", "resource.organization_id")),
+
+	// Can view audit log entries (scoped to own organization)
+	policy.Allow(
+		ActionAuditLogEntryGet,
+		ActionAuditLogEntryList,
+	).
+		WithSID("audit-log-entry-viewer-access").
 		When(policy.Equals("principal.organization_id", "resource.organization_id")),
 ).
 	WithDescription("Read-only IAM access for organization viewers")

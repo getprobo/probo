@@ -1,6 +1,7 @@
 import { useTranslate } from "@probo/i18n";
 import {
   IconKey,
+  IconListStack,
   IconLock,
   IconSend,
   IconSettingsGear2,
@@ -36,6 +37,10 @@ export default function SettingsLayout() {
         <TabLink to={`/organizations/${organizationId}/settings/webhooks`}>
           <IconSend size={20} />
           {__("Webhooks")}
+        </TabLink>
+        <TabLink to={`/organizations/${organizationId}/settings/audit-log`}>
+          <IconListStack size={20} />
+          {__("Audit Log")}
         </TabLink>
       </Tabs>
 

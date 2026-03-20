@@ -65,7 +65,7 @@ func NewMux(logger *log.Logger, svc *iam.Service, cookieConfig securecookie.Conf
 }
 
 func (r *Resolver) Permission(ctx context.Context, obj types.Node, action string) (bool, error) {
-	return r.authorize(ctx, obj.GetID(), action) == nil, nil
+	return r.authorize(ctx, obj.GetID(), action, authz.WithDryRun()) == nil, nil
 }
 
 func (r *Resolver) SSOLoginURL(samlConfigID gid.GID) string {

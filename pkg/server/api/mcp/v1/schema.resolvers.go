@@ -3312,3 +3312,50 @@ func (r *Resolver) GetAuditReportUrlTool(ctx context.Context, req *mcp.CallToolR
 		URL: *url,
 	}, nil
 }
+
+func (r *Resolver) ListAuditLogEntriesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListAuditLogEntriesInput) (*mcp.CallToolResult, types.ListAuditLogEntriesOutput, error) {
+	r.MustAuthorize(ctx, input.OrganizationID, iam.ActionAuditLogEntryList)
+
+	pageOrderBy := page.OrderBy[coredata.AuditLogEntryOrderField]{
+		Field:     coredata.AuditLogEntryOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	filter := coredata.NewAuditLogEntryFilter()
+	if input.Filter != nil {
+		if input.Filter.Action != nil {
+			filter.WithAction(*input.Filter.Action)
+		}
+		if input.Filter.ActorID != nil {
+			filter.WithActorID(*input.Filter.ActorID)
+		}
+		if input.Filter.ResourceType != nil {
+			filter.WithResourceType(*input.Filter.ResourceType)
+		}
+		if input.Filter.ResourceID != nil {
+			filter.WithResourceID(*input.Filter.ResourceID)
+		}
+	}
+
+	p, err := r.iamSvc.OrganizationService.ListAuditLogEntries(ctx, input.OrganizationID, cursor, filter)
+	if err != nil {
+		panic(fmt.Errorf("cannot list audit log entries: %w", err))
+	}
+
+	return nil, types.NewListAuditLogEntriesOutput(p), nil
+}
+
+func (r *Resolver) GetAuditLogEntryTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetAuditLogEntryInput) (*mcp.CallToolResult, types.GetAuditLogEntryOutput, error) {
+	r.MustAuthorize(ctx, input.ID, iam.ActionAuditLogEntryGet)
+
+	entry, err := r.iamSvc.OrganizationService.GetAuditLogEntry(ctx, input.ID)
+	if err != nil {
+		panic(fmt.Errorf("cannot get audit log entry: %w", err))
+	}
+
+	return nil, types.GetAuditLogEntryOutput{
+		AuditLogEntry: types.NewAuditLogEntry(entry),
+	}, nil
+}

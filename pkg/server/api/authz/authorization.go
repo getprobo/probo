@@ -41,7 +41,13 @@ func WithAttr(key, value string) AuthorizeFuncOption {
 // Example: on the viewer memberships page, we're accessing several organization names, but the viewer isn't assuming one yet.
 func WithSkipAssumptionCheck() AuthorizeFuncOption {
 	return func(params *iam.AuthorizeParams) {
-		params.Session = nil
+		params.SkipAssumptionCheck = true
+	}
+}
+
+func WithDryRun() AuthorizeFuncOption {
+	return func(params *iam.AuthorizeParams) {
+		params.DryRun = true
 	}
 }
 

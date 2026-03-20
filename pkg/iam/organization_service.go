@@ -2110,3 +2110,79 @@ func (s OrganizationService) DeleteSCIMBridge(ctx context.Context, organizationI
 
 	return nil
 }
+
+func (s *OrganizationService) GetAuditLogEntry(
+	ctx context.Context,
+	id gid.GID,
+) (*coredata.AuditLogEntry, error) {
+	var (
+		scope = coredata.NewScopeFromObjectID(id)
+		entry = &coredata.AuditLogEntry{}
+	)
+
+	err := s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			return entry.LoadByID(ctx, conn, scope, id)
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot load audit log entry: %w", err)
+	}
+
+	return entry, nil
+}
+
+func (s *OrganizationService) ListAuditLogEntries(
+	ctx context.Context,
+	organizationID gid.GID,
+	cursor *page.Cursor[coredata.AuditLogEntryOrderField],
+	filter *coredata.AuditLogEntryFilter,
+) (*page.Page[*coredata.AuditLogEntry, coredata.AuditLogEntryOrderField], error) {
+	var (
+		scope   = coredata.NewScopeFromObjectID(organizationID)
+		entries = coredata.AuditLogEntries{}
+	)
+
+	err := s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			if err := entries.LoadAllByOrganizationID(ctx, conn, scope, organizationID, cursor, filter); err != nil {
+				return fmt.Errorf("cannot load audit log entries: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return page.NewPage(entries, cursor), nil
+}
+
+func (s *OrganizationService) CountAuditLogEntries(
+	ctx context.Context,
+	organizationID gid.GID,
+	filter *coredata.AuditLogEntryFilter,
+) (int, error) {
+	var (
+		scope = coredata.NewScopeFromObjectID(organizationID)
+		count int
+	)
+
+	err := s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) (err error) {
+			entries := coredata.AuditLogEntries{}
+			count, err = entries.CountByOrganizationID(ctx, conn, scope, organizationID, filter)
+			if err != nil {
+				return fmt.Errorf("cannot count audit log entries: %w", err)
+			}
+
+			return nil
+		},
+	)
+
+	return count, err
+}

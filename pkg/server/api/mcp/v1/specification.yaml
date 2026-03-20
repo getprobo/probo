@@ -6428,6 +6428,110 @@ components:
         organization_context:
           $ref: "#/components/schemas/OrganizationContext"
 
+    GetAuditLogEntryInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Audit log entry ID
+
+    GetAuditLogEntryOutput:
+      type: object
+      required:
+        - audit_log_entry
+      properties:
+        audit_log_entry:
+          $ref: "#/components/schemas/AuditLogEntry"
+
+    ListAuditLogEntriesInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+        filter:
+          type: object
+          properties:
+            action:
+              type: string
+              description: Filter by action (e.g. "core:vendor:create")
+            actor_id:
+              $ref: "#/components/schemas/GID"
+              description: Filter by actor ID
+            resource_type:
+              type: string
+              description: Filter by resource type (e.g. "Vendor")
+            resource_id:
+              $ref: "#/components/schemas/GID"
+              description: Filter by resource ID
+
+    ListAuditLogEntriesOutput:
+      type: object
+      required:
+        - audit_log_entries
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        audit_log_entries:
+          type: array
+          items:
+            $ref: "#/components/schemas/AuditLogEntry"
+
+    AuditLogEntry:
+      type: object
+      required:
+        - id
+        - organization_id
+        - actor_id
+        - actor_type
+        - action
+        - resource_type
+        - resource_id
+        - created_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Audit log entry ID
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        actor_id:
+          $ref: "#/components/schemas/GID"
+          description: ID of the actor who performed the action
+        actor_type:
+          type: string
+          enum: [USER, API_KEY, SYSTEM]
+          go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.AuditLogActorType
+          description: Type of actor
+        action:
+          type: string
+          description: Action performed (e.g. "core:vendor:create")
+        resource_type:
+          type: string
+          description: Type of resource affected (e.g. "Vendor")
+        resource_id:
+          $ref: "#/components/schemas/GID"
+          description: ID of the affected resource
+        metadata:
+          type: object
+          description: Additional metadata about the action
+        created_at:
+          type: string
+          format: date-time
+          go.probo.inc/mcpgen/type: time.Time
+          description: When the action was performed
+
 tools:
   - name: listOrganizations
     description: List all organizations the user has access to
@@ -7572,3 +7676,21 @@ tools:
       $ref: "#/components/schemas/UpdateOrganizationContextInput"
     outputSchema:
       $ref: "#/components/schemas/UpdateOrganizationContextOutput"
+  - name: getAuditLogEntry
+    description: Get an audit log entry by ID
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/GetAuditLogEntryInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetAuditLogEntryOutput"
+  - name: listAuditLogEntries
+    description: List audit log entries for the organization. Audit log entries record write actions (create, update, delete) performed by users and API keys.
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/ListAuditLogEntriesInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListAuditLogEntriesOutput"

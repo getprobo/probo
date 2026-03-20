@@ -91,6 +91,7 @@ const (
 	MailingListSubscriberEntityType            uint16 = 65
 	MailingListUpdateEntityType                uint16 = 66
 	FindingEntityType                          uint16 = 67
+	AuditLogEntryEntityType                    uint16 = 68
 )
 
 func NewEntityFromID(id gid.GID) (any, bool) {
@@ -223,6 +224,8 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &MailingListSubscriber{ID: id}, true
 	case MailingListUpdateEntityType:
 		return &MailingListUpdate{ID: id}, true
+	case AuditLogEntryEntityType:
+		return &AuditLogEntry{ID: id}, true
 	default:
 		return nil, false
 	}

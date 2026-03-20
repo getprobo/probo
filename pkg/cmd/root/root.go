@@ -17,6 +17,7 @@ package root
 import (
 	"github.com/spf13/cobra"
 	cmdapi "go.probo.inc/probo/pkg/cmd/api"
+	"go.probo.inc/probo/pkg/cmd/auditlog"
 	"go.probo.inc/probo/pkg/cmd/auth"
 	"go.probo.inc/probo/pkg/cmd/browse"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
@@ -65,6 +66,7 @@ func NewCmdRoot(f *cmdutil.Factory) *cobra.Command {
 	)
 
 	cmd.AddCommand(cmdapi.NewCmdAPI(f))
+	cmd.AddCommand(auditlog.NewCmdAuditLog(f))
 	cmd.AddCommand(auth.NewCmdAuth(f))
 	cmd.AddCommand(browse.NewCmdBrowse(f))
 	cmd.AddCommand(completion.NewCmdCompletion(f))

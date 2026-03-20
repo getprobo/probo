@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -16,11 +16,14 @@ package iam
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"maps"
+	"strings"
 	"time"
 
+	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
@@ -35,11 +38,13 @@ type AuthorizationAttributer interface {
 
 // AuthorizeParams contains the parameters for an authorization request.
 type AuthorizeParams struct {
-	Principal          gid.GID
-	Resource           gid.GID
-	Session            *gid.GID
-	Action             string
-	ResourceAttributes map[string]string
+	Principal           gid.GID
+	Resource            gid.GID
+	Session             *gid.GID
+	Action              string
+	ResourceAttributes  map[string]string
+	DryRun              bool
+	SkipAssumptionCheck bool
 }
 
 // Authorizer evaluates authorization requests against registered policies.
@@ -47,14 +52,16 @@ type Authorizer struct {
 	pg        *pg.Client
 	evaluator *policy.Evaluator
 	policySet *PolicySet
+	logger    *log.Logger
 }
 
 // NewAuthorizer creates a new Authorizer instance.
-func NewAuthorizer(pgClient *pg.Client) *Authorizer {
+func NewAuthorizer(pgClient *pg.Client, logger *log.Logger) *Authorizer {
 	return &Authorizer{
 		pg:        pgClient,
 		evaluator: policy.NewEvaluator(),
 		policySet: NewPolicySet(),
+		logger:    logger,
 	}
 }
 
@@ -87,7 +94,7 @@ func (a *Authorizer) authorize(ctx context.Context, conn pg.Conn, params Authori
 	}
 
 	// Check whether the viewer is currently assuming the org of the accessed resource
-	if membership != nil && params.Session != nil {
+	if membership != nil && params.Session != nil && !params.SkipAssumptionCheck {
 		if _, err := a.getActiveChildSessionForMembership(
 			ctx,
 			conn,
@@ -137,6 +144,7 @@ func (a *Authorizer) authorize(ctx context.Context, conn pg.Conn, params Authori
 	}
 
 	if a.evaluator.Evaluate(req, policies).IsAllowed() {
+		a.recordAuditLog(ctx, conn, params, resourceAttrs)
 		return nil
 	}
 
@@ -257,4 +265,86 @@ func (a *Authorizer) buildPoliciesForRole(role string) []*policy.Policy {
 	}
 
 	return policies
+}
+
+// resourceTypeFromAction extracts the resource type name from an action
+// string. For example, "core:vendor:create" returns "Vendor" and
+// "core:webhook-subscription:delete" returns "WebhookSubscription".
+func resourceTypeFromAction(action string) string {
+	parts := strings.Split(action, ":")
+	if len(parts) < 3 {
+		return "Unknown"
+	}
+
+	segments := strings.Split(parts[1], "-")
+	for i, s := range segments {
+		if len(s) > 0 {
+			segments[i] = strings.ToUpper(s[:1]) + s[1:]
+		}
+	}
+
+	return strings.Join(segments, "")
+}
+
+func (a *Authorizer) recordAuditLog(
+	ctx context.Context,
+	conn pg.Conn,
+	params AuthorizeParams,
+	resourceAttrs map[string]string,
+) {
+	if params.DryRun {
+		return
+	}
+
+	orgIDStr := resourceAttrs["organization_id"]
+	if orgIDStr == "" {
+		return
+	}
+
+	orgID, err := gid.ParseGID(orgIDStr)
+	if err != nil {
+		a.logger.ErrorCtx(ctx, "cannot parse organization id for audit log",
+			log.Error(err),
+		)
+		return
+	}
+
+	var actorType coredata.AuditLogActorType
+	if params.Session != nil {
+		actorType = coredata.AuditLogActorTypeUser
+	} else {
+		actorType = coredata.AuditLogActorTypeAPIKey
+	}
+
+	resourceType := resourceTypeFromAction(params.Action)
+
+	metadata, err := json.Marshal(map[string]any{})
+	if err != nil {
+		a.logger.ErrorCtx(ctx, "cannot marshal audit log metadata",
+			log.Error(err),
+		)
+		return
+	}
+
+	entry := &coredata.AuditLogEntry{
+		ID:             gid.New(orgID.TenantID(), coredata.AuditLogEntryEntityType),
+		OrganizationID: orgID,
+		ActorID:        params.Principal,
+		ActorType:      actorType,
+		Action:         params.Action,
+		ResourceType:   resourceType,
+		ResourceID:     params.Resource,
+		Metadata:       metadata,
+		CreatedAt:      time.Now(),
+	}
+
+	scope := coredata.NewScope(orgID.TenantID())
+
+	if err := entry.Insert(ctx, conn, scope); err != nil {
+		a.logger.ErrorCtx(ctx, "cannot insert audit log entry",
+			log.Error(err),
+			log.String("action", params.Action),
+			log.String("resource_id", params.Resource.String()),
+		)
+	}
 }

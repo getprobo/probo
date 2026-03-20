@@ -210,6 +210,13 @@ const routes = [
                     import("./pages/iam/organizations/settings/WebhooksSettingsPageLoader"),
                 ),
               },
+              {
+                path: "audit-log",
+                Component: lazy(
+                  () =>
+                    import("./pages/iam/organizations/settings/AuditLogSettingsPageLoader"),
+                ),
+              },
             ],
           },
           ...peopleRoutes,

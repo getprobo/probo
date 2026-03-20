@@ -92,4 +92,8 @@ const (
 
 	// Connector actions
 	ActionConnectorGet = "iam:connector:get"
+
+	// Audit log entry actions
+	ActionAuditLogEntryGet  = "iam:audit-log-entry:get"
+	ActionAuditLogEntryList = "iam:audit-log-entry:list"
 )

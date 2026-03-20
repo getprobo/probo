@@ -27,6 +27,32 @@ import (
 	"go.probo.inc/probo/pkg/server/gqlutils/types/cursor"
 )
 
+// Organization is the resolver for the organization field.
+func (r *auditLogEntryResolver) Organization(ctx context.Context, obj *types.AuditLogEntry) (*types.Organization, error) {
+	return obj.Organization, nil
+}
+
+// Permission is the resolver for the permission field.
+func (r *auditLogEntryResolver) Permission(ctx context.Context, obj *types.AuditLogEntry, action string) (bool, error) {
+	return r.Resolver.Permission(ctx, obj, action)
+}
+
+// TotalCount is the resolver for the totalCount field.
+func (r *auditLogEntryConnectionResolver) TotalCount(ctx context.Context, obj *types.AuditLogEntryConnection) (int, error) {
+	filter := coredata.NewAuditLogEntryFilter()
+	if obj.Filter != nil {
+		filter = obj.Filter
+	}
+
+	count, err := r.iam.OrganizationService.CountAuditLogEntries(ctx, obj.ParentID, filter)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot count audit log entries", log.Error(err))
+		return 0, gqlutils.Internal(ctx)
+	}
+
+	return count, nil
+}
+
 // Permission is the resolver for the permission field.
 func (r *connectorResolver) Permission(ctx context.Context, obj *types.Connector, action string) (bool, error) {
 	return r.Resolver.Permission(ctx, obj, action)
@@ -1302,6 +1328,50 @@ func (r *organizationResolver) ScimConfiguration(ctx context.Context, obj *types
 	return types.NewSCIMConfiguration(config), nil
 }
 
+// AuditLogEntries is the resolver for the auditLogEntries field.
+func (r *organizationResolver) AuditLogEntries(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AuditLogEntryOrderBy, filter *types.AuditLogEntryFilter) (*types.AuditLogEntryConnection, error) {
+	if err := r.authorize(ctx, obj.ID, iam.ActionAuditLogEntryList); err != nil {
+		return nil, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.AuditLogEntryOrderField]{
+		Field:     coredata.AuditLogEntryOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.AuditLogEntryOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	c := cursor.NewCursor(first, after, last, before, pageOrderBy)
+
+	coredataFilter := coredata.NewAuditLogEntryFilter()
+	if filter != nil {
+		if filter.Action != nil {
+			coredataFilter.WithAction(*filter.Action)
+		}
+		if filter.ActorID != nil {
+			coredataFilter.WithActorID(*filter.ActorID)
+		}
+		if filter.ResourceType != nil {
+			coredataFilter.WithResourceType(*filter.ResourceType)
+		}
+		if filter.ResourceID != nil {
+			coredataFilter.WithResourceID(*filter.ResourceID)
+		}
+	}
+
+	p, err := r.iam.OrganizationService.ListAuditLogEntries(ctx, obj.ID, c, coredataFilter)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list audit log entries", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewAuditLogEntryConnection(p, r, obj.ID, coredataFilter), nil
+}
+
 // Viewer is the resolver for the viewer field.
 func (r *organizationResolver) Viewer(ctx context.Context, obj *types.Organization) (*types.Profile, error) {
 	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileGet); err != nil {
@@ -1909,6 +1979,14 @@ func (r *sessionConnectionResolver) TotalCount(ctx context.Context, obj *types.S
 	return nil, gqlutils.Internal(ctx)
 }
 
+// AuditLogEntry returns schema.AuditLogEntryResolver implementation.
+func (r *Resolver) AuditLogEntry() schema.AuditLogEntryResolver { return &auditLogEntryResolver{r} }
+
+// AuditLogEntryConnection returns schema.AuditLogEntryConnectionResolver implementation.
+func (r *Resolver) AuditLogEntryConnection() schema.AuditLogEntryConnectionResolver {
+	return &auditLogEntryConnectionResolver{r}
+}
+
 // Connector returns schema.ConnectorResolver implementation.
 func (r *Resolver) Connector() schema.ConnectorResolver { return &connectorResolver{r} }
 
@@ -1980,6 +2058,8 @@ func (r *Resolver) SessionConnection() schema.SessionConnectionResolver {
 	return &sessionConnectionResolver{r}
 }
 
+type auditLogEntryResolver struct{ *Resolver }
+type auditLogEntryConnectionResolver struct{ *Resolver }
 type connectorResolver struct{ *Resolver }
 type identityResolver struct{ *Resolver }
 type invitationResolver struct{ *Resolver }
