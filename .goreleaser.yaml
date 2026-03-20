@@ -157,6 +157,8 @@ brews:
       owner: getprobo
       name: homebrew-tap
       token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+      pull_request:
+        enabled: true
     commit_author:
       name: probo-bot
       email: bot@getprobo.com
