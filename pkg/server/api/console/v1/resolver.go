@@ -43,6 +43,7 @@ import (
 type (
 	Resolver struct {
 		authorize         authz.AuthorizeFunc
+		bulkAuthorize     authz.BulkAuthorizeFunc
 		probo             *probo.Service
 		iam               *iam.Service
 		esign             *esign.Service

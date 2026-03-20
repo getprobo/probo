@@ -59,7 +59,6 @@ func (p Document) CursorKey(orderBy DocumentOrderField) page.CursorKey {
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-// AuthorizationAttributes returns the authorization attributes for policy evaluation.
 func (d *Document) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
 	q := `SELECT organization_id, status FROM documents WHERE id = $1 LIMIT 1;`
 
@@ -76,6 +75,44 @@ func (d *Document) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (m
 		"organization_id": organizationID.String(),
 		"document_status": documentStatus.String(),
 	}, nil
+}
+
+func (d Documents) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[gid.GID]map[string]string, error) {
+	ids := make([]gid.GID, len(d))
+	for i, doc := range d {
+		ids[i] = doc.ID
+	}
+
+	q := `SELECT id, organization_id, status FROM documents WHERE id = ANY($1);`
+
+	rows, err := conn.Query(ctx, q, ids)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query document authorization attributes: %w", err)
+	}
+	defer rows.Close()
+
+	result := make(map[gid.GID]map[string]string, len(d))
+	for rows.Next() {
+		var id, organizationID gid.GID
+		var documentStatus DocumentStatus
+		if err := rows.Scan(&id, &organizationID, &documentStatus); err != nil {
+			return nil, fmt.Errorf("cannot scan document authorization attributes: %w", err)
+		}
+		result[id] = map[string]string{
+			"organization_id": organizationID.String(),
+			"document_status": documentStatus.String(),
+		}
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("cannot iterate document authorization attributes: %w", err)
+	}
+
+	if len(result) != len(d) {
+		return nil, ErrResourceNotFound
+	}
+
+	return result, nil
 }
 
 func (p *Document) LoadByID(

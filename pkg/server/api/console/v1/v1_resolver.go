@@ -4682,10 +4682,8 @@ func (r *mutationResolver) BulkPublishDocumentVersions(ctx context.Context, inpu
 		}, nil
 	}
 
-	for _, documentID := range input.DocumentIds {
-		if err := r.authorize(ctx, documentID, probo.ActionDocumentVersionPublish); err != nil {
-			return nil, err
-		}
+	if err := r.bulkAuthorize(ctx, input.DocumentIds, probo.ActionDocumentVersionPublish); err != nil {
+		return nil, err
 	}
 
 	prb := r.ProboService(ctx, input.DocumentIds[0].TenantID())
@@ -4724,10 +4722,8 @@ func (r *mutationResolver) BulkDeleteDocuments(ctx context.Context, input types.
 		}, nil
 	}
 
-	for _, documentID := range input.DocumentIds {
-		if err := r.authorize(ctx, documentID, probo.ActionDocumentDelete); err != nil {
-			return nil, err
-		}
+	if err := r.bulkAuthorize(ctx, input.DocumentIds, probo.ActionDocumentDelete); err != nil {
+		return nil, err
 	}
 
 	prb := r.ProboService(ctx, input.DocumentIds[0].TenantID())
@@ -4751,10 +4747,8 @@ func (r *mutationResolver) BulkArchiveDocuments(ctx context.Context, input types
 		}, nil
 	}
 
-	for _, documentID := range input.DocumentIds {
-		if err := r.authorize(ctx, documentID, probo.ActionDocumentArchive); err != nil {
-			return nil, err
-		}
+	if err := r.bulkAuthorize(ctx, input.DocumentIds, probo.ActionDocumentArchive); err != nil {
+		return nil, err
 	}
 
 	prb := r.ProboService(ctx, input.DocumentIds[0].TenantID())
@@ -4777,10 +4771,8 @@ func (r *mutationResolver) BulkUnarchiveDocuments(ctx context.Context, input typ
 		}, nil
 	}
 
-	for _, documentID := range input.DocumentIds {
-		if err := r.authorize(ctx, documentID, probo.ActionDocumentUnarchive); err != nil {
-			return nil, err
-		}
+	if err := r.bulkAuthorize(ctx, input.DocumentIds, probo.ActionDocumentUnarchive); err != nil {
+		return nil, err
 	}
 
 	prb := r.ProboService(ctx, input.DocumentIds[0].TenantID())
@@ -4802,11 +4794,8 @@ func (r *mutationResolver) BulkExportDocuments(ctx context.Context, input types.
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	// TODO have a way to batch authorize for resources
-	for _, documentID := range input.DocumentIds {
-		if err := r.authorize(ctx, documentID, probo.ActionDocumentVersionExport); err != nil {
-			return nil, err
-		}
+	if err := r.bulkAuthorize(ctx, input.DocumentIds, probo.ActionDocumentVersionExport); err != nil {
+		return nil, err
 	}
 
 	prb := r.ProboService(ctx, input.DocumentIds[0].TenantID())
@@ -4959,10 +4948,8 @@ func (r *mutationResolver) BulkRequestSignatures(ctx context.Context, input type
 		}, nil
 	}
 
-	for _, documentID := range input.DocumentIds {
-		if err := r.authorize(ctx, documentID, probo.ActionDocumentVersionSignatureRequest); err != nil {
-			return nil, err
-		}
+	if err := r.bulkAuthorize(ctx, input.DocumentIds, probo.ActionDocumentVersionSignatureRequest); err != nil {
+		return nil, err
 	}
 
 	prb := r.ProboService(ctx, input.DocumentIds[0].TenantID())

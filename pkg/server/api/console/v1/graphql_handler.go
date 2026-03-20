@@ -31,6 +31,7 @@ func NewGraphQLHandler(iamSvc *iam.Service, proboSvc *probo.Service, esignSvc *e
 	config := schema.Config{
 		Resolvers: &Resolver{
 			authorize:         authz.NewAuthorizeFunc(iamSvc, logger),
+			bulkAuthorize:     authz.NewBulkAuthorizeFunc(iamSvc, logger),
 			probo:             proboSvc,
 			iam:               iamSvc,
 			esign:             esignSvc,
