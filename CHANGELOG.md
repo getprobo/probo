@@ -4,6 +4,25 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.147.0] - 2026-03-20
+
+### Added
+
+- Add /llms.txt endpoint to trust center compliance page
+- Add context page with organization context and meetings tabs
+- Allow skipping confirmation email when adding mailing list subscribers
+- Support developer-specific env vars in sandbox provisioning
+
+### Changed
+
+- Rename Vendor to Subprocessor in trust API surface
+- Improve pagination performance for findings, obligations, and measures
+
+### Fixed
+
+- Fix unvalidated URL redirection in HTTP redirects
+- Fix measure breadcrumb category filter
+
 ## [0.146.1] - 2026-03-19
 
 ### Fixed
