@@ -158,7 +158,11 @@ Each entity gets a unique `uint16` constant in `entity_type_reg.go`. **Never reu
 
 ## Migrations
 
-Files in `pkg/coredata/migrations/` use timestamp naming: `YYYYMMDDTHHMMSSZ.sql` (UTC). One logical change per file. Always create indexes for frequently queried columns.
+Files in `pkg/coredata/migrations/` use timestamp naming: `YYYYMMDDTHHMMSSZ.sql` (UTC). One logical change per file.
+
+**No indexes by default.** Only add indexes when justified by observed query latency in production environments. Do not speculatively create indexes on new tables or columns. This rule does not apply to indexes that enforce constraints, such as unique indexes.
+
+**Avoid default values.** Columns should not have `DEFAULT` clauses. When adding a non-nullable column to an existing table, use a `DEFAULT` to backfill existing rows, then drop it in the same migration.
 
 ## New entity checklist
 
