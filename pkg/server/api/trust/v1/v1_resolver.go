@@ -490,14 +490,14 @@ func (r *mutationResolver) ExportTrustCenterFile(ctx context.Context, input type
 	}
 
 	if trustCenterFile.TrustCenterVisibility == coredata.TrustCenterVisibilityPublic {
-		fileData, err := trustService.TrustCenterFiles.ExportFileWithoutWatermark(ctx, input.TrustCenterFileID)
+		fileData, mimeType, err := trustService.TrustCenterFiles.ExportFileWithoutWatermark(ctx, input.TrustCenterFileID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot export trust center file", log.Error(err))
 			return nil, gqlutils.Internal(ctx)
 		}
 
 		return &types.ExportTrustCenterFilePayload{
-			Data: fmt.Sprintf("data:application/pdf;base64,%s", base64.StdEncoding.EncodeToString(fileData)),
+			Data: fmt.Sprintf("data:%s;base64,%s", mimeType, base64.StdEncoding.EncodeToString(fileData)),
 		}, nil
 	}
 
@@ -519,14 +519,14 @@ func (r *mutationResolver) ExportTrustCenterFile(ctx context.Context, input type
 		return nil, gqlutils.Forbiddenf(ctx, "access denied: no permission to access this file")
 	}
 
-	fileData, err := trustService.TrustCenterFiles.ExportFile(ctx, input.TrustCenterFileID, identity.EmailAddress)
+	fileData, mimeType, err := trustService.TrustCenterFiles.ExportFile(ctx, input.TrustCenterFileID, identity.EmailAddress)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot export trust center file", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.ExportTrustCenterFilePayload{
-		Data: fmt.Sprintf("data:application/pdf;base64,%s", base64.StdEncoding.EncodeToString(fileData)),
+		Data: fmt.Sprintf("data:%s;base64,%s", mimeType, base64.StdEncoding.EncodeToString(fileData)),
 	}, nil
 }
 

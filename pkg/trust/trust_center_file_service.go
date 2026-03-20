@@ -97,31 +97,34 @@ func (s *TrustCenterFileService) ExportFile(
 	ctx context.Context,
 	trustCenterFileID gid.GID,
 	email mail.Addr,
-) ([]byte, error) {
-	pdfData, err := s.exportFileData(ctx, trustCenterFileID)
+) ([]byte, string, error) {
+	fileData, mimeType, err := s.exportFileData(ctx, trustCenterFileID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot export trust center file: %w", err)
+		return nil, "", fmt.Errorf("cannot export trust center file: %w", err)
 	}
 
-	watermarkedPDF, err := watermarkpdf.AddConfidentialWithTimestamp(pdfData, email)
-	if err != nil {
-		return nil, fmt.Errorf("cannot add watermark to PDF: %w", err)
+	if mimeType == "application/pdf" {
+		watermarkedPDF, err := watermarkpdf.AddConfidentialWithTimestamp(fileData, email)
+		if err != nil {
+			return nil, "", fmt.Errorf("cannot add watermark to PDF: %w", err)
+		}
+		return watermarkedPDF, mimeType, nil
 	}
 
-	return watermarkedPDF, nil
+	return fileData, mimeType, nil
 }
 
 func (s *TrustCenterFileService) ExportFileWithoutWatermark(
 	ctx context.Context,
 	trustCenterFileID gid.GID,
-) ([]byte, error) {
+) ([]byte, string, error) {
 	return s.exportFileData(ctx, trustCenterFileID)
 }
 
 func (s *TrustCenterFileService) exportFileData(
 	ctx context.Context,
 	trustCenterFileID gid.GID,
-) ([]byte, error) {
+) ([]byte, string, error) {
 	var trustCenterFile *coredata.TrustCenterFile
 	var file *coredata.File
 
@@ -139,7 +142,7 @@ func (s *TrustCenterFileService) exportFileData(
 		return nil
 	})
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
 	result, err := s.svc.s3.GetObject(ctx, &s3.GetObjectInput{
@@ -147,14 +150,14 @@ func (s *TrustCenterFileService) exportFileData(
 		Key:    new(file.FileKey),
 	})
 	if err != nil {
-		return nil, fmt.Errorf("cannot download file from S3: %w", err)
+		return nil, "", fmt.Errorf("cannot download file from S3: %w", err)
 	}
 	defer func() { _ = result.Body.Close() }()
 
 	fileData, err := io.ReadAll(result.Body)
 	if err != nil {
-		return nil, fmt.Errorf("cannot read file data: %w", err)
+		return nil, "", fmt.Errorf("cannot read file data: %w", err)
 	}
 
-	return fileData, nil
+	return fileData, file.MimeType, nil
 }

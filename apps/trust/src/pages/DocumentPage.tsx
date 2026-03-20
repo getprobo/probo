@@ -164,8 +164,19 @@ type Props = {
   queryRef: PreloadedQuery<DocumentPageQueryType>;
 };
 
-function isPdfFilename(name: string): boolean {
-  return name.toLowerCase().endsWith(".pdf");
+function isPdfDataUri(dataUri: string): boolean {
+  return dataUri.startsWith("data:application/pdf;");
+}
+
+function extractBase64Data(dataUri: string): string {
+  const commaIndex = dataUri.indexOf(",");
+  if (commaIndex === -1) return dataUri;
+  return dataUri.substring(commaIndex + 1);
+}
+
+function extractMimeType(dataUri: string): string {
+  const match = dataUri.match(/^data:([^;]+);/);
+  return match?.[1] ?? "application/octet-stream";
 }
 
 function getNodeTitle(node: DocumentPageQueryType["response"]["node"]): string | undefined {
@@ -276,7 +287,7 @@ export function DocumentPage({ queryRef }: Props) {
           variables: { input: { trustCenterFileId: node.id } },
           onCompleted: (response, errors) => {
             if (onCompletedErrors(errors)) return;
-            if (isPdfFilename(node.name)) {
+            if (isPdfDataUri(response.exportTrustCenterFile.data)) {
               setPdfData(response.exportTrustCenterFile.data);
             } else {
               setFileData(response.exportTrustCenterFile.data);
@@ -359,16 +370,18 @@ export function DocumentPage({ queryRef }: Props) {
 
   const isRequesting = isRequestingAccess || isRequestingFileAccess || isRequestingReportAccess;
   const hasRequested = node.access?.status === "REQUESTED";
-  const isPdf = node.__typename === "Document" || node.__typename === "Report" || (node.__typename === "TrustCenterFile" && isPdfFilename(node.name));
+  const isPdf = node.__typename === "Document" || node.__typename === "Report" || (node.__typename === "TrustCenterFile" && pdfData !== null);
 
   const handleDownload = () => {
     if (!fileData || !nodeTitle) return;
-    const byteCharacters = atob(fileData);
+    const base64 = extractBase64Data(fileData);
+    const mimeType = extractMimeType(fileData);
+    const byteCharacters = atob(base64);
     const byteNumbers = new Uint8Array(byteCharacters.length);
     for (let i = 0; i < byteCharacters.length; i++) {
       byteNumbers[i] = byteCharacters.charCodeAt(i);
     }
-    const blob = new Blob([byteNumbers]);
+    const blob = new Blob([byteNumbers], { type: mimeType });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
