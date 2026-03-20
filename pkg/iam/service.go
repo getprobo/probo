@@ -123,7 +123,10 @@ func NewService(
 	svc.AuthService = NewAuthService(svc)
 	svc.APIKeyService = NewAPIKeyService(svc)
 
-	svc.Authorizer = NewAuthorizer(pgClient, cfg.Logger.Named("authorizer"))
+	svc.Authorizer = NewAuthorizer(
+		pgClient,
+		cfg.Logger.Named("authorizer"),
+	)
 	svc.Authorizer.RegisterPolicySet(IAMPolicySet())
 
 	samlService, err := saml.NewService(svc.pg, svc.baseURL, svc.certificate, svc.privateKey, cfg.Logger)

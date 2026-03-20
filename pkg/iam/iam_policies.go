@@ -316,7 +316,9 @@ var IAMAdminPolicy = policy.NewPolicy(
 		ActionAuditLogEntryList,
 	).
 		WithSID("audit-log-entry-admin-access").
-		When(policy.Equals("principal.organization_id", "resource.organization_id")),
+		When(
+			policy.Equals("principal.organization_id", "resource.organization_id"),
+		),
 ).
 	WithDescription("IAM admin access - can manage members but cannot delete organization or manage SAML/SCIM")
 
@@ -358,6 +360,8 @@ var IAMViewerPolicy = policy.NewPolicy(
 		ActionAuditLogEntryList,
 	).
 		WithSID("audit-log-entry-viewer-access").
-		When(policy.Equals("principal.organization_id", "resource.organization_id")),
+		When(
+			policy.Equals("principal.organization_id", "resource.organization_id"),
+		),
 ).
 	WithDescription("Read-only IAM access for organization viewers")

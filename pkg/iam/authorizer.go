@@ -303,7 +303,9 @@ func (a *Authorizer) recordAuditLog(
 
 	orgID, err := gid.ParseGID(orgIDStr)
 	if err != nil {
-		a.logger.ErrorCtx(ctx, "cannot parse organization id for audit log",
+		a.logger.ErrorCtx(
+			ctx,
+			"cannot parse organization id for audit log",
 			log.Error(err),
 		)
 		return
@@ -320,7 +322,9 @@ func (a *Authorizer) recordAuditLog(
 
 	metadata, err := json.Marshal(map[string]any{})
 	if err != nil {
-		a.logger.ErrorCtx(ctx, "cannot marshal audit log metadata",
+		a.logger.ErrorCtx(
+			ctx,
+			"cannot marshal audit log metadata",
 			log.Error(err),
 		)
 		return
@@ -341,7 +345,9 @@ func (a *Authorizer) recordAuditLog(
 	scope := coredata.NewScope(orgID.TenantID())
 
 	if err := entry.Insert(ctx, conn, scope); err != nil {
-		a.logger.ErrorCtx(ctx, "cannot insert audit log entry",
+		a.logger.ErrorCtx(
+			ctx,
+			"cannot insert audit log entry",
 			log.Error(err),
 			log.String("action", params.Action),
 			log.String("resource_id", params.Resource.String()),
