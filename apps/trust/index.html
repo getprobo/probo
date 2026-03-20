@@ -6,11 +6,9 @@
   <script>
     (function () {
       var m = location.pathname.match(/^\/trust\/[^/]+/);
-      if (m) {
-        var b = document.createElement("base");
-        b.href = m[0] + "/";
-        document.head.appendChild(b);
-      }
+      var b = document.createElement("base");
+      b.href = m ? m[0] + "/" : "/";
+      document.head.appendChild(b);
     })();
   </script>
 
