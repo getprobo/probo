@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.149.0] - 2026-03-20
+
+### Changed
+
+- Use actual MIME type for trust center file exports
+
+### Fixed
+
+- Fix trust center SPA asset loading on custom domains
+
 ## [0.148.0] - 2026-03-20
 
 ### Added
