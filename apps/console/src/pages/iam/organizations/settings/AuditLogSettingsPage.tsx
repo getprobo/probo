@@ -5,23 +5,23 @@ import {
   Button,
   IconChevronDown,
   Spinner,
+  Table,
   Tbody,
   Td,
   Th,
   Thead,
-  Table,
   Tr,
 } from "@probo/ui";
 import {
-  type PreloadedQuery,
   graphql,
+  type PreloadedQuery,
   useFragment,
   usePaginationFragment,
   usePreloadedQuery,
 } from "react-relay";
 
-import type { AuditLogSettingsPageQuery } from "#/__generated__/iam/AuditLogSettingsPageQuery.graphql";
 import type { AuditLogSettingsPageFragment$key } from "#/__generated__/iam/AuditLogSettingsPageFragment.graphql";
+import type { AuditLogSettingsPageQuery } from "#/__generated__/iam/AuditLogSettingsPageQuery.graphql";
 import type { AuditLogSettingsPageRefetchQuery } from "#/__generated__/iam/AuditLogSettingsPageRefetchQuery.graphql";
 import type { AuditLogSettingsPageRowFragment$key } from "#/__generated__/iam/AuditLogSettingsPageRowFragment.graphql";
 
@@ -93,10 +93,10 @@ function ActionBadge({ action }: { action: string }) {
   const verb = parts[parts.length - 1];
 
   if (
-    verb === "create" ||
-    verb === "upload" ||
-    verb === "import" ||
-    verb === "publish"
+    verb === "create"
+    || verb === "upload"
+    || verb === "import"
+    || verb === "publish"
   ) {
     return <Badge variant="success" size="sm">{action}</Badge>;
   }
@@ -104,10 +104,10 @@ function ActionBadge({ action }: { action: string }) {
     return <Badge variant="danger" size="sm">{action}</Badge>;
   }
   if (
-    verb === "update" ||
-    verb === "assign" ||
-    verb === "unassign" ||
-    verb === "unarchive"
+    verb === "update"
+    || verb === "assign"
+    || verb === "unassign"
+    || verb === "unarchive"
   ) {
     return <Badge variant="warning" size="sm">{action}</Badge>;
   }
@@ -169,13 +169,13 @@ export function AuditLogSettingsPage(props: {
     throw new Error("Relay node is not an organization");
   }
 
-  const { data, loadNext, hasNext, isLoadingNext } =
-    usePaginationFragment<
+  const { data, loadNext, hasNext, isLoadingNext }
+    = usePaginationFragment<
       AuditLogSettingsPageRefetchQuery,
       AuditLogSettingsPageFragment$key
     >(auditLogSettingsPageFragment, organization);
 
-  const entries = data?.auditLogEntries?.edges?.map((e) => e.node) ?? [];
+  const entries = data?.auditLogEntries?.edges?.map(e => e.node) ?? [];
   const totalCount = data?.auditLogEntries?.totalCount ?? 0;
 
   return (
@@ -189,45 +189,47 @@ export function AuditLogSettingsPage(props: {
         </p>
       </div>
 
-      {entries.length === 0 ? (
-        <div className="text-center py-8">
-          <p className="text-sm text-txt-tertiary">
-            {__("No audit log entries yet.")}
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          <p className="text-sm text-txt-tertiary">
-            {`${__("Showing")} ${entries.length} ${__("of")} ${totalCount} ${__("entries")}`}
-          </p>
-          <Table>
-            <Thead>
-              <Tr>
-                <Th>{__("Date")}</Th>
-                <Th>{__("Actor")}</Th>
-                <Th>{__("Action")}</Th>
-                <Th>{__("Resource")}</Th>
-              </Tr>
-            </Thead>
-            <Tbody>
-              {entries.map((entry) => (
-                <AuditLogEntryRow key={entry.id} entryKey={entry} />
-              ))}
-            </Tbody>
-          </Table>
-          {hasNext && (
-            <Button
-              variant="tertiary"
-              onClick={() => loadNext(50)}
-              className="mx-auto"
-              disabled={isLoadingNext}
-              icon={isLoadingNext ? Spinner : IconChevronDown}
-            >
-              {__("Show more")}
-            </Button>
+      {entries.length === 0
+        ? (
+            <div className="text-center py-8">
+              <p className="text-sm text-txt-tertiary">
+                {__("No audit log entries yet.")}
+              </p>
+            </div>
+          )
+        : (
+            <div className="space-y-4">
+              <p className="text-sm text-txt-tertiary">
+                {`${__("Showing")} ${entries.length} ${__("of")} ${totalCount} ${__("entries")}`}
+              </p>
+              <Table>
+                <Thead>
+                  <Tr>
+                    <Th>{__("Date")}</Th>
+                    <Th>{__("Actor")}</Th>
+                    <Th>{__("Action")}</Th>
+                    <Th>{__("Resource")}</Th>
+                  </Tr>
+                </Thead>
+                <Tbody>
+                  {entries.map(entry => (
+                    <AuditLogEntryRow key={entry.id} entryKey={entry} />
+                  ))}
+                </Tbody>
+              </Table>
+              {hasNext && (
+                <Button
+                  variant="tertiary"
+                  onClick={() => loadNext(50)}
+                  className="mx-auto"
+                  disabled={isLoadingNext}
+                  icon={isLoadingNext ? Spinner : IconChevronDown}
+                >
+                  {__("Show more")}
+                </Button>
+              )}
+            </div>
           )}
-        </div>
-      )}
     </div>
   );
 }
