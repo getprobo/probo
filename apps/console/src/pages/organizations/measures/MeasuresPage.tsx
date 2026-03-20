@@ -193,6 +193,22 @@ export default function MeasuresPage({ queryRef }: MeasuresPageProps) {
     });
   };
 
+  const initialUrlCategory = useRef(urlCategory);
+  useEffect(() => {
+    if (initialUrlCategory.current) {
+      startTransition(() => {
+        refetch(
+          {
+            query: null,
+            state: null,
+            category: initialUrlCategory.current,
+          },
+          { fetchPolicy: "network-only" },
+        );
+      });
+    }
+  }, [refetch, startTransition]);
+
   useEffect(() => {
     if (urlCategory !== categoryFilter) {
       setCategoryFilter(urlCategory);
