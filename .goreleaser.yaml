@@ -50,27 +50,6 @@ builds:
     ignore:
       - goos: windows
         goarch: arm64
-  - id: prb
-    main: ./cmd/prb/main.go
-    binary: prb
-    ldflags:
-      - -s -w
-      - -X 'main.version={{.Version}}'
-    gcflags:
-      - -e
-    env:
-      - CGO_ENABLED=0
-    goos:
-      - windows
-      - darwin
-      - freebsd
-      - openbsd
-    goarch:
-      - amd64
-      - arm64
-    ignore:
-      - goos: windows
-        goarch: arm64
   # Docker-specific builds for Linux only
   - id: probod-docker
     main: ./cmd/probod/main.go
@@ -149,22 +128,6 @@ archives:
       - README.md
       - LICENSE
       - CHANGELOG.md
-
-brews:
-  - ids:
-      - prb
-    repository:
-      owner: getprobo
-      name: homebrew-tap
-      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
-      pull_request:
-        enabled: true
-    commit_author:
-      name: probo-bot
-      email: bot@getprobo.com
-    homepage: "https://github.com/getprobo/probo"
-    description: "CLI for the Probo compliance management platform"
-    license: "ISC"
 
 checksum:
   name_template: "checksums.txt"
