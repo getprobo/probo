@@ -55,6 +55,7 @@ import (
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/html2pdf"
 	"go.probo.inc/probo/pkg/iam"
+	"go.probo.inc/probo/pkg/agents/vetting"
 	"go.probo.inc/probo/pkg/mailer"
 	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/probo"
@@ -435,6 +436,12 @@ func (impl *Implm) Run(
 
 	mailmanService := mailman.NewService(pgClient, fileManagerService, impl.cfg.Auth.Cookie.Secret, baseURL, impl.cfg.AWS.Bucket, encryptionKey, l)
 
+	vendorAssessor := vetting.NewAssessor(vetting.Config{
+		Client:     llmClient,
+		Model:      impl.cfg.OpenAI.ModelName,
+		ChromeAddr: impl.cfg.ChromeDPAddr,
+	})
+
 	proboService, err := probo.NewService(
 		ctx,
 		encryptionKey,
@@ -455,6 +462,7 @@ func (impl *Implm) Run(
 		iamService,
 		esignService,
 		time.Duration(impl.cfg.Auth.InvitationConfirmationTokenValidity)*time.Second,
+		vendorAssessor,
 	)
 	if err != nil {
 		return fmt.Errorf("cannot create probo service: %w", err)
