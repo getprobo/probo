@@ -24,45 +24,14 @@ import (
 	"go.gearno.de/kit/pg"
 )
 
-type (
-	OIDCProvider string
-
-	OIDCState struct {
-		ID           string       `db:"id"`
-		Provider     OIDCProvider `db:"provider"`
-		Nonce        string       `db:"nonce"`
-		CodeVerifier string       `db:"code_verifier"`
-		ContinueURL  string       `db:"continue_url"`
-		CreatedAt    time.Time    `db:"created_at"`
-		ExpiresAt    time.Time    `db:"expires_at"`
-	}
-)
-
-const (
-	OIDCProviderGoogle    OIDCProvider = "GOOGLE"
-	OIDCProviderMicrosoft OIDCProvider = "MICROSOFT"
-)
-
-func (p OIDCProvider) IsValid() bool {
-	switch p {
-	case OIDCProviderGoogle, OIDCProviderMicrosoft:
-		return true
-	}
-	return false
-}
-
-func (p OIDCProvider) String() string { return string(p) }
-
-func (p *OIDCProvider) UnmarshalText(text []byte) error {
-	*p = OIDCProvider(text)
-	if !p.IsValid() {
-		return fmt.Errorf("%s is not a valid OIDCProvider", string(text))
-	}
-	return nil
-}
-
-func (p OIDCProvider) MarshalText() ([]byte, error) {
-	return []byte(p.String()), nil
+type OIDCState struct {
+	ID           string       `db:"id"`
+	Provider     OIDCProvider `db:"provider"`
+	Nonce        string       `db:"nonce"`
+	CodeVerifier string       `db:"code_verifier"`
+	ContinueURL  string       `db:"continue_url"`
+	CreatedAt    time.Time    `db:"created_at"`
+	ExpiresAt    time.Time    `db:"expires_at"`
 }
 
 func (s *OIDCState) Insert(ctx context.Context, conn pg.Conn) error {
@@ -125,7 +94,7 @@ func (s *OIDCState) Delete(ctx context.Context, conn pg.Conn) error {
 	return nil
 }
 
-func DeleteExpiredOIDCStates(ctx context.Context, conn pg.Conn, now time.Time) (int64, error) {
+func (s *OIDCState) DeleteExpired(ctx context.Context, conn pg.Conn, now time.Time) (int64, error) {
 	query := `DELETE FROM iam_oidc_states WHERE expires_at < @now`
 
 	result, err := conn.Exec(ctx, query, pgx.StrictNamedArgs{"now": now})

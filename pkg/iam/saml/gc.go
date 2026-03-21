@@ -34,18 +34,34 @@ type (
 		interval time.Duration
 		logger   *log.Logger
 	}
+
+	GarbageCollectorOption func(*GarbageCollector)
 )
 
-func NewGarbageCollector(
-	pg *pg.Client,
-	interval time.Duration,
-	logger *log.Logger,
-) *GarbageCollector {
-	return &GarbageCollector{
-		pg:       pg,
-		interval: interval,
-		logger:   logger.Named("saml.garbage_collector").With(log.Duration("interval", interval)),
+func WithGarbageCollectionInterval(interval time.Duration) GarbageCollectorOption {
+	return func(gc *GarbageCollector) {
+		gc.interval = interval
 	}
+}
+
+func NewGarbageCollector(
+	pgClient *pg.Client,
+	logger *log.Logger,
+	opts ...GarbageCollectorOption,
+) *GarbageCollector {
+	gc := &GarbageCollector{
+		pg:       pgClient,
+		interval: DefaultGarbageCollectionInterval,
+		logger:   logger.Named("saml.garbage_collector"),
+	}
+
+	for _, opt := range opts {
+		opt(gc)
+	}
+
+	gc.logger = gc.logger.With(log.Duration("interval", gc.interval))
+
+	return gc
 }
 
 func (gc *GarbageCollector) Run(ctx context.Context) error {
@@ -55,12 +71,15 @@ func (gc *GarbageCollector) Run(ctx context.Context) error {
 		gc.logger.ErrorCtx(ctx, "cannot run initial cleanup", log.Error(err))
 	}
 
+	ticker := time.NewTicker(gc.interval)
+	defer ticker.Stop()
+
 	for {
 		select {
 		case <-ctx.Done():
 			gc.logger.InfoCtx(ctx, "saml garbage collector shutting down")
 			return ctx.Err()
-		case <-time.After(gc.interval):
+		case <-ticker.C:
 			if err := gc.cleanup(ctx); err != nil {
 				gc.logger.ErrorCtx(ctx, "cannot run periodic cleanup", log.Error(err))
 			}

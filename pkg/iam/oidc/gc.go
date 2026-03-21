@@ -28,22 +28,40 @@ const (
 	DefaultGarbageCollectionInterval = 1 * time.Hour
 )
 
-type GarbageCollector struct {
-	pg       *pg.Client
-	interval time.Duration
-	logger   *log.Logger
+type (
+	GarbageCollector struct {
+		pg       *pg.Client
+		interval time.Duration
+		logger   *log.Logger
+	}
+
+	GarbageCollectorOption func(*GarbageCollector)
+)
+
+func WithGarbageCollectionInterval(interval time.Duration) GarbageCollectorOption {
+	return func(gc *GarbageCollector) {
+		gc.interval = interval
+	}
 }
 
 func NewGarbageCollector(
-	pg *pg.Client,
-	interval time.Duration,
+	pgClient *pg.Client,
 	logger *log.Logger,
+	opts ...GarbageCollectorOption,
 ) *GarbageCollector {
-	return &GarbageCollector{
-		pg:       pg,
-		interval: interval,
-		logger:   logger.Named("oidc.garbage_collector").With(log.Duration("interval", interval)),
+	gc := &GarbageCollector{
+		pg:       pgClient,
+		interval: DefaultGarbageCollectionInterval,
+		logger:   logger.Named("oidc.garbage_collector"),
 	}
+
+	for _, opt := range opts {
+		opt(gc)
+	}
+
+	gc.logger = gc.logger.With(log.Duration("interval", gc.interval))
+
+	return gc
 }
 
 func (gc *GarbageCollector) Run(ctx context.Context) error {
@@ -53,12 +71,15 @@ func (gc *GarbageCollector) Run(ctx context.Context) error {
 		gc.logger.ErrorCtx(ctx, "cannot run initial cleanup", log.Error(err))
 	}
 
+	ticker := time.NewTicker(gc.interval)
+	defer ticker.Stop()
+
 	for {
 		select {
 		case <-ctx.Done():
 			gc.logger.InfoCtx(ctx, "oidc garbage collector shutting down")
 			return ctx.Err()
-		case <-time.After(gc.interval):
+		case <-ticker.C:
 			if err := gc.cleanup(ctx); err != nil {
 				gc.logger.ErrorCtx(ctx, "cannot run periodic cleanup", log.Error(err))
 			}
@@ -72,7 +93,8 @@ func (gc *GarbageCollector) cleanup(ctx context.Context) error {
 	return gc.pg.WithTx(
 		ctx,
 		func(tx pg.Conn) error {
-			deleted, err := coredata.DeleteExpiredOIDCStates(ctx, tx, now)
+			var state coredata.OIDCState
+			deleted, err := state.DeleteExpired(ctx, tx, now)
 			if err != nil {
 				return fmt.Errorf("cannot delete expired oidc states: %w", err)
 			}

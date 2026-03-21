@@ -5,6 +5,7 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -21,7 +22,6 @@ import (
 	"go.probo.inc/probo/pkg/iam/oidc"
 	"go.probo.inc/probo/pkg/iam/saml"
 	"go.probo.inc/probo/pkg/iam/scim"
-	"golang.org/x/sync/errgroup"
 )
 
 type (
@@ -175,14 +175,48 @@ func NewService(
 }
 
 func (s *Service) Run(ctx context.Context) error {
-	g, ctx := errgroup.WithContext(ctx)
+	wg := sync.WaitGroup{}
+	ctx, cancel := context.WithCancelCause(ctx)
+	defer cancel(context.Canceled)
 
-	g.Go(func() error { return s.SAMLService.Run(ctx) })
-	g.Go(func() error { return s.OIDCService.Run(ctx) })
-	g.Go(func() error { return s.samlDomainVerifier.Run(ctx) })
-	g.Go(func() error { return s.SCIMService.Run(ctx) })
+	samlCtx, stopSAML := context.WithCancel(context.WithoutCancel(ctx))
+	wg.Go(func() {
+		if err := s.SAMLService.Run(samlCtx); err != nil {
+			cancel(fmt.Errorf("saml service crashed: %w", err))
+		}
+	})
 
-	return g.Wait()
+	oidcCtx, stopOIDC := context.WithCancel(context.WithoutCancel(ctx))
+	wg.Go(func() {
+		if err := s.OIDCService.Run(oidcCtx); err != nil {
+			cancel(fmt.Errorf("oidc service crashed: %w", err))
+		}
+	})
+
+	domainVerifierCtx, stopDomainVerifier := context.WithCancel(context.WithoutCancel(ctx))
+	wg.Go(func() {
+		if err := s.samlDomainVerifier.Run(domainVerifierCtx); err != nil {
+			cancel(fmt.Errorf("saml domain verifier crashed: %w", err))
+		}
+	})
+
+	scimCtx, stopSCIM := context.WithCancel(context.WithoutCancel(ctx))
+	wg.Go(func() {
+		if err := s.SCIMService.Run(scimCtx); err != nil {
+			cancel(fmt.Errorf("scim service crashed: %w", err))
+		}
+	})
+
+	<-ctx.Done()
+
+	stopSAML()
+	stopOIDC()
+	stopDomainVerifier()
+	stopSCIM()
+
+	wg.Wait()
+
+	return context.Cause(ctx)
 }
 
 func (s *Service) GetMembership(ctx context.Context, membershipID gid.GID) (*coredata.Membership, error) {
