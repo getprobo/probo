@@ -20,13 +20,15 @@ import (
 )
 
 type AuthConfig struct {
-	Cookie                              CookieConfig   `json:"cookie"`
-	Password                            PasswordConfig `json:"password"`
-	DisableSignup                       bool           `json:"disable-signup"`
-	InvitationConfirmationTokenValidity int            `json:"invitation-confirmation-token-validity"`
-	PasswordResetTokenValidity          int            `json:"password-reset-token-validity"`
-	MagicLinkTokenValidity              int            `json:"magic-link-token-validity"`
-	SAML                                SAMLConfig     `json:"saml"`
+	Cookie                              CookieConfig       `json:"cookie"`
+	Password                            PasswordConfig     `json:"password"`
+	DisableSignup                       bool               `json:"disable-signup"`
+	InvitationConfirmationTokenValidity int                `json:"invitation-confirmation-token-validity"`
+	PasswordResetTokenValidity          int                `json:"password-reset-token-validity"`
+	MagicLinkTokenValidity              int                `json:"magic-link-token-validity"`
+	SAML                                SAMLConfig         `json:"saml"`
+	Google                              OIDCProviderConfig `json:"google"`
+	Microsoft                           OIDCProviderConfig `json:"microsoft"`
 }
 
 type CookieConfig struct {

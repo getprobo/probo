@@ -9,6 +9,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/99designs/gqlgen/graphql"
@@ -1744,6 +1745,21 @@ func (r *queryResolver) SsoLoginURL(ctx context.Context, email mail.Addr) (*stri
 	loginURL := r.SSOLoginURL(samlConfig.ID)
 
 	return &loginURL, nil
+}
+
+// OidcProviders is the resolver for the oidcProviders field.
+func (r *queryResolver) OidcProviders(ctx context.Context) ([]*types.OIDCProviderInfo, error) {
+	providers := r.iam.OIDCService.EnabledProviders()
+	result := make([]*types.OIDCProviderInfo, 0, len(providers))
+
+	for _, p := range providers {
+		result = append(result, &types.OIDCProviderInfo{
+			Name:     strings.ToLower(p.String()),
+			LoginURL: r.baseURL.WithPath("/api/connect/v1/oidc/" + strings.ToLower(p.String()) + "/login").MustString(),
+		})
+	}
+
+	return result, nil
 }
 
 // TestLoginURL is the resolver for the testLoginUrl field.

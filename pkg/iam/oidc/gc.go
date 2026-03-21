@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package saml
+package oidc
 
 import (
 	"context"
@@ -52,7 +52,7 @@ func NewGarbageCollector(
 	gc := &GarbageCollector{
 		pg:       pgClient,
 		interval: DefaultGarbageCollectionInterval,
-		logger:   logger.Named("saml.garbage_collector"),
+		logger:   logger.Named("oidc.garbage_collector"),
 	}
 
 	for _, opt := range opts {
@@ -65,14 +65,10 @@ func NewGarbageCollector(
 }
 
 func (gc *GarbageCollector) Run(ctx context.Context) error {
-	gc.logger.InfoCtx(ctx, "saml garbage collector starting")
+	gc.logger.InfoCtx(ctx, "oidc garbage collector starting")
 
 	if err := gc.cleanup(ctx); err != nil {
 		gc.logger.ErrorCtx(ctx, "cannot run initial cleanup", log.Error(err))
-	}
-
-	if gc.interval <= 0 {
-		return fmt.Errorf("cannot run SAML garbage collector: interval must be greater than zero")
 	}
 
 	ticker := time.NewTicker(gc.interval)
@@ -81,7 +77,7 @@ func (gc *GarbageCollector) Run(ctx context.Context) error {
 	for {
 		select {
 		case <-ctx.Done():
-			gc.logger.InfoCtx(ctx, "saml garbage collector shutting down")
+			gc.logger.InfoCtx(ctx, "oidc garbage collector shutting down")
 			return ctx.Err()
 		case <-ticker.C:
 			if err := gc.cleanup(ctx); err != nil {
@@ -97,21 +93,16 @@ func (gc *GarbageCollector) cleanup(ctx context.Context) error {
 	return gc.pg.WithTx(
 		ctx,
 		func(tx pg.Conn) error {
-			assertionsDeleted, err := coredata.DeleteExpiredSAMLAssertions(ctx, tx, now)
+			var state coredata.OIDCState
+			deleted, err := state.DeleteExpired(ctx, tx, now)
 			if err != nil {
-				return fmt.Errorf("cannot delete expired saml assertions: %w", err)
-			}
-
-			requestsDeleted, err := coredata.DeleteExpiredSAMLRequests(ctx, tx, now)
-			if err != nil {
-				return fmt.Errorf("cannot delete expired saml requests: %w", err)
+				return fmt.Errorf("cannot delete expired oidc states: %w", err)
 			}
 
 			gc.logger.InfoCtx(
 				ctx,
-				"saml garbage collector cleaned up expired assertions and requests",
-				log.Int64("assertions", assertionsDeleted),
-				log.Int64("requests", requestsDeleted),
+				"oidc garbage collector cleaned up expired states",
+				log.Int64("deleted", deleted),
 			)
 
 			return nil

@@ -52,10 +52,14 @@ func NewMux(logger *log.Logger, svc *iam.Service, cookieConfig securecookie.Conf
 
 	router := r.With(sessionMiddleware, apiKeyMiddleware)
 
+	oidcHandler := NewOIDCHandler(svc, cookieConfig, baseURL, logger)
+
 	router.Handle("/graphql", graphqlHandler)
 	router.Get("/saml/2.0/metadata", samlHandler.MetadataHandler)
 	router.Post("/saml/2.0/consume", samlHandler.ConsumeHandler)
 	router.Get("/saml/2.0/{samlConfigID}", samlHandler.LoginHandler)
+	router.Get("/oidc/{provider}/login", oidcHandler.LoginHandler)
+	router.Get("/oidc/{provider}/callback", oidcHandler.CallbackHandler)
 
 	// SCIM 2.0 endpoints - these use their own bearer token authentication
 	scimServer := NewSCIMServer(scimHandler)

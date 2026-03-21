@@ -110,6 +110,16 @@ func (b *Builder) Build() (*probod.FullConfig, error) {
 					DomainVerificationIntervalSeconds: b.getEnvIntOrDefault("SAML_DOMAIN_VERIFICATION_INTERVAL_SECONDS", 60),
 					DomainVerificationResolverAddr:    b.getEnvOrDefault("SAML_DOMAIN_VERIFICATION_RESOLVER_ADDR", "8.8.8.8:53"),
 				},
+				Google: probod.OIDCProviderConfig{
+					ClientID:     b.getEnv("AUTH_GOOGLE_CLIENT_ID"),
+					ClientSecret: b.getEnv("AUTH_GOOGLE_CLIENT_SECRET"),
+					Enabled:      b.getEnv("AUTH_GOOGLE_CLIENT_ID") != "" && b.getEnv("AUTH_GOOGLE_CLIENT_SECRET") != "",
+				},
+				Microsoft: probod.OIDCProviderConfig{
+					ClientID:     b.getEnv("AUTH_MICROSOFT_CLIENT_ID"),
+					ClientSecret: b.getEnv("AUTH_MICROSOFT_CLIENT_SECRET"),
+					Enabled:      b.getEnv("AUTH_MICROSOFT_CLIENT_ID") != "" && b.getEnv("AUTH_MICROSOFT_CLIENT_SECRET") != "",
+				},
 			},
 			TrustCenter: probod.TrustCenterConfig{
 				HTTPAddr:  b.getEnvOrDefault("TRUST_CENTER_HTTP_ADDR", ":80"),
