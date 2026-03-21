@@ -69,6 +69,10 @@ func (v *SAMLDomainVerifier) Run(ctx context.Context) error {
 
 	v.runOnce(ctx)
 
+	if v.interval <= 0 {
+		return fmt.Errorf("cannot run SAML domain verifier: interval must be greater than zero")
+	}
+
 	ticker := time.NewTicker(v.interval)
 	defer ticker.Stop()
 

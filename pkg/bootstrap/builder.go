@@ -113,12 +113,12 @@ func (b *Builder) Build() (*probod.FullConfig, error) {
 				Google: probod.OIDCProviderConfig{
 					ClientID:     b.getEnv("AUTH_GOOGLE_CLIENT_ID"),
 					ClientSecret: b.getEnv("AUTH_GOOGLE_CLIENT_SECRET"),
-					Enabled:      b.getEnv("AUTH_GOOGLE_CLIENT_ID") != "",
+					Enabled:      b.getEnv("AUTH_GOOGLE_CLIENT_ID") != "" && b.getEnv("AUTH_GOOGLE_CLIENT_SECRET") != "",
 				},
 				Microsoft: probod.OIDCProviderConfig{
 					ClientID:     b.getEnv("AUTH_MICROSOFT_CLIENT_ID"),
 					ClientSecret: b.getEnv("AUTH_MICROSOFT_CLIENT_SECRET"),
-					Enabled:      b.getEnv("AUTH_MICROSOFT_CLIENT_ID") != "",
+					Enabled:      b.getEnv("AUTH_MICROSOFT_CLIENT_ID") != "" && b.getEnv("AUTH_MICROSOFT_CLIENT_SECRET") != "",
 				},
 			},
 			TrustCenter: probod.TrustCenterConfig{

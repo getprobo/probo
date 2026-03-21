@@ -34,6 +34,7 @@ import (
 	"sync"
 	"time"
 
+	"go.gearno.de/kit/httpclient"
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
@@ -64,10 +65,11 @@ type (
 	}
 
 	Service struct {
-		pg        *pg.Client
-		baseURL   string
-		logger    *log.Logger
-		providers map[coredata.OIDCProvider]*providerInfo
+		pg         *pg.Client
+		baseURL    string
+		logger     *log.Logger
+		httpClient *http.Client
+		providers  map[coredata.OIDCProvider]*providerInfo
 
 		jwksMu    sync.RWMutex
 		jwksCache map[string]*jwksEntry
@@ -157,11 +159,12 @@ func NewService(
 	logger *log.Logger,
 ) *Service {
 	s := &Service{
-		pg:        pgClient,
-		baseURL:   baseURL,
-		logger:    logger.Named("oidc"),
-		providers: make(map[coredata.OIDCProvider]*providerInfo),
-		jwksCache: make(map[string]*jwksEntry),
+		pg:         pgClient,
+		baseURL:    baseURL,
+		logger:     logger.Named("oidc"),
+		httpClient: httpclient.DefaultPooledClient(httpclient.WithLogger(logger)),
+		providers:  make(map[coredata.OIDCProvider]*providerInfo),
+		jwksCache:  make(map[string]*jwksEntry),
 	}
 
 	if google.Enabled {
@@ -488,7 +491,7 @@ func (s *Service) verifyAndParseIDToken(ctx context.Context, info *providerInfo,
 	}
 
 	if claims.Nonce != expectedNonce {
-		return nil, fmt.Errorf("cannot validate nonce: expected %q, got %q", expectedNonce, claims.Nonce)
+		return nil, fmt.Errorf("cannot validate nonce: mismatch")
 	}
 
 	if time.Now().After(time.Unix(int64(claims.ExpiresAt), 0)) {
@@ -504,7 +507,7 @@ func (s *Service) getSigningKey(ctx context.Context, jwksURL string, kid string)
 	s.jwksMu.RUnlock()
 
 	if !ok || time.Since(entry.fetchedAt) > jwksCacheTTL {
-		keys, err := fetchJWKS(ctx, jwksURL)
+		keys, err := fetchJWKS(ctx, s.httpClient, jwksURL)
 		if err != nil {
 			return nil, err
 		}
@@ -522,7 +525,7 @@ func (s *Service) getSigningKey(ctx context.Context, jwksURL string, kid string)
 	}
 
 	// Key not found in cache, try refreshing
-	keys, err := fetchJWKS(ctx, jwksURL)
+	keys, err := fetchJWKS(ctx, s.httpClient, jwksURL)
 	if err != nil {
 		return nil, err
 	}
@@ -541,13 +544,13 @@ func (s *Service) getSigningKey(ctx context.Context, jwksURL string, kid string)
 	return nil, fmt.Errorf("cannot find signing key %q in JWKS", kid)
 }
 
-func fetchJWKS(ctx context.Context, jwksURL string) ([]jwk, error) {
+func fetchJWKS(ctx context.Context, httpClient *http.Client, jwksURL string) ([]jwk, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, jwksURL, nil)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create jwks request: %w", err)
 	}
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("cannot fetch jwks: %w", err)
 	}
