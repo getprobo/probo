@@ -246,8 +246,23 @@ jobs:
           node-version-file: ".nvmrc"
           cache: "npm"
       - run: "npm i -g npm@11.8.0"
-      - run: "sudo apt-get install -y mkcert"
-      - run: "sudo mkcert -install 2>&1 | grep -v 'no Firefox and/or Chrome/Chromium security databases found' || true"
+      - run: "sudo apt-get install -y mkcert libnss3-tools"
+      - name: "Install mkcert root CA"
+        run: |
+          # Create NSS databases for the runner user so mkcert -install
+          # can register the CA without warnings. These must belong to the
+          # runner user (not root) because `make stack-up` later invokes
+          # mkcert without sudo to generate the Pebble certificates.
+          mkdir -p "$HOME/.pki/nssdb"
+          certutil -d sql:"$HOME/.pki/nssdb" -N --empty-password
+          mkdir -p "$HOME/.mozilla/firefox/default"
+          certutil -d sql:"$HOME/.mozilla/firefox/default" -N --empty-password
+
+          # Install the runner user's CA into NSS databases and the
+          # system trust store (sudo needed only for the latter).
+          mkcert -install
+          sudo cp "$(mkcert -CAROOT)/rootCA.pem" /usr/local/share/ca-certificates/mkcert-ca.crt
+          sudo update-ca-certificates
       - uses: "docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130" # v3.7.0
       - uses: "docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f" # v3.12.0
       - uses: "docker/setup-compose-action@364cc21a5de5b1ee4a7f5f9d3fa374ce0ccde746" # v1.2.0
