@@ -71,6 +71,10 @@ func (gc *GarbageCollector) Run(ctx context.Context) error {
 		gc.logger.ErrorCtx(ctx, "cannot run initial cleanup", log.Error(err))
 	}
 
+	if gc.interval <= 0 {
+		return fmt.Errorf("cannot run SAML garbage collector: interval must be greater than zero")
+	}
+
 	ticker := time.NewTicker(gc.interval)
 	defer ticker.Stop()
 

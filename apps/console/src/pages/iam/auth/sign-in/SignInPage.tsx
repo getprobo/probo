@@ -70,10 +70,10 @@ function OIDCButtons() {
             onClick={() => {
               window.location.href
                 = provider.loginURL
-                + "?continue="
-                + encodeURIComponent(
-                  safeContinueUrl.pathname + safeContinueUrl.search,
-                );
+                  + "?continue="
+                  + encodeURIComponent(
+                    safeContinueUrl.pathname + safeContinueUrl.search,
+                  );
             }}
           >
             <span className="flex items-center gap-2">
