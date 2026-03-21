@@ -3,7 +3,7 @@ import { useTranslate } from "@probo/i18n";
 import { Button, Field, Google, Microsoft, useToast } from "@probo/ui";
 import { type ComponentProps, type FormEventHandler, Suspense } from "react";
 import { useLazyLoadQuery, useMutation } from "react-relay";
-import { Link, useLocation, matchPath } from "react-router";
+import { Link, matchPath, useLocation } from "react-router";
 import { graphql } from "relay-runtime";
 
 import type { SignInPageMutation } from "#/__generated__/iam/SignInPageMutation.graphql";
@@ -68,10 +68,10 @@ function OIDCButtons() {
             variant="secondary"
             className="w-full h-10"
             onClick={() => {
-              window.location.href =
-                provider.loginURL +
-                "?continue=" +
-                encodeURIComponent(
+              window.location.href
+                = provider.loginURL
+                + "?continue="
+                + encodeURIComponent(
                   safeContinueUrl.pathname + safeContinueUrl.search,
                 );
             }}
@@ -93,8 +93,8 @@ export default function SignInPage() {
   const location = useLocation();
   const safeContinueUrl = useSafeContinueUrl();
 
-  const [signIn, isSigningIn] =
-    useMutation<SignInPageMutation>(signInMutation);
+  const [signIn, isSigningIn]
+    = useMutation<SignInPageMutation>(signInMutation);
 
   const handleSubmit: FormEventHandler<HTMLFormElement> = (e) => {
     e.preventDefault();
