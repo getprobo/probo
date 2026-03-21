@@ -67,14 +67,18 @@ func NewSAMLDomainVerifier(
 func (v *SAMLDomainVerifier) Run(ctx context.Context) error {
 	v.logger.InfoCtx(ctx, "starting", log.Duration("interval", v.interval))
 
-	for {
-		v.runOnce(ctx)
+	v.runOnce(ctx)
 
+	ticker := time.NewTicker(v.interval)
+	defer ticker.Stop()
+
+	for {
 		select {
 		case <-ctx.Done():
 			v.logger.InfoCtx(ctx, "shutting down")
 			return ctx.Err()
-		case <-time.After(v.interval):
+		case <-ticker.C:
+			v.runOnce(ctx)
 		}
 	}
 }
