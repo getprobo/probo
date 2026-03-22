@@ -30,6 +30,7 @@ import (
 	"io"
 	"math/big"
 	"net/http"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -258,6 +259,7 @@ func (s *Service) EnabledProviders() []coredata.OIDCProvider {
 	for p := range s.providers {
 		providers = append(providers, p)
 	}
+	slices.Sort(providers)
 	return providers
 }
 
