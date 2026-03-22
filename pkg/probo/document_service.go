@@ -693,7 +693,9 @@ func (s *DocumentService) SendSigningNotifications(
 					subject,
 					textBody,
 					htmlBody,
-					nil,
+					&coredata.EmailOptions{
+						SenderName: new(organization.Name),
+					},
 				)
 
 				if err := email.Insert(ctx, tx); err != nil {

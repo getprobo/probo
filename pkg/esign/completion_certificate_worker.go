@@ -238,8 +238,9 @@ func (w *CompletionCertificateWorker) generateCertificate(
 	scope coredata.Scoper,
 ) (*coredata.Email, coredata.EmailAttachments, error) {
 	var (
-		events     = coredata.ElectronicSignatureEvents{}
-		signedFile = coredata.File{}
+		events       = coredata.ElectronicSignatureEvents{}
+		signedFile   = coredata.File{}
+		organization = coredata.Organization{}
 	)
 
 	if err := w.pg.WithConn(
@@ -251,6 +252,10 @@ func (w *CompletionCertificateWorker) generateCertificate(
 
 			if err := signedFile.LoadByID(ctx, conn, scope, signature.FileID); err != nil {
 				return fmt.Errorf("cannot load signed file: %w", err)
+			}
+
+			if err := organization.LoadByID(ctx, conn, scope, signature.OrganizationID); err != nil {
+				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
 			return nil
@@ -322,7 +327,9 @@ func (w *CompletionCertificateWorker) generateCertificate(
 		subject,
 		textBody,
 		htmlBody,
-		nil,
+		&coredata.EmailOptions{
+			SenderName: new(organization.Name),
+		},
 	)
 
 	attachments := coredata.EmailAttachments{

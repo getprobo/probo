@@ -583,13 +583,20 @@ func (s AuthService) SendMagicLink(ctx context.Context, req *SendMagicLinkReques
 				return fmt.Errorf("cannot render magic link email: %w", err)
 			}
 
+			var emailOpts *coredata.EmailOptions
+			if req.CompliancePageID != nil {
+				emailOpts = &coredata.EmailOptions{
+					SenderName: new(organization.Name),
+				}
+			}
+
 			magicLinkEmail := coredata.NewEmail(
 				fullName,
 				req.Email,
 				subject,
 				textBody,
 				htmlBody,
-				nil,
+				emailOpts,
 			)
 
 			if err := magicLinkEmail.Insert(ctx, tx); err != nil {

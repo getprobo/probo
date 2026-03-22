@@ -202,9 +202,14 @@ func (w *SendingWorker) sendAndCommit(
 				return fmt.Errorf("cannot load email attachments: %w", err)
 			}
 
+			fromName := w.senderName
+			if email.SenderName != nil {
+				fromName = *email.SenderName + " via " + w.senderName
+			}
+
 			mail := enmime.Builder().
 				Subject(email.Subject).
-				From(w.senderName, w.senderEmail).
+				From(fromName, w.senderEmail).
 				To(email.RecipientName, email.RecipientEmail).
 				Text([]byte(email.TextBody))
 
