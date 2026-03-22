@@ -880,10 +880,18 @@ type RecordSigningEventPayload {
   success: Boolean!
 }
 
+type OIDCProviderInfo {
+  name: String!
+  loginURL: String!
+}
+
 type Query {
   viewer: Identity
   node(id: ID!): Node
   currentTrustCenter: TrustCenter
+  oidcProviders: [OIDCProviderInfo!]!
+    @goField(forceResolver: true)
+    @session(required: OPTIONAL)
 }
 
 type Mutation {
