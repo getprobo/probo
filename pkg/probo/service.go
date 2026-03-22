@@ -284,7 +284,6 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 		logger:        s.logger.Named("custom_domains"),
 	}
 	tenantService.SlackMessages = s.slack.WithTenant(tenantID).SlackMessages
-
 	return tenantService
 }
 

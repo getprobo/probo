@@ -55,7 +55,8 @@ PROBOD_BOOTSTRAP_SRC=	cmd/probod-bootstrap/main.go
 ifndef SKIP_APPS
 PROBOD_BIN_EXTRA_DEPS += \
 	@probo/console \
-	@probo/trust
+	@probo/trust \
+	@probo/cookie-banner
 endif
 
 .PHONY: all
@@ -225,6 +226,11 @@ bin/probod-bootstrap:
 @probo/trust:
 	$(NPM) --workspace $@ run relay
 	$(NPM) --workspace $@ run check
+	$(NPM) --workspace $@ run build
+
+.PHONY: @probo/cookie-banner
+@probo/cookie-banner: NODE_ENV=production
+@probo/cookie-banner:
 	$(NPM) --workspace $@ run build
 
 .PHONY: generate

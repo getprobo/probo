@@ -15,6 +15,7 @@ import (
 
 	pgx "github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/consent"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
@@ -429,6 +430,26 @@ func (r *complianceFrameworkResolver) Framework(ctx context.Context, obj *types.
 	return types.NewFramework(framework), nil
 }
 
+// TotalCount is the resolver for the totalCount field.
+func (r *consentRecordConnectionResolver) TotalCount(ctx context.Context, obj *types.ConsentRecordConnection) (int, error) {
+	if err := r.authorize(ctx, obj.ParentID, probo.ActionConsentRecordList); err != nil {
+		return 0, err
+	}
+
+	switch obj.Resolver.(type) {
+	case *cookieBannerResolver:
+		count, err := r.consent.CountConsentRecordsForCookieBannerID(ctx, obj.ParentID, coredata.NewConsentRecordFilter(nil))
+		if err != nil {
+			r.logger.ErrorCtx(ctx, "cannot count consent records", log.Error(err))
+			return 0, gqlutils.Internal(ctx)
+		}
+		return count, nil
+	}
+
+	r.logger.ErrorCtx(ctx, "unsupported resolver")
+	return 0, gqlutils.Internal(ctx)
+}
+
 // Organization is the resolver for the organization field.
 func (r *controlResolver) Organization(ctx context.Context, obj *types.Control) (*types.Organization, error) {
 	if err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
@@ -729,6 +750,106 @@ func (r *controlConnectionResolver) TotalCount(ctx context.Context, obj *types.C
 		count, err := prb.Controls.CountForStateOfApplicabilityID(ctx, obj.ParentID, obj.Filters)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count controls", log.Error(err))
+			return 0, gqlutils.Internal(ctx)
+		}
+		return count, nil
+	}
+
+	r.logger.ErrorCtx(ctx, "unsupported resolver")
+	return 0, gqlutils.Internal(ctx)
+}
+
+// Theme is the resolver for the theme field.
+func (r *cookieBannerResolver) Theme(ctx context.Context, obj *types.CookieBanner) (*types.CookieBannerTheme, error) {
+	banner, err := r.consent.GetCookieBanner(ctx, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot get cookie banner for theme", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewCookieBannerTheme(banner.Theme), nil
+}
+
+// Categories is the resolver for the categories field.
+func (r *cookieBannerResolver) Categories(ctx context.Context, obj *types.CookieBanner, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.CookieCategoryOrderBy) (*types.CookieCategoryConnection, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionCookieCategoryList); err != nil {
+		return nil, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.CookieCategoryOrderField]{
+		Field:     coredata.CookieCategoryOrderFieldRank,
+		Direction: page.OrderDirectionAsc,
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	p, err := r.consent.ListCookieCategoriesForCookieBannerID(ctx, obj.ID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list cookie categories", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewCookieCategoryConnection(p, r, obj.ID), nil
+}
+
+// ConsentRecords is the resolver for the consentRecords field.
+func (r *cookieBannerResolver) ConsentRecords(ctx context.Context, obj *types.CookieBanner, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ConsentRecordOrderBy) (*types.ConsentRecordConnection, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionConsentRecordList); err != nil {
+		return nil, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.ConsentRecordOrderField]{
+		Field:     coredata.ConsentRecordOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	p, err := r.consent.ListConsentRecordsForCookieBannerID(ctx, obj.ID, cursor, coredata.NewConsentRecordFilter(nil))
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list consent records", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewConsentRecordConnection(p, r, obj.ID), nil
+}
+
+// Permission is the resolver for the permission field.
+func (r *cookieBannerResolver) Permission(ctx context.Context, obj *types.CookieBanner, action string) (bool, error) {
+	return r.Resolver.Permission(ctx, obj, action)
+}
+
+// TotalCount is the resolver for the totalCount field.
+func (r *cookieBannerConnectionResolver) TotalCount(ctx context.Context, obj *types.CookieBannerConnection) (int, error) {
+	if err := r.authorize(ctx, obj.ParentID, probo.ActionCookieBannerList); err != nil {
+		return 0, err
+	}
+
+	switch obj.Resolver.(type) {
+	case *organizationResolver:
+		count, err := r.consent.CountCookieBannersForOrganizationID(ctx, obj.ParentID)
+		if err != nil {
+			r.logger.ErrorCtx(ctx, "cannot count cookie banners", log.Error(err))
+			return 0, gqlutils.Internal(ctx)
+		}
+		return count, nil
+	}
+
+	r.logger.ErrorCtx(ctx, "unsupported resolver")
+	return 0, gqlutils.Internal(ctx)
+}
+
+// TotalCount is the resolver for the totalCount field.
+func (r *cookieCategoryConnectionResolver) TotalCount(ctx context.Context, obj *types.CookieCategoryConnection) (int, error) {
+	if err := r.authorize(ctx, obj.ParentID, probo.ActionCookieCategoryList); err != nil {
+		return 0, err
+	}
+
+	switch obj.Resolver.(type) {
+	case *cookieBannerResolver:
+		count, err := r.consent.CountCookieCategoriesForCookieBannerID(ctx, obj.ParentID)
+		if err != nil {
+			r.logger.ErrorCtx(ctx, "cannot count cookie categories", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
 		}
 		return count, nil
@@ -6266,6 +6387,234 @@ func (r *mutationResolver) DeleteCustomDomain(ctx context.Context, input types.D
 	}, nil
 }
 
+// CreateCookieBanner is the resolver for the createCookieBanner field.
+func (r *mutationResolver) CreateCookieBanner(ctx context.Context, input types.CreateCookieBannerInput) (*types.CreateCookieBannerPayload, error) {
+	if err := r.authorize(ctx, input.OrganizationID, probo.ActionCookieBannerCreate); err != nil {
+		return nil, err
+	}
+
+	var domain string
+	if input.Domain != nil {
+		domain = *input.Domain
+	}
+
+	banner, err := r.consent.CreateCookieBanner(
+		ctx,
+		consent.CreateCookieBannerRequest{
+			OrganizationID: input.OrganizationID,
+			Name:           input.Name,
+			Domain:         domain,
+		},
+	)
+	if err != nil {
+		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+		}
+		r.logger.ErrorCtx(ctx, "cannot create cookie banner", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.CreateCookieBannerPayload{
+		CookieBanner:     types.NewCookieBanner(banner, r.baseURL),
+		CookieBannerEdge: types.NewCookieBannerEdge(banner, coredata.CookieBannerOrderFieldCreatedAt, r.baseURL),
+	}, nil
+}
+
+// UpdateCookieBanner is the resolver for the updateCookieBanner field.
+func (r *mutationResolver) UpdateCookieBanner(ctx context.Context, input types.UpdateCookieBannerInput) (*types.UpdateCookieBannerPayload, error) {
+	if err := r.authorize(ctx, input.ID, probo.ActionCookieBannerUpdate); err != nil {
+		return nil, err
+	}
+
+	req := consent.UpdateCookieBannerRequest{
+		ID:                   input.ID,
+		Name:                 input.Name,
+		Domain:               input.Domain,
+		Title:                input.Title,
+		Description:          input.Description,
+		AcceptAllLabel:       input.AcceptAllLabel,
+		RejectAllLabel:       input.RejectAllLabel,
+		SavePreferencesLabel: input.SavePreferencesLabel,
+		PrivacyPolicyURL:     input.PrivacyPolicyURL,
+		ConsentExpiryDays:    input.ConsentExpiryDays,
+	}
+
+	if input.Theme != nil {
+		existing, err := r.consent.GetCookieBanner(ctx, input.ID)
+		if err != nil {
+			r.logger.ErrorCtx(ctx, "cannot get cookie banner for theme update", log.Error(err))
+			return nil, gqlutils.Internal(ctx)
+		}
+		req.Theme = types.MergeThemeInput(existing.Theme, input.Theme)
+	}
+
+	banner, err := r.consent.UpdateCookieBanner(ctx, req)
+	if err != nil {
+		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+		}
+		r.logger.ErrorCtx(ctx, "cannot update cookie banner", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.UpdateCookieBannerPayload{
+		CookieBanner: types.NewCookieBanner(banner, r.baseURL),
+	}, nil
+}
+
+// DeleteCookieBanner is the resolver for the deleteCookieBanner field.
+func (r *mutationResolver) DeleteCookieBanner(ctx context.Context, input types.DeleteCookieBannerInput) (*types.DeleteCookieBannerPayload, error) {
+	if err := r.authorize(ctx, input.ID, probo.ActionCookieBannerDelete); err != nil {
+		return nil, err
+	}
+
+	err := r.consent.DeleteCookieBanner(ctx, input.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot delete cookie banner", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.DeleteCookieBannerPayload{
+		DeletedCookieBannerID: input.ID,
+	}, nil
+}
+
+// PublishCookieBanner is the resolver for the publishCookieBanner field.
+func (r *mutationResolver) PublishCookieBanner(ctx context.Context, input types.PublishCookieBannerInput) (*types.PublishCookieBannerPayload, error) {
+	if err := r.authorize(ctx, input.ID, probo.ActionCookieBannerUpdate); err != nil {
+		return nil, err
+	}
+
+	banner, err := r.consent.PublishCookieBanner(ctx, input.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot publish cookie banner", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.PublishCookieBannerPayload{
+		CookieBanner: types.NewCookieBanner(banner, r.baseURL),
+	}, nil
+}
+
+// DisableCookieBanner is the resolver for the disableCookieBanner field.
+func (r *mutationResolver) DisableCookieBanner(ctx context.Context, input types.DisableCookieBannerInput) (*types.DisableCookieBannerPayload, error) {
+	if err := r.authorize(ctx, input.ID, probo.ActionCookieBannerUpdate); err != nil {
+		return nil, err
+	}
+
+	banner, err := r.consent.DisableCookieBanner(ctx, input.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot disable cookie banner", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.DisableCookieBannerPayload{
+		CookieBanner: types.NewCookieBanner(banner, r.baseURL),
+	}, nil
+}
+
+// CreateCookieCategory is the resolver for the createCookieCategory field.
+func (r *mutationResolver) CreateCookieCategory(ctx context.Context, input types.CreateCookieCategoryInput) (*types.CreateCookieCategoryPayload, error) {
+	if err := r.authorize(ctx, input.CookieBannerID, probo.ActionCookieCategoryCreate); err != nil {
+		return nil, err
+	}
+
+	var description string
+	if input.Description != nil {
+		description = *input.Description
+	}
+
+	var rank int
+	if input.Rank != nil {
+		rank = *input.Rank
+	}
+
+	var cookies coredata.CookieItems
+	for _, c := range input.Cookies {
+		cookies = append(cookies, *c)
+	}
+
+	category, err := r.consent.CreateCookieCategory(
+		ctx,
+		consent.CreateCookieCategoryRequest{
+			CookieBannerID: input.CookieBannerID,
+			Name:           input.Name,
+			Description:    description,
+			Rank:           rank,
+			Cookies:        cookies,
+		},
+	)
+	if err != nil {
+		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+		}
+		r.logger.ErrorCtx(ctx, "cannot create cookie category", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.CreateCookieCategoryPayload{
+		CookieCategory: types.NewCookieCategory(category),
+	}, nil
+}
+
+// UpdateCookieCategory is the resolver for the updateCookieCategory field.
+func (r *mutationResolver) UpdateCookieCategory(ctx context.Context, input types.UpdateCookieCategoryInput) (*types.UpdateCookieCategoryPayload, error) {
+	if err := r.authorize(ctx, input.ID, probo.ActionCookieCategoryUpdate); err != nil {
+		return nil, err
+	}
+
+	var cookies *coredata.CookieItems
+	if input.Cookies != nil {
+		items := make(coredata.CookieItems, 0, len(input.Cookies))
+		for _, c := range input.Cookies {
+			items = append(items, *c)
+		}
+		cookies = &items
+	}
+
+	category, err := r.consent.UpdateCookieCategory(
+		ctx,
+		consent.UpdateCookieCategoryRequest{
+			ID:          input.ID,
+			Name:        input.Name,
+			Description: input.Description,
+			Rank:        input.Rank,
+			Cookies:     cookies,
+		},
+	)
+	if err != nil {
+		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+		}
+		r.logger.ErrorCtx(ctx, "cannot update cookie category", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.UpdateCookieCategoryPayload{
+		CookieCategory: types.NewCookieCategory(category),
+	}, nil
+}
+
+// DeleteCookieCategory is the resolver for the deleteCookieCategory field.
+func (r *mutationResolver) DeleteCookieCategory(ctx context.Context, input types.DeleteCookieCategoryInput) (*types.DeleteCookieCategoryPayload, error) {
+	if err := r.authorize(ctx, input.ID, probo.ActionCookieCategoryDelete); err != nil {
+		return nil, err
+	}
+
+	err := r.consent.DeleteCookieCategory(ctx, input.ID)
+	if err != nil {
+		if errors.Is(err, consent.ErrCannotDeleteRequiredCategory) {
+			return nil, gqlutils.Invalidf(ctx, "cannot delete a required cookie category")
+		}
+		r.logger.ErrorCtx(ctx, "cannot delete cookie category", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.DeleteCookieCategoryPayload{
+		DeletedCookieCategoryID: input.ID,
+	}, nil
+}
+
 // Organization is the resolver for the organization field.
 func (r *obligationResolver) Organization(ctx context.Context, obj *types.Obligation) (*types.Organization, error) {
 	if err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
@@ -7246,6 +7595,28 @@ func (r *organizationResolver) WebhookSubscriptions(ctx context.Context, obj *ty
 	return types.NewWebhookSubscriptionConnection(page, r, obj.ID), nil
 }
 
+// CookieBanners is the resolver for the cookieBanners field.
+func (r *organizationResolver) CookieBanners(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.CookieBannerOrderBy) (*types.CookieBannerConnection, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionCookieBannerList); err != nil {
+		return nil, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.CookieBannerOrderField]{
+		Field:     coredata.CookieBannerOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	p, err := r.consent.ListCookieBannersForOrganizationID(ctx, obj.ID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list cookie banners", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewCookieBannerConnection(p, r, obj.ID, r.baseURL), nil
+}
+
 // Permission is the resolver for the permission field.
 func (r *organizationResolver) Permission(ctx context.Context, obj *types.Organization, action string) (bool, error) {
 	return r.Resolver.Permission(ctx, obj, action)
@@ -7723,6 +8094,15 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 				return nil, err
 			}
 			return types.NewWebhookSubscription(wc), nil
+		}
+	case coredata.CookieBannerEntityType:
+		action = probo.ActionCookieBannerGet
+		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
+			banner, err := r.consent.GetCookieBanner(ctx, id)
+			if err != nil {
+				return nil, err
+			}
+			return types.NewCookieBanner(banner, r.baseURL), nil
 		}
 	default:
 	}
@@ -9762,12 +10142,30 @@ func (r *Resolver) ComplianceFramework() schema.ComplianceFrameworkResolver {
 	return &complianceFrameworkResolver{r}
 }
 
+// ConsentRecordConnection returns schema.ConsentRecordConnectionResolver implementation.
+func (r *Resolver) ConsentRecordConnection() schema.ConsentRecordConnectionResolver {
+	return &consentRecordConnectionResolver{r}
+}
+
 // Control returns schema.ControlResolver implementation.
 func (r *Resolver) Control() schema.ControlResolver { return &controlResolver{r} }
 
 // ControlConnection returns schema.ControlConnectionResolver implementation.
 func (r *Resolver) ControlConnection() schema.ControlConnectionResolver {
 	return &controlConnectionResolver{r}
+}
+
+// CookieBanner returns schema.CookieBannerResolver implementation.
+func (r *Resolver) CookieBanner() schema.CookieBannerResolver { return &cookieBannerResolver{r} }
+
+// CookieBannerConnection returns schema.CookieBannerConnectionResolver implementation.
+func (r *Resolver) CookieBannerConnection() schema.CookieBannerConnectionResolver {
+	return &cookieBannerConnectionResolver{r}
+}
+
+// CookieCategoryConnection returns schema.CookieCategoryConnectionResolver implementation.
+func (r *Resolver) CookieCategoryConnection() schema.CookieCategoryConnectionResolver {
+	return &cookieCategoryConnectionResolver{r}
 }
 
 // CustomDomain returns schema.CustomDomainResolver implementation.
@@ -10069,8 +10467,12 @@ type auditResolver struct{ *Resolver }
 type auditConnectionResolver struct{ *Resolver }
 type complianceExternalURLResolver struct{ *Resolver }
 type complianceFrameworkResolver struct{ *Resolver }
+type consentRecordConnectionResolver struct{ *Resolver }
 type controlResolver struct{ *Resolver }
 type controlConnectionResolver struct{ *Resolver }
+type cookieBannerResolver struct{ *Resolver }
+type cookieBannerConnectionResolver struct{ *Resolver }
+type cookieCategoryConnectionResolver struct{ *Resolver }
 type customDomainResolver struct{ *Resolver }
 type dataProtectionImpactAssessmentResolver struct{ *Resolver }
 type dataProtectionImpactAssessmentConnectionResolver struct{ *Resolver }

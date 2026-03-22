@@ -6,6 +6,7 @@ import (
 	"context"
 
 	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/consent"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/probo"
@@ -13,9 +14,10 @@ import (
 )
 
 type Resolver struct {
-	proboSvc *probo.Service
-	iamSvc   *iam.Service
-	logger   *log.Logger
+	proboSvc   *probo.Service
+	consentSvc *consent.Service
+	iamSvc     *iam.Service
+	logger     *log.Logger
 }
 
 func (r *Resolver) MustAuthorize(ctx context.Context, entityID gid.GID, action iam.Action) {

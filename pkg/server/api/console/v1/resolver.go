@@ -27,6 +27,7 @@ import (
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/consent"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/gid"
@@ -44,17 +45,20 @@ type (
 	Resolver struct {
 		authorize         authz.AuthorizeFunc
 		probo             *probo.Service
+		consent           *consent.Service
 		iam               *iam.Service
 		esign             *esign.Service
 		mailman           *mailman.Service
 		logger            *log.Logger
 		customDomainCname string
+		baseURL           *baseurl.BaseURL
 	}
 )
 
 func NewMux(
 	logger *log.Logger,
 	proboSvc *probo.Service,
+	consentSvc *consent.Service,
 	iamSvc *iam.Service,
 	esignSvc *esign.Service,
 	mailmanSvc *mailman.Service,
@@ -68,7 +72,16 @@ func NewMux(
 
 	safeRedirect := &saferedirect.SafeRedirect{AllowedHost: baseURL.Host()}
 
-	graphqlHandler := NewGraphQLHandler(iamSvc, proboSvc, esignSvc, mailmanSvc, customDomainCname, logger)
+	graphqlHandler := NewGraphQLHandler(
+		iamSvc,
+		proboSvc,
+		consentSvc,
+		esignSvc,
+		mailmanSvc,
+		customDomainCname,
+		baseURL,
+		logger,
+	)
 
 	r.Group(func(r chi.Router) {
 		r.Use(authn.NewSessionMiddleware(iamSvc, cookieConfig))

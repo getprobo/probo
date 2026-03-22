@@ -91,6 +91,9 @@ const (
 	MailingListSubscriberEntityType            uint16 = 65
 	MailingListUpdateEntityType                uint16 = 66
 	FindingEntityType                          uint16 = 67
+	CookieBannerEntityType                     uint16 = 68
+	CookieCategoryEntityType                   uint16 = 69
+	ConsentRecordEntityType                    uint16 = 70
 )
 
 func NewEntityFromID(id gid.GID) (any, bool) {
@@ -223,6 +226,12 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &MailingListSubscriber{ID: id}, true
 	case MailingListUpdateEntityType:
 		return &MailingListUpdate{ID: id}, true
+	case CookieBannerEntityType:
+		return &CookieBanner{ID: id}, true
+	case CookieCategoryEntityType:
+		return &CookieCategory{ID: id}, true
+	case ConsentRecordEntityType:
+		return &ConsentRecord{ID: id}, true
 	default:
 		return nil, false
 	}

@@ -32,6 +32,7 @@ import { riskRoutes } from "./routes/riskRoutes";
 import { snapshotsRoutes } from "./routes/snapshotsRoutes";
 import { statesOfApplicabilityRoutes } from "./routes/statesOfApplicabilityRoutes";
 import { taskRoutes } from "./routes/taskRoutes";
+import { cookieBannerRoutes } from "./routes/cookieBannerRoutes";
 import { vendorRoutes } from "./routes/vendorRoutes";
 
 const routes = [
@@ -228,6 +229,7 @@ const routes = [
           ...rightsRequestRoutes,
           ...processingActivityRoutes,
           ...statesOfApplicabilityRoutes,
+          ...cookieBannerRoutes,
           ...compliancePageRoutes,
           ...snapshotsRoutes,
           {

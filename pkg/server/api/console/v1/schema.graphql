@@ -2018,6 +2018,14 @@ type Organization implements Node {
         orderBy: WebhookSubscriptionOrder
     ): WebhookSubscriptionConnection! @goField(forceResolver: true)
 
+    cookieBanners(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: CookieBannerOrder
+    ): CookieBannerConnection! @goField(forceResolver: true)
+
     createdAt: Datetime!
     updatedAt: Datetime!
 
@@ -3428,6 +3436,48 @@ type SnapshotEdge {
     node: Snapshot!
 }
 
+type CookieBannerConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.CookieBannerConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [CookieBannerEdge!]!
+    pageInfo: PageInfo!
+}
+
+type CookieBannerEdge {
+    cursor: CursorKey!
+    node: CookieBanner!
+}
+
+type CookieCategoryConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.CookieCategoryConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [CookieCategoryEdge!]!
+    pageInfo: PageInfo!
+}
+
+type CookieCategoryEdge {
+    cursor: CursorKey!
+    node: CookieCategory!
+}
+
+type ConsentRecordConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ConsentRecordConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [ConsentRecordEdge!]!
+    pageInfo: PageInfo!
+}
+
+type ConsentRecordEdge {
+    cursor: CursorKey!
+    node: ConsentRecord!
+}
+
 type File {
     id: ID!
     mimeType: String!
@@ -3841,6 +3891,31 @@ type Mutation {
     deleteCustomDomain(
         input: DeleteCustomDomainInput!
     ): DeleteCustomDomainPayload!
+    # Cookie Banner mutations
+    createCookieBanner(
+        input: CreateCookieBannerInput!
+    ): CreateCookieBannerPayload!
+    updateCookieBanner(
+        input: UpdateCookieBannerInput!
+    ): UpdateCookieBannerPayload!
+    deleteCookieBanner(
+        input: DeleteCookieBannerInput!
+    ): DeleteCookieBannerPayload!
+    publishCookieBanner(
+        input: PublishCookieBannerInput!
+    ): PublishCookieBannerPayload!
+    disableCookieBanner(
+        input: DisableCookieBannerInput!
+    ): DisableCookieBannerPayload!
+    createCookieCategory(
+        input: CreateCookieCategoryInput!
+    ): CreateCookieCategoryPayload!
+    updateCookieCategory(
+        input: UpdateCookieCategoryInput!
+    ): UpdateCookieCategoryPayload!
+    deleteCookieCategory(
+        input: DeleteCookieCategoryInput!
+    ): DeleteCookieCategoryPayload!
 }
 
 # Input Types
@@ -5933,6 +6008,42 @@ enum ElectronicSignatureEventSource
         )
 }
 
+enum CookieBannerState
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.CookieBannerState"
+    ) {
+    DRAFT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CookieBannerStateDraft"
+        )
+    PUBLISHED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CookieBannerStatePublished"
+        )
+    DISABLED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CookieBannerStateDisabled"
+        )
+}
+
+enum ConsentAction
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.ConsentAction"
+    ) {
+    ACCEPT_ALL
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ConsentActionAcceptAll"
+        )
+    REJECT_ALL
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ConsentActionRejectAll"
+        )
+    CUSTOMIZE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ConsentActionCustomize"
+        )
+}
+
 type ElectronicSignature implements Node {
     id: ID!
     status: ElectronicSignatureStatus!
@@ -5955,4 +6066,254 @@ type ElectronicSignatureEvent {
     actorUserAgent: String!
     occurredAt: Datetime!
     createdAt: Datetime!
+}
+
+type CookieBannerTheme
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.CookieBannerTheme"
+    ) {
+    primaryColor: String!
+    primaryTextColor: String!
+    secondaryColor: String!
+    secondaryTextColor: String!
+    backgroundColor: String!
+    textColor: String!
+    secondaryTextBodyColor: String!
+    borderColor: String!
+    fontFamily: String!
+    borderRadius: Int!
+    position: String!
+    revisitPosition: String!
+}
+
+type CookieBanner implements Node {
+    id: ID!
+    name: String!
+    domain: String!
+    state: CookieBannerState!
+    title: String!
+    description: String!
+    acceptAllLabel: String!
+    rejectAllLabel: String!
+    savePreferencesLabel: String!
+    privacyPolicyUrl: String!
+    consentExpiryDays: Int!
+    version: Int!
+    theme: CookieBannerTheme! @goField(forceResolver: true)
+    categories(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: CookieCategoryOrder
+    ): CookieCategoryConnection! @goField(forceResolver: true)
+    consentRecords(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: ConsentRecordOrder
+    ): ConsentRecordConnection! @goField(forceResolver: true)
+    embedSnippet: String!
+    createdAt: Datetime!
+    updatedAt: Datetime!
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type CookieCategoryItem
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.CookieItem"
+    ) {
+    name: String!
+    duration: String!
+    description: String!
+}
+
+type CookieCategory implements Node {
+    id: ID!
+    name: String!
+    description: String!
+    required: Boolean!
+    rank: Int!
+    cookies: [CookieCategoryItem!]!
+    createdAt: Datetime!
+    updatedAt: Datetime!
+}
+
+type ConsentRecord implements Node {
+    id: ID!
+    visitorId: String!
+    consentData: String!
+    ipAddress: String
+    userAgent: String
+    action: ConsentAction!
+    bannerVersion: Int!
+    createdAt: Datetime!
+}
+
+input CreateCookieBannerInput {
+    organizationId: ID!
+    name: String!
+    domain: String
+}
+
+type CreateCookieBannerPayload {
+    cookieBanner: CookieBanner
+    cookieBannerEdge: CookieBannerEdge
+}
+
+input UpdateCookieBannerThemeInput
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.UpdateCookieBannerThemeInput"
+    ) {
+    primaryColor: String
+    primaryTextColor: String
+    secondaryColor: String
+    secondaryTextColor: String
+    backgroundColor: String
+    textColor: String
+    secondaryTextBodyColor: String
+    borderColor: String
+    fontFamily: String
+    borderRadius: Int
+    position: String
+    revisitPosition: String
+}
+
+input UpdateCookieBannerInput {
+    id: ID!
+    name: String
+    domain: String
+    title: String
+    description: String
+    acceptAllLabel: String
+    rejectAllLabel: String
+    savePreferencesLabel: String
+    privacyPolicyUrl: String
+    consentExpiryDays: Int
+    theme: UpdateCookieBannerThemeInput
+}
+
+type UpdateCookieBannerPayload {
+    cookieBanner: CookieBanner
+}
+
+input DeleteCookieBannerInput {
+    id: ID!
+}
+
+type DeleteCookieBannerPayload {
+    deletedCookieBannerId: ID!
+}
+
+input PublishCookieBannerInput {
+    id: ID!
+}
+
+type PublishCookieBannerPayload {
+    cookieBanner: CookieBanner
+}
+
+input DisableCookieBannerInput {
+    id: ID!
+}
+
+type DisableCookieBannerPayload {
+    cookieBanner: CookieBanner
+}
+
+input CookieCategoryItemInput
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.CookieItem"
+    ) {
+    name: String!
+    duration: String!
+    description: String!
+}
+
+input CreateCookieCategoryInput {
+    cookieBannerId: ID!
+    name: String!
+    description: String
+    rank: Int
+    cookies: [CookieCategoryItemInput!]
+}
+
+type CreateCookieCategoryPayload {
+    cookieCategory: CookieCategory
+}
+
+input UpdateCookieCategoryInput {
+    id: ID!
+    name: String
+    description: String
+    rank: Int
+    cookies: [CookieCategoryItemInput!]
+}
+
+type UpdateCookieCategoryPayload {
+    cookieCategory: CookieCategory
+}
+
+input DeleteCookieCategoryInput {
+    id: ID!
+}
+
+type DeleteCookieCategoryPayload {
+    deletedCookieCategoryId: ID!
+}
+
+input CookieBannerOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.CookieBannerOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: CookieBannerOrderField!
+}
+
+enum CookieBannerOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.CookieBannerOrderField"
+    ) {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CookieBannerOrderFieldCreatedAt"
+        )
+}
+
+input CookieCategoryOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.CookieCategoryOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: CookieCategoryOrderField!
+}
+
+enum CookieCategoryOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.CookieCategoryOrderField"
+    ) {
+    RANK
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CookieCategoryOrderFieldRank"
+        )
+}
+
+input ConsentRecordOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ConsentRecordOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: ConsentRecordOrderField!
+}
+
+enum ConsentRecordOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.ConsentRecordOrderField"
+    ) {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ConsentRecordOrderFieldCreatedAt"
+        )
 }
