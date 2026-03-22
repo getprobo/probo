@@ -1,10 +1,11 @@
 import type { GraphQLError } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
-import { Button, Field, useToast } from "@probo/ui";
-import { useEffect, useRef, useState } from "react";
+import { Button, Field, Google, Microsoft, useToast } from "@probo/ui";
+import { type ComponentProps, Suspense, useEffect, useRef, useState } from "react";
 import {
   type PreloadedQuery,
+  useLazyLoadQuery,
   useMutation,
   usePreloadedQuery,
 } from "react-relay";
@@ -16,6 +17,7 @@ import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { getPathPrefix } from "#/utils/pathPrefix";
 
 import type { ConnectPageMutation, SendMagicLinkInput } from "./__generated__/ConnectPageMutation.graphql";
+import type { ConnectPageOIDCQuery } from "./__generated__/ConnectPageOIDCQuery.graphql";
 import type { ConnectPageQuery } from "./__generated__/ConnectPageQuery.graphql";
 
 export const connectPageQuery = graphql`
@@ -28,6 +30,15 @@ export const connectPageQuery = graphql`
   }
 `;
 
+const oidcProvidersQuery = graphql`
+  query ConnectPageOIDCQuery {
+    oidcProviders {
+      name
+      loginURL
+    }
+  }
+`;
+
 const sendMagicLinkMutation = graphql`
   mutation ConnectPageMutation($input: SendMagicLinkInput!) {
     sendMagicLink(input: $input) {
@@ -36,6 +47,14 @@ const sendMagicLinkMutation = graphql`
   }
 `;
 
+const providerIcons: Record<
+  string,
+  (props: ComponentProps<"svg">) => React.ReactNode
+> = {
+  google: Google,
+  microsoft: Microsoft,
+};
+
 const schema = z.object({
   email: z.string().email(),
 });
@@ -43,6 +62,58 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>;
 
 const timerDurationSeconds = 60;
+
+function Divider({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="relative my-6 w-full">
+      <div className="border-t border-border-mid" />
+      <span className="px-4 text-xs uppercase text-txt-secondary bg-level-0 absolute top-0 left-1/2 -translate-1/2">
+        {children}
+      </span>
+    </div>
+  );
+}
+
+function OIDCButtons({ safeContinueUrl }: { safeContinueUrl: string }) {
+  const { __ } = useTranslate();
+
+  const data = useLazyLoadQuery<ConnectPageOIDCQuery>(oidcProvidersQuery, {});
+
+  if (data.oidcProviders.length === 0) {
+    return null;
+  }
+
+  const continueUrl = new URL(safeContinueUrl);
+
+  return (
+    <>
+      {data.oidcProviders.map((provider) => {
+        const Icon = providerIcons[provider.name];
+        return (
+          <Button
+            key={provider.name}
+            variant="secondary"
+            className="w-full h-10"
+            onClick={() => {
+              window.location.href
+                = provider.loginURL
+                  + "?continue="
+                  + encodeURIComponent(
+                    continueUrl.pathname + continueUrl.search,
+                  );
+            }}
+          >
+            <span className="flex items-center gap-2">
+              {Icon && <Icon width={18} height={18} />}
+              {__(`Sign in with ${provider.name.charAt(0).toUpperCase() + provider.name.slice(1)}`)}
+            </span>
+          </Button>
+        );
+      })}
+      <Divider>{__("Or")}</Divider>
+    </>
+  );
+}
 
 export function ConnectPage(props: {
   queryRef: PreloadedQuery<ConnectPageQuery>;
@@ -164,9 +235,15 @@ export function ConnectPage(props: {
         </h1>
         <p className="text-txt-tertiary">
           {__(
-            "Enter your email address to connect with a magic link and start requesting access to documents",
+            "Sign in to start requesting access to documents",
           )}
         </p>
+      </div>
+
+      <div className="space-y-4">
+        <Suspense fallback={null}>
+          <OIDCButtons safeContinueUrl={safeContinueUrl} />
+        </Suspense>
       </div>
 
       <form onSubmit={e => void handleSubmit(e)} className="space-y-6">

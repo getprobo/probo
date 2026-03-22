@@ -11,6 +11,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"strings"
 	"time"
 
 	"go.gearno.de/kit/log"
@@ -991,6 +992,22 @@ func (r *queryResolver) CurrentTrustCenter(ctx context.Context) (*types.TrustCen
 	response.Organization = types.NewOrganization(org)
 
 	return response, nil
+}
+
+// OidcProviders is the resolver for the oidcProviders field.
+func (r *queryResolver) OidcProviders(ctx context.Context) ([]*types.OIDCProviderInfo, error) {
+	providers := r.iam.OIDCService.EnabledProviders()
+	result := make([]*types.OIDCProviderInfo, 0, len(providers))
+
+	for _, p := range providers {
+		name := strings.ToLower(p.String())
+		result = append(result, &types.OIDCProviderInfo{
+			Name:     name,
+			LoginURL: r.baseURL.WithPath("/api/connect/v1/oidc/" + name + "/login").MustString(),
+		})
+	}
+
+	return result, nil
 }
 
 // IsUserAuthorized is the resolver for the isUserAuthorized field.
