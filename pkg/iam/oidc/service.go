@@ -57,6 +57,12 @@ type (
 		jwksURL           string
 		issuerValidator   func(string) bool
 		enterpriseChecker func(*idTokenClaims) bool
+
+		// trustProviderEmail indicates that the provider's directory
+		// guarantees email verification for enterprise accounts, so
+		// the email_verified claim does not need to be present in
+		// the ID token.
+		trustProviderEmail bool
 	}
 
 	UserInfo struct {
@@ -198,7 +204,8 @@ func NewService(
 				RedirectURL:  baseURL + "/api/connect/v1/oidc/microsoft/callback",
 				Scopes:       []string{"openid", "email", "profile"},
 			},
-			jwksURL: microsoftJWKSURL,
+			jwksURL:            microsoftJWKSURL,
+			trustProviderEmail: true,
 			issuerValidator: func(iss string) bool {
 				return strings.HasPrefix(iss, "https://login.microsoftonline.com/") &&
 					strings.HasSuffix(iss, "/v2.0")
@@ -224,11 +231,13 @@ func (s *Service) Run(ctx context.Context) error {
 
 	gcCtx, stopGC := context.WithCancel(context.WithoutCancel(ctx))
 	gc := NewGarbageCollector(s.pg, s.logger)
-	wg.Go(func() {
-		if err := gc.Run(gcCtx); err != nil {
-			cancel(fmt.Errorf("oidc garbage collector crashed: %w", err))
-		}
-	})
+	wg.Go(
+		func() {
+			if err := gc.Run(gcCtx); err != nil {
+				cancel(fmt.Errorf("oidc garbage collector crashed: %w", err))
+			}
+		},
+	)
 
 	<-ctx.Done()
 
@@ -377,7 +386,7 @@ func (s *Service) HandleCallback(
 		return nil, "", NewMissingEmailClaimError()
 	}
 
-	if !claims.isEmailVerified() {
+	if !info.trustProviderEmail && !claims.isEmailVerified() {
 		return nil, "", NewEmailNotVerifiedError()
 	}
 
