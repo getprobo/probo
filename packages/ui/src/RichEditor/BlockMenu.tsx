@@ -134,9 +134,16 @@ export function BlockMenu({ editor }: BlockMenuProps) {
     try {
       const pos = editor.view.posAtDOM(hoveredBlock, 0);
       const $pos = editor.state.doc.resolve(pos);
-      const rootPos = $pos.before(1);
-      const rootNode = $pos.node(1);
-      const insertPos = rootPos + rootNode.nodeSize;
+
+      let insertPos: number;
+      if ($pos.depth >= 1) {
+        const rootPos = $pos.before(1);
+        const rootNode = $pos.node(1);
+        insertPos = rootPos + rootNode.nodeSize;
+      } else {
+        const nodeAfter = $pos.nodeAfter;
+        insertPos = pos + (nodeAfter?.nodeSize ?? 1);
+      }
 
       editor.chain()
         .focus()
