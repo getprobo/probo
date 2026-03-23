@@ -41,7 +41,9 @@ const routes = [
     children: [
       {
         path: "login",
-        Component: lazy(() => import("./pages/iam/auth/sign-in/SignInPage")),
+        Component: lazy(
+          () => import("./pages/iam/auth/sign-in/SignInPageLoader"),
+        ),
       },
       {
         path: "password-login",
