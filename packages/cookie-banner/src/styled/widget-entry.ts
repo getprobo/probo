@@ -12,7 +12,10 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import type { ConsentChangeCallback } from "../headless/types";
+import type {
+  ConsentChangeCallback,
+  ConsentMode,
+} from "../headless/types";
 import { StyledBanner } from "./styled-banner";
 
 let _banner: StyledBanner | null = null;
@@ -21,6 +24,7 @@ function getScriptInfo(): {
   bannerId: string;
   baseUrl: string;
   lang: string;
+  consentMode: ConsentMode;
 } | null {
   const scripts = document.querySelectorAll(
     'script[data-banner-id]',
@@ -39,9 +43,13 @@ function getScriptInfo(): {
     document.documentElement.lang ||
     "en";
 
+  const rawMode = script.getAttribute("data-consent-mode");
+  const consentMode: ConsentMode =
+    rawMode === "opt-out" ? "opt-out" : "opt-in";
+
   // Derive base URL: remove /widget.js from the script src
   const baseUrl = src.replace(/\/widget\.js(\?.*)?$/, "");
-  return { bannerId, baseUrl, lang };
+  return { bannerId, baseUrl, lang, consentMode };
 }
 
 async function init(): Promise<void> {
@@ -52,6 +60,7 @@ async function init(): Promise<void> {
     bannerId: info.bannerId,
     baseUrl: info.baseUrl,
     lang: info.lang,
+    consentMode: info.consentMode,
   });
 
   await _banner.init();
@@ -77,6 +86,10 @@ export function onConsentChange(cb: ConsentChangeCallback): void {
 
 export function removeConsentChangeListener(cb: ConsentChangeCallback): void {
   _banner?.manager.removeConsentChangeListener(cb);
+}
+
+export function isGPCEnabled(): boolean {
+  return _banner?.manager.gpcEnabled ?? false;
 }
 
 export function reset(): void {

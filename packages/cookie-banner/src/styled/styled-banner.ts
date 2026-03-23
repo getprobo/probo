@@ -41,6 +41,12 @@ export class StyledBanner {
       }
     });
 
+    this.manager.onGPCHandled((config) => {
+      this.applyPlaceholders(config);
+      // GPC auto-rejected: show revisit icon so user can still change.
+      this.showRevisitIcon(config);
+    });
+
     this.manager.onConsentChange(() => {
       const config = this.manager.getConfig();
       if (config) this.applyPlaceholders(config);

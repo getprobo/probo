@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,15 +12,25 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-export { ConsentManager } from "./consent-manager";
-export { defaultTheme } from "./api";
-export type {
-  BannerCategory,
-  BannerConfig,
-  ConsentChangeCallback,
-  ConsentManagerConfig,
-  ConsentMode,
-  StoredConsent,
-  ThemeConfig,
-  WidgetStrings,
-} from "./types";
+package provider
+
+import (
+	"github.com/spf13/cobra"
+	"go.probo.inc/probo/pkg/cmd/cmdutil"
+	"go.probo.inc/probo/pkg/cmd/cookiebanner/provider/add"
+	"go.probo.inc/probo/pkg/cmd/cookiebanner/provider/list"
+	"go.probo.inc/probo/pkg/cmd/cookiebanner/provider/view"
+)
+
+func NewCmdProvider(f *cmdutil.Factory) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "provider <command>",
+		Short: "Browse the built-in cookie provider library",
+	}
+
+	cmd.AddCommand(list.NewCmdList(f))
+	cmd.AddCommand(view.NewCmdView(f))
+	cmd.AddCommand(add.NewCmdAdd(f))
+
+	return cmd
+}

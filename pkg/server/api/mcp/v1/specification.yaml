@@ -7020,6 +7020,111 @@ components:
           $ref: "#/components/schemas/GID"
           description: Deleted cookie category ID
 
+    CookieProviderCookie:
+      type: object
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/cookieprovider.Cookie
+      required:
+        - name
+        - duration
+        - description
+      properties:
+        name:
+          type: string
+          description: Cookie name or pattern
+        duration:
+          type: string
+          description: Cookie duration
+        description:
+          type: string
+          description: Cookie description
+
+    CookieProvider:
+      type: object
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/cookieprovider.Provider
+      required:
+        - key
+        - name
+        - description
+        - category
+        - website_url
+        - cookies
+      properties:
+        key:
+          type: string
+          description: Unique provider key
+        name:
+          type: string
+          description: Provider name
+        description:
+          type: string
+          description: Provider description
+        category:
+          type: string
+          description: Default cookie category (Necessary, Analytics, Marketing, Preferences)
+        website_url:
+          type: string
+          description: Provider website URL
+        cookies:
+          type: array
+          items:
+            $ref: "#/components/schemas/CookieProviderCookie"
+          description: Cookies set by this provider
+
+    ListCookieProvidersInput:
+      type: object
+      properties:
+        category:
+          type: string
+          description: Filter by cookie category (Necessary, Analytics, Marketing, Preferences)
+
+    ListCookieProvidersOutput:
+      type: object
+      required:
+        - cookie_providers
+      properties:
+        cookie_providers:
+          type: array
+          items:
+            $ref: "#/components/schemas/CookieProvider"
+
+    GetCookieProviderInput:
+      type: object
+      required:
+        - key
+      properties:
+        key:
+          type: string
+          description: Provider key
+
+    GetCookieProviderOutput:
+      type: object
+      required:
+        - cookie_provider
+      properties:
+        cookie_provider:
+          $ref: "#/components/schemas/CookieProvider"
+
+    AddCookiesFromProviderInput:
+      type: object
+      required:
+        - cookie_category_id
+        - provider_key
+      properties:
+        cookie_category_id:
+          $ref: "#/components/schemas/GID"
+          description: Cookie category ID to add cookies to
+        provider_key:
+          type: string
+          description: Provider key from the cookie provider library
+
+    AddCookiesFromProviderOutput:
+      type: object
+      required:
+        - cookie_category
+      properties:
+        cookie_category:
+          $ref: "#/components/schemas/CookieCategory"
+
     ListConsentRecordsInput:
       type: object
       required:
@@ -8303,6 +8408,32 @@ tools:
       $ref: "#/components/schemas/DeleteCookieCategoryInput"
     outputSchema:
       $ref: "#/components/schemas/DeleteCookieCategoryOutput"
+  - name: listCookieProviders
+    description: List known cookie providers from the built-in library, optionally filtered by category
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/ListCookieProvidersInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListCookieProvidersOutput"
+  - name: getCookieProvider
+    description: Get details of a known cookie provider by key
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/GetCookieProviderInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetCookieProviderOutput"
+  - name: addCookiesFromProvider
+    description: Add cookies from a known provider to an existing cookie category
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/AddCookiesFromProviderInput"
+    outputSchema:
+      $ref: "#/components/schemas/AddCookiesFromProviderOutput"
   - name: listConsentRecords
     description: List consent records for a cookie banner
     hints:

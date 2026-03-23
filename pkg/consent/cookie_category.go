@@ -21,6 +21,7 @@ import (
 	"time"
 
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/cookieprovider"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
@@ -42,6 +43,11 @@ type (
 		Description *string
 		Rank        *int
 		Cookies     *coredata.CookieItems
+	}
+
+	AddCookiesFromProviderRequest struct {
+		CookieCategoryID gid.GID
+		ProviderKey      string
 	}
 )
 
@@ -318,4 +324,66 @@ func (s *Service) DeleteCookieCategory(
 	}
 
 	return nil
+}
+
+func (r *AddCookiesFromProviderRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(r.CookieCategoryID, "cookie_category_id", validator.Required(), validator.GID(coredata.CookieCategoryEntityType))
+	v.Check(r.ProviderKey, "provider_key", validator.Required())
+
+	return v.Error()
+}
+
+func (s *Service) AddCookiesFromProvider(
+	ctx context.Context,
+	req AddCookiesFromProviderRequest,
+) (*coredata.CookieCategory, error) {
+	if err := req.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid request: %w", err)
+	}
+
+	provider, ok := cookieprovider.ByKey(req.ProviderKey)
+	if !ok {
+		return nil, fmt.Errorf("invalid request: %w", validator.ValidationErrors{
+			{Field: "provider_key", Code: validator.ErrorCodeInvalidFormat, Message: "unknown cookie provider"},
+		})
+	}
+
+	scope := coredata.NewScopeFromObjectID(req.CookieCategoryID)
+	category := &coredata.CookieCategory{}
+
+	err := s.pg.WithTx(
+		ctx,
+		func(conn pg.Conn) error {
+			if err := category.LoadByID(ctx, conn, scope, req.CookieCategoryID); err != nil {
+				return fmt.Errorf("cannot load cookie category: %w", err)
+			}
+
+			existing := make(map[string]bool, len(category.Cookies))
+			for _, c := range category.Cookies {
+				existing[c.Name] = true
+			}
+
+			for _, item := range provider.CookieItems() {
+				if !existing[item.Name] {
+					category.Cookies = append(category.Cookies, item)
+				}
+			}
+
+			now := time.Now()
+			category.UpdatedAt = now
+
+			if err := category.Update(ctx, conn, scope); err != nil {
+				return fmt.Errorf("cannot update cookie category: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot add cookies from provider: %w", err)
+	}
+
+	return category, nil
 }

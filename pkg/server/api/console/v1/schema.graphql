@@ -3492,6 +3492,8 @@ type File {
 type Query {
     node(id: ID!): Node!
     viewer: Viewer!
+    cookieProviders(category: String): [CookieProvider!]!
+    cookieProvider(key: String!): CookieProvider
 }
 
 type Mutation {
@@ -3916,6 +3918,9 @@ type Mutation {
     deleteCookieCategory(
         input: DeleteCookieCategoryInput!
     ): DeleteCookieCategoryPayload!
+    addCookiesFromProvider(
+        input: AddCookiesFromProviderInput!
+    ): AddCookiesFromProviderPayload!
 }
 
 # Input Types
@@ -6262,6 +6267,36 @@ input DeleteCookieCategoryInput {
 
 type DeleteCookieCategoryPayload {
     deletedCookieCategoryId: ID!
+}
+
+type CookieProvider
+    @goModel(
+        model: "go.probo.inc/probo/pkg/cookieprovider.Provider"
+    ) {
+    key: String!
+    name: String!
+    description: String!
+    category: String!
+    websiteUrl: String! @goField(name: "WebsiteURL")
+    cookies: [CookieProviderCookie!]!
+}
+
+type CookieProviderCookie
+    @goModel(
+        model: "go.probo.inc/probo/pkg/cookieprovider.Cookie"
+    ) {
+    name: String!
+    duration: String!
+    description: String!
+}
+
+input AddCookiesFromProviderInput {
+    cookieCategoryId: ID!
+    providerKey: String!
+}
+
+type AddCookiesFromProviderPayload {
+    cookieCategory: CookieCategory
 }
 
 input CookieBannerOrder

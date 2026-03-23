@@ -13,6 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 import type { BannerConfig, ThemeConfig } from "./types";
+import { enqueueConsent, dequeueAllConsents } from "./storage";
 
 export type { BannerCategory, BannerConfig, ThemeConfig } from "./types";
 
@@ -49,15 +50,15 @@ export async function fetchConfig(
   }
 }
 
-export async function postConsent(
+async function sendConsent(
   baseUrl: string,
   bannerId: string,
   visitorId: string,
   consentData: Record<string, boolean>,
   action: string,
-): Promise<void> {
+): Promise<boolean> {
   try {
-    await fetch(`${baseUrl}/${bannerId}/consents`, {
+    const resp = await fetch(`${baseUrl}/${bannerId}/consents`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -66,7 +67,55 @@ export async function postConsent(
         action,
       }),
     });
+    return resp.ok;
   } catch {
-    // Silently fail — never break the customer's site
+    return false;
+  }
+}
+
+export async function postConsent(
+  baseUrl: string,
+  bannerId: string,
+  visitorId: string,
+  consentData: Record<string, boolean>,
+  action: string,
+): Promise<void> {
+  const ok = await sendConsent(
+    baseUrl,
+    bannerId,
+    visitorId,
+    consentData,
+    action,
+  );
+
+  if (!ok) {
+    enqueueConsent({
+      baseUrl,
+      bannerId,
+      visitorId,
+      consentData,
+      action,
+      timestamp: Date.now(),
+    });
+  }
+}
+
+export async function flushConsentQueue(): Promise<void> {
+  const queued = dequeueAllConsents();
+  for (const entry of queued) {
+    const ok = await sendConsent(
+      entry.baseUrl,
+      entry.bannerId,
+      entry.visitorId,
+      entry.consentData,
+      entry.action,
+    );
+
+    if (!ok) {
+      // Re-queue entries that still fail.
+      enqueueConsent(entry);
+      // Stop trying — if one fails, likely all will.
+      break;
+    }
   }
 }

@@ -12,15 +12,11 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-export { ConsentManager } from "./consent-manager";
-export { defaultTheme } from "./api";
-export type {
-  BannerCategory,
-  BannerConfig,
-  ConsentChangeCallback,
-  ConsentManagerConfig,
-  ConsentMode,
-  StoredConsent,
-  ThemeConfig,
-  WidgetStrings,
-} from "./types";
+export function isGPCEnabled(): boolean {
+  try {
+    const nav = navigator as unknown as Record<string, unknown>;
+    return nav.globalPrivacyControl === true;
+  } catch {
+    return false;
+  }
+}

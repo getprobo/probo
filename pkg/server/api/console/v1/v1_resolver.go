@@ -16,6 +16,7 @@ import (
 	pgx "github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/consent"
+	"go.probo.inc/probo/pkg/cookieprovider"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
@@ -857,6 +858,11 @@ func (r *cookieCategoryConnectionResolver) TotalCount(ctx context.Context, obj *
 
 	r.logger.ErrorCtx(ctx, "unsupported resolver")
 	return 0, gqlutils.Internal(ctx)
+}
+
+// Category is the resolver for the category field.
+func (r *cookieProviderResolver) Category(ctx context.Context, obj *cookieprovider.Provider) (string, error) {
+	return string(obj.Category), nil
 }
 
 // Permission is the resolver for the permission field.
@@ -6615,6 +6621,32 @@ func (r *mutationResolver) DeleteCookieCategory(ctx context.Context, input types
 	}, nil
 }
 
+// AddCookiesFromProvider is the resolver for the addCookiesFromProvider field.
+func (r *mutationResolver) AddCookiesFromProvider(ctx context.Context, input types.AddCookiesFromProviderInput) (*types.AddCookiesFromProviderPayload, error) {
+	if err := r.authorize(ctx, input.CookieCategoryID, probo.ActionCookieCategoryUpdate); err != nil {
+		return nil, err
+	}
+
+	category, err := r.consent.AddCookiesFromProvider(
+		ctx,
+		consent.AddCookiesFromProviderRequest{
+			CookieCategoryID: input.CookieCategoryID,
+			ProviderKey:      input.ProviderKey,
+		},
+	)
+	if err != nil {
+		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+		}
+		r.logger.ErrorCtx(ctx, "cannot add cookies from provider", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.AddCookiesFromProviderPayload{
+		CookieCategory: types.NewCookieCategory(category),
+	}, nil
+}
+
 // Organization is the resolver for the organization field.
 func (r *obligationResolver) Organization(ctx context.Context, obj *types.Obligation) (*types.Organization, error) {
 	if err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
@@ -8141,6 +8173,33 @@ func (r *queryResolver) Viewer(ctx context.Context) (*types.Viewer, error) {
 	}
 
 	return &types.Viewer{ID: viewerID}, nil
+}
+
+// CookieProviders is the resolver for the cookieProviders field.
+func (r *queryResolver) CookieProviders(ctx context.Context, category *string) ([]*cookieprovider.Provider, error) {
+	var providers []cookieprovider.Provider
+	if category != nil {
+		providers = cookieprovider.ByCategory(cookieprovider.Category(*category))
+	} else {
+		providers = cookieprovider.All()
+	}
+
+	result := make([]*cookieprovider.Provider, len(providers))
+	for i := range providers {
+		result[i] = &providers[i]
+	}
+
+	return result, nil
+}
+
+// CookieProvider is the resolver for the cookieProvider field.
+func (r *queryResolver) CookieProvider(ctx context.Context, key string) (*cookieprovider.Provider, error) {
+	p, ok := cookieprovider.ByKey(key)
+	if !ok {
+		return nil, nil
+	}
+
+	return &p, nil
 }
 
 // DownloadURL is the resolver for the downloadUrl field.
@@ -10168,6 +10227,9 @@ func (r *Resolver) CookieCategoryConnection() schema.CookieCategoryConnectionRes
 	return &cookieCategoryConnectionResolver{r}
 }
 
+// CookieProvider returns schema.CookieProviderResolver implementation.
+func (r *Resolver) CookieProvider() schema.CookieProviderResolver { return &cookieProviderResolver{r} }
+
 // CustomDomain returns schema.CustomDomainResolver implementation.
 func (r *Resolver) CustomDomain() schema.CustomDomainResolver { return &customDomainResolver{r} }
 
@@ -10473,6 +10535,7 @@ type controlConnectionResolver struct{ *Resolver }
 type cookieBannerResolver struct{ *Resolver }
 type cookieBannerConnectionResolver struct{ *Resolver }
 type cookieCategoryConnectionResolver struct{ *Resolver }
+type cookieProviderResolver struct{ *Resolver }
 type customDomainResolver struct{ *Resolver }
 type dataProtectionImpactAssessmentResolver struct{ *Resolver }
 type dataProtectionImpactAssessmentConnectionResolver struct{ *Resolver }

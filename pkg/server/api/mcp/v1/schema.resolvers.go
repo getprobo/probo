@@ -13,6 +13,7 @@ import (
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"go.probo.inc/probo/pkg/consent"
+	"go.probo.inc/probo/pkg/cookieprovider"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
@@ -3573,4 +3574,47 @@ func (r *Resolver) ListConsentRecordsTool(ctx context.Context, req *mcp.CallTool
 	}
 
 	return nil, types.NewListConsentRecordsOutput(p), nil
+}
+
+func (r *Resolver) ListCookieProvidersTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListCookieProvidersInput) (*mcp.CallToolResult, types.ListCookieProvidersOutput, error) {
+	var providers []cookieprovider.Provider
+	if input.Category != nil {
+		providers = cookieprovider.ByCategory(cookieprovider.Category(*input.Category))
+	} else {
+		providers = cookieprovider.All()
+	}
+
+	return nil, types.ListCookieProvidersOutput{
+		CookieProviders: providers,
+	}, nil
+}
+
+func (r *Resolver) GetCookieProviderTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetCookieProviderInput) (*mcp.CallToolResult, types.GetCookieProviderOutput, error) {
+	provider, ok := cookieprovider.ByKey(input.Key)
+	if !ok {
+		return nil, types.GetCookieProviderOutput{}, fmt.Errorf("cannot get cookie provider: unknown provider key %q", input.Key)
+	}
+
+	return nil, types.GetCookieProviderOutput{
+		CookieProvider: provider,
+	}, nil
+}
+
+func (r *Resolver) AddCookiesFromProviderTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddCookiesFromProviderInput) (*mcp.CallToolResult, types.AddCookiesFromProviderOutput, error) {
+	r.MustAuthorize(ctx, input.CookieCategoryID, probo.ActionCookieCategoryUpdate)
+
+	category, err := r.consentSvc.AddCookiesFromProvider(
+		ctx,
+		consent.AddCookiesFromProviderRequest{
+			CookieCategoryID: input.CookieCategoryID,
+			ProviderKey:      input.ProviderKey,
+		},
+	)
+	if err != nil {
+		return nil, types.AddCookiesFromProviderOutput{}, fmt.Errorf("cannot add cookies from provider: %w", err)
+	}
+
+	return nil, types.AddCookiesFromProviderOutput{
+		CookieCategory: types.NewCookieCategory(category),
+	}, nil
 }

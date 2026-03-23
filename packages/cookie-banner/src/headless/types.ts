@@ -67,10 +67,13 @@ export type ConsentChangeCallback = (
   consents: Record<string, boolean>,
 ) => void;
 
+export type ConsentMode = "opt-in" | "opt-out";
+
 export interface ConsentManagerConfig {
   bannerId: string;
   baseUrl: string;
   lang?: string;
+  consentMode?: ConsentMode;
 }
 
 export interface WidgetStrings {
