@@ -14,13 +14,12 @@ import { Text } from "@tiptap/extension-text";
 import { Underline } from "@tiptap/extension-underline";
 import { Dropcursor, Gapcursor, UndoRedo } from "@tiptap/extensions";
 import { type Content, EditorContent, useEditor, useEditorState } from "@tiptap/react";
-import { BubbleMenu } from "@tiptap/react/menus";
 import { type ComponentProps, useEffect, useRef } from "react";
 import { tv } from "tailwind-variants";
 
 import { BlockMenu } from "./BlockMenu";
+import { BubbleMenu } from "./BubbleMenu";
 import { LinkExtension } from "./LinkExtension";
-import { MenuButton } from "./MenuButton";
 import { OptionsMenu } from "./OptionsMenu";
 
 const extensions = [
@@ -49,13 +48,8 @@ const extensions = [
 ];
 
 const richEditorVariants = tv({
-  slots: {
-    bubbleMenu: ["flex items-center gap-1 rounded-lg border border-border-mid bg-level-0 p-1 shadow-md"],
-    editor: ["h-full px-12"],
-  },
+  base: ["h-full px-12"],
 });
-
-const { bubbleMenu, editor: editorVariants } = richEditorVariants();
 
 type RichEditorProps = ComponentProps<"div"> & {
   content: string;
@@ -94,55 +88,10 @@ export function RichEditor(props: RichEditorProps) {
   }, [content, watchedContent, onChangeContent]);
 
   return (
-    <div className={editorVariants({ className })}>
-      <BubbleMenu
-        editor={editor}
-        className={bubbleMenu()}
-      >
-        <MenuButton
-          label="Bold"
-          active={editor.isActive("bold")}
-          onClick={() => editor.chain().focus().toggleBold().run()}
-        />
-        <MenuButton
-          label="Italic"
-          active={editor.isActive("italic")}
-          onClick={() => editor.chain().focus().toggleItalic().run()}
-        />
-        <MenuButton
-          label="Underline"
-          active={editor.isActive("underline")}
-          onClick={() => editor.chain().focus().toggleUnderline().run()}
-        />
-        <MenuButton
-          label="Strike"
-          active={editor.isActive("strike")}
-          onClick={() => editor.chain().focus().toggleStrike().run()}
-        />
-        <MenuButton
-          label="Code"
-          active={editor.isActive("code")}
-          onClick={() => editor.chain().focus().toggleCode().run()}
-        />
-        <MenuButton
-          label="Link"
-          active={editor.isActive("link")}
-          onClick={() => {
-            if (editor.isActive("link")) {
-              editor.chain().focus().unsetLink().run();
-              return;
-            }
-            const url = window.prompt("URL");
-            if (url) {
-              editor.chain().focus().setLink({ href: url }).run();
-            }
-          }}
-        />
-      </BubbleMenu>
-
+    <div className={richEditorVariants({ className })}>
+      <BubbleMenu editor={editor} />
       <BlockMenu editor={editor} />
       <OptionsMenu editor={editor} />
-
       <EditorContent className="h-full" editor={editor} />
     </div>
   );

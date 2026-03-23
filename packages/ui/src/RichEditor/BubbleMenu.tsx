@@ -1,3 +1,4 @@
+import { CodeIcon, LinkIcon, TextBIcon, TextItalicIcon, TextStrikethroughIcon, TextUnderlineIcon } from "@phosphor-icons/react";
 import type { useEditor } from "@tiptap/react";
 import { BubbleMenu as BaseBubbleMenu } from "@tiptap/react/menus";
 import { tv } from "tailwind-variants";
@@ -21,32 +22,36 @@ export function BubbleMenu(props: BubbleMenuProps) {
       className={bubbleMenuVariants()}
     >
       <MenuButton
-        label="Bold"
         active={editor.isActive("bold")}
         onClick={() => editor.chain().focus().toggleBold().run()}
-      />
+      >
+        <TextBIcon size={16} weight="bold" />
+      </MenuButton>
       <MenuButton
-        label="Italic"
         active={editor.isActive("italic")}
         onClick={() => editor.chain().focus().toggleItalic().run()}
-      />
+      >
+        <TextItalicIcon size={16} weight="bold" />
+      </MenuButton>
       <MenuButton
-        label="Underline"
         active={editor.isActive("underline")}
         onClick={() => editor.chain().focus().toggleUnderline().run()}
-      />
+      >
+        <TextUnderlineIcon size={16} weight="bold" />
+      </MenuButton>
       <MenuButton
-        label="Strike"
         active={editor.isActive("strike")}
         onClick={() => editor.chain().focus().toggleStrike().run()}
-      />
+      >
+        <TextStrikethroughIcon size={16} weight="bold" />
+      </MenuButton>
       <MenuButton
-        label="Code"
         active={editor.isActive("code")}
         onClick={() => editor.chain().focus().toggleCode().run()}
-      />
+      >
+        <CodeIcon size={16} weight="bold" />
+      </MenuButton>
       <MenuButton
-        label="Link"
         active={editor.isActive("link")}
         onClick={() => {
           if (editor.isActive("link")) {
@@ -58,7 +63,9 @@ export function BubbleMenu(props: BubbleMenuProps) {
             editor.chain().focus().setLink({ href: url }).run();
           }
         }}
-      />
+      >
+        <LinkIcon size={16} weight="bold" />
+      </MenuButton>
     </BaseBubbleMenu>
   );
 }

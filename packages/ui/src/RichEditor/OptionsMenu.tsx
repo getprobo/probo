@@ -9,23 +9,22 @@ import {
   useFloatingRootContext,
   useInteractions,
 } from "@floating-ui/react";
+import { CodeBlockIcon, DotsSixVerticalIcon, ListBulletsIcon, ListNumbersIcon, QuotesIcon, TextHOneIcon, TextHThreeIcon, TextHTwoIcon, TextTIcon } from "@phosphor-icons/react";
 import { NodeSelection, TextSelection } from "@tiptap/pm/state";
 import type { EditorView } from "@tiptap/pm/view";
 import { type useEditor } from "@tiptap/react";
 import { type DragEvent, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { tv } from "tailwind-variants";
 
-import { IconChevronGrabberVertical } from "../Atoms/Icons";
-
 import { MenuButton } from "./MenuButton";
 
 const optionsMenuVariants = tv({
   slots: {
     trigger: [
-      "z-50 flex size-6 items-center justify-center",
+      "z-10 flex size-6 items-center justify-center",
       "rounded text-txt-tertiary hover:bg-subtle hover:text-txt-primary cursor-grab",
     ],
-    menu: ["flex items-center gap-1 rounded-lg border border-border-mid bg-level-0 p-1 shadow-md z-50"],
+    menu: ["rounded-lg border border-border-mid bg-level-0 p-1 shadow-md z-20"],
   },
 });
 
@@ -265,7 +264,7 @@ export function OptionsMenu({ editor }: OptionsMenuProps) {
         }}
         className={trigger()}
       >
-        <IconChevronGrabberVertical size={16} />
+        <DotsSixVerticalIcon size={20} weight="bold" />
       </button>
       {menuOpen && (
         <div
@@ -278,46 +277,63 @@ export function OptionsMenu({ editor }: OptionsMenuProps) {
           onMouseDown={e => e.preventDefault()}
           className={menu()}
         >
+          <div className="p-1 font-semibold text-sm">Turn into</div>
           <MenuButton
-            label="H1"
+            active={isNodeType("paragraph")}
+            onClick={() => handleAction(chain => chain.setParagraph())}
+          >
+            <TextTIcon size={16} weight="bold" />
+            Text
+          </MenuButton>
+          <MenuButton
             active={isNodeType("heading", { level: 1 })}
             onClick={() => handleAction(chain => chain.toggleHeading({ level: 1 }))}
-          />
+          >
+            <TextHOneIcon size={16} weight="bold" />
+            Heading 1
+          </MenuButton>
           <MenuButton
-            label="H2"
             active={isNodeType("heading", { level: 2 })}
             onClick={() => handleAction(chain => chain.toggleHeading({ level: 2 }))}
-          />
+          >
+            <TextHTwoIcon size={16} weight="bold" />
+            Heading 2
+          </MenuButton>
           <MenuButton
-            label="H3"
             active={isNodeType("heading", { level: 3 })}
             onClick={() => handleAction(chain => chain.toggleHeading({ level: 3 }))}
-          />
+          >
+            <TextHThreeIcon size={16} weight="bold" />
+            Heading 3
+          </MenuButton>
           <MenuButton
-            label="Bullet List"
             active={isNodeType("bulletList")}
             onClick={() => handleAction(chain => chain.toggleBulletList())}
-          />
+          >
+            <ListBulletsIcon size={16} weight="bold" />
+            Bullet List
+          </MenuButton>
           <MenuButton
-            label="Ordered List"
             active={isNodeType("orderedList")}
             onClick={() => handleAction(chain => chain.toggleOrderedList())}
-          />
+          >
+            <ListNumbersIcon size={16} weight="bold" />
+            Ordered List
+          </MenuButton>
           <MenuButton
-            label="Code"
-            active={isNodeType("code")}
-            onClick={() => handleAction(chain => chain.toggleCode())}
-          />
-          <MenuButton
-            label="Code Block"
             active={isNodeType("codeBlock")}
             onClick={() => handleAction(chain => chain.toggleCodeBlock())}
-          />
+          >
+            <CodeBlockIcon size={16} weight="bold" />
+            Code Block
+          </MenuButton>
           <MenuButton
-            label="Blockquote"
             active={isNodeType("blockquote")}
             onClick={() => handleAction(chain => chain.toggleBlockquote())}
-          />
+          >
+            <QuotesIcon size={16} weight="bold" />
+            Blockquote
+          </MenuButton>
         </div>
       )}
     </>
