@@ -1,7 +1,11 @@
+import type { PropsWithChildren } from "react";
 import { tv } from "tailwind-variants";
 
 const menuButtonVariants = tv({
-  base: ["px-2 py-1 text-sm rounded-sm font-semibold bg-level-0 hover:bg-subtle"],
+  base: [
+    "flex items-center gap-2 w-full",
+    "px-2 py-1.5 text-sm rounded-sm bg-level-0 hover:bg-subtle cursor-pointer",
+  ],
   variants: {
     active: {
       true: ["bg-active"],
@@ -10,19 +14,18 @@ const menuButtonVariants = tv({
 });
 
 type MenuButtonProps = {
-  label: string;
   active?: boolean;
   onClick: () => void;
 };
 
-export function MenuButton({ label, active, onClick }: MenuButtonProps) {
+export function MenuButton({ children, active, onClick }: PropsWithChildren<MenuButtonProps>) {
   return (
     <button
       type="button"
       onClick={onClick}
       className={menuButtonVariants({ active })}
     >
-      {label}
+      {children}
     </button>
   );
 }

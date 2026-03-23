@@ -9,21 +9,20 @@ import {
   useFloatingRootContext,
   useInteractions,
 } from "@floating-ui/react";
+import { CodeBlockIcon, ListBulletsIcon, ListNumbersIcon, MinusIcon, PlusIcon, QuotesIcon, TextHOneIcon, TextHThreeIcon, TextHTwoIcon, TextTIcon } from "@phosphor-icons/react";
 import { type useEditor } from "@tiptap/react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { tv } from "tailwind-variants";
-
-import { IconPlusSmall } from "../Atoms/Icons";
 
 import { MenuButton } from "./MenuButton";
 
 const blockMenuVariants = tv({
   slots: {
     trigger: [
-      "z-50 flex size-6 items-center justify-center",
+      "z-10 flex size-6 items-center justify-center",
       "rounded text-txt-tertiary hover:bg-subtle hover:text-txt-primary text-xl font-light cursor-pointer",
     ],
-    menu: ["flex items-center gap-1 rounded-lg border border-border-mid bg-level-0 p-1 shadow-md z-50"],
+    menu: ["rounded-lg border border-border-mid bg-level-0 p-1 shadow-md z-20"],
   },
 });
 
@@ -170,7 +169,7 @@ export function BlockMenu({ editor }: BlockMenuProps) {
         }}
         className={trigger()}
       >
-        <IconPlusSmall size={16} />
+        <PlusIcon size={16} weight="bold" />
       </button>
       {menuOpen && (
         <div
@@ -183,50 +182,69 @@ export function BlockMenu({ editor }: BlockMenuProps) {
           onMouseDown={e => e.preventDefault()}
           className={menu()}
         >
+          <div className="p-1 font-semibold text-sm">Style</div>
           <MenuButton
-            label="H1"
-            active={editor.isActive("heading", { level: 1 })}
+            active={false}
+            onClick={() => handleAction(chain => chain.setParagraph())}
+          >
+            <TextTIcon size={16} weight="bold" />
+            Text
+          </MenuButton>
+          <MenuButton
+            active={false}
             onClick={() => handleAction(chain => chain.toggleHeading({ level: 1 }))}
-          />
+          >
+            <TextHOneIcon size={16} weight="bold" />
+            Heading 1
+          </MenuButton>
           <MenuButton
-            label="H2"
-            active={editor.isActive("heading", { level: 2 })}
+            active={false}
             onClick={() => handleAction(chain => chain.toggleHeading({ level: 2 }))}
-          />
+          >
+            <TextHTwoIcon size={16} weight="bold" />
+            Heading 2
+          </MenuButton>
           <MenuButton
-            label="H3"
-            active={editor.isActive("heading", { level: 3 })}
+            active={false}
             onClick={() => handleAction(chain => chain.toggleHeading({ level: 3 }))}
-          />
+          >
+            <TextHThreeIcon size={16} weight="bold" />
+            Heading 3
+          </MenuButton>
           <MenuButton
-            label="Bullet List"
-            active={editor.isActive("bulletList")}
+            active={false}
             onClick={() => handleAction(chain => chain.toggleBulletList())}
-          />
+          >
+            <ListBulletsIcon size={16} weight="bold" />
+            Bullet List
+          </MenuButton>
           <MenuButton
-            label="Ordered List"
-            active={editor.isActive("orderedList")}
+            active={false}
             onClick={() => handleAction(chain => chain.toggleOrderedList())}
-          />
+          >
+            <ListNumbersIcon size={16} weight="bold" />
+            Ordered List
+          </MenuButton>
           <MenuButton
-            label="Code"
-            active={editor.isActive("code")}
-            onClick={() => handleAction(chain => chain.toggleCode())}
-          />
-          <MenuButton
-            label="Code Block"
-            active={editor.isActive("codeBlock")}
+            active={false}
             onClick={() => handleAction(chain => chain.toggleCodeBlock())}
-          />
+          >
+            <CodeBlockIcon size={16} weight="bold" />
+            Code Block
+          </MenuButton>
           <MenuButton
-            label="Blockquote"
-            active={editor.isActive("blockquote")}
+            active={false}
             onClick={() => handleAction(chain => chain.toggleBlockquote())}
-          />
+          >
+            <QuotesIcon size={16} weight="bold" />
+            Blockquote
+          </MenuButton>
           <MenuButton
-            label="Divider"
             onClick={() => handleAction(chain => chain.setHorizontalRule())}
-          />
+          >
+            <MinusIcon size={16} weight="bold" />
+            Divider
+          </MenuButton>
         </div>
       )}
     </>

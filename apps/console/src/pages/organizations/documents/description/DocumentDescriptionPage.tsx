@@ -9,6 +9,8 @@ import { useDebounceCallback } from "usehooks-ts";
 import type { DocumentDescriptionPage_updateContentMutation } from "#/__generated__/core/DocumentDescriptionPage_updateContentMutation.graphql";
 import type { DocumentDescriptionPageQuery } from "#/__generated__/core/DocumentDescriptionPageQuery.graphql";
 
+const autoSaveIntervalMs = 1000;
+
 export const documentDescriptionPageQuery = graphql`
   query DocumentDescriptionPageQuery($documentId: ID! $versionId: ID! $versionSpecified: Boolean!) {
     # We use this on /documents/:documentId/versions/:versionId/description
@@ -99,7 +101,7 @@ export function DocumentDescriptionPage(props: { queryRef: PreloadedQuery<Docume
         },
       });
     }, [currentVersion.id, updateContent, toast, __]),
-    500,
+    autoSaveIntervalMs,
   );
 
   return (
