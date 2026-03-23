@@ -5,6 +5,7 @@ import { Button, Field, Google, Microsoft, useToast } from "@probo/ui";
 import { type ComponentProps, useEffect, useRef, useState } from "react";
 import {
   type PreloadedQuery,
+  useFragment,
   useMutation,
   usePreloadedQuery,
 } from "react-relay";
@@ -16,6 +17,7 @@ import { useSafeContinueUrl } from "#/hooks/useSafeContinueUrl";
 import { getPathPrefix } from "#/utils/pathPrefix";
 
 import type { ConnectPageMutation, SendMagicLinkInput } from "./__generated__/ConnectPageMutation.graphql";
+import type { ConnectPageOIDCButtonFragment$key } from "./__generated__/ConnectPageOIDCButtonFragment.graphql";
 import type { ConnectPageQuery } from "./__generated__/ConnectPageQuery.graphql";
 
 export const connectPageQuery = graphql`
@@ -26,8 +28,7 @@ export const connectPageQuery = graphql`
       }
     }
     oidcProviders {
-      name
-      loginURL
+      ...ConnectPageOIDCButtonFragment
     }
   }
 `;
@@ -37,6 +38,13 @@ const sendMagicLinkMutation = graphql`
     sendMagicLink(input: $input) {
       success
     }
+  }
+`;
+
+const oidcButtonFragment = graphql`
+  fragment ConnectPageOIDCButtonFragment on OIDCProviderInfo {
+    name
+    loginURL
   }
 `;
 
@@ -71,7 +79,7 @@ function OIDCButtons({
   providers,
   safeContinueUrl,
 }: {
-  providers: ReadonlyArray<{ readonly name: string; readonly loginURL: string }>;
+  providers: ReadonlyArray<ConnectPageOIDCButtonFragment$key>;
   safeContinueUrl: URL;
 }) {
   const { __ } = useTranslate();
@@ -82,29 +90,47 @@ function OIDCButtons({
 
   return (
     <>
-      {providers.map((provider) => {
-        const Icon = providerIcons[provider.name];
-        return (
-          <Button
-            key={provider.name}
-            variant="secondary"
-            className="w-full h-10"
-            onClick={() => {
-              window.location.href
-                = provider.loginURL
-                  + "?continue="
-                  + encodeURIComponent(safeContinueUrl.toString());
-            }}
-          >
-            <span className="flex items-center gap-2">
-              {Icon && <Icon width={18} height={18} />}
-              {__(`Sign in with ${provider.name.charAt(0).toUpperCase() + provider.name.slice(1)}`)}
-            </span>
-          </Button>
-        );
-      })}
+      {providers.map((providerRef, index) => (
+        <OIDCButton
+          key={index}
+          providerRef={providerRef}
+          safeContinueUrl={safeContinueUrl}
+          __={__}
+        />
+      ))}
       <Divider>{__("Or")}</Divider>
     </>
+  );
+}
+
+function OIDCButton({
+  providerRef,
+  safeContinueUrl,
+  __,
+}: {
+  providerRef: ConnectPageOIDCButtonFragment$key;
+  safeContinueUrl: URL;
+  __: (s: string) => string;
+}) {
+  const provider = useFragment(oidcButtonFragment, providerRef);
+  const Icon = providerIcons[provider.name];
+
+  return (
+    <Button
+      variant="secondary"
+      className="w-full h-10"
+      onClick={() => {
+        window.location.href
+          = provider.loginURL
+            + "?continue="
+            + encodeURIComponent(safeContinueUrl.toString());
+      }}
+    >
+      <span className="flex items-center gap-2">
+        {Icon && <Icon width={18} height={18} />}
+        {__(`Sign in with ${provider.name.charAt(0).toUpperCase() + provider.name.slice(1)}`)}
+      </span>
+    </Button>
   );
 }
 
