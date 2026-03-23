@@ -2,7 +2,8 @@ import { formatError, type GraphQLError } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import { Button, Field, useToast } from "@probo/ui";
 import type { FormEventHandler } from "react";
-import { useLazyLoadQuery, useMutation } from "react-relay";
+import { useMutation, usePreloadedQuery } from "react-relay";
+import type { PreloadedQuery } from "react-relay";
 import { Link, matchPath, useLocation } from "react-router";
 import { graphql } from "relay-runtime";
 
@@ -23,7 +24,7 @@ const signInMutation = graphql`
   }
 `;
 
-const signInPageQuery = graphql`
+export const signInPageQuery = graphql`
   query SignInPageQuery {
     oidcProviders {
       ...OIDCButtonsFragment
@@ -31,13 +32,17 @@ const signInPageQuery = graphql`
   }
 `;
 
-export default function SignInPage() {
+type Props = {
+  queryRef: PreloadedQuery<SignInPageQuery>;
+};
+
+export default function SignInPage(props: Props) {
   const { __ } = useTranslate();
   const { toast } = useToast();
   const location = useLocation();
   const safeContinueUrl = useSafeContinueUrl();
 
-  const data = useLazyLoadQuery<SignInPageQuery>(signInPageQuery, {});
+  const data = usePreloadedQuery<SignInPageQuery>(signInPageQuery, props.queryRef);
 
   const [signIn, isSigningIn]
     = useMutation<SignInPageMutation>(signInMutation);
