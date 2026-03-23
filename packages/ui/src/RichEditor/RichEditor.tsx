@@ -7,73 +7,26 @@ import { HardBreak } from "@tiptap/extension-hard-break";
 import { Heading } from "@tiptap/extension-heading";
 import { HorizontalRule } from "@tiptap/extension-horizontal-rule";
 import { Italic } from "@tiptap/extension-italic";
-import { Link } from "@tiptap/extension-link";
 import { BulletList, ListItem, OrderedList } from "@tiptap/extension-list";
 import { Paragraph } from "@tiptap/extension-paragraph";
 import { Strike } from "@tiptap/extension-strike";
 import { Text } from "@tiptap/extension-text";
 import { Underline } from "@tiptap/extension-underline";
 import { Dropcursor, Gapcursor, UndoRedo } from "@tiptap/extensions";
-import { Plugin, PluginKey } from "@tiptap/pm/state";
-import { type Content, EditorContent, getAttributes, useEditor, useEditorState } from "@tiptap/react";
-import { BubbleMenu, FloatingMenu } from "@tiptap/react/menus";
-import { type ComponentProps, useEffect } from "react";
+import { type Content, EditorContent, useEditor, useEditorState } from "@tiptap/react";
+import { BubbleMenu } from "@tiptap/react/menus";
+import { type ComponentProps, useEffect, useRef } from "react";
 import { tv } from "tailwind-variants";
 
-export const ControlClickLink = Link.extend({
-  addProseMirrorPlugins: () => {
-    return [
-      new Plugin({
-        key: new PluginKey("handleControlClick"),
-        props: {
-          handleKeyDown: (view, event) => {
-            if (event.key === "Control" || event.key === "Meta") {
-              view.dom.classList.add("pointer-on-hovered-link");
-            }
-          },
-          handleDOMEvents: {
-            keyup: (view, event) => {
-              if (event.key === "Control" || event.key === "Meta") {
-                view.dom.classList.remove("pointer-on-hovered-link");
-              }
-            },
-          },
-          handleClick: (view, _, event) => {
-            const { ctrlKey, metaKey } = event; // Check for Ctrl (Windows) or Cmd (Mac)
-            const keyPressed = ctrlKey || metaKey;
-
-            if (keyPressed) {
-              // Get attributes of the mark at the clicked position
-              const attrs = getAttributes(view.state, "link");
-              const link = (event.target as Element | null)?.closest("a");
-
-              if (link && attrs.href) {
-                window.open(attrs.href as string, "_blank", "noopener,noreferrer"); // Open link in a new tab
-                return true; // Handle the event
-              }
-            }
-            return false; // Let other handlers run
-          },
-        },
-      }),
-    ];
-  },
-}).configure({
-  openOnClick: false,
-});
+import { BlockMenu } from "./BlockMenu";
+import { LinkExtension } from "./LinkExtension";
+import { MenuButton } from "./MenuButton";
+import { OptionsMenu } from "./OptionsMenu";
 
 const extensions = [
   Document,
-  Paragraph.configure({
-    HTMLAttributes: {
-      class: "text-base py-2",
-    },
-  }),
-  Text.configure({
-    HTMLAttributes: {
-      class: "text-base",
-    },
-  }),
+  Paragraph,
+  Text,
   Heading.configure({
     levels: [1, 2, 3],
   }),
@@ -83,7 +36,7 @@ const extensions = [
   Underline,
   Code,
   CodeBlock,
-  ControlClickLink,
+  LinkExtension,
   Blockquote,
   BulletList,
   OrderedList,
@@ -98,38 +51,11 @@ const extensions = [
 const richEditorVariants = tv({
   slots: {
     bubbleMenu: ["flex items-center gap-1 rounded-lg border border-border-mid bg-level-0 p-1 shadow-md"],
-    floatingMenu: ["flex items-center gap-1 rounded-lg border border-border-mid bg-level-0 p-1 shadow-md"],
-    menuButton: ["px-2 py-1 text-sm rounded-sm font-semibold bg-level-0 hover:bg-subtle"],
-    editor: ["h-full"],
-  },
-  variants: {
-    active: {
-      true: {
-        menuButton: ["bg-active"],
-      },
-    },
+    editor: ["h-full px-12"],
   },
 });
 
-const { bubbleMenu, floatingMenu, editor: editorVariants, menuButton } = richEditorVariants();
-
-type MenuButtonProps = {
-  label: string;
-  active?: boolean;
-  onClick: () => void;
-};
-
-function MenuButton({ label, active, onClick }: MenuButtonProps) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={menuButton({ active })}
-    >
-      {label}
-    </button>
-  );
-}
+const { bubbleMenu, editor: editorVariants } = richEditorVariants();
 
 type RichEditorProps = ComponentProps<"div"> & {
   content: string;
@@ -139,6 +65,8 @@ type RichEditorProps = ComponentProps<"div"> & {
 
 export function RichEditor(props: RichEditorProps) {
   const { className, content, disabled = false, onChangeContent } = props;
+
+  const previousContentRef = useRef<string>(content);
 
   const editor = useEditor({
     editorProps: {
@@ -159,7 +87,8 @@ export function RichEditor(props: RichEditorProps) {
   });
 
   useEffect(() => {
-    if (watchedContent !== content) {
+    if (watchedContent !== previousContentRef.current) {
+      previousContentRef.current = watchedContent;
       onChangeContent(watchedContent);
     }
   }, [content, watchedContent, onChangeContent]);
@@ -211,60 +140,10 @@ export function RichEditor(props: RichEditorProps) {
         />
       </BubbleMenu>
 
-      <FloatingMenu
-        editor={editor}
-        className={floatingMenu()}
-      >
-        <MenuButton
-          label="H1"
-          active={editor.isActive("heading", { level: 1 })}
-          onClick={() =>
-            editor.chain().focus().toggleHeading({ level: 1 }).run()}
-        />
-        <MenuButton
-          label="H2"
-          active={editor.isActive("heading", { level: 2 })}
-          onClick={() =>
-            editor.chain().focus().toggleHeading({ level: 2 }).run()}
-        />
-        <MenuButton
-          label="H3"
-          active={editor.isActive("heading", { level: 3 })}
-          onClick={() =>
-            editor.chain().focus().toggleHeading({ level: 3 }).run()}
-        />
-        <MenuButton
-          label="Bullet List"
-          active={editor.isActive("bulletList")}
-          onClick={() => editor.chain().focus().toggleBulletList().run()}
-        />
-        <MenuButton
-          label="Ordered List"
-          active={editor.isActive("orderedList")}
-          onClick={() => editor.chain().focus().toggleOrderedList().run()}
-        />
-        <MenuButton
-          label="Code"
-          active={editor.isActive("code")}
-          onClick={() => editor.chain().focus().toggleCode().run()}
-        />
-        <MenuButton
-          label="Code Block"
-          active={editor.isActive("codeBlock")}
-          onClick={() => editor.chain().focus().toggleCodeBlock().run()}
-        />
-        <MenuButton
-          label="Blockquote"
-          active={editor.isActive("blockquote")}
-          onClick={() => editor.chain().focus().toggleBlockquote().run()}
-        />
-        <MenuButton
-          label="Divider"
-          onClick={() => editor.chain().focus().setHorizontalRule().run()}
-        />
-      </FloatingMenu>
+      <BlockMenu editor={editor} />
+      <OptionsMenu editor={editor} />
 
-      <EditorContent className={editorVariants()} editor={editor} />
+      <EditorContent className="h-full" editor={editor} />
     </div>
   );
 }

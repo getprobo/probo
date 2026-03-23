@@ -284,36 +284,36 @@ button[data-cell]:focus-visible {
     outline-style: none !important;
 }
 
-.tiptap p { @apply py-2; }
+.tiptap p { @apply my-2; }
 
 .tiptap strong { @apply font-semibold; }
 
 .tiptap h1 {
-    @apply text-4xl font-semibold pt-4;
+    @apply text-2xl font-semibold mt-4;
 }
 
 .tiptap h2 {
-    @apply text-3xl font-semibold pt-3;
+    @apply text-xl font-semibold mt-3;
 }
 
 .tiptap h3 {
-    @apply text-2xl font-semibold pt-2;
+    @apply text-lg font-semibold mt-2;
 }
 
 .tiptap ul {
-    @apply list-disc list-inside py-2;
+    @apply list-disc list-inside my-2;
 
     li {
-        p { @apply inline-block py-0 }
+        p { @apply inline-block my-0 }
     }
     li::marker { @apply mx-2!; }
 }
 
 .tiptap ol {
-    @apply list-decimal list-inside py-2;
+    @apply list-decimal list-inside my-2;
 
     li {
-        p { @apply inline-block py-0 }
+        p { @apply inline-block my-0 }
     }
     li::marker { @apply mx-2!; }
 }
@@ -327,8 +327,8 @@ button[data-cell]:focus-visible {
 }
 
 .tiptap blockquote {
-    @apply py-2 pl-4 border-l-4 border-l-border-solid;
-    p { @apply py-0; }
+    @apply my-2 pl-4 border-l-4 border-l-border-solid;
+    p { @apply my-0; }
 }
 
 .tiptap hr {
@@ -336,7 +336,7 @@ button[data-cell]:focus-visible {
 }
 
 .tiptap pre {
-    @apply py-4 px-6 bg-border-solid rounded-lg text-sm;
+    @apply my-4 px-6 py-4 bg-border-solid rounded-lg text-sm;
 }
 
 .tiptap code {
