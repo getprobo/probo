@@ -139,7 +139,14 @@ export function OptionsMenu({ editor }: OptionsMenuProps) {
     try {
       const pos = editor.view.posAtDOM(hoveredBlock, 0);
       const $pos = editor.state.doc.resolve(pos);
-      return { node: $pos.node(1), pos: $pos.before(1) };
+      if ($pos.depth >= 1) {
+        return { node: $pos.node(1), pos: $pos.before(1) };
+      }
+      const nodeAfter = $pos.nodeAfter;
+      if (nodeAfter) {
+        return { node: nodeAfter, pos: pos };
+      }
+      return null;
     } catch {
       return null;
     }
@@ -161,10 +168,36 @@ export function OptionsMenu({ editor }: OptionsMenuProps) {
     applyCommand: (chain: ReturnType<typeof editor.chain>) => ReturnType<typeof editor.chain>,
   ) => {
     const data = getNodeAtHoveredBlock();
-    if (!data) return;
+    if (!data) {
+      setMenuOpen(false);
+      return;
+    }
 
     try {
       if (!data.node.isTextblock) {
+        if (!data.node.firstChild) {
+          const paragraph = editor.state.schema.nodes.paragraph.create();
+          editor.chain()
+            .focus()
+            .command(({ tr }) => {
+              tr.replaceWith(data.pos, data.pos + data.node.nodeSize, paragraph);
+              return true;
+            })
+            .run();
+
+          const $near = editor.state.doc.resolve(data.pos + 1);
+          const textPos = TextSelection.near($near).from;
+
+          applyCommand(
+            editor.chain()
+              .focus()
+              .setTextSelection(textPos),
+          ).run();
+
+          setMenuOpen(false);
+          return;
+        }
+
         let textBlock = data.node.firstChild;
         if (!textBlock) return;
         while (!textBlock.isTextblock && textBlock.firstChild) {
@@ -172,7 +205,7 @@ export function OptionsMenu({ editor }: OptionsMenuProps) {
         }
         if (!textBlock.isTextblock) return;
 
-        const firstChildSize = data.node.firstChild!.nodeSize;
+        const firstChildSize = data.node.firstChild.nodeSize;
         const paragraph = editor.state.schema.nodes.paragraph.create(
           null,
           textBlock.content,
@@ -254,6 +287,7 @@ export function OptionsMenu({ editor }: OptionsMenuProps) {
           menuRefs.setReference(node);
         }}
         {...getReferenceProps()}
+        onMouseDown={e => e.preventDefault()}
         draggable
         onDragStart={onDragStart}
         onDragEnd={() => setHoveredBlock(null)}
