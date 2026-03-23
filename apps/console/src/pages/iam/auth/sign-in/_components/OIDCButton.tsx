@@ -4,10 +4,11 @@ import type { ComponentProps } from "react";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
-import type { OIDCButtonsFragment$key } from "#/__generated__/iam/OIDCButtonsFragment.graphql";
+import type { OIDCButtonFragment$key } from "#/__generated__/iam/OIDCButtonFragment.graphql";
+import { useSafeContinueUrl } from "#/hooks/useSafeContinueUrl";
 
 const fragment = graphql`
-  fragment OIDCButtonsFragment on OIDCProviderInfo {
+  fragment OIDCButtonFragment on OIDCProviderInfo {
     name
     loginURL
   }
@@ -21,38 +22,13 @@ const providerIcons: Record<
   microsoft: Microsoft,
 };
 
-export function OIDCButtons({
-  providers,
-  safeContinueUrl,
+export function OIDCButton({
+  providerRef,
 }: {
-  providers: ReadonlyArray<OIDCButtonsFragment$key>;
-  safeContinueUrl: URL;
+  providerRef: OIDCButtonFragment$key;
 }) {
   const { __ } = useTranslate();
-
-  return (
-    <>
-      {providers.map((providerRef, index) => (
-        <OIDCButton
-          key={index}
-          providerRef={providerRef}
-          safeContinueUrl={safeContinueUrl}
-          __={__}
-        />
-      ))}
-    </>
-  );
-}
-
-function OIDCButton({
-  providerRef,
-  safeContinueUrl,
-  __,
-}: {
-  providerRef: OIDCButtonsFragment$key;
-  safeContinueUrl: URL;
-  __: (s: string) => string;
-}) {
+  const safeContinueUrl = useSafeContinueUrl();
   const provider = useFragment(fragment, providerRef);
   const Icon = providerIcons[provider.name];
 

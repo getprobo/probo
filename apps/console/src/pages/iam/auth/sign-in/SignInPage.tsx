@@ -2,8 +2,7 @@ import { formatError, type GraphQLError } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import { Button, Field, useToast } from "@probo/ui";
 import type { FormEventHandler } from "react";
-import { useMutation, usePreloadedQuery } from "react-relay";
-import type { PreloadedQuery } from "react-relay";
+import { type PreloadedQuery, useMutation, usePreloadedQuery } from "react-relay";
 import { Link, matchPath, useLocation } from "react-router";
 import { graphql } from "relay-runtime";
 
@@ -12,7 +11,7 @@ import type { SignInPageQuery } from "#/__generated__/iam/SignInPageQuery.graphq
 import { useSafeContinueUrl } from "#/hooks/useSafeContinueUrl";
 
 import { Divider } from "./_components/Divider";
-import { OIDCButtons } from "./_components/OIDCButtons";
+import { OIDCButton } from "./_components/OIDCButton";
 
 const signInMutation = graphql`
   mutation SignInPageMutation($input: SignInInput!) {
@@ -27,7 +26,7 @@ const signInMutation = graphql`
 export const signInPageQuery = graphql`
   query SignInPageQuery {
     oidcProviders {
-      ...OIDCButtonsFragment
+      ...OIDCButtonFragment
     }
   }
 `;
@@ -140,10 +139,9 @@ export default function SignInPage(props: Props) {
       <div className="mt-6 space-y-4">
         <Divider>{__("Or")}</Divider>
 
-        <OIDCButtons
-          providers={data.oidcProviders}
-          safeContinueUrl={safeContinueUrl}
-        />
+        {data.oidcProviders.map((providerRef, index) => (
+          <OIDCButton key={index} providerRef={providerRef} />
+        ))}
 
         <Button
           variant="secondary"

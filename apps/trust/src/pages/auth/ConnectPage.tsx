@@ -1,14 +1,9 @@
 import type { GraphQLError } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
-import { Button, Field, Google, Microsoft, useToast } from "@probo/ui";
-import { type ComponentProps, useEffect, useRef, useState } from "react";
-import {
-  type PreloadedQuery,
-  useFragment,
-  useMutation,
-  usePreloadedQuery,
-} from "react-relay";
+import { Button, Field, useToast } from "@probo/ui";
+import { useEffect, useRef, useState } from "react";
+import { type PreloadedQuery, useMutation, usePreloadedQuery } from "react-relay";
 import { graphql } from "relay-runtime";
 import { z } from "zod";
 
@@ -17,9 +12,9 @@ import { useSafeContinueUrl } from "#/hooks/useSafeContinueUrl";
 import { getPathPrefix } from "#/utils/pathPrefix";
 
 import { Divider } from "./_components/Divider";
+import { OIDCButton } from "./_components/OIDCButton";
 
 import type { ConnectPageMutation, SendMagicLinkInput } from "./__generated__/ConnectPageMutation.graphql";
-import type { ConnectPageOIDCButtonFragment$key } from "./__generated__/ConnectPageOIDCButtonFragment.graphql";
 import type { ConnectPageQuery } from "./__generated__/ConnectPageQuery.graphql";
 
 export const connectPageQuery = graphql`
@@ -30,7 +25,7 @@ export const connectPageQuery = graphql`
       }
     }
     oidcProviders {
-      ...ConnectPageOIDCButtonFragment
+      ...OIDCButtonFragment
     }
   }
 `;
@@ -43,21 +38,6 @@ const sendMagicLinkMutation = graphql`
   }
 `;
 
-const oidcButtonFragment = graphql`
-  fragment ConnectPageOIDCButtonFragment on OIDCProviderInfo {
-    name
-    loginURL
-  }
-`;
-
-const providerIcons: Record<
-  string,
-  (props: ComponentProps<"svg">) => React.ReactNode
-> = {
-  google: Google,
-  microsoft: Microsoft,
-};
-
 const schema = z.object({
   email: z.string().email(),
 });
@@ -65,65 +45,6 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>;
 
 const timerDurationSeconds = 60;
-
-function OIDCButtons({
-  providers,
-  safeContinueUrl,
-}: {
-  providers: ReadonlyArray<ConnectPageOIDCButtonFragment$key>;
-  safeContinueUrl: URL;
-}) {
-  const { __ } = useTranslate();
-
-  if (providers.length === 0) {
-    return null;
-  }
-
-  return (
-    <>
-      {providers.map((providerRef, index) => (
-        <OIDCButton
-          key={index}
-          providerRef={providerRef}
-          safeContinueUrl={safeContinueUrl}
-          __={__}
-        />
-      ))}
-      <Divider>{__("Or")}</Divider>
-    </>
-  );
-}
-
-function OIDCButton({
-  providerRef,
-  safeContinueUrl,
-  __,
-}: {
-  providerRef: ConnectPageOIDCButtonFragment$key;
-  safeContinueUrl: URL;
-  __: (s: string) => string;
-}) {
-  const provider = useFragment(oidcButtonFragment, providerRef);
-  const Icon = providerIcons[provider.name];
-
-  return (
-    <Button
-      variant="secondary"
-      className="w-full h-10"
-      onClick={() => {
-        window.location.href
-          = provider.loginURL
-            + "?continue="
-            + encodeURIComponent(safeContinueUrl.toString());
-      }}
-    >
-      <span className="flex items-center gap-2">
-        {Icon && <Icon width={18} height={18} />}
-        {__(`Sign in with ${provider.name.charAt(0).toUpperCase() + provider.name.slice(1)}`)}
-      </span>
-    </Button>
-  );
-}
 
 export function ConnectPage(props: {
   queryRef: PreloadedQuery<ConnectPageQuery>;
@@ -234,12 +155,14 @@ export function ConnectPage(props: {
         </p>
       </div>
 
-      <div className="space-y-4">
-        <OIDCButtons
-          providers={oidcProviders}
-          safeContinueUrl={safeContinueUrl}
-        />
-      </div>
+      {oidcProviders.length > 0 && (
+        <div className="space-y-4">
+          {oidcProviders.map((providerRef, index) => (
+            <OIDCButton key={index} providerRef={providerRef} />
+          ))}
+          <Divider>{__("Or")}</Divider>
+        </div>
+      )}
 
       <form onSubmit={e => void handleSubmit(e)} className="space-y-6">
         <Field
