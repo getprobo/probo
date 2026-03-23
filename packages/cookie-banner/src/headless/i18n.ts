@@ -24,6 +24,9 @@ const translations: Record<string, WidgetStrings> = {
     savePreferences: "Save my preferences",
     privacyPolicy: "Privacy Policy",
     cookiePreferencesTooltip: "Cookie preferences",
+    contextualBlockedMessage:
+      'This content requires "{categoryName}" cookies to be displayed.',
+    contextualAllowButton: "Allow and show content",
   },
   fr: {
     customize: "Personnaliser",
@@ -34,6 +37,9 @@ const translations: Record<string, WidgetStrings> = {
     savePreferences: "Enregistrer mes préférences",
     privacyPolicy: "Politique de confidentialité",
     cookiePreferencesTooltip: "Préférences de cookies",
+    contextualBlockedMessage:
+      'Ce contenu nécessite les cookies « {categoryName} » pour être affiché.',
+    contextualAllowButton: "Autoriser et afficher le contenu",
   },
   de: {
     customize: "Anpassen",
@@ -44,6 +50,9 @@ const translations: Record<string, WidgetStrings> = {
     savePreferences: "Meine Einstellungen speichern",
     privacyPolicy: "Datenschutzerklärung",
     cookiePreferencesTooltip: "Cookie-Einstellungen",
+    contextualBlockedMessage:
+      'Dieser Inhalt erfordert „{categoryName}"-Cookies, um angezeigt zu werden.',
+    contextualAllowButton: "Zulassen und Inhalt anzeigen",
   },
   es: {
     customize: "Personalizar",
@@ -54,6 +63,9 @@ const translations: Record<string, WidgetStrings> = {
     savePreferences: "Guardar mis preferencias",
     privacyPolicy: "Política de privacidad",
     cookiePreferencesTooltip: "Preferencias de cookies",
+    contextualBlockedMessage:
+      'Este contenido requiere cookies de "{categoryName}" para mostrarse.',
+    contextualAllowButton: "Permitir y mostrar contenido",
   },
 };
 

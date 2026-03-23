@@ -82,4 +82,6 @@ export interface WidgetStrings {
   savePreferences: string;
   privacyPolicy: string;
   cookiePreferencesTooltip: string;
+  contextualBlockedMessage: string;
+  contextualAllowButton: string;
 }

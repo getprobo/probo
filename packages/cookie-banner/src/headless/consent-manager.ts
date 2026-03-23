@@ -132,6 +132,17 @@ export class ConsentManager {
     this.applyAndStore(data, previousConsent, "REJECT_ALL");
   }
 
+  acceptCategory(categoryId: string): void {
+    if (!this.config) return;
+    const previousConsent = { ...this.currentConsent };
+    const data = { ...this.currentConsent };
+    for (const cat of this.config.categories) {
+      if (cat.required) data[cat.id] = true;
+    }
+    data[categoryId] = true;
+    this.applyAndStore(data, previousConsent, "ACCEPT_CATEGORY");
+  }
+
   savePreferences(choices: Record<string, boolean>): void {
     if (!this.config) return;
     const previousConsent = { ...this.currentConsent };

@@ -15,6 +15,10 @@
 import { ConsentManager } from "../headless/consent-manager";
 import type { BannerConfig, ConsentManagerConfig } from "../headless/types";
 import { renderBanner } from "./banner-renderer";
+import {
+  applyContextualPlaceholders,
+  removeAllPlaceholders,
+} from "./placeholder-renderer";
 import { renderRevisitIcon } from "./revisit-renderer";
 
 export class StyledBanner {
@@ -26,13 +30,20 @@ export class StyledBanner {
 
   async init(): Promise<void> {
     this.manager.onConsentRequired((config) => {
+      this.applyPlaceholders(config);
       this.showBanner(config);
     });
 
     this.manager.onReady((config) => {
+      this.applyPlaceholders(config);
       if (!this.manager.needsConsent()) {
         this.showRevisitIcon(config);
       }
+    });
+
+    this.manager.onConsentChange(() => {
+      const config = this.manager.getConfig();
+      if (config) this.applyPlaceholders(config);
     });
 
     await this.manager.init();
@@ -48,7 +59,18 @@ export class StyledBanner {
   destroy(): void {
     document.getElementById("probo-cookie-banner")?.remove();
     document.getElementById("probo-cookie-revisit")?.remove();
+    removeAllPlaceholders();
     this.manager.destroy();
+  }
+
+  private applyPlaceholders(config: BannerConfig): void {
+    applyContextualPlaceholders(
+      this.manager.getConsents(),
+      (id) => config.categories.find((c) => c.id === id)?.name ?? id,
+      (categoryId) => this.manager.acceptCategory(categoryId),
+      this.manager.getStrings(),
+      config.theme,
+    );
   }
 
   private showBanner(config: BannerConfig): void {

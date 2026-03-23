@@ -15,6 +15,10 @@
 export { StyledBanner } from "./styled-banner";
 export { renderBanner } from "./banner-renderer";
 export type { BannerCallbacks, BannerOptions } from "./banner-renderer";
+export {
+  applyContextualPlaceholders,
+  removeAllPlaceholders,
+} from "./placeholder-renderer";
 export { renderPreferences } from "./preferences-renderer";
 export { renderRevisitIcon } from "./revisit-renderer";
 export { themeToCSSVars } from "./theme";
