@@ -180,32 +180,40 @@ func (s *Service) Run(ctx context.Context) error {
 	defer cancel(context.Canceled)
 
 	samlCtx, stopSAML := context.WithCancel(context.WithoutCancel(ctx))
-	wg.Go(func() {
-		if err := s.SAMLService.Run(samlCtx); err != nil {
-			cancel(fmt.Errorf("saml service crashed: %w", err))
-		}
-	})
+	wg.Go(
+		func() {
+			if err := s.SAMLService.Run(samlCtx); err != nil {
+				cancel(fmt.Errorf("saml service crashed: %w", err))
+			}
+		},
+	)
 
 	oidcCtx, stopOIDC := context.WithCancel(context.WithoutCancel(ctx))
-	wg.Go(func() {
-		if err := s.OIDCService.Run(oidcCtx); err != nil {
-			cancel(fmt.Errorf("oidc service crashed: %w", err))
-		}
-	})
+	wg.Go(
+		func() {
+			if err := s.OIDCService.Run(oidcCtx); err != nil {
+				cancel(fmt.Errorf("oidc service crashed: %w", err))
+			}
+		},
+	)
 
 	domainVerifierCtx, stopDomainVerifier := context.WithCancel(context.WithoutCancel(ctx))
-	wg.Go(func() {
-		if err := s.samlDomainVerifier.Run(domainVerifierCtx); err != nil {
-			cancel(fmt.Errorf("saml domain verifier crashed: %w", err))
-		}
-	})
+	wg.Go(
+		func() {
+			if err := s.samlDomainVerifier.Run(domainVerifierCtx); err != nil {
+				cancel(fmt.Errorf("saml domain verifier crashed: %w", err))
+			}
+		},
+	)
 
 	scimCtx, stopSCIM := context.WithCancel(context.WithoutCancel(ctx))
-	wg.Go(func() {
-		if err := s.SCIMService.Run(scimCtx); err != nil {
-			cancel(fmt.Errorf("scim service crashed: %w", err))
-		}
-	})
+	wg.Go(
+		func() {
+			if err := s.SCIMService.Run(scimCtx); err != nil {
+				cancel(fmt.Errorf("scim service crashed: %w", err))
+			}
+		},
+	)
 
 	<-ctx.Done()
 
