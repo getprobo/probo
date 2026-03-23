@@ -16,6 +16,8 @@ import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { useSafeContinueUrl } from "#/hooks/useSafeContinueUrl";
 import { getPathPrefix } from "#/utils/pathPrefix";
 
+import { Divider } from "./_components/Divider";
+
 import type { ConnectPageMutation, SendMagicLinkInput } from "./__generated__/ConnectPageMutation.graphql";
 import type { ConnectPageOIDCButtonFragment$key } from "./__generated__/ConnectPageOIDCButtonFragment.graphql";
 import type { ConnectPageQuery } from "./__generated__/ConnectPageQuery.graphql";
@@ -63,17 +65,6 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>;
 
 const timerDurationSeconds = 60;
-
-function Divider({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="relative my-6 w-full">
-      <div className="border-t border-border-mid" />
-      <span className="px-4 text-xs uppercase text-txt-secondary bg-level-0 absolute top-0 left-1/2 -translate-1/2">
-        {children}
-      </span>
-    </div>
-  );
-}
 
 function OIDCButtons({
   providers,
