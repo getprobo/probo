@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.150.0] - 2026-03-23
+
+### Added
+
+- Add OIDC login support for Google and Microsoft providers
+- Add per-email sender name for compliance page emails
+- Add audit log feature for recording all actions
+
 ## [0.149.0] - 2026-03-20
 
 ### Changed
