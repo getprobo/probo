@@ -1,5 +1,4 @@
-ALTER TYPE session_auth_method ADD VALUE 'GOOGLE';
-ALTER TYPE session_auth_method ADD VALUE 'MICROSOFT';
+ALTER TYPE session_auth_method ADD VALUE 'OIDC';
 
 CREATE TYPE iam_oidc_provider AS ENUM (
     'GOOGLE',

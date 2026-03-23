@@ -110,19 +110,11 @@ func (h *OIDCHandler) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var authMethod coredata.AuthMethod
-	switch provider {
-	case coredata.OIDCProviderGoogle:
-		authMethod = coredata.AuthMethodGoogle
-	case coredata.OIDCProviderMicrosoft:
-		authMethod = coredata.AuthMethodMicrosoft
-	}
-
 	rootSession := authn.SessionFromContext(ctx)
 
 	switch {
 	case rootSession == nil:
-		rootSession, err = h.iam.AuthService.OpenSessionWithOIDC(ctx, identity.ID, authMethod)
+		rootSession, err = h.iam.AuthService.OpenSessionWithOIDC(ctx, identity.ID, coredata.AuthMethodOIDC)
 		if err != nil {
 			h.logger.ErrorCtx(ctx, "cannot open root session", log.Error(err))
 			httpserver.RenderError(w, http.StatusInternalServerError, errors.New("internal server error"))
@@ -136,7 +128,7 @@ func (h *OIDCHandler) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		rootSession, err = h.iam.AuthService.OpenSessionWithOIDC(ctx, identity.ID, authMethod)
+		rootSession, err = h.iam.AuthService.OpenSessionWithOIDC(ctx, identity.ID, coredata.AuthMethodOIDC)
 		if err != nil {
 			h.logger.ErrorCtx(ctx, "cannot open root session", log.Error(err))
 			httpserver.RenderError(w, http.StatusInternalServerError, errors.New("internal server error"))

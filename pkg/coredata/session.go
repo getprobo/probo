@@ -57,8 +57,7 @@ const (
 	AuthMethodMagicLink AuthMethod = "MAGIC_LINK"
 	AuthMethodPassword  AuthMethod = "PASSWORD"
 	AuthMethodSAML      AuthMethod = "SAML"
-	AuthMethodGoogle    AuthMethod = "GOOGLE"
-	AuthMethodMicrosoft AuthMethod = "MICROSOFT"
+	AuthMethodOIDC      AuthMethod = "OIDC"
 )
 
 func NewRootSession(identityID gid.GID, method AuthMethod, duration time.Duration) *Session {
