@@ -6,8 +6,8 @@ import type { SignInPageQuery } from "#/__generated__/iam/SignInPageQuery.graphq
 import SignInPage, { signInPageQuery } from "./SignInPage";
 
 function SignInPageQueryLoader() {
-  const [queryRef, loadQuery] =
-    useQueryLoader<SignInPageQuery>(signInPageQuery);
+  const [queryRef, loadQuery]
+    = useQueryLoader<SignInPageQuery>(signInPageQuery);
 
   useEffect(() => {
     loadQuery({});

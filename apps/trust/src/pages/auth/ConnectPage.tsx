@@ -11,11 +11,10 @@ import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { useSafeContinueUrl } from "#/hooks/useSafeContinueUrl";
 import { getPathPrefix } from "#/utils/pathPrefix";
 
-import { Divider } from "./_components/Divider";
-import { OIDCButton } from "./_components/OIDCButton";
-
 import type { ConnectPageMutation, SendMagicLinkInput } from "./__generated__/ConnectPageMutation.graphql";
 import type { ConnectPageQuery } from "./__generated__/ConnectPageQuery.graphql";
+import { Divider } from "./_components/Divider";
+import { OIDCButton } from "./_components/OIDCButton";
 
 export const connectPageQuery = graphql`
   query ConnectPageQuery {

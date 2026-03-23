@@ -4,8 +4,9 @@ import type { ComponentProps } from "react";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
-import type { OIDCButtonFragment$key } from "./__generated__/OIDCButtonFragment.graphql";
 import { useSafeContinueUrl } from "#/hooks/useSafeContinueUrl";
+
+import type { OIDCButtonFragment$key } from "./__generated__/OIDCButtonFragment.graphql";
 
 const fragment = graphql`
   fragment OIDCButtonFragment on OIDCProviderInfo {
