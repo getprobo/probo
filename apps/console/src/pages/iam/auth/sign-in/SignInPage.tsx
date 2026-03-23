@@ -6,14 +6,14 @@ import { graphql } from "relay-runtime";
 
 import type { SignInPageQuery } from "#/__generated__/iam/SignInPageQuery.graphql";
 import { useSafeContinueUrl } from "#/hooks/useSafeContinueUrl";
+
 import { Divider } from "./_components/Divider";
 import { OIDCButtons } from "./_components/OIDCButtons";
 
 const signInPageQuery = graphql`
   query SignInPageQuery {
     oidcProviders {
-      name
-      loginURL
+      ...OIDCButtonsFragment
     }
   }
 `;
