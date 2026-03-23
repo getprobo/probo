@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@ariakit/react": "^0.4.17",
+    "@floating-ui/react": "^0.27.19",
     "@probo/helpers": "1.0.0",
     "@probo/i18n": "1.0.0",
     "@radix-ui/react-alert-dialog": "^1.1.15",
