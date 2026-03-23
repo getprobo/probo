@@ -2,22 +2,20 @@ import type { GraphQLError } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
 import { Button, Field, Google, Microsoft, useToast } from "@probo/ui";
-import { type ComponentProps, Suspense, useEffect, useRef, useState } from "react";
+import { type ComponentProps, useEffect, useRef, useState } from "react";
 import {
   type PreloadedQuery,
-  useLazyLoadQuery,
   useMutation,
   usePreloadedQuery,
 } from "react-relay";
-import { useSearchParams } from "react-router";
 import { graphql } from "relay-runtime";
 import { z } from "zod";
 
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
+import { useSafeContinueUrl } from "#/hooks/useSafeContinueUrl";
 import { getPathPrefix } from "#/utils/pathPrefix";
 
 import type { ConnectPageMutation, SendMagicLinkInput } from "./__generated__/ConnectPageMutation.graphql";
-import type { ConnectPageOIDCQuery } from "./__generated__/ConnectPageOIDCQuery.graphql";
 import type { ConnectPageQuery } from "./__generated__/ConnectPageQuery.graphql";
 
 export const connectPageQuery = graphql`
@@ -27,11 +25,6 @@ export const connectPageQuery = graphql`
         name
       }
     }
-  }
-`;
-
-const oidcProvidersQuery = graphql`
-  query ConnectPageOIDCQuery {
     oidcProviders {
       name
       loginURL
@@ -74,20 +67,22 @@ function Divider({ children }: { children: React.ReactNode }) {
   );
 }
 
-function OIDCButtons({ safeContinueUrl }: { safeContinueUrl: string }) {
+function OIDCButtons({
+  providers,
+  safeContinueUrl,
+}: {
+  providers: ReadonlyArray<{ readonly name: string; readonly loginURL: string }>;
+  safeContinueUrl: URL;
+}) {
   const { __ } = useTranslate();
 
-  const data = useLazyLoadQuery<ConnectPageOIDCQuery>(oidcProvidersQuery, {});
-
-  if (data.oidcProviders.length === 0) {
+  if (providers.length === 0) {
     return null;
   }
 
-  const continueUrl = new URL(safeContinueUrl);
-
   return (
     <>
-      {data.oidcProviders.map((provider) => {
+      {providers.map((provider) => {
         const Icon = providerIcons[provider.name];
         return (
           <Button
@@ -98,9 +93,7 @@ function OIDCButtons({ safeContinueUrl }: { safeContinueUrl: string }) {
               window.location.href
                 = provider.loginURL
                   + "?continue="
-                  + encodeURIComponent(
-                    continueUrl.pathname + continueUrl.search,
-                  );
+                  + encodeURIComponent(safeContinueUrl.toString());
             }}
           >
             <span className="flex items-center gap-2">
@@ -125,28 +118,12 @@ export function ConnectPage(props: {
   const [magicLinkSent, setMagicLinkSent] = useState<boolean>(false);
   const interval = useRef<NodeJS.Timeout>(undefined);
   const [timer, setTimer] = useState<number>(timerDurationSeconds);
-  const [searchParams] = useSearchParams();
+  const safeContinueUrl = useSafeContinueUrl();
 
   const {
     currentTrustCenter: { organization },
+    oidcProviders,
   } = usePreloadedQuery<ConnectPageQuery>(connectPageQuery, queryRef);
-
-  const continueUrlParam = searchParams.get("continue");
-  let safeContinueUrl: string;
-  if (continueUrlParam) {
-    try {
-      const continueUrl = new URL(continueUrlParam, window.location.origin);
-      if (continueUrl.origin === window.location.origin && continueUrl.pathname.startsWith(`${getPathPrefix()}/`)) {
-        safeContinueUrl = window.location.origin + continueUrl.pathname + continueUrl.search;
-      } else {
-        safeContinueUrl = window.location.origin + getPathPrefix();
-      }
-    } catch {
-      safeContinueUrl = window.location.origin + getPathPrefix();
-    }
-  } else {
-    safeContinueUrl = window.location.origin + getPathPrefix();
-  }
 
   useEffect(() => {
     if (!magicLinkSent && interval.current) {
@@ -184,13 +161,13 @@ export function ConnectPage(props: {
   const handleSubmit = handleSubmitWrapper(({ email }: FormData) => {
     const input: SendMagicLinkInput = { email };
     if (safeContinueUrl) {
-      input.continue = safeContinueUrl;
+      input.continue = safeContinueUrl.toString();
     }
     sendMagicLink({
       variables: {
         input: {
           email,
-          continue: safeContinueUrl,
+          continue: safeContinueUrl.toString(),
         },
       },
       onCompleted: (_, errors: GraphQLError[] | null) => {
@@ -241,9 +218,10 @@ export function ConnectPage(props: {
       </div>
 
       <div className="space-y-4">
-        <Suspense fallback={null}>
-          <OIDCButtons safeContinueUrl={safeContinueUrl} />
-        </Suspense>
+        <OIDCButtons
+          providers={oidcProviders}
+          safeContinueUrl={safeContinueUrl}
+        />
       </div>
 
       <form onSubmit={e => void handleSubmit(e)} className="space-y-6">
