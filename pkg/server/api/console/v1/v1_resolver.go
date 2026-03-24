@@ -439,7 +439,7 @@ func (r *consentRecordConnectionResolver) TotalCount(ctx context.Context, obj *t
 
 	switch obj.Resolver.(type) {
 	case *cookieBannerResolver:
-		count, err := r.consent.CountConsentRecordsForCookieBannerID(ctx, obj.ParentID, coredata.NewConsentRecordFilter(nil))
+		count, err := r.consent.CountConsentRecordsForCookieBannerID(ctx, obj.ParentID, obj.Filter)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count consent records", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
@@ -762,6 +762,10 @@ func (r *controlConnectionResolver) TotalCount(ctx context.Context, obj *types.C
 
 // Theme is the resolver for the theme field.
 func (r *cookieBannerResolver) Theme(ctx context.Context, obj *types.CookieBanner) (*types.CookieBannerTheme, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionCookieBannerGet); err != nil {
+		return nil, err
+	}
+
 	banner, err := r.consent.GetCookieBanner(ctx, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get cookie banner for theme", log.Error(err))
@@ -769,6 +773,28 @@ func (r *cookieBannerResolver) Theme(ctx context.Context, obj *types.CookieBanne
 	}
 
 	return types.NewCookieBannerTheme(banner.Theme), nil
+}
+
+// Analytics is the resolver for the analytics field.
+func (r *cookieBannerResolver) Analytics(ctx context.Context, obj *types.CookieBanner) (*types.ConsentAnalytics, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionCookieBannerGet); err != nil {
+		return nil, err
+	}
+
+	analytics, err := r.consent.GetConsentAnalyticsForCookieBannerID(ctx, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot get consent analytics", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.ConsentAnalytics{
+		TotalRecords:        analytics.TotalRecords,
+		AcceptAllCount:      analytics.AcceptAllCount,
+		RejectAllCount:      analytics.RejectAllCount,
+		CustomizeCount:      analytics.CustomizeCount,
+		AcceptCategoryCount: analytics.AcceptCategoryCount,
+		GPCCount:            analytics.GPCCount,
+	}, nil
 }
 
 // Categories is the resolver for the categories field.
@@ -794,7 +820,7 @@ func (r *cookieBannerResolver) Categories(ctx context.Context, obj *types.Cookie
 }
 
 // ConsentRecords is the resolver for the consentRecords field.
-func (r *cookieBannerResolver) ConsentRecords(ctx context.Context, obj *types.CookieBanner, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ConsentRecordOrderBy) (*types.ConsentRecordConnection, error) {
+func (r *cookieBannerResolver) ConsentRecords(ctx context.Context, obj *types.CookieBanner, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ConsentRecordOrderBy, filter *types.ConsentRecordFilter) (*types.ConsentRecordConnection, error) {
 	if err := r.authorize(ctx, obj.ID, probo.ActionConsentRecordList); err != nil {
 		return nil, err
 	}
@@ -806,13 +832,19 @@ func (r *cookieBannerResolver) ConsentRecords(ctx context.Context, obj *types.Co
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	p, err := r.consent.ListConsentRecordsForCookieBannerID(ctx, obj.ID, cursor, coredata.NewConsentRecordFilter(nil))
+	var actionFilter *coredata.ConsentAction
+	if filter != nil {
+		actionFilter = filter.Action
+	}
+	consentFilter := coredata.NewConsentRecordFilter(actionFilter)
+
+	p, err := r.consent.ListConsentRecordsForCookieBannerID(ctx, obj.ID, cursor, consentFilter)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list consent records", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewConsentRecordConnection(p, r, obj.ID), nil
+	return types.NewConsentRecordConnection(p, r, obj.ID, consentFilter), nil
 }
 
 // Permission is the resolver for the permission field.
@@ -6443,9 +6475,17 @@ func (r *mutationResolver) UpdateCookieBanner(ctx context.Context, input types.U
 		SavePreferencesLabel: input.SavePreferencesLabel,
 		PrivacyPolicyURL:     input.PrivacyPolicyURL,
 		ConsentExpiryDays:    input.ConsentExpiryDays,
+		ConsentMode:          input.ConsentMode,
 	}
 
 	if input.Theme != nil {
+		if err := input.Theme.Validate(); err != nil {
+			if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+				return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			}
+			return nil, gqlutils.Internal(ctx)
+		}
+
 		existing, err := r.consent.GetCookieBanner(ctx, input.ID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot get cookie banner for theme update", log.Error(err))

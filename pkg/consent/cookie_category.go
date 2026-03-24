@@ -51,7 +51,9 @@ type (
 	}
 )
 
-var ErrCannotDeleteRequiredCategory = errors.New("cannot delete a required cookie category")
+var (
+	ErrCannotDeleteRequiredCategory = errors.New("cannot delete a required cookie category")
+)
 
 func (r *CreateCookieCategoryRequest) Validate() error {
 	v := validator.New()

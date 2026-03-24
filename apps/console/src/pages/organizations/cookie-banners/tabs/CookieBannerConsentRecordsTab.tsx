@@ -1,11 +1,12 @@
 import { formatDate } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import { Badge, Tbody, Td, Th, Thead, Tr } from "@probo/ui";
+import { useState } from "react";
 import { graphql, usePaginationFragment } from "react-relay";
 import { useOutletContext } from "react-router";
 
 import type { CookieBannerConsentRecordsTabFragment$key } from "#/__generated__/core/CookieBannerConsentRecordsTabFragment.graphql";
-import type { CookieBannerGraphNodeQuery$data } from "#/__generated__/core/CookieBannerGraphNodeQuery.graphql";
+import type { CookieBannerDetailPageQuery$data } from "#/__generated__/core/CookieBannerDetailPageQuery.graphql";
 import { SortableTable, SortableTh } from "#/components/SortableTable";
 
 const fragment = graphql`
@@ -17,6 +18,7 @@ const fragment = graphql`
     after: { type: "CursorKey", defaultValue: null }
     before: { type: "CursorKey", defaultValue: null }
     last: { type: "Int", defaultValue: null }
+    filter: { type: "ConsentRecordFilter", defaultValue: null }
   ) {
     consentRecords(
       first: $first
@@ -24,6 +26,7 @@ const fragment = graphql`
       last: $last
       before: $before
       orderBy: $order
+      filter: $filter
     )
       @connection(
         key: "CookieBannerConsentRecordsTab_consentRecords"
@@ -58,27 +61,67 @@ function ConsentActionBadge({ action }: { action: string }) {
       return <Badge variant="danger">{__("Reject All")}</Badge>;
     case "CUSTOMIZE":
       return <Badge variant="warning">{__("Customize")}</Badge>;
+    case "ACCEPT_CATEGORY":
+      return <Badge variant="info">{__("Accept Category")}</Badge>;
+    case "GPC":
+      return <Badge variant="info">{__("GPC")}</Badge>;
     default:
       return <Badge>{action}</Badge>;
   }
 }
 
+const ACTION_OPTIONS = [
+  { value: "", label: "All Actions" },
+  { value: "ACCEPT_ALL", label: "Accept All" },
+  { value: "REJECT_ALL", label: "Reject All" },
+  { value: "CUSTOMIZE", label: "Customize" },
+  { value: "ACCEPT_CATEGORY", label: "Accept Category" },
+  { value: "GPC", label: "GPC" },
+] as const;
+
 export default function CookieBannerConsentRecordsTab() {
   const { banner } = useOutletContext<{
-    banner: CookieBannerGraphNodeQuery$data["node"];
+    banner: CookieBannerDetailPageQuery$data["node"];
   }>();
 
   const { __ } = useTranslate();
+  const [actionFilter, setActionFilter] = useState("");
+
   const pagination = usePaginationFragment(
     fragment,
     banner as CookieBannerConsentRecordsTabFragment$key,
   );
 
-  const records
-    = pagination.data.consentRecords?.edges.map(edge => edge.node) ?? [];
+  const handleFilterChange = (value: string) => {
+    setActionFilter(value);
+    pagination.refetch({
+      filter: value ? { action: value } : null,
+      first: 50,
+      after: null,
+      last: null,
+      before: null,
+    });
+  };
+
+  const records =
+    pagination.data.consentRecords?.edges.map((edge) => edge.node) ?? [];
 
   return (
     <div className="space-y-6">
+      <div className="flex items-center gap-4">
+        <select
+          value={actionFilter}
+          onChange={(e) => handleFilterChange(e.target.value)}
+          className="rounded-[10px] border border-border-mid bg-secondary px-3 py-[6px] text-sm text-txt-primary hover:border-border-strong"
+        >
+          {ACTION_OPTIONS.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {__(opt.label)}
+            </option>
+          ))}
+        </select>
+      </div>
+
       {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
       <SortableTable {...(pagination as any)}>
         <Thead>
@@ -91,7 +134,7 @@ export default function CookieBannerConsentRecordsTab() {
           </Tr>
         </Thead>
         <Tbody>
-          {records.map(record => (
+          {records.map((record) => (
             <Tr key={record.id}>
               <Td>
                 <span className="font-mono text-sm">

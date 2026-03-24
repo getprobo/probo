@@ -3,11 +3,11 @@ import { Button, Card } from "@probo/ui";
 import { useCallback } from "react";
 import { useOutletContext } from "react-router";
 
-import type { CookieBannerGraphNodeQuery$data } from "#/__generated__/core/CookieBannerGraphNodeQuery.graphql";
+import type { CookieBannerDetailPageQuery$data } from "#/__generated__/core/CookieBannerDetailPageQuery.graphql";
 
 export default function CookieBannerEmbedTab() {
   const { banner } = useOutletContext<{
-    banner: CookieBannerGraphNodeQuery$data["node"];
+    banner: CookieBannerDetailPageQuery$data["node"];
   }>();
 
   const { __ } = useTranslate();

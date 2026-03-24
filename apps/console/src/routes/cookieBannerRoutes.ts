@@ -6,22 +6,24 @@ import {
 } from "@probo/routes";
 import { loadQuery } from "react-relay";
 
-import type { CookieBannerGraphListQuery } from "#/__generated__/core/CookieBannerGraphListQuery.graphql";
-import type { CookieBannerGraphNodeQuery } from "#/__generated__/core/CookieBannerGraphNodeQuery.graphql";
+import type { CookieBannerDetailPageQuery } from "#/__generated__/core/CookieBannerDetailPageQuery.graphql";
+import type { CookieBannersPageQuery } from "#/__generated__/core/CookieBannersPageQuery.graphql";
 import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
 import { coreEnvironment } from "#/environments";
 
 import {
   cookieBannerNodeQuery,
+} from "../pages/organizations/cookie-banners/CookieBannerDetailPage";
+import {
   cookieBannersQuery,
-} from "../hooks/graph/CookieBannerGraph";
+} from "../pages/organizations/cookie-banners/CookieBannersPage";
 
 export const cookieBannerRoutes = [
   {
     path: "cookie-banners",
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ organizationId }) =>
-      loadQuery<CookieBannerGraphListQuery>(
+      loadQuery<CookieBannersPageQuery>(
         coreEnvironment,
         cookieBannersQuery,
         {
@@ -42,7 +44,7 @@ export const cookieBannerRoutes = [
     path: "cookie-banners/:cookieBannerId",
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ cookieBannerId }) =>
-      loadQuery<CookieBannerGraphNodeQuery>(
+      loadQuery<CookieBannerDetailPageQuery>(
         coreEnvironment,
         cookieBannerNodeQuery,
         {

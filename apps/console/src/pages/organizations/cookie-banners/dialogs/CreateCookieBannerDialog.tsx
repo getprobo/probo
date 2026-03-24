@@ -1,3 +1,4 @@
+import { formatError, type GraphQLError } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import {
   Button,
@@ -6,12 +7,38 @@ import {
   DialogFooter,
   Field,
   useDialogRef,
+  useToast,
 } from "@probo/ui";
 import type { ReactNode } from "react";
+import { useMutation } from "react-relay";
+import { graphql } from "relay-runtime";
 import { z } from "zod";
 
-import { useCreateCookieBannerMutation } from "#/hooks/graph/CookieBannerGraph";
+import type { CreateCookieBannerDialogMutation } from "#/__generated__/core/CreateCookieBannerDialogMutation.graphql";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
+
+const createCookieBannerMutation = graphql`
+  mutation CreateCookieBannerDialogMutation(
+    $input: CreateCookieBannerInput!
+    $connections: [ID!]!
+  ) {
+    createCookieBanner(input: $input) {
+      cookieBannerEdge @appendEdge(connections: $connections) {
+        node {
+          id
+          name
+          domain
+          state
+          version
+          createdAt
+          updatedAt
+          canUpdate: permission(action: "core:cookie-banner:update")
+          canDelete: permission(action: "core:cookie-banner:delete")
+        }
+      }
+    }
+  }
+`;
 
 const schema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -30,8 +57,9 @@ export function CreateCookieBannerDialog({
   connection,
 }: Props) {
   const { __ } = useTranslate();
+  const { toast } = useToast();
   const dialogRef = useDialogRef();
-  const [createCookieBanner] = useCreateCookieBannerMutation();
+  const [createCookieBanner] = useMutation<CreateCookieBannerDialogMutation>(createCookieBannerMutation);
 
   const {
     register,
@@ -45,8 +73,8 @@ export function CreateCookieBannerDialog({
     },
   });
 
-  const onSubmit = handleSubmit(async (formData) => {
-    await createCookieBanner({
+  const onSubmit = handleSubmit((formData) => {
+    createCookieBanner({
       variables: {
         input: {
           organizationId,
@@ -55,9 +83,21 @@ export function CreateCookieBannerDialog({
         },
         connections: [connection],
       },
-      onSuccess: () => {
+      onCompleted() {
+        toast({
+          title: __("Success"),
+          description: __("Cookie banner created successfully."),
+          variant: "success",
+        });
         reset();
         dialogRef.current?.close();
+      },
+      onError(error) {
+        toast({
+          title: __("Error"),
+          description: formatError(__("Failed to create cookie banner"), error as GraphQLError),
+          variant: "error",
+        });
       },
     });
   });

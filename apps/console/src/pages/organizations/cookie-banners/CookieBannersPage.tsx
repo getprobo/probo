@@ -1,3 +1,4 @@
+import { formatError, type GraphQLError, sprintf } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
 import {
@@ -12,25 +13,51 @@ import {
   Th,
   Thead,
   Tr,
+  useConfirm,
+  useToast,
 } from "@probo/ui";
 import {
   graphql,
   type PreloadedQuery,
+  useMutation,
   usePaginationFragment,
   usePreloadedQuery,
 } from "react-relay";
 
-import type { CookieBannerGraphListQuery } from "#/__generated__/core/CookieBannerGraphListQuery.graphql";
+import type { CookieBannersPageDeleteMutation } from "#/__generated__/core/CookieBannersPageDeleteMutation.graphql";
 import type { CookieBannersPageFragment$key } from "#/__generated__/core/CookieBannersPageFragment.graphql";
+import type { CookieBannersPageQuery } from "#/__generated__/core/CookieBannersPageQuery.graphql";
 import { SortableTable, SortableTh } from "#/components/SortableTable";
-import {
-  cookieBannersQuery,
-  useDeleteCookieBanner,
-} from "#/hooks/graph/CookieBannerGraph";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import { CookieBannerStateBadge } from "./_components/CookieBannerStateBadge";
 import { CreateCookieBannerDialog } from "./dialogs/CreateCookieBannerDialog";
+
+/* eslint-disable relay/unused-fields, relay/must-colocate-fragment-spreads */
+
+export const cookieBannersQuery = graphql`
+  query CookieBannersPageQuery($organizationId: ID!) {
+    node(id: $organizationId) {
+      ... on Organization {
+        canCreateCookieBanner: permission(
+          action: "core:cookie-banner:create"
+        )
+        ...CookieBannersPageFragment
+      }
+    }
+  }
+`;
+
+const deleteCookieBannerMutation = graphql`
+  mutation CookieBannersPageDeleteMutation(
+    $input: DeleteCookieBannerInput!
+    $connections: [ID!]!
+  ) {
+    deleteCookieBanner(input: $input) {
+      deletedCookieBannerId @deleteEdge(connections: $connections)
+    }
+  }
+`;
 
 const paginatedCookieBannersFragment = graphql`
   fragment CookieBannersPageFragment on Organization
@@ -73,14 +100,14 @@ const paginatedCookieBannersFragment = graphql`
 `;
 
 type Props = {
-  queryRef: PreloadedQuery<CookieBannerGraphListQuery>;
+  queryRef: PreloadedQuery<CookieBannersPageQuery>;
 };
 
 export default function CookieBannersPage(props: Props) {
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
 
-  const data = usePreloadedQuery<CookieBannerGraphListQuery>(
+  const data = usePreloadedQuery<CookieBannersPageQuery>(
     cookieBannersQuery,
     props.queryRef,
   );
@@ -167,8 +194,51 @@ function CookieBannerRow({
   hasAnyAction: boolean;
 }) {
   const { __ } = useTranslate();
-  const deleteCookieBanner = useDeleteCookieBanner(banner, connectionId);
+  const { toast } = useToast();
+  const confirm = useConfirm();
+  const [deleteCookieBanner] = useMutation<CookieBannersPageDeleteMutation>(deleteCookieBannerMutation);
   const bannerUrl = `/organizations/${organizationId}/cookie-banners/${banner.id}/overview`;
+
+  const handleDelete = () => {
+    if (!banner.id || !banner.name) {
+      return alert(__("Failed to delete cookie banner: missing id or name"));
+    }
+    confirm(
+      () =>
+        new Promise<void>((resolve) => {
+          deleteCookieBanner({
+            variables: {
+              input: { id: banner.id },
+              connections: [connectionId],
+            },
+            onCompleted() {
+              toast({
+                title: __("Success"),
+                description: __("Cookie banner deleted successfully."),
+                variant: "success",
+              });
+              resolve();
+            },
+            onError(error) {
+              toast({
+                title: __("Error"),
+                description: formatError(__("Failed to delete cookie banner"), error as GraphQLError),
+                variant: "error",
+              });
+              resolve();
+            },
+          });
+        }),
+      {
+        message: sprintf(
+          __(
+            "This will permanently delete cookie banner \"%s\". This action cannot be undone.",
+          ),
+          banner.name,
+        ),
+      },
+    );
+  };
 
   return (
     <Tr to={bannerUrl}>
@@ -183,7 +253,7 @@ function CookieBannerRow({
           <ActionDropdown>
             {banner.canDelete && (
               <DropdownItem
-                onClick={deleteCookieBanner}
+                onClick={handleDelete}
                 variant="danger"
                 icon={IconTrashCan}
               >

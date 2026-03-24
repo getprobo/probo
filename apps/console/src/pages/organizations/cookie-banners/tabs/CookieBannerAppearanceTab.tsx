@@ -1,13 +1,14 @@
+import { formatError, type GraphQLError } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
-import { Button, Card, Field } from "@probo/ui";
+import { Button, Card, Field, useToast } from "@probo/ui";
 import { Controller, useWatch } from "react-hook-form";
-import { graphql, useFragment } from "react-relay";
+import { graphql, useFragment, useMutation } from "react-relay";
 import { useOutletContext } from "react-router";
 import { z } from "zod";
 
-import type { CookieBannerGraphNodeQuery$data } from "#/__generated__/core/CookieBannerGraphNodeQuery.graphql";
 import type { CookieBannerAppearanceTabFragment$key } from "#/__generated__/core/CookieBannerAppearanceTabFragment.graphql";
-import { useUpdateCookieBannerMutation } from "#/hooks/graph/CookieBannerGraph";
+import type { CookieBannerAppearanceTabUpdateMutation } from "#/__generated__/core/CookieBannerAppearanceTabUpdateMutation.graphql";
+import type { CookieBannerDetailPageQuery$data } from "#/__generated__/core/CookieBannerDetailPageQuery.graphql";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { CookieBannerPreview } from "../_components/CookieBannerPreview";
 
@@ -53,6 +54,44 @@ const fragment = graphql`
   }
 `;
 
+const updateCookieBannerMutation = graphql`
+  mutation CookieBannerAppearanceTabUpdateMutation(
+    $input: UpdateCookieBannerInput!
+  ) {
+    updateCookieBanner(input: $input) {
+      cookieBanner {
+        id
+        name
+        domain
+        state
+        title
+        description
+        acceptAllLabel
+        rejectAllLabel
+        savePreferencesLabel
+        privacyPolicyUrl
+        consentExpiryDays
+        version
+        updatedAt
+        theme {
+          primaryColor
+          primaryTextColor
+          secondaryColor
+          secondaryTextColor
+          backgroundColor
+          textColor
+          secondaryTextBodyColor
+          borderColor
+          fontFamily
+          borderRadius
+          position
+          revisitPosition
+        }
+      }
+    }
+  }
+`;
+
 const hexColorRegex = /^#[0-9a-fA-F]{6}$/;
 
 const schema = z.object({
@@ -68,6 +107,9 @@ const schema = z.object({
   secondaryTextBodyColor: z.string().regex(hexColorRegex, "Must be a valid hex color"),
   borderColor: z.string().regex(hexColorRegex, "Must be a valid hex color"),
   borderRadius: z.coerce.number().min(0).max(24),
+  fontFamily: z.string().min(1, "Font family is required"),
+  position: z.enum(["bottom", "bottom-left", "bottom-right", "center"]),
+  revisitPosition: z.enum(["bottom-left", "bottom-right"]),
 });
 
 const lightPreset = {
@@ -127,16 +169,17 @@ function ColorField({
 
 export default function CookieBannerAppearanceTab() {
   const { banner } = useOutletContext<{
-    banner: CookieBannerGraphNodeQuery$data["node"];
+    banner: CookieBannerDetailPageQuery$data["node"];
   }>();
 
   const { __ } = useTranslate();
+  const { toast } = useToast();
   const data = useFragment<CookieBannerAppearanceTabFragment$key>(
     fragment,
     banner,
   );
 
-  const [mutate] = useUpdateCookieBannerMutation();
+  const [mutate] = useMutation<CookieBannerAppearanceTabUpdateMutation>(updateCookieBannerMutation);
 
   const {
     control,
@@ -159,6 +202,9 @@ export default function CookieBannerAppearanceTab() {
       secondaryTextBodyColor: data.theme.secondaryTextBodyColor,
       borderColor: data.theme.borderColor,
       borderRadius: data.theme.borderRadius,
+      fontFamily: data.theme.fontFamily,
+      position: data.theme.position as "bottom" | "bottom-left" | "bottom-right" | "center",
+      revisitPosition: data.theme.revisitPosition as "bottom-left" | "bottom-right",
     },
   });
 
@@ -193,9 +239,12 @@ export default function CookieBannerAppearanceTab() {
     secondary_text_body_color: watchedValues.secondaryTextBodyColor ?? data.theme.secondaryTextBodyColor,
     border_color: watchedValues.borderColor ?? data.theme.borderColor,
     border_radius: watchedValues.borderRadius ?? data.theme.borderRadius,
+    font_family: watchedValues.fontFamily ?? data.theme.fontFamily,
+    position: watchedValues.position ?? data.theme.position,
+    revisit_position: watchedValues.revisitPosition ?? data.theme.revisitPosition,
   };
 
-  const onSubmit = handleSubmit(async (formData) => {
+  const onSubmit = handleSubmit((formData) => {
     const {
       primaryColor,
       primaryTextColor,
@@ -204,10 +253,13 @@ export default function CookieBannerAppearanceTab() {
       secondaryTextBodyColor,
       borderColor,
       borderRadius,
+      fontFamily,
+      position,
+      revisitPosition,
       ...contentData
     } = formData;
 
-    await mutate({
+    mutate({
       variables: {
         input: {
           id: data.id,
@@ -220,11 +272,28 @@ export default function CookieBannerAppearanceTab() {
             secondaryTextBodyColor,
             borderColor,
             borderRadius,
+            fontFamily,
+            position,
+            revisitPosition,
           },
         },
       },
+      onCompleted() {
+        toast({
+          title: __("Success"),
+          description: __("Cookie banner updated successfully."),
+          variant: "success",
+        });
+        reset(formData);
+      },
+      onError(error) {
+        toast({
+          title: __("Error"),
+          description: formatError(__("Failed to update cookie banner"), error as GraphQLError),
+          variant: "error",
+        });
+      },
     });
-    reset(formData);
   });
 
   return (
@@ -387,6 +456,61 @@ export default function CookieBannerAppearanceTab() {
             type="number"
             error={errors.borderRadius?.message}
             disabled={isFormDisabled}
+          />
+          <Field
+            {...register("fontFamily")}
+            label={__("Font Family")}
+            type="text"
+            error={errors.fontFamily?.message}
+            disabled={isFormDisabled}
+          />
+        </Card>
+      </div>
+
+      <div className="space-y-4">
+        <h2 className="text-base font-medium">{__("Layout")}</h2>
+        <Card className="space-y-4" padded>
+          <Controller
+            name="position"
+            control={control}
+            render={({ field }) => (
+              <div className="flex flex-col gap-[6px]">
+                <label className="text-sm font-medium text-txt-primary">
+                  {__("Banner Position")}
+                </label>
+                <select
+                  value={field.value}
+                  onChange={field.onChange}
+                  disabled={isFormDisabled}
+                  className="w-full rounded-[10px] border border-border-mid bg-secondary px-3 py-[6px] text-sm text-txt-primary hover:border-border-strong disabled:bg-transparent disabled:opacity-60"
+                >
+                  <option value="bottom">{__("Bottom (full width)")}</option>
+                  <option value="bottom-left">{__("Bottom Left")}</option>
+                  <option value="bottom-right">{__("Bottom Right")}</option>
+                  <option value="center">{__("Center")}</option>
+                </select>
+              </div>
+            )}
+          />
+          <Controller
+            name="revisitPosition"
+            control={control}
+            render={({ field }) => (
+              <div className="flex flex-col gap-[6px]">
+                <label className="text-sm font-medium text-txt-primary">
+                  {__("Revisit Button Position")}
+                </label>
+                <select
+                  value={field.value}
+                  onChange={field.onChange}
+                  disabled={isFormDisabled}
+                  className="w-full rounded-[10px] border border-border-mid bg-secondary px-3 py-[6px] text-sm text-txt-primary hover:border-border-strong disabled:bg-transparent disabled:opacity-60"
+                >
+                  <option value="bottom-left">{__("Bottom Left")}</option>
+                  <option value="bottom-right">{__("Bottom Right")}</option>
+                </select>
+              </div>
+            )}
           />
         </Card>
       </div>
