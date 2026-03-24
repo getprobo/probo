@@ -27,6 +27,17 @@ export const PlaceholderExtension = Extension.create({
             if (node.type.name !== "paragraph") return DecorationSet.empty;
             if (node.content.size !== 0) return DecorationSet.empty;
 
+            if ($pos.depth >= 2) {
+              const parentName = $pos.node($pos.depth - 1).type.name;
+              if (
+                parentName === "listItem"
+                || parentName === "tableCell"
+                || parentName === "tableHeader"
+              ) {
+                return DecorationSet.empty;
+              }
+            }
+
             const pos = $pos.before($pos.depth);
 
             return DecorationSet.create(state.doc, [
