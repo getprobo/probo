@@ -10,7 +10,7 @@ import {
   useFloating,
 } from "@floating-ui/react";
 import type { Icon } from "@phosphor-icons/react";
-import { CodeBlockIcon, ListBulletsIcon, ListNumbersIcon, MinusIcon, PlusIcon, QuotesIcon, TextHOneIcon, TextHThreeIcon, TextHTwoIcon, TextTIcon } from "@phosphor-icons/react";
+import { CodeBlockIcon, GridFourIcon, ListBulletsIcon, ListNumbersIcon, MinusIcon, PlusIcon, QuotesIcon, TextHOneIcon, TextHThreeIcon, TextHTwoIcon, TextTIcon } from "@phosphor-icons/react";
 import { type useEditor, useEditorState } from "@tiptap/react";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { tv } from "tailwind-variants";
@@ -37,6 +37,7 @@ const BLOCK_ITEMS: BlockItem[] = [
   { label: "Code Block", icon: CodeBlockIcon, action: chain => chain.toggleCodeBlock() },
   { label: "Blockquote", icon: QuotesIcon, action: chain => chain.toggleBlockquote() },
   { label: "Divider", icon: MinusIcon, action: chain => chain.setHorizontalRule() },
+  { label: "Table", icon: GridFourIcon, action: chain => chain.insertTable() },
 ];
 
 const blockMenuVariants = tv({
