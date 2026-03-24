@@ -52,4 +52,18 @@
     pre { @apply my-4 px-6 py-4 bg-border-solid rounded-lg text-sm; }
 
     code { @apply text-inherit font-mono bg-border-solid rounded-md; }
+
+    p.is-empty-focused::before {
+        content: attr(data-placeholder);
+        @apply text-txt-tertiary pointer-events-none float-left h-0;
+    }
+
+    .slash-search {
+        @apply bg-subtle rounded px-1.5 py-0.5;
+    }
+
+    .slash-search[data-empty="true"]::after {
+        content: attr(data-placeholder);
+        @apply text-txt-tertiary;
+    }
 }
