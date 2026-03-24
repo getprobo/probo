@@ -1,3 +1,7 @@
+// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Use of this source code is governed by the ISC license
+// that can be found in the LICENSE file.
+
 import { CodeIcon, LinkIcon, TextBIcon, TextItalicIcon, TextStrikethroughIcon, TextUnderlineIcon, TrashIcon } from "@phosphor-icons/react";
 import { Editor, useEditorState } from "@tiptap/react";
 import { BubbleMenu as BaseBubbleMenu } from "@tiptap/react/menus";
