@@ -1,3 +1,7 @@
+// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Use of this source code is governed by the ISC license
+// that can be found in the LICENSE file.
+
 import { Blockquote } from "@tiptap/extension-blockquote";
 import { Bold } from "@tiptap/extension-bold";
 import { Code } from "@tiptap/extension-code";
@@ -21,6 +25,8 @@ import { BlockMenu } from "./BlockMenu";
 import { BubbleMenu } from "./BubbleMenu";
 import { LinkExtension } from "./LinkExtension";
 import { OptionsMenu } from "./OptionsMenu";
+import { PlaceholderExtension } from "./PlaceholderExtension";
+import { SlashCommandExtension } from "./SlashCommandExtension";
 
 const extensions = [
   Document,
@@ -36,6 +42,8 @@ const extensions = [
   Code,
   CodeBlock,
   LinkExtension,
+  SlashCommandExtension,
+  PlaceholderExtension,
   Blockquote,
   BulletList,
   OrderedList,
