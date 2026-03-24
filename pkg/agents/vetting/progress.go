@@ -51,6 +51,13 @@ var toolMessages = map[string][]string{
 		"Surveying the vendor's regulatory standing",
 		"Evaluating adherence to industry standards",
 	},
+	"assess_market_presence": {
+		"Investigating the vendor's market presence",
+		"Looking for notable customers and case studies",
+		"Checking who uses this vendor",
+		"Assessing the vendor's market credibility",
+		"Identifying the vendor's customer base",
+	},
 
 	// Security sub-agent tools.
 	"check_ssl_certificate": {

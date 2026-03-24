@@ -43,7 +43,7 @@ func newOrchestratorAgent(
 		return nil, fmt.Errorf("cannot build security tools: %w", err)
 	}
 
-	var crawlerOpts, analyzerOpts, securityOpts, complianceOpts []agent.Option
+	var crawlerOpts, analyzerOpts, securityOpts, complianceOpts, marketOpts []agent.Option
 	if reporter != nil {
 		crawlerOpts = append(
 			crawlerOpts,
@@ -61,12 +61,17 @@ func newOrchestratorAgent(
 			complianceOpts,
 			agent.WithHooks(newSubProgressHooks(reporter, "assess_compliance")),
 		)
+		marketOpts = append(
+			marketOpts,
+			agent.WithHooks(newSubProgressHooks(reporter, "assess_market_presence")),
+		)
 	}
 
 	crawler := newCrawlerAgent(client, model, browserTools, crawlerOpts...)
 	analyzer := newDocumentAnalyzerAgent(client, model, browserTools, analyzerOpts...)
 	securityAssessor := newSecurityAssessorAgent(client, model, securityTools, securityOpts...)
 	compliance := newComplianceAssessorAgent(client, model, browserTools, complianceOpts...)
+	market := newMarketPresenceAgent(client, model, browserTools, marketOpts...)
 
 	opts := []agent.Option{
 		agent.WithInstructions(orchestratorSystemPrompt),
@@ -87,6 +92,10 @@ func newOrchestratorAgent(
 			compliance.AsTool(
 				"assess_compliance",
 				"Identify certifications and compliance frameworks from a trust/compliance page. Input: the trust or compliance page URL.",
+			),
+			market.AsTool(
+				"assess_market_presence",
+				"Analyze a vendor's market presence by identifying notable customers, case studies, and company size signals. Input: the vendor's main website URL.",
 			),
 		),
 		agent.WithMaxTurns(20),
