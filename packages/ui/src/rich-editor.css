@@ -76,12 +76,43 @@
             @apply border border-border-mid border-collapse;
         }
         th {
-            @apply px-2 py-1.5 border border-border-mid border-collapse bg-subtle text-left font-semibold;
+            @apply px-2 py-1.5 border border-border-mid border-collapse bg-subtle text-left font-semibold relative;
             p { @apply m-0; }
         }
         td {
-            @apply px-2 py-1.5 border border-border-mid border-collapse bg-level-0 text-left;
+            @apply px-2 py-1.5 border border-border-mid border-collapse bg-level-0 text-left relative;
             p { @apply m-0; }
         }
+    }
+
+    th.selectedCell, td.selectedCell,
+    th.focusedCell, td.focusedCell {
+        background-color: color-mix(in srgb, var(--color-info) 50%, transparent) !important;
+        border: 2px solid var(--color-border-info) !important;
+    }
+
+    .selectedCell:has(+ .selectedCell) {
+        border-right: 1px solid var(--color-border-mid) !important;
+    }
+    .selectedCell + .selectedCell {
+        border-left: 1px solid var(--color-border-mid) !important;
+    }
+    tr:has(+ tr .selectedCell) > .selectedCell {
+        border-bottom: 1px solid var(--color-border-mid) !important;
+    }
+    tr:has(.selectedCell) + tr > .selectedCell {
+        border-top: 1px solid var(--color-border-mid) !important;
+    }
+
+    .column-resize-handle {
+        @apply absolute top-0 -right-px bottom-0 w-0.5 bg-border-info pointer-events-none z-20;
+    }
+
+    &.resize-cursor {
+        cursor: col-resize;
+    }
+
+    .tableWrapper {
+        @apply overflow-x-auto;
     }
 }

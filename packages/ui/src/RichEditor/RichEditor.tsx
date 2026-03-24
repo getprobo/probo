@@ -24,10 +24,12 @@ import { tv } from "tailwind-variants";
 
 import { BlockMenu } from "./BlockMenu";
 import { BubbleMenu } from "./BubbleMenu";
+import { FocusedCellExtension } from "./FocusedCellExtension";
 import { LinkExtension } from "./LinkExtension";
 import { OptionsMenu } from "./OptionsMenu";
 import { PlaceholderExtension } from "./PlaceholderExtension";
 import { SlashCommandExtension } from "./SlashCommandExtension";
+import { TableCellMenu } from "./TableCellMenu";
 
 const extensions = [
   Document,
@@ -54,7 +56,10 @@ const extensions = [
   Dropcursor,
   Gapcursor,
   UndoRedo,
-  TableKit,
+  TableKit.configure({
+    table: { resizable: true },
+  }),
+  FocusedCellExtension,
 ];
 
 const richEditorVariants = tv({
@@ -102,6 +107,7 @@ export function RichEditor(props: RichEditorProps) {
       <BubbleMenu editor={editor} />
       <BlockMenu editor={editor} />
       <OptionsMenu editor={editor} />
+      <TableCellMenu editor={editor} />
       <EditorContent className="h-full" editor={editor} />
     </div>
   );
