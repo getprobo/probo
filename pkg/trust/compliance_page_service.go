@@ -31,6 +31,12 @@ import (
 //go:embed compliance.md.tmpl
 var complianceTmplContent string
 
+//go:embed sitemap.xml.tmpl
+var sitemapTmplContent string
+
+//go:embed robots.txt.tmpl
+var robotsTmplContent string
+
 var complianceTmpl = template.Must(
 	template.New("compliance").
 		Funcs(template.FuncMap{
@@ -42,6 +48,14 @@ var complianceTmpl = template.Must(
 			},
 		}).
 		Parse(complianceTmplContent),
+)
+
+var sitemapTmpl = template.Must(
+	template.New("sitemap").Parse(sitemapTmplContent),
+)
+
+var robotsTmpl = template.Must(
+	template.New("robots").Parse(robotsTmplContent),
 )
 
 type (
@@ -164,6 +178,105 @@ func (s *Service) RenderCompliancePageMarkdown(
 	}
 
 	return nil
+}
+
+type (
+	sitemapData struct {
+		BaseURL   string
+		Documents []string
+	}
+
+	robotsData struct {
+		Indexable bool
+		BaseURL   string
+	}
+)
+
+func (s *Service) RenderSitemap(
+	ctx context.Context,
+	w io.Writer,
+	trustCenterID gid.GID,
+	tenantID gid.TenantID,
+	baseURL string,
+) error {
+	org, err := s.GetOrganizationByTrustCenterID(ctx, trustCenterID)
+	if err != nil {
+		return fmt.Errorf("cannot load organization for sitemap: %w", err)
+	}
+
+	tenantSvc := s.WithTenant(tenantID)
+
+	data := &sitemapData{
+		BaseURL: baseURL,
+	}
+
+	data.Documents, err = s.fetchDocumentIDs(ctx, tenantSvc, org.ID)
+	if err != nil {
+		return fmt.Errorf("cannot fetch document IDs for sitemap: %w", err)
+	}
+
+	if err := sitemapTmpl.Execute(w, data); err != nil {
+		return fmt.Errorf("cannot render sitemap: %w", err)
+	}
+
+	return nil
+}
+
+func (s *Service) RenderRobotsTxt(
+	ctx context.Context,
+	w io.Writer,
+	searchEngineIndexing coredata.SearchEngineIndexing,
+	baseURL string,
+) error {
+	data := &robotsData{
+		Indexable: searchEngineIndexing == coredata.SearchEngineIndexingIndexable,
+		BaseURL:   baseURL,
+	}
+
+	if err := robotsTmpl.Execute(w, data); err != nil {
+		return fmt.Errorf("cannot render robots.txt: %w", err)
+	}
+
+	return nil
+}
+
+func (s *Service) fetchDocumentIDs(ctx context.Context, tenantSvc *TenantService, orgID gid.GID) ([]string, error) {
+	var ids []string
+
+	var cursorKey *page.CursorKey
+	for {
+		cursor := page.NewCursor(
+			page.MaxCursorSize,
+			cursorKey,
+			page.Head,
+			page.OrderBy[coredata.DocumentOrderField]{
+				Field:     coredata.DocumentOrderFieldTitle,
+				Direction: page.OrderDirectionAsc,
+			},
+		)
+
+		result, err := tenantSvc.Documents.ListForOrganizationId(ctx, orgID, cursor)
+		if err != nil {
+			return nil, fmt.Errorf("cannot list documents: %w", err)
+		}
+
+		for _, doc := range result.Data {
+			if doc.TrustCenterVisibility == coredata.TrustCenterVisibilityNone {
+				continue
+			}
+			ids = append(ids, doc.ID.String())
+		}
+
+		if !result.Info.HasNext {
+			break
+		}
+
+		last := result.Data[len(result.Data)-1]
+		ck := last.CursorKey(coredata.DocumentOrderFieldTitle)
+		cursorKey = &ck
+	}
+
+	return ids, nil
 }
 
 func (s *Service) fetchComplianceFrameworks(ctx context.Context, tenantSvc *TenantService, trustCenterID gid.GID) ([]compliancePageFramework, error) {

@@ -41,3 +41,43 @@ func (h *Handler) HandleLLMsTxt(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "internal server error", http.StatusInternalServerError)
 	}
 }
+
+func (h *Handler) HandleRobotsTxt(w http.ResponseWriter, r *http.Request) {
+	tc := CompliancePageFromContext(r.Context())
+	if tc == nil {
+		http.Error(w, "not found", http.StatusNotFound)
+		return
+	}
+
+	baseURL := CompliancePageBaseURLFromContext(r.Context())
+	if baseURL == nil {
+		http.Error(w, "not found", http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+
+	if err := h.trustService.RenderRobotsTxt(r.Context(), w, tc.SearchEngineIndexing, *baseURL); err != nil {
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+	}
+}
+
+func (h *Handler) HandleSitemap(w http.ResponseWriter, r *http.Request) {
+	tc := CompliancePageFromContext(r.Context())
+	if tc == nil {
+		http.Error(w, "not found", http.StatusNotFound)
+		return
+	}
+
+	baseURL := CompliancePageBaseURLFromContext(r.Context())
+	if baseURL == nil {
+		http.Error(w, "not found", http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/xml; charset=utf-8")
+
+	if err := h.trustService.RenderSitemap(r.Context(), w, tc.ID, tc.TenantID, *baseURL); err != nil {
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+	}
+}

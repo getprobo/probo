@@ -138,6 +138,20 @@ enum TrustCenterVisibility
         )
 }
 
+enum SearchEngineIndexing
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.SearchEngineIndexing"
+    ) {
+    INDEXABLE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.SearchEngineIndexingIndexable"
+        )
+    NOT_INDEXABLE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.SearchEngineIndexingNotIndexable"
+        )
+}
+
 enum ControlImplementationState
     @goModel(
         model: "go.probo.inc/probo/pkg/coredata.ControlImplementationState"
@@ -1685,6 +1699,7 @@ type TrustCenter implements Node
     ) {
     id: ID!
     active: Boolean!
+    searchEngineIndexing: SearchEngineIndexing!
     logoFileUrl: String @goField(forceResolver: true)
     darkLogoFileUrl: String @goField(forceResolver: true)
     ndaFileName: String
@@ -3893,6 +3908,7 @@ input UpdateOrganizationContextInput {
 input UpdateTrustCenterInput {
     trustCenterId: ID!
     active: Boolean
+    searchEngineIndexing: SearchEngineIndexing
 }
 
 input UploadTrustCenterNDAInput {

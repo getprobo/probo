@@ -9,6 +9,7 @@ const updateTrustCenterMutation = graphql`
       trustCenter {
         id
         active
+        searchEngineIndexing
         updatedAt
       }
     }

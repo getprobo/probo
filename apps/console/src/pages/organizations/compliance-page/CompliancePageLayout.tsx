@@ -1,6 +1,6 @@
 import { usePageTitle } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
-import { Badge, IconBell2, IconCheckmark1, IconFolder2, IconMedal, IconPageTextLine, IconPencil, IconPeopleAdd, IconSettingsGear2, IconStore, PageHeader, TabLink, Tabs } from "@probo/ui";
+import { Badge, Button, IconBell2, IconCheckmark1, IconFolder2, IconMedal, IconPageTextLine, IconPencil, IconPeopleAdd, IconSettingsGear2, IconStore, PageHeader, TabLink, Tabs } from "@probo/ui";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { Outlet } from "react-router";
 import { graphql } from "relay-runtime";
@@ -13,7 +13,11 @@ export const compliancePageLayoutQuery = graphql`
     organization: node(id: $organizationId) {
       __typename
       ... on Organization {
+        customDomain {
+          domain
+        }
         compliancePage: trustCenter {
+          id
           active
         }
       }
@@ -34,6 +38,12 @@ export function CompliancePageLayout(props: { queryRef: PreloadedQuery<Complianc
     throw new Error("invalid type for node");
   }
 
+  const compliancePageUrl = organization.compliancePage?.id
+    ? organization.customDomain?.domain
+      ? `https://${organization.customDomain.domain}`
+      : `${window.location.origin}/trust/${organization.compliancePage.id}`
+    : null;
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -45,6 +55,19 @@ export function CompliancePageLayout(props: { queryRef: PreloadedQuery<Complianc
         <Badge variant={organization.compliancePage?.active ? "success" : "danger"}>
           {organization.compliancePage?.active ? __("Active") : __("Inactive")}
         </Badge>
+        {organization.compliancePage?.active && compliancePageUrl && (
+          <Button
+            variant="secondary"
+            onClick={() =>
+              window.open(
+                compliancePageUrl,
+                "_blank",
+                "noopener,noreferrer",
+              )}
+          >
+            {__("Open")}
+          </Button>
+        )}
       </PageHeader>
 
       <Tabs>

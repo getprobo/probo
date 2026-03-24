@@ -43,6 +43,7 @@ type (
 		ID                           gid.GID
 		Active                       *bool
 		Slug                         *string
+		SearchEngineIndexing         *coredata.SearchEngineIndexing
 		NonDisclosureAgreementFileID *gid.GID
 	}
 
@@ -177,6 +178,9 @@ func (s TrustCenterService) Update(
 			}
 			if req.Slug != nil {
 				trustCenter.Slug = *req.Slug
+			}
+			if req.SearchEngineIndexing != nil {
+				trustCenter.SearchEngineIndexing = *req.SearchEngineIndexing
 			}
 			trustCenter.UpdatedAt = time.Now()
 

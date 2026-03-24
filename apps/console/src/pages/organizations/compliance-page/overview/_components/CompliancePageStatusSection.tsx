@@ -1,5 +1,5 @@
 import { useTranslate } from "@probo/i18n";
-import { Button, Card, Checkbox, Spinner, useToast } from "@probo/ui";
+import { Card, Spinner, Toggle, useToast } from "@probo/ui";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -8,12 +8,10 @@ import { useUpdateTrustCenterMutation } from "#/hooks/graph/TrustCenterGraph";
 
 const fragment = graphql`
   fragment CompliancePageStatusSectionFragment on Organization {
-    customDomain {
-      domain
-    }
     compliancePage: trustCenter {
       id
       active
+      searchEngineIndexing
       canUpdate: permission(action: "core:trust-center:update")
     }
   }
@@ -31,12 +29,6 @@ export function CompliancePageStatusSection(props: {
     fragment,
     fragmentRef,
   );
-
-  const compliancePageUrl = organization.compliancePage?.id
-    ? organization.customDomain?.domain
-      ? `https://${organization.customDomain.domain}`
-      : `${window.location.origin}/trust/${organization.compliancePage.id}`
-    : null;
 
   const [updateCompliancePage, isUpdating] = useUpdateTrustCenterMutation();
 
@@ -60,10 +52,32 @@ export function CompliancePageStatusSection(props: {
     });
   };
 
+  const handleToggleSearchEngineIndexing = async (indexable: boolean) => {
+    if (!organization.compliancePage?.id) {
+      toast({
+        title: __("Error"),
+        description: __("Compliance page not found"),
+        variant: "error",
+      });
+      return;
+    }
+
+    await updateCompliancePage({
+      variables: {
+        input: {
+          trustCenterId: organization.compliancePage.id,
+          searchEngineIndexing: indexable ? "INDEXABLE" : "NOT_INDEXABLE",
+        },
+      },
+    });
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-base font-medium">{__("Compliance Page Status")}</h2>
+        <h2 className="text-base font-medium">
+          {__("Compliance Page Status")}
+        </h2>
         {isUpdating && <Spinner />}
       </div>
       <Card padded className="space-y-4">
@@ -76,55 +90,42 @@ export function CompliancePageStatusSection(props: {
               )}
             </p>
           </div>
-          <Checkbox
+          <Toggle
             checked={!!organization.compliancePage?.active}
             onChange={checked => void handleToggleActive(checked)}
             disabled={!organization.compliancePage?.canUpdate}
           />
         </div>
 
-        {organization.compliancePage?.active && compliancePageUrl && (
-          <div className="mt-4 p-4 bg-accent-light rounded-lg border border-accent">
-            <div className="flex items-center justify-between">
-              <div>
-                <h4 className="font-medium text-accent-dark">
-                  {__("Your compliance page is live!")}
-                </h4>
-                <p className="text-sm text-accent-dark mt-1">
-                  {__("Your customers can now access your compliance page at:")}
-                </p>
-                <a
-                  href={compliancePageUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm font-mono text-accent underline hover:no-underline"
-                >
-                  {compliancePageUrl}
-                </a>
-              </div>
-              <Button
-                variant="secondary"
-                onClick={() =>
-                  window.open(compliancePageUrl, "_blank", "noopener,noreferrer")}
-              >
-                {__("View")}
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {!organization.compliancePage?.active && (
-          <div className="mt-4 p-4 bg-tertiary rounded-lg border border-border-solid">
-            <h4 className="font-medium text-txt-secondary">
-              {__("Compliance page is inactive")}
-            </h4>
-            <p className="text-sm text-txt-tertiary mt-1">
+        <div className="flex items-center justify-between border-t border-border-solid pt-4">
+          <div className="space-y-1">
+            <h3 className="font-medium">{__("Search Engine Indexing")}</h3>
+            <p className="text-sm text-txt-tertiary">
               {__(
-                "Your compliance page is currently not accessible to the public. Enable it to start sharing your compliance status.",
+                "Allow search engines to index your compliance page and make it discoverable",
               )}
             </p>
           </div>
-        )}
+          <span
+            title={
+              !organization.compliancePage?.active
+                ? __("Activate your compliance page first to enable search engine indexing")
+                : undefined
+            }
+          >
+            <Toggle
+              checked={
+                organization.compliancePage?.searchEngineIndexing === "INDEXABLE"
+              }
+              onChange={checked =>
+                void handleToggleSearchEngineIndexing(checked)}
+              disabled={
+                !organization.compliancePage?.canUpdate
+                || !organization.compliancePage?.active
+              }
+            />
+          </span>
+        </div>
       </Card>
     </div>
   );

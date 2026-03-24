@@ -1,0 +1,9 @@
+{{- if .Indexable }}
+User-Agent: *
+Allow: /
+
+Sitemap: {{ .BaseURL }}/sitemap.xml
+{{- else }}
+User-Agent: *
+Disallow: /
+{{- end }}

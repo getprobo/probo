@@ -24,6 +24,7 @@ import (
 type TrustCenter struct {
 	ID                   gid.GID                          `json:"id"`
 	Active               bool                             `json:"active"`
+	SearchEngineIndexing coredata.SearchEngineIndexing    `json:"searchEngineIndexing"`
 	LogoFileURL          *string                          `json:"logoFileUrl,omitempty"`
 	DarkLogoFileURL      *string                          `json:"darkLogoFileUrl,omitempty"`
 	NdaFileName          *string                          `json:"ndaFileName,omitempty"`
@@ -53,9 +54,10 @@ func NewTrustCenter(tc *coredata.TrustCenter, file *coredata.File) *TrustCenter 
 		Organization: &Organization{
 			ID: tc.OrganizationID,
 		},
-		Active:      tc.Active,
-		NdaFileName: ndaFileName,
-		CreatedAt:   tc.CreatedAt,
-		UpdatedAt:   tc.UpdatedAt,
+		Active:               tc.Active,
+		SearchEngineIndexing: tc.SearchEngineIndexing,
+		NdaFileName:          ndaFileName,
+		CreatedAt:            tc.CreatedAt,
+		UpdatedAt:            tc.UpdatedAt,
 	}
 }

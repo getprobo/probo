@@ -178,6 +178,8 @@ func (s *Server) trustCenterRouter() chi.Router {
 
 	r.Mount("/api/trust/v1", s.apiServer.CompliancePageHandler())
 	r.Get("/llms.txt", h.HandleLLMsTxt)
+	r.Get("/robots.txt", h.HandleRobotsTxt)
+	r.Get("/sitemap.xml", h.HandleSitemap)
 	r.Handle("/*", s.trustWebServer)
 
 	return r

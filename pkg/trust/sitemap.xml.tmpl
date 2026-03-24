@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>{{ .BaseURL }}/overview</loc>
+  </url>
+  <url>
+    <loc>{{ .BaseURL }}/documents</loc>
+  </url>
+  <url>
+    <loc>{{ .BaseURL }}/subprocessors</loc>
+  </url>
+  <url>
+    <loc>{{ .BaseURL }}/updates</loc>
+  </url>
+{{ range .Documents }}  <url>
+    <loc>{{ $.BaseURL }}/documents/{{ . }}</loc>
+  </url>
+{{ end }}</urlset>

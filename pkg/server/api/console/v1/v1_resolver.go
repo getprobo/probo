@@ -2106,8 +2106,9 @@ func (r *mutationResolver) UpdateTrustCenter(ctx context.Context, input types.Up
 	trustCenter, file, err := prb.TrustCenters.Update(
 		ctx,
 		&probo.UpdateTrustCenterRequest{
-			ID:     input.TrustCenterID,
-			Active: input.Active,
+			ID:                   input.TrustCenterID,
+			Active:               input.Active,
+			SearchEngineIndexing: input.SearchEngineIndexing,
 		},
 	)
 	if err != nil {

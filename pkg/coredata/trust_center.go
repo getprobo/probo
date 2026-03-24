@@ -30,17 +30,18 @@ import (
 
 type (
 	TrustCenter struct {
-		ID                           gid.GID      `db:"id"`
-		OrganizationID               gid.GID      `db:"organization_id"`
-		TenantID                     gid.TenantID `db:"tenant_id"`
-		Active                       bool         `db:"active"`
-		Slug                         string       `db:"slug"`
-		MailingListID                *gid.GID     `db:"mailing_list_id"`
-		LogoFileID                   *gid.GID     `db:"logo_file_id"`
-		DarkLogoFileID               *gid.GID     `db:"dark_logo_file_id"`
-		NonDisclosureAgreementFileID *gid.GID     `db:"non_disclosure_agreement_file_id"`
-		CreatedAt                    time.Time    `db:"created_at"`
-		UpdatedAt                    time.Time    `db:"updated_at"`
+		ID                           gid.GID              `db:"id"`
+		OrganizationID               gid.GID              `db:"organization_id"`
+		TenantID                     gid.TenantID         `db:"tenant_id"`
+		Active                       bool                 `db:"active"`
+		Slug                         string               `db:"slug"`
+		SearchEngineIndexing         SearchEngineIndexing `db:"search_engine_indexing"`
+		MailingListID                *gid.GID             `db:"mailing_list_id"`
+		LogoFileID                   *gid.GID             `db:"logo_file_id"`
+		DarkLogoFileID               *gid.GID             `db:"dark_logo_file_id"`
+		NonDisclosureAgreementFileID *gid.GID             `db:"non_disclosure_agreement_file_id"`
+		CreatedAt                    time.Time            `db:"created_at"`
+		UpdatedAt                    time.Time            `db:"updated_at"`
 	}
 
 	TrustCenters []*TrustCenter
@@ -85,6 +86,7 @@ SELECT
 	dark_logo_file_id,
 	active,
 	slug,
+	search_engine_indexing,
 	non_disclosure_agreement_file_id,
 	created_at,
 	updated_at
@@ -136,6 +138,7 @@ SELECT
 	dark_logo_file_id,
 	active,
 	slug,
+	search_engine_indexing,
 	non_disclosure_agreement_file_id,
 	created_at,
 	updated_at
@@ -187,6 +190,7 @@ SELECT
 	dark_logo_file_id,
 	active,
 	slug,
+	search_engine_indexing,
 	non_disclosure_agreement_file_id,
 	created_at,
 	updated_at
@@ -238,6 +242,7 @@ SELECT
 	dark_logo_file_id,
 	active,
 	slug,
+	search_engine_indexing,
 	non_disclosure_agreement_file_id,
 	created_at,
 	updated_at
@@ -284,6 +289,7 @@ INSERT INTO trust_centers (
 	dark_logo_file_id,
 	active,
 	slug,
+	search_engine_indexing,
 	non_disclosure_agreement_file_id,
 	created_at,
 	updated_at
@@ -296,6 +302,7 @@ INSERT INTO trust_centers (
 	@dark_logo_file_id,
 	@active,
 	@slug,
+	@search_engine_indexing,
 	@non_disclosure_agreement_file_id,
 	@created_at,
 	@updated_at
@@ -311,6 +318,7 @@ INSERT INTO trust_centers (
 		"dark_logo_file_id":                tc.DarkLogoFileID,
 		"active":                           tc.Active,
 		"slug":                             tc.Slug,
+		"search_engine_indexing":           tc.SearchEngineIndexing,
 		"non_disclosure_agreement_file_id": tc.NonDisclosureAgreementFileID,
 		"created_at":                       tc.CreatedAt,
 		"updated_at":                       tc.UpdatedAt,
@@ -340,6 +348,7 @@ UPDATE trust_centers
 SET
 	active = @active,
 	slug = @slug,
+	search_engine_indexing = @search_engine_indexing,
 	logo_file_id = @logo_file_id,
 	dark_logo_file_id = @dark_logo_file_id,
 	non_disclosure_agreement_file_id = @non_disclosure_agreement_file_id,
@@ -357,6 +366,7 @@ WHERE
 		"dark_logo_file_id":                tc.DarkLogoFileID,
 		"active":                           tc.Active,
 		"slug":                             tc.Slug,
+		"search_engine_indexing":           tc.SearchEngineIndexing,
 		"non_disclosure_agreement_file_id": tc.NonDisclosureAgreementFileID,
 		"updated_at":                       tc.UpdatedAt,
 	}
