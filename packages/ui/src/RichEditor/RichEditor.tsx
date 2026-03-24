@@ -14,6 +14,7 @@ import { Italic } from "@tiptap/extension-italic";
 import { BulletList, ListItem, OrderedList } from "@tiptap/extension-list";
 import { Paragraph } from "@tiptap/extension-paragraph";
 import { Strike } from "@tiptap/extension-strike";
+import { TableKit } from "@tiptap/extension-table";
 import { Text } from "@tiptap/extension-text";
 import { Underline } from "@tiptap/extension-underline";
 import { Dropcursor, Gapcursor, UndoRedo } from "@tiptap/extensions";
@@ -53,6 +54,7 @@ const extensions = [
   Dropcursor,
   Gapcursor,
   UndoRedo,
+  TableKit,
 ];
 
 const richEditorVariants = tv({

@@ -66,4 +66,22 @@
         content: attr(data-placeholder);
         @apply text-txt-tertiary;
     }
+
+    table {
+        @apply border border-border-mid border-collapse;
+        tbody {
+            @apply border border-border-mid border-collapse;
+        }
+        tr {
+            @apply border border-border-mid border-collapse;
+        }
+        th {
+            @apply px-2 py-1.5 border border-border-mid border-collapse bg-subtle text-left font-semibold;
+            p { @apply m-0; }
+        }
+        td {
+            @apply px-2 py-1.5 border border-border-mid border-collapse bg-level-0 text-left;
+            p { @apply m-0; }
+        }
+    }
 }
