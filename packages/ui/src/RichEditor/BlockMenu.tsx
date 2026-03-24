@@ -51,6 +51,8 @@ const blockMenuVariants = tv({
 
 const { trigger, menu } = blockMenuVariants();
 
+const TRIGGER_HEIGHT = 24;
+
 function findClosestRootBlock(element: Element, editorDom: Element): HTMLElement | null {
   let current: Element | null = element;
 
@@ -198,13 +200,16 @@ export function BlockMenu({ editor }: BlockMenuProps) {
     };
   }, [editor, slashState.active, slashState.query, filteredItems, slashActiveIndex, handleSlashAction]);
 
+  const blockHeight = hoveredBlock?.getBoundingClientRect().height ?? 0;
+  const triggerPlacement = blockHeight > 2 * TRIGGER_HEIGHT ? "left-start" as const : "left" as const;
+
   const {
     refs: triggerRefs,
     floatingStyles: triggerStyles,
     isPositioned,
   } = useFloating({
     strategy: "fixed",
-    placement: "left-start",
+    placement: triggerPlacement,
     middleware: [offset(32)],
     whileElementsMounted: autoUpdate,
   });
