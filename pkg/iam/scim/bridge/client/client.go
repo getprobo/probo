@@ -309,6 +309,56 @@ func (c *Client) DeleteUser(ctx context.Context, userID string) error {
 	return nil
 }
 
+func (u *User) UnmarshalJSON(data []byte) error {
+	var raw struct {
+		ID                string `json:"id"`
+		UserName          string `json:"userName"`
+		DisplayName       string `json:"displayName"`
+		Active            bool   `json:"active"`
+		Title             string `json:"title"`
+		ExternalID        string `json:"externalId"`
+		UserType          string `json:"userType"`
+		PreferredLanguage string `json:"preferredLanguage"`
+		Name              struct {
+			GivenName  string `json:"givenName"`
+			FamilyName string `json:"familyName"`
+		} `json:"name"`
+		Enterprise struct {
+			EmployeeNumber string `json:"employeeNumber"`
+			Department     string `json:"department"`
+			CostCenter     string `json:"costCenter"`
+			Organization   string `json:"organization"`
+			Division       string `json:"division"`
+			Manager        struct {
+				Value string `json:"value"`
+			} `json:"manager"`
+		} `json:"urn:ietf:params:scim:schemas:extension:enterprise:2.0:User"`
+	}
+
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+
+	u.ID = raw.ID
+	u.UserName = raw.UserName
+	u.DisplayName = raw.DisplayName
+	u.Active = raw.Active
+	u.Title = raw.Title
+	u.ExternalID = raw.ExternalID
+	u.UserType = raw.UserType
+	u.PreferredLanguage = raw.PreferredLanguage
+	u.GivenName = raw.Name.GivenName
+	u.FamilyName = raw.Name.FamilyName
+	u.EmployeeNumber = raw.Enterprise.EmployeeNumber
+	u.Department = raw.Enterprise.Department
+	u.CostCenter = raw.Enterprise.CostCenter
+	u.EnterpriseOrganization = raw.Enterprise.Organization
+	u.Division = raw.Enterprise.Division
+	u.ManagerValue = raw.Enterprise.Manager.Value
+
+	return nil
+}
+
 func (c *Client) setHeaders(req *http.Request) {
 	req.Header.Set("Authorization", "Bearer "+c.token)
 	req.Header.Set("Accept", "application/scim+json")
