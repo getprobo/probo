@@ -77,6 +77,7 @@ export function PersonForm(props: {
   id?: string;
   connectionId?: DataID;
   disabled?: boolean;
+  scimManaged?: boolean;
   defaultValues?: z.infer<typeof schema>;
   onSubmit?: () => void;
 }) {
@@ -84,6 +85,7 @@ export function PersonForm(props: {
     id,
     connectionId = "",
     disabled = false,
+    scimManaged = false,
     defaultValues = {
       fullName: "",
       emailAddress: "",
@@ -162,7 +164,7 @@ export function PersonForm(props: {
 
   return (
     <form onSubmit={e => void handleSubmit(e)} className="space-y-4">
-      <Field label={__("Full name *")} {...register("fullName")} type="text" disabled={disabled} />
+      <Field label={__("Full name *")} {...register("fullName")} type="text" disabled={disabled || scimManaged} />
       {id
         ? (
             <>
@@ -223,7 +225,7 @@ export function PersonForm(props: {
         name="kind"
         type="select"
         label={__("Type")}
-        disabled={disabled}
+        disabled={disabled || scimManaged}
       >
         {getRoles(__).map(role => (
           <Option key={role.value} value={role.value}>
@@ -236,9 +238,9 @@ export function PersonForm(props: {
         {...register("position")}
         type="text"
         placeholder={__("e.g. CEO, CFO, etc.")}
-        disabled={disabled}
+        disabled={disabled || scimManaged}
       />
-      <EmailsField control={control} register={register} disabled={disabled} />
+      <EmailsField control={control} register={register} disabled={disabled || scimManaged} />
       <Field label={__("Contract start date")}>
         <Input
           {...register("contractStartDate")}
@@ -272,7 +274,8 @@ export function PersonFormLoader(props: { fragmentRef: PersonFormFragment$key })
   return (
     <PersonForm
       id={person.id}
-      disabled={!person.canUpdate || person.source === "SCIM"}
+      disabled={!person.canUpdate}
+      scimManaged={person.source === "SCIM"}
       defaultValues={
         {
           kind: person.kind,

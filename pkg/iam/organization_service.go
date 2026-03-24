@@ -977,10 +977,12 @@ func (s *OrganizationService) UpdateUser(ctx context.Context, req *UpdateUserReq
 				return fmt.Errorf("cannot load profile: %w", err)
 			}
 
-			profile.FullName = req.FullName
-			profile.Kind = req.Kind
-			profile.AdditionalEmailAddresses = req.AdditionalEmailAddresses
-			profile.Position = req.Position
+			if profile.Source != coredata.ProfileSourceSCIM {
+				profile.FullName = req.FullName
+				profile.Kind = req.Kind
+				profile.AdditionalEmailAddresses = req.AdditionalEmailAddresses
+				profile.Position = req.Position
+			}
 
 			if req.ContractStartDate != nil {
 				profile.ContractStartDate = *req.ContractStartDate
