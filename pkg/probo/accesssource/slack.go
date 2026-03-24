@@ -19,7 +19,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"time"
 
 	"go.probo.inc/probo/pkg/coredata"
 )
@@ -46,7 +45,7 @@ func (d *SlackDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error)
 		cursor  string
 	)
 
-	for {
+	for range maxPaginationPages {
 		resp, err := d.queryUsers(ctx, cursor)
 		if err != nil {
 			return nil, err
@@ -72,10 +71,8 @@ func (d *SlackDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error)
 				AuthMethod: coredata.AccessEntryAuthMethodUnknown,
 			}
 
-			if m.Updated != 0 {
-				t := time.Unix(int64(m.Updated), 0)
-				record.LastLogin = &t
-			}
+			// Note: Slack's Updated field is the profile update time, not
+			// the last login time, so we intentionally do not map it.
 
 			if record.Email != "" {
 				records = append(records, record)

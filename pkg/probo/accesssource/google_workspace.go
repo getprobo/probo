@@ -49,7 +49,7 @@ func (d *GoogleWorkspaceDriver) ListAccounts(ctx context.Context) ([]AccountReco
 	var records []AccountRecord
 	pageToken := ""
 
-	for {
+	for range maxPaginationPages {
 		call := adminService.Users.List().
 			Customer("my_customer").
 			MaxResults(500).
@@ -93,8 +93,10 @@ func (d *GoogleWorkspaceDriver) ListAccounts(ctx context.Context) ([]AccountReco
 				}
 			}
 
+			// Note: OrgUnitPath is an organizational unit (e.g. "/Engineering"),
+			// not a job title. We map it to Role as an approximation.
 			if u.OrgUnitPath != "" {
-				rec.JobTitle = u.OrgUnitPath
+				rec.Role = u.OrgUnitPath
 			}
 
 			records = append(records, rec)

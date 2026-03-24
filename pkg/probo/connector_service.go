@@ -49,11 +49,12 @@ type (
 	}
 
 	CreateConnectorRequest struct {
-		OrganizationID gid.GID
-		Provider       coredata.ConnectorProvider
-		Protocol       coredata.ConnectorProtocol
-		Connection     connector.Connection
-		Settings       map[string]any
+		OrganizationID      gid.GID
+		Provider            coredata.ConnectorProvider
+		Protocol            coredata.ConnectorProtocol
+		Connection          connector.Connection
+		TallySettings       *coredata.TallyConnectorSettings
+		OnePasswordSettings *coredata.OnePasswordConnectorSettings
 	}
 )
 
@@ -201,9 +202,19 @@ func (s *ConnectorService) Create(
 		Provider:       req.Provider,
 		Protocol:       req.Protocol,
 		Connection:     req.Connection,
-		Settings:       req.Settings,
 		CreatedAt:      now,
 		UpdatedAt:      now,
+	}
+
+	switch {
+	case req.TallySettings != nil:
+		if err := newConnector.SetSettings(req.TallySettings); err != nil {
+			return nil, fmt.Errorf("cannot set tally settings: %w", err)
+		}
+	case req.OnePasswordSettings != nil:
+		if err := newConnector.SetSettings(req.OnePasswordSettings); err != nil {
+			return nil, fmt.Errorf("cannot set one password settings: %w", err)
+		}
 	}
 
 	err := s.svc.pg.WithConn(

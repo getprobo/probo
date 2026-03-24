@@ -210,27 +210,17 @@ func (w *SourceFetchWorker) recoverStaleRows(ctx context.Context) {
 	staleThreshold := now.Add(-w.staleAfter)
 
 	err := w.pg.WithTx(ctx, func(tx pg.Conn) error {
-		result, err := tx.Exec(ctx, `
-UPDATE access_review_campaign_source_fetches
-SET
-	status = 'QUEUED',
-	last_error = 'recovered from stale FETCHING state',
-	started_at = NULL,
-	completed_at = NULL,
-	updated_at = $1
-WHERE
-	status = 'FETCHING'
-	AND updated_at < $2
-`, now, staleThreshold)
+		var fetches coredata.AccessReviewCampaignSourceFetches
+		count, err := fetches.RecoverStale(ctx, tx, staleThreshold, now)
 		if err != nil {
-			return fmt.Errorf("cannot recover stale source fetches: %w", err)
+			return err
 		}
 
-		if result.RowsAffected() > 0 {
+		if count > 0 {
 			w.logger.InfoCtx(
 				ctx,
 				"recovered stale source fetches",
-				log.Int64("count", result.RowsAffected()),
+				log.Int64("count", count),
 			)
 		}
 

@@ -23,6 +23,7 @@ import (
 
 type AccessReviewCampaignScopeSource struct {
 	ID                   gid.GID                                        `json:"id"`
+	CampaignID           gid.GID                                        `json:"-"`
 	Source               *AccessSource                                  `json:"source"`
 	Name                 string                                         `json:"name"`
 	FetchStatus          coredata.AccessReviewCampaignSourceFetchStatus `json:"fetchStatus"`

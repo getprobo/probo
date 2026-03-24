@@ -365,6 +365,7 @@ const (
 	ActionAccessEntryGet    = "core:access-entry:get"
 	ActionAccessEntryList   = "core:access-entry:list"
 	ActionAccessEntryDecide = "core:access-entry:decide"
+	ActionAccessEntryFlag   = "core:access-entry:flag"
 
 	// AccessSource actions
 	ActionAccessSourceGet    = "core:access-source:get"

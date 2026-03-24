@@ -100,26 +100,7 @@ func (r *accessEntryConnectionResolver) TotalCount(ctx context.Context, obj *typ
 
 // Organization is the resolver for the organization field.
 func (r *accessReviewCampaignResolver) Organization(ctx context.Context, obj *types.AccessReviewCampaign) (*types.Organization, error) {
-	panic(fmt.Errorf("not implemented: Organization - organization"))
-}
-
-// IdentitySource is the resolver for the identitySource field.
-func (r *accessReviewCampaignResolver) IdentitySource(ctx context.Context, obj *types.AccessReviewCampaign) (*types.AccessSource, error) {
-	if obj.IdentitySource == nil {
-		return nil, nil
-	}
-
-	prb := r.ProboService(ctx, obj.ID.TenantID())
-
-	source, err := prb.AccessSources.Get(ctx, obj.IdentitySource.ID)
-	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, nil
-		}
-		panic(fmt.Errorf("cannot get identity source: %w", err))
-	}
-
-	return types.NewAccessSource(source), nil
+	return obj.Organization, nil
 }
 
 // ScopeSources is the resolver for the scopeSources field.
@@ -147,7 +128,7 @@ func (r *accessReviewCampaignResolver) ScopeSources(ctx context.Context, obj *ty
 
 	result := make([]*types.AccessReviewCampaignScopeSource, len(sources))
 	for i, s := range sources {
-		result[i] = types.NewAccessReviewCampaignScopeSource(s, fetchBySourceID[s.ID])
+		result[i] = types.NewAccessReviewCampaignScopeSource(obj.ID, s, fetchBySourceID[s.ID])
 	}
 
 	return result, nil
@@ -193,6 +174,10 @@ func (r *accessReviewCampaignResolver) Entries(ctx context.Context, obj *types.A
 
 // Statistics is the resolver for the statistics field.
 func (r *accessReviewCampaignResolver) Statistics(ctx context.Context, obj *types.AccessReviewCampaign) (*types.AccessReviewCampaignStatistics, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionAccessEntryList); err != nil {
+		return nil, err
+	}
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	stats, err := prb.AccessEntries.Statistics(ctx, obj.ID)
@@ -251,6 +236,81 @@ func (r *accessReviewCampaignConnectionResolver) TotalCount(ctx context.Context,
 	}
 
 	panic(fmt.Errorf("unsupported resolver: %T", obj.Resolver))
+}
+
+// Entries is the resolver for the entries field.
+func (r *accessReviewCampaignScopeSourceResolver) Entries(ctx context.Context, obj *types.AccessReviewCampaignScopeSource, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AccessEntryOrder, filter *coredata.AccessEntryFilter) (*types.AccessEntryConnection, error) {
+	if err := r.authorize(ctx, obj.CampaignID, probo.ActionAccessEntryList); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, obj.CampaignID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.AccessEntryOrderField]{
+		Field:     coredata.AccessEntryOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.AccessEntryOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	p, err := prb.AccessEntries.ListForCampaignIDAndSourceID(ctx, obj.CampaignID, obj.ID, cursor, filter)
+	if err != nil {
+		panic(fmt.Errorf("cannot list access entries: %w", err))
+	}
+
+	sourceID := obj.ID
+	return types.NewAccessEntryConnection(p, r, obj.CampaignID, &sourceID, filter), nil
+}
+
+// Statistics is the resolver for the statistics field.
+func (r *accessReviewCampaignScopeSourceResolver) Statistics(ctx context.Context, obj *types.AccessReviewCampaignScopeSource) (*types.AccessReviewCampaignStatistics, error) {
+	if err := r.authorize(ctx, obj.CampaignID, probo.ActionAccessEntryList); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, obj.CampaignID.TenantID())
+
+	stats, err := prb.AccessEntries.StatisticsForSource(ctx, obj.CampaignID, obj.ID)
+	if err != nil {
+		panic(fmt.Errorf("cannot get source statistics: %w", err))
+	}
+
+	decisionCounts := make([]*types.AccessEntryDecisionCount, 0, len(stats.DecisionCounts))
+	for decision, count := range stats.DecisionCounts {
+		decisionCounts = append(
+			decisionCounts,
+			&types.AccessEntryDecisionCount{Decision: decision, Count: count},
+		)
+	}
+
+	flagCounts := make([]*types.AccessEntryFlagCount, 0, len(stats.FlagCounts))
+	for flag, count := range stats.FlagCounts {
+		flagCounts = append(
+			flagCounts,
+			&types.AccessEntryFlagCount{Flag: flag, Count: count},
+		)
+	}
+
+	incrementalTagCounts := make([]*types.AccessEntryIncrementalTagCount, 0, len(stats.IncrementalTagCounts))
+	for tag, count := range stats.IncrementalTagCounts {
+		incrementalTagCounts = append(
+			incrementalTagCounts,
+			&types.AccessEntryIncrementalTagCount{IncrementalTag: tag, Count: count},
+		)
+	}
+
+	return &types.AccessReviewCampaignStatistics{
+		TotalCount:           stats.TotalCount,
+		DecisionCounts:       decisionCounts,
+		FlagCounts:           flagCounts,
+		IncrementalTagCounts: incrementalTagCounts,
+	}, nil
 }
 
 // Organization is the resolver for the organization field.
@@ -6672,7 +6732,6 @@ func (r *mutationResolver) CreateAccessReviewCampaign(ctx context.Context, input
 		OrganizationID:    input.OrganizationID,
 		Name:              input.Name,
 		FrameworkControls: input.FrameworkControls,
-		IdentitySourceID:  input.IdentitySourceID,
 		AccessSourceIDs:   input.AccessSourceIds,
 	})
 	if err != nil {
@@ -6883,9 +6942,16 @@ func (r *mutationResolver) RecordAccessEntryDecisions(ctx context.Context, input
 		}, nil
 	}
 
-	// Authorize against the first entry; all entries must belong to the same tenant.
-	if err := r.authorize(ctx, input.Decisions[0].AccessEntryID, probo.ActionAccessEntryDecide); err != nil {
-		return nil, err
+	const maxBatchSize = 100
+	if len(input.Decisions) > maxBatchSize {
+		return nil, fmt.Errorf("cannot record decisions: batch size %d exceeds maximum of %d", len(input.Decisions), maxBatchSize)
+	}
+
+	// Authorize each entry individually to prevent cross-org bypass.
+	for _, d := range input.Decisions {
+		if err := r.authorize(ctx, d.AccessEntryID, probo.ActionAccessEntryDecide); err != nil {
+			return nil, err
+		}
 	}
 
 	identity := authn.IdentityFromContext(ctx)
@@ -6933,6 +6999,31 @@ func (r *mutationResolver) RecordAccessEntryDecisions(ctx context.Context, input
 	}, nil
 }
 
+// FlagAccessEntry is the resolver for the flagAccessEntry field.
+func (r *mutationResolver) FlagAccessEntry(ctx context.Context, input types.FlagAccessEntryInput) (*types.FlagAccessEntryPayload, error) {
+	if err := r.authorize(ctx, input.AccessEntryID, probo.ActionAccessEntryFlag); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, input.AccessEntryID.TenantID())
+
+	entry, err := prb.AccessEntries.FlagEntry(ctx, probo.FlagAccessEntryRequest{
+		EntryID:    input.AccessEntryID,
+		Flag:       input.Flag,
+		FlagReason: input.FlagReason,
+	})
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+		panic(fmt.Errorf("cannot flag access entry: %w", err))
+	}
+
+	return &types.FlagAccessEntryPayload{
+		AccessEntry: types.NewAccessEntry(entry),
+	}, nil
+}
+
 // CreateAPIKeyConnector is the resolver for the createAPIKeyConnector field.
 func (r *mutationResolver) CreateAPIKeyConnector(ctx context.Context, input types.CreateAPIKeyConnectorInput) (*types.CreateAPIKeyConnectorPayload, error) {
 	if err := r.authorize(ctx, input.OrganizationID, probo.ActionConnectorCreate); err != nil {
@@ -6941,27 +7032,19 @@ func (r *mutationResolver) CreateAPIKeyConnector(ctx context.Context, input type
 
 	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
 
-	settings := make(map[string]any)
-	if input.TallyOrganizationID != nil {
-		settings["organization_id"] = *input.TallyOrganizationID
-	}
-	if input.CloudflareAccountID != nil {
-		settings["account_id"] = *input.CloudflareAccountID
-	}
-	if input.SentryOrganizationSlug != nil {
-		settings["organization_slug"] = *input.SentryOrganizationSlug
+	req := probo.CreateConnectorRequest{
+		OrganizationID: input.OrganizationID,
+		Provider:       input.Provider,
+		Protocol:       coredata.ConnectorProtocolAPIKey,
+		Connection:     &connector.APIKeyConnection{APIKey: input.APIKey},
 	}
 
-	cnnctr, err := prb.Connectors.Create(
-		ctx,
-		probo.CreateConnectorRequest{
-			OrganizationID: input.OrganizationID,
-			Provider:       input.Provider,
-			Protocol:       coredata.ConnectorProtocolAPIKey,
-			Connection:     &connector.APIKeyConnection{APIKey: input.APIKey},
-			Settings:       settings,
-		},
-	)
+	if input.TallyOrganizationID != nil {
+		req.TallySettings = &coredata.TallyConnectorSettings{
+			OrganizationID: *input.TallyOrganizationID,
+		}
+	}
+	cnnctr, err := prb.Connectors.Create(ctx, req)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 			return nil, gqlutils.Conflict(ctx, err)
@@ -10649,6 +10732,11 @@ func (r *Resolver) AccessReviewCampaignConnection() schema.AccessReviewCampaignC
 	return &accessReviewCampaignConnectionResolver{r}
 }
 
+// AccessReviewCampaignScopeSource returns schema.AccessReviewCampaignScopeSourceResolver implementation.
+func (r *Resolver) AccessReviewCampaignScopeSource() schema.AccessReviewCampaignScopeSourceResolver {
+	return &accessReviewCampaignScopeSourceResolver{r}
+}
+
 // AccessSource returns schema.AccessSourceResolver implementation.
 func (r *Resolver) AccessSource() schema.AccessSourceResolver { return &accessSourceResolver{r} }
 
@@ -11004,6 +11092,7 @@ type accessEntryResolver struct{ *Resolver }
 type accessEntryConnectionResolver struct{ *Resolver }
 type accessReviewCampaignResolver struct{ *Resolver }
 type accessReviewCampaignConnectionResolver struct{ *Resolver }
+type accessReviewCampaignScopeSourceResolver struct{ *Resolver }
 type accessSourceResolver struct{ *Resolver }
 type accessSourceConnectionResolver struct{ *Resolver }
 type applicabilityStatementResolver struct{ *Resolver }

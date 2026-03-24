@@ -37,13 +37,16 @@ type AccountRecord struct {
 	ExternalID string // system-specific user ID
 }
 
+// maxPaginationPages is the upper bound on the number of pages a driver will
+// fetch from an external API. This prevents infinite loops if an API returns
+// a non-empty cursor on every response.
+const maxPaginationPages = 500
+
 // Driver defines the interface for fetching accounts from an access or
 // identity source. Each driver implementation corresponds to a specific
 // system (e.g. Google Workspace, AWS IAM, Probo memberships, CSV).
 //
-// The access_review_campaigns.identity_source_id FK determines which source is
-// the identity provider ("who should have access"). All other sources
-// in a campaign's scope return "who actually has access" data.
+// All sources in a campaign's scope return "who actually has access" data.
 type Driver interface {
 	// ListAccounts returns all accounts from the source system.
 	ListAccounts(ctx context.Context) ([]AccountRecord, error)

@@ -9,15 +9,15 @@ import {
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { Link } from "react-router";
 import { ConnectionHandler } from "relay-runtime";
-import { z } from "zod";
 
-import type { AccessReviewPageQuery } from "#/__generated__/core/AccessReviewPageQuery.graphql";
+import type { CreateAccessSourcePageQuery } from "#/__generated__/core/CreateAccessSourcePageQuery.graphql";
 import type { CreateAccessSourceDialogMutation } from "#/__generated__/core/CreateAccessSourceDialogMutation.graphql";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
+import { z } from "zod";
 
-import { accessReviewPageQuery } from "./AccessReviewPage";
+import { createAccessSourcePageQuery } from "./CreateAccessSourcePage";
 import { createAccessSourceMutation } from "./dialogs/CreateAccessSourceDialog";
 
 const csvSchema = z.object({
@@ -28,7 +28,7 @@ const csvSchema = z.object({
 export default function CreateCsvAccessSourcePage({
   queryRef,
 }: {
-  queryRef: PreloadedQuery<AccessReviewPageQuery>;
+  queryRef: PreloadedQuery<CreateAccessSourcePageQuery>;
 }) {
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
@@ -42,14 +42,14 @@ export default function CreateCsvAccessSourcePage({
 
   usePageTitle(__("Add CSV Access Source"));
 
-  const { organization } = usePreloadedQuery(accessReviewPageQuery, queryRef);
+  const { organization } = usePreloadedQuery(createAccessSourcePageQuery, queryRef);
   if (organization.__typename !== "Organization") {
     throw new Error("Organization not found");
   }
 
   const connectionId = ConnectionHandler.getConnectionID(
     organization.id,
-    "AccessReviewPage_accessSources",
+    "AccessReviewSourcesTab_accessSources",
   );
 
   const [createAccessSource, isCreating]
@@ -83,7 +83,7 @@ export default function CreateCsvAccessSourcePage({
         connections: connectionId ? [connectionId] : [],
       },
       onCompleted: () => {
-        window.location.href = `/organizations/${organizationId}/access-reviews`;
+        window.location.href = `/organizations/${organizationId}/access-reviews/sources`;
       },
     });
   };

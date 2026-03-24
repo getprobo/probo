@@ -27,7 +27,7 @@ import (
 )
 
 const (
-	docusignUserInfoEndpoint = "https://account-d.docusign.com/oauth/userinfo"
+	docusignUserInfoEndpoint = "https://account.docusign.com/oauth/userinfo"
 	docusignUsersPageSize    = 100
 )
 
@@ -53,7 +53,7 @@ func (d *DocuSignDriver) ListAccounts(ctx context.Context) ([]AccountRecord, err
 	var records []AccountRecord
 	startPosition := 0
 
-	for {
+	for range maxPaginationPages {
 		resp, err := d.queryUsers(ctx, baseURI, accountID, startPosition)
 		if err != nil {
 			return nil, err

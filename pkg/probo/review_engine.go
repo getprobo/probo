@@ -82,7 +82,7 @@ func (e *ReviewEngine) SnapshotSource(
 			}
 		} else {
 			entries := &coredata.AccessEntries{}
-			baseline, err = entries.LoadBaselineBySourceID(ctx, conn, lastCompletedCampaign.ID, sourceID)
+			baseline, err = entries.LoadBaselineBySourceID(ctx, conn, e.scope, lastCompletedCampaign.ID, sourceID)
 			if err != nil {
 				return err
 			}
@@ -246,11 +246,14 @@ func (e *ReviewEngine) resolveDriver(
 		if err != nil {
 			return nil, fmt.Errorf("cannot create HTTP client for 1password connector: %w", err)
 		}
-		baseURL, _ := dbConnector.Settings["scim_bridge_url"].(string)
-		if baseURL == "" {
+		onePasswordSettings, err := dbConnector.OnePasswordSettings()
+		if err != nil {
+			return nil, fmt.Errorf("cannot read 1password connector settings: %w", err)
+		}
+		if onePasswordSettings.SCIMBridgeURL == "" {
 			return nil, fmt.Errorf("1password connector requires scim_bridge_url in settings")
 		}
-		return accesssource.NewOnePasswordDriver(httpClient, baseURL), nil
+		return accesssource.NewOnePasswordDriver(httpClient, onePasswordSettings.SCIMBridgeURL), nil
 	case coredata.ConnectorProviderHubSpot:
 		httpClient, err := dbConnector.Connection.Client(ctx)
 		if err != nil {
@@ -280,31 +283,20 @@ func (e *ReviewEngine) resolveDriver(
 		if err != nil {
 			return nil, fmt.Errorf("cannot create HTTP client for tally connector: %w", err)
 		}
-		organizationID, _ := dbConnector.Settings["organization_id"].(string)
-		if organizationID == "" {
+		tallySettings, err := dbConnector.TallySettings()
+		if err != nil {
+			return nil, fmt.Errorf("cannot read tally connector settings: %w", err)
+		}
+		if tallySettings.OrganizationID == "" {
 			return nil, fmt.Errorf("tally connector requires organization_id in settings")
 		}
-		return accesssource.NewTallyDriver(httpClient, organizationID), nil
+		return accesssource.NewTallyDriver(httpClient, tallySettings.OrganizationID), nil
 	case coredata.ConnectorProviderCloudflare:
 		httpClient, err := dbConnector.Connection.Client(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("cannot create HTTP client for cloudflare connector: %w", err)
 		}
-		accountID, _ := dbConnector.Settings["account_id"].(string)
-		if accountID == "" {
-			return nil, fmt.Errorf("cloudflare connector requires account_id in settings")
-		}
-		return accesssource.NewCloudflareDriver(httpClient, accountID), nil
-	case coredata.ConnectorProviderSentry:
-		httpClient, err := dbConnector.Connection.Client(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("cannot create HTTP client for sentry connector: %w", err)
-		}
-		organizationSlug, _ := dbConnector.Settings["organization_slug"].(string)
-		if organizationSlug == "" {
-			return nil, fmt.Errorf("sentry connector requires organization_slug in settings")
-		}
-		return accesssource.NewSentryDriver(httpClient, organizationSlug), nil
+		return accesssource.NewCloudflareDriver(httpClient), nil
 	case coredata.ConnectorProviderOpenAI:
 		httpClient, err := dbConnector.Connection.Client(ctx)
 		if err != nil {

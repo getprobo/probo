@@ -29,16 +29,6 @@ const (
 	AccessEntryDecisionEscalate AccessEntryDecision = "ESCALATE"
 )
 
-func AccessEntryDecisions() []AccessEntryDecision {
-	return []AccessEntryDecision{
-		AccessEntryDecisionPending,
-		AccessEntryDecisionApproved,
-		AccessEntryDecisionRevoke,
-		AccessEntryDecisionDefer,
-		AccessEntryDecisionEscalate,
-	}
-}
-
 func (d AccessEntryDecision) String() string {
 	return string(d)
 }

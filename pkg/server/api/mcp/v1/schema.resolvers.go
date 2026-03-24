@@ -3517,7 +3517,15 @@ func (r *Resolver) RecordAccessEntryDecisionsTool(ctx context.Context, req *mcp.
 		}, nil
 	}
 
-	r.MustAuthorize(ctx, input.Decisions[0].AccessEntryID, probo.ActionAccessEntryDecide)
+	const maxBatchSize = 100
+	if len(input.Decisions) > maxBatchSize {
+		return nil, types.RecordAccessEntryDecisionsOutput{}, fmt.Errorf("cannot record decisions: batch size %d exceeds maximum of %d", len(input.Decisions), maxBatchSize)
+	}
+
+	// Authorize each entry individually to prevent cross-org bypass.
+	for _, d := range input.Decisions {
+		r.MustAuthorize(ctx, d.AccessEntryID, probo.ActionAccessEntryDecide)
+	}
 
 	prb := r.ProboService(ctx, input.Decisions[0].AccessEntryID)
 
@@ -3574,5 +3582,282 @@ func (r *Resolver) CloseAccessReviewCampaignTool(ctx context.Context, req *mcp.C
 
 	return nil, types.CloseAccessReviewCampaignOutput{
 		Campaign: types.NewAccessReviewCampaign(campaign),
+	}, nil
+}
+
+// ListAccessSourcesTool handles the listAccessSources tool
+// List access sources for an organization
+func (r *Resolver) ListAccessSourcesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListAccessSourcesInput) (*mcp.CallToolResult, types.ListAccessSourcesOutput, error) {
+	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionAccessSourceList)
+
+	prb := r.ProboService(ctx, input.OrganizationID)
+
+	pageOrderBy := page.OrderBy[coredata.AccessSourceOrderField]{
+		Field:     coredata.AccessSourceOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.AccessSourceOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	p, err := prb.AccessSources.ListForOrganizationID(ctx, input.OrganizationID, cursor)
+	if err != nil {
+		panic(fmt.Errorf("cannot list access sources: %w", err))
+	}
+
+	return nil, types.NewListAccessSourcesOutput(p), nil
+}
+
+// CreateAccessSourceTool handles the createAccessSource tool
+// Create a new access source for an organization
+func (r *Resolver) CreateAccessSourceTool(ctx context.Context, req *mcp.CallToolRequest, input *types.CreateAccessSourceInput) (*mcp.CallToolResult, types.CreateAccessSourceOutput, error) {
+	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionAccessSourceCreate)
+
+	prb := r.ProboService(ctx, input.OrganizationID)
+
+	source, err := prb.AccessSources.Create(ctx, probo.CreateAccessSourceRequest{
+		OrganizationID: input.OrganizationID,
+		ConnectorID:    input.ConnectorID,
+		Name:           input.Name,
+		Category:       coredata.AccessSourceCategorySaaS,
+		CsvData:        input.CsvData,
+	})
+	if err != nil {
+		return nil, types.CreateAccessSourceOutput{}, fmt.Errorf("cannot create access source: %w", err)
+	}
+
+	return nil, types.CreateAccessSourceOutput{
+		AccessSource: types.NewAccessSource(source),
+	}, nil
+}
+
+// UpdateAccessSourceTool handles the updateAccessSource tool
+// Update an existing access source
+func (r *Resolver) UpdateAccessSourceTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateAccessSourceInput) (*mcp.CallToolResult, types.UpdateAccessSourceOutput, error) {
+	r.MustAuthorize(ctx, input.AccessSourceID, probo.ActionAccessSourceUpdate)
+
+	prb := r.ProboService(ctx, input.AccessSourceID)
+
+	updateReq := probo.UpdateAccessSourceRequest{
+		AccessSourceID: input.AccessSourceID,
+		Name:           input.Name,
+	}
+
+	if rawConnectorID := UnwrapOmittable(input.ConnectorID); rawConnectorID != nil {
+		if *rawConnectorID != nil {
+			id, err := gid.ParseGID(**rawConnectorID)
+			if err != nil {
+				return nil, types.UpdateAccessSourceOutput{}, fmt.Errorf("cannot parse connector_id: %w", err)
+			}
+			idPtr := &id
+			updateReq.ConnectorID = &idPtr
+		} else {
+			var nilGID *gid.GID
+			updateReq.ConnectorID = &nilGID
+		}
+	}
+
+	if rawCsvData := UnwrapOmittable(input.CsvData); rawCsvData != nil {
+		updateReq.CsvData = rawCsvData
+	}
+
+	source, err := prb.AccessSources.Update(ctx, updateReq)
+	if err != nil {
+		return nil, types.UpdateAccessSourceOutput{}, fmt.Errorf("cannot update access source: %w", err)
+	}
+
+	return nil, types.UpdateAccessSourceOutput{
+		AccessSource: types.NewAccessSource(source),
+	}, nil
+}
+
+// DeleteAccessSourceTool handles the deleteAccessSource tool
+// Delete an access source
+func (r *Resolver) DeleteAccessSourceTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteAccessSourceInput) (*mcp.CallToolResult, types.DeleteAccessSourceOutput, error) {
+	r.MustAuthorize(ctx, input.AccessSourceID, probo.ActionAccessSourceDelete)
+
+	prb := r.ProboService(ctx, input.AccessSourceID)
+
+	if err := prb.AccessSources.Delete(ctx, input.AccessSourceID); err != nil {
+		return nil, types.DeleteAccessSourceOutput{}, fmt.Errorf("cannot delete access source: %w", err)
+	}
+
+	return nil, types.DeleteAccessSourceOutput{
+		DeletedAccessSourceID: input.AccessSourceID,
+	}, nil
+}
+
+// CreateAccessReviewCampaignTool handles the createAccessReviewCampaign tool
+// Create a new access review campaign for an organization
+func (r *Resolver) CreateAccessReviewCampaignTool(ctx context.Context, req *mcp.CallToolRequest, input *types.CreateAccessReviewCampaignInput) (*mcp.CallToolResult, types.CreateAccessReviewCampaignOutput, error) {
+	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionAccessReviewCampaignCreate)
+
+	prb := r.ProboService(ctx, input.OrganizationID)
+
+	campaign, err := prb.AccessReviewCampaigns.Create(ctx, probo.CreateAccessReviewCampaignRequest{
+		OrganizationID:    input.OrganizationID,
+		Name:              input.Name,
+		FrameworkControls: input.FrameworkControls,
+		AccessSourceIDs:   input.AccessSourceIds,
+	})
+	if err != nil {
+		return nil, types.CreateAccessReviewCampaignOutput{}, fmt.Errorf("cannot create access review campaign: %w", err)
+	}
+
+	return nil, types.CreateAccessReviewCampaignOutput{
+		Campaign: types.NewAccessReviewCampaign(campaign),
+	}, nil
+}
+
+// UpdateAccessReviewCampaignTool handles the updateAccessReviewCampaign tool
+// Update an existing access review campaign
+func (r *Resolver) UpdateAccessReviewCampaignTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateAccessReviewCampaignInput) (*mcp.CallToolResult, types.UpdateAccessReviewCampaignOutput, error) {
+	r.MustAuthorize(ctx, input.CampaignID, probo.ActionAccessReviewCampaignUpdate)
+
+	prb := r.ProboService(ctx, input.CampaignID)
+
+	updateReq := probo.UpdateAccessReviewCampaignRequest{
+		CampaignID: input.CampaignID,
+		Name:       input.Name,
+	}
+
+	if rawControls := UnwrapOmittable(input.FrameworkControls); rawControls != nil {
+		if *rawControls != nil {
+			controls := make([]string, 0, len(**rawControls))
+			for _, v := range **rawControls {
+				if s, ok := v.(string); ok {
+					controls = append(controls, s)
+				}
+			}
+			updateReq.FrameworkControls = &controls
+		} else {
+			empty := []string{}
+			updateReq.FrameworkControls = &empty
+		}
+	}
+
+	campaign, err := prb.AccessReviewCampaigns.Update(ctx, updateReq)
+	if err != nil {
+		return nil, types.UpdateAccessReviewCampaignOutput{}, fmt.Errorf("cannot update access review campaign: %w", err)
+	}
+
+	return nil, types.UpdateAccessReviewCampaignOutput{
+		Campaign: types.NewAccessReviewCampaign(campaign),
+	}, nil
+}
+
+// DeleteAccessReviewCampaignTool handles the deleteAccessReviewCampaign tool
+// Delete an access review campaign
+func (r *Resolver) DeleteAccessReviewCampaignTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteAccessReviewCampaignInput) (*mcp.CallToolResult, types.DeleteAccessReviewCampaignOutput, error) {
+	r.MustAuthorize(ctx, input.CampaignID, probo.ActionAccessReviewCampaignDelete)
+
+	prb := r.ProboService(ctx, input.CampaignID)
+
+	if err := prb.AccessReviewCampaigns.Delete(ctx, input.CampaignID); err != nil {
+		return nil, types.DeleteAccessReviewCampaignOutput{}, fmt.Errorf("cannot delete access review campaign: %w", err)
+	}
+
+	return nil, types.DeleteAccessReviewCampaignOutput{
+		DeletedCampaignID: input.CampaignID,
+	}, nil
+}
+
+// StartAccessReviewCampaignTool handles the startAccessReviewCampaign tool
+// Start an access review campaign
+func (r *Resolver) StartAccessReviewCampaignTool(ctx context.Context, req *mcp.CallToolRequest, input *types.StartAccessReviewCampaignInput) (*mcp.CallToolResult, types.StartAccessReviewCampaignOutput, error) {
+	r.MustAuthorize(ctx, input.CampaignID, probo.ActionAccessReviewCampaignStart)
+
+	prb := r.ProboService(ctx, input.CampaignID)
+
+	campaign, err := prb.AccessReviewCampaigns.Start(ctx, input.CampaignID)
+	if err != nil {
+		return nil, types.StartAccessReviewCampaignOutput{}, fmt.Errorf("cannot start access review campaign: %w", err)
+	}
+
+	return nil, types.StartAccessReviewCampaignOutput{
+		Campaign: types.NewAccessReviewCampaign(campaign),
+	}, nil
+}
+
+// CancelAccessReviewCampaignTool handles the cancelAccessReviewCampaign tool
+// Cancel an in-progress access review campaign
+func (r *Resolver) CancelAccessReviewCampaignTool(ctx context.Context, req *mcp.CallToolRequest, input *types.CancelAccessReviewCampaignInput) (*mcp.CallToolResult, types.CancelAccessReviewCampaignOutput, error) {
+	r.MustAuthorize(ctx, input.CampaignID, probo.ActionAccessReviewCampaignCancel)
+
+	prb := r.ProboService(ctx, input.CampaignID)
+
+	campaign, err := prb.AccessReviewCampaigns.Cancel(ctx, input.CampaignID)
+	if err != nil {
+		return nil, types.CancelAccessReviewCampaignOutput{}, fmt.Errorf("cannot cancel access review campaign: %w", err)
+	}
+
+	return nil, types.CancelAccessReviewCampaignOutput{
+		Campaign: types.NewAccessReviewCampaign(campaign),
+	}, nil
+}
+
+// AddAccessReviewCampaignScopeSourceTool handles the addAccessReviewCampaignScopeSource tool
+// Add an access source to an access review campaign's scope
+func (r *Resolver) AddAccessReviewCampaignScopeSourceTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddAccessReviewCampaignScopeSourceInput) (*mcp.CallToolResult, types.AddAccessReviewCampaignScopeSourceOutput, error) {
+	r.MustAuthorize(ctx, input.CampaignID, probo.ActionAccessReviewCampaignAddScopeSource)
+
+	prb := r.ProboService(ctx, input.CampaignID)
+
+	campaign, err := prb.AccessReviewCampaigns.AddScopeSource(ctx, probo.AddCampaignScopeSourceRequest{
+		CampaignID:     input.CampaignID,
+		AccessSourceID: input.AccessSourceID,
+	})
+	if err != nil {
+		return nil, types.AddAccessReviewCampaignScopeSourceOutput{}, fmt.Errorf("cannot add scope source to access review campaign: %w", err)
+	}
+
+	return nil, types.AddAccessReviewCampaignScopeSourceOutput{
+		Campaign: types.NewAccessReviewCampaign(campaign),
+	}, nil
+}
+
+// RemoveAccessReviewCampaignScopeSourceTool handles the removeAccessReviewCampaignScopeSource tool
+// Remove an access source from an access review campaign's scope
+func (r *Resolver) RemoveAccessReviewCampaignScopeSourceTool(ctx context.Context, req *mcp.CallToolRequest, input *types.RemoveAccessReviewCampaignScopeSourceInput) (*mcp.CallToolResult, types.RemoveAccessReviewCampaignScopeSourceOutput, error) {
+	r.MustAuthorize(ctx, input.CampaignID, probo.ActionAccessReviewCampaignRemoveScopeSource)
+
+	prb := r.ProboService(ctx, input.CampaignID)
+
+	campaign, err := prb.AccessReviewCampaigns.RemoveScopeSource(ctx, probo.RemoveCampaignScopeSourceRequest{
+		CampaignID:     input.CampaignID,
+		AccessSourceID: input.AccessSourceID,
+	})
+	if err != nil {
+		return nil, types.RemoveAccessReviewCampaignScopeSourceOutput{}, fmt.Errorf("cannot remove scope source from access review campaign: %w", err)
+	}
+
+	return nil, types.RemoveAccessReviewCampaignScopeSourceOutput{
+		Campaign: types.NewAccessReviewCampaign(campaign),
+	}, nil
+}
+
+// FlagAccessEntryTool handles the flagAccessEntry tool
+// Flag an access entry during review
+func (r *Resolver) FlagAccessEntryTool(ctx context.Context, req *mcp.CallToolRequest, input *types.FlagAccessEntryInput) (*mcp.CallToolResult, types.FlagAccessEntryOutput, error) {
+	r.MustAuthorize(ctx, input.AccessEntryID, probo.ActionAccessEntryFlag)
+
+	prb := r.ProboService(ctx, input.AccessEntryID)
+
+	entry, err := prb.AccessEntries.FlagEntry(ctx, probo.FlagAccessEntryRequest{
+		EntryID:    input.AccessEntryID,
+		Flag:       input.Flag,
+		FlagReason: input.FlagReason,
+	})
+	if err != nil {
+		return nil, types.FlagAccessEntryOutput{}, fmt.Errorf("cannot flag access entry: %w", err)
+	}
+
+	return nil, types.FlagAccessEntryOutput{
+		AccessEntry: types.NewAccessEntry(entry),
 	}, nil
 }

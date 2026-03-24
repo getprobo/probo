@@ -8,6 +8,7 @@ import {
   IconFire3,
   IconGroup1,
   IconInboxEmpty,
+  IconKey,
   IconListStack,
   IconLock,
   IconMagnifyingGlass,

@@ -30,17 +30,6 @@ const (
 	AccessEntryFlagNew          AccessEntryFlag = "NEW"
 )
 
-func AccessEntryFlags() []AccessEntryFlag {
-	return []AccessEntryFlag{
-		AccessEntryFlagNone,
-		AccessEntryFlagOrphaned,
-		AccessEntryFlagInactive,
-		AccessEntryFlagExcessive,
-		AccessEntryFlagRoleMismatch,
-		AccessEntryFlagNew,
-	}
-}
-
 func (f AccessEntryFlag) String() string {
 	return string(f)
 }

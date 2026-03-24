@@ -46,7 +46,7 @@ func (d *NotionDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 		startCursor *string
 	)
 
-	for {
+	for range maxPaginationPages {
 		resp, err := d.queryUsers(ctx, startCursor)
 		if err != nil {
 			return nil, err

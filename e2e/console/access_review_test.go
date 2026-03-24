@@ -31,6 +31,8 @@ func TestAccessSource_Create(t *testing.T) {
 	orgID := owner.GetOrganizationID().String()
 
 	t.Run("with name only", func(t *testing.T) {
+		t.Parallel()
+
 		const query = `
 			mutation($input: CreateAccessSourceInput!) {
 				createAccessSource(input: $input) {
@@ -74,6 +76,8 @@ func TestAccessSource_Create(t *testing.T) {
 	})
 
 	t.Run("with csv data", func(t *testing.T) {
+		t.Parallel()
+
 		const query = `
 			mutation($input: CreateAccessSourceInput!) {
 				createAccessSource(input: $input) {
@@ -240,6 +244,8 @@ func TestAccessReviewCampaign_Create(t *testing.T) {
 	orgID := owner.GetOrganizationID().String()
 
 	t.Run("with name only", func(t *testing.T) {
+		t.Parallel()
+
 		const query = `
 			mutation($input: CreateAccessReviewCampaignInput!) {
 				createAccessReviewCampaign(input: $input) {
@@ -285,61 +291,9 @@ func TestAccessReviewCampaign_Create(t *testing.T) {
 		assert.NotEmpty(t, node.CreatedAt)
 	})
 
-	t.Run("with identity source", func(t *testing.T) {
-		sourceID := factory.NewAccessSource(owner, orgID).
-			WithName("Identity Source").
-			Create()
-
-		const query = `
-			mutation($input: CreateAccessReviewCampaignInput!) {
-				createAccessReviewCampaign(input: $input) {
-					accessReviewCampaignEdge {
-						node {
-							id
-							name
-							identitySource {
-								id
-								name
-							}
-						}
-					}
-				}
-			}
-		`
-
-		var result struct {
-			CreateAccessReviewCampaign struct {
-				AccessReviewCampaignEdge struct {
-					Node struct {
-						ID             string `json:"id"`
-						Name           string `json:"name"`
-						IdentitySource *struct {
-							ID   string `json:"id"`
-							Name string `json:"name"`
-						} `json:"identitySource"`
-					} `json:"node"`
-				} `json:"accessReviewCampaignEdge"`
-			} `json:"createAccessReviewCampaign"`
-		}
-
-		err := owner.Execute(query, map[string]any{
-			"input": map[string]any{
-				"organizationId":   orgID,
-				"name":             "Campaign with IdP",
-				"identitySourceId": sourceID,
-			},
-		}, &result)
-		require.NoError(t, err)
-
-		node := result.CreateAccessReviewCampaign.AccessReviewCampaignEdge.Node
-		assert.NotEmpty(t, node.ID)
-		assert.Equal(t, "Campaign with IdP", node.Name)
-		require.NotNil(t, node.IdentitySource)
-		assert.Equal(t, sourceID, node.IdentitySource.ID)
-		assert.Equal(t, "Identity Source", node.IdentitySource.Name)
-	})
-
 	t.Run("with access sources", func(t *testing.T) {
+		t.Parallel()
+
 		source1ID := factory.NewAccessSource(owner, orgID).
 			WithName("Slack Source").
 			Create()
@@ -395,6 +349,8 @@ func TestAccessReviewCampaign_Create(t *testing.T) {
 	})
 
 	t.Run("with framework controls", func(t *testing.T) {
+		t.Parallel()
+
 		const query = `
 			mutation($input: CreateAccessReviewCampaignInput!) {
 				createAccessReviewCampaign(input: $input) {
@@ -830,6 +786,8 @@ func TestAccessReview_TenantIsolation(t *testing.T) {
 	org1ID := org1Owner.GetOrganizationID().String()
 
 	t.Run("cannot create access source in another organization", func(t *testing.T) {
+		t.Parallel()
+
 		const query = `
 			mutation($input: CreateAccessSourceInput!) {
 				createAccessSource(input: $input) {
@@ -850,6 +808,8 @@ func TestAccessReview_TenantIsolation(t *testing.T) {
 	})
 
 	t.Run("cannot create campaign in another organization", func(t *testing.T) {
+		t.Parallel()
+
 		const query = `
 			mutation($input: CreateAccessReviewCampaignInput!) {
 				createAccessReviewCampaign(input: $input) {

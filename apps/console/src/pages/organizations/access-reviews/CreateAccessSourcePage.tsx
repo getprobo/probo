@@ -1,3 +1,4 @@
+import { sprintf } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
 import {
@@ -19,12 +20,12 @@ import {
   usePaginationFragment,
   usePreloadedQuery,
 } from "react-relay";
+import { graphql } from "relay-runtime";
 import { Link, useSearchParams } from "react-router";
-import { graphql } from "react-relay";
 
-import type { AccessReviewPageQuery } from "#/__generated__/core/AccessReviewPageQuery.graphql";
-import type { AccessReviewPageSourcesFragment$key } from "#/__generated__/core/AccessReviewPageSourcesFragment.graphql";
-import type { AccessReviewPageSourcesPaginationQuery } from "#/__generated__/core/AccessReviewPageSourcesPaginationQuery.graphql";
+import type { CreateAccessSourcePageQuery } from "#/__generated__/core/CreateAccessSourcePageQuery.graphql";
+import type { CreateAccessSourcePageSourcesFragment$key } from "#/__generated__/core/CreateAccessSourcePageSourcesFragment.graphql";
+import type { CreateAccessSourcePageSourcesPaginationQuery } from "#/__generated__/core/CreateAccessSourcePageSourcesPaginationQuery.graphql";
 import type { AccessSourceRowDeleteMutation } from "#/__generated__/core/AccessSourceRowDeleteMutation.graphql";
 import type { CreateAccessSourceDialogMutation } from "#/__generated__/core/CreateAccessSourceDialogMutation.graphql";
 import type { CreateAccessSourcePageCreateAPIKeyConnectorMutation } from "#/__generated__/core/CreateAccessSourcePageCreateAPIKeyConnectorMutation.graphql";
@@ -32,8 +33,55 @@ import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import { deleteAccessSourceMutation } from "./_components/AccessSourceRow";
-import { accessReviewPageQuery, sourcesPaginatedFragment } from "./AccessReviewPage";
 import { createAccessSourceMutation } from "./dialogs/CreateAccessSourceDialog";
+
+export const createAccessSourcePageQuery = graphql`
+  query CreateAccessSourcePageQuery($organizationId: ID!) {
+    organization: node(id: $organizationId) {
+      __typename
+      ... on Organization {
+        id
+        canCreateSource: permission(action: "core:access-source:create")
+        ...CreateAccessSourcePageSourcesFragment
+      }
+    }
+  }
+`;
+
+export const createAccessSourcePageSourcesFragment = graphql`
+  fragment CreateAccessSourcePageSourcesFragment on Organization
+  @refetchable(queryName: "CreateAccessSourcePageSourcesPaginationQuery")
+  @argumentDefinitions(
+    first: { type: "Int", defaultValue: 50 }
+    order: {
+      type: "AccessSourceOrder"
+      defaultValue: { direction: DESC, field: CREATED_AT }
+    }
+    after: { type: "CursorKey", defaultValue: null }
+    before: { type: "CursorKey", defaultValue: null }
+    last: { type: "Int", defaultValue: null }
+  ) {
+    accessSources(
+      first: $first
+      after: $after
+      last: $last
+      before: $before
+      orderBy: $order
+    ) @connection(key: "CreateAccessSourcePage_accessSources") {
+      __id
+      edges {
+        node {
+          id
+          name
+          connectorId
+          connector {
+            provider
+          }
+        }
+      }
+    }
+  }
+`;
 
 const createAPIKeyConnectorMutation = graphql`
   mutation CreateAccessSourcePageCreateAPIKeyConnectorMutation(
@@ -49,11 +97,11 @@ const createAPIKeyConnectorMutation = graphql`
 `;
 
 type OAuthProvider = "GOOGLE_WORKSPACE" | "LINEAR" | "SLACK";
-type APIKeyProvider = "BREX" | "TALLY" | "CLOUDFLARE" | "SENTRY";
+type APIKeyProvider = "BREX" | "TALLY" | "CLOUDFLARE";
 type SourceProvider = OAuthProvider | APIKeyProvider;
 
 const OAUTH_PROVIDERS: OAuthProvider[] = ["GOOGLE_WORKSPACE", "LINEAR", "SLACK"];
-const API_KEY_PROVIDERS: APIKeyProvider[] = ["BREX", "TALLY", "CLOUDFLARE", "SENTRY"];
+const API_KEY_PROVIDERS: APIKeyProvider[] = ["BREX", "TALLY", "CLOUDFLARE"];
 
 function providerLabel(provider: SourceProvider): string {
   switch (provider) {
@@ -69,8 +117,6 @@ function providerLabel(provider: SourceProvider): string {
       return "Tally";
     case "CLOUDFLARE":
       return "Cloudflare";
-    case "SENTRY":
-      return "Sentry";
     default:
       return provider;
   }
@@ -90,8 +136,6 @@ function providerDescription(provider: SourceProvider): string {
       return "Connect Tally to review form and workspace access.";
     case "CLOUDFLARE":
       return "Connect Cloudflare to review infrastructure access.";
-    case "SENTRY":
-      return "Connect Sentry to review error monitoring access.";
     default:
       return "Connect this provider to sync access data.";
   }
@@ -103,8 +147,7 @@ function isConnectedProvider(provider: string | null): provider is SourceProvide
     || provider === "SLACK"
     || provider === "BREX"
     || provider === "TALLY"
-    || provider === "CLOUDFLARE"
-    || provider === "SENTRY";
+    || provider === "CLOUDFLARE";
 }
 
 function defaultSourceName(provider: SourceProvider, __: (input: string) => string): string {
@@ -121,8 +164,6 @@ function defaultSourceName(provider: SourceProvider, __: (input: string) => stri
       return __("Tally source");
     case "CLOUDFLARE":
       return __("Cloudflare source");
-    case "SENTRY":
-      return __("Sentry source");
     default:
       return __("Connected source");
   }
@@ -131,7 +172,7 @@ function defaultSourceName(provider: SourceProvider, __: (input: string) => stri
 export default function CreateAccessSourcePage({
   queryRef,
 }: {
-  queryRef: PreloadedQuery<AccessReviewPageQuery>;
+  queryRef: PreloadedQuery<CreateAccessSourcePageQuery>;
 }) {
   const { __ } = useTranslate();
   const { toast } = useToast();
@@ -146,7 +187,7 @@ export default function CreateAccessSourcePage({
 
   usePageTitle(__("Add Access Source"));
 
-  const { organization } = usePreloadedQuery(accessReviewPageQuery, queryRef);
+  const { organization } = usePreloadedQuery(createAccessSourcePageQuery, queryRef);
   if (organization.__typename !== "Organization") {
     throw new Error("Organization not found");
   }
@@ -154,9 +195,9 @@ export default function CreateAccessSourcePage({
   const {
     data: { accessSources },
   } = usePaginationFragment<
-    AccessReviewPageSourcesPaginationQuery,
-    AccessReviewPageSourcesFragment$key
-  >(sourcesPaginatedFragment, organization);
+    CreateAccessSourcePageSourcesPaginationQuery,
+    CreateAccessSourcePageSourcesFragment$key
+  >(createAccessSourcePageSourcesFragment, organization);
 
   const [deleteAccessSource, isDeletingSource]
     = useMutationWithToasts<AccessSourceRowDeleteMutation>(
@@ -256,7 +297,7 @@ export default function CreateAccessSourcePage({
     );
   }
 
-  const connectOAuthProvider = (provider: OAuthProvider) => {
+  const connectOAuthProvider = (provider: OAuthProvider, extraParams?: Record<string, string>) => {
     const baseURL = import.meta.env.VITE_API_URL || window.location.origin;
     const url = new URL("/api/console/v1/connectors/initiate", baseURL);
     url.searchParams.append("organization_id", organizationId);
@@ -265,6 +306,11 @@ export default function CreateAccessSourcePage({
       "continue",
       `/organizations/${organizationId}/access-reviews/sources/new`,
     );
+    if (extraParams) {
+      for (const [key, value] of Object.entries(extraParams)) {
+        url.searchParams.append(key, value);
+      }
+    }
     window.location.assign(url.toString());
   };
 
@@ -276,7 +322,7 @@ export default function CreateAccessSourcePage({
   };
 
   const providerNeedsExtraSetting = (provider: APIKeyProvider | null): boolean => {
-    return provider === "TALLY" || provider === "CLOUDFLARE" || provider === "SENTRY";
+    return provider === "TALLY";
   };
 
   const connectAPIKeyProvider = () => {
@@ -294,13 +340,6 @@ export default function CreateAccessSourcePage({
     if (apiKeyProvider === "TALLY" && providerSettingValue.trim()) {
       extraSettings.tallyOrganizationId = providerSettingValue.trim();
     }
-    if (apiKeyProvider === "CLOUDFLARE" && providerSettingValue.trim()) {
-      extraSettings.cloudflareAccountId = providerSettingValue.trim();
-    }
-    if (apiKeyProvider === "SENTRY" && providerSettingValue.trim()) {
-      extraSettings.sentryOrganizationSlug = providerSettingValue.trim();
-    }
-
     createAPIKeyConnector({
       variables: {
         input: {
@@ -340,7 +379,7 @@ export default function CreateAccessSourcePage({
         toast({
           title: __("Connection failed"),
           description: __("Failed to connect provider. Please check your API key and try again."),
-          variant: "destructive",
+          variant: "error",
         });
       },
     });
@@ -422,7 +461,10 @@ export default function CreateAccessSourcePage({
 
       <div className="space-y-3">
         {OAUTH_PROVIDERS.map(provider =>
-          renderProviderCard(provider, () => connectOAuthProvider(provider)),
+          renderProviderCard(
+            provider,
+            () => connectOAuthProvider(provider),
+          ),
         )}
         {API_KEY_PROVIDERS.map(provider =>
           renderProviderCard(provider, () => openAPIKeyDialog(provider)),
@@ -445,7 +487,7 @@ export default function CreateAccessSourcePage({
 
       <Dialog
         ref={apiKeyDialogRef}
-        title={apiKeyProvider ? __("Connect %s", providerLabel(apiKeyProvider)) : __("Connect provider")}
+        title={apiKeyProvider ? sprintf(__("Connect %s"), providerLabel(apiKeyProvider)) : __("Connect provider")}
       >
         <form
           onSubmit={(e) => {
@@ -455,7 +497,7 @@ export default function CreateAccessSourcePage({
         >
           <DialogContent padded className="space-y-4">
             <p className="text-txt-secondary text-sm">
-              {__("Enter the API key for %s to connect it as an access source.", apiKeyProvider ? providerLabel(apiKeyProvider) : "")}
+              {sprintf(__("Enter the API key for %s to connect it as an access source."), apiKeyProvider ? providerLabel(apiKeyProvider) : "")}
             </p>
             <Field
               label={__("API Key")}
@@ -473,33 +515,22 @@ export default function CreateAccessSourcePage({
                 required
               />
             )}
-            {apiKeyProvider === "CLOUDFLARE" && (
-              <Field
-                label={__("Account ID")}
-                value={providerSettingValue}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setProviderSettingValue(e.target.value)}
-                required
-              />
-            )}
-            {apiKeyProvider === "SENTRY" && (
-              <Field
-                label={__("Organization Slug")}
-                value={providerSettingValue}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setProviderSettingValue(e.target.value)}
-                required
-              />
-            )}
           </DialogContent>
           <DialogFooter>
             <Button
               type="submit"
-              disabled={isConnectingAPIKey || !apiKeyValue.trim() || (providerNeedsExtraSetting(apiKeyProvider) && !providerSettingValue.trim())}
+              disabled={
+                isConnectingAPIKey
+                || !apiKeyValue.trim()
+                || (providerNeedsExtraSetting(apiKeyProvider) && !providerSettingValue.trim())
+              }
             >
               {isConnectingAPIKey ? __("Connecting...") : __("Connect")}
             </Button>
           </DialogFooter>
         </form>
       </Dialog>
+
     </div>
   );
 }

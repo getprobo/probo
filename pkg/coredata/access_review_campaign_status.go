@@ -30,17 +30,6 @@ const (
 	AccessReviewCampaignStatusCancelled      AccessReviewCampaignStatus = "CANCELLED"
 )
 
-func AccessReviewCampaignStatuses() []AccessReviewCampaignStatus {
-	return []AccessReviewCampaignStatus{
-		AccessReviewCampaignStatusDraft,
-		AccessReviewCampaignStatusInProgress,
-		AccessReviewCampaignStatusPendingActions,
-		AccessReviewCampaignStatusFailed,
-		AccessReviewCampaignStatusCompleted,
-		AccessReviewCampaignStatusCancelled,
-	}
-}
-
 func (s AccessReviewCampaignStatus) String() string {
 	return string(s)
 }

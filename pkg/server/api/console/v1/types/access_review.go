@@ -101,6 +101,7 @@ func NewAccessSource(s *coredata.AccessSource) *AccessSource {
 }
 
 func NewAccessReviewCampaignScopeSource(
+	campaignID gid.GID,
 	source *coredata.AccessSource,
 	fetch *coredata.AccessReviewCampaignSourceFetch,
 ) *AccessReviewCampaignScopeSource {
@@ -121,6 +122,7 @@ func NewAccessReviewCampaignScopeSource(
 
 	return &AccessReviewCampaignScopeSource{
 		ID:                   source.ID,
+		CampaignID:           campaignID,
 		Source:               NewAccessSource(source),
 		Name:                 source.Name,
 		FetchStatus:          status,
@@ -174,12 +176,6 @@ func NewAccessReviewCampaign(c *coredata.AccessReviewCampaign) *AccessReviewCamp
 		FrameworkControls: c.FrameworkControls,
 		CreatedAt:         c.CreatedAt,
 		UpdatedAt:         c.UpdatedAt,
-	}
-
-	if c.IdentitySourceID != nil {
-		campaign.IdentitySource = &AccessSource{
-			ID: *c.IdentitySourceID,
-		}
 	}
 
 	return campaign

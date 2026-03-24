@@ -32,7 +32,8 @@ func TestNewAccessReviewCampaignScopeSource_DefaultFetchState(t *testing.T) {
 		Name:           "Google Workspace",
 	}
 
-	got := NewAccessReviewCampaignScopeSource(source, nil)
+	campaignID := gid.New(tenantID, coredata.AccessReviewCampaignEntityType)
+	got := NewAccessReviewCampaignScopeSource(campaignID, source, nil)
 	if got.FetchStatus != coredata.AccessReviewCampaignSourceFetchStatusQueued {
 		t.Fatalf("fetch status = %q, want QUEUED", got.FetchStatus)
 	}
@@ -64,7 +65,8 @@ func TestNewAccessReviewCampaignScopeSource_UsesFetchState(t *testing.T) {
 		CompletedAt:          &now,
 	}
 
-	got := NewAccessReviewCampaignScopeSource(source, fetch)
+	campaignID := gid.New(tenantID, coredata.AccessReviewCampaignEntityType)
+	got := NewAccessReviewCampaignScopeSource(campaignID, source, fetch)
 	if got.FetchStatus != coredata.AccessReviewCampaignSourceFetchStatusFailed {
 		t.Fatalf("fetch status = %q, want FAILED", got.FetchStatus)
 	}

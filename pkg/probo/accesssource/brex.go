@@ -43,7 +43,7 @@ func (d *BrexDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error) 
 		cursor  *string
 	)
 
-	for {
+	for range maxPaginationPages {
 		resp, err := d.queryUsers(ctx, cursor)
 		if err != nil {
 			return nil, err

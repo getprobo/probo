@@ -12,26 +12,23 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package accessreview
+package entry
 
 import (
 	"github.com/spf13/cobra"
-	"go.probo.inc/probo/pkg/cmd/accessreview/campaign"
-	"go.probo.inc/probo/pkg/cmd/accessreview/entry"
-	"go.probo.inc/probo/pkg/cmd/accessreview/source"
+	entryflag "go.probo.inc/probo/pkg/cmd/accessreview/entry/flag"
+	"go.probo.inc/probo/pkg/cmd/accessreview/entry/list"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
 )
 
-func NewCmdAccessReview(f *cmdutil.Factory) *cobra.Command {
+func NewCmdEntry(f *cmdutil.Factory) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "access-review <command>",
-		Short:   "Manage access reviews",
-		Aliases: []string{"ar"},
+		Use:   "entry <command>",
+		Short: "Manage access review entries",
 	}
 
-	cmd.AddCommand(campaign.NewCmdCampaign(f))
-	cmd.AddCommand(entry.NewCmdEntry(f))
-	cmd.AddCommand(source.NewCmdSource(f))
+	cmd.AddCommand(list.NewCmdList(f))
+	cmd.AddCommand(entryflag.NewCmdFlag(f))
 
 	return cmd
 }

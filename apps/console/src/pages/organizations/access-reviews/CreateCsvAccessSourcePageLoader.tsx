@@ -1,17 +1,17 @@
 import { Suspense, useEffect } from "react";
 import { useQueryLoader } from "react-relay";
 
-import type { AccessReviewPageQuery } from "#/__generated__/core/AccessReviewPageQuery.graphql";
+import type { CreateAccessSourcePageQuery } from "#/__generated__/core/CreateAccessSourcePageQuery.graphql";
 import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
-import { accessReviewPageQuery } from "./AccessReviewPage";
+import { createAccessSourcePageQuery } from "./CreateAccessSourcePage";
 import CreateCsvAccessSourcePage from "./CreateCsvAccessSourcePage";
 
 export default function CreateCsvAccessSourcePageLoader() {
   const organizationId = useOrganizationId();
   const [queryRef, loadQuery]
-    = useQueryLoader<AccessReviewPageQuery>(accessReviewPageQuery);
+    = useQueryLoader<CreateAccessSourcePageQuery>(createAccessSourcePageQuery);
 
   useEffect(() => {
     loadQuery({ organizationId });

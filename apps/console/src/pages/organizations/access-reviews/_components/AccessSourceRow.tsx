@@ -1,4 +1,4 @@
-import { formatDate, formatError, type GraphQLError, promisifyMutation, sprintf } from "@probo/helpers";
+import { formatDate, formatError, type GraphQLError, sprintf } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import {
   ActionDropdown,
@@ -76,24 +76,44 @@ export function AccessSourceRow({ fKey, connectionId }: Props) {
       return alert(__("Failed to delete access source: missing id or name"));
     }
     confirm(
-      () =>
-        promisifyMutation(deleteAccessSource)({
-          variables: {
-            input: {
-              accessSourceId: accessSource.id,
+      async () => {
+        await new Promise<void>((resolve, reject) => {
+          deleteAccessSource({
+            variables: {
+              input: {
+                accessSourceId: accessSource.id,
+              },
+              connections: [connectionId],
             },
-            connections: [connectionId],
-          },
-        }).catch((error) => {
-          toast({
-            title: __("Error"),
-            description: formatError(
-              __("Failed to delete access source"),
-              error as GraphQLError,
-            ),
-            variant: "error",
+            onCompleted: (_response, errors) => {
+              if (errors?.length) {
+                toast({
+                  title: __("Error"),
+                  description: formatError(
+                    __("Failed to delete access source"),
+                    errors as GraphQLError[],
+                  ),
+                  variant: "error",
+                });
+                reject(new Error(errors[0]?.message ?? __("Failed to delete access source")));
+                return;
+              }
+              resolve();
+            },
+            onError: (error) => {
+              toast({
+                title: __("Error"),
+                description: formatError(
+                  __("Failed to delete access source"),
+                  error as GraphQLError,
+                ),
+                variant: "error",
+              });
+              reject(error);
+            },
           });
-        }),
+        });
+      },
       {
         message: sprintf(
           __(

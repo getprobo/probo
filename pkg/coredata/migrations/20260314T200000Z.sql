@@ -54,13 +54,6 @@ CREATE TYPE access_entry_incremental_tag AS ENUM (
     'UNCHANGED'
 );
 
-CREATE TYPE access_review_remediation_task_status AS ENUM (
-    'OPEN',
-    'ACKNOWLEDGED',
-    'COMPLETED',
-    'CANCELLED'
-);
-
 CREATE TYPE access_review_campaign_source_fetch_status AS ENUM (
     'QUEUED',
     'FETCHING',
@@ -80,24 +73,11 @@ ALTER TYPE connector_provider ADD VALUE IF NOT EXISTS 'TALLY';
 ALTER TYPE connector_provider ADD VALUE IF NOT EXISTS 'CLOUDFLARE';
 ALTER TYPE connector_protocol ADD VALUE IF NOT EXISTS 'API_KEY';
 
--- 1. access_reviews: one per organization
-CREATE TABLE access_reviews (
-    id TEXT PRIMARY KEY,
-    tenant_id TEXT NOT NULL,
-    organization_id TEXT NOT NULL UNIQUE REFERENCES organizations(id) ON DELETE CASCADE,
-    identity_source_id TEXT,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL,
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL
-);
-
-CREATE INDEX idx_access_reviews_tenant_id ON access_reviews(tenant_id);
-CREATE INDEX idx_access_reviews_organization_id ON access_reviews(organization_id);
-
--- 2. access_sources: configured data sources
+-- 1. access_sources: configured data sources
 CREATE TABLE access_sources (
     id TEXT PRIMARY KEY,
     tenant_id TEXT NOT NULL,
-    access_review_id TEXT NOT NULL REFERENCES access_reviews(id) ON DELETE CASCADE,
+    organization_id TEXT NOT NULL REFERENCES organizations(id),
     connector_id TEXT REFERENCES connectors(id),
     name TEXT NOT NULL,
     category access_source_category NOT NULL,
@@ -107,19 +87,14 @@ CREATE TABLE access_sources (
 );
 
 CREATE INDEX idx_access_sources_tenant_id ON access_sources(tenant_id);
-CREATE INDEX idx_access_sources_access_review_id ON access_sources(access_review_id);
+CREATE INDEX idx_access_sources_organization_id ON access_sources(organization_id);
 CREATE INDEX idx_access_sources_connector_id ON access_sources(connector_id);
 
--- FK for identity_source_id now that access_sources exists
-ALTER TABLE access_reviews
-    ADD CONSTRAINT fk_access_reviews_identity_source
-    FOREIGN KEY (identity_source_id) REFERENCES access_sources(id) ON DELETE SET NULL;
-
--- 3. access_review_campaigns: individual review campaigns
+-- 2. access_review_campaigns: individual review campaigns
 CREATE TABLE access_review_campaigns (
     id TEXT PRIMARY KEY,
     tenant_id TEXT NOT NULL,
-    access_review_id TEXT NOT NULL REFERENCES access_reviews(id) ON DELETE CASCADE,
+    organization_id TEXT NOT NULL REFERENCES organizations(id),
     name TEXT NOT NULL,
     status access_review_campaign_status NOT NULL DEFAULT 'DRAFT',
     started_at TIMESTAMP WITH TIME ZONE,
@@ -130,17 +105,17 @@ CREATE TABLE access_review_campaigns (
 );
 
 CREATE INDEX idx_access_review_campaigns_tenant_id ON access_review_campaigns(tenant_id);
-CREATE INDEX idx_access_review_campaigns_access_review_id ON access_review_campaigns(access_review_id);
+CREATE INDEX idx_access_review_campaigns_organization_id ON access_review_campaigns(organization_id);
 CREATE INDEX idx_access_review_campaigns_status ON access_review_campaigns(status);
 
--- 4. access_review_campaign_scope_systems: join table campaigns <-> access_sources
+-- 3. access_review_campaign_scope_systems: join table campaigns <-> access_sources
 CREATE TABLE access_review_campaign_scope_systems (
     access_review_campaign_id TEXT NOT NULL REFERENCES access_review_campaigns(id) ON DELETE CASCADE,
     access_source_id TEXT NOT NULL REFERENCES access_sources(id) ON DELETE CASCADE,
     PRIMARY KEY (access_review_campaign_id, access_source_id)
 );
 
--- 5. access_entries: individual access records per user per system per campaign
+-- 4. access_entries: individual access records per user per system per campaign
 CREATE TABLE access_entries (
     id TEXT PRIMARY KEY,
     tenant_id TEXT NOT NULL,
@@ -184,78 +159,7 @@ CREATE INDEX idx_access_entries_campaign_source
 CREATE INDEX idx_access_entries_campaign_decided_at
     ON access_entries (access_review_campaign_id, decided_at);
 
--- 6. access_entry_decision_events: audit trail for decision changes
-CREATE TABLE access_entry_decision_events (
-    id TEXT PRIMARY KEY,
-    tenant_id TEXT NOT NULL,
-    access_entry_id TEXT NOT NULL REFERENCES access_entries(id) ON DELETE CASCADE,
-    access_review_campaign_id TEXT NOT NULL REFERENCES access_review_campaigns(id) ON DELETE CASCADE,
-    previous_decision access_entry_decision NOT NULL,
-    new_decision access_entry_decision NOT NULL,
-    decision_note TEXT,
-    decided_by TEXT,
-    decided_at TIMESTAMP WITH TIME ZONE NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL
-);
-
-CREATE INDEX idx_access_entry_decision_events_tenant_id
-    ON access_entry_decision_events (tenant_id);
-CREATE INDEX idx_access_entry_decision_events_campaign_id
-    ON access_entry_decision_events (access_review_campaign_id);
-CREATE INDEX idx_access_entry_decision_events_entry_id
-    ON access_entry_decision_events (access_entry_id);
-
--- 7. access_review_remediation_tasks: follow-up tasks for revoked/escalated entries
-CREATE TABLE access_review_remediation_tasks (
-    id TEXT PRIMARY KEY,
-    tenant_id TEXT NOT NULL,
-    access_review_campaign_id TEXT NOT NULL REFERENCES access_review_campaigns(id) ON DELETE CASCADE,
-    access_entry_id TEXT NOT NULL REFERENCES access_entries(id) ON DELETE CASCADE,
-    decided_by TEXT,
-    status access_review_remediation_task_status NOT NULL DEFAULT 'OPEN',
-    status_note TEXT,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL,
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL,
-    UNIQUE (access_entry_id)
-);
-
-CREATE INDEX idx_access_review_remediation_tasks_tenant_id
-    ON access_review_remediation_tasks (tenant_id);
-CREATE INDEX idx_access_review_remediation_tasks_campaign_id
-    ON access_review_remediation_tasks (access_review_campaign_id);
-CREATE INDEX idx_access_review_remediation_tasks_status
-    ON access_review_remediation_tasks (status);
-
--- 8. access_review_campaign_validation_checkpoints
-CREATE TABLE access_review_campaign_validation_checkpoints (
-    id TEXT PRIMARY KEY,
-    tenant_id TEXT NOT NULL,
-    access_review_campaign_id TEXT NOT NULL REFERENCES access_review_campaigns(id) ON DELETE CASCADE,
-    note TEXT,
-    validated_at TIMESTAMP WITH TIME ZONE NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL,
-    UNIQUE (access_review_campaign_id)
-);
-
-CREATE INDEX idx_access_review_campaign_validation_checkpoints_tenant_id
-    ON access_review_campaign_validation_checkpoints (tenant_id);
-
--- 9. access_review_campaign_evidence_snapshots
-CREATE TABLE access_review_campaign_evidence_snapshots (
-    id TEXT PRIMARY KEY,
-    tenant_id TEXT NOT NULL,
-    access_review_campaign_id TEXT NOT NULL REFERENCES access_review_campaigns(id) ON DELETE CASCADE,
-    payload JSONB NOT NULL,
-    checksum_sha256 TEXT NOT NULL,
-    signature TEXT,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL,
-    UNIQUE (access_review_campaign_id)
-);
-
-CREATE INDEX idx_access_review_campaign_evidence_snapshots_tenant_id
-    ON access_review_campaign_evidence_snapshots (tenant_id);
-
--- 10. access_review_campaign_source_fetches: tracks per-source fetch lifecycle
+-- 5. access_review_campaign_source_fetches: tracks per-source fetch lifecycle
 CREATE TABLE access_review_campaign_source_fetches (
     tenant_id TEXT NOT NULL,
     access_review_campaign_id TEXT NOT NULL REFERENCES access_review_campaigns(id) ON DELETE CASCADE,

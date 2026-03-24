@@ -31,7 +31,6 @@ type (
 	AccessReviewCampaign struct {
 		ID                gid.GID                    `db:"id"`
 		OrganizationID    gid.GID                    `db:"organization_id"`
-		IdentitySourceID  *gid.GID                   `db:"identity_source_id"`
 		Name              string                     `db:"name"`
 		Status            AccessReviewCampaignStatus `db:"status"`
 		StartedAt         *time.Time                 `db:"started_at"`
@@ -77,7 +76,6 @@ func (c *AccessReviewCampaign) LoadByID(
 SELECT
     id,
     organization_id,
-    identity_source_id,
     name,
     status,
     started_at,
@@ -126,7 +124,6 @@ INSERT INTO
         id,
         tenant_id,
         organization_id,
-        identity_source_id,
         name,
         status,
         started_at,
@@ -139,7 +136,6 @@ VALUES (
     @id,
     @tenant_id,
     @organization_id,
-    @identity_source_id,
     @name,
     @status,
     @started_at,
@@ -154,7 +150,6 @@ VALUES (
 		"id":                 c.ID,
 		"tenant_id":          scope.GetTenantID(),
 		"organization_id":    c.OrganizationID,
-		"identity_source_id": c.IdentitySourceID,
 		"name":               c.Name,
 		"status":             c.Status,
 		"started_at":         c.StartedAt,
@@ -251,7 +246,6 @@ func (campaigns *AccessReviewCampaigns) LoadByOrganizationID(
 SELECT
     id,
     organization_id,
-    identity_source_id,
     name,
     status,
     started_at,
@@ -323,7 +317,6 @@ func (c *AccessReviewCampaign) LoadLastCompletedByOrganizationID(
 SELECT
     id,
     organization_id,
-    identity_source_id,
     name,
     status,
     started_at,

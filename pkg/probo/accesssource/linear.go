@@ -46,7 +46,7 @@ func (d *LinearDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 		after   *string
 	)
 
-	for {
+	for range maxPaginationPages {
 		resp, err := d.queryUsers(ctx, after)
 		if err != nil {
 			return nil, err

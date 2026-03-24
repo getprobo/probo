@@ -28,15 +28,6 @@ const (
 	AccessReviewCampaignSourceFetchStatusFailed   AccessReviewCampaignSourceFetchStatus = "FAILED"
 )
 
-func AccessReviewCampaignSourceFetchStatuses() []AccessReviewCampaignSourceFetchStatus {
-	return []AccessReviewCampaignSourceFetchStatus{
-		AccessReviewCampaignSourceFetchStatusQueued,
-		AccessReviewCampaignSourceFetchStatusFetching,
-		AccessReviewCampaignSourceFetchStatusSuccess,
-		AccessReviewCampaignSourceFetchStatusFailed,
-	}
-}
-
 func (s AccessReviewCampaignSourceFetchStatus) IsTerminal() bool {
 	return s == AccessReviewCampaignSourceFetchStatusSuccess || s == AccessReviewCampaignSourceFetchStatusFailed
 }

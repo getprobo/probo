@@ -46,7 +46,7 @@ func (d *HubSpotDriver) ListAccounts(ctx context.Context) ([]AccountRecord, erro
 		after   string
 	)
 
-	for {
+	for range maxPaginationPages {
 		resp, err := d.fetchUsers(ctx, after)
 		if err != nil {
 			return nil, err

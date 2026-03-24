@@ -6943,6 +6943,30 @@ components:
           items:
             $ref: "#/components/schemas/AccessEntry"
 
+    FlagAccessEntryMCPInput:
+      type: object
+      required:
+        - access_entry_id
+        - flag
+      properties:
+        access_entry_id:
+          $ref: "#/components/schemas/GID"
+          description: Access entry ID
+        flag:
+          $ref: "#/components/schemas/AccessEntryFlag"
+          description: Flag to set (NONE, ORPHANED, INACTIVE, EXCESSIVE, ROLE_MISMATCH, NEW)
+        flag_reason:
+          type: string
+          description: Reason for flagging
+
+    FlagAccessEntryMCPOutput:
+      type: object
+      required:
+        - access_entry
+      properties:
+        access_entry:
+          $ref: "#/components/schemas/AccessEntry"
+
     CloseAccessReviewCampaignMCPInput:
       type: object
       required:
@@ -6953,6 +6977,332 @@ components:
           description: Campaign ID
 
     CloseAccessReviewCampaignMCPOutput:
+      type: object
+      required:
+        - campaign
+      properties:
+        campaign:
+          $ref: "#/components/schemas/AccessReviewCampaign"
+
+    AccessSourceCategory:
+      type: string
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.AccessSourceCategory
+      enum:
+        - SAAS
+        - CLOUD_INFRA
+        - SOURCE_CODE
+        - OTHER
+
+    AccessSourceOrderField:
+      type: string
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.AccessSourceOrderField
+      enum:
+        - CREATED_AT
+
+    AccessSourceOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/AccessSourceOrderField"
+          description: Order field
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+          description: Order direction
+
+    AccessSource:
+      type: object
+      required:
+        - id
+        - organization_id
+        - name
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Access source ID
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        connector_id:
+          anyOf:
+            - $ref: "#/components/schemas/GID"
+            - type: "null"
+          description: Connector ID
+        name:
+          type: string
+          description: Access source name
+        csv_data:
+          type:
+            - string
+            - "null"
+          description: CSV data for manual sources
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Update timestamp
+
+    ListAccessSourcesInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        order_by:
+          $ref: "#/components/schemas/AccessSourceOrderBy"
+          description: Order by
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+
+    ListAccessSourcesOutput:
+      type: object
+      required:
+        - access_sources
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        access_sources:
+          type: array
+          items:
+            $ref: "#/components/schemas/AccessSource"
+
+    CreateAccessSourceMCPInput:
+      type: object
+      required:
+        - organization_id
+        - name
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        connector_id:
+          $ref: "#/components/schemas/GID"
+          description: Connector ID (optional)
+        name:
+          type: string
+          description: Access source name
+        csv_data:
+          type: string
+          description: CSV data for manual sources (optional)
+
+    CreateAccessSourceMCPOutput:
+      type: object
+      required:
+        - access_source
+      properties:
+        access_source:
+          $ref: "#/components/schemas/AccessSource"
+
+    UpdateAccessSourceMCPInput:
+      type: object
+      required:
+        - access_source_id
+      properties:
+        access_source_id:
+          $ref: "#/components/schemas/GID"
+          description: Access source ID
+        name:
+          type: string
+          description: New name
+        connector_id:
+          type:
+            - string
+            - "null"
+          go.probo.inc/mcpgen/omittable: true
+          description: Connector ID (set to null to remove)
+        csv_data:
+          type:
+            - string
+            - "null"
+          go.probo.inc/mcpgen/omittable: true
+          description: CSV data for manual sources (set to null to remove)
+
+    UpdateAccessSourceMCPOutput:
+      type: object
+      required:
+        - access_source
+      properties:
+        access_source:
+          $ref: "#/components/schemas/AccessSource"
+
+    DeleteAccessSourceMCPInput:
+      type: object
+      required:
+        - access_source_id
+      properties:
+        access_source_id:
+          $ref: "#/components/schemas/GID"
+          description: Access source ID
+
+    DeleteAccessSourceMCPOutput:
+      type: object
+      required:
+        - deleted_access_source_id
+      properties:
+        deleted_access_source_id:
+          $ref: "#/components/schemas/GID"
+          description: Deleted access source ID
+
+    CreateAccessReviewCampaignMCPInput:
+      type: object
+      required:
+        - organization_id
+        - name
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        name:
+          type: string
+          description: Campaign name
+        framework_controls:
+          type: array
+          items:
+            type: string
+          description: Framework control references
+        access_source_ids:
+          type: array
+          items:
+            $ref: "#/components/schemas/GID"
+          description: Access source IDs to include in scope
+
+    CreateAccessReviewCampaignMCPOutput:
+      type: object
+      required:
+        - campaign
+      properties:
+        campaign:
+          $ref: "#/components/schemas/AccessReviewCampaign"
+
+    UpdateAccessReviewCampaignMCPInput:
+      type: object
+      required:
+        - campaign_id
+      properties:
+        campaign_id:
+          $ref: "#/components/schemas/GID"
+          description: Campaign ID
+        name:
+          type: string
+          description: New campaign name
+        framework_controls:
+          type:
+            - array
+            - "null"
+          items:
+            type: string
+          go.probo.inc/mcpgen/omittable: true
+          description: Framework control references (set to null to clear)
+
+    UpdateAccessReviewCampaignMCPOutput:
+      type: object
+      required:
+        - campaign
+      properties:
+        campaign:
+          $ref: "#/components/schemas/AccessReviewCampaign"
+
+    DeleteAccessReviewCampaignMCPInput:
+      type: object
+      required:
+        - campaign_id
+      properties:
+        campaign_id:
+          $ref: "#/components/schemas/GID"
+          description: Campaign ID
+
+    DeleteAccessReviewCampaignMCPOutput:
+      type: object
+      required:
+        - deleted_campaign_id
+      properties:
+        deleted_campaign_id:
+          $ref: "#/components/schemas/GID"
+          description: Deleted campaign ID
+
+    StartAccessReviewCampaignMCPInput:
+      type: object
+      required:
+        - campaign_id
+      properties:
+        campaign_id:
+          $ref: "#/components/schemas/GID"
+          description: Campaign ID
+
+    StartAccessReviewCampaignMCPOutput:
+      type: object
+      required:
+        - campaign
+      properties:
+        campaign:
+          $ref: "#/components/schemas/AccessReviewCampaign"
+
+    CancelAccessReviewCampaignMCPInput:
+      type: object
+      required:
+        - campaign_id
+      properties:
+        campaign_id:
+          $ref: "#/components/schemas/GID"
+          description: Campaign ID
+
+    CancelAccessReviewCampaignMCPOutput:
+      type: object
+      required:
+        - campaign
+      properties:
+        campaign:
+          $ref: "#/components/schemas/AccessReviewCampaign"
+
+    AddAccessReviewCampaignScopeSourceMCPInput:
+      type: object
+      required:
+        - campaign_id
+        - access_source_id
+      properties:
+        campaign_id:
+          $ref: "#/components/schemas/GID"
+          description: Campaign ID
+        access_source_id:
+          $ref: "#/components/schemas/GID"
+          description: Access source ID to add to scope
+
+    AddAccessReviewCampaignScopeSourceMCPOutput:
+      type: object
+      required:
+        - campaign
+      properties:
+        campaign:
+          $ref: "#/components/schemas/AccessReviewCampaign"
+
+    RemoveAccessReviewCampaignScopeSourceMCPInput:
+      type: object
+      required:
+        - campaign_id
+        - access_source_id
+      properties:
+        campaign_id:
+          $ref: "#/components/schemas/GID"
+          description: Campaign ID
+        access_source_id:
+          $ref: "#/components/schemas/GID"
+          description: Access source ID to remove from scope
+
+    RemoveAccessReviewCampaignScopeSourceMCPOutput:
       type: object
       required:
         - campaign
@@ -8161,6 +8511,14 @@ tools:
       $ref: "#/components/schemas/RecordAccessEntryDecisionsMCPInput"
     outputSchema:
       $ref: "#/components/schemas/RecordAccessEntryDecisionsMCPOutput"
+  - name: flagAccessEntry
+    description: Flag an access entry during review (NONE, ORPHANED, INACTIVE, EXCESSIVE, ROLE_MISMATCH, NEW). Optionally provide a reason.
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/FlagAccessEntryMCPInput"
+    outputSchema:
+      $ref: "#/components/schemas/FlagAccessEntryMCPOutput"
   - name: closeAccessReviewCampaign
     description: Close an access review campaign. All entries must have been decided (no PENDING entries).
     hints:
@@ -8169,3 +8527,94 @@ tools:
       $ref: "#/components/schemas/CloseAccessReviewCampaignMCPInput"
     outputSchema:
       $ref: "#/components/schemas/CloseAccessReviewCampaignMCPOutput"
+  - name: listAccessSources
+    description: List access sources for an organization
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/ListAccessSourcesInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListAccessSourcesOutput"
+  - name: createAccessSource
+    description: Create a new access source for an organization
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/CreateAccessSourceMCPInput"
+    outputSchema:
+      $ref: "#/components/schemas/CreateAccessSourceMCPOutput"
+  - name: updateAccessSource
+    description: Update an existing access source
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/UpdateAccessSourceMCPInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateAccessSourceMCPOutput"
+  - name: deleteAccessSource
+    description: Delete an access source
+    hints:
+      readonly: false
+      destructive: true
+    inputSchema:
+      $ref: "#/components/schemas/DeleteAccessSourceMCPInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteAccessSourceMCPOutput"
+  - name: createAccessReviewCampaign
+    description: Create a new access review campaign for an organization
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/CreateAccessReviewCampaignMCPInput"
+    outputSchema:
+      $ref: "#/components/schemas/CreateAccessReviewCampaignMCPOutput"
+  - name: updateAccessReviewCampaign
+    description: Update an existing access review campaign
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/UpdateAccessReviewCampaignMCPInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateAccessReviewCampaignMCPOutput"
+  - name: deleteAccessReviewCampaign
+    description: Delete an access review campaign
+    hints:
+      readonly: false
+      destructive: true
+    inputSchema:
+      $ref: "#/components/schemas/DeleteAccessReviewCampaignMCPInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteAccessReviewCampaignMCPOutput"
+  - name: startAccessReviewCampaign
+    description: Start an access review campaign. Triggers data fetching from all configured scope sources.
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/StartAccessReviewCampaignMCPInput"
+    outputSchema:
+      $ref: "#/components/schemas/StartAccessReviewCampaignMCPOutput"
+  - name: cancelAccessReviewCampaign
+    description: Cancel an in-progress access review campaign
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/CancelAccessReviewCampaignMCPInput"
+    outputSchema:
+      $ref: "#/components/schemas/CancelAccessReviewCampaignMCPOutput"
+  - name: addAccessReviewCampaignScopeSource
+    description: Add an access source to an access review campaign's scope
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/AddAccessReviewCampaignScopeSourceMCPInput"
+    outputSchema:
+      $ref: "#/components/schemas/AddAccessReviewCampaignScopeSourceMCPOutput"
+  - name: removeAccessReviewCampaignScopeSource
+    description: Remove an access source from an access review campaign's scope
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/RemoveAccessReviewCampaignScopeSourceMCPInput"
+    outputSchema:
+      $ref: "#/components/schemas/RemoveAccessReviewCampaignScopeSourceMCPOutput"

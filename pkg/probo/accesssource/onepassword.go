@@ -41,7 +41,7 @@ func (d *OnePasswordDriver) ListAccounts(ctx context.Context) ([]AccountRecord, 
 	var records []AccountRecord
 	startIndex := 1
 
-	for {
+	for range maxPaginationPages {
 		resp, err := d.queryUsers(ctx, startIndex)
 		if err != nil {
 			return nil, err
@@ -84,18 +84,15 @@ func (d *OnePasswordDriver) ListAccounts(ctx context.Context) ([]AccountRecord, 
 				}
 			}
 
-			if u.Meta.LastModified != "" {
-				if t, err := time.Parse(time.RFC3339, u.Meta.LastModified); err == nil {
-					record.LastLogin = &t
-				}
-			}
+			// Note: SCIM Meta.LastModified is the profile update time, not
+			// the last login time, so we intentionally do not map it.
 
 			if email != "" {
 				records = append(records, record)
 			}
 		}
 
-		if startIndex+resp.ItemsPerPage > resp.TotalResults {
+		if len(resp.Resources) == 0 || resp.ItemsPerPage <= 0 || startIndex+resp.ItemsPerPage > resp.TotalResults {
 			break
 		}
 		startIndex += resp.ItemsPerPage

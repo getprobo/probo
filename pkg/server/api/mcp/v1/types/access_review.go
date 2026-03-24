@@ -19,6 +19,38 @@ import (
 	"go.probo.inc/probo/pkg/page"
 )
 
+func NewAccessSource(s *coredata.AccessSource) *AccessSource {
+	return &AccessSource{
+		ID:             s.ID,
+		OrganizationID: s.OrganizationID,
+		ConnectorID:    s.ConnectorID,
+		Name:           s.Name,
+		CsvData:        s.CsvData,
+		CreatedAt:      s.CreatedAt,
+		UpdatedAt:      s.UpdatedAt,
+	}
+}
+
+func NewListAccessSourcesOutput(
+	p *page.Page[*coredata.AccessSource, coredata.AccessSourceOrderField],
+) ListAccessSourcesOutput {
+	sources := make([]*AccessSource, 0, len(p.Data))
+	for _, s := range p.Data {
+		sources = append(sources, NewAccessSource(s))
+	}
+
+	var nextCursor *page.CursorKey
+	if len(p.Data) > 0 {
+		cursorKey := p.Data[len(p.Data)-1].CursorKey(p.Cursor.OrderBy.Field)
+		nextCursor = &cursorKey
+	}
+
+	return ListAccessSourcesOutput{
+		NextCursor:    nextCursor,
+		AccessSources: sources,
+	}
+}
+
 func NewAccessReviewCampaign(c *coredata.AccessReviewCampaign) *AccessReviewCampaign {
 	return &AccessReviewCampaign{
 		ID:                c.ID,

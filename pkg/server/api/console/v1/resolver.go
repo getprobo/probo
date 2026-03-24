@@ -95,8 +95,13 @@ func NewMux(
 
 		r.Get("/connectors/initiate", func(w http.ResponseWriter, r *http.Request) {
 			provider := r.URL.Query().Get("provider")
-			if provider != "SLACK" && provider != "GOOGLE_WORKSPACE" && provider != "LINEAR" {
-				httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("unsupported provider"))
+			if provider == "" {
+				httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("missing provider parameter"))
+				return
+			}
+
+			if _, err := connectorRegistry.Get(provider); err != nil {
+				httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("unsupported provider: %q", provider))
 				return
 			}
 
@@ -137,17 +142,11 @@ func NewMux(
 				panic(fmt.Errorf("cannot initiate connector: %w", err))
 			}
 
-			// Allow external redirects for OAuth providers
-			var oauthSafeRedirect *saferedirect.SafeRedirect
-			switch provider {
-			case "SLACK":
-				oauthSafeRedirect = &saferedirect.SafeRedirect{AllowedHost: "slack.com"}
-			case "GOOGLE_WORKSPACE":
-				oauthSafeRedirect = &saferedirect.SafeRedirect{AllowedHost: "accounts.google.com"}
-			case "LINEAR":
-				oauthSafeRedirect = &saferedirect.SafeRedirect{AllowedHost: "linear.app"}
-			}
-			oauthSafeRedirect.Redirect(w, r, redirectURL, "/", http.StatusSeeOther)
+			// The redirect URL comes from the connector's server-side OAuth
+			// config (AuthURL), so it is trusted. Use http.Redirect directly
+			// since SafeRedirect with an allowlist derived from the URL itself
+			// would be a tautology.
+			http.Redirect(w, r, redirectURL, http.StatusSeeOther)
 		})
 
 		r.Get("/connectors/complete", func(w http.ResponseWriter, r *http.Request) {
@@ -158,15 +157,8 @@ func NewMux(
 			}
 
 			var connectorProvider coredata.ConnectorProvider
-			switch provider {
-			case "SLACK":
-				connectorProvider = coredata.ConnectorProviderSlack
-			case "GOOGLE_WORKSPACE":
-				connectorProvider = coredata.ConnectorProviderGoogleWorkspace
-			case "LINEAR":
-				connectorProvider = coredata.ConnectorProviderLinear
-			default:
-				httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("unsupported provider"))
+			if err := connectorProvider.Scan(provider); err != nil {
+				httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("unsupported provider: %q", provider))
 				return
 			}
 
@@ -209,7 +201,6 @@ func NewMux(
 			}
 			q := parsedURL.Query()
 			q.Set("connector_id", connector.ID.String())
-			q.Set("provider", provider)
 			parsedURL.RawQuery = q.Encode()
 
 			safeRedirect.Redirect(w, r, parsedURL.String(), "/", http.StatusSeeOther)

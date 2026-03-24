@@ -66,16 +66,16 @@ func (f *AccessEntryFilter) SQLFragment() string {
 }
 
 func (f *AccessEntryFilter) SQLArguments() pgx.StrictNamedArgs {
+	if f == nil {
+		return pgx.StrictNamedArgs{}
+	}
+
 	args := pgx.StrictNamedArgs{
 		"filter_decision":        nil,
 		"filter_flag":            nil,
 		"filter_incremental_tag": nil,
 		"filter_is_admin":        nil,
 		"filter_auth_method":     nil,
-	}
-
-	if f == nil {
-		return args
 	}
 
 	if f.Decision != nil {

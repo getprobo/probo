@@ -8,7 +8,30 @@ export const accessReviewRoutes = [
     path: "access-reviews",
     Fallback: PageSkeleton,
     Component: lazy(
-      () => import("#/pages/organizations/access-reviews/AccessReviewPageLoader"),
+      () => import("#/pages/organizations/access-reviews/AccessReviewLayoutLoader"),
+    ),
+    children: [
+      {
+        index: true,
+        Fallback: PageSkeleton,
+        Component: lazy(
+          () => import("#/pages/organizations/access-reviews/campaigns/AccessReviewCampaignsTab"),
+        ),
+      },
+      {
+        path: "sources",
+        Fallback: PageSkeleton,
+        Component: lazy(
+          () => import("#/pages/organizations/access-reviews/sources/AccessReviewSourcesTab"),
+        ),
+      },
+    ],
+  },
+  {
+    path: "access-reviews/campaigns/:campaignId",
+    Fallback: PageSkeleton,
+    Component: lazy(
+      () => import("#/pages/organizations/access-reviews/campaigns/CampaignDetailPageLoader"),
     ),
   },
   {

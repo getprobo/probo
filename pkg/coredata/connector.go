@@ -30,13 +30,37 @@ import (
 	"go.probo.inc/probo/pkg/page"
 )
 
+// jsonRawMessageOrNull is a json.RawMessage that scans NULL as an empty
+// slice and serialises an empty/nil value as SQL NULL.  This avoids the
+// need for *json.RawMessage and keeps the zero-value useful.
+type jsonRawMessageOrNull json.RawMessage
+
+func (j *jsonRawMessageOrNull) Scan(src any) error {
+	if src == nil {
+		*j = nil
+		return nil
+	}
+	switch v := src.(type) {
+	case []byte:
+		cp := make(jsonRawMessageOrNull, len(v))
+		copy(cp, v)
+		*j = cp
+		return nil
+	case string:
+		*j = jsonRawMessageOrNull(v)
+		return nil
+	default:
+		return fmt.Errorf("unsupported type for jsonRawMessageOrNull: %T", src)
+	}
+}
+
 type (
 	Connector struct {
 		ID                  gid.GID              `db:"id"`
 		OrganizationID      gid.GID              `db:"organization_id"`
 		Provider            ConnectorProvider    `db:"provider"`
 		Protocol            ConnectorProtocol    `db:"protocol"`
-		Settings            map[string]any       `db:"settings"`
+		RawSettings         jsonRawMessageOrNull `db:"settings"`
 		Connection          connector.Connection `db:"-"`
 		EncryptedConnection []byte               `db:"encrypted_connection"`
 		CreatedAt           time.Time            `db:"created_at"`
@@ -135,7 +159,13 @@ func (c *Connector) LoadByID(
 			return fmt.Errorf("cannot unmarshal connection: %w", err)
 		}
 
-		c.populateSlackSettings()
+		if c.Provider == ConnectorProviderSlack {
+			if slackConn, ok := c.Connection.(*connector.SlackConnection); ok {
+				settings, _ := c.SlackSettings()
+				slackConn.Settings.Channel = settings.Channel
+				slackConn.Settings.ChannelID = settings.ChannelID
+			}
+		}
 	}
 
 	return nil
@@ -250,7 +280,14 @@ INSERT INTO connectors (
 		return fmt.Errorf("connection is nil")
 	}
 
-	c.extractSlackSettings()
+	if c.Provider == ConnectorProviderSlack {
+		if slackConn, ok := c.Connection.(*connector.SlackConnection); ok {
+			_ = c.SetSettings(&SlackConnectorSettings{
+				Channel:   slackConn.Settings.Channel,
+				ChannelID: slackConn.Settings.ChannelID,
+			})
+		}
+	}
 
 	connection, err := json.Marshal(c.Connection)
 	if err != nil {
@@ -262,13 +299,18 @@ INSERT INTO connectors (
 		return fmt.Errorf("cannot encrypt connection: %w", err)
 	}
 
+	var settingsArg any
+	if len(c.RawSettings) > 0 {
+		settingsArg = []byte(c.RawSettings)
+	}
+
 	args := pgx.StrictNamedArgs{
 		"id":                   c.ID,
 		"tenant_id":            scope.GetTenantID(),
 		"organization_id":      c.OrganizationID,
 		"provider":             c.Provider,
 		"protocol":             c.Protocol,
-		"settings":             c.Settings,
+		"settings":             settingsArg,
 		"encrypted_connection": encryptedConnection,
 		"created_at":           c.CreatedAt,
 		"updated_at":           c.UpdatedAt,
@@ -280,47 +322,10 @@ INSERT INTO connectors (
 	}
 
 	c.EncryptedConnection = encryptedConnection
-	c.populateSlackSettings()
 
 	return nil
 }
 
-func (c *Connector) populateSlackSettings() {
-	if c.Provider != ConnectorProviderSlack {
-		return
-	}
-
-	slackConn, ok := c.Connection.(*connector.SlackConnection)
-	if !ok {
-		return
-	}
-
-	if channel, ok := c.Settings["channel"].(string); ok {
-		slackConn.Settings.Channel = channel
-	}
-	if channelID, ok := c.Settings["channel_id"].(string); ok {
-		slackConn.Settings.ChannelID = channelID
-	}
-}
-
-func (c *Connector) extractSlackSettings() {
-	if c.Provider != ConnectorProviderSlack {
-		return
-	}
-
-	slackConn, ok := c.Connection.(*connector.SlackConnection)
-	if !ok {
-		return
-	}
-
-	c.Settings = make(map[string]any)
-	if slackConn.Settings.Channel != "" {
-		c.Settings["channel"] = slackConn.Settings.Channel
-	}
-	if slackConn.Settings.ChannelID != "" {
-		c.Settings["channel_id"] = slackConn.Settings.ChannelID
-	}
-}
 
 func (c *Connectors) loadByOrganizationIDWithPagination(
 	ctx context.Context,
@@ -492,7 +497,14 @@ WHERE
 		return fmt.Errorf("connection is nil")
 	}
 
-	c.extractSlackSettings()
+	if c.Provider == ConnectorProviderSlack {
+		if slackConn, ok := c.Connection.(*connector.SlackConnection); ok {
+			_ = c.SetSettings(&SlackConnectorSettings{
+				Channel:   slackConn.Settings.Channel,
+				ChannelID: slackConn.Settings.ChannelID,
+			})
+		}
+	}
 
 	connection, err := json.Marshal(c.Connection)
 	if err != nil {
@@ -504,9 +516,14 @@ WHERE
 		return fmt.Errorf("cannot encrypt connection: %w", err)
 	}
 
+	var settingsArg any
+	if len(c.RawSettings) > 0 {
+		settingsArg = []byte(c.RawSettings)
+	}
+
 	args := pgx.StrictNamedArgs{
 		"id":                   c.ID,
-		"settings":             c.Settings,
+		"settings":             settingsArg,
 		"encrypted_connection": encryptedConnection,
 		"updated_at":           c.UpdatedAt,
 	}
@@ -522,7 +539,6 @@ WHERE
 	}
 
 	c.EncryptedConnection = encryptedConnection
-	c.populateSlackSettings()
 
 	return nil
 }
@@ -543,7 +559,13 @@ func (c *Connectors) decryptConnections(encryptionKey cipher.EncryptionKey) erro
 			return fmt.Errorf("cannot unmarshal connection for %s: %w", cnnctr.Provider, err)
 		}
 
-		cnnctr.populateSlackSettings()
+		if cnnctr.Provider == ConnectorProviderSlack {
+			if slackConn, ok := cnnctr.Connection.(*connector.SlackConnection); ok {
+				settings, _ := cnnctr.SlackSettings()
+				slackConn.Settings.Channel = settings.Channel
+				slackConn.Settings.ChannelID = settings.ChannelID
+			}
+		}
 	}
 
 	return nil

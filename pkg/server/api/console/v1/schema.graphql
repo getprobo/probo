@@ -2102,7 +2102,6 @@ enum ConnectorProvider
     TALLY @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderTally")
     CLOUDFLARE
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderCloudflare")
-    SENTRY @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderSentry")
 }
 
 input ConnectorFilter {
@@ -3974,6 +3973,9 @@ type Mutation {
     recordAccessEntryDecisions(
         input: RecordAccessEntryDecisionsInput!
     ): RecordAccessEntryDecisionsPayload!
+    flagAccessEntry(
+        input: FlagAccessEntryInput!
+    ): FlagAccessEntryPayload!
     # Connector mutations
     createAPIKeyConnector(
         input: CreateAPIKeyConnectorInput!
@@ -6375,6 +6377,17 @@ type AccessReviewCampaignScopeSource
     lastError: String
     fetchStartedAt: Datetime
     fetchCompletedAt: Datetime
+
+    entries(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: AccessEntryOrder
+        filter: AccessEntryFilter
+    ): AccessEntryConnection! @goField(forceResolver: true)
+
+    statistics: AccessReviewCampaignStatistics! @goField(forceResolver: true)
 }
 
 type AccessSourceConnection
@@ -6413,8 +6426,6 @@ type AccessReviewCampaign implements Node {
     frameworkControls: [String!]
     createdAt: Datetime!
     updatedAt: Datetime!
-
-    identitySource: AccessSource @goField(forceResolver: true)
 
     scopeSources: [AccessReviewCampaignScopeSource!]! @goField(forceResolver: true)
 
@@ -6581,7 +6592,6 @@ input CreateAccessReviewCampaignInput {
     organizationId: ID!
     name: String!
     frameworkControls: [String!]
-    identitySourceId: ID
     accessSourceIds: [ID!]
 }
 
@@ -6673,13 +6683,21 @@ type RecordAccessEntryDecisionsPayload {
     accessEntries: [AccessEntry!]!
 }
 
+input FlagAccessEntryInput {
+    accessEntryId: ID!
+    flag: AccessEntryFlag!
+    flagReason: String
+}
+
+type FlagAccessEntryPayload {
+    accessEntry: AccessEntry!
+}
+
 input CreateAPIKeyConnectorInput {
     organizationId: ID!
     provider: ConnectorProvider!
     apiKey: String!
     tallyOrganizationId: String
-    cloudflareAccountId: String
-    sentryOrganizationSlug: String
 }
 
 type CreateAPIKeyConnectorPayload {

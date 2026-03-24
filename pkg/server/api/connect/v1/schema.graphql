@@ -414,8 +414,6 @@ enum ConnectorProvider
   TALLY @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderTally")
   CLOUDFLARE
     @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderCloudflare")
-  SENTRY
-    @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderSentry")
 }
 
 enum SCIMBridgeType

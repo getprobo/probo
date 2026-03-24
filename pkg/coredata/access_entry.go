@@ -509,20 +509,6 @@ WHERE
 	return count, nil
 }
 
-func (entries *AccessEntries) BulkInsert(
-	ctx context.Context,
-	conn pg.Conn,
-	scope Scoper,
-) error {
-	for _, entry := range *entries {
-		if err := entry.Insert(ctx, conn, scope); err != nil {
-			return fmt.Errorf("cannot bulk insert access_entry: %w", err)
-		}
-	}
-
-	return nil
-}
-
 func (e *AccessEntry) LoadOrganizationID(
 	ctx context.Context,
 	conn pg.Conn,
@@ -588,6 +574,43 @@ WHERE
 
 	if result.RowsAffected() == 0 {
 		return fmt.Errorf("cannot record access entry decision: not pending")
+	}
+
+	return nil
+}
+
+func (e *AccessEntry) UpdateFlag(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+) error {
+	q := `
+UPDATE access_entries
+SET
+    flag = @flag,
+    flag_reason = @flag_reason,
+    updated_at = @updated_at
+WHERE
+    %s
+    AND id = @id
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"id":          e.ID,
+		"flag":        e.Flag,
+		"flag_reason": e.FlagReason,
+		"updated_at":  e.UpdatedAt,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	result, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot update access entry flag: %w", err)
+	}
+
+	if result.RowsAffected() == 0 {
+		return ErrResourceNotFound
 	}
 
 	return nil
@@ -713,16 +736,25 @@ type BaselineAccountEntry struct {
 func (entries *AccessEntries) LoadBaselineBySourceID(
 	ctx context.Context,
 	conn pg.Conn,
+	scope Scoper,
 	campaignID gid.GID,
 	sourceID gid.GID,
 ) ([]BaselineAccountEntry, error) {
-	q := `
+	q := fmt.Sprintf(`
 SELECT account_key, email, full_name
 FROM access_entries
-WHERE access_review_campaign_id = $1
-  AND access_source_id = $2
-`
-	rows, err := conn.Query(ctx, q, campaignID, sourceID)
+WHERE %s
+  AND access_review_campaign_id = @campaign_id
+  AND access_source_id = @source_id
+`, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"campaign_id": campaignID,
+		"source_id":   sourceID,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
 		return nil, fmt.Errorf("cannot load baseline entries: %w", err)
 	}

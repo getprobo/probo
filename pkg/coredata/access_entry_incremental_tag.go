@@ -27,14 +27,6 @@ const (
 	AccessEntryIncrementalTagUnchanged AccessEntryIncrementalTag = "UNCHANGED"
 )
 
-func AccessEntryIncrementalTags() []AccessEntryIncrementalTag {
-	return []AccessEntryIncrementalTag{
-		AccessEntryIncrementalTagNew,
-		AccessEntryIncrementalTagRemoved,
-		AccessEntryIncrementalTagUnchanged,
-	}
-}
-
 func (t AccessEntryIncrementalTag) String() string {
 	return string(t)
 }

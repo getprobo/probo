@@ -37,6 +37,12 @@ type (
 		DecisionNote *string
 		DecidedByID  *gid.GID
 	}
+
+	FlagAccessEntryRequest struct {
+		EntryID    gid.GID
+		Flag       coredata.AccessEntryFlag
+		FlagReason *string
+	}
 )
 
 func (s AccessEntryService) ResolveOrganizationID(
@@ -103,6 +109,15 @@ func (s AccessEntryService) RecordDecision(
 				return fmt.Errorf("cannot load access entry: %w", err)
 			}
 
+			campaign := &coredata.AccessReviewCampaign{}
+			if err := campaign.LoadByID(ctx, conn, s.svc.scope, entry.AccessReviewCampaignID); err != nil {
+				return fmt.Errorf("cannot load campaign: %w", err)
+			}
+
+			if campaign.Status != coredata.AccessReviewCampaignStatusPendingActions {
+				return fmt.Errorf("cannot decide access entry: campaign status is %s, expected PENDING_ACTIONS", campaign.Status)
+			}
+
 			if entry.Decision != coredata.AccessEntryDecisionPending {
 				return fmt.Errorf("cannot decide access entry: invalid transition from %s", entry.Decision)
 			}
@@ -114,7 +129,9 @@ func (s AccessEntryService) RecordDecision(
 			entry.DecidedAt = &now
 			entry.UpdatedAt = now
 			if req.Decision == coredata.AccessEntryDecisionRevoke || req.Decision == coredata.AccessEntryDecisionEscalate {
-				entry.Flag = coredata.AccessEntryFlagExcessive
+				if entry.Flag == coredata.AccessEntryFlagNone {
+					entry.Flag = coredata.AccessEntryFlagExcessive
+				}
 			}
 
 			if err := entry.RecordDecision(ctx, conn, s.svc.scope); err != nil {
@@ -162,10 +179,25 @@ func (s AccessEntryService) RecordDecisions(
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(conn pg.Conn) error {
+			// Track verified campaigns to avoid repeated loads within the
+			// same transaction.
+			verifiedCampaigns := make(map[gid.GID]bool)
+
 			for _, d := range decisions {
 				entry := &coredata.AccessEntry{}
 				if err := entry.LoadByID(ctx, conn, s.svc.scope, d.EntryID); err != nil {
 					return fmt.Errorf("cannot load access entry %s: %w", d.EntryID, err)
+				}
+
+				if !verifiedCampaigns[entry.AccessReviewCampaignID] {
+					campaign := &coredata.AccessReviewCampaign{}
+					if err := campaign.LoadByID(ctx, conn, s.svc.scope, entry.AccessReviewCampaignID); err != nil {
+						return fmt.Errorf("cannot load campaign: %w", err)
+					}
+					if campaign.Status != coredata.AccessReviewCampaignStatusPendingActions {
+						return fmt.Errorf("cannot decide access entry: campaign status is %s, expected PENDING_ACTIONS", campaign.Status)
+					}
+					verifiedCampaigns[entry.AccessReviewCampaignID] = true
 				}
 
 				if entry.Decision != coredata.AccessEntryDecisionPending {
@@ -183,7 +215,9 @@ func (s AccessEntryService) RecordDecisions(
 				entry.DecidedAt = &now
 				entry.UpdatedAt = now
 				if d.Decision == coredata.AccessEntryDecisionRevoke || d.Decision == coredata.AccessEntryDecisionEscalate {
-					entry.Flag = coredata.AccessEntryFlagExcessive
+					if entry.Flag == coredata.AccessEntryFlagNone {
+						entry.Flag = coredata.AccessEntryFlagExcessive
+					}
 				}
 
 				if err := entry.RecordDecision(ctx, conn, s.svc.scope); err != nil {
@@ -208,6 +242,43 @@ func (s AccessEntryService) RecordDecisions(
 	}
 
 	return entries, nil
+}
+
+func (s AccessEntryService) FlagEntry(
+	ctx context.Context,
+	req FlagAccessEntryRequest,
+) (*coredata.AccessEntry, error) {
+	entry := &coredata.AccessEntry{}
+
+	err := s.svc.pg.WithTx(
+		ctx,
+		func(conn pg.Conn) error {
+			if err := entry.LoadByID(ctx, conn, s.svc.scope, req.EntryID); err != nil {
+				return fmt.Errorf("cannot load access entry: %w", err)
+			}
+
+			campaign := &coredata.AccessReviewCampaign{}
+			if err := campaign.LoadByID(ctx, conn, s.svc.scope, entry.AccessReviewCampaignID); err != nil {
+				return fmt.Errorf("cannot load campaign: %w", err)
+			}
+
+			if campaign.Status != coredata.AccessReviewCampaignStatusPendingActions {
+				return fmt.Errorf("cannot flag access entry: campaign status is %s, expected PENDING_ACTIONS", campaign.Status)
+			}
+
+			now := time.Now()
+			entry.Flag = req.Flag
+			entry.FlagReason = req.FlagReason
+			entry.UpdatedAt = now
+
+			return entry.UpdateFlag(ctx, conn, s.svc.scope)
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.Get(ctx, req.EntryID)
 }
 
 func (s AccessEntryService) ListForCampaignID(
@@ -308,6 +379,26 @@ func (s AccessEntryService) Statistics(
 		ctx,
 		func(conn pg.Conn) error {
 			return stats.LoadByCampaignID(ctx, conn, s.svc.scope, campaignID)
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return stats, nil
+}
+
+func (s AccessEntryService) StatisticsForSource(
+	ctx context.Context,
+	campaignID gid.GID,
+	sourceID gid.GID,
+) (*coredata.AccessEntryStatistics, error) {
+	stats := &coredata.AccessEntryStatistics{}
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			return stats.LoadByCampaignIDAndSourceID(ctx, conn, s.svc.scope, campaignID, sourceID)
 		},
 	)
 	if err != nil {

@@ -188,7 +188,7 @@ func normalizeHost(host string) string {
 	lower := strings.ToLower(host)
 	if strings.HasPrefix(lower, "http://") || strings.HasPrefix(lower, "https://") {
 		if u, err := url.Parse(host); err == nil {
-			return u.Host
+			return strings.TrimRight(u.Scheme+"://"+u.Host, "/")
 		}
 	}
 

@@ -46,7 +46,7 @@ func (d *FigmaDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error)
 		before  string
 	)
 
-	for {
+	for range maxPaginationPages {
 		resp, err := d.queryMembers(ctx, before)
 		if err != nil {
 			return nil, err

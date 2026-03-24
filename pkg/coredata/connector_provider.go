@@ -34,7 +34,6 @@ const (
 	ConnectorProviderBrex            ConnectorProvider = "BREX"
 	ConnectorProviderTally           ConnectorProvider = "TALLY"
 	ConnectorProviderCloudflare      ConnectorProvider = "CLOUDFLARE"
-	ConnectorProviderSentry          ConnectorProvider = "SENTRY"
 	ConnectorProviderOpenAI          ConnectorProvider = "OPENAI"
 )
 
@@ -51,7 +50,6 @@ func ConnectorProviders() []ConnectorProvider {
 		ConnectorProviderBrex,
 		ConnectorProviderTally,
 		ConnectorProviderCloudflare,
-		ConnectorProviderSentry,
 		ConnectorProviderOpenAI,
 	}
 }
@@ -94,8 +92,6 @@ func (cp *ConnectorProvider) Scan(value any) error {
 		*cp = ConnectorProviderTally
 	case "CLOUDFLARE":
 		*cp = ConnectorProviderCloudflare
-	case "SENTRY":
-		*cp = ConnectorProviderSentry
 	case "OPENAI":
 		*cp = ConnectorProviderOpenAI
 	default:

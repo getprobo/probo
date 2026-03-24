@@ -45,7 +45,6 @@ type (
 		OrganizationID    gid.GID
 		Name              string
 		FrameworkControls []string
-		IdentitySourceID  *gid.GID
 		AccessSourceIDs   []gid.GID
 	}
 

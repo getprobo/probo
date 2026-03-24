@@ -16,12 +16,9 @@ package accessreview
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"maps"
 	"time"
 
-	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
 	"go.gearno.de/x/ref"
 	"go.probo.inc/probo/pkg/coredata"
@@ -58,7 +55,6 @@ func (s *CampaignService) Create(
 	campaign := &coredata.AccessReviewCampaign{
 		ID:                gid.New(s.scope.GetTenantID(), coredata.AccessReviewCampaignEntityType),
 		OrganizationID:    req.OrganizationID,
-		IdentitySourceID:  req.IdentitySourceID,
 		Name:              req.Name,
 		Status:            coredata.AccessReviewCampaignStatusDraft,
 		FrameworkControls: req.FrameworkControls,
@@ -83,11 +79,11 @@ func (s *CampaignService) Create(
 					return fmt.Errorf("cannot create campaign: access source %s does not belong to the same organization", sourceID)
 				}
 
-				_, err := conn.Exec(ctx, `
-INSERT INTO access_review_campaign_scope_systems (access_review_campaign_id, access_source_id)
-VALUES ($1, $2)
-`, campaign.ID, sourceID)
-				if err != nil {
+				scopeSystem := coredata.AccessReviewCampaignScopeSystem{
+					AccessReviewCampaignID: campaign.ID,
+					AccessSourceID:         sourceID,
+				}
+				if err := scopeSystem.Insert(ctx, conn); err != nil {
 					return fmt.Errorf("cannot insert scope system: %w", err)
 				}
 			}
@@ -134,8 +130,16 @@ func (s *CampaignService) Update(
 	err := s.pg.WithTx(
 		ctx,
 		func(conn pg.Conn) error {
+			if err := s.lockCampaignForUpdate(ctx, conn, req.CampaignID); err != nil {
+				return err
+			}
+
 			if err := campaign.LoadByID(ctx, conn, s.scope, req.CampaignID); err != nil {
 				return fmt.Errorf("cannot load campaign: %w", err)
+			}
+
+			if campaign.Status != coredata.AccessReviewCampaignStatusDraft {
+				return fmt.Errorf("cannot update campaign: status is %s, expected DRAFT", campaign.Status)
 			}
 
 			if req.Name != nil {
@@ -166,11 +170,23 @@ func (s *CampaignService) Delete(
 	ctx context.Context,
 	campaignID gid.GID,
 ) error {
-	campaign := &coredata.AccessReviewCampaign{ID: campaignID}
-
 	return s.pg.WithTx(
 		ctx,
 		func(conn pg.Conn) error {
+			if err := s.lockCampaignForUpdate(ctx, conn, campaignID); err != nil {
+				return err
+			}
+
+			campaign := &coredata.AccessReviewCampaign{}
+			if err := campaign.LoadByID(ctx, conn, s.scope, campaignID); err != nil {
+				return fmt.Errorf("cannot load campaign: %w", err)
+			}
+
+			if campaign.Status != coredata.AccessReviewCampaignStatusDraft &&
+				campaign.Status != coredata.AccessReviewCampaignStatusCancelled {
+				return fmt.Errorf("cannot delete campaign: status is %s, expected DRAFT or CANCELLED", campaign.Status)
+			}
+
 			return campaign.Delete(ctx, conn, s.scope)
 		},
 	)
@@ -206,13 +222,12 @@ func (s *CampaignService) AddScopeSource(
 				return fmt.Errorf("cannot add scope source: access source %s does not belong to the same organization", req.AccessSourceID)
 			}
 
-			_, err := conn.Exec(ctx, `
-INSERT INTO access_review_campaign_scope_systems (access_review_campaign_id, access_source_id)
-VALUES ($1, $2)
-ON CONFLICT (access_review_campaign_id, access_source_id) DO NOTHING
-`, campaign.ID, req.AccessSourceID)
-			if err != nil {
-				return fmt.Errorf("cannot insert scope system: %w", err)
+			scopeSystem := coredata.AccessReviewCampaignScopeSystem{
+				AccessReviewCampaignID: campaign.ID,
+				AccessSourceID:         req.AccessSourceID,
+			}
+			if err := scopeSystem.Upsert(ctx, conn); err != nil {
+				return fmt.Errorf("cannot upsert scope system: %w", err)
 			}
 
 			return nil
@@ -246,12 +261,11 @@ func (s *CampaignService) RemoveScopeSource(
 				return fmt.Errorf("cannot remove scope source: campaign status is %s, expected DRAFT", campaign.Status)
 			}
 
-			_, err := conn.Exec(ctx, `
-DELETE FROM access_review_campaign_scope_systems
-WHERE access_review_campaign_id = $1
-  AND access_source_id = $2
-`, campaign.ID, req.AccessSourceID)
-			if err != nil {
+			scopeSystem := coredata.AccessReviewCampaignScopeSystem{
+				AccessReviewCampaignID: campaign.ID,
+				AccessSourceID:         req.AccessSourceID,
+			}
+			if err := scopeSystem.Delete(ctx, conn); err != nil {
 				return fmt.Errorf("cannot delete scope system: %w", err)
 			}
 
@@ -295,6 +309,15 @@ func (s *CampaignService) Start(
 				return fmt.Errorf("cannot update campaign: %w", err)
 			}
 
+			var sources coredata.AccessSources
+			if err := sources.LoadScopeSourcesByCampaignID(ctx, conn, s.scope, campaign.ID); err != nil {
+				return fmt.Errorf("cannot load scope sources: %w", err)
+			}
+
+			if len(sources) == 0 {
+				return fmt.Errorf("cannot start campaign: no scope sources configured")
+			}
+
 			if err := s.enqueueSourceFetches(ctx, conn, campaign.ID); err != nil {
 				return fmt.Errorf("cannot queue source fetches: %w", err)
 			}
@@ -326,9 +349,8 @@ func (s *CampaignService) Close(
 				return fmt.Errorf("cannot load campaign: %w", err)
 			}
 
-			if campaign.Status != coredata.AccessReviewCampaignStatusInProgress &&
-				campaign.Status != coredata.AccessReviewCampaignStatusPendingActions {
-				return fmt.Errorf("cannot close campaign: status is %s, expected IN_PROGRESS or PENDING_ACTIONS", campaign.Status)
+			if campaign.Status != coredata.AccessReviewCampaignStatusPendingActions {
+				return fmt.Errorf("cannot close campaign: status is %s, expected PENDING_ACTIONS", campaign.Status)
 			}
 
 			// Check all entries have been decided
@@ -365,26 +387,8 @@ func (s *CampaignService) lockCampaignForUpdate(ctx context.Context, conn pg.Con
 }
 
 func lockCampaignForUpdate(ctx context.Context, conn pg.Conn, scope coredata.Scoper, campaignID gid.GID) error {
-	q := `
-SELECT id
-FROM access_review_campaigns
-WHERE %s
-  AND id = @id
-FOR UPDATE
-`
-	q = fmt.Sprintf(q, scope.SQLFragment())
-	args := pgx.StrictNamedArgs{"id": campaignID}
-	maps.Copy(args, scope.SQLArguments())
-
-	var id gid.GID
-	if err := conn.QueryRow(ctx, q, args).Scan(&id); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return coredata.ErrResourceNotFound
-		}
-		return fmt.Errorf("cannot lock campaign: %w", err)
-	}
-
-	return nil
+	c := &coredata.AccessReviewCampaign{ID: campaignID}
+	return c.LockForUpdate(ctx, conn, scope)
 }
 
 func (s *CampaignService) enqueueSourceFetches(
@@ -399,32 +403,11 @@ func (s *CampaignService) enqueueSourceFetches(
 
 	now := time.Now()
 	for _, source := range sources {
-		_, err := conn.Exec(ctx, `
-INSERT INTO access_review_campaign_source_fetches (
-	tenant_id,
-	access_review_campaign_id,
-	access_source_id,
-	status,
-	fetched_accounts_count,
-	attempt_count,
-	last_error,
-	started_at,
-	completed_at,
-	created_at,
-	updated_at
-) VALUES (
-	$1,$2,$3,'QUEUED',0,0,NULL,NULL,NULL,$4,$4
-)
-ON CONFLICT (access_review_campaign_id, access_source_id) DO UPDATE SET
-	status = 'QUEUED',
-	fetched_accounts_count = 0,
-	attempt_count = 0,
-	last_error = NULL,
-	started_at = NULL,
-	completed_at = NULL,
-	updated_at = EXCLUDED.updated_at
-`, s.scope.GetTenantID(), campaignID, source.ID, now)
-		if err != nil {
+		fetch := &coredata.AccessReviewCampaignSourceFetch{
+			AccessReviewCampaignID: campaignID,
+			AccessSourceID:         source.ID,
+		}
+		if err := fetch.UpsertQueued(ctx, conn, s.scope.GetTenantID(), now); err != nil {
 			return fmt.Errorf("cannot queue source fetch %s: %w", source.ID, err)
 		}
 	}

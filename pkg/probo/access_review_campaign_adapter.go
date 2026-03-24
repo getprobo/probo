@@ -36,7 +36,6 @@ func (a *accessReviewCampaignAdapter) Create(ctx context.Context, req CreateAcce
 		OrganizationID:    req.OrganizationID,
 		Name:              req.Name,
 		FrameworkControls: req.FrameworkControls,
-		IdentitySourceID:  req.IdentitySourceID,
 		AccessSourceIDs:   req.AccessSourceIDs,
 	})
 }
