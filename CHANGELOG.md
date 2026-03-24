@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.151.0] - 2026-03-24
+
+### Added
+
+- Add SEO controls and sitemap for compliance pages
+
+### Changed
+
+- Allow editing non-SCIM fields on SCIM-managed profiles
+
 ## [0.150.0] - 2026-03-23
 
 ### Added
