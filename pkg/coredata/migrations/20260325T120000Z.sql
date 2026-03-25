@@ -14,3 +14,6 @@ CREATE TABLE log_exports (
     started_at TIMESTAMPTZ,
     completed_at TIMESTAMPTZ
 );
+
+CREATE INDEX idx_log_exports_pending ON log_exports (status, created_at)
+    WHERE status = 'PENDING';

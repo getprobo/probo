@@ -221,6 +221,7 @@ func (w *LogExportWorker) handle(ctx context.Context, export *coredata.LogExport
 				"organization-id": export.OrganizationID.String(),
 			},
 		)
+		pr.CloseWithError(uploadErr)
 	}()
 
 	writeErr := w.streamJSONL(ctx, export, scope, pw)

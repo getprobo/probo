@@ -198,8 +198,8 @@ function ExportAuditLogDialog({
       variables: {
         input: {
           organizationId,
-          fromTime: new Date(fromDate).toISOString(),
-          toTime: new Date(toDate).toISOString(),
+          fromTime: new Date(`${fromDate}T00:00:00Z`).toISOString(),
+          toTime: new Date(Date.parse(`${toDate}T00:00:00Z`) + 24 * 60 * 60 * 1000).toISOString(),
         },
       },
       onCompleted: (_response, errors) => {
@@ -268,7 +268,7 @@ function ExportAuditLogDialog({
         <DialogFooter>
           <Button
             onClick={handleExport}
-            disabled={isExporting || !fromDate || !toDate}
+            disabled={isExporting || !fromDate || !toDate || fromDate > toDate}
           >
             {isExporting
               ? (
