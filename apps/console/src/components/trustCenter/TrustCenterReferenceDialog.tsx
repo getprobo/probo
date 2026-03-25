@@ -31,7 +31,7 @@ type ReferenceFormData = z.infer<typeof referenceSchema>;
 
 export type TrustCenterReferenceDialogRef = {
   openCreate: (trustCenterId: string, connectionId: string) => void;
-  openEdit: (reference: CompliancePageReferenceListItemFragment$data) => void;
+  openEdit: (reference: CompliancePageReferenceListItemFragment$data, rank: number) => void;
 };
 
 export const TrustCenterReferenceDialog = forwardRef<TrustCenterReferenceDialogRef, { children?: ReactNode }>(
@@ -72,7 +72,7 @@ export const TrustCenterReferenceDialog = forwardRef<TrustCenterReferenceDialogR
         });
         dialogRef.current?.open();
       },
-      openEdit: (reference: CompliancePageReferenceListItemFragment$data) => {
+      openEdit: (reference: CompliancePageReferenceListItemFragment$data, rank: number) => {
         setMode("edit");
         setEditReference(reference);
         setUploadedFile(null);
@@ -80,7 +80,7 @@ export const TrustCenterReferenceDialog = forwardRef<TrustCenterReferenceDialogR
           name: reference.name,
           description: reference.description ?? undefined,
           websiteUrl: reference.websiteUrl,
-          rank: reference.rank,
+          rank,
         });
         dialogRef.current?.open();
       },
