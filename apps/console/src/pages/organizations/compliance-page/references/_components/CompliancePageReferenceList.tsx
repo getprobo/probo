@@ -35,7 +35,7 @@ const fragment = graphql`
 
 export function CompliancePageReferenceList(props: {
   fragmentRef: CompliancePageReferenceListFragment$key;
-  onEdit: (r: CompliancePageReferenceListItemFragment$data) => void;
+  onEdit: (r: CompliancePageReferenceListItemFragment$data, rank: number) => void;
 }) {
   const { fragmentRef, onEdit } = props;
 
@@ -116,7 +116,7 @@ export function CompliancePageReferenceList(props: {
               index={index}
               isDragging={draggedIndex === index}
               isDropTarget={dragOverIndex === index && draggedIndex !== index}
-              onEdit={(r: CompliancePageReferenceListItemFragment$data) => onEdit(r)}
+              onEdit={(r: CompliancePageReferenceListItemFragment$data) => onEdit(r, reference.rank)}
               connectionId={references.__id}
               onDragStart={() => handleDragStart(index)}
               onDragOver={e => handleDragOver(e, index)}

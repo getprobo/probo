@@ -118,11 +118,13 @@ export function DocumentList(props: {
 
   const refetch = pagination.refetch;
   useEffect(() => {
-    refetch(
-      { status: [tab], documentTypes: documentTypeFilter ? [documentTypeFilter] : null },
-      { fetchPolicy: "store-and-network" },
-    );
-  }, [tab, refetch]);
+    startTransition(() => {
+      refetch(
+        { status: [tab], documentTypes: documentTypeFilter ? [documentTypeFilter] : null },
+        { fetchPolicy: "store-and-network" },
+      );
+    });
+  }, [tab, refetch, documentTypeFilter]);
 
   const documents = pagination.data.documents.edges.map(({ node }) => node);
   const connectionId = pagination.data.documents.__id;
@@ -145,7 +147,9 @@ export function DocumentList(props: {
   const canRequestAnySignatures = documents.some(({ canRequestSignatures }) => canRequestSignatures);
   const canArchiveAny = documents.some(({ canArchive }) => canArchive);
   const canUnarchiveAny = documents.some(({ canUnarchive }) => canUnarchive);
-  const canSendAnySignatureNotifications = documents.some(({ canSendSigningNotifications }) => canSendSigningNotifications);
+  const canSendAnySignatureNotifications = documents.some(
+    ({ canSendSigningNotifications }) => canSendSigningNotifications,
+  );
   const hasAnyAction = tab === "ARCHIVED" ? canUnarchiveAny || canDeleteAny : canDeleteAny || canUpdateAny;
 
   useEffect(() => {
@@ -170,12 +174,6 @@ export function DocumentList(props: {
         },
       ),
     );
-    startTransition(() => {
-      pagination.refetch(
-        { status: [tab], documentTypes: newType ? [newType] : null },
-        { fetchPolicy: "store-and-network" },
-      );
-    });
   };
 
   const handleBulkDelete = () => {

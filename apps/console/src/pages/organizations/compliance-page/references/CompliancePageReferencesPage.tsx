@@ -50,8 +50,8 @@ export function CompliancePageReferencesPage(props: { queryRef: PreloadedQuery<C
     }
   };
 
-  const handleEdit = (reference: CompliancePageReferenceListItemFragment$data) => {
-    dialogRef.current?.openEdit(reference);
+  const handleEdit = (reference: CompliancePageReferenceListItemFragment$data, rank: number) => {
+    dialogRef.current?.openEdit(reference, rank);
   };
 
   return (
