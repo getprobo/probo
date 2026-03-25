@@ -35,60 +35,58 @@ export function CompliancePageSlackSection(props: { fragmentRef: CompliancePageS
   return (
     <div className="space-y-4">
       <h2 className="text-base font-medium">{__("Integrations")}</h2>
-      <Card padded>
-        <div className="space-y-2">
-          {organization.slackConnections.edges.map(({ node: slackConnection }) => (
-            <Card
-              key={slackConnection.id}
-              padded
-              className="flex items-center gap-3"
-            >
-              <div className="h-10 w-10 flex items-center justify-center bg-subtle rounded">
-                <Slack className="h-6 w-6" />
-              </div>
-              <div className="mr-auto">
-                <h3 className="text-base font-semibold">Slack</h3>
-                <p className="text-sm text-txt-tertiary">
-                  {sprintf(
-                    __("Connected on %s"),
-                    dateTimeFormat(slackConnection.createdAt),
-                  )}
-                  {slackConnection.channel && (
-                    <>
-                      {" • "}
-                      {sprintf(__("Channel: %s"), slackConnection.channel)}
-                    </>
-                  )}
-                </p>
-              </div>
-              <div>
-                <Badge variant="success" size="md">
-                  {__("Connected")}
-                </Badge>
-              </div>
-            </Card>
-          ))}
-          {organization.compliancePage?.canUpdate && organization.slackConnections.edges.length === 0 && (
-            <Card
-              padded
-              className="flex items-center gap-3"
-            >
-              <div className="h-10 w-10 flex items-center justify-center bg-subtle rounded">
-                <Slack className="h-6 w-6" />
-              </div>
-              <div className="mr-auto">
-                <h3 className="text-base font-semibold">Slack</h3>
-                <p className="text-sm text-txt-tertiary">
-                  {__("Manage your compliance page access with slack")}
-                </p>
-              </div>
-              <Button variant="secondary" asChild>
-                <a href={getSlackConnectionUrl(organizationId)}>{__("Connect")}</a>
-              </Button>
-            </Card>
-          )}
-        </div>
-      </Card>
+      <div className="space-y-2">
+        {organization.slackConnections.edges.map(({ node: slackConnection }) => (
+          <Card
+            key={slackConnection.id}
+            padded
+            className="flex items-center gap-3"
+          >
+            <div className="h-10 w-10 flex items-center justify-center bg-subtle rounded">
+              <Slack className="h-6 w-6" />
+            </div>
+            <div className="mr-auto">
+              <h3 className="text-base font-semibold">Slack</h3>
+              <p className="text-sm text-txt-tertiary">
+                {sprintf(
+                  __("Connected on %s"),
+                  dateTimeFormat(slackConnection.createdAt),
+                )}
+                {slackConnection.channel && (
+                  <>
+                    {" • "}
+                    {sprintf(__("Channel: %s"), slackConnection.channel)}
+                  </>
+                )}
+              </p>
+            </div>
+            <div>
+              <Badge variant="success" size="md">
+                {__("Connected")}
+              </Badge>
+            </div>
+          </Card>
+        ))}
+        {organization.compliancePage?.canUpdate && organization.slackConnections.edges.length === 0 && (
+          <Card
+            padded
+            className="flex items-center gap-3"
+          >
+            <div className="h-10 w-10 flex items-center justify-center bg-subtle rounded">
+              <Slack className="h-6 w-6" />
+            </div>
+            <div className="mr-auto">
+              <h3 className="text-base font-semibold">Slack</h3>
+              <p className="text-sm text-txt-tertiary">
+                {__("Manage your compliance page access with slack")}
+              </p>
+            </div>
+            <Button variant="secondary" asChild>
+              <a href={getSlackConnectionUrl(organizationId)}>{__("Connect")}</a>
+            </Button>
+          </Card>
+        )}
+      </div>
     </div>
   );
 }
