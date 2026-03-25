@@ -113,6 +113,6 @@
     }
 
     .tableWrapper {
-        @apply overflow-x-auto;
+        @apply overflow-x-auto my-4;
     }
 }
