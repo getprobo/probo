@@ -489,14 +489,15 @@ func (s *OrganizationService) CreateOrganization(
 		}
 
 		trustCenter = &coredata.TrustCenter{
-			ID:             gid.New(tenantID, coredata.TrustCenterEntityType),
-			OrganizationID: organization.ID,
-			TenantID:       organization.TenantID,
-			Active:         false,
-			Slug:           slug.Make(organization.Name),
-			MailingListID:  &mailingList.ID,
-			CreatedAt:      now,
-			UpdatedAt:      now,
+			ID:                   gid.New(tenantID, coredata.TrustCenterEntityType),
+			OrganizationID:       organization.ID,
+			TenantID:             organization.TenantID,
+			Active:               false,
+			Slug:                 slug.Make(organization.Name),
+			SearchEngineIndexing: coredata.SearchEngineIndexingNotIndexable,
+			MailingListID:        &mailingList.ID,
+			CreatedAt:            now,
+			UpdatedAt:            now,
 		}
 
 		logoFile           *coredata.File
