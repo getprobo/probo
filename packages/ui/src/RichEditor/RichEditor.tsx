@@ -65,7 +65,7 @@ const extensions = [
 ];
 
 const richEditorVariants = tv({
-  base: ["h-full px-12"],
+  base: ["h-full pl-14"],
 });
 
 type RichEditorProps = ComponentProps<"div"> & {
