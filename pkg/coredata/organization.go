@@ -125,6 +125,53 @@ LIMIT 1;
 	return nil
 }
 
+func (o *Organizations) LoadByIDs(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	organizationIDs []gid.GID,
+) error {
+	q := `
+SELECT
+    tenant_id,
+    id,
+    name,
+    logo_file_id,
+    horizontal_logo_file_id,
+    description,
+    website_url,
+    email,
+    headquarter_address,
+    custom_domain_id,
+    created_at,
+    updated_at
+FROM
+    organizations
+WHERE
+    %s
+    AND id = ANY(@organization_ids)
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"organization_ids": organizationIDs}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query organizations: %w", err)
+	}
+
+	organizations, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Organization])
+	if err != nil {
+		return fmt.Errorf("cannot collect organizations: %w", err)
+	}
+
+	*o = organizations
+
+	return nil
+}
+
 func (o *Organizations) LoadByIdentityID(
 	ctx context.Context,
 	conn pg.Conn,

@@ -913,6 +913,34 @@ func (s ControlService) Get(
 	return control, nil
 }
 
+func (s ControlService) GetByIDs(
+	ctx context.Context,
+	controlIDs ...gid.GID,
+) (coredata.Controls, error) {
+	var controls coredata.Controls
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			if err := controls.LoadByIDs(
+				ctx,
+				conn,
+				s.svc.scope,
+				controlIDs,
+			); err != nil {
+				return fmt.Errorf("cannot load controls by ids: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return controls, nil
+}
+
 func (s ControlService) Update(
 	ctx context.Context,
 	req UpdateControlRequest,

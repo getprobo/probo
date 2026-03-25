@@ -461,6 +461,50 @@ LIMIT 1;
 	return nil
 }
 
+func (m *Measures) LoadByIDs(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	measureIDs []gid.GID,
+) error {
+	q := `
+SELECT
+    id,
+    organization_id,
+    category,
+    name,
+    description,
+    state,
+    reference_id,
+    created_at,
+    updated_at
+FROM
+    measures
+WHERE
+    %s
+    AND id = ANY(@measure_ids)
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"measure_ids": measureIDs}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query measures: %w", err)
+	}
+
+	measures, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Measure])
+	if err != nil {
+		return fmt.Errorf("cannot collect measures: %w", err)
+	}
+
+	*m = measures
+
+	return nil
+}
+
 func (m *Measure) Upsert(
 	ctx context.Context,
 	conn pg.Conn,

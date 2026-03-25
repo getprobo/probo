@@ -160,6 +160,68 @@ LIMIT 1;
 	return nil
 }
 
+func (v *Vendors) LoadByIDs(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	vendorIDs []gid.GID,
+) error {
+	q := `
+SELECT
+    id,
+    tenant_id,
+    organization_id,
+    name,
+    description,
+    category,
+    headquarter_address,
+    legal_name,
+    website_url,
+    privacy_policy_url,
+    service_level_agreement_url,
+    data_processing_agreement_url,
+    business_associate_agreement_url,
+    subprocessors_list_url,
+    certifications,
+    countries,
+    business_owner_profile_id,
+    security_owner_profile_id,
+    status_page_url,
+    terms_of_service_url,
+    security_page_url,
+    trust_page_url,
+    show_on_trust_center,
+    snapshot_id,
+    source_id,
+    created_at,
+    updated_at
+FROM
+    vendors
+WHERE
+    %s
+    AND id = ANY(@vendor_ids)
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"vendor_ids": vendorIDs}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query vendors: %w", err)
+	}
+
+	vendors, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Vendor])
+	if err != nil {
+		return fmt.Errorf("cannot collect vendors: %w", err)
+	}
+
+	*v = vendors
+
+	return nil
+}
+
 func (v Vendor) Insert(
 	ctx context.Context,
 	conn pg.Conn,

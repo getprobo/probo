@@ -202,6 +202,34 @@ func (s *DocumentService) Get(
 	return document, nil
 }
 
+func (s *DocumentService) GetByIDs(
+	ctx context.Context,
+	documentIDs ...gid.GID,
+) (coredata.Documents, error) {
+	var documents coredata.Documents
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			if err := documents.LoadByIDs(
+				ctx,
+				conn,
+				s.svc.scope,
+				documentIDs,
+			); err != nil {
+				return fmt.Errorf("cannot load documents by ids: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return documents, nil
+}
+
 func (s *DocumentService) ListApprovers(
 	ctx context.Context,
 	documentID gid.GID,

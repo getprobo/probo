@@ -31,6 +31,7 @@ require (
 	github.com/scim2/filter-parser/v2 v2.2.0
 	github.com/stretchr/testify v1.11.1
 	github.com/vektah/gqlparser/v2 v2.5.32
+	github.com/vikstrous/dataloadgen v0.0.10
 	github.com/yuin/goldmark v1.7.16
 	go.abhg.dev/goldmark/mermaid v0.6.0
 	go.gearno.de/crypto/uuid v0.1.1-0.20251208105319-3f587312a712

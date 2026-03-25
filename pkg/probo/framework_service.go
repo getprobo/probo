@@ -447,6 +447,34 @@ func (s FrameworkService) Get(
 	return framework, nil
 }
 
+func (s FrameworkService) GetByIDs(
+	ctx context.Context,
+	frameworkIDs ...gid.GID,
+) (coredata.Frameworks, error) {
+	var frameworks coredata.Frameworks
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			if err := frameworks.LoadByIDs(
+				ctx,
+				conn,
+				s.svc.scope,
+				frameworkIDs,
+			); err != nil {
+				return fmt.Errorf("cannot load frameworks by ids: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return frameworks, nil
+}
+
 func (s FrameworkService) Update(
 	ctx context.Context,
 	req UpdateFrameworkRequest,

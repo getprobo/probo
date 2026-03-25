@@ -14,6 +14,7 @@ import (
 	"time"
 
 	pgx "github.com/jackc/pgx/v5"
+	"github.com/vikstrous/dataloadgen"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
@@ -22,6 +23,7 @@ import (
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/authn"
+	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
@@ -52,10 +54,14 @@ func (r *applicabilityStatementResolver) Control(ctx context.Context, obj *types
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	loaders := dataloader.FromContext(ctx)
 
-	control, err := prb.Controls.Get(ctx, obj.Control.ID)
+	control, err := loaders.Control.Load(ctx, obj.Control.ID)
 	if err != nil {
+		if errors.Is(err, dataloadgen.ErrNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
 		r.logger.ErrorCtx(ctx, "cannot get control", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
@@ -96,9 +102,11 @@ func (r *assetResolver) Owner(ctx context.Context, obj *types.Asset) (*types.Pro
 		return nil, err
 	}
 
-	owner, err := r.iam.OrganizationService.GetProfile(ctx, obj.Owner.ID)
+	loaders := dataloader.FromContext(ctx)
+
+	owner, err := loaders.Profile.Load(ctx, obj.Owner.ID)
 	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
+		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
@@ -205,11 +213,11 @@ func (r *auditResolver) Organization(ctx context.Context, obj *types.Audit) (*ty
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	loaders := dataloader.FromContext(ctx)
 
-	organization, err := prb.Organizations.Get(ctx, obj.Organization.ID)
+	organization, err := loaders.Organization.Load(ctx, obj.Organization.ID)
 	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
+		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
@@ -226,11 +234,11 @@ func (r *auditResolver) Framework(ctx context.Context, obj *types.Audit) (*types
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	loaders := dataloader.FromContext(ctx)
 
-	framework, err := prb.Frameworks.Get(ctx, obj.Framework.ID)
+	framework, err := loaders.Framework.Load(ctx, obj.Framework.ID)
 	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
+		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
@@ -247,14 +255,18 @@ func (r *auditResolver) Report(ctx context.Context, obj *types.Audit) (*types.Re
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
-
 	if obj.Report == nil {
 		return nil, nil
 	}
 
-	report, err := prb.Reports.Get(ctx, obj.Report.ID)
+	loaders := dataloader.FromContext(ctx)
+
+	report, err := loaders.Report.Load(ctx, obj.Report.ID)
 	if err != nil {
+		if errors.Is(err, dataloadgen.ErrNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
 		r.logger.ErrorCtx(ctx, "cannot load report", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
@@ -444,10 +456,14 @@ func (r *complianceFrameworkResolver) Framework(ctx context.Context, obj *types.
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.FrameworkID.TenantID())
+	loaders := dataloader.FromContext(ctx)
 
-	framework, err := prb.Frameworks.Get(ctx, obj.FrameworkID)
+	framework, err := loaders.Framework.Load(ctx, obj.FrameworkID)
 	if err != nil {
+		if errors.Is(err, dataloadgen.ErrNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
 		r.logger.ErrorCtx(ctx, "cannot load framework", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
@@ -461,11 +477,11 @@ func (r *controlResolver) Organization(ctx context.Context, obj *types.Control) 
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	loaders := dataloader.FromContext(ctx)
 
-	organization, err := prb.Organizations.Get(ctx, obj.Organization.ID)
+	organization, err := loaders.Organization.Load(ctx, obj.Organization.ID)
 	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
+		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
@@ -520,11 +536,11 @@ func (r *controlResolver) Framework(ctx context.Context, obj *types.Control) (*t
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	loaders := dataloader.FromContext(ctx)
 
-	framework, err := prb.Frameworks.Get(ctx, obj.Framework.ID)
+	framework, err := loaders.Framework.Load(ctx, obj.Framework.ID)
 	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
+		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
@@ -851,9 +867,11 @@ func (r *datumResolver) Owner(ctx context.Context, obj *types.Datum) (*types.Pro
 		return nil, err
 	}
 
-	owner, err := r.iam.OrganizationService.GetProfile(ctx, obj.Owner.ID)
+	loaders := dataloader.FromContext(ctx)
+
+	owner, err := loaders.Profile.Load(ctx, obj.Owner.ID)
 	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
+		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
@@ -899,11 +917,11 @@ func (r *datumResolver) Organization(ctx context.Context, obj *types.Datum) (*ty
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	loaders := dataloader.FromContext(ctx)
 
-	org, err := prb.Organizations.Get(ctx, obj.OrganizationID)
+	org, err := loaders.Organization.Load(ctx, obj.OrganizationID)
 	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
+		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
@@ -987,11 +1005,11 @@ func (r *documentResolver) Organization(ctx context.Context, obj *types.Document
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	loaders := dataloader.FromContext(ctx)
 
-	organization, err := prb.Organizations.Get(ctx, obj.Organization.ID)
+	organization, err := loaders.Organization.Load(ctx, obj.Organization.ID)
 	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
+		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
@@ -1116,11 +1134,11 @@ func (r *documentVersionResolver) Document(ctx context.Context, obj *types.Docum
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	loaders := dataloader.FromContext(ctx)
 
-	document, err := prb.Documents.Get(ctx, obj.Document.ID)
+	document, err := loaders.Document.Load(ctx, obj.Document.ID)
 	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
+		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
@@ -1281,9 +1299,11 @@ func (r *documentVersionSignatureResolver) SignedBy(ctx context.Context, obj *ty
 		return nil, err
 	}
 
-	signatory, err := r.iam.OrganizationService.GetProfile(ctx, obj.SignedBy.ID)
+	loaders := dataloader.FromContext(ctx)
+
+	signatory, err := loaders.Profile.Load(ctx, obj.SignedBy.ID)
 	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
+		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
@@ -1365,15 +1385,15 @@ func (r *evidenceResolver) File(ctx context.Context, obj *types.Evidence) (*type
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
-
 	if obj.File == nil {
 		return nil, nil
 	}
 
-	file, err := prb.Files.Get(ctx, obj.File.ID)
+	loaders := dataloader.FromContext(ctx)
+
+	file, err := loaders.File.Load(ctx, obj.File.ID)
 	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
+		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
@@ -1390,16 +1410,16 @@ func (r *evidenceResolver) Task(ctx context.Context, obj *types.Evidence) (*type
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
-
 	if obj.Task == nil {
 		r.logger.ErrorCtx(ctx, "evidence is not associated with a task")
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	task, err := prb.Tasks.Get(ctx, obj.Task.ID)
+	loaders := dataloader.FromContext(ctx)
+
+	task, err := loaders.Task.Load(ctx, obj.Task.ID)
 	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
+		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
@@ -1416,11 +1436,11 @@ func (r *evidenceResolver) Measure(ctx context.Context, obj *types.Evidence) (*t
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	loaders := dataloader.FromContext(ctx)
 
-	measure, err := prb.Measures.Get(ctx, obj.Measure.ID)
+	measure, err := loaders.Measure.Load(ctx, obj.Measure.ID)
 	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
+		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
@@ -1488,11 +1508,11 @@ func (r *findingResolver) Organization(ctx context.Context, obj *types.Finding) 
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	loaders := dataloader.FromContext(ctx)
 
-	organization, err := prb.Organizations.Get(ctx, obj.Organization.ID)
+	organization, err := loaders.Organization.Load(ctx, obj.Organization.ID)
 	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
+		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
@@ -1543,9 +1563,11 @@ func (r *findingResolver) Owner(ctx context.Context, obj *types.Finding) (*types
 		return nil, err
 	}
 
-	owner, err := r.iam.OrganizationService.GetProfile(ctx, obj.Owner.ID)
+	loaders := dataloader.FromContext(ctx)
+
+	owner, err := loaders.Profile.Load(ctx, obj.Owner.ID)
 	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
+		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
@@ -1566,11 +1588,11 @@ func (r *findingResolver) Risk(ctx context.Context, obj *types.Finding) (*types.
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	loaders := dataloader.FromContext(ctx)
 
-	risk, err := prb.Risks.Get(ctx, obj.Risk.ID)
+	risk, err := loaders.Risk.Load(ctx, obj.Risk.ID)
 	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
+		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
@@ -1639,11 +1661,11 @@ func (r *frameworkResolver) Organization(ctx context.Context, obj *types.Framewo
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	loaders := dataloader.FromContext(ctx)
 
-	organization, err := prb.Organizations.Get(ctx, obj.Organization.ID)
+	organization, err := loaders.Organization.Load(ctx, obj.Organization.ID)
 	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
+		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
@@ -2022,11 +2044,11 @@ func (r *meetingResolver) Organization(ctx context.Context, obj *types.Meeting) 
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	loaders := dataloader.FromContext(ctx)
 
-	organization, err := prb.Organizations.Get(ctx, obj.Organization.ID)
+	organization, err := loaders.Organization.Load(ctx, obj.Organization.ID)
 	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
+		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
@@ -6334,11 +6356,11 @@ func (r *obligationResolver) Organization(ctx context.Context, obj *types.Obliga
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	loaders := dataloader.FromContext(ctx)
 
-	organization, err := prb.Organizations.Get(ctx, obj.Organization.ID)
+	organization, err := loaders.Organization.Load(ctx, obj.Organization.ID)
 	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
+		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
@@ -6355,9 +6377,11 @@ func (r *obligationResolver) Owner(ctx context.Context, obj *types.Obligation) (
 		return nil, err
 	}
 
-	owner, err := r.iam.OrganizationService.GetProfile(ctx, obj.Owner.ID)
+	loaders := dataloader.FromContext(ctx)
+
+	owner, err := loaders.Profile.Load(ctx, obj.Owner.ID)
 	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
+		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
@@ -7363,11 +7387,11 @@ func (r *processingActivityResolver) Organization(ctx context.Context, obj *type
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	loaders := dataloader.FromContext(ctx)
 
-	organization, err := prb.Organizations.Get(ctx, obj.Organization.ID)
+	organization, err := loaders.Organization.Load(ctx, obj.Organization.ID)
 	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
+		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
@@ -7388,8 +7412,14 @@ func (r *processingActivityResolver) DataProtectionOfficer(ctx context.Context, 
 		return nil, nil
 	}
 
-	dpo, err := r.iam.OrganizationService.GetProfile(ctx, obj.DataProtectionOfficer.ID)
+	loaders := dataloader.FromContext(ctx)
+
+	dpo, err := loaders.Profile.Load(ctx, obj.DataProtectionOfficer.ID)
 	if err != nil {
+		if errors.Is(err, dataloadgen.ErrNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
 		r.logger.ErrorCtx(ctx, "cannot get data protection officer", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
@@ -7972,9 +8002,11 @@ func (r *riskResolver) Owner(ctx context.Context, obj *types.Risk) (*types.Profi
 		return nil, nil
 	}
 
-	owner, err := r.iam.OrganizationService.GetProfile(ctx, obj.Owner.ID)
+	loaders := dataloader.FromContext(ctx)
+
+	owner, err := loaders.Profile.Load(ctx, obj.Owner.ID)
 	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
+		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
@@ -7991,11 +8023,11 @@ func (r *riskResolver) Organization(ctx context.Context, obj *types.Risk) (*type
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	loaders := dataloader.FromContext(ctx)
 
-	organization, err := prb.Organizations.Get(ctx, obj.Organization.ID)
+	organization, err := loaders.Organization.Load(ctx, obj.Organization.ID)
 	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
+		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
@@ -8328,11 +8360,11 @@ func (r *stateOfApplicabilityResolver) Organization(ctx context.Context, obj *ty
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	loaders := dataloader.FromContext(ctx)
 
-	organization, err := prb.Organizations.Get(ctx, obj.Organization.ID)
+	organization, err := loaders.Organization.Load(ctx, obj.Organization.ID)
 	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
+		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 		r.logger.ErrorCtx(ctx, "cannot load organization", log.Error(err))
@@ -8348,9 +8380,11 @@ func (r *stateOfApplicabilityResolver) Owner(ctx context.Context, obj *types.Sta
 		return nil, err
 	}
 
-	owner, err := r.iam.OrganizationService.GetProfile(ctx, obj.Owner.ID)
+	loaders := dataloader.FromContext(ctx)
+
+	owner, err := loaders.Profile.Load(ctx, obj.Owner.ID)
 	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
+		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 		r.logger.ErrorCtx(ctx, "cannot load owner", log.Error(err))
@@ -8423,9 +8457,11 @@ func (r *taskResolver) AssignedTo(ctx context.Context, obj *types.Task) (*types.
 		return nil, nil
 	}
 
-	assignee, err := r.iam.OrganizationService.GetProfile(ctx, obj.AssignedTo.ID)
+	loaders := dataloader.FromContext(ctx)
+
+	assignee, err := loaders.Profile.Load(ctx, obj.AssignedTo.ID)
 	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
+		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
@@ -8442,11 +8478,11 @@ func (r *taskResolver) Organization(ctx context.Context, obj *types.Task) (*type
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	loaders := dataloader.FromContext(ctx)
 
-	organization, err := prb.Organizations.Get(ctx, obj.Organization.ID)
+	organization, err := loaders.Organization.Load(ctx, obj.Organization.ID)
 	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
+		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
@@ -8463,15 +8499,15 @@ func (r *taskResolver) Measure(ctx context.Context, obj *types.Task) (*types.Mea
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
-
 	if obj.Measure == nil {
 		return nil, nil
 	}
 
-	measure, err := prb.Measures.Get(ctx, obj.Measure.ID)
+	loaders := dataloader.FromContext(ctx)
+
+	measure, err := loaders.Measure.Load(ctx, obj.Measure.ID)
 	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
+		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
@@ -8568,11 +8604,11 @@ func (r *transferImpactAssessmentResolver) Organization(ctx context.Context, obj
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	loaders := dataloader.FromContext(ctx)
 
-	organization, err := prb.Organizations.Get(ctx, obj.Organization.ID)
+	organization, err := loaders.Organization.Load(ctx, obj.Organization.ID)
 	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
+		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
@@ -9150,11 +9186,11 @@ func (r *vendorResolver) Organization(ctx context.Context, obj *types.Vendor) (*
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	loaders := dataloader.FromContext(ctx)
 
-	organization, err := prb.Organizations.Get(ctx, obj.Organization.ID)
+	organization, err := loaders.Organization.Load(ctx, obj.Organization.ID)
 	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
+		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
@@ -9337,9 +9373,11 @@ func (r *vendorResolver) BusinessOwner(ctx context.Context, obj *types.Vendor) (
 		return nil, nil
 	}
 
-	businessOwner, err := r.iam.OrganizationService.GetProfile(ctx, obj.BusinessOwner.ID)
+	loaders := dataloader.FromContext(ctx)
+
+	businessOwner, err := loaders.Profile.Load(ctx, obj.BusinessOwner.ID)
 	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
+		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
@@ -9360,9 +9398,11 @@ func (r *vendorResolver) SecurityOwner(ctx context.Context, obj *types.Vendor) (
 		return nil, nil
 	}
 
-	securityOwner, err := r.iam.OrganizationService.GetProfile(ctx, obj.SecurityOwner.ID)
+	loaders := dataloader.FromContext(ctx)
+
+	securityOwner, err := loaders.Profile.Load(ctx, obj.SecurityOwner.ID)
 	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
+		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
@@ -9621,11 +9661,11 @@ func (r *vendorServiceResolver) Vendor(ctx context.Context, obj *types.VendorSer
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	loaders := dataloader.FromContext(ctx)
 
-	vendor, err := prb.Vendors.Get(ctx, obj.Vendor.ID)
+	vendor, err := loaders.Vendor.Load(ctx, obj.Vendor.ID)
 	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
+		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
@@ -9743,11 +9783,11 @@ func (r *webhookSubscriptionResolver) Organization(ctx context.Context, obj *typ
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	loaders := dataloader.FromContext(ctx)
 
-	organization, err := prb.Organizations.Get(ctx, obj.Organization.ID)
+	organization, err := loaders.Organization.Load(ctx, obj.Organization.ID)
 	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
+		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 

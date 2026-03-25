@@ -123,6 +123,53 @@ LIMIT 1;
 	return nil
 }
 
+func (t *Tasks) LoadByIDs(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	taskIDs []gid.GID,
+) error {
+	q := `
+SELECT
+    id,
+    organization_id,
+    measure_id,
+    name,
+    description,
+    state,
+    reference_id,
+    time_estimate,
+    assigned_to_profile_id,
+    deadline,
+    created_at,
+    updated_at
+FROM
+    tasks
+WHERE
+    %s
+    AND id = ANY(@task_ids)
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"task_ids": taskIDs}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query tasks: %w", err)
+	}
+
+	tasks, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Task])
+	if err != nil {
+		return fmt.Errorf("cannot collect tasks: %w", err)
+	}
+
+	*t = tasks
+
+	return nil
+}
+
 func (c Task) Insert(
 	ctx context.Context,
 	conn pg.Conn,

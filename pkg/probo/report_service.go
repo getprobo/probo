@@ -54,6 +54,34 @@ func (s ReportService) Get(
 	return report, nil
 }
 
+func (s ReportService) GetByIDs(
+	ctx context.Context,
+	reportIDs ...gid.GID,
+) (coredata.Reports, error) {
+	var reports coredata.Reports
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			if err := reports.LoadByIDs(
+				ctx,
+				conn,
+				s.svc.scope,
+				reportIDs,
+			); err != nil {
+				return fmt.Errorf("cannot load reports by ids: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return reports, nil
+}
+
 func (s ReportService) Delete(
 	ctx context.Context,
 	reportID gid.GID,
