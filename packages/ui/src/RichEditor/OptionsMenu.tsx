@@ -16,10 +16,13 @@ import {
 import { CodeBlockIcon, DotsSixVerticalIcon, ListBulletsIcon, ListNumbersIcon, QuotesIcon, TextHOneIcon, TextHThreeIcon, TextHTwoIcon, TextTIcon } from "@phosphor-icons/react";
 import { NodeSelection, TextSelection } from "@tiptap/pm/state";
 import type { EditorView } from "@tiptap/pm/view";
-import { type useEditor } from "@tiptap/react";
-import { type DragEvent, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { type Editor } from "@tiptap/react";
+import { type DragEvent, useState } from "react";
 import { tv } from "tailwind-variants";
 
+import { getBlockNode, isBlockNodeType } from "./_lib/getBlockNode";
+import { useBlockTrigger } from "./_lib/useBlockTrigger";
+import { useHoveredBlock } from "./_lib/useHoveredBlock";
 import { MenuButton } from "./MenuButton";
 
 const optionsMenuVariants = tv({
@@ -34,46 +37,21 @@ const optionsMenuVariants = tv({
 
 const { trigger, menu } = optionsMenuVariants();
 
-const TRIGGER_HEIGHT = 24;
-
-function findClosestRootBlock(element: Element, editorDom: Element): HTMLElement | null {
-  let current: Element | null = element;
-
-  while (current?.parentElement && current.parentElement !== editorDom) {
-    current = current.parentElement;
-  }
-
-  return current?.parentElement === editorDom ? (current as HTMLElement) : null;
-}
-
 function startDrag(view: EditorView, slice: ReturnType<NodeSelection["content"]>, node: NodeSelection) {
   view.dragging = { slice, move: true, node } as typeof view.dragging;
 }
 
 type OptionsMenuProps = {
-  editor: ReturnType<typeof useEditor>;
+  editor: Editor;
 };
 
 export function OptionsMenu({ editor }: OptionsMenuProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [triggerEl, setTriggerEl] = useState<Element | null>(null);
   const [dropdownEl, setDropdownEl] = useState<HTMLElement | null>(null);
-  const [hoveredBlock, setHoveredBlock] = useState<HTMLElement | null>(null);
-  const rafId = useRef<number | null>(null);
 
-  const blockHeight = hoveredBlock?.getBoundingClientRect().height ?? 0;
-  const triggerPlacement = blockHeight > 2 * TRIGGER_HEIGHT ? "left-start" as const : "left" as const;
-
-  const {
-    refs: triggerRefs,
-    floatingStyles: triggerStyles,
-    isPositioned,
-  } = useFloating({
-    strategy: "fixed",
-    placement: triggerPlacement,
-    middleware: [offset(16)],
-    whileElementsMounted: autoUpdate,
-  });
+  const { hoveredBlock, setHoveredBlock } = useHoveredBlock(editor, menuOpen);
+  const { triggerRefs, triggerStyles, isPositioned } = useBlockTrigger(hoveredBlock, 16);
 
   const menuRootContext = useFloatingRootContext({
     open: menuOpen,
@@ -93,90 +71,18 @@ export function OptionsMenu({ editor }: OptionsMenuProps) {
   const dismiss = useDismiss(menuRootContext);
   const { getReferenceProps, getFloatingProps } = useInteractions([click, dismiss]);
 
-  useEffect(() => {
-    if (!editor || editor.isDestroyed) return;
-    const editorDom = editor.view.dom;
-
-    const onMouseMove = (e: MouseEvent) => {
-      if (menuOpen) return;
-
-      if (rafId.current) return;
-      rafId.current = requestAnimationFrame(() => {
-        rafId.current = null;
-
-        if (!editor.isEditable) {
-          setHoveredBlock(null);
-          return;
-        }
-
-        const elements = editorDom.ownerDocument.elementsFromPoint(e.clientX, e.clientY);
-        let block: HTMLElement | null = null;
-
-        for (const el of elements) {
-          if (!editorDom.contains(el)) continue;
-          block = findClosestRootBlock(el, editorDom);
-          if (block) break;
-        }
-
-        if (block) {
-          setHoveredBlock(block);
-        }
-      });
-    };
-
-    editorDom.addEventListener("mousemove", onMouseMove);
-
-    return () => {
-      editorDom.removeEventListener("mousemove", onMouseMove);
-      if (rafId.current) {
-        cancelAnimationFrame(rafId.current);
-        rafId.current = null;
-      }
-    };
-  }, [editor, menuOpen]);
-
-  useLayoutEffect(() => {
-    triggerRefs.setReference(hoveredBlock);
-  }, [hoveredBlock, triggerRefs]);
-
   const shouldShow = hoveredBlock != null || menuOpen;
 
-  if (!editor || !shouldShow) return null;
-
-  const getNodeAtHoveredBlock = () => {
-    if (!hoveredBlock) return null;
-    try {
-      const pos = editor.view.posAtDOM(hoveredBlock, 0);
-      const $pos = editor.state.doc.resolve(pos);
-      if ($pos.depth >= 1) {
-        return { node: $pos.node(1), pos: $pos.before(1) };
-      }
-      const nodeAfter = $pos.nodeAfter;
-      if (nodeAfter) {
-        return { node: nodeAfter, pos: pos };
-      }
-      return null;
-    } catch {
-      return null;
-    }
-  };
-
-  const isNodeType = (type: string, attrs?: Record<string, unknown>) => {
-    const data = getNodeAtHoveredBlock();
-    if (!data) return false;
-    if (data.node.type.name !== type) return false;
-    if (attrs) {
-      return Object.entries(attrs).every(
-        ([key, value]) => data.node.attrs[key] === value,
-      );
-    }
-    return true;
-  };
+  if (!shouldShow) return null;
 
   const handleAction = (
     applyCommand: (chain: ReturnType<typeof editor.chain>) => ReturnType<typeof editor.chain>,
   ) => {
-    const data = getNodeAtHoveredBlock();
+    if (!hoveredBlock) {
+      setMenuOpen(false);
+      return;
+    }
+    const data = getBlockNode(editor, hoveredBlock);
     if (!data) {
       setMenuOpen(false);
       return;
@@ -255,8 +161,9 @@ export function OptionsMenu({ editor }: OptionsMenuProps) {
   };
 
   const onDragStart = (e: DragEvent<HTMLButtonElement>) => {
-    const data = getNodeAtHoveredBlock();
-    if (!data || !hoveredBlock) return;
+    if (!hoveredBlock) return;
+    const data = getBlockNode(editor, hoveredBlock);
+    if (!data) return;
 
     try {
       const view = editor.view;
@@ -321,56 +228,56 @@ export function OptionsMenu({ editor }: OptionsMenuProps) {
         >
           <div className="p-1 font-semibold text-sm">Turn into</div>
           <MenuButton
-            active={isNodeType("paragraph")}
+            active={hoveredBlock != null && isBlockNodeType(editor, hoveredBlock, "paragraph")}
             onClick={() => handleAction(chain => chain.setParagraph())}
           >
             <TextTIcon size={16} weight="bold" />
             Text
           </MenuButton>
           <MenuButton
-            active={isNodeType("heading", { level: 1 })}
+            active={hoveredBlock != null && isBlockNodeType(editor, hoveredBlock, "heading", { level: 1 })}
             onClick={() => handleAction(chain => chain.toggleHeading({ level: 1 }))}
           >
             <TextHOneIcon size={16} weight="bold" />
             Heading 1
           </MenuButton>
           <MenuButton
-            active={isNodeType("heading", { level: 2 })}
+            active={hoveredBlock != null && isBlockNodeType(editor, hoveredBlock, "heading", { level: 2 })}
             onClick={() => handleAction(chain => chain.toggleHeading({ level: 2 }))}
           >
             <TextHTwoIcon size={16} weight="bold" />
             Heading 2
           </MenuButton>
           <MenuButton
-            active={isNodeType("heading", { level: 3 })}
+            active={hoveredBlock != null && isBlockNodeType(editor, hoveredBlock, "heading", { level: 3 })}
             onClick={() => handleAction(chain => chain.toggleHeading({ level: 3 }))}
           >
             <TextHThreeIcon size={16} weight="bold" />
             Heading 3
           </MenuButton>
           <MenuButton
-            active={isNodeType("bulletList")}
+            active={hoveredBlock != null && isBlockNodeType(editor, hoveredBlock, "bulletList")}
             onClick={() => handleAction(chain => chain.toggleBulletList())}
           >
             <ListBulletsIcon size={16} weight="bold" />
             Bullet List
           </MenuButton>
           <MenuButton
-            active={isNodeType("orderedList")}
+            active={hoveredBlock != null && isBlockNodeType(editor, hoveredBlock, "orderedList")}
             onClick={() => handleAction(chain => chain.toggleOrderedList())}
           >
             <ListNumbersIcon size={16} weight="bold" />
             Ordered List
           </MenuButton>
           <MenuButton
-            active={isNodeType("codeBlock")}
+            active={hoveredBlock != null && isBlockNodeType(editor, hoveredBlock, "codeBlock")}
             onClick={() => handleAction(chain => chain.toggleCodeBlock())}
           >
             <CodeBlockIcon size={16} weight="bold" />
             Code Block
           </MenuButton>
           <MenuButton
-            active={isNodeType("blockquote")}
+            active={hoveredBlock != null && isBlockNodeType(editor, hoveredBlock, "blockquote")}
             onClick={() => handleAction(chain => chain.toggleBlockquote())}
           >
             <QuotesIcon size={16} weight="bold" />
