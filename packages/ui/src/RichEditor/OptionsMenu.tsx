@@ -185,7 +185,7 @@ export function OptionsMenu({ editor }: OptionsMenuProps) {
         wrapper.style.top = "-10000px";
         document.body.append(wrapper);
         e.dataTransfer.setDragImage(wrapper, 0, 0);
-        document.addEventListener("drop", () => wrapper.remove(), { once: true });
+        document.addEventListener("dragend", () => wrapper.remove(), { once: true });
       }
 
       startDrag(view, slice, selection);
