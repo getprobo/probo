@@ -171,8 +171,11 @@ func (p *Provisioner) checkCAARecords(domain string) error {
 	}
 
 	for _, caa := range caaRecords {
-		if caa.Tag == "issue" && strings.EqualFold(caa.Value, p.caaIssuerDomain) {
-			return nil
+		if caa.Tag == "issue" {
+			issuer, _, _ := strings.Cut(caa.Value, ";")
+			if strings.EqualFold(strings.TrimSpace(issuer), p.caaIssuerDomain) {
+				return nil
+			}
 		}
 	}
 
