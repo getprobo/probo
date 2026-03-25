@@ -84,6 +84,7 @@ probod:
       mailer-interval: 60
     slack:
       sender-interval: 60
+    signing-notification-interval: 600
 
   openai:
     api-key: "thisisnotasecret"

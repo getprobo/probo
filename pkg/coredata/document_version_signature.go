@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -404,6 +404,47 @@ WHERE
 	signatures, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[DocumentVersionSignatureWithPeople])
 	if err != nil {
 		return fmt.Errorf("cannot collect document version signatures with people: %w", err)
+	}
+
+	*pvss = signatures
+
+	return nil
+}
+
+func (pvss *DocumentVersionSignatures) LoadPendingNotificationsForUpdate(
+	ctx context.Context,
+	conn pg.Conn,
+	delay time.Duration,
+) error {
+	q := `
+SELECT
+	dvs.id,
+	dvs.organization_id,
+	dvs.document_version_id,
+	dvs.state,
+	dvs.signed_by_profile_id,
+	dvs.signed_at,
+	dvs.requested_at,
+	dvs.created_at,
+	dvs.updated_at
+FROM
+	document_version_signatures dvs
+WHERE
+	dvs.state = 'REQUESTED'
+	AND dvs.requested_at < NOW() - @delay::interval
+ORDER BY
+	dvs.created_at ASC
+FOR UPDATE SKIP LOCKED
+`
+
+	rows, err := conn.Query(ctx, q, pgx.StrictNamedArgs{"delay": delay})
+	if err != nil {
+		return fmt.Errorf("cannot query pending notification signatures: %w", err)
+	}
+
+	signatures, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[DocumentVersionSignature])
+	if err != nil {
+		return fmt.Errorf("cannot collect pending notification signatures: %w", err)
 	}
 
 	*pvss = signatures

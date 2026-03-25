@@ -41,9 +41,12 @@ const requestSignatureMutation = graphql`
         node {
           id
           state
+          requestedAt
           signedBy {
             id
+            fullName
           }
+          ...DocumentSignatureListItemFragment
         }
       }
     }

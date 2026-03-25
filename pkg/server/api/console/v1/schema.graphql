@@ -5362,6 +5362,10 @@ enum DocumentVersionSignatureState
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.DocumentVersionSignatureStateRequested"
         )
+    NOTIFIED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DocumentVersionSignatureStateNotified"
+        )
     SIGNED
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.DocumentVersionSignatureStateSigned"

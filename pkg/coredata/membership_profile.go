@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -976,7 +976,7 @@ WITH signatories AS (
         document_version_signatures
     WHERE
         %s
-        AND state = 'REQUESTED'
+        AND state IN ('REQUESTED', 'NOTIFIED')
     GROUP BY
         signed_by_profile_id
 )

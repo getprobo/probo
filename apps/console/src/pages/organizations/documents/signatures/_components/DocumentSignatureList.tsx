@@ -4,7 +4,7 @@ import { graphql } from "relay-runtime";
 
 import type { DocumentSignatureList_peopleFragment$key } from "#/__generated__/core/DocumentSignatureList_peopleFragment.graphql";
 import type { DocumentSignatureList_versionFragment$key } from "#/__generated__/core/DocumentSignatureList_versionFragment.graphql";
-import type { DocumentSignatureListQuery } from "#/__generated__/core/DocumentSignatureListQuery.graphql";
+import type { DocumentSignatureListQuery, DocumentVersionSignatureState } from "#/__generated__/core/DocumentSignatureListQuery.graphql";
 
 import { DocumentSignatureListItem } from "./DocumentSignatureListItem";
 import { DocumentSignaturePlaceholder } from "./DocumentSignaturePlaceholder";
@@ -57,14 +57,19 @@ const peopleFragment = graphql`
   }
 `;
 
-type SignatureState = "REQUESTED" | "SIGNED";
+type SignatureFilter = "PENDING" | "SIGNED";
+
+const filterToStates: Record<SignatureFilter, DocumentVersionSignatureState[]> = {
+  PENDING: ["REQUESTED", "NOTIFIED"],
+  SIGNED: ["SIGNED"],
+} as const;
 
 export function DocumentSignatureList(props: {
   peopleFragmentRef: DocumentSignatureList_peopleFragment$key;
   versionFragmentRef: DocumentSignatureList_versionFragment$key;
-  selectedStates: SignatureState[];
+  selectedFilters: SignatureFilter[];
 }) {
-  const { peopleFragmentRef, selectedStates, versionFragmentRef } = props;
+  const { peopleFragmentRef, selectedFilters, versionFragmentRef } = props;
 
   const { profiles, ...organization } = useFragment<DocumentSignatureList_peopleFragment$key>(
     peopleFragment,
@@ -88,14 +93,14 @@ export function DocumentSignatureList(props: {
       return;
     }
 
-    const filter
-      = selectedStates.length > 0 ? { states: selectedStates } : null;
+    const states = selectedFilters.flatMap(f => filterToStates[f]);
+    const filter = states.length > 0 ? { states } : null;
 
     refetch({ signatureFilter: filter });
-  }, [selectedStates, refetch]);
+  }, [selectedFilters, refetch]);
 
   const filteredPeople
-    = selectedStates.length > 0
+    = selectedFilters.length > 0
       ? profiles.edges.filter(({ node }) => signatureMap.has(node.id))
       : profiles.edges;
 

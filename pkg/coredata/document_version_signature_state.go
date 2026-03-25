@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -27,6 +27,7 @@ type (
 
 const (
 	DocumentVersionSignatureStateRequested DocumentVersionSignatureState = "REQUESTED"
+	DocumentVersionSignatureStateNotified  DocumentVersionSignatureState = "NOTIFIED"
 	DocumentVersionSignatureStateSigned    DocumentVersionSignatureState = "SIGNED"
 )
 
@@ -40,6 +41,8 @@ func (pvs *DocumentVersionSignatureState) UnmarshalText(data []byte) error {
 	switch val {
 	case DocumentVersionSignatureStateRequested.String():
 		*pvs = DocumentVersionSignatureStateRequested
+	case DocumentVersionSignatureStateNotified.String():
+		*pvs = DocumentVersionSignatureStateNotified
 	case DocumentVersionSignatureStateSigned.String():
 		*pvs = DocumentVersionSignatureStateSigned
 	default:
@@ -55,6 +58,8 @@ func (pvs DocumentVersionSignatureState) String() string {
 	switch pvs {
 	case DocumentVersionSignatureStateRequested:
 		val = "REQUESTED"
+	case DocumentVersionSignatureStateNotified:
+		val = "NOTIFIED"
 	case DocumentVersionSignatureStateSigned:
 		val = "SIGNED"
 	default:

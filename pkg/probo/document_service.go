@@ -39,8 +39,7 @@ type (
 	}
 
 	ErrSignatureNotCancellable struct {
-		currentState  coredata.DocumentVersionSignatureState
-		expectedState coredata.DocumentVersionSignatureState
+		currentState coredata.DocumentVersionSignatureState
 	}
 
 	ErrDocumentVersionNoChanges struct {
@@ -156,9 +155,8 @@ var (
 
 func (e ErrSignatureNotCancellable) Error() string {
 	return fmt.Sprintf(
-		"cannot cancel signature request: signature is in state %v, expected %v",
+		"cannot cancel signature request: signature is in state %v",
 		e.currentState,
-		e.expectedState,
 	)
 }
 
@@ -1787,10 +1785,9 @@ func (s *DocumentService) CancelSignatureRequest(
 				return fmt.Errorf("cannot load document version signature: %w", err)
 			}
 
-			if documentVersionSignature.State != coredata.DocumentVersionSignatureStateRequested {
+			if documentVersionSignature.State == coredata.DocumentVersionSignatureStateSigned {
 				return ErrSignatureNotCancellable{
-					currentState:  documentVersionSignature.State,
-					expectedState: coredata.DocumentVersionSignatureStateRequested,
+					currentState: documentVersionSignature.State,
 				}
 			}
 

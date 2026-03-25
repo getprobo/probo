@@ -49,6 +49,7 @@ const documentsSignatureMutation = graphql`
         node {
           id
           state
+          requestedAt
         }
       }
     }

@@ -39,7 +39,7 @@ export const documentSignaturesPageQuery = graphql`
   }
 `;
 
-type SignatureState = "REQUESTED" | "SIGNED";
+type SignatureFilter = "PENDING" | "SIGNED";
 
 export function DocumentSignaturesPage(props: { queryRef: PreloadedQuery<DocumentSignaturesPageQuery> }) {
   const { queryRef } = props;
@@ -58,10 +58,10 @@ export function DocumentSignaturesPage(props: { queryRef: PreloadedQuery<Documen
     throw new Error("no document or version sepcified");
   }
 
-  const [selectedStates, setSelectedStates] = useState<SignatureState[]>([]);
-  const handleSelectState = (state: SignatureState) => {
-    setSelectedStates(prev =>
-      prev.includes(state) ? prev.filter(s => s !== state) : [...prev, state],
+  const [selectedFilters, setSelectedFilters] = useState<SignatureFilter[]>([]);
+  const handleSelectFilter = (filter: SignatureFilter) => {
+    setSelectedFilters(prev =>
+      prev.includes(filter) ? prev.filter(f => f !== filter) : [...prev, filter],
     );
   };
 
@@ -73,24 +73,24 @@ export function DocumentSignaturesPage(props: { queryRef: PreloadedQuery<Documen
         </span>
         <div className="flex items-center gap-2">
           <Checkbox
-            checked={selectedStates.includes("REQUESTED")}
-            onChange={() => handleSelectState("REQUESTED")}
+            checked={selectedFilters.includes("PENDING")}
+            onChange={() => handleSelectFilter("PENDING")}
           />
           <span
             className="text-sm text-txt-secondary cursor-pointer select-none"
-            onClick={() => handleSelectState("REQUESTED")}
+            onClick={() => handleSelectFilter("PENDING")}
           >
-            {__("Requested")}
+            {__("Pending")}
           </span>
         </div>
         <div className="flex items-center gap-2">
           <Checkbox
-            checked={selectedStates.includes("SIGNED")}
-            onChange={() => handleSelectState("SIGNED")}
+            checked={selectedFilters.includes("SIGNED")}
+            onChange={() => handleSelectFilter("SIGNED")}
           />
           <span
             className="text-sm text-txt-secondary cursor-pointer select-none"
-            onClick={() => handleSelectState("SIGNED")}
+            onClick={() => handleSelectFilter("SIGNED")}
           >
             {__("Signed")}
           </span>
@@ -102,7 +102,7 @@ export function DocumentSignaturesPage(props: { queryRef: PreloadedQuery<Documen
           versionFragmentRef={
             (version ?? document?.lastVersion.edges[0].node) as DocumentSignatureList_versionFragment$key
           }
-          selectedStates={selectedStates}
+          selectedFilters={selectedFilters}
         />
       </Suspense>
     </div>

@@ -5107,6 +5107,7 @@ components:
       type: string
       enum:
         - REQUESTED
+        - NOTIFIED
         - SIGNED
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.DocumentVersionSignatureState
 

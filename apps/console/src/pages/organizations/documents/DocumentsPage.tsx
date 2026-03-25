@@ -7,6 +7,7 @@ import {
   PageHeader,
   TabItem,
   Tabs,
+  useConfirm,
 } from "@probo/ui";
 import { useState } from "react";
 import {
@@ -53,6 +54,7 @@ export default function DocumentsPage(props: {
   }
 
   const [sendSigningNotifications] = useSendSigningNotificationsMutation();
+  const confirm = useConfirm();
 
   usePageTitle(__("Documents"));
 
@@ -66,12 +68,24 @@ export default function DocumentsPage(props: {
     ),
   );
 
-  const handleSendSigningNotifications = async () => {
-    await sendSigningNotifications({
-      variables: {
-        input: { organizationId },
+  const handleResendSigningNotifications = () => {
+    confirm(
+      async () => {
+        await sendSigningNotifications({
+          variables: {
+            input: { organizationId },
+          },
+        });
       },
-    });
+      {
+        title: __("Resend signing notifications"),
+        message: __(
+          "Signing notifications are automatically sent when a signature is requested. Are you sure you want to resend notifications to all pending signatories?",
+        ),
+        variant: "primary",
+        label: __("Resend"),
+      },
+    );
   };
 
   return (
@@ -85,9 +99,9 @@ export default function DocumentsPage(props: {
             <Button
               icon={IconBell2}
               variant="secondary"
-              onClick={() => void handleSendSigningNotifications()}
+              onClick={handleResendSigningNotifications}
             >
-              {__("Send signing notifications")}
+              {__("Resend signing notifications")}
             </Button>
           )}
           {organization.canCreateDocument && tab === "ACTIVE" && (

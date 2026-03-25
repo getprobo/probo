@@ -197,6 +197,7 @@ func New() *Implm {
 					SenderInterval: 5,
 					CacheTTL:       86400,
 				},
+				SigningNotificationInterval: 600,
 			},
 			CustomDomains: CustomDomainsConfig{
 				RenewalInterval:   3600,
@@ -617,6 +618,25 @@ func (impl *Implm) Run(
 		},
 	)
 
+	signingNotificationWorker := probo.NewSigningNotificationWorker(
+		pgClient,
+		fileManagerService,
+		impl.cfg.AWS.Bucket,
+		baseURL.String(),
+		impl.cfg.Auth.Cookie.Secret,
+		time.Duration(impl.cfg.Auth.InvitationConfirmationTokenValidity)*time.Second,
+		l.Named("signing-notification-worker"),
+		probo.WithSigningNotificationWorkerInterval(time.Duration(impl.cfg.Notifications.SigningNotificationInterval)*time.Second),
+	)
+	signingNotificationWorkerCtx, stopSigningNotificationWorker := context.WithCancel(context.Background())
+	wg.Go(
+		func() {
+			if err := signingNotificationWorker.Run(signingNotificationWorkerCtx); err != nil {
+				cancel(fmt.Errorf("signing notification worker crashed: %w", err))
+			}
+		},
+	)
+
 	trustCenterServerCtx, stopTrustCenterServer := context.WithCancel(context.Background())
 	defer stopTrustCenterServer()
 	wg.Go(
@@ -644,6 +664,7 @@ func (impl *Implm) Run(
 	stopWebhookSender()
 	stopESignService()
 	stopMailingListWorker()
+	stopSigningNotificationWorker()
 	stopExportJobExporter()
 	stopIAMService()
 	stopMailer()

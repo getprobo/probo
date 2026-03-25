@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -332,8 +332,8 @@ func TestDocumentVersionSignatureStates(t *testing.T) {
 
 	states := []coredata.DocumentVersionSignatureState{
 		coredata.DocumentVersionSignatureStateRequested,
+		coredata.DocumentVersionSignatureStateNotified,
 		coredata.DocumentVersionSignatureStateSigned,
-		// Add other states if they exist
 	}
 
 	for _, state := range states {
