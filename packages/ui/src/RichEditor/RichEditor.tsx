@@ -55,7 +55,10 @@ const extensions = [
   ListItem,
   HorizontalRule,
   HardBreak,
-  Dropcursor,
+  Dropcursor.configure({
+    color: "#0081f1",
+    width: 2,
+  }),
   Gapcursor,
   UndoRedo,
   TableKit.configure({
