@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -32,13 +32,14 @@ import (
 
 type (
 	Provisioner struct {
-		pg            *pg.Client
-		acmeService   *ACMEService
-		encryptionKey cipher.EncryptionKey
-		cnameTarget   string
-		interval      time.Duration
-		resolverAddr  string
-		logger        *log.Logger
+		pg              *pg.Client
+		acmeService     *ACMEService
+		encryptionKey   cipher.EncryptionKey
+		cnameTarget     string
+		caaIssuerDomain string
+		interval        time.Duration
+		resolverAddr    string
+		logger          *log.Logger
 	}
 )
 
@@ -51,18 +52,20 @@ func NewProvisioner(
 	acmeService *ACMEService,
 	encryptionKey cipher.EncryptionKey,
 	cnameTarget string,
+	caaIssuerDomain string,
 	interval time.Duration,
 	resolverAddr string,
 	logger *log.Logger,
 ) *Provisioner {
 	return &Provisioner{
-		pg:            pg,
-		acmeService:   acmeService,
-		encryptionKey: encryptionKey,
-		cnameTarget:   cnameTarget,
-		interval:      interval,
-		resolverAddr:  resolverAddr,
-		logger:        logger.Named("certmanager.provisioner"),
+		pg:              pg,
+		acmeService:     acmeService,
+		encryptionKey:   encryptionKey,
+		cnameTarget:     cnameTarget,
+		caaIssuerDomain: caaIssuerDomain,
+		interval:        interval,
+		resolverAddr:    resolverAddr,
+		logger:          logger.Named("certmanager.provisioner"),
 	}
 }
 
@@ -133,6 +136,51 @@ func (p *Provisioner) checkDNSConfiguration(domain string) error {
 	}
 
 	return nil
+}
+
+func (p *Provisioner) checkCAARecords(domain string) error {
+	fqdn := domain
+	if !strings.HasSuffix(fqdn, ".") {
+		fqdn = fqdn + "."
+	}
+
+	msg := &dns.Msg{MsgHeader: dns.MsgHeader{ID: dns.ID(), RecursionDesired: true}}
+	msg.Question = []dns.RR{&dns.CAA{Hdr: dns.Header{Name: fqdn, Class: dns.ClassINET}}}
+
+	client := dns.NewClient()
+
+	resp, _, err := client.Exchange(
+		context.Background(),
+		msg,
+		"udp",
+		p.resolverAddr,
+	)
+	if err != nil {
+		return fmt.Errorf("cannot exchange dns message for caa records: %w", err)
+	}
+
+	var caaRecords []*dns.CAA
+	for _, rr := range resp.Answer {
+		if caa, ok := rr.(*dns.CAA); ok {
+			caaRecords = append(caaRecords, caa)
+		}
+	}
+
+	if len(caaRecords) == 0 {
+		return nil
+	}
+
+	for _, caa := range caaRecords {
+		if caa.Tag == "issue" && strings.EqualFold(caa.Value, p.caaIssuerDomain) {
+			return nil
+		}
+	}
+
+	return fmt.Errorf(
+		"caa records for domain %q do not permit issuance by %q",
+		domain,
+		p.caaIssuerDomain,
+	)
 }
 
 func (p *Provisioner) checkPendingDomains(ctx context.Context) error {
@@ -286,6 +334,17 @@ func (p *Provisioner) provisionDomainCertificate(
 			p.logger.WarnCtx(
 				ctx,
 				"dns configuration check failed",
+				log.String("domain", domain.Domain),
+				log.Error(err),
+			)
+
+			return err
+		}
+
+		if err := p.checkCAARecords(domain.Domain); err != nil {
+			p.logger.WarnCtx(
+				ctx,
+				"caa record check failed",
 				log.String("domain", domain.Domain),
 				log.Error(err),
 			)

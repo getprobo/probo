@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -168,6 +168,7 @@ func (b *Builder) Build() (*probod.FullConfig, error) {
 				ProvisionInterval: b.getEnvIntOrDefault("CUSTOM_DOMAINS_PROVISION_INTERVAL", 30),
 				CnameTarget:       b.getEnvOrDefault("CUSTOM_DOMAINS_CNAME_TARGET", "custom.getprobo.com"),
 				ResolverAddr:      b.getEnvOrDefault("CUSTOM_DOMAINS_RESOLVER_ADDR", "8.8.8.8:53"),
+				CAAIssuerDomain:   b.getEnvOrDefault("CUSTOM_DOMAINS_CAA_ISSUER_DOMAIN", "letsencrypt.org"),
 				ACME: probod.ACMEConfig{
 					Directory:  b.getEnvOrDefault("ACME_DIRECTORY", "https://acme-v02.api.letsencrypt.org/directory"),
 					Email:      b.getEnvOrDefault("ACME_EMAIL", "admin@getprobo.com"),
