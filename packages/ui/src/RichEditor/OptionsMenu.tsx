@@ -46,8 +46,8 @@ function findClosestRootBlock(element: Element, editorDom: Element): HTMLElement
   return current?.parentElement === editorDom ? (current as HTMLElement) : null;
 }
 
-function startDrag(view: EditorView, slice: ReturnType<NodeSelection["content"]>) {
-  view.dragging = { slice, move: true };
+function startDrag(view: EditorView, slice: ReturnType<NodeSelection["content"]>, node: NodeSelection) {
+  view.dragging = { slice, move: true, node } as typeof view.dragging;
 }
 
 type OptionsMenuProps = {
@@ -281,7 +281,7 @@ export function OptionsMenu({ editor }: OptionsMenuProps) {
         document.addEventListener("drop", () => wrapper.remove(), { once: true });
       }
 
-      startDrag(view, slice);
+      startDrag(view, slice, selection);
     } catch {
       // Block may no longer be in the document
     }
