@@ -4,7 +4,6 @@
 
 import { Link } from "@tiptap/extension-link";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
-import { getAttributes } from "@tiptap/react";
 
 export const LinkExtension = Link.extend({
   addProseMirrorPlugins: () => {
@@ -24,18 +23,16 @@ export const LinkExtension = Link.extend({
               }
             },
           },
-          handleClick: (view, _, event) => {
+          handleClick: (_view, _, event) => {
             const { ctrlKey, metaKey } = event; // Check for Ctrl (Windows) or Cmd (Mac)
             const keyPressed = ctrlKey || metaKey;
 
             if (keyPressed) {
-              // Get attributes of the mark at the clicked position
-              const attrs = getAttributes(view.state, "link");
               const link = (event.target as Element | null)?.closest("a");
 
-              if (link && attrs.href) {
-                window.open(attrs.href as string, "_blank", "noopener,noreferrer"); // Open link in a new tab
-                return true; // Handle the event
+              if (link?.href) {
+                window.open(link.href, "_blank", "noopener,noreferrer");
+                return true;
               }
             }
             return false; // Let other handlers run
