@@ -52,7 +52,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Scan Docker image with Trivy
         if: github.ref == 'refs/heads/main'
-        uses: "aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8" # 0.33.1
+        uses: "aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1" # 0.35.0
         with:
           image-ref: "ghcr.io/getprobo/probo:latest-amd64"
           format: "sarif"
@@ -64,7 +64,7 @@ jobs:
           cache-dir: ~/.cache/trivy
       - name: Scan Docker image with Trivy
         if: github.ref != 'refs/heads/main'
-        uses: "aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8" # 0.33.1
+        uses: "aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1" # 0.35.0
         with:
           image-ref: "ghcr.io/getprobo/probo:latest-amd64"
           format: "table"
