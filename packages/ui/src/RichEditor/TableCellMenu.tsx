@@ -235,70 +235,33 @@ export function TableCellMenu({ editor }: TableCellMenuProps) {
     setMenuOpen(false);
   };
 
-  const hasSpannedCell = (): boolean => {
-    const { selection } = editor.state;
-
-    if (selection instanceof CellSelection) {
-      let found = false;
-      selection.forEachCell((node) => {
-        if (node.attrs.colspan > 1 || node.attrs.rowspan > 1) {
-          found = true;
-        }
-      });
-      return found;
-    }
-
-    const $pos = editor.state.doc.resolve(selection.from);
-    const cell = cellAround($pos);
-    if (!cell) return false;
-    const cellNode = editor.state.doc.nodeAt(cell.pos);
-    if (!cellNode) return false;
-    return cellNode.attrs.colspan > 1 || cellNode.attrs.rowspan > 1;
-  };
-
   const handleSplitCell = () => {
     editor.chain().focus().splitCell().run();
     setMenuOpen(false);
   };
 
   const handleClearContents = () => {
-    const { state, dispatch } = editor.view;
-    const { selection, schema } = state;
-    const { tr } = state;
-    let cursorTarget: number | null = null;
+    const { state } = editor.view;
 
-    if (selection instanceof CellSelection) {
-      selection.forEachCell((node, pos) => {
-        const start = pos + 1;
-        const end = pos + node.nodeSize - 1;
-        if (cursorTarget === null) {
-          cursorTarget = tr.mapping.map(start) + 1;
-        }
-        tr.replaceWith(
-          tr.mapping.map(start),
-          tr.mapping.map(end),
-          schema.nodes.paragraph.create(),
-        );
-      });
+    if (state.selection instanceof CellSelection) {
+      editor.commands.deleteSelection();
     } else {
-      const $pos = state.doc.resolve(selection.from);
+      const { dispatch } = editor.view;
+      const { tr, schema } = state;
+      const $pos = state.doc.resolve(state.selection.from);
       const cell = cellAround($pos);
       if (cell) {
         const cellNode = state.doc.nodeAt(cell.pos);
         if (cellNode) {
           const start = cell.pos + 1;
           const end = cell.pos + cellNode.nodeSize - 1;
-          cursorTarget = start + 1;
           tr.replaceWith(start, end, schema.nodes.paragraph.create());
+          tr.setSelection(TextSelection.create(tr.doc, start + 1));
+          dispatch(tr);
         }
       }
     }
 
-    if (cursorTarget !== null) {
-      tr.setSelection(TextSelection.create(tr.doc, cursorTarget));
-    }
-
-    dispatch(tr);
     setMenuOpen(false);
   };
 
@@ -340,11 +303,13 @@ export function TableCellMenu({ editor }: TableCellMenuProps) {
           onMouseDown={e => e.preventDefault()}
           className={menu()}
         >
-          <MenuButton onClick={handleMergeCells}>
-            <IntersectIcon size={16} weight="bold" />
-            Merge cells
-          </MenuButton>
-          {hasSpannedCell() && (
+          {editor.can().mergeCells() && (
+            <MenuButton onClick={handleMergeCells}>
+              <IntersectIcon size={16} weight="bold" />
+              Merge cells
+            </MenuButton>
+          )}
+          {editor.can().splitCell() && (
             <MenuButton onClick={handleSplitCell}>
               <SplitHorizontalIcon size={16} weight="bold" />
               Split cells
