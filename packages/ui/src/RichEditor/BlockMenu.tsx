@@ -11,15 +11,17 @@ import {
 } from "@floating-ui/react";
 import type { Icon } from "@phosphor-icons/react";
 import { CodeBlockIcon, GridFourIcon, ListBulletsIcon, ListNumbersIcon, MinusIcon, PlusIcon, QuotesIcon, TextHOneIcon, TextHThreeIcon, TextHTwoIcon, TextTIcon } from "@phosphor-icons/react";
-import { type useEditor, useEditorState } from "@tiptap/react";
+import { type Editor, useEditorState } from "@tiptap/react";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { tv } from "tailwind-variants";
 
+import { useBlockTrigger } from "./_lib/useBlockTrigger";
+import { useHoveredBlock } from "./_lib/useHoveredBlock";
 import { MenuButton } from "./MenuButton";
 import type { SlashCommandStorage } from "./SlashCommandExtension";
 import { activateSlashCommand, deactivateSlashCommand } from "./SlashCommandExtension";
 
-type ChainCommands = ReturnType<NonNullable<ReturnType<typeof useEditor>>["chain"]>;
+type ChainCommands = ReturnType<Editor["chain"]>;
 
 type BlockItem = {
   label: string;
@@ -52,32 +54,18 @@ const blockMenuVariants = tv({
 
 const { trigger, menu } = blockMenuVariants();
 
-const TRIGGER_HEIGHT = 24;
-
-function findClosestRootBlock(element: Element, editorDom: Element): HTMLElement | null {
-  let current: Element | null = element;
-
-  while (current?.parentElement && current.parentElement !== editorDom) {
-    current = current.parentElement;
-  }
-
-  return current?.parentElement === editorDom ? (current as HTMLElement) : null;
-}
-
-function getSlashStorage(editor: NonNullable<ReturnType<typeof useEditor>>): SlashCommandStorage | undefined {
+function getSlashStorage(editor: Editor): SlashCommandStorage | undefined {
   return (editor.storage as unknown as Record<string, unknown>).slashCommand as
     | SlashCommandStorage
     | undefined;
 }
 
 type BlockMenuProps = {
-  editor: ReturnType<typeof useEditor>;
+  editor: Editor;
 };
 
 export function BlockMenu({ editor }: BlockMenuProps) {
-  const [hoveredBlock, setHoveredBlock] = useState<HTMLElement | null>(null);
   const [slashNav, setSlashNav] = useState({ index: 0, query: "" });
-  const rafId = useRef<number | null>(null);
   const slashDropdownRef = useRef<HTMLDivElement | null>(null);
 
   const slashState = useEditorState({
@@ -91,6 +79,9 @@ export function BlockMenu({ editor }: BlockMenuProps) {
       };
     },
   });
+
+  const { hoveredBlock } = useHoveredBlock(editor, slashState.active);
+  const { triggerRefs, triggerStyles, isPositioned } = useBlockTrigger(hoveredBlock, 40);
 
   const slashActiveIndex = slashState.query === slashNav.query
     ? slashNav.index
@@ -114,7 +105,7 @@ export function BlockMenu({ editor }: BlockMenuProps) {
   });
 
   useLayoutEffect(() => {
-    if (!slashState.active || !editor) {
+    if (!slashState.active) {
       slashMenuRefs.setPositionReference(null);
       return;
     }
@@ -142,7 +133,7 @@ export function BlockMenu({ editor }: BlockMenuProps) {
 
   const handleSlashAction = useCallback(
     (item: BlockItem) => {
-      if (!editor || !slashState.active) return;
+      if (!slashState.active) return;
       const { from } = slashState;
       const cursorPos = editor.state.selection.from;
 
@@ -163,7 +154,7 @@ export function BlockMenu({ editor }: BlockMenuProps) {
   );
 
   useEffect(() => {
-    if (!editor || editor.isDestroyed || !slashState.active) return;
+    if (editor.isDestroyed || !slashState.active) return;
     const editorDom = editor.view.dom;
 
     const onKeyDown = (e: KeyboardEvent) => {
@@ -200,68 +191,6 @@ export function BlockMenu({ editor }: BlockMenuProps) {
       editorDom.removeEventListener("keydown", onKeyDown, { capture: true });
     };
   }, [editor, slashState.active, slashState.query, filteredItems, slashActiveIndex, handleSlashAction]);
-
-  const blockHeight = hoveredBlock?.getBoundingClientRect().height ?? 0;
-  const triggerPlacement = blockHeight > 2 * TRIGGER_HEIGHT ? "left-start" as const : "left" as const;
-
-  const {
-    refs: triggerRefs,
-    floatingStyles: triggerStyles,
-    isPositioned,
-  } = useFloating({
-    strategy: "fixed",
-    placement: triggerPlacement,
-    middleware: [offset(40)],
-    whileElementsMounted: autoUpdate,
-  });
-
-  useEffect(() => {
-    if (!editor || editor.isDestroyed) return;
-    const editorDom = editor.view.dom;
-
-    const onMouseMove = (e: MouseEvent) => {
-      if (slashState.active) return;
-
-      if (rafId.current) return;
-      rafId.current = requestAnimationFrame(() => {
-        rafId.current = null;
-
-        if (!editor.isEditable) {
-          setHoveredBlock(null);
-          return;
-        }
-
-        const elements = editorDom.ownerDocument.elementsFromPoint(e.clientX, e.clientY);
-        let block: HTMLElement | null = null;
-
-        for (const el of elements) {
-          if (!editorDom.contains(el)) continue;
-          block = findClosestRootBlock(el, editorDom);
-          if (block) break;
-        }
-
-        if (block) {
-          setHoveredBlock(block);
-        }
-      });
-    };
-
-    editorDom.addEventListener("mousemove", onMouseMove);
-
-    return () => {
-      editorDom.removeEventListener("mousemove", onMouseMove);
-      if (rafId.current) {
-        cancelAnimationFrame(rafId.current);
-        rafId.current = null;
-      }
-    };
-  }, [editor, slashState.active]);
-
-  useLayoutEffect(() => {
-    triggerRefs.setReference(hoveredBlock);
-  }, [hoveredBlock, triggerRefs]);
-
-  if (!editor) return null;
 
   const handleTriggerClick = () => {
     if (!hoveredBlock) return;

@@ -2,17 +2,7 @@
 // Use of this source code is governed by the ISC license
 // that can be found in the LICENSE file.
 
-import {
-  autoUpdate,
-  flip,
-  offset,
-  shift,
-  size,
-  useDismiss,
-  useFloating,
-  useFloatingRootContext,
-  useInteractions,
-} from "@floating-ui/react";
+import { autoUpdate, offset, size, useFloating } from "@floating-ui/react";
 import {
   BroomIcon,
   CopyIcon,
@@ -24,13 +14,14 @@ import {
 import type { Node as PMNode } from "@tiptap/pm/model";
 import { TextSelection } from "@tiptap/pm/state";
 import { cellAround, CellSelection, TableMap } from "@tiptap/pm/tables";
-import { type useEditor } from "@tiptap/react";
+import { type Editor } from "@tiptap/react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { tv } from "tailwind-variants";
 
+import { cellDomElement } from "./_lib/cellDomElement";
+import { DRAG_THRESHOLD } from "./_lib/constants";
+import { useTableDropdownMenu } from "./_lib/useTableDropdownMenu";
 import { MenuButton } from "./MenuButton";
-
-const DRAG_THRESHOLD = 4;
 
 const tableRowMenuVariants = tv({
   slots: {
@@ -51,24 +42,11 @@ type HoveredRow = {
 };
 
 type TableRowMenuProps = {
-  editor: ReturnType<typeof useEditor>;
+  editor: Editor;
 };
 
-function cellDomElement(
-  editor: NonNullable<ReturnType<typeof useEditor>>,
-  cellPos: number,
-): HTMLElement | null {
-  const dom = editor.view.domAtPos(cellPos + 1);
-  let el: Node | null = dom.node;
-  if (el.nodeType === Node.TEXT_NODE) el = el.parentElement;
-  while (el && !(el instanceof HTMLTableCellElement)) {
-    el = (el as HTMLElement).parentElement;
-  }
-  return el as HTMLElement | null;
-}
-
 function getRowRect(
-  editor: NonNullable<ReturnType<typeof useEditor>>,
+  editor: Editor,
   tableStart: number,
   rowIndex: number,
 ): DOMRect | null {
@@ -108,7 +86,7 @@ function getRowRect(
 }
 
 function moveRow(
-  editor: NonNullable<ReturnType<typeof useEditor>>,
+  editor: Editor,
   tableStart: number,
   fromRow: number,
   toRow: number,
@@ -131,10 +109,17 @@ function moveRow(
 }
 
 export function TableRowMenu({ editor }: TableRowMenuProps) {
-  const [menuOpen, setMenuOpen] = useState(false);
+  const {
+    menuOpen,
+    setMenuOpen,
+    setTriggerEl,
+    setDropdownEl,
+    menuRefs,
+    menuStyles,
+    getFloatingProps,
+  } = useTableDropdownMenu();
+
   const [hoveredRow, setHoveredRow] = useState<HoveredRow | null>(null);
-  const [triggerEl, setTriggerEl] = useState<Element | null>(null);
-  const [dropdownEl, setDropdownEl] = useState<HTMLElement | null>(null);
   const [dragIndicator, setDragIndicator] = useState<{
     left: number;
     top: number;
@@ -151,7 +136,7 @@ export function TableRowMenu({ editor }: TableRowMenuProps) {
   }, [hoveredRow]);
 
   useEffect(() => {
-    if (!editor || editor.isDestroyed || !editor.isEditable) return;
+    if (editor.isDestroyed || !editor.isEditable) return;
 
     const editorDom = editor.view.dom;
 
@@ -251,25 +236,8 @@ export function TableRowMenu({ editor }: TableRowMenuProps) {
       autoUpdate(ref, floating, update, { animationFrame: true }),
   });
 
-  const menuRootContext = useFloatingRootContext({
-    open: menuOpen,
-    onOpenChange: setMenuOpen,
-    elements: { reference: triggerEl, floating: dropdownEl },
-  });
-
-  const { refs: menuRefs, floatingStyles: menuStyles } = useFloating({
-    rootContext: menuRootContext,
-    strategy: "fixed",
-    placement: "bottom-start",
-    middleware: [offset(4), flip(), shift()],
-    whileElementsMounted: autoUpdate,
-  });
-
-  const dismiss = useDismiss(menuRootContext);
-  const { getFloatingProps } = useInteractions([dismiss]);
-
   useLayoutEffect(() => {
-    if (!editor || !hoveredRow) {
+    if (!hoveredRow) {
       handleRefs.setReference(null);
       return;
     }
@@ -286,7 +254,7 @@ export function TableRowMenu({ editor }: TableRowMenuProps) {
     });
   }, [hoveredRow, editor, handleRefs]);
 
-  if (!editor || (!hoveredRow && !menuOpen)) return null;
+  if (!hoveredRow && !menuOpen) return null;
 
   const computeTargetGap = (clientY: number, tableStart: number): number => {
     const table = editor.state.doc.nodeAt(tableStart - 1);
