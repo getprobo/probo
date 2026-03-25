@@ -845,7 +845,6 @@ func CreateDocument(c *testutil.Client, attrs ...Attrs) string {
 	input := map[string]any{
 		"organizationId": c.GetOrganizationID().String(),
 		"title":          a.getString("title", SafeName("Document")),
-		"content":        a.getString("content", "Document content"),
 		"documentType":   a.getString("documentType", "POLICY"),
 		"classification": a.getString("classification", "INTERNAL"),
 	}

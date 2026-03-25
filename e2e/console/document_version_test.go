@@ -74,6 +74,7 @@ func createTestDocument(t *testing.T, owner *testutil.Client) (docID string, doc
 			"organizationId": owner.GetOrganizationID().String(),
 			"title":          "Test Document",
 			"content":        "Initial content",
+			"approverIds":    []string{profileID},
 			"documentType":   "POLICY",
 			"classification": "INTERNAL",
 		},
@@ -269,34 +270,28 @@ func TestDocumentVersion_UpdateContent(t *testing.T) {
 	_, draftVersionID := createTestDocument(t, owner)
 
 	query := `
-		mutation UpdateDocumentVersion($input: UpdateDocumentVersionInput!) {
-			updateDocumentVersion(input: $input) {
-				documentVersion {
-					id
-					content
-				}
+		mutation UpdateDocumentVersion($input: UpdateDocumentVersionContentInput!) {
+			updateDocumentVersionContent(input: $input) {
+				content
 			}
 		}
 	`
 
 	var result struct {
-		UpdateDocumentVersion struct {
-			DocumentVersion struct {
-				ID      string `json:"id"`
-				Content string `json:"content"`
-			} `json:"documentVersion"`
-		} `json:"updateDocumentVersion"`
+		UpdateDocumentVersionContent struct {
+			Content string `json:"content"`
+		} `json:"updateDocumentVersionContent"`
 	}
 
 	err := owner.Execute(query, map[string]any{
 		"input": map[string]any{
-			"documentVersionId": draftVersionID,
-			"content":           "Updated content for the document",
+			"id":      draftVersionID,
+			"content": "Updated content for the document version",
 		},
 	}, &result)
 	require.NoError(t, err)
 
-	assert.Equal(t, "Updated content for the document", result.UpdateDocumentVersion.DocumentVersion.Content)
+	assert.Equal(t, "Updated content for the document version", result.UpdateDocumentVersionContent.Content)
 }
 
 func TestDocumentVersion_RequestSignature(t *testing.T) {
