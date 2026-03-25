@@ -347,6 +347,15 @@ func (p *Provisioner) provisionDomainCertificate(
 		domain.SSLRetryCount = domain.SSLRetryCount + 1
 		domain.SSLLastAttemptAt = new(time.Now())
 
+		// Clear challenge data and reset to pending so the next attempt
+		// creates a fresh ACME order. Once a challenge fails validation,
+		// Let's Encrypt marks it as invalid and retrying the same
+		// challenge always fails with "authorization must be pending".
+		domain.HTTPChallengeToken = nil
+		domain.HTTPChallengeKeyAuth = nil
+		domain.HTTPChallengeURL = nil
+		domain.HTTPOrderURL = nil
+
 		if domain.SSLRetryCount >= maxRetries {
 			p.logger.ErrorCtx(
 				ctx,
@@ -356,10 +365,8 @@ func (p *Provisioner) provisionDomainCertificate(
 			)
 
 			domain.SSLStatus = coredata.CustomDomainSSLStatusFailed
-			domain.HTTPChallengeToken = nil
-			domain.HTTPChallengeKeyAuth = nil
-			domain.HTTPChallengeURL = nil
-			domain.HTTPOrderURL = nil
+		} else {
+			domain.SSLStatus = coredata.CustomDomainSSLStatusPending
 		}
 
 		if err := domain.Update(ctx, tx, coredata.NewNoScope()); err != nil {
