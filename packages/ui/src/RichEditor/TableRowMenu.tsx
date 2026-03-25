@@ -419,6 +419,24 @@ export function TableRowMenu({ editor }: TableRowMenuProps) {
           // table may have changed
         }
       } else {
+        try {
+          const table = editor.state.doc.nodeAt(tableStart - 1);
+          if (table) {
+            const map = TableMap.get(table);
+            const anchorPos
+              = map.positionAt(fromRow, 0, table) + tableStart;
+            const headPos
+              = map.positionAt(fromRow, map.width - 1, table) + tableStart;
+            const sel = CellSelection.create(
+              view.state.doc,
+              anchorPos,
+              headPos,
+            );
+            view.dispatch(view.state.tr.setSelection(sel));
+          }
+        } catch {
+          // table may have changed
+        }
         setMenuOpen(prev => !prev);
       }
 
