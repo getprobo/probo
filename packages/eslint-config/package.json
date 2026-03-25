@@ -20,7 +20,7 @@
     "#stylisticConfigs": "./src/stylisticConfigs.ts"
   },
   "scripts": {
-    "lint": "eslint src"
+    "lint": "eslint src --max-warnings 0"
   },
   "keywords": [],
   "author": "",
