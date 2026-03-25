@@ -17,7 +17,7 @@ import { Strike } from "@tiptap/extension-strike";
 import { TableKit } from "@tiptap/extension-table";
 import { Text } from "@tiptap/extension-text";
 import { Underline } from "@tiptap/extension-underline";
-import { Dropcursor, Gapcursor, UndoRedo } from "@tiptap/extensions";
+import { Dropcursor, UndoRedo } from "@tiptap/extensions";
 import { type Content, EditorContent, useEditor, useEditorState } from "@tiptap/react";
 import { type ComponentProps, useEffect, useRef } from "react";
 import { tv } from "tailwind-variants";
@@ -59,7 +59,6 @@ const extensions = [
     color: "#0081f1",
     width: 2,
   }),
-  Gapcursor,
   UndoRedo,
   TableKit.configure({
     table: { resizable: true },
