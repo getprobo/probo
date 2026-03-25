@@ -16,6 +16,7 @@ import {
 import {
   BroomIcon,
   CopyIcon,
+  CrownSimpleIcon,
   DotsThreeIcon,
   PlusIcon,
   TrashIcon,
@@ -453,6 +454,54 @@ export function TableColumnMenu({ editor }: TableColumnMenuProps) {
 
   const currentCol = hoveredCol;
 
+  const isFirstColumn = currentCol?.colIndex === 0;
+
+  const isHeaderColumn = (): boolean => {
+    if (!currentCol || currentCol.colIndex !== 0) return false;
+    try {
+      const table = editor.state.doc.nodeAt(currentCol.tableStart - 1);
+      if (!table) return false;
+      const map = TableMap.get(table);
+      for (let row = 0; row < map.height; row++) {
+        const cellPos = map.map[row * map.width] + currentCol.tableStart;
+        const cellNode = editor.state.doc.nodeAt(cellPos);
+        if (!cellNode || cellNode.type.name !== "tableHeader") return false;
+      }
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  const handleToggleHeaderColumn = () => {
+    if (!currentCol || currentCol.colIndex !== 0) return;
+    const { tableStart } = currentCol;
+
+    try {
+      const table = editor.state.doc.nodeAt(tableStart - 1);
+      if (!table) return;
+
+      const map = TableMap.get(table);
+      const { tr, schema } = editor.state;
+      const targetType = isHeaderColumn()
+        ? schema.nodes.tableCell
+        : schema.nodes.tableHeader;
+
+      for (let row = 0; row < map.height; row++) {
+        const cellPos = map.map[row * map.width] + tableStart;
+        const cellNode = editor.state.doc.nodeAt(cellPos);
+        if (!cellNode) continue;
+        tr.setNodeMarkup(cellPos, targetType, cellNode.attrs);
+      }
+
+      editor.view.dispatch(tr);
+    } catch {
+      // table may have changed
+    }
+
+    setMenuOpen(false);
+  };
+
   const handleDeleteColumn = () => {
     if (!currentCol) return;
     const { colIndex, tableStart } = currentCol;
@@ -634,6 +683,12 @@ export function TableColumnMenu({ editor }: TableColumnMenuProps) {
           onMouseDown={e => e.preventDefault()}
           className={menu()}
         >
+          {isFirstColumn && (
+            <MenuButton active={isHeaderColumn()} onClick={handleToggleHeaderColumn}>
+              <CrownSimpleIcon size={16} weight="bold" />
+              Header column
+            </MenuButton>
+          )}
           <MenuButton onClick={handleInsertLeft}>
             <PlusIcon size={16} weight="bold" />
             Insert column left
