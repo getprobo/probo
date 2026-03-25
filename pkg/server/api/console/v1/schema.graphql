@@ -3893,6 +3893,13 @@ type Mutation {
     deleteCustomDomain(
         input: DeleteCustomDomainInput!
     ): DeleteCustomDomainPayload!
+    # Log export mutations
+    requestAuditLogExport(
+        input: RequestAuditLogExportInput!
+    ): RequestAuditLogExportPayload!
+    requestSCIMEventExport(
+        input: RequestSCIMEventExportInput!
+    ): RequestSCIMEventExportPayload!
 }
 
 # Input Types
@@ -6053,4 +6060,24 @@ type AuditLogEntryConnection
 type AuditLogEntryEdge {
     cursor: CursorKey!
     node: AuditLogEntry!
+}
+
+input RequestAuditLogExportInput {
+    organizationId: ID!
+    fromTime: Datetime!
+    toTime: Datetime!
+}
+
+type RequestAuditLogExportPayload {
+    logExportId: ID!
+}
+
+input RequestSCIMEventExportInput {
+    organizationId: ID!
+    fromTime: Datetime!
+    toTime: Datetime!
+}
+
+type RequestSCIMEventExportPayload {
+    logExportId: ID!
 }

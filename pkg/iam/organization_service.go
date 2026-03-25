@@ -2188,3 +2188,54 @@ func (s *OrganizationService) CountAuditLogEntries(
 
 	return count, err
 }
+
+type RequestLogExportRequest struct {
+	OrganizationID gid.GID
+	Type           coredata.LogExportType
+	FromTime       time.Time
+	ToTime         time.Time
+	RecipientEmail mail.Addr
+	RecipientName  string
+}
+
+func (s *OrganizationService) RequestLogExport(
+	ctx context.Context,
+	req RequestLogExportRequest,
+) (*coredata.LogExport, error) {
+	if !req.FromTime.Before(req.ToTime) {
+		return nil, fmt.Errorf("from_time must be before to_time")
+	}
+
+	scope := coredata.NewScopeFromObjectID(req.OrganizationID)
+	logExport := &coredata.LogExport{}
+
+	err := s.pg.WithTx(
+		ctx,
+		func(tx pg.Conn) error {
+			now := time.Now()
+
+			logExport = &coredata.LogExport{
+				ID:             gid.New(scope.GetTenantID(), coredata.LogExportEntityType),
+				OrganizationID: req.OrganizationID,
+				Type:           req.Type,
+				Status:         coredata.LogExportStatusPending,
+				FromTime:       req.FromTime,
+				ToTime:         req.ToTime,
+				RecipientEmail: req.RecipientEmail,
+				RecipientName:  req.RecipientName,
+				CreatedAt:      now,
+			}
+
+			if err := logExport.Insert(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot insert log export: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return logExport, nil
+}

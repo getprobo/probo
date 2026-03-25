@@ -6293,6 +6293,64 @@ func (r *mutationResolver) DeleteCustomDomain(ctx context.Context, input types.D
 	}, nil
 }
 
+// RequestAuditLogExport is the resolver for the requestAuditLogExport field.
+func (r *mutationResolver) RequestAuditLogExport(ctx context.Context, input types.RequestAuditLogExportInput) (*types.RequestAuditLogExportPayload, error) {
+	if err := r.authorize(ctx, input.OrganizationID, iam.ActionAuditLogExport); err != nil {
+		return nil, err
+	}
+
+	identity := authn.IdentityFromContext(ctx)
+
+	logExport, err := r.iam.OrganizationService.RequestLogExport(
+		ctx,
+		iam.RequestLogExportRequest{
+			OrganizationID: input.OrganizationID,
+			Type:           coredata.LogExportTypeAuditLog,
+			FromTime:       input.FromTime,
+			ToTime:         input.ToTime,
+			RecipientEmail: identity.EmailAddress,
+			RecipientName:  identity.FullName,
+		},
+	)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot request audit log export", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.RequestAuditLogExportPayload{
+		LogExportID: logExport.ID,
+	}, nil
+}
+
+// RequestSCIMEventExport is the resolver for the requestSCIMEventExport field.
+func (r *mutationResolver) RequestSCIMEventExport(ctx context.Context, input types.RequestSCIMEventExportInput) (*types.RequestSCIMEventExportPayload, error) {
+	if err := r.authorize(ctx, input.OrganizationID, iam.ActionSCIMEventExport); err != nil {
+		return nil, err
+	}
+
+	identity := authn.IdentityFromContext(ctx)
+
+	logExport, err := r.iam.OrganizationService.RequestLogExport(
+		ctx,
+		iam.RequestLogExportRequest{
+			OrganizationID: input.OrganizationID,
+			Type:           coredata.LogExportTypeSCIMEvent,
+			FromTime:       input.FromTime,
+			ToTime:         input.ToTime,
+			RecipientEmail: identity.EmailAddress,
+			RecipientName:  identity.FullName,
+		},
+	)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot request SCIM event export", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.RequestSCIMEventExportPayload{
+		LogExportID: logExport.ID,
+	}, nil
+}
+
 // Organization is the resolver for the organization field.
 func (r *obligationResolver) Organization(ctx context.Context, obj *types.Obligation) (*types.Organization, error) {
 	if err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {

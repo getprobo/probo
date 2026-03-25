@@ -12,25 +12,48 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package auditlog
+package coredata
 
 import (
-	"github.com/spf13/cobra"
-	"go.probo.inc/probo/pkg/cmd/auditlog/export"
-	"go.probo.inc/probo/pkg/cmd/auditlog/list"
-	"go.probo.inc/probo/pkg/cmd/auditlog/view"
-	"go.probo.inc/probo/pkg/cmd/cmdutil"
+	"database/sql/driver"
+	"fmt"
 )
 
-func NewCmdAuditLog(f *cmdutil.Factory) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "audit-log <command>",
-		Short: "Manage audit log entries",
+type (
+	LogExportType string
+)
+
+const (
+	LogExportTypeAuditLog  LogExportType = "AUDIT_LOG"
+	LogExportTypeSCIMEvent LogExportType = "SCIM_EVENT"
+)
+
+func (t LogExportType) String() string {
+	return string(t)
+}
+
+func (t *LogExportType) Scan(value any) error {
+	var s string
+	switch v := value.(type) {
+	case string:
+		s = v
+	case []byte:
+		s = string(v)
+	default:
+		return fmt.Errorf("unsupported type for LogExportType: %T", value)
 	}
 
-	cmd.AddCommand(export.NewCmdExport(f))
-	cmd.AddCommand(list.NewCmdList(f))
-	cmd.AddCommand(view.NewCmdView(f))
+	switch s {
+	case LogExportTypeAuditLog.String():
+		*t = LogExportTypeAuditLog
+	case LogExportTypeSCIMEvent.String():
+		*t = LogExportTypeSCIMEvent
+	default:
+		return fmt.Errorf("invalid LogExportType value: %q", s)
+	}
+	return nil
+}
 
-	return cmd
+func (t LogExportType) Value() (driver.Value, error) {
+	return t.String(), nil
 }

@@ -3359,3 +3359,52 @@ func (r *Resolver) GetAuditLogEntryTool(ctx context.Context, req *mcp.CallToolRe
 		AuditLogEntry: types.NewAuditLogEntry(entry),
 	}, nil
 }
+
+func (r *Resolver) RequestAuditLogExportTool(ctx context.Context, req *mcp.CallToolRequest, input *types.RequestAuditLogExportInput) (*mcp.CallToolResult, types.RequestAuditLogExportOutput, error) {
+	r.MustAuthorize(ctx, input.OrganizationID, iam.ActionAuditLogExport)
+
+	identity := authn.IdentityFromContext(ctx)
+
+	logExport, err := r.iamSvc.OrganizationService.RequestLogExport(
+		ctx,
+		iam.RequestLogExportRequest{
+			OrganizationID: input.OrganizationID,
+			Type:           coredata.LogExportTypeAuditLog,
+			FromTime:       input.FromTime,
+			ToTime:         input.ToTime,
+			RecipientEmail: identity.EmailAddress,
+			RecipientName:  identity.FullName,
+		},
+	)
+	if err != nil {
+		return nil, types.RequestAuditLogExportOutput{}, fmt.Errorf("cannot request audit log export: %w", err)
+	}
+
+	return nil, types.RequestAuditLogExportOutput{
+		LogExportID: logExport.ID,
+	}, nil
+}
+func (r *Resolver) RequestSCIMEventExportTool(ctx context.Context, req *mcp.CallToolRequest, input *types.RequestSCIMEventExportInput) (*mcp.CallToolResult, types.RequestSCIMEventExportOutput, error) {
+	r.MustAuthorize(ctx, input.OrganizationID, iam.ActionSCIMEventExport)
+
+	identity := authn.IdentityFromContext(ctx)
+
+	logExport, err := r.iamSvc.OrganizationService.RequestLogExport(
+		ctx,
+		iam.RequestLogExportRequest{
+			OrganizationID: input.OrganizationID,
+			Type:           coredata.LogExportTypeSCIMEvent,
+			FromTime:       input.FromTime,
+			ToTime:         input.ToTime,
+			RecipientEmail: identity.EmailAddress,
+			RecipientName:  identity.FullName,
+		},
+	)
+	if err != nil {
+		return nil, types.RequestSCIMEventExportOutput{}, fmt.Errorf("cannot request SCIM event export: %w", err)
+	}
+
+	return nil, types.RequestSCIMEventExportOutput{
+		LogExportID: logExport.ID,
+	}, nil
+}

@@ -222,6 +222,7 @@ const (
 	subjectMailingListSubscription           = "%s – Confirm Your Compliance Updates Subscription"
 	subjectMailingListUnsubscription         = "%s – You've been unsubscribed"
 	subjectMailingListUpdates                = "%s – %s"
+	subjectLogExport                         = "Your log export is ready"
 )
 
 var (
@@ -251,6 +252,8 @@ var (
 	mailingListUnsubscriptionTextTemplate         = texttemplate.Must(texttemplate.ParseFS(Templates, "dist/mailing-list-unsubscription.txt.tmpl"))
 	mailingListUpdatesHTMLTemplate                = htmltemplate.Must(htmltemplate.ParseFS(Templates, "dist/mailing-list-updates.html.tmpl"))
 	mailingListUpdatesTextTemplate                = texttemplate.Must(texttemplate.ParseFS(Templates, "dist/mailing-list-updates.txt.tmpl"))
+	logExportHTMLTemplate                         = htmltemplate.Must(htmltemplate.ParseFS(Templates, "dist/log-export.html.tmpl"))
+	logExportTextTemplate                         = texttemplate.Must(texttemplate.ParseFS(Templates, "dist/log-export.txt.tmpl"))
 )
 
 func (p *Presenter) getCommonVariables(ctx context.Context) (*CommonVariables, error) {
@@ -412,6 +415,24 @@ func (p *Presenter) RenderFrameworkExport(ctx context.Context, downloadUrl strin
 
 	textBody, htmlBody, err = renderEmail(frameworkExportTextTemplate, frameworkExportHTMLTemplate, data)
 	return subjectFrameworkExport, textBody, htmlBody, err
+}
+
+func (p *Presenter) RenderLogExport(ctx context.Context, downloadUrl string) (subject string, textBody string, htmlBody *string, err error) {
+	vars, err := p.getCommonVariables(ctx)
+	if err != nil {
+		return "", "", nil, fmt.Errorf("cannot get common variables: %w", err)
+	}
+
+	data := struct {
+		*CommonVariables
+		DownloadUrl string
+	}{
+		CommonVariables: vars,
+		DownloadUrl:     downloadUrl,
+	}
+
+	textBody, htmlBody, err = renderEmail(logExportTextTemplate, logExportHTMLTemplate, data)
+	return subjectLogExport, textBody, htmlBody, err
 }
 
 func (p *Presenter) RenderTrustCenterAccess(ctx context.Context, organizationName string) (subject string, textBody string, htmlBody *string, err error) {

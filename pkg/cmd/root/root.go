@@ -29,6 +29,7 @@ import (
 	"go.probo.inc/probo/pkg/cmd/framework"
 	"go.probo.inc/probo/pkg/cmd/org"
 	"go.probo.inc/probo/pkg/cmd/risk"
+	"go.probo.inc/probo/pkg/cmd/scimevent"
 	"go.probo.inc/probo/pkg/cmd/soa"
 	"go.probo.inc/probo/pkg/cmd/user"
 	"go.probo.inc/probo/pkg/cmd/version"
@@ -77,6 +78,7 @@ func NewCmdRoot(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(framework.NewCmdFramework(f))
 	cmd.AddCommand(org.NewCmdOrg(f))
 	cmd.AddCommand(risk.NewCmdRisk(f))
+	cmd.AddCommand(scimevent.NewCmdSCIMEvent(f))
 	cmd.AddCommand(soa.NewCmdSoa(f))
 	cmd.AddCommand(user.NewCmdUser(f))
 	cmd.AddCommand(version.NewCmdVersion(f))

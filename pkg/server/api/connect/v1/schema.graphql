@@ -134,6 +134,10 @@ type Mutation {
   updateSCIMBridge(
     input: UpdateSCIMBridgeInput!
   ): UpdateSCIMBridgePayload @session(required: PRESENT)
+
+  requestAuditLogExport(
+    input: RequestAuditLogExportInput!
+  ): RequestAuditLogExportPayload @session(required: PRESENT)
 }
 
 type Identity implements Node {
@@ -1032,4 +1036,14 @@ type RegenerateSCIMTokenPayload {
 
 type UpdateSCIMBridgePayload {
   scimBridge: SCIMBridge!
+}
+
+input RequestAuditLogExportInput {
+  organizationId: ID!
+  fromTime: Datetime!
+  toTime: Datetime!
+}
+
+type RequestAuditLogExportPayload {
+  logExportId: ID!
 }

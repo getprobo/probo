@@ -1212,6 +1212,35 @@ func (r *mutationResolver) UpdateSCIMBridge(ctx context.Context, input types.Upd
 	}, nil
 }
 
+// RequestAuditLogExport is the resolver for the requestAuditLogExport field.
+func (r *mutationResolver) RequestAuditLogExport(ctx context.Context, input types.RequestAuditLogExportInput) (*types.RequestAuditLogExportPayload, error) {
+	if err := r.authorize(ctx, input.OrganizationID, iam.ActionAuditLogExport); err != nil {
+		return nil, err
+	}
+
+	identity := authn.IdentityFromContext(ctx)
+
+	logExport, err := r.iam.OrganizationService.RequestLogExport(
+		ctx,
+		iam.RequestLogExportRequest{
+			OrganizationID: input.OrganizationID,
+			Type:           coredata.LogExportTypeAuditLog,
+			FromTime:       input.FromTime,
+			ToTime:         input.ToTime,
+			RecipientEmail: identity.EmailAddress,
+			RecipientName:  identity.FullName,
+		},
+	)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot request audit log export", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.RequestAuditLogExportPayload{
+		LogExportID: logExport.ID,
+	}, nil
+}
+
 // LogoURL is the resolver for the logoUrl field.
 func (r *organizationResolver) LogoURL(ctx context.Context, obj *types.Organization) (*string, error) {
 	if err := r.authorize(ctx, obj.ID, iam.ActionOrganizationGet, authz.WithSkipAssumptionCheck()); err != nil {

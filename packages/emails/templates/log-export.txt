@@ -1,0 +1,12 @@
+Probo
+
+Hi {{.RecipientFullName}},
+
+Your log export has been completed successfully. Click the link below to download it:
+
+{{.DownloadUrl}}
+
+This link will expire in 24 hours.
+
+{{.SenderCompanyHeadquarterAddress}}
+Powered By Probo
