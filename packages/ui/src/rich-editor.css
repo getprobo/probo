@@ -6,7 +6,7 @@
 
 .tiptap {
     p {
-        @apply my-2;
+        @apply my-2 min-w-0.5;
         code { @apply py-0.5 px-1; }
     }
 
@@ -22,7 +22,7 @@
         @apply list-disc list-inside my-2;
 
         li {
-            p { @apply inline-block my-0 }
+            p { @apply inline-block my-0; }
         }
         li::marker { @apply mx-2!; }
     }
@@ -31,7 +31,7 @@
         @apply list-decimal list-inside my-2;
 
         li {
-            p { @apply inline-block my-0 }
+            p { @apply inline-block my-0; }
         }
         li::marker { @apply mx-2!; }
     }
