@@ -106,6 +106,8 @@ export function RichEditor(props: RichEditorProps) {
     }
   }, [content, watchedContent, onChangeContent]);
 
+  if (!editor) return null;
+
   return (
     <div className={richEditorVariants({ className })}>
       <BubbleMenu editor={editor} />
