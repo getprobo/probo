@@ -423,6 +423,24 @@ export function TableColumnMenu({ editor }: TableColumnMenuProps) {
           // table may have changed
         }
       } else {
+        try {
+          const table = editor.state.doc.nodeAt(tableStart - 1);
+          if (table) {
+            const map = TableMap.get(table);
+            const anchorPos
+              = map.positionAt(0, fromCol, table) + tableStart;
+            const headPos
+              = map.positionAt(map.height - 1, fromCol, table) + tableStart;
+            const sel = CellSelection.create(
+              view.state.doc,
+              anchorPos,
+              headPos,
+            );
+            view.dispatch(view.state.tr.setSelection(sel));
+          }
+        } catch {
+          // table may have changed
+        }
         setMenuOpen(prev => !prev);
       }
 
