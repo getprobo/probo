@@ -450,19 +450,17 @@ export function TableColumnMenu({ editor }: TableColumnMenuProps) {
       if (!table) return;
 
       const map = TableMap.get(table);
-      const { tr, schema } = editor.state;
-      const targetType = isHeaderColumn()
-        ? schema.nodes.tableCell
-        : schema.nodes.tableHeader;
+      const cellPos = map.positionAt(0, 0, table) + tableStart;
 
-      for (let row = 0; row < map.height; row++) {
-        const cellPos = map.map[row * map.width] + tableStart;
-        const cellNode = editor.state.doc.nodeAt(cellPos);
-        if (!cellNode) continue;
-        tr.setNodeMarkup(cellPos, targetType, cellNode.attrs);
-      }
-
-      editor.view.dispatch(tr);
+      editor
+        .chain()
+        .focus()
+        .command(({ tr }) => {
+          tr.setSelection(TextSelection.create(tr.doc, cellPos + 1));
+          return true;
+        })
+        .toggleHeaderColumn()
+        .run();
     } catch {
       // table may have changed
     }
@@ -503,26 +501,26 @@ export function TableColumnMenu({ editor }: TableColumnMenuProps) {
     const { colIndex, tableStart } = currentCol;
 
     try {
-      const tableNodePos = tableStart - 1;
-      const table = editor.state.doc.nodeAt(tableNodePos);
+      const table = editor.state.doc.nodeAt(tableStart - 1);
       if (!table) return;
 
-      const rows: PMNode[] = [];
-      table.forEach((row) => {
-        const cells: PMNode[] = [];
-        row.forEach((cell, _offset, i) => {
-          cells.push(cell);
-          if (i === colIndex) {
-            cells.push(cell.copy(cell.content));
-          }
-        });
-        rows.push(row.type.create(row.attrs, cells));
-      });
+      const map = TableMap.get(table);
 
-      const newTable = table.type.create(table.attrs, rows);
-      const { tr } = editor.state;
-      tr.replaceWith(tableNodePos, tableNodePos + table.nodeSize, newTable);
-      editor.view.dispatch(tr);
+      editor
+        .chain()
+        .focus()
+        .command(({ tr }) => {
+          for (let row = map.height - 1; row >= 0; row--) {
+            const cellOffset = map.map[row * map.width + colIndex];
+            const cell = table.nodeAt(cellOffset);
+            if (!cell) continue;
+
+            const insertPos = cellOffset + tableStart + cell.nodeSize;
+            tr.insert(insertPos, cell);
+          }
+          return true;
+        })
+        .run();
     } catch {
       // table may have changed
     }
@@ -593,25 +591,17 @@ export function TableColumnMenu({ editor }: TableColumnMenuProps) {
       if (!table) return;
 
       const map = TableMap.get(table);
-      const { tr } = editor.state;
-      const { schema } = editor.state;
+      const firstCellPos = map.map[colIndex] + tableStart;
+      const lastCellPos
+        = map.map[(map.height - 1) * map.width + colIndex] + tableStart;
 
-      for (let row = 0; row < map.height; row++) {
-        const cellPos = map.map[row * map.width + colIndex] + tableStart;
-        const cellNode = editor.state.doc.nodeAt(cellPos);
-        if (!cellNode) continue;
+      const $anchor = editor.state.doc.resolve(firstCellPos);
+      const $head = editor.state.doc.resolve(lastCellPos);
 
-        const start = cellPos + 1;
-        const end = cellPos + cellNode.nodeSize - 1;
-
-        tr.replaceWith(
-          tr.mapping.map(start),
-          tr.mapping.map(end),
-          schema.nodes.paragraph.create(),
-        );
-      }
-
-      editor.view.dispatch(tr);
+      editor.view.dispatch(
+        editor.state.tr.setSelection(new CellSelection($anchor, $head)),
+      );
+      editor.commands.deleteSelection();
     } catch {
       // table may have changed
     }
