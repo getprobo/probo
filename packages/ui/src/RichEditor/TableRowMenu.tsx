@@ -16,6 +16,7 @@ import {
 import {
   BroomIcon,
   CopyIcon,
+  CrownSimpleIcon,
   DotsThreeVerticalIcon,
   PlusIcon,
   TrashIcon,
@@ -449,6 +450,54 @@ export function TableRowMenu({ editor }: TableRowMenuProps) {
 
   const currentRow = hoveredRow;
 
+  const isFirstRow = currentRow?.rowIndex === 0;
+
+  const isHeaderRow = (): boolean => {
+    if (!currentRow || currentRow.rowIndex !== 0) return false;
+    try {
+      const table = editor.state.doc.nodeAt(currentRow.tableStart - 1);
+      if (!table) return false;
+      const map = TableMap.get(table);
+      for (let col = 0; col < map.width; col++) {
+        const cellPos = map.map[col] + currentRow.tableStart;
+        const cellNode = editor.state.doc.nodeAt(cellPos);
+        if (!cellNode || cellNode.type.name !== "tableHeader") return false;
+      }
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  const handleToggleHeaderRow = () => {
+    if (!currentRow || currentRow.rowIndex !== 0) return;
+    const { tableStart } = currentRow;
+
+    try {
+      const table = editor.state.doc.nodeAt(tableStart - 1);
+      if (!table) return;
+
+      const map = TableMap.get(table);
+      const { tr, schema } = editor.state;
+      const targetType = isHeaderRow()
+        ? schema.nodes.tableCell
+        : schema.nodes.tableHeader;
+
+      for (let col = 0; col < map.width; col++) {
+        const cellPos = map.map[col] + tableStart;
+        const cellNode = editor.state.doc.nodeAt(cellPos);
+        if (!cellNode) continue;
+        tr.setNodeMarkup(cellPos, targetType, cellNode.attrs);
+      }
+
+      editor.view.dispatch(tr);
+    } catch {
+      // table may have changed
+    }
+
+    setMenuOpen(false);
+  };
+
   const handleDeleteRow = () => {
     if (!currentRow) return;
     const { rowIndex, tableStart } = currentRow;
@@ -626,6 +675,12 @@ export function TableRowMenu({ editor }: TableRowMenuProps) {
           onMouseDown={e => e.preventDefault()}
           className={menu()}
         >
+          {isFirstRow && (
+            <MenuButton active={isHeaderRow()} onClick={handleToggleHeaderRow}>
+              <CrownSimpleIcon size={16} weight="bold" />
+              Header row
+            </MenuButton>
+          )}
           <MenuButton onClick={handleInsertAbove}>
             <PlusIcon size={16} weight="bold" />
             Insert row above
