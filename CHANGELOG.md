@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.152.0] - 2026-03-25
+
+### Added
+
+- Add GraphQL dataloaders for batched record lookups
+- Check CAA records before ACME certificate issuance
+
+### Fixed
+
+- Fix Microsoft OIDC token exchange auth style
+- Fix SCIM bridge updating all users on every sync
+- Fix ACME challenge retry to create fresh orders
+
 ## [0.151.0] - 2026-03-24
 
 ### Added
