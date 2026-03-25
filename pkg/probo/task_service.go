@@ -162,6 +162,34 @@ func (s TaskService) Get(
 	return task, nil
 }
 
+func (s TaskService) GetByIDs(
+	ctx context.Context,
+	taskIDs ...gid.GID,
+) (coredata.Tasks, error) {
+	var tasks coredata.Tasks
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			if err := tasks.LoadByIDs(
+				ctx,
+				conn,
+				s.svc.scope,
+				taskIDs,
+			); err != nil {
+				return fmt.Errorf("cannot load tasks by ids: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return tasks, nil
+}
+
 func (s TaskService) Assign(
 	ctx context.Context,
 	taskID gid.GID,

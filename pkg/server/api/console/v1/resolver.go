@@ -37,6 +37,7 @@ import (
 	"go.probo.inc/probo/pkg/securecookie"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/authz"
+	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 )
 
@@ -74,6 +75,7 @@ func NewMux(
 		r.Use(authn.NewSessionMiddleware(iamSvc, cookieConfig))
 		r.Use(authn.NewAPIKeyMiddleware(iamSvc, tokenSecret))
 		r.Use(authn.NewIdentityPresenceMiddleware())
+		r.Use(dataloader.NewMiddleware(proboSvc, iamSvc))
 
 		r.Handle("/graphql", graphqlHandler)
 

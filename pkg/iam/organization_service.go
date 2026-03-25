@@ -1073,6 +1073,35 @@ func (s *OrganizationService) GetProfile(ctx context.Context, profileID gid.GID)
 	return profile, nil
 }
 
+func (s *OrganizationService) GetProfilesByIDs(
+	ctx context.Context,
+	scope coredata.Scoper,
+	profileIDs ...gid.GID,
+) (coredata.MembershipProfiles, error) {
+	var profiles coredata.MembershipProfiles
+
+	err := s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			if err := profiles.LoadByIDs(
+				ctx,
+				conn,
+				scope,
+				profileIDs,
+			); err != nil {
+				return fmt.Errorf("cannot load profiles by ids: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return profiles, nil
+}
+
 func (s *OrganizationService) GetProfileForIdentityAndOrganization(ctx context.Context, identityID gid.GID, organizationID gid.GID) (*coredata.MembershipProfile, error) {
 	profile := &coredata.MembershipProfile{}
 

@@ -720,6 +720,51 @@ LIMIT 1;
 	return nil
 }
 
+func (c *Controls) LoadByIDs(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	controlIDs []gid.GID,
+) error {
+	q := `
+SELECT
+    id,
+    section_title,
+    framework_id,
+    organization_id,
+    name,
+    description,
+    best_practice,
+    implemented,
+    not_implemented_justification,
+    created_at,
+    updated_at
+FROM
+    controls
+WHERE
+    %s
+    AND id = ANY(@control_ids)
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"control_ids": controlIDs}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query controls: %w", err)
+	}
+
+	controls, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Control])
+	if err != nil {
+		return fmt.Errorf("cannot collect controls: %w", err)
+	}
+
+	*c = controls
+
+	return nil
+}
+
 func (c Control) Insert(
 	ctx context.Context,
 	conn pg.Conn,
