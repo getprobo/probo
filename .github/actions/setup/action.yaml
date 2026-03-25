@@ -1,0 +1,30 @@
+name: "Setup"
+description: "Set up Go and/or Node.js toolchains"
+inputs:
+  go:
+    description: "Set up Go toolchain and download modules"
+    required: false
+    default: "true"
+  node:
+    description: "Set up Node.js and install dependencies"
+    required: false
+    default: "true"
+runs:
+  using: "composite"
+  steps:
+    - if: inputs.go == 'true'
+      uses: "actions/setup-go@v6"
+      with:
+        go-version: "1.26.1"
+        cache: true
+    - if: inputs.go == 'true'
+      shell: bash
+      run: go mod download
+    - if: inputs.node == 'true'
+      uses: "actions/setup-node@v6"
+      with:
+        node-version-file: ".nvmrc"
+        cache: "npm"
+    - if: inputs.node == 'true'
+      shell: bash
+      run: npm ci
