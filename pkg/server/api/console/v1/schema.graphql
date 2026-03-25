@@ -4464,7 +4464,7 @@ input DeleteVendorDataPrivacyAgreementInput {
 input CreateDocumentInput {
     organizationId: ID!
     title: String!
-    content: String!
+    content: String
     approverIds: [ID!]!
     documentType: DocumentType!
     classification: DocumentClassification!
