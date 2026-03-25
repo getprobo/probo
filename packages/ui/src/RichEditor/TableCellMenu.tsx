@@ -12,7 +12,7 @@ import {
   useFloatingRootContext,
   useInteractions,
 } from "@floating-ui/react";
-import { BroomIcon, CircleIcon, DotsThreeCircleVerticalIcon, IntersectIcon } from "@phosphor-icons/react";
+import { BroomIcon, CircleIcon, DotsThreeCircleVerticalIcon, IntersectIcon, SplitHorizontalIcon } from "@phosphor-icons/react";
 import { TextSelection } from "@tiptap/pm/state";
 import { cellAround, CellSelection, TableMap } from "@tiptap/pm/tables";
 import { type useEditor, useEditorState } from "@tiptap/react";
@@ -263,6 +263,32 @@ export function TableCellMenu({ editor }: TableCellMenuProps) {
     setMenuOpen(false);
   };
 
+  const hasSpannedCell = (): boolean => {
+    const { selection } = editor.state;
+
+    if (selection instanceof CellSelection) {
+      let found = false;
+      selection.forEachCell((node) => {
+        if (node.attrs.colspan > 1 || node.attrs.rowspan > 1) {
+          found = true;
+        }
+      });
+      return found;
+    }
+
+    const $pos = editor.state.doc.resolve(selection.from);
+    const cell = cellAround($pos);
+    if (!cell) return false;
+    const cellNode = editor.state.doc.nodeAt(cell.pos);
+    if (!cellNode) return false;
+    return cellNode.attrs.colspan > 1 || cellNode.attrs.rowspan > 1;
+  };
+
+  const handleSplitCell = () => {
+    editor.chain().focus().splitCell().run();
+    setMenuOpen(false);
+  };
+
   const handleClearContents = () => {
     const { state, dispatch } = editor.view;
     const { selection, schema } = state;
@@ -346,6 +372,12 @@ export function TableCellMenu({ editor }: TableCellMenuProps) {
             <IntersectIcon size={16} weight="bold" />
             Merge cells
           </MenuButton>
+          {hasSpannedCell() && (
+            <MenuButton onClick={handleSplitCell}>
+              <SplitHorizontalIcon size={16} weight="bold" />
+              Split cells
+            </MenuButton>
+          )}
           <MenuButton onClick={handleClearContents}>
             <BroomIcon size={16} weight="bold" />
             Clear contents
