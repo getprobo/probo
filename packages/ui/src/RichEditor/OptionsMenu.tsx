@@ -296,7 +296,6 @@ export function OptionsMenu({ editor }: OptionsMenuProps) {
           menuRefs.setReference(node);
         }}
         {...getReferenceProps()}
-        onMouseDown={e => e.preventDefault()}
         draggable
         onDragStart={onDragStart}
         onDragEnd={() => setHoveredBlock(null)}
