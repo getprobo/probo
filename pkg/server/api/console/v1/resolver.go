@@ -201,6 +201,7 @@ func NewMux(
 			}
 			q := parsedURL.Query()
 			q.Set("connector_id", connector.ID.String())
+			q.Set("provider", string(connectorProvider))
 			parsedURL.RawQuery = q.Encode()
 
 			safeRedirect.Redirect(w, r, parsedURL.String(), "/", http.StatusSeeOther)

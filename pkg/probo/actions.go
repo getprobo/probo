@@ -350,15 +350,15 @@ const (
 	ActionWebhookSubscriptionDelete = "core:webhook-subscription:delete"
 
 	// AccessReviewCampaign actions
-	ActionAccessReviewCampaignGet    = "core:access-review-campaign:get"
-	ActionAccessReviewCampaignList   = "core:access-review-campaign:list"
-	ActionAccessReviewCampaignCreate = "core:access-review-campaign:create"
-	ActionAccessReviewCampaignUpdate = "core:access-review-campaign:update"
-	ActionAccessReviewCampaignDelete = "core:access-review-campaign:delete"
-	ActionAccessReviewCampaignStart            = "core:access-review-campaign:start"
-	ActionAccessReviewCampaignClose            = "core:access-review-campaign:close"
-	ActionAccessReviewCampaignCancel           = "core:access-review-campaign:cancel"
-	ActionAccessReviewCampaignAddScopeSource   = "core:access-review-campaign:add-scope-source"
+	ActionAccessReviewCampaignGet               = "core:access-review-campaign:get"
+	ActionAccessReviewCampaignList              = "core:access-review-campaign:list"
+	ActionAccessReviewCampaignCreate            = "core:access-review-campaign:create"
+	ActionAccessReviewCampaignUpdate            = "core:access-review-campaign:update"
+	ActionAccessReviewCampaignDelete            = "core:access-review-campaign:delete"
+	ActionAccessReviewCampaignStart             = "core:access-review-campaign:start"
+	ActionAccessReviewCampaignClose             = "core:access-review-campaign:close"
+	ActionAccessReviewCampaignCancel            = "core:access-review-campaign:cancel"
+	ActionAccessReviewCampaignAddScopeSource    = "core:access-review-campaign:add-scope-source"
 	ActionAccessReviewCampaignRemoveScopeSource = "core:access-review-campaign:remove-scope-source"
 
 	// AccessEntry actions

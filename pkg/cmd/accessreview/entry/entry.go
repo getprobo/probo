@@ -16,6 +16,8 @@ package entry
 
 import (
 	"github.com/spf13/cobra"
+	"go.probo.inc/probo/pkg/cmd/accessreview/entry/decide"
+	"go.probo.inc/probo/pkg/cmd/accessreview/entry/decideall"
 	entryflag "go.probo.inc/probo/pkg/cmd/accessreview/entry/flag"
 	"go.probo.inc/probo/pkg/cmd/accessreview/entry/list"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
@@ -29,6 +31,8 @@ func NewCmdEntry(f *cmdutil.Factory) *cobra.Command {
 
 	cmd.AddCommand(list.NewCmdList(f))
 	cmd.AddCommand(entryflag.NewCmdFlag(f))
+	cmd.AddCommand(decide.NewCmdDecide(f))
+	cmd.AddCommand(decideall.NewCmdDecideAll(f))
 
 	return cmd
 }

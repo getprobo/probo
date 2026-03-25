@@ -66,7 +66,8 @@ export default function AccessReviewLayout({
       <Outlet context={{
         organizationRef: organization,
         canCreateSource: organization.canCreateSource,
-      }} />
+      }}
+      />
     </div>
   );
 }

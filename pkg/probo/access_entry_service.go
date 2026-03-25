@@ -138,6 +138,19 @@ func (s AccessEntryService) RecordDecision(
 				return err
 			}
 
+			history := &coredata.AccessEntryDecisionHistory{
+				ID:           gid.New(s.svc.scope.GetTenantID(), coredata.AccessEntryDecisionHistoryEntityType),
+				AccessEntry:  entry.ID,
+				Decision:     entry.Decision,
+				DecisionNote: entry.DecisionNote,
+				DecidedBy:    entry.DecidedBy,
+				DecidedAt:    *entry.DecidedAt,
+				CreatedAt:    now,
+			}
+			if err := history.Insert(ctx, conn, s.svc.scope); err != nil {
+				return fmt.Errorf("cannot insert decision history: %w", err)
+			}
+
 			return nil
 		},
 	)
@@ -222,6 +235,19 @@ func (s AccessEntryService) RecordDecisions(
 
 				if err := entry.RecordDecision(ctx, conn, s.svc.scope); err != nil {
 					return fmt.Errorf("cannot record decision for entry %s: %w", d.EntryID, err)
+				}
+
+				history := &coredata.AccessEntryDecisionHistory{
+					ID:           gid.New(s.svc.scope.GetTenantID(), coredata.AccessEntryDecisionHistoryEntityType),
+					AccessEntry:  entry.ID,
+					Decision:     entry.Decision,
+					DecisionNote: entry.DecisionNote,
+					DecidedBy:    entry.DecidedBy,
+					DecidedAt:    *entry.DecidedAt,
+					CreatedAt:    now,
+				}
+				if err := history.Insert(ctx, conn, s.svc.scope); err != nil {
+					return fmt.Errorf("cannot insert decision history for entry %s: %w", d.EntryID, err)
 				}
 			}
 
@@ -367,6 +393,25 @@ func (s AccessEntryService) CountForCampaignIDAndSourceID(
 	}
 
 	return count, nil
+}
+
+func (s AccessEntryService) DecisionHistory(
+	ctx context.Context,
+	entryID gid.GID,
+) (coredata.AccessEntryDecisionHistories, error) {
+	var histories coredata.AccessEntryDecisionHistories
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			return histories.LoadByEntryID(ctx, conn, s.svc.scope, entryID)
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return histories, nil
 }
 
 func (s AccessEntryService) Statistics(

@@ -40,6 +40,7 @@ type (
 		IsAdmin                bool                      `db:"is_admin"`
 		MFAStatus              MFAStatus                 `db:"mfa_status"`
 		AuthMethod             AccessEntryAuthMethod     `db:"auth_method"`
+		AccountType            AccessEntryAccountType    `db:"account_type"`
 		LastLogin              *time.Time                `db:"last_login"`
 		AccountCreatedAt       *time.Time                `db:"account_created_at"`
 		ExternalID             string                    `db:"external_id"`
@@ -106,6 +107,7 @@ SELECT
     is_admin,
     mfa_status,
     auth_method,
+    account_type,
     last_login,
     account_created_at,
     external_id,
@@ -169,6 +171,7 @@ INSERT INTO
         is_admin,
         mfa_status,
         auth_method,
+        account_type,
         last_login,
         account_created_at,
         external_id,
@@ -196,6 +199,7 @@ VALUES (
     @is_admin,
     @mfa_status,
     @auth_method,
+    @account_type,
     @last_login,
     @account_created_at,
     @external_id,
@@ -225,6 +229,7 @@ VALUES (
 		"is_admin":                  e.IsAdmin,
 		"mfa_status":                e.MFAStatus,
 		"auth_method":               e.AuthMethod,
+		"account_type":              e.AccountType,
 		"last_login":                e.LastLogin,
 		"account_created_at":        e.AccountCreatedAt,
 		"external_id":               e.ExternalID,
@@ -313,6 +318,7 @@ SELECT
     is_admin,
     mfa_status,
     auth_method,
+    account_type,
     last_login,
     account_created_at,
     external_id,
@@ -378,6 +384,7 @@ SELECT
     is_admin,
     mfa_status,
     auth_method,
+    account_type,
     last_login,
     account_created_at,
     external_id,
@@ -635,6 +642,7 @@ INSERT INTO access_entries (
     is_admin,
     mfa_status,
     auth_method,
+    account_type,
     last_login,
     account_created_at,
     external_id,
@@ -661,6 +669,7 @@ INSERT INTO access_entries (
     @is_admin,
     @mfa_status,
     @auth_method,
+    @account_type,
     @last_login,
     @account_created_at,
     @external_id,
@@ -683,6 +692,7 @@ ON CONFLICT (access_review_campaign_id, access_source_id, account_key) DO UPDATE
     is_admin = EXCLUDED.is_admin,
     mfa_status = EXCLUDED.mfa_status,
     auth_method = EXCLUDED.auth_method,
+    account_type = EXCLUDED.account_type,
     last_login = EXCLUDED.last_login,
     account_created_at = EXCLUDED.account_created_at,
     external_id = EXCLUDED.external_id,
@@ -702,6 +712,7 @@ ON CONFLICT (access_review_campaign_id, access_source_id, account_key) DO UPDATE
 		"is_admin":                  e.IsAdmin,
 		"mfa_status":                e.MFAStatus,
 		"auth_method":               e.AuthMethod,
+		"account_type":              e.AccountType,
 		"last_login":                e.LastLogin,
 		"account_created_at":        e.AccountCreatedAt,
 		"external_id":               e.ExternalID,

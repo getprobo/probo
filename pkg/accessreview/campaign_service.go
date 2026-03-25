@@ -56,6 +56,7 @@ func (s *CampaignService) Create(
 		ID:                gid.New(s.scope.GetTenantID(), coredata.AccessReviewCampaignEntityType),
 		OrganizationID:    req.OrganizationID,
 		Name:              req.Name,
+		Description:       req.Description,
 		Status:            coredata.AccessReviewCampaignStatusDraft,
 		FrameworkControls: req.FrameworkControls,
 		CreatedAt:         now,
@@ -144,6 +145,10 @@ func (s *CampaignService) Update(
 
 			if req.Name != nil {
 				campaign.Name = *req.Name
+			}
+
+			if req.Description != nil {
+				campaign.Description = *req.Description
 			}
 
 			if req.FrameworkControls != nil {

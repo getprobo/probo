@@ -16,6 +16,7 @@ package console_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -775,6 +776,440 @@ func TestAccessReviewCampaign_Cancel(t *testing.T) {
 
 	assert.Equal(t, campaignID, result.CancelAccessReviewCampaign.AccessReviewCampaign.ID)
 	assert.Equal(t, "CANCELLED", result.CancelAccessReviewCampaign.AccessReviewCampaign.Status)
+}
+
+func TestAccessReviewCampaign_Description(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	orgID := owner.GetOrganizationID().String()
+
+	t.Run("create with description", func(t *testing.T) {
+		t.Parallel()
+
+		const query = `
+			mutation($input: CreateAccessReviewCampaignInput!) {
+				createAccessReviewCampaign(input: $input) {
+					accessReviewCampaignEdge {
+						node {
+							id
+							name
+							description
+						}
+					}
+				}
+			}
+		`
+
+		var result struct {
+			CreateAccessReviewCampaign struct {
+				AccessReviewCampaignEdge struct {
+					Node struct {
+						ID          string `json:"id"`
+						Name        string `json:"name"`
+						Description string `json:"description"`
+					} `json:"node"`
+				} `json:"accessReviewCampaignEdge"`
+			} `json:"createAccessReviewCampaign"`
+		}
+
+		err := owner.Execute(query, map[string]any{
+			"input": map[string]any{
+				"organizationId": orgID,
+				"name":           "Q1 Review with Desc",
+				"description":    "Quarterly review of all SaaS access",
+			},
+		}, &result)
+		require.NoError(t, err)
+
+		node := result.CreateAccessReviewCampaign.AccessReviewCampaignEdge.Node
+		assert.Equal(t, "Q1 Review with Desc", node.Name)
+		assert.Equal(t, "Quarterly review of all SaaS access", node.Description)
+	})
+
+	t.Run("update description", func(t *testing.T) {
+		t.Parallel()
+
+		campaignID := factory.NewAccessReviewCampaign(owner, orgID).
+			WithName("Description Update Test").
+			Create()
+
+		const query = `
+			mutation($input: UpdateAccessReviewCampaignInput!) {
+				updateAccessReviewCampaign(input: $input) {
+					accessReviewCampaign {
+						id
+						description
+					}
+				}
+			}
+		`
+
+		var result struct {
+			UpdateAccessReviewCampaign struct {
+				AccessReviewCampaign struct {
+					ID          string `json:"id"`
+					Description string `json:"description"`
+				} `json:"accessReviewCampaign"`
+			} `json:"updateAccessReviewCampaign"`
+		}
+
+		err := owner.Execute(query, map[string]any{
+			"input": map[string]any{
+				"accessReviewCampaignId": campaignID,
+				"description":            "Updated description",
+			},
+		}, &result)
+		require.NoError(t, err)
+
+		assert.Equal(t, campaignID, result.UpdateAccessReviewCampaign.AccessReviewCampaign.ID)
+		assert.Equal(t, "Updated description", result.UpdateAccessReviewCampaign.AccessReviewCampaign.Description)
+	})
+}
+
+func TestAccessReviewCampaign_FullLifecycle(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	orgID := owner.GetOrganizationID().String()
+
+	// Step 1: Create a CSV source with test data
+	sourceID := factory.NewAccessSource(owner, orgID).
+		WithName("Lifecycle Test Source").
+		WithCsvData(testCsvData).
+		Create()
+
+	// Step 2: Create a campaign with a description and the source
+	const createQuery = `
+		mutation($input: CreateAccessReviewCampaignInput!) {
+			createAccessReviewCampaign(input: $input) {
+				accessReviewCampaignEdge {
+					node {
+						id
+						name
+						description
+						status
+						scopeSources {
+							id
+						}
+					}
+				}
+			}
+		}
+	`
+
+	var createResult struct {
+		CreateAccessReviewCampaign struct {
+			AccessReviewCampaignEdge struct {
+				Node struct {
+					ID           string `json:"id"`
+					Name         string `json:"name"`
+					Description  string `json:"description"`
+					Status       string `json:"status"`
+					ScopeSources []struct {
+						ID string `json:"id"`
+					} `json:"scopeSources"`
+				} `json:"node"`
+			} `json:"accessReviewCampaignEdge"`
+		} `json:"createAccessReviewCampaign"`
+	}
+
+	err := owner.Execute(createQuery, map[string]any{
+		"input": map[string]any{
+			"organizationId":  orgID,
+			"name":            "Full Lifecycle Campaign",
+			"description":     "Testing the full lifecycle",
+			"accessSourceIds": []string{sourceID},
+		},
+	}, &createResult)
+	require.NoError(t, err)
+
+	campaignNode := createResult.CreateAccessReviewCampaign.AccessReviewCampaignEdge.Node
+	campaignID := campaignNode.ID
+	assert.Equal(t, "DRAFT", campaignNode.Status)
+	assert.Equal(t, "Testing the full lifecycle", campaignNode.Description)
+	assert.Len(t, campaignNode.ScopeSources, 1)
+
+	// Step 3: Start the campaign (triggers worker to fetch CSV data)
+	const startQuery = `
+		mutation($input: StartAccessReviewCampaignInput!) {
+			startAccessReviewCampaign(input: $input) {
+				accessReviewCampaign {
+					id
+					status
+					startedAt
+				}
+			}
+		}
+	`
+
+	var startResult struct {
+		StartAccessReviewCampaign struct {
+			AccessReviewCampaign struct {
+				ID        string  `json:"id"`
+				Status    string  `json:"status"`
+				StartedAt *string `json:"startedAt"`
+			} `json:"accessReviewCampaign"`
+		} `json:"startAccessReviewCampaign"`
+	}
+
+	err = owner.Execute(startQuery, map[string]any{
+		"input": map[string]any{
+			"accessReviewCampaignId": campaignID,
+		},
+	}, &startResult)
+	require.NoError(t, err)
+	assert.Equal(t, "IN_PROGRESS", startResult.StartAccessReviewCampaign.AccessReviewCampaign.Status)
+	assert.NotNil(t, startResult.StartAccessReviewCampaign.AccessReviewCampaign.StartedAt)
+
+	// Step 4: Wait for the worker to process entries and move campaign to PENDING_ACTIONS.
+	// Poll the campaign status until it transitions.
+	const nodeQuery = `
+		query($id: ID!) {
+			node(id: $id) {
+				... on AccessReviewCampaign {
+					id
+					status
+					entries(first: 100) {
+						edges {
+							node {
+								id
+								email
+								fullName
+								decision
+							}
+						}
+						totalCount
+					}
+					statistics {
+						totalCount
+						decisionCounts {
+							decision
+							count
+						}
+					}
+				}
+			}
+		}
+	`
+
+	type campaignQueryResult struct {
+		Node struct {
+			ID      string `json:"id"`
+			Status  string `json:"status"`
+			Entries struct {
+				Edges []struct {
+					Node struct {
+						ID       string `json:"id"`
+						Email    string `json:"email"`
+						FullName string `json:"fullName"`
+						Decision string `json:"decision"`
+					} `json:"node"`
+				} `json:"edges"`
+				TotalCount int `json:"totalCount"`
+			} `json:"entries"`
+			Statistics struct {
+				TotalCount     int `json:"totalCount"`
+				DecisionCounts []struct {
+					Decision string `json:"decision"`
+					Count    int    `json:"count"`
+				} `json:"decisionCounts"`
+			} `json:"statistics"`
+		} `json:"node"`
+	}
+
+	var campaignResult campaignQueryResult
+	require.Eventually(t, func() bool {
+		err := owner.Execute(nodeQuery, map[string]any{"id": campaignID}, &campaignResult)
+		if err != nil {
+			return false
+		}
+		return campaignResult.Node.Status == "PENDING_ACTIONS"
+	}, 60*time.Second, 1*time.Second, "campaign should transition to PENDING_ACTIONS")
+
+	// Verify entries were created from CSV data
+	assert.GreaterOrEqual(t, campaignResult.Node.Entries.TotalCount, 1)
+	assert.Equal(t, campaignResult.Node.Entries.TotalCount, campaignResult.Node.Statistics.TotalCount)
+
+	// All entries should be PENDING
+	for _, edge := range campaignResult.Node.Entries.Edges {
+		assert.Equal(t, "PENDING", edge.Node.Decision)
+	}
+
+	// Step 5: Record decisions on all entries
+	const recordDecisionQuery = `
+		mutation($input: RecordAccessEntryDecisionInput!) {
+			recordAccessEntryDecision(input: $input) {
+				accessEntry {
+					id
+					decision
+					decidedAt
+					decisionHistory {
+						id
+						decision
+						decidedAt
+					}
+				}
+			}
+		}
+	`
+
+	for _, edge := range campaignResult.Node.Entries.Edges {
+		var decisionResult struct {
+			RecordAccessEntryDecision struct {
+				AccessEntry struct {
+					ID              string  `json:"id"`
+					Decision        string  `json:"decision"`
+					DecidedAt       *string `json:"decidedAt"`
+					DecisionHistory []struct {
+						ID       string `json:"id"`
+						Decision string `json:"decision"`
+					} `json:"decisionHistory"`
+				} `json:"accessEntry"`
+			} `json:"recordAccessEntryDecision"`
+		}
+
+		err = owner.Execute(recordDecisionQuery, map[string]any{
+			"input": map[string]any{
+				"accessEntryId": edge.Node.ID,
+				"decision":      "APPROVED",
+			},
+		}, &decisionResult)
+		require.NoError(t, err)
+
+		entry := decisionResult.RecordAccessEntryDecision.AccessEntry
+		assert.Equal(t, "APPROVED", entry.Decision)
+		assert.NotNil(t, entry.DecidedAt)
+
+		// Verify decision history was recorded
+		assert.Len(t, entry.DecisionHistory, 1)
+		assert.Equal(t, "APPROVED", entry.DecisionHistory[0].Decision)
+	}
+
+	// Step 6: Close the campaign
+	const closeQuery = `
+		mutation($input: CloseAccessReviewCampaignInput!) {
+			closeAccessReviewCampaign(input: $input) {
+				accessReviewCampaign {
+					id
+					status
+					completedAt
+				}
+			}
+		}
+	`
+
+	var closeResult struct {
+		CloseAccessReviewCampaign struct {
+			AccessReviewCampaign struct {
+				ID          string  `json:"id"`
+				Status      string  `json:"status"`
+				CompletedAt *string `json:"completedAt"`
+			} `json:"accessReviewCampaign"`
+		} `json:"closeAccessReviewCampaign"`
+	}
+
+	err = owner.Execute(closeQuery, map[string]any{
+		"input": map[string]any{
+			"accessReviewCampaignId": campaignID,
+		},
+	}, &closeResult)
+	require.NoError(t, err)
+
+	closedCampaign := closeResult.CloseAccessReviewCampaign.AccessReviewCampaign
+	assert.Equal(t, "COMPLETED", closedCampaign.Status)
+	assert.NotNil(t, closedCampaign.CompletedAt)
+}
+
+func TestAccessReviewCampaign_CloseRequiresAllDecisions(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	orgID := owner.GetOrganizationID().String()
+
+	sourceID := factory.NewAccessSource(owner, orgID).
+		WithName("Close Guard Source").
+		WithCsvData(testCsvData).
+		Create()
+
+	campaignID := factory.NewAccessReviewCampaign(owner, orgID).
+		WithName("Close Guard Campaign").
+		WithAccessSourceIDs([]string{sourceID}).
+		Create()
+
+	// Start the campaign
+	const startQuery = `
+		mutation($input: StartAccessReviewCampaignInput!) {
+			startAccessReviewCampaign(input: $input) {
+				accessReviewCampaign { id status }
+			}
+		}
+	`
+	err := owner.Execute(startQuery, map[string]any{
+		"input": map[string]any{
+			"accessReviewCampaignId": campaignID,
+		},
+	}, nil)
+	require.NoError(t, err)
+
+	// Wait for PENDING_ACTIONS
+	const nodeQuery = `
+		query($id: ID!) {
+			node(id: $id) {
+				... on AccessReviewCampaign { status }
+			}
+		}
+	`
+
+	require.Eventually(t, func() bool {
+		var r struct {
+			Node struct {
+				Status string `json:"status"`
+			} `json:"node"`
+		}
+		if err := owner.Execute(nodeQuery, map[string]any{"id": campaignID}, &r); err != nil {
+			return false
+		}
+		return r.Node.Status == "PENDING_ACTIONS"
+	}, 60*time.Second, 1*time.Second)
+
+	// Try to close without deciding — should fail
+	const closeQuery = `
+		mutation($input: CloseAccessReviewCampaignInput!) {
+			closeAccessReviewCampaign(input: $input) {
+				accessReviewCampaign { id status }
+			}
+		}
+	`
+
+	_, err = owner.Do(closeQuery, map[string]any{
+		"input": map[string]any{
+			"accessReviewCampaignId": campaignID,
+		},
+	})
+	require.Error(t, err, "closing a campaign with undecided entries should fail")
+}
+
+func TestAccessReviewCampaign_StartWithoutSourcesFails(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	orgID := owner.GetOrganizationID().String()
+
+	campaignID := factory.NewAccessReviewCampaign(owner, orgID).
+		WithName("No Sources Campaign").
+		Create()
+
+	const startQuery = `
+		mutation($input: StartAccessReviewCampaignInput!) {
+			startAccessReviewCampaign(input: $input) {
+				accessReviewCampaign { id status }
+			}
+		}
+	`
+
+	_, err := owner.Do(startQuery, map[string]any{
+		"input": map[string]any{
+			"accessReviewCampaignId": campaignID,
+		},
+	})
+	require.Error(t, err, "starting a campaign without sources should fail")
 }
 
 func TestAccessReview_TenantIsolation(t *testing.T) {

@@ -170,6 +170,7 @@ func NewAccessReviewCampaign(c *coredata.AccessReviewCampaign) *AccessReviewCamp
 			ID: c.OrganizationID,
 		},
 		Name:              c.Name,
+		Description:       c.Description,
 		Status:            c.Status,
 		StartedAt:         c.StartedAt,
 		CompletedAt:       c.CompletedAt,
@@ -179,6 +180,22 @@ func NewAccessReviewCampaign(c *coredata.AccessReviewCampaign) *AccessReviewCamp
 	}
 
 	return campaign
+}
+
+func NewAccessEntryDecisionHistoryEntry(h *coredata.AccessEntryDecisionHistory) *AccessEntryDecisionHistoryEntry {
+	entry := &AccessEntryDecisionHistoryEntry{
+		ID:           h.ID,
+		Decision:     h.Decision,
+		DecisionNote: h.DecisionNote,
+		DecidedAt:    h.DecidedAt,
+		CreatedAt:    h.CreatedAt,
+	}
+
+	if h.DecidedBy != nil {
+		entry.DecidedBy = h.DecidedBy
+	}
+
+	return entry
 }
 
 // AccessEntry helpers
@@ -230,6 +247,7 @@ func NewAccessEntry(e *coredata.AccessEntry) *AccessEntry {
 		IsAdmin:          e.IsAdmin,
 		MfaStatus:        e.MFAStatus,
 		AuthMethod:       e.AuthMethod,
+		AccountType:      e.AccountType,
 		LastLogin:        e.LastLogin,
 		AccountCreatedAt: e.AccountCreatedAt,
 		ExternalID:       e.ExternalID,
@@ -249,4 +267,3 @@ func NewAccessEntry(e *coredata.AccessEntry) *AccessEntry {
 
 	return entry
 }
-

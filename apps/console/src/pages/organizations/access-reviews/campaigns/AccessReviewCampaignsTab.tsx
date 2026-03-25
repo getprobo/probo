@@ -103,7 +103,7 @@ export default function AccessReviewCampaignsTab() {
           </Tr>
         </Thead>
         <Tbody>
-          {accessReviewCampaigns.edges.map((edge) => (
+          {accessReviewCampaigns.edges.map(edge => (
             <Tr
               key={edge.node.id}
               to={`/organizations/${organizationId}/access-reviews/campaigns/${edge.node.id}`}
@@ -115,7 +115,7 @@ export default function AccessReviewCampaignsTab() {
                 </Badge>
               </Td>
               <Td>
-                {new Date(edge.node.createdAt as string).toLocaleDateString()}
+                {new Date(edge.node.createdAt).toLocaleDateString()}
               </Td>
             </Tr>
           ))}

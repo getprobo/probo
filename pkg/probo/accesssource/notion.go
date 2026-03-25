@@ -64,8 +64,9 @@ func (d *NotionDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 				Active:     true,
 				IsAdmin:    false,
 				ExternalID: u.ID,
-				MFAStatus:  coredata.MFAStatusUnknown,
-				AuthMethod: coredata.AccessEntryAuthMethodUnknown,
+				MFAStatus:   coredata.MFAStatusUnknown,
+				AuthMethod:  coredata.AccessEntryAuthMethodUnknown,
+				AccountType: coredata.AccessEntryAccountTypeUser,
 			}
 
 			if record.Email != "" {

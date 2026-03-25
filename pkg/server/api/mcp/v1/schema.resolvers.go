@@ -3699,9 +3699,15 @@ func (r *Resolver) CreateAccessReviewCampaignTool(ctx context.Context, req *mcp.
 
 	prb := r.ProboService(ctx, input.OrganizationID)
 
+	var description string
+	if input.Description != nil {
+		description = *input.Description
+	}
+
 	campaign, err := prb.AccessReviewCampaigns.Create(ctx, probo.CreateAccessReviewCampaignRequest{
 		OrganizationID:    input.OrganizationID,
 		Name:              input.Name,
+		Description:       description,
 		FrameworkControls: input.FrameworkControls,
 		AccessSourceIDs:   input.AccessSourceIds,
 	})
@@ -3722,8 +3728,9 @@ func (r *Resolver) UpdateAccessReviewCampaignTool(ctx context.Context, req *mcp.
 	prb := r.ProboService(ctx, input.CampaignID)
 
 	updateReq := probo.UpdateAccessReviewCampaignRequest{
-		CampaignID: input.CampaignID,
-		Name:       input.Name,
+		CampaignID:  input.CampaignID,
+		Name:        input.Name,
+		Description: input.Description,
 	}
 
 	if rawControls := UnwrapOmittable(input.FrameworkControls); rawControls != nil {

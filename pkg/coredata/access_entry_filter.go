@@ -24,6 +24,7 @@ type AccessEntryFilter struct {
 	IncrementalTag *AccessEntryIncrementalTag
 	IsAdmin        *bool
 	AuthMethod     *AccessEntryAuthMethod
+	AccountType    *AccessEntryAccountType
 }
 
 func (f *AccessEntryFilter) SQLFragment() string {
@@ -62,6 +63,12 @@ func (f *AccessEntryFilter) SQLFragment() string {
 			auth_method = @filter_auth_method::text
 		ELSE TRUE
 	END
+	AND
+	CASE
+		WHEN @filter_account_type::text IS NOT NULL THEN
+			account_type = @filter_account_type::text
+		ELSE TRUE
+	END
 )`
 }
 
@@ -76,6 +83,7 @@ func (f *AccessEntryFilter) SQLArguments() pgx.StrictNamedArgs {
 		"filter_incremental_tag": nil,
 		"filter_is_admin":        nil,
 		"filter_auth_method":     nil,
+		"filter_account_type":    nil,
 	}
 
 	if f.Decision != nil {
@@ -92,6 +100,9 @@ func (f *AccessEntryFilter) SQLArguments() pgx.StrictNamedArgs {
 	}
 	if f.AuthMethod != nil {
 		args["filter_auth_method"] = string(*f.AuthMethod)
+	}
+	if f.AccountType != nil {
+		args["filter_account_type"] = string(*f.AccountType)
 	}
 
 	return args

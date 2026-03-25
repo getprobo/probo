@@ -130,6 +130,7 @@ func (e *ReviewEngine) SnapshotSource(
 				IsAdmin:                account.IsAdmin,
 				MFAStatus:              account.MFAStatus,
 				AuthMethod:             account.AuthMethod,
+				AccountType:            account.AccountType,
 				LastLogin:              account.LastLogin,
 				AccountCreatedAt:       account.CreatedAt,
 				ExternalID:             account.ExternalID,
@@ -165,6 +166,7 @@ func (e *ReviewEngine) SnapshotSource(
 				Decision:               coredata.AccessEntryDecisionPending,
 				MFAStatus:              coredata.MFAStatusUnknown,
 				AuthMethod:             coredata.AccessEntryAuthMethodUnknown,
+				AccountType:            coredata.AccessEntryAccountTypeUser,
 				CreatedAt:              now,
 				UpdatedAt:              now,
 			}
@@ -235,12 +237,6 @@ func (e *ReviewEngine) resolveDriver(
 			return nil, fmt.Errorf("cannot create HTTP client for slack connector: %w", err)
 		}
 		return accesssource.NewSlackDriver(httpClient), nil
-	case coredata.ConnectorProviderFigma:
-		httpClient, err := dbConnector.Connection.Client(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("cannot create HTTP client for figma connector: %w", err)
-		}
-		return accesssource.NewFigmaDriver(httpClient), nil
 	case coredata.ConnectorProviderOnePassword:
 		httpClient, err := dbConnector.Connection.Client(ctx)
 		if err != nil {

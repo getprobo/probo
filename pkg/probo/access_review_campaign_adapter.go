@@ -35,6 +35,7 @@ func (a *accessReviewCampaignAdapter) Create(ctx context.Context, req CreateAcce
 	return a.svc.Create(ctx, accessreview.CreateAccessReviewCampaignRequest{
 		OrganizationID:    req.OrganizationID,
 		Name:              req.Name,
+		Description:       req.Description,
 		FrameworkControls: req.FrameworkControls,
 		AccessSourceIDs:   req.AccessSourceIDs,
 	})
@@ -48,6 +49,7 @@ func (a *accessReviewCampaignAdapter) Update(ctx context.Context, req UpdateAcce
 	return a.svc.Update(ctx, accessreview.UpdateAccessReviewCampaignRequest{
 		CampaignID:        req.CampaignID,
 		Name:              req.Name,
+		Description:       req.Description,
 		FrameworkControls: req.FrameworkControls,
 	})
 }

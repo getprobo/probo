@@ -60,8 +60,9 @@ func (d *OpenAIDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 				Active:     !u.Disabled,
 				IsAdmin:    u.Role == "owner",
 				ExternalID: u.ID,
-				MFAStatus:  coredata.MFAStatusUnknown,
-				AuthMethod: coredata.AccessEntryAuthMethodUnknown,
+				MFAStatus:   coredata.MFAStatusUnknown,
+				AuthMethod:  coredata.AccessEntryAuthMethodUnknown,
+				AccountType: coredata.AccessEntryAccountTypeUser,
 			}
 
 			if u.AddedAt != 0 {

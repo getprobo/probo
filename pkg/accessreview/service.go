@@ -21,11 +21,14 @@ import (
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/gid"
+	"golang.org/x/sync/errgroup"
 )
 
 type Service struct {
-	worker *SourceFetchWorker
+	worker           *SourceFetchWorker
+	sourceNameWorker *SourceNameWorker
 }
 
 type CampaignReader interface {
@@ -44,6 +47,7 @@ func NewService(
 	logger *log.Logger,
 	interval time.Duration,
 	tenantRuntimeProvider TenantRuntimeProvider,
+	encryptionKey cipher.EncryptionKey,
 ) *Service {
 	return &Service{
 		worker: NewSourceFetchWorker(
@@ -52,9 +56,17 @@ func NewService(
 			logger,
 			WithSourceFetchWorkerInterval(interval),
 		),
+		sourceNameWorker: NewSourceNameWorker(
+			pgClient,
+			encryptionKey,
+			logger.Named("source-name"),
+		),
 	}
 }
 
 func (s *Service) Run(ctx context.Context) error {
-	return s.worker.Run(ctx)
+	g, ctx := errgroup.WithContext(ctx)
+	g.Go(func() error { return s.worker.Run(ctx) })
+	g.Go(func() error { return s.sourceNameWorker.Run(ctx) })
+	return g.Wait()
 }

@@ -19,6 +19,7 @@ import (
 	"go.probo.inc/probo/pkg/cmd/accessreview/source/create"
 	"go.probo.inc/probo/pkg/cmd/accessreview/source/delete"
 	"go.probo.inc/probo/pkg/cmd/accessreview/source/list"
+	"go.probo.inc/probo/pkg/cmd/accessreview/source/update"
 	"go.probo.inc/probo/pkg/cmd/accessreview/source/view"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
 )
@@ -32,6 +33,7 @@ func NewCmdSource(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(list.NewCmdList(f))
 	cmd.AddCommand(create.NewCmdCreate(f))
 	cmd.AddCommand(view.NewCmdView(f))
+	cmd.AddCommand(update.NewCmdUpdate(f))
 	cmd.AddCommand(delete.NewCmdDelete(f))
 
 	return cmd

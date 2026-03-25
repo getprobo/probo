@@ -96,6 +96,7 @@ const (
 	AccessSourceEntityType                     uint16 = 70
 	AccessReviewCampaignEntityType             uint16 = 71
 	AccessEntryEntityType                      uint16 = 72
+	AccessEntryDecisionHistoryEntityType       uint16 = 73
 )
 
 func NewEntityFromID(id gid.GID) (any, bool) {

@@ -66,8 +66,9 @@ func (d *CSVDriver) ListAccounts(_ context.Context) ([]AccountRecord, error) {
 		}
 
 		record := AccountRecord{
-			MFAStatus:  coredata.MFAStatusUnknown,
-			AuthMethod: coredata.AccessEntryAuthMethodUnknown,
+			MFAStatus:   coredata.MFAStatusUnknown,
+			AuthMethod:  coredata.AccessEntryAuthMethodUnknown,
+			AccountType: coredata.AccessEntryAccountTypeUser,
 		}
 
 		if idx, ok := colIndex["email"]; ok && idx < len(row) {
@@ -90,6 +91,11 @@ func (d *CSVDriver) ListAccounts(_ context.Context) ([]AccountRecord, error) {
 		}
 		if idx, ok := colIndex["external_id"]; ok && idx < len(row) {
 			record.ExternalID = strings.TrimSpace(row[idx])
+		}
+		if idx, ok := colIndex["account_type"]; ok && idx < len(row) {
+			if strings.TrimSpace(strings.ToUpper(row[idx])) == "SERVICE_ACCOUNT" {
+				record.AccountType = coredata.AccessEntryAccountTypeServiceAccount
+			}
 		}
 
 		if record.Email != "" {

@@ -20,15 +20,15 @@ import {
   usePaginationFragment,
   usePreloadedQuery,
 } from "react-relay";
-import { graphql } from "relay-runtime";
 import { Link, useSearchParams } from "react-router";
+import { graphql } from "relay-runtime";
 
-import type { CreateAccessSourcePageQuery } from "#/__generated__/core/CreateAccessSourcePageQuery.graphql";
-import type { CreateAccessSourcePageSourcesFragment$key } from "#/__generated__/core/CreateAccessSourcePageSourcesFragment.graphql";
-import type { CreateAccessSourcePageSourcesPaginationQuery } from "#/__generated__/core/CreateAccessSourcePageSourcesPaginationQuery.graphql";
 import type { AccessSourceRowDeleteMutation } from "#/__generated__/core/AccessSourceRowDeleteMutation.graphql";
 import type { CreateAccessSourceDialogMutation } from "#/__generated__/core/CreateAccessSourceDialogMutation.graphql";
 import type { CreateAccessSourcePageCreateAPIKeyConnectorMutation } from "#/__generated__/core/CreateAccessSourcePageCreateAPIKeyConnectorMutation.graphql";
+import type { CreateAccessSourcePageQuery } from "#/__generated__/core/CreateAccessSourcePageQuery.graphql";
+import type { CreateAccessSourcePageSourcesFragment$key } from "#/__generated__/core/CreateAccessSourcePageSourcesFragment.graphql";
+import type { CreateAccessSourcePageSourcesPaginationQuery } from "#/__generated__/core/CreateAccessSourcePageSourcesPaginationQuery.graphql";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
@@ -150,23 +150,8 @@ function isConnectedProvider(provider: string | null): provider is SourceProvide
     || provider === "CLOUDFLARE";
 }
 
-function defaultSourceName(provider: SourceProvider, __: (input: string) => string): string {
-  switch (provider) {
-    case "GOOGLE_WORKSPACE":
-      return __("Google Workspace source");
-    case "LINEAR":
-      return __("Linear source");
-    case "SLACK":
-      return __("Slack source");
-    case "BREX":
-      return __("Brex source");
-    case "TALLY":
-      return __("Tally source");
-    case "CLOUDFLARE":
-      return __("Cloudflare source");
-    default:
-      return __("Connected source");
-  }
+function defaultSourceName(provider: SourceProvider): string {
+  return providerLabel(provider);
 }
 
 export default function CreateAccessSourcePage({
@@ -261,8 +246,8 @@ export default function CreateAccessSourcePage({
           organizationId,
           connectorId: callbackConnectorId,
           name: isConnectedProvider(callbackProvider)
-            ? defaultSourceName(callbackProvider, __)
-            : __("Connected source"),
+            ? defaultSourceName(callbackProvider)
+            : callbackProvider || "Source",
           csvData: null,
         },
         connections: accessSources?.__id ? [accessSources.__id] : [],
@@ -314,12 +299,21 @@ export default function CreateAccessSourcePage({
     window.location.assign(url.toString());
   };
 
+  const [apiKeyDialogOpen, setApiKeyDialogOpen] = useState(false);
+
   const openAPIKeyDialog = (provider: APIKeyProvider) => {
     setApiKeyProvider(provider);
     setApiKeyValue("");
     setProviderSettingValue("");
-    apiKeyDialogRef.current?.open();
+    setApiKeyDialogOpen(true);
   };
+
+  useEffect(() => {
+    if (apiKeyDialogOpen) {
+      apiKeyDialogRef.current?.open();
+      setApiKeyDialogOpen(false);
+    }
+  }, [apiKeyDialogOpen]);
 
   const providerNeedsExtraSetting = (provider: APIKeyProvider | null): boolean => {
     return provider === "TALLY";
@@ -357,7 +351,7 @@ export default function CreateAccessSourcePage({
             input: {
               organizationId,
               connectorId,
-              name: defaultSourceName(apiKeyProvider, __),
+              name: defaultSourceName(apiKeyProvider),
               csvData: null,
             },
             connections: accessSources?.__id ? [accessSources.__id] : [],

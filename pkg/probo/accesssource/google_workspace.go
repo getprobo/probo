@@ -70,8 +70,9 @@ func (d *GoogleWorkspaceDriver) ListAccounts(ctx context.Context) ([]AccountReco
 				Active:     !u.Suspended && !u.Archived,
 				IsAdmin:    u.IsAdmin,
 				ExternalID: u.Id,
-				MFAStatus:  coredata.MFAStatusUnknown,
-				AuthMethod: coredata.AccessEntryAuthMethodSSO,
+				MFAStatus:   coredata.MFAStatusUnknown,
+				AuthMethod:  coredata.AccessEntryAuthMethodSSO,
+				AccountType: coredata.AccessEntryAccountTypeUser,
 			}
 
 			if u.IsEnrolledIn2Sv {

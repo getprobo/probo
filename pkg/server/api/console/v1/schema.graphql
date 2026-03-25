@@ -6351,6 +6351,20 @@ type AuditLogEntryConnection
 type AuditLogEntryEdge {
     cursor: CursorKey!
     node: AuditLogEntry!
+enum AccessEntryAccountType
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.AccessEntryAccountType"
+    ) {
+    USER
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AccessEntryAccountTypeUser"
+        )
+    SERVICE_ACCOUNT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AccessEntryAccountTypeServiceAccount"
+        )
+}
+
 type AccessSource implements Node {
     id: ID!
     organization: Organization! @goField(forceResolver: true)
@@ -6420,6 +6434,7 @@ type AccessReviewCampaign implements Node {
     id: ID!
     organization: Organization! @goField(forceResolver: true)
     name: String!
+    description: String!
     status: AccessReviewCampaignStatus!
     startedAt: Datetime
     completedAt: Datetime
@@ -6481,6 +6496,7 @@ type AccessEntry implements Node {
     isAdmin: Boolean!
     mfaStatus: MfaStatus!
     authMethod: AccessEntryAuthMethod!
+    accountType: AccessEntryAccountType!
     lastLogin: Datetime
     accountCreatedAt: Datetime
     externalId: String!
@@ -6491,10 +6507,21 @@ type AccessEntry implements Node {
     decisionNote: String
     decidedBy: ID
     decidedAt: Datetime
+    decisionHistory: [AccessEntryDecisionHistoryEntry!]!
+        @goField(forceResolver: true)
     createdAt: Datetime!
     updatedAt: Datetime!
 
     permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type AccessEntryDecisionHistoryEntry {
+    id: ID!
+    decision: AccessEntryDecision!
+    decisionNote: String
+    decidedBy: ID
+    decidedAt: Datetime!
+    createdAt: Datetime!
 }
 
 type AccessEntryConnection
@@ -6532,6 +6559,7 @@ input AccessEntryFilter
     incrementalTag: AccessEntryIncrementalTag
     isAdmin: Boolean
     authMethod: AccessEntryAuthMethod
+    accountType: AccessEntryAccountType
 }
 
 type AccessReviewCampaignStatistics {
@@ -6591,6 +6619,7 @@ type DeleteAccessSourcePayload {
 input CreateAccessReviewCampaignInput {
     organizationId: ID!
     name: String!
+    description: String
     frameworkControls: [String!]
     accessSourceIds: [ID!]
 }
@@ -6602,6 +6631,7 @@ type CreateAccessReviewCampaignPayload {
 input UpdateAccessReviewCampaignInput {
     accessReviewCampaignId: ID!
     name: String @goField(omittable: true)
+    description: String @goField(omittable: true)
     frameworkControls: [String!] @goField(omittable: true)
 }
 

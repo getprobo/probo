@@ -94,13 +94,14 @@ func (d *TallyDriver) listUsers(ctx context.Context) ([]AccountRecord, error) {
 		}
 
 		record := AccountRecord{
-			Email:      u.Email,
-			FullName:   u.FullName,
-			Active:     !u.IsDeleted,
-			ExternalID: u.ID,
-			MFAStatus:  mfaStatus,
-			AuthMethod: coredata.AccessEntryAuthMethodUnknown,
-			CreatedAt:  new(u.CreatedAt),
+			Email:       u.Email,
+			FullName:    u.FullName,
+			Active:      !u.IsDeleted,
+			ExternalID:  u.ID,
+			MFAStatus:   mfaStatus,
+			AuthMethod:  coredata.AccessEntryAuthMethodUnknown,
+			AccountType: coredata.AccessEntryAccountTypeUser,
+			CreatedAt:   new(u.CreatedAt),
 		}
 
 		if record.Email != "" {
@@ -147,12 +148,13 @@ func (d *TallyDriver) listInvites(ctx context.Context) ([]AccountRecord, error) 
 	var records []AccountRecord
 	for _, inv := range invites {
 		record := AccountRecord{
-			Email:      inv.Email,
-			Active:     false,
-			ExternalID: inv.ID,
-			MFAStatus:  coredata.MFAStatusUnknown,
-			AuthMethod: coredata.AccessEntryAuthMethodUnknown,
-			Role:       "Invited",
+			Email:       inv.Email,
+			Active:      false,
+			ExternalID:  inv.ID,
+			MFAStatus:   coredata.MFAStatusUnknown,
+			AuthMethod:  coredata.AccessEntryAuthMethodUnknown,
+			AccountType: coredata.AccessEntryAccountTypeUser,
+			Role:        "Invited",
 		}
 
 		if record.Email != "" {

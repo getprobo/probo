@@ -139,7 +139,7 @@ export default function CampaignDetailPage({ queryRef }: Props) {
       </div>
 
       <div className="space-y-4">
-        {campaign.scopeSources.map((source) => (
+        {campaign.scopeSources.map(source => (
           <ScopeSourceCard key={source.id} source={source} />
         ))}
 
@@ -181,7 +181,9 @@ function ScopeSourceCard({ source }: { source: ScopeSource }) {
             : <IconChevronRight className="size-4 text-txt-tertiary" />}
           <span className="font-medium">{source.name}</span>
           <Badge variant="neutral">
-            {source.fetchedAccountsCount} {__("accounts")}
+            {source.fetchedAccountsCount}
+            {" "}
+            {__("accounts")}
           </Badge>
           <Badge variant={source.fetchStatus === "SUCCESS" ? "success" : "info"}>
             {formatStatus(source.fetchStatus)}
@@ -212,7 +214,7 @@ function ScopeSourceCard({ source }: { source: ScopeSource }) {
                     </Tr>
                   </Thead>
                   <Tbody>
-                    {source.entries.edges.map((edge) => (
+                    {source.entries.edges.map(edge => (
                       <Tr key={edge.node.id}>
                         <Td>{edge.node.fullName}</Td>
                         <Td>{edge.node.email}</Td>
@@ -225,7 +227,7 @@ function ScopeSourceCard({ source }: { source: ScopeSource }) {
                         </Td>
                         <Td>
                           {edge.node.lastLogin
-                            ? formatDate(edge.node.lastLogin as string)
+                            ? formatDate(edge.node.lastLogin)
                             : "—"}
                         </Td>
                         <Td>

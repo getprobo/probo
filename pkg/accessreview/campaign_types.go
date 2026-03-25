@@ -44,6 +44,7 @@ type (
 	CreateAccessReviewCampaignRequest struct {
 		OrganizationID    gid.GID
 		Name              string
+		Description       string
 		FrameworkControls []string
 		AccessSourceIDs   []gid.GID
 	}
@@ -51,6 +52,7 @@ type (
 	UpdateAccessReviewCampaignRequest struct {
 		CampaignID        gid.GID
 		Name              *string
+		Description       *string
 		FrameworkControls *[]string
 	}
 

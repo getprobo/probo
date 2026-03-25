@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package create
+package update
 
 import (
 	"encoding/json"
@@ -23,45 +23,45 @@ import (
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
 )
 
-const createMutation = `
-mutation($input: CreateAccessReviewCampaignInput!) {
-  createAccessReviewCampaign(input: $input) {
-    accessReviewCampaignEdge {
-      node {
-        id
-        name
-        status
-      }
+const updateMutation = `
+mutation($input: UpdateAccessReviewCampaignInput!) {
+  updateAccessReviewCampaign(input: $input) {
+    accessReviewCampaign {
+      id
+      name
+      status
     }
   }
 }
 `
 
-type createResponse struct {
-	CreateAccessReviewCampaign struct {
-		AccessReviewCampaignEdge struct {
-			Node struct {
-				ID     string `json:"id"`
-				Name   string `json:"name"`
-				Status string `json:"status"`
-			} `json:"node"`
-		} `json:"accessReviewCampaignEdge"`
-	} `json:"createAccessReviewCampaign"`
+type updateResponse struct {
+	UpdateAccessReviewCampaign struct {
+		AccessReviewCampaign struct {
+			ID     string `json:"id"`
+			Name   string `json:"name"`
+			Status string `json:"status"`
+		} `json:"accessReviewCampaign"`
+	} `json:"updateAccessReviewCampaign"`
 }
 
-func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
+func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 	var (
-		flagOrg         string
-		flagName        string
-		flagDescription string
-		flagSourceIDs   []string
+		flagName             string
+		flagDescription      string
+		flagFrameworkControl []string
+		flagOutput           *string
 	)
 
 	cmd := &cobra.Command{
-		Use:   "create",
-		Short: "Create an access review campaign",
-		Args:  cobra.NoArgs,
+		Use:   "update <campaign-id>",
+		Short: "Update an access review campaign",
+		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := cmdutil.ValidateOutputFlag(flagOutput); err != nil {
+				return err
+			}
+
 			cfg, err := f.Config()
 			if err != nil {
 				return err
@@ -79,61 +79,58 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				cfg.HTTPTimeoutDuration(),
 			)
 
-			if flagOrg == "" {
-				flagOrg = hc.Organization
-			}
-
-			if flagOrg == "" {
-				return fmt.Errorf("organization is required; pass --org or set a default with 'prb auth login'")
-			}
-
 			input := map[string]any{
-				"organizationId": flagOrg,
-				"name":           flagName,
+				"accessReviewCampaignId": args[0],
 			}
 
-			if flagDescription != "" {
+			if cmd.Flags().Changed("name") {
+				input["name"] = flagName
+			}
+
+			if cmd.Flags().Changed("description") {
 				input["description"] = flagDescription
 			}
 
-			if len(flagSourceIDs) > 0 {
-				input["accessSourceIds"] = flagSourceIDs
+			if cmd.Flags().Changed("framework-control") {
+				input["frameworkControls"] = flagFrameworkControl
 			}
 
 			data, err := client.Do(
-				createMutation,
+				updateMutation,
 				map[string]any{"input": input},
 			)
 			if err != nil {
 				return err
 			}
 
-			var resp createResponse
+			var resp updateResponse
 			if err := json.Unmarshal(data, &resp); err != nil {
 				return fmt.Errorf("cannot parse response: %w", err)
 			}
 
-			c := resp.CreateAccessReviewCampaign.AccessReviewCampaignEdge.Node
-			out := f.IOStreams.Out
-			_, _ = fmt.Fprintf(out, "Created access review campaign %s\n", c.ID)
-			_, _ = fmt.Fprintf(out, "Name: %s\n", c.Name)
-			_, _ = fmt.Fprintf(out, "Status: %s\n", c.Status)
+			c := resp.UpdateAccessReviewCampaign.AccessReviewCampaign
+
+			if *flagOutput == cmdutil.OutputJSON {
+				return cmdutil.PrintJSON(f.IOStreams.Out, c)
+			}
+
+			_, _ = fmt.Fprintf(f.IOStreams.Out, "Updated access review campaign %s\n", c.ID)
+			_, _ = fmt.Fprintf(f.IOStreams.Out, "Name: %s\n", c.Name)
+			_, _ = fmt.Fprintf(f.IOStreams.Out, "Status: %s\n", c.Status)
 
 			return nil
 		},
 	}
 
-	cmd.Flags().StringVar(&flagOrg, "org", "", "Organization ID")
-	cmd.Flags().StringVar(&flagName, "name", "", "Campaign name (required)")
+	cmd.Flags().StringVar(&flagName, "name", "", "Campaign name")
 	cmd.Flags().StringVar(&flagDescription, "description", "", "Campaign description")
 	cmd.Flags().StringSliceVar(
-		&flagSourceIDs,
-		"source-id",
+		&flagFrameworkControl,
+		"framework-control",
 		nil,
-		"Access source IDs to include (can be repeated)",
+		"Framework control IDs (can be repeated)",
 	)
-
-	_ = cmd.MarkFlagRequired("name")
+	flagOutput = cmdutil.AddOutputFlag(cmd)
 
 	return cmd
 }

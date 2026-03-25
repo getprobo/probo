@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"go.probo.inc/probo/pkg/coredata"
 )
@@ -53,14 +54,20 @@ func (d *LinearDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 		}
 
 		for _, u := range resp.Data.Users.Nodes {
+			accountType := coredata.AccessEntryAccountTypeUser
+			if strings.HasSuffix(u.Email, "@linear.linear.app") {
+				accountType = coredata.AccessEntryAccountTypeServiceAccount
+			}
+
 			record := AccountRecord{
-				Email:      u.Email,
-				FullName:   u.Name,
-				Active:     u.Active,
-				IsAdmin:    u.Admin,
-				ExternalID: u.ID,
-				MFAStatus:  coredata.MFAStatusUnknown,
-				AuthMethod: coredata.AccessEntryAuthMethodUnknown,
+				Email:       u.Email,
+				FullName:    u.Name,
+				Active:      u.Active,
+				IsAdmin:     u.Admin,
+				ExternalID:  u.ID,
+				MFAStatus:   coredata.MFAStatusUnknown,
+				AuthMethod:  coredata.AccessEntryAuthMethodUnknown,
+				AccountType: accountType,
 			}
 
 			if record.Email != "" {

@@ -35,6 +35,7 @@ type (
 		Name           string               `db:"name"`
 		Category       AccessSourceCategory `db:"category"`
 		CsvData        *string              `db:"csv_data"`
+		NameSyncedAt   *time.Time           `db:"name_synced_at"`
 		CreatedAt      time.Time            `db:"created_at"`
 		UpdatedAt      time.Time            `db:"updated_at"`
 	}
@@ -79,6 +80,7 @@ SELECT
     name,
     category,
     csv_data,
+    name_synced_at,
     created_at,
     updated_at
 FROM
@@ -126,6 +128,7 @@ INSERT INTO
         name,
         category,
         csv_data,
+        name_synced_at,
         created_at,
         updated_at
     )
@@ -137,21 +140,23 @@ VALUES (
     @name,
     @category,
     @csv_data,
+    @name_synced_at,
     @created_at,
     @updated_at
 );
 `
 
 	args := pgx.StrictNamedArgs{
-		"id":               as.ID,
-		"tenant_id":        scope.GetTenantID(),
-		"organization_id":  as.OrganizationID,
-		"connector_id":     as.ConnectorID,
-		"name":             as.Name,
-		"category":         as.Category,
-		"csv_data":         as.CsvData,
-		"created_at":       as.CreatedAt,
-		"updated_at":       as.UpdatedAt,
+		"id":              as.ID,
+		"tenant_id":       scope.GetTenantID(),
+		"organization_id": as.OrganizationID,
+		"connector_id":    as.ConnectorID,
+		"name":            as.Name,
+		"category":        as.Category,
+		"csv_data":        as.CsvData,
+		"name_synced_at":  as.NameSyncedAt,
+		"created_at":      as.CreatedAt,
+		"updated_at":      as.UpdatedAt,
 	}
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
@@ -173,6 +178,7 @@ SET
     category = @category,
     connector_id = @connector_id,
     csv_data = @csv_data,
+    name_synced_at = @name_synced_at,
     updated_at = @updated_at
 WHERE
     %s
@@ -181,12 +187,13 @@ WHERE
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"id":           as.ID,
-		"name":         as.Name,
-		"category":     as.Category,
-		"connector_id": as.ConnectorID,
-		"csv_data":     as.CsvData,
-		"updated_at":   as.UpdatedAt,
+		"id":             as.ID,
+		"name":           as.Name,
+		"category":       as.Category,
+		"connector_id":   as.ConnectorID,
+		"csv_data":       as.CsvData,
+		"name_synced_at": as.NameSyncedAt,
+		"updated_at":     as.UpdatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -243,6 +250,7 @@ SELECT
     name,
     category,
     csv_data,
+    name_synced_at,
     created_at,
     updated_at
 FROM
@@ -316,6 +324,7 @@ SELECT
     name,
     category,
     csv_data,
+    name_synced_at,
     created_at,
     updated_at
 FROM
@@ -362,4 +371,65 @@ ORDER BY name ASC
 	*sources = result
 
 	return nil
+}
+
+// ErrNoAccessSourceNameSyncAvailable is returned when no access source
+// needs its name synced from its connector.
+var ErrNoAccessSourceNameSyncAvailable = fmt.Errorf("no access source name sync available")
+
+// accessSourceWithTenantID is used internally by the name sync worker to
+// retrieve a source along with its tenant_id (which is not on the struct).
+type accessSourceWithTenantID struct {
+	AccessSource
+	TenantID gid.TenantID `db:"tenant_id"`
+}
+
+// LoadNextUnsyncedNameForUpdateSkipLocked claims the next access source that
+// has a connector but has not yet had its name synced. The row is locked with
+// FOR UPDATE SKIP LOCKED so concurrent workers do not pick the same row.
+// It returns the tenant ID so the caller can create a Scope.
+func (as *AccessSource) LoadNextUnsyncedNameForUpdateSkipLocked(
+	ctx context.Context,
+	conn pg.Conn,
+) (gid.TenantID, error) {
+	q := `
+SELECT
+    id,
+    tenant_id,
+    organization_id,
+    connector_id,
+    name,
+    category,
+    csv_data,
+    name_synced_at,
+    created_at,
+    updated_at
+FROM
+    access_sources
+WHERE
+    connector_id IS NOT NULL
+    AND name_synced_at IS NULL
+ORDER BY
+    created_at ASC
+LIMIT 1
+FOR UPDATE SKIP LOCKED;
+`
+
+	var zeroTenantID gid.TenantID
+
+	rows, err := conn.Query(ctx, q)
+	if err != nil {
+		return zeroTenantID, fmt.Errorf("cannot query unsynced access_sources: %w", err)
+	}
+
+	row, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[accessSourceWithTenantID])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return zeroTenantID, ErrNoAccessSourceNameSyncAvailable
+		}
+		return zeroTenantID, fmt.Errorf("cannot collect unsynced access source: %w", err)
+	}
+
+	*as = row.AccessSource
+	return row.TenantID, nil
 }

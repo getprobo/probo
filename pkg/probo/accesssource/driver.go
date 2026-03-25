@@ -31,8 +31,9 @@ type AccountRecord struct {
 	Active     bool
 	IsAdmin    bool
 	MFAStatus  coredata.MFAStatus
-	AuthMethod coredata.AccessEntryAuthMethod
-	LastLogin  *time.Time
+	AuthMethod  coredata.AccessEntryAuthMethod
+	AccountType coredata.AccessEntryAccountType
+	LastLogin   *time.Time
 	CreatedAt  *time.Time
 	ExternalID string // system-specific user ID
 }

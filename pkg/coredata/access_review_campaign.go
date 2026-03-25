@@ -32,6 +32,7 @@ type (
 		ID                gid.GID                    `db:"id"`
 		OrganizationID    gid.GID                    `db:"organization_id"`
 		Name              string                     `db:"name"`
+		Description       string                     `db:"description"`
 		Status            AccessReviewCampaignStatus `db:"status"`
 		StartedAt         *time.Time                 `db:"started_at"`
 		CompletedAt       *time.Time                 `db:"completed_at"`
@@ -77,6 +78,7 @@ SELECT
     id,
     organization_id,
     name,
+    description,
     status,
     started_at,
     completed_at,
@@ -125,6 +127,7 @@ INSERT INTO
         tenant_id,
         organization_id,
         name,
+        description,
         status,
         started_at,
         completed_at,
@@ -137,6 +140,7 @@ VALUES (
     @tenant_id,
     @organization_id,
     @name,
+    @description,
     @status,
     @started_at,
     @completed_at,
@@ -151,6 +155,7 @@ VALUES (
 		"tenant_id":          scope.GetTenantID(),
 		"organization_id":    c.OrganizationID,
 		"name":               c.Name,
+		"description":        c.Description,
 		"status":             c.Status,
 		"started_at":         c.StartedAt,
 		"completed_at":       c.CompletedAt,
@@ -175,6 +180,7 @@ func (c *AccessReviewCampaign) Update(
 UPDATE access_review_campaigns
 SET
     name = @name,
+    description = @description,
     status = @status,
     started_at = @started_at,
     completed_at = @completed_at,
@@ -189,6 +195,7 @@ WHERE
 	args := pgx.StrictNamedArgs{
 		"id":                 c.ID,
 		"name":               c.Name,
+		"description":        c.Description,
 		"status":             c.Status,
 		"started_at":         c.StartedAt,
 		"completed_at":       c.CompletedAt,
@@ -247,6 +254,7 @@ SELECT
     id,
     organization_id,
     name,
+    description,
     status,
     started_at,
     completed_at,
@@ -318,6 +326,7 @@ SELECT
     id,
     organization_id,
     name,
+    description,
     status,
     started_at,
     completed_at,

@@ -67,8 +67,9 @@ func (d *DocuSignDriver) ListAccounts(ctx context.Context) ([]AccountRecord, err
 				Active:     strings.EqualFold(u.UserStatus, "active"),
 				IsAdmin:    strings.EqualFold(u.IsAdmin, "True"),
 				ExternalID: u.UserID,
-				MFAStatus:  coredata.MFAStatusUnknown,
-				AuthMethod: coredata.AccessEntryAuthMethodUnknown,
+				MFAStatus:   coredata.MFAStatusUnknown,
+				AuthMethod:  coredata.AccessEntryAuthMethodUnknown,
+				AccountType: coredata.AccessEntryAccountTypeUser,
 			}
 
 			if u.LastLogin != "" {

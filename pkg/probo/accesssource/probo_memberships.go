@@ -63,8 +63,9 @@ func (d *ProboMembershipsDriver) ListAccounts(ctx context.Context) ([]AccountRec
 				Email:      account.Email,
 				FullName:   account.FullName,
 				Active:     account.State == "ACTIVE",
-				MFAStatus:  coredata.MFAStatusUnknown,
-				AuthMethod: coredata.AccessEntryAuthMethodUnknown,
+				MFAStatus:   coredata.MFAStatusUnknown,
+				AuthMethod:  coredata.AccessEntryAuthMethodUnknown,
+				AccountType: coredata.AccessEntryAccountTypeUser,
 			})
 		}
 

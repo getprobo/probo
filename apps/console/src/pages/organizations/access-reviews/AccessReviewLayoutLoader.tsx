@@ -15,7 +15,7 @@ export default function AccessReviewLayoutLoader() {
     if (!queryRef) {
       loadQuery({ organizationId });
     }
-  });
+  }, [loadQuery, organizationId]);
 
   if (!queryRef) return <PageSkeleton />;
 

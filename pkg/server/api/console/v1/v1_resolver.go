@@ -70,6 +70,27 @@ func (r *accessEntryResolver) AccessSource(ctx context.Context, obj *types.Acces
 	return types.NewAccessSource(source), nil
 }
 
+// DecisionHistory is the resolver for the decisionHistory field.
+func (r *accessEntryResolver) DecisionHistory(ctx context.Context, obj *types.AccessEntry) ([]*types.AccessEntryDecisionHistoryEntry, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionAccessEntryGet); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	histories, err := prb.AccessEntries.DecisionHistory(ctx, obj.ID)
+	if err != nil {
+		panic(fmt.Errorf("cannot get decision history: %w", err))
+	}
+
+	result := make([]*types.AccessEntryDecisionHistoryEntry, len(histories))
+	for i, h := range histories {
+		result[i] = types.NewAccessEntryDecisionHistoryEntry(h)
+	}
+
+	return result, nil
+}
+
 // Permission is the resolver for the permission field.
 func (r *accessEntryResolver) Permission(ctx context.Context, obj *types.AccessEntry, action string) (bool, error) {
 	return r.Resolver.Permission(ctx, obj, action)
@@ -6728,9 +6749,15 @@ func (r *mutationResolver) CreateAccessReviewCampaign(ctx context.Context, input
 
 	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
 
+	var description string
+	if input.Description != nil {
+		description = *input.Description
+	}
+
 	campaign, err := prb.AccessReviewCampaigns.Create(ctx, probo.CreateAccessReviewCampaignRequest{
 		OrganizationID:    input.OrganizationID,
 		Name:              input.Name,
+		Description:       description,
 		FrameworkControls: input.FrameworkControls,
 		AccessSourceIDs:   input.AccessSourceIds,
 	})
@@ -6756,6 +6783,9 @@ func (r *mutationResolver) UpdateAccessReviewCampaign(ctx context.Context, input
 	}
 	if input.Name.IsSet() {
 		req.Name = input.Name.Value()
+	}
+	if input.Description.IsSet() {
+		req.Description = input.Description.Value()
 	}
 	if input.FrameworkControls.IsSet() {
 		controls := input.FrameworkControls.Value()

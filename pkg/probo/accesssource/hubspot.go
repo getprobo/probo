@@ -67,8 +67,9 @@ func (d *HubSpotDriver) ListAccounts(ctx context.Context) ([]AccountRecord, erro
 				Active:     true,
 				IsAdmin:    u.SuperAdmin,
 				ExternalID: u.ID,
-				MFAStatus:  coredata.MFAStatusUnknown,
-				AuthMethod: coredata.AccessEntryAuthMethodUnknown,
+				MFAStatus:   coredata.MFAStatusUnknown,
+				AuthMethod:  coredata.AccessEntryAuthMethodUnknown,
+				AccountType: coredata.AccessEntryAccountTypeUser,
 			}
 
 			if record.Email != "" {

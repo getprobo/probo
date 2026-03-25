@@ -189,8 +189,8 @@ WHERE
 	AND updated_at < @stale_threshold
 `
 	args := pgx.StrictNamedArgs{
-		"now":              now,
-		"stale_threshold":  staleThreshold,
+		"now":             now,
+		"stale_threshold": staleThreshold,
 	}
 
 	result, err := conn.Exec(ctx, q, args)

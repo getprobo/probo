@@ -617,6 +617,7 @@ func (impl *Implm) Run(
 				tenantService: proboService.WithTenant(tenantID),
 			}
 		},
+		encryptionKey,
 	)
 	wg.Go(
 		func() {

@@ -68,7 +68,8 @@ func (d *SlackDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error)
 				IsAdmin:    m.IsAdmin || m.IsOwner || m.IsPrimaryOwner,
 				ExternalID: m.ID,
 				MFAStatus:  slackMFAStatus(m.Has2FA),
-				AuthMethod: coredata.AccessEntryAuthMethodUnknown,
+				AuthMethod:  coredata.AccessEntryAuthMethodUnknown,
+				AccountType: coredata.AccessEntryAccountTypeUser,
 			}
 
 			// Note: Slack's Updated field is the profile update time, not

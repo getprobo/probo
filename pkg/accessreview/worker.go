@@ -286,95 +286,46 @@ func (w *SourceFetchWorker) finalizeCampaignFetchLifecycle(
 ) error {
 	scope := coredata.NewScope(tenantID)
 
-	var (
-		readyForFinalization bool
-		hasFailure           bool
-	)
-
-	err := w.pg.WithTx(
-		ctx,
-		func(tx pg.Conn) error {
-			fetches := coredata.AccessReviewCampaignSourceFetches{}
-			if err := fetches.LoadByCampaignID(ctx, tx, scope, campaignID); err != nil {
-				return fmt.Errorf("cannot load source fetches: %w", err)
-			}
-			if len(fetches) == 0 {
-				return nil
-			}
-
-			for _, fetch := range fetches {
-				if !fetch.Status.IsTerminal() {
-					return nil
-				}
-				if fetch.Status == coredata.AccessReviewCampaignSourceFetchStatusFailed {
-					hasFailure = true
-				}
-			}
-
-			campaign := &coredata.AccessReviewCampaign{}
-			if err := campaign.LoadByID(ctx, tx, scope, campaignID); err != nil {
-				return fmt.Errorf("cannot load campaign: %w", err)
-			}
-
-			if campaign.Status == coredata.AccessReviewCampaignStatusCompleted ||
-				campaign.Status == coredata.AccessReviewCampaignStatusCancelled ||
-				campaign.Status == coredata.AccessReviewCampaignStatusPendingActions ||
-				campaign.Status == coredata.AccessReviewCampaignStatusFailed {
-				return nil
-			}
-
-			readyForFinalization = true
-			return nil
-		},
-	)
-	if err != nil {
-		return err
-	}
-	if !readyForFinalization {
-		return nil
-	}
-
-	if hasFailure {
-		return w.markCampaignFailed(ctx, tenantID, campaignID)
-	}
-
 	return w.pg.WithTx(ctx, func(tx pg.Conn) error {
 		if err := lockCampaignForUpdate(ctx, tx, scope, campaignID); err != nil {
 			return err
 		}
 
-		c := &coredata.AccessReviewCampaign{}
-		if err := c.LoadByID(ctx, tx, scope, campaignID); err != nil {
-			return fmt.Errorf("cannot reload campaign: %w", err)
+		campaign := &coredata.AccessReviewCampaign{}
+		if err := campaign.LoadByID(ctx, tx, scope, campaignID); err != nil {
+			return fmt.Errorf("cannot load campaign: %w", err)
 		}
-		if c.Status != coredata.AccessReviewCampaignStatusInProgress {
+
+		if campaign.Status != coredata.AccessReviewCampaignStatusInProgress {
 			return nil
 		}
 
-		c.Status = coredata.AccessReviewCampaignStatusPendingActions
-		c.UpdatedAt = time.Now()
-		return c.Update(ctx, tx, scope)
-	})
-}
-
-func (w *SourceFetchWorker) markCampaignFailed(
-	ctx context.Context,
-	tenantID gid.TenantID,
-	campaignID gid.GID,
-) error {
-	scope := coredata.NewScope(tenantID)
-
-	return w.pg.WithTx(ctx, func(conn pg.Conn) error {
-		if err := lockCampaignForUpdate(ctx, conn, scope, campaignID); err != nil {
-			return err
+		fetches := coredata.AccessReviewCampaignSourceFetches{}
+		if err := fetches.LoadByCampaignID(ctx, tx, scope, campaignID); err != nil {
+			return fmt.Errorf("cannot load source fetches: %w", err)
 		}
 
-		campaign := &coredata.AccessReviewCampaign{}
-		if err := campaign.LoadByID(ctx, conn, scope, campaignID); err != nil {
-			return fmt.Errorf("cannot load campaign for failure update: %w", err)
+		if len(fetches) == 0 {
+			return nil
 		}
-		campaign.Status = coredata.AccessReviewCampaignStatusFailed
+
+		hasFailure := false
+		for _, fetch := range fetches {
+			if !fetch.Status.IsTerminal() {
+				return nil
+			}
+			if fetch.Status == coredata.AccessReviewCampaignSourceFetchStatusFailed {
+				hasFailure = true
+			}
+		}
+
+		if hasFailure {
+			campaign.Status = coredata.AccessReviewCampaignStatusFailed
+		} else {
+			campaign.Status = coredata.AccessReviewCampaignStatusPendingActions
+		}
+
 		campaign.UpdatedAt = time.Now()
-		return campaign.Update(ctx, conn, scope)
+		return campaign.Update(ctx, tx, scope)
 	})
 }

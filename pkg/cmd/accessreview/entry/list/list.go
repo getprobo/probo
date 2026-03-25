@@ -53,6 +53,7 @@ query(
             isAdmin
             mfaStatus
             authMethod
+            accountType
             lastLogin
             externalId
             incrementalTag
@@ -86,6 +87,7 @@ type entryNode struct {
 	IsAdmin        bool    `json:"isAdmin"`
 	MfaStatus      string  `json:"mfaStatus"`
 	AuthMethod     string  `json:"authMethod"`
+	AccountType    string  `json:"accountType"`
 	LastLogin      *string `json:"lastLogin"`
 	ExternalID     string  `json:"externalId"`
 	IncrementalTag string  `json:"incrementalTag"`
@@ -110,8 +112,9 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 		flagFlag       string
 		flagIncTag     string
 		flagIsAdmin    *bool
-		flagAuthMethod string
-		flagOutput     *string
+		flagAuthMethod  string
+		flagAccountType string
+		flagOutput      *string
 	)
 
 	cmd := &cobra.Command{
@@ -213,6 +216,16 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				}
 				filter["authMethod"] = flagAuthMethod
 			}
+			if flagAccountType != "" {
+				if err := cmdutil.ValidateEnum(
+					"account-type",
+					flagAccountType,
+					[]string{"USER", "SERVICE_ACCOUNT"},
+				); err != nil {
+					return err
+				}
+				filter["accountType"] = flagAccountType
+			}
 			if len(filter) > 0 {
 				variables["filter"] = filter
 			}
@@ -225,7 +238,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				func(data json.RawMessage) (*api.Connection[entryNode], error) {
 					var resp struct {
 						Node *struct {
-							Typename string                      `json:"__typename"`
+							Typename string                    `json:"__typename"`
 							Entries  api.Connection[entryNode] `json:"entries"`
 						} `json:"node"`
 					}
@@ -300,6 +313,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagIncTag, "incremental-tag", "", "Filter by incremental tag (NEW, REMOVED, UNCHANGED)")
 	flagIsAdmin = cmd.Flags().Bool("is-admin", false, "Filter by admin status")
 	cmd.Flags().StringVar(&flagAuthMethod, "auth-method", "", "Filter by auth method (SSO, PASSWORD, API_KEY, SERVICE_ACCOUNT, UNKNOWN)")
+	cmd.Flags().StringVar(&flagAccountType, "account-type", "", "Filter by account type (USER, SERVICE_ACCOUNT)")
 	flagOutput = cmdutil.AddOutputFlag(cmd)
 
 	return cmd

@@ -148,7 +148,8 @@ func (d *CloudflareDriver) queryAllMembers(ctx context.Context, accountID string
 				IsAdmin:    isAdmin,
 				ExternalID: m.ID,
 				MFAStatus:  mfaStatus,
-				AuthMethod: coredata.AccessEntryAuthMethodUnknown,
+				AuthMethod:  coredata.AccessEntryAuthMethodUnknown,
+				AccountType: coredata.AccessEntryAccountTypeUser,
 			}
 
 			if record.Email != "" {
@@ -205,8 +206,8 @@ type cloudflareAccount struct {
 }
 
 type cloudflareListAccountsResponse struct {
-	Result     []cloudflareAccount    `json:"result"`
-	ResultInfo cloudflareResultInfo   `json:"result_info"`
+	Result     []cloudflareAccount  `json:"result"`
+	ResultInfo cloudflareResultInfo `json:"result_info"`
 }
 
 type cloudflareResultInfo struct {

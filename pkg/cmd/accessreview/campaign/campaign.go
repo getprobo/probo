@@ -24,6 +24,7 @@ import (
 	"go.probo.inc/probo/pkg/cmd/accessreview/campaign/list"
 	"go.probo.inc/probo/pkg/cmd/accessreview/campaign/removesource"
 	"go.probo.inc/probo/pkg/cmd/accessreview/campaign/start"
+	"go.probo.inc/probo/pkg/cmd/accessreview/campaign/update"
 	"go.probo.inc/probo/pkg/cmd/accessreview/campaign/view"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
 )
@@ -40,6 +41,7 @@ func NewCmdCampaign(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(delete.NewCmdDelete(f))
 	cmd.AddCommand(start.NewCmdStart(f))
 	cmd.AddCommand(close.NewCmdClose(f))
+	cmd.AddCommand(update.NewCmdUpdate(f))
 	cmd.AddCommand(cancel.NewCmdCancel(f))
 	cmd.AddCommand(addsource.NewCmdAddSource(f))
 	cmd.AddCommand(removesource.NewCmdRemoveSource(f))

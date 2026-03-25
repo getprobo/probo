@@ -204,6 +204,66 @@ const (
 			}
 		}`
 
+	createAccessSourceMutation = `
+		mutation CreateAccessSource($input: CreateAccessSourceInput!) {
+			createAccessSource(input: $input) {
+				accessSourceEdge { node { id } }
+			}
+		}`
+
+	updateAccessSourceMutation = `
+		mutation UpdateAccessSource($input: UpdateAccessSourceInput!) {
+			updateAccessSource(input: $input) {
+				accessSource { id }
+			}
+		}`
+
+	deleteAccessSourceMutation = `
+		mutation DeleteAccessSource($input: DeleteAccessSourceInput!) {
+			deleteAccessSource(input: $input) {
+				deletedAccessSourceId
+			}
+		}`
+
+	listAccessSourcesQuery = `
+		query GetAccessSources($id: ID!) {
+			node(id: $id) {
+				... on Organization {
+					accessSources(first: 10) { totalCount }
+				}
+			}
+		}`
+
+	createAccessReviewCampaignMutation = `
+		mutation CreateCampaign($input: CreateAccessReviewCampaignInput!) {
+			createAccessReviewCampaign(input: $input) {
+				accessReviewCampaignEdge { node { id } }
+			}
+		}`
+
+	updateAccessReviewCampaignMutation = `
+		mutation UpdateCampaign($input: UpdateAccessReviewCampaignInput!) {
+			updateAccessReviewCampaign(input: $input) {
+				accessReviewCampaign { id }
+			}
+		}`
+
+	deleteAccessReviewCampaignMutation = `
+		mutation DeleteCampaign($input: DeleteAccessReviewCampaignInput!) {
+			deleteAccessReviewCampaign(input: $input) {
+				deletedAccessReviewCampaignId
+			}
+		}`
+
+	listAccessReviewCampaignsQuery = `
+		query GetCampaigns($id: ID!) {
+			node(id: $id) {
+				... on Organization {
+					accessReviewCampaigns(first: 10) { totalCount }
+				}
+			}
+		}`
+
 	updateOrganizationMutation = `
 		mutation UpdateOrganization($input: UpdateOrganizationInput!) {
 			updateOrganization(input: $input) {
@@ -245,6 +305,8 @@ func TestRBAC(t *testing.T) {
 	taskID := factory.NewTask(owner, measureID).WithName("RBAC Test Task").Create()
 	riskID := factory.NewRisk(owner).WithName("RBAC Test Risk").Create()
 	vendorID := factory.NewVendor(owner).WithName("RBAC Test Vendor").Create()
+	accessSourceID := factory.NewAccessSource(owner, owner.GetOrganizationID().String()).WithName("RBAC Test Source").Create()
+	accessReviewCampaignID := factory.NewAccessReviewCampaign(owner, owner.GetOrganizationID().String()).WithName("RBAC Test Campaign").Create()
 
 	tests := []struct {
 		name        string
@@ -991,6 +1053,260 @@ func TestRBAC(t *testing.T) {
 			role:   "viewer",
 			client: viewer,
 			query:  listVendorsQuery,
+			variables: func() map[string]any {
+				return map[string]any{"id": owner.GetOrganizationID().String()}
+			},
+			shouldAllow: true,
+		},
+		// Access Source - Create
+		{
+			name:   "owner can create access source",
+			role:   "owner",
+			client: owner,
+			query:  createAccessSourceMutation,
+			variables: func() map[string]any {
+				return map[string]any{"input": map[string]any{"organizationId": owner.GetOrganizationID().String(), "name": factory.SafeName("AccessSource")}}
+			},
+			shouldAllow: true,
+		},
+		{
+			name:   "admin can create access source",
+			role:   "admin",
+			client: admin,
+			query:  createAccessSourceMutation,
+			variables: func() map[string]any {
+				return map[string]any{"input": map[string]any{"organizationId": owner.GetOrganizationID().String(), "name": factory.SafeName("AccessSource")}}
+			},
+			shouldAllow: true,
+		},
+		{
+			name:   "viewer cannot create access source",
+			role:   "viewer",
+			client: viewer,
+			query:  createAccessSourceMutation,
+			variables: func() map[string]any {
+				return map[string]any{"input": map[string]any{"organizationId": owner.GetOrganizationID().String(), "name": factory.SafeName("AccessSource")}}
+			},
+			shouldAllow: false,
+		},
+		// Access Source - Update
+		{
+			name:   "owner can update access source",
+			role:   "owner",
+			client: owner,
+			query:  updateAccessSourceMutation,
+			variables: func() map[string]any {
+				return map[string]any{"input": map[string]any{"accessSourceId": accessSourceID, "name": factory.SafeName("Updated Source")}}
+			},
+			shouldAllow: true,
+		},
+		{
+			name:   "admin can update access source",
+			role:   "admin",
+			client: admin,
+			query:  updateAccessSourceMutation,
+			variables: func() map[string]any {
+				return map[string]any{"input": map[string]any{"accessSourceId": accessSourceID, "name": factory.SafeName("Updated Source")}}
+			},
+			shouldAllow: true,
+		},
+		{
+			name:   "viewer cannot update access source",
+			role:   "viewer",
+			client: viewer,
+			query:  updateAccessSourceMutation,
+			variables: func() map[string]any {
+				return map[string]any{"input": map[string]any{"accessSourceId": accessSourceID, "name": factory.SafeName("Updated Source")}}
+			},
+			shouldAllow: false,
+		},
+		// Access Source - Delete
+		{
+			name:   "owner can delete access source",
+			role:   "owner",
+			client: owner,
+			query:  deleteAccessSourceMutation,
+			variables: func() map[string]any {
+				id := factory.NewAccessSource(owner, owner.GetOrganizationID().String()).WithName(factory.SafeName("ToDelete")).Create()
+				return map[string]any{"input": map[string]any{"accessSourceId": id}}
+			},
+			shouldAllow: true,
+		},
+		{
+			name:   "admin can delete access source",
+			role:   "admin",
+			client: admin,
+			query:  deleteAccessSourceMutation,
+			variables: func() map[string]any {
+				id := factory.NewAccessSource(owner, owner.GetOrganizationID().String()).WithName(factory.SafeName("ToDelete")).Create()
+				return map[string]any{"input": map[string]any{"accessSourceId": id}}
+			},
+			shouldAllow: true,
+		},
+		{
+			name:   "viewer cannot delete access source",
+			role:   "viewer",
+			client: viewer,
+			query:  deleteAccessSourceMutation,
+			variables: func() map[string]any {
+				id := factory.NewAccessSource(owner, owner.GetOrganizationID().String()).WithName(factory.SafeName("ToDelete")).Create()
+				return map[string]any{"input": map[string]any{"accessSourceId": id}}
+			},
+			shouldAllow: false,
+		},
+		// Access Source - List
+		{
+			name:   "owner can list access sources",
+			role:   "owner",
+			client: owner,
+			query:  listAccessSourcesQuery,
+			variables: func() map[string]any {
+				return map[string]any{"id": owner.GetOrganizationID().String()}
+			},
+			shouldAllow: true,
+		},
+		{
+			name:   "admin can list access sources",
+			role:   "admin",
+			client: admin,
+			query:  listAccessSourcesQuery,
+			variables: func() map[string]any {
+				return map[string]any{"id": owner.GetOrganizationID().String()}
+			},
+			shouldAllow: true,
+		},
+		{
+			name:   "viewer can list access sources",
+			role:   "viewer",
+			client: viewer,
+			query:  listAccessSourcesQuery,
+			variables: func() map[string]any {
+				return map[string]any{"id": owner.GetOrganizationID().String()}
+			},
+			shouldAllow: true,
+		},
+		// Access Review Campaign - Create
+		{
+			name:   "owner can create access review campaign",
+			role:   "owner",
+			client: owner,
+			query:  createAccessReviewCampaignMutation,
+			variables: func() map[string]any {
+				return map[string]any{"input": map[string]any{"organizationId": owner.GetOrganizationID().String(), "name": factory.SafeName("Campaign")}}
+			},
+			shouldAllow: true,
+		},
+		{
+			name:   "admin can create access review campaign",
+			role:   "admin",
+			client: admin,
+			query:  createAccessReviewCampaignMutation,
+			variables: func() map[string]any {
+				return map[string]any{"input": map[string]any{"organizationId": owner.GetOrganizationID().String(), "name": factory.SafeName("Campaign")}}
+			},
+			shouldAllow: true,
+		},
+		{
+			name:   "viewer cannot create access review campaign",
+			role:   "viewer",
+			client: viewer,
+			query:  createAccessReviewCampaignMutation,
+			variables: func() map[string]any {
+				return map[string]any{"input": map[string]any{"organizationId": owner.GetOrganizationID().String(), "name": factory.SafeName("Campaign")}}
+			},
+			shouldAllow: false,
+		},
+		// Access Review Campaign - Update
+		{
+			name:   "owner can update access review campaign",
+			role:   "owner",
+			client: owner,
+			query:  updateAccessReviewCampaignMutation,
+			variables: func() map[string]any {
+				return map[string]any{"input": map[string]any{"accessReviewCampaignId": accessReviewCampaignID, "name": factory.SafeName("Updated Campaign")}}
+			},
+			shouldAllow: true,
+		},
+		{
+			name:   "admin can update access review campaign",
+			role:   "admin",
+			client: admin,
+			query:  updateAccessReviewCampaignMutation,
+			variables: func() map[string]any {
+				return map[string]any{"input": map[string]any{"accessReviewCampaignId": accessReviewCampaignID, "name": factory.SafeName("Updated Campaign")}}
+			},
+			shouldAllow: true,
+		},
+		{
+			name:   "viewer cannot update access review campaign",
+			role:   "viewer",
+			client: viewer,
+			query:  updateAccessReviewCampaignMutation,
+			variables: func() map[string]any {
+				return map[string]any{"input": map[string]any{"accessReviewCampaignId": accessReviewCampaignID, "name": factory.SafeName("Updated Campaign")}}
+			},
+			shouldAllow: false,
+		},
+		// Access Review Campaign - Delete
+		{
+			name:   "owner can delete access review campaign",
+			role:   "owner",
+			client: owner,
+			query:  deleteAccessReviewCampaignMutation,
+			variables: func() map[string]any {
+				id := factory.NewAccessReviewCampaign(owner, owner.GetOrganizationID().String()).WithName(factory.SafeName("ToDelete")).Create()
+				return map[string]any{"input": map[string]any{"accessReviewCampaignId": id}}
+			},
+			shouldAllow: true,
+		},
+		{
+			name:   "admin can delete access review campaign",
+			role:   "admin",
+			client: admin,
+			query:  deleteAccessReviewCampaignMutation,
+			variables: func() map[string]any {
+				id := factory.NewAccessReviewCampaign(owner, owner.GetOrganizationID().String()).WithName(factory.SafeName("ToDelete")).Create()
+				return map[string]any{"input": map[string]any{"accessReviewCampaignId": id}}
+			},
+			shouldAllow: true,
+		},
+		{
+			name:   "viewer cannot delete access review campaign",
+			role:   "viewer",
+			client: viewer,
+			query:  deleteAccessReviewCampaignMutation,
+			variables: func() map[string]any {
+				id := factory.NewAccessReviewCampaign(owner, owner.GetOrganizationID().String()).WithName(factory.SafeName("ToDelete")).Create()
+				return map[string]any{"input": map[string]any{"accessReviewCampaignId": id}}
+			},
+			shouldAllow: false,
+		},
+		// Access Review Campaign - List
+		{
+			name:   "owner can list access review campaigns",
+			role:   "owner",
+			client: owner,
+			query:  listAccessReviewCampaignsQuery,
+			variables: func() map[string]any {
+				return map[string]any{"id": owner.GetOrganizationID().String()}
+			},
+			shouldAllow: true,
+		},
+		{
+			name:   "admin can list access review campaigns",
+			role:   "admin",
+			client: admin,
+			query:  listAccessReviewCampaignsQuery,
+			variables: func() map[string]any {
+				return map[string]any{"id": owner.GetOrganizationID().String()}
+			},
+			shouldAllow: true,
+		},
+		{
+			name:   "viewer can list access review campaigns",
+			role:   "viewer",
+			client: viewer,
+			query:  listAccessReviewCampaignsQuery,
 			variables: func() map[string]any {
 				return map[string]any{"id": owner.GetOrganizationID().String()}
 			},

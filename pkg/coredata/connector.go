@@ -326,7 +326,6 @@ INSERT INTO connectors (
 	return nil
 }
 
-
 func (c *Connectors) loadByOrganizationIDWithPagination(
 	ctx context.Context,
 	conn pg.Conn,

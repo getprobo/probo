@@ -6496,6 +6496,13 @@ components:
         - UNKNOWN
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.AccessEntryAuthMethod
 
+    AccessEntryAccountType:
+      type: string
+      enum:
+        - USER
+        - SERVICE_ACCOUNT
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.AccessEntryAccountType
+
     MFAStatus:
       type: string
       enum:
@@ -6561,6 +6568,9 @@ components:
         name:
           type: string
           description: Campaign name
+        description:
+          type: string
+          description: Campaign description
         status:
           $ref: "#/components/schemas/AccessReviewCampaignStatus"
           description: Campaign status
@@ -6603,6 +6613,7 @@ components:
         - is_admin
         - mfa_status
         - auth_method
+        - account_type
         - external_id
         - incremental_tag
         - flag
@@ -6640,6 +6651,9 @@ components:
         auth_method:
           $ref: "#/components/schemas/AccessEntryAuthMethod"
           description: Authentication method
+        account_type:
+          $ref: "#/components/schemas/AccessEntryAccountType"
+          description: Account type (user or service account)
         last_login:
           type:
             - string
@@ -6807,6 +6821,9 @@ components:
             auth_method:
               $ref: "#/components/schemas/AccessEntryAuthMethod"
               description: Filter by auth method
+            account_type:
+              $ref: "#/components/schemas/AccessEntryAccountType"
+              description: Filter by account type
 
     ListAccessEntriesOutput:
       type: object
@@ -7169,6 +7186,9 @@ components:
         name:
           type: string
           description: Campaign name
+        description:
+          type: string
+          description: Campaign description
         framework_controls:
           type: array
           items:
@@ -7199,6 +7219,9 @@ components:
         name:
           type: string
           description: New campaign name
+        description:
+          type: string
+          description: New campaign description
         framework_controls:
           type:
             - array
@@ -8478,7 +8501,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/ListAccessReviewCampaignsOutput"
   - name: listAccessEntries
-    description: List access entries for a campaign with optional filters (decision, flag, incremental_tag, is_admin, auth_method)
+    description: List access entries for a campaign with optional filters (decision, flag, incremental_tag, is_admin, auth_method, account_type)
     hints:
       readonly: true
       idempotent: true
