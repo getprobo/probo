@@ -31,6 +31,7 @@ import { PlaceholderExtension } from "./PlaceholderExtension";
 import { SlashCommandExtension } from "./SlashCommandExtension";
 import { TableCellMenu } from "./TableCellMenu";
 import { TableColumnMenu } from "./TableColumnMenu";
+import { TableRowMenu } from "./TableRowMenu";
 
 const extensions = [
   Document,
@@ -110,6 +111,7 @@ export function RichEditor(props: RichEditorProps) {
       <OptionsMenu editor={editor} />
       <TableCellMenu editor={editor} />
       <TableColumnMenu editor={editor} />
+      <TableRowMenu editor={editor} />
       <EditorContent className="h-full" editor={editor} />
     </div>
   );

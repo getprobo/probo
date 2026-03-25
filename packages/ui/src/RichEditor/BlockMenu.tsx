@@ -211,7 +211,7 @@ export function BlockMenu({ editor }: BlockMenuProps) {
   } = useFloating({
     strategy: "fixed",
     placement: triggerPlacement,
-    middleware: [offset(32)],
+    middleware: [offset(40)],
     whileElementsMounted: autoUpdate,
   });
 
