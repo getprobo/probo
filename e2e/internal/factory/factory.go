@@ -846,7 +846,6 @@ func CreateDocument(c *testutil.Client, approverID string, attrs ...Attrs) strin
 		"organizationId": c.GetOrganizationID().String(),
 		"approverIds":    []string{approverID},
 		"title":          a.getString("title", SafeName("Document")),
-		"content":        a.getString("content", "Document content"),
 		"documentType":   a.getString("documentType", "POLICY"),
 		"classification": a.getString("classification", "INTERNAL"),
 	}

@@ -4267,12 +4267,18 @@ func (r *mutationResolver) CreateDocument(ctx context.Context, input types.Creat
 
 	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
 
+	var content string
+	if input.Content != nil {
+		content = *input.Content
+	}
+
 	document, documentVersion, err := prb.Documents.Create(
 		ctx,
 		probo.CreateDocumentRequest{
 			OrganizationID:        input.OrganizationID,
 			DocumentType:          input.DocumentType,
 			Title:                 input.Title,
+			Content:               content,
 			ApproverIDs:           input.ApproverIds,
 			Classification:        input.Classification,
 			TrustCenterVisibility: input.TrustCenterVisibility,
