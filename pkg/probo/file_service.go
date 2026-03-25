@@ -73,6 +73,34 @@ func (s FileService) Get(
 	return file, nil
 }
 
+func (s FileService) GetByIDs(
+	ctx context.Context,
+	fileIDs ...gid.GID,
+) (coredata.Files, error) {
+	var files coredata.Files
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			if err := files.LoadByIDs(
+				ctx,
+				conn,
+				s.svc.scope,
+				fileIDs,
+			); err != nil {
+				return fmt.Errorf("cannot load files by ids: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return files, nil
+}
+
 func (s FileService) UploadAndSaveFile(
 	ctx context.Context,
 	fileValidator *filevalidation.FileValidator,

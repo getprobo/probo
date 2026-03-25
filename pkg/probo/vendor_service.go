@@ -429,6 +429,34 @@ func (s VendorService) Get(
 	return vendor, nil
 }
 
+func (s VendorService) GetByIDs(
+	ctx context.Context,
+	vendorIDs ...gid.GID,
+) (coredata.Vendors, error) {
+	var vendors coredata.Vendors
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			if err := vendors.LoadByIDs(
+				ctx,
+				conn,
+				s.svc.scope,
+				vendorIDs,
+			); err != nil {
+				return fmt.Errorf("cannot load vendors by ids: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return vendors, nil
+}
+
 func (s VendorService) Delete(
 	ctx context.Context,
 	vendorID gid.GID,

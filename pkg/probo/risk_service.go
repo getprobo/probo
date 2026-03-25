@@ -498,6 +498,34 @@ func (s RiskService) Get(
 	return risk, nil
 }
 
+func (s RiskService) GetByIDs(
+	ctx context.Context,
+	riskIDs ...gid.GID,
+) (coredata.Risks, error) {
+	var risks coredata.Risks
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			if err := risks.LoadByIDs(
+				ctx,
+				conn,
+				s.svc.scope,
+				riskIDs,
+			); err != nil {
+				return fmt.Errorf("cannot load risks by ids: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return risks, nil
+}
+
 func (s RiskService) Update(
 	ctx context.Context,
 	req UpdateRiskRequest,

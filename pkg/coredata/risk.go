@@ -401,6 +401,57 @@ LIMIT 1;
 	return nil
 }
 
+func (r *Risks) LoadByIDs(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	riskIDs []gid.GID,
+) error {
+	q := `
+SELECT
+	id,
+	organization_id,
+	name,
+	description,
+	category,
+	owner_profile_id,
+	NULL as owner_full_name,
+	treatment,
+	note,
+	inherent_likelihood,
+	inherent_impact,
+	inherent_risk_score,
+	residual_likelihood,
+	residual_impact,
+	residual_risk_score,
+	snapshot_id,
+	source_id,
+	created_at,
+	updated_at
+FROM risks
+WHERE %s
+	AND id = ANY(@risk_ids)
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"risk_ids": riskIDs}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query risks: %w", err)
+	}
+
+	risks, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Risk])
+	if err != nil {
+		return fmt.Errorf("cannot collect risks: %w", err)
+	}
+
+	*r = risks
+
+	return nil
+}
+
 func (r *Risk) Insert(
 	ctx context.Context,
 	conn pg.Conn,

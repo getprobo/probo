@@ -333,6 +333,34 @@ func (s MeasureService) Get(
 	return measure, nil
 }
 
+func (s MeasureService) GetByIDs(
+	ctx context.Context,
+	measureIDs ...gid.GID,
+) (coredata.Measures, error) {
+	var measures coredata.Measures
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			if err := measures.LoadByIDs(
+				ctx,
+				conn,
+				s.svc.scope,
+				measureIDs,
+			); err != nil {
+				return fmt.Errorf("cannot load measures by ids: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return measures, nil
+}
+
 func (s MeasureService) Import(
 	ctx context.Context,
 	organizationID gid.GID,

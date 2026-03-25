@@ -110,6 +110,34 @@ func (s OrganizationService) Get(
 	return organization, nil
 }
 
+func (s OrganizationService) GetByIDs(
+	ctx context.Context,
+	organizationIDs ...gid.GID,
+) (coredata.Organizations, error) {
+	var organizations coredata.Organizations
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			if err := organizations.LoadByIDs(
+				ctx,
+				conn,
+				s.svc.scope,
+				organizationIDs,
+			); err != nil {
+				return fmt.Errorf("cannot load organizations by ids: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return organizations, nil
+}
+
 func (s OrganizationService) GetContext(
 	ctx context.Context,
 	organizationID gid.GID,
