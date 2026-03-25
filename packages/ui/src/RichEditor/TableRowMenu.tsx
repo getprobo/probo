@@ -16,7 +16,7 @@ import {
 import {
   BroomIcon,
   CopyIcon,
-  DotsThreeIcon,
+  DotsThreeVerticalIcon,
   PlusIcon,
   TrashIcon,
 } from "@phosphor-icons/react";
@@ -31,25 +31,25 @@ import { MenuButton } from "./MenuButton";
 
 const DRAG_THRESHOLD = 4;
 
-const tableColumnMenuVariants = tv({
+const tableRowMenuVariants = tv({
   slots: {
     trigger: [
-      "z-10 flex items-center justify-center",
+      "z-10 flex flex-col items-center justify-center",
       "rounded text-txt-tertiary bg-subtle hover:bg-border-solid cursor-grab",
-      "py-0.5 h-3",
+      "px-0.5 w-3",
     ],
     menu: ["rounded-lg border border-border-mid bg-level-0 p-1 shadow-md z-20"],
   },
 });
 
-const { trigger, menu } = tableColumnMenuVariants();
+const { trigger, menu } = tableRowMenuVariants();
 
-type HoveredColumn = {
-  colIndex: number;
+type HoveredRow = {
+  rowIndex: number;
   tableStart: number;
 };
 
-type TableColumnMenuProps = {
+type TableRowMenuProps = {
   editor: ReturnType<typeof useEditor>;
 };
 
@@ -66,10 +66,10 @@ function cellDomElement(
   return el as HTMLElement | null;
 }
 
-function getColumnRect(
+function getRowRect(
   editor: NonNullable<ReturnType<typeof useEditor>>,
   tableStart: number,
-  colIndex: number,
+  rowIndex: number,
 ): DOMRect | null {
   try {
     const tableNodePos = tableStart - 1;
@@ -77,55 +77,51 @@ function getColumnRect(
     if (!table) return null;
 
     const map = TableMap.get(table);
-    if (colIndex < 0 || colIndex >= map.width) return null;
+    if (rowIndex < 0 || rowIndex >= map.height) return null;
 
-    const cellPos = map.positionAt(0, colIndex, table) + tableStart;
+    const cellPos = map.positionAt(rowIndex, 0, table) + tableStart;
     const el = cellDomElement(editor, cellPos);
     if (!el) return null;
 
-    const topRect = el.getBoundingClientRect();
-    let bottom = topRect.bottom;
+    const leftRect = el.getBoundingClientRect();
+    let right = leftRect.right;
 
-    if (map.height > 1) {
+    if (map.width > 1) {
       const lastCellPos
-        = map.positionAt(map.height - 1, colIndex, table) + tableStart;
+        = map.positionAt(rowIndex, map.width - 1, table) + tableStart;
       const lastEl = cellDomElement(editor, lastCellPos);
       if (lastEl) {
-        bottom = lastEl.getBoundingClientRect().bottom;
+        right = lastEl.getBoundingClientRect().right;
       }
     }
 
     return new DOMRect(
-      topRect.left,
-      topRect.top,
-      topRect.width,
-      bottom - topRect.top,
+      leftRect.left,
+      leftRect.top,
+      right - leftRect.left,
+      leftRect.height,
     );
   } catch {
     return null;
   }
 }
 
-function moveColumn(
+function moveRow(
   editor: NonNullable<ReturnType<typeof useEditor>>,
   tableStart: number,
-  fromCol: number,
-  toCol: number,
+  fromRow: number,
+  toRow: number,
 ) {
-  if (fromCol === toCol) return;
+  if (fromRow === toRow) return;
 
   const tableNodePos = tableStart - 1;
   const table = editor.state.doc.nodeAt(tableNodePos);
   if (!table) return;
 
   const rows: PMNode[] = [];
-  table.forEach((row) => {
-    const cells: PMNode[] = [];
-    row.forEach(cell => cells.push(cell));
-    const [moved] = cells.splice(fromCol, 1);
-    cells.splice(toCol, 0, moved);
-    rows.push(row.type.create(row.attrs, cells));
-  });
+  table.forEach(row => rows.push(row));
+  const [moved] = rows.splice(fromRow, 1);
+  rows.splice(toRow, 0, moved);
 
   const newTable = table.type.create(table.attrs, rows);
   const { tr } = editor.state;
@@ -133,25 +129,25 @@ function moveColumn(
   editor.view.dispatch(tr);
 }
 
-export function TableColumnMenu({ editor }: TableColumnMenuProps) {
+export function TableRowMenu({ editor }: TableRowMenuProps) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [hoveredCol, setHoveredCol] = useState<HoveredColumn | null>(null);
+  const [hoveredRow, setHoveredRow] = useState<HoveredRow | null>(null);
   const [triggerEl, setTriggerEl] = useState<Element | null>(null);
   const [dropdownEl, setDropdownEl] = useState<HTMLElement | null>(null);
   const [dragIndicator, setDragIndicator] = useState<{
     left: number;
     top: number;
-    height: number;
+    width: number;
   } | null>(null);
 
   const draggingRef = useRef(false);
   const dragStartPos = useRef({ x: 0, y: 0 });
   const rafId = useRef<number | null>(null);
-  const hoveredColRef = useRef<HoveredColumn | null>(null);
+  const hoveredRowRef = useRef<HoveredRow | null>(null);
 
   useEffect(() => {
-    hoveredColRef.current = hoveredCol;
-  }, [hoveredCol]);
+    hoveredRowRef.current = hoveredRow;
+  }, [hoveredRow]);
 
   useEffect(() => {
     if (!editor || editor.isDestroyed || !editor.isEditable) return;
@@ -168,8 +164,8 @@ export function TableColumnMenu({ editor }: TableColumnMenuProps) {
         const target = e.target as HTMLElement;
 
         if (
-          target.closest("[data-column-handle]")
-          || target.closest("[data-column-menu]")
+          target.closest("[data-row-handle]")
+          || target.closest("[data-row-menu]")
         ) {
           return;
         }
@@ -185,13 +181,13 @@ export function TableColumnMenu({ editor }: TableColumnMenuProps) {
               const ts = cellResolved.start(-1);
               const map = TableMap.get(table);
               const cellRect = map.findCell(cellResolved.pos - ts);
-              const ci = cellRect.left;
+              const ri = cellRect.top;
 
-              setHoveredCol((prev) => {
-                if (prev && prev.colIndex === ci && prev.tableStart === ts) {
+              setHoveredRow((prev) => {
+                if (prev && prev.rowIndex === ri && prev.tableStart === ts) {
                   return prev;
                 }
-                return { colIndex: ci, tableStart: ts };
+                return { rowIndex: ri, tableStart: ts };
               });
               return;
             }
@@ -200,24 +196,24 @@ export function TableColumnMenu({ editor }: TableColumnMenuProps) {
           }
         }
 
-        const current = hoveredColRef.current;
+        const current = hoveredRowRef.current;
         if (current) {
-          const rect = getColumnRect(editor, current.tableStart, current.colIndex);
+          const rect = getRowRect(editor, current.tableStart, current.rowIndex);
           if (rect) {
-            const zoneTop = rect.top - 40;
+            const zoneLeft = rect.left - 40;
             if (
-              e.clientX >= rect.left
-              && e.clientX <= rect.left + rect.width
-              && e.clientY >= zoneTop
-              && e.clientY <= rect.top
+              e.clientY >= rect.top
+              && e.clientY <= rect.top + rect.height
+              && e.clientX >= zoneLeft
+              && e.clientX <= rect.left
             ) {
               return;
             }
           }
         }
 
-        if (hoveredColRef.current) {
-          setHoveredCol(null);
+        if (hoveredRowRef.current) {
+          setHoveredRow(null);
         }
       });
     };
@@ -239,13 +235,13 @@ export function TableColumnMenu({ editor }: TableColumnMenuProps) {
     isPositioned,
   } = useFloating({
     strategy: "fixed",
-    placement: "top",
+    placement: "left",
     middleware: [
       offset(6),
       size({
         apply({ rects, elements }) {
           Object.assign(elements.floating.style, {
-            width: `${rects.reference.width}px`,
+            height: `${rects.reference.height}px`,
           });
         },
       }),
@@ -272,40 +268,40 @@ export function TableColumnMenu({ editor }: TableColumnMenuProps) {
   const { getFloatingProps } = useInteractions([dismiss]);
 
   useLayoutEffect(() => {
-    if (!editor || !hoveredCol) {
+    if (!editor || !hoveredRow) {
       handleRefs.setReference(null);
       return;
     }
 
-    const { colIndex, tableStart } = hoveredCol;
+    const { rowIndex, tableStart } = hoveredRow;
     const ed = editor;
 
     handleRefs.setReference({
       getBoundingClientRect() {
-        const r = getColumnRect(ed, tableStart, colIndex);
+        const r = getRowRect(ed, tableStart, rowIndex);
         if (!r) return new DOMRect(0, 0, 0, 0);
-        return new DOMRect(r.left, r.top, r.width, 0);
+        return new DOMRect(r.left, r.top, 0, r.height);
       },
     });
-  }, [hoveredCol, editor, handleRefs]);
+  }, [hoveredRow, editor, handleRefs]);
 
-  if (!editor || (!hoveredCol && !menuOpen)) return null;
+  if (!editor || (!hoveredRow && !menuOpen)) return null;
 
-  const computeTargetGap = (clientX: number, tableStart: number): number => {
+  const computeTargetGap = (clientY: number, tableStart: number): number => {
     const table = editor.state.doc.nodeAt(tableStart - 1);
     if (!table) return 0;
 
     const map = TableMap.get(table);
     let targetGap = 0;
 
-    for (let col = 0; col < map.width; col++) {
-      const r = getColumnRect(editor, tableStart, col);
+    for (let row = 0; row < map.height; row++) {
+      const r = getRowRect(editor, tableStart, row);
       if (!r) continue;
-      const midX = r.left + r.width / 2;
-      if (clientX > midX) {
-        targetGap = col + 1;
+      const midY = r.top + r.height / 2;
+      if (clientY > midY) {
+        targetGap = row + 1;
       } else {
-        targetGap = col;
+        targetGap = row;
         break;
       }
     }
@@ -313,7 +309,7 @@ export function TableColumnMenu({ editor }: TableColumnMenuProps) {
     return targetGap;
   };
 
-  const computeGapX = (
+  const computeGapY = (
     tableStart: number,
     gap: number,
   ): number | null => {
@@ -323,19 +319,19 @@ export function TableColumnMenu({ editor }: TableColumnMenuProps) {
     const map = TableMap.get(table);
 
     if (gap <= 0) {
-      const r = getColumnRect(editor, tableStart, 0);
-      return r ? r.left : null;
+      const r = getRowRect(editor, tableStart, 0);
+      return r ? r.top : null;
     }
 
-    if (gap >= map.width) {
-      const r = getColumnRect(editor, tableStart, map.width - 1);
-      return r ? r.left + r.width : null;
+    if (gap >= map.height) {
+      const r = getRowRect(editor, tableStart, map.height - 1);
+      return r ? r.top + r.height : null;
     }
 
-    const rLeft = getColumnRect(editor, tableStart, gap - 1);
-    const rRight = getColumnRect(editor, tableStart, gap);
-    if (rLeft && rRight) {
-      return (rLeft.left + rLeft.width + rRight.left) / 2;
+    const rAbove = getRowRect(editor, tableStart, gap - 1);
+    const rBelow = getRowRect(editor, tableStart, gap);
+    if (rAbove && rBelow) {
+      return (rAbove.top + rAbove.height + rBelow.top) / 2;
     }
     return null;
   };
@@ -344,12 +340,12 @@ export function TableColumnMenu({ editor }: TableColumnMenuProps) {
     e.preventDefault();
     e.stopPropagation();
 
-    if (menuOpen || !hoveredCol) return;
+    if (menuOpen || !hoveredRow) return;
 
     draggingRef.current = false;
     dragStartPos.current = { x: e.clientX, y: e.clientY };
 
-    const { colIndex: fromCol, tableStart } = hoveredCol;
+    const { rowIndex: fromRow, tableStart } = hoveredRow;
     const view = editor.view;
 
     const onMouseMove = (ev: MouseEvent) => {
@@ -365,9 +361,9 @@ export function TableColumnMenu({ editor }: TableColumnMenuProps) {
           if (table) {
             const map = TableMap.get(table);
             const anchorPos
-              = map.positionAt(0, fromCol, table) + tableStart;
+              = map.positionAt(fromRow, 0, table) + tableStart;
             const headPos
-              = map.positionAt(map.height - 1, fromCol, table) + tableStart;
+              = map.positionAt(fromRow, map.width - 1, table) + tableStart;
             const sel = CellSelection.create(
               view.state.doc,
               anchorPos,
@@ -381,21 +377,21 @@ export function TableColumnMenu({ editor }: TableColumnMenuProps) {
       }
 
       try {
-        const targetGap = computeTargetGap(ev.clientX, tableStart);
+        const targetGap = computeTargetGap(ev.clientY, tableStart);
 
-        if (targetGap === fromCol || targetGap === fromCol + 1) {
+        if (targetGap === fromRow || targetGap === fromRow + 1) {
           setDragIndicator(null);
           return;
         }
 
-        const gapX = computeGapX(tableStart, targetGap);
-        if (gapX !== null) {
-          const colRect = getColumnRect(editor, tableStart, 0);
-          if (colRect) {
+        const gapY = computeGapY(tableStart, targetGap);
+        if (gapY !== null) {
+          const rowRect = getRowRect(editor, tableStart, 0);
+          if (rowRect) {
             setDragIndicator({
-              left: gapX,
-              top: colRect.top,
-              height: colRect.height,
+              left: rowRect.left,
+              top: gapY,
+              width: rowRect.width,
             });
           }
         }
@@ -412,12 +408,12 @@ export function TableColumnMenu({ editor }: TableColumnMenuProps) {
         setDragIndicator(null);
 
         try {
-          const targetGap = computeTargetGap(ev.clientX, tableStart);
+          const targetGap = computeTargetGap(ev.clientY, tableStart);
 
-          if (targetGap !== fromCol && targetGap !== fromCol + 1) {
-            const toCol
-              = fromCol < targetGap ? targetGap - 1 : targetGap;
-            moveColumn(editor, tableStart, fromCol, toCol);
+          if (targetGap !== fromRow && targetGap !== fromRow + 1) {
+            const toRow
+              = fromRow < targetGap ? targetGap - 1 : targetGap;
+            moveRow(editor, tableStart, fromRow, toRow);
           }
         } catch {
           // table may have changed
@@ -433,18 +429,18 @@ export function TableColumnMenu({ editor }: TableColumnMenuProps) {
     document.addEventListener("mouseup", onMouseUp);
   };
 
-  const currentCol = hoveredCol;
+  const currentRow = hoveredRow;
 
-  const handleDeleteColumn = () => {
-    if (!currentCol) return;
-    const { colIndex, tableStart } = currentCol;
+  const handleDeleteRow = () => {
+    if (!currentRow) return;
+    const { rowIndex, tableStart } = currentRow;
 
     try {
       const table = editor.state.doc.nodeAt(tableStart - 1);
       if (!table) return;
 
       const map = TableMap.get(table);
-      const cellPos = map.positionAt(0, colIndex, table) + tableStart;
+      const cellPos = map.positionAt(rowIndex, 0, table) + tableStart;
 
       editor
         .chain()
@@ -453,19 +449,19 @@ export function TableColumnMenu({ editor }: TableColumnMenuProps) {
           tr.setSelection(TextSelection.create(tr.doc, cellPos + 1));
           return true;
         })
-        .deleteColumn()
+        .deleteRow()
         .run();
     } catch {
       // table may have changed
     }
 
     setMenuOpen(false);
-    setHoveredCol(null);
+    setHoveredRow(null);
   };
 
-  const handleDuplicateColumn = () => {
-    if (!currentCol) return;
-    const { colIndex, tableStart } = currentCol;
+  const handleDuplicateRow = () => {
+    if (!currentRow) return;
+    const { rowIndex, tableStart } = currentRow;
 
     try {
       const tableNodePos = tableStart - 1;
@@ -473,15 +469,11 @@ export function TableColumnMenu({ editor }: TableColumnMenuProps) {
       if (!table) return;
 
       const rows: PMNode[] = [];
-      table.forEach((row) => {
-        const cells: PMNode[] = [];
-        row.forEach((cell, _offset, i) => {
-          cells.push(cell);
-          if (i === colIndex) {
-            cells.push(cell.copy(cell.content));
-          }
-        });
-        rows.push(row.type.create(row.attrs, cells));
+      table.forEach((row, _offset, i) => {
+        rows.push(row);
+        if (i === rowIndex) {
+          rows.push(row.copy(row.content));
+        }
       });
 
       const newTable = table.type.create(table.attrs, rows);
@@ -495,16 +487,16 @@ export function TableColumnMenu({ editor }: TableColumnMenuProps) {
     setMenuOpen(false);
   };
 
-  const handleInsertLeft = () => {
-    if (!currentCol) return;
-    const { colIndex, tableStart } = currentCol;
+  const handleInsertAbove = () => {
+    if (!currentRow) return;
+    const { rowIndex, tableStart } = currentRow;
 
     try {
       const table = editor.state.doc.nodeAt(tableStart - 1);
       if (!table) return;
 
       const map = TableMap.get(table);
-      const cellPos = map.positionAt(0, colIndex, table) + tableStart;
+      const cellPos = map.positionAt(rowIndex, 0, table) + tableStart;
 
       editor
         .chain()
@@ -513,7 +505,7 @@ export function TableColumnMenu({ editor }: TableColumnMenuProps) {
           tr.setSelection(TextSelection.create(tr.doc, cellPos + 1));
           return true;
         })
-        .addColumnBefore()
+        .addRowBefore()
         .run();
     } catch {
       // table may have changed
@@ -522,16 +514,16 @@ export function TableColumnMenu({ editor }: TableColumnMenuProps) {
     setMenuOpen(false);
   };
 
-  const handleInsertRight = () => {
-    if (!currentCol) return;
-    const { colIndex, tableStart } = currentCol;
+  const handleInsertBelow = () => {
+    if (!currentRow) return;
+    const { rowIndex, tableStart } = currentRow;
 
     try {
       const table = editor.state.doc.nodeAt(tableStart - 1);
       if (!table) return;
 
       const map = TableMap.get(table);
-      const cellPos = map.positionAt(0, colIndex, table) + tableStart;
+      const cellPos = map.positionAt(rowIndex, 0, table) + tableStart;
 
       editor
         .chain()
@@ -540,7 +532,7 @@ export function TableColumnMenu({ editor }: TableColumnMenuProps) {
           tr.setSelection(TextSelection.create(tr.doc, cellPos + 1));
           return true;
         })
-        .addColumnAfter()
+        .addRowAfter()
         .run();
     } catch {
       // table may have changed
@@ -550,8 +542,8 @@ export function TableColumnMenu({ editor }: TableColumnMenuProps) {
   };
 
   const handleClearContents = () => {
-    if (!currentCol) return;
-    const { colIndex, tableStart } = currentCol;
+    if (!currentRow) return;
+    const { rowIndex, tableStart } = currentRow;
 
     try {
       const table = editor.state.doc.nodeAt(tableStart - 1);
@@ -561,8 +553,8 @@ export function TableColumnMenu({ editor }: TableColumnMenuProps) {
       const { tr } = editor.state;
       const { schema } = editor.state;
 
-      for (let row = 0; row < map.height; row++) {
-        const cellPos = map.map[row * map.width + colIndex] + tableStart;
+      for (let col = 0; col < map.width; col++) {
+        const cellPos = map.map[rowIndex * map.width + col] + tableStart;
         const cellNode = editor.state.doc.nodeAt(cellPos);
         if (!cellNode) continue;
 
@@ -592,17 +584,17 @@ export function TableColumnMenu({ editor }: TableColumnMenuProps) {
           setTriggerEl(node);
           menuRefs.setReference(node);
         }}
-        data-column-handle
+        data-row-handle
         onMouseDown={onHandleMouseDown}
         type="button"
         style={{
           ...handleStyles,
           visibility:
-            isPositioned && (hoveredCol || menuOpen) ? "visible" : "hidden",
+            isPositioned && (hoveredRow || menuOpen) ? "visible" : "hidden",
         }}
         className={trigger()}
       >
-        <DotsThreeIcon size={16} weight="bold" />
+        <DotsThreeVerticalIcon size={16} weight="bold" />
       </button>
       {menuOpen && (
         <div
@@ -610,31 +602,31 @@ export function TableColumnMenu({ editor }: TableColumnMenuProps) {
             setDropdownEl(node);
             menuRefs.setFloating(node);
           }}
-          data-column-menu
+          data-row-menu
           style={menuStyles}
           {...getFloatingProps()}
           onMouseDown={e => e.preventDefault()}
           className={menu()}
         >
-          <MenuButton onClick={handleInsertLeft}>
+          <MenuButton onClick={handleInsertAbove}>
             <PlusIcon size={16} weight="bold" />
-            Insert column left
+            Insert row above
           </MenuButton>
-          <MenuButton onClick={handleInsertRight}>
+          <MenuButton onClick={handleInsertBelow}>
             <PlusIcon size={16} weight="bold" />
-            Insert column right
+            Insert row below
           </MenuButton>
-          <MenuButton onClick={handleDuplicateColumn}>
+          <MenuButton onClick={handleDuplicateRow}>
             <CopyIcon size={16} weight="bold" />
-            Duplicate column
+            Duplicate row
           </MenuButton>
           <MenuButton onClick={handleClearContents}>
             <BroomIcon size={16} weight="bold" />
             Clear contents
           </MenuButton>
-          <MenuButton onClick={handleDeleteColumn}>
+          <MenuButton onClick={handleDeleteRow}>
             <TrashIcon size={16} weight="bold" />
-            Delete column
+            Delete row
           </MenuButton>
         </div>
       )}
@@ -642,10 +634,10 @@ export function TableColumnMenu({ editor }: TableColumnMenuProps) {
         <div
           style={{
             position: "fixed",
-            left: dragIndicator.left - 1,
-            top: dragIndicator.top,
-            width: 2,
-            height: dragIndicator.height,
+            left: dragIndicator.left,
+            top: dragIndicator.top - 1,
+            width: dragIndicator.width,
+            height: 2,
             backgroundColor: "var(--color-border-info)",
             zIndex: 40,
             pointerEvents: "none",

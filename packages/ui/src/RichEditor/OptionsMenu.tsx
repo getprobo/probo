@@ -71,7 +71,7 @@ export function OptionsMenu({ editor }: OptionsMenuProps) {
   } = useFloating({
     strategy: "fixed",
     placement: triggerPlacement,
-    middleware: [offset(8)],
+    middleware: [offset(16)],
     whileElementsMounted: autoUpdate,
   });
 
