@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.153.0] - 2026-03-26
+
+### Added
+
+- Add AI-powered evidence description generation
+
+### Fixed
+
+- Fix batch signature dialog wording
+- Fix empty search_engine_indexing on trust centers
+
 ## [0.152.0] - 2026-03-25
 
 ### Added
