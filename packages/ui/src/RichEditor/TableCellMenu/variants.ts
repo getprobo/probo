@@ -7,9 +7,9 @@ import { tv } from "tailwind-variants";
 export const tableCellMenuVariants = tv({
   slots: {
     trigger: [
-      "z-10 flex size-5 items-center justify-center",
+      "z-20 flex size-5 items-center justify-center",
       "rounded text-border-info cursor-pointer",
     ],
-    menu: ["rounded-lg border border-border-mid bg-level-0 p-1 shadow-md z-20"],
+    menu: ["rounded-lg border border-border-mid bg-level-0 p-1 shadow-md z-30"],
   },
 });
