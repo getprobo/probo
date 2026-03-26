@@ -16,6 +16,7 @@ import (
 	pgx "github.com/jackc/pgx/v5"
 	"github.com/vikstrous/dataloadgen"
 	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/accessreview"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
@@ -6827,7 +6828,7 @@ func (r *mutationResolver) CreateAccessReviewCampaign(ctx context.Context, input
 		description = *input.Description
 	}
 
-	campaign, err := prb.AccessReviewCampaigns.Create(ctx, probo.CreateAccessReviewCampaignRequest{
+	campaign, err := prb.AccessReviewCampaigns.Create(ctx, accessreview.CreateAccessReviewCampaignRequest{
 		OrganizationID:    input.OrganizationID,
 		Name:              input.Name,
 		Description:       description,
@@ -6851,7 +6852,7 @@ func (r *mutationResolver) UpdateAccessReviewCampaign(ctx context.Context, input
 
 	prb := r.ProboService(ctx, input.AccessReviewCampaignID.TenantID())
 
-	req := probo.UpdateAccessReviewCampaignRequest{
+	req := accessreview.UpdateAccessReviewCampaignRequest{
 		CampaignID: input.AccessReviewCampaignID,
 	}
 	if input.Name.IsSet() {
@@ -6960,7 +6961,7 @@ func (r *mutationResolver) AddAccessReviewCampaignScopeSource(ctx context.Contex
 
 	prb := r.ProboService(ctx, input.AccessReviewCampaignID.TenantID())
 
-	campaign, err := prb.AccessReviewCampaigns.AddScopeSource(ctx, probo.AddCampaignScopeSourceRequest{
+	campaign, err := prb.AccessReviewCampaigns.AddScopeSource(ctx, accessreview.AddCampaignScopeSourceRequest{
 		CampaignID:     input.AccessReviewCampaignID,
 		AccessSourceID: input.AccessSourceID,
 	})
@@ -6981,7 +6982,7 @@ func (r *mutationResolver) RemoveAccessReviewCampaignScopeSource(ctx context.Con
 
 	prb := r.ProboService(ctx, input.AccessReviewCampaignID.TenantID())
 
-	campaign, err := prb.AccessReviewCampaigns.RemoveScopeSource(ctx, probo.RemoveCampaignScopeSourceRequest{
+	campaign, err := prb.AccessReviewCampaigns.RemoveScopeSource(ctx, accessreview.RemoveCampaignScopeSourceRequest{
 		CampaignID:     input.AccessReviewCampaignID,
 		AccessSourceID: input.AccessSourceID,
 	})
@@ -8776,6 +8777,33 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 				return nil, err
 			}
 			return types.NewWebhookSubscription(wc), nil
+		}
+	case coredata.AccessReviewCampaignEntityType:
+		action = probo.ActionAccessReviewCampaignGet
+		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
+			campaign, err := prb.AccessReviewCampaigns.Get(ctx, id)
+			if err != nil {
+				return nil, err
+			}
+			return types.NewAccessReviewCampaign(campaign), nil
+		}
+	case coredata.AccessSourceEntityType:
+		action = probo.ActionAccessSourceGet
+		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
+			source, err := prb.AccessSources.Get(ctx, id)
+			if err != nil {
+				return nil, err
+			}
+			return types.NewAccessSource(source), nil
+		}
+	case coredata.AccessEntryEntityType:
+		action = probo.ActionAccessEntryGet
+		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
+			entry, err := prb.AccessEntries.Get(ctx, id)
+			if err != nil {
+				return nil, err
+			}
+			return types.NewAccessEntry(entry), nil
 		}
 	default:
 	}

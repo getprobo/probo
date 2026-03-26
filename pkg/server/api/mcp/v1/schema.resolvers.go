@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
+	"go.probo.inc/probo/pkg/accessreview"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
@@ -3551,7 +3552,7 @@ func (r *Resolver) CreateAccessReviewCampaignTool(ctx context.Context, req *mcp.
 		description = *input.Description
 	}
 
-	campaign, err := prb.AccessReviewCampaigns.Create(ctx, probo.CreateAccessReviewCampaignRequest{
+	campaign, err := prb.AccessReviewCampaigns.Create(ctx, accessreview.CreateAccessReviewCampaignRequest{
 		OrganizationID:    input.OrganizationID,
 		Name:              input.Name,
 		Description:       description,
@@ -3574,7 +3575,7 @@ func (r *Resolver) UpdateAccessReviewCampaignTool(ctx context.Context, req *mcp.
 
 	prb := r.ProboService(ctx, input.CampaignID)
 
-	updateReq := probo.UpdateAccessReviewCampaignRequest{
+	updateReq := accessreview.UpdateAccessReviewCampaignRequest{
 		CampaignID:  input.CampaignID,
 		Name:        input.Name,
 		Description: input.Description,
@@ -3662,7 +3663,7 @@ func (r *Resolver) AddAccessReviewCampaignScopeSourceTool(ctx context.Context, r
 
 	prb := r.ProboService(ctx, input.CampaignID)
 
-	campaign, err := prb.AccessReviewCampaigns.AddScopeSource(ctx, probo.AddCampaignScopeSourceRequest{
+	campaign, err := prb.AccessReviewCampaigns.AddScopeSource(ctx, accessreview.AddCampaignScopeSourceRequest{
 		CampaignID:     input.CampaignID,
 		AccessSourceID: input.AccessSourceID,
 	})
@@ -3682,7 +3683,7 @@ func (r *Resolver) RemoveAccessReviewCampaignScopeSourceTool(ctx context.Context
 
 	prb := r.ProboService(ctx, input.CampaignID)
 
-	campaign, err := prb.AccessReviewCampaigns.RemoveScopeSource(ctx, probo.RemoveCampaignScopeSourceRequest{
+	campaign, err := prb.AccessReviewCampaigns.RemoveScopeSource(ctx, accessreview.RemoveCampaignScopeSourceRequest{
 		CampaignID:     input.CampaignID,
 		AccessSourceID: input.AccessSourceID,
 	})

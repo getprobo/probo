@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package accesssource
+package drivers
 
 import (
 	"context"
@@ -23,45 +23,38 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 )
 
-const (
-	notionUsersEndpoint = "https://api.notion.com/v1/users"
-	notionAPIVersion    = "2022-06-28"
-)
+const brexUsersEndpoint = "https://platform.brexapis.com/v2/users"
 
-// NotionDriver fetches workspace users from Notion via OAuth2-authenticated
-// REST API requests.
-type NotionDriver struct {
+// BrexDriver fetches users from Brex via OAuth2-authenticated REST API
+// requests.
+type BrexDriver struct {
 	httpClient *http.Client
 }
 
-func NewNotionDriver(httpClient *http.Client) *NotionDriver {
-	return &NotionDriver{
+func NewBrexDriver(httpClient *http.Client) *BrexDriver {
+	return &BrexDriver{
 		httpClient: httpClient,
 	}
 }
 
-func (d *NotionDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error) {
+func (d *BrexDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error) {
 	var (
-		records     []AccountRecord
-		startCursor *string
+		records []AccountRecord
+		cursor  *string
 	)
 
 	for range maxPaginationPages {
-		resp, err := d.queryUsers(ctx, startCursor)
+		resp, err := d.queryUsers(ctx, cursor)
 		if err != nil {
 			return nil, err
 		}
 
-		for _, u := range resp.Results {
-			if u.Type != "person" {
-				continue
-			}
-
+		for _, u := range resp.Items {
 			record := AccountRecord{
-				Email:       u.Person.Email,
-				FullName:    u.Name,
-				Role:        "Member",
-				Active:      true,
+				Email:       u.Email,
+				FullName:    u.FirstName + " " + u.LastName,
+				Role:        u.Role,
+				Active:      u.Status == "ACTIVE",
 				IsAdmin:     false,
 				ExternalID:  u.ID,
 				MFAStatus:   coredata.MFAStatusUnknown,
@@ -74,61 +67,59 @@ func (d *NotionDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 			}
 		}
 
-		if !resp.HasMore || resp.NextCursor == "" {
+		if resp.NextCursor == "" {
 			break
 		}
 		nextCursor := resp.NextCursor
-		startCursor = &nextCursor
+		cursor = &nextCursor
 	}
 
 	return records, nil
 }
 
-func (d *NotionDriver) queryUsers(ctx context.Context, startCursor *string) (*notionUsersResponse, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, notionUsersEndpoint, nil)
+func (d *BrexDriver) queryUsers(ctx context.Context, cursor *string) (*brexUsersResponse, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, brexUsersEndpoint, nil)
 	if err != nil {
-		return nil, fmt.Errorf("cannot create notion users request: %w", err)
+		return nil, fmt.Errorf("cannot create brex users request: %w", err)
 	}
 
-	req.Header.Set("Notion-Version", notionAPIVersion)
 	req.Header.Set("Accept", "application/json")
+	req.Header.Set("Content-Type", "application/json")
 
-	q := req.URL.Query()
-	q.Set("page_size", "100")
-	if startCursor != nil {
-		q.Set("start_cursor", *startCursor)
+	if cursor != nil {
+		q := req.URL.Query()
+		q.Set("cursor", *cursor)
+		req.URL.RawQuery = q.Encode()
 	}
-	req.URL.RawQuery = q.Encode()
 
 	httpResp, err := d.httpClient.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("cannot execute notion users request: %w", err)
+		return nil, fmt.Errorf("cannot execute brex users request: %w", err)
 	}
 	defer func() {
 		_ = httpResp.Body.Close()
 	}()
 
 	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
-		return nil, fmt.Errorf("cannot fetch notion users: unexpected status %d", httpResp.StatusCode)
+		return nil, fmt.Errorf("cannot fetch brex users: unexpected status %d", httpResp.StatusCode)
 	}
 
-	var resp notionUsersResponse
+	var resp brexUsersResponse
 	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
-		return nil, fmt.Errorf("cannot decode notion users response: %w", err)
+		return nil, fmt.Errorf("cannot decode brex users response: %w", err)
 	}
 
 	return &resp, nil
 }
 
-type notionUsersResponse struct {
-	Results []struct {
-		ID     string `json:"id"`
-		Type   string `json:"type"`
-		Name   string `json:"name"`
-		Person struct {
-			Email string `json:"email"`
-		} `json:"person"`
-	} `json:"results"`
-	HasMore    bool   `json:"has_more"`
+type brexUsersResponse struct {
+	Items []struct {
+		ID        string `json:"id"`
+		FirstName string `json:"first_name"`
+		LastName  string `json:"last_name"`
+		Email     string `json:"email"`
+		Status    string `json:"status"`
+		Role      string `json:"role"`
+	} `json:"items"`
 	NextCursor string `json:"next_cursor"`
 }

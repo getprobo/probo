@@ -26,7 +26,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/probo/accesssource"
+	"go.probo.inc/probo/pkg/accessreview/drivers"
 )
 
 // SourceNameWorker polls for access sources that have a connector but no
@@ -112,7 +112,7 @@ func (w *SourceNameWorker) processNext(ctx context.Context) error {
 	// provider display name and the instance name in a single pass.
 	var (
 		dbConnector coredata.Connector
-		resolver    accesssource.NameResolver
+		resolver    drivers.NameResolver
 	)
 
 	err = w.pg.WithConn(ctx, func(conn pg.Conn) error {
@@ -170,7 +170,7 @@ func (w *SourceNameWorker) processNext(ctx context.Context) error {
 		return nil
 	}
 
-	displayName := accesssource.ProviderDisplayName(dbConnector.Provider)
+	displayName := drivers.ProviderDisplayName(dbConnector.Provider)
 	newName := displayName + " " + instanceName
 
 	w.logger.InfoCtx(ctx, "resolved source name",
@@ -192,37 +192,37 @@ func (w *SourceNameWorker) processNext(ctx context.Context) error {
 func (w *SourceNameWorker) buildResolver(
 	dbConnector *coredata.Connector,
 	httpClient *http.Client,
-) accesssource.NameResolver {
+) drivers.NameResolver {
 	switch dbConnector.Provider {
 	case coredata.ConnectorProviderSlack:
-		return accesssource.NewSlackNameResolver(httpClient)
+		return drivers.NewSlackNameResolver(httpClient)
 	case coredata.ConnectorProviderGoogleWorkspace:
-		return accesssource.NewGoogleWorkspaceNameResolver(httpClient)
+		return drivers.NewGoogleWorkspaceNameResolver(httpClient)
 	case coredata.ConnectorProviderLinear:
-		return accesssource.NewLinearNameResolver(httpClient)
+		return drivers.NewLinearNameResolver(httpClient)
 	case coredata.ConnectorProviderCloudflare:
-		return accesssource.NewCloudflareNameResolver(httpClient)
+		return drivers.NewCloudflareNameResolver(httpClient)
 	case coredata.ConnectorProviderBrex:
-		return accesssource.NewBrexNameResolver(httpClient)
+		return drivers.NewBrexNameResolver(httpClient)
 	case coredata.ConnectorProviderTally:
 		tallySettings, err := dbConnector.TallySettings()
 		if err != nil {
 			w.logger.Error("cannot read tally connector settings", log.Error(err))
 			return nil
 		}
-		return accesssource.NewTallyNameResolver(httpClient, tallySettings.OrganizationID)
+		return drivers.NewTallyNameResolver(httpClient, tallySettings.OrganizationID)
 	case coredata.ConnectorProviderHubSpot:
-		return accesssource.NewHubSpotNameResolver(httpClient)
+		return drivers.NewHubSpotNameResolver(httpClient)
 	case coredata.ConnectorProviderDocuSign:
-		return accesssource.NewDocuSignNameResolver(httpClient)
+		return drivers.NewDocuSignNameResolver(httpClient)
 	case coredata.ConnectorProviderFigma:
-		return accesssource.NewFigmaNameResolver(httpClient)
+		return drivers.NewFigmaNameResolver(httpClient)
 	case coredata.ConnectorProviderNotion:
-		return accesssource.NewNotionNameResolver(httpClient)
+		return drivers.NewNotionNameResolver(httpClient)
 	case coredata.ConnectorProviderOpenAI:
-		return accesssource.NewOpenAINameResolver(httpClient)
+		return drivers.NewOpenAINameResolver(httpClient)
 	case coredata.ConnectorProviderOnePassword:
-		return accesssource.NewOnePasswordNameResolver()
+		return drivers.NewOnePasswordNameResolver()
 	default:
 		return nil
 	}

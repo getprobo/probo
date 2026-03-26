@@ -120,7 +120,7 @@ type (
 		CustomDomains                     *CustomDomainService
 		SlackMessages                     *slack.SlackMessageService
 		AccessSources                     *AccessSourceService
-		AccessReviewCampaigns             AccessReviewCampaignService
+		AccessReviewCampaigns             *accessreview.CampaignService
 		AccessEntries                     *AccessEntryService
 		ReviewEngine                      *ReviewEngine
 	}
@@ -290,7 +290,7 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 	}
 	tenantService.SlackMessages = s.slack.WithTenant(tenantID).SlackMessages
 	tenantService.AccessSources = &AccessSourceService{svc: tenantService}
-	tenantService.AccessReviewCampaigns = newAccessReviewCampaignAdapter(accessreview.NewCampaignService(s.pg, tenantService.scope))
+	tenantService.AccessReviewCampaigns = accessreview.NewCampaignService(s.pg, tenantService.scope)
 	tenantService.AccessEntries = &AccessEntryService{svc: tenantService}
 	tenantService.ReviewEngine = NewReviewEngine(s.pg, tenantService.scope, s.encryptionKey)
 

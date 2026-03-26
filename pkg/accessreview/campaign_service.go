@@ -39,9 +39,6 @@ func NewCampaignService(pgClient *pg.Client, scope coredata.Scoper) *CampaignSer
 	}
 }
 
-// Ensure CampaignService implements accessreview.AccessReviewCampaignService.
-var _ AccessReviewCampaignService = (*CampaignService)(nil)
-
 func (s *CampaignService) Create(
 	ctx context.Context,
 	req CreateAccessReviewCampaignRequest,

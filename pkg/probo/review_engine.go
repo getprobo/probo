@@ -25,7 +25,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/probo/accesssource"
+	"go.probo.inc/probo/pkg/accessreview/drivers"
 )
 
 // ReviewEngine contains the stateless core logic for access review campaigns:
@@ -56,7 +56,7 @@ func (e *ReviewEngine) SnapshotSource(
 	// so that external HTTP calls do not hold a database connection.
 	var (
 		source   *coredata.AccessSource
-		driver   accesssource.Driver
+		driver   drivers.Driver
 		baseline []coredata.BaselineAccountEntry
 	)
 
@@ -201,15 +201,15 @@ func (e *ReviewEngine) resolveDriver(
 	ctx context.Context,
 	conn pg.Conn,
 	source *coredata.AccessSource,
-) (accesssource.Driver, error) {
+) (drivers.Driver, error) {
 	if source.ConnectorID == nil {
 		// CSV-backed source: use CSVDriver when csv_data is present
 		if source.CsvData != nil && *source.CsvData != "" {
-			return accesssource.NewCSVDriver(strings.NewReader(*source.CsvData)), nil
+			return drivers.NewCSVDriver(strings.NewReader(*source.CsvData)), nil
 		}
 
 		// Built-in driver: default to ProboMemberships
-		return accesssource.NewProboMembershipsDriver(e.pg, e.scope, source.OrganizationID), nil
+		return drivers.NewProboMembershipsDriver(e.pg, e.scope, source.OrganizationID), nil
 	}
 
 	// Connector-backed: look up the connector and resolve driver by provider
@@ -224,19 +224,19 @@ func (e *ReviewEngine) resolveDriver(
 		if err != nil {
 			return nil, fmt.Errorf("cannot create HTTP client for google workspace connector: %w", err)
 		}
-		return accesssource.NewGoogleWorkspaceDriver(httpClient), nil
+		return drivers.NewGoogleWorkspaceDriver(httpClient), nil
 	case coredata.ConnectorProviderLinear:
 		httpClient, err := dbConnector.Connection.Client(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("cannot create HTTP client for linear connector: %w", err)
 		}
-		return accesssource.NewLinearDriver(httpClient), nil
+		return drivers.NewLinearDriver(httpClient), nil
 	case coredata.ConnectorProviderSlack:
 		httpClient, err := dbConnector.Connection.Client(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("cannot create HTTP client for slack connector: %w", err)
 		}
-		return accesssource.NewSlackDriver(httpClient), nil
+		return drivers.NewSlackDriver(httpClient), nil
 	case coredata.ConnectorProviderOnePassword:
 		httpClient, err := dbConnector.Connection.Client(ctx)
 		if err != nil {
@@ -249,31 +249,31 @@ func (e *ReviewEngine) resolveDriver(
 		if onePasswordSettings.SCIMBridgeURL == "" {
 			return nil, fmt.Errorf("1password connector requires scim_bridge_url in settings")
 		}
-		return accesssource.NewOnePasswordDriver(httpClient, onePasswordSettings.SCIMBridgeURL), nil
+		return drivers.NewOnePasswordDriver(httpClient, onePasswordSettings.SCIMBridgeURL), nil
 	case coredata.ConnectorProviderHubSpot:
 		httpClient, err := dbConnector.Connection.Client(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("cannot create HTTP client for hubspot connector: %w", err)
 		}
-		return accesssource.NewHubSpotDriver(httpClient), nil
+		return drivers.NewHubSpotDriver(httpClient), nil
 	case coredata.ConnectorProviderDocuSign:
 		httpClient, err := dbConnector.Connection.Client(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("cannot create HTTP client for docusign connector: %w", err)
 		}
-		return accesssource.NewDocuSignDriver(httpClient), nil
+		return drivers.NewDocuSignDriver(httpClient), nil
 	case coredata.ConnectorProviderNotion:
 		httpClient, err := dbConnector.Connection.Client(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("cannot create HTTP client for notion connector: %w", err)
 		}
-		return accesssource.NewNotionDriver(httpClient), nil
+		return drivers.NewNotionDriver(httpClient), nil
 	case coredata.ConnectorProviderBrex:
 		httpClient, err := dbConnector.Connection.Client(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("cannot create HTTP client for brex connector: %w", err)
 		}
-		return accesssource.NewBrexDriver(httpClient), nil
+		return drivers.NewBrexDriver(httpClient), nil
 	case coredata.ConnectorProviderTally:
 		httpClient, err := dbConnector.Connection.Client(ctx)
 		if err != nil {
@@ -286,19 +286,19 @@ func (e *ReviewEngine) resolveDriver(
 		if tallySettings.OrganizationID == "" {
 			return nil, fmt.Errorf("tally connector requires organization_id in settings")
 		}
-		return accesssource.NewTallyDriver(httpClient, tallySettings.OrganizationID), nil
+		return drivers.NewTallyDriver(httpClient, tallySettings.OrganizationID), nil
 	case coredata.ConnectorProviderCloudflare:
 		httpClient, err := dbConnector.Connection.Client(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("cannot create HTTP client for cloudflare connector: %w", err)
 		}
-		return accesssource.NewCloudflareDriver(httpClient), nil
+		return drivers.NewCloudflareDriver(httpClient), nil
 	case coredata.ConnectorProviderOpenAI:
 		httpClient, err := dbConnector.Connection.Client(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("cannot create HTTP client for openai connector: %w", err)
 		}
-		return accesssource.NewOpenAIDriver(httpClient), nil
+		return drivers.NewOpenAIDriver(httpClient), nil
 	default:
 		return nil, fmt.Errorf("unsupported connector provider %q for access source driver", dbConnector.Provider)
 	}

@@ -15,30 +15,12 @@
 package accessreview
 
 import (
-	"context"
-
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/validator"
 )
 
 const campaignNameMaxLength = 1000
-
-type AccessReviewCampaignService interface {
-	Create(ctx context.Context, req CreateAccessReviewCampaignRequest) (*coredata.AccessReviewCampaign, error)
-	Get(ctx context.Context, campaignID gid.GID) (*coredata.AccessReviewCampaign, error)
-	Update(ctx context.Context, req UpdateAccessReviewCampaignRequest) (*coredata.AccessReviewCampaign, error)
-	Delete(ctx context.Context, campaignID gid.GID) error
-	AddScopeSource(ctx context.Context, req AddCampaignScopeSourceRequest) (*coredata.AccessReviewCampaign, error)
-	RemoveScopeSource(ctx context.Context, req RemoveCampaignScopeSourceRequest) (*coredata.AccessReviewCampaign, error)
-	Start(ctx context.Context, campaignID gid.GID) (*coredata.AccessReviewCampaign, error)
-	Close(ctx context.Context, campaignID gid.GID) (*coredata.AccessReviewCampaign, error)
-	Cancel(ctx context.Context, campaignID gid.GID) (*coredata.AccessReviewCampaign, error)
-	ListForOrganizationID(ctx context.Context, organizationID gid.GID, cursor *page.Cursor[coredata.AccessReviewCampaignOrderField]) (*page.Page[*coredata.AccessReviewCampaign, coredata.AccessReviewCampaignOrderField], error)
-	ListSourceFetches(ctx context.Context, campaignID gid.GID) (coredata.AccessReviewCampaignSourceFetches, error)
-	CountForOrganizationID(ctx context.Context, organizationID gid.GID) (int, error)
-}
 
 type (
 	CreateAccessReviewCampaignRequest struct {
