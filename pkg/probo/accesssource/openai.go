@@ -54,12 +54,12 @@ func (d *OpenAIDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 
 		for _, u := range resp.Data {
 			record := AccountRecord{
-				Email:      u.Email,
-				FullName:   u.Name,
-				Role:       openaiRole(u.Role),
-				Active:     !u.Disabled,
-				IsAdmin:    u.Role == "owner",
-				ExternalID: u.ID,
+				Email:       u.Email,
+				FullName:    u.Name,
+				Role:        openaiRole(u.Role),
+				Active:      !u.Disabled,
+				IsAdmin:     u.Role == "owner",
+				ExternalID:  u.ID,
 				MFAStatus:   coredata.MFAStatusUnknown,
 				AuthMethod:  coredata.AccessEntryAuthMethodUnknown,
 				AccountType: coredata.AccessEntryAccountTypeUser,

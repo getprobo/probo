@@ -59,10 +59,10 @@ func (d *OnePasswordDriver) ListAccounts(ctx context.Context) ([]AccountRecord, 
 			}
 
 			record := AccountRecord{
-				Email:      email,
-				FullName:   u.DisplayName,
-				Active:     u.Active,
-				ExternalID: u.ID,
+				Email:       email,
+				FullName:    u.DisplayName,
+				Active:      u.Active,
+				ExternalID:  u.ID,
 				MFAStatus:   coredata.MFAStatusUnknown,
 				AuthMethod:  coredata.AccessEntryAuthMethodUnknown,
 				AccountType: coredata.AccessEntryAccountTypeUser,

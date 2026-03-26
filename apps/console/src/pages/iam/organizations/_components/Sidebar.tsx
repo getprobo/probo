@@ -16,8 +16,6 @@ import {
   IconPageCheck,
   IconPageTextLine,
   IconPageTextSolid,
-  IconRotateCw,
-  IconKey,
   IconSettingsGear2,
   IconShield,
   IconStore,

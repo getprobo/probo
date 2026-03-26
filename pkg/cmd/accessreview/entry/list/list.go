@@ -104,14 +104,14 @@ type entryNode struct {
 
 func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	var (
-		flagLimit      int
-		flagOrderBy    string
-		flagOrderDir   string
-		flagSourceID   string
-		flagDecision   string
-		flagFlag       string
-		flagIncTag     string
-		flagIsAdmin    *bool
+		flagLimit       int
+		flagOrderBy     string
+		flagOrderDir    string
+		flagSourceID    string
+		flagDecision    string
+		flagFlag        string
+		flagIncTag      string
+		flagIsAdmin     *bool
 		flagAuthMethod  string
 		flagAccountType string
 		flagOutput      *string

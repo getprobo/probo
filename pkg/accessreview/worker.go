@@ -23,7 +23,6 @@ import (
 
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
-	"go.gearno.de/x/ref"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 )
@@ -134,7 +133,7 @@ func (w *SourceFetchWorker) processNext(
 			sourceFetch.Status = coredata.AccessReviewCampaignSourceFetchStatusFetching
 			sourceFetch.AttemptCount++
 			sourceFetch.LastError = nil
-			sourceFetch.StartedAt = ref.Ref(now)
+			sourceFetch.StartedAt = new(now)
 			sourceFetch.CompletedAt = nil
 			sourceFetch.UpdatedAt = now
 
@@ -244,7 +243,7 @@ func (w *SourceFetchWorker) commitFailedSourceFetch(
 
 	sourceFetch.Status = coredata.AccessReviewCampaignSourceFetchStatusFailed
 	sourceFetch.LastError = &errMsg
-	sourceFetch.CompletedAt = ref.Ref(now)
+	sourceFetch.CompletedAt = new(now)
 	sourceFetch.UpdatedAt = now
 
 	return w.pg.WithConn(
@@ -268,7 +267,7 @@ func (w *SourceFetchWorker) commitSuccessfulSourceFetch(
 	sourceFetch.Status = coredata.AccessReviewCampaignSourceFetchStatusSuccess
 	sourceFetch.FetchedAccountsCount = fetchedAccountsCount
 	sourceFetch.LastError = nil
-	sourceFetch.CompletedAt = ref.Ref(now)
+	sourceFetch.CompletedAt = new(now)
 	sourceFetch.UpdatedAt = now
 
 	return w.pg.WithConn(

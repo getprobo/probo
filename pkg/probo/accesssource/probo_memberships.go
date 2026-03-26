@@ -60,9 +60,9 @@ func (d *ProboMembershipsDriver) ListAccounts(ctx context.Context) ([]AccountRec
 
 		for _, account := range accounts {
 			records = append(records, AccountRecord{
-				Email:      account.Email,
-				FullName:   account.FullName,
-				Active:     account.State == "ACTIVE",
+				Email:       account.Email,
+				FullName:    account.FullName,
+				Active:      account.State == "ACTIVE",
 				MFAStatus:   coredata.MFAStatusUnknown,
 				AuthMethod:  coredata.AccessEntryAuthMethodUnknown,
 				AccountType: coredata.AccessEntryAccountTypeUser,

@@ -1,17 +1,3 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
-//
-// Permission to use, copy, modify, and/or distribute this software for any
-// purpose with or without fee is hereby granted, provided that the above
-// copyright notice and this permission notice appear in all copies.
-//
-// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
-// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
-// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
-// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
-// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-// PERFORMANCE OF THIS SOFTWARE.
-
 package mcp_v1
 
 // This file will be automatically regenerated based on the schema, any resolver implementations
@@ -1404,9 +1390,9 @@ func (r *Resolver) AddAuditTool(ctx context.Context, req *mcp.CallToolRequest, i
 func (r *Resolver) UpdateAuditTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateAuditInput) (*mcp.CallToolResult, types.UpdateAuditOutput, error) {
 	r.MustAuthorize(ctx, input.ID, probo.ActionAuditUpdate)
 
-	prb := r.ProboService(ctx, input.ID)
+	svc := r.ProboService(ctx, input.ID)
 
-	audit, err := prb.Audits.Update(
+	audit, err := svc.Audits.Update(
 		ctx,
 		&probo.UpdateAuditRequest{
 			ID:                    input.ID,
@@ -1423,7 +1409,7 @@ func (r *Resolver) UpdateAuditTool(ctx context.Context, req *mcp.CallToolRequest
 
 	var report *coredata.Report
 	if audit.ReportID != nil {
-		report, err = prb.Reports.Get(ctx, *audit.ReportID)
+		report, err = svc.Reports.Get(ctx, *audit.ReportID)
 		if err != nil {
 			return nil, types.UpdateAuditOutput{}, fmt.Errorf("cannot get audit report: %w", err)
 		}
@@ -3232,145 +3218,6 @@ func (r *Resolver) ListFindingAuditsTool(ctx context.Context, req *mcp.CallToolR
 	return nil, types.NewListFindingAuditsOutput(auditPage), nil
 }
 
-func (r *Resolver) ArchiveDocumentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ArchiveDocumentInput) (*mcp.CallToolResult, types.ArchiveDocumentOutput, error) {
-	r.MustAuthorize(ctx, input.ID, probo.ActionDocumentArchive)
-
-	svc := r.ProboService(ctx, input.ID)
-
-	document, err := svc.Documents.Archive(ctx, input.ID)
-	if err != nil {
-		return nil, types.ArchiveDocumentOutput{}, fmt.Errorf("cannot archive document: %w", err)
-	}
-
-	approverPage, err := svc.Documents.ListApprovers(ctx, input.ID, allApproversCursor())
-	if err != nil {
-		return nil, types.ArchiveDocumentOutput{}, fmt.Errorf("cannot list document approvers: %w", err)
-	}
-
-	return nil, types.ArchiveDocumentOutput{
-		Document: types.NewDocument(document, profileIDs(approverPage)),
-	}, nil
-}
-
-func (r *Resolver) UnarchiveDocumentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UnarchiveDocumentInput) (*mcp.CallToolResult, types.UnarchiveDocumentOutput, error) {
-	r.MustAuthorize(ctx, input.ID, probo.ActionDocumentUnarchive)
-
-	svc := r.ProboService(ctx, input.ID)
-
-	document, err := svc.Documents.Unarchive(ctx, input.ID)
-	if err != nil {
-		return nil, types.UnarchiveDocumentOutput{}, fmt.Errorf("cannot unarchive document: %w", err)
-	}
-
-	approverPage, err := svc.Documents.ListApprovers(ctx, input.ID, allApproversCursor())
-	if err != nil {
-		return nil, types.UnarchiveDocumentOutput{}, fmt.Errorf("cannot list document approvers: %w", err)
-	}
-
-	return nil, types.UnarchiveDocumentOutput{
-		Document: types.NewDocument(document, profileIDs(approverPage)),
-	}, nil
-}
-
-func (r *Resolver) GetOrganizationContextTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetOrganizationContextInput) (*mcp.CallToolResult, types.GetOrganizationContextOutput, error) {
-	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionOrganizationContextGet)
-
-	prb := r.ProboService(ctx, input.OrganizationID)
-
-	orgContext, err := prb.Organizations.GetContext(ctx, input.OrganizationID)
-	if err != nil {
-		return nil, types.GetOrganizationContextOutput{}, fmt.Errorf("cannot get organization context: %w", err)
-	}
-
-	return nil, types.GetOrganizationContextOutput{
-		OrganizationContext: types.NewOrganizationContext(orgContext),
-	}, nil
-}
-
-func (r *Resolver) UpdateOrganizationContextTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateOrganizationContextInput) (*mcp.CallToolResult, types.UpdateOrganizationContextOutput, error) {
-	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionOrganizationContextUpdate)
-
-	prb := r.ProboService(ctx, input.OrganizationID)
-
-	orgContext, err := prb.Organizations.UpdateContext(
-		ctx,
-		probo.UpdateOrganizationContextRequest{
-			OrganizationID: input.OrganizationID,
-			Product:        &input.Product,
-			Architecture:   &input.Architecture,
-			Team:           &input.Team,
-			Processes:      &input.Processes,
-			Customers:      &input.Customers,
-		},
-	)
-	if err != nil {
-		return nil, types.UpdateOrganizationContextOutput{}, fmt.Errorf("cannot update organization context: %w", err)
-	}
-
-	return nil, types.UpdateOrganizationContextOutput{
-		OrganizationContext: types.NewOrganizationContext(orgContext),
-	}, nil
-}
-
-func (r *Resolver) GetAuditReportUrlTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetAuditReportUrlInput) (*mcp.CallToolResult, types.GetAuditReportUrlOutput, error) {
-	r.MustAuthorize(ctx, input.ID, probo.ActionReportGetReportUrl)
-
-	prb := r.ProboService(ctx, input.ID)
-
-	url, err := prb.Audits.GenerateReportURL(ctx, input.ID, 15*time.Minute)
-	if err != nil {
-		return nil, types.GetAuditReportUrlOutput{}, fmt.Errorf("cannot generate audit report URL: %w", err)
-	}
-
-	return nil, types.GetAuditReportUrlOutput{
-		URL: *url,
-	}, nil
-}
-
-func (r *Resolver) ListAuditLogEntriesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListAuditLogEntriesInput) (*mcp.CallToolResult, types.ListAuditLogEntriesOutput, error) {
-	r.MustAuthorize(ctx, input.OrganizationID, iam.ActionAuditLogEntryList)
-
-	pageOrderBy := page.OrderBy[coredata.AuditLogEntryOrderField]{
-		Field:     coredata.AuditLogEntryOrderFieldCreatedAt,
-		Direction: page.OrderDirectionDesc,
-	}
-
-	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
-
-	filter := coredata.NewAuditLogEntryFilter()
-	if input.Filter != nil {
-		if input.Filter.Action != nil {
-			filter.WithAction(*input.Filter.Action)
-		}
-		if input.Filter.ActorID != nil {
-			filter.WithActorID(*input.Filter.ActorID)
-		}
-		if input.Filter.ResourceType != nil {
-			filter.WithResourceType(*input.Filter.ResourceType)
-		}
-		if input.Filter.ResourceID != nil {
-			filter.WithResourceID(*input.Filter.ResourceID)
-		}
-	}
-
-	p, err := r.iamSvc.OrganizationService.ListAuditLogEntries(ctx, input.OrganizationID, cursor, filter)
-	if err != nil {
-		panic(fmt.Errorf("cannot list audit log entries: %w", err))
-	}
-
-	return nil, types.NewListAuditLogEntriesOutput(p), nil
-}
-
-func (r *Resolver) GetAuditLogEntryTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetAuditLogEntryInput) (*mcp.CallToolResult, types.GetAuditLogEntryOutput, error) {
-	r.MustAuthorize(ctx, input.ID, iam.ActionAuditLogEntryGet)
-
-	entry, err := r.iamSvc.OrganizationService.GetAuditLogEntry(ctx, input.ID)
-	if err != nil {
-		panic(fmt.Errorf("cannot get audit log entry: %w", err))
-	}
-
-	return nil, types.GetAuditLogEntryOutput{
-		AuditLogEntry: types.NewAuditLogEntry(entry),
 // ListAccessReviewCampaignsTool handles the listAccessReviewCampaigns tool
 // List access review campaigns for an organization
 func (r *Resolver) ListAccessReviewCampaignsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListAccessReviewCampaignsInput) (*mcp.CallToolResult, types.ListAccessReviewCampaignsOutput, error) {
@@ -3867,4 +3714,146 @@ func (r *Resolver) FlagAccessEntryTool(ctx context.Context, req *mcp.CallToolReq
 	return nil, types.FlagAccessEntryOutput{
 		AccessEntry: types.NewAccessEntry(entry),
 	}, nil
+}
+
+func (r *Resolver) GetAuditReportUrlTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetAuditReportUrlInput) (*mcp.CallToolResult, types.GetAuditReportUrlOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionReportGetReportUrl)
+
+	prb := r.ProboService(ctx, input.ID)
+
+	url, err := prb.Audits.GenerateReportURL(ctx, input.ID, 15*time.Minute)
+	if err != nil {
+		return nil, types.GetAuditReportUrlOutput{}, fmt.Errorf("cannot generate audit report URL: %w", err)
+	}
+
+	return nil, types.GetAuditReportUrlOutput{
+		URL: *url,
+	}, nil
+}
+
+func (r *Resolver) ArchiveDocumentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ArchiveDocumentInput) (*mcp.CallToolResult, types.ArchiveDocumentOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionDocumentArchive)
+
+	svc := r.ProboService(ctx, input.ID)
+
+	document, err := svc.Documents.Archive(ctx, input.ID)
+	if err != nil {
+		return nil, types.ArchiveDocumentOutput{}, fmt.Errorf("cannot archive document: %w", err)
+	}
+
+	approverPage, err := svc.Documents.ListApprovers(ctx, input.ID, allApproversCursor())
+	if err != nil {
+		return nil, types.ArchiveDocumentOutput{}, fmt.Errorf("cannot list document approvers: %w", err)
+	}
+
+	return nil, types.ArchiveDocumentOutput{
+		Document: types.NewDocument(document, profileIDs(approverPage)),
+	}, nil
+}
+
+func (r *Resolver) UnarchiveDocumentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UnarchiveDocumentInput) (*mcp.CallToolResult, types.UnarchiveDocumentOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionDocumentUnarchive)
+
+	svc := r.ProboService(ctx, input.ID)
+
+	document, err := svc.Documents.Unarchive(ctx, input.ID)
+	if err != nil {
+		return nil, types.UnarchiveDocumentOutput{}, fmt.Errorf("cannot unarchive document: %w", err)
+	}
+
+	approverPage, err := svc.Documents.ListApprovers(ctx, input.ID, allApproversCursor())
+	if err != nil {
+		return nil, types.UnarchiveDocumentOutput{}, fmt.Errorf("cannot list document approvers: %w", err)
+	}
+
+	return nil, types.UnarchiveDocumentOutput{
+		Document: types.NewDocument(document, profileIDs(approverPage)),
+	}, nil
+}
+
+func (r *Resolver) GetOrganizationContextTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetOrganizationContextInput) (*mcp.CallToolResult, types.GetOrganizationContextOutput, error) {
+	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionOrganizationContextGet)
+
+	prb := r.ProboService(ctx, input.OrganizationID)
+
+	orgContext, err := prb.Organizations.GetContext(ctx, input.OrganizationID)
+	if err != nil {
+		return nil, types.GetOrganizationContextOutput{}, fmt.Errorf("cannot get organization context: %w", err)
+	}
+
+	return nil, types.GetOrganizationContextOutput{
+		OrganizationContext: types.NewOrganizationContext(orgContext),
+	}, nil
+}
+
+func (r *Resolver) UpdateOrganizationContextTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateOrganizationContextInput) (*mcp.CallToolResult, types.UpdateOrganizationContextOutput, error) {
+	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionOrganizationContextUpdate)
+
+	prb := r.ProboService(ctx, input.OrganizationID)
+
+	orgContext, err := prb.Organizations.UpdateContext(
+		ctx,
+		probo.UpdateOrganizationContextRequest{
+			OrganizationID: input.OrganizationID,
+			Product:        &input.Product,
+			Architecture:   &input.Architecture,
+			Team:           &input.Team,
+			Processes:      &input.Processes,
+			Customers:      &input.Customers,
+		},
+	)
+	if err != nil {
+		return nil, types.UpdateOrganizationContextOutput{}, fmt.Errorf("cannot update organization context: %w", err)
+	}
+
+	return nil, types.UpdateOrganizationContextOutput{
+		OrganizationContext: types.NewOrganizationContext(orgContext),
+	}, nil
+}
+
+func (r *Resolver) GetAuditLogEntryTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetAuditLogEntryInput) (*mcp.CallToolResult, types.GetAuditLogEntryOutput, error) {
+	r.MustAuthorize(ctx, input.ID, iam.ActionAuditLogEntryGet)
+
+	entry, err := r.iamSvc.OrganizationService.GetAuditLogEntry(ctx, input.ID)
+	if err != nil {
+		panic(fmt.Errorf("cannot get audit log entry: %w", err))
+	}
+
+	return nil, types.GetAuditLogEntryOutput{
+		AuditLogEntry: types.NewAuditLogEntry(entry),
+	}, nil
+}
+
+func (r *Resolver) ListAuditLogEntriesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListAuditLogEntriesInput) (*mcp.CallToolResult, types.ListAuditLogEntriesOutput, error) {
+	r.MustAuthorize(ctx, input.OrganizationID, iam.ActionAuditLogEntryList)
+
+	pageOrderBy := page.OrderBy[coredata.AuditLogEntryOrderField]{
+		Field:     coredata.AuditLogEntryOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	filter := coredata.NewAuditLogEntryFilter()
+	if input.Filter != nil {
+		if input.Filter.Action != nil {
+			filter.WithAction(*input.Filter.Action)
+		}
+		if input.Filter.ActorID != nil {
+			filter.WithActorID(*input.Filter.ActorID)
+		}
+		if input.Filter.ResourceType != nil {
+			filter.WithResourceType(*input.Filter.ResourceType)
+		}
+		if input.Filter.ResourceID != nil {
+			filter.WithResourceID(*input.Filter.ResourceID)
+		}
+	}
+
+	p, err := r.iamSvc.OrganizationService.ListAuditLogEntries(ctx, input.OrganizationID, cursor, filter)
+	if err != nil {
+		panic(fmt.Errorf("cannot list audit log entries: %w", err))
+	}
+
+	return nil, types.NewListAuditLogEntriesOutput(p), nil
 }

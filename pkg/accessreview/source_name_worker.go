@@ -23,7 +23,6 @@ import (
 
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
-	"go.gearno.de/x/ref"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/gid"
@@ -94,7 +93,7 @@ func (w *SourceNameWorker) processNext(ctx context.Context) error {
 		// picking the same row. The name will be updated in a
 		// subsequent step if resolution succeeds.
 		now := time.Now()
-		source.NameSyncedAt = ref.Ref(now)
+		source.NameSyncedAt = new(now)
 		source.UpdatedAt = now
 
 		scope := coredata.NewScope(tenantID)

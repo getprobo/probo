@@ -61,12 +61,12 @@ func (d *HubSpotDriver) ListAccounts(ctx context.Context) ([]AccountRecord, erro
 			fullName := strings.TrimSpace(u.FirstName + " " + u.LastName)
 
 			record := AccountRecord{
-				Email:      u.Email,
-				FullName:   fullName,
-				Role:       role,
-				Active:     true,
-				IsAdmin:    u.SuperAdmin,
-				ExternalID: u.ID,
+				Email:       u.Email,
+				FullName:    fullName,
+				Role:        role,
+				Active:      true,
+				IsAdmin:     u.SuperAdmin,
+				ExternalID:  u.ID,
 				MFAStatus:   coredata.MFAStatusUnknown,
 				AuthMethod:  coredata.AccessEntryAuthMethodUnknown,
 				AccountType: coredata.AccessEntryAccountTypeUser,

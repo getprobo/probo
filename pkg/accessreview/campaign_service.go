@@ -20,7 +20,6 @@ import (
 	"time"
 
 	"go.gearno.de/kit/pg"
-	"go.gearno.de/x/ref"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
@@ -370,7 +369,7 @@ func (s *CampaignService) Close(
 			}
 
 			campaign.Status = coredata.AccessReviewCampaignStatusCompleted
-			campaign.CompletedAt = ref.Ref(time.Now())
+			campaign.CompletedAt = new(time.Now())
 			campaign.UpdatedAt = time.Now()
 
 			if err := campaign.Update(ctx, conn, s.scope); err != nil {
@@ -443,7 +442,7 @@ func (s *CampaignService) Cancel(
 			}
 
 			campaign.Status = coredata.AccessReviewCampaignStatusCancelled
-			campaign.CompletedAt = ref.Ref(time.Now())
+			campaign.CompletedAt = new(time.Now())
 			campaign.UpdatedAt = time.Now()
 
 			if err := campaign.Update(ctx, conn, s.scope); err != nil {

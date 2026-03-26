@@ -120,6 +120,79 @@ func (r *accessEntryConnectionResolver) TotalCount(ctx context.Context, obj *typ
 }
 
 // Organization is the resolver for the organization field.
+func (r *accessReviewResolver) Organization(ctx context.Context, obj *types.AccessReview) (*types.Organization, error) {
+	return obj.Organization, nil
+}
+
+// IdentitySource is the resolver for the identitySource field.
+func (r *accessReviewResolver) IdentitySource(ctx context.Context, obj *types.AccessReview) (*types.AccessSource, error) {
+	return obj.IdentitySource, nil
+}
+
+// AccessSources is the resolver for the accessSources field.
+func (r *accessReviewResolver) AccessSources(ctx context.Context, obj *types.AccessReview, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AccessSourceOrder) (*types.AccessSourceConnection, error) {
+	if err := r.authorize(ctx, obj.Organization.ID, probo.ActionAccessSourceList); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, obj.Organization.ID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.AccessSourceOrderField]{
+		Field:     coredata.AccessSourceOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.AccessSourceOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	p, err := prb.AccessSources.ListForOrganizationID(ctx, obj.Organization.ID, cursor)
+	if err != nil {
+		panic(fmt.Errorf("cannot list access sources: %w", err))
+	}
+
+	return types.NewAccessSourceConnection(p, r, obj.Organization.ID), nil
+}
+
+// Campaigns is the resolver for the campaigns field.
+func (r *accessReviewResolver) Campaigns(ctx context.Context, obj *types.AccessReview, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AccessReviewCampaignOrder) (*types.AccessReviewCampaignConnection, error) {
+	if err := r.authorize(ctx, obj.Organization.ID, probo.ActionAccessReviewCampaignList); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, obj.Organization.ID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.AccessReviewCampaignOrderField]{
+		Field:     coredata.AccessReviewCampaignOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.AccessReviewCampaignOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	p, err := prb.AccessReviewCampaigns.ListForOrganizationID(ctx, obj.Organization.ID, cursor)
+	if err != nil {
+		panic(fmt.Errorf("cannot list access review campaigns: %w", err))
+	}
+
+	return types.NewAccessReviewCampaignConnection(p, r, obj.Organization.ID), nil
+}
+
+// Permission is the resolver for the permission field.
+func (r *accessReviewResolver) Permission(ctx context.Context, obj *types.AccessReview, action string) (bool, error) {
+	return r.Resolver.Permission(ctx, obj, action)
+}
+
+// Organization is the resolver for the organization field.
 func (r *accessReviewCampaignResolver) Organization(ctx context.Context, obj *types.AccessReviewCampaign) (*types.Organization, error) {
 	return obj.Organization, nil
 }
@@ -8160,9 +8233,8 @@ func (r *organizationResolver) AuditLogEntries(ctx context.Context, obj *types.O
 	}
 
 	return types.NewAuditLogEntryConnection(p, r, obj.ID, coredataFilter), nil
-// AccessReview is the resolver for the accessReview field.
-func (r *organizationResolver) AccessReview(ctx context.Context, obj *types.Organization) (*types.AccessReview, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionAccessReviewGet); err != nil {
+}
+
 // AccessSources is the resolver for the accessSources field.
 func (r *organizationResolver) AccessSources(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AccessSourceOrder) (*types.AccessSourceConnection, error) {
 	if err := r.authorize(ctx, obj.ID, probo.ActionAccessSourceList); err != nil {
@@ -8704,33 +8776,6 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 				return nil, err
 			}
 			return types.NewWebhookSubscription(wc), nil
-		}
-	case coredata.AccessReviewCampaignEntityType:
-		action = probo.ActionAccessReviewCampaignGet
-		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
-			campaign, err := prb.AccessReviewCampaigns.Get(ctx, id)
-			if err != nil {
-				return nil, err
-			}
-			return types.NewAccessReviewCampaign(campaign), nil
-		}
-	case coredata.AccessSourceEntityType:
-		action = probo.ActionAccessSourceGet
-		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
-			source, err := prb.AccessSources.Get(ctx, id)
-			if err != nil {
-				return nil, err
-			}
-			return types.NewAccessSource(source), nil
-		}
-	case coredata.AccessEntryEntityType:
-		action = probo.ActionAccessEntryGet
-		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
-			entry, err := prb.AccessEntries.Get(ctx, id)
-			if err != nil {
-				return nil, err
-			}
-			return types.NewAccessEntry(entry), nil
 		}
 	default:
 	}
@@ -10752,6 +10797,9 @@ func (r *Resolver) AccessEntryConnection() schema.AccessEntryConnectionResolver 
 	return &accessEntryConnectionResolver{r}
 }
 
+// AccessReview returns schema.AccessReviewResolver implementation.
+func (r *Resolver) AccessReview() schema.AccessReviewResolver { return &accessReviewResolver{r} }
+
 // AccessReviewCampaign returns schema.AccessReviewCampaignResolver implementation.
 func (r *Resolver) AccessReviewCampaign() schema.AccessReviewCampaignResolver {
 	return &accessReviewCampaignResolver{r}
@@ -11120,6 +11168,7 @@ func (r *Resolver) WebhookSubscriptionConnection() schema.WebhookSubscriptionCon
 
 type accessEntryResolver struct{ *Resolver }
 type accessEntryConnectionResolver struct{ *Resolver }
+type accessReviewResolver struct{ *Resolver }
 type accessReviewCampaignResolver struct{ *Resolver }
 type accessReviewCampaignConnectionResolver struct{ *Resolver }
 type accessReviewCampaignScopeSourceResolver struct{ *Resolver }

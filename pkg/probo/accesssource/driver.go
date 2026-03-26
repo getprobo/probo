@@ -24,18 +24,18 @@ import (
 // AccountRecord represents a single account from an access source or identity
 // source. All fields are best-effort; sources populate what they can.
 type AccountRecord struct {
-	Email      string
-	FullName   string
-	Role       string // system role/permission (e.g. "Admin", "Viewer")
-	JobTitle   string // HR job title / department (e.g. "Software Engineer")
-	Active     bool
-	IsAdmin    bool
-	MFAStatus  coredata.MFAStatus
+	Email       string
+	FullName    string
+	Role        string // system role/permission (e.g. "Admin", "Viewer")
+	JobTitle    string // HR job title / department (e.g. "Software Engineer")
+	Active      bool
+	IsAdmin     bool
+	MFAStatus   coredata.MFAStatus
 	AuthMethod  coredata.AccessEntryAuthMethod
 	AccountType coredata.AccessEntryAccountType
 	LastLogin   *time.Time
-	CreatedAt  *time.Time
-	ExternalID string // system-specific user ID
+	CreatedAt   *time.Time
+	ExternalID  string // system-specific user ID
 }
 
 // maxPaginationPages is the upper bound on the number of pages a driver will

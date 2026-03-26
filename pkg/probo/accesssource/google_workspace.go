@@ -65,11 +65,11 @@ func (d *GoogleWorkspaceDriver) ListAccounts(ctx context.Context) ([]AccountReco
 
 		for _, u := range resp.Users {
 			rec := AccountRecord{
-				Email:      u.PrimaryEmail,
-				FullName:   u.Name.FullName,
-				Active:     !u.Suspended && !u.Archived,
-				IsAdmin:    u.IsAdmin,
-				ExternalID: u.Id,
+				Email:       u.PrimaryEmail,
+				FullName:    u.Name.FullName,
+				Active:      !u.Suspended && !u.Archived,
+				IsAdmin:     u.IsAdmin,
+				ExternalID:  u.Id,
 				MFAStatus:   coredata.MFAStatusUnknown,
 				AuthMethod:  coredata.AccessEntryAuthMethodSSO,
 				AccountType: coredata.AccessEntryAccountTypeUser,
@@ -117,7 +117,7 @@ func (d *GoogleWorkspaceDriver) listUsersWithRetry(
 	call *admin.UsersListCall,
 ) (*admin.Users, error) {
 	var lastErr error
-	for attempt := 0; attempt < 3; attempt++ {
+	for attempt := range 3 {
 		resp, err := call.Do()
 		if err == nil {
 			return resp, nil

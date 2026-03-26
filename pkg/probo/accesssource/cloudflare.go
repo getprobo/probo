@@ -141,13 +141,13 @@ func (d *CloudflareDriver) queryAllMembers(ctx context.Context, accountID string
 			}
 
 			record := AccountRecord{
-				Email:      m.User.Email,
-				FullName:   m.User.FirstName + " " + m.User.LastName,
-				Role:       role,
-				Active:     m.Status == "accepted",
-				IsAdmin:    isAdmin,
-				ExternalID: m.ID,
-				MFAStatus:  mfaStatus,
+				Email:       m.User.Email,
+				FullName:    m.User.FirstName + " " + m.User.LastName,
+				Role:        role,
+				Active:      m.Status == "accepted",
+				IsAdmin:     isAdmin,
+				ExternalID:  m.ID,
+				MFAStatus:   mfaStatus,
 				AuthMethod:  coredata.AccessEntryAuthMethodUnknown,
 				AccountType: coredata.AccessEntryAccountTypeUser,
 			}

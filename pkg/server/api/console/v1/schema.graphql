@@ -2063,7 +2063,6 @@ type Organization implements Node {
     ): WebhookSubscriptionConnection! @goField(forceResolver: true)
 
     auditLogEntries(
-    accessSources(
         first: Int
         after: CursorKey
         last: Int
@@ -2072,7 +2071,11 @@ type Organization implements Node {
         filter: AuditLogEntryFilter
     ): AuditLogEntryConnection! @goField(forceResolver: true)
 
-    accessReview: AccessReview @goField(forceResolver: true)
+    accessSources(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
         orderBy: AccessSourceOrder
     ): AccessSourceConnection! @goField(forceResolver: true)
 
@@ -6125,6 +6128,10 @@ type AuditLogEntry implements Node {
     resourceId: ID!
     metadata: String
     createdAt: Datetime!
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
 # ===== Access Review Types =====
 
 enum AccessReviewCampaignStatus
@@ -6351,6 +6358,8 @@ type AuditLogEntryConnection
 type AuditLogEntryEdge {
     cursor: CursorKey!
     node: AuditLogEntry!
+}
+
 enum AccessEntryAccountType
     @goModel(
         model: "go.probo.inc/probo/pkg/coredata.AccessEntryAccountType"

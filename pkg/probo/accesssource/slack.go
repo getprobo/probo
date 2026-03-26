@@ -61,13 +61,13 @@ func (d *SlackDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error)
 			}
 
 			record := AccountRecord{
-				Email:      m.Profile.Email,
-				FullName:   m.RealName,
-				Role:       slackRole(m),
-				Active:     !m.Deleted,
-				IsAdmin:    m.IsAdmin || m.IsOwner || m.IsPrimaryOwner,
-				ExternalID: m.ID,
-				MFAStatus:  slackMFAStatus(m.Has2FA),
+				Email:       m.Profile.Email,
+				FullName:    m.RealName,
+				Role:        slackRole(m),
+				Active:      !m.Deleted,
+				IsAdmin:     m.IsAdmin || m.IsOwner || m.IsPrimaryOwner,
+				ExternalID:  m.ID,
+				MFAStatus:   slackMFAStatus(m.Has2FA),
 				AuthMethod:  coredata.AccessEntryAuthMethodUnknown,
 				AccountType: coredata.AccessEntryAccountTypeUser,
 			}
