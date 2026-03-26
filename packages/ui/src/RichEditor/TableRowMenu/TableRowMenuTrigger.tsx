@@ -45,10 +45,17 @@ export function TableRowMenuTrigger({
   const dragStartPos = useRef({ x: 0, y: 0 });
   const rafId = useRef<number | null>(null);
   const hoveredRowRef = useRef<HoveredRow | null>(null);
+  const dragCleanupRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     hoveredRowRef.current = hoveredRow;
   }, [hoveredRow]);
+
+  useEffect(() => {
+    return () => {
+      dragCleanupRef.current?.();
+    };
+  }, []);
 
   useEffect(() => {
     if (editor.isDestroyed || !editor.isEditable) return;
@@ -285,6 +292,7 @@ export function TableRowMenuTrigger({
     const onMouseUp = (ev: MouseEvent) => {
       document.removeEventListener("mousemove", onMouseMove);
       document.removeEventListener("mouseup", onMouseUp);
+      dragCleanupRef.current = null;
 
       if (draggingRef.current) {
         setDragIndicator(null);
@@ -327,6 +335,10 @@ export function TableRowMenuTrigger({
 
     document.addEventListener("mousemove", onMouseMove);
     document.addEventListener("mouseup", onMouseUp);
+    dragCleanupRef.current = () => {
+      document.removeEventListener("mousemove", onMouseMove);
+      document.removeEventListener("mouseup", onMouseUp);
+    };
   };
 
   return (

@@ -102,8 +102,6 @@ export function TableColumnMenu({ editor }: TableColumnMenuProps) {
 
   const [hoveredCol, setHoveredCol] = useState<HoveredColumn | null>(null);
 
-  if (!hoveredCol && !menuOpen) return null;
-
   return (
     <>
       <TableColumnMenuTrigger
