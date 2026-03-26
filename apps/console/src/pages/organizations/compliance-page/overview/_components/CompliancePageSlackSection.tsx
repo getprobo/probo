@@ -1,25 +1,37 @@
 import { sprintf } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
-import { Badge, Button, Card, Slack } from "@probo/ui";
-import { useFragment } from "react-relay";
+import { Badge, Button, Card, Slack, useConfirm } from "@probo/ui";
+import { useFragment, useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 
+import type { CompliancePageSlackSectionDeleteMutation } from "#/__generated__/core/CompliancePageSlackSectionDeleteMutation.graphql";
 import type { CompliancePageSlackSectionFragment$key } from "#/__generated__/core/CompliancePageSlackSectionFragment.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 const fragment = graphql`
   fragment CompliancePageSlackSectionFragment on Organization {
-    compliancePage: trustCenter {
-      canUpdate: permission(action: "core:trust-center:update")
-    }
+    canConnectSlack: permission(action: "core:connector:initiate")
     slackConnections(first: 100) {
+      __id
       edges {
         node {
           id
           channel
           createdAt
+          canDelete: permission(action: "core:connector:delete")
         }
       }
+    }
+  }
+`;
+
+const deleteMutation = graphql`
+  mutation CompliancePageSlackSectionDeleteMutation(
+    $input: DeleteSlackConnectionInput!
+    $connections: [ID!]!
+  ) {
+    deleteSlackConnection(input: $input) {
+      deletedSlackConnectionId @deleteEdge(connections: $connections)
     }
   }
 `;
@@ -29,8 +41,36 @@ export function CompliancePageSlackSection(props: { fragmentRef: CompliancePageS
 
   const organizationId = useOrganizationId();
   const { __, dateTimeFormat } = useTranslate();
+  const confirm = useConfirm();
 
   const organization = useFragment<CompliancePageSlackSectionFragment$key>(fragment, fragmentRef);
+  const [deleteSlackConnection] = useMutation<CompliancePageSlackSectionDeleteMutation>(deleteMutation);
+
+  const connectionId = organization.slackConnections.__id;
+
+  const handleDisconnect = (slackConnectionId: string) => {
+    confirm(
+      () =>
+        new Promise<void>((resolve, reject) => {
+          deleteSlackConnection({
+            variables: {
+              connections: [connectionId],
+              input: {
+                slackConnectionId,
+              },
+            },
+            onCompleted: () => resolve(),
+            onError: error => reject(error),
+          });
+        }),
+      {
+        title: __("Disconnect Slack"),
+        message: __("Are you sure you want to disconnect this Slack channel? This action cannot be undone."),
+        label: __("Disconnect"),
+        variant: "danger",
+      },
+    );
+  };
 
   return (
     <div className="space-y-4">
@@ -60,14 +100,22 @@ export function CompliancePageSlackSection(props: { fragmentRef: CompliancePageS
                 )}
               </p>
             </div>
-            <div>
+            <div className="flex items-center gap-2">
               <Badge variant="success" size="md">
                 {__("Connected")}
               </Badge>
+              {slackConnection.canDelete && (
+                <Button
+                  variant="secondary"
+                  onClick={() => handleDisconnect(slackConnection.id)}
+                >
+                  {__("Disconnect")}
+                </Button>
+              )}
             </div>
           </Card>
         ))}
-        {organization.compliancePage?.canUpdate && organization.slackConnections.edges.length === 0 && (
+        {organization.canConnectSlack && organization.slackConnections.edges.length === 0 && (
           <Card
             padded
             className="flex items-center gap-3"
@@ -100,4 +148,4 @@ function getSlackConnectionUrl(organizationId: string): string {
   url.searchParams.append("continue", redirectUrl);
   const finalUrl = url.toString();
   return finalUrl;
-};
+}

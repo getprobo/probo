@@ -2077,12 +2077,14 @@ type Organization implements Node {
     permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
-type SlackConnection {
+type SlackConnection implements Node {
     id: ID!
     channel: String
     channelId: String
     createdAt: Datetime!
     updatedAt: Datetime!
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type SlackConnectionConnection {
@@ -3944,6 +3946,10 @@ type Mutation {
     deleteCustomDomain(
         input: DeleteCustomDomainInput!
     ): DeleteCustomDomainPayload!
+    # Slack Connection mutations
+    deleteSlackConnection(
+        input: DeleteSlackConnectionInput!
+    ): DeleteSlackConnectionPayload!
 }
 
 # Input Types
@@ -6094,6 +6100,14 @@ type CreateCustomDomainPayload {
 
 type DeleteCustomDomainPayload {
     deletedCustomDomainId: ID!
+}
+
+input DeleteSlackConnectionInput {
+    slackConnectionId: ID!
+}
+
+type DeleteSlackConnectionPayload {
+    deletedSlackConnectionId: ID!
 }
 
 # Electronic Signature

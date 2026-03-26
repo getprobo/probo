@@ -6811,6 +6811,25 @@ func (r *mutationResolver) DeleteCustomDomain(ctx context.Context, input types.D
 	}, nil
 }
 
+// DeleteSlackConnection is the resolver for the deleteSlackConnection field.
+func (r *mutationResolver) DeleteSlackConnection(ctx context.Context, input types.DeleteSlackConnectionInput) (*types.DeleteSlackConnectionPayload, error) {
+	if err := r.authorize(ctx, input.SlackConnectionID, probo.ActionConnectorDelete); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, input.SlackConnectionID.TenantID())
+
+	err := prb.Connectors.Delete(ctx, input.SlackConnectionID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot delete slack connection", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.DeleteSlackConnectionPayload{
+		DeletedSlackConnectionID: input.SlackConnectionID,
+	}, nil
+}
+
 // Organization is the resolver for the organization field.
 func (r *obligationResolver) Organization(ctx context.Context, obj *types.Obligation) (*types.Organization, error) {
 	if err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
@@ -8665,6 +8684,10 @@ func (r *riskConnectionResolver) TotalCount(ctx context.Context, obj *types.Risk
 	return 0, gqlutils.Internal(ctx)
 }
 
+// Permission is the resolver for the permission field.
+func (r *slackConnectionResolver) Permission(ctx context.Context, obj *types.SlackConnection, action string) (bool, error) {
+	return r.Resolver.Permission(ctx, obj, action)
+}
 // Organization is the resolver for the organization field.
 func (r *snapshotResolver) Organization(ctx context.Context, obj *types.Snapshot) (*types.Organization, error) {
 	if err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
@@ -10599,6 +10622,10 @@ func (r *Resolver) Risk() schema.RiskResolver { return &riskResolver{r} }
 // RiskConnection returns schema.RiskConnectionResolver implementation.
 func (r *Resolver) RiskConnection() schema.RiskConnectionResolver { return &riskConnectionResolver{r} }
 
+// SlackConnection returns schema.SlackConnectionResolver implementation.
+func (r *Resolver) SlackConnection() schema.SlackConnectionResolver {
+	return &slackConnectionResolver{r}
+}
 // Snapshot returns schema.SnapshotResolver implementation.
 func (r *Resolver) Snapshot() schema.SnapshotResolver { return &snapshotResolver{r} }
 
@@ -10781,6 +10808,7 @@ type rightsRequestResolver struct{ *Resolver }
 type rightsRequestConnectionResolver struct{ *Resolver }
 type riskResolver struct{ *Resolver }
 type riskConnectionResolver struct{ *Resolver }
+type slackConnectionResolver struct{ *Resolver }
 type snapshotResolver struct{ *Resolver }
 type snapshotConnectionResolver struct{ *Resolver }
 type stateOfApplicabilityResolver struct{ *Resolver }
