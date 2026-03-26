@@ -247,6 +247,74 @@ func TestAuditLog_RBAC(t *testing.T) {
 	})
 }
 
+func TestAuditLog_Export(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+
+	const mutation = `
+		mutation($input: RequestAuditLogExportInput!) {
+			requestAuditLogExport(input: $input) {
+				logExportId
+			}
+		}
+	`
+
+	t.Run("owner can request export", func(t *testing.T) {
+		t.Parallel()
+
+		var result struct {
+			RequestAuditLogExport struct {
+				LogExportID string `json:"logExportId"`
+			} `json:"requestAuditLogExport"`
+		}
+
+		err := owner.Execute(mutation, map[string]any{
+			"input": map[string]any{
+				"organizationId": owner.GetOrganizationID().String(),
+				"fromTime":       "2026-01-01T00:00:00Z",
+				"toTime":         "2026-03-24T00:00:00Z",
+			},
+		}, &result)
+		require.NoError(t, err)
+		assert.NotEmpty(t, result.RequestAuditLogExport.LogExportID)
+	})
+
+	t.Run("admin can request export", func(t *testing.T) {
+		t.Parallel()
+		admin := testutil.NewClientInOrg(t, testutil.RoleAdmin, owner)
+
+		var result struct {
+			RequestAuditLogExport struct {
+				LogExportID string `json:"logExportId"`
+			} `json:"requestAuditLogExport"`
+		}
+
+		err := admin.Execute(mutation, map[string]any{
+			"input": map[string]any{
+				"organizationId": admin.GetOrganizationID().String(),
+				"fromTime":       "2026-01-01T00:00:00Z",
+				"toTime":         "2026-03-24T00:00:00Z",
+			},
+		}, &result)
+		require.NoError(t, err)
+		assert.NotEmpty(t, result.RequestAuditLogExport.LogExportID)
+	})
+
+	t.Run("viewer cannot request export", func(t *testing.T) {
+		t.Parallel()
+		viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
+
+		_, err := viewer.Do(mutation, map[string]any{
+			"input": map[string]any{
+				"organizationId": viewer.GetOrganizationID().String(),
+				"fromTime":       "2026-01-01T00:00:00Z",
+				"toTime":         "2026-03-24T00:00:00Z",
+			},
+		})
+		testutil.RequireForbiddenError(t, err, "viewer cannot request audit log export")
+	})
+}
+
 func TestAuditLog_TenantIsolation(t *testing.T) {
 	t.Parallel()
 

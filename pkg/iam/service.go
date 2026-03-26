@@ -67,6 +67,7 @@ type (
 		Authorizer            *Authorizer
 
 		samlDomainVerifier *SAMLDomainVerifier
+		logExportWorker    *LogExportWorker
 	}
 
 	Config struct {
@@ -185,6 +186,14 @@ func NewService(
 		cfg.DomainVerificationResolverAddr,
 	)
 
+	svc.logExportWorker = NewLogExportWorker(
+		pgClient,
+		fm,
+		cfg.Bucket,
+		cfg.BaseURL.String(),
+		cfg.Logger.Named("log-export-worker"),
+	)
+
 	return svc, nil
 }
 
@@ -229,12 +238,22 @@ func (s *Service) Run(ctx context.Context) error {
 		},
 	)
 
+	logExportCtx, stopLogExport := context.WithCancel(context.WithoutCancel(ctx))
+	wg.Go(
+		func() {
+			if err := s.logExportWorker.Run(logExportCtx); err != nil {
+				cancel(fmt.Errorf("log export worker crashed: %w", err))
+			}
+		},
+	)
+
 	<-ctx.Done()
 
 	stopSAML()
 	stopOIDC()
 	stopDomainVerifier()
 	stopSCIM()
+	stopLogExport()
 
 	wg.Wait()
 

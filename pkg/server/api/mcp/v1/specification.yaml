@@ -6532,6 +6532,66 @@ components:
           go.probo.inc/mcpgen/type: time.Time
           description: When the action was performed
 
+    RequestAuditLogExportInput:
+      type: object
+      required:
+        - organization_id
+        - from_time
+        - to_time
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        from_time:
+          type: string
+          format: date-time
+          go.probo.inc/mcpgen/type: time.Time
+          description: Start of the time range (inclusive)
+        to_time:
+          type: string
+          format: date-time
+          go.probo.inc/mcpgen/type: time.Time
+          description: End of the time range (exclusive)
+
+    RequestAuditLogExportOutput:
+      type: object
+      required:
+        - log_export_id
+      properties:
+        log_export_id:
+          $ref: "#/components/schemas/GID"
+          description: ID of the created log export
+
+    RequestSCIMEventExportInput:
+      type: object
+      required:
+        - organization_id
+        - from_time
+        - to_time
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        from_time:
+          type: string
+          format: date-time
+          go.probo.inc/mcpgen/type: time.Time
+          description: Start of the time range (inclusive)
+        to_time:
+          type: string
+          format: date-time
+          go.probo.inc/mcpgen/type: time.Time
+          description: End of the time range (exclusive)
+
+    RequestSCIMEventExportOutput:
+      type: object
+      required:
+        - log_export_id
+      properties:
+        log_export_id:
+          $ref: "#/components/schemas/GID"
+          description: ID of the created log export
+
 tools:
   - name: listOrganizations
     description: List all organizations the user has access to
@@ -7694,3 +7754,23 @@ tools:
       $ref: "#/components/schemas/ListAuditLogEntriesInput"
     outputSchema:
       $ref: "#/components/schemas/ListAuditLogEntriesOutput"
+
+  - name: requestAuditLogExport
+    description: Request an export of audit log entries for the organization within a time range. The export will be emailed as a JSONL download link.
+    hints:
+      readonly: false
+      idempotent: false
+    inputSchema:
+      $ref: "#/components/schemas/RequestAuditLogExportInput"
+    outputSchema:
+      $ref: "#/components/schemas/RequestAuditLogExportOutput"
+
+  - name: requestSCIMEventExport
+    description: Request an export of SCIM events for the organization within a time range. The export will be emailed as a JSONL download link.
+    hints:
+      readonly: false
+      idempotent: false
+    inputSchema:
+      $ref: "#/components/schemas/RequestSCIMEventExportInput"
+    outputSchema:
+      $ref: "#/components/schemas/RequestSCIMEventExportOutput"

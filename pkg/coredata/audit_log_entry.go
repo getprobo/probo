@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"iter"
 	"maps"
 	"time"
 
@@ -212,6 +213,81 @@ WHERE
 
 	*es = entries
 	return nil
+}
+
+func AuditLogEntriesByOrganizationIDAndTimeRange(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	organizationID gid.GID,
+	fromTime time.Time,
+	toTime time.Time,
+) iter.Seq2[*AuditLogEntry, error] {
+	q := `
+DECLARE audit_log_export_cursor CURSOR FOR
+SELECT
+    id,
+    organization_id,
+    actor_id,
+    actor_type,
+    action,
+    resource_type,
+    resource_id,
+    metadata,
+    created_at
+FROM
+    audit_log_entries
+WHERE
+    %s
+    AND organization_id = @organization_id
+    AND created_at >= @from_time
+    AND created_at < @to_time
+ORDER BY
+    created_at ASC
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"organization_id": organizationID,
+		"from_time":       fromTime,
+		"to_time":         toTime,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	return func(yield func(*AuditLogEntry, error) bool) {
+		if _, err := conn.Exec(ctx, q, args); err != nil {
+			yield(nil, fmt.Errorf("cannot declare audit log cursor: %w", err))
+			return
+		}
+
+		defer func() {
+			_, _ = conn.Exec(ctx, "CLOSE audit_log_export_cursor")
+		}()
+
+		for {
+			rows, err := conn.Query(ctx, "FETCH 500 FROM audit_log_export_cursor")
+			if err != nil {
+				yield(nil, fmt.Errorf("cannot fetch audit log entries: %w", err))
+				return
+			}
+
+			entries, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[AuditLogEntry])
+			if err != nil {
+				yield(nil, fmt.Errorf("cannot collect audit log entries: %w", err))
+				return
+			}
+
+			if len(entries) == 0 {
+				return
+			}
+
+			for _, entry := range entries {
+				if !yield(entry, nil) {
+					return
+				}
+			}
+		}
+	}
 }
 
 func (es *AuditLogEntries) CountByOrganizationID(

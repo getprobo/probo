@@ -12,25 +12,21 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package auditlog
+package scimevent
 
 import (
 	"github.com/spf13/cobra"
-	"go.probo.inc/probo/pkg/cmd/auditlog/export"
-	"go.probo.inc/probo/pkg/cmd/auditlog/list"
-	"go.probo.inc/probo/pkg/cmd/auditlog/view"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
+	"go.probo.inc/probo/pkg/cmd/scimevent/export"
 )
 
-func NewCmdAuditLog(f *cmdutil.Factory) *cobra.Command {
+func NewCmdSCIMEvent(f *cmdutil.Factory) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "audit-log <command>",
-		Short: "Manage audit log entries",
+		Use:   "scim-event <command>",
+		Short: "Manage SCIM events",
 	}
 
 	cmd.AddCommand(export.NewCmdExport(f))
-	cmd.AddCommand(list.NewCmdList(f))
-	cmd.AddCommand(view.NewCmdView(f))
 
 	return cmd
 }
