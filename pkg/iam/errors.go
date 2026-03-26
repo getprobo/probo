@@ -31,6 +31,16 @@ func (e ErrInvalidToken) Error() string {
 	return e.message
 }
 
+type ErrExpiredToken struct{ message string }
+
+func NewExpiredTokenError() error {
+	return &ErrExpiredToken{"token has expired"}
+}
+
+func (e ErrExpiredToken) Error() string {
+	return e.message
+}
+
 type ErrInvitationAlreadyAccepted struct{ InvitationID gid.GID }
 
 func NewInvitationAlreadyAcceptedError(invitationID gid.GID) error {
