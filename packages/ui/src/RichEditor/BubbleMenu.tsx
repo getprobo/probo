@@ -12,7 +12,7 @@ import { MenuButton } from "./MenuButton";
 
 const bubbleMenuVariants = tv({
   slots: {
-    root: "flex flex-col items-stretch z-20 rounded-lg border border-border-mid bg-level-0 shadow-md",
+    root: "flex flex-col items-stretch z-20 rounded-lg border border-border-mid bg-level-0 shadow-mid",
     toolbar: "flex items-center gap-1 p-1",
     linkInput: "flex items-center gap-1 border-t border-border-mid px-2 py-1.5",
   },
