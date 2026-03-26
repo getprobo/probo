@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.153.1] - 2026-03-26
+
+### Fixed
+
+- Fix file MIME type lookup for evidence description generation
+
 ## [0.153.0] - 2026-03-26
 
 ### Added
