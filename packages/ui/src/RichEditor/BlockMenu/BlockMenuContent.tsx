@@ -10,16 +10,17 @@ import {
   useFloating,
 } from "@floating-ui/react";
 import type { Icon } from "@phosphor-icons/react";
-import { CodeBlockIcon, GridFourIcon, ListBulletsIcon, ListNumbersIcon, MinusIcon, PlusIcon, QuotesIcon, TextHOneIcon, TextHThreeIcon, TextHTwoIcon, TextTIcon } from "@phosphor-icons/react";
-import { type Editor, useEditorState } from "@tiptap/react";
+import { CodeBlockIcon, GridFourIcon, ListBulletsIcon, ListNumbersIcon, MinusIcon, QuotesIcon, TextHOneIcon, TextHThreeIcon, TextHTwoIcon, TextTIcon } from "@phosphor-icons/react";
+import { type Editor } from "@tiptap/react";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { tv } from "tailwind-variants";
 
-import { useBlockTrigger } from "./_lib/useBlockTrigger";
-import { useHoveredBlock } from "./_lib/useHoveredBlock";
-import { MenuButton } from "./MenuButton";
-import type { SlashCommandStorage } from "./SlashCommandExtension";
-import { activateSlashCommand, deactivateSlashCommand } from "./SlashCommandExtension";
+import { getSlashStorage } from "../_lib/getSlashStorage";
+import { MenuButton } from "../MenuButton";
+import { deactivateSlashCommand } from "../SlashCommandExtension";
+
+import { blockMenuVariants } from "./variants";
+
+const { menu } = blockMenuVariants();
 
 type ChainCommands = ReturnType<Editor["chain"]>;
 
@@ -42,46 +43,14 @@ const BLOCK_ITEMS: BlockItem[] = [
   { label: "Table", icon: GridFourIcon, action: chain => chain.insertTable() },
 ];
 
-const blockMenuVariants = tv({
-  slots: {
-    trigger: [
-      "z-10 flex size-6 items-center justify-center",
-      "rounded text-txt-tertiary hover:bg-subtle hover:text-txt-primary text-xl font-light cursor-pointer",
-    ],
-    menu: ["rounded-lg border border-border-mid bg-level-0 p-1 shadow-md z-20"],
-  },
-});
-
-const { trigger, menu } = blockMenuVariants();
-
-function getSlashStorage(editor: Editor): SlashCommandStorage | undefined {
-  return (editor.storage as unknown as Record<string, unknown>).slashCommand as
-    | SlashCommandStorage
-    | undefined;
-}
-
-type BlockMenuProps = {
+type BlockMenuContentProps = {
   editor: Editor;
+  slashState: { active: boolean; query: string; from: number };
 };
 
-export function BlockMenu({ editor }: BlockMenuProps) {
+export function BlockMenuContent({ editor, slashState }: BlockMenuContentProps) {
   const [slashNav, setSlashNav] = useState({ index: 0, query: "" });
   const slashDropdownRef = useRef<HTMLDivElement | null>(null);
-
-  const slashState = useEditorState({
-    editor,
-    selector: ({ editor: e }) => {
-      const s = getSlashStorage(e);
-      return {
-        active: s?.active ?? false,
-        query: s?.query ?? "",
-        from: s?.from ?? 0,
-      };
-    },
-  });
-
-  const { hoveredBlock } = useHoveredBlock(editor, slashState.active);
-  const { triggerRefs, triggerStyles, isPositioned } = useBlockTrigger(hoveredBlock, 40);
 
   const slashActiveIndex = slashState.query === slashNav.query
     ? slashNav.index
@@ -192,101 +161,32 @@ export function BlockMenu({ editor }: BlockMenuProps) {
     };
   }, [editor, slashState.active, slashState.query, filteredItems, slashActiveIndex, handleSlashAction]);
 
-  const handleTriggerClick = () => {
-    if (!hoveredBlock) return;
-
-    try {
-      const pos = editor.view.posAtDOM(hoveredBlock, 0);
-      const $pos = editor.state.doc.resolve(pos);
-
-      const rootPos = $pos.depth >= 1 ? $pos.before(1) : pos;
-      const rootNode = $pos.depth >= 1 ? $pos.node(1) : $pos.nodeAfter;
-
-      if (rootNode && rootNode.isTextblock && rootNode.content.size === 0) {
-        const textPos = rootPos + 1;
-
-        editor.chain()
-          .focus()
-          .setTextSelection(textPos)
-          .insertContent("/")
-          .run();
-
-        const s = getSlashStorage(editor);
-        if (s) activateSlashCommand(s, textPos);
-        return;
-      }
-
-      let insertPos: number;
-      if ($pos.depth >= 1) {
-        insertPos = rootPos + rootNode!.nodeSize;
-      } else {
-        const nodeAfter = $pos.nodeAfter;
-        insertPos = pos + (nodeAfter?.nodeSize ?? 1);
-      }
-
-      const textPos = insertPos + 1;
-
-      editor.chain()
-        .focus()
-        .insertContentAt(insertPos, { type: "paragraph" })
-        .setTextSelection(textPos)
-        .insertContent("/")
-        .run();
-
-      const s = getSlashStorage(editor);
-      if (s) activateSlashCommand(s, textPos);
-    } catch {
-      // Block may no longer be in the document
-    }
-  };
-
   return (
-    <>
-      {hoveredBlock != null && (
-        <button
-          ref={(node) => {
-            triggerRefs.setFloating(node);
-          }}
-          onClick={handleTriggerClick}
-          onMouseDown={e => e.preventDefault()}
-          type="button"
-          style={{
-            ...triggerStyles,
-            visibility: isPositioned ? "visible" : "hidden",
-          }}
-          className={trigger()}
-        >
-          <PlusIcon size={16} weight="bold" />
-        </button>
-      )}
-      {slashState.active && (
-        <div
-          ref={(node) => {
-            slashDropdownRef.current = node;
-            slashMenuRefs.setFloating(node);
-          }}
-          style={slashMenuStyles}
-          onMouseDown={e => e.preventDefault()}
-          className={menu()}
-        >
-          {filteredItems.length > 0
-            ? filteredItems.map((item, index) => (
-                <MenuButton
-                  key={item.label}
-                  active={index === slashActiveIndex}
-                  onClick={() => handleSlashAction(item)}
-                >
-                  <item.icon size={16} weight="bold" />
-                  {item.label}
-                </MenuButton>
-              ))
-            : (
-                <div className="px-2 py-1.5 text-sm text-txt-tertiary">
-                  No results
-                </div>
-              )}
-        </div>
-      )}
-    </>
+    <div
+      ref={(node) => {
+        slashDropdownRef.current = node;
+        slashMenuRefs.setFloating(node);
+      }}
+      style={slashMenuStyles}
+      onMouseDown={e => e.preventDefault()}
+      className={menu()}
+    >
+      {filteredItems.length > 0
+        ? filteredItems.map((item, index) => (
+            <MenuButton
+              key={item.label}
+              active={index === slashActiveIndex}
+              onClick={() => handleSlashAction(item)}
+            >
+              <item.icon size={16} weight="bold" />
+              {item.label}
+            </MenuButton>
+          ))
+        : (
+            <div className="px-2 py-1.5 text-sm text-txt-tertiary">
+              No results
+            </div>
+          )}
+    </div>
   );
 }

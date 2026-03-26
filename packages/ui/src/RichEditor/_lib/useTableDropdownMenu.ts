@@ -14,6 +14,8 @@ import {
 } from "@floating-ui/react";
 import { useState } from "react";
 
+export type DropdownMenu = ReturnType<typeof useTableDropdownMenu>;
+
 export function useTableDropdownMenu() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [triggerEl, setTriggerEl] = useState<Element | null>(null);
