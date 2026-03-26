@@ -161,8 +161,8 @@ func (w *EvidenceDescriptionWorker) processNext(ctx context.Context, sem chan st
 				log.String("evidence_id", evidence.ID.String()),
 			)
 
-			if err := w.resetEvidence(nonCancelableCtx, &evidence); err != nil {
-				w.logger.ErrorCtx(nonCancelableCtx, "cannot reset evidence description status", log.Error(err))
+			if err := w.failEvidence(nonCancelableCtx, &evidence); err != nil {
+				w.logger.ErrorCtx(nonCancelableCtx, "cannot mark evidence description as failed", log.Error(err))
 			}
 		}
 	}(evidence)
@@ -219,7 +219,7 @@ func (w *EvidenceDescriptionWorker) describeAndCommit(
 	)
 }
 
-func (w *EvidenceDescriptionWorker) resetEvidence(
+func (w *EvidenceDescriptionWorker) failEvidence(
 	ctx context.Context,
 	evidence *coredata.Evidence,
 ) error {
@@ -228,7 +228,7 @@ func (w *EvidenceDescriptionWorker) resetEvidence(
 	return w.pg.WithTx(
 		ctx,
 		func(tx pg.Conn) error {
-			evidence.DescriptionStatus = coredata.EvidenceDescriptionStatusPending
+			evidence.DescriptionStatus = coredata.EvidenceDescriptionStatusFailed
 			evidence.DescriptionProcessingStartedAt = nil
 			evidence.UpdatedAt = time.Now()
 			if err := evidence.Update(ctx, tx, scope); err != nil {

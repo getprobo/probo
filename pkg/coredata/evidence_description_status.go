@@ -27,6 +27,7 @@ const (
 	EvidenceDescriptionStatusPending    EvidenceDescriptionStatus = "PENDING"
 	EvidenceDescriptionStatusProcessing EvidenceDescriptionStatus = "PROCESSING"
 	EvidenceDescriptionStatusCompleted  EvidenceDescriptionStatus = "COMPLETED"
+	EvidenceDescriptionStatusFailed     EvidenceDescriptionStatus = "FAILED"
 )
 
 func (s EvidenceDescriptionStatus) MarshalText() ([]byte, error) {
@@ -43,6 +44,8 @@ func (s *EvidenceDescriptionStatus) UnmarshalText(data []byte) error {
 		*s = EvidenceDescriptionStatusProcessing
 	case EvidenceDescriptionStatusCompleted.String():
 		*s = EvidenceDescriptionStatusCompleted
+	case EvidenceDescriptionStatusFailed.String():
+		*s = EvidenceDescriptionStatusFailed
 	default:
 		return fmt.Errorf("invalid EvidenceDescriptionStatus value: %q", val)
 	}
