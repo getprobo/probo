@@ -15,15 +15,13 @@ const tasksQuery = graphql`
       ... on Measure {
         id
         canCreateTask: permission(action: "core:task:create")
-        tasks(first: 100)
+        tasks(first: 100, orderBy: { field: PRIORITY, direction: ASC })
           @connection(key: "Measure__tasks")
           @required(action: THROW) {
           __id
           edges @required(action: THROW) {
             node {
-              id
-              # eslint-disable-next-line relay/unused-fields
-              state
+              ...TasksCard_task
               ...TaskFormDialogFragment
               ...TasksCard_TaskRowFragment
             }

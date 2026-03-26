@@ -6,16 +6,17 @@ import {
 } from "@probo/routes";
 import { loadQuery } from "react-relay";
 
-import type { TaskGraphQuery } from "#/__generated__/core/TaskGraphQuery.graphql";
+import type { TasksPageQuery } from "#/__generated__/core/TasksPageQuery.graphql";
 import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
 import { coreEnvironment } from "#/environments";
-import { tasksQuery } from "#/hooks/graph/TaskGraph";
+import { tasksPageQuery } from "#/pages/organizations/tasks/TasksPage";
+
 export const taskRoutes = [
   {
     path: "tasks",
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ organizationId }) =>
-      loadQuery<TaskGraphQuery>(coreEnvironment, tasksQuery, {
+      loadQuery<TasksPageQuery>(coreEnvironment, tasksPageQuery, {
         organizationId,
       }),
     ),

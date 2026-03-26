@@ -33,8 +33,6 @@ const taskFragment = graphql`
     id
     description
     name
-    # eslint-disable-next-line relay/unused-fields
-    state
     timeEstimate
     deadline
     assignedTo {
@@ -52,9 +50,11 @@ const taskCreateMutation = graphql`
     $connections: [ID!]!
   ) {
     createTask(input: $input) {
-      taskEdge @prependEdge(connections: $connections) {
+      taskEdge @appendEdge(connections: $connections) {
         node {
           ...TaskFormDialogFragment
+          ...TasksCard_task
+          ...TasksCard_TaskRowFragment
         }
       }
     }
@@ -66,6 +66,8 @@ export const taskUpdateMutation = graphql`
     updateTask(input: $input) {
       task {
         ...TaskFormDialogFragment
+        ...TasksCard_task
+        ...TasksCard_TaskRowFragment
       }
     }
   }

@@ -1,5 +1,4 @@
-import { formatDate, formatDuration, promisifyMutation } from "@probo/helpers";
-import { usePageTitle } from "@probo/hooks";
+import { formatDate, formatDuration, formatError, promisifyMutation } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import {
   ActionDropdown,
@@ -16,22 +15,29 @@ import {
   TaskStateIcon,
   useConfirm,
   useDialogRef,
+  useToast,
 } from "@probo/ui";
-import { Fragment } from "react";
+import { Fragment, type ReactNode, useState, useTransition } from "react";
 import {
   graphql,
+  readInlineData,
   useFragment,
   useMutation,
+  useRefetchableFragment,
   useRelayEnvironment,
 } from "react-relay";
 import { Link, useLocation, useParams } from "react-router";
 
-import type { MeasureTasksTabQuery$data } from "#/__generated__/core/MeasureTasksTabQuery.graphql";
 import type { TaskFormDialogFragment$key } from "#/__generated__/core/TaskFormDialogFragment.graphql";
 import type { TaskFormDialogUpdateMutation } from "#/__generated__/core/TaskFormDialogUpdateMutation.graphql";
+import type { TasksCard_task$key } from "#/__generated__/core/TasksCard_task.graphql";
 import type { TasksCard_TaskRowFragment$key } from "#/__generated__/core/TasksCard_TaskRowFragment.graphql";
 import type { TasksCardDeleteMutation } from "#/__generated__/core/TasksCardDeleteMutation.graphql";
-import type { TasksPageFragment$data } from "#/__generated__/core/TasksPageFragment.graphql";
+import type {
+  TasksCardOrganizationFragment$data,
+  TasksCardOrganizationFragment$key,
+} from "#/__generated__/core/TasksCardOrganizationFragment.graphql";
+import type { TasksCardOrganizationQuery } from "#/__generated__/core/TasksCardOrganizationQuery.graphql";
 import TaskFormDialog, {
   taskUpdateMutation,
 } from "#/components/tasks/TaskFormDialog";
@@ -39,18 +45,107 @@ import { updateStoreCounter } from "#/hooks/useMutationWithIncrement";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 type Props = {
-  tasks:
-    | TasksPageFragment$data["tasks"]["edges"]
-    | Extract<
-      MeasureTasksTabQuery$data["node"],
-      { __typename: "Measure" }
-    >["tasks"]["edges"];
+  tasks: TasksCardOrganizationFragment$data["tasks"]["edges"];
   connectionId: string;
+  canReorder?: boolean;
+  refetch?: (vars: Record<string, never>, options?: { fetchPolicy?: "store-and-network" | "network-only" }) => void;
 };
 
-export function TasksCard({ tasks, connectionId }: Props) {
+const taskInlineFragment = graphql`
+  fragment TasksCard_task on Task @inline {
+    id
+    state
+    priority
+  }
+`;
+
+function readTask(key: TasksCard_task$key) {
+  return readInlineData(taskInlineFragment, key);
+}
+
+const organizationTasksFragment = graphql`
+  fragment TasksCardOrganizationFragment on Organization
+  @refetchable(queryName: "TasksCardOrganizationQuery")
+  @argumentDefinitions(
+    first: { type: "Int", defaultValue: 500 }
+    order: { type: "TaskOrder", defaultValue: { field: PRIORITY, direction: ASC } }
+    after: { type: "CursorKey", defaultValue: null }
+    before: { type: "CursorKey", defaultValue: null }
+    last: { type: "Int", defaultValue: null }
+  ) {
+    canCreateTask: permission(action: "core:task:create")
+    canUpdateTask: permission(action: "core:task:update")
+    tasks(
+      first: $first
+      after: $after
+      last: $last
+      before: $before
+      orderBy: $order
+    ) @connection(key: "TasksCardOrganization_tasks") @required(action: THROW) {
+      __id
+      edges @required(action: THROW) {
+        node {
+          ...TasksCard_task
+          ...TaskFormDialogFragment
+          ...TasksCard_TaskRowFragment
+        }
+      }
+    }
+  }
+`;
+
+type OrganizationTasksCardProps = {
+  organizationRef: TasksCardOrganizationFragment$key;
+  header?: (params: { connectionId: string; canCreateTask: boolean }) => ReactNode;
+};
+
+export function OrganizationTasksCard({ organizationRef, header }: OrganizationTasksCardProps) {
+  const [data, refetch] = useRefetchableFragment<
+    TasksCardOrganizationQuery,
+    TasksCardOrganizationFragment$key
+  >(organizationTasksFragment, organizationRef);
+
+  return (
+    <>
+      {header?.({ connectionId: data.tasks.__id, canCreateTask: data.canCreateTask })}
+      <TasksCard
+        tasks={data.tasks.edges}
+        connectionId={data.tasks.__id}
+        canReorder={data.canUpdateTask}
+        refetch={refetch}
+      />
+    </>
+  );
+}
+
+const updatePriorityMutation = graphql`
+  mutation TasksCardUpdatePriorityMutation($input: UpdateTaskInput!) {
+    updateTask(input: $input) {
+      task {
+        id
+        priority
+      }
+    }
+  }
+`;
+
+export function TasksCard({ tasks, connectionId, canReorder, refetch }: Props) {
   const { __ } = useTranslate();
   const hash = useLocation().hash.replace("#", "");
+  const [, startTransition] = useTransition();
+
+  const { toast } = useToast();
+  const [draggedId, setDraggedId] = useState<string | null>(null);
+  const [previewOrder, setPreviewOrder] = useState<string[] | null>(null);
+  const [updatePriority] = useMutation<TaskFormDialogUpdateMutation>(updatePriorityMutation);
+
+  const handleStateChange = () => {
+    if (refetch) {
+      startTransition(() => {
+        refetch({}, { fetchPolicy: "store-and-network" });
+      });
+    }
+  };
 
   const hashes = [
     { hash: "", label: __("To do"), state: "TODO" },
@@ -59,14 +154,99 @@ export function TasksCard({ tasks, connectionId }: Props) {
   ] as const;
 
   const tasksPerHash = new Map([
-    ["", tasks?.filter(({ node }) => node.state === "TODO")],
-    ["done", tasks?.filter(({ node }) => node.state === "DONE")],
+    ["", tasks?.filter(({ node }) => readTask(node).state === "TODO")],
+    ["done", tasks?.filter(({ node }) => readTask(node).state === "DONE")],
     ["all", tasks],
   ]);
 
   const filteredTasks = tasksPerHash.get(hash) ?? [];
+  const canDrag = !!canReorder && hash !== "all";
 
-  usePageTitle(__("Tasks"));
+  const handleDragOver = (e: React.DragEvent, hoveredId: string) => {
+    e.preventDefault();
+    if (draggedId === null || hoveredId === draggedId) return;
+    const ids = filteredTasks.map(({ node }) => readTask(node).id);
+    const fromIdx = ids.indexOf(draggedId);
+    if (fromIdx === -1) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const midY = rect.top + rect.height / 2;
+    const insertBefore = e.clientY < midY;
+    const hoverIdx = ids.indexOf(hoveredId);
+    let targetIdx = insertBefore ? hoverIdx : hoverIdx + 1;
+    if (targetIdx > fromIdx) targetIdx--;
+    if (targetIdx === fromIdx) {
+      setPreviewOrder(null);
+      return;
+    }
+    const reordered = [...ids];
+    reordered.splice(fromIdx, 1);
+    reordered.splice(targetIdx, 0, draggedId);
+    setPreviewOrder(reordered);
+  };
+
+  const handleDrop = () => {
+    if (draggedId === null || previewOrder === null) {
+      setDraggedId(null);
+      return;
+    }
+
+    const newIdx = previewOrder.indexOf(draggedId);
+    const originalIds = filteredTasks.map(({ node }) => readTask(node).id);
+    const originalIdx = originalIds.indexOf(draggedId);
+    let targetOriginalIdx = newIdx;
+    if (targetOriginalIdx >= originalIdx) targetOriginalIdx++;
+    if (targetOriginalIdx >= filteredTasks.length) targetOriginalIdx = filteredTasks.length - 1;
+    const targetPriority = readTask(filteredTasks[targetOriginalIdx].node).priority;
+
+    setDraggedId(null);
+
+    updatePriority({
+      variables: {
+        input: {
+          taskId: draggedId,
+          priority: targetPriority,
+        },
+      },
+      onCompleted: (_, errors) => {
+        if (errors?.length) {
+          toast({
+            title: __("Error"),
+            description: formatError(
+              __("Failed to reorder task."),
+              errors,
+            ),
+            variant: "error",
+          });
+        }
+        if (refetch) {
+          startTransition(() => {
+            refetch(
+              {},
+              { fetchPolicy: errors?.length ? "network-only" : "store-and-network" },
+            );
+          });
+        }
+      },
+      onError: () => {
+        toast({
+          title: __("Error"),
+          description: __("Failed to reorder task."),
+          variant: "error",
+        });
+      },
+    });
+  };
+
+  const displayTasks = (() => {
+    if (!previewOrder) return filteredTasks;
+    const byId = new Map(filteredTasks.map(edge => [readTask(edge.node).id, edge]));
+    const currentIdSet = new Set(byId.keys());
+    const previewIdSet = new Set(previewOrder);
+    if (currentIdSet.size !== previewIdSet.size || [...currentIdSet].some(id => !previewIdSet.has(id))) {
+      return filteredTasks;
+    }
+    return previewOrder.map(id => byId.get(id)!);
+  })();
 
   return (
     <div className="space-y-6">
@@ -98,26 +278,43 @@ export function TasksCard({ tasks, connectionId }: Props) {
                             <TaskStateIcon state={h.state!} />
                             {h.label}
                           </h2>
-                          {tasksPerHash.get(h.hash)?.map(({ node: task }) => (
+                          {tasksPerHash.get(h.hash)?.map(({ node }) => (
                             <TaskRow
-                              key={task.id}
-                              fKey={task}
+                              key={readTask(node).id}
+                              fKey={node}
                               connectionId={connectionId}
+                              onStateChange={handleStateChange}
                             />
                           ))}
                         </Fragment>
                       ))
                   // Todo and Done tab simply list todos
-                  : filteredTasks?.map(({ node: task }) => (
-                      <TaskRow
-                        key={task.id}
-                        fKey={task}
-                        connectionId={connectionId}
-                      />
-                    ))}
+                  : displayTasks.map(({ node }) => {
+                      const task = readTask(node);
+                      return (
+                        <TaskRow
+                          key={task.id}
+                          fKey={node}
+                          connectionId={connectionId}
+                          canDrag={canDrag}
+                          isDragging={draggedId === task.id}
+                          isGhost={previewOrder !== null && draggedId === task.id}
+                          onDragStart={() => setDraggedId(task.id)}
+                          onDragOver={e => handleDragOver(e, task.id)}
+                          onDrop={handleDrop}
+                          onDragEnd={() => setDraggedId(null)}
+                          onStateChange={handleStateChange}
+                        />
+                      );
+                    })}
               </div>
             </Card>
           )}
+      {canDrag && filteredTasks.length > 1 && (
+        <p className="text-sm text-txt-tertiary">
+          {__("Drag and drop to reorder tasks")}
+        </p>
+      )}
     </div>
   );
 }
@@ -125,6 +322,14 @@ export function TasksCard({ tasks, connectionId }: Props) {
 type TaskRowProps = {
   fKey: TasksCard_TaskRowFragment$key | TaskFormDialogFragment$key;
   connectionId: string;
+  canDrag?: boolean;
+  isDragging?: boolean;
+  isGhost?: boolean;
+  onDragStart?: () => void;
+  onDragOver?: (e: React.DragEvent) => void;
+  onDrop?: () => void;
+  onDragEnd?: () => void;
+  onStateChange?: () => void;
 };
 
 const fragment = graphql`
@@ -175,6 +380,8 @@ function TaskRow(props: TaskRowProps) {
     );
   const [updateTask, isUpdating] = useMutation<TaskFormDialogUpdateMutation>(taskUpdateMutation);
 
+  const [isMouseDown, setIsMouseDown] = useState(false);
+
   const onToggle = async () => {
     await promisifyMutation(updateTask)({
       variables: {
@@ -184,6 +391,7 @@ function TaskRow(props: TaskRowProps) {
         },
       },
     });
+    props.onStateChange?.();
   };
 
   const onDelete = () => {
@@ -211,13 +419,37 @@ function TaskRow(props: TaskRowProps) {
     );
   };
 
+  const canDrag = props.canDrag;
+  const isDragging = props.isDragging;
+  const isGhost = props.isGhost;
+
+  const className = [
+    "transition-all duration-150",
+    canDrag && isDragging && !isGhost && "opacity-40 cursor-grabbing",
+    canDrag && !isDragging && !isMouseDown && "cursor-grab",
+    canDrag && !isDragging && isMouseDown && "cursor-grabbing",
+    isGhost && "opacity-50 bg-primary-50",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   return (
     <>
       <TaskFormDialog
         task={props.fKey as TaskFormDialogFragment$key}
         ref={dialogRef}
       />
-      <div className="flex items-center justify-between py-3 px-6">
+      <div
+        className={`flex items-center justify-between py-3 px-6 ${className}`}
+        draggable={canDrag}
+        onDragStart={canDrag ? props.onDragStart : undefined}
+        onDragOver={canDrag ? props.onDragOver : undefined}
+        onDrop={canDrag ? props.onDrop : undefined}
+        onDragEnd={canDrag ? props.onDragEnd : undefined}
+        onMouseDown={canDrag ? () => setIsMouseDown(true) : undefined}
+        onMouseUp={canDrag ? () => setIsMouseDown(false) : undefined}
+        onMouseLeave={canDrag ? () => setIsMouseDown(false) : undefined}
+      >
         <div className="flex gap-2 items-start">
           <div className="flex items-center gap-2 pt-[2px]">
             <PriorityLevel level={1} />
