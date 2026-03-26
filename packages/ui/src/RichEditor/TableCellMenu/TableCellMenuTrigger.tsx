@@ -57,9 +57,12 @@ export function TableCellMenuTrigger({
   useLayoutEffect(() => {
     const ed = editor;
     const fallback = activeCellEl;
+    const wrapper = fallback.closest(".tableWrapper");
 
     handleRefs.setReference({
       getBoundingClientRect() {
+        let rect: DOMRect;
+
         const { selection } = ed.state;
         if (selection instanceof CellSelection) {
           let top = Infinity;
@@ -69,17 +72,31 @@ export function TableCellMenuTrigger({
           selection.forEachCell((_node, pos) => {
             const el = cellDomElement(ed, pos);
             if (!el) return;
-            const rect = el.getBoundingClientRect();
-            top = Math.min(top, rect.top);
-            left = Math.min(left, rect.left);
-            bottom = Math.max(bottom, rect.bottom);
-            right = Math.max(right, rect.right);
+            const r = el.getBoundingClientRect();
+            top = Math.min(top, r.top);
+            left = Math.min(left, r.left);
+            bottom = Math.max(bottom, r.bottom);
+            right = Math.max(right, r.right);
           });
-          if (top !== Infinity) {
-            return new DOMRect(left, top, right - left, bottom - top);
-          }
+          rect = top !== Infinity
+            ? new DOMRect(left, top, right - left, bottom - top)
+            : fallback.getBoundingClientRect();
+        } else {
+          rect = fallback.getBoundingClientRect();
         }
-        return fallback.getBoundingClientRect();
+
+        if (wrapper) {
+          const clip = wrapper.getBoundingClientRect();
+          const clampedLeft = Math.max(rect.left, clip.left);
+          const clampedTop = Math.max(rect.top, clip.top);
+          const clampedRight = Math.min(rect.right, clip.right);
+          const clampedBottom = Math.min(rect.bottom, clip.bottom);
+          const w = Math.max(0, clampedRight - clampedLeft);
+          const h = Math.max(0, clampedBottom - clampedTop);
+          return new DOMRect(clampedLeft, clampedTop, w, h);
+        }
+
+        return rect;
       },
     });
   }, [activeCellEl, editor, handleRefs]);
