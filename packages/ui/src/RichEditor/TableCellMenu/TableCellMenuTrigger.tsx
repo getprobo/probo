@@ -49,7 +49,7 @@ export function TableCellMenuTrigger({
   } = useFloating({
     strategy: "fixed",
     placement: "right",
-    middleware: [offset(-10)],
+    middleware: [offset(-11)],
     whileElementsMounted: (ref, floating, update) =>
       autoUpdate(ref, floating, update, { animationFrame: true }),
   });
