@@ -24,7 +24,6 @@ import { tv } from "tailwind-variants";
 
 import { BlockMenu } from "./BlockMenu/BlockMenu";
 import { BubbleMenu } from "./BubbleMenu";
-import { FocusedCellExtension } from "./FocusedCellExtension";
 import { LinkExtension } from "./LinkExtension";
 import { OptionsMenu } from "./OptionsMenu/OptionsMenu";
 import { PlaceholderExtension } from "./PlaceholderExtension";
@@ -32,6 +31,7 @@ import { SlashCommandExtension } from "./SlashCommandExtension";
 import { TableCellMenu } from "./TableCellMenu/TableCellMenu";
 import { TableColumnMenu } from "./TableColumnMenu/TableColumnMenu";
 import { TableRowMenu } from "./TableRowMenu/TableRowMenu";
+import { TableSelectionOverlay } from "./TableSelectionOverlay";
 
 const extensions = [
   Document,
@@ -63,7 +63,6 @@ const extensions = [
   TableKit.configure({
     table: { resizable: true },
   }),
-  FocusedCellExtension,
 ];
 
 const richEditorVariants = tv({
@@ -113,6 +112,7 @@ export function RichEditor(props: RichEditorProps) {
       <BubbleMenu editor={editor} />
       <BlockMenu editor={editor} />
       <OptionsMenu editor={editor} />
+      <TableSelectionOverlay editor={editor} />
       <TableCellMenu editor={editor} />
       <TableColumnMenu editor={editor} />
       <TableRowMenu editor={editor} />

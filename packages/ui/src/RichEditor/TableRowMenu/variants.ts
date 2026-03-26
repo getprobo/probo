@@ -7,10 +7,10 @@ import { tv } from "tailwind-variants";
 export const tableRowMenuVariants = tv({
   slots: {
     trigger: [
-      "z-10 flex flex-col items-center justify-center",
+      "z-20 flex flex-col items-center justify-center",
       "rounded text-txt-tertiary bg-subtle hover:bg-border-solid cursor-grab",
       "px-0.5 w-3",
     ],
-    menu: ["rounded-lg border border-border-mid bg-level-0 p-1 shadow-md z-20"],
+    menu: ["rounded-lg border border-border-mid bg-level-0 p-1 shadow-md z-30"],
   },
 });

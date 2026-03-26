@@ -83,25 +83,6 @@
         }
     }
 
-    th.selectedCell, td.selectedCell,
-    th.focusedCell, td.focusedCell {
-        background-color: color-mix(in srgb, var(--color-info) 50%, transparent) !important;
-        border: 2px solid var(--color-border-info) !important;
-    }
-
-    .selectedCell:has(+ .selectedCell) {
-        border-right: 1px solid var(--color-border-mid) !important;
-    }
-    .selectedCell + .selectedCell {
-        border-left: 1px solid var(--color-border-mid) !important;
-    }
-    tr:has(+ tr .selectedCell) > .selectedCell {
-        border-bottom: 1px solid var(--color-border-mid) !important;
-    }
-    tr:has(.selectedCell) + tr > .selectedCell {
-        border-top: 1px solid var(--color-border-mid) !important;
-    }
-
     .column-resize-handle {
         @apply absolute top-0 -right-px bottom-0 w-0.5 bg-border-info pointer-events-none z-20;
     }
@@ -111,6 +92,6 @@
     }
 
     .tableWrapper {
-        @apply overflow-x-auto my-4;
+        @apply relative overflow-x-auto my-4;
     }
 }
