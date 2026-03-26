@@ -3,127 +3,38 @@
 // that can be found in the LICENSE file.
 
 import { autoUpdate, offset, size, useFloating } from "@floating-ui/react";
-import {
-  BroomIcon,
-  CopyIcon,
-  CrownSimpleIcon,
-  DotsThreeIcon,
-  PlusIcon,
-  TrashIcon,
-} from "@phosphor-icons/react";
-import type { Node as PMNode } from "@tiptap/pm/model";
-import { TextSelection } from "@tiptap/pm/state";
+import { DotsThreeIcon } from "@phosphor-icons/react";
 import { cellAround, CellSelection, TableMap } from "@tiptap/pm/tables";
 import { type Editor } from "@tiptap/react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { tv } from "tailwind-variants";
 
-import { cellDomElement } from "./_lib/cellDomElement";
-import { DRAG_THRESHOLD } from "./_lib/constants";
-import { useTableDropdownMenu } from "./_lib/useTableDropdownMenu";
-import { MenuButton } from "./MenuButton";
+import { DRAG_THRESHOLD } from "../_lib/constants";
+import type { DropdownMenu } from "../_lib/useTableDropdownMenu";
 
-const tableColumnMenuVariants = tv({
-  slots: {
-    trigger: [
-      "z-10 flex items-center justify-center",
-      "rounded text-txt-tertiary bg-subtle hover:bg-border-solid cursor-grab",
-      "py-0.5 h-3",
-    ],
-    menu: ["rounded-lg border border-border-mid bg-level-0 p-1 shadow-md z-20"],
-  },
-});
+import { getColumnRect, type HoveredColumn, moveColumn } from "./TableColumnMenu";
+import { tableColumnMenuVariants } from "./variants";
 
-const { trigger, menu } = tableColumnMenuVariants();
+const { trigger } = tableColumnMenuVariants();
 
-type HoveredColumn = {
-  colIndex: number;
-  tableStart: number;
-};
-
-type TableColumnMenuProps = {
+type TableColumnMenuTriggerProps = {
   editor: Editor;
+  hoveredCol: HoveredColumn | null;
+  setHoveredCol: React.Dispatch<React.SetStateAction<HoveredColumn | null>>;
+  menuOpen: boolean;
+  setMenuOpen: DropdownMenu["setMenuOpen"];
+  setTriggerEl: DropdownMenu["setTriggerEl"];
+  menuRefs: DropdownMenu["menuRefs"];
 };
 
-function getColumnRect(
-  editor: Editor,
-  tableStart: number,
-  colIndex: number,
-): DOMRect | null {
-  try {
-    const tableNodePos = tableStart - 1;
-    const table = editor.state.doc.nodeAt(tableNodePos);
-    if (!table) return null;
-
-    const map = TableMap.get(table);
-    if (colIndex < 0 || colIndex >= map.width) return null;
-
-    const cellPos = map.positionAt(0, colIndex, table) + tableStart;
-    const el = cellDomElement(editor, cellPos);
-    if (!el) return null;
-
-    const topRect = el.getBoundingClientRect();
-    let bottom = topRect.bottom;
-
-    if (map.height > 1) {
-      const lastCellPos
-        = map.positionAt(map.height - 1, colIndex, table) + tableStart;
-      const lastEl = cellDomElement(editor, lastCellPos);
-      if (lastEl) {
-        bottom = lastEl.getBoundingClientRect().bottom;
-      }
-    }
-
-    return new DOMRect(
-      topRect.left,
-      topRect.top,
-      topRect.width,
-      bottom - topRect.top,
-    );
-  } catch {
-    return null;
-  }
-}
-
-function moveColumn(
-  editor: Editor,
-  tableStart: number,
-  fromCol: number,
-  toCol: number,
-) {
-  if (fromCol === toCol) return;
-
-  const tableNodePos = tableStart - 1;
-  const table = editor.state.doc.nodeAt(tableNodePos);
-  if (!table) return;
-
-  const rows: PMNode[] = [];
-  table.forEach((row) => {
-    const cells: PMNode[] = [];
-    row.forEach(cell => cells.push(cell));
-    const [moved] = cells.splice(fromCol, 1);
-    cells.splice(toCol, 0, moved);
-    rows.push(row.type.create(row.attrs, cells));
-  });
-
-  const newTable = table.type.create(table.attrs, rows);
-  const { tr } = editor.state;
-  tr.replaceWith(tableNodePos, tableNodePos + table.nodeSize, newTable);
-  editor.view.dispatch(tr);
-}
-
-export function TableColumnMenu({ editor }: TableColumnMenuProps) {
-  const {
-    menuOpen,
-    setMenuOpen,
-    setTriggerEl,
-    setDropdownEl,
-    menuRefs,
-    menuStyles,
-    getFloatingProps,
-  } = useTableDropdownMenu();
-
-  const [hoveredCol, setHoveredCol] = useState<HoveredColumn | null>(null);
+export function TableColumnMenuTrigger({
+  editor,
+  hoveredCol,
+  setHoveredCol,
+  menuOpen,
+  setMenuOpen,
+  setTriggerEl,
+  menuRefs,
+}: TableColumnMenuTriggerProps) {
   const [dragIndicator, setDragIndicator] = useState<{
     left: number;
     top: number;
@@ -217,7 +128,7 @@ export function TableColumnMenu({ editor }: TableColumnMenuProps) {
         rafId.current = null;
       }
     };
-  }, [editor, menuOpen]);
+  }, [editor, menuOpen, setHoveredCol]);
 
   const {
     refs: handleRefs,
@@ -257,8 +168,6 @@ export function TableColumnMenu({ editor }: TableColumnMenuProps) {
       },
     });
   }, [hoveredCol, editor, handleRefs]);
-
-  if (!hoveredCol && !menuOpen) return null;
 
   const computeTargetGap = (clientX: number, tableStart: number): number => {
     const table = editor.state.doc.nodeAt(tableStart - 1);
@@ -420,195 +329,6 @@ export function TableColumnMenu({ editor }: TableColumnMenuProps) {
     document.addEventListener("mouseup", onMouseUp);
   };
 
-  const currentCol = hoveredCol;
-
-  const isFirstColumn = currentCol?.colIndex === 0;
-
-  const isHeaderColumn = (): boolean => {
-    if (!currentCol || currentCol.colIndex !== 0) return false;
-    try {
-      const table = editor.state.doc.nodeAt(currentCol.tableStart - 1);
-      if (!table) return false;
-      const map = TableMap.get(table);
-      for (let row = 0; row < map.height; row++) {
-        const cellPos = map.map[row * map.width] + currentCol.tableStart;
-        const cellNode = editor.state.doc.nodeAt(cellPos);
-        if (!cellNode || cellNode.type.name !== "tableHeader") return false;
-      }
-      return true;
-    } catch {
-      return false;
-    }
-  };
-
-  const handleToggleHeaderColumn = () => {
-    if (!currentCol || currentCol.colIndex !== 0) return;
-    const { tableStart } = currentCol;
-
-    try {
-      const table = editor.state.doc.nodeAt(tableStart - 1);
-      if (!table) return;
-
-      const map = TableMap.get(table);
-      const cellPos = map.positionAt(0, 0, table) + tableStart;
-
-      editor
-        .chain()
-        .focus()
-        .command(({ tr }) => {
-          tr.setSelection(TextSelection.create(tr.doc, cellPos + 1));
-          return true;
-        })
-        .toggleHeaderColumn()
-        .run();
-    } catch {
-      // table may have changed
-    }
-
-    setMenuOpen(false);
-  };
-
-  const handleDeleteColumn = () => {
-    if (!currentCol) return;
-    const { colIndex, tableStart } = currentCol;
-
-    try {
-      const table = editor.state.doc.nodeAt(tableStart - 1);
-      if (!table) return;
-
-      const map = TableMap.get(table);
-      const cellPos = map.positionAt(0, colIndex, table) + tableStart;
-
-      editor
-        .chain()
-        .focus()
-        .command(({ tr }) => {
-          tr.setSelection(TextSelection.create(tr.doc, cellPos + 1));
-          return true;
-        })
-        .deleteColumn()
-        .run();
-    } catch {
-      // table may have changed
-    }
-
-    setMenuOpen(false);
-    setHoveredCol(null);
-  };
-
-  const handleDuplicateColumn = () => {
-    if (!currentCol) return;
-    const { colIndex, tableStart } = currentCol;
-
-    try {
-      const table = editor.state.doc.nodeAt(tableStart - 1);
-      if (!table) return;
-
-      const map = TableMap.get(table);
-
-      editor
-        .chain()
-        .focus()
-        .command(({ tr }) => {
-          for (let row = map.height - 1; row >= 0; row--) {
-            const cellOffset = map.map[row * map.width + colIndex];
-            const cell = table.nodeAt(cellOffset);
-            if (!cell) continue;
-
-            const insertPos = cellOffset + tableStart + cell.nodeSize;
-            tr.insert(insertPos, cell);
-          }
-          return true;
-        })
-        .run();
-    } catch {
-      // table may have changed
-    }
-
-    setMenuOpen(false);
-  };
-
-  const handleInsertLeft = () => {
-    if (!currentCol) return;
-    const { colIndex, tableStart } = currentCol;
-
-    try {
-      const table = editor.state.doc.nodeAt(tableStart - 1);
-      if (!table) return;
-
-      const map = TableMap.get(table);
-      const cellPos = map.positionAt(0, colIndex, table) + tableStart;
-
-      editor
-        .chain()
-        .focus()
-        .command(({ tr }) => {
-          tr.setSelection(TextSelection.create(tr.doc, cellPos + 1));
-          return true;
-        })
-        .addColumnBefore()
-        .run();
-    } catch {
-      // table may have changed
-    }
-
-    setMenuOpen(false);
-  };
-
-  const handleInsertRight = () => {
-    if (!currentCol) return;
-    const { colIndex, tableStart } = currentCol;
-
-    try {
-      const table = editor.state.doc.nodeAt(tableStart - 1);
-      if (!table) return;
-
-      const map = TableMap.get(table);
-      const cellPos = map.positionAt(0, colIndex, table) + tableStart;
-
-      editor
-        .chain()
-        .focus()
-        .command(({ tr }) => {
-          tr.setSelection(TextSelection.create(tr.doc, cellPos + 1));
-          return true;
-        })
-        .addColumnAfter()
-        .run();
-    } catch {
-      // table may have changed
-    }
-
-    setMenuOpen(false);
-  };
-
-  const handleClearContents = () => {
-    if (!currentCol) return;
-    const { colIndex, tableStart } = currentCol;
-
-    try {
-      const table = editor.state.doc.nodeAt(tableStart - 1);
-      if (!table) return;
-
-      const map = TableMap.get(table);
-      const firstCellPos = map.map[colIndex] + tableStart;
-      const lastCellPos
-        = map.map[(map.height - 1) * map.width + colIndex] + tableStart;
-
-      const $anchor = editor.state.doc.resolve(firstCellPos);
-      const $head = editor.state.doc.resolve(lastCellPos);
-
-      editor.view.dispatch(
-        editor.state.tr.setSelection(new CellSelection($anchor, $head)),
-      );
-      editor.commands.deleteSelection();
-    } catch {
-      // table may have changed
-    }
-
-    setMenuOpen(false);
-  };
-
   return (
     <>
       <button
@@ -629,46 +349,6 @@ export function TableColumnMenu({ editor }: TableColumnMenuProps) {
       >
         <DotsThreeIcon size={16} weight="bold" />
       </button>
-      {menuOpen && (
-        <div
-          ref={(node) => {
-            setDropdownEl(node);
-            menuRefs.setFloating(node);
-          }}
-          data-column-menu
-          style={menuStyles}
-          {...getFloatingProps()}
-          onMouseDown={e => e.preventDefault()}
-          className={menu()}
-        >
-          {isFirstColumn && (
-            <MenuButton active={isHeaderColumn()} onClick={handleToggleHeaderColumn}>
-              <CrownSimpleIcon size={16} weight="bold" />
-              Header column
-            </MenuButton>
-          )}
-          <MenuButton onClick={handleInsertLeft}>
-            <PlusIcon size={16} weight="bold" />
-            Insert column left
-          </MenuButton>
-          <MenuButton onClick={handleInsertRight}>
-            <PlusIcon size={16} weight="bold" />
-            Insert column right
-          </MenuButton>
-          <MenuButton onClick={handleDuplicateColumn}>
-            <CopyIcon size={16} weight="bold" />
-            Duplicate column
-          </MenuButton>
-          <MenuButton onClick={handleClearContents}>
-            <BroomIcon size={16} weight="bold" />
-            Clear contents
-          </MenuButton>
-          <MenuButton onClick={handleDeleteColumn}>
-            <TrashIcon size={16} weight="bold" />
-            Delete column
-          </MenuButton>
-        </div>
-      )}
       {dragIndicator && (
         <div
           style={{

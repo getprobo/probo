@@ -22,16 +22,16 @@ import { type Content, EditorContent, useEditor, useEditorState } from "@tiptap/
 import { type ComponentProps, useEffect, useRef } from "react";
 import { tv } from "tailwind-variants";
 
-import { BlockMenu } from "./BlockMenu";
+import { BlockMenu } from "./BlockMenu/BlockMenu";
 import { BubbleMenu } from "./BubbleMenu";
 import { FocusedCellExtension } from "./FocusedCellExtension";
 import { LinkExtension } from "./LinkExtension";
-import { OptionsMenu } from "./OptionsMenu";
+import { OptionsMenu } from "./OptionsMenu/OptionsMenu";
 import { PlaceholderExtension } from "./PlaceholderExtension";
 import { SlashCommandExtension } from "./SlashCommandExtension";
-import { TableCellMenu } from "./TableCellMenu";
-import { TableColumnMenu } from "./TableColumnMenu";
-import { TableRowMenu } from "./TableRowMenu";
+import { TableCellMenu } from "./TableCellMenu/TableCellMenu";
+import { TableColumnMenu } from "./TableColumnMenu/TableColumnMenu";
+import { TableRowMenu } from "./TableRowMenu/TableRowMenu";
 
 const extensions = [
   Document,
