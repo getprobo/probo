@@ -73,9 +73,9 @@ export function SignatureDocumentsDialog({
         successMessage: (response) => {
           const actualRequestsCount
             = response.bulkRequestSignatures.documentVersionSignatureEdges.length;
-          return sprintf(__("%s signature requests sent"), actualRequestsCount);
+          return sprintf(__("%s signature requests created"), actualRequestsCount);
         },
-        errorMessage: __("Failed to send signature requests"),
+        errorMessage: __("Failed to create signature requests"),
       },
     );
 
@@ -117,7 +117,7 @@ export function SignatureDocumentsDialog({
             type="submit"
             disabled={selectedPeople.length === 0 || isSubmitting}
           >
-            {__("Send signature requests")}
+            {__("Request signatures")}
           </Button>
         </DialogFooter>
       </form>
