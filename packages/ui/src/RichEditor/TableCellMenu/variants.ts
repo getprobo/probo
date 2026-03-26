@@ -10,6 +10,6 @@ export const tableCellMenuVariants = tv({
       "z-20 flex size-5 items-center justify-center",
       "rounded text-border-info cursor-pointer",
     ],
-    menu: ["rounded-lg border border-border-mid bg-level-0 p-1 shadow-md z-30"],
+    menu: ["rounded-lg border border-border-mid bg-level-0 p-1 shadow-mid z-30"],
   },
 });

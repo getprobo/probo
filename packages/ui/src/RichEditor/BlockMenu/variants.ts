@@ -10,6 +10,6 @@ export const blockMenuVariants = tv({
       "z-20 flex size-6 items-center justify-center",
       "rounded text-txt-tertiary hover:bg-subtle hover:text-txt-primary text-xl font-light cursor-pointer",
     ],
-    menu: ["rounded-lg border border-border-mid bg-level-0 p-1 shadow-md z-30"],
+    menu: ["rounded-lg border border-border-mid bg-level-0 p-1 shadow-mid z-30"],
   },
 });

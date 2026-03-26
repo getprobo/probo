@@ -11,6 +11,6 @@ export const tableColumnMenuVariants = tv({
       "rounded text-txt-tertiary bg-subtle hover:bg-border-solid cursor-grab",
       "py-0.5 h-3",
     ],
-    menu: ["rounded-lg border border-border-mid bg-level-0 p-1 shadow-md z-30"],
+    menu: ["rounded-lg border border-border-mid bg-level-0 p-1 shadow-mid z-30"],
   },
 });
