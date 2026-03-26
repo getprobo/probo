@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.153.2] - 2026-03-26
+
+### Fixed
+
+- Mark failed evidence descriptions instead of retrying
+
 ## [0.153.1] - 2026-03-26
 
 ### Fixed
