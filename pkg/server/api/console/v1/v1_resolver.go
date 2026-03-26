@@ -3766,6 +3766,7 @@ func (r *mutationResolver) UpdateTask(ctx context.Context, input types.UpdateTas
 			Name:         input.Name,
 			Description:  gqlutils.UnwrapOmittable(input.Description),
 			State:        input.State,
+			Priority:     input.Priority,
 			TimeEstimate: gqlutils.UnwrapOmittable(input.TimeEstimate),
 			Deadline:     gqlutils.UnwrapOmittable(input.Deadline),
 			AssignedToID: gqlutils.UnwrapOmittable(input.AssignedToID),

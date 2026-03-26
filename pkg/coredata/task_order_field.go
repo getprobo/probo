@@ -14,16 +14,33 @@
 
 package coredata
 
+import "fmt"
+
 type (
 	TaskOrderField string
 )
 
 const (
+	TaskOrderFieldPriority  TaskOrderField = "PRIORITY"
 	TaskOrderFieldCreatedAt TaskOrderField = "CREATED_AT"
 )
 
 func (p TaskOrderField) Column() string {
-	return string(p)
+	switch p {
+	case TaskOrderFieldPriority:
+		return "priority"
+	case TaskOrderFieldCreatedAt:
+		return "created_at"
+	}
+	panic(fmt.Sprintf("unsupported order by: %s", p))
+}
+
+func (p TaskOrderField) IsValid() bool {
+	switch p {
+	case TaskOrderFieldPriority, TaskOrderFieldCreatedAt:
+		return true
+	}
+	return false
 }
 
 func (p TaskOrderField) String() string {
@@ -36,5 +53,8 @@ func (p TaskOrderField) MarshalText() ([]byte, error) {
 
 func (p *TaskOrderField) UnmarshalText(text []byte) error {
 	*p = TaskOrderField(text)
+	if !p.IsValid() {
+		return fmt.Errorf("%s is not a valid TaskOrderField", string(text))
+	}
 	return nil
 }

@@ -25,6 +25,7 @@ func NewTask(t *coredata.Task) *Task {
 		Name:         t.Name,
 		Description:  t.Description,
 		State:        t.State,
+		Priority:     t.Priority,
 		TimeEstimate: t.TimeEstimate,
 		CreatedAt:    t.CreatedAt,
 		UpdatedAt:    t.UpdatedAt,

@@ -499,6 +499,7 @@ enum MeasureOrderField
 
 enum TaskOrderField
     @goModel(model: "go.probo.inc/probo/pkg/coredata.TaskOrderField") {
+    PRIORITY
     CREATED_AT
 }
 
@@ -2392,6 +2393,7 @@ type Task implements Node {
     name: String!
     description: String
     state: TaskState!
+    priority: Int!
     timeEstimate: Duration
     deadline: Datetime
     assignedTo: Profile @goField(forceResolver: true)
@@ -4211,6 +4213,7 @@ input UpdateTaskInput {
     name: String
     description: String @goField(omittable: true)
     state: TaskState
+    priority: Int
     timeEstimate: Duration @goField(omittable: true)
     deadline: Datetime @goField(omittable: true)
     assignedToId: ID @goField(omittable: true)

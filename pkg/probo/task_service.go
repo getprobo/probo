@@ -51,6 +51,7 @@ type (
 		Deadline     **time.Time
 		AssignedToID **gid.GID
 		MeasureID    **gid.GID
+		Priority     *int
 	}
 )
 
@@ -273,6 +274,8 @@ func (s TaskService) Update(
 				return fmt.Errorf("cannot load task %q: %w", req.TaskID, err)
 			}
 
+			oldState := task.State
+
 			if req.Name != nil {
 				task.Name = *req.Name
 			}
@@ -318,6 +321,17 @@ func (s TaskService) Update(
 			}
 
 			task.UpdatedAt = time.Now()
+
+			if req.Priority != nil {
+				task.Priority = *req.Priority
+				if err := task.UpdatePriority(ctx, conn, s.svc.scope); err != nil {
+					return fmt.Errorf("cannot update task priority: %w", err)
+				}
+			} else if task.State != oldState {
+				if err := task.NextPriorityForState(ctx, conn, s.svc.scope); err != nil {
+					return fmt.Errorf("cannot get next priority: %w", err)
+				}
+			}
 
 			if err := task.Update(ctx, conn, s.svc.scope); err != nil {
 				return fmt.Errorf("cannot update task: %w", err)

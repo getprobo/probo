@@ -4619,6 +4619,7 @@ components:
     TaskOrderField:
       type: string
       enum:
+        - PRIORITY
         - CREATED_AT
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.TaskOrderField
 
@@ -4642,6 +4643,7 @@ components:
         - organization_id
         - name
         - state
+        - priority
         - created_at
         - updated_at
       properties:
@@ -4671,6 +4673,9 @@ components:
         state:
           $ref: "#/components/schemas/TaskState"
           description: Task state
+        priority:
+          type: integer
+          description: Task priority within state
         time_estimate:
           anyOf:
             - $ref: "#/components/schemas/Duration"
@@ -4822,6 +4827,9 @@ components:
             - type: "null"
               description: No state
           description: Task state
+        priority:
+          type: integer
+          description: Task priority within state
         time_estimate:
           anyOf:
             - $ref: "#/components/schemas/Duration"

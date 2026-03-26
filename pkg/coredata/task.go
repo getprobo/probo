@@ -41,6 +41,7 @@ type (
 		TimeEstimate   *time.Duration `db:"time_estimate"`
 		AssignedToID   *gid.GID       `db:"assigned_to_profile_id"`
 		Deadline       *time.Time     `db:"deadline"`
+		Priority       int            `db:"priority"`
 		CreatedAt      time.Time      `db:"created_at"`
 		UpdatedAt      time.Time      `db:"updated_at"`
 	}
@@ -48,10 +49,12 @@ type (
 	Tasks []*Task
 )
 
-func (c Task) CursorKey(orderBy TaskOrderField) page.CursorKey {
+func (t Task) CursorKey(orderBy TaskOrderField) page.CursorKey {
 	switch orderBy {
+	case TaskOrderFieldPriority:
+		return page.NewCursorKey(t.ID, t.Priority)
 	case TaskOrderFieldCreatedAt:
-		return page.NewCursorKey(c.ID, c.CreatedAt)
+		return page.NewCursorKey(t.ID, t.CreatedAt)
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
@@ -71,7 +74,7 @@ func (t *Task) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[s
 	return map[string]string{"organization_id": organizationID.String()}, nil
 }
 
-func (c *Task) LoadByID(
+func (t *Task) LoadByID(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
@@ -89,6 +92,7 @@ SELECT
     time_estimate,
     assigned_to_profile_id,
     deadline,
+    priority,
     created_at,
     updated_at
 FROM
@@ -118,7 +122,7 @@ LIMIT 1;
 		return fmt.Errorf("cannot collect tasks: %w", err)
 	}
 
-	*c = task
+	*t = task
 
 	return nil
 }
@@ -141,6 +145,7 @@ SELECT
     time_estimate,
     assigned_to_profile_id,
     deadline,
+    priority,
     created_at,
     updated_at
 FROM
@@ -170,12 +175,17 @@ WHERE
 	return nil
 }
 
-func (c Task) Insert(
+func (t *Task) Insert(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
 ) error {
 	q := `
+WITH next_priority AS (
+    SELECT COALESCE(MAX(priority), 0) + 1 AS value
+    FROM tasks
+    WHERE organization_id = @organization_id AND state = @state
+)
 INSERT INTO
     tasks (
         tenant_id,
@@ -189,6 +199,7 @@ INSERT INTO
         time_estimate,
         assigned_to_profile_id,
         deadline,
+        priority,
         created_at,
         updated_at
     )
@@ -204,28 +215,30 @@ VALUES (
     @time_estimate,
     @assigned_to_profile_id,
     @deadline,
+    (SELECT value FROM next_priority),
     @created_at,
     @updated_at
-);
+)
+RETURNING priority;
 `
 
 	args := pgx.StrictNamedArgs{
 		"tenant_id":              scope.GetTenantID(),
-		"task_id":                c.ID,
-		"organization_id":        c.OrganizationID,
-		"measure_id":             c.MeasureID,
-		"name":                   c.Name,
-		"description":            c.Description,
-		"reference_id":           c.ReferenceID,
-		"state":                  c.State,
-		"time_estimate":          c.TimeEstimate,
-		"assigned_to_profile_id": c.AssignedToID,
-		"deadline":               c.Deadline,
-		"created_at":             c.CreatedAt,
-		"updated_at":             c.UpdatedAt,
+		"task_id":                t.ID,
+		"organization_id":        t.OrganizationID,
+		"measure_id":             t.MeasureID,
+		"name":                   t.Name,
+		"description":            t.Description,
+		"reference_id":           t.ReferenceID,
+		"state":                  t.State,
+		"time_estimate":          t.TimeEstimate,
+		"assigned_to_profile_id": t.AssignedToID,
+		"deadline":               t.Deadline,
+		"created_at":             t.CreatedAt,
+		"updated_at":             t.UpdatedAt,
 	}
-	_, err := conn.Exec(ctx, q, args)
 
+	err := conn.QueryRow(ctx, q, args).Scan(&t.Priority)
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
@@ -239,12 +252,17 @@ VALUES (
 	return nil
 }
 
-func (c *Task) Upsert(
+func (t *Task) Upsert(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
 ) error {
 	q := `
+WITH next_priority AS (
+    SELECT COALESCE(MAX(priority), 0) + 1 AS value
+    FROM tasks
+    WHERE organization_id = @organization_id AND state = @state
+)
 INSERT INTO
     tasks (
         tenant_id,
@@ -258,6 +276,7 @@ INSERT INTO
         time_estimate,
         assigned_to_profile_id,
         deadline,
+        priority,
         created_at,
         updated_at
     )
@@ -273,6 +292,7 @@ VALUES (
     @time_estimate,
     @assigned_to_profile_id,
     @deadline,
+    (SELECT value FROM next_priority),
     @created_at,
     @updated_at
 )
@@ -292,24 +312,25 @@ RETURNING
     time_estimate,
     assigned_to_profile_id,
     deadline,
+    priority,
     created_at,
     updated_at
 `
 
 	args := pgx.StrictNamedArgs{
 		"tenant_id":              scope.GetTenantID(),
-		"task_id":                c.ID,
-		"organization_id":        c.OrganizationID,
-		"measure_id":             c.MeasureID,
-		"name":                   c.Name,
-		"description":            c.Description,
-		"reference_id":           c.ReferenceID,
-		"state":                  c.State,
-		"time_estimate":          c.TimeEstimate,
-		"assigned_to_profile_id": c.AssignedToID,
-		"deadline":               c.Deadline,
-		"created_at":             c.CreatedAt,
-		"updated_at":             c.UpdatedAt,
+		"task_id":                t.ID,
+		"organization_id":        t.OrganizationID,
+		"measure_id":             t.MeasureID,
+		"name":                   t.Name,
+		"description":            t.Description,
+		"reference_id":           t.ReferenceID,
+		"state":                  t.State,
+		"time_estimate":          t.TimeEstimate,
+		"assigned_to_profile_id": t.AssignedToID,
+		"deadline":               t.Deadline,
+		"created_at":             t.CreatedAt,
+		"updated_at":             t.UpdatedAt,
 	}
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -321,12 +342,12 @@ RETURNING
 		return fmt.Errorf("cannot collect tasks: %w", err)
 	}
 
-	*c = task
+	*t = task
 
 	return nil
 }
 
-func (c *Tasks) CountByOrganizationID(
+func (t *Tasks) CountByOrganizationID(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
@@ -358,7 +379,7 @@ func (c *Tasks) CountByOrganizationID(
 	return count, nil
 }
 
-func (c *Tasks) LoadByOrganizationID(
+func (t *Tasks) LoadByOrganizationID(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
@@ -377,6 +398,7 @@ func (c *Tasks) LoadByOrganizationID(
 		time_estimate,
 		assigned_to_profile_id,
 		deadline,
+		priority,
 		created_at,
 		updated_at
 	FROM
@@ -402,12 +424,12 @@ func (c *Tasks) LoadByOrganizationID(
 		return fmt.Errorf("cannot collect tasks: %w", err)
 	}
 
-	*c = tasks
+	*t = tasks
 
 	return nil
 }
 
-func (c *Tasks) CountByMeasureID(
+func (t *Tasks) CountByMeasureID(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
@@ -439,7 +461,7 @@ WHERE
 	return count, nil
 }
 
-func (c *Tasks) LoadByMeasureID(
+func (t *Tasks) LoadByMeasureID(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
@@ -458,6 +480,7 @@ SELECT
     time_estimate,
     assigned_to_profile_id,
     deadline,
+    priority,
     created_at,
     updated_at
 FROM
@@ -483,12 +506,12 @@ WHERE
 		return fmt.Errorf("cannot collect tasks: %w", err)
 	}
 
-	*c = tasks
+	*t = tasks
 
 	return nil
 }
 
-func (c *Task) Update(
+func (t *Task) Update(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
@@ -499,6 +522,7 @@ SET
   name = @name,
   description = @description,
   state = @state,
+  priority = @priority,
   time_estimate = @time_estimate,
   updated_at = @updated_at,
   assigned_to_profile_id = @assigned_to_profile_id,
@@ -509,14 +533,15 @@ WHERE %s
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.NamedArgs{
-		"task_id":                c.ID,
-		"name":                   c.Name,
-		"description":            c.Description,
-		"state":                  c.State,
-		"time_estimate":          c.TimeEstimate,
-		"updated_at":             c.UpdatedAt,
-		"assigned_to_profile_id": c.AssignedToID,
-		"deadline":               c.Deadline,
+		"task_id":                t.ID,
+		"name":                   t.Name,
+		"description":            t.Description,
+		"state":                  t.State,
+		"priority":               t.Priority,
+		"time_estimate":          t.TimeEstimate,
+		"updated_at":             t.UpdatedAt,
+		"assigned_to_profile_id": t.AssignedToID,
+		"deadline":               t.Deadline,
 	}
 
 	maps.Copy(args, scope.SQLArguments())
@@ -525,7 +550,97 @@ WHERE %s
 	return err
 }
 
-func (c *Task) Delete(
+func (t *Task) NextPriorityForState(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+) error {
+	q := `
+SELECT COALESCE(MAX(priority), 0) + 1
+FROM tasks
+WHERE
+    organization_id = @organization_id
+    AND state = @state
+    AND id != @id
+    AND %s;
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"id":              t.ID,
+		"organization_id": t.OrganizationID,
+		"state":           t.State,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot get next priority: %w", err)
+	}
+
+	priority, err := pgx.CollectExactlyOneRow(rows, pgx.RowTo[int])
+	if err != nil {
+		return fmt.Errorf("cannot get next priority: %w", err)
+	}
+
+	t.Priority = priority
+	return nil
+}
+
+func (t *Task) UpdatePriority(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+) error {
+	q := `
+WITH old AS (
+  SELECT
+	priority AS old_priority
+  FROM tasks
+  WHERE %s AND id = @id AND organization_id = @organization_id AND state = @state
+)
+
+UPDATE tasks
+SET
+    priority = CASE
+        WHEN id = @id THEN @new_priority
+        ELSE priority + CASE
+            WHEN @new_priority < old.old_priority THEN 1
+            WHEN @new_priority > old.old_priority THEN -1
+        END
+    END,
+    updated_at = @updated_at
+FROM old
+WHERE %s
+  AND organization_id = @organization_id
+  AND state = @state
+  AND (
+    id = @id
+    OR (priority BETWEEN LEAST(old.old_priority, @new_priority) AND GREATEST(old.old_priority, @new_priority))
+  );
+`
+
+	scopeFragment := scope.SQLFragment()
+	q = fmt.Sprintf(q, scopeFragment, scopeFragment)
+
+	args := pgx.StrictNamedArgs{
+		"id":              t.ID,
+		"new_priority":    t.Priority,
+		"organization_id": t.OrganizationID,
+		"state":           t.State,
+		"updated_at":      t.UpdatedAt,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	_, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot update task priority: %w", err)
+	}
+
+	return nil
+}
+
+func (t *Task) Delete(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
@@ -538,7 +653,7 @@ WHERE %s
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.NamedArgs{
-		"task_id": c.ID,
+		"task_id": t.ID,
 	}
 
 	maps.Copy(args, scope.SQLArguments())
