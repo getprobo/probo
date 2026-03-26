@@ -207,9 +207,9 @@ export function TableColumnMenuContent({
       if (!table) return;
 
       const map = TableMap.get(table);
-      const firstCellPos = map.map[colIndex] + tableStart;
+      const firstCellPos = map.map[colIndex] + tableStart + 1;
       const lastCellPos
-        = map.map[(map.height - 1) * map.width + colIndex] + tableStart;
+        = map.map[(map.height - 1) * map.width + colIndex] + tableStart + 1;
 
       const $anchor = editor.state.doc.resolve(firstCellPos);
       const $head = editor.state.doc.resolve(lastCellPos);

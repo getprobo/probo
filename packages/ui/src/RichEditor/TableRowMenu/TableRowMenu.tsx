@@ -98,8 +98,6 @@ export function TableRowMenu({ editor }: TableRowMenuProps) {
 
   const [hoveredRow, setHoveredRow] = useState<HoveredRow | null>(null);
 
-  if (!hoveredRow && !menuOpen) return null;
-
   return (
     <>
       <TableRowMenuTrigger

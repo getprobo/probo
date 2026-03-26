@@ -6,7 +6,7 @@ import { autoUpdate, offset, useFloating } from "@floating-ui/react";
 import { CircleIcon, DotsThreeCircleVerticalIcon } from "@phosphor-icons/react";
 import { cellAround, CellSelection, TableMap } from "@tiptap/pm/tables";
 import { type Editor } from "@tiptap/react";
-import { useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 import { cellDomElement } from "../_lib/cellDomElement";
 import { DRAG_THRESHOLD } from "../_lib/constants";
@@ -41,6 +41,13 @@ export function TableCellMenuTrigger({
     bottomRow: number;
     tableStart: number;
   } | null>(null);
+  const dragCleanupRef = useRef<(() => void) | null>(null);
+
+  useEffect(() => {
+    return () => {
+      dragCleanupRef.current?.();
+    };
+  }, []);
 
   const {
     refs: handleRefs,
@@ -196,6 +203,7 @@ export function TableCellMenuTrigger({
     const onMouseUp = () => {
       document.removeEventListener("mousemove", onMouseMove);
       document.removeEventListener("mouseup", onMouseUp);
+      dragCleanupRef.current = null;
 
       if (!draggingRef.current) {
         setMenuOpen(prev => !prev);
@@ -208,6 +216,10 @@ export function TableCellMenuTrigger({
 
     document.addEventListener("mousemove", onMouseMove);
     document.addEventListener("mouseup", onMouseUp);
+    dragCleanupRef.current = () => {
+      document.removeEventListener("mousemove", onMouseMove);
+      document.removeEventListener("mouseup", onMouseUp);
+    };
   };
 
   return (
