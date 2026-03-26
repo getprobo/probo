@@ -1,4 +1,4 @@
-import { fileSize, fileType, formatDate, sprintf } from "@probo/helpers";
+import { fileSize, formatDate, sprintf } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
 import {
@@ -79,7 +79,7 @@ export const evidenceFragment = graphql`
       mimeType
       size
     }
-    type
+    description
     createdAt
     canDelete: permission(action: "core:evidence:delete")
   }
@@ -123,8 +123,8 @@ export default function MeasureEvidencesTab() {
       <SortableTable {...pagination}>
         <Thead>
           <Tr>
-            <Th>{__("Evidence name")}</Th>
-            <Th>{__("Type")}</Th>
+            <Th>{__("Description")}</Th>
+            <Th>{__("File type")}</Th>
             <Th>{__("File size")}</Th>
             <Th>{__("Created at")}</Th>
             <Th width={50}></Th>
@@ -248,13 +248,12 @@ function EvidenceRow(props: {
         />
       )}
       <Tr to={evidenceUrl}>
-        <Td>{evidence.file?.fileName}</Td>
         <Td>
-          {fileType(__, {
-            type: evidence.type,
-            mimeType: evidence.file?.mimeType || "",
-          })}
+          <span className="text-txt-secondary text-sm line-clamp-2">
+            {evidence.description || "—"}
+          </span>
         </Td>
+        <Td>{evidence.file?.mimeType || "—"}</Td>
         <Td>{fileSize(__, evidence.file?.size || 0)}</Td>
         <Td>{formatDate(evidence.createdAt)}</Td>
         <Td noLink>

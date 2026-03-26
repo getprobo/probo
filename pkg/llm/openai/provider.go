@@ -16,10 +16,13 @@ package openai
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/openai/openai-go"
@@ -188,6 +191,8 @@ func buildMessages(messages []llm.Message) []openai.ChatCompletionMessageParamUn
 						},
 						),
 					)
+				case llm.FilePart:
+					parts = append(parts, buildFilePart(p))
 				}
 			}
 			out = append(out, openai.UserMessage(parts))
@@ -449,4 +454,24 @@ func mapChunkToEvent(chunk *openai.ChatCompletionChunk) llm.ChatCompletionStream
 	}
 
 	return event
+}
+
+func buildFilePart(p llm.FilePart) openai.ChatCompletionContentPartUnionParam {
+	switch {
+	case strings.HasPrefix(p.MimeType, "image/"):
+		return openai.ImageContentPart(openai.ChatCompletionContentPartImageImageURLParam{
+			URL: fmt.Sprintf("data:%s;base64,%s", p.MimeType, p.Data),
+		})
+	case strings.HasPrefix(p.MimeType, "text/"):
+		decoded, err := base64.StdEncoding.DecodeString(p.Data)
+		if err != nil {
+			return openai.TextContentPart(fmt.Sprintf("[file: %s, type: %s, error decoding content]", p.Filename, p.MimeType))
+		}
+		return openai.TextContentPart(fmt.Sprintf("File: %s\n\n%s", p.Filename, string(decoded)))
+	default:
+		return openai.FileContentPart(openai.ChatCompletionContentPartFileFileParam{
+			FileData: param.NewOpt(fmt.Sprintf("data:%s;base64,%s", p.MimeType, p.Data)),
+			Filename: param.NewOpt(p.Filename),
+		})
+	}
 }

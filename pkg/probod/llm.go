@@ -22,13 +22,14 @@ import (
 	"go.gearno.de/kit/log"
 	"go.opentelemetry.io/otel/trace"
 	"go.probo.inc/probo/pkg/llm"
+	llmanthropic "go.probo.inc/probo/pkg/llm/anthropic"
 	llmopenai "go.probo.inc/probo/pkg/llm/openai"
 )
 
-func buildLLMClient(cfg LLMConfig, l *log.Logger, tp trace.TracerProvider, r prometheus.Registerer) (*llm.Client, error) {
-	provider := cfg.Provider
-	if provider == "" {
-		provider = "openai"
+func buildLLMClient(cfg LLMProviderConfig, l *log.Logger, tp trace.TracerProvider, r prometheus.Registerer) (*llm.Client, error) {
+	providerType := cfg.Type
+	if providerType == "" {
+		providerType = "openai"
 	}
 
 	httpClient := httpclient.DefaultPooledClient(
@@ -37,7 +38,7 @@ func buildLLMClient(cfg LLMConfig, l *log.Logger, tp trace.TracerProvider, r pro
 		httpclient.WithRegisterer(r),
 	)
 
-	switch provider {
+	switch providerType {
 	case "openai":
 		p := llmopenai.NewProvider(
 			cfg.APIKey,
@@ -50,10 +51,19 @@ func buildLLMClient(cfg LLMConfig, l *log.Logger, tp trace.TracerProvider, r pro
 			llm.WithTracerProvider(tp),
 		), nil
 	case "anthropic":
-		return nil, fmt.Errorf("anthropic provider not yet wired; add import and construct here")
+		p := llmanthropic.NewProvider(
+			cfg.APIKey,
+			llmanthropic.WithHTTPClient(httpClient),
+		)
+		return llm.NewClient(
+			p,
+			"anthropic",
+			llm.WithLogger(l),
+			llm.WithTracerProvider(tp),
+		), nil
 	case "bedrock":
 		return nil, fmt.Errorf("bedrock provider not yet wired; requires aws.Config")
 	default:
-		return nil, fmt.Errorf("unsupported LLM provider: %q", provider)
+		return nil, fmt.Errorf("unsupported LLM provider type: %q", providerType)
 	}
 }

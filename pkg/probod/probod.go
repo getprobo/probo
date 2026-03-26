@@ -51,6 +51,7 @@ import (
 	"go.probo.inc/probo/pkg/crypto/keys"
 	"go.probo.inc/probo/pkg/crypto/passwdhash"
 	"go.probo.inc/probo/pkg/esign"
+	"go.probo.inc/probo/pkg/evidencedescriber"
 	"go.probo.inc/probo/pkg/file"
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/html2pdf"
@@ -115,7 +116,7 @@ type (
 		AWS           AWSConfig           `json:"aws"`
 		Notifications NotificationsConfig `json:"notifications"`
 		Connectors    []ConnectorConfig   `json:"connectors"`
-		OpenAI        OpenAIConfig        `json:"openai"`
+		Agents        AgentsConfig        `json:"agents"`
 		ChromeDPAddr  string              `json:"chrome-dp-addr"`
 		CustomDomains CustomDomainsConfig `json:"custom-domains"`
 		SCIMBridge    SCIMBridgeConfig    `json:"scim-bridge"`
@@ -316,9 +317,24 @@ func (impl *Implm) Run(
 		}
 	}
 
-	llmClient, err := buildLLMClient(impl.cfg.OpenAI, l.Named("llm"), tp, r)
+	proboAgentCfg := impl.cfg.Agents.ResolveAgent(impl.cfg.Agents.Probo)
+	proboProviderCfg, ok := impl.cfg.Agents.Providers[proboAgentCfg.Provider]
+	if !ok {
+		return fmt.Errorf("unknown LLM provider %q for probo agent", proboAgentCfg.Provider)
+	}
+	proboLLMClient, err := buildLLMClient(proboProviderCfg, l.Named("llm.probo"), tp, r)
 	if err != nil {
-		return fmt.Errorf("cannot create LLM client: %w", err)
+		return fmt.Errorf("cannot create probo LLM client: %w", err)
+	}
+
+	evidenceDescriberAgentCfg := impl.cfg.Agents.ResolveAgent(impl.cfg.Agents.EvidenceDescriber)
+	evidenceDescriberProviderCfg, ok := impl.cfg.Agents.Providers[evidenceDescriberAgentCfg.Provider]
+	if !ok {
+		return fmt.Errorf("unknown LLM provider %q for evidence-describer agent", evidenceDescriberAgentCfg.Provider)
+	}
+	evidenceDescriberLLMClient, err := buildLLMClient(evidenceDescriberProviderCfg, l.Named("llm.evidence-describer"), tp, r)
+	if err != nil {
+		return fmt.Errorf("cannot create evidence describer LLM client: %w", err)
 	}
 
 	fileManagerService := filemanager.NewService(s3Client)
@@ -454,10 +470,10 @@ func (impl *Implm) Run(
 		impl.cfg.AWS.Bucket,
 		baseURL.String(),
 		impl.cfg.Auth.Cookie.Secret,
-		llmClient,
-		impl.cfg.OpenAI.ModelName,
-		impl.cfg.OpenAI.Temperature,
-		impl.cfg.OpenAI.MaxTokens,
+		proboLLMClient,
+		proboAgentCfg.ModelName,
+		*proboAgentCfg.Temperature,
+		*proboAgentCfg.MaxTokens,
 		html2pdfConverter,
 		acmeService,
 		fileManagerService,
@@ -617,6 +633,29 @@ func (impl *Implm) Run(
 		},
 	)
 
+	evidenceDescriber := evidencedescriber.New(
+		evidenceDescriberLLMClient,
+		evidencedescriber.Config{
+			Model:     evidenceDescriberAgentCfg.ModelName,
+			Temp:      *evidenceDescriberAgentCfg.Temperature,
+			MaxTokens: *evidenceDescriberAgentCfg.MaxTokens,
+		},
+	)
+	evidenceDescriptionWorker := probo.NewEvidenceDescriptionWorker(
+		pgClient,
+		fileManagerService,
+		evidenceDescriber,
+		l.Named("evidence-description-worker"),
+	)
+	evidenceDescriptionWorkerCtx, stopEvidenceDescriptionWorker := context.WithCancel(context.Background())
+	wg.Go(
+		func() {
+			if err := evidenceDescriptionWorker.Run(evidenceDescriptionWorkerCtx); err != nil {
+				cancel(fmt.Errorf("evidence description worker crashed: %w", err))
+			}
+		},
+	)
+
 	trustCenterServerCtx, stopTrustCenterServer := context.WithCancel(context.Background())
 	defer stopTrustCenterServer()
 	wg.Go(
@@ -644,6 +683,7 @@ func (impl *Implm) Run(
 	stopWebhookSender()
 	stopESignService()
 	stopMailingListWorker()
+	stopEvidenceDescriptionWorker()
 	stopExportJobExporter()
 	stopIAMService()
 	stopMailer()

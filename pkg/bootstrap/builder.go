@@ -157,11 +157,35 @@ func (b *Builder) Build() (*probod.FullConfig, error) {
 					CacheTTL:       b.getEnvIntOrDefault("WEBHOOK_CACHE_TTL", 86400),
 				},
 			},
-			OpenAI: probod.OpenAIConfig{
-				APIKey:      b.getEnv("OPENAI_API_KEY"),
-				Temperature: b.getEnvFloatOrDefault("OPENAI_TEMPERATURE", 0.1),
-				ModelName:   b.getEnvOrDefault("OPENAI_MODEL_NAME", "gpt-4o"),
-				MaxTokens:   b.getEnvIntOrDefault("OPENAI_MAX_TOKENS", 4096),
+			Agents: probod.AgentsConfig{
+				Providers: map[string]probod.LLMProviderConfig{
+					"openai": {
+						Type:   "openai",
+						APIKey: b.getEnv("OPENAI_API_KEY"),
+					},
+					"anthropic": {
+						Type:   "anthropic",
+						APIKey: b.getEnv("ANTHROPIC_API_KEY"),
+					},
+				},
+				Default: probod.LLMAgentConfig{
+					Provider:    b.getEnvOrDefault("AGENT_DEFAULT_PROVIDER", "openai"),
+					ModelName:   b.getEnvOrDefault("AGENT_DEFAULT_MODEL_NAME", "gpt-4o"),
+					Temperature: new(b.getEnvFloatOrDefault("AGENT_DEFAULT_TEMPERATURE", 0.1)),
+					MaxTokens:   new(b.getEnvIntOrDefault("AGENT_DEFAULT_MAX_TOKENS", 4096)),
+				},
+				Probo: probod.LLMAgentConfig{
+					Provider:    b.getEnvOrDefault("AGENT_PROBO_PROVIDER", ""),
+					ModelName:   b.getEnvOrDefault("AGENT_PROBO_MODEL_NAME", ""),
+					Temperature: b.getEnvFloatPtr("AGENT_PROBO_TEMPERATURE"),
+					MaxTokens:   b.getEnvIntPtr("AGENT_PROBO_MAX_TOKENS"),
+				},
+				EvidenceDescriber: probod.LLMAgentConfig{
+					Provider:    b.getEnvOrDefault("AGENT_EVIDENCE_DESCRIBER_PROVIDER", ""),
+					ModelName:   b.getEnvOrDefault("AGENT_EVIDENCE_DESCRIBER_MODEL_NAME", ""),
+					Temperature: b.getEnvFloatPtr("AGENT_EVIDENCE_DESCRIBER_TEMPERATURE"),
+					MaxTokens:   b.getEnvIntPtr("AGENT_EVIDENCE_DESCRIBER_MAX_TOKENS"),
+				},
 			},
 			CustomDomains: probod.CustomDomainsConfig{
 				RenewalInterval:   b.getEnvIntOrDefault("CUSTOM_DOMAINS_RENEWAL_INTERVAL", 3600),
@@ -300,6 +324,25 @@ func (b *Builder) getEnvFloatOrDefault(key string, defaultValue float64) float64
 		}
 	}
 	return defaultValue
+}
+
+func (b *Builder) getEnvFloatPtr(key string) *float64 {
+	if value := b.getEnv(key); value != "" {
+		if floatValue, err := strconv.ParseFloat(value, 64); err == nil {
+			return &floatValue
+		}
+	}
+	return nil
+}
+
+func (b *Builder) getEnvIntPtr(key string) *int {
+	if value := b.getEnv(key); value != "" {
+		if intValue, err := strconv.ParseInt(value, 10, 32); err == nil {
+			v := int(intValue)
+			return &v
+		}
+	}
+	return nil
 }
 
 func (b *Builder) getEnvBoolOrDefault(key string, defaultValue bool) bool {

@@ -16,11 +16,13 @@ package anthropic
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/anthropics/anthropic-sdk-go"
@@ -185,6 +187,8 @@ func buildMessages(messages []llm.Message) []anthropic.MessageParam {
 							},
 						),
 					)
+				case llm.FilePart:
+					blocks = append(blocks, buildFilePart(p))
 				}
 			}
 			out = append(out, anthropic.NewUserMessage(blocks...))
@@ -458,5 +462,26 @@ func (s *anthropicStream) mapStreamEvent(event *anthropic.MessageStreamEventUnio
 
 	default:
 		return llm.ChatCompletionStreamEvent{}, false
+	}
+}
+
+func buildFilePart(p llm.FilePart) anthropic.ContentBlockParamUnion {
+	switch {
+	case strings.HasPrefix(p.MimeType, "image/"):
+		return anthropic.NewImageBlockBase64(p.MimeType, p.Data)
+	case p.MimeType == "application/pdf":
+		return anthropic.NewDocumentBlock(anthropic.Base64PDFSourceParam{
+			Data: p.Data,
+		})
+	case strings.HasPrefix(p.MimeType, "text/"):
+		decoded, err := base64.StdEncoding.DecodeString(p.Data)
+		if err != nil {
+			return anthropic.NewTextBlock(fmt.Sprintf("[file: %s, type: %s, error decoding content]", p.Filename, p.MimeType))
+		}
+		return anthropic.NewDocumentBlock(anthropic.PlainTextSourceParam{
+			Data: string(decoded),
+		})
+	default:
+		return anthropic.NewTextBlock(fmt.Sprintf("[file: %s, type: %s, unsupported format]", p.Filename, p.MimeType))
 	}
 }

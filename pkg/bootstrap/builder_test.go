@@ -161,10 +161,20 @@ func TestBuilder_Build_Defaults(t *testing.T) {
 	assert.Equal(t, 5, cfg.Probod.Notifications.Webhook.SenderInterval)
 	assert.Equal(t, 86400, cfg.Probod.Notifications.Webhook.CacheTTL)
 
-	// OpenAI config
-	assert.Equal(t, 0.1, cfg.Probod.OpenAI.Temperature)
-	assert.Equal(t, "gpt-4o", cfg.Probod.OpenAI.ModelName)
-	assert.Equal(t, 4096, cfg.Probod.OpenAI.MaxTokens)
+	// Agents config — default
+	assert.Equal(t, "openai", cfg.Probod.Agents.Default.Provider)
+	assert.Equal(t, "gpt-4o", cfg.Probod.Agents.Default.ModelName)
+	assert.Equal(t, new(0.1), cfg.Probod.Agents.Default.Temperature)
+	assert.Equal(t, new(4096), cfg.Probod.Agents.Default.MaxTokens)
+	// Agents config — per-agent overrides are empty (inherit from default)
+	assert.Empty(t, cfg.Probod.Agents.Probo.Provider)
+	assert.Empty(t, cfg.Probod.Agents.Probo.ModelName)
+	assert.Nil(t, cfg.Probod.Agents.Probo.Temperature)
+	assert.Nil(t, cfg.Probod.Agents.Probo.MaxTokens)
+	assert.Empty(t, cfg.Probod.Agents.EvidenceDescriber.Provider)
+	assert.Empty(t, cfg.Probod.Agents.EvidenceDescriber.ModelName)
+	assert.Nil(t, cfg.Probod.Agents.EvidenceDescriber.Temperature)
+	assert.Nil(t, cfg.Probod.Agents.EvidenceDescriber.MaxTokens)
 
 	// Custom domains config
 	assert.Equal(t, 3600, cfg.Probod.CustomDomains.RenewalInterval)
@@ -231,11 +241,19 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	env["WEBHOOK_SENDER_INTERVAL"] = "10"
 	env["WEBHOOK_CACHE_TTL"] = "3600"
 	env["CONNECTOR_SLACK_SIGNING_SECRET"] = "slack-signing-secret"
-	// OpenAI
+	// Agents — providers
 	env["OPENAI_API_KEY"] = "sk-test-key"
-	env["OPENAI_TEMPERATURE"] = "0.5"
-	env["OPENAI_MODEL_NAME"] = "gpt-4-turbo"
-	env["OPENAI_MAX_TOKENS"] = "8192"
+	env["ANTHROPIC_API_KEY"] = "sk-ant-test-key"
+	// Agents — default
+	env["AGENT_DEFAULT_PROVIDER"] = "openai"
+	env["AGENT_DEFAULT_MODEL_NAME"] = "gpt-4-turbo"
+	env["AGENT_DEFAULT_TEMPERATURE"] = "0.5"
+	env["AGENT_DEFAULT_MAX_TOKENS"] = "8192"
+	// Agents — evidence-describer override
+	env["AGENT_EVIDENCE_DESCRIBER_PROVIDER"] = "anthropic"
+	env["AGENT_EVIDENCE_DESCRIBER_MODEL_NAME"] = "claude-sonnet-4-20250514"
+	env["AGENT_EVIDENCE_DESCRIBER_TEMPERATURE"] = "0.2"
+	env["AGENT_EVIDENCE_DESCRIBER_MAX_TOKENS"] = "4096"
 	// Custom domains
 	env["CUSTOM_DOMAINS_RESOLVER_ADDR"] = "1.1.1.1:53"
 	env["ACME_ACCOUNT_KEY"] = "-----BEGIN EC PRIVATE KEY-----\ntest\n-----END EC PRIVATE KEY-----"
@@ -295,11 +313,24 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	assert.Equal(t, "slack-signing-secret", cfg.Probod.Notifications.Slack.SigningSecret)
 	assert.Equal(t, 10, cfg.Probod.Notifications.Webhook.SenderInterval)
 	assert.Equal(t, 3600, cfg.Probod.Notifications.Webhook.CacheTTL)
-	// OpenAI
-	assert.Equal(t, "sk-test-key", cfg.Probod.OpenAI.APIKey)
-	assert.Equal(t, 0.5, cfg.Probod.OpenAI.Temperature)
-	assert.Equal(t, "gpt-4-turbo", cfg.Probod.OpenAI.ModelName)
-	assert.Equal(t, 8192, cfg.Probod.OpenAI.MaxTokens)
+	// Agents — providers
+	assert.Equal(t, "openai", cfg.Probod.Agents.Providers["openai"].Type)
+	assert.Equal(t, "sk-test-key", cfg.Probod.Agents.Providers["openai"].APIKey)
+	assert.Equal(t, "anthropic", cfg.Probod.Agents.Providers["anthropic"].Type)
+	assert.Equal(t, "sk-ant-test-key", cfg.Probod.Agents.Providers["anthropic"].APIKey)
+	// Agents — default
+	assert.Equal(t, "openai", cfg.Probod.Agents.Default.Provider)
+	assert.Equal(t, "gpt-4-turbo", cfg.Probod.Agents.Default.ModelName)
+	assert.Equal(t, new(0.5), cfg.Probod.Agents.Default.Temperature)
+	assert.Equal(t, new(8192), cfg.Probod.Agents.Default.MaxTokens)
+	// Agents — probo inherits default (no overrides set)
+	assert.Empty(t, cfg.Probod.Agents.Probo.Provider)
+	assert.Empty(t, cfg.Probod.Agents.Probo.ModelName)
+	// Agents — evidence-describer overrides
+	assert.Equal(t, "anthropic", cfg.Probod.Agents.EvidenceDescriber.Provider)
+	assert.Equal(t, "claude-sonnet-4-20250514", cfg.Probod.Agents.EvidenceDescriber.ModelName)
+	assert.Equal(t, new(0.2), cfg.Probod.Agents.EvidenceDescriber.Temperature)
+	assert.Equal(t, new(4096), cfg.Probod.Agents.EvidenceDescriber.MaxTokens)
 	// Custom domains
 	assert.Equal(t, "1.1.1.1:53", cfg.Probod.CustomDomains.ResolverAddr)
 	assert.Equal(t, "-----BEGIN EC PRIVATE KEY-----\ntest\n-----END EC PRIVATE KEY-----", cfg.Probod.CustomDomains.ACME.AccountKey)

@@ -125,39 +125,48 @@ function EvidencePreviewContent({
     );
   }
 
+  let preview;
+
   if (evidence.file.mimeType?.startsWith("image/")) {
-    return (
+    preview = (
       <img
         src={evidence.file.downloadUrl}
         alt={evidence.file.fileName}
         className="max-h-[70vh] object-contain"
       />
     );
-  }
-
-  if (evidence.file.mimeType?.includes("pdf")) {
-    return (
+  } else if (evidence.file.mimeType?.includes("pdf")) {
+    preview = (
       <iframe
         src={evidence.file.downloadUrl}
         className="w-full h-[70vh]"
         title={evidence.file.fileName}
       />
     );
+  } else {
+    preview = (
+      <div className="flex flex-col items-center gap-2 justify-center">
+        <IconWarning size={20} />
+        <p className="text-txt-secondary text-center">
+          {__("Preview not available for this file type")
+            + " "
+            + evidence.file.mimeType}
+        </p>
+        <Button asChild variant="secondary" icon={IconArrowInbox}>
+          <a href={evidence.file.downloadUrl} target="_blank" rel="noreferrer">
+            {__("Download File")}
+          </a>
+        </Button>
+      </div>
+    );
   }
 
   return (
-    <div className="flex flex-col items-center gap-2 justify-center">
-      <IconWarning size={20} />
-      <p className="text-txt-secondary text-center">
-        {__("Preview not available for this file type")
-          + " "
-          + evidence.file.mimeType}
-      </p>
-      <Button asChild variant="secondary" icon={IconArrowInbox}>
-        <a href={evidence.file.downloadUrl} target="_blank" rel="noreferrer">
-          {__("Download File")}
-        </a>
-      </Button>
+    <div className="space-y-4">
+      {preview}
+      {evidence.description && (
+        <p className="text-txt-secondary text-sm">{evidence.description}</p>
+      )}
     </div>
   );
 }

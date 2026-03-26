@@ -7,6 +7,7 @@ export const evidenceFileQuery = graphql`
     node(id: $evidenceId) {
       ... on Evidence {
         id
+        description
         file {
             mimeType
             fileName

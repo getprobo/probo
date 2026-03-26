@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,28 +12,25 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package llm
+package evidence
 
-type (
-	Part interface {
-		part()
-	}
-
-	TextPart struct {
-		Text string
-	}
-
-	ImagePart struct {
-		URL string
-	}
-
-	FilePart struct {
-		Data     string // base64-encoded content
-		MimeType string // e.g. "application/pdf", "text/csv", "image/png"
-		Filename string
-	}
+import (
+	"github.com/spf13/cobra"
+	"go.probo.inc/probo/pkg/cmd/cmdutil"
+	"go.probo.inc/probo/pkg/cmd/evidence/delete"
+	"go.probo.inc/probo/pkg/cmd/evidence/list"
+	"go.probo.inc/probo/pkg/cmd/evidence/view"
 )
 
-func (TextPart) part()  {}
-func (ImagePart) part() {}
-func (FilePart) part()  {}
+func NewCmdEvidence(f *cmdutil.Factory) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "evidence <command>",
+		Short: "Manage evidences",
+	}
+
+	cmd.AddCommand(list.NewCmdList(f))
+	cmd.AddCommand(view.NewCmdView(f))
+	cmd.AddCommand(delete.NewCmdDelete(f))
+
+	return cmd
+}
