@@ -225,6 +225,11 @@ func (r *mutationResolver) VerifyMagicLink(ctx context.Context, input types.Veri
 
 	email, err := r.iam.AuthService.GetMagicLinkEmail(ctx, input.Token)
 	if err != nil {
+		var errExpiredToken *iam.ErrExpiredToken
+		if errors.As(err, &errExpiredToken) {
+			return nil, gqlutils.Invalid(ctx, err)
+		}
+
 		var errInvalidToken *iam.ErrInvalidToken
 		if errors.As(err, &errInvalidToken) {
 			return nil, gqlutils.Invalid(ctx, err)
@@ -241,6 +246,11 @@ func (r *mutationResolver) VerifyMagicLink(ctx context.Context, input types.Veri
 		var err error
 		identity, session, continueURL, err = r.iam.AuthService.OpenSessionWithMagicLink(ctx, input.Token)
 		if err != nil {
+			var errExpiredToken *iam.ErrExpiredToken
+			if errors.As(err, &errExpiredToken) {
+				return nil, gqlutils.Invalid(ctx, err)
+			}
+
 			var errInvalidToken *iam.ErrInvalidToken
 			if errors.As(err, &errInvalidToken) {
 				return nil, gqlutils.Invalid(ctx, err)
@@ -258,6 +268,11 @@ func (r *mutationResolver) VerifyMagicLink(ctx context.Context, input types.Veri
 		var err error
 		identity, session, continueURL, err = r.iam.AuthService.OpenSessionWithMagicLink(ctx, input.Token)
 		if err != nil {
+			var errExpiredToken *iam.ErrExpiredToken
+			if errors.As(err, &errExpiredToken) {
+				return nil, gqlutils.Invalid(ctx, err)
+			}
+
 			var errInvalidToken *iam.ErrInvalidToken
 			if errors.As(err, &errInvalidToken) {
 				return nil, gqlutils.Invalid(ctx, err)

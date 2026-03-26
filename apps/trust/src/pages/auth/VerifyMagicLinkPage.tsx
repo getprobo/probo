@@ -46,9 +46,16 @@ export default function VerifyMagicLinkPagePageMutation() {
               return;
             }
           }
+
+          const hasExpiredToken = errors.some(
+            (err) => err.message === "token has expired",
+          );
+
           toast({
             title: __("Error"),
-            description: formatError(__("Failed to connect"), errors),
+            description: hasExpiredToken
+              ? __("This magic link has expired. Please request a new one.")
+              : formatError(__("Failed to connect"), errors),
             variant: "error",
           });
           return;
