@@ -48,7 +48,7 @@ export default function VerifyMagicLinkPagePageMutation() {
           }
 
           const hasExpiredToken = errors.some(
-            (err) => err.message === "token has expired",
+            err => err.message === "token has expired",
           );
 
           toast({
