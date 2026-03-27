@@ -2,7 +2,7 @@
 // Use of this source code is governed by the ISC license
 // that can be found in the LICENSE file.
 
-import { CodeBlockIcon, ListBulletsIcon, ListNumbersIcon, QuotesIcon, TextHOneIcon, TextHThreeIcon, TextHTwoIcon, TextTIcon } from "@phosphor-icons/react";
+import { CodeBlockIcon, ListBulletsIcon, ListNumbersIcon, QuotesIcon, TextHFourIcon, TextHOneIcon, TextHThreeIcon, TextHTwoIcon, TextTIcon } from "@phosphor-icons/react";
 import { TextSelection } from "@tiptap/pm/state";
 import { type Editor } from "@tiptap/react";
 
@@ -157,6 +157,13 @@ export function OptionsMenuContent({
       >
         <TextHThreeIcon size={16} weight="bold" />
         Heading 3
+      </MenuButton>
+      <MenuButton
+        active={hoveredBlock != null && isBlockNodeType(editor, hoveredBlock, "heading", { level: 4 })}
+        onClick={() => handleAction(chain => chain.toggleHeading({ level: 4 }))}
+      >
+        <TextHFourIcon size={16} weight="bold" />
+        Heading 4
       </MenuButton>
       <MenuButton
         active={hoveredBlock != null && isBlockNodeType(editor, hoveredBlock, "bulletList")}

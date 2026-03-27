@@ -37,9 +37,7 @@ const extensions = [
   Document,
   Paragraph,
   Text,
-  Heading.configure({
-    levels: [1, 2, 3],
-  }),
+  Heading,
   Bold,
   Italic,
   Strike,

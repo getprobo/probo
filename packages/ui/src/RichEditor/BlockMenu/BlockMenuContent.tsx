@@ -10,7 +10,7 @@ import {
   useFloating,
 } from "@floating-ui/react";
 import type { Icon } from "@phosphor-icons/react";
-import { CodeBlockIcon, GridFourIcon, ListBulletsIcon, ListNumbersIcon, MinusIcon, QuotesIcon, TextHOneIcon, TextHThreeIcon, TextHTwoIcon, TextTIcon } from "@phosphor-icons/react";
+import { CodeBlockIcon, GridFourIcon, ListBulletsIcon, ListNumbersIcon, MinusIcon, QuotesIcon, TextHFourIcon, TextHOneIcon, TextHThreeIcon, TextHTwoIcon, TextTIcon } from "@phosphor-icons/react";
 import { type Editor } from "@tiptap/react";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
@@ -35,6 +35,7 @@ const BLOCK_ITEMS: BlockItem[] = [
   { label: "Heading 1", icon: TextHOneIcon, action: chain => chain.toggleHeading({ level: 1 }) },
   { label: "Heading 2", icon: TextHTwoIcon, action: chain => chain.toggleHeading({ level: 2 }) },
   { label: "Heading 3", icon: TextHThreeIcon, action: chain => chain.toggleHeading({ level: 3 }) },
+  { label: "Heading 4", icon: TextHFourIcon, action: chain => chain.toggleHeading({ level: 4 }) },
   { label: "Bullet List", icon: ListBulletsIcon, action: chain => chain.toggleBulletList() },
   { label: "Ordered List", icon: ListNumbersIcon, action: chain => chain.toggleOrderedList() },
   { label: "Code Block", icon: CodeBlockIcon, action: chain => chain.toggleCodeBlock() },
