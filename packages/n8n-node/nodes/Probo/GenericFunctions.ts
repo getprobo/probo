@@ -23,16 +23,11 @@ async function proboGraphqlRequest(
 ): Promise<IDataObject> {
 	const credentials = await this.getCredentials('proboApi');
 
-	if (!credentials?.apiKey) {
-		throw new NodeApiError(this.getNode(), { message: 'API Key is required' } as JsonObject);
-	}
-
 	const options: IHttpRequestOptions = {
 		method: 'POST',
 		baseURL: `${credentials.server}`,
 		url: apiPath,
 		headers: {
-			Authorization: `Bearer ${credentials.apiKey}`,
 			'Content-Type': 'application/json',
 			'User-Agent': `probo-n8n-node/${version}`,
 		},
@@ -44,7 +39,11 @@ async function proboGraphqlRequest(
 	};
 
 	try {
-		const response = await this.helpers.httpRequest(options);
+		const response = await this.helpers.httpRequestWithAuthentication.call(
+			this,
+			'proboApi',
+			options,
+		);
 
 		if (response.errors && Array.isArray(response.errors) && response.errors.length > 0) {
 			const errorMessages = response.errors.map((err: IDataObject) =>
@@ -180,10 +179,6 @@ export async function proboApiMultipartRequest(
 ): Promise<IDataObject> {
 	const credentials = await this.getCredentials('proboApi');
 
-	if (!credentials?.apiKey) {
-		throw new NodeApiError(this.getNode(), { message: 'API Key is required' } as JsonObject);
-	}
-
 	const boundary = `----n8nFormBoundary${Date.now().toString(16)}`;
 
 	const safeFileName = fileName
@@ -218,7 +213,6 @@ export async function proboApiMultipartRequest(
 		baseURL: `${credentials.server}`,
 		url: '/api/console/v1/graphql',
 		headers: {
-			Authorization: `Bearer ${credentials.apiKey}`,
 			'Content-Type': `multipart/form-data; boundary=${boundary}`,
 			'User-Agent': `probo-n8n-node/${version}`,
 		},
@@ -226,7 +220,11 @@ export async function proboApiMultipartRequest(
 	};
 
 	try {
-		const response = await this.helpers.httpRequest(options);
+		const response = await this.helpers.httpRequestWithAuthentication.call(
+			this,
+			'proboApi',
+			options,
+		);
 
 		if (response.errors && Array.isArray(response.errors) && response.errors.length > 0) {
 			const errorMessages = response.errors.map((err: IDataObject) =>
