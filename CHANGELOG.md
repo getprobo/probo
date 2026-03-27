@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+### Added
+
+- Add document approval workflow
+- Add task priority
+
+### Fixed
+
+- Fix duplicate organization name returning internal error
+- Distinguish expired magic links from invalid tokens
+
 ## [0.153.2] - 2026-03-26
 
 ### Fixed
