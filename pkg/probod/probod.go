@@ -107,20 +107,22 @@ type (
 
 	// Config represents the probod application configuration.
 	Config struct {
-		BaseURL       string              `json:"base-url"`
-		EncryptionKey string              `json:"encryption-key"`
-		Pg            PgConfig            `json:"pg"`
-		Api           APIConfig           `json:"api"`
-		Auth          AuthConfig          `json:"auth"`
-		TrustCenter   TrustCenterConfig   `json:"trust-center"`
-		AWS           AWSConfig           `json:"aws"`
-		Notifications NotificationsConfig `json:"notifications"`
-		Connectors    []ConnectorConfig   `json:"connectors"`
-		Agents        AgentsConfig        `json:"agents"`
-		ChromeDPAddr  string              `json:"chrome-dp-addr"`
-		CustomDomains CustomDomainsConfig `json:"custom-domains"`
-		SCIMBridge    SCIMBridgeConfig    `json:"scim-bridge"`
-		ESign         ESignConfig         `json:"esign"`
+		BaseURL           string                  `json:"base-url"`
+		EncryptionKey     string                  `json:"encryption-key"`
+		Pg                PgConfig                `json:"pg"`
+		Api               APIConfig               `json:"api"`
+		Auth              AuthConfig              `json:"auth"`
+		TrustCenter       TrustCenterConfig       `json:"trust-center"`
+		AWS               AWSConfig               `json:"aws"`
+		Notifications     NotificationsConfig     `json:"notifications"`
+		Connectors        []ConnectorConfig       `json:"connectors"`
+		LLM               LLMSettings             `json:"llm"`
+		ProboAgent        LLMConfig               `json:"probo-agent"`
+		EvidenceDescriber EvidenceDescriberConfig `json:"evidence-describer"`
+		ChromeDPAddr      string                  `json:"chrome-dp-addr"`
+		CustomDomains     CustomDomainsConfig     `json:"custom-domains"`
+		SCIMBridge        SCIMBridgeConfig        `json:"scim-bridge"`
+		ESign             ESignConfig             `json:"esign"`
 	}
 
 	// TrustCenterConfig contains trust center server configuration.
@@ -215,6 +217,11 @@ func New() *Implm {
 			},
 			ESign: ESignConfig{
 				TSAURL: "http://timestamp.digicert.com",
+			},
+			EvidenceDescriber: EvidenceDescriberConfig{
+				Interval:       10,
+				StaleAfter:     300,
+				MaxConcurrency: 10,
 			},
 		},
 	}
@@ -317,8 +324,8 @@ func (impl *Implm) Run(
 		}
 	}
 
-	proboAgentCfg := impl.cfg.Agents.ResolveAgent(impl.cfg.Agents.Probo)
-	proboProviderCfg, ok := impl.cfg.Agents.Providers[proboAgentCfg.Provider]
+	proboAgentCfg := impl.cfg.LLM.ResolveLLMConfig(impl.cfg.ProboAgent)
+	proboProviderCfg, ok := impl.cfg.LLM.Providers[proboAgentCfg.Provider]
 	if !ok {
 		return fmt.Errorf("unknown LLM provider %q for probo agent", proboAgentCfg.Provider)
 	}
@@ -327,12 +334,12 @@ func (impl *Implm) Run(
 		return fmt.Errorf("cannot create probo LLM client: %w", err)
 	}
 
-	evidenceDescriberAgentCfg := impl.cfg.Agents.ResolveAgent(impl.cfg.Agents.EvidenceDescriber)
-	evidenceDescriberProviderCfg, ok := impl.cfg.Agents.Providers[evidenceDescriberAgentCfg.Provider]
+	edLLMCfg := impl.cfg.LLM.ResolveLLMConfig(impl.cfg.EvidenceDescriber.LLMConfig())
+	edProviderCfg, ok := impl.cfg.LLM.Providers[edLLMCfg.Provider]
 	if !ok {
-		return fmt.Errorf("unknown LLM provider %q for evidence-describer agent", evidenceDescriberAgentCfg.Provider)
+		return fmt.Errorf("unknown LLM provider %q for evidence-describer agent", edLLMCfg.Provider)
 	}
-	evidenceDescriberLLMClient, err := buildLLMClient(evidenceDescriberProviderCfg, l.Named("llm.evidence-describer"), tp, r)
+	evidenceDescriberLLMClient, err := buildLLMClient(edProviderCfg, l.Named("llm.evidence-describer"), tp, r)
 	if err != nil {
 		return fmt.Errorf("cannot create evidence describer LLM client: %w", err)
 	}
@@ -636,9 +643,9 @@ func (impl *Implm) Run(
 	evidenceDescriber := evidencedescriber.New(
 		evidenceDescriberLLMClient,
 		evidencedescriber.Config{
-			Model:     evidenceDescriberAgentCfg.ModelName,
-			Temp:      *evidenceDescriberAgentCfg.Temperature,
-			MaxTokens: *evidenceDescriberAgentCfg.MaxTokens,
+			Model:     edLLMCfg.ModelName,
+			Temp:      *edLLMCfg.Temperature,
+			MaxTokens: *edLLMCfg.MaxTokens,
 		},
 	)
 	evidenceDescriptionWorker := probo.NewEvidenceDescriptionWorker(
@@ -646,6 +653,9 @@ func (impl *Implm) Run(
 		fileManagerService,
 		evidenceDescriber,
 		l.Named("evidence-description-worker"),
+		probo.WithEvidenceDescriptionWorkerInterval(time.Duration(impl.cfg.EvidenceDescriber.Interval)*time.Second),
+		probo.WithEvidenceDescriptionWorkerStaleAfter(time.Duration(impl.cfg.EvidenceDescriber.StaleAfter)*time.Second),
+		probo.WithEvidenceDescriptionWorkerMaxConcurrency(impl.cfg.EvidenceDescriber.MaxConcurrency),
 	)
 	evidenceDescriptionWorkerCtx, stopEvidenceDescriptionWorker := context.WithCancel(context.Background())
 	wg.Go(

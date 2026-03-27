@@ -85,11 +85,21 @@ probod:
     slack:
       sender-interval: 60
 
-  openai:
-    api-key: "thisisnotasecret"
-    temperature: 0.1
-    model-name: "gpt-4o"
-    max-tokens: 4096
+  llm:
+    providers:
+      openai:
+        type: openai
+        api-key: "thisisnotasecret"
+    defaults:
+      provider: openai
+      model-name: gpt-4o
+      temperature: 0.1
+      max-tokens: 4096
+
+  evidence-describer:
+    interval: 10
+    stale-after: 300
+    max-concurrency: 10
 
   custom-domains:
     renewal-interval: 3600
