@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,6 +10,7 @@
         @page {
             size: A4;
             margin: 2.5cm;
+
             @bottom-right {
                 content: "Page " counter(page) " of " counter(pages);
                 font-family: Arial, sans-serif;
@@ -32,14 +34,15 @@
             width: 21cm;
             margin: 0 auto;
             background: white;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
 
         /* Individual page sections */
         .page-section {
             padding: 2.5cm;
             position: relative;
-            min-height: 24.7cm; /* A4 height minus padding */
+            min-height: 24.7cm;
+            /* A4 height minus padding */
             border-bottom: 2px dashed #ddd;
             page-break-after: always;
         }
@@ -75,7 +78,7 @@
             text-align: left;
         }
 
-        .company-header + .document-title {
+        .company-header+.document-title {
             margin-top: 30px;
         }
 
@@ -248,16 +251,23 @@
         }
 
         /* Prevent bad page breaks */
-        h1, h2, h3, h4, h5, h6 {
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6 {
             page-break-after: avoid;
             page-break-inside: avoid;
         }
 
-        p, li {
+        p,
+        li {
             page-break-inside: avoid;
         }
 
-        table, .signatures-section {
+        table,
+        .signatures-section {
             page-break-inside: avoid;
         }
 
@@ -367,6 +377,7 @@
         });
     </script>
 </head>
+
 <body>
     <div class="document-container">
         <div class="page-section">
@@ -394,9 +405,9 @@
                                 {{index .Approvers 0}}
                                 {{- else}}
                                 <ul style="margin: 0; padding-left: 18px;">
-                                {{- range .Approvers}}
+                                    {{- range .Approvers}}
                                     <li>{{.}}</li>
-                                {{- end}}
+                                    {{- end}}
                                 </ul>
                                 {{- end}}
                             </td>
@@ -417,7 +428,7 @@
             </div>
 
             <div class="document-content">
-                {{.Content | formatContent}}
+                {{.BodyHTML}}
             </div>
 
             {{- if .Signatures}}
@@ -460,4 +471,5 @@
         </div>
     </div>
 </body>
+
 </html>
