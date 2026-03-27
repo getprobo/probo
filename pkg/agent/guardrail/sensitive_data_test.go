@@ -82,12 +82,12 @@ func TestSensitiveDataGuardrail_Check(t *testing.T) {
 		{"pem certificate", "-----BEGIN CERTIFICATE-----\nMIIE...", true},
 
 		// Connection strings
-		{"postgres uri", "Connect to postgres://user:pass@host/db", true},     // trufflehog:ignore
-		{"postgresql uri", "Connect to postgresql://user:pass@host/db", true}, // trufflehog:ignore
-		{"mongodb uri", "Use mongodb://user:pass@host/db", true},              // trufflehog:ignore
+		{"postgres uri", "Connect to postgres://user:pass@host/db", true},
+		{"postgresql uri", "Connect to postgresql://user:pass@host/db", true},
+		{"mongodb uri", "Use mongodb://user:pass@host/db", true},
 		{"mysql uri", "Use mysql://user:pass@host/db", true},
 		{"redis uri", "Cache at redis://localhost:6379", true},
-		{"amqp uri", "Queue at amqp://guest:guest@host/vhost", true}, // trufflehog:ignore
+		{"amqp uri", "Queue at amqp://guest:guest@host/vhost", true},
 
 		// Generic secret field names
 		{"encryption_key", "The encryption_key is set in config", true},
