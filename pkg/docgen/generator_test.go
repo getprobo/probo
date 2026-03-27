@@ -38,7 +38,7 @@ func TestRenderHTML(t *testing.T) {
 			name: "basic document with all fields",
 			data: DocumentData{
 				Title:          "Test Document",
-				Content:        "# Main Title\n\nThis is **bold** text with *italic* formatting.",
+				Content:        `{"type":"doc","content":[{"type":"heading","attrs":{"level":1},"content":[{"type":"text","text":"Main Title"}]},{"type":"paragraph","content":[{"type":"text","text":"This is "},{"type":"text","marks":[{"type":"bold"}],"text":"bold"},{"type":"text","text":" text with "},{"type":"text","marks":[{"type":"italic"}],"text":"italic"},{"type":"text","text":" formatting."}]}]}`,
 				Version:        1,
 				Classification: ClassificationPublic,
 				Approvers:      []string{"John Doe"},
@@ -87,20 +87,32 @@ func TestRenderHTML(t *testing.T) {
 			},
 		},
 		{
-			name: "document with markdown content",
+			name: "document with prosemirror content",
 			data: DocumentData{
-				Title:   "Markdown Test",
-				Content: "## Section 1\n\n- Item 1\n- Item 2\n\n**Bold text** and *italic text*\n\n```code block```",
+				Title: "ProseMirror Test",
+				Content: `{"type":"doc","content":[` +
+					`{"type":"heading","attrs":{"level":2},"content":[{"type":"text","text":"Section 1"}]},` +
+					`{"type":"bulletList","content":[` +
+					`{"type":"listItem","content":[{"type":"paragraph","content":[{"type":"text","text":"Item 1"}]}]},` +
+					`{"type":"listItem","content":[{"type":"paragraph","content":[{"type":"text","text":"Item 2"}]}]}` +
+					`]},` +
+					`{"type":"paragraph","content":[` +
+					`{"type":"text","marks":[{"type":"bold"}],"text":"Bold text"},` +
+					`{"type":"text","text":" and "},` +
+					`{"type":"text","marks":[{"type":"italic"}],"text":"italic text"}` +
+					`]},` +
+					`{"type":"codeBlock","content":[{"type":"text","text":"code block"}]}` +
+					`]}`,
 			},
 			wantContains: []string{
 				"<h2>Section 1</h2>",
 				"<ul>",
-				"<li>Item 1</li>",
-				"<li>Item 2</li>",
+				"<li><p>Item 1</p></li>",
+				"<li><p>Item 2</p></li>",
 				"</ul>",
 				"<strong>Bold text</strong>",
 				"<em>italic text</em>",
-				"<code>code block</code>",
+				"<pre><code>code block</code></pre>",
 			},
 		},
 		{
@@ -176,10 +188,9 @@ func TestRenderHTML(t *testing.T) {
 }
 
 func TestRenderHTML_ErrorHandling(t *testing.T) {
-	// Test with data that should not cause errors
 	data := DocumentData{
 		Title:   "Valid Document",
-		Content: "Valid content",
+		Content: `{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Valid content"}]}]}`,
 	}
 
 	result, err := RenderHTML(data)
@@ -214,20 +225,21 @@ func TestTemplateFunctions(t *testing.T) {
 		assert.Equal(t, "CONFIDENTIAL", classFunc(ClassificationConfidential))
 	})
 
-	t.Run("formatContent function", func(t *testing.T) {
-		formatFunc := templateFuncs["formatContent"].(func(string) template.HTML)
-
-		// Test markdown conversion
-		result := formatFunc("**bold** text")
+	t.Run("ProseMirrorJSONToHTML", func(t *testing.T) {
+		result := ProseMirrorJSONToHTML(
+			`{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"plain "},{"type":"text","marks":[{"type":"bold"}],"text":"bold"}]}]}`,
+		)
 		assert.Contains(t, string(result), "<strong>bold</strong>")
 
-		// Test basic text
-		result = formatFunc("simple text")
+		result = ProseMirrorJSONToHTML(
+			`{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"simple text"}]}]}`,
+		)
 		assert.Contains(t, string(result), "<p>simple text</p>")
 
-		// Test empty content - goldmark produces empty output for empty input
-		result = formatFunc("")
-		// Empty content should produce empty result from goldmark
+		result = ProseMirrorJSONToHTML("**not** json")
+		assert.Contains(t, string(result), "<p>**not** json</p>")
+
+		result = ProseMirrorJSONToHTML("")
 		assert.Equal(t, template.HTML(""), result)
 	})
 }
@@ -276,44 +288,62 @@ func TestHTMLEscaping(t *testing.T) {
 	assert.Contains(t, resultStr, "&#39;")
 }
 
-func TestMarkdownRendering(t *testing.T) {
+func TestProseMirrorContentRendering(t *testing.T) {
 	tests := []struct {
-		name     string
-		markdown string
-		want     []string
+		name    string
+		content string
+		want    []string
 	}{
 		{
-			name:     "headers",
-			markdown: "# H1\n## H2\n### H3",
-			want:     []string{"<h1>H1</h1>", "<h2>H2</h2>", "<h3>H3</h3>"},
+			name: "headers",
+			content: `{"type":"doc","content":[` +
+				`{"type":"heading","attrs":{"level":1},"content":[{"type":"text","text":"H1"}]},` +
+				`{"type":"heading","attrs":{"level":2},"content":[{"type":"text","text":"H2"}]},` +
+				`{"type":"heading","attrs":{"level":3},"content":[{"type":"text","text":"H3"}]}` +
+				`]}`,
+			want: []string{"<h1>H1</h1>", "<h2>H2</h2>", "<h3>H3</h3>"},
 		},
 		{
-			name:     "emphasis",
-			markdown: "**bold** and *italic*",
-			want:     []string{"<strong>bold</strong>", "<em>italic</em>"},
+			name: "emphasis",
+			content: `{"type":"doc","content":[{"type":"paragraph","content":[` +
+				`{"type":"text","marks":[{"type":"bold"}],"text":"bold"},` +
+				`{"type":"text","text":" and "},` +
+				`{"type":"text","marks":[{"type":"italic"}],"text":"italic"}` +
+				`]}]}`,
+			want: []string{"<strong>bold</strong>", "<em>italic</em>"},
 		},
 		{
-			name:     "lists",
-			markdown: "- Item 1\n- Item 2",
-			want:     []string{"<ul>", "<li>Item 1</li>", "<li>Item 2</li>", "</ul>"},
+			name: "lists",
+			content: `{"type":"doc","content":[{"type":"bulletList","content":[` +
+				`{"type":"listItem","content":[{"type":"paragraph","content":[{"type":"text","text":"Item 1"}]}]},` +
+				`{"type":"listItem","content":[{"type":"paragraph","content":[{"type":"text","text":"Item 2"}]}]}` +
+				`]}]}`,
+			want: []string{"<ul>", "<li><p>Item 1</p></li>", "<li><p>Item 2</p></li>", "</ul>"},
 		},
 		{
-			name:     "paragraphs",
-			markdown: "Paragraph 1\n\nParagraph 2",
-			want:     []string{"<p>Paragraph 1</p>", "<p>Paragraph 2</p>"},
+			name: "paragraphs",
+			content: `{"type":"doc","content":[` +
+				`{"type":"paragraph","content":[{"type":"text","text":"Paragraph 1"}]},` +
+				`{"type":"paragraph","content":[{"type":"text","text":"Paragraph 2"}]}` +
+				`]}`,
+			want: []string{"<p>Paragraph 1</p>", "<p>Paragraph 2</p>"},
 		},
 		{
-			name:     "code",
-			markdown: "`inline code` and\n```\ncode block\n```",
-			want:     []string{"<code>inline code</code>", "<pre><code>code block"},
+			name: "code",
+			content: `{"type":"doc","content":[` +
+				`{"type":"paragraph","content":[{"type":"text","marks":[{"type":"code"}],"text":"inline code"}]},` +
+				`{"type":"paragraph","content":[{"type":"text","text":" and "}]},` +
+				`{"type":"codeBlock","content":[{"type":"text","text":"code block"}]}` +
+				`]}`,
+			want: []string{"<code>inline code</code>", "<pre><code>code block</code></pre>"},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			data := DocumentData{
-				Title:   "Markdown Test",
-				Content: tt.markdown,
+				Title:   "ProseMirror Test",
+				Content: tt.content,
 			}
 
 			result, err := RenderHTML(data)
@@ -357,14 +387,29 @@ func TestDocumentVersionSignatureStates(t *testing.T) {
 }
 
 func TestLargeContent(t *testing.T) {
-	// Create a large markdown content
 	var largeContent strings.Builder
+	largeContent.WriteString(`{"type":"doc","content":[`)
 	for i := range 1000 {
-		largeContent.WriteString("# Section ")
-		largeContent.WriteString(string(rune('A' + i%26)))
-		largeContent.WriteString("\n\nThis is a paragraph with **bold** and *italic* text.\n\n")
-		largeContent.WriteString("- List item 1\n- List item 2\n- List item 3\n\n")
+		if i > 0 {
+			largeContent.WriteByte(',')
+		}
+		largeContent.WriteString(`{"type":"heading","attrs":{"level":1},"content":[{"type":"text","text":"Section `)
+		largeContent.WriteByte(byte('A' + i%26))
+		largeContent.WriteString(`"}]},`)
+		largeContent.WriteString(`{"type":"paragraph","content":[` +
+			`{"type":"text","text":"This is a paragraph with "},` +
+			`{"type":"text","marks":[{"type":"bold"}],"text":"bold"},` +
+			`{"type":"text","text":" and "},` +
+			`{"type":"text","marks":[{"type":"italic"}],"text":"italic"},` +
+			`{"type":"text","text":" text."}` +
+			`]},`)
+		largeContent.WriteString(`{"type":"bulletList","content":[` +
+			`{"type":"listItem","content":[{"type":"paragraph","content":[{"type":"text","text":"List item 1"}]}]},` +
+			`{"type":"listItem","content":[{"type":"paragraph","content":[{"type":"text","text":"List item 2"}]}]},` +
+			`{"type":"listItem","content":[{"type":"paragraph","content":[{"type":"text","text":"List item 3"}]}]}` +
+			`]}`)
 	}
+	largeContent.WriteString(`]}`)
 
 	data := DocumentData{
 		Title:   "Large Document",
@@ -381,8 +426,21 @@ func BenchmarkGenerateHTML(b *testing.B) {
 	now := time.Now()
 
 	data := DocumentData{
-		Title:          "Benchmark Document",
-		Content:        "# Title\n\nThis is **bold** text with *italic* formatting.\n\n- Item 1\n- Item 2",
+		Title: "Benchmark Document",
+		Content: `{"type":"doc","content":[` +
+			`{"type":"heading","attrs":{"level":1},"content":[{"type":"text","text":"Title"}]},` +
+			`{"type":"paragraph","content":[` +
+			`{"type":"text","text":"This is "},` +
+			`{"type":"text","marks":[{"type":"bold"}],"text":"bold"},` +
+			`{"type":"text","text":" text with "},` +
+			`{"type":"text","marks":[{"type":"italic"}],"text":"italic"},` +
+			`{"type":"text","text":" formatting."}` +
+			`]},` +
+			`{"type":"bulletList","content":[` +
+			`{"type":"listItem","content":[{"type":"paragraph","content":[{"type":"text","text":"Item 1"}]}]},` +
+			`{"type":"listItem","content":[{"type":"paragraph","content":[{"type":"text","text":"Item 2"}]}]}` +
+			`]}` +
+			`]}`,
 		Version:        1,
 		Classification: ClassificationPublic,
 		Approvers:      []string{"John Doe"},

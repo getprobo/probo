@@ -110,6 +110,16 @@ const (
 	MarkLink      MarkType = "link"
 )
 
+// Parse unmarshals a ProseMirror/Tiptap JSON document string into a Node tree.
+// Nested content and marks are unmarshaled into Go structs recursively.
+func Parse(s string) (Node, error) {
+	var n Node
+	if err := json.Unmarshal([]byte(s), &n); err != nil {
+		return Node{}, fmt.Errorf("cannot parse prosemirror node: %w", err)
+	}
+	return n, nil
+}
+
 // HeadingAttrs parses and returns the heading attributes from a heading node.
 func (n Node) HeadingAttrs() (HeadingAttrs, error) {
 	var a HeadingAttrs
@@ -121,6 +131,9 @@ func (n Node) HeadingAttrs() (HeadingAttrs, error) {
 
 // CodeBlockAttrs parses and returns the code block attributes.
 func (n Node) CodeBlockAttrs() (CodeBlockAttrs, error) {
+	if len(n.Attrs) == 0 {
+		return CodeBlockAttrs{}, nil
+	}
 	var a CodeBlockAttrs
 	if err := json.Unmarshal(n.Attrs, &a); err != nil {
 		return a, fmt.Errorf("cannot parse code block attrs: %w", err)

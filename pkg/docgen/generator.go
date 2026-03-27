@@ -23,11 +23,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/yuin/goldmark"
-	"github.com/yuin/goldmark/extension"
-	gmhtml "github.com/yuin/goldmark/renderer/html"
-	"go.abhg.dev/goldmark/mermaid"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/prosemirror"
 )
 
 var (
@@ -79,26 +76,6 @@ var (
 				return "Yes"
 			}
 			return "No"
-		},
-		"formatContent": func(content string) template.HTML {
-			md := goldmark.New(
-				goldmark.WithExtensions(
-					extension.Table,
-					&mermaid.Extender{
-						RenderMode: mermaid.RenderModeClient,
-						NoScript:   true,
-					},
-				),
-				goldmark.WithRendererOptions(
-					gmhtml.WithUnsafe(),
-				),
-			)
-
-			var buf bytes.Buffer
-			if err := md.Convert([]byte(content), &buf); err != nil {
-				return template.HTML(fmt.Sprintf("<p>%s</p>", html.EscapeString(content)))
-			}
-			return template.HTML(buf.String())
 		},
 		"imgTag": func(src, alt, class string) template.HTML {
 			return template.HTML(fmt.Sprintf(`<img src="%s" alt="%s" class="%s">`, html.EscapeString(src), html.EscapeString(alt), html.EscapeString(class)))
@@ -217,7 +194,7 @@ type (
 
 	DocumentData struct {
 		Title                       string
-		Content                     string
+		Content                     string // ProseMirror/Tiptap document JSON; use ProseMirrorJSONToHTML for HTML
 		Version                     int
 		Classification              Classification
 		Approvers                   []string
@@ -339,11 +316,37 @@ const (
 	ClassificationSecret       Classification = "SECRET"
 )
 
+// ProseMirrorJSONToHTML converts ProseMirror/Tiptap document JSON to an HTML fragment.
+// On parse or render failure it returns a single escaped paragraph with the raw input.
+func ProseMirrorJSONToHTML(content string) template.HTML {
+	s := strings.TrimSpace(content)
+	if s == "" {
+		return template.HTML("")
+	}
+	node, err := prosemirror.Parse(s)
+	if err != nil {
+		return template.HTML(fmt.Sprintf("<p>%s</p>", html.EscapeString(s)))
+	}
+	htmlStr, err := prosemirror.RenderHTML(node)
+	if err != nil {
+		return template.HTML(fmt.Sprintf("<p>%s</p>", html.EscapeString(s)))
+	}
+	return template.HTML(htmlStr)
+}
+
 func RenderHTML(data DocumentData) ([]byte, error) {
 	data.MermaidJS = template.JS(mermaidJSSource)
 
+	page := struct {
+		DocumentData
+		BodyHTML template.HTML
+	}{
+		DocumentData: data,
+		BodyHTML:     ProseMirrorJSONToHTML(data.Content),
+	}
+
 	var buf bytes.Buffer
-	if err := documentTemplate.Execute(&buf, data); err != nil {
+	if err := documentTemplate.Execute(&buf, page); err != nil {
 		return nil, fmt.Errorf("cannot execute template: %w", err)
 	}
 
