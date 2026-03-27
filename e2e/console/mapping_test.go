@@ -370,7 +370,6 @@ func TestControlDocumentMapping_CreateDelete(t *testing.T) {
 	controlID := createControlResult.CreateControl.ControlEdge.Node.ID
 
 	// Create a document
-	profileID := factory.CreateUser(owner)
 	var createDocumentResult struct {
 		CreateDocument struct {
 			DocumentEdge struct {
@@ -395,7 +394,6 @@ func TestControlDocumentMapping_CreateDelete(t *testing.T) {
 			"organizationId": owner.GetOrganizationID().String(),
 			"title":          "Document for Control Mapping",
 			"content":        "Document content",
-			"approverIds":    []string{profileID},
 			"documentType":   "POLICY",
 			"classification": "INTERNAL",
 		},
@@ -760,7 +758,6 @@ func TestRiskDocumentMapping_CreateDelete(t *testing.T) {
 	riskID := createRiskResult.CreateRisk.RiskEdge.Node.ID
 
 	// Create a document
-	profileID := factory.CreateUser(owner)
 	var createDocumentResult struct {
 		CreateDocument struct {
 			DocumentEdge struct {
@@ -785,7 +782,6 @@ func TestRiskDocumentMapping_CreateDelete(t *testing.T) {
 			"organizationId": owner.GetOrganizationID().String(),
 			"title":          "Document for Risk Mapping",
 			"content":        "Document content",
-			"approverIds":    []string{profileID},
 			"documentType":   "POLICY",
 			"classification": "INTERNAL",
 		},

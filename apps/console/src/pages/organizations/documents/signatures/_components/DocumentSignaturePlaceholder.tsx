@@ -1,5 +1,5 @@
 import { useTranslate } from "@probo/i18n";
-import { Avatar, Button } from "@probo/ui";
+import { Button } from "@probo/ui";
 import { useFragment } from "react-relay";
 import { type DataID, graphql } from "relay-runtime";
 
@@ -77,7 +77,6 @@ export function DocumentSignaturePlaceholder(props: {
 
   return (
     <div className="flex gap-3 items-center py-3">
-      <Avatar size="l" name={person.fullName} />
       <div className="space-y-1">
         <div className="text-sm text-txt-primary font-medium">
           {person.fullName}

@@ -87,6 +87,7 @@ type (
 		Organizations                     *OrganizationService
 		Vendors                           *VendorService
 		Documents                         *DocumentService
+		DocumentApprovals                 *DocumentApprovalService
 		Controls                          *ControlService
 		Risks                             *RiskService
 		VendorComplianceReports           *VendorComplianceReportService
@@ -207,6 +208,12 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 	}
 	tenantService.Vendors = &VendorService{svc: tenantService}
 	tenantService.Documents = &DocumentService{
+		svc:                     tenantService,
+		html2pdfConverter:       s.html2pdfConverter,
+		invitationTokenValidity: s.invitationTokenValidity,
+		tokenSecret:             s.tokenSecret,
+	}
+	tenantService.DocumentApprovals = &DocumentApprovalService{
 		svc:                     tenantService,
 		html2pdfConverter:       s.html2pdfConverter,
 		invitationTokenValidity: s.invitationTokenValidity,

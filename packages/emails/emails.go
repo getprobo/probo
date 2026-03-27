@@ -212,6 +212,7 @@ const (
 	subjectConfirmEmail                      = "Confirm your email address"
 	subjectPasswordReset                     = "Reset your password"
 	subjectInvitation                        = "Invitation to join %s on Probo"
+	subjectDocumentApproval                  = "Action Required – Please review and approve %s"
 	subjectDocumentSigning                   = "Action Required – Please review and sign %s compliance documents"
 	subjectDocumentExport                    = "Your document export is ready"
 	subjectFrameworkExport                   = "Your framework export is ready"
@@ -231,6 +232,8 @@ var (
 	passwordResetTextTemplate                     = texttemplate.Must(texttemplate.ParseFS(Templates, "dist/password-reset.txt.tmpl"))
 	invitationHTMLTemplate                        = htmltemplate.Must(htmltemplate.ParseFS(Templates, "dist/invitation.html.tmpl"))
 	invitationTextTemplate                        = texttemplate.Must(texttemplate.ParseFS(Templates, "dist/invitation.txt.tmpl"))
+	documentApprovalHTMLTemplate                  = htmltemplate.Must(htmltemplate.ParseFS(Templates, "dist/document-approval.html.tmpl"))
+	documentApprovalTextTemplate                  = texttemplate.Must(texttemplate.ParseFS(Templates, "dist/document-approval.txt.tmpl"))
 	documentSigningHTMLTemplate                   = htmltemplate.Must(htmltemplate.ParseFS(Templates, "dist/document-signing.html.tmpl"))
 	documentSigningTextTemplate                   = texttemplate.Must(texttemplate.ParseFS(Templates, "dist/document-signing.txt.tmpl"))
 	documentExportHTMLTemplate                    = htmltemplate.Must(htmltemplate.ParseFS(Templates, "dist/document-export.html.tmpl"))
@@ -346,6 +349,39 @@ func (p *Presenter) RenderInvitation(ctx context.Context, invitationURLPath stri
 
 	textBody, htmlBody, err = renderEmail(invitationTextTemplate, invitationHTMLTemplate, data)
 	return fmt.Sprintf(subjectInvitation, organizationName), textBody, htmlBody, err
+}
+
+func (p *Presenter) RenderDocumentApproval(
+	ctx context.Context,
+	approvalURLPath string,
+	approvalURLQuery url.Values,
+	organizationName string,
+	documentName string,
+) (subject string, textBody string, htmlBody *string, err error) {
+	vars, err := p.getCommonVariables(ctx)
+	if err != nil {
+		return "", "", nil, fmt.Errorf("cannot get common variables: %w", err)
+	}
+
+	approvalURL := baseurl.MustParse(vars.BaseURL).
+		AppendPath(approvalURLPath).
+		WithQueryValues(approvalURLQuery).
+		MustString()
+
+	data := struct {
+		*CommonVariables
+		ApprovalUrl      string
+		OrganizationName string
+		DocumentName     string
+	}{
+		CommonVariables:  vars,
+		ApprovalUrl:      approvalURL,
+		OrganizationName: organizationName,
+		DocumentName:     documentName,
+	}
+
+	textBody, htmlBody, err = renderEmail(documentApprovalTextTemplate, documentApprovalHTMLTemplate, data)
+	return fmt.Sprintf(subjectDocumentApproval, documentName), textBody, htmlBody, err
 }
 
 func (p *Presenter) RenderDocumentSigning(
@@ -478,7 +514,7 @@ func (p *Presenter) RenderMagicLink(ctx context.Context, magicLinkUrlPath string
 	return fmt.Sprintf(subjectMagicLink, organizationName), textBody, htmlBody, err
 }
 
-func (p *Presenter) RenderElectronicSignatureCertificate(ctx context.Context, signerName string, documentType string) (subject string, textBody string, htmlBody *string, err error) {
+func (p *Presenter) RenderElectronicSignatureCertificate(ctx context.Context, signerName string, documentName string) (subject string, textBody string, htmlBody *string, err error) {
 	vars, err := p.getCommonVariables(ctx)
 	if err != nil {
 		return "", "", nil, fmt.Errorf("cannot get common variables: %w", err)
@@ -487,15 +523,15 @@ func (p *Presenter) RenderElectronicSignatureCertificate(ctx context.Context, si
 	data := struct {
 		*CommonVariables
 		SignerName   string
-		DocumentType string
+		DocumentName string
 	}{
 		CommonVariables: vars,
 		SignerName:      signerName,
-		DocumentType:    documentType,
+		DocumentName:    documentName,
 	}
 
 	textBody, htmlBody, err = renderEmail(electronicSignatureCertificateTextTemplate, electronicSignatureCertificateHTMLTemplate, data)
-	return fmt.Sprintf(subjectElectronicSignatureCertificate, documentType), textBody, htmlBody, err
+	return fmt.Sprintf(subjectElectronicSignatureCertificate, documentName), textBody, htmlBody, err
 }
 
 func (p *Presenter) RenderMailingListSubscription(ctx context.Context, organizationName string, confirmURL string, unsubscribeURL string) (subject string, textBody string, htmlBody *string, err error) {

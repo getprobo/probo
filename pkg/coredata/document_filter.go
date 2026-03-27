@@ -16,6 +16,7 @@ package coredata
 
 import (
 	"github.com/jackc/pgx/v5"
+	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/mail"
 )
 
@@ -25,6 +26,7 @@ type (
 		trustCenterVisibilities []TrustCenterVisibility
 		published               *bool
 		userEmail               *mail.Addr
+		approverIdentityID      *gid.GID
 		documentTypes           []DocumentType
 		status                  []DocumentStatus
 	}
@@ -55,6 +57,11 @@ func (f *DocumentFilter) WithPublished(published *bool) *DocumentFilter {
 
 func (f *DocumentFilter) WithUserEmail(userEmail *mail.Addr) *DocumentFilter {
 	f.userEmail = userEmail
+	return f
+}
+
+func (f *DocumentFilter) WithApproverIdentityID(identityID *gid.GID) *DocumentFilter {
+	f.approverIdentityID = identityID
 	return f
 }
 
@@ -98,6 +105,7 @@ func (f *DocumentFilter) SQLArguments() pgx.NamedArgs {
 		"trust_center_visibilities": visibilities,
 		"published":                 f.published,
 		"user_email":                f.userEmail,
+		"approver_identity_id":      f.approverIdentityID,
 		"document_types":            documentTypes,
 		"document_status":           status,
 	}
@@ -139,6 +147,19 @@ func (f *DocumentFilter) SQLFragment() string {
 				AND dv.status = 'PUBLISHED'
 				AND i.email_address = @user_email::CITEXT
 				AND dvs.state IN ('REQUESTED', 'SIGNED')
+		)
+	END
+	AND
+	CASE
+		WHEN @approver_identity_id::text IS NULL THEN TRUE
+		ELSE EXISTS (
+			SELECT 1
+			FROM document_versions dv
+			INNER JOIN document_version_approval_quorums dvaq ON dvaq.version_id = dv.id
+			INNER JOIN document_version_approval_decisions dvad ON dvad.quorum_id = dvaq.id
+			INNER JOIN iam_membership_profiles p ON dvad.approver_id = p.id
+			WHERE dv.document_id = documents.id
+				AND p.identity_id = @approver_identity_id::text
 		)
 	END
 	AND

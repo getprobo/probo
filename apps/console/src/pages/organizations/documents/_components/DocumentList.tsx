@@ -1,7 +1,7 @@
 import { documentTypes, getDocumentTypeLabel, sprintf } from "@probo/helpers";
 import { useList } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
-import { Button, Card, Checkbox, IconArchive, IconArrowDown, IconCheckmark1, IconCrossLargeX, IconSignature, IconTrashCan, Option, Select, Tbody, Th, Thead, Tr, useConfirm } from "@probo/ui";
+import { Button, Card, Checkbox, IconArchive, IconArrowDown, IconCrossLargeX, IconSignature, IconTrashCan, IconUpload, Option, Select, Tbody, Th, Thead, Tr, useConfirm } from "@probo/ui";
 import { type ComponentProps, use, useEffect, useRef, useState, useTransition } from "react";
 import { usePaginationFragment } from "react-relay";
 import { ConnectionHandler, graphql } from "relay-runtime";
@@ -295,7 +295,7 @@ export function DocumentList(props: {
                               onChange={() => reset(documents.map(d => d.id))}
                             />
                           </Th>
-                          <SortableTh field="TITLE" className="min-w-0" onOrderChange={handleOrderChange}>
+                          <SortableTh field="TITLE" className="min-w-0 pr-12" onOrderChange={handleOrderChange}>
                             {__("Name")}
                           </SortableTh>
                           <Th className="w-24">{__("Status")}</Th>
@@ -306,13 +306,14 @@ export function DocumentList(props: {
                           <Th className="w-32">{__("Classification")}</Th>
                           <Th className="w-60">{__("Approvers")}</Th>
                           <Th className="w-60">{__("Last update")}</Th>
+                          <Th className="w-20">{__("Approvals")}</Th>
                           <Th className="w-20">{__("Signatures")}</Th>
                           {hasAnyAction && <Th className="w-18"></Th>}
                         </Tr>
                       )
                     : (
                         <Tr>
-                          <Th colspan={10} compact>
+                          <Th colspan={hasAnyAction ? 11 : 10} compact>
                             <div className="flex justify-between items-center h-8">
                               <div className="flex gap-2 items-center">
                                 {sprintf(__("%s documents selected"), selection.length)}
@@ -357,7 +358,10 @@ export function DocumentList(props: {
                                       <>
                                         {canUpdateAny && (
                                           <PublishDocumentsDialog documentIds={selection} onSave={clear}>
-                                            <Button icon={IconCheckmark1} className="py-0.5 px-2 text-xs h-6 min-h-6">
+                                            <Button
+                                              icon={IconUpload}
+                                              className="py-0.5 px-2 text-xs h-6 min-h-6"
+                                            >
                                               {__("Publish")}
                                             </Button>
                                           </PublishDocumentsDialog>

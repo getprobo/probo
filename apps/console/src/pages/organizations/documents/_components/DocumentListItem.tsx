@@ -17,20 +17,32 @@ const fragment = graphql`
     classification
     updatedAt
     canDelete: permission(action: "core:document:delete")
-    approvers(first: 100) {
-      edges {
-        node {
-          id
-          fullName
-        }
-      }
-    }
-    lastVersion: versions(first: 1 orderBy: { field: CREATED_AT direction: DESC }) {
+    recentVersions: versions(first: 2 orderBy: { field: CREATED_AT direction: DESC }) {
       edges {
         node {
           id
           status
           version
+          approvalQuorums(first: 1, orderBy: { field: CREATED_AT, direction: DESC }) {
+            edges {
+              node {
+                status
+                decisions(first: 20) {
+                  totalCount
+                  edges {
+                    node {
+                      approver {
+                        fullName
+                      }
+                    }
+                  }
+                }
+                approvedDecisions: decisions(first: 0 filter: { states: [APPROVED] }) {
+                  totalCount
+                }
+              }
+            }
+          }
           signatures(first: 0 filter: { activeContract: true }) {
             totalCount
           }
@@ -74,10 +86,21 @@ export function DocumentListItem(props: {
     fragment,
     fragmentRef,
   );
-  const lastVersion = document.lastVersion.edges[0].node;
+  const lastVersion = document.recentVersions.edges[0].node;
+  const approverQuorum = lastVersion.approvalQuorums?.edges?.[0]?.node
+    ?? document.recentVersions.edges[1]?.node.approvalQuorums?.edges?.[0]?.node;
 
-  const isDraft = lastVersion.status === "DRAFT";
   const { __ } = useTranslate();
+
+  const statusVariant = {
+    DRAFT: "neutral",
+    PUBLISHED: "success",
+  } as const;
+
+  const statusLabel = {
+    DRAFT: __("Draft"),
+    PUBLISHED: __("Published"),
+  } as const;
 
   const [deleteDocument] = useMutationWithToasts<DocumentListItem_deleteMutation>(
     deleteDocumentMutation,
@@ -119,8 +142,8 @@ export function DocumentListItem(props: {
         <div className="flex gap-4 items-center">{document.title}</div>
       </Td>
       <Td className="w-24">
-        <Badge variant={isDraft ? "neutral" : "success"}>
-          {isDraft ? __("Draft") : __("Published")}
+        <Badge variant={statusVariant[lastVersion.status]}>
+          {statusLabel[lastVersion.status]}
         </Badge>
       </Td>
       <Td className="w-20">
@@ -134,9 +157,24 @@ export function DocumentListItem(props: {
         {getDocumentClassificationLabel(__, document.classification)}
       </Td>
       <Td className="w-60">
-        {document.approvers.edges.map(({ node }) => node.fullName).join(", ")}
+        {(() => {
+          const decisions = approverQuorum?.decisions;
+          if (!decisions?.edges.length) return "—";
+          const names = decisions.edges.map(e => e.node.approver.fullName).join(", ");
+          return decisions.totalCount > 20 ? `${names}...` : names;
+        })()}
       </Td>
       <Td className="w-60">{formatDate(document.updatedAt)}</Td>
+      <Td className="w-20">
+        {(() => {
+          const lastQuorum = lastVersion.approvalQuorums?.edges?.[0]?.node;
+          return lastQuorum
+            ? lastQuorum.status === "REJECTED"
+              ? __("Rejected")
+              : `${lastQuorum.approvedDecisions.totalCount}/${lastQuorum.decisions.totalCount}`
+            : "—";
+        })()}
+      </Td>
       <Td className="w-20">
         {lastVersion.signedSignatures.totalCount}
         /

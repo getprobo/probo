@@ -29,6 +29,11 @@ var (
 		ActionDocumentSendSigningNotifications,
 		ActionDocumentVersionUpdate,
 		ActionDocumentVersionPublish,
+		ActionDocumentVersionRequestApproval,
+		ActionDocumentVersionApprove,
+		ActionDocumentVersionReject,
+		ActionDocumentVersionAddApprover,
+		ActionDocumentVersionRemoveApprover,
 		ActionDocumentVersionDeleteDraft,
 		ActionDocumentVersionSignatureRequest,
 		ActionDocumentVersionCancelSignature,
@@ -42,6 +47,31 @@ var (
 		organizationCondition,
 		policy.Equals("resource.document_status", "ACTIVE"),
 	)
+
+	// Deny requesting approval when a pending quorum exists
+	documentRequestApprovalNoPendingQuorum = policy.Deny(
+		ActionDocumentVersionRequestApproval,
+	).WithSID("document-request-approval-no-pending-quorum").When(
+		organizationCondition,
+		policy.Equals("resource.last_quorum_status", "PENDING"),
+	)
+
+	// Deny requesting approval when the version is already published
+	documentRequestApprovalNotPublished = policy.Deny(
+		ActionDocumentVersionRequestApproval,
+	).WithSID("document-request-approval-not-published").When(
+		organizationCondition,
+		policy.Equals("resource.version_status", "PUBLISHED"),
+	)
+
+	// Deny adding/removing approvers when there is no pending quorum
+	documentApproverRequiresPendingQuorum = policy.Deny(
+		ActionDocumentVersionAddApprover,
+		ActionDocumentVersionRemoveApprover,
+	).WithSID("document-approver-requires-pending-quorum").When(
+		organizationCondition,
+		policy.NotEquals("resource.last_quorum_status", "PENDING"),
+	)
 )
 
 // OwnerPolicy defines permissions for organization owners.
@@ -50,6 +80,11 @@ var OwnerPolicy = policy.NewPolicy(
 	"Probo Owner",
 	documentWriteActiveOnly,
 	documentUnarchiveArchivedOnly,
+
+	documentRequestApprovalNoPendingQuorum,
+	documentRequestApprovalNotPublished,
+
+	documentApproverRequiresPendingQuorum,
 	policy.Allow("core:*").WithSID("full-core-access").When(organizationCondition),
 ).WithDescription("Full probo access for organization owners")
 
@@ -59,6 +94,11 @@ var AdminPolicy = policy.NewPolicy(
 	"Probo Admin",
 	documentWriteActiveOnly,
 	documentUnarchiveArchivedOnly,
+
+	documentRequestApprovalNoPendingQuorum,
+	documentRequestApprovalNotPublished,
+
+	documentApproverRequiresPendingQuorum,
 	policy.Allow("core:*").WithSID("full-core-access").When(organizationCondition),
 ).WithDescription("Probo admin access - can manage core entities")
 
@@ -66,6 +106,7 @@ var AdminPolicy = policy.NewPolicy(
 var ViewerPolicy = policy.NewPolicy(
 	"probo:viewer",
 	"Probo Viewer",
+	documentWriteActiveOnly,
 	policy.Allow(
 		ActionOrganizationGet,
 		ActionOrganizationGetLogoUrl,
@@ -88,6 +129,7 @@ var ViewerPolicy = policy.NewPolicy(
 		ActionDocumentGet, ActionDocumentList,
 		ActionDocumentVersionGet, ActionDocumentVersionList,
 		ActionDocumentVersionSignatureGet, ActionDocumentVersionSignatureList,
+		ActionDocumentVersionApprovalList,
 		ActionRiskGet, ActionRiskList,
 		ActionAssetGet, ActionAssetList,
 		ActionDatumGet, ActionDatumList,
@@ -124,6 +166,10 @@ var ViewerPolicy = policy.NewPolicy(
 	).WithSID("document-signing").When(organizationCondition),
 
 	policy.Allow(
+		ActionDocumentVersionApprove, ActionDocumentVersionReject,
+	).WithSID("document-approval").When(organizationCondition),
+
+	policy.Allow(
 		ActionProcessingActivityExport,
 		ActionDataProtectionImpactAssessmentExport,
 		ActionTransferImpactAssessmentExport,
@@ -155,6 +201,7 @@ var AuditorPolicy = policy.NewPolicy(
 		ActionDocumentGet, ActionDocumentList,
 		ActionDocumentVersionGet, ActionDocumentVersionList,
 		ActionDocumentVersionSignatureGet, ActionDocumentVersionSignatureList,
+		ActionDocumentVersionApprovalList,
 		ActionRiskGet, ActionRiskList,
 		ActionAssetGet, ActionAssetList,
 		ActionDatumGet, ActionDatumList,
@@ -184,6 +231,7 @@ var AuditorPolicy = policy.NewPolicy(
 var EmployeePolicy = policy.NewPolicy(
 	"probo:employee",
 	"Probo Employee",
+	documentWriteActiveOnly,
 	policy.Allow(
 		ActionOrganizationGet,
 		ActionOrganizationGetLogoUrl,
@@ -198,7 +246,14 @@ var EmployeePolicy = policy.NewPolicy(
 		ActionDocumentVersionSign,
 		ActionDocumentVersionExportSignable,
 	).WithSID("document-version-signing").When(organizationCondition),
-).WithDescription("Employee access - can sign documents and view internal content")
+
+	policy.Allow(
+		ActionDocumentVersionApprovalList,
+		ActionDocumentVersionApprove,
+		ActionDocumentVersionReject,
+		ActionDocumentVersionExportPDF,
+	).WithSID("document-version-approval").When(organizationCondition),
+).WithDescription("Employee access - can sign documents, approve documents, and view internal content")
 
 // ProboPolicySet returns the PolicySet for the probo service.
 func ProboPolicySet() *iam.PolicySet {

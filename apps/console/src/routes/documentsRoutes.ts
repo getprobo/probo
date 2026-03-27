@@ -41,6 +41,14 @@ const documentTabs = (prefix: string) => {
       ),
     },
     {
+      path: `${prefix}approvals`,
+      Fallback: LinkCardSkeleton,
+      Component: lazy(
+        () =>
+          import("#/pages/organizations/documents/approvals/DocumentApprovalsPageLoader"),
+      ),
+    },
+    {
       path: `${prefix}signatures`,
       Fallback: LinkCardSkeleton,
       Component: lazy(
@@ -61,6 +69,9 @@ export const documentsRoutes = [
     path: "documents/:documentId",
     Fallback: PageSkeleton,
     Component: lazy(() => import("#/pages/organizations/documents/DocumentLayoutLoader")),
-    children: [...documentTabs(""), ...documentTabs("versions/:versionId/")],
+    children: [
+      ...documentTabs(""),
+      ...documentTabs("versions/:versionId/"),
+    ],
   },
 ] satisfies AppRoute[];

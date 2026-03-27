@@ -23,10 +23,52 @@ import (
 	"go.probo.inc/probo/e2e/internal/testutil"
 )
 
+// getOwnerProfileID queries the organization profiles and returns the first one (the owner's).
+func getOwnerProfileID(t *testing.T, owner *testutil.Client) string {
+	t.Helper()
+
+	query := `
+		query GetProfiles($orgId: ID!) {
+			node(id: $orgId) {
+				... on Organization {
+					profiles(first: 1) {
+						edges {
+							node {
+								id
+							}
+						}
+					}
+				}
+			}
+		}
+	`
+
+	var result struct {
+		Node struct {
+			Profiles struct {
+				Edges []struct {
+					Node struct {
+						ID string `json:"id"`
+					} `json:"node"`
+				} `json:"edges"`
+			} `json:"profiles"`
+		} `json:"node"`
+	}
+
+	err := owner.Execute(
+		query,
+		map[string]any{"orgId": owner.GetOrganizationID().String()},
+		&result,
+	)
+	require.NoError(t, err)
+	require.NotEmpty(t, result.Node.Profiles.Edges)
+
+	return result.Node.Profiles.Edges[0].Node.ID
+}
+
 // createTestDocument creates a document and returns its ID and the document version ID
 func createTestDocument(t *testing.T, owner *testutil.Client) (docID string, docVersionID string) {
 	t.Helper()
-	profileID := factory.CreateUser(owner)
 
 	query := `
 		mutation CreateDocument($input: CreateDocumentInput!) {
@@ -69,7 +111,6 @@ func createTestDocument(t *testing.T, owner *testutil.Client) (docID string, doc
 			"organizationId": owner.GetOrganizationID().String(),
 			"title":          "Test Document",
 			"content":        "Initial content",
-			"approverIds":    []string{profileID},
 			"documentType":   "POLICY",
 			"classification": "INTERNAL",
 		},
@@ -83,79 +124,143 @@ func createTestDocument(t *testing.T, owner *testutil.Client) (docID string, doc
 	return docID, docVersionID
 }
 
+// approveTestDocument requests approval and approves the document so it can be published.
+func approveTestDocument(t *testing.T, owner *testutil.Client, docID string) {
+	t.Helper()
+
+	requestQuery := `
+		mutation RequestApproval($input: RequestDocumentVersionApprovalInput!) {
+			requestDocumentVersionApproval(input: $input) {
+				approvalQuorum {
+					id
+				}
+			}
+		}
+	`
+
+	// Use the owner's profile as the approver
+	approverID := getOwnerProfileID(t, owner)
+
+	_, err := owner.Do(requestQuery, map[string]any{
+		"input": map[string]any{
+			"documentId":  docID,
+			"approverIds": []string{approverID},
+			"changelog":   "Test changelog",
+		},
+	})
+	require.NoError(t, err)
+
+	// Approve for each approver
+	approveQuery := `
+		mutation ApproveDocumentVersion($input: ApproveDocumentVersionInput!) {
+			approveDocumentVersion(input: $input) {
+				approvalDecision {
+					id
+					state
+				}
+			}
+		}
+	`
+
+	// Get the latest version ID
+	versionQuery := `
+		query GetVersions($id: ID!) {
+			node(id: $id) {
+				... on Document {
+					versions(first: 1, orderBy: { field: CREATED_AT, direction: DESC }) {
+						edges {
+							node {
+								id
+							}
+						}
+					}
+				}
+			}
+		}
+	`
+
+	var versionResult struct {
+		Node struct {
+			Versions struct {
+				Edges []struct {
+					Node struct {
+						ID string `json:"id"`
+					} `json:"node"`
+				} `json:"edges"`
+			} `json:"versions"`
+		} `json:"node"`
+	}
+
+	err = owner.Execute(versionQuery, map[string]any{"id": docID}, &versionResult)
+	require.NoError(t, err)
+	require.NotEmpty(t, versionResult.Node.Versions.Edges)
+
+	versionID := versionResult.Node.Versions.Edges[0].Node.ID
+
+	_, err = owner.Do(approveQuery, map[string]any{
+		"input": map[string]any{
+			"documentVersionId": versionID,
+		},
+	})
+	require.NoError(t, err)
+}
+
 func TestDocumentVersion_PublishVersion(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
 	docID, _ := createTestDocument(t, owner)
+	approveTestDocument(t, owner, docID)
 
+	// After approval, the version is auto-published.
+	// Verify the version status by querying.
 	query := `
-		mutation PublishDocumentVersion($input: PublishDocumentVersionInput!) {
-			publishDocumentVersion(input: $input) {
-				documentVersion {
-					id
-					status
-					version
-					changelog
-				}
-				document {
-					id
+		query GetDocument($id: ID!) {
+			node(id: $id) {
+				... on Document {
+					versions(first: 1, orderBy: { field: CREATED_AT, direction: DESC }) {
+						edges {
+							node {
+								id
+								status
+								version
+							}
+						}
+					}
 				}
 			}
 		}
 	`
 
 	var result struct {
-		PublishDocumentVersion struct {
-			DocumentVersion struct {
-				ID        string `json:"id"`
-				Status    string `json:"status"`
-				Version   int    `json:"version"`
-				Changelog string `json:"changelog"`
-			} `json:"documentVersion"`
-			Document struct {
-				ID string `json:"id"`
-			} `json:"document"`
-		} `json:"publishDocumentVersion"`
+		Node struct {
+			Versions struct {
+				Edges []struct {
+					Node struct {
+						ID      string `json:"id"`
+						Status  string `json:"status"`
+						Version int    `json:"version"`
+					} `json:"node"`
+				} `json:"edges"`
+			} `json:"versions"`
+		} `json:"node"`
 	}
 
-	err := owner.Execute(query, map[string]any{
-		"input": map[string]any{
-			"documentId": docID,
-			"changelog":  "Initial release",
-		},
-	}, &result)
+	err := owner.Execute(query, map[string]any{"id": docID}, &result)
 	require.NoError(t, err)
+	require.NotEmpty(t, result.Node.Versions.Edges)
 
-	assert.Equal(t, "PUBLISHED", result.PublishDocumentVersion.DocumentVersion.Status)
-	assert.Equal(t, 1, result.PublishDocumentVersion.DocumentVersion.Version)
-	assert.Equal(t, "Initial release", result.PublishDocumentVersion.DocumentVersion.Changelog)
+	assert.Equal(t, "PUBLISHED", result.Node.Versions.Edges[0].Node.Status)
+	assert.Equal(t, 1, result.Node.Versions.Edges[0].Node.Version)
 }
 
 func TestDocumentVersion_CreateDraft(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
-	// Create and publish a document first
+	// Create and approve a document (auto-publishes on approval)
 	docID, _ := createTestDocument(t, owner)
-
-	publishQuery := `
-		mutation PublishDocumentVersion($input: PublishDocumentVersionInput!) {
-			publishDocumentVersion(input: $input) {
-				documentVersion {
-					id
-				}
-			}
-		}
-	`
-
-	_, err := owner.Do(publishQuery, map[string]any{
-		"input": map[string]any{
-			"documentId": docID,
-			"changelog":  "Initial release",
-		},
-	})
-	require.NoError(t, err)
+	approveTestDocument(t, owner, docID)
 
 	query := `
 		mutation CreateDraftDocumentVersion($input: CreateDraftDocumentVersionInput!) {
@@ -181,7 +286,7 @@ func TestDocumentVersion_CreateDraft(t *testing.T) {
 		} `json:"createDraftDocumentVersion"`
 	}
 
-	err = owner.Execute(query, map[string]any{
+	err := owner.Execute(query, map[string]any{
 		"input": map[string]any{
 			"documentID": docID,
 		},
@@ -232,36 +337,44 @@ func TestDocumentVersion_RequestSignature(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
-	// Create and publish a document
+	// Create and approve a document (auto-publishes on approval)
 	docID, _ := createTestDocument(t, owner)
+	approveTestDocument(t, owner, docID)
 
-	publishQuery := `
-		mutation PublishDocumentVersion($input: PublishDocumentVersionInput!) {
-			publishDocumentVersion(input: $input) {
-				documentVersion {
-					id
+	// Get the published version ID
+	versionQuery := `
+		query GetVersions($id: ID!) {
+			node(id: $id) {
+				... on Document {
+					versions(first: 1, orderBy: { field: CREATED_AT, direction: DESC }) {
+						edges {
+							node {
+								id
+							}
+						}
+					}
 				}
 			}
 		}
 	`
 
-	var publishResult struct {
-		PublishDocumentVersion struct {
-			DocumentVersion struct {
-				ID string `json:"id"`
-			} `json:"documentVersion"`
-		} `json:"publishDocumentVersion"`
+	var versionResult struct {
+		Node struct {
+			Versions struct {
+				Edges []struct {
+					Node struct {
+						ID string `json:"id"`
+					} `json:"node"`
+				} `json:"edges"`
+			} `json:"versions"`
+		} `json:"node"`
 	}
 
-	err := owner.Execute(publishQuery, map[string]any{
-		"input": map[string]any{
-			"documentId": docID,
-			"changelog":  "Initial release",
-		},
-	}, &publishResult)
+	err := owner.Execute(versionQuery, map[string]any{"id": docID}, &versionResult)
 	require.NoError(t, err)
+	require.NotEmpty(t, versionResult.Node.Versions.Edges)
 
-	publishedVersionID := publishResult.PublishDocumentVersion.DocumentVersion.ID
+	publishedVersionID := versionResult.Node.Versions.Edges[0].Node.ID
 
 	// Create a person to sign
 	signerProfileID := factory.CreateUser(owner)
@@ -318,15 +431,15 @@ func TestDocumentVersion_BulkPublish(t *testing.T) {
 	// Create multiple documents
 	docID1, _ := createTestDocument(t, owner)
 	docID2, _ := createTestDocument(t, owner)
+	approveTestDocument(t, owner, docID1)
+	approveTestDocument(t, owner, docID2)
 
 	query := `
 		mutation BulkPublishDocumentVersions($input: BulkPublishDocumentVersionsInput!) {
 			bulkPublishDocumentVersions(input: $input) {
-				documentVersionEdges {
-					node {
-						id
-						status
-					}
+				documentVersions {
+					id
+					status
 				}
 			}
 		}
@@ -334,12 +447,10 @@ func TestDocumentVersion_BulkPublish(t *testing.T) {
 
 	var result struct {
 		BulkPublishDocumentVersions struct {
-			DocumentVersionEdges []struct {
-				Node struct {
-					ID     string `json:"id"`
-					Status string `json:"status"`
-				} `json:"node"`
-			} `json:"documentVersionEdges"`
+			DocumentVersions []struct {
+				ID     string `json:"id"`
+				Status string `json:"status"`
+			} `json:"documentVersions"`
 		} `json:"bulkPublishDocumentVersions"`
 	}
 
@@ -351,9 +462,9 @@ func TestDocumentVersion_BulkPublish(t *testing.T) {
 	}, &result)
 	require.NoError(t, err)
 
-	assert.Equal(t, 2, len(result.BulkPublishDocumentVersions.DocumentVersionEdges))
-	for _, edge := range result.BulkPublishDocumentVersions.DocumentVersionEdges {
-		assert.Equal(t, "PUBLISHED", edge.Node.Status)
+	assert.Equal(t, 2, len(result.BulkPublishDocumentVersions.DocumentVersions))
+	for _, dv := range result.BulkPublishDocumentVersions.DocumentVersions {
+		assert.Equal(t, "PUBLISHED", dv.Status)
 	}
 }
 
@@ -361,26 +472,9 @@ func TestDocumentVersion_BulkRequestSignatures(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
-	// Create and publish a document
+	// Create and approve a document (auto-publishes on approval)
 	docID, _ := createTestDocument(t, owner)
-
-	publishQuery := `
-		mutation PublishDocumentVersion($input: PublishDocumentVersionInput!) {
-			publishDocumentVersion(input: $input) {
-				documentVersion {
-					id
-				}
-			}
-		}
-	`
-
-	_, err := owner.Do(publishQuery, map[string]any{
-		"input": map[string]any{
-			"documentId": docID,
-			"changelog":  "Initial release",
-		},
-	})
-	require.NoError(t, err)
+	approveTestDocument(t, owner, docID)
 
 	// Create multiple signers
 	signer1ProfileID := factory.CreateUser(owner)
@@ -410,7 +504,7 @@ func TestDocumentVersion_BulkRequestSignatures(t *testing.T) {
 		} `json:"bulkRequestSignatures"`
 	}
 
-	err = owner.Execute(query, map[string]any{
+	err := owner.Execute(query, map[string]any{
 		"input": map[string]any{
 			"documentIds":  []string{docID},
 			"signatoryIds": []string{signer1ProfileID, signer2ProfileID},

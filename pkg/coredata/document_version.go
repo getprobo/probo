@@ -50,18 +50,44 @@ type (
 // AuthorizationAttributes returns the authorization attributes for policy evaluation.
 func (dv *DocumentVersion) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
 	q := `
+WITH document_version AS (
+	SELECT id, document_id, organization_id, status AS version_status
+	FROM document_versions
+	WHERE id = $1
+	LIMIT 1
+),
+document AS (
+	SELECT d.id, d.status
+	FROM documents d
+	INNER JOIN document_version ON d.id = document_version.document_id
+),
+last_quorum AS (
+	SELECT
+		q.version_id,
+		q.status::text AS status
+	FROM document_version_approval_quorums q
+	INNER JOIN document_version ON q.version_id = document_version.id
+	ORDER BY q.created_at DESC
+	LIMIT 1
+)
 SELECT
-	dv.organization_id,
-	d.status
-FROM document_versions dv
-INNER JOIN documents d ON d.id = dv.document_id
-WHERE dv.id = $1
-LIMIT 1;
+	document_version.organization_id,
+	document.status,
+	document_version.version_status,
+	COALESCE(lq.status, '')
+FROM document_version
+INNER JOIN document ON document.id = document_version.document_id
+LEFT JOIN last_quorum lq ON lq.version_id = document_version.id;
 `
 
-	var organizationID gid.GID
-	var documentStatus DocumentStatus
-	if err := conn.QueryRow(ctx, q, dv.ID).Scan(&organizationID, &documentStatus); err != nil {
+	var (
+		organizationID        gid.GID
+		documentStatus        DocumentStatus
+		documentVersionStatus DocumentVersionStatus
+		lastQuorumStatus      string
+	)
+
+	if err := conn.QueryRow(ctx, q, dv.ID).Scan(&organizationID, &documentStatus, &documentVersionStatus, &lastQuorumStatus); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrResourceNotFound
 		}
@@ -69,8 +95,10 @@ LIMIT 1;
 	}
 
 	return map[string]string{
-		"organization_id": organizationID.String(),
-		"document_status": documentStatus.String(),
+		"organization_id":    organizationID.String(),
+		"document_status":    documentStatus.String(),
+		"version_status":     documentVersionStatus.String(),
+		"last_quorum_status": lastQuorumStatus,
 	}, nil
 }
 

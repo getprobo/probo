@@ -5,7 +5,6 @@ import { useFormWithSchema } from "../useFormWithSchema";
 export const documentSchema = z.object({
   title: z.string().min(1, "Title is required"),
   content: z.string().min(1, "Content is required"),
-  approverIds: z.array(z.string()).min(1, "At least one approver is required"),
   documentType: z.enum(["OTHER", "GOVERNANCE", "POLICY", "PROCEDURE", "PLAN", "REGISTER", "RECORD", "REPORT", "TEMPLATE"]),
   classification: z.enum(["PUBLIC", "INTERNAL", "CONFIDENTIAL", "SECRET"]),
 });

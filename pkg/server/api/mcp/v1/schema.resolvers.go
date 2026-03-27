@@ -1685,16 +1685,7 @@ func (r *Resolver) ListControlDocumentsTool(ctx context.Context, req *mcp.CallTo
 		return nil, types.ListControlDocumentsOutput{}, fmt.Errorf("failed to list control documents: %w", err)
 	}
 
-	approverIDsMap := make(map[gid.GID][]gid.GID)
-	for _, d := range docPage.Data {
-		approverPage, err := prb.Documents.ListApprovers(ctx, d.ID, allApproversCursor())
-		if err != nil {
-			return nil, types.ListControlDocumentsOutput{}, fmt.Errorf("failed to list document approvers: %w", err)
-		}
-		approverIDsMap[d.ID] = profileIDs(approverPage)
-	}
-
-	return nil, types.NewListControlDocumentsOutput(docPage, approverIDsMap), nil
+	return nil, types.NewListControlDocumentsOutput(docPage), nil
 }
 
 func (r *Resolver) ListControlAuditsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListControlAuditsInput) (*mcp.CallToolResult, types.ListControlAuditsOutput, error) {
@@ -2059,16 +2050,7 @@ func (r *Resolver) ListDocumentsTool(ctx context.Context, req *mcp.CallToolReque
 		panic(fmt.Errorf("cannot list organization documents: %w", err))
 	}
 
-	approverIDsMap := make(map[gid.GID][]gid.GID)
-	for _, d := range docPage.Data {
-		approverPage, err := prb.Documents.ListApprovers(ctx, d.ID, allApproversCursor())
-		if err != nil {
-			panic(fmt.Errorf("cannot list document approvers: %w", err))
-		}
-		approverIDsMap[d.ID] = profileIDs(approverPage)
-	}
-
-	return nil, types.NewListDocumentsOutput(docPage, approverIDsMap), nil
+	return nil, types.NewListDocumentsOutput(docPage), nil
 }
 
 func (r *Resolver) GetDocumentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetDocumentInput) (*mcp.CallToolResult, types.GetDocumentOutput, error) {
@@ -2081,13 +2063,8 @@ func (r *Resolver) GetDocumentTool(ctx context.Context, req *mcp.CallToolRequest
 		panic(fmt.Errorf("cannot get document: %w", err))
 	}
 
-	approverPage, err := prb.Documents.ListApprovers(ctx, input.ID, allApproversCursor())
-	if err != nil {
-		panic(fmt.Errorf("cannot list document approvers: %w", err))
-	}
-
 	return nil, types.GetDocumentOutput{
-		Document: types.NewDocument(document, profileIDs(approverPage)),
+		Document: types.NewDocument(document),
 	}, nil
 }
 
@@ -2107,7 +2084,6 @@ func (r *Resolver) AddDocumentTool(ctx context.Context, req *mcp.CallToolRequest
 			OrganizationID:        input.OrganizationID,
 			Title:                 input.Title,
 			Content:               input.Content,
-			ApproverIDs:           input.ApproverIds,
 			Classification:        input.Classification,
 			DocumentType:          input.DocumentType,
 			TrustCenterVisibility: trustCenterVisibility,
@@ -2117,7 +2093,7 @@ func (r *Resolver) AddDocumentTool(ctx context.Context, req *mcp.CallToolRequest
 		panic(fmt.Errorf("cannot create document: %w", err))
 	}
 
-	return nil, types.NewAddDocumentOutput(document, documentVersion, input.ApproverIds, input.ApproverIds), nil
+	return nil, types.NewAddDocumentOutput(document, documentVersion), nil
 }
 
 func (r *Resolver) UpdateDocumentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateDocumentInput) (*mcp.CallToolResult, types.UpdateDocumentOutput, error) {
@@ -2130,7 +2106,6 @@ func (r *Resolver) UpdateDocumentTool(ctx context.Context, req *mcp.CallToolRequ
 		probo.UpdateDocumentRequest{
 			DocumentID:            input.ID,
 			Title:                 input.Title,
-			ApproverIDs:           input.ApproverIds,
 			Classification:        input.Classification,
 			DocumentType:          input.DocumentType,
 			TrustCenterVisibility: input.TrustCenterVisibility,
@@ -2140,13 +2115,8 @@ func (r *Resolver) UpdateDocumentTool(ctx context.Context, req *mcp.CallToolRequ
 		panic(fmt.Errorf("cannot update document: %w", err))
 	}
 
-	approverPage, err := svc.Documents.ListApprovers(ctx, input.ID, allApproversCursor())
-	if err != nil {
-		panic(fmt.Errorf("cannot list document approvers: %w", err))
-	}
-
 	return nil, types.UpdateDocumentOutput{
-		Document: types.NewDocument(document, profileIDs(approverPage)),
+		Document: types.NewDocument(document),
 	}, nil
 }
 
@@ -2172,16 +2142,7 @@ func (r *Resolver) ListDocumentVersionsTool(ctx context.Context, req *mcp.CallTo
 		panic(fmt.Errorf("cannot list document versions: %w", err))
 	}
 
-	approverIDsMap := make(map[gid.GID][]gid.GID)
-	for _, v := range versionPage.Data {
-		approverPage, err := svc.Documents.ListVersionApprovers(ctx, v.ID, allApproversCursor())
-		if err != nil {
-			panic(fmt.Errorf("cannot list document version approvers: %w", err))
-		}
-		approverIDsMap[v.ID] = profileIDs(approverPage)
-	}
-
-	return nil, types.NewListDocumentVersionsOutput(versionPage, approverIDsMap), nil
+	return nil, types.NewListDocumentVersionsOutput(versionPage), nil
 }
 
 func (r *Resolver) GetDocumentVersionTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetDocumentVersionInput) (*mcp.CallToolResult, types.GetDocumentVersionOutput, error) {
@@ -2194,13 +2155,8 @@ func (r *Resolver) GetDocumentVersionTool(ctx context.Context, req *mcp.CallTool
 		panic(fmt.Errorf("cannot get document version: %w", err))
 	}
 
-	approverPage, err := svc.Documents.ListVersionApprovers(ctx, input.ID, allApproversCursor())
-	if err != nil {
-		panic(fmt.Errorf("cannot list document version approvers: %w", err))
-	}
-
 	return nil, types.GetDocumentVersionOutput{
-		DocumentVersion: types.NewDocumentVersion(version, profileIDs(approverPage)),
+		DocumentVersion: types.NewDocumentVersion(version),
 	}, nil
 }
 
@@ -2214,13 +2170,8 @@ func (r *Resolver) CreateDraftDocumentVersionTool(ctx context.Context, req *mcp.
 		panic(fmt.Errorf("cannot create draft document version: %w", err))
 	}
 
-	approverPage, err := svc.Documents.ListVersionApprovers(ctx, draftVersion.ID, allApproversCursor())
-	if err != nil {
-		panic(fmt.Errorf("cannot list document version approvers: %w", err))
-	}
-
 	return nil, types.CreateDraftDocumentVersionOutput{
-		DocumentVersion: types.NewDocumentVersion(draftVersion, profileIDs(approverPage)),
+		DocumentVersion: types.NewDocumentVersion(draftVersion),
 	}, nil
 }
 
@@ -2240,13 +2191,8 @@ func (r *Resolver) UpdateDocumentVersionTool(ctx context.Context, req *mcp.CallT
 		panic(fmt.Errorf("cannot update document version: %w", err))
 	}
 
-	versionApproverPage, err := svc.Documents.ListVersionApprovers(ctx, documentVersion.ID, allApproversCursor())
-	if err != nil {
-		panic(fmt.Errorf("cannot list document version approvers: %w", err))
-	}
-
 	return nil, types.UpdateDocumentVersionOutput{
-		DocumentVersion: types.NewDocumentVersion(documentVersion, profileIDs(versionApproverPage)),
+		DocumentVersion: types.NewDocumentVersion(documentVersion),
 	}, nil
 }
 
@@ -2262,19 +2208,9 @@ func (r *Resolver) PublishDocumentVersionTool(ctx context.Context, req *mcp.Call
 		panic(fmt.Errorf("cannot publish document version: %w", err))
 	}
 
-	docApproverPage, err := svc.Documents.ListApprovers(ctx, document.ID, allApproversCursor())
-	if err != nil {
-		panic(fmt.Errorf("cannot list document approvers: %w", err))
-	}
-
-	versionApproverPage, err := svc.Documents.ListVersionApprovers(ctx, documentVersion.ID, allApproversCursor())
-	if err != nil {
-		panic(fmt.Errorf("cannot list document version approvers: %w", err))
-	}
-
 	return nil, types.PublishDocumentVersionOutput{
-		Document:        types.NewDocument(document, profileIDs(docApproverPage)),
-		DocumentVersion: types.NewDocumentVersion(documentVersion, profileIDs(versionApproverPage)),
+		Document:        types.NewDocument(document),
+		DocumentVersion: types.NewDocumentVersion(documentVersion),
 	}, nil
 }
 
@@ -3243,13 +3179,8 @@ func (r *Resolver) ArchiveDocumentTool(ctx context.Context, req *mcp.CallToolReq
 		return nil, types.ArchiveDocumentOutput{}, fmt.Errorf("cannot archive document: %w", err)
 	}
 
-	approverPage, err := svc.Documents.ListApprovers(ctx, input.ID, allApproversCursor())
-	if err != nil {
-		return nil, types.ArchiveDocumentOutput{}, fmt.Errorf("cannot list document approvers: %w", err)
-	}
-
 	return nil, types.ArchiveDocumentOutput{
-		Document: types.NewDocument(document, profileIDs(approverPage)),
+		Document: types.NewDocument(document),
 	}, nil
 }
 
@@ -3263,13 +3194,8 @@ func (r *Resolver) UnarchiveDocumentTool(ctx context.Context, req *mcp.CallToolR
 		return nil, types.UnarchiveDocumentOutput{}, fmt.Errorf("cannot unarchive document: %w", err)
 	}
 
-	approverPage, err := svc.Documents.ListApprovers(ctx, input.ID, allApproversCursor())
-	if err != nil {
-		return nil, types.UnarchiveDocumentOutput{}, fmt.Errorf("cannot list document approvers: %w", err)
-	}
-
 	return nil, types.UnarchiveDocumentOutput{
-		Document: types.NewDocument(document, profileIDs(approverPage)),
+		Document: types.NewDocument(document),
 	}, nil
 }
 
@@ -3372,5 +3298,29 @@ func (r *Resolver) GetAuditLogEntryTool(ctx context.Context, req *mcp.CallToolRe
 
 	return nil, types.GetAuditLogEntryOutput{
 		AuditLogEntry: types.NewAuditLogEntry(entry),
+	}, nil
+}
+
+func (r *Resolver) RequestDocumentVersionApprovalTool(ctx context.Context, req *mcp.CallToolRequest, input *types.RequestDocumentVersionApprovalInput) (*mcp.CallToolResult, types.RequestDocumentVersionApprovalOutput, error) {
+	r.MustAuthorize(ctx, input.DocumentID, probo.ActionDocumentVersionRequestApproval)
+
+	svc := r.ProboService(ctx, input.DocumentID)
+
+	quorum, err := svc.DocumentApprovals.RequestApproval(ctx, probo.RequestApprovalRequest{
+		DocumentID:  input.DocumentID,
+		ApproverIDs: input.ApproverIds,
+		Changelog:   input.Changelog,
+	})
+	if err != nil {
+		panic(fmt.Errorf("cannot request document version approval: %w", err))
+	}
+
+	documentVersion, err := svc.Documents.GetVersion(ctx, quorum.VersionID)
+	if err != nil {
+		panic(fmt.Errorf("cannot get document version: %w", err))
+	}
+
+	return nil, types.RequestDocumentVersionApprovalOutput{
+		DocumentVersion: types.NewDocumentVersion(documentVersion),
 	}, nil
 }

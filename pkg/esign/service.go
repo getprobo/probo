@@ -48,6 +48,7 @@ type (
 	CreateSignatureRequest struct {
 		OrganizationID gid.GID
 		DocumentType   coredata.ElectronicSignatureDocumentType
+		DocumentName   *string
 		FileID         gid.GID
 		SignerEmail    mail.Addr
 		ConsentText    string // optional; required when DocumentType == OTHER
@@ -59,6 +60,18 @@ type (
 		SignerEmail    mail.Addr
 		SignerIPAddr   string
 		SignerUA       string
+	}
+
+	CreateAndAcceptSignatureRequest struct {
+		OrganizationID gid.GID
+		DocumentType   coredata.ElectronicSignatureDocumentType
+		DocumentName   *string
+		FileID         gid.GID
+		SignerEmail    mail.Addr
+		SignerFullName string
+		SignerIPAddr   string
+		SignerUA       string
+		ConsentText    string
 	}
 
 	RecordEventRequest struct {
@@ -161,6 +174,7 @@ func (s *Service) CreateSignature(
 		OrganizationID: req.OrganizationID,
 		Status:         coredata.ElectronicSignatureStatusPending,
 		DocumentType:   req.DocumentType,
+		DocumentName:   req.DocumentName,
 		FileID:         stampedFileID,
 		SignerEmail:    req.SignerEmail.String(),
 		ConsentText:    consentText,
@@ -173,6 +187,59 @@ func (s *Service) CreateSignature(
 
 	if err := sig.Insert(ctx, conn, scope); err != nil {
 		return nil, fmt.Errorf("cannot insert electronic signature: %w", err)
+	}
+
+	return sig, nil
+}
+
+func (s *Service) CreateAndAcceptSignature(
+	ctx context.Context,
+	conn pg.Conn,
+	req *CreateAndAcceptSignatureRequest,
+) (*coredata.ElectronicSignature, error) {
+	sig, err := s.CreateSignature(
+		ctx,
+		conn,
+		&CreateSignatureRequest{
+			OrganizationID: req.OrganizationID,
+			DocumentType:   req.DocumentType,
+			DocumentName:   req.DocumentName,
+			FileID:         req.FileID,
+			SignerEmail:    req.SignerEmail,
+			ConsentText:    req.ConsentText,
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create signature: %w", err)
+	}
+
+	now := time.Now()
+	scope := coredata.NewScopeFromObjectID(req.OrganizationID)
+
+	sig.SignerFullName = &req.SignerFullName
+	sig.SignerIPAddress = &req.SignerIPAddr
+	sig.SignerUserAgent = &req.SignerUA
+	sig.SignedAt = &now
+	sig.Status = coredata.ElectronicSignatureStatusAccepted
+	sig.UpdatedAt = now
+
+	if err := sig.Update(ctx, conn, scope); err != nil {
+		return nil, fmt.Errorf("cannot accept signature: %w", err)
+	}
+
+	if err := s.recordEvent(
+		ctx,
+		conn,
+		&RecordEventRequest{
+			SignatureID: sig.ID,
+			EventType:   coredata.ElectronicSignatureEventTypeSignatureAccepted,
+			EventSource: coredata.ElectronicSignatureEventSourceServer,
+			ActorEmail:  req.SignerEmail,
+			ActorIPAddr: req.SignerIPAddr,
+			ActorUA:     req.SignerUA,
+		},
+	); err != nil {
+		return nil, fmt.Errorf("cannot record signature event: %w", err)
 	}
 
 	return sig, nil

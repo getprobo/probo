@@ -1,17 +1,18 @@
 import { useTranslate } from "@probo/i18n";
-import { Breadcrumb, Button, IconCheckmark1, PageHeader, TabBadge, TabLink, Tabs } from "@probo/ui";
+import { Breadcrumb, Button, IconUpload, PageHeader, TabBadge, TabLink, Tabs } from "@probo/ui";
+import { useCallback, useRef, useState } from "react";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { Outlet, useParams } from "react-router";
 import { graphql } from "relay-runtime";
 
 import type { DocumentLayoutQuery } from "#/__generated__/core/DocumentLayoutQuery.graphql";
-import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import { DocumentActionsDropdownn } from "./_components/DocumentActionsDropdown";
 import { DocumentLayoutDrawer } from "./_components/DocumentLayoutDrawer";
 import { DocumentTitleForm } from "./_components/DocumentTitleForm";
 import { DocumentVersionsDropdown } from "./_components/DocumentVersionsDropdown";
+import { PublishDialog, type PublishDialogRef } from "./_components/PublishDialog";
 
 export const documentLayoutQuery = graphql`
   query DocumentLayoutQuery($documentId: ID! $versionId: ID! $versionSpecified: Boolean!) {
@@ -29,6 +30,20 @@ export const documentLayoutQuery = graphql`
         signedSignatures: signatures(first: 0 filter: { states: [SIGNED], activeContract: true }) {
           totalCount
         }
+        approvalQuorums(first: 1, orderBy: { field: CREATED_AT, direction: DESC }) {
+          edges {
+            node {
+              id
+              status
+              decisions(first: 0) {
+                totalCount
+              }
+              approvedDecisions: decisions(first: 0 filter: { states: [APPROVED] }) {
+                totalCount
+              }
+            }
+          }
+        }
       }
     }
     document: node(id: $documentId) {
@@ -38,6 +53,7 @@ export const documentLayoutQuery = graphql`
         title
         status
         canPublish: permission(action: "core:document-version:publish")
+        ...PublishDialog_documentFragment
         controlInfo: controls(first: 0) {
           totalCount
         }
@@ -58,21 +74,23 @@ export const documentLayoutQuery = graphql`
               signedSignatures: signatures(first: 0 filter: { states: [SIGNED], activeContract: true }) {
                 totalCount
               }
+              approvalQuorums(first: 1, orderBy: { field: CREATED_AT, direction: DESC }) {
+                edges {
+                  node {
+                    id
+                    status
+                    decisions(first: 0) {
+                      totalCount
+                    }
+                    approvedDecisions: decisions(first: 0 filter: { states: [APPROVED] }) {
+                      totalCount
+                    }
+                  }
+                }
+              }
             }
           }
         }
-      }
-    }
-  }
-`;
-
-const publishDocumentVersionMutation = graphql`
-  mutation DocumentLayout_publishVersionMutation(
-    $input: PublishDocumentVersionInput!
-  ) {
-    publishDocumentVersion(input: $input) {
-      document {
-        id
       }
     }
   }
@@ -85,6 +103,14 @@ export function DocumentLayout(props: { queryRef: PreloadedQuery<DocumentLayoutQ
   const { versionId } = useParams();
 
   const { __ } = useTranslate();
+
+  const publishDialogRef = useRef<PublishDialogRef>(null);
+  const [approvalRequestedAt, setApprovalRequestedAt] = useState(0);
+
+  const handlePublishOrApproval = useCallback(() => {
+    onRefetch();
+    setApprovalRequestedAt(Date.now());
+  }, [onRefetch]);
 
   const { document, version } = usePreloadedQuery<DocumentLayoutQuery>(documentLayoutQuery, queryRef);
   if (document.__typename !== "Document" || (version && version.__typename !== "DocumentVersion")) {
@@ -99,23 +125,10 @@ export function DocumentLayout(props: { queryRef: PreloadedQuery<DocumentLayoutQ
   // It is ok to cas as NonNullable here since we know we have either version or lastVersion
   const currentVersion = version ?? lastVersion as NonNullable<typeof version | typeof lastVersion>;
   const isDraft = currentVersion.status === "DRAFT";
-
-  const [publishDocumentVersion, isPublishing] = useMutationWithToasts(
-    publishDocumentVersionMutation,
-    {
-      successMessage: __("Document published successfully."),
-      errorMessage: __("Failed to publish document"),
-    },
-  );
-
-  const handlePublish = async () => {
-    await publishDocumentVersion({
-      variables: {
-        input: { documentId: document.id },
-      },
-      onSuccess: onRefetch,
-    });
-  };
+  const isPublished = currentVersion.status === "PUBLISHED";
+  const lastQuorum = currentVersion.approvalQuorums?.edges?.[0]?.node ?? null;
+  const hasApprovals = lastQuorum != null;
+  const hasPendingApproval = lastQuorum?.status === "PENDING";
 
   const urlPrefix = versionId
     ? `/organizations/${organizationId}/documents/${document.id}/versions/${versionId}`
@@ -140,9 +153,8 @@ export function DocumentLayout(props: { queryRef: PreloadedQuery<DocumentLayoutQ
           <div className="flex gap-2">
             {isDraft && document.canPublish && (
               <Button
-                onClick={() => void handlePublish()}
-                icon={IconCheckmark1}
-                disabled={isPublishing}
+                icon={IconUpload}
+                onClick={() => publishDialogRef.current?.open()}
               >
                 {__("Publish")}
               </Button>
@@ -166,7 +178,17 @@ export function DocumentLayout(props: { queryRef: PreloadedQuery<DocumentLayoutQ
             {__("Controls")}
             <TabBadge>{document.controlInfo.totalCount}</TabBadge>
           </TabLink>
-          {!isDraft && (
+          {hasApprovals && (
+            <TabLink to={`${urlPrefix}/approvals`}>
+              {__("Approvals")}
+              <TabBadge>
+                {lastQuorum?.status === "REJECTED"
+                  ? __("Rejected")
+                  : `${lastQuorum?.approvedDecisions.totalCount ?? 0}/${lastQuorum?.decisions.totalCount ?? 0}`}
+              </TabBadge>
+            </TabLink>
+          )}
+          {isPublished && (
             <TabLink to={`${urlPrefix}/signatures`}>
               {__("Signatures")}
               <TabBadge>
@@ -178,10 +200,18 @@ export function DocumentLayout(props: { queryRef: PreloadedQuery<DocumentLayoutQ
           )}
         </Tabs>
 
-        <Outlet />
+        <Outlet context={{ onRefetch, approvalRequestedAt }} />
       </div>
 
       <DocumentLayoutDrawer documentFragmentRef={document} versionFragmentRef={currentVersion} />
+
+      <PublishDialog
+        ref={publishDialogRef}
+        documentId={document.id}
+        documentFragmentRef={document}
+        hasPendingApproval={hasPendingApproval}
+        onSuccess={handlePublishOrApproval}
+      />
     </>
   );
 }

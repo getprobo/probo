@@ -35,7 +35,7 @@ export const employeeDocumentSignaturePageQuery = graphql`
 `;
 
 const documentFragment = graphql`
-  fragment EmployeeDocumentSignaturePageDocumentFragment on SignableDocument {
+  fragment EmployeeDocumentSignaturePageDocumentFragment on EmployeeDocument {
     id
     title
     # eslint-disable-next-line relay/unused-fields
@@ -159,7 +159,7 @@ function DocumentSignatureContent({
           description: __("Document signed successfully"),
           variant: "success",
         });
-        void navigate(`/organizations/${organizationId}/employee`);
+        void navigate(`/organizations/${organizationId}/employee/signatures`);
       },
       onError: (error) => {
         toast({
@@ -256,7 +256,7 @@ function DocumentSignatureContent({
                     isSigning={isSigning}
                     onSign={handleSign}
                     onBack={() =>
-                      void navigate(`/organizations/${organizationId}/employee`)}
+                      void navigate(`/organizations/${organizationId}/employee/signatures`)}
                   />
                 )
               : null}

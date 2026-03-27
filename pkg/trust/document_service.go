@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"io"
 
+	"errors"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/docgen"
@@ -160,19 +161,50 @@ func (s *DocumentService) exportPDFData(
 				return fmt.Errorf("cannot load latest published document version: %w", err)
 			}
 
-			// Load approvers
-			docApprovers := &coredata.DocumentApprovers{}
-			if err := docApprovers.LoadByDocumentID(ctx, conn, s.svc.scope, documentID); err != nil {
-				return fmt.Errorf("cannot load document approvers: %w", err)
-			}
+			lastQuorum := &coredata.DocumentVersionApprovalQuorum{}
+			if err := lastQuorum.LoadLastByDocumentVersionID(ctx, conn, s.svc.scope, version.ID); err != nil {
+				if !errors.Is(err, coredata.ErrResourceNotFound) {
+					return fmt.Errorf("cannot load last approval quorum: %w", err)
+				}
+			} else if lastQuorum.Status == coredata.DocumentVersionApprovalQuorumStatusApproved {
+				approvedDecisions := &coredata.DocumentVersionApprovalDecisions{}
+				approvedFilter := coredata.NewDocumentVersionApprovalDecisionFilter(
+					coredata.DocumentVersionApprovalDecisionStates{coredata.DocumentVersionApprovalDecisionStateApproved},
+				)
+				if err := approvedDecisions.LoadByQuorumID(
+					ctx,
+					conn,
+					s.svc.scope,
+					lastQuorum.ID,
+					page.NewCursor(
+						100,
+						nil,
+						page.Head,
+						page.OrderBy[coredata.DocumentVersionApprovalDecisionOrderField]{
+							Field:     coredata.DocumentVersionApprovalDecisionOrderFieldCreatedAt,
+							Direction: page.OrderDirectionAsc,
+						},
+					),
+					approvedFilter,
+				); err != nil {
+					return fmt.Errorf("cannot load approved decisions: %w", err)
+				}
 
-			profiles := coredata.MembershipProfiles{}
-			if err := profiles.LoadByIDs(ctx, conn, s.svc.scope, docApprovers.ApproverProfileIDs()); err != nil {
-				return fmt.Errorf("cannot load document approver profiles: %w", err)
-			}
+				approverProfileIDs := make([]gid.GID, 0, len(*approvedDecisions))
+				for _, d := range *approvedDecisions {
+					approverProfileIDs = append(approverProfileIDs, d.ApproverID)
+				}
 
-			for _, p := range profiles {
-				approverNames = append(approverNames, p.FullName)
+				if len(approverProfileIDs) > 0 {
+					profiles := coredata.MembershipProfiles{}
+					if err := profiles.LoadByIDs(ctx, conn, s.svc.scope, approverProfileIDs); err != nil {
+						return fmt.Errorf("cannot load approver profiles: %w", err)
+					}
+
+					for _, p := range profiles {
+						approverNames = append(approverNames, p.FullName)
+					}
+				}
 			}
 
 			if err := organization.LoadByID(ctx, conn, s.svc.scope, document.OrganizationID); err != nil {

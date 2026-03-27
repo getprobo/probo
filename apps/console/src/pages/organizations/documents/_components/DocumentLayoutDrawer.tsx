@@ -1,6 +1,6 @@
 import { documentClassifications, documentTypes, formatDate, getDocumentClassificationLabel, getDocumentTypeLabel } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
-import { Avatar, Badge, Button, Drawer, IconCheckmark1, IconCrossLargeX, IconPencil, PropertyRow } from "@probo/ui";
+import { Badge, Button, Drawer, IconCheckmark1, IconCrossLargeX, IconPencil, PropertyRow } from "@probo/ui";
 import { useState } from "react";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
@@ -12,10 +12,8 @@ import type { DocumentLayoutDrawerMutation } from "#/__generated__/core/Document
 import { ControlledField } from "#/components/form/ControlledField";
 import { DocumentClassificationOptions } from "#/components/form/DocumentClassificationOptions";
 import { DocumentTypeOptions } from "#/components/form/DocumentTypeOptions";
-import { PeopleMultiSelectField } from "#/components/form/PeopleMultiSelectField";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
-import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 const documentFragment = graphql`
   fragment DocumentLayoutDrawer_documentFragment on Document {
@@ -24,14 +22,6 @@ const documentFragment = graphql`
     status
     archivedAt
     canUpdate: permission(action: "core:document:update")
-    approvers(first: 100) {
-      edges {
-        node {
-          id
-          fullName
-        }
-      }
-    }
   }
 `;
 
@@ -53,21 +43,12 @@ const updateDocumentMutation = graphql`
         id
         documentType
         classification
-        approvers(first: 100) {
-          edges {
-            node {
-              id
-              fullName
-            }
-          }
-        }
       }
     }
   }
 `;
 
 const schema = z.object({
-  approverIds: z.array(z.string()).min(1, "At least one approver is required"),
   documentType: z.enum(documentTypes),
   classification: z.enum(documentClassifications),
 });
@@ -78,10 +59,8 @@ export function DocumentLayoutDrawer(props: {
 }) {
   const { documentFragmentRef, versionFragmentRef } = props;
 
-  const organizationId = useOrganizationId();
   const { __ } = useTranslate();
 
-  const [isEditingApprover, setIsEditingApprover] = useState(false);
   const [isEditingType, setIsEditingType] = useState(false);
   const [isEditingClassification, setIsEditingClassification] = useState(false);
 
@@ -91,13 +70,10 @@ export function DocumentLayoutDrawer(props: {
   const isDraft = version.status === "DRAFT";
   const canEdit = document.canUpdate;
 
-  const approvers = document.approvers.edges.map(e => e.node);
-
   const { control, handleSubmit, reset } = useFormWithSchema(
     schema,
     {
       defaultValues: {
-        approverIds: approvers.map(a => a.id),
         documentType: document.documentType,
         classification: version.classification,
       },
@@ -112,20 +88,6 @@ export function DocumentLayoutDrawer(props: {
         errorMessage: __("Failed to update document"),
       },
     );
-
-  const handleUpdateApprover = async (data: { approverIds: string[] }) => {
-    await updateDocument({
-      variables: {
-        input: {
-          id: document.id,
-          approverIds: data.approverIds,
-        },
-      },
-      onSuccess: () => {
-        setIsEditingApprover(false);
-      },
-    });
-  };
 
   const handleUpdateDocumentType = async (data: {
     documentType: (typeof documentTypes)[number];
@@ -164,42 +126,6 @@ export function DocumentLayoutDrawer(props: {
       <div className="text-base text-txt-primary font-medium mb-4">
         {__("Properties")}
       </div>
-      <PropertyRow label={__("Approvers")}>
-        {isEditingApprover
-          ? (
-              <EditablePropertyContent
-                onSave={() => void handleSubmit(handleUpdateApprover)()}
-                onCancel={() => {
-                  setIsEditingApprover(false);
-                  reset();
-                }}
-                disabled={isUpdatingDocument}
-              >
-                <PeopleMultiSelectField
-                  name="approverIds"
-                  control={control}
-                  organizationId={organizationId}
-                  selectedPeople={approvers}
-                  placeholder={__("Add approvers...")}
-                />
-              </EditablePropertyContent>
-            )
-          : (
-              <ReadOnlyPropertyContent
-                onEdit={() => setIsEditingApprover(true)}
-                canEdit={canEdit}
-              >
-                <div className="flex flex-wrap gap-2">
-                  {approvers.map(approver => (
-                    <Badge key={approver.id} variant="highlight" size="md" className="gap-2">
-                      <Avatar name={approver.fullName} />
-                      {approver.fullName}
-                    </Badge>
-                  ))}
-                </div>
-              </ReadOnlyPropertyContent>
-            )}
-      </PropertyRow>
       <PropertyRow label={__("Type")}>
         {isEditingType
           ? (

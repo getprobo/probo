@@ -1,0 +1,73 @@
+import { Suspense, useCallback, useEffect } from "react";
+import { useQueryLoader } from "react-relay";
+import { useOutletContext, useParams } from "react-router";
+
+import type { DocumentApprovalsPageQuery } from "#/__generated__/core/DocumentApprovalsPageQuery.graphql";
+import { LinkCardSkeleton } from "#/components/skeletons/LinkCardSkeleton";
+
+import { DocumentApprovalsPage, documentApprovalsPageQuery } from "./DocumentApprovalsPage";
+
+function DocumentApprovalsPageQueryLoader() {
+  const { documentId, versionId } = useParams();
+  if (!documentId) {
+    throw new Error(":documentId missing in route params");
+  }
+
+  const { onRefetch: parentRefetch, approvalRequestedAt }
+    = useOutletContext<{
+      onRefetch: () => void;
+      approvalRequestedAt?: number;
+    }>();
+
+  const [queryRef, loadQuery] = useQueryLoader<DocumentApprovalsPageQuery>(documentApprovalsPageQuery);
+
+  const loadQueryParams = useCallback(() => {
+    loadQuery(
+      {
+        documentId: documentId,
+        versionId: versionId ?? "",
+        versionSpecified: !!versionId,
+      },
+      { fetchPolicy: "network-only" },
+    );
+  }, [documentId, versionId, loadQuery]);
+
+  useEffect(() => {
+    if (!queryRef) {
+      loadQuery(
+        {
+          documentId: documentId,
+          versionId: versionId ?? "",
+          versionSpecified: !!versionId,
+        },
+        { fetchPolicy: "network-only" },
+      );
+    }
+  }, [queryRef, documentId, versionId, loadQuery]);
+
+  // Reload approvals data whenever a new approval round is requested from the layout
+  useEffect(() => {
+    if (approvalRequestedAt) {
+      loadQueryParams();
+    }
+  }, [approvalRequestedAt, loadQueryParams]);
+
+  const onRefetch = useCallback(() => {
+    parentRefetch();
+    loadQueryParams();
+  }, [parentRefetch, loadQueryParams]);
+
+  if (!queryRef) {
+    return <LinkCardSkeleton />;
+  }
+
+  return <DocumentApprovalsPage queryRef={queryRef} onRefetch={onRefetch} />;
+}
+
+export default function DocumentApprovalsPageLoader() {
+  return (
+    <Suspense fallback={<LinkCardSkeleton />}>
+      <DocumentApprovalsPageQueryLoader />
+    </Suspense>
+  );
+}

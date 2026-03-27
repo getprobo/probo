@@ -4,7 +4,6 @@ import { useQueryLoader } from "react-relay";
 import type { EmployeeDocumentsPageQuery } from "#/__generated__/core/EmployeeDocumentsPageQuery.graphql";
 import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
-import { CoreRelayProvider } from "#/providers/CoreRelayProvider";
 
 import {
   EmployeeDocumentsPage,
@@ -32,10 +31,8 @@ function EmployeeDocumentsPageQueryLoader() {
 
 export default function EmployeeDocumentsPageLoader() {
   return (
-    <CoreRelayProvider>
-      <Suspense fallback={<PageSkeleton />}>
-        <EmployeeDocumentsPageQueryLoader />
-      </Suspense>
-    </CoreRelayProvider>
+    <Suspense fallback={<PageSkeleton />}>
+      <EmployeeDocumentsPageQueryLoader />
+    </Suspense>
   );
 }

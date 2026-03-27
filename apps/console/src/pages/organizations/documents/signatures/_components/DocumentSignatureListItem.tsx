@@ -1,6 +1,6 @@
 import { sprintf } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
-import { Avatar, Badge, Button, IconCircleCheck, IconClock } from "@probo/ui";
+import { Badge, Button, IconCircleCheck, IconClock } from "@probo/ui";
 import { useFragment } from "react-relay";
 import { type DataID, graphql } from "relay-runtime";
 
@@ -53,7 +53,6 @@ export function DocumentSignatureListItem(props: {
 
   return (
     <div className="flex gap-3 items-center py-3">
-      <Avatar size="l" name={signature.signedBy.fullName} />
       <div className="space-y-1">
         <div className="text-sm text-txt-primary font-medium">
           {signature.signedBy.fullName}

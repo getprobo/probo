@@ -10,7 +10,7 @@ import { graphql, useFragment } from "react-relay";
 import type { DocumentRowFragment$key } from "#/__generated__/core/DocumentRowFragment.graphql";
 
 const fragment = graphql`
-  fragment DocumentRowFragment on SignableDocument {
+  fragment DocumentRowFragment on EmployeeDocument {
     id
     title
     documentType
@@ -31,8 +31,8 @@ export function DocumentRow({
   const { __ } = useTranslate();
 
   return (
-    <Tr to={`/organizations/${organizationId}/employee/${document.id}`}>
-      <Td className="min-w-0 pr-12">{document.title}</Td>
+    <Tr to={`/organizations/${organizationId}/employee/signatures/${document.id}`}>
+      <Td>{document.title}</Td>
       <Td className="w-48">
         {getDocumentTypeLabel(__, document.documentType)}
       </Td>

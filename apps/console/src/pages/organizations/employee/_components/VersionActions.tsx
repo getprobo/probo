@@ -5,7 +5,7 @@ import { graphql, useFragment } from "react-relay";
 import type { VersionActionsFragment$key } from "#/__generated__/core/VersionActionsFragment.graphql";
 
 const fragment = graphql`
-  fragment VersionActionsFragment on DocumentVersion {
+  fragment VersionActionsFragment on EmployeeDocumentVersion {
     id
     signed
   }

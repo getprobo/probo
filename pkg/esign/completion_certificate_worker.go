@@ -315,8 +315,11 @@ func (w *CompletionCertificateWorker) generateCertificate(
 	}
 	emailPresenter := emails.NewPresenterFromConfig(w.fileManager, presenterCfg, ref.UnrefOrZero(signature.SignerFullName))
 
-	docTypeName := signature.DocumentType.DisplayName()
-	subject, textBody, htmlBody, err := emailPresenter.RenderElectronicSignatureCertificate(ctx, ref.UnrefOrZero(signature.SignerFullName), docTypeName)
+	docName := ref.UnrefOrZero(signature.DocumentName)
+	if docName == "" {
+		docName = signature.DocumentType.DisplayName()
+	}
+	subject, textBody, htmlBody, err := emailPresenter.RenderElectronicSignatureCertificate(ctx, ref.UnrefOrZero(signature.SignerFullName), docName)
 	if err != nil {
 		return nil, nil, fmt.Errorf("cannot render email: %w", err)
 	}

@@ -61,11 +61,46 @@ func (p Document) CursorKey(orderBy DocumentOrderField) page.CursorKey {
 
 // AuthorizationAttributes returns the authorization attributes for policy evaluation.
 func (d *Document) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
-	q := `SELECT organization_id, status FROM documents WHERE id = $1 LIMIT 1;`
+	q := `
+WITH document AS (
+	SELECT id, organization_id, status
+	FROM documents
+	WHERE id = $1
+	LIMIT 1
+),
+latest_version AS (
+	SELECT dv.id, dv.document_id, dv.status AS version_status
+	FROM document_versions dv
+	INNER JOIN document ON dv.document_id = document.id
+	ORDER BY dv.created_at DESC
+	LIMIT 1
+),
+last_quorum AS (
+	SELECT
+		lv.document_id,
+		q.status::text AS status
+	FROM document_version_approval_quorums q
+	INNER JOIN latest_version lv ON lv.id = q.version_id
+	ORDER BY q.created_at DESC
+	LIMIT 1
+)
+SELECT
+	document.organization_id,
+	document.status,
+	COALESCE(lv.version_status::text, ''),
+	COALESCE(lq.status, '')
+FROM document
+LEFT JOIN latest_version lv ON lv.document_id = document.id
+LEFT JOIN last_quorum lq ON lq.document_id = document.id;
+`
 
-	var organizationID gid.GID
-	var documentStatus DocumentStatus
-	if err := conn.QueryRow(ctx, q, d.ID).Scan(&organizationID, &documentStatus); err != nil {
+	var (
+		organizationID      gid.GID
+		documentStatus      DocumentStatus
+		latestVersionStatus string
+		lastQuorumStatus    string
+	)
+	if err := conn.QueryRow(ctx, q, d.ID).Scan(&organizationID, &documentStatus, &latestVersionStatus, &lastQuorumStatus); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrResourceNotFound
 		}
@@ -73,8 +108,10 @@ func (d *Document) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (m
 	}
 
 	return map[string]string{
-		"organization_id": organizationID.String(),
-		"document_status": documentStatus.String(),
+		"organization_id":    organizationID.String(),
+		"document_status":    documentStatus.String(),
+		"version_status":     latestVersionStatus,
+		"last_quorum_status": lastQuorumStatus,
 	}, nil
 }
 
@@ -887,4 +924,57 @@ SELECT EXISTS (
 	}
 
 	return signed, nil
+}
+
+func (p *Document) GetViewerApprovalStateForLastVersion(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	documentID gid.GID,
+	identityID gid.GID,
+) (DocumentVersionApprovalDecisionState, error) {
+	q := `
+WITH viewer_decision AS (
+	SELECT
+		dvad.tenant_id,
+		dvad.state,
+		dv.version_number,
+		dvaq.created_at AS quorum_created_at
+	FROM documents d
+	INNER JOIN document_versions dv ON dv.document_id = d.id
+	INNER JOIN document_version_approval_quorums dvaq ON dvaq.version_id = dv.id
+	INNER JOIN document_version_approval_decisions dvad ON dvad.quorum_id = dvaq.id
+	INNER JOIN iam_membership_profiles p ON dvad.approver_id = p.id
+	WHERE d.id = @document_id
+		AND p.identity_id = @identity_id
+)
+SELECT state
+FROM viewer_decision
+WHERE %s
+ORDER BY version_number DESC, quorum_created_at DESC
+LIMIT 1
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"document_id": documentID,
+		"identity_id": identityID,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return "", fmt.Errorf("cannot query document approval state: %w", err)
+	}
+
+	state, err := pgx.CollectOneRow(rows, pgx.RowTo[DocumentVersionApprovalDecisionState])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return DocumentVersionApprovalDecisionStatePending, nil
+		}
+		return "", fmt.Errorf("cannot collect approval state: %w", err)
+	}
+
+	return state, nil
 }

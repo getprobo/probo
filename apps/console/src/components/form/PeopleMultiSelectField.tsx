@@ -1,5 +1,5 @@
 import { useTranslate } from "@probo/i18n";
-import { Avatar, Badge, Button, Field, IconCrossLargeX, Option, Select } from "@probo/ui";
+import { Badge, Button, Field, IconCrossLargeX, Option, Select } from "@probo/ui";
 import { type ComponentProps, Suspense, useState } from "react";
 import { type Control, Controller, type FieldValues, type Path } from "react-hook-form";
 
@@ -104,10 +104,6 @@ function PeopleMultiSelectWithQuery<T extends FieldValues = FieldValues>(
                 >
                   {availablePeople.map(person => (
                     <Option key={person.id} value={person.id} className="flex gap-2">
-                      <Avatar
-                        name={person.fullName}
-                        size="s"
-                      />
                       <div className="flex flex-col">
                         <span>{person.fullName}</span>
                         {person.emailAddress && (
@@ -125,10 +121,6 @@ function PeopleMultiSelectWithQuery<T extends FieldValues = FieldValues>(
                 <div className="flex flex-wrap gap-2">
                   {selectedPeople.map(person => (
                     <Badge key={person.id} variant="neutral" className="flex items-center gap-2">
-                      <Avatar
-                        name={person.fullName}
-                        size="s"
-                      />
                       <span>{person.fullName}</span>
                       {!props.disabled && (
                         <Button

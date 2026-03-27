@@ -35,6 +35,7 @@ type ElectronicSignature struct {
 	OrganizationID                 gid.GID                         `db:"organization_id"`
 	Status                         ElectronicSignatureStatus       `db:"status"`
 	DocumentType                   ElectronicSignatureDocumentType `db:"document_type"`
+	DocumentName                   *string                         `db:"document_name"`
 	FileID                         gid.GID                         `db:"file_id"`
 	SignerEmail                    string                          `db:"signer_email"`
 	ConsentText                    string                          `db:"consent_text"`
@@ -83,11 +84,11 @@ func (es *ElectronicSignature) Insert(
 ) error {
 	q := `
 INSERT INTO electronic_signatures (
-	id, tenant_id, organization_id, status, document_type, file_id,
+	id, tenant_id, organization_id, status, document_type, document_name, file_id,
 	signer_email, consent_text, seal_version, attempt_count, max_attempts,
 	created_at, updated_at
 ) VALUES (
-	@id, @tenant_id, @organization_id, @status, @document_type, @file_id,
+	@id, @tenant_id, @organization_id, @status, @document_type, @document_name, @file_id,
 	@signer_email, @consent_text, @seal_version, @attempt_count, @max_attempts,
 	@created_at, @updated_at
 )
@@ -98,6 +99,7 @@ INSERT INTO electronic_signatures (
 		"organization_id": es.OrganizationID,
 		"status":          es.Status,
 		"document_type":   es.DocumentType,
+		"document_name":   es.DocumentName,
 		"file_id":         es.FileID,
 		"signer_email":    es.SignerEmail,
 		"consent_text":    es.ConsentText,
@@ -184,7 +186,7 @@ func (es *ElectronicSignature) LoadByID(
 ) error {
 	q := `
 SELECT
-	id, tenant_id, organization_id, status, document_type, file_id,
+	id, tenant_id, organization_id, status, document_type, document_name, file_id,
 	signer_email, consent_text, signer_full_name, signer_ip_address,
 	signer_user_agent, file_hash, seal, seal_version, tsa_token, signed_at,
 	certificate_file_id, certificate_processing_started_at,
@@ -222,7 +224,7 @@ func (es *ElectronicSignature) LoadNextAcceptedForUpdateSkipLocked(
 ) error {
 	q := `
 SELECT
-	id, tenant_id, organization_id, status, document_type, file_id,
+	id, tenant_id, organization_id, status, document_type, document_name, file_id,
 	signer_email, consent_text, signer_full_name, signer_ip_address,
 	signer_user_agent, file_hash, seal, seal_version, tsa_token, signed_at,
 	certificate_file_id, certificate_processing_started_at,
@@ -258,7 +260,7 @@ func (es *ElectronicSignature) LoadNextCompletedWithoutCertificateForUpdate(
 ) error {
 	q := `
 SELECT
-	id, tenant_id, organization_id, status, document_type, file_id,
+	id, tenant_id, organization_id, status, document_type, document_name, file_id,
 	signer_email, consent_text, signer_full_name, signer_ip_address,
 	signer_user_agent, file_hash, seal, seal_version, tsa_token, signed_at,
 	certificate_file_id, certificate_processing_started_at,

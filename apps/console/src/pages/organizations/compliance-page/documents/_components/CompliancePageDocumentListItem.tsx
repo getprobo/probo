@@ -24,7 +24,7 @@ const documentFragment = graphql`
     latestPublishedVersion: versions(
       first: 1
       orderBy: { field: CREATED_AT, direction: DESC }
-      filter: { status: PUBLISHED }
+      filter: { statuses: [PUBLISHED] }
     ) {
       edges {
         node {

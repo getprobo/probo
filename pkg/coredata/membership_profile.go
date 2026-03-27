@@ -559,150 +559,6 @@ WHERE
 	return nil
 }
 
-func (p *MembershipProfiles) LoadByDocumentID(
-	ctx context.Context,
-	conn pg.Conn,
-	scope Scoper,
-	documentID gid.GID,
-	cursor *page.Cursor[MembershipProfileOrderField],
-) error {
-	q := `
-WITH profiles AS (
-    SELECT
-        mp.id,
-        mp.identity_id,
-        mp.organization_id,
-        mp.source,
-        mp.state,
-        mp.full_name,
-        mp.kind,
-        mp.additional_email_addresses,
-        mp.position,
-        mp.contract_start_date,
-        mp.contract_end_date,
-        mp.user_name,
-        mp.external_id,
-        mp.nickname,
-        mp.locale,
-        mp.timezone,
-        mp.profile_url,
-        mp.preferred_language,
-        mp.given_name,
-        mp.family_name,
-        mp.formatted_name,
-        mp.middle_name,
-        mp.honorific_prefix,
-        mp.honorific_suffix,
-        mp.employee_number,
-        mp.department,
-        mp.cost_center,
-        mp.enterprise_organization,
-        mp.division,
-        mp.manager_value,
-        mp.created_at,
-        mp.updated_at
-    FROM
-        iam_membership_profiles mp
-    WHERE
-        mp.%s
-        AND mp.id IN (
-            SELECT approver_profile_id
-            FROM document_approvers
-            WHERE document_id = @document_id
-        )
-        AND %s
-)
-SELECT
-    p.id,
-    p.identity_id,
-    p.organization_id,
-    i.email_address,
-    p.source,
-    p.state,
-    p.full_name,
-    p.kind,
-    p.additional_email_addresses,
-    p.position,
-    p.contract_start_date,
-    p.contract_end_date,
-    '' AS organization_name,
-    p.user_name,
-    p.external_id,
-    p.nickname,
-    p.locale,
-    p.timezone,
-    p.profile_url,
-    p.preferred_language,
-    p.given_name,
-    p.family_name,
-    p.formatted_name,
-    p.middle_name,
-    p.honorific_prefix,
-    p.honorific_suffix,
-    p.employee_number,
-    p.department,
-    p.cost_center,
-    p.enterprise_organization,
-    p.division,
-    p.manager_value,
-    p.created_at,
-    p.updated_at
-FROM profiles p
-INNER JOIN identities i ON i.id = p.identity_id
-`
-
-	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
-
-	args := pgx.NamedArgs{"document_id": documentID}
-	maps.Copy(args, scope.SQLArguments())
-	maps.Copy(args, cursor.SQLArguments())
-
-	rows, err := conn.Query(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot query document approver profiles: %w", err)
-	}
-
-	profiles, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[MembershipProfile])
-	if err != nil {
-		return fmt.Errorf("cannot collect document approver profiles: %w", err)
-	}
-
-	*p = profiles
-
-	return nil
-}
-
-func (p *MembershipProfiles) CountByDocumentID(
-	ctx context.Context,
-	conn pg.Conn,
-	scope Scoper,
-	documentID gid.GID,
-) (int, error) {
-	q := `
-SELECT
-    COUNT(*)
-FROM
-    iam_membership_profiles mp
-INNER JOIN document_approvers da ON mp.id = da.approver_profile_id
-WHERE
-    mp.%s
-    AND da.document_id = @document_id
-`
-
-	q = fmt.Sprintf(q, scope.SQLFragment())
-
-	args := pgx.StrictNamedArgs{"document_id": documentID}
-	maps.Copy(args, scope.SQLArguments())
-
-	var count int
-	err := conn.QueryRow(ctx, q, args).Scan(&count)
-	if err != nil {
-		return 0, fmt.Errorf("cannot query document approver profiles count: %w", err)
-	}
-
-	return count, nil
-}
-
 func (p *MembershipProfiles) LoadByDocumentVersionID(
 	ctx context.Context,
 	conn pg.Conn,
@@ -711,7 +567,19 @@ func (p *MembershipProfiles) LoadByDocumentVersionID(
 	cursor *page.Cursor[MembershipProfileOrderField],
 ) error {
 	q := `
-WITH profiles AS (
+WITH latest_quorum AS (
+    SELECT id
+    FROM document_version_approval_quorums
+    WHERE version_id = @version_id
+    ORDER BY created_at DESC
+    LIMIT 1
+),
+version_approvers AS (
+    SELECT d.approver_id
+    FROM document_version_approval_decisions d
+    WHERE d.quorum_id = (SELECT id FROM latest_quorum)
+),
+profiles AS (
     SELECT
         mp.id,
         mp.identity_id,
@@ -747,13 +615,9 @@ WITH profiles AS (
         mp.updated_at
     FROM
         iam_membership_profiles mp
+    INNER JOIN version_approvers va ON va.approver_id = mp.id
     WHERE
         mp.%s
-        AND mp.id IN (
-            SELECT approver_profile_id
-            FROM document_version_approvers
-            WHERE document_version_id = @document_version_id
-        )
         AND %s
 )
 SELECT
@@ -797,7 +661,7 @@ INNER JOIN identities i ON i.id = p.identity_id
 
 	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
 
-	args := pgx.NamedArgs{"document_version_id": documentVersionID}
+	args := pgx.NamedArgs{"version_id": documentVersionID}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
@@ -823,19 +687,26 @@ func (p *MembershipProfiles) CountByDocumentVersionID(
 	documentVersionID gid.GID,
 ) (int, error) {
 	q := `
+WITH latest_quorum AS (
+    SELECT id
+    FROM document_version_approval_quorums
+    WHERE version_id = @version_id
+    ORDER BY created_at DESC
+    LIMIT 1
+)
 SELECT
-    COUNT(*)
+    COUNT(DISTINCT mp.id)
 FROM
     iam_membership_profiles mp
-INNER JOIN document_version_approvers dva ON mp.id = dva.approver_profile_id
+INNER JOIN document_version_approval_decisions dvad ON mp.id = dvad.approver_id
+INNER JOIN latest_quorum lq ON lq.id = dvad.quorum_id
 WHERE
     mp.%s
-    AND dva.document_version_id = @document_version_id
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
-	args := pgx.StrictNamedArgs{"document_version_id": documentVersionID}
+	args := pgx.StrictNamedArgs{"version_id": documentVersionID}
 	maps.Copy(args, scope.SQLArguments())
 
 	var count int

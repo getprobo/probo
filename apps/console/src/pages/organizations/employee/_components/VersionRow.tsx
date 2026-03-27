@@ -6,7 +6,7 @@ import { graphql, useFragment } from "react-relay";
 import type { VersionRowFragment$key } from "#/__generated__/core/VersionRowFragment.graphql";
 
 const fragment = graphql`
-  fragment VersionRowFragment on DocumentVersion {
+  fragment VersionRowFragment on EmployeeDocumentVersion {
     # eslint-disable-next-line relay/unused-fields
     id
     version

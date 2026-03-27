@@ -824,7 +824,7 @@ func (b *MeetingBuilder) Create() string {
 	return CreateMeeting(b.client, b.attrs)
 }
 
-func CreateDocument(c *testutil.Client, approverID string, attrs ...Attrs) string {
+func CreateDocument(c *testutil.Client, attrs ...Attrs) string {
 	c.T.Helper()
 
 	var a Attrs
@@ -844,7 +844,6 @@ func CreateDocument(c *testutil.Client, approverID string, attrs ...Attrs) strin
 
 	input := map[string]any{
 		"organizationId": c.GetOrganizationID().String(),
-		"approverIds":    []string{approverID},
 		"title":          a.getString("title", SafeName("Document")),
 		"content":        a.getString("content", "Document content"),
 		"documentType":   a.getString("documentType", "POLICY"),
@@ -868,13 +867,12 @@ func CreateDocument(c *testutil.Client, approverID string, attrs ...Attrs) strin
 }
 
 type DocumentBuilder struct {
-	client     *testutil.Client
-	approverID string
-	attrs      Attrs
+	client *testutil.Client
+	attrs  Attrs
 }
 
-func NewDocument(c *testutil.Client, approverID string) *DocumentBuilder {
-	return &DocumentBuilder{client: c, approverID: approverID, attrs: Attrs{}}
+func NewDocument(c *testutil.Client) *DocumentBuilder {
+	return &DocumentBuilder{client: c, attrs: Attrs{}}
 }
 
 func (b *DocumentBuilder) WithTitle(title string) *DocumentBuilder {
@@ -898,7 +896,7 @@ func (b *DocumentBuilder) WithClassification(classification string) *DocumentBui
 }
 
 func (b *DocumentBuilder) Create() string {
-	return CreateDocument(b.client, b.approverID, b.attrs)
+	return CreateDocument(b.client, b.attrs)
 }
 
 func CreateProcessingActivity(c *testutil.Client, attrs ...Attrs) string {

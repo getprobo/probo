@@ -92,6 +92,8 @@ const (
 	MailingListUpdateEntityType                uint16 = 66
 	FindingEntityType                          uint16 = 67
 	AuditLogEntryEntityType                    uint16 = 68
+	DocumentVersionApprovalQuorumEntityType    uint16 = 69
+	DocumentVersionApprovalDecisionEntityType  uint16 = 70
 )
 
 func NewEntityFromID(id gid.GID) (any, bool) {
@@ -226,6 +228,10 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &MailingListUpdate{ID: id}, true
 	case AuditLogEntryEntityType:
 		return &AuditLogEntry{ID: id}, true
+	case DocumentVersionApprovalDecisionEntityType:
+		return &DocumentVersionApprovalDecision{ID: id}, true
+	case DocumentVersionApprovalQuorumEntityType:
+		return &DocumentVersionApprovalQuorum{ID: id}, true
 	default:
 		return nil, false
 	}

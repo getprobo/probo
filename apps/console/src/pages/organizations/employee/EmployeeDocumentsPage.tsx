@@ -1,6 +1,6 @@
 import { usePageTitle } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
-import { Card, PageHeader, Tbody, Th, Thead, Tr } from "@probo/ui";
+import { Card, Tbody, Th, Thead, Tr } from "@probo/ui";
 import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 
 import type { EmployeeDocumentsPageQuery } from "#/__generated__/core/EmployeeDocumentsPageQuery.graphql";
@@ -46,19 +46,18 @@ export function EmployeeDocumentsPage(props: {
   usePageTitle(__("Documents"));
 
   return (
-    <div className="space-y-6">
-      <PageHeader title={__("Documents")} />
+    <>
       {documents.length > 0
         ? (
             <Card>
-              <table className="w-full">
+              <table className="w-full table-fixed">
                 <Thead>
                   <Tr>
-                    <Th className="min-w-0 pr-12">{__("Name")}</Th>
-                    <Th className="w-48">{__("Type")}</Th>
-                    <Th className="w-36">{__("Classification")}</Th>
-                    <Th className="w-40">{__("Last update")}</Th>
-                    <Th className="w-32">{__("Signed")}</Th>
+                    <Th className="text-left">{__("Name")}</Th>
+                    <Th className="w-48 text-left">{__("Type")}</Th>
+                    <Th className="w-36 text-left">{__("Classification")}</Th>
+                    <Th className="w-40 text-left">{__("Last update")}</Th>
+                    <Th className="w-32 text-left">{__("Signed")}</Th>
                   </Tr>
                 </Thead>
                 <Tbody>
@@ -85,6 +84,6 @@ export function EmployeeDocumentsPage(props: {
               </div>
             </Card>
           )}
-    </div>
+    </>
   );
 }

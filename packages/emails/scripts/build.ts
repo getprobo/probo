@@ -7,6 +7,7 @@ import * as React from "react";
 import MailingListUpdates from "../src/MailingListUpdates";
 import ConfirmEmail from "../src/ConfirmEmail";
 import DocumentExport from "../src/DocumentExport";
+import DocumentApproval from "../src/DocumentApproval";
 import DocumentSigning from "../src/DocumentSigning";
 import FrameworkExport from "../src/FrameworkExport";
 import Invitation from "../src/Invitation";
@@ -38,6 +39,10 @@ const templates: TemplateConfig[] = [
   {
     name: "invitation",
     render: () => Invitation(),
+  },
+  {
+    name: "document-approval",
+    render: () => DocumentApproval(),
   },
   {
     name: "document-signing",
