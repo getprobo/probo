@@ -171,10 +171,11 @@ jobs:
           REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           if [ "${{ github.event_name }}" = "pull_request" ]; then
-            for dir in apps/console apps/trust packages/ui packages/eslint-config packages/n8n-node; do
+            for dir in apps/console apps/trust packages/ui packages/eslint-config; do
               (cd "$dir" && npx eslint . --concurrency 4 --format stylish 2>/dev/null) | \
                 reviewdog -f=eslint -reporter=github-pr-review -filter-mode=nofilter -fail-level=error -name="eslint ($dir)"
             done
+            (cd packages/n8n-node && npx n8n-node lint)
           else
             npm run lint
           fi
