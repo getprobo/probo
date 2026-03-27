@@ -68,7 +68,8 @@ func (g *PromptInjectionGuardrail) Check(ctx context.Context, messages []llm.Mes
 				Parts: []llm.Part{llm.TextPart{Text: userText}},
 			},
 		},
-		MaxTokens: new(10),
+		MaxTokens:   new(10),
+		Temperature: new(0.0),
 	})
 	if err != nil {
 		// If the classifier fails, allow the message through rather than
