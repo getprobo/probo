@@ -779,6 +779,10 @@ func (r *mutationResolver) CreateOrganization(ctx context.Context, input types.C
 		},
 	)
 	if err != nil {
+		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
+			return nil, gqlutils.Conflict(ctx, err)
+		}
+
 		r.logger.ErrorCtx(ctx, "cannot create organization", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
