@@ -59,20 +59,20 @@ func (g *PromptInjectionGuardrail) Check(ctx context.Context, messages []llm.Mes
 	resp, err := g.client.ChatCompletion(
 		ctx,
 		&llm.ChatCompletionRequest{
-		Model: "gpt-4o-mini",
-		Messages: []llm.Message{
-			{
-				Role:  llm.RoleSystem,
-				Parts: []llm.Part{llm.TextPart{Text: promptInjectionClassifierPrompt}},
+			Model: "gpt-4o-mini",
+			Messages: []llm.Message{
+				{
+					Role:  llm.RoleSystem,
+					Parts: []llm.Part{llm.TextPart{Text: promptInjectionClassifierPrompt}},
+				},
+				{
+					Role:  llm.RoleUser,
+					Parts: []llm.Part{llm.TextPart{Text: userText}},
+				},
 			},
-			{
-				Role:  llm.RoleUser,
-				Parts: []llm.Part{llm.TextPart{Text: userText}},
-			},
+			MaxTokens:   new(10),
+			Temperature: new(0.0),
 		},
-		MaxTokens:   new(10),
-		Temperature: new(0.0),
-	},
 	)
 	if err != nil {
 		// If the classifier fails, allow the message through rather than

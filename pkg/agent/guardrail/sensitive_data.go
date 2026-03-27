@@ -58,7 +58,8 @@ func (g *SensitiveDataGuardrail) Check(_ context.Context, message llm.Message) (
 		"sk_test_",
 
 		// LLM provider keys
-		"sk-",
+		"sk-proj-", // OpenAI
+		"sk-ant-",  // Anthropic
 
 		// JWT tokens
 		"eyj", // base64-encoded JSON header

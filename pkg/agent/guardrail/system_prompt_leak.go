@@ -27,9 +27,12 @@ type SystemPromptLeakGuardrail struct {
 }
 
 func NewSystemPromptLeakGuardrail(fingerprints []string) *SystemPromptLeakGuardrail {
-	lowered := make([]string, len(fingerprints))
-	for i, f := range fingerprints {
-		lowered[i] = strings.ToLower(f)
+	lowered := make([]string, 0, len(fingerprints))
+	for _, f := range fingerprints {
+		if f == "" {
+			continue
+		}
+		lowered = append(lowered, strings.ToLower(f))
 	}
 
 	return &SystemPromptLeakGuardrail{fingerprints: lowered}

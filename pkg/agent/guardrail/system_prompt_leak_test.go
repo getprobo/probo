@@ -66,4 +66,14 @@ func TestSystemPromptLeakGuardrail_Check(t *testing.T) {
 		require.NoError(t, err)
 		assert.False(t, result.Tripwire)
 	})
+
+	t.Run("empty fingerprints are ignored", func(t *testing.T) {
+		t.Parallel()
+
+		g := guardrail.NewSystemPromptLeakGuardrail([]string{"", "secret phrase", ""})
+		result, err := g.Check(context.Background(), assistantMessage("hello world"))
+
+		require.NoError(t, err)
+		assert.False(t, result.Tripwire)
+	})
 }

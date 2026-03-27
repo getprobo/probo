@@ -66,6 +66,8 @@ func TestSensitiveDataGuardrail_Check(t *testing.T) {
 
 		// LLM provider keys
 		{"openai key", "The API key is sk-proj-abc123", true},
+		{"anthropic key", "Key: sk-ant-api03-abc123", true},
+		{"sk prefix not a false positive", "This is a risk-based approach to task-management.", false},
 
 		// JWT tokens
 		{"jwt token", "Token: eyJhbGciOiJIUzI1NiJ9.payload.sig", true},
