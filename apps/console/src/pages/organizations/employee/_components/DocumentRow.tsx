@@ -28,9 +28,15 @@ const fragment = graphql`
     id
     title
     documentType
-    classification
     signed
     updatedAt
+    lastVersion: versions(first: 1 orderBy: { field: CREATED_AT direction: DESC }) {
+      edges {
+        node {
+          classification
+        }
+      }
+    }
   }
 `;
 
@@ -42,6 +48,7 @@ export function DocumentRow({
   organizationId: string;
 }) {
   const document = useFragment<DocumentRowFragment$key>(fragment, fKey);
+  const lastVersion = document.lastVersion.edges[0].node;
   const { __ } = useTranslate();
 
   return (
@@ -52,7 +59,7 @@ export function DocumentRow({
       </Td>
       <Td className="w-36">
         <Badge variant="neutral">
-          {getDocumentClassificationLabel(__, document.classification)}
+          {getDocumentClassificationLabel(__, lastVersion.classification)}
         </Badge>
       </Td>
       <Td className="w-40">{formatDate(document.updatedAt)}</Td>

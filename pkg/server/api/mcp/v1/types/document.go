@@ -25,7 +25,6 @@ func NewDocument(d *coredata.Document) *Document {
 		OrganizationID:        d.OrganizationID,
 		Title:                 d.Title,
 		DocumentType:          d.DocumentType,
-		Classification:        d.Classification,
 		CurrentPublishedMajor: d.CurrentPublishedMajor,
 		CurrentPublishedMinor: d.CurrentPublishedMinor,
 		TrustCenterVisibility: d.TrustCenterVisibility,

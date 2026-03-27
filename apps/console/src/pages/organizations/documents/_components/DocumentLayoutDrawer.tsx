@@ -16,19 +16,18 @@ import { documentClassifications, documentTypes, formatDate, getDocumentClassifi
 import { useTranslate } from "@probo/i18n";
 import { Badge, Button, Drawer, IconCheckmark1, IconCrossLargeX, IconPencil, PropertyRow } from "@probo/ui";
 import { useState } from "react";
-import { useFragment } from "react-relay";
+import { useFragment, useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 import { z } from "zod";
 
 import type { DocumentLayoutDrawer_documentFragment$key } from "#/__generated__/core/DocumentLayoutDrawer_documentFragment.graphql";
+import type { DocumentLayoutDrawer_updateClassificationMutation } from "#/__generated__/core/DocumentLayoutDrawer_updateClassificationMutation.graphql";
 import type { DocumentLayoutDrawer_versionFragment$key } from "#/__generated__/core/DocumentLayoutDrawer_versionFragment.graphql";
 import type { DocumentLayoutDrawerMutation } from "#/__generated__/core/DocumentLayoutDrawerMutation.graphql";
 import { ControlledField } from "#/components/form/ControlledField";
 import { DocumentClassificationOptions } from "#/components/form/DocumentClassificationOptions";
 import { DocumentTypeOptions } from "#/components/form/DocumentTypeOptions";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
-import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
-
 const documentFragment = graphql`
   fragment DocumentLayoutDrawer_documentFragment on Document {
     id
@@ -57,6 +56,16 @@ const updateDocumentMutation = graphql`
       document {
         id
         documentType
+      }
+    }
+  }
+`;
+
+const updateClassificationMutation = graphql`
+  mutation DocumentLayoutDrawer_updateClassificationMutation($input: UpdateDocumentVersionInput!) {
+    updateDocumentVersion(input: $input) {
+      documentVersion {
+        id
         classification
       }
     }
@@ -65,6 +74,9 @@ const updateDocumentMutation = graphql`
 
 const schema = z.object({
   documentType: z.enum(documentTypes),
+});
+
+const classificationSchema = z.object({
   classification: z.enum(documentClassifications),
 });
 
@@ -90,47 +102,56 @@ export function DocumentLayoutDrawer(props: {
     {
       defaultValues: {
         documentType: document.documentType,
+      },
+    },
+  );
+
+  const {
+    control: classificationControl,
+    handleSubmit: handleClassificationSubmit,
+    reset: resetClassification,
+  } = useFormWithSchema(
+    classificationSchema,
+    {
+      defaultValues: {
         classification: version.classification,
       },
     },
   );
 
   const [updateDocument, isUpdatingDocument]
-    = useMutationWithToasts<DocumentLayoutDrawerMutation>(
-      updateDocumentMutation,
-      {
-        successMessage: __("Document updated successfully."),
-        errorMessage: __("Failed to update document"),
-      },
-    );
+    = useMutation<DocumentLayoutDrawerMutation>(updateDocumentMutation);
 
-  const handleUpdateDocumentType = async (data: {
+  const [updateClassification, isUpdatingClassification]
+    = useMutation<DocumentLayoutDrawer_updateClassificationMutation>(updateClassificationMutation);
+
+  const handleUpdateDocumentType = (data: {
     documentType: (typeof documentTypes)[number];
   }) => {
-    await updateDocument({
+    updateDocument({
       variables: {
         input: {
           id: document.id,
           documentType: data.documentType,
         },
       },
-      onSuccess: () => {
+      onCompleted: () => {
         setIsEditingType(false);
       },
     });
   };
 
-  const handleUpdateClassification = async (data: {
+  const handleUpdateClassification = (data: {
     classification: (typeof documentClassifications)[number];
   }) => {
-    await updateDocument({
+    updateClassification({
       variables: {
         input: {
-          id: document.id,
+          documentVersionId: version.id,
           classification: data.classification,
         },
       },
-      onSuccess: () => {
+      onCompleted: () => {
         setIsEditingClassification(false);
       },
     });
@@ -176,16 +197,16 @@ export function DocumentLayoutDrawer(props: {
         {isEditingClassification
           ? (
               <EditablePropertyContent
-                onSave={() => void handleSubmit(handleUpdateClassification)()}
+                onSave={() => void handleClassificationSubmit(handleUpdateClassification)()}
                 onCancel={() => {
                   setIsEditingClassification(false);
-                  reset();
+                  resetClassification();
                 }}
-                disabled={isUpdatingDocument}
+                disabled={isUpdatingClassification}
               >
                 <ControlledField
                   name="classification"
-                  control={control}
+                  control={classificationControl}
                   type="select"
                 >
                   <DocumentClassificationOptions />
@@ -195,13 +216,10 @@ export function DocumentLayoutDrawer(props: {
           : (
               <ReadOnlyPropertyContent
                 onEdit={() => setIsEditingClassification(true)}
-                canEdit={canEdit}
+                canEdit={canEdit && isDraft}
               >
                 <div className="text-sm text-txt-secondary">
-                  {getDocumentClassificationLabel(
-                    __,
-                    version.classification,
-                  )}
+                  {getDocumentClassificationLabel(__, version.classification)}
                 </div>
               </ReadOnlyPropertyContent>
             )}

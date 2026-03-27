@@ -42,13 +42,12 @@ type (
 	}
 
 	EmployeeDocument struct {
-		ID             gid.GID
-		Title          string
-		Description    *string
-		DocumentType   coredata.DocumentType
-		Classification coredata.DocumentClassification
-		CreatedAt      time.Time
-		UpdatedAt      time.Time
+		ID           gid.GID
+		Title        string
+		Description  *string
+		DocumentType coredata.DocumentType
+		CreatedAt    time.Time
+		UpdatedAt    time.Time
 
 		FilterMode EmployeeDocumentFilterMode
 	}
@@ -69,6 +68,7 @@ type (
 		Major          int
 		Minor          int
 		Status         coredata.DocumentVersionStatus
+		Classification coredata.DocumentClassification
 		PublishedAt    *time.Time
 		CreatedAt      time.Time
 		UpdatedAt      time.Time

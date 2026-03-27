@@ -15,12 +15,11 @@
 import { formatDate, getDocumentClassificationLabel, getDocumentTypeLabel, sprintf } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import { ActionDropdown, Badge, Checkbox, DropdownItem, IconTrashCan, Td, Tr, useConfirm } from "@probo/ui";
-import { useFragment } from "react-relay";
+import { useFragment, useMutation } from "react-relay";
 import { type DataID, graphql } from "relay-runtime";
 
 import type { DocumentListItem_deleteMutation } from "#/__generated__/core/DocumentListItem_deleteMutation.graphql";
 import type { DocumentListItemFragment$key } from "#/__generated__/core/DocumentListItemFragment.graphql";
-import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 const fragment = graphql`
@@ -28,7 +27,6 @@ const fragment = graphql`
     id
     title
     documentType
-    classification
     updatedAt
     canDelete: permission(action: "core:document:delete")
     recentVersions: versions(first: 2 orderBy: { field: CREATED_AT direction: DESC }) {
@@ -38,6 +36,7 @@ const fragment = graphql`
           status
           major
           minor
+          classification
           approvalQuorums(first: 1, orderBy: { field: CREATED_AT, direction: DESC }) {
             edges {
               node {
@@ -117,23 +116,21 @@ export function DocumentListItem(props: {
     PUBLISHED: __("Published"),
   } as const;
 
-  const [deleteDocument] = useMutationWithToasts<DocumentListItem_deleteMutation>(
-    deleteDocumentMutation,
-    {
-      successMessage: __("Document deleted successfully."),
-      errorMessage: __("Failed to delete document"),
-    },
-  );
+  const [deleteDocument] = useMutation<DocumentListItem_deleteMutation>(deleteDocumentMutation);
   const confirm = useConfirm();
 
   const handleDelete = () => {
     confirm(
       () =>
-        deleteDocument({
-          variables: {
-            connections: [connectionId],
-            input: { documentId: document.id },
-          },
+        new Promise<void>((resolve, reject) => {
+          deleteDocument({
+            variables: {
+              connections: [connectionId],
+              input: { documentId: document.id },
+            },
+            onCompleted: () => resolve(),
+            onError: err => reject(err),
+          });
         }),
       {
         message: sprintf(
@@ -171,7 +168,7 @@ export function DocumentListItem(props: {
         {getDocumentTypeLabel(__, document.documentType)}
       </Td>
       <Td className="w-32">
-        {getDocumentClassificationLabel(__, document.classification)}
+        {getDocumentClassificationLabel(__, lastVersion.classification)}
       </Td>
       <Td className="w-60">
         {(() => {

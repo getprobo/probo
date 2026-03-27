@@ -104,7 +104,6 @@ func TestDocument_Create(t *testing.T) {
 								id
 								title
 								documentType
-								classification
 							}
 						}
 					}
@@ -120,10 +119,9 @@ func TestDocument_Create(t *testing.T) {
 				CreateDocument struct {
 					DocumentEdge struct {
 						Node struct {
-							ID             string `json:"id"`
-							Title          string `json:"title"`
-							DocumentType   string `json:"documentType"`
-							Classification string `json:"classification"`
+							ID           string `json:"id"`
+							Title        string `json:"title"`
+							DocumentType string `json:"documentType"`
 						} `json:"node"`
 					} `json:"documentEdge"`
 				} `json:"createDocument"`

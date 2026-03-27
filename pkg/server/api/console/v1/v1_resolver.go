@@ -1664,6 +1664,7 @@ func (r *employeeDocumentResolver) Versions(ctx context.Context, obj *types.Empl
 			Major:          v.Major,
 			Minor:          v.Minor,
 			Status:         v.Status,
+			Classification: v.Classification,
 			PublishedAt:    v.PublishedAt,
 			CreatedAt:      v.CreatedAt,
 			UpdatedAt:      v.UpdatedAt,
@@ -4669,7 +4670,6 @@ func (r *mutationResolver) UpdateDocument(ctx context.Context, input types.Updat
 		probo.UpdateDocumentRequest{
 			DocumentID:            input.ID,
 			Title:                 input.Title,
-			Classification:        input.Classification,
 			DocumentType:          input.DocumentType,
 			TrustCenterVisibility: input.TrustCenterVisibility,
 		},
@@ -5410,8 +5410,9 @@ func (r *mutationResolver) UpdateDocumentVersion(ctx context.Context, input type
 	documentVersion, err := prb.Documents.UpdateVersion(
 		ctx,
 		probo.UpdateDocumentVersionRequest{
-			ID:      input.DocumentVersionID,
-			Content: input.Content,
+			ID:             input.DocumentVersionID,
+			Content:        input.Content,
+			Classification: input.Classification,
 		},
 	)
 	if err != nil {
@@ -10243,13 +10244,12 @@ func (r *viewerResolver) SignableDocuments(ctx context.Context, obj *types.Viewe
 	employeeDocuments := make([]*types.EmployeeDocument, len(documentsPage.Data))
 	for i, doc := range documentsPage.Data {
 		employeeDocuments[i] = &types.EmployeeDocument{
-			ID:             doc.ID,
-			Title:          doc.Title,
-			DocumentType:   doc.DocumentType,
-			Classification: doc.Classification,
-			CreatedAt:      doc.CreatedAt,
-			UpdatedAt:      doc.UpdatedAt,
-			FilterMode:     types.EmployeeDocumentFilterModeSignature,
+			ID:           doc.ID,
+			Title:        doc.Title,
+			DocumentType: doc.DocumentType,
+			CreatedAt:    doc.CreatedAt,
+			UpdatedAt:    doc.UpdatedAt,
+			FilterMode:   types.EmployeeDocumentFilterModeSignature,
 		}
 	}
 
@@ -10280,13 +10280,12 @@ func (r *viewerResolver) SignableDocument(ctx context.Context, obj *types.Viewer
 	}
 
 	return &types.EmployeeDocument{
-		ID:             document.ID,
-		Title:          document.Title,
-		DocumentType:   document.DocumentType,
-		Classification: document.Classification,
-		CreatedAt:      document.CreatedAt,
-		UpdatedAt:      document.UpdatedAt,
-		FilterMode:     types.EmployeeDocumentFilterModeSignature,
+		ID:           document.ID,
+		Title:        document.Title,
+		DocumentType: document.DocumentType,
+		CreatedAt:    document.CreatedAt,
+		UpdatedAt:    document.UpdatedAt,
+		FilterMode:   types.EmployeeDocumentFilterModeSignature,
 	}, nil
 }
 
@@ -10324,13 +10323,12 @@ func (r *viewerResolver) ApprovableDocuments(ctx context.Context, obj *types.Vie
 	employeeDocuments := make([]*types.EmployeeDocument, len(documentsPage.Data))
 	for i, doc := range documentsPage.Data {
 		employeeDocuments[i] = &types.EmployeeDocument{
-			ID:             doc.ID,
-			Title:          doc.Title,
-			DocumentType:   doc.DocumentType,
-			Classification: doc.Classification,
-			CreatedAt:      doc.CreatedAt,
-			UpdatedAt:      doc.UpdatedAt,
-			FilterMode:     types.EmployeeDocumentFilterModeApproval,
+			ID:           doc.ID,
+			Title:        doc.Title,
+			DocumentType: doc.DocumentType,
+			CreatedAt:    doc.CreatedAt,
+			UpdatedAt:    doc.UpdatedAt,
+			FilterMode:   types.EmployeeDocumentFilterModeApproval,
 		}
 	}
 
@@ -10361,13 +10359,12 @@ func (r *viewerResolver) ApprovableDocument(ctx context.Context, obj *types.View
 	}
 
 	return &types.EmployeeDocument{
-		ID:             document.ID,
-		Title:          document.Title,
-		DocumentType:   document.DocumentType,
-		Classification: document.Classification,
-		CreatedAt:      document.CreatedAt,
-		UpdatedAt:      document.UpdatedAt,
-		FilterMode:     types.EmployeeDocumentFilterModeApproval,
+		ID:           document.ID,
+		Title:        document.Title,
+		DocumentType: document.DocumentType,
+		CreatedAt:    document.CreatedAt,
+		UpdatedAt:    document.UpdatedAt,
+		FilterMode:   types.EmployeeDocumentFilterModeApproval,
 	}, nil
 }
 

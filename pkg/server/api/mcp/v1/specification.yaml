@@ -5186,7 +5186,6 @@ components:
         - organization_id
         - title
         - document_type
-        - classification
         - trust_center_visibility
         - status
         - created_at
@@ -5204,9 +5203,6 @@ components:
         document_type:
           $ref: "#/components/schemas/DocumentType"
           description: Document type
-        classification:
-          $ref: "#/components/schemas/DocumentClassification"
-          description: Document classification
         current_published_major:
           type:
             - integer
@@ -5459,9 +5455,6 @@ components:
         title:
           type: string
           description: Document title
-        classification:
-          $ref: "#/components/schemas/DocumentClassification"
-          description: Document classification
         document_type:
           $ref: "#/components/schemas/DocumentType"
           description: Document type
@@ -5580,7 +5573,6 @@ components:
       type: object
       required:
         - document_version_id
-        - content
       properties:
         document_version_id:
           $ref: "#/components/schemas/GID"
@@ -5588,6 +5580,9 @@ components:
         content:
           type: string
           description: Document content
+        classification:
+          $ref: "#/components/schemas/DocumentClassification"
+          description: Document classification
 
     UpdateDocumentVersionOutput:
       type: object

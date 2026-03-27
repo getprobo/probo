@@ -30,18 +30,17 @@ import (
 
 type (
 	Document struct {
-		ID                    gid.GID                `db:"id"`
-		OrganizationID        gid.GID                `db:"organization_id"`
-		Title                 string                 `db:"title"`
-		DocumentType          DocumentType           `db:"document_type"`
-		Classification        DocumentClassification `db:"classification"`
-		CurrentPublishedMajor *int                   `db:"current_published_major"`
-		CurrentPublishedMinor *int                   `db:"current_published_minor"`
-		TrustCenterVisibility TrustCenterVisibility  `db:"trust_center_visibility"`
-		Status                DocumentStatus         `db:"status"`
-		ArchivedAt            *time.Time             `db:"archived_at"`
-		CreatedAt             time.Time              `db:"created_at"`
-		UpdatedAt             time.Time              `db:"updated_at"`
+		ID                    gid.GID               `db:"id"`
+		OrganizationID        gid.GID               `db:"organization_id"`
+		Title                 string                `db:"title"`
+		DocumentType          DocumentType          `db:"document_type"`
+		CurrentPublishedMajor *int                  `db:"current_published_major"`
+		CurrentPublishedMinor *int                  `db:"current_published_minor"`
+		TrustCenterVisibility TrustCenterVisibility `db:"trust_center_visibility"`
+		Status                DocumentStatus        `db:"status"`
+		ArchivedAt            *time.Time            `db:"archived_at"`
+		CreatedAt             time.Time             `db:"created_at"`
+		UpdatedAt             time.Time             `db:"updated_at"`
 	}
 
 	Documents []*Document
@@ -128,7 +127,6 @@ SELECT
     organization_id,
     title,
     document_type,
-    classification,
     current_published_major,
     current_published_minor,
     trust_center_visibility,
@@ -182,7 +180,6 @@ SELECT
     organization_id,
     title,
     document_type,
-    classification,
     current_published_major,
     current_published_minor,
     trust_center_visibility,
@@ -237,7 +234,6 @@ SELECT
     organization_id,
     title,
     document_type,
-    classification,
     current_published_major,
     current_published_minor,
     trust_center_visibility,
@@ -321,7 +317,6 @@ SELECT
     organization_id,
     title,
     document_type,
-    classification,
     current_published_major,
     current_published_minor,
     trust_center_visibility,
@@ -374,7 +369,6 @@ SELECT
     organization_id,
     title,
     document_type,
-    classification,
     current_published_major,
     current_published_minor,
     trust_center_visibility,
@@ -441,7 +435,6 @@ SELECT
 	organization_id,
 	COALESCE(published_title, title) AS title,
 	document_type,
-	classification,
 	current_published_major,
 	current_published_minor,
 	trust_center_visibility,
@@ -491,7 +484,6 @@ INSERT INTO
 		organization_id,
 		title,
 		document_type,
-		classification,
 		current_published_major,
 		current_published_minor,
 		trust_center_visibility,
@@ -506,7 +498,6 @@ VALUES (
     @organization_id,
     @title,
     @document_type,
-    @classification,
     @current_published_major,
     @current_published_minor,
     @trust_center_visibility,
@@ -523,7 +514,6 @@ VALUES (
 		"organization_id":         p.OrganizationID,
 		"title":                   p.Title,
 		"document_type":           p.DocumentType,
-		"classification":          p.Classification,
 		"current_published_major": p.CurrentPublishedMajor,
 		"current_published_minor": p.CurrentPublishedMinor,
 		"trust_center_visibility": p.TrustCenterVisibility,
@@ -586,7 +576,6 @@ SET
 	current_published_major = @current_published_major,
 	current_published_minor = @current_published_minor,
 	document_type = @document_type,
-	classification = @classification,
 	trust_center_visibility = @trust_center_visibility,
 	status = @status,
 	archived_at = @archived_at,
@@ -605,7 +594,6 @@ WHERE
 		"current_published_major": p.CurrentPublishedMajor,
 		"current_published_minor": p.CurrentPublishedMinor,
 		"document_type":           p.DocumentType,
-		"classification":          p.Classification,
 		"trust_center_visibility": p.TrustCenterVisibility,
 		"status":                  p.Status,
 		"archived_at":             p.ArchivedAt,
@@ -678,7 +666,6 @@ SELECT
 	scoped_documents.organization_id,
 	scoped_documents.title,
 	scoped_documents.document_type,
-	scoped_documents.classification,
 	scoped_documents.current_published_major,
 	scoped_documents.current_published_minor,
 	scoped_documents.trust_center_visibility,
@@ -770,7 +757,6 @@ SELECT
 	scoped_documents.organization_id,
 	scoped_documents.title,
 	scoped_documents.document_type,
-	scoped_documents.classification,
 	scoped_documents.current_published_major,
 	scoped_documents.current_published_minor,
 	scoped_documents.trust_center_visibility,

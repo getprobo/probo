@@ -219,12 +219,14 @@ func (s *DocumentService) exportPDFData(
 		return nil, err
 	}
 
-	classification := docgen.ClassificationInternal
-	switch document.DocumentType {
-	case coredata.DocumentTypePolicy:
+	classification := docgen.ClassificationSecret
+	switch version.Classification {
+	case coredata.DocumentClassificationPublic:
+		classification = docgen.ClassificationPublic
+	case coredata.DocumentClassificationInternal:
+		classification = docgen.ClassificationInternal
+	case coredata.DocumentClassificationConfidential:
 		classification = docgen.ClassificationConfidential
-	case coredata.DocumentTypeGovernance:
-		classification = docgen.ClassificationSecret
 	}
 
 	horizontalLogoBase64 := ""

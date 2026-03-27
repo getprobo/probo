@@ -85,14 +85,14 @@ type (
 	UpdateDocumentRequest struct {
 		DocumentID            gid.GID
 		Title                 *string
-		Classification        *coredata.DocumentClassification
 		DocumentType          *coredata.DocumentType
 		TrustCenterVisibility *coredata.TrustCenterVisibility
 	}
 
 	UpdateDocumentVersionRequest struct {
-		ID      gid.GID
-		Content string
+		ID             gid.GID
+		Content        *string
+		Classification *coredata.DocumentClassification
 	}
 
 	RequestSignatureRequest struct {
@@ -133,7 +133,6 @@ func (udr *UpdateDocumentRequest) Validate() error {
 
 	v.Check(udr.DocumentID, "document_id", validator.Required(), validator.GID(coredata.DocumentEntityType))
 	v.Check(udr.Title, "title", validator.SafeTextNoNewLine(TitleMaxLength))
-	v.Check(udr.Classification, "classification", validator.OneOfSlice(coredata.DocumentClassifications()))
 	v.Check(udr.DocumentType, "document_type", validator.OneOfSlice(coredata.DocumentTypes()))
 	v.Check(udr.TrustCenterVisibility, "trust_center_visibility", validator.OneOfSlice(coredata.TrustCenterVisibilities()))
 
@@ -144,7 +143,8 @@ func (udvr *UpdateDocumentVersionRequest) Validate() error {
 	v := validator.New()
 
 	v.Check(udvr.ID, "id", validator.Required(), validator.GID(coredata.DocumentVersionEntityType))
-	v.Check(udvr.Content, "content", validator.Required(), validator.NotEmpty(), validator.MaxLen(documentMaxLength))
+	v.Check(udvr.Content, "content", validator.NotEmpty(), validator.MaxLen(documentMaxLength))
+	v.Check(udvr.Classification, "classification", validator.OneOfSlice(coredata.DocumentClassifications()))
 
 	return v.Error()
 }
@@ -509,7 +509,6 @@ func (s *DocumentService) Create(
 		Title:                 req.Title,
 		DocumentType:          req.DocumentType,
 		TrustCenterVisibility: coredata.TrustCenterVisibilityNone,
-		Classification:        req.Classification,
 		Status:                coredata.DocumentStatusActive,
 		CreatedAt:             now,
 		UpdatedAt:             now,
@@ -763,8 +762,12 @@ func (s *DocumentService) UpdateVersion(
 			}
 
 			documentVersion.Title = document.Title
-			documentVersion.Classification = document.Classification
-			documentVersion.Content = req.Content
+			if req.Content != nil {
+				documentVersion.Content = *req.Content
+			}
+			if req.Classification != nil {
+				documentVersion.Classification = *req.Classification
+			}
 			documentVersion.UpdatedAt = time.Now()
 
 			if err := documentVersion.Update(ctx, conn, s.svc.scope); err != nil {
@@ -1002,7 +1005,7 @@ func (s *DocumentService) CreateDraft(
 			draftVersion.Title = document.Title
 			draftVersion.Major = latestVersion.Major
 			draftVersion.Minor = latestVersion.Minor + 1
-			draftVersion.Classification = document.Classification
+			draftVersion.Classification = latestVersion.Classification
 			draftVersion.Content = latestVersion.Content
 			draftVersion.Status = coredata.DocumentVersionStatusDraft
 			draftVersion.CreatedAt = now
@@ -1533,10 +1536,6 @@ func (s *DocumentService) Update(
 				document.Title = *req.Title
 			}
 
-			if req.Classification != nil {
-				document.Classification = *req.Classification
-			}
-
 			if req.DocumentType != nil {
 				document.DocumentType = *req.DocumentType
 			}
@@ -1559,7 +1558,6 @@ func (s *DocumentService) Update(
 			err := draftVersion.LoadLatestVersion(ctx, tx, s.svc.scope, req.DocumentID)
 			if err == nil && draftVersion.Status == coredata.DocumentVersionStatusDraft {
 				draftVersion.Title = document.Title
-				draftVersion.Classification = document.Classification
 				draftVersion.UpdatedAt = now
 
 				if err := draftVersion.Update(ctx, tx, s.svc.scope); err != nil {
@@ -1934,7 +1932,7 @@ func exportDocumentPDF(
 	}
 
 	classification := docgen.ClassificationSecret
-	switch document.Classification {
+	switch version.Classification {
 	case coredata.DocumentClassificationPublic:
 		classification = docgen.ClassificationPublic
 	case coredata.DocumentClassificationInternal:
