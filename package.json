@@ -23,11 +23,11 @@
     "schema": "./pkg/server/api/console/v1/schema.graphql"
   },
   "overrides": {
-    "form-data": "^4.0.4",
-    "minimatch": "^9.0.9",
-    "@typescript-eslint/typescript-estree": {
-      "minimatch": "^9.0.9"
-    }
+    "brace-expansion": "^5.0.5",
+    "minimatch@9": "^9.0.9",
+    "langsmith": "^0.5.0",
+    "handlebars": "4.7.9",
+    "@langchain/community": "^1.1.25"
   },
   "license": "MIT",
   "packageManager": "npm@11.8.0",
