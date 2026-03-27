@@ -1,0 +1,2 @@
+exclude_paths:
+  - "pkg/agent/guardrail/sensitive_data_test.go"
