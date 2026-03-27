@@ -32,6 +32,7 @@ require (
 	github.com/stretchr/testify v1.11.1
 	github.com/vektah/gqlparser/v2 v2.5.32
 	github.com/vikstrous/dataloadgen v0.0.10
+	github.com/yuin/goldmark v1.4.13
 	go.gearno.de/crypto/uuid v0.1.1-0.20251208105319-3f587312a712
 	go.gearno.de/kit v0.1.1
 	go.gearno.de/x/ref v0.0.0-20260216110753-a700c951377c
