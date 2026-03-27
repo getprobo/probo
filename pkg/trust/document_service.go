@@ -244,7 +244,8 @@ func (s *DocumentService) exportPDFData(
 	docData := docgen.DocumentData{
 		Title:                       version.Title,
 		Content:                     version.Content,
-		Version:                     version.VersionNumber,
+		Major:                       version.Major,
+		Minor:                       version.Minor,
 		Classification:              classification,
 		Approvers:                   approverNames,
 		PublishedAt:                 version.PublishedAt,

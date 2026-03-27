@@ -960,26 +960,13 @@ func (s *DocumentApprovalService) publishVersion(
 		return fmt.Errorf("cannot load document version: %w", err)
 	}
 
-	document := &coredata.Document{}
-	if err := document.LoadByID(ctx, tx, s.svc.scope, version.DocumentID); err != nil {
-		return fmt.Errorf("cannot load document: %w", err)
-	}
+	_, _, err := s.svc.Documents.publishMajorVersionInTx(
+		ctx,
+		tx,
+		version.DocumentID,
+		nil,
+		false,
+	)
 
-	now := time.Now()
-	document.CurrentPublishedVersion = &version.VersionNumber
-	document.UpdatedAt = now
-
-	version.Status = coredata.DocumentVersionStatusPublished
-	version.PublishedAt = &now
-	version.UpdatedAt = now
-
-	if err := document.Update(ctx, tx, s.svc.scope); err != nil {
-		return fmt.Errorf("cannot update document: %w", err)
-	}
-
-	if err := version.Update(ctx, tx, s.svc.scope); err != nil {
-		return fmt.Errorf("cannot update document version: %w", err)
-	}
-
-	return nil
+	return err
 }

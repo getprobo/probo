@@ -16,7 +16,7 @@ const fragment = graphql`
       edges {
         node {
           id
-          currentPublishedVersion
+          currentPublishedMajor
           ...CompliancePageDocumentListItem_documentFragment
         }
       }
@@ -30,7 +30,7 @@ export function CompliancePageDocumentList(props: { fragmentRef: CompliancePageD
   const { __ } = useTranslate();
 
   const { compliancePage, documents } = useFragment<CompliancePageDocumentListFragment$key>(fragment, fragmentRef);
-  const publishedDocuments = documents.edges.filter(({ node }) => node.currentPublishedVersion != null);
+  const publishedDocuments = documents.edges.filter(({ node }) => node.currentPublishedMajor != null);
 
   return (
     <div className="space-y-[10px]">

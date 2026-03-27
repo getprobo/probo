@@ -80,13 +80,14 @@ func NewDocument(document *coredata.Document) *Document {
 		Organization: &Organization{
 			ID: document.OrganizationID,
 		},
-		DocumentType:            document.DocumentType,
-		Classification:          document.Classification,
-		CurrentPublishedVersion: document.CurrentPublishedVersion,
-		TrustCenterVisibility:   document.TrustCenterVisibility,
-		Status:                  document.Status,
-		ArchivedAt:              document.ArchivedAt,
-		CreatedAt:               document.CreatedAt,
-		UpdatedAt:               document.UpdatedAt,
+		DocumentType:          document.DocumentType,
+		Classification:        document.Classification,
+		CurrentPublishedMajor: document.CurrentPublishedMajor,
+		CurrentPublishedMinor: document.CurrentPublishedMinor,
+		TrustCenterVisibility: document.TrustCenterVisibility,
+		Status:                document.Status,
+		ArchivedAt:            document.ArchivedAt,
+		CreatedAt:             document.CreatedAt,
+		UpdatedAt:             document.UpdatedAt,
 	}
 }

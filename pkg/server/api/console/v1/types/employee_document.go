@@ -66,7 +66,8 @@ type (
 	EmployeeDocumentVersion struct {
 		ID             gid.GID
 		OrganizationID gid.GID
-		Version        int
+		Major          int
+		Minor          int
 		Status         coredata.DocumentVersionStatus
 		PublishedAt    *time.Time
 		CreatedAt      time.Time

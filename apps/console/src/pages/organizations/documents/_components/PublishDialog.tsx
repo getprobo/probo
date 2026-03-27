@@ -18,7 +18,8 @@ import { graphql } from "relay-runtime";
 import { z } from "zod";
 
 import type { PublishDialog_documentFragment$key } from "#/__generated__/core/PublishDialog_documentFragment.graphql";
-import type { PublishDialog_publishMutation } from "#/__generated__/core/PublishDialog_publishMutation.graphql";
+import type { PublishDialog_publishMajorMutation } from "#/__generated__/core/PublishDialog_publishMajorMutation.graphql";
+import type { PublishDialog_publishMinorMutation } from "#/__generated__/core/PublishDialog_publishMinorMutation.graphql";
 import type { PublishDialog_requestApprovalMutation } from "#/__generated__/core/PublishDialog_requestApprovalMutation.graphql";
 import { PeopleMultiSelectField } from "#/components/form/PeopleMultiSelectField";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
@@ -62,9 +63,24 @@ const documentFragment = graphql`
   }
 `;
 
-const publishMutation = graphql`
-  mutation PublishDialog_publishMutation($input: PublishDocumentVersionInput!) {
-    publishDocumentVersion(input: $input) {
+const publishMajorMutation = graphql`
+  mutation PublishDialog_publishMajorMutation($input: PublishMajorDocumentVersionInput!) {
+    publishMajorDocumentVersion(input: $input) {
+      document {
+        id
+        status
+      }
+      documentVersion {
+        id
+        status
+      }
+    }
+  }
+`;
+
+const publishMinorMutation = graphql`
+  mutation PublishDialog_publishMinorMutation($input: PublishMinorDocumentVersionInput!) {
+    publishMinorDocumentVersion(input: $input) {
       document {
         id
         status
@@ -160,36 +176,52 @@ export function PublishDialog({
     },
   }));
 
-  const [publishVersion, isPublishing] = useMutation<PublishDialog_publishMutation>(publishMutation);
-  const [requestApproval, isRequesting] = useMutation<PublishDialog_requestApprovalMutation>(requestApprovalMutation);
+  const [publishMajor, isPublishingMajor]
+    = useMutation<PublishDialog_publishMajorMutation>(publishMajorMutation);
+  const [publishMinor, isPublishingMinor]
+    = useMutation<PublishDialog_publishMinorMutation>(publishMinorMutation);
+  const [requestApproval, isRequesting]
+    = useMutation<PublishDialog_requestApprovalMutation>(requestApprovalMutation);
 
-  const isBusy = isPublishing || isRequesting;
+  const isBusy = isPublishingMajor || isPublishingMinor || isRequesting;
   const approverIds = watch("approverIds");
-  const actionRef = useRef<"publish" | "request-approval">("publish");
+  const actionRef = useRef<"publish" | "publish-minor" | "request-approval">("publish");
 
-  const handlePublish = (data: z.infer<typeof schema>) => {
-    publishVersion({
+  const onPublishCompleted = (_: unknown, errors: ReadonlyArray<{ message: string }> | null) => {
+    if (errors?.length) {
+      toast({
+        title: __("Error"),
+        description: formatError(__("Failed to publish document"), [...errors]),
+        variant: "error",
+      });
+    } else {
+      toast({
+        title: __("Success"),
+        description: __("Document published successfully."),
+        variant: "success",
+      });
+      dialogRef.current?.close();
+      onSuccess();
+    }
+  };
+
+  const onPublishError = (error: Error) => {
+    toast({ title: __("Error"), description: error.message, variant: "error" });
+  };
+
+  const handlePublishMajor = (data: z.infer<typeof schema>) => {
+    publishMajor({
       variables: { input: { documentId, changelog: data.changelog } },
-      onCompleted(_, errors) {
-        if (errors?.length) {
-          toast({
-            title: __("Error"),
-            description: formatError(__("Failed to publish document"), errors),
-            variant: "error",
-          });
-        } else {
-          toast({
-            title: __("Success"),
-            description: __("Document published successfully."),
-            variant: "success",
-          });
-          dialogRef.current?.close();
-          onSuccess();
-        }
-      },
-      onError(error) {
-        toast({ title: __("Error"), description: error.message, variant: "error" });
-      },
+      onCompleted: onPublishCompleted,
+      onError: onPublishError,
+    });
+  };
+
+  const handlePublishMinor = (data: z.infer<typeof schema>) => {
+    publishMinor({
+      variables: { input: { documentId, changelog: data.changelog } },
+      onCompleted: onPublishCompleted,
+      onError: onPublishError,
     });
   };
 
@@ -231,7 +263,9 @@ export function PublishDialog({
       <form
         onSubmit={e => void handleSubmit((data) => {
           if (actionRef.current === "publish") {
-            handlePublish(data);
+            handlePublishMajor(data);
+          } else if (actionRef.current === "publish-minor") {
+            handlePublishMinor(data);
           } else {
             onRequestApproval(data);
           }
@@ -284,38 +318,34 @@ export function PublishDialog({
           </div>
         </DialogContent>
         <DialogFooter>
-          {hasPendingApproval
-            ? (
-                <Button
-                  type="submit"
-                  icon={IconUpload}
-                  onClick={() => { actionRef.current = "publish"; }}
-                  disabled={isBusy}
-                >
-                  {__("Publish now")}
-                </Button>
-              )
-            : (
-                <>
-                  <Button
-                    type="submit"
-                    variant="secondary"
-                    icon={IconUpload}
-                    onClick={() => { actionRef.current = "publish"; }}
-                    disabled={isBusy}
-                  >
-                    {__("Publish now")}
-                  </Button>
-                  <Button
-                    type="submit"
-                    icon={IconSend}
-                    onClick={() => { actionRef.current = "request-approval"; }}
-                    disabled={isBusy || approverIds.length === 0}
-                  >
-                    {__("Request approval")}
-                  </Button>
-                </>
-              )}
+          <Button
+            type="submit"
+            variant="secondary"
+            icon={IconUpload}
+            onClick={() => { actionRef.current = "publish-minor"; }}
+            disabled={isBusy}
+          >
+            {__("Publish as minor")}
+          </Button>
+          <Button
+            type="submit"
+            variant="secondary"
+            icon={IconUpload}
+            onClick={() => { actionRef.current = "publish"; }}
+            disabled={isBusy}
+          >
+            {__("Publish now")}
+          </Button>
+          {!hasPendingApproval && (
+            <Button
+              type="submit"
+              icon={IconSend}
+              onClick={() => { actionRef.current = "request-approval"; }}
+              disabled={isBusy || approverIds.length === 0}
+            >
+              {__("Request approval")}
+            </Button>
+          )}
         </DialogFooter>
       </form>
     </Dialog>

@@ -9,7 +9,8 @@ const fragment = graphql`
   fragment VersionRowFragment on EmployeeDocumentVersion {
     # eslint-disable-next-line relay/unused-fields
     id
-    version
+    major
+    minor
     signed
     publishedAt
   }
@@ -55,14 +56,14 @@ export function VersionRow({
           )}
         >
           {versionData.publishedAt
-            ? `v${versionData.version} - ${(() => {
+            ? `v${versionData.major}.${versionData.minor} - ${(() => {
               const date = new Date(versionData.publishedAt);
               const day = String(date.getDate()).padStart(2, "0");
               const month = String(date.getMonth() + 1).padStart(2, "0");
               const year = date.getFullYear();
               return `${day}/${month}/${year}`;
             })()}`
-            : `v${versionData.version}`}
+            : `v${versionData.major}.${versionData.minor}`}
         </p>
       </div>
       <div className="flex-shrink-0">

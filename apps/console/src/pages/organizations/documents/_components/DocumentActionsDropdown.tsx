@@ -75,7 +75,8 @@ const unarchiveDocumentMutation = graphql`
 const versionFragment = graphql`
   fragment DocumentActionsDropdown_versionFragment on DocumentVersion {
     id
-    version
+    major
+    minor
     status
     canDeleteDraft: permission(action: "core:document-version:delete-draft")
   }
@@ -229,7 +230,7 @@ export function DocumentActionsDropdownn(props: {
           __(
             "This will permanently delete the draft version %s of \"%s\". This action cannot be undone.",
           ),
-          version.version,
+          `${version.major}.${version.minor}`,
           document.title,
         ),
       },
@@ -259,7 +260,7 @@ export function DocumentActionsDropdownn(props: {
         if (data.exportDocumentVersionPDF) {
           const link = window.document.createElement("a");
           link.href = data.exportDocumentVersionPDF.data;
-          link.download = `${document.title}-v${version.version}.pdf`;
+          link.download = `${document.title}-v${version.major}.${version.minor}.pdf`;
           window.document.body.appendChild(link);
           link.click();
           window.document.body.removeChild(link);

@@ -131,8 +131,8 @@ func (f *DocumentFilter) SQLFragment() string {
 	AND
 	CASE
 		WHEN @published::boolean IS NULL THEN TRUE
-		WHEN @published::boolean IS TRUE THEN current_published_version IS NOT NULL
-		WHEN @published::boolean IS FALSE THEN current_published_version IS NULL
+		WHEN @published::boolean IS TRUE THEN current_published_major IS NOT NULL
+		WHEN @published::boolean IS FALSE THEN current_published_major IS NULL
 	END
 	AND
 	CASE

@@ -51,7 +51,8 @@ const createDraftDocument = graphql`
           content
           status
           publishedAt
-          version
+          major
+          minor
           updatedAt
           signatures(first: 100) {
             edges {

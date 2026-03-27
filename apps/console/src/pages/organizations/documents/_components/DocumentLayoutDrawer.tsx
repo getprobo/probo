@@ -29,7 +29,8 @@ const versionFragment = graphql`
   fragment DocumentLayoutDrawer_versionFragment on DocumentVersion {
     id
     classification
-    version
+    major
+    minor
     status
     updatedAt
     publishedAt
@@ -202,7 +203,9 @@ export function DocumentLayoutDrawer(props: {
       </PropertyRow>
       <PropertyRow label={__("Version")}>
         <div className="text-sm text-txt-secondary">
-          {version.version}
+          {version.major}
+          .
+          {version.minor}
         </div>
       </PropertyRow>
       <PropertyRow label={__("Last modified")}>

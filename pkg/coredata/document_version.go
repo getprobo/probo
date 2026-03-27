@@ -34,7 +34,8 @@ type (
 		OrganizationID gid.GID                `db:"organization_id"`
 		DocumentID     gid.GID                `db:"document_id"`
 		Title          string                 `db:"title"`
-		VersionNumber  int                    `db:"version_number"`
+		Major          int                    `db:"major"`
+		Minor          int                    `db:"minor"`
 		Classification DocumentClassification `db:"classification"`
 		Content        string                 `db:"content"`
 		Changelog      string                 `db:"changelog"`
@@ -116,7 +117,8 @@ SELECT
 	organization_id,
 	document_id,
 	title,
-	version_number,
+	major,
+	minor,
 	classification,
 	content,
 	changelog,
@@ -177,7 +179,8 @@ SELECT
 	organization_id,
 	document_id,
 	title,
-	version_number,
+	major,
+	minor,
 	classification,
 	content,
 	changelog,
@@ -227,7 +230,8 @@ INSERT INTO document_versions (
 	organization_id,
 	document_id,
 	title,
-	version_number,
+	major,
+	minor,
 	classification,
 	content,
 	changelog,
@@ -241,7 +245,8 @@ VALUES (
 	@organization_id,
 	@document_id,
 	@title,
-	@version_number,
+	@major,
+	@minor,
 	@classification,
 	@content,
 	@changelog,
@@ -256,7 +261,8 @@ VALUES (
 		"organization_id": dv.OrganizationID,
 		"document_id":     dv.DocumentID,
 		"title":           dv.Title,
-		"version_number":  dv.VersionNumber,
+		"major":           dv.Major,
+		"minor":           dv.Minor,
 		"classification":  dv.Classification,
 		"content":         dv.Content,
 		"changelog":       dv.Changelog,
@@ -270,7 +276,7 @@ VALUES (
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
 			if pgErr.Code == "23505" {
-				if pgErr.ConstraintName == "document_versions_document_id_version_number_key" || pgErr.ConstraintName == "document_one_draft_version_idx" {
+				if pgErr.ConstraintName == "document_versions_document_id_major_minor_key" || pgErr.ConstraintName == "document_one_draft_version_idx" {
 					return ErrResourceAlreadyExists
 				}
 			}
@@ -281,12 +287,13 @@ VALUES (
 	return nil
 }
 
-func (dv *DocumentVersion) LoadByDocumentIDAndVersionNumber(
+func (dv *DocumentVersion) LoadByDocumentIDAndVersion(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
 	documentID gid.GID,
-	versionNumber int,
+	major int,
+	minor int,
 ) error {
 	q := `
 SELECT
@@ -294,7 +301,8 @@ SELECT
 	organization_id,
 	document_id,
 	title,
-	version_number,
+	major,
+	minor,
 	classification,
 	content,
 	changelog,
@@ -307,15 +315,17 @@ FROM
 WHERE
 	%s
 	AND document_id = @document_id
-	AND version_number = @version_number
+	AND major = @major
+	AND minor = @minor
 LIMIT 1;
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"document_id":    documentID,
-		"version_number": versionNumber,
+		"document_id": documentID,
+		"major":       major,
+		"minor":       minor,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -346,7 +356,8 @@ SELECT
 	organization_id,
 	document_id,
 	title,
-	version_number,
+	major,
+	minor,
 	classification,
 	content,
 	changelog,
@@ -396,7 +407,8 @@ SELECT
 	organization_id,
 	document_id,
 	title,
-	version_number,
+	major,
+	minor,
 	classification,
 	content,
 	changelog,
@@ -444,6 +456,8 @@ func (dv DocumentVersion) Update(
 	q := `
 UPDATE document_versions SET
 	title = @title,
+	major = @major,
+	minor = @minor,
 	changelog = @changelog,
 	status = @status,
 	content = @content,
@@ -459,6 +473,8 @@ WHERE %s
 	args := pgx.StrictNamedArgs{
 		"document_version_id": dv.ID,
 		"title":               dv.Title,
+		"major":               dv.Major,
+		"minor":               dv.Minor,
 		"changelog":           dv.Changelog,
 		"status":              dv.Status,
 		"content":             dv.Content,

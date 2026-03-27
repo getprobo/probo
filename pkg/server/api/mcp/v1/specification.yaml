@@ -5207,11 +5207,16 @@ components:
         classification:
           $ref: "#/components/schemas/DocumentClassification"
           description: Document classification
-        current_published_version:
+        current_published_major:
           type:
             - integer
             - "null"
-          description: Current published version number
+          description: Current published major version number
+        current_published_minor:
+          type:
+            - integer
+            - "null"
+          description: Current published minor version number
         trust_center_visibility:
           $ref: "#/components/schemas/TrustCenterVisibility"
           description: Trust center visibility
@@ -5240,7 +5245,8 @@ components:
         - organization_id
         - document_id
         - title
-        - version_number
+        - major
+        - minor
         - classification
         - content
         - changelog
@@ -5260,9 +5266,12 @@ components:
         title:
           type: string
           description: Document version title
-        version_number:
+        major:
           type: integer
-          description: Version number
+          description: Major version number
+        minor:
+          type: integer
+          description: Minor version number
         classification:
           $ref: "#/components/schemas/DocumentClassification"
           description: Document classification
@@ -5606,7 +5615,19 @@ components:
           $ref: "#/components/schemas/GID"
           description: Deleted document version ID
 
-    PublishDocumentVersionInput:
+    PublishMajorDocumentVersionInput:
+      type: object
+      required:
+        - document_id
+      properties:
+        document_id:
+          $ref: "#/components/schemas/GID"
+          description: Document ID
+        changelog:
+          type: string
+          description: Changelog for this version
+
+    PublishMinorDocumentVersionInput:
       type: object
       required:
         - document_id
@@ -7471,12 +7492,20 @@ tools:
       $ref: "#/components/schemas/DeleteDraftDocumentVersionInput"
     outputSchema:
       $ref: "#/components/schemas/DeleteDraftDocumentVersionOutput"
-  - name: publishDocumentVersion
-    description: Publish a draft document version
+  - name: publishMajorDocumentVersion
+    description: Publish a draft document version as a new major version
     hints:
       readonly: false
     inputSchema:
-      $ref: "#/components/schemas/PublishDocumentVersionInput"
+      $ref: "#/components/schemas/PublishMajorDocumentVersionInput"
+    outputSchema:
+      $ref: "#/components/schemas/PublishDocumentVersionOutput"
+  - name: publishMinorDocumentVersion
+    description: Publish a draft document version as a minor version
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/PublishMinorDocumentVersionInput"
     outputSchema:
       $ref: "#/components/schemas/PublishDocumentVersionOutput"
   - name: requestDocumentVersionApproval

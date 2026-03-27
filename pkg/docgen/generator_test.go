@@ -39,7 +39,7 @@ func TestRenderHTML(t *testing.T) {
 			data: DocumentData{
 				Title:          "Test Document",
 				Content:        "# Main Title\n\nThis is **bold** text with *italic* formatting.",
-				Version:        1,
+				Major:          1,
 				Classification: ClassificationPublic,
 				Approvers:      []string{"John Doe"},
 				PublishedAt:    &now,
@@ -57,7 +57,7 @@ func TestRenderHTML(t *testing.T) {
 				"<h1>Main Title</h1>",
 				"<strong>bold</strong>",
 				"<em>italic</em>",
-				"<td>1</td>",
+				"<td>1.0</td>",
 				"PUBLIC",
 				"John Doe",
 				"Alice Smith",
@@ -383,7 +383,7 @@ func BenchmarkGenerateHTML(b *testing.B) {
 	data := DocumentData{
 		Title:          "Benchmark Document",
 		Content:        "# Title\n\nThis is **bold** text with *italic* formatting.\n\n- Item 1\n- Item 2",
-		Version:        1,
+		Major:          1,
 		Classification: ClassificationPublic,
 		Approvers:      []string{"John Doe"},
 		PublishedAt:    &now,

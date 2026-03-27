@@ -2441,7 +2441,8 @@ type Document implements Node {
     description: String
     documentType: DocumentType!
     classification: DocumentClassification!
-    currentPublishedVersion: Int
+    currentPublishedMajor: Int
+    currentPublishedMinor: Int
     trustCenterVisibility: TrustCenterVisibility!
     organization: Organization! @goField(forceResolver: true)
 
@@ -2501,7 +2502,8 @@ type EmployeeDocumentVersion
         model: "go.probo.inc/probo/pkg/server/api/console/v1/types.EmployeeDocumentVersion"
     ) {
     id: ID!
-    version: Int!
+    major: Int!
+    minor: Int!
     status: DocumentVersionStatus!
     signed: Boolean! @goField(forceResolver: true)
     approvalDecision: DocumentVersionApprovalDecision @goField(forceResolver: true)
@@ -3792,10 +3794,16 @@ type Mutation {
     exportStateOfApplicabilityPDF(
         input: ExportStateOfApplicabilityPDFInput!
     ): ExportStateOfApplicabilityPDFPayload!
-    publishDocumentVersion(
-        input: PublishDocumentVersionInput!
+    publishMajorDocumentVersion(
+        input: PublishMajorDocumentVersionInput!
     ): PublishDocumentVersionPayload!
-    bulkPublishDocumentVersions(
+    publishMinorDocumentVersion(
+        input: PublishMinorDocumentVersionInput!
+    ): PublishDocumentVersionPayload!
+    bulkPublishMajorDocumentVersions(
+        input: BulkPublishDocumentVersionsInput!
+    ): BulkPublishDocumentVersionsPayload!
+    bulkPublishMinorDocumentVersions(
         input: BulkPublishDocumentVersionsInput!
     ): BulkPublishDocumentVersionsPayload!
     requestDocumentVersionApproval(
@@ -5355,7 +5363,8 @@ type DocumentVersion implements Node {
     id: ID!
     document: Document! @goField(forceResolver: true)
     status: DocumentVersionStatus!
-    version: Int!
+    major: Int!
+    minor: Int!
     content: String!
     changelog: String!
     title: String!
@@ -5686,7 +5695,12 @@ type RequestDocumentVersionApprovalPayload {
     approvalQuorum: DocumentVersionApprovalQuorum!
 }
 
-input PublishDocumentVersionInput {
+input PublishMajorDocumentVersionInput {
+    documentId: ID!
+    changelog: String
+}
+
+input PublishMinorDocumentVersionInput {
     documentId: ID!
     changelog: String
 }

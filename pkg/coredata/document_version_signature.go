@@ -236,21 +236,28 @@ func (pvss *DocumentVersionSignatures) LoadByDocumentVersionID(
 	filter *DocumentVersionSignatureFilter,
 ) error {
 	q := `
+WITH source_version AS (
+	SELECT document_id, major FROM document_versions WHERE id = @document_version_id
+),
+major_versions AS (
+	SELECT dv.id FROM document_versions dv
+	INNER JOIN source_version sv ON dv.document_id = sv.document_id AND dv.major = sv.major
+)
 SELECT
-	id,
-	organization_id,
-	document_version_id,
-	state,
-	signed_by_profile_id,
-	signed_at,
-	requested_at,
-	created_at,
-	updated_at
+	document_version_signatures.id,
+	document_version_signatures.organization_id,
+	document_version_signatures.document_version_id,
+	document_version_signatures.state,
+	document_version_signatures.signed_by_profile_id,
+	document_version_signatures.signed_at,
+	document_version_signatures.requested_at,
+	document_version_signatures.created_at,
+	document_version_signatures.updated_at
 FROM
 	document_version_signatures
+INNER JOIN major_versions mv ON document_version_signatures.document_version_id = mv.id
 WHERE
 	%s
-	AND document_version_id = @document_version_id
 	AND %s
 	AND %s
 `
@@ -348,7 +355,14 @@ func (pvss *DocumentVersionSignaturesWithPeople) LoadByDocumentVersionIDWithPeop
 	limit int,
 ) error {
 	q := `
-WITH sigs AS (
+WITH source_version AS (
+	SELECT document_id, major FROM document_versions WHERE id = @document_version_id
+),
+major_versions AS (
+	SELECT dv.id FROM document_versions dv
+	INNER JOIN source_version sv ON dv.document_id = sv.document_id AND dv.major = sv.major
+),
+signatures_with_people AS (
 	SELECT
 		dvs.id,
 		dvs.organization_id,
@@ -360,16 +374,10 @@ WITH sigs AS (
 		dvs.requested_at,
 		dvs.created_at,
 		dvs.updated_at,
-		p.full_name as signed_by_full_name
-	FROM
-		document_version_signatures dvs
-	INNER JOIN
-		iam_membership_profiles p ON dvs.signed_by_profile_id = p.id
-	WHERE
-		dvs.document_version_id = @document_version_id
-	ORDER BY
-		p.full_name ASC
-	LIMIT @limit
+		p.full_name AS signed_by_full_name
+	FROM document_version_signatures dvs
+	INNER JOIN major_versions mv ON dvs.document_version_id = mv.id
+	INNER JOIN iam_membership_profiles p ON dvs.signed_by_profile_id = p.id
 )
 SELECT
 	id,
@@ -383,9 +391,12 @@ SELECT
 	updated_at,
 	signed_by_full_name
 FROM
-	sigs
+	signatures_with_people
 WHERE
 	%s
+ORDER BY
+	signed_by_full_name ASC
+LIMIT @limit
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -419,17 +430,30 @@ func (pvs *DocumentVersionSignature) IsSignedByUserEmail(
 	userEmail mail.Addr,
 ) (bool, error) {
 	q := `
-SELECT EXISTS (
-	SELECT 1
+WITH source_version AS (
+	SELECT document_id, major FROM document_versions WHERE id = @document_version_id
+),
+major_versions AS (
+	SELECT dv.id FROM document_versions dv
+	INNER JOIN source_version sv ON dv.document_id = sv.document_id AND dv.major = sv.major
+),
+signed_emails AS (
+	SELECT dvs.id, dvs.tenant_id
 	FROM document_version_signatures dvs
+	INNER JOIN major_versions mv ON dvs.document_version_id = mv.id
 	INNER JOIN iam_membership_profiles p ON dvs.signed_by_profile_id = p.id
 	INNER JOIN identities i ON p.identity_id = i.id
-	WHERE dvs.document_version_id = @document_version_id
-		AND i.email_address = @user_email::CITEXT
+	WHERE i.email_address = @user_email::CITEXT
 		AND dvs.state = 'SIGNED'
-		AND dvs.tenant_id = @tenant_id
+)
+SELECT EXISTS (
+	SELECT 1
+	FROM signed_emails
+	WHERE %s
 ) AS signed
 `
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"document_version_id": documentVersionID,
@@ -458,13 +482,20 @@ func (dvs *DocumentVersionSignatures) CountByDocumentVersionID(
 	filter *DocumentVersionSignatureFilter,
 ) (int, error) {
 	q := `
+WITH source_version AS (
+	SELECT document_id, major FROM document_versions WHERE id = @document_version_id
+),
+major_versions AS (
+	SELECT dv.id FROM document_versions dv
+	INNER JOIN source_version sv ON dv.document_id = sv.document_id AND dv.major = sv.major
+)
 SELECT
-	COUNT(id)
+	COUNT(document_version_signatures.id)
 FROM
 	document_version_signatures
+INNER JOIN major_versions mv ON document_version_signatures.document_version_id = mv.id
 WHERE
 	%s
-	AND document_version_id = @document_version_id
 	AND %s
 `
 

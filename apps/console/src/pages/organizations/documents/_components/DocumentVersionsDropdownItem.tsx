@@ -13,7 +13,8 @@ import { useOrganizationId } from "#/hooks/useOrganizationId";
 const fragment = graphql`
   fragment DocumentVersionsDropdownItemFragment on DocumentVersion {
     id
-    version
+    major
+    minor
     status
     publishedAt
     updatedAt
@@ -51,7 +52,9 @@ export function DocumentVersionsDropdownItem(props: {
             )}
           >
             <div className="text-base text-txt-primary whitespace-nowrap font-bold text-center">
-              {version.version}
+              {version.major}
+              .
+              {version.minor}
             </div>
           </div>
           <div className="flex-1 space-y-[2px] overflow-hidden">

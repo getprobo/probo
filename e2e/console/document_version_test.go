@@ -223,7 +223,8 @@ func TestDocumentVersion_PublishVersion(t *testing.T) {
 							node {
 								id
 								status
-								version
+								major
+								minor
 							}
 						}
 					}
@@ -237,9 +238,10 @@ func TestDocumentVersion_PublishVersion(t *testing.T) {
 			Versions struct {
 				Edges []struct {
 					Node struct {
-						ID      string `json:"id"`
-						Status  string `json:"status"`
-						Version int    `json:"version"`
+						ID     string `json:"id"`
+						Status string `json:"status"`
+						Major  int    `json:"major"`
+						Minor  int    `json:"minor"`
 					} `json:"node"`
 				} `json:"edges"`
 			} `json:"versions"`
@@ -251,7 +253,8 @@ func TestDocumentVersion_PublishVersion(t *testing.T) {
 	require.NotEmpty(t, result.Node.Versions.Edges)
 
 	assert.Equal(t, "PUBLISHED", result.Node.Versions.Edges[0].Node.Status)
-	assert.Equal(t, 1, result.Node.Versions.Edges[0].Node.Version)
+	assert.Equal(t, 1, result.Node.Versions.Edges[0].Node.Major)
+	assert.Equal(t, 0, result.Node.Versions.Edges[0].Node.Minor)
 }
 
 func TestDocumentVersion_CreateDraft(t *testing.T) {
@@ -435,8 +438,8 @@ func TestDocumentVersion_BulkPublish(t *testing.T) {
 	approveTestDocument(t, owner, docID2)
 
 	query := `
-		mutation BulkPublishDocumentVersions($input: BulkPublishDocumentVersionsInput!) {
-			bulkPublishDocumentVersions(input: $input) {
+		mutation BulkPublishMajorDocumentVersions($input: BulkPublishDocumentVersionsInput!) {
+			bulkPublishMajorDocumentVersions(input: $input) {
 				documentVersions {
 					id
 					status
@@ -446,12 +449,12 @@ func TestDocumentVersion_BulkPublish(t *testing.T) {
 	`
 
 	var result struct {
-		BulkPublishDocumentVersions struct {
+		BulkPublishMajorDocumentVersions struct {
 			DocumentVersions []struct {
 				ID     string `json:"id"`
 				Status string `json:"status"`
 			} `json:"documentVersions"`
-		} `json:"bulkPublishDocumentVersions"`
+		} `json:"bulkPublishMajorDocumentVersions"`
 	}
 
 	err := owner.Execute(query, map[string]any{
@@ -462,8 +465,8 @@ func TestDocumentVersion_BulkPublish(t *testing.T) {
 	}, &result)
 	require.NoError(t, err)
 
-	assert.Equal(t, 2, len(result.BulkPublishDocumentVersions.DocumentVersions))
-	for _, dv := range result.BulkPublishDocumentVersions.DocumentVersions {
+	assert.Equal(t, 2, len(result.BulkPublishMajorDocumentVersions.DocumentVersions))
+	for _, dv := range result.BulkPublishMajorDocumentVersions.DocumentVersions {
 		assert.Equal(t, "PUBLISHED", dv.Status)
 	}
 }

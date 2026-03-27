@@ -21,17 +21,18 @@ import (
 
 func NewDocument(d *coredata.Document) *Document {
 	return &Document{
-		ID:                      d.ID,
-		OrganizationID:          d.OrganizationID,
-		Title:                   d.Title,
-		DocumentType:            d.DocumentType,
-		Classification:          d.Classification,
-		CurrentPublishedVersion: d.CurrentPublishedVersion,
-		TrustCenterVisibility:   d.TrustCenterVisibility,
-		Status:                  d.Status,
-		ArchivedAt:              d.ArchivedAt,
-		CreatedAt:               d.CreatedAt,
-		UpdatedAt:               d.UpdatedAt,
+		ID:                    d.ID,
+		OrganizationID:        d.OrganizationID,
+		Title:                 d.Title,
+		DocumentType:          d.DocumentType,
+		Classification:        d.Classification,
+		CurrentPublishedMajor: d.CurrentPublishedMajor,
+		CurrentPublishedMinor: d.CurrentPublishedMinor,
+		TrustCenterVisibility: d.TrustCenterVisibility,
+		Status:                d.Status,
+		ArchivedAt:            d.ArchivedAt,
+		CreatedAt:             d.CreatedAt,
+		UpdatedAt:             d.UpdatedAt,
 	}
 }
 
@@ -84,7 +85,8 @@ func NewDocumentVersion(dv *coredata.DocumentVersion) *DocumentVersion {
 		OrganizationID: dv.OrganizationID,
 		DocumentID:     dv.DocumentID,
 		Title:          dv.Title,
-		VersionNumber:  dv.VersionNumber,
+		Major:          dv.Major,
+		Minor:          dv.Minor,
 		Classification: dv.Classification,
 		Content:        dv.Content,
 		Changelog:      dv.Changelog,

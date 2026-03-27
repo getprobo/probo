@@ -1647,7 +1647,8 @@ func (r *employeeDocumentResolver) Versions(ctx context.Context, obj *types.Empl
 		employeeVersions[i] = &types.EmployeeDocumentVersion{
 			ID:             v.ID,
 			OrganizationID: v.OrganizationID,
-			Version:        v.VersionNumber,
+			Major:          v.Major,
+			Minor:          v.Minor,
 			Status:         v.Status,
 			PublishedAt:    v.PublishedAt,
 			CreatedAt:      v.CreatedAt,
@@ -5012,16 +5013,20 @@ func (r *mutationResolver) ExportStateOfApplicabilityPDF(ctx context.Context, in
 	}, nil
 }
 
-// PublishDocumentVersion is the resolver for the publishDocumentVersion field.
-func (r *mutationResolver) PublishDocumentVersion(ctx context.Context, input types.PublishDocumentVersionInput) (*types.PublishDocumentVersionPayload, error) {
+// PublishMajorDocumentVersion is the resolver for the publishMajorDocumentVersion field.
+func (r *mutationResolver) PublishMajorDocumentVersion(ctx context.Context, input types.PublishMajorDocumentVersionInput) (*types.PublishDocumentVersionPayload, error) {
 	if err := r.authorize(ctx, input.DocumentID, probo.ActionDocumentVersionPublish); err != nil {
 		return nil, err
 	}
 
-	identity := authn.IdentityFromContext(ctx)
 	prb := r.ProboService(ctx, input.DocumentID.TenantID())
 
-	document, documentVersion, err := prb.Documents.PublishVersion(ctx, input.DocumentID, identity.ID, input.Changelog)
+	document, documentVersion, err := prb.Documents.PublishMajorVersion(
+		ctx,
+		input.DocumentID,
+		authn.IdentityFromContext(ctx).ID,
+		input.Changelog,
+	)
 	if err != nil {
 		if errArchived, ok := errors.AsType[*probo.ErrDocumentArchived](err); ok {
 			return nil, gqlutils.Conflict(ctx, errArchived)
@@ -5031,7 +5036,11 @@ func (r *mutationResolver) PublishDocumentVersion(ctx context.Context, input typ
 			return nil, gqlutils.Invalid(ctx, errNotDraft)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot publish document version", log.Error(err))
+		if errNoChanges, ok := errors.AsType[*probo.ErrDocumentVersionNoChanges](err); ok {
+			return nil, gqlutils.Invalid(ctx, errNoChanges)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot publish major document version", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -5041,8 +5050,41 @@ func (r *mutationResolver) PublishDocumentVersion(ctx context.Context, input typ
 	}, nil
 }
 
-// BulkPublishDocumentVersions is the resolver for the bulkPublishDocumentVersions field.
-func (r *mutationResolver) BulkPublishDocumentVersions(ctx context.Context, input types.BulkPublishDocumentVersionsInput) (*types.BulkPublishDocumentVersionsPayload, error) {
+// PublishMinorDocumentVersion is the resolver for the publishMinorDocumentVersion field.
+func (r *mutationResolver) PublishMinorDocumentVersion(ctx context.Context, input types.PublishMinorDocumentVersionInput) (*types.PublishDocumentVersionPayload, error) {
+	if err := r.authorize(ctx, input.DocumentID, probo.ActionDocumentVersionPublish); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, input.DocumentID.TenantID())
+
+	document, documentVersion, err := prb.Documents.PublishMinorVersion(
+		ctx,
+		input.DocumentID,
+		authn.IdentityFromContext(ctx).ID,
+		input.Changelog,
+	)
+	if err != nil {
+		if errArchived, ok := errors.AsType[*probo.ErrDocumentArchived](err); ok {
+			return nil, gqlutils.Conflict(ctx, errArchived)
+		}
+
+		if errNotDraft, ok := errors.AsType[*probo.ErrDocumentVersionNotDraft](err); ok {
+			return nil, gqlutils.Invalid(ctx, errNotDraft)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot publish minor document version", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.PublishDocumentVersionPayload{
+		Document:        types.NewDocument(document),
+		DocumentVersion: types.NewDocumentVersion(documentVersion),
+	}, nil
+}
+
+// BulkPublishMajorDocumentVersions is the resolver for the bulkPublishMajorDocumentVersions field.
+func (r *mutationResolver) BulkPublishMajorDocumentVersions(ctx context.Context, input types.BulkPublishDocumentVersionsInput) (*types.BulkPublishDocumentVersionsPayload, error) {
 	if len(input.DocumentIds) == 0 {
 		return &types.BulkPublishDocumentVersionsPayload{
 			DocumentVersions: []*types.DocumentVersion{},
@@ -5056,12 +5098,10 @@ func (r *mutationResolver) BulkPublishDocumentVersions(ctx context.Context, inpu
 		}
 	}
 
-	identity := authn.IdentityFromContext(ctx)
 	prb := r.ProboService(ctx, input.DocumentIds[0].TenantID())
 
-	versions, documents, err := prb.Documents.BulkPublishVersions(ctx, probo.BulkPublishVersionsRequest{
+	versions, documents, err := prb.Documents.BulkPublishMajorVersions(ctx, probo.BulkPublishVersionsRequest{
 		DocumentIDs: input.DocumentIds,
-		PublishedBy: identity.ID,
 		Changelog:   input.Changelog,
 	})
 	if err != nil {
@@ -5073,7 +5113,57 @@ func (r *mutationResolver) BulkPublishDocumentVersions(ctx context.Context, inpu
 			return nil, gqlutils.Invalid(ctx, errNotDraft)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot bulk publish document versions", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot bulk publish major document versions", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	typesVersions := make([]*types.DocumentVersion, len(versions))
+	for i, v := range versions {
+		typesVersions[i] = types.NewDocumentVersion(v)
+	}
+
+	typesDocuments := make([]*types.Document, len(documents))
+	for i, d := range documents {
+		typesDocuments[i] = types.NewDocument(d)
+	}
+
+	return &types.BulkPublishDocumentVersionsPayload{
+		DocumentVersions: typesVersions,
+		Documents:        typesDocuments,
+	}, nil
+}
+
+// BulkPublishMinorDocumentVersions is the resolver for the bulkPublishMinorDocumentVersions field.
+func (r *mutationResolver) BulkPublishMinorDocumentVersions(ctx context.Context, input types.BulkPublishDocumentVersionsInput) (*types.BulkPublishDocumentVersionsPayload, error) {
+	if len(input.DocumentIds) == 0 {
+		return &types.BulkPublishDocumentVersionsPayload{
+			DocumentVersions: []*types.DocumentVersion{},
+			Documents:        []*types.Document{},
+		}, nil
+	}
+
+	for _, documentID := range input.DocumentIds {
+		if err := r.authorize(ctx, documentID, probo.ActionDocumentVersionPublish); err != nil {
+			return nil, err
+		}
+	}
+
+	prb := r.ProboService(ctx, input.DocumentIds[0].TenantID())
+
+	versions, documents, err := prb.Documents.BulkPublishMinorVersions(ctx, probo.BulkPublishVersionsRequest{
+		DocumentIDs: input.DocumentIds,
+		Changelog:   input.Changelog,
+	})
+	if err != nil {
+		if errArchived, ok := errors.AsType[*probo.ErrDocumentArchived](err); ok {
+			return nil, gqlutils.Conflict(ctx, errArchived)
+		}
+
+		if errNotDraft, ok := errors.AsType[*probo.ErrDocumentVersionNotDraft](err); ok {
+			return nil, gqlutils.Invalid(ctx, errNotDraft)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot bulk publish minor document versions", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 

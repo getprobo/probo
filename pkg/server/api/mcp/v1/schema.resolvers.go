@@ -2196,24 +2196,6 @@ func (r *Resolver) UpdateDocumentVersionTool(ctx context.Context, req *mcp.CallT
 	}, nil
 }
 
-func (r *Resolver) PublishDocumentVersionTool(ctx context.Context, req *mcp.CallToolRequest, input *types.PublishDocumentVersionInput) (*mcp.CallToolResult, types.PublishDocumentVersionOutput, error) {
-	r.MustAuthorize(ctx, input.DocumentID, probo.ActionDocumentVersionPublish)
-
-	svc := r.ProboService(ctx, input.DocumentID)
-
-	user := authn.IdentityFromContext(ctx)
-
-	document, documentVersion, err := svc.Documents.PublishVersion(ctx, input.DocumentID, user.ID, input.Changelog)
-	if err != nil {
-		panic(fmt.Errorf("cannot publish document version: %w", err))
-	}
-
-	return nil, types.PublishDocumentVersionOutput{
-		Document:        types.NewDocument(document),
-		DocumentVersion: types.NewDocumentVersion(documentVersion),
-	}, nil
-}
-
 func (r *Resolver) ListDocumentVersionSignaturesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListDocumentVersionSignaturesInput) (*mcp.CallToolResult, types.ListDocumentVersionSignaturesOutput, error) {
 	r.MustAuthorize(ctx, input.DocumentVersionID, probo.ActionDocumentVersionSignatureList)
 
@@ -3321,6 +3303,50 @@ func (r *Resolver) RequestDocumentVersionApprovalTool(ctx context.Context, req *
 	}
 
 	return nil, types.RequestDocumentVersionApprovalOutput{
+		DocumentVersion: types.NewDocumentVersion(documentVersion),
+	}, nil
+}
+
+func (r *Resolver) PublishMajorDocumentVersionTool(ctx context.Context, req *mcp.CallToolRequest, input *types.PublishMajorDocumentVersionInput) (*mcp.CallToolResult, types.PublishMajorDocumentVersionOutput, error) {
+	r.MustAuthorize(ctx, input.DocumentID, probo.ActionDocumentVersionPublish)
+
+	svc := r.ProboService(ctx, input.DocumentID)
+	user := authn.IdentityFromContext(ctx)
+
+	document, documentVersion, err := svc.Documents.PublishMajorVersion(
+		ctx,
+		input.DocumentID,
+		user.ID,
+		input.Changelog,
+	)
+	if err != nil {
+		panic(fmt.Errorf("cannot publish major document version: %w", err))
+	}
+
+	return nil, types.PublishMajorDocumentVersionOutput{
+		Document:        types.NewDocument(document),
+		DocumentVersion: types.NewDocumentVersion(documentVersion),
+	}, nil
+}
+
+func (r *Resolver) PublishMinorDocumentVersionTool(ctx context.Context, req *mcp.CallToolRequest, input *types.PublishMinorDocumentVersionInput) (*mcp.CallToolResult, types.PublishMinorDocumentVersionOutput, error) {
+	r.MustAuthorize(ctx, input.DocumentID, probo.ActionDocumentVersionPublish)
+
+	svc := r.ProboService(ctx, input.DocumentID)
+	user := authn.IdentityFromContext(ctx)
+
+	document, documentVersion, err := svc.Documents.PublishMinorVersion(
+		ctx,
+		input.DocumentID,
+		user.ID,
+		input.Changelog,
+	)
+	if err != nil {
+		panic(fmt.Errorf("cannot publish minor document version: %w", err))
+	}
+
+	return nil, types.PublishMinorDocumentVersionOutput{
+		Document:        types.NewDocument(document),
 		DocumentVersion: types.NewDocumentVersion(documentVersion),
 	}, nil
 }

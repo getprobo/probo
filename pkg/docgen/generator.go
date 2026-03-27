@@ -218,7 +218,8 @@ type (
 	DocumentData struct {
 		Title                       string
 		Content                     string
-		Version                     int
+		Major                       int
+		Minor                       int
 		Classification              Classification
 		Approvers                   []string
 		Description                 string

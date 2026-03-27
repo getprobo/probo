@@ -115,19 +115,26 @@ func (q *DocumentVersionApprovalQuorum) LoadLastByDocumentVersionID(
 	documentVersionID gid.GID,
 ) error {
 	query := `
+WITH source_version AS (
+	SELECT document_id, major FROM document_versions WHERE id = @version_id
+),
+major_versions AS (
+	SELECT dv.id FROM document_versions dv
+	INNER JOIN source_version sv ON dv.document_id = sv.document_id AND dv.major = sv.major
+)
 SELECT
-	id,
-	organization_id,
-	version_id,
-	status,
-	created_at,
-	updated_at
+	document_version_approval_quorums.id,
+	document_version_approval_quorums.organization_id,
+	document_version_approval_quorums.version_id,
+	document_version_approval_quorums.status,
+	document_version_approval_quorums.created_at,
+	document_version_approval_quorums.updated_at
 FROM
 	document_version_approval_quorums
+INNER JOIN major_versions mv ON document_version_approval_quorums.version_id = mv.id
 WHERE
 	%s
-	AND version_id = @version_id
-ORDER BY created_at DESC
+ORDER BY document_version_approval_quorums.created_at DESC
 LIMIT 1
 `
 
@@ -162,18 +169,25 @@ func (q *DocumentVersionApprovalQuorums) LoadAllByDocumentVersionID(
 	cursor *page.Cursor[DocumentVersionApprovalQuorumOrderField],
 ) error {
 	query := `
+WITH source_version AS (
+	SELECT document_id, major FROM document_versions WHERE id = @version_id
+),
+major_versions AS (
+	SELECT dv.id FROM document_versions dv
+	INNER JOIN source_version sv ON dv.document_id = sv.document_id AND dv.major = sv.major
+)
 SELECT
-	id,
-	organization_id,
-	version_id,
-	status,
-	created_at,
-	updated_at
+	document_version_approval_quorums.id,
+	document_version_approval_quorums.organization_id,
+	document_version_approval_quorums.version_id,
+	document_version_approval_quorums.status,
+	document_version_approval_quorums.created_at,
+	document_version_approval_quorums.updated_at
 FROM
 	document_version_approval_quorums
+INNER JOIN major_versions mv ON document_version_approval_quorums.version_id = mv.id
 WHERE
 	%s
-	AND version_id = @version_id
 	AND %s
 `
 
@@ -205,13 +219,20 @@ func (q *DocumentVersionApprovalQuorums) CountByDocumentVersionID(
 	documentVersionID gid.GID,
 ) (int, error) {
 	query := `
+WITH source_version AS (
+	SELECT document_id, major FROM document_versions WHERE id = @version_id
+),
+major_versions AS (
+	SELECT dv.id FROM document_versions dv
+	INNER JOIN source_version sv ON dv.document_id = sv.document_id AND dv.major = sv.major
+)
 SELECT
-	COUNT(id)
+	COUNT(document_version_approval_quorums.id)
 FROM
 	document_version_approval_quorums
+INNER JOIN major_versions mv ON document_version_approval_quorums.version_id = mv.id
 WHERE
 	%s
-	AND version_id = @version_id
 `
 
 	query = fmt.Sprintf(query, scope.SQLFragment())

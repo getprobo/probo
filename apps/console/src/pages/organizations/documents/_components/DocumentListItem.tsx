@@ -22,7 +22,8 @@ const fragment = graphql`
         node {
           id
           status
-          version
+          major
+          minor
           approvalQuorums(first: 1, orderBy: { field: CREATED_AT, direction: DESC }) {
             edges {
               node {
@@ -148,7 +149,9 @@ export function DocumentListItem(props: {
       </Td>
       <Td className="w-20">
         v
-        {lastVersion.version}
+        {lastVersion.major}
+        .
+        {lastVersion.minor}
       </Td>
       <Td className="w-28">
         {getDocumentTypeLabel(__, document.documentType)}

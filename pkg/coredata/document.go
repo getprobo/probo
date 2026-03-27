@@ -30,17 +30,18 @@ import (
 
 type (
 	Document struct {
-		ID                      gid.GID                `db:"id"`
-		OrganizationID          gid.GID                `db:"organization_id"`
-		Title                   string                 `db:"title"`
-		DocumentType            DocumentType           `db:"document_type"`
-		Classification          DocumentClassification `db:"classification"`
-		CurrentPublishedVersion *int                   `db:"current_published_version"`
-		TrustCenterVisibility   TrustCenterVisibility  `db:"trust_center_visibility"`
-		Status                  DocumentStatus         `db:"status"`
-		ArchivedAt              *time.Time             `db:"archived_at"`
-		CreatedAt               time.Time              `db:"created_at"`
-		UpdatedAt               time.Time              `db:"updated_at"`
+		ID                    gid.GID                `db:"id"`
+		OrganizationID        gid.GID                `db:"organization_id"`
+		Title                 string                 `db:"title"`
+		DocumentType          DocumentType           `db:"document_type"`
+		Classification        DocumentClassification `db:"classification"`
+		CurrentPublishedMajor *int                   `db:"current_published_major"`
+		CurrentPublishedMinor *int                   `db:"current_published_minor"`
+		TrustCenterVisibility TrustCenterVisibility  `db:"trust_center_visibility"`
+		Status                DocumentStatus         `db:"status"`
+		ArchivedAt            *time.Time             `db:"archived_at"`
+		CreatedAt             time.Time              `db:"created_at"`
+		UpdatedAt             time.Time              `db:"updated_at"`
 	}
 
 	Documents []*Document
@@ -128,7 +129,8 @@ SELECT
     title,
     document_type,
     classification,
-    current_published_version,
+    current_published_major,
+    current_published_minor,
     trust_center_visibility,
     status,
     archived_at,
@@ -181,7 +183,8 @@ SELECT
     title,
     document_type,
     classification,
-    current_published_version,
+    current_published_major,
+    current_published_minor,
     trust_center_visibility,
     status,
     archived_at,
@@ -235,7 +238,8 @@ SELECT
     title,
     document_type,
     classification,
-    current_published_version,
+    current_published_major,
+    current_published_minor,
     trust_center_visibility,
     status,
     archived_at,
@@ -318,7 +322,8 @@ SELECT
     title,
     document_type,
     classification,
-    current_published_version,
+    current_published_major,
+    current_published_minor,
     trust_center_visibility,
     status,
     archived_at,
@@ -370,7 +375,8 @@ SELECT
     title,
     document_type,
     classification,
-    current_published_version,
+    current_published_major,
+    current_published_minor,
     trust_center_visibility,
     status,
     archived_at,
@@ -424,7 +430,8 @@ WITH published_documents AS (
 		documents d
 		LEFT JOIN document_versions dv
 			ON dv.document_id = d.id
-			AND dv.version_number = d.current_published_version
+			AND dv.major = d.current_published_major
+			AND dv.minor = d.current_published_minor
 	WHERE
 		d.deleted_at IS NULL
 		AND d.organization_id = @organization_id
@@ -435,7 +442,8 @@ SELECT
 	COALESCE(published_title, title) AS title,
 	document_type,
 	classification,
-	current_published_version,
+	current_published_major,
+	current_published_minor,
 	trust_center_visibility,
 	status,
 	archived_at,
@@ -484,7 +492,8 @@ INSERT INTO
 		title,
 		document_type,
 		classification,
-		current_published_version,
+		current_published_major,
+		current_published_minor,
 		trust_center_visibility,
 		status,
 		archived_at,
@@ -498,7 +507,8 @@ VALUES (
     @title,
     @document_type,
     @classification,
-    @current_published_version,
+    @current_published_major,
+    @current_published_minor,
     @trust_center_visibility,
     @status,
     @archived_at,
@@ -508,18 +518,19 @@ VALUES (
 `
 
 	args := pgx.StrictNamedArgs{
-		"tenant_id":                 scope.GetTenantID(),
-		"document_id":               p.ID,
-		"organization_id":           p.OrganizationID,
-		"title":                     p.Title,
-		"document_type":             p.DocumentType,
-		"classification":            p.Classification,
-		"current_published_version": p.CurrentPublishedVersion,
-		"trust_center_visibility":   p.TrustCenterVisibility,
-		"status":                    p.Status,
-		"archived_at":               p.ArchivedAt,
-		"created_at":                p.CreatedAt,
-		"updated_at":                p.UpdatedAt,
+		"tenant_id":               scope.GetTenantID(),
+		"document_id":             p.ID,
+		"organization_id":         p.OrganizationID,
+		"title":                   p.Title,
+		"document_type":           p.DocumentType,
+		"classification":          p.Classification,
+		"current_published_major": p.CurrentPublishedMajor,
+		"current_published_minor": p.CurrentPublishedMinor,
+		"trust_center_visibility": p.TrustCenterVisibility,
+		"status":                  p.Status,
+		"archived_at":             p.ArchivedAt,
+		"created_at":              p.CreatedAt,
+		"updated_at":              p.UpdatedAt,
 	}
 	_, err := conn.Exec(ctx, q, args)
 	return err
@@ -572,7 +583,8 @@ UPDATE
 	documents
 SET
 	title = @title,
-	current_published_version = @current_published_version,
+	current_published_major = @current_published_major,
+	current_published_minor = @current_published_minor,
 	document_type = @document_type,
 	classification = @classification,
 	trust_center_visibility = @trust_center_visibility,
@@ -587,15 +599,16 @@ WHERE
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"document_id":               p.ID,
-		"updated_at":                time.Now(),
-		"title":                     p.Title,
-		"current_published_version": p.CurrentPublishedVersion,
-		"document_type":             p.DocumentType,
-		"classification":            p.Classification,
-		"trust_center_visibility":   p.TrustCenterVisibility,
-		"status":                    p.Status,
-		"archived_at":               p.ArchivedAt,
+		"document_id":             p.ID,
+		"updated_at":              time.Now(),
+		"title":                   p.Title,
+		"current_published_major": p.CurrentPublishedMajor,
+		"current_published_minor": p.CurrentPublishedMinor,
+		"document_type":           p.DocumentType,
+		"classification":          p.Classification,
+		"trust_center_visibility": p.TrustCenterVisibility,
+		"status":                  p.Status,
+		"archived_at":             p.ArchivedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -666,7 +679,8 @@ SELECT
 	scoped_documents.title,
 	scoped_documents.document_type,
 	scoped_documents.classification,
-	scoped_documents.current_published_version,
+	scoped_documents.current_published_major,
+	scoped_documents.current_published_minor,
 	scoped_documents.trust_center_visibility,
 	scoped_documents.status,
 	scoped_documents.archived_at,
@@ -757,7 +771,8 @@ SELECT
 	scoped_documents.title,
 	scoped_documents.document_type,
 	scoped_documents.classification,
-	scoped_documents.current_published_version,
+	scoped_documents.current_published_major,
+	scoped_documents.current_published_minor,
 	scoped_documents.trust_center_visibility,
 	scoped_documents.status,
 	scoped_documents.archived_at,
@@ -874,28 +889,29 @@ func (p *Document) IsLastSignableVersionSignedByUserEmail(
 	userEmail mail.Addr,
 ) (bool, error) {
 	q := `
-WITH last_signable_version AS (
+WITH max_signable_major AS (
+	SELECT MAX(dv.major) AS major
+	FROM document_versions dv
+	INNER JOIN document_version_signatures dvs ON dvs.document_version_id = dv.id
+	INNER JOIN iam_membership_profiles p ON dvs.signed_by_profile_id = p.id
+	INNER JOIN identities i ON p.identity_id = i.id
+	WHERE dv.document_id = @document_id
+		AND i.email_address = @user_email::CITEXT
+),
+last_signable_version AS (
 	SELECT
 		d.id AS document_id,
 		d.tenant_id,
-		dv.version_number,
+		dv.major,
 		dvs.state
 	FROM documents d
 	INNER JOIN document_versions dv ON dv.document_id = d.id
+	INNER JOIN max_signable_major msm ON dv.major = msm.major
 	INNER JOIN document_version_signatures dvs ON dvs.document_version_id = dv.id
 	INNER JOIN iam_membership_profiles p ON dvs.signed_by_profile_id = p.id
 	INNER JOIN identities i ON p.identity_id = i.id
 	WHERE d.id = @document_id
 		AND i.email_address = @user_email::CITEXT
-		AND dv.version_number = (
-			SELECT MAX(dv2.version_number)
-			FROM document_versions dv2
-			INNER JOIN document_version_signatures dvs2 ON dvs2.document_version_id = dv2.id
-			INNER JOIN iam_membership_profiles p2 ON dvs2.signed_by_profile_id = p2.id
-			INNER JOIN identities i2 ON p2.identity_id = i2.id
-			WHERE dv2.document_id = d.id
-				AND i2.email_address = @user_email::CITEXT
-		)
 )
 SELECT EXISTS (
 	SELECT 1
@@ -938,7 +954,7 @@ WITH viewer_decision AS (
 	SELECT
 		dvad.tenant_id,
 		dvad.state,
-		dv.version_number,
+		dv.major,
 		dvaq.created_at AS quorum_created_at
 	FROM documents d
 	INNER JOIN document_versions dv ON dv.document_id = d.id
@@ -951,7 +967,7 @@ WITH viewer_decision AS (
 SELECT state
 FROM viewer_decision
 WHERE %s
-ORDER BY version_number DESC, quorum_created_at DESC
+ORDER BY major DESC, quorum_created_at DESC
 LIMIT 1
 `
 
