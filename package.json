@@ -24,6 +24,9 @@
   },
   "overrides": {
     "brace-expansion": "^5.0.5",
+    "minimatch@3": {
+      "brace-expansion": "^1.1.11"
+    },
     "minimatch@9": "^9.0.9",
     "langsmith": "^0.5.0",
     "handlebars": "4.7.9",
