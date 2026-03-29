@@ -1,12 +1,11 @@
-Probo
+Govrly
 
 Hi {{.RecipientFullName}},
 
-You have been invited to join organization {{.OrganizationName}} on Probo. Click the link below to activate your account:
+You have been invited to join organization {{.OrganizationName}} on Govrly. Click the link below to activate your account:
 
 {{.InvitationUrl}}
 
 If you don't want to do so, you can ignore this email.
 
-{{.SenderCompanyHeadquarterAddress}}
-Powered By Probo
+app.govrly.sa
