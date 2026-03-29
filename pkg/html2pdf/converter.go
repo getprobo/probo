@@ -77,8 +77,8 @@ func WithTracerProvider(tp trace.TracerProvider) Option {
 }
 
 func NewConverter(addr string, opts ...Option) *Converter {
-	// Only add ws:// prefix if it's not already present
-	if !strings.HasPrefix(addr, "ws://") {
+	// Only add ws:// prefix if no websocket scheme is present
+	if !strings.HasPrefix(addr, "ws://") && !strings.HasPrefix(addr, "wss://") {
 		addr = "ws://" + addr
 	}
 
