@@ -15,6 +15,7 @@
 package docgen
 
 import (
+	"encoding/json"
 	"html/template"
 	"strings"
 	"testing"
@@ -37,8 +38,10 @@ func TestRenderHTML(t *testing.T) {
 		{
 			name: "basic document with all fields",
 			data: DocumentData{
-				Title:          "Test Document",
-				Content:        `{"type":"doc","content":[{"type":"heading","attrs":{"level":1},"content":[{"type":"text","text":"Main Title"}]},{"type":"paragraph","content":[{"type":"text","text":"This is "},{"type":"text","marks":[{"type":"bold"}],"text":"bold"},{"type":"text","text":" text with "},{"type":"text","marks":[{"type":"italic"}],"text":"italic"},{"type":"text","text":" formatting."}]}]}`,
+				Title: "Test Document",
+				Content: json.RawMessage(
+					[]byte(`{"type":"doc","content":[{"type":"heading","attrs":{"level":1},"content":[{"type":"text","text":"Main Title"}]},{"type":"paragraph","content":[{"type":"text","text":"This is "},{"type":"text","marks":[{"type":"bold"}],"text":"bold"},{"type":"text","text":" text with "},{"type":"text","marks":[{"type":"italic"}],"text":"italic"},{"type":"text","text":" formatting."}]}]}`),
+				),
 				Version:        1,
 				Classification: ClassificationPublic,
 				Approvers:      []string{"John Doe"},
@@ -67,7 +70,7 @@ func TestRenderHTML(t *testing.T) {
 			name: "document with HTML characters that need escaping",
 			data: DocumentData{
 				Title:     "Test & <Script> Title",
-				Content:   "Normal markdown content",
+				Content:   json.RawMessage([]byte("Normal markdown content")),
 				Approvers: []string{"John <script>alert('xss')</script> Doe"},
 				Signatures: []SignatureData{
 					{
@@ -90,19 +93,21 @@ func TestRenderHTML(t *testing.T) {
 			name: "document with prosemirror content",
 			data: DocumentData{
 				Title: "ProseMirror Test",
-				Content: `{"type":"doc","content":[` +
-					`{"type":"heading","attrs":{"level":2},"content":[{"type":"text","text":"Section 1"}]},` +
-					`{"type":"bulletList","content":[` +
-					`{"type":"listItem","content":[{"type":"paragraph","content":[{"type":"text","text":"Item 1"}]}]},` +
-					`{"type":"listItem","content":[{"type":"paragraph","content":[{"type":"text","text":"Item 2"}]}]}` +
-					`]},` +
-					`{"type":"paragraph","content":[` +
-					`{"type":"text","marks":[{"type":"bold"}],"text":"Bold text"},` +
-					`{"type":"text","text":" and "},` +
-					`{"type":"text","marks":[{"type":"italic"}],"text":"italic text"}` +
-					`]},` +
-					`{"type":"codeBlock","content":[{"type":"text","text":"code block"}]}` +
-					`]}`,
+				Content: json.RawMessage([]byte(
+					`{"type":"doc","content":[` +
+						`{"type":"heading","attrs":{"level":2},"content":[{"type":"text","text":"Section 1"}]},` +
+						`{"type":"bulletList","content":[` +
+						`{"type":"listItem","content":[{"type":"paragraph","content":[{"type":"text","text":"Item 1"}]}]},` +
+						`{"type":"listItem","content":[{"type":"paragraph","content":[{"type":"text","text":"Item 2"}]}]}` +
+						`]},` +
+						`{"type":"paragraph","content":[` +
+						`{"type":"text","marks":[{"type":"bold"}],"text":"Bold text"},` +
+						`{"type":"text","text":" and "},` +
+						`{"type":"text","marks":[{"type":"italic"}],"text":"italic text"}` +
+						`]},` +
+						`{"type":"codeBlock","content":[{"type":"text","text":"code block"}]}` +
+						`]}`,
+				)),
 			},
 			wantContains: []string{
 				"<h2>Section 1</h2>",
@@ -189,8 +194,10 @@ func TestRenderHTML(t *testing.T) {
 
 func TestRenderHTML_ErrorHandling(t *testing.T) {
 	data := DocumentData{
-		Title:   "Valid Document",
-		Content: `{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Valid content"}]}]}`,
+		Title: "Valid Document",
+		Content: json.RawMessage(
+			[]byte(`{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Valid content"}]}]}`),
+		),
 	}
 
 	result, err := RenderHTML(data)
@@ -226,20 +233,20 @@ func TestTemplateFunctions(t *testing.T) {
 	})
 
 	t.Run("ProseMirrorJSONToHTML", func(t *testing.T) {
-		result := ProseMirrorJSONToHTML(
-			`{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"plain "},{"type":"text","marks":[{"type":"bold"}],"text":"bold"}]}]}`,
-		)
+		result := ProseMirrorJSONToHTML(json.RawMessage(
+			[]byte(`{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"plain "},{"type":"text","marks":[{"type":"bold"}],"text":"bold"}]}]}`),
+		))
 		assert.Contains(t, string(result), "<strong>bold</strong>")
 
-		result = ProseMirrorJSONToHTML(
-			`{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"simple text"}]}]}`,
-		)
+		result = ProseMirrorJSONToHTML(json.RawMessage(
+			[]byte(`{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"simple text"}]}]}`),
+		))
 		assert.Contains(t, string(result), "<p>simple text</p>")
 
-		result = ProseMirrorJSONToHTML("**not** json")
+		result = ProseMirrorJSONToHTML(json.RawMessage([]byte("**not** json")))
 		assert.Contains(t, string(result), "<p>**not** json</p>")
 
-		result = ProseMirrorJSONToHTML("")
+		result = ProseMirrorJSONToHTML(nil)
 		assert.Equal(t, template.HTML(""), result)
 	})
 }
@@ -343,7 +350,7 @@ func TestProseMirrorContentRendering(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			data := DocumentData{
 				Title:   "ProseMirror Test",
-				Content: tt.content,
+				Content: json.RawMessage([]byte(tt.content)),
 			}
 
 			result, err := RenderHTML(data)
@@ -413,7 +420,7 @@ func TestLargeContent(t *testing.T) {
 
 	data := DocumentData{
 		Title:   "Large Document",
-		Content: largeContent.String(),
+		Content: json.RawMessage([]byte(largeContent.String())),
 	}
 
 	result, err := RenderHTML(data)
@@ -427,20 +434,22 @@ func BenchmarkGenerateHTML(b *testing.B) {
 
 	data := DocumentData{
 		Title: "Benchmark Document",
-		Content: `{"type":"doc","content":[` +
-			`{"type":"heading","attrs":{"level":1},"content":[{"type":"text","text":"Title"}]},` +
-			`{"type":"paragraph","content":[` +
-			`{"type":"text","text":"This is "},` +
-			`{"type":"text","marks":[{"type":"bold"}],"text":"bold"},` +
-			`{"type":"text","text":" text with "},` +
-			`{"type":"text","marks":[{"type":"italic"}],"text":"italic"},` +
-			`{"type":"text","text":" formatting."}` +
-			`]},` +
-			`{"type":"bulletList","content":[` +
-			`{"type":"listItem","content":[{"type":"paragraph","content":[{"type":"text","text":"Item 1"}]}]},` +
-			`{"type":"listItem","content":[{"type":"paragraph","content":[{"type":"text","text":"Item 2"}]}]}` +
-			`]}` +
-			`]}`,
+		Content: json.RawMessage([]byte(
+			`{"type":"doc","content":[` +
+				`{"type":"heading","attrs":{"level":1},"content":[{"type":"text","text":"Title"}]},` +
+				`{"type":"paragraph","content":[` +
+				`{"type":"text","text":"This is "},` +
+				`{"type":"text","marks":[{"type":"bold"}],"text":"bold"},` +
+				`{"type":"text","text":" text with "},` +
+				`{"type":"text","marks":[{"type":"italic"}],"text":"italic"},` +
+				`{"type":"text","text":" formatting."}` +
+				`]},` +
+				`{"type":"bulletList","content":[` +
+				`{"type":"listItem","content":[{"type":"paragraph","content":[{"type":"text","text":"Item 1"}]}]},` +
+				`{"type":"listItem","content":[{"type":"paragraph","content":[{"type":"text","text":"Item 2"}]}]}` +
+				`]}` +
+				`]}`,
+		)),
 		Version:        1,
 		Classification: ClassificationPublic,
 		Approvers:      []string{"John Doe"},

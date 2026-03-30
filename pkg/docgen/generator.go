@@ -17,6 +17,7 @@ package docgen
 import (
 	"bytes"
 	_ "embed"
+	"encoding/json"
 	"fmt"
 	"html"
 	"html/template"
@@ -194,7 +195,7 @@ type (
 
 	DocumentData struct {
 		Title                       string
-		Content                     string // ProseMirror/Tiptap document JSON; use ProseMirrorJSONToHTML for HTML
+		Content                     json.RawMessage // ProseMirror/Tiptap document JSON; use ProseMirrorJSONToHTML for HTML
 		Version                     int
 		Classification              Classification
 		Approvers                   []string
@@ -318,8 +319,8 @@ const (
 
 // ProseMirrorJSONToHTML converts ProseMirror/Tiptap document JSON to an HTML fragment.
 // On parse or render failure it returns a single escaped paragraph with the raw input.
-func ProseMirrorJSONToHTML(content string) template.HTML {
-	s := strings.TrimSpace(content)
+func ProseMirrorJSONToHTML(content json.RawMessage) template.HTML {
+	s := strings.TrimSpace(string(content))
 	if s == "" {
 		return template.HTML("")
 	}
