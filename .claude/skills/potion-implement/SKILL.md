@@ -34,13 +34,13 @@ Use this table to map modules and file paths to their owning stack.
 ### Go Backend (Go 1.26)
 - **Frameworks:** chi router, gqlgen, mcpgen, pgx, testify
 - **Modules:** cmd, pkg/server, pkg/probo, pkg/iam, pkg/trust, pkg/coredata, pkg/validator, pkg/gid, pkg/agent, pkg/llm, pkg/agents, pkg/cmd, pkg/cli, pkg/certmanager, pkg/webhook, pkg/mailer, pkg/slack, pkg/connector, pkg/bootstrap, e2e
-- **Implementer agent:** `probo-go-backend-implementer`
+- **Implementer agent:** `potion-go-backend-implementer`
 - **Guidelines:** `.claude/guidelines/go-backend/`
 
 ### TypeScript Frontend (React 19 + Relay 19)
 - **Frameworks:** React, Relay, React Router v7, Tailwind CSS v4, Vite, Storybook 10
 - **Modules:** apps/console, apps/trust, packages/ui, packages/relay, packages/helpers, packages/hooks, packages/emails, packages/n8n-node, packages/routes, packages/coredata, packages/i18n
-- **Implementer agent:** `probo-typescript-frontend-implementer`
+- **Implementer agent:** `potion-typescript-frontend-implementer`
 - **Guidelines:** `.claude/guidelines/typescript-frontend/`
 
 ## Task analysis
