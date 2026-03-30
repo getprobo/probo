@@ -74,7 +74,6 @@ func createTestDocument(t *testing.T, owner *testutil.Client) (docID string, doc
 			"organizationId": owner.GetOrganizationID().String(),
 			"title":          "Test Document",
 			"content":        "Initial content",
-			"approverIds":    []string{profileID},
 			"documentType":   "POLICY",
 			"classification": "INTERNAL",
 		},
