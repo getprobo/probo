@@ -1,4 +1,5 @@
-export function HIPAA(props: { className?: string }) {
+// --license-header-ignore
+// HIPAA — U.S. Health Insurance Portability and Accountability Act
   const { className } = props;
 
   return (

@@ -1,4 +1,5 @@
-export function FERPA() {
+// --license-header-ignore
+// FERPA — U.S. Family Educational Rights and Privacy Act
   return (
     <svg
       version="1.1"

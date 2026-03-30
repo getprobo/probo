@@ -1,3 +1,4 @@
+// --license-header-ignore
 // LinkedIn logo — trademark of LinkedIn Corporation.
 // Used here solely for brand identification (nominative fair use).
 // SVG path from Simple Icons (https://simpleicons.org), CC0 license.

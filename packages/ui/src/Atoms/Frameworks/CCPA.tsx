@@ -1,4 +1,5 @@
-export function CCPA(props: { className?: string }) {
+// --license-header-ignore
+// CCPA — California Consumer Privacy Act
   const { className } = props;
 
   return (

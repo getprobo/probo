@@ -1,4 +1,5 @@
-export function SOC3() {
+// --license-header-ignore
+// SOC 3 — trademark of the AICPA
   return (
     <svg
       version="1.1"

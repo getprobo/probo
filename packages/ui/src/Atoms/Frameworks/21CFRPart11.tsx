@@ -1,4 +1,5 @@
-export function TwentyOneCFRPart11(props: { className?: string }) {
+// --license-header-ignore
+// 21 CFR Part 11 — U.S. FDA regulation
   const { className } = props;
 
   return (

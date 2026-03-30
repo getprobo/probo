@@ -1,4 +1,5 @@
-export function GDPR(props: { className?: string }) {
+// --license-header-ignore
+// GDPR — EU General Data Protection Regulation
   const { className } = props;
 
   return (

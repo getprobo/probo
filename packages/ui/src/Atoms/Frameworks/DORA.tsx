@@ -1,4 +1,5 @@
-export function DORA(props: { className?: string }) {
+// --license-header-ignore
+// DORA — EU Digital Operational Resilience Act
   const { className } = props;
 
   return (

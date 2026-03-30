@@ -1,4 +1,5 @@
-export function ISO42001(props: { className?: string }) {
+// --license-header-ignore
+// ISO 42001 — trademark of ISO/IEC
   const { className } = props;
 
   return (

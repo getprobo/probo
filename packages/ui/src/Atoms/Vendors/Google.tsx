@@ -1,3 +1,5 @@
+// --license-header-ignore
+// Google logo — trademark of Google LLC
 import type { ComponentProps } from "react";
 
 export function Google(props: ComponentProps<"svg">) {

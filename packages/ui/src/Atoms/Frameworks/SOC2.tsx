@@ -1,4 +1,5 @@
-export function SOC2(props: { className?: string }) {
+// --license-header-ignore
+// SOC 2 — trademark of the AICPA
   const { className } = props;
 
   return (

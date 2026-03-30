@@ -1,3 +1,5 @@
+// --license-header-ignore
+// Slack logo — trademark of Salesforce, Inc.
 import type { ComponentProps } from "react";
 
 export function Slack(props: ComponentProps<"svg">) {

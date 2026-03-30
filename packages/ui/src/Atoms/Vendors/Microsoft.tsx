@@ -1,3 +1,5 @@
+// --license-header-ignore
+// Microsoft logo — trademark of Microsoft Corporation
 import type { ComponentProps } from "react";
 
 export function Microsoft(props: ComponentProps<"svg">) {

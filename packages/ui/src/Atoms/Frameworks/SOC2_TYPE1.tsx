@@ -1,4 +1,5 @@
-export function SOC2_TYPE1() {
+// --license-header-ignore
+// SOC 2 Type 1 — trademark of the AICPA
   return (
     <svg
       version="1.1"

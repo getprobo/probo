@@ -1,4 +1,5 @@
-export function CASA(props: { className?: string }) {
+// --license-header-ignore
+// CASA — trademark of the App Defense Alliance
   const { className } = props;
 
   return (

@@ -1,4 +1,5 @@
-export function NIS2(props: { className?: string }) {
+// --license-header-ignore
+// NIS2 — EU Network and Information Security Directive
   const { className } = props;
 
   return (

@@ -62,7 +62,7 @@ endif
 all: build
 
 .PHONY: lint
-lint: vet go-fmt go-fix go-lint npm-lint
+lint: vet go-fmt go-fix go-lint npm-lint license-check
 
 .PHONY: vet
 vet: generate apps/console/dist/index.html apps/trust/dist/index.html @probo/emails
@@ -93,6 +93,14 @@ go-fix: generate apps/console/dist/index.html apps/trust/dist/index.html @probo/
 .PHONY: go-lint
 go-lint: generate
 	$(GOLINTCMD) run ./...
+
+.PHONY: license-check
+license-check: ## Check that all source files have the ISC license header
+	@./contrib/license-header.sh check
+
+.PHONY: license-fix
+license-fix: ## Add ISC license header to files that are missing it
+	@./contrib/license-header.sh fix
 
 .PHONY: test
 test: generate

@@ -1,4 +1,5 @@
-export function HDS(props: { className?: string }) {
+// --license-header-ignore
+// HDS — French health data hosting certification
   const { className } = props;
 
   return (

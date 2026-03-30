@@ -1,4 +1,5 @@
-export function ISO27001(props: { className?: string }) {
+// --license-header-ignore
+// ISO 27001 — trademark of ISO/IEC
   const { className } = props;
 
   return (
