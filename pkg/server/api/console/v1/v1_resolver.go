@@ -4754,7 +4754,9 @@ func (r *mutationResolver) UpdateDocumentVersionContent(ctx context.Context, inp
 		if _, ok := errors.AsType[*probo.ErrDocumentVersionNotDraft](err); ok {
 			return nil, gqlutils.Conflict(ctx, err)
 		}
-
+		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+		}
 		r.logger.ErrorCtx(ctx, "cannot update document version content", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
