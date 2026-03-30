@@ -12,18 +12,32 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package hash
+package rand
 
 import (
-	"crypto/sha256"
+	"crypto/rand"
 	"encoding/hex"
+	"fmt"
 )
 
-func SHA256(data []byte) []byte {
-	h := sha256.Sum256(data)
-	return h[:]
+// HexString returns a hex-encoded cryptographically random string.
+// The output is 2*byteLen characters long.
+func HexString(byteLen int) (string, error) {
+	b := make([]byte, byteLen)
+	if _, err := rand.Read(b); err != nil {
+		return "", fmt.Errorf("cannot generate random bytes: %w", err)
+	}
+
+	return hex.EncodeToString(b), nil
 }
 
-func SHA256Hex(data []byte) string {
-	return hex.EncodeToString(SHA256(data))
+// MustHexString is like HexString but panics if the system entropy source is
+// unavailable.
+func MustHexString(byteLen int) string {
+	s, err := HexString(byteLen)
+	if err != nil {
+		panic("rand: crypto/rand is unavailable: " + err.Error())
+	}
+
+	return s
 }

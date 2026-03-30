@@ -135,6 +135,13 @@ func NewServer(cfg Config) (*Server, error) {
 	// POSTs from external identity providers by design.
 	csrf.AddInsecureBypassPattern("POST /connect/v1/saml/2.0/consume")
 
+	// OAuth2 token, introspection, revocation, and device authorization
+	// endpoints receive cross-origin POSTs from external clients.
+	csrf.AddInsecureBypassPattern("POST /connect/v1/oauth2/token")
+	csrf.AddInsecureBypassPattern("POST /connect/v1/oauth2/introspect")
+	csrf.AddInsecureBypassPattern("POST /connect/v1/oauth2/revoke")
+	csrf.AddInsecureBypassPattern("POST /connect/v1/oauth2/device")
+
 	csrf.SetDenyHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		httpserver.RenderJSON(
 			w,

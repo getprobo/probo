@@ -12,18 +12,36 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package hash
+package coredata
 
-import (
-	"crypto/sha256"
-	"encoding/hex"
+import "fmt"
+
+type OAuth2CodeChallengeMethod string
+
+const (
+	OAuth2CodeChallengeMethodS256 OAuth2CodeChallengeMethod = "S256"
 )
 
-func SHA256(data []byte) []byte {
-	h := sha256.Sum256(data)
-	return h[:]
+func (m OAuth2CodeChallengeMethod) IsValid() bool {
+	switch m {
+	case OAuth2CodeChallengeMethodS256:
+		return true
+	}
+
+	return false
 }
 
-func SHA256Hex(data []byte) string {
-	return hex.EncodeToString(SHA256(data))
+func (m OAuth2CodeChallengeMethod) String() string { return string(m) }
+
+func (m *OAuth2CodeChallengeMethod) UnmarshalText(text []byte) error {
+	*m = OAuth2CodeChallengeMethod(text)
+	if !m.IsValid() {
+		return fmt.Errorf("%s is not a valid OAuth2CodeChallengeMethod", string(text))
+	}
+
+	return nil
+}
+
+func (m OAuth2CodeChallengeMethod) MarshalText() ([]byte, error) {
+	return []byte(m.String()), nil
 }

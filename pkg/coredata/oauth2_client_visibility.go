@@ -12,18 +12,37 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package hash
+package coredata
 
-import (
-	"crypto/sha256"
-	"encoding/hex"
+import "fmt"
+
+type OAuth2ClientVisibility string
+
+const (
+	OAuth2ClientVisibilityPrivate OAuth2ClientVisibility = "private"
+	OAuth2ClientVisibilityPublic  OAuth2ClientVisibility = "public"
 )
 
-func SHA256(data []byte) []byte {
-	h := sha256.Sum256(data)
-	return h[:]
+func (v OAuth2ClientVisibility) IsValid() bool {
+	switch v {
+	case OAuth2ClientVisibilityPrivate, OAuth2ClientVisibilityPublic:
+		return true
+	}
+
+	return false
 }
 
-func SHA256Hex(data []byte) string {
-	return hex.EncodeToString(SHA256(data))
+func (v OAuth2ClientVisibility) String() string { return string(v) }
+
+func (v *OAuth2ClientVisibility) UnmarshalText(text []byte) error {
+	*v = OAuth2ClientVisibility(text)
+	if !v.IsValid() {
+		return fmt.Errorf("%s is not a valid OAuth2ClientVisibility", string(text))
+	}
+
+	return nil
+}
+
+func (v OAuth2ClientVisibility) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
 }

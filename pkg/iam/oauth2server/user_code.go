@@ -12,18 +12,30 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package hash
+package oauth2server
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
+	"crypto/rand"
+	"math/big"
+
+	"go.probo.inc/probo/pkg/coredata"
 )
 
-func SHA256(data []byte) []byte {
-	h := sha256.Sum256(data)
-	return h[:]
-}
+// userCodeAlphabet excludes ambiguous characters: 0/O, 1/I/L.
+const userCodeAlphabet = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"
 
-func SHA256Hex(data []byte) string {
-	return hex.EncodeToString(SHA256(data))
+// GenerateUserCode generates a raw 8-character user code for the device flow.
+// Characters are drawn from an unambiguous alphabet (no 0/O/1/I/L).
+func GenerateUserCode() (coredata.OAuth2UserCode, error) {
+	code := make([]byte, 8)
+	for i := range code {
+		n, err := rand.Int(rand.Reader, big.NewInt(int64(len(userCodeAlphabet))))
+		if err != nil {
+			return "", err
+		}
+
+		code[i] = userCodeAlphabet[n.Int64()]
+	}
+
+	return coredata.OAuth2UserCode(code), nil
 }

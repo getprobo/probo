@@ -12,18 +12,36 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package hash
+package coredata
 
-import (
-	"crypto/sha256"
-	"encoding/hex"
+import "fmt"
+
+type OAuth2SigningAlgorithm string
+
+const (
+	OAuth2SigningAlgorithmRS256 OAuth2SigningAlgorithm = "RS256"
 )
 
-func SHA256(data []byte) []byte {
-	h := sha256.Sum256(data)
-	return h[:]
+func (a OAuth2SigningAlgorithm) IsValid() bool {
+	switch a {
+	case OAuth2SigningAlgorithmRS256:
+		return true
+	}
+
+	return false
 }
 
-func SHA256Hex(data []byte) string {
-	return hex.EncodeToString(SHA256(data))
+func (a OAuth2SigningAlgorithm) String() string { return string(a) }
+
+func (a *OAuth2SigningAlgorithm) UnmarshalText(text []byte) error {
+	*a = OAuth2SigningAlgorithm(text)
+	if !a.IsValid() {
+		return fmt.Errorf("%s is not a valid OAuth2SigningAlgorithm", string(text))
+	}
+
+	return nil
+}
+
+func (a OAuth2SigningAlgorithm) MarshalText() ([]byte, error) {
+	return []byte(a.String()), nil
 }

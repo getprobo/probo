@@ -98,6 +98,8 @@ const (
 	AccessReviewCampaignEntityType             uint16 = 72
 	AccessEntryEntityType                      uint16 = 73
 	AccessEntryDecisionHistoryEntityType       uint16 = 74
+	OAuth2ClientEntityType                     uint16 = 75
+	OAuth2ConsentEntityType                    uint16 = 76
 )
 
 func NewEntityFromID(id gid.GID) (any, bool) {
@@ -244,6 +246,10 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &AccessEntry{ID: id}, true
 	case AccessEntryDecisionHistoryEntityType:
 		return &AccessEntryDecisionHistory{ID: id}, true
+	case OAuth2ClientEntityType:
+		return &OAuth2Client{ID: id}, true
+	case OAuth2ConsentEntityType:
+		return &OAuth2Consent{ID: id}, true
 	default:
 		return nil, false
 	}

@@ -16,8 +16,6 @@ package coredata
 
 import (
 	"context"
-	"crypto/rand"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"maps"
@@ -26,6 +24,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/crypto/cipher"
+	"go.probo.inc/probo/pkg/crypto/rand"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
 )
@@ -45,12 +44,12 @@ type (
 )
 
 func (w *WebhookSubscription) GenerateSigningSecret(encryptionKey cipher.EncryptionKey) (string, error) {
-	secret := make([]byte, 32)
-	if _, err := rand.Read(secret); err != nil {
+	hexSecret, err := rand.HexString(32)
+	if err != nil {
 		return "", fmt.Errorf("cannot generate signing secret: %w", err)
 	}
 
-	signingSecret := "whsec_" + hex.EncodeToString(secret)
+	signingSecret := "whsec_" + hexSecret
 
 	encrypted, err := cipher.Encrypt([]byte(signingSecret), encryptionKey)
 	if err != nil {
