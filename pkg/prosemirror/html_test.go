@@ -187,6 +187,45 @@ func TestRenderHTML_LinkMinimalAttrs(t *testing.T) {
 	assert.Equal(t, `<a href="https://example.com">hi</a>`, got)
 }
 
+func TestRenderHTML_LinkBlankTargetDefaultRel(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		name string
+		raw  string
+		want string
+	}{
+		{
+			name: "no rel",
+			raw:  `{"type":"text","marks":[{"type":"link","attrs":{"href":"https://example.com","target":"_blank","rel":null}}],"text":"hi"}`,
+			want: `<a href="https://example.com" target="_blank" rel="noopener noreferrer">hi</a>`,
+		},
+		{
+			name: "case insensitive target",
+			raw:  `{"type":"text","marks":[{"type":"link","attrs":{"href":"https://example.com","target":"_BLANK"}}],"text":"hi"}`,
+			want: `<a href="https://example.com" target="_BLANK" rel="noopener noreferrer">hi</a>`,
+		},
+		{
+			name: "whitespace rel treated as absent",
+			raw:  `{"type":"text","marks":[{"type":"link","attrs":{"href":"https://example.com","target":" _blank ","rel":"  "}}],"text":"hi"}`,
+			want: `<a href="https://example.com" target=" _blank " rel="noopener noreferrer">hi</a>`,
+		},
+	} {
+		t.Run(
+			tc.name,
+			func(t *testing.T) {
+				t.Parallel()
+				var n Node
+				require.NoError(t, json.Unmarshal([]byte(tc.raw), &n))
+
+				got, err := RenderHTML(n)
+				require.NoError(t, err)
+				assert.Equal(t, tc.want, got)
+			},
+		)
+	}
+}
+
 func TestRenderHTML_LinkSanitizesDangerousHrefs(t *testing.T) {
 	t.Parallel()
 

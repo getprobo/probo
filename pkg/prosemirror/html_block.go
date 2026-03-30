@@ -26,12 +26,10 @@ import (
 
 // htmlBlockSanitizePolicy matches tags and attributes we can represent as
 // ProseMirror/Tiptap JSON and strips scripts, event handlers, and unsafe URLs.
-func htmlBlockSanitizePolicy() *bluemonday.Policy {
-	return bluemonday.UGCPolicy()
-}
+var htmlBlockSanitizePolicy = bluemonday.UGCPolicy()
 
 func sanitizeHTMLBlockContent(s string) string {
-	return htmlBlockSanitizePolicy().Sanitize(s)
+	return htmlBlockSanitizePolicy.Sanitize(s)
 }
 
 // convertProseMirrorFromInlineHTML sanitizes inline raw HTML and maps it to

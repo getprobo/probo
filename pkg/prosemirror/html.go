@@ -198,8 +198,9 @@ func openMark(buf *bytes.Buffer, m Mark) error {
 		if attrs.Target != nil {
 			writeAttr(buf, "target", *attrs.Target)
 		}
-		if attrs.Rel != nil {
-			writeAttr(buf, "rel", *attrs.Rel)
+		rel := linkRelToEmit(attrs)
+		if rel != "" {
+			writeAttr(buf, "rel", rel)
 		}
 		if attrs.Class != nil {
 			writeAttr(buf, "class", *attrs.Class)
@@ -259,6 +260,27 @@ func renderTableCell(buf *bytes.Buffer, n Node, tag string) error {
 	buf.WriteString(tag)
 	buf.WriteByte('>')
 	return nil
+}
+
+const linkRelBlankTargetDefault = "noopener noreferrer"
+
+// linkRelToEmit returns the rel attribute value for a link mark, or empty when
+// the attribute should be omitted. When target opens a new browsing context
+// (_blank) and the document provides no rel, browsers would grant the opened
+// page access to window.opener unless noopener is set.
+func linkRelToEmit(attrs LinkAttrs) string {
+	if attrs.Rel != nil {
+		if s := strings.TrimSpace(*attrs.Rel); s != "" {
+			return s
+		}
+	}
+	if attrs.Target == nil {
+		return ""
+	}
+	if !strings.EqualFold(strings.TrimSpace(*attrs.Target), "_blank") {
+		return ""
+	}
+	return linkRelBlankTargetDefault
 }
 
 func writeAttr(buf *bytes.Buffer, name, value string) {
