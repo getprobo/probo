@@ -44,10 +44,10 @@ need for sub-agents.
 ### Medium changes (4-10 files, 1-2 stacks)
 Spawn 2-3 relevant topic reviewers based on what the changes touch. Tell each
 reviewer which stack's guidelines to load:
-- Backend route/service changes -> `probo-pattern-reviewer` + `probo-architecture-reviewer`
-- Frontend component changes -> `probo-style-reviewer` + `probo-test-reviewer`
-- Database migrations -> `probo-security-reviewer` + `probo-architecture-reviewer`
-- New feature across modules -> `probo-architecture-reviewer` + `probo-pattern-reviewer` + `probo-test-reviewer`
+- Backend route/service changes -> `potion-pattern-reviewer` + `potion-architecture-reviewer`
+- Frontend component changes -> `potion-style-reviewer` + `potion-test-reviewer`
+- Database migrations -> `potion-security-reviewer` + `potion-architecture-reviewer`
+- New feature across modules -> `potion-architecture-reviewer` + `potion-pattern-reviewer` + `potion-test-reviewer`
 
 ### Large changes (10+ files, multiple stacks)
 Spawn all available topic reviewers in parallel. For each reviewer, pass the
@@ -65,27 +65,27 @@ Review these files using {stack_name} guidelines:
 The master reviewer PASSES stack context to each topic reviewer -- reviewers do
 not detect it themselves.
 
-- **probo-architecture-reviewer** -- module placement, layer boundaries, dependencies:
+- **potion-architecture-reviewer** -- module placement, layer boundaries, dependencies:
   - For Go Backend files -> load `.claude/guidelines/go-backend/index.md`
   - For TypeScript Frontend files -> load `.claude/guidelines/typescript-frontend/index.md`
 
-- **probo-pattern-reviewer** -- error handling, data access, DI, type usage:
+- **potion-pattern-reviewer** -- error handling, data access, DI, type usage:
   - For Go Backend files -> load `.claude/guidelines/go-backend/patterns.md`
   - For TypeScript Frontend files -> load `.claude/guidelines/typescript-frontend/patterns.md`
 
-- **probo-test-reviewer** -- test quality, coverage, conventions:
+- **potion-test-reviewer** -- test quality, coverage, conventions:
   - For Go Backend files -> load `.claude/guidelines/go-backend/testing.md`
   - For TypeScript Frontend files -> load `.claude/guidelines/typescript-frontend/testing.md`
 
-- **probo-security-reviewer** -- auth, data exposure, injection, SQL safety:
+- **potion-security-reviewer** -- auth, data exposure, injection, SQL safety:
   - For Go Backend files -> load `.claude/guidelines/go-backend/pitfalls.md`
   - For TypeScript Frontend files -> load `.claude/guidelines/typescript-frontend/pitfalls.md`
 
-- **probo-style-reviewer** -- naming, formatting, exports, conventions:
+- **potion-style-reviewer** -- naming, formatting, exports, conventions:
   - For Go Backend files -> load `.claude/guidelines/go-backend/conventions.md`
   - For TypeScript Frontend files -> load `.claude/guidelines/typescript-frontend/conventions.md`
 
-- **probo-duplication-reviewer** -- code duplication, missed reuse:
+- **potion-duplication-reviewer** -- code duplication, missed reuse:
   - For Go Backend files -> load `.claude/guidelines/go-backend/patterns.md`
   - For TypeScript Frontend files -> load `.claude/guidelines/typescript-frontend/patterns.md`
 
