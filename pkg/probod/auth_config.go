@@ -29,6 +29,12 @@ type AuthConfig struct {
 	SAML                                SAMLConfig         `json:"saml"`
 	Google                              OIDCProviderConfig `json:"google"`
 	Microsoft                           OIDCProviderConfig `json:"microsoft"`
+	OAuth2Server                        OAuth2ServerConfig `json:"oauth2-server"`
+}
+
+type OAuth2ServerConfig struct {
+	SigningKeyFile string `json:"signing-key-file"`
+	SigningKID     string `json:"signing-kid"`
 }
 
 type CookieConfig struct {

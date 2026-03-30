@@ -25,6 +25,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"os"
 	"strings"
 	"sync"
 	"time"
@@ -365,6 +366,31 @@ func (impl *Implm) Run(
 		}
 	}
 
+	var oauth2SigningKey *rsa.PrivateKey
+	var oauth2SigningKID string
+	if impl.cfg.Auth.OAuth2Server.SigningKeyFile != "" {
+		keyPEM, err := os.ReadFile(impl.cfg.Auth.OAuth2Server.SigningKeyFile)
+		if err != nil {
+			return fmt.Errorf("cannot read OAuth2 server signing key file: %w", err)
+		}
+
+		signer, err := pemutil.DecodePrivateKey(keyPEM)
+		if err != nil {
+			return fmt.Errorf("cannot decode OAuth2 server signing key: %w", err)
+		}
+
+		var ok bool
+		oauth2SigningKey, ok = signer.(*rsa.PrivateKey)
+		if !ok {
+			return fmt.Errorf("OAuth2 server signing key is not an RSA key")
+		}
+
+		oauth2SigningKID = impl.cfg.Auth.OAuth2Server.SigningKID
+		if oauth2SigningKID == "" {
+			oauth2SigningKID = "default"
+		}
+	}
+
 	if err := emails.UploadStaticAssets(
 		ctx,
 		s3Client,
@@ -408,6 +434,8 @@ func (impl *Implm) Run(
 				ClientSecret: impl.cfg.Auth.Microsoft.ClientSecret,
 				Enabled:      impl.cfg.Auth.Microsoft.Enabled,
 			},
+			OAuth2ServerSigningKey: oauth2SigningKey,
+			OAuth2ServerSigningKID: oauth2SigningKID,
 		},
 	)
 	if err != nil {

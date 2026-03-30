@@ -18,6 +18,7 @@ import (
 	"context"
 	"crypto/rsa"
 	"crypto/x509"
+	"errors"
 	"fmt"
 	"sync"
 	"time"
@@ -33,6 +34,7 @@ import (
 	"go.probo.inc/probo/pkg/crypto/passwdhash"
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/iam/oauth2server"
 	"go.probo.inc/probo/pkg/iam/oidc"
 	"go.probo.inc/probo/pkg/iam/saml"
 	"go.probo.inc/probo/pkg/iam/scim"
@@ -64,6 +66,7 @@ type (
 		OIDCService           *oidc.Service
 		SCIMService           *scim.Service
 		APIKeyService         *APIKeyService
+		OAuth2ServerService   *oauth2server.Service
 		Authorizer            *Authorizer
 
 		samlDomainVerifier *SAMLDomainVerifier
@@ -91,6 +94,8 @@ type (
 		SCIMBridgePollInterval         time.Duration
 		GoogleOIDC                     oidc.ProviderConfig
 		MicrosoftOIDC                  oidc.ProviderConfig
+		OAuth2ServerSigningKey         *rsa.PrivateKey
+		OAuth2ServerSigningKID         string
 	}
 )
 
@@ -177,6 +182,16 @@ func NewService(
 		},
 	)
 
+	svc.OAuth2ServerService = oauth2server.NewService(
+		pgClient,
+		oauth2server.Config{
+			SigningKey: cfg.OAuth2ServerSigningKey,
+			SigningKID: cfg.OAuth2ServerSigningKID,
+			BaseURL:    cfg.BaseURL.String(),
+			Logger:     cfg.Logger.Named("oauth2server"),
+		},
+	)
+
 	svc.samlDomainVerifier = NewSAMLDomainVerifier(
 		pgClient,
 		cfg.Logger,
@@ -229,16 +244,46 @@ func (s *Service) Run(ctx context.Context) error {
 		},
 	)
 
+	oauth2Ctx, stopOAuth2Server := context.WithCancel(context.WithoutCancel(ctx))
+	wg.Go(
+		func() {
+			if err := s.OAuth2ServerService.Run(oauth2Ctx); err != nil {
+				cancel(fmt.Errorf("oauth2 server service crashed: %w", err))
+			}
+		},
+	)
+
 	<-ctx.Done()
 
 	stopSAML()
 	stopOIDC()
 	stopDomainVerifier()
 	stopSCIM()
+	stopOAuth2Server()
 
 	wg.Wait()
 
 	return context.Cause(ctx)
+}
+
+func (s *Service) HasMembership(ctx context.Context, identityID gid.GID, organizationID gid.GID) (bool, error) {
+	var membership coredata.Membership
+
+	err := s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			return membership.LoadActiveByIdentityIDAndOrganizationID(ctx, conn, identityID, organizationID)
+		},
+	)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return false, nil
+		}
+
+		return false, fmt.Errorf("cannot check membership: %w", err)
+	}
+
+	return true, nil
 }
 
 func (s *Service) GetMembership(ctx context.Context, membershipID gid.GID) (*coredata.Membership, error) {

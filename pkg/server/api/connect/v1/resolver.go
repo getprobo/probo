@@ -79,6 +79,36 @@ func NewMux(logger *log.Logger, svc *iam.Service, cookieConfig securecookie.Conf
 	scimServer := NewSCIMServer(scimHandler)
 	r.Mount("/scim/2.0", http.StripPrefix("/scim/2.0", scimHandler.BearerTokenMiddleware(scimServer)))
 
+	// OAuth2 / OpenID Connect server endpoints.
+	if svc.OAuth2ServerService != nil {
+		oauth2Handler := NewOAuth2Handler(svc, cookieConfig, baseURL, logger)
+
+		// Public endpoints (no authentication).
+		r.Get("/oauth2/jwks", oauth2Handler.JWKSHandler)
+		r.Post("/oauth2/token", oauth2Handler.TokenHandler)
+		r.Post("/oauth2/device", oauth2Handler.DeviceAuthHandler)
+
+		// Bearer-token authenticated endpoints.
+		bearerAuth := r.With(oauth2Handler.BearerTokenMiddleware)
+		bearerAuth.Get("/oauth2/userinfo", oauth2Handler.UserInfoHandler)
+
+		// Client-authenticated endpoints.
+		clientAuth := r.With(oauth2Handler.ClientAuthMiddleware)
+		clientAuth.Post("/oauth2/introspect", oauth2Handler.IntrospectHandler)
+		clientAuth.Post("/oauth2/revoke", oauth2Handler.RevokeHandler)
+
+		// Session-authenticated endpoints.
+		router.Get("/oauth2/authorize", oauth2Handler.AuthorizeHandler)
+
+		requireIdentity := router.With(authn.NewIdentityPresenceMiddleware())
+		requireIdentity.Post("/oauth2/authorize", oauth2Handler.AuthorizeConsentHandler)
+		requireIdentity.Post("/oauth2/register", oauth2Handler.RegisterHandler)
+		requireIdentity.Post("/oauth2/device/verify", oauth2Handler.DeviceVerifySubmit)
+
+		// DeviceVerifyPage has its own redirect-to-login logic.
+		router.Get("/oauth2/device/verify", oauth2Handler.DeviceVerifyPage)
+	}
+
 	return r
 }
 

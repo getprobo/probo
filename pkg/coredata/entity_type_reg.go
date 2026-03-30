@@ -94,6 +94,8 @@ const (
 	AuditLogEntryEntityType                    uint16 = 68
 	DocumentVersionApprovalQuorumEntityType    uint16 = 69
 	DocumentVersionApprovalDecisionEntityType  uint16 = 70
+	OAuth2ClientEntityType                     uint16 = 71
+	OAuth2ConsentEntityType                    uint16 = 72
 )
 
 func NewEntityFromID(id gid.GID) (any, bool) {
@@ -232,6 +234,10 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &DocumentVersionApprovalDecision{ID: id}, true
 	case DocumentVersionApprovalQuorumEntityType:
 		return &DocumentVersionApprovalQuorum{ID: id}, true
+	case OAuth2ClientEntityType:
+		return &OAuth2Client{ID: id}, true
+	case OAuth2ConsentEntityType:
+		return &OAuth2Consent{ID: id}, true
 	default:
 		return nil, false
 	}

@@ -1,0 +1,51 @@
+<!--
+  Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+
+  Permission to use, copy, modify, and/or distribute this software for any
+  purpose with or without fee is hereby granted, provided that the above
+  copyright notice and this permission notice appear in all copies.
+
+  THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+  REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+  AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+  LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+  OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+  PERFORMANCE OF THIS SOFTWARE.
+-->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Authorize {{.ClientName}}</title>
+  </head>
+  <body>
+    <h1>Authorize {{.ClientName}}</h1>
+    <p>This application is requesting access to your account with the following permissions:</p>
+    <ul>
+      {{- range .Scopes}}
+      {{- if eq . "openid"}}
+      <li>Verify your identity</li>
+      {{- end}}
+      {{- if eq . "email"}}
+      <li>View your email address</li>
+      {{- end}}
+      {{- if eq . "profile"}}
+      <li>View your profile information</li>
+      {{- end}}
+      {{- end}}
+    </ul>
+    <form method="POST" action="/api/connect/v1/oauth2/authorize">
+      <input type="hidden" name="client_id" value="{{.ClientID}}">
+      <input type="hidden" name="redirect_uri" value="{{.RedirectURI}}">
+      <input type="hidden" name="scope" value="{{.Scope}}">
+      <input type="hidden" name="state" value="{{.State}}">
+      <input type="hidden" name="code_challenge" value="{{.CodeChallenge}}">
+      <input type="hidden" name="code_challenge_method" value="{{.CodeChallengeMethod}}">
+      <input type="hidden" name="nonce" value="{{.Nonce}}">
+      <button type="submit" name="action" value="approve">Allow</button>
+      <button type="submit" name="action" value="deny">Deny</button>
+    </form>
+  </body>
+</html>
