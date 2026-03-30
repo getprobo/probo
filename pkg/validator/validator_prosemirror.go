@@ -12,21 +12,29 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package documentversion
+package validator
 
 import (
-	"github.com/spf13/cobra"
-	"go.probo.inc/probo/pkg/cmd/cmdutil"
-	"go.probo.inc/probo/pkg/cmd/documentversion/updatecontent"
+	"strings"
+
+	"go.probo.inc/probo/pkg/prosemirror"
 )
 
-func NewCmdDocumentVersion(f *cmdutil.Factory) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "document-version <command>",
-		Short: "Manage document versions",
+// ProseMirrorDocumentContent requires non-empty string values to be valid
+// ProseMirror/Tiptap JSON with root type "doc". Empty and whitespace-only
+// strings are allowed.
+func ProseMirrorDocumentContent() ValidatorFunc {
+	return func(value any) *ValidationError {
+		s, ok := value.(string)
+		if !ok {
+			return newValidationError(ErrorCodeInvalidFormat, "value must be a string")
+		}
+		if strings.TrimSpace(s) == "" {
+			return nil
+		}
+		if err := prosemirror.ValidateDocumentContentJSON(s); err != nil {
+			return newValidationError(ErrorCodeInvalidFormat, err.Error())
+		}
+		return nil
 	}
-
-	cmd.AddCommand(updatecontent.NewCmdUpdateContent(f))
-
-	return cmd
 }

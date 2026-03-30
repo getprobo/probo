@@ -16,6 +16,8 @@ package prosemirror
 
 import (
 	"encoding/json"
+	"fmt"
+	"html"
 	"os"
 	"testing"
 
@@ -183,6 +185,49 @@ func TestRenderHTML_LinkMinimalAttrs(t *testing.T) {
 	got, err := RenderHTML(n)
 	require.NoError(t, err)
 	assert.Equal(t, `<a href="https://example.com">hi</a>`, got)
+}
+
+func TestRenderHTML_LinkSanitizesDangerousHrefs(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		name     string
+		href     string
+		wantHref string
+	}{
+		{name: "javascript scheme", href: `javascript:alert(1)`, wantHref: `#`},
+		{name: "javascript scheme case insensitive", href: `javaScript:alert(1)`, wantHref: `#`},
+		{name: "data html", href: `data:text/html,<script>alert(1)</script>`, wantHref: `#`},
+		{name: "protocol-relative", href: `//evil.example/phish`, wantHref: `#`},
+		{name: "path with leading slash-slash", href: `//not-a-path`, wantHref: `#`},
+		{name: "empty href", href: ``, wantHref: `#`},
+		{name: "fragment only", href: `#section`, wantHref: `#section`},
+		{name: "relative path", href: `docs/page`, wantHref: `docs/page`},
+		{name: "absolute path", href: `/app/foo`, wantHref: `/app/foo`},
+		{name: "mailto", href: `mailto:user@example.com`, wantHref: `mailto:user@example.com`},
+		{name: "tel", href: `tel:+15551212`, wantHref: `tel:+15551212`},
+		{name: "https preserved", href: `https://example.com/x`, wantHref: `https://example.com/x`},
+	} {
+		t.Run(
+			tc.name,
+			func(t *testing.T) {
+				t.Parallel()
+				hrefJSON, err := json.Marshal(tc.href)
+				require.NoError(t, err)
+				raw := fmt.Sprintf(
+					`{"type":"text","marks":[{"type":"link","attrs":{"href":%s,"target":null,"rel":null,"class":null,"title":null}}],"text":"x"}`,
+					string(hrefJSON),
+				)
+				var n Node
+				require.NoError(t, json.Unmarshal([]byte(raw), &n))
+
+				got, err := RenderHTML(n)
+				require.NoError(t, err)
+				want := fmt.Sprintf(`<a href="%s">x</a>`, html.EscapeString(tc.wantHref))
+				assert.Equal(t, want, got)
+			},
+		)
+	}
 }
 
 func TestRenderHTML_Image(t *testing.T) {

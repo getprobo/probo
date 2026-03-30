@@ -18,7 +18,9 @@ import (
 	"bytes"
 	"fmt"
 	"html"
+	"net/url"
 	"strconv"
+	"strings"
 )
 
 // RenderHTML renders a ProseMirror document node tree to an HTML string.
@@ -192,7 +194,7 @@ func openMark(buf *bytes.Buffer, m Mark) error {
 			return fmt.Errorf("cannot render link mark: %w", err)
 		}
 		buf.WriteString("<a")
-		writeAttr(buf, "href", attrs.Href)
+		writeAttr(buf, "href", safeLinkHref(attrs.Href))
 		if attrs.Target != nil {
 			writeAttr(buf, "target", *attrs.Target)
 		}
@@ -265,4 +267,40 @@ func writeAttr(buf *bytes.Buffer, name, value string) {
 	buf.WriteString(`="`)
 	buf.WriteString(html.EscapeString(value))
 	buf.WriteByte('"')
+}
+
+// safeLinkHref returns a value safe to use in link mark attrs and to emit in an
+// HTML href attribute. URLs with disallowed schemes (for example javascript: or
+// data:) are replaced with "#" so escaped text content cannot be combined with an
+// executable URL.
+func safeLinkHref(href string) string {
+	href = strings.TrimSpace(href)
+	if href == "" {
+		return "#"
+	}
+	if href[0] == '#' {
+		return href
+	}
+	if strings.HasPrefix(href, "/") {
+		if len(href) > 1 && (href[1] == '/' || href[1] == '\\') {
+			return "#"
+		}
+		return href
+	}
+	u, err := url.Parse(href)
+	if err != nil {
+		return "#"
+	}
+	if u.Scheme != "" {
+		switch strings.ToLower(u.Scheme) {
+		case "http", "https", "mailto", "tel":
+			return href
+		default:
+			return "#"
+		}
+	}
+	if u.Host != "" {
+		return "#"
+	}
+	return href
 }

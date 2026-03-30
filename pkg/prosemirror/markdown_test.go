@@ -205,6 +205,33 @@ func TestParseMarkdown_Link(t *testing.T) {
 	assert.Equal(t, "https://example.com", linkAttrs.Href)
 }
 
+func TestParseMarkdown_LinkSanitizesDangerousHrefs(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name     string
+		markdown string
+		wantHref string
+	}{
+		{name: "javascript scheme", markdown: `[x](javascript:alert(1))`, wantHref: `#`},
+		{name: "data html", markdown: `[x](data:text/html,<script>alert(1)</script>)`, wantHref: `#`},
+		{name: "protocol-relative", markdown: `[x](//evil.example/phish)`, wantHref: `#`},
+		{name: "https preserved", markdown: `[x](https://example.com/y)`, wantHref: `https://example.com/y`},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			doc, err := ParseMarkdown(tt.markdown)
+			require.NoError(t, err)
+			txt := doc.Content[0].Content[0]
+			linkAttrs, err := txt.Marks[0].LinkAttrs()
+			require.NoError(t, err)
+			assert.Equal(t, tt.wantHref, linkAttrs.Href)
+		})
+	}
+}
+
 func TestParseMarkdown_Image(t *testing.T) {
 	t.Parallel()
 

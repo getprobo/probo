@@ -40,6 +40,7 @@ import (
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
+	"go.probo.inc/probo/pkg/prosemirror"
 	"go.probo.inc/probo/pkg/statelesstoken"
 	"go.probo.inc/probo/pkg/validator"
 	"go.probo.inc/probo/pkg/watermarkpdf"
@@ -120,7 +121,12 @@ func (cdr *CreateDocumentRequest) Validate() error {
 
 	v.Check(cdr.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
 	v.Check(cdr.Title, "title", validator.Required(), validator.SafeTextNoNewLine(TitleMaxLength))
-	v.Check(cdr.Content, "content", validator.MaxLen(documentMaxLength))
+	v.Check(
+		cdr.Content,
+		"content",
+		validator.MaxLen(documentMaxLength),
+		validator.ProseMirrorDocumentContent(),
+	)
 	v.Check(cdr.Classification, "classification", validator.Required(), validator.OneOfSlice(coredata.DocumentClassifications()))
 	v.Check(cdr.DocumentType, "document_type", validator.Required(), validator.OneOfSlice(coredata.DocumentTypes()))
 	v.Check(cdr.TrustCenterVisibility, "trust_center_visibility", validator.OneOfSlice(coredata.TrustCenterVisibilities()))
@@ -143,8 +149,15 @@ func (udvr *UpdateDocumentVersionRequest) Validate() error {
 	v := validator.New()
 
 	v.Check(udvr.ID, "id", validator.Required(), validator.GID(coredata.DocumentVersionEntityType))
-	v.Check(udvr.Content, "content", validator.NotEmpty(), validator.MaxLen(documentMaxLength))
 	v.Check(udvr.Classification, "classification", validator.OneOfSlice(coredata.DocumentClassifications()))
+	v.Check(
+		udvr.Content,
+		"content",
+		validator.Required(),
+		validator.NotEmpty(),
+		validator.MaxLen(documentMaxLength),
+		validator.ProseMirrorDocumentContent(),
+	)
 
 	return v.Error()
 }
@@ -518,13 +531,22 @@ func (s *DocumentService) Create(
 		document.TrustCenterVisibility = *req.TrustCenterVisibility
 	}
 
+	content := req.Content
+	if strings.TrimSpace(content) != "" {
+		var sanitizeErr error
+		content, sanitizeErr = prosemirror.SanitizeDocumentJSON(content)
+		if sanitizeErr != nil {
+			return nil, nil, fmt.Errorf("cannot sanitize document content: %w", sanitizeErr)
+		}
+	}
+
 	documentVersion := &coredata.DocumentVersion{
 		ID:             documentVersionID,
 		DocumentID:     documentID,
 		Title:          req.Title,
 		Major:          0,
 		Minor:          1,
-		Content:        req.Content,
+		Content:        content,
 		Status:         coredata.DocumentVersionStatusDraft,
 		Classification: req.Classification,
 		CreatedAt:      now,
@@ -761,10 +783,17 @@ func (s *DocumentService) UpdateVersion(
 				return &ErrDocumentVersionNotDraft{}
 			}
 
-			documentVersion.Title = document.Title
+			var content string
 			if req.Content != nil {
-				documentVersion.Content = *req.Content
+				var err error
+				content, err = prosemirror.SanitizeDocumentJSON(*req.Content)
+				if err != nil {
+					return fmt.Errorf("cannot sanitize document content: %w", err)
+				}
 			}
+
+			documentVersion.Title = document.Title
+			documentVersion.Content = content
 			if req.Classification != nil {
 				documentVersion.Classification = *req.Classification
 			}
@@ -1574,45 +1603,6 @@ func (s *DocumentService) Update(
 	}
 
 	return document, nil
-}
-
-func (s *DocumentService) UpdateDocumentVersionContent(
-	ctx context.Context,
-	req UpdateDocumentVersionRequest,
-) (string, error) {
-	documentVersion := &coredata.DocumentVersion{}
-
-	if err := req.Validate(); err != nil {
-		return "", err
-	}
-
-	err := s.svc.pg.WithTx(
-		ctx,
-		func(conn pg.Conn) error {
-			if err := documentVersion.LoadByID(ctx, conn, s.svc.scope, req.ID); err != nil {
-				return fmt.Errorf("cannot load document version %q: %w", req.ID, err)
-			}
-
-			if documentVersion.Status != coredata.DocumentVersionStatusDraft {
-				return &ErrDocumentVersionNotDraft{}
-			}
-
-			documentVersion.Content = req.Content
-			documentVersion.UpdatedAt = time.Now()
-
-			if err := documentVersion.Update(ctx, conn, s.svc.scope); err != nil {
-				return fmt.Errorf("cannot update document version: %w", err)
-			}
-
-			return nil
-		},
-	)
-
-	if err != nil {
-		return "", err
-	}
-
-	return documentVersion.Content, nil
 }
 
 func (s *DocumentService) Archive(

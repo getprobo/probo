@@ -55,9 +55,11 @@ export const documentDescriptionPageQuery = graphql`
 `;
 
 const updateContentMutation = graphql`
-  mutation DocumentDescriptionPage_updateContentMutation($input: UpdateDocumentVersionContentInput!) {
-    updateDocumentVersionContent(input: $input) {
-      content
+  mutation DocumentDescriptionPage_updateContentMutation($input: UpdateDocumentVersionInput!) {
+    updateDocumentVersion(input: $input) {
+      documentVersion {
+        content
+      }
     }
   }
 `;
@@ -86,7 +88,7 @@ export function DocumentDescriptionPage(props: { queryRef: PreloadedQuery<Docume
       updateContent({
         variables: {
           input: {
-            id: currentVersion.id,
+            documentVersionId: currentVersion.id,
             content,
           },
         },

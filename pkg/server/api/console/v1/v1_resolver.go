@@ -4734,38 +4734,6 @@ func (r *mutationResolver) UnarchiveDocument(ctx context.Context, input types.Un
 	}, nil
 }
 
-// UpdateDocumentVersionContent is the resolver for the updateDocumentVersionContent field.
-func (r *mutationResolver) UpdateDocumentVersionContent(ctx context.Context, input types.UpdateDocumentVersionContentInput) (*types.UpdateDocumentVersionContentPayload, error) {
-	if err := r.authorize(ctx, input.ID, probo.ActionDocumentUpdate); err != nil {
-		return nil, err
-	}
-
-	prb := r.ProboService(ctx, input.ID.TenantID())
-
-	content, err := prb.Documents.UpdateDocumentVersionContent(
-		ctx,
-		probo.UpdateDocumentVersionRequest{
-			ID:      input.ID,
-			Content: input.Content,
-		},
-	)
-
-	if err != nil {
-		if _, ok := errors.AsType[*probo.ErrDocumentVersionNotDraft](err); ok {
-			return nil, gqlutils.Conflict(ctx, err)
-		}
-		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
-		}
-		r.logger.ErrorCtx(ctx, "cannot update document version content", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return &types.UpdateDocumentVersionContentPayload{
-		Content: content,
-	}, nil
-}
-
 // DeleteDocument is the resolver for the deleteDocument field.
 func (r *mutationResolver) DeleteDocument(ctx context.Context, input types.DeleteDocumentInput) (*types.DeleteDocumentPayload, error) {
 	if err := r.authorize(ctx, input.DocumentID, probo.ActionDocumentDelete); err != nil {
