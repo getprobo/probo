@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.154.2] - 2026-03-30
+
+### Added
+
+- Add reusable agent guardrails for prompt injection and data leaks
+
+### Fixed
+
+- Add ability to disconnect Slack channel from compliance page
+
 ## [0.154.1] - 2026-03-30
 
 ### Fixed
