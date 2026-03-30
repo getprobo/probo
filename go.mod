@@ -41,7 +41,7 @@ require (
 	go.opentelemetry.io/otel/trace v1.40.0
 	go.probo.inc/mcpgen v0.0.0-20260223192226-386b1fbe6184
 	golang.org/x/crypto v0.49.0
-	golang.org/x/image v0.36.0
+	golang.org/x/image v0.38.0
 	golang.org/x/oauth2 v0.35.0
 	golang.org/x/sync v0.20.0
 	google.golang.org/api v0.269.0
