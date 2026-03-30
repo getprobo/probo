@@ -121,7 +121,7 @@ func (cdr *CreateDocumentRequest) Validate() error {
 
 	v.Check(cdr.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
 	v.Check(cdr.Title, "title", validator.Required(), validator.SafeTextNoNewLine(TitleMaxLength))
-	v.Check(cdr.Content, "content", validator.Required(), validator.NotEmpty(), validator.MaxLen(documentMaxLength))
+	v.Check(cdr.Content, "content", validator.MaxLen(documentMaxLength))
 	v.Check(cdr.Classification, "classification", validator.Required(), validator.OneOfSlice(coredata.DocumentClassifications()))
 	v.Check(cdr.DocumentType, "document_type", validator.Required(), validator.OneOfSlice(coredata.DocumentTypes()))
 	v.Check(cdr.TrustCenterVisibility, "trust_center_visibility", validator.OneOfSlice(coredata.TrustCenterVisibilities()))
