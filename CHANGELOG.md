@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.154.0] - 2026-03-30
+
 ### Added
 
 - Add document approval workflow
