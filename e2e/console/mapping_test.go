@@ -393,7 +393,7 @@ func TestControlDocumentMapping_CreateDelete(t *testing.T) {
 		"input": map[string]any{
 			"organizationId": owner.GetOrganizationID().String(),
 			"title":          "Document for Control Mapping",
-			"content":        "Document content",
+			"content":        testutil.ProseMirrorTextDoc("Document content"),
 			"documentType":   "POLICY",
 			"classification": "INTERNAL",
 		},
@@ -781,7 +781,7 @@ func TestRiskDocumentMapping_CreateDelete(t *testing.T) {
 		"input": map[string]any{
 			"organizationId": owner.GetOrganizationID().String(),
 			"title":          "Document for Risk Mapping",
-			"content":        "Document content",
+			"content":        testutil.ProseMirrorTextDoc("Document content"),
 			"documentType":   "POLICY",
 			"classification": "INTERNAL",
 		},

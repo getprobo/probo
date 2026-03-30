@@ -41,7 +41,7 @@ func TestDocument_Create(t *testing.T) {
 			name: "with full details",
 			input: map[string]any{
 				"title":          "Security Policy",
-				"content":        "This is the security policy content.",
+				"content":        testutil.ProseMirrorTextDoc("This is the security policy content."),
 				"documentType":   "POLICY",
 				"classification": "INTERNAL",
 			},
@@ -52,7 +52,7 @@ func TestDocument_Create(t *testing.T) {
 			name: "with POLICY type",
 			input: map[string]any{
 				"title":          "Policy Document",
-				"content":        "Policy content",
+				"content":        testutil.ProseMirrorTextDoc("Policy content"),
 				"documentType":   "POLICY",
 				"classification": "INTERNAL",
 			},
@@ -63,7 +63,7 @@ func TestDocument_Create(t *testing.T) {
 			name: "with PROCEDURE type",
 			input: map[string]any{
 				"title":          "Procedure Document",
-				"content":        "Procedure content",
+				"content":        testutil.ProseMirrorTextDoc("Procedure content"),
 				"documentType":   "PROCEDURE",
 				"classification": "INTERNAL",
 			},
@@ -74,7 +74,7 @@ func TestDocument_Create(t *testing.T) {
 			name: "with GOVERNANCE type",
 			input: map[string]any{
 				"title":          "Governance Document",
-				"content":        "Governance content",
+				"content":        testutil.ProseMirrorTextDoc("Governance content"),
 				"documentType":   "GOVERNANCE",
 				"classification": "INTERNAL",
 			},
@@ -85,7 +85,7 @@ func TestDocument_Create(t *testing.T) {
 			name: "with OTHER type",
 			input: map[string]any{
 				"title":          "Other Document",
-				"content":        "Other content",
+				"content":        testutil.ProseMirrorTextDoc("Other content"),
 				"documentType":   "OTHER",
 				"classification": "INTERNAL",
 			},
@@ -159,7 +159,7 @@ func TestDocument_Create_Validation(t *testing.T) {
 			name: "missing organizationId",
 			input: map[string]any{
 				"title":          "Test Document",
-				"content":        "Test content",
+				"content":        testutil.ProseMirrorTextDoc("Test content"),
 				"documentType":   "POLICY",
 				"classification": "INTERNAL",
 			},
@@ -170,7 +170,7 @@ func TestDocument_Create_Validation(t *testing.T) {
 			name: "title with HTML tags",
 			input: map[string]any{
 				"title":          "<script>alert('xss')</script>",
-				"content":        "Test content",
+				"content":        testutil.ProseMirrorTextDoc("Test content"),
 				"documentType":   "POLICY",
 				"classification": "INTERNAL",
 			},
@@ -180,7 +180,7 @@ func TestDocument_Create_Validation(t *testing.T) {
 			name: "title with newline",
 			input: map[string]any{
 				"title":          "Test\nDocument",
-				"content":        "Test content",
+				"content":        testutil.ProseMirrorTextDoc("Test content"),
 				"documentType":   "POLICY",
 				"classification": "INTERNAL",
 			},
@@ -190,7 +190,7 @@ func TestDocument_Create_Validation(t *testing.T) {
 			name: "title with carriage return",
 			input: map[string]any{
 				"title":          "Test\rDocument",
-				"content":        "Test content",
+				"content":        testutil.ProseMirrorTextDoc("Test content"),
 				"documentType":   "POLICY",
 				"classification": "INTERNAL",
 			},
@@ -200,7 +200,7 @@ func TestDocument_Create_Validation(t *testing.T) {
 			name: "title with null byte",
 			input: map[string]any{
 				"title":          "Test\x00Document",
-				"content":        "Test content",
+				"content":        testutil.ProseMirrorTextDoc("Test content"),
 				"documentType":   "POLICY",
 				"classification": "INTERNAL",
 			},
@@ -210,7 +210,7 @@ func TestDocument_Create_Validation(t *testing.T) {
 			name: "title with tab character",
 			input: map[string]any{
 				"title":          "Test\tDocument",
-				"content":        "Test content",
+				"content":        testutil.ProseMirrorTextDoc("Test content"),
 				"documentType":   "POLICY",
 				"classification": "INTERNAL",
 			},
@@ -220,7 +220,7 @@ func TestDocument_Create_Validation(t *testing.T) {
 			name: "title with zero-width space",
 			input: map[string]any{
 				"title":          "Test\u200BDocument",
-				"content":        "Test content",
+				"content":        testutil.ProseMirrorTextDoc("Test content"),
 				"documentType":   "POLICY",
 				"classification": "INTERNAL",
 			},
@@ -230,7 +230,7 @@ func TestDocument_Create_Validation(t *testing.T) {
 			name: "title with zero-width joiner",
 			input: map[string]any{
 				"title":          "Test\u200DDocument",
-				"content":        "Test content",
+				"content":        testutil.ProseMirrorTextDoc("Test content"),
 				"documentType":   "POLICY",
 				"classification": "INTERNAL",
 			},
@@ -240,7 +240,7 @@ func TestDocument_Create_Validation(t *testing.T) {
 			name: "title with right-to-left override",
 			input: map[string]any{
 				"title":          "Test\u202EDocument",
-				"content":        "Test content",
+				"content":        testutil.ProseMirrorTextDoc("Test content"),
 				"documentType":   "POLICY",
 				"classification": "INTERNAL",
 			},
@@ -613,7 +613,7 @@ func TestDocument_Timestamps(t *testing.T) {
 			"input": map[string]any{
 				"organizationId": owner.GetOrganizationID().String(),
 				"title":          "Timestamp Test Document",
-				"content":        "Test content",
+				"content":        testutil.ProseMirrorTextDoc("Test content"),
 				"documentType":   "POLICY",
 				"classification": "INTERNAL",
 			},
@@ -742,7 +742,7 @@ func TestDocument_RBAC(t *testing.T) {
 				"input": map[string]any{
 					"organizationId": owner.GetOrganizationID().String(),
 					"title":          "RBAC Test Document",
-					"content":        "Test content",
+					"content":        testutil.ProseMirrorTextDoc("Test content"),
 					"documentType":   "POLICY",
 					"classification": "INTERNAL",
 				},
@@ -764,7 +764,7 @@ func TestDocument_RBAC(t *testing.T) {
 				"input": map[string]any{
 					"organizationId": admin.GetOrganizationID().String(),
 					"title":          "RBAC Test Document",
-					"content":        "Test content",
+					"content":        testutil.ProseMirrorTextDoc("Test content"),
 					"documentType":   "POLICY",
 					"classification": "INTERNAL",
 				},
@@ -786,7 +786,7 @@ func TestDocument_RBAC(t *testing.T) {
 				"input": map[string]any{
 					"organizationId": viewer.GetOrganizationID().String(),
 					"title":          "RBAC Test Document",
-					"content":        "Test content",
+					"content":        testutil.ProseMirrorTextDoc("Test content"),
 					"documentType":   "POLICY",
 					"classification": "INTERNAL",
 				},
@@ -1009,7 +1009,7 @@ func TestDocument_MaxLength_Validation(t *testing.T) {
 			"input": map[string]any{
 				"organizationId": owner.GetOrganizationID().String(),
 				"title":          longTitle,
-				"content":        "Test content",
+				"content":        testutil.ProseMirrorTextDoc("Test content"),
 				"documentType":   "POLICY",
 				"classification": "INTERNAL",
 			},

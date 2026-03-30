@@ -3326,7 +3326,7 @@ func (r *Resolver) RequestDocumentVersionApprovalTool(ctx context.Context, req *
 }
 
 func (r *Resolver) UpdateDocumentVersionContentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateDocumentVersionContentInput) (*mcp.CallToolResult, types.UpdateDocumentVersionContentOutput, error) {
-	r.MustAuthorize(ctx, input.DocumentVersionID, probo.ActionDocumentUpdate)
+	r.MustAuthorize(ctx, input.DocumentVersionID, probo.ActionDocumentVersionUpdate)
 
 	svc := r.ProboService(ctx, input.DocumentVersionID)
 

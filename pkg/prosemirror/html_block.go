@@ -561,7 +561,7 @@ func (c *htmlBlockConverter) convertAnchor(n *html.Node) ([]Node, error) {
 	if t := attrVal(n, "title"); t != "" {
 		title = &t
 	}
-	attrs, err := json.Marshal(LinkAttrs{Href: href, Title: title})
+	attrs, err := json.Marshal(LinkAttrs{Href: safeLinkHref(href), Title: title})
 	if err != nil {
 		return nil, fmt.Errorf("cannot marshal link attrs: %w", err)
 	}

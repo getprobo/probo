@@ -110,7 +110,7 @@ func createTestDocument(t *testing.T, owner *testutil.Client) (docID string, doc
 		"input": map[string]any{
 			"organizationId": owner.GetOrganizationID().String(),
 			"title":          "Test Document",
-			"content":        "Initial content",
+			"content":        testutil.ProseMirrorTextDoc("Initial content"),
 			"documentType":   "POLICY",
 			"classification": "INTERNAL",
 		},
@@ -316,15 +316,17 @@ func TestDocumentVersion_UpdateContent(t *testing.T) {
 		} `json:"updateDocumentVersionContent"`
 	}
 
+	wantContent := testutil.ProseMirrorTextDoc("Updated content for the document version")
+
 	err := owner.Execute(query, map[string]any{
 		"input": map[string]any{
 			"id":      draftVersionID,
-			"content": "Updated content for the document version",
+			"content": wantContent,
 		},
 	}, &result)
 	require.NoError(t, err)
 
-	assert.Equal(t, "Updated content for the document version", result.UpdateDocumentVersionContent.Content)
+	assert.JSONEq(t, wantContent, result.UpdateDocumentVersionContent.Content)
 }
 
 func TestDocumentVersion_RequestSignature(t *testing.T) {
