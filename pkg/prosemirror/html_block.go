@@ -462,7 +462,11 @@ func (c *htmlBlockConverter) convertTableRow(tr *html.Node) (*Node, error) {
 }
 
 func (c *htmlBlockConverter) convertTableCell(n *html.Node, typ NodeType) (*Node, error) {
-	attrs, err := json.Marshal(TableCellAttrs{})
+	cellAttrs := TableCellAttrs{
+		Colspan: tableSpanFromHTML(n, "colspan"),
+		Rowspan: tableSpanFromHTML(n, "rowspan"),
+	}
+	attrs, err := json.Marshal(cellAttrs)
 	if err != nil {
 		return nil, fmt.Errorf("cannot marshal table cell attrs: %w", err)
 	}
@@ -597,4 +601,19 @@ func attrVal(n *html.Node, key string) string {
 		}
 	}
 	return ""
+}
+
+// tableSpanFromHTML reads colspan or rowspan from a table cell element.
+// Missing, invalid, or non-positive values yield 1, matching HTML defaults
+// and ProseMirror/Tiptap cell attrs.
+func tableSpanFromHTML(n *html.Node, key string) int {
+	s := strings.TrimSpace(attrVal(n, key))
+	if s == "" {
+		return 1
+	}
+	v, err := strconv.Atoi(s)
+	if err != nil || v < 1 {
+		return 1
+	}
+	return v
 }
