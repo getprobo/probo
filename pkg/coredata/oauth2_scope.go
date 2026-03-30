@@ -77,7 +77,9 @@ func (s *OAuth2Scopes) UnmarshalText(text []byte) error {
 	fields := strings.Fields(str)
 	scopes := make(OAuth2Scopes, len(fields))
 	for i, f := range fields {
-		scopes[i] = OAuth2Scope(f)
+		if err := scopes[i].UnmarshalText([]byte(f)); err != nil {
+			return err
+		}
 	}
 
 	*s = scopes
