@@ -428,6 +428,31 @@ func TestParseMarkdown_BlockHTMLTable(t *testing.T) {
 	require.Len(t, doc.Content[0].Content[0].Content, 2)
 	assert.Equal(t, NodeTableHeader, doc.Content[0].Content[0].Content[0].Type)
 	assert.Equal(t, NodeTableCell, doc.Content[0].Content[0].Content[1].Type)
+
+	thAttrs, err := doc.Content[0].Content[0].Content[0].TableCellAttrs()
+	require.NoError(t, err)
+	assert.Equal(t, 1, thAttrs.Colspan)
+	assert.Equal(t, 1, thAttrs.Rowspan)
+
+	tdAttrs, err := doc.Content[0].Content[0].Content[1].TableCellAttrs()
+	require.NoError(t, err)
+	assert.Equal(t, 1, tdAttrs.Colspan)
+	assert.Equal(t, 1, tdAttrs.Rowspan)
+}
+
+func TestParseMarkdown_BlockHTMLTableCellSpans(t *testing.T) {
+	t.Parallel()
+
+	md := `<table><tr><td colspan="3" rowspan="2">X</td></tr></table>` + "\n"
+	doc, err := ParseMarkdown(md)
+	require.NoError(t, err)
+	require.Len(t, doc.Content, 1)
+	cell := doc.Content[0].Content[0].Content[0]
+	require.Equal(t, NodeTableCell, cell.Type)
+	attrs, err := cell.TableCellAttrs()
+	require.NoError(t, err)
+	assert.Equal(t, 3, attrs.Colspan)
+	assert.Equal(t, 2, attrs.Rowspan)
 }
 
 func TestParseMarkdown_BlockHTMLScriptRemovedKeepsSafeContent(t *testing.T) {
