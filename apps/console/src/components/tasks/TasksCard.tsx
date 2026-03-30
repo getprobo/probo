@@ -43,7 +43,10 @@ import {
 import { Link, useLocation, useParams } from "react-router";
 
 import type { TaskFormDialogFragment$key } from "#/__generated__/core/TaskFormDialogFragment.graphql";
-import type { TaskFormDialogUpdateMutation } from "#/__generated__/core/TaskFormDialogUpdateMutation.graphql";
+import type {
+  TaskFormDialogUpdateMutation,
+  TaskPriority,
+} from "#/__generated__/core/TaskFormDialogUpdateMutation.graphql";
 import type { TasksCard_task$key } from "#/__generated__/core/TasksCard_task.graphql";
 import type { TasksCard_TaskRowFragment$key } from "#/__generated__/core/TasksCard_TaskRowFragment.graphql";
 import type { TasksCardDeleteMutation } from "#/__generated__/core/TasksCardDeleteMutation.graphql";
@@ -53,10 +56,34 @@ import type {
 } from "#/__generated__/core/TasksCardOrganizationFragment.graphql";
 import type { TasksCardOrganizationQuery } from "#/__generated__/core/TasksCardOrganizationQuery.graphql";
 import TaskFormDialog, {
+  taskPriorities,
   taskUpdateMutation,
 } from "#/components/tasks/TaskFormDialog";
 import { updateStoreCounter } from "#/hooks/useMutationWithIncrement";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
+
+function resolveDropPriority(
+  dragged: TaskPriority,
+  above?: TaskPriority,
+  below?: TaskPriority,
+): TaskPriority | undefined {
+  // If any neighbor shares the dragged priority, keep it.
+  if (above === dragged || below === dragged) return undefined;
+
+  // At edges, take the single neighbor's priority.
+  if (!above && below) return below !== dragged ? below : undefined;
+  if (!below && above) return above !== dragged ? above : undefined;
+
+  // Both neighbors differ — pick the one closest to dragged.
+  if (above && below) {
+    const di = taskPriorities.indexOf(dragged);
+    const dAbove = Math.abs(taskPriorities.indexOf(above) - di);
+    const dBelow = Math.abs(taskPriorities.indexOf(below) - di);
+    return dAbove <= dBelow ? above : below;
+  }
+
+  return undefined;
+}
 
 type Props = {
   tasks: TasksCardOrganizationFragment$data["tasks"]["edges"];
@@ -70,6 +97,7 @@ const taskInlineFragment = graphql`
     id
     state
     priority
+    rank
   }
 `;
 
@@ -82,7 +110,7 @@ const organizationTasksFragment = graphql`
   @refetchable(queryName: "TasksCardOrganizationQuery")
   @argumentDefinitions(
     first: { type: "Int", defaultValue: 500 }
-    order: { type: "TaskOrder", defaultValue: { field: PRIORITY, direction: ASC } }
+    order: { type: "TaskOrder", defaultValue: { field: PRIORITY_RANK, direction: ASC } }
     after: { type: "CursorKey", defaultValue: null }
     before: { type: "CursorKey", defaultValue: null }
     last: { type: "Int", defaultValue: null }
@@ -110,7 +138,7 @@ const organizationTasksFragment = graphql`
 
 type OrganizationTasksCardProps = {
   organizationRef: TasksCardOrganizationFragment$key;
-  header?: (params: { connectionId: string; canCreateTask: boolean }) => ReactNode;
+  header?: (params: { connectionId: string; canCreateTask: boolean; refetch: () => void }) => ReactNode;
 };
 
 export function OrganizationTasksCard({ organizationRef, header }: OrganizationTasksCardProps) {
@@ -119,9 +147,13 @@ export function OrganizationTasksCard({ organizationRef, header }: OrganizationT
     TasksCardOrganizationFragment$key
   >(organizationTasksFragment, organizationRef);
 
+  const handleRefetch = () => {
+    refetch({}, { fetchPolicy: "store-and-network" });
+  };
+
   return (
     <>
-      {header?.({ connectionId: data.tasks.__id, canCreateTask: data.canCreateTask })}
+      {header?.({ connectionId: data.tasks.__id, canCreateTask: data.canCreateTask, refetch: handleRefetch })}
       <TasksCard
         tasks={data.tasks.edges}
         connectionId={data.tasks.__id}
@@ -132,12 +164,13 @@ export function OrganizationTasksCard({ organizationRef, header }: OrganizationT
   );
 }
 
-const updatePriorityMutation = graphql`
-  mutation TasksCardUpdatePriorityMutation($input: UpdateTaskInput!) {
+const updateRankMutation = graphql`
+  mutation TasksCardUpdateRankMutation($input: UpdateTaskInput!) {
     updateTask(input: $input) {
       task {
         id
         priority
+        rank
       }
     }
   }
@@ -151,7 +184,7 @@ export function TasksCard({ tasks, connectionId, canReorder, refetch }: Props) {
   const { toast } = useToast();
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [previewOrder, setPreviewOrder] = useState<string[] | null>(null);
-  const [updatePriority] = useMutation<TaskFormDialogUpdateMutation>(updatePriorityMutation);
+  const [updateRank] = useMutation<TaskFormDialogUpdateMutation>(updateRankMutation);
 
   const handleStateChange = () => {
     if (refetch) {
@@ -207,18 +240,32 @@ export function TasksCard({ tasks, connectionId, canReorder, refetch }: Props) {
     const newIdx = previewOrder.indexOf(draggedId);
     const originalIds = filteredTasks.map(({ node }) => readTask(node).id);
     const originalIdx = originalIds.indexOf(draggedId);
+    if (originalIdx === -1) {
+      setDraggedId(null);
+      setPreviewOrder(null);
+      return;
+    }
     let targetOriginalIdx = newIdx;
     if (targetOriginalIdx >= originalIdx) targetOriginalIdx++;
     if (targetOriginalIdx >= filteredTasks.length) targetOriginalIdx = filteredTasks.length - 1;
-    const targetPriority = readTask(filteredTasks[targetOriginalIdx].node).priority;
+    const targetTask = readTask(filteredTasks[targetOriginalIdx].node);
+    const draggedTask = readTask(filteredTasks[originalIdx].node);
+
+    // Determine target priority from neighbors at the drop position.
+    const aboveId = newIdx > 0 ? previewOrder[newIdx - 1] : null;
+    const belowId = newIdx < previewOrder.length - 1 ? previewOrder[newIdx + 1] : null;
+    const aboveTask = aboveId ? readTask(filteredTasks[originalIds.indexOf(aboveId)].node) : null;
+    const belowTask = belowId ? readTask(filteredTasks[originalIds.indexOf(belowId)].node) : null;
+    const targetPriority = resolveDropPriority(draggedTask.priority, aboveTask?.priority, belowTask?.priority);
 
     setDraggedId(null);
 
-    updatePriority({
+    updateRank({
       variables: {
         input: {
           taskId: draggedId,
-          priority: targetPriority,
+          rank: targetTask.rank,
+          ...(targetPriority && { priority: targetPriority }),
         },
       },
       onCompleted: (_, errors) => {
@@ -351,6 +398,7 @@ const fragment = graphql`
     id
     name
     state
+    priority
     description
     timeEstimate
     deadline
@@ -452,6 +500,7 @@ function TaskRow(props: TaskRowProps) {
       <TaskFormDialog
         task={props.fKey as TaskFormDialogFragment$key}
         ref={dialogRef}
+        onCompleted={props.onStateChange}
       />
       <div
         className={`flex items-center justify-between py-3 px-6 ${className}`}
@@ -466,7 +515,7 @@ function TaskRow(props: TaskRowProps) {
       >
         <div className="flex gap-2 items-start">
           <div className="flex items-center gap-2 pt-[2px]">
-            <PriorityLevel level={1} />
+            <PriorityLevel level={task.priority} />
             <button
               onClick={() => void onToggle()}
               className="cursor-pointer -m-1 p-1 disabled:opacity-60"

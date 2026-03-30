@@ -58,6 +58,7 @@ func TestTask_Create(t *testing.T) {
 			"measureId":      measureID,
 			"name":           "Owner Task",
 			"description":    "Created by owner",
+			"priority":       "MEDIUM",
 		},
 	}, &result)
 	require.NoError(t, err)
@@ -106,6 +107,7 @@ func TestTask_CreateWithoutMeasure(t *testing.T) {
 			"organizationId": owner.GetOrganizationID().String(),
 			"name":           "Task without measure",
 			"description":    "Created without a measure",
+			"priority":       "HIGH",
 		},
 	}, &result)
 	require.NoError(t, err)
@@ -252,7 +254,8 @@ func TestTask_RequiredFields(t *testing.T) {
 		{
 			name: "missing organizationId",
 			input: map[string]any{
-				"name": "Test Task",
+				"name":     "Test Task",
+				"priority": "MEDIUM",
 			},
 			skipOrganization:  true,
 			wantErrorContains: "organizationId",
@@ -261,8 +264,17 @@ func TestTask_RequiredFields(t *testing.T) {
 			name: "missing name",
 			input: map[string]any{
 				"organizationId": "placeholder",
+				"priority":       "MEDIUM",
 			},
 			wantErrorContains: "name",
+		},
+		{
+			name: "missing priority",
+			input: map[string]any{
+				"organizationId": "placeholder",
+				"name":           "Test Task",
+			},
+			wantErrorContains: "priority",
 		},
 	}
 
@@ -770,6 +782,7 @@ func TestTask_OmittableDeadline(t *testing.T) {
 			"organizationId": owner.GetOrganizationID().String(),
 			"measureId":      measureID,
 			"name":           "Deadline Test Task",
+			"priority":       "MEDIUM",
 			"deadline":       "2025-12-31T00:00:00Z",
 		},
 	}, &createResult)

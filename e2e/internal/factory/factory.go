@@ -339,6 +339,7 @@ func CreateTask(c *testutil.Client, measureID *string, attrs ...Attrs) string {
 	input := map[string]any{
 		"organizationId": c.GetOrganizationID().String(),
 		"name":           a.getString("name", SafeName("Task")),
+		"priority":       a.getString("priority", "MEDIUM"),
 	}
 	if measureID != nil {
 		input["measureId"] = *measureID

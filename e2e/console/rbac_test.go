@@ -631,7 +631,7 @@ func TestRBAC(t *testing.T) {
 			client: owner,
 			query:  createTaskMutation,
 			variables: func() map[string]any {
-				return map[string]any{"input": map[string]any{"organizationId": owner.GetOrganizationID().String(), "measureId": measureID, "name": factory.SafeName("Task")}}
+				return map[string]any{"input": map[string]any{"organizationId": owner.GetOrganizationID().String(), "measureId": measureID, "name": factory.SafeName("Task"), "priority": "MEDIUM"}}
 			},
 			shouldAllow: true,
 		},
@@ -641,7 +641,7 @@ func TestRBAC(t *testing.T) {
 			client: admin,
 			query:  createTaskMutation,
 			variables: func() map[string]any {
-				return map[string]any{"input": map[string]any{"organizationId": owner.GetOrganizationID().String(), "measureId": measureID, "name": factory.SafeName("Task")}}
+				return map[string]any{"input": map[string]any{"organizationId": owner.GetOrganizationID().String(), "measureId": measureID, "name": factory.SafeName("Task"), "priority": "MEDIUM"}}
 			},
 			shouldAllow: true,
 		},
@@ -651,7 +651,7 @@ func TestRBAC(t *testing.T) {
 			client: viewer,
 			query:  createTaskMutation,
 			variables: func() map[string]any {
-				return map[string]any{"input": map[string]any{"organizationId": owner.GetOrganizationID().String(), "measureId": measureID, "name": factory.SafeName("Task")}}
+				return map[string]any{"input": map[string]any{"organizationId": owner.GetOrganizationID().String(), "measureId": measureID, "name": factory.SafeName("Task"), "priority": "MEDIUM"}}
 			},
 			shouldAllow: false,
 		},

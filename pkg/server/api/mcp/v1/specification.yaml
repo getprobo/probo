@@ -4621,7 +4621,7 @@ components:
     TaskOrderField:
       type: string
       enum:
-        - PRIORITY
+        - PRIORITY_RANK
         - CREATED_AT
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.TaskOrderField
 
@@ -4638,6 +4638,15 @@ components:
           $ref: "#/components/schemas/OrderDirection"
           description: Task order direction
 
+    TaskPriority:
+      type: string
+      enum:
+        - URGENT
+        - HIGH
+        - MEDIUM
+        - LOW
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.TaskPriority
+
     Task:
       type: object
       required:
@@ -4646,6 +4655,7 @@ components:
         - name
         - state
         - priority
+        - rank
         - created_at
         - updated_at
       properties:
@@ -4676,8 +4686,11 @@ components:
           $ref: "#/components/schemas/TaskState"
           description: Task state
         priority:
+          $ref: "#/components/schemas/TaskPriority"
+          description: Task priority level
+        rank:
           type: integer
-          description: Task priority within state
+          description: Task rank within state
         time_estimate:
           anyOf:
             - $ref: "#/components/schemas/Duration"
@@ -4830,8 +4843,15 @@ components:
               description: No state
           description: Task state
         priority:
+          anyOf:
+            - $ref: "#/components/schemas/TaskPriority"
+              description: Task priority level
+            - type: "null"
+              description: No priority
+          description: Task priority level
+        rank:
           type: integer
-          description: Task priority within state
+          description: Task rank within state
         time_estimate:
           anyOf:
             - $ref: "#/components/schemas/Duration"

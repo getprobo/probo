@@ -37,13 +37,17 @@ type (
 		Name           string         `db:"name"`
 		Description    *string        `db:"description"`
 		State          TaskState      `db:"state"`
+		Priority       TaskPriority   `db:"priority"`
 		ReferenceID    string         `db:"reference_id"`
 		TimeEstimate   *time.Duration `db:"time_estimate"`
 		AssignedToID   *gid.GID       `db:"assigned_to_profile_id"`
 		Deadline       *time.Time     `db:"deadline"`
-		Priority       int            `db:"priority"`
+		Rank           int            `db:"rank"`
 		CreatedAt      time.Time      `db:"created_at"`
 		UpdatedAt      time.Time      `db:"updated_at"`
+
+		// ordering only
+		PriorityRank int `db:"priority_rank"`
 	}
 
 	Tasks []*Task
@@ -51,8 +55,8 @@ type (
 
 func (t Task) CursorKey(orderBy TaskOrderField) page.CursorKey {
 	switch orderBy {
-	case TaskOrderFieldPriority:
-		return page.NewCursorKey(t.ID, t.Priority)
+	case TaskOrderFieldPriorityRank:
+		return page.NewCursorKey(t.ID, t.PriorityRank)
 	case TaskOrderFieldCreatedAt:
 		return page.NewCursorKey(t.ID, t.CreatedAt)
 	}
@@ -88,11 +92,13 @@ SELECT
     name,
     description,
     state,
+    priority,
     reference_id,
     time_estimate,
     assigned_to_profile_id,
     deadline,
-    priority,
+    rank,
+    priority_rank,
     created_at,
     updated_at
 FROM
@@ -141,11 +147,13 @@ SELECT
     name,
     description,
     state,
+    priority,
     reference_id,
     time_estimate,
     assigned_to_profile_id,
     deadline,
-    priority,
+    rank,
+    priority_rank,
     created_at,
     updated_at
 FROM
@@ -181,10 +189,10 @@ func (t *Task) Insert(
 	scope Scoper,
 ) error {
 	q := `
-WITH next_priority AS (
-    SELECT COALESCE(MAX(priority), 0) + 1 AS value
+WITH next_rank AS (
+    SELECT COALESCE(MAX(rank), 0) + 1 AS value
     FROM tasks
-    WHERE organization_id = @organization_id AND state = @state
+    WHERE organization_id = @organization_id AND state = @state AND priority = @priority
 )
 INSERT INTO
     tasks (
@@ -196,10 +204,11 @@ INSERT INTO
         description,
         reference_id,
         state,
+        priority,
         time_estimate,
         assigned_to_profile_id,
         deadline,
-        priority,
+        rank,
         created_at,
         updated_at
     )
@@ -212,14 +221,15 @@ VALUES (
     @description,
     @reference_id,
     @state,
+    @priority,
     @time_estimate,
     @assigned_to_profile_id,
     @deadline,
-    (SELECT value FROM next_priority),
+    (SELECT value FROM next_rank),
     @created_at,
     @updated_at
 )
-RETURNING priority;
+RETURNING rank, priority_rank;
 `
 
 	args := pgx.StrictNamedArgs{
@@ -231,6 +241,7 @@ RETURNING priority;
 		"description":            t.Description,
 		"reference_id":           t.ReferenceID,
 		"state":                  t.State,
+		"priority":               t.Priority,
 		"time_estimate":          t.TimeEstimate,
 		"assigned_to_profile_id": t.AssignedToID,
 		"deadline":               t.Deadline,
@@ -238,7 +249,7 @@ RETURNING priority;
 		"updated_at":             t.UpdatedAt,
 	}
 
-	err := conn.QueryRow(ctx, q, args).Scan(&t.Priority)
+	err := conn.QueryRow(ctx, q, args).Scan(&t.Rank, &t.PriorityRank)
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
@@ -258,10 +269,10 @@ func (t *Task) Upsert(
 	scope Scoper,
 ) error {
 	q := `
-WITH next_priority AS (
-    SELECT COALESCE(MAX(priority), 0) + 1 AS value
+WITH next_rank AS (
+    SELECT COALESCE(MAX(rank), 0) + 1 AS value
     FROM tasks
-    WHERE organization_id = @organization_id AND state = @state
+    WHERE organization_id = @organization_id AND state = @state AND priority = @priority
 )
 INSERT INTO
     tasks (
@@ -273,10 +284,11 @@ INSERT INTO
         description,
         reference_id,
         state,
+        priority,
         time_estimate,
         assigned_to_profile_id,
         deadline,
-        priority,
+        rank,
         created_at,
         updated_at
     )
@@ -289,10 +301,11 @@ VALUES (
     @description,
     @reference_id,
     @state,
+    @priority,
     @time_estimate,
     @assigned_to_profile_id,
     @deadline,
-    (SELECT value FROM next_priority),
+    (SELECT value FROM next_rank),
     @created_at,
     @updated_at
 )
@@ -309,10 +322,12 @@ RETURNING
     description,
     reference_id,
     state,
+    priority,
     time_estimate,
     assigned_to_profile_id,
     deadline,
-    priority,
+    rank,
+    priority_rank,
     created_at,
     updated_at
 `
@@ -326,6 +341,7 @@ RETURNING
 		"description":            t.Description,
 		"reference_id":           t.ReferenceID,
 		"state":                  t.State,
+		"priority":               t.Priority,
 		"time_estimate":          t.TimeEstimate,
 		"assigned_to_profile_id": t.AssignedToID,
 		"deadline":               t.Deadline,
@@ -394,11 +410,13 @@ func (t *Tasks) LoadByOrganizationID(
 		name,
 		description,
 		state,
+		priority,
 		reference_id,
 		time_estimate,
 		assigned_to_profile_id,
 		deadline,
-		priority,
+		rank,
+		priority_rank,
 		created_at,
 		updated_at
 	FROM
@@ -476,11 +494,13 @@ SELECT
     name,
     description,
     state,
+    priority,
     reference_id,
     time_estimate,
     assigned_to_profile_id,
     deadline,
-    priority,
+    rank,
+    priority_rank,
     created_at,
     updated_at
 FROM
@@ -523,6 +543,7 @@ SET
   description = @description,
   state = @state,
   priority = @priority,
+  rank = @rank,
   time_estimate = @time_estimate,
   updated_at = @updated_at,
   assigned_to_profile_id = @assigned_to_profile_id,
@@ -538,6 +559,7 @@ WHERE %s
 		"description":            t.Description,
 		"state":                  t.State,
 		"priority":               t.Priority,
+		"rank":                   t.Rank,
 		"time_estimate":          t.TimeEstimate,
 		"updated_at":             t.UpdatedAt,
 		"assigned_to_profile_id": t.AssignedToID,
@@ -550,17 +572,18 @@ WHERE %s
 	return err
 }
 
-func (t *Task) NextPriorityForState(
+func (t *Task) NextRankForStatePriority(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
 ) error {
 	q := `
-SELECT COALESCE(MAX(priority), 0) + 1
+SELECT COALESCE(MAX(rank), 0) + 1
 FROM tasks
 WHERE
     organization_id = @organization_id
     AND state = @state
+    AND priority = @priority
     AND id != @id
     AND %s;
 `
@@ -570,24 +593,25 @@ WHERE
 		"id":              t.ID,
 		"organization_id": t.OrganizationID,
 		"state":           t.State,
+		"priority":        t.Priority,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot get next priority: %w", err)
+		return fmt.Errorf("cannot get next rank: %w", err)
 	}
 
-	priority, err := pgx.CollectExactlyOneRow(rows, pgx.RowTo[int])
+	rank, err := pgx.CollectExactlyOneRow(rows, pgx.RowTo[int])
 	if err != nil {
-		return fmt.Errorf("cannot get next priority: %w", err)
+		return fmt.Errorf("cannot get next rank: %w", err)
 	}
 
-	t.Priority = priority
+	t.Rank = rank
 	return nil
 }
 
-func (t *Task) UpdatePriority(
+func (t *Task) UpdateRank(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
@@ -595,18 +619,18 @@ func (t *Task) UpdatePriority(
 	q := `
 WITH old AS (
   SELECT
-	priority AS old_priority
+	rank AS old_rank
   FROM tasks
-  WHERE %s AND id = @id AND organization_id = @organization_id AND state = @state
+  WHERE %s AND id = @id AND organization_id = @organization_id AND state = @state AND priority = @priority
 )
 
 UPDATE tasks
 SET
-    priority = CASE
-        WHEN id = @id THEN @new_priority
-        ELSE priority + CASE
-            WHEN @new_priority < old.old_priority THEN 1
-            WHEN @new_priority > old.old_priority THEN -1
+    rank = CASE
+        WHEN id = @id THEN @new_rank
+        ELSE rank + CASE
+            WHEN @new_rank < old.old_rank THEN 1
+            WHEN @new_rank > old.old_rank THEN -1
         END
     END,
     updated_at = @updated_at
@@ -614,9 +638,10 @@ FROM old
 WHERE %s
   AND organization_id = @organization_id
   AND state = @state
+  AND priority = @priority
   AND (
     id = @id
-    OR (priority BETWEEN LEAST(old.old_priority, @new_priority) AND GREATEST(old.old_priority, @new_priority))
+    OR (rank BETWEEN LEAST(old.old_rank, @new_rank) AND GREATEST(old.old_rank, @new_rank))
   );
 `
 
@@ -625,16 +650,17 @@ WHERE %s
 
 	args := pgx.StrictNamedArgs{
 		"id":              t.ID,
-		"new_priority":    t.Priority,
+		"new_rank":        t.Rank,
 		"organization_id": t.OrganizationID,
 		"state":           t.State,
+		"priority":        t.Priority,
 		"updated_at":      t.UpdatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot update task priority: %w", err)
+		return fmt.Errorf("cannot update task rank: %w", err)
 	}
 
 	return nil

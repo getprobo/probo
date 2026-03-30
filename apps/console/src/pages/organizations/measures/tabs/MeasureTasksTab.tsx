@@ -29,7 +29,7 @@ const tasksQuery = graphql`
       ... on Measure {
         id
         canCreateTask: permission(action: "core:task:create")
-        tasks(first: 100, orderBy: { field: PRIORITY, direction: ASC })
+        tasks(first: 100, orderBy: { field: PRIORITY_RANK, direction: ASC })
           @connection(key: "Measure__tasks")
           @required(action: THROW) {
           __id

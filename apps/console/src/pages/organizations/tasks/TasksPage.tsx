@@ -46,7 +46,7 @@ export default function TasksPage({ queryRef }: Props) {
     <div className="space-y-6">
       <OrganizationTasksCard
         organizationRef={query.organization as TasksCardOrganizationFragment$key}
-        header={({ connectionId, canCreateTask }) => (
+        header={({ connectionId, canCreateTask, refetch }) => (
           <PageHeader
             title={__("Tasks")}
             description={__(
@@ -54,7 +54,7 @@ export default function TasksPage({ queryRef }: Props) {
             )}
           >
             {canCreateTask && (
-              <TaskFormDialog connection={connectionId}>
+              <TaskFormDialog connection={connectionId} onCompleted={refetch}>
                 <Button icon={IconPlusLarge}>{__("New task")}</Button>
               </TaskFormDialog>
             )}
