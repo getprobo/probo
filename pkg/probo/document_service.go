@@ -77,7 +77,6 @@ type (
 		OrganizationID        gid.GID
 		Title                 string
 		Content               string
-		ApproverIDs           []gid.GID
 		Classification        coredata.DocumentClassification
 		DocumentType          coredata.DocumentType
 		TrustCenterVisibility *coredata.TrustCenterVisibility
@@ -123,10 +122,6 @@ func (cdr *CreateDocumentRequest) Validate() error {
 	v.Check(cdr.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
 	v.Check(cdr.Title, "title", validator.Required(), validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(cdr.Content, "content", validator.Required(), validator.NotEmpty(), validator.MaxLen(documentMaxLength))
-	v.Check(cdr.ApproverIDs, "approver_ids", validator.Required(), validator.NotEmpty())
-	for _, id := range cdr.ApproverIDs {
-		v.Check(id, "approver_ids", validator.Required(), validator.GID(coredata.MembershipProfileEntityType))
-	}
 	v.Check(cdr.Classification, "classification", validator.Required(), validator.OneOfSlice(coredata.DocumentClassifications()))
 	v.Check(cdr.DocumentType, "document_type", validator.Required(), validator.OneOfSlice(coredata.DocumentTypes()))
 	v.Check(cdr.TrustCenterVisibility, "trust_center_visibility", validator.OneOfSlice(coredata.TrustCenterVisibilities()))

@@ -4624,7 +4624,6 @@ func (r *mutationResolver) CreateDocument(ctx context.Context, input types.Creat
 			DocumentType:          input.DocumentType,
 			Title:                 input.Title,
 			Content:               content,
-			ApproverIDs:           input.ApproverIds,
 			Classification:        input.Classification,
 			TrustCenterVisibility: input.TrustCenterVisibility,
 		},

@@ -4465,7 +4465,6 @@ input CreateDocumentInput {
     organizationId: ID!
     title: String!
     content: String
-    approverIds: [ID!]!
     documentType: DocumentType!
     classification: DocumentClassification!
     trustCenterVisibility: TrustCenterVisibility
