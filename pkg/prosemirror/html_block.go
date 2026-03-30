@@ -225,6 +225,16 @@ func (c *htmlBlockConverter) convertBlockElement(n *html.Node) ([]Node, error) {
 }
 
 func (c *htmlBlockConverter) unwrapBlockElement(n *html.Node) ([]Node, error) {
+	if !hasBlockElementChild(n) {
+		inlines, err := c.convertInlineFragments(n)
+		if err != nil {
+			return nil, err
+		}
+		if len(inlines) == 0 {
+			return nil, nil
+		}
+		return []Node{{Type: NodeParagraph, Content: inlines}}, nil
+	}
 	return c.convertBlockChildren(n)
 }
 
@@ -395,26 +405,46 @@ func hasBlockElementChild(n *html.Node) bool {
 func blockTagName(name string) bool {
 	switch name {
 	case "p", "div", "blockquote", "pre", "ul", "ol", "table",
-		"h1", "h2", "h3", "h4", "h5", "h6", "hr":
+		"h1", "h2", "h3", "h4", "h5", "h6", "hr",
+		"section", "article", "aside", "main", "header", "footer", "nav",
+		"figure", "center",
+		"html", "body", "head":
 		return true
 	default:
 		return false
 	}
 }
 
-func (c *htmlBlockConverter) convertTable(n *html.Node) ([]Node, error) {
+// collectTableRows returns <tr> nodes that belong to this table only: direct
+// children of thead/tbody/tfoot, or direct <tr> children of the table element
+// (implicit tbody). It does not descend into cells or nested tables, so inner
+// tables cannot contribute rows to the outer table.
+func collectTableRows(table *html.Node) []*html.Node {
 	var rows []*html.Node
-	var collect func(*html.Node)
-	collect = func(x *html.Node) {
-		if x.Type == html.ElementNode && x.Data == "tr" {
-			rows = append(rows, x)
-			return
+	for ch := table.FirstChild; ch != nil; ch = ch.NextSibling {
+		if ch.Type != html.ElementNode {
+			continue
 		}
-		for ch := x.FirstChild; ch != nil; ch = ch.NextSibling {
-			collect(ch)
+		switch ch.Data {
+		case "thead", "tbody", "tfoot":
+			for tr := ch.FirstChild; tr != nil; tr = tr.NextSibling {
+				if tr.Type == html.ElementNode && tr.Data == "tr" {
+					rows = append(rows, tr)
+				}
+			}
+		case "tr":
+			rows = append(rows, ch)
+		case "caption", "colgroup", "col":
+			// Table metadata / columns; not row containers.
+		default:
+			// Ignore other direct children (e.g. invalid markup).
 		}
 	}
-	collect(n)
+	return rows
+}
+
+func (c *htmlBlockConverter) convertTable(n *html.Node) ([]Node, error) {
+	rows := collectTableRows(n)
 
 	var rowNodes []Node
 	for _, tr := range rows {
