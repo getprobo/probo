@@ -40,9 +40,9 @@ func main() {
 
 func run() error {
 	var (
-		pgDSN            string
-		dryRun           bool
-		continueOnError  bool
+		pgDSN           string
+		dryRun          bool
+		continueOnError bool
 	)
 
 	flag.StringVar(
