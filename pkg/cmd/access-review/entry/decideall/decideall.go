@@ -90,6 +90,7 @@ func NewCmdDecideAll(f *cmdutil.Factory) *cobra.Command {
 				hc.Token,
 				"/api/console/v1/graphql",
 				cfg.HTTPTimeoutDuration(),
+				cmdutil.TokenRefreshOption(cfg, host, hc),
 			)
 
 			decisions := make([]map[string]any, len(flagEntryIDs))

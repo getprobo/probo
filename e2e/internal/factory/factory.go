@@ -17,6 +17,7 @@ package factory
 
 import (
 	"fmt"
+	"maps"
 	"strings"
 
 	"github.com/brianvoe/gofakeit/v7"
@@ -1216,4 +1217,64 @@ func CreateApplicabilityStatement(c *testutil.Client, soaID, controlID string, a
 	require.NoError(c.T, err, "createApplicabilityStatement mutation failed")
 
 	return result.CreateApplicabilityStatement.ApplicabilityStatementEdge.Node.ID
+}
+
+type OAuth2ClientResult struct {
+	ClientID     string
+	ClientSecret string
+}
+
+func CreateOAuth2Client(c *testutil.Client, attrs Attrs) OAuth2ClientResult {
+	input := map[string]any{
+		"organization_id": c.GetOrganizationID().String(),
+		"client_name":     SafeName("OAuth2 Client"),
+		"visibility":      "private",
+		"redirect_uris":   []string{"http://localhost:9999/callback"},
+		"grant_types": []string{
+			"authorization_code",
+			"refresh_token",
+		},
+		"response_types":             []string{"code"},
+		"token_endpoint_auth_method": "client_secret_basic",
+		"scopes":                     "openid email profile offline_access",
+	}
+
+	maps.Copy(input, attrs)
+
+	resp, raw, err := testutil.OAuth2RegisterClient(c, input)
+	require.NoError(c.T, err, "OAuth2 client registration failed")
+	require.NotNil(c.T, resp, "OAuth2 client registration returned nil (status=%d body=%s)", raw.StatusCode, string(raw.Body))
+
+	return OAuth2ClientResult{
+		ClientID:     resp.ClientID,
+		ClientSecret: resp.ClientSecret,
+	}
+}
+
+func CreatePublicOAuth2Client(c *testutil.Client, attrs Attrs) OAuth2ClientResult {
+	input := map[string]any{
+		"organization_id": c.GetOrganizationID().String(),
+		"client_name":     SafeName("Public OAuth2 Client"),
+		"visibility":      "private",
+		"redirect_uris":   []string{"http://localhost:9999/callback"},
+		"grant_types": []string{
+			"authorization_code",
+			"refresh_token",
+			"urn:ietf:params:oauth:grant-type:device_code",
+		},
+		"response_types":             []string{"code"},
+		"token_endpoint_auth_method": "none",
+		"scopes":                     "openid email profile offline_access",
+	}
+
+	maps.Copy(input, attrs)
+
+	resp, raw, err := testutil.OAuth2RegisterClient(c, input)
+	require.NoError(c.T, err, "public OAuth2 client registration failed")
+	require.NotNil(c.T, resp, "public OAuth2 client registration returned nil (status=%d body=%s)", raw.StatusCode, string(raw.Body))
+
+	return OAuth2ClientResult{
+		ClientID:     resp.ClientID,
+		ClientSecret: resp.ClientSecret,
+	}
 }

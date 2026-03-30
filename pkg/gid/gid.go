@@ -47,6 +47,16 @@ func ParseGID(encoded string) (GID, error) {
 	return gid, nil
 }
 
+// MustParseGID parses a GID string and panics if it is invalid.
+func MustParseGID(encoded string) GID {
+	id, err := ParseGID(encoded)
+	if err != nil {
+		panic(fmt.Sprintf("invalid GID: %s", encoded))
+	}
+
+	return id
+}
+
 // New creates a new GID with default entity type and nil tenant ID
 func New(tenantID TenantID, entityType uint16) GID {
 	id, err := NewGID(tenantID, entityType)

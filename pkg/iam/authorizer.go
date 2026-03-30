@@ -131,6 +131,10 @@ func (a *Authorizer) authorize(ctx context.Context, tx pg.Tx, params AuthorizePa
 		return fmt.Errorf("cannot build principal attributes: %w", err)
 	}
 
+	if params.Session != nil {
+		principalAttrs["session_id"] = params.Session.String()
+	}
+
 	policies := a.buildPoliciesForRole(role)
 
 	req := policy.AuthorizationRequest{

@@ -29,6 +29,21 @@ type AuthConfig struct {
 	SAML                                SAMLConfig         `json:"saml"`
 	Google                              OIDCProviderConfig `json:"google"`
 	Microsoft                           OIDCProviderConfig `json:"microsoft"`
+	OAuth2Server                        OAuth2ServerConfig `json:"oauth2-server"`
+}
+
+type OAuth2ServerConfig struct {
+	SigningKeys               []OAuth2SigningKeyConfig `json:"signing-keys"`
+	AccessTokenDuration       int                      `json:"access-token-duration"`
+	RefreshTokenDuration      int                      `json:"refresh-token-duration"`
+	AuthorizationCodeDuration int                      `json:"authorization-code-duration"`
+	DeviceCodeDuration        int                      `json:"device-code-duration"`
+}
+
+type OAuth2SigningKeyConfig struct {
+	KeyFile string `json:"key-file"`
+	KID     string `json:"kid"`
+	Active  bool   `json:"active"`
 }
 
 type CookieConfig struct {

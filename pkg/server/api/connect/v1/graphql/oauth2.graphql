@@ -1,0 +1,42 @@
+extend type Mutation {
+    authorizeDevice(
+        input: AuthorizeDeviceInput!
+    ): AuthorizeDevicePayload @session(required: PRESENT)
+
+  approveConsent(
+    input: ApproveConsentInput!
+  ): ApproveConsentPayload @session(required: PRESENT)
+}
+
+
+input AuthorizeDeviceInput {
+  userCode: String!
+}
+
+type AuthorizeDevicePayload {
+  success: Boolean!
+  consentId: ID
+}
+
+type Consent implements Node {
+  id: ID!
+  application: Application! @goField(forceResolver: true)
+  scopes: [String!]!
+}
+
+type Application implements Node {
+  id: ID!
+  name: String!
+  logoUrl: String
+  url: String
+}
+
+input ApproveConsentInput {
+  consentId: ID!
+  approved: Boolean!
+}
+
+type ApproveConsentPayload {
+  redirectURL: String
+  deviceAuthorized: Boolean
+}

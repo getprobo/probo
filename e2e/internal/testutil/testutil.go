@@ -15,7 +15,12 @@
 package testutil
 
 import (
+	"bytes"
 	"context"
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/x509"
+	"encoding/pem"
 	"fmt"
 	"io"
 	"net/http"
@@ -38,6 +43,7 @@ type TestEnv struct {
 	BaseURL        string
 	cmd            *exec.Cmd
 	done           chan error
+	outputBuf      *bytes.Buffer
 }
 
 func Setup() {
@@ -64,6 +70,11 @@ func Setup() {
 			}
 		}
 
+		if err := ensureSigningKey("./testdata/oauth2_signing_key.pem"); err != nil {
+			fmt.Fprintf(os.Stderr, "e2etest: cannot create signing key: %v\n", err)
+			os.Exit(1)
+		}
+
 		testEnv = &TestEnv{
 			done: make(chan error, 1),
 		}
@@ -74,12 +85,16 @@ func Setup() {
 		} else {
 			cmd.Env = os.Environ()
 		}
-		if os.Getenv("PROBO_E2E_VERBOSE") != "" {
+
+		verbose := os.Getenv("PROBO_E2E_VERBOSE") != ""
+		if verbose {
 			cmd.Stdout = os.Stdout
 			cmd.Stderr = os.Stderr
 		} else {
-			cmd.Stdout = io.Discard
-			cmd.Stderr = io.Discard
+			var buf bytes.Buffer
+			testEnv.outputBuf = &buf
+			cmd.Stdout = &buf
+			cmd.Stderr = &buf
 		}
 
 		testEnv.cmd = cmd
@@ -100,16 +115,48 @@ func Setup() {
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
 		if err := waitForServer(ctx, testEnv.BaseURL+"/api/console/v1/graphql", 30*time.Second); err != nil {
-			fmt.Fprintf(os.Stderr, "e2etest: API server failed to start: %v\n", err)
+			testEnv.dumpOutputOnFailure("API server failed to start", err)
 			_ = testEnv.cmd.Process.Kill()
 			os.Exit(1)
 		}
 		if err := waitForServer(ctx, testEnv.MailpitBaseURL+"/api/v1/messages", 30*time.Second); err != nil {
-			fmt.Fprintf(os.Stderr, "e2etest: MailPit server failed to start: %v\n", err)
+			testEnv.dumpOutputOnFailure("MailPit server failed to start", err)
 			_ = testEnv.cmd.Process.Kill()
 			os.Exit(1)
 		}
+
+		if !verbose {
+			cmd.Stdout = io.Discard
+			cmd.Stderr = io.Discard
+		}
 	})
+}
+
+func (e *TestEnv) dumpOutputOnFailure(context string, err error) {
+	fmt.Fprintf(os.Stderr, "\n=== e2etest: %s: %v ===\n", context, err)
+
+	select {
+	case waitErr := <-e.done:
+		if waitErr != nil {
+			fmt.Fprintf(os.Stderr, "e2etest: process exited with error: %v\n", waitErr)
+		} else {
+			fmt.Fprintf(os.Stderr, "e2etest: process exited cleanly (unexpected)\n")
+		}
+	default:
+		fmt.Fprintf(os.Stderr, "e2etest: process is still running\n")
+	}
+
+	if e.outputBuf != nil && e.outputBuf.Len() > 0 {
+		output := e.outputBuf.Bytes()
+		const maxTail = 10_000
+		if len(output) > maxTail {
+			fmt.Fprintf(os.Stderr, "e2etest: (showing last %d bytes of output)\n", maxTail)
+			output = output[len(output)-maxTail:]
+		}
+		fmt.Fprintf(os.Stderr, "--- probod output start ---\n%s\n--- probod output end ---\n", output)
+	} else {
+		fmt.Fprintf(os.Stderr, "e2etest: no captured output available\n")
+	}
 }
 
 func waitForServer(ctx context.Context, url string, timeout time.Duration) error {
@@ -120,6 +167,9 @@ func waitForServer(ctx context.Context, url string, timeout time.Duration) error
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
+		case err := <-testEnv.done:
+			testEnv.done <- err
+			return fmt.Errorf("process exited before becoming ready: %v", err)
 		default:
 		}
 
@@ -131,14 +181,13 @@ func waitForServer(ctx context.Context, url string, timeout time.Duration) error
 		resp, err := client.Do(req)
 		if err == nil {
 			_ = resp.Body.Close()
-			// Any response means server is up
 			return nil
 		}
 
 		time.Sleep(100 * time.Millisecond)
 	}
 
-	return fmt.Errorf("server did not become ready within %v", timeout)
+	return fmt.Errorf("server at %s did not become ready within %v", url, timeout)
 }
 
 func Teardown() {
@@ -170,4 +219,32 @@ func GetMailpitBaseURL() string {
 		return "http://localhost:8025"
 	}
 	return testEnv.MailpitBaseURL
+}
+
+// ensureSigningKey creates a 2048-bit RSA PEM key at path if it does not
+// already exist. The key is used exclusively for e2e test JWT signing.
+func ensureSigningKey(path string) error {
+	if _, err := os.Stat(path); err == nil {
+		return nil
+	}
+
+	key, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		return fmt.Errorf("cannot generate RSA key: %w", err)
+	}
+
+	data := pem.EncodeToMemory(&pem.Block{
+		Type:  "RSA PRIVATE KEY",
+		Bytes: x509.MarshalPKCS1PrivateKey(key),
+	})
+
+	if err := os.MkdirAll("testdata", 0755); err != nil {
+		return fmt.Errorf("cannot create testdata directory: %w", err)
+	}
+
+	if err := os.WriteFile(path, data, 0600); err != nil {
+		return fmt.Errorf("cannot write key file: %w", err)
+	}
+
+	return nil
 }

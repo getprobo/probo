@@ -98,6 +98,20 @@ const routes = [
         path: "reset-password",
         Component: lazy(() => import("./pages/iam/auth/ResetPasswordPage")),
       },
+      {
+        path: "device",
+        ErrorBoundary: RootErrorBoundary,
+        Component: lazy(
+          () => import("./pages/iam/auth/DeviceActivationPageLoader"),
+        ),
+      },
+      {
+        path: "consent",
+        ErrorBoundary: RootErrorBoundary,
+        Component: lazy(
+          () => import("./pages/iam/auth/ConsentPageLoader"),
+        ),
+      },
     ],
   },
   {

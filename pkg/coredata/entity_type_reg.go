@@ -102,6 +102,12 @@ const (
 	CookieCategoryEntityType                   uint16 = 76
 	CookieConsentRecordEntityType              uint16 = 77
 	CookieBannerVersionEntityType              uint16 = 78
+	OAuth2ClientEntityType                     uint16 = 79
+	OAuth2ConsentEntityType                    uint16 = 80
+	OAuth2AccessTokenEntityType                uint16 = 81
+	OAuth2RefreshTokenEntityType               uint16 = 82
+	OAuth2AuthorizationCodeEntityType          uint16 = 83
+	OAuth2DeviceCodeEntityType                 uint16 = 84
 )
 
 func NewEntityFromID(id gid.GID) (any, bool) {
@@ -256,6 +262,18 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &CookieConsentRecord{ID: id}, true
 	case CookieBannerVersionEntityType:
 		return &CookieBannerVersion{ID: id}, true
+	case OAuth2ClientEntityType:
+		return &OAuth2Client{ID: id}, true
+	case OAuth2ConsentEntityType:
+		return &OAuth2Consent{ID: id}, true
+	case OAuth2AccessTokenEntityType:
+		return &OAuth2AccessToken{ID: id}, true
+	case OAuth2RefreshTokenEntityType:
+		return &OAuth2RefreshToken{ID: id}, true
+	case OAuth2AuthorizationCodeEntityType:
+		return &OAuth2AuthorizationCode{ID: id}, true
+	case OAuth2DeviceCodeEntityType:
+		return &OAuth2DeviceCode{ID: id}, true
 	default:
 		return nil, false
 	}
