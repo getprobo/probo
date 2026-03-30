@@ -16,10 +16,12 @@ package trust
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 
 	"errors"
+
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/docgen"
@@ -245,7 +247,7 @@ func (s *DocumentService) exportPDFData(
 
 	docData := docgen.DocumentData{
 		Title:                       version.Title,
-		Content:                     version.Content,
+		Content:                     json.RawMessage([]byte(version.Content)),
 		Major:                       version.Major,
 		Minor:                       version.Minor,
 		Classification:              classification,

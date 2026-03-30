@@ -1994,7 +1994,7 @@ func exportDocumentPDF(
 
 	docData := docgen.DocumentData{
 		Title:                       version.Title,
-		Content:                     version.Content,
+		Content:                     json.RawMessage([]byte(version.Content)),
 		Major:                       version.Major,
 		Minor:                       version.Minor,
 		Classification:              classification,
