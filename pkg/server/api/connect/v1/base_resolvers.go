@@ -16,6 +16,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
+	"go.probo.inc/probo/pkg/iam/oauth2server"
 	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/schema"
@@ -31,6 +32,16 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 	)
 
 	switch id.EntityType() {
+	case coredata.OAuth2ConsentEntityType:
+		action = iam.ActionOAuth2ConsentGet
+		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
+			consent, err := r.iam.OAuth2ServerService.GetConsentByID(ctx, id)
+			if err != nil {
+				return nil, err
+			}
+
+			return types.NewConsent(consent), nil
+		}
 	case coredata.OrganizationEntityType:
 		action = iam.ActionOrganizationGet
 		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
@@ -38,6 +49,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			if err != nil {
 				return nil, err
 			}
+
 			return types.NewOrganization(organization), nil
 		}
 	case coredata.IdentityEntityType:
@@ -155,6 +167,10 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 
 		if isNotFoundErr {
 			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		if oauthErr, ok := errors.AsType[*oauth2server.OAuth2Error](err); ok {
+			return nil, gqlutils.Invalidf(ctx, "%s", oauthErr.Description())
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load node", log.Error(err))

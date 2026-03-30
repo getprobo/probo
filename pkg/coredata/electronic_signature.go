@@ -350,7 +350,7 @@ func (es *ElectronicSignature) computeSealV1() (string, error) {
 	}
 
 	input := strings.Join(fields, "\n")
-	return hash.SHA256Hex([]byte(input)), nil
+	return hash.SHA256HexString(input), nil
 }
 
 func ResetStaleCertificateProcessing(

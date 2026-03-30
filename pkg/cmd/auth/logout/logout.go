@@ -15,14 +15,25 @@
 package logout
 
 import (
+	"encoding/json"
 	"fmt"
 	"maps"
+	"net/http"
+	"net/url"
 	"slices"
+	"strings"
+	"time"
 
 	"github.com/charmbracelet/huh"
 	"github.com/spf13/cobra"
+	"go.probo.inc/probo/pkg/cli/config"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
+	"go.probo.inc/probo/pkg/version"
 )
+
+type oidcDiscovery struct {
+	RevocationEndpoint string `json:"revocation_endpoint"`
+}
 
 func NewCmdLogout(f *cmdutil.Factory) *cobra.Command {
 	var flagHost string
@@ -66,9 +77,12 @@ func NewCmdLogout(f *cmdutil.Factory) *cobra.Command {
 				}
 			}
 
-			if _, ok := cfg.Hosts[flagHost]; !ok {
+			hc, ok := cfg.Hosts[flagHost]
+			if !ok {
 				return fmt.Errorf("not logged in to %s", flagHost)
 			}
+
+			revokeTokens(flagHost, hc, f)
 
 			delete(cfg.Hosts, flagHost)
 			if cfg.ActiveHost == flagHost {
@@ -92,4 +106,107 @@ func NewCmdLogout(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagHost, "hostname", "", "Probo hostname to log out of")
 
 	return cmd
+}
+
+func revokeTokens(host string, hc *config.HostConfig, f *cmdutil.Factory) {
+	baseURL := normalizeHostToURL(host)
+	httpClient := &http.Client{Timeout: 10 * time.Second}
+
+	discovery, err := fetchRevocationEndpoint(httpClient, baseURL)
+	if err != nil || discovery.RevocationEndpoint == "" {
+		return
+	}
+
+	if hc.RefreshToken != "" {
+		_ = revokeToken(
+			httpClient,
+			discovery.RevocationEndpoint,
+			hc.RefreshToken,
+			"refresh_token",
+		)
+	}
+
+	if hc.Token != "" {
+		_ = revokeToken(
+			httpClient,
+			discovery.RevocationEndpoint,
+			hc.Token,
+			"access_token",
+		)
+	}
+}
+
+func fetchRevocationEndpoint(client *http.Client, baseURL string) (*oidcDiscovery, error) {
+	req, err := http.NewRequest(
+		http.MethodGet,
+		baseURL+"/.well-known/openid-configuration",
+		nil,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create request: %w", err)
+	}
+
+	req.Header.Set("User-Agent", version.UserAgent("prb"))
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("cannot fetch discovery document: %w", err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("discovery endpoint returned HTTP %d", resp.StatusCode)
+	}
+
+	var discovery oidcDiscovery
+	if err := json.NewDecoder(resp.Body).Decode(&discovery); err != nil {
+		return nil, fmt.Errorf("cannot decode discovery document: %w", err)
+	}
+
+	return &discovery, nil
+}
+
+func revokeToken(
+	client *http.Client,
+	endpoint string,
+	token string,
+	tokenTypeHint string,
+) error {
+	data := url.Values{
+		"token":           {token},
+		"token_type_hint": {tokenTypeHint},
+		"client_id":       {config.CLIClientID},
+	}
+
+	req, err := http.NewRequest(
+		http.MethodPost,
+		endpoint,
+		strings.NewReader(data.Encode()),
+	)
+	if err != nil {
+		return fmt.Errorf("cannot create revocation request: %w", err)
+	}
+
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("User-Agent", version.UserAgent("prb"))
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("cannot send revocation request: %w", err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("revocation endpoint returned HTTP %d", resp.StatusCode)
+	}
+
+	return nil
+}
+
+func normalizeHostToURL(host string) string {
+	lower := strings.ToLower(host)
+	if strings.HasPrefix(lower, "http://") || strings.HasPrefix(lower, "https://") {
+		return strings.TrimRight(host, "/")
+	}
+	return "https://" + strings.TrimRight(host, "/")
 }
