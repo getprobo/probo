@@ -366,6 +366,164 @@ func TestParseMarkdown_MixedContent(t *testing.T) {
 	assert.Equal(t, MarkStrong, p.Content[1].Marks[0].Type)
 }
 
+func TestParseMarkdown_BlockHTML(t *testing.T) {
+	t.Parallel()
+
+	doc, err := ParseMarkdown("<div>block</div>\n")
+	require.NoError(t, err)
+	require.Len(t, doc.Content, 1)
+	assert.Equal(t, NodeParagraph, doc.Content[0].Type)
+	require.Len(t, doc.Content[0].Content, 1)
+	assert.Equal(t, NodeText, doc.Content[0].Content[0].Type)
+	require.NotNil(t, doc.Content[0].Content[0].Text)
+	assert.Equal(t, "block", *doc.Content[0].Content[0].Text)
+}
+
+func TestParseMarkdown_BlockHTMLWithClosureLine(t *testing.T) {
+	t.Parallel()
+
+	// Type 1 HTML block: closing tag is stored on ClosureLine, not in Lines.
+	// Script is stripped by the HTML sanitizer; nothing safe remains.
+	md := "<script>\nconsole.log(1)\n</script>\n"
+	doc, err := ParseMarkdown(md)
+	require.NoError(t, err)
+	assert.Empty(t, doc.Content)
+}
+
+func TestParseMarkdown_BlockHTMLParagraphAndHeading(t *testing.T) {
+	t.Parallel()
+
+	doc, err := ParseMarkdown("<p>a</p>\n<h2>Title</h2>\n")
+	require.NoError(t, err)
+	require.Len(t, doc.Content, 2)
+	assert.Equal(t, NodeParagraph, doc.Content[0].Type)
+	require.Len(t, doc.Content[0].Content, 1)
+	assert.Equal(t, "a", *doc.Content[0].Content[0].Text)
+	assert.Equal(t, NodeHeading, doc.Content[1].Type)
+	attrs, err := doc.Content[1].HeadingAttrs()
+	require.NoError(t, err)
+	assert.Equal(t, 2, attrs.Level)
+}
+
+func TestParseMarkdown_BlockHTMLListAndBlockquote(t *testing.T) {
+	t.Parallel()
+
+	doc, err := ParseMarkdown("<ul><li>one</li></ul>\n<blockquote><p>q</p></blockquote>\n")
+	require.NoError(t, err)
+	require.Len(t, doc.Content, 2)
+	assert.Equal(t, NodeBulletList, doc.Content[0].Type)
+	assert.Equal(t, NodeBlockquote, doc.Content[1].Type)
+}
+
+func TestParseMarkdown_BlockHTMLTable(t *testing.T) {
+	t.Parallel()
+
+	md := "<table><tr><th>A</th><td>B</td></tr></table>\n"
+	doc, err := ParseMarkdown(md)
+	require.NoError(t, err)
+	require.Len(t, doc.Content, 1)
+	assert.Equal(t, NodeTable, doc.Content[0].Type)
+	require.Len(t, doc.Content[0].Content, 1)
+	assert.Equal(t, NodeTableRow, doc.Content[0].Content[0].Type)
+	require.Len(t, doc.Content[0].Content[0].Content, 2)
+	assert.Equal(t, NodeTableHeader, doc.Content[0].Content[0].Content[0].Type)
+	assert.Equal(t, NodeTableCell, doc.Content[0].Content[0].Content[1].Type)
+}
+
+func TestParseMarkdown_BlockHTMLScriptRemovedKeepsSafeContent(t *testing.T) {
+	t.Parallel()
+
+	md := "<p>ok</p>\n<script>bad()</script>\n"
+	doc, err := ParseMarkdown(md)
+	require.NoError(t, err)
+	require.Len(t, doc.Content, 1)
+	assert.Equal(t, NodeParagraph, doc.Content[0].Type)
+	assert.Equal(t, "ok", *doc.Content[0].Content[0].Text)
+}
+
+func TestParseMarkdown_InlineRawHTML(t *testing.T) {
+	t.Parallel()
+
+	doc, err := ParseMarkdown("before <span>x</span> after")
+	require.NoError(t, err)
+	require.Len(t, doc.Content, 1)
+	p := doc.Content[0]
+	require.Equal(t, NodeParagraph, p.Type)
+
+	var joined string
+	for _, ch := range p.Content {
+		require.Equal(t, NodeText, ch.Type)
+		require.NotNil(t, ch.Text)
+		joined += *ch.Text
+	}
+	// Sanitized HTML: span is unwrapped to plain text content.
+	assert.Equal(t, "before x after", joined)
+}
+
+func TestParseMarkdown_InlineRawHTMLStrong(t *testing.T) {
+	t.Parallel()
+
+	doc, err := ParseMarkdown(`a <strong>b</strong> c`)
+	require.NoError(t, err)
+	require.Len(t, doc.Content, 1)
+	p := doc.Content[0]
+	require.Len(t, p.Content, 3)
+	assert.Equal(t, "a ", *p.Content[0].Text)
+	assert.Equal(t, "b", *p.Content[1].Text)
+	require.Len(t, p.Content[1].Marks, 1)
+	assert.Equal(t, MarkStrong, p.Content[1].Marks[0].Type)
+	assert.Equal(t, " c", *p.Content[2].Text)
+}
+
+func TestParseMarkdown_InlineRawHTMLScriptStripped(t *testing.T) {
+	t.Parallel()
+
+	doc, err := ParseMarkdown(`hi <script>evil()</script> there`)
+	require.NoError(t, err)
+	require.Len(t, doc.Content, 1)
+	p := doc.Content[0]
+	var joined string
+	for _, ch := range p.Content {
+		if ch.Type == NodeText && ch.Text != nil {
+			joined += *ch.Text
+		}
+	}
+	assert.NotContains(t, joined, "script")
+	assert.NotContains(t, joined, "evil")
+	assert.Contains(t, joined, "hi")
+	assert.Contains(t, joined, "there")
+}
+
+func TestParseMarkdown_InlineRawHTMLWithOuterBold(t *testing.T) {
+	t.Parallel()
+
+	doc, err := ParseMarkdown(`**a <em>b</em> c**`)
+	require.NoError(t, err)
+	require.Len(t, doc.Content, 1)
+	p := doc.Content[0]
+	require.GreaterOrEqual(t, len(p.Content), 3)
+
+	var joined string
+	for _, ch := range p.Content {
+		require.Equal(t, NodeText, ch.Type)
+		require.NotNil(t, ch.Text)
+		joined += *ch.Text
+	}
+	assert.Equal(t, "a b c", joined)
+
+	var mid *Node
+	for i := range p.Content {
+		if p.Content[i].Text != nil && *p.Content[i].Text == "b" {
+			mid = &p.Content[i]
+			break
+		}
+	}
+	require.NotNil(t, mid, "expected inner <em> as text node b")
+	require.GreaterOrEqual(t, len(mid.Marks), 2)
+	assert.Equal(t, MarkStrong, mid.Marks[0].Type)
+	assert.Equal(t, MarkEm, mid.Marks[1].Type)
+}
+
 func TestParseMarkdown_JSONRoundTrip(t *testing.T) {
 	t.Parallel()
 
