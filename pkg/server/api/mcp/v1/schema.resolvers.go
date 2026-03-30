@@ -3351,3 +3351,29 @@ func (r *Resolver) PublishMinorDocumentVersionTool(ctx context.Context, req *mcp
 		DocumentVersion: types.NewDocumentVersion(documentVersion),
 	}, nil
 }
+
+func (r *Resolver) UpdateDocumentVersionContentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateDocumentVersionContentInput) (*mcp.CallToolResult, types.UpdateDocumentVersionContentOutput, error) {
+	r.MustAuthorize(ctx, input.DocumentVersionID, probo.ActionDocumentUpdate)
+
+	svc := r.ProboService(ctx, input.DocumentVersionID)
+
+	content, err := svc.Documents.UpdateDocumentVersionContent(
+		ctx,
+		probo.UpdateDocumentVersionRequest{
+			ID:      input.DocumentVersionID,
+			Content: input.Content,
+		},
+	)
+	if err != nil {
+		var errNotDraft *probo.ErrDocumentVersionNotDraft
+		if errors.As(err, &errNotDraft) {
+			return nil, types.UpdateDocumentVersionContentOutput{}, fmt.Errorf("cannot update document version content: %w", err)
+		}
+
+		panic(fmt.Errorf("cannot update document version content: %w", err))
+	}
+
+	return nil, types.UpdateDocumentVersionContentOutput{
+		Content: content,
+	}, nil
+}

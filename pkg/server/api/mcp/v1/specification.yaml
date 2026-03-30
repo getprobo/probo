@@ -5597,6 +5597,28 @@ components:
         document_version:
           $ref: "#/components/schemas/DocumentVersion"
 
+    UpdateDocumentVersionContentInput:
+      type: object
+      required:
+        - document_version_id
+        - content
+      properties:
+        document_version_id:
+          $ref: "#/components/schemas/GID"
+          description: Document version ID
+        content:
+          type: string
+          description: ProseMirror JSON document content
+
+    UpdateDocumentVersionContentOutput:
+      type: object
+      required:
+        - content
+      properties:
+        content:
+          type: string
+          description: Updated document content
+
     DeleteDraftDocumentVersionInput:
       type: object
       required:
@@ -7484,6 +7506,14 @@ tools:
       $ref: "#/components/schemas/UpdateDocumentVersionInput"
     outputSchema:
       $ref: "#/components/schemas/UpdateDocumentVersionOutput"
+  - name: updateDocumentVersionContent
+    description: Update draft document version body content only (ProseMirror JSON).
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/UpdateDocumentVersionContentInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateDocumentVersionContentOutput"
   - name: deleteDraftDocumentVersion
     description: Delete a draft document version
     hints:
