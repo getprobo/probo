@@ -117,6 +117,9 @@ func (c *converter) collectRawHTMLRun(start ast.Node) (run string, next ast.Node
 		case ast.KindText:
 			t := ch.(*ast.Text)
 			buf.Write(t.Segment.Value(c.source))
+			if t.SoftLineBreak() {
+				buf.WriteByte(' ')
+			}
 		case ast.KindString:
 			buf.Write(ch.(*ast.String).Value)
 		default:
@@ -352,6 +355,9 @@ func (c *converter) convertImage(n *ast.Image) ([]Node, error) {
 
 func (c *converter) convertText(n *ast.Text) ([]Node, error) {
 	content := string(n.Segment.Value(c.source))
+	if n.SoftLineBreak() {
+		content += " "
+	}
 	if content == "" {
 		return nil, nil
 	}

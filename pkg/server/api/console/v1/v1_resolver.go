@@ -8725,6 +8725,7 @@ func (r *riskConnectionResolver) TotalCount(ctx context.Context, obj *types.Risk
 func (r *slackConnectionResolver) Permission(ctx context.Context, obj *types.SlackConnection, action string) (bool, error) {
 	return r.Resolver.Permission(ctx, obj, action)
 }
+
 // Organization is the resolver for the organization field.
 func (r *snapshotResolver) Organization(ctx context.Context, obj *types.Snapshot) (*types.Organization, error) {
 	if err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
@@ -10663,6 +10664,7 @@ func (r *Resolver) RiskConnection() schema.RiskConnectionResolver { return &risk
 func (r *Resolver) SlackConnection() schema.SlackConnectionResolver {
 	return &slackConnectionResolver{r}
 }
+
 // Snapshot returns schema.SnapshotResolver implementation.
 func (r *Resolver) Snapshot() schema.SnapshotResolver { return &snapshotResolver{r} }
 

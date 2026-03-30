@@ -134,6 +134,8 @@ func NewCmdUpdateContent(f *cmdutil.Factory) *cobra.Command {
 		"Markdown content to convert and upload",
 	)
 
+	cmd.MarkFlagsMutuallyExclusive("content", "from-markdown")
+
 	_ = cmd.MarkFlagRequired("id")
 
 	return cmd

@@ -16,6 +16,7 @@ package prosemirror
 
 import (
 	"encoding/json"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -349,6 +350,25 @@ func TestParseMarkdown_HardBreak(t *testing.T) {
 		}
 	}
 	assert.True(t, hasHardBreak, "expected hard break node")
+}
+
+func TestParseMarkdown_SoftLineBreak(t *testing.T) {
+	t.Parallel()
+
+	doc, err := ParseMarkdown("line one\nand line two")
+	require.NoError(t, err)
+	require.Len(t, doc.Content, 1)
+
+	p := doc.Content[0]
+	require.Equal(t, NodeParagraph, p.Type)
+
+	var joined strings.Builder
+	for _, child := range p.Content {
+		if child.Type == NodeText && child.Text != nil {
+			joined.WriteString(*child.Text)
+		}
+	}
+	assert.Equal(t, "line one and line two", joined.String())
 }
 
 func TestParseMarkdown_NestedMarks(t *testing.T) {
