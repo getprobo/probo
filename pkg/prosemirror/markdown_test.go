@@ -406,6 +406,42 @@ func TestParseMarkdown_BlockHTML(t *testing.T) {
 	assert.Equal(t, "block", *doc.Content[0].Content[0].Text)
 }
 
+func TestParseMarkdown_BlockHTMLDivPreservesInlineMarks(t *testing.T) {
+	t.Parallel()
+
+	doc, err := ParseMarkdown("<div>hello <strong>world</strong></div>\n")
+	require.NoError(t, err)
+	require.Len(t, doc.Content, 1)
+	p := doc.Content[0]
+	require.Equal(t, NodeParagraph, p.Type)
+
+	var foundStrong bool
+	for _, ch := range p.Content {
+		if ch.Type != NodeText || ch.Text == nil {
+			continue
+		}
+		if *ch.Text != "world" {
+			continue
+		}
+		require.Len(t, ch.Marks, 1)
+		assert.Equal(t, MarkStrong, ch.Marks[0].Type)
+		foundStrong = true
+	}
+	assert.True(t, foundStrong, "expected bold mark on 'world' inside a single paragraph")
+}
+
+func TestParseMarkdown_BlockHTMLDivAroundSectionWithParagraphs(t *testing.T) {
+	t.Parallel()
+
+	doc, err := ParseMarkdown("<div><section><p>a</p><p>b</p></section></div>\n")
+	require.NoError(t, err)
+	require.Len(t, doc.Content, 2)
+	assert.Equal(t, NodeParagraph, doc.Content[0].Type)
+	assert.Equal(t, NodeParagraph, doc.Content[1].Type)
+	assert.Equal(t, "a", *doc.Content[0].Content[0].Text)
+	assert.Equal(t, "b", *doc.Content[1].Content[0].Text)
+}
+
 func TestParseMarkdown_BlockHTMLWithClosureLine(t *testing.T) {
 	t.Parallel()
 
@@ -465,6 +501,19 @@ func TestParseMarkdown_BlockHTMLTable(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, 1, tdAttrs.Colspan)
 	assert.Equal(t, 1, tdAttrs.Rowspan)
+}
+
+func TestParseMarkdown_BlockHTMLNestedTableDoesNotHoistInnerRows(t *testing.T) {
+	t.Parallel()
+
+	md := "<table><tr><td><table><tr><td>inner</td></tr></table></td></tr></table>\n"
+	doc, err := ParseMarkdown(md)
+	require.NoError(t, err)
+	require.Len(t, doc.Content, 1)
+	assert.Equal(t, NodeTable, doc.Content[0].Type)
+	// Outer table must have exactly one row; inner <tr> must not become a second outer row.
+	require.Len(t, doc.Content[0].Content, 1)
+	assert.Equal(t, NodeTableRow, doc.Content[0].Content[0].Type)
 }
 
 func TestParseMarkdown_BlockHTMLTableCellSpans(t *testing.T) {
