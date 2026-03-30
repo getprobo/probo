@@ -142,6 +142,7 @@ signs:
       - |
         if [ "{{ .IsSnapshot }}" = "true" ]; then
           echo "Skipping signing (snapshot: {{ .IsSnapshot }})"
+          touch "${signature}"
         else
           cosign sign-blob --bundle="${signature}" "${artifact}" --yes
         fi
