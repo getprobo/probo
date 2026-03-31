@@ -1256,4 +1256,3 @@ func (s *Service) issueAuthorizationCode(
 
 	return codeValue, nil
 }
-

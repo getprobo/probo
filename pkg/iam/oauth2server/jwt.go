@@ -29,43 +29,45 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 )
 
-// IDTokenClaims represents the claims included in an OIDC ID token.
-type IDTokenClaims struct {
-	Issuer        string                `json:"iss"`
-	Subject       string                `json:"sub"`
-	Audience      string                `json:"aud"`
-	ExpiresAt     int64                 `json:"exp"`
-	IssuedAt      int64                 `json:"iat"`
-	AuthTime      int64                 `json:"auth_time"`
-	Nonce         string                `json:"nonce,omitempty"`
-	AtHash        string                `json:"at_hash,omitempty"`
-	Email         string                `json:"email,omitempty"`
-	EmailVerified *bool                 `json:"email_verified,omitempty"`
-	Name          string                `json:"name,omitempty"`
-	Scope         coredata.OAuth2Scopes `json:"-"`
-}
+type (
+	// IDTokenClaims represents the claims included in an OIDC ID token.
+	IDTokenClaims struct {
+		Issuer        string                `json:"iss"`
+		Subject       string                `json:"sub"`
+		Audience      string                `json:"aud"`
+		ExpiresAt     int64                 `json:"exp"`
+		IssuedAt      int64                 `json:"iat"`
+		AuthTime      int64                 `json:"auth_time"`
+		Nonce         string                `json:"nonce,omitempty"`
+		AtHash        string                `json:"at_hash,omitempty"`
+		Email         string                `json:"email,omitempty"`
+		EmailVerified *bool                 `json:"email_verified,omitempty"`
+		Name          string                `json:"name,omitempty"`
+		Scope         coredata.OAuth2Scopes `json:"-"`
+	}
 
-// JWTHeader represents a JWT header.
-type JWTHeader struct {
-	Algorithm string `json:"alg"`
-	Type      string `json:"typ"`
-	KeyID     string `json:"kid"`
-}
+	// JWTHeader represents a JWT header.
+	JWTHeader struct {
+		Algorithm string `json:"alg"`
+		Type      string `json:"typ"`
+		KeyID     string `json:"kid"`
+	}
 
-// JWK represents a JSON Web Key.
-type JWK struct {
-	KeyType   string `json:"kty"`
-	Use       string `json:"use"`
-	Algorithm string `json:"alg"`
-	KeyID     string `json:"kid"`
-	N         string `json:"n"`
-	E         string `json:"e"`
-}
+	// JWK represents a JSON Web Key.
+	JWK struct {
+		KeyType   string `json:"kty"`
+		Use       string `json:"use"`
+		Algorithm string `json:"alg"`
+		KeyID     string `json:"kid"`
+		N         string `json:"n"`
+		E         string `json:"e"`
+	}
 
-// JWKS represents a JSON Web Key Set.
-type JWKS struct {
-	Keys []JWK `json:"keys"`
-}
+	// JWKS represents a JSON Web Key Set.
+	JWKS struct {
+		Keys []JWK `json:"keys"`
+	}
+)
 
 // SignIDToken signs an ID token with the given RSA private key.
 func SignIDToken(key *rsa.PrivateKey, kid string, claims *IDTokenClaims) (string, error) {
