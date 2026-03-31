@@ -152,11 +152,8 @@ func (h *OAuth2Handler) endpoints() oauth2server.Endpoints {
 func (h *OAuth2Handler) DiscoveryHandler(w http.ResponseWriter, r *http.Request) {
 	metadata := h.iam.OAuth2ServerService.Metadata(h.endpoints())
 
-	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Cache-Control", "public, max-age=3600")
-	if err := json.NewEncoder(w).Encode(metadata); err != nil {
-		h.logger.ErrorCtx(r.Context(), "cannot encode OIDC discovery metadata", log.Error(err))
-	}
+	httpserver.RenderJSON(w, http.StatusOK, metadata)
 }
 
 // JWKSHandler serves the JSON Web Key Set.
@@ -164,11 +161,8 @@ func (h *OAuth2Handler) DiscoveryHandler(w http.ResponseWriter, r *http.Request)
 func (h *OAuth2Handler) JWKSHandler(w http.ResponseWriter, r *http.Request) {
 	jwks := h.iam.OAuth2ServerService.JWKS()
 
-	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Cache-Control", "public, max-age=3600")
-	if err := json.NewEncoder(w).Encode(jwks); err != nil {
-		h.logger.ErrorCtx(r.Context(), "cannot encode JWKS", log.Error(err))
-	}
+	httpserver.RenderJSON(w, http.StatusOK, jwks)
 }
 
 // AuthorizeHandler handles the authorization endpoint.
@@ -732,10 +726,9 @@ func redirectWithCode(w http.ResponseWriter, r *http.Request, redirectURI, code,
 }
 
 func writeTokenResponse(w http.ResponseWriter, resp *oauth2server.TokenResponse) {
-	w.Header().Set("Content-Type", "application/json;charset=UTF-8")
 	w.Header().Set("Cache-Control", "no-store")
 	w.Header().Set("Pragma", "no-cache")
-	_ = json.NewEncoder(w).Encode(resp)
+	httpserver.RenderJSON(w, http.StatusOK, resp)
 }
 
 func oauth2ErrorStatusCode(err error) int {

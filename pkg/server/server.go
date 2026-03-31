@@ -15,7 +15,6 @@
 package server
 
 import (
-	"encoding/json"
 	"errors"
 	"net/http"
 	"path"
@@ -171,11 +170,8 @@ func (s *Server) oidcDiscoveryHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	metadata := s.iamService.OAuth2ServerService.Metadata(endpoints)
-	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Cache-Control", "public, max-age=3600")
-	if err := json.NewEncoder(w).Encode(metadata); err != nil {
-		s.logger.ErrorCtx(r.Context(), "cannot encode OIDC discovery metadata", log.Error(err))
-	}
+	httpserver.RenderJSON(w, http.StatusOK, metadata)
 }
 
 func (s *Server) handleCustomDomain404(w http.ResponseWriter, r *http.Request) {

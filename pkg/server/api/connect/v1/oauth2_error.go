@@ -15,8 +15,9 @@
 package connect_v1
 
 import (
-	"encoding/json"
 	"net/http"
+
+	"go.gearno.de/kit/httpserver"
 )
 
 type (
@@ -28,11 +29,9 @@ type (
 )
 
 func (e *oauth2Error) writeResponse(w http.ResponseWriter) {
-	w.Header().Set("Content-Type", "application/json;charset=UTF-8")
 	w.Header().Set("Cache-Control", "no-store")
 	w.Header().Set("Pragma", "no-cache")
-	w.WriteHeader(e.statusCode)
-	_ = json.NewEncoder(w).Encode(e)
+	httpserver.RenderJSON(w, e.statusCode, e)
 }
 
 func writeOAuth2Error(w http.ResponseWriter, code, description string, statusCode int) {
