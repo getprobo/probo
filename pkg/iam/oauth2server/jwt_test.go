@@ -463,7 +463,9 @@ func TestPublicJWKS(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-			jwks := oauth2server.PublicJWKS(&key.PublicKey, "kid-1")
+			jwks := oauth2server.PublicJWKS([]oauth2server.SigningKey{
+				{PrivateKey: key, KID: "kid-1"},
+			})
 			require.Len(t, jwks.Keys, 1)
 		},
 	)
@@ -473,7 +475,9 @@ func TestPublicJWKS(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-			jwks := oauth2server.PublicJWKS(&key.PublicKey, "kid-1")
+			jwks := oauth2server.PublicJWKS([]oauth2server.SigningKey{
+				{PrivateKey: key, KID: "kid-1"},
+			})
 			jwk := jwks.Keys[0]
 
 			assert.Equal(t, "RSA", jwk.KeyType)
@@ -488,7 +492,9 @@ func TestPublicJWKS(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-			jwks := oauth2server.PublicJWKS(&key.PublicKey, "kid-1")
+			jwks := oauth2server.PublicJWKS([]oauth2server.SigningKey{
+				{PrivateKey: key, KID: "kid-1"},
+			})
 			jwk := jwks.Keys[0]
 
 			nBytes, err := base64.RawURLEncoding.DecodeString(jwk.N)
@@ -504,7 +510,9 @@ func TestPublicJWKS(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-			jwks := oauth2server.PublicJWKS(&key.PublicKey, "kid-1")
+			jwks := oauth2server.PublicJWKS([]oauth2server.SigningKey{
+				{PrivateKey: key, KID: "kid-1"},
+			})
 			jwk := jwks.Keys[0]
 
 			eBytes, err := base64.RawURLEncoding.DecodeString(jwk.E)
@@ -516,14 +524,19 @@ func TestPublicJWKS(t *testing.T) {
 	)
 
 	t.Run(
-		"different kids produce different key ids",
+		"multiple keys are all included",
 		func(t *testing.T) {
 			t.Parallel()
 
-			jwks1 := oauth2server.PublicJWKS(&key.PublicKey, "kid-a")
-			jwks2 := oauth2server.PublicJWKS(&key.PublicKey, "kid-b")
+			key2 := testRSAKey(t)
+			jwks := oauth2server.PublicJWKS([]oauth2server.SigningKey{
+				{PrivateKey: key, KID: "kid-a"},
+				{PrivateKey: key2, KID: "kid-b"},
+			})
 
-			assert.NotEqual(t, jwks1.Keys[0].KeyID, jwks2.Keys[0].KeyID)
+			require.Len(t, jwks.Keys, 2)
+			assert.Equal(t, "kid-a", jwks.Keys[0].KeyID)
+			assert.Equal(t, "kid-b", jwks.Keys[1].KeyID)
 		},
 	)
 }

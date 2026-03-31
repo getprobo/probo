@@ -17,7 +17,6 @@ package oauth2server
 import (
 	"context"
 	"crypto/rand"
-	"crypto/rsa"
 	"crypto/sha256"
 	"crypto/subtle"
 	"encoding/hex"
@@ -34,19 +33,17 @@ import (
 
 type (
 	Service struct {
-		pg         *pg.Client
-		signingKey *rsa.PrivateKey
-		signingKID string
-		baseURL    string
-		logger     *log.Logger
-		gc         *GarbageCollector
+		pg          *pg.Client
+		signingKeys []SigningKey
+		baseURL     string
+		logger      *log.Logger
+		gc          *GarbageCollector
 	}
 
 	Config struct {
-		SigningKey *rsa.PrivateKey
-		SigningKID string
-		BaseURL    string
-		Logger     *log.Logger
+		SigningKeys []SigningKey
+		BaseURL     string
+		Logger      *log.Logger
 	}
 
 	// AuthorizeRequest contains the parsed parameters for an authorization request.
@@ -110,11 +107,10 @@ type (
 
 func NewService(pgClient *pg.Client, cfg Config) *Service {
 	s := &Service{
-		pg:         pgClient,
-		signingKey: cfg.SigningKey,
-		signingKID: cfg.SigningKID,
-		baseURL:    cfg.BaseURL,
-		logger:     cfg.Logger,
+		pg:          pgClient,
+		signingKeys: cfg.SigningKeys,
+		baseURL:     cfg.BaseURL,
+		logger:      cfg.Logger,
 	}
 
 	s.gc = NewGarbageCollector(pgClient, cfg.Logger)
@@ -133,7 +129,7 @@ func (s *Service) Metadata(endpoints Endpoints) *ServerMetadata {
 
 // JWKS returns the public key set.
 func (s *Service) JWKS() *JWKS {
-	return PublicJWKS(&s.signingKey.PublicKey, s.signingKID)
+	return PublicJWKS(s.signingKeys)
 }
 
 // hashToken computes SHA-256 hash of a token value.
@@ -408,7 +404,7 @@ func (s *Service) ExchangeAuthorizationCode(
 			"", false, "",
 		)
 
-		idToken, err := SignIDToken(s.signingKey, s.signingKID, idTokenClaims)
+		idToken, err := SignIDToken(s.signingKeys[0].PrivateKey, s.signingKeys[0].KID, idTokenClaims)
 		if err != nil {
 			return nil, fmt.Errorf("cannot sign id token: %w", err)
 		}
@@ -543,7 +539,7 @@ func (s *Service) RefreshToken(
 			accessTokenValue,
 			"", false, "",
 		)
-		idToken, err := SignIDToken(s.signingKey, s.signingKID, claims)
+		idToken, err := SignIDToken(s.signingKeys[0].PrivateKey, s.signingKeys[0].KID, claims)
 		if err != nil {
 			return nil, fmt.Errorf("cannot sign id token: %w", err)
 		}
@@ -725,7 +721,7 @@ func (s *Service) PollDeviceCode(
 			accessTokenValue,
 			"", false, "",
 		)
-		idToken, signErr := SignIDToken(s.signingKey, s.signingKID, claims)
+		idToken, signErr := SignIDToken(s.signingKeys[0].PrivateKey, s.signingKeys[0].KID, claims)
 		if signErr != nil {
 			return nil, fmt.Errorf("%w: cannot sign id token", ErrServerError)
 		}

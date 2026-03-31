@@ -30,6 +30,14 @@ import (
 )
 
 type (
+	// SigningKey pairs an RSA private key with its key ID. The first entry
+	// in a []SigningKey slice is the active signing key; all entries are
+	// published in the JWKS to allow verification during key rotation.
+	SigningKey struct {
+		PrivateKey *rsa.PrivateKey
+		KID        string
+	}
+
 	// IDTokenClaims represents the claims included in an OIDC ID token.
 	IDTokenClaims struct {
 		Issuer        string                `json:"iss"`
@@ -156,18 +164,22 @@ func NewIDTokenClaims(
 	return claims
 }
 
-// PublicJWKS returns the JWKS for the given RSA public key.
-func PublicJWKS(key *rsa.PublicKey, kid string) *JWKS {
-	return &JWKS{
-		Keys: []JWK{
-			{
-				KeyType:   "RSA",
-				Use:       "sig",
-				Algorithm: "RS256",
-				KeyID:     kid,
-				N:         base64.RawURLEncoding.EncodeToString(key.N.Bytes()),
-				E:         base64.RawURLEncoding.EncodeToString(big.NewInt(int64(key.E)).Bytes()),
-			},
-		},
+// PublicJWKS returns the JWKS containing the public keys for all signing keys.
+func PublicJWKS(keys []SigningKey) *JWKS {
+	jwks := &JWKS{
+		Keys: make([]JWK, 0, len(keys)),
 	}
+
+	for _, k := range keys {
+		jwks.Keys = append(jwks.Keys, JWK{
+			KeyType:   "RSA",
+			Use:       "sig",
+			Algorithm: "RS256",
+			KeyID:     k.KID,
+			N:         base64.RawURLEncoding.EncodeToString(k.PrivateKey.N.Bytes()),
+			E:         base64.RawURLEncoding.EncodeToString(big.NewInt(int64(k.PrivateKey.E)).Bytes()),
+		})
+	}
+
+	return jwks
 }

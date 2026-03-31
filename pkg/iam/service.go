@@ -94,8 +94,7 @@ type (
 		SCIMBridgePollInterval         time.Duration
 		GoogleOIDC                     oidc.ProviderConfig
 		MicrosoftOIDC                  oidc.ProviderConfig
-		OAuth2ServerSigningKey         *rsa.PrivateKey
-		OAuth2ServerSigningKID         string
+		OAuth2ServerSigningKeys        []oauth2server.SigningKey
 	}
 )
 
@@ -185,10 +184,9 @@ func NewService(
 	svc.OAuth2ServerService = oauth2server.NewService(
 		pgClient,
 		oauth2server.Config{
-			SigningKey: cfg.OAuth2ServerSigningKey,
-			SigningKID: cfg.OAuth2ServerSigningKID,
-			BaseURL:    cfg.BaseURL.String(),
-			Logger:     cfg.Logger.Named("oauth2server"),
+			SigningKeys: cfg.OAuth2ServerSigningKeys,
+			BaseURL:     cfg.BaseURL.String(),
+			Logger:      cfg.Logger.Named("oauth2server"),
 		},
 	)
 

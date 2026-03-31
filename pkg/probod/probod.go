@@ -57,6 +57,7 @@ import (
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/html2pdf"
 	"go.probo.inc/probo/pkg/iam"
+	"go.probo.inc/probo/pkg/iam/oauth2server"
 	"go.probo.inc/probo/pkg/iam/oidc"
 	"go.probo.inc/probo/pkg/mailer"
 	"go.probo.inc/probo/pkg/mailman"
@@ -366,10 +367,9 @@ func (impl *Implm) Run(
 		}
 	}
 
-	var oauth2SigningKey *rsa.PrivateKey
-	var oauth2SigningKID string
-	if impl.cfg.Auth.OAuth2Server.SigningKeyFile != "" {
-		keyPEM, err := os.ReadFile(impl.cfg.Auth.OAuth2Server.SigningKeyFile)
+	var oauth2SigningKeys []oauth2server.SigningKey
+	for _, keyCfg := range impl.cfg.Auth.OAuth2Server.SigningKeys {
+		keyPEM, err := os.ReadFile(keyCfg.KeyFile)
 		if err != nil {
 			return fmt.Errorf("cannot read OAuth2 server signing key file: %w", err)
 		}
@@ -379,16 +379,20 @@ func (impl *Implm) Run(
 			return fmt.Errorf("cannot decode OAuth2 server signing key: %w", err)
 		}
 
-		var ok bool
-		oauth2SigningKey, ok = signer.(*rsa.PrivateKey)
+		rsaKey, ok := signer.(*rsa.PrivateKey)
 		if !ok {
 			return fmt.Errorf("OAuth2 server signing key is not an RSA key")
 		}
 
-		oauth2SigningKID = impl.cfg.Auth.OAuth2Server.SigningKID
-		if oauth2SigningKID == "" {
-			oauth2SigningKID = "default"
+		kid := keyCfg.KID
+		if kid == "" {
+			kid = "default"
 		}
+
+		oauth2SigningKeys = append(oauth2SigningKeys, oauth2server.SigningKey{
+			PrivateKey: rsaKey,
+			KID:        kid,
+		})
 	}
 
 	if err := emails.UploadStaticAssets(
@@ -434,8 +438,7 @@ func (impl *Implm) Run(
 				ClientSecret: impl.cfg.Auth.Microsoft.ClientSecret,
 				Enabled:      impl.cfg.Auth.Microsoft.Enabled,
 			},
-			OAuth2ServerSigningKey: oauth2SigningKey,
-			OAuth2ServerSigningKID: oauth2SigningKID,
+			OAuth2ServerSigningKeys: oauth2SigningKeys,
 		},
 	)
 	if err != nil {
