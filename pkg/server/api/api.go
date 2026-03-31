@@ -197,6 +197,10 @@ func NewServer(cfg Config) (*Server, error) {
 				_, err := cfg.Trust.GetByDomainName(ctx, host)
 				return err == nil
 			},
+			func(ctx context.Context, host string) bool {
+				_, err := cfg.Trust.GetByDomainName(ctx, host)
+				return err == nil
+			},
 		),
 	}, nil
 }

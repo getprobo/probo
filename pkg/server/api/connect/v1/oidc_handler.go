@@ -15,8 +15,10 @@
 package connect_v1
 
 import (
+	"context"
 	"errors"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/go-chi/chi/v5"
@@ -29,11 +31,17 @@ import (
 	"go.probo.inc/probo/pkg/server/api/authn"
 )
 
+// IsTrustCenterDomainFunc checks whether a given host is a trust center
+// custom domain.
+type IsTrustCenterDomainFunc func(ctx context.Context, host string) bool
+
 type OIDCHandler struct {
-	iam           *iam.Service
-	sessionCookie *authn.Cookie
-	logger        *log.Logger
-	safeRedirect  *saferedirect.SafeRedirect
+	iam                  *iam.Service
+	sessionCookie        *authn.Cookie
+	cookieSecret         string
+	logger               *log.Logger
+	safeRedirect         *saferedirect.SafeRedirect
+	isTrustCenterDomain  IsTrustCenterDomainFunc
 }
 
 func NewOIDCHandler(
@@ -41,12 +49,15 @@ func NewOIDCHandler(
 	cookieConfig securecookie.Config,
 	logger *log.Logger,
 	allowedHost saferedirect.AllowedHostFunc,
+	isTrustCenterDomain IsTrustCenterDomainFunc,
 ) *OIDCHandler {
 	return &OIDCHandler{
-		iam:           iam,
-		sessionCookie: authn.NewCookie(&cookieConfig),
-		logger:        logger,
-		safeRedirect:  saferedirect.New(allowedHost),
+		iam:                 iam,
+		sessionCookie:       authn.NewCookie(&cookieConfig),
+		cookieSecret:        cookieConfig.Secret,
+		logger:              logger,
+		safeRedirect:        saferedirect.New(allowedHost),
+		isTrustCenterDomain: isTrustCenterDomain,
 	}
 }
 
@@ -140,7 +151,46 @@ func (h *OIDCHandler) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 
 	h.sessionCookie.Set(w, rootSession)
 
-	h.safeRedirect.Redirect(w, r, continueURL, "/", http.StatusFound)
+	redirectURL := h.safeRedirect.GetSafeRedirectURL(ctx, continueURL, "/")
+
+	if transferURL, ok := h.buildSessionTransferURL(ctx, redirectURL, rootSession.ID.String()); ok {
+		http.Redirect(w, r, transferURL, http.StatusFound)
+		return
+	}
+
+	http.Redirect(w, r, redirectURL, http.StatusFound)
+}
+
+// buildSessionTransferURL returns a session-transfer URL on the target trust
+// center custom domain. This lets the custom domain set its own cookie for the
+// session.
+func (h *OIDCHandler) buildSessionTransferURL(ctx context.Context, redirectURL string, sessionID string) (string, bool) {
+	parsed, err := url.Parse(redirectURL)
+	if err != nil || !parsed.IsAbs() {
+		return "", false
+	}
+
+	if !h.isTrustCenterDomain(ctx, parsed.Host) {
+		return "", false
+	}
+
+	token, err := authn.SignSessionTransfer(sessionID, redirectURL, h.cookieSecret)
+	if err != nil {
+		h.logger.Error("cannot sign session transfer token", log.Error(err))
+		return "", false
+	}
+
+	transferURL := &url.URL{
+		Scheme: parsed.Scheme,
+		Host:   parsed.Host,
+		Path:   "/api/trust/v1/session-transfer",
+	}
+
+	q := transferURL.Query()
+	q.Set("token", token)
+	transferURL.RawQuery = q.Encode()
+
+	return transferURL.String(), true
 }
 
 func parseOIDCProvider(s string) (coredata.OIDCProvider, error) {

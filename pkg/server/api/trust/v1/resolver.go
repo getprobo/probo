@@ -83,6 +83,10 @@ func NewMux(
 	r := chi.NewMux()
 
 	r.Use(compliancepage.NewCompliancePagePresenceMiddleware())
+
+	sessionTransferHandler := NewSessionTransferHandler(iamSvc, cookieConfig, logger)
+	r.Get("/session-transfer", sessionTransferHandler.ServeHTTP)
+
 	r.Use(authn.NewSessionMiddleware(iamSvc, cookieConfig))
 	r.Use(compliancepage.NewMemberProvisioningMiddleware(trustSvc, logger))
 

@@ -63,6 +63,7 @@ func NewMux(
 	tokenSecret string,
 	baseURL *baseurl.BaseURL,
 	allowedRedirectHost saferedirect.AllowedHostFunc,
+	isTrustCenterDomain IsTrustCenterDomainFunc,
 ) *chi.Mux {
 	r := chi.NewMux()
 
@@ -74,7 +75,7 @@ func NewMux(
 
 	router := r.With(sessionMiddleware, apiKeyMiddleware)
 
-	oidcHandler := NewOIDCHandler(svc, cookieConfig, logger, allowedRedirectHost)
+	oidcHandler := NewOIDCHandler(svc, cookieConfig, logger, allowedRedirectHost, isTrustCenterDomain)
 
 	router.Handle("/graphql", graphqlHandler)
 	router.Get("/saml/2.0/metadata", samlHandler.MetadataHandler)
