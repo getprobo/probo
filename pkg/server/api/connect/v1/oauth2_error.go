@@ -117,7 +117,7 @@ func oauth2ErrorDescription(err error, code string) string {
 func redirectWithError(w http.ResponseWriter, r *http.Request, redirectURI, state string, err error) {
 	u, parseErr := url.Parse(redirectURI)
 	if parseErr != nil {
-		httpserver.RenderError(w, http.StatusInternalServerError, parseErr)
+		httpserver.RenderError(w, http.StatusInternalServerError, errors.New("internal server error"))
 		return
 	}
 
