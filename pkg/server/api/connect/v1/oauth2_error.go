@@ -46,19 +46,9 @@ func withRedirect(err error, redirectURI, state string) error {
 	}
 }
 
-// writeOAuth2Error is the single entry point for all OAuth2 error responses.
-// It inspects the error to determine the response mode:
-//
-//   - Redirect: if the error carries redirect context and the error is
-//     redirectable (i.e. not an invalid client or bad redirect_uri), the
-//     error is sent back to the client via query parameters.
-//   - Render: if the error is a known OAuth2 error, it is rendered as a JSON
-//     response with the appropriate HTTP status code.
-//   - Internal: if the error is not a known OAuth2 error, an HTTP 500 is
-//     returned.
 func writeOAuth2Error(w http.ResponseWriter, r *http.Request, err error) {
-	var rc *oauth2RedirectContext
-	if errors.As(err, &rc) {
+	rc, ok := errors.AsType[*oauth2RedirectContext](err)
+	if ok {
 		if isRedirectableError(err) && rc.redirectURI != "" {
 			redirectWithError(w, r, rc.redirectURI, rc.state, rc.err)
 			return
@@ -69,7 +59,7 @@ func writeOAuth2Error(w http.ResponseWriter, r *http.Request, err error) {
 
 	code := oauth2server.OAuth2ErrorCode(err)
 	if code == "server_error" && !errors.Is(err, oauth2server.ErrServerError) {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		httpserver.RenderError(w, http.StatusInternalServerError, err)
 		return
 	}
 
@@ -87,13 +77,13 @@ func writeOAuth2Error(w http.ResponseWriter, r *http.Request, err error) {
 	})
 }
 
-// isRedirectableError returns true if the error should be redirected back
-// to the client. Errors related to invalid client identity or redirect URI
-// must never be redirected.
 func isRedirectableError(err error) bool {
-	return !errors.Is(err, oauth2server.ErrInvalidClient) &&
-		!errors.Is(err, oauth2server.ErrInvalidRedirectURI) &&
-		!errors.Is(err, oauth2server.ErrServerError)
+	return errors.Is(err, oauth2server.ErrAccessDenied) ||
+		errors.Is(err, oauth2server.ErrInvalidRequest) ||
+		errors.Is(err, oauth2server.ErrInvalidScope) ||
+		errors.Is(err, oauth2server.ErrUnauthorizedClient) ||
+		errors.Is(err, oauth2server.ErrInvalidGrant) ||
+		errors.Is(err, oauth2server.ErrUnsupportedGrantType)
 }
 
 func oauth2ErrorStatusCode(err error) int {
@@ -127,7 +117,7 @@ func oauth2ErrorDescription(err error, code string) string {
 func redirectWithError(w http.ResponseWriter, r *http.Request, redirectURI, state string, err error) {
 	u, parseErr := url.Parse(redirectURI)
 	if parseErr != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		httpserver.RenderError(w, http.StatusInternalServerError, parseErr)
 		return
 	}
 
