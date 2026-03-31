@@ -24,34 +24,16 @@ import (
 	"go.probo.inc/probo/pkg/iam/oauth2server"
 )
 
-type oauth2RedirectContext struct {
-	err         error
-	redirectURI string
-	state       string
-}
-
-func (e *oauth2RedirectContext) Error() string { return e.err.Error() }
-func (e *oauth2RedirectContext) Unwrap() error { return e.err }
-
-func withRedirect(err error, redirectURI, state string) error {
-	return &oauth2RedirectContext{
-		err:         err,
-		redirectURI: redirectURI,
-		state:       state,
+func handleAuthorizeError(w http.ResponseWriter, r *http.Request, err error, redirectURI, state string) {
+	if isRedirectableError(err) && redirectURI != "" {
+		redirectWithError(w, r, redirectURI, state, err)
+		return
 	}
+
+	writeOAuth2Error(w, r, err)
 }
 
 func writeOAuth2Error(w http.ResponseWriter, r *http.Request, err error) {
-	rc, ok := errors.AsType[*oauth2RedirectContext](err)
-	if ok {
-		if isRedirectableError(err) && rc.redirectURI != "" {
-			redirectWithError(w, r, rc.redirectURI, rc.state, rc.err)
-			return
-		}
-
-		err = rc.err
-	}
-
 	oauthErr, ok := errors.AsType[*oauth2server.OAuth2Error](err)
 	if !ok {
 		httpserver.RenderError(w, http.StatusInternalServerError, err)

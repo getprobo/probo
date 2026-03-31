@@ -211,6 +211,12 @@ func (h *OAuth2Handler) AuthorizeHandler(w http.ResponseWriter, r *http.Request)
 		authTime = session.CreatedAt
 	}
 
+	scopes, err := parseScopes(q.Get("scope"))
+	if err != nil {
+		handleAuthorizeError(w, r, err, redirectURI, state)
+		return
+	}
+
 	code, err := h.iam.OAuth2ServerService.Authorize(
 		r.Context(),
 		&oauth2server.AuthorizeRequest{
@@ -219,7 +225,7 @@ func (h *OAuth2Handler) AuthorizeHandler(w http.ResponseWriter, r *http.Request)
 			ResponseType:        q.Get("response_type"),
 			ClientID:            clientID,
 			RedirectURI:         redirectURI,
-			Scopes:              parseScopes(q.Get("scope")),
+			Scopes:              scopes,
 			CodeChallenge:       q.Get("code_challenge"),
 			CodeChallengeMethod: coredata.OAuth2CodeChallengeMethod(q.Get("code_challenge_method")),
 			Nonce:               q.Get("nonce"),
@@ -239,7 +245,7 @@ func (h *OAuth2Handler) AuthorizeHandler(w http.ResponseWriter, r *http.Request)
 	}
 
 	if err != nil {
-		writeOAuth2Error(w, r, withRedirect(err, redirectURI, state))
+		handleAuthorizeError(w, r, err, redirectURI, state)
 		return
 	}
 
@@ -279,7 +285,7 @@ func (h *OAuth2Handler) AuthorizeConsentHandler(w http.ResponseWriter, r *http.R
 	)
 	if err != nil {
 		h.logger.ErrorCtx(r.Context(), "cannot approve consent", log.Error(err))
-		writeOAuth2Error(w, r, withRedirect(err, redirectURI, state))
+		handleAuthorizeError(w, r, err, redirectURI, state)
 		return
 	}
 
@@ -685,8 +691,10 @@ func writeTokenResponse(w http.ResponseWriter, resp *oauth2server.TokenResponse)
 	httpserver.RenderJSON(w, http.StatusOK, resp)
 }
 
-func parseScopes(s string) coredata.OAuth2Scopes {
+func parseScopes(s string) (coredata.OAuth2Scopes, error) {
 	var scopes coredata.OAuth2Scopes
-	_ = scopes.UnmarshalText([]byte(s))
-	return scopes
+	if err := scopes.UnmarshalText([]byte(s)); err != nil {
+		return nil, fmt.Errorf("%w: %v", oauth2server.ErrInvalidScope, err)
+	}
+	return scopes, nil
 }
