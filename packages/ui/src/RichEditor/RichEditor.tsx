@@ -64,7 +64,13 @@ const extensions = [
 ];
 
 const richEditorVariants = tv({
-  base: ["relative h-full pl-14"],
+  base: ["relative h-full"],
+  variants: {
+    disabled: {
+      true: "",
+      false: "pl-14",
+    },
+  },
 });
 
 type RichEditorProps = ComponentProps<"div"> & {
@@ -103,17 +109,28 @@ export function RichEditor(props: RichEditorProps) {
     }
   }, [content, watchedContent, onChangeContent]);
 
+  useEffect(() => {
+    if (!editor) return;
+    editor.setEditable(!disabled);
+  }, [editor, disabled]);
+
   if (!editor) return null;
 
   return (
-    <div className={richEditorVariants({ className })}>
-      <BubbleMenu editor={editor} />
-      <BlockMenu editor={editor} />
-      <OptionsMenu editor={editor} />
-      <TableSelectionOverlay editor={editor} />
-      <TableCellMenu editor={editor} />
-      <TableColumnMenu editor={editor} />
-      <TableRowMenu editor={editor} />
+    <div className={richEditorVariants({ className, disabled })}>
+      {!disabled
+        && (
+          <>
+            <BubbleMenu editor={editor} />
+            <BlockMenu editor={editor} />
+            <OptionsMenu editor={editor} />
+            <TableSelectionOverlay editor={editor} />
+            <TableCellMenu editor={editor} />
+            <TableColumnMenu editor={editor} />
+            <TableRowMenu editor={editor} />
+          </>
+        )}
+
       <EditorContent className="h-full" editor={editor} />
     </div>
   );
