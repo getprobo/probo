@@ -457,14 +457,27 @@ func (s *Service) RefreshToken(
 	client *coredata.OAuth2Client,
 	refreshTokenValue string,
 ) (*TokenResponse, error) {
+	// Generate new token values before the transaction so that token
+	// creation and old-token revocation happen atomically.
+	accessTokenValue, err := generateRandomToken(32)
+	if err != nil {
+		return nil, fmt.Errorf("cannot generate access token: %w", err)
+	}
+
+	refreshTokenValueNew, err := generateRandomToken(48)
+	if err != nil {
+		return nil, fmt.Errorf("cannot generate refresh token: %w", err)
+	}
+
 	var (
 		hashedValue = hashToken(refreshTokenValue)
-		oldToken    coredata.OAuth2RefreshToken
+		accessToken *coredata.OAuth2AccessToken
 		identityID  gid.GID
 		scopes      coredata.OAuth2Scopes
 	)
 
 	if err := s.pg.WithTx(ctx, func(tx pg.Conn) error {
+		var oldToken coredata.OAuth2RefreshToken
 		if err := oldToken.LoadByHashedValueForUpdate(ctx, tx, hashedValue); err != nil {
 			return fmt.Errorf("cannot load refresh token: %w", err)
 		}
@@ -496,6 +509,9 @@ func (s *Service) RefreshToken(
 			return fmt.Errorf("refresh token expired")
 		}
 
+		identityID = oldToken.IdentityID
+		scopes = oldToken.Scopes
+
 		// Revoke old refresh token (rotation).
 		if err := oldToken.Revoke(ctx, tx, time.Now()); err != nil {
 			return fmt.Errorf("cannot revoke old refresh token: %w", err)
@@ -505,23 +521,39 @@ func (s *Service) RefreshToken(
 		oldAT := &coredata.OAuth2AccessToken{ID: oldToken.AccessTokenID}
 		_ = oldAT.Delete(ctx, tx)
 
-		identityID = oldToken.IdentityID
-		scopes = oldToken.Scopes
+		// Create new access token in the same transaction.
+		now := time.Now()
+		accessToken = &coredata.OAuth2AccessToken{
+			ID:          fmt.Sprintf("oat_%s", accessTokenValue[:16]),
+			HashedValue: hashToken(accessTokenValue),
+			ClientID:    client.ID,
+			IdentityID:  identityID,
+			Scopes:      scopes,
+			CreatedAt:   now,
+			ExpiresAt:   now.Add(1 * time.Hour),
+		}
+		if err := accessToken.Insert(ctx, tx); err != nil {
+			return fmt.Errorf("cannot create access token: %w", err)
+		}
+
+		// Create new refresh token in the same transaction.
+		newRT := &coredata.OAuth2RefreshToken{
+			ID:            fmt.Sprintf("ort_%s", refreshTokenValueNew[:16]),
+			HashedValue:   hashToken(refreshTokenValueNew),
+			ClientID:      client.ID,
+			IdentityID:    identityID,
+			Scopes:        scopes,
+			AccessTokenID: accessToken.ID,
+			CreatedAt:     now,
+			ExpiresAt:     now.Add(30 * 24 * time.Hour),
+		}
+		if err := newRT.Insert(ctx, tx); err != nil {
+			return fmt.Errorf("cannot create refresh token: %w", err)
+		}
 
 		return nil
 	}); err != nil {
 		return nil, err
-	}
-
-	// Issue new tokens.
-	accessTokenValue, accessToken, err := s.CreateAccessToken(ctx, client.ID, identityID, scopes)
-	if err != nil {
-		return nil, fmt.Errorf("cannot create access token: %w", err)
-	}
-
-	refreshTokenValueNew, _, err := s.CreateRefreshToken(ctx, client.ID, identityID, scopes, accessToken.ID)
-	if err != nil {
-		return nil, fmt.Errorf("cannot create refresh token: %w", err)
 	}
 
 	resp := &TokenResponse{
