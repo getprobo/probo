@@ -19,6 +19,7 @@ import (
 	"errors"
 	"fmt"
 	"maps"
+	"slices"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -48,6 +49,10 @@ type (
 
 	OAuth2Clients []*OAuth2Client
 )
+
+func (c *OAuth2Client) IsRedirectURIValid(uri string) bool {
+	return slices.Contains(c.RedirectURIs, uri)
+}
 
 func (c *OAuth2Client) CursorKey(orderBy OAuth2ClientOrderField) page.CursorKey {
 	switch orderBy {
