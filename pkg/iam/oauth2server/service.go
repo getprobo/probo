@@ -23,6 +23,7 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"sync/atomic"
 	"time"
 
 	"go.gearno.de/kit/log"
@@ -33,11 +34,13 @@ import (
 
 type (
 	Service struct {
-		pg          *pg.Client
-		signingKeys []SigningKey
-		baseURL     string
-		logger      *log.Logger
-		gc          *GarbageCollector
+		pg               *pg.Client
+		signingKeys      []SigningKey
+		activeSigningIdx []int
+		rrCounter        atomic.Uint64
+		baseURL          string
+		logger           *log.Logger
+		gc               *GarbageCollector
 	}
 
 	Config struct {
@@ -106,16 +109,31 @@ type (
 )
 
 func NewService(pgClient *pg.Client, cfg Config) *Service {
+	var activeIdx []int
+	for i, k := range cfg.SigningKeys {
+		if k.Active {
+			activeIdx = append(activeIdx, i)
+		}
+	}
+
 	s := &Service{
-		pg:          pgClient,
-		signingKeys: cfg.SigningKeys,
-		baseURL:     cfg.BaseURL,
-		logger:      cfg.Logger,
+		pg:               pgClient,
+		signingKeys:      cfg.SigningKeys,
+		activeSigningIdx: activeIdx,
+		baseURL:          cfg.BaseURL,
+		logger:           cfg.Logger,
 	}
 
 	s.gc = NewGarbageCollector(pgClient, cfg.Logger)
 
 	return s
+}
+
+// signingKey returns the next active signing key using round-robin.
+func (s *Service) signingKey() *SigningKey {
+	n := s.rrCounter.Add(1)
+	idx := s.activeSigningIdx[n%uint64(len(s.activeSigningIdx))]
+	return &s.signingKeys[idx]
 }
 
 func (s *Service) Run(ctx context.Context) error {
@@ -404,7 +422,7 @@ func (s *Service) ExchangeAuthorizationCode(
 			"", false, "",
 		)
 
-		idToken, err := SignIDToken(s.signingKeys[0].PrivateKey, s.signingKeys[0].KID, idTokenClaims)
+		idToken, err := SignIDToken(s.signingKey(), idTokenClaims)
 		if err != nil {
 			return nil, fmt.Errorf("cannot sign id token: %w", err)
 		}
@@ -539,7 +557,7 @@ func (s *Service) RefreshToken(
 			accessTokenValue,
 			"", false, "",
 		)
-		idToken, err := SignIDToken(s.signingKeys[0].PrivateKey, s.signingKeys[0].KID, claims)
+		idToken, err := SignIDToken(s.signingKey(), claims)
 		if err != nil {
 			return nil, fmt.Errorf("cannot sign id token: %w", err)
 		}
@@ -721,7 +739,7 @@ func (s *Service) PollDeviceCode(
 			accessTokenValue,
 			"", false, "",
 		)
-		idToken, signErr := SignIDToken(s.signingKeys[0].PrivateKey, s.signingKeys[0].KID, claims)
+		idToken, signErr := SignIDToken(s.signingKey(), claims)
 		if signErr != nil {
 			return nil, fmt.Errorf("%w: cannot sign id token", ErrServerError)
 		}

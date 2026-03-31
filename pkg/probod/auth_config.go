@@ -39,6 +39,7 @@ type OAuth2ServerConfig struct {
 type OAuth2SigningKeyConfig struct {
 	KeyFile string `json:"key-file"`
 	KID     string `json:"kid"`
+	Active  bool   `json:"active"`
 }
 
 type CookieConfig struct {

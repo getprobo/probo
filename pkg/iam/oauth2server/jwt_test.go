@@ -63,7 +63,7 @@ func TestSignIDToken(t *testing.T) {
 				AuthTime:  time.Now().Unix(),
 			}
 
-			token, err := oauth2server.SignIDToken(key, "kid-1", claims)
+			token, err := oauth2server.SignIDToken(&oauth2server.SigningKey{PrivateKey: key, KID: "kid-1"}, claims)
 			require.NoError(t, err)
 
 			parts := strings.Split(token, ".")
@@ -82,7 +82,7 @@ func TestSignIDToken(t *testing.T) {
 				Audience: "aud-456",
 			}
 
-			token, err := oauth2server.SignIDToken(key, "my-kid", claims)
+			token, err := oauth2server.SignIDToken(&oauth2server.SigningKey{PrivateKey: key, KID: "my-kid"}, claims)
 			require.NoError(t, err)
 
 			parts := strings.Split(token, ".")
@@ -116,7 +116,7 @@ func TestSignIDToken(t *testing.T) {
 				Nonce:     "test-nonce",
 			}
 
-			token, err := oauth2server.SignIDToken(key, "kid-1", claims)
+			token, err := oauth2server.SignIDToken(&oauth2server.SigningKey{PrivateKey: key, KID: "kid-1"}, claims)
 			require.NoError(t, err)
 
 			parts := strings.Split(token, ".")
@@ -148,7 +148,7 @@ func TestSignIDToken(t *testing.T) {
 				Audience: "aud-456",
 			}
 
-			token, err := oauth2server.SignIDToken(key, "kid-1", claims)
+			token, err := oauth2server.SignIDToken(&oauth2server.SigningKey{PrivateKey: key, KID: "kid-1"}, claims)
 			require.NoError(t, err)
 
 			parts := strings.Split(token, ".")
@@ -173,7 +173,7 @@ func TestSignIDToken(t *testing.T) {
 				Audience: "aud-456",
 			}
 
-			token, err := oauth2server.SignIDToken(key, "kid-1", claims)
+			token, err := oauth2server.SignIDToken(&oauth2server.SigningKey{PrivateKey: key, KID: "kid-1"}, claims)
 			require.NoError(t, err)
 
 			parts := strings.Split(token, ".")

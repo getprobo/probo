@@ -367,7 +367,12 @@ func (impl *Implm) Run(
 		}
 	}
 
+	if len(impl.cfg.Auth.OAuth2Server.SigningKeys) == 0 {
+		return fmt.Errorf("cannot configure OAuth2 server: at least one signing key is required")
+	}
+
 	var oauth2SigningKeys []oauth2server.SigningKey
+	var hasActive bool
 	for _, keyCfg := range impl.cfg.Auth.OAuth2Server.SigningKeys {
 		keyPEM, err := os.ReadFile(keyCfg.KeyFile)
 		if err != nil {
@@ -389,10 +394,19 @@ func (impl *Implm) Run(
 			kid = "default"
 		}
 
+		if keyCfg.Active {
+			hasActive = true
+		}
+
 		oauth2SigningKeys = append(oauth2SigningKeys, oauth2server.SigningKey{
 			PrivateKey: rsaKey,
 			KID:        kid,
+			Active:     keyCfg.Active,
 		})
+	}
+
+	if !hasActive {
+		return fmt.Errorf("cannot configure OAuth2 server: at least one signing key must be active")
 	}
 
 	if err := emails.UploadStaticAssets(

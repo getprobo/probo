@@ -30,12 +30,14 @@ import (
 )
 
 type (
-	// SigningKey pairs an RSA private key with its key ID. The first entry
-	// in a []SigningKey slice is the active signing key; all entries are
-	// published in the JWKS to allow verification during key rotation.
+	// SigningKey pairs an RSA private key with its key ID. All entries are
+	// published in the JWKS endpoint. Keys with Active set to true are
+	// used for signing new tokens; when multiple keys are active, the
+	// service round-robins between them.
 	SigningKey struct {
 		PrivateKey *rsa.PrivateKey
 		KID        string
+		Active     bool
 	}
 
 	// IDTokenClaims represents the claims included in an OIDC ID token.
@@ -77,12 +79,12 @@ type (
 	}
 )
 
-// SignIDToken signs an ID token with the given RSA private key.
-func SignIDToken(key *rsa.PrivateKey, kid string, claims *IDTokenClaims) (string, error) {
+// SignIDToken signs an ID token with the given signing key.
+func SignIDToken(sk *SigningKey, claims *IDTokenClaims) (string, error) {
 	header := JWTHeader{
 		Algorithm: "RS256",
 		Type:      "JWT",
-		KeyID:     kid,
+		KeyID:     sk.KID,
 	}
 
 	headerJSON, err := json.Marshal(header)
@@ -101,7 +103,7 @@ func SignIDToken(key *rsa.PrivateKey, kid string, claims *IDTokenClaims) (string
 	signingInput := headerB64 + "." + claimsB64
 
 	h := sha256.Sum256([]byte(signingInput))
-	signature, err := rsa.SignPKCS1v15(rand.Reader, key, crypto.SHA256, h[:])
+	signature, err := rsa.SignPKCS1v15(rand.Reader, sk.PrivateKey, crypto.SHA256, h[:])
 	if err != nil {
 		return "", fmt.Errorf("cannot sign jwt: %w", err)
 	}
