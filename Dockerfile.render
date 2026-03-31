@@ -24,6 +24,7 @@ COPY . .
 COPY --from=frontend /app/apps/console/dist apps/console/dist
 COPY --from=frontend /app/apps/trust/dist apps/trust/dist
 COPY --from=frontend /app/packages/emails/dist packages/emails/dist
+RUN go generate ./...
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
     -ldflags="-w -s -X 'main.version=dev' -X 'main.env=prod'" \
     -o /probod ./cmd/probod
