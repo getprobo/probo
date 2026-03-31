@@ -23,7 +23,7 @@ import (
 	"go.probo.inc/probo/pkg/iam/oauth2server"
 )
 
-func TestBuildMetadata(t *testing.T) {
+func TestNewMetadata(t *testing.T) {
 	t.Parallel()
 
 	issuer := "https://auth.example.com"
@@ -38,7 +38,7 @@ func TestBuildMetadata(t *testing.T) {
 		DeviceAuthorization: "https://auth.example.com/device",
 	}
 
-	metadata := oauth2server.BuildMetadata(issuer, endpoints)
+	metadata := oauth2server.NewMetadata(issuer, endpoints)
 	require.NotNil(t, metadata)
 
 	t.Run(

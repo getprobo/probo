@@ -127,7 +127,7 @@ func (s *Service) Run(ctx context.Context) error {
 
 // Metadata returns the OIDC discovery document.
 func (s *Service) Metadata(endpoints Endpoints) *ServerMetadata {
-	return BuildMetadata(s.baseURL, endpoints)
+	return NewMetadata(s.baseURL, endpoints)
 }
 
 // JWKS returns the public key set.

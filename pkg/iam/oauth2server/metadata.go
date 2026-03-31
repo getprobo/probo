@@ -52,9 +52,7 @@ type (
 	}
 )
 
-// BuildMetadata returns the OIDC discovery document for the given issuer
-// and endpoint URLs.
-func BuildMetadata(issuer string, endpoints Endpoints) *ServerMetadata {
+func NewMetadata(issuer string, endpoints Endpoints) *ServerMetadata {
 	return &ServerMetadata{
 		Issuer:                      issuer,
 		AuthorizationEndpoint:       endpoints.Authorization,
