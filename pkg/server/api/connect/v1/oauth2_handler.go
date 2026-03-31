@@ -402,10 +402,18 @@ func (h *OAuth2Handler) DeviceAuthHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	var scopes coredata.OAuth2Scopes
+	if scopeStr := r.FormValue("scope"); scopeStr != "" {
+		if err := scopes.UnmarshalText([]byte(scopeStr)); err != nil {
+			writeOAuth2InvalidRequest(w, "invalid scope")
+			return
+		}
+	}
+
 	result, err := h.iam.OAuth2ServerService.CreateDeviceCode(
 		r.Context(),
 		clientID,
-		r.FormValue("scope"),
+		scopes,
 	)
 	if err != nil {
 		h.logger.ErrorCtx(r.Context(), "cannot create device code", log.Error(err))

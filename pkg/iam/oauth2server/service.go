@@ -615,7 +615,7 @@ type DeviceCodeResult struct {
 func (s *Service) CreateDeviceCode(
 	ctx context.Context,
 	clientID gid.GID,
-	scope string,
+	scopes coredata.OAuth2Scopes,
 ) (*DeviceCodeResult, error) {
 	client, err := s.GetClientByID(ctx, clientID)
 	if err != nil {
@@ -626,10 +626,7 @@ func (s *Service) CreateDeviceCode(
 		return nil, fmt.Errorf("%w: client not authorized for device flow", ErrUnauthorizedClient)
 	}
 
-	var parsedScopes coredata.OAuth2Scopes
-	_ = parsedScopes.UnmarshalText([]byte(scope))
-
-	requestedScopes := parsedScopes.OrDefault(client.Scopes)
+	requestedScopes := scopes.OrDefault(client.Scopes)
 	if !validateScopes(requestedScopes, client.Scopes) {
 		return nil, fmt.Errorf("%w: requested scope exceeds client registration", ErrInvalidScope)
 	}
