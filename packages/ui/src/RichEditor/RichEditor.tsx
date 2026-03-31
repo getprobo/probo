@@ -18,8 +18,8 @@ import { TableKit } from "@tiptap/extension-table";
 import { Text } from "@tiptap/extension-text";
 import { Underline } from "@tiptap/extension-underline";
 import { Dropcursor, UndoRedo } from "@tiptap/extensions";
-import { type Content, EditorContent, useEditor, useEditorState } from "@tiptap/react";
-import { type ComponentProps, useEffect, useRef } from "react";
+import { type Content, Editor, EditorContent, useEditor } from "@tiptap/react";
+import { type ComponentProps, useCallback, useEffect } from "react";
 import { tv } from "tailwind-variants";
 
 import { BlockMenu } from "./BlockMenu/BlockMenu";
@@ -82,7 +82,12 @@ type RichEditorProps = ComponentProps<"div"> & {
 export function RichEditor(props: RichEditorProps) {
   const { className, content, disabled = false, onChangeContent } = props;
 
-  const previousContentRef = useRef<string>(content);
+  const handleUpdate = useCallback(
+    ({ editor }: { editor: Editor }) => {
+      onChangeContent(JSON.stringify(editor.getJSON()));
+    },
+    [onChangeContent],
+  );
 
   const editor = useEditor({
     editorProps: {
@@ -93,25 +98,12 @@ export function RichEditor(props: RichEditorProps) {
     editable: !disabled,
     extensions,
     content: (content ? JSON.parse(content) : "") as Content,
+    onUpdate: handleUpdate,
   });
-
-  const watchedContent = useEditorState({
-    editor,
-    selector: ({ editor }) => {
-      return JSON.stringify(editor.getJSON());
-    },
-  });
-
-  useEffect(() => {
-    if (watchedContent !== previousContentRef.current) {
-      previousContentRef.current = watchedContent;
-      onChangeContent(watchedContent);
-    }
-  }, [content, watchedContent, onChangeContent]);
 
   useEffect(() => {
     if (!editor) return;
-    editor.setEditable(!disabled);
+    editor.setEditable(!disabled, false);
   }, [editor, disabled]);
 
   if (!editor) return null;
