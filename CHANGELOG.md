@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.156.0] - 2026-03-31
+
+### Changed
+
+- Unify dropzone accept prop
+
+### Added
+
+- Add document classification filter
+
+### Fixed
+
+- Add session transfer for SSO cookies on custom domains
+
 ## [0.155.0] - 2026-03-31
 
 ### Added
