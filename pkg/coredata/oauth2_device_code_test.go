@@ -12,30 +12,55 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package oauth2server
+package coredata_test
 
 import (
-	"crypto/rand"
-	"math/big"
+	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
-// userCodeAlphabet excludes ambiguous characters: 0/O, 1/I/L.
-const userCodeAlphabet = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"
+func TestOAuth2UserCode_Format(t *testing.T) {
+	t.Parallel()
 
-// GenerateUserCode generates a raw 8-character user code for the device flow.
-// Characters are drawn from an unambiguous alphabet (no 0/O/1/I/L).
-func GenerateUserCode() (coredata.OAuth2UserCode, error) {
-	code := make([]byte, 8)
-	for i := range code {
-		n, err := rand.Int(rand.Reader, big.NewInt(int64(len(userCodeAlphabet))))
-		if err != nil {
-			return "", err
-		}
+	t.Run(
+		"formats as XXXX-XXXX",
+		func(t *testing.T) {
+			t.Parallel()
 
-		code[i] = userCodeAlphabet[n.Int64()]
-	}
+			code := coredata.OAuth2UserCode("ABCDEFGH")
+			assert.Equal(t, "ABCD-EFGH", code.Format())
+		},
+	)
 
-	return coredata.OAuth2UserCode(code), nil
+	t.Run(
+		"panics on short code",
+		func(t *testing.T) {
+			t.Parallel()
+
+			code := coredata.OAuth2UserCode("ABC")
+			assert.Panics(t, func() { code.Format() })
+		},
+	)
+
+	t.Run(
+		"panics on long code",
+		func(t *testing.T) {
+			t.Parallel()
+
+			code := coredata.OAuth2UserCode("ABCDEFGHIJ")
+			assert.Panics(t, func() { code.Format() })
+		},
+	)
+
+	t.Run(
+		"panics on empty code",
+		func(t *testing.T) {
+			t.Parallel()
+
+			code := coredata.OAuth2UserCode("")
+			assert.Panics(t, func() { code.Format() })
+		},
+	)
 }

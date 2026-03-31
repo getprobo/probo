@@ -556,7 +556,7 @@ func (s *Service) RefreshToken(
 // DeviceCodeResult contains the result of a device authorization request.
 type DeviceCodeResult struct {
 	DeviceCode string
-	UserCode   string
+	UserCode   coredata.OAuth2UserCode
 	ExpiresIn  int
 	Interval   int
 }
@@ -580,7 +580,7 @@ func (s *Service) CreateDeviceCode(
 	var parsedScopes coredata.OAuth2Scopes
 	_ = parsedScopes.UnmarshalText([]byte(scope))
 
-	requestedScopes := scopesOrDefault(parsedScopes, client.Scopes)
+	requestedScopes := parsedScopes.OrDefault(client.Scopes)
 	if !validateScopes(requestedScopes, client.Scopes) {
 		return nil, fmt.Errorf("%w: requested scope exceeds client registration", ErrInvalidScope)
 	}
@@ -590,7 +590,7 @@ func (s *Service) CreateDeviceCode(
 		return nil, fmt.Errorf("cannot generate device code: %w", err)
 	}
 
-	var userCode string
+	var userCode coredata.OAuth2UserCode
 	now := time.Now()
 
 	err = s.pg.WithConn(ctx, func(conn pg.Conn) error {
@@ -1028,7 +1028,7 @@ func (s *Service) Authorize(
 		)
 	}
 
-	requestedScopes := scopesOrDefault(req.Scopes, client.Scopes)
+	requestedScopes := req.Scopes.OrDefault(client.Scopes)
 	if !validateScopes(requestedScopes, client.Scopes) {
 		return "", fmt.Errorf(
 			"%w: requested scope exceeds client registration",

@@ -426,12 +426,12 @@ func (h *OAuth2Handler) DeviceAuthHandler(w http.ResponseWriter, r *http.Request
 
 	verificationURI := h.baseURL.WithPath("/api/connect/v1/oauth2/device/verify").MustString()
 	verificationURIComplete := h.baseURL.WithPath("/api/connect/v1/oauth2/device/verify").
-		WithQuery("user_code", result.UserCode).
+		WithQuery("user_code", string(result.UserCode)).
 		MustString()
 
 	httpserver.RenderJSON(w, http.StatusOK, map[string]any{
 		"device_code":               result.DeviceCode,
-		"user_code":                 oauth2server.FormatUserCode(result.UserCode),
+		"user_code":                 result.UserCode.Format(),
 		"verification_uri":          verificationURI,
 		"verification_uri_complete": verificationURIComplete,
 		"expires_in":                result.ExpiresIn,

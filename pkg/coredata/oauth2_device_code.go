@@ -26,10 +26,13 @@ import (
 )
 
 type (
+	// OAuth2UserCode represents a raw 8-character user code for the device flow.
+	OAuth2UserCode string
+
 	OAuth2DeviceCode struct {
 		ID             string                 `db:"id"`
 		DeviceCodeHash []byte                 `db:"device_code_hash"`
-		UserCode       string                 `db:"user_code"`
+		UserCode       OAuth2UserCode         `db:"user_code"`
 		ClientID       gid.GID                `db:"client_id"`
 		Scopes         OAuth2Scopes           `db:"scopes"`
 		IdentityID     *gid.GID               `db:"identity_id"`
@@ -40,6 +43,15 @@ type (
 		ExpiresAt      time.Time              `db:"expires_at"`
 	}
 )
+
+// Format returns the user code formatted as XXXX-XXXX for display.
+func (c OAuth2UserCode) Format() string {
+	if len(c) != 8 {
+		panic(fmt.Sprintf("invalid user code length: %d", len(c)))
+	}
+
+	return string(c[:4]) + "-" + string(c[4:])
+}
 
 func (d *OAuth2DeviceCode) Insert(ctx context.Context, conn pg.Conn) error {
 	q := `

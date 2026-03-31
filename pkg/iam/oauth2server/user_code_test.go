@@ -20,6 +20,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/iam/oauth2server"
 )
 
@@ -33,7 +34,7 @@ func TestGenerateUserCode(t *testing.T) {
 
 			code, err := oauth2server.GenerateUserCode()
 			require.NoError(t, err)
-			assert.Len(t, code, 8)
+			assert.Len(t, string(code), 8)
 		},
 	)
 
@@ -48,7 +49,7 @@ func TestGenerateUserCode(t *testing.T) {
 				code, err := oauth2server.GenerateUserCode()
 				require.NoError(t, err)
 
-				for _, c := range code {
+				for _, c := range string(code) {
 					assert.True(
 						t,
 						strings.ContainsRune(allowed, c),
@@ -70,7 +71,7 @@ func TestGenerateUserCode(t *testing.T) {
 				code, err := oauth2server.GenerateUserCode()
 				require.NoError(t, err)
 
-				for _, c := range code {
+				for _, c := range string(code) {
 					assert.False(
 						t,
 						strings.ContainsRune(ambiguous, c),
@@ -86,7 +87,7 @@ func TestGenerateUserCode(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-			seen := make(map[string]struct{})
+			seen := make(map[coredata.OAuth2UserCode]struct{})
 
 			for range 100 {
 				code, err := oauth2server.GenerateUserCode()
@@ -96,46 +97,6 @@ func TestGenerateUserCode(t *testing.T) {
 				assert.False(t, duplicate, "duplicate code generated: %q", code)
 				seen[code] = struct{}{}
 			}
-		},
-	)
-}
-
-func TestFormatUserCode(t *testing.T) {
-	t.Parallel()
-
-	t.Run(
-		"formats 8 char code as XXXX-XXXX",
-		func(t *testing.T) {
-			t.Parallel()
-
-			assert.Equal(t, "ABCD-EFGH", oauth2server.FormatUserCode("ABCDEFGH"))
-		},
-	)
-
-	t.Run(
-		"returns short code unchanged",
-		func(t *testing.T) {
-			t.Parallel()
-
-			assert.Equal(t, "ABC", oauth2server.FormatUserCode("ABC"))
-		},
-	)
-
-	t.Run(
-		"returns long code unchanged",
-		func(t *testing.T) {
-			t.Parallel()
-
-			assert.Equal(t, "ABCDEFGHIJ", oauth2server.FormatUserCode("ABCDEFGHIJ"))
-		},
-	)
-
-	t.Run(
-		"returns empty string unchanged",
-		func(t *testing.T) {
-			t.Parallel()
-
-			assert.Equal(t, "", oauth2server.FormatUserCode(""))
 		},
 	)
 }

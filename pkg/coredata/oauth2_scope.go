@@ -67,6 +67,13 @@ func (s OAuth2Scopes) MarshalText() ([]byte, error) {
 	return []byte(s.String()), nil
 }
 
+func (s OAuth2Scopes) OrDefault(defaultScopes OAuth2Scopes) OAuth2Scopes {
+	if len(s) == 0 {
+		return defaultScopes
+	}
+	return s
+}
+
 func (s *OAuth2Scopes) UnmarshalText(text []byte) error {
 	str := string(text)
 	if str == "" {
