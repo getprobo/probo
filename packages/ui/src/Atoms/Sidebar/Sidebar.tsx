@@ -32,11 +32,11 @@ export function Sidebar({ children }: PropsWithChildren) {
     <sidebarContext.Provider value={{ open }}>
       <aside
         className={clsx(
-          "border-r border-border-solid relative pt-16 flex-none",
+          "border-r border-border-solid relative pt-16 flex-none flex flex-col",
           open ? "px-4 w-[260px]" : "px-2",
         )}
       >
-        {children}
+        <div className="flex-1 overflow-y-auto pb-14">{children}</div>
         <Button
           variant="tertiary"
           icon={open ? IconCollapse : IconExpand}
