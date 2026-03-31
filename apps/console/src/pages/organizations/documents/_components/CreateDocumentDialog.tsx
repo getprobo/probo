@@ -9,10 +9,9 @@ import {
   Input,
   Label,
   PropertyRow,
-  Textarea,
   useDialogRef,
 } from "@probo/ui";
-import { type ReactNode } from "react";
+import { type ReactNode, useCallback } from "react";
 import { graphql } from "relay-runtime";
 import type { z } from "zod";
 
@@ -20,6 +19,7 @@ import type { CreateDocumentDialogMutation } from "#/__generated__/core/CreateDo
 import { ControlledField } from "#/components/form/ControlledField";
 import { DocumentClassificationOptions } from "#/components/form/DocumentClassificationOptions";
 import { DocumentTypeOptions } from "#/components/form/DocumentTypeOptions";
+import { RichTextEditor } from "#/components/form/RichTextEditor";
 import { documentSchema, useDocumentForm } from "#/hooks/forms/useDocumentForm";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
@@ -58,11 +58,18 @@ export function CreateDocumentDialog({ trigger, connection }: Props) {
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
 
-  const { control, handleSubmit, register, formState, reset }
+  const { control, handleSubmit, register, formState, reset, setValue }
     = useDocumentForm();
   const errors = formState.errors ?? {};
   const [createDocument, isLoading]
     = useMutationWithToasts<CreateDocumentDialogMutation>(createDocumentMutation);
+
+  const onContentChange = useCallback(
+    (html: string) => {
+      setValue("content", html, { shouldValidate: true });
+    },
+    [setValue],
+  );
 
   const onSubmit = async (data: z.infer<typeof documentSchema>) => {
     await createDocument({
@@ -89,29 +96,33 @@ export function CreateDocumentDialog({ trigger, connection }: Props) {
       ref={dialogRef}
       trigger={trigger}
       title={<Breadcrumb items={[__("Documents"), __("New Document")]} />}
+      className="w-[85vw]! max-w-[85vw]! h-[85vh]!"
     >
-      <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
-        <DialogContent className="grid grid-cols-[1fr_420px]">
-          <div className="py-8 px-10 space-y-4">
-            <Input
-              id="title"
-              aria-label={__("Title")}
-              required
-              variant="title"
-              placeholder={__("Document title")}
-              {...register("title")}
-            />
-            <Textarea
-              id="content"
-              variant="ghost"
-              autogrow
-              placeholder={__("Add content")}
-              aria-label={__("Content")}
-              {...register("content")}
-            />
+      <form
+        onSubmit={e => void handleSubmit(onSubmit)(e)}
+        className="flex flex-col h-[calc(85vh-110px)]"
+      >
+        <DialogContent className="grid grid-cols-[1fr_420px] flex-1 max-h-none!">
+          <div className="flex flex-col overflow-hidden">
+            <div className="py-4 px-10 shrink-0">
+              <Input
+                id="title"
+                aria-label={__("Title")}
+                required
+                variant="title"
+                placeholder={__("Document title")}
+                {...register("title")}
+              />
+            </div>
+            <div className="flex-1 overflow-hidden">
+              <RichTextEditor
+                onChange={onContentChange}
+                placeholder={__("Add content")}
+              />
+            </div>
           </div>
           {/* Properties form */}
-          <div className="py-5 px-6 bg-subtle">
+          <div className="py-5 px-6 bg-subtle overflow-y-auto">
             <Label>{__("Properties")}</Label>
             <PropertyRow label={__("Status")}>
               <Badge variant="neutral" size="md">
