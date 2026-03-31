@@ -465,24 +465,14 @@ func (h *OAuth2Handler) RegisterHandler(w http.ResponseWriter, r *http.Request) 
 func (h *OAuth2Handler) UserInfoHandler(w http.ResponseWriter, r *http.Request) {
 	accessToken := oauth2AccessTokenFromContext(r)
 
-	identity, err := h.iam.AccountService.GetIdentity(r.Context(), accessToken.IdentityID)
+	claims, err := h.iam.OAuth2ServerService.UserInfo(
+		r.Context(),
+		accessToken.IdentityID,
+		accessToken.Scopes,
+	)
 	if err != nil {
 		writeOAuth2Error(w, r, oauth2server.ErrServerError)
 		return
-	}
-
-	claims := map[string]any{
-		"sub": identity.ID.String(),
-	}
-
-	for _, scope := range accessToken.Scopes {
-		switch scope {
-		case coredata.OAuth2ScopeEmail:
-			claims["email"] = identity.EmailAddress.String()
-			claims["email_verified"] = identity.EmailAddressVerified
-		case coredata.OAuth2ScopeProfile:
-			claims["name"] = identity.FullName
-		}
 	}
 
 	httpserver.RenderJSON(w, http.StatusOK, claims)

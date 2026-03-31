@@ -1001,6 +1001,45 @@ func (s *Service) IntrospectToken(ctx context.Context, clientID gid.GID, tokenVa
 	}, nil
 }
 
+// UserInfo returns the OIDC UserInfo claims for the given access token.
+func (s *Service) UserInfo(
+	ctx context.Context,
+	identityID gid.GID,
+	scopes coredata.OAuth2Scopes,
+) (map[string]any, error) {
+	identity := &coredata.Identity{}
+
+	err := s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			if err := identity.LoadByID(ctx, conn, identityID); err != nil {
+				return fmt.Errorf("cannot load identity: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	claims := map[string]any{
+		"sub": identity.ID.String(),
+	}
+
+	for _, scope := range scopes {
+		switch scope {
+		case coredata.OAuth2ScopeEmail:
+			claims["email"] = identity.EmailAddress.String()
+			claims["email_verified"] = identity.EmailAddressVerified
+		case coredata.OAuth2ScopeProfile:
+			claims["name"] = identity.FullName
+		}
+	}
+
+	return claims, nil
+}
+
 // RevokeToken revokes a token (access or refresh) that belongs to the given
 // client. Per RFC 7009, this always succeeds even if the token is invalid or
 // does not belong to the client.
