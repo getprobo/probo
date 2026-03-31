@@ -453,6 +453,7 @@ func (impl *Implm) Run(
 				Enabled:      impl.cfg.Auth.Microsoft.Enabled,
 			},
 			OAuth2ServerSigningKeys: oauth2SigningKeys,
+			OAuth2ServerOptions:     oauth2ServerOptions(impl.cfg.Auth.OAuth2Server),
 		},
 	)
 	if err != nil {
@@ -1110,4 +1111,18 @@ func parseIPs(strs []string) []net.IP {
 		}
 	}
 	return ips
+}
+
+func oauth2ServerOptions(cfg OAuth2ServerConfig) []oauth2server.Option {
+	var opts []oauth2server.Option
+
+	if cfg.AccessTokenDuration > 0 {
+		opts = append(opts, oauth2server.WithAccessTokenDuration(time.Duration(cfg.AccessTokenDuration)*time.Second))
+	}
+
+	if cfg.RefreshTokenDuration > 0 {
+		opts = append(opts, oauth2server.WithRefreshTokenDuration(time.Duration(cfg.RefreshTokenDuration)*time.Second))
+	}
+
+	return opts
 }

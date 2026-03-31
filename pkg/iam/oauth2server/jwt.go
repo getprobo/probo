@@ -132,6 +132,7 @@ func NewIDTokenClaims(
 	email string,
 	emailVerified bool,
 	fullName string,
+	ttl time.Duration,
 ) *IDTokenClaims {
 	now := time.Now()
 
@@ -139,7 +140,7 @@ func NewIDTokenClaims(
 		Issuer:    issuer,
 		Subject:   identityID.String(),
 		Audience:  clientID.String(),
-		ExpiresAt: now.Add(1 * time.Hour).Unix(),
+		ExpiresAt: now.Add(ttl).Unix(),
 		IssuedAt:  now.Unix(),
 		AuthTime:  authTime.Unix(),
 		Scope:     scopes,

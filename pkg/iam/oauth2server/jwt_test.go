@@ -266,6 +266,7 @@ func TestNewIDTokenClaims(t *testing.T) {
 				"user@example.com",
 				true,
 				"John Doe",
+				1*time.Hour,
 			)
 
 			assert.Equal(t, "https://issuer.example.com", claims.Issuer)
@@ -296,6 +297,7 @@ func TestNewIDTokenClaims(t *testing.T) {
 				"",
 				false,
 				"",
+				1*time.Hour,
 			)
 
 			assert.Equal(t, "test-nonce", claims.Nonce)
@@ -318,6 +320,7 @@ func TestNewIDTokenClaims(t *testing.T) {
 				"",
 				false,
 				"",
+				1*time.Hour,
 			)
 
 			expected := oauth2server.ComputeAtHash("access-token-123")
@@ -341,6 +344,7 @@ func TestNewIDTokenClaims(t *testing.T) {
 				"user@example.com",
 				true,
 				"",
+				1*time.Hour,
 			)
 
 			assert.Equal(t, "user@example.com", claims.Email)
@@ -365,6 +369,7 @@ func TestNewIDTokenClaims(t *testing.T) {
 				"",
 				false,
 				"Jane Doe",
+				1*time.Hour,
 			)
 
 			assert.Equal(t, "Jane Doe", claims.Name)
@@ -391,6 +396,7 @@ func TestNewIDTokenClaims(t *testing.T) {
 				"user@example.com",
 				false,
 				"John Doe",
+				1*time.Hour,
 			)
 
 			assert.Equal(t, "nonce-val", claims.Nonce)
@@ -403,10 +409,11 @@ func TestNewIDTokenClaims(t *testing.T) {
 	)
 
 	t.Run(
-		"sets expiration to one hour from now",
+		"sets expiration based on ttl",
 		func(t *testing.T) {
 			t.Parallel()
 
+			ttl := 2 * time.Hour
 			before := time.Now()
 			claims := oauth2server.NewIDTokenClaims(
 				"https://issuer.example.com",
@@ -419,11 +426,12 @@ func TestNewIDTokenClaims(t *testing.T) {
 				"",
 				false,
 				"",
+				ttl,
 			)
 			after := time.Now()
 
-			assert.GreaterOrEqual(t, claims.ExpiresAt, before.Add(1*time.Hour).Unix())
-			assert.LessOrEqual(t, claims.ExpiresAt, after.Add(1*time.Hour).Unix())
+			assert.GreaterOrEqual(t, claims.ExpiresAt, before.Add(ttl).Unix())
+			assert.LessOrEqual(t, claims.ExpiresAt, after.Add(ttl).Unix())
 			assert.GreaterOrEqual(t, claims.IssuedAt, before.Unix())
 			assert.LessOrEqual(t, claims.IssuedAt, after.Unix())
 		},
@@ -445,6 +453,7 @@ func TestNewIDTokenClaims(t *testing.T) {
 				"user@example.com",
 				false,
 				"",
+				1*time.Hour,
 			)
 
 			require.NotNil(t, claims.EmailVerified)

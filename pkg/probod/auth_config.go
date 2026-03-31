@@ -33,7 +33,9 @@ type AuthConfig struct {
 }
 
 type OAuth2ServerConfig struct {
-	SigningKeys []OAuth2SigningKeyConfig `json:"signing-keys"`
+	SigningKeys          []OAuth2SigningKeyConfig `json:"signing-keys"`
+	AccessTokenDuration  int                      `json:"access-token-duration"`
+	RefreshTokenDuration int                      `json:"refresh-token-duration"`
 }
 
 type OAuth2SigningKeyConfig struct {

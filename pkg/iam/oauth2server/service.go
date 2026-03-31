@@ -34,20 +34,18 @@ import (
 
 type (
 	Service struct {
-		pg               *pg.Client
-		signingKeys      []SigningKey
-		activeSigningIdx []int
-		rrCounter        atomic.Uint64
-		baseURL          string
-		logger           *log.Logger
-		gc               *GarbageCollector
+		pg                   *pg.Client
+		signingKeys          []SigningKey
+		activeSigningIdx     []int
+		rrCounter            atomic.Uint64
+		baseURL              string
+		logger               *log.Logger
+		gc                   *GarbageCollector
+		accessTokenDuration  time.Duration
+		refreshTokenDuration time.Duration
 	}
 
-	Config struct {
-		SigningKeys []SigningKey
-		BaseURL     string
-		Logger      *log.Logger
-	}
+	Option func(*Service)
 
 	// AuthorizeRequest contains the parsed parameters for an authorization request.
 	AuthorizeRequest struct {
@@ -108,23 +106,47 @@ type (
 	}
 )
 
-func NewService(pgClient *pg.Client, cfg Config) *Service {
+func WithAccessTokenDuration(d time.Duration) Option {
+	return func(s *Service) {
+		s.accessTokenDuration = d
+	}
+}
+
+func WithRefreshTokenDuration(d time.Duration) Option {
+	return func(s *Service) {
+		s.refreshTokenDuration = d
+	}
+}
+
+func NewService(
+	pgClient *pg.Client,
+	signingKeys []SigningKey,
+	baseURL string,
+	logger *log.Logger,
+	opts ...Option,
+) *Service {
 	var activeIdx []int
-	for i, k := range cfg.SigningKeys {
+	for i, k := range signingKeys {
 		if k.Active {
 			activeIdx = append(activeIdx, i)
 		}
 	}
 
 	s := &Service{
-		pg:               pgClient,
-		signingKeys:      cfg.SigningKeys,
-		activeSigningIdx: activeIdx,
-		baseURL:          cfg.BaseURL,
-		logger:           cfg.Logger,
+		pg:                   pgClient,
+		signingKeys:          signingKeys,
+		activeSigningIdx:     activeIdx,
+		baseURL:              baseURL,
+		logger:               logger,
+		accessTokenDuration:  1 * time.Hour,
+		refreshTokenDuration: 30 * 24 * time.Hour,
 	}
 
-	s.gc = NewGarbageCollector(pgClient, cfg.Logger)
+	for _, opt := range opts {
+		opt(s)
+	}
+
+	s.gc = NewGarbageCollector(pgClient, logger)
 
 	return s
 }
@@ -210,7 +232,7 @@ func (s *Service) CreateAccessToken(
 		IdentityID:  identityID,
 		Scopes:      scopes,
 		CreatedAt:   now,
-		ExpiresAt:   now.Add(1 * time.Hour),
+		ExpiresAt:   now.Add(s.accessTokenDuration),
 	}
 
 	if err = s.pg.WithConn(
@@ -248,7 +270,7 @@ func (s *Service) CreateRefreshToken(
 		Scopes:        scopes,
 		AccessTokenID: accessTokenID,
 		CreatedAt:     now,
-		ExpiresAt:     now.Add(30 * 24 * time.Hour),
+		ExpiresAt:     now.Add(s.refreshTokenDuration),
 	}
 
 	if err = s.pg.WithConn(
@@ -363,7 +385,7 @@ func (s *Service) ExchangeAuthorizationCode(
 			IdentityID:  identityID,
 			Scopes:      codeScopes,
 			CreatedAt:   now,
-			ExpiresAt:   now.Add(1 * time.Hour),
+			ExpiresAt:   now.Add(s.accessTokenDuration),
 		}
 
 		if err := accessToken.Insert(ctx, tx); err != nil {
@@ -387,7 +409,7 @@ func (s *Service) ExchangeAuthorizationCode(
 				Scopes:        codeScopes,
 				AccessTokenID: accessToken.ID,
 				CreatedAt:     now,
-				ExpiresAt:     now.Add(30 * 24 * time.Hour),
+				ExpiresAt:     now.Add(s.refreshTokenDuration),
 			}
 
 			if err := rt.Insert(ctx, tx); err != nil {
@@ -420,6 +442,7 @@ func (s *Service) ExchangeAuthorizationCode(
 			nonce,
 			accessTokenValue,
 			"", false, "",
+			s.accessTokenDuration,
 		)
 
 		idToken, err := SignIDToken(s.signingKey(), idTokenClaims)
@@ -512,7 +535,7 @@ func (s *Service) RefreshToken(
 			IdentityID:  identityID,
 			Scopes:      scopes,
 			CreatedAt:   now,
-			ExpiresAt:   now.Add(1 * time.Hour),
+			ExpiresAt:   now.Add(s.accessTokenDuration),
 		}
 		if err := accessToken.Insert(ctx, tx); err != nil {
 			return fmt.Errorf("cannot create access token: %w", err)
@@ -527,7 +550,7 @@ func (s *Service) RefreshToken(
 			Scopes:        scopes,
 			AccessTokenID: accessToken.ID,
 			CreatedAt:     now,
-			ExpiresAt:     now.Add(30 * 24 * time.Hour),
+			ExpiresAt:     now.Add(s.refreshTokenDuration),
 		}
 		if err := newRT.Insert(ctx, tx); err != nil {
 			return fmt.Errorf("cannot create refresh token: %w", err)
@@ -556,6 +579,7 @@ func (s *Service) RefreshToken(
 			"",
 			accessTokenValue,
 			"", false, "",
+			s.accessTokenDuration,
 		)
 		idToken, err := SignIDToken(s.signingKey(), claims)
 		if err != nil {
@@ -738,6 +762,7 @@ func (s *Service) PollDeviceCode(
 			"",
 			accessTokenValue,
 			"", false, "",
+			s.accessTokenDuration,
 		)
 		idToken, signErr := SignIDToken(s.signingKey(), claims)
 		if signErr != nil {

@@ -95,6 +95,7 @@ type (
 		GoogleOIDC                     oidc.ProviderConfig
 		MicrosoftOIDC                  oidc.ProviderConfig
 		OAuth2ServerSigningKeys        []oauth2server.SigningKey
+		OAuth2ServerOptions            []oauth2server.Option
 	}
 )
 
@@ -183,11 +184,10 @@ func NewService(
 
 	svc.OAuth2ServerService = oauth2server.NewService(
 		pgClient,
-		oauth2server.Config{
-			SigningKeys: cfg.OAuth2ServerSigningKeys,
-			BaseURL:     cfg.BaseURL.String(),
-			Logger:      cfg.Logger.Named("oauth2server"),
-		},
+		cfg.OAuth2ServerSigningKeys,
+		cfg.BaseURL.String(),
+		cfg.Logger.Named("oauth2server"),
+		cfg.OAuth2ServerOptions...,
 	)
 
 	svc.samlDomainVerifier = NewSAMLDomainVerifier(
