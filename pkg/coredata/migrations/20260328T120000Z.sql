@@ -96,7 +96,12 @@ CREATE TABLE iam_oauth2_consents (
     identity_id TEXT NOT NULL,
     client_id TEXT NOT NULL REFERENCES iam_oauth2_clients(id),
     scopes TEXT[] NOT NULL,
+    redirect_uri TEXT NOT NULL,
+    code_challenge TEXT NOT NULL,
+    code_challenge_method TEXT NOT NULL,
+    nonce TEXT NOT NULL,
+    state TEXT NOT NULL,
+    approved BOOLEAN NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL,
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL,
-    CONSTRAINT iam_oauth2_consents_identity_client_unique UNIQUE (identity_id, client_id)
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL
 );

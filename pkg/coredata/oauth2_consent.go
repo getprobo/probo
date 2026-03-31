@@ -30,12 +30,18 @@ import (
 
 type (
 	OAuth2Consent struct {
-		ID         gid.GID      `db:"id"`
-		IdentityID gid.GID      `db:"identity_id"`
-		ClientID   gid.GID      `db:"client_id"`
-		Scopes     OAuth2Scopes `db:"scopes"`
-		CreatedAt  time.Time    `db:"created_at"`
-		UpdatedAt  time.Time    `db:"updated_at"`
+		ID                  gid.GID                   `db:"id"`
+		IdentityID          gid.GID                   `db:"identity_id"`
+		ClientID            gid.GID                   `db:"client_id"`
+		Scopes              OAuth2Scopes              `db:"scopes"`
+		RedirectURI         string                    `db:"redirect_uri"`
+		CodeChallenge       string                    `db:"code_challenge"`
+		CodeChallengeMethod OAuth2CodeChallengeMethod `db:"code_challenge_method"`
+		Nonce               string                    `db:"nonce"`
+		State               string                    `db:"state"`
+		Approved            bool                      `db:"approved"`
+		CreatedAt           time.Time                 `db:"created_at"`
+		UpdatedAt           time.Time                 `db:"updated_at"`
 	}
 
 	OAuth2Consents []*OAuth2Consent
@@ -50,11 +56,10 @@ func (c *OAuth2Consent) CursorKey(orderBy OAuth2ConsentOrderField) page.CursorKe
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (c *OAuth2Consent) LoadByIdentityAndClient(
+func (c *OAuth2Consent) LoadByID(
 	ctx context.Context,
 	conn pg.Conn,
-	identityID gid.GID,
-	clientID gid.GID,
+	id gid.GID,
 ) error {
 	q := `
 SELECT
@@ -62,6 +67,58 @@ SELECT
 	identity_id,
 	client_id,
 	scopes,
+	redirect_uri,
+	code_challenge,
+	code_challenge_method,
+	nonce,
+	state,
+	approved,
+	created_at,
+	updated_at
+FROM
+	iam_oauth2_consents
+WHERE
+	id = @id
+LIMIT 1;
+`
+
+	rows, err := conn.Query(ctx, q, pgx.StrictNamedArgs{"id": id})
+	if err != nil {
+		return fmt.Errorf("cannot query oauth2_consent: %w", err)
+	}
+
+	consent, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[OAuth2Consent])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect oauth2_consent: %w", err)
+	}
+
+	*c = consent
+	return nil
+}
+
+func (c *OAuth2Consent) LoadMatchingConsent(
+	ctx context.Context,
+	conn pg.Conn,
+	identityID gid.GID,
+	clientID gid.GID,
+	scopes OAuth2Scopes,
+) error {
+	q := `
+SELECT
+	id,
+	identity_id,
+	client_id,
+	scopes,
+	redirect_uri,
+	code_challenge,
+	code_challenge_method,
+	nonce,
+	state,
+	approved,
 	created_at,
 	updated_at
 FROM
@@ -69,6 +126,9 @@ FROM
 WHERE
 	identity_id = @identity_id
 	AND client_id = @client_id
+	AND approved = TRUE
+	AND scopes @> @scopes
+	AND scopes <@ @scopes
 LIMIT 1;
 `
 
@@ -78,6 +138,7 @@ LIMIT 1;
 		pgx.StrictNamedArgs{
 			"identity_id": identityID,
 			"client_id":   clientID,
+			"scopes":      scopes,
 		},
 	)
 	if err != nil {
@@ -104,6 +165,12 @@ INSERT INTO iam_oauth2_consents (
 	identity_id,
 	client_id,
 	scopes,
+	redirect_uri,
+	code_challenge,
+	code_challenge_method,
+	nonce,
+	state,
+	approved,
 	created_at,
 	updated_at
 ) VALUES (
@@ -111,18 +178,30 @@ INSERT INTO iam_oauth2_consents (
 	@identity_id,
 	@client_id,
 	@scopes,
+	@redirect_uri,
+	@code_challenge,
+	@code_challenge_method,
+	@nonce,
+	@state,
+	@approved,
 	@created_at,
 	@updated_at
 )
 `
 
 	args := pgx.StrictNamedArgs{
-		"id":          c.ID,
-		"identity_id": c.IdentityID,
-		"client_id":   c.ClientID,
-		"scopes":      c.Scopes,
-		"created_at":  c.CreatedAt,
-		"updated_at":  c.UpdatedAt,
+		"id":                    c.ID,
+		"identity_id":           c.IdentityID,
+		"client_id":             c.ClientID,
+		"scopes":                c.Scopes,
+		"redirect_uri":          c.RedirectURI,
+		"code_challenge":        c.CodeChallenge,
+		"code_challenge_method": c.CodeChallengeMethod,
+		"nonce":                 c.Nonce,
+		"state":                 c.State,
+		"approved":              c.Approved,
+		"created_at":            c.CreatedAt,
+		"updated_at":            c.UpdatedAt,
 	}
 
 	_, err := conn.Exec(ctx, q, args)
@@ -142,6 +221,7 @@ func (c *OAuth2Consent) Update(ctx context.Context, conn pg.Conn) error {
 UPDATE iam_oauth2_consents
 SET
 	scopes = @scopes,
+	approved = @approved,
 	updated_at = @updated_at
 WHERE
 	id = @id
@@ -153,6 +233,7 @@ WHERE
 		pgx.StrictNamedArgs{
 			"id":         c.ID,
 			"scopes":     c.Scopes,
+			"approved":   c.Approved,
 			"updated_at": c.UpdatedAt,
 		},
 	)
@@ -190,12 +271,19 @@ SELECT
 	identity_id,
 	client_id,
 	scopes,
+	redirect_uri,
+	code_challenge,
+	code_challenge_method,
+	nonce,
+	state,
+	approved,
 	created_at,
 	updated_at
 FROM
 	iam_oauth2_consents
 WHERE
 	identity_id = @identity_id
+	AND approved = TRUE
 	AND %s
 `
 
