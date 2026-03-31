@@ -5374,6 +5374,11 @@ components:
               items:
                 $ref: "#/components/schemas/DocumentType"
               description: Document types
+            classifications:
+              type: array
+              items:
+                $ref: "#/components/schemas/DocumentClassification"
+              description: Document classifications
 
     ListDocumentsOutput:
       type: object

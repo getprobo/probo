@@ -1,17 +1,3 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
-//
-// Permission to use, copy, modify, and/or distribute this software for any
-// purpose with or without fee is hereby granted, provided that the above
-// copyright notice and this permission notice appear in all copies.
-//
-// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
-// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
-// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
-// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
-// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-// PERFORMANCE OF THIS SOFTWARE.
-
 package console_v1
 
 // This file will be automatically regenerated based on the schema, any resolver
@@ -625,7 +611,8 @@ func (r *controlResolver) Documents(ctx context.Context, obj *types.Control, fir
 	var documentFilter = coredata.NewDocumentFilter(nil)
 	if filter != nil {
 		documentFilter = coredata.NewDocumentFilter(filter.Query).
-			WithDocumentTypes(filter.DocumentTypes)
+			WithDocumentTypes(filter.DocumentTypes).
+			WithClassifications(filter.Classifications)
 	}
 
 	page, err := prb.Documents.ListForControlID(ctx, obj.ID, cursor, documentFilter)
@@ -7262,6 +7249,7 @@ func (r *organizationResolver) Documents(ctx context.Context, obj *types.Organiz
 	if filter != nil {
 		documentFilter = coredata.NewDocumentFilter(filter.Query).
 			WithDocumentTypes(filter.DocumentTypes).
+			WithClassifications(filter.Classifications).
 			WithStatus(filter.Status)
 	}
 
@@ -8674,7 +8662,8 @@ func (r *riskResolver) Documents(ctx context.Context, obj *types.Risk, first *in
 	var documentFilter = coredata.NewDocumentFilter(nil)
 	if filter != nil {
 		documentFilter = coredata.NewDocumentFilter(filter.Query).
-			WithDocumentTypes(filter.DocumentTypes)
+			WithDocumentTypes(filter.DocumentTypes).
+			WithClassifications(filter.Classifications)
 	}
 
 	page, err := prb.Documents.ListForRiskID(ctx, obj.ID, cursor, documentFilter)

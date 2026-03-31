@@ -1634,6 +1634,7 @@ input ControlFilter {
 input DocumentFilter {
     query: String
     documentTypes: [DocumentType!]
+    classifications: [DocumentClassification!]
     status: [DocumentStatus!]
 }
 

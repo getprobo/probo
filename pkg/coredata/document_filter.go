@@ -28,6 +28,7 @@ type (
 		userEmail               *mail.Addr
 		approverIdentityID      *gid.GID
 		documentTypes           []DocumentType
+		classifications         []DocumentClassification
 		status                  []DocumentStatus
 	}
 )
@@ -70,6 +71,11 @@ func (f *DocumentFilter) WithDocumentTypes(documentTypes []DocumentType) *Docume
 	return f
 }
 
+func (f *DocumentFilter) WithClassifications(classifications []DocumentClassification) *DocumentFilter {
+	f.classifications = classifications
+	return f
+}
+
 func (f *DocumentFilter) WithStatus(status []DocumentStatus) *DocumentFilter {
 	f.status = status
 	return f
@@ -92,6 +98,14 @@ func (f *DocumentFilter) SQLArguments() pgx.NamedArgs {
 		}
 	}
 
+	var classifications []string
+	if f.classifications != nil {
+		classifications = make([]string, len(f.classifications))
+		for i, c := range f.classifications {
+			classifications[i] = c.String()
+		}
+	}
+
 	var status []string
 	if f.status != nil {
 		status = make([]string, len(f.status))
@@ -107,6 +121,7 @@ func (f *DocumentFilter) SQLArguments() pgx.NamedArgs {
 		"user_email":                f.userEmail,
 		"approver_identity_id":      f.approverIdentityID,
 		"document_types":            documentTypes,
+		"classifications":           classifications,
 		"document_status":           status,
 	}
 }
@@ -166,6 +181,18 @@ func (f *DocumentFilter) SQLFragment() string {
 	CASE
 		WHEN @document_types::document_type[] IS NOT NULL THEN
 			document_type = ANY(@document_types::document_type[])
+		ELSE TRUE
+	END
+	AND
+	CASE
+		WHEN @classifications::document_classification[] IS NOT NULL THEN
+			(
+				SELECT dv.classification
+				FROM document_versions dv
+				WHERE dv.document_id = documents.id
+				ORDER BY dv.major DESC, dv.minor DESC
+				LIMIT 1
+			) = ANY(@classifications::document_classification[])
 		ELSE TRUE
 	END
 	AND

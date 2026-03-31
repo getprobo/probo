@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { documentTypes, getDocumentTypeLabel, sprintf } from "@probo/helpers";
+import { documentClassifications, documentTypes, getDocumentClassificationLabel, getDocumentTypeLabel, sprintf } from "@probo/helpers";
 import { useList } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
 import { Button, Card, Checkbox, IconArchive, IconArrowDown, IconCrossLargeX, IconSignature, IconTrashCan, IconUpload, Option, Select, Tbody, Th, Thead, Tr, useConfirm } from "@probo/ui";
@@ -23,7 +23,7 @@ import { ConnectionHandler, graphql } from "relay-runtime";
 import type { DocumentListBulkArchiveMutation } from "#/__generated__/core/DocumentListBulkArchiveMutation.graphql";
 import type { DocumentListBulkUnarchiveMutation } from "#/__generated__/core/DocumentListBulkUnarchiveMutation.graphql";
 import type { DocumentListFragment$key } from "#/__generated__/core/DocumentListFragment.graphql";
-import type { DocumentOrderField, DocumentsListQuery, DocumentType } from "#/__generated__/core/DocumentsListQuery.graphql";
+import type { DocumentClassification, DocumentOrderField, DocumentsListQuery, DocumentType } from "#/__generated__/core/DocumentsListQuery.graphql";
 import { BulkExportDialog, type BulkExportDialogRef } from "#/components/documents/BulkExportDialog";
 import { type Order, SortableTable, SortableTh } from "#/components/SortableTable";
 import { useBulkDeleteDocumentsMutation, useBulkExportDocumentsMutation } from "#/hooks/graph/DocumentGraph";
@@ -49,6 +49,7 @@ const fragment = graphql`
     last: { type: "Int", defaultValue: null }
     status: { type: "[DocumentStatus!]", defaultValue: [ACTIVE] }
     documentTypes: { type: "[DocumentType!]", defaultValue: null }
+    classifications: { type: "[DocumentClassification!]", defaultValue: null }
   ) {
     documents(
       first: $first
@@ -56,7 +57,7 @@ const fragment = graphql`
       last: $last
       before: $before
       orderBy: $order
-      filter: { status: $status documentTypes: $documentTypes }
+      filter: { status: $status documentTypes: $documentTypes classifications: $classifications }
     ) @connection(key: "DocumentsListQuery_documents" filters: ["orderBy", "filter"]) {
       __id
       edges {
@@ -128,17 +129,22 @@ export function DocumentList(props: {
   );
 
   const [documentTypeFilter, setDocumentTypeFilter] = useState<DocumentType | null>(null);
+  const [classificationFilter, setClassificationFilter] = useState<DocumentClassification | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const refetch = pagination.refetch;
   useEffect(() => {
     startTransition(() => {
       refetch(
-        { status: [tab], documentTypes: documentTypeFilter ? [documentTypeFilter] : null },
+        {
+          status: [tab],
+          documentTypes: documentTypeFilter ? [documentTypeFilter] : null,
+          classifications: classificationFilter ? [classificationFilter] : null,
+        },
         { fetchPolicy: "store-and-network" },
       );
     });
-  }, [tab, refetch, documentTypeFilter]);
+  }, [tab, refetch, documentTypeFilter, classificationFilter]);
 
   const documents = pagination.data.documents.edges.map(({ node }) => node);
   const connectionId = pagination.data.documents.__id;
@@ -184,7 +190,31 @@ export function DocumentList(props: {
         "DocumentsListQuery_documents",
         {
           orderBy: { direction: "ASC", field: "TITLE" },
-          filter: { status: [tab], documentTypes: newType ? [newType] : null },
+          filter: {
+            status: [tab],
+            documentTypes: newType ? [newType] : null,
+            classifications: classificationFilter ? [classificationFilter] : null,
+          },
+        },
+      ),
+    );
+  };
+
+  const handleClassificationFilterChange = (value: string) => {
+    const newClassification = value === "ALL" ? null : (value as DocumentClassification);
+    clear();
+    setClassificationFilter(newClassification);
+    onConnectionIdChange(
+      ConnectionHandler.getConnectionID(
+        organizationId,
+        "DocumentsListQuery_documents",
+        {
+          orderBy: { direction: "ASC", field: "TITLE" },
+          filter: {
+            status: [tab],
+            documentTypes: documentTypeFilter ? [documentTypeFilter] : null,
+            classifications: newClassification ? [newClassification] : null,
+          },
         },
       ),
     );
@@ -263,7 +293,11 @@ export function DocumentList(props: {
         "DocumentsListQuery_documents",
         {
           orderBy: order,
-          filter: { status: [tab], documentTypes: documentTypeFilter ? [documentTypeFilter] : null },
+          filter: {
+            status: [tab],
+            documentTypes: documentTypeFilter ? [documentTypeFilter] : null,
+            classifications: classificationFilter ? [classificationFilter] : null,
+          },
         },
       ),
     );
@@ -274,6 +308,7 @@ export function DocumentList(props: {
       order: { direction: order.direction, field: order.field as DocumentOrderField },
       status: [tab],
       documentTypes: documentTypeFilter ? [documentTypeFilter] : null,
+      classifications: classificationFilter ? [classificationFilter] : null,
     });
   };
 
@@ -288,6 +323,17 @@ export function DocumentList(props: {
           {documentTypes.map(type => (
             <Option key={type} value={type}>
               {getDocumentTypeLabel(__, type) ?? type}
+            </Option>
+          ))}
+        </Select>
+        <Select
+          value={classificationFilter ?? "ALL"}
+          onValueChange={handleClassificationFilterChange}
+        >
+          <Option value="ALL">{__("All classifications")}</Option>
+          {documentClassifications.map(classification => (
+            <Option key={classification} value={classification}>
+              {getDocumentClassificationLabel(__, classification) ?? classification}
             </Option>
           ))}
         </Select>
