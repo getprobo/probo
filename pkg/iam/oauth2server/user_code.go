@@ -22,9 +22,9 @@ import (
 // userCodeAlphabet excludes ambiguous characters: 0/O, 1/I/L.
 const userCodeAlphabet = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"
 
-// GenerateUserCode generates an 8-character user code for the device flow.
+// GenerateUserCode generates a raw 8-character user code for the device flow.
 // Characters are drawn from an unambiguous alphabet (no 0/O/1/I/L).
-// The code is formatted as XXXX-XXXX for display.
+// Use FormatUserCode to format the raw code as XXXX-XXXX for display.
 func GenerateUserCode() (string, error) {
 	code := make([]byte, 8)
 	for i := range code {
