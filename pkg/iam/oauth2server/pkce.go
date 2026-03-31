@@ -22,18 +22,20 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 )
 
-// ValidateCodeChallenge validates a PKCE code verifier against a code challenge.
-// Only the S256 method is supported per security best practices.
 func ValidateCodeChallenge(verifier, challenge string, method coredata.OAuth2CodeChallengeMethod) bool {
-	if method != coredata.OAuth2CodeChallengeMethodS256 {
-		return false
-	}
-
 	if verifier == "" || challenge == "" {
 		return false
 	}
 
-	// S256: BASE64URL(SHA256(code_verifier)) == code_challenge
+	switch method {
+	case coredata.OAuth2CodeChallengeMethodS256:
+		return validateS256(verifier, challenge)
+	default:
+		return false
+	}
+}
+
+func validateS256(verifier, challenge string) bool {
 	h := sha256.Sum256([]byte(verifier))
 	computed := base64.RawURLEncoding.EncodeToString(h[:])
 
