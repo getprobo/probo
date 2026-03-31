@@ -127,7 +127,7 @@ function EvidenceUpload({ measureId, connectionId }: Omit<Props, "ref">) {
       <DialogContent padded>
         <Dropzone
           description={__(
-            "Only PDF, DOCX, XLSX, PPTX, CSV, JPG, PNG, WEBP, URI files up to 10MB are allowed",
+            "Documents, spreadsheets, presentations, images, and text files up to 20MB",
           )}
           isUploading={isUpdating}
           onDrop={files => void handleDrop(files)}
