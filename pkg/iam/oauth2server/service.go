@@ -85,6 +85,22 @@ type (
 		AuthTime            time.Time
 	}
 
+	// RegisterClientRequest contains the parameters for dynamic client registration.
+	RegisterClientRequest struct {
+		IdentityID              gid.GID  `json:"-"`
+		OrganizationID          string   `json:"organization_id"`
+		ClientName              string   `json:"client_name"`
+		Visibility              string   `json:"visibility"`
+		RedirectURIs            []string `json:"redirect_uris"`
+		GrantTypes              []string `json:"grant_types"`
+		ResponseTypes           []string `json:"response_types"`
+		TokenEndpointAuthMethod string   `json:"token_endpoint_auth_method"`
+		LogoURI                 *string  `json:"logo_uri"`
+		ClientURI               *string  `json:"client_uri"`
+		Contacts                []string `json:"contacts"`
+		Scopes                  []string `json:"scopes"`
+	}
+
 	// TokenResponse is the JSON response returned by the token endpoint.
 	TokenResponse struct {
 		AccessToken  string `json:"access_token"`
@@ -247,7 +263,7 @@ func (s *Service) GetClientByID(ctx context.Context, clientID gid.GID) (*coredat
 	if err := s.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {
-			if err := client.LoadByIDNoScope(ctx, conn, clientID); err != nil {
+			if err := client.LoadByID(ctx, conn, coredata.NewNoScope(), clientID); err != nil {
 				return fmt.Errorf("cannot get oauth2 client: %w", err)
 			}
 
@@ -818,19 +834,73 @@ func (s *Service) AuthorizeDevice(
 // Returns (clientID, plaintext_secret, error). Secret is empty for public clients.
 func (s *Service) RegisterClient(
 	ctx context.Context,
-	organizationID gid.GID,
-	clientName string,
-	visibility coredata.OAuth2ClientVisibility,
-	redirectURIs []string,
-	scopes coredata.OAuth2Scopes,
-	grantTypes []coredata.OAuth2GrantType,
-	responseTypes []coredata.OAuth2ResponseType,
-	authMethod coredata.OAuth2ClientTokenEndpointAuthMethod,
-	logoURI *string,
-	clientURI *string,
-	contacts []string,
+	req *RegisterClientRequest,
 ) (gid.GID, string, error) {
-	tenantID := organizationID.TenantID()
+	orgID, err := gid.ParseGID(req.OrganizationID)
+	if err != nil {
+		return gid.GID{}, "", fmt.Errorf("%w: invalid organization_id", ErrInvalidRequest)
+	}
+
+	// Check org membership.
+	var membership coredata.Membership
+	err = s.pg.WithConn(ctx, func(conn pg.Conn) error {
+		return membership.LoadActiveByIdentityIDAndOrganizationID(
+			ctx,
+			conn,
+			req.IdentityID,
+			orgID,
+		)
+	})
+	if err != nil {
+		return gid.GID{}, "", fmt.Errorf("%w: not a member of the organization", ErrAccessDenied)
+	}
+
+	// Apply defaults.
+	grantTypes := req.GrantTypes
+	if len(grantTypes) == 0 {
+		grantTypes = []string{coredata.OAuth2GrantTypeAuthorizationCode.String()}
+	}
+
+	responseTypes := req.ResponseTypes
+	if len(responseTypes) == 0 {
+		responseTypes = []string{coredata.OAuth2ResponseTypeCode.String()}
+	}
+
+	authMethod := req.TokenEndpointAuthMethod
+	if authMethod == "" {
+		authMethod = coredata.OAuth2ClientTokenEndpointAuthMethodClientSecretBasic.String()
+	}
+
+	visibility := req.Visibility
+	if visibility == "" {
+		visibility = coredata.OAuth2ClientVisibilityPrivate.String()
+	}
+
+	scopeStrs := req.Scopes
+	if len(scopeStrs) == 0 {
+		scopeStrs = []string{
+			coredata.OAuth2ScopeOpenID.String(),
+			coredata.OAuth2ScopeProfile.String(),
+			coredata.OAuth2ScopeEmail.String(),
+		}
+	}
+
+	scopes := make(coredata.OAuth2Scopes, len(scopeStrs))
+	for i, s := range scopeStrs {
+		scopes[i] = coredata.OAuth2Scope(s)
+	}
+
+	parsedGrantTypes := make([]coredata.OAuth2GrantType, len(grantTypes))
+	for i, s := range grantTypes {
+		parsedGrantTypes[i] = coredata.OAuth2GrantType(s)
+	}
+
+	parsedResponseTypes := make([]coredata.OAuth2ResponseType, len(responseTypes))
+	for i, s := range responseTypes {
+		parsedResponseTypes[i] = coredata.OAuth2ResponseType(s)
+	}
+
+	tenantID := orgID.TenantID()
 	clientID := gid.New(tenantID, coredata.OAuth2ClientEntityType)
 
 	var (
@@ -838,7 +908,8 @@ func (s *Service) RegisterClient(
 		plaintextSecret string
 	)
 
-	if authMethod != coredata.OAuth2ClientTokenEndpointAuthMethodNone {
+	parsedAuthMethod := coredata.OAuth2ClientTokenEndpointAuthMethod(authMethod)
+	if parsedAuthMethod != coredata.OAuth2ClientTokenEndpointAuthMethodNone {
 		secret, err := generateRandomToken(32)
 		if err != nil {
 			return gid.GID{}, "", fmt.Errorf("cannot generate client secret: %w", err)
@@ -850,25 +921,25 @@ func (s *Service) RegisterClient(
 	now := time.Now()
 	client := &coredata.OAuth2Client{
 		ID:                      clientID,
-		OrganizationID:          organizationID,
+		OrganizationID:          orgID,
 		ClientSecretHash:        secretHash,
-		ClientName:              clientName,
-		Visibility:              visibility,
-		RedirectURIs:            redirectURIs,
+		ClientName:              req.ClientName,
+		Visibility:              coredata.OAuth2ClientVisibility(visibility),
+		RedirectURIs:            req.RedirectURIs,
 		Scopes:                  scopes,
-		GrantTypes:              grantTypes,
-		ResponseTypes:           responseTypes,
-		TokenEndpointAuthMethod: authMethod,
-		LogoURI:                 logoURI,
-		ClientURI:               clientURI,
-		Contacts:                contacts,
+		GrantTypes:              parsedGrantTypes,
+		ResponseTypes:           parsedResponseTypes,
+		TokenEndpointAuthMethod: parsedAuthMethod,
+		LogoURI:                 req.LogoURI,
+		ClientURI:               req.ClientURI,
+		Contacts:                req.Contacts,
 		CreatedAt:               now,
 		UpdatedAt:               now,
 	}
 
-	scope := coredata.NewScopeFromObjectID(organizationID)
+	scope := coredata.NewScopeFromObjectID(orgID)
 
-	err := s.pg.WithConn(ctx, func(conn pg.Conn) error {
+	err = s.pg.WithConn(ctx, func(conn pg.Conn) error {
 		return client.Insert(ctx, conn, scope)
 	})
 	if err != nil {
@@ -966,13 +1037,39 @@ func (s *Service) RevokeToken(ctx context.Context, clientID gid.GID, tokenValue 
 // Authorize validates an authorization request, checks existing consent,
 // and either returns an authorization code or signals that consent is needed.
 //
-// The caller must validate the client_id and redirect_uri before calling
-// this method. The client must be loaded and passed as a parameter.
+// Authorize validates the client, redirect URI, and membership, then either
+// issues an authorization code or returns a ConsentRequiredError.
 func (s *Service) Authorize(
 	ctx context.Context,
-	client *coredata.OAuth2Client,
 	req *AuthorizeRequest,
 ) (string, error) {
+	client, err := s.GetClientByID(ctx, req.ClientID)
+	if err != nil {
+		return "", fmt.Errorf("cannot load client: %w", ErrInvalidClient)
+	}
+
+	if !slices.Contains(client.RedirectURIs, req.RedirectURI) {
+		return "", fmt.Errorf("%w", ErrInvalidRedirectURI)
+	}
+
+	if client.Visibility == coredata.OAuth2ClientVisibilityPrivate {
+		var membership coredata.Membership
+		err := s.pg.WithConn(ctx, func(conn pg.Conn) error {
+			return membership.LoadActiveByIdentityIDAndOrganizationID(
+				ctx,
+				conn,
+				req.IdentityID,
+				client.OrganizationID,
+			)
+		})
+		if err != nil {
+			return "", fmt.Errorf(
+				"%w: client is private and user is not a member of the organization",
+				ErrUnauthorizedClient,
+			)
+		}
+	}
+
 	if req.ResponseType != string(coredata.OAuth2ResponseTypeCode) {
 		return "", fmt.Errorf(
 			"%w: unsupported response_type",

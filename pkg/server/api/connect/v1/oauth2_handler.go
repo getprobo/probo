@@ -22,10 +22,10 @@ import (
 	"html/template"
 	"net/http"
 	"net/url"
-	"slices"
 	"strings"
 	"time"
 
+	"go.gearno.de/kit/httpserver"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/bearertoken"
@@ -198,7 +198,6 @@ func (h *OAuth2Handler) AuthorizeHandler(w http.ResponseWriter, r *http.Request)
 	redirectURI := q.Get("redirect_uri")
 	state := q.Get("state")
 
-	// Validate client_id and redirect_uri before any redirect.
 	clientIDStr := q.Get("client_id")
 	if clientIDStr == "" {
 		writeOAuth2InvalidRequest(w, "missing client_id")
@@ -211,31 +210,6 @@ func (h *OAuth2Handler) AuthorizeHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	client, err := h.iam.OAuth2ServerService.GetClientByID(r.Context(), clientID)
-	if err != nil {
-		writeOAuth2InvalidRequest(w, "unknown client_id")
-		return
-	}
-
-	if !slices.Contains(client.RedirectURIs, redirectURI) {
-		writeOAuth2InvalidRequest(w, "invalid redirect_uri")
-		return
-	}
-
-	// Check membership for private clients.
-	if client.Visibility == coredata.OAuth2ClientVisibilityPrivate {
-		hasMembership, err := h.iam.HasMembership(r.Context(), identity.ID, client.OrganizationID)
-		if err != nil || !hasMembership {
-			redirectWithError(
-				w, r, redirectURI,
-				"unauthorized_client",
-				"client is private and user is not a member of the organization",
-				state,
-			)
-			return
-		}
-	}
-
 	session := authn.SessionFromContext(r.Context())
 	authTime := time.Now()
 	if session != nil {
@@ -244,7 +218,6 @@ func (h *OAuth2Handler) AuthorizeHandler(w http.ResponseWriter, r *http.Request)
 
 	code, err := h.iam.OAuth2ServerService.Authorize(
 		r.Context(),
-		client,
 		&oauth2server.AuthorizeRequest{
 			IdentityID:          identity.ID,
 			ResponseType:        q.Get("response_type"),
@@ -258,8 +231,7 @@ func (h *OAuth2Handler) AuthorizeHandler(w http.ResponseWriter, r *http.Request)
 		},
 	)
 
-	var consentErr *oauth2server.ConsentRequiredError
-	if errors.As(err, &consentErr) {
+	if consentErr, ok := errors.AsType[*oauth2server.ConsentRequiredError](err); ok {
 		h.renderConsentPage(
 			w,
 			consentErr.Client,
@@ -274,12 +246,18 @@ func (h *OAuth2Handler) AuthorizeHandler(w http.ResponseWriter, r *http.Request)
 	}
 
 	if err != nil {
-		redirectWithError(
-			w, r, redirectURI,
-			oauth2server.OAuth2ErrorCode(err),
-			err.Error(),
-			state,
-		)
+		switch {
+		case errors.Is(err, oauth2server.ErrInvalidClient),
+			errors.Is(err, oauth2server.ErrInvalidRedirectURI):
+			writeOAuth2InvalidRequest(w, err.Error())
+		case errors.Is(err, oauth2server.ErrAccessDenied),
+			errors.Is(err, oauth2server.ErrInvalidRequest),
+			errors.Is(err, oauth2server.ErrInvalidScope),
+			errors.Is(err, oauth2server.ErrUnauthorizedClient):
+			redirectWithError(w, r, redirectURI, oauth2server.OAuth2ErrorCode(err), err.Error(), state)
+		default:
+			writeOAuth2ServerError(w, "internal error")
+		}
 		return
 	}
 
@@ -327,11 +305,18 @@ func (h *OAuth2Handler) AuthorizeConsentHandler(w http.ResponseWriter, r *http.R
 	)
 	if err != nil {
 		h.logger.ErrorCtx(r.Context(), "cannot approve consent", log.Error(err))
-		if errors.Is(err, oauth2server.ErrInvalidRedirectURI) || errors.Is(err, oauth2server.ErrInvalidClient) {
+		switch {
+		case errors.Is(err, oauth2server.ErrInvalidClient),
+			errors.Is(err, oauth2server.ErrInvalidRedirectURI):
 			writeOAuth2InvalidRequest(w, err.Error())
-			return
+		case errors.Is(err, oauth2server.ErrAccessDenied),
+			errors.Is(err, oauth2server.ErrInvalidRequest),
+			errors.Is(err, oauth2server.ErrInvalidScope),
+			errors.Is(err, oauth2server.ErrUnauthorizedClient):
+			redirectWithError(w, r, redirectURI, oauth2server.OAuth2ErrorCode(err), err.Error(), state)
+		default:
+			writeOAuth2ServerError(w, "internal error")
 		}
-		redirectWithError(w, r, redirectURI, oauth2server.OAuth2ErrorCode(err), err.Error(), state)
 		return
 	}
 
@@ -378,11 +363,11 @@ func (h *OAuth2Handler) IntrospectHandler(w http.ResponseWriter, r *http.Request
 
 	result, err := h.iam.OAuth2ServerService.IntrospectToken(r.Context(), client.ID, token)
 	if err != nil {
-		writeJSON(w, http.StatusOK, map[string]any{"active": false})
+		httpserver.RenderJSON(w, http.StatusOK, map[string]any{"active": false})
 		return
 	}
 
-	writeJSON(
+	httpserver.RenderJSON(
 		w,
 		http.StatusOK,
 		map[string]any{
@@ -454,7 +439,7 @@ func (h *OAuth2Handler) DeviceAuthHandler(w http.ResponseWriter, r *http.Request
 		WithQuery("user_code", result.UserCode).
 		MustString()
 
-	writeJSON(w, http.StatusOK, map[string]any{
+	httpserver.RenderJSON(w, http.StatusOK, map[string]any{
 		"device_code":               result.DeviceCode,
 		"user_code":                 oauth2server.FormatUserCode(result.UserCode),
 		"verification_uri":          verificationURI,
@@ -469,91 +454,24 @@ func (h *OAuth2Handler) DeviceAuthHandler(w http.ResponseWriter, r *http.Request
 func (h *OAuth2Handler) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	identity := authn.IdentityFromContext(r.Context())
 
-	var req struct {
-		OrganizationID          string   `json:"organization_id"`
-		ClientName              string   `json:"client_name"`
-		Visibility              string   `json:"visibility"`
-		RedirectURIs            []string `json:"redirect_uris"`
-		GrantTypes              []string `json:"grant_types"`
-		ResponseTypes           []string `json:"response_types"`
-		TokenEndpointAuthMethod string   `json:"token_endpoint_auth_method"`
-		LogoURI                 *string  `json:"logo_uri"`
-		ClientURI               *string  `json:"client_uri"`
-		Contacts                []string `json:"contacts"`
-		Scopes                  []string `json:"scopes"`
-	}
+	var req oauth2server.RegisterClientRequest
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeOAuth2InvalidRequest(w, "invalid JSON body")
 		return
 	}
 
-	// Defaults.
-	if len(req.GrantTypes) == 0 {
-		req.GrantTypes = []string{string(coredata.OAuth2GrantTypeAuthorizationCode)}
-	}
-	if len(req.ResponseTypes) == 0 {
-		req.ResponseTypes = []string{string(coredata.OAuth2ResponseTypeCode)}
-	}
-	if req.TokenEndpointAuthMethod == "" {
-		req.TokenEndpointAuthMethod = string(coredata.OAuth2ClientTokenEndpointAuthMethodClientSecretBasic)
-	}
-	if req.Visibility == "" {
-		req.Visibility = string(coredata.OAuth2ClientVisibilityPrivate)
-	}
-	if len(req.Scopes) == 0 {
-		req.Scopes = []string{
-			string(coredata.OAuth2ScopeOpenID),
-			string(coredata.OAuth2ScopeProfile),
-			string(coredata.OAuth2ScopeEmail),
-		}
-	}
+	req.IdentityID = identity.ID
 
-	scopes := make(coredata.OAuth2Scopes, len(req.Scopes))
-	for i, s := range req.Scopes {
-		scopes[i] = coredata.OAuth2Scope(s)
-	}
-
-	grantTypes := make([]coredata.OAuth2GrantType, len(req.GrantTypes))
-	for i, s := range req.GrantTypes {
-		grantTypes[i] = coredata.OAuth2GrantType(s)
-	}
-
-	responseTypes := make([]coredata.OAuth2ResponseType, len(req.ResponseTypes))
-	for i, s := range req.ResponseTypes {
-		responseTypes[i] = coredata.OAuth2ResponseType(s)
-	}
-
-	orgID, err := gid.ParseGID(req.OrganizationID)
-	if err != nil {
-		writeOAuth2InvalidRequest(w, "invalid organization_id")
-		return
-	}
-
-	// Check org membership.
-	hasMembership, err := h.iam.HasMembership(r.Context(), identity.ID, orgID)
-	if err != nil || !hasMembership {
-		writeOAuth2InvalidRequest(w, "not a member of the organization")
-		return
-	}
-
-	clientID, clientSecret, err := h.iam.OAuth2ServerService.RegisterClient(
-		r.Context(),
-		orgID,
-		req.ClientName,
-		coredata.OAuth2ClientVisibility(req.Visibility),
-		req.RedirectURIs,
-		scopes,
-		grantTypes,
-		responseTypes,
-		coredata.OAuth2ClientTokenEndpointAuthMethod(req.TokenEndpointAuthMethod),
-		req.LogoURI,
-		req.ClientURI,
-		req.Contacts,
-	)
+	clientID, clientSecret, err := h.iam.OAuth2ServerService.RegisterClient(r.Context(), &req)
 	if err != nil {
 		h.logger.ErrorCtx(r.Context(), "cannot register client", log.Error(err))
-		writeOAuth2ServerError(w, "internal error")
+		writeOAuth2Error(
+			w,
+			oauth2server.OAuth2ErrorCode(err),
+			err.Error(),
+			oauth2ErrorStatusCode(err),
+		)
 		return
 	}
 
@@ -572,9 +490,7 @@ func (h *OAuth2Handler) RegisterHandler(w http.ResponseWriter, r *http.Request) 
 		resp["client_secret"] = clientSecret
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	_ = json.NewEncoder(w).Encode(resp)
+	httpserver.RenderJSON(w, http.StatusCreated, resp)
 }
 
 // UserInfoHandler serves the OIDC UserInfo endpoint.
@@ -602,7 +518,7 @@ func (h *OAuth2Handler) UserInfoHandler(w http.ResponseWriter, r *http.Request) 
 		}
 	}
 
-	writeJSON(w, http.StatusOK, claims)
+	httpserver.RenderJSON(w, http.StatusOK, claims)
 }
 
 // DeviceVerifyPage renders the device code verification page.
@@ -856,12 +772,6 @@ func oauth2ErrorStatusCode(err error) int {
 	default:
 		return http.StatusBadRequest
 	}
-}
-
-func writeJSON(w http.ResponseWriter, status int, v any) {
-	w.Header().Set("Content-Type", "application/json;charset=UTF-8")
-	w.WriteHeader(status)
-	_ = json.NewEncoder(w).Encode(v)
 }
 
 func parseScopes(s string) coredata.OAuth2Scopes {

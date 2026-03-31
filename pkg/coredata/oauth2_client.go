@@ -134,53 +134,6 @@ LIMIT 1;
 	return nil
 }
 
-func (c *OAuth2Client) LoadByIDNoScope(
-	ctx context.Context,
-	conn pg.Conn,
-	clientID gid.GID,
-) error {
-	q := `
-SELECT
-	id,
-	organization_id,
-	client_secret_hash,
-	client_name,
-	visibility,
-	redirect_uris,
-	scopes,
-	grant_types,
-	response_types,
-	token_endpoint_auth_method,
-	logo_uri,
-	client_uri,
-	contacts,
-	created_at,
-	updated_at
-FROM
-	iam_oauth2_clients
-WHERE
-	id = @id
-LIMIT 1;
-`
-
-	rows, err := conn.Query(ctx, q, pgx.StrictNamedArgs{"id": clientID})
-	if err != nil {
-		return fmt.Errorf("cannot query iam_oauth2_clients: %w", err)
-	}
-
-	client, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[OAuth2Client])
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return ErrResourceNotFound
-		}
-
-		return fmt.Errorf("cannot collect oauth2_client: %w", err)
-	}
-
-	*c = client
-	return nil
-}
-
 func (c *OAuth2Clients) LoadByOrganizationID(
 	ctx context.Context,
 	conn pg.Conn,
