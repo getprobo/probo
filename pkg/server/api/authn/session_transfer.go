@@ -104,13 +104,13 @@ func VerifySessionTransfer(token string, secret string) (SessionTransferClaims, 
 	}
 
 	// Split rest into sessionID and continueURL.
-	sepIdx := strings.Index(rest, ":")
-	if sepIdx < 0 {
+	before, after, ok := strings.Cut(rest, ":")
+	if !ok {
 		return SessionTransferClaims{}, ErrInvalidSessionTransferToken
 	}
 
 	return SessionTransferClaims{
-		SessionID:   rest[:sepIdx],
-		ContinueURL: rest[sepIdx+1:],
+		SessionID:   before,
+		ContinueURL: after,
 	}, nil
 }
