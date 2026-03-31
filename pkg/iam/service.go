@@ -18,7 +18,6 @@ import (
 	"context"
 	"crypto/rsa"
 	"crypto/x509"
-	"errors"
 	"fmt"
 	"sync"
 	"time"
@@ -262,26 +261,6 @@ func (s *Service) Run(ctx context.Context) error {
 	wg.Wait()
 
 	return context.Cause(ctx)
-}
-
-func (s *Service) HasMembership(ctx context.Context, identityID gid.GID, organizationID gid.GID) (bool, error) {
-	var membership coredata.Membership
-
-	err := s.pg.WithConn(
-		ctx,
-		func(conn pg.Conn) error {
-			return membership.LoadActiveByIdentityIDAndOrganizationID(ctx, conn, identityID, organizationID)
-		},
-	)
-	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return false, nil
-		}
-
-		return false, fmt.Errorf("cannot check membership: %w", err)
-	}
-
-	return true, nil
 }
 
 func (s *Service) GetMembership(ctx context.Context, membershipID gid.GID) (*coredata.Membership, error) {
