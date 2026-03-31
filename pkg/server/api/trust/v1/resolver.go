@@ -96,11 +96,14 @@ func NewMux(
 	)
 	r.Method(http.MethodGet, "/session-transfer", sessionTransferHandler)
 
-	r.Use(authn.NewSessionMiddleware(iamSvc, cookieConfig))
-	r.Use(compliancepage.NewMemberProvisioningMiddleware(trustSvc, logger))
-
 	graphqlHandler := NewGraphQLHandler(iamSvc, trustSvc, esignSvc, mailmanSvc, logger, baseURL, cookieConfig, tokenSecret)
-	r.Handle("/graphql", graphqlHandler)
+	r.Group(
+		func(r chi.Router) {
+			r.Use(authn.NewSessionMiddleware(iamSvc, cookieConfig))
+			r.Use(compliancepage.NewMemberProvisioningMiddleware(trustSvc, logger))
+			r.Handle("/graphql", graphqlHandler)
+		},
+	)
 
 	return r
 }
