@@ -15,50 +15,54 @@
 package connect_v1
 
 import (
+	"errors"
 	"net/http"
+	"strings"
 
 	"go.gearno.de/kit/httpserver"
+	"go.probo.inc/probo/pkg/iam/oauth2server"
 )
 
-type (
-	oauth2Error struct {
-		Code        string `json:"error"`
-		Description string `json:"error_description,omitempty"`
-		statusCode  int
-	}
-)
+func writeOAuth2Error(w http.ResponseWriter, err error) {
+	code := oauth2server.OAuth2ErrorCode(err)
+	description := oauth2ErrorDescription(err, code)
+	statusCode := oauth2ErrorStatusCode(err)
 
-func (e *oauth2Error) writeResponse(w http.ResponseWriter) {
 	w.Header().Set("Cache-Control", "no-store")
 	w.Header().Set("Pragma", "no-cache")
-	httpserver.RenderJSON(w, e.statusCode, e)
-}
-
-func writeOAuth2Error(w http.ResponseWriter, code, description string, statusCode int) {
-	e := &oauth2Error{
+	httpserver.RenderJSON(w, statusCode, &struct {
+		Code        string `json:"error"`
+		Description string `json:"error_description,omitempty"`
+	}{
 		Code:        code,
 		Description: description,
-		statusCode:  statusCode,
+	})
+}
+
+func oauth2ErrorStatusCode(err error) int {
+	switch {
+	case errors.Is(err, oauth2server.ErrAccessDenied):
+		return http.StatusForbidden
+	case errors.Is(err, oauth2server.ErrInvalidClient):
+		return http.StatusUnauthorized
+	case errors.Is(err, oauth2server.ErrServerError):
+		return http.StatusInternalServerError
+	default:
+		return http.StatusBadRequest
 	}
-	e.writeResponse(w)
 }
 
-func writeOAuth2InvalidRequest(w http.ResponseWriter, description string) {
-	writeOAuth2Error(w, "invalid_request", description, http.StatusBadRequest)
-}
+func oauth2ErrorDescription(err error, code string) string {
+	msg := err.Error()
 
-func writeOAuth2InvalidGrant(w http.ResponseWriter, description string) {
-	writeOAuth2Error(w, "invalid_grant", description, http.StatusBadRequest)
-}
+	if msg == code {
+		return ""
+	}
 
-func writeOAuth2InvalidClient(w http.ResponseWriter) {
-	writeOAuth2Error(w, "invalid_client", "", http.StatusUnauthorized)
-}
+	prefix := code + ": "
+	if strings.HasPrefix(msg, prefix) {
+		return msg[len(prefix):]
+	}
 
-func writeOAuth2UnsupportedGrantType(w http.ResponseWriter) {
-	writeOAuth2Error(w, "unsupported_grant_type", "", http.StatusBadRequest)
-}
-
-func writeOAuth2ServerError(w http.ResponseWriter, description string) {
-	writeOAuth2Error(w, "server_error", description, http.StatusInternalServerError)
+	return msg
 }
