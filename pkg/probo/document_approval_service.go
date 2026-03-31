@@ -290,7 +290,7 @@ func (s *DocumentApprovalService) Approve(
 				tx,
 				&esign.CreateAndAcceptSignatureRequest{
 					OrganizationID: documentVersion.OrganizationID,
-					DocumentType:   coredata.ElectronicSignatureDocumentTypeFromDocumentType(document.DocumentType),
+					DocumentType:   coredata.ElectronicSignatureDocumentTypeFromDocumentType(documentVersion.DocumentType),
 					DocumentName:   &document.Title,
 					FileID:         fileRecord.ID,
 					SignerEmail:    req.SignerEmail,

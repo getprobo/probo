@@ -72,7 +72,13 @@ const documentsFragment = graphql`
         node {
           id
           title
-          documentType
+          versions(first: 1, orderBy: { field: CREATED_AT, direction: DESC }) {
+            edges {
+              node {
+                documentType
+              }
+            }
+          }
         }
       }
     }
@@ -187,7 +193,7 @@ function DocumentRow(props: RowProps) {
       onClick={() => onClick(props.document.id)}
     >
       {props.document.title}
-      <DocumentTypeBadge type={props.document.documentType} />
+      <DocumentTypeBadge type={props.document.versions.edges[0].node.documentType} />
       <Button
         disabled={props.disabled}
         className="ml-auto"

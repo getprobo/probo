@@ -27,12 +27,12 @@ const fragment = graphql`
   fragment DocumentRowFragment on EmployeeDocument {
     id
     title
-    documentType
     signed
     updatedAt
     lastVersion: versions(first: 1 orderBy: { field: CREATED_AT direction: DESC }) {
       edges {
         node {
+          documentType
           classification
         }
       }
@@ -55,7 +55,7 @@ export function DocumentRow({
     <Tr to={`/organizations/${organizationId}/employee/signatures/${document.id}`}>
       <Td>{document.title}</Td>
       <Td className="w-48">
-        {getDocumentTypeLabel(__, document.documentType)}
+        {getDocumentTypeLabel(__, lastVersion.documentType)}
       </Td>
       <Td className="w-36">
         <Badge variant="neutral">

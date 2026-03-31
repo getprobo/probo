@@ -27,12 +27,12 @@ const fragment = graphql`
   fragment ApprovableDocumentRowFragment on EmployeeDocument {
     id
     title
-    documentType
     approvalState
     updatedAt
     lastVersion: versions(first: 1 orderBy: { field: CREATED_AT direction: DESC }) {
       edges {
         node {
+          documentType
           classification
         }
       }
@@ -67,7 +67,7 @@ export function ApprovableDocumentRow({
     <Tr to={`/organizations/${organizationId}/employee/approvals/${document.id}`}>
       <Td>{document.title}</Td>
       <Td className="w-48">
-        {getDocumentTypeLabel(__, document.documentType)}
+        {getDocumentTypeLabel(__, lastVersion.documentType)}
       </Td>
       <Td className="w-36">
         <Badge variant="neutral">

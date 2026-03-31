@@ -33,7 +33,6 @@ const compliancePageFragment = graphql`
 const documentFragment = graphql`
   fragment CompliancePageDocumentListItem_documentFragment on Document {
     id
-    documentType
     trustCenterVisibility
     latestPublishedVersion: versions(
       first: 1
@@ -43,6 +42,7 @@ const documentFragment = graphql`
       edges {
         node {
           title
+          documentType
         }
       }
     }
@@ -102,7 +102,8 @@ export function CompliancePageDocumentListItem(props: {
     [document.id, updateDocumentVisibility],
   );
 
-  const versionTitle = document.latestPublishedVersion.edges[0]?.node.title;
+  const latestVersion = document.latestPublishedVersion.edges[0]?.node;
+  const versionTitle = latestVersion?.title;
 
   return (
     <Tr to={`/organizations/${organizationId}/documents/${document.id}`}>
@@ -110,7 +111,7 @@ export function CompliancePageDocumentListItem(props: {
         <div className="flex gap-4 items-center">{versionTitle}</div>
       </Td>
       <Td>
-        <DocumentTypeBadge type={document.documentType} />
+        {latestVersion && <DocumentTypeBadge type={latestVersion.documentType} />}
       </Td>
       <Td noLink width={130} className="pr-0">
         <Field

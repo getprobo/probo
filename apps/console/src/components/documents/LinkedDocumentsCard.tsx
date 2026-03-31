@@ -44,11 +44,11 @@ const linkedDocumentFragment = graphql`
   fragment LinkedDocumentsCardFragment on Document {
     id
     title
-    documentType
     versions(first: 1) {
       edges {
         node {
           id
+          documentType
           status
         }
       }
@@ -221,7 +221,7 @@ function DocumentRow(props: {
         </div>
       </Td>
       <Td>
-        <DocumentTypeBadge type={document.documentType} />
+        <DocumentTypeBadge type={document.versions.edges[0].node.documentType} />
       </Td>
       <Td>
         <DocumentVersionBadge state={document.versions.edges[0].node.status} />

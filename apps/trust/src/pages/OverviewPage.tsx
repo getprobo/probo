@@ -64,8 +64,8 @@ const overviewFragment = graphql`
       edges {
         node {
           id
-          ...DocumentRowFragment
           documentType
+          ...DocumentRowFragment
         }
       }
     }

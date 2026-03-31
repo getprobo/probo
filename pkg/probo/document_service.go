@@ -86,7 +86,6 @@ type (
 	UpdateDocumentRequest struct {
 		DocumentID            gid.GID
 		Title                 *string
-		DocumentType          *coredata.DocumentType
 		TrustCenterVisibility *coredata.TrustCenterVisibility
 	}
 
@@ -94,6 +93,7 @@ type (
 		ID             gid.GID
 		Content        *string
 		Classification *coredata.DocumentClassification
+		DocumentType   *coredata.DocumentType
 	}
 
 	RequestSignatureRequest struct {
@@ -139,7 +139,6 @@ func (udr *UpdateDocumentRequest) Validate() error {
 
 	v.Check(udr.DocumentID, "document_id", validator.Required(), validator.GID(coredata.DocumentEntityType))
 	v.Check(udr.Title, "title", validator.SafeTextNoNewLine(TitleMaxLength))
-	v.Check(udr.DocumentType, "document_type", validator.OneOfSlice(coredata.DocumentTypes()))
 	v.Check(udr.TrustCenterVisibility, "trust_center_visibility", validator.OneOfSlice(coredata.TrustCenterVisibilities()))
 
 	return v.Error()
@@ -156,6 +155,7 @@ func (udvr *UpdateDocumentVersionRequest) Validate() error {
 		validator.MaxLen(documentMaxLength),
 		validator.ProseMirrorDocumentContent(),
 	)
+	v.Check(udvr.DocumentType, "document_type", validator.OneOfSlice(coredata.DocumentTypes()))
 
 	return v.Error()
 }
@@ -518,7 +518,6 @@ func (s *DocumentService) Create(
 	document := &coredata.Document{
 		ID:                    documentID,
 		Title:                 req.Title,
-		DocumentType:          req.DocumentType,
 		TrustCenterVisibility: coredata.TrustCenterVisibilityNone,
 		Status:                coredata.DocumentStatusActive,
 		CreatedAt:             now,
@@ -547,6 +546,7 @@ func (s *DocumentService) Create(
 		Content:        content,
 		Status:         coredata.DocumentVersionStatusDraft,
 		Classification: req.Classification,
+		DocumentType:   req.DocumentType,
 		CreatedAt:      now,
 		UpdatedAt:      now,
 	}
@@ -793,6 +793,9 @@ func (s *DocumentService) UpdateVersion(
 			if req.Classification != nil {
 				documentVersion.Classification = *req.Classification
 			}
+			if req.DocumentType != nil {
+				documentVersion.DocumentType = *req.DocumentType
+			}
 			documentVersion.UpdatedAt = time.Now()
 
 			if err := documentVersion.Update(ctx, conn, s.svc.scope); err != nil {
@@ -1031,6 +1034,7 @@ func (s *DocumentService) CreateDraft(
 			draftVersion.Major = latestVersion.Major
 			draftVersion.Minor = latestVersion.Minor + 1
 			draftVersion.Classification = latestVersion.Classification
+			draftVersion.DocumentType = latestVersion.DocumentType
 			draftVersion.Content = latestVersion.Content
 			draftVersion.Status = coredata.DocumentVersionStatusDraft
 			draftVersion.CreatedAt = now
@@ -1559,14 +1563,6 @@ func (s *DocumentService) Update(
 
 			if req.Title != nil {
 				document.Title = *req.Title
-			}
-
-			if req.DocumentType != nil {
-				document.DocumentType = *req.DocumentType
-			}
-
-			if req.DocumentType != nil {
-				document.DocumentType = *req.DocumentType
 			}
 
 			if req.TrustCenterVisibility != nil {

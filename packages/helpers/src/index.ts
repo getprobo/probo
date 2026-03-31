@@ -107,7 +107,6 @@ export { detectSocialName } from "./socialUrl";
 export { formatError, type GraphQLError } from "./error";
 export { Role, roles, getAssignableRoles } from "./roles";
 export {
-  getTrustCenterDocumentAccessInfo,
   getTrustCenterDocumentAccessStatusBadgeVariant,
   getTrustCenterDocumentAccessStatusLabel,
   type TrustCenterDocumentAccessInfo,

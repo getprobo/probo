@@ -13,10 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 import type { TrustCenterDocumentAccessStatus } from "@probo/coredata";
-import {
-  getTrustCenterDocumentAccessInfo,
-  type TrustCenterDocumentAccessInfo,
-} from "@probo/helpers";
+import type { TrustCenterDocumentAccessInfo } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import {
   Button,
@@ -31,14 +28,99 @@ import {
   usePreloadedQuery,
   useQueryLoader,
 } from "react-relay";
-import { graphql } from "relay-runtime";
+import { graphql, readInlineData } from "relay-runtime";
 
+import type { CompliancePageAccessEditDialogDocumentAccessFragment$data, CompliancePageAccessEditDialogDocumentAccessFragment$key } from "#/__generated__/core/CompliancePageAccessEditDialogDocumentAccessFragment.graphql";
 import type { CompliancePageAccessEditDialogQuery as CompliancePageAccessEditDialogQueryType } from "#/__generated__/core/CompliancePageAccessEditDialogQuery.graphql";
 import type { CompliancePageAccessEditDialogUpdateMutation } from "#/__generated__/core/CompliancePageAccessEditDialogUpdateMutation.graphql";
 import type { CompliancePageAccessListItemFragment$data } from "#/__generated__/core/CompliancePageAccessListItemFragment.graphql";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 import { CompliancePageDocumentAccessList } from "#/pages/organizations/compliance-page/access/_components/CompliancePageDocumentAccessList";
 import { ElectronicSignatureSection } from "#/pages/organizations/compliance-page/access/_components/ElectronicSignatureSection";
+
+const documentAccessFragment = graphql`
+  fragment CompliancePageAccessEditDialogDocumentAccessFragment on TrustCenterDocumentAccess @inline {
+    id
+    status
+    document {
+      id
+      title
+      versions(first: 1, orderBy: { field: CREATED_AT, direction: DESC }) {
+        edges {
+          node {
+            documentType
+          }
+        }
+      }
+    }
+    report {
+      id
+      filename
+      audit {
+        id
+        framework {
+          name
+        }
+      }
+    }
+    trustCenterFile {
+      id
+      name
+      category
+    }
+  }
+`;
+
+function getTrustCenterDocumentAccessInfo(
+  fragmentRef: CompliancePageAccessEditDialogDocumentAccessFragment$key,
+  __: (key: string) => string,
+): TrustCenterDocumentAccessInfo {
+  const node = readInlineData(documentAccessFragment, fragmentRef);
+  return toDocumentAccessInfo(node, __);
+}
+
+function toDocumentAccessInfo(
+  node: CompliancePageAccessEditDialogDocumentAccessFragment$data,
+  __: (key: string) => string,
+): TrustCenterDocumentAccessInfo {
+  if (node.document) {
+    return {
+      persisted: node.id !== node.document.id,
+      variant: "info",
+      name: node.document.title,
+      type: "document",
+      typeLabel: __("Document"),
+      category: node.document.versions?.edges[0]?.node.documentType ?? "",
+      id: node.document.id,
+      status: node.status,
+    };
+  }
+  if (node.report) {
+    return {
+      persisted: node.id !== node.report.id,
+      variant: "success",
+      name: node.report.filename,
+      type: "report",
+      typeLabel: __("Report"),
+      category: node.report.audit?.framework?.name ?? "",
+      id: node.report.id,
+      status: node.status,
+    };
+  }
+  if (node.trustCenterFile) {
+    return {
+      persisted: node.id !== node.trustCenterFile.id,
+      variant: "highlight",
+      name: node.trustCenterFile.name,
+      type: "file",
+      typeLabel: __("File"),
+      category: node.trustCenterFile.category,
+      id: node.trustCenterFile.id,
+      status: node.status,
+    };
+  }
+  throw new Error("Unknown trust center access document type");
+}
 
 const compliancePageAccessEditDialogQuery = graphql`
   query CompliancePageAccessEditDialogQuery($accessId: ID!) {
@@ -54,38 +136,7 @@ const compliancePageAccessEditDialogQuery = graphql`
         ) {
           edges {
             node {
-              id
-              status
-              # eslint-disable-next-line relay/unused-fields
-              document {
-                id
-                # eslint-disable-next-line relay/unused-fields
-                title
-                # eslint-disable-next-line relay/unused-fields
-                documentType
-              }
-              # eslint-disable-next-line relay/unused-fields
-              report {
-                id
-                # eslint-disable-next-line relay/unused-fields
-                filename
-                # eslint-disable-next-line relay/unused-fields
-                audit {
-                  id
-                  # eslint-disable-next-line relay/unused-fields
-                  framework {
-                    name
-                  }
-                }
-              }
-              # eslint-disable-next-line relay/unused-fields
-              trustCenterFile {
-                id
-                # eslint-disable-next-line relay/unused-fields
-                name
-                # eslint-disable-next-line relay/unused-fields
-                category
-              }
+              ...CompliancePageAccessEditDialogDocumentAccessFragment
             }
           }
         }

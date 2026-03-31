@@ -14,6 +14,8 @@
 
 package coredata
 
+import "fmt"
+
 type (
 	DocumentOrderField string
 )
@@ -25,7 +27,25 @@ const (
 )
 
 func (p DocumentOrderField) Column() string {
-	return string(p)
+	switch p {
+	case DocumentOrderFieldCreatedAt:
+		return "created_at"
+	case DocumentOrderFieldTitle:
+		return "title"
+	case DocumentOrderFieldDocumentType:
+		return "document_type"
+	}
+	panic(fmt.Sprintf("unsupported order by: %s", p))
+}
+
+func (p DocumentOrderField) IsValid() bool {
+	switch p {
+	case DocumentOrderFieldCreatedAt,
+		DocumentOrderFieldTitle,
+		DocumentOrderFieldDocumentType:
+		return true
+	}
+	return false
 }
 
 func (p DocumentOrderField) String() string {
@@ -38,5 +58,8 @@ func (p DocumentOrderField) MarshalText() ([]byte, error) {
 
 func (p *DocumentOrderField) UnmarshalText(text []byte) error {
 	*p = DocumentOrderField(text)
+	if !p.IsValid() {
+		return fmt.Errorf("%s is not a valid DocumentOrderField", string(text))
+	}
 	return nil
 }

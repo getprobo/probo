@@ -2095,7 +2095,6 @@ func (r *Resolver) UpdateDocumentTool(ctx context.Context, req *mcp.CallToolRequ
 		probo.UpdateDocumentRequest{
 			DocumentID:            input.ID,
 			Title:                 input.Title,
-			DocumentType:          input.DocumentType,
 			TrustCenterVisibility: input.TrustCenterVisibility,
 		},
 	)
@@ -2201,6 +2200,7 @@ func (r *Resolver) UpdateDocumentVersionTool(ctx context.Context, req *mcp.CallT
 			ID:             input.DocumentVersionID,
 			Content:        content,
 			Classification: input.Classification,
+			DocumentType:   input.DocumentType,
 		},
 	)
 	if err != nil {

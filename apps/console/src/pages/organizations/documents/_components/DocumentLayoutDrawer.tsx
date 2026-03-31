@@ -14,7 +14,7 @@
 
 import { documentClassifications, documentTypes, formatDate, getDocumentClassificationLabel, getDocumentTypeLabel } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
-import { Badge, Button, Drawer, IconCheckmark1, IconCrossLargeX, IconPencil, PropertyRow } from "@probo/ui";
+import { Badge, Button, Drawer, IconCheckmark1, IconCrossLargeX, IconPencil, PropertyRow, useToast } from "@probo/ui";
 import { useState } from "react";
 import { useFragment, useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
@@ -31,7 +31,6 @@ import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 const documentFragment = graphql`
   fragment DocumentLayoutDrawer_documentFragment on Document {
     id
-    documentType
     status
     archivedAt
     canUpdate: permission(action: "core:document:update")
@@ -41,6 +40,7 @@ const documentFragment = graphql`
 const versionFragment = graphql`
   fragment DocumentLayoutDrawer_versionFragment on DocumentVersion {
     id
+    documentType
     classification
     major
     minor
@@ -50,10 +50,10 @@ const versionFragment = graphql`
   }
 `;
 
-const updateDocumentMutation = graphql`
-  mutation DocumentLayoutDrawerMutation($input: UpdateDocumentInput!) {
-    updateDocument(input: $input) {
-      document {
+const updateDocumentTypeMutation = graphql`
+  mutation DocumentLayoutDrawerMutation($input: UpdateDocumentVersionInput!) {
+    updateDocumentVersion(input: $input) {
+      documentVersion {
         id
         documentType
       }
@@ -91,6 +91,7 @@ export function DocumentLayoutDrawer(props: {
   const [isEditingType, setIsEditingType] = useState(false);
   const [isEditingClassification, setIsEditingClassification] = useState(false);
 
+  const { toast } = useToast();
   const document = useFragment<DocumentLayoutDrawer_documentFragment$key>(documentFragment, documentFragmentRef);
   const version = useFragment<DocumentLayoutDrawer_versionFragment$key>(versionFragment, versionFragmentRef);
 
@@ -101,7 +102,7 @@ export function DocumentLayoutDrawer(props: {
     schema,
     {
       defaultValues: {
-        documentType: document.documentType,
+        documentType: version.documentType,
       },
     },
   );
@@ -119,8 +120,8 @@ export function DocumentLayoutDrawer(props: {
     },
   );
 
-  const [updateDocument, isUpdatingDocument]
-    = useMutation<DocumentLayoutDrawerMutation>(updateDocumentMutation);
+  const [updateDocumentType, isUpdatingDocumentType]
+    = useMutation<DocumentLayoutDrawerMutation>(updateDocumentTypeMutation);
 
   const [updateClassification, isUpdatingClassification]
     = useMutation<DocumentLayoutDrawer_updateClassificationMutation>(updateClassificationMutation);
@@ -128,15 +129,27 @@ export function DocumentLayoutDrawer(props: {
   const handleUpdateDocumentType = (data: {
     documentType: (typeof documentTypes)[number];
   }) => {
-    updateDocument({
+    updateDocumentType({
       variables: {
         input: {
-          id: document.id,
+          documentVersionId: version.id,
           documentType: data.documentType,
         },
       },
       onCompleted: () => {
         setIsEditingType(false);
+        toast({
+          title: __("Success"),
+          description: __("Document type updated successfully"),
+          variant: "success",
+        });
+      },
+      onError: () => {
+        toast({
+          title: __("Error"),
+          description: __("Failed to update document type"),
+          variant: "error",
+        });
       },
     });
   };
@@ -153,6 +166,18 @@ export function DocumentLayoutDrawer(props: {
       },
       onCompleted: () => {
         setIsEditingClassification(false);
+        toast({
+          title: __("Success"),
+          description: __("Document classification updated successfully"),
+          variant: "success",
+        });
+      },
+      onError: () => {
+        toast({
+          title: __("Error"),
+          description: __("Failed to update document classification"),
+          variant: "error",
+        });
       },
     });
   };
@@ -171,7 +196,7 @@ export function DocumentLayoutDrawer(props: {
                   setIsEditingType(false);
                   reset();
                 }}
-                disabled={isUpdatingDocument}
+                disabled={isUpdatingDocumentType}
               >
                 <ControlledField
                   name="documentType"
@@ -185,10 +210,10 @@ export function DocumentLayoutDrawer(props: {
           : (
               <ReadOnlyPropertyContent
                 onEdit={() => setIsEditingType(true)}
-                canEdit={canEdit}
+                canEdit={canEdit && isDraft}
               >
                 <div className="text-sm text-txt-secondary">
-                  {getDocumentTypeLabel(__, document.documentType)}
+                  {getDocumentTypeLabel(__, version.documentType)}
                 </div>
               </ReadOnlyPropertyContent>
             )}

@@ -80,7 +80,6 @@ func NewDocument(document *coredata.Document) *Document {
 		Organization: &Organization{
 			ID: document.OrganizationID,
 		},
-		DocumentType:          document.DocumentType,
 		CurrentPublishedMajor: document.CurrentPublishedMajor,
 		CurrentPublishedMinor: document.CurrentPublishedMinor,
 		TrustCenterVisibility: document.TrustCenterVisibility,

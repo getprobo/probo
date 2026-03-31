@@ -180,7 +180,13 @@ func (f *DocumentFilter) SQLFragment() string {
 	AND
 	CASE
 		WHEN @document_types::document_type[] IS NOT NULL THEN
-			document_type = ANY(@document_types::document_type[])
+			(
+				SELECT dv.document_type
+				FROM document_versions dv
+				WHERE dv.document_id = documents.id
+				ORDER BY dv.major DESC, dv.minor DESC
+				LIMIT 1
+			) = ANY(@document_types::document_type[])
 		ELSE TRUE
 	END
 	AND

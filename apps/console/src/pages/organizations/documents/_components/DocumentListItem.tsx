@@ -26,7 +26,6 @@ const fragment = graphql`
   fragment DocumentListItemFragment on Document {
     id
     title
-    documentType
     updatedAt
     canDelete: permission(action: "core:document:delete")
     recentVersions: versions(first: 2 orderBy: { field: CREATED_AT direction: DESC }) {
@@ -36,6 +35,7 @@ const fragment = graphql`
           status
           major
           minor
+          documentType
           classification
           approvalQuorums(first: 1, orderBy: { field: CREATED_AT, direction: DESC }) {
             edges {
@@ -165,7 +165,7 @@ export function DocumentListItem(props: {
         {lastVersion.minor}
       </Td>
       <Td className="w-28">
-        {getDocumentTypeLabel(__, document.documentType)}
+        {getDocumentTypeLabel(__, lastVersion.documentType)}
       </Td>
       <Td className="w-32">
         {getDocumentClassificationLabel(__, lastVersion.classification)}

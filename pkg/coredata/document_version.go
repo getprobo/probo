@@ -37,6 +37,7 @@ type (
 		Major          int                    `db:"major"`
 		Minor          int                    `db:"minor"`
 		Classification DocumentClassification `db:"classification"`
+		DocumentType   DocumentType           `db:"document_type"`
 		Content        string                 `db:"content"`
 		Changelog      string                 `db:"changelog"`
 		Status         DocumentVersionStatus  `db:"status"`
@@ -120,6 +121,7 @@ SELECT
 	major,
 	minor,
 	classification,
+	document_type,
 	content,
 	changelog,
 	status,
@@ -182,6 +184,7 @@ SELECT
 	major,
 	minor,
 	classification,
+	document_type,
 	content,
 	changelog,
 	status,
@@ -233,6 +236,7 @@ INSERT INTO document_versions (
 	major,
 	minor,
 	classification,
+	document_type,
 	content,
 	changelog,
 	status,
@@ -248,6 +252,7 @@ VALUES (
 	@major,
 	@minor,
 	@classification,
+	@document_type,
 	@content,
 	@changelog,
 	@status,
@@ -264,6 +269,7 @@ VALUES (
 		"major":           dv.Major,
 		"minor":           dv.Minor,
 		"classification":  dv.Classification,
+		"document_type":   dv.DocumentType,
 		"content":         dv.Content,
 		"changelog":       dv.Changelog,
 		"status":          dv.Status,
@@ -304,6 +310,7 @@ SELECT
 	major,
 	minor,
 	classification,
+	document_type,
 	content,
 	changelog,
 	status,
@@ -359,6 +366,7 @@ SELECT
 	major,
 	minor,
 	classification,
+	document_type,
 	content,
 	changelog,
 	status,
@@ -410,6 +418,7 @@ SELECT
 	major,
 	minor,
 	classification,
+	document_type,
 	content,
 	changelog,
 	status,
@@ -463,6 +472,7 @@ UPDATE document_versions SET
 	content = @content,
 	published_at = @published_at,
 	classification = @classification,
+	document_type = @document_type,
 	updated_at = @updated_at
 WHERE %s
 	AND id = @document_version_id
@@ -480,6 +490,7 @@ WHERE %s
 		"content":             dv.Content,
 		"published_at":        dv.PublishedAt,
 		"classification":      dv.Classification,
+		"document_type":       dv.DocumentType,
 		"updated_at":          dv.UpdatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())

@@ -2168,6 +2168,7 @@ func (r *employeeDocumentResolver) Versions(ctx context.Context, obj *types.Empl
 			Minor:          v.Minor,
 			Status:         v.Status,
 			Classification: v.Classification,
+			DocumentType:   v.DocumentType,
 			PublishedAt:    v.PublishedAt,
 			CreatedAt:      v.CreatedAt,
 			UpdatedAt:      v.UpdatedAt,
@@ -5142,10 +5143,10 @@ func (r *mutationResolver) CreateDocument(ctx context.Context, input types.Creat
 		ctx,
 		probo.CreateDocumentRequest{
 			OrganizationID:        input.OrganizationID,
-			DocumentType:          input.DocumentType,
 			Title:                 input.Title,
 			Content:               content,
 			Classification:        input.Classification,
+			DocumentType:          input.DocumentType,
 			TrustCenterVisibility: input.TrustCenterVisibility,
 		},
 	)
@@ -5180,7 +5181,6 @@ func (r *mutationResolver) UpdateDocument(ctx context.Context, input types.Updat
 		probo.UpdateDocumentRequest{
 			DocumentID:            input.ID,
 			Title:                 input.Title,
-			DocumentType:          input.DocumentType,
 			TrustCenterVisibility: input.TrustCenterVisibility,
 		},
 	)
@@ -5923,6 +5923,7 @@ func (r *mutationResolver) UpdateDocumentVersion(ctx context.Context, input type
 			ID:             input.DocumentVersionID,
 			Content:        input.Content,
 			Classification: input.Classification,
+			DocumentType:   input.DocumentType,
 		},
 	)
 	if err != nil {

@@ -103,6 +103,11 @@ func TestDocument_Create(t *testing.T) {
 							node {
 								id
 								title
+							}
+						}
+						documentVersionEdge {
+							node {
+								id
 								documentType
 							}
 						}
@@ -119,11 +124,16 @@ func TestDocument_Create(t *testing.T) {
 				CreateDocument struct {
 					DocumentEdge struct {
 						Node struct {
-							ID           string `json:"id"`
-							Title        string `json:"title"`
-							DocumentType string `json:"documentType"`
+							ID    string `json:"id"`
+							Title string `json:"title"`
 						} `json:"node"`
 					} `json:"documentEdge"`
+					DocumentVersionEdge struct {
+						Node struct {
+							ID           string `json:"id"`
+							DocumentType string `json:"documentType"`
+						} `json:"node"`
+					} `json:"documentVersionEdge"`
 				} `json:"createDocument"`
 			}
 
@@ -133,11 +143,13 @@ func TestDocument_Create(t *testing.T) {
 			node := result.CreateDocument.DocumentEdge.Node
 			assert.NotEmpty(t, node.ID)
 
+			versionNode := result.CreateDocument.DocumentVersionEdge.Node
+
 			switch tt.assertField {
 			case "title":
 				assert.Equal(t, tt.assertValue, node.Title)
 			case "documentType":
-				assert.Equal(t, tt.assertValue, node.DocumentType)
+				assert.Equal(t, tt.assertValue, versionNode.DocumentType)
 			}
 		})
 	}
@@ -277,48 +289,14 @@ func TestDocument_Update(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
-	tests := []struct {
-		name        string
-		setup       func() string
-		input       func(id string) map[string]any
-		assertField string
-		assertValue string
-	}{
-		{
-			name: "update title",
-			setup: func() string {
-				return factory.NewDocument(owner).
-					WithTitle("Document to Update").
-					Create()
-			},
-			input: func(id string) map[string]any {
-				return map[string]any{
-					"id":    id,
-					"title": "Updated Document Title",
-				}
-			},
-			assertField: "title",
-			assertValue: "Updated Document Title",
-		},
-		{
-			name: "update document type",
-			setup: func() string {
-				return factory.NewDocument(owner).
-					WithTitle("Type Test").
-					WithDocumentType("POLICY").
-					Create()
-			},
-			input: func(id string) map[string]any {
-				return map[string]any{"id": id, "documentType": "PROCEDURE"}
-			},
-			assertField: "documentType",
-			assertValue: "PROCEDURE",
-		},
-	}
+	t.Run(
+		"update title",
+		func(t *testing.T) {
+			t.Parallel()
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			documentID := tt.setup()
+			documentID := factory.NewDocument(owner).
+				WithTitle("Document to Update").
+				Create()
 
 			query := `
 				mutation UpdateDocument($input: UpdateDocumentInput!) {
@@ -326,7 +304,6 @@ func TestDocument_Update(t *testing.T) {
 						document {
 							id
 							title
-							documentType
 						}
 					}
 				}
@@ -335,25 +312,22 @@ func TestDocument_Update(t *testing.T) {
 			var result struct {
 				UpdateDocument struct {
 					Document struct {
-						ID           string `json:"id"`
-						Title        string `json:"title"`
-						DocumentType string `json:"documentType"`
+						ID    string `json:"id"`
+						Title string `json:"title"`
 					} `json:"document"`
 				} `json:"updateDocument"`
 			}
 
-			err := owner.Execute(query, map[string]any{"input": tt.input(documentID)}, &result)
+			err := owner.Execute(query, map[string]any{
+				"input": map[string]any{
+					"id":    documentID,
+					"title": "Updated Document Title",
+				},
+			}, &result)
 			require.NoError(t, err)
-
-			doc := result.UpdateDocument.Document
-			switch tt.assertField {
-			case "title":
-				assert.Equal(t, tt.assertValue, doc.Title)
-			case "documentType":
-				assert.Equal(t, tt.assertValue, doc.DocumentType)
-			}
-		})
-	}
+			assert.Equal(t, "Updated Document Title", result.UpdateDocument.Document.Title)
+		},
+	)
 }
 
 func TestDocument_Update_Validation(t *testing.T) {

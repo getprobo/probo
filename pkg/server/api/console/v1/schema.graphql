@@ -2543,7 +2543,6 @@ type Document implements Node {
     id: ID!
     title: String!
     description: String
-    documentType: DocumentType!
     currentPublishedMajor: Int
     currentPublishedMinor: Int
     trustCenterVisibility: TrustCenterVisibility!
@@ -2583,7 +2582,6 @@ type EmployeeDocument
     id: ID!
     title: String!
     description: String
-    documentType: DocumentType!
     signed: Boolean @goField(forceResolver: true)
     approvalState: DocumentVersionApprovalDecisionState @goField(forceResolver: true)
 
@@ -2608,6 +2606,7 @@ type EmployeeDocumentVersion
     minor: Int!
     status: DocumentVersionStatus!
     classification: DocumentClassification!
+    documentType: DocumentType!
     signed: Boolean! @goField(forceResolver: true)
     approvalDecision: DocumentVersionApprovalDecision @goField(forceResolver: true)
     publishedAt: Datetime
@@ -4642,7 +4641,6 @@ input UpdateDocumentInput {
     id: ID!
     title: String
     content: String
-    documentType: DocumentType
     trustCenterVisibility: TrustCenterVisibility
 }
 
@@ -5529,6 +5527,7 @@ type DocumentVersion implements Node {
     changelog: String!
     title: String!
     classification: DocumentClassification!
+    documentType: DocumentType!
     approvers(
         first: Int
         after: CursorKey
@@ -5900,6 +5899,7 @@ input UpdateDocumentVersionInput {
     documentVersionId: ID!
     content: String
     classification: DocumentClassification
+    documentType: DocumentType
 }
 
 input CancelSignatureRequestInput {

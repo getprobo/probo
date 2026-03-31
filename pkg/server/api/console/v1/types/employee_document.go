@@ -70,6 +70,7 @@ type (
 		Minor          int
 		Status         coredata.DocumentVersionStatus
 		Classification coredata.DocumentClassification
+		DocumentType   coredata.DocumentType
 		PublishedAt    *time.Time
 		CreatedAt      time.Time
 		UpdatedAt      time.Time
