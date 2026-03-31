@@ -15,28 +15,35 @@
 package oauth2server
 
 import (
-	"errors"
-
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 )
 
+// OAuth2Error represents an OAuth2 protocol error with an associated
+// error code per RFC 6749 §5.2 and RFC 8628 §3.5.
+type OAuth2Error struct {
+	code string
+}
+
+func (e *OAuth2Error) Error() string     { return e.code }
+func (e *OAuth2Error) ErrorCode() string { return e.code }
+
 var (
 	// OAuth2 error codes per RFC 6749 §5.2 and RFC 8628 §3.5.
-	ErrInvalidRequest       = errors.New("invalid_request")
-	ErrInvalidClient        = errors.New("invalid_client")
-	ErrInvalidGrant         = errors.New("invalid_grant")
-	ErrUnauthorizedClient   = errors.New("unauthorized_client")
-	ErrUnsupportedGrantType = errors.New("unsupported_grant_type")
-	ErrInvalidScope         = errors.New("invalid_scope")
-	ErrAccessDenied         = errors.New("access_denied")
-	ErrServerError          = errors.New("server_error")
-	ErrInvalidRedirectURI   = errors.New("invalid redirect_uri")
+	ErrInvalidRequest       = &OAuth2Error{code: "invalid_request"}
+	ErrInvalidClient        = &OAuth2Error{code: "invalid_client"}
+	ErrInvalidGrant         = &OAuth2Error{code: "invalid_grant"}
+	ErrUnauthorizedClient   = &OAuth2Error{code: "unauthorized_client"}
+	ErrUnsupportedGrantType = &OAuth2Error{code: "unsupported_grant_type"}
+	ErrInvalidScope         = &OAuth2Error{code: "invalid_scope"}
+	ErrAccessDenied         = &OAuth2Error{code: "access_denied"}
+	ErrServerError          = &OAuth2Error{code: "server_error"}
+	ErrInvalidRedirectURI   = &OAuth2Error{code: "invalid_redirect_uri"}
 
 	// RFC 8628 device flow errors.
-	ErrAuthorizationPending = errors.New("authorization_pending")
-	ErrSlowDown             = errors.New("slow_down")
-	ErrExpiredToken         = errors.New("expired_token")
+	ErrAuthorizationPending = &OAuth2Error{code: "authorization_pending"}
+	ErrSlowDown             = &OAuth2Error{code: "slow_down"}
+	ErrExpiredToken         = &OAuth2Error{code: "expired_token"}
 )
 
 // ConsentRequiredError is returned by Authorize when the user must approve
@@ -49,32 +56,4 @@ type ConsentRequiredError struct {
 
 func (e *ConsentRequiredError) Error() string {
 	return "consent required"
-}
-
-// OAuth2ErrorCode returns the OAuth2 error code string for a sentinel error.
-func OAuth2ErrorCode(err error) string {
-	switch {
-	case errors.Is(err, ErrInvalidRequest):
-		return "invalid_request"
-	case errors.Is(err, ErrInvalidClient):
-		return "invalid_client"
-	case errors.Is(err, ErrInvalidGrant):
-		return "invalid_grant"
-	case errors.Is(err, ErrUnauthorizedClient):
-		return "unauthorized_client"
-	case errors.Is(err, ErrUnsupportedGrantType):
-		return "unsupported_grant_type"
-	case errors.Is(err, ErrInvalidScope):
-		return "invalid_scope"
-	case errors.Is(err, ErrAccessDenied):
-		return "access_denied"
-	case errors.Is(err, ErrAuthorizationPending):
-		return "authorization_pending"
-	case errors.Is(err, ErrSlowDown):
-		return "slow_down"
-	case errors.Is(err, ErrExpiredToken):
-		return "expired_token"
-	default:
-		return "server_error"
-	}
 }

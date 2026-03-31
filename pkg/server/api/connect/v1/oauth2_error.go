@@ -24,9 +24,6 @@ import (
 	"go.probo.inc/probo/pkg/iam/oauth2server"
 )
 
-// oauth2RedirectContext wraps an OAuth2 error with redirect context for the
-// authorization endpoint. When handled, redirectable errors are sent back
-// to the client via query parameters instead of rendered as JSON.
 type oauth2RedirectContext struct {
 	err         error
 	redirectURI string
@@ -36,8 +33,6 @@ type oauth2RedirectContext struct {
 func (e *oauth2RedirectContext) Error() string { return e.err.Error() }
 func (e *oauth2RedirectContext) Unwrap() error { return e.err }
 
-// withRedirect wraps an error with redirect context so that writeOAuth2Error
-// can redirect back to the client when appropriate.
 func withRedirect(err error, redirectURI, state string) error {
 	return &oauth2RedirectContext{
 		err:         err,
@@ -57,14 +52,15 @@ func writeOAuth2Error(w http.ResponseWriter, r *http.Request, err error) {
 		err = rc.err
 	}
 
-	code := oauth2server.OAuth2ErrorCode(err)
-	if code == "server_error" && !errors.Is(err, oauth2server.ErrServerError) {
+	oauthErr, ok := errors.AsType[*oauth2server.OAuth2Error](err)
+	if !ok {
 		httpserver.RenderError(w, http.StatusInternalServerError, err)
 		return
 	}
 
+	code := oauthErr.ErrorCode()
 	description := oauth2ErrorDescription(err, code)
-	statusCode := oauth2ErrorStatusCode(err)
+	statusCode := oauth2ErrorStatusCode(oauthErr)
 
 	w.Header().Set("Cache-Control", "no-store")
 	w.Header().Set("Pragma", "no-cache")
@@ -86,13 +82,13 @@ func isRedirectableError(err error) bool {
 		errors.Is(err, oauth2server.ErrUnsupportedGrantType)
 }
 
-func oauth2ErrorStatusCode(err error) int {
-	switch {
-	case errors.Is(err, oauth2server.ErrAccessDenied):
+func oauth2ErrorStatusCode(err *oauth2server.OAuth2Error) int {
+	switch err.ErrorCode() {
+	case "access_denied":
 		return http.StatusForbidden
-	case errors.Is(err, oauth2server.ErrInvalidClient):
+	case "invalid_client":
 		return http.StatusUnauthorized
-	case errors.Is(err, oauth2server.ErrServerError):
+	case "server_error":
 		return http.StatusInternalServerError
 	default:
 		return http.StatusBadRequest
@@ -121,7 +117,13 @@ func redirectWithError(w http.ResponseWriter, r *http.Request, redirectURI, stat
 		return
 	}
 
-	code := oauth2server.OAuth2ErrorCode(err)
+	oauthErr, ok := errors.AsType[*oauth2server.OAuth2Error](err)
+	if !ok {
+		httpserver.RenderError(w, http.StatusInternalServerError, errors.New("internal server error"))
+		return
+	}
+
+	code := oauthErr.ErrorCode()
 	description := oauth2ErrorDescription(err, code)
 
 	q := u.Query()
