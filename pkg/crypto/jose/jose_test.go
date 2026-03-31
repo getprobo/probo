@@ -15,7 +15,9 @@
 package jose_test
 
 import (
+	"crypto"
 	"crypto/rsa"
+	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
 	"math/big"
@@ -99,6 +101,100 @@ func TestRSAPublicKeyToJWK(t *testing.T) {
 			assert.Equal(t, "kid-a", jwk1.KeyID)
 			assert.Equal(t, "kid-b", jwk2.KeyID)
 			assert.Equal(t, jwk1.N, jwk2.N)
+		},
+	)
+}
+
+func TestSignJWT(t *testing.T) {
+	t.Parallel()
+
+	key := testRSAKey(t)
+
+	t.Run(
+		"produces valid three-part JWT",
+		func(t *testing.T) {
+			t.Parallel()
+
+			claims := map[string]string{"sub": "test"}
+
+			token, err := jose.SignJWT(key, "kid-1", claims)
+			require.NoError(t, err)
+
+			parts := strings.Split(token, ".")
+			assert.Len(t, parts, 3)
+		},
+	)
+
+	t.Run(
+		"header contains correct fields",
+		func(t *testing.T) {
+			t.Parallel()
+
+			claims := map[string]string{"sub": "test"}
+
+			token, err := jose.SignJWT(key, "my-kid", claims)
+			require.NoError(t, err)
+
+			parts := strings.Split(token, ".")
+			headerJSON, err := base64.RawURLEncoding.DecodeString(parts[0])
+			require.NoError(t, err)
+
+			var header jose.JWTHeader
+			err = json.Unmarshal(headerJSON, &header)
+			require.NoError(t, err)
+
+			assert.Equal(t, "RS256", header.Algorithm)
+			assert.Equal(t, "JWT", header.Type)
+			assert.Equal(t, "my-kid", header.KeyID)
+		},
+	)
+
+	t.Run(
+		"claims are correctly encoded",
+		func(t *testing.T) {
+			t.Parallel()
+
+			claims := map[string]any{
+				"iss": "https://issuer.example.com",
+				"sub": "sub-123",
+				"aud": "aud-456",
+			}
+
+			token, err := jose.SignJWT(key, "kid-1", claims)
+			require.NoError(t, err)
+
+			parts := strings.Split(token, ".")
+			claimsJSON, err := base64.RawURLEncoding.DecodeString(parts[1])
+			require.NoError(t, err)
+
+			var decoded map[string]any
+			err = json.Unmarshal(claimsJSON, &decoded)
+			require.NoError(t, err)
+
+			assert.Equal(t, "https://issuer.example.com", decoded["iss"])
+			assert.Equal(t, "sub-123", decoded["sub"])
+			assert.Equal(t, "aud-456", decoded["aud"])
+		},
+	)
+
+	t.Run(
+		"signature is verifiable",
+		func(t *testing.T) {
+			t.Parallel()
+
+			claims := map[string]string{"sub": "test"}
+
+			token, err := jose.SignJWT(key, "kid-1", claims)
+			require.NoError(t, err)
+
+			parts := strings.Split(token, ".")
+			signingInput := parts[0] + "." + parts[1]
+			signature, err := base64.RawURLEncoding.DecodeString(parts[2])
+			require.NoError(t, err)
+
+			h := sha256.Sum256([]byte(signingInput))
+			err = rsa.VerifyPKCS1v15(&key.PublicKey, crypto.SHA256, h[:], signature)
+			assert.NoError(t, err)
 		},
 	)
 }

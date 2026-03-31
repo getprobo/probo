@@ -15,8 +15,13 @@
 package jose
 
 import (
+	"crypto"
+	"crypto/rand"
 	"crypto/rsa"
+	"crypto/sha256"
 	"encoding/base64"
+	"encoding/json"
+	"fmt"
 	"math/big"
 )
 
@@ -55,4 +60,39 @@ func RSAPublicKeyToJWK(pub *rsa.PublicKey, kid string) JWK {
 		N:         base64.RawURLEncoding.EncodeToString(pub.N.Bytes()),
 		E:         base64.RawURLEncoding.EncodeToString(big.NewInt(int64(pub.E)).Bytes()),
 	}
+}
+
+// SignJWT signs arbitrary claims as a JWT using RS256 with the given RSA
+// private key and key ID. The claims value is JSON-marshaled as the payload.
+func SignJWT(privateKey *rsa.PrivateKey, kid string, claims any) (string, error) {
+	header := JWTHeader{
+		Algorithm: "RS256",
+		Type:      "JWT",
+		KeyID:     kid,
+	}
+
+	headerJSON, err := json.Marshal(header)
+	if err != nil {
+		return "", fmt.Errorf("cannot marshal jwt header: %w", err)
+	}
+
+	claimsJSON, err := json.Marshal(claims)
+	if err != nil {
+		return "", fmt.Errorf("cannot marshal jwt claims: %w", err)
+	}
+
+	headerB64 := base64.RawURLEncoding.EncodeToString(headerJSON)
+	claimsB64 := base64.RawURLEncoding.EncodeToString(claimsJSON)
+
+	signingInput := headerB64 + "." + claimsB64
+
+	h := sha256.Sum256([]byte(signingInput))
+	signature, err := rsa.SignPKCS1v15(rand.Reader, privateKey, crypto.SHA256, h[:])
+	if err != nil {
+		return "", fmt.Errorf("cannot sign jwt: %w", err)
+	}
+
+	signatureB64 := base64.RawURLEncoding.EncodeToString(signature)
+
+	return signingInput + "." + signatureB64, nil
 }

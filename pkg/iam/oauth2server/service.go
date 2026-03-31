@@ -454,7 +454,8 @@ func (s *Service) ExchangeAuthorizationCode(
 			s.accessTokenDuration,
 		)
 
-		idToken, err := SignIDToken(s.signingKey(), idTokenClaims)
+		sk := s.signingKey()
+		idToken, err := jose.SignJWT(sk.PrivateKey, sk.KID, idTokenClaims)
 		if err != nil {
 			return nil, fmt.Errorf("cannot sign id token: %w", err)
 		}
@@ -590,7 +591,8 @@ func (s *Service) RefreshToken(
 			"", false, "",
 			s.accessTokenDuration,
 		)
-		idToken, err := SignIDToken(s.signingKey(), claims)
+		sk := s.signingKey()
+		idToken, err := jose.SignJWT(sk.PrivateKey, sk.KID, claims)
 		if err != nil {
 			return nil, fmt.Errorf("cannot sign id token: %w", err)
 		}
@@ -773,7 +775,8 @@ func (s *Service) PollDeviceCode(
 			"", false, "",
 			s.accessTokenDuration,
 		)
-		idToken, signErr := SignIDToken(s.signingKey(), claims)
+		sk := s.signingKey()
+		idToken, signErr := jose.SignJWT(sk.PrivateKey, sk.KID, claims)
 		if signErr != nil {
 			return nil, fmt.Errorf("%w: cannot sign id token", ErrServerError)
 		}

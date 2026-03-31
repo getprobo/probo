@@ -15,17 +15,12 @@
 package oauth2server
 
 import (
-	"crypto"
-	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha256"
 	"encoding/base64"
-	"encoding/json"
-	"fmt"
 	"time"
 
 	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/crypto/jose"
 	"go.probo.inc/probo/pkg/gid"
 )
 
@@ -59,40 +54,6 @@ type (
 	// SigningKeys is a collection of signing keys.
 	SigningKeys []SigningKey
 )
-
-// SignIDToken signs an ID token with the given signing key.
-func SignIDToken(sk *SigningKey, claims *IDTokenClaims) (string, error) {
-	header := jose.JWTHeader{
-		Algorithm: "RS256",
-		Type:      "JWT",
-		KeyID:     sk.KID,
-	}
-
-	headerJSON, err := json.Marshal(header)
-	if err != nil {
-		return "", fmt.Errorf("cannot marshal jwt header: %w", err)
-	}
-
-	claimsJSON, err := json.Marshal(claims)
-	if err != nil {
-		return "", fmt.Errorf("cannot marshal jwt claims: %w", err)
-	}
-
-	headerB64 := base64.RawURLEncoding.EncodeToString(headerJSON)
-	claimsB64 := base64.RawURLEncoding.EncodeToString(claimsJSON)
-
-	signingInput := headerB64 + "." + claimsB64
-
-	h := sha256.Sum256([]byte(signingInput))
-	signature, err := rsa.SignPKCS1v15(rand.Reader, sk.PrivateKey, crypto.SHA256, h[:])
-	if err != nil {
-		return "", fmt.Errorf("cannot sign jwt: %w", err)
-	}
-
-	signatureB64 := base64.RawURLEncoding.EncodeToString(signature)
-
-	return signingInput + "." + signatureB64, nil
-}
 
 // ComputeAtHash computes the at_hash claim value for an access token.
 // Per OIDC Core §3.1.3.6: left half of SHA-256 hash, base64url-encoded.
