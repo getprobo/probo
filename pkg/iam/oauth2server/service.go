@@ -220,8 +220,6 @@ func validateScopes(requested, allowed coredata.OAuth2Scopes) bool {
 	return true
 }
 
-// CreateAccessToken generates an opaque access token, stores it hashed,
-// and returns the plaintext token value.
 func (s *Service) CreateAccessToken(
 	ctx context.Context,
 	clientID gid.GID,
@@ -247,10 +245,14 @@ func (s *Service) CreateAccessToken(
 	if err = s.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {
-			return token.Insert(ctx, conn)
+			if err := token.Insert(ctx, conn); err != nil {
+				return fmt.Errorf("cannot create access token: %w", err)
+			}
+
+			return nil
 		},
 	); err != nil {
-		return "", nil, fmt.Errorf("cannot create access token: %w", err)
+		return "", nil, err
 	}
 
 	return tokenValue, token, nil
