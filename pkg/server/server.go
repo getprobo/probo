@@ -15,6 +15,7 @@
 package server
 
 import (
+	"encoding/json"
 	"errors"
 	"net/http"
 	"path"
@@ -29,6 +30,7 @@ import (
 	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/file"
 	"go.probo.inc/probo/pkg/iam"
+	"go.probo.inc/probo/pkg/iam/oauth2server"
 	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/securecookie"
@@ -66,7 +68,9 @@ type Server struct {
 	trustWebServer     *trust_web.Server
 	router             *chi.Mux
 	extraHeaderFields  map[string]string
+	baseURL            string
 	proboService       *probo.Service
+	iamService         *iam.Service
 	trustService       *trust.Service
 	logger             *log.Logger
 }
@@ -113,7 +117,9 @@ func NewServer(cfg Config) (*Server, error) {
 		trustWebServer:     trustWebServer,
 		router:             router,
 		extraHeaderFields:  cfg.ExtraHeaderFields,
+		baseURL:            cfg.BaseURL.String(),
 		proboService:       cfg.Probo,
+		iamService:         cfg.IAM,
 		trustService:       cfg.Trust,
 		logger:             cfg.Logger,
 	}
@@ -124,6 +130,9 @@ func NewServer(cfg Config) (*Server, error) {
 }
 
 func (s *Server) setupRoutes(baseURL string) {
+	// OIDC discovery endpoint must be at the issuer root per OIDC Discovery 1.0 §4.
+	s.router.Get("/.well-known/openid-configuration", s.oidcDiscoveryHandler)
+
 	s.router.Mount("/api", http.StripPrefix("/api", s.apiServer))
 	s.router.Mount("/mail-actions", http.StripPrefix("/mail-actions", s.mailActionsHandler))
 
@@ -144,6 +153,28 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func (s *Server) setExtraHeaders(w http.ResponseWriter) {
 	for key, value := range s.extraHeaderFields {
 		w.Header().Set(key, value)
+	}
+}
+
+func (s *Server) oidcDiscoveryHandler(w http.ResponseWriter, r *http.Request) {
+	api := s.baseURL + "/api/connect/v1"
+
+	endpoints := oauth2server.Endpoints{
+		Authorization:       api + "/oauth2/authorize",
+		Token:               api + "/oauth2/token",
+		Userinfo:            api + "/oauth2/userinfo",
+		JWKS:                api + "/oauth2/jwks",
+		Registration:        api + "/oauth2/register",
+		Introspection:       api + "/oauth2/introspect",
+		Revocation:          api + "/oauth2/revoke",
+		DeviceAuthorization: api + "/oauth2/device",
+	}
+
+	metadata := s.iamService.OAuth2ServerService.Metadata(endpoints)
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Cache-Control", "public, max-age=3600")
+	if err := json.NewEncoder(w).Encode(metadata); err != nil {
+		s.logger.ErrorCtx(r.Context(), "cannot encode OIDC discovery metadata", log.Error(err))
 	}
 }
 
