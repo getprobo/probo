@@ -52,6 +52,7 @@ type (
 	// AuthorizeRequest contains the parsed parameters for an authorization request.
 	AuthorizeRequest struct {
 		IdentityID          gid.GID
+		SessionID           gid.GID
 		ResponseType        string
 		ClientID            gid.GID
 		RedirectURI         string
@@ -1089,6 +1090,7 @@ func (s *Service) Authorize(
 	pendingConsent := &coredata.OAuth2Consent{
 		ID:                  gid.New(client.ID.TenantID(), coredata.OAuth2ConsentEntityType),
 		IdentityID:          req.IdentityID,
+		SessionID:           req.SessionID,
 		ClientID:            client.ID,
 		Scopes:              requestedScopes,
 		RedirectURI:         req.RedirectURI,

@@ -220,6 +220,7 @@ func (h *OAuth2Handler) AuthorizeHandler(w http.ResponseWriter, r *http.Request)
 		r.Context(),
 		&oauth2server.AuthorizeRequest{
 			IdentityID:          identity.ID,
+			SessionID:           session.ID,
 			ResponseType:        q.Get("response_type"),
 			ClientID:            clientID,
 			RedirectURI:         redirectURI,

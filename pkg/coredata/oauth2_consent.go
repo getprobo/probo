@@ -32,6 +32,7 @@ type (
 	OAuth2Consent struct {
 		ID                  gid.GID                   `db:"id"`
 		IdentityID          gid.GID                   `db:"identity_id"`
+		SessionID           gid.GID                   `db:"session_id"`
 		ClientID            gid.GID                   `db:"client_id"`
 		Scopes              OAuth2Scopes              `db:"scopes"`
 		RedirectURI         string                    `db:"redirect_uri"`
@@ -65,6 +66,7 @@ func (c *OAuth2Consent) LoadByID(
 SELECT
 	id,
 	identity_id,
+	session_id,
 	client_id,
 	scopes,
 	redirect_uri,
@@ -111,6 +113,7 @@ func (c *OAuth2Consent) LoadMatchingConsent(
 SELECT
 	id,
 	identity_id,
+	session_id,
 	client_id,
 	scopes,
 	redirect_uri,
@@ -163,6 +166,7 @@ func (c *OAuth2Consent) Insert(ctx context.Context, conn pg.Conn) error {
 INSERT INTO iam_oauth2_consents (
 	id,
 	identity_id,
+	session_id,
 	client_id,
 	scopes,
 	redirect_uri,
@@ -176,6 +180,7 @@ INSERT INTO iam_oauth2_consents (
 ) VALUES (
 	@id,
 	@identity_id,
+	@session_id,
 	@client_id,
 	@scopes,
 	@redirect_uri,
@@ -192,6 +197,7 @@ INSERT INTO iam_oauth2_consents (
 	args := pgx.StrictNamedArgs{
 		"id":                    c.ID,
 		"identity_id":           c.IdentityID,
+		"session_id":            c.SessionID,
 		"client_id":             c.ClientID,
 		"scopes":                c.Scopes,
 		"redirect_uri":          c.RedirectURI,
@@ -269,6 +275,7 @@ func (c *OAuth2Consents) LoadByIdentityID(
 SELECT
 	id,
 	identity_id,
+	session_id,
 	client_id,
 	scopes,
 	redirect_uri,
