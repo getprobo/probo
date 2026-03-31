@@ -236,7 +236,7 @@ export const TrustCenterReferenceDialog = forwardRef<TrustCenterReferenceDialogR
 
               <Field label={__("Logo")}>
                 <Dropzone
-                  description={__("Upload logo image (PNG, JPG, WEBP up to 5MB)")}
+                  description={__("Upload logo image (PNG, JPG, WEBP, SVG up to 5MB)")}
                   isUploading={isSubmitting}
                   onDrop={handleDrop}
                   accept={acceptImage}

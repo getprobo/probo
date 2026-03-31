@@ -42,7 +42,6 @@ export const acceptText = {
 export const acceptImage = {
   "image/jpeg": [".jpg", ".jpeg"],
   "image/png": [".png"],
-  "image/gif": [".gif"],
   "image/svg+xml": [".svg"],
   "image/webp": [".webp"],
 } satisfies Record<string, string[]>;

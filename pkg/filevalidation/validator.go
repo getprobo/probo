@@ -72,7 +72,6 @@ var FileTypes = []FileType{
 	// Image types
 	{MimeType: "image/jpeg", Extensions: []string{".jpg", ".jpeg"}, Category: CategoryImage},
 	{MimeType: "image/png", Extensions: []string{".png"}, Category: CategoryImage},
-	{MimeType: "image/gif", Extensions: []string{".gif"}, Category: CategoryImage},
 	{MimeType: "image/svg+xml", Extensions: []string{".svg"}, Category: CategoryImage},
 	{MimeType: "image/webp", Extensions: []string{".webp"}, Category: CategoryImage},
 
