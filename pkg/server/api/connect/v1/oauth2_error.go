@@ -17,14 +17,62 @@ package connect_v1
 import (
 	"errors"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"go.gearno.de/kit/httpserver"
 	"go.probo.inc/probo/pkg/iam/oauth2server"
 )
 
-func writeOAuth2Error(w http.ResponseWriter, err error) {
+// oauth2RedirectContext wraps an OAuth2 error with redirect context for the
+// authorization endpoint. When handled, redirectable errors are sent back
+// to the client via query parameters instead of rendered as JSON.
+type oauth2RedirectContext struct {
+	err         error
+	redirectURI string
+	state       string
+}
+
+func (e *oauth2RedirectContext) Error() string { return e.err.Error() }
+func (e *oauth2RedirectContext) Unwrap() error { return e.err }
+
+// withRedirect wraps an error with redirect context so that writeOAuth2Error
+// can redirect back to the client when appropriate.
+func withRedirect(err error, redirectURI, state string) error {
+	return &oauth2RedirectContext{
+		err:         err,
+		redirectURI: redirectURI,
+		state:       state,
+	}
+}
+
+// writeOAuth2Error is the single entry point for all OAuth2 error responses.
+// It inspects the error to determine the response mode:
+//
+//   - Redirect: if the error carries redirect context and the error is
+//     redirectable (i.e. not an invalid client or bad redirect_uri), the
+//     error is sent back to the client via query parameters.
+//   - Render: if the error is a known OAuth2 error, it is rendered as a JSON
+//     response with the appropriate HTTP status code.
+//   - Internal: if the error is not a known OAuth2 error, an HTTP 500 is
+//     returned.
+func writeOAuth2Error(w http.ResponseWriter, r *http.Request, err error) {
+	var rc *oauth2RedirectContext
+	if errors.As(err, &rc) {
+		if isRedirectableError(err) && rc.redirectURI != "" {
+			redirectWithError(w, r, rc.redirectURI, rc.state, rc.err)
+			return
+		}
+
+		err = rc.err
+	}
+
 	code := oauth2server.OAuth2ErrorCode(err)
+	if code == "server_error" && !errors.Is(err, oauth2server.ErrServerError) {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
 	description := oauth2ErrorDescription(err, code)
 	statusCode := oauth2ErrorStatusCode(err)
 
@@ -37,6 +85,15 @@ func writeOAuth2Error(w http.ResponseWriter, err error) {
 		Code:        code,
 		Description: description,
 	})
+}
+
+// isRedirectableError returns true if the error should be redirected back
+// to the client. Errors related to invalid client identity or redirect URI
+// must never be redirected.
+func isRedirectableError(err error) bool {
+	return !errors.Is(err, oauth2server.ErrInvalidClient) &&
+		!errors.Is(err, oauth2server.ErrInvalidRedirectURI) &&
+		!errors.Is(err, oauth2server.ErrServerError)
 }
 
 func oauth2ErrorStatusCode(err error) int {
@@ -65,4 +122,27 @@ func oauth2ErrorDescription(err error, code string) string {
 	}
 
 	return msg
+}
+
+func redirectWithError(w http.ResponseWriter, r *http.Request, redirectURI, state string, err error) {
+	u, parseErr := url.Parse(redirectURI)
+	if parseErr != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	code := oauth2server.OAuth2ErrorCode(err)
+	description := oauth2ErrorDescription(err, code)
+
+	q := u.Query()
+	q.Set("error", code)
+	if description != "" {
+		q.Set("error_description", description)
+	}
+	if state != "" {
+		q.Set("state", state)
+	}
+	u.RawQuery = q.Encode()
+
+	http.Redirect(w, r, u.String(), http.StatusFound)
 }

@@ -78,4 +78,3 @@ func OAuth2ErrorCode(err error) string {
 		return "server_error"
 	}
 }
-

@@ -99,7 +99,7 @@ func (h *OAuth2Handler) ClientAuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		client, err := h.authenticateClient(r)
 		if err != nil {
-			writeOAuth2Error(w, oauth2server.ErrInvalidClient)
+			writeOAuth2Error(w, r, oauth2server.ErrInvalidClient)
 			return
 		}
 
@@ -174,7 +174,7 @@ func (h *OAuth2Handler) AuthorizeHandler(w http.ResponseWriter, r *http.Request)
 		// Prevent infinite redirect loop: if we already redirected to login
 		// and came back without a valid session, return an error.
 		if r.URL.Query().Get("_login_redirect") == "1" {
-			writeOAuth2Error(w, fmt.Errorf("%w: authentication required", oauth2server.ErrInvalidRequest))
+			writeOAuth2Error(w, r, fmt.Errorf("%w: authentication required", oauth2server.ErrInvalidRequest))
 			return
 		}
 
@@ -195,13 +195,13 @@ func (h *OAuth2Handler) AuthorizeHandler(w http.ResponseWriter, r *http.Request)
 
 	clientIDStr := q.Get("client_id")
 	if clientIDStr == "" {
-		writeOAuth2Error(w, fmt.Errorf("%w: missing client_id", oauth2server.ErrInvalidRequest))
+		writeOAuth2Error(w, r, fmt.Errorf("%w: missing client_id", oauth2server.ErrInvalidRequest))
 		return
 	}
 
 	clientID, err := gid.ParseGID(clientIDStr)
 	if err != nil {
-		writeOAuth2Error(w, fmt.Errorf("%w: invalid client_id", oauth2server.ErrInvalidRequest))
+		writeOAuth2Error(w, r, fmt.Errorf("%w: invalid client_id", oauth2server.ErrInvalidRequest))
 		return
 	}
 
@@ -239,18 +239,7 @@ func (h *OAuth2Handler) AuthorizeHandler(w http.ResponseWriter, r *http.Request)
 	}
 
 	if err != nil {
-		switch {
-		case errors.Is(err, oauth2server.ErrInvalidClient),
-			errors.Is(err, oauth2server.ErrInvalidRedirectURI):
-			writeOAuth2Error(w, err)
-		case errors.Is(err, oauth2server.ErrAccessDenied),
-			errors.Is(err, oauth2server.ErrInvalidRequest),
-			errors.Is(err, oauth2server.ErrInvalidScope),
-			errors.Is(err, oauth2server.ErrUnauthorizedClient):
-			redirectWithError(w, r, redirectURI, oauth2server.OAuth2ErrorCode(err), oauth2ErrorDescription(err, oauth2server.OAuth2ErrorCode(err)), state)
-		default:
-			writeOAuth2Error(w, oauth2server.ErrServerError)
-		}
+		writeOAuth2Error(w, r, withRedirect(err, redirectURI, state))
 		return
 	}
 
@@ -263,13 +252,13 @@ func (h *OAuth2Handler) AuthorizeConsentHandler(w http.ResponseWriter, r *http.R
 	identity := authn.IdentityFromContext(r.Context())
 
 	if err := r.ParseForm(); err != nil {
-		writeOAuth2Error(w, fmt.Errorf("%w: invalid form data", oauth2server.ErrInvalidRequest))
+		writeOAuth2Error(w, r, fmt.Errorf("%w: invalid form data", oauth2server.ErrInvalidRequest))
 		return
 	}
 
 	consentID, err := gid.ParseGID(r.FormValue("consent_id"))
 	if err != nil {
-		writeOAuth2Error(w, fmt.Errorf("%w: invalid consent_id", oauth2server.ErrInvalidRequest))
+		writeOAuth2Error(w, r, fmt.Errorf("%w: invalid consent_id", oauth2server.ErrInvalidRequest))
 		return
 	}
 
@@ -290,18 +279,7 @@ func (h *OAuth2Handler) AuthorizeConsentHandler(w http.ResponseWriter, r *http.R
 	)
 	if err != nil {
 		h.logger.ErrorCtx(r.Context(), "cannot approve consent", log.Error(err))
-		switch {
-		case errors.Is(err, oauth2server.ErrInvalidClient),
-			errors.Is(err, oauth2server.ErrInvalidRedirectURI):
-			writeOAuth2Error(w, err)
-		case errors.Is(err, oauth2server.ErrAccessDenied),
-			errors.Is(err, oauth2server.ErrInvalidRequest),
-			errors.Is(err, oauth2server.ErrInvalidScope),
-			errors.Is(err, oauth2server.ErrUnauthorizedClient):
-			redirectWithError(w, r, redirectURI, oauth2server.OAuth2ErrorCode(err), oauth2ErrorDescription(err, oauth2server.OAuth2ErrorCode(err)), state)
-		default:
-			writeOAuth2Error(w, oauth2server.ErrServerError)
-		}
+		writeOAuth2Error(w, r, withRedirect(err, redirectURI, state))
 		return
 	}
 
@@ -312,7 +290,7 @@ func (h *OAuth2Handler) AuthorizeConsentHandler(w http.ResponseWriter, r *http.R
 // POST /oauth2/token
 func (h *OAuth2Handler) TokenHandler(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm(); err != nil {
-		writeOAuth2Error(w, fmt.Errorf("%w: invalid form data", oauth2server.ErrInvalidRequest))
+		writeOAuth2Error(w, r, fmt.Errorf("%w: invalid form data", oauth2server.ErrInvalidRequest))
 		return
 	}
 
@@ -326,7 +304,7 @@ func (h *OAuth2Handler) TokenHandler(w http.ResponseWriter, r *http.Request) {
 	case "urn:ietf:params:oauth:grant-type:device_code":
 		h.handleDeviceCodeGrant(w, r)
 	default:
-		writeOAuth2Error(w, oauth2server.ErrUnsupportedGrantType)
+		writeOAuth2Error(w, r, oauth2server.ErrUnsupportedGrantType)
 	}
 }
 
@@ -336,13 +314,13 @@ func (h *OAuth2Handler) IntrospectHandler(w http.ResponseWriter, r *http.Request
 	client := oauth2ClientFromContext(r)
 
 	if err := r.ParseForm(); err != nil {
-		writeOAuth2Error(w, fmt.Errorf("%w: invalid form data", oauth2server.ErrInvalidRequest))
+		writeOAuth2Error(w, r, fmt.Errorf("%w: invalid form data", oauth2server.ErrInvalidRequest))
 		return
 	}
 
 	token := r.FormValue("token")
 	if token == "" {
-		writeOAuth2Error(w, fmt.Errorf("%w: missing token parameter", oauth2server.ErrInvalidRequest))
+		writeOAuth2Error(w, r, fmt.Errorf("%w: missing token parameter", oauth2server.ErrInvalidRequest))
 		return
 	}
 
@@ -393,20 +371,20 @@ func (h *OAuth2Handler) RevokeHandler(w http.ResponseWriter, r *http.Request) {
 // POST /oauth2/device
 func (h *OAuth2Handler) DeviceAuthHandler(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm(); err != nil {
-		writeOAuth2Error(w, fmt.Errorf("%w: invalid form data", oauth2server.ErrInvalidRequest))
+		writeOAuth2Error(w, r, fmt.Errorf("%w: invalid form data", oauth2server.ErrInvalidRequest))
 		return
 	}
 
 	clientID, err := gid.ParseGID(r.FormValue("client_id"))
 	if err != nil {
-		writeOAuth2Error(w, fmt.Errorf("%w: invalid client_id", oauth2server.ErrInvalidRequest))
+		writeOAuth2Error(w, r, fmt.Errorf("%w: invalid client_id", oauth2server.ErrInvalidRequest))
 		return
 	}
 
 	var scopes coredata.OAuth2Scopes
 	if scopeStr := r.FormValue("scope"); scopeStr != "" {
 		if err := scopes.UnmarshalText([]byte(scopeStr)); err != nil {
-			writeOAuth2Error(w, fmt.Errorf("%w: invalid scope", oauth2server.ErrInvalidRequest))
+			writeOAuth2Error(w, r, fmt.Errorf("%w: invalid scope", oauth2server.ErrInvalidRequest))
 			return
 		}
 	}
@@ -418,7 +396,7 @@ func (h *OAuth2Handler) DeviceAuthHandler(w http.ResponseWriter, r *http.Request
 	)
 	if err != nil {
 		h.logger.ErrorCtx(r.Context(), "cannot create device code", log.Error(err))
-		writeOAuth2Error(w, err)
+		writeOAuth2Error(w, r, err)
 		return
 	}
 
@@ -445,7 +423,7 @@ func (h *OAuth2Handler) RegisterHandler(w http.ResponseWriter, r *http.Request) 
 	var req oauth2server.RegisterClientRequest
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeOAuth2Error(w, fmt.Errorf("%w: invalid JSON body", oauth2server.ErrInvalidRequest))
+		writeOAuth2Error(w, r, fmt.Errorf("%w: invalid JSON body", oauth2server.ErrInvalidRequest))
 		return
 	}
 
@@ -454,7 +432,7 @@ func (h *OAuth2Handler) RegisterHandler(w http.ResponseWriter, r *http.Request) 
 	clientID, clientSecret, err := h.iam.OAuth2ServerService.RegisterClient(r.Context(), &req)
 	if err != nil {
 		h.logger.ErrorCtx(r.Context(), "cannot register client", log.Error(err))
-		writeOAuth2Error(w, err)
+		writeOAuth2Error(w, r, err)
 		return
 	}
 
@@ -483,7 +461,7 @@ func (h *OAuth2Handler) UserInfoHandler(w http.ResponseWriter, r *http.Request) 
 
 	identity, err := h.iam.AccountService.GetIdentity(r.Context(), accessToken.IdentityID)
 	if err != nil {
-		writeOAuth2Error(w, oauth2server.ErrServerError)
+		writeOAuth2Error(w, r, oauth2server.ErrServerError)
 		return
 	}
 
@@ -591,7 +569,7 @@ func (h *OAuth2Handler) authenticateClient(r *http.Request) (*coredata.OAuth2Cli
 func (h *OAuth2Handler) handleAuthorizationCodeGrant(w http.ResponseWriter, r *http.Request) {
 	client, err := h.authenticateClient(r)
 	if err != nil {
-		writeOAuth2Error(w, oauth2server.ErrInvalidClient)
+		writeOAuth2Error(w, r, oauth2server.ErrInvalidClient)
 		return
 	}
 
@@ -600,7 +578,7 @@ func (h *OAuth2Handler) handleAuthorizationCodeGrant(w http.ResponseWriter, r *h
 	codeVerifier := r.FormValue("code_verifier")
 
 	if code == "" {
-		writeOAuth2Error(w, fmt.Errorf("%w: missing code", oauth2server.ErrInvalidGrant))
+		writeOAuth2Error(w, r, fmt.Errorf("%w: missing code", oauth2server.ErrInvalidGrant))
 		return
 	}
 
@@ -613,7 +591,7 @@ func (h *OAuth2Handler) handleAuthorizationCodeGrant(w http.ResponseWriter, r *h
 	)
 	if err != nil {
 		h.logger.ErrorCtx(r.Context(), "cannot exchange authorization code", log.Error(err))
-		writeOAuth2Error(w, fmt.Errorf("%w: invalid or expired code", oauth2server.ErrInvalidGrant))
+		writeOAuth2Error(w, r, fmt.Errorf("%w: invalid or expired code", oauth2server.ErrInvalidGrant))
 		return
 	}
 
@@ -623,20 +601,20 @@ func (h *OAuth2Handler) handleAuthorizationCodeGrant(w http.ResponseWriter, r *h
 func (h *OAuth2Handler) handleRefreshTokenGrant(w http.ResponseWriter, r *http.Request) {
 	client, err := h.authenticateClient(r)
 	if err != nil {
-		writeOAuth2Error(w, oauth2server.ErrInvalidClient)
+		writeOAuth2Error(w, r, oauth2server.ErrInvalidClient)
 		return
 	}
 
 	refreshTokenValue := r.FormValue("refresh_token")
 	if refreshTokenValue == "" {
-		writeOAuth2Error(w, fmt.Errorf("%w: missing refresh_token", oauth2server.ErrInvalidGrant))
+		writeOAuth2Error(w, r, fmt.Errorf("%w: missing refresh_token", oauth2server.ErrInvalidGrant))
 		return
 	}
 
 	tokenResponse, err := h.iam.OAuth2ServerService.RefreshToken(r.Context(), client, refreshTokenValue)
 	if err != nil {
 		h.logger.ErrorCtx(r.Context(), "cannot refresh token", log.Error(err))
-		writeOAuth2Error(w, fmt.Errorf("%w: invalid or expired refresh token", oauth2server.ErrInvalidGrant))
+		writeOAuth2Error(w, r, fmt.Errorf("%w: invalid or expired refresh token", oauth2server.ErrInvalidGrant))
 		return
 	}
 
@@ -648,13 +626,13 @@ func (h *OAuth2Handler) handleDeviceCodeGrant(w http.ResponseWriter, r *http.Req
 	deviceCodeValue := r.FormValue("device_code")
 
 	if clientIDStr == "" || deviceCodeValue == "" {
-		writeOAuth2Error(w, fmt.Errorf("%w: missing client_id or device_code", oauth2server.ErrInvalidRequest))
+		writeOAuth2Error(w, r, fmt.Errorf("%w: missing client_id or device_code", oauth2server.ErrInvalidRequest))
 		return
 	}
 
 	clientID, err := gid.ParseGID(clientIDStr)
 	if err != nil {
-		writeOAuth2Error(w, fmt.Errorf("%w: invalid client_id", oauth2server.ErrInvalidRequest))
+		writeOAuth2Error(w, r, fmt.Errorf("%w: invalid client_id", oauth2server.ErrInvalidRequest))
 		return
 	}
 
@@ -664,7 +642,7 @@ func (h *OAuth2Handler) handleDeviceCodeGrant(w http.ResponseWriter, r *http.Req
 		deviceCodeValue,
 	)
 	if err != nil {
-		writeOAuth2Error(w, err)
+		writeOAuth2Error(w, r, err)
 		return
 	}
 
@@ -687,24 +665,6 @@ func (h *OAuth2Handler) renderConsentPage(
 		ClientName: client.ClientName,
 		Scopes:     scopes,
 	})
-}
-
-func redirectWithError(w http.ResponseWriter, r *http.Request, redirectURI, errorCode, description, state string) {
-	u, err := url.Parse(redirectURI)
-	if err != nil {
-		writeOAuth2Error(w, fmt.Errorf("%w: invalid redirect_uri", oauth2server.ErrServerError))
-		return
-	}
-
-	q := u.Query()
-	q.Set("error", errorCode)
-	q.Set("error_description", description)
-	if state != "" {
-		q.Set("state", state)
-	}
-	u.RawQuery = q.Encode()
-
-	http.Redirect(w, r, u.String(), http.StatusFound)
 }
 
 func redirectWithCode(w http.ResponseWriter, r *http.Request, redirectURI, code, state string) {
