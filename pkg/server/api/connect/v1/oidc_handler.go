@@ -36,12 +36,12 @@ import (
 type IsTrustCenterDomainFunc func(ctx context.Context, host string) bool
 
 type OIDCHandler struct {
-	iam                  *iam.Service
-	sessionCookie        *authn.Cookie
-	cookieSecret         string
-	logger               *log.Logger
-	safeRedirect         *saferedirect.SafeRedirect
-	isTrustCenterDomain  IsTrustCenterDomainFunc
+	iam                 *iam.Service
+	sessionCookie       *authn.Cookie
+	cookieSecret        string
+	logger              *log.Logger
+	safeRedirect        *saferedirect.SafeRedirect
+	isTrustCenterDomain IsTrustCenterDomainFunc
 }
 
 func NewOIDCHandler(
