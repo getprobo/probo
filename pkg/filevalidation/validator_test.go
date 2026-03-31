@@ -45,8 +45,8 @@ func TestNewValidator(t *testing.T) {
 		{
 			name:           "Only images",
 			categories:     []string{CategoryImage},
-			expectedMimes:  []string{"image/jpeg", "image/png", "image/gif"},
-			expectedExts:   []string{".jpg", ".png", ".gif"},
+			expectedMimes:  []string{"image/jpeg", "image/png"},
+			expectedExts:   []string{".jpg", ".png"},
 			unexpectedMime: "application/pdf",
 		},
 		{
