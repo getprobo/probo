@@ -227,6 +227,7 @@ func (h *OAuth2Handler) AuthorizeHandler(w http.ResponseWriter, r *http.Request)
 			CodeChallenge:       q.Get("code_challenge"),
 			CodeChallengeMethod: coredata.OAuth2CodeChallengeMethod(q.Get("code_challenge_method")),
 			Nonce:               q.Get("nonce"),
+			State:               state,
 			AuthTime:            authTime,
 		},
 	)
@@ -234,13 +235,9 @@ func (h *OAuth2Handler) AuthorizeHandler(w http.ResponseWriter, r *http.Request)
 	if consentErr, ok := errors.AsType[*oauth2server.ConsentRequiredError](err); ok {
 		h.renderConsentPage(
 			w,
+			consentErr.ConsentID,
 			consentErr.Client,
-			redirectURI,
 			consentErr.Scopes,
-			state,
-			q.Get("code_challenge"),
-			q.Get("code_challenge_method"),
-			q.Get("nonce"),
 		)
 		return
 	}
@@ -274,12 +271,9 @@ func (h *OAuth2Handler) AuthorizeConsentHandler(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	redirectURI := r.FormValue("redirect_uri")
-	state := r.FormValue("state")
-
-	clientID, err := gid.ParseGID(r.FormValue("client_id"))
+	consentID, err := gid.ParseGID(r.FormValue("consent_id"))
 	if err != nil {
-		writeOAuth2InvalidRequest(w, "invalid client_id")
+		writeOAuth2InvalidRequest(w, "invalid consent_id")
 		return
 	}
 
@@ -289,18 +283,13 @@ func (h *OAuth2Handler) AuthorizeConsentHandler(w http.ResponseWriter, r *http.R
 		authTime = session.CreatedAt
 	}
 
-	code, err := h.iam.OAuth2ServerService.ApproveConsent(
+	code, redirectURI, state, err := h.iam.OAuth2ServerService.ApproveConsent(
 		r.Context(),
 		&oauth2server.ConsentApprovalRequest{
-			IdentityID:          identity.ID,
-			ClientID:            clientID,
-			Approved:            r.FormValue("action") != "deny",
-			Scopes:              parseScopes(r.FormValue("scope")),
-			RedirectURI:         redirectURI,
-			CodeChallenge:       r.FormValue("code_challenge"),
-			CodeChallengeMethod: coredata.OAuth2CodeChallengeMethod(r.FormValue("code_challenge_method")),
-			Nonce:               r.FormValue("nonce"),
-			AuthTime:            authTime,
+			ConsentID:  consentID,
+			IdentityID: identity.ID,
+			Approved:   r.FormValue("action") != "deny",
+			AuthTime:   authTime,
 		},
 	)
 	if err != nil {
@@ -695,32 +684,19 @@ func (h *OAuth2Handler) handleDeviceCodeGrant(w http.ResponseWriter, r *http.Req
 
 func (h *OAuth2Handler) renderConsentPage(
 	w http.ResponseWriter,
+	consentID gid.GID,
 	client *coredata.OAuth2Client,
-	redirectURI string,
 	scopes coredata.OAuth2Scopes,
-	state, codeChallenge, codeChallengeMethod, nonce string,
 ) {
 	w.Header().Set("Content-Type", "text/html;charset=UTF-8")
 	_ = consentTmpl.Execute(w, struct {
-		ClientName          string
-		ClientID            string
-		RedirectURI         string
-		Scopes              coredata.OAuth2Scopes
-		Scope               string
-		State               string
-		CodeChallenge       string
-		CodeChallengeMethod string
-		Nonce               string
+		ConsentID  string
+		ClientName string
+		Scopes     coredata.OAuth2Scopes
 	}{
-		ClientName:          client.ClientName,
-		ClientID:            client.ID.String(),
-		RedirectURI:         redirectURI,
-		Scopes:              scopes,
-		Scope:               scopes.String(),
-		State:               state,
-		CodeChallenge:       codeChallenge,
-		CodeChallengeMethod: codeChallengeMethod,
-		Nonce:               nonce,
+		ConsentID:  consentID.String(),
+		ClientName: client.ClientName,
+		Scopes:     scopes,
 	})
 }
 

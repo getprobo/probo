@@ -59,6 +59,7 @@ type (
 		CodeChallenge       string
 		CodeChallengeMethod coredata.OAuth2CodeChallengeMethod
 		Nonce               string
+		State               string
 		AuthTime            time.Time
 	}
 
@@ -71,18 +72,12 @@ type (
 		CreatedAt  time.Time
 	}
 
-	// ConsentApprovalRequest contains the parameters for consent approval
-	// and authorization code issuance.
+	// ConsentApprovalRequest contains the parameters for consent approval.
 	ConsentApprovalRequest struct {
-		IdentityID          gid.GID
-		ClientID            gid.GID
-		Approved            bool
-		Scopes              coredata.OAuth2Scopes
-		RedirectURI         string
-		CodeChallenge       string
-		CodeChallengeMethod coredata.OAuth2CodeChallengeMethod
-		Nonce               string
-		AuthTime            time.Time
+		ConsentID  gid.GID
+		IdentityID gid.GID
+		Approved   bool
+		AuthTime   time.Time
 	}
 
 	// RegisterClientRequest contains the parameters for dynamic client registration.
@@ -274,51 +269,6 @@ func (s *Service) GetClientByID(ctx context.Context, clientID gid.GID) (*coredat
 	}
 
 	return &client, nil
-}
-
-// SaveConsent creates or updates a consent record for the given identity and client.
-func (s *Service) SaveConsent(
-	ctx context.Context,
-	identityID gid.GID,
-	clientID gid.GID,
-	scopes coredata.OAuth2Scopes,
-) error {
-	return s.pg.WithConn(
-		ctx,
-		func(conn pg.Conn) error {
-			var existing coredata.OAuth2Consent
-			err := existing.LoadByIdentityAndClient(ctx, conn, identityID, clientID)
-			if err == nil {
-				existing.Scopes = scopes
-				existing.UpdatedAt = time.Now()
-				if err := existing.Update(ctx, conn); err != nil {
-					return fmt.Errorf("cannot update consent: %w", err)
-				}
-
-				return nil
-			}
-
-			if !errors.Is(err, coredata.ErrResourceNotFound) {
-				return fmt.Errorf("cannot check existing consent: %w", err)
-			}
-
-			now := time.Now()
-			consent := &coredata.OAuth2Consent{
-				ID:         gid.New(identityID.TenantID(), coredata.OAuth2ConsentEntityType),
-				IdentityID: identityID,
-				ClientID:   clientID,
-				Scopes:     scopes,
-				CreatedAt:  now,
-				UpdatedAt:  now,
-			}
-
-			if err := consent.Insert(ctx, conn); err != nil {
-				return fmt.Errorf("cannot insert consent: %w", err)
-			}
-
-			return nil
-		},
-	)
 }
 
 // ExchangeAuthorizationCode validates and exchanges an authorization code for tokens.
@@ -1048,7 +998,7 @@ func (s *Service) Authorize(
 		return "", fmt.Errorf("cannot load client: %w", ErrInvalidClient)
 	}
 
-	if !slices.Contains(client.RedirectURIs, req.RedirectURI) {
+	if !client.IsRedirectURIValid(req.RedirectURI) {
 		return "", fmt.Errorf("%w", ErrInvalidRedirectURI)
 	}
 
@@ -1104,12 +1054,18 @@ func (s *Service) Authorize(
 		codeChallengeMethod = coredata.OAuth2CodeChallengeMethodS256
 	}
 
-	// Check existing consent.
-	var consent coredata.OAuth2Consent
+	// Check existing approved consent with matching scopes.
+	var existingConsent coredata.OAuth2Consent
 	consentErr := s.pg.WithConn(ctx, func(conn pg.Conn) error {
-		return consent.LoadByIdentityAndClient(ctx, conn, req.IdentityID, client.ID)
+		return existingConsent.LoadMatchingConsent(
+			ctx,
+			conn,
+			req.IdentityID,
+			client.ID,
+			requestedScopes,
+		)
 	})
-	if consentErr == nil && scopesMatch(consent.Scopes, requestedScopes) {
+	if consentErr == nil {
 		code, err := s.issueAuthorizationCode(
 			ctx,
 			client,
@@ -1128,46 +1084,100 @@ func (s *Service) Authorize(
 		return code, nil
 	}
 
+	// Create a pending consent record storing the full authorization request.
+	now := time.Now()
+	pendingConsent := &coredata.OAuth2Consent{
+		ID:                  gid.New(client.ID.TenantID(), coredata.OAuth2ConsentEntityType),
+		IdentityID:          req.IdentityID,
+		ClientID:            client.ID,
+		Scopes:              requestedScopes,
+		RedirectURI:         req.RedirectURI,
+		CodeChallenge:       req.CodeChallenge,
+		CodeChallengeMethod: codeChallengeMethod,
+		Nonce:               req.Nonce,
+		State:               req.State,
+		Approved:            false,
+		CreatedAt:           now,
+		UpdatedAt:           now,
+	}
+
+	if err := s.pg.WithConn(ctx, func(conn pg.Conn) error {
+		return pendingConsent.Insert(ctx, conn)
+	}); err != nil {
+		return "", fmt.Errorf("%w: cannot create pending consent", ErrServerError)
+	}
+
 	return "", &ConsentRequiredError{
-		Client: client,
-		Scopes: requestedScopes,
+		ConsentID: pendingConsent.ID,
+		Client:    client,
+		Scopes:    requestedScopes,
 	}
 }
 
-// ApproveConsent validates the client and redirect URI, then either issues
-// an authorization code (when approved) or returns ErrAccessDenied.
+// ApproveConsent loads the pending consent by ID, validates ownership, and
+// either issues an authorization code (when approved) or returns ErrAccessDenied.
+// Returns (code, redirect_uri, state, error).
 func (s *Service) ApproveConsent(
 	ctx context.Context,
 	req *ConsentApprovalRequest,
-) (string, error) {
-	client, err := s.GetClientByID(ctx, req.ClientID)
-	if err != nil {
-		return "", fmt.Errorf("cannot load client: %w", ErrInvalidClient)
+) (string, string, string, error) {
+	var consent coredata.OAuth2Consent
+	if err := s.pg.WithConn(ctx, func(conn pg.Conn) error {
+		return consent.LoadByID(ctx, conn, req.ConsentID)
+	}); err != nil {
+		return "", "", "", fmt.Errorf("%w: consent not found", ErrInvalidRequest)
 	}
 
-	if !slices.Contains(client.RedirectURIs, req.RedirectURI) {
-		return "", fmt.Errorf("%w", ErrInvalidRedirectURI)
+	if consent.IdentityID != req.IdentityID {
+		return "", "", "", fmt.Errorf("%w: consent does not belong to this identity", ErrAccessDenied)
+	}
+
+	if consent.Approved {
+		return "", "", "", fmt.Errorf("%w: consent already processed", ErrInvalidRequest)
+	}
+
+	client, err := s.GetClientByID(ctx, consent.ClientID)
+	if err != nil {
+		return "", "", "", fmt.Errorf("cannot load client: %w", ErrInvalidClient)
+	}
+
+	if !client.IsRedirectURIValid(consent.RedirectURI) {
+		return "", "", "", fmt.Errorf("%w", ErrInvalidRedirectURI)
 	}
 
 	if !req.Approved {
-		return "", fmt.Errorf("%w: user denied the request", ErrAccessDenied)
+		// Clean up the pending consent.
+		_ = s.pg.WithConn(ctx, func(conn pg.Conn) error {
+			return consent.Delete(ctx, conn)
+		})
+		return "", consent.RedirectURI, consent.State, fmt.Errorf("%w: user denied the request", ErrAccessDenied)
 	}
 
-	if err := s.SaveConsent(ctx, req.IdentityID, client.ID, req.Scopes); err != nil {
-		s.logger.WarnCtx(ctx, "cannot save consent", log.Error(err))
+	// Mark consent as approved.
+	consent.Approved = true
+	consent.UpdatedAt = time.Now()
+	if err := s.pg.WithConn(ctx, func(conn pg.Conn) error {
+		return consent.Update(ctx, conn)
+	}); err != nil {
+		return "", consent.RedirectURI, consent.State, fmt.Errorf("%w: cannot approve consent", ErrServerError)
 	}
 
-	return s.issueAuthorizationCode(
+	code, err := s.issueAuthorizationCode(
 		ctx,
 		client,
-		req.IdentityID,
-		req.RedirectURI,
-		req.Scopes,
-		req.CodeChallenge,
-		req.CodeChallengeMethod,
-		req.Nonce,
+		consent.IdentityID,
+		consent.RedirectURI,
+		consent.Scopes,
+		consent.CodeChallenge,
+		consent.CodeChallengeMethod,
+		consent.Nonce,
 		req.AuthTime,
 	)
+	if err != nil {
+		return "", consent.RedirectURI, consent.State, err
+	}
+
+	return code, consent.RedirectURI, consent.State, nil
 }
 
 // AuthenticateClient verifies client credentials and returns the client.
@@ -1247,14 +1257,3 @@ func (s *Service) issueAuthorizationCode(
 	return codeValue, nil
 }
 
-func scopesMatch(a, b coredata.OAuth2Scopes) bool {
-	if len(a) != len(b) {
-		return false
-	}
-	for _, s := range b {
-		if !slices.Contains(a, s) {
-			return false
-		}
-	}
-	return true
-}

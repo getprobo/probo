@@ -18,6 +18,7 @@ import (
 	"errors"
 
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
 )
 
 var (
@@ -41,8 +42,9 @@ var (
 // ConsentRequiredError is returned by Authorize when the user must approve
 // the authorization request before a code can be issued.
 type ConsentRequiredError struct {
-	Client *coredata.OAuth2Client
-	Scopes coredata.OAuth2Scopes
+	ConsentID gid.GID
+	Client    *coredata.OAuth2Client
+	Scopes    coredata.OAuth2Scopes
 }
 
 func (e *ConsentRequiredError) Error() string {

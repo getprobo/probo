@@ -37,13 +37,7 @@
       {{- end}}
     </ul>
     <form method="POST" action="/api/connect/v1/oauth2/authorize">
-      <input type="hidden" name="client_id" value="{{.ClientID}}">
-      <input type="hidden" name="redirect_uri" value="{{.RedirectURI}}">
-      <input type="hidden" name="scope" value="{{.Scope}}">
-      <input type="hidden" name="state" value="{{.State}}">
-      <input type="hidden" name="code_challenge" value="{{.CodeChallenge}}">
-      <input type="hidden" name="code_challenge_method" value="{{.CodeChallengeMethod}}">
-      <input type="hidden" name="nonce" value="{{.Nonce}}">
+      <input type="hidden" name="consent_id" value="{{.ConsentID}}">
       <button type="submit" name="action" value="approve">Allow</button>
       <button type="submit" name="action" value="deny">Deny</button>
     </form>
