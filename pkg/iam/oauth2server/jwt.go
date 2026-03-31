@@ -22,10 +22,10 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"math/big"
 	"time"
 
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/crypto/jose"
 	"go.probo.inc/probo/pkg/gid"
 )
 
@@ -56,35 +56,13 @@ type (
 		Scope         coredata.OAuth2Scopes `json:"-"`
 	}
 
-	// JWTHeader represents a JWT header.
-	JWTHeader struct {
-		Algorithm string `json:"alg"`
-		Type      string `json:"typ"`
-		KeyID     string `json:"kid"`
-	}
-
-	// JWK represents a JSON Web Key.
-	JWK struct {
-		KeyType   string `json:"kty"`
-		Use       string `json:"use"`
-		Algorithm string `json:"alg"`
-		KeyID     string `json:"kid"`
-		N         string `json:"n"`
-		E         string `json:"e"`
-	}
-
-	// JWKS represents a JSON Web Key Set.
-	JWKS struct {
-		Keys []JWK `json:"keys"`
-	}
-
 	// SigningKeys is a collection of signing keys.
 	SigningKeys []SigningKey
 )
 
 // SignIDToken signs an ID token with the given signing key.
 func SignIDToken(sk *SigningKey, claims *IDTokenClaims) (string, error) {
-	header := JWTHeader{
+	header := jose.JWTHeader{
 		Algorithm: "RS256",
 		Type:      "JWT",
 		KeyID:     sk.KID,
@@ -168,29 +146,4 @@ func NewIDTokenClaims(
 	}
 
 	return claims
-}
-
-// PublicJWK returns the public JWK representation of the signing key.
-func (k *SigningKey) PublicJWK() JWK {
-	return JWK{
-		KeyType:   "RSA",
-		Use:       "sig",
-		Algorithm: "RS256",
-		KeyID:     k.KID,
-		N:         base64.RawURLEncoding.EncodeToString(k.PrivateKey.N.Bytes()),
-		E:         base64.RawURLEncoding.EncodeToString(big.NewInt(int64(k.PrivateKey.E)).Bytes()),
-	}
-}
-
-// PublicJWKS returns the JWKS containing the public keys for all signing keys.
-func (keys SigningKeys) PublicJWKS() *JWKS {
-	jwks := &JWKS{
-		Keys: make([]JWK, 0, len(keys)),
-	}
-
-	for i := range keys {
-		jwks.Keys = append(jwks.Keys, keys[i].PublicJWK())
-	}
-
-	return jwks
 }

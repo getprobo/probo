@@ -29,6 +29,7 @@ import (
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/crypto/jose"
 	"go.probo.inc/probo/pkg/gid"
 )
 
@@ -168,8 +169,16 @@ func (s *Service) Metadata(endpoints Endpoints) *ServerMetadata {
 }
 
 // JWKS returns the public key set.
-func (s *Service) JWKS() *JWKS {
-	return s.signingKeys.PublicJWKS()
+func (s *Service) JWKS() *jose.JWKS {
+	jwks := &jose.JWKS{
+		Keys: make([]jose.JWK, 0, len(s.signingKeys)),
+	}
+
+	for _, sk := range s.signingKeys {
+		jwks.Keys = append(jwks.Keys, jose.RSAPublicKeyToJWK(&sk.PrivateKey.PublicKey, sk.KID))
+	}
+
+	return jwks
 }
 
 // hashToken computes SHA-256 hash of a token value.

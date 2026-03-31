@@ -20,7 +20,6 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
-	"math/big"
 	"strings"
 	"testing"
 	"time"
@@ -28,6 +27,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/crypto/jose"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam/oauth2server"
 )
@@ -89,7 +89,7 @@ func TestSignIDToken(t *testing.T) {
 			headerJSON, err := base64.RawURLEncoding.DecodeString(parts[0])
 			require.NoError(t, err)
 
-			var header oauth2server.JWTHeader
+			var header jose.JWTHeader
 			err = json.Unmarshal(headerJSON, &header)
 			require.NoError(t, err)
 
@@ -458,94 +458,6 @@ func TestNewIDTokenClaims(t *testing.T) {
 
 			require.NotNil(t, claims.EmailVerified)
 			assert.False(t, *claims.EmailVerified)
-		},
-	)
-}
-
-func TestPublicJWKS(t *testing.T) {
-	t.Parallel()
-
-	key := testRSAKey(t)
-
-	t.Run(
-		"returns single key in set",
-		func(t *testing.T) {
-			t.Parallel()
-
-			jwks := oauth2server.SigningKeys{
-				{PrivateKey: key, KID: "kid-1"},
-			}.PublicJWKS()
-			require.Len(t, jwks.Keys, 1)
-		},
-	)
-
-	t.Run(
-		"key fields are correct",
-		func(t *testing.T) {
-			t.Parallel()
-
-			jwks := oauth2server.SigningKeys{
-				{PrivateKey: key, KID: "kid-1"},
-			}.PublicJWKS()
-			jwk := jwks.Keys[0]
-
-			assert.Equal(t, "RSA", jwk.KeyType)
-			assert.Equal(t, "sig", jwk.Use)
-			assert.Equal(t, "RS256", jwk.Algorithm)
-			assert.Equal(t, "kid-1", jwk.KeyID)
-		},
-	)
-
-	t.Run(
-		"modulus encodes correctly",
-		func(t *testing.T) {
-			t.Parallel()
-
-			jwks := oauth2server.SigningKeys{
-				{PrivateKey: key, KID: "kid-1"},
-			}.PublicJWKS()
-			jwk := jwks.Keys[0]
-
-			nBytes, err := base64.RawURLEncoding.DecodeString(jwk.N)
-			require.NoError(t, err)
-
-			n := new(big.Int).SetBytes(nBytes)
-			assert.Equal(t, key.N, n)
-		},
-	)
-
-	t.Run(
-		"exponent encodes correctly",
-		func(t *testing.T) {
-			t.Parallel()
-
-			jwks := oauth2server.SigningKeys{
-				{PrivateKey: key, KID: "kid-1"},
-			}.PublicJWKS()
-			jwk := jwks.Keys[0]
-
-			eBytes, err := base64.RawURLEncoding.DecodeString(jwk.E)
-			require.NoError(t, err)
-
-			e := new(big.Int).SetBytes(eBytes)
-			assert.Equal(t, int64(key.E), e.Int64())
-		},
-	)
-
-	t.Run(
-		"multiple keys are all included",
-		func(t *testing.T) {
-			t.Parallel()
-
-			key2 := testRSAKey(t)
-			jwks := oauth2server.SigningKeys{
-				{PrivateKey: key, KID: "kid-a"},
-				{PrivateKey: key2, KID: "kid-b"},
-			}.PublicJWKS()
-
-			require.Len(t, jwks.Keys, 2)
-			assert.Equal(t, "kid-a", jwks.Keys[0].KeyID)
-			assert.Equal(t, "kid-b", jwks.Keys[1].KeyID)
 		},
 	)
 }
