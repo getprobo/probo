@@ -13,68 +13,68 @@
     --color-level-3: #141e12;
 
     /* Text colors */
-    --color-txt-primary: #141e12;
-    --color-invert: #fcfdfc;
+    --color-txt-primary: #1e293b;
+    --color-invert: #f8fafc;
     --color-txt-invert: var(--color-invert);
-    --color-txt-secondary: #6b716a;
-    --color-txt-tertiary: #818780;
-    --color-txt-quaternary: #c3c8c2;
-    --color-txt-disabled: #000000;
-    --color-txt-accent: #93c926;
+    --color-txt-secondary: #64748b;
+    --color-txt-tertiary: #94a3b8;
+    --color-txt-quaternary: #cbd5e1;
+    --color-txt-disabled: #94a3b8;
+    --color-txt-accent: #F54900;
     --color-txt-danger: #cd2b31;
     --color-txt-success: #5d770d;
     --color-txt-info: #006adc;
     --color-txt-warning: #ad5700;
 
     /* Backgrounds */
-    --color-primary: #141e12;
+    --color-primary: #F54900;
     --color-invert: #ffffff;
     --color-secondary: #ffffff;
     --color-tertiary: #ffffff;
-    --color-subtle: #054d0507;
-    --color-highlight: #0027000d;
-    --color-active: #e4f7c7;
-    --color-accent: #141e12;
-    --color-danger: #ffefef;
+    --color-subtle: rgba(245, 73, 0, 0.03);
+    --color-highlight: rgba(245, 73, 0, 0.05);
+    --color-active: #fff4ef;
+    --color-accent: #F54900;
+    --color-danger: #fef2f2;
     --color-danger-plain: #dc3d43;
     --color-danger-dark: #dc3d43;
-    --color-success: #eefadc;
+    --color-success: #f0fdf4;
     --color-info: #edf6ff;
-    --color-warning: #fff4d5;
-    --color-dialog: #141e12;
+    --color-warning: #fffbeb;
+    --color-dialog: #1e293b;
 
     /* Borders */
-    --color-border-solid: #ecefec;
-    --color-border-low: #022a0213;
-    --color-border-mid: #001a0027;
-    --color-border-strong: #051a013d;
-    --color-border-active: #141e12;
-    --color-border-accent: #93c926;
+    --color-border-solid: #e2e8f0;
+    --color-border-low: rgba(30, 41, 59, 0.07);
+    --color-border-mid: rgba(30, 41, 59, 0.15);
+    --color-border-strong: rgba(30, 41, 59, 0.24);
+    --color-border-active: #1e293b;
+    --color-border-accent: #F54900;
     --color-border-danger: #dc3d43;
-    --color-border-success: #93c926;
+    --color-border-success: #16a34a;
     --color-border-warning: #ffa01c;
     --color-border-info: #0081f1;
 
     /* Hover */
-    --color-primary-hover: #273025;
-    --color-invert-hover: #f8faf8;
-    --color-secondary-hover: #f8faf8;
-    --color-tertiary-hover: #054d0507;
-    --color-subtle-hover: #0027000d;
-    --color-highlight-hover: #022a0213;
-    --color-accent-hover: #1e2c1c;
-    --color-active-hover: #d7f2b0;
+    --color-primary-hover: #d94000;
+    --color-invert-hover: #f1f5f9;
+    --color-secondary-hover: #f1f5f9;
+    --color-tertiary-hover: rgba(245, 73, 0, 0.03);
+    --color-subtle-hover: rgba(245, 73, 0, 0.05);
+    --color-highlight-hover: rgba(245, 73, 0, 0.08);
+    --color-accent-hover: #d94000;
+    --color-active-hover: #ffe8db;
     --color-danger-hover: #cf393f;
 
     /* Pressed */
-    --color-primary-pressed: #30392e;
-    --color-invert-pressed: #f2f4f2;
-    --color-secondary-pressed: #f2f4f2;
-    --color-tertiary-pressed: #0027000d;
-    --color-subtle-pressed: #022a0213;
-    --color-highlight-pressed: #02210219;
-    --color-accent-pressed: #293a25;
-    --color-active-pressed: #c9e894;
+    --color-primary-pressed: #c03800;
+    --color-invert-pressed: #e2e8f0;
+    --color-secondary-pressed: #e2e8f0;
+    --color-tertiary-pressed: rgba(245, 73, 0, 0.05);
+    --color-subtle-pressed: rgba(245, 73, 0, 0.08);
+    --color-highlight-pressed: rgba(245, 73, 0, 0.1);
+    --color-accent-pressed: #c03800;
+    --color-active-pressed: #ffd4c2;
     --color-danger-pressed: #c6373c;
 
     /* text-5xl */
@@ -163,10 +163,21 @@
     --shadow-hover:
         0px 2px 6px 0px rgba(11, 19, 36, 0.1),
         0px -1px 0px 0px rgba(0, 0, 0, 0.1) inset;
-    --shadow-focus: 0px 0px 0px 4px rgba(135, 190, 34, 0.5);
+    --shadow-focus: 0px 0px 0px 4px rgba(245, 73, 0, 0.3);
     --shadow-mid:
         0px 2px 4px 0px rgba(0, 0, 0, 0.08),
         0px 2px 12px 0px rgba(0, 0, 0, 0.06);
+
+    /* Sidebar — own color system */
+    --color-sidebar-bg: #ffffff;
+    --color-sidebar-border: #e5e7eb;
+    --color-sidebar-text: #6b7280;
+    --color-sidebar-text-hover: #374151;
+    --color-sidebar-text-active: #F54900;
+    --color-sidebar-hover-bg: #f3f4f6;
+    --color-sidebar-active-bg: #fff1eb;
+    --color-sidebar-active-hover-bg: #ffe4d6;
+    --color-sidebar-active-pressed-bg: #ffd4c2;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -255,7 +266,7 @@ button:focus-visible {
 
 button[data-cell]:focus-visible {
     box-shadow: none;
-    outline: solid 2px rgba(135, 190, 34, 0.5);
+    outline: solid 2px rgba(245, 73, 0, 0.3);
 }
 
 /* Allow interpolation : https://developer.chrome.com/docs/css-ui/animate-to-height-auto */
