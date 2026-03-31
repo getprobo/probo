@@ -472,9 +472,9 @@ func TestPublicJWKS(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-			jwks := oauth2server.PublicJWKS([]oauth2server.SigningKey{
+			jwks := oauth2server.SigningKeys{
 				{PrivateKey: key, KID: "kid-1"},
-			})
+			}.PublicJWKS()
 			require.Len(t, jwks.Keys, 1)
 		},
 	)
@@ -484,9 +484,9 @@ func TestPublicJWKS(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-			jwks := oauth2server.PublicJWKS([]oauth2server.SigningKey{
+			jwks := oauth2server.SigningKeys{
 				{PrivateKey: key, KID: "kid-1"},
-			})
+			}.PublicJWKS()
 			jwk := jwks.Keys[0]
 
 			assert.Equal(t, "RSA", jwk.KeyType)
@@ -501,9 +501,9 @@ func TestPublicJWKS(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-			jwks := oauth2server.PublicJWKS([]oauth2server.SigningKey{
+			jwks := oauth2server.SigningKeys{
 				{PrivateKey: key, KID: "kid-1"},
-			})
+			}.PublicJWKS()
 			jwk := jwks.Keys[0]
 
 			nBytes, err := base64.RawURLEncoding.DecodeString(jwk.N)
@@ -519,9 +519,9 @@ func TestPublicJWKS(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-			jwks := oauth2server.PublicJWKS([]oauth2server.SigningKey{
+			jwks := oauth2server.SigningKeys{
 				{PrivateKey: key, KID: "kid-1"},
-			})
+			}.PublicJWKS()
 			jwk := jwks.Keys[0]
 
 			eBytes, err := base64.RawURLEncoding.DecodeString(jwk.E)
@@ -538,10 +538,10 @@ func TestPublicJWKS(t *testing.T) {
 			t.Parallel()
 
 			key2 := testRSAKey(t)
-			jwks := oauth2server.PublicJWKS([]oauth2server.SigningKey{
+			jwks := oauth2server.SigningKeys{
 				{PrivateKey: key, KID: "kid-a"},
 				{PrivateKey: key2, KID: "kid-b"},
-			})
+			}.PublicJWKS()
 
 			require.Len(t, jwks.Keys, 2)
 			assert.Equal(t, "kid-a", jwks.Keys[0].KeyID)

@@ -77,6 +77,9 @@ type (
 	JWKS struct {
 		Keys []JWK `json:"keys"`
 	}
+
+	// SigningKeys is a collection of signing keys.
+	SigningKeys []SigningKey
 )
 
 // SignIDToken signs an ID token with the given signing key.
@@ -167,21 +170,26 @@ func NewIDTokenClaims(
 	return claims
 }
 
+// PublicJWK returns the public JWK representation of the signing key.
+func (k *SigningKey) PublicJWK() JWK {
+	return JWK{
+		KeyType:   "RSA",
+		Use:       "sig",
+		Algorithm: "RS256",
+		KeyID:     k.KID,
+		N:         base64.RawURLEncoding.EncodeToString(k.PrivateKey.N.Bytes()),
+		E:         base64.RawURLEncoding.EncodeToString(big.NewInt(int64(k.PrivateKey.E)).Bytes()),
+	}
+}
+
 // PublicJWKS returns the JWKS containing the public keys for all signing keys.
-func PublicJWKS(keys []SigningKey) *JWKS {
+func (keys SigningKeys) PublicJWKS() *JWKS {
 	jwks := &JWKS{
 		Keys: make([]JWK, 0, len(keys)),
 	}
 
-	for _, k := range keys {
-		jwks.Keys = append(jwks.Keys, JWK{
-			KeyType:   "RSA",
-			Use:       "sig",
-			Algorithm: "RS256",
-			KeyID:     k.KID,
-			N:         base64.RawURLEncoding.EncodeToString(k.PrivateKey.N.Bytes()),
-			E:         base64.RawURLEncoding.EncodeToString(big.NewInt(int64(k.PrivateKey.E)).Bytes()),
-		})
+	for i := range keys {
+		jwks.Keys = append(jwks.Keys, keys[i].PublicJWK())
 	}
 
 	return jwks

@@ -371,7 +371,7 @@ func (impl *Implm) Run(
 		return fmt.Errorf("cannot configure OAuth2 server: at least one signing key is required")
 	}
 
-	var oauth2SigningKeys []oauth2server.SigningKey
+	var oauth2SigningKeys oauth2server.SigningKeys
 	var hasActive bool
 	for _, keyCfg := range impl.cfg.Auth.OAuth2Server.SigningKeys {
 		keyPEM, err := os.ReadFile(keyCfg.KeyFile)

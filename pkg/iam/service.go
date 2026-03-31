@@ -94,7 +94,7 @@ type (
 		SCIMBridgePollInterval         time.Duration
 		GoogleOIDC                     oidc.ProviderConfig
 		MicrosoftOIDC                  oidc.ProviderConfig
-		OAuth2ServerSigningKeys        []oauth2server.SigningKey
+		OAuth2ServerSigningKeys        oauth2server.SigningKeys
 		OAuth2ServerOptions            []oauth2server.Option
 	}
 )

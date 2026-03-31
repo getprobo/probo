@@ -35,7 +35,7 @@ import (
 type (
 	Service struct {
 		pg                   *pg.Client
-		signingKeys          []SigningKey
+		signingKeys          SigningKeys
 		activeSigningIdx     []int
 		rrCounter            atomic.Uint64
 		baseURL              string
@@ -120,7 +120,7 @@ func WithRefreshTokenDuration(d time.Duration) Option {
 
 func NewService(
 	pgClient *pg.Client,
-	signingKeys []SigningKey,
+	signingKeys SigningKeys,
 	baseURL string,
 	logger *log.Logger,
 	opts ...Option,
@@ -169,7 +169,7 @@ func (s *Service) Metadata(endpoints Endpoints) *ServerMetadata {
 
 // JWKS returns the public key set.
 func (s *Service) JWKS() *JWKS {
-	return PublicJWKS(s.signingKeys)
+	return s.signingKeys.PublicJWKS()
 }
 
 // hashToken computes SHA-256 hash of a token value.
