@@ -252,7 +252,7 @@ function References({ references }: { references: Reference[] }) {
               alt={reference.name}
               className="rounded-2xl size-12 block"
             />
-            <span className="text-xs text-txt-secondary">{reference.name}</span>
+            <span className="text-xs text-txt-secondary text-center">{reference.name}</span>
           </a>
         ))}
       </Card>
