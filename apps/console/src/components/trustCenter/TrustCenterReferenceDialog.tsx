@@ -12,6 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+import { acceptImage } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import {
   Button,
@@ -238,11 +239,7 @@ export const TrustCenterReferenceDialog = forwardRef<TrustCenterReferenceDialogR
                   description={__("Upload logo image (PNG, JPG, WEBP up to 5MB)")}
                   isUploading={isSubmitting}
                   onDrop={handleDrop}
-                  accept={{
-                    "image/png": [".png"],
-                    "image/jpeg": [".jpg", ".jpeg"],
-                    "image/webp": [".webp"],
-                  }}
+                  accept={acceptImage}
                   maxSize={5}
                 />
                 {uploadedFile && (

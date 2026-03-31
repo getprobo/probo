@@ -12,6 +12,14 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+import {
+  acceptData,
+  acceptDocument,
+  acceptImage,
+  acceptPresentation,
+  acceptSpreadsheet,
+  acceptText,
+} from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import {
   Breadcrumb,
@@ -124,18 +132,12 @@ function EvidenceUpload({ measureId, connectionId }: Omit<Props, "ref">) {
           isUploading={isUpdating}
           onDrop={files => void handleDrop(files)}
           accept={{
-            "text/plain": [".uri"],
-            "text/csv": [".csv"],
-            "application/pdf": [".pdf"],
-            "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
-              [".docx"],
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":
-              [".xlsx"],
-            "application/vnd.openxmlformats-officedocument.presentationml.presentation":
-              [".pptx"],
-            "image/jpeg": [".jpg", ".jpeg"],
-            "image/png": [".png"],
-            "image/webp": [".webp"],
+            ...acceptDocument,
+            ...acceptSpreadsheet,
+            ...acceptPresentation,
+            ...acceptText,
+            ...acceptData,
+            ...acceptImage,
           }}
           maxSize={20}
         />

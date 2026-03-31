@@ -63,6 +63,7 @@ var FileTypes = []FileType{
 	{MimeType: "application/vnd.oasis.opendocument.presentation", Extensions: []string{".odp"}, Category: CategoryPresentation},
 
 	// Text types
+	{MimeType: "text/markdown", Extensions: []string{".md"}, Category: CategoryText},
 	{MimeType: "text/plain", Extensions: []string{".txt"}, Category: CategoryText},
 	{MimeType: "text/x-log", Extensions: []string{".log"}, Category: CategoryText},
 	{MimeType: "text/uri-list", Extensions: []string{".uri"}, Category: CategoryText},

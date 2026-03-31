@@ -304,16 +304,11 @@ export default function AuditDetailsPage(props: Props) {
                     </p>
                     <Dropzone
                       description={__(
-                        "Only PDF, DOCX files up to 25MB are allowed",
+                        "Only PDF up to 25MB are allowed",
                       )}
                       isUploading={isUploading}
                       onDrop={files => void handleUploadFile(files)}
-                      accept={{
-                        "application/pdf": [".pdf"],
-                        "application/msword": [".doc"],
-                        "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [".docx"],
-                        "application/vnd.oasis.opendocument.text": [".odt"],
-                      }}
+                      accept={{ "application/pdf": [".pdf"] }}
                       maxSize={25}
                     />
                   </div>

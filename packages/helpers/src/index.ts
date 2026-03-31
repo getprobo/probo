@@ -85,6 +85,16 @@ export {
 export { promisifyMutation } from "./relay";
 export { fileType, fileSize } from "./file";
 export {
+  acceptDocument,
+  acceptSpreadsheet,
+  acceptPresentation,
+  acceptText,
+  acceptImage,
+  acceptData,
+  acceptVideo,
+  acceptAll,
+} from "./fileAccept";
+export {
   formatDatetime,
   formatDate,
   toDateInput,

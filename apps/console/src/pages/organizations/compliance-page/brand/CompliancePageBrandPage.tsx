@@ -12,6 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+import { acceptImage } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import {
   Button,
@@ -286,12 +287,7 @@ export function CompliancePageBrandPage(props: { queryRef: PreloadedQuery<Compli
                       description={__("Upload logo image (PNG, JPG, SVG, WEBP up to 5MB)")}
                       isUploading={isUpdating}
                       onDrop={handleLogoDrop}
-                      accept={{
-                        "image/png": [".png"],
-                        "image/jpeg": [".jpg", ".jpeg"],
-                        "image/svg+xml": [".svg"],
-                        "image/webp": [".webp"],
-                      }}
+                      accept={acceptImage}
                       maxSize={5}
                     />
                   )}
@@ -336,12 +332,7 @@ export function CompliancePageBrandPage(props: { queryRef: PreloadedQuery<Compli
                       description={__("Upload dark logo image (PNG, JPG, SVG, WEBP up to 5MB)")}
                       isUploading={isUpdating}
                       onDrop={handleDarkLogoDrop}
-                      accept={{
-                        "image/png": [".png"],
-                        "image/jpeg": [".jpg", ".jpeg"],
-                        "image/svg+xml": [".svg"],
-                        "image/webp": [".webp"],
-                      }}
+                      accept={acceptImage}
                       maxSize={5}
                     />
                   )}
