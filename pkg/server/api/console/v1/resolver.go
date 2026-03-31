@@ -81,7 +81,7 @@ func NewMux(
 ) *chi.Mux {
 	r := chi.NewMux()
 
-	safeRedirect := &saferedirect.SafeRedirect{AllowedHost: baseURL.Host()}
+	safeRedirect := saferedirect.New(saferedirect.StaticHosts(baseURL.Host()))
 
 	graphqlHandler := NewGraphQLHandler(iamSvc, proboSvc, esignSvc, mailmanSvc, customDomainCname, logger)
 
@@ -141,9 +141,9 @@ func NewMux(
 			var oauthSafeRedirect *saferedirect.SafeRedirect
 			switch provider {
 			case "SLACK":
-				oauthSafeRedirect = &saferedirect.SafeRedirect{AllowedHost: "slack.com"}
+				oauthSafeRedirect = saferedirect.New(saferedirect.StaticHosts("slack.com"))
 			case "GOOGLE_WORKSPACE":
-				oauthSafeRedirect = &saferedirect.SafeRedirect{AllowedHost: "accounts.google.com"}
+				oauthSafeRedirect = saferedirect.New(saferedirect.StaticHosts("accounts.google.com"))
 			}
 			oauthSafeRedirect.Redirect(w, r, redirectURL, "/", http.StatusSeeOther)
 		})

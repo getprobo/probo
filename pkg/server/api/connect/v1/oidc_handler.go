@@ -22,7 +22,6 @@ import (
 	"github.com/go-chi/chi/v5"
 	"go.gearno.de/kit/httpserver"
 	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/saferedirect"
@@ -33,18 +32,21 @@ import (
 type OIDCHandler struct {
 	iam           *iam.Service
 	sessionCookie *authn.Cookie
-	baseURL       *baseurl.BaseURL
 	logger        *log.Logger
 	safeRedirect  *saferedirect.SafeRedirect
 }
 
-func NewOIDCHandler(iam *iam.Service, cookieConfig securecookie.Config, baseURL *baseurl.BaseURL, logger *log.Logger) *OIDCHandler {
+func NewOIDCHandler(
+	iam *iam.Service,
+	cookieConfig securecookie.Config,
+	logger *log.Logger,
+	allowedHost saferedirect.AllowedHostFunc,
+) *OIDCHandler {
 	return &OIDCHandler{
 		iam:           iam,
 		sessionCookie: authn.NewCookie(&cookieConfig),
-		baseURL:       baseURL,
 		logger:        logger,
-		safeRedirect:  &saferedirect.SafeRedirect{AllowedHost: baseURL.Host()},
+		safeRedirect:  saferedirect.New(allowedHost),
 	}
 }
 

@@ -193,10 +193,10 @@ func (r *mutationResolver) SendMagicLink(ctx context.Context, input types.SendMa
 
 	baseURL := compliancepage.CompliancePageBaseURLFromContext(ctx)
 
-	safeRedirect := &saferedirect.SafeRedirect{AllowedHost: baseurl.MustParse(*baseURL).Host()}
+	safeRedirect := saferedirect.New(saferedirect.StaticHosts(baseurl.MustParse(*baseURL).Host()))
 
 	if input.Continue != nil {
-		_, ok := safeRedirect.Validate(*input.Continue)
+		_, ok := safeRedirect.Validate(ctx, *input.Continue)
 		if !ok {
 			return nil, gqlutils.Invalidf(ctx, "invalid continue URL")
 		}

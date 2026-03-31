@@ -15,18 +15,40 @@
 package saferedirect
 
 import (
+	"context"
 	"net/http"
 	"net/url"
 	"strings"
 )
 
 type (
+	AllowedHostFunc func(ctx context.Context, host string) bool
+
 	SafeRedirect struct {
-		AllowedHost string
+		allowedHost AllowedHostFunc
 	}
 )
 
-func (sr *SafeRedirect) Validate(redirectURL string) (string, bool) {
+func New(allowedHost AllowedHostFunc) *SafeRedirect {
+	return &SafeRedirect{allowedHost: allowedHost}
+}
+
+// StaticHosts returns an AllowedHost function that matches against a fixed
+// list of hosts.
+func StaticHosts(hosts ...string) AllowedHostFunc {
+	allowed := make(map[string]bool, len(hosts))
+	for _, h := range hosts {
+		if h != "" {
+			allowed[h] = true
+		}
+	}
+
+	return func(_ context.Context, host string) bool {
+		return allowed[host]
+	}
+}
+
+func (sr *SafeRedirect) Validate(ctx context.Context, redirectURL string) (string, bool) {
 	if redirectURL == "" {
 		return "", false
 	}
@@ -48,7 +70,7 @@ func (sr *SafeRedirect) Validate(redirectURL string) (string, bool) {
 			return "", false
 		}
 
-		if sr.AllowedHost != "" && parsedURL.Host != sr.AllowedHost {
+		if sr.allowedHost != nil && !sr.allowedHost(ctx, parsedURL.Host) {
 			return "", false
 		}
 
@@ -58,14 +80,14 @@ func (sr *SafeRedirect) Validate(redirectURL string) (string, bool) {
 	return "", false
 }
 
-func (sr *SafeRedirect) GetSafeRedirectURL(redirectURL, fallbackURL string) string {
-	if safeURL, isValid := sr.Validate(redirectURL); isValid {
+func (sr *SafeRedirect) GetSafeRedirectURL(ctx context.Context, redirectURL, fallbackURL string) string {
+	if safeURL, isValid := sr.Validate(ctx, redirectURL); isValid {
 		return safeURL
 	}
 	return fallbackURL
 }
 
 func (sr *SafeRedirect) Redirect(w http.ResponseWriter, r *http.Request, redirectURL, fallbackURL string, statusCode int) {
-	safeURL := sr.GetSafeRedirectURL(redirectURL, fallbackURL)
+	safeURL := sr.GetSafeRedirectURL(r.Context(), redirectURL, fallbackURL)
 	http.Redirect(w, r, safeURL, statusCode)
 }

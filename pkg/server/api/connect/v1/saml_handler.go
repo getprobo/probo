@@ -45,7 +45,7 @@ func NewSAMLHandler(iam *iam.Service, cookieConfig securecookie.Config, baseURL 
 		sessionCookie: authn.NewCookie(&cookieConfig),
 		baseURL:       baseURL,
 		logger:        logger,
-		safeRedirect:  &saferedirect.SafeRedirect{AllowedHost: baseURL.Host()},
+		safeRedirect:  saferedirect.New(saferedirect.StaticHosts(baseURL.Host())),
 	}
 }
 

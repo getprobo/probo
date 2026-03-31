@@ -15,6 +15,7 @@
 package saferedirect_test
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -23,79 +24,81 @@ import (
 )
 
 func TestSafeRedirect_Validate(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name            string
-		allowedHost     string
+		allowedHost     saferedirect.AllowedHostFunc
 		redirectURL     string
 		expectedURL     string
 		expectedIsValid bool
 	}{
 		{
 			name:            "empty redirect URL",
-			allowedHost:     "example.com",
+			allowedHost:     saferedirect.StaticHosts("example.com"),
 			redirectURL:     "",
 			expectedURL:     "",
 			expectedIsValid: false,
 		},
 		{
 			name:            "relative URL",
-			allowedHost:     "example.com",
+			allowedHost:     saferedirect.StaticHosts("example.com"),
 			redirectURL:     "/dashboard",
 			expectedURL:     "/dashboard",
 			expectedIsValid: true,
 		},
 		{
 			name:            "allowed absolute URL",
-			allowedHost:     "example.com",
+			allowedHost:     saferedirect.StaticHosts("example.com"),
 			redirectURL:     "https://example.com/dashboard",
 			expectedURL:     "https://example.com/dashboard",
 			expectedIsValid: true,
 		},
 		{
 			name:            "disallowed host",
-			allowedHost:     "example.com",
+			allowedHost:     saferedirect.StaticHosts("example.com"),
 			redirectURL:     "https://evil.com/phishing",
 			expectedURL:     "",
 			expectedIsValid: false,
 		},
 		{
 			name:            "disallowed scheme (javascript:)",
-			allowedHost:     "example.com",
+			allowedHost:     saferedirect.StaticHosts("example.com"),
 			redirectURL:     "javascript:alert('xss')",
 			expectedURL:     "",
 			expectedIsValid: false,
 		},
 		{
 			name:            "disallowed scheme (data:)",
-			allowedHost:     "example.com",
+			allowedHost:     saferedirect.StaticHosts("example.com"),
 			redirectURL:     "data:text/html;base64,PHNjcmlwdD5hbGVydCgnWFNTJyk8L3NjcmlwdD4=",
 			expectedURL:     "",
 			expectedIsValid: false,
 		},
 		{
 			name:            "no allowed host restriction",
-			allowedHost:     "",
+			allowedHost:     nil,
 			redirectURL:     "https://any-domain.com/page",
 			expectedURL:     "https://any-domain.com/page",
 			expectedIsValid: true,
 		},
 		{
 			name:            "invalid URL",
-			allowedHost:     "example.com",
+			allowedHost:     saferedirect.StaticHosts("example.com"),
 			redirectURL:     "https://[invalid-url",
 			expectedURL:     "",
 			expectedIsValid: false,
 		},
 		{
 			name:            "double slash attack",
-			allowedHost:     "example.com",
+			allowedHost:     saferedirect.StaticHosts("example.com"),
 			redirectURL:     "//evil.com/phishing",
 			expectedURL:     "",
 			expectedIsValid: false,
 		},
 		{
 			name:            "slash-backslash attack",
-			allowedHost:     "example.com",
+			allowedHost:     saferedirect.StaticHosts("example.com"),
 			redirectURL:     "/\\evil.com/phishing",
 			expectedURL:     "",
 			expectedIsValid: false,
@@ -104,11 +107,11 @@ func TestSafeRedirect_Validate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			sr := saferedirect.SafeRedirect{
-				AllowedHost: tt.allowedHost,
-			}
+			t.Parallel()
 
-			gotURL, gotIsValid := sr.Validate(tt.redirectURL)
+			sr := saferedirect.New(tt.allowedHost)
+
+			gotURL, gotIsValid := sr.Validate(context.Background(), tt.redirectURL)
 			if gotIsValid != tt.expectedIsValid {
 				t.Errorf("Validate() isValid = %v, want %v", gotIsValid, tt.expectedIsValid)
 			}
@@ -120,44 +123,46 @@ func TestSafeRedirect_Validate(t *testing.T) {
 }
 
 func TestSafeRedirect_GetSafeRedirectURL(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name        string
-		allowedHost string
+		allowedHost saferedirect.AllowedHostFunc
 		redirectURL string
 		fallbackURL string
 		expectedURL string
 	}{
 		{
 			name:        "safe redirect URL",
-			allowedHost: "example.com",
+			allowedHost: saferedirect.StaticHosts("example.com"),
 			redirectURL: "/dashboard",
 			fallbackURL: "/home",
 			expectedURL: "/dashboard",
 		},
 		{
 			name:        "unsafe redirect URL",
-			allowedHost: "example.com",
+			allowedHost: saferedirect.StaticHosts("example.com"),
 			redirectURL: "https://evil.com/phishing",
 			fallbackURL: "/home",
 			expectedURL: "/home",
 		},
 		{
 			name:        "empty redirect URL",
-			allowedHost: "example.com",
+			allowedHost: saferedirect.StaticHosts("example.com"),
 			redirectURL: "",
 			fallbackURL: "/home",
 			expectedURL: "/home",
 		},
 		{
 			name:        "double slash attack",
-			allowedHost: "example.com",
+			allowedHost: saferedirect.StaticHosts("example.com"),
 			redirectURL: "//evil.com/phishing",
 			fallbackURL: "/home",
 			expectedURL: "/home",
 		},
 		{
 			name:        "slash-backslash attack",
-			allowedHost: "example.com",
+			allowedHost: saferedirect.StaticHosts("example.com"),
 			redirectURL: "/\\evil.com/phishing",
 			fallbackURL: "/home",
 			expectedURL: "/home",
@@ -166,11 +171,11 @@ func TestSafeRedirect_GetSafeRedirectURL(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			sr := saferedirect.SafeRedirect{
-				AllowedHost: tt.allowedHost,
-			}
+			t.Parallel()
 
-			gotURL := sr.GetSafeRedirectURL(tt.redirectURL, tt.fallbackURL)
+			sr := saferedirect.New(tt.allowedHost)
+
+			gotURL := sr.GetSafeRedirectURL(context.Background(), tt.redirectURL, tt.fallbackURL)
 			if gotURL != tt.expectedURL {
 				t.Errorf("GetSafeRedirectURL() = %v, want %v", gotURL, tt.expectedURL)
 			}
@@ -179,9 +184,11 @@ func TestSafeRedirect_GetSafeRedirectURL(t *testing.T) {
 }
 
 func TestSafeRedirect_Redirect(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name           string
-		allowedHost    string
+		allowedHost    saferedirect.AllowedHostFunc
 		redirectURL    string
 		fallbackURL    string
 		expectedStatus int
@@ -189,7 +196,7 @@ func TestSafeRedirect_Redirect(t *testing.T) {
 	}{
 		{
 			name:           "safe redirect URL",
-			allowedHost:    "example.com",
+			allowedHost:    saferedirect.StaticHosts("example.com"),
 			redirectURL:    "/dashboard",
 			fallbackURL:    "/home",
 			expectedStatus: http.StatusFound,
@@ -197,7 +204,7 @@ func TestSafeRedirect_Redirect(t *testing.T) {
 		},
 		{
 			name:           "unsafe redirect URL",
-			allowedHost:    "example.com",
+			allowedHost:    saferedirect.StaticHosts("example.com"),
 			redirectURL:    "https://evil.com/phishing",
 			fallbackURL:    "/home",
 			expectedStatus: http.StatusFound,
@@ -205,7 +212,7 @@ func TestSafeRedirect_Redirect(t *testing.T) {
 		},
 		{
 			name:           "empty redirect URL",
-			allowedHost:    "example.com",
+			allowedHost:    saferedirect.StaticHosts("example.com"),
 			redirectURL:    "",
 			fallbackURL:    "/home",
 			expectedStatus: http.StatusFound,
@@ -213,7 +220,7 @@ func TestSafeRedirect_Redirect(t *testing.T) {
 		},
 		{
 			name:           "double slash attack",
-			allowedHost:    "example.com",
+			allowedHost:    saferedirect.StaticHosts("example.com"),
 			redirectURL:    "//evil.com/phishing",
 			fallbackURL:    "/home",
 			expectedStatus: http.StatusFound,
@@ -221,7 +228,7 @@ func TestSafeRedirect_Redirect(t *testing.T) {
 		},
 		{
 			name:           "slash-backslash attack",
-			allowedHost:    "example.com",
+			allowedHost:    saferedirect.StaticHosts("example.com"),
 			redirectURL:    "/\\evil.com/phishing",
 			fallbackURL:    "/home",
 			expectedStatus: http.StatusFound,
@@ -231,26 +238,149 @@ func TestSafeRedirect_Redirect(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			sr := saferedirect.SafeRedirect{
-				AllowedHost: tt.allowedHost,
-			}
+			t.Parallel()
 
-			// Create a test HTTP recorder to capture the response
+			sr := saferedirect.New(tt.allowedHost)
+
 			w := httptest.NewRecorder()
 			r := httptest.NewRequest("GET", "http://test.com", nil)
 
 			sr.Redirect(w, r, tt.redirectURL, tt.fallbackURL, tt.expectedStatus)
 
-			// Check that we got the expected status code
 			if w.Code != tt.expectedStatus {
 				t.Errorf("Redirect() status = %v, want %v", w.Code, tt.expectedStatus)
 			}
 
-			// Check that the Location header contains the expected URL
 			location := w.Header().Get("Location")
 			if location != tt.expectedURL {
 				t.Errorf("Redirect() location = %v, want %v", location, tt.expectedURL)
 			}
 		})
 	}
+}
+
+func TestSafeRedirect_DynamicAllowedHost(t *testing.T) {
+	t.Parallel()
+
+	trustedDomains := map[string]bool{
+		"app.getprobo.com":   true,
+		"trust.company.com":  true,
+		"compliance.acme.io": true,
+	}
+
+	sr := saferedirect.New(func(_ context.Context, host string) bool {
+		return trustedDomains[host]
+	})
+
+	tests := []struct {
+		name        string
+		redirectURL string
+		fallbackURL string
+		expectedURL string
+	}{
+		{
+			name:        "primary host passes",
+			redirectURL: "https://app.getprobo.com/trust/my-slug",
+			fallbackURL: "/",
+			expectedURL: "https://app.getprobo.com/trust/my-slug",
+		},
+		{
+			name:        "trusted custom domain passes",
+			redirectURL: "https://trust.company.com/overview",
+			fallbackURL: "/",
+			expectedURL: "https://trust.company.com/overview",
+		},
+		{
+			name:        "another trusted custom domain passes",
+			redirectURL: "https://compliance.acme.io/documents",
+			fallbackURL: "/",
+			expectedURL: "https://compliance.acme.io/documents",
+		},
+		{
+			name:        "untrusted domain rejected",
+			redirectURL: "https://evil.com/phishing",
+			fallbackURL: "/",
+			expectedURL: "/",
+		},
+		{
+			name:        "relative path still works",
+			redirectURL: "/trust/my-slug",
+			fallbackURL: "/",
+			expectedURL: "/trust/my-slug",
+		},
+		{
+			name:        "javascript scheme rejected",
+			redirectURL: "javascript:alert('xss')",
+			fallbackURL: "/",
+			expectedURL: "/",
+		},
+		{
+			name:        "empty redirect URL uses fallback",
+			redirectURL: "",
+			fallbackURL: "/",
+			expectedURL: "/",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			w := httptest.NewRecorder()
+			r := httptest.NewRequest("GET", "http://test.com", nil)
+
+			sr.Redirect(w, r, tt.redirectURL, tt.fallbackURL, http.StatusFound)
+
+			location := w.Header().Get("Location")
+			if location != tt.expectedURL {
+				t.Errorf("Redirect() location = %v, want %v", location, tt.expectedURL)
+			}
+		})
+	}
+}
+
+func TestStaticHosts(t *testing.T) {
+	t.Parallel()
+
+	t.Run("single host", func(t *testing.T) {
+		t.Parallel()
+
+		fn := saferedirect.StaticHosts("example.com")
+		if !fn(context.Background(), "example.com") {
+			t.Error("expected example.com to be allowed")
+		}
+		if fn(context.Background(), "other.com") {
+			t.Error("expected other.com to be rejected")
+		}
+	})
+
+	t.Run("multiple hosts", func(t *testing.T) {
+		t.Parallel()
+
+		fn := saferedirect.StaticHosts("a.com", "b.com", "c.com")
+		if !fn(context.Background(), "a.com") {
+			t.Error("expected a.com to be allowed")
+		}
+		if !fn(context.Background(), "b.com") {
+			t.Error("expected b.com to be allowed")
+		}
+		if !fn(context.Background(), "c.com") {
+			t.Error("expected c.com to be allowed")
+		}
+		if fn(context.Background(), "d.com") {
+			t.Error("expected d.com to be rejected")
+		}
+	})
+
+	t.Run("empty strings ignored", func(t *testing.T) {
+		t.Parallel()
+
+		fn := saferedirect.StaticHosts("", "example.com")
+		if fn(context.Background(), "") {
+			t.Error("expected empty host to be rejected")
+		}
+		if !fn(context.Background(), "example.com") {
+			t.Error("expected example.com to be allowed")
+		}
+	})
 }

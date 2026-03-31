@@ -39,6 +39,7 @@ import (
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
+	"go.probo.inc/probo/pkg/saferedirect"
 	"go.probo.inc/probo/pkg/securecookie"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/authz"
@@ -55,7 +56,14 @@ type (
 	}
 )
 
-func NewMux(logger *log.Logger, svc *iam.Service, cookieConfig securecookie.Config, tokenSecret string, baseURL *baseurl.BaseURL) *chi.Mux {
+func NewMux(
+	logger *log.Logger,
+	svc *iam.Service,
+	cookieConfig securecookie.Config,
+	tokenSecret string,
+	baseURL *baseurl.BaseURL,
+	allowedRedirectHost saferedirect.AllowedHostFunc,
+) *chi.Mux {
 	r := chi.NewMux()
 
 	sessionMiddleware := authn.NewSessionMiddleware(svc, cookieConfig)
@@ -66,7 +74,7 @@ func NewMux(logger *log.Logger, svc *iam.Service, cookieConfig securecookie.Conf
 
 	router := r.With(sessionMiddleware, apiKeyMiddleware)
 
-	oidcHandler := NewOIDCHandler(svc, cookieConfig, baseURL, logger)
+	oidcHandler := NewOIDCHandler(svc, cookieConfig, logger, allowedRedirectHost)
 
 	router.Handle("/graphql", graphqlHandler)
 	router.Get("/saml/2.0/metadata", samlHandler.MetadataHandler)

@@ -15,6 +15,7 @@
 package api
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -188,6 +189,14 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.Cookie,
 			cfg.TokenSecret,
 			cfg.BaseURL,
+			func(ctx context.Context, host string) bool {
+				if host == cfg.BaseURL.Host() {
+					return true
+				}
+
+				_, err := cfg.Trust.GetByDomainName(ctx, host)
+				return err == nil
+			},
 		),
 	}, nil
 }
