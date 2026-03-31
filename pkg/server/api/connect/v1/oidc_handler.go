@@ -176,7 +176,7 @@ func (h *OIDCHandler) buildSessionTransferURL(ctx context.Context, redirectURL s
 
 	token, err := authn.SignSessionTransfer(sessionID, redirectURL, h.cookieSecret)
 	if err != nil {
-		h.logger.Error("cannot sign session transfer token", log.Error(err))
+		h.logger.ErrorCtx(ctx, "cannot sign session transfer token", log.Error(err))
 		return "", false
 	}
 

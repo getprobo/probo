@@ -32,6 +32,7 @@ package trust_v1
 
 import (
 	"context"
+	"net/http"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -84,8 +85,16 @@ func NewMux(
 
 	r.Use(compliancepage.NewCompliancePagePresenceMiddleware())
 
-	sessionTransferHandler := NewSessionTransferHandler(iamSvc, cookieConfig, logger)
-	r.Get("/session-transfer", sessionTransferHandler.ServeHTTP)
+	sessionTransferHandler := NewSessionTransferHandler(
+		iamSvc,
+		cookieConfig,
+		func(ctx context.Context, host string) bool {
+			_, err := trustSvc.GetByDomainName(ctx, host)
+			return err == nil
+		},
+		logger,
+	)
+	r.Method(http.MethodGet, "/session-transfer", sessionTransferHandler)
 
 	r.Use(authn.NewSessionMiddleware(iamSvc, cookieConfig))
 	r.Use(compliancepage.NewMemberProvisioningMiddleware(trustSvc, logger))
