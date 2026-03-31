@@ -28,6 +28,9 @@ RUN go generate ./...
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
     -ldflags="-w -s -X 'main.version=dev' -X 'main.env=prod'" \
     -o /probod ./cmd/probod
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
+    -ldflags="-w -s" \
+    -o /probod-bootstrap ./cmd/probod-bootstrap
 
 # Stage 3: Runtime (Alpine — matches working Render pattern)
 FROM alpine:latest
@@ -36,8 +39,10 @@ RUN apk --no-cache add ca-certificates openssl bash && \
     adduser -D -u 1000 -G probo probo && \
     mkdir -p /etc/probod && \
     chown probo:probo /etc/probod
+ENV PATH="/app:${PATH}"
 WORKDIR /app
 COPY --from=backend --chown=probo:probo /probod ./probod
+COPY --from=backend --chown=probo:probo /probod-bootstrap ./probod-bootstrap
 COPY --chown=probo:probo entrypoint.sh ./entrypoint.sh
 COPY --chown=probo:probo rds-ca-bundle.pem ./rds-ca-bundle.pem
 USER probo
