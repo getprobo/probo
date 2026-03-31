@@ -30,6 +30,7 @@ var (
 	ErrInvalidScope         = errors.New("invalid_scope")
 	ErrAccessDenied         = errors.New("access_denied")
 	ErrServerError          = errors.New("server_error")
+	ErrInvalidRedirectURI   = errors.New("invalid redirect_uri")
 
 	// RFC 8628 device flow errors.
 	ErrAuthorizationPending = errors.New("authorization_pending")

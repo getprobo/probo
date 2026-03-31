@@ -76,6 +76,7 @@ type (
 	ConsentApprovalRequest struct {
 		IdentityID          gid.GID
 		ClientID            gid.GID
+		Approved            bool
 		Scopes              coredata.OAuth2Scopes
 		RedirectURI         string
 		CodeChallenge       string
@@ -1036,19 +1037,23 @@ func (s *Service) Authorize(
 	}
 }
 
-// ApproveConsent saves the user's consent and issues an authorization code.
-// Returns the plaintext authorization code value.
+// ApproveConsent validates the client and redirect URI, then either issues
+// an authorization code (when approved) or returns ErrAccessDenied.
 func (s *Service) ApproveConsent(
 	ctx context.Context,
 	req *ConsentApprovalRequest,
 ) (string, error) {
 	client, err := s.GetClientByID(ctx, req.ClientID)
 	if err != nil {
-		return "", fmt.Errorf("cannot load client: %w", err)
+		return "", fmt.Errorf("cannot load client: %w", ErrInvalidClient)
 	}
 
 	if !slices.Contains(client.RedirectURIs, req.RedirectURI) {
-		return "", fmt.Errorf("invalid redirect_uri")
+		return "", fmt.Errorf("%w", ErrInvalidRedirectURI)
+	}
+
+	if !req.Approved {
+		return "", fmt.Errorf("%w: user denied the request", ErrAccessDenied)
 	}
 
 	if err := s.SaveConsent(ctx, req.IdentityID, client.ID, req.Scopes); err != nil {

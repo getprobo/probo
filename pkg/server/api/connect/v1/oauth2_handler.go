@@ -299,8 +299,9 @@ func (h *OAuth2Handler) AuthorizeConsentHandler(w http.ResponseWriter, r *http.R
 	redirectURI := r.FormValue("redirect_uri")
 	state := r.FormValue("state")
 
-	if r.FormValue("action") == "deny" {
-		redirectWithError(w, r, redirectURI, "access_denied", "user denied the request", state)
+	clientID, err := gid.ParseGID(r.FormValue("client_id"))
+	if err != nil {
+		writeOAuth2InvalidRequest(w, "invalid client_id")
 		return
 	}
 
@@ -310,17 +311,12 @@ func (h *OAuth2Handler) AuthorizeConsentHandler(w http.ResponseWriter, r *http.R
 		authTime = session.CreatedAt
 	}
 
-	clientID, err := gid.ParseGID(r.FormValue("client_id"))
-	if err != nil {
-		writeOAuth2InvalidRequest(w, "invalid client_id")
-		return
-	}
-
 	code, err := h.iam.OAuth2ServerService.ApproveConsent(
 		r.Context(),
 		&oauth2server.ConsentApprovalRequest{
 			IdentityID:          identity.ID,
 			ClientID:            clientID,
+			Approved:            r.FormValue("action") != "deny",
 			Scopes:              parseScopes(r.FormValue("scope")),
 			RedirectURI:         redirectURI,
 			CodeChallenge:       r.FormValue("code_challenge"),
@@ -331,7 +327,11 @@ func (h *OAuth2Handler) AuthorizeConsentHandler(w http.ResponseWriter, r *http.R
 	)
 	if err != nil {
 		h.logger.ErrorCtx(r.Context(), "cannot approve consent", log.Error(err))
-		redirectWithError(w, r, redirectURI, "server_error", "internal error", state)
+		if errors.Is(err, oauth2server.ErrInvalidRedirectURI) || errors.Is(err, oauth2server.ErrInvalidClient) {
+			writeOAuth2InvalidRequest(w, err.Error())
+			return
+		}
+		redirectWithError(w, r, redirectURI, oauth2server.OAuth2ErrorCode(err), err.Error(), state)
 		return
 	}
 
