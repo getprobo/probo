@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.155.0] - 2026-03-31
+
+### Added
+
+- Add major.minor document versioning
+
+### Fixed
+
+- Fix compliance page login redirect to custom domains
+
 ## [0.154.2] - 2026-03-30
 
 ### Added
