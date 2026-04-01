@@ -209,13 +209,17 @@ export function TableRowMenuContent({
       const lastCellPos
         = map.map[rowIndex * map.width + (map.width - 1)] + tableStart;
 
-      const $anchor = editor.state.doc.resolve(firstCellPos);
-      const $head = editor.state.doc.resolve(lastCellPos);
-
-      editor.view.dispatch(
-        editor.state.tr.setSelection(new CellSelection($anchor, $head)),
-      );
-      editor.commands.deleteSelection();
+      editor
+        .chain()
+        .focus()
+        .command(({ tr }) => {
+          const $anchor = tr.doc.resolve(firstCellPos);
+          const $head = tr.doc.resolve(lastCellPos);
+          tr.setSelection(new CellSelection($anchor, $head));
+          return true;
+        })
+        .deleteSelection()
+        .run();
     } catch {
       // table may have changed
     }

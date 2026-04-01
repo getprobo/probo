@@ -100,7 +100,7 @@ func renderNode(buf *bytes.Buffer, n Node) error {
 			return fmt.Errorf("cannot render image node: %w", err)
 		}
 		buf.WriteString("<img")
-		writeAttr(buf, "src", attrs.Src)
+		writeAttr(buf, "src", safeImageSrc(attrs.Src))
 		if attrs.Alt != nil {
 			writeAttr(buf, "alt", *attrs.Alt)
 		}
@@ -274,21 +274,36 @@ const linkRelBlankTargetDefault = "noopener noreferrer"
 
 // linkRelToEmit returns the rel attribute value for a link mark, or empty when
 // the attribute should be omitted. When target opens a new browsing context
-// (_blank) and the document provides no rel, browsers would grant the opened
-// page access to window.opener unless noopener is set.
+// (_blank), noopener is always injected to prevent the opened page from
+// accessing window.opener, even when the document supplies a custom rel.
 func linkRelToEmit(attrs LinkAttrs) string {
+	blanksTarget := attrs.Target != nil &&
+		strings.EqualFold(strings.TrimSpace(*attrs.Target), "_blank")
+
 	if attrs.Rel != nil {
 		if s := strings.TrimSpace(*attrs.Rel); s != "" {
+			if blanksTarget {
+				return ensureNoopener(s)
+			}
 			return s
 		}
 	}
-	if attrs.Target == nil {
-		return ""
+
+	if blanksTarget {
+		return linkRelBlankTargetDefault
 	}
-	if !strings.EqualFold(strings.TrimSpace(*attrs.Target), "_blank") {
-		return ""
+	return ""
+}
+
+// ensureNoopener returns rel unchanged when it already contains the noopener
+// token (case-insensitive check). Otherwise it appends " noopener".
+func ensureNoopener(rel string) string {
+	for tok := range strings.FieldsSeq(rel) {
+		if strings.EqualFold(tok, "noopener") {
+			return rel
+		}
 	}
-	return linkRelBlankTargetDefault
+	return rel + " noopener"
 }
 
 func writeAttr(buf *bytes.Buffer, name, value string) {
@@ -333,4 +348,37 @@ func safeLinkHref(href string) string {
 		return "#"
 	}
 	return href
+}
+
+// safeImageSrc returns a value safe to use in an HTML img src attribute.
+// Only http, https, and data schemes are permitted; everything else
+// (javascript:, vbscript:, etc.) is replaced with an empty string so the
+// image simply does not render.
+func safeImageSrc(src string) string {
+	src = strings.TrimSpace(src)
+	if src == "" {
+		return ""
+	}
+	if strings.HasPrefix(src, "/") {
+		if len(src) > 1 && (src[1] == '/' || src[1] == '\\') {
+			return ""
+		}
+		return src
+	}
+	u, err := url.Parse(src)
+	if err != nil {
+		return ""
+	}
+	if u.Scheme != "" {
+		switch strings.ToLower(u.Scheme) {
+		case "http", "https", "data":
+			return src
+		default:
+			return ""
+		}
+	}
+	if u.Host != "" {
+		return ""
+	}
+	return src
 }

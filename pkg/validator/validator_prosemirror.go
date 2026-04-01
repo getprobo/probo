@@ -25,7 +25,11 @@ import (
 // strings are allowed.
 func ProseMirrorDocumentContent() ValidatorFunc {
 	return func(value any) *ValidationError {
-		s, ok := value.(string)
+		actualValue, isNil := dereferenceValue(value)
+		if isNil {
+			return nil
+		}
+		s, ok := actualValue.(string)
 		if !ok {
 			return newValidationError(ErrorCodeInvalidFormat, "value must be a string")
 		}

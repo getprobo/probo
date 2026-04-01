@@ -31,6 +31,8 @@ func TestProseMirrorDocumentContent(t *testing.T) {
 		{"valid doc", validDoc, false},
 		{"plain text", "not json", true},
 		{"non-doc root", `{"type":"paragraph","content":[]}`, true},
+		{"nil value", nil, false},
+		{"nil *string", (*string)(nil), false},
 		{"non-string", 1, true},
 	}
 

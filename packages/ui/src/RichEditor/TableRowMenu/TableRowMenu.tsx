@@ -70,6 +70,11 @@ export function moveRow(
   const table = editor.state.doc.nodeAt(tableNodePos);
   if (!table) return;
 
+  const map = TableMap.get(table);
+  if (new Set(map.map).size < map.map.length) return;
+  if (fromRow < 0 || fromRow >= map.height || toRow < 0 || toRow >= map.height)
+    return;
+
   const rows: PMNode[] = [];
   table.forEach(row => rows.push(row));
   const [moved] = rows.splice(fromRow, 1);

@@ -82,3 +82,37 @@ func TestSanitizeDocumentJSON_PreservesSafeHref(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "https://example.com", attrs.Href)
 }
+
+func TestSanitizeDocumentJSON_ImageSrc(t *testing.T) {
+	t.Parallel()
+
+	raw := `{"type":"doc","content":[{"type":"image","attrs":{"src":"javascript:alert(1)","alt":"xss"}}]}`
+
+	out, err := SanitizeDocumentJSON(raw)
+	require.NoError(t, err)
+
+	var doc Node
+	require.NoError(t, json.Unmarshal([]byte(out), &doc))
+	img := doc.Content[0]
+	attrs, err := img.ImageAttrs()
+	require.NoError(t, err)
+	assert.Equal(t, "", attrs.Src)
+	require.NotNil(t, attrs.Alt)
+	assert.Equal(t, "xss", *attrs.Alt)
+}
+
+func TestSanitizeDocumentJSON_PreservesSafeImageSrc(t *testing.T) {
+	t.Parallel()
+
+	raw := `{"type":"doc","content":[{"type":"image","attrs":{"src":"https://example.com/img.png","alt":"ok"}}]}`
+
+	out, err := SanitizeDocumentJSON(raw)
+	require.NoError(t, err)
+
+	var doc Node
+	require.NoError(t, json.Unmarshal([]byte(out), &doc))
+	img := doc.Content[0]
+	attrs, err := img.ImageAttrs()
+	require.NoError(t, err)
+	assert.Equal(t, "https://example.com/img.png", attrs.Src)
+}

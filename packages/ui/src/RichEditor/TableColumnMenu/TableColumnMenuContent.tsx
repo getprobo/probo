@@ -129,8 +129,12 @@ export function TableColumnMenuContent({
         .chain()
         .focus()
         .command(({ tr }) => {
+          const seen = new Set<number>();
           for (let row = map.height - 1; row >= 0; row--) {
             const cellOffset = map.map[row * map.width + colIndex];
+            if (seen.has(cellOffset)) continue;
+            seen.add(cellOffset);
+
             const cell = table.nodeAt(cellOffset);
             if (!cell) continue;
 
@@ -211,13 +215,17 @@ export function TableColumnMenuContent({
       const lastCellPos
         = map.map[(map.height - 1) * map.width + colIndex] + tableStart + 1;
 
-      const $anchor = editor.state.doc.resolve(firstCellPos);
-      const $head = editor.state.doc.resolve(lastCellPos);
-
-      editor.view.dispatch(
-        editor.state.tr.setSelection(new CellSelection($anchor, $head)),
-      );
-      editor.commands.deleteSelection();
+      editor
+        .chain()
+        .focus()
+        .command(({ tr }) => {
+          const $anchor = tr.doc.resolve(firstCellPos);
+          const $head = tr.doc.resolve(lastCellPos);
+          tr.setSelection(new CellSelection($anchor, $head));
+          return true;
+        })
+        .deleteSelection()
+        .run();
     } catch {
       // table may have changed
     }

@@ -255,6 +255,25 @@ func TestParseMarkdown_Image(t *testing.T) {
 	assert.Equal(t, "title", *attrs.Title)
 }
 
+func TestParseMarkdown_ImageFormattedAltText(t *testing.T) {
+	t.Parallel()
+
+	doc, err := ParseMarkdown("![**bold** and *italic*](https://example.com/img.png)")
+	require.NoError(t, err)
+	require.Len(t, doc.Content, 1)
+
+	p := doc.Content[0]
+	require.Len(t, p.Content, 1)
+
+	img := p.Content[0]
+	assert.Equal(t, NodeImage, img.Type)
+
+	attrs, err := img.ImageAttrs()
+	require.NoError(t, err)
+	require.NotNil(t, attrs.Alt)
+	assert.Equal(t, "bold and italic", *attrs.Alt)
+}
+
 func TestParseMarkdown_BulletList(t *testing.T) {
 	t.Parallel()
 

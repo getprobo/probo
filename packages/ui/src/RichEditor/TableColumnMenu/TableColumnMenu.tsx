@@ -70,6 +70,11 @@ export function moveColumn(
   const table = editor.state.doc.nodeAt(tableNodePos);
   if (!table) return;
 
+  const map = TableMap.get(table);
+  if (new Set(map.map).size < map.map.length) return;
+  if (fromCol < 0 || fromCol >= map.width || toCol < 0 || toCol >= map.width)
+    return;
+
   const rows: PMNode[] = [];
   table.forEach((row) => {
     const cells: PMNode[] = [];

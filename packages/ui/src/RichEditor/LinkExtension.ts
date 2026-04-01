@@ -22,6 +22,9 @@ export const LinkExtension = Link.extend({
                 view.dom.classList.remove("pointer-on-hovered-link");
               }
             },
+            blur: (view) => {
+              view.dom.classList.remove("pointer-on-hovered-link");
+            },
           },
           handleClick: (_view, _, event) => {
             const { ctrlKey, metaKey } = event; // Check for Ctrl (Windows) or Cmd (Mac)

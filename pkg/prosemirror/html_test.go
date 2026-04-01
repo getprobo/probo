@@ -222,6 +222,26 @@ func TestRenderHTML_LinkBlankTargetDefaultRel(t *testing.T) {
 			raw:  `{"type":"text","marks":[{"type":"link","attrs":{"href":"https://example.com","target":" _blank ","rel":"  "}}],"text":"hi"}`,
 			want: `<a href="https://example.com" target=" _blank " rel="noopener noreferrer">hi</a>`,
 		},
+		{
+			name: "custom rel without noopener gets noopener appended",
+			raw:  `{"type":"text","marks":[{"type":"link","attrs":{"href":"https://example.com","target":"_blank","rel":"nofollow"}}],"text":"hi"}`,
+			want: `<a href="https://example.com" target="_blank" rel="nofollow noopener">hi</a>`,
+		},
+		{
+			name: "custom rel already has noopener",
+			raw:  `{"type":"text","marks":[{"type":"link","attrs":{"href":"https://example.com","target":"_blank","rel":"noopener nofollow"}}],"text":"hi"}`,
+			want: `<a href="https://example.com" target="_blank" rel="noopener nofollow">hi</a>`,
+		},
+		{
+			name: "custom rel with noopener case insensitive",
+			raw:  `{"type":"text","marks":[{"type":"link","attrs":{"href":"https://example.com","target":"_blank","rel":"NoOpener"}}],"text":"hi"}`,
+			want: `<a href="https://example.com" target="_blank" rel="NoOpener">hi</a>`,
+		},
+		{
+			name: "custom rel without blank target unchanged",
+			raw:  `{"type":"text","marks":[{"type":"link","attrs":{"href":"https://example.com","target":"_self","rel":"nofollow"}}],"text":"hi"}`,
+			want: `<a href="https://example.com" target="_self" rel="nofollow">hi</a>`,
+		},
 	} {
 		t.Run(
 			tc.name,
@@ -291,6 +311,47 @@ func TestRenderHTML_Image(t *testing.T) {
 	got, err := RenderHTML(n)
 	require.NoError(t, err)
 	assert.Equal(t, `<img src="https://example.com/img.png" alt="A photo" title="My image">`, got)
+}
+
+func TestRenderHTML_ImageSanitizesDangerousSrc(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		name    string
+		src     string
+		wantSrc string
+	}{
+		{name: "javascript scheme", src: `javascript:alert(1)`, wantSrc: ``},
+		{name: "javascript case insensitive", src: `javaScript:alert(1)`, wantSrc: ``},
+		{name: "vbscript scheme", src: `vbscript:MsgBox("xss")`, wantSrc: ``},
+		{name: "protocol-relative", src: `//evil.example/img.png`, wantSrc: ``},
+		{name: "empty src", src: ``, wantSrc: ``},
+		{name: "https preserved", src: `https://example.com/img.png`, wantSrc: `https://example.com/img.png`},
+		{name: "http preserved", src: `http://example.com/img.png`, wantSrc: `http://example.com/img.png`},
+		{name: "data URI preserved", src: `data:image/png;base64,iVBOR`, wantSrc: `data:image/png;base64,iVBOR`},
+		{name: "absolute path", src: `/images/photo.png`, wantSrc: `/images/photo.png`},
+		{name: "relative path", src: `images/photo.png`, wantSrc: `images/photo.png`},
+	} {
+		t.Run(
+			tc.name,
+			func(t *testing.T) {
+				t.Parallel()
+				srcJSON, err := json.Marshal(tc.src)
+				require.NoError(t, err)
+				raw := fmt.Sprintf(
+					`{"type":"image","attrs":{"src":%s}}`,
+					string(srcJSON),
+				)
+				var n Node
+				require.NoError(t, json.Unmarshal([]byte(raw), &n))
+
+				got, err := RenderHTML(n)
+				require.NoError(t, err)
+				want := fmt.Sprintf(`<img src="%s">`, html.EscapeString(tc.wantSrc))
+				assert.Equal(t, want, got)
+			},
+		)
+	}
 }
 
 func TestRenderHTML_MultipleMarks(t *testing.T) {

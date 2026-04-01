@@ -153,8 +153,6 @@ func (udvr *UpdateDocumentVersionRequest) Validate() error {
 	v.Check(
 		udvr.Content,
 		"content",
-		validator.Required(),
-		validator.NotEmpty(),
 		validator.MaxLen(documentMaxLength),
 		validator.ProseMirrorDocumentContent(),
 	)
@@ -783,17 +781,15 @@ func (s *DocumentService) UpdateVersion(
 				return &ErrDocumentVersionNotDraft{}
 			}
 
-			var content string
 			if req.Content != nil {
-				var err error
-				content, err = prosemirror.SanitizeDocumentJSON(*req.Content)
+				content, err := prosemirror.SanitizeDocumentJSON(*req.Content)
 				if err != nil {
 					return fmt.Errorf("cannot sanitize document content: %w", err)
 				}
+				documentVersion.Content = content
 			}
 
 			documentVersion.Title = document.Title
-			documentVersion.Content = content
 			if req.Classification != nil {
 				documentVersion.Classification = *req.Classification
 			}

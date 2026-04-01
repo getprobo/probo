@@ -66,12 +66,32 @@ func SanitizeDocumentJSON(s string) (string, error) {
 }
 
 func sanitizeNode(n *Node) {
+	if n.Type == NodeImage {
+		sanitizeImageNode(n)
+	}
 	for i := range n.Marks {
 		sanitizeLinkMark(&n.Marks[i])
 	}
 	for i := range n.Content {
 		sanitizeNode(&n.Content[i])
 	}
+}
+
+func sanitizeImageNode(n *Node) {
+	attrs, err := n.ImageAttrs()
+	if err != nil {
+		n.Attrs = []byte(`{"src":""}`)
+		return
+	}
+
+	attrs.Src = safeImageSrc(attrs.Src)
+	raw, err := json.Marshal(attrs)
+	if err != nil {
+		n.Attrs = []byte(`{"src":""}`)
+		return
+	}
+
+	n.Attrs = raw
 }
 
 func sanitizeLinkMark(m *Mark) {

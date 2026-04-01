@@ -330,15 +330,7 @@ func (c *converter) convertImage(n *ast.Image) ([]Node, error) {
 		imgAttrs.Title = &t
 	}
 
-	// Collect alt text from child text nodes.
-	var altBuf bytes.Buffer
-	for child := n.FirstChild(); child != nil; child = child.NextSibling() {
-		if child.Kind() == ast.KindText {
-			altBuf.Write(child.(*ast.Text).Segment.Value(c.source))
-		}
-	}
-	if altBuf.Len() > 0 {
-		alt := altBuf.String()
+	if alt := c.extractText(n); alt != "" {
 		imgAttrs.Alt = &alt
 	}
 
@@ -522,6 +514,22 @@ func (c *converter) convertStrikethrough(n ast.Node) ([]Node, error) {
 	}
 
 	return children, nil
+}
+
+// extractText recursively collects the text content of all descendant nodes.
+func (c *converter) extractText(n ast.Node) string {
+	var buf bytes.Buffer
+	for child := n.FirstChild(); child != nil; child = child.NextSibling() {
+		switch child.Kind() {
+		case ast.KindText:
+			buf.Write(child.(*ast.Text).Segment.Value(c.source))
+		case ast.KindString:
+			buf.Write(child.(*ast.String).Value)
+		default:
+			buf.WriteString(c.extractText(child))
+		}
+	}
+	return buf.String()
 }
 
 func copyMarks(marks []Mark) []Mark {
