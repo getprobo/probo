@@ -4,6 +4,23 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.157.0] - 2026-04-01
+
+### Added
+
+- Add rich text editor for documents with TipTap (tables, links, mermaid diagrams, slash commands, auto-save)
+- Add prosemirror-based PDF rendering for documents
+- Add migration command for document version markdown-to-prosemirror conversion
+
+### Changed
+
+- Remove version update dialog in favor of inline editing
+
+### Fixed
+
+- Fix create draft condition and delete draft connections handling
+- Fix document creation request validation
+
 ## [0.156.1] - 2026-04-01
 
 ### Fixed
