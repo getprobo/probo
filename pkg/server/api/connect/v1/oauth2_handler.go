@@ -192,15 +192,8 @@ func (h *OAuth2Handler) AuthorizeHandler(w http.ResponseWriter, r *http.Request)
 	redirectURI := q.Get("redirect_uri")
 	state := q.Get("state")
 
-	clientIDStr := q.Get("client_id")
-	if clientIDStr == "" {
-		h.writeOAuth2Error(w, r, oauth2server.ErrInvalidRequest.WithDescription("missing client_id"))
-		return
-	}
-
-	clientID, err := gid.ParseGID(clientIDStr)
-	if err != nil {
-		h.writeOAuth2Error(w, r, oauth2server.ErrInvalidRequest.WithDescription("invalid client_id"))
+	clientID, ok := h.requireQueryGID(w, r, "client_id")
+	if !ok {
 		return
 	}
 
@@ -256,14 +249,12 @@ func (h *OAuth2Handler) AuthorizeHandler(w http.ResponseWriter, r *http.Request)
 func (h *OAuth2Handler) AuthorizeConsentHandler(w http.ResponseWriter, r *http.Request) {
 	identity := authn.IdentityFromContext(r.Context())
 
-	if err := r.ParseForm(); err != nil {
-		h.writeOAuth2Error(w, r, oauth2server.ErrInvalidRequest.WithDescription("invalid form data"))
+	if !h.parseForm(w, r) {
 		return
 	}
 
-	consentID, err := gid.ParseGID(r.FormValue("consent_id"))
-	if err != nil {
-		h.writeOAuth2Error(w, r, oauth2server.ErrInvalidRequest.WithDescription("invalid consent_id"))
+	consentID, ok := h.requireFormGID(w, r, "consent_id")
+	if !ok {
 		return
 	}
 
@@ -293,8 +284,7 @@ func (h *OAuth2Handler) AuthorizeConsentHandler(w http.ResponseWriter, r *http.R
 // TokenHandler handles the token endpoint.
 // POST /oauth2/token
 func (h *OAuth2Handler) TokenHandler(w http.ResponseWriter, r *http.Request) {
-	if err := r.ParseForm(); err != nil {
-		h.writeOAuth2Error(w, r, oauth2server.ErrInvalidRequest.WithDescription("invalid form data"))
+	if !h.parseForm(w, r) {
 		return
 	}
 
@@ -317,8 +307,7 @@ func (h *OAuth2Handler) TokenHandler(w http.ResponseWriter, r *http.Request) {
 func (h *OAuth2Handler) IntrospectHandler(w http.ResponseWriter, r *http.Request) {
 	client := oauth2ClientFromContext(r)
 
-	if err := r.ParseForm(); err != nil {
-		h.writeOAuth2Error(w, r, oauth2server.ErrInvalidRequest.WithDescription("invalid form data"))
+	if !h.parseForm(w, r) {
 		return
 	}
 
@@ -374,14 +363,12 @@ func (h *OAuth2Handler) RevokeHandler(w http.ResponseWriter, r *http.Request) {
 // DeviceAuthHandler handles the device authorization endpoint (RFC 8628).
 // POST /oauth2/device
 func (h *OAuth2Handler) DeviceAuthHandler(w http.ResponseWriter, r *http.Request) {
-	if err := r.ParseForm(); err != nil {
-		h.writeOAuth2Error(w, r, oauth2server.ErrInvalidRequest.WithDescription("invalid form data"))
+	if !h.parseForm(w, r) {
 		return
 	}
 
-	clientID, err := gid.ParseGID(r.FormValue("client_id"))
-	if err != nil {
-		h.writeOAuth2Error(w, r, oauth2server.ErrInvalidRequest.WithDescription("invalid client_id"))
+	clientID, ok := h.requireFormGID(w, r, "client_id")
+	if !ok {
 		return
 	}
 
@@ -612,17 +599,14 @@ func (h *OAuth2Handler) handleRefreshTokenGrant(w http.ResponseWriter, r *http.R
 }
 
 func (h *OAuth2Handler) handleDeviceCodeGrant(w http.ResponseWriter, r *http.Request) {
-	clientIDStr := r.FormValue("client_id")
-	deviceCodeValue := r.FormValue("device_code")
-
-	if clientIDStr == "" || deviceCodeValue == "" {
-		h.writeOAuth2Error(w, r, oauth2server.ErrInvalidRequest.WithDescription("missing client_id or device_code"))
+	clientID, ok := h.requireFormGID(w, r, "client_id")
+	if !ok {
 		return
 	}
 
-	clientID, err := gid.ParseGID(clientIDStr)
-	if err != nil {
-		h.writeOAuth2Error(w, r, oauth2server.ErrInvalidRequest.WithDescription("invalid client_id"))
+	deviceCodeValue := r.FormValue("device_code")
+	if deviceCodeValue == "" {
+		h.writeOAuth2Error(w, r, oauth2server.ErrInvalidRequest.WithDescription("missing device_code"))
 		return
 	}
 
@@ -681,4 +665,52 @@ func parseScopes(s string) (coredata.OAuth2Scopes, error) {
 		return nil, oauth2server.ErrInvalidScope.WithDescription(err.Error())
 	}
 	return scopes, nil
+}
+
+// parseForm parses the request form and writes an OAuth2 error on failure.
+// Returns true if parsing succeeded.
+func (h *OAuth2Handler) parseForm(w http.ResponseWriter, r *http.Request) bool {
+	if err := r.ParseForm(); err != nil {
+		h.writeOAuth2Error(w, r, oauth2server.ErrInvalidRequest.WithDescription("invalid form data"))
+		return false
+	}
+	return true
+}
+
+// requireFormGID extracts a form parameter, parses it as a GID, and writes an
+// OAuth2 error if the value is missing or malformed. Returns the parsed GID
+// and true on success.
+func (h *OAuth2Handler) requireFormGID(w http.ResponseWriter, r *http.Request, param string) (gid.GID, bool) {
+	v := r.FormValue(param)
+	if v == "" {
+		h.writeOAuth2Error(w, r, oauth2server.ErrInvalidRequest.WithDescription("missing "+param))
+		return gid.GID{}, false
+	}
+
+	id, err := gid.ParseGID(v)
+	if err != nil {
+		h.writeOAuth2Error(w, r, oauth2server.ErrInvalidRequest.WithDescription("invalid "+param))
+		return gid.GID{}, false
+	}
+
+	return id, true
+}
+
+// requireQueryGID extracts a query parameter, parses it as a GID, and writes
+// an OAuth2 error if the value is missing or malformed. Returns the parsed GID
+// and true on success.
+func (h *OAuth2Handler) requireQueryGID(w http.ResponseWriter, r *http.Request, param string) (gid.GID, bool) {
+	v := r.URL.Query().Get(param)
+	if v == "" {
+		h.writeOAuth2Error(w, r, oauth2server.ErrInvalidRequest.WithDescription("missing "+param))
+		return gid.GID{}, false
+	}
+
+	id, err := gid.ParseGID(v)
+	if err != nil {
+		h.writeOAuth2Error(w, r, oauth2server.ErrInvalidRequest.WithDescription("invalid "+param))
+		return gid.GID{}, false
+	}
+
+	return id, true
 }
