@@ -5565,6 +5565,9 @@ components:
         document_id:
           $ref: "#/components/schemas/GID"
           description: Document ID
+        content:
+          type: string
+          description: Document content in markdown format
 
     CreateDraftDocumentVersionOutput:
       type: object
@@ -5584,7 +5587,7 @@ components:
           description: Document version ID
         content:
           type: string
-          description: Document content
+          description: Document content in markdown format
         classification:
           $ref: "#/components/schemas/DocumentClassification"
           description: Document classification

@@ -2170,6 +2170,24 @@ func (r *Resolver) CreateDraftDocumentVersionTool(ctx context.Context, req *mcp.
 		panic(fmt.Errorf("cannot create draft document version: %w", err))
 	}
 
+	if input.Content != nil {
+		content, err := markdownToProseMirrorJSON(*input.Content)
+		if err != nil {
+			panic(fmt.Errorf("cannot convert markdown to prosemirror: %w", err))
+		}
+
+		draftVersion, err = svc.Documents.UpdateVersion(
+			ctx,
+			probo.UpdateDocumentVersionRequest{
+				ID:      draftVersion.ID,
+				Content: &content,
+			},
+		)
+		if err != nil {
+			panic(fmt.Errorf("cannot update draft document version content: %w", err))
+		}
+	}
+
 	return nil, types.CreateDraftDocumentVersionOutput{
 		DocumentVersion: types.NewDocumentVersion(draftVersion),
 	}, nil
@@ -2180,11 +2198,20 @@ func (r *Resolver) UpdateDocumentVersionTool(ctx context.Context, req *mcp.CallT
 
 	svc := r.ProboService(ctx, input.DocumentVersionID)
 
+	var content *string
+	if input.Content != nil {
+		c, err := markdownToProseMirrorJSON(*input.Content)
+		if err != nil {
+			panic(fmt.Errorf("cannot convert markdown to prosemirror: %w", err))
+		}
+		content = &c
+	}
+
 	documentVersion, err := svc.Documents.UpdateVersion(
 		ctx,
 		probo.UpdateDocumentVersionRequest{
 			ID:             input.DocumentVersionID,
-			Content:        input.Content,
+			Content:        content,
 			Classification: input.Classification,
 		},
 	)

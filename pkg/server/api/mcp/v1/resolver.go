@@ -18,11 +18,14 @@ package mcp_v1
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/probo"
+	"go.probo.inc/probo/pkg/prosemirror"
 	"go.probo.inc/probo/pkg/server/api/authn"
 )
 
@@ -30,6 +33,20 @@ type Resolver struct {
 	proboSvc *probo.Service
 	iamSvc   *iam.Service
 	logger   *log.Logger
+}
+
+func markdownToProseMirrorJSON(markdown string) (string, error) {
+	node, err := prosemirror.ParseMarkdown(markdown)
+	if err != nil {
+		return "", fmt.Errorf("cannot parse markdown: %w", err)
+	}
+
+	out, err := json.Marshal(node)
+	if err != nil {
+		return "", fmt.Errorf("cannot marshal prosemirror node: %w", err)
+	}
+
+	return string(out), nil
 }
 
 func (r *Resolver) MustAuthorize(ctx context.Context, entityID gid.GID, action iam.Action) {
