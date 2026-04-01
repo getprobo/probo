@@ -6,7 +6,7 @@ export function ProboLogo() {
     <Img
       style={{verticalAlign: "middle", height: "100%"}}
       src="{{.PoweredByLogoURL}}"
-      alt="Probo"
+      alt="Govrly"
       height="16"
     />
   );

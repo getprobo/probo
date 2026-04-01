@@ -203,7 +203,7 @@ func UploadStaticAssets(ctx context.Context, s3Client *s3.Client, staticAssetsBu
 const (
 	subjectConfirmEmail                      = "Confirm your email address"
 	subjectPasswordReset                     = "Reset your password"
-	subjectInvitation                        = "Invitation to join %s on Probo"
+	subjectInvitation                        = "Invitation to join %s on Govrly"
 	subjectDocumentApproval                  = "Action Required – Please review and approve %s"
 	subjectDocumentSigning                   = "Action Required – Please review and sign %s compliance documents"
 	subjectDocumentExport                    = "Your document export is ready"
