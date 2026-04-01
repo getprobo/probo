@@ -6,11 +6,10 @@ import {
   DialogContent,
   DialogFooter,
   Spinner,
-  Textarea,
   useDialogRef,
   useToast,
 } from "@probo/ui";
-import { type RefObject, useEffect } from "react";
+import { type RefObject, useCallback, useEffect, useState } from "react";
 import { useFragment, useMutation } from "react-relay";
 import { useNavigate } from "react-router";
 import { graphql } from "relay-runtime";
@@ -19,6 +18,7 @@ import { z } from "zod";
 import type { UpdateVersionDialogCreateMutation } from "#/__generated__/core/UpdateVersionDialogCreateMutation.graphql";
 import type { UpdateVersionDialogFragment$key } from "#/__generated__/core/UpdateVersionDialogFragment.graphql";
 import type { UpdateVersionDialogUpdateMutation } from "#/__generated__/core/UpdateVersionDialogUpdateMutation.graphql";
+import { RichTextEditor } from "#/components/form/RichTextEditor";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
@@ -98,6 +98,7 @@ export default function UpdateVersionDialog(props: UpdateVersionDialogProps) {
   const { __ } = useTranslate();
   const { toast } = useToast();
   const dialogRef = useDialogRef();
+  const [editorKey, setEditorKey] = useState(0);
 
   const document = useFragment<UpdateVersionDialogFragment$key>(fragment, fKey);
   const version = document.versions.edges[0].node;
@@ -112,16 +113,27 @@ export default function UpdateVersionDialog(props: UpdateVersionDialogProps) {
         errorMessage: __("Failed to update document"),
       },
     );
-  const { handleSubmit, register } = useFormWithSchema(versionSchema, {
+  const { handleSubmit, setValue, watch } = useFormWithSchema(versionSchema, {
     defaultValues: {
       content: version.content,
     },
   });
 
+  const contentValue = watch("content");
+
+  const onContentChange = useCallback(
+    (html: string) => {
+      setValue("content", html, { shouldValidate: true });
+    },
+    [setValue],
+  );
+
   useEffect(() => {
     if (!ref.current) {
       ref.current = {
         open: () => {
+          setValue("content", version.content);
+          setEditorKey(k => k + 1);
           dialogRef.current?.open();
         },
       };
@@ -194,25 +206,38 @@ export default function UpdateVersionDialog(props: UpdateVersionDialogProps) {
   return (
     <Dialog
       ref={dialogRef}
-      title={<Breadcrumb items={[__("Documents"), __("Edit document")]} />}
-    >
-      <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
-        <DialogContent>
-          <Textarea
-            id="content"
-            variant="ghost"
-            autogrow
-            required
-            placeholder={__("Add content")}
-            aria-label={__("Content")}
-            className="p-6"
-            {...register("content")}
+      title={
+        (
+          <Breadcrumb
+            items={[
+              __("Documents"),
+              isDraft ? __("Edit draft") : __("Create new draft"),
+            ]}
           />
+        )
+      }
+      className="w-[85vw]! max-w-[85vw]! h-[85vh]!"
+    >
+      <form
+        onSubmit={e => void handleSubmit(onSubmit)(e)}
+        className="flex flex-col h-[calc(85vh-110px)]"
+      >
+        <DialogContent className="flex-1 max-h-none! p-0!">
+          <div className="flex flex-col h-full overflow-hidden">
+            <div className="flex-1 overflow-hidden">
+              <RichTextEditor
+                key={editorKey}
+                value={contentValue}
+                onChange={onContentChange}
+                placeholder={__("Add content")}
+              />
+            </div>
+          </div>
         </DialogContent>
         <DialogFooter>
           <Button disabled={isLoading} type="submit">
             {isLoading && <Spinner />}
-            {__("Update document")}
+            {isDraft ? __("Update document") : __("Create draft")}
           </Button>
         </DialogFooter>
       </form>
