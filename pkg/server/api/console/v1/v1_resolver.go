@@ -1564,7 +1564,7 @@ func (r *electronicSignatureResolver) Events(ctx context.Context, obj *types.Ele
 
 // Signed is the resolver for the signed field.
 func (r *employeeDocumentResolver) Signed(ctx context.Context, obj *types.EmployeeDocument) (*bool, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionDocumentGet); err != nil {
+	if err := r.authorize(ctx, obj.ID, probo.ActionEmployeeDocumentGet); err != nil {
 		return nil, err
 	}
 
@@ -1586,7 +1586,7 @@ func (r *employeeDocumentResolver) Signed(ctx context.Context, obj *types.Employ
 
 // ApprovalState is the resolver for the approvalState field.
 func (r *employeeDocumentResolver) ApprovalState(ctx context.Context, obj *types.EmployeeDocument) (*coredata.DocumentVersionApprovalDecisionState, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionDocumentGet); err != nil {
+	if err := r.authorize(ctx, obj.ID, probo.ActionEmployeeDocumentGet); err != nil {
 		return nil, err
 	}
 
@@ -1608,7 +1608,7 @@ func (r *employeeDocumentResolver) ApprovalState(ctx context.Context, obj *types
 
 // Versions is the resolver for the versions field.
 func (r *employeeDocumentResolver) Versions(ctx context.Context, obj *types.EmployeeDocument, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentVersionOrderBy) (*types.EmployeeDocumentVersionConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionDocumentVersionList); err != nil {
+	if err := r.authorize(ctx, obj.ID, probo.ActionEmployeeDocumentGet); err != nil {
 		return nil, err
 	}
 
@@ -1629,13 +1629,19 @@ func (r *employeeDocumentResolver) Versions(ctx context.Context, obj *types.Empl
 
 	identity := authn.IdentityFromContext(ctx)
 
-	versionFilter := coredata.NewDocumentVersionFilter()
+	var filterMode coredata.EmployeeFilterMode
 	switch obj.FilterMode {
 	case types.EmployeeDocumentFilterModeSignature:
-		versionFilter = versionFilter.WithUserEmail(&identity.EmailAddress)
+		filterMode = coredata.EmployeeFilterModeSignature
 	case types.EmployeeDocumentFilterModeApproval:
-		versionFilter = versionFilter.WithApproverIdentityID(&identity.ID)
+		filterMode = coredata.EmployeeFilterModeApproval
+	default:
+		r.logger.ErrorCtx(ctx, "unsupported employee document filter mode", log.String("filter_mode", string(obj.FilterMode)))
+		return nil, gqlutils.Internal(ctx)
 	}
+
+	versionFilter := coredata.NewDocumentVersionFilter().
+		WithEmployeeIdentityID(&identity.ID, filterMode)
 
 	versionsPage, err := prb.Documents.ListVersions(ctx, obj.ID, cursor, versionFilter)
 	if err != nil {
@@ -1647,6 +1653,7 @@ func (r *employeeDocumentResolver) Versions(ctx context.Context, obj *types.Empl
 	for i, v := range versionsPage.Data {
 		employeeVersions[i] = &types.EmployeeDocumentVersion{
 			ID:             v.ID,
+			DocumentID:     obj.ID,
 			OrganizationID: v.OrganizationID,
 			Major:          v.Major,
 			Minor:          v.Minor,
@@ -1665,7 +1672,7 @@ func (r *employeeDocumentResolver) Versions(ctx context.Context, obj *types.Empl
 
 // Signed is the resolver for the signed field.
 func (r *employeeDocumentVersionResolver) Signed(ctx context.Context, obj *types.EmployeeDocumentVersion) (bool, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionDocumentVersionGet); err != nil {
+	if err := r.authorize(ctx, obj.DocumentID, probo.ActionEmployeeDocumentGet); err != nil {
 		return false, err
 	}
 
@@ -1684,7 +1691,7 @@ func (r *employeeDocumentVersionResolver) Signed(ctx context.Context, obj *types
 
 // ApprovalDecision is the resolver for the approvalDecision field.
 func (r *employeeDocumentVersionResolver) ApprovalDecision(ctx context.Context, obj *types.EmployeeDocumentVersion) (*types.DocumentVersionApprovalDecision, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionDocumentVersionApprovalList); err != nil {
+	if err := r.authorize(ctx, obj.DocumentID, probo.ActionEmployeeDocumentGet); err != nil {
 		return nil, err
 	}
 
@@ -5708,9 +5715,9 @@ func (r *mutationResolver) ExportDocumentVersionPDF(ctx context.Context, input t
 	}, nil
 }
 
-// ExportSignableVersionDocumentPDF is the resolver for the exportSignableVersionDocumentPDF field.
-func (r *mutationResolver) ExportSignableVersionDocumentPDF(ctx context.Context, input types.ExportSignableDocumentVersionPDFInput) (*types.ExportSignableDocumentVersionPDFPayload, error) {
-	if err := r.authorize(ctx, input.DocumentVersionID, probo.ActionDocumentVersionExportSignable); err != nil {
+// ExportEmployeeDocumentVersionPDF is the resolver for the exportEmployeeDocumentVersionPDF field.
+func (r *mutationResolver) ExportEmployeeDocumentVersionPDF(ctx context.Context, input types.ExportEmployeeDocumentVersionPDFInput) (*types.ExportEmployeeDocumentVersionPDFPayload, error) {
+	if err := r.authorize(ctx, input.DocumentVersionID, probo.ActionEmployeeDocumentVersionExportPDF); err != nil {
 		return nil, err
 	}
 
@@ -5723,7 +5730,11 @@ func (r *mutationResolver) ExportSignableVersionDocumentPDF(ctx context.Context,
 	}
 
 	identity := authn.IdentityFromContext(ctx)
-	documentFilter := coredata.NewDocumentFilter(nil).WithUserEmail(&identity.EmailAddress)
+	documentFilter := coredata.NewDocumentFilter(nil).WithEmployeeIdentityID(
+		&identity.ID,
+		coredata.EmployeeFilterModeSignature,
+		coredata.EmployeeFilterModeApproval,
+	)
 
 	_, err = prb.Documents.GetWithFilter(ctx, documentVersion.DocumentID, documentFilter)
 	if err != nil {
@@ -5731,7 +5742,7 @@ func (r *mutationResolver) ExportSignableVersionDocumentPDF(ctx context.Context,
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot get signable document", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot get employee document", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -5743,11 +5754,11 @@ func (r *mutationResolver) ExportSignableVersionDocumentPDF(ctx context.Context,
 
 	pdf, err := prb.Documents.ExportPDF(ctx, input.DocumentVersionID, options)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot export signable document PDF", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot export employee document PDF", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return &types.ExportSignableDocumentVersionPDFPayload{
+	return &types.ExportEmployeeDocumentVersionPDFPayload{
 		Data: fmt.Sprintf("data:application/pdf;base64,%s", base64.StdEncoding.EncodeToString(pdf)),
 	}, nil
 }
@@ -10201,7 +10212,7 @@ func (r *vendorServiceResolver) Permission(ctx context.Context, obj *types.Vendo
 
 // SignableDocuments is the resolver for the signableDocuments field.
 func (r *viewerResolver) SignableDocuments(ctx context.Context, obj *types.Viewer, organizationID gid.GID, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentOrderBy) (*types.EmployeeDocumentConnection, error) {
-	if err := r.authorize(ctx, organizationID, probo.ActionDocumentList); err != nil {
+	if err := r.authorize(ctx, organizationID, probo.ActionEmployeeDocumentList); err != nil {
 		return nil, err
 	}
 
@@ -10222,7 +10233,7 @@ func (r *viewerResolver) SignableDocuments(ctx context.Context, obj *types.Viewe
 
 	identity := authn.IdentityFromContext(ctx)
 
-	documentFilter := coredata.NewDocumentFilter(nil).WithUserEmail(&identity.EmailAddress)
+	documentFilter := coredata.NewDocumentFilter(nil).WithEmployeeIdentityID(&identity.ID, coredata.EmployeeFilterModeSignature)
 
 	documentsPage, err := prb.Documents.ListByOrganizationID(ctx, organizationID, cursor, documentFilter)
 	if err != nil {
@@ -10249,7 +10260,7 @@ func (r *viewerResolver) SignableDocuments(ctx context.Context, obj *types.Viewe
 
 // SignableDocument is the resolver for the signableDocument field.
 func (r *viewerResolver) SignableDocument(ctx context.Context, obj *types.Viewer, id gid.GID) (*types.EmployeeDocument, error) {
-	if err := r.authorize(ctx, id, probo.ActionDocumentGet); err != nil {
+	if err := r.authorize(ctx, id, probo.ActionEmployeeDocumentGet); err != nil {
 		return nil, err
 	}
 
@@ -10257,7 +10268,7 @@ func (r *viewerResolver) SignableDocument(ctx context.Context, obj *types.Viewer
 
 	identity := authn.IdentityFromContext(ctx)
 
-	documentFilter := coredata.NewDocumentFilter(nil).WithUserEmail(&identity.EmailAddress)
+	documentFilter := coredata.NewDocumentFilter(nil).WithEmployeeIdentityID(&identity.ID, coredata.EmployeeFilterModeSignature)
 	document, err := prb.Documents.GetWithFilter(ctx, id, documentFilter)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
@@ -10280,7 +10291,7 @@ func (r *viewerResolver) SignableDocument(ctx context.Context, obj *types.Viewer
 
 // ApprovableDocuments is the resolver for the approvableDocuments field.
 func (r *viewerResolver) ApprovableDocuments(ctx context.Context, obj *types.Viewer, organizationID gid.GID, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentOrderBy) (*types.EmployeeDocumentConnection, error) {
-	if err := r.authorize(ctx, organizationID, probo.ActionDocumentVersionApprovalList); err != nil {
+	if err := r.authorize(ctx, organizationID, probo.ActionEmployeeDocumentList); err != nil {
 		return nil, err
 	}
 
@@ -10301,7 +10312,7 @@ func (r *viewerResolver) ApprovableDocuments(ctx context.Context, obj *types.Vie
 
 	identity := authn.IdentityFromContext(ctx)
 
-	documentFilter := coredata.NewDocumentFilter(nil).WithApproverIdentityID(&identity.ID)
+	documentFilter := coredata.NewDocumentFilter(nil).WithEmployeeIdentityID(&identity.ID, coredata.EmployeeFilterModeApproval)
 
 	documentsPage, err := prb.Documents.ListByOrganizationID(ctx, organizationID, cursor, documentFilter)
 	if err != nil {
@@ -10328,7 +10339,7 @@ func (r *viewerResolver) ApprovableDocuments(ctx context.Context, obj *types.Vie
 
 // ApprovableDocument is the resolver for the approvableDocument field.
 func (r *viewerResolver) ApprovableDocument(ctx context.Context, obj *types.Viewer, id gid.GID) (*types.EmployeeDocument, error) {
-	if err := r.authorize(ctx, id, probo.ActionDocumentGet); err != nil {
+	if err := r.authorize(ctx, id, probo.ActionEmployeeDocumentGet); err != nil {
 		return nil, err
 	}
 
@@ -10336,7 +10347,7 @@ func (r *viewerResolver) ApprovableDocument(ctx context.Context, obj *types.View
 
 	identity := authn.IdentityFromContext(ctx)
 
-	documentFilter := coredata.NewDocumentFilter(nil).WithApproverIdentityID(&identity.ID)
+	documentFilter := coredata.NewDocumentFilter(nil).WithEmployeeIdentityID(&identity.ID, coredata.EmployeeFilterModeApproval)
 	document, err := prb.Documents.GetWithFilter(ctx, id, documentFilter)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {

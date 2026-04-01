@@ -3860,9 +3860,9 @@ type Mutation {
     exportDocumentVersionPDF(
         input: ExportDocumentVersionPDFInput!
     ): ExportDocumentVersionPDFPayload!
-    exportSignableVersionDocumentPDF(
-        input: ExportSignableDocumentVersionPDFInput!
-    ): ExportSignableDocumentVersionPDFPayload!
+    exportEmployeeDocumentVersionPDF(
+        input: ExportEmployeeDocumentVersionPDFInput!
+    ): ExportEmployeeDocumentVersionPDFPayload!
     exportProcessingActivitiesPDF(
         input: ExportProcessingActivitiesPDFInput!
     ): ExportProcessingActivitiesPDFPayload!
@@ -4492,7 +4492,7 @@ input ExportDocumentVersionPDFInput {
     withSignatures: Boolean!
 }
 
-input ExportSignableDocumentVersionPDFInput {
+input ExportEmployeeDocumentVersionPDFInput {
     documentVersionId: ID!
 }
 
@@ -5222,7 +5222,7 @@ type ExportDocumentVersionPDFPayload {
     data: String!
 }
 
-type ExportSignableDocumentVersionPDFPayload {
+type ExportEmployeeDocumentVersionPDFPayload {
     data: String!
 }
 

@@ -46,7 +46,7 @@ import type { DocumentApprovePage_approveMutation } from "#/__generated__/core/D
 import type { DocumentApprovePage_rejectMutation } from "#/__generated__/core/DocumentApprovePage_rejectMutation.graphql";
 import type { DocumentApprovePageDecisionFragment$key } from "#/__generated__/core/DocumentApprovePageDecisionFragment.graphql";
 import type { DocumentApprovePageDocumentFragment$key } from "#/__generated__/core/DocumentApprovePageDocumentFragment.graphql";
-import type { DocumentApprovePageExportPDFMutation } from "#/__generated__/core/DocumentApprovePageExportPDFMutation.graphql";
+import type { DocumentApprovePageExportEmployeePDFMutation } from "#/__generated__/core/DocumentApprovePageExportEmployeePDFMutation.graphql";
 import type { DocumentApprovePageQuery } from "#/__generated__/core/DocumentApprovePageQuery.graphql";
 import type { DocumentApprovePageVersionRowFragment$key } from "#/__generated__/core/DocumentApprovePageVersionRowFragment.graphql";
 import { PDFPreview } from "#/components/documents/PDFPreview";
@@ -100,9 +100,6 @@ const decisionFragment = graphql`
     state
     canApprove: permission(action: "core:document-version:approve")
     canReject: permission(action: "core:document-version:reject")
-    documentVersion {
-      id
-    }
   }
 `;
 
@@ -131,10 +128,10 @@ const rejectDocumentVersionMutation = graphql`
 `;
 
 const exportPDFMutation = graphql`
-  mutation DocumentApprovePageExportPDFMutation(
-    $input: ExportDocumentVersionPDFInput!
+  mutation DocumentApprovePageExportEmployeePDFMutation(
+    $input: ExportEmployeeDocumentVersionPDFInput!
   ) {
-    exportDocumentVersionPDF(input: $input) {
+    exportEmployeeDocumentVersionPDF(input: $input) {
       data
     }
   }
@@ -227,9 +224,10 @@ function VersionRow({
 
 function ViewerDecision(props: {
   fragmentRef: DocumentApprovePageDecisionFragment$key;
+  versionId: string;
   onBack: () => void;
 }) {
-  const { fragmentRef, onBack } = props;
+  const { fragmentRef, versionId, onBack } = props;
   const { __ } = useTranslate();
   const decision = useFragment(decisionFragment, fragmentRef);
   const rejectDialogRef = useDialogRef();
@@ -311,7 +309,7 @@ function ViewerDecision(props: {
                 approveVersion({
                   variables: {
                     input: {
-                      documentVersionId: decision.documentVersion.id,
+                      documentVersionId: versionId,
                     },
                   },
                   onCompleted(_, errors) {
@@ -372,7 +370,7 @@ function ViewerDecision(props: {
               rejectVersion({
                 variables: {
                   input: {
-                    documentVersionId: decision.documentVersion.id,
+                    documentVersionId: versionId,
                     comment: rejectComment || undefined,
                   },
                 },
@@ -434,7 +432,7 @@ function DocumentApproveContent({
 
   usePageTitle(__("Review and Approve Document"));
 
-  const [exportPDF] = useMutation<DocumentApprovePageExportPDFMutation>(
+  const [exportPDF] = useMutation<DocumentApprovePageExportEmployeePDFMutation>(
     exportPDFMutation,
   );
 
@@ -448,8 +446,6 @@ function DocumentApproveContent({
       variables: {
         input: {
           documentVersionId: selectedVersion.id,
-          withWatermark: true,
-          withSignatures: false,
         },
       },
       onCompleted: (data, errors): void => {
@@ -464,8 +460,8 @@ function DocumentApproveContent({
           });
           return;
         }
-        if (data.exportDocumentVersionPDF?.data) {
-          const dataUrl = data.exportDocumentVersionPDF.data;
+        if (data.exportEmployeeDocumentVersionPDF?.data) {
+          const dataUrl = data.exportEmployeeDocumentVersionPDF.data;
           pdfUrlRef.current = dataUrl;
           setPdfUrl(dataUrl);
         }
@@ -522,6 +518,7 @@ function DocumentApproveContent({
                 ? (
                     <ViewerDecision
                       fragmentRef={decision}
+                      versionId={selectedVersion.id}
                       onBack={() =>
                         void navigate(`/organizations/${organizationId}/employee/approvals`)}
                     />

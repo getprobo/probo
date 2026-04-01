@@ -190,7 +190,6 @@ const (
 	ActionDocumentVersionGet             = "core:document-version:get"
 	ActionDocumentVersionList            = "core:document-version:list"
 	ActionDocumentVersionExportPDF       = "core:document-version:export-pdf"
-	ActionDocumentVersionExportSignable  = "core:document-version:export-signable-pdf"
 	ActionDocumentVersionSign            = "core:document-version:sign"
 	ActionDocumentVersionUpdate          = "core:document-version:update"
 	ActionDocumentVersionDeleteDraft     = "core:document-version:delete-draft"
@@ -202,6 +201,11 @@ const (
 	ActionDocumentVersionRemoveApprover  = "core:document-version:remove-approver"
 	ActionDocumentVersionPublish         = "core:document-version:publish"
 	ActionDocumentVersionExport          = "core:document-version:export"
+
+	// EmployeeDocument actions
+	ActionEmployeeDocumentGet              = "core:employee-document:get"
+	ActionEmployeeDocumentList             = "core:employee-document:list"
+	ActionEmployeeDocumentVersionExportPDF = "core:employee-document-version:export-pdf"
 
 	// DocumentVersionSignature actions
 	ActionDocumentVersionSignatureRequest = "core:document-version-signature:request"

@@ -23,47 +23,10 @@ import (
 	"go.probo.inc/probo/e2e/internal/testutil"
 )
 
-// getOwnerProfileID queries the organization profiles and returns the first one (the owner's).
 func getOwnerProfileID(t *testing.T, owner *testutil.Client) string {
 	t.Helper()
 
-	query := `
-		query GetProfiles($orgId: ID!) {
-			node(id: $orgId) {
-				... on Organization {
-					profiles(first: 1) {
-						edges {
-							node {
-								id
-							}
-						}
-					}
-				}
-			}
-		}
-	`
-
-	var result struct {
-		Node struct {
-			Profiles struct {
-				Edges []struct {
-					Node struct {
-						ID string `json:"id"`
-					} `json:"node"`
-				} `json:"edges"`
-			} `json:"profiles"`
-		} `json:"node"`
-	}
-
-	err := owner.Execute(
-		query,
-		map[string]any{"orgId": owner.GetOrganizationID().String()},
-		&result,
-	)
-	require.NoError(t, err)
-	require.NotEmpty(t, result.Node.Profiles.Edges)
-
-	return result.Node.Profiles.Edges[0].Node.ID
+	return owner.GetProfileID().String()
 }
 
 // createTestDocument creates a document and returns its ID and the document version ID

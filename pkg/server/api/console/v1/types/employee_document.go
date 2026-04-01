@@ -23,11 +23,11 @@ import (
 	"go.probo.inc/probo/pkg/page"
 )
 
-type EmployeeDocumentFilterMode int
+type EmployeeDocumentFilterMode string
 
 const (
-	EmployeeDocumentFilterModeSignature EmployeeDocumentFilterMode = iota
-	EmployeeDocumentFilterModeApproval
+	EmployeeDocumentFilterModeSignature EmployeeDocumentFilterMode = "SIGNATURE"
+	EmployeeDocumentFilterModeApproval  EmployeeDocumentFilterMode = "APPROVAL"
 )
 
 type (
@@ -64,6 +64,7 @@ type (
 
 	EmployeeDocumentVersion struct {
 		ID             gid.GID
+		DocumentID     gid.GID
 		OrganizationID gid.GID
 		Major          int
 		Minor          int

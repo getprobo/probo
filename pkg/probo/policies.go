@@ -162,12 +162,17 @@ var ViewerPolicy = policy.NewPolicy(
 	policy.Allow(ActionCustomDomainGet).WithSID("custom-domain-read").When(organizationCondition),
 	policy.Allow(ActionOrganizationContextGet).WithSID("organization-context-read").When(organizationCondition),
 	policy.Allow(
-		ActionDocumentVersionExportPDF, ActionDocumentVersionExportSignable, ActionDocumentVersionSign,
+		ActionDocumentVersionExportPDF, ActionDocumentVersionSign,
 	).WithSID("document-signing").When(organizationCondition),
 
 	policy.Allow(
 		ActionDocumentVersionApprove, ActionDocumentVersionReject,
 	).WithSID("document-approval").When(organizationCondition),
+
+	policy.Allow(
+		ActionEmployeeDocumentGet, ActionEmployeeDocumentList,
+		ActionEmployeeDocumentVersionExportPDF,
+	).WithSID("employee-document-access").When(organizationCondition),
 
 	policy.Allow(
 		ActionProcessingActivityExport,
@@ -219,8 +224,13 @@ var AuditorPolicy = policy.NewPolicy(
 	).WithSID("entity-read-access").When(organizationCondition),
 
 	policy.Allow(
-		ActionDocumentVersionExportPDF, ActionDocumentVersionExportSignable, ActionDocumentVersionSign,
+		ActionDocumentVersionExportPDF, ActionDocumentVersionSign,
 	).WithSID("document-signing").When(organizationCondition),
+
+	policy.Allow(
+		ActionEmployeeDocumentGet, ActionEmployeeDocumentList,
+		ActionEmployeeDocumentVersionExportPDF,
+	).WithSID("employee-document-access").When(organizationCondition),
 
 	policy.Allow(
 		ActionStateOfApplicabilityExport,
@@ -238,20 +248,19 @@ var EmployeePolicy = policy.NewPolicy(
 	).WithSID("org-basic-access").When(organizationCondition),
 
 	policy.Allow(
-		ActionDocumentGet, ActionDocumentList,
-	).WithSID("document-signing-access").When(organizationCondition),
+		ActionEmployeeDocumentGet, ActionEmployeeDocumentList,
+	).WithSID("employee-document-access").When(organizationCondition),
 
 	policy.Allow(
-		ActionDocumentVersionGet, ActionDocumentVersionList,
 		ActionDocumentVersionSign,
-		ActionDocumentVersionExportSignable,
+		ActionEmployeeDocumentVersionExportPDF,
 	).WithSID("document-version-signing").When(organizationCondition),
 
 	policy.Allow(
 		ActionDocumentVersionApprovalList,
 		ActionDocumentVersionApprove,
 		ActionDocumentVersionReject,
-		ActionDocumentVersionExportPDF,
+		ActionEmployeeDocumentVersionExportPDF,
 	).WithSID("document-version-approval").When(organizationCondition),
 ).WithDescription("Employee access - can sign documents, approve documents, and view internal content")
 

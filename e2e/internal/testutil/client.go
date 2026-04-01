@@ -38,9 +38,11 @@ func generateUniqueID() string {
 type TestRole string
 
 const (
-	RoleOwner  TestRole = "OWNER"
-	RoleAdmin  TestRole = "ADMIN"
-	RoleViewer TestRole = "VIEWER"
+	RoleOwner    TestRole = "OWNER"
+	RoleAdmin    TestRole = "ADMIN"
+	RoleViewer   TestRole = "VIEWER"
+	RoleEmployee TestRole = "EMPLOYEE"
+	RoleAuditor  TestRole = "AUDITOR"
 )
 
 type Client struct {
@@ -50,6 +52,7 @@ type Client struct {
 	mailpitBaseURL string
 	role           TestRole
 	userID         gid.GID
+	profileID      gid.GID
 	organizationID gid.GID
 }
 
@@ -129,6 +132,7 @@ func (c *Client) SetupTestUserInOrg(ownerClient *Client) {
 	// Owner invites user to organization
 	profileID, identityID := ownerClient.createUser(email, fullName, coredata.MembershipRole(c.role))
 	c.userID = identityID
+	c.profileID = profileID
 	ownerClient.inviteUser(profileID)
 	token := c.getActivationToken(email)
 	passwordToken := c.activateUser(token)
@@ -212,6 +216,9 @@ func (c *Client) createOrganization(name string) gid.GID {
 			Organization struct {
 				ID string `json:"id"`
 			} `json:"organization"`
+			Profile struct {
+				ID string `json:"id"`
+			} `json:"profile"`
 		} `json:"createOrganization"`
 	}
 
@@ -222,6 +229,11 @@ func (c *Client) createOrganization(name string) gid.GID {
 
 	orgID, err := gid.ParseGID(result.CreateOrganization.Organization.ID)
 	require.NoError(c.T, err, "cannot parse organization ID")
+
+	profileID, err := gid.ParseGID(result.CreateOrganization.Profile.ID)
+	require.NoError(c.T, err, "cannot parse profile ID")
+
+	c.profileID = profileID
 
 	return orgID
 }
@@ -481,6 +493,10 @@ func (c *Client) assumeOrganizationSession() {
 
 func (c *Client) GetUserID() gid.GID {
 	return c.userID
+}
+
+func (c *Client) GetProfileID() gid.GID {
+	return c.profileID
 }
 
 func (c *Client) GetOrganizationID() gid.GID {
