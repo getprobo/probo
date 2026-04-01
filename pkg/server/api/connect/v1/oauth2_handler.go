@@ -535,7 +535,9 @@ func (h *OAuth2Handler) handleAuthorizationCodeGrant(w http.ResponseWriter, r *h
 		return
 	}
 
-	writeTokenResponse(w, tokenResponse)
+	w.Header().Set("Cache-Control", "no-store")
+	w.Header().Set("Pragma", "no-cache")
+	httpserver.RenderJSON(w, http.StatusOK, tokenResponse)
 }
 
 func (h *OAuth2Handler) handleRefreshTokenGrant(w http.ResponseWriter, r *http.Request) {
@@ -557,7 +559,9 @@ func (h *OAuth2Handler) handleRefreshTokenGrant(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	writeTokenResponse(w, tokenResponse)
+	w.Header().Set("Cache-Control", "no-store")
+	w.Header().Set("Pragma", "no-cache")
+	httpserver.RenderJSON(w, http.StatusOK, tokenResponse)
 }
 
 func (h *OAuth2Handler) handleDeviceCodeGrant(w http.ResponseWriter, r *http.Request) {
@@ -577,7 +581,9 @@ func (h *OAuth2Handler) handleDeviceCodeGrant(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	writeTokenResponse(w, tokenResponse)
+	w.Header().Set("Cache-Control", "no-store")
+	w.Header().Set("Pragma", "no-cache")
+	httpserver.RenderJSON(w, http.StatusOK, tokenResponse)
 }
 
 func (h *OAuth2Handler) renderConsentPage(
@@ -609,10 +615,3 @@ func redirectWithCode(w http.ResponseWriter, r *http.Request, redirectURI, code,
 
 	http.Redirect(w, r, u.String(), http.StatusFound)
 }
-
-func writeTokenResponse(w http.ResponseWriter, resp *types.TokenResponse) {
-	w.Header().Set("Cache-Control", "no-store")
-	w.Header().Set("Pragma", "no-cache")
-	httpserver.RenderJSON(w, http.StatusOK, resp)
-}
-
