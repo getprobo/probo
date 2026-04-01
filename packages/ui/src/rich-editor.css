@@ -109,7 +109,7 @@
         }
 
         pre {
-            @apply my-0 rounded-none border-none;
+            @apply my-0 rounded-lg border-none;
         }
     }
 
