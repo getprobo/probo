@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.156.1] - 2026-04-01
+
+### Fixed
+
+- Split employee document policy from core document actions
+
 ## [0.156.0] - 2026-03-31
 
 ### Changed
