@@ -570,6 +570,80 @@ func TestParseMarkdown_BlockHTMLTableCellSpans(t *testing.T) {
 	assert.Equal(t, 2, attrs.Rowspan)
 }
 
+func TestParseMarkdown_MarkdownTable(t *testing.T) {
+	t.Parallel()
+
+	md := "| Name | Age |\n| --- | --- |\n| Alice | 30 |\n| Bob | 25 |\n"
+	doc, err := ParseMarkdown(md)
+	require.NoError(t, err)
+	require.Len(t, doc.Content, 1)
+	assert.Equal(t, NodeTable, doc.Content[0].Type)
+
+	table := doc.Content[0]
+	require.Len(t, table.Content, 3)
+
+	headerRow := table.Content[0]
+	assert.Equal(t, NodeTableRow, headerRow.Type)
+	require.Len(t, headerRow.Content, 2)
+	assert.Equal(t, NodeTableHeader, headerRow.Content[0].Type)
+	assert.Equal(t, NodeTableHeader, headerRow.Content[1].Type)
+
+	require.Len(t, headerRow.Content[0].Content, 1)
+	require.Equal(t, NodeParagraph, headerRow.Content[0].Content[0].Type)
+	require.Len(t, headerRow.Content[0].Content[0].Content, 1)
+	assert.Equal(t, "Name", *headerRow.Content[0].Content[0].Content[0].Text)
+
+	require.Len(t, headerRow.Content[1].Content, 1)
+	require.Equal(t, NodeParagraph, headerRow.Content[1].Content[0].Type)
+	require.Len(t, headerRow.Content[1].Content[0].Content, 1)
+	assert.Equal(t, "Age", *headerRow.Content[1].Content[0].Content[0].Text)
+
+	for i := 1; i <= 2; i++ {
+		row := table.Content[i]
+		assert.Equal(t, NodeTableRow, row.Type)
+		require.Len(t, row.Content, 2)
+		assert.Equal(t, NodeTableCell, row.Content[0].Type)
+		assert.Equal(t, NodeTableCell, row.Content[1].Type)
+
+		attrs, err := row.Content[0].TableCellAttrs()
+		require.NoError(t, err)
+		assert.Equal(t, 1, attrs.Colspan)
+		assert.Equal(t, 1, attrs.Rowspan)
+	}
+
+	assert.Equal(t, "Alice", *table.Content[1].Content[0].Content[0].Content[0].Text)
+	assert.Equal(t, "30", *table.Content[1].Content[1].Content[0].Content[0].Text)
+	assert.Equal(t, "Bob", *table.Content[2].Content[0].Content[0].Content[0].Text)
+	assert.Equal(t, "25", *table.Content[2].Content[1].Content[0].Content[0].Text)
+}
+
+func TestParseMarkdown_MarkdownTableWithInlineMarks(t *testing.T) {
+	t.Parallel()
+
+	md := "| Header |\n| --- |\n| **bold** and *italic* |\n"
+	doc, err := ParseMarkdown(md)
+	require.NoError(t, err)
+	require.Len(t, doc.Content, 1)
+	assert.Equal(t, NodeTable, doc.Content[0].Type)
+
+	dataRow := doc.Content[0].Content[1]
+	assert.Equal(t, NodeTableRow, dataRow.Type)
+	cell := dataRow.Content[0]
+	assert.Equal(t, NodeTableCell, cell.Type)
+
+	p := cell.Content[0]
+	require.Equal(t, NodeParagraph, p.Type)
+	require.GreaterOrEqual(t, len(p.Content), 3)
+
+	assert.Equal(t, "bold", *p.Content[0].Text)
+	require.Len(t, p.Content[0].Marks, 1)
+	assert.Equal(t, MarkStrong, p.Content[0].Marks[0].Type)
+
+	assert.Equal(t, "italic", *p.Content[2].Text)
+	require.Len(t, p.Content[2].Marks, 1)
+	assert.Equal(t, MarkEm, p.Content[2].Marks[0].Type)
+}
+
 func TestParseMarkdown_BlockHTMLScriptRemovedKeepsSafeContent(t *testing.T) {
 	t.Parallel()
 

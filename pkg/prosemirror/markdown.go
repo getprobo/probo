@@ -33,7 +33,10 @@ func ParseMarkdown(markdown string) (Node, error) {
 	source := []byte(markdown)
 
 	md := goldmark.New(
-		goldmark.WithExtensions(goldmarkext.Strikethrough),
+		goldmark.WithExtensions(
+			goldmarkext.Strikethrough,
+			goldmarkext.Table,
+		),
 		goldmark.WithParserOptions(parser.WithAutoHeadingID()),
 	)
 
@@ -169,8 +172,17 @@ func (c *converter) convertNode(n ast.Node) ([]Node, error) {
 	case ast.KindHTMLBlock:
 		return c.convertHTMLBlock(n.(*ast.HTMLBlock))
 	default:
-		if n.Kind() == goldmarkast.KindStrikethrough {
+		switch n.Kind() {
+		case goldmarkast.KindStrikethrough:
 			return c.convertStrikethrough(n)
+		case goldmarkast.KindTable:
+			return c.convertTable(n)
+		case goldmarkast.KindTableHeader:
+			return c.convertTableHeaderRow(n.(*goldmarkast.TableHeader))
+		case goldmarkast.KindTableRow:
+			return c.convertTableDataRow(n)
+		case goldmarkast.KindTableCell:
+			return nil, fmt.Errorf("cannot convert table cell outside of a table row")
 		}
 		return nil, fmt.Errorf("cannot convert markdown node of kind %s", n.Kind())
 	}
@@ -514,6 +526,83 @@ func (c *converter) convertStrikethrough(n ast.Node) ([]Node, error) {
 	}
 
 	return children, nil
+}
+
+func (c *converter) convertTable(n ast.Node) ([]Node, error) {
+	var rows []Node
+
+	for child := n.FirstChild(); child != nil; child = child.NextSibling() {
+		converted, err := c.convertNode(child)
+		if err != nil {
+			return nil, err
+		}
+		rows = append(rows, converted...)
+	}
+
+	if len(rows) == 0 {
+		return nil, nil
+	}
+
+	return []Node{{Type: NodeTable, Content: rows}}, nil
+}
+
+func (c *converter) convertTableHeaderRow(n *goldmarkast.TableHeader) ([]Node, error) {
+	cells, err := c.convertTableCells(n, NodeTableHeader)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(cells) == 0 {
+		return nil, nil
+	}
+
+	return []Node{{Type: NodeTableRow, Content: cells}}, nil
+}
+
+func (c *converter) convertTableDataRow(n ast.Node) ([]Node, error) {
+	cells, err := c.convertTableCells(n, NodeTableCell)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(cells) == 0 {
+		return nil, nil
+	}
+
+	return []Node{{Type: NodeTableRow, Content: cells}}, nil
+}
+
+func (c *converter) convertTableCells(row ast.Node, cellType NodeType) ([]Node, error) {
+	var cells []Node
+
+	for child := row.FirstChild(); child != nil; child = child.NextSibling() {
+		if child.Kind() != goldmarkast.KindTableCell {
+			continue
+		}
+
+		inlineContent, err := c.convertInlineChildren(child)
+		if err != nil {
+			return nil, err
+		}
+
+		cellAttrs := TableCellAttrs{
+			Colspan: 1,
+			Rowspan: 1,
+		}
+
+		attrs, err := json.Marshal(cellAttrs)
+		if err != nil {
+			return nil, fmt.Errorf("cannot marshal table cell attrs: %w", err)
+		}
+
+		cells = append(cells, Node{
+			Type:    cellType,
+			Attrs:   attrs,
+			Content: []Node{{Type: NodeParagraph, Content: inlineContent}},
+		})
+	}
+
+	return cells, nil
 }
 
 // extractText recursively collects the text content of all descendant nodes.
