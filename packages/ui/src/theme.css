@@ -5,77 +5,78 @@
     --font-sans: "Geist", "sans-serif";
     --color-*: initial;
 
-    --color-black: #000000;
+    --color-black: #0f172a;
 
-    --color-level-0: #f8f9fb;
+    /* Surface layers — cool-gray page, crisp white cards, soft gray overlays */
+    --color-level-0: #f1f5f9;
     --color-level-1: #ffffff;
-    --color-level-2: #ffffff;
+    --color-level-2: #f8fafc;
     --color-level-3: #0f172a;
 
-    /* Text colors */
+    /* Text — deep navy #0f172a anchors the hierarchy */
     --color-txt-primary: #0f172a;
-    --color-invert: #f8fafc;
-    --color-txt-invert: var(--color-invert);
-    --color-txt-secondary: #475569;
-    --color-txt-tertiary: #94a3b8;
-    --color-txt-quaternary: #cbd5e1;
-    --color-txt-disabled: #94a3b8;
+    --color-invert: #ffffff;
+    --color-txt-invert: #ffffff;
+    --color-txt-secondary: #334155;
+    --color-txt-tertiary: #64748b;
+    --color-txt-quaternary: #94a3b8;
+    --color-txt-disabled: #cbd5e1;
     --color-txt-accent: #ec4701;
-    --color-txt-danger: #cd2b31;
-    --color-txt-success: #5d770d;
-    --color-txt-info: #006adc;
-    --color-txt-warning: #ad5700;
+    --color-txt-danger: #dc2626;
+    --color-txt-success: #15803d;
+    --color-txt-info: #0369a1;
+    --color-txt-warning: #b45309;
 
-    /* Backgrounds */
+    /* Backgrounds — #ec4701 orange woven into subtle/active tints */
     --color-primary: #ec4701;
     --color-invert: #ffffff;
     --color-secondary: #ffffff;
-    --color-tertiary: #ffffff;
-    --color-subtle: rgba(236, 71, 1, 0.03);
+    --color-tertiary: transparent;
+    --color-subtle: rgba(15, 23, 42, 0.03);
     --color-highlight: rgba(236, 71, 1, 0.05);
-    --color-active: #fff4ef;
+    --color-active: #fff5f0;
     --color-accent: #ec4701;
     --color-danger: #fef2f2;
-    --color-danger-plain: #dc3d43;
-    --color-danger-dark: #dc3d43;
+    --color-danger-plain: #dc2626;
+    --color-danger-dark: #b91c1c;
     --color-success: #f0fdf4;
-    --color-info: #edf6ff;
+    --color-info: #eff6ff;
     --color-warning: #fffbeb;
     --color-dialog: #0f172a;
 
-    /* Borders */
+    /* Borders — crisp slate-based edges */
     --color-border-solid: #e2e8f0;
-    --color-border-low: rgba(15, 23, 42, 0.07);
-    --color-border-mid: rgba(15, 23, 42, 0.15);
-    --color-border-strong: rgba(15, 23, 42, 0.24);
+    --color-border-low: rgba(15, 23, 42, 0.08);
+    --color-border-mid: rgba(15, 23, 42, 0.14);
+    --color-border-strong: rgba(15, 23, 42, 0.25);
     --color-border-active: #0f172a;
     --color-border-accent: #ec4701;
-    --color-border-danger: #dc3d43;
+    --color-border-danger: #dc2626;
     --color-border-success: #16a34a;
-    --color-border-warning: #ffa01c;
-    --color-border-info: #0081f1;
+    --color-border-warning: #f59e0b;
+    --color-border-info: #0284c7;
 
     /* Hover */
     --color-primary-hover: #d43e00;
-    --color-invert-hover: #f1f5f9;
-    --color-secondary-hover: #f1f5f9;
-    --color-tertiary-hover: rgba(236, 71, 1, 0.03);
-    --color-subtle-hover: rgba(236, 71, 1, 0.05);
+    --color-invert-hover: #f8fafc;
+    --color-secondary-hover: #f8fafc;
+    --color-tertiary-hover: rgba(15, 23, 42, 0.04);
+    --color-subtle-hover: rgba(15, 23, 42, 0.05);
     --color-highlight-hover: rgba(236, 71, 1, 0.08);
     --color-accent-hover: #d43e00;
-    --color-active-hover: #ffe8db;
-    --color-danger-hover: #cf393f;
+    --color-active-hover: #ffede3;
+    --color-danger-hover: #b91c1c;
 
     /* Pressed */
     --color-primary-pressed: #bf3700;
-    --color-invert-pressed: #e2e8f0;
-    --color-secondary-pressed: #e2e8f0;
-    --color-tertiary-pressed: rgba(236, 71, 1, 0.05);
-    --color-subtle-pressed: rgba(236, 71, 1, 0.08);
-    --color-highlight-pressed: rgba(236, 71, 1, 0.1);
+    --color-invert-pressed: #f1f5f9;
+    --color-secondary-pressed: #f1f5f9;
+    --color-tertiary-pressed: rgba(15, 23, 42, 0.06);
+    --color-subtle-pressed: rgba(15, 23, 42, 0.08);
+    --color-highlight-pressed: rgba(236, 71, 1, 0.12);
     --color-accent-pressed: #bf3700;
-    --color-active-pressed: #ffd4c2;
-    --color-danger-pressed: #c6373c;
+    --color-active-pressed: #ffdcc8;
+    --color-danger-pressed: #991b1b;
 
     /* text-5xl */
     --text-5xl: 3rem;
@@ -155,29 +156,32 @@
     --text-xxs--letter-spacing: 0px;
     --text-xxs--font-weight: 400;
 
-    /* Shadows */
+    /* Shadows — layered depth with navy tint */
     --shadow-*: initial;
     --shadow-base:
-        0px 1px 3px 0px rgba(15, 23, 42, 0.08),
-        0px -1px 0px 0px rgba(15, 23, 42, 0.06) inset;
+        0px 0px 0px 1px rgba(15, 23, 42, 0.05),
+        0px 1px 2px 0px rgba(15, 23, 42, 0.06),
+        0px 1px 3px 0px rgba(15, 23, 42, 0.1);
     --shadow-hover:
-        0px 2px 6px 0px rgba(15, 23, 42, 0.1),
-        0px -1px 0px 0px rgba(15, 23, 42, 0.06) inset;
-    --shadow-focus: 0px 0px 0px 4px rgba(236, 71, 1, 0.3);
+        0px 0px 0px 1px rgba(15, 23, 42, 0.05),
+        0px 3px 6px 0px rgba(15, 23, 42, 0.08),
+        0px 6px 12px 0px rgba(15, 23, 42, 0.08);
+    --shadow-focus: 0px 0px 0px 3px rgba(236, 71, 1, 0.2);
     --shadow-mid:
-        0px 2px 4px 0px rgba(15, 23, 42, 0.06),
-        0px 2px 12px 0px rgba(15, 23, 42, 0.04);
+        0px 0px 0px 1px rgba(15, 23, 42, 0.04),
+        0px 4px 8px -2px rgba(15, 23, 42, 0.06),
+        0px 8px 16px -4px rgba(15, 23, 42, 0.08);
 
-    /* Sidebar — own color system */
+    /* Sidebar — white surface on gray page, warm accent */
     --color-sidebar-bg: #ffffff;
     --color-sidebar-border: #e2e8f0;
     --color-sidebar-text: #64748b;
     --color-sidebar-text-hover: #0f172a;
     --color-sidebar-text-active: #ec4701;
     --color-sidebar-hover-bg: #f1f5f9;
-    --color-sidebar-active-bg: #fff2ed;
-    --color-sidebar-active-hover-bg: #ffe4d6;
-    --color-sidebar-active-pressed-bg: #ffd4c2;
+    --color-sidebar-active-bg: #fff5f0;
+    --color-sidebar-active-hover-bg: #ffede3;
+    --color-sidebar-active-pressed-bg: #ffdcc8;
 }
 
 /* Dark theme — explicit opt-in via data attribute */
@@ -288,7 +292,7 @@ button:focus-visible {
 
 button[data-cell]:focus-visible {
     box-shadow: none;
-    outline: solid 2px rgba(236, 71, 1, 0.3);
+    outline: solid 2px rgba(236, 71, 1, 0.24);
 }
 
 /* Allow interpolation : https://developer.chrome.com/docs/css-ui/animate-to-height-auto */
