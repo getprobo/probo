@@ -240,12 +240,8 @@ func (h *OAuth2Handler) AuthorizeHandler(w http.ResponseWriter, r *http.Request)
 func (h *OAuth2Handler) AuthorizeConsentHandler(w http.ResponseWriter, r *http.Request) {
 	identity := authn.IdentityFromContext(r.Context())
 
-	if !h.parseForm(w, r) {
-		return
-	}
-
 	var in types.AuthorizeConsentInput
-	if err := in.DecodeForm(r.Form); err != nil {
+	if err := in.DecodeForm(r); err != nil {
 		h.writeOAuth2Error(w, r, oauth2server.ErrInvalidRequest.WithDescription(err.Error()))
 		return
 	}
@@ -276,7 +272,8 @@ func (h *OAuth2Handler) AuthorizeConsentHandler(w http.ResponseWriter, r *http.R
 // TokenHandler handles the token endpoint.
 // POST /oauth2/token
 func (h *OAuth2Handler) TokenHandler(w http.ResponseWriter, r *http.Request) {
-	if !h.parseForm(w, r) {
+	if err := r.ParseForm(); err != nil {
+		h.writeOAuth2Error(w, r, oauth2server.ErrInvalidRequest.WithDescription("invalid form data"))
 		return
 	}
 
@@ -299,12 +296,8 @@ func (h *OAuth2Handler) TokenHandler(w http.ResponseWriter, r *http.Request) {
 func (h *OAuth2Handler) IntrospectHandler(w http.ResponseWriter, r *http.Request) {
 	client := oauth2ClientFromContext(r)
 
-	if !h.parseForm(w, r) {
-		return
-	}
-
 	var in types.IntrospectInput
-	if err := in.DecodeForm(r.Form); err != nil {
+	if err := in.DecodeForm(r); err != nil {
 		h.writeOAuth2Error(w, r, oauth2server.ErrInvalidRequest.WithDescription(err.Error()))
 		return
 	}
@@ -323,13 +316,8 @@ func (h *OAuth2Handler) IntrospectHandler(w http.ResponseWriter, r *http.Request
 func (h *OAuth2Handler) RevokeHandler(w http.ResponseWriter, r *http.Request) {
 	client := oauth2ClientFromContext(r)
 
-	if err := r.ParseForm(); err != nil {
-		w.WriteHeader(http.StatusOK)
-		return
-	}
-
 	var in types.RevokeInput
-	_ = in.DecodeForm(r.Form)
+	_ = in.DecodeForm(r)
 
 	if in.Token == "" {
 		w.WriteHeader(http.StatusOK)
@@ -345,12 +333,8 @@ func (h *OAuth2Handler) RevokeHandler(w http.ResponseWriter, r *http.Request) {
 // DeviceAuthHandler handles the device authorization endpoint (RFC 8628).
 // POST /oauth2/device
 func (h *OAuth2Handler) DeviceAuthHandler(w http.ResponseWriter, r *http.Request) {
-	if !h.parseForm(w, r) {
-		return
-	}
-
 	var in types.DeviceAuthInput
-	if err := in.DecodeForm(r.Form); err != nil {
+	if err := in.DecodeForm(r); err != nil {
 		h.writeOAuth2Error(w, r, oauth2server.ErrInvalidRequest.WithDescription(err.Error()))
 		return
 	}
@@ -481,13 +465,8 @@ func (h *OAuth2Handler) DeviceVerifyPage(w http.ResponseWriter, r *http.Request)
 func (h *OAuth2Handler) DeviceVerifySubmit(w http.ResponseWriter, r *http.Request) {
 	identity := authn.IdentityFromContext(r.Context())
 
-	if err := r.ParseForm(); err != nil {
-		http.Error(w, "invalid form", http.StatusBadRequest)
-		return
-	}
-
 	var in types.DeviceVerifySubmitInput
-	_ = in.DecodeForm(r.Form)
+	_ = in.DecodeForm(r)
 
 	if err := h.iam.OAuth2ServerService.AuthorizeDevice(r.Context(), identity.ID, in.UserCode); err != nil {
 		h.logger.ErrorCtx(r.Context(), "cannot authorize device", log.Error(err))
@@ -539,7 +518,7 @@ func (h *OAuth2Handler) handleAuthorizationCodeGrant(w http.ResponseWriter, r *h
 	}
 
 	var in types.AuthorizationCodeGrantInput
-	if err := in.DecodeForm(r.Form); err != nil {
+	if err := in.DecodeForm(r); err != nil {
 		h.writeOAuth2Error(w, r, oauth2server.ErrInvalidGrant.WithDescription(err.Error()))
 		return
 	}
@@ -567,7 +546,7 @@ func (h *OAuth2Handler) handleRefreshTokenGrant(w http.ResponseWriter, r *http.R
 	}
 
 	var in types.RefreshTokenGrantInput
-	if err := in.DecodeForm(r.Form); err != nil {
+	if err := in.DecodeForm(r); err != nil {
 		h.writeOAuth2Error(w, r, oauth2server.ErrInvalidGrant.WithDescription(err.Error()))
 		return
 	}
@@ -583,7 +562,7 @@ func (h *OAuth2Handler) handleRefreshTokenGrant(w http.ResponseWriter, r *http.R
 
 func (h *OAuth2Handler) handleDeviceCodeGrant(w http.ResponseWriter, r *http.Request) {
 	var in types.DeviceCodeGrantInput
-	if err := in.DecodeForm(r.Form); err != nil {
+	if err := in.DecodeForm(r); err != nil {
 		h.writeOAuth2Error(w, r, oauth2server.ErrInvalidRequest.WithDescription(err.Error()))
 		return
 	}
@@ -637,12 +616,3 @@ func writeTokenResponse(w http.ResponseWriter, resp *types.TokenResponse) {
 	httpserver.RenderJSON(w, http.StatusOK, resp)
 }
 
-// parseForm parses the request form and writes an OAuth2 error on failure.
-// Returns true if parsing succeeded.
-func (h *OAuth2Handler) parseForm(w http.ResponseWriter, r *http.Request) bool {
-	if err := r.ParseForm(); err != nil {
-		h.writeOAuth2Error(w, r, oauth2server.ErrInvalidRequest.WithDescription("invalid form data"))
-		return false
-	}
-	return true
-}

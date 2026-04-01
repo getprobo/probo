@@ -16,6 +16,7 @@ package types
 
 import (
 	"fmt"
+	"net/http"
 	"net/url"
 	"strings"
 	"time"
@@ -141,41 +142,57 @@ func (in *AuthorizeInput) DecodeQuery(q url.Values) error {
 	return nil
 }
 
-func (in *AuthorizeConsentInput) DecodeForm(form url.Values) error {
+func (in *AuthorizeConsentInput) DecodeForm(r *http.Request) error {
+	if err := r.ParseForm(); err != nil {
+		return fmt.Errorf("invalid form data")
+	}
+
 	var err error
 
-	in.ConsentID, err = requireGID(form, "consent_id")
+	in.ConsentID, err = requireGID(r.Form, "consent_id")
 	if err != nil {
 		return err
 	}
 
-	in.Action = form.Get("action")
+	in.Action = r.FormValue("action")
 
 	return nil
 }
 
-func (in *IntrospectInput) DecodeForm(form url.Values) error {
-	in.Token = form.Get("token")
+func (in *IntrospectInput) DecodeForm(r *http.Request) error {
+	if err := r.ParseForm(); err != nil {
+		return fmt.Errorf("invalid form data")
+	}
+
+	in.Token = r.FormValue("token")
 	if in.Token == "" {
 		return fmt.Errorf("missing token parameter")
 	}
 	return nil
 }
 
-func (in *RevokeInput) DecodeForm(form url.Values) error {
-	in.Token = form.Get("token")
+func (in *RevokeInput) DecodeForm(r *http.Request) error {
+	if err := r.ParseForm(); err != nil {
+		return fmt.Errorf("invalid form data")
+	}
+
+	in.Token = r.FormValue("token")
 	return nil
 }
 
-func (in *DeviceAuthInput) DecodeForm(form url.Values) error {
+func (in *DeviceAuthInput) DecodeForm(r *http.Request) error {
+	if err := r.ParseForm(); err != nil {
+		return fmt.Errorf("invalid form data")
+	}
+
 	var err error
 
-	in.ClientID, err = requireGID(form, "client_id")
+	in.ClientID, err = requireGID(r.Form, "client_id")
 	if err != nil {
 		return err
 	}
 
-	if scopeStr := form.Get("scope"); scopeStr != "" {
+	if scopeStr := r.FormValue("scope"); scopeStr != "" {
 		in.Scopes, err = parseScopes(scopeStr)
 		if err != nil {
 			return fmt.Errorf("invalid scope")
@@ -190,19 +207,27 @@ func (in *DeviceVerifyInput) DecodeQuery(q url.Values) error {
 	return nil
 }
 
-func (in *DeviceVerifySubmitInput) DecodeForm(form url.Values) error {
-	userCode := form.Get("user_code")
+func (in *DeviceVerifySubmitInput) DecodeForm(r *http.Request) error {
+	if err := r.ParseForm(); err != nil {
+		return fmt.Errorf("invalid form data")
+	}
+
+	userCode := r.FormValue("user_code")
 	userCode = strings.ReplaceAll(userCode, "-", "")
 	in.UserCode = strings.ToUpper(strings.TrimSpace(userCode))
 	return nil
 }
 
-func (in *AuthorizationCodeGrantInput) DecodeForm(form url.Values) error {
-	in.ClientID = form.Get("client_id")
-	in.ClientSecret = form.Get("client_secret")
-	in.Code = form.Get("code")
-	in.RedirectURI = form.Get("redirect_uri")
-	in.CodeVerifier = form.Get("code_verifier")
+func (in *AuthorizationCodeGrantInput) DecodeForm(r *http.Request) error {
+	if err := r.ParseForm(); err != nil {
+		return fmt.Errorf("invalid form data")
+	}
+
+	in.ClientID = r.FormValue("client_id")
+	in.ClientSecret = r.FormValue("client_secret")
+	in.Code = r.FormValue("code")
+	in.RedirectURI = r.FormValue("redirect_uri")
+	in.CodeVerifier = r.FormValue("code_verifier")
 
 	if in.Code == "" {
 		return fmt.Errorf("missing code")
@@ -211,10 +236,14 @@ func (in *AuthorizationCodeGrantInput) DecodeForm(form url.Values) error {
 	return nil
 }
 
-func (in *RefreshTokenGrantInput) DecodeForm(form url.Values) error {
-	in.ClientID = form.Get("client_id")
-	in.ClientSecret = form.Get("client_secret")
-	in.RefreshToken = form.Get("refresh_token")
+func (in *RefreshTokenGrantInput) DecodeForm(r *http.Request) error {
+	if err := r.ParseForm(); err != nil {
+		return fmt.Errorf("invalid form data")
+	}
+
+	in.ClientID = r.FormValue("client_id")
+	in.ClientSecret = r.FormValue("client_secret")
+	in.RefreshToken = r.FormValue("refresh_token")
 
 	if in.RefreshToken == "" {
 		return fmt.Errorf("missing refresh_token")
@@ -223,15 +252,19 @@ func (in *RefreshTokenGrantInput) DecodeForm(form url.Values) error {
 	return nil
 }
 
-func (in *DeviceCodeGrantInput) DecodeForm(form url.Values) error {
+func (in *DeviceCodeGrantInput) DecodeForm(r *http.Request) error {
+	if err := r.ParseForm(); err != nil {
+		return fmt.Errorf("invalid form data")
+	}
+
 	var err error
 
-	in.ClientID, err = requireGID(form, "client_id")
+	in.ClientID, err = requireGID(r.Form, "client_id")
 	if err != nil {
 		return err
 	}
 
-	in.DeviceCode = form.Get("device_code")
+	in.DeviceCode = r.FormValue("device_code")
 	if in.DeviceCode == "" {
 		return fmt.Errorf("missing device_code")
 	}
