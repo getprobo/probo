@@ -143,11 +143,6 @@ func migrateOne(ctx context.Context, conn pg.Conn, idStr string, dryRun bool) er
 		return nil
 	}
 
-	if dryRun {
-		fmt.Printf("would migrate %s\n", idStr)
-		return nil
-	}
-
 	doc, err := prosemirror.ParseMarkdown(dv.Content)
 	if err != nil {
 		return fmt.Errorf("cannot parse markdown for %q: %w", idStr, err)
@@ -156,6 +151,11 @@ func migrateOne(ctx context.Context, conn pg.Conn, idStr string, dryRun bool) er
 	out, err := json.Marshal(doc)
 	if err != nil {
 		return fmt.Errorf("cannot marshal prosemirror for %q: %w", idStr, err)
+	}
+
+	if dryRun {
+		fmt.Printf("would migrate %s successfully\n", idStr)
+		return nil
 	}
 
 	dv.Content = string(out)
