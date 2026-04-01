@@ -1,3 +1,4 @@
+import { ThemeProvider } from "@probo/ui";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createRoot } from "react-dom/client";
 
@@ -17,10 +18,12 @@ const queryClient = new QueryClient({
 
 createRoot(document.getElementById("root")!).render(
   <QueryClientProvider client={queryClient}>
-    <RelayProvider>
-      <TranslatorProvider>
-        <App />
-      </TranslatorProvider>
-    </RelayProvider>
+    <ThemeProvider>
+      <RelayProvider>
+        <TranslatorProvider>
+          <App />
+        </TranslatorProvider>
+      </RelayProvider>
+    </ThemeProvider>
   </QueryClientProvider>,
 );

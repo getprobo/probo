@@ -38,6 +38,8 @@ export { IconInProgress } from "./IconInProgress";
 export { IconPeopleAdd } from "./IconPeopleAdd";
 export { IconChevronLeft } from "./IconChevronLeft";
 export { IconSun } from "./IconSun";
+export { IconMoon } from "./IconMoon";
+export { IconMonitor } from "./IconMonitor";
 export { IconChevronGrabberVertical } from "./IconChevronGrabberVertical";
 export { IconCollapse } from "./IconCollapse";
 export { IconSquareBehindSquare2 } from "./IconSquareBehindSquare2";

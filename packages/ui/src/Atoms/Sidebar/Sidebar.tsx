@@ -8,6 +8,7 @@ import {
 
 import { Button } from "../Button/Button";
 import { IconCollapse, IconExpand } from "../Icons";
+import { ThemeToggle } from "../ThemeToggle/ThemeToggle";
 
 const sidebarContext = createContext({ open: true });
 
@@ -32,17 +33,31 @@ export function Sidebar({ children }: PropsWithChildren) {
     <sidebarContext.Provider value={{ open }}>
       <aside
         className={clsx(
-          "border-r border-border-solid relative pt-16 flex-none flex flex-col",
-          open ? "px-4 w-[260px]" : "px-2",
+          "border-r border-border-solid pt-16 flex-none flex flex-col h-screen",
+          open ? "w-[260px]" : "",
         )}
       >
-        <div className="flex-1 overflow-y-auto pb-14">{children}</div>
-        <Button
-          variant="tertiary"
-          icon={open ? IconCollapse : IconExpand}
-          onClick={() => setOpen(!open)}
-          className="absolute bottom-4 left-4"
-        />
+        <div
+          className={clsx(
+            "flex-1 min-h-0 overflow-y-auto",
+            open ? "px-4" : "px-2",
+          )}
+        >
+          {children}
+        </div>
+        <div
+          className={clsx(
+            "shrink-0 border-t border-border-low bg-level-0 flex flex-col gap-2 py-3",
+            open ? "px-4" : "px-2 items-center",
+          )}
+        >
+          <ThemeToggle collapsed={!open} />
+          <Button
+            variant="tertiary"
+            icon={open ? IconCollapse : IconExpand}
+            onClick={() => setOpen(!open)}
+          />
+        </div>
       </aside>
     </sidebarContext.Provider>
   );
