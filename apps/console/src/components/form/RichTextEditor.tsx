@@ -62,7 +62,15 @@ function ToolbarButton({
 }
 
 function ToolbarSep() {
-  return <div className="w-px self-stretch bg-border-low/60 mx-1 shrink-0" />;
+  return <div className="w-px h-5 bg-border-low/50 shrink-0" />;
+}
+
+function ToolbarGrp({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex items-center gap-px rounded-lg bg-level-1 shadow-sm ring-1 ring-border-low/40 p-0.5">
+      {children}
+    </div>
+  );
 }
 
 // ─── SVG icon helper ────────────────────────────────────────────────
@@ -325,108 +333,154 @@ function Toolbar({
   return (
     <div className="flex flex-col overflow-visible">
       {/* Main toolbar */}
-      <div className="flex items-center gap-0.5 flex-wrap px-3 py-1.5">
+      <div className="flex items-center gap-1.5 flex-wrap px-3 py-2">
         {/* Undo / Redo */}
-        <ToolbarButton onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()} title={t("Undo")}>
-          <Ico>
-            <path d="M3 7v6h6" />
-            <path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13" />
-          </Ico>
-        </ToolbarButton>
-        <ToolbarButton onClick={() => editor.chain().focus().redo().run()} disabled={!editor.can().redo()} title={t("Redo")}>
-          <Ico>
-            <path d="M21 7v6h-6" />
-            <path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3L21 13" />
-          </Ico>
-        </ToolbarButton>
-
-        <ToolbarSep />
+        <ToolbarGrp>
+          <ToolbarButton onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()} title={t("Undo")}>
+            <Ico>
+              <path d="M3 7v6h6" />
+              <path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13" />
+            </Ico>
+          </ToolbarButton>
+          <ToolbarButton onClick={() => editor.chain().focus().redo().run()} disabled={!editor.can().redo()} title={t("Redo")}>
+            <Ico>
+              <path d="M21 7v6h-6" />
+              <path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3L21 13" />
+            </Ico>
+          </ToolbarButton>
+        </ToolbarGrp>
 
         {/* Headings */}
-        <ToolbarButton
-          onClick={() => editor.chain().focus().setParagraph().run()}
-          active={editor.isActive("paragraph") && !editor.isActive("heading")}
-          title={t("Normal text")}
-        >
-          <Ico>
-            <path d="M13 4v16" />
-            <path d="M17 4v16" />
-            <path d="M13 4H7a4 4 0 0 0 0 8h6" />
-          </Ico>
-        </ToolbarButton>
-        <ToolbarButton onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()} active={editor.isActive("heading", { level: 1 })} title={t("Heading 1")}>
-          <span className="text-xs font-bold leading-none">H1</span>
-        </ToolbarButton>
-        <ToolbarButton onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} active={editor.isActive("heading", { level: 2 })} title={t("Heading 2")}>
-          <span className="text-xs font-bold leading-none">H2</span>
-        </ToolbarButton>
-        <ToolbarButton onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()} active={editor.isActive("heading", { level: 3 })} title={t("Heading 3")}>
-          <span className="text-xs font-bold leading-none">H3</span>
-        </ToolbarButton>
-
-        <ToolbarSep />
+        <ToolbarGrp>
+          <ToolbarButton
+            onClick={() => editor.chain().focus().setParagraph().run()}
+            active={editor.isActive("paragraph") && !editor.isActive("heading")}
+            title={t("Normal text")}
+          >
+            <Ico>
+              <path d="M13 4v16" />
+              <path d="M17 4v16" />
+              <path d="M13 4H7a4 4 0 0 0 0 8h6" />
+            </Ico>
+          </ToolbarButton>
+          <ToolbarSep />
+          <ToolbarButton onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()} active={editor.isActive("heading", { level: 1 })} title={t("Heading 1")}>
+            <span className="text-xs font-bold leading-none">H1</span>
+          </ToolbarButton>
+          <ToolbarButton onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} active={editor.isActive("heading", { level: 2 })} title={t("Heading 2")}>
+            <span className="text-xs font-bold leading-none">H2</span>
+          </ToolbarButton>
+          <ToolbarButton onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()} active={editor.isActive("heading", { level: 3 })} title={t("Heading 3")}>
+            <span className="text-xs font-bold leading-none">H3</span>
+          </ToolbarButton>
+        </ToolbarGrp>
 
         {/* Text formatting */}
-        <ToolbarButton onClick={() => editor.chain().focus().toggleBold().run()} active={editor.isActive("bold")} title={t("Bold")}>
-          <Ico><path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6zM6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z" /></Ico>
-        </ToolbarButton>
-        <ToolbarButton onClick={() => editor.chain().focus().toggleItalic().run()} active={editor.isActive("italic")} title={t("Italic")}>
-          <Ico>
-            <path d="M19 4h-9" />
-            <path d="M14 20H5" />
-            <path d="M15 4L9 20" />
-          </Ico>
-        </ToolbarButton>
-        <ToolbarButton onClick={() => editor.chain().focus().toggleUnderline().run()} active={editor.isActive("underline")} title={t("Underline")}>
-          <Ico>
-            <path d="M6 3v7a6 6 0 0 0 6 6 6 6 0 0 0 6-6V3" />
-            <path d="M4 21h16" />
-          </Ico>
-        </ToolbarButton>
-        <ToolbarButton onClick={() => editor.chain().focus().toggleStrike().run()} active={editor.isActive("strike")} title={t("Strikethrough")}>
-          <Ico>
-            <path d="M16 4H9a3 3 0 0 0-2.83 4" />
-            <path d="M14 12a4 4 0 0 1 0 8H6" />
-            <path d="M4 12h16" />
-          </Ico>
-        </ToolbarButton>
-        <ToolbarButton onClick={() => editor.chain().focus().toggleCode().run()} active={editor.isActive("code")} title={t("Inline code")}>
-          <Ico>
-            <path d="m16 18 6-6-6-6" />
-            <path d="m8 6-6 6 6 6" />
-          </Ico>
-        </ToolbarButton>
-        <ToolbarButton onClick={() => editor.chain().focus().toggleSuperscript().run()} active={editor.isActive("superscript")} title={t("Superscript")}>
-          <Ico>
-            <path d="m4 19 8-8" />
-            <path d="m12 19-8-8" />
-            <path d="M20 12h-4c0-1.5.44-2 1.5-2.5S20 8.33 20 7c0-1.06-.75-2-2-2a1.98 1.98 0 0 0-1.62.86" />
-          </Ico>
-        </ToolbarButton>
-        <ToolbarButton onClick={() => editor.chain().focus().toggleSubscript().run()} active={editor.isActive("subscript")} title={t("Subscript")}>
-          <Ico>
-            <path d="m4 5 8 8" />
-            <path d="m12 5-8 8" />
-            <path d="M20 19h-4c0-1.5.44-2 1.5-2.5S20 15.33 20 14c0-1.06-.75-2-2-2a1.98 1.98 0 0 0-1.62.86" />
-          </Ico>
-        </ToolbarButton>
-
-        <ToolbarSep />
+        <ToolbarGrp>
+          <ToolbarButton onClick={() => editor.chain().focus().toggleBold().run()} active={editor.isActive("bold")} title={t("Bold")}>
+            <Ico><path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6zM6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z" /></Ico>
+          </ToolbarButton>
+          <ToolbarButton onClick={() => editor.chain().focus().toggleItalic().run()} active={editor.isActive("italic")} title={t("Italic")}>
+            <Ico>
+              <path d="M19 4h-9" />
+              <path d="M14 20H5" />
+              <path d="M15 4L9 20" />
+            </Ico>
+          </ToolbarButton>
+          <ToolbarButton onClick={() => editor.chain().focus().toggleUnderline().run()} active={editor.isActive("underline")} title={t("Underline")}>
+            <Ico>
+              <path d="M6 3v7a6 6 0 0 0 6 6 6 6 0 0 0 6-6V3" />
+              <path d="M4 21h16" />
+            </Ico>
+          </ToolbarButton>
+          <ToolbarButton onClick={() => editor.chain().focus().toggleStrike().run()} active={editor.isActive("strike")} title={t("Strikethrough")}>
+            <Ico>
+              <path d="M16 4H9a3 3 0 0 0-2.83 4" />
+              <path d="M14 12a4 4 0 0 1 0 8H6" />
+              <path d="M4 12h16" />
+            </Ico>
+          </ToolbarButton>
+          <ToolbarButton onClick={() => editor.chain().focus().toggleCode().run()} active={editor.isActive("code")} title={t("Inline code")}>
+            <Ico>
+              <path d="m16 18 6-6-6-6" />
+              <path d="m8 6-6 6 6 6" />
+            </Ico>
+          </ToolbarButton>
+          <ToolbarSep />
+          <ToolbarButton onClick={() => editor.chain().focus().toggleSuperscript().run()} active={editor.isActive("superscript")} title={t("Superscript")}>
+            <Ico>
+              <path d="m4 19 8-8" />
+              <path d="m12 19-8-8" />
+              <path d="M20 12h-4c0-1.5.44-2 1.5-2.5S20 8.33 20 7c0-1.06-.75-2-2-2a1.98 1.98 0 0 0-1.62.86" />
+            </Ico>
+          </ToolbarButton>
+          <ToolbarButton onClick={() => editor.chain().focus().toggleSubscript().run()} active={editor.isActive("subscript")} title={t("Subscript")}>
+            <Ico>
+              <path d="m4 5 8 8" />
+              <path d="m12 5-8 8" />
+              <path d="M20 19h-4c0-1.5.44-2 1.5-2.5S20 15.33 20 14c0-1.06-.75-2-2-2a1.98 1.98 0 0 0-1.62.86" />
+            </Ico>
+          </ToolbarButton>
+        </ToolbarGrp>
 
         {/* Colors */}
-        <div className="relative">
-          <ToolbarButton
-            onClick={() => {
-              setShowColorPicker(!showColorPicker);
-              setShowHighlightPicker(false);
-              setShowLinkPopover(false);
-            }}
-            title={t("Text color")}
-          >
-            <div className="flex flex-col items-center gap-0.5">
+        <ToolbarGrp>
+          <div className="relative">
+            <ToolbarButton
+              onClick={() => {
+                setShowColorPicker(!showColorPicker);
+                setShowHighlightPicker(false);
+                setShowLinkPopover(false);
+              }}
+              title={t("Text color")}
+            >
+              <div className="flex flex-col items-center gap-0.5">
+                <svg
+                  width={14}
+                  height={14}
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M6 20h12" />
+                  <path d="M12 4 6.5 16h2.1L10 13h4l1.4 3h2.1z" />
+                </svg>
+                <div
+                  className="h-1 w-4 rounded-sm"
+                  style={{ backgroundColor: String(editor.getAttributes("textStyle").color || "currentColor") }}
+                />
+              </div>
+            </ToolbarButton>
+            {showColorPicker && (
+              <ColorPicker
+                currentColor={String(editor.getAttributes("textStyle").color ?? "")}
+                onSelect={(c) => {
+                  if (c) {
+                    editor.chain().focus().setColor(c).run();
+                  } else {
+                    editor.chain().focus().unsetColor().run();
+                  }
+                }}
+                onClose={() => setShowColorPicker(false)}
+              />
+            )}
+          </div>
+          <div className="relative">
+            <ToolbarButton
+              onClick={() => {
+                setShowHighlightPicker(!showHighlightPicker);
+                setShowColorPicker(false);
+                setShowLinkPopover(false);
+              }}
+              active={editor.isActive("highlight")}
+              title={t("Highlight")}
+            >
               <svg
-                width={14}
-                height={14}
+                width={16}
+                height={16}
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -434,285 +488,246 @@ function Toolbar({
                 strokeLinecap="round"
                 strokeLinejoin="round"
               >
-                <path d="M6 20h12" />
-                <path d="M12 4 6.5 16h2.1L10 13h4l1.4 3h2.1z" />
+                <path d="m19 4-8.8 8.8a1 1 0 0 0-.2.4L9 17l3.8-1a1 1 0 0 0 .4-.2L22 7" />
+                <path d="m19 4 2 2-1.5 1.5" />
+                <rect x="2" y="20" width="20" height="3" rx="1" fill="#fef08a" stroke="none" />
               </svg>
-              <div
-                className="h-1 w-4 rounded-sm"
-                style={{ backgroundColor: String(editor.getAttributes("textStyle").color || "currentColor") }}
+            </ToolbarButton>
+            {showHighlightPicker && (
+              <HighlightColorPicker
+                onSelect={(c) => {
+                  if (c) {
+                    editor.chain().focus().toggleHighlight({ color: c }).run();
+                  } else {
+                    editor.chain().focus().unsetHighlight().run();
+                  }
+                }}
+                onClose={() => setShowHighlightPicker(false)}
               />
-            </div>
-          </ToolbarButton>
-          {showColorPicker && (
-            <ColorPicker
-              currentColor={String(editor.getAttributes("textStyle").color ?? "")}
-              onSelect={(c) => {
-                if (c) {
-                  editor.chain().focus().setColor(c).run();
-                } else {
-                  editor.chain().focus().unsetColor().run();
-                }
-              }}
-              onClose={() => setShowColorPicker(false)}
-            />
-          )}
-        </div>
-        <div className="relative">
-          <ToolbarButton
-            onClick={() => {
-              setShowHighlightPicker(!showHighlightPicker);
-              setShowColorPicker(false);
-              setShowLinkPopover(false);
-            }}
-            active={editor.isActive("highlight")}
-            title={t("Highlight")}
-          >
-            <svg
-              width={16}
-              height={16}
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="m19 4-8.8 8.8a1 1 0 0 0-.2.4L9 17l3.8-1a1 1 0 0 0 .4-.2L22 7" />
-              <path d="m19 4 2 2-1.5 1.5" />
-              <rect x="2" y="20" width="20" height="3" rx="1" fill="#fef08a" stroke="none" />
-            </svg>
-          </ToolbarButton>
-          {showHighlightPicker && (
-            <HighlightColorPicker
-              onSelect={(c) => {
-                if (c) {
-                  editor.chain().focus().toggleHighlight({ color: c }).run();
-                } else {
-                  editor.chain().focus().unsetHighlight().run();
-                }
-              }}
-              onClose={() => setShowHighlightPicker(false)}
-            />
-          )}
-        </div>
-
-        <ToolbarSep />
+            )}
+          </div>
+        </ToolbarGrp>
 
         {/* Lists */}
-        <ToolbarButton onClick={() => editor.chain().focus().toggleBulletList().run()} active={editor.isActive("bulletList")} title={t("Bullet list")}>
-          <Ico>
-            <line x1="9" y1="6" x2="20" y2="6" />
-            <line x1="9" y1="12" x2="20" y2="12" />
-            <line x1="9" y1="18" x2="20" y2="18" />
-            <circle cx="4.5" cy="6" r="1.5" fill="currentColor" stroke="none" />
-            <circle cx="4.5" cy="12" r="1.5" fill="currentColor" stroke="none" />
-            <circle cx="4.5" cy="18" r="1.5" fill="currentColor" stroke="none" />
-          </Ico>
-        </ToolbarButton>
-        <ToolbarButton onClick={() => editor.chain().focus().toggleOrderedList().run()} active={editor.isActive("orderedList")} title={t("Numbered list")}>
-          <Ico>
-            <line x1="10" y1="6" x2="21" y2="6" />
-            <line x1="10" y1="12" x2="21" y2="12" />
-            <line x1="10" y1="18" x2="21" y2="18" />
-            <path d="M4 6h1v4" />
-            <path d="M3 10h3" />
-            <path d="M3 18h3" />
-            <path d="M6 14H4c0 1 .5 1.5 1 2l-1 2" />
-          </Ico>
-        </ToolbarButton>
-        <ToolbarButton onClick={() => editor.chain().focus().toggleTaskList().run()} active={editor.isActive("taskList")} title={t("Task list")}>
-          <Ico>
-            <rect x="3" y="5" width="6" height="6" rx="1" />
-            <path d="m3 17 2 2 4-4" />
-            <line x1="13" y1="6" x2="21" y2="6" />
-            <line x1="13" y1="12" x2="21" y2="12" />
-            <line x1="13" y1="18" x2="21" y2="18" />
-          </Ico>
-        </ToolbarButton>
-
-        <ToolbarSep />
+        <ToolbarGrp>
+          <ToolbarButton onClick={() => editor.chain().focus().toggleBulletList().run()} active={editor.isActive("bulletList")} title={t("Bullet list")}>
+            <Ico>
+              <line x1="9" y1="6" x2="20" y2="6" />
+              <line x1="9" y1="12" x2="20" y2="12" />
+              <line x1="9" y1="18" x2="20" y2="18" />
+              <circle cx="4.5" cy="6" r="1.5" fill="currentColor" stroke="none" />
+              <circle cx="4.5" cy="12" r="1.5" fill="currentColor" stroke="none" />
+              <circle cx="4.5" cy="18" r="1.5" fill="currentColor" stroke="none" />
+            </Ico>
+          </ToolbarButton>
+          <ToolbarButton onClick={() => editor.chain().focus().toggleOrderedList().run()} active={editor.isActive("orderedList")} title={t("Numbered list")}>
+            <Ico>
+              <line x1="10" y1="6" x2="21" y2="6" />
+              <line x1="10" y1="12" x2="21" y2="12" />
+              <line x1="10" y1="18" x2="21" y2="18" />
+              <path d="M4 6h1v4" />
+              <path d="M3 10h3" />
+              <path d="M3 18h3" />
+              <path d="M6 14H4c0 1 .5 1.5 1 2l-1 2" />
+            </Ico>
+          </ToolbarButton>
+          <ToolbarButton onClick={() => editor.chain().focus().toggleTaskList().run()} active={editor.isActive("taskList")} title={t("Task list")}>
+            <Ico>
+              <rect x="3" y="5" width="6" height="6" rx="1" />
+              <path d="m3 17 2 2 4-4" />
+              <line x1="13" y1="6" x2="21" y2="6" />
+              <line x1="13" y1="12" x2="21" y2="12" />
+              <line x1="13" y1="18" x2="21" y2="18" />
+            </Ico>
+          </ToolbarButton>
+        </ToolbarGrp>
 
         {/* Alignment */}
-        <ToolbarButton onClick={() => editor.chain().focus().setTextAlign("left").run()} active={editor.isActive({ textAlign: "left" })} title={t("Align left")}>
-          <Ico>
-            <line x1="3" y1="6" x2="21" y2="6" />
-            <line x1="3" y1="12" x2="15" y2="12" />
-            <line x1="3" y1="18" x2="18" y2="18" />
-          </Ico>
-        </ToolbarButton>
-        <ToolbarButton onClick={() => editor.chain().focus().setTextAlign("center").run()} active={editor.isActive({ textAlign: "center" })} title={t("Align center")}>
-          <Ico>
-            <line x1="3" y1="6" x2="21" y2="6" />
-            <line x1="6" y1="12" x2="18" y2="12" />
-            <line x1="4" y1="18" x2="20" y2="18" />
-          </Ico>
-        </ToolbarButton>
-        <ToolbarButton onClick={() => editor.chain().focus().setTextAlign("right").run()} active={editor.isActive({ textAlign: "right" })} title={t("Align right")}>
-          <Ico>
-            <line x1="3" y1="6" x2="21" y2="6" />
-            <line x1="9" y1="12" x2="21" y2="12" />
-            <line x1="6" y1="18" x2="21" y2="18" />
-          </Ico>
-        </ToolbarButton>
-        <ToolbarButton onClick={() => editor.chain().focus().setTextAlign("justify").run()} active={editor.isActive({ textAlign: "justify" })} title={t("Justify")}>
-          <Ico>
-            <line x1="3" y1="6" x2="21" y2="6" />
-            <line x1="3" y1="12" x2="21" y2="12" />
-            <line x1="3" y1="18" x2="21" y2="18" />
-          </Ico>
-        </ToolbarButton>
-
-        <ToolbarSep />
+        <ToolbarGrp>
+          <ToolbarButton onClick={() => editor.chain().focus().setTextAlign("left").run()} active={editor.isActive({ textAlign: "left" })} title={t("Align left")}>
+            <Ico>
+              <line x1="3" y1="6" x2="21" y2="6" />
+              <line x1="3" y1="12" x2="15" y2="12" />
+              <line x1="3" y1="18" x2="18" y2="18" />
+            </Ico>
+          </ToolbarButton>
+          <ToolbarButton onClick={() => editor.chain().focus().setTextAlign("center").run()} active={editor.isActive({ textAlign: "center" })} title={t("Align center")}>
+            <Ico>
+              <line x1="3" y1="6" x2="21" y2="6" />
+              <line x1="6" y1="12" x2="18" y2="12" />
+              <line x1="4" y1="18" x2="20" y2="18" />
+            </Ico>
+          </ToolbarButton>
+          <ToolbarButton onClick={() => editor.chain().focus().setTextAlign("right").run()} active={editor.isActive({ textAlign: "right" })} title={t("Align right")}>
+            <Ico>
+              <line x1="3" y1="6" x2="21" y2="6" />
+              <line x1="9" y1="12" x2="21" y2="12" />
+              <line x1="6" y1="18" x2="21" y2="18" />
+            </Ico>
+          </ToolbarButton>
+          <ToolbarButton onClick={() => editor.chain().focus().setTextAlign("justify").run()} active={editor.isActive({ textAlign: "justify" })} title={t("Justify")}>
+            <Ico>
+              <line x1="3" y1="6" x2="21" y2="6" />
+              <line x1="3" y1="12" x2="21" y2="12" />
+              <line x1="3" y1="18" x2="21" y2="18" />
+            </Ico>
+          </ToolbarButton>
+        </ToolbarGrp>
 
         {/* Blocks */}
-        <ToolbarButton onClick={() => editor.chain().focus().toggleBlockquote().run()} active={editor.isActive("blockquote")} title={t("Blockquote")}>
-          <Ico>
-            <path d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V21z" />
-            <path d="M15 21c3 0 7-1 7-8V5c0-1.25-.757-2.017-2-2h-4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2h.75c0 2.25.25 4-2.75 4v3z" />
-          </Ico>
-        </ToolbarButton>
-        <ToolbarButton onClick={() => editor.chain().focus().toggleCodeBlock().run()} active={editor.isActive("codeBlock")} title={t("Code block")}>
-          <Ico>
-            <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-            <path d="m10 10-2 2 2 2" />
-            <path d="m14 10 2 2-2 2" />
-          </Ico>
-        </ToolbarButton>
-        <ToolbarButton onClick={() => editor.chain().focus().setHorizontalRule().run()} title={t("Horizontal rule")}>
-          <Ico><path d="M3 12h18" /></Ico>
-        </ToolbarButton>
-
-        <ToolbarSep />
-
-        {/* Link */}
-        <div className="relative">
-          <ToolbarButton
-            onClick={() => {
-              if (editor.isActive("link")) {
-                editor.chain().focus().unsetLink().run();
-              } else {
-                setShowLinkPopover(!showLinkPopover);
-                setShowColorPicker(false);
-                setShowHighlightPicker(false);
-              }
-            }}
-            active={editor.isActive("link")}
-            title={editor.isActive("link") ? t("Remove link") : t("Add link")}
-          >
+        <ToolbarGrp>
+          <ToolbarButton onClick={() => editor.chain().focus().toggleBlockquote().run()} active={editor.isActive("blockquote")} title={t("Blockquote")}>
             <Ico>
-              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
-              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+              <path d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V21z" />
+              <path d="M15 21c3 0 7-1 7-8V5c0-1.25-.757-2.017-2-2h-4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2h.75c0 2.25.25 4-2.75 4v3z" />
             </Ico>
           </ToolbarButton>
-          {showLinkPopover && (
-            <InputPopover
-              initialValue={String(editor.getAttributes("link").href ?? "")}
-              onSubmit={handleLinkSubmit}
-              onClose={() => setShowLinkPopover(false)}
-              inputPlaceholder="https://example.com"
-              submitLabel={t("Apply")}
-            />
-          )}
-        </div>
-        {/* Image */}
-        <div className="relative">
-          <ToolbarButton
-            onClick={() => {
-              setShowImagePopover(!showImagePopover);
-              setShowLinkPopover(false);
-              setShowColorPicker(false);
-              setShowHighlightPicker(false);
-            }}
-            title={t("Insert image")}
-          >
+          <ToolbarButton onClick={() => editor.chain().focus().toggleCodeBlock().run()} active={editor.isActive("codeBlock")} title={t("Code block")}>
             <Ico>
               <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-              <circle cx="8.5" cy="8.5" r="1.5" />
-              <path d="m21 15-5-5L5 21" />
+              <path d="m10 10-2 2 2 2" />
+              <path d="m14 10 2 2-2 2" />
             </Ico>
           </ToolbarButton>
-          {showImagePopover && (
-            <InputPopover
-              initialValue=""
-              onSubmit={handleImageSubmit}
-              onClose={() => setShowImagePopover(false)}
-              inputPlaceholder={t("https://example.com/image.png")}
-              submitLabel={t("Insert")}
-            />
-          )}
-        </div>
-        {/* Table */}
-        <ToolbarButton onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()} title={t("Insert table")}>
-          <Ico>
-            <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-            <line x1="3" y1="9" x2="21" y2="9" />
-            <line x1="3" y1="15" x2="21" y2="15" />
-            <line x1="9" y1="3" x2="9" y2="21" />
-            <line x1="15" y1="3" x2="15" y2="21" />
-          </Ico>
-        </ToolbarButton>
+          <ToolbarButton onClick={() => editor.chain().focus().setHorizontalRule().run()} title={t("Horizontal rule")}>
+            <Ico><path d="M3 12h18" /></Ico>
+          </ToolbarButton>
+        </ToolbarGrp>
 
-        <ToolbarSep />
+        {/* Insert */}
+        <ToolbarGrp>
+          <div className="relative">
+            <ToolbarButton
+              onClick={() => {
+                if (editor.isActive("link")) {
+                  editor.chain().focus().unsetLink().run();
+                } else {
+                  setShowLinkPopover(!showLinkPopover);
+                  setShowColorPicker(false);
+                  setShowHighlightPicker(false);
+                }
+              }}
+              active={editor.isActive("link")}
+              title={editor.isActive("link") ? t("Remove link") : t("Add link")}
+            >
+              <Ico>
+                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+              </Ico>
+            </ToolbarButton>
+            {showLinkPopover && (
+              <InputPopover
+                initialValue={String(editor.getAttributes("link").href ?? "")}
+                onSubmit={handleLinkSubmit}
+                onClose={() => setShowLinkPopover(false)}
+                inputPlaceholder="https://example.com"
+                submitLabel={t("Apply")}
+              />
+            )}
+          </div>
+          <div className="relative">
+            <ToolbarButton
+              onClick={() => {
+                setShowImagePopover(!showImagePopover);
+                setShowLinkPopover(false);
+                setShowColorPicker(false);
+                setShowHighlightPicker(false);
+              }}
+              title={t("Insert image")}
+            >
+              <Ico>
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                <circle cx="8.5" cy="8.5" r="1.5" />
+                <path d="m21 15-5-5L5 21" />
+              </Ico>
+            </ToolbarButton>
+            {showImagePopover && (
+              <InputPopover
+                initialValue=""
+                onSubmit={handleImageSubmit}
+                onClose={() => setShowImagePopover(false)}
+                inputPlaceholder={t("https://example.com/image.png")}
+                submitLabel={t("Insert")}
+              />
+            )}
+          </div>
+          <ToolbarSep />
+          <ToolbarButton onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()} title={t("Insert table")}>
+            <Ico>
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+              <line x1="3" y1="9" x2="21" y2="9" />
+              <line x1="3" y1="15" x2="21" y2="15" />
+              <line x1="9" y1="3" x2="9" y2="21" />
+              <line x1="15" y1="3" x2="15" y2="21" />
+            </Ico>
+          </ToolbarButton>
+        </ToolbarGrp>
 
         {/* Clear */}
-        <ToolbarButton
-          onClick={() => editor.chain().focus().clearNodes().unsetAllMarks().run()}
-          title={t("Clear formatting")}
-        >
-          <Ico>
-            <path d="M4 7V4h16v3" />
-            <path d="M9 20h6" />
-            <path d="M12 4v16" />
-            <path d="m17 3-10 18" />
-          </Ico>
-        </ToolbarButton>
+        <ToolbarGrp>
+          <ToolbarButton
+            onClick={() => editor.chain().focus().clearNodes().unsetAllMarks().run()}
+            title={t("Clear formatting")}
+          >
+            <Ico>
+              <path d="M4 7V4h16v3" />
+              <path d="M9 20h6" />
+              <path d="M12 4v16" />
+              <path d="m17 3-10 18" />
+            </Ico>
+          </ToolbarButton>
+        </ToolbarGrp>
       </div>
 
-      {/* Table context bar — appears only when cursor is inside a table */}
+      {/* Table context bar */}
       {editor.isActive("table") && (
-        <div className="flex items-center gap-0.5 px-3 py-1 border-t border-t-border-low/50 bg-primary/5">
-          <span className="text-[10px] font-medium text-primary mr-1.5 select-none">
+        <div className="flex items-center gap-1.5 flex-wrap px-3 py-1.5 border-t border-t-border-low/50 bg-primary/[0.03]">
+          <span className="text-[10px] font-medium text-primary select-none">
             {t("Table")}
           </span>
-          <ToolbarButton onClick={() => editor.chain().focus().addColumnAfter().run()} title={t("Add column")}>
-            <Ico>
-              <rect x="3" y="3" width="18" height="18" rx="2" />
-              <line x1="12" y1="8" x2="12" y2="16" />
-              <line x1="8" y1="12" x2="16" y2="12" />
-            </Ico>
-          </ToolbarButton>
-          <ToolbarButton onClick={() => editor.chain().focus().addRowAfter().run()} title={t("Add row")}>
-            <Ico>
-              <rect x="3" y="3" width="18" height="18" rx="2" />
-              <line x1="3" y1="12" x2="21" y2="12" />
-              <line x1="12" y1="12" x2="12" y2="21" />
-            </Ico>
-          </ToolbarButton>
-          <ToolbarSep />
-          <ToolbarButton onClick={() => editor.chain().focus().deleteColumn().run()} title={t("Delete column")}>
-            <Ico>
-              <rect x="3" y="3" width="18" height="18" rx="2" />
-              <line x1="9" y1="3" x2="9" y2="21" />
-              <path d="m14 9 4 4" />
-              <path d="m18 9-4 4" />
-            </Ico>
-          </ToolbarButton>
-          <ToolbarButton onClick={() => editor.chain().focus().deleteRow().run()} title={t("Delete row")}>
-            <Ico>
-              <rect x="3" y="3" width="18" height="18" rx="2" />
-              <line x1="3" y1="9" x2="21" y2="9" />
-              <path d="m9 14 4 4" />
-              <path d="m13 14-4 4" />
-            </Ico>
-          </ToolbarButton>
-          <ToolbarSep />
-          <ToolbarButton onClick={() => editor.chain().focus().deleteTable().run()} title={t("Delete table")}>
-            <Ico>
-              <path d="M3 6h18" />
-              <path d="M8 6V4h8v2" />
-              <path d="m19 6-.867 12.142A2 2 0 0 1 16.138 20H7.862a2 2 0 0 1-1.995-1.858L5 6" />
-            </Ico>
-          </ToolbarButton>
+          <ToolbarGrp>
+            <ToolbarButton onClick={() => editor.chain().focus().addColumnAfter().run()} title={t("Add column")}>
+              <Ico>
+                <rect x="3" y="3" width="18" height="18" rx="2" />
+                <line x1="12" y1="8" x2="12" y2="16" />
+                <line x1="8" y1="12" x2="16" y2="12" />
+              </Ico>
+            </ToolbarButton>
+            <ToolbarButton onClick={() => editor.chain().focus().addRowAfter().run()} title={t("Add row")}>
+              <Ico>
+                <rect x="3" y="3" width="18" height="18" rx="2" />
+                <line x1="3" y1="12" x2="21" y2="12" />
+                <line x1="12" y1="12" x2="12" y2="21" />
+              </Ico>
+            </ToolbarButton>
+          </ToolbarGrp>
+          <ToolbarGrp>
+            <ToolbarButton onClick={() => editor.chain().focus().deleteColumn().run()} title={t("Delete column")}>
+              <Ico>
+                <rect x="3" y="3" width="18" height="18" rx="2" />
+                <line x1="9" y1="3" x2="9" y2="21" />
+                <path d="m14 9 4 4" />
+                <path d="m18 9-4 4" />
+              </Ico>
+            </ToolbarButton>
+            <ToolbarButton onClick={() => editor.chain().focus().deleteRow().run()} title={t("Delete row")}>
+              <Ico>
+                <rect x="3" y="3" width="18" height="18" rx="2" />
+                <line x1="3" y1="9" x2="21" y2="9" />
+                <path d="m9 14 4 4" />
+                <path d="m13 14-4 4" />
+              </Ico>
+            </ToolbarButton>
+          </ToolbarGrp>
+          <ToolbarGrp>
+            <ToolbarButton onClick={() => editor.chain().focus().deleteTable().run()} title={t("Delete table")}>
+              <Ico>
+                <path d="M3 6h18" />
+                <path d="M8 6V4h8v2" />
+                <path d="m19 6-.867 12.142A2 2 0 0 1 16.138 20H7.862a2 2 0 0 1-1.995-1.858L5 6" />
+              </Ico>
+            </ToolbarButton>
+          </ToolbarGrp>
         </div>
       )}
     </div>
