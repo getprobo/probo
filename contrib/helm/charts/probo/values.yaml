@@ -234,7 +234,7 @@ probo:
 
   # Email configuration
   mailer:
-    senderName: "Probo"
+    senderName: "Govrly"
     senderEmail: "no-reply@notification.getprobo.com"
     smtp:
       addr: ""

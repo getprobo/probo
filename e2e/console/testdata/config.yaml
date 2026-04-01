@@ -52,7 +52,7 @@ probod:
 
   notifications:
     mailer:
-      sender-name: "Probo Test"
+      sender-name: "Govrly Test"
       sender-email: "no-reply@test.getprobo.com"
       smtp:
         addr: "localhost:1025"

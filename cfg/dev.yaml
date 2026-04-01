@@ -76,7 +76,7 @@ probod:
 
   notifications:
     mailer:
-      sender-name: "Probo"
+      sender-name: "Govrly"
       sender-email: "no-reply@notification.getprobo.com"
       smtp:
         addr: "localhost:1025"

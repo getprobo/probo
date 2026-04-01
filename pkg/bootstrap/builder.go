@@ -138,7 +138,7 @@ func (b *Builder) Build() (*probod.FullConfig, error) {
 			},
 			Notifications: probod.NotificationsConfig{
 				Mailer: probod.MailerConfig{
-					SenderName:     b.getEnvOrDefault("MAILER_SENDER_NAME", "Probo"),
+					SenderName:     b.getEnvOrDefault("MAILER_SENDER_NAME", "Govrly"),
 					SenderEmail:    b.getEnvOrDefault("MAILER_SENDER_EMAIL", "no-reply@notification.getprobo.com"),
 					MailerInterval: b.getEnvIntOrDefault("MAILER_INTERVAL", 60),
 					SMTP: probod.SMTPConfig{
