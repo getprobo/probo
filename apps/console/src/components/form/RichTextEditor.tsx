@@ -52,6 +52,7 @@ function ToolbarButton({
       className={clsx(
         "size-8 flex items-center justify-center rounded-md transition-colors",
         disabled && "opacity-30 cursor-not-allowed",
+        !disabled && "cursor-pointer",
         !disabled && active && "bg-primary/10 text-primary",
         !disabled && !active && "text-txt-secondary hover:bg-subtle hover:text-txt-primary",
       )}
