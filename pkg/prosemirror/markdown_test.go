@@ -644,6 +644,55 @@ func TestParseMarkdown_MarkdownTableWithInlineMarks(t *testing.T) {
 	assert.Equal(t, MarkEm, p.Content[2].Marks[0].Type)
 }
 
+func TestParseMarkdown_MarkdownTableCellWithBlockList(t *testing.T) {
+	t.Parallel()
+
+	md := "| Header |\n| --- |\n| <ul><li>one</li><li>two</li></ul> |\n"
+	doc, err := ParseMarkdown(md)
+	require.NoError(t, err)
+	require.Len(t, doc.Content, 1)
+	assert.Equal(t, NodeTable, doc.Content[0].Type)
+
+	dataRow := doc.Content[0].Content[1]
+	assert.Equal(t, NodeTableRow, dataRow.Type)
+	cell := dataRow.Content[0]
+	assert.Equal(t, NodeTableCell, cell.Type)
+
+	require.Len(t, cell.Content, 1)
+	assert.Equal(t, NodeBulletList, cell.Content[0].Type)
+	require.Len(t, cell.Content[0].Content, 2)
+	assert.Equal(t, NodeListItem, cell.Content[0].Content[0].Type)
+	assert.Equal(t, NodeListItem, cell.Content[0].Content[1].Type)
+
+	li1Para := cell.Content[0].Content[0].Content[0]
+	require.Equal(t, NodeParagraph, li1Para.Type)
+	assert.Equal(t, "one", *li1Para.Content[0].Text)
+
+	li2Para := cell.Content[0].Content[1].Content[0]
+	require.Equal(t, NodeParagraph, li2Para.Type)
+	assert.Equal(t, "two", *li2Para.Content[0].Text)
+}
+
+func TestParseMarkdown_MarkdownTableCellWithOrderedList(t *testing.T) {
+	t.Parallel()
+
+	md := "| Header |\n| --- |\n| <ol><li>first</li><li>second</li></ol> |\n"
+	doc, err := ParseMarkdown(md)
+	require.NoError(t, err)
+	require.Len(t, doc.Content, 1)
+	assert.Equal(t, NodeTable, doc.Content[0].Type)
+
+	dataRow := doc.Content[0].Content[1]
+	cell := dataRow.Content[0]
+	assert.Equal(t, NodeTableCell, cell.Type)
+
+	require.Len(t, cell.Content, 1)
+	assert.Equal(t, NodeOrderedList, cell.Content[0].Type)
+	require.Len(t, cell.Content[0].Content, 2)
+	assert.Equal(t, NodeListItem, cell.Content[0].Content[0].Type)
+	assert.Equal(t, NodeListItem, cell.Content[0].Content[1].Type)
+}
+
 func TestParseMarkdown_BlockHTMLScriptRemovedKeepsSafeContent(t *testing.T) {
 	t.Parallel()
 

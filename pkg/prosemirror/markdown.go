@@ -580,7 +580,7 @@ func (c *converter) convertTableCells(row ast.Node, cellType NodeType) ([]Node, 
 			continue
 		}
 
-		inlineContent, err := c.convertInlineChildren(child)
+		content, err := c.convertTableCellContent(child)
 		if err != nil {
 			return nil, err
 		}
@@ -598,11 +598,84 @@ func (c *converter) convertTableCells(row ast.Node, cellType NodeType) ([]Node, 
 		cells = append(cells, Node{
 			Type:    cellType,
 			Attrs:   attrs,
-			Content: []Node{{Type: NodeParagraph, Content: inlineContent}},
+			Content: content,
 		})
 	}
 
 	return cells, nil
+}
+
+func (c *converter) convertTableCellContent(cell ast.Node) ([]Node, error) {
+	if c.cellHasBlockHTML(cell) {
+		raw := c.collectCellRawContent(cell)
+		nodes, err := convertProseMirrorFromHTMLBlock(raw)
+		if err != nil {
+			return nil, err
+		}
+		if len(nodes) > 0 {
+			return nodes, nil
+		}
+	}
+
+	inlineContent, err := c.convertInlineChildren(cell)
+	if err != nil {
+		return nil, err
+	}
+	return []Node{{Type: NodeParagraph, Content: inlineContent}}, nil
+}
+
+func (c *converter) cellHasBlockHTML(cell ast.Node) bool {
+	for ch := cell.FirstChild(); ch != nil; ch = ch.NextSibling() {
+		if ch.Kind() != ast.KindRawHTML {
+			continue
+		}
+		raw := ch.(*ast.RawHTML)
+		for i := 0; i < raw.Segments.Len(); i++ {
+			seg := raw.Segments.At(i)
+			val := strings.ToLower(string(seg.Value(c.source)))
+			if containsBlockOpenTag(val) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func containsBlockOpenTag(s string) bool {
+	for _, tag := range []string{
+		"<ul", "<ol", "<table", "<blockquote", "<pre", "<div",
+		"<h1", "<h2", "<h3", "<h4", "<h5", "<h6", "<hr",
+	} {
+		if strings.Contains(s, tag) {
+			return true
+		}
+	}
+	return false
+}
+
+func (c *converter) collectCellRawContent(cell ast.Node) string {
+	var buf bytes.Buffer
+	for ch := cell.FirstChild(); ch != nil; ch = ch.NextSibling() {
+		switch ch.Kind() {
+		case ast.KindRawHTML:
+			raw := ch.(*ast.RawHTML)
+			for i := 0; i < raw.Segments.Len(); i++ {
+				seg := raw.Segments.At(i)
+				buf.Write(seg.Value(c.source))
+			}
+		case ast.KindText:
+			t := ch.(*ast.Text)
+			buf.Write(t.Segment.Value(c.source))
+			if t.SoftLineBreak() {
+				buf.WriteByte(' ')
+			}
+		case ast.KindString:
+			buf.Write(ch.(*ast.String).Value)
+		default:
+			buf.WriteString(c.extractText(ch))
+		}
+	}
+	return buf.String()
 }
 
 // extractText recursively collects the text content of all descendant nodes.
