@@ -20,23 +20,28 @@ import (
 	"net/url"
 
 	"go.gearno.de/kit/httpserver"
+	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/iam/oauth2server"
 )
 
-func handleAuthorizeError(w http.ResponseWriter, r *http.Request, err error, redirectURI, state string) {
+func (h *OAuth2Handler) handleAuthorizeError(w http.ResponseWriter, r *http.Request, err error, redirectURI, state string) {
 	if isRedirectableError(err) && redirectURI != "" {
 		redirectWithError(w, r, redirectURI, state, err)
 		return
 	}
 
-	writeOAuth2Error(w, r, err)
+	h.writeOAuth2Error(w, r, err)
 }
 
-func writeOAuth2Error(w http.ResponseWriter, r *http.Request, err error) {
+func (h *OAuth2Handler) writeOAuth2Error(w http.ResponseWriter, r *http.Request, err error) {
 	oauthErr, ok := errors.AsType[*oauth2server.OAuth2Error](err)
 	if !ok {
 		httpserver.RenderError(w, http.StatusInternalServerError, err)
 		return
+	}
+
+	if errors.Is(err, oauth2server.ErrServerError) {
+		h.logger.ErrorCtx(r.Context(), "oauth2 server error", log.Error(err))
 	}
 
 	w.Header().Set("Cache-Control", "no-store")
