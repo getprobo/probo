@@ -33,7 +33,7 @@ export function Sidebar({ children }: PropsWithChildren) {
     <sidebarContext.Provider value={{ open }}>
       <aside
         className={clsx(
-          "border-r border-border-solid pt-16 flex-none flex flex-col h-screen",
+          "border-r border-sidebar-border bg-sidebar-bg pt-16 flex-none flex flex-col h-screen",
           open ? "w-[260px]" : "",
         )}
       >
@@ -47,7 +47,7 @@ export function Sidebar({ children }: PropsWithChildren) {
         </div>
         <div
           className={clsx(
-            "shrink-0 border-t border-border-low bg-level-0 flex flex-col gap-2 py-3",
+            "shrink-0 border-t border-sidebar-border bg-sidebar-bg flex flex-col gap-2 py-3",
             open ? "px-4" : "px-2 items-center",
           )}
         >

@@ -7,10 +7,10 @@
 
     --color-black: #0f172a;
 
-    /* Surface layers — cool-gray page, crisp white cards, soft gray overlays */
-    --color-level-0: #f1f5f9;
-    --color-level-1: #ffffff;
-    --color-level-2: #f8fafc;
+    /* Surface layers — white page, soft gray cards, subtle gray overlays */
+    --color-level-0: #ffffff;
+    --color-level-1: #f8fafc;
+    --color-level-2: #f1f5f9;
     --color-level-3: #0f172a;
 
     /* Text — deep navy #0f172a anchors the hierarchy */
@@ -27,14 +27,14 @@
     --color-txt-info: #0369a1;
     --color-txt-warning: #b45309;
 
-    /* Backgrounds — #ec4701 orange woven into subtle/active tints */
+    /* Backgrounds — orange brand presence through warm tints */
     --color-primary: #ec4701;
     --color-invert: #ffffff;
     --color-secondary: #ffffff;
     --color-tertiary: transparent;
     --color-subtle: rgba(15, 23, 42, 0.03);
-    --color-highlight: rgba(236, 71, 1, 0.05);
-    --color-active: #fff5f0;
+    --color-highlight: rgba(236, 71, 1, 0.06);
+    --color-active: #fff7ed;
     --color-accent: #ec4701;
     --color-danger: #fef2f2;
     --color-danger-plain: #dc2626;
@@ -62,9 +62,9 @@
     --color-secondary-hover: #f8fafc;
     --color-tertiary-hover: rgba(15, 23, 42, 0.04);
     --color-subtle-hover: rgba(15, 23, 42, 0.05);
-    --color-highlight-hover: rgba(236, 71, 1, 0.08);
+    --color-highlight-hover: rgba(236, 71, 1, 0.10);
     --color-accent-hover: #d43e00;
-    --color-active-hover: #ffede3;
+    --color-active-hover: #ffedd5;
     --color-danger-hover: #b91c1c;
 
     /* Pressed */
@@ -73,9 +73,9 @@
     --color-secondary-pressed: #f1f5f9;
     --color-tertiary-pressed: rgba(15, 23, 42, 0.06);
     --color-subtle-pressed: rgba(15, 23, 42, 0.08);
-    --color-highlight-pressed: rgba(236, 71, 1, 0.12);
+    --color-highlight-pressed: rgba(236, 71, 1, 0.14);
     --color-accent-pressed: #bf3700;
-    --color-active-pressed: #ffdcc8;
+    --color-active-pressed: #fed7aa;
     --color-danger-pressed: #991b1b;
 
     /* text-5xl */
@@ -172,16 +172,16 @@
         0px 4px 8px -2px rgba(15, 23, 42, 0.06),
         0px 8px 16px -4px rgba(15, 23, 42, 0.08);
 
-    /* Sidebar — white surface on gray page, warm accent */
+    /* Sidebar — white surface, orange brand accent for active state */
     --color-sidebar-bg: #ffffff;
-    --color-sidebar-border: #e2e8f0;
+    --color-sidebar-border: #f1f5f9;
     --color-sidebar-text: #64748b;
     --color-sidebar-text-hover: #0f172a;
     --color-sidebar-text-active: #ec4701;
-    --color-sidebar-hover-bg: #f1f5f9;
-    --color-sidebar-active-bg: #fff5f0;
-    --color-sidebar-active-hover-bg: #ffede3;
-    --color-sidebar-active-pressed-bg: #ffdcc8;
+    --color-sidebar-hover-bg: #f8fafc;
+    --color-sidebar-active-bg: #fff7ed;
+    --color-sidebar-active-hover-bg: #ffedd5;
+    --color-sidebar-active-pressed-bg: #fed7aa;
 }
 
 /* Dark theme — explicit opt-in via data attribute */
