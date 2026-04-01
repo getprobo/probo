@@ -50,7 +50,7 @@ function ToolbarButton({
       onClick={onClick}
       disabled={disabled}
       className={clsx(
-        "size-7 flex items-center justify-center rounded-md transition-colors",
+        "size-8 flex items-center justify-center rounded-md transition-colors",
         disabled && "opacity-30 cursor-not-allowed",
         !disabled && active && "bg-primary/10 text-primary",
         !disabled && !active && "text-txt-secondary hover:bg-subtle hover:text-txt-primary",
@@ -62,7 +62,7 @@ function ToolbarButton({
 }
 
 function ToolbarDivider() {
-  return <div className="w-px h-4 bg-border-low mx-1 shrink-0" />;
+  return <div className="w-px h-5 bg-border-low mx-1.5 shrink-0" />;
 }
 
 function ToolbarGroup({ children }: { children: React.ReactNode }) {
@@ -71,7 +71,7 @@ function ToolbarGroup({ children }: { children: React.ReactNode }) {
 
 // ─── SVG icon helper ────────────────────────────────────────────────
 
-function Ico({ children, size = 15 }: { children: React.ReactNode; size?: number }) {
+function Ico({ children, size = 16 }: { children: React.ReactNode; size?: number }) {
   return (
     <svg
       width={size}
@@ -170,49 +170,62 @@ function ColorPicker({
   currentColor: string;
 }) {
   const { __ } = useTranslate();
-  const colors = [
-    { label: __("Default"), value: "" },
-    { label: __("Gray"), value: "#6b7280" },
-    { label: __("Brown"), value: "#92400e" },
-    { label: __("Red"), value: "#dc2626" },
-    { label: __("Orange"), value: "#ea580c" },
-    { label: __("Yellow"), value: "#ca8a04" },
-    { label: __("Green"), value: "#16a34a" },
-    { label: __("Teal"), value: "#0d9488" },
-    { label: __("Blue"), value: "#2563eb" },
-    { label: __("Indigo"), value: "#4f46e5" },
-    { label: __("Purple"), value: "#9333ea" },
-    { label: __("Pink"), value: "#db2777" },
+  const presets = [
+    "#000000", "#374151", "#6b7280", "#9ca3af",
+    "#dc2626", "#ea580c", "#ca8a04", "#16a34a",
+    "#0d9488", "#2563eb", "#4f46e5", "#9333ea",
+    "#db2777", "#92400e", "#0369a1", "#7c3aed",
   ];
 
   return (
-    <div className="absolute left-0 top-full mt-1 z-50 bg-level-1 border border-border-low rounded-xl shadow-mid p-2 min-w-45">
-      <div className="text-xs font-medium text-txt-tertiary px-2 py-1 mb-1">{__("Text color")}</div>
-      <div className="grid grid-cols-6 gap-1">
-        {colors.map(c => (
+    <div className="absolute left-0 top-full mt-1 z-50 bg-level-1 border border-border-low rounded-xl shadow-mid p-2.5 w-52">
+      <div className="text-xs font-medium text-txt-tertiary px-1 py-1 mb-1">
+        {__("Text color")}
+      </div>
+      <div className="grid grid-cols-8 gap-1 mb-2">
+        {presets.map(c => (
           <button
-            key={c.value || "default"}
+            key={c}
             type="button"
-            title={c.label}
             onMouseDown={e => e.preventDefault()}
             onClick={() => {
-              onSelect(c.value);
+              onSelect(c);
               onClose();
             }}
             className={clsx(
-              "size-7 rounded-md flex items-center justify-center transition-colors hover:ring-2 hover:ring-primary/30",
-              currentColor === c.value && "ring-2 ring-primary",
+              "size-5.5 rounded-full transition-all hover:scale-110 hover:ring-2 hover:ring-primary/30",
+              currentColor === c && "ring-2 ring-primary ring-offset-1 ring-offset-level-1",
             )}
-          >
-            {c.value
-              ? <span className="size-4 rounded-full" style={{ backgroundColor: c.value }} />
-              : (
-                  <span className="size-4 rounded-full border border-border-low bg-level-2 flex items-center justify-center text-[9px] text-txt-tertiary">
-                    A
-                  </span>
-                )}
-          </button>
+            style={{ backgroundColor: c }}
+          />
         ))}
+      </div>
+      <div className="flex items-center gap-2 pt-2 border-t border-border-low">
+        <label className="flex items-center gap-2 flex-1 cursor-pointer group">
+          <input
+            type="color"
+            value={currentColor || "#000000"}
+            onMouseDown={e => e.stopPropagation()}
+            onChange={(e) => {
+              onSelect(e.target.value);
+            }}
+            className="size-6 rounded cursor-pointer border border-border-low p-0 bg-transparent [&::-webkit-color-swatch-wrapper]:p-0.5 [&::-webkit-color-swatch]:rounded"
+          />
+          <span className="text-xs text-txt-secondary group-hover:text-txt-primary">
+            {__("Custom")}
+          </span>
+        </label>
+        <button
+          type="button"
+          onMouseDown={e => e.preventDefault()}
+          onClick={() => {
+            onSelect("");
+            onClose();
+          }}
+          className="text-xs text-txt-secondary hover:text-txt-primary px-2 py-1 hover:bg-subtle rounded-md transition-colors"
+        >
+          {__("Reset")}
+        </button>
       </div>
     </div>
   );
@@ -226,48 +239,60 @@ function HighlightColorPicker({
   onClose: () => void;
 }) {
   const { __ } = useTranslate();
-  const colors = [
-    { label: __("Yellow"), value: "#fef08a" },
-    { label: __("Green"), value: "#bbf7d0" },
-    { label: __("Blue"), value: "#bfdbfe" },
-    { label: __("Purple"), value: "#e9d5ff" },
-    { label: __("Pink"), value: "#fce7f3" },
-    { label: __("Orange"), value: "#fed7aa" },
-    { label: __("Red"), value: "#fecaca" },
-    { label: __("Gray"), value: "#e5e7eb" },
+  const presets = [
+    "#fef08a", "#bbf7d0", "#bfdbfe", "#e9d5ff",
+    "#fce7f3", "#fed7aa", "#fecaca", "#e5e7eb",
+    "#fde68a", "#a7f3d0", "#93c5fd", "#c4b5fd",
+    "#f9a8d4", "#fdba74", "#fca5a5", "#d1d5db",
   ];
 
   return (
-    <div className="absolute left-0 top-full mt-1 z-50 bg-level-1 border border-border-low rounded-xl shadow-mid p-2 min-w-37.5">
-      <div className="text-xs font-medium text-txt-tertiary px-2 py-1 mb-1">{__("Highlight")}</div>
-      <div className="grid grid-cols-4 gap-1">
-        {colors.map(c => (
+    <div className="absolute left-0 top-full mt-1 z-50 bg-level-1 border border-border-low rounded-xl shadow-mid p-2.5 w-52">
+      <div className="text-xs font-medium text-txt-tertiary px-1 py-1 mb-1">
+        {__("Highlight")}
+      </div>
+      <div className="grid grid-cols-8 gap-1 mb-2">
+        {presets.map(c => (
           <button
-            key={c.value}
+            key={c}
             type="button"
-            title={c.label}
             onMouseDown={e => e.preventDefault()}
             onClick={() => {
-              onSelect(c.value);
+              onSelect(c);
               onClose();
             }}
-            className="size-7 rounded-md flex items-center justify-center hover:ring-2 hover:ring-primary/30"
-          >
-            <span className="size-5 rounded" style={{ backgroundColor: c.value }} />
-          </button>
+            className="size-5.5 rounded transition-all hover:scale-110 hover:ring-2 hover:ring-primary/30"
+            style={{ backgroundColor: c }}
+          />
         ))}
       </div>
-      <button
-        type="button"
-        onMouseDown={e => e.preventDefault()}
-        onClick={() => {
-          onSelect("");
-          onClose();
-        }}
-        className="w-full text-xs text-txt-secondary hover:text-txt-primary py-1 mt-1 hover:bg-subtle rounded-md transition-colors"
-      >
-        {__("Remove highlight")}
-      </button>
+      <div className="flex items-center gap-2 pt-2 border-t border-border-low">
+        <label className="flex items-center gap-2 flex-1 cursor-pointer group">
+          <input
+            type="color"
+            defaultValue="#fef08a"
+            onMouseDown={e => e.stopPropagation()}
+            onChange={(e) => {
+              onSelect(e.target.value);
+            }}
+            className="size-6 rounded cursor-pointer border border-border-low p-0 bg-transparent [&::-webkit-color-swatch-wrapper]:p-0.5 [&::-webkit-color-swatch]:rounded"
+          />
+          <span className="text-xs text-txt-secondary group-hover:text-txt-primary">
+            {__("Custom")}
+          </span>
+        </label>
+        <button
+          type="button"
+          onMouseDown={e => e.preventDefault()}
+          onClick={() => {
+            onSelect("");
+            onClose();
+          }}
+          className="text-xs text-txt-secondary hover:text-txt-primary px-2 py-1 hover:bg-subtle rounded-md transition-colors"
+        >
+          {__("Remove")}
+        </button>
+      </div>
     </div>
   );
 }
@@ -309,13 +334,13 @@ function ToolbarRow1({ editor, __: t }: { editor: Editor; __: (s: string) => str
           </Ico>
         </ToolbarButton>
         <ToolbarButton onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()} active={editor.isActive("heading", { level: 1 })} title={t("Heading 1")}>
-          <span className="text-[10px] font-bold leading-none">H1</span>
+          <span className="text-xs font-bold leading-none">H1</span>
         </ToolbarButton>
         <ToolbarButton onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} active={editor.isActive("heading", { level: 2 })} title={t("Heading 2")}>
-          <span className="text-[10px] font-bold leading-none">H2</span>
+          <span className="text-xs font-bold leading-none">H2</span>
         </ToolbarButton>
         <ToolbarButton onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()} active={editor.isActive("heading", { level: 3 })} title={t("Heading 3")}>
-          <span className="text-[10px] font-bold leading-none">H3</span>
+          <span className="text-xs font-bold leading-none">H3</span>
         </ToolbarButton>
       </ToolbarGroup>
 
@@ -487,12 +512,25 @@ function ToolbarRow2({
             }}
             title={t("Text color")}
           >
-            <Ico>
-              <path d="M4 20h16" />
-              <path d="m8.5 6 3.5 10" />
-              <path d="M12 16l3.5-10" />
-              <path d="M6 16h12" />
-            </Ico>
+            <div className="flex flex-col items-center gap-0.5">
+              <svg
+                width={14}
+                height={14}
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M6 20h12" />
+                <path d="M12 4 6.5 16h2.1L10 13h4l1.4 3h2.1z" />
+              </svg>
+              <div
+                className="h-1 w-4 rounded-sm"
+                style={{ backgroundColor: String(editor.getAttributes("textStyle").color || "currentColor") }}
+              />
+            </div>
           </ToolbarButton>
           {showColorPicker && (
             <ColorPicker
@@ -518,10 +556,20 @@ function ToolbarRow2({
             active={editor.isActive("highlight")}
             title={t("Highlight")}
           >
-            <Ico>
-              <path d="m9 11-6 6v3h9l3-3" />
-              <path d="m22 12-4.6 4.6a2 2 0 0 1-2.8 0l-5.2-5.2a2 2 0 0 1 0-2.8L14 4" />
-            </Ico>
+            <svg
+              width={16}
+              height={16}
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="m19 4-8.8 8.8a1 1 0 0 0-.2.4L9 17l3.8-1a1 1 0 0 0 .4-.2L22 7" />
+              <path d="m19 4 2 2-1.5 1.5" />
+              <rect x="2" y="20" width="20" height="3" rx="1" fill="#fef08a" stroke="none" />
+            </svg>
           </ToolbarButton>
           {showHighlightPicker && (
             <HighlightColorPicker
@@ -635,16 +683,16 @@ function ToolbarRow2({
         {editor.isActive("table") && (
           <>
             <ToolbarButton onClick={() => editor.chain().focus().addColumnAfter().run()} title={t("Add column")}>
-              <span className="text-[9px] font-bold leading-none">+Col</span>
+              <span className="text-[10px] font-bold leading-none">+Col</span>
             </ToolbarButton>
             <ToolbarButton onClick={() => editor.chain().focus().addRowAfter().run()} title={t("Add row")}>
-              <span className="text-[9px] font-bold leading-none">+Row</span>
+              <span className="text-[10px] font-bold leading-none">+Row</span>
             </ToolbarButton>
             <ToolbarButton onClick={() => editor.chain().focus().deleteColumn().run()} title={t("Delete column")}>
-              <span className="text-[9px] font-bold leading-none text-danger">-Col</span>
+              <span className="text-[10px] font-bold leading-none text-danger">-Col</span>
             </ToolbarButton>
             <ToolbarButton onClick={() => editor.chain().focus().deleteRow().run()} title={t("Delete row")}>
-              <span className="text-[9px] font-bold leading-none text-danger">-Row</span>
+              <span className="text-[10px] font-bold leading-none text-danger">-Row</span>
             </ToolbarButton>
             <ToolbarButton onClick={() => editor.chain().focus().deleteTable().run()} title={t("Delete table")}>
               <Ico>
