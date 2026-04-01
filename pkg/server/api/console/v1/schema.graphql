@@ -54,6 +54,14 @@ enum MeasureState
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.MeasureStateImplemented"
         )
+    UNKNOWN
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.MeasureStateUnknown"
+        )
+    NOT_IMPLEMENTED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.MeasureStateNotImplemented"
+        )
 }
 
 enum TaskState @goModel(model: "go.probo.inc/probo/pkg/coredata.TaskState") {

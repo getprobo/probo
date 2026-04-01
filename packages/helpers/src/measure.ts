@@ -19,6 +19,8 @@ export const measureStates = [
     "IN_PROGRESS",
     "NOT_APPLICABLE",
     "NOT_STARTED",
+    "UNKNOWN",
+    "NOT_IMPLEMENTED",
 ] as const;
 
 export function getMeasureStateLabel(__: Translator, state: string) {
@@ -31,6 +33,10 @@ export function getMeasureStateLabel(__: Translator, state: string) {
             return __("Not Applicable");
         case "NOT_STARTED":
             return __("Not Started");
+        case "UNKNOWN":
+            return __("Unknown");
+        case "NOT_IMPLEMENTED":
+            return __("Not Implemented");
         default:
             return __("Unknown");
     }

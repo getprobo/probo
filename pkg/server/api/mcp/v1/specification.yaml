@@ -1350,6 +1350,8 @@ components:
         - IN_PROGRESS
         - NOT_APPLICABLE
         - IMPLEMENTED
+        - UNKNOWN
+        - NOT_IMPLEMENTED
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.MeasureState
 
     MeasureOrderField:

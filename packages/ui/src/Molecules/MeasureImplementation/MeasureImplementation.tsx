@@ -31,6 +31,8 @@ const stateToColor: Record<MeasureState, string> = {
   IN_PROGRESS: "bg-border-warning",
   NOT_APPLICABLE: "bg-border-info",
   NOT_STARTED: "bg-highlight",
+  UNKNOWN: "bg-highlight",
+  NOT_IMPLEMENTED: "bg-border-danger",
 };
 
 export function MeasureImplementation({ measures, className }: Props) {

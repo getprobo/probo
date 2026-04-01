@@ -25,7 +25,7 @@ export default {
 
 type Story = StoryObj<typeof MeasureImplementation>;
 
-type MeasureState = "IMPLEMENTED" | "IN_PROGRESS" | "NOT_APPLICABLE" | "NOT_STARTED";
+type MeasureState = "IMPLEMENTED" | "IN_PROGRESS" | "NOT_APPLICABLE" | "NOT_STARTED" | "UNKNOWN" | "NOT_IMPLEMENTED";
 
 export const Default: Story = {
   args: {

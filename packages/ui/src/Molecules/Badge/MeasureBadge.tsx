@@ -31,6 +31,8 @@ const stateToVariant: Record<
   IN_PROGRESS: "info",
   NOT_APPLICABLE: "neutral",
   NOT_STARTED: "neutral",
+  UNKNOWN: "neutral",
+  NOT_IMPLEMENTED: "danger",
 };
 
 export function MeasureBadge({ state }: Props) {
