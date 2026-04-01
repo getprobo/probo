@@ -22,7 +22,6 @@ import (
 	"html/template"
 	"net/http"
 	"net/url"
-	"strings"
 	"time"
 
 	"go.gearno.de/kit/httpserver"
@@ -33,6 +32,7 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/iam/oauth2server"
+	"go.probo.inc/probo/pkg/iam/oauth2server/types"
 	"go.probo.inc/probo/pkg/securecookie"
 	"go.probo.inc/probo/pkg/server/api/authn"
 )
@@ -188,12 +188,9 @@ func (h *OAuth2Handler) AuthorizeHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	q := r.URL.Query()
-	redirectURI := q.Get("redirect_uri")
-	state := q.Get("state")
-
-	clientID, ok := h.requireQueryGID(w, r, "client_id")
-	if !ok {
+	var in types.AuthorizeInput
+	if err := in.DecodeQuery(r.URL.Query()); err != nil {
+		h.handleAuthorizeError(w, r, oauth2server.ErrInvalidRequest.WithDescription(err.Error()), "", "")
 		return
 	}
 
@@ -203,25 +200,19 @@ func (h *OAuth2Handler) AuthorizeHandler(w http.ResponseWriter, r *http.Request)
 		authTime = session.CreatedAt
 	}
 
-	scopes, err := parseScopes(q.Get("scope"))
-	if err != nil {
-		h.handleAuthorizeError(w, r, err, redirectURI, state)
-		return
-	}
-
 	code, err := h.iam.OAuth2ServerService.Authorize(
 		r.Context(),
-		&oauth2server.AuthorizeRequest{
+		&types.AuthorizeRequest{
 			IdentityID:          identity.ID,
 			SessionID:           session.ID,
-			ResponseType:        q.Get("response_type"),
-			ClientID:            clientID,
-			RedirectURI:         redirectURI,
-			Scopes:              scopes,
-			CodeChallenge:       q.Get("code_challenge"),
-			CodeChallengeMethod: coredata.OAuth2CodeChallengeMethod(q.Get("code_challenge_method")),
-			Nonce:               q.Get("nonce"),
-			State:               state,
+			ResponseType:        in.ResponseType,
+			ClientID:            in.ClientID,
+			RedirectURI:         in.RedirectURI,
+			Scopes:              in.Scopes,
+			CodeChallenge:       in.CodeChallenge,
+			CodeChallengeMethod: in.CodeChallengeMethod,
+			Nonce:               in.Nonce,
+			State:               in.State,
 			AuthTime:            authTime,
 		},
 	)
@@ -237,11 +228,11 @@ func (h *OAuth2Handler) AuthorizeHandler(w http.ResponseWriter, r *http.Request)
 	}
 
 	if err != nil {
-		h.handleAuthorizeError(w, r, err, redirectURI, state)
+		h.handleAuthorizeError(w, r, err, in.RedirectURI, in.State)
 		return
 	}
 
-	redirectWithCode(w, r, redirectURI, code, state)
+	redirectWithCode(w, r, in.RedirectURI, code, in.State)
 }
 
 // AuthorizeConsentHandler handles consent form submission.
@@ -253,8 +244,9 @@ func (h *OAuth2Handler) AuthorizeConsentHandler(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	consentID, ok := h.requireFormGID(w, r, "consent_id")
-	if !ok {
+	var in types.AuthorizeConsentInput
+	if err := in.DecodeForm(r.Form); err != nil {
+		h.writeOAuth2Error(w, r, oauth2server.ErrInvalidRequest.WithDescription(err.Error()))
 		return
 	}
 
@@ -266,10 +258,10 @@ func (h *OAuth2Handler) AuthorizeConsentHandler(w http.ResponseWriter, r *http.R
 
 	code, redirectURI, state, err := h.iam.OAuth2ServerService.ApproveConsent(
 		r.Context(),
-		&oauth2server.ConsentApprovalRequest{
-			ConsentID:  consentID,
+		&types.ConsentApprovalRequest{
+			ConsentID:  in.ConsentID,
 			IdentityID: identity.ID,
-			Approved:   r.FormValue("action") != "deny",
+			Approved:   in.Action != "deny",
 			AuthTime:   authTime,
 		},
 	)
@@ -311,31 +303,19 @@ func (h *OAuth2Handler) IntrospectHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	token := r.FormValue("token")
-	if token == "" {
-		h.writeOAuth2Error(w, r, oauth2server.ErrInvalidRequest.WithDescription("missing token parameter"))
+	var in types.IntrospectInput
+	if err := in.DecodeForm(r.Form); err != nil {
+		h.writeOAuth2Error(w, r, oauth2server.ErrInvalidRequest.WithDescription(err.Error()))
 		return
 	}
 
-	result, err := h.iam.OAuth2ServerService.IntrospectToken(r.Context(), client.ID, token)
+	result, err := h.iam.OAuth2ServerService.IntrospectToken(r.Context(), client.ID, in.Token)
 	if err != nil {
-		httpserver.RenderJSON(w, http.StatusOK, map[string]any{"active": false})
+		httpserver.RenderJSON(w, http.StatusOK, types.InactiveIntrospectResponse())
 		return
 	}
 
-	httpserver.RenderJSON(
-		w,
-		http.StatusOK,
-		map[string]any{
-			"active":     true,
-			"scope":      result.Scopes,
-			"client_id":  result.ClientID,
-			"sub":        result.IdentityID,
-			"exp":        result.ExpiresAt.Unix(),
-			"iat":        result.CreatedAt.Unix(),
-			"token_type": "Bearer",
-		},
-	)
+	httpserver.RenderJSON(w, http.StatusOK, types.ActiveIntrospectResponse(result))
 }
 
 // RevokeHandler handles token revocation (RFC 7009).
@@ -348,13 +328,15 @@ func (h *OAuth2Handler) RevokeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token := r.FormValue("token")
-	if token == "" {
+	var in types.RevokeInput
+	_ = in.DecodeForm(r.Form)
+
+	if in.Token == "" {
 		w.WriteHeader(http.StatusOK)
 		return
 	}
 
-	h.iam.OAuth2ServerService.RevokeToken(r.Context(), client.ID, token)
+	h.iam.OAuth2ServerService.RevokeToken(r.Context(), client.ID, in.Token)
 
 	// Always return 200 per RFC 7009.
 	w.WriteHeader(http.StatusOK)
@@ -367,23 +349,16 @@ func (h *OAuth2Handler) DeviceAuthHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	clientID, ok := h.requireFormGID(w, r, "client_id")
-	if !ok {
+	var in types.DeviceAuthInput
+	if err := in.DecodeForm(r.Form); err != nil {
+		h.writeOAuth2Error(w, r, oauth2server.ErrInvalidRequest.WithDescription(err.Error()))
 		return
-	}
-
-	var scopes coredata.OAuth2Scopes
-	if scopeStr := r.FormValue("scope"); scopeStr != "" {
-		if err := scopes.UnmarshalText([]byte(scopeStr)); err != nil {
-			h.writeOAuth2Error(w, r, oauth2server.ErrInvalidRequest.WithDescription("invalid scope"))
-			return
-		}
 	}
 
 	result, err := h.iam.OAuth2ServerService.CreateDeviceCode(
 		r.Context(),
-		clientID,
-		scopes,
+		in.ClientID,
+		in.Scopes,
 	)
 	if err != nil {
 		h.writeOAuth2Error(w, r, err)
@@ -395,13 +370,13 @@ func (h *OAuth2Handler) DeviceAuthHandler(w http.ResponseWriter, r *http.Request
 		WithQuery("user_code", string(result.UserCode)).
 		MustString()
 
-	httpserver.RenderJSON(w, http.StatusOK, map[string]any{
-		"device_code":               result.DeviceCode,
-		"user_code":                 result.UserCode.Format(),
-		"verification_uri":          verificationURI,
-		"verification_uri_complete": verificationURIComplete,
-		"expires_in":                result.ExpiresIn,
-		"interval":                  result.Interval,
+	httpserver.RenderJSON(w, http.StatusOK, &types.DeviceAuthResponse{
+		DeviceCode:              result.DeviceCode,
+		UserCode:                result.UserCode.Format(),
+		VerificationURI:         verificationURI,
+		VerificationURIComplete: verificationURIComplete,
+		ExpiresIn:               result.ExpiresIn,
+		Interval:                result.Interval,
 	})
 }
 
@@ -410,37 +385,45 @@ func (h *OAuth2Handler) DeviceAuthHandler(w http.ResponseWriter, r *http.Request
 func (h *OAuth2Handler) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	identity := authn.IdentityFromContext(r.Context())
 
-	var req oauth2server.RegisterClientRequest
-
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	var in types.RegisterInput
+	if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
 		h.writeOAuth2Error(w, r, oauth2server.ErrInvalidRequest.WithDescription("invalid JSON body"))
 		return
 	}
 
-	req.IdentityID = identity.ID
-
-	clientID, clientSecret, err := h.iam.OAuth2ServerService.RegisterClient(r.Context(), &req)
+	clientID, clientSecret, err := h.iam.OAuth2ServerService.RegisterClient(
+		r.Context(),
+		&types.RegisterClientRequest{
+			IdentityID:              identity.ID,
+			OrganizationID:          in.OrganizationID,
+			ClientName:              in.ClientName,
+			Visibility:              in.Visibility,
+			RedirectURIs:            in.RedirectURIs,
+			GrantTypes:              in.GrantTypes,
+			ResponseTypes:           in.ResponseTypes,
+			TokenEndpointAuthMethod: in.TokenEndpointAuthMethod,
+			LogoURI:                 in.LogoURI,
+			ClientURI:               in.ClientURI,
+			Contacts:                in.Contacts,
+			Scopes:                  in.Scopes,
+		},
+	)
 	if err != nil {
 		h.writeOAuth2Error(w, r, err)
 		return
 	}
 
-	resp := map[string]any{
-		"client_id":                  clientID.String(),
-		"client_name":                req.ClientName,
-		"visibility":                 req.Visibility,
-		"redirect_uris":              req.RedirectURIs,
-		"grant_types":                req.GrantTypes,
-		"response_types":             req.ResponseTypes,
-		"token_endpoint_auth_method": req.TokenEndpointAuthMethod,
-		"scopes":                     req.Scopes,
-	}
-
-	if clientSecret != "" {
-		resp["client_secret"] = clientSecret
-	}
-
-	httpserver.RenderJSON(w, http.StatusCreated, resp)
+	httpserver.RenderJSON(w, http.StatusCreated, &types.RegisterResponse{
+		ClientID:                clientID.String(),
+		ClientSecret:            clientSecret,
+		ClientName:              in.ClientName,
+		Visibility:              in.Visibility,
+		RedirectURIs:            in.RedirectURIs,
+		GrantTypes:              in.GrantTypes,
+		ResponseTypes:           in.ResponseTypes,
+		TokenEndpointAuthMethod: in.TokenEndpointAuthMethod,
+		Scopes:                  in.Scopes,
+	})
 }
 
 // UserInfoHandler serves the OIDC UserInfo endpoint.
@@ -482,11 +465,14 @@ func (h *OAuth2Handler) DeviceVerifyPage(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	var in types.DeviceVerifyInput
+	_ = in.DecodeQuery(r.URL.Query())
+
 	w.Header().Set("Content-Type", "text/html;charset=UTF-8")
 	_ = deviceVerifyTmpl.Execute(w, struct {
 		UserCode string
 	}{
-		UserCode: r.URL.Query().Get("user_code"),
+		UserCode: in.UserCode,
 	})
 }
 
@@ -500,10 +486,10 @@ func (h *OAuth2Handler) DeviceVerifySubmit(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	userCode := strings.ReplaceAll(r.FormValue("user_code"), "-", "")
-	userCode = strings.ToUpper(strings.TrimSpace(userCode))
+	var in types.DeviceVerifySubmitInput
+	_ = in.DecodeForm(r.Form)
 
-	if err := h.iam.OAuth2ServerService.AuthorizeDevice(r.Context(), identity.ID, userCode); err != nil {
+	if err := h.iam.OAuth2ServerService.AuthorizeDevice(r.Context(), identity.ID, in.UserCode); err != nil {
 		h.logger.ErrorCtx(r.Context(), "cannot authorize device", log.Error(err))
 		w.Header().Set("Content-Type", "text/html;charset=UTF-8")
 		_ = deviceVerifyFailedTmpl.Execute(w, nil)
@@ -552,21 +538,18 @@ func (h *OAuth2Handler) handleAuthorizationCodeGrant(w http.ResponseWriter, r *h
 		return
 	}
 
-	code := r.FormValue("code")
-	redirectURI := r.FormValue("redirect_uri")
-	codeVerifier := r.FormValue("code_verifier")
-
-	if code == "" {
-		h.writeOAuth2Error(w, r, oauth2server.ErrInvalidGrant.WithDescription("missing code"))
+	var in types.AuthorizationCodeGrantInput
+	if err := in.DecodeForm(r.Form); err != nil {
+		h.writeOAuth2Error(w, r, oauth2server.ErrInvalidGrant.WithDescription(err.Error()))
 		return
 	}
 
 	tokenResponse, err := h.iam.OAuth2ServerService.ExchangeAuthorizationCode(
 		r.Context(),
 		client,
-		code,
-		redirectURI,
-		codeVerifier,
+		in.Code,
+		in.RedirectURI,
+		in.CodeVerifier,
 	)
 	if err != nil {
 		h.writeOAuth2Error(w, r, oauth2server.ErrInvalidGrant.WithDescription("invalid or expired code"))
@@ -583,13 +566,13 @@ func (h *OAuth2Handler) handleRefreshTokenGrant(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	refreshTokenValue := r.FormValue("refresh_token")
-	if refreshTokenValue == "" {
-		h.writeOAuth2Error(w, r, oauth2server.ErrInvalidGrant.WithDescription("missing refresh_token"))
+	var in types.RefreshTokenGrantInput
+	if err := in.DecodeForm(r.Form); err != nil {
+		h.writeOAuth2Error(w, r, oauth2server.ErrInvalidGrant.WithDescription(err.Error()))
 		return
 	}
 
-	tokenResponse, err := h.iam.OAuth2ServerService.RefreshToken(r.Context(), client, refreshTokenValue)
+	tokenResponse, err := h.iam.OAuth2ServerService.RefreshToken(r.Context(), client, in.RefreshToken)
 	if err != nil {
 		h.writeOAuth2Error(w, r, oauth2server.ErrInvalidGrant.WithDescription("invalid or expired refresh token"))
 		return
@@ -599,21 +582,16 @@ func (h *OAuth2Handler) handleRefreshTokenGrant(w http.ResponseWriter, r *http.R
 }
 
 func (h *OAuth2Handler) handleDeviceCodeGrant(w http.ResponseWriter, r *http.Request) {
-	clientID, ok := h.requireFormGID(w, r, "client_id")
-	if !ok {
-		return
-	}
-
-	deviceCodeValue := r.FormValue("device_code")
-	if deviceCodeValue == "" {
-		h.writeOAuth2Error(w, r, oauth2server.ErrInvalidRequest.WithDescription("missing device_code"))
+	var in types.DeviceCodeGrantInput
+	if err := in.DecodeForm(r.Form); err != nil {
+		h.writeOAuth2Error(w, r, oauth2server.ErrInvalidRequest.WithDescription(err.Error()))
 		return
 	}
 
 	tokenResponse, err := h.iam.OAuth2ServerService.PollDeviceCode(
 		r.Context(),
-		clientID,
-		deviceCodeValue,
+		in.ClientID,
+		in.DeviceCode,
 	)
 	if err != nil {
 		h.writeOAuth2Error(w, r, err)
@@ -653,18 +631,10 @@ func redirectWithCode(w http.ResponseWriter, r *http.Request, redirectURI, code,
 	http.Redirect(w, r, u.String(), http.StatusFound)
 }
 
-func writeTokenResponse(w http.ResponseWriter, resp *oauth2server.TokenResponse) {
+func writeTokenResponse(w http.ResponseWriter, resp *types.TokenResponse) {
 	w.Header().Set("Cache-Control", "no-store")
 	w.Header().Set("Pragma", "no-cache")
 	httpserver.RenderJSON(w, http.StatusOK, resp)
-}
-
-func parseScopes(s string) (coredata.OAuth2Scopes, error) {
-	var scopes coredata.OAuth2Scopes
-	if err := scopes.UnmarshalText([]byte(s)); err != nil {
-		return nil, oauth2server.ErrInvalidScope.WithDescription(err.Error())
-	}
-	return scopes, nil
 }
 
 // parseForm parses the request form and writes an OAuth2 error on failure.
@@ -675,42 +645,4 @@ func (h *OAuth2Handler) parseForm(w http.ResponseWriter, r *http.Request) bool {
 		return false
 	}
 	return true
-}
-
-// requireFormGID extracts a form parameter, parses it as a GID, and writes an
-// OAuth2 error if the value is missing or malformed. Returns the parsed GID
-// and true on success.
-func (h *OAuth2Handler) requireFormGID(w http.ResponseWriter, r *http.Request, param string) (gid.GID, bool) {
-	v := r.FormValue(param)
-	if v == "" {
-		h.writeOAuth2Error(w, r, oauth2server.ErrInvalidRequest.WithDescription("missing "+param))
-		return gid.GID{}, false
-	}
-
-	id, err := gid.ParseGID(v)
-	if err != nil {
-		h.writeOAuth2Error(w, r, oauth2server.ErrInvalidRequest.WithDescription("invalid "+param))
-		return gid.GID{}, false
-	}
-
-	return id, true
-}
-
-// requireQueryGID extracts a query parameter, parses it as a GID, and writes
-// an OAuth2 error if the value is missing or malformed. Returns the parsed GID
-// and true on success.
-func (h *OAuth2Handler) requireQueryGID(w http.ResponseWriter, r *http.Request, param string) (gid.GID, bool) {
-	v := r.URL.Query().Get(param)
-	if v == "" {
-		h.writeOAuth2Error(w, r, oauth2server.ErrInvalidRequest.WithDescription("missing "+param))
-		return gid.GID{}, false
-	}
-
-	id, err := gid.ParseGID(v)
-	if err != nil {
-		h.writeOAuth2Error(w, r, oauth2server.ErrInvalidRequest.WithDescription("invalid "+param))
-		return gid.GID{}, false
-	}
-
-	return id, true
 }

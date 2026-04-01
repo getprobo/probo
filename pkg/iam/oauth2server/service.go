@@ -31,6 +31,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/jose"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/iam/oauth2server/types"
 )
 
 type (
@@ -47,64 +48,6 @@ type (
 	}
 
 	Option func(*Service)
-
-	// AuthorizeRequest contains the parsed parameters for an authorization request.
-	AuthorizeRequest struct {
-		IdentityID          gid.GID
-		SessionID           gid.GID
-		ResponseType        string
-		ClientID            gid.GID
-		RedirectURI         string
-		Scopes              coredata.OAuth2Scopes
-		CodeChallenge       string
-		CodeChallengeMethod coredata.OAuth2CodeChallengeMethod
-		Nonce               string
-		State               string
-		AuthTime            time.Time
-	}
-
-	// IntrospectionResult is returned by IntrospectToken on success.
-	IntrospectionResult struct {
-		Scopes     coredata.OAuth2Scopes
-		ClientID   gid.GID
-		IdentityID gid.GID
-		ExpiresAt  time.Time
-		CreatedAt  time.Time
-	}
-
-	// ConsentApprovalRequest contains the parameters for consent approval.
-	ConsentApprovalRequest struct {
-		ConsentID  gid.GID
-		IdentityID gid.GID
-		Approved   bool
-		AuthTime   time.Time
-	}
-
-	// RegisterClientRequest contains the parameters for dynamic client registration.
-	RegisterClientRequest struct {
-		IdentityID              gid.GID  `json:"-"`
-		OrganizationID          string   `json:"organization_id"`
-		ClientName              string   `json:"client_name"`
-		Visibility              string   `json:"visibility"`
-		RedirectURIs            []string `json:"redirect_uris"`
-		GrantTypes              []string `json:"grant_types"`
-		ResponseTypes           []string `json:"response_types"`
-		TokenEndpointAuthMethod string   `json:"token_endpoint_auth_method"`
-		LogoURI                 *string  `json:"logo_uri"`
-		ClientURI               *string  `json:"client_uri"`
-		Contacts                []string `json:"contacts"`
-		Scopes                  []string `json:"scopes"`
-	}
-
-	// TokenResponse is the JSON response returned by the token endpoint.
-	TokenResponse struct {
-		AccessToken  string `json:"access_token"`
-		TokenType    string `json:"token_type"`
-		ExpiresIn    int64  `json:"expires_in"`
-		RefreshToken string `json:"refresh_token,omitempty"`
-		IDToken      string `json:"id_token,omitempty"`
-		Scope        string `json:"scope,omitempty"`
-	}
 )
 
 func WithAccessTokenDuration(d time.Duration) Option {
@@ -326,7 +269,7 @@ func (s *Service) ExchangeAuthorizationCode(
 	codeValue string,
 	redirectURI string,
 	codeVerifier string,
-) (*TokenResponse, error) {
+) (*types.TokenResponse, error) {
 	var (
 		codeHash          = hashTokenHex(codeValue)
 		codeScopes        coredata.OAuth2Scopes
@@ -435,7 +378,7 @@ func (s *Service) ExchangeAuthorizationCode(
 		return nil, err
 	}
 
-	resp := &TokenResponse{
+	resp := &types.TokenResponse{
 		AccessToken:  accessTokenValue,
 		TokenType:    "Bearer",
 		ExpiresIn:    int64(time.Until(accessToken.ExpiresAt).Seconds()),
@@ -473,7 +416,7 @@ func (s *Service) RefreshToken(
 	ctx context.Context,
 	client *coredata.OAuth2Client,
 	refreshTokenValue string,
-) (*TokenResponse, error) {
+) (*types.TokenResponse, error) {
 	// Generate new token values before the transaction so that token
 	// creation and old-token revocation happen atomically.
 	accessTokenValue, err := generateRandomToken(32)
@@ -573,7 +516,7 @@ func (s *Service) RefreshToken(
 		return nil, err
 	}
 
-	resp := &TokenResponse{
+	resp := &types.TokenResponse{
 		AccessToken:  accessTokenValue,
 		TokenType:    "Bearer",
 		ExpiresIn:    int64(time.Until(accessToken.ExpiresAt).Seconds()),
@@ -604,21 +547,13 @@ func (s *Service) RefreshToken(
 	return resp, nil
 }
 
-// DeviceCodeResult contains the result of a device authorization request.
-type DeviceCodeResult struct {
-	DeviceCode string
-	UserCode   coredata.OAuth2UserCode
-	ExpiresIn  int
-	Interval   int
-}
-
 // CreateDeviceCode validates the client, requested scopes, and creates a new
 // device authorization request.
 func (s *Service) CreateDeviceCode(
 	ctx context.Context,
 	clientID gid.GID,
 	scopes coredata.OAuth2Scopes,
-) (*DeviceCodeResult, error) {
+) (*types.DeviceCodeResult, error) {
 	client, err := s.GetClientByID(ctx, clientID)
 	if err != nil {
 		return nil, ErrInvalidRequest.WithDescription("unknown client_id")
@@ -675,7 +610,7 @@ func (s *Service) CreateDeviceCode(
 		return nil, ErrServerError.WithDescription(err.Error())
 	}
 
-	return &DeviceCodeResult{
+	return &types.DeviceCodeResult{
 		DeviceCode: deviceCodeValue,
 		UserCode:   userCode,
 		ExpiresIn:  600,
@@ -690,7 +625,7 @@ func (s *Service) PollDeviceCode(
 	ctx context.Context,
 	clientID gid.GID,
 	deviceCodeValue string,
-) (*TokenResponse, error) {
+) (*types.TokenResponse, error) {
 	hashedValue := hashToken(deviceCodeValue)
 
 	var dc coredata.OAuth2DeviceCode
@@ -755,7 +690,7 @@ func (s *Service) PollDeviceCode(
 		return nil, ErrServerError.WithDescription("cannot create access token")
 	}
 
-	resp := &TokenResponse{
+	resp := &types.TokenResponse{
 		AccessToken: accessTokenValue,
 		TokenType:   "Bearer",
 		ExpiresIn:   int64(time.Until(accessToken.ExpiresAt).Seconds()),
@@ -835,7 +770,7 @@ func (s *Service) AuthorizeDevice(
 // Returns (clientID, plaintext_secret, error). Secret is empty for public clients.
 func (s *Service) RegisterClient(
 	ctx context.Context,
-	req *RegisterClientRequest,
+	req *types.RegisterClientRequest,
 ) (gid.GID, string, error) {
 	orgID, err := gid.ParseGID(req.OrganizationID)
 	if err != nil {
@@ -973,7 +908,7 @@ func (s *Service) LoadAccessToken(ctx context.Context, tokenValue string) (*core
 
 // IntrospectToken loads an access token by its plaintext value and validates
 // that it belongs to the given client and has not expired.
-func (s *Service) IntrospectToken(ctx context.Context, clientID gid.GID, tokenValue string) (*IntrospectionResult, error) {
+func (s *Service) IntrospectToken(ctx context.Context, clientID gid.GID, tokenValue string) (*types.IntrospectionResult, error) {
 	hashedValue := hashToken(tokenValue)
 	var token coredata.OAuth2AccessToken
 
@@ -992,7 +927,7 @@ func (s *Service) IntrospectToken(ctx context.Context, clientID gid.GID, tokenVa
 		return nil, fmt.Errorf("cannot introspect token: expired")
 	}
 
-	return &IntrospectionResult{
+	return &types.IntrospectionResult{
 		Scopes:     token.Scopes,
 		ClientID:   token.ClientID,
 		IdentityID: token.IdentityID,
@@ -1081,7 +1016,7 @@ func (s *Service) RevokeToken(ctx context.Context, clientID gid.GID, tokenValue 
 // issues an authorization code or returns a ConsentRequiredError.
 func (s *Service) Authorize(
 	ctx context.Context,
-	req *AuthorizeRequest,
+	req *types.AuthorizeRequest,
 ) (string, error) {
 	client, err := s.GetClientByID(ctx, req.ClientID)
 	if err != nil {
@@ -1195,7 +1130,7 @@ func (s *Service) Authorize(
 // Returns (code, redirect_uri, state, error).
 func (s *Service) ApproveConsent(
 	ctx context.Context,
-	req *ConsentApprovalRequest,
+	req *types.ConsentApprovalRequest,
 ) (string, string, string, error) {
 	var consent coredata.OAuth2Consent
 	if err := s.pg.WithConn(ctx, func(conn pg.Conn) error {
