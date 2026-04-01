@@ -318,9 +318,9 @@ func (c *htmlBlockConverter) convertPre(n *html.Node) ([]Node, error) {
 
 func codeLanguageFromClass(class string) *string {
 	const prefix = "language-"
-	for _, part := range strings.Fields(class) {
-		if strings.HasPrefix(part, prefix) {
-			lang := strings.TrimPrefix(part, prefix)
+	for part := range strings.FieldsSeq(class) {
+		if after, ok := strings.CutPrefix(part, prefix); ok {
+			lang := after
 			if lang != "" {
 				return &lang
 			}

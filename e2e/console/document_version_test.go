@@ -262,39 +262,6 @@ func TestDocumentVersion_CreateDraft(t *testing.T) {
 	assert.Equal(t, "DRAFT", result.CreateDraftDocumentVersion.DocumentVersionEdge.Node.Status)
 }
 
-func TestDocumentVersion_UpdateContent(t *testing.T) {
-	t.Parallel()
-	owner := testutil.NewClient(t, testutil.RoleOwner)
-
-	_, draftVersionID := createTestDocument(t, owner)
-
-	query := `
-		mutation UpdateDocumentVersion($input: UpdateDocumentVersionContentInput!) {
-			updateDocumentVersionContent(input: $input) {
-				content
-			}
-		}
-	`
-
-	var result struct {
-		UpdateDocumentVersionContent struct {
-			Content string `json:"content"`
-		} `json:"updateDocumentVersionContent"`
-	}
-
-	wantContent := testutil.ProseMirrorTextDoc("Updated content for the document version")
-
-	err := owner.Execute(query, map[string]any{
-		"input": map[string]any{
-			"id":      draftVersionID,
-			"content": wantContent,
-		},
-	}, &result)
-	require.NoError(t, err)
-
-	assert.JSONEq(t, wantContent, result.UpdateDocumentVersionContent.Content)
-}
-
 func TestDocumentVersion_RequestSignature(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)

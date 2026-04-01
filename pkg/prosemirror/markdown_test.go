@@ -571,14 +571,14 @@ func TestParseMarkdown_InlineRawHTML(t *testing.T) {
 	p := doc.Content[0]
 	require.Equal(t, NodeParagraph, p.Type)
 
-	var joined string
+	var joined strings.Builder
 	for _, ch := range p.Content {
 		require.Equal(t, NodeText, ch.Type)
 		require.NotNil(t, ch.Text)
-		joined += *ch.Text
+		joined.WriteString(*ch.Text)
 	}
 	// Sanitized HTML: span is unwrapped to plain text content.
-	assert.Equal(t, "before x after", joined)
+	assert.Equal(t, "before x after", joined.String())
 }
 
 func TestParseMarkdown_InlineRawHTMLStrong(t *testing.T) {
@@ -603,16 +603,16 @@ func TestParseMarkdown_InlineRawHTMLScriptStripped(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, doc.Content, 1)
 	p := doc.Content[0]
-	var joined string
+	var joined strings.Builder
 	for _, ch := range p.Content {
 		if ch.Type == NodeText && ch.Text != nil {
-			joined += *ch.Text
+			joined.WriteString(*ch.Text)
 		}
 	}
-	assert.NotContains(t, joined, "script")
-	assert.NotContains(t, joined, "evil")
-	assert.Contains(t, joined, "hi")
-	assert.Contains(t, joined, "there")
+	assert.NotContains(t, joined.String(), "script")
+	assert.NotContains(t, joined.String(), "evil")
+	assert.Contains(t, joined.String(), "hi")
+	assert.Contains(t, joined.String(), "there")
 }
 
 func TestParseMarkdown_InlineRawHTMLWithOuterBold(t *testing.T) {
@@ -624,13 +624,13 @@ func TestParseMarkdown_InlineRawHTMLWithOuterBold(t *testing.T) {
 	p := doc.Content[0]
 	require.GreaterOrEqual(t, len(p.Content), 3)
 
-	var joined string
+	var joined strings.Builder
 	for _, ch := range p.Content {
 		require.Equal(t, NodeText, ch.Type)
 		require.NotNil(t, ch.Text)
-		joined += *ch.Text
+		joined.WriteString(*ch.Text)
 	}
-	assert.Equal(t, "a b c", joined)
+	assert.Equal(t, "a b c", joined.String())
 
 	var mid *Node
 	for i := range p.Content {
