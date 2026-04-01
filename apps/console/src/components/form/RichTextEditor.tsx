@@ -751,7 +751,12 @@ export function RichTextEditor({ value, onChange, placeholder }: Props) {
       subscript,
       link.configure({
         openOnClick: false,
-        HTMLAttributes: { class: "text-primary underline cursor-pointer" },
+        autolink: true,
+        HTMLAttributes: {
+          class: "text-primary underline cursor-pointer",
+          target: "_blank",
+          rel: "noopener noreferrer",
+        },
       }),
       TextStyle,
       color,
@@ -780,7 +785,11 @@ export function RichTextEditor({ value, onChange, placeholder }: Props) {
 
   const handleLinkSubmit = useCallback((url: string) => {
     if (!editor) return;
-    editor.chain().focus().extendMarkRange("link").setLink({ href: url }).run();
+    let href = url.trim();
+    if (href && !/^https?:\/\//i.test(href)) {
+      href = `https://${href}`;
+    }
+    editor.chain().focus().extendMarkRange("link").setLink({ href }).run();
   }, [editor]);
 
   const handleImageSubmit = useCallback((url: string) => {
