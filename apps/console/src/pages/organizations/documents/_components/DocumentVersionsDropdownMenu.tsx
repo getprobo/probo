@@ -24,7 +24,7 @@ export const documentVersionsDropdownMenuQuery = graphql`
     document: node(id: $documentId) {
       __typename
       ... on Document {
-        versions(first: 20) {
+        versions(first: 20) @connection(key: "DocumentversionsDropdownMenu_versions") {
           edges {
             node {
               id

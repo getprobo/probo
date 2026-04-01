@@ -21,6 +21,7 @@ import { useNavigate, useParams } from "react-router";
 import { ConnectionHandler, graphql } from "relay-runtime";
 
 import type { DocumentActionsDropdown_archiveMutation } from "#/__generated__/core/DocumentActionsDropdown_archiveMutation.graphql";
+import type { DocumentActionsDropdown_createDraftMutation } from "#/__generated__/core/DocumentActionsDropdown_createDraftMutation.graphql";
 import type { DocumentActionsDropdown_documentFragment$key } from "#/__generated__/core/DocumentActionsDropdown_documentFragment.graphql";
 import type { DocumentActionsDropdown_unarchiveMutation } from "#/__generated__/core/DocumentActionsDropdown_unarchiveMutation.graphql";
 import type { DocumentActionsDropdown_versionFragment$key } from "#/__generated__/core/DocumentActionsDropdown_versionFragment.graphql";
@@ -30,8 +31,6 @@ import { DocumentsConnectionKey, useDeleteDocumentMutation, useDeleteDraftDocume
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { CurrentUser } from "#/providers/CurrentUser";
-
-import UpdateVersionDialog from "./UpdateVersionDialog";
 
 const documentFragment = graphql`
   fragment DocumentActionsDropdown_documentFragment on Document {
@@ -43,10 +42,37 @@ const documentFragment = graphql`
     canUnarchive: permission(action: "core:document:unarchive")
     canDelete: permission(action: "core:document:delete")
     versions(first: 20) {
-      __id
       totalCount
     }
-    ...UpdateVersionDialogFragment
+  }
+`;
+
+const createDraftDocumentVersionMutation = graphql`
+  mutation DocumentActionsDropdown_createDraftMutation(
+    $input: CreateDraftDocumentVersionInput!
+    $connections: [ID!]!
+  ) {
+    createDraftDocumentVersion(input: $input) {
+      documentVersionEdge @prependEdge(connections: $connections) {
+        node {
+          id
+          content
+          status
+          publishedAt
+          major
+          minor
+          updatedAt
+          signatures(first: 100) {
+            edges {
+              node {
+                id
+                state
+              }
+            }
+          }
+        }
+      }
+    }
   }
 `;
 
@@ -118,7 +144,6 @@ export function DocumentActionsDropdownn(props: {
   const { versionId } = useParams();
   const { __ } = useTranslate();
   const { email: defaultEmail } = use(CurrentUser);
-  const updateDialogRef = useRef<{ open: () => void }>(null);
   const pdfDownloadDialogRef = useRef<PdfDownloadDialogRef>(null);
   const confirm = useConfirm();
   const { toast } = useToast();
@@ -128,6 +153,8 @@ export function DocumentActionsDropdownn(props: {
 
   const isDraft = version.status === "DRAFT";
 
+  const [createDraftDocumentVersion, isCreatingDraft]
+    = useMutation<DocumentActionsDropdown_createDraftMutation>(createDraftDocumentVersionMutation);
   const [deleteDocument, isDeleting] = useDeleteDocumentMutation();
   const [archiveDocument, isArchiving]
     = useMutation<DocumentActionsDropdown_archiveMutation>(archiveDocumentMutation);
@@ -143,6 +170,38 @@ export function DocumentActionsDropdownn(props: {
         errorMessage: __("Failed to generate PDF"),
       },
     );
+
+  const handleCreateDraft = () => {
+    const connectionId = ConnectionHandler.getConnectionID(document.id, "DocumentversionsDropdownMenu_versions");
+    createDraftDocumentVersion({
+      variables: {
+        input: {
+          documentID: document.id,
+        },
+        connections: [connectionId],
+      },
+      onCompleted: (response, errors) => {
+        if (errors) {
+          toast({
+            variant: "error",
+            title: __("Error creating draft"),
+            description:
+                  errors[0]?.message || __("An unknown error occurred"),
+          });
+          return;
+        }
+
+        const newVersionId
+          = response.createDraftDocumentVersion.documentVersionEdge.node.id;
+
+        void navigate(`/organizations/${organizationId}/documents/${document.id}/versions/${newVersionId}`);
+      },
+      onError(error) {
+        console.log(error);
+        toast({ title: __("Error"), description: error.message, variant: "error" });
+      },
+    });
+  };
 
   const handleArchive = () => {
     confirm(
@@ -220,16 +279,13 @@ export function DocumentActionsDropdownn(props: {
   };
 
   const handleDeleteDraft = () => {
-    const versionsConnectionId = ConnectionHandler.getConnectionID(
-      document.id,
-      "DocumentLayout_versions",
-    );
+    const connectionId = ConnectionHandler.getConnectionID(document.id, "DocumentversionsDropdownMenu_versions");
     confirm(
       () =>
         deleteDraftDocumentVersion({
           variables: {
             input: { documentVersionId: version.id },
-            connections: [document.versions.__id, versionsConnectionId],
+            connections: [connectionId],
           },
           onSuccess() {
             if (versionId) {
@@ -285,10 +341,6 @@ export function DocumentActionsDropdownn(props: {
 
   return (
     <>
-      <UpdateVersionDialog
-        ref={updateDialogRef}
-        fKey={document}
-      />
       <PdfDownloadDialog
         ref={pdfDownloadDialogRef}
         onDownload={options => void handleExportDocumentVersion(options)}
@@ -296,12 +348,13 @@ export function DocumentActionsDropdownn(props: {
         defaultEmail={defaultEmail}
       />
       <ActionDropdown variant="secondary">
-        {document.canUpdate && (
+        {document.canUpdate && !isDraft && (
           <DropdownItem
-            onClick={() => updateDialogRef.current?.open()}
+            onClick={handleCreateDraft}
             icon={IconPencil}
+            disabled={isCreatingDraft}
           >
-            {isDraft ? __("Edit draft document") : __("Create new draft")}
+            {__("Create new draft")}
           </DropdownItem>
         )}
         {isDraft
