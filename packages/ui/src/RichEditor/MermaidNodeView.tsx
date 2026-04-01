@@ -95,7 +95,7 @@ function MermaidBlock({ node }: { node: ReactNodeViewProps["node"] }) {
 
   return (
     <NodeViewWrapper>
-      <div className="mermaid-block">
+      <div className={`mermaid-block ${mode === "code" ? "editing" : ""}`}>
         <div className="mermaid-toolbar">
           <button
             type="button"

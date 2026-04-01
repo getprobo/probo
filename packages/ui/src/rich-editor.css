@@ -97,7 +97,16 @@
     }
 
     .mermaid-block {
-        @apply my-4 border border-border-mid rounded-lg overflow-hidden;
+        @apply my-4 rounded-lg relative
+               border border-transparent transition-colors;
+
+        &:hover, &.editing {
+            @apply border-border-mid;
+        }
+
+        &:not(.editing) {
+            caret-color: transparent;
+        }
 
         pre {
             @apply my-0 rounded-none border-none;
@@ -105,7 +114,11 @@
     }
 
     .mermaid-toolbar {
-        @apply flex gap-1 px-2 py-1.5 bg-subtle border-b border-border-mid;
+        @apply flex gap-1 p-1.5 absolute top-0 right-0 z-10 opacity-0 pointer-events-none transition-opacity;
+
+        .mermaid-block:hover &, .mermaid-block.editing & {
+            @apply opacity-100 pointer-events-auto;
+        }
     }
 
     .mermaid-toolbar-btn {
