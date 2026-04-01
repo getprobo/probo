@@ -11,7 +11,8 @@ import {
   PropertyRow,
   useDialogRef,
 } from "@probo/ui";
-import { type ReactNode, useCallback } from "react";
+import { clsx } from "clsx";
+import { type ReactNode, useCallback, useState } from "react";
 import { graphql } from "relay-runtime";
 import type { z } from "zod";
 
@@ -23,6 +24,8 @@ import { RichTextEditor } from "#/components/form/RichTextEditor";
 import { documentSchema, useDocumentForm } from "#/hooks/forms/useDocumentForm";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
+
+import { type DocumentTemplate, documentTemplates } from "./templates";
 
 type Props = {
   trigger?: ReactNode;
@@ -57,10 +60,13 @@ const createDocumentMutation = graphql`
 export function CreateDocumentDialog({ trigger, connection }: Props) {
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
+  const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
+  const [editorKey, setEditorKey] = useState(0);
 
-  const { control, handleSubmit, register, formState, reset, setValue }
+  const { control, handleSubmit, register, formState, reset, setValue, watch }
     = useDocumentForm();
   const errors = formState.errors ?? {};
+  const contentValue = watch("content");
   const [createDocument, isLoading]
     = useMutationWithToasts<CreateDocumentDialogMutation>(createDocumentMutation);
 
@@ -70,6 +76,21 @@ export function CreateDocumentDialog({ trigger, connection }: Props) {
     },
     [setValue],
   );
+
+  const applyTemplate = (template: DocumentTemplate) => {
+    setValue("title", template.title);
+    setValue("content", template.content, { shouldValidate: true });
+    setValue("documentType", template.documentType);
+    setValue("classification", template.classification);
+    setSelectedTemplate(template.id);
+    setEditorKey(k => k + 1);
+  };
+
+  const clearTemplate = () => {
+    reset();
+    setSelectedTemplate(null);
+    setEditorKey(k => k + 1);
+  };
 
   const onSubmit = async (data: z.infer<typeof documentSchema>) => {
     await createDocument({
@@ -85,6 +106,8 @@ export function CreateDocumentDialog({ trigger, connection }: Props) {
       onSuccess: () => {
         dialogRef.current?.close();
         reset();
+        setSelectedTemplate(null);
+        setEditorKey(k => k + 1);
       },
     });
   };
@@ -97,6 +120,11 @@ export function CreateDocumentDialog({ trigger, connection }: Props) {
       trigger={trigger}
       title={<Breadcrumb items={[__("Documents"), __("New Document")]} />}
       className="w-[85vw]! max-w-[85vw]! h-[85vh]!"
+      onClose={() => {
+        reset();
+        setSelectedTemplate(null);
+        setEditorKey(k => k + 1);
+      }}
     >
       <form
         onSubmit={e => void handleSubmit(onSubmit)(e)}
@@ -116,13 +144,51 @@ export function CreateDocumentDialog({ trigger, connection }: Props) {
             </div>
             <div className="flex-1 overflow-hidden">
               <RichTextEditor
+                key={editorKey}
+                value={contentValue}
                 onChange={onContentChange}
                 placeholder={__("Add content")}
               />
             </div>
           </div>
-          {/* Properties form */}
+          {/* Properties & templates sidebar */}
           <div className="py-5 px-6 bg-subtle overflow-y-auto">
+            <Label>{__("Template")}</Label>
+            <div className="flex flex-wrap gap-1.5 mt-2 mb-5">
+              <button
+                type="button"
+                onClick={clearTemplate}
+                className={clsx(
+                  "flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs font-medium transition-all cursor-pointer",
+                  selectedTemplate === null
+                    ? "border-primary bg-primary/5 text-primary ring-1 ring-primary/20"
+                    : "border-border-low bg-level-1 text-txt-secondary hover:border-txt-tertiary hover:text-txt-primary",
+                )}
+              >
+                {__("Blank")}
+              </button>
+              {documentTemplates.map((template) => {
+                const Icon = template.icon;
+                const isActive = selectedTemplate === template.id;
+                return (
+                  <button
+                    key={template.id}
+                    type="button"
+                    onClick={() => applyTemplate(template)}
+                    className={clsx(
+                      "flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs font-medium transition-all cursor-pointer",
+                      isActive
+                        ? "border-primary bg-primary/5 text-primary ring-1 ring-primary/20"
+                        : "border-border-low bg-level-1 text-txt-secondary hover:border-txt-tertiary hover:text-txt-primary",
+                    )}
+                  >
+                    <Icon size={12} />
+                    {__(template.name)}
+                  </button>
+                );
+              })}
+            </div>
+
             <Label>{__("Properties")}</Label>
             <PropertyRow label={__("Status")}>
               <Badge variant="neutral" size="md">
