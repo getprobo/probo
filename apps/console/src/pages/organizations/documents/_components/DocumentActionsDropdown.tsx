@@ -41,8 +41,14 @@ const documentFragment = graphql`
     canArchive: permission(action: "core:document:archive")
     canUnarchive: permission(action: "core:document:unarchive")
     canDelete: permission(action: "core:document:delete")
-    versions(first: 20) {
+    versions(first: 1 orderBy: { field: CREATED_AT, direction: DESC }) {
       totalCount
+      edges {
+        node {
+          id
+          status
+        }
+      }
     }
   }
 `;
@@ -151,6 +157,8 @@ export function DocumentActionsDropdownn(props: {
   const document = useFragment<DocumentActionsDropdown_documentFragment$key>(documentFragment, documentFragmentRef);
   const version = useFragment<DocumentActionsDropdown_versionFragment$key>(versionFragment, versionFragmentRef);
 
+  const lastVersion = document.versions.edges[0].node;
+  const hasDraft = lastVersion.status === "DRAFT";
   const isDraft = version.status === "DRAFT";
 
   const [createDraftDocumentVersion, isCreatingDraft]
@@ -279,13 +287,18 @@ export function DocumentActionsDropdownn(props: {
   };
 
   const handleDeleteDraft = () => {
-    const connectionId = ConnectionHandler.getConnectionID(document.id, "DocumentversionsDropdownMenu_versions");
+    const versionsConnectionId = ConnectionHandler.getConnectionID(document.id, "DocumentversionsDropdownMenu_versions");
+    const lastVersionConnectionId = ConnectionHandler.getConnectionID(
+      document.id,
+      "DocumentversionsDropdownMenu_lastVersion",
+      { orderBy: { field: "CREATED_AT", direction: "DESC" } },
+    );
     confirm(
       () =>
         deleteDraftDocumentVersion({
           variables: {
             input: { documentVersionId: version.id },
-            connections: [connectionId],
+            connections: [versionsConnectionId, lastVersionConnectionId],
           },
           onSuccess() {
             if (versionId) {
@@ -348,7 +361,7 @@ export function DocumentActionsDropdownn(props: {
         defaultEmail={defaultEmail}
       />
       <ActionDropdown variant="secondary">
-        {document.canUpdate && !isDraft && (
+        {document.canUpdate && !hasDraft && (
           <DropdownItem
             onClick={handleCreateDraft}
             icon={IconPencil}

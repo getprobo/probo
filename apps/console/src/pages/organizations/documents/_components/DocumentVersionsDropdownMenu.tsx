@@ -33,7 +33,9 @@ export const documentVersionsDropdownMenuQuery = graphql`
           }
         }
         # We use this on /documents/:documentId
-        lastVersion: versions(first: 1 orderBy: { field: CREATED_AT, direction: DESC }) @skip(if: $versionSpecified) {
+        lastVersion: versions(first: 1 orderBy: { field: CREATED_AT, direction: DESC })
+        @skip(if: $versionSpecified)
+        @connection(key: "DocumentversionsDropdownMenu_lastVersion" filters: ["orderBy"]) {
           edges {
             node {
               id
