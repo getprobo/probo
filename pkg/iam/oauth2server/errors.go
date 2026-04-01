@@ -22,11 +22,36 @@ import (
 // OAuth2Error represents an OAuth2 protocol error with an associated
 // error code per RFC 6749 §5.2 and RFC 8628 §3.5.
 type OAuth2Error struct {
-	code string
+	code        string
+	description string
 }
 
-func (e *OAuth2Error) Error() string     { return e.code }
-func (e *OAuth2Error) ErrorCode() string { return e.code }
+func (e *OAuth2Error) Error() string {
+	if e.description != "" {
+		return e.code + ": " + e.description
+	}
+	return e.code
+}
+
+func (e *OAuth2Error) ErrorCode() string   { return e.code }
+func (e *OAuth2Error) Description() string { return e.description }
+
+func (e *OAuth2Error) Is(target error) bool {
+	t, ok := target.(*OAuth2Error)
+	if !ok {
+		return false
+	}
+	return e.code == t.code
+}
+
+// WithDescription returns a new OAuth2Error with the same error code
+// and the given human-readable description.
+func (e *OAuth2Error) WithDescription(description string) *OAuth2Error {
+	return &OAuth2Error{
+		code:        e.code,
+		description: description,
+	}
+}
 
 var (
 	// OAuth2 error codes per RFC 6749 §5.2 and RFC 8628 §3.5.

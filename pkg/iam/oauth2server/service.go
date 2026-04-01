@@ -621,16 +621,16 @@ func (s *Service) CreateDeviceCode(
 ) (*DeviceCodeResult, error) {
 	client, err := s.GetClientByID(ctx, clientID)
 	if err != nil {
-		return nil, fmt.Errorf("%w: unknown client_id", ErrInvalidRequest)
+		return nil, ErrInvalidRequest.WithDescription("unknown client_id")
 	}
 
 	if !slices.Contains(client.GrantTypes, coredata.OAuth2GrantTypeDeviceCode) {
-		return nil, fmt.Errorf("%w: client not authorized for device flow", ErrUnauthorizedClient)
+		return nil, ErrUnauthorizedClient.WithDescription("client not authorized for device flow")
 	}
 
 	requestedScopes := scopes.OrDefault(client.Scopes)
 	if !validateScopes(requestedScopes, client.Scopes) {
-		return nil, fmt.Errorf("%w: requested scope exceeds client registration", ErrInvalidScope)
+		return nil, ErrInvalidScope.WithDescription("requested scope exceeds client registration")
 	}
 
 	deviceCodeValue, err := generateRandomToken(32)
@@ -672,7 +672,7 @@ func (s *Service) CreateDeviceCode(
 		return fmt.Errorf("cannot generate unique user code after 3 attempts")
 	})
 	if err != nil {
-		return nil, fmt.Errorf("%w: %v", ErrServerError, err)
+		return nil, ErrServerError.WithDescription(err.Error())
 	}
 
 	return &DeviceCodeResult{
@@ -726,7 +726,7 @@ func (s *Service) PollDeviceCode(
 		if errors.Is(err, ErrSlowDown) {
 			return nil, ErrSlowDown
 		}
-		return nil, fmt.Errorf("%w: invalid device code", ErrInvalidGrant)
+		return nil, ErrInvalidGrant.WithDescription("invalid device code")
 	}
 
 	if time.Now().After(dc.ExpiresAt) {
@@ -741,18 +741,18 @@ func (s *Service) PollDeviceCode(
 	case coredata.OAuth2DeviceCodeStatusAuthorized:
 		// Continue to issue tokens.
 	default:
-		return nil, fmt.Errorf("%w: invalid device code status", ErrInvalidGrant)
+		return nil, ErrInvalidGrant.WithDescription("invalid device code status")
 	}
 
 	if dc.IdentityID == nil {
-		return nil, fmt.Errorf("%w: device code authorized but no identity", ErrServerError)
+		return nil, ErrServerError.WithDescription("device code authorized but no identity")
 	}
 
 	identityID := *dc.IdentityID
 
 	accessTokenValue, accessToken, err := s.CreateAccessToken(ctx, clientID, identityID, dc.Scopes)
 	if err != nil {
-		return nil, fmt.Errorf("%w: cannot create access token", ErrServerError)
+		return nil, ErrServerError.WithDescription("cannot create access token")
 	}
 
 	resp := &TokenResponse{
@@ -777,7 +777,7 @@ func (s *Service) PollDeviceCode(
 		sk := s.signingKey()
 		idToken, signErr := jose.SignJWT(sk.PrivateKey, sk.KID, claims)
 		if signErr != nil {
-			return nil, fmt.Errorf("%w: cannot sign id token", ErrServerError)
+			return nil, ErrServerError.WithDescription("cannot sign id token")
 		}
 		resp.IDToken = idToken
 	}
@@ -839,7 +839,7 @@ func (s *Service) RegisterClient(
 ) (gid.GID, string, error) {
 	orgID, err := gid.ParseGID(req.OrganizationID)
 	if err != nil {
-		return gid.GID{}, "", fmt.Errorf("%w: invalid organization_id", ErrInvalidRequest)
+		return gid.GID{}, "", ErrInvalidRequest.WithDescription("invalid organization_id")
 	}
 
 	// Check org membership.
@@ -853,7 +853,7 @@ func (s *Service) RegisterClient(
 		)
 	})
 	if err != nil {
-		return gid.GID{}, "", fmt.Errorf("%w: not a member of the organization", ErrAccessDenied)
+		return gid.GID{}, "", ErrAccessDenied.WithDescription("not a member of the organization")
 	}
 
 	// Apply defaults.
@@ -1085,11 +1085,11 @@ func (s *Service) Authorize(
 ) (string, error) {
 	client, err := s.GetClientByID(ctx, req.ClientID)
 	if err != nil {
-		return "", fmt.Errorf("cannot load client: %w", ErrInvalidClient)
+		return "", ErrInvalidClient.WithDescription("cannot load client")
 	}
 
 	if !client.IsRedirectURIValid(req.RedirectURI) {
-		return "", fmt.Errorf("%w", ErrInvalidRedirectURI)
+		return "", ErrInvalidRedirectURI
 	}
 
 	if client.Visibility == coredata.OAuth2ClientVisibilityPrivate {
@@ -1103,41 +1103,26 @@ func (s *Service) Authorize(
 			)
 		})
 		if err != nil {
-			return "", fmt.Errorf(
-				"%w: client is private and user is not a member of the organization",
-				ErrUnauthorizedClient,
-			)
+			return "", ErrUnauthorizedClient.WithDescription("client is private and user is not a member of the organization")
 		}
 	}
 
 	if req.ResponseType != string(coredata.OAuth2ResponseTypeCode) {
-		return "", fmt.Errorf(
-			"%w: unsupported response_type",
-			ErrInvalidRequest,
-		)
+		return "", ErrInvalidRequest.WithDescription("unsupported response_type")
 	}
 
 	requestedScopes := req.Scopes.OrDefault(client.Scopes)
 	if !validateScopes(requestedScopes, client.Scopes) {
-		return "", fmt.Errorf(
-			"%w: requested scope exceeds client registration",
-			ErrInvalidScope,
-		)
+		return "", ErrInvalidScope.WithDescription("requested scope exceeds client registration")
 	}
 
 	codeChallengeMethod := req.CodeChallengeMethod
 	if client.TokenEndpointAuthMethod == coredata.OAuth2ClientTokenEndpointAuthMethodNone && req.CodeChallenge == "" {
-		return "", fmt.Errorf(
-			"%w: code_challenge required for public clients",
-			ErrInvalidRequest,
-		)
+		return "", ErrInvalidRequest.WithDescription("code_challenge required for public clients")
 	}
 
 	if codeChallengeMethod != "" && codeChallengeMethod != coredata.OAuth2CodeChallengeMethodS256 {
-		return "", fmt.Errorf(
-			"%w: only S256 code_challenge_method is supported",
-			ErrInvalidRequest,
-		)
+		return "", ErrInvalidRequest.WithDescription("only S256 code_challenge_method is supported")
 	}
 
 	if req.CodeChallenge != "" && codeChallengeMethod == "" {
@@ -1168,7 +1153,7 @@ func (s *Service) Authorize(
 			req.AuthTime,
 		)
 		if err != nil {
-			return "", fmt.Errorf("%w: %v", ErrServerError, err)
+			return "", ErrServerError.WithDescription(err.Error())
 		}
 
 		return code, nil
@@ -1195,7 +1180,7 @@ func (s *Service) Authorize(
 	if err := s.pg.WithConn(ctx, func(conn pg.Conn) error {
 		return pendingConsent.Insert(ctx, conn)
 	}); err != nil {
-		return "", fmt.Errorf("%w: cannot create pending consent", ErrServerError)
+		return "", ErrServerError.WithDescription("cannot create pending consent")
 	}
 
 	return "", &ConsentRequiredError{
@@ -1216,24 +1201,24 @@ func (s *Service) ApproveConsent(
 	if err := s.pg.WithConn(ctx, func(conn pg.Conn) error {
 		return consent.LoadByID(ctx, conn, req.ConsentID)
 	}); err != nil {
-		return "", "", "", fmt.Errorf("%w: consent not found", ErrInvalidRequest)
+		return "", "", "", ErrInvalidRequest.WithDescription("consent not found")
 	}
 
 	if consent.IdentityID != req.IdentityID {
-		return "", "", "", fmt.Errorf("%w: consent does not belong to this identity", ErrAccessDenied)
+		return "", "", "", ErrAccessDenied.WithDescription("consent does not belong to this identity")
 	}
 
 	if consent.Approved {
-		return "", "", "", fmt.Errorf("%w: consent already processed", ErrInvalidRequest)
+		return "", "", "", ErrInvalidRequest.WithDescription("consent already processed")
 	}
 
 	client, err := s.GetClientByID(ctx, consent.ClientID)
 	if err != nil {
-		return "", "", "", fmt.Errorf("cannot load client: %w", ErrInvalidClient)
+		return "", "", "", ErrInvalidClient.WithDescription("cannot load client")
 	}
 
 	if !client.IsRedirectURIValid(consent.RedirectURI) {
-		return "", "", "", fmt.Errorf("%w", ErrInvalidRedirectURI)
+		return "", "", "", ErrInvalidRedirectURI
 	}
 
 	if !req.Approved {
@@ -1241,7 +1226,7 @@ func (s *Service) ApproveConsent(
 		_ = s.pg.WithConn(ctx, func(conn pg.Conn) error {
 			return consent.Delete(ctx, conn)
 		})
-		return "", consent.RedirectURI, consent.State, fmt.Errorf("%w: user denied the request", ErrAccessDenied)
+		return "", consent.RedirectURI, consent.State, ErrAccessDenied.WithDescription("user denied the request")
 	}
 
 	// Mark consent as approved.
@@ -1250,7 +1235,7 @@ func (s *Service) ApproveConsent(
 	if err := s.pg.WithConn(ctx, func(conn pg.Conn) error {
 		return consent.Update(ctx, conn)
 	}); err != nil {
-		return "", consent.RedirectURI, consent.State, fmt.Errorf("%w: cannot approve consent", ErrServerError)
+		return "", consent.RedirectURI, consent.State, ErrServerError.WithDescription("cannot approve consent")
 	}
 
 	code, err := s.issueAuthorizationCode(
@@ -1280,7 +1265,7 @@ func (s *Service) AuthenticateClient(
 ) (*coredata.OAuth2Client, error) {
 	client, err := s.GetClientByID(ctx, clientID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot load client: %w", ErrInvalidClient)
+		return nil, ErrInvalidClient.WithDescription("cannot load client")
 	}
 
 	if client.TokenEndpointAuthMethod == coredata.OAuth2ClientTokenEndpointAuthMethodNone {
@@ -1288,11 +1273,11 @@ func (s *Service) AuthenticateClient(
 	}
 
 	if clientSecret == "" {
-		return nil, fmt.Errorf("missing client_secret: %w", ErrInvalidClient)
+		return nil, ErrInvalidClient.WithDescription("missing client_secret")
 	}
 
 	if !verifyClientSecret(client.ClientSecretHash, clientSecret) {
-		return nil, fmt.Errorf("invalid client_secret: %w", ErrInvalidClient)
+		return nil, ErrInvalidClient.WithDescription("invalid client_secret")
 	}
 
 	return client, nil

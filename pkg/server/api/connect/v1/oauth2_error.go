@@ -18,7 +18,6 @@ import (
 	"errors"
 	"net/http"
 	"net/url"
-	"strings"
 
 	"go.gearno.de/kit/httpserver"
 	"go.probo.inc/probo/pkg/iam/oauth2server"
@@ -40,18 +39,14 @@ func writeOAuth2Error(w http.ResponseWriter, r *http.Request, err error) {
 		return
 	}
 
-	code := oauthErr.ErrorCode()
-	description := oauth2ErrorDescription(err, code)
-	statusCode := oauth2ErrorStatusCode(oauthErr)
-
 	w.Header().Set("Cache-Control", "no-store")
 	w.Header().Set("Pragma", "no-cache")
-	httpserver.RenderJSON(w, statusCode, &struct {
+	httpserver.RenderJSON(w, oauth2ErrorStatusCode(oauthErr), &struct {
 		Code        string `json:"error"`
 		Description string `json:"error_description,omitempty"`
 	}{
-		Code:        code,
-		Description: description,
+		Code:        oauthErr.ErrorCode(),
+		Description: oauthErr.Description(),
 	})
 }
 
@@ -77,21 +72,6 @@ func oauth2ErrorStatusCode(err *oauth2server.OAuth2Error) int {
 	}
 }
 
-func oauth2ErrorDescription(err error, code string) string {
-	msg := err.Error()
-
-	if msg == code {
-		return ""
-	}
-
-	prefix := code + ": "
-	if strings.HasPrefix(msg, prefix) {
-		return msg[len(prefix):]
-	}
-
-	return msg
-}
-
 func redirectWithError(w http.ResponseWriter, r *http.Request, redirectURI, state string, err error) {
 	u, parseErr := url.Parse(redirectURI)
 	if parseErr != nil {
@@ -105,13 +85,10 @@ func redirectWithError(w http.ResponseWriter, r *http.Request, redirectURI, stat
 		return
 	}
 
-	code := oauthErr.ErrorCode()
-	description := oauth2ErrorDescription(err, code)
-
 	q := u.Query()
-	q.Set("error", code)
-	if description != "" {
-		q.Set("error_description", description)
+	q.Set("error", oauthErr.ErrorCode())
+	if desc := oauthErr.Description(); desc != "" {
+		q.Set("error_description", desc)
 	}
 	if state != "" {
 		q.Set("state", state)
