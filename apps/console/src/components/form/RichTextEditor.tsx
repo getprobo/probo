@@ -46,6 +46,7 @@ function ToolbarButton({
     <button
       type="button"
       title={title}
+      onMouseDown={e => e.preventDefault()}
       onClick={onClick}
       disabled={disabled}
       className={clsx(
@@ -193,6 +194,7 @@ function ColorPicker({
             key={c.value || "default"}
             type="button"
             title={c.label}
+            onMouseDown={e => e.preventDefault()}
             onClick={() => {
               onSelect(c.value);
               onClose();
@@ -244,6 +246,7 @@ function HighlightColorPicker({
             key={c.value}
             type="button"
             title={c.label}
+            onMouseDown={e => e.preventDefault()}
             onClick={() => {
               onSelect(c.value);
               onClose();
@@ -256,6 +259,7 @@ function HighlightColorPicker({
       </div>
       <button
         type="button"
+        onMouseDown={e => e.preventDefault()}
         onClick={() => {
           onSelect("");
           onClose();
@@ -743,11 +747,11 @@ export function RichTextEditor({ value, onChange, placeholder }: Props) {
   return (
     <div className="flex flex-col h-full">
       {/* Toolbar */}
-      <div className="relative shrink-0 border-b border-b-border-low bg-level-2/50">
+      <div className="relative shrink-0 border-b border-b-border-low bg-level-2/50 overflow-visible">
         <div className="px-3 py-1.5 border-b border-b-border-low/50">
           <ToolbarRow1 editor={editor} __={__} />
         </div>
-        <div className="px-3 py-1.5">
+        <div className="relative px-3 py-1.5 overflow-visible">
           <ToolbarRow2
             editor={editor}
             __={__}
