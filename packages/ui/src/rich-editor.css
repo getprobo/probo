@@ -95,4 +95,42 @@
     .tableWrapper {
         @apply relative overflow-x-auto my-4;
     }
+
+    .mermaid-block {
+        @apply my-4 border border-border-mid rounded-lg overflow-hidden;
+
+        pre {
+            @apply my-0 rounded-none border-none;
+        }
+    }
+
+    .mermaid-toolbar {
+        @apply flex gap-1 px-2 py-1.5 bg-subtle border-b border-border-mid;
+    }
+
+    .mermaid-toolbar-btn {
+        @apply flex items-center gap-1 px-2 py-1 text-xs font-medium rounded
+               text-txt-secondary cursor-pointer
+               hover:bg-border-solid transition-colors;
+
+        &.active {
+            @apply bg-border-solid text-txt-primary;
+        }
+    }
+
+    .mermaid-preview {
+        @apply flex justify-center p-6 min-h-24;
+
+        svg {
+            @apply max-w-full h-auto;
+        }
+    }
+
+    .mermaid-error {
+        @apply p-4 text-sm font-mono text-txt-danger;
+    }
+
+    .mermaid-empty {
+        @apply p-4 text-sm text-txt-tertiary text-center;
+    }
 }

@@ -31,7 +31,7 @@
     "@tiptap/starter-kit": "^3.20.2",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
-    "mermaid": "^11.13.0",
+    "mermaid": "^11.14.0",
     "react-dropzone": "^14.3.8",
     "react-intersection-observer": "^9.16.0",
     "react-markdown": "^10.1.0",

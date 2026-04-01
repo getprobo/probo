@@ -100,6 +100,18 @@ func TestRenderHTML_CodeBlockWithLanguage(t *testing.T) {
 	assert.Equal(t, `<pre><code class="language-go">fmt.Println()</code></pre>`, got)
 }
 
+func TestRenderHTML_CodeBlockMermaid(t *testing.T) {
+	t.Parallel()
+
+	raw := `{"type":"codeBlock","attrs":{"language":"mermaid"},"content":[{"type":"text","text":"graph TD\n  A-->B"}]}`
+	var n Node
+	require.NoError(t, json.Unmarshal([]byte(raw), &n))
+
+	got, err := RenderHTML(n)
+	require.NoError(t, err)
+	assert.Equal(t, "<pre class=\"mermaid\">graph TD\n  A--&gt;B</pre>", got)
+}
+
 func TestRenderHTML_CodeBlockWithoutLanguage(t *testing.T) {
 	t.Parallel()
 

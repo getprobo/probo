@@ -10,7 +10,20 @@ import {
   useFloating,
 } from "@floating-ui/react";
 import type { Icon } from "@phosphor-icons/react";
-import { CodeBlockIcon, GridFourIcon, ListBulletsIcon, ListNumbersIcon, MinusIcon, QuotesIcon, TextHFourIcon, TextHOneIcon, TextHThreeIcon, TextHTwoIcon, TextTIcon } from "@phosphor-icons/react";
+import {
+  CodeBlockIcon,
+  GridFourIcon,
+  ListBulletsIcon,
+  ListNumbersIcon,
+  MinusIcon,
+  QuotesIcon,
+  TextHFourIcon,
+  TextHOneIcon,
+  TextHThreeIcon,
+  TextHTwoIcon,
+  TextTIcon,
+  TreeStructureIcon,
+} from "@phosphor-icons/react";
 import { type Editor } from "@tiptap/react";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
@@ -40,6 +53,7 @@ const BLOCK_ITEMS: BlockItem[] = [
   { label: "Ordered List", icon: ListNumbersIcon, action: chain => chain.toggleOrderedList() },
   { label: "Code Block", icon: CodeBlockIcon, action: chain => chain.toggleCodeBlock() },
   { label: "Blockquote", icon: QuotesIcon, action: chain => chain.toggleBlockquote() },
+  { label: "Mermaid Diagram", icon: TreeStructureIcon, action: chain => chain.setCodeBlock({ language: "mermaid" }) },
   { label: "Divider", icon: MinusIcon, action: chain => chain.setHorizontalRule() },
   { label: "Table", icon: GridFourIcon, action: chain => chain.insertTable() },
 ];

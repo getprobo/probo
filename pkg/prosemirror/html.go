@@ -71,15 +71,23 @@ func renderNode(buf *bytes.Buffer, n Node) error {
 		if err != nil {
 			return fmt.Errorf("cannot render code block node: %w", err)
 		}
-		buf.WriteString("<pre><code")
-		if attrs.Language != nil {
-			writeAttr(buf, "class", "language-"+*attrs.Language)
+		if attrs.Language != nil && *attrs.Language == "mermaid" {
+			buf.WriteString(`<pre class="mermaid">`)
+			if err := renderChildren(buf, n.Content); err != nil {
+				return err
+			}
+			buf.WriteString("</pre>")
+		} else {
+			buf.WriteString("<pre><code")
+			if attrs.Language != nil {
+				writeAttr(buf, "class", "language-"+*attrs.Language)
+			}
+			buf.WriteByte('>')
+			if err := renderChildren(buf, n.Content); err != nil {
+				return err
+			}
+			buf.WriteString("</code></pre>")
 		}
-		buf.WriteByte('>')
-		if err := renderChildren(buf, n.Content); err != nil {
-			return err
-		}
-		buf.WriteString("</code></pre>")
 	case NodeHorizontalRule:
 		buf.WriteString("<hr>")
 	case NodeHardBreak:

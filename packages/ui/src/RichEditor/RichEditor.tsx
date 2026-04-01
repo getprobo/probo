@@ -5,7 +5,6 @@
 import { Blockquote } from "@tiptap/extension-blockquote";
 import { Bold } from "@tiptap/extension-bold";
 import { Code } from "@tiptap/extension-code";
-import { CodeBlock } from "@tiptap/extension-code-block";
 import { Document } from "@tiptap/extension-document";
 import { HardBreak } from "@tiptap/extension-hard-break";
 import { Heading } from "@tiptap/extension-heading";
@@ -25,6 +24,7 @@ import { tv } from "tailwind-variants";
 import { BlockMenu } from "./BlockMenu/BlockMenu";
 import { BubbleMenu } from "./BubbleMenu";
 import { LinkExtension } from "./LinkExtension";
+import { MermaidCodeBlock } from "./MermaidExtension";
 import { OptionsMenu } from "./OptionsMenu/OptionsMenu";
 import { PlaceholderExtension } from "./PlaceholderExtension";
 import { SlashCommandExtension } from "./SlashCommandExtension";
@@ -43,7 +43,7 @@ const extensions = [
   Strike,
   Underline,
   Code,
-  CodeBlock,
+  MermaidCodeBlock,
   LinkExtension,
   SlashCommandExtension,
   PlaceholderExtension,
