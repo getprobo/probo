@@ -19,7 +19,7 @@ import underline from "@tiptap/extension-underline";
 import { type Editor, EditorContent, useEditor } from "@tiptap/react";
 import starterKit from "@tiptap/starter-kit";
 import { clsx } from "clsx";
-import { useCallback, useState } from "react";
+import { type ReactNode, useCallback, useState } from "react";
 
 type Props = {
   value?: string;
@@ -40,7 +40,7 @@ function ToolbarButton({
   active?: boolean;
   disabled?: boolean;
   title: string;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   return (
     <button
@@ -65,7 +65,7 @@ function ToolbarSep() {
   return <div className="w-px h-5 bg-border-low/50 shrink-0" />;
 }
 
-function ToolbarGrp({ children }: { children: React.ReactNode }) {
+function ToolbarGrp({ children }: { children: ReactNode }) {
   return (
     <div className="flex items-center gap-px rounded-lg bg-level-1 shadow-sm ring-1 ring-border-low/40 p-0.5">
       {children}
@@ -75,7 +75,7 @@ function ToolbarGrp({ children }: { children: React.ReactNode }) {
 
 // ─── SVG icon helper ────────────────────────────────────────────────
 
-function Ico({ children, size = 16 }: { children: React.ReactNode; size?: number }) {
+function Ico({ children, size = 16 }: { children: ReactNode; size?: number }) {
   return (
     <svg
       width={size}
