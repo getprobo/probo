@@ -22,6 +22,7 @@ import (
 	"go.gearno.de/kit/httpserver"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/iam/oauth2server"
+	"go.probo.inc/probo/pkg/iam/oauth2server/types"
 )
 
 func (h *OAuth2Handler) handleAuthorizeError(w http.ResponseWriter, r *http.Request, err error, redirectURI, state string) {
@@ -46,10 +47,7 @@ func (h *OAuth2Handler) writeOAuth2Error(w http.ResponseWriter, r *http.Request,
 
 	w.Header().Set("Cache-Control", "no-store")
 	w.Header().Set("Pragma", "no-cache")
-	httpserver.RenderJSON(w, oauth2ErrorStatusCode(oauthErr), &struct {
-		Code        string `json:"error"`
-		Description string `json:"error_description,omitempty"`
-	}{
+	httpserver.RenderJSON(w, oauth2ErrorStatusCode(oauthErr), &types.ErrorResponse{
 		Code:        oauthErr.ErrorCode(),
 		Description: oauthErr.Description(),
 	})

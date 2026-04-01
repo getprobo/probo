@@ -381,4 +381,9 @@ type (
 		ExpiresIn  int
 		Interval   int
 	}
+
+	ErrorResponse struct {
+		Code        string `json:"error"`
+		Description string `json:"error_description,omitempty"`
+	}
 )
