@@ -95,6 +95,29 @@ func NewDeterministicToken[T any](secret string, tokenType string, expiresAt tim
 	return tokenString, nil
 }
 
+// DecodePayload decodes the token payload without verifying the signature.
+// This is useful when you need to inspect the payload to determine which
+// secret to use for full validation (e.g., extracting the provider from
+// an OAuth2 state token to look up the correct connector).
+func DecodePayload[T any](tokenString string) (*Payload[T], error) {
+	parts := strings.Split(tokenString, ".")
+	if len(parts) != 2 {
+		return nil, &ErrInvalidToken{message: "invalid token format"}
+	}
+
+	payloadBytes, err := base64.RawURLEncoding.DecodeString(parts[0])
+	if err != nil {
+		return nil, fmt.Errorf("cannot decode token payload: %w", err)
+	}
+
+	var payload Payload[T]
+	if err := json.Unmarshal(payloadBytes, &payload); err != nil {
+		return nil, fmt.Errorf("cannot unmarshal token payload: %w", err)
+	}
+
+	return &payload, nil
+}
+
 // ValidateToken validates a token and unmarshals the payload
 // It returns an error if the token is invalid or expired
 func ValidateToken[T any](secret string, tokenType string, tokenString string) (*Payload[T], error) {

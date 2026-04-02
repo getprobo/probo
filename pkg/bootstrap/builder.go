@@ -212,23 +212,129 @@ func (b *Builder) Build() (*probod.FullConfig, error) {
 	}
 
 	if slackClientID := b.getEnv("CONNECTOR_SLACK_CLIENT_ID"); slackClientID != "" {
-		cfg.Probod.Connectors = []probod.ConnectorConfig{
-			{
-				Provider: "SLACK",
-				Protocol: "oauth2",
-				RawConfig: probod.ConnectorConfigOAuth2{
-					ClientID:     slackClientID,
-					ClientSecret: b.getEnv("CONNECTOR_SLACK_CLIENT_SECRET"),
-					RedirectURI:  b.getEnv("CONNECTOR_SLACK_REDIRECT_URI"),
-					AuthURL:      b.getEnvOrDefault("CONNECTOR_SLACK_AUTH_URL", "https://slack.com/oauth/v2/authorize"),
-					TokenURL:     b.getEnvOrDefault("CONNECTOR_SLACK_TOKEN_URL", "https://slack.com/api/oauth.v2.access"),
-					Scopes:       []string{"chat:write", "channels:join", "incoming-webhook"},
-				},
-				RawSettings: map[string]any{
-					"signing-secret": b.getEnv("CONNECTOR_SLACK_SIGNING_SECRET"),
-				},
+		cfg.Probod.Connectors = append(cfg.Probod.Connectors, probod.ConnectorConfig{
+			Provider: "SLACK",
+			Protocol: "oauth2",
+			RawConfig: probod.ConnectorConfigOAuth2{
+				ClientID:     slackClientID,
+				ClientSecret: b.getEnv("CONNECTOR_SLACK_CLIENT_SECRET"),
+				RedirectURI:  b.getEnv("CONNECTOR_SLACK_REDIRECT_URI"),
+				AuthURL:      b.getEnvOrDefault("CONNECTOR_SLACK_AUTH_URL", "https://slack.com/oauth/v2/authorize"),
+				TokenURL:     b.getEnvOrDefault("CONNECTOR_SLACK_TOKEN_URL", "https://slack.com/api/oauth.v2.access"),
+				Scopes:       []string{"chat:write", "channels:join", "incoming-webhook"},
 			},
-		}
+			RawSettings: map[string]any{
+				"signing-secret": b.getEnv("CONNECTOR_SLACK_SIGNING_SECRET"),
+			},
+		})
+	}
+
+	if hubspotClientID := b.getEnv("CONNECTOR_HUBSPOT_CLIENT_ID"); hubspotClientID != "" {
+		cfg.Probod.Connectors = append(cfg.Probod.Connectors, probod.ConnectorConfig{
+			Provider: "HUBSPOT",
+			Protocol: "oauth2",
+			RawConfig: probod.ConnectorConfigOAuth2{
+				ClientID:     hubspotClientID,
+				ClientSecret: b.getEnv("CONNECTOR_HUBSPOT_CLIENT_SECRET"),
+				RedirectURI:  b.getEnv("CONNECTOR_HUBSPOT_REDIRECT_URI"),
+				AuthURL:      b.getEnvOrDefault("CONNECTOR_HUBSPOT_AUTH_URL", "https://app.hubspot.com/oauth/authorize"),
+				TokenURL:     b.getEnvOrDefault("CONNECTOR_HUBSPOT_TOKEN_URL", "https://api.hubapi.com/oauth/v1/token"),
+				Scopes:       []string{"settings.users.read"},
+			},
+		})
+	}
+
+	if docusignClientID := b.getEnv("CONNECTOR_DOCUSIGN_CLIENT_ID"); docusignClientID != "" {
+		cfg.Probod.Connectors = append(cfg.Probod.Connectors, probod.ConnectorConfig{
+			Provider: "DOCUSIGN",
+			Protocol: "oauth2",
+			RawConfig: probod.ConnectorConfigOAuth2{
+				ClientID:          docusignClientID,
+				ClientSecret:      b.getEnv("CONNECTOR_DOCUSIGN_CLIENT_SECRET"),
+				RedirectURI:       b.getEnv("CONNECTOR_DOCUSIGN_REDIRECT_URI"),
+				AuthURL:           b.getEnvOrDefault("CONNECTOR_DOCUSIGN_AUTH_URL", "https://account.docusign.com/oauth/auth"),
+				TokenURL:          b.getEnvOrDefault("CONNECTOR_DOCUSIGN_TOKEN_URL", "https://account.docusign.com/oauth/token"),
+				Scopes:            []string{"signature"},
+				TokenEndpointAuth: "basic-form",
+			},
+		})
+	}
+
+	if notionClientID := b.getEnv("CONNECTOR_NOTION_CLIENT_ID"); notionClientID != "" {
+		cfg.Probod.Connectors = append(cfg.Probod.Connectors, probod.ConnectorConfig{
+			Provider: "NOTION",
+			Protocol: "oauth2",
+			RawConfig: probod.ConnectorConfigOAuth2{
+				ClientID:     notionClientID,
+				ClientSecret: b.getEnv("CONNECTOR_NOTION_CLIENT_SECRET"),
+				RedirectURI:  b.getEnv("CONNECTOR_NOTION_REDIRECT_URI"),
+				AuthURL:      b.getEnvOrDefault("CONNECTOR_NOTION_AUTH_URL", "https://api.notion.com/v1/oauth/authorize"),
+				TokenURL:     b.getEnvOrDefault("CONNECTOR_NOTION_TOKEN_URL", "https://api.notion.com/v1/oauth/token"),
+				// Notion does not use scopes in OAuth URL; permissions are granted via page-picker UI during authorization.
+				ExtraAuthParams:   map[string]string{"owner": "user"},
+				TokenEndpointAuth: "basic-json",
+			},
+		})
+	}
+
+	if githubClientID := b.getEnv("CONNECTOR_GITHUB_CLIENT_ID"); githubClientID != "" {
+		cfg.Probod.Connectors = append(cfg.Probod.Connectors, probod.ConnectorConfig{
+			Provider: "GITHUB",
+			Protocol: "oauth2",
+			RawConfig: probod.ConnectorConfigOAuth2{
+				ClientID:     githubClientID,
+				ClientSecret: b.getEnv("CONNECTOR_GITHUB_CLIENT_SECRET"),
+				RedirectURI:  b.getEnv("CONNECTOR_GITHUB_REDIRECT_URI"),
+				AuthURL:      b.getEnvOrDefault("CONNECTOR_GITHUB_AUTH_URL", "https://github.com/login/oauth/authorize"),
+				TokenURL:     b.getEnvOrDefault("CONNECTOR_GITHUB_TOKEN_URL", "https://github.com/login/oauth/access_token"),
+				Scopes:       []string{"read:org"},
+			},
+		})
+	}
+
+	if sentryClientID := b.getEnv("CONNECTOR_SENTRY_CLIENT_ID"); sentryClientID != "" {
+		cfg.Probod.Connectors = append(cfg.Probod.Connectors, probod.ConnectorConfig{
+			Provider: "SENTRY",
+			Protocol: "oauth2",
+			RawConfig: probod.ConnectorConfigOAuth2{
+				ClientID:     sentryClientID,
+				ClientSecret: b.getEnv("CONNECTOR_SENTRY_CLIENT_SECRET"),
+				RedirectURI:  b.getEnv("CONNECTOR_SENTRY_REDIRECT_URI"),
+				AuthURL:      b.getEnvOrDefault("CONNECTOR_SENTRY_AUTH_URL", "https://sentry.io/oauth/authorize/"),
+				TokenURL:     b.getEnvOrDefault("CONNECTOR_SENTRY_TOKEN_URL", "https://sentry.io/oauth/token/"),
+				Scopes:       []string{"org:read", "member:read"},
+			},
+		})
+	}
+
+	if intercomClientID := b.getEnv("CONNECTOR_INTERCOM_CLIENT_ID"); intercomClientID != "" {
+		cfg.Probod.Connectors = append(cfg.Probod.Connectors, probod.ConnectorConfig{
+			Provider: "INTERCOM",
+			Protocol: "oauth2",
+			RawConfig: probod.ConnectorConfigOAuth2{
+				ClientID:     intercomClientID,
+				ClientSecret: b.getEnv("CONNECTOR_INTERCOM_CLIENT_SECRET"),
+				RedirectURI:  b.getEnv("CONNECTOR_INTERCOM_REDIRECT_URI"),
+				AuthURL:      b.getEnvOrDefault("CONNECTOR_INTERCOM_AUTH_URL", "https://app.intercom.com/oauth"),
+				TokenURL:     b.getEnvOrDefault("CONNECTOR_INTERCOM_TOKEN_URL", "https://api.intercom.io/auth/eagle/token"),
+				// Intercom scopes are configured at app level in Developer Hub, not in the OAuth URL.
+			},
+		})
+	}
+
+	if brexClientID := b.getEnv("CONNECTOR_BREX_CLIENT_ID"); brexClientID != "" {
+		cfg.Probod.Connectors = append(cfg.Probod.Connectors, probod.ConnectorConfig{
+			Provider: "BREX",
+			Protocol: "oauth2",
+			RawConfig: probod.ConnectorConfigOAuth2{
+				ClientID:     brexClientID,
+				ClientSecret: b.getEnv("CONNECTOR_BREX_CLIENT_SECRET"),
+				RedirectURI:  b.getEnv("CONNECTOR_BREX_REDIRECT_URI"),
+				AuthURL:      b.getEnvOrDefault("CONNECTOR_BREX_AUTH_URL", "https://accounts-api.brex.com/oauth2/default/v1/authorize"),
+				TokenURL:     b.getEnvOrDefault("CONNECTOR_BREX_TOKEN_URL", "https://accounts-api.brex.com/oauth2/default/v1/token"),
+				Scopes:       []string{"openid", "offline_access"},
+			},
+		})
 	}
 
 	return cfg, nil
@@ -258,6 +364,31 @@ func (b *Builder) validateRequired() error {
 		for _, key := range slackRequired {
 			if b.getEnv(key) == "" {
 				missing = append(missing, key+" (required when CONNECTOR_SLACK_CLIENT_ID is set)")
+			}
+		}
+	}
+
+	oauthProviders := []struct {
+		envPrefix string
+		required  []string
+	}{
+		{"CONNECTOR_HUBSPOT", []string{"CLIENT_SECRET", "REDIRECT_URI"}},
+		{"CONNECTOR_DOCUSIGN", []string{"CLIENT_SECRET", "REDIRECT_URI"}},
+		{"CONNECTOR_NOTION", []string{"CLIENT_SECRET", "REDIRECT_URI"}},
+		{"CONNECTOR_GITHUB", []string{"CLIENT_SECRET", "REDIRECT_URI"}},
+		{"CONNECTOR_SENTRY", []string{"CLIENT_SECRET", "REDIRECT_URI"}},
+		{"CONNECTOR_INTERCOM", []string{"CLIENT_SECRET", "REDIRECT_URI"}},
+		{"CONNECTOR_BREX", []string{"CLIENT_SECRET", "REDIRECT_URI"}},
+	}
+
+	for _, p := range oauthProviders {
+		clientIDKey := p.envPrefix + "_CLIENT_ID"
+		if b.getEnv(clientIDKey) != "" {
+			for _, suffix := range p.required {
+				key := p.envPrefix + "_" + suffix
+				if b.getEnv(key) == "" {
+					missing = append(missing, key+" (required when "+clientIDKey+" is set)")
+				}
 			}
 		}
 	}

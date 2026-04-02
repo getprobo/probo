@@ -33,13 +33,14 @@ type ConnectorConfig struct {
 }
 
 type ConnectorConfigOAuth2 struct {
-	ClientID        string            `json:"client-id"`
-	ClientSecret    string            `json:"client-secret"`
-	RedirectURI     string            `json:"redirect-uri"`
-	AuthURL         string            `json:"auth-url"`
-	TokenURL        string            `json:"token-url"`
-	Scopes          []string          `json:"scopes"`
-	ExtraAuthParams map[string]string `json:"extra-auth-params,omitempty"`
+	ClientID          string            `json:"client-id"`
+	ClientSecret      string            `json:"client-secret"`
+	RedirectURI       string            `json:"redirect-uri"`
+	AuthURL           string            `json:"auth-url"`
+	TokenURL          string            `json:"token-url"`
+	Scopes            []string          `json:"scopes"`
+	ExtraAuthParams   map[string]string `json:"extra-auth-params,omitempty"`
+	TokenEndpointAuth string            `json:"token-endpoint-auth,omitempty"`
 }
 
 func (c *Config) GetSlackSigningSecret() string {
@@ -90,13 +91,14 @@ func (c *ConnectorConfig) UnmarshalJSON(data []byte) error {
 		}
 
 		oauth2Connector := connector.OAuth2Connector{
-			ClientID:        config.ClientID,
-			ClientSecret:    config.ClientSecret,
-			RedirectURI:     config.RedirectURI,
-			AuthURL:         config.AuthURL,
-			TokenURL:        config.TokenURL,
-			Scopes:          config.Scopes,
-			ExtraAuthParams: config.ExtraAuthParams,
+			ClientID:          config.ClientID,
+			ClientSecret:      config.ClientSecret,
+			RedirectURI:       config.RedirectURI,
+			AuthURL:           config.AuthURL,
+			TokenURL:          config.TokenURL,
+			Scopes:            config.Scopes,
+			ExtraAuthParams:   config.ExtraAuthParams,
+			TokenEndpointAuth: config.TokenEndpointAuth,
 		}
 
 		c.Config = &oauth2Connector

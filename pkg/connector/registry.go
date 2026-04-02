@@ -65,6 +65,24 @@ func (cr *ConnectorRegistry) Initiate(ctx context.Context, provider string, orga
 	return connector.Initiate(ctx, provider, organizationID, r)
 }
 
+// ExtractProviderFromState decodes the OAuth2 state token without
+// verifying its signature and returns the provider name. This allows
+// the callback handler to determine which connector to use for
+// completing the OAuth2 flow, removing the need for a ?provider=
+// query parameter on the redirect URI.
+func ExtractProviderFromState(stateToken string) (string, error) {
+	payload, err := DecodeOAuth2StatePayload(stateToken)
+	if err != nil {
+		return "", fmt.Errorf("cannot decode state token: %w", err)
+	}
+
+	if payload.Data.Provider == "" {
+		return "", fmt.Errorf("state token has no provider")
+	}
+
+	return payload.Data.Provider, nil
+}
+
 func (cr *ConnectorRegistry) Complete(ctx context.Context, provider string, r *http.Request) (Connection, *gid.GID, string, error) {
 	connector, err := cr.Get(provider)
 	if err != nil {
@@ -72,6 +90,49 @@ func (cr *ConnectorRegistry) Complete(ctx context.Context, provider string, r *h
 	}
 
 	return connector.Complete(ctx, r)
+}
+
+// CompleteWithState completes the OAuth2 flow and returns the full state
+// including any reconnection context (ConnectorID).
+func (cr *ConnectorRegistry) CompleteWithState(ctx context.Context, provider string, r *http.Request) (Connection, *OAuth2State, error) {
+	connector, err := cr.Get(provider)
+	if err != nil {
+		return nil, nil, fmt.Errorf("cannot complete connector: %w", err)
+	}
+
+	oauth2Connector, ok := connector.(*OAuth2Connector)
+	if !ok {
+		return nil, nil, fmt.Errorf("connector %q is not an OAuth2 connector", provider)
+	}
+
+	return oauth2Connector.CompleteWithState(ctx, r)
+}
+
+// providerProbeURLs maps provider names to lightweight API endpoints
+// used to verify OAuth token validity. Each URL must accept a GET
+// request with a Bearer token and return 401/403 for invalid tokens.
+var providerProbeURLs = map[string]string{
+	"SLACK":            "https://slack.com/api/users.list?limit=1",
+	"GOOGLE_WORKSPACE": "https://admin.googleapis.com/admin/directory/v1/users?customer=my_customer&maxResults=1",
+	"LINEAR":           "https://api.linear.app/graphql",
+	"BREX":             "https://platform.brexapis.com/v2/users/me",
+	"HUBSPOT":          "https://api.hubapi.com/account-info/v3/details",
+	"DOCUSIGN":         "https://account-d.docusign.com/oauth/userinfo",
+	"NOTION":           "https://api.notion.com/v1/users/me",
+	"GITHUB":           "https://api.github.com/user",
+	"SENTRY":           "https://sentry.io/api/0/organizations/",
+	"INTERCOM":         "https://api.intercom.io/me",
+	"CLOUDFLARE":       "https://api.cloudflare.com/client/v4/user/tokens/verify",
+	"OPENAI":           "https://api.openai.com/v1/models",
+	"SUPABASE":         "https://api.supabase.com/v1/organizations",
+	"TALLY":            "https://api.tally.so/me",
+	"RESEND":           "https://api.resend.com/domains",
+	"ONE_PASSWORD":     "https://events.1password.com/api/v1/auditevents",
+}
+
+// GetProbeURL returns the probe URL for a provider.
+func (cr *ConnectorRegistry) GetProbeURL(provider string) string {
+	return providerProbeURLs[provider]
 }
 
 // GetOAuth2RefreshConfig returns the OAuth2 refresh configuration for a provider.
@@ -91,8 +152,9 @@ func (cr *ConnectorRegistry) GetOAuth2RefreshConfig(provider string) *OAuth2Refr
 	}
 
 	return &OAuth2RefreshConfig{
-		ClientID:     oauth2Connector.ClientID,
-		ClientSecret: oauth2Connector.ClientSecret,
-		TokenURL:     oauth2Connector.TokenURL,
+		ClientID:          oauth2Connector.ClientID,
+		ClientSecret:      oauth2Connector.ClientSecret,
+		TokenURL:          oauth2Connector.TokenURL,
+		TokenEndpointAuth: oauth2Connector.TokenEndpointAuth,
 	}
 }

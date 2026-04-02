@@ -42,6 +42,7 @@ type (
 
 const (
 	ProtocolOAuth2 ProtocolType = "OAUTH2"
+	ProtocolAPIKey ProtocolType = "API_KEY"
 )
 
 func UnmarshalConnection(protocol string, provider string, data []byte) (Connection, error) {
@@ -62,6 +63,13 @@ func UnmarshalConnection(protocol string, provider string, data []byte) (Connect
 			}
 			return &conn, nil
 		}
+
+	case string(ProtocolAPIKey):
+		var conn APIKeyConnection
+		if err := json.Unmarshal(data, &conn); err != nil {
+			return nil, fmt.Errorf("cannot unmarshal api key connection: %w", err)
+		}
+		return &conn, nil
 	}
 
 	return nil, fmt.Errorf("unknown connection protocol: %s", protocol)
