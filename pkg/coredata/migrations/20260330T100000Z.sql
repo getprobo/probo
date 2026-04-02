@@ -12,29 +12,25 @@
 -- OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 -- PERFORMANCE OF THIS SOFTWARE.
 
--- Add organization_id to access_entries and access_entry_decision_history
--- to avoid JOINs in AuthorizationAttributes lookups.
-
--- 1. access_entries
+-- Convert flag from single TEXT to TEXT array
 ALTER TABLE access_entries
-    ADD COLUMN organization_id TEXT REFERENCES organizations(id);
+    ADD COLUMN flags TEXT[] NOT NULL DEFAULT '{}';
 
-UPDATE access_entries ae
-SET organization_id = arc.organization_id
-FROM access_review_campaigns arc
-WHERE ae.access_review_campaign_id = arc.id;
+-- Migrate existing data: copy non-NONE flag values into the array
+UPDATE access_entries
+SET flags = ARRAY[flag]
+WHERE flag != 'NONE';
 
+-- Convert flag_reason to flag_reasons array
 ALTER TABLE access_entries
-    ALTER COLUMN organization_id SET NOT NULL;
+    ADD COLUMN flag_reasons TEXT[] NOT NULL DEFAULT '{}';
 
--- 2. access_entry_decision_history
-ALTER TABLE access_entry_decision_history
-    ADD COLUMN organization_id TEXT REFERENCES organizations(id);
+-- Migrate existing flag_reason
+UPDATE access_entries
+SET flag_reasons = ARRAY[flag_reason]
+WHERE flag_reason IS NOT NULL AND flag_reason != '';
 
-UPDATE access_entry_decision_history h
-SET organization_id = ae.organization_id
-FROM access_entries ae
-WHERE h.access_entry_id = ae.id;
-
-ALTER TABLE access_entry_decision_history
-    ALTER COLUMN organization_id SET NOT NULL;
+-- Drop old columns in a single statement
+ALTER TABLE access_entries
+    DROP COLUMN flag,
+    DROP COLUMN flag_reason;

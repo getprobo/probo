@@ -12,29 +12,5 @@
 -- OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 -- PERFORMANCE OF THIS SOFTWARE.
 
--- Add organization_id to access_entries and access_entry_decision_history
--- to avoid JOINs in AuthorizationAttributes lookups.
-
--- 1. access_entries
 ALTER TABLE access_entries
-    ADD COLUMN organization_id TEXT REFERENCES organizations(id);
-
-UPDATE access_entries ae
-SET organization_id = arc.organization_id
-FROM access_review_campaigns arc
-WHERE ae.access_review_campaign_id = arc.id;
-
-ALTER TABLE access_entries
-    ALTER COLUMN organization_id SET NOT NULL;
-
--- 2. access_entry_decision_history
-ALTER TABLE access_entry_decision_history
-    ADD COLUMN organization_id TEXT REFERENCES organizations(id);
-
-UPDATE access_entry_decision_history h
-SET organization_id = ae.organization_id
-FROM access_entries ae
-WHERE h.access_entry_id = ae.id;
-
-ALTER TABLE access_entry_decision_history
-    ALTER COLUMN organization_id SET NOT NULL;
+    ADD COLUMN account_type TEXT NOT NULL DEFAULT 'USER';

@@ -94,6 +94,10 @@ const (
 	AuditLogEntryEntityType                    uint16 = 68
 	DocumentVersionApprovalQuorumEntityType    uint16 = 69
 	DocumentVersionApprovalDecisionEntityType  uint16 = 70
+	AccessSourceEntityType                     uint16 = 71
+	AccessReviewCampaignEntityType             uint16 = 72
+	AccessEntryEntityType                      uint16 = 73
+	AccessEntryDecisionHistoryEntityType       uint16 = 74
 )
 
 func NewEntityFromID(id gid.GID) (any, bool) {
@@ -232,6 +236,14 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &DocumentVersionApprovalDecision{ID: id}, true
 	case DocumentVersionApprovalQuorumEntityType:
 		return &DocumentVersionApprovalQuorum{ID: id}, true
+	case AccessSourceEntityType:
+		return &AccessSource{ID: id}, true
+	case AccessReviewCampaignEntityType:
+		return &AccessReviewCampaign{ID: id}, true
+	case AccessEntryEntityType:
+		return &AccessEntry{ID: id}, true
+	case AccessEntryDecisionHistoryEntityType:
+		return &AccessEntryDecisionHistory{ID: id}, true
 	default:
 		return nil, false
 	}
