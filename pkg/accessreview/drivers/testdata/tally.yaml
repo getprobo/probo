@@ -1,0 +1,154 @@
+---
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.tally.so
+        headers:
+            Accept:
+                - application/json
+        url: https://api.tally.so/organizations/wvBzxD/users
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '[{"id":"xA1bCD","firstName":"Alice","lastName":"Johnson","email":"alice@example.com","avatarUrl":"","isBlocked":false,"isDeleted":false,"timezone":"Europe/Paris","isUnknownDeviceVerificationDisabled":false,"createdAt":"2025-10-24T14:51:36.000Z","updatedAt":"2026-03-26T13:54:30.000Z","organizationId":"org001","fullName":"Alice Johnson","ssoIsConnectedWithGoogle":true,"ssoIsConnectedWithApple":false,"hasPasswordSet":true,"authenticationMethodsCount":2,"hasTwoFactorEnabled":true,"emailDomain":null},{"id":"yB2cDE","firstName":"Bob","lastName":"Smith","email":"bob@example.com","avatarUrl":"","isBlocked":false,"isDeleted":false,"timezone":"Europe/Paris","isUnknownDeviceVerificationDisabled":false,"createdAt":"2025-10-25T16:48:52.000Z","updatedAt":"2026-03-23T11:42:00.000Z","organizationId":"org001","fullName":"Bob Smith","ssoIsConnectedWithGoogle":true,"ssoIsConnectedWithApple":false,"hasPasswordSet":false,"authenticationMethodsCount":1,"hasTwoFactorEnabled":false,"emailDomain":null},{"id":"zC3dEF","firstName":"Carol","lastName":"Williams","email":"carol@example.com","avatarUrl":"","isBlocked":false,"isDeleted":false,"timezone":"Europe/Paris","isUnknownDeviceVerificationDisabled":false,"createdAt":"2025-12-01T13:38:59.000Z","updatedAt":"2026-03-06T09:47:20.000Z","organizationId":"org001","fullName":"Carol Williams","ssoIsConnectedWithGoogle":true,"ssoIsConnectedWithApple":false,"hasPasswordSet":false,"authenticationMethodsCount":1,"hasTwoFactorEnabled":false,"emailDomain":null}]'
+        headers:
+            Access-Control-Allow-Credentials:
+                - "true"
+            Access-Control-Expose-Headers:
+                - Mcp-Session-Id
+            Cf-Cache-Status:
+                - DYNAMIC
+            Cf-Ray:
+                - 9e26a8307c916f02-CDG
+            Content-Security-Policy:
+                - 'default-src ''self'';base-uri ''self'';font-src ''self'' https: data:;form-action ''self'';frame-ancestors ''self'';img-src ''self'' data:;object-src ''none'';script-src ''self'';script-src-attr ''none'';style-src ''self'' https: ''unsafe-inline'';upgrade-insecure-requests'
+            Content-Type:
+                - application/json; charset=utf-8
+            Cross-Origin-Opener-Policy:
+                - same-origin
+            Date:
+                - Thu, 26 Mar 2026 13:56:08 GMT
+            Etag:
+                - W/"f19-hbZ8t5Tve+qpDeG+/EcW1dXDiZM"
+            Nel:
+                - '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}'
+            Origin-Agent-Cluster:
+                - ?1
+            Referrer-Policy:
+                - no-referrer
+            Report-To:
+                - '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=CocRUYJt6j9oAYgflV089%2BvXAR3wD10c6qleEoXbEMs%2FxN1a1DYwTeJ08xXieR%2F0nRHSBKZVVCUQLGiMHYrKJbCjfkSUlWLf%2BTR%2BW9a4V%2FhvMBzLQXaQsRb1ii1SIg%3D%3D"}]}'
+            Server:
+                - cloudflare
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains
+            Vary:
+                - Origin
+            X-Cloud-Trace-Context:
+                - 7337a79cb9f6d2c654df69076505ff5a
+            X-Content-Type-Options:
+                - nosniff
+            X-Dns-Prefetch-Control:
+                - "off"
+            X-Download-Options:
+                - noopen
+            X-Frame-Options:
+                - SAMEORIGIN
+            X-Permitted-Cross-Domain-Policies:
+                - none
+            X-Ratelimit-Limit:
+                - "100"
+            X-Ratelimit-Remaining:
+                - "95"
+            X-Ratelimit-Reset:
+                - "1774533375"
+            X-Xss-Protection:
+                - "0"
+        status: 200 OK
+        code: 200
+        duration: 77.593208ms
+    - id: 1
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.tally.so
+        headers:
+            Accept:
+                - application/json
+        url: https://api.tally.so/organizations/wvBzxD/invites
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: 2
+        body: '[]'
+        headers:
+            Access-Control-Allow-Credentials:
+                - "true"
+            Access-Control-Expose-Headers:
+                - Mcp-Session-Id
+            Cf-Cache-Status:
+                - DYNAMIC
+            Cf-Ray:
+                - 9e26a830cccb6f02-CDG
+            Content-Length:
+                - "2"
+            Content-Security-Policy:
+                - 'default-src ''self'';base-uri ''self'';font-src ''self'' https: data:;form-action ''self'';frame-ancestors ''self'';img-src ''self'' data:;object-src ''none'';script-src ''self'';script-src-attr ''none'';style-src ''self'' https: ''unsafe-inline'';upgrade-insecure-requests'
+            Content-Type:
+                - application/json; charset=utf-8
+            Cross-Origin-Opener-Policy:
+                - same-origin
+            Date:
+                - Thu, 26 Mar 2026 13:56:08 GMT
+            Etag:
+                - W/"2-l9Fw4VUO7kr8CvBlt4zaMCqXZ0w"
+            Nel:
+                - '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}'
+            Origin-Agent-Cluster:
+                - ?1
+            Referrer-Policy:
+                - no-referrer
+            Report-To:
+                - '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=vfTMmGB%2FitCP4gkTcfhy9vOYzJZbTYp4a0km1df34sZL3TfZ17vXbuv4kl5nEwXSPgHv1si5IF8qaUW1z70vzxLUnCqaF0A7%2Fi6DgBVz1Xv%2BwAGOIUHAA6uyq2%2B76A%3D%3D"}]}'
+            Server:
+                - cloudflare
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains
+            Vary:
+                - Origin
+            X-Cloud-Trace-Context:
+                - 38b42db0f009bb00781397cecba8b838
+            X-Content-Type-Options:
+                - nosniff
+            X-Dns-Prefetch-Control:
+                - "off"
+            X-Download-Options:
+                - noopen
+            X-Frame-Options:
+                - SAMEORIGIN
+            X-Permitted-Cross-Domain-Policies:
+                - none
+            X-Ratelimit-Limit:
+                - "100"
+            X-Ratelimit-Remaining:
+                - "94"
+            X-Ratelimit-Reset:
+                - "1774533375"
+            X-Xss-Protection:
+                - "0"
+        status: 200 OK
+        code: 200
+        duration: 48.255292ms

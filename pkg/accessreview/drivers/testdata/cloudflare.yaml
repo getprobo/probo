@@ -1,0 +1,130 @@
+---
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.cloudflare.com
+        form:
+            page:
+                - "1"
+            per_page:
+                - "50"
+        headers:
+            Accept:
+                - application/json
+            Content-Type:
+                - application/json
+        url: https://api.cloudflare.com/client/v4/accounts?page=1&per_page=50
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"result":[{"id":"a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0","name":"Acme Corp Account","type":"standard","settings":{"enforce_twofactor":false,"api_access_enabled":null,"access_approval_expiry":null,"abuse_contact_email":null},"legacy_flags":{"enterprise_zone_quota":{"maximum":0,"current":0,"available":0}},"created_on":"2024-08-01T13:33:08.703547Z"}],"result_info":{"page":1,"per_page":50,"total_pages":1,"count":1,"total_count":1},"success":true,"errors":[],"messages":[]}'
+        headers:
+            Api-Version:
+                - "2026-03-26"
+            Cache-Control:
+                - no-store, no-cache, must-revalidate, post-check=0, pre-check=0
+            Cf-Auditlog-Id:
+                - 019d2a35-91c4-7736-896b-b006409d7e6f
+            Cf-Cache-Status:
+                - DYNAMIC
+            Cf-Ray:
+                - 9e264d55fea00272-CDG
+            Content-Type:
+                - application/json
+            Date:
+                - Thu, 26 Mar 2026 12:54:08 GMT
+            Expires:
+                - Sun, 25 Jan 1981 05:00:00 GMT
+            Pragma:
+                - no-cache
+            Ratelimit:
+                - '"default";r=1199;t=1'
+            Ratelimit-Policy:
+                - '"default";q=1200;w=300'
+            Server:
+                - cloudflare
+            Set-Cookie:
+                - __cflb=04dTob1Z8hkaUxg6DoHNs8KRCyeFsheZBgh4Z4g8w7; SameSite=Lax; path=/; expires=Thu, 26-Mar-26 15:24:09 GMT; HttpOnly
+                - __cf_bm=LyuTKDqNQ5tvh.PHF8_9EdNmXMvJqY4R5hcWPgVvMzU-1774529647.0347695-1.0.1.1-UnR7cgawFlfSt.v3DMn.2_k9YyICl.HC97ZYLn4wz_18Abz7sbBAHiVmjrFTui2_2Yv6xMPC5aQHLne9dkWG9AEfHjgOciGnCcIxV_5R3cU9fx1I.X6S2ULi.g02JOhT; HttpOnly; Secure; Path=/; Domain=api.cloudflare.com; Expires=Thu, 26 Mar 2026 13:24:08 GMT
+                - _cfuvid=RPBCBz3UI_HliU0tQFxDPvA0iEo4L.Sl9rAKMd.y6gk-1774529647.0347695-1.0.1.1-pURMyXvOZFChPV9dMfEZBk7C500xxDGyZbysJ0p1SlM; HttpOnly; SameSite=None; Secure; Path=/; Domain=api.cloudflare.com
+            Strict-Transport-Security:
+                - max-age=31536000
+            Vary:
+                - Accept-Encoding
+            X-Content-Type-Options:
+                - nosniff
+            X-Frame-Options:
+                - SAMEORIGIN
+        status: 200 OK
+        code: 200
+        duration: 1.137052667s
+    - id: 1
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.cloudflare.com
+        form:
+            page:
+                - "1"
+            per_page:
+                - "50"
+        headers:
+            Accept:
+                - application/json
+            Content-Type:
+                - application/json
+        url: https://api.cloudflare.com/client/v4/accounts/a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0/members?page=1&per_page=50
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: |
+            {"result":[{"id":"b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0","email":"john@example.com","user":{"id":"c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0","first_name":null,"last_name":null,"email":"john@example.com","two_factor_authentication_enabled":true},"status":"accepted","api_access_enabled":null,"policies":[{"id":"94f6cdbcf2914b68b69a1c6ccb407ff2","access":"allow","permission_groups":[{"id":"8e23b19e4e0d44c29d239c5688ba8cbb","name":"Super Administrator - All Privileges","meta":{"category":"general","description":"Can edit any Cloudflare setting, make purchases, update billing, and manage memberships. Super Administrators can revoke the access of other Super Administrators.","editable":"false","label":"all_privileges","scopes":"com.cloudflare.api.account"}}],"resource_groups":[{"id":"4a190dd8042e46bfb5c86663050c37bb","name":"com.cloudflare.api.account.a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0","meta":{"editable":"false"},"scope":{"key":"com.cloudflare.api.account.a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0","objects":[{"key":"*"}]}}]}],"roles":[{"id":"33666b9c79b9a5273fc7344ff42f953d","name":"Super Administrator - All Privileges","description":"Can edit any Cloudflare setting, make purchases, update billing, and manage memberships. Super Administrators can revoke the access of other Super Administrators.","permissions":{"access":{"edit":true,"read":true},"analytics":{"edit":false,"read":true},"api_gateway":{"edit":true,"read":true},"app":{"edit":true,"read":false},"auditlogs":{"edit":false,"read":true},"billing":{"edit":true,"read":true},"blocks":{"edit":true,"read":true},"cache_purge":{"edit":true,"read":false},"casb":{"edit":true,"read":true},"cds":{"edit":true,"read":true},"cds_compute_account":{"edit":true,"read":true},"ces_analytics":{"edit":false,"read":true},"ces_integration":{"edit":true,"read":true},"ces_phishguard":{"edit":false,"read":true},"ces_policies":{"edit":true,"read":true},"ces_pra_report":{"edit":true,"read":true},"ces_search":{"action":true,"edit":false,"preview":true,"raw":true,"read":true,"trace":true},"ces_settings":{"edit":true,"read":true},"ces_submissions":{"edit":true,"read":true},"cf1_integration":{"casb":true,"ces":true,"edit":true,"read":true},"d1":{"edit":true,"read":false},"dash_sso":{"edit":true,"read":true},"dex":{"edit":true,"read":true},"dns_records":{"edit":true,"read":true},"domain":{"edit":false,"read":true},"fbm":{"edit":true,"read":true},"fbm_acc":{"edit":true,"read":false},"healthchecks":{"edit":true,"read":true},"http_applications":{"edit":true,"read":true},"image":{"edit":true,"read":true},"integration":{"edit":true,"install":true,"read":true},"lb":{"edit":true,"read":true},"legal":{"edit":true,"read":true},"logs":{"edit":true,"read":true},"magic":{"edit":true,"read":true},"member":{"edit":true,"read":true},"organization":{"edit":true,"read":true},"page_shield":{"edit":true,"read":true},"query_cache":{"edit":true,"read":true},"r2_bucket":{"edit":true,"read":true},"r2_bucket_item":{"edit":true,"read":true},"r2_bucket_warehouse":{"edit":true,"read":true},"r2_bucket_warehouse_sql":{"edit":false,"read":true},"resilience":{"edit":true,"read":true},"ssl":{"edit":true,"read":true},"stream":{"edit":true,"read":true},"subscription":{"edit":true,"read":true},"teams":{"edit":true,"pii":true,"read":true,"report":true},"teams_device":{"edit":false,"read":true},"vectorize":{"edit":true,"read":true},"waf":{"edit":true,"read":true},"waitingroom":{"edit":true,"read":true},"web3":{"edit":true,"read":true},"worker":{"edit":true,"read":true},"zaraz":{"edit":true,"publish":true,"read":true},"zone":{"edit":true,"read":true},"zone_settings":{"edit":true,"read":true},"zone_versioning":{"edit":true,"read":true}}}]}],"result_info":{"page":1,"per_page":50,"total_pages":1,"count":1,"total_count":1},"success":true,"errors":[],"messages":[]}
+        headers:
+            Allow:
+                - GET, POST
+            Api-Version:
+                - "2026-03-26"
+            Cache-Control:
+                - private,no-cache,no-store
+            Cf-Auditlog-Id:
+                - 019d2a35-9614-75cb-bdee-bd4b7032bff2
+            Cf-Cache-Status:
+                - DYNAMIC
+            Cf-Ray:
+                - 9e264d5cdd890272-CDG
+            Content-Type:
+                - application/json
+            Date:
+                - Thu, 26 Mar 2026 12:54:08 GMT
+            Pragma:
+                - no-cache
+            Ratelimit:
+                - '"default";r=1199;t=1'
+            Ratelimit-Policy:
+                - '"default";q=1200;w=300'
+            Server:
+                - cloudflare
+            Set-Cookie:
+                - __cflb=04dTob1Z8hkaUxg6DoHNs8KRCyeFsheZMPN5MtAkCd; SameSite=Lax; path=/; expires=Thu, 26-Mar-26 15:24:09 GMT; HttpOnly
+                - __cf_bm=wb_wrUP01dJHoUzazZm1.uiyEnIDd9T4FfBjy0TCTA8-1774529648.1355844-1.0.1.1-U1ANV4vetzyj.IHgptRMPsZRo425I1beWBhJj9Sk6fTCNbehiJ5wQyZfEXPnzaLii5IkN8TZ0e.I7RGjjZof01_fwKAA46tNZ17xG032QXlmKnnmU4DrxL8cvpogHIFL; HttpOnly; Secure; Path=/; Domain=api.cloudflare.com; Expires=Thu, 26 Mar 2026 13:24:08 GMT
+                - _cfuvid=sUYD5zj5lijQFwgMQsqTkqNzvzAH20wbHjXkOak6_V0-1774529648.1355844-1.0.1.1-b3hM8gyNj.5d_wxoQiozNeDeAi_pUUdL6KSJTAHjBSU; HttpOnly; SameSite=None; Secure; Path=/; Domain=api.cloudflare.com
+            Vary:
+                - Accept-Encoding
+        status: 200 OK
+        code: 200
+        duration: 739.361791ms

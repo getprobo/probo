@@ -1,0 +1,81 @@
+---
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: sentry.io
+        url: https://sentry.io/api/0/organizations/acme-corp/members/
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '[{"id":"100001","email":"john@example.com","name":"john@example.com","user":{"id":"1000001","name":"john@example.com","username":"john@example.com","email":"john@example.com","avatarUrl":"","isActive":true,"hasPasswordAuth":false,"isManaged":false,"dateJoined":"2024-10-18T09:11:59.290806Z","lastLogin":"2026-03-16T11:30:17.761122Z","has2fa":false,"lastActive":"2026-03-26T12:13:40.025328Z","isSuperuser":false,"isStaff":false,"emails":[],"experiments":{},"avatar":{"avatarType":"letter_avatar","avatarUuid":null,"avatarUrl":null}},"orgRole":"owner","pending":false,"expired":false,"flags":{"idp:provisioned":false,"idp:role-restricted":false,"sso:linked":false,"sso:invalid":false,"member-limit:restricted":false,"partnership:restricted":false},"dateCreated":"2024-10-18T09:12:00.476934Z","inviteStatus":"approved","inviterName":null,"role":"owner","roleName":"Owner"},{"id":"100002","email":"jane@example.com","name":"Jane Doe","user":{"id":"1000002","name":"Jane Doe","username":"jane@example.com","email":"jane@example.com","avatarUrl":"","isActive":true,"hasPasswordAuth":true,"isManaged":false,"dateJoined":"2025-04-01T16:34:31.237067Z","lastLogin":"2025-11-27T16:37:09.123872Z","has2fa":false,"lastActive":"2025-11-28T14:28:23.938416Z","isSuperuser":false,"isStaff":false,"emails":[],"experiments":{},"avatar":{"avatarType":"letter_avatar","avatarUuid":null,"avatarUrl":null}},"orgRole":"member","pending":false,"expired":false,"flags":{"idp:provisioned":false,"idp:role-restricted":false,"sso:linked":false,"sso:invalid":false,"member-limit:restricted":false,"partnership:restricted":false},"dateCreated":"2025-11-07T14:54:57.672332Z","inviteStatus":"approved","inviterName":"john@example.com","role":"member","roleName":"Member"}]'
+        headers:
+            Access-Control-Allow-Headers:
+                - X-Sentry-Auth, X-Requested-With, Origin, Accept, Content-Type, Authentication, Authorization, Content-Encoding, sentry-trace, baggage, X-CSRFToken
+            Access-Control-Allow-Methods:
+                - GET, POST, HEAD, OPTIONS
+            Access-Control-Allow-Origin:
+                - '*'
+            Access-Control-Expose-Headers:
+                - X-Sentry-Error, X-Sentry-Direct-Hit, X-Hits, X-Max-Hits, Endpoint, Retry-After, Link
+            Allow:
+                - GET, POST, HEAD, OPTIONS
+            Alt-Svc:
+                - h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
+            Content-Language:
+                - en
+            Content-Security-Policy:
+                - 'base-uri ''none''; style-src * ''unsafe-inline''; frame-ancestors ''self'' *.sentry.io; font-src * data:; connect-src ''self'' *.algolia.net *.algolianet.com *.algolia.io sentry.io *.sentry.io s1.sentry-cdn.com o1.ingest.sentry.io api2.amplitude.com app.pendo.io data.pendo.io reload.getsentry.net t687h3m0nh65.statuspage.io sentry.zendesk.com ekr.zdassets.com maps.googleapis.com; object-src ''none''; frame-src app.pendo.io demo.arcade.software js.stripe.com sentry.io ''self''; script-src ''self'' ''unsafe-inline'' ''report-sample'' s1.sentry-cdn.com js.sentry-cdn.com browser.sentry-cdn.com statuspage-production.s3.amazonaws.com static.zdassets.com aui-cdn.atlassian.com connect-cdn.atl-paas.net js.stripe.com ''strict-dynamic'' cdn.pendo.io data.pendo.io pendo-io-static.storage.googleapis.com pendo-static-5634074999128064.storage.googleapis.com; media-src *; default-src ''none''; img-src * blob: data:; worker-src blob:; report-uri https://o1.ingest.sentry.io/api/54785/security/?sentry_key=f724a8a027db45f5b21507e7142ff78e&sentry_release=8bd10e6776717c63689632c2a4b7de878fbfe6c2'
+            Content-Type:
+                - application/json
+            Cross-Origin-Opener-Policy-Report-Only:
+                - same-origin; report-to="coop-endpoint"
+            Date:
+                - Thu, 26 Mar 2026 12:53:44 GMT
+            Link:
+                - <https://sentry.io/api/0/organizations/acme-corp/members/?&cursor=100:-1:1>; rel="previous"; results="false"; cursor="100:-1:1", <https://sentry.io/api/0/organizations/acme-corp/members/?&cursor=100:1:0>; rel="next"; results="false"; cursor="100:1:0"
+            Report-To:
+                - '{"group":"coop-endpoint","max_age":86400,"endpoints":[{"url":"https://sentry-coop-302178938983.us-central1.run.app/coop"}]}'
+            Server:
+                - nginx
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains; preload
+            Vary:
+                - Accept-Encoding,Accept-Language, Cookie
+            Via:
+                - 1.1 google
+            X-Content-Type-Options:
+                - nosniff
+            X-Envoy-Attempt-Count:
+                - "1"
+            X-Envoy-Upstream-Service-Time:
+                - "861"
+            X-Frame-Options:
+                - deny
+            X-Sentry-Proxy-Url:
+                - http://sentry-rpc-de.psc.control.sentry.internal:8999/api/0/organizations/acme-corp/members/
+            X-Sentry-Rate-Limit-Concurrentlimit:
+                - "25"
+            X-Sentry-Rate-Limit-Concurrentremaining:
+                - "24"
+            X-Sentry-Rate-Limit-Limit:
+                - "40"
+            X-Sentry-Rate-Limit-Remaining:
+                - "39"
+            X-Sentry-Rate-Limit-Reset:
+                - "1774529624"
+            X-Served-By:
+                - frontend-default-694c567cbb-w99ht
+            X-Xss-Protection:
+                - 1; mode=block
+        status: 200 OK
+        code: 200
+        duration: 1.024781959s

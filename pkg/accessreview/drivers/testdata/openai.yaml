@@ -1,0 +1,83 @@
+---
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.openai.com
+        form:
+            limit:
+                - "100"
+        headers:
+            Accept:
+                - application/json
+        url: https://api.openai.com/v1/organization/users?limit=100
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: |-
+            {
+              "object": "list",
+              "data": [
+                {
+                  "id": "user-aaaaaaaaaaaaaaaaaaaaaaaa",
+                  "object": "organization.user",
+                  "added_at": 1670256043,
+                  "email": "john@example.com",
+                  "name": "John Smith",
+                  "role": "owner"
+                },
+                {
+                  "id": "user-bbbbbbbbbbbbbbbbbbbbbbbb",
+                  "object": "organization.user",
+                  "added_at": 1734424828,
+                  "email": "jane@example.com",
+                  "name": "Jane Doe",
+                  "role": "reader"
+                }
+              ],
+              "first_id": "user-aaaaaaaaaaaaaaaaaaaaaaaa",
+              "has_more": false,
+              "last_id": "user-bbbbbbbbbbbbbbbbbbbbbbbb"
+            }
+        headers:
+            Alt-Svc:
+                - h3=":443"; ma=86400
+            Cf-Cache-Status:
+                - DYNAMIC
+            Cf-Ray:
+                - 9e264eaaae05343a-CDG
+            Content-Type:
+                - application/json
+            Date:
+                - Thu, 26 Mar 2026 12:55:02 GMT
+            Openai-Organization:
+                - acme-corp
+            Openai-Processing-Ms:
+                - "349"
+            Openai-Project:
+                - proj_aaaabbbbccccddddeeeeeeee
+            Openai-Version:
+                - "2020-10-01"
+            Server:
+                - cloudflare
+            Set-Cookie:
+                - __cf_bm=OJPi1FQ3aQDosdow4APC.IrgvoFoniXhs7yLPvcgzEw-1774529701.5408235-1.0.1.1-1yRB5GUWfOrogA6r7_dfUryKqwAVzgcuryL2S2fsII1iUganS7LKKhscf9JADsEDaIn6UHXk9hxfH8P3Ue0ixIaVDSlZWf30CEPCJDI6nuiN.1YHejTkmH3llHLkfuLp; HttpOnly; Secure; Path=/; Domain=api.openai.com; Expires=Thu, 26 Mar 2026 13:25:02 GMT
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains; preload
+            X-Content-Type-Options:
+                - nosniff
+            X-Openai-Proxy-Wasm:
+                - v0.1
+            X-Request-Id:
+                - 097c2db1-ecaa-44fe-a7bc-3b2b528acae4
+        status: 200 OK
+        code: 200
+        duration: 529.968583ms

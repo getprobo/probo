@@ -1,0 +1,42 @@
+---
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: platform.brexapis.com
+        headers:
+            Accept:
+                - application/json
+            Content-Type:
+                - application/json
+        url: https://platform.brexapis.com/v2/users
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"items":[{"id":"cuuser_000000000000000000000001","first_name":"Alice","last_name":"Martin","email":"alice@example.com","status":"ACTIVE","manager_id":"cuuser_000000000000000000000006","user_role":"EMPLOYEE"},{"id":"cuuser_000000000000000000000002","first_name":"Bob","last_name":"Wilson","email":"bob@example.com","status":"ACTIVE","manager_id":"cuuser_000000000000000000000005","user_role":"EMPLOYEE"},{"id":"cuuser_000000000000000000000003","first_name":"Charlie","last_name":"Brown","email":"charlie@example.com","status":"ACTIVE","manager_id":"cuuser_000000000000000000000006","user_role":"EMPLOYEE"},{"id":"cuuser_000000000000000000000004","first_name":"Dana","last_name":"Contractor","email":"dana@contractor.example.com","status":"ACTIVE","user_role":"BOOKKEEPER"},{"id":"cuuser_000000000000000000000005","first_name":"John","last_name":"Smith","email":"john@example.com","status":"ACTIVE","user_role":"ACCOUNT_ADMIN"},{"id":"cuuser_000000000000000000000006","first_name":"Jane","last_name":"Doe","email":"jane@example.com","status":"ACTIVE","user_role":"ACCOUNT_ADMIN"}]}'
+        headers:
+            Content-Type:
+                - application/json
+            Date:
+                - Thu, 26 Mar 2026 12:54:04 GMT
+            Server:
+                - istio-envoy
+            X-Brex-Parent-Id:
+                - "2660134401200686227"
+            X-Brex-Sampling-Priority:
+                - "1"
+            X-Brex-Trace-Id:
+                - "17144222899071086561"
+            X-Envoy-Upstream-Service-Time:
+                - "590"
+        status: 200 OK
+        code: 200
+        duration: 1.095966125s

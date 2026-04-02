@@ -1,0 +1,296 @@
+---
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.github.com
+        form:
+            per_page:
+                - "100"
+        headers:
+            Accept:
+                - application/vnd.github+json
+        url: https://api.github.com/orgs/acme-corp/members?per_page=100
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '[{"login":"jdoe","id":100001,"node_id":"XYZQ6VXNlcjEwMDAw","avatar_url":"","gravatar_id":"","url":"https://api.github.com/users/jdoe","html_url":"https://github.com/jdoe","followers_url":"https://api.github.com/users/jdoe/followers","following_url":"https://api.github.com/users/jdoe/following{/other_user}","gists_url":"https://api.github.com/users/jdoe/gists{/gist_id}","starred_url":"https://api.github.com/users/jdoe/starred{/owner}{/repo}","subscriptions_url":"https://api.github.com/users/jdoe/subscriptions","organizations_url":"https://api.github.com/users/jdoe/orgs","repos_url":"https://api.github.com/users/jdoe/repos","events_url":"https://api.github.com/users/jdoe/events{/privacy}","received_events_url":"https://api.github.com/users/jdoe/received_events","type":"User","user_view_type":"public","site_admin":false}]'
+        headers:
+            Access-Control-Allow-Origin:
+                - '*'
+            Access-Control-Expose-Headers:
+                - ETag, Link, Location, Retry-After, X-GitHub-OTP, X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Used, X-RateLimit-Resource, X-RateLimit-Reset, X-OAuth-Scopes, X-Accepted-OAuth-Scopes, X-Poll-Interval, X-GitHub-Media-Type, X-GitHub-SSO, X-GitHub-Request-Id, Deprecation, Sunset
+            Cache-Control:
+                - private, max-age=60, s-maxage=60
+            Content-Security-Policy:
+                - default-src 'none'
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Thu, 26 Mar 2026 13:20:24 GMT
+            Etag:
+                - W/"ff2048ab2918047a22ee474a92af74dff9570f18dc6b59556889b02a90e5291f"
+            Github-Authentication-Token-Expiration:
+                - 2026-04-25 13:21:33 +0200
+            Referrer-Policy:
+                - origin-when-cross-origin, strict-origin-when-cross-origin
+            Server:
+                - github.com
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubdomains; preload
+            Vary:
+                - Accept, Authorization, Cookie, X-GitHub-OTP,Accept-Encoding, Accept, X-Requested-With
+            X-Accepted-Github-Permissions:
+                - members=read
+            X-Content-Type-Options:
+                - nosniff
+            X-Frame-Options:
+                - deny
+            X-Github-Api-Version-Selected:
+                - "2022-11-28"
+            X-Github-Media-Type:
+                - github.v3; format=json
+            X-Github-Request-Id:
+                - E712:31AC1B:623D7E5:56C7B3B:69C53298
+            X-Ratelimit-Limit:
+                - "5000"
+            X-Ratelimit-Remaining:
+                - "4999"
+            X-Ratelimit-Reset:
+                - "1774534824"
+            X-Ratelimit-Resource:
+                - core
+            X-Ratelimit-Used:
+                - "1"
+            X-Xss-Protection:
+                - "0"
+        status: 200 OK
+        code: 200
+        duration: 282.34525ms
+    - id: 1
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.github.com
+        form:
+            filter:
+                - 2fa_disabled
+            per_page:
+                - "100"
+        headers:
+            Accept:
+                - application/vnd.github+json
+        url: https://api.github.com/orgs/acme-corp/members?filter=2fa_disabled&per_page=100
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: 2
+        body: '[]'
+        headers:
+            Access-Control-Allow-Origin:
+                - '*'
+            Access-Control-Expose-Headers:
+                - ETag, Link, Location, Retry-After, X-GitHub-OTP, X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Used, X-RateLimit-Resource, X-RateLimit-Reset, X-OAuth-Scopes, X-Accepted-OAuth-Scopes, X-Poll-Interval, X-GitHub-Media-Type, X-GitHub-SSO, X-GitHub-Request-Id, Deprecation, Sunset
+            Cache-Control:
+                - private, max-age=60, s-maxage=60
+            Content-Length:
+                - "2"
+            Content-Security-Policy:
+                - default-src 'none'
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Thu, 26 Mar 2026 13:20:24 GMT
+            Etag:
+                - '"66d4a6c8d79df8b01adad18bc0608ce26f32b16b3bf0d61ec689cc3a8cda2c37"'
+            Github-Authentication-Token-Expiration:
+                - 2026-04-25 13:21:33 +0200
+            Referrer-Policy:
+                - origin-when-cross-origin, strict-origin-when-cross-origin
+            Server:
+                - github.com
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubdomains; preload
+            Vary:
+                - Accept, Authorization, Cookie, X-GitHub-OTP,Accept-Encoding, Accept, X-Requested-With
+            X-Accepted-Github-Permissions:
+                - members=read
+            X-Content-Type-Options:
+                - nosniff
+            X-Frame-Options:
+                - deny
+            X-Github-Api-Version-Selected:
+                - "2022-11-28"
+            X-Github-Media-Type:
+                - github.v3; format=json
+            X-Github-Request-Id:
+                - E712:31AC1B:623DA14:56C7D1F:69C53298
+            X-Ratelimit-Limit:
+                - "5000"
+            X-Ratelimit-Remaining:
+                - "4998"
+            X-Ratelimit-Reset:
+                - "1774534824"
+            X-Ratelimit-Resource:
+                - core
+            X-Ratelimit-Used:
+                - "2"
+            X-Xss-Protection:
+                - "0"
+        status: 200 OK
+        code: 200
+        duration: 222.556791ms
+    - id: 2
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.github.com
+        headers:
+            Accept:
+                - application/vnd.github+json
+        url: https://api.github.com/orgs/acme-corp/memberships/jdoe
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"url":"https://api.github.com/orgs/acme-corp/memberships/jdoe","state":"active","role":"admin","organization_url":"https://api.github.com/orgs/acme-corp","user":{"login":"jdoe","id":100001,"node_id":"XYZQ6VXNlcjEwMDAw","avatar_url":"","gravatar_id":"","url":"https://api.github.com/users/jdoe","html_url":"https://github.com/jdoe","followers_url":"https://api.github.com/users/jdoe/followers","following_url":"https://api.github.com/users/jdoe/following{/other_user}","gists_url":"https://api.github.com/users/jdoe/gists{/gist_id}","starred_url":"https://api.github.com/users/jdoe/starred{/owner}{/repo}","subscriptions_url":"https://api.github.com/users/jdoe/subscriptions","organizations_url":"https://api.github.com/users/jdoe/orgs","repos_url":"https://api.github.com/users/jdoe/repos","events_url":"https://api.github.com/users/jdoe/events{/privacy}","received_events_url":"https://api.github.com/users/jdoe/received_events","type":"User","user_view_type":"public","site_admin":false},"direct_membership":true,"enterprise_teams_providing_indirect_membership":[],"organization":{"login":"acme-corp","id":100002,"node_id":"O_kgDOFake0Rg","url":"https://api.github.com/orgs/acme-corp","repos_url":"https://api.github.com/orgs/acme-corp/repos","events_url":"https://api.github.com/orgs/acme-corp/events","hooks_url":"https://api.github.com/orgs/acme-corp/hooks","issues_url":"https://api.github.com/orgs/acme-corp/issues","members_url":"https://api.github.com/orgs/acme-corp/members{/member}","public_members_url":"https://api.github.com/orgs/acme-corp/public_members{/member}","avatar_url":"","description":""}}'
+        headers:
+            Access-Control-Allow-Origin:
+                - '*'
+            Access-Control-Expose-Headers:
+                - ETag, Link, Location, Retry-After, X-GitHub-OTP, X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Used, X-RateLimit-Resource, X-RateLimit-Reset, X-OAuth-Scopes, X-Accepted-OAuth-Scopes, X-Poll-Interval, X-GitHub-Media-Type, X-GitHub-SSO, X-GitHub-Request-Id, Deprecation, Sunset
+            Cache-Control:
+                - private, max-age=60, s-maxage=60
+            Content-Security-Policy:
+                - default-src 'none'
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Thu, 26 Mar 2026 13:20:25 GMT
+            Etag:
+                - W/"5f52c04e58dd224bb535f57f82fa45937ab13a419b2fafa841ee9392cc8dc444"
+            Github-Authentication-Token-Expiration:
+                - 2026-04-25 13:21:33 +0200
+            Referrer-Policy:
+                - origin-when-cross-origin, strict-origin-when-cross-origin
+            Server:
+                - github.com
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubdomains; preload
+            Vary:
+                - Accept, Authorization, Cookie, X-GitHub-OTP,Accept-Encoding, Accept, X-Requested-With
+            X-Accepted-Github-Permissions:
+                - members=read
+            X-Content-Type-Options:
+                - nosniff
+            X-Frame-Options:
+                - deny
+            X-Github-Api-Version-Selected:
+                - "2022-11-28"
+            X-Github-Media-Type:
+                - github.v3; format=json
+            X-Github-Request-Id:
+                - E712:31AC1B:623DC2B:56C7EF5:69C53298
+            X-Ratelimit-Limit:
+                - "5000"
+            X-Ratelimit-Remaining:
+                - "4997"
+            X-Ratelimit-Reset:
+                - "1774534824"
+            X-Ratelimit-Resource:
+                - core
+            X-Ratelimit-Used:
+                - "3"
+            X-Xss-Protection:
+                - "0"
+        status: 200 OK
+        code: 200
+        duration: 207.5905ms
+    - id: 3
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.github.com
+        headers:
+            Accept:
+                - application/vnd.github+json
+        url: https://api.github.com/users/jdoe
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"login":"jdoe","id":100001,"node_id":"XYZQ6VXNlcjEwMDAw","avatar_url":"","gravatar_id":"","url":"https://api.github.com/users/jdoe","html_url":"https://github.com/jdoe","followers_url":"https://api.github.com/users/jdoe/followers","following_url":"https://api.github.com/users/jdoe/following{/other_user}","gists_url":"https://api.github.com/users/jdoe/gists{/gist_id}","starred_url":"https://api.github.com/users/jdoe/starred{/owner}{/repo}","subscriptions_url":"https://api.github.com/users/jdoe/subscriptions","organizations_url":"https://api.github.com/users/jdoe/orgs","repos_url":"https://api.github.com/users/jdoe/repos","events_url":"https://api.github.com/users/jdoe/events{/privacy}","received_events_url":"https://api.github.com/users/jdoe/received_events","type":"User","user_view_type":"public","site_admin":false,"name":"Jane Doe","company":null,"blog":"","location":"","email":null,"hireable":null,"bio":null,"twitter_username":null,"public_repos":12,"public_gists":3,"followers":10,"following":5,"created_at":"2009-05-06T20:34:11Z","updated_at":"2026-02-24T10:26:18Z"}'
+        headers:
+            Access-Control-Allow-Origin:
+                - '*'
+            Access-Control-Expose-Headers:
+                - ETag, Link, Location, Retry-After, X-GitHub-OTP, X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Used, X-RateLimit-Resource, X-RateLimit-Reset, X-OAuth-Scopes, X-Accepted-OAuth-Scopes, X-Poll-Interval, X-GitHub-Media-Type, X-GitHub-SSO, X-GitHub-Request-Id, Deprecation, Sunset
+            Cache-Control:
+                - private, max-age=60, s-maxage=60
+            Content-Security-Policy:
+                - default-src 'none'
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Thu, 26 Mar 2026 13:20:25 GMT
+            Etag:
+                - W/"c747d94dd20c979144fc5f2bdd4e88145cf97bb5c5386d56c1c779e980671332"
+            Github-Authentication-Token-Expiration:
+                - 2026-04-25 13:21:33 +0200
+            Last-Modified:
+                - Tue, 24 Feb 2026 10:26:18 GMT
+            Referrer-Policy:
+                - origin-when-cross-origin, strict-origin-when-cross-origin
+            Server:
+                - github.com
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubdomains; preload
+            Vary:
+                - Accept, Authorization, Cookie, X-GitHub-OTP,Accept-Encoding, Accept, X-Requested-With
+            X-Content-Type-Options:
+                - nosniff
+            X-Frame-Options:
+                - deny
+            X-Github-Api-Version-Selected:
+                - "2022-11-28"
+            X-Github-Media-Type:
+                - github.v3; format=json
+            X-Github-Request-Id:
+                - E712:31AC1B:623DE37:56C80BC:69C53299
+            X-Ratelimit-Limit:
+                - "5000"
+            X-Ratelimit-Remaining:
+                - "4996"
+            X-Ratelimit-Reset:
+                - "1774534824"
+            X-Ratelimit-Resource:
+                - core
+            X-Ratelimit-Used:
+                - "4"
+            X-Xss-Protection:
+                - "0"
+        status: 200 OK
+        code: 200
+        duration: 190.346042ms

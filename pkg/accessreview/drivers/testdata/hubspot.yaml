@@ -1,0 +1,137 @@
+---
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.hubapi.com
+        headers:
+            Accept:
+                - application/json
+        url: https://api.hubapi.com/settings/v3/users/roles
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: 153
+        body: '{"status":"error","message":"Account doesn''t have access to roles.","correlationId":"019d2a35-7d8f-7ae2-bbf6-6342ceb0b095","category":"VALIDATION_ERROR"}'
+        headers:
+            Access-Control-Allow-Credentials:
+                - "false"
+            Cf-Cache-Status:
+                - DYNAMIC
+            Cf-Ray:
+                - 9e264d34984eef36-CDG
+            Content-Length:
+                - "153"
+            Content-Type:
+                - application/json;charset=utf-8
+            Date:
+                - Thu, 26 Mar 2026 12:54:01 GMT
+            Nel:
+                - '{"success_fraction":0.01,"report_to":"cf-nel","max_age":604800}'
+            Report-To:
+                - '{"endpoints":[{"url":"https:\/\/a.nel.cloudflare.com\/report\/v4?s=AQJsKvuHIV2QL3QAbod63rryJIMLkiSMUEWj9GIPyGtL0x2nmDjJTT2jTK5wZhmW%2BbrKrp7%2BGNHq5GAesRD%2F%2Bm%2FQb02pCiKGoMf%2BaJDy9IrNH249nETyQPjc58vdXA%2FJ"}],"group":"cf-nel","max_age":604800}'
+            Server:
+                - cloudflare
+            Server-Timing:
+                - hcid;desc="019d2a35-7d8f-7ae2-bbf6-6342ceb0b095", cfr;desc="9e264d357357ef36-CDG"
+            Set-Cookie:
+                - __cf_bm=4RLJK.6JUyiG8B7tN3fIH7ZsNHaHg7.NT4d45o29LdQ-1774529641-1.0.1.1-ci1VEnqgpmPAVxsm.Wfu6qz01Wk70GNl3tX5MYFIbnvwmVi1heY0S0T_19KVQa_TJUawOFrHHmuOhUkBMaoIFtLB9PpI0zIry.4Lfx6Pmps; path=/; expires=Thu, 26-Mar-26 13:24:01 GMT; domain=.hubapi.com; HttpOnly; Secure; SameSite=None
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains; preload
+            Vary:
+                - origin, Accept-Encoding
+            X-Content-Type-Options:
+                - nosniff
+            X-Hubspot-Correlation-Id:
+                - 019d2a35-7d8f-7ae2-bbf6-6342ceb0b095
+            X-Hubspot-Ratelimit-Daily:
+                - "250000"
+            X-Hubspot-Ratelimit-Daily-Remaining:
+                - "249999"
+            X-Hubspot-Ratelimit-Interval-Milliseconds:
+                - "10000"
+            X-Hubspot-Ratelimit-Max:
+                - "100"
+            X-Hubspot-Ratelimit-Remaining:
+                - "99"
+            X-Hubspot-Ratelimit-Secondly:
+                - "10"
+            X-Hubspot-Ratelimit-Secondly-Remaining:
+                - "9"
+        status: 400 Bad Request
+        code: 400
+        duration: 260.217958ms
+    - id: 1
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.hubapi.com
+        form:
+            limit:
+                - "100"
+        headers:
+            Accept:
+                - application/json
+        url: https://api.hubapi.com/settings/v3/users?limit=100
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"results":[{"id":"10000001","email":"john@example.com","firstName":"John","lastName":"Smith","roleIds":[],"superAdmin":true},{"id":"10000002","email":"jane@example.com","firstName":"Jane","lastName":"Doe","roleIds":[],"superAdmin":true}]}'
+        headers:
+            Access-Control-Allow-Credentials:
+                - "false"
+            Cf-Cache-Status:
+                - DYNAMIC
+            Cf-Ray:
+                - 9e264d35eb14ef36-CDG
+            Content-Type:
+                - application/json;charset=utf-8
+            Date:
+                - Thu, 26 Mar 2026 12:54:02 GMT
+            Nel:
+                - '{"success_fraction":0.01,"report_to":"cf-nel","max_age":604800}'
+            Report-To:
+                - '{"endpoints":[{"url":"https:\/\/a.nel.cloudflare.com\/report\/v4?s=80JrXPVKlK%2FOAlE%2FWZDhkwEsCPYQItel9E9qSgo%2BqSi8R5j7hnJLtXpH%2BBffnffkPQZoF5lX6qLfTBh65dNj8v1usNa%2Fz%2FMN33nOy4vjJBWW2LUwqQdb84tL5Ibm2Ji6"}],"group":"cf-nel","max_age":604800}'
+            Server:
+                - cloudflare
+            Server-Timing:
+                - hcid;desc="019d2a35-7e38-7d81-a93c-7babb6730cf2", cfr;desc="9e264d36a3eeef36-CDG"
+            Set-Cookie:
+                - __cf_bm=S9t6TJ6fbQ40SO.aEIBymxjviee3C3rcHuiTajw_cr4-1774529642-1.0.1.1-tOR6PEVlUL.2ttF4.l9IsAS11oSsHi8IFgeXmDCgipjPPY.ztKXNvEE1p26R25qVs8jfiUZbRmbRcuOEn64SLXUX6uDGgsetl2X2.JoiLmg; path=/; expires=Thu, 26-Mar-26 13:24:02 GMT; domain=.hubapi.com; HttpOnly; Secure; SameSite=None
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains; preload
+            Vary:
+                - origin, Accept-Encoding
+            X-Content-Type-Options:
+                - nosniff
+            X-Hubspot-Correlation-Id:
+                - 019d2a35-7e38-7d81-a93c-7babb6730cf2
+            X-Hubspot-Ratelimit-Daily:
+                - "250000"
+            X-Hubspot-Ratelimit-Daily-Remaining:
+                - "249998"
+            X-Hubspot-Ratelimit-Interval-Milliseconds:
+                - "10000"
+            X-Hubspot-Ratelimit-Max:
+                - "100"
+            X-Hubspot-Ratelimit-Remaining:
+                - "98"
+            X-Hubspot-Ratelimit-Secondly:
+                - "10"
+            X-Hubspot-Ratelimit-Secondly-Remaining:
+                - "9"
+        status: 200 OK
+        code: 200
+        duration: 212.332792ms

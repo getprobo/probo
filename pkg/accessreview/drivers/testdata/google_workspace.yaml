@@ -1,0 +1,59 @@
+---
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: admin.googleapis.com
+        form:
+            alt:
+                - json
+            customer:
+                - my_customer
+            maxResults:
+                - "500"
+            prettyPrint:
+                - "false"
+            projection:
+                - full
+        headers:
+            User-Agent:
+                - google-api-go-client/0.5
+            X-Goog-Api-Client:
+                - gl-go/1.26.1 gdcl/0.269.0
+        url: https://admin.googleapis.com/admin/directory/v1/users?alt=json&customer=my_customer&maxResults=500&prettyPrint=false&projection=full
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"kind":"admin#directory#users","etag":"\"1jGAF1FWZlpfhWcmHrlfmqb5ce_W0dm0ajQixlgUSrw/WNFnbiExslIFfweBCCvZF7X9P54\"","users":[{"kind":"admin#directory#user","id":"100000000000000000001","etag":"\"1jGAF1FWZlpfhWcmHrlfmqb5ce_W0dm0ajQixlgUSrw/DxQUydt7QDpnnNeKSgPDFsixDyc\"","primaryEmail":"admin@example.com","name":{"givenName":"Admin","familyName":"Acme","fullName":"Admin Acme"},"isAdmin":false,"isDelegatedAdmin":false,"lastLoginTime":"2026-03-01T21:05:54.000Z","creationTime":"2025-08-12T14:19:33.000Z","agreedToTerms":true,"suspended":false,"archived":false,"changePasswordAtNextLogin":false,"ipWhitelisted":false,"emails":[{"address":"admin@example.com","primary":true}],"languages":[{"languageCode":"fr","preference":"preferred"}],"customerId":"C00000000","orgUnitPath":"/","isMailboxSetup":true,"isEnrolledIn2Sv":false,"isEnforcedIn2Sv":false,"includeInGlobalAddressList":true,"isGuestUser":false},{"kind":"admin#directory#user","id":"100000000000000000002","etag":"\"1jGAF1FWZlpfhWcmHrlfmqb5ce_W0dm0ajQixlgUSrw/KMljSOxw0Onv2s8INJKG2EuQ2vk\"","primaryEmail":"jane@example.com","name":{"givenName":"Jane","familyName":"Doe","fullName":"Jane Doe"},"isAdmin":true,"isDelegatedAdmin":false,"lastLoginTime":"2026-03-24T16:58:48.000Z","creationTime":"2024-06-27T15:34:22.000Z","agreedToTerms":true,"suspended":false,"archived":false,"changePasswordAtNextLogin":false,"ipWhitelisted":false,"emails":[{"address":"jane.doe@mail.com","type":"work"},{"address":"jane@example.com","primary":true},{"address":"jane@alias.example.com"},{"address":"jane@alias.example.com.test-google-a.com"}],"languages":[{"languageCode":"fr","preference":"preferred"}],"aliases":["jane@alias.example.com"],"nonEditableAliases":["jane@alias.example.com.test-google-a.com"],"customerId":"C00000000","orgUnitPath":"/","isMailboxSetup":true,"isEnrolledIn2Sv":false,"isEnforcedIn2Sv":false,"includeInGlobalAddressList":true},{"kind":"admin#directory#user","id":"100000000000000000003","etag":"\"1jGAF1FWZlpfhWcmHrlfmqb5ce_W0dm0ajQixlgUSrw/q0vjbrybeHcyVw_tohnBmp7QR9o\"","primaryEmail":"john@example.com","name":{"givenName":"John","familyName":"Smith","fullName":"John Smith"},"isAdmin":true,"isDelegatedAdmin":false,"lastLoginTime":"2026-03-25T12:59:35.000Z","creationTime":"2024-06-21T08:54:20.000Z","agreedToTerms":true,"suspended":false,"archived":false,"changePasswordAtNextLogin":false,"ipWhitelisted":false,"emails":[{"address":"john.smith@mail.com","type":"home"},{"address":"john@example.com","primary":true},{"address":"john@alias.example.com"},{"address":"john@alias.example.com.test-google-a.com"}],"languages":[{"languageCode":"fr","preference":"preferred"}],"aliases":["john@alias.example.com"],"nonEditableAliases":["john@alias.example.com.test-google-a.com"],"customerId":"C00000000","orgUnitPath":"/","isMailboxSetup":true,"isEnrolledIn2Sv":false,"isEnforcedIn2Sv":false,"includeInGlobalAddressList":true},{"kind":"admin#directory#user","id":"100000000000000000004","etag":"\"1jGAF1FWZlpfhWcmHrlfmqb5ce_W0dm0ajQixlgUSrw/ds_13bLY04Q9Og1eNpsd0YjVxaY\"","primaryEmail":"alice@example.com","name":{"givenName":"Alice","familyName":"Martin","fullName":"Alice Martin"},"isAdmin":false,"isDelegatedAdmin":false,"lastLoginTime":"2026-03-23T00:49:43.000Z","creationTime":"2026-02-27T13:04:06.000Z","agreedToTerms":true,"suspended":false,"archived":false,"changePasswordAtNextLogin":false,"ipWhitelisted":false,"emails":[{"address":"alice.martin@mail.com","type":"work"},{"address":"alice@example.com","primary":true}],"languages":[{"languageCode":"fr","preference":"preferred"}],"customerId":"C00000000","orgUnitPath":"/","isMailboxSetup":true,"isEnrolledIn2Sv":false,"isEnforcedIn2Sv":false,"includeInGlobalAddressList":true,"isGuestUser":false},{"kind":"admin#directory#user","id":"100000000000000000005","etag":"\"1jGAF1FWZlpfhWcmHrlfmqb5ce_W0dm0ajQixlgUSrw/1iEamJfIqzBoK68_qGSuZBuENO4\"","primaryEmail":"bob@example.com","name":{"givenName":"Bob","familyName":"Wilson","fullName":"Bob Wilson"},"isAdmin":false,"isDelegatedAdmin":false,"lastLoginTime":"2025-10-30T13:22:29.000Z","creationTime":"2025-09-01T13:31:09.000Z","agreedToTerms":true,"suspended":false,"archived":true,"changePasswordAtNextLogin":false,"ipWhitelisted":false,"emails":[{"address":"bob.wilson@mail.com","type":"work"},{"address":"bob@example.com","primary":true}],"languages":[{"languageCode":"fr","preference":"preferred"}],"customerId":"C00000000","orgUnitPath":"/","isMailboxSetup":true,"isEnrolledIn2Sv":false,"isEnforcedIn2Sv":false,"includeInGlobalAddressList":true,"isGuestUser":false},{"kind":"admin#directory#user","id":"100000000000000000006","etag":"\"1jGAF1FWZlpfhWcmHrlfmqb5ce_W0dm0ajQixlgUSrw/B3juSMM35EG9w667pEIJNKSZpuc\"","primaryEmail":"carol@example.com","name":{"givenName":"Carol","familyName":"Davis","fullName":"Carol Davis"},"isAdmin":false,"isDelegatedAdmin":false,"lastLoginTime":"2026-03-20T13:20:46.000Z","creationTime":"2024-12-30T22:47:49.000Z","agreedToTerms":true,"suspended":false,"archived":false,"changePasswordAtNextLogin":false,"ipWhitelisted":false,"emails":[{"address":"carol.davis@mail.com","type":"work"},{"address":"carol@example.com","primary":true}],"languages":[{"languageCode":"fr","preference":"preferred"}],"customerId":"C00000000","orgUnitPath":"/","isMailboxSetup":true,"isEnrolledIn2Sv":false,"isEnforcedIn2Sv":false,"includeInGlobalAddressList":true,"recoveryEmail":"carol.davis@mail.com","recoveryPhone":"+10000000000"},{"kind":"admin#directory#user","id":"100000000000000000007","etag":"\"1jGAF1FWZlpfhWcmHrlfmqb5ce_W0dm0ajQixlgUSrw/Ks9OEK3oCK5B8YiH3q-5OMRaUe4\"","primaryEmail":"toolsadmin@example.com","name":{"givenName":"Team","familyName":"Admin","fullName":"Team Admin"},"isAdmin":true,"isDelegatedAdmin":false,"lastLoginTime":"2025-03-10T10:10:22.000Z","creationTime":"2024-06-21T08:31:08.000Z","agreedToTerms":true,"suspended":false,"archived":false,"changePasswordAtNextLogin":false,"ipWhitelisted":false,"emails":[{"address":"toolsadmin@example.com","primary":true},{"address":"toolsadmin@alias.example.com"},{"address":"toolsadmin@alias.example.com.test-google-a.com"}],"languages":[{"languageCode":"fr","preference":"preferred"}],"aliases":["toolsadmin@alias.example.com"],"nonEditableAliases":["toolsadmin@alias.example.com.test-google-a.com"],"customerId":"C00000000","orgUnitPath":"/","isMailboxSetup":true,"isEnrolledIn2Sv":false,"isEnforcedIn2Sv":false,"includeInGlobalAddressList":true,"recoveryEmail":"admin@example.com"}]}'
+        headers:
+            Alt-Svc:
+                - h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
+            Content-Type:
+                - application/json; charset=UTF-8
+            Date:
+                - Thu, 26 Mar 2026 13:14:54 GMT
+            Etag:
+                - '"1jGAF1FWZlpfhWcmHrlfmqb5ce_W0dm0ajQixlgUSrw/WNFnbiExslIFfweBCCvZF7X9P54"'
+            Server:
+                - ESF
+            Vary:
+                - Origin
+                - X-Origin
+                - Referer
+            X-Content-Type-Options:
+                - nosniff
+            X-Frame-Options:
+                - SAMEORIGIN
+            X-Xss-Protection:
+                - "0"
+        status: 200 OK
+        code: 200
+        duration: 541.406625ms
