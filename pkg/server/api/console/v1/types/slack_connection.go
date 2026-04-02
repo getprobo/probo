@@ -46,14 +46,13 @@ func NewSlackConnection(c *coredata.Connector) *SlackConnection {
 		UpdatedAt: c.UpdatedAt,
 	}
 
-	// Extract channel information from settings
-	if len(c.Settings) > 0 {
-		if channel, ok := c.Settings["channel"].(string); ok && channel != "" {
-			conn.Channel = &channel
-		}
-		if channelID, ok := c.Settings["channel_id"].(string); ok && channelID != "" {
-			conn.ChannelID = &channelID
-		}
+	// Extract channel information from typed settings
+	settings, _ := c.SlackSettings()
+	if settings.Channel != "" {
+		conn.Channel = &settings.Channel
+	}
+	if settings.ChannelID != "" {
+		conn.ChannelID = &settings.ChannelID
 	}
 
 	return conn

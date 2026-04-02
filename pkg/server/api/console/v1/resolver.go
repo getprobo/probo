@@ -39,6 +39,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"go.gearno.de/kit/httpserver"
 	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/accessreview"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/coredata"
@@ -61,7 +62,9 @@ type (
 		probo             *probo.Service
 		iam               *iam.Service
 		esign             *esign.Service
+		accessReview      *accessreview.Service
 		mailman           *mailman.Service
+		connectorRegistry *connector.ConnectorRegistry
 		logger            *log.Logger
 		customDomainCname string
 	}
@@ -72,6 +75,7 @@ func NewMux(
 	proboSvc *probo.Service,
 	iamSvc *iam.Service,
 	esignSvc *esign.Service,
+	accessReviewSvc *accessreview.Service,
 	mailmanSvc *mailman.Service,
 	cookieConfig securecookie.Config,
 	tokenSecret string,
@@ -83,7 +87,7 @@ func NewMux(
 
 	safeRedirect := saferedirect.New(saferedirect.StaticHosts(baseURL.Host()))
 
-	graphqlHandler := NewGraphQLHandler(iamSvc, proboSvc, esignSvc, mailmanSvc, customDomainCname, logger)
+	graphqlHandler := NewGraphQLHandler(iamSvc, proboSvc, esignSvc, accessReviewSvc, mailmanSvc, connectorRegistry, customDomainCname, logger)
 
 	r.Group(func(r chi.Router) {
 		r.Use(authn.NewSessionMiddleware(iamSvc, cookieConfig))
@@ -95,8 +99,13 @@ func NewMux(
 
 		r.Get("/connectors/initiate", func(w http.ResponseWriter, r *http.Request) {
 			provider := r.URL.Query().Get("provider")
-			if provider != "SLACK" && provider != "GOOGLE_WORKSPACE" {
-				httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("unsupported provider"))
+			if provider == "" {
+				httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("missing provider parameter"))
+				return
+			}
+
+			if _, err := connectorRegistry.Get(provider); err != nil {
+				httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("unsupported provider: %q", provider))
 				return
 			}
 
@@ -149,51 +158,69 @@ func NewMux(
 		})
 
 		r.Get("/connectors/complete", func(w http.ResponseWriter, r *http.Request) {
-			provider := r.URL.Query().Get("provider")
-			if provider == "" {
-				httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("missing provider parameter"))
-				return
-			}
-
-			var connectorProvider coredata.ConnectorProvider
-			switch provider {
-			case "SLACK":
-				connectorProvider = coredata.ConnectorProviderSlack
-			case "GOOGLE_WORKSPACE":
-				connectorProvider = coredata.ConnectorProviderGoogleWorkspace
-			default:
-				httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("unsupported provider"))
-				return
-			}
-
 			stateToken := r.URL.Query().Get("state")
 			if stateToken == "" {
 				httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("missing state parameter"))
 				return
 			}
 
-			connection, organizationID, continueURL, err := connectorRegistry.Complete(r.Context(), provider, r)
+			provider, err := connector.ExtractProviderFromState(stateToken)
+			if err != nil {
+				httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("cannot extract provider from state: %w", err))
+				return
+			}
+
+			var connectorProvider coredata.ConnectorProvider
+			if err := connectorProvider.Scan(provider); err != nil {
+				httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("unsupported provider: %q", provider))
+				return
+			}
+
+			connection, state, err := connectorRegistry.CompleteWithState(r.Context(), provider, r)
 			if err != nil {
 				panic(fmt.Errorf("cannot complete connector: %w", err))
 			}
 
+			organizationID, err := gid.ParseGID(state.OrganizationID)
+			if err != nil {
+				httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("cannot parse organization ID from state: %w", err))
+				return
+			}
+
 			svc := proboSvc.WithTenant(organizationID.TenantID())
 
-			connector, err := svc.Connectors.Create(
-				r.Context(),
-				probo.CreateConnectorRequest{
-					OrganizationID: *organizationID,
-					Provider:       connectorProvider,
-					Protocol:       coredata.ConnectorProtocol(connection.Type()),
-					Connection:     connection,
-				},
-			)
-			if err != nil {
-				panic(fmt.Errorf("cannot create or update connector: %w", err))
+			var cnnctr *coredata.Connector
+
+			// If a connector_id was passed in the state, this is a
+			// reconnection — update the existing connector's token.
+			if state.ConnectorID != "" {
+				connectorID, err := gid.ParseGID(state.ConnectorID)
+				if err != nil {
+					httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("cannot parse connector ID from state: %w", err))
+					return
+				}
+
+				cnnctr, err = svc.Connectors.Reconnect(r.Context(), connectorID, connection)
+				if err != nil {
+					panic(fmt.Errorf("cannot reconnect connector: %w", err))
+				}
+			} else {
+				cnnctr, err = svc.Connectors.Create(
+					r.Context(),
+					probo.CreateConnectorRequest{
+						OrganizationID: organizationID,
+						Provider:       connectorProvider,
+						Protocol:       coredata.ConnectorProtocol(connection.Type()),
+						Connection:     connection,
+					},
+				)
+				if err != nil {
+					panic(fmt.Errorf("cannot create connector: %w", err))
+				}
 			}
 
 			// Append connector_id to the redirect URL so frontend can create the bridge
-			redirectURL := continueURL
+			redirectURL := state.ContinueURL
 			if redirectURL == "" {
 				redirectURL = baseURL.WithPath("/organizations/" + organizationID.String()).MustString()
 			}
@@ -204,7 +231,8 @@ func NewMux(
 				parsedURL, _ = url.Parse(baseURL.WithPath("/organizations/" + organizationID.String()).MustString())
 			}
 			q := parsedURL.Query()
-			q.Set("connector_id", connector.ID.String())
+			q.Set("connector_id", cnnctr.ID.String())
+			q.Set("provider", string(connectorProvider))
 			parsedURL.RawQuery = q.Encode()
 
 			safeRedirect.Redirect(w, r, parsedURL.String(), "/", http.StatusSeeOther)
