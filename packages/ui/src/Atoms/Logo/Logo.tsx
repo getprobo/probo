@@ -1,12 +1,15 @@
 import clsx from "clsx";
 
+import { useTheme } from "../ThemeProvider/ThemeProvider";
+
 type Props = {
   className?: string;
   withPicto?: boolean;
 };
 
 export function Logo({ className, withPicto }: Props) {
-  const src = "/logos/govrly.png";
+  const { resolvedTheme } = useTheme();
+  const src = resolvedTheme === "dark" ? "/logos/govrly-white.png" : "/logos/govrly.png";
   const alt = "Govrly";
 
   if (withPicto) {
