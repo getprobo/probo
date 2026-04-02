@@ -22,6 +22,7 @@ import {
   IconFire3,
   IconGroup1,
   IconInboxEmpty,
+  IconKey,
   IconListStack,
   IconLock,
   IconMagnifyingGlass,
@@ -65,6 +66,9 @@ const fragment = graphql`
         canUpdateOrganization: permission(action: "iam:organization:update")
         canListStatesOfApplicability: permission(
             action: "core:state-of-applicability:list"
+        )
+        canListAccessReviewCampaigns: permission(
+            action: "core:access-review-campaign:list"
         )
     }
 `;
@@ -198,6 +202,13 @@ export function Sidebar(props: { fKey: SidebarFragment$key }) {
           label={__("Snapshots")}
           icon={IconClock}
           to={`${prefix}/snapshots`}
+        />
+      )}
+      {organization.canListAccessReviewCampaigns && (
+        <SidebarItem
+          label={__("Access Reviews")}
+          icon={IconKey}
+          to={`${prefix}/access-reviews`}
         />
       )}
       {organization.canGetTrustCenter && (

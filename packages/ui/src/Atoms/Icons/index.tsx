@@ -96,6 +96,7 @@ export { IconChevronUp } from "./IconChevronUp";
 export { IconBlock } from "./IconBlock";
 export { IconChevronDown } from "./IconChevronDown";
 export { IconPageCross } from "./IconPageCross";
+export { IconRobot } from "./IconRobot";
 export { IconRotateCw } from "./IconRotateCw";
 export { IconPin } from "./IconPin";
 export { IconMinusLarge } from "./IconMinusLarge";

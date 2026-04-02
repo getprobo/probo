@@ -35,7 +35,7 @@ type State = {
   message: string | null;
   variant?: ComponentProps<typeof Button>["variant"];
   label?: string;
-  onConfirm: () => Promise<unknown>;
+  onConfirm: () => void | Promise<unknown>;
 };
 
 const useConfirmStore = create(

@@ -15,9 +15,11 @@
 import * as ScrollArea from "@radix-ui/react-scroll-area";
 import {
   Content,
+  Group,
   Icon,
   Item,
   ItemText,
+  Label,
   Portal,
   Root,
   Trigger,
@@ -222,5 +224,20 @@ export function Option({ children, ...props }: ComponentProps<typeof Item>) {
         </span>
       </ItemText>
     </Item>
+  );
+}
+
+export function SelectGroup({ children, ...props }: ComponentProps<typeof Group>) {
+  return <Group {...props}>{children}</Group>;
+}
+
+export function SelectLabel({ children, ...props }: ComponentProps<typeof Label>) {
+  return (
+    <Label
+      {...props}
+      className="px-[10px] py-1 text-xs font-semibold text-txt-tertiary uppercase tracking-wider"
+    >
+      {children}
+    </Label>
   );
 }

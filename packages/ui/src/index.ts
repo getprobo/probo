@@ -40,7 +40,7 @@ export { Avatar } from "./Atoms/Avatar/Avatar";
 export { Field } from "./Molecules/Field/Field";
 export { Input } from "./Atoms/Input/Input";
 export { Textarea } from "./Atoms/Textarea/Textarea";
-export { Option, Select } from "./Atoms/Select/Select";
+export { Option, Select, SelectGroup, SelectLabel } from "./Atoms/Select/Select";
 export { Label } from "./Atoms/Label/Label";
 export { PropertyRow } from "./Atoms/PropertyRow/PropertyRow";
 export { Table, Tbody, Td, Th, Thead, Tr, TrButton } from "./Atoms/Table/Table";

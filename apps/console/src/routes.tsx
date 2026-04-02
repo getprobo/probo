@@ -31,6 +31,7 @@ import { ViewerLayoutLoading } from "./pages/iam/memberships/ViewerLayoutLoading
 import { peopleRoutes } from "./pages/iam/organizations/people/routes";
 import { compliancePageRoutes } from "./pages/organizations/compliance-page/routes";
 import { CurrentUser } from "./providers/CurrentUser";
+import { accessReviewRoutes } from "./routes/accessReviewRoutes";
 import { assetRoutes } from "./routes/assetRoutes";
 import { auditRoutes } from "./routes/auditRoutes";
 import { contextRoutes } from "./routes/contextRoutes";
@@ -288,6 +289,7 @@ const routes = [
           ...rightsRequestRoutes,
           ...processingActivityRoutes,
           ...statesOfApplicabilityRoutes,
+          ...accessReviewRoutes,
           ...compliancePageRoutes,
           ...snapshotsRoutes,
           {
