@@ -25,15 +25,28 @@ import {
   Thead,
   Tr,
 } from "@probo/ui";
-import { graphql, usePaginationFragment } from "react-relay";
-import { useOutletContext } from "react-router";
+import type { PreloadedQuery } from "react-relay";
+import { graphql, usePaginationFragment, usePreloadedQuery } from "react-relay";
 
 import type { AccessReviewCampaignsTabFragment$key } from "#/__generated__/core/AccessReviewCampaignsTabFragment.graphql";
 import type { AccessReviewCampaignsTabPaginationQuery } from "#/__generated__/core/AccessReviewCampaignsTabPaginationQuery.graphql";
+import type { AccessReviewCampaignsTabQuery } from "#/__generated__/core/AccessReviewCampaignsTabQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import { statusBadgeVariant, statusLabel } from "../_components/accessReviewHelpers";
 import { CreateAccessReviewCampaignDialog } from "../dialogs/CreateAccessReviewCampaignDialog";
+
+export const accessReviewCampaignsTabQuery = graphql`
+  query AccessReviewCampaignsTabQuery($organizationId: ID!) {
+    organization: node(id: $organizationId) {
+      __typename
+      ... on Organization {
+        canCreateCampaign: permission(action: "core:access-review-campaign:create")
+        ...AccessReviewCampaignsTabFragment
+      }
+    }
+  }
+`;
 
 const campaignsFragment = graphql`
   fragment AccessReviewCampaignsTabFragment on Organization
@@ -58,21 +71,24 @@ const campaignsFragment = graphql`
           name
           status
           createdAt
-          startedAt
-          completedAt
         }
       }
     }
   }
 `;
 
-export default function AccessReviewCampaignsTab() {
+type Props = {
+  queryRef: PreloadedQuery<AccessReviewCampaignsTabQuery>;
+};
+
+export default function AccessReviewCampaignsTab({ queryRef }: Props) {
   const { __, dateFormat } = useTranslate();
   const organizationId = useOrganizationId();
-  const { organizationRef, canCreateCampaign } = useOutletContext<{
-    organizationRef: AccessReviewCampaignsTabFragment$key;
-    canCreateCampaign: boolean;
-  }>();
+
+  const { organization } = usePreloadedQuery(accessReviewCampaignsTabQuery, queryRef);
+  if (organization.__typename !== "Organization") {
+    throw new Error("Organization not found");
+  }
 
   const {
     data: { accessReviewCampaigns },
@@ -82,12 +98,12 @@ export default function AccessReviewCampaignsTab() {
   } = usePaginationFragment<
     AccessReviewCampaignsTabPaginationQuery,
     AccessReviewCampaignsTabFragment$key
-  >(campaignsFragment, organizationRef);
+  >(campaignsFragment, organization);
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-end">
-        {canCreateCampaign && (
+        {organization.canCreateCampaign && (
           <CreateAccessReviewCampaignDialog
             organizationId={organizationId}
             connectionId={accessReviewCampaigns.__id}

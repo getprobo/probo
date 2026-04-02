@@ -21,54 +21,15 @@ import {
   TabLink,
   Tabs,
 } from "@probo/ui";
-import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { Outlet } from "react-router";
-import { graphql } from "relay-runtime";
 
-import type { AccessReviewLayoutQuery } from "#/__generated__/core/AccessReviewLayoutQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
-export const accessReviewLayoutQuery = graphql`
-  query AccessReviewLayoutQuery($organizationId: ID!) {
-    organization: node(id: $organizationId) {
-      __typename
-      ... on Organization {
-        id
-        canCreateSource: permission(action: "core:access-source:create")
-        canCreateCampaign: permission(action: "core:access-review-campaign:create")
-        connectorProviderInfos {
-          provider
-          displayName
-          oauthConfigured
-          apiKeySupported
-          clientCredentialsSupported
-          extraSettings {
-            key
-            label
-            required
-          }
-        }
-        ...AccessReviewCampaignsTabFragment
-        ...AccessReviewSourcesTabFragment
-      }
-    }
-  }
-`;
-
-export default function AccessReviewLayout({
-  queryRef,
-}: {
-  queryRef: PreloadedQuery<AccessReviewLayoutQuery>;
-}) {
+export default function AccessReviewLayout() {
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
 
   usePageTitle(__("Access Reviews"));
-
-  const { organization } = usePreloadedQuery(accessReviewLayoutQuery, queryRef);
-  if (organization.__typename !== "Organization") {
-    throw new Error("Organization not found");
-  }
 
   return (
     <div className="space-y-6">
@@ -90,13 +51,7 @@ export default function AccessReviewLayout({
         </TabLink>
       </Tabs>
 
-      <Outlet context={{
-        organizationRef: organization,
-        canCreateSource: organization.canCreateSource,
-        canCreateCampaign: organization.canCreateCampaign,
-        connectorProviderInfos: organization.connectorProviderInfos,
-      }}
-      />
+      <Outlet />
     </div>
   );
 }

@@ -15,14 +15,14 @@ export const accessReviewRoutes = [
         index: true,
         Fallback: PageSkeleton,
         Component: lazy(
-          () => import("#/pages/organizations/access-reviews/campaigns/AccessReviewCampaignsTab"),
+          () => import("#/pages/organizations/access-reviews/campaigns/AccessReviewCampaignsTabLoader"),
         ),
       },
       {
         path: "sources",
         Fallback: PageSkeleton,
         Component: lazy(
-          () => import("#/pages/organizations/access-reviews/sources/AccessReviewSourcesTab"),
+          () => import("#/pages/organizations/access-reviews/sources/AccessReviewSourcesTabLoader"),
         ),
       },
     ],

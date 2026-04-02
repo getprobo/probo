@@ -131,10 +131,6 @@ export const campaignDetailPageQuery = graphql`
         id
         name
         status
-        createdAt
-        startedAt
-        completedAt
-        pendingEntryCount
         scopeSources {
           id
           source {

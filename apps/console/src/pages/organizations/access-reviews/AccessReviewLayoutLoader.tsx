@@ -12,30 +12,8 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { Suspense, useEffect } from "react";
-import { useQueryLoader } from "react-relay";
-
-import type { AccessReviewLayoutQuery } from "#/__generated__/core/AccessReviewLayoutQuery.graphql";
-import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
-import { useOrganizationId } from "#/hooks/useOrganizationId";
-
-import AccessReviewLayout, { accessReviewLayoutQuery } from "./AccessReviewLayout";
+import AccessReviewLayout from "./AccessReviewLayout";
 
 export default function AccessReviewLayoutLoader() {
-  const organizationId = useOrganizationId();
-  const [queryRef, loadQuery] = useQueryLoader<AccessReviewLayoutQuery>(accessReviewLayoutQuery);
-
-  useEffect(() => {
-    if (!queryRef) {
-      loadQuery({ organizationId });
-    }
-  }, [loadQuery, organizationId]);
-
-  if (!queryRef) return <PageSkeleton />;
-
-  return (
-    <Suspense fallback={<PageSkeleton />}>
-      <AccessReviewLayout queryRef={queryRef} />
-    </Suspense>
-  );
+  return <AccessReviewLayout />;
 }

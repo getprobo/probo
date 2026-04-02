@@ -26,17 +26,35 @@ import {
   useToast,
 } from "@probo/ui";
 import { useEffect, useMemo, useRef } from "react";
-import { graphql, useMutation, usePaginationFragment } from "react-relay";
-import { useOutletContext, useSearchParams } from "react-router";
+import type { PreloadedQuery } from "react-relay";
+import { graphql, useFragment, useMutation, usePaginationFragment, usePreloadedQuery } from "react-relay";
+import { useSearchParams } from "react-router";
 
 import type { AccessReviewSourcesTabFragment$key } from "#/__generated__/core/AccessReviewSourcesTabFragment.graphql";
 import type { AccessReviewSourcesTabPaginationQuery } from "#/__generated__/core/AccessReviewSourcesTabPaginationQuery.graphql";
+import type { AccessReviewSourcesTabQuery } from "#/__generated__/core/AccessReviewSourcesTabQuery.graphql";
+import type { AddAccessSourceDialogConnectorProviderInfoFragment$key } from "#/__generated__/core/AddAccessSourceDialogConnectorProviderInfoFragment.graphql";
 import type { CreateAccessSourceDialogMutation } from "#/__generated__/core/CreateAccessSourceDialogMutation.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import { AccessSourceRow } from "../_components/AccessSourceRow";
-import { AddAccessSourceDialog, type ProviderInfo } from "../dialogs/AddAccessSourceDialog";
+import { AddAccessSourceDialog, addAccessSourceDialogConnectorProviderInfoFragment } from "../dialogs/AddAccessSourceDialog";
 import { createAccessSourceMutation } from "../dialogs/CreateAccessSourceDialog";
+
+export const accessReviewSourcesTabQuery = graphql`
+  query AccessReviewSourcesTabQuery($organizationId: ID!) {
+    organization: node(id: $organizationId) {
+      __typename
+      ... on Organization {
+        canCreateSource: permission(action: "core:access-source:create")
+        connectorProviderInfos {
+          ...AddAccessSourceDialogConnectorProviderInfoFragment
+        }
+        ...AccessReviewSourcesTabFragment
+      }
+    }
+  }
+`;
 
 const sourcesFragment = graphql`
   fragment AccessReviewSourcesTabFragment on Organization
@@ -62,7 +80,6 @@ const sourcesFragment = graphql`
       edges {
         node {
           id
-          name
           connectorId
           connector {
             provider
@@ -74,17 +91,26 @@ const sourcesFragment = graphql`
   }
 `;
 
-export default function AccessReviewSourcesTab() {
+type Props = {
+  queryRef: PreloadedQuery<AccessReviewSourcesTabQuery>;
+};
+
+export default function AccessReviewSourcesTab({ queryRef }: Props) {
   const { __ } = useTranslate();
   const { toast } = useToast();
   const organizationId = useOrganizationId();
   const [searchParams, setSearchParams] = useSearchParams();
   const processedConnectorIdRef = useRef<string | null>(null);
-  const { organizationRef, canCreateSource, connectorProviderInfos } = useOutletContext<{
-    organizationRef: AccessReviewSourcesTabFragment$key;
-    canCreateSource: boolean;
-    connectorProviderInfos: ReadonlyArray<ProviderInfo>;
-  }>();
+
+  const { organization } = usePreloadedQuery(accessReviewSourcesTabQuery, queryRef);
+  if (organization.__typename !== "Organization") {
+    throw new Error("Organization not found");
+  }
+
+  const connectorProviderInfos = useFragment<AddAccessSourceDialogConnectorProviderInfoFragment$key>(
+    addAccessSourceDialogConnectorProviderInfoFragment,
+    organization.connectorProviderInfos,
+  );
 
   const {
     data: { accessSources },
@@ -94,7 +120,7 @@ export default function AccessReviewSourcesTab() {
   } = usePaginationFragment<
     AccessReviewSourcesTabPaginationQuery,
     AccessReviewSourcesTabFragment$key
-  >(sourcesFragment, organizationRef);
+  >(sourcesFragment, organization);
 
   const existingSourceProviders = useMemo(
     () =>
@@ -211,7 +237,7 @@ export default function AccessReviewSourcesTab() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-end">
-        {canCreateSource && (
+        {organization.canCreateSource && (
           <AddAccessSourceDialog
             organizationId={organizationId}
             connectionId={accessSources.__id}

@@ -37,19 +37,29 @@ import { useMutation } from "react-relay";
 import { Link } from "react-router";
 import { graphql } from "relay-runtime";
 
-import type { AccessReviewLayoutQuery$data } from "#/__generated__/core/AccessReviewLayoutQuery.graphql";
+import type { AddAccessSourceDialogConnectorProviderInfoFragment$data } from "#/__generated__/core/AddAccessSourceDialogConnectorProviderInfoFragment.graphql";
 import type { AddAccessSourceDialogCreateAPIKeyConnectorMutation } from "#/__generated__/core/AddAccessSourceDialogCreateAPIKeyConnectorMutation.graphql";
 import type { AddAccessSourceDialogCreateClientCredentialsConnectorMutation } from "#/__generated__/core/AddAccessSourceDialogCreateClientCredentialsConnectorMutation.graphql";
 import type { CreateAccessSourceDialogMutation } from "#/__generated__/core/CreateAccessSourceDialogMutation.graphql";
 
 import { createAccessSourceMutation } from "./CreateAccessSourceDialog";
 
-type OrganizationData = Extract<
-  AccessReviewLayoutQuery$data["organization"],
-  { readonly __typename: "Organization" }
->;
+export const addAccessSourceDialogConnectorProviderInfoFragment = graphql`
+  fragment AddAccessSourceDialogConnectorProviderInfoFragment on ConnectorProviderInfo @relay(plural: true) {
+    provider
+    displayName
+    oauthConfigured
+    apiKeySupported
+    clientCredentialsSupported
+    extraSettings {
+      key
+      label
+      required
+    }
+  }
+`;
 
-export type ProviderInfo = OrganizationData["connectorProviderInfos"][number];
+export type ProviderInfo = AddAccessSourceDialogConnectorProviderInfoFragment$data[number];
 
 type Props = {
   children: ReactNode;
