@@ -12,17 +12,32 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package agent
+package vetting
 
-import "go.probo.inc/probo/pkg/llm"
+import (
+	_ "embed"
 
-type ModelSettings struct {
-	Temperature       *float64
-	TopP              *float64
-	FrequencyPenalty  *float64
-	PresencePenalty   *float64
-	MaxTokens         *int
-	ToolChoice        *llm.ToolChoice
-	ParallelToolCalls *bool
-	Thinking          *llm.ThinkingConfig
+	"go.probo.inc/probo/pkg/agent"
+	"go.probo.inc/probo/pkg/llm"
+)
+
+//go:embed security_prompt.txt
+var securitySystemPrompt string
+
+func newSecurityAssessorAgent(
+	client *llm.Client,
+	model string,
+	securityTools []agent.Tool,
+	extraOpts ...agent.Option,
+) *agent.Agent {
+	opts := []agent.Option{
+		agent.WithInstructions(securitySystemPrompt),
+		agent.WithModel(model),
+		agent.WithTools(securityTools...),
+		agent.WithMaxTurns(8),
+		agent.WithParallelToolCalls(true),
+	}
+	opts = append(opts, extraOpts...)
+
+	return agent.New("security_assessor", client, opts...)
 }

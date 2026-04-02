@@ -36,6 +36,7 @@ type (
 		model              string
 		modelSettings      ModelSettings
 		tools              []Tool
+		toolsets           []Toolset
 		handoffs           []*Handoff
 		mcpServers         []*MCPServer
 		maxTurns           int
@@ -94,6 +95,9 @@ func (a *Agent) Clone(opts ...Option) *Agent {
 
 	cp.tools = make([]Tool, len(a.tools))
 	copy(cp.tools, a.tools)
+
+	cp.toolsets = make([]Toolset, len(a.toolsets))
+	copy(cp.toolsets, a.toolsets)
 
 	cp.handoffs = make([]*Handoff, len(a.handoffs))
 	copy(cp.handoffs, a.handoffs)
@@ -172,6 +176,12 @@ func WithModelSettings(s ModelSettings) Option {
 func WithTools(tools ...Tool) Option {
 	return func(a *Agent) {
 		a.tools = append(a.tools, tools...)
+	}
+}
+
+func WithToolsets(toolsets ...Toolset) Option {
+	return func(a *Agent) {
+		a.toolsets = append(a.toolsets, toolsets...)
 	}
 }
 
@@ -255,6 +265,15 @@ func WithParallelToolCalls(enabled bool) Option {
 	}
 }
 
+func WithThinking(budgetTokens int) Option {
+	return func(a *Agent) {
+		a.modelSettings.Thinking = &llm.ThinkingConfig{
+			Enabled:      true,
+			BudgetTokens: budgetTokens,
+		}
+	}
+}
+
 func WithLogger(l *log.Logger) Option {
 	return func(a *Agent) {
 		a.logger = l
@@ -332,6 +351,16 @@ func (a *Agent) resolveTools(ctx context.Context) ([]ToolDescriptor, map[string]
 
 	for _, t := range a.tools {
 		all = append(all, t)
+	}
+
+	for _, ts := range a.toolsets {
+		tsTools, err := ts.Tools()
+		if err != nil {
+			return nil, nil, fmt.Errorf("cannot resolve toolset: %w", err)
+		}
+		for _, t := range tsTools {
+			all = append(all, t)
+		}
 	}
 
 	for _, h := range a.handoffs {

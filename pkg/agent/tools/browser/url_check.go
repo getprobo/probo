@@ -12,17 +12,22 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package agent
+package browser
 
-import "go.probo.inc/probo/pkg/llm"
+import (
+	"go.probo.inc/probo/pkg/agent/tools/internal/netcheck"
+)
 
-type ModelSettings struct {
-	Temperature       *float64
-	TopP              *float64
-	FrequencyPenalty  *float64
-	PresencePenalty   *float64
-	MaxTokens         *int
-	ToolChoice        *llm.ToolChoice
-	ParallelToolCalls *bool
-	Thinking          *llm.ThinkingConfig
+// validatePublicURL checks that a URL uses an http(s) scheme and that its
+// host does not resolve to a private, loopback, or link-local IP address.
+// This prevents SSRF attacks where the LLM could be tricked into requesting
+// internal network endpoints.
+func validatePublicURL(rawURL string) error {
+	return netcheck.ValidatePublicURL(rawURL)
+}
+
+// validatePublicDomain checks that a domain does not resolve to a private,
+// loopback, or link-local IP address.
+func validatePublicDomain(domain string) error {
+	return netcheck.ValidatePublicDomain(domain)
 }
