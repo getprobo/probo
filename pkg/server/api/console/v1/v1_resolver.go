@@ -4571,7 +4571,6 @@ func (r *mutationResolver) CreateTask(ctx context.Context, input types.CreateTas
 			OrganizationID: input.OrganizationID,
 			Name:           input.Name,
 			Description:    input.Description,
-			Priority:       input.Priority,
 			TimeEstimate:   input.TimeEstimate,
 			AssignedToID:   input.AssignedToID,
 			Deadline:       input.Deadline,
@@ -4610,7 +4609,6 @@ func (r *mutationResolver) UpdateTask(ctx context.Context, input types.UpdateTas
 			Description:  gqlutils.UnwrapOmittable(input.Description),
 			State:        input.State,
 			Priority:     input.Priority,
-			Rank:         input.Rank,
 			TimeEstimate: gqlutils.UnwrapOmittable(input.TimeEstimate),
 			Deadline:     gqlutils.UnwrapOmittable(input.Deadline),
 			AssignedToID: gqlutils.UnwrapOmittable(input.AssignedToID),
@@ -6403,11 +6401,12 @@ func (r *mutationResolver) AssessVendor(ctx context.Context, input types.AssessV
 
 	prb := r.ProboService(ctx, input.ID.TenantID())
 
-	vendor, err := prb.Vendors.Assess(
+	result, err := prb.Vendors.Assess(
 		ctx,
 		probo.AssessVendorRequest{
 			ID:         input.ID,
 			WebsiteURL: input.WebsiteURL,
+			Procedure:  input.Procedure,
 		},
 	)
 	if err != nil {
@@ -6415,8 +6414,19 @@ func (r *mutationResolver) AssessVendor(ctx context.Context, input types.AssessV
 		return nil, gqlutils.Internal(ctx)
 	}
 
+	subprocessors := make([]*types.VendorSubprocessor, len(result.Subprocessors))
+	for i, sp := range result.Subprocessors {
+		subprocessors[i] = &types.VendorSubprocessor{
+			Name:    sp.Name,
+			Country: sp.Country,
+			Purpose: sp.Purpose,
+		}
+	}
+
 	return &types.AssessVendorPayload{
-		Vendor: types.NewVendor(vendor),
+		Vendor:        types.NewVendor(result.Vendor),
+		Report:        result.Report,
+		Subprocessors: subprocessors,
 	}, nil
 }
 

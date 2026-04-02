@@ -23,10 +23,7 @@ import {
   DurationPicker,
   Input,
   Label,
-  Option,
-  PriorityLevel,
   PropertyRow,
-  Select,
   Textarea,
   useDialogRef,
 } from "@probo/ui";
@@ -50,7 +47,6 @@ const taskFragment = graphql`
     id
     description
     name
-    priority
     timeEstimate
     deadline
     assignedTo {
@@ -91,12 +87,9 @@ export const taskUpdateMutation = graphql`
   }
 `;
 
-export const taskPriorities = ["URGENT", "HIGH", "MEDIUM", "LOW"] as const;
-
 const createTaskSchema = z.object({
   name: z.string().min(1),
   description: z.string().optional().nullable(),
-  priority: z.enum(taskPriorities),
   timeEstimate: z.string().optional().nullable(),
   assignedToId: z.string().optional().nullable(),
   measureId: z.preprocess(
@@ -109,7 +102,6 @@ const createTaskSchema = z.object({
 const updateTaskSchema = z.object({
   name: z.string().min(1),
   description: z.string().optional().nullable(),
-  priority: z.enum(taskPriorities),
   timeEstimate: z.string().optional().nullable(),
   assignedToId: z.preprocess(
     val => (val === "" || val == null ? null : val),
@@ -128,11 +120,10 @@ type Props = {
   connection?: string;
   ref?: DialogRef;
   measureId?: string;
-  onCompleted?: () => void;
 };
 
 export default function TaskFormDialog(props: Props) {
-  const { children, connection, ref, task: taskKey, measureId, onCompleted } = props;
+  const { children, connection, ref, task: taskKey, measureId } = props;
   const { __ } = useTranslate();
   const newRef = useDialogRef();
   const dialogRef = ref ?? newRef;
@@ -154,7 +145,6 @@ export default function TaskFormDialog(props: Props) {
       defaultValues: {
         name: task?.name ?? "",
         description: task?.description ?? "",
-        priority: task?.priority ?? "MEDIUM",
         timeEstimate: task?.timeEstimate ?? "",
         assignedToId: task?.assignedTo?.id ?? "",
         measureId: task?.measure?.id ?? measureId ?? "",
@@ -170,15 +160,11 @@ export default function TaskFormDialog(props: Props) {
             taskId: task.id,
             name: data.name,
             description: data.description || null,
-            priority: data.priority,
             timeEstimate: data.timeEstimate || null,
             deadline: formatDatetime(data.deadline) ?? null,
             assignedToId: data.assignedToId ?? null,
             measureId: data.measureId || null,
           },
-        },
-        onCompleted: (_response, errors) => {
-          if (!errors) onCompleted?.();
         },
       });
     } else {
@@ -188,7 +174,6 @@ export default function TaskFormDialog(props: Props) {
             organizationId,
             name: data.name,
             description: data.description || null,
-            priority: data.priority,
             timeEstimate: data.timeEstimate || null,
             deadline: formatDatetime(data.deadline) ?? null,
             assignedToId: data.assignedToId || null,
@@ -197,11 +182,8 @@ export default function TaskFormDialog(props: Props) {
           connections: [connection!],
         },
         onCompleted: (_response, errors) => {
-          if (!errors) {
-            if (data.measureId) {
-              updateStoreCounter(relayEnv, data.measureId, "tasks(first:0)", 1);
-            }
-            onCompleted?.();
+          if (!errors && data.measureId) {
+            updateStoreCounter(relayEnv, data.measureId, "tasks(first:0)", 1);
           }
         },
       });
@@ -242,46 +224,6 @@ export default function TaskFormDialog(props: Props) {
           {/* Properties form */}
           <div className="py-5 px-6 bg-subtle">
             <Label>{__("Properties")}</Label>
-            <PropertyRow
-              label={__("Priority")}
-              error={formState.errors.priority?.message}
-            >
-              <Controller
-                name="priority"
-                control={control}
-                render={({ field }) => (
-                  <Select
-                    value={field.value}
-                    onValueChange={field.onChange}
-                  >
-                    <Option value="URGENT">
-                      <span className="flex items-center gap-2">
-                        <PriorityLevel level="URGENT" />
-                        {__("Urgent")}
-                      </span>
-                    </Option>
-                    <Option value="HIGH">
-                      <span className="flex items-center gap-2">
-                        <PriorityLevel level="HIGH" />
-                        {__("High")}
-                      </span>
-                    </Option>
-                    <Option value="MEDIUM">
-                      <span className="flex items-center gap-2">
-                        <PriorityLevel level="MEDIUM" />
-                        {__("Medium")}
-                      </span>
-                    </Option>
-                    <Option value="LOW">
-                      <span className="flex items-center gap-2">
-                        <PriorityLevel level="LOW" />
-                        {__("Low")}
-                      </span>
-                    </Option>
-                  </Select>
-                )}
-              />
-            </PropertyRow>
             <PropertyRow
               label={__("Assigned to")}
               error={formState.errors.assignedToId?.message}

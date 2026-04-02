@@ -4,14 +4,6 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
-## [0.158.0] - 2026-04-02
-
-### Added
-
-- Add task priority enum
-- Add UNKNOWN and NOT_IMPLEMENTED measure states
-- MCP takes markdown input for document version content
-
 ## [0.157.0] - 2026-04-01
 
 ### Added

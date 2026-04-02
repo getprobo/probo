@@ -411,7 +411,6 @@ func (s MeasureService) Import(
 						Description:    &taskDescription,
 						ReferenceID:    req.Measures[i].Tasks[j].ReferenceID,
 						State:          coredata.TaskStateTodo,
-						Priority:       coredata.TaskPriorityMedium,
 						CreatedAt:      now,
 						UpdatedAt:      now,
 					}
