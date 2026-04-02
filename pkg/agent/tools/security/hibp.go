@@ -27,7 +27,7 @@ import (
 )
 
 type hibpParams struct {
-	Domain string `json:"domain" jsonschema:"description=The domain to check for known data breaches (e.g. example.com)"`
+	Domain string `json:"domain" jsonschema:"The domain to check for known data breaches (e.g. example.com)"`
 }
 
 type breach struct {
@@ -81,7 +81,7 @@ func CheckBreachesTool() (agent.Tool, error) {
 				})
 				return agent.ToolResult{Content: string(data)}, nil
 			}
-			defer resp.Body.Close()
+			defer func() { _ = resp.Body.Close() }()
 
 			body, err := io.ReadAll(resp.Body)
 			if err != nil {

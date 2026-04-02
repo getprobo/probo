@@ -68,7 +68,7 @@ type (
 		slack                   *slack.Service
 		esign                   *esign.Service
 		invitationTokenValidity time.Duration
-		vendorAssessor         *vetting.Assessor
+		vendorAssessor          *vetting.Assessor
 	}
 
 	TenantService struct {
@@ -171,7 +171,7 @@ func NewService(
 		slack:                   slackService,
 		esign:                   esignService,
 		invitationTokenValidity: invitationTokenValidity,
-		vendorAssessor:         vendorAssessor,
+		vendorAssessor:          vendorAssessor,
 	}
 
 	return svc, nil
@@ -179,17 +179,17 @@ func NewService(
 
 func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 	tenantService := &TenantService{
-		pg:            s.pg,
-		s3:            s.s3,
-		bucket:        s.bucket,
-		encryptionKey: s.encryptionKey,
-		baseURL:       s.baseURL,
-		scope:         coredata.NewScope(tenantID),
-		tokenSecret:   s.tokenSecret,
+		pg:             s.pg,
+		s3:             s.s3,
+		bucket:         s.bucket,
+		encryptionKey:  s.encryptionKey,
+		baseURL:        s.baseURL,
+		scope:          coredata.NewScope(tenantID),
+		tokenSecret:    s.tokenSecret,
 		agent:          agents.NewAgent(nil, s.llmClient, s.llmModel, s.llmTemperature, s.llmMaxTokens),
 		vendorAssessor: s.vendorAssessor,
-		fileManager:   s.fileManager,
-		esign:         s.esign,
+		fileManager:    s.fileManager,
+		esign:          s.esign,
 	}
 
 	tenantService.Frameworks = &FrameworkService{

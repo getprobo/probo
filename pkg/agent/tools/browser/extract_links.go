@@ -17,7 +17,6 @@ package browser
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/url"
 
 	"github.com/chromedp/chromedp"
@@ -25,7 +24,7 @@ import (
 )
 
 type extractLinksParams struct {
-	URL string `json:"url" jsonschema:"description=The URL to extract links from"`
+	URL string `json:"url" jsonschema:"The URL to extract links from"`
 }
 
 type link struct {
@@ -38,12 +37,20 @@ func ExtractLinksTool(b *Browser) (agent.Tool, error) {
 		"extract_links",
 		"Navigate to a URL and extract all links (<a> elements) with their href and text.",
 		func(ctx context.Context, p extractLinksParams) (agent.ToolResult, error) {
+			if r := b.checkAlive(); r != nil {
+				return *r, nil
+			}
+
 			u, err := url.Parse(p.URL)
 			if err != nil || (u.Scheme != "http" && u.Scheme != "https") {
 				return agent.ToolResult{
 					Content: "invalid URL scheme: only http and https are allowed",
 					IsError: true,
 				}, nil
+			}
+
+			if r := b.checkURL(p.URL); r != nil {
+				return *r, nil
 			}
 
 			ctx, timeoutCancel := withToolTimeout(ctx)
@@ -57,7 +64,7 @@ func ExtractLinksTool(b *Browser) (agent.Tool, error) {
 			err = chromedp.Run(
 				tabCtx,
 				chromedp.Navigate(p.URL),
-				chromedp.WaitReady("body"),
+				waitForPage(),
 				chromedp.Evaluate(
 					`Array.from(document.querySelectorAll("a[href]")).map(a => ({
 						href: a.href,
@@ -68,7 +75,7 @@ func ExtractLinksTool(b *Browser) (agent.Tool, error) {
 			)
 			if err != nil {
 				return agent.ToolResult{
-					Content: fmt.Sprintf("cannot extract links from %s: %s", p.URL, err),
+					Content: b.classifyError(ctx, p.URL, err),
 					IsError: true,
 				}, nil
 			}

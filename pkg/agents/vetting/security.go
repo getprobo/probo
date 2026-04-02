@@ -34,7 +34,7 @@ func newSecurityAssessorAgent(
 		agent.WithInstructions(securitySystemPrompt),
 		agent.WithModel(model),
 		agent.WithTools(securityTools...),
-		agent.WithMaxTurns(5),
+		agent.WithMaxTurns(8),
 		agent.WithParallelToolCalls(true),
 	}
 	opts = append(opts, extraOpts...)

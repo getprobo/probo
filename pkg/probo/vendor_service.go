@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"go.gearno.de/kit/pg"
+	"go.gearno.de/x/ref"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
@@ -83,6 +84,19 @@ type (
 	AssessVendorRequest struct {
 		ID         gid.GID
 		WebsiteURL string
+		Procedure  *string
+	}
+
+	AssessVendorResult struct {
+		Vendor        *coredata.Vendor
+		Report        string
+		Subprocessors []Subprocessor
+	}
+
+	Subprocessor struct {
+		Name    string
+		Country string
+		Purpose string
 	}
 
 	CreateVendorRiskAssessmentRequest struct {
@@ -394,7 +408,14 @@ func (s VendorService) Update(
 				return fmt.Errorf("cannot update vendor: %w", err)
 			}
 
-			if err := webhook.InsertData(ctx, conn, s.svc.scope, vendor.OrganizationID, coredata.WebhookEventTypeVendorUpdated, webhooktypes.NewVendor(vendor)); err != nil {
+			if err := webhook.InsertData(
+				ctx,
+				conn,
+				s.svc.scope,
+				vendor.OrganizationID,
+				coredata.WebhookEventTypeVendorUpdated,
+				webhooktypes.NewVendor(vendor),
+			); err != nil {
 				return fmt.Errorf("cannot insert webhook event: %w", err)
 			}
 
@@ -470,7 +491,14 @@ func (s VendorService) Delete(
 				return fmt.Errorf("cannot load vendor: %w", err)
 			}
 
-			if err := webhook.InsertData(ctx, conn, s.svc.scope, vendor.OrganizationID, coredata.WebhookEventTypeVendorDeleted, webhooktypes.NewVendor(vendor)); err != nil {
+			if err := webhook.InsertData(
+				ctx,
+				conn,
+				s.svc.scope,
+				vendor.OrganizationID,
+				coredata.WebhookEventTypeVendorDeleted,
+				webhooktypes.NewVendor(vendor),
+			); err != nil {
 				return fmt.Errorf("cannot insert webhook event: %w", err)
 			}
 
@@ -547,7 +575,14 @@ func (s VendorService) Create(
 				return fmt.Errorf("cannot insert vendor: %w", err)
 			}
 
-			if err := webhook.InsertData(ctx, conn, s.svc.scope, organization.ID, coredata.WebhookEventTypeVendorCreated, webhooktypes.NewVendor(vendor)); err != nil {
+			if err := webhook.InsertData(
+				ctx,
+				conn,
+				s.svc.scope,
+				organization.ID,
+				coredata.WebhookEventTypeVendorCreated,
+				webhooktypes.NewVendor(vendor),
+			); err != nil {
 				return fmt.Errorf("cannot insert webhook event: %w", err)
 			}
 
@@ -763,8 +798,8 @@ func (s VendorService) GetByRiskAssessmentID(
 func (s VendorService) Assess(
 	ctx context.Context,
 	req AssessVendorRequest,
-) (*coredata.Vendor, error) {
-	result, err := s.svc.vendorAssessor.Assess(ctx, req.WebsiteURL, nil)
+) (*AssessVendorResult, error) {
+	result, err := s.svc.vendorAssessor.Assess(ctx, req.WebsiteURL, ref.UnrefOrZero(req.Procedure), nil)
 	if err != nil {
 		return nil, fmt.Errorf("cannot assess vendor: %w", err)
 	}
@@ -811,7 +846,14 @@ func (s VendorService) Assess(
 				return fmt.Errorf("cannot update vendor: %w", err)
 			}
 
-			if err := webhook.InsertData(ctx, conn, s.svc.scope, vendor.OrganizationID, coredata.WebhookEventTypeVendorUpdated, webhooktypes.NewVendor(vendor)); err != nil {
+			if err := webhook.InsertData(
+				ctx,
+				conn,
+				s.svc.scope,
+				vendor.OrganizationID,
+				coredata.WebhookEventTypeVendorUpdated,
+				webhooktypes.NewVendor(vendor),
+			); err != nil {
 				return fmt.Errorf("cannot insert webhook event: %w", err)
 			}
 
@@ -822,7 +864,20 @@ func (s VendorService) Assess(
 		return nil, err
 	}
 
-	return vendor, nil
+	subprocessors := make([]Subprocessor, len(result.Info.Subprocessors))
+	for i, sp := range result.Info.Subprocessors {
+		subprocessors[i] = Subprocessor{
+			Name:    sp.Name,
+			Country: sp.Country,
+			Purpose: sp.Purpose,
+		}
+	}
+
+	return &AssessVendorResult{
+		Vendor:        vendor,
+		Report:        result.Document,
+		Subprocessors: subprocessors,
+	}, nil
 }
 
 func setIfNotEmpty(dst **string, val string) {

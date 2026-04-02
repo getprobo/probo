@@ -26,8 +26,8 @@ import (
 )
 
 type corsParams struct {
-	URL    string `json:"url" jsonschema:"description=The URL to check CORS headers for"`
-	Origin string `json:"origin" jsonschema:"description=The Origin header value to send in the preflight request (e.g. https://evil.com)"`
+	URL    string `json:"url" jsonschema:"The URL to check CORS headers for"`
+	Origin string `json:"origin" jsonschema:"The Origin header value to send in the preflight request (e.g. https://evil.com)"`
 }
 
 type corsResult struct {
@@ -95,7 +95,7 @@ func CheckCORSTool() (agent.Tool, error) {
 				})
 				return agent.ToolResult{Content: string(data)}, nil
 			}
-			defer resp.Body.Close()
+			defer func() { _ = resp.Body.Close() }()
 
 			allowOrigin := resp.Header.Get("Access-Control-Allow-Origin")
 

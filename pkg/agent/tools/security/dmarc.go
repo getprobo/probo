@@ -25,7 +25,7 @@ import (
 )
 
 type dmarcParams struct {
-	Domain string `json:"domain" jsonschema:"description=The domain to check DMARC record for (e.g. example.com)"`
+	Domain string `json:"domain" jsonschema:"The domain to check DMARC record for (e.g. example.com)"`
 }
 
 type dmarcResult struct {
@@ -39,10 +39,10 @@ type dmarcResult struct {
 }
 
 func parseDMARCTag(record, tag string) string {
-	for _, part := range strings.Split(record, ";") {
+	for part := range strings.SplitSeq(record, ";") {
 		part = strings.TrimSpace(part)
-		if strings.HasPrefix(part, tag+"=") {
-			return strings.TrimPrefix(part, tag+"=")
+		if after, ok := strings.CutPrefix(part, tag+"="); ok {
+			return after
 		}
 	}
 	return ""
@@ -75,6 +75,9 @@ func CheckDMARCTool() (agent.Tool, error) {
 
 			client := dns.NewClient()
 			resp, _, err := client.Exchange(ctx, msg, "udp", defaultResolverAddr)
+			if err == nil && resp.Truncated {
+				resp, _, err = client.Exchange(ctx, msg, "tcp", defaultResolverAddr)
+			}
 			if err != nil {
 				data, _ := json.Marshal(dmarcResult{
 					Found:       false,

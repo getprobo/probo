@@ -70,6 +70,16 @@ func BuildTools() ([]agent.Tool, error) {
 		return nil, err
 	}
 
+	whoisTool, err := CheckWhoisTool()
+	if err != nil {
+		return nil, err
+	}
+
+	dnsRecordsTool, err := CheckDNSRecordsTool()
+	if err != nil {
+		return nil, err
+	}
+
 	return []agent.Tool{
 		sslTool,
 		headersTool,
@@ -79,5 +89,7 @@ func BuildTools() ([]agent.Tool, error) {
 		dnssecTool,
 		cspTool,
 		corsTool,
+		whoisTool,
+		dnsRecordsTool,
 	}, nil
 }

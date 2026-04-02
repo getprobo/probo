@@ -26,7 +26,7 @@ import (
 )
 
 type cspParams struct {
-	URL string `json:"url" jsonschema:"description=The URL to analyze the Content-Security-Policy header for"`
+	URL string `json:"url" jsonschema:"The URL to analyze the Content-Security-Policy header for"`
 }
 
 type cspDirective struct {
@@ -35,20 +35,20 @@ type cspDirective struct {
 }
 
 type cspResult struct {
-	Present        bool           `json:"present"`
-	ReportOnly     bool           `json:"report_only"`
-	RawHeader      string         `json:"raw_header,omitempty"`
-	Directives     []cspDirective `json:"directives,omitempty"`
-	HasUnsafeEval  bool           `json:"has_unsafe_eval"`
-	HasUnsafeInline bool          `json:"has_unsafe_inline"`
-	HasWildcard    bool           `json:"has_wildcard"`
-	ErrorDetail    string         `json:"error_detail,omitempty"`
+	Present         bool           `json:"present"`
+	ReportOnly      bool           `json:"report_only"`
+	RawHeader       string         `json:"raw_header,omitempty"`
+	Directives      []cspDirective `json:"directives,omitempty"`
+	HasUnsafeEval   bool           `json:"has_unsafe_eval"`
+	HasUnsafeInline bool           `json:"has_unsafe_inline"`
+	HasWildcard     bool           `json:"has_wildcard"`
+	ErrorDetail     string         `json:"error_detail,omitempty"`
 }
 
 func parseCSPDirectives(raw string) []cspDirective {
 	var directives []cspDirective
 
-	for _, part := range strings.Split(raw, ";") {
+	for part := range strings.SplitSeq(raw, ";") {
 		part = strings.TrimSpace(part)
 		if part == "" {
 			continue
@@ -93,7 +93,7 @@ func AnalyzeCSPTool() (agent.Tool, error) {
 				})
 				return agent.ToolResult{Content: string(data)}, nil
 			}
-			defer resp.Body.Close()
+			defer func() { _ = resp.Body.Close() }()
 
 			raw := resp.Header.Get("Content-Security-Policy")
 			reportOnly := false

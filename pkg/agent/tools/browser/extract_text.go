@@ -16,7 +16,7 @@ package browser
 
 import (
 	"context"
-	"fmt"
+	"time"
 
 	"github.com/chromedp/chromedp"
 	"go.probo.inc/probo/pkg/agent"
@@ -25,7 +25,7 @@ import (
 const maxTextLength = 32000
 
 type extractTextParams struct {
-	URL string `json:"url" jsonschema:"description=The URL to extract text from"`
+	URL string `json:"url" jsonschema:"The URL to extract text from"`
 }
 
 func ExtractPageTextTool(b *Browser) (agent.Tool, error) {
@@ -33,6 +33,18 @@ func ExtractPageTextTool(b *Browser) (agent.Tool, error) {
 		"extract_page_text",
 		"Navigate to a URL and extract the visible text content of the page, truncated to 32000 characters.",
 		func(ctx context.Context, p extractTextParams) (agent.ToolResult, error) {
+			if r := b.checkAlive(); r != nil {
+				return *r, nil
+			}
+
+			if r := b.checkURL(p.URL); r != nil {
+				return *r, nil
+			}
+
+			if r := checkPDF(p.URL); r != nil {
+				return *r, nil
+			}
+
 			ctx, timeoutCancel := withToolTimeout(ctx)
 			defer timeoutCancel()
 
@@ -44,12 +56,18 @@ func ExtractPageTextTool(b *Browser) (agent.Tool, error) {
 			err := chromedp.Run(
 				tabCtx,
 				chromedp.Navigate(p.URL),
-				chromedp.WaitReady("body"),
-				chromedp.Evaluate(`document.body.innerText`, &text),
+				waitForPage(),
+				// Scroll to bottom to trigger lazy-loaded content,
+				// then back to top and wait briefly for rendering.
+				chromedp.Evaluate(`window.scrollTo(0, document.body.scrollHeight)`, nil),
+				chromedp.Sleep(500*time.Millisecond),
+				chromedp.Evaluate(`window.scrollTo(0, 0)`, nil),
+				chromedp.Sleep(200*time.Millisecond),
+				chromedp.Evaluate(`String(document.body?.innerText ?? '')`, &text),
 			)
 			if err != nil {
 				return agent.ToolResult{
-					Content: fmt.Sprintf("cannot extract text from %s: %s", p.URL, err),
+					Content: b.classifyError(ctx, p.URL, err),
 					IsError: true,
 				}, nil
 			}

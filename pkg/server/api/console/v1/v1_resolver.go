@@ -5783,11 +5783,12 @@ func (r *mutationResolver) AssessVendor(ctx context.Context, input types.AssessV
 
 	prb := r.ProboService(ctx, input.ID.TenantID())
 
-	vendor, err := prb.Vendors.Assess(
+	result, err := prb.Vendors.Assess(
 		ctx,
 		probo.AssessVendorRequest{
 			ID:         input.ID,
 			WebsiteURL: input.WebsiteURL,
+			Procedure:  input.Procedure,
 		},
 	)
 	if err != nil {
@@ -5795,8 +5796,19 @@ func (r *mutationResolver) AssessVendor(ctx context.Context, input types.AssessV
 		return nil, gqlutils.Internal(ctx)
 	}
 
+	subprocessors := make([]*types.VendorSubprocessor, len(result.Subprocessors))
+	for i, sp := range result.Subprocessors {
+		subprocessors[i] = &types.VendorSubprocessor{
+			Name:    sp.Name,
+			Country: sp.Country,
+			Purpose: sp.Purpose,
+		}
+	}
+
 	return &types.AssessVendorPayload{
-		Vendor: types.NewVendor(vendor),
+		Vendor:        types.NewVendor(result.Vendor),
+		Report:        result.Report,
+		Subprocessors: subprocessors,
 	}, nil
 }
 

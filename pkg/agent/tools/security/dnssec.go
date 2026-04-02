@@ -25,7 +25,7 @@ import (
 )
 
 type dnssecParams struct {
-	Domain string `json:"domain" jsonschema:"description=The domain to check DNSSEC for (e.g. example.com)"`
+	Domain string `json:"domain" jsonschema:"The domain to check DNSSEC for (e.g. example.com)"`
 }
 
 type dnssecResult struct {

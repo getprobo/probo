@@ -25,7 +25,7 @@ import (
 )
 
 type spfParams struct {
-	Domain string `json:"domain" jsonschema:"description=The domain to check SPF record for (e.g. example.com)"`
+	Domain string `json:"domain" jsonschema:"The domain to check SPF record for (e.g. example.com)"`
 }
 
 type spfResult struct {
@@ -37,7 +37,7 @@ type spfResult struct {
 }
 
 func parseSPFPolicy(record string) string {
-	for _, part := range strings.Fields(strings.ToLower(record)) {
+	for part := range strings.FieldsSeq(strings.ToLower(record)) {
 		switch part {
 		case "-all":
 			return "fail"
@@ -80,6 +80,9 @@ func CheckSPFTool() (agent.Tool, error) {
 
 			client := dns.NewClient()
 			resp, _, err := client.Exchange(ctx, msg, "udp", defaultResolverAddr)
+			if err == nil && resp.Truncated {
+				resp, _, err = client.Exchange(ctx, msg, "tcp", defaultResolverAddr)
+			}
 			if err != nil {
 				data, _ := json.Marshal(spfResult{
 					Found:       false,

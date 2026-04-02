@@ -27,7 +27,7 @@ import (
 )
 
 type sslParams struct {
-	Domain string `json:"domain" jsonschema:"description=The domain to check the SSL certificate for (e.g. example.com)"`
+	Domain string `json:"domain" jsonschema:"The domain to check the SSL certificate for (e.g. example.com)"`
 }
 
 type sslResult struct {
@@ -67,7 +67,7 @@ func CheckSSLCertificateTool() (agent.Tool, error) {
 				NetDialer: &net.Dialer{Timeout: 10 * time.Second},
 				Config: &tls.Config{
 					InsecureSkipVerify: true,
-					ServerName:        p.Domain,
+					ServerName:         p.Domain,
 				},
 			}
 			netConn, err := dialer.DialContext(ctx, "tcp", p.Domain+":443")
@@ -82,7 +82,7 @@ func CheckSSLCertificateTool() (agent.Tool, error) {
 				})
 				return agent.ToolResult{Content: string(data)}, nil
 			}
-			defer conn.Close()
+			defer func() { _ = conn.Close() }()
 
 			state := conn.ConnectionState()
 			if len(state.PeerCertificates) == 0 {

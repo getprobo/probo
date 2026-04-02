@@ -58,6 +58,99 @@ var toolMessages = map[string][]string{
 		"Assessing the vendor's market credibility",
 		"Identifying the vendor's customer base",
 	},
+	"extract_subprocessors": {
+		"Extracting sub-processor information",
+		"Reading the vendor's sub-processor list",
+		"Identifying third-party sub-processors",
+		"Parsing sub-processor details",
+		"Cataloging the vendor's sub-processors",
+	},
+	"assess_data_processing": {
+		"Analyzing data processing practices",
+		"Reviewing encryption and data handling",
+		"Evaluating data retention and transfer policies",
+		"Checking data processing documentation",
+		"Assessing cross-border data transfer mechanisms",
+	},
+	"assess_incident_response": {
+		"Evaluating incident response capabilities",
+		"Reviewing breach notification procedures",
+		"Checking incident history and transparency",
+		"Assessing security incident readiness",
+		"Examining post-incident review processes",
+	},
+	"assess_business_continuity": {
+		"Assessing business continuity planning",
+		"Reviewing disaster recovery capabilities",
+		"Checking SLA and uptime commitments",
+		"Evaluating infrastructure redundancy",
+		"Examining geographic distribution and failover",
+	},
+	"assess_professional_standing": {
+		"Evaluating professional standing and credentials",
+		"Reviewing licensing and industry memberships",
+		"Checking professional qualifications and accreditation",
+		"Assessing team credentials and experience",
+		"Examining professional liability and insurance coverage",
+	},
+	"assess_ai_risk": {
+		"Evaluating AI governance and responsible AI practices",
+		"Reviewing AI transparency and bias controls",
+		"Checking AI risk management documentation",
+		"Assessing automated decision-making safeguards",
+		"Examining AI training data governance",
+	},
+	"research_vendor_externally": {
+		"Researching the vendor across the web",
+		"Searching for external signals about the vendor",
+		"Looking for news and breach reports",
+		"Investigating the vendor's external reputation",
+		"Scanning public sources for vendor intelligence",
+	},
+	"assess_regulatory_compliance": {
+		"Performing deep regulatory compliance analysis",
+		"Checking GDPR article-level compliance",
+		"Analyzing regulatory framework adherence",
+		"Reviewing compliance against specific regulations",
+		"Evaluating regulatory requirements coverage",
+	},
+	"assess_financial_stability": {
+		"Assessing vendor financial stability",
+		"Investigating company funding and financial health",
+		"Checking business registration and SEC filings",
+		"Evaluating vendor viability and longevity",
+		"Researching company financial standing",
+	},
+	"assess_code_security": {
+		"Evaluating open-source code security posture",
+		"Checking for security advisories and CVEs",
+		"Reviewing dependency management practices",
+		"Analyzing release cadence and maintenance",
+		"Inspecting code security practices",
+	},
+	"compare_vendor": {
+		"Comparing vendor against alternatives",
+		"Finding competing vendors in the same category",
+		"Benchmarking security and compliance posture",
+		"Evaluating vendor relative to market alternatives",
+		"Assessing competitive landscape",
+	},
+	"extract_vendor_info": {
+		"Extracting vendor information from assessment",
+		"Parsing assessment into structured data",
+		"Building vendor profile from findings",
+		"Distilling key vendor details from report",
+		"Organizing vendor metadata from assessment",
+	},
+
+	// Web search sub-agent tools.
+	"web_search": {
+		"Searching the web",
+		"Running a web search query",
+		"Looking up information online",
+		"Querying search results",
+		"Fetching search results",
+	},
 
 	// Security sub-agent tools.
 	"check_ssl_certificate": {
@@ -146,15 +239,114 @@ var toolMessages = map[string][]string{
 		"Hunting for specific links on the page",
 		"Sifting through links for a match",
 	},
+	"click_element": {
+		"Clicking on the page",
+		"Interacting with the page",
+		"Pressing a button on the page",
+		"Navigating within the page",
+		"Triggering a page action",
+	},
+	"select_option": {
+		"Selecting an option on the page",
+		"Changing a dropdown selection",
+		"Adjusting page settings",
+		"Picking a value from a dropdown",
+		"Updating a page filter",
+	},
+
+	// New security tools.
+	"check_whois": {
+		"Looking up domain registration details",
+		"Checking WHOIS records",
+		"Querying domain registrar information",
+		"Inspecting domain ownership data",
+		"Retrieving domain age and registrant info",
+	},
+	"check_dns_records": {
+		"Querying DNS records",
+		"Looking up A, MX, and NS records",
+		"Checking DNS configuration",
+		"Resolving domain DNS entries",
+		"Inspecting hosting and email providers",
+	},
+
+	// New browser tools.
+	"fetch_robots_txt": {
+		"Fetching robots.txt",
+		"Checking robots.txt for hidden pages",
+		"Reading site crawl directives",
+		"Discovering sitemap URLs from robots.txt",
+		"Parsing robots.txt disallow rules",
+	},
+	"fetch_sitemap": {
+		"Fetching sitemap",
+		"Parsing sitemap for page URLs",
+		"Discovering pages from sitemap",
+		"Reading sitemap index",
+		"Extracting URLs from sitemap XML",
+	},
+	"download_pdf": {
+		"Downloading and extracting PDF",
+		"Reading PDF document content",
+		"Extracting text from PDF",
+		"Processing PDF document",
+		"Parsing PDF for analysis",
+	},
+
+	// New search tools.
+	"check_wayback": {
+		"Checking Wayback Machine archives",
+		"Looking for historical page snapshots",
+		"Querying Internet Archive",
+		"Searching for archived versions",
+		"Checking page history in Wayback Machine",
+	},
+	"check_government_databases": {
+		"Searching government regulatory databases",
+		"Checking SEC and FTC records",
+		"Looking for GDPR enforcement actions",
+		"Querying regulatory databases",
+		"Searching for enforcement history",
+	},
+	"diff_documents": {
+		"Comparing document versions",
+		"Diffing document texts",
+		"Analyzing document changes",
+		"Checking for document modifications",
+		"Computing document differences",
+	},
 }
 
-func randomMessage(tool string) string {
-	msgs, ok := toolMessages[tool]
+func randomMessage(step string) string {
+	msgs, ok := toolMessages[step]
 	if !ok {
 		return ""
 	}
 
 	return msgs[rand.IntN(len(msgs))]
+}
+
+// reportProgress emits a progress event to the reporter if non-nil.
+func reportProgress(
+	ctx context.Context,
+	reporter agent.ProgressReporter,
+	step string,
+	eventType agent.ProgressEventType,
+) {
+	if reporter == nil {
+		return
+	}
+
+	event := agent.ProgressEvent{
+		Type: eventType,
+		Step: step,
+	}
+
+	if eventType == agent.ProgressEventStepStarted {
+		event.Message = randomMessage(step)
+	}
+
+	reporter(ctx, event)
 }
 
 // progressHooks translates orchestrator-level tool events into progress events.

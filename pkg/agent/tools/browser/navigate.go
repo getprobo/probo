@@ -17,7 +17,6 @@ package browser
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 
 	"github.com/chromedp/chromedp"
 	"go.probo.inc/probo/pkg/agent"
@@ -28,7 +27,7 @@ func withToolTimeout(ctx context.Context) (context.Context, context.CancelFunc) 
 }
 
 type navigateParams struct {
-	URL string `json:"url" jsonschema:"description=The URL to navigate to"`
+	URL string `json:"url" jsonschema:"The URL to navigate to"`
 }
 
 type navigateResult struct {
@@ -42,6 +41,18 @@ func NavigateToURLTool(b *Browser) (agent.Tool, error) {
 		"navigate_to_url",
 		"Navigate to a URL and return the page title, meta description, and final URL after redirects.",
 		func(ctx context.Context, p navigateParams) (agent.ToolResult, error) {
+			if r := b.checkAlive(); r != nil {
+				return *r, nil
+			}
+
+			if r := b.checkURL(p.URL); r != nil {
+				return *r, nil
+			}
+
+			if r := checkPDF(p.URL); r != nil {
+				return *r, nil
+			}
+
 			ctx, timeoutCancel := withToolTimeout(ctx)
 			defer timeoutCancel()
 
@@ -57,7 +68,7 @@ func NavigateToURLTool(b *Browser) (agent.Tool, error) {
 			err := chromedp.Run(
 				tabCtx,
 				chromedp.Navigate(p.URL),
-				chromedp.WaitReady("body"),
+				waitForPage(),
 				chromedp.Title(&title),
 				chromedp.Evaluate(
 					`(() => {
@@ -70,7 +81,7 @@ func NavigateToURLTool(b *Browser) (agent.Tool, error) {
 			)
 			if err != nil {
 				return agent.ToolResult{
-					Content: fmt.Sprintf("cannot navigate to %s: %s", p.URL, err),
+					Content: b.classifyError(ctx, p.URL, err),
 					IsError: true,
 				}, nil
 			}

@@ -24,8 +24,8 @@ import (
 )
 
 type findLinksParams struct {
-	URL     string `json:"url" jsonschema:"description=The URL to search for links"`
-	Pattern string `json:"pattern" jsonschema:"description=Keyword to filter links by (case-insensitive match on href or text)"`
+	URL     string `json:"url" jsonschema:"The URL to search for links"`
+	Pattern string `json:"pattern" jsonschema:"Keyword to filter links by (case-insensitive match on href or text)"`
 }
 
 func FindLinksMatchingTool(b *Browser) (agent.Tool, error) {
@@ -33,13 +33,13 @@ func FindLinksMatchingTool(b *Browser) (agent.Tool, error) {
 		"find_links_matching",
 		"Navigate to a URL and extract links whose href or text matches a keyword (case-insensitive).",
 		func(ctx context.Context, p findLinksParams) (agent.ToolResult, error) {
-			ctx, timeoutCancel := withToolTimeout(ctx)
-			defer timeoutCancel()
+			if r := b.checkAlive(); r != nil {
+				return *r, nil
+			}
 
-			tabCtx, cancel := b.NewTab(ctx)
-			defer cancel()
-
-			var links []link
+			if r := b.checkURL(p.URL); r != nil {
+				return *r, nil
+			}
 
 			if p.Pattern == "" {
 				return agent.ToolResult{
@@ -48,14 +48,26 @@ func FindLinksMatchingTool(b *Browser) (agent.Tool, error) {
 				}, nil
 			}
 
+			ctx, timeoutCancel := withToolTimeout(ctx)
+			defer timeoutCancel()
+
+			tabCtx, cancel := b.NewTab(ctx)
+			defer cancel()
+
+			var links []link
+
 			js := fmt.Sprintf(
 				`(() => {
 					const pattern = %q.toLowerCase();
+					const normalize = s => s.replace(/[-_\s]+/g, "");
+					const normalizedPattern = normalize(pattern);
 					return Array.from(document.querySelectorAll("a[href]"))
 						.filter(a => {
 							const href = a.href.toLowerCase();
 							const text = a.innerText.toLowerCase();
-							return href.includes(pattern) || text.includes(pattern);
+							return href.includes(pattern) || text.includes(pattern)
+								|| normalize(href).includes(normalizedPattern)
+								|| normalize(text).includes(normalizedPattern);
 						})
 						.map(a => ({
 							href: a.href,
@@ -68,12 +80,12 @@ func FindLinksMatchingTool(b *Browser) (agent.Tool, error) {
 			err := chromedp.Run(
 				tabCtx,
 				chromedp.Navigate(p.URL),
-				chromedp.WaitReady("body"),
+				waitForPage(),
 				chromedp.Evaluate(js, &links),
 			)
 			if err != nil {
 				return agent.ToolResult{
-					Content: fmt.Sprintf("cannot find links on %s: %s", p.URL, err),
+					Content: b.classifyError(ctx, p.URL, err),
 					IsError: true,
 				}, nil
 			}

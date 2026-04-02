@@ -5769,10 +5769,19 @@ type GenerateDocumentChangelogPayload {
 input AssessVendorInput {
     id: ID!
     websiteUrl: String!
+    procedure: String
+}
+
+type VendorSubprocessor {
+    name: String!
+    country: String!
+    purpose: String!
 }
 
 type AssessVendorPayload {
     vendor: Vendor!
+    report: String!
+    subprocessors: [VendorSubprocessor!]!
 }
 
 type Asset implements Node {

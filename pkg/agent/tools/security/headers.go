@@ -26,7 +26,7 @@ import (
 )
 
 type headersParams struct {
-	URL string `json:"url" jsonschema:"description=The URL to check security headers for (e.g. https://example.com)"`
+	URL string `json:"url" jsonschema:"The URL to check security headers for (e.g. https://example.com)"`
 }
 
 type headerCheck struct {
@@ -85,15 +85,15 @@ func CheckSecurityHeadersTool() (agent.Tool, error) {
 			// First check the HTTP version to detect HTTP→HTTPS redirect.
 			redirectsToHTTPS := false
 			httpURL := p.URL
-			if strings.HasPrefix(httpURL, "https://") {
-				httpURL = "http://" + strings.TrimPrefix(httpURL, "https://")
+			if after, ok := strings.CutPrefix(httpURL, "https://"); ok {
+				httpURL = "http://" + after
 			}
 
 			httpReq, err := http.NewRequestWithContext(ctx, http.MethodGet, httpURL, nil)
 			if err == nil {
 				httpResp, err := client.Do(httpReq)
 				if err == nil {
-					httpResp.Body.Close()
+					_ = httpResp.Body.Close()
 					if httpResp.StatusCode >= 300 && httpResp.StatusCode < 400 {
 						loc := httpResp.Header.Get("Location")
 						if strings.HasPrefix(loc, "https://") {
@@ -105,8 +105,8 @@ func CheckSecurityHeadersTool() (agent.Tool, error) {
 
 			// Now check the HTTPS version for the actual security headers.
 			httpsURL := p.URL
-			if strings.HasPrefix(httpsURL, "http://") {
-				httpsURL = "https://" + strings.TrimPrefix(httpsURL, "http://")
+			if after, ok := strings.CutPrefix(httpsURL, "http://"); ok {
+				httpsURL = "https://" + after
 			}
 
 			followClient := &http.Client{Timeout: 10 * time.Second}
@@ -124,7 +124,7 @@ func CheckSecurityHeadersTool() (agent.Tool, error) {
 				})
 				return agent.ToolResult{Content: string(data)}, nil
 			}
-			defer resp.Body.Close()
+			defer func() { _ = resp.Body.Close() }()
 
 			result := headersFromResponse(resp)
 			result.RedirectsToHTTPS = redirectsToHTTPS
