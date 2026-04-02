@@ -55,7 +55,7 @@
     "n8n-workflow": "*"
   },
   "devDependencies": {
-    "@n8n/node-cli": "^0.24.1",
-    "eslint": "^9.39.2"
+    "@n8n/node-cli": "^0.25.0",
+    "eslint": "^10.1.0"
   }
 }
