@@ -30,6 +30,12 @@ export const Default: Story = {
   },
 };
 
+export const InProgress: Story = {
+  args: {
+    state: "IN_PROGRESS",
+  },
+};
+
 export const Done: Story = {
   args: {
     state: "DONE",

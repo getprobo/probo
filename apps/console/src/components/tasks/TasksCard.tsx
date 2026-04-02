@@ -15,14 +15,14 @@
 import { formatDate, formatDuration, formatError, promisifyMutation } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import {
-  ActionDropdown,
+  Button,
   Card,
-  DropdownItem,
   IconArrowCornerDownLeft,
+  IconCircleCheck,
+  IconCircleProgress,
   IconPencil,
   IconTrashCan,
   PriorityLevel,
-  Spinner,
   TabBadge,
   TabItem,
   Tabs,
@@ -31,7 +31,7 @@ import {
   useDialogRef,
   useToast,
 } from "@probo/ui";
-import { Fragment, type ReactNode, useState, useTransition } from "react";
+import { Fragment, type ReactNode, useRef, useState, useTransition } from "react";
 import {
   graphql,
   readInlineData,
@@ -67,16 +67,17 @@ function resolveDropPriority(
   above?: TaskPriority,
   below?: TaskPriority,
 ): TaskPriority | undefined {
-  // If any neighbor shares the dragged priority, keep it.
   if (above === dragged || below === dragged) return undefined;
 
-  // At edges, take the single neighbor's priority.
-  if (!above && below) return below !== dragged ? below : undefined;
-  if (!below && above) return above !== dragged ? above : undefined;
+  const di = taskPriorities.indexOf(dragged);
 
-  // Both neighbors differ — pick the one closest to dragged.
+  if (!above && below) {
+    return taskPriorities.indexOf(below) <= di ? below : undefined;
+  }
+  if (!below && above) {
+    return taskPriorities.indexOf(above) >= di ? above : undefined;
+  }
   if (above && below) {
-    const di = taskPriorities.indexOf(dragged);
     const dAbove = Math.abs(taskPriorities.indexOf(above) - di);
     const dBelow = Math.abs(taskPriorities.indexOf(below) - di);
     return dAbove <= dBelow ? above : below;
@@ -171,6 +172,7 @@ const updateRankMutation = graphql`
         id
         priority
         rank
+        state
       }
     }
   }
@@ -184,7 +186,9 @@ export function TasksCard({ tasks, connectionId, canReorder, refetch }: Props) {
   const { toast } = useToast();
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [previewOrder, setPreviewOrder] = useState<string[] | null>(null);
+  const [dropTargetState, setDropTargetState] = useState<string | null>(null);
   const [updateRank] = useMutation<TaskFormDialogUpdateMutation>(updateRankMutation);
+  const droppedRef = useRef(false);
 
   const handleStateChange = () => {
     if (refetch) {
@@ -194,31 +198,56 @@ export function TasksCard({ tasks, connectionId, canReorder, refetch }: Props) {
     }
   };
 
-  const hashes = [
-    { hash: "", label: __("To do"), state: "TODO" },
+  const stateHashes = [
+    { hash: "todo", label: __("To do"), state: "TODO" },
+    { hash: "in-progress", label: __("In progress"), state: "IN_PROGRESS" },
     { hash: "done", label: __("Done"), state: "DONE" },
-    { hash: "all", label: __("All"), state: null },
   ] as const;
 
-  const tasksPerHash = new Map([
-    ["", tasks?.filter(({ node }) => readTask(node).state === "TODO")],
-    ["done", tasks?.filter(({ node }) => readTask(node).state === "DONE")],
-    ["all", tasks],
+  const hashes = [
+    { hash: "", label: __("All"), state: null },
+    ...stateHashes,
+  ] as const;
+
+  const tasksPerHash = new Map<string, typeof tasks>([
+    ...stateHashes.map(h => [h.hash, tasks?.filter(({ node }) => readTask(node).state === h.state)] as const),
+    ["", tasks],
   ]);
 
   const filteredTasks = tasksPerHash.get(hash) ?? [];
-  const canDrag = !!canReorder && hash !== "all";
+  const canDrag = !!canReorder;
 
-  const handleDragOver = (e: React.DragEvent, hoveredId: string) => {
+  // Get the task list for a given state section.
+  const sectionTasks = (state: string) =>
+    tasks?.filter(({ node }) => readTask(node).state === state) ?? [];
+
+  const handleDragOver = (e: React.DragEvent, hoveredId: string, hoveredState?: string) => {
     e.preventDefault();
     if (draggedId === null || hoveredId === draggedId) return;
-    const ids = filteredTasks.map(({ node }) => readTask(node).id);
+
+    if (hoveredState) setDropTargetState(hoveredState);
+
+    // Reorder within the target section (works for both All and single-state tabs).
+    const sectionList = hash === "" && hoveredState
+      ? sectionTasks(hoveredState)
+      : filteredTasks;
+
+    const ids = sectionList.map(({ node }) => readTask(node).id);
     const fromIdx = ids.indexOf(draggedId);
-    if (fromIdx === -1) return;
     const rect = e.currentTarget.getBoundingClientRect();
     const midY = rect.top + rect.height / 2;
     const insertBefore = e.clientY < midY;
     const hoverIdx = ids.indexOf(hoveredId);
+
+    if (fromIdx === -1) {
+      // Dragging from another section — insert relative to the hovered task.
+      const targetIdx = insertBefore ? hoverIdx : hoverIdx + 1;
+      const reordered = [...ids];
+      reordered.splice(targetIdx, 0, draggedId);
+      setPreviewOrder(reordered);
+      return;
+    }
+
     let targetIdx = insertBefore ? hoverIdx : hoverIdx + 1;
     if (targetIdx > fromIdx) targetIdx--;
     if (targetIdx === fromIdx) {
@@ -232,82 +261,147 @@ export function TasksCard({ tasks, connectionId, canReorder, refetch }: Props) {
   };
 
   const handleDrop = () => {
-    if (draggedId === null || previewOrder === null) {
-      setDraggedId(null);
+    if (draggedId === null) {
+      resetDragState();
       return;
     }
 
-    const newIdx = previewOrder.indexOf(draggedId);
-    const originalIds = filteredTasks.map(({ node }) => readTask(node).id);
-    const originalIdx = originalIds.indexOf(draggedId);
-    if (originalIdx === -1) {
-      setDraggedId(null);
-      setPreviewOrder(null);
+    if (previewOrder === null && !(hash === "" && dropTargetState)) {
+      resetDragState();
       return;
     }
+
+    // Determine which section list to resolve rank/priority from.
+    const targetState = hash === "" ? dropTargetState : null;
+    const sectionList = targetState ? sectionTasks(targetState) : filteredTasks;
+    const sectionIds = sectionList.map(({ node }) => readTask(node).id);
+    const byId = new Map(tasks.map(edge => [readTask(edge.node).id, edge]));
+
+    // Use previewOrder when available, otherwise the section list.
+    // Append draggedId if missing (cross-section drop onto a header with no preview).
+    const order = previewOrder ?? (sectionIds.includes(draggedId) ? sectionIds : [...sectionIds, draggedId]);
+    const newIdx = order.indexOf(draggedId);
+
+    if (newIdx === -1) {
+      resetDragState();
+      return;
+    }
+
+    // Find the task we're displacing to get its rank.
+    const originalIdx = sectionIds.indexOf(draggedId);
     let targetOriginalIdx = newIdx;
-    if (targetOriginalIdx >= originalIdx) targetOriginalIdx++;
-    if (targetOriginalIdx >= filteredTasks.length) targetOriginalIdx = filteredTasks.length - 1;
-    const targetTask = readTask(filteredTasks[targetOriginalIdx].node);
-    const draggedTask = readTask(filteredTasks[originalIdx].node);
+    if (originalIdx !== -1) {
+      if (targetOriginalIdx >= originalIdx) targetOriginalIdx++;
+      if (targetOriginalIdx >= sectionList.length) targetOriginalIdx = sectionList.length - 1;
+    } else {
+      // Cross-section drop: clamp to section bounds.
+      if (targetOriginalIdx >= sectionList.length) targetOriginalIdx = sectionList.length - 1;
+    }
 
-    // Determine target priority from neighbors at the drop position.
-    const aboveId = newIdx > 0 ? previewOrder[newIdx - 1] : null;
-    const belowId = newIdx < previewOrder.length - 1 ? previewOrder[newIdx + 1] : null;
-    const aboveTask = aboveId ? readTask(filteredTasks[originalIds.indexOf(aboveId)].node) : null;
-    const belowTask = belowId ? readTask(filteredTasks[originalIds.indexOf(belowId)].node) : null;
-    const targetPriority = resolveDropPriority(draggedTask.priority, aboveTask?.priority, belowTask?.priority);
+    const draggedEdge = byId.get(draggedId);
+    if (!draggedEdge) {
+      resetDragState();
+      return;
+    }
+    const draggedTask = readTask(draggedEdge.node);
 
-    setDraggedId(null);
+    // Determine target rank from the displaced task, or default to rank 1 for empty sections.
+    const targetRank = sectionList.length > 0
+      ? readTask(sectionList[Math.max(0, targetOriginalIdx)].node).rank
+      : 1;
+
+    // Determine if state changed (All tab cross-section drop).
+    const newState = targetState && targetState !== draggedTask.state
+      ? targetState as "TODO" | "IN_PROGRESS" | "DONE"
+      : undefined;
+
+    // Only change priority for same-state reorder, never for cross-section drops.
+    const aboveId = newIdx > 0 ? order[newIdx - 1] : null;
+    const belowId = newIdx < order.length - 1 ? order[newIdx + 1] : null;
+    const aboveTask = aboveId && byId.has(aboveId) ? readTask(byId.get(aboveId)!.node) : null;
+    const belowTask = belowId && byId.has(belowId) ? readTask(byId.get(belowId)!.node) : null;
+    const targetPriority = newState
+      ? undefined
+      : resolveDropPriority(draggedTask.priority, aboveTask?.priority, belowTask?.priority);
+
+    const taskId = draggedId;
+
+    droppedRef.current = true;
 
     updateRank({
       variables: {
         input: {
-          taskId: draggedId,
-          rank: targetTask.rank,
+          taskId,
+          rank: targetRank,
           ...(targetPriority && { priority: targetPriority }),
+          ...(newState && { state: newState }),
         },
       },
       onCompleted: (_, errors) => {
         if (errors?.length) {
           toast({
             title: __("Error"),
-            description: formatError(
-              __("Failed to reorder task."),
-              errors,
-            ),
+            description: formatError(__("Failed to reorder task."), errors),
             variant: "error",
           });
         }
         if (refetch) {
           startTransition(() => {
-            refetch(
-              {},
-              { fetchPolicy: errors?.length ? "network-only" : "store-and-network" },
-            );
+            refetch({}, { fetchPolicy: errors?.length ? "network-only" : "store-and-network" });
+            droppedRef.current = false;
+            resetDragState();
           });
+        } else {
+          droppedRef.current = false;
+          resetDragState();
         }
       },
       onError: () => {
-        toast({
-          title: __("Error"),
-          description: __("Failed to reorder task."),
-          variant: "error",
-        });
+        droppedRef.current = false;
+        resetDragState();
+        toast({ title: __("Error"), description: __("Failed to reorder task."), variant: "error" });
       },
     });
   };
 
-  const displayTasks = (() => {
-    if (!previewOrder) return filteredTasks;
-    const byId = new Map(filteredTasks.map(edge => [readTask(edge.node).id, edge]));
-    const currentIdSet = new Set(byId.keys());
-    const previewIdSet = new Set(previewOrder);
-    if (currentIdSet.size !== previewIdSet.size || [...currentIdSet].some(id => !previewIdSet.has(id))) {
-      return filteredTasks;
-    }
-    return previewOrder.map(id => byId.get(id)!);
-  })();
+  const resetDragState = () => {
+    setDraggedId(null);
+    setPreviewOrder(null);
+    setDropTargetState(null);
+  };
+
+  const byId = new Map(tasks.map(edge => [readTask(edge.node).id, edge]));
+
+  const applyPreviewOrder = (sourceTasks: typeof tasks) => {
+    if (!previewOrder) return sourceTasks;
+    const sourceIds = new Set(sourceTasks.map(({ node }) => readTask(node).id));
+    // Check if the preview order matches this section (may include the dragged item from another section).
+    const previewMatchesSection = previewOrder.every(id => sourceIds.has(id) || id === draggedId);
+    if (!previewMatchesSection) return sourceTasks;
+    return previewOrder.filter(id => byId.has(id)).map(id => byId.get(id)!);
+  };
+
+  const displayTasks = applyPreviewOrder(filteredTasks);
+
+  const renderTaskRow = (node: (typeof tasks)[number]["node"], sectionState?: "TODO" | "IN_PROGRESS" | "DONE") => {
+    const task = readTask(node);
+    return (
+      <TaskRow
+        key={task.id}
+        fKey={node}
+        connectionId={connectionId}
+        sectionState={sectionState}
+        canDrag={canDrag}
+        isDragging={draggedId === task.id}
+        isGhost={previewOrder !== null && draggedId === task.id}
+        onDragStart={() => setDraggedId(task.id)}
+        onDragOver={e => handleDragOver(e, task.id, sectionState)}
+        onDrop={handleDrop}
+        onDragEnd={() => { if (!droppedRef.current) resetDragState(); }}
+        onStateChange={handleStateChange}
+      />
+    );
+  };
 
   return (
     <div className="space-y-6">
@@ -321,6 +415,7 @@ export function TasksCard({ tasks, connectionId, canReorder, refetch }: Props) {
                 {hashes.map(h => (
                   <TabItem asChild active={hash === h.hash} key={h.hash}>
                     <Link to={`#${h.hash}`}>
+                      {h.state && <TaskStateIcon state={h.state} />}
                       {h.label}
                       <TabBadge>{tasksPerHash.get(h.hash)?.length}</TabBadge>
                     </Link>
@@ -328,52 +423,42 @@ export function TasksCard({ tasks, connectionId, canReorder, refetch }: Props) {
                 ))}
               </Tabs>
               <div className="divide-y divide-border-solid">
-                {hash === "all"
-                  // All tabs group the todo using the state
-                  ? hashes
-                      .slice(0, 2)
-                      .filter(h => tasksPerHash.get(h.hash)?.length)
-                      .map(h => (
-                        <Fragment key={h.label}>
-                          <h2 className="px-6 py-3 text-sm font-medium flex items-center gap-2 bg-subtle">
-                            <TaskStateIcon state={h.state!} />
-                            {h.label}
-                          </h2>
-                          {tasksPerHash.get(h.hash)?.map(({ node }) => (
-                            <TaskRow
-                              key={readTask(node).id}
-                              fKey={node}
-                              connectionId={connectionId}
-                              onStateChange={handleStateChange}
-                            />
-                          ))}
-                        </Fragment>
-                      ))
-                  // Todo and Done tab simply list todos
-                  : displayTasks.map(({ node }) => {
-                      const task = readTask(node);
-                      return (
-                        <TaskRow
-                          key={task.id}
-                          fKey={node}
-                          connectionId={connectionId}
-                          canDrag={canDrag}
-                          isDragging={draggedId === task.id}
-                          isGhost={previewOrder !== null && draggedId === task.id}
-                          onDragStart={() => setDraggedId(task.id)}
-                          onDragOver={e => handleDragOver(e, task.id)}
-                          onDrop={handleDrop}
-                          onDragEnd={() => setDraggedId(null)}
-                          onStateChange={handleStateChange}
-                        />
-                      );
-                    })}
+                {hash === ""
+                  ? stateHashes
+                      .filter(h => tasksPerHash.get(h.hash)?.length || (draggedId && dropTargetState === h.state))
+                      .map((h) => {
+                        const displayEdges = applyPreviewOrder(tasksPerHash.get(h.hash) ?? []);
+                        const dragClass = canDrag && draggedId !== null
+                          ? "border-2 border-dashed border-transparent hover:border-primary-300"
+                          : "";
+                        return (
+                          <Fragment key={h.label}>
+                            <h2
+                              className={`px-6 py-3 text-sm font-medium flex items-center gap-2 bg-subtle ${dragClass}`}
+                              onDragOver={canDrag
+                                ? (e) => {
+                                    e.preventDefault();
+                                    setDropTargetState(h.state);
+                                  }
+                                : undefined}
+                              onDrop={canDrag ? handleDrop : undefined}
+                            >
+                              <TaskStateIcon state={h.state} />
+                              {h.label}
+                            </h2>
+                            {displayEdges.map(({ node }) => renderTaskRow(node, h.state))}
+                          </Fragment>
+                        );
+                      })
+                  : displayTasks.map(({ node }) => renderTaskRow(node))}
               </div>
             </Card>
           )}
       {canDrag && filteredTasks.length > 1 && (
         <p className="text-sm text-txt-tertiary">
-          {__("Drag and drop to reorder tasks")}
+          {hash === ""
+            ? __("Drag and drop to reorder tasks or move them between states")
+            : __("Drag and drop to reorder tasks")}
         </p>
       )}
     </div>
@@ -383,6 +468,7 @@ export function TasksCard({ tasks, connectionId, canReorder, refetch }: Props) {
 type TaskRowProps = {
   fKey: TasksCard_TaskRowFragment$key | TaskFormDialogFragment$key;
   connectionId: string;
+  sectionState?: "TODO" | "IN_PROGRESS" | "DONE";
   canDrag?: boolean;
   isDragging?: boolean;
   isGhost?: boolean;
@@ -440,16 +526,29 @@ function TaskRow(props: TaskRowProps) {
       fragment,
       props.fKey as TasksCard_TaskRowFragment$key,
     );
-  const [updateTask, isUpdating] = useMutation<TaskFormDialogUpdateMutation>(taskUpdateMutation);
-
+  const [updateTask, isAdvancing] = useMutation<TaskFormDialogUpdateMutation>(taskUpdateMutation);
   const [isMouseDown, setIsMouseDown] = useState(false);
+  const displayState = props.sectionState ?? task.state;
 
-  const onToggle = async () => {
+  const nextStepConfig: Record<string, {
+    state: "IN_PROGRESS" | "DONE";
+    label: string;
+    icon: typeof IconCircleProgress;
+    className: string;
+  }> = {
+    TODO: { state: "IN_PROGRESS", label: __("Move to In progress"), icon: IconCircleProgress, className: "text-txt-warning" },
+    IN_PROGRESS: { state: "DONE", label: __("Move to Done"), icon: IconCircleCheck, className: "text-txt-accent" },
+  };
+
+  const onAdvance = async () => {
+    const config = nextStepConfig[displayState];
+    if (!config) return;
+    const target = config.state;
     await promisifyMutation(updateTask)({
       variables: {
         input: {
           taskId: task.id,
-          state: task.state === "TODO" ? "DONE" : "TODO",
+          state: target,
         },
       },
     });
@@ -481,12 +580,10 @@ function TaskRow(props: TaskRowProps) {
     );
   };
 
-  const canDrag = props.canDrag;
-  const isDragging = props.isDragging;
-  const isGhost = props.isGhost;
+  const { canDrag, isDragging, isGhost } = props;
 
   const className = [
-    "transition-all duration-150",
+    canDrag && "select-none",
     canDrag && isDragging && !isGhost && "opacity-40 cursor-grabbing",
     canDrag && !isDragging && !isMouseDown && "cursor-grab",
     canDrag && !isDragging && isMouseDown && "cursor-grabbing",
@@ -516,13 +613,7 @@ function TaskRow(props: TaskRowProps) {
         <div className="flex gap-2 items-start">
           <div className="flex items-center gap-2 pt-[2px]">
             <PriorityLevel level={task.priority} />
-            <button
-              onClick={() => void onToggle()}
-              className="cursor-pointer -m-1 p-1 disabled:opacity-60"
-              disabled={isUpdating}
-            >
-              <TaskStateIcon state={task.state} />
-            </button>
+            <TaskStateIcon state={displayState} />
           </div>
           <div className="text-sm space-y-1 flex-1">
             <h2 className="font-medium">{task.name}</h2>
@@ -566,27 +657,31 @@ function TaskRow(props: TaskRowProps) {
           </div>
         )}
         <div className="flex gap-2 items-center">
-          {isUpdating && <Spinner size={16} />}
-          {(canUpdate || canDelete) && (
-            <ActionDropdown>
-              {canUpdate && (
-                <DropdownItem
-                  icon={IconPencil}
-                  onClick={() => dialogRef.current?.open()}
-                >
-                  {__("Edit")}
-                </DropdownItem>
-              )}
-              {canDelete && (
-                <DropdownItem
-                  variant="danger"
-                  icon={IconTrashCan}
-                  onClick={onDelete}
-                >
-                  {__("Delete")}
-                </DropdownItem>
-              )}
-            </ActionDropdown>
+          {canUpdate && nextStepConfig[displayState] && (
+            <Button
+              variant="secondary"
+              icon={nextStepConfig[displayState].icon}
+              className={nextStepConfig[displayState].className}
+              title={nextStepConfig[displayState].label}
+              onClick={() => void onAdvance()}
+              disabled={isAdvancing}
+            />
+          )}
+          {canUpdate && (
+            <Button
+              variant="secondary"
+              icon={IconPencil}
+              title={__("Edit")}
+              onClick={() => dialogRef.current?.open()}
+            />
+          )}
+          {canDelete && (
+            <Button
+              variant="danger"
+              icon={IconTrashCan}
+              title={__("Delete")}
+              onClick={onDelete}
+            />
           )}
         </div>
       </div>

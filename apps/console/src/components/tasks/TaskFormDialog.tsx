@@ -27,11 +27,12 @@ import {
   PriorityLevel,
   PropertyRow,
   Select,
+  TaskStateIcon,
   Textarea,
   useDialogRef,
 } from "@probo/ui";
 import { Breadcrumb } from "@probo/ui";
-import type { ReactNode } from "react";
+import { type ReactNode, useEffect } from "react";
 import { Controller } from "react-hook-form";
 import { useFragment, useRelayEnvironment } from "react-relay";
 import { graphql } from "relay-runtime";
@@ -50,6 +51,7 @@ const taskFragment = graphql`
     id
     description
     name
+    state
     priority
     timeEstimate
     deadline
@@ -91,6 +93,7 @@ export const taskUpdateMutation = graphql`
   }
 `;
 
+export const taskStates = ["TODO", "IN_PROGRESS", "DONE"] as const;
 export const taskPriorities = ["URGENT", "HIGH", "MEDIUM", "LOW"] as const;
 
 const createTaskSchema = z.object({
@@ -109,6 +112,7 @@ const createTaskSchema = z.object({
 const updateTaskSchema = z.object({
   name: z.string().min(1),
   description: z.string().optional().nullable(),
+  state: z.enum(taskStates),
   priority: z.enum(taskPriorities),
   timeEstimate: z.string().optional().nullable(),
   assignedToId: z.preprocess(
@@ -154,6 +158,7 @@ export default function TaskFormDialog(props: Props) {
       defaultValues: {
         name: task?.name ?? "",
         description: task?.description ?? "",
+        state: task?.state ?? "TODO",
         priority: task?.priority ?? "MEDIUM",
         timeEstimate: task?.timeEstimate ?? "",
         assignedToId: task?.assignedTo?.id ?? "",
@@ -161,6 +166,23 @@ export default function TaskFormDialog(props: Props) {
         deadline: task?.deadline?.split("T")[0] ?? "",
       },
     });
+
+  useEffect(() => {
+    if (task) {
+      reset({
+        name: task.name,
+        description: task.description ?? "",
+        state: task.state,
+        priority: task.priority,
+        timeEstimate: task.timeEstimate ?? "",
+        assignedToId: task.assignedTo?.id ?? "",
+        measureId: task.measure?.id ?? measureId ?? "",
+        deadline: task.deadline?.split("T")[0] ?? "",
+      });
+    }
+  }, [
+    task, reset, measureId,
+  ]);
 
   const onSubmit = async (data: z.infer<typeof updateTaskSchema | typeof createTaskSchema>) => {
     if (task) {
@@ -170,6 +192,7 @@ export default function TaskFormDialog(props: Props) {
             taskId: task.id,
             name: data.name,
             description: data.description || null,
+            state: "state" in data ? data.state : undefined,
             priority: data.priority,
             timeEstimate: data.timeEstimate || null,
             deadline: formatDatetime(data.deadline) ?? null,
@@ -242,6 +265,42 @@ export default function TaskFormDialog(props: Props) {
           {/* Properties form */}
           <div className="py-5 px-6 bg-subtle">
             <Label>{__("Properties")}</Label>
+            {isUpdating && (
+              <PropertyRow
+                label={__("State")}
+                error={"state" in formState.errors ? formState.errors.state?.message : undefined}
+              >
+                <Controller
+                  name="state"
+                  control={control}
+                  render={({ field }) => (
+                    <Select
+                      value={field.value}
+                      onValueChange={field.onChange}
+                    >
+                      <Option value="TODO">
+                        <span className="flex items-center gap-2">
+                          <TaskStateIcon state="TODO" />
+                          {__("To do")}
+                        </span>
+                      </Option>
+                      <Option value="IN_PROGRESS">
+                        <span className="flex items-center gap-2">
+                          <TaskStateIcon state="IN_PROGRESS" />
+                          {__("In progress")}
+                        </span>
+                      </Option>
+                      <Option value="DONE">
+                        <span className="flex items-center gap-2">
+                          <TaskStateIcon state="DONE" />
+                          {__("Done")}
+                        </span>
+                      </Option>
+                    </Select>
+                  )}
+                />
+              </PropertyRow>
+            )}
             <PropertyRow
               label={__("Priority")}
               error={formState.errors.priority?.message}

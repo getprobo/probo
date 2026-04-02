@@ -12,19 +12,21 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+import { IconCircleCheck } from "./IconCircleCheck";
 import { IconCircleProgress } from "./IconCircleProgress";
 import { IconRadioUnchecked } from "./IconRadioUnchecked";
 
 type Props = {
-  state: "TODO" | "DONE";
+  state: "TODO" | "IN_PROGRESS" | "DONE";
 };
 
 export function TaskStateIcon({ state }: Props) {
-  return state === "TODO"
-    ? (
-        <IconRadioUnchecked size={16} className="text-txt-quaternary" />
-      )
-    : (
-        <IconCircleProgress size={16} className="text-txt-accent" />
-      );
+  switch (state) {
+    case "TODO":
+      return <IconRadioUnchecked size={16} className="text-txt-quaternary" />;
+    case "IN_PROGRESS":
+      return <IconCircleProgress size={16} className="text-txt-warning" />;
+    case "DONE":
+      return <IconCircleCheck size={16} className="text-txt-accent" />;
+  }
 }

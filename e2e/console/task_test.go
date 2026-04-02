@@ -320,6 +320,7 @@ func TestTask_StateEnum(t *testing.T) {
 
 	states := []string{
 		"TODO",
+		"IN_PROGRESS",
 		"DONE",
 	}
 

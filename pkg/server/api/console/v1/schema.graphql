@@ -66,6 +66,7 @@ enum MeasureState
 
 enum TaskState @goModel(model: "go.probo.inc/probo/pkg/coredata.TaskState") {
     TODO @goEnum(value: "go.probo.inc/probo/pkg/coredata.TaskStateTodo")
+    IN_PROGRESS @goEnum(value: "go.probo.inc/probo/pkg/coredata.TaskStateInProgress")
     DONE @goEnum(value: "go.probo.inc/probo/pkg/coredata.TaskStateDone")
 }
 

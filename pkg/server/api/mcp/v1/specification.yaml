@@ -4615,6 +4615,7 @@ components:
       type: string
       enum:
         - TODO
+        - IN_PROGRESS
         - DONE
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.TaskState
 
