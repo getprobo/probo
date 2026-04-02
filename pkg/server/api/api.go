@@ -25,6 +25,7 @@ import (
 	"github.com/go-chi/cors"
 	"go.gearno.de/kit/httpserver"
 	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/accessreview"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/esign"
@@ -52,6 +53,7 @@ type (
 		IAM               *iam.Service
 		Trust             *trust.Service
 		ESign             *esign.Service
+		AccessReview      *accessreview.Service
 		Slack             *slack.Service
 		Mailman           *mailman.Service
 		Cookie            securecookie.Config
@@ -161,6 +163,7 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.Probo,
 			cfg.IAM,
 			cfg.ESign,
+			cfg.AccessReview,
 			cfg.Mailman,
 			cfg.Cookie,
 			cfg.TokenSecret,
@@ -176,6 +179,7 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.Logger.Named("mcp.v1"),
 			cfg.Probo,
 			cfg.IAM,
+			cfg.AccessReview,
 			cfg.TokenSecret,
 		),
 		slackHandler: slack_v1.NewMux(

@@ -42,6 +42,7 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.gearno.de/kit/unit"
 	"go.opentelemetry.io/otel/trace"
+	"go.probo.inc/probo/pkg/accessreview"
 	"go.probo.inc/probo/pkg/awsconfig"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/certmanager"
@@ -481,6 +482,7 @@ func (impl *Implm) Run(
 		slackService,
 		iamService,
 		esignService,
+		defaultConnectorRegistry,
 		time.Duration(impl.cfg.Auth.InvitationConfirmationTokenValidity)*time.Second,
 	)
 	if err != nil {
@@ -503,6 +505,13 @@ func (impl *Implm) Run(
 
 	fileService := file.NewService(pgClient, fileManagerService)
 
+	accessReviewService := accessreview.NewService(
+		pgClient,
+		encryptionKey,
+		defaultConnectorRegistry,
+		l.Named("access-review"),
+	)
+
 	serverHandler, err := server.NewServer(
 		server.Config{
 			AllowedOrigins:    impl.cfg.Api.Cors.AllowedOrigins,
@@ -512,6 +521,7 @@ func (impl *Implm) Run(
 			IAM:               iamService,
 			Trust:             trustService,
 			ESign:             esignService,
+			AccessReview:      accessReviewService,
 			Mailman:           mailmanService,
 			Slack:             slackService,
 			ConnectorRegistry: defaultConnectorRegistry,
@@ -605,6 +615,15 @@ func (impl *Implm) Run(
 		},
 	)
 
+	accessReviewWorkerCtx, stopAccessReviewWorker := context.WithCancel(context.Background())
+	wg.Go(
+		func() {
+			if err := accessReviewService.Run(accessReviewWorkerCtx); err != nil {
+				cancel(fmt.Errorf("access review source fetcher crashed: %w", err))
+			}
+		},
+	)
+
 	iamServiceCtx, stopIAMService := context.WithCancel(context.Background())
 	wg.Go(
 		func() {
@@ -685,6 +704,7 @@ func (impl *Implm) Run(
 	stopMailingListWorker()
 	stopEvidenceDescriptionWorker()
 	stopExportJobExporter()
+	stopAccessReviewWorker()
 	stopIAMService()
 	stopMailer()
 	stopSlackSender()
