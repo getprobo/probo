@@ -152,6 +152,9 @@ func buildParams(req *llm.ChatCompletionRequest) (anthropic.MessageNewParams, er
 	if req.ToolChoice != nil {
 		params.ToolChoice = buildToolChoice(req.ToolChoice)
 	}
+	if req.Thinking != nil && req.Thinking.Enabled {
+		params.Thinking = anthropic.ThinkingConfigParamOfEnabled(int64(req.Thinking.BudgetTokens))
+	}
 
 	return params, nil
 }
@@ -194,6 +197,11 @@ func buildMessages(messages []llm.Message) []anthropic.MessageParam {
 			out = append(out, anthropic.NewUserMessage(blocks...))
 		case llm.RoleAssistant:
 			var blocks []anthropic.ContentBlockParamUnion
+			for _, p := range msg.Parts {
+				if tp, ok := p.(llm.ThinkingPart); ok {
+					blocks = append(blocks, anthropic.NewThinkingBlock(tp.Signature, tp.Text))
+				}
+			}
 			if text := msg.Text(); text != "" {
 				blocks = append(blocks, anthropic.NewTextBlock(text))
 			}
@@ -295,6 +303,12 @@ func mapResponse(msg *anthropic.Message) *llm.ChatCompletionResponse {
 
 	for _, block := range msg.Content {
 		switch block.Type {
+		case "thinking":
+			tb := block.AsThinking()
+			resp.Message.Parts = append(resp.Message.Parts, llm.ThinkingPart{
+				Text:      tb.Thinking,
+				Signature: tb.Signature,
+			})
 		case "text":
 			resp.Message.Parts = append(resp.Message.Parts, llm.TextPart{Text: block.Text})
 		case "tool_use":
@@ -361,7 +375,8 @@ type anthropicStream struct {
 	stream  *ssestream.Stream[anthropic.MessageStreamEventUnion]
 	current llm.ChatCompletionStreamEvent
 	// Track tool call indices for mapping content_block_start events.
-	toolCallIndex int
+	toolCallIndex     int
+	thinkingSignature string
 }
 
 func (s *anthropicStream) Next() bool {
@@ -396,7 +411,8 @@ func (s *anthropicStream) mapStreamEvent(event *anthropic.MessageStreamEventUnio
 	switch event.Type {
 	case "content_block_start":
 		cb := event.ContentBlock
-		if cb.Type == "tool_use" {
+		switch cb.Type {
+		case "tool_use":
 			tu := cb.AsToolUse()
 			return llm.ChatCompletionStreamEvent{
 				Delta: llm.MessageDelta{
@@ -407,6 +423,8 @@ func (s *anthropicStream) mapStreamEvent(event *anthropic.MessageStreamEventUnio
 					}},
 				},
 			}, true
+		case "thinking":
+			return llm.ChatCompletionStreamEvent{}, false
 		}
 		return llm.ChatCompletionStreamEvent{}, false
 
@@ -417,6 +435,13 @@ func (s *anthropicStream) mapStreamEvent(event *anthropic.MessageStreamEventUnio
 			return llm.ChatCompletionStreamEvent{
 				Delta: llm.MessageDelta{Content: delta.Text},
 			}, true
+		case "thinking_delta":
+			return llm.ChatCompletionStreamEvent{
+				Delta: llm.MessageDelta{Thinking: delta.Thinking},
+			}, true
+		case "signature_delta":
+			s.thinkingSignature = delta.Signature
+			return llm.ChatCompletionStreamEvent{}, false
 		case "input_json_delta":
 			return llm.ChatCompletionStreamEvent{
 				Delta: llm.MessageDelta{

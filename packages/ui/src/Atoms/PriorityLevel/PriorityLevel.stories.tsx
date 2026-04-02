@@ -24,26 +24,8 @@ export default {
 
 type Story = StoryObj<typeof PriorityLevel>;
 
-export const Low: Story = {
+export const Default: Story = {
   args: {
-    level: "LOW",
-  },
-};
-
-export const Medium: Story = {
-  args: {
-    level: "MEDIUM",
-  },
-};
-
-export const High: Story = {
-  args: {
-    level: "HIGH",
-  },
-};
-
-export const Urgent: Story = {
-  args: {
-    level: "URGENT",
+    level: 1,
   },
 };

@@ -21,14 +21,14 @@ type (
 )
 
 const (
-	TaskOrderFieldPriorityRank TaskOrderField = "PRIORITY_RANK" // ordering only
-	TaskOrderFieldCreatedAt    TaskOrderField = "CREATED_AT"
+	TaskOrderFieldPriority  TaskOrderField = "PRIORITY"
+	TaskOrderFieldCreatedAt TaskOrderField = "CREATED_AT"
 )
 
 func (p TaskOrderField) Column() string {
 	switch p {
-	case TaskOrderFieldPriorityRank:
-		return "priority_rank"
+	case TaskOrderFieldPriority:
+		return "priority"
 	case TaskOrderFieldCreatedAt:
 		return "created_at"
 	}
@@ -37,7 +37,7 @@ func (p TaskOrderField) Column() string {
 
 func (p TaskOrderField) IsValid() bool {
 	switch p {
-	case TaskOrderFieldPriorityRank, TaskOrderFieldCreatedAt:
+	case TaskOrderFieldPriority, TaskOrderFieldCreatedAt:
 		return true
 	}
 	return false

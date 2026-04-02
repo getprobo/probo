@@ -24,4 +24,5 @@ type ModelSettings struct {
 	MaxTokens         *int
 	ToolChoice        *llm.ToolChoice
 	ParallelToolCalls *bool
+	Thinking          *llm.ThinkingConfig
 }

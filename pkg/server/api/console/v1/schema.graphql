@@ -69,26 +69,6 @@ enum TaskState @goModel(model: "go.probo.inc/probo/pkg/coredata.TaskState") {
     DONE @goEnum(value: "go.probo.inc/probo/pkg/coredata.TaskStateDone")
 }
 
-enum TaskPriority
-    @goModel(model: "go.probo.inc/probo/pkg/coredata.TaskPriority") {
-    URGENT
-        @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.TaskPriorityUrgent"
-        )
-    HIGH
-        @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.TaskPriorityHigh"
-        )
-    MEDIUM
-        @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.TaskPriorityMedium"
-        )
-    LOW
-        @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.TaskPriorityLow"
-        )
-}
-
 enum EvidenceState
     @goModel(model: "go.probo.inc/probo/pkg/coredata.EvidenceState") {
     FULFILLED
@@ -527,7 +507,7 @@ enum MeasureOrderField
 
 enum TaskOrderField
     @goModel(model: "go.probo.inc/probo/pkg/coredata.TaskOrderField") {
-    PRIORITY_RANK
+    PRIORITY
     CREATED_AT
 }
 
@@ -2498,8 +2478,7 @@ type Task implements Node {
     name: String!
     description: String
     state: TaskState!
-    priority: TaskPriority!
-    rank: Int!
+    priority: Int!
     timeEstimate: Duration
     deadline: Datetime
     assignedTo: Profile @goField(forceResolver: true)
@@ -4424,7 +4403,6 @@ input CreateTaskInput {
     measureId: ID
     name: String!
     description: String
-    priority: TaskPriority!
     timeEstimate: Duration
     assignedToId: ID
     deadline: Datetime
@@ -4435,8 +4413,7 @@ input UpdateTaskInput {
     name: String
     description: String @goField(omittable: true)
     state: TaskState
-    priority: TaskPriority
-    rank: Int
+    priority: Int
     timeEstimate: Duration @goField(omittable: true)
     deadline: Datetime @goField(omittable: true)
     assignedToId: ID @goField(omittable: true)
@@ -5950,10 +5927,19 @@ type GenerateDocumentChangelogPayload {
 input AssessVendorInput {
     id: ID!
     websiteUrl: String!
+    procedure: String
+}
+
+type VendorSubprocessor {
+    name: String!
+    country: String!
+    purpose: String!
 }
 
 type AssessVendorPayload {
     vendor: Vendor!
+    report: String!
+    subprocessors: [VendorSubprocessor!]!
 }
 
 type Asset implements Node {
