@@ -12,17 +12,37 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package agent
+package security
 
-import "go.probo.inc/probo/pkg/llm"
+import (
+	"crypto/tls"
+	"testing"
 
-type ModelSettings struct {
-	Temperature       *float64
-	TopP              *float64
-	FrequencyPenalty  *float64
-	PresencePenalty   *float64
-	MaxTokens         *int
-	ToolChoice        *llm.ToolChoice
-	ParallelToolCalls *bool
-	Thinking          *llm.ThinkingConfig
+	"github.com/stretchr/testify/assert"
+)
+
+func TestProtocolName(t *testing.T) {
+	t.Parallel()
+
+	t.Run(
+		"known protocols",
+		func(t *testing.T) {
+			t.Parallel()
+
+			assert.Equal(t, "TLS 1.0", protocolName(tls.VersionTLS10))
+			assert.Equal(t, "TLS 1.1", protocolName(tls.VersionTLS11))
+			assert.Equal(t, "TLS 1.2", protocolName(tls.VersionTLS12))
+			assert.Equal(t, "TLS 1.3", protocolName(tls.VersionTLS13))
+		},
+	)
+
+	t.Run(
+		"unknown protocol",
+		func(t *testing.T) {
+			t.Parallel()
+
+			result := protocolName(0x9999)
+			assert.Contains(t, result, "unknown")
+		},
+	)
 }

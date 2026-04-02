@@ -12,17 +12,31 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package agent
+package vetting
 
-import "go.probo.inc/probo/pkg/llm"
+import (
+	_ "embed"
 
-type ModelSettings struct {
-	Temperature       *float64
-	TopP              *float64
-	FrequencyPenalty  *float64
-	PresencePenalty   *float64
-	MaxTokens         *int
-	ToolChoice        *llm.ToolChoice
-	ParallelToolCalls *bool
-	Thinking          *llm.ThinkingConfig
+	"go.probo.inc/probo/pkg/agent"
+	"go.probo.inc/probo/pkg/llm"
+)
+
+//go:embed crawler_prompt.txt
+var crawlerSystemPrompt string
+
+func newCrawlerAgent(
+	client *llm.Client,
+	model string,
+	browserTools []agent.Tool,
+	extraOpts ...agent.Option,
+) *agent.Agent {
+	opts := []agent.Option{
+		agent.WithInstructions(crawlerSystemPrompt),
+		agent.WithModel(model),
+		agent.WithTools(browserTools...),
+		agent.WithMaxTurns(10),
+	}
+	opts = append(opts, extraOpts...)
+
+	return agent.New("website_crawler", client, opts...)
 }

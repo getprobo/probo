@@ -12,17 +12,27 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package agent
+package search
 
-import "go.probo.inc/probo/pkg/llm"
+import (
+	"go.probo.inc/probo/pkg/agent"
+)
 
-type ModelSettings struct {
-	Temperature       *float64
-	TopP              *float64
-	FrequencyPenalty  *float64
-	PresencePenalty   *float64
-	MaxTokens         *int
-	ToolChoice        *llm.ToolChoice
-	ParallelToolCalls *bool
-	Thinking          *llm.ThinkingConfig
+// Toolset provides web search tools.
+type Toolset struct {
+	endpoint string
+}
+
+// NewToolset creates a search toolset with the given SearXNG endpoint.
+func NewToolset(endpoint string) *Toolset {
+	return &Toolset{endpoint: endpoint}
+}
+
+func (t *Toolset) Tools() ([]agent.Tool, error) {
+	return agent.CollectTools(
+		func() (agent.Tool, error) { return WebSearchTool(t.endpoint) },
+		func() (agent.Tool, error) { return CheckGovernmentDBTool(t.endpoint) },
+		CheckWaybackTool,
+		DiffDocumentsTool,
+	)
 }

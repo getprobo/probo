@@ -12,17 +12,31 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package agent
+package vetting
 
-import "go.probo.inc/probo/pkg/llm"
+import (
+	_ "embed"
 
-type ModelSettings struct {
-	Temperature       *float64
-	TopP              *float64
-	FrequencyPenalty  *float64
-	PresencePenalty   *float64
-	MaxTokens         *int
-	ToolChoice        *llm.ToolChoice
-	ParallelToolCalls *bool
-	Thinking          *llm.ThinkingConfig
+	"go.probo.inc/probo/pkg/agent"
+	"go.probo.inc/probo/pkg/llm"
+)
+
+//go:embed market_prompt.txt
+var marketSystemPrompt string
+
+func newMarketPresenceAgent(
+	client *llm.Client,
+	model string,
+	browserTools []agent.Tool,
+	extraOpts ...agent.Option,
+) *agent.Agent {
+	opts := []agent.Option{
+		agent.WithInstructions(marketSystemPrompt),
+		agent.WithModel(model),
+		agent.WithTools(browserTools...),
+		agent.WithMaxTurns(10),
+	}
+	opts = append(opts, extraOpts...)
+
+	return agent.New("market_presence_analyst", client, opts...)
 }

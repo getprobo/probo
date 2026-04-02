@@ -306,6 +306,7 @@ func coreLoop(ctx context.Context, startAgent *Agent, inputMessages []llm.Messag
 			ToolChoice:        toolChoice,
 			ParallelToolCalls: s.agent.modelSettings.ParallelToolCalls,
 			ResponseFormat:    responseFormat,
+			Thinking:          s.agent.modelSettings.Thinking,
 		}
 
 		s.logger.InfoCtx(
@@ -852,12 +853,24 @@ func executeSingleTool(
 	emitHook(agent, func(h RunHooks) { h.OnToolEnd(ctx, agent, tool, result, nil) })
 	emitAgentHook(agent, func(h AgentHooks) { h.OnToolEnd(ctx, agent, tool, result) })
 
-	logger.InfoCtx(
-		ctx,
-		"tool execution completed",
-		log.String("tool", tool.Name()),
-		log.Bool("is_error", result.IsError),
-	)
+	if result.IsError {
+		content := result.Content
+		if len(content) > 200 {
+			content = content[:200] + "... (truncated)"
+		}
+		logger.WarnCtx(
+			ctx,
+			"tool returned error",
+			log.String("tool", tool.Name()),
+			log.String("content", content),
+		)
+	} else {
+		logger.InfoCtx(
+			ctx,
+			"tool execution completed",
+			log.String("tool", tool.Name()),
+		)
+	}
 
 	return result, nil
 }
