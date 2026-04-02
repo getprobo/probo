@@ -49,10 +49,16 @@ type (
 	}
 
 	CreateConnectorRequest struct {
-		OrganizationID gid.GID
-		Provider       coredata.ConnectorProvider
-		Protocol       coredata.ConnectorProtocol
-		Connection     connector.Connection
+		OrganizationID              gid.GID
+		Provider                    coredata.ConnectorProvider
+		Protocol                    coredata.ConnectorProtocol
+		Connection                  connector.Connection
+		TallySettings               *coredata.TallyConnectorSettings
+		OnePasswordSettings         *coredata.OnePasswordConnectorSettings
+		SentrySettings              *coredata.SentryConnectorSettings
+		SupabaseSettings            *coredata.SupabaseConnectorSettings
+		GitHubSettings              *coredata.GitHubConnectorSettings
+		OnePasswordUsersAPISettings *coredata.OnePasswordUsersAPISettings
 	}
 )
 
@@ -94,6 +100,30 @@ func (s *ConnectorService) ListForOrganizationID(
 	return page.NewPage(connectors, cursor), nil
 }
 
+func (s *ConnectorService) ListAllForOrganizationID(
+	ctx context.Context,
+	organizationID gid.GID,
+) (coredata.Connectors, error) {
+	var connectors coredata.Connectors
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			return connectors.LoadAllByOrganizationIDWithoutDecryptedConnection(
+				ctx,
+				conn,
+				s.svc.scope,
+				organizationID,
+			)
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot list all connectors: %w", err)
+	}
+
+	return connectors, nil
+}
+
 func (s *ConnectorService) GetByOrganizationIDAndProvider(
 	ctx context.Context,
 	organizationID gid.GID,
@@ -125,6 +155,25 @@ func (s *ConnectorService) GetByOrganizationIDAndProvider(
 	}
 
 	return connectors[0], nil
+}
+
+func (s *ConnectorService) Get(
+	ctx context.Context,
+	connectorID gid.GID,
+) (*coredata.Connector, error) {
+	connector := &coredata.Connector{}
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			return connector.LoadMetadataByID(ctx, conn, s.svc.scope, connectorID)
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get connector: %w", err)
+	}
+
+	return connector, nil
 }
 
 func (s *ConnectorService) Delete(
@@ -159,6 +208,33 @@ func (s *ConnectorService) Create(
 		Connection:     req.Connection,
 		CreatedAt:      now,
 		UpdatedAt:      now,
+	}
+
+	switch {
+	case req.TallySettings != nil:
+		if err := newConnector.SetSettings(req.TallySettings); err != nil {
+			return nil, fmt.Errorf("cannot set tally settings: %w", err)
+		}
+	case req.OnePasswordSettings != nil:
+		if err := newConnector.SetSettings(req.OnePasswordSettings); err != nil {
+			return nil, fmt.Errorf("cannot set one password settings: %w", err)
+		}
+	case req.SentrySettings != nil:
+		if err := newConnector.SetSettings(req.SentrySettings); err != nil {
+			return nil, fmt.Errorf("cannot set sentry settings: %w", err)
+		}
+	case req.SupabaseSettings != nil:
+		if err := newConnector.SetSettings(req.SupabaseSettings); err != nil {
+			return nil, fmt.Errorf("cannot set supabase settings: %w", err)
+		}
+	case req.GitHubSettings != nil:
+		if err := newConnector.SetSettings(req.GitHubSettings); err != nil {
+			return nil, fmt.Errorf("cannot set github settings: %w", err)
+		}
+	case req.OnePasswordUsersAPISettings != nil:
+		if err := newConnector.SetSettings(req.OnePasswordUsersAPISettings); err != nil {
+			return nil, fmt.Errorf("cannot set one password users api settings: %w", err)
+		}
 	}
 
 	err := s.svc.pg.WithConn(
@@ -210,4 +286,31 @@ func (s *ConnectorService) Create(
 	}
 
 	return newConnector, nil
+}
+
+// Reconnect updates an existing connector's connection (token) without
+// changing its settings or identity. Used when an OAuth token expires
+// and the user re-authenticates.
+func (s *ConnectorService) Reconnect(
+	ctx context.Context,
+	connectorID gid.GID,
+	connection connector.Connection,
+) (*coredata.Connector, error) {
+	cnnctr := &coredata.Connector{}
+
+	err := s.svc.pg.WithTx(ctx, func(conn pg.Conn) error {
+		if err := cnnctr.LoadMetadataByID(ctx, conn, s.svc.scope, connectorID); err != nil {
+			return fmt.Errorf("cannot load connector: %w", err)
+		}
+
+		cnnctr.Connection = connection
+		cnnctr.UpdatedAt = time.Now()
+
+		return cnnctr.Update(ctx, conn, s.svc.scope, s.svc.encryptionKey)
+	})
+	if err != nil {
+		return nil, fmt.Errorf("cannot reconnect connector: %w", err)
+	}
+
+	return cnnctr, nil
 }

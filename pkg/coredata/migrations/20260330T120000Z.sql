@@ -1,40 +1,36 @@
--- Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
---
--- Permission to use, copy, modify, and/or distribute this software for any
--- purpose with or without fee is hereby granted, provided that the above
--- copyright notice and this permission notice appear in all copies.
---
--- THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
--- REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
--- AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
--- INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
--- LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
--- OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
--- PERFORMANCE OF THIS SOFTWARE.
+-- Rename priority to rank
+ALTER TABLE tasks RENAME COLUMN priority TO rank;
 
--- Add organization_id to access_entries and access_entry_decision_history
--- to avoid JOINs in AuthorizationAttributes lookups.
+ALTER TABLE tasks DROP CONSTRAINT tasks_organization_id_state_priority_key;
 
--- 1. access_entries
-ALTER TABLE access_entries
-    ADD COLUMN organization_id TEXT REFERENCES organizations(id);
+-- Add task priority enum
+CREATE TYPE task_priority AS ENUM ('URGENT', 'HIGH', 'MEDIUM', 'LOW');
 
-UPDATE access_entries ae
-SET organization_id = arc.organization_id
-FROM access_review_campaigns arc
-WHERE ae.access_review_campaign_id = arc.id;
+ALTER TABLE tasks ADD COLUMN priority task_priority NOT NULL DEFAULT 'MEDIUM'::task_priority;
 
-ALTER TABLE access_entries
-    ALTER COLUMN organization_id SET NOT NULL;
+ALTER TABLE tasks ALTER COLUMN priority DROP DEFAULT;
 
--- 2. access_entry_decision_history
-ALTER TABLE access_entry_decision_history
-    ADD COLUMN organization_id TEXT REFERENCES organizations(id);
+-- Rank is now scoped to (state, priority) — backfill ranks per group
+WITH ranked AS (
+    SELECT id, ROW_NUMBER() OVER (
+        PARTITION BY organization_id, state, priority
+        ORDER BY rank
+    ) AS new_rank
+    FROM tasks
+)
+UPDATE tasks SET rank = ranked.new_rank FROM ranked WHERE tasks.id = ranked.id;
 
-UPDATE access_entry_decision_history h
-SET organization_id = ae.organization_id
-FROM access_entries ae
-WHERE h.access_entry_id = ae.id;
+ALTER TABLE tasks
+ADD CONSTRAINT tasks_organization_id_state_priority_rank_key
+    UNIQUE (organization_id, state, priority, rank)
+    DEFERRABLE INITIALLY DEFERRED;
 
-ALTER TABLE access_entry_decision_history
-    ALTER COLUMN organization_id SET NOT NULL;
+-- Computed column for composite ordering (priority level then rank)
+ALTER TABLE tasks ADD COLUMN priority_rank int GENERATED ALWAYS AS (
+    (CASE priority
+        WHEN 'URGENT' THEN 1
+        WHEN 'HIGH' THEN 2
+        WHEN 'MEDIUM' THEN 3
+        WHEN 'LOW' THEN 4
+    END) * 1000000 + rank
+) STORED;
