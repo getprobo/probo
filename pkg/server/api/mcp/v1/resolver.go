@@ -22,6 +22,7 @@ import (
 	"fmt"
 
 	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/accessreview"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/probo"
@@ -30,9 +31,10 @@ import (
 )
 
 type Resolver struct {
-	proboSvc *probo.Service
-	iamSvc   *iam.Service
-	logger   *log.Logger
+	proboSvc     *probo.Service
+	iamSvc       *iam.Service
+	accessReview *accessreview.Service
+	logger       *log.Logger
 }
 
 func markdownToProseMirrorJSON(markdown string) (string, error) {

@@ -22,6 +22,7 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"go.gearno.de/kit/log"
 	mcpgenmcp "go.probo.inc/mcpgen/mcp"
+	"go.probo.inc/probo/pkg/accessreview"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/probo"
@@ -34,16 +35,17 @@ func (r *Resolver) ProboService(ctx context.Context, objectID gid.GID) *probo.Te
 	return r.proboSvc.WithTenant(objectID.TenantID())
 }
 
-func NewMux(logger *log.Logger, proboSvc *probo.Service, iamSvc *iam.Service, tokenSecret string) *chi.Mux {
+func NewMux(logger *log.Logger, proboSvc *probo.Service, iamSvc *iam.Service, accessReviewSvc *accessreview.Service, tokenSecret string) *chi.Mux {
 	logger = logger.Named("mcp.v1")
 
 	logger.Info("initializing MCP server")
 	// server.AddReceivingMiddleware(mcputils.LoggingMiddleware(logger))
 
 	resolver := &Resolver{
-		proboSvc: proboSvc,
-		iamSvc:   iamSvc,
-		logger:   logger,
+		proboSvc:     proboSvc,
+		iamSvc:       iamSvc,
+		accessReview: accessReviewSvc,
+		logger:       logger,
 	}
 
 	mcpServer := server.New(resolver)
