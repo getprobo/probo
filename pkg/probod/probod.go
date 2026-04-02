@@ -42,6 +42,7 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.gearno.de/kit/unit"
 	"go.opentelemetry.io/otel/trace"
+	"go.probo.inc/probo/pkg/agents/vetting"
 	"go.probo.inc/probo/pkg/awsconfig"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/certmanager"
@@ -107,20 +108,21 @@ type (
 
 	// Config represents the probod application configuration.
 	Config struct {
-		BaseURL       string              `json:"base-url"`
-		EncryptionKey string              `json:"encryption-key"`
-		Pg            PgConfig            `json:"pg"`
-		Api           APIConfig           `json:"api"`
-		Auth          AuthConfig          `json:"auth"`
-		TrustCenter   TrustCenterConfig   `json:"trust-center"`
-		AWS           AWSConfig           `json:"aws"`
-		Notifications NotificationsConfig `json:"notifications"`
-		Connectors    []ConnectorConfig   `json:"connectors"`
-		Agents        AgentsConfig        `json:"agents"`
-		ChromeDPAddr  string              `json:"chrome-dp-addr"`
-		CustomDomains CustomDomainsConfig `json:"custom-domains"`
-		SCIMBridge    SCIMBridgeConfig    `json:"scim-bridge"`
-		ESign         ESignConfig         `json:"esign"`
+		BaseURL        string              `json:"base-url"`
+		EncryptionKey  string              `json:"encryption-key"`
+		Pg             PgConfig            `json:"pg"`
+		Api            APIConfig           `json:"api"`
+		Auth           AuthConfig          `json:"auth"`
+		TrustCenter    TrustCenterConfig   `json:"trust-center"`
+		AWS            AWSConfig           `json:"aws"`
+		Notifications  NotificationsConfig `json:"notifications"`
+		Connectors     []ConnectorConfig   `json:"connectors"`
+		Agents         AgentsConfig        `json:"agents"`
+		ChromeDPAddr   string              `json:"chrome-dp-addr"`
+		SearchEndpoint string              `json:"search-endpoint"`
+		CustomDomains  CustomDomainsConfig `json:"custom-domains"`
+		SCIMBridge     SCIMBridgeConfig    `json:"scim-bridge"`
+		ESign          ESignConfig         `json:"esign"`
 	}
 
 	// TrustCenterConfig contains trust center server configuration.
@@ -337,6 +339,16 @@ func (impl *Implm) Run(
 		return fmt.Errorf("cannot create evidence describer LLM client: %w", err)
 	}
 
+	vendorAssessorAgentCfg := impl.cfg.Agents.ResolveAgent(impl.cfg.Agents.VendorAssessor)
+	vendorAssessorProviderCfg, ok := impl.cfg.Agents.Providers[vendorAssessorAgentCfg.Provider]
+	if !ok {
+		return fmt.Errorf("unknown LLM provider %q for vendor-assessor agent", vendorAssessorAgentCfg.Provider)
+	}
+	vendorAssessorLLMClient, err := buildLLMClient(vendorAssessorProviderCfg, l.Named("llm.vendor-assessor"), tp, r)
+	if err != nil {
+		return fmt.Errorf("cannot create vendor assessor LLM client: %w", err)
+	}
+
 	fileManagerService := filemanager.NewService(s3Client)
 
 	var samlCert *x509.Certificate
@@ -462,6 +474,14 @@ func (impl *Implm) Run(
 
 	mailmanService := mailman.NewService(pgClient, fileManagerService, impl.cfg.Auth.Cookie.Secret, baseURL, impl.cfg.AWS.Bucket, encryptionKey, l)
 
+	vendorAssessor := vetting.NewAssessor(vetting.Config{
+		Client:         vendorAssessorLLMClient,
+		Model:          vendorAssessorAgentCfg.ModelName,
+		ChromeAddr:     impl.cfg.ChromeDPAddr,
+		SearchEndpoint: impl.cfg.SearchEndpoint,
+		Logger:         l.Named("vendor-assessor"),
+	})
+
 	proboService, err := probo.NewService(
 		ctx,
 		encryptionKey,
@@ -482,6 +502,7 @@ func (impl *Implm) Run(
 		iamService,
 		esignService,
 		time.Duration(impl.cfg.Auth.InvitationConfirmationTokenValidity)*time.Second,
+		vendorAssessor,
 	)
 	if err != nil {
 		return fmt.Errorf("cannot create probo service: %w", err)

@@ -39,6 +39,7 @@ type (
 		Default           LLMAgentConfig               `json:"default"`
 		Probo             LLMAgentConfig               `json:"probo"`
 		EvidenceDescriber LLMAgentConfig               `json:"evidence-describer"`
+		VendorAssessor    LLMAgentConfig               `json:"vendor-assessor"`
 	}
 )
 

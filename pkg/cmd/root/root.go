@@ -32,6 +32,7 @@ import (
 	"go.probo.inc/probo/pkg/cmd/risk"
 	"go.probo.inc/probo/pkg/cmd/soa"
 	"go.probo.inc/probo/pkg/cmd/user"
+	"go.probo.inc/probo/pkg/cmd/vendorcmd"
 	"go.probo.inc/probo/pkg/cmd/version"
 	"go.probo.inc/probo/pkg/cmd/webhook"
 )
@@ -81,6 +82,7 @@ func NewCmdRoot(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(risk.NewCmdRisk(f))
 	cmd.AddCommand(soa.NewCmdSoa(f))
 	cmd.AddCommand(user.NewCmdUser(f))
+	cmd.AddCommand(vendorcmd.NewCmdVendor(f))
 	cmd.AddCommand(version.NewCmdVersion(f))
 	cmd.AddCommand(webhook.NewCmdWebhook(f))
 

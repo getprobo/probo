@@ -255,6 +255,15 @@ func WithParallelToolCalls(enabled bool) Option {
 	}
 }
 
+func WithThinking(budgetTokens int) Option {
+	return func(a *Agent) {
+		a.modelSettings.Thinking = &llm.ThinkingConfig{
+			Enabled:      true,
+			BudgetTokens: budgetTokens,
+		}
+	}
+}
+
 func WithLogger(l *log.Logger) Option {
 	return func(a *Agent) {
 		a.logger = l
