@@ -7,7 +7,7 @@ import { ReactNodeViewRenderer } from "@tiptap/react";
 
 import { MermaidNodeView } from "./MermaidNodeView";
 
-export const MermaidCodeBlock = CodeBlock.extend({
+export const CodeBlockExtension = CodeBlock.extend({
   addNodeView() {
     return ReactNodeViewRenderer(MermaidNodeView);
   },

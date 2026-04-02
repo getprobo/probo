@@ -21,18 +21,10 @@
 
     ul {
         @apply list-disc list-outside my-2 pl-4;
-
-        li {
-            p { @apply my-0; }
-        }
     }
 
     ol {
         @apply list-decimal list-outside my-2 pl-4;
-
-        li {
-            p { @apply inline-block my-0; }
-        }
     }
 
     a { @apply text-txt-info underline font-normal; }

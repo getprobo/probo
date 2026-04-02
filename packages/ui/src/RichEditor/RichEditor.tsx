@@ -4,13 +4,14 @@
 
 import { Blockquote } from "@tiptap/extension-blockquote";
 import { Bold } from "@tiptap/extension-bold";
+import { BulletList } from "@tiptap/extension-bullet-list";
 import { Code } from "@tiptap/extension-code";
 import { Document } from "@tiptap/extension-document";
 import { HardBreak } from "@tiptap/extension-hard-break";
 import { Heading } from "@tiptap/extension-heading";
 import { HorizontalRule } from "@tiptap/extension-horizontal-rule";
 import { Italic } from "@tiptap/extension-italic";
-import { BulletList, ListItem, OrderedList } from "@tiptap/extension-list";
+import { ListItem, OrderedList } from "@tiptap/extension-list";
 import { Paragraph } from "@tiptap/extension-paragraph";
 import { Strike } from "@tiptap/extension-strike";
 import { TableKit } from "@tiptap/extension-table";
@@ -23,8 +24,9 @@ import { tv } from "tailwind-variants";
 
 import { BlockMenu } from "./BlockMenu/BlockMenu";
 import { BubbleMenu } from "./BubbleMenu";
+import { CodeBlockExtension } from "./CodeBlockExtension";
 import { LinkExtension } from "./LinkExtension";
-import { MermaidCodeBlock } from "./MermaidExtension";
+import { MarkdownPasteExtension } from "./MarkdownPasteExtension";
 import { OptionsMenu } from "./OptionsMenu/OptionsMenu";
 import { PlaceholderExtension } from "./PlaceholderExtension";
 import { SlashCommandExtension } from "./SlashCommandExtension";
@@ -43,7 +45,7 @@ const extensions = [
   Strike,
   Underline,
   Code,
-  MermaidCodeBlock,
+  CodeBlockExtension,
   LinkExtension,
   SlashCommandExtension,
   PlaceholderExtension,
@@ -61,6 +63,7 @@ const extensions = [
   TableKit.configure({
     table: { resizable: true },
   }),
+  MarkdownPasteExtension,
 ];
 
 const richEditorVariants = tv({
