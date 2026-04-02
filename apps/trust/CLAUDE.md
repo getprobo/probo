@@ -7,7 +7,7 @@ Same frontend stack as `apps/console/` — see its CLAUDE.md for Relay query pat
 ## Trust-specific differences
 
 - Public-facing trust center app (not an internal dashboard)
-- Path-prefix routing: `/trust/{slug}` for Probo-hosted, `/` for custom domains
+- Path-prefix routing: `/trust/{slug}` for Govrly-hosted, `/` for custom domains
 - Routes: `/overview`, `/documents`, `/subprocessors`, `/updates`
 - Auth flow: `/connect`, `/verify-magic-link`, `/full-name`
 - Content routes (`/overview`, `/documents`, `/subprocessors`, `/updates`) wrapped in `MainLayout`

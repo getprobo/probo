@@ -73,7 +73,7 @@ haproxy-ingress:
     extraArgs:
       - --tcp-services-configmap=$(POD_NAMESPACE)/haproxy-tcp-services
     config:
-      ssl-redirect: "false"  # Probo handles SSL internally
+      ssl-redirect: "false"  # Govrly handles SSL internally
 
 # Configure ingress with TLS
 ingress:
@@ -92,7 +92,7 @@ ingress:
       hosts:
         - probo.example.com
 
-# Probo application configuration
+# Govrly application configuration
 probo:
   # Must match your ingress hostname
   baseUrl: "probo.example.com"
@@ -143,7 +143,7 @@ probo:
 
   # Email configuration
   mailer:
-    senderName: "Probo"
+    senderName: "Govrly"
     senderEmail: "noreply@example.com"
     smtp:
       # Use your SMTP provider (e.g., SendGrid, Mailgun, AWS SES)

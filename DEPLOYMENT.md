@@ -1,10 +1,10 @@
-# Probo Deployment on Render — Complete Guide
+# Govrly Deployment on Render — Complete Guide
 
 ## Overview
-Deploy the open-source Probo GRC platform on Render (Docker web service) with AWS RDS PostgreSQL.
+Deploy the open-source Govrly GRC platform on Render (Docker web service) with AWS RDS PostgreSQL.
 
 ## Pre-requisites
-- GitHub repo with the Probo source code
+- GitHub repo with the Govrly source code
 - Render account
 - AWS account (for RDS PostgreSQL)
 - Cloudflare R2 bucket (for file storage)

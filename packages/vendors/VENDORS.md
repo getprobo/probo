@@ -146,7 +146,7 @@
 
 ### SECURITY
 
-- [Probo](#probo)
+- [Govrly](#govrly)
 - [Tailscale](#tailscale)
 
 ### VERSION_CONTROL
@@ -2859,11 +2859,11 @@ Puzzle provides modern, real-time accounting software that gives startups automa
 
 ---
 
-## Probo
+## Govrly
 
-Probo is an open-source compliance platform that helps startups achieve SOC 2 and ISO 27001 certifications quickly and affordably, with expert guidance and no vendor lock-in.
+Govrly is an open-source compliance platform that helps startups achieve SOC 2 and ISO 27001 certifications quickly and affordably, with expert guidance and no vendor lock-in.
 
-**Legal Name:** Probo Inc.
+**Legal Name:** Govrly Inc.
 
 **Headquarters:** 490 Post St, Suite 640,San Francisco, CA 94102, United States
 

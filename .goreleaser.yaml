@@ -163,7 +163,7 @@ dockers_v2:
       - entrypoint.sh
     labels:
       "org.opencontainers.image.title": "{{.ProjectName}}"
-      "org.opencontainers.image.description": "Probo compliance management platform"
+      "org.opencontainers.image.description": "Govrly compliance management platform"
       "org.opencontainers.image.url": "https://github.com/getprobo/probo"
       "org.opencontainers.image.source": "https://github.com/getprobo/probo"
       "org.opencontainers.image.version": "{{.Version}}"

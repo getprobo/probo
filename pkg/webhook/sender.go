@@ -306,10 +306,10 @@ func (s *Sender) doHTTPCall(
 	signature := computeSignature(signingSecret, timestamp, body)
 
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("X-Probo-Webhook-Event", webhookData.EventType.String())
-	req.Header.Set("X-Probo-Webhook-Organization-Id", webhookData.OrganizationID.String())
-	req.Header.Set("X-Probo-Webhook-Timestamp", timestamp)
-	req.Header.Set("X-Probo-Webhook-Signature", signature)
+	req.Header.Set("X-Govrly-Webhook-Event", webhookData.EventType.String())
+	req.Header.Set("X-Govrly-Webhook-Organization-Id", webhookData.OrganizationID.String())
+	req.Header.Set("X-Govrly-Webhook-Timestamp", timestamp)
+	req.Header.Set("X-Govrly-Webhook-Signature", signature)
 
 	resp, err := s.httpClient.Do(req)
 	if err != nil {

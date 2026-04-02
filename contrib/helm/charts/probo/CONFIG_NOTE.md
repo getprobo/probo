@@ -2,7 +2,7 @@
 
 ## Environment Variable Substitution
 
-The Helm chart templates use a `-from-env` suffix pattern in the configuration file (e.g., `encryption-key-from-env: "ENCRYPTION_KEY"`). This pattern assumes the Probo application supports reading secrets from environment variables instead of directly from the config file.
+The Helm chart templates use a `-from-env` suffix pattern in the configuration file (e.g., `encryption-key-from-env: "ENCRYPTION_KEY"`). This pattern assumes the Govrly application supports reading secrets from environment variables instead of directly from the config file.
 
 ### Current Implementation
 
@@ -11,13 +11,13 @@ The chart currently:
 2. Mounts them as environment variables in the pod
 3. References them in the config with `-from-env` suffix
 
-### If Probo Doesn't Support `-from-env` Pattern
+### If Govrly Doesn't Support `-from-env` Pattern
 
-If the current Probo application doesn't support the `-from-env` pattern, you have three options:
+If the current Govrly application doesn't support the `-from-env` pattern, you have three options:
 
-#### Option 1: Implement in Probo (Recommended)
+#### Option 1: Implement in Govrly (Recommended)
 
-Update the Probo configuration parser to recognize `-from-env` suffixes and read from environment variables. This is the most secure approach.
+Update the Govrly configuration parser to recognize `-from-env` suffixes and read from environment variables. This is the most secure approach.
 
 Example in Go:
 ```go
@@ -76,7 +76,7 @@ This is simpler but less secure as the entire config is stored as a Secret.
 
 ## Recommendation
 
-We recommend implementing Option 1 in the Probo codebase as it:
+We recommend implementing Option 1 in the Govrly codebase as it:
 - Follows Kubernetes best practices
 - Keeps secrets separate from configuration
 - Works well with secret management tools (Vault, External Secrets, etc.)
@@ -84,4 +84,4 @@ We recommend implementing Option 1 in the Probo codebase as it:
 
 ## Current Status
 
-The Helm chart is built with Option 1 in mind. If the Probo application doesn't yet support `-from-env`, please implement it or use one of the alternative approaches above.
+The Helm chart is built with Option 1 in mind. If the Govrly application doesn't yet support `-from-env`, please implement it or use one of the alternative approaches above.

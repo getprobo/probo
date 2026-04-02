@@ -1,6 +1,6 @@
-# Probo Kubernetes Deployment
+# Govrly Kubernetes Deployment
 
-This directory contains the Helm chart for deploying Probo on Kubernetes with external managed services.
+This directory contains the Helm chart for deploying Govrly on Kubernetes with external managed services.
 
 ## Quick Links
 
@@ -9,7 +9,7 @@ This directory contains the Helm chart for deploying Probo on Kubernetes with ex
 
 ## Prerequisites
 
-Before deploying Probo, ensure you have:
+Before deploying Govrly, ensure you have:
 
 1. **Kubernetes Cluster** - Version 1.23+
 2. **Helm** - Version 3.8+
@@ -104,7 +104,7 @@ For production deployments, we recommend:
 
 ### What Gets Deployed
 
-- **Probo Application** - Main Go binary serving GraphQL APIs and React frontends
+- **Govrly Application** - Main Go binary serving GraphQL APIs and React frontends
 - **Chrome Headless** - For PDF generation (optional, can use external service)
 - **LoadBalancer Service** - For external access via TCP on ports 80, 443, and 8080
 - **Ingress** - Alternative to LoadBalancer for HTTP routing (optional)
@@ -135,21 +135,21 @@ HAProxy Ingress LoadBalancer
 
 1. **HAProxy Ingress Controller** runs in the release namespace with a LoadBalancer service
 2. **TCP ConfigMap** defines Layer 4 TCP passthrough rules:
-   - Port 80 → Probo service port 80
-   - Port 443 → Probo service port 443
+   - Port 80 → Govrly service port 80
+   - Port 443 → Govrly service port 443
 3. **HTTP Ingress** defines Layer 7 HTTP routing:
-   - Host `probo.example.com` → Probo service port 8080
+   - Host `probo.example.com` → Govrly service port 8080
 
 **Benefits:**
 - Single LoadBalancer for both TCP and HTTP traffic
-- TCP passthrough for ports 80/443 (Probo handles TLS directly)
+- TCP passthrough for ports 80/443 (Govrly handles TLS directly)
 - HTTP routing for backoffice on port 8080
 - Supports ACME/Let's Encrypt integration
 
 **Port Configuration:**
-- **Port 80** - TCP passthrough to Probo:80 (HTTP service, ACME challenges)
-- **Port 443** - TCP passthrough to Probo:443 (HTTPS service with TLS)
-- **Port 8080** - HTTP routing to Probo:8080 (Backoffice, via host-based routing)
+- **Port 80** - TCP passthrough to Govrly:80 (HTTP service, ACME challenges)
+- **Port 443** - TCP passthrough to Govrly:443 (HTTPS service with TLS)
+- **Port 8080** - HTTP routing to Govrly:8080 (Backoffice, via host-based routing)
 
 ## Configuration
 
@@ -301,7 +301,7 @@ spec:
 
 | Key                                                     | Type    | Default                                            | Description                                                                                         |
 |---------------------------------------------------------| ------- |----------------------------------------------------|-----------------------------------------------------------------------------------------------------|
-| replicaCount                                            | int     | `1`                                                | Number of Probo application replicas                                                                |
+| replicaCount                                            | int     | `1`                                                | Number of Govrly application replicas                                                                |
 | image.repository                                        | string  | `"ghcr.io/getprobo/probo"`                         | Container image repository                                                                          |
 | image.pullPolicy                                        | string  | `"IfNotPresent"`                                   | Image pull policy                                                                                   |
 | image.tag                                               | string  | `"latest"`                                         | Overrides the image tag whose default is the chart appVersion                                       |
@@ -376,10 +376,10 @@ spec:
 | metrics.serviceMonitor.scrapeTimeout                    | string  | `"10s"`                                            | Scrape timeout for metrics                                                                          |
 | metrics.serviceMonitor.labels                           | object  | `{}`                                               | Labels for the ServiceMonitor                                                                       |
 | metrics.serviceMonitor.relabelings                      | list    | `[]`                                               | Relabeling configs for the ServiceMonitor                                                           |
-| probo.baseUrl                                           | string  | `"probo.example.com"`                              | Public hostname where Probo will be accessible                                                      |
+| probo.baseUrl                                           | string  | `"probo.example.com"`                              | Public hostname where Govrly will be accessible                                                      |
 | probo.encryptionKey                                     | string  | `""`                                               | **REQUIRED** Base64-encoded encryption key (generate with: openssl rand -base64 32)                 |
-| probo.service.port                                      | int     | `8080`                                             | Probo application service port                                                                      |
-| probo.metrics.port                                      | int     | `8081`                                             | Probo metrics service port                                                                          |
+| probo.service.port                                      | int     | `8080`                                             | Govrly application service port                                                                      |
+| probo.metrics.port                                      | int     | `8081`                                             | Govrly metrics service port                                                                          |
 | probo.tracing.enabled                                   | bool    | `false`                                            | Enable OpenTelemetry tracing                                                                        |
 | probo.tracing.addr                                      | string  | `""`                                               | OTLP gRPC endpoint (e.g., tempo:4317)                                                               |
 | probo.tracing.maxBatchSize                              | int     | `512`                                              | Maximum batch size for trace exports                                                                |
@@ -404,7 +404,7 @@ spec:
 | probo.trustAuth.tokenSecret                             | string  | `""`                                               | **REQUIRED** Trust token signing secret (at least 32 bytes, generate with: openssl rand -base64 32) |
 | probo.trustAuth.scope                                   | string  | `"trust_center_readonly"`                          | Trust token scope                                                                                   |
 | probo.trustAuth.tokenType                               | string  | `"trust_center_access"`                            | Trust token type                                                                                    |
-| probo.mailer.senderName                                 | string  | `"Probo"`                                          | Email sender name                                                                                   |
+| probo.mailer.senderName                                 | string  | `"Govrly"`                                         | Email sender name                                                                                   |
 | probo.mailer.senderEmail                                | string  | `"no-reply@notification.getprobo.com"`             | Email sender address                                                                                |
 | probo.mailer.smtp.addr                                  | string  | `"sandbox.smtp.mailtrap.io:2525"`                  | SMTP server address                                                                                 |
 | probo.mailer.smtp.user                                  | string  | `"2d1b1d0e8b3d0b"`                                 | SMTP username                                                                                       |

@@ -1,7 +1,7 @@
 {
   "name": "@probo/tsconfig",
   "version": "0.0.1",
-  "description": "Probo default typescript configs",
+  "description": "Govrly default typescript configs",
   "publishConfig": {
     "access": "public"
   },

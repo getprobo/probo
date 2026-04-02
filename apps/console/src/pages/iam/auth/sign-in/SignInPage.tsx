@@ -58,7 +58,7 @@ export default function SignInPage(props: Props) {
       </div>
 
       <p className="mt-8 text-center text-sm text-txt-secondary">
-        {__("New to Probo?")}
+        {__("New to Govrly?")}
         {" "}
         <Link
           to={{ pathname: "/auth/register", search: location.search }}

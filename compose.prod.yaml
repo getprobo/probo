@@ -35,7 +35,7 @@ services:
       # Email notifications
       SMTP_ADDR: "your.smtp.server:587"
       SMTP_TLS_REQUIRED: "false"
-      MAILER_SENDER_NAME: "Probo"
+      MAILER_SENDER_NAME: "Govrly"
       MAILER_SENDER_EMAIL: "no-reply@notification.getprobo.com"
 
       # Chrome for PDF generation

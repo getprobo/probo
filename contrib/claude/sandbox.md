@@ -54,7 +54,7 @@ During provisioning, the sandbox automatically generates:
 - **`/etc/probod/config.yml`** — probod config with the VM IP as cookie domain, `secure: false`, and correct CORS origins
 - **`apps/console/.env`** and **`apps/trust/.env`** — `VITE_API_URL` pointing to the VM IP
 
-Probod config is at `/etc/probod/config.yml`.
+Govrlyd config is at `/etc/probod/config.yml`.
 
 ### Custom environment variables
 
@@ -76,7 +76,7 @@ The sandbox provisions three systemd services:
 | Service | Description | Starts on boot |
 |---|---|---|
 | `probo-stack` | Docker Compose stack (Postgres, SeaweedFS, Keycloak, etc.) | Yes |
-| `probod` | Probo API server (depends on `probo-stack`) | No |
+| `probod` | Govrly API server (depends on `probo-stack`) | No |
 | `probo-console` | Console frontend dev server | No |
 
 `probo-stack` starts automatically when the VM boots. `probod` and `probo-console` must be started manually after building.
