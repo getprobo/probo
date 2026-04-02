@@ -24,6 +24,7 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/agents"
 	"go.probo.inc/probo/pkg/certmanager"
+	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/esign"
@@ -66,6 +67,7 @@ type (
 		logger                  *log.Logger
 		slack                   *slack.Service
 		esign                   *esign.Service
+		connectorRegistry       *connector.ConnectorRegistry
 		invitationTokenValidity time.Duration
 	}
 
@@ -141,6 +143,7 @@ func NewService(
 	slackService *slack.Service,
 	iamService *iam.Service,
 	esignService *esign.Service,
+	connectorRegistry *connector.ConnectorRegistry,
 	invitationTokenValidity time.Duration,
 ) (*Service, error) {
 	if bucket == "" {
@@ -166,6 +169,7 @@ func NewService(
 		logger:                  logger,
 		slack:                   slackService,
 		esign:                   esignService,
+		connectorRegistry:       connectorRegistry,
 		invitationTokenValidity: invitationTokenValidity,
 	}
 
@@ -291,6 +295,7 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 		logger:        s.logger.Named("custom_domains"),
 	}
 	tenantService.SlackMessages = s.slack.WithTenant(tenantID).SlackMessages
+
 	return tenantService
 }
 
