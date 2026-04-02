@@ -33,6 +33,12 @@ type (
 		ToolChoice        *ToolChoice
 		ParallelToolCalls *bool
 		ResponseFormat    *ResponseFormat
+		Thinking          *ThinkingConfig
+	}
+
+	ThinkingConfig struct {
+		Enabled      bool
+		BudgetTokens int
 	}
 
 	ToolChoiceType string
@@ -98,6 +104,7 @@ type (
 
 	MessageDelta struct {
 		Content   string
+		Thinking  string
 		ToolCalls []ToolCallDelta
 	}
 
@@ -144,13 +151,15 @@ func (u Usage) Add(other Usage) Usage {
 // After the stream is exhausted (Next returns false), call Response
 // to get the fully assembled ChatCompletionResponse.
 type StreamAccumulator struct {
-	stream       ChatCompletionStream
-	current      ChatCompletionStreamEvent
-	content      strings.Builder
-	toolCalls    map[int]*ToolCall
-	usage        Usage
-	finishReason FinishReason
-	model        string
+	stream            ChatCompletionStream
+	current           ChatCompletionStreamEvent
+	content           strings.Builder
+	thinking          strings.Builder
+	thinkingSignature string
+	toolCalls         map[int]*ToolCall
+	usage             Usage
+	finishReason      FinishReason
+	model             string
 }
 
 func NewStreamAccumulator(stream ChatCompletionStream) *StreamAccumulator {
@@ -194,11 +203,20 @@ func (a *StreamAccumulator) Response() *ChatCompletionResponse {
 		}
 	}
 
+	var parts []Part
+	if thinking := a.thinking.String(); thinking != "" {
+		parts = append(parts, ThinkingPart{
+			Text:      thinking,
+			Signature: a.thinkingSignature,
+		})
+	}
+	parts = append(parts, TextPart{Text: a.content.String()})
+
 	return &ChatCompletionResponse{
 		Model: a.model,
 		Message: Message{
 			Role:      RoleAssistant,
-			Parts:     []Part{TextPart{Text: a.content.String()}},
+			Parts:     parts,
 			ToolCalls: toolCalls,
 		},
 		Usage:        a.usage,
@@ -212,6 +230,7 @@ func (a *StreamAccumulator) accumulate(event ChatCompletionStreamEvent) {
 	}
 
 	a.content.WriteString(event.Delta.Content)
+	a.thinking.WriteString(event.Delta.Thinking)
 
 	for _, tcd := range event.Delta.ToolCalls {
 		tc, ok := a.toolCalls[tcd.Index]

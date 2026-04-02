@@ -22,38 +22,41 @@ type (
 		APIKey string `json:"api-key"` // for OpenAI and Anthropic
 	}
 
-	// LLMConfig holds model parameters for a single LLM consumer. Provider
-	// references one of the keys in LLMSettings.Providers.
-	LLMConfig struct {
-		Provider    string   `json:"provider"` // key into LLMSettings.Providers
+	// LLMAgentConfig holds model parameters for a single agent. Provider
+	// references one of the keys in AgentsConfig.Providers.
+	LLMAgentConfig struct {
+		Provider    string   `json:"provider"` // key into AgentsConfig.Providers
 		ModelName   string   `json:"model-name"`
 		Temperature *float64 `json:"temperature"`
 		MaxTokens   *int     `json:"max-tokens"`
 	}
 
-	// LLMSettings groups LLM provider credentials and default model
-	// settings. Defaults is used as a fallback when a consumer-specific
-	// field is zero-valued.
-	LLMSettings struct {
-		Providers map[string]LLMProviderConfig `json:"providers"`
-		Defaults  LLMConfig                    `json:"defaults"`
+	// AgentsConfig groups LLM provider credentials and per-agent model
+	// settings. Default is used as a fallback when an agent-specific field
+	// is zero-valued.
+	AgentsConfig struct {
+		Providers         map[string]LLMProviderConfig `json:"providers"`
+		Default           LLMAgentConfig               `json:"default"`
+		Probo             LLMAgentConfig               `json:"probo"`
+		EvidenceDescriber LLMAgentConfig               `json:"evidence-describer"`
+		VendorAssessor    LLMAgentConfig               `json:"vendor-assessor"`
 	}
 )
 
-// ResolveLLMConfig returns a fully populated LLMConfig by filling in
-// zero-valued fields from the defaults.
-func (s *LLMSettings) ResolveLLMConfig(cfg LLMConfig) LLMConfig {
-	if cfg.Provider == "" {
-		cfg.Provider = s.Defaults.Provider
+// ResolveAgent returns a fully populated LLMAgentConfig by filling in
+// zero-valued fields from the default config.
+func (c *AgentsConfig) ResolveAgent(agent LLMAgentConfig) LLMAgentConfig {
+	if agent.Provider == "" {
+		agent.Provider = c.Default.Provider
 	}
-	if cfg.ModelName == "" {
-		cfg.ModelName = s.Defaults.ModelName
+	if agent.ModelName == "" {
+		agent.ModelName = c.Default.ModelName
 	}
-	if cfg.Temperature == nil {
-		cfg.Temperature = s.Defaults.Temperature
+	if agent.Temperature == nil {
+		agent.Temperature = c.Default.Temperature
 	}
-	if cfg.MaxTokens == nil {
-		cfg.MaxTokens = s.Defaults.MaxTokens
+	if agent.MaxTokens == nil {
+		agent.MaxTokens = c.Default.MaxTokens
 	}
-	return cfg
+	return agent
 }
