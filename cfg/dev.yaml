@@ -4,8 +4,8 @@ unit:
   tracing:
     addr: "localhost:4317"
     max-batch-size: 512
-    batch-timeout: 5
-    export-timeout: 30
+    batch-timeout: 1
+    export-timeout: 1
     max-queue-size: 2048
 
 probod:
