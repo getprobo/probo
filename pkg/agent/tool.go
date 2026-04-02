@@ -29,6 +29,7 @@ type (
 		IsError bool
 	}
 
+	// ToolDescriptor describes a tool's name and LLM definition.
 	ToolDescriptor interface {
 		Name() string
 		Definition() llm.Tool
@@ -38,7 +39,31 @@ type (
 		ToolDescriptor
 		Execute(ctx context.Context, arguments string) (ToolResult, error)
 	}
+)
 
+// ResultJSON marshals v to JSON and returns a successful ToolResult.
+func ResultJSON(v any) ToolResult {
+	data, err := json.Marshal(v)
+	if err != nil {
+		return ToolResult{
+			Content: fmt.Sprintf("cannot marshal tool result: %s", err),
+			IsError: true,
+		}
+	}
+	return ToolResult{Content: string(data)}
+}
+
+// ResultError returns an error ToolResult with the given message.
+func ResultError(msg string) ToolResult {
+	return ToolResult{Content: msg, IsError: true}
+}
+
+// ResultErrorf returns an error ToolResult with a formatted message.
+func ResultErrorf(format string, args ...any) ToolResult {
+	return ToolResult{Content: fmt.Sprintf(format, args...), IsError: true}
+}
+
+type (
 	functionTool[P any] struct {
 		name           string
 		description    string

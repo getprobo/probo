@@ -12,17 +12,31 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package agent
+package vetting
 
-import "go.probo.inc/probo/pkg/llm"
+import (
+	_ "embed"
 
-type ModelSettings struct {
-	Temperature       *float64
-	TopP              *float64
-	FrequencyPenalty  *float64
-	PresencePenalty   *float64
-	MaxTokens         *int
-	ToolChoice        *llm.ToolChoice
-	ParallelToolCalls *bool
-	Thinking          *llm.ThinkingConfig
+	"go.probo.inc/probo/pkg/agent"
+	"go.probo.inc/probo/pkg/llm"
+)
+
+//go:embed subprocessor_prompt.txt
+var subprocessorSystemPrompt string
+
+func newSubprocessorAgent(
+	client *llm.Client,
+	model string,
+	tools []agent.Tool,
+	extraOpts ...agent.Option,
+) *agent.Agent {
+	opts := []agent.Option{
+		agent.WithInstructions(subprocessorSystemPrompt),
+		agent.WithModel(model),
+		agent.WithTools(tools...),
+		agent.WithMaxTurns(25),
+	}
+	opts = append(opts, extraOpts...)
+
+	return agent.New("subprocessor_extractor", client, opts...)
 }

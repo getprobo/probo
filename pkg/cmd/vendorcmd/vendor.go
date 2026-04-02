@@ -12,17 +12,21 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package agent
+package vendorcmd
 
-import "go.probo.inc/probo/pkg/llm"
+import (
+	"github.com/spf13/cobra"
+	"go.probo.inc/probo/pkg/cmd/cmdutil"
+	"go.probo.inc/probo/pkg/cmd/vendorcmd/assess"
+)
 
-type ModelSettings struct {
-	Temperature       *float64
-	TopP              *float64
-	FrequencyPenalty  *float64
-	PresencePenalty   *float64
-	MaxTokens         *int
-	ToolChoice        *llm.ToolChoice
-	ParallelToolCalls *bool
-	Thinking          *llm.ThinkingConfig
+func NewCmdVendor(f *cmdutil.Factory) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "vendor <command>",
+		Short: "Manage vendors",
+	}
+
+	cmd.AddCommand(assess.NewCmdAssess(f))
+
+	return cmd
 }

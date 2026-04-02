@@ -14,15 +14,23 @@
 
 package agent
 
-import "go.probo.inc/probo/pkg/llm"
+import "context"
 
-type ModelSettings struct {
-	Temperature       *float64
-	TopP              *float64
-	FrequencyPenalty  *float64
-	PresencePenalty   *float64
-	MaxTokens         *int
-	ToolChoice        *llm.ToolChoice
-	ParallelToolCalls *bool
-	Thinking          *llm.ThinkingConfig
-}
+type (
+	ProgressEventType string
+
+	ProgressEvent struct {
+		Type       ProgressEventType `json:"type"`
+		Step       string            `json:"step"`
+		ParentStep string            `json:"parent_step,omitempty"`
+		Message    string            `json:"message"`
+	}
+
+	ProgressReporter func(ctx context.Context, event ProgressEvent)
+)
+
+const (
+	ProgressEventStepStarted   ProgressEventType = "step_started"
+	ProgressEventStepCompleted ProgressEventType = "step_completed"
+	ProgressEventStepFailed    ProgressEventType = "step_failed"
+)
