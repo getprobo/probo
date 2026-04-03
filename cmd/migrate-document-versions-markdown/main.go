@@ -21,10 +21,10 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"net/url"
 	"os"
 	"time"
 
-	"github.com/jackc/pgx/v5/pgxpool"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
@@ -66,50 +66,44 @@ func run() error {
 
 	ctx := context.Background()
 
-	pool, err := pgxpool.New(ctx, pgDSN)
+	pgClient, err := newPgClientFromDSN(pgDSN)
 	if err != nil {
-		return fmt.Errorf("cannot connect to database: %w", err)
+		return fmt.Errorf("cannot create pg client: %w", err)
 	}
-	defer pool.Close()
 
-	rows, err := pool.Query(
-		ctx,
-		`
+	var ids []string
+	err = pgClient.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		rows, err := conn.Query(
+			ctx,
+			`
 SELECT id::text
 FROM document_versions
 WHERE content IS NOT NULL
 	AND btrim(content) <> ''
 ORDER BY id;
 `,
-	)
-	if err != nil {
-		return fmt.Errorf("cannot list document versions: %w", err)
-	}
-	defer rows.Close()
-
-	var ids []string
-	for rows.Next() {
-		var id string
-		if err := rows.Scan(&id); err != nil {
-			return fmt.Errorf("cannot scan document version id: %w", err)
+		)
+		if err != nil {
+			return fmt.Errorf("cannot list document versions: %w", err)
 		}
-		ids = append(ids, id)
-	}
-	if err := rows.Err(); err != nil {
-		return fmt.Errorf("cannot iterate document versions: %w", err)
-	}
+		defer rows.Close()
 
-	conn, err := pool.Acquire(ctx)
+		for rows.Next() {
+			var id string
+			if err := rows.Scan(&id); err != nil {
+				return fmt.Errorf("cannot scan document version id: %w", err)
+			}
+			ids = append(ids, id)
+		}
+		return rows.Err()
+	})
 	if err != nil {
-		return fmt.Errorf("cannot acquire connection: %w", err)
+		return err
 	}
-	defer conn.Release()
-
-	pgxConn := conn.Conn()
 
 	var failures int
 	for _, idStr := range ids {
-		if err := migrateOne(ctx, pgxConn, idStr, dryRun); err != nil {
+		if err := migrateOneInTx(ctx, pgClient, idStr, dryRun); err != nil {
 			fmt.Fprintf(os.Stderr, "%v\n", err)
 			failures++
 			if !continueOnError {
@@ -127,14 +121,46 @@ ORDER BY id;
 	return nil
 }
 
-func migrateOne(ctx context.Context, conn pg.Querier, idStr string, dryRun bool) error {
+func newPgClientFromDSN(dsn string) (*pg.Client, error) {
+	u, err := url.Parse(dsn)
+	if err != nil {
+		return nil, fmt.Errorf("cannot parse DSN: %w", err)
+	}
+
+	var opts []pg.Option
+
+	if u.Host != "" {
+		opts = append(opts, pg.WithAddr(u.Host))
+	}
+
+	if u.User != nil {
+		opts = append(opts, pg.WithUser(u.User.Username()))
+		if password, ok := u.User.Password(); ok {
+			opts = append(opts, pg.WithPassword(password))
+		}
+	}
+
+	if len(u.Path) > 1 {
+		opts = append(opts, pg.WithDatabase(u.Path[1:]))
+	}
+
+	return pg.NewClient(opts...)
+}
+
+func migrateOneInTx(ctx context.Context, pgClient *pg.Client, idStr string, dryRun bool) error {
+	return pgClient.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		return migrateOne(ctx, tx, idStr, dryRun)
+	})
+}
+
+func migrateOne(ctx context.Context, tx pg.Tx, idStr string, dryRun bool) error {
 	versionID, err := gid.ParseGID(idStr)
 	if err != nil {
 		return fmt.Errorf("invalid document version id %q: %w", idStr, err)
 	}
 
 	dv := &coredata.DocumentVersion{}
-	if err := dv.LoadByID(ctx, conn, coredata.NewNoScope(), versionID); err != nil {
+	if err := dv.LoadByID(ctx, tx, coredata.NewNoScope(), versionID); err != nil {
 		return fmt.Errorf("cannot load document version %q: %w", idStr, err)
 	}
 
@@ -161,7 +187,7 @@ func migrateOne(ctx context.Context, conn pg.Querier, idStr string, dryRun bool)
 	dv.Content = string(out)
 	dv.UpdatedAt = time.Now()
 
-	if err := dv.Update(ctx, conn, coredata.NewNoScope()); err != nil {
+	if err := dv.Update(ctx, tx, coredata.NewNoScope()); err != nil {
 		return fmt.Errorf("cannot update document version %q: %w", idStr, err)
 	}
 
