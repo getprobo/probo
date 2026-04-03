@@ -28,7 +28,7 @@ export const employeeApprovalsPageQuery = graphql`
       approvableDocuments(
         organizationId: $organizationId
         first: 1000
-        orderBy: { field: CREATED_AT, direction: DESC }
+        orderBy: { field: UPDATED_AT, direction: DESC }
       ) @required(action: THROW) {
         edges @required(action: THROW) {
           node @required(action: THROW) {

@@ -542,6 +542,10 @@ enum DocumentOrderField
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.DocumentOrderFieldCreatedAt"
         )
+    UPDATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DocumentOrderFieldUpdatedAt"
+        )
     DOCUMENT_TYPE
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.DocumentOrderFieldDocumentType"

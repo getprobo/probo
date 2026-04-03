@@ -52,6 +52,8 @@ func (p Document) CursorKey(orderBy DocumentOrderField) page.CursorKey {
 	switch orderBy {
 	case DocumentOrderFieldCreatedAt:
 		return page.NewCursorKey(p.ID, p.CreatedAt)
+	case DocumentOrderFieldUpdatedAt:
+		return page.NewCursorKey(p.ID, p.UpdatedAt)
 	case DocumentOrderFieldTitle:
 		return page.NewCursorKey(p.ID, p.Title)
 	case DocumentOrderFieldDocumentType:

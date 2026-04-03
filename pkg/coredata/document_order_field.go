@@ -22,6 +22,7 @@ type (
 
 const (
 	DocumentOrderFieldCreatedAt    DocumentOrderField = "CREATED_AT"
+	DocumentOrderFieldUpdatedAt    DocumentOrderField = "UPDATED_AT"
 	DocumentOrderFieldTitle        DocumentOrderField = "TITLE"
 	DocumentOrderFieldDocumentType DocumentOrderField = "DOCUMENT_TYPE"
 )
@@ -30,6 +31,8 @@ func (p DocumentOrderField) Column() string {
 	switch p {
 	case DocumentOrderFieldCreatedAt:
 		return "created_at"
+	case DocumentOrderFieldUpdatedAt:
+		return "updated_at"
 	case DocumentOrderFieldTitle:
 		return "title"
 	case DocumentOrderFieldDocumentType:
@@ -41,6 +44,7 @@ func (p DocumentOrderField) Column() string {
 func (p DocumentOrderField) IsValid() bool {
 	switch p {
 	case DocumentOrderFieldCreatedAt,
+		DocumentOrderFieldUpdatedAt,
 		DocumentOrderFieldTitle,
 		DocumentOrderFieldDocumentType:
 		return true

@@ -103,6 +103,8 @@ func (d EmployeeDocument) CursorKey(orderBy coredata.DocumentOrderField) page.Cu
 	switch orderBy {
 	case coredata.DocumentOrderFieldCreatedAt:
 		return page.NewCursorKey(d.ID, d.CreatedAt)
+	case coredata.DocumentOrderFieldUpdatedAt:
+		return page.NewCursorKey(d.ID, d.UpdatedAt)
 	case coredata.DocumentOrderFieldTitle:
 		return page.NewCursorKey(d.ID, d.Title)
 	case coredata.DocumentOrderFieldDocumentType:
