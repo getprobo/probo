@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.161.0] - 2026-04-03
+
+### Added
+
+- Add measure-document linking
+
+### Changed
+
+- Sort employee signatures and approvals by most recently updated
+- Remove no-changes guard from document version publish
+- Exclude approved-without-signature documents from employee approvals
+
 ## [0.160.2] - 2026-04-03
 
 ### Fixed
