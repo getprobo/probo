@@ -19,7 +19,9 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
+	"go.probo.inc/probo/pkg/duration"
 	"go.probo.inc/probo/pkg/probod"
 )
 
@@ -149,12 +151,12 @@ func (b *Builder) Build() (*probod.FullConfig, error) {
 					},
 				},
 				Slack: probod.SlackConfig{
-					SenderInterval: b.getEnvIntOrDefault("SLACK_SENDER_INTERVAL", 60),
+					SenderInterval: b.getEnvDurationOrDefault("SLACK_SENDER_INTERVAL", 60*time.Second),
 					SigningSecret:  b.getEnv("CONNECTOR_SLACK_SIGNING_SECRET"),
 				},
 				Webhook: probod.WebhookConfig{
-					SenderInterval: b.getEnvIntOrDefault("WEBHOOK_SENDER_INTERVAL", 5),
-					CacheTTL:       b.getEnvIntOrDefault("WEBHOOK_CACHE_TTL", 86400),
+					SenderInterval: b.getEnvDurationOrDefault("WEBHOOK_SENDER_INTERVAL", 5*time.Second),
+					CacheTTL:       b.getEnvDurationOrDefault("WEBHOOK_CACHE_TTL", 24*time.Hour),
 				},
 			},
 			LLM: probod.LLMSettings{
@@ -449,6 +451,20 @@ func (b *Builder) getEnvIntOrDefault(key string, defaultValue int) int {
 		}
 	}
 	return defaultValue
+}
+
+func (b *Builder) getEnvDurationOrDefault(key string, defaultValue time.Duration) duration.Duration {
+	if value := b.getEnv(key); value != "" {
+		if intValue, err := strconv.ParseInt(value, 10, 64); err == nil {
+			return duration.Duration(time.Duration(intValue) * time.Second)
+		}
+
+		if parsed, err := time.ParseDuration(value); err == nil {
+			return duration.Duration(parsed)
+		}
+	}
+
+	return duration.Duration(defaultValue)
 }
 
 func (b *Builder) getEnvFloatOrDefault(key string, defaultValue float64) float64 {
