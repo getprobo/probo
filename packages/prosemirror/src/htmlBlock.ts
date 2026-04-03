@@ -39,7 +39,7 @@ export function safeLinkHref(href: string): string {
         return "#";
     }
   } catch {
-    return href;
+    return "#";
   }
 }
 

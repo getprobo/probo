@@ -34,22 +34,13 @@ function isTableSeparatorLine(line: string): boolean {
   return true;
 }
 
-function isWordChar(c: number): boolean {
-  return (
-    (c >= 48 && c <= 57) ||
-    (c >= 65 && c <= 90) ||
-    (c >= 97 && c <= 122) ||
-    c === 95
-  );
-}
-
 function hasMarkdownLine(line: string): boolean {
   if (line.length === 0) return false;
   const ch = line[0];
 
   if (ch === "`" && line.startsWith("```")) {
     for (let i = 3; i < line.length; i++) {
-      if (!isWordChar(line.charCodeAt(i))) return false;
+      if (line[i] === "`") return false;
     }
     return true;
   }
@@ -77,7 +68,7 @@ function hasMarkdownLine(line: string): boolean {
     while (i < line.length && line[i] >= "0" && line[i] <= "9") i++;
     if (
       i < line.length &&
-      line[i] === "." &&
+      (line[i] === "." || line[i] === ")") &&
       i + 1 < line.length &&
       (line[i + 1] === " " || line[i + 1] === "\t")
     ) {
