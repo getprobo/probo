@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.160.2] - 2026-04-03
+
+### Fixed
+
+- Fix SCIM sync
+
 ## [0.160.1] - 2026-04-03
 
 ### Fixed
