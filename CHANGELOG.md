@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.159.0] - 2026-04-02
+
+### Added
+
+- Add access review
+- Add in-progress state to tasks
+
+### Fixed
+
+- Allow logo to take doc width
+
 ## [0.158.0] - 2026-04-02
 
 ### Added
