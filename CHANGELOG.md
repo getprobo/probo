@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.160.0] - 2026-04-03
+
+### Added
+
+- Add markdown copy-paste support in rich text editor
+
+### Changed
+
+- Update rich editor style to be lighter and closer to printed documents
+
 ## [0.159.0] - 2026-04-02
 
 ### Added
