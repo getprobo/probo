@@ -95,6 +95,7 @@ func (f *DocumentVersionFilter) SQLFragment() string {
 				INNER JOIN iam_membership_profiles p ON dvad.approver_id = p.id
 				WHERE dvaq.version_id = document_versions.id
 					AND p.identity_id = @employee_identity_id::text
+					AND NOT (dvad.state = 'APPROVED' AND dvad.electronic_signature_id IS NULL)
 			)
 		)
 	)

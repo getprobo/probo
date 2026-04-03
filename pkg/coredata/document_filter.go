@@ -173,6 +173,7 @@ func (f *DocumentFilter) SQLFragment() string {
 					INNER JOIN iam_membership_profiles p ON dvad.approver_id = p.id
 					WHERE dv.document_id = documents.id
 						AND p.identity_id = @employee_identity_id::text
+						AND NOT (dvad.state = 'APPROVED' AND dvad.electronic_signature_id IS NULL)
 				)
 			)
 		)
