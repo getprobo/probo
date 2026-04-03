@@ -59,9 +59,6 @@ type (
 		expectedState coredata.DocumentVersionSignatureState
 	}
 
-	ErrDocumentVersionNoChanges struct {
-	}
-
 	ErrDocumentVersionNotDraft struct {
 	}
 
@@ -176,10 +173,6 @@ func (e ErrSignatureNotCancellable) Error() string {
 		e.currentState,
 		e.expectedState,
 	)
-}
-
-func (e ErrDocumentVersionNoChanges) Error() string {
-	return "no changes detected"
 }
 
 func (e ErrDocumentVersionNotDraft) Error() string {
@@ -2267,11 +2260,6 @@ func (s *DocumentService) publishMajorVersionInTx(
 		publishedVersion := &coredata.DocumentVersion{}
 		if err := publishedVersion.LoadByDocumentIDAndVersion(ctx, tx, s.svc.scope, documentID, *document.CurrentPublishedMajor, *document.CurrentPublishedMinor); err != nil {
 			return nil, nil, fmt.Errorf("cannot load published version: %w", err)
-		}
-
-		if publishedVersion.Content == documentVersion.Content &&
-			publishedVersion.Title == documentVersion.Title {
-			return nil, nil, &ErrDocumentVersionNoChanges{}
 		}
 
 		documentVersion.Major = *document.CurrentPublishedMajor + 1

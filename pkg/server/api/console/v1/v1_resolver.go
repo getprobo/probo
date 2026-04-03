@@ -5560,10 +5560,6 @@ func (r *mutationResolver) PublishMajorDocumentVersion(ctx context.Context, inpu
 			return nil, gqlutils.Invalid(ctx, errNotDraft)
 		}
 
-		if errNoChanges, ok := errors.AsType[*probo.ErrDocumentVersionNoChanges](err); ok {
-			return nil, gqlutils.Invalid(ctx, errNoChanges)
-		}
-
 		r.logger.ErrorCtx(ctx, "cannot publish major document version", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
