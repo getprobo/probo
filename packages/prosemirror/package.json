@@ -1,0 +1,18 @@
+{
+  "name": "@probo/prosemirror",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "sideEffects": false,
+  "main": "src/index.ts",
+  "license": "ISC",
+  "scripts": {
+    "check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@tiptap/pm": "^3.20.2"
+  },
+  "devDependencies": {
+    "typescript": "~5.8.3"
+  }
+}
