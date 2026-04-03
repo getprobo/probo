@@ -67,7 +67,7 @@ const extensions = [
 ];
 
 const richEditorVariants = tv({
-  base: ["relative h-full"],
+  base: ["relative flex-1 pb-14"],
   variants: {
     disabled: {
       true: "",
