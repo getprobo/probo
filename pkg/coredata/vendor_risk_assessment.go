@@ -57,7 +57,7 @@ func (v VendorRiskAssessment) CursorKey(orderBy VendorRiskAssessmentOrderField) 
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (v *VendorRiskAssessment) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+func (v *VendorRiskAssessment) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	q := `SELECT organization_id FROM vendor_risk_assessments WHERE id = $1 LIMIT 1;`
 
 	var organizationID gid.GID
@@ -74,7 +74,7 @@ func (v *VendorRiskAssessment) AuthorizationAttributes(ctx context.Context, conn
 // Insert adds a new risk assessment to the database
 func (r VendorRiskAssessment) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -124,7 +124,7 @@ VALUES (
 // LoadByID loads a risk assessment by its ID
 func (r *VendorRiskAssessment) LoadByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	id gid.GID,
 ) error {
@@ -173,7 +173,7 @@ LIMIT 1;
 // LoadLatestByVendorID loads the most recent risk assessment for a vendor
 func (r *VendorRiskAssessment) LoadLatestByVendorID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	vendorID gid.GID,
 ) error {
@@ -224,7 +224,7 @@ LIMIT 1;
 // LoadByVendorID loads all risk assessments for a vendor, ordered by assessment date
 func (r *VendorRiskAssessments) LoadByVendorID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	vendorID gid.GID,
 	cursor *page.Cursor[VendorRiskAssessmentOrderField],
@@ -273,7 +273,7 @@ WHERE
 
 func (v VendorRiskAssessments) InsertVendorSnapshots(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 	organizationID gid.GID,
 	snapshotID gid.GID,

@@ -110,7 +110,7 @@ func (s *Service) InitiateLogin(
 
 	err := s.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			config := &coredata.SAMLConfiguration{}
 			err := config.LoadByID(ctx, tx, coredata.NewNoScope(), configID)
 			if err != nil {
@@ -177,7 +177,7 @@ func (s *Service) HandleAssertion(
 
 	err := s.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			config := &coredata.SAMLConfiguration{}
 
 			err := config.LoadByID(ctx, tx, coredata.NewNoScope(), configID)

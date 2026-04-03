@@ -43,7 +43,7 @@ type (
 
 func (h *AccessEntryDecisionHistory) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -91,7 +91,7 @@ INSERT INTO access_entry_decision_history (
 
 func (h *AccessEntryDecisionHistory) AuthorizationAttributes(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 ) (map[string]string, error) {
 	q := `SELECT organization_id FROM access_entry_decision_history WHERE id = $1 LIMIT 1;`
 
@@ -108,7 +108,7 @@ func (h *AccessEntryDecisionHistory) AuthorizationAttributes(
 
 func (hs *AccessEntryDecisionHistories) LoadByEntryID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	entryID gid.GID,
 ) error {

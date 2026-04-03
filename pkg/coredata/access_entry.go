@@ -69,7 +69,7 @@ func (e AccessEntry) CursorKey(orderBy AccessEntryOrderField) page.CursorKey {
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (e *AccessEntry) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+func (e *AccessEntry) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	q := `SELECT organization_id FROM access_entries WHERE id = $1 LIMIT 1;`
 
 	var organizationID gid.GID
@@ -85,7 +85,7 @@ func (e *AccessEntry) AuthorizationAttributes(ctx context.Context, conn pg.Conn)
 
 func (e *AccessEntry) LoadByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	id gid.GID,
 ) error {
@@ -149,7 +149,7 @@ LIMIT 1;
 
 func (e *AccessEntry) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -253,7 +253,7 @@ VALUES (
 
 func (e *AccessEntry) Update(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -298,7 +298,7 @@ WHERE
 
 func (entries *AccessEntries) LoadByCampaignID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	campaignID gid.GID,
 	cursor *page.Cursor[AccessEntryOrderField],
@@ -364,7 +364,7 @@ WHERE
 
 func (entries *AccessEntries) LoadByCampaignIDAndSourceID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	campaignID gid.GID,
 	sourceID gid.GID,
@@ -432,7 +432,7 @@ WHERE
 
 func (entries *AccessEntries) CountByCampaignID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	campaignID gid.GID,
 	filter *AccessEntryFilter,
@@ -461,7 +461,7 @@ WHERE
 
 func (entries *AccessEntries) CountByCampaignIDAndSourceID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	campaignID gid.GID,
 	sourceID gid.GID,
@@ -492,7 +492,7 @@ WHERE
 
 func (entries *AccessEntries) CountPendingByCampaignID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	campaignID gid.GID,
 ) (int, error) {
@@ -519,7 +519,7 @@ WHERE
 
 func (e *AccessEntry) LoadOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	entryID gid.GID,
 ) (gid.GID, error) {
 	q := `SELECT organization_id FROM access_entries WHERE id = $1 LIMIT 1;`
@@ -537,7 +537,7 @@ func (e *AccessEntry) LoadOrganizationID(
 
 func (e *AccessEntry) UpdateFlags(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -574,7 +574,7 @@ WHERE
 
 func (e *AccessEntry) Upsert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 ) error {
 	q := `
@@ -698,7 +698,7 @@ type BaselineAccountEntry struct {
 
 func (entries *AccessEntries) LoadBaselineBySourceID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	campaignID gid.GID,
 	sourceID gid.GID,
@@ -751,7 +751,7 @@ type MembershipAccount struct {
 
 func LoadMembershipAccountsByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 ) ([]MembershipAccount, error) {

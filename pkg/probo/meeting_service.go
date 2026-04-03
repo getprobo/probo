@@ -92,7 +92,7 @@ func (s MeetingService) ListForOrganizationID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			if err := organization.LoadByID(ctx, conn, s.svc.scope, organizationID); err != nil {
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
@@ -127,7 +127,7 @@ func (s MeetingService) CountForOrganizationID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) (err error) {
+		func(ctx context.Context, conn pg.Querier) (err error) {
 			meetings := &coredata.Meetings{}
 			count, err = meetings.CountByOrganizationID(ctx, conn, s.svc.scope, organizationID)
 			if err != nil {
@@ -153,7 +153,7 @@ func (s MeetingService) Get(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			return meeting.LoadByID(ctx, conn, s.svc.scope, meetingID)
 		},
 	)
@@ -179,7 +179,7 @@ func (s MeetingService) Create(
 
 	err := s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Tx) error {
 			if err := organization.LoadByID(ctx, conn, s.svc.scope, req.OrganizationID); err != nil {
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
@@ -233,7 +233,7 @@ func (s MeetingService) GetAttendees(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			return attendees.LoadByMeetingID(ctx, conn, s.svc.scope, meetingID)
 		},
 	)
@@ -257,7 +257,7 @@ func (s MeetingService) Update(
 
 	err := s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Tx) error {
 			if err := meeting.LoadByID(ctx, conn, s.svc.scope, req.MeetingID); err != nil {
 				return fmt.Errorf("cannot load meeting: %w", err)
 			}
@@ -313,7 +313,7 @@ func (s MeetingService) Delete(
 
 	err := s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Tx) error {
 			if err := meeting.LoadByID(ctx, conn, s.svc.scope, meetingID); err != nil {
 				return fmt.Errorf("cannot load meeting: %w", err)
 			}

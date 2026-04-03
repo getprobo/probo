@@ -34,7 +34,7 @@ type OIDCState struct {
 	ExpiresAt    time.Time    `db:"expires_at"`
 }
 
-func (s *OIDCState) Insert(ctx context.Context, conn pg.Conn) error {
+func (s *OIDCState) Insert(ctx context.Context, conn pg.Tx) error {
 	query := `
 INSERT INTO iam_oidc_states (id, provider, nonce, code_verifier, continue_url, created_at, expires_at)
 VALUES (@id, @provider, @nonce, @code_verifier, @continue_url, @created_at, @expires_at)
@@ -58,7 +58,7 @@ VALUES (@id, @provider, @nonce, @code_verifier, @continue_url, @created_at, @exp
 	return nil
 }
 
-func (s *OIDCState) LoadByIDForUpdate(ctx context.Context, conn pg.Conn, id string) error {
+func (s *OIDCState) LoadByIDForUpdate(ctx context.Context, conn pg.Tx, id string) error {
 	query := `
 SELECT id, provider, nonce, code_verifier, continue_url, created_at, expires_at
 FROM iam_oidc_states
@@ -83,7 +83,7 @@ FOR UPDATE
 	return nil
 }
 
-func (s *OIDCState) Delete(ctx context.Context, conn pg.Conn) error {
+func (s *OIDCState) Delete(ctx context.Context, conn pg.Tx) error {
 	query := `DELETE FROM iam_oidc_states WHERE id = @id`
 
 	_, err := conn.Exec(ctx, query, pgx.StrictNamedArgs{"id": s.ID})
@@ -94,7 +94,7 @@ func (s *OIDCState) Delete(ctx context.Context, conn pg.Conn) error {
 	return nil
 }
 
-func (s *OIDCState) DeleteExpired(ctx context.Context, conn pg.Conn, now time.Time) (int64, error) {
+func (s *OIDCState) DeleteExpired(ctx context.Context, conn pg.Tx, now time.Time) (int64, error) {
 	query := `DELETE FROM iam_oidc_states WHERE expires_at < @now`
 
 	result, err := conn.Exec(ctx, query, pgx.StrictNamedArgs{"now": now})

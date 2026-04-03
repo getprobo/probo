@@ -65,7 +65,7 @@ func (f *File) GetMimeType() string {
 var _ filemanager.File = (*File)(nil)
 
 // AuthorizationAttributes returns the authorization attributes for policy evaluation.
-func (f *File) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+func (f *File) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	q := `SELECT organization_id FROM files WHERE id = $1 LIMIT 1;`
 
 	var organizationID gid.GID
@@ -81,7 +81,7 @@ func (f *File) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[s
 
 func (f *File) LoadByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	fileID gid.GID,
 ) error {
@@ -133,7 +133,7 @@ LIMIT 1;
 
 func (f *Files) LoadByIDs(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	fileIDs []gid.GID,
 ) error {
@@ -179,7 +179,7 @@ WHERE
 
 func (f File) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -245,7 +245,7 @@ VALUES (
 
 func (f *File) LoadPublicByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	fileID gid.GID,
 ) error {
 	q := `
@@ -292,7 +292,7 @@ LIMIT 1;
 	return nil
 }
 
-func (f File) SoftDelete(ctx context.Context, conn pg.Conn, scope Scoper) error {
+func (f File) SoftDelete(ctx context.Context, conn pg.Tx, scope Scoper) error {
 	q := `
 UPDATE files
 SET deleted_at = NOW()

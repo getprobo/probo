@@ -57,7 +57,7 @@ func (a *Asset) CursorKey(field AssetOrderField) page.CursorKey {
 }
 
 // AuthorizationAttributes returns the authorization attributes for policy evaluation.
-func (a *Asset) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+func (a *Asset) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	q := `SELECT organization_id FROM assets WHERE id = $1 LIMIT 1;`
 
 	var organizationID gid.GID
@@ -73,7 +73,7 @@ func (a *Asset) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[
 
 func (a *Asset) LoadByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	assetID gid.GID,
 ) error {
@@ -124,7 +124,7 @@ LIMIT 1;
 
 func (a *Asset) LoadByOwnerID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 ) error {
 	q := `
@@ -174,7 +174,7 @@ LIMIT 1;
 
 func (a *Assets) CountByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 	filter *AssetFilter,
@@ -208,7 +208,7 @@ WHERE
 
 func (a *Assets) LoadByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 	cursor *page.Cursor[AssetOrderField],
@@ -260,7 +260,7 @@ WHERE
 
 func (a *Asset) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -312,7 +312,7 @@ INSERT INTO assets (
 
 func (a *Asset) Update(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -372,7 +372,7 @@ RETURNING
 
 func (a *Asset) Delete(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -396,7 +396,7 @@ WHERE
 	return nil
 }
 
-func (assets Assets) Snapshot(ctx context.Context, conn pg.Conn, scope Scoper, organizationID, snapshotID gid.GID) error {
+func (assets Assets) Snapshot(ctx context.Context, conn pg.Tx, scope Scoper, organizationID, snapshotID gid.GID) error {
 	snapshotters := []AssetSnapshotter{Assets{}, Vendors{}, AssetVendors{}}
 
 	for _, snapshotter := range snapshotters {
@@ -410,7 +410,7 @@ func (assets Assets) Snapshot(ctx context.Context, conn pg.Conn, scope Scoper, o
 
 func (assets Assets) InsertAssetSnapshots(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 	organizationID gid.GID,
 	snapshotID gid.GID,

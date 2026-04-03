@@ -57,7 +57,7 @@ func (dpia *DataProtectionImpactAssessment) CursorKey(field DataProtectionImpact
 }
 
 // AuthorizationAttributes returns the authorization attributes for policy evaluation.
-func (dpia *DataProtectionImpactAssessment) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+func (dpia *DataProtectionImpactAssessment) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	q := `SELECT organization_id FROM processing_activity_data_protection_impact_assessments WHERE id = $1 LIMIT 1;`
 
 	var organizationID gid.GID
@@ -73,7 +73,7 @@ func (dpia *DataProtectionImpactAssessment) AuthorizationAttributes(ctx context.
 
 func (dpias *DataProtectionImpactAssessments) CountByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 	filter *DataProtectionImpactAssessmentFilter,
@@ -108,7 +108,7 @@ WHERE
 
 func (dpias *DataProtectionImpactAssessments) LoadByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 	cursor *page.Cursor[DataProtectionImpactAssessmentOrderField],
@@ -161,7 +161,7 @@ WHERE
 
 func (dpias *DataProtectionImpactAssessments) LoadAllByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 	filter *DataProtectionImpactAssessmentFilter,
@@ -211,7 +211,7 @@ WHERE
 
 func (dpia *DataProtectionImpactAssessment) LoadByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	dpiaID gid.GID,
 ) error {
@@ -263,7 +263,7 @@ LIMIT 1;
 
 func (dpia *DataProtectionImpactAssessment) LoadByProcessingActivityID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	processingActivityID gid.GID,
 ) error {
@@ -315,7 +315,7 @@ LIMIT 1;
 
 func (dpia *DataProtectionImpactAssessment) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -377,7 +377,7 @@ INSERT INTO processing_activity_data_protection_impact_assessments (
 
 func (dpia *DataProtectionImpactAssessment) Update(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -416,7 +416,7 @@ WHERE
 
 func (dpia *DataProtectionImpactAssessment) Delete(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -441,7 +441,7 @@ WHERE
 
 func (dpias DataProtectionImpactAssessments) InsertProcessingActivitySnapshots(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 	organizationID gid.GID,
 	snapshotID gid.GID,

@@ -66,7 +66,7 @@ func NewCustomDomain(tenantID gid.TenantID, domain string) *CustomDomain {
 }
 
 // AuthorizationAttributes returns the authorization attributes for policy evaluation.
-func (cd *CustomDomain) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+func (cd *CustomDomain) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	q := `SELECT organization_id FROM custom_domains WHERE id = $1 LIMIT 1;`
 
 	var organizationID gid.GID
@@ -151,7 +151,7 @@ func (cd *CustomDomain) ParseCertificate(encryptionKey cipher.EncryptionKey) err
 
 func (cd *CustomDomain) LoadByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	domainID gid.GID,
 ) error {
@@ -207,7 +207,7 @@ LIMIT 1
 
 func (cd *CustomDomain) LoadByIDForUpdateSkipLocked(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 	domainID gid.GID,
 ) error {
@@ -263,7 +263,7 @@ FOR UPDATE SKIP LOCKED
 
 func (cd *CustomDomain) LoadByDomain(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	domain string,
 ) error {
@@ -319,7 +319,7 @@ LIMIT 1
 
 func (cd *CustomDomain) LoadByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 ) error {
@@ -375,7 +375,7 @@ LIMIT 1
 
 func (cd *CustomDomain) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 	encryptionKey cipher.EncryptionKey,
 ) error {
@@ -462,7 +462,7 @@ INSERT INTO custom_domains (
 
 func (cd *CustomDomain) Update(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	var encryptedKey []byte
@@ -522,7 +522,7 @@ WHERE
 
 func (cd *CustomDomain) Delete(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -547,7 +547,7 @@ WHERE
 
 func (cd *CustomDomain) LoadByHTTPChallengeToken(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	token string,
 ) error {
@@ -599,7 +599,7 @@ LIMIT 1
 
 func (domains *CustomDomains) ListDomainsForRenewal(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 ) error {
 	q := `
@@ -651,7 +651,7 @@ ORDER BY
 
 func (domains *CustomDomains) ListDomainsWithPendingHTTPChallenges(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 ) error {
 	q := `
@@ -706,7 +706,7 @@ WHERE
 
 func (domains *CustomDomains) LoadActiveCertificates(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 ) error {
 	q := `
@@ -756,7 +756,7 @@ WHERE
 
 func (domains *CustomDomains) ListStaleProvisioningDomains(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 ) error {
 	q := `

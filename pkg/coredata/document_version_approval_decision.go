@@ -54,7 +54,7 @@ func (d DocumentVersionApprovalDecision) CursorKey(orderBy DocumentVersionApprov
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (d *DocumentVersionApprovalDecision) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+func (d *DocumentVersionApprovalDecision) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	q := `SELECT organization_id FROM document_version_approval_decisions WHERE id = $1 LIMIT 1;`
 
 	var organizationID gid.GID
@@ -70,7 +70,7 @@ func (d *DocumentVersionApprovalDecision) AuthorizationAttributes(ctx context.Co
 
 func (d *DocumentVersionApprovalDecision) LoadByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	id gid.GID,
 ) error {
@@ -118,7 +118,7 @@ WHERE
 
 func (d *DocumentVersionApprovalDecision) LoadByQuorumIDAndApproverID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	quorumID gid.GID,
 	approverID gid.GID,
@@ -172,7 +172,7 @@ LIMIT 1
 
 func (d *DocumentVersionApprovalDecisions) CountApprovedByQuorumID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	quorumID gid.GID,
 ) (int, error) {
@@ -203,7 +203,7 @@ WHERE
 
 func (d *DocumentVersionApprovalDecisions) LoadByQuorumID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	quorumID gid.GID,
 	cursor *page.Cursor[DocumentVersionApprovalDecisionOrderField],
@@ -254,7 +254,7 @@ WHERE
 
 func (d *DocumentVersionApprovalDecision) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -315,7 +315,7 @@ INSERT INTO document_version_approval_decisions (
 
 func (ds DocumentVersionApprovalDecisions) BulkInsert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 ) error {
 	if len(ds) == 0 {
@@ -362,7 +362,7 @@ func (ds DocumentVersionApprovalDecisions) BulkInsert(
 
 func (d *DocumentVersionApprovalDecision) Update(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -401,7 +401,7 @@ WHERE
 
 func (d *DocumentVersionApprovalDecision) Delete(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -426,7 +426,7 @@ WHERE
 
 func (d *DocumentVersionApprovalDecisions) CountByQuorumID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	quorumID gid.GID,
 	filter *DocumentVersionApprovalDecisionFilter,

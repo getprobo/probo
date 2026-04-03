@@ -92,7 +92,7 @@ func (gc *GarbageCollector) cleanup(ctx context.Context) error {
 
 	return gc.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			var state coredata.OIDCState
 			deleted, err := state.DeleteExpired(ctx, tx, now)
 			if err != nil {

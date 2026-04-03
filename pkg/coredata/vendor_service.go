@@ -54,7 +54,7 @@ func (vs VendorService) CursorKey(orderBy VendorServiceOrderField) page.CursorKe
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (vs *VendorService) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+func (vs *VendorService) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	q := `SELECT organization_id FROM vendor_services WHERE id = $1 LIMIT 1;`
 
 	var organizationID gid.GID
@@ -70,7 +70,7 @@ func (vs *VendorService) AuthorizationAttributes(ctx context.Context, conn pg.Co
 
 func (vs *VendorService) LoadByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	vendorServiceID gid.GID,
 ) error {
@@ -120,7 +120,7 @@ LIMIT 1;
 
 func (vs *VendorServices) LoadByVendorID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	vendorID gid.GID,
 	cursor *page.Cursor[VendorServiceOrderField],
@@ -169,7 +169,7 @@ WHERE
 
 func (vs VendorService) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -217,7 +217,7 @@ VALUES (
 
 func (vs VendorService) Update(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -253,7 +253,7 @@ WHERE
 
 func (vs VendorService) Delete(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -280,7 +280,7 @@ WHERE
 
 func (vs VendorServices) InsertVendorSnapshots(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 	organizationID gid.GID,
 	snapshotID gid.GID,

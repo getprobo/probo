@@ -55,7 +55,7 @@ func (c ComplianceFramework) CursorKey(orderBy ComplianceFrameworkOrderField) pa
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (c *ComplianceFramework) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+func (c *ComplianceFramework) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	q := `SELECT organization_id FROM compliance_frameworks WHERE id = $1 LIMIT 1;`
 
 	var organizationID gid.GID
@@ -71,7 +71,7 @@ func (c *ComplianceFramework) AuthorizationAttributes(ctx context.Context, conn 
 
 func (c *ComplianceFramework) LoadByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	complianceFrameworkID gid.GID,
 ) error {
@@ -117,7 +117,7 @@ LIMIT 1;
 
 func (c *ComplianceFramework) LoadByTrustCenterIDAndFrameworkID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	trustCenterID gid.GID,
 	frameworkID gid.GID,
@@ -168,7 +168,7 @@ LIMIT 1;
 
 func (c *ComplianceFramework) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -222,7 +222,7 @@ RETURNING rank;
 
 func (c *ComplianceFramework) UpdateRank(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -272,7 +272,7 @@ WHERE %s
 
 func (c *ComplianceFramework) Delete(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -297,7 +297,7 @@ WHERE
 
 func (c *ComplianceFrameworks) LoadByTrustCenterID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	trustCenterID gid.GID,
 	cursor *page.Cursor[ComplianceFrameworkOrderField],
@@ -342,7 +342,7 @@ WHERE
 
 func (c *ComplianceFrameworks) LoadWithHiddenByTrustCenterID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	trustCenterID gid.GID,
 	cursor *page.Cursor[ComplianceFrameworkOrderField],

@@ -38,7 +38,7 @@ func (r *BridgeRunner) acquireNextBridge(ctx context.Context) (*coredata.SCIMBri
 
 	err := r.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			bridge = &coredata.SCIMBridge{}
 			if err := bridge.LoadNextForSyncSkipLocked(ctx, tx, r.cfg.StaleSyncThreshold); err != nil {
 				return err
@@ -70,9 +70,9 @@ func (r *BridgeRunner) transitionToSuccess(
 	connector *coredata.Connector,
 	logger *log.Logger,
 ) error {
-	return r.pg.WithConn(
+	return r.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			now := time.Now()
 			nextSync := now.Add(r.cfg.Interval)
 
@@ -84,7 +84,7 @@ func (r *BridgeRunner) transitionToSuccess(
 			bridge.TotalSyncCount++
 			bridge.UpdatedAt = now
 
-			if err := bridge.Update(ctx, conn, scope); err != nil {
+			if err := bridge.Update(ctx, tx, scope); err != nil {
 				logger.ErrorCtx(
 					ctx,
 					"cannot update bridge after successful sync",
@@ -95,7 +95,7 @@ func (r *BridgeRunner) transitionToSuccess(
 
 			if connector != nil {
 				connector.UpdatedAt = now
-				if err := connector.Update(ctx, conn, scope, r.encryptionKey); err != nil {
+				if err := connector.Update(ctx, tx, scope, r.encryptionKey); err != nil {
 					logger.WarnCtx(
 						ctx,
 						"cannot persist refreshed OAuth2 token",
@@ -129,9 +129,9 @@ func (r *BridgeRunner) transitionToFailed(
 	duration time.Duration,
 	logger *log.Logger,
 ) error {
-	return r.pg.WithConn(
+	return r.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			now := time.Now()
 
 			bridge.ConsecutiveFailures++
@@ -171,7 +171,7 @@ func (r *BridgeRunner) transitionToFailed(
 				)
 			}
 
-			if err := bridge.Update(ctx, conn, scope); err != nil {
+			if err := bridge.Update(ctx, tx, scope); err != nil {
 				logger.ErrorCtx(
 					ctx,
 					"cannot update bridge after failed sync",

@@ -37,7 +37,7 @@ type (
 
 func (ma *MeetingAttendees) Merge(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	meetingID gid.GID,
 	organizationID gid.GID,

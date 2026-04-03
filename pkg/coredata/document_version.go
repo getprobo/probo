@@ -50,7 +50,7 @@ type (
 )
 
 // AuthorizationAttributes returns the authorization attributes for policy evaluation.
-func (dv *DocumentVersion) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+func (dv *DocumentVersion) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	q := `
 WITH document_version AS (
 	SELECT id, document_id, organization_id, status AS version_status
@@ -106,7 +106,7 @@ LEFT JOIN last_quorum lq ON lq.version_id = document_version.id;
 
 func (dv *DocumentVersions) LoadByDocumentID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	documentID gid.GID,
 	cursor *page.Cursor[DocumentVersionOrderField],
@@ -171,7 +171,7 @@ func (dv DocumentVersion) CursorKey(orderBy DocumentVersionOrderField) page.Curs
 
 func (dv *DocumentVersion) LoadByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	documentVersionID gid.GID,
 ) error {
@@ -223,7 +223,7 @@ LIMIT 1;
 
 func (dv DocumentVersion) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -295,7 +295,7 @@ VALUES (
 
 func (dv *DocumentVersion) LoadByDocumentIDAndVersion(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	documentID gid.GID,
 	major int,
@@ -353,7 +353,7 @@ LIMIT 1;
 
 func (dv *DocumentVersion) LoadLatestVersion(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	documentID gid.GID,
 ) error {
@@ -405,7 +405,7 @@ LIMIT 1;
 
 func (dv *DocumentVersion) LoadLatestPublishedVersion(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	documentID gid.GID,
 ) error {
@@ -459,7 +459,7 @@ LIMIT 1;
 
 func (dv DocumentVersion) Update(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -505,7 +505,7 @@ WHERE %s
 
 func (dv DocumentVersion) Delete(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -531,7 +531,7 @@ WHERE %s
 
 func (dv *DocumentVersions) CountByDocumentID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	documentID gid.GID,
 	filter *DocumentVersionFilter,

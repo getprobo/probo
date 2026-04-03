@@ -56,7 +56,7 @@ func (s *SnapshotService) Get(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			return snapshot.LoadByID(ctx, conn, s.svc.scope, snapshotID)
 		},
 	)
@@ -85,7 +85,7 @@ func (s *SnapshotService) Create(
 
 	err := s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Tx) error {
 			organization := &coredata.Organization{}
 			if err := organization.LoadByID(ctx, conn, s.svc.scope, req.OrganizationID); err != nil {
 				return fmt.Errorf("cannot load organization: %w", err)
@@ -119,15 +119,15 @@ func (s *SnapshotService) Delete(
 	ctx context.Context,
 	snapshotID gid.GID,
 ) error {
-	err := s.svc.pg.WithConn(
+	err := s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			snapshot := &coredata.Snapshot{}
-			if err := snapshot.LoadByID(ctx, conn, s.svc.scope, snapshotID); err != nil {
+			if err := snapshot.LoadByID(ctx, tx, s.svc.scope, snapshotID); err != nil {
 				return fmt.Errorf("cannot load snapshot: %w", err)
 			}
 
-			if err := snapshot.Delete(ctx, conn, s.svc.scope); err != nil {
+			if err := snapshot.Delete(ctx, tx, s.svc.scope); err != nil {
 				return fmt.Errorf("cannot delete snapshot: %w", err)
 			}
 
@@ -147,7 +147,7 @@ func (s *SnapshotService) ListForOrganizationID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			if err := snapshots.LoadByOrganizationID(ctx, conn, s.svc.scope, organizationID, cursor); err != nil {
 				return fmt.Errorf("cannot load snapshots: %w", err)
 			}
@@ -170,7 +170,7 @@ func (s *SnapshotService) CountForOrganizationID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) (err error) {
+		func(ctx context.Context, conn pg.Querier) (err error) {
 			snapshots := coredata.Snapshots{}
 			filter := coredata.NewSnapshotFilter(nil)
 			count, err = snapshots.CountByOrganizationID(ctx, conn, s.svc.scope, organizationID, filter)
@@ -199,7 +199,7 @@ func (s *SnapshotService) ListForControlID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			if err := control.LoadByID(ctx, conn, s.svc.scope, controlID); err != nil {
 				return fmt.Errorf("cannot load control: %w", err)
 			}

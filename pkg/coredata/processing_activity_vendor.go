@@ -37,13 +37,13 @@ type (
 	ProcessingActivityVendors []*ProcessingActivityVendor
 
 	ProcessingActivitySnapshotter interface {
-		InsertProcessingActivitySnapshots(ctx context.Context, conn pg.Conn, scope Scoper, organizationID, snapshotID gid.GID) error
+		InsertProcessingActivitySnapshots(ctx context.Context, conn pg.Tx, scope Scoper, organizationID, snapshotID gid.GID) error
 	}
 )
 
 func (pav ProcessingActivityVendors) Merge(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	processingActivityID gid.GID,
 	organizationID gid.GID,
@@ -89,7 +89,7 @@ WHEN NOT MATCHED
 
 func (pav ProcessingActivityVendors) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 	processingActivityID gid.GID,
 	organizationID gid.GID,
@@ -127,7 +127,7 @@ FROM vendor_ids
 
 func (pav ProcessingActivityVendors) InsertProcessingActivitySnapshots(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 	organizationID gid.GID,
 	snapshotID gid.GID,

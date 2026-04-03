@@ -56,7 +56,7 @@ func (v VendorDataPrivacyAgreement) CursorKey(orderBy VendorDataPrivacyAgreement
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (vdpa *VendorDataPrivacyAgreement) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+func (vdpa *VendorDataPrivacyAgreement) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	q := `SELECT organization_id FROM vendor_data_privacy_agreements WHERE id = $1 LIMIT 1;`
 
 	var organizationID gid.GID
@@ -72,7 +72,7 @@ func (vdpa *VendorDataPrivacyAgreement) AuthorizationAttributes(ctx context.Cont
 
 func (vdpa *VendorDataPrivacyAgreement) LoadByVendorID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	vendorID gid.GID,
 ) error {
@@ -118,7 +118,7 @@ LIMIT 1;
 
 func (vdpa *VendorDataPrivacyAgreement) LoadByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	vendorDataPrivacyAgreementID gid.GID,
 ) error {
@@ -164,7 +164,7 @@ LIMIT 1;
 
 func (vdpa *VendorDataPrivacyAgreement) Update(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -202,7 +202,7 @@ WHERE
 
 func (vdpa *VendorDataPrivacyAgreement) Upsert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 ) error {
 	q := `
@@ -271,7 +271,7 @@ ON CONFLICT (organization_id, vendor_id) DO UPDATE SET
 
 func (vdpa *VendorDataPrivacyAgreement) Delete(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -295,7 +295,7 @@ WHERE
 
 func (vdpa *VendorDataPrivacyAgreement) DeleteByVendorID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 	vendorID gid.GID,
 ) error {
@@ -319,7 +319,7 @@ WHERE
 
 func (vdpa VendorDataPrivacyAgreements) InsertVendorSnapshots(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 	organizationID gid.GID,
 	snapshotID gid.GID,

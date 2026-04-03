@@ -122,7 +122,7 @@ func (w *MailingListWorker) processNext(ctx context.Context, sem chan struct{}, 
 
 	if err := w.pg.WithTx(
 		nonCancelableCtx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			if err := mlu.LoadNextEnqueuedForUpdateSkipLocked(nonCancelableCtx, tx); err != nil {
 				return err
 			}
@@ -176,7 +176,7 @@ func (w *MailingListWorker) sendAndCommit(ctx context.Context, mlu *coredata.Mai
 
 	return w.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			scope := coredata.NewScopeFromObjectID(mlu.ID)
 
 			var current coredata.MailingListUpdate
@@ -203,7 +203,7 @@ func (w *MailingListWorker) sendAndCommit(ctx context.Context, mlu *coredata.Mai
 func (w *MailingListWorker) resetEnqueued(ctx context.Context, mlu *coredata.MailingListUpdate) error {
 	return w.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			scope := coredata.NewScopeFromObjectID(mlu.ID)
 			mlu.Status = coredata.MailingListUpdateStatusEnqueued
 			mlu.UpdatedAt = time.Now()
@@ -218,10 +218,10 @@ func (w *MailingListWorker) resetEnqueued(ctx context.Context, mlu *coredata.Mai
 }
 
 func (w *MailingListWorker) recoverStaleRows(ctx context.Context) {
-	err := w.pg.WithConn(
+	err := w.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
-			if err := coredata.ResetStaleProcessingMailingListUpdates(ctx, conn, w.staleAfter); err != nil {
+		func(ctx context.Context, tx pg.Tx) error {
+			if err := coredata.ResetStaleProcessingMailingListUpdates(ctx, tx, w.staleAfter); err != nil {
 				return fmt.Errorf("cannot reset stale processing mailing list updates: %w", err)
 			}
 			return nil

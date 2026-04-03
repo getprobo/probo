@@ -53,7 +53,7 @@ func (e AuditLogEntry) CursorKey(orderBy AuditLogEntryOrderField) page.CursorKey
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (e *AuditLogEntry) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+func (e *AuditLogEntry) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	q := `SELECT organization_id FROM audit_log_entries WHERE id = $1 LIMIT 1;`
 
 	var organizationID gid.GID
@@ -69,7 +69,7 @@ func (e *AuditLogEntry) AuthorizationAttributes(ctx context.Context, conn pg.Con
 
 func (e *AuditLogEntry) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -122,7 +122,7 @@ VALUES (
 
 func (e *AuditLogEntry) LoadByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	id gid.GID,
 ) error {
@@ -168,7 +168,7 @@ LIMIT 1;
 
 func (es *AuditLogEntries) LoadAllByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 	cursor *page.Cursor[AuditLogEntryOrderField],
@@ -216,7 +216,7 @@ WHERE
 
 func (es *AuditLogEntries) CountByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 	filter *AuditLogEntryFilter,

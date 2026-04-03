@@ -37,7 +37,7 @@ func (s ReportService) Get(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			err := report.LoadByID(ctx, conn, s.svc.scope, reportID)
 			if err != nil {
 				return fmt.Errorf("cannot load report: %w", err)
@@ -62,7 +62,7 @@ func (s ReportService) GetByIDs(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			if err := reports.LoadByIDs(
 				ctx,
 				conn,
@@ -86,7 +86,7 @@ func (s ReportService) Delete(
 	ctx context.Context,
 	reportID gid.GID,
 ) error {
-	return s.svc.pg.WithTx(ctx, func(conn pg.Conn) error {
+	return s.svc.pg.WithTx(ctx, func(ctx context.Context, conn pg.Tx) error {
 		report := &coredata.Report{}
 		err := report.LoadByID(ctx, conn, s.svc.scope, reportID)
 		if err != nil {

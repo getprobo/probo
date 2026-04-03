@@ -73,11 +73,11 @@ func (e *ReviewEngine) FetchSource(
 		baseline []coredata.BaselineAccountEntry
 	)
 
-	err := e.pg.WithConn(
+	err := e.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			source = &coredata.AccessSource{}
-			if err := source.LoadByID(ctx, conn, e.scope, sourceID); err != nil {
+			if err := source.LoadByID(ctx, tx, e.scope, sourceID); err != nil {
 				return fmt.Errorf("cannot load access source %s: %w", sourceID, err)
 			}
 			if source.OrganizationID != campaign.OrganizationID {
@@ -85,19 +85,19 @@ func (e *ReviewEngine) FetchSource(
 			}
 
 			var err error
-			driver, err = e.resolveDriver(ctx, conn, source)
+			driver, err = e.resolveDriver(ctx, tx, source)
 			if err != nil {
 				return fmt.Errorf("cannot resolve driver for source %s: %w", source.Name, err)
 			}
 
 			lastCompletedCampaign := &coredata.AccessReviewCampaign{}
-			if err := lastCompletedCampaign.LoadLastCompletedByOrganizationID(ctx, conn, e.scope, campaign.OrganizationID); err != nil {
+			if err := lastCompletedCampaign.LoadLastCompletedByOrganizationID(ctx, tx, e.scope, campaign.OrganizationID); err != nil {
 				if !errors.Is(err, coredata.ErrResourceNotFound) {
 					return fmt.Errorf("cannot load last completed campaign: %w", err)
 				}
 			} else {
 				entries := &coredata.AccessEntries{}
-				baseline, err = entries.LoadBaselineBySourceID(ctx, conn, e.scope, lastCompletedCampaign.ID, sourceID)
+				baseline, err = entries.LoadBaselineBySourceID(ctx, tx, e.scope, lastCompletedCampaign.ID, sourceID)
 				if err != nil {
 					return fmt.Errorf("cannot load baseline entries by source: %w", err)
 				}
@@ -125,7 +125,7 @@ func (e *ReviewEngine) FetchSource(
 
 	err = e.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Tx) error {
 			now := time.Now()
 			seenAccountKeys := make(map[string]struct{}, len(accounts))
 
@@ -252,7 +252,7 @@ func (e *ReviewEngine) connectorHTTPClient(
 // connector_id (null = built-in, set = connector-backed).
 func (e *ReviewEngine) resolveDriver(
 	ctx context.Context,
-	conn pg.Conn,
+	tx pg.Tx,
 	source *coredata.AccessSource,
 ) (drivers.Driver, error) {
 	if source.ConnectorID == nil {
@@ -267,7 +267,7 @@ func (e *ReviewEngine) resolveDriver(
 
 	// Connector-backed: look up the connector and resolve driver by provider
 	dbConnector := &coredata.Connector{}
-	if err := dbConnector.LoadByID(ctx, conn, e.scope, *source.ConnectorID, e.encryptionKey); err != nil {
+	if err := dbConnector.LoadByID(ctx, tx, e.scope, *source.ConnectorID, e.encryptionKey); err != nil {
 		return nil, fmt.Errorf("cannot load connector %s: %w", *source.ConnectorID, err)
 	}
 
@@ -291,7 +291,7 @@ func (e *ReviewEngine) resolveDriver(
 	if oauth2Conn, ok := dbConnector.Connection.(*connector.OAuth2Connection); ok {
 		if oauth2Conn.AccessToken != tokenBefore {
 			dbConnector.UpdatedAt = time.Now()
-			if err := dbConnector.Update(ctx, conn, e.scope, e.encryptionKey); err != nil {
+			if err := dbConnector.Update(ctx, tx, e.scope, e.encryptionKey); err != nil {
 				return nil, fmt.Errorf("cannot persist refreshed token for connector %s: %w", *source.ConnectorID, err)
 			}
 		}

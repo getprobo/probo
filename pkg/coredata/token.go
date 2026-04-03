@@ -34,7 +34,7 @@ type Token struct {
 
 func (t *Token) LoadByHashedValueForUpdate(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	hashedValue []byte,
 ) error {
 	q := `
@@ -72,7 +72,7 @@ FOR UPDATE;
 
 func (t *Token) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 ) error {
 	q := `
 INSERT INTO iam_tokens(
@@ -109,7 +109,7 @@ INSERT INTO iam_tokens(
 
 func (t *Token) Delete(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 ) error {
 	q := `
 DELETE FROM iam_tokens

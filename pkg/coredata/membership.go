@@ -54,7 +54,7 @@ func (m Membership) CursorKey(orderBy MembershipOrderField) page.CursorKey {
 
 func (m *Membership) LoadByIdentityIDAndOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	identityID gid.GID,
 	organizationID gid.GID,
@@ -102,7 +102,7 @@ WHERE
 	return nil
 }
 
-func (m *Membership) Insert(ctx context.Context, conn pg.Conn, scope Scoper) error {
+func (m *Membership) Insert(ctx context.Context, conn pg.Tx, scope Scoper) error {
 	query := `
 INSERT INTO
     iam_memberships (
@@ -154,7 +154,7 @@ VALUES (
 
 func (m *Membership) LoadByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	membershipID gid.GID,
 ) error {
@@ -198,7 +198,7 @@ WHERE
 	return nil
 }
 
-func (m *Membership) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+func (m *Membership) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	q := `
 SELECT
     identity_id,
@@ -234,7 +234,7 @@ LIMIT 1;
 
 func (m *Membership) LoadByIdentityAndOrg(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	identityID gid.GID,
 	organizationID gid.GID,
@@ -281,7 +281,7 @@ WHERE
 	return nil
 }
 
-func (m *Membership) Update(ctx context.Context, conn pg.Conn, scope Scoper) error {
+func (m *Membership) Update(ctx context.Context, conn pg.Tx, scope Scoper) error {
 	query := `
 UPDATE
     iam_memberships
@@ -314,7 +314,7 @@ WHERE
 	return nil
 }
 
-func (m *Membership) Delete(ctx context.Context, conn pg.Conn, scope Scoper, membershipID gid.GID) error {
+func (m *Membership) Delete(ctx context.Context, conn pg.Tx, scope Scoper, membershipID gid.GID) error {
 	query := `
 DELETE FROM
     iam_memberships
@@ -344,7 +344,7 @@ WHERE
 
 func (m *Membership) LoadActiveByIdentityIDAndOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	identityID gid.GID,
 	organizationID gid.GID,
 ) error {

@@ -46,7 +46,7 @@ type (
 	Organizations []*Organization
 )
 
-func (o *Organization) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+func (o *Organization) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	q := `SELECT id FROM organizations WHERE id = $1 LIMIT 1;`
 
 	var id gid.GID
@@ -75,7 +75,7 @@ func (o Organization) CursorKey(orderBy OrganizationOrderField) page.CursorKey {
 
 func (o *Organization) LoadByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 ) error {
@@ -127,7 +127,7 @@ LIMIT 1;
 
 func (o *Organizations) LoadByIDs(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationIDs []gid.GID,
 ) error {
@@ -174,7 +174,7 @@ WHERE
 
 func (o *Organizations) LoadByIdentityID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	identityID gid.GID,
 	cursor *page.Cursor[OrganizationOrderField],
@@ -232,7 +232,7 @@ WHERE
 
 func (o *Organization) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 ) error {
 	q := `
 INSERT INTO organizations (
@@ -277,7 +277,7 @@ INSERT INTO organizations (
 func (o *Organization) Update(
 	ctx context.Context,
 	scope Scoper,
-	conn pg.Conn,
+	conn pg.Tx,
 ) error {
 	q := `
 UPDATE organizations
@@ -323,7 +323,7 @@ WHERE
 
 func (o *Organization) Delete(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	organizationID gid.GID,
 ) error {
 	q := `
@@ -343,7 +343,7 @@ WHERE id = @id
 
 func (o *Organization) LoadByCustomDomainID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	customDomainID gid.GID,
 ) error {

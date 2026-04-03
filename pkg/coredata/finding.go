@@ -74,7 +74,7 @@ func (f *Finding) CursorKey(field FindingOrderField) page.CursorKey {
 	panic(fmt.Sprintf("unsupported order by: %s", field))
 }
 
-func (f *Finding) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+func (f *Finding) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	q := `SELECT organization_id FROM findings WHERE id = $1 LIMIT 1;`
 
 	var organizationID gid.GID
@@ -90,7 +90,7 @@ func (f *Finding) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (ma
 
 func (f *Finding) LoadByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	findingID gid.GID,
 ) error {
@@ -145,7 +145,7 @@ LIMIT 1;
 
 func (fs *Findings) CountByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 	filter *FindingFilter,
@@ -180,7 +180,7 @@ WHERE
 
 func (fs *Findings) LoadByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 	cursor *page.Cursor[FindingOrderField],
@@ -240,7 +240,7 @@ WHERE
 
 func (f *Finding) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	lockQuery := `SELECT pg_advisory_xact_lock(hashtext(@organization_id::text))`
@@ -336,7 +336,7 @@ RETURNING reference_id
 
 func (f *Finding) Update(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -389,7 +389,7 @@ WHERE
 
 func (f *Finding) Delete(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -412,7 +412,7 @@ WHERE
 	return nil
 }
 
-func (fs Findings) Snapshot(ctx context.Context, conn pg.Conn, scope Scoper, organizationID, snapshotID gid.GID) error {
+func (fs Findings) Snapshot(ctx context.Context, conn pg.Tx, scope Scoper, organizationID, snapshotID gid.GID) error {
 	query := `
 INSERT INTO findings (
 	id,
@@ -503,7 +503,7 @@ WHERE %s AND live.organization_id = @organization_id
 
 func (fs *Findings) LoadByAuditID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	auditID gid.GID,
 	cursor *page.Cursor[FindingOrderField],
@@ -589,7 +589,7 @@ WHERE %s
 
 func (fs *Findings) CountByAuditID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	auditID gid.GID,
 	filter *FindingFilter,

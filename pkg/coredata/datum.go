@@ -43,7 +43,7 @@ type (
 	Data []*Datum
 
 	DataSnapshotter interface {
-		InsertDataSnapshots(ctx context.Context, conn pg.Conn, scope Scoper, organizationID, snapshotID gid.GID) error
+		InsertDataSnapshots(ctx context.Context, conn pg.Tx, scope Scoper, organizationID, snapshotID gid.GID) error
 	}
 )
 
@@ -61,7 +61,7 @@ func (d *Datum) CursorKey(field DatumOrderField) page.CursorKey {
 }
 
 // AuthorizationAttributes returns the authorization attributes for policy evaluation.
-func (d *Datum) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+func (d *Datum) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	q := `SELECT organization_id FROM data WHERE id = $1 LIMIT 1;`
 
 	var organizationID gid.GID
@@ -77,7 +77,7 @@ func (d *Datum) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[
 
 func (d *Datum) LoadByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	dataID gid.GID,
 ) error {
@@ -122,7 +122,7 @@ LIMIT 1;
 
 func (d *Datum) LoadByOwnerID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 ) error {
 	q := `
@@ -166,7 +166,7 @@ LIMIT 1;
 
 func (d *Data) CountByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 	filter *DatumFilter,
@@ -201,7 +201,7 @@ WHERE
 
 func (d *Data) LoadByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 	cursor *page.Cursor[DatumOrderField],
@@ -251,7 +251,7 @@ WHERE
 
 func (d *Datum) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -303,7 +303,7 @@ INSERT INTO data (
 
 func (d *Datum) Update(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -357,7 +357,7 @@ RETURNING
 
 func (d *Datum) Delete(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -381,7 +381,7 @@ WHERE
 	return nil
 }
 
-func (d Data) Snapshot(ctx context.Context, conn pg.Conn, scope Scoper, organizationID, snapshotID gid.GID) error {
+func (d Data) Snapshot(ctx context.Context, conn pg.Tx, scope Scoper, organizationID, snapshotID gid.GID) error {
 	snapshotters := []DataSnapshotter{Data{}, Vendors{}, DatumVendors{}}
 
 	for _, snapshotter := range snapshotters {
@@ -395,7 +395,7 @@ func (d Data) Snapshot(ctx context.Context, conn pg.Conn, scope Scoper, organiza
 
 func (d Data) InsertDataSnapshots(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 	organizationID gid.GID,
 	snapshotID gid.GID,

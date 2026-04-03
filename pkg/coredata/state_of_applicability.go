@@ -54,7 +54,7 @@ func (s StateOfApplicability) CursorKey(orderBy StateOfApplicabilityOrderField) 
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (s *StateOfApplicability) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+func (s *StateOfApplicability) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	q := `SELECT organization_id FROM states_of_applicability WHERE id = $1 LIMIT 1;`
 
 	var organizationID gid.GID
@@ -70,7 +70,7 @@ func (s *StateOfApplicability) AuthorizationAttributes(ctx context.Context, conn
 
 func (s *StateOfApplicability) LoadByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	stateOfApplicabilityID gid.GID,
 ) error {
@@ -117,7 +117,7 @@ LIMIT 1;
 
 func (s *StatesOfApplicability) LoadByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 	cursor *page.Cursor[StateOfApplicabilityOrderField],
@@ -164,7 +164,7 @@ WHERE
 
 func (s *StatesOfApplicability) CountByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 	filter *StateOfApplicabilityFilter,
@@ -198,7 +198,7 @@ WHERE
 
 func (s *StateOfApplicability) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -255,7 +255,7 @@ VALUES (
 
 func (s *StateOfApplicability) Update(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -299,7 +299,7 @@ WHERE
 
 func (s *StateOfApplicability) Delete(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -327,7 +327,7 @@ WHERE
 	return nil
 }
 
-func (soas StatesOfApplicability) Snapshot(ctx context.Context, conn pg.Conn, scope Scoper, organizationID, snapshotID gid.GID) error {
+func (soas StatesOfApplicability) Snapshot(ctx context.Context, conn pg.Tx, scope Scoper, organizationID, snapshotID gid.GID) error {
 	if err := soas.insertStateOfApplicabilitySnapshots(ctx, conn, scope, organizationID, snapshotID); err != nil {
 		return fmt.Errorf("cannot insert state_of_applicability snapshots: %w", err)
 	}
@@ -341,7 +341,7 @@ func (soas StatesOfApplicability) Snapshot(ctx context.Context, conn pg.Conn, sc
 
 func (soas StatesOfApplicability) insertStateOfApplicabilitySnapshots(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 	snapshotID gid.GID,
@@ -395,7 +395,7 @@ WHERE
 
 func (soas StatesOfApplicability) insertStateOfApplicabilityControlSnapshots(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 	snapshotID gid.GID,

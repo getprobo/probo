@@ -121,7 +121,7 @@ func (s TaskService) Create(
 
 	err = s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Tx) error {
 			if req.MeasureID != nil {
 				measure := &coredata.Measure{}
 				if err := measure.LoadByID(ctx, conn, s.svc.scope, *req.MeasureID); err != nil {
@@ -158,7 +158,7 @@ func (s TaskService) Get(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			return task.LoadByID(ctx, conn, s.svc.scope, taskID)
 		},
 	)
@@ -177,7 +177,7 @@ func (s TaskService) GetByIDs(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			if err := tasks.LoadByIDs(
 				ctx,
 				conn,
@@ -206,7 +206,7 @@ func (s TaskService) Assign(
 
 	err := s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Tx) error {
 			if err := task.LoadByID(ctx, conn, s.svc.scope, taskID); err != nil {
 				return fmt.Errorf("cannot load task %q: %w", taskID, err)
 			}
@@ -241,7 +241,7 @@ func (s TaskService) Unassign(
 
 	err := s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Tx) error {
 			if err := task.LoadByID(ctx, conn, s.svc.scope, taskID); err != nil {
 				return fmt.Errorf("cannot load task %q: %w", taskID, err)
 			}
@@ -275,7 +275,7 @@ func (s TaskService) Update(
 
 	err := s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Tx) error {
 			if err := task.LoadByID(ctx, conn, s.svc.scope, req.TaskID); err != nil {
 				return fmt.Errorf("cannot load task %q: %w", req.TaskID, err)
 			}
@@ -372,7 +372,7 @@ func (s TaskService) Delete(
 
 	err := s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Tx) error {
 			return task.Delete(ctx, conn, s.svc.scope)
 		},
 	)
@@ -391,7 +391,7 @@ func (s TaskService) CountForOrganizationID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) (err error) {
+		func(ctx context.Context, conn pg.Querier) (err error) {
 			tasks := coredata.Tasks{}
 			count, err = tasks.CountByOrganizationID(ctx, conn, s.svc.scope, organizationID)
 			if err != nil {
@@ -417,7 +417,7 @@ func (s TaskService) ListForOrganizationID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			return tasks.LoadByOrganizationID(ctx, conn, s.svc.scope, organizationID, cursor)
 		},
 	)
@@ -436,7 +436,7 @@ func (s TaskService) CountForMeasureID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) (err error) {
+		func(ctx context.Context, conn pg.Querier) (err error) {
 			tasks := coredata.Tasks{}
 			count, err = tasks.CountByMeasureID(ctx, conn, s.svc.scope, measureID)
 			if err != nil {
@@ -462,7 +462,7 @@ func (s TaskService) ListForMeasureID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			return tasks.LoadByMeasureID(
 				ctx,
 				conn,

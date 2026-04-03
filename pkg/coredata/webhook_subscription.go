@@ -85,7 +85,7 @@ func (w WebhookSubscription) CursorKey(orderBy WebhookSubscriptionOrderField) pa
 }
 
 // AuthorizationAttributes returns the authorization attributes for policy evaluation.
-func (w *WebhookSubscription) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+func (w *WebhookSubscription) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	q := `SELECT organization_id FROM webhook_subscriptions WHERE id = $1 LIMIT 1;`
 
 	var organizationID gid.GID
@@ -101,7 +101,7 @@ func (w *WebhookSubscription) AuthorizationAttributes(ctx context.Context, conn 
 
 func (w *WebhookSubscription) LoadByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	webhookSubscriptionID gid.GID,
 ) error {
@@ -147,7 +147,7 @@ LIMIT 1;
 
 func (w *WebhookSubscriptions) LoadByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 	cursor *page.Cursor[WebhookSubscriptionOrderField],
@@ -190,7 +190,7 @@ WHERE
 
 func (w *WebhookSubscriptions) CountByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 ) (int, error) {
@@ -221,7 +221,7 @@ WHERE
 
 func (w *WebhookSubscriptions) ExistsByOrganizationIDAndEventType(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 	eventType WebhookEventType,
@@ -253,7 +253,7 @@ SELECT EXISTS (
 
 func (w *WebhookSubscription) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -301,7 +301,7 @@ VALUES (
 
 func (w *WebhookSubscription) Update(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -338,7 +338,7 @@ WHERE %s
 
 func (w *WebhookSubscriptions) LoadMatchingByOrganizationIDAndEventType(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 	eventType WebhookEventType,
@@ -383,7 +383,7 @@ WHERE
 
 func (w *WebhookSubscription) Delete(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `

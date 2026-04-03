@@ -33,7 +33,7 @@ type AccessEntryStatistics struct {
 
 func (s *AccessEntryStatistics) LoadByCampaignID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	campaignID gid.GID,
 ) error {
@@ -135,7 +135,7 @@ GROUP BY incremental_tag;
 
 func (s *AccessEntryStatistics) LoadByCampaignIDAndSourceID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	campaignID gid.GID,
 	sourceID gid.GID,

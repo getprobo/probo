@@ -55,7 +55,7 @@ type (
 	Risks []*Risk
 
 	RiskSnapshotter interface {
-		InsertRiskSnapshots(ctx context.Context, conn pg.Conn, scope Scoper, organizationID, snapshotID gid.GID) error
+		InsertRiskSnapshots(ctx context.Context, conn pg.Tx, scope Scoper, organizationID, snapshotID gid.GID) error
 	}
 )
 
@@ -80,7 +80,7 @@ func (r *Risk) CursorKey(orderBy RiskOrderField) page.CursorKey {
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (r *Risk) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+func (r *Risk) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	q := `SELECT organization_id FROM risks WHERE id = $1 LIMIT 1;`
 
 	var organizationID gid.GID
@@ -96,7 +96,7 @@ func (r *Risk) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[s
 
 func (r *Risks) CountByMeasureID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	measureID gid.GID,
 	filter *RiskFilter,
@@ -140,7 +140,7 @@ WHERE %s
 
 func (r *Risks) LoadByMeasureID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	measureID gid.GID,
 	cursor *page.Cursor[RiskOrderField],
@@ -229,7 +229,7 @@ WHERE %s
 
 func (r *Risks) CountByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 	filter *RiskFilter,
@@ -260,7 +260,7 @@ WHERE %s
 
 func (r *Risks) LoadByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 	cursor *page.Cursor[RiskOrderField],
@@ -347,7 +347,7 @@ WHERE %s
 
 func (r *Risk) LoadByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	riskID gid.GID,
 ) error {
@@ -403,7 +403,7 @@ LIMIT 1;
 
 func (r *Risks) LoadByIDs(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	riskIDs []gid.GID,
 ) error {
@@ -454,7 +454,7 @@ WHERE %s
 
 func (r *Risk) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -486,7 +486,7 @@ VALUES (@id, @tenant_id, @organization_id, @name, @description, @category, @owne
 
 func (r *Risk) Update(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -531,7 +531,7 @@ WHERE %s
 
 func (r *Risk) Delete(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 	riskID gid.GID,
 ) error {
@@ -549,7 +549,7 @@ DELETE FROM risks WHERE %s AND id = @id AND snapshot_id IS NULL
 
 func (r *Risks) CountByDocumentID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	documentID gid.GID,
 	filter *RiskFilter,
@@ -591,7 +591,7 @@ WHERE %s
 	return count, nil
 }
 
-func (r Risks) Snapshot(ctx context.Context, conn pg.Conn, scope Scoper, organizationID, snapshotID gid.GID) error {
+func (r Risks) Snapshot(ctx context.Context, conn pg.Tx, scope Scoper, organizationID, snapshotID gid.GID) error {
 	if err := r.InsertRiskSnapshots(ctx, conn, scope, organizationID, snapshotID); err != nil {
 		return fmt.Errorf("cannot create risk snapshots: %w", err)
 	}
@@ -601,7 +601,7 @@ func (r Risks) Snapshot(ctx context.Context, conn pg.Conn, scope Scoper, organiz
 
 func (r Risks) InsertRiskSnapshots(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 	organizationID gid.GID,
 	snapshotID gid.GID,

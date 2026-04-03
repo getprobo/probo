@@ -53,7 +53,7 @@ func (mlu *MailingListUpdate) CursorKey(orderBy MailingListUpdateOrderField) pag
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (mlu *MailingListUpdate) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+func (mlu *MailingListUpdate) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	q := `SELECT organization_id FROM mailing_list_updates WHERE id = $1 LIMIT 1;`
 
 	var organizationID gid.GID
@@ -67,7 +67,7 @@ func (mlu *MailingListUpdate) AuthorizationAttributes(ctx context.Context, conn 
 	return map[string]string{"organization_id": organizationID.String()}, nil
 }
 
-func (mlu *MailingListUpdate) Insert(ctx context.Context, conn pg.Conn, scope Scoper) error {
+func (mlu *MailingListUpdate) Insert(ctx context.Context, conn pg.Tx, scope Scoper) error {
 	q := `
 INSERT INTO mailing_list_updates (
 	id,
@@ -107,7 +107,7 @@ INSERT INTO mailing_list_updates (
 	return err
 }
 
-func (mlu *MailingListUpdate) Update(ctx context.Context, conn pg.Conn, scope Scoper) error {
+func (mlu *MailingListUpdate) Update(ctx context.Context, conn pg.Tx, scope Scoper) error {
 	q := `
 UPDATE mailing_list_updates
 SET
@@ -140,7 +140,7 @@ WHERE
 	return nil
 }
 
-func (mlu *MailingListUpdate) Delete(ctx context.Context, conn pg.Conn, scope Scoper) error {
+func (mlu *MailingListUpdate) Delete(ctx context.Context, conn pg.Tx, scope Scoper) error {
 	q := `
 DELETE FROM mailing_list_updates
 WHERE
@@ -164,7 +164,7 @@ WHERE
 	return nil
 }
 
-func (mlu *MailingListUpdate) LoadByID(ctx context.Context, conn pg.Conn, scope Scoper, id gid.GID) error {
+func (mlu *MailingListUpdate) LoadByID(ctx context.Context, conn pg.Querier, scope Scoper, id gid.GID) error {
 	q := `
 SELECT
 	id,
@@ -207,7 +207,7 @@ LIMIT 1;
 
 func (mlul *MailingListUpdateItems) LoadSentByMailingListID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	mailingListID gid.GID,
 	cursor *page.Cursor[MailingListUpdateOrderField],
@@ -254,7 +254,7 @@ WHERE
 
 func (mlul *MailingListUpdateItems) LoadByMailingListID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	mailingListID gid.GID,
 	cursor *page.Cursor[MailingListUpdateOrderField],
@@ -300,7 +300,7 @@ WHERE
 
 func (mlul *MailingListUpdateItems) CountByMailingListID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	mailingListID gid.GID,
 ) (int, error) {
@@ -329,7 +329,7 @@ WHERE
 
 func (mlu *MailingListUpdate) LoadNextEnqueuedForUpdateSkipLocked(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 ) error {
 	q := `
 SELECT
@@ -367,7 +367,7 @@ FOR UPDATE SKIP LOCKED
 
 func ResetStaleProcessingMailingListUpdates(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	staleAfter time.Duration,
 ) error {
 	q := `

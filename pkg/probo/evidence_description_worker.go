@@ -126,7 +126,7 @@ func (w *EvidenceDescriptionWorker) processNext(ctx context.Context, sem chan st
 
 	if err := w.pg.WithTx(
 		nonCancelableCtx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			if err := evidence.LoadNextPendingDescriptionForUpdateSkipLocked(
 				nonCancelableCtx,
 				tx,
@@ -183,7 +183,7 @@ func (w *EvidenceDescriptionWorker) describeAndCommit(
 	var file coredata.File
 	if err := w.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			if err := file.LoadByID(ctx, conn, scope, *evidence.EvidenceFileId); err != nil {
 				return fmt.Errorf("cannot load file: %w", err)
 			}
@@ -205,7 +205,7 @@ func (w *EvidenceDescriptionWorker) describeAndCommit(
 
 	return w.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			evidence.Description = description
 			evidence.DescriptionStatus = coredata.EvidenceDescriptionStatusCompleted
 			evidence.DescriptionProcessingStartedAt = nil
@@ -227,7 +227,7 @@ func (w *EvidenceDescriptionWorker) failEvidence(
 
 	return w.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			evidence.DescriptionStatus = coredata.EvidenceDescriptionStatusFailed
 			evidence.DescriptionProcessingStartedAt = nil
 			evidence.UpdatedAt = time.Now()
@@ -243,7 +243,7 @@ func (w *EvidenceDescriptionWorker) failEvidence(
 func (w *EvidenceDescriptionWorker) recoverStaleRows(ctx context.Context) {
 	if err := w.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			if err := coredata.ResetStaleDescriptionProcessing(ctx, conn, w.staleAfter); err != nil {
 				return fmt.Errorf("cannot reset stale description processing: %w", err)
 			}

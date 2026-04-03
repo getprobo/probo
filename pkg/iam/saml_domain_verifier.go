@@ -101,7 +101,7 @@ func (v *SAMLDomainVerifier) checkUnverifiedDomains(ctx context.Context) error {
 
 	err := v.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			err := configs.LoadUnverified(ctx, conn)
 			if err != nil {
 				return fmt.Errorf("cannot load unverified SAML configurations: %w", err)
@@ -148,7 +148,7 @@ func (v *SAMLDomainVerifier) checkUnverifiedDomains(ctx context.Context) error {
 func (v *SAMLDomainVerifier) tryVerifyDomain(ctx context.Context, configID gid.GID) error {
 	return v.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			config := &coredata.SAMLConfiguration{}
 			if err := config.LoadByIDForUpdateSkipLocked(ctx, tx, configID); err != nil {
 				if err == coredata.ErrResourceNotFound {

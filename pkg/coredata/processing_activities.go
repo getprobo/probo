@@ -70,7 +70,7 @@ func (p *ProcessingActivity) CursorKey(field ProcessingActivityOrderField) page.
 	panic(fmt.Sprintf("unsupported order by: %s", field))
 }
 
-func (p *ProcessingActivity) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+func (p *ProcessingActivity) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	q := `SELECT organization_id FROM processing_activities WHERE id = $1 LIMIT 1;`
 
 	var organizationID gid.GID
@@ -86,7 +86,7 @@ func (p *ProcessingActivity) AuthorizationAttributes(ctx context.Context, conn p
 
 func (p *ProcessingActivity) LoadByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	processingActivityID gid.GID,
 ) error {
@@ -147,7 +147,7 @@ LIMIT 1;
 
 func (p *ProcessingActivities) CountByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 	filter *ProcessingActivityFilter,
@@ -182,7 +182,7 @@ WHERE
 
 func (p *ProcessingActivities) LoadByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 	cursor *page.Cursor[ProcessingActivityOrderField],
@@ -248,7 +248,7 @@ WHERE
 
 func (p *ProcessingActivities) LoadAllByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 	filter *ProcessingActivityFilter,
@@ -312,7 +312,7 @@ ORDER BY created_at DESC
 
 func (p *ProcessingActivity) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -412,7 +412,7 @@ INSERT INTO processing_activities (
 
 func (p *ProcessingActivity) Update(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -481,7 +481,7 @@ WHERE
 
 func (p *ProcessingActivity) Delete(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -505,7 +505,7 @@ WHERE
 	return nil
 }
 
-func (pas ProcessingActivities) Snapshot(ctx context.Context, conn pg.Conn, scope Scoper, organizationID, snapshotID gid.GID) error {
+func (pas ProcessingActivities) Snapshot(ctx context.Context, conn pg.Tx, scope Scoper, organizationID, snapshotID gid.GID) error {
 	snapshotters := []ProcessingActivitySnapshotter{ProcessingActivities{}, Vendors{}, ProcessingActivityVendors{}, DataProtectionImpactAssessments{}, TransferImpactAssessments{}}
 
 	for _, snapshotter := range snapshotters {
@@ -519,7 +519,7 @@ func (pas ProcessingActivities) Snapshot(ctx context.Context, conn pg.Conn, scop
 
 func (pas ProcessingActivities) InsertProcessingActivitySnapshots(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 	organizationID gid.GID,
 	snapshotID gid.GID,

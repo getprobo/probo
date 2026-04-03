@@ -114,7 +114,7 @@ func (s AccessSourceService) Create(
 
 	err := s.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Tx) error {
 			// Validate connector exists if provided
 			if req.ConnectorID != nil {
 				connector := &coredata.Connector{}
@@ -145,7 +145,7 @@ func (s AccessSourceService) Get(
 
 	err := s.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			return source.LoadByID(ctx, conn, s.scope, accessSourceID)
 		},
 	)
@@ -168,7 +168,7 @@ func (s AccessSourceService) Update(
 
 	err := s.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Tx) error {
 			if err := source.LoadByID(ctx, conn, s.scope, req.AccessSourceID); err != nil {
 				return fmt.Errorf("cannot load access source: %w", err)
 			}
@@ -219,7 +219,7 @@ func (s AccessSourceService) Delete(
 
 	return s.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Tx) error {
 			return source.Delete(ctx, conn, s.scope)
 		},
 	)
@@ -234,7 +234,7 @@ func (s AccessSourceService) ListForOrganizationID(
 
 	err := s.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			return sources.LoadByOrganizationID(ctx, conn, s.scope, organizationID, cursor)
 		},
 	)
@@ -253,7 +253,7 @@ func (s AccessSourceService) CountForOrganizationID(
 
 	err := s.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) (err error) {
+		func(ctx context.Context, conn pg.Querier) (err error) {
 			sources := coredata.AccessSources{}
 			count, err = sources.CountByOrganizationID(ctx, conn, s.scope, organizationID)
 			return err
@@ -274,7 +274,7 @@ func (s AccessSourceService) ListScopeSourcesForCampaignID(
 
 	err := s.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			return sources.LoadScopeSourcesByCampaignID(ctx, conn, s.scope, campaignID)
 		},
 	)
@@ -296,7 +296,7 @@ func (s AccessSourceService) ConnectorHTTPClient(
 
 	err := s.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			if err := dbConnector.LoadByID(ctx, conn, s.scope, connectorID, s.encryptionKey); err != nil {
 				return fmt.Errorf("cannot load connector: %w", err)
 			}
@@ -336,10 +336,10 @@ func (s AccessSourceService) ConnectorHTTPClient(
 	// Persist refreshed token if it changed.
 	if isOAuth2 && oauth2Conn.AccessToken != tokenBefore {
 		dbConnector.UpdatedAt = time.Now()
-		if err := s.pg.WithConn(
+		if err := s.pg.WithTx(
 			ctx,
-			func(conn pg.Conn) error {
-				return dbConnector.Update(ctx, conn, s.scope, s.encryptionKey)
+			func(ctx context.Context, tx pg.Tx) error {
+				return dbConnector.Update(ctx, tx, s.scope, s.encryptionKey)
 			},
 		); err != nil {
 			return nil, nil, fmt.Errorf("cannot persist refreshed token: %w", err)
@@ -361,7 +361,7 @@ func (s AccessSourceService) ConfigureAccessSource(
 
 	err := s.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Tx) error {
 			if err := source.LoadByID(ctx, conn, s.scope, req.AccessSourceID); err != nil {
 				return fmt.Errorf("cannot load access source: %w", err)
 			}

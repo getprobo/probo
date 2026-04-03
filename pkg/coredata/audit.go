@@ -61,7 +61,7 @@ func (a *Audit) CursorKey(field AuditOrderField) page.CursorKey {
 }
 
 // AuthorizationAttributes returns the authorization attributes for policy evaluation.
-func (a *Audit) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+func (a *Audit) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	q := `SELECT organization_id FROM audits WHERE id = $1 LIMIT 1;`
 
 	var organizationID gid.GID
@@ -77,7 +77,7 @@ func (a *Audit) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[
 
 func (a *Audit) LoadByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	auditID gid.GID,
 ) error {
@@ -128,7 +128,7 @@ LIMIT 1;
 
 func (a *Audits) CountByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 ) (int, error) {
@@ -160,7 +160,7 @@ WHERE
 
 func (a *Audits) LoadByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 	cursor *page.Cursor[AuditOrderField],
@@ -212,7 +212,7 @@ WHERE
 
 func (a *Audits) LoadAllByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 	filter *AuditFilter,
@@ -262,7 +262,7 @@ ORDER BY valid_from DESC
 
 func (a *Audit) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -320,7 +320,7 @@ INSERT INTO audits (
 
 func (a *Audit) Update(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -362,7 +362,7 @@ WHERE
 
 func (a *Audit) Delete(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -387,7 +387,7 @@ WHERE
 
 func (a *Audits) LoadByControlID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	controlID gid.GID,
 	cursor *page.Cursor[AuditOrderField],
@@ -454,7 +454,7 @@ WHERE %s
 
 func (a *Audits) LoadByFindingID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	findingID gid.GID,
 	cursor *page.Cursor[AuditOrderField],
@@ -521,7 +521,7 @@ WHERE %s
 
 func (a *Audits) CountByControlID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	controlID gid.GID,
 ) (int, error) {
@@ -563,7 +563,7 @@ WHERE
 
 func (a *Audits) CountByFindingID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	findingID gid.GID,
 ) (int, error) {
@@ -605,7 +605,7 @@ WHERE
 
 func (a *Audit) LoadByReportID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	reportID gid.GID,
 ) error {

@@ -148,7 +148,7 @@ func (s ProcessingActivityService) Get(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			return processingActivity.LoadByID(ctx, conn, s.svc.scope, processingActivityID)
 		},
 	)
@@ -195,7 +195,7 @@ func (s *ProcessingActivityService) Create(
 
 	err := s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Tx) error {
 			organization := &coredata.Organization{}
 			if err := organization.LoadByID(ctx, conn, s.svc.scope, req.OrganizationID); err != nil {
 				return fmt.Errorf("cannot load organization: %w", err)
@@ -231,7 +231,7 @@ func (s *ProcessingActivityService) Update(
 
 	err := s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Tx) error {
 			if err := processingActivity.LoadByID(ctx, conn, s.svc.scope, req.ID); err != nil {
 				return fmt.Errorf("cannot load processing activity: %w", err)
 			}
@@ -322,10 +322,10 @@ func (s ProcessingActivityService) Delete(
 	processingActivityID gid.GID,
 ) error {
 	processingActivity := coredata.ProcessingActivity{ID: processingActivityID}
-	return s.svc.pg.WithConn(
+	return s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
-			err := processingActivity.Delete(ctx, conn, s.svc.scope)
+		func(ctx context.Context, tx pg.Tx) error {
+			err := processingActivity.Delete(ctx, tx, s.svc.scope)
 			if err != nil {
 				return fmt.Errorf("cannot delete processing activity: %w", err)
 			}
@@ -344,7 +344,7 @@ func (s ProcessingActivityService) ListForOrganizationID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			err := processingActivities.LoadByOrganizationID(ctx, conn, s.svc.scope, organizationID, cursor, filter)
 			if err != nil {
 				return fmt.Errorf("cannot load processing activities: %w", err)
@@ -370,7 +370,7 @@ func (s ProcessingActivityService) CountForOrganizationID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) (err error) {
+		func(ctx context.Context, conn pg.Querier) (err error) {
 			processingActivities := coredata.ProcessingActivities{}
 			count, err = processingActivities.CountByOrganizationID(ctx, conn, s.svc.scope, organizationID, filter)
 			if err != nil {
@@ -397,7 +397,7 @@ func (s *ProcessingActivityService) ExportPDF(
 
 	err := s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Tx) error {
 			var processingActivities coredata.ProcessingActivities
 			if err := processingActivities.LoadAllByOrganizationID(ctx, conn, s.svc.scope, organizationID, filter); err != nil {
 				return fmt.Errorf("cannot load processing activities: %w", err)

@@ -146,7 +146,7 @@ func (w *SealingWorker) processNext(ctx context.Context, sem chan struct{}, wg *
 
 	if err := w.pg.WithTx(
 		nonCancelableCtx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			if err := signature.LoadNextAcceptedForUpdateSkipLocked(nonCancelableCtx, tx); err != nil {
 				return err
 			}
@@ -194,7 +194,7 @@ func (w *SealingWorker) sealAndCommit(
 
 	if err := w.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			if err := file.LoadByID(ctx, conn, scope, signature.FileID); err != nil {
 				return fmt.Errorf("cannot load file: %w", err)
 			}
@@ -244,7 +244,7 @@ func (w *SealingWorker) sealAndCommit(
 
 	if err := w.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			var current coredata.ElectronicSignature
 			if err := current.LoadByID(ctx, tx, scope, signature.ID); err != nil {
 				return fmt.Errorf("cannot load signature: %w", err)
@@ -298,7 +298,7 @@ func (w *SealingWorker) failSignature(
 
 	return w.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			errStr := userFacingError(processingError)
 			signature.LastError = &errStr
 			signature.ProcessingStartedAt = nil
@@ -340,7 +340,7 @@ func userFacingError(err error) string {
 func (w *SealingWorker) recoverStaleRows(ctx context.Context) {
 	if err := w.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			return coredata.ResetStaleProcessingSignatures(ctx, conn, w.staleAfter)
 		},
 	); err != nil {

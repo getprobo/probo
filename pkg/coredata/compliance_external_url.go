@@ -52,7 +52,7 @@ func (c ComplianceExternalURL) CursorKey(orderBy ComplianceExternalURLOrderField
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (c *ComplianceExternalURL) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+func (c *ComplianceExternalURL) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	q := `SELECT organization_id FROM compliance_external_urls WHERE id = $1 LIMIT 1;`
 
 	var organizationID gid.GID
@@ -68,7 +68,7 @@ func (c *ComplianceExternalURL) AuthorizationAttributes(ctx context.Context, con
 
 func (c *ComplianceExternalURL) LoadByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	id gid.GID,
 ) error {
@@ -114,7 +114,7 @@ LIMIT 1;
 
 func (c *ComplianceExternalURL) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -164,7 +164,7 @@ RETURNING rank;
 
 func (c *ComplianceExternalURL) Update(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -197,7 +197,7 @@ WHERE
 
 func (c *ComplianceExternalURL) UpdateRank(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -248,7 +248,7 @@ WHERE %s
 
 func (c *ComplianceExternalURL) Delete(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -273,7 +273,7 @@ WHERE
 
 func (c *ComplianceExternalURLs) LoadByTrustCenterID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	trustCenterID gid.GID,
 	cursor *page.Cursor[ComplianceExternalURLOrderField],

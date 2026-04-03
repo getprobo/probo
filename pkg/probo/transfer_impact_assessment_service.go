@@ -88,7 +88,7 @@ func (s TransferImpactAssessmentService) Get(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			if err := tia.LoadByID(ctx, conn, s.svc.scope, tiaID); err != nil {
 				return fmt.Errorf("cannot load transfer impact assessment: %w", err)
 			}
@@ -112,7 +112,7 @@ func (s TransferImpactAssessmentService) GetByProcessingActivityID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			if err := tia.LoadByProcessingActivityID(ctx, conn, s.svc.scope, processingActivityID); err != nil {
 				return fmt.Errorf("cannot load transfer impact assessment: %w", err)
 			}
@@ -138,7 +138,7 @@ func (s TransferImpactAssessmentService) ListForOrganizationID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			err := tias.LoadByOrganizationID(ctx, conn, s.svc.scope, organizationID, cursor, filter)
 			if err != nil {
 				return fmt.Errorf("cannot load transfer impact assessments: %w", err)
@@ -164,7 +164,7 @@ func (s TransferImpactAssessmentService) CountForOrganizationID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) (err error) {
+		func(ctx context.Context, conn pg.Querier) (err error) {
 			tias := coredata.TransferImpactAssessments{}
 			count, err = tias.CountByOrganizationID(ctx, conn, s.svc.scope, organizationID, filter)
 			return err
@@ -202,7 +202,7 @@ func (s *TransferImpactAssessmentService) Create(
 
 	err := s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Tx) error {
 			processingActivity := &coredata.ProcessingActivity{}
 			if err := processingActivity.LoadByID(ctx, conn, s.svc.scope, req.ProcessingActivityID); err != nil {
 				return fmt.Errorf("cannot load processing activity: %w", err)
@@ -237,7 +237,7 @@ func (s *TransferImpactAssessmentService) Update(
 
 	err := s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Tx) error {
 			if err := tia.LoadByID(ctx, conn, s.svc.scope, req.ID); err != nil {
 				return fmt.Errorf("cannot load transfer impact assessment: %w", err)
 			}
@@ -285,7 +285,7 @@ func (s *TransferImpactAssessmentService) Delete(
 ) error {
 	err := s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Tx) error {
 			tia := &coredata.TransferImpactAssessment{}
 			if err := tia.LoadByID(ctx, conn, s.svc.scope, tiaID); err != nil {
 				return fmt.Errorf("cannot load transfer impact assessment: %w", err)
@@ -311,7 +311,7 @@ func (s *TransferImpactAssessmentService) ExportPDF(
 
 	err := s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Tx) error {
 			var assessments coredata.TransferImpactAssessments
 			if err := assessments.LoadAllByOrganizationID(ctx, conn, s.svc.scope, organizationID, filter); err != nil {
 				return fmt.Errorf("cannot load transfer impact assessments: %w", err)

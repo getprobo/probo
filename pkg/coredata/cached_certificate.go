@@ -39,7 +39,7 @@ type (
 	CachedCertificates []*CachedCertificate
 )
 
-func (cc *CachedCertificate) LoadByDomain(ctx context.Context, conn pg.Conn, domain string) error {
+func (cc *CachedCertificate) LoadByDomain(ctx context.Context, conn pg.Querier, domain string) error {
 	q := `
 SELECT
 	domain,
@@ -72,7 +72,7 @@ LIMIT 1
 	return nil
 }
 
-func (cc *CachedCertificate) Upsert(ctx context.Context, conn pg.Conn) error {
+func (cc *CachedCertificate) Upsert(ctx context.Context, conn pg.Querier) error {
 	cc.CachedAt = time.Now()
 
 	q := `
@@ -120,7 +120,7 @@ ON CONFLICT (domain) DO UPDATE SET
 	return nil
 }
 
-func (cc *CachedCertificate) Delete(ctx context.Context, conn pg.Conn, domain string) error {
+func (cc *CachedCertificate) Delete(ctx context.Context, conn pg.Tx, domain string) error {
 	q := `DELETE FROM cached_certificates WHERE domain = @domain`
 	args := pgx.NamedArgs{"domain": domain}
 
@@ -132,7 +132,7 @@ func (cc *CachedCertificate) Delete(ctx context.Context, conn pg.Conn, domain st
 	return nil
 }
 
-func (cc *CachedCertificates) CountAll(ctx context.Context, conn pg.Conn) (int, error) {
+func (cc *CachedCertificates) CountAll(ctx context.Context, conn pg.Querier) (int, error) {
 	q := `SELECT COUNT(*) FROM cached_certificates`
 
 	var count int
@@ -144,7 +144,7 @@ func (cc *CachedCertificates) CountAll(ctx context.Context, conn pg.Conn) (int, 
 	return count, nil
 }
 
-func (cc *CachedCertificates) CleanExpired(ctx context.Context, conn pg.Conn) error {
+func (cc *CachedCertificates) CleanExpired(ctx context.Context, conn pg.Querier) error {
 	q := `
 DELETE
 FROM
@@ -161,7 +161,7 @@ WHERE
 	return nil
 }
 
-func (cc *CachedCertificate) RefreshFromDomain(ctx context.Context, conn pg.Conn, domain *CustomDomain, encryptionKey cipher.EncryptionKey) error {
+func (cc *CachedCertificate) RefreshFromDomain(ctx context.Context, conn pg.Querier, domain *CustomDomain, encryptionKey cipher.EncryptionKey) error {
 	if domain.SSLCertificate == nil {
 		return fmt.Errorf("domain has no parsed certificate")
 	}

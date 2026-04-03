@@ -64,7 +64,7 @@ func (t Task) CursorKey(orderBy TaskOrderField) page.CursorKey {
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (t *Task) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+func (t *Task) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	q := `SELECT organization_id FROM tasks WHERE id = $1 LIMIT 1;`
 
 	var organizationID gid.GID
@@ -80,7 +80,7 @@ func (t *Task) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[s
 
 func (t *Task) LoadByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	taskID gid.GID,
 ) error {
@@ -135,7 +135,7 @@ LIMIT 1;
 
 func (t *Tasks) LoadByIDs(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	taskIDs []gid.GID,
 ) error {
@@ -185,7 +185,7 @@ WHERE
 
 func (t *Task) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -265,7 +265,7 @@ RETURNING rank, priority_rank;
 
 func (t *Task) Upsert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 ) error {
 	q := `
@@ -365,7 +365,7 @@ RETURNING
 
 func (t *Tasks) CountByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 ) (int, error) {
@@ -397,7 +397,7 @@ func (t *Tasks) CountByOrganizationID(
 
 func (t *Tasks) LoadByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 	cursor *page.Cursor[TaskOrderField],
@@ -449,7 +449,7 @@ func (t *Tasks) LoadByOrganizationID(
 
 func (t *Tasks) CountByMeasureID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	measureID gid.GID,
 ) (int, error) {
@@ -481,7 +481,7 @@ WHERE
 
 func (t *Tasks) LoadByMeasureID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	measureID gid.GID,
 	cursor *page.Cursor[TaskOrderField],
@@ -533,7 +533,7 @@ WHERE
 
 func (t *Task) Update(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -574,7 +574,7 @@ WHERE %s
 
 func (t *Task) NextRankForStatePriority(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 ) error {
 	q := `
@@ -613,7 +613,7 @@ WHERE
 
 func (t *Task) UpdateRank(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -668,7 +668,7 @@ WHERE %s
 
 func (t *Task) Delete(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `

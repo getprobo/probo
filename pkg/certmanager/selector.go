@@ -80,7 +80,7 @@ func (s *Selector) loadFromDatabase(domain string) (*tls.Certificate, error) {
 	var cert *tls.Certificate
 	err := s.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			var cache coredata.CachedCertificate
 			if err := cache.LoadByDomain(ctx, conn, domain); err != nil {
 				if err := s.rebuildCacheEntry(ctx, conn, domain); err != nil {
@@ -114,7 +114,7 @@ func (s *Selector) loadFromDatabase(domain string) (*tls.Certificate, error) {
 	return cert, nil
 }
 
-func (s *Selector) rebuildCacheEntry(ctx context.Context, conn pg.Conn, domain string) error {
+func (s *Selector) rebuildCacheEntry(ctx context.Context, conn pg.Querier, domain string) error {
 	var customDomain coredata.CustomDomain
 	if err := customDomain.LoadByDomain(ctx, conn, coredata.NewNoScope(), domain); err != nil {
 		return fmt.Errorf("cannot load domain: %w", err)

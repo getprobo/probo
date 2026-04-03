@@ -38,7 +38,7 @@ type (
 
 func (cs ControlSnapshot) Upsert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 ) error {
 	q := `
@@ -73,7 +73,7 @@ ON CONFLICT (control_id, snapshot_id) DO NOTHING;
 
 func (cs ControlSnapshot) Delete(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 	controlID gid.GID,
 	snapshotID gid.GID,

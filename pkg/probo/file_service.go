@@ -57,7 +57,7 @@ func (s FileService) Get(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			if err := file.LoadByID(ctx, conn, s.svc.scope, fileID); err != nil {
 				return fmt.Errorf("cannot load file %w", err)
 			}
@@ -81,7 +81,7 @@ func (s FileService) GetByIDs(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			if err := files.LoadByIDs(
 				ctx,
 				conn,
@@ -161,7 +161,7 @@ func (s FileService) UploadAndSaveFile(
 
 	err = s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Tx) error {
 			file = &coredata.File{
 				ID:             fileID,
 				OrganizationID: organizationID,

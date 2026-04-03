@@ -54,7 +54,7 @@ var (
 
 func (f *AccessReviewCampaignSourceFetch) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -107,7 +107,7 @@ INSERT INTO access_review_campaign_source_fetches (
 
 func (f *AccessReviewCampaignSourceFetch) Update(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -154,7 +154,7 @@ WHERE
 
 func (f *AccessReviewCampaignSourceFetch) LoadByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	campaignID gid.GID,
 	sourceID gid.GID,
@@ -207,7 +207,7 @@ LIMIT 1
 
 func (fs *AccessReviewCampaignSourceFetches) LoadByCampaignID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	campaignID gid.GID,
 ) error {
@@ -258,7 +258,7 @@ ORDER BY created_at ASC
 // Scope for subsequent operations.
 func (f *AccessReviewCampaignSourceFetch) LoadNextQueuedForUpdateSkipLocked(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 ) error {
 	q := `
 SELECT

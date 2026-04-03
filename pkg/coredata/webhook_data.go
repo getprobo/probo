@@ -42,7 +42,7 @@ type (
 
 func (w *WebhookData) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -83,7 +83,7 @@ VALUES (
 
 func (w *WebhookData) LoadNextUnprocessedForUpdate(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 ) error {
 	q := `
 SELECT
@@ -120,7 +120,7 @@ FOR UPDATE SKIP LOCKED
 
 func (w *WebhookData) UpdateProcessedAt(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `

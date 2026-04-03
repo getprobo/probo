@@ -55,7 +55,7 @@ func (m Meeting) CursorKey(orderBy MeetingOrderField) page.CursorKey {
 }
 
 // AuthorizationAttributes returns the authorization attributes for policy evaluation.
-func (m *Meeting) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+func (m *Meeting) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	q := `SELECT organization_id FROM meetings WHERE id = $1 LIMIT 1;`
 
 	var organizationID gid.GID
@@ -71,7 +71,7 @@ func (m *Meeting) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (ma
 
 func (m *Meeting) LoadByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	meetingID gid.GID,
 ) error {
@@ -117,7 +117,7 @@ LIMIT 1;
 
 func (m *Meetings) LoadByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 	cursor *page.Cursor[MeetingOrderField],
@@ -160,7 +160,7 @@ WHERE
 
 func (m *Meetings) CountByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 ) (int, error) {
@@ -191,7 +191,7 @@ WHERE
 
 func (m *Meeting) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -239,7 +239,7 @@ VALUES (
 
 func (m *Meeting) Update(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -278,7 +278,7 @@ WHERE %s
 
 func (m *Meeting) Delete(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `

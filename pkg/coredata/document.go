@@ -62,7 +62,7 @@ func (p Document) CursorKey(orderBy DocumentOrderField) page.CursorKey {
 }
 
 // AuthorizationAttributes returns the authorization attributes for policy evaluation.
-func (d *Document) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+func (d *Document) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	q := `
 WITH document AS (
 	SELECT id, organization_id, status
@@ -119,7 +119,7 @@ LEFT JOIN last_quorum lq ON lq.document_id = document.id;
 
 func (p *Document) LoadByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	documentID gid.GID,
 ) error {
@@ -177,7 +177,7 @@ LIMIT 1;
 
 func (p *Document) LoadByIDWithFilter(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	documentID gid.GID,
 	filter *DocumentFilter,
@@ -238,7 +238,7 @@ LIMIT 1;
 
 func (p *Documents) LoadByIDs(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	documentIDs []gid.GID,
 ) error {
@@ -291,7 +291,7 @@ WHERE
 
 func (p *Documents) CountByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 	filter *DocumentFilter,
@@ -325,7 +325,7 @@ WHERE
 
 func (p *Documents) LoadByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 	cursor *page.Cursor[DocumentOrderField],
@@ -384,7 +384,7 @@ WHERE
 
 func (p *Documents) LoadAllByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 	filter *DocumentFilter,
@@ -441,7 +441,7 @@ ORDER BY title ASC
 
 func (p *Documents) LoadPublishedByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 	cursor *page.Cursor[DocumentOrderField],
@@ -511,7 +511,7 @@ WHERE
 
 func (p Document) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -563,7 +563,7 @@ VALUES (
 
 func (p Document) SoftDelete(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -581,7 +581,7 @@ UPDATE documents SET deleted_at = @deleted_at WHERE %s AND id = @document_id
 
 func (p Document) DeleteByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 	organizationID gid.GID,
 ) error {
@@ -600,7 +600,7 @@ DELETE FROM documents WHERE %s AND organization_id = @organization_id
 
 func (p *Document) Update(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -643,7 +643,7 @@ WHERE
 
 func (p *Documents) CountByControlID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	controlID gid.GID,
 	filter *DocumentFilter,
@@ -679,7 +679,7 @@ WHERE cp.control_id = @control_id
 
 func (p *Documents) LoadByControlID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	controlID gid.GID,
 	cursor *page.Cursor[DocumentOrderField],
@@ -740,7 +740,7 @@ WHERE cp.control_id = @control_id
 
 func (p *Documents) CountByRiskID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	riskID gid.GID,
 	filter *DocumentFilter,
@@ -776,7 +776,7 @@ WHERE rp.risk_id = @risk_id
 
 func (p *Documents) LoadByRiskID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	riskID gid.GID,
 	cursor *page.Cursor[DocumentOrderField],
@@ -837,7 +837,7 @@ WHERE rp.risk_id = @risk_id
 
 func (p *Documents) BulkSoftDelete(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -861,7 +861,7 @@ UPDATE documents SET deleted_at = @deleted_at WHERE %s AND id = ANY(@document_id
 
 func (p *Documents) BulkArchive(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 ) error {
 	q := `
@@ -888,7 +888,7 @@ UPDATE documents SET status = 'ARCHIVED', archived_at = @archived_at, trust_cent
 
 func (p *Documents) BulkUnarchive(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 ) error {
 	q := `
@@ -914,7 +914,7 @@ UPDATE documents SET status = 'ACTIVE', archived_at = NULL WHERE %s AND id = ANY
 
 func (p *Document) IsLastSignableVersionSignedByUserEmail(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	documentID gid.GID,
 	userEmail mail.Addr,
@@ -975,7 +975,7 @@ SELECT EXISTS (
 
 func (p *Document) GetViewerApprovalStateForLastVersion(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	documentID gid.GID,
 	identityID gid.GID,

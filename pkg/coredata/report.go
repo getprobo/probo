@@ -42,7 +42,7 @@ type (
 	Reports []*Report
 )
 
-func (r *Report) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+func (r *Report) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	q := `SELECT organization_id FROM reports WHERE id = $1 LIMIT 1;`
 
 	var organizationID gid.GID
@@ -58,7 +58,7 @@ func (r *Report) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map
 
 func (r *Report) LoadByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	reportID gid.GID,
 ) error {
@@ -106,7 +106,7 @@ LIMIT 1;
 
 func (r *Reports) LoadByIDs(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	reportIDs []gid.GID,
 ) error {
@@ -149,7 +149,7 @@ WHERE
 
 func (r *Report) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -198,7 +198,7 @@ INSERT INTO reports (
 
 func (r *Report) Update(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -236,7 +236,7 @@ WHERE
 
 func (r *Report) Delete(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `

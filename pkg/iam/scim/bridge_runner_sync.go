@@ -38,11 +38,11 @@ func (r *BridgeRunner) executeSync(
 ) (stats SyncStats, duration time.Duration, connector *coredata.Connector, err error) {
 	start := time.Now()
 
-	err = r.pg.WithConn(
+	err = r.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			var syncErr error
-			stats, connector, syncErr = r.doSync(ctx, conn, bridge, scope, logger)
+			stats, connector, syncErr = r.doSync(ctx, tx, bridge, scope, logger)
 			return syncErr
 		},
 	)
@@ -53,7 +53,7 @@ func (r *BridgeRunner) executeSync(
 
 func (r *BridgeRunner) doSync(
 	ctx context.Context,
-	conn pg.Conn,
+	tx pg.Tx,
 	scimBridge *coredata.SCIMBridge,
 	scope coredata.Scoper,
 	logger *log.Logger,
@@ -63,7 +63,7 @@ func (r *BridgeRunner) doSync(
 	}
 
 	dbConnector := &coredata.Connector{}
-	if err := dbConnector.LoadByID(ctx, conn, scope, *scimBridge.ConnectorID, r.encryptionKey); err != nil {
+	if err := dbConnector.LoadByID(ctx, tx, scope, *scimBridge.ConnectorID, r.encryptionKey); err != nil {
 		return SyncStats{}, nil, fmt.Errorf("cannot load connector: %w", err)
 	}
 
@@ -73,7 +73,7 @@ func (r *BridgeRunner) doSync(
 	}
 
 	var scimConfig coredata.SCIMConfiguration
-	if err := scimConfig.LoadByID(ctx, conn, scope, scimBridge.ScimConfigurationID); err != nil {
+	if err := scimConfig.LoadByID(ctx, tx, scope, scimBridge.ScimConfigurationID); err != nil {
 		return SyncStats{}, nil, fmt.Errorf("cannot load SCIM configuration: %w", err)
 	}
 
@@ -84,7 +84,7 @@ func (r *BridgeRunner) doSync(
 
 	scimConfig.HashedToken = HashToken(token)
 	scimConfig.UpdatedAt = time.Now()
-	if err := scimConfig.Update(ctx, conn, scope); err != nil {
+	if err := scimConfig.Update(ctx, tx, scope); err != nil {
 		return SyncStats{}, nil, fmt.Errorf("cannot update SCIM configuration token: %w", err)
 	}
 

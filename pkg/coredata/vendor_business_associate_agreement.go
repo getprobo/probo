@@ -56,7 +56,7 @@ func (v VendorBusinessAssociateAgreement) CursorKey(orderBy VendorBusinessAssoci
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (vbaa *VendorBusinessAssociateAgreement) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+func (vbaa *VendorBusinessAssociateAgreement) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	q := `SELECT organization_id FROM vendor_business_associate_agreements WHERE id = $1 LIMIT 1;`
 
 	var organizationID gid.GID
@@ -72,7 +72,7 @@ func (vbaa *VendorBusinessAssociateAgreement) AuthorizationAttributes(ctx contex
 
 func (vbaa *VendorBusinessAssociateAgreement) LoadByVendorID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	vendorID gid.GID,
 ) error {
@@ -118,7 +118,7 @@ LIMIT 1;
 
 func (vbaa *VendorBusinessAssociateAgreement) LoadByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	vendorBusinessAssociateAgreementID gid.GID,
 ) error {
@@ -164,7 +164,7 @@ LIMIT 1;
 
 func (vbaa *VendorBusinessAssociateAgreement) Update(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -202,7 +202,7 @@ WHERE
 
 func (vbaa *VendorBusinessAssociateAgreement) Upsert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 ) error {
 	q := `
@@ -271,7 +271,7 @@ ON CONFLICT (organization_id, vendor_id) DO UPDATE SET
 
 func (vbaa *VendorBusinessAssociateAgreement) Delete(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -295,7 +295,7 @@ WHERE
 
 func (vbaa *VendorBusinessAssociateAgreement) DeleteByVendorID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 	vendorID gid.GID,
 ) error {
@@ -320,7 +320,7 @@ WHERE
 
 func (v VendorBusinessAssociateAgreements) InsertVendorSnapshots(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 	organizationID gid.GID,
 	snapshotID gid.GID,

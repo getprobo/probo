@@ -360,7 +360,7 @@ func (s *Service) lockExportJob(ctx context.Context) (*coredata.ExportJob, error
 
 	err := s.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			if err := exportJob.LoadNextPendingForUpdateSkipLocked(ctx, tx); err != nil {
 				return fmt.Errorf("cannot load next pending export job: %w", err)
 			}
@@ -389,11 +389,11 @@ func (s *Service) commitFailedExport(ctx context.Context, exportJob *coredata.Ex
 	errorMsg := failureErr.Error()
 	exportJob.Error = &errorMsg
 
-	return s.pg.WithConn(
+	return s.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			scope := coredata.NewScope(exportJob.ID.TenantID())
-			if err := exportJob.Update(ctx, conn, scope); err != nil {
+			if err := exportJob.Update(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot update %s export job: %w", exportJob.Type, err)
 			}
 
@@ -406,11 +406,11 @@ func (s *Service) commitSuccessfulExport(ctx context.Context, exportJob *coredat
 	exportJob.CompletedAt = new(time.Now())
 	exportJob.Status = coredata.ExportJobStatusCompleted
 
-	return s.pg.WithConn(
+	return s.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			scope := coredata.NewScope(exportJob.ID.TenantID())
-			if err := exportJob.Update(ctx, conn, scope); err != nil {
+			if err := exportJob.Update(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot update %s export job: %w", exportJob.Type, err)
 			}
 
@@ -424,7 +424,7 @@ func (s *Service) LoadOrganizationByDomain(ctx context.Context, domain string) (
 
 	err := s.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			var customDomain coredata.CustomDomain
 			if err := customDomain.LoadByDomain(ctx, conn, coredata.NewNoScope(), domain); err != nil {
 				return fmt.Errorf("cannot load custom domain: %w", err)

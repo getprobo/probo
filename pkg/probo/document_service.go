@@ -206,7 +206,7 @@ func (s *DocumentService) Get(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			return document.LoadByID(ctx, conn, s.svc.scope, documentID)
 		},
 	)
@@ -226,7 +226,7 @@ func (s *DocumentService) GetByIDs(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			if err := documents.LoadByIDs(
 				ctx,
 				conn,
@@ -255,7 +255,7 @@ func (s *DocumentService) ListVersionApprovers(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			if err := profiles.LoadByDocumentVersionID(ctx, conn, s.svc.scope, documentVersionID, cursor); err != nil {
 				return fmt.Errorf("cannot load document version approvers: %w", err)
 			}
@@ -279,7 +279,7 @@ func (s *DocumentService) CountVersionApprovers(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) (err error) {
+		func(ctx context.Context, conn pg.Querier) (err error) {
 			profiles := coredata.MembershipProfiles{}
 			count, err = profiles.CountByDocumentVersionID(ctx, conn, s.svc.scope, documentVersionID)
 			if err != nil {
@@ -306,7 +306,7 @@ func (s *DocumentService) GetWithFilter(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			err := document.LoadByIDWithFilter(ctx, conn, s.svc.scope, documentID, filter)
 			if err != nil {
 				return fmt.Errorf("cannot load document: %w", err)
@@ -333,7 +333,7 @@ func (s DocumentService) GenerateChangelog(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			if err := draftVersion.LoadLatestVersion(ctx, conn, s.svc.scope, documentID); err != nil {
 				return fmt.Errorf("cannot load draft version: %w", err)
 			}
@@ -388,7 +388,7 @@ func (s *DocumentService) BulkPublishMajorVersions(
 
 	err := s.svc.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			for _, documentID := range req.DocumentIDs {
 				document, version, err := s.publishMajorVersionInTx(ctx, tx, documentID, &req.Changelog, true)
 				if err != nil {
@@ -419,7 +419,7 @@ func (s *DocumentService) BulkPublishMinorVersions(
 
 	err := s.svc.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			for _, documentID := range req.DocumentIDs {
 				document, version, err := s.publishMinorVersionInTx(ctx, tx, documentID, &req.Changelog, true)
 				if err != nil {
@@ -452,7 +452,7 @@ func (s *DocumentService) PublishMajorVersion(
 
 	err := s.svc.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			var err error
 
 			document, documentVersion, err = s.publishMajorVersionInTx(ctx, tx, documentID, changelog, false)
@@ -482,7 +482,7 @@ func (s *DocumentService) PublishMinorVersion(
 
 	err := s.svc.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			var err error
 
 			document, documentVersion, err = s.publishMinorVersionInTx(ctx, tx, documentID, changelog, false)
@@ -553,7 +553,7 @@ func (s *DocumentService) Create(
 
 	err := s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Tx) error {
 			if err := organization.LoadByID(ctx, conn, s.svc.scope, req.OrganizationID); err != nil {
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
@@ -589,7 +589,7 @@ func (s *DocumentService) SendSigningNotifications(
 
 	err := s.svc.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			var signatories coredata.MembershipProfiles
 			if err := signatories.LoadAwaitingSigning(ctx, tx, s.svc.scope); err != nil {
 				return fmt.Errorf("cannot load signatories: %w", err)
@@ -685,7 +685,7 @@ func (s *DocumentService) SignDocumentVersionByIdentity(
 
 	err := s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Tx) error {
 			documentVersion := &coredata.DocumentVersion{}
 			if err := documentVersion.LoadByID(ctx, conn, s.svc.scope, documentVersionID); err != nil {
 				return fmt.Errorf("cannot get document version: %w", err)
@@ -712,7 +712,7 @@ func (s *DocumentService) SignDocumentVersionByIdentity(
 
 func (s *DocumentService) signDocumentVersionInTx(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	documentVersionID gid.GID,
 	signatory gid.GID,
 ) (*coredata.DocumentVersionSignature, error) {
@@ -764,7 +764,7 @@ func (s *DocumentService) UpdateVersion(
 
 	err := s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Tx) error {
 			if err := documentVersion.LoadByID(ctx, conn, s.svc.scope, req.ID); err != nil {
 				return fmt.Errorf("cannot load document version %q: %w", req.ID, err)
 			}
@@ -821,7 +821,7 @@ func (s *DocumentService) GetVersionSignature(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			return documentVersionSignature.LoadByID(ctx, conn, s.svc.scope, signatureID)
 		},
 	)
@@ -841,7 +841,7 @@ func (s *DocumentService) BulkRequestSignatures(
 
 	err := s.svc.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			for _, documentID := range req.DocumentIDs {
 				documentVersion := &coredata.DocumentVersion{}
 				if err := documentVersion.LoadLatestVersion(ctx, tx, s.svc.scope, documentID); err != nil {
@@ -873,7 +873,7 @@ func (s *DocumentService) BulkRequestSignatures(
 
 func (s *DocumentService) createSignatureRequestInTx(
 	ctx context.Context,
-	tx pg.Conn,
+	tx pg.Tx,
 	documentVersionID gid.GID,
 	signatoryID gid.GID,
 	ignoreExisting bool,
@@ -932,7 +932,7 @@ func (s *DocumentService) RequestSignature(
 	var signature *coredata.DocumentVersionSignature
 	err = s.svc.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			signature, err = s.createSignatureRequestInTx(ctx, tx, req.DocumentVersionID, req.Signatory, false)
 			if err != nil {
 				return fmt.Errorf("cannot create signature request: %w", err)
@@ -959,7 +959,7 @@ func (s *DocumentService) ListSignatures(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			return documentVersionSignatures.LoadByDocumentVersionID(ctx, conn, s.svc.scope, documentVersionID, cursor, filter)
 		},
 	)
@@ -981,7 +981,7 @@ func (s *DocumentService) IsVersionSignedByUserEmail(
 	var signed bool
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			var err error
 			signed, err = documentVersionSignature.IsSignedByUserEmail(
 				ctx,
@@ -1014,7 +1014,7 @@ func (s *DocumentService) CreateDraft(
 
 	err := s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Tx) error {
 			if err := document.LoadByID(ctx, conn, s.svc.scope, documentID); err != nil {
 				return fmt.Errorf("cannot load document: %w", err)
 			}
@@ -1063,7 +1063,7 @@ func (s *DocumentService) DeleteDraft(
 
 	return s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Tx) error {
 			if err := documentVersion.LoadByID(ctx, conn, s.svc.scope, documentVersionID); err != nil {
 				return fmt.Errorf("cannot load document version: %w", err)
 			}
@@ -1091,10 +1091,10 @@ func (s *DocumentService) SoftDelete(
 ) error {
 	document := coredata.Document{ID: documentID}
 
-	return s.svc.pg.WithConn(
+	return s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
-			return document.SoftDelete(ctx, conn, s.svc.scope)
+		func(ctx context.Context, tx pg.Tx) error {
+			return document.SoftDelete(ctx, tx, s.svc.scope)
 		},
 	)
 }
@@ -1109,10 +1109,10 @@ func (s *DocumentService) BulkSoftDelete(
 		documents = append(documents, &coredata.Document{ID: documentID})
 	}
 
-	return s.svc.pg.WithConn(
+	return s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
-			return documents.BulkSoftDelete(ctx, conn, s.svc.scope)
+		func(ctx context.Context, tx pg.Tx) error {
+			return documents.BulkSoftDelete(ctx, tx, s.svc.scope)
 		},
 	)
 }
@@ -1129,7 +1129,7 @@ func (s *DocumentService) BulkArchive(
 
 	return s.svc.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			controlDocument := coredata.ControlDocument{}
 			if err := controlDocument.DeleteByDocumentIDs(ctx, tx, s.svc.scope, documentIDs); err != nil {
 				return fmt.Errorf("cannot delete control mappings: %w", err)
@@ -1157,7 +1157,7 @@ func (s *DocumentService) BulkUnarchive(
 
 	return s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			return documents.BulkUnarchive(ctx, conn, s.svc.scope)
 		},
 	)
@@ -1179,7 +1179,7 @@ func (s *DocumentService) RequestExport(
 		}
 	}
 
-	err := s.svc.pg.WithTx(ctx, func(conn pg.Conn) error {
+	err := s.svc.pg.WithTx(ctx, func(ctx context.Context, conn pg.Tx) error {
 		var organizationID gid.GID
 		for _, documentID := range documentIDs {
 			document := &coredata.Document{}
@@ -1238,7 +1238,7 @@ func (s *DocumentService) CountVersionsForDocumentID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) (err error) {
+		func(ctx context.Context, conn pg.Querier) (err error) {
 			documentVersions := &coredata.DocumentVersions{}
 			count, err = documentVersions.CountByDocumentID(ctx, conn, s.svc.scope, documentID, filter)
 
@@ -1262,7 +1262,7 @@ func (s *DocumentService) CountSignaturesForVersionID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) (err error) {
+		func(ctx context.Context, conn pg.Querier) (err error) {
 			documentVersionSignatures := &coredata.DocumentVersionSignatures{}
 			count, err = documentVersionSignatures.CountByDocumentVersionID(ctx, conn, s.svc.scope, documentVersionID, filter)
 
@@ -1287,7 +1287,7 @@ func (s *DocumentService) ListVersions(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 
 			err := documentVersions.LoadByDocumentID(ctx, conn, s.svc.scope, documentID, cursor, filter)
 			if err != nil {
@@ -1313,7 +1313,7 @@ func (s *DocumentService) GetVersion(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			return documentVersion.LoadByID(ctx, conn, s.svc.scope, documentVersionID)
 		},
 	)
@@ -1335,7 +1335,7 @@ func (s *DocumentService) IsSigned(
 	var signed bool
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			var err error
 			signed, err = document.IsLastSignableVersionSignedByUserEmail(
 				ctx,
@@ -1365,7 +1365,7 @@ func (s *DocumentService) GetViewerApprovalState(
 	var state coredata.DocumentVersionApprovalDecisionState
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			var err error
 			state, err = document.GetViewerApprovalStateForLastVersion(
 				ctx,
@@ -1394,7 +1394,7 @@ func (s *DocumentService) CountForOrganizationID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) (err error) {
+		func(ctx context.Context, conn pg.Querier) (err error) {
 			documents := &coredata.Documents{}
 			count, err = documents.CountByOrganizationID(ctx, conn, s.svc.scope, organizationID, filter)
 			if err != nil {
@@ -1422,7 +1422,7 @@ func (s *DocumentService) ListByOrganizationID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			return documents.LoadByOrganizationID(
 				ctx,
 				conn,
@@ -1450,7 +1450,7 @@ func (s *DocumentService) CountForControlID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) (err error) {
+		func(ctx context.Context, conn pg.Querier) (err error) {
 			documents := &coredata.Documents{}
 			count, err = documents.CountByControlID(ctx, conn, s.svc.scope, controlID, filter)
 			if err != nil {
@@ -1478,7 +1478,7 @@ func (s *DocumentService) ListForControlID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			return documents.LoadByControlID(ctx, conn, s.svc.scope, controlID, cursor, filter)
 		},
 	)
@@ -1499,7 +1499,7 @@ func (s *DocumentService) CountForRiskID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) (err error) {
+		func(ctx context.Context, conn pg.Querier) (err error) {
 			documents := &coredata.Documents{}
 			count, err = documents.CountByRiskID(ctx, conn, s.svc.scope, riskID, filter)
 			if err != nil {
@@ -1527,7 +1527,7 @@ func (s *DocumentService) ListForRiskID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			return documents.LoadByRiskID(ctx, conn, s.svc.scope, riskID, cursor, filter)
 		},
 	)
@@ -1552,7 +1552,7 @@ func (s *DocumentService) Update(
 
 	err := s.svc.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			if err := document.LoadByID(ctx, tx, s.svc.scope, req.DocumentID); err != nil {
 				return fmt.Errorf("cannot load document %q: %w", req.DocumentID, err)
 			}
@@ -1606,7 +1606,7 @@ func (s *DocumentService) Archive(
 
 	err := s.svc.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			if err := document.LoadByID(ctx, tx, s.svc.scope, documentID); err != nil {
 				return fmt.Errorf("cannot load document %q: %w", documentID, err)
 			}
@@ -1654,7 +1654,7 @@ func (s *DocumentService) Unarchive(
 
 	err := s.svc.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			if err := document.LoadByID(ctx, tx, s.svc.scope, documentID); err != nil {
 				return fmt.Errorf("cannot load document %q: %w", documentID, err)
 			}
@@ -1690,7 +1690,7 @@ func (s *DocumentService) CancelSignatureRequest(
 
 	return s.svc.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			if err := documentVersionSignature.LoadByID(ctx, tx, s.svc.scope, documentVersionSignatureID); err != nil {
 				return fmt.Errorf("cannot load document version signature: %w", err)
 			}
@@ -1726,7 +1726,7 @@ func (s *DocumentService) ExportPDF(
 
 	err := s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) (err error) {
+		func(ctx context.Context, conn pg.Tx) (err error) {
 			data, err = exportDocumentPDF(ctx, s.svc, s.html2pdfConverter, conn, s.svc.scope, documentVersionID, options)
 			if err != nil {
 				return fmt.Errorf("cannot export document PDF: %w", err)
@@ -1747,7 +1747,7 @@ func (s *DocumentService) BuildAndUploadExport(ctx context.Context, exportJobID 
 	exportJob := &coredata.ExportJob{}
 	err := s.svc.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			if err := exportJob.LoadByID(ctx, tx, s.svc.scope, exportJobID); err != nil {
 				return fmt.Errorf("cannot load export job: %w", err)
 			}
@@ -1863,7 +1863,7 @@ func exportDocumentPDF(
 	ctx context.Context,
 	svc *TenantService,
 	html2pdfConverter *html2pdf.Converter,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope coredata.Scoper,
 	documentVersionID gid.GID,
 	options ExportPDFOptions,
@@ -2043,7 +2043,7 @@ func (s *DocumentService) Export(
 
 	return s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Tx) error {
 			for i, documentID := range documentIDs {
 				document := &coredata.Document{}
 				if err := document.LoadByID(ctx, conn, s.svc.scope, documentID); err != nil {
@@ -2093,7 +2093,7 @@ func (s *DocumentService) SendExportEmail(
 ) error {
 	return s.svc.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			file := &coredata.File{}
 			if err := file.LoadByID(ctx, tx, s.svc.scope, fileID); err != nil {
 				return fmt.Errorf("cannot load file: %w", err)
@@ -2188,7 +2188,7 @@ func sanitizeFilename(title string) string {
 
 func (s *DocumentService) loadDraftForPublish(
 	ctx context.Context,
-	tx pg.Conn,
+	tx pg.Tx,
 	documentID gid.GID,
 	ignoreExisting bool,
 ) (*coredata.Document, *coredata.DocumentVersion, error) {
@@ -2220,7 +2220,7 @@ func (s *DocumentService) loadDraftForPublish(
 
 func (s *DocumentService) finalizePublish(
 	ctx context.Context,
-	tx pg.Conn,
+	tx pg.Tx,
 	document *coredata.Document,
 	documentVersion *coredata.DocumentVersion,
 	changelog *string,
@@ -2249,7 +2249,7 @@ func (s *DocumentService) finalizePublish(
 
 func (s *DocumentService) publishMajorVersionInTx(
 	ctx context.Context,
-	tx pg.Conn,
+	tx pg.Tx,
 	documentID gid.GID,
 	changelog *string,
 	ignoreExisting bool,
@@ -2292,7 +2292,7 @@ func (s *DocumentService) publishMajorVersionInTx(
 
 func (s *DocumentService) publishMinorVersionInTx(
 	ctx context.Context,
-	tx pg.Conn,
+	tx pg.Tx,
 	documentID gid.GID,
 	changelog *string,
 	ignoreExisting bool,

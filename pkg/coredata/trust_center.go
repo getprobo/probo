@@ -56,7 +56,7 @@ func (tc *TrustCenter) CursorKey(orderBy TrustCenterOrderField) page.CursorKey {
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (tc *TrustCenter) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+func (tc *TrustCenter) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	q := `SELECT organization_id FROM trust_centers WHERE id = $1 LIMIT 1;`
 
 	var organizationID gid.GID
@@ -72,7 +72,7 @@ func (tc *TrustCenter) AuthorizationAttributes(ctx context.Context, conn pg.Conn
 
 func (tc *TrustCenter) LoadByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	trustCenterID gid.GID,
 ) error {
@@ -124,7 +124,7 @@ LIMIT 1;
 
 func (tc *TrustCenter) LoadByMailingListID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	mailingListID gid.GID,
 ) error {
@@ -176,7 +176,7 @@ LIMIT 1;
 
 func (tc *TrustCenter) LoadByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 ) error {
@@ -229,7 +229,7 @@ LIMIT 1;
 // Tenant id scope is not applied because we want to access trust centers by slug across all tenants for public access.
 func (tc *TrustCenter) LoadBySlug(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	slug string,
 ) error {
 	q := `
@@ -276,7 +276,7 @@ LIMIT 1;
 
 func (tc *TrustCenter) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -340,7 +340,7 @@ INSERT INTO trust_centers (
 
 func (tc *TrustCenter) Update(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `

@@ -50,7 +50,7 @@ func (q DocumentVersionApprovalQuorum) CursorKey(orderBy DocumentVersionApproval
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (q *DocumentVersionApprovalQuorum) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+func (q *DocumentVersionApprovalQuorum) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	query := `SELECT organization_id FROM document_version_approval_quorums WHERE id = $1 LIMIT 1;`
 
 	var organizationID gid.GID
@@ -66,7 +66,7 @@ func (q *DocumentVersionApprovalQuorum) AuthorizationAttributes(ctx context.Cont
 
 func (q *DocumentVersionApprovalQuorum) LoadByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	id gid.GID,
 ) error {
@@ -110,7 +110,7 @@ WHERE
 
 func (q *DocumentVersionApprovalQuorum) LoadLastByDocumentVersionID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	documentVersionID gid.GID,
 ) error {
@@ -163,7 +163,7 @@ LIMIT 1
 
 func (q *DocumentVersionApprovalQuorums) LoadAllByDocumentVersionID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	documentVersionID gid.GID,
 	cursor *page.Cursor[DocumentVersionApprovalQuorumOrderField],
@@ -214,7 +214,7 @@ WHERE
 
 func (q *DocumentVersionApprovalQuorums) CountByDocumentVersionID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	documentVersionID gid.GID,
 ) (int, error) {
@@ -251,7 +251,7 @@ WHERE
 
 func (q *DocumentVersionApprovalQuorum) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	query := `
@@ -300,7 +300,7 @@ INSERT INTO document_version_approval_quorums (
 
 func (q *DocumentVersionApprovalQuorum) Delete(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	query := `
@@ -325,7 +325,7 @@ WHERE
 
 func (q *DocumentVersionApprovalQuorum) Update(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	query := `

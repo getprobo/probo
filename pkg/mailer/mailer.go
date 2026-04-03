@@ -150,7 +150,7 @@ func (w *SendingWorker) processNext(ctx context.Context, sem chan struct{}, wg *
 
 	if err := w.pg.WithTx(
 		nonCancelableCtx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			if err := email.LoadNextPendingForUpdateSkipLocked(nonCancelableCtx, tx); err != nil {
 				return err
 			}
@@ -196,7 +196,7 @@ func (w *SendingWorker) sendAndCommit(
 
 	if err := w.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			var attachments coredata.EmailAttachments
 			if err := attachments.LoadByEmailID(ctx, conn, email.ID); err != nil {
 				return fmt.Errorf("cannot load email attachments: %w", err)
@@ -268,7 +268,7 @@ func (w *SendingWorker) sendAndCommit(
 
 	if err := w.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			now := time.Now()
 			email.Status = coredata.EmailStatusSent
 			email.SentAt = &now
@@ -307,7 +307,7 @@ func (w *SendingWorker) failEmail(
 
 	return w.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			errStr := processingError.Error()
 			email.LastError = &errStr
 			email.ProcessingStartedAt = nil
@@ -331,7 +331,7 @@ func (w *SendingWorker) failEmail(
 func (w *SendingWorker) recoverStaleRows(ctx context.Context) {
 	if err := w.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			return coredata.ResetStaleProcessingEmails(ctx, conn, w.staleAfter)
 		},
 	); err != nil {

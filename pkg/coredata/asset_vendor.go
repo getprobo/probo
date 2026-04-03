@@ -37,13 +37,13 @@ type (
 	AssetVendors []*AssetVendor
 
 	AssetSnapshotter interface {
-		InsertAssetSnapshots(ctx context.Context, conn pg.Conn, scope Scoper, organizationID, snapshotID gid.GID) error
+		InsertAssetSnapshots(ctx context.Context, conn pg.Tx, scope Scoper, organizationID, snapshotID gid.GID) error
 	}
 )
 
 func (av AssetVendors) Merge(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	assetID gid.GID,
 	organizationID gid.GID,
@@ -89,7 +89,7 @@ WHEN NOT MATCHED
 
 func (av AssetVendors) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 	assetID gid.GID,
 	organizationID gid.GID,
@@ -127,7 +127,7 @@ FROM vendor_ids
 
 func (av AssetVendors) InsertAssetSnapshots(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 	organizationID gid.GID,
 	snapshotID gid.GID,

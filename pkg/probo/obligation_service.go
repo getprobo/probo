@@ -102,7 +102,7 @@ func (s ObligationService) Get(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			if err := obligation.LoadByID(ctx, conn, s.svc.scope, obligationID); err != nil {
 				return fmt.Errorf("cannot load obligation: %w", err)
 			}
@@ -147,7 +147,7 @@ func (s *ObligationService) Create(
 
 	err := s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Tx) error {
 			organization := &coredata.Organization{}
 			if err := organization.LoadByID(ctx, conn, s.svc.scope, req.OrganizationID); err != nil {
 				return fmt.Errorf("cannot load organization: %w", err)
@@ -189,7 +189,7 @@ func (s *ObligationService) Update(
 
 	err := s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Tx) error {
 			if err := obligation.LoadByID(ctx, conn, s.svc.scope, req.ID); err != nil {
 				return fmt.Errorf("cannot load obligation: %w", err)
 			}
@@ -265,7 +265,7 @@ func (s *ObligationService) Delete(
 ) error {
 	err := s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Tx) error {
 			obligation := &coredata.Obligation{}
 			if err := obligation.LoadByID(ctx, conn, s.svc.scope, obligationID); err != nil {
 				return fmt.Errorf("cannot load obligation: %w", err)
@@ -295,7 +295,7 @@ func (s ObligationService) CountForOrganizationID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) (err error) {
+		func(ctx context.Context, conn pg.Querier) (err error) {
 			obligations := coredata.Obligations{}
 			count, err = obligations.CountByOrganizationID(ctx, conn, s.svc.scope, organizationID, filter)
 			if err != nil {
@@ -324,7 +324,7 @@ func (s ObligationService) ListForControlID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			if err := control.LoadByID(ctx, conn, s.svc.scope, controlID); err != nil {
 				return fmt.Errorf("cannot load control: %w", err)
 			}
@@ -355,7 +355,7 @@ func (s ObligationService) ListForOrganizationID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			err := obligations.LoadByOrganizationID(ctx, conn, s.svc.scope, organizationID, cursor, filter)
 			if err != nil {
 				return fmt.Errorf("cannot load obligations: %w", err)
@@ -381,7 +381,7 @@ func (s ObligationService) CountForRiskID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) (err error) {
+		func(ctx context.Context, conn pg.Querier) (err error) {
 			obligations := &coredata.Obligations{}
 			count, err = obligations.CountByRiskID(ctx, conn, s.svc.scope, riskID, filter)
 			if err != nil {
@@ -409,7 +409,7 @@ func (s ObligationService) ListForRiskID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			err := obligations.LoadByRiskID(ctx, conn, s.svc.scope, riskID, cursor, filter)
 			if err != nil {
 				return fmt.Errorf("cannot load obligations: %w", err)

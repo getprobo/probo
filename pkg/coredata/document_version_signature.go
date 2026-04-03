@@ -64,7 +64,7 @@ func (pvs DocumentVersionSignature) CursorKey(orderBy DocumentVersionSignatureOr
 }
 
 // AuthorizationAttributes returns the authorization attributes for policy evaluation.
-func (dvs *DocumentVersionSignature) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+func (dvs *DocumentVersionSignature) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	q := `SELECT organization_id FROM document_version_signatures WHERE id = $1 LIMIT 1;`
 
 	var organizationID gid.GID
@@ -80,7 +80,7 @@ func (dvs *DocumentVersionSignature) AuthorizationAttributes(ctx context.Context
 
 func (pvs *DocumentVersionSignature) LoadByDocumentVersionIDAndSignatory(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	documentVersionID gid.GID,
 	signatory gid.GID,
@@ -127,7 +127,7 @@ LIMIT 1
 
 func (pvs *DocumentVersionSignature) LoadByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	signatureID gid.GID,
 ) error {
@@ -171,7 +171,7 @@ WHERE
 
 func (pvs DocumentVersionSignature) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -229,7 +229,7 @@ INSERT INTO document_version_signatures (
 
 func (pvss *DocumentVersionSignatures) LoadByDocumentVersionID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	documentVersionID gid.GID,
 	cursor *page.Cursor[DocumentVersionSignatureOrderField],
@@ -286,7 +286,7 @@ WHERE
 
 func (pvs *DocumentVersionSignature) Update(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -323,7 +323,7 @@ WHERE
 
 func (pvs *DocumentVersionSignature) Delete(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 	documentVersionSignatureID gid.GID,
 ) error {
@@ -349,7 +349,7 @@ WHERE
 
 func (pvss *DocumentVersionSignaturesWithPeople) LoadByDocumentVersionIDWithPeople(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	documentVersionID gid.GID,
 	limit int,
@@ -424,7 +424,7 @@ LIMIT @limit
 
 func (pvs *DocumentVersionSignature) IsSignedByUserEmail(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	documentVersionID gid.GID,
 	userEmail mail.Addr,
@@ -476,7 +476,7 @@ SELECT EXISTS (
 
 func (dvs *DocumentVersionSignatures) CountByDocumentVersionID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	documentVersionID gid.GID,
 	filter *DocumentVersionSignatureFilter,

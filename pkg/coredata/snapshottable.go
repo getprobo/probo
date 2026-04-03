@@ -23,7 +23,7 @@ import (
 )
 
 type Snapshottable interface {
-	Snapshot(ctx context.Context, conn pg.Conn, scope Scoper, organizationID, snapshotID gid.GID) error
+	Snapshot(ctx context.Context, conn pg.Tx, scope Scoper, organizationID, snapshotID gid.GID) error
 }
 
 func GetSnapshottable(snapshotType SnapshotsType) (Snapshottable, error) {

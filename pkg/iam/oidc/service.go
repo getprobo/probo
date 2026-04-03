@@ -302,7 +302,7 @@ func (s *Service) InitiateLogin(
 
 	err = s.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			if err := oidcState.Insert(ctx, tx); err != nil {
 				return fmt.Errorf("cannot store oidc state: %w", err)
 			}
@@ -339,7 +339,7 @@ func (s *Service) HandleCallback(
 	var oidcState coredata.OIDCState
 	err := s.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			if err := oidcState.LoadByIDForUpdate(ctx, tx, stateParam); err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return NewInvalidStateError()
@@ -407,7 +407,7 @@ func (s *Service) HandleCallback(
 
 	err = s.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			identity = &coredata.Identity{}
 			err := identity.LoadByEmail(ctx, tx, email)
 			if err != nil {

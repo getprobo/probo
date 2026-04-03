@@ -61,7 +61,7 @@ type (
 	Vendors []*Vendor
 
 	VendorSnapshotter interface {
-		InsertVendorSnapshots(ctx context.Context, conn pg.Conn, scope Scoper, organizationID, snapshotID gid.GID) error
+		InsertVendorSnapshots(ctx context.Context, conn pg.Tx, scope Scoper, organizationID, snapshotID gid.GID) error
 	}
 )
 
@@ -78,7 +78,7 @@ func (v Vendor) CursorKey(orderBy VendorOrderField) page.CursorKey {
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (v *Vendor) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+func (v *Vendor) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	q := `SELECT organization_id FROM vendors WHERE id = $1 LIMIT 1;`
 
 	var organizationID gid.GID
@@ -94,7 +94,7 @@ func (v *Vendor) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map
 
 func (v *Vendor) LoadByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	vendorID gid.GID,
 ) error {
@@ -162,7 +162,7 @@ LIMIT 1;
 
 func (v *Vendors) LoadByIDs(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	vendorIDs []gid.GID,
 ) error {
@@ -224,7 +224,7 @@ WHERE
 
 func (v Vendor) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -324,7 +324,7 @@ VALUES (
 
 func (v Vendor) Delete(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -342,7 +342,7 @@ DELETE FROM vendors WHERE %s AND id = @vendor_id
 
 func (v *Vendors) CountByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 	filter *VendorFilter,
@@ -377,7 +377,7 @@ WHERE
 
 func (v *Vendors) LoadByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 	cursor *page.Cursor[VendorOrderField],
@@ -444,7 +444,7 @@ WHERE
 
 func (v *Vendor) Update(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -509,7 +509,7 @@ WHERE %s
 
 func (v Vendor) ExpireNonExpiredRiskAssessments(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 ) error {
 	now := time.Now()
@@ -543,7 +543,7 @@ func (v Vendor) ExpireNonExpiredRiskAssessments(
 
 func (v *Vendors) CountByAssetID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	assetID gid.GID,
 ) (int, error) {
@@ -582,7 +582,7 @@ WHERE %s
 
 func (v *Vendors) LoadByAssetID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	assetID gid.GID,
 	cursor *page.Cursor[VendorOrderField],
@@ -680,7 +680,7 @@ WHERE %s
 
 func (v *Vendors) CountByDatumID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	datumID gid.GID,
 ) (int, error) {
@@ -719,7 +719,7 @@ WHERE %s
 
 func (vs *Vendors) LoadByDatumID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	datumID gid.GID,
 	cursor *page.Cursor[VendorOrderField],
@@ -817,7 +817,7 @@ WHERE %s
 
 func (v *Vendors) LoadByProcessingActivityID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	processingActivityID gid.GID,
 	cursor *page.Cursor[VendorOrderField],
@@ -915,7 +915,7 @@ WHERE %s
 
 func (v *Vendors) LoadAllByProcessingActivities(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 	filter *ProcessingActivityFilter,
@@ -983,7 +983,7 @@ ORDER BY
 
 func (d Vendors) InsertDataSnapshots(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 	organizationID gid.GID,
 	snapshotID gid.GID,
@@ -1085,7 +1085,7 @@ FROM source_vendors v
 
 func (vs Vendors) InsertAssetSnapshots(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 	organizationID gid.GID,
 	snapshotID gid.GID,
@@ -1187,7 +1187,7 @@ FROM source_vendors v
 
 func (vs Vendors) InsertProcessingActivitySnapshots(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 	organizationID gid.GID,
 	snapshotID gid.GID,
@@ -1287,7 +1287,7 @@ FROM source_vendors v
 	return nil
 }
 
-func (v Vendors) Snapshot(ctx context.Context, conn pg.Conn, scope Scoper, organizationID, snapshotID gid.GID) error {
+func (v Vendors) Snapshot(ctx context.Context, conn pg.Tx, scope Scoper, organizationID, snapshotID gid.GID) error {
 	for _, snapshotter := range []VendorSnapshotter{
 		Vendors{},
 		VendorServices{},
@@ -1307,7 +1307,7 @@ func (v Vendors) Snapshot(ctx context.Context, conn pg.Conn, scope Scoper, organ
 
 func (v Vendors) InsertVendorSnapshots(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 	organizationID gid.GID,
 	snapshotID gid.GID,

@@ -33,7 +33,7 @@ import (
 // AuthorizationAttributer is implemented by entities that provide attributes
 // for policy condition evaluation.
 type AuthorizationAttributer interface {
-	AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error)
+	AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error)
 }
 
 // AuthorizeParams contains the parameters for an authorization request.
@@ -76,11 +76,11 @@ func (a *Authorizer) Authorize(ctx context.Context, params AuthorizeParams) erro
 		return NewUnsupportedPrincipalTypeError(params.Principal.EntityType())
 	}
 
-	return a.pg.WithConn(ctx, func(conn pg.Conn) error { return a.authorize(ctx, conn, params) })
+	return a.pg.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error { return a.authorize(ctx, tx, params) })
 }
 
-func (a *Authorizer) authorize(ctx context.Context, conn pg.Conn, params AuthorizeParams) error {
-	resourceAttrs, err := a.buildResourceAttributes(ctx, conn, params)
+func (a *Authorizer) authorize(ctx context.Context, tx pg.Tx, params AuthorizeParams) error {
+	resourceAttrs, err := a.buildResourceAttributes(ctx, tx, params)
 	if err != nil {
 		return fmt.Errorf("cannot build resource attributes: %w", err)
 	}
@@ -88,7 +88,7 @@ func (a *Authorizer) authorize(ctx context.Context, conn pg.Conn, params Authori
 	resourceOrgID := resourceAttrs["organization_id"]
 
 	// Find role for resource's organization
-	membership, err := a.loadMembership(ctx, conn, params.Principal, resourceOrgID)
+	membership, err := a.loadMembership(ctx, tx, params.Principal, resourceOrgID)
 	if err != nil {
 		return fmt.Errorf("cannot load memberships for principal: %w", err)
 	}
@@ -97,7 +97,7 @@ func (a *Authorizer) authorize(ctx context.Context, conn pg.Conn, params Authori
 	if membership != nil && params.Session != nil && !params.SkipAssumptionCheck {
 		if _, err := a.getActiveChildSessionForMembership(
 			ctx,
-			conn,
+			tx,
 			*params.Session,
 			membership.ID,
 		); err != nil {
@@ -126,7 +126,7 @@ func (a *Authorizer) authorize(ctx context.Context, conn pg.Conn, params Authori
 		}
 	}
 
-	principalAttrs, err := a.buildPrincipalAttributes(ctx, conn, params.Principal, scopedPrincipalAttrs)
+	principalAttrs, err := a.buildPrincipalAttributes(ctx, tx, params.Principal, scopedPrincipalAttrs)
 	if err != nil {
 		return fmt.Errorf("cannot build principal attributes: %w", err)
 	}
@@ -144,7 +144,7 @@ func (a *Authorizer) authorize(ctx context.Context, conn pg.Conn, params Authori
 	}
 
 	if a.evaluator.Evaluate(req, policies).IsAllowed() {
-		a.recordAuditLog(ctx, conn, params, resourceAttrs)
+		a.recordAuditLog(ctx, tx, params, resourceAttrs)
 		return nil
 	}
 
@@ -153,7 +153,7 @@ func (a *Authorizer) authorize(ctx context.Context, conn pg.Conn, params Authori
 
 func (a *Authorizer) loadMembership(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	principalID gid.GID,
 	resourceOrgID string,
 ) (*coredata.Membership, error) {
@@ -180,7 +180,7 @@ func (a *Authorizer) loadMembership(
 
 func (a *Authorizer) getActiveChildSessionForMembership(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	rootSessionID gid.GID,
 	membershipID gid.GID,
 ) (*coredata.Session, error) {
@@ -203,7 +203,7 @@ func (a *Authorizer) getActiveChildSessionForMembership(
 
 func (a *Authorizer) buildPrincipalAttributes(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	principalID gid.GID,
 	defaultAttrs map[string]string,
 ) (map[string]string, error) {
@@ -227,7 +227,7 @@ func (a *Authorizer) buildPrincipalAttributes(
 
 func (a *Authorizer) buildResourceAttributes(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	params AuthorizeParams,
 ) (map[string]string, error) {
 	attrs := map[string]string{
@@ -288,7 +288,7 @@ func resourceTypeFromAction(action string) string {
 
 func (a *Authorizer) recordAuditLog(
 	ctx context.Context,
-	conn pg.Conn,
+	tx pg.Tx,
 	params AuthorizeParams,
 	resourceAttrs map[string]string,
 ) {
@@ -344,7 +344,7 @@ func (a *Authorizer) recordAuditLog(
 
 	scope := coredata.NewScope(orgID.TenantID())
 
-	if err := entry.Insert(ctx, conn, scope); err != nil {
+	if err := entry.Insert(ctx, tx, scope); err != nil {
 		a.logger.ErrorCtx(
 			ctx,
 			"cannot insert audit log entry",

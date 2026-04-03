@@ -62,7 +62,7 @@ func (s *CustomDomainService) CreateCustomDomain(
 
 	err := s.svc.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			domain = coredata.NewCustomDomain(s.svc.scope.GetTenantID(), req.Domain)
 			domain.OrganizationID = req.OrganizationID
 
@@ -97,7 +97,7 @@ func (s *CustomDomainService) DeleteCustomDomain(
 ) error {
 	return s.svc.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			var org coredata.Organization
 			if err := org.LoadByID(ctx, tx, s.svc.scope, organizationID); err != nil {
 				return fmt.Errorf("cannot load organization: %w", err)
@@ -134,7 +134,7 @@ func (s *CustomDomainService) GetOrganizationCustomDomain(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			var org coredata.Organization
 			if err := org.LoadByID(ctx, conn, s.svc.scope, organizationID); err != nil {
 				return fmt.Errorf("cannot load organization: %w", err)

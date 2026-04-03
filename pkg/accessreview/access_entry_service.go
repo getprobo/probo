@@ -54,7 +54,7 @@ func (s AccessEntryService) Get(
 
 	err := s.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			return entry.LoadByID(ctx, conn, s.scope, entryID)
 		},
 	)
@@ -83,7 +83,7 @@ func (s AccessEntryService) RecordDecision(
 
 	err := s.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Tx) error {
 			if err := entry.LoadByID(ctx, conn, s.scope, req.EntryID); err != nil {
 				return fmt.Errorf("cannot load access entry: %w", err)
 			}
@@ -173,7 +173,7 @@ func (s AccessEntryService) RecordDecisions(
 
 	err := s.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Tx) error {
 			// Track verified campaigns to avoid repeated loads within the
 			// same transaction.
 			verifiedCampaigns := make(map[gid.GID]bool)
@@ -259,7 +259,7 @@ func (s AccessEntryService) FlagEntry(
 
 	err := s.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Tx) error {
 			if err := entry.LoadByID(ctx, conn, s.scope, req.EntryID); err != nil {
 				return fmt.Errorf("cannot load access entry: %w", err)
 			}
@@ -304,7 +304,7 @@ func (s AccessEntryService) ListForCampaignID(
 
 	err := s.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			return entries.LoadByCampaignID(ctx, conn, s.scope, campaignID, cursor, filter)
 		},
 	)
@@ -326,7 +326,7 @@ func (s AccessEntryService) ListForCampaignIDAndSourceID(
 
 	err := s.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			return entries.LoadByCampaignIDAndSourceID(ctx, conn, s.scope, campaignID, sourceID, cursor, filter)
 		},
 	)
@@ -346,7 +346,7 @@ func (s AccessEntryService) CountForCampaignID(
 
 	err := s.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) (err error) {
+		func(ctx context.Context, conn pg.Querier) (err error) {
 			entries := coredata.AccessEntries{}
 			count, err = entries.CountByCampaignID(ctx, conn, s.scope, campaignID, filter)
 			if err != nil {
@@ -372,7 +372,7 @@ func (s AccessEntryService) CountForCampaignIDAndSourceID(
 
 	err := s.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) (err error) {
+		func(ctx context.Context, conn pg.Querier) (err error) {
 			entries := coredata.AccessEntries{}
 			count, err = entries.CountByCampaignIDAndSourceID(ctx, conn, s.scope, campaignID, sourceID, filter)
 			if err != nil {
@@ -396,7 +396,7 @@ func (s AccessEntryService) CountPendingForCampaignID(
 
 	err := s.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) (err error) {
+		func(ctx context.Context, conn pg.Querier) (err error) {
 			entries := coredata.AccessEntries{}
 			count, err = entries.CountPendingByCampaignID(ctx, conn, s.scope, campaignID)
 			if err != nil {
@@ -420,7 +420,7 @@ func (s AccessEntryService) DecisionHistory(
 
 	err := s.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			return histories.LoadByEntryID(ctx, conn, s.scope, entryID)
 		},
 	)
@@ -439,7 +439,7 @@ func (s AccessEntryService) Statistics(
 
 	err := s.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			return stats.LoadByCampaignID(ctx, conn, s.scope, campaignID)
 		},
 	)
@@ -459,7 +459,7 @@ func (s AccessEntryService) StatisticsForSource(
 
 	err := s.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			return stats.LoadByCampaignIDAndSourceID(ctx, conn, s.scope, campaignID, sourceID)
 		},
 	)

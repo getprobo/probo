@@ -57,7 +57,7 @@ func (e ErrSlackMessageNotFound) Error() string {
 	return "slack message not found"
 }
 
-func (sm *SlackMessage) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+func (sm *SlackMessage) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	q := `SELECT organization_id FROM slack_messages WHERE id = $1 LIMIT 1;`
 
 	var organizationID gid.GID
@@ -92,7 +92,7 @@ func NewSlackMessage(
 
 func (s *SlackMessage) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -151,7 +151,7 @@ VALUES (
 
 func (s *SlackMessage) LoadNextUnsentForUpdate(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 ) error {
 	q := `
 SELECT id, organization_id, type, body, message_ts, channel_id, requester_email, metadata, initial_slack_message_id, created_at, updated_at, sent_at, error
@@ -183,7 +183,7 @@ FOR UPDATE
 
 func (s *SlackMessage) LoadNextInitalUnsentForUpdate(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 ) error {
 	q := `
 SELECT id, organization_id, type, body, message_ts, channel_id, requester_email, metadata, initial_slack_message_id, created_at, updated_at, sent_at, error
@@ -215,7 +215,7 @@ FOR UPDATE
 
 func (s *SlackMessage) LoadNextUpdateUnsentForUpdate(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 ) error {
 	q := `
 SELECT
@@ -265,7 +265,7 @@ FOR UPDATE OF sm
 
 func (s *SlackMessage) LoadInitialByChannelAndTS(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	channelID string,
 	messageTS string,
@@ -305,7 +305,7 @@ LIMIT 1
 
 func (s *SlackMessage) Update(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -335,7 +335,7 @@ WHERE id = @id AND %s
 
 func (s *SlackMessage) UpdateChannelAndTSByInitialMessageID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 	initialSlackMessageID gid.GID,
 	channelID string,
@@ -369,7 +369,7 @@ WHERE initial_slack_message_id = @initial_slack_message_id AND %s
 
 func (s *SlackMessage) LoadById(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	slackMessageID gid.GID,
 ) error {
@@ -408,7 +408,7 @@ LIMIT 1
 
 func (s *SlackMessage) LoadLatestByInitialMessageID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	initialSlackMessageID gid.GID,
 ) error {
@@ -448,7 +448,7 @@ LIMIT 1
 
 func (s *SlackMessage) LoadLatestByRequesterEmailAndType(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 	requesterEmail mail.Addr,

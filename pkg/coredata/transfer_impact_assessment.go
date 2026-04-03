@@ -56,7 +56,7 @@ func (tia *TransferImpactAssessment) CursorKey(field TransferImpactAssessmentOrd
 	panic(fmt.Sprintf("unsupported order by: %s", field))
 }
 
-func (tia *TransferImpactAssessment) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+func (tia *TransferImpactAssessment) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	q := `SELECT organization_id FROM processing_activity_transfer_impact_assessments WHERE id = $1 LIMIT 1;`
 
 	var organizationID gid.GID
@@ -73,7 +73,7 @@ func (tia *TransferImpactAssessment) AuthorizationAttributes(ctx context.Context
 
 func (tias *TransferImpactAssessments) CountByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 	filter *TransferImpactAssessmentFilter,
@@ -108,7 +108,7 @@ WHERE
 
 func (tias *TransferImpactAssessments) LoadByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 	cursor *page.Cursor[TransferImpactAssessmentOrderField],
@@ -161,7 +161,7 @@ WHERE
 
 func (tias *TransferImpactAssessments) LoadAllByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 	filter *TransferImpactAssessmentFilter,
@@ -211,7 +211,7 @@ WHERE
 
 func (tia *TransferImpactAssessment) LoadByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	tiaID gid.GID,
 ) error {
@@ -262,7 +262,7 @@ LIMIT 1;
 
 func (tia *TransferImpactAssessment) LoadByProcessingActivityID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	processingActivityID gid.GID,
 ) error {
@@ -313,7 +313,7 @@ LIMIT 1;
 
 func (tia *TransferImpactAssessment) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -375,7 +375,7 @@ INSERT INTO processing_activity_transfer_impact_assessments (
 
 func (tia *TransferImpactAssessment) Update(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -414,7 +414,7 @@ WHERE
 
 func (tia *TransferImpactAssessment) Delete(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -439,7 +439,7 @@ WHERE
 
 func (tias TransferImpactAssessments) InsertProcessingActivitySnapshots(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 	organizationID gid.GID,
 	snapshotID gid.GID,

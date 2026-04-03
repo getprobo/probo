@@ -48,7 +48,7 @@ func NewEmailAttachment(emailID, fileID gid.GID, filename string) *EmailAttachme
 
 func (a *EmailAttachment) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 ) error {
 	q := `
 INSERT INTO email_attachments (id, email_id, file_id, filename, created_at)
@@ -72,7 +72,7 @@ VALUES (@id, @email_id, @file_id, @filename, @created_at)
 
 func (a *EmailAttachments) LoadByEmailID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	emailID gid.GID,
 ) error {
 	q := `

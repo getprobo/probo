@@ -52,7 +52,7 @@ func (as AccessSource) CursorKey(orderBy AccessSourceOrderField) page.CursorKey 
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (as *AccessSource) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+func (as *AccessSource) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	q := `SELECT organization_id FROM access_sources WHERE id = $1 LIMIT 1;`
 
 	var organizationID gid.GID
@@ -68,7 +68,7 @@ func (as *AccessSource) AuthorizationAttributes(ctx context.Context, conn pg.Con
 
 func (as *AccessSource) LoadByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	id gid.GID,
 ) error {
@@ -115,7 +115,7 @@ LIMIT 1;
 
 func (as *AccessSource) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -168,7 +168,7 @@ VALUES (
 
 func (as *AccessSource) Update(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -211,7 +211,7 @@ WHERE
 
 func (as *AccessSource) Delete(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -237,7 +237,7 @@ WHERE %s AND id = @id
 
 func (sources *AccessSources) LoadByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 	cursor *page.Cursor[AccessSourceOrderField],
@@ -283,7 +283,7 @@ WHERE
 
 func (sources *AccessSources) CountByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 ) (int, error) {
@@ -311,7 +311,7 @@ WHERE
 // name order. Only explicitly scoped sources are returned.
 func (sources *AccessSources) LoadScopeSourcesByCampaignID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	campaignID gid.GID,
 ) error {
@@ -366,7 +366,7 @@ var ErrNoAccessSourceNameSyncAvailable = fmt.Errorf("no access source name sync 
 // FOR UPDATE SKIP LOCKED so concurrent workers do not pick the same row.
 func (as *AccessSource) LoadNextUnsyncedNameForUpdateSkipLocked(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 ) error {
 	q := `
 SELECT

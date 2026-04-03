@@ -127,7 +127,7 @@ func (w *SourceFetchWorker) processNext(
 
 	if err := w.pg.WithTx(
 		nonCancelableCtx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			if err := sourceFetch.LoadNextQueuedForUpdateSkipLocked(nonCancelableCtx, tx); err != nil {
 				return err // sentinel errors checked by caller
 			}
@@ -212,7 +212,7 @@ func (w *SourceFetchWorker) recoverStaleRows(ctx context.Context) {
 
 	err := w.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			var fetches coredata.AccessReviewCampaignSourceFetches
 			count, err := fetches.RecoverStale(ctx, tx, staleThreshold, now)
 			if err != nil {
@@ -251,10 +251,10 @@ func (w *SourceFetchWorker) commitFailedSourceFetch(
 	sourceFetch.CompletedAt = new(now)
 	sourceFetch.UpdatedAt = now
 
-	return w.pg.WithConn(
+	return w.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
-			return sourceFetch.Update(ctx, conn, scope)
+		func(ctx context.Context, tx pg.Tx) error {
+			return sourceFetch.Update(ctx, tx, scope)
 		},
 	)
 }
@@ -275,10 +275,10 @@ func (w *SourceFetchWorker) commitSuccessfulSourceFetch(
 	sourceFetch.CompletedAt = new(now)
 	sourceFetch.UpdatedAt = now
 
-	return w.pg.WithConn(
+	return w.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
-			return sourceFetch.Update(ctx, conn, scope)
+		func(ctx context.Context, tx pg.Tx) error {
+			return sourceFetch.Update(ctx, tx, scope)
 		},
 	)
 }
@@ -292,7 +292,7 @@ func (w *SourceFetchWorker) finalizeCampaignFetchLifecycle(
 
 	return w.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			if err := lockCampaignForUpdate(ctx, tx, scope, campaignID); err != nil {
 				return fmt.Errorf("cannot lock campaign: %w", err)
 			}

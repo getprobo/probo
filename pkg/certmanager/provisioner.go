@@ -189,7 +189,7 @@ func (p *Provisioner) checkCAARecords(domain string) error {
 func (p *Provisioner) checkPendingDomains(ctx context.Context) error {
 	err := p.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			if err := p.handleStaleProvisioningAttempts(ctx, tx); err != nil {
 				return fmt.Errorf("cannot handle stale provisioning attempts: %w", err)
 			}
@@ -203,7 +203,7 @@ func (p *Provisioner) checkPendingDomains(ctx context.Context) error {
 
 	err = p.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			var domains coredata.CustomDomains
 			if err := domains.ListDomainsWithPendingHTTPChallenges(ctx, tx, coredata.NewNoScope()); err != nil {
 				return fmt.Errorf("cannot load domains with pending challenges: %w", err)
@@ -243,7 +243,7 @@ func (p *Provisioner) checkPendingDomains(ctx context.Context) error {
 	return nil
 }
 
-func (p *Provisioner) handleStaleProvisioningAttempts(ctx context.Context, tx pg.Conn) error {
+func (p *Provisioner) handleStaleProvisioningAttempts(ctx context.Context, tx pg.Tx) error {
 	var domains coredata.CustomDomains
 	if err := domains.ListStaleProvisioningDomains(ctx, tx, coredata.NewNoScope()); err != nil {
 		return fmt.Errorf("cannot load stale provisioning domains: %w", err)
@@ -271,7 +271,7 @@ func (p *Provisioner) handleStaleProvisioningAttempts(ctx context.Context, tx pg
 
 func (p *Provisioner) resetStaleDomain(
 	ctx context.Context,
-	tx pg.Conn,
+	tx pg.Tx,
 	domain *coredata.CustomDomain,
 ) error {
 	fullDomain := &coredata.CustomDomain{}
@@ -320,7 +320,7 @@ func (p *Provisioner) resetStaleDomain(
 
 func (p *Provisioner) provisionDomainCertificate(
 	ctx context.Context,
-	tx pg.Conn,
+	tx pg.Tx,
 	domainID gid.GID,
 ) error {
 	domain := &coredata.CustomDomain{}

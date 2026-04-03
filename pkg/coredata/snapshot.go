@@ -53,7 +53,7 @@ func (s *Snapshot) CursorKey(field SnapshotOrderField) page.CursorKey {
 	panic(fmt.Sprintf("unsupported order by: %s", field))
 }
 
-func (s *Snapshot) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+func (s *Snapshot) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	q := `SELECT organization_id FROM snapshots WHERE id = $1 LIMIT 1;`
 
 	var organizationID gid.GID
@@ -69,7 +69,7 @@ func (s *Snapshot) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (m
 
 func (s *Snapshot) LoadByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	snapshotID gid.GID,
 ) error {
@@ -111,7 +111,7 @@ LIMIT 1;
 
 func (s *Snapshots) CountByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 	filter *SnapshotFilter,
@@ -145,7 +145,7 @@ WHERE
 
 func (s *Snapshots) LoadByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 	cursor *page.Cursor[SnapshotOrderField],
@@ -189,7 +189,7 @@ WHERE
 
 func (s *Snapshot) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -232,7 +232,7 @@ INSERT INTO snapshots (
 
 func (s *Snapshot) Delete(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -258,7 +258,7 @@ WHERE
 
 func (s *Snapshots) LoadByControlID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	controlID gid.GID,
 	cursor *page.Cursor[SnapshotOrderField],

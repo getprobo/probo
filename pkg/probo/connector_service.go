@@ -81,7 +81,7 @@ func (s *ConnectorService) ListForOrganizationID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			return connectors.LoadByOrganizationIDWithoutDecryptedConnection(
 				ctx,
 				conn,
@@ -108,7 +108,7 @@ func (s *ConnectorService) ListAllForOrganizationID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			return connectors.LoadAllByOrganizationIDWithoutDecryptedConnection(
 				ctx,
 				conn,
@@ -133,7 +133,7 @@ func (s *ConnectorService) GetByOrganizationIDAndProvider(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			return connectors.LoadAllByOrganizationIDProtocolAndProvider(
 				ctx,
 				conn,
@@ -165,7 +165,7 @@ func (s *ConnectorService) Get(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			return connector.LoadMetadataByID(ctx, conn, s.svc.scope, connectorID)
 		},
 	)
@@ -180,11 +180,11 @@ func (s *ConnectorService) Delete(
 	ctx context.Context,
 	connectorID gid.GID,
 ) error {
-	return s.svc.pg.WithConn(
+	return s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			cnnctr := &coredata.Connector{ID: connectorID}
-			return cnnctr.Delete(ctx, conn, s.svc.scope)
+			return cnnctr.Delete(ctx, tx, s.svc.scope)
 		},
 	)
 }
@@ -237,10 +237,10 @@ func (s *ConnectorService) Create(
 		}
 	}
 
-	err := s.svc.pg.WithConn(
+	err := s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
-			if err := newConnector.Insert(ctx, conn, s.svc.scope, s.svc.encryptionKey); err != nil {
+		func(ctx context.Context, tx pg.Tx) error {
+			if err := newConnector.Insert(ctx, tx, s.svc.scope, s.svc.encryptionKey); err != nil {
 				return fmt.Errorf("cannot create connector: %w", err)
 			}
 
@@ -248,7 +248,7 @@ func (s *ConnectorService) Create(
 				slackConn, ok := req.Connection.(*connector.SlackConnection)
 				if ok && slackConn.Settings.Channel != "" {
 					var organization coredata.Organization
-					if err := organization.LoadByID(ctx, conn, s.svc.scope, req.OrganizationID); err != nil {
+					if err := organization.LoadByID(ctx, tx, s.svc.scope, req.OrganizationID); err != nil {
 						return fmt.Errorf("cannot load organization: %w", err)
 					}
 
@@ -271,7 +271,7 @@ func (s *ConnectorService) Create(
 					}
 
 					slackMessage := coredata.NewSlackMessage(s.svc.scope, req.OrganizationID, coredata.SlackMessageTypeWelcome, body)
-					if err := slackMessage.Insert(ctx, conn, s.svc.scope); err != nil {
+					if err := slackMessage.Insert(ctx, tx, s.svc.scope); err != nil {
 						return fmt.Errorf("cannot insert slack message: %w", err)
 					}
 				}
@@ -298,7 +298,7 @@ func (s *ConnectorService) Reconnect(
 ) (*coredata.Connector, error) {
 	cnnctr := &coredata.Connector{}
 
-	err := s.svc.pg.WithTx(ctx, func(conn pg.Conn) error {
+	err := s.svc.pg.WithTx(ctx, func(ctx context.Context, conn pg.Tx) error {
 		if err := cnnctr.LoadMetadataByID(ctx, conn, s.svc.scope, connectorID); err != nil {
 			return fmt.Errorf("cannot load connector: %w", err)
 		}

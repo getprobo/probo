@@ -43,7 +43,7 @@ func (s SessionService) GetSession(ctx context.Context, sessionID gid.GID) (*cor
 
 	err := s.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			if err := session.LoadByID(ctx, tx, sessionID); err != nil {
 				if err == coredata.ErrResourceNotFound {
 					return NewSessionNotFoundError(sessionID)
@@ -79,7 +79,7 @@ func (s SessionService) GetSession(ctx context.Context, sessionID gid.GID) (*cor
 func (s SessionService) CloseSession(ctx context.Context, sessionID gid.GID) error {
 	return s.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Tx) error {
 			session := &coredata.Session{}
 			if err := session.LoadByID(ctx, conn, sessionID); err != nil {
 				if err == coredata.ErrResourceNotFound {
@@ -114,7 +114,7 @@ func (s SessionService) RevokeSession(ctx context.Context, identityID gid.GID, s
 
 	return s.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			identity := &coredata.Identity{}
 			err := identity.LoadByID(ctx, tx, identityID)
 			if err != nil {
@@ -166,7 +166,7 @@ func (s SessionService) RevokeAllSessions(ctx context.Context, currentSessionID 
 
 	err := s.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			session := coredata.Session{}
 			err := session.LoadByID(ctx, tx, currentSessionID)
 			if err != nil {
@@ -193,7 +193,7 @@ func (s SessionService) RevokeAllSessions(ctx context.Context, currentSessionID 
 func (s SessionService) UpdateSessionInfo(ctx context.Context, sessionID gid.GID, userAgent string, ipAddress net.IP) error {
 	return s.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			session := &coredata.Session{}
 			err := session.LoadByID(ctx, tx, sessionID)
 			if err != nil {
@@ -224,7 +224,7 @@ func (s SessionService) UpdateSessionInfo(ctx context.Context, sessionID gid.GID
 func (s SessionService) UpdateSessionData(ctx context.Context, sessionID gid.GID, data coredata.SessionData) error {
 	return s.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			session := &coredata.Session{}
 			err := session.LoadByID(ctx, tx, sessionID)
 			if err != nil {
@@ -256,7 +256,7 @@ func (s SessionService) GetActiveSessionForMembership(ctx context.Context, rootS
 
 	err := s.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			rootSession := &coredata.Session{}
 			err := rootSession.LoadByID(ctx, tx, rootSessionID)
 			if err != nil {
@@ -318,7 +318,7 @@ func (s SessionService) OpenPasswordChildSessionForOrganization(
 
 	err := s.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			err := rootSession.LoadByID(ctx, tx, rootSessionID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
@@ -420,7 +420,7 @@ func (s SessionService) OpenSAMLChildSessionForOrganization(
 
 	err := s.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			err := rootSession.LoadByID(ctx, tx, rootSessionID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
@@ -509,7 +509,7 @@ func (s SessionService) AssumeOrganizationSession(
 
 	err := s.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			if err := rootSession.LoadByID(ctx, tx, sessionID); err != nil {
 				if err == coredata.ErrResourceNotFound {
 					return NewSessionNotFoundError(sessionID)

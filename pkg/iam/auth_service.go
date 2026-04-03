@@ -142,7 +142,7 @@ func (s *AuthService) ActivateAccount(
 
 	if err = s.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			err := invitation.LoadByID(ctx, tx, scope, payload.Data.InvitationID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
@@ -256,7 +256,7 @@ func (s AuthService) ResetPassword(
 
 	return s.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			identity := &coredata.Identity{}
 			err := identity.LoadByEmail(ctx, tx, payload.Data.Email)
 			if err != nil {
@@ -295,7 +295,7 @@ func (s AuthService) SendPasswordResetInstructionByEmail(
 
 	return s.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			identity := &coredata.Identity{}
 			if err := identity.LoadByEmail(ctx, tx, email); err != nil {
 				if err == coredata.ErrResourceNotFound {
@@ -396,7 +396,7 @@ func (s AuthService) CreateIdentityWithPassword(
 
 	err = s.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			err := identity.Insert(ctx, tx)
 			if err != nil {
 				if err == coredata.ErrResourceAlreadyExists {
@@ -426,7 +426,7 @@ func (s AuthService) OpenSessionWithSAML(ctx context.Context, identityID gid.GID
 
 	err := s.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) (err error) {
+		func(ctx context.Context, conn pg.Tx) (err error) {
 			session = coredata.NewRootSession(identityID, coredata.AuthMethodSAML, s.sessionDuration)
 			err = session.Insert(ctx, conn)
 			if err != nil {
@@ -449,7 +449,7 @@ func (s AuthService) OpenSessionWithOIDC(ctx context.Context, identityID gid.GID
 
 	err := s.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) (err error) {
+		func(ctx context.Context, conn pg.Tx) (err error) {
 			session = coredata.NewRootSession(identityID, authMethod, s.sessionDuration)
 			err = session.Insert(ctx, conn)
 			if err != nil {
@@ -484,7 +484,7 @@ func (s AuthService) CheckCredentials(
 
 	err = s.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Tx) error {
 			err := identity.LoadByEmail(ctx, conn, email)
 			if err != nil {
 				// Do not leak information about non-existent identities
@@ -521,7 +521,7 @@ func (s AuthService) OpenSessionWithPassword(ctx context.Context, identityID gid
 
 	err := s.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) (err error) {
+		func(ctx context.Context, conn pg.Tx) (err error) {
 			session = coredata.NewRootSession(identityID, coredata.AuthMethodPassword, s.sessionDuration)
 			err = session.Insert(ctx, conn)
 			if err != nil {
@@ -555,7 +555,7 @@ func (s AuthService) SendMagicLink(ctx context.Context, req *SendMagicLinkReques
 
 	return s.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			hashedToken := HashToken(tokenString)
 			token := &coredata.Token{
 				ID:          gid.New(gid.NilTenant, coredata.TokenEntityType),
@@ -664,7 +664,7 @@ func (s AuthService) OpenSessionWithMagicLink(ctx context.Context, tokenString s
 
 	if err := s.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			hashedValue := HashToken(tokenString)
 			token := &coredata.Token{}
 

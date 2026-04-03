@@ -57,7 +57,7 @@ func (s ReportService) loadByID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			err := report.LoadByID(ctx, conn, s.svc.scope, reportID)
 			if err != nil {
 				return fmt.Errorf("cannot load report: %w", err)

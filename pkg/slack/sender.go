@@ -72,7 +72,7 @@ func (s *Sender) batchSendMessages(ctx context.Context) error {
 	for {
 		err := s.pg.WithTx(
 			ctx,
-			func(tx pg.Conn) (err error) {
+			func(ctx context.Context, tx pg.Tx) (err error) {
 				message := &coredata.SlackMessage{}
 
 				defer func() {
@@ -144,7 +144,7 @@ func (s *Sender) batchSendMessages(ctx context.Context) error {
 	}
 }
 
-func (s *Sender) sendMessage(ctx context.Context, tx pg.Conn, message *coredata.SlackMessage) (*string, *string, error) {
+func (s *Sender) sendMessage(ctx context.Context, tx pg.Querier, message *coredata.SlackMessage) (*string, *string, error) {
 	tenantID := message.ID.TenantID()
 	scope := coredata.NewScope(tenantID)
 
@@ -204,7 +204,7 @@ func (s *Sender) batchUpdateMessages(ctx context.Context) error {
 	for {
 		err := s.pg.WithTx(
 			ctx,
-			func(tx pg.Conn) (err error) {
+			func(ctx context.Context, tx pg.Tx) (err error) {
 				updateMessage := &coredata.SlackMessage{}
 
 				defer func() {
@@ -267,7 +267,7 @@ func (s *Sender) batchUpdateMessages(ctx context.Context) error {
 	}
 }
 
-func (s *Sender) updateMessage(ctx context.Context, tx pg.Conn, updateMessage *coredata.SlackMessage) error {
+func (s *Sender) updateMessage(ctx context.Context, tx pg.Querier, updateMessage *coredata.SlackMessage) error {
 	if updateMessage.ChannelID == nil || updateMessage.MessageTS == nil {
 		return fmt.Errorf("slack message has no channel ID or message TS")
 	}

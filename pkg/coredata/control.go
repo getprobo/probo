@@ -58,7 +58,7 @@ func (c Control) CursorKey(orderBy ControlOrderField) page.CursorKey {
 }
 
 // AuthorizationAttributes returns the authorization attributes for policy evaluation.
-func (c *Control) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+func (c *Control) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	q := `SELECT organization_id FROM controls WHERE id = $1 LIMIT 1;`
 
 	var organizationID gid.GID
@@ -74,7 +74,7 @@ func (c *Control) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (ma
 
 func (c *Controls) CountByDocumentID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	documentID gid.GID,
 	filter *ControlFilter,
@@ -116,7 +116,7 @@ WHERE %s
 
 func (c *Controls) LoadByDocumentID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	documentID gid.GID,
 	cursor *page.Cursor[ControlOrderField],
@@ -187,7 +187,7 @@ WHERE %s
 
 func (c *Controls) CountByMeasureID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	measureID gid.GID,
 	filter *ControlFilter,
@@ -229,7 +229,7 @@ WHERE %s
 
 func (c *Controls) LoadByMeasureID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	measureID gid.GID,
 	cursor *page.Cursor[ControlOrderField],
@@ -300,7 +300,7 @@ WHERE %s
 
 func (c *Controls) CountByRiskID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	riskID gid.GID,
 	filter *ControlFilter,
@@ -348,7 +348,7 @@ WHERE %s
 
 func (c *Controls) LoadByRiskID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	riskID gid.GID,
 	cursor *page.Cursor[ControlOrderField],
@@ -425,7 +425,7 @@ WHERE %s
 
 func (c *Controls) CountByFrameworkID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	frameworkID gid.GID,
 	filter *ControlFilter,
@@ -457,7 +457,7 @@ WHERE %s
 
 func (c *Controls) LoadByFrameworkID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	frameworkID gid.GID,
 	cursor *page.Cursor[ControlOrderField],
@@ -508,7 +508,7 @@ WHERE
 
 func (c *Controls) CountByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 	filter *ControlFilter,
@@ -551,7 +551,7 @@ WHERE %s
 
 func (c *Controls) LoadByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 	cursor *page.Cursor[ControlOrderField],
@@ -622,7 +622,7 @@ WHERE %s
 
 func (c *Control) LoadByFrameworkIDAndSectionTitle(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	frameworkID gid.GID,
 	sectionTitle string,
@@ -673,7 +673,7 @@ LIMIT 1;
 
 func (c *Control) LoadByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	controlID gid.GID,
 ) error {
@@ -722,7 +722,7 @@ LIMIT 1;
 
 func (c *Controls) LoadByIDs(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	controlIDs []gid.GID,
 ) error {
@@ -767,7 +767,7 @@ WHERE
 
 func (c Control) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -833,7 +833,7 @@ VALUES (
 
 func (c Control) Delete(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -855,7 +855,7 @@ WHERE
 
 func (c *Control) Update(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -901,7 +901,7 @@ WHERE %s
 
 func (c *Controls) LoadByAuditID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	auditID gid.GID,
 	cursor *page.Cursor[ControlOrderField],
@@ -972,7 +972,7 @@ WHERE %s
 
 func (c *Controls) LoadBySnapshotID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	snapshotID gid.GID,
 	cursor *page.Cursor[ControlOrderField],
@@ -1043,7 +1043,7 @@ WHERE %s
 
 func (c *Controls) CountByStateOfApplicabilityID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	stateOfApplicabilityID gid.GID,
 	filter *ControlFilter,

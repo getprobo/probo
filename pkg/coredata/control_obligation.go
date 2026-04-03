@@ -37,7 +37,7 @@ type (
 
 func (co ControlObligation) Upsert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 ) error {
 	q := `
@@ -69,7 +69,7 @@ ON CONFLICT (control_id, obligation_id) DO NOTHING;
 
 func (co ControlObligation) Delete(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 	controlID gid.GID,
 	obligationID gid.GID,
@@ -97,7 +97,7 @@ WHERE
 
 func (cos *ControlObligations) CountByControlID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	controlID gid.GID,
 	filter *ControlObligationFilter,

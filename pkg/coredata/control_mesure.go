@@ -39,7 +39,7 @@ type (
 
 func (cm ControlMeasure) Upsert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 ) error {
 	q := `
@@ -74,7 +74,7 @@ ON CONFLICT (control_id, measure_id) DO NOTHING;
 
 func (cm ControlMeasure) Delete(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 	controlID gid.GID,
 	measureID gid.GID,
@@ -108,7 +108,7 @@ type ControlsWithRisk []*ControlWithRisk
 
 func (cwrs *ControlsWithRisk) LoadByControlIDs(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	controlIDs []gid.GID,
 ) error {

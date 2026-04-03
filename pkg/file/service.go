@@ -46,7 +46,7 @@ func (s *Service) GetPublicFileURL(
 
 	err := s.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			if err := file.LoadPublicByID(ctx, conn, fileID); err != nil {
 				return fmt.Errorf("cannot load public file: %w", err)
 			}

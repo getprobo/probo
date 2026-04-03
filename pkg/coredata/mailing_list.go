@@ -35,7 +35,7 @@ type MailingList struct {
 	UpdatedAt      time.Time  `db:"updated_at"`
 }
 
-func (ml *MailingList) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+func (ml *MailingList) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	q := `SELECT organization_id FROM mailing_lists WHERE id = $1 LIMIT 1;`
 
 	var organizationID gid.GID
@@ -51,7 +51,7 @@ func (ml *MailingList) AuthorizationAttributes(ctx context.Context, conn pg.Conn
 
 func (ml *MailingList) LoadByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	id gid.GID,
 ) error {
@@ -95,7 +95,7 @@ LIMIT 1;
 
 func (ml *MailingList) Update(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -131,7 +131,7 @@ WHERE
 
 func (ml *MailingList) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `

@@ -83,7 +83,7 @@ func (w *SourceNameWorker) processNext(ctx context.Context) error {
 
 	err := w.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			return source.LoadNextUnsyncedNameForUpdateSkipLocked(ctx, tx)
 		},
 	)
@@ -101,15 +101,15 @@ func (w *SourceNameWorker) processNext(ctx context.Context) error {
 		resolver    drivers.NameResolver
 	)
 
-	err = w.pg.WithConn(
+	err = w.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			scope := coredata.NewScopeFromObjectID(source.ID)
 			if source.ConnectorID == nil {
 				return fmt.Errorf("source %s has no connector", source.ID)
 			}
 
-			if err := dbConnector.LoadByID(ctx, conn, scope, *source.ConnectorID, w.encryptionKey); err != nil {
+			if err := dbConnector.LoadByID(ctx, tx, scope, *source.ConnectorID, w.encryptionKey); err != nil {
 				return fmt.Errorf("cannot load connector %s: %w", *source.ConnectorID, err)
 			}
 
@@ -126,7 +126,7 @@ func (w *SourceNameWorker) processNext(ctx context.Context) error {
 			if oauth2Conn, ok := dbConnector.Connection.(*connector.OAuth2Connection); ok {
 				if oauth2Conn.AccessToken != tokenBefore {
 					dbConnector.UpdatedAt = time.Now()
-					if err := dbConnector.Update(ctx, conn, scope, w.encryptionKey); err != nil {
+					if err := dbConnector.Update(ctx, tx, scope, w.encryptionKey); err != nil {
 						return fmt.Errorf("cannot persist refreshed token for connector %s: %w", *source.ConnectorID, err)
 					}
 				}
@@ -192,7 +192,7 @@ func (w *SourceNameWorker) markNameSynced(
 ) error {
 	return w.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			scope := coredata.NewScopeFromObjectID(source.ID)
 			now := time.Now()
 

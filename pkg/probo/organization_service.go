@@ -93,7 +93,7 @@ func (s OrganizationService) Get(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			return organization.LoadByID(
 				ctx,
 				conn,
@@ -118,7 +118,7 @@ func (s OrganizationService) GetByIDs(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			if err := organizations.LoadByIDs(
 				ctx,
 				conn,
@@ -146,7 +146,7 @@ func (s OrganizationService) GetContext(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			err := organizationContext.LoadByOrganizationID(
 				ctx,
 				conn,
@@ -181,7 +181,7 @@ func (s OrganizationService) UpdateContext(
 
 	err := s.svc.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			if err := organization.LoadByID(ctx, tx, s.svc.scope, req.OrganizationID); err != nil {
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
@@ -239,7 +239,7 @@ func (s OrganizationService) Update(
 
 	err := s.svc.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			if err := organization.LoadByID(ctx, tx, s.svc.scope, req.ID); err != nil {
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
@@ -422,7 +422,7 @@ func (s OrganizationService) GenerateLogoURL(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			organization := &coredata.Organization{}
 			if err := organization.LoadByID(ctx, conn, s.svc.scope, organizationID); err != nil {
 				return fmt.Errorf("cannot load organization: %w", err)
@@ -464,7 +464,7 @@ func (s OrganizationService) GenerateHorizontalLogoURL(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			organization := &coredata.Organization{}
 			if err := organization.LoadByID(ctx, conn, s.svc.scope, organizationID); err != nil {
 				return fmt.Errorf("cannot load organization: %w", err)
@@ -505,7 +505,7 @@ func (s OrganizationService) DeleteHorizontalLogo(
 
 	err := s.svc.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			if err := organization.LoadByID(ctx, tx, s.svc.scope, organizationID); err != nil {
 				return fmt.Errorf("cannot load organization: %w", err)
 			}

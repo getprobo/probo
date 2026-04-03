@@ -44,7 +44,7 @@ type (
 
 func (e *ElectronicSignatureEvent) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -81,7 +81,7 @@ INSERT INTO electronic_signature_events (
 
 func (es *ElectronicSignatureEvents) LoadBySignatureID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	sigID gid.GID,
 ) error {

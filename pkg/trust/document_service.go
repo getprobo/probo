@@ -54,7 +54,7 @@ func (s *DocumentService) ListForOrganizationId(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			filter := coredata.NewDocumentTrustCenterFilter()
 
 			if err := documents.LoadPublishedByOrganizationID(ctx, conn, s.svc.scope, organizationID, cursor, filter); err != nil {
@@ -106,7 +106,7 @@ func (s DocumentService) Get(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			err := document.LoadByID(ctx, conn, s.svc.scope, documentID)
 			if err != nil {
 				return fmt.Errorf("cannot load document: %w", err)
@@ -146,7 +146,7 @@ func (s *DocumentService) exportPDFData(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			if err := document.LoadByID(ctx, conn, s.svc.scope, documentID); err != nil {
 				return fmt.Errorf("cannot load document: %w", err)
 			}
@@ -234,7 +234,7 @@ func (s *DocumentService) exportPDFData(
 	horizontalLogoBase64 := ""
 	if organization.HorizontalLogoFileID != nil {
 		fileRecord := &coredata.File{}
-		fileErr := s.svc.pg.WithConn(ctx, func(conn pg.Conn) error {
+		fileErr := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 			return fileRecord.LoadByID(ctx, conn, s.svc.scope, *organization.HorizontalLogoFileID)
 		})
 		if fileErr == nil {

@@ -65,7 +65,7 @@ func (o *Obligation) CursorKey(field ObligationOrderField) page.CursorKey {
 	panic(fmt.Sprintf("unsupported order by: %s", field))
 }
 
-func (o *Obligation) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+func (o *Obligation) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	q := `SELECT organization_id FROM obligations WHERE id = $1 LIMIT 1;`
 
 	var organizationID gid.GID
@@ -81,7 +81,7 @@ func (o *Obligation) AuthorizationAttributes(ctx context.Context, conn pg.Conn) 
 
 func (o *Obligation) LoadByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	obligationID gid.GID,
 ) error {
@@ -133,7 +133,7 @@ LIMIT 1;
 
 func (os *Obligations) CountByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 	filter *ObligationFilter,
@@ -168,7 +168,7 @@ WHERE
 
 func (os *Obligations) CountByRiskID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	riskID gid.GID,
 	filter *ObligationFilter,
@@ -214,7 +214,7 @@ WHERE %s
 
 func (os *Obligations) LoadByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 	cursor *page.Cursor[ObligationOrderField],
@@ -271,7 +271,7 @@ WHERE
 
 func (os *Obligations) LoadByRiskID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	riskID gid.GID,
 	cursor *page.Cursor[ObligationOrderField],
@@ -353,7 +353,7 @@ WHERE %s
 
 func (os *Obligations) CountByControlID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	controlID gid.GID,
 	filter *ObligationFilter,
@@ -398,7 +398,7 @@ WHERE %s
 
 func (os *Obligations) LoadByControlID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	controlID gid.GID,
 	cursor *page.Cursor[ObligationOrderField],
@@ -478,7 +478,7 @@ WHERE %s
 
 func (o *Obligation) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -551,7 +551,7 @@ INSERT INTO obligations (
 
 func (o *Obligation) Update(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -601,7 +601,7 @@ WHERE
 
 func (o *Obligation) Delete(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -625,7 +625,7 @@ WHERE
 	return nil
 }
 
-func (os Obligations) Snapshot(ctx context.Context, conn pg.Conn, scope Scoper, organizationID, snapshotID gid.GID) error {
+func (os Obligations) Snapshot(ctx context.Context, conn pg.Tx, scope Scoper, organizationID, snapshotID gid.GID) error {
 	query := `
 INSERT INTO obligations (
 	id,

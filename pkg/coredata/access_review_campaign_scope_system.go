@@ -33,7 +33,7 @@ type AccessReviewCampaignScopeSystem struct {
 
 func (ss AccessReviewCampaignScopeSystem) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -56,7 +56,7 @@ VALUES (@access_review_campaign_id, @access_source_id, @tenant_id)
 
 func (ss AccessReviewCampaignScopeSystem) Upsert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 ) error {
 	q := `
@@ -80,7 +80,7 @@ ON CONFLICT (access_review_campaign_id, access_source_id) DO NOTHING
 
 func (ss AccessReviewCampaignScopeSystem) Delete(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -108,7 +108,7 @@ WHERE
 
 func (c *AccessReviewCampaign) LockForUpdate(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -135,7 +135,7 @@ FOR UPDATE
 
 func (f *AccessReviewCampaignSourceFetch) UpsertQueued(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	now time.Time,
 ) error {
@@ -184,7 +184,7 @@ ON CONFLICT (access_review_campaign_id, access_source_id) DO UPDATE SET
 // all stale fetches regardless of tenant.
 func (fs *AccessReviewCampaignSourceFetches) RecoverStale(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	staleThreshold time.Time,
 	now time.Time,
 ) (int64, error) {

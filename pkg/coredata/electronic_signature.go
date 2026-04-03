@@ -79,7 +79,7 @@ func (es *ElectronicSignature) NewEvent(
 
 func (es *ElectronicSignature) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -120,7 +120,7 @@ INSERT INTO electronic_signatures (
 
 func (es *ElectronicSignature) Update(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -180,7 +180,7 @@ WHERE
 
 func (es *ElectronicSignature) LoadByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	id gid.GID,
 ) error {
@@ -220,7 +220,7 @@ LIMIT 1
 
 func (es *ElectronicSignature) LoadNextAcceptedForUpdateSkipLocked(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 ) error {
 	q := `
 SELECT
@@ -256,7 +256,7 @@ FOR UPDATE SKIP LOCKED
 
 func (es *ElectronicSignature) LoadNextCompletedWithoutCertificateForUpdate(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 ) error {
 	q := `
 SELECT
@@ -295,7 +295,7 @@ FOR UPDATE SKIP LOCKED
 
 func ResetStaleProcessingSignatures(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	staleAfter time.Duration,
 ) error {
 	q := `
@@ -355,7 +355,7 @@ func (es *ElectronicSignature) computeSealV1() (string, error) {
 
 func ResetStaleCertificateProcessing(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	staleAfter time.Duration,
 ) error {
 	q := `

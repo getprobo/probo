@@ -116,7 +116,7 @@ func (s *Service) ResolveEntryOrganizationID(ctx context.Context, entryID gid.GI
 
 	err := s.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			var err error
 			entry := &coredata.AccessEntry{}
 			organizationID, err = entry.LoadOrganizationID(ctx, conn, entryID)

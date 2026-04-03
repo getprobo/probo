@@ -84,7 +84,7 @@ func (s DatumService) Get(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			return datum.LoadByID(ctx, conn, s.svc.scope, datumID)
 		},
 	)
@@ -104,7 +104,7 @@ func (s DatumService) GetByOwnerID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			return datum.LoadByOwnerID(ctx, conn, s.svc.scope)
 		},
 	)
@@ -125,7 +125,7 @@ func (s DatumService) CountForOrganizationID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) (err error) {
+		func(ctx context.Context, conn pg.Querier) (err error) {
 			data := coredata.Data{}
 			count, err = data.CountByOrganizationID(ctx, conn, s.svc.scope, organizationID, filter)
 			if err != nil {
@@ -153,7 +153,7 @@ func (s DatumService) ListForOrganizationID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			return data.LoadByOrganizationID(
 				ctx,
 				conn,
@@ -184,7 +184,7 @@ func (s DatumService) Update(
 	datum := &coredata.Datum{}
 	datumVendors := &coredata.DatumVendors{}
 
-	err := s.svc.pg.WithTx(ctx, func(conn pg.Conn) error {
+	err := s.svc.pg.WithTx(ctx, func(ctx context.Context, conn pg.Tx) error {
 		if err := datum.LoadByID(ctx, conn, s.svc.scope, req.ID); err != nil {
 			return fmt.Errorf("cannot load data: %w", err)
 		}
@@ -248,7 +248,7 @@ func (s DatumService) Create(
 
 	err := s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Tx) error {
 			owner := &coredata.MembershipProfile{}
 			if err := owner.LoadByID(ctx, conn, s.svc.scope, req.OwnerID); err != nil {
 				return fmt.Errorf("cannot load owner profile: %w", err)
@@ -281,10 +281,10 @@ func (s DatumService) Delete(
 ) error {
 	datum := &coredata.Datum{ID: datumID}
 
-	return s.svc.pg.WithConn(
+	return s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
-			return datum.Delete(ctx, conn, s.svc.scope)
+		func(ctx context.Context, tx pg.Tx) error {
+			return datum.Delete(ctx, tx, s.svc.scope)
 		},
 	)
 }
@@ -298,7 +298,7 @@ func (s DatumService) ListVendors(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			return vendors.LoadByDatumID(ctx, conn, s.svc.scope, datumID, cursor)
 		},
 	)

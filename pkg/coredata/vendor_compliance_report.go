@@ -56,7 +56,7 @@ func (c VendorComplianceReport) CursorKey(orderBy VendorComplianceReportOrderFie
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (v *VendorComplianceReport) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+func (v *VendorComplianceReport) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	q := `SELECT organization_id FROM vendor_compliance_reports WHERE id = $1 LIMIT 1;`
 
 	var organizationID gid.GID
@@ -72,7 +72,7 @@ func (v *VendorComplianceReport) AuthorizationAttributes(ctx context.Context, co
 
 func (vcs *VendorComplianceReports) LoadForVendorID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	vendorID gid.GID,
 	cursor *page.Cursor[VendorComplianceReportOrderField],
@@ -121,7 +121,7 @@ WHERE
 
 func (vcr *VendorComplianceReport) LoadByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	vendorComplianceReportID gid.GID,
 ) error {
@@ -168,7 +168,7 @@ LIMIT 1;
 
 func (vcr *VendorComplianceReport) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -217,7 +217,7 @@ VALUES (
 
 func (vcr *VendorComplianceReport) Delete(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -254,7 +254,7 @@ RETURNING report_file_id
 
 func (vcrs VendorComplianceReports) InsertVendorSnapshots(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 	organizationID gid.GID,
 	snapshotID gid.GID,

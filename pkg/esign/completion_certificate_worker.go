@@ -145,7 +145,7 @@ func (w *CompletionCertificateWorker) processNext(ctx context.Context, sem chan 
 
 	if err := w.pg.WithTx(
 		nonCancelableCtx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			if err := signature.LoadNextCompletedWithoutCertificateForUpdate(nonCancelableCtx, tx); err != nil {
 				return err
 			}
@@ -198,7 +198,7 @@ func (w *CompletionCertificateWorker) generateAndCommit(
 
 	if err := w.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			signature.CertificateFileID = &attachments[1].FileID
 			signature.UpdatedAt = time.Now()
 			if err := signature.Update(ctx, tx, scope); err != nil {
@@ -245,7 +245,7 @@ func (w *CompletionCertificateWorker) generateCertificate(
 
 	if err := w.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			if err := events.LoadBySignatureID(ctx, conn, scope, signature.ID); err != nil {
 				return fmt.Errorf("cannot load events: %w", err)
 			}
@@ -298,7 +298,7 @@ func (w *CompletionCertificateWorker) generateCertificate(
 
 	if err := w.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			if err := certificateOfCompletionFile.Insert(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot insert certificate of completion file: %w", err)
 			}
@@ -366,7 +366,7 @@ func (w *CompletionCertificateWorker) handleCertFailure(
 
 	return w.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			errStr := processingError.Error()
 			signature.LastError = &errStr
 			signature.CertificateProcessingStartedAt = nil
@@ -388,7 +388,7 @@ func (w *CompletionCertificateWorker) handleCertFailure(
 func (w *CompletionCertificateWorker) recoverStaleCertificateRows(ctx context.Context) {
 	if err := w.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			return coredata.ResetStaleCertificateProcessing(ctx, conn, w.staleAfter)
 		},
 	); err != nil {

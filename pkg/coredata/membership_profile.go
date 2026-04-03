@@ -87,7 +87,7 @@ func (p MembershipProfile) CursorKey(orderBy MembershipProfileOrderField) page.C
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (p *MembershipProfile) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+func (p *MembershipProfile) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	q := `SELECT organization_id, identity_id FROM iam_membership_profiles WHERE id = $1 LIMIT 1;`
 
 	var organizationID gid.GID
@@ -107,7 +107,7 @@ func (p *MembershipProfile) AuthorizationAttributes(ctx context.Context, conn pg
 
 func (p *MembershipProfile) LoadByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	profileID gid.GID,
 ) error {
@@ -183,7 +183,7 @@ LIMIT 1;
 
 func (p *MembershipProfile) LoadByIdentityIDAndOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	identityID gid.GID,
 	organizationID gid.GID,
@@ -264,7 +264,7 @@ LIMIT 1;
 
 func (p *MembershipProfiles) LoadByIDs(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	profileIDs []gid.GID,
 ) error {
@@ -335,7 +335,7 @@ WHERE
 
 func (p *MembershipProfiles) LoadByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 	cursor *page.Cursor[MembershipProfileOrderField],
@@ -449,7 +449,7 @@ WHERE
 
 func (p *MembershipProfiles) LoadByIdentityID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	identityID gid.GID,
 	cursor *page.Cursor[MembershipProfileOrderField],
 	filter *MembershipProfileFilter,
@@ -561,7 +561,7 @@ WHERE
 
 func (p *MembershipProfiles) LoadByDocumentVersionID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	documentVersionID gid.GID,
 	cursor *page.Cursor[MembershipProfileOrderField],
@@ -682,7 +682,7 @@ INNER JOIN identities i ON i.id = p.identity_id
 
 func (p *MembershipProfiles) CountByDocumentVersionID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	documentVersionID gid.GID,
 ) (int, error) {
@@ -720,7 +720,7 @@ WHERE
 
 func (p *MembershipProfiles) LoadByMeetingID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	meetingID gid.GID,
 ) error {
@@ -836,7 +836,7 @@ ORDER BY
 
 func (p *MembershipProfiles) LoadAwaitingSigning(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 ) error {
 	q := `
@@ -912,7 +912,7 @@ INNER JOIN signatories ON p.id = signatories.signed_by_profile_id
 
 func (p *MembershipProfiles) CountByIdentityID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	identityID gid.GID,
 	filter *MembershipProfileFilter,
 ) (int, error) {
@@ -945,7 +945,7 @@ WHERE
 
 func (p *MembershipProfiles) CountByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 	filter *MembershipProfileFilter,
@@ -981,7 +981,7 @@ WHERE
 
 func (p *MembershipProfiles) CountActiveOwnerByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 ) (int, error) {
@@ -1020,7 +1020,7 @@ WHERE
 
 func (p *MembershipProfile) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 ) error {
 	q := `
 INSERT INTO
@@ -1146,7 +1146,7 @@ VALUES (
 
 func (p *MembershipProfile) Update(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -1235,7 +1235,7 @@ WHERE
 
 func (p *MembershipProfiles) ResetSCIMSources(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 ) error {
@@ -1269,7 +1269,7 @@ WHERE
 
 func (p *MembershipProfile) ClearExternalID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	externalID string,
 	organizationID gid.GID,
@@ -1305,7 +1305,7 @@ WHERE
 
 func (p *MembershipProfile) Delete(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 	profileID gid.GID,
 ) error {

@@ -96,7 +96,7 @@ func (s *Session) IsChildSession() bool {
 
 func (s *Session) LoadByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	sessionID gid.GID,
 ) error {
 	q := `
@@ -144,7 +144,7 @@ LIMIT 1;
 
 // AuthorizationAttributes loads the minimal authorization attributes for policy condition evaluation.
 // It is intentionally lightweight and does not populate the Session struct.
-func (s *Session) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+func (s *Session) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	q := `
 SELECT
     identity_id
@@ -168,7 +168,7 @@ LIMIT 1;
 
 func (s *Session) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 ) error {
 	q := `
 INSERT INTO
@@ -214,7 +214,7 @@ VALUES (
 
 func (s *Session) Update(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 ) error {
 	q := `
 UPDATE iam_sessions
@@ -251,7 +251,7 @@ WHERE
 	return nil
 }
 
-func (s *Sessions) LoadByIdentityID(ctx context.Context, conn pg.Conn, identityID gid.GID, cursor *page.Cursor[SessionOrderField]) error {
+func (s *Sessions) LoadByIdentityID(ctx context.Context, conn pg.Querier, identityID gid.GID, cursor *page.Cursor[SessionOrderField]) error {
 	q := `
 SELECT
     id,
@@ -295,7 +295,7 @@ WHERE
 	return nil
 }
 
-func (s *Sessions) CountByIdentityID(ctx context.Context, conn pg.Conn, identityID gid.GID) (int, error) {
+func (s *Sessions) CountByIdentityID(ctx context.Context, conn pg.Querier, identityID gid.GID) (int, error) {
 	q := `
 SELECT
     COUNT(*)
@@ -317,7 +317,7 @@ WHERE
 	return count, nil
 }
 
-func (s *Sessions) ExpireAllForIdentityExceptOneSession(ctx context.Context, conn pg.Conn, identityID gid.GID, sessionID gid.GID) (int64, error) {
+func (s *Sessions) ExpireAllForIdentityExceptOneSession(ctx context.Context, conn pg.Querier, identityID gid.GID, sessionID gid.GID) (int64, error) {
 	q := `
 UPDATE iam_sessions
 SET
@@ -345,7 +345,7 @@ WHERE
 
 func (s *Session) LoadByRootSessionIDAndMembershipID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	rootSessionID gid.GID,
 	membershipID gid.GID,
 ) error {

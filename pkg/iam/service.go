@@ -249,7 +249,7 @@ func (s *Service) GetMembership(ctx context.Context, membershipID gid.GID) (*cor
 
 	err := s.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			err := membership.LoadByID(ctx, conn, scope, membershipID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
@@ -277,7 +277,7 @@ func (s *Service) GetInvitation(ctx context.Context, invitationID gid.GID) (*cor
 
 	err := s.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			err := invitation.LoadByID(ctx, conn, scope, invitationID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
@@ -302,7 +302,7 @@ func (s *Service) GetSession(ctx context.Context, sessionID gid.GID) (*coredata.
 
 	err := s.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			err := session.LoadByID(ctx, conn, sessionID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
@@ -330,7 +330,7 @@ func (s *Service) GetSAMLconfiguration(ctx context.Context, samlConfigurationID 
 
 	err := s.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			err := samlConfiguration.LoadByID(ctx, conn, scope, samlConfigurationID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
@@ -355,7 +355,7 @@ func (s *Service) GetPersonalAPIKey(ctx context.Context, personalAPIKeyID gid.GI
 
 	err := s.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			err := personalAPIKey.LoadByID(ctx, conn, personalAPIKeyID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
@@ -383,7 +383,7 @@ func (s *Service) GetSCIMConfiguration(ctx context.Context, scimConfigurationID 
 
 	err := s.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			err := scimConfiguration.LoadByID(ctx, conn, scope, scimConfigurationID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
@@ -411,7 +411,7 @@ func (s *Service) GetSCIMEvent(ctx context.Context, scimEventID gid.GID) (*cored
 
 	err := s.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			err := scimEvent.LoadByID(ctx, conn, scope, scimEventID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {

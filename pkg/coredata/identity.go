@@ -56,7 +56,7 @@ func (i Identity) CursorKey(orderBy IdentityOrderField) page.CursorKey {
 // Tenant id scope is not applied because we want to access identities across all tenants for authentication purposes.
 func (i *Identity) LoadByEmail(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	email mail.Addr,
 ) error {
 	q := `
@@ -100,7 +100,7 @@ LIMIT 1;
 // Tenant id scope is not applied because we want to access identities across all tenants for authentication purposes.
 func (i *Identity) LoadByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	identityID gid.GID,
 ) error {
 	q := `
@@ -143,7 +143,7 @@ LIMIT 1;
 
 // AuthorizationAttributes loads the minimal authorization attributes for policy condition evaluation.
 // It is intentionally lightweight and does not populate the Identity struct.
-func (i *Identity) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+func (i *Identity) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	q := `
 SELECT
     id,
@@ -173,7 +173,7 @@ WHERE
 
 func (i *Identity) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 ) error {
 	q := `
 INSERT INTO
@@ -217,7 +217,7 @@ VALUES (
 	return nil
 }
 
-func (i *Identity) Update(ctx context.Context, conn pg.Conn) error {
+func (i *Identity) Update(ctx context.Context, conn pg.Tx) error {
 	q := `
 UPDATE
     identities
@@ -257,7 +257,7 @@ WHERE
 // LoadBySAMLSubject loads an identity by their SAML subject (NameID)
 func (i *Identity) LoadBySAMLSubject(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	samlSubject string,
 ) error {
 	q := `
@@ -300,7 +300,7 @@ LIMIT 1;
 
 func (i *Identity) CountMemberships(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 ) (int, error) {
 	q := `
 SELECT

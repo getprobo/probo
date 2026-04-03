@@ -163,7 +163,7 @@ func (s VendorService) CountForOrganizationID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) (err error) {
+		func(ctx context.Context, conn pg.Querier) (err error) {
 			vendors := coredata.Vendors{}
 			filter := &coredata.VendorFilter{}
 			count, err = vendors.CountByOrganizationID(ctx, conn, s.svc.scope, organizationID, filter)
@@ -193,7 +193,7 @@ func (s VendorService) ListForOrganizationID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			if err := organization.LoadByID(ctx, conn, s.svc.scope, organizationID); err != nil {
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
@@ -224,7 +224,7 @@ func (s VendorService) CountForDatumID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) (err error) {
+		func(ctx context.Context, conn pg.Querier) (err error) {
 			vendors := coredata.Vendors{}
 			count, err = vendors.CountByDatumID(ctx, conn, s.svc.scope, datumID)
 			if err != nil {
@@ -251,7 +251,7 @@ func (s VendorService) ListForDatumID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			return vendors.LoadByDatumID(
 				ctx,
 				conn,
@@ -281,7 +281,7 @@ func (s VendorService) Update(
 
 	err := s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Tx) error {
 			if err := vendor.LoadByID(ctx, conn, s.svc.scope, req.ID); err != nil {
 				return fmt.Errorf("cannot load vendor %q: %w", req.ID, err)
 			}
@@ -417,7 +417,7 @@ func (s VendorService) Get(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			return vendor.LoadByID(ctx, conn, s.svc.scope, vendorID)
 		},
 	)
@@ -437,7 +437,7 @@ func (s VendorService) GetByIDs(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			if err := vendors.LoadByIDs(
 				ctx,
 				conn,
@@ -465,7 +465,7 @@ func (s VendorService) Delete(
 
 	return s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Tx) error {
 			if err := vendor.LoadByID(ctx, conn, s.svc.scope, vendorID); err != nil {
 				return fmt.Errorf("cannot load vendor: %w", err)
 			}
@@ -513,7 +513,7 @@ func (s VendorService) Create(
 
 	err := s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Tx) error {
 			organization := &coredata.Organization{}
 			if err := organization.LoadByID(ctx, conn, s.svc.scope, req.OrganizationID); err != nil {
 				return fmt.Errorf("cannot load organization %q: %w", req.OrganizationID, err)
@@ -570,7 +570,7 @@ func (s VendorService) CountForAssetID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) (err error) {
+		func(ctx context.Context, conn pg.Querier) (err error) {
 			vendors := coredata.Vendors{}
 			count, err = vendors.CountByAssetID(ctx, conn, s.svc.scope, assetID)
 			if err != nil {
@@ -597,7 +597,7 @@ func (s VendorService) ListForAssetID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			return vendors.LoadByAssetID(ctx, conn, s.svc.scope, assetID, cursor)
 		},
 	)
@@ -618,7 +618,7 @@ func (s VendorService) ListForProcessingActivityID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			err := vendors.LoadByProcessingActivityID(ctx, conn, s.svc.scope, processingActivityID, cursor)
 			if err != nil {
 				return fmt.Errorf("cannot load vendors by processing activity: %w", err)
@@ -644,7 +644,7 @@ func (s VendorService) ListRiskAssessments(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			return vendorRiskAssessments.LoadByVendorID(ctx, conn, s.svc.scope, vendorID, cursor)
 		},
 	)
@@ -685,7 +685,7 @@ func (s VendorService) CreateRiskAssessment(
 
 	err := s.svc.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			vendor := coredata.Vendor{}
 			if err := vendor.LoadByID(ctx, tx, s.svc.scope, req.VendorID); err != nil {
 				return fmt.Errorf("cannot load vendor: %w", err)
@@ -719,7 +719,7 @@ func (s VendorService) GetRiskAssessment(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			return vendorRiskAssessment.LoadByID(ctx, conn, s.svc.scope, vendorRiskAssessmentID)
 		},
 	)
@@ -739,7 +739,7 @@ func (s VendorService) GetByRiskAssessmentID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			vendorRiskAssessment := &coredata.VendorRiskAssessment{}
 			if err := vendorRiskAssessment.LoadByID(ctx, conn, s.svc.scope, vendorRiskAssessmentID); err != nil {
 				return fmt.Errorf("cannot load vendor risk assessment: %w", err)

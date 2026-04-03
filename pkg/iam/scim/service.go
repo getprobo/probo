@@ -107,7 +107,7 @@ func (s *Service) ValidateToken(ctx context.Context, token string) (*coredata.SC
 
 	err := s.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			err := config.LoadByHashedToken(ctx, conn, hashedToken)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
@@ -160,7 +160,7 @@ func (s *Service) CreateUser(
 
 	scope := coredata.NewScopeFromObjectID(config.OrganizationID)
 
-	err = s.pg.WithTx(ctx, func(tx pg.Conn) error {
+	err = s.pg.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		identity := &coredata.Identity{}
 		if err := identity.LoadByEmail(ctx, tx, emailAddr); err != nil {
 			if errors.Is(err, coredata.ErrResourceNotFound) {
@@ -355,7 +355,7 @@ func (s *Service) GetUser(
 
 	err := s.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			profile = &coredata.MembershipProfile{}
 			if err := profile.LoadByID(ctx, conn, scope, profileID); err != nil {
 				if err == coredata.ErrResourceNotFound {
@@ -405,7 +405,7 @@ func (s *Service) ListUsers(
 
 	err = s.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			var err error
 			totalCount, err = profiles.CountByOrganizationID(ctx, conn, scope, config.OrganizationID, filter)
 			if err != nil {
@@ -486,7 +486,7 @@ func (s *Service) updateUser(
 
 	err := s.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			profile = &coredata.MembershipProfile{}
 			if err := profile.LoadByID(ctx, tx, scope, profileID); err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
@@ -772,7 +772,7 @@ func (s *Service) DeleteUser(
 
 	return s.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			profile := &coredata.MembershipProfile{}
 			if err := profile.LoadByID(ctx, tx, scope, profileID); err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
@@ -837,10 +837,10 @@ func (s *Service) LogEvent(
 
 	event := s.createEvent(config, method, path, userName, ipAddress, statusCode, errorMessage)
 
-	err := s.pg.WithConn(
+	err := s.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
-			err := event.Insert(ctx, conn, scope)
+		func(ctx context.Context, tx pg.Tx) error {
+			err := event.Insert(ctx, tx, scope)
 			if err != nil {
 				return fmt.Errorf("cannot insert SCIM event: %w", err)
 			}

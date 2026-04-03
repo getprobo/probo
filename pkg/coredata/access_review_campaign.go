@@ -53,7 +53,7 @@ func (c AccessReviewCampaign) CursorKey(orderBy AccessReviewCampaignOrderField) 
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (c *AccessReviewCampaign) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+func (c *AccessReviewCampaign) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	q := `SELECT organization_id FROM access_review_campaigns WHERE id = $1 LIMIT 1;`
 
 	var organizationID gid.GID
@@ -69,7 +69,7 @@ func (c *AccessReviewCampaign) AuthorizationAttributes(ctx context.Context, conn
 
 func (c *AccessReviewCampaign) LoadByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	id gid.GID,
 ) error {
@@ -117,7 +117,7 @@ LIMIT 1;
 
 func (c *AccessReviewCampaign) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -173,7 +173,7 @@ VALUES (
 
 func (c *AccessReviewCampaign) Update(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -218,7 +218,7 @@ WHERE
 
 func (c *AccessReviewCampaign) Delete(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -244,7 +244,7 @@ WHERE %s AND id = @id
 
 func (campaigns *AccessReviewCampaigns) LoadByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 	cursor *page.Cursor[AccessReviewCampaignOrderField],
@@ -291,7 +291,7 @@ WHERE
 
 func (campaigns *AccessReviewCampaigns) CountByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 ) (int, error) {
@@ -317,7 +317,7 @@ WHERE
 
 func (c *AccessReviewCampaign) LoadLastCompletedByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 ) error {

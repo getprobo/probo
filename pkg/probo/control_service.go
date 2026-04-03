@@ -104,7 +104,7 @@ func (s ControlService) CountForDocumentID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) (err error) {
+		func(ctx context.Context, conn pg.Querier) (err error) {
 			controls := &coredata.Controls{}
 			count, err = controls.CountByDocumentID(ctx, conn, s.svc.scope, documentID, filter)
 			if err != nil {
@@ -133,7 +133,7 @@ func (s ControlService) ListForDocumentID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			if err := document.LoadByID(ctx, conn, s.svc.scope, documentID); err != nil {
 				return fmt.Errorf("cannot load document: %w", err)
 			}
@@ -158,7 +158,7 @@ func (s ControlService) CountForMeasureID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) (err error) {
+		func(ctx context.Context, conn pg.Querier) (err error) {
 			controls := &coredata.Controls{}
 			count, err = controls.CountByMeasureID(ctx, conn, s.svc.scope, measureID, filter)
 			if err != nil {
@@ -187,7 +187,7 @@ func (s ControlService) ListForMeasureID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			if err := measure.LoadByID(ctx, conn, s.svc.scope, measureID); err != nil {
 				return fmt.Errorf("cannot load measure: %w", err)
 			}
@@ -212,7 +212,7 @@ func (s ControlService) CountForFrameworkID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) (err error) {
+		func(ctx context.Context, conn pg.Querier) (err error) {
 			controls := &coredata.Controls{}
 			count, err = controls.CountByFrameworkID(ctx, conn, s.svc.scope, frameworkID, filter)
 			if err != nil {
@@ -241,7 +241,7 @@ func (s ControlService) ListForFrameworkID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			if err := framework.LoadByID(ctx, conn, s.svc.scope, frameworkID); err != nil {
 				return fmt.Errorf("cannot load framework: %w", err)
 			}
@@ -273,7 +273,7 @@ func (s ControlService) CountForOrganizationID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) (err error) {
+		func(ctx context.Context, conn pg.Querier) (err error) {
 			controls := &coredata.Controls{}
 			count, err = controls.CountByOrganizationID(ctx, conn, s.svc.scope, organizationID, filter)
 			if err != nil {
@@ -302,7 +302,7 @@ func (s ControlService) ListForOrganizationID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			if err := organization.LoadByID(ctx, conn, s.svc.scope, organizationID); err != nil {
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
@@ -334,7 +334,7 @@ func (s ControlService) CountForRiskID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) (err error) {
+		func(ctx context.Context, conn pg.Querier) (err error) {
 			controls := &coredata.Controls{}
 			count, err = controls.CountByRiskID(ctx, conn, s.svc.scope, riskID, filter)
 			if err != nil {
@@ -363,7 +363,7 @@ func (s ControlService) ListForRiskID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			if err := risk.LoadByID(ctx, conn, s.svc.scope, riskID); err != nil {
 				return fmt.Errorf("cannot load risk: %w", err)
 			}
@@ -389,7 +389,7 @@ func (s ControlService) CreateMeasureMapping(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			if err := control.LoadByID(ctx, conn, s.svc.scope, controlID); err != nil {
 				return fmt.Errorf("cannot load control: %w", err)
 			}
@@ -425,19 +425,19 @@ func (s ControlService) DeleteMeasureMapping(
 	control := &coredata.Control{}
 	measure := &coredata.Measure{}
 
-	err := s.svc.pg.WithConn(
+	err := s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
-			if err := control.LoadByID(ctx, conn, s.svc.scope, controlID); err != nil {
+		func(ctx context.Context, tx pg.Tx) error {
+			if err := control.LoadByID(ctx, tx, s.svc.scope, controlID); err != nil {
 				return fmt.Errorf("cannot load control: %w", err)
 			}
 
-			if err := measure.LoadByID(ctx, conn, s.svc.scope, measureID); err != nil {
+			if err := measure.LoadByID(ctx, tx, s.svc.scope, measureID); err != nil {
 				return fmt.Errorf("cannot load measure: %w", err)
 			}
 
 			controlMeasure := &coredata.ControlMeasure{}
-			if err := controlMeasure.Delete(ctx, conn, s.svc.scope, control.ID, measure.ID); err != nil {
+			if err := controlMeasure.Delete(ctx, tx, s.svc.scope, control.ID, measure.ID); err != nil {
 				return fmt.Errorf("cannot delete control measure mapping: %w", err)
 			}
 
@@ -460,14 +460,14 @@ func (s ControlService) CreateDocumentMapping(
 	control := &coredata.Control{}
 	document := &coredata.Document{}
 
-	err := s.svc.pg.WithConn(
+	err := s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
-			if err := control.LoadByID(ctx, conn, s.svc.scope, controlID); err != nil {
+		func(ctx context.Context, tx pg.Tx) error {
+			if err := control.LoadByID(ctx, tx, s.svc.scope, controlID); err != nil {
 				return fmt.Errorf("cannot load control: %w", err)
 			}
 
-			if err := document.LoadByID(ctx, conn, s.svc.scope, documentID); err != nil {
+			if err := document.LoadByID(ctx, tx, s.svc.scope, documentID); err != nil {
 				return fmt.Errorf("cannot load document: %w", err)
 			}
 
@@ -479,7 +479,7 @@ func (s ControlService) CreateDocumentMapping(
 				CreatedAt:      time.Now(),
 			}
 
-			if err := controlDocument.Insert(ctx, conn, s.svc.scope); err != nil {
+			if err := controlDocument.Insert(ctx, tx, s.svc.scope); err != nil {
 				return fmt.Errorf("cannot insert control document: %w", err)
 			}
 
@@ -502,19 +502,19 @@ func (s ControlService) DeleteDocumentMapping(
 	control := &coredata.Control{}
 	document := &coredata.Document{}
 
-	err := s.svc.pg.WithConn(
+	err := s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
-			if err := control.LoadByID(ctx, conn, s.svc.scope, controlID); err != nil {
+		func(ctx context.Context, tx pg.Tx) error {
+			if err := control.LoadByID(ctx, tx, s.svc.scope, controlID); err != nil {
 				return fmt.Errorf("cannot load control: %w", err)
 			}
 
-			if err := document.LoadByID(ctx, conn, s.svc.scope, documentID); err != nil {
+			if err := document.LoadByID(ctx, tx, s.svc.scope, documentID); err != nil {
 				return fmt.Errorf("cannot load document: %w", err)
 			}
 
 			controlDocument := &coredata.ControlDocument{}
-			if err := controlDocument.Delete(ctx, conn, s.svc.scope, control.ID, document.ID); err != nil {
+			if err := controlDocument.Delete(ctx, tx, s.svc.scope, control.ID, document.ID); err != nil {
 				return fmt.Errorf("cannot delete control document mapping: %w", err)
 			}
 
@@ -539,7 +539,7 @@ func (s ControlService) CreateAuditMapping(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			if err := control.LoadByID(ctx, conn, s.svc.scope, controlID); err != nil {
 				return fmt.Errorf("cannot load control: %w", err)
 			}
@@ -578,19 +578,19 @@ func (s ControlService) DeleteAuditMapping(
 	control := &coredata.Control{}
 	audit := &coredata.Audit{}
 
-	err := s.svc.pg.WithConn(
+	err := s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
-			if err := control.LoadByID(ctx, conn, s.svc.scope, controlID); err != nil {
+		func(ctx context.Context, tx pg.Tx) error {
+			if err := control.LoadByID(ctx, tx, s.svc.scope, controlID); err != nil {
 				return fmt.Errorf("cannot load control: %w", err)
 			}
 
-			if err := audit.LoadByID(ctx, conn, s.svc.scope, auditID); err != nil {
+			if err := audit.LoadByID(ctx, tx, s.svc.scope, auditID); err != nil {
 				return fmt.Errorf("cannot load audit: %w", err)
 			}
 
 			controlAudit := &coredata.ControlAudit{}
-			if err := controlAudit.Delete(ctx, conn, s.svc.scope, control.ID, audit.ID); err != nil {
+			if err := controlAudit.Delete(ctx, tx, s.svc.scope, control.ID, audit.ID); err != nil {
 				return fmt.Errorf("cannot delete control audit mapping: %w", err)
 			}
 
@@ -615,7 +615,7 @@ func (s ControlService) CreateObligationMapping(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			if err := control.LoadByID(ctx, conn, s.svc.scope, controlID); err != nil {
 				return fmt.Errorf("cannot load control: %w", err)
 			}
@@ -653,19 +653,19 @@ func (s ControlService) DeleteObligationMapping(
 	control := &coredata.Control{}
 	obligation := &coredata.Obligation{}
 
-	err := s.svc.pg.WithConn(
+	err := s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
-			if err := control.LoadByID(ctx, conn, s.svc.scope, controlID); err != nil {
+		func(ctx context.Context, tx pg.Tx) error {
+			if err := control.LoadByID(ctx, tx, s.svc.scope, controlID); err != nil {
 				return fmt.Errorf("cannot load control: %w", err)
 			}
 
-			if err := obligation.LoadByID(ctx, conn, s.svc.scope, obligationID); err != nil {
+			if err := obligation.LoadByID(ctx, tx, s.svc.scope, obligationID); err != nil {
 				return fmt.Errorf("cannot load obligation: %w", err)
 			}
 
 			controlObligation := &coredata.ControlObligation{}
-			if err := controlObligation.Delete(ctx, conn, s.svc.scope, control.ID, obligation.ID); err != nil {
+			if err := controlObligation.Delete(ctx, tx, s.svc.scope, control.ID, obligation.ID); err != nil {
 				return fmt.Errorf("cannot delete control obligation mapping: %w", err)
 			}
 
@@ -691,7 +691,7 @@ func (s ControlService) ListForAuditID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			if err := audit.LoadByID(ctx, conn, s.svc.scope, auditID); err != nil {
 				return fmt.Errorf("cannot load audit: %w", err)
 			}
@@ -720,7 +720,7 @@ func (s ControlService) CreateSnapshotMapping(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			if err := control.LoadByID(ctx, conn, s.svc.scope, controlID); err != nil {
 				return fmt.Errorf("cannot load control: %w", err)
 			}
@@ -759,19 +759,19 @@ func (s ControlService) DeleteSnapshotMapping(
 	control := &coredata.Control{}
 	snapshot := &coredata.Snapshot{}
 
-	err := s.svc.pg.WithConn(
+	err := s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
-			if err := control.LoadByID(ctx, conn, s.svc.scope, controlID); err != nil {
+		func(ctx context.Context, tx pg.Tx) error {
+			if err := control.LoadByID(ctx, tx, s.svc.scope, controlID); err != nil {
 				return fmt.Errorf("cannot load control: %w", err)
 			}
 
-			if err := snapshot.LoadByID(ctx, conn, s.svc.scope, snapshotID); err != nil {
+			if err := snapshot.LoadByID(ctx, tx, s.svc.scope, snapshotID); err != nil {
 				return fmt.Errorf("cannot load snapshot: %w", err)
 			}
 
 			controlSnapshot := &coredata.ControlSnapshot{}
-			if err := controlSnapshot.Delete(ctx, conn, s.svc.scope, control.ID, snapshot.ID); err != nil {
+			if err := controlSnapshot.Delete(ctx, tx, s.svc.scope, control.ID, snapshot.ID); err != nil {
 				return fmt.Errorf("cannot delete control snapshot mapping: %w", err)
 			}
 
@@ -797,7 +797,7 @@ func (s ControlService) ListForSnapshotID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			if err := snapshot.LoadByID(ctx, conn, s.svc.scope, snapshotID); err != nil {
 				return fmt.Errorf("cannot load snapshot: %w", err)
 			}
@@ -825,7 +825,7 @@ func (s ControlService) CountForStateOfApplicabilityID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) (err error) {
+		func(ctx context.Context, conn pg.Querier) (err error) {
 			controls := &coredata.Controls{}
 			count, err = controls.CountByStateOfApplicabilityID(ctx, conn, s.svc.scope, stateOfApplicabilityID, filter)
 			if err != nil {
@@ -874,7 +874,7 @@ func (s ControlService) Create(
 
 	err := s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Tx) error {
 			if err := framework.LoadByID(ctx, conn, s.svc.scope, req.FrameworkID); err != nil {
 				return fmt.Errorf("cannot load framework: %w", err)
 			}
@@ -901,7 +901,7 @@ func (s ControlService) Get(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			return control.LoadByID(ctx, conn, s.svc.scope, controlID)
 		},
 	)
@@ -921,7 +921,7 @@ func (s ControlService) GetByIDs(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			if err := controls.LoadByIDs(
 				ctx,
 				conn,
@@ -953,7 +953,7 @@ func (s ControlService) Update(
 
 	err := s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Tx) error {
 			if err := control.LoadByID(ctx, conn, s.svc.scope, req.ID); err != nil {
 				return fmt.Errorf("cannot load control: %w", err)
 			}
@@ -1003,10 +1003,10 @@ func (s ControlService) Delete(
 ) error {
 	control := &coredata.Control{ID: controlID}
 
-	return s.svc.pg.WithConn(
+	return s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
-			return control.Delete(ctx, conn, s.svc.scope)
+		func(ctx context.Context, tx pg.Tx) error {
+			return control.Delete(ctx, tx, s.svc.scope)
 		},
 	)
 }
@@ -1022,7 +1022,7 @@ func (s ControlService) HasRegulatoryObligation(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			var controlObligations coredata.ControlObligations
 			count, err := controlObligations.CountByControlID(ctx, conn, s.svc.scope, controlID, filter)
 			if err != nil {
@@ -1047,7 +1047,7 @@ func (s ControlService) HasContractualObligation(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			var controlObligations coredata.ControlObligations
 			count, err := controlObligations.CountByControlID(ctx, conn, s.svc.scope, controlID, filter)
 			if err != nil {
@@ -1069,7 +1069,7 @@ func (s ControlService) HasRiskAssessment(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			var controlsWithRisk coredata.ControlsWithRisk
 			if err := controlsWithRisk.LoadByControlIDs(ctx, conn, s.svc.scope, []gid.GID{controlID}); err != nil {
 				return fmt.Errorf("cannot load controls with risk: %w", err)

@@ -127,7 +127,7 @@ ORDER BY id;
 	return nil
 }
 
-func migrateOne(ctx context.Context, conn pg.Conn, idStr string, dryRun bool) error {
+func migrateOne(ctx context.Context, conn pg.Querier, idStr string, dryRun bool) error {
 	versionID, err := gid.ParseGID(idStr)
 	if err != nil {
 		return fmt.Errorf("invalid document version id %q: %w", idStr, err)

@@ -52,7 +52,7 @@ func (tca *TrustCenterAccess) CursorKey(orderBy TrustCenterAccessOrderField) pag
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (tca *TrustCenterAccess) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+func (tca *TrustCenterAccess) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	q := `SELECT organization_id FROM trust_center_accesses WHERE id = $1 LIMIT 1;`
 
 	var organizationID gid.GID
@@ -68,7 +68,7 @@ func (tca *TrustCenterAccess) AuthorizationAttributes(ctx context.Context, conn 
 
 func (tca *TrustCenterAccess) LoadByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	accessID gid.GID,
 ) error {
@@ -116,7 +116,7 @@ LIMIT 1;
 
 func (tca *TrustCenterAccess) LoadByTrustCenterIDAndIdentityID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	trustCenterID gid.GID,
 	identityID gid.GID,
@@ -169,7 +169,7 @@ LIMIT 1;
 
 func (tca *TrustCenterAccess) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -221,7 +221,7 @@ INSERT INTO trust_center_accesses (
 
 func (tca *TrustCenterAccess) Update(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -252,7 +252,7 @@ WHERE
 
 func (tca *TrustCenterAccess) Delete(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -279,7 +279,7 @@ WHERE
 
 func (tcas *TrustCenterAccesses) LoadByTrustCenterID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	trustCenterID gid.GID,
 	cursor *page.Cursor[TrustCenterAccessOrderField],

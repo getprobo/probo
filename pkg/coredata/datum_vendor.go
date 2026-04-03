@@ -38,7 +38,7 @@ type (
 
 func (dv DatumVendors) Merge(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	datumID gid.GID,
 	organizationID gid.GID,
@@ -84,7 +84,7 @@ WHEN NOT MATCHED BY SOURCE
 
 func (dv DatumVendors) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 	datumID gid.GID,
 	organizationID gid.GID,
@@ -122,7 +122,7 @@ FROM vendor_ids
 
 func (d DatumVendors) InsertDataSnapshots(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 	organizationID gid.GID,
 	snapshotID gid.GID,

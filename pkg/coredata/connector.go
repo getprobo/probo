@@ -82,7 +82,7 @@ func (c *Connector) CursorKey(orderBy ConnectorOrderField) page.CursorKey {
 }
 
 // AuthorizationAttributes returns the authorization attributes for policy evaluation.
-func (c *Connector) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+func (c *Connector) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	q := `SELECT organization_id FROM connectors WHERE id = $1 LIMIT 1;`
 
 	var organizationID gid.GID
@@ -98,7 +98,7 @@ func (c *Connector) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (
 
 func (c *Connectors) LoadAllByOrganizationIDProtocolAndProvider(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 	protocol ConnectorProtocol,
@@ -118,7 +118,7 @@ func (c *Connectors) LoadAllByOrganizationIDProtocolAndProvider(
 
 func (c *Connectors) LoadByOrganizationIDWithoutDecryptedConnection(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 	cursor *page.Cursor[ConnectorOrderField],
@@ -129,7 +129,7 @@ func (c *Connectors) LoadByOrganizationIDWithoutDecryptedConnection(
 
 func (c *Connectors) LoadAllByOrganizationIDWithoutDecryptedConnection(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 ) error {
@@ -138,7 +138,7 @@ func (c *Connectors) LoadAllByOrganizationIDWithoutDecryptedConnection(
 
 func (c *Connector) LoadByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	connectorID gid.GID,
 	encryptionKey cipher.EncryptionKey,
@@ -175,7 +175,7 @@ func (c *Connector) LoadByID(
 // Use this when you only need provider, organization, or other metadata.
 func (c *Connector) LoadMetadataByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	connectorID gid.GID,
 ) error {
@@ -222,7 +222,7 @@ LIMIT 1;
 
 func (c *Connector) Delete(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -248,7 +248,7 @@ WHERE %s AND id = @id
 
 func (c *Connector) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 	encryptionKey cipher.EncryptionKey,
 ) error {
@@ -328,7 +328,7 @@ INSERT INTO connectors (
 
 func (c *Connectors) loadByOrganizationIDWithPagination(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 	cursor *page.Cursor[ConnectorOrderField],
@@ -377,7 +377,7 @@ WHERE
 
 func (c *Connectors) loadAllByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 ) error {
@@ -422,7 +422,7 @@ ORDER BY
 
 func (c *Connectors) loadAllByOrganizationIDProtocolAndProvider(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 	protocol ConnectorProtocol,
@@ -475,7 +475,7 @@ ORDER BY
 
 func (c *Connector) Update(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 	encryptionKey cipher.EncryptionKey,
 ) error {

@@ -36,14 +36,14 @@ type Payload struct {
 
 func InsertData(
 	ctx context.Context,
-	conn pg.Conn,
+	tx pg.Tx,
 	scope coredata.Scoper,
 	organizationID gid.GID,
 	eventType coredata.WebhookEventType,
 	data any,
 ) error {
 	var configs coredata.WebhookSubscriptions
-	exists, err := configs.ExistsByOrganizationIDAndEventType(ctx, conn, scope, organizationID, eventType)
+	exists, err := configs.ExistsByOrganizationIDAndEventType(ctx, tx, scope, organizationID, eventType)
 	if err != nil {
 		return fmt.Errorf("cannot check webhook subscriptions: %w", err)
 	}
@@ -65,7 +65,7 @@ func InsertData(
 		CreatedAt:      time.Now(),
 	}
 
-	if err = webhookData.Insert(ctx, conn, scope); err != nil {
+	if err = webhookData.Insert(ctx, tx, scope); err != nil {
 		return fmt.Errorf("cannot insert webhook data: %w", err)
 	}
 

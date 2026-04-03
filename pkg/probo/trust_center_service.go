@@ -112,7 +112,7 @@ func (s TrustCenterService) Get(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			trustCenter = &coredata.TrustCenter{}
 			if err := trustCenter.LoadByID(ctx, conn, s.svc.scope, trustCenterID); err != nil {
 				return fmt.Errorf("cannot load trust center: %w", err)
@@ -137,7 +137,7 @@ func (s TrustCenterService) GetByOrganizationID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			trustCenter = &coredata.TrustCenter{}
 			if err := trustCenter.LoadByOrganizationID(ctx, conn, s.svc.scope, organizationID); err != nil {
 				return fmt.Errorf("cannot load trust center: %w", err)
@@ -167,7 +167,7 @@ func (s TrustCenterService) Update(
 
 	err := s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Tx) error {
 			trustCenter = &coredata.TrustCenter{}
 			if err := trustCenter.LoadByID(ctx, conn, s.svc.scope, req.ID); err != nil {
 				return fmt.Errorf("cannot load trust center: %w", err)
@@ -224,7 +224,7 @@ func (s TrustCenterService) UploadNDA(
 
 	err = s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Tx) error {
 			trustCenter = &coredata.TrustCenter{}
 			if err := trustCenter.LoadByID(ctx, conn, s.svc.scope, req.TrustCenterID); err != nil {
 				return fmt.Errorf("cannot load trust center: %w", err)
@@ -301,7 +301,7 @@ func (s TrustCenterService) DeleteNDA(
 
 	err := s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Tx) error {
 			trustCenter = &coredata.TrustCenter{}
 			if err := trustCenter.LoadByID(ctx, conn, s.svc.scope, trustCenterID); err != nil {
 				return fmt.Errorf("cannot load trust center: %w", err)
@@ -338,7 +338,7 @@ func (s TrustCenterService) UpdateTrustCenterBrand(
 
 	err := s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Tx) error {
 			trustCenter = &coredata.TrustCenter{}
 			if err := trustCenter.LoadByID(ctx, conn, s.svc.scope, req.TrustCenterID); err != nil {
 				return fmt.Errorf("cannot load trust center: %w", err)
@@ -396,7 +396,7 @@ func (s TrustCenterService) UpdateTrustCenterBrand(
 
 func (s TrustCenterService) uploadFile(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	fileUpload *FileUpload,
 	fileType string,
 	trustCenter *coredata.TrustCenter,
@@ -468,7 +468,7 @@ func (s TrustCenterService) GenerateNDAFileURL(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			if err := trustCenter.LoadByID(ctx, conn, s.svc.scope, trustCenterID); err != nil {
 				return fmt.Errorf("cannot load trust center: %w", err)
 			}
@@ -511,7 +511,7 @@ func (s TrustCenterService) GenerateLogoURL(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			if err := compliancePage.LoadByID(ctx, conn, s.svc.scope, compliancePageID); err != nil {
 				return fmt.Errorf("cannot load compliance page: %w", err)
 			}
@@ -557,7 +557,7 @@ func (s TrustCenterService) GenerateDarkLogoURL(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			if err := compliancePage.LoadByID(ctx, conn, s.svc.scope, compliancePageID); err != nil {
 				return fmt.Errorf("cannot load compliance page: %w", err)
 			}
@@ -606,7 +606,7 @@ func (s *TrustCenterService) EmailPresenterConfig(ctx context.Context, complianc
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			if err := compliancePage.LoadByID(ctx, conn, scope, compliancePageID); err != nil {
 				return fmt.Errorf("cannot load compliance page: %w", err)
 			}
@@ -688,7 +688,7 @@ func (s *TrustCenterService) GetMailingList(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			trustCenter := &coredata.TrustCenter{}
 			if err := trustCenter.LoadByID(ctx, conn, s.svc.scope, trustCenterID); err != nil {
 				return fmt.Errorf("cannot load trust center: %w", err)

@@ -58,7 +58,7 @@ func (s ApplicabilityStatement) CursorKey(orderBy ApplicabilityStatementOrderFie
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (s *ApplicabilityStatement) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+func (s *ApplicabilityStatement) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	q := `SELECT organization_id FROM applicability_statements WHERE id = $1 LIMIT 1;`
 
 	var organizationID gid.GID
@@ -74,7 +74,7 @@ func (s *ApplicabilityStatement) AuthorizationAttributes(ctx context.Context, co
 
 func (sac *ApplicabilityStatement) LoadByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	id gid.GID,
 ) error {
@@ -144,7 +144,7 @@ LIMIT 1;
 
 func (sac *ApplicabilityStatement) LoadByStateOfApplicabilityIDAndControlID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	stateOfApplicabilityID gid.GID,
 	controlID gid.GID,
@@ -208,7 +208,7 @@ LIMIT 1;
 
 func (sac *ApplicabilityStatement) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -269,7 +269,7 @@ VALUES (
 
 func (sac *ApplicabilityStatement) Update(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -304,7 +304,7 @@ WHERE
 
 func (sac *ApplicabilityStatement) UpdateByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -341,7 +341,7 @@ WHERE
 
 func (sac *ApplicabilityStatement) Delete(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -371,7 +371,7 @@ WHERE state_of_applicability_id IN (SELECT id FROM current_soa)
 
 func (sac *ApplicabilityStatement) DeleteByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 	applicabilityStatementID gid.GID,
 ) error {
@@ -400,7 +400,7 @@ WHERE
 
 func (sacs *ApplicabilityStatements) LoadByStateOfApplicabilityID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	stateOfApplicabilityID gid.GID,
 	cursor *page.Cursor[ApplicabilityStatementOrderField],
@@ -469,7 +469,7 @@ WHERE
 
 func (sacs *ApplicabilityStatements) CountByStateOfApplicabilityID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	stateOfApplicabilityID gid.GID,
 ) (int, error) {
@@ -497,7 +497,7 @@ WHERE
 
 func (sacs *ApplicabilityStatements) LoadByControlID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	controlID gid.GID,
 	cursor *page.Cursor[ApplicabilityStatementOrderField],

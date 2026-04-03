@@ -63,7 +63,7 @@ func (s *SAMLConfiguration) CursorKey(orderBy SAMLConfigurationOrderField) page.
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (s *SAMLConfiguration) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+func (s *SAMLConfiguration) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	q := `SELECT organization_id FROM iam_saml_configurations WHERE id = $1 LIMIT 1;`
 
 	var organizationID gid.GID
@@ -93,7 +93,7 @@ func (s *SAMLConfiguration) GetIdPCertificate() (*x509.Certificate, error) {
 
 func (s *SAMLConfiguration) LoadByOrganizationIDAndEmailDomain(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 	emailDomain string,
@@ -155,7 +155,7 @@ LIMIT 1;
 
 func (s *SAMLConfiguration) LoadByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	configID gid.GID,
 ) error {
@@ -212,7 +212,7 @@ LIMIT 1;
 
 func (s *SAMLConfiguration) LoadByIDForUpdateSkipLocked(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	configID gid.GID,
 ) error {
 	q := `
@@ -264,7 +264,7 @@ FOR UPDATE SKIP LOCKED;
 
 func (s *SAMLConfiguration) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -347,7 +347,7 @@ INSERT INTO iam_saml_configurations (
 
 func (s *SAMLConfiguration) Update(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -402,7 +402,7 @@ WHERE
 
 func (s *SAMLConfiguration) Delete(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -427,7 +427,7 @@ WHERE
 
 func (s *SAMLConfigurations) LoadByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 ) error {
@@ -480,7 +480,7 @@ ORDER BY email_domain ASC;
 
 func (s *SAMLConfigurations) CountByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 ) (int, error) {
@@ -513,7 +513,7 @@ WHERE
 	return count, nil
 }
 
-func (s *SAMLConfigurations) LoadVerifiedByEmailDomain(ctx context.Context, conn pg.Conn, emailDomain string) error {
+func (s *SAMLConfigurations) LoadVerifiedByEmailDomain(ctx context.Context, conn pg.Querier, emailDomain string) error {
 	q := `
 SELECT
     id,
@@ -558,7 +558,7 @@ ORDER BY email_domain ASC;
 
 func (s *SAMLConfigurations) CountVerifiedByEmailDomain(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	emailDomain string,
 ) (int, error) {
 	q := `
@@ -582,7 +582,7 @@ WHERE
 
 func (s *SAMLConfigurations) LoadUnverified(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 ) error {
 	q := `
 SELECT

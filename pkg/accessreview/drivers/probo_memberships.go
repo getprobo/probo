@@ -49,7 +49,7 @@ func (d *ProboMembershipsDriver) ListAccounts(ctx context.Context) ([]AccountRec
 
 	err := d.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			accounts, err := coredata.LoadMembershipAccountsByOrganizationID(
 				ctx,
 				conn,
