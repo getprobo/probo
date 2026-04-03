@@ -6,7 +6,15 @@ Docker images, npm packages, signatures).
 
 ## Steps
 
-### 1. List changes since the last release
+### 1. Pull the latest main
+
+Ensure you are on `main` and have the latest changes before starting:
+
+```shell
+git checkout main && git pull origin main
+```
+
+### 2. List changes since the last release
 
 Find the latest tag and review every commit since then:
 
@@ -14,7 +22,7 @@ Find the latest tag and review every commit since then:
 git log $(git describe --tags --abbrev=0)..HEAD --oneline
 ```
 
-### 2. Write the changelog entry
+### 3. Write the changelog entry
 
 Create a new version section in `CHANGELOG.md` from those commits.
 Keep the empty `## Unreleased` heading above it.
@@ -68,14 +76,14 @@ Example result:
 ## [0.143.0] - 2026-03-16
 ```
 
-### 3. Decide the version bump
+### 4. Decide the version bump
 
 The project is in the **0.x** series. Never bump MAJOR.
 
 - Bug fixes only → bump **PATCH**
 - New features or non-breaking changes → bump **MINOR**
 
-### 4. Bump version in `GNUmakefile`
+### 5. Bump version in `GNUmakefile`
 
 Update the `VERSION` variable at the top of `GNUmakefile`:
 
@@ -83,13 +91,13 @@ Update the `VERSION` variable at the top of `GNUmakefile`:
 VERSION=	0.144.0
 ```
 
-### 5. Review with the user
+### 6. Review with the user
 
 Before committing, show the user the full `CHANGELOG.md` entry and
 the new `VERSION` value. Ask them to confirm everything looks good.
 Only proceed once they approve.
 
-### 6. Create the release commit
+### 7. Create the release commit
 
 Stage only `CHANGELOG.md` and `GNUmakefile`. The commit message
 **must** follow this exact format:
@@ -100,7 +108,7 @@ Release v<VERSION>
 
 No body is needed.
 
-### 7. Create the tag
+### 8. Create the tag
 
 Tag the release commit with an **annotated** tag. The tag **must**
 match `v<VERSION>`:
@@ -109,7 +117,7 @@ match `v<VERSION>`:
 git tag -a v<VERSION> -m "v<VERSION>"
 ```
 
-### 8. Push
+### 9. Push
 
 Push both the commit and the tag:
 
@@ -127,10 +135,11 @@ care of:
 
 ## Checklist
 
-1. [ ] Reviewed commits since last tag
-2. [ ] `CHANGELOG.md` — new version section with categorized entries
-3. [ ] `GNUmakefile` — `VERSION` bumped
-4. [ ] User confirmed changelog and version look good
-5. [ ] Commit message is `Release v<VERSION>`
-6. [ ] Annotated tag `v<VERSION>` on the release commit
-7. [ ] Push commit and tag
+1. [ ] Pulled latest `main`
+2. [ ] Reviewed commits since last tag
+3. [ ] `CHANGELOG.md` — new version section with categorized entries
+4. [ ] `GNUmakefile` — `VERSION` bumped
+5. [ ] User confirmed changelog and version look good
+6. [ ] Commit message is `Release v<VERSION>`
+7. [ ] Annotated tag `v<VERSION>` on the release commit
+8. [ ] Push commit and tag
