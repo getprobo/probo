@@ -9,6 +9,12 @@ import type {
   Schema,
 } from "@tiptap/pm/model";
 
+import {
+  cellHasBlockHTML,
+  convertHTMLBlockContent,
+  safeLinkHref,
+} from "./htmlBlock";
+
 const tableSeparatorPattern =
   /^\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)*\|?\s*$/m;
 const markdownLinePattern =
@@ -21,31 +27,6 @@ function unescapeHtml(html: string): string {
     .replace(/&quot;/g, '"')
     .replace(/&#39;/g, "'")
     .replace(/&amp;/g, "&");
-}
-
-function safeLinkHref(href: string): string {
-  href = href.trim();
-  if (!href) return "#";
-  if (href[0] === "#") return href;
-  if (href.startsWith("/")) {
-    if (href.length > 1 && (href[1] === "/" || href[1] === "\\")) return "#";
-    return href;
-  }
-  try {
-    const url = new URL(href);
-    const scheme = url.protocol.slice(0, -1).toLowerCase();
-    switch (scheme) {
-      case "http":
-      case "https":
-      case "mailto":
-      case "tel":
-        return href;
-      default:
-        return "#";
-    }
-  } catch {
-    return href;
-  }
 }
 
 type HtmlTagInfo = {
@@ -296,10 +277,19 @@ class Converter {
     cell: Tokens.TableCell,
     isHeader: boolean,
   ): ProseMirrorNode {
-    const content = this.convertInlineTokens(cell.tokens);
     const nodeType = isHeader
       ? this.schema.nodes.tableHeader
       : this.schema.nodes.tableCell;
+
+    if (cellHasBlockHTML(cell.tokens)) {
+      const raw = cell.tokens.map(t => t.raw).join("");
+      const blockContent = convertHTMLBlockContent(raw, this.schema);
+      if (blockContent.length > 0) {
+        return nodeType.create(null, blockContent);
+      }
+    }
+
+    const content = this.convertInlineTokens(cell.tokens);
     return nodeType.create(
       null,
       this.schema.nodes.paragraph.create(
