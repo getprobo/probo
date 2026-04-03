@@ -10,7 +10,8 @@
     "check": "tsc --noEmit"
   },
   "dependencies": {
-    "@tiptap/pm": "^3.20.2"
+    "@tiptap/pm": "^3.20.2",
+    "marked": "^15.0.12"
   },
   "devDependencies": {
     "typescript": "~5.8.3"
