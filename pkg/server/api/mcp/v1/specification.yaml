@@ -1515,6 +1515,37 @@ components:
           items:
             $ref: "#/components/schemas/Control"
 
+    ListMeasureDocumentsInput:
+      type: object
+      required:
+        - measure_id
+      properties:
+        measure_id:
+          $ref: "#/components/schemas/GID"
+          description: Measure ID
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+        size:
+          type: integer
+          description: Page size
+        order_by:
+          $ref: "#/components/schemas/DocumentOrderBy"
+          description: Document order by
+
+    ListMeasureDocumentsOutput:
+      type: object
+      required:
+        - documents
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        documents:
+          type: array
+          items:
+            $ref: "#/components/schemas/Document"
+
     ListMeasureTasksInput:
       type: object
       required:
@@ -1639,7 +1670,7 @@ components:
           description: Measure ID
         resource_id:
           $ref: "#/components/schemas/GID"
-          description: ID of the resource to link (control or risk)
+          description: ID of the resource to link (control, risk, or document)
 
     LinkMeasureOutput:
       type: object
@@ -1655,7 +1686,7 @@ components:
           description: Measure ID
         resource_id:
           $ref: "#/components/schemas/GID"
-          description: ID of the resource to unlink (control or risk)
+          description: ID of the resource to unlink (control, risk, or document)
 
     UnlinkMeasureOutput:
       type: object
@@ -7669,7 +7700,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/ListMeasureEvidencesOutput"
   - name: linkMeasure
-    description: Link a measure to a resource (control or risk). The resource type is determined from the resource_id GID.
+    description: Link a measure to a resource (control, risk, or document). The resource type is determined from the resource_id GID.
     hints:
       readonly: false
     inputSchema:
@@ -7677,13 +7708,22 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/LinkMeasureOutput"
   - name: unlinkMeasure
-    description: Unlink a measure from a resource (control or risk). The resource type is determined from the resource_id GID.
+    description: Unlink a measure from a resource (control, risk, or document). The resource type is determined from the resource_id GID.
     hints:
       readonly: false
     inputSchema:
       $ref: "#/components/schemas/UnlinkMeasureInput"
     outputSchema:
       $ref: "#/components/schemas/UnlinkMeasureOutput"
+  - name: listMeasureDocuments
+    description: List documents linked to a measure
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/ListMeasureDocumentsInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListMeasureDocumentsOutput"
   - name: listFrameworks
     description: List all frameworks for the organization
     hints:

@@ -52,6 +52,24 @@ func NewListControlDocumentsOutput(documentPage *page.Page[*coredata.Document, c
 	}
 }
 
+func NewListMeasureDocumentsOutput(documentPage *page.Page[*coredata.Document, coredata.DocumentOrderField]) ListMeasureDocumentsOutput {
+	documents := make([]*Document, 0, len(documentPage.Data))
+	for _, d := range documentPage.Data {
+		documents = append(documents, NewDocument(d))
+	}
+
+	var nextCursor *page.CursorKey
+	if len(documentPage.Data) > 0 {
+		cursorKey := documentPage.Data[len(documentPage.Data)-1].CursorKey(documentPage.Cursor.OrderBy.Field)
+		nextCursor = &cursorKey
+	}
+
+	return ListMeasureDocumentsOutput{
+		NextCursor: nextCursor,
+		Documents:  documents,
+	}
+}
+
 func NewListDocumentsOutput(documentPage *page.Page[*coredata.Document, coredata.DocumentOrderField]) ListDocumentsOutput {
 	documents := make([]*Document, 0, len(documentPage.Data))
 	for _, d := range documentPage.Data {

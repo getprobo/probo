@@ -601,3 +601,80 @@ func (s MeasureService) Delete(
 		return nil
 	})
 }
+
+func (s MeasureService) CreateDocumentMapping(
+	ctx context.Context,
+	measureID gid.GID,
+	documentID gid.GID,
+) (*coredata.Measure, *coredata.Document, error) {
+	measure := &coredata.Measure{}
+	document := &coredata.Document{}
+
+	err := s.svc.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			if err := measure.LoadByID(ctx, tx, s.svc.scope, measureID); err != nil {
+				return fmt.Errorf("cannot load measure: %w", err)
+			}
+
+			if err := document.LoadByID(ctx, tx, s.svc.scope, documentID); err != nil {
+				return fmt.Errorf("cannot load document: %w", err)
+			}
+
+			measureDocument := &coredata.MeasureDocument{
+				MeasureID:      measure.ID,
+				DocumentID:     document.ID,
+				OrganizationID: measure.OrganizationID,
+				TenantID:       s.svc.scope.GetTenantID(),
+				CreatedAt:      time.Now(),
+			}
+
+			if err := measureDocument.Insert(ctx, tx, s.svc.scope); err != nil {
+				return fmt.Errorf("cannot insert measure document: %w", err)
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return measure, document, nil
+}
+
+func (s MeasureService) DeleteDocumentMapping(
+	ctx context.Context,
+	measureID gid.GID,
+	documentID gid.GID,
+) (*coredata.Measure, *coredata.Document, error) {
+	measure := &coredata.Measure{}
+	document := &coredata.Document{}
+
+	err := s.svc.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			if err := measure.LoadByID(ctx, tx, s.svc.scope, measureID); err != nil {
+				return fmt.Errorf("cannot load measure: %w", err)
+			}
+
+			if err := document.LoadByID(ctx, tx, s.svc.scope, documentID); err != nil {
+				return fmt.Errorf("cannot load document: %w", err)
+			}
+
+			measureDocument := &coredata.MeasureDocument{}
+			if err := measureDocument.Delete(ctx, tx, s.svc.scope, measure.ID, document.ID); err != nil {
+				return fmt.Errorf("cannot delete measure document mapping: %w", err)
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return measure, document, nil
+}

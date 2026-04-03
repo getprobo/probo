@@ -19,8 +19,6 @@ import type { MeasureGraphDeleteMutation } from "#/__generated__/core/MeasureGra
 
 import { useMutationWithToasts } from "../useMutationWithToasts";
 
-/* eslint-disable relay/unused-fields, relay/must-colocate-fragment-spreads */
-
 export const MeasureConnectionKey = "MeasuresPage_measures";
 
 const deleteMeasureMutation = graphql`
@@ -45,36 +43,6 @@ export function useDeleteMeasureMutation() {
     },
   );
 }
-
-export const measureNodeQuery = graphql`
-  query MeasureGraphNodeQuery($measureId: ID!) {
-    node(id: $measureId) {
-      ... on Measure {
-        id
-        name
-        description
-        state
-        category
-        canUpdate: permission(action: "core:measure:update")
-        canDelete: permission(action: "core:measure:delete")
-        canListTasks: permission(action: "core:task:list")
-        evidencesInfos: evidences(first: 0) {
-          totalCount
-        }
-        risksInfos: risks(first: 0) {
-          totalCount
-        }
-        controlsInfos: controls(first: 0) {
-          totalCount
-        }
-        ...MeasureRisksTabFragment
-        ...MeasureControlsTabFragment
-        ...MeasureFormDialogMeasureFragment
-        ...MeasureEvidencesTabFragment
-      }
-    }
-  }
-`;
 
 const measureUpdateMutation = graphql`
   mutation MeasureGraphUpdateMutation($input: UpdateMeasureInput!) {

@@ -2597,6 +2597,11 @@ func (r *Resolver) LinkMeasureTool(ctx context.Context, req *mcp.CallToolRequest
 		if _, _, err := svc.Risks.CreateMeasureMapping(ctx, input.ResourceID, input.MeasureID); err != nil {
 			return nil, types.LinkMeasureOutput{}, fmt.Errorf("failed to link measure to risk: %w", err)
 		}
+	case coredata.DocumentEntityType:
+		r.MustAuthorize(ctx, input.MeasureID, probo.ActionMeasureDocumentMappingCreate)
+		if _, _, err := svc.Measures.CreateDocumentMapping(ctx, input.MeasureID, input.ResourceID); err != nil {
+			return nil, types.LinkMeasureOutput{}, fmt.Errorf("failed to link measure to document: %w", err)
+		}
 	default:
 		return nil, types.LinkMeasureOutput{}, fmt.Errorf("unsupported resource type for measure linking: entity type %d", input.ResourceID.EntityType())
 	}
@@ -2617,6 +2622,11 @@ func (r *Resolver) UnlinkMeasureTool(ctx context.Context, req *mcp.CallToolReque
 		r.MustAuthorize(ctx, input.MeasureID, probo.ActionRiskMeasureMappingDelete)
 		if _, _, err := svc.Risks.DeleteMeasureMapping(ctx, input.ResourceID, input.MeasureID); err != nil {
 			return nil, types.UnlinkMeasureOutput{}, fmt.Errorf("failed to unlink measure from risk: %w", err)
+		}
+	case coredata.DocumentEntityType:
+		r.MustAuthorize(ctx, input.MeasureID, probo.ActionMeasureDocumentMappingDelete)
+		if _, _, err := svc.Measures.DeleteDocumentMapping(ctx, input.MeasureID, input.ResourceID); err != nil {
+			return nil, types.UnlinkMeasureOutput{}, fmt.Errorf("failed to unlink measure from document: %w", err)
 		}
 	default:
 		return nil, types.UnlinkMeasureOutput{}, fmt.Errorf("unsupported resource type for measure unlinking: entity type %d", input.ResourceID.EntityType())
@@ -3872,4 +3882,30 @@ func (r *Resolver) PublishMinorDocumentVersionTool(ctx context.Context, req *mcp
 		Document:        types.NewDocument(document),
 		DocumentVersion: types.NewDocumentVersion(documentVersion),
 	}, nil
+}
+
+func (r *Resolver) ListMeasureDocumentsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListMeasureDocumentsInput) (*mcp.CallToolResult, types.ListMeasureDocumentsOutput, error) {
+	r.MustAuthorize(ctx, input.MeasureID, probo.ActionMeasureGet)
+
+	prb := r.ProboService(ctx, input.MeasureID)
+
+	pageOrderBy := page.OrderBy[coredata.DocumentOrderField]{
+		Field:     coredata.DocumentOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.DocumentOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	docPage, err := prb.Documents.ListForMeasureID(ctx, input.MeasureID, cursor, coredata.NewDocumentFilter(nil))
+	if err != nil {
+		return nil, types.ListMeasureDocumentsOutput{}, fmt.Errorf("failed to list measure documents: %w", err)
+	}
+
+	return nil, types.NewListMeasureDocumentsOutput(docPage), nil
 }

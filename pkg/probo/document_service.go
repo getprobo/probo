@@ -1133,6 +1133,11 @@ func (s *DocumentService) BulkArchive(
 				return fmt.Errorf("cannot delete risk mappings: %w", err)
 			}
 
+			measureDocument := coredata.MeasureDocument{}
+			if err := measureDocument.DeleteByDocumentIDs(ctx, tx, s.svc.scope, documentIDs); err != nil {
+				return fmt.Errorf("cannot delete measure mappings: %w", err)
+			}
+
 			return documents.BulkArchive(ctx, tx, s.svc.scope)
 		},
 	)
@@ -1532,6 +1537,58 @@ func (s *DocumentService) ListForRiskID(
 	return page.NewPage(documents, cursor), nil
 }
 
+func (s *DocumentService) CountForMeasureID(
+	ctx context.Context,
+	measureID gid.GID,
+	filter *coredata.DocumentFilter,
+) (int, error) {
+	var count int
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) (err error) {
+			documents := &coredata.Documents{}
+			count, err = documents.CountByMeasureID(ctx, conn, s.svc.scope, measureID, filter)
+			if err != nil {
+				return fmt.Errorf("cannot count documents: %w", err)
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
+func (s *DocumentService) ListForMeasureID(
+	ctx context.Context,
+	measureID gid.GID,
+	cursor *page.Cursor[coredata.DocumentOrderField],
+	filter *coredata.DocumentFilter,
+) (*page.Page[*coredata.Document, coredata.DocumentOrderField], error) {
+	var documents coredata.Documents
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := documents.LoadByMeasureID(ctx, conn, s.svc.scope, measureID, cursor, filter); err != nil {
+				return fmt.Errorf("cannot list documents for measure: %w", err)
+			}
+			return nil
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return page.NewPage(documents, cursor), nil
+}
+
 func (s *DocumentService) Update(
 	ctx context.Context,
 	req UpdateDocumentRequest,
@@ -1616,6 +1673,11 @@ func (s *DocumentService) Archive(
 			riskDocument := coredata.RiskDocument{}
 			if err := riskDocument.DeleteByDocumentIDs(ctx, tx, s.svc.scope, []gid.GID{documentID}); err != nil {
 				return fmt.Errorf("cannot delete risk mappings: %w", err)
+			}
+
+			measureDocument := coredata.MeasureDocument{}
+			if err := measureDocument.DeleteByDocumentIDs(ctx, tx, s.svc.scope, []gid.GID{documentID}); err != nil {
+				return fmt.Errorf("cannot delete measure mappings: %w", err)
 			}
 
 			document.Status = coredata.DocumentStatusArchived

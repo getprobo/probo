@@ -837,6 +837,103 @@ WHERE rp.risk_id = @risk_id
 	return nil
 }
 
+func (p *Documents) CountByMeasureID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	measureID gid.GID,
+	filter *DocumentFilter,
+) (int, error) {
+	q := `
+WITH scoped_documents AS (
+	SELECT *
+	FROM documents
+	WHERE %s
+		AND deleted_at IS NULL
+		AND %s
+)
+SELECT COUNT(scoped_documents.id)
+FROM scoped_documents
+INNER JOIN measures_documents md ON scoped_documents.id = md.document_id
+WHERE md.measure_id = @measure_id
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
+
+	args := pgx.NamedArgs{"measure_id": measureID}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
+
+	row := conn.QueryRow(ctx, q, args)
+	var count int
+	if err := row.Scan(&count); err != nil {
+		return 0, fmt.Errorf("cannot scan count: %w", err)
+	}
+
+	return count, nil
+}
+
+func (p *Documents) LoadByMeasureID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	measureID gid.GID,
+	cursor *page.Cursor[DocumentOrderField],
+	filter *DocumentFilter,
+) error {
+	q := `
+WITH latest_versions AS (
+	SELECT DISTINCT ON (document_id) document_id, document_type
+	FROM document_versions
+	ORDER BY document_id, major DESC, minor DESC
+),
+scoped_documents AS (
+	SELECT *
+	FROM documents
+	WHERE %s
+		AND deleted_at IS NULL
+		AND %s
+		AND %s
+)
+SELECT
+	scoped_documents.id,
+	scoped_documents.organization_id,
+	scoped_documents.title,
+	scoped_documents.current_published_major,
+	scoped_documents.current_published_minor,
+	scoped_documents.trust_center_visibility,
+	scoped_documents.status,
+	scoped_documents.archived_at,
+	scoped_documents.created_at,
+	scoped_documents.updated_at,
+	COALESCE(lv.document_type, 'OTHER') AS document_type
+FROM scoped_documents
+INNER JOIN measures_documents md ON scoped_documents.id = md.document_id
+LEFT JOIN latest_versions lv ON lv.document_id = scoped_documents.id
+WHERE md.measure_id = @measure_id
+`
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
+
+	args := pgx.NamedArgs{"measure_id": measureID}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
+	maps.Copy(args, cursor.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query documents: %w", err)
+	}
+
+	documents, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Document])
+	if err != nil {
+		return fmt.Errorf("cannot collect documents: %w", err)
+	}
+
+	*p = documents
+
+	return nil
+}
+
 func (p *Documents) BulkSoftDelete(
 	ctx context.Context,
 	conn pg.Tx,

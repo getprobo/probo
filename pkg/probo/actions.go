@@ -154,13 +154,15 @@ const (
 	ActionControlObligationMappingDelete = "core:control:delete-obligation-mapping"
 
 	// Measure actions
-	ActionMeasureGet            = "core:measure:get"
-	ActionMeasureList           = "core:measure:list"
-	ActionMeasureCreate         = "core:measure:create"
-	ActionMeasureUpdate         = "core:measure:update"
-	ActionMeasureDelete         = "core:measure:delete"
-	ActionMeasureEvidenceUpload = "core:measure:upload-evidence"
-	ActionMeasureImport         = "core:measure:import"
+	ActionMeasureGet                   = "core:measure:get"
+	ActionMeasureList                  = "core:measure:list"
+	ActionMeasureCreate                = "core:measure:create"
+	ActionMeasureUpdate                = "core:measure:update"
+	ActionMeasureDelete                = "core:measure:delete"
+	ActionMeasureEvidenceUpload        = "core:measure:upload-evidence"
+	ActionMeasureImport                = "core:measure:import"
+	ActionMeasureDocumentMappingCreate = "core:measure:create-document-mapping"
+	ActionMeasureDocumentMappingDelete = "core:measure:delete-document-mapping"
 
 	// Task actions
 	ActionTaskGet      = "core:task:get"

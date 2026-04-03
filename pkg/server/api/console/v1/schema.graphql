@@ -2492,6 +2492,15 @@ type Measure implements Node {
         filter: ControlFilter
     ): ControlConnection! @goField(forceResolver: true)
 
+    documents(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: DocumentOrder
+        filter: DocumentFilter
+    ): DocumentConnection! @goField(forceResolver: true)
+
     createdAt: Datetime!
     updatedAt: Datetime!
 
@@ -3830,6 +3839,12 @@ type Mutation {
     deleteRiskDocumentMapping(
         input: DeleteRiskDocumentMappingInput!
     ): DeleteRiskDocumentMappingPayload!
+    createMeasureDocumentMapping(
+        input: CreateMeasureDocumentMappingInput!
+    ): CreateMeasureDocumentMappingPayload!
+    deleteMeasureDocumentMapping(
+        input: DeleteMeasureDocumentMappingInput!
+    ): DeleteMeasureDocumentMappingPayload!
     createRiskObligationMapping(
         input: CreateRiskObligationMappingInput!
     ): CreateRiskObligationMappingPayload!
@@ -4568,6 +4583,16 @@ input CreateRiskDocumentMappingInput {
 
 input DeleteRiskDocumentMappingInput {
     riskId: ID!
+    documentId: ID!
+}
+
+input CreateMeasureDocumentMappingInput {
+    measureId: ID!
+    documentId: ID!
+}
+
+input DeleteMeasureDocumentMappingInput {
+    measureId: ID!
     documentId: ID!
 }
 
@@ -5328,6 +5353,16 @@ type CreateRiskDocumentMappingPayload {
 
 type DeleteRiskDocumentMappingPayload {
     deletedRiskId: ID!
+    deletedDocumentId: ID!
+}
+
+type CreateMeasureDocumentMappingPayload {
+    measureEdge: MeasureEdge!
+    documentEdge: DocumentEdge!
+}
+
+type DeleteMeasureDocumentMappingPayload {
+    deletedMeasureId: ID!
     deletedDocumentId: ID!
 }
 

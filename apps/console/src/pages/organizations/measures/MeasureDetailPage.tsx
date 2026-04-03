@@ -26,6 +26,7 @@ import {
   DropdownItem,
   IconCheckmark1,
   IconFrame2,
+  IconPageCheck,
   IconPageTextLine,
   IconPencil,
   IconTrashCan,
@@ -50,17 +51,58 @@ import {
 } from "react-relay";
 import { Outlet, useNavigate, useParams } from "react-router";
 
+import type { MeasureDetailPageNodeQuery } from "#/__generated__/core/MeasureDetailPageNodeQuery.graphql";
 import type { MeasureDetailPageTasksCountQuery } from "#/__generated__/core/MeasureDetailPageTasksCountQuery.graphql";
-import type { MeasureGraphNodeQuery } from "#/__generated__/core/MeasureGraphNodeQuery.graphql";
 import {
   MeasureConnectionKey,
-  measureNodeQuery,
   useDeleteMeasureMutation,
   useUpdateMeasure,
 } from "#/hooks/graph/MeasureGraph";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import MeasureFormDialog from "./dialog/MeasureFormDialog";
+import { controlsFragment } from "./tabs/MeasureControlsTab";
+import { documentsFragment } from "./tabs/MeasureDocumentsTab";
+import { evidencesFragment } from "./tabs/MeasureEvidencesTab";
+import { risksFragment } from "./tabs/MeasureRisksTab";
+
+void controlsFragment;
+void documentsFragment;
+void evidencesFragment;
+void risksFragment;
+
+export const measureNodeQuery = graphql`
+  query MeasureDetailPageNodeQuery($measureId: ID!) {
+    node(id: $measureId) {
+      ... on Measure {
+        name
+        description
+        state
+        category
+        canUpdate: permission(action: "core:measure:update")
+        canDelete: permission(action: "core:measure:delete")
+        canListTasks: permission(action: "core:task:list")
+        evidencesInfos: evidences(first: 0) {
+          totalCount
+        }
+        risksInfos: risks(first: 0) {
+          totalCount
+        }
+        controlsInfos: controls(first: 0) {
+          totalCount
+        }
+        documentsInfos: documents(first: 0) {
+          totalCount
+        }
+        ...MeasureRisksTabFragment
+        ...MeasureControlsTabFragment
+        ...MeasureDocumentsTabFragment
+        ...MeasureFormDialogMeasureFragment
+        ...MeasureEvidencesTabFragment
+      }
+    }
+  }
+`;
 
 const tasksCountQuery = graphql`
   query MeasureDetailPageTasksCountQuery($measureId: ID!) {
@@ -84,7 +126,7 @@ function TasksCountBadge({ measureId }: { measureId: string }) {
 }
 
 type Props = {
-  queryRef: PreloadedQuery<MeasureGraphNodeQuery>;
+  queryRef: PreloadedQuery<MeasureDetailPageNodeQuery>;
 };
 
 export default function MeasureDetailPage(props: Props) {
@@ -106,6 +148,7 @@ export default function MeasureDetailPage(props: Props) {
   const evidencesCount = measure.evidencesInfos?.totalCount ?? 0;
   const controlsCount = measure.controlsInfos?.totalCount ?? 0;
   const risksCount = measure.risksInfos?.totalCount ?? 0;
+  const documentsCount = measure.documentsInfos?.totalCount ?? 0;
 
   const onDelete = () => {
     const connectionId = ConnectionHandler.getConnectionID(
@@ -212,7 +255,7 @@ export default function MeasureDetailPage(props: Props) {
         <TabLink
           to={`/organizations/${organizationId}/measures/${measureId}/evidences`}
         >
-          <IconPageTextLine size={20} />
+          <IconPageCheck size={20} />
           {__("Evidences")}
           <TabBadge>{evidencesCount}</TabBadge>
         </TabLink>
@@ -240,6 +283,13 @@ export default function MeasureDetailPage(props: Props) {
           <IconWarning size={20} />
           {__("Risks")}
           <TabBadge>{risksCount}</TabBadge>
+        </TabLink>
+        <TabLink
+          to={`/organizations/${organizationId}/measures/${measureId}/documents`}
+        >
+          <IconPageTextLine size={20} />
+          {__("Documents")}
+          <TabBadge>{documentsCount}</TabBadge>
         </TabLink>
       </Tabs>
 

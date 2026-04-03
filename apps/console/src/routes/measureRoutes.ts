@@ -22,11 +22,11 @@ import { Fragment } from "react";
 import { loadQuery } from "react-relay";
 import { redirect } from "react-router";
 
-import type { MeasureGraphNodeQuery } from "#/__generated__/core/MeasureGraphNodeQuery.graphql";
+import type { MeasureDetailPageNodeQuery } from "#/__generated__/core/MeasureDetailPageNodeQuery.graphql";
 import { LinkCardSkeleton } from "#/components/skeletons/LinkCardSkeleton";
 import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
 import { coreEnvironment } from "#/environments";
-import { measureNodeQuery } from "#/hooks/graph/MeasureGraph";
+import { measureNodeQuery } from "#/pages/organizations/measures/MeasureDetailPage";
 
 export const measureRoutes = [
   {
@@ -41,7 +41,7 @@ export const measureRoutes = [
     path: "measures/:measureId",
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ measureId }) =>
-      loadQuery<MeasureGraphNodeQuery>(coreEnvironment, measureNodeQuery, {
+      loadQuery<MeasureDetailPageNodeQuery>(coreEnvironment, measureNodeQuery, {
         measureId: measureId,
       }),
     ),
@@ -87,6 +87,14 @@ export const measureRoutes = [
         Component: lazy(
           () =>
             import("#/pages/organizations/measures/tabs/MeasureEvidencesTab"),
+        ),
+      },
+      {
+        path: "documents",
+        Fallback: LinkCardSkeleton,
+        Component: lazy(
+          () =>
+            import("#/pages/organizations/measures/tabs/MeasureDocumentsTab"),
         ),
       },
     ],

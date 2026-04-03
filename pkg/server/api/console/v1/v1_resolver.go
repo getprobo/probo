@@ -1601,6 +1601,13 @@ func (r *documentConnectionResolver) TotalCount(ctx context.Context, obj *types.
 			return 0, gqlutils.Internal(ctx)
 		}
 		return count, nil
+	case *measureResolver:
+		count, err := prb.Documents.CountForMeasureID(ctx, obj.ParentID, obj.Filters)
+		if err != nil {
+			r.logger.ErrorCtx(ctx, "cannot count documents", log.Error(err))
+			return 0, gqlutils.Internal(ctx)
+		}
+		return count, nil
 	}
 
 	r.logger.ErrorCtx(ctx, "unsupported resolver")
@@ -2809,6 +2816,43 @@ func (r *measureResolver) Controls(ctx context.Context, obj *types.Measure, firs
 	}
 
 	return types.NewControlConnection(page, r, obj.ID, controlFilter), nil
+}
+
+// Documents is the resolver for the documents field.
+func (r *measureResolver) Documents(ctx context.Context, obj *types.Measure, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentOrderBy, filter *types.DocumentFilter) (*types.DocumentConnection, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionDocumentList); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.DocumentOrderField]{
+		Field:     coredata.DocumentOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.DocumentOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	var documentFilter = coredata.NewDocumentFilter(nil)
+	if filter != nil {
+		documentFilter = coredata.NewDocumentFilter(filter.Query).
+			WithDocumentTypes(filter.DocumentTypes).
+			WithClassifications(filter.Classifications)
+	}
+
+	pg, err := prb.Documents.ListForMeasureID(ctx, obj.ID, cursor, documentFilter)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list documents", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewDocumentConnection(pg, r, obj.ID, documentFilter), nil
 }
 
 // Permission is the resolver for the permission field.
@@ -4822,6 +4866,50 @@ func (r *mutationResolver) DeleteRiskDocumentMapping(ctx context.Context, input 
 
 	return &types.DeleteRiskDocumentMappingPayload{
 		DeletedRiskID:     risk.ID,
+		DeletedDocumentID: document.ID,
+	}, nil
+}
+
+// CreateMeasureDocumentMapping is the resolver for the createMeasureDocumentMapping field.
+func (r *mutationResolver) CreateMeasureDocumentMapping(ctx context.Context, input types.CreateMeasureDocumentMappingInput) (*types.CreateMeasureDocumentMappingPayload, error) {
+	if err := r.authorize(ctx, input.MeasureID, probo.ActionMeasureDocumentMappingCreate); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, input.MeasureID.TenantID())
+
+	measure, document, err := prb.Measures.CreateDocumentMapping(ctx, input.MeasureID, input.DocumentID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
+			return nil, gqlutils.Conflict(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot create measure document mapping", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.CreateMeasureDocumentMappingPayload{
+		MeasureEdge:  types.NewMeasureEdge(measure, coredata.MeasureOrderFieldCreatedAt),
+		DocumentEdge: types.NewDocumentEdge(document, coredata.DocumentOrderFieldTitle),
+	}, nil
+}
+
+// DeleteMeasureDocumentMapping is the resolver for the deleteMeasureDocumentMapping field.
+func (r *mutationResolver) DeleteMeasureDocumentMapping(ctx context.Context, input types.DeleteMeasureDocumentMappingInput) (*types.DeleteMeasureDocumentMappingPayload, error) {
+	if err := r.authorize(ctx, input.MeasureID, probo.ActionMeasureDocumentMappingDelete); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, input.MeasureID.TenantID())
+
+	measure, document, err := prb.Measures.DeleteDocumentMapping(ctx, input.MeasureID, input.DocumentID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot delete measure document mapping", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.DeleteMeasureDocumentMappingPayload{
+		DeletedMeasureID:  measure.ID,
 		DeletedDocumentID: document.ID,
 	}, nil
 }

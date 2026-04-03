@@ -945,3 +945,93 @@ func TestRiskObligationMapping_CreateDelete(t *testing.T) {
 		require.NoError(t, err)
 	})
 }
+
+func TestMeasureDocumentMapping_CreateDelete(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	measureID := factory.NewMeasure(owner).Create()
+
+	t.Run("create mapping", func(t *testing.T) {
+		t.Parallel()
+		documentID := factory.NewDocument(owner).Create()
+
+		var result struct {
+			CreateMeasureDocumentMapping struct {
+				MeasureEdge struct {
+					Node struct {
+						ID string `json:"id"`
+					} `json:"node"`
+				} `json:"measureEdge"`
+				DocumentEdge struct {
+					Node struct {
+						ID string `json:"id"`
+					} `json:"node"`
+				} `json:"documentEdge"`
+			} `json:"createMeasureDocumentMapping"`
+		}
+		err := owner.Execute(`
+			mutation($input: CreateMeasureDocumentMappingInput!) {
+				createMeasureDocumentMapping(input: $input) {
+					measureEdge {
+						node {
+							id
+						}
+					}
+					documentEdge {
+						node {
+							id
+						}
+					}
+				}
+			}
+		`, map[string]any{
+			"input": map[string]any{
+				"measureId":  measureID,
+				"documentId": documentID,
+			},
+		}, &result)
+		require.NoError(t, err)
+		assert.Equal(t, measureID, result.CreateMeasureDocumentMapping.MeasureEdge.Node.ID)
+		assert.Equal(t, documentID, result.CreateMeasureDocumentMapping.DocumentEdge.Node.ID)
+	})
+
+	t.Run("delete mapping", func(t *testing.T) {
+		t.Parallel()
+		documentID := factory.NewDocument(owner).Create()
+
+		// Create the mapping first
+		_, err := owner.Do(`
+			mutation($input: CreateMeasureDocumentMappingInput!) {
+				createMeasureDocumentMapping(input: $input) {
+					documentEdge {
+						node {
+							id
+						}
+					}
+				}
+			}
+		`, map[string]any{
+			"input": map[string]any{
+				"measureId":  measureID,
+				"documentId": documentID,
+			},
+		})
+		require.NoError(t, err)
+
+		// Delete it
+		_, err = owner.Do(`
+			mutation($input: DeleteMeasureDocumentMappingInput!) {
+				deleteMeasureDocumentMapping(input: $input) {
+					deletedMeasureId
+					deletedDocumentId
+				}
+			}
+		`, map[string]any{
+			"input": map[string]any{
+				"measureId":  measureID,
+				"documentId": documentID,
+			},
+		})
+		require.NoError(t, err)
+	})
+}
