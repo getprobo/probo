@@ -15,11 +15,6 @@ import {
   safeLinkHref,
 } from "./htmlBlock";
 
-const tableSeparatorPattern =
-  /^\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)*\|?\s*$/m;
-const markdownLinePattern =
-  /(?:^```\w*$|^#{1,6}\s|^>\s|^[-+*]\s|^\d+\.\s|^(?:---|___|\*\*\*)\s*$)/m;
-
 function unescapeHtml(html: string): string {
   return html
     .replace(/&lt;/g, "<")
@@ -410,10 +405,6 @@ class Converter {
 
     return nodes;
   }
-}
-
-export function hasMarkdown(text: string): boolean {
-  return markdownLinePattern.test(text) || tableSeparatorPattern.test(text);
 }
 
 export function parseInlineContent(
