@@ -9,7 +9,7 @@ export const tableColumnMenuVariants = tv({
     trigger: [
       "z-20 flex items-center justify-center",
       "rounded text-txt-tertiary bg-subtle hover:bg-border-solid cursor-grab",
-      "py-0.5 h-3",
+      "py-0.5 h-2",
     ],
     menu: ["rounded-lg border border-border-mid bg-level-0 p-1 shadow-mid z-30"],
   },

@@ -67,10 +67,10 @@ const extensions = [
 ];
 
 const richEditorVariants = tv({
-  base: ["relative flex-1 pb-14"],
+  base: ["relative flex-1 py-14 pr-8 bg-level-1 shadow-base"],
   variants: {
     disabled: {
-      true: "",
+      true: "pl-8",
       false: "pl-14",
     },
   },
@@ -83,7 +83,7 @@ type RichEditorProps = ComponentProps<"div"> & {
 };
 
 export function RichEditor(props: RichEditorProps) {
-  const { className, content, disabled = false, onChangeContent } = props;
+  const { className, content, disabled = false, onChangeContent, ...divProps } = props;
 
   const handleUpdate = useCallback(
     ({ editor }: { editor: Editor }) => {
@@ -112,7 +112,7 @@ export function RichEditor(props: RichEditorProps) {
   if (!editor) return null;
 
   return (
-    <div className={richEditorVariants({ className, disabled })}>
+    <div className={richEditorVariants({ className, disabled })} {...divProps}>
       {!disabled
         && (
           <>

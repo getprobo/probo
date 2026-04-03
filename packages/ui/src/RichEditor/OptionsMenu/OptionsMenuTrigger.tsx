@@ -37,7 +37,7 @@ export function OptionsMenuTrigger({
   menuRefs,
   getReferenceProps,
 }: OptionsMenuTriggerProps) {
-  const { triggerRefs, triggerStyles, isPositioned } = useBlockTrigger(hoveredBlock, 16);
+  const { triggerRefs, triggerStyles, isPositioned } = useBlockTrigger(hoveredBlock, 12);
 
   const onDragStart = (e: DragEvent<HTMLButtonElement>) => {
     if (!hoveredBlock) return;
@@ -91,7 +91,7 @@ export function OptionsMenuTrigger({
       }}
       className={trigger()}
     >
-      <DotsSixVerticalIcon size={20} weight="bold" />
+      <DotsSixVerticalIcon size={16} weight="bold" />
     </button>
   );
 }

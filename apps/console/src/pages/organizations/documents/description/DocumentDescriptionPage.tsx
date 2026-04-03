@@ -124,6 +124,7 @@ export function DocumentDescriptionPage(props: { queryRef: PreloadedQuery<Docume
     <RichEditor
       className="flex-1"
       content={currentVersion.content}
+      data-theme="document"
       disabled={currentVersion.status !== "DRAFT"}
       onChangeContent={handleUpdate}
     />

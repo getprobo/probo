@@ -145,7 +145,7 @@ export function TableColumnMenuTrigger({
     strategy: "fixed",
     placement: "top",
     middleware: [
-      offset(6),
+      offset(4),
       size({
         apply({ rects, elements }) {
           Object.assign(elements.floating.style, {

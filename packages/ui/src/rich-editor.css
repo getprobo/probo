@@ -6,7 +6,7 @@
 
 .tiptap {
     p {
-        @apply my-2 min-w-0.5;
+        @apply my-2 min-w-0.5 font-light text-sm;
         code { @apply py-0.5 px-1; }
     }
 
@@ -68,7 +68,7 @@
         }
         th {
             @apply px-2 py-1.5 border border-border-mid border-collapse bg-subtle text-left font-semibold relative;
-            p { @apply m-0; }
+            p { @apply m-0 font-medium; }
         }
         td {
             @apply px-2 py-1.5 border border-border-mid border-collapse bg-level-0 text-left relative;

@@ -85,7 +85,7 @@ export function Layout({
               hasDrawer && "pr-105",
             )}
           >
-            <div className="py-12 px-8 max-w-[1200px] w-full mx-auto h-full">
+            <div className="py-12 px-8 max-w-[1200px] w-full mx-auto min-h-[calc(100vh-48px)]">
               {children}
             </div>
           </main>

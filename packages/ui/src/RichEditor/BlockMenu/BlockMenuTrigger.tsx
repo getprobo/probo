@@ -19,7 +19,7 @@ type BlockMenuTriggerProps = {
 };
 
 export function BlockMenuTrigger({ editor, hoveredBlock }: BlockMenuTriggerProps) {
-  const { triggerRefs, triggerStyles, isPositioned } = useBlockTrigger(hoveredBlock, 40);
+  const { triggerRefs, triggerStyles, isPositioned } = useBlockTrigger(hoveredBlock, 32);
 
   const handleTriggerClick = () => {
     try {
@@ -81,7 +81,7 @@ export function BlockMenuTrigger({ editor, hoveredBlock }: BlockMenuTriggerProps
       }}
       className={trigger()}
     >
-      <PlusIcon size={16} weight="bold" />
+      <PlusIcon size={14} weight="bold" />
     </button>
   );
 }
