@@ -146,15 +146,7 @@ func NewMux(
 				panic(fmt.Errorf("cannot initiate connector: %w", err))
 			}
 
-			// Allow external redirects for OAuth providers
-			var oauthSafeRedirect *saferedirect.SafeRedirect
-			switch provider {
-			case "SLACK":
-				oauthSafeRedirect = saferedirect.New(saferedirect.StaticHosts("slack.com"))
-			case "GOOGLE_WORKSPACE":
-				oauthSafeRedirect = saferedirect.New(saferedirect.StaticHosts("accounts.google.com"))
-			}
-			oauthSafeRedirect.Redirect(w, r, redirectURL, "/", http.StatusSeeOther)
+			http.Redirect(w, r, redirectURL, http.StatusSeeOther)
 		})
 
 		r.Get("/connectors/complete", func(w http.ResponseWriter, r *http.Request) {
