@@ -1,4 +1,4 @@
-name: Release
+name: "Release"
 
 on:
   push:
@@ -6,80 +6,313 @@ on:
       - "v*"
 
 permissions:
-  contents: write
-  packages: write
-  id-token: write
-  attestations: write
-  security-events: write
+  contents: "read"
 
 jobs:
-  github-release:
-    runs-on: "ubuntu-24.04-64cores"
-    outputs:
-      hashes: ${{ steps.hash.outputs.hashes }}
-      image-digest: ${{ steps.image.outputs.digest }}
+  # ── Build frontend apps ──────────────────────────────────────────────
+  build-apps:
+    name: "build-apps"
+    runs-on: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache"
+    permissions:
+      contents: "read"
     steps:
-      - name: Checkout
-        uses: actions/checkout@v6
+      - uses: "actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd" # v6
         with:
-          fetch-depth: 0
           submodules: recursive
-
-      - name: Set up Go
-        uses: actions/setup-go@v6
+      - uses: "runs-on/action@742bf56072eb4845a0f94b3394673e4903c90ff0" # v2
+      - uses: "./.github/actions/setup"
         with:
-          go-version: "1.26.1"
-          cache: true
-
-      - run: "go mod download"
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v6
+          go: "false"
+      - run: "npm --workspace @probo/emails run build"
+      - name: "Build console"
+        run: |
+          npm --workspace @probo/console run relay
+          npm --workspace @probo/console run check
+          NODE_ENV=production npm --workspace @probo/console run build
+      - name: "Build trust"
+        run: |
+          npm --workspace @probo/trust run relay
+          npm --workspace @probo/trust run check
+          NODE_ENV=production npm --workspace @probo/trust run build
+      - uses: "actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f" # v7
         with:
-          node-version-file: ".nvmrc"
-          cache: "npm"
+          name: "frontend-apps"
+          path: |
+            apps/console/dist/
+            apps/trust/dist/
+            packages/emails/dist/
+          retention-days: 1
 
-      - name: Update npm
-        run: npm i -g npm@11.8.0
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Install Cosign
-        uses: sigstore/cosign-installer@faadad0cce49287aee09b3a48701e75088a2c6ad # v4.0.0
+  # ── Build Go binaries (matrix by GOOS/GOARCH) ───────────────────────
+  build-binary:
+    name: "binary (${{ matrix.goos }}/${{ matrix.goarch }})"
+    needs: [build-apps]
+    runs-on: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache"
+    permissions:
+      contents: "read"
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { goos: linux, goarch: amd64 }
+          - { goos: linux, goarch: arm64 }
+          - { goos: darwin, goarch: amd64 }
+          - { goos: darwin, goarch: arm64 }
+          - { goos: windows, goarch: amd64 }
+          - { goos: freebsd, goarch: amd64 }
+          - { goos: freebsd, goarch: arm64 }
+          - { goos: openbsd, goarch: amd64 }
+          - { goos: openbsd, goarch: arm64 }
+    steps:
+      - uses: "actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd" # v6
         with:
-          cosign-release: "v3.0.4" 
-
-      - name: Initialize Cosign TUF root
-        run: cosign initialize
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4.0.0
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@ce360397dd3f832beb865e1373c09c0e9f86d70a # v4.0.0
+          submodules: recursive
+      - uses: "runs-on/action@742bf56072eb4845a0f94b3394673e4903c90ff0" # v2
+      - uses: "./.github/actions/setup"
         with:
-          platforms: all
+          node: "false"
+      - uses: "actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c" # v8
+        with:
+          name: "frontend-apps"
+      - name: "Generate Go code"
+        run: |
+          go generate ./pkg/server/api/connect/v1
+          go generate ./pkg/server/api/console/v1
+          go generate ./pkg/server/api/trust/v1
+          go generate ./pkg/server/api/mcp/v1
+      - name: "Build binaries"
+        env:
+          CGO_ENABLED: "0"
+          GOOS: "${{ matrix.goos }}"
+          GOARCH: "${{ matrix.goarch }}"
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          EXT=""
+          if [ "$GOOS" = "windows" ]; then EXT=".exe"; fi
 
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
+          go build -ldflags "-s -w -X 'main.version=${VERSION}' -X 'main.env=prod'" \
+            -gcflags="-e" -o "dist/probod${EXT}" ./cmd/probod/main.go
+
+          go build -ldflags "-s -w" \
+            -gcflags="-e" -o "dist/probod-bootstrap${EXT}" ./cmd/probod-bootstrap/main.go
+
+          go build -ldflags "-s -w -X 'main.version=${VERSION}'" \
+            -gcflags="-e" -o "dist/prb${EXT}" ./cmd/prb/main.go
+      - name: "Create archives"
+        env:
+          GOOS: "${{ matrix.goos }}"
+          GOARCH: "${{ matrix.goarch }}"
+        run: |
+          case "$GOOS" in
+            linux)   OS="Linux" ;;
+            darwin)  OS="Darwin" ;;
+            windows) OS="Windows" ;;
+            freebsd) OS="Freebsd" ;;
+            openbsd) OS="Openbsd" ;;
+          esac
+          case "$GOARCH" in
+            amd64) ARCH="x86_64" ;;
+            *)     ARCH="$GOARCH" ;;
+          esac
+          EXT=""
+          if [ "$GOOS" = "windows" ]; then EXT=".exe"; fi
+
+          mkdir -p archives
+
+          PROBOD_DIR="probod_${OS}_${ARCH}"
+          mkdir -p "staging/${PROBOD_DIR}"
+          cp "dist/probod${EXT}" "dist/probod-bootstrap${EXT}" "dist/prb${EXT}" \
+            README.md LICENSE CHANGELOG.md "staging/${PROBOD_DIR}/"
+          if [ "$GOOS" = "windows" ]; then
+            (cd staging && zip -r "../archives/${PROBOD_DIR}.zip" "${PROBOD_DIR}")
+          else
+            tar -czf "archives/${PROBOD_DIR}.tar.gz" -C staging "${PROBOD_DIR}"
+          fi
+
+          PRB_DIR="prb_${OS}_${ARCH}"
+          mkdir -p "staging/${PRB_DIR}"
+          cp "dist/prb${EXT}" README.md LICENSE CHANGELOG.md "staging/${PRB_DIR}/"
+          if [ "$GOOS" = "windows" ]; then
+            (cd staging && zip -r "../archives/${PRB_DIR}.zip" "${PRB_DIR}")
+          else
+            tar -czf "archives/${PRB_DIR}.tar.gz" -C staging "${PRB_DIR}"
+          fi
+      - uses: "actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f" # v7
+        with:
+          name: "binary-${{ matrix.goos }}-${{ matrix.goarch }}"
+          path: "dist/"
+          retention-days: 1
+      - uses: "actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f" # v7
+        with:
+          name: "archive-${{ matrix.goos }}-${{ matrix.goarch }}"
+          path: "archives/"
+          retention-days: 1
+
+  # ── Build Docker images (matrix by architecture) ─────────────────────
+  build-docker:
+    name: "docker (${{ matrix.arch }})"
+    needs: [build-binary]
+    runs-on: "runs-on=${{ github.run_id }}/runner=${{ matrix.runner }}/extras=s3-cache"
+    permissions:
+      contents: "read"
+      packages: "write"
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            platform: "linux/amd64"
+            runner: "4cpu-linux-x64"
+          - arch: arm64
+            platform: "linux/arm64"
+            runner: "4cpu-linux-arm64"
+    steps:
+      - uses: "actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd" # v6
+      - uses: "runs-on/action@742bf56072eb4845a0f94b3394673e4903c90ff0" # v2
+      - uses: "docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd" # v4.0.0
+      - uses: "docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2" # v4.0.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@ec59f474b9834571250b370d4735c50f8e2d1e29 # v7.0.0
+      - uses: "actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c" # v8
         with:
-          distribution: goreleaser
-          version: "~> v2"
-          args: release --clean
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          HOMEBREW_TAP_GITHUB_TOKEN: ${{ secrets.HOMEBREW_TAP_GITHUB_TOKEN }}
+          name: "binary-linux-${{ matrix.arch }}"
+          path: "linux/${{ matrix.arch }}"
+      - name: "Prepare binaries"
+        run: "chmod +x linux/${{ matrix.arch }}/*"
+      - name: "Build and push Docker image"
+        run: |
+          docker buildx build \
+            --platform "${{ matrix.platform }}" \
+            --label "org.opencontainers.image.title=probod" \
+            --label "org.opencontainers.image.description=Probo compliance management platform" \
+            --label "org.opencontainers.image.url=https://github.com/getprobo/probo" \
+            --label "org.opencontainers.image.source=https://github.com/getprobo/probo" \
+            --label "org.opencontainers.image.version=${{ github.ref_name }}" \
+            --label "org.opencontainers.image.revision=${{ github.sha }}" \
+            --label "org.opencontainers.image.licenses=MIT" \
+            --tag "ghcr.io/getprobo/probo:${{ github.ref_name }}-${{ matrix.arch }}" \
+            --push \
+            .
 
-      - name: Scan Docker image with Trivy
-        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
+  # ── Create multi-arch Docker manifest and sign ──────────────────────
+  docker-manifest:
+    name: "docker-manifest"
+    needs: [build-docker]
+    runs-on: "runs-on=${{ github.run_id }}/runner=2cpu-linux-x64/extras=s3-cache"
+    permissions:
+      packages: "write"
+      id-token: "write"
+    outputs:
+      digest: ${{ steps.digest.outputs.digest }}
+    steps:
+      - uses: "runs-on/action@742bf56072eb4845a0f94b3394673e4903c90ff0" # v2
+      - uses: "docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd" # v4.0.0
+      - uses: "docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2" # v4.0.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: "sigstore/cosign-installer@faadad0cce49287aee09b3a48701e75088a2c6ad" # v4.0.0
+      - name: "Create and push manifest"
+        run: |
+          docker buildx imagetools create \
+            --tag "ghcr.io/getprobo/probo:${{ github.ref_name }}" \
+            --tag "ghcr.io/getprobo/probo:latest" \
+            "ghcr.io/getprobo/probo:${{ github.ref_name }}-amd64" \
+            "ghcr.io/getprobo/probo:${{ github.ref_name }}-arm64"
+      - name: "Get manifest digest"
+        id: digest
+        run: |
+          DIGEST=$(docker buildx imagetools inspect "ghcr.io/getprobo/probo:${{ github.ref_name }}" --format '{{json .Manifest.Digest}}' | jq -r)
+          echo "digest=$DIGEST" >> "$GITHUB_OUTPUT"
+      - name: "Sign Docker manifest"
+        run: cosign sign "ghcr.io/getprobo/probo@${{ steps.digest.outputs.digest }}" --yes
+
+  # ── Create GitHub release ───────────────────────────────────────────
+  github-release:
+    name: "github-release"
+    needs: [build-binary]
+    runs-on: "runs-on=${{ github.run_id }}/runner=2cpu-linux-x64/extras=s3-cache"
+    permissions:
+      contents: "write"
+      id-token: "write"
+    steps:
+      - uses: "actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd" # v6
+        with:
+          fetch-depth: 0
+      - uses: "runs-on/action@742bf56072eb4845a0f94b3394673e4903c90ff0" # v2
+      - uses: "sigstore/cosign-installer@faadad0cce49287aee09b3a48701e75088a2c6ad" # v4.0.0
+      - uses: "actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c" # v8
+        with:
+          pattern: "archive-*"
+          path: "archives"
+          merge-multiple: true
+      - name: "Generate checksums and sign"
+        run: |
+          cd archives
+          sha256sum *.tar.gz *.zip > checksums.txt
+          cosign sign-blob --bundle="checksums.txt.bundle" checksums.txt --yes
+      - name: "Generate release notes"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh api "repos/${{ github.repository }}/releases/generate-notes" \
+            -f tag_name="${{ github.ref_name }}" \
+            --jq '.body' > release-notes.md
+
+          cat >> release-notes.md << EOF
+
+          ## Docker Images
+          - \`ghcr.io/getprobo/probo:${{ github.ref_name }}\` (multi-arch: linux/amd64, linux/arm64)
+          - \`ghcr.io/getprobo/probo:latest\` (multi-arch: linux/amd64, linux/arm64)
+          EOF
+      - name: "Create GitHub release"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PRERELEASE_FLAG=""
+          if echo "${{ github.ref_name }}" | grep -qE '(alpha|beta|rc)'; then
+            PRERELEASE_FLAG="--prerelease"
+          fi
+
+          gh release delete "${{ github.ref_name }}" --yes 2>/dev/null || true
+
+          gh release create "${{ github.ref_name }}" \
+            --title "${{ github.ref_name }}" \
+            --notes-file release-notes.md \
+            $PRERELEASE_FLAG \
+            archives/*
+
+  # ── Security scan, SBOM, and attestations ───────────────────────────
+  security-scan:
+    name: "security-scan"
+    needs: [docker-manifest, github-release]
+    runs-on: "runs-on=${{ github.run_id }}/runner=2cpu-linux-x64/extras=s3-cache"
+    permissions:
+      contents: "read"
+      packages: "write"
+      id-token: "write"
+      attestations: "write"
+      security-events: "write"
+    steps:
+      - uses: "actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd" # v6
+        with:
+          submodules: recursive
+      - uses: "runs-on/action@742bf56072eb4845a0f94b3394673e4903c90ff0" # v2
+      - uses: "docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2" # v4.0.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: "actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c" # v8
+        with:
+          pattern: "archive-*"
+          path: "archives"
+          merge-multiple: true
+      - name: "Scan Docker image with Trivy"
+        uses: "aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1" # 0.35.0
         with:
           image-ref: "ghcr.io/getprobo/probo:${{ github.ref_name }}"
           format: "sarif"
@@ -88,114 +321,168 @@ jobs:
           ignore-unfixed: true
           vuln-type: "os,library"
           severity: "CRITICAL,HIGH"
-
-      - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@6bc82e05fd0ea64601dd4b465378bbcf57de0314 # v4.32.1
+      - name: "Upload Trivy scan results"
+        uses: "github/codeql-action/upload-sarif@6bc82e05fd0ea64601dd4b465378bbcf57de0314" # v4.32.1
         if: always()
         with:
           sarif_file: "trivy-results.sarif"
-
-      - name: Generate SBOM
-        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 #v0.24.0
+      - name: "Generate SBOM"
+        uses: "anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610" # v0.24.0
         with:
           path: ./
           format: cyclonedx-json
           output-file: sbom.json
-
-      - name: Run vulnerability scan
-        uses: anchore/scan-action@e1165082ffb1fe366ebaf02d8526e7c4989ea9d2 #v7.4.0
+      - name: "Run vulnerability scan"
+        uses: "anchore/scan-action@e1165082ffb1fe366ebaf02d8526e7c4989ea9d2" # v7.4.0
         with:
           sbom: "sbom.json"
           fail-build: true
           severity-cutoff: critical
-
-      - name: Generate subject for attestation
-        id: hash
-        run: |
-          set -euo pipefail
-          (
-            cd dist
-            find . -type f -name '*.tar.gz' -o -name '*.zip' | while read file; do
-              echo "$(sha256sum "$file" | head -c 64)  $file"
-            done
-          ) > checksums.txt
-          echo "hashes=$(cat checksums.txt | base64 -w0)" >> "$GITHUB_OUTPUT"
-
-      - name: Attest SBOM
-        uses: actions/attest-sbom@v4
+      - name: "Attest SBOM for archives"
+        uses: "actions/attest-sbom@c604332985a26aa8cf1bdc465b92731239ec6b9e" # v4
         with:
-          subject-path: "dist/*.tar.gz, dist/*.zip"
+          subject-path: "archives/*.tar.gz, archives/*.zip"
           sbom-path: "sbom.json"
-
-      - name: Attest build provenance
-        uses: actions/attest-build-provenance@v4
+      - name: "Attest build provenance for archives"
+        uses: "actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32" # v4
         with:
-          subject-path: "dist/*.tar.gz, dist/*.zip"
-
-      - name: Get image digest
-        id: image
-        run: |
-          echo "Getting image digest..."
-          DIGEST=$(docker buildx imagetools inspect ghcr.io/getprobo/probo:${{ github.ref_name }} --format '{{json .Manifest.Digest}}' | jq -r)
-          echo "Successfully retrieved digest: $DIGEST"
-          echo "digest=$DIGEST" >> "$GITHUB_OUTPUT"
-
-      - name: Attest Docker image SBOM
-        uses: actions/attest-sbom@v4
+          subject-path: "archives/*.tar.gz, archives/*.zip"
+      - name: "Attest Docker image SBOM"
+        uses: "actions/attest-sbom@c604332985a26aa8cf1bdc465b92731239ec6b9e" # v4
         with:
           subject-name: "ghcr.io/getprobo/probo"
-          subject-digest: ${{ steps.image.outputs.digest }}
+          subject-digest: ${{ needs.docker-manifest.outputs.digest }}
           sbom-path: "sbom.json"
-
-      - name: Upload SBOM as artifact
-        uses: actions/upload-artifact@v7
+      - uses: "actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f" # v7
         with:
-          name: sbom
-          path: |
-            sbom.json
-            checksums.txt
+          name: "sbom"
+          path: "sbom.json"
           retention-days: 30
 
+  # ── Publish Homebrew formula ────────────────────────────────────────
+  homebrew:
+    name: "homebrew"
+    needs: [github-release]
+    runs-on: "runs-on=${{ github.run_id }}/runner=2cpu-linux-x64/extras=s3-cache"
+    permissions:
+      contents: "read"
+    steps:
+      - uses: "runs-on/action@742bf56072eb4845a0f94b3394673e4903c90ff0" # v2
+      - name: "Download checksums from release"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release download "${{ github.ref_name }}" \
+            --repo "${{ github.repository }}" \
+            --pattern "checksums.txt"
+      - name: "Generate and publish Homebrew formula"
+        env:
+          GH_TOKEN: ${{ secrets.HOMEBREW_TAP_GITHUB_TOKEN }}
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          TAG="${GITHUB_REF_NAME}"
+          BASE_URL="https://github.com/${{ github.repository }}/releases/download/${TAG}"
+
+          DARWIN_ARM64_SHA=$(grep "prb_Darwin_arm64.tar.gz" checksums.txt | awk '{print $1}')
+          DARWIN_X86_64_SHA=$(grep "prb_Darwin_x86_64.tar.gz" checksums.txt | awk '{print $1}')
+          LINUX_ARM64_SHA=$(grep "prb_Linux_arm64.tar.gz" checksums.txt | awk '{print $1}')
+          LINUX_X86_64_SHA=$(grep "prb_Linux_x86_64.tar.gz" checksums.txt | awk '{print $1}')
+
+          cat > prb.rb << RUBY
+          # typed: false
+          # frozen_string_literal: true
+
+          class Prb < Formula
+            desc "Probo CLI"
+            homepage "https://github.com/getprobo/probo"
+            version "${VERSION}"
+            license "MIT"
+
+            on_macos do
+              on_arm do
+                url "${BASE_URL}/prb_Darwin_arm64.tar.gz"
+                sha256 "${DARWIN_ARM64_SHA}"
+              end
+              on_intel do
+                url "${BASE_URL}/prb_Darwin_x86_64.tar.gz"
+                sha256 "${DARWIN_X86_64_SHA}"
+              end
+            end
+
+            on_linux do
+              on_arm do
+                url "${BASE_URL}/prb_Linux_arm64.tar.gz"
+                sha256 "${LINUX_ARM64_SHA}"
+              end
+              on_intel do
+                url "${BASE_URL}/prb_Linux_x86_64.tar.gz"
+                sha256 "${LINUX_X86_64_SHA}"
+              end
+            end
+
+            def install
+              bin.install "prb"
+            end
+
+            test do
+              assert_match version.to_s, shell_output("#{bin}/prb --version")
+            end
+          end
+          RUBY
+
+          EXISTING_SHA=$(gh api "repos/getprobo/homebrew-tap/contents/Formula/prb.rb" --jq '.sha' 2>/dev/null || echo "")
+
+          if [ -n "$EXISTING_SHA" ]; then
+            gh api "repos/getprobo/homebrew-tap/contents/Formula/prb.rb" \
+              --method PUT \
+              -f message="prb ${VERSION}" \
+              -f content="$(base64 -w0 prb.rb)" \
+              -f sha="${EXISTING_SHA}"
+          else
+            gh api "repos/getprobo/homebrew-tap/contents/Formula/prb.rb" \
+              --method PUT \
+              -f message="prb ${VERSION}" \
+              -f content="$(base64 -w0 prb.rb)"
+          fi
+
+  # ── npm release (independent) ───────────────────────────────────────
   npm-release:
-    runs-on: "ubuntu-24.04-64cores"
+    name: "npm-release"
+    runs-on: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache"
     permissions:
       contents: read
       id-token: write
       attestations: write
     steps:
-      - uses: actions/checkout@v6
+      - uses: "actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd" # v6
         with:
           fetch-depth: 0
           submodules: recursive
-
-      - uses: actions/setup-node@v6
+      - uses: "runs-on/action@742bf56072eb4845a0f94b3394673e4903c90ff0" # v2
+      - uses: "actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f" # v6
         with:
           node-version-file: ".nvmrc"
           cache: "npm"
           registry-url: "https://registry.npmjs.org"
           scope: "@probo"
-
-      - run: npm install -g npm@latest
-      - run: npm ci
-      - run: npm --workspace @probo/n8n-nodes-probo run build
-      - name: Set package version from git tag
+      - run: "npm install -g npm@latest"
+      - run: "npm ci"
+      - run: "npm --workspace @probo/n8n-nodes-probo run build"
+      - name: "Set package version from git tag"
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
           npm --workspace @probo/n8n-nodes-probo version "$VERSION" --no-git-tag-version
-
-      - uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 #v0.24.0
+      - uses: "anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610" # v0.24.0
         with:
           path: ./packages/n8n-node
           format: cyclonedx-json
           output-file: packages/n8n-node/sbom.json
-
-      - uses: anchore/scan-action@e1165082ffb1fe366ebaf02d8526e7c4989ea9d2 #v7.4.0
+      - uses: "anchore/scan-action@e1165082ffb1fe366ebaf02d8526e7c4989ea9d2" # v7.4.0
         with:
           path: ./packages/n8n-node
           fail-build: true
           severity-cutoff: critical
-
-      - name: Generate checksums for dist files
+      - name: "Generate checksums for dist files"
         id: checksum
         run: |
           cd packages/n8n-node/dist
@@ -203,22 +490,18 @@ jobs:
             echo "$(sha256sum "$file" | head -c 64)  $file"
           done > ../checksums.txt
           echo "hashes=$(cat ../checksums.txt | base64 -w0)" >> "$GITHUB_OUTPUT"
-
-      - run: npm --workspace @probo/n8n-nodes-probo publish --access public --dry-run
-      - run: npm --workspace @probo/n8n-nodes-probo publish --access public
-
-      - uses: actions/attest-sbom@v4
+      - run: "npm --workspace @probo/n8n-nodes-probo publish --access public --dry-run"
+      - run: "npm --workspace @probo/n8n-nodes-probo publish --access public"
+      - uses: "actions/attest-sbom@c604332985a26aa8cf1bdc465b92731239ec6b9e" # v4
         with:
           subject-path: "packages/n8n-node/dist/**"
           sbom-path: "packages/n8n-node/sbom.json"
-
-      - uses: actions/attest-build-provenance@v4
+      - uses: "actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32" # v4
         with:
           subject-path: "packages/n8n-node/dist/**"
-
-      - uses: actions/upload-artifact@v7
+      - uses: "actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f" # v7
         with:
-          name: npm-sbom
+          name: "npm-sbom"
           path: |
             packages/n8n-node/sbom.json
             packages/n8n-node/checksums.txt

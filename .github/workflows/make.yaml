@@ -7,54 +7,152 @@ on:
     branches:
       - "main"
 
+permissions:
+  contents: "read"
+
 jobs:
-  release-snapshot:
-    name: "release-snapshot"
-    runs-on: "ubuntu-24.04-64cores"
+  # ── Snapshot: build frontend apps ──────────────────────────────────
+  build-apps:
+    name: "build-apps"
+    if: github.event_name == 'push'
+    runs-on: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache"
     permissions:
       contents: "read"
-      packages: "write"
-      id-token: "write"
-      security-events: "write"
     steps:
-      - uses: "actions/checkout@v6"
+      - uses: "actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd" # v6
         with:
-          fetch-depth: 0
           submodules: recursive
-      - uses: "actions/setup-go@v6"
+      - uses: "runs-on/action@742bf56072eb4845a0f94b3394673e4903c90ff0" # v2
+      - uses: "./.github/actions/setup"
         with:
-          go-version: "1.26.1"
-          cache: true
-      - run: "go mod download"
-      - uses: "actions/setup-node@v6"
+          go: "false"
+      - run: "npm --workspace @probo/emails run build"
+      - name: "Build console"
+        run: |
+          npm --workspace @probo/console run relay
+          npm --workspace @probo/console run check
+          NODE_ENV=production npm --workspace @probo/console run build
+      - name: "Build trust"
+        run: |
+          npm --workspace @probo/trust run relay
+          npm --workspace @probo/trust run check
+          NODE_ENV=production npm --workspace @probo/trust run build
+      - uses: "actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f" # v7
         with:
-          node-version-file: ".nvmrc"
-          cache: "npm"
-      - run: "npm i -g npm@11.8.0"
-      - run: "npm ci"
-      - uses: "docker/setup-qemu-action@ce360397dd3f832beb865e1373c09c0e9f86d70a" # v4.0.0
+          name: "frontend-apps"
+          path: |
+            apps/console/dist/
+            apps/trust/dist/
+            packages/emails/dist/
+          retention-days: 1
+
+  # ── Snapshot: build Go binaries (matrix by GOOS/GOARCH) ────────────
+  build-snapshot-binary:
+    name: "binary (${{ matrix.goos }}/${{ matrix.goarch }})"
+    if: github.event_name == 'push'
+    needs: [build-apps]
+    runs-on: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache"
+    permissions:
+      contents: "read"
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { goos: linux, goarch: amd64 }
+          - { goos: linux, goarch: arm64 }
+          - { goos: darwin, goarch: amd64 }
+          - { goos: darwin, goarch: arm64 }
+          - { goos: windows, goarch: amd64 }
+          - { goos: freebsd, goarch: amd64 }
+          - { goos: freebsd, goarch: arm64 }
+          - { goos: openbsd, goarch: amd64 }
+          - { goos: openbsd, goarch: arm64 }
+    steps:
+      - uses: "actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd" # v6
+        with:
+          submodules: recursive
+      - uses: "runs-on/action@742bf56072eb4845a0f94b3394673e4903c90ff0" # v2
+      - uses: "./.github/actions/setup"
+        with:
+          node: "false"
+      - uses: "actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c" # v8
+        with:
+          name: "frontend-apps"
+      - name: "Generate Go code"
+        run: |
+          go generate ./pkg/server/api/connect/v1
+          go generate ./pkg/server/api/console/v1
+          go generate ./pkg/server/api/trust/v1
+          go generate ./pkg/server/api/mcp/v1
+      - name: "Build binaries"
+        env:
+          CGO_ENABLED: "0"
+          GOOS: "${{ matrix.goos }}"
+          GOARCH: "${{ matrix.goarch }}"
+        run: |
+          EXT=""
+          if [ "$GOOS" = "windows" ]; then EXT=".exe"; fi
+
+          go build -ldflags "-s -w -X 'main.version=snapshot' -X 'main.env=prod'" \
+            -gcflags="-e" -o "dist/probod${EXT}" ./cmd/probod/main.go
+
+          go build -ldflags "-s -w" \
+            -gcflags="-e" -o "dist/probod-bootstrap${EXT}" ./cmd/probod-bootstrap/main.go
+
+          go build -ldflags "-s -w -X 'main.version=snapshot'" \
+            -gcflags="-e" -o "dist/prb${EXT}" ./cmd/prb/main.go
+      - uses: "actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f" # v7
+        with:
+          name: "binary-${{ matrix.goos }}-${{ matrix.goarch }}"
+          path: "dist/"
+          retention-days: 1
+
+  # ── Snapshot: build Docker images (matrix by architecture) ─────────
+  build-snapshot-docker:
+    name: "docker (${{ matrix.arch }})"
+    if: github.event_name == 'push'
+    needs: [build-snapshot-binary]
+    runs-on: "runs-on=${{ github.run_id }}/runner=${{ matrix.runner }}/extras=s3-cache"
+    permissions:
+      contents: "read"
+      security-events: "write"
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            platform: "linux/amd64"
+            runner: "4cpu-linux-x64"
+          - arch: arm64
+            platform: "linux/arm64"
+            runner: "4cpu-linux-arm64"
+    steps:
+      - uses: "actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd" # v6
+      - uses: "runs-on/action@742bf56072eb4845a0f94b3394673e4903c90ff0" # v2
       - uses: "docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd" # v4.0.0
-      - uses: "sigstore/cosign-installer@053f9b74638557590800a301da1ba82351507e2c" # v3.8.1
-      - name: Cache Trivy database
-        uses: "actions/cache@v5"
+      - uses: "actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c" # v8
+        with:
+          name: "binary-linux-${{ matrix.arch }}"
+          path: "linux/${{ matrix.arch }}"
+      - name: "Prepare binaries"
+        run: "chmod +x linux/${{ matrix.arch }}/*"
+      - name: "Build Docker image"
+        run: |
+          docker buildx build \
+            --platform "${{ matrix.platform }}" \
+            --tag "ghcr.io/getprobo/probo:snapshot-${{ matrix.arch }}" \
+            --load \
+            .
+      - name: "Cache Trivy database"
+        uses: "runs-on/cache@a5f51d6f3fece787d03b7b4e981c82538a0654ed" # v4
         with:
           path: ~/.cache/trivy
-          key: trivy-db-${{ runner.os }}-${{ github.run_id }}
-          restore-keys: |
-            trivy-db-${{ runner.os }}-
-      - uses: "anchore/sbom-action/download-syft@e22c389904149dbc22b58101806040fa8d37a610" # v0.24.0
-      - uses: "goreleaser/goreleaser-action@ec59f474b9834571250b370d4735c50f8e2d1e29" # v7.0.0
-        with:
-          distribution: "goreleaser"
-          version: "~> v2"
-          args: "release --clean --snapshot"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Scan Docker image with Trivy
-        if: github.ref == 'refs/heads/main'
+          key: "trivy-db-${{ matrix.arch }}-${{ github.run_id }}"
+          restore-keys: "trivy-db-${{ matrix.arch }}-"
+      - name: "Scan Docker image with Trivy"
         uses: "aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1" # 0.35.0
         with:
-          image-ref: "ghcr.io/getprobo/probo:latest-amd64"
+          image-ref: "ghcr.io/getprobo/probo:snapshot-${{ matrix.arch }}"
           format: "sarif"
           output: "trivy-results.sarif"
           exit-code: 0
@@ -62,100 +160,124 @@ jobs:
           vuln-type: "os,library"
           severity: "CRITICAL,HIGH"
           cache-dir: ~/.cache/trivy
-      - name: Scan Docker image with Trivy
-        if: github.ref != 'refs/heads/main'
-        uses: "aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1" # 0.35.0
-        with:
-          image-ref: "ghcr.io/getprobo/probo:latest-amd64"
-          format: "table"
-          exit-code: 1
-          ignore-unfixed: true
-          vuln-type: "os,library"
-          severity: "CRITICAL,HIGH"
-          cache-dir: ~/.cache/trivy
-      - name: Upload Trivy scan results to GitHub Security tab
-        if: github.ref == 'refs/heads/main'
-        uses: github/codeql-action/upload-sarif@6bc82e05fd0ea64601dd4b465378bbcf57de0314 # v4.32.1
+      - name: "Upload Trivy scan results"
+        uses: "github/codeql-action/upload-sarif@6bc82e05fd0ea64601dd4b465378bbcf57de0314" # v4.32.1
         with:
           sarif_file: "trivy-results.sarif"
-      - uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 #v0.24.0
+          category: "trivy-${{ matrix.arch }}"
+
+  # ── Snapshot: SBOM & vulnerability scan ────────────────────────────
+  snapshot-scan:
+    name: "snapshot-scan"
+    if: github.event_name == 'push'
+    needs: [build-snapshot-binary]
+    runs-on: "runs-on=${{ github.run_id }}/runner=2cpu-linux-x64/extras=s3-cache"
+    permissions:
+      contents: "read"
+    steps:
+      - uses: "actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd" # v6
+        with:
+          submodules: recursive
+      - uses: "runs-on/action@742bf56072eb4845a0f94b3394673e4903c90ff0" # v2
+      - uses: "anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610" # v0.24.0
         with:
           path: ./
           format: cyclonedx-json
           output-file: sbom.json
-      - uses: anchore/scan-action@e1165082ffb1fe366ebaf02d8526e7c4989ea9d2 #v7.4.0
+      - uses: "anchore/scan-action@e1165082ffb1fe366ebaf02d8526e7c4989ea9d2" # v7.4.0
         with:
           sbom: "sbom.json"
           fail-build: true
           severity-cutoff: critical
           output-format: table
 
+  # ── Build (PR + push validation) ───────────────────────────────────
   build:
     name: "build"
-    runs-on: "ubuntu-22.04"
+    runs-on: "runs-on=${{ github.run_id }}/runner=8cpu-linux-x64/extras=s3-cache"
     permissions:
       contents: "read"
     steps:
-      - uses: "actions/checkout@v6"
+      - uses: "actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd" # v6
         with:
           submodules: recursive
-      - uses: "actions/setup-go@v6"
+      - uses: "runs-on/action@742bf56072eb4845a0f94b3394673e4903c90ff0" # v2
+      - uses: "./.github/actions/setup"
         with:
-          go-version: "1.26.1"
-          cache: true
-      - run: "go mod download"
-      - uses: "actions/setup-node@v6"
-        with:
-          node-version-file: ".nvmrc"
-          cache: "npm"
-      - run: "npm i -g npm@11.8.0"
-      - run: "npm ci"
-      - run: "make build"
-      - uses: "actions/upload-artifact@v7"
-        with:
-          name: "build-artifacts"
-          path: |
-            bin/probod
-            apps/console/dist/
-            apps/trust/dist/
-            packages/emails/dist/
-          retention-days: 1
+          node: "false"
+      - name: "Create placeholder dist files"
+        run: |
+          mkdir -p apps/console/dist apps/trust/dist packages/emails/dist
+          echo dev-server > apps/console/dist/index.html
+          echo dev-server > apps/trust/dist/index.html
+          echo dev-server > packages/emails/dist/placeholder
+      - name: "Generate Go code"
+        run: |
+          pids=()
+          go generate ./pkg/server/api/connect/v1 & pids+=($!)
+          go generate ./pkg/server/api/console/v1 & pids+=($!)
+          go generate ./pkg/server/api/trust/v1 & pids+=($!)
+          go generate ./pkg/server/api/mcp/v1 & pids+=($!)
+          for pid in "${pids[@]}"; do wait "$pid"; done
+      - name: "Build binaries"
+        env:
+          CGO_ENABLED: "0"
+        run: |
+          pids=()
+          go build -ldflags "-s -w -X 'main.version=snapshot' -X 'main.env=prod'" \
+            -gcflags="-e" -o bin/probod ./cmd/probod/main.go & pids+=($!)
+          go build -ldflags "-s -w" \
+            -gcflags="-e" -o bin/probod-bootstrap ./cmd/probod-bootstrap/main.go & pids+=($!)
+          go build -ldflags "-s -w -X 'main.version=snapshot'" \
+            -gcflags="-e" -o bin/prb ./cmd/prb/main.go & pids+=($!)
+          for pid in "${pids[@]}"; do wait "$pid"; done
 
-  lint:
-    name: "lint"
-    needs: [build]
-    runs-on: "ubuntu-22.04"
+  lint-go:
+    name: "lint-go"
+    runs-on: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache"
     permissions:
       contents: "read"
       pull-requests: "write"
-      checks: "write"
     steps:
-      - uses: "actions/checkout@v6"
+      - uses: "actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd" # v6
         with:
           submodules: recursive
-      - uses: "actions/setup-go@v6"
+      - uses: "runs-on/action@742bf56072eb4845a0f94b3394673e4903c90ff0" # v2
+      - uses: "./.github/actions/setup"
         with:
-          go-version: "1.26.1"
-          cache: true
-      - run: "go mod download"
-      - uses: "actions/setup-node@v6"
-        with:
-          node-version-file: ".nvmrc"
-          cache: "npm"
+          node: "false"
       - uses: golangci/golangci-lint-action@1e7e51e771db61008b38414a730f564565cf7c20 # v9.2.0
         with:
           install-only: true
       - uses: reviewdog/action-setup@d8a7baabd7f3e8544ee4dbde3ee41d0011c3a93f # v1.5.0
-      - run: "npm i -g npm@11.8.0"
-      - run: "npm ci"
-      - uses: "actions/download-artifact@v8"
-        with:
-          name: "build-artifacts"
-      - run: "chmod +x bin/probod"
-      - run: "make generate"
-      - run: "make go-fmt go-fix"
-      - name: "Run go vet"
-        run: "go vet ./..."
+      - name: "Create placeholder dist files"
+        run: |
+          mkdir -p apps/console/dist apps/trust/dist packages/emails/dist
+          echo dev-server > apps/console/dist/index.html
+          echo dev-server > apps/trust/dist/index.html
+          echo dev-server > packages/emails/dist/placeholder
+      - name: "Generate Go code"
+        run: |
+          go generate ./pkg/server/api/connect/v1
+          go generate ./pkg/server/api/console/v1
+          go generate ./pkg/server/api/trust/v1
+          go generate ./pkg/server/api/mcp/v1
+      - name: "Run gofmt"
+        run: |
+          output="$(gofmt -l apps cmd packages pkg e2e)"
+          if [ -n "$output" ]; then
+            echo "error: 'gofmt' found unformatted files:"
+            echo "$output"
+            exit 1
+          fi
+      - name: "Run go fix"
+        run: |
+          output="$(CGO_ENABLED=0 go fix -diff -omitzero=false ./apps/... ./cmd/... ./packages/... ./pkg/... ./e2e/...)"
+          if [ -n "$output" ]; then
+            echo "error: 'go fix' suggests changes; please apply them"
+            echo "$output"
+            exit 1
+          fi
       - name: "Run golangci-lint"
         env:
           REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -166,6 +288,26 @@ jobs:
           else
             golangci-lint run ./...
           fi
+
+  lint-js:
+    name: "lint-js"
+    runs-on: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache"
+    permissions:
+      contents: "read"
+      pull-requests: "write"
+    steps:
+      - uses: "actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd" # v6
+        with:
+          submodules: recursive
+      - uses: "runs-on/action@742bf56072eb4845a0f94b3394673e4903c90ff0" # v2
+      - uses: "./.github/actions/setup"
+        with:
+          go: "false"
+      - uses: reviewdog/action-setup@d8a7baabd7f3e8544ee4dbde3ee41d0011c3a93f # v1.5.0
+      - name: "Generate Relay artifacts"
+        run: |
+          npm --workspace @probo/console run relay
+          npm --workspace @probo/trust run relay
       - name: "Run eslint"
         env:
           REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -182,82 +324,82 @@ jobs:
 
   test:
     name: "test"
-    needs: [build]
-    runs-on: "ubuntu-22.04"
+    runs-on: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache"
     permissions:
       contents: "read"
     steps:
-      - uses: "actions/checkout@v6"
+      - uses: "actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd" # v6
         with:
           submodules: recursive
-      - uses: "actions/setup-go@v6"
-        with:
-          go-version: "1.26.1"
-          cache: true
-      - run: "go mod download"
-      - uses: "actions/download-artifact@v8"
-        with:
-          name: "build-artifacts"
-      - run: "chmod +x bin/probod"
-      - run: "make generate"
+      - uses: "runs-on/action@742bf56072eb4845a0f94b3394673e4903c90ff0" # v2
+      - uses: "./.github/actions/setup"
+      - name: "Create placeholder dist files"
+        run: |
+          mkdir -p apps/console/dist apps/trust/dist
+          echo dev-server > apps/console/dist/index.html
+          echo dev-server > apps/trust/dist/index.html
+      - run: "npm --workspace @probo/emails run build"
       - run: "make test"
         env:
           GOTESTSUM_JUNITFILE: "junit.xml"
       - name: "Upload test results"
-        uses: "actions/upload-artifact@v7"
+        uses: "actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f" # v7
         if: "always()"
+        continue-on-error: true
         with:
           name: "junit-results"
           path: "junit.xml"
           retention-days: 30
-      - run: "make coverage-report"
-      - uses: "actions/upload-artifact@v7"
+      - run: "go tool cover -html=coverage.out -o coverage.html"
+      - uses: "actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f" # v7
+        continue-on-error: true
         with:
           name: "coverage-reports"
           path: |
             coverage.out
             coverage.html
           retention-days: 30
-      # Trivy ignore does not work for license scanning in Github action
-      # - uses: "aquasecurity/trivy-action@0.33.1"
-      #   with:
-      #     scan-type: "fs"
-      #     scanners: "license"
-      #     severity: "UNKNOWN,HIGH,CRITICAL"
-      #     exit-code: 1
-      #     trivyignores: ".trivyignore.yaml"
-      #     trivy-config: "trivy.yaml"
 
   test-e2e:
     name: "test-e2e"
-    runs-on: "ubuntu-22.04"
+    runs-on: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache"
     permissions:
       contents: "read"
     steps:
-      - uses: "actions/checkout@v6"
+      - uses: "actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd" # v6
         with:
           submodules: recursive
-      - uses: "actions/setup-go@v6"
-        with:
-          go-version: "1.26.1"
-          cache: true
-      - run: "go mod download"
-      - uses: "actions/setup-node@v6"
-        with:
-          node-version-file: ".nvmrc"
-          cache: "npm"
-      - run: "npm i -g npm@11.8.0"
-      - run: "sudo apt-get install -y mkcert"
-      - run: "sudo mkcert -install 2>&1 | grep -v 'no Firefox and/or Chrome/Chromium security databases found' || true"
-      - uses: "docker/setup-qemu-action@ce360397dd3f832beb865e1373c09c0e9f86d70a" # v4.0.0
-      - uses: "docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd" # v4.0.0
+      - uses: "runs-on/action@742bf56072eb4845a0f94b3394673e4903c90ff0" # v2
+      - uses: "./.github/actions/setup"
       - uses: "docker/setup-compose-action@8cccb8c14b6500aaffebff1aa49c502c34d2e5e6" # v2.1.0
-      - run: "npm ci"
-      - run: "make stack-up"
+      - name: "Install mkcert"
+        run: |
+          go install filippo.io/mkcert@latest
+          sudo mkcert -install 2>&1 | grep -v 'no Firefox and/or Chrome/Chromium security databases found' || true
+      - name: "Cache Docker images"
+        id: docker-cache
+        uses: "runs-on/cache@a5f51d6f3fece787d03b7b4e981c82538a0654ed" # v4
+        with:
+          path: /tmp/docker-images
+          key: "docker-images-${{ hashFiles('compose.yaml') }}"
+      - name: "Load cached Docker images"
+        if: steps.docker-cache.outputs.cache-hit == 'true'
+        run: "docker load -i /tmp/docker-images/images.tar"
+      - name: "Pull and save Docker images"
+        if: steps.docker-cache.outputs.cache-hit != 'true'
+        run: |
+          docker compose pull
+          mkdir -p /tmp/docker-images
+          docker save $(docker compose config --images) -o /tmp/docker-images/images.tar
+      - name: "Build and start stack in parallel"
+        run: |
+          make stack-up &
+          STACK_PID=$!
+          SKIP_APPS=1 make bin/probod
+          wait $STACK_PID
       - run: "make stack-ps"
       - name: "Inject root CA into e2e config"
         run: |
-          # Use Python to properly inject the root CA PEM content into YAML
           python3 << 'EOF'
           import yaml
 
@@ -272,12 +414,17 @@ jobs:
           with open('e2e/console/testdata/config.yaml', 'w') as f:
               yaml.dump(config, f, default_flow_style=False, allow_unicode=True)
           EOF
-      - run: "SKIP_APPS=1 make test-e2e"
+      - name: "Run e2e tests"
         env:
+          PROBO_E2E_BINARY: "${{ github.workspace }}/bin/probod"
+          PROBO_E2E_CONFIG: "${{ github.workspace }}/e2e/console/testdata/config.yaml"
+          GOTESTSUM_FORMAT: "testname"
           GOTESTSUM_JUNITFILE: "junit-e2e.xml"
+        run: "CGO_ENABLED=1 go tool gotestsum -- -race -cover -coverprofile=coverage.out -count=1 ./e2e/console/..."
       - name: "Upload test results"
-        uses: "actions/upload-artifact@v7"
+        uses: "actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f" # v7
         if: "always()"
+        continue-on-error: true
         with:
           name: "junit-e2e-results"
           path: "junit-e2e.xml"

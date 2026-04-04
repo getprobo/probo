@@ -1,3 +1,5 @@
+MAKEFLAGS := --jobs=$(shell nproc)
+
 CAT ?=	cat
 CP ?=	cp
 DOCKER ?=	docker
@@ -62,7 +64,13 @@ endif
 all: build
 
 .PHONY: lint
-lint: vet go-fmt go-fix go-lint npm-lint
+lint: lint-go lint-js
+
+.PHONY: lint-go
+lint-go: vet go-fmt go-fix go-lint
+
+.PHONY: lint-js
+lint-js: npm-lint
 
 .PHONY: vet
 vet: generate apps/console/dist/index.html apps/trust/dist/index.html @probo/emails
@@ -300,14 +308,6 @@ stack-ps: ## List the docker stack containers
 .PHONY: psql
 psql: ## Open a psql shell to the postgres container
 	$(DOCKER_COMPOSE) exec postgres psql -U probod -d probod
-
-.PHONY: goreleaser-snapshot
-goreleaser-snapshot: ## Build a snapshot release with goreleaser
-	goreleaser release --snapshot --clean --config .goreleaser.yaml
-
-.PHONY: goreleaser-check
-goreleaser-check: ## Check goreleaser configuration
-	goreleaser check
 
 compose/pebble/certs/rootCA.pem:
 	@$(MKDIR) compose/pebble/certs
