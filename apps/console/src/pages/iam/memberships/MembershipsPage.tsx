@@ -100,7 +100,7 @@ export function MembershipsPage(props: {
                   )}
             </div>
           )}
-          <Card padded>
+          {/* <Card padded>
             <h2 className="text-xl font-semibold mb-1">
               {__("Create an organization")}
             </h2>
@@ -115,7 +115,7 @@ export function MembershipsPage(props: {
             >
               {__("Create organization")}
             </Button>
-          </Card>
+          </Card> */}
         </div>
       </div>
     </>

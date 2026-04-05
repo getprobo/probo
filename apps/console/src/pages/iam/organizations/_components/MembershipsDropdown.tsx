@@ -92,13 +92,13 @@ export function MembershipsDropdown(props: {
             </Suspense>
           )}
         </div>
-        <DropdownSeparator />
+        {/* <DropdownSeparator />
         <DropdownItem asChild>
           <Link to="/organizations/new" state={{ from: location.pathname }}>
             <IconPlusLarge size={16} />
             {__("Add organization")}
           </Link>
-        </DropdownItem>
+        </DropdownItem> */}
       </Dropdown>
     </div>
   );
