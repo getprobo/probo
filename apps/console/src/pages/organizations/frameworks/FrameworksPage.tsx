@@ -2,12 +2,14 @@ import { usePageTitle } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
 import {
   ActionDropdown,
+  Button,
   Card,
   DropdownItem,
   FileButton,
   FrameworkLogo,
   FrameworkSelector,
   IconFolderUpload,
+  IconMail,
   IconPencil,
   IconTrashCan,
   PageHeader,
@@ -135,7 +137,7 @@ export default function FrameworksPage(props: Props) {
         title={__("Frameworks")}
         description={__("Manage your compliance frameworks")}
       >
-        {data.organization.canCreateFramework && (
+        {/* {data.organization.canCreateFramework && (
           <>
             <FileButton
               variant="secondary"
@@ -150,7 +152,13 @@ export default function FrameworksPage(props: Props) {
               disabled={isLoading}
             />
           </>
-        )}
+        )} */}
+        <Button
+          icon={IconMail}
+          onClick={() => window.location.href = "mailto:sales@govrly.com"}
+        >
+          {__("Contact Sales")}
+        </Button>
       </PageHeader>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -163,6 +171,7 @@ export default function FrameworksPage(props: Props) {
             hasAnyAction={hasAnyAction}
           />
         ))}
+        <AvailableFrameworkPlaceholders />
       </div>
     </div>
   );
@@ -243,5 +252,66 @@ function FrameworkCard(props: FrameworkCardProps) {
       </h2>
       <p className="text-sm text-txt-secondary">{framework.description}</p>
     </Card>
+  );
+}
+
+const placeholderFrameworks = [
+  { name: "ISO 27001", description: "Information security management systems" },
+  { name: "SOC 2", description: "System and Organization Controls 2" },
+  { name: "HIPAA", description: "Health Insurance Portability and Accountability Act" },
+  { name: "GDPR", description: "General Data Protection Regulation" },
+  { name: "NIS 2", description: "Network and Information Systems Directive 2" },
+  { name: "DORA", description: "Digital Operational Readiness Assessment" },
+  { name: "ISO 27701", description: "Information security, cybersecurity and privacy protection" },
+  { name: "ISO 42001", description: "Information technology, artificial intelligence, management system" },
+  { name: "CCPA", description: "California Consumer Privacy Act" },
+  { name: "21 CFR Part 11", description: "Electronic Records and Signatures" },
+  { name: "HDS", description: "Hébergement de Données de Santé" },
+];
+
+const PLACEHOLDER_VISIBLE_COUNT = 3;
+
+function AvailableFrameworkPlaceholders() {
+  const { __ } = useTranslate();
+  const visible = placeholderFrameworks.slice(0, PLACEHOLDER_VISIBLE_COUNT);
+  const remaining = placeholderFrameworks.length - PLACEHOLDER_VISIBLE_COUNT;
+
+  return (
+    <>
+      {visible.map(fw => (
+        <Card
+          key={fw.name}
+          padded
+          className="p-6 rounded shadow relative opacity-50 pointer-events-none select-none"
+        >
+          <div className="flex justify-between mb-3">
+            <FrameworkLogo name={fw.name} />
+          </div>
+          <h2 className="text-xl font-medium">{fw.name}</h2>
+          <p className="text-sm text-txt-secondary">{fw.description}</p>
+          <span className="absolute top-3 right-3 text-xs font-medium text-txt-tertiary bg-highlight rounded-full px-2 py-0.5">
+            {__("Contact Sales")}
+          </span>
+        </Card>
+      ))}
+      {remaining > 0 && (
+        <Card
+          padded
+          className="p-6 rounded shadow relative opacity-50 pointer-events-none select-none flex items-center justify-center"
+        >
+          <div className="text-center">
+            <p className="text-2xl font-bold text-txt-secondary">
+              +{remaining}
+            </p>
+            <p className="text-sm text-txt-tertiary mt-1">
+              {__("More frameworks available")}
+            </p>
+            <p className="text-xs text-txt-tertiary mt-1">
+              {__("Contact Sales")}
+            </p>
+          </div>
+        </Card>
+      )}
+    </>
   );
 }
