@@ -8,7 +8,6 @@ import {
 
 import { Button } from "../Button/Button";
 import { IconCollapse, IconExpand } from "../Icons";
-import { ThemeToggle } from "../ThemeToggle/ThemeToggle";
 
 const sidebarContext = createContext({ open: true });
 
@@ -51,7 +50,6 @@ export function Sidebar({ children }: PropsWithChildren) {
             open ? "px-4" : "px-2 items-center",
           )}
         >
-          <ThemeToggle collapsed={!open} />
           <Button
             variant="tertiary"
             icon={open ? IconCollapse : IconExpand}
