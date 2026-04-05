@@ -55,10 +55,10 @@ const routes = [
         path: "sso-login",
         Component: lazy(() => import("./pages/iam/auth/sign-in/SSOSignInPage")),
       },
-      {
-        path: "register",
-        Component: lazy(() => import("./pages/iam/auth/SignUpPage")),
-      },
+      // {
+      //   path: "register",
+      //   Component: lazy(() => import("./pages/iam/auth/SignUpPage")),
+      // },
       {
         path: "verify-email",
         Component: lazy(() => import("./pages/iam/auth/VerifyEmailPage")),
