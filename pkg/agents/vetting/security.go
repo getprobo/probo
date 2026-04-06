@@ -16,6 +16,7 @@ package vetting
 
 import (
 	_ "embed"
+	"fmt"
 
 	"go.probo.inc/probo/pkg/agent"
 	"go.probo.inc/probo/pkg/llm"
@@ -27,17 +28,23 @@ var securitySystemPrompt string
 func newSecurityAssessorAgent(
 	client *llm.Client,
 	model string,
-	securityTools []agent.Tool,
+	tools []agent.Tool,
 	extraOpts ...agent.Option,
-) *agent.Agent {
+) (*agent.Agent, error) {
+	outputType, err := agent.NewOutputType[SecurityOutput]("security_output")
+	if err != nil {
+		return nil, fmt.Errorf("cannot create output type: %w", err)
+	}
+
 	opts := []agent.Option{
 		agent.WithInstructions(securitySystemPrompt),
 		agent.WithModel(model),
-		agent.WithTools(securityTools...),
-		agent.WithMaxTurns(8),
+		agent.WithTools(tools...),
+		agent.WithMaxTurns(32),
+		agent.WithOutputType(outputType),
 		agent.WithParallelToolCalls(true),
 	}
 	opts = append(opts, extraOpts...)
 
-	return agent.New("security_assessor", client, opts...)
+	return agent.New("security_assessor", client, opts...), nil
 }
