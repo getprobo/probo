@@ -54,31 +54,43 @@ Analyze the vendor's documentation against applicable regulatory frameworks. Dow
 
 ## Output Format
 
-Return a structured assessment per applicable regulation:
+Return a JSON object with the following structure. Each regulatory framework contains an `applicable` boolean, an `overall_status` string, an `articles` array with per-article assessments, and a `notes` string.
 
 ```json
 {
   "gdpr": {
     "applicable": true,
-    "overall_status": "Partially Compliant",
-    "article_28": {"status": "Compliant", "notes": "DPA includes all required elements"},
-    "article_32": {"status": "Partially Compliant", "notes": "Security measures documented but no mention of regular testing"},
-    "article_33_34": {"status": "Compliant", "notes": "72-hour notification timeline specified in DPA"},
-    "article_35": {"status": "Not Assessed", "notes": "No DPIA evidence found"},
-    "article_44_49": {"status": "Compliant", "notes": "SCCs (2021 version) included in DPA"},
-    "dpo": {"status": "Compliant", "notes": "DPO contact listed on privacy policy"},
-    "ropa": {"status": "Not Assessed", "notes": "No public evidence"}
+    "overall_status": "partially_compliant",
+    "articles": [
+      {"article": "article_28", "status": "compliant", "notes": "DPA includes all required elements: subject matter, duration, nature/purpose, data types, data subject categories"},
+      {"article": "article_32", "status": "partially_compliant", "notes": "Security measures documented but no mention of regular testing"},
+      {"article": "article_33_34", "status": "compliant", "notes": "72-hour notification timeline specified in DPA"},
+      {"article": "article_35", "status": "not_assessed", "notes": "No DPIA evidence found"},
+      {"article": "article_44_49", "status": "compliant", "notes": "SCCs (2021 version) included in DPA"}
+    ],
+    "notes": "Strong processor obligations documentation. DPIA and regular testing evidence missing."
   },
   "hipaa": {
     "applicable": false,
+    "overall_status": "not_applicable",
+    "articles": [],
     "notes": "Vendor does not appear to handle PHI"
   },
   "pci_dss": {
-    "applicable": false
+    "applicable": false,
+    "overall_status": "not_applicable",
+    "articles": [],
+    "notes": ""
   },
-  "industry_specific": [],
+  "sox": {
+    "applicable": false,
+    "overall_status": "not_applicable",
+    "articles": [],
+    "notes": ""
+  },
+  "industry_specific": ["FedRAMP Moderate authorization in progress"],
   "cross_border_transfers": {
-    "mechanisms": ["SCCs (2021)"],
+    "mechanisms": ["Standard Contractual Clauses (2021)", "EU-US Data Privacy Framework"],
     "data_locations": ["EU", "US"],
     "tia_evidence": false
   },
@@ -87,7 +99,17 @@ Return a structured assessment per applicable regulation:
 }
 ```
 
-Status values: **Compliant**, **Partially Compliant**, **Non-Compliant**, **Not Assessed**, **Not Applicable**
+Field reference:
+- `gdpr`: GDPR compliance assessment with `applicable` (boolean), `overall_status` (string), `articles` (array of objects with `article`, `status`, and `notes`), and `notes` (string).
+- `hipaa`: HIPAA compliance assessment, same structure as gdpr.
+- `pci_dss`: PCI DSS compliance assessment, same structure as gdpr.
+- `sox`: SOX compliance assessment, same structure as gdpr.
+- `industry_specific`: Array of other industry-specific regulations found (strings).
+- `cross_border_transfers`: Object with `mechanisms` (array of strings), `data_locations` (array of strings), and `tia_evidence` (boolean).
+- `gaps`: Array of identified compliance gaps (strings).
+- `recommendations`: Array of recommended actions to address gaps (strings).
+
+Status values for `overall_status` and article `status`: compliant, partially_compliant, non_compliant, not_assessed, not_applicable.
 
 ## Important
 

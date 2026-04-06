@@ -18,4 +18,57 @@ Strategy:
 3. If the trust page links to sub-pages (e.g. separate pages per certification), follow the most important ones
 
 Report only what you actually find — do not speculate.
-For each certification, note whether the page claims it is current, in progress, or does not specify.
+
+## Certification Status Classification
+
+For each certification, assign one of the following statuses:
+
+- **current**: The certification is clearly active. Evidence includes: a certification logo paired with an audit date or validity period, a downloadable or requestable audit report, a certificate number, or an explicit statement like "SOC 2 Type II certified (last audit: March 2025)".
+- **in_progress**: The vendor explicitly states the certification is upcoming or in progress. Evidence includes phrases like "currently pursuing ISO 27001", "SOC 2 audit underway", or a roadmap page listing the certification as planned.
+- **claimed_unverified**: The certification is mentioned on a marketing page but lacks supporting proof. For example, a SOC 2 badge on the homepage with no audit date, no certificate number, no downloadable report, and no details page. A logo alone is not proof.
+- **not_specified**: The certification is referenced but its current status is unclear. For example, the vendor mentions "we follow ISO 27001 standards" without claiming actual certification.
+
+Distinguish self-asserted claims from independently verified certifications. A SOC 2 badge on the website without audit report availability is "claimed_unverified". A vendor stating "we align with NIST CSF" is describing a framework alignment, not a certification — list it under other_frameworks instead.
+
+## Output Format
+
+Return a JSON object with the following structure:
+
+```json
+{
+  "certifications": [
+    {
+      "name": "SOC 2 Type II",
+      "status": "current",
+      "details": "Last audit completed March 2025 by Deloitte. Report available on request via trust center."
+    },
+    {
+      "name": "ISO 27001",
+      "status": "claimed_unverified",
+      "details": "ISO 27001 badge displayed on trust page but no certificate number, accreditation body, or audit date provided."
+    },
+    {
+      "name": "HIPAA",
+      "status": "in_progress",
+      "details": "Trust center states HIPAA compliance is expected Q3 2026."
+    }
+  ],
+  "penetration_testing": "Annual third-party penetration testing by NCC Group, last completed January 2025",
+  "bug_bounty": "Responsible disclosure program via HackerOne at https://hackerone.com/example",
+  "encryption_standards": "AES-256 at rest, TLS 1.3 in transit",
+  "audit_reports": "SOC 2 report available on request through trust center portal",
+  "other_frameworks": ["NIST CSF alignment", "CIS Benchmarks"],
+  "summary": "Strong compliance posture with current SOC 2 Type II and multiple certifications. ISO 27001 claim needs verification.",
+  "sources": ["https://example.com/trust", "https://example.com/security"]
+}
+```
+
+Field reference:
+- `certifications`: Array of certification entries, each with `name` (string), `status` (current/in_progress/claimed_unverified/not_specified), and `details` (string with audit date, certificate number, accreditation body, or other evidence).
+- `penetration_testing`: String describing penetration testing practices.
+- `bug_bounty`: String describing bug bounty or responsible disclosure program.
+- `encryption_standards`: String describing encryption standards mentioned.
+- `audit_reports`: String describing audit report availability.
+- `other_frameworks`: Array of other frameworks or standards mentioned that are not certifications.
+- `summary`: Overall compliance posture summary string.
+- `sources`: Array of URLs visited during assessment.

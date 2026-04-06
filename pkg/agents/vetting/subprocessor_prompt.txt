@@ -34,15 +34,41 @@ IMPORTANT:
 - If a page returns an error or is blocked, move on to the next approach immediately.
 - Do NOT give up after just one or two failed attempts — try all available strategies (link search, direct paths, web search, DPA/privacy policy) before concluding that no subprocessors page exists.
 
-Output a markdown table with all sub-processors found:
-
-| Name | Country | Purpose |
-|------|---------|---------|
-| ... | ... | ... |
-
 Rules:
 - Only report sub-processors actually listed on the website — never fabricate entries
 - If no subprocessors page or list can be found after exhausting all strategies, state that clearly
 - If country information is not provided for a sub-processor, leave the field empty
 - If purpose is not provided, try to infer it from context (e.g. section headings) or leave empty
 - Include all sub-processors found, even if the list is long
+
+## Output Format
+
+Return a JSON object with the following structure:
+
+```json
+{
+  "subprocessors": [
+    {
+      "name": "Amazon Web Services",
+      "country": "United States",
+      "purpose": "Cloud infrastructure and hosting"
+    },
+    {
+      "name": "Twilio SendGrid",
+      "country": "United States",
+      "purpose": "Email delivery"
+    }
+  ],
+  "total_count": 12,
+  "source": "https://example.com/legal/subprocessors",
+  "is_complete": true,
+  "notes": "List last updated January 2025. All sub-processors are US-based."
+}
+```
+
+Field reference:
+- `subprocessors`: Array of sub-processor objects, each with `name` (string), `country` (string, empty if not stated), and `purpose` (string, empty if not stated).
+- `total_count`: Total number of sub-processors found (integer).
+- `source`: URL where the sub-processor list was found (string).
+- `is_complete`: Whether the full list was extracted — set to false if pagination was incomplete or the page was truncated (boolean).
+- `notes`: Observations about the sub-processor list (string).

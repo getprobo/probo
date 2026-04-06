@@ -48,45 +48,56 @@ You have browser tools to navigate and extract content from web pages.
 4. Check the status page for historical uptime metrics if available
 5. Look for architecture or infrastructure documentation
 
-## Output Format
-
-### Disaster Recovery
-- DR plan: [Documented/Not documented]
-- RTO: [Value or "Not specified"]
-- RPO: [Value or "Not specified"]
-- Testing frequency: [Findings]
-
-### Infrastructure Redundancy
-- Cloud provider(s): [Findings]
-- Multi-region: [Yes/No/Not specified]
-- Failover: [Automatic/Manual/Not specified]
-
-### SLA & Uptime
-- Uptime SLA: [Percentage or "Not specified"]
-- SLA credits: [Findings]
-- Historical uptime: [Findings if available]
-- Maintenance windows: [Findings]
-
-### Geographic Distribution
-- Regions: [List of regions/countries]
-- CDN: [Yes/No/Not specified]
-- Customer region selection: [Yes/No/Not specified]
-
-### Backup Strategy
-[Findings or "Not documented"]
-
-### Business Continuity Planning
-- BCP documented: [Yes/No]
-- ISO 22301: [Certified/Referenced/Not mentioned]
-- Scope: [Findings]
-
-### Assessment Rating
-Rate the vendor's business continuity readiness as **Strong**, **Adequate**, or **Weak** with justification.
-
-### Sources
-List all URLs consulted.
-
 IMPORTANT:
 - Only report information explicitly found on the vendor's pages
 - Marketing claims like "enterprise-grade reliability" without specifics should be noted as vague
 - If SLA documents are behind a login wall, note that they are not publicly available
+
+## Output Format
+
+Return a JSON object with the following structure:
+
+```json
+{
+  "dr_plan": "Documented disaster recovery plan covering regional failover and data recovery scenarios",
+  "rto": "4 hours",
+  "rpo": "1 hour",
+  "testing_frequency": "DR tests conducted quarterly, last test December 2024",
+  "cloud_providers": ["AWS", "GCP"],
+  "multi_region": "Active-active deployment across us-east-1 and eu-west-1",
+  "failover": "Automatic failover with health checks every 30 seconds",
+  "uptime_sla": "99.99%",
+  "sla_credits": "10% credit for <99.99%, 25% for <99.9%, 50% for <99.0%",
+  "historical_uptime": "99.98% over the last 12 months per status page",
+  "maintenance_windows": "Scheduled maintenance Sundays 2-4 AM UTC with 72-hour advance notice",
+  "regions": ["US East", "US West", "EU West", "AP Southeast"],
+  "cdn": "Cloudflare CDN for static assets and API acceleration",
+  "backup_strategy": "Hourly incremental backups, daily full backups, 30-day retention, cross-region replication, encrypted with AES-256",
+  "bcp_documented": "Business continuity plan documented and reviewed annually",
+  "iso_22301": "Referenced but not certified",
+  "rating": "Strong",
+  "summary": "Robust business continuity with multi-region deployment, 99.99% SLA, and quarterly DR testing.",
+  "sources": ["https://example.com/sla", "https://example.com/security", "https://status.example.com"]
+}
+```
+
+Field reference:
+- `dr_plan`: Disaster recovery plan documentation status (string).
+- `rto`: Recovery Time Objective (string).
+- `rpo`: Recovery Point Objective (string).
+- `testing_frequency`: DR testing frequency and last test date (string).
+- `cloud_providers`: Array of cloud infrastructure providers used.
+- `multi_region`: Multi-region deployment details (string).
+- `failover`: Failover mechanisms and automation (string).
+- `uptime_sla`: Uptime SLA commitment, e.g. 99.99% (string).
+- `sla_credits`: SLA credit or penalty structure (string).
+- `historical_uptime`: Historical uptime performance (string).
+- `maintenance_windows`: Scheduled maintenance window policy (string).
+- `regions`: Array of geographic regions with infrastructure.
+- `cdn`: CDN usage and provider (string).
+- `backup_strategy`: Backup frequency, retention, and encryption (string).
+- `bcp_documented`: Business continuity plan documentation status (string).
+- `iso_22301`: ISO 22301 certification status (string).
+- `rating`: Overall business continuity rating: Strong, Adequate, or Weak (string).
+- `summary`: Key findings summary (string).
+- `sources`: Array of URLs visited during assessment.

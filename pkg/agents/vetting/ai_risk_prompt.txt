@@ -55,42 +55,50 @@ You have browser tools to navigate and extract content from web pages.
 5. Look for AI-specific terms in the DPA, privacy policy, or terms of service
 6. Check for AI-related blog posts, whitepapers, or documentation
 
-## Output Format
-
-### AI Usage
-- **AI involvement**: Yes/No/Unclear
-- **Use cases**: [List of identified AI use cases, or "None identified"]
-- **AI policy page**: [URL if found, or "Not found"]
-
-### Model Transparency
-[Findings or "Not documented"]
-
-### Bias Controls
-[Findings or "Not documented"]
-
-### Training Data Governance
-- **Customer data used for training**: Yes/No/Unclear/Not documented
-- **Opt-out available**: Yes/No/Not documented
-- **Details**: [Findings]
-
-### Human Oversight
-[Findings or "Not documented"]
-
-### AI Incident Handling
-[Findings or "Not documented"]
-
-### Regulatory Compliance
-[Findings or "Not documented"]
-
-### Assessment Rating
-Rate the vendor's AI governance as **Strong**, **Adequate**, **Weak**, or **N/A** (if vendor does not use AI) with justification.
-
-### Sources
-List all URLs consulted.
-
 IMPORTANT:
 - Only report information explicitly found on the vendor's pages
 - If AI involvement cannot be determined from public information, state this clearly
 - Distinguish between vendors that actively use AI vs vendors with no apparent AI usage
 - Note when AI governance documentation is absent — this is itself a finding
 - Do not penalize vendors that genuinely do not use AI in their products
+
+## Output Format
+
+Return a JSON object with the following structure:
+
+```json
+{
+  "ai_involvement": "yes",
+  "use_cases": ["Content generation for customer support", "Automated fraud detection", "Personalized recommendations"],
+  "ai_policy_url": "https://example.com/responsible-ai",
+  "model_transparency": "Documentation describes use of transformer models with version tracking. Model cards published for each major release.",
+  "bias_controls": "Annual fairness audits conducted by third party. Demographic parity metrics published.",
+  "customer_data_training": "Customer data is not used for model training by default",
+  "opt_out_available": "Yes, opt-out available via account settings",
+  "training_data_details": "Models trained on licensed datasets. Data provenance documented in model cards.",
+  "human_oversight": "Human-in-the-loop required for all decisions affecting account status or access",
+  "ai_incident_handling": "AI-specific incident runbook documented. Model rollback capability within 1 hour.",
+  "automated_decisions": "GDPR Art. 22 addressed — users can request human review of automated decisions",
+  "eu_ai_act": "Vendor references EU AI Act in responsible AI page. Self-classified as limited risk.",
+  "rating": "Strong",
+  "summary": "Mature AI governance with transparent model documentation, opt-out mechanisms, and regulatory awareness.",
+  "sources": ["https://example.com/responsible-ai", "https://example.com/privacy", "https://example.com/trust"]
+}
+```
+
+Field reference:
+- `ai_involvement`: AI involvement status: yes, no, or unclear (string).
+- `use_cases`: Array of AI/ML use cases in the product or service.
+- `ai_policy_url`: URL to AI governance or responsible AI documentation (string).
+- `model_transparency`: Model transparency and explainability findings (string).
+- `bias_controls`: Bias detection and fairness measures (string).
+- `customer_data_training`: Whether customer data is used for model training (string).
+- `opt_out_available`: Whether training data opt-out is available (string).
+- `training_data_details`: Training data governance details (string).
+- `human_oversight`: Human oversight mechanisms for AI decisions (string).
+- `ai_incident_handling`: AI-specific incident handling procedures (string).
+- `automated_decisions`: GDPR Art. 22 automated decision-making compliance (string).
+- `eu_ai_act`: EU AI Act awareness and compliance indicators (string).
+- `rating`: Overall AI risk rating: Strong, Adequate, Weak, or N/A (string).
+- `summary`: Key findings summary (string).
+- `sources`: Array of URLs visited during assessment.
