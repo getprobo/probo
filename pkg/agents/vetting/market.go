@@ -16,6 +16,7 @@ package vetting
 
 import (
 	_ "embed"
+	"fmt"
 
 	"go.probo.inc/probo/pkg/agent"
 	"go.probo.inc/probo/pkg/llm"
@@ -27,16 +28,23 @@ var marketSystemPrompt string
 func newMarketPresenceAgent(
 	client *llm.Client,
 	model string,
-	browserTools []agent.Tool,
+	tools []agent.Tool,
 	extraOpts ...agent.Option,
-) *agent.Agent {
+) (*agent.Agent, error) {
+	outputType, err := agent.NewOutputType[MarketOutput]("market_output")
+	if err != nil {
+		return nil, fmt.Errorf("cannot create output type: %w", err)
+	}
+
 	opts := []agent.Option{
 		agent.WithInstructions(marketSystemPrompt),
 		agent.WithModel(model),
-		agent.WithTools(browserTools...),
-		agent.WithMaxTurns(10),
+		agent.WithTools(tools...),
+		agent.WithMaxTurns(40),
+		agent.WithOutputType(outputType),
+		agent.WithParallelToolCalls(true),
 	}
 	opts = append(opts, extraOpts...)
 
-	return agent.New("market_presence_analyst", client, opts...)
+	return agent.New("market_presence_analyst", client, opts...), nil
 }

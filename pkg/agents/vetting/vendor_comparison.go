@@ -16,6 +16,7 @@ package vetting
 
 import (
 	_ "embed"
+	"fmt"
 
 	"go.probo.inc/probo/pkg/agent"
 	"go.probo.inc/probo/pkg/llm"
@@ -29,14 +30,20 @@ func newVendorComparisonAgent(
 	model string,
 	tools []agent.Tool,
 	extraOpts ...agent.Option,
-) *agent.Agent {
+) (*agent.Agent, error) {
+	outputType, err := agent.NewOutputType[VendorComparisonOutput]("vendor_comparison_output")
+	if err != nil {
+		return nil, fmt.Errorf("cannot create output type: %w", err)
+	}
+
 	opts := []agent.Option{
 		agent.WithInstructions(vendorComparisonSystemPrompt),
 		agent.WithModel(model),
 		agent.WithTools(tools...),
-		agent.WithMaxTurns(10),
+		agent.WithMaxTurns(40),
+		agent.WithOutputType(outputType),
 	}
 	opts = append(opts, extraOpts...)
 
-	return agent.New("vendor_comparison_assessor", client, opts...)
+	return agent.New("vendor_comparison_assessor", client, opts...), nil
 }

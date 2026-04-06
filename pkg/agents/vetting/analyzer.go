@@ -16,6 +16,7 @@ package vetting
 
 import (
 	_ "embed"
+	"fmt"
 
 	"go.probo.inc/probo/pkg/agent"
 	"go.probo.inc/probo/pkg/llm"
@@ -27,16 +28,23 @@ var analyzerSystemPrompt string
 func newDocumentAnalyzerAgent(
 	client *llm.Client,
 	model string,
-	browserTools []agent.Tool,
+	tools []agent.Tool,
 	extraOpts ...agent.Option,
-) *agent.Agent {
+) (*agent.Agent, error) {
+	outputType, err := agent.NewOutputType[DocumentAnalysisOutput]("document_analysis_output")
+	if err != nil {
+		return nil, fmt.Errorf("cannot create output type: %w", err)
+	}
+
 	opts := []agent.Option{
 		agent.WithInstructions(analyzerSystemPrompt),
 		agent.WithModel(model),
-		agent.WithTools(browserTools...),
-		agent.WithMaxTurns(5),
+		agent.WithTools(tools...),
+		agent.WithMaxTurns(20),
+		agent.WithOutputType(outputType),
+		agent.WithThinking(4000),
 	}
 	opts = append(opts, extraOpts...)
 
-	return agent.New("document_analyzer", client, opts...)
+	return agent.New("document_analyzer", client, opts...), nil
 }

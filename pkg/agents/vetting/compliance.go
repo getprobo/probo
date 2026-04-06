@@ -16,6 +16,7 @@ package vetting
 
 import (
 	_ "embed"
+	"fmt"
 
 	"go.probo.inc/probo/pkg/agent"
 	"go.probo.inc/probo/pkg/llm"
@@ -27,16 +28,22 @@ var complianceSystemPrompt string
 func newComplianceAssessorAgent(
 	client *llm.Client,
 	model string,
-	browserTools []agent.Tool,
+	tools []agent.Tool,
 	extraOpts ...agent.Option,
-) *agent.Agent {
+) (*agent.Agent, error) {
+	outputType, err := agent.NewOutputType[ComplianceOutput]("compliance_output")
+	if err != nil {
+		return nil, fmt.Errorf("cannot create output type: %w", err)
+	}
+
 	opts := []agent.Option{
 		agent.WithInstructions(complianceSystemPrompt),
 		agent.WithModel(model),
-		agent.WithTools(browserTools...),
-		agent.WithMaxTurns(5),
+		agent.WithTools(tools...),
+		agent.WithMaxTurns(20),
+		agent.WithOutputType(outputType),
 	}
 	opts = append(opts, extraOpts...)
 
-	return agent.New("compliance_assessor", client, opts...)
+	return agent.New("compliance_assessor", client, opts...), nil
 }
