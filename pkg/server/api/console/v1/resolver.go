@@ -171,6 +171,11 @@ func handleConnectorComplete(
 	return func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
 
+		if oauthErr := query.Get("error"); oauthErr != "" {
+			handleConnectorOAuth2Error(w, r, logger, baseURL, safeRedirect, query)
+			return
+		}
+
 		stateToken := query.Get("state")
 		if stateToken == "" {
 			httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("missing state parameter"))
@@ -249,6 +254,41 @@ func handleConnectorComplete(
 
 		safeRedirect.Redirect(w, r, parsedURL.String(), "/", http.StatusSeeOther)
 	}
+}
+
+func handleConnectorOAuth2Error(
+	w http.ResponseWriter,
+	r *http.Request,
+	logger *log.Logger,
+	baseURL *baseurl.BaseURL,
+	safeRedirect *saferedirect.SafeRedirect,
+	query url.Values,
+) {
+	oauthErr := query.Get("error")
+	oauthErrDesc := query.Get("error_description")
+
+	provider := "unknown"
+	if stateToken := query.Get("state"); stateToken != "" {
+		if p, err := connector.ExtractProviderFromState(stateToken); err == nil {
+			provider = p
+		}
+	}
+
+	logger.WarnCtx(r.Context(), "OAuth2 callback returned error",
+		log.String("provider", provider),
+		log.String("error", oauthErr),
+		log.String("error_description", oauthErrDesc),
+	)
+
+	parsedURL, _ := url.Parse(baseURL.String())
+	q := parsedURL.Query()
+	q.Set("error", oauthErr)
+	if oauthErrDesc != "" {
+		q.Set("error_description", oauthErrDesc)
+	}
+	parsedURL.RawQuery = q.Encode()
+
+	safeRedirect.Redirect(w, r, parsedURL.String(), "/", http.StatusSeeOther)
 }
 
 func (r *Resolver) ProboService(ctx context.Context, tenantID gid.TenantID) *probo.TenantService {
