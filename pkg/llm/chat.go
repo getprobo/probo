@@ -103,9 +103,10 @@ type (
 	}
 
 	MessageDelta struct {
-		Content   string
-		Thinking  string
-		ToolCalls []ToolCallDelta
+		Content           string
+		Thinking          string
+		ThinkingSignature string
+		ToolCalls         []ToolCallDelta
 	}
 
 	ToolCallDelta struct {
@@ -231,6 +232,9 @@ func (a *StreamAccumulator) accumulate(event ChatCompletionStreamEvent) {
 
 	a.content.WriteString(event.Delta.Content)
 	a.thinking.WriteString(event.Delta.Thinking)
+	if event.Delta.ThinkingSignature != "" {
+		a.thinkingSignature = event.Delta.ThinkingSignature
+	}
 
 	for _, tcd := range event.Delta.ToolCalls {
 		tc, ok := a.toolCalls[tcd.Index]
