@@ -26,34 +26,163 @@ Custom scalar mappings: `Datetime → string`, `GID → string`, `CursorKey → 
 
 ## Colocated queries
 
-Queries are defined inline in the file that uses them. Route-level queries are preloaded in the router loader before the component renders:
+Queries are defined inline in the file that uses them. Route-level queries are preloaded in a dedicated `*PageLoader` component before the page renders.
+
+### Route definition
+
+Routes only declare `path`, `Fallback`, and `Component` pointing to a lazy-loaded loader component — no Relay logic in the route itself:
 
 ```tsx
-// In route definition
-{
-  path: "vendors",
-  loader: loaderFromQueryLoader(({ organizationId }) =>
-    loadQuery<VendorGraphListQuery>(coreEnvironment, vendorsQuery, {
-      organizationId,
-      snapshotId: null,
-    }),
-  ),
-  Component: withQueryRef(
-    lazy(() => import("#/pages/organizations/vendors/VendorsPage")),
-  ),
-}
+// In route file (e.g. findingRoutes.ts)
+import { lazy } from "@probo/react-lazy";
+import type { AppRoute } from "@probo/routes";
+import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
 
-// In the component
-export default function VendorsPage(props: Props) {
-  const data = usePreloadedQuery(vendorsQuery, props.queryRef);
+export const findingRoutes = [
+  {
+    path: "findings",
+    Fallback: PageSkeleton,
+    Component: lazy(
+      () => import("#/pages/organizations/findings/FindingsPageLoader"),
+    ),
+  },
+] satisfies AppRoute[];
+```
+
+### Loader component
+
+The loader component owns the Relay query lifecycle — it calls `useQueryLoader` + `useEffect` to preload, renders a skeleton while waiting, then wraps the real page in `Suspense`:
+
+```tsx
+// FindingsPageLoader.tsx
+import { Suspense, useEffect } from "react";
+import { useQueryLoader } from "react-relay";
+import { useParams } from "react-router";
+
+import type { FindingsPageListQuery } from "#/__generated__/core/FindingsPageListQuery.graphql";
+import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
+
+import FindingsPage, { findingsPageQuery } from "./FindingsPage";
+
+export default function FindingsPageLoader() {
+  const organizationId = useOrganizationId();
+  const { snapshotId } = useParams<{ snapshotId?: string }>();
+  const [queryRef, loadQuery]
+    = useQueryLoader<FindingsPageListQuery>(findingsPageQuery);
+
+  useEffect(() => {
+    loadQuery({
+      organizationId,
+      snapshotId: snapshotId ?? null,
+    });
+  }, [loadQuery, organizationId, snapshotId]);
+
+  if (!queryRef) {
+    return <PageSkeleton />;
+  }
+
+  return (
+    <Suspense fallback={<PageSkeleton />}>
+      <FindingsPage queryRef={queryRef} />
+    </Suspense>
+  );
+}
+```
+
+### Page component
+
+The page receives `queryRef` as a prop and reads data with `usePreloadedQuery`:
+
+```tsx
+// FindingsPage.tsx
+export const findingsPageQuery = graphql`
+  query FindingsPageListQuery($organizationId: ID!, $snapshotId: ID) {
+    node(id: $organizationId) {
+      ... on Organization {
+        ...FindingsPageFragment @arguments(snapshotId: $snapshotId)
+      }
+    }
+  }
+`;
+
+interface FindingsPageProps {
+  queryRef: PreloadedQuery<FindingsPageListQuery>;
+};
+
+export default function FindingsPage({ queryRef }: FindingsPageProps) {
+  const data = usePreloadedQuery(findingsPageQuery, queryRef);
   // ...
 }
 ```
 
-- `loaderFromQueryLoader` — converts a query loader into a React Router loader, returns `{ queryRef, dispose }`
-- `withQueryRef` — extracts `queryRef` from loader data and handles cleanup on unmount
+### `loaderFromQueryLoader` / `withQueryRef` (deprecated)
 
-For queries that need to run after render (e.g. select dropdowns), use `useLazyLoadQuery` with `fetchPolicy: "network-only"`.
+**Do not use.** Use a `*PageLoader` component with `useQueryLoader` as shown above instead.
+
+## Interaction-triggered queries
+
+When a user interaction (hover, click, open dialog) needs data beyond what the initial page query loaded, use a secondary query with `useQueryLoader` + `usePreloadedQuery`. This starts fetching in the event handler — before the target component renders — so the network request and component rendering overlap instead of running sequentially.
+
+The parent component owns the query lifecycle with `useQueryLoader`, triggers the fetch in the event handler, and passes the query ref down:
+
+```tsx
+import { Suspense } from "react";
+import { useQueryLoader } from "react-relay";
+
+import type { PosterHovercardQuery as HovercardQueryType } from "#/__generated__/core/PosterHovercardQuery.graphql";
+
+import PosterHovercard, { posterHovercardQuery } from "./PosterHovercard";
+
+function PosterByline({ poster }: Props) {
+  const data = useFragment(posterBylineFragment, poster);
+  const [hovercardQueryRef, loadHovercardQuery] =
+    useQueryLoader<HovercardQueryType>(posterHovercardQuery);
+
+  function onBeginHover() {
+    loadHovercardQuery({ posterId: data.id });
+  }
+
+  return (
+    <HoverTrigger onBeginHover={onBeginHover}>
+      {hovercardQueryRef && (
+        <Suspense fallback={<Spinner />}>
+          <PosterHovercard queryRef={hovercardQueryRef} />
+        </Suspense>
+      )}
+    </HoverTrigger>
+  );
+}
+```
+
+The child component reads data with `usePreloadedQuery`:
+
+```tsx
+import { graphql, usePreloadedQuery } from "react-relay";
+import type { PreloadedQuery } from "react-relay";
+import type { PosterHovercardQuery } from "#/__generated__/core/PosterHovercardQuery.graphql";
+
+export const posterHovercardQuery = graphql`
+  query PosterHovercardQuery($posterId: ID!) {
+    node(id: $posterId) {
+      ... on Poster {
+        ...PosterHovercardBodyFragment
+      }
+    }
+  }
+`;
+
+interface PosterHovercardProps {
+  queryRef: PreloadedQuery<PosterHovercardQuery>;
+}
+
+export default function PosterHovercard({ queryRef }: PosterHovercardProps) {
+  const data = usePreloadedQuery(posterHovercardQuery, queryRef);
+  // ...
+}
+```
+
+**Do not use `useLazyLoadQuery`** — it defers the fetch until the component renders, adding unnecessary latency. Always prefer `useQueryLoader` + `usePreloadedQuery` so the network request starts in the event handler.
 
 ## Fragments
 
@@ -61,7 +190,7 @@ Fragments colocate data requirements with the component that reads them:
 
 ```tsx
 const contactFragment = graphql`
-  fragment VendorContactsTabFragment_contact on VendorContact {
+  fragment ContactRow_contactFragment on VendorContact {
     id
     fullName
     email
@@ -74,7 +203,7 @@ const contactFragment = graphql`
   }
 `;
 
-function ContactRow(props: { contactKey: VendorContactsTabFragment_contact$key }) {
+function ContactRow(props: { contactKey: ContactRow_contactFragment$key }) {
   const contact = useFragment(contactFragment, props.contactKey);
   // ...
 }
@@ -252,20 +381,17 @@ return () => {
 
 ## File organization
 
-GraphQL operations are colocated with the components that use them:
+GraphQL operations are colocated with the components that use them. See [`contrib/claude/app-arborescence.md`](app-arborescence.md) for the full folder layout.
 
 ```
 pages/organizations/vendors/
   VendorsPage.tsx                    # query + pagination fragment
+  _components/
+    CreateContactDialog.tsx          # create mutation
+    EditContactDialog.tsx            # update mutation
   tabs/
     VendorContactsTab.tsx            # refetchable fragment + item fragment
     VendorComplianceTab.tsx
-  dialogs/
-    CreateContactDialog.tsx          # create mutation
-    EditContactDialog.tsx            # update mutation
-
-hooks/graph/
-  VendorGraph.ts                     # shared queries, mutations, hooks
 ```
 
-Shared queries and mutation hooks (used by multiple components) live in `hooks/graph/*.ts`. Component-specific operations are defined inline in the component file.
+Component-specific operations (queries, fragments, mutations) are defined inline in the component file that uses them. Shared sub-components live in `_components/` next to the page (scoped to the nearest common ancestor).

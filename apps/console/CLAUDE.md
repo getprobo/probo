@@ -15,7 +15,7 @@ React 19 + Vite + TypeScript + Relay + TailwindCSS. Port 5173.
 Defined in `src/routes.tsx` with feature-specific route files (e.g. `src/routes/assetRoutes.ts`).
 
 - Lazy-loaded via `lazy()` from `@probo/react-lazy`
-- Data loading: `loaderFromQueryLoader()` + `loadQuery()` (Relay)
+- Data loading: dedicated `*PageLoader` components with `useQueryLoader` (Relay)
 - Type: all routes `satisfies AppRoute[]`
 - Fallback: `PageSkeleton` or `Fallback` components during loading
 - Error boundaries per route group
