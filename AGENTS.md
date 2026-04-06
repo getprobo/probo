@@ -38,6 +38,7 @@ Detailed guides for specific subsystems live in `contrib/claude/`:
 - [`contrib/claude/license.md`](contrib/claude/license.md) — ISC license header (all file types)
 - [`contrib/claude/mcp.md`](contrib/claude/mcp.md) — MCP API patterns (specification.yaml, mcpgen, resolvers, type helpers)
 - [`contrib/claude/relay.md`](contrib/claude/relay.md) — Frontend Relay client (queries, fragments, mutations, pagination)
+- [`contrib/claude/ui.md`](contrib/claude/ui.md) — `@probo/ui`, Tailwind, tailwind-variants, folders, skeletons, compound components
 - [`contrib/claude/release.md`](contrib/claude/release.md) — Release process (version bump, changelog, tag, push)
 - [`contrib/claude/sandbox.md`](contrib/claude/sandbox.md) — Lima sandbox environments (create, manage, access services)
 - [`contrib/claude/validation.md`](contrib/claude/validation.md) — Validation framework (fluent API, validators, error codes, propagation)
