@@ -318,9 +318,13 @@ func (impl *Implm) Run(
 		return fmt.Errorf("cannot create hashing profile: %w", err)
 	}
 
+	redirectURI := baseURL.WithPath(connector.CallbackPath).MustString()
 	defaultConnectorRegistry := connector.NewConnectorRegistry()
-	for _, connector := range impl.cfg.Connectors {
-		if err := defaultConnectorRegistry.Register(connector.Provider, connector.Config); err != nil {
+	for _, connectorCfg := range impl.cfg.Connectors {
+		if oauth2c, ok := connectorCfg.Config.(*connector.OAuth2Connector); ok {
+			connector.ApplyProviderDefaults(connectorCfg.Provider, redirectURI, oauth2c)
+		}
+		if err := defaultConnectorRegistry.Register(connectorCfg.Provider, connectorCfg.Config); err != nil {
 			return fmt.Errorf("cannot register connector: %w", err)
 		}
 	}
