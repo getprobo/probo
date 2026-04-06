@@ -104,7 +104,7 @@ func (r *mdRenderer) renderNode(n Node) error {
 			r.buf.WriteString(*attrs.Language)
 		}
 		r.newLine()
-		for _, line := range strings.Split(code, "\n") {
+		for line := range strings.SplitSeq(code, "\n") {
 			r.ensurePrefix()
 			r.buf.WriteString(line)
 			r.newLine()
