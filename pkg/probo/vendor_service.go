@@ -808,7 +808,7 @@ func (s VendorService) Assess(
 
 	err = s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Tx) error {
 			if err := vendor.LoadByID(ctx, conn, s.svc.scope, req.ID); err != nil {
 				return fmt.Errorf("cannot load vendor %q: %w", req.ID, err)
 			}
