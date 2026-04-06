@@ -13,7 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 import { graphql, useFragment } from "react-relay";
-import { useOutletContext } from "react-router";
+import { useOutletContext, useParams } from "react-router";
 
 import type { MeasureRisksTabFragment$key } from "#/__generated__/core/MeasureRisksTabFragment.graphql";
 import { LinkedRisksCard } from "#/components/risks/LinkedRisksCard";
@@ -68,8 +68,12 @@ export const detachRiskMutation = graphql`
 `;
 
 export default function MeasureRisksTab() {
+  const { measureId } = useParams<{ measureId: string }>();
+  if (!measureId) {
+    throw new Error("Missing :measureId param in route");
+  }
   const { measure } = useOutletContext<{
-    measure: MeasureRisksTabFragment$key & { id: string };
+    measure: MeasureRisksTabFragment$key;
   }>();
   const data = useFragment(risksFragment, measure);
   const connectionId = data.risks.__id;

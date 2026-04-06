@@ -15,7 +15,7 @@
 import { useTranslate } from "@probo/i18n";
 import { Button, IconPlusLarge } from "@probo/ui";
 import { useLazyLoadQuery } from "react-relay";
-import { useOutletContext } from "react-router";
+import { useParams } from "react-router";
 import { graphql } from "relay-runtime";
 
 import type { MeasureTasksTabQuery } from "#/__generated__/core/MeasureTasksTabQuery.graphql";
@@ -48,12 +48,11 @@ const tasksQuery = graphql`
 
 export default function MeasureTasksTab() {
   const { __ } = useTranslate();
-  const { measure } = useOutletContext<{
-    measure: { id: string };
-  }>();
-  const { node } = useLazyLoadQuery<MeasureTasksTabQuery>(tasksQuery, {
-    measureId: measure.id,
-  });
+  const { measureId } = useParams<{ measureId: string }>();
+  if (!measureId) {
+    throw new Error("Missing :measureId param in route");
+  }
+  const { node } = useLazyLoadQuery<MeasureTasksTabQuery>(tasksQuery, { measureId });
   if (node.__typename !== "Measure") {
     throw new Error("invalid node type");
   }
@@ -63,7 +62,7 @@ export default function MeasureTasksTab() {
     <div className="relative">
       <TasksCard connectionId={connectionId} tasks={node.tasks.edges} />
       {node.canCreateTask && (
-        <TaskFormDialog connection={connectionId} measureId={measure.id}>
+        <TaskFormDialog connection={connectionId} measureId={measureId}>
           <Button
             variant="secondary"
             icon={IconPlusLarge}

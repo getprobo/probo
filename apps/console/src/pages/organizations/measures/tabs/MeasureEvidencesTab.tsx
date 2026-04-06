@@ -60,7 +60,7 @@ export const evidencesFragment = graphql`
     before: { type: "CursorKey", defaultValue: null }
     last: { type: "Int", defaultValue: null }
   ) {
-    id
+    name
     canUploadEvidence: permission(action: "core:measure:upload-evidence")
     evidences(
       first: $first
@@ -112,12 +112,16 @@ const deleteEvidenceMutation = graphql`
 
 export default function MeasureEvidencesTab() {
   const { measure } = useOutletContext<{
-    measure: MeasureEvidencesTabFragment$key & { id: string; name: string };
+    measure: MeasureEvidencesTabFragment$key;
   }>();
-  const { evidenceId, snapshotId } = useParams<{
+  const { measureId, evidenceId, snapshotId } = useParams<{
+    measureId: string;
     evidenceId: string;
     snapshotId?: string;
   }>();
+  if (!measureId) {
+    throw new Error("Missing :measureId param in route");
+  }
   // eslint-disable-next-line relay/generated-typescript-types
   const pagination = usePaginationFragment(evidencesFragment, measure);
   const connectionId = pagination.data.evidences.__id;
@@ -130,7 +134,7 @@ export default function MeasureEvidencesTab() {
   const dialogRef = useDialogRef();
   const isSnapshotMode = Boolean(snapshotId);
 
-  usePageTitle(measure.name + " - " + __("Evidences"));
+  usePageTitle(pagination.data.name + " - " + __("Evidences"));
 
   return (
     <div className="space-y-6">
@@ -149,7 +153,7 @@ export default function MeasureEvidencesTab() {
             <EvidenceRow
               key={evidence.id}
               evidenceKey={evidence}
-              measureId={measure.id}
+              measureId={measureId}
               organizationId={organizationId}
               connectionId={connectionId}
               hideActions={isSnapshotMode}
@@ -169,11 +173,11 @@ export default function MeasureEvidencesTab() {
       </SortableTable>
       {evidence && (
         <EvidencePreviewDialog
-          key={evidence?.id}
+          key={evidence.id}
           onClose={() => {
             const baseUrl = isSnapshotMode
-              ? `/organizations/${organizationId}/snapshots/${snapshotId}/risks/measures/${measure.id}/evidences`
-              : `/organizations/${organizationId}/measures/${measure.id}/evidences`;
+              ? `/organizations/${organizationId}/snapshots/${snapshotId}/risks/measures/${measureId}/evidences`
+              : `/organizations/${organizationId}/measures/${measureId}/evidences`;
             void navigate(baseUrl);
           }}
           evidenceId={evidence.id}
@@ -183,7 +187,7 @@ export default function MeasureEvidencesTab() {
       {!isSnapshotMode && pagination.data.canUploadEvidence && (
         <CreateEvidenceDialog
           ref={dialogRef}
-          measureId={measure.id}
+          measureId={measureId}
           connectionId={connectionId}
         />
       )}

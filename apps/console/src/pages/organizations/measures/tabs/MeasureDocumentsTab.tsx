@@ -13,7 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 import { graphql, useFragment } from "react-relay";
-import { useOutletContext } from "react-router";
+import { useOutletContext, useParams } from "react-router";
 
 import type { MeasureDocumentsTabFragment$key } from "#/__generated__/core/MeasureDocumentsTabFragment.graphql";
 import { LinkedDocumentsCard } from "#/components/documents/LinkedDocumentsCard";
@@ -68,6 +68,10 @@ export const detachDocumentMutation = graphql`
 `;
 
 export default function MeasureDocumentsTab() {
+  const { measureId } = useParams<{ measureId: string }>();
+  if (!measureId) {
+    throw new Error("Missing :measureId param in route");
+  }
   const { measure } = useOutletContext<{
     measure: MeasureDocumentsTabFragment$key;
   }>();
@@ -108,7 +112,7 @@ export default function MeasureDocumentsTab() {
       documents={documents}
       onAttach={attachDocument}
       onDetach={detachDocument}
-      params={{ measureId: data.id }}
+      params={{ measureId }}
       connectionId={connectionId}
       readOnly={readOnly}
     />

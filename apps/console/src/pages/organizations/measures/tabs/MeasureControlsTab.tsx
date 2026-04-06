@@ -13,7 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 import { graphql, useRefetchableFragment } from "react-relay";
-import { useOutletContext } from "react-router";
+import { useOutletContext, useParams } from "react-router";
 
 import type { MeasureControlsTabFragment$key } from "#/__generated__/core/MeasureControlsTabFragment.graphql";
 import { LinkedControlsCard } from "#/components/controls/LinkedControlsCard";
@@ -30,7 +30,6 @@ export const controlsFragment = graphql`
     filter: { type: "ControlFilter", defaultValue: null }
   )
   @refetchable(queryName: "MeasureControlsTabControlsQuery") {
-    id
     canCreateControlMeasureMapping: permission(
       action: "core:control:create-measure-mapping"
     )
@@ -85,8 +84,12 @@ export const attachControlMutation = graphql`
 
 export default function MeasureControlsTab() {
   const { measure } = useOutletContext<{
-    measure: MeasureControlsTabFragment$key & { id: string };
+    measure: MeasureControlsTabFragment$key;
   }>();
+  const { measureId } = useParams<{ measureId: string }>();
+  if (!measureId) {
+    throw new Error("Missing :measureId param in route");
+  }
   // eslint-disable-next-line relay/generated-typescript-types
   const [data, refetch] = useRefetchableFragment(controlsFragment, measure);
   const connectionId = data.controls.__id;
@@ -97,7 +100,7 @@ export default function MeasureControlsTab() {
   const readOnly = !canLinkControl && !canUnlinkControl;
 
   const incrementOptions = {
-    id: data.id,
+    id: measureId,
     node: "controls(first:0)",
   };
   const [detachControl, isDetaching] = useMutationWithIncrement(
@@ -122,7 +125,7 @@ export default function MeasureControlsTab() {
       controls={controls}
       onDetach={detachControl}
       onAttach={attachControl}
-      params={{ measureId: data.id }}
+      params={{ measureId }}
       connectionId={connectionId}
       refetch={refetch}
       readOnly={readOnly}
