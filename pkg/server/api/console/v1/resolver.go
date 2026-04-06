@@ -268,9 +268,15 @@ func handleConnectorOAuth2Error(
 	oauthErrDesc := query.Get("error_description")
 
 	provider := "unknown"
+	redirectURL := baseURL.String()
 	if stateToken := query.Get("state"); stateToken != "" {
-		if p, err := connector.ExtractProviderFromState(stateToken); err == nil {
-			provider = p
+		if payload, err := connector.DecodeOAuth2StatePayload(stateToken); err == nil {
+			if payload.Data.Provider != "" {
+				provider = payload.Data.Provider
+			}
+			if payload.Data.ContinueURL != "" {
+				redirectURL = payload.Data.ContinueURL
+			}
 		}
 	}
 
@@ -280,7 +286,7 @@ func handleConnectorOAuth2Error(
 		log.String("error_description", oauthErrDesc),
 	)
 
-	parsedURL, _ := url.Parse(baseURL.String())
+	parsedURL, _ := url.Parse(redirectURL)
 	q := parsedURL.Query()
 	q.Set("error", oauthErr)
 	if oauthErrDesc != "" {
