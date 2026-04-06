@@ -307,6 +307,9 @@ func coreLoop(ctx context.Context, startAgent *Agent, inputMessages []llm.Messag
 		log.Int("tool_count", len(s.toolDefs)),
 	)
 
+	const maxEmptyOutputRetries = 2
+	emptyOutputRetries := 0
+
 	for {
 		if err := ctx.Err(); err != nil {
 			return s.finishRun(ctx, nil, fmt.Errorf("cannot complete: %w", err))
@@ -371,6 +374,25 @@ func coreLoop(ctx context.Context, startAgent *Agent, inputMessages []llm.Messag
 
 		switch resp.FinishReason {
 		case llm.FinishReasonStop, llm.FinishReasonLength:
+			// When structured output is enabled and the model produced
+			// no text (e.g. only thinking), retry the turn so the model
+			// gets another chance to produce the required JSON output.
+			// The empty assistant turn must be dropped from history
+			// because Anthropic rejects requests where the last message
+			// is a thinking-only assistant turn.
+			if s.agent.outputType != nil && resp.Message.Text() == "" && emptyOutputRetries < maxEmptyOutputRetries && s.turns < s.agent.maxTurns {
+				emptyOutputRetries++
+				s.messages = s.messages[:len(s.messages)-1]
+				s.logger.InfoCtx(
+					ctx,
+					"retrying turn: structured output expected but got empty text",
+					log.Int("turn", s.turns),
+					log.Int("retry", emptyOutputRetries),
+					log.Int("output_tokens", resp.Usage.OutputTokens),
+				)
+				continue
+			}
+
 			if err := runOutputGuardrails(ctx, s.agent, resp.Message); err != nil {
 				return s.finishRun(ctx, nil, err)
 			}
