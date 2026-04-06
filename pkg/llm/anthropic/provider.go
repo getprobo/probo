@@ -218,7 +218,9 @@ func buildMessages(messages []llm.Message) []anthropic.MessageParam {
 			}
 			for _, tc := range msg.ToolCalls {
 				var input any
-				_ = json.Unmarshal([]byte(tc.Function.Arguments), &input)
+				if err := json.Unmarshal([]byte(tc.Function.Arguments), &input); err != nil || input == nil {
+					input = map[string]any{}
+				}
 				blocks = append(blocks, anthropic.NewToolUseBlock(tc.ID, input, tc.Function.Name))
 			}
 			out = append(out, anthropic.NewAssistantMessage(blocks...))
@@ -387,6 +389,7 @@ type anthropicStream struct {
 	current llm.ChatCompletionStreamEvent
 	// Track tool call indices for mapping content_block_start events.
 	toolCallIndex     int
+	inToolUse         bool
 	thinkingSignature string
 }
 
@@ -424,6 +427,7 @@ func (s *anthropicStream) mapStreamEvent(event *anthropic.MessageStreamEventUnio
 		cb := event.ContentBlock
 		switch cb.Type {
 		case "tool_use":
+			s.inToolUse = true
 			tu := cb.AsToolUse()
 			return llm.ChatCompletionStreamEvent{
 				Delta: llm.MessageDelta{
@@ -452,7 +456,9 @@ func (s *anthropicStream) mapStreamEvent(event *anthropic.MessageStreamEventUnio
 			}, true
 		case "signature_delta":
 			s.thinkingSignature = delta.Signature
-			return llm.ChatCompletionStreamEvent{}, false
+			return llm.ChatCompletionStreamEvent{
+				Delta: llm.MessageDelta{ThinkingSignature: delta.Signature},
+			}, true
 		case "input_json_delta":
 			return llm.ChatCompletionStreamEvent{
 				Delta: llm.MessageDelta{
@@ -466,8 +472,9 @@ func (s *anthropicStream) mapStreamEvent(event *anthropic.MessageStreamEventUnio
 		return llm.ChatCompletionStreamEvent{}, false
 
 	case "content_block_stop":
-		if event.ContentBlock.Type == "tool_use" {
+		if s.inToolUse {
 			s.toolCallIndex++
+			s.inToolUse = false
 		}
 		return llm.ChatCompletionStreamEvent{}, false
 

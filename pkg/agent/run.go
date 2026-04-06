@@ -18,6 +18,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"sync"
 
 	"go.gearno.de/kit/log"
@@ -68,7 +69,34 @@ type (
 func noopEvent(_ context.Context, _ StreamEvent) {}
 
 func blockingCallLLM(ctx context.Context, agent *Agent, req *llm.ChatCompletionRequest) (*llm.ChatCompletionResponse, error) {
-	return agent.client.ChatCompletion(ctx, req)
+	resp, err := agent.client.ChatCompletion(ctx, req)
+	if err == nil {
+		return resp, nil
+	}
+
+	// Some providers (e.g. Anthropic) require streaming for large
+	// max_tokens or when thinking is enabled. Fall back to streaming
+	// transparently when the blocking call fails with a streaming
+	// requirement error.
+	if !isStreamingRequiredError(err) {
+		return nil, err
+	}
+
+	stream, sErr := agent.client.ChatCompletionStream(ctx, req)
+	if sErr != nil {
+		return nil, err // return the original error
+	}
+	acc := llm.NewStreamAccumulator(stream)
+	for acc.Next() {
+	}
+	if sErr := acc.Err(); sErr != nil {
+		return nil, sErr
+	}
+	return acc.Response(), nil
+}
+
+func isStreamingRequiredError(err error) bool {
+	return err != nil && strings.Contains(err.Error(), "streaming is required")
 }
 
 func (a *Agent) Run(ctx context.Context, messages []llm.Message) (*Result, error) {
