@@ -124,7 +124,6 @@ func TestWriteConfig_CompleteConfig(t *testing.T) {
 					RawConfig: probod.ConnectorConfigOAuth2{
 						ClientID:     "client-id",
 						ClientSecret: "client-secret",
-						Scopes:       []string{"chat:write"},
 					},
 					RawSettings: map[string]any{
 						"signing-secret": "secret",

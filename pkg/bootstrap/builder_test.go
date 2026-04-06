@@ -73,7 +73,7 @@ func TestBuilder_Build_MissingRequiredEnvVars(t *testing.T) {
 				"AUTH_PASSWORD_PEPPER":      "pepper",
 				"CONNECTOR_SLACK_CLIENT_ID": "client-id",
 			},
-			wantMissing: []string{"CONNECTOR_SLACK_CLIENT_SECRET", "CONNECTOR_SLACK_SIGNING_SECRET", "CONNECTOR_SLACK_REDIRECT_URI"},
+			wantMissing: []string{"CONNECTOR_SLACK_CLIENT_SECRET", "CONNECTOR_SLACK_SIGNING_SECRET"},
 		},
 	}
 
@@ -358,7 +358,6 @@ func TestBuilder_Build_SlackConnector(t *testing.T) {
 	env["CONNECTOR_SLACK_CLIENT_ID"] = "slack-client-id"
 	env["CONNECTOR_SLACK_CLIENT_SECRET"] = "slack-client-secret"
 	env["CONNECTOR_SLACK_SIGNING_SECRET"] = "slack-signing-secret"
-	env["CONNECTOR_SLACK_REDIRECT_URI"] = "https://app.example.com/api/console/v1/connectors/complete"
 
 	b := NewBuilder(mockEnv(env))
 	b.samlCertificate = "test-cert"
@@ -374,34 +373,8 @@ func TestBuilder_Build_SlackConnector(t *testing.T) {
 	rawConfig := connector.RawConfig.(probod.ConnectorConfigOAuth2)
 	assert.Equal(t, "slack-client-id", rawConfig.ClientID)
 	assert.Equal(t, "slack-client-secret", rawConfig.ClientSecret)
-	assert.Equal(t, "https://app.example.com/api/console/v1/connectors/complete", rawConfig.RedirectURI)
-	assert.Equal(t, "https://slack.com/oauth/v2/authorize", rawConfig.AuthURL)
-	assert.Equal(t, "https://slack.com/api/oauth.v2.access", rawConfig.TokenURL)
-	assert.Equal(t, []string{"chat:write", "channels:join", "incoming-webhook"}, rawConfig.Scopes)
 	rawSettings := connector.RawSettings.(map[string]any)
 	assert.Equal(t, "slack-signing-secret", rawSettings["signing-secret"])
-}
-
-func TestBuilder_Build_SlackConnector_CustomURLs(t *testing.T) {
-	env := requiredEnv()
-	env["CONNECTOR_SLACK_CLIENT_ID"] = "slack-client-id"
-	env["CONNECTOR_SLACK_CLIENT_SECRET"] = "slack-client-secret"
-	env["CONNECTOR_SLACK_SIGNING_SECRET"] = "slack-signing-secret"
-	env["CONNECTOR_SLACK_REDIRECT_URI"] = "https://app.example.com/callback"
-	env["CONNECTOR_SLACK_AUTH_URL"] = "https://custom.slack.com/oauth/authorize"
-	env["CONNECTOR_SLACK_TOKEN_URL"] = "https://custom.slack.com/oauth/token"
-
-	b := NewBuilder(mockEnv(env))
-	b.samlCertificate = "test-cert"
-	b.samlPrivateKey = "test-key"
-
-	cfg, err := b.Build()
-	require.NoError(t, err)
-
-	connector := cfg.Probod.Connectors[0]
-	rawConfig := connector.RawConfig.(probod.ConnectorConfigOAuth2)
-	assert.Equal(t, "https://custom.slack.com/oauth/authorize", rawConfig.AuthURL)
-	assert.Equal(t, "https://custom.slack.com/oauth/token", rawConfig.TokenURL)
 }
 
 func TestBuilder_Build_SAMLAutoGeneration(t *testing.T) {
