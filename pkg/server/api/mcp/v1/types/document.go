@@ -110,22 +110,17 @@ func NewListDocumentsOutput(documentPage *page.Page[*coredata.Document, coredata
 	}
 }
 
-func NewAddDocumentOutput(doc *coredata.Document, docVersion *coredata.DocumentVersion) (AddDocumentOutput, error) {
-	dv, err := NewDocumentVersion(docVersion)
-	if err != nil {
-		return AddDocumentOutput{}, err
-	}
-
+func NewAddDocumentOutput(doc *coredata.Document, docVersion *coredata.DocumentVersion) AddDocumentOutput {
 	return AddDocumentOutput{
 		Document:        NewDocument(doc),
-		DocumentVersion: dv,
-	}, nil
+		DocumentVersion: NewDocumentVersion(docVersion),
+	}
 }
 
-func NewDocumentVersion(dv *coredata.DocumentVersion) (*DocumentVersion, error) {
+func NewDocumentVersion(dv *coredata.DocumentVersion) *DocumentVersion {
 	contentMD, err := proseMirrorJSONToMarkdown(dv.Content)
 	if err != nil {
-		return nil, fmt.Errorf("cannot convert document version content to markdown: %w", err)
+		panic(fmt.Errorf("cannot convert document version content to markdown: %w", err))
 	}
 
 	return &DocumentVersion{
@@ -143,17 +138,13 @@ func NewDocumentVersion(dv *coredata.DocumentVersion) (*DocumentVersion, error) 
 		PublishedAt:    dv.PublishedAt,
 		CreatedAt:      dv.CreatedAt,
 		UpdatedAt:      dv.UpdatedAt,
-	}, nil
+	}
 }
 
-func NewListDocumentVersionsOutput(versionPage *page.Page[*coredata.DocumentVersion, coredata.DocumentVersionOrderField]) (ListDocumentVersionsOutput, error) {
+func NewListDocumentVersionsOutput(versionPage *page.Page[*coredata.DocumentVersion, coredata.DocumentVersionOrderField]) ListDocumentVersionsOutput {
 	versions := make([]*DocumentVersion, 0, len(versionPage.Data))
 	for _, v := range versionPage.Data {
-		dv, err := NewDocumentVersion(v)
-		if err != nil {
-			return ListDocumentVersionsOutput{}, err
-		}
-		versions = append(versions, dv)
+		versions = append(versions, NewDocumentVersion(v))
 	}
 
 	var nextCursor *page.CursorKey
@@ -165,7 +156,7 @@ func NewListDocumentVersionsOutput(versionPage *page.Page[*coredata.DocumentVers
 	return ListDocumentVersionsOutput{
 		NextCursor:       nextCursor,
 		DocumentVersions: versions,
-	}, nil
+	}
 }
 
 func NewDocumentVersionSignature(dvs *coredata.DocumentVersionSignature) *DocumentVersionSignature {
