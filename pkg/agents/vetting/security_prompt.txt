@@ -14,3 +14,111 @@ Given a domain name, perform all available security checks:
 
 Run all available checks and provide a comprehensive technical security summary. If a check fails due to an API limitation (e.g. missing API key), note it in your summary and continue with the remaining checks.
 Report findings factually — note what is present, what is missing, and any concerns.
+
+## Rating Criteria Per Check
+
+Apply the following criteria when assigning a status to each check:
+
+### SSL
+- **pass**: Valid certificate from a trusted CA, TLS 1.2 or higher, strong cipher suites
+- **warning**: Valid certificate but TLS 1.1 negotiated, or weak cipher suites (RC4, 3DES, CBC-mode only)
+- **fail**: Expired certificate, invalid hostname, self-signed certificate, or TLS 1.0 only
+
+### Headers
+- **pass**: HSTS, X-Frame-Options (or frame-ancestors CSP), and X-Content-Type-Options: nosniff all present
+- **warning**: One or two of the three key headers missing, or HSTS present without includeSubDomains
+- **fail**: No security headers at all, or only informational headers (Server, X-Powered-By)
+
+### DMARC
+- **pass**: DMARC record exists with p=reject or p=quarantine
+- **warning**: DMARC record exists with p=none (monitoring only, no enforcement)
+- **fail**: No DMARC record found
+
+### SPF
+- **pass**: Valid SPF record with -all (hard fail) or ~all (soft fail)
+- **warning**: SPF record with ?all (neutral — no enforcement)
+- **fail**: No SPF record found, or SPF record with +all (permit all senders)
+
+### Breaches
+- **pass**: No known breaches found in HIBP
+- **warning**: Old breaches (2+ years ago) that have been publicly acknowledged and remediated
+- **fail**: Recent breaches (within 2 years) or unresolved/unacknowledged breaches
+
+### DNSSEC
+- **pass**: DNSSEC enabled with valid signatures (RRSIG records present and chain of trust intact)
+- **warning**: DNSSEC partially configured (DS records present but validation issues)
+- **fail**: DNSSEC not enabled (no DS or RRSIG records)
+
+### CSP
+- **pass**: Restrictive Content-Security-Policy with no unsafe-inline, no unsafe-eval, no wildcard (*) sources
+- **warning**: CSP present but includes unsafe-inline or unsafe-eval directives
+- **fail**: No Content-Security-Policy header at all
+
+### CORS
+- **pass**: Restrictive CORS — specific allowed origins, no wildcard
+- **warning**: Reflected origin (Access-Control-Allow-Origin echoes the request Origin header)
+- **fail**: Wildcard (Access-Control-Allow-Origin: *), especially combined with Access-Control-Allow-Credentials: true
+
+### DNS
+- **pass**: Always pass — DNS checks are informational
+- Use the details field to report hosting provider signals (e.g. AWS, GCP, Cloudflare from A/CNAME records), email provider signals (e.g. Google Workspace, Microsoft 365 from MX records), and any notable TXT records (SPF, DKIM, domain verification entries)
+
+### API Errors
+If a check fails due to an API limitation (e.g. missing API key for HIBP, DNS timeout, WHOIS rate limit), set the status to "error" and explain the limitation in the details field. Do not leave the status empty or guess the result.
+
+## Output Format
+
+Return a JSON object with the following structure:
+
+```json
+{
+  "ssl": {
+    "status": "pass",
+    "details": "Valid certificate issued by Let's Encrypt, TLS 1.3 supported, strong cipher suites"
+  },
+  "headers": {
+    "status": "warning",
+    "details": "HSTS present with max-age=31536000. X-Content-Type-Options: nosniff present. X-Frame-Options missing."
+  },
+  "dmarc": {
+    "status": "pass",
+    "details": "DMARC record found: v=DMARC1; p=reject; rua=mailto:dmarc@example.com"
+  },
+  "spf": {
+    "status": "pass",
+    "details": "SPF record found: v=spf1 include:_spf.google.com ~all"
+  },
+  "breaches": {
+    "status": "error",
+    "details": "HIBP API returned 401 Unauthorized — API key required for domain search"
+  },
+  "dnssec": {
+    "status": "fail",
+    "details": "No DNSSEC records found — DS and RRSIG records absent"
+  },
+  "csp": {
+    "status": "warning",
+    "details": "CSP present but includes 'unsafe-inline' for script-src"
+  },
+  "cors": {
+    "status": "pass",
+    "details": "No Access-Control-Allow-Origin header returned for cross-origin request"
+  },
+  "dns": {
+    "status": "pass",
+    "details": "A records point to Cloudflare (104.x.x.x). MX records indicate Google Workspace. TXT records include SPF and Google site verification."
+  },
+  "whois": {
+    "registrar": "Cloudflare, Inc.",
+    "creation_date": "2018-03-15",
+    "organization": "Example Corp",
+    "name_servers": "ns1.cloudflare.com, ns2.cloudflare.com"
+  },
+  "summary": "Overall security posture is adequate. Strong SSL and email authentication but missing DNSSEC and some security headers."
+}
+```
+
+Field reference:
+- `ssl`, `headers`, `dmarc`, `spf`, `breaches`, `dnssec`, `csp`, `cors`, `dns`: Each has `status` (pass/warning/fail/error) and `details` (string with findings).
+- `whois`: Object with `registrar`, `creation_date`, `organization`, `name_servers` (all strings).
+- `summary`: Overall security posture summary string.
