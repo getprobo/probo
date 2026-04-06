@@ -247,12 +247,26 @@ func (r *mdRenderer) renderText(n Node) error {
 	return nil
 }
 
+// maxConsecutiveBackticks returns the length of the longest run of '`' in s.
+// Inline code fences must be longer than this value (CommonMark).
+func maxConsecutiveBackticks(s string) int {
+	max, cur := 0, 0
+	for i := 0; i < len(s); i++ {
+		if s[i] == '`' {
+			cur++
+			if cur > max {
+				max = cur
+			}
+		} else {
+			cur = 0
+		}
+	}
+	return max
+}
+
 func (r *mdRenderer) renderCodeText(n Node) error {
 	text := *n.Text
-	backtick := "`"
-	if strings.Contains(text, "`") {
-		backtick = "``"
-	}
+	fence := strings.Repeat("`", maxConsecutiveBackticks(text)+1)
 
 	var otherMarks []Mark
 	for _, m := range n.Marks {
@@ -267,15 +281,15 @@ func (r *mdRenderer) renderCodeText(n Node) error {
 		}
 	}
 
-	r.buf.WriteString(backtick)
-	if backtick == "``" {
+	r.buf.WriteString(fence)
+	if len(fence) > 1 {
 		r.buf.WriteByte(' ')
 	}
 	r.buf.WriteString(text)
-	if backtick == "``" {
+	if len(fence) > 1 {
 		r.buf.WriteByte(' ')
 	}
-	r.buf.WriteString(backtick)
+	r.buf.WriteString(fence)
 
 	for i := len(otherMarks) - 1; i >= 0; i-- {
 		if err := r.closeMark(otherMarks[i]); err != nil {
@@ -334,11 +348,11 @@ func (r *mdRenderer) closeMark(m Mark) error {
 }
 
 func (r *mdRenderer) renderBulletList(n Node) error {
-	tight := isTightList(n)
+	tight, err := listTightness(n)
+	if err != nil {
+		return fmt.Errorf("cannot render bullet list: %w", err)
+	}
 	for i, item := range n.Content {
-		if item.Type != NodeListItem {
-			continue
-		}
 		if i > 0 && !tight {
 			r.ensurePrefix()
 			r.newLine()
@@ -369,12 +383,12 @@ func (r *mdRenderer) renderOrderedList(n Node) error {
 	if err != nil {
 		return fmt.Errorf("cannot render ordered list node: %w", err)
 	}
-	tight := isTightList(n)
+	tight, err := listTightness(n)
+	if err != nil {
+		return fmt.Errorf("cannot render ordered list: %w", err)
+	}
 	start := max(attrs.Start, 1)
 	for i, item := range n.Content {
-		if item.Type != NodeListItem {
-			continue
-		}
 		if i > 0 && !tight {
 			r.ensurePrefix()
 			r.newLine()
@@ -461,16 +475,23 @@ func (r *mdRenderer) renderCellInline(cell Node) error {
 	return nil
 }
 
-func isTightList(n Node) bool {
+// listTightness returns true when the list is tight (no blank lines between items).
+// Every direct child of n must be a listItem; otherwise listTightness returns an error.
+func listTightness(n Node) (tight bool, err error) {
+	tight = true
 	for _, item := range n.Content {
 		if item.Type != NodeListItem {
-			continue
+			return false, fmt.Errorf(
+				"invalid child type %q (expected %q)",
+				item.Type,
+				NodeListItem,
+			)
 		}
 		if len(item.Content) != 1 {
-			return false
+			tight = false
 		}
 	}
-	return true
+	return tight, nil
 }
 
 func collectText(nodes []Node) string {

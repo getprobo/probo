@@ -199,6 +199,31 @@ func TestRenderMarkdown_InlineCodeWithBacktick(t *testing.T) {
 	assert.Equal(t, "`` a ` b ``\n", got)
 }
 
+func TestRenderMarkdown_InlineCodeWithDoubleBacktickRun(t *testing.T) {
+	t.Parallel()
+
+	// Two consecutive backticks in content need a 3+ backtick fence.
+	raw := `{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","marks":[{"type":"code"}],"text":"` + "``" + `x"}]}]}`
+	var n Node
+	require.NoError(t, json.Unmarshal([]byte(raw), &n))
+
+	got, err := RenderMarkdown(n)
+	require.NoError(t, err)
+	assert.Equal(t, "``` ``x ```\n", got)
+}
+
+func TestRenderMarkdown_InlineCodeWithTripleBacktickRun(t *testing.T) {
+	t.Parallel()
+
+	raw := `{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","marks":[{"type":"code"}],"text":"` + "```" + `"}]}]}`
+	var n Node
+	require.NoError(t, json.Unmarshal([]byte(raw), &n))
+
+	got, err := RenderMarkdown(n)
+	require.NoError(t, err)
+	assert.Equal(t, "```` ``` ````\n", got)
+}
+
 func TestRenderMarkdown_Link(t *testing.T) {
 	t.Parallel()
 
