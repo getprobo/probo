@@ -129,14 +129,6 @@ type (
 		Document string
 		Info     VendorInfo
 	}
-
-	// CrawlResult is the structured output from the crawler agent.
-	CrawlResult struct {
-		VendorName     string            `json:"vendor_name"`
-		VendorDomain   string            `json:"vendor_domain"`
-		DiscoveredURLs map[string]string `json:"discovered_urls"`
-		Notes          string            `json:"notes"`
-	}
 )
 
 func NewAssessor(cfg Config) *Assessor {
@@ -147,7 +139,7 @@ func (a *Assessor) Assess(ctx context.Context, websiteURL string, procedure stri
 	// Detach from the caller's context (typically the HTTP request) so
 	// that the assessment is not cancelled when the client disconnects.
 	// A dedicated timeout prevents the assessment from running forever.
-	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 10*time.Minute)
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 20*time.Minute)
 	defer cancel()
 
 	vendorBrowser := browser.NewBrowser(ctx, a.cfg.ChromeAddr)
