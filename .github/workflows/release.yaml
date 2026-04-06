@@ -291,7 +291,7 @@ jobs:
     needs: [docker-manifest, github-release]
     runs-on: "runs-on=${{ github.run_id }}/runner=2cpu-linux-x64/extras=s3-cache"
     permissions:
-      contents: "read"
+      contents: "write"
       packages: "write"
       id-token: "write"
       attestations: "write"
@@ -430,25 +430,37 @@ jobs:
           end
           RUBY
 
-          EXISTING_SHA=$(gh api "repos/getprobo/homebrew-tap/contents/Formula/prb.rb" --jq '.sha' 2>/dev/null || echo "")
+          CONTENT=$(base64 -w0 prb.rb)
+          HEAD_OID=$(gh api "repos/getprobo/homebrew-tap/git/ref/heads/main" --jq '.object.sha')
 
-          if [ -n "$EXISTING_SHA" ]; then
-            gh api "repos/getprobo/homebrew-tap/contents/Formula/prb.rb" \
-              --method PUT \
-              -f message="prb ${VERSION}" \
-              -f content="$(base64 -w0 prb.rb)" \
-              -f sha="${EXISTING_SHA}"
-          else
-            gh api "repos/getprobo/homebrew-tap/contents/Formula/prb.rb" \
-              --method PUT \
-              -f message="prb ${VERSION}" \
-              -f content="$(base64 -w0 prb.rb)"
-          fi
+          gh api graphql -f query='
+            mutation($headline: String!, $oid: GitObjectID!, $contents: Base64String!) {
+              createCommitOnBranch(input: {
+                branch: {
+                  repositoryNameWithOwner: "getprobo/homebrew-tap"
+                  branchName: "main"
+                }
+                message: { headline: $headline }
+                expectedHeadOid: $oid
+                fileChanges: {
+                  additions: [{
+                    path: "Formula/prb.rb"
+                    contents: $contents
+                  }]
+                }
+              }) {
+                commit { url }
+              }
+            }' \
+            -f headline="prb ${VERSION}" \
+            -f oid="${HEAD_OID}" \
+            -f contents="${CONTENT}"
 
-  # ── npm release (independent) ───────────────────────────────────────
-  npm-release:
-    name: "npm-release"
-    runs-on: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache"
+  # ── n8n node release ────────────────────────────────────────────────
+  n8n-node-release:
+    name: "n8n-node-release"
+    needs: [github-release]
+    runs-on: "ubuntu-latest"
     permissions:
       contents: read
       id-token: write
@@ -458,7 +470,6 @@ jobs:
         with:
           fetch-depth: 0
           submodules: recursive
-      - uses: "runs-on/action@742bf56072eb4845a0f94b3394673e4903c90ff0" # v2
       - uses: "actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f" # v6
         with:
           node-version-file: ".nvmrc"
