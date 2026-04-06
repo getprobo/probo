@@ -37,6 +37,7 @@ Detailed guides for specific subsystems live in `contrib/claude/`:
 - [`contrib/claude/graphql.md`](contrib/claude/graphql.md) — Go GraphQL backend (gqlgen, @goModel, connection types, cursor pagination)
 - [`contrib/claude/license.md`](contrib/claude/license.md) — ISC license header (all file types)
 - [`contrib/claude/mcp.md`](contrib/claude/mcp.md) — MCP API patterns (specification.yaml, mcpgen, resolvers, type helpers)
+- [`contrib/claude/react-components.md`](contrib/claude/react-components.md) — React component shape (file/export, props, configure vs data via hooks)
 - [`contrib/claude/relay.md`](contrib/claude/relay.md) — Frontend Relay client (queries, fragments, mutations, pagination)
 - [`contrib/claude/ui.md`](contrib/claude/ui.md) — `@probo/ui`, Tailwind, tailwind-variants, folders, skeletons, compound components
 - [`contrib/claude/release.md`](contrib/claude/release.md) — Release process (version bump, changelog, tag, push)

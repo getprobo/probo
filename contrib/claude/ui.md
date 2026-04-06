@@ -58,8 +58,8 @@ const row = tv({
   },
   defaultVariants: { bordered: true },
 });
-export function Row(props: { bordered?: boolean; children: React.ReactNode }) {
-  return <div className={row({ bordered: props.bordered })}>{props.children}</div>;
+export function Row({ bordered, children }: { bordered?: boolean; children: React.ReactNode }) {
+  return <div className={row({ bordered })}>{children}</div>;
 }
 ```
 
@@ -159,12 +159,12 @@ export const imageCard = tv({
 // ImageCard/ImageCardShell.tsx — Good — slot class names on wrapping tags
 import { imageCard } from "./variants";
 
-export function ImageCardShell(props: { image: React.ReactNode; text: React.ReactNode }) {
-  const { shell, image, text } = imageCard();
+export function ImageCardShell({ image, text }: { image: React.ReactNode; text: React.ReactNode }) {
+  const { shell, image: imageSlot, text: textSlot } = imageCard();
   return (
     <div className={shell()}>
-      <div className={image()}>{props.image}</div>
-      <div className={text()}>{props.text}</div>
+      <div className={imageSlot()}>{image}</div>
+      <div className={textSlot()}>{text}</div>
     </div>
   );
 }
@@ -174,13 +174,13 @@ export function ImageCardShell(props: { image: React.ReactNode; text: React.Reac
 // ImageCard/ImageCard.tsx — Good — Root owns logic; Shell receives region nodes as props
 import { Image, Text } from "@probo/ui";
 
-function ImageCardRoot(props: { image: React.ReactNode; text: React.ReactNode }) {
+function ImageCardRoot({ image, text }: { image: React.ReactNode; text: React.ReactNode }) {
   const id = useId();
   // state, effects, data wiring …
   return (
     <ImageCard.Shell
-      image={<Image>{props.image}</Image>}
-      text={<Text>{props.text}</Text>}
+      image={<Image>{image}</Image>}
+      text={<Text>{text}</Text>}
     />
   );
 }
@@ -192,12 +192,12 @@ function ImageCardRoot(props: { image: React.ReactNode; text: React.ReactNode })
 // </ImageCard.Shell>
 
 // Bad — data hooks or state live on Shell
-function ImageCardShellWithData(props: { image: React.ReactNode; text: React.ReactNode }) {
+function ImageCardShellWithData({ image, text }: { image: React.ReactNode; text: React.ReactNode }) {
   const data = useQuery(/* … */); // move to Root (or above)
   return (
     <div>
-      {props.image}
-      {props.text}
+      {image}
+      {text}
     </div>
   );
 }
