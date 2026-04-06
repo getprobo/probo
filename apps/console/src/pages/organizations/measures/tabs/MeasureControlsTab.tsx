@@ -12,6 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+import type { ComponentProps } from "react";
 import { graphql, useRefetchableFragment } from "react-relay";
 import { useOutletContext, useParams } from "react-router";
 
@@ -122,7 +123,7 @@ export default function MeasureControlsTab() {
   return (
     <LinkedControlsCard
       disabled={isLoading}
-      controls={controls}
+      controls={controls as ComponentProps<typeof LinkedControlsCard>["controls"]}
       onDetach={detachControl}
       onAttach={attachControl}
       params={{ measureId }}
