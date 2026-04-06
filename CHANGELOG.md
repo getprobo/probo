@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.161.1] - 2026-04-06
+
+### Fixed
+
+- Fix measure ID missing for evidence dialog
+
 ## [0.161.0] - 2026-04-03
 
 ### Added
