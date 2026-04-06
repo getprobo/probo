@@ -16,6 +16,32 @@ For data loading and GraphQL on the console, see [`contrib/claude/relay.md`](rel
 
 Preview components with Storybook from `packages/ui`: `npm run dev` (Storybook on port 6006 per `package.json`).
 
+## Props typing
+
+When a component renders a native HTML element as its top-level node (not a custom component), **merge the component's own props with that element's intrinsic props** via `ComponentProps`. Destructure custom props and spread the rest onto the element so callers can pass standard HTML attributes (`id`, `className`, `aria-*`, event handlers, etc.) without wrapper boilerplate.
+
+### Do / don't: props merging
+
+```tsx
+// Good — own props merged with the native element's props, rest spread onto <span>
+type MyProps = ComponentProps<"span"> & { myPropName: string };
+
+export function MyComponent(props: MyProps) {
+  const { myPropName, ...spanProps } = props;
+
+  return <span {...spanProps}>{myPropName}</span>;
+}
+```
+
+```tsx
+// Bad — only custom props accepted; callers cannot set id, className, aria-*, etc.
+type MyProps = { myPropName: string };
+
+export function MyComponent(props: MyProps) {
+  return <span>{props.myPropName}</span>;
+}
+```
+
 ## `tailwind-variants` and `className`
 
 In a **single component file**, do **not** mix arbitrary Tailwind utility strings on `className` with `tailwind-variants` for the same styling concerns. Put layout and look in **`tv` variants and `slots`** (and the APIs `tv` exposes for overrides). If consumers need extensibility, expose it through variant props or documented slot/class hooks—not by sprinkling raw utilities beside `tv()` output in the same file.
