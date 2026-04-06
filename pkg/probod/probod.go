@@ -481,9 +481,14 @@ func (impl *Implm) Run(
 
 	mailmanService := mailman.NewService(pgClient, fileManagerService, impl.cfg.Auth.Cookie.Secret, baseURL, impl.cfg.AWS.Bucket, encryptionKey, l)
 
+	vendorAssessorMaxTokens := 16384
+	if vendorAssessorAgentCfg.MaxTokens != nil {
+		vendorAssessorMaxTokens = *vendorAssessorAgentCfg.MaxTokens
+	}
 	vendorAssessor := vetting.NewAssessor(vetting.Config{
 		Client:         vendorAssessorLLMClient,
 		Model:          vendorAssessorAgentCfg.ModelName,
+		MaxTokens:      vendorAssessorMaxTokens,
 		ChromeAddr:     impl.cfg.ChromeDPAddr,
 		SearchEndpoint: impl.cfg.SearchEndpoint,
 		Logger:         l.Named("vendor-assessor"),

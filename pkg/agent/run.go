@@ -86,6 +86,8 @@ func blockingCallLLM(ctx context.Context, agent *Agent, req *llm.ChatCompletionR
 	if sErr != nil {
 		return nil, err // return the original error
 	}
+	defer stream.Close()
+
 	acc := llm.NewStreamAccumulator(stream)
 	for acc.Next() {
 	}
@@ -95,6 +97,10 @@ func blockingCallLLM(ctx context.Context, agent *Agent, req *llm.ChatCompletionR
 	return acc.Response(), nil
 }
 
+// isStreamingRequiredError detects the Anthropic API error returned when
+// a non-streaming request exceeds the provider's response time limit.
+// This matches the error message string because the SDK does not expose
+// a typed error for this condition.
 func isStreamingRequiredError(err error) bool {
 	return err != nil && strings.Contains(err.Error(), "streaming is required")
 }

@@ -36,6 +36,7 @@ type (
 	Config struct {
 		Client         *llm.Client
 		Model          string
+		MaxTokens      int
 		ChromeAddr     string
 		SearchEndpoint string
 		Logger         *log.Logger
@@ -157,6 +158,7 @@ func (a *Assessor) Assess(ctx context.Context, websiteURL string, procedure stri
 	orchestrator, err := newOrchestratorAgent(
 		a.cfg.Client,
 		a.cfg.Model,
+		a.cfg.MaxTokens,
 		procedure,
 		a.cfg.Logger,
 		vendorBrowser,
@@ -205,6 +207,7 @@ func (a *Assessor) extractVendorInfo(ctx context.Context, document string) (*Ven
 		a.cfg.Client,
 		agent.WithInstructions(extractionPrompt),
 		agent.WithModel(a.cfg.Model),
+		agent.WithMaxTokens(a.cfg.MaxTokens),
 		agent.WithLogger(a.cfg.Logger),
 	)
 

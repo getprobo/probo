@@ -38,6 +38,7 @@ var (
 func newOrchestratorAgent(
 	client *llm.Client,
 	model string,
+	maxTokens int,
 	procedure string,
 	logger *log.Logger,
 	vendorBrowser *browser.Browser,
@@ -70,8 +71,10 @@ func newOrchestratorAgent(
 
 	loggerOpt := agent.WithLogger(logger)
 
+	maxTokensOpt := agent.WithMaxTokens(maxTokens)
+
 	subAgentOpts := func(step string) []agent.Option {
-		opts := []agent.Option{loggerOpt}
+		opts := []agent.Option{loggerOpt, maxTokensOpt}
 		if reporter != nil {
 			opts = append(opts, agent.WithHooks(newSubProgressHooks(reporter, step)))
 		}
@@ -273,6 +276,7 @@ func newOrchestratorAgent(
 		agent.WithLogger(logger),
 		agent.WithInstructions(systemPrompt),
 		agent.WithModel(model),
+		agent.WithMaxTokens(maxTokens),
 		agent.WithTools(tools...),
 		agent.WithMaxTurns(140),
 		agent.WithParallelToolCalls(true),
