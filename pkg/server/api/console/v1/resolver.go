@@ -149,89 +149,106 @@ func NewMux(
 			http.Redirect(w, r, redirectURL, http.StatusSeeOther)
 		})
 
-		r.Get("/connectors/complete", func(w http.ResponseWriter, r *http.Request) {
-			stateToken := r.URL.Query().Get("state")
-			if stateToken == "" {
-				httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("missing state parameter"))
-				return
-			}
-
-			provider, err := connector.ExtractProviderFromState(stateToken)
-			if err != nil {
-				httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("cannot extract provider from state: %w", err))
-				return
-			}
-
-			var connectorProvider coredata.ConnectorProvider
-			if err := connectorProvider.Scan(provider); err != nil {
-				httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("unsupported provider: %q", provider))
-				return
-			}
-
-			connection, state, err := connectorRegistry.CompleteWithState(r.Context(), provider, r)
-			if err != nil {
-				panic(fmt.Errorf("cannot complete connector: %w", err))
-			}
-
-			organizationID, err := gid.ParseGID(state.OrganizationID)
-			if err != nil {
-				httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("cannot parse organization ID from state: %w", err))
-				return
-			}
-
-			svc := proboSvc.WithTenant(organizationID.TenantID())
-
-			var cnnctr *coredata.Connector
-
-			// If a connector_id was passed in the state, this is a
-			// reconnection — update the existing connector's token.
-			if state.ConnectorID != "" {
-				connectorID, err := gid.ParseGID(state.ConnectorID)
-				if err != nil {
-					httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("cannot parse connector ID from state: %w", err))
-					return
-				}
-
-				cnnctr, err = svc.Connectors.Reconnect(r.Context(), connectorID, connection)
-				if err != nil {
-					panic(fmt.Errorf("cannot reconnect connector: %w", err))
-				}
-			} else {
-				cnnctr, err = svc.Connectors.Create(
-					r.Context(),
-					probo.CreateConnectorRequest{
-						OrganizationID: organizationID,
-						Provider:       connectorProvider,
-						Protocol:       coredata.ConnectorProtocol(connection.Type()),
-						Connection:     connection,
-					},
-				)
-				if err != nil {
-					panic(fmt.Errorf("cannot create connector: %w", err))
-				}
-			}
-
-			// Append connector_id to the redirect URL so frontend can create the bridge
-			redirectURL := state.ContinueURL
-			if redirectURL == "" {
-				redirectURL = baseURL.WithPath("/organizations/" + organizationID.String()).MustString()
-			}
-
-			parsedURL, err := url.Parse(redirectURL)
-			if err != nil {
-				logger.ErrorCtx(r.Context(), "cannot parse redirect URL", log.Error(err))
-				parsedURL, _ = url.Parse(baseURL.WithPath("/organizations/" + organizationID.String()).MustString())
-			}
-			q := parsedURL.Query()
-			q.Set("connector_id", cnnctr.ID.String())
-			q.Set("provider", string(connectorProvider))
-			parsedURL.RawQuery = q.Encode()
-
-			safeRedirect.Redirect(w, r, parsedURL.String(), "/", http.StatusSeeOther)
-		})
+		r.Get("/connectors/complete", handleConnectorComplete(
+			logger,
+			baseURL,
+			proboSvc,
+			connectorRegistry,
+			safeRedirect,
+		))
 	})
 
 	return r
+}
+
+func handleConnectorComplete(
+	logger *log.Logger,
+	baseURL *baseurl.BaseURL,
+	proboSvc *probo.Service,
+	connectorRegistry *connector.ConnectorRegistry,
+	safeRedirect *saferedirect.SafeRedirect,
+) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		query := r.URL.Query()
+
+		stateToken := query.Get("state")
+		if stateToken == "" {
+			httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("missing state parameter"))
+			return
+		}
+
+		provider, err := connector.ExtractProviderFromState(stateToken)
+		if err != nil {
+			httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("cannot extract provider from state: %w", err))
+			return
+		}
+
+		var connectorProvider coredata.ConnectorProvider
+		if err := connectorProvider.Scan(provider); err != nil {
+			httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("unsupported provider: %q", provider))
+			return
+		}
+
+		connection, state, err := connectorRegistry.CompleteWithState(r.Context(), provider, r)
+		if err != nil {
+			panic(fmt.Errorf("cannot complete connector: %w", err))
+		}
+
+		organizationID, err := gid.ParseGID(state.OrganizationID)
+		if err != nil {
+			httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("cannot parse organization ID from state: %w", err))
+			return
+		}
+
+		svc := proboSvc.WithTenant(organizationID.TenantID())
+
+		var cnnctr *coredata.Connector
+
+		// If a connector_id was passed in the state, this is a
+		// reconnection — update the existing connector's token.
+		if state.ConnectorID != "" {
+			connectorID, err := gid.ParseGID(state.ConnectorID)
+			if err != nil {
+				httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("cannot parse connector ID from state: %w", err))
+				return
+			}
+
+			cnnctr, err = svc.Connectors.Reconnect(r.Context(), connectorID, connection)
+			if err != nil {
+				panic(fmt.Errorf("cannot reconnect connector: %w", err))
+			}
+		} else {
+			cnnctr, err = svc.Connectors.Create(
+				r.Context(),
+				probo.CreateConnectorRequest{
+					OrganizationID: organizationID,
+					Provider:       connectorProvider,
+					Protocol:       coredata.ConnectorProtocol(connection.Type()),
+					Connection:     connection,
+				},
+			)
+			if err != nil {
+				panic(fmt.Errorf("cannot create connector: %w", err))
+			}
+		}
+
+		redirectURL := state.ContinueURL
+		if redirectURL == "" {
+			redirectURL = baseURL.WithPath("/organizations/" + organizationID.String()).MustString()
+		}
+
+		parsedURL, err := url.Parse(redirectURL)
+		if err != nil {
+			logger.ErrorCtx(r.Context(), "cannot parse redirect URL", log.Error(err))
+			parsedURL, _ = url.Parse(baseURL.WithPath("/organizations/" + organizationID.String()).MustString())
+		}
+		q := parsedURL.Query()
+		q.Set("connector_id", cnnctr.ID.String())
+		q.Set("provider", string(connectorProvider))
+		parsedURL.RawQuery = q.Encode()
+
+		safeRedirect.Redirect(w, r, parsedURL.String(), "/", http.StatusSeeOther)
+	}
 }
 
 func (r *Resolver) ProboService(ctx context.Context, tenantID gid.TenantID) *probo.TenantService {
