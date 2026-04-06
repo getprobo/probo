@@ -25,6 +25,7 @@ GraphQL and MCP codegen is triggered by `go generate`:
 ## Reference Documentation
 
 Detailed guides for specific subsystems live in `contrib/claude/`:
+- [`contrib/claude/app-arborescence.md`](contrib/claude/app-arborescence.md) — Frontend app folder layout (pages, routes, loaders, skeletons, `_components`)
 - [`contrib/claude/authorization.md`](contrib/claude/authorization.md) — IAM policy-based authorization (policies, conditions, roles, AuthorizationAttributer)
 - [`contrib/claude/cli.md`](contrib/claude/cli.md) — CLI command patterns (cobra, huh prompts, pagination, output formatting)
 - [`contrib/claude/commit.md`](contrib/claude/commit.md) — Commit message conventions
