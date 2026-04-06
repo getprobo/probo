@@ -155,6 +155,17 @@ func buildParams(req *llm.ChatCompletionRequest) (anthropic.MessageNewParams, er
 	if req.Thinking != nil && req.Thinking.Enabled {
 		params.Thinking = anthropic.ThinkingConfigParamOfEnabled(int64(req.Thinking.BudgetTokens))
 	}
+	if req.ResponseFormat != nil && req.ResponseFormat.Type == llm.ResponseFormatJSONSchema && req.ResponseFormat.JSONSchema != nil {
+		var schema map[string]any
+		if err := json.Unmarshal(req.ResponseFormat.JSONSchema.Schema, &schema); err != nil {
+			return anthropic.MessageNewParams{}, fmt.Errorf("cannot unmarshal JSON schema for output format: %w", err)
+		}
+		params.OutputConfig = anthropic.OutputConfigParam{
+			Format: anthropic.JSONOutputFormatParam{
+				Schema: schema,
+			},
+		}
+	}
 
 	return params, nil
 }
