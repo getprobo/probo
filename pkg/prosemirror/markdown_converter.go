@@ -55,6 +55,20 @@ func ParseMarkdown(markdown string) (Node, error) {
 	}, nil
 }
 
+// normalizeCodeBlockContent strips one trailing newline when it is only the
+// line terminator goldmark attaches to the last content line. That avoids an
+// extra visible blank line in editors (e.g. TipTap) while preserving a
+// trailing blank line in the source, which ends with two newlines.
+func normalizeCodeBlockContent(content string) string {
+	if content == "" {
+		return content
+	}
+	if strings.HasSuffix(content, "\n") && !strings.HasSuffix(content, "\n\n") {
+		return strings.TrimSuffix(content, "\n")
+	}
+	return content
+}
+
 type converter struct {
 	source []byte
 	marks  []Mark
@@ -238,7 +252,7 @@ func (c *converter) convertFencedCodeBlock(n *ast.FencedCodeBlock) ([]Node, erro
 		buf.Write(line.Value(c.source))
 	}
 
-	content := buf.String()
+	content := normalizeCodeBlockContent(buf.String())
 
 	var lang *string
 	if n.Language(c.source) != nil {
@@ -274,7 +288,7 @@ func (c *converter) convertCodeBlock(n *ast.CodeBlock) ([]Node, error) {
 		buf.Write(line.Value(c.source))
 	}
 
-	content := buf.String()
+	content := normalizeCodeBlockContent(buf.String())
 
 	attrs, err := json.Marshal(CodeBlockAttrs{Language: nil})
 	if err != nil {

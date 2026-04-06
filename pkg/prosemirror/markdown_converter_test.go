@@ -167,7 +167,7 @@ func TestParseMarkdown_CodeBlock(t *testing.T) {
 		assert.Equal(t, "go", *attrs.Language)
 
 		require.Len(t, cb.Content, 1)
-		assert.Equal(t, "fmt.Println(\"hello\")\n", *cb.Content[0].Text)
+		assert.Equal(t, "fmt.Println(\"hello\")", *cb.Content[0].Text)
 	})
 
 	t.Run("without language", func(t *testing.T) {
@@ -183,6 +183,21 @@ func TestParseMarkdown_CodeBlock(t *testing.T) {
 		attrs, err := cb.CodeBlockAttrs()
 		require.NoError(t, err)
 		assert.Nil(t, attrs.Language)
+
+		require.Len(t, cb.Content, 1)
+		assert.Equal(t, "some code", *cb.Content[0].Text)
+	})
+
+	t.Run("trailing blank line preserved", func(t *testing.T) {
+		t.Parallel()
+
+		doc, err := ParseMarkdown("```\nline\n\n```")
+		require.NoError(t, err)
+		require.Len(t, doc.Content, 1)
+
+		cb := doc.Content[0]
+		require.Len(t, cb.Content, 1)
+		assert.Equal(t, "line\n\n", *cb.Content[0].Text)
 	})
 }
 

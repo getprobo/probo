@@ -15,9 +15,31 @@
 package types
 
 import (
+	"fmt"
+	"strings"
+
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/page"
+	"go.probo.inc/probo/pkg/prosemirror"
 )
+
+func proseMirrorJSONToMarkdown(pmJSON string) (string, error) {
+	if strings.TrimSpace(pmJSON) == "" {
+		return "", nil
+	}
+
+	node, err := prosemirror.Parse(pmJSON)
+	if err != nil {
+		return "", fmt.Errorf("cannot parse prosemirror json: %w", err)
+	}
+
+	md, err := prosemirror.RenderMarkdown(node)
+	if err != nil {
+		return "", fmt.Errorf("cannot render markdown: %w", err)
+	}
+
+	return md, nil
+}
 
 func NewDocument(d *coredata.Document) *Document {
 	return &Document{
@@ -88,14 +110,24 @@ func NewListDocumentsOutput(documentPage *page.Page[*coredata.Document, coredata
 	}
 }
 
-func NewAddDocumentOutput(doc *coredata.Document, docVersion *coredata.DocumentVersion) AddDocumentOutput {
+func NewAddDocumentOutput(doc *coredata.Document, docVersion *coredata.DocumentVersion) (AddDocumentOutput, error) {
+	dv, err := NewDocumentVersion(docVersion)
+	if err != nil {
+		return AddDocumentOutput{}, err
+	}
+
 	return AddDocumentOutput{
 		Document:        NewDocument(doc),
-		DocumentVersion: NewDocumentVersion(docVersion),
-	}
+		DocumentVersion: dv,
+	}, nil
 }
 
-func NewDocumentVersion(dv *coredata.DocumentVersion) *DocumentVersion {
+func NewDocumentVersion(dv *coredata.DocumentVersion) (*DocumentVersion, error) {
+	contentMD, err := proseMirrorJSONToMarkdown(dv.Content)
+	if err != nil {
+		return nil, fmt.Errorf("cannot convert document version content to markdown: %w", err)
+	}
+
 	return &DocumentVersion{
 		ID:             dv.ID,
 		OrganizationID: dv.OrganizationID,
@@ -105,19 +137,23 @@ func NewDocumentVersion(dv *coredata.DocumentVersion) *DocumentVersion {
 		Minor:          dv.Minor,
 		Classification: dv.Classification,
 		DocumentType:   dv.DocumentType,
-		Content:        dv.Content,
+		Content:        contentMD,
 		Changelog:      dv.Changelog,
 		Status:         dv.Status,
 		PublishedAt:    dv.PublishedAt,
 		CreatedAt:      dv.CreatedAt,
 		UpdatedAt:      dv.UpdatedAt,
-	}
+	}, nil
 }
 
-func NewListDocumentVersionsOutput(versionPage *page.Page[*coredata.DocumentVersion, coredata.DocumentVersionOrderField]) ListDocumentVersionsOutput {
+func NewListDocumentVersionsOutput(versionPage *page.Page[*coredata.DocumentVersion, coredata.DocumentVersionOrderField]) (ListDocumentVersionsOutput, error) {
 	versions := make([]*DocumentVersion, 0, len(versionPage.Data))
 	for _, v := range versionPage.Data {
-		versions = append(versions, NewDocumentVersion(v))
+		dv, err := NewDocumentVersion(v)
+		if err != nil {
+			return ListDocumentVersionsOutput{}, err
+		}
+		versions = append(versions, dv)
 	}
 
 	var nextCursor *page.CursorKey
@@ -129,7 +165,7 @@ func NewListDocumentVersionsOutput(versionPage *page.Page[*coredata.DocumentVers
 	return ListDocumentVersionsOutput{
 		NextCursor:       nextCursor,
 		DocumentVersions: versions,
-	}
+	}, nil
 }
 
 func NewDocumentVersionSignature(dvs *coredata.DocumentVersionSignature) *DocumentVersionSignature {

@@ -2067,12 +2067,17 @@ func (r *Resolver) AddDocumentTool(ctx context.Context, req *mcp.CallToolRequest
 		trustCenterVisibility = input.TrustCenterVisibility
 	}
 
+	contentJSON, err := markdownToProseMirrorJSON(input.Content)
+	if err != nil {
+		panic(fmt.Errorf("cannot convert markdown to prosemirror: %w", err))
+	}
+
 	document, documentVersion, err := svc.Documents.Create(
 		ctx,
 		probo.CreateDocumentRequest{
 			OrganizationID:        input.OrganizationID,
 			Title:                 input.Title,
-			Content:               input.Content,
+			Content:               contentJSON,
 			Classification:        input.Classification,
 			DocumentType:          input.DocumentType,
 			TrustCenterVisibility: trustCenterVisibility,
@@ -2082,7 +2087,12 @@ func (r *Resolver) AddDocumentTool(ctx context.Context, req *mcp.CallToolRequest
 		panic(fmt.Errorf("cannot create document: %w", err))
 	}
 
-	return nil, types.NewAddDocumentOutput(document, documentVersion), nil
+	out, err := types.NewAddDocumentOutput(document, documentVersion)
+	if err != nil {
+		panic(fmt.Errorf("cannot build add document output: %w", err))
+	}
+
+	return nil, out, nil
 }
 
 func (r *Resolver) UpdateDocumentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateDocumentInput) (*mcp.CallToolResult, types.UpdateDocumentOutput, error) {
@@ -2129,7 +2139,12 @@ func (r *Resolver) ListDocumentVersionsTool(ctx context.Context, req *mcp.CallTo
 		panic(fmt.Errorf("cannot list document versions: %w", err))
 	}
 
-	return nil, types.NewListDocumentVersionsOutput(versionPage), nil
+	out, err := types.NewListDocumentVersionsOutput(versionPage)
+	if err != nil {
+		panic(fmt.Errorf("cannot build list document versions output: %w", err))
+	}
+
+	return nil, out, nil
 }
 
 func (r *Resolver) GetDocumentVersionTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetDocumentVersionInput) (*mcp.CallToolResult, types.GetDocumentVersionOutput, error) {
@@ -2142,8 +2157,13 @@ func (r *Resolver) GetDocumentVersionTool(ctx context.Context, req *mcp.CallTool
 		panic(fmt.Errorf("cannot get document version: %w", err))
 	}
 
+	dv, err := types.NewDocumentVersion(version)
+	if err != nil {
+		panic(fmt.Errorf("cannot build document version: %w", err))
+	}
+
 	return nil, types.GetDocumentVersionOutput{
-		DocumentVersion: types.NewDocumentVersion(version),
+		DocumentVersion: dv,
 	}, nil
 }
 
@@ -2175,8 +2195,13 @@ func (r *Resolver) CreateDraftDocumentVersionTool(ctx context.Context, req *mcp.
 		}
 	}
 
+	dv, err := types.NewDocumentVersion(draftVersion)
+	if err != nil {
+		panic(fmt.Errorf("cannot build document version: %w", err))
+	}
+
 	return nil, types.CreateDraftDocumentVersionOutput{
-		DocumentVersion: types.NewDocumentVersion(draftVersion),
+		DocumentVersion: dv,
 	}, nil
 }
 
@@ -2207,8 +2232,13 @@ func (r *Resolver) UpdateDocumentVersionTool(ctx context.Context, req *mcp.CallT
 		panic(fmt.Errorf("cannot update document version: %w", err))
 	}
 
+	dv, err := types.NewDocumentVersion(documentVersion)
+	if err != nil {
+		panic(fmt.Errorf("cannot build document version: %w", err))
+	}
+
 	return nil, types.UpdateDocumentVersionOutput{
-		DocumentVersion: types.NewDocumentVersion(documentVersion),
+		DocumentVersion: dv,
 	}, nil
 }
 
@@ -3835,8 +3865,13 @@ func (r *Resolver) RequestDocumentVersionApprovalTool(ctx context.Context, req *
 		panic(fmt.Errorf("cannot get document version: %w", err))
 	}
 
+	dv, err := types.NewDocumentVersion(documentVersion)
+	if err != nil {
+		panic(fmt.Errorf("cannot build document version: %w", err))
+	}
+
 	return nil, types.RequestDocumentVersionApprovalOutput{
-		DocumentVersion: types.NewDocumentVersion(documentVersion),
+		DocumentVersion: dv,
 	}, nil
 }
 
@@ -3856,9 +3891,14 @@ func (r *Resolver) PublishMajorDocumentVersionTool(ctx context.Context, req *mcp
 		panic(fmt.Errorf("cannot publish major document version: %w", err))
 	}
 
+	dv, err := types.NewDocumentVersion(documentVersion)
+	if err != nil {
+		panic(fmt.Errorf("cannot build document version: %w", err))
+	}
+
 	return nil, types.PublishMajorDocumentVersionOutput{
 		Document:        types.NewDocument(document),
-		DocumentVersion: types.NewDocumentVersion(documentVersion),
+		DocumentVersion: dv,
 	}, nil
 }
 
@@ -3878,9 +3918,14 @@ func (r *Resolver) PublishMinorDocumentVersionTool(ctx context.Context, req *mcp
 		panic(fmt.Errorf("cannot publish minor document version: %w", err))
 	}
 
+	dv, err := types.NewDocumentVersion(documentVersion)
+	if err != nil {
+		panic(fmt.Errorf("cannot build document version: %w", err))
+	}
+
 	return nil, types.PublishMinorDocumentVersionOutput{
 		Document:        types.NewDocument(document),
-		DocumentVersion: types.NewDocumentVersion(documentVersion),
+		DocumentVersion: dv,
 	}, nil
 }
 

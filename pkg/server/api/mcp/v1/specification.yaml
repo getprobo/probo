@@ -5327,7 +5327,7 @@ components:
           description: Document type
         content:
           type: string
-          description: Document content
+          description: Document body in markdown (converted from stored ProseMirror JSON)
         changelog:
           type: string
           description: Changelog
@@ -5481,7 +5481,7 @@ components:
           description: Document title
         content:
           type: string
-          description: Document content
+          description: Document content in markdown format
         classification:
           $ref: "#/components/schemas/DocumentClassification"
           description: Document classification
@@ -5494,6 +5494,7 @@ components:
 
     AddDocumentOutput:
       type: object
+      description: Created document and version; document_version.content is markdown
       required:
         - document
         - document_version
@@ -5580,6 +5581,7 @@ components:
 
     ListDocumentVersionsOutput:
       type: object
+      description: Each document_versions[].content is markdown
       required:
         - document_versions
       properties:
@@ -5602,6 +5604,7 @@ components:
 
     GetDocumentVersionOutput:
       type: object
+      description: document_version.content is markdown
       required:
         - document_version
       properties:
@@ -5622,6 +5625,7 @@ components:
 
     CreateDraftDocumentVersionOutput:
       type: object
+      description: Created draft; document_version.content is markdown
       required:
         - document_version
       properties:
@@ -5648,6 +5652,7 @@ components:
 
     UpdateDocumentVersionOutput:
       type: object
+      description: Updated draft; document_version.content is markdown
       required:
         - document_version
       properties:
@@ -5698,6 +5703,7 @@ components:
 
     PublishDocumentVersionOutput:
       type: object
+      description: document_version.content is markdown
       required:
         - document
         - document_version
@@ -5727,6 +5733,7 @@ components:
 
     RequestDocumentVersionApprovalOutput:
       type: object
+      description: document_version.content is markdown
       required:
         - document_version
       properties:
