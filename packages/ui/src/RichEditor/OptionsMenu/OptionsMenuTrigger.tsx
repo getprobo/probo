@@ -61,8 +61,13 @@ export function OptionsMenuTrigger({
         const wrapper = document.createElement("div");
         wrapper.append(hoveredBlock.cloneNode(true));
         wrapper.style.position = "absolute";
-        wrapper.style.top = "-10000px";
+        wrapper.style.left = "-10000px";
+        wrapper.style.top = "0";
+        wrapper.style.minWidth = "1px";
+        wrapper.style.minHeight = "1px";
         document.body.append(wrapper);
+        // Safari needs the element laid out before setDragImage
+        void wrapper.offsetHeight;
         e.dataTransfer.setDragImage(wrapper, 0, 0);
         document.addEventListener("dragend", () => wrapper.remove(), { once: true });
       }
