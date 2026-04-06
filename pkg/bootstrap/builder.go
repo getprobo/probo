@@ -45,7 +45,7 @@ func (b *Builder) Build() (*probod.FullConfig, error) {
 
 	samlCert, samlKey, err := b.getSAMLCredentials()
 	if err != nil {
-		return nil, fmt.Errorf("failed to get SAML credentials: %w", err)
+		return nil, fmt.Errorf("cannot get SAML credentials: %w", err)
 	}
 
 	pgCACertBundle := b.getPgCACertBundle()
@@ -221,10 +221,6 @@ func (b *Builder) Build() (*probod.FullConfig, error) {
 			RawConfig: probod.ConnectorConfigOAuth2{
 				ClientID:     slackClientID,
 				ClientSecret: b.getEnv("CONNECTOR_SLACK_CLIENT_SECRET"),
-				RedirectURI:  b.getEnv("CONNECTOR_SLACK_REDIRECT_URI"),
-				AuthURL:      b.getEnvOrDefault("CONNECTOR_SLACK_AUTH_URL", "https://slack.com/oauth/v2/authorize"),
-				TokenURL:     b.getEnvOrDefault("CONNECTOR_SLACK_TOKEN_URL", "https://slack.com/api/oauth.v2.access"),
-				Scopes:       []string{"chat:write", "channels:join", "incoming-webhook"},
 			},
 			RawSettings: map[string]any{
 				"signing-secret": b.getEnv("CONNECTOR_SLACK_SIGNING_SECRET"),
@@ -239,10 +235,6 @@ func (b *Builder) Build() (*probod.FullConfig, error) {
 			RawConfig: probod.ConnectorConfigOAuth2{
 				ClientID:     hubspotClientID,
 				ClientSecret: b.getEnv("CONNECTOR_HUBSPOT_CLIENT_SECRET"),
-				RedirectURI:  b.getEnv("CONNECTOR_HUBSPOT_REDIRECT_URI"),
-				AuthURL:      b.getEnvOrDefault("CONNECTOR_HUBSPOT_AUTH_URL", "https://app.hubspot.com/oauth/authorize"),
-				TokenURL:     b.getEnvOrDefault("CONNECTOR_HUBSPOT_TOKEN_URL", "https://api.hubapi.com/oauth/v1/token"),
-				Scopes:       []string{"settings.users.read"},
 			},
 		})
 	}
@@ -252,13 +244,8 @@ func (b *Builder) Build() (*probod.FullConfig, error) {
 			Provider: "DOCUSIGN",
 			Protocol: "oauth2",
 			RawConfig: probod.ConnectorConfigOAuth2{
-				ClientID:          docusignClientID,
-				ClientSecret:      b.getEnv("CONNECTOR_DOCUSIGN_CLIENT_SECRET"),
-				RedirectURI:       b.getEnv("CONNECTOR_DOCUSIGN_REDIRECT_URI"),
-				AuthURL:           b.getEnvOrDefault("CONNECTOR_DOCUSIGN_AUTH_URL", "https://account.docusign.com/oauth/auth"),
-				TokenURL:          b.getEnvOrDefault("CONNECTOR_DOCUSIGN_TOKEN_URL", "https://account.docusign.com/oauth/token"),
-				Scopes:            []string{"signature"},
-				TokenEndpointAuth: "basic-form",
+				ClientID:     docusignClientID,
+				ClientSecret: b.getEnv("CONNECTOR_DOCUSIGN_CLIENT_SECRET"),
 			},
 		})
 	}
@@ -270,12 +257,6 @@ func (b *Builder) Build() (*probod.FullConfig, error) {
 			RawConfig: probod.ConnectorConfigOAuth2{
 				ClientID:     notionClientID,
 				ClientSecret: b.getEnv("CONNECTOR_NOTION_CLIENT_SECRET"),
-				RedirectURI:  b.getEnv("CONNECTOR_NOTION_REDIRECT_URI"),
-				AuthURL:      b.getEnvOrDefault("CONNECTOR_NOTION_AUTH_URL", "https://api.notion.com/v1/oauth/authorize"),
-				TokenURL:     b.getEnvOrDefault("CONNECTOR_NOTION_TOKEN_URL", "https://api.notion.com/v1/oauth/token"),
-				// Notion does not use scopes in OAuth URL; permissions are granted via page-picker UI during authorization.
-				ExtraAuthParams:   map[string]string{"owner": "user"},
-				TokenEndpointAuth: "basic-json",
 			},
 		})
 	}
@@ -287,10 +268,6 @@ func (b *Builder) Build() (*probod.FullConfig, error) {
 			RawConfig: probod.ConnectorConfigOAuth2{
 				ClientID:     githubClientID,
 				ClientSecret: b.getEnv("CONNECTOR_GITHUB_CLIENT_SECRET"),
-				RedirectURI:  b.getEnv("CONNECTOR_GITHUB_REDIRECT_URI"),
-				AuthURL:      b.getEnvOrDefault("CONNECTOR_GITHUB_AUTH_URL", "https://github.com/login/oauth/authorize"),
-				TokenURL:     b.getEnvOrDefault("CONNECTOR_GITHUB_TOKEN_URL", "https://github.com/login/oauth/access_token"),
-				Scopes:       []string{"read:org"},
 			},
 		})
 	}
@@ -302,10 +279,6 @@ func (b *Builder) Build() (*probod.FullConfig, error) {
 			RawConfig: probod.ConnectorConfigOAuth2{
 				ClientID:     sentryClientID,
 				ClientSecret: b.getEnv("CONNECTOR_SENTRY_CLIENT_SECRET"),
-				RedirectURI:  b.getEnv("CONNECTOR_SENTRY_REDIRECT_URI"),
-				AuthURL:      b.getEnvOrDefault("CONNECTOR_SENTRY_AUTH_URL", "https://sentry.io/oauth/authorize/"),
-				TokenURL:     b.getEnvOrDefault("CONNECTOR_SENTRY_TOKEN_URL", "https://sentry.io/oauth/token/"),
-				Scopes:       []string{"org:read", "member:read"},
 			},
 		})
 	}
@@ -317,10 +290,6 @@ func (b *Builder) Build() (*probod.FullConfig, error) {
 			RawConfig: probod.ConnectorConfigOAuth2{
 				ClientID:     intercomClientID,
 				ClientSecret: b.getEnv("CONNECTOR_INTERCOM_CLIENT_SECRET"),
-				RedirectURI:  b.getEnv("CONNECTOR_INTERCOM_REDIRECT_URI"),
-				AuthURL:      b.getEnvOrDefault("CONNECTOR_INTERCOM_AUTH_URL", "https://app.intercom.com/oauth"),
-				TokenURL:     b.getEnvOrDefault("CONNECTOR_INTERCOM_TOKEN_URL", "https://api.intercom.io/auth/eagle/token"),
-				// Intercom scopes are configured at app level in Developer Hub, not in the OAuth URL.
 			},
 		})
 	}
@@ -332,10 +301,6 @@ func (b *Builder) Build() (*probod.FullConfig, error) {
 			RawConfig: probod.ConnectorConfigOAuth2{
 				ClientID:     brexClientID,
 				ClientSecret: b.getEnv("CONNECTOR_BREX_CLIENT_SECRET"),
-				RedirectURI:  b.getEnv("CONNECTOR_BREX_REDIRECT_URI"),
-				AuthURL:      b.getEnvOrDefault("CONNECTOR_BREX_AUTH_URL", "https://accounts-api.brex.com/oauth2/default/v1/authorize"),
-				TokenURL:     b.getEnvOrDefault("CONNECTOR_BREX_TOKEN_URL", "https://accounts-api.brex.com/oauth2/default/v1/token"),
-				Scopes:       []string{"openid", "offline_access"},
 			},
 		})
 	}
@@ -362,7 +327,6 @@ func (b *Builder) validateRequired() error {
 		slackRequired := []string{
 			"CONNECTOR_SLACK_CLIENT_SECRET",
 			"CONNECTOR_SLACK_SIGNING_SECRET",
-			"CONNECTOR_SLACK_REDIRECT_URI",
 		}
 		for _, key := range slackRequired {
 			if b.getEnv(key) == "" {
@@ -375,13 +339,13 @@ func (b *Builder) validateRequired() error {
 		envPrefix string
 		required  []string
 	}{
-		{"CONNECTOR_HUBSPOT", []string{"CLIENT_SECRET", "REDIRECT_URI"}},
-		{"CONNECTOR_DOCUSIGN", []string{"CLIENT_SECRET", "REDIRECT_URI"}},
-		{"CONNECTOR_NOTION", []string{"CLIENT_SECRET", "REDIRECT_URI"}},
-		{"CONNECTOR_GITHUB", []string{"CLIENT_SECRET", "REDIRECT_URI"}},
-		{"CONNECTOR_SENTRY", []string{"CLIENT_SECRET", "REDIRECT_URI"}},
-		{"CONNECTOR_INTERCOM", []string{"CLIENT_SECRET", "REDIRECT_URI"}},
-		{"CONNECTOR_BREX", []string{"CLIENT_SECRET", "REDIRECT_URI"}},
+		{"CONNECTOR_HUBSPOT", []string{"CLIENT_SECRET"}},
+		{"CONNECTOR_DOCUSIGN", []string{"CLIENT_SECRET"}},
+		{"CONNECTOR_NOTION", []string{"CLIENT_SECRET"}},
+		{"CONNECTOR_GITHUB", []string{"CLIENT_SECRET"}},
+		{"CONNECTOR_SENTRY", []string{"CLIENT_SECRET"}},
+		{"CONNECTOR_INTERCOM", []string{"CLIENT_SECRET"}},
+		{"CONNECTOR_BREX", []string{"CLIENT_SECRET"}},
 	}
 
 	for _, p := range oauthProviders {
@@ -417,7 +381,7 @@ func (b *Builder) getSAMLCredentials() (cert, key string, err error) {
 	if cert == "" || key == "" {
 		cert, key, err = GenerateSAMLCertificate()
 		if err != nil {
-			return "", "", err
+			return "", "", fmt.Errorf("cannot generate SAML certificate: %w", err)
 		}
 	}
 
