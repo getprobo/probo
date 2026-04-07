@@ -298,8 +298,36 @@ func coreLoop(ctx context.Context, startAgent *Agent, inputMessages []llm.Messag
 		log.Int("tool_count", len(s.toolDefs)),
 	)
 
-	const maxEmptyOutputRetries = 2
+	const (
+		maxEmptyOutputRetries = 2
+		synthesisNudge        = "Based on everything you have gathered, produce the final structured output now."
+	)
 	emptyOutputRetries := 0
+
+	// Resolve the structured output request, if any. An agent can
+	// request structured output through either WithOutputType (typed
+	// sub-agents) or a directly-set responseFormat (the RunTyped
+	// convenience wrapper).
+	var structuredFormat *llm.ResponseFormat
+	if s.agent.responseFormat != nil {
+		structuredFormat = s.agent.responseFormat
+	} else if s.agent.outputType != nil {
+		structuredFormat = s.agent.outputType.responseFormat()
+	}
+
+	// When the agent has both tools and a structured output request,
+	// we delay structured output enforcement until a dedicated
+	// synthesis turn. Enforcing the schema during tool exploration
+	// causes models with extended thinking to stuff planning prose
+	// into the first text field of the schema as a scratchpad,
+	// burning the entire max_tokens budget on thinking-inside-JSON
+	// before ever producing a valid object. Instead, we let the
+	// model freely call tools without a schema, then force one final
+	// synthesis turn with ToolChoice=none + schema enforced once the
+	// model signals it has enough information (finish_reason=stop).
+	// Agents without tools or without a structured output request
+	// do not need this dance and enforce the schema immediately.
+	exploring := structuredFormat != nil && len(s.toolDefs) > 0
 
 	for {
 		if err := ctx.Err(); err != nil {
@@ -312,14 +340,20 @@ func coreLoop(ctx context.Context, startAgent *Agent, inputMessages []llm.Messag
 
 		fullMessages := buildFullMessages(s.systemPrompt, s.messages)
 
-		responseFormat := s.agent.responseFormat
-		if responseFormat == nil && s.agent.outputType != nil {
-			responseFormat = s.agent.outputType.responseFormat()
+		var responseFormat *llm.ResponseFormat
+		if !exploring {
+			responseFormat = structuredFormat
 		}
 
 		toolChoice := s.agent.modelSettings.ToolChoice
 		if s.toolUsedInRun && s.agent.resetToolChoice && toolChoice != nil {
 			toolChoice = nil
+		}
+		if !exploring && structuredFormat != nil && len(s.toolDefs) > 0 {
+			// On the synthesis turn, forbid further tool calls so the
+			// model is forced to convert what it has into JSON.
+			none := llm.ToolChoice{Type: llm.ToolChoiceNone}
+			toolChoice = &none
 		}
 
 		req := &llm.ChatCompletionRequest{
@@ -365,15 +399,45 @@ func coreLoop(ctx context.Context, startAgent *Agent, inputMessages []llm.Messag
 
 		switch resp.FinishReason {
 		case llm.FinishReasonStop, llm.FinishReasonLength:
-			// When structured output is enabled and the model produced
-			// no text (e.g. only thinking), retry the turn so the model
-			// gets another chance to produce the required JSON output.
-			// The empty assistant turn must be dropped from history
-			// because Anthropic rejects requests where the last message
-			// is a thinking-only assistant turn. The counter tracks
-			// consecutive empty outputs and resets in the tool-calls
-			// branch below.
-			if s.agent.outputType != nil && resp.Message.Text() == "" && emptyOutputRetries < maxEmptyOutputRetries && s.turns < s.agent.maxTurns {
+			// Model signalled it has nothing more to do with tools.
+			// If we have a structured output request but haven't
+			// enforced the schema yet, promote this turn to the
+			// synthesis turn: the next iteration runs with
+			// ToolChoice=none and the schema enforced, so the model
+			// converts what it has gathered into JSON in one shot.
+			//
+			// Anthropic requires the last message in the conversation
+			// to be a user message, so we cannot simply continue after
+			// an assistant stop turn. Drop empty (thinking-only) turns
+			// from history and append a user nudge that asks for the
+			// final structured output. Non-empty assistant turns stay
+			// in history so the model can reference its own
+			// conclusions during synthesis.
+			if exploring && s.turns < s.agent.maxTurns {
+				exploring = false
+				if resp.Message.Text() == "" {
+					s.messages = s.messages[:len(s.messages)-1]
+				}
+				s.messages = append(s.messages, llm.Message{
+					Role:  llm.RoleUser,
+					Parts: []llm.Part{llm.TextPart{Text: synthesisNudge}},
+				})
+				s.logger.InfoCtx(
+					ctx,
+					"entering synthesis turn: forcing structured output with tool_choice=none",
+					log.Int("turn", s.turns),
+					log.Int("output_tokens", resp.Usage.OutputTokens),
+				)
+				continue
+			}
+
+			// Synthesis turn ran but produced no text. Retry the same
+			// turn a bounded number of times so the model gets another
+			// chance to emit the required JSON output. The empty
+			// assistant turn must be dropped from history because
+			// Anthropic rejects requests where the last message is a
+			// thinking-only assistant turn.
+			if structuredFormat != nil && resp.Message.Text() == "" && emptyOutputRetries < maxEmptyOutputRetries && s.turns < s.agent.maxTurns {
 				emptyOutputRetries++
 				s.messages = s.messages[:len(s.messages)-1]
 				s.logger.InfoCtx(
