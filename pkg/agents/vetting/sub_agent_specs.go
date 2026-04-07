@@ -206,3 +206,25 @@ var (
 		maxTurns:   40,
 	}
 )
+
+// Per-output-type builders. Defining them here lets the orchestrator hold
+// a slice of (toolName, description, tools, builder) entries instead of
+// embedding a closure with an explicit type parameter at every call site.
+var (
+	buildCrawlerAgent              = buildFor[CrawlerOutput](crawlerAgentSpec)
+	buildAnalyzerAgent             = buildFor[DocumentAnalysisOutput](analyzerAgentSpec)
+	buildSecurityAgent             = buildFor[SecurityOutput](securityAgentSpec)
+	buildComplianceAgent           = buildFor[ComplianceOutput](complianceAgentSpec)
+	buildMarketAgent               = buildFor[MarketOutput](marketAgentSpec)
+	buildSubprocessorAgent         = buildFor[SubprocessorOutput](subprocessorAgentSpec)
+	buildDataProcessingAgent       = buildFor[DataProcessingOutput](dataProcessingAgentSpec)
+	buildAIRiskAgent               = buildFor[AIRiskOutput](aiRiskAgentSpec)
+	buildIncidentResponseAgent     = buildFor[IncidentResponseOutput](incidentResponseAgentSpec)
+	buildBusinessContinuityAgent   = buildFor[BusinessContinuityOutput](businessContinuityAgentSpec)
+	buildProfessionalStandingAgent = buildFor[ProfessionalStandingOutput](professionalStandingAgentSpec)
+	buildRegulatoryComplianceAgent = buildFor[RegulatoryComplianceOutput](regulatoryComplianceAgentSpec)
+	buildWebsearchAgent            = buildFor[WebSearchOutput](websearchAgentSpec)
+	buildFinancialStabilityAgent   = buildFor[FinancialStabilityOutput](financialStabilityAgentSpec)
+	buildCodeSecurityAgent         = buildFor[CodeSecurityOutput](codeSecurityAgentSpec)
+	buildVendorComparisonAgent     = buildFor[VendorComparisonOutput](vendorComparisonAgentSpec)
+)
