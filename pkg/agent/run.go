@@ -18,7 +18,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 	"sync"
 
 	"go.gearno.de/kit/log"
@@ -76,9 +75,9 @@ func blockingCallLLM(ctx context.Context, agent *Agent, req *llm.ChatCompletionR
 
 	// Some providers (e.g. Anthropic) require streaming for large
 	// max_tokens or when thinking is enabled. Fall back to streaming
-	// transparently when the blocking call fails with a streaming
-	// requirement error.
-	if !isStreamingRequiredError(err) {
+	// transparently when the blocking call returns ErrStreamingRequired.
+	var streamRequired *llm.ErrStreamingRequired
+	if !errors.As(err, &streamRequired) {
 		return nil, err
 	}
 
@@ -95,14 +94,6 @@ func blockingCallLLM(ctx context.Context, agent *Agent, req *llm.ChatCompletionR
 		return nil, sErr
 	}
 	return acc.Response(), nil
-}
-
-// isStreamingRequiredError detects the Anthropic API error returned when
-// a non-streaming request exceeds the provider's response time limit.
-// This matches the error message string because the SDK does not expose
-// a typed error for this condition.
-func isStreamingRequiredError(err error) bool {
-	return err != nil && strings.Contains(err.Error(), "streaming is required")
 }
 
 func (a *Agent) Run(ctx context.Context, messages []llm.Message) (*Result, error) {
@@ -379,7 +370,9 @@ func coreLoop(ctx context.Context, startAgent *Agent, inputMessages []llm.Messag
 			// gets another chance to produce the required JSON output.
 			// The empty assistant turn must be dropped from history
 			// because Anthropic rejects requests where the last message
-			// is a thinking-only assistant turn.
+			// is a thinking-only assistant turn. The counter tracks
+			// consecutive empty outputs and resets in the tool-calls
+			// branch below.
 			if s.agent.outputType != nil && resp.Message.Text() == "" && emptyOutputRetries < maxEmptyOutputRetries && s.turns < s.agent.maxTurns {
 				emptyOutputRetries++
 				s.messages = s.messages[:len(s.messages)-1]
@@ -392,6 +385,7 @@ func coreLoop(ctx context.Context, startAgent *Agent, inputMessages []llm.Messag
 				)
 				continue
 			}
+			emptyOutputRetries = 0
 
 			if err := runOutputGuardrails(ctx, s.agent, resp.Message); err != nil {
 				return s.finishRun(ctx, nil, err)
@@ -411,6 +405,7 @@ func coreLoop(ctx context.Context, startAgent *Agent, inputMessages []llm.Messag
 
 		case llm.FinishReasonToolCalls:
 			s.toolUsedInRun = true
+			emptyOutputRetries = 0
 
 			s.logger.InfoCtx(
 				ctx,
