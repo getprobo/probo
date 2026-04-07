@@ -903,4 +903,3 @@ func (s VendorService) Assess(
 		Subprocessors: subprocessors,
 	}, nil
 }
-
