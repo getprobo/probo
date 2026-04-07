@@ -18,6 +18,7 @@ import (
 	"github.com/vikstrous/dataloadgen"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/accessreview"
+	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
@@ -31,6 +32,7 @@ import (
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
 	"go.probo.inc/probo/pkg/server/gqlutils/types/cursor"
+	"go.probo.inc/probo/pkg/slack"
 	"go.probo.inc/probo/pkg/validator"
 )
 
@@ -518,6 +520,30 @@ func (r *accessSourceResolver) SelectedOrganization(ctx context.Context, obj *ty
 	}
 
 	return nil, nil
+}
+
+// Oauth2Scopes is the resolver for the oauth2Scopes field.
+func (r *accessSourceResolver) Oauth2Scopes(ctx context.Context, obj *types.AccessSource) ([]string, error) {
+	if obj.ConnectorID == nil {
+		return []string{}, nil
+	}
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	dbConnector, err := prb.Connectors.Get(ctx, *obj.ConnectorID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return []string{}, nil
+		}
+		r.logger.ErrorCtx(ctx, "cannot get connector for oauth2 scopes", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	scopes := drivers.ProviderOAuth2Scopes(dbConnector.Provider)
+	if scopes == nil {
+		return []string{}, nil
+	}
+	return scopes, nil
 }
 
 // Permission is the resolver for the permission field.
@@ -8280,6 +8306,11 @@ func (r *organizationResolver) SlackConnections(ctx context.Context, obj *types.
 	return types.NewSlackConnectionConnection(page), nil
 }
 
+// SlackOAuth2Scopes is the resolver for the slackOAuth2Scopes field.
+func (r *organizationResolver) SlackOAuth2Scopes(ctx context.Context, obj *types.Organization) ([]string, error) {
+	return slack.OAuth2Scopes, nil
+}
+
 // Connectors is the resolver for the connectors field.
 func (r *organizationResolver) Connectors(ctx context.Context, obj *types.Organization, filter *types.ConnectorFilter) ([]*types.Connector, error) {
 	if err := r.authorize(ctx, obj.ID, probo.ActionConnectorList); err != nil {
@@ -8320,12 +8351,17 @@ func (r *organizationResolver) ConnectorProviderInfos(ctx context.Context, obj *
 	var infos []*types.ConnectorProviderInfo
 	for _, provider := range coredata.ConnectorProviders() {
 		_, oauthErr := r.connectorRegistry.Get(string(provider))
+		scopes := drivers.ProviderOAuth2Scopes(provider)
+		if scopes == nil {
+			scopes = []string{}
+		}
 		info := &types.ConnectorProviderInfo{
 			Provider:                   provider,
 			DisplayName:                providerDisplayName(provider),
 			OauthConfigured:            oauthErr == nil,
 			APIKeySupported:            providerSupportsAPIKey(provider),
 			ClientCredentialsSupported: providerSupportsClientCredentials(provider),
+			Oauth2Scopes:               scopes,
 			ExtraSettings:              providerExtraSettings(provider),
 		}
 		infos = append(infos, info)

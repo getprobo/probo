@@ -250,6 +250,7 @@ type Organization implements Node {
   ): SAMLConfigurationConnection @goField(forceResolver: true)
 
   scimConfiguration: SCIMConfiguration @goField(forceResolver: true)
+  googleWorkspaceOAuth2Scopes: [String!]! @goField(forceResolver: true)
 
   auditLogEntries(
     first: Int

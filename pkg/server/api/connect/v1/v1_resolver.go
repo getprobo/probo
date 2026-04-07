@@ -18,6 +18,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
+	"go.probo.inc/probo/pkg/iam/scim/bridge/provider/googleworkspace"
 	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/server/api/authn"
@@ -1331,6 +1332,11 @@ func (r *organizationResolver) ScimConfiguration(ctx context.Context, obj *types
 	}
 
 	return types.NewSCIMConfiguration(config), nil
+}
+
+// GoogleWorkspaceOAuth2Scopes is the resolver for the googleWorkspaceOAuth2Scopes field.
+func (r *organizationResolver) GoogleWorkspaceOAuth2Scopes(ctx context.Context, obj *types.Organization) ([]string, error) {
+	return googleworkspace.OAuth2Scopes, nil
 }
 
 // AuditLogEntries is the resolver for the auditLogEntries field.

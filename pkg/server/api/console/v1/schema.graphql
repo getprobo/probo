@@ -1908,6 +1908,7 @@ type Organization implements Node {
         last: Int
         before: CursorKey
     ): SlackConnectionConnection! @goField(forceResolver: true)
+    slackOAuth2Scopes: [String!]! @goField(forceResolver: true)
     connectors(filter: ConnectorFilter): [Connector!]! @goField(forceResolver: true)
     connectorProviderInfos: [ConnectorProviderInfo!]! @goField(forceResolver: true)
 
@@ -2166,6 +2167,7 @@ type ConnectorProviderInfo {
     oauthConfigured: Boolean!
     apiKeySupported: Boolean!
     clientCredentialsSupported: Boolean!
+    oauth2Scopes: [String!]!
     extraSettings: [ConnectorProviderSettingInfo!]!
 }
 
@@ -6802,6 +6804,7 @@ type AccessSource implements Node {
     needsConfiguration: Boolean! @goField(forceResolver: true)
     connectionStatus: AccessSourceConnectionStatus! @goField(forceResolver: true)
     selectedOrganization: String @goField(forceResolver: true)
+    oauth2Scopes: [String!]! @goField(forceResolver: true)
     createdAt: Datetime!
     updatedAt: Datetime!
 
