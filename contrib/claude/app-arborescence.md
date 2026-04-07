@@ -61,8 +61,8 @@ Each page folder may contain a subset of these files. Names use PascalCase match
 | File | Role |
 |------|------|
 | `routes.ts` | Route definitions for this folder. Exports an array spread into the parent route tree. Uses `lazy()` from `@probo/react-lazy` to point at loaders / pages. |
-| `MyPageLoader.tsx` | Bundle entry point imported by `lazy()` in the route. **Default export.** Wraps the page in providers and `Suspense`, loads data via Relay, renders a skeleton while loading, then mounts the page with `queryRef`. |
-| `MyPage.tsx` | The actual page component. Receives `queryRef` from the loader, calls `usePreloadedQuery`. **Default export.** |
+| `MyPageLoader.tsx` | Bundle entry point imported by `lazy()` in the route. **Default export.** loads data via Relay, renders a skeleton while loading, then mounts the page with `queryRef`. |
+| `MyPage.tsx` | The actual page component. Receives `queryRef` from the loader, calls `usePreloadedQuery`. |
 | `MyPageSkeleton.tsx` | `Suspense` fallback rendered while the page is still receiving data. Also used as the route-level `Fallback`. |
 | `MyPageError.tsx` | Error boundary rendering component for this page's error state. |
 | `_components/` | Sub-components scoped to this page (see [below](#_components-folder)). |
@@ -104,11 +104,13 @@ The loader is the **lazy bundle entry point**. It sets up providers, triggers th
 
 ```tsx
 // pages/organizations/vendors/VendorsPageLoader.tsx
-import { Suspense } from "react";
+import { Suspense, useEffect } from "react";
+import { useQueryLoader } from "react-relay";
 
-import { CoreRelayProvider } from "#/providers/CoreRelayProvider";
+import type { VendorsPageQuery } from "#/__generated__/core/VendorsPageQuery.graphql";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 
-import { VendorsPage } from "./VendorsPage";
+import VendorsPage, { vendorsPageQuery } from "./VendorsPage";
 import { VendorsPageSkeleton } from "./VendorsPageSkeleton";
 
 function VendorsPageQueryLoader() {
@@ -116,22 +118,20 @@ function VendorsPageQueryLoader() {
   const [queryRef, loadQuery] = useQueryLoader<VendorsPageQuery>(vendorsPageQuery);
 
   useEffect(() => {
-    if (!queryRef) {
-      loadQuery({ organizationId });
-    }
-  });
+    loadQuery({ organizationId });
+  }, [loadQuery, organizationId]);
 
-  if (!queryRef) return <VendorsPageSkeleton />;
+  if (!queryRef) {
+    return <VendorsPageSkeleton />;
+  }
 
-  return <VendorsPage queryRef={queryRef} />;
+  return <VendorsPage queryRef={queryRef} />
 }
 
 export default function VendorsPageLoader() {
   return (
     <CoreRelayProvider>
-      <Suspense fallback={<VendorsPageSkeleton />}>
-        <VendorsPageQueryLoader />
-      </Suspense>
+      <VendorsPageQueryLoader queryRef={queryRef} />
     </CoreRelayProvider>
   );
 }
