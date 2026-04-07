@@ -68,71 +68,71 @@ type (
 	}
 
 	VendorInfo struct {
-		Name                          string         `json:"name"`
-		Description                   string         `json:"description"`
-		Category                      string         `json:"category"`
-		VendorType                    string         `json:"vendor_type"`
-		HeadquarterAddress            string         `json:"headquarter_address"`
-		LegalName                     string         `json:"legal_name"`
-		PrivacyPolicyURL              string         `json:"privacy_policy_url"`
-		ServiceLevelAgreementURL      string         `json:"service_level_agreement_url"`
-		DataProcessingAgreementURL    string         `json:"data_processing_agreement_url"`
-		BusinessAssociateAgreementURL string         `json:"business_associate_agreement_url"`
-		SubprocessorsListURL          string         `json:"subprocessors_list_url"`
-		SecurityPageURL               string         `json:"security_page_url"`
-		TrustPageURL                  string         `json:"trust_page_url"`
-		TermsOfServiceURL             string         `json:"terms_of_service_url"`
-		StatusPageURL                 string         `json:"status_page_url"`
-		BugBountyURL                  string         `json:"bug_bounty_url"`
-		IncidentResponseURL           string         `json:"incident_response_url"`
-		DataLocations                 []string       `json:"data_locations"`
-		Certifications                []string       `json:"certifications"`
-		Subprocessors                 []Subprocessor `json:"subprocessors"`
+		Name                          string         `json:"name" jsonschema:"Vendor display name as shown on the website"`
+		Description                   string         `json:"description" jsonschema:"One-sentence description of what the vendor does"`
+		Category                      string         `json:"category" jsonschema:"Vendor category enum: ANALYTICS, ACCOUNTING, CLOUD_MONITORING, CLOUD_PROVIDER, COLLABORATION, CONSULTING, CUSTOMER_SUPPORT, DATA_STORAGE_AND_PROCESSING, DOCUMENT_MANAGEMENT, EMPLOYEE_MANAGEMENT, ENGINEERING, FINANCE, IDENTITY_PROVIDER, IT, LEGAL, MARKETING, OFFICE_OPERATIONS, OTHER, PASSWORD_MANAGEMENT, PRODUCT_AND_DESIGN, PROFESSIONAL_SERVICES, RECRUITING, SALES, SECURITY, STAFFING, VERSION_CONTROL"`
+		VendorType                    string         `json:"vendor_type" jsonschema:"Vendor type: SAAS, INFRASTRUCTURE, PROFESSIONAL_SERVICES, STAFFING, OTHER"`
+		HeadquarterAddress            string         `json:"headquarter_address" jsonschema:"Vendor headquarters address (city, country) if mentioned"`
+		LegalName                     string         `json:"legal_name" jsonschema:"Legal entity name if different from display name (e.g. 'Datadog, Inc.')"`
+		PrivacyPolicyURL              string         `json:"privacy_policy_url" jsonschema:"URL to the vendor's privacy policy page"`
+		ServiceLevelAgreementURL      string         `json:"service_level_agreement_url" jsonschema:"URL to the SLA page"`
+		DataProcessingAgreementURL    string         `json:"data_processing_agreement_url" jsonschema:"URL to the DPA page"`
+		BusinessAssociateAgreementURL string         `json:"business_associate_agreement_url" jsonschema:"URL to the BAA page if HIPAA-eligible"`
+		SubprocessorsListURL          string         `json:"subprocessors_list_url" jsonschema:"URL to the public subprocessors list"`
+		SecurityPageURL               string         `json:"security_page_url" jsonschema:"URL to the vendor's security page"`
+		TrustPageURL                  string         `json:"trust_page_url" jsonschema:"URL to the trust center"`
+		TermsOfServiceURL             string         `json:"terms_of_service_url" jsonschema:"URL to the terms of service"`
+		StatusPageURL                 string         `json:"status_page_url" jsonschema:"URL to the vendor's status / uptime page"`
+		BugBountyURL                  string         `json:"bug_bounty_url" jsonschema:"URL to the bug bounty or responsible disclosure program"`
+		IncidentResponseURL           string         `json:"incident_response_url" jsonschema:"URL to incident response or post-mortem documentation"`
+		DataLocations                 []string       `json:"data_locations" jsonschema:"Countries or regions where data is processed or stored (e.g. 'United States', 'EU', 'Germany')"`
+		Certifications                []string       `json:"certifications" jsonschema:"Compliance certifications found (e.g. 'SOC 2 Type II', 'ISO 27001')"`
+		Subprocessors                 []Subprocessor `json:"subprocessors" jsonschema:"Sub-processors discovered with name, country, purpose"`
 
 		// Privacy classification (ISO 27701).
-		PrivacyRole         string `json:"privacy_role"`
-		ProcessesPII        bool   `json:"processes_pii"`
-		CrossBorderTransfer bool   `json:"cross_border_transfer"`
+		PrivacyRole         string `json:"privacy_role" jsonschema:"Privacy role under ISO 27701: CONTROLLER, PROCESSOR, SUBPROCESSOR, NONE"`
+		ProcessesPII        bool   `json:"processes_pii" jsonschema:"Whether the vendor processes personal data"`
+		CrossBorderTransfer bool   `json:"cross_border_transfer" jsonschema:"Whether cross-border data transfers occur"`
 
 		// Privacy risk fields.
-		DPAStatus         string `json:"dpa_status"`
-		DSARCapability    string `json:"dsar_capability"`
-		DataMinimization  string `json:"data_minimization"`
-		PurposeLimitation string `json:"purpose_limitation"`
-		RetentionPolicy   string `json:"retention_policy"`
-		DeletionPolicy    string `json:"deletion_policy"`
+		DPAStatus         string `json:"dpa_status" jsonschema:"DPA accessibility: AVAILABLE, AVAILABLE_ON_REQUEST, NOT_FOUND, BEHIND_LOGIN"`
+		DSARCapability    string `json:"dsar_capability" jsonschema:"Brief summary of how the vendor handles Data Subject Access Requests"`
+		DataMinimization  string `json:"data_minimization" jsonschema:"Brief summary of data minimization practices"`
+		PurposeLimitation string `json:"purpose_limitation" jsonschema:"Brief summary of purpose limitation commitments"`
+		RetentionPolicy   string `json:"retention_policy" jsonschema:"Brief summary of data retention policy"`
+		DeletionPolicy    string `json:"deletion_policy" jsonschema:"Brief summary of data deletion policy"`
 
 		// AI classification (ISO 42001).
-		InvolvesAI bool     `json:"involves_ai"`
-		AIUseCases []string `json:"ai_use_cases"`
+		InvolvesAI bool     `json:"involves_ai" jsonschema:"Whether the vendor uses AI/ML in their product or service"`
+		AIUseCases []string `json:"ai_use_cases" jsonschema:"Array of AI use case descriptions (e.g. 'content generation', 'fraud detection')"`
 
 		// AI risk fields.
-		AIGovernanceDocURL     string `json:"ai_governance_doc_url"`
-		AITransparency         string `json:"ai_transparency"`
-		BiasControls           string `json:"bias_controls"`
-		HumanOversight         string `json:"human_oversight"`
-		TrainingDataGovernance string `json:"training_data_governance"`
+		AIGovernanceDocURL     string `json:"ai_governance_doc_url" jsonschema:"URL to AI governance or responsible AI documentation"`
+		AITransparency         string `json:"ai_transparency" jsonschema:"Brief summary of model transparency findings"`
+		BiasControls           string `json:"bias_controls" jsonschema:"Brief summary of bias detection and fairness measures"`
+		HumanOversight         string `json:"human_oversight" jsonschema:"Brief summary of human oversight mechanisms for AI decisions"`
+		TrainingDataGovernance string `json:"training_data_governance" jsonschema:"Brief summary of training data governance"`
 
 		// Contractual clause analysis.
-		PrivacyClauses []string `json:"privacy_clauses"`
-		AIClauses      []string `json:"ai_clauses"`
+		PrivacyClauses []string `json:"privacy_clauses" jsonschema:"Notable privacy contractual clauses found (e.g. '72-hour breach notification', 'SCCs included')"`
+		AIClauses      []string `json:"ai_clauses" jsonschema:"Notable AI contractual clauses found (e.g. 'Customer data not used for training')"`
 
 		// Minimum acceptance baseline.
-		MinimumBaselineMet bool     `json:"minimum_baseline_met"`
-		BaselineFailures   []string `json:"baseline_failures"`
+		MinimumBaselineMet bool     `json:"minimum_baseline_met" jsonschema:"Whether all hard-reject baseline criteria are met"`
+		BaselineFailures   []string `json:"baseline_failures" jsonschema:"List of failed baseline criteria descriptions"`
 
 		// Risk scoring.
-		OverallRiskRating    string      `json:"overall_risk_rating"`
-		OverallRiskScore     int         `json:"overall_risk_score"`
-		Recommendation       string      `json:"recommendation"`
-		RiskScores           []RiskScore `json:"risk_scores"`
-		SecurityRiskScore    int         `json:"security_risk_score"`
-		PrivacyRiskScore     int         `json:"privacy_risk_score"`
-		AIRiskScore          int         `json:"ai_risk_score"`
-		InformationGaps      []string    `json:"information_gaps"`
-		ProfessionalLicenses []string    `json:"professional_licenses"`
-		IndustryMemberships  []string    `json:"industry_memberships"`
-		InsuranceCoverage    string      `json:"insurance_coverage"`
+		OverallRiskRating    string      `json:"overall_risk_rating" jsonschema:"Overall risk rating: Low, Medium, High"`
+		OverallRiskScore     int         `json:"overall_risk_score" jsonschema:"Overall risk score from the report (0-100)"`
+		Recommendation       string      `json:"recommendation" jsonschema:"Recommendation: APPROVE, APPROVE_WITH_CONDITIONS, ESCALATE, REJECT"`
+		RiskScores           []RiskScore `json:"risk_scores" jsonschema:"Per-category risk scores from the Risk Summary table"`
+		SecurityRiskScore    int         `json:"security_risk_score" jsonschema:"Security pillar risk score (0-100)"`
+		PrivacyRiskScore     int         `json:"privacy_risk_score" jsonschema:"Privacy pillar risk score (0-100)"`
+		AIRiskScore          int         `json:"ai_risk_score" jsonschema:"AI pillar risk score (0-100), 0 if no AI"`
+		InformationGaps      []string    `json:"information_gaps" jsonschema:"Concise descriptions of information gaps from the report"`
+		ProfessionalLicenses []string    `json:"professional_licenses" jsonschema:"Professional license descriptions for services firms (e.g. 'New York State Bar')"`
+		IndustryMemberships  []string    `json:"industry_memberships" jsonschema:"Industry body memberships (e.g. 'AICPA', 'American Bar Association')"`
+		InsuranceCoverage    string      `json:"insurance_coverage" jsonschema:"Description of professional liability or E&O insurance"`
 	}
 
 	Result struct {
