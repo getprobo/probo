@@ -363,6 +363,15 @@ func mapStopReason(reason anthropic.StopReason) llm.FinishReason {
 }
 
 func mapError(err error) error {
+	// The Anthropic SDK refuses non-streaming requests client-side when
+	// the expected response time exceeds 10 minutes (large max_tokens or
+	// model-specific non-streaming token limits). It returns a plain
+	// fmt.Errorf, not an *anthropic.Error, so we must match on the
+	// message before attempting the type assertion.
+	if err != nil && strings.Contains(err.Error(), "streaming is required") {
+		return &llm.ErrStreamingRequired{Err: err}
+	}
+
 	var apiErr *anthropic.Error
 	if !errors.As(err, &apiErr) {
 		return err
@@ -374,13 +383,6 @@ func mapError(err error) error {
 		return &llm.ErrRateLimit{RetryAfter: retryAfter, Err: err}
 	case http.StatusUnauthorized:
 		return &llm.ErrAuthentication{Err: err}
-	case http.StatusBadRequest:
-		// Anthropic returns 400 with this message body when a non-streaming
-		// request would exceed the provider's response time limit.
-		if strings.Contains(apiErr.Error(), "streaming is required") {
-			return &llm.ErrStreamingRequired{Err: err}
-		}
-		return err
 	default:
 		return err
 	}
