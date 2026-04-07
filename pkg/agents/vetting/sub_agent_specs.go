@@ -23,7 +23,10 @@ import _ "embed"
 // Tuning notes:
 //   - thinkingBudget=4000 is enabled on agents that need to reason over
 //     multiple documents (analyzer, ai_risk, data_processing, business
-//     continuity, incident response, regulatory compliance).
+//     continuity, incident response, regulatory compliance). The agent
+//     runtime delays structured output enforcement until a dedicated
+//     synthesis turn (run.go), so thinking no longer conflicts with the
+//     JSON schema during tool exploration.
 //   - parallelTools=true is enabled on agents that issue many independent
 //     tool calls per turn (security_assessor, market, code_security,
 //     financial_stability, web_search, regulatory_compliance).
