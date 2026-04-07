@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.163.0] - 2026-04-07
+
+### Changed
+
+- Improve list handling and backspace behavior in rich editor
+
 ## [0.162.1] - 2026-04-07
 
 ### Fixed
