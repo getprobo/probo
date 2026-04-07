@@ -627,7 +627,6 @@ func TestRisk_SubResolvers(t *testing.T) {
 							edges {
 								node {
 									id
-									title
 								}
 							}
 						}
@@ -642,8 +641,7 @@ func TestRisk_SubResolvers(t *testing.T) {
 				Documents struct {
 					Edges []struct {
 						Node struct {
-							ID    string `json:"id"`
-							Title string `json:"title"`
+							ID string `json:"id"`
 						} `json:"node"`
 					} `json:"edges"`
 				} `json:"documents"`

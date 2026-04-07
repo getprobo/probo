@@ -89,13 +89,13 @@ type (
 
 	UpdateDocumentRequest struct {
 		DocumentID            gid.GID
-		Title                 *string
 		TrustCenterVisibility *coredata.TrustCenterVisibility
 		DefaultApproverIDs    *[]gid.GID
 	}
 
 	UpdateDocumentVersionRequest struct {
 		ID             gid.GID
+		Title          *string
 		Content        *string
 		Classification *coredata.DocumentClassification
 		DocumentType   *coredata.DocumentType
@@ -150,7 +150,6 @@ func (udr *UpdateDocumentRequest) Validate() error {
 	v := validator.New()
 
 	v.Check(udr.DocumentID, "document_id", validator.Required(), validator.GID(coredata.DocumentEntityType))
-	v.Check(udr.Title, "title", validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(udr.TrustCenterVisibility, "trust_center_visibility", validator.OneOfSlice(coredata.TrustCenterVisibilities()))
 	if udr.DefaultApproverIDs != nil {
 		v.Check(len(*udr.DefaultApproverIDs), "default_approver_ids", validator.Max(100))
@@ -167,6 +166,7 @@ func (udvr *UpdateDocumentVersionRequest) Validate() error {
 	v := validator.New()
 
 	v.Check(udvr.ID, "id", validator.Required(), validator.GID(coredata.DocumentVersionEntityType))
+	v.Check(udvr.Title, "title", validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(udvr.Classification, "classification", validator.OneOfSlice(coredata.DocumentClassifications()))
 	v.Check(
 		udvr.Content,
@@ -584,7 +584,6 @@ func (s *DocumentService) Create(
 
 	document := &coredata.Document{
 		ID:                    documentID,
-		Title:                 req.Title,
 		TrustCenterVisibility: coredata.TrustCenterVisibilityNone,
 		Status:                coredata.DocumentStatusActive,
 		CreatedAt:             now,
@@ -863,7 +862,9 @@ func (s *DocumentService) UpdateVersion(
 				documentVersion.Content = content
 			}
 
-			documentVersion.Title = document.Title
+			if req.Title != nil {
+				documentVersion.Title = *req.Title
+			}
 			if req.Classification != nil {
 				documentVersion.Classification = *req.Classification
 			}
@@ -1119,7 +1120,7 @@ func (s *DocumentService) CreateDraft(
 			draftVersion.ID = draftVersionID
 			draftVersion.OrganizationID = document.OrganizationID
 			draftVersion.DocumentID = documentID
-			draftVersion.Title = document.Title
+			draftVersion.Title = latestVersion.Title
 			draftVersion.Major = latestVersion.Major
 			draftVersion.Minor = latestVersion.Minor + 1
 			draftVersion.Classification = latestVersion.Classification
@@ -1716,10 +1717,6 @@ func (s *DocumentService) Update(
 				return &ErrDocumentArchived{}
 			}
 
-			if req.Title != nil {
-				document.Title = *req.Title
-			}
-
 			if req.TrustCenterVisibility != nil {
 				document.TrustCenterVisibility = *req.TrustCenterVisibility
 			}
@@ -1728,17 +1725,6 @@ func (s *DocumentService) Update(
 
 			if err := document.Update(ctx, tx, s.svc.scope); err != nil {
 				return fmt.Errorf("cannot update document: %w", err)
-			}
-
-			draftVersion := &coredata.DocumentVersion{}
-			err := draftVersion.LoadLatestVersion(ctx, tx, s.svc.scope, req.DocumentID)
-			if err == nil && draftVersion.Status == coredata.DocumentVersionStatusDraft {
-				draftVersion.Title = document.Title
-				draftVersion.UpdatedAt = now
-
-				if err := draftVersion.Update(ctx, tx, s.svc.scope); err != nil {
-					return fmt.Errorf("cannot update draft version: %w", err)
-				}
 			}
 
 			if req.DefaultApproverIDs != nil {

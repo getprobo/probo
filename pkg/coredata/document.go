@@ -32,7 +32,6 @@ type (
 	Document struct {
 		ID                    gid.GID               `db:"id"`
 		OrganizationID        gid.GID               `db:"organization_id"`
-		Title                 string                `db:"title"`
 		CurrentPublishedMajor *int                  `db:"current_published_major"`
 		CurrentPublishedMinor *int                  `db:"current_published_minor"`
 		TrustCenterVisibility TrustCenterVisibility `db:"trust_center_visibility"`
@@ -42,6 +41,7 @@ type (
 		UpdatedAt             time.Time             `db:"updated_at"`
 
 		// ordering only
+		Title        string       `db:"title"`
 		DocumentType DocumentType `db:"document_type"`
 	}
 
@@ -93,14 +93,13 @@ func (p *Document) LoadByID(
 ) error {
 	q := `
 WITH latest_versions AS (
-    SELECT DISTINCT ON (document_id) document_id, document_type
+    SELECT DISTINCT ON (document_id) document_id, title, document_type
     FROM document_versions
     ORDER BY document_id, major DESC, minor DESC
 )
 SELECT
     documents.id,
     documents.organization_id,
-    documents.title,
     documents.current_published_major,
     documents.current_published_minor,
     documents.trust_center_visibility,
@@ -108,6 +107,7 @@ SELECT
     documents.archived_at,
     documents.created_at,
     documents.updated_at,
+    COALESCE(lv.title, '') AS title,
     COALESCE(lv.document_type, 'OTHER') AS document_type
 FROM
     documents
@@ -152,14 +152,13 @@ func (p *Document) LoadByIDWithFilter(
 ) error {
 	q := `
 WITH latest_versions AS (
-    SELECT DISTINCT ON (document_id) document_id, document_type
+    SELECT DISTINCT ON (document_id) document_id, title, document_type
     FROM document_versions
     ORDER BY document_id, major DESC, minor DESC
 )
 SELECT
     documents.id,
     documents.organization_id,
-    documents.title,
     documents.current_published_major,
     documents.current_published_minor,
     documents.trust_center_visibility,
@@ -167,6 +166,7 @@ SELECT
     documents.archived_at,
     documents.created_at,
     documents.updated_at,
+    COALESCE(lv.title, '') AS title,
     COALESCE(lv.document_type, 'OTHER') AS document_type
 FROM
     documents
@@ -212,14 +212,13 @@ func (p *Documents) LoadByIDs(
 ) error {
 	q := `
 WITH latest_versions AS (
-    SELECT DISTINCT ON (document_id) document_id, document_type
+    SELECT DISTINCT ON (document_id) document_id, title, document_type
     FROM document_versions
     ORDER BY document_id, major DESC, minor DESC
 )
 SELECT
     documents.id,
     documents.organization_id,
-    documents.title,
     documents.current_published_major,
     documents.current_published_minor,
     documents.trust_center_visibility,
@@ -227,6 +226,7 @@ SELECT
     documents.archived_at,
     documents.created_at,
     documents.updated_at,
+    COALESCE(lv.title, '') AS title,
     COALESCE(lv.document_type, 'OTHER') AS document_type
 FROM
     documents
@@ -301,31 +301,33 @@ func (p *Documents) LoadByOrganizationID(
 ) error {
 	q := `
 WITH latest_versions AS (
-    SELECT DISTINCT ON (document_id) document_id, document_type
+    SELECT DISTINCT ON (document_id) document_id, title, document_type
     FROM document_versions
     ORDER BY document_id, major DESC, minor DESC
+),
+base AS (
+    SELECT
+        documents.id,
+        documents.organization_id,
+        documents.current_published_major,
+        documents.current_published_minor,
+        documents.trust_center_visibility,
+        documents.status,
+        documents.archived_at,
+        documents.created_at,
+        documents.updated_at,
+        COALESCE(lv.title, '') AS title,
+        COALESCE(lv.document_type, 'OTHER') AS document_type
+    FROM
+        documents
+    LEFT JOIN latest_versions lv ON lv.document_id = documents.id
+    WHERE
+        %s
+        AND documents.deleted_at IS NULL
+        AND documents.organization_id = @organization_id
+        AND %s
 )
-SELECT
-	documents.id,
-    documents.organization_id,
-    documents.title,
-    documents.current_published_major,
-    documents.current_published_minor,
-    documents.trust_center_visibility,
-    documents.status,
-    documents.archived_at,
-    documents.created_at,
-    documents.updated_at,
-    COALESCE(lv.document_type, 'OTHER') AS document_type
-FROM
-    documents
-LEFT JOIN latest_versions lv ON lv.document_id = documents.id
-WHERE
-    %s
-    AND documents.deleted_at IS NULL
-    AND documents.organization_id = @organization_id
-    AND %s
-    AND %s
+SELECT * FROM base WHERE %s
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
@@ -359,14 +361,13 @@ func (p *Documents) LoadAllByOrganizationID(
 ) error {
 	q := `
 WITH latest_versions AS (
-    SELECT DISTINCT ON (document_id) document_id, document_type
+    SELECT DISTINCT ON (document_id) document_id, title, document_type
     FROM document_versions
     ORDER BY document_id, major DESC, minor DESC
 )
 SELECT
 	documents.id,
     documents.organization_id,
-    documents.title,
     documents.current_published_major,
     documents.current_published_minor,
     documents.trust_center_visibility,
@@ -374,6 +375,7 @@ SELECT
     documents.archived_at,
     documents.created_at,
     documents.updated_at,
+    COALESCE(lv.title, '') AS title,
     COALESCE(lv.document_type, 'OTHER') AS document_type
 FROM
     documents
@@ -417,43 +419,48 @@ func (p *Documents) LoadPublishedByOrganizationID(
 ) error {
 	q := `
 WITH latest_versions AS (
-	SELECT DISTINCT ON (document_id) document_id, document_type
+	SELECT DISTINCT ON (document_id) document_id, title, document_type
 	FROM document_versions
 	ORDER BY document_id, major DESC, minor DESC
 ),
-published_documents AS (
+published_versions AS (
 	SELECT
-		d.*,
+		dv.document_id,
 		dv.title AS published_title
 	FROM
-		documents d
-		LEFT JOIN document_versions dv
+		document_versions dv
+		INNER JOIN documents d
 			ON dv.document_id = d.id
 			AND dv.major = d.current_published_major
 			AND dv.minor = d.current_published_minor
 	WHERE
 		d.deleted_at IS NULL
 		AND d.organization_id = @organization_id
+),
+base AS (
+	SELECT
+		documents.id,
+		documents.organization_id,
+		documents.current_published_major,
+		documents.current_published_minor,
+		documents.trust_center_visibility,
+		documents.status,
+		documents.archived_at,
+		documents.created_at,
+		documents.updated_at,
+		COALESCE(pv.published_title, lv.title, '') AS title,
+		COALESCE(lv.document_type, 'OTHER') AS document_type
+	FROM
+		documents
+	LEFT JOIN latest_versions lv ON lv.document_id = documents.id
+	LEFT JOIN published_versions pv ON pv.document_id = documents.id
+	WHERE
+		%s
+		AND documents.deleted_at IS NULL
+		AND documents.organization_id = @organization_id
+		AND %s
 )
-SELECT
-	documents.id,
-	documents.organization_id,
-	COALESCE(documents.published_title, documents.title) AS title,
-	documents.current_published_major,
-	documents.current_published_minor,
-	documents.trust_center_visibility,
-	documents.status,
-	documents.archived_at,
-	documents.created_at,
-	documents.updated_at,
-	COALESCE(lv.document_type, 'OTHER') AS document_type
-FROM
-	published_documents documents
-LEFT JOIN latest_versions lv ON lv.document_id = documents.id
-WHERE
-	%s
-	AND %s
-	AND %s
+SELECT * FROM base WHERE %s
 `
 	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
 
@@ -488,7 +495,6 @@ INSERT INTO
         tenant_id,
 		id,
 		organization_id,
-		title,
 		current_published_major,
 		current_published_minor,
 		trust_center_visibility,
@@ -501,7 +507,6 @@ VALUES (
     @tenant_id,
     @document_id,
     @organization_id,
-    @title,
     @current_published_major,
     @current_published_minor,
     @trust_center_visibility,
@@ -516,7 +521,6 @@ VALUES (
 		"tenant_id":               scope.GetTenantID(),
 		"document_id":             p.ID,
 		"organization_id":         p.OrganizationID,
-		"title":                   p.Title,
 		"current_published_major": p.CurrentPublishedMajor,
 		"current_published_minor": p.CurrentPublishedMinor,
 		"trust_center_visibility": p.TrustCenterVisibility,
@@ -575,7 +579,6 @@ func (p *Document) Update(
 UPDATE
 	documents
 SET
-	title = @title,
 	current_published_major = @current_published_major,
 	current_published_minor = @current_published_minor,
 	trust_center_visibility = @trust_center_visibility,
@@ -592,7 +595,6 @@ WHERE
 	args := pgx.StrictNamedArgs{
 		"document_id":             p.ID,
 		"updated_at":              time.Now(),
-		"title":                   p.Title,
 		"current_published_major": p.CurrentPublishedMajor,
 		"current_published_minor": p.CurrentPublishedMinor,
 		"trust_center_visibility": p.TrustCenterVisibility,
@@ -655,7 +657,7 @@ func (p *Documents) LoadByControlID(
 ) error {
 	q := `
 WITH latest_versions AS (
-	SELECT DISTINCT ON (document_id) document_id, document_type
+	SELECT DISTINCT ON (document_id) document_id, title, document_type
 	FROM document_versions
 	ORDER BY document_id, major DESC, minor DESC
 ),
@@ -665,24 +667,26 @@ scoped_documents AS (
 	WHERE %s
 		AND deleted_at IS NULL
 		AND %s
-		AND %s
+),
+base AS (
+	SELECT
+		sd.id,
+		sd.organization_id,
+		sd.current_published_major,
+		sd.current_published_minor,
+		sd.trust_center_visibility,
+		sd.status,
+		sd.archived_at,
+		sd.created_at,
+		sd.updated_at,
+		COALESCE(lv.title, '') AS title,
+		COALESCE(lv.document_type, 'OTHER') AS document_type
+	FROM scoped_documents sd
+	INNER JOIN controls_documents cp ON sd.id = cp.document_id
+	LEFT JOIN latest_versions lv ON lv.document_id = sd.id
+	WHERE cp.control_id = @control_id
 )
-SELECT
-	scoped_documents.id,
-	scoped_documents.organization_id,
-	scoped_documents.title,
-	scoped_documents.current_published_major,
-	scoped_documents.current_published_minor,
-	scoped_documents.trust_center_visibility,
-	scoped_documents.status,
-	scoped_documents.archived_at,
-	scoped_documents.created_at,
-	scoped_documents.updated_at,
-	COALESCE(lv.document_type, 'OTHER') AS document_type
-FROM scoped_documents
-INNER JOIN controls_documents cp ON scoped_documents.id = cp.document_id
-LEFT JOIN latest_versions lv ON lv.document_id = scoped_documents.id
-WHERE cp.control_id = @control_id
+SELECT * FROM base WHERE %s
 `
 	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
 
@@ -752,7 +756,7 @@ func (p *Documents) LoadByRiskID(
 ) error {
 	q := `
 WITH latest_versions AS (
-	SELECT DISTINCT ON (document_id) document_id, document_type
+	SELECT DISTINCT ON (document_id) document_id, title, document_type
 	FROM document_versions
 	ORDER BY document_id, major DESC, minor DESC
 ),
@@ -762,24 +766,26 @@ scoped_documents AS (
 	WHERE %s
 		AND deleted_at IS NULL
 		AND %s
-		AND %s
+),
+base AS (
+	SELECT
+		sd.id,
+		sd.organization_id,
+		sd.current_published_major,
+		sd.current_published_minor,
+		sd.trust_center_visibility,
+		sd.status,
+		sd.archived_at,
+		sd.created_at,
+		sd.updated_at,
+		COALESCE(lv.title, '') AS title,
+		COALESCE(lv.document_type, 'OTHER') AS document_type
+	FROM scoped_documents sd
+	INNER JOIN risks_documents rp ON sd.id = rp.document_id
+	LEFT JOIN latest_versions lv ON lv.document_id = sd.id
+	WHERE rp.risk_id = @risk_id
 )
-SELECT
-	scoped_documents.id,
-	scoped_documents.organization_id,
-	scoped_documents.title,
-	scoped_documents.current_published_major,
-	scoped_documents.current_published_minor,
-	scoped_documents.trust_center_visibility,
-	scoped_documents.status,
-	scoped_documents.archived_at,
-	scoped_documents.created_at,
-	scoped_documents.updated_at,
-	COALESCE(lv.document_type, 'OTHER') AS document_type
-FROM scoped_documents
-INNER JOIN risks_documents rp ON scoped_documents.id = rp.document_id
-LEFT JOIN latest_versions lv ON lv.document_id = scoped_documents.id
-WHERE rp.risk_id = @risk_id
+SELECT * FROM base WHERE %s
 `
 	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
 
@@ -849,7 +855,7 @@ func (p *Documents) LoadByMeasureID(
 ) error {
 	q := `
 WITH latest_versions AS (
-	SELECT DISTINCT ON (document_id) document_id, document_type
+	SELECT DISTINCT ON (document_id) document_id, title, document_type
 	FROM document_versions
 	ORDER BY document_id, major DESC, minor DESC
 ),
@@ -859,24 +865,26 @@ scoped_documents AS (
 	WHERE %s
 		AND deleted_at IS NULL
 		AND %s
-		AND %s
+),
+base AS (
+	SELECT
+		sd.id,
+		sd.organization_id,
+		sd.current_published_major,
+		sd.current_published_minor,
+		sd.trust_center_visibility,
+		sd.status,
+		sd.archived_at,
+		sd.created_at,
+		sd.updated_at,
+		COALESCE(lv.title, '') AS title,
+		COALESCE(lv.document_type, 'OTHER') AS document_type
+	FROM scoped_documents sd
+	INNER JOIN measures_documents md ON sd.id = md.document_id
+	LEFT JOIN latest_versions lv ON lv.document_id = sd.id
+	WHERE md.measure_id = @measure_id
 )
-SELECT
-	scoped_documents.id,
-	scoped_documents.organization_id,
-	scoped_documents.title,
-	scoped_documents.current_published_major,
-	scoped_documents.current_published_minor,
-	scoped_documents.trust_center_visibility,
-	scoped_documents.status,
-	scoped_documents.archived_at,
-	scoped_documents.created_at,
-	scoped_documents.updated_at,
-	COALESCE(lv.document_type, 'OTHER') AS document_type
-FROM scoped_documents
-INNER JOIN measures_documents md ON scoped_documents.id = md.document_id
-LEFT JOIN latest_versions lv ON lv.document_id = scoped_documents.id
-WHERE md.measure_id = @measure_id
+SELECT * FROM base WHERE %s
 `
 	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
 

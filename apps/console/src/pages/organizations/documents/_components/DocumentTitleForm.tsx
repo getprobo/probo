@@ -12,22 +12,22 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+import { formatError } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
-import { Button, IconCheckmark1, IconCrossLargeX, IconPencil, Input } from "@probo/ui";
+import { Button, IconCheckmark1, IconCrossLargeX, IconPencil, Input, useToast } from "@probo/ui";
 import { useState } from "react";
-import { useFragment } from "react-relay";
+import { useFragment, useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 import { z } from "zod";
 
 import type { DocumentTitleFormFragment$key } from "#/__generated__/core/DocumentTitleFormFragment.graphql";
 import type { DocumentTitleFormMutation } from "#/__generated__/core/DocumentTitleFormMutation.graphql";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
-import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 
-const updateDocumentTitleMutation = graphql`
-  mutation DocumentTitleFormMutation($input: UpdateDocumentInput!) {
-    updateDocument(input: $input) {
-      document {
+const updateDocumentVersionTitleMutation = graphql`
+  mutation DocumentTitleFormMutation($input: UpdateDocumentVersionInput!) {
+    updateDocumentVersion(input: $input) {
+      documentVersion {
         ...DocumentTitleFormFragment
       }
     }
@@ -35,10 +35,11 @@ const updateDocumentTitleMutation = graphql`
 `;
 
 const fragment = graphql`
-  fragment DocumentTitleFormFragment on Document {
+  fragment DocumentTitleFormFragment on DocumentVersion {
     id
     title
-    canUpdate: permission(action: "core:document:update")
+    status
+    canUpdate: permission(action: "core:document-version:update")
   }
 `;
 
@@ -50,37 +51,39 @@ export function DocumentTitleForm(props: { fKey: DocumentTitleFormFragment$key }
   const { fKey } = props;
 
   const { __ } = useTranslate();
+  const { toast } = useToast();
 
-  const document = useFragment<DocumentTitleFormFragment$key>(fragment, fKey);
-  const [updateDocument, isUpdatingDocument]
-    = useMutationWithToasts<DocumentTitleFormMutation>(
-      updateDocumentTitleMutation,
-      {
-        successMessage: __("Document updated successfully."),
-        errorMessage: __("Failed to update document"),
-      },
-    );
+  const version = useFragment<DocumentTitleFormFragment$key>(fragment, fKey);
+  const [updateDocumentVersion, isUpdating]
+    = useMutation<DocumentTitleFormMutation>(updateDocumentVersionTitleMutation);
 
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const { register, handleSubmit, reset } = useFormWithSchema(
     schema,
     {
       defaultValues: {
-        title: document.title,
+        title: version.title,
       },
     },
   );
 
-  const handleUpdateTitle = async (data: { title: string }) => {
-    await updateDocument({
+  const handleUpdateTitle = (data: { title: string }) => {
+    updateDocumentVersion({
       variables: {
         input: {
-          id: document.id,
+          documentVersionId: version.id,
           title: data.title,
         },
       },
-      onSuccess: () => {
+      onCompleted(_, errors) {
+        if (errors?.length) {
+          toast({ title: __("Error"), description: formatError(__("Failed to update document"), errors), variant: "error" });
+          return;
+        }
         setIsEditingTitle(false);
+      },
+      onError(error) {
+        toast({ title: __("Error"), description: error.message, variant: "error" });
       },
     });
   };
@@ -107,7 +110,7 @@ export function DocumentTitleForm(props: { fKey: DocumentTitleFormFragment$key }
             variant="quaternary"
             icon={IconCheckmark1}
             onClick={() => void handleSubmit(handleUpdateTitle)()}
-            disabled={isUpdatingDocument}
+            disabled={isUpdating}
           />
           <Button
             variant="quaternary"
@@ -121,8 +124,8 @@ export function DocumentTitleForm(props: { fKey: DocumentTitleFormFragment$key }
       )
     : (
         <div className="flex items-center gap-2">
-          <span>{document.title}</span>
-          {document.canUpdate && (
+          <span>{version.title}</span>
+          {version.canUpdate && version.status === "DRAFT" && (
             <Button
               variant="quaternary"
               icon={IconPencil}

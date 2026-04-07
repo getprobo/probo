@@ -2119,7 +2119,6 @@ func (r *Resolver) UpdateDocumentTool(ctx context.Context, req *mcp.CallToolRequ
 		ctx,
 		probo.UpdateDocumentRequest{
 			DocumentID:            input.ID,
-			Title:                 input.Title,
 			TrustCenterVisibility: input.TrustCenterVisibility,
 			DefaultApproverIDs:    defaultApproverIDs,
 		},
@@ -2224,6 +2223,7 @@ func (r *Resolver) UpdateDocumentVersionTool(ctx context.Context, req *mcp.CallT
 		ctx,
 		probo.UpdateDocumentVersionRequest{
 			ID:             input.DocumentVersionID,
+			Title:          input.Title,
 			Content:        content,
 			Classification: input.Classification,
 			DocumentType:   input.DocumentType,

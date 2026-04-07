@@ -71,10 +71,10 @@ const documentsFragment = graphql`
       edges {
         node {
           id
-          title
           versions(first: 1, orderBy: { field: CREATED_AT, direction: DESC }) {
             edges {
               node {
+                title
                 documentType
               }
             }
@@ -135,7 +135,7 @@ function LinkedDocumentsDialogContent(props: Omit<Props, "children">) {
 
   const filteredDocuments = useMemo(() => {
     return documents.filter(document =>
-      document.title.toLowerCase().includes(search.toLowerCase()),
+      document.versions.edges[0].node.title.toLowerCase().includes(search.toLowerCase()),
     );
   }, [documents, search]);
 
@@ -192,7 +192,7 @@ function DocumentRow(props: RowProps) {
       className="py-4 flex items-center gap-4 hover:bg-subtle cursor-pointer px-6 w-full h-[100px]"
       onClick={() => onClick(props.document.id)}
     >
-      {props.document.title}
+      {props.document.versions.edges[0].node.title}
       <DocumentTypeBadge type={props.document.versions.edges[0].node.documentType} />
       <Button
         disabled={props.disabled}

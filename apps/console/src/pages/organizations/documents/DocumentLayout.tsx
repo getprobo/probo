@@ -35,7 +35,9 @@ export const documentLayoutQuery = graphql`
       __typename
       ... on DocumentVersion {
         id
+        title
         status
+        ...DocumentTitleFormFragment
         ...DocumentActionsDropdown_versionFragment
         ...DocumentLayoutDrawer_versionFragment
         signatures(first: 0 filter: { activeContract: true }) {
@@ -64,14 +66,12 @@ export const documentLayoutQuery = graphql`
       __typename
       ... on Document {
         id
-        title
         status
         canPublish: permission(action: "core:document-version:publish")
         ...PublishDialog_documentFragment
         controlInfo: controls(first: 0) {
           totalCount
         }
-        ...DocumentTitleFormFragment
         ...DocumentActionsDropdown_documentFragment
         ...DocumentLayoutDrawer_documentFragment
         # We use this on /documents/:documentId
@@ -79,7 +79,9 @@ export const documentLayoutQuery = graphql`
           edges {
             node {
               id
+              title
               status
+              ...DocumentTitleFormFragment
               ...DocumentActionsDropdown_versionFragment
               ...DocumentLayoutDrawer_versionFragment
               signatures(first: 0 filter: { activeContract: true }) {
@@ -158,7 +160,7 @@ export function DocumentLayout(props: { queryRef: PreloadedQuery<DocumentLayoutQ
                 to: `/organizations/${organizationId}/documents`,
               },
               {
-                label: document.title,
+                label: currentVersion.title,
               },
             ]}
           />
@@ -182,7 +184,7 @@ export function DocumentLayout(props: { queryRef: PreloadedQuery<DocumentLayoutQ
         </div>
 
         <PageHeader
-          title={<DocumentTitleForm fKey={document} />}
+          title={<DocumentTitleForm fKey={currentVersion} />}
         />
 
         <Tabs>

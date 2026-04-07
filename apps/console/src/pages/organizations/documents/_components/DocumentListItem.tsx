@@ -25,7 +25,6 @@ import { useOrganizationId } from "#/hooks/useOrganizationId";
 const fragment = graphql`
   fragment DocumentListItemFragment on Document {
     id
-    title
     updatedAt
     canDelete: permission(action: "core:document:delete")
     defaultApprovers {
@@ -36,6 +35,7 @@ const fragment = graphql`
       edges {
         node {
           id
+          title
           status
           major
           minor
@@ -135,7 +135,7 @@ export function DocumentListItem(props: {
           __(
             "This will permanently delete the document \"%s\". This action cannot be undone.",
           ),
-          document.title,
+          lastVersion.title,
         ),
       },
     );
@@ -149,7 +149,7 @@ export function DocumentListItem(props: {
         <Checkbox checked={checked} onChange={onCheck} />
       </Td>
       <Td className="min-w-0">
-        <div className="flex gap-4 items-center">{document.title}</div>
+        <div className="flex gap-4 items-center">{lastVersion.title}</div>
       </Td>
       <Td className="w-24">
         <Badge variant={statusVariant[lastVersion.status]}>

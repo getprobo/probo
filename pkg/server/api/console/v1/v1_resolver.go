@@ -5307,7 +5307,6 @@ func (r *mutationResolver) UpdateDocument(ctx context.Context, input types.Updat
 		ctx,
 		probo.UpdateDocumentRequest{
 			DocumentID:            input.ID,
-			Title:                 input.Title,
 			TrustCenterVisibility: input.TrustCenterVisibility,
 			DefaultApproverIDs:    defaultApproverIDs,
 		},
@@ -6101,6 +6100,7 @@ func (r *mutationResolver) UpdateDocumentVersion(ctx context.Context, input type
 		ctx,
 		probo.UpdateDocumentVersionRequest{
 			ID:             input.DocumentVersionID,
+			Title:          input.Title,
 			Content:        input.Content,
 			Classification: input.Classification,
 			DocumentType:   input.DocumentType,

@@ -825,50 +825,10 @@ func (b *MeetingBuilder) Create() string {
 	return CreateMeeting(b.client, b.attrs)
 }
 
-func CreateDocument(c *testutil.Client, attrs ...Attrs) string {
-	c.T.Helper()
-
-	var a Attrs
-	if len(attrs) > 0 {
-		a = attrs[0]
-	}
-
-	const query = `
-		mutation($input: CreateDocumentInput!) {
-			createDocument(input: $input) {
-				documentEdge {
-					node { id }
-				}
-			}
-		}
-	`
-
-	input := map[string]any{
-		"organizationId": c.GetOrganizationID().String(),
-		"title":          a.getString("title", SafeName("Document")),
-		"documentType":   a.getString("documentType", "POLICY"),
-		"classification": a.getString("classification", "INTERNAL"),
-	}
-
-	var result struct {
-		CreateDocument struct {
-			DocumentEdge struct {
-				Node struct {
-					ID string `json:"id"`
-				} `json:"node"`
-			} `json:"documentEdge"`
-		} `json:"createDocument"`
-	}
-
-	err := c.Execute(query, map[string]any{"input": input}, &result)
-	require.NoError(c.T, err, "createDocument mutation failed")
-
-	return result.CreateDocument.DocumentEdge.Node.ID
-}
-
 type DocumentBuilder struct {
-	client *testutil.Client
-	attrs  Attrs
+	client    *testutil.Client
+	attrs     Attrs
+	versionID string
 }
 
 func NewDocument(c *testutil.Client) *DocumentBuilder {
@@ -895,8 +855,56 @@ func (b *DocumentBuilder) WithClassification(classification string) *DocumentBui
 	return b
 }
 
+func (b *DocumentBuilder) VersionID() string {
+	return b.versionID
+}
+
 func (b *DocumentBuilder) Create() string {
-	return CreateDocument(b.client, b.attrs)
+	b.client.T.Helper()
+
+	a := b.attrs
+
+	const query = `
+		mutation($input: CreateDocumentInput!) {
+			createDocument(input: $input) {
+				documentEdge {
+					node { id }
+				}
+				documentVersionEdge {
+					node { id }
+				}
+			}
+		}
+	`
+
+	input := map[string]any{
+		"organizationId": b.client.GetOrganizationID().String(),
+		"title":          a.getString("title", SafeName("Document")),
+		"documentType":   a.getString("documentType", "POLICY"),
+		"classification": a.getString("classification", "INTERNAL"),
+	}
+
+	var result struct {
+		CreateDocument struct {
+			DocumentEdge struct {
+				Node struct {
+					ID string `json:"id"`
+				} `json:"node"`
+			} `json:"documentEdge"`
+			DocumentVersionEdge struct {
+				Node struct {
+					ID string `json:"id"`
+				} `json:"node"`
+			} `json:"documentVersionEdge"`
+		} `json:"createDocument"`
+	}
+
+	err := b.client.Execute(query, map[string]any{"input": input}, &result)
+	require.NoError(b.client.T, err, "createDocument mutation failed")
+
+	b.versionID = result.CreateDocument.DocumentVersionEdge.Node.ID
+
+	return result.CreateDocument.DocumentEdge.Node.ID
 }
 
 func CreateProcessingActivity(c *testutil.Client, attrs ...Attrs) string {

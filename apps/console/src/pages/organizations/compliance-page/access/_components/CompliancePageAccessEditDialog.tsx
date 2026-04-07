@@ -44,10 +44,10 @@ const documentAccessFragment = graphql`
     status
     document {
       id
-      title
       versions(first: 1, orderBy: { field: CREATED_AT, direction: DESC }) {
         edges {
           node {
+            title
             documentType
           }
         }
@@ -87,7 +87,7 @@ function toDocumentAccessInfo(
     return {
       persisted: node.id !== node.document.id,
       variant: "info",
-      name: node.document.title,
+      name: node.document.versions?.edges[0]?.node.title ?? "",
       type: "document",
       typeLabel: __("Document"),
       category: node.document.versions?.edges[0]?.node.documentType ?? "",

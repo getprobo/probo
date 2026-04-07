@@ -45,7 +45,6 @@ func NewDocument(d *coredata.Document) *Document {
 	return &Document{
 		ID:                    d.ID,
 		OrganizationID:        d.OrganizationID,
-		Title:                 d.Title,
 		CurrentPublishedMajor: d.CurrentPublishedMajor,
 		CurrentPublishedMinor: d.CurrentPublishedMinor,
 		TrustCenterVisibility: d.TrustCenterVisibility,

@@ -2562,7 +2562,6 @@ type Evidence implements Node {
 
 type Document implements Node {
     id: ID!
-    title: String!
     description: String
     currentPublishedMajor: Int
     currentPublishedMinor: Int
@@ -4676,8 +4675,6 @@ input CreateDocumentInput {
 
 input UpdateDocumentInput {
     id: ID!
-    title: String
-    content: String
     trustCenterVisibility: TrustCenterVisibility
     defaultApproverIds: [ID!]
 }
@@ -5945,6 +5942,7 @@ input DeleteDraftDocumentVersionInput {
 
 input UpdateDocumentVersionInput {
     documentVersionId: ID!
+    title: String
     content: String
     classification: DocumentClassification
     documentType: DocumentType

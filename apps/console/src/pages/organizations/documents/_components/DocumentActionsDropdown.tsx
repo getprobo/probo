@@ -34,7 +34,6 @@ import { CurrentUser } from "#/providers/CurrentUser";
 const documentFragment = graphql`
   fragment DocumentActionsDropdown_documentFragment on Document {
     id
-    title
     status
     canUpdate: permission(action: "core:document:update")
     canArchive: permission(action: "core:document:archive")
@@ -45,6 +44,7 @@ const documentFragment = graphql`
       edges {
         node {
           id
+          title
           status
         }
       }
@@ -120,6 +120,7 @@ const unarchiveDocumentMutation = graphql`
 const versionFragment = graphql`
   fragment DocumentActionsDropdown_versionFragment on DocumentVersion {
     id
+    title
     major
     minor
     status
@@ -226,7 +227,7 @@ export function DocumentActionsDropdown(props: {
       {
         message: sprintf(
           __("This will archive the document \"%s\". It will no longer be editable."),
-          document.title,
+          lastVersion.title,
         ),
         variant: "danger",
         label: __("Archive"),
@@ -272,7 +273,7 @@ export function DocumentActionsDropdown(props: {
           __(
             "This will permanently delete the document \"%s\". This action cannot be undone.",
           ),
-          document.title,
+          lastVersion.title,
         ),
       },
     );
@@ -306,7 +307,7 @@ export function DocumentActionsDropdown(props: {
             "This will permanently delete the draft version %s of \"%s\". This action cannot be undone.",
           ),
           `${version.major}.${version.minor}`,
-          document.title,
+          lastVersion.title,
         ),
       },
     );
@@ -340,7 +341,7 @@ export function DocumentActionsDropdown(props: {
         if (data.exportDocumentVersionPDF) {
           const link = window.document.createElement("a");
           link.href = data.exportDocumentVersionPDF.data;
-          link.download = `${document.title}-v${version.major}.${version.minor}.pdf`;
+          link.download = `${version.title}-v${version.major}.${version.minor}.pdf`;
           window.document.body.appendChild(link);
           link.click();
           window.document.body.removeChild(link);

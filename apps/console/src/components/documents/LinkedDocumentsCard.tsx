@@ -43,11 +43,11 @@ import { LinkedDocumentDialog } from "./LinkedDocumentsDialog";
 const linkedDocumentFragment = graphql`
   fragment LinkedDocumentsCardFragment on Document {
     id
-    title
     versions(first: 1) {
       edges {
         node {
           id
+          title
           documentType
           status
         }
@@ -217,7 +217,7 @@ function DocumentRow(props: {
             height={36}
             className="border-4 border-highlight rounded box-content"
           />
-          {document.title}
+          {document.versions.edges[0].node.title}
         </div>
       </Td>
       <Td>

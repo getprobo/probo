@@ -55,7 +55,6 @@ func TestEmployeeDocument_NodeAccess(t *testing.T) {
 				node(id: $id) {
 					... on Document {
 						id
-						title
 					}
 				}
 			}
@@ -71,7 +70,6 @@ func TestEmployeeDocument_NodeAccess(t *testing.T) {
 				node(id: $id) {
 					... on Document {
 						id
-						title
 					}
 				}
 			}

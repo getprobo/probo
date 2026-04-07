@@ -5243,7 +5243,6 @@ components:
       required:
         - id
         - organization_id
-        - title
         - trust_center_visibility
         - status
         - created_at
@@ -5255,9 +5254,6 @@ components:
         organization_id:
           $ref: "#/components/schemas/GID"
           description: Organization ID
-        title:
-          type: string
-          description: Document title
         current_published_major:
           type:
             - integer
@@ -5522,9 +5518,6 @@ components:
         id:
           $ref: "#/components/schemas/GID"
           description: Document ID
-        title:
-          type: string
-          description: Document title
         trust_center_visibility:
           $ref: "#/components/schemas/TrustCenterVisibility"
           description: Trust center visibility
@@ -5655,6 +5648,9 @@ components:
         document_version_id:
           $ref: "#/components/schemas/GID"
           description: Document version ID
+        title:
+          type: string
+          description: Document version title
         content:
           type: string
           description: Document content in markdown format

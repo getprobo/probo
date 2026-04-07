@@ -45,7 +45,7 @@ func TestDocument_Create(t *testing.T) {
 				"documentType":   "POLICY",
 				"classification": "INTERNAL",
 			},
-			assertField: "title",
+			assertField: "versionTitle",
 			assertValue: "Security Policy",
 		},
 		{
@@ -102,12 +102,12 @@ func TestDocument_Create(t *testing.T) {
 						documentEdge {
 							node {
 								id
-								title
 							}
 						}
 						documentVersionEdge {
 							node {
 								id
+								title
 								documentType
 							}
 						}
@@ -124,13 +124,13 @@ func TestDocument_Create(t *testing.T) {
 				CreateDocument struct {
 					DocumentEdge struct {
 						Node struct {
-							ID    string `json:"id"`
-							Title string `json:"title"`
+							ID string `json:"id"`
 						} `json:"node"`
 					} `json:"documentEdge"`
 					DocumentVersionEdge struct {
 						Node struct {
 							ID           string `json:"id"`
+							Title        string `json:"title"`
 							DocumentType string `json:"documentType"`
 						} `json:"node"`
 					} `json:"documentVersionEdge"`
@@ -146,8 +146,8 @@ func TestDocument_Create(t *testing.T) {
 			versionNode := result.CreateDocument.DocumentVersionEdge.Node
 
 			switch tt.assertField {
-			case "title":
-				assert.Equal(t, tt.assertValue, node.Title)
+			case "versionTitle":
+				assert.Equal(t, tt.assertValue, versionNode.Title)
 			case "documentType":
 				assert.Equal(t, tt.assertValue, versionNode.DocumentType)
 			}
@@ -290,18 +290,19 @@ func TestDocument_Update(t *testing.T) {
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
 	t.Run(
-		"update title",
+		"update title via document version",
 		func(t *testing.T) {
 			t.Parallel()
 
-			documentID := factory.NewDocument(owner).
-				WithTitle("Document to Update").
-				Create()
+			doc := factory.NewDocument(owner).
+				WithTitle("Document to Update")
+			doc.Create()
+			versionID := doc.VersionID()
 
 			query := `
-				mutation UpdateDocument($input: UpdateDocumentInput!) {
-					updateDocument(input: $input) {
-						document {
+				mutation UpdateDocumentVersion($input: UpdateDocumentVersionInput!) {
+					updateDocumentVersion(input: $input) {
+						documentVersion {
 							id
 							title
 						}
@@ -310,31 +311,33 @@ func TestDocument_Update(t *testing.T) {
 			`
 
 			var result struct {
-				UpdateDocument struct {
-					Document struct {
+				UpdateDocumentVersion struct {
+					DocumentVersion struct {
 						ID    string `json:"id"`
 						Title string `json:"title"`
-					} `json:"document"`
-				} `json:"updateDocument"`
+					} `json:"documentVersion"`
+				} `json:"updateDocumentVersion"`
 			}
 
 			err := owner.Execute(query, map[string]any{
 				"input": map[string]any{
-					"id":    documentID,
-					"title": "Updated Document Title",
+					"documentVersionId": versionID,
+					"title":             "Updated Document Title",
 				},
 			}, &result)
 			require.NoError(t, err)
-			assert.Equal(t, "Updated Document Title", result.UpdateDocument.Document.Title)
+			assert.Equal(t, "Updated Document Title", result.UpdateDocumentVersion.DocumentVersion.Title)
 		},
 	)
 }
 
-func TestDocument_Update_Validation(t *testing.T) {
+func TestDocumentVersion_Update_TitleValidation(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
-	baseDocumentID := factory.NewDocument(owner).WithTitle("Validation Test Document").Create()
+	doc := factory.NewDocument(owner).WithTitle("Validation Test Document")
+	doc.Create()
+	baseVersionID := doc.VersionID()
 
 	tests := []struct {
 		name              string
@@ -343,50 +346,42 @@ func TestDocument_Update_Validation(t *testing.T) {
 		wantErrorContains string
 	}{
 		{
-			name:  "invalid ID format",
-			setup: func() string { return "invalid-id-format" },
-			input: func(id string) map[string]any {
-				return map[string]any{"id": id, "title": "Test"}
-			},
-			wantErrorContains: "base64",
-		},
-		{
 			name:  "title with HTML tags",
-			setup: func() string { return baseDocumentID },
+			setup: func() string { return baseVersionID },
 			input: func(id string) map[string]any {
-				return map[string]any{"id": id, "title": "<script>alert('xss')</script>"}
+				return map[string]any{"documentVersionId": id, "title": "<script>alert('xss')</script>"}
 			},
 			wantErrorContains: "HTML",
 		},
 		{
 			name:  "title with newline",
-			setup: func() string { return baseDocumentID },
+			setup: func() string { return baseVersionID },
 			input: func(id string) map[string]any {
-				return map[string]any{"id": id, "title": "Test\nDocument"}
+				return map[string]any{"documentVersionId": id, "title": "Test\nDocument"}
 			},
 			wantErrorContains: "newline",
 		},
 		{
 			name:  "title with carriage return",
-			setup: func() string { return baseDocumentID },
+			setup: func() string { return baseVersionID },
 			input: func(id string) map[string]any {
-				return map[string]any{"id": id, "title": "Test\rDocument"}
+				return map[string]any{"documentVersionId": id, "title": "Test\rDocument"}
 			},
 			wantErrorContains: "carriage return",
 		},
 		{
 			name:  "title with null byte",
-			setup: func() string { return baseDocumentID },
+			setup: func() string { return baseVersionID },
 			input: func(id string) map[string]any {
-				return map[string]any{"id": id, "title": "Test\x00Document"}
+				return map[string]any{"documentVersionId": id, "title": "Test\x00Document"}
 			},
 			wantErrorContains: "control character",
 		},
 		{
 			name:  "title with zero-width space",
-			setup: func() string { return baseDocumentID },
+			setup: func() string { return baseVersionID },
 			input: func(id string) map[string]any {
-				return map[string]any{"id": id, "title": "Test\u200BDocument"}
+				return map[string]any{"documentVersionId": id, "title": "Test\u200BDocument"}
 			},
 			wantErrorContains: "zero-width",
 		},
@@ -394,19 +389,19 @@ func TestDocument_Update_Validation(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			documentID := tt.setup()
+			versionID := tt.setup()
 
 			query := `
-				mutation UpdateDocument($input: UpdateDocumentInput!) {
-					updateDocument(input: $input) {
-						document {
+				mutation UpdateDocumentVersion($input: UpdateDocumentVersionInput!) {
+					updateDocumentVersion(input: $input) {
+						documentVersion {
 							id
 						}
 					}
 				}
 			`
 
-			_, err := owner.Do(query, map[string]any{"input": tt.input(documentID)})
+			_, err := owner.Do(query, map[string]any{"input": tt.input(versionID)})
 			require.Error(t, err)
 			assert.Contains(t, err.Error(), tt.wantErrorContains)
 		})
@@ -494,7 +489,6 @@ func TestDocument_List(t *testing.T) {
 						edges {
 							node {
 								id
-								title
 							}
 						}
 						totalCount
@@ -509,8 +503,7 @@ func TestDocument_List(t *testing.T) {
 			Documents struct {
 				Edges []struct {
 					Node struct {
-						ID    string `json:"id"`
-						Title string `json:"title"`
+						ID string `json:"id"`
 					} `json:"node"`
 				} `json:"edges"`
 				TotalCount int `json:"totalCount"`
@@ -535,7 +528,6 @@ func TestDocument_Query(t *testing.T) {
 				node(id: $id) {
 					... on Document {
 						id
-						title
 					}
 				}
 			}
@@ -648,8 +640,8 @@ func TestDocument_Timestamps(t *testing.T) {
 
 		err = owner.Execute(updateQuery, map[string]any{
 			"input": map[string]any{
-				"id":    documentID,
-				"title": "Updated Timestamp Test",
+				"id":                    documentID,
+				"trustCenterVisibility": "PRIVATE",
 			},
 		}, &updateResult)
 		require.NoError(t, err)
@@ -781,8 +773,8 @@ func TestDocument_RBAC(t *testing.T) {
 				}
 			`, map[string]any{
 				"input": map[string]any{
-					"id":    documentID,
-					"title": "Updated by Owner",
+					"id":                    documentID,
+					"trustCenterVisibility": "PRIVATE",
 				},
 			})
 			require.NoError(t, err, "owner should be able to update document")
@@ -802,8 +794,8 @@ func TestDocument_RBAC(t *testing.T) {
 				}
 			`, map[string]any{
 				"input": map[string]any{
-					"id":    documentID,
-					"title": "Updated by Admin",
+					"id":                    documentID,
+					"trustCenterVisibility": "PRIVATE",
 				},
 			})
 			require.NoError(t, err, "admin should be able to update document")
@@ -823,8 +815,8 @@ func TestDocument_RBAC(t *testing.T) {
 				}
 			`, map[string]any{
 				"input": map[string]any{
-					"id":    documentID,
-					"title": "Updated by Viewer",
+					"id":                    documentID,
+					"trustCenterVisibility": "PRIVATE",
 				},
 			})
 			testutil.RequireForbiddenError(t, err, "viewer should not be able to update document")
@@ -894,15 +886,14 @@ func TestDocument_RBAC(t *testing.T) {
 
 			var result struct {
 				Node *struct {
-					ID    string `json:"id"`
-					Title string `json:"title"`
+					ID string `json:"id"`
 				} `json:"node"`
 			}
 
 			err := owner.Execute(`
 				query($id: ID!) {
 					node(id: $id) {
-						... on Document { id title }
+						... on Document { id }
 					}
 				}
 			`, map[string]any{"id": documentID}, &result)
@@ -918,15 +909,14 @@ func TestDocument_RBAC(t *testing.T) {
 
 			var result struct {
 				Node *struct {
-					ID    string `json:"id"`
-					Title string `json:"title"`
+					ID string `json:"id"`
 				} `json:"node"`
 			}
 
 			err := admin.Execute(`
 				query($id: ID!) {
 					node(id: $id) {
-						... on Document { id title }
+						... on Document { id }
 					}
 				}
 			`, map[string]any{"id": documentID}, &result)
@@ -942,15 +932,14 @@ func TestDocument_RBAC(t *testing.T) {
 
 			var result struct {
 				Node *struct {
-					ID    string `json:"id"`
-					Title string `json:"title"`
+					ID string `json:"id"`
 				} `json:"node"`
 			}
 
 			err := viewer.Execute(`
 				query($id: ID!) {
 					node(id: $id) {
-						... on Document { id title }
+						... on Document { id }
 					}
 				}
 			`, map[string]any{"id": documentID}, &result)
@@ -990,21 +979,23 @@ func TestDocument_MaxLength_Validation(t *testing.T) {
 		assert.Contains(t, err.Error(), "title")
 	})
 
-	t.Run("update with long title", func(t *testing.T) {
-		documentID := factory.NewDocument(owner).WithTitle("Max Length Test").Create()
+	t.Run("update version", func(t *testing.T) {
+		doc := factory.NewDocument(owner).WithTitle("Max Length Test")
+		doc.Create()
+		versionID := doc.VersionID()
 
 		query := `
-			mutation UpdateDocument($input: UpdateDocumentInput!) {
-				updateDocument(input: $input) {
-					document { id }
+			mutation UpdateDocumentVersion($input: UpdateDocumentVersionInput!) {
+				updateDocumentVersion(input: $input) {
+					documentVersion { id }
 				}
 			}
 		`
 
 		_, err := owner.Do(query, map[string]any{
 			"input": map[string]any{
-				"id":    documentID,
-				"title": longTitle,
+				"documentVersionId": versionID,
+				"title":             longTitle,
 			},
 		})
 		require.Error(t, err)
@@ -1080,7 +1071,7 @@ func TestDocument_Pagination(t *testing.T) {
 					... on Organization {
 						documents(first: 2) {
 							edges {
-								node { id title }
+								node { id }
 								cursor
 							}
 							pageInfo {
@@ -1101,8 +1092,7 @@ func TestDocument_Pagination(t *testing.T) {
 				Documents struct {
 					Edges []struct {
 						Node struct {
-							ID    string `json:"id"`
-							Title string `json:"title"`
+							ID string `json:"id"`
 						} `json:"node"`
 						Cursor string `json:"cursor"`
 					} `json:"edges"`
@@ -1131,7 +1121,7 @@ func TestDocument_Pagination(t *testing.T) {
 					... on Organization {
 						documents(first: 2, after: $after) {
 							edges {
-								node { id title }
+								node { id }
 							}
 							pageInfo {
 								hasNextPage
@@ -1148,8 +1138,7 @@ func TestDocument_Pagination(t *testing.T) {
 				Documents struct {
 					Edges []struct {
 						Node struct {
-							ID    string `json:"id"`
-							Title string `json:"title"`
+							ID string `json:"id"`
 						} `json:"node"`
 					} `json:"edges"`
 					PageInfo testutil.PageInfo `json:"pageInfo"`
@@ -1173,7 +1162,7 @@ func TestDocument_Pagination(t *testing.T) {
 					... on Organization {
 						documents(last: 2) {
 							edges {
-								node { id title }
+								node { id }
 							}
 							pageInfo {
 								hasNextPage
@@ -1190,8 +1179,7 @@ func TestDocument_Pagination(t *testing.T) {
 				Documents struct {
 					Edges []struct {
 						Node struct {
-							ID    string `json:"id"`
-							Title string `json:"title"`
+							ID string `json:"id"`
 						} `json:"node"`
 					} `json:"edges"`
 					PageInfo testutil.PageInfo `json:"pageInfo"`
@@ -1222,7 +1210,6 @@ func TestDocument_TenantIsolation(t *testing.T) {
 				node(id: $id) {
 					... on Document {
 						id
-						title
 					}
 				}
 			}
@@ -1230,8 +1217,7 @@ func TestDocument_TenantIsolation(t *testing.T) {
 
 		var result struct {
 			Node *struct {
-				ID    string `json:"id"`
-				Title string `json:"title"`
+				ID string `json:"id"`
 			} `json:"node"`
 		}
 
@@ -1250,8 +1236,8 @@ func TestDocument_TenantIsolation(t *testing.T) {
 
 		_, err := org2Owner.Do(query, map[string]any{
 			"input": map[string]any{
-				"id":    documentID,
-				"title": "Hijacked Document",
+				"id":                    documentID,
+				"trustCenterVisibility": "PRIVATE",
 			},
 		})
 		require.Error(t, err, "Should not be able to update document from another org")
@@ -1283,7 +1269,6 @@ func TestDocument_TenantIsolation(t *testing.T) {
 							edges {
 								node {
 									id
-									title
 								}
 							}
 						}
@@ -1297,8 +1282,7 @@ func TestDocument_TenantIsolation(t *testing.T) {
 				Documents struct {
 					Edges []struct {
 						Node struct {
-							ID    string `json:"id"`
-							Title string `json:"title"`
+							ID string `json:"id"`
 						} `json:"node"`
 					} `json:"edges"`
 				} `json:"documents"`
