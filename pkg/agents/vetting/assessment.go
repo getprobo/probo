@@ -17,6 +17,7 @@ package vetting
 import (
 	"context"
 	_ "embed"
+	"encoding/json"
 	"fmt"
 	"net/url"
 	"time"
@@ -27,14 +28,36 @@ import (
 	"go.probo.inc/probo/pkg/llm"
 )
 
-// DefaultMaxTokens is the fallback max-tokens budget used when the
-// vendor-assessor agent config does not specify a value. Sized to leave
-// headroom above the orchestrator's thinking budget on Anthropic models.
-const DefaultMaxTokens = 16384
+const (
+	// DefaultMaxTokens is the fallback max-tokens budget used when the
+	// vendor-assessor agent config does not specify a value. Sized to
+	// leave headroom above the orchestrator's thinking budget on
+	// Anthropic models.
+	DefaultMaxTokens = 16384
 
-// AssessmentTimeout is the hard upper bound on a single assessment run.
-// This is also the timeout the CLI client should use.
-const AssessmentTimeout = 20 * time.Minute
+	// AssessmentTimeout is the hard upper bound on a single assessment
+	// run. This is also the timeout the CLI client should use.
+	AssessmentTimeout = 20 * time.Minute
+)
+
+// vendorCategoryEnum is the canonical list of allowed values for
+// VendorInfo.Category. It is duplicated into the jsonschema struct tag
+// because Go struct tags must be compile-time string literals.
+var vendorCategoryEnum = []string{
+	"ANALYTICS", "ACCOUNTING", "CLOUD_MONITORING", "CLOUD_PROVIDER",
+	"COLLABORATION", "CONSULTING", "CUSTOMER_SUPPORT",
+	"DATA_STORAGE_AND_PROCESSING", "DOCUMENT_MANAGEMENT",
+	"EMPLOYEE_MANAGEMENT", "ENGINEERING", "FINANCE", "IDENTITY_PROVIDER",
+	"IT", "LEGAL", "MARKETING", "OFFICE_OPERATIONS", "OTHER",
+	"PASSWORD_MANAGEMENT", "PRODUCT_AND_DESIGN", "PROFESSIONAL_SERVICES",
+	"RECRUITING", "SALES", "SECURITY", "STAFFING", "VERSION_CONTROL",
+}
+
+// vendorTypeEnum is the canonical list of allowed values for
+// VendorInfo.VendorType.
+var vendorTypeEnum = []string{
+	"SAAS", "INFRASTRUCTURE", "PROFESSIONAL_SERVICES", "STAFFING", "OTHER",
+}
 
 var (
 	//go:embed prompts/extraction.txt
@@ -70,8 +93,8 @@ type (
 	VendorInfo struct {
 		Name                          string         `json:"name" jsonschema:"Vendor display name as shown on the website"`
 		Description                   string         `json:"description" jsonschema:"One-sentence description of what the vendor does"`
-		Category                      string         `json:"category" jsonschema:"Vendor category enum: ANALYTICS, ACCOUNTING, CLOUD_MONITORING, CLOUD_PROVIDER, COLLABORATION, CONSULTING, CUSTOMER_SUPPORT, DATA_STORAGE_AND_PROCESSING, DOCUMENT_MANAGEMENT, EMPLOYEE_MANAGEMENT, ENGINEERING, FINANCE, IDENTITY_PROVIDER, IT, LEGAL, MARKETING, OFFICE_OPERATIONS, OTHER, PASSWORD_MANAGEMENT, PRODUCT_AND_DESIGN, PROFESSIONAL_SERVICES, RECRUITING, SALES, SECURITY, STAFFING, VERSION_CONTROL"`
-		VendorType                    string         `json:"vendor_type" jsonschema:"Vendor type: SAAS, INFRASTRUCTURE, PROFESSIONAL_SERVICES, STAFFING, OTHER"`
+		Category                      string         `json:"category" jsonschema:"Vendor category; one of vendorCategoryEnum"`
+		VendorType                    string         `json:"vendor_type" jsonschema:"Vendor type; one of vendorTypeEnum"`
 		HeadquarterAddress            string         `json:"headquarter_address" jsonschema:"Vendor headquarters address (city, country) if mentioned"`
 		LegalName                     string         `json:"legal_name" jsonschema:"Legal entity name if different from display name (e.g. 'Datadog, Inc.')"`
 		PrivacyPolicyURL              string         `json:"privacy_policy_url" jsonschema:"URL to the vendor's privacy policy page"`
@@ -220,6 +243,11 @@ func (a *Assessor) Assess(ctx context.Context, websiteURL string, procedure stri
 }
 
 func (a *Assessor) extractVendorInfo(ctx context.Context, document string) (*VendorInfo, error) {
+	outputType, err := vendorInfoOutputType()
+	if err != nil {
+		return nil, fmt.Errorf("cannot build vendor info output type: %w", err)
+	}
+
 	extractor := agent.New(
 		"vendor_info_extractor",
 		a.cfg.Client,
@@ -227,11 +255,11 @@ func (a *Assessor) extractVendorInfo(ctx context.Context, document string) (*Ven
 		agent.WithModel(a.cfg.Model),
 		agent.WithMaxTokens(a.cfg.MaxTokens),
 		agent.WithLogger(a.cfg.Logger),
+		agent.WithOutputType(outputType),
 	)
 
-	typedResult, err := agent.RunTyped[VendorInfo](
+	result, err := extractor.Run(
 		ctx,
-		extractor,
 		[]llm.Message{
 			{
 				Role:  llm.RoleUser,
@@ -243,5 +271,52 @@ func (a *Assessor) extractVendorInfo(ctx context.Context, document string) (*Ven
 		return nil, fmt.Errorf("cannot extract vendor info: %w", err)
 	}
 
-	return &typedResult.Output, nil
+	var info VendorInfo
+	if err := json.Unmarshal([]byte(result.FinalMessage().Text()), &info); err != nil {
+		return nil, fmt.Errorf("cannot parse vendor info output: %w", err)
+	}
+
+	return &info, nil
+}
+
+// vendorInfoOutputType builds the VendorInfo structured output type and
+// decorates its JSON Schema with explicit enum constraints on fields
+// whose allowed values live in package-level slices. jsonschema-go only
+// reads struct tags as free-form descriptions, so the enum list cannot
+// be encoded in the tag itself.
+func vendorInfoOutputType() (*agent.OutputType, error) {
+	outputType, err := agent.NewOutputType[VendorInfo]("vendor_info")
+	if err != nil {
+		return nil, fmt.Errorf("cannot create vendor info output type: %w", err)
+	}
+
+	var schema map[string]any
+	if err := json.Unmarshal(outputType.Schema, &schema); err != nil {
+		return nil, fmt.Errorf("cannot unmarshal vendor info schema: %w", err)
+	}
+
+	properties, ok := schema["properties"].(map[string]any)
+	if !ok {
+		return nil, fmt.Errorf("vendor info schema has no properties")
+	}
+
+	enums := map[string][]string{
+		"category":    vendorCategoryEnum,
+		"vendor_type": vendorTypeEnum,
+	}
+	for field, values := range enums {
+		prop, ok := properties[field].(map[string]any)
+		if !ok {
+			return nil, fmt.Errorf("vendor info schema has no %q property", field)
+		}
+		prop["enum"] = values
+	}
+
+	decorated, err := json.Marshal(schema)
+	if err != nil {
+		return nil, fmt.Errorf("cannot marshal decorated vendor info schema: %w", err)
+	}
+	outputType.Schema = decorated
+
+	return outputType, nil
 }
