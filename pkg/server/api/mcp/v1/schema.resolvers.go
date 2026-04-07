@@ -1850,6 +1850,11 @@ func (r *Resolver) AddTaskTool(ctx context.Context, req *mcp.CallToolRequest, in
 
 	svc := r.ProboService(ctx, input.OrganizationID)
 
+	priority := coredata.TaskPriorityMedium
+	if input.Priority != nil {
+		priority = *input.Priority
+	}
+
 	task, err := svc.Tasks.Create(
 		ctx,
 		probo.CreateTaskRequest{
@@ -1857,6 +1862,7 @@ func (r *Resolver) AddTaskTool(ctx context.Context, req *mcp.CallToolRequest, in
 			MeasureID:      input.MeasureID,
 			Name:           input.Name,
 			Description:    input.Description,
+			Priority:       priority,
 			TimeEstimate:   input.TimeEstimate,
 			Deadline:       input.Deadline,
 			AssignedToID:   input.AssignedToID,

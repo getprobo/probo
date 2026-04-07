@@ -4843,6 +4843,10 @@ components:
             - type: "null"
               description: Not assigned
           description: Assigned to person ID
+        priority:
+          $ref: "#/components/schemas/TaskPriority"
+          description: Task priority level (defaults to MEDIUM if not specified)
+          default: MEDIUM
 
     AddTaskOutput:
       type: object
