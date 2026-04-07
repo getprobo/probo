@@ -351,67 +351,28 @@ func reportProgress(
 	reporter(ctx, event)
 }
 
-// progressHooks translates orchestrator-level tool events into progress events.
+// progressHooks translates tool events into progress events. When
+// parentStep is non-empty, emitted events are scoped under a parent
+// step (sub-agent mode); otherwise they are top-level orchestrator
+// events.
 type progressHooks struct {
 	agent.NoOpHooks
-	reporter agent.ProgressReporter
+	reporter   agent.ProgressReporter
+	parentStep string
 }
 
 func newProgressHooks(reporter agent.ProgressReporter) *progressHooks {
 	return &progressHooks{reporter: reporter}
 }
 
-func (h *progressHooks) OnToolStart(ctx context.Context, _ *agent.Agent, tool agent.Tool, _ string) {
-	msg := randomMessage(tool.Name())
-	if msg == "" {
-		return
-	}
-
-	h.reporter(
-		ctx,
-		agent.ProgressEvent{
-			Type:    agent.ProgressEventStepStarted,
-			Step:    tool.Name(),
-			Message: msg,
-		},
-	)
-}
-
-func (h *progressHooks) OnToolEnd(ctx context.Context, _ *agent.Agent, tool agent.Tool, _ agent.ToolResult, err error) {
-	if _, ok := toolMessages[tool.Name()]; !ok {
-		return
-	}
-
-	eventType := agent.ProgressEventStepCompleted
-	if err != nil {
-		eventType = agent.ProgressEventStepFailed
-	}
-
-	h.reporter(
-		ctx,
-		agent.ProgressEvent{
-			Type: eventType,
-			Step: tool.Name(),
-		},
-	)
-}
-
-// subProgressHooks translates sub-agent tool events into progress events
-// scoped under a parent step.
-type subProgressHooks struct {
-	agent.NoOpHooks
-	reporter   agent.ProgressReporter
-	parentStep string
-}
-
-func newSubProgressHooks(reporter agent.ProgressReporter, parentStep string) *subProgressHooks {
-	return &subProgressHooks{
+func newSubProgressHooks(reporter agent.ProgressReporter, parentStep string) *progressHooks {
+	return &progressHooks{
 		reporter:   reporter,
 		parentStep: parentStep,
 	}
 }
 
-func (h *subProgressHooks) OnToolStart(ctx context.Context, _ *agent.Agent, tool agent.Tool, _ string) {
+func (h *progressHooks) OnToolStart(ctx context.Context, _ *agent.Agent, tool agent.Tool, _ string) {
 	msg := randomMessage(tool.Name())
 	if msg == "" {
 		return
@@ -428,7 +389,7 @@ func (h *subProgressHooks) OnToolStart(ctx context.Context, _ *agent.Agent, tool
 	)
 }
 
-func (h *subProgressHooks) OnToolEnd(ctx context.Context, _ *agent.Agent, tool agent.Tool, _ agent.ToolResult, err error) {
+func (h *progressHooks) OnToolEnd(ctx context.Context, _ *agent.Agent, tool agent.Tool, _ agent.ToolResult, err error) {
 	if _, ok := toolMessages[tool.Name()]; !ok {
 		return
 	}
@@ -448,7 +409,4 @@ func (h *subProgressHooks) OnToolEnd(ctx context.Context, _ *agent.Agent, tool a
 	)
 }
 
-var (
-	_ agent.RunHooks = (*progressHooks)(nil)
-	_ agent.RunHooks = (*subProgressHooks)(nil)
-)
+var _ agent.RunHooks = (*progressHooks)(nil)
