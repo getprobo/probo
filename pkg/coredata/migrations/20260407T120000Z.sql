@@ -16,3 +16,14 @@
 ALTER TABLE documents ALTER COLUMN title DROP NOT NULL;
 
 ALTER TABLE documents DROP COLUMN description;
+
+-- Move search_vector from documents to document_versions.
+DROP INDEX documents_search_idx;
+ALTER TABLE documents DROP COLUMN search_vector;
+
+ALTER TABLE document_versions ADD COLUMN search_vector tsvector
+GENERATED ALWAYS AS (
+    to_tsvector('simple', COALESCE(title, ''))
+) STORED;
+
+CREATE INDEX document_versions_search_idx ON document_versions USING gin(search_vector);

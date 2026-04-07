@@ -131,7 +131,13 @@ func (f *DocumentFilter) SQLFragment() string {
 (
 	CASE
 		WHEN @query::text IS NOT NULL AND @query::text != '' THEN
-			search_vector @@ (
+			(
+				SELECT dv.search_vector
+				FROM document_versions dv
+				WHERE dv.document_id = documents.id
+				ORDER BY dv.major DESC, dv.minor DESC
+				LIMIT 1
+			) @@ (
 				SELECT to_tsquery('simple', string_agg(lexeme || ':*', ' & '))
 				FROM unnest(regexp_split_to_array(trim(@query::text), '\s+')) AS lexeme
 			)
