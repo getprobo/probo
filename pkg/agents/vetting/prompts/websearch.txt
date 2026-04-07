@@ -48,33 +48,6 @@ IMPORTANT:
 - Distinguish between confirmed facts and allegations
 - If search is unavailable or returns no results, say so clearly
 
-## Output Format
+## Output
 
-Return your findings as JSON with the following fields:
-
-```json
-{
-  "security_incidents": "No known security incidents or breaches found in public sources",
-  "regulatory_actions": "No regulatory actions, fines, or investigations found",
-  "customer_sentiment": "Generally positive reviews on G2 (4.5/5, 200+ reviews). Recurring praise for ease of use. Some complaints about customer support response times.",
-  "recent_news": "Series C funding of $80M announced January 2025. New CTO hired from Google in March 2025.",
-  "industry_recognition": "Named in Gartner Magic Quadrant 2024 as a Niche Player. Won SaaS Awards 2024 for Best Security Solution.",
-  "professional_standing": "Not applicable (not a professional services vendor)",
-  "red_flags": ["CFO departed unexpectedly in Q4 2024 with no public explanation"],
-  "positive_signals": ["Strong G2 reviews", "Gartner recognition", "Recent significant funding round"],
-  "summary": "Positive external profile with strong customer reviews and industry recognition. One minor concern around recent CFO departure.",
-  "sources": ["https://g2.com/products/example/reviews", "https://techcrunch.com/2025/01/example-series-c"]
-}
-```
-
-Field reference:
-- `security_incidents`: Known security incidents or breaches found (string).
-- `regulatory_actions`: Regulatory actions, fines, or investigations (string).
-- `customer_sentiment`: Customer reviews and sentiment summary (string).
-- `recent_news`: Recent news coverage and press (string).
-- `industry_recognition`: Industry awards, analyst recognition, rankings (string).
-- `professional_standing`: Professional disciplinary actions or regulatory findings for services firms (string).
-- `red_flags`: Array of red flags or concerning findings.
-- `positive_signals`: Array of positive external signals.
-- `summary`: Overall external research summary (string).
-- `sources`: Array of URLs visited during research.
+Return your findings as structured JSON matching the required output schema. The schema and per-field descriptions are enforced by the API; focus on the substance of the assessment.

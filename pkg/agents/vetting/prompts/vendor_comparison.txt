@@ -39,67 +39,9 @@ Compare the assessed vendor against the alternatives on:
 - **Market position**: Company size, customer base, funding
 - **Transparency**: How openly they share security/compliance info
 
-## Output Format
+## Output
 
-Return a JSON object with the following structure:
-
-```json
-{
-  "vendor_category": "Compliance Automation",
-  "assessed_vendor": "Example Corp",
-  "alternatives": [
-    {
-      "name": "ComplianceTool Inc",
-      "website": "https://compliancetool.com",
-      "certifications": ["SOC 2 Type II", "ISO 27001", "ISO 27701"],
-      "trust_center": true,
-      "privacy_policy": true,
-      "company_size": "Large (500+ employees, Series D funded)",
-      "security_score": "Strong"
-    },
-    {
-      "name": "SecureVendor Ltd",
-      "website": "https://securevendor.com",
-      "certifications": ["SOC 2 Type II"],
-      "trust_center": false,
-      "privacy_policy": true,
-      "company_size": "Mid-market (100-200 employees)",
-      "security_score": "Adequate"
-    }
-  ],
-  "comparison_summary": {
-    "security_maturity": "The assessed vendor has comparable certifications to most alternatives but lacks ISO 27701",
-    "compliance_posture": "Above average — has more publicly visible compliance documentation than 2 of 3 alternatives",
-    "market_position": "Mid-tier — smaller than the category leader but well-established",
-    "transparency": "Good — trust center and security page are comprehensive compared to alternatives"
-  },
-  "vendor_strengths": ["Comprehensive trust center", "Transparent security practices", "Bug bounty program"],
-  "vendor_weaknesses": ["Smaller company size than leading alternative", "No ISO 27701 certification"],
-  "overall_position": "Above_Average",
-  "notes": "Category leader ComplianceTool Inc sets a high bar. Assessed vendor compares favorably to other mid-market alternatives."
-}
-```
-
-Field reference:
-- `vendor_category`: The vendor's product category (string).
-- `assessed_vendor`: The vendor being assessed (string).
-- `alternatives`: Array of alternative vendor objects, each with:
-  - `name`: Alternative vendor name (string).
-  - `website`: Alternative vendor website URL (string).
-  - `certifications`: Array of visible certifications (strings).
-  - `trust_center`: Whether a trust center page was found (boolean).
-  - `privacy_policy`: Whether a privacy policy was found (boolean).
-  - `company_size`: Estimated company size (string).
-  - `security_score`: Quick security impression: Strong, Adequate, or Weak (string).
-- `comparison_summary`: Object with:
-  - `security_maturity`: Relative security maturity vs alternatives (string).
-  - `compliance_posture`: Relative compliance posture vs alternatives (string).
-  - `market_position`: Relative market position vs alternatives (string).
-  - `transparency`: Relative transparency vs alternatives (string).
-- `vendor_strengths`: Array of the assessed vendor's strengths vs alternatives.
-- `vendor_weaknesses`: Array of the assessed vendor's weaknesses vs alternatives.
-- `overall_position`: Vendor position: Above_Average, Average, or Below_Average (string).
-- `notes`: Additional comparison notes (string).
+Return your findings as structured JSON matching the required output schema. The schema and per-field descriptions are enforced by the API; focus on the substance of the assessment.
 
 ## Important
 

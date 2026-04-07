@@ -41,34 +41,6 @@ Rules:
 - If purpose is not provided, try to infer it from context (e.g. section headings) or leave empty
 - Include all sub-processors found, even if the list is long
 
-## Output Format
+## Output
 
-Return a JSON object with the following structure:
-
-```json
-{
-  "subprocessors": [
-    {
-      "name": "Amazon Web Services",
-      "country": "United States",
-      "purpose": "Cloud infrastructure and hosting"
-    },
-    {
-      "name": "Twilio SendGrid",
-      "country": "United States",
-      "purpose": "Email delivery"
-    }
-  ],
-  "total_count": 12,
-  "source": "https://example.com/legal/subprocessors",
-  "is_complete": true,
-  "notes": "List last updated January 2025. All sub-processors are US-based."
-}
-```
-
-Field reference:
-- `subprocessors`: Array of sub-processor objects, each with `name` (string), `country` (string, empty if not stated), and `purpose` (string, empty if not stated).
-- `total_count`: Total number of sub-processors found (integer).
-- `source`: URL where the sub-processor list was found (string).
-- `is_complete`: Whether the full list was extracted — set to false if pagination was incomplete or the page was truncated (boolean).
-- `notes`: Observations about the sub-processor list (string).
+Return your findings as structured JSON matching the required output schema. The schema and per-field descriptions are enforced by the API; focus on the substance of the assessment.

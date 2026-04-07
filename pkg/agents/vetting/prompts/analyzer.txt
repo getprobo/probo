@@ -45,57 +45,6 @@ Strategy:
 Report what you actually find — do not speculate or invent details.
 If a section is missing from the document, explicitly note its absence.
 
-## Output Format
+## Output
 
-Return a JSON object with the following structure:
-
-```json
-{
-  "document_type": "dpa",
-  "document_title": "Data Processing Agreement",
-  "last_updated": "2025-01-15",
-  "data_retention": "Customer data retained for duration of agreement plus 30 days",
-  "data_locations": ["United States", "European Union", "Canada"],
-  "gdpr_indicators": "Lawful basis documented, DPO contact provided, data subject rights section present",
-  "ccpa_indicators": "CCPA-specific section with opt-out rights and do-not-sell provisions",
-  "security_measures": "AES-256 encryption at rest, TLS 1.3 in transit, annual penetration testing",
-  "breach_notification": "72-hour notification to controller, without undue delay to data subjects",
-  "data_deletion": "Data deleted within 30 days of contract termination upon written request",
-  "liability_caps": "Aggregate liability capped at 12 months of fees paid",
-  "indemnification": "Mutual indemnification for data breaches caused by negligence",
-  "termination": "Either party may terminate with 30 days written notice; data returned within 60 days",
-  "governing_law": "State of Delaware, United States",
-  "privacy_clauses": [
-    "Prior written consent required for sub-processor changes",
-    "SCCs incorporated for EU-US transfers"
-  ],
-  "ai_clauses": [
-    "Customer data not used for model training",
-    "Right to opt out of AI-powered features"
-  ],
-  "subprocessor_terms": "Prior written consent required; 30-day notice before sub-processor changes",
-  "summary": "Comprehensive DPA with strong GDPR alignment. Includes SCCs, 72-hour breach notification, and clear data deletion timeline.",
-  "source_url": "https://example.com/legal/dpa"
-}
-```
-
-Field reference:
-- `document_type`: One of: privacy_policy, terms_of_service, dpa, sla, security_policy, acceptable_use, engagement_letter, other.
-- `document_title`: Title of the document as shown on the page (string).
-- `last_updated`: Last updated date if found, empty string otherwise (string).
-- `data_retention`: Data retention policy details (string).
-- `data_locations`: Array of countries or regions where data is processed or stored.
-- `gdpr_indicators`: GDPR compliance indicators found (string).
-- `ccpa_indicators`: CCPA/CPRA compliance indicators found (string).
-- `security_measures`: Security measures described in the document (string).
-- `breach_notification`: Breach notification commitments and timelines (string).
-- `data_deletion`: Data deletion procedures and timelines (string).
-- `liability_caps`: Liability limitations and caps (string).
-- `indemnification`: Indemnification obligations (string).
-- `termination`: Termination provisions and data return (string).
-- `governing_law`: Governing law and jurisdiction (string).
-- `privacy_clauses`: Array of notable privacy contractual clauses found.
-- `ai_clauses`: Array of notable AI-related contractual clauses found.
-- `subprocessor_terms`: Sub-processor management terms (string).
-- `summary`: Key findings summary (string).
-- `source_url`: URL of the analyzed document (string).
+Return your findings as structured JSON matching the required output schema. The schema and per-field descriptions are enforced by the API; focus on the substance of the assessment.

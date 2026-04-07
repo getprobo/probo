@@ -36,40 +36,6 @@ IMPORTANT:
 - Do not visit the same URL more than once
 - If a page redirects, report the final URL
 
-## Output Format
+## Output
 
-Return a JSON object with the following structure. The `discovered_urls` field is an array of objects, each with a `category` and `url`.
-
-```json
-{
-  "vendor_name": "Example Corp",
-  "vendor_domain": "example.com",
-  "discovered_urls": [
-    {"category": "privacy_policy", "url": "https://example.com/privacy"},
-    {"category": "terms_of_service", "url": "https://example.com/terms"},
-    {"category": "security", "url": "https://example.com/security"},
-    {"category": "trust", "url": "https://example.com/trust"},
-    {"category": "compliance", "url": "https://example.com/compliance"},
-    {"category": "dpa", "url": "https://example.com/legal/dpa"},
-    {"category": "subprocessors", "url": "https://example.com/legal/subprocessors"},
-    {"category": "status", "url": "https://status.example.com"},
-    {"category": "sla", "url": "https://example.com/sla"},
-    {"category": "about", "url": "https://example.com/about"},
-    {"category": "team", "url": "https://example.com/team"},
-    {"category": "ai_policy", "url": "https://example.com/responsible-ai"},
-    {"category": "careers", "url": "https://example.com/careers"},
-    {"category": "pricing", "url": "https://example.com/pricing"},
-    {"category": "blog", "url": "https://example.com/blog"}
-  ],
-  "notes": "Trust center requires login for detailed reports. Status page is hosted on a separate subdomain."
-}
-```
-
-Field reference:
-- `vendor_name`: The vendor's display name as found on the website (string).
-- `vendor_domain`: The vendor's primary domain, e.g. "example.com" (string).
-- `discovered_urls`: Array of objects, each with:
-  - `category`: One of: privacy_policy, terms_of_service, dpa, security, trust, compliance, status, subprocessors, sla, about, team, ai_policy, blog, careers, pricing, other.
-  - `url`: The discovered URL (string).
-  Only include entries for pages you actually found.
-- `notes`: Observations about the site structure or crawl limitations (string).
+Return your findings as structured JSON matching the required output schema. The schema and per-field descriptions are enforced by the API; focus on the substance of the assessment.

@@ -51,46 +51,6 @@ IMPORTANT:
 - If the status page shows historical incidents, report factually without editorializing
 - Distinguish between documented plans and demonstrated practice
 
-## Output Format
+## Output
 
-Return a JSON object with the following structure:
-
-```json
-{
-  "ir_plan": "Documented incident response plan with 4 severity levels and dedicated security team",
-  "notification_timeline": "72 hours for GDPR-qualifying breaches, 24 hours for critical incidents",
-  "notification_method": "Email notification to designated security contacts, status page update",
-  "contractual_obligations": "DPA specifies 72-hour notification; ToS commits to status page updates",
-  "status_page_url": "https://status.example.com",
-  "status_page_active": true,
-  "update_frequency": "Updates every 30 minutes during active incidents",
-  "post_mortems": "Public post-mortems published for all major incidents within 5 business days",
-  "remediation_approach": "Root cause analysis followed by preventive measures documented in post-mortem",
-  "recent_incidents": [
-    "2025-02-10: 45-minute API outage due to database failover, resolved with no data loss",
-    "2024-11-03: Degraded performance for 2 hours in EU region due to network provider issue"
-  ],
-  "security_contact": "security@example.com",
-  "bug_bounty": "HackerOne program at https://hackerone.com/example with $500-$10,000 bounties",
-  "rating": "Strong",
-  "summary": "Mature incident response with public status page, regular post-mortems, and 72-hour breach notification commitment.",
-  "sources": ["https://example.com/security", "https://status.example.com", "https://example.com/legal/dpa"]
-}
-```
-
-Field reference:
-- `ir_plan`: Incident response plan documentation status (string).
-- `notification_timeline`: Breach notification timeline, e.g. 72 hours (string).
-- `notification_method`: How customers are notified of incidents (string).
-- `contractual_obligations`: Contractual IR obligations found (string).
-- `status_page_url`: Status page URL if found (string).
-- `status_page_active`: Whether the status page is actively maintained (boolean).
-- `update_frequency`: How frequently status updates are provided during incidents (string).
-- `post_mortems`: Post-mortem publication practices (string).
-- `remediation_approach`: Approach to incident remediation (string).
-- `recent_incidents`: Array of recent incidents found with dates and descriptions.
-- `security_contact`: Security contact email or reporting mechanism (string).
-- `bug_bounty`: Bug bounty or vulnerability disclosure program (string).
-- `rating`: Overall incident response rating: Strong, Adequate, or Weak (string).
-- `summary`: Key findings summary (string).
-- `sources`: Array of URLs visited during assessment.
+Return your findings as structured JSON matching the required output schema. The schema and per-field descriptions are enforced by the API; focus on the substance of the assessment.
