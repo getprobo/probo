@@ -44,22 +44,27 @@ func (e *OAuth2Error) Is(target error) bool {
 	return e.code == t.code
 }
 
-// WithDescription returns a new OAuth2Error with the same error code
-// and the given human-readable description.
-func (e *OAuth2Error) WithDescription(description string) *OAuth2Error {
-	return &OAuth2Error{
-		code:        e.code,
-		description: description,
+type ErrorOption func(*OAuth2Error)
+
+func WithDescription(description string) ErrorOption {
+	return func(e *OAuth2Error) {
+		e.description = description
 	}
 }
 
-// Wrap returns a new OAuth2Error with the same error code and the
-// wrapped error's message as description.
-func (e *OAuth2Error) Wrap(err error) *OAuth2Error {
-	return &OAuth2Error{
-		code:        e.code,
-		description: err.Error(),
+func WithError(err error) ErrorOption {
+	return func(e *OAuth2Error) {
+		e.description = err.Error()
 	}
+}
+
+// NewError creates a new OAuth2Error derived from a sentinel error code.
+func NewError(code *OAuth2Error, opts ...ErrorOption) *OAuth2Error {
+	e := &OAuth2Error{code: code.code}
+	for _, opt := range opts {
+		opt(e)
+	}
+	return e
 }
 
 var (

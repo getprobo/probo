@@ -37,6 +37,10 @@ type (
 	}
 )
 
+func (t *OAuth2AccessToken) ExpiresIn(now time.Time) time.Duration {
+	return t.ExpiresAt.Sub(now)
+}
+
 func (t *OAuth2AccessToken) Insert(ctx context.Context, conn pg.Tx) error {
 	q := `
 INSERT INTO iam_oauth2_access_tokens (

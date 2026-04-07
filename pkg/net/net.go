@@ -12,30 +12,19 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package oauth2server
+package net
 
-import (
-	"crypto/rand"
-	"math/big"
+import "net"
 
-	"go.probo.inc/probo/pkg/coredata"
-)
-
-// userCodeAlphabet excludes ambiguous characters: 0/O, 1/I/L.
-const userCodeAlphabet = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"
-
-// GenerateUserCode generates a raw 8-character user code for the device flow.
-// Characters are drawn from an unambiguous alphabet (no 0/O/1/I/L).
-func GenerateUserCode() (coredata.OAuth2UserCode, error) {
-	code := make([]byte, 8)
-	for i := range code {
-		n, err := rand.Int(rand.Reader, big.NewInt(int64(len(userCodeAlphabet))))
-		if err != nil {
-			return "", err
-		}
-
-		code[i] = userCodeAlphabet[n.Int64()]
+// IsLoopback reports whether host is a loopback address. It recognizes
+// "localhost" by name and delegates to net.IP.IsLoopback for IP addresses,
+// which covers 127.0.0.0/8, ::1, and IPv4-mapped variants like
+// ::ffff:127.0.0.1.
+func IsLoopback(host string) bool {
+	if host == "localhost" {
+		return true
 	}
 
-	return coredata.OAuth2UserCode(code), nil
+	ip := net.ParseIP(host)
+	return ip != nil && ip.IsLoopback()
 }

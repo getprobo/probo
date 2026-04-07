@@ -87,7 +87,7 @@ func (s *Service) Run(ctx context.Context) error {
 }
 
 func HashToken(token string) []byte {
-	return hash.SHA256([]byte(token))
+	return hash.SHA256String(token)
 }
 
 func GenerateToken() (string, error) {

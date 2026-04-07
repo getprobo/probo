@@ -21,6 +21,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/gid"
 )
@@ -98,15 +99,21 @@ INSERT INTO iam_oauth2_device_codes (
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
+		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok &&
+			pgErr.Code == "23505" &&
+			pgErr.ConstraintName == "iam_oauth2_device_codes_user_code_unique" {
+			return ErrResourceAlreadyExists
+		}
+
 		return fmt.Errorf("cannot insert oauth2_device_code: %w", err)
 	}
 
 	return nil
 }
 
-func (d *OAuth2DeviceCode) LoadByUserCode(
+func (d *OAuth2DeviceCode) LoadByUserCodeForUpdate(
 	ctx context.Context,
-	conn pg.Querier,
+	conn pg.Tx,
 	userCode string,
 ) error {
 	q := `
@@ -126,7 +133,7 @@ FROM
 	iam_oauth2_device_codes
 WHERE
 	user_code = @user_code
-LIMIT 1;
+FOR UPDATE;
 `
 
 	rows, err := conn.Query(ctx, q, pgx.StrictNamedArgs{"user_code": userCode})
@@ -199,43 +206,12 @@ FOR UPDATE;
 	return nil
 }
 
-func (d *OAuth2DeviceCode) UpdateStatus(
-	ctx context.Context,
-	conn pg.Tx,
-	status OAuth2DeviceCodeStatus,
-	identityID *gid.GID,
-) error {
+func (d *OAuth2DeviceCode) Update(ctx context.Context, conn pg.Tx) error {
 	q := `
 UPDATE iam_oauth2_device_codes
 SET
 	status = @status,
-	identity_id = @identity_id
-WHERE
-	id = @id
-`
-
-	args := pgx.StrictNamedArgs{
-		"id":          d.ID,
-		"status":      status,
-		"identity_id": identityID,
-	}
-
-	if _, err := conn.Exec(ctx, q, args); err != nil {
-		return fmt.Errorf("cannot update oauth2_device_code status: %w", err)
-	}
-
-	return nil
-}
-
-func (d *OAuth2DeviceCode) UpdateLastPolledAt(
-	ctx context.Context,
-	conn pg.Tx,
-	now time.Time,
-	pollInterval int,
-) error {
-	q := `
-UPDATE iam_oauth2_device_codes
-SET
+	identity_id = @identity_id,
 	last_polled_at = @last_polled_at,
 	poll_interval = @poll_interval
 WHERE
@@ -244,12 +220,14 @@ WHERE
 
 	args := pgx.StrictNamedArgs{
 		"id":             d.ID,
-		"last_polled_at": now,
-		"poll_interval":  pollInterval,
+		"status":         d.Status,
+		"identity_id":    d.IdentityID,
+		"last_polled_at": d.LastPolledAt,
+		"poll_interval":  d.PollInterval,
 	}
 
 	if _, err := conn.Exec(ctx, q, args); err != nil {
-		return fmt.Errorf("cannot update oauth2_device_code last_polled_at: %w", err)
+		return fmt.Errorf("cannot update oauth2_device_code: %w", err)
 	}
 
 	return nil

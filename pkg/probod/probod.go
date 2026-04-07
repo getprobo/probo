@@ -1154,5 +1154,13 @@ func oauth2ServerOptions(cfg OAuth2ServerConfig) []oauth2server.Option {
 		opts = append(opts, oauth2server.WithRefreshTokenDuration(time.Duration(cfg.RefreshTokenDuration)*time.Second))
 	}
 
+	if cfg.AuthorizationCodeDuration > 0 {
+		opts = append(opts, oauth2server.WithAuthorizationCodeDuration(time.Duration(cfg.AuthorizationCodeDuration)*time.Second))
+	}
+
+	if cfg.DeviceCodeDuration > 0 {
+		opts = append(opts, oauth2server.WithDeviceCodeDuration(time.Duration(cfg.DeviceCodeDuration)*time.Second))
+	}
+
 	return opts
 }

@@ -24,6 +24,14 @@ func SHA256(data []byte) []byte {
 	return h[:]
 }
 
+func SHA256String(s string) []byte {
+	return SHA256([]byte(s))
+}
+
 func SHA256Hex(data []byte) string {
 	return hex.EncodeToString(SHA256(data))
+}
+
+func SHA256HexString(s string) string {
+	return SHA256Hex([]byte(s))
 }

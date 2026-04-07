@@ -16,7 +16,6 @@ package iam
 
 import (
 	"context"
-	"crypto/sha256"
 	"errors"
 	"fmt"
 	"time"
@@ -24,6 +23,7 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/packages/emails"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/crypto/hash"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/statelesstoken"
@@ -715,6 +715,5 @@ func (s AuthService) OpenSessionWithMagicLink(ctx context.Context, tokenString s
 }
 
 func HashToken(token string) []byte {
-	hash := sha256.Sum256([]byte(token))
-	return hash[:]
+	return hash.SHA256String(token)
 }
