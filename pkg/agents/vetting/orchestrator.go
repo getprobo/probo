@@ -28,10 +28,10 @@ import (
 )
 
 var (
-	//go:embed orchestrator_base_prompt.txt
+	//go:embed prompts/orchestrator_base.txt
 	orchestratorBasePrompt string
 
-	//go:embed default_procedure.txt
+	//go:embed prompts/default_procedure.txt
 	defaultProcedure string
 )
 

@@ -32,52 +32,52 @@ import _ "embed"
 //     paginated subprocessor lists.
 
 var (
-	//go:embed crawler_prompt.txt
+	//go:embed prompts/crawler.txt
 	crawlerPrompt string
 
-	//go:embed analyzer_prompt.txt
+	//go:embed prompts/analyzer.txt
 	analyzerPrompt string
 
-	//go:embed security_prompt.txt
+	//go:embed prompts/security.txt
 	securityPrompt string
 
-	//go:embed compliance_prompt.txt
+	//go:embed prompts/compliance.txt
 	compliancePrompt string
 
-	//go:embed market_prompt.txt
+	//go:embed prompts/market.txt
 	marketPrompt string
 
-	//go:embed subprocessor_prompt.txt
+	//go:embed prompts/subprocessor.txt
 	subprocessorPrompt string
 
-	//go:embed data_processing_prompt.txt
+	//go:embed prompts/data_processing.txt
 	dataProcessingPrompt string
 
-	//go:embed ai_risk_prompt.txt
+	//go:embed prompts/ai_risk.txt
 	aiRiskPrompt string
 
-	//go:embed incident_response_prompt.txt
+	//go:embed prompts/incident_response.txt
 	incidentResponsePrompt string
 
-	//go:embed business_continuity_prompt.txt
+	//go:embed prompts/business_continuity.txt
 	businessContinuityPrompt string
 
-	//go:embed professional_standing_prompt.txt
+	//go:embed prompts/professional_standing.txt
 	professionalStandingPrompt string
 
-	//go:embed regulatory_compliance_prompt.txt
+	//go:embed prompts/regulatory_compliance.txt
 	regulatoryCompliancePrompt string
 
-	//go:embed websearch_prompt.txt
+	//go:embed prompts/websearch.txt
 	websearchPrompt string
 
-	//go:embed financial_stability_prompt.txt
+	//go:embed prompts/financial_stability.txt
 	financialStabilityPrompt string
 
-	//go:embed code_security_prompt.txt
+	//go:embed prompts/code_security.txt
 	codeSecurityPrompt string
 
-	//go:embed vendor_comparison_prompt.txt
+	//go:embed prompts/vendor_comparison.txt
 	vendorComparisonPrompt string
 )
 
