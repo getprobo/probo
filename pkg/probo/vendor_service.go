@@ -825,18 +825,42 @@ func (s VendorService) Assess(
 			}
 			vendor.UpdatedAt = time.Now()
 
-			setIfNotEmpty(&vendor.Description, info.Description)
-			setIfNotEmpty(&vendor.HeadquarterAddress, info.HeadquarterAddress)
-			setIfNotEmpty(&vendor.LegalName, info.LegalName)
-			setIfNotEmpty(&vendor.PrivacyPolicyURL, info.PrivacyPolicyURL)
-			setIfNotEmpty(&vendor.ServiceLevelAgreementURL, info.ServiceLevelAgreementURL)
-			setIfNotEmpty(&vendor.DataProcessingAgreementURL, info.DataProcessingAgreementURL)
-			setIfNotEmpty(&vendor.BusinessAssociateAgreementURL, info.BusinessAssociateAgreementURL)
-			setIfNotEmpty(&vendor.SubprocessorsListURL, info.SubprocessorsListURL)
-			setIfNotEmpty(&vendor.SecurityPageURL, info.SecurityPageURL)
-			setIfNotEmpty(&vendor.TrustPageURL, info.TrustPageURL)
-			setIfNotEmpty(&vendor.TermsOfServiceURL, info.TermsOfServiceURL)
-			setIfNotEmpty(&vendor.StatusPageURL, info.StatusPageURL)
+			if info.Description != "" {
+				vendor.Description = &info.Description
+			}
+			if info.HeadquarterAddress != "" {
+				vendor.HeadquarterAddress = &info.HeadquarterAddress
+			}
+			if info.LegalName != "" {
+				vendor.LegalName = &info.LegalName
+			}
+			if info.PrivacyPolicyURL != "" {
+				vendor.PrivacyPolicyURL = &info.PrivacyPolicyURL
+			}
+			if info.ServiceLevelAgreementURL != "" {
+				vendor.ServiceLevelAgreementURL = &info.ServiceLevelAgreementURL
+			}
+			if info.DataProcessingAgreementURL != "" {
+				vendor.DataProcessingAgreementURL = &info.DataProcessingAgreementURL
+			}
+			if info.BusinessAssociateAgreementURL != "" {
+				vendor.BusinessAssociateAgreementURL = &info.BusinessAssociateAgreementURL
+			}
+			if info.SubprocessorsListURL != "" {
+				vendor.SubprocessorsListURL = &info.SubprocessorsListURL
+			}
+			if info.SecurityPageURL != "" {
+				vendor.SecurityPageURL = &info.SecurityPageURL
+			}
+			if info.TrustPageURL != "" {
+				vendor.TrustPageURL = &info.TrustPageURL
+			}
+			if info.TermsOfServiceURL != "" {
+				vendor.TermsOfServiceURL = &info.TermsOfServiceURL
+			}
+			if info.StatusPageURL != "" {
+				vendor.StatusPageURL = &info.StatusPageURL
+			}
 
 			if len(info.Certifications) > 0 {
 				vendor.Certifications = info.Certifications
@@ -880,8 +904,3 @@ func (s VendorService) Assess(
 	}, nil
 }
 
-func setIfNotEmpty(dst **string, val string) {
-	if val != "" {
-		*dst = &val
-	}
-}
