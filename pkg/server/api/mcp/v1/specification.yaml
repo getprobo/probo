@@ -778,6 +778,57 @@ components:
           $ref: "#/components/schemas/GID"
           description: Deleted vendor ID
 
+    AssessVendorInput:
+      type: object
+      required:
+        - id
+        - website_url
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Vendor ID to assess
+        website_url:
+          type: string
+          description: Vendor website URL to crawl and assess
+        procedure:
+          type: string
+          description: Optional custom assessment procedure (overrides the default)
+
+    VendorSubprocessor:
+      type: object
+      required:
+        - name
+        - country
+        - purpose
+      properties:
+        name:
+          type: string
+          description: Sub-processor name
+        country:
+          type: string
+          description: Country where the sub-processor operates
+        purpose:
+          type: string
+          description: Purpose of the sub-processor
+
+    AssessVendorOutput:
+      type: object
+      required:
+        - vendor
+        - report
+        - subprocessors
+      properties:
+        vendor:
+          $ref: "#/components/schemas/Vendor"
+        report:
+          type: string
+          description: Markdown-formatted vendor assessment report
+        subprocessors:
+          type: array
+          items:
+            $ref: "#/components/schemas/VendorSubprocessor"
+          description: Sub-processors discovered during the assessment
+
     GetUserInput:
       type: object
       required:
@@ -7620,6 +7671,14 @@ tools:
       $ref: "#/components/schemas/DeleteVendorInput"
     outputSchema:
       $ref: "#/components/schemas/DeleteVendorOutput"
+  - name: assessVendor
+    description: Run an AI-powered assessment on a vendor by crawling its website. Returns a markdown report, the discovered sub-processors, and an enriched vendor record. Long-running (up to 20 minutes).
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/AssessVendorInput"
+    outputSchema:
+      $ref: "#/components/schemas/AssessVendorOutput"
   - name: listRisks
     description: List all risks for the organization
     hints:
