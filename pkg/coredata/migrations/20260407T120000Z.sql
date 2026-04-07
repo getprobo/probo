@@ -14,3 +14,5 @@
 
 -- TODO: drop the title column from documents.
 ALTER TABLE documents ALTER COLUMN title DROP NOT NULL;
+
+ALTER TABLE documents DROP COLUMN description;

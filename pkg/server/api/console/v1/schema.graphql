@@ -2562,7 +2562,6 @@ type Evidence implements Node {
 
 type Document implements Node {
     id: ID!
-    description: String
     currentPublishedMajor: Int
     currentPublishedMinor: Int
     trustCenterVisibility: TrustCenterVisibility!
@@ -2603,7 +2602,6 @@ type EmployeeDocument
     ) {
     id: ID!
     title: String!
-    description: String
     signed: Boolean @goField(forceResolver: true)
     approvalState: DocumentVersionApprovalDecisionState @goField(forceResolver: true)
 

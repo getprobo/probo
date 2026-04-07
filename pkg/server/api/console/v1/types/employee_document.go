@@ -44,7 +44,6 @@ type (
 	EmployeeDocument struct {
 		ID           gid.GID
 		Title        string
-		Description  *string
 		DocumentType coredata.DocumentType
 		CreatedAt    time.Time
 		UpdatedAt    time.Time
