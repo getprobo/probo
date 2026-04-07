@@ -155,15 +155,23 @@ func buildParams(req *llm.ChatCompletionRequest) (anthropic.MessageNewParams, er
 	if req.Thinking != nil && req.Thinking.Enabled {
 		params.Thinking = anthropic.ThinkingConfigParamOfEnabled(int64(req.Thinking.BudgetTokens))
 	}
-	if req.ResponseFormat != nil && req.ResponseFormat.Type == llm.ResponseFormatJSONSchema && req.ResponseFormat.JSONSchema != nil {
-		var schema map[string]any
-		if err := json.Unmarshal(req.ResponseFormat.JSONSchema.Schema, &schema); err != nil {
-			return anthropic.MessageNewParams{}, fmt.Errorf("cannot unmarshal JSON schema for output format: %w", err)
-		}
-		params.OutputConfig = anthropic.OutputConfigParam{
-			Format: anthropic.JSONOutputFormatParam{
-				Schema: schema,
-			},
+	if req.ResponseFormat != nil {
+		switch req.ResponseFormat.Type {
+		case llm.ResponseFormatJSONSchema:
+			if req.ResponseFormat.JSONSchema == nil {
+				return anthropic.MessageNewParams{}, fmt.Errorf("cannot apply JSON schema output format: schema is nil")
+			}
+			var schema map[string]any
+			if err := json.Unmarshal(req.ResponseFormat.JSONSchema.Schema, &schema); err != nil {
+				return anthropic.MessageNewParams{}, fmt.Errorf("cannot unmarshal JSON schema for output format: %w", err)
+			}
+			params.OutputConfig = anthropic.OutputConfigParam{
+				Format: anthropic.JSONOutputFormatParam{Schema: schema},
+			}
+		case llm.ResponseFormatJSONObject:
+			return anthropic.MessageNewParams{}, fmt.Errorf("anthropic does not support json_object response format without a schema; use json_schema instead")
+		case llm.ResponseFormatText:
+			// default behaviour, nothing to set
 		}
 	}
 
@@ -209,12 +217,14 @@ func buildMessages(messages []llm.Message) []anthropic.MessageParam {
 		case llm.RoleAssistant:
 			var blocks []anthropic.ContentBlockParamUnion
 			for _, p := range msg.Parts {
-				if tp, ok := p.(llm.ThinkingPart); ok {
-					blocks = append(blocks, anthropic.NewThinkingBlock(tp.Signature, tp.Text))
+				switch part := p.(type) {
+				case llm.ThinkingPart:
+					blocks = append(blocks, anthropic.NewThinkingBlock(part.Signature, part.Text))
+				case llm.TextPart:
+					if part.Text != "" {
+						blocks = append(blocks, anthropic.NewTextBlock(part.Text))
+					}
 				}
-			}
-			if text := msg.Text(); text != "" {
-				blocks = append(blocks, anthropic.NewTextBlock(text))
 			}
 			for _, tc := range msg.ToolCalls {
 				var input any
@@ -364,6 +374,13 @@ func mapError(err error) error {
 		return &llm.ErrRateLimit{RetryAfter: retryAfter, Err: err}
 	case http.StatusUnauthorized:
 		return &llm.ErrAuthentication{Err: err}
+	case http.StatusBadRequest:
+		// Anthropic returns 400 with this message body when a non-streaming
+		// request would exceed the provider's response time limit.
+		if strings.Contains(apiErr.Error(), "streaming is required") {
+			return &llm.ErrStreamingRequired{Err: err}
+		}
+		return err
 	default:
 		return err
 	}

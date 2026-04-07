@@ -37,6 +37,13 @@ type (
 	ErrAuthentication struct {
 		Err error
 	}
+
+	// ErrStreamingRequired is returned by a provider when a non-streaming
+	// request must be retried with the streaming endpoint (e.g. Anthropic
+	// requires streaming for responses that may take longer than 10 minutes).
+	ErrStreamingRequired struct {
+		Err error
+	}
 )
 
 func (e *ErrRateLimit) Error() string {
@@ -68,3 +75,9 @@ func (e *ErrAuthentication) Error() string {
 }
 
 func (e *ErrAuthentication) Unwrap() error { return e.Err }
+
+func (e *ErrStreamingRequired) Error() string {
+	return fmt.Sprintf("streaming is required: %v", e.Err)
+}
+
+func (e *ErrStreamingRequired) Unwrap() error { return e.Err }
