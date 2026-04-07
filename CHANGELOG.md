@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.163.1] - 2026-04-07
+
+### Fixed
+
+- Fix mcp task creation priority
+
 ## [0.163.0] - 2026-04-07
 
 ### Changed
