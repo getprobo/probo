@@ -33,6 +33,20 @@ type subAgentSpec struct {
 	parallelTools  bool // true enables parallel tool calls
 }
 
+// subAgentBuilder constructs a sub-agent from a client, model, tools, and
+// extra options. The structured output type is captured by the closure
+// returned from buildFor[T].
+type subAgentBuilder func(client *llm.Client, model string, tools []agent.Tool, extraOpts ...agent.Option) (*agent.Agent, error)
+
+// buildFor returns a subAgentBuilder bound to a structured output type T
+// and a spec. This lets the orchestrator hold a slice of entries whose
+// build closures only differ in their type parameter.
+func buildFor[T any](spec subAgentSpec) subAgentBuilder {
+	return func(client *llm.Client, model string, tools []agent.Tool, extraOpts ...agent.Option) (*agent.Agent, error) {
+		return newSubAgent[T](client, model, spec, tools, extraOpts...)
+	}
+}
+
 // newSubAgent builds a vetting sub-agent from its spec, the tools it
 // should use, and any caller-supplied extra options (logger, hooks).
 // The type parameter T is the structured output type the agent must
