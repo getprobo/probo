@@ -119,6 +119,24 @@ packages/ui/src/
 packages/ui/src/RandomFolder/Text.tsx
 ```
 
+## Primitives vs compound components
+
+Components in `@probo/ui` fall into two categories: **primitives** and **compound** components.
+
+### Primitives
+
+**Primitives** (`Text`, `Image`, form inputs, layout helpers) are self-contained — they render a single semantic element with its own styling. A primitive **is its own shell**: it owns both its layout footprint and its visual output, so there is no separate shell wrapper. Each primitive has a paired skeleton (`TextSkeleton`, `ImageSkeleton`) that matches its dimensions.
+
+### Compound components
+
+**Compound components** (`ImageCard`, …) assemble multiple primitives into a larger UI region. When logic (state, effects, data fetching) lives inside the top-level component, a **shell** is required to separate layout from behavior:
+
+- **Shell** — pure layout frame that accepts region props (`image`, `text`, …) as `ReactNode` and applies `tv` slot class names. No state, no effects, no data.
+- **Root** — owns the logic and renders the shell, passing primitives into its region props.
+- **Skeleton** — reuses the **same shell** with skeleton primitives, so the loading placeholder is structurally identical to the real component without pulling in the logic graph.
+
+The shell exists so that **skeletons can share the exact same layout** as the real component without importing Root and its dependencies. If the compound component is **purely presentational** (no logic needed), there is no Root — expose only the Shell.
+
 ## Skeletons
 
 For each meaningful component, provide a paired loading UI:
@@ -139,7 +157,7 @@ export function Text(props: TextProps) { /* … */ }
 export function LoadingText() { /* … */ } // use TextSkeleton instead
 ```
 
-## Compound components (e.g. `ImageCard`)
+## Compound component structure (e.g. `ImageCard`)
 
 Multi-region UI (card shell, media, text column, etc.) is exported as **individual named exports** — one per sub-component — all prefixed with the feature name (e.g. `ImageCardRoot`, `ImageCardShell`, `ImageCardSkeleton`). **Do not** group sub-components as static properties on a single namespace object (`ImageCard.Root`, `ImageCard.Shell`, …); flat named exports enable proper tree shaking and keep unwanted third-party dependencies out of loading-time bundles.
 
