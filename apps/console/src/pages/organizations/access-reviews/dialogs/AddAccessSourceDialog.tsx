@@ -37,10 +37,10 @@ import { useMutation } from "react-relay";
 import { Link } from "react-router";
 import { graphql } from "relay-runtime";
 
+import type { accessSourceMutationsCreateMutation } from "#/__generated__/core/accessSourceMutationsCreateMutation.graphql";
 import type { AddAccessSourceDialogConnectorProviderInfoFragment$data } from "#/__generated__/core/AddAccessSourceDialogConnectorProviderInfoFragment.graphql";
 import type { AddAccessSourceDialogCreateAPIKeyConnectorMutation } from "#/__generated__/core/AddAccessSourceDialogCreateAPIKeyConnectorMutation.graphql";
 import type { AddAccessSourceDialogCreateClientCredentialsConnectorMutation } from "#/__generated__/core/AddAccessSourceDialogCreateClientCredentialsConnectorMutation.graphql";
-import type { accessSourceMutationsCreateMutation } from "#/__generated__/core/accessSourceMutationsCreateMutation.graphql";
 
 import { createAccessSourceMutation } from "./accessSourceMutations";
 
