@@ -28,7 +28,19 @@ import (
 	"go.probo.inc/probo/pkg/llm"
 )
 
-const tracerName = "go.probo.inc/probo/pkg/agent"
+const (
+	tracerName = "go.probo.inc/probo/pkg/agent"
+
+	// maxEmptyOutputRetries bounds the number of times the core loop
+	// will re-ask the model to produce a structured output after it
+	// returned a thinking-only empty response.
+	maxEmptyOutputRetries = 2
+
+	// synthesisNudge is the static user message appended after tool
+	// exploration completes, asking the model to produce the final
+	// structured output on the next (synthesis) turn.
+	synthesisNudge = "Based on everything you have gathered, produce the final structured output now."
+)
 
 type (
 	CallLLMFunc func(ctx context.Context, agent *Agent, req *llm.ChatCompletionRequest) (*llm.ChatCompletionResponse, error)
@@ -298,22 +310,9 @@ func coreLoop(ctx context.Context, startAgent *Agent, inputMessages []llm.Messag
 		log.Int("tool_count", len(s.toolDefs)),
 	)
 
-	const (
-		maxEmptyOutputRetries = 2
-		synthesisNudge        = "Based on everything you have gathered, produce the final structured output now."
-	)
 	emptyOutputRetries := 0
 
-	// Resolve the structured output request, if any. An agent can
-	// request structured output through either WithOutputType (typed
-	// sub-agents) or a directly-set responseFormat (the RunTyped
-	// convenience wrapper).
-	var structuredFormat *llm.ResponseFormat
-	if s.agent.responseFormat != nil {
-		structuredFormat = s.agent.responseFormat
-	} else if s.agent.outputType != nil {
-		structuredFormat = s.agent.outputType.responseFormat()
-	}
+	structuredFormat := resolveStructuredFormat(s.agent)
 
 	// When the agent has both tools and a structured output request,
 	// we delay structured output enforcement until a dedicated
@@ -1305,4 +1304,19 @@ func emitAgentHook(agent *Agent, fn func(AgentHooks)) {
 	if agent.agentHooks != nil {
 		fn(agent.agentHooks)
 	}
+}
+
+// resolveStructuredFormat returns the structured output request the
+// agent wants enforced on its final turn, or nil if none. An agent can
+// declare structured output through either WithOutputType (typed
+// sub-agents) or a directly-set responseFormat (the RunTyped
+// convenience wrapper).
+func resolveStructuredFormat(a *Agent) *llm.ResponseFormat {
+	if a.responseFormat != nil {
+		return a.responseFormat
+	}
+	if a.outputType != nil {
+		return a.outputType.responseFormat()
+	}
+	return nil
 }
