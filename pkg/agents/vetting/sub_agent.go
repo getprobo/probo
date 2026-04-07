@@ -15,36 +15,54 @@
 package vetting
 
 import (
-	_ "embed"
 	"fmt"
 
 	"go.probo.inc/probo/pkg/agent"
 	"go.probo.inc/probo/pkg/llm"
 )
 
-//go:embed business_continuity_prompt.txt
-var businessContinuitySystemPrompt string
+// subAgentSpec describes a vetting sub-agent. The generic builder
+// `newSubAgent[T]` reads it once and constructs the agent. This avoids
+// duplicating the same option boilerplate across 16 constructor functions.
+type subAgentSpec struct {
+	name           string
+	outputName     string
+	prompt         string
+	maxTurns       int
+	thinkingBudget int  // 0 disables extended thinking
+	parallelTools  bool // true enables parallel tool calls
+}
 
-func newBusinessContinuityAgent(
+// newSubAgent builds a vetting sub-agent from its spec, the tools it
+// should use, and any caller-supplied extra options (logger, hooks).
+// The type parameter T is the structured output type the agent must
+// produce.
+func newSubAgent[T any](
 	client *llm.Client,
 	model string,
+	spec subAgentSpec,
 	tools []agent.Tool,
 	extraOpts ...agent.Option,
 ) (*agent.Agent, error) {
-	outputType, err := agent.NewOutputType[BusinessContinuityOutput]("business_continuity_output")
+	outputType, err := agent.NewOutputType[T](spec.outputName)
 	if err != nil {
-		return nil, fmt.Errorf("cannot create output type: %w", err)
+		return nil, fmt.Errorf("cannot create output type %q: %w", spec.outputName, err)
 	}
 
 	opts := []agent.Option{
-		agent.WithInstructions(businessContinuitySystemPrompt),
+		agent.WithInstructions(spec.prompt),
 		agent.WithModel(model),
 		agent.WithTools(tools...),
-		agent.WithMaxTurns(28),
+		agent.WithMaxTurns(spec.maxTurns),
 		agent.WithOutputType(outputType),
-		agent.WithThinking(4000),
+	}
+	if spec.thinkingBudget > 0 {
+		opts = append(opts, agent.WithThinking(spec.thinkingBudget))
+	}
+	if spec.parallelTools {
+		opts = append(opts, agent.WithParallelToolCalls(true))
 	}
 	opts = append(opts, extraOpts...)
 
-	return agent.New("business_continuity_assessor", client, opts...), nil
+	return agent.New(spec.name, client, opts...), nil
 }
