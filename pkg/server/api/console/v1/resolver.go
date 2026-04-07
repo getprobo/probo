@@ -141,7 +141,11 @@ func NewMux(
 				return
 			}
 
-			redirectURL, err := connectorRegistry.Initiate(r.Context(), provider, organizationID, r)
+			opts := connector.InitiateOptions{
+				Scopes: r.URL.Query()["scope"],
+			}
+
+			redirectURL, err := connectorRegistry.Initiate(r.Context(), provider, organizationID, opts, r)
 			if err != nil {
 				panic(fmt.Errorf("cannot initiate connector: %w", err))
 			}

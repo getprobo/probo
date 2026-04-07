@@ -22,10 +22,12 @@ const (
 type (
 	// providerDefinition holds the static OAuth2 properties for a provider.
 	// These are intrinsic to the provider and do not vary between deployments.
+	// Scopes are not part of this — they are passed by the caller at
+	// initiate time via InitiateOptions, since the same provider may be used
+	// in multiple contexts requiring different scope sets.
 	providerDefinition struct {
 		AuthURL           string
 		TokenURL          string
-		Scopes            []string
 		ExtraAuthParams   map[string]string
 		TokenEndpointAuth string // "post-form" (default), "basic-form", or "basic-json"
 	}
@@ -38,17 +40,14 @@ var (
 		"SLACK": {
 			AuthURL:  "https://slack.com/oauth/v2/authorize",
 			TokenURL: "https://slack.com/api/oauth.v2.access",
-			Scopes:   []string{"chat:write", "channels:join", "incoming-webhook"},
 		},
 		"HUBSPOT": {
 			AuthURL:  "https://app.hubspot.com/oauth/authorize",
 			TokenURL: "https://api.hubapi.com/oauth/v1/token",
-			Scopes:   []string{"settings.users.read"},
 		},
 		"DOCUSIGN": {
 			AuthURL:           "https://account.docusign.com/oauth/auth",
 			TokenURL:          "https://account.docusign.com/oauth/token",
-			Scopes:            []string{"signature"},
 			TokenEndpointAuth: "basic-form",
 		},
 		"NOTION": {
@@ -60,36 +59,43 @@ var (
 		"GITHUB": {
 			AuthURL:  "https://github.com/login/oauth/authorize",
 			TokenURL: "https://github.com/login/oauth/access_token",
-			Scopes:   []string{"read:org"},
 		},
 		"SENTRY": {
 			AuthURL:  "https://sentry.io/oauth/authorize/",
 			TokenURL: "https://sentry.io/oauth/token/",
-			Scopes:   []string{"org:read", "member:read"},
 		},
 		"INTERCOM": {
 			AuthURL:  "https://app.intercom.com/oauth",
 			TokenURL: "https://api.intercom.io/auth/eagle/token",
-			// Scopes configured at app level in Intercom Developer Hub.
 		},
 		"BREX": {
 			AuthURL:  "https://accounts-api.brex.com/oauth2/default/v1/authorize",
 			TokenURL: "https://accounts-api.brex.com/oauth2/default/v1/token",
-			Scopes:   []string{"openid", "offline_access"},
+		},
+		"GOOGLE_WORKSPACE": {
+			AuthURL:  "https://accounts.google.com/o/oauth2/v2/auth",
+			TokenURL: "https://oauth2.googleapis.com/token",
+			ExtraAuthParams: map[string]string{
+				"access_type": "offline",
+				"prompt":      "consent",
+			},
+		},
+		"LINEAR": {
+			AuthURL:  "https://linear.app/oauth/authorize",
+			TokenURL: "https://api.linear.app/oauth/token",
 		},
 	}
 )
 
 // ApplyProviderDefaults sets the redirect URI and applies static provider
-// defaults (auth URL, token URL, scopes, extra params, token endpoint auth)
-// onto an OAuth2Connector. Call this before registering the connector.
+// defaults (auth URL, token URL, extra params, token endpoint auth) onto
+// an OAuth2Connector. Call this before registering the connector.
 func ApplyProviderDefaults(provider string, redirectURI string, c *OAuth2Connector) {
 	c.RedirectURI = redirectURI
 
 	if def, ok := providerDefinitions[provider]; ok {
 		c.AuthURL = def.AuthURL
 		c.TokenURL = def.TokenURL
-		c.Scopes = def.Scopes
 		c.ExtraAuthParams = def.ExtraAuthParams
 		c.TokenEndpointAuth = def.TokenEndpointAuth
 	}

@@ -27,6 +27,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.probo.inc/probo/pkg/gid"
 )
 
 func TestBuildTokenRequest_PostForm(t *testing.T) {
@@ -255,4 +256,58 @@ func TestClientCredentialsClient_ReusesValidToken(t *testing.T) {
 	require.NotNil(t, client)
 
 	assert.Equal(t, "existing-token", conn.AccessToken)
+}
+
+func TestInitiateWithState_Scopes(t *testing.T) {
+	t.Parallel()
+
+	t.Run("scopes are joined and set on auth URL", func(t *testing.T) {
+		t.Parallel()
+
+		c := &OAuth2Connector{
+			ClientID:     "id",
+			ClientSecret: "secret",
+			RedirectURI:  "https://example.com/cb",
+			AuthURL:      "https://provider.example.com/authorize",
+		}
+
+		orgID := gid.New(gid.NewTenantID(), 0)
+
+		u, err := c.InitiateWithState(
+			context.Background(),
+			OAuth2State{OrganizationID: orgID.String(), Provider: "TEST"},
+			InitiateOptions{Scopes: []string{"read:user", "write:user"}},
+			nil,
+		)
+		require.NoError(t, err)
+
+		parsed, err := url.Parse(u)
+		require.NoError(t, err)
+		assert.Equal(t, "read:user write:user", parsed.Query().Get("scope"))
+	})
+
+	t.Run("empty scopes omits scope parameter", func(t *testing.T) {
+		t.Parallel()
+
+		c := &OAuth2Connector{
+			ClientID:     "id",
+			ClientSecret: "secret",
+			RedirectURI:  "https://example.com/cb",
+			AuthURL:      "https://provider.example.com/authorize",
+		}
+
+		orgID := gid.New(gid.NewTenantID(), 0)
+
+		u, err := c.InitiateWithState(
+			context.Background(),
+			OAuth2State{OrganizationID: orgID.String(), Provider: "TEST"},
+			InitiateOptions{},
+			nil,
+		)
+		require.NoError(t, err)
+
+		parsed, err := url.Parse(u)
+		require.NoError(t, err)
+		assert.False(t, parsed.Query().Has("scope"), "scope param should be absent when no scopes provided")
+	})
 }

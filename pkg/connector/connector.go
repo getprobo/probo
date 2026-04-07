@@ -26,8 +26,16 @@ import (
 type (
 	ProtocolType string
 
+	// InitiateOptions holds per-call options passed by the caller initiating
+	// a connector flow. Different callers may need different configurations
+	// for the same provider — for OAuth2, the most common case is requesting
+	// a different set of scopes (e.g. SCIM bridge vs access review).
+	InitiateOptions struct {
+		Scopes []string
+	}
+
 	Connector interface {
-		Initiate(ctx context.Context, provider string, organizationID gid.GID, r *http.Request) (string, error)
+		Initiate(ctx context.Context, provider string, organizationID gid.GID, opts InitiateOptions, r *http.Request) (string, error)
 		Complete(ctx context.Context, r *http.Request) (Connection, *gid.GID, string, error) // returns: connection, organizationID, continueURL, error
 	}
 

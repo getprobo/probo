@@ -57,13 +57,19 @@ func (r *ConnectorRegistry) Get(provider string) (Connector, error) {
 	return c, nil
 }
 
-func (r *ConnectorRegistry) Initiate(ctx context.Context, provider string, organizationID gid.GID, req *http.Request) (string, error) {
+func (r *ConnectorRegistry) Initiate(
+	ctx context.Context,
+	provider string,
+	organizationID gid.GID,
+	opts InitiateOptions,
+	req *http.Request,
+) (string, error) {
 	c, err := r.Get(provider)
 	if err != nil {
 		return "", fmt.Errorf("cannot initiate connector: %w", err)
 	}
 
-	return c.Initiate(ctx, provider, organizationID, req)
+	return c.Initiate(ctx, provider, organizationID, opts, req)
 }
 
 // ExtractProviderFromState decodes the OAuth2 state token without

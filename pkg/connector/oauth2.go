@@ -44,7 +44,6 @@ type (
 		ClientID          string
 		ClientSecret      string
 		RedirectURI       string
-		Scopes            []string
 		AuthURL           string
 		TokenURL          string
 		ExtraAuthParams   map[string]string // Optional: extra params for auth URL (e.g., access_type=offline for Google)
@@ -98,7 +97,13 @@ func DecodeOAuth2StatePayload(tokenString string) (*statelesstoken.Payload[OAuth
 	return statelesstoken.DecodePayload[OAuth2State](tokenString)
 }
 
-func (c *OAuth2Connector) Initiate(ctx context.Context, provider string, organizationID gid.GID, r *http.Request) (string, error) {
+func (c *OAuth2Connector) Initiate(
+	ctx context.Context,
+	provider string,
+	organizationID gid.GID,
+	opts InitiateOptions,
+	r *http.Request,
+) (string, error) {
 	stateData := OAuth2State{
 		OrganizationID: organizationID.String(),
 		Provider:       provider,
@@ -111,12 +116,17 @@ func (c *OAuth2Connector) Initiate(ctx context.Context, provider string, organiz
 			stateData.ConnectorID = connectorID
 		}
 	}
-	return c.InitiateWithState(ctx, stateData, r)
+	return c.InitiateWithState(ctx, stateData, opts, r)
 }
 
 // InitiateWithState generates an OAuth2 authorization URL with a custom state.
 // This allows callers to include additional context (like SCIMBridgeID) in the state.
-func (c *OAuth2Connector) InitiateWithState(ctx context.Context, stateData OAuth2State, r *http.Request) (string, error) {
+func (c *OAuth2Connector) InitiateWithState(
+	ctx context.Context,
+	stateData OAuth2State,
+	opts InitiateOptions,
+	r *http.Request,
+) (string, error) {
 	state, err := statelesstoken.NewToken(c.ClientSecret, OAuth2TokenType, OAuth2TokenTTL, stateData)
 	if err != nil {
 		return "", fmt.Errorf("cannot create state token: %w", err)
@@ -127,7 +137,9 @@ func (c *OAuth2Connector) InitiateWithState(ctx context.Context, stateData OAuth
 	authCodeQuery.Set("client_id", c.ClientID)
 	authCodeQuery.Set("redirect_uri", c.RedirectURI)
 	authCodeQuery.Set("response_type", "code")
-	authCodeQuery.Set("scope", strings.Join(c.Scopes, " "))
+	if len(opts.Scopes) > 0 {
+		authCodeQuery.Set("scope", strings.Join(opts.Scopes, " "))
+	}
 
 	// Add any extra auth params (e.g., access_type=offline, prompt=consent for Google)
 	for k, v := range c.ExtraAuthParams {
