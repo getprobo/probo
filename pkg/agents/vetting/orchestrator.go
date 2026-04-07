@@ -35,6 +35,28 @@ var (
 	defaultProcedure string
 )
 
+const (
+	// orchestratorMaxTurns bounds the orchestrator loop. Each turn typically
+	// dispatches one sub-agent in parallel; with 16 sub-agents and a few
+	// retries we need ~140 turns of headroom before timing out.
+	orchestratorMaxTurns = 140
+
+	// orchestratorThinkingBudget is the extended-thinking budget for the
+	// orchestrator. It is high because the orchestrator must reason over
+	// the outputs of all 16 sub-agents to produce the final report.
+	orchestratorThinkingBudget = 40000
+)
+
+// subAgentEntry binds a sub-agent spec to the tools it needs and the
+// LLM-facing tool name + description it is exposed as. The build closure
+// captures the structured output type parameter so the entries can live
+// in a slice and be processed in a single loop.
+type subAgentEntry struct {
+	toolName    string
+	description string
+	build       func() (*agent.Agent, error)
+}
+
 func newOrchestratorAgent(
 	client *llm.Client,
 	model string,
@@ -46,32 +68,26 @@ func newOrchestratorAgent(
 	searchEndpoint string,
 	reporter agent.ProgressReporter,
 ) (*agent.Agent, error) {
-	vendorToolset := browser.NewReadOnlyToolset(vendorBrowser)
-	researchToolset := browser.NewInteractiveToolset(researchBrowser)
-	securityToolset := security.NewToolset()
-
-	readOnlyBrowserTools, err := vendorToolset.Tools()
+	readOnlyBrowserTools, err := browser.NewReadOnlyToolset(vendorBrowser).Tools()
 	if err != nil {
 		return nil, fmt.Errorf("cannot build read-only browser tools: %w", err)
 	}
 
-	// Build unrestricted browser tools for the subprocessor agent.
-	// Subprocessor lists are frequently hosted on external platforms
-	// (OneTrust, Transcend, Notion, etc.), so the domain-restricted
-	// vendor browser cannot reach them.
-	unrestrictedBrowserTools, err := researchToolset.Tools()
+	// Unrestricted browser tools for sub-agents that need to follow links
+	// to external sites (subprocessor lists hosted on OneTrust/Transcend,
+	// research, vendor comparison).
+	unrestrictedBrowserTools, err := browser.NewInteractiveToolset(researchBrowser).Tools()
 	if err != nil {
 		return nil, fmt.Errorf("cannot build unrestricted browser tools: %w", err)
 	}
 
-	securityTools, err := securityToolset.Tools()
+	securityTools, err := security.NewToolset().Tools()
 	if err != nil {
 		return nil, fmt.Errorf("cannot build security tools: %w", err)
 	}
 
-	loggerOpt := agent.WithLogger(logger)
-
 	maxTokensOpt := agent.WithMaxTokens(maxTokens)
+	loggerOpt := agent.WithLogger(logger)
 
 	subAgentOpts := func(step string) []agent.Option {
 		opts := []agent.Option{loggerOpt, maxTokensOpt}
@@ -81,30 +97,8 @@ func newOrchestratorAgent(
 		return opts
 	}
 
-	crawler, err := newCrawlerAgent(client, model, readOnlyBrowserTools, subAgentOpts("crawl_vendor_website")...)
-	if err != nil {
-		return nil, fmt.Errorf("cannot create crawler agent: %w", err)
-	}
-
-	analyzer, err := newDocumentAnalyzerAgent(client, model, readOnlyBrowserTools, subAgentOpts("analyze_document")...)
-	if err != nil {
-		return nil, fmt.Errorf("cannot create document analyzer agent: %w", err)
-	}
-
-	securityAssessor, err := newSecurityAssessorAgent(client, model, securityTools, subAgentOpts("assess_security")...)
-	if err != nil {
-		return nil, fmt.Errorf("cannot create security assessor agent: %w", err)
-	}
-
-	compliance, err := newComplianceAssessorAgent(client, model, readOnlyBrowserTools, subAgentOpts("assess_compliance")...)
-	if err != nil {
-		return nil, fmt.Errorf("cannot create compliance assessor agent: %w", err)
-	}
-
-	market, err := newMarketPresenceAgent(client, model, readOnlyBrowserTools, subAgentOpts("assess_market_presence")...)
-	if err != nil {
-		return nil, fmt.Errorf("cannot create market presence agent: %w", err)
-	}
+	// Subprocessor agent benefits from web search when available so it can
+	// find subprocessor pages hosted on third-party platforms.
 	subprocessorTools := unrestrictedBrowserTools
 	if searchEndpoint != "" {
 		searchTool, err := search.WebSearchTool(searchEndpoint)
@@ -113,89 +107,98 @@ func newOrchestratorAgent(
 		}
 		subprocessorTools = append(subprocessorTools, searchTool)
 	}
-	subprocessor, err := newSubprocessorAgent(client, model, subprocessorTools, subAgentOpts("extract_subprocessors")...)
-	if err != nil {
-		return nil, fmt.Errorf("cannot create subprocessor agent: %w", err)
-	}
-	dataProcessing, err := newDataProcessingAgent(client, model, readOnlyBrowserTools, subAgentOpts("assess_data_processing")...)
-	if err != nil {
-		return nil, fmt.Errorf("cannot create data processing agent: %w", err)
-	}
-	aiRisk, err := newAIRiskAgent(client, model, readOnlyBrowserTools, subAgentOpts("assess_ai_risk")...)
-	if err != nil {
-		return nil, fmt.Errorf("cannot create ai risk agent: %w", err)
-	}
-	incidentResponse, err := newIncidentResponseAgent(client, model, readOnlyBrowserTools, subAgentOpts("assess_incident_response")...)
-	if err != nil {
-		return nil, fmt.Errorf("cannot create incident response agent: %w", err)
+
+	// Core sub-agents that always run.
+	entries := []subAgentEntry{
+		{
+			toolName:    "crawl_vendor_website",
+			description: "Crawl a vendor website to discover security, compliance, privacy, and legal pages. Returns structured JSON with categorized URLs (vendor_name, vendor_domain, discovered_urls, notes). Input: the vendor's main website URL.",
+			build: func() (*agent.Agent, error) {
+				return newSubAgent[CrawlerOutput](client, model, crawlerAgentSpec, readOnlyBrowserTools, subAgentOpts("crawl_vendor_website")...)
+			},
+		},
+		{
+			toolName:    "assess_security",
+			description: "Perform technical security checks on a domain. Returns structured JSON with per-check results (ssl, headers, dmarc, spf, breaches, dnssec, csp, cors, dns, whois) each with status (pass/warning/fail/error) and details. Input: the vendor's domain name (e.g. example.com).",
+			build: func() (*agent.Agent, error) {
+				return newSubAgent[SecurityOutput](client, model, securityAgentSpec, securityTools, subAgentOpts("assess_security")...)
+			},
+		},
+		{
+			toolName:    "analyze_document",
+			description: "Analyze a specific document page (privacy policy, DPA, ToS) and extract key provisions. Returns structured JSON with document_type, retention, locations, GDPR/CCPA indicators, clauses, and summary. Input: the document URL.",
+			build: func() (*agent.Agent, error) {
+				return newSubAgent[DocumentAnalysisOutput](client, model, analyzerAgentSpec, readOnlyBrowserTools, subAgentOpts("analyze_document")...)
+			},
+		},
+		{
+			toolName:    "assess_compliance",
+			description: "Identify certifications and compliance frameworks from a trust/compliance page. Returns structured JSON with certifications (name, status, details), audit reports, and frameworks. Input: the trust or compliance page URL.",
+			build: func() (*agent.Agent, error) {
+				return newSubAgent[ComplianceOutput](client, model, complianceAgentSpec, readOnlyBrowserTools, subAgentOpts("assess_compliance")...)
+			},
+		},
+		{
+			toolName:    "assess_market_presence",
+			description: "Analyze a vendor's market presence. Returns structured JSON with notable_customers, case_studies, partnerships, company_size_signals, funding_info, and market_position. Input: the vendor's main website URL.",
+			build: func() (*agent.Agent, error) {
+				return newSubAgent[MarketOutput](client, model, marketAgentSpec, readOnlyBrowserTools, subAgentOpts("assess_market_presence")...)
+			},
+		},
+		{
+			toolName:    "extract_subprocessors",
+			description: "Find and extract the list of sub-processors from a vendor's website. Returns structured JSON with subprocessors (name, country, purpose), total_count, and source. Input: the vendor's main website URL or a known subprocessors page URL.",
+			build: func() (*agent.Agent, error) {
+				return newSubAgent[SubprocessorOutput](client, model, subprocessorAgentSpec, subprocessorTools, subAgentOpts("extract_subprocessors")...)
+			},
+		},
+		{
+			toolName:    "assess_data_processing",
+			description: "Assess data processing practices. Returns structured JSON with encryption, retention, deletion, data locations, transfer mechanisms, DPA status, DSAR handling, and rating. Input: a relevant page URL (privacy policy, DPA, security page, or trust center).",
+			build: func() (*agent.Agent, error) {
+				return newSubAgent[DataProcessingOutput](client, model, dataProcessingAgentSpec, readOnlyBrowserTools, subAgentOpts("assess_data_processing")...)
+			},
+		},
+		{
+			toolName:    "assess_incident_response",
+			description: "Evaluate incident response capabilities. Returns structured JSON with ir_plan, notification_timeline, status_page, post_mortems, recent_incidents, security_contact, and rating. Input: a relevant page URL (security page, trust center, or status page).",
+			build: func() (*agent.Agent, error) {
+				return newSubAgent[IncidentResponseOutput](client, model, incidentResponseAgentSpec, readOnlyBrowserTools, subAgentOpts("assess_incident_response")...)
+			},
+		},
+		{
+			toolName:    "assess_business_continuity",
+			description: "Evaluate business continuity and disaster recovery. Returns structured JSON with dr_plan, rto, rpo, cloud_providers, uptime_sla, regions, backup_strategy, and rating. Input: a relevant page URL (SLA page, trust center, or infrastructure docs).",
+			build: func() (*agent.Agent, error) {
+				return newSubAgent[BusinessContinuityOutput](client, model, businessContinuityAgentSpec, readOnlyBrowserTools, subAgentOpts("assess_business_continuity")...)
+			},
+		},
+		{
+			toolName:    "assess_professional_standing",
+			description: "Evaluate professional standing for services firms. Returns structured JSON with licensing, memberships, insurance, team_credentials, coi_policy, and rating. Input: relevant page URL (team page, about page, credentials page).",
+			build: func() (*agent.Agent, error) {
+				return newSubAgent[ProfessionalStandingOutput](client, model, professionalStandingAgentSpec, readOnlyBrowserTools, subAgentOpts("assess_professional_standing")...)
+			},
+		},
+		{
+			toolName:    "assess_ai_risk",
+			description: "Evaluate AI governance (ISO 42001). Returns structured JSON with ai_involvement, use_cases, model_transparency, bias_controls, customer_data_training, human_oversight, and rating. Input: relevant page URL (AI policy, trust center, responsible AI page, or main website).",
+			build: func() (*agent.Agent, error) {
+				return newSubAgent[AIRiskOutput](client, model, aiRiskAgentSpec, readOnlyBrowserTools, subAgentOpts("assess_ai_risk")...)
+			},
+		},
+		{
+			toolName:    "assess_regulatory_compliance",
+			description: "Deep regulatory compliance check. Returns structured JSON with per-framework assessment (gdpr, hipaa, pci_dss, sox) each with articles, status, and notes. Input: relevant page URL (DPA, compliance page, trust center).",
+			build: func() (*agent.Agent, error) {
+				return newSubAgent[RegulatoryComplianceOutput](client, model, regulatoryComplianceAgentSpec, readOnlyBrowserTools, subAgentOpts("assess_regulatory_compliance")...)
+			},
+		},
 	}
 
-	businessContinuity, err := newBusinessContinuityAgent(client, model, readOnlyBrowserTools, subAgentOpts("assess_business_continuity")...)
-	if err != nil {
-		return nil, fmt.Errorf("cannot create business continuity agent: %w", err)
-	}
-	professionalStanding, err := newProfessionalStandingAgent(client, model, readOnlyBrowserTools, subAgentOpts("assess_professional_standing")...)
-	if err != nil {
-		return nil, fmt.Errorf("cannot create professional standing agent: %w", err)
-	}
-	regulatoryCompliance, err := newRegulatoryComplianceAgent(client, model, readOnlyBrowserTools, subAgentOpts("assess_regulatory_compliance")...)
-	if err != nil {
-		return nil, fmt.Errorf("cannot create regulatory compliance agent: %w", err)
-	}
-
-	tools := []agent.Tool{
-		crawler.AsTool(
-			"crawl_vendor_website",
-			"Crawl a vendor website to discover security, compliance, privacy, and legal pages. Returns structured JSON with categorized URLs (vendor_name, vendor_domain, discovered_urls, notes). Input: the vendor's main website URL.",
-		),
-		securityAssessor.AsTool(
-			"assess_security",
-			"Perform technical security checks on a domain. Returns structured JSON with per-check results (ssl, headers, dmarc, spf, breaches, dnssec, csp, cors, dns, whois) each with status (pass/warning/fail/error) and details. Input: the vendor's domain name (e.g. example.com).",
-		),
-		analyzer.AsTool(
-			"analyze_document",
-			"Analyze a specific document page (privacy policy, DPA, ToS) and extract key provisions. Returns structured JSON with document_type, retention, locations, GDPR/CCPA indicators, clauses, and summary. Input: the document URL.",
-		),
-		compliance.AsTool(
-			"assess_compliance",
-			"Identify certifications and compliance frameworks from a trust/compliance page. Returns structured JSON with certifications (name, status, details), audit reports, and frameworks. Input: the trust or compliance page URL.",
-		),
-		market.AsTool(
-			"assess_market_presence",
-			"Analyze a vendor's market presence. Returns structured JSON with notable_customers, case_studies, partnerships, company_size_signals, funding_info, and market_position. Input: the vendor's main website URL.",
-		),
-		subprocessor.AsTool(
-			"extract_subprocessors",
-			"Find and extract the list of sub-processors from a vendor's website. Returns structured JSON with subprocessors (name, country, purpose), total_count, and source. Input: the vendor's main website URL or a known subprocessors page URL.",
-		),
-		dataProcessing.AsTool(
-			"assess_data_processing",
-			"Assess data processing practices. Returns structured JSON with encryption, retention, deletion, data locations, transfer mechanisms, DPA status, DSAR handling, and rating. Input: a relevant page URL (privacy policy, DPA, security page, or trust center).",
-		),
-		incidentResponse.AsTool(
-			"assess_incident_response",
-			"Evaluate incident response capabilities. Returns structured JSON with ir_plan, notification_timeline, status_page, post_mortems, recent_incidents, security_contact, and rating. Input: a relevant page URL (security page, trust center, or status page).",
-		),
-		businessContinuity.AsTool(
-			"assess_business_continuity",
-			"Evaluate business continuity and disaster recovery. Returns structured JSON with dr_plan, rto, rpo, cloud_providers, uptime_sla, regions, backup_strategy, and rating. Input: a relevant page URL (SLA page, trust center, or infrastructure docs).",
-		),
-		professionalStanding.AsTool(
-			"assess_professional_standing",
-			"Evaluate professional standing for services firms. Returns structured JSON with licensing, memberships, insurance, team_credentials, coi_policy, and rating. Input: relevant page URL (team page, about page, credentials page).",
-		),
-		aiRisk.AsTool(
-			"assess_ai_risk",
-			"Evaluate AI governance (ISO 42001). Returns structured JSON with ai_involvement, use_cases, model_transparency, bias_controls, customer_data_training, human_oversight, and rating. Input: relevant page URL (AI policy, trust center, responsible AI page, or main website).",
-		),
-		regulatoryCompliance.AsTool(
-			"assess_regulatory_compliance",
-			"Deep regulatory compliance check. Returns structured JSON with per-framework assessment (gdpr, hipaa, pci_dss, sox) each with articles, status, and notes. Input: relevant page URL (DPA, compliance page, trust center).",
-		),
-	}
-
+	// Optional sub-agents: only added when a search endpoint is configured.
 	if searchEndpoint != "" {
-		researchBrowserTools, err := researchToolset.Tools()
+		researchBrowserTools, err := browser.NewInteractiveToolset(researchBrowser).Tools()
 		if err != nil {
 			return nil, fmt.Errorf("cannot build research browser tools: %w", err)
 		}
@@ -205,18 +208,6 @@ func newOrchestratorAgent(
 			return nil, fmt.Errorf("cannot build web search tool: %w", err)
 		}
 
-		websearchTools := append([]agent.Tool{searchTool}, researchBrowserTools...)
-		websearch, err := newWebSearchAgent(client, model, websearchTools, subAgentOpts("research_vendor_externally")...)
-		if err != nil {
-			return nil, fmt.Errorf("cannot create web search agent: %w", err)
-		}
-
-		tools = append(tools, websearch.AsTool(
-			"research_vendor_externally",
-			"Search the open web for external signals about the vendor. Returns structured JSON with security_incidents, regulatory_actions, customer_sentiment, recent_news, red_flags, and positive_signals. Input: the vendor's name and domain.",
-		))
-
-		// Build tools for sub-agents that need search + unrestricted browsing.
 		govDBTool, err := search.CheckGovernmentDBTool(searchEndpoint)
 		if err != nil {
 			return nil, fmt.Errorf("cannot build government DB tool: %w", err)
@@ -232,39 +223,50 @@ func newOrchestratorAgent(
 			return nil, fmt.Errorf("cannot build diff tool: %w", err)
 		}
 
+		websearchTools := append([]agent.Tool{searchTool}, researchBrowserTools...)
 		financialTools := append([]agent.Tool{searchTool, govDBTool, waybackTool}, researchBrowserTools...)
-		financialStability, err := newFinancialStabilityAgent(client, model, financialTools, subAgentOpts("assess_financial_stability")...)
-		if err != nil {
-			return nil, fmt.Errorf("cannot create financial stability agent: %w", err)
-		}
-
 		codeSecurityTools := append([]agent.Tool{searchTool}, researchBrowserTools...)
-		codeSecurity, err := newCodeSecurityAgent(client, model, codeSecurityTools, subAgentOpts("assess_code_security")...)
-		if err != nil {
-			return nil, fmt.Errorf("cannot create code security agent: %w", err)
-		}
-
 		comparisonTools := append([]agent.Tool{searchTool, diffTool}, researchBrowserTools...)
-		vendorComparison, err := newVendorComparisonAgent(client, model, comparisonTools, subAgentOpts("compare_vendor")...)
-		if err != nil {
-			return nil, fmt.Errorf("cannot create vendor comparison agent: %w", err)
-		}
 
-		tools = append(
-			tools,
-			financialStability.AsTool(
-				"assess_financial_stability",
-				"Evaluate vendor financial stability. Returns structured JSON with company_age, funding, employee_count, legal_standing, ownership, risk_signals, overall_assessment, and confidence. Input: vendor name and website URL.",
-			),
-			codeSecurity.AsTool(
-				"assess_code_security",
-				"Evaluate open-source code security posture. Returns structured JSON with has_public_repos, security_advisories, dependency_management, release_cadence, security_policy, overall_assessment, and risk_signals. Input: vendor name and website URL.",
-			),
-			vendorComparison.AsTool(
-				"compare_vendor",
-				"Find and compare alternative vendors. Returns structured JSON with alternatives (name, certifications, security_score), comparison_summary, vendor_strengths, vendor_weaknesses, and overall_position. Input: vendor name, category, and website URL.",
-			),
+		entries = append(entries,
+			subAgentEntry{
+				toolName:    "research_vendor_externally",
+				description: "Search the open web for external signals about the vendor. Returns structured JSON with security_incidents, regulatory_actions, customer_sentiment, recent_news, red_flags, and positive_signals. Input: the vendor's name and domain.",
+				build: func() (*agent.Agent, error) {
+					return newSubAgent[WebSearchOutput](client, model, websearchAgentSpec, websearchTools, subAgentOpts("research_vendor_externally")...)
+				},
+			},
+			subAgentEntry{
+				toolName:    "assess_financial_stability",
+				description: "Evaluate vendor financial stability. Returns structured JSON with company_age, funding, employee_count, legal_standing, ownership, risk_signals, overall_assessment, and confidence. Input: vendor name and website URL.",
+				build: func() (*agent.Agent, error) {
+					return newSubAgent[FinancialStabilityOutput](client, model, financialStabilityAgentSpec, financialTools, subAgentOpts("assess_financial_stability")...)
+				},
+			},
+			subAgentEntry{
+				toolName:    "assess_code_security",
+				description: "Evaluate open-source code security posture. Returns structured JSON with has_public_repos, security_advisories, dependency_management, release_cadence, security_policy, overall_assessment, and risk_signals. Input: vendor name and website URL.",
+				build: func() (*agent.Agent, error) {
+					return newSubAgent[CodeSecurityOutput](client, model, codeSecurityAgentSpec, codeSecurityTools, subAgentOpts("assess_code_security")...)
+				},
+			},
+			subAgentEntry{
+				toolName:    "compare_vendor",
+				description: "Find and compare alternative vendors. Returns structured JSON with alternatives (name, certifications, security_score), comparison_summary, vendor_strengths, vendor_weaknesses, and overall_position. Input: vendor name, category, and website URL.",
+				build: func() (*agent.Agent, error) {
+					return newSubAgent[VendorComparisonOutput](client, model, vendorComparisonAgentSpec, comparisonTools, subAgentOpts("compare_vendor")...)
+				},
+			},
 		)
+	}
+
+	tools := make([]agent.Tool, 0, len(entries))
+	for _, e := range entries {
+		ag, err := e.build()
+		if err != nil {
+			return nil, fmt.Errorf("cannot create %s sub-agent: %w", e.toolName, err)
+		}
+		tools = append(tools, ag.AsTool(e.toolName, e.description))
 	}
 
 	if procedure == "" {
@@ -278,9 +280,9 @@ func newOrchestratorAgent(
 		agent.WithModel(model),
 		agent.WithMaxTokens(maxTokens),
 		agent.WithTools(tools...),
-		agent.WithMaxTurns(140),
+		agent.WithMaxTurns(orchestratorMaxTurns),
 		agent.WithParallelToolCalls(true),
-		agent.WithThinking(40000),
+		agent.WithThinking(orchestratorThinkingBudget),
 	}
 
 	if reporter != nil {
