@@ -27,6 +27,15 @@ import (
 	"go.probo.inc/probo/pkg/llm"
 )
 
+// DefaultMaxTokens is the fallback max-tokens budget used when the
+// vendor-assessor agent config does not specify a value. Sized to leave
+// headroom above the orchestrator's thinking budget on Anthropic models.
+const DefaultMaxTokens = 16384
+
+// AssessmentTimeout is the hard upper bound on a single assessment run.
+// This is also the timeout the CLI client should use.
+const AssessmentTimeout = 20 * time.Minute
+
 var (
 	//go:embed extraction_prompt.txt
 	extractionPrompt string
@@ -137,18 +146,27 @@ func NewAssessor(cfg Config) *Assessor {
 }
 
 func (a *Assessor) Assess(ctx context.Context, websiteURL string, procedure string, reporter agent.ProgressReporter) (*Result, error) {
+	u, err := url.Parse(websiteURL)
+	if err != nil {
+		return nil, fmt.Errorf("cannot parse website URL %q: %w", websiteURL, err)
+	}
+	if u.Scheme != "http" && u.Scheme != "https" {
+		return nil, fmt.Errorf("website URL must use http or https, got %q", u.Scheme)
+	}
+	if u.Hostname() == "" {
+		return nil, fmt.Errorf("website URL %q has no host", websiteURL)
+	}
+
 	// Detach from the caller's context (typically the HTTP request) so
 	// that the assessment is not cancelled when the client disconnects.
 	// A dedicated timeout prevents the assessment from running forever.
-	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 20*time.Minute)
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), AssessmentTimeout)
 	defer cancel()
 
 	vendorBrowser := browser.NewBrowser(ctx, a.cfg.ChromeAddr)
 	defer vendorBrowser.Close()
 
-	if u, err := url.Parse(websiteURL); err == nil {
-		vendorBrowser.SetAllowedDomain(u.Hostname())
-	}
+	vendorBrowser.SetAllowedDomain(u.Hostname())
 
 	// Create an unrestricted browser for web search agents that need to
 	// follow links to external sites (news, reviews, etc.).

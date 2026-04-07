@@ -37,21 +37,6 @@ mutation($input: AssessVendorInput!) {
     vendor {
       id
       name
-      category
-      websiteUrl
-      certifications
-      countries
-      privacyPolicyUrl
-      serviceLevelAgreementUrl
-      dataProcessingAgreementUrl
-      businessAssociateAgreementUrl
-      subprocessorsListUrl
-      termsOfServiceUrl
-      securityPageUrl
-      statusPageUrl
-      trustPageUrl
-      headquarterAddress
-      legalName
     }
   }
 }
@@ -66,23 +51,8 @@ type assessResponse struct {
 			Purpose string `json:"purpose"`
 		} `json:"subprocessors"`
 		Vendor struct {
-			ID                            string   `json:"id"`
-			Name                          string   `json:"name"`
-			Category                      string   `json:"category"`
-			WebsiteURL                    string   `json:"websiteUrl"`
-			Certifications                []string `json:"certifications"`
-			Countries                     []string `json:"countries"`
-			PrivacyPolicyURL              string   `json:"privacyPolicyUrl"`
-			ServiceLevelAgreementURL      string   `json:"serviceLevelAgreementUrl"`
-			DataProcessingAgreementURL    string   `json:"dataProcessingAgreementUrl"`
-			BusinessAssociateAgreementURL string   `json:"businessAssociateAgreementUrl"`
-			SubprocessorsListURL          string   `json:"subprocessorsListUrl"`
-			TermsOfServiceURL             string   `json:"termsOfServiceUrl"`
-			SecurityPageURL               string   `json:"securityPageUrl"`
-			StatusPageURL                 string   `json:"statusPageUrl"`
-			TrustPageURL                  string   `json:"trustPageUrl"`
-			HeadquarterAddress            string   `json:"headquarterAddress"`
-			LegalName                     string   `json:"legalName"`
+			ID   string `json:"id"`
+			Name string `json:"name"`
 		} `json:"vendor"`
 	} `json:"assessVendor"`
 }
@@ -136,13 +106,13 @@ func NewCmdAssess(f *cmdutil.Factory) *cobra.Command {
 				input["procedure"] = string(data)
 			}
 
-			// Use a longer timeout since the AI assessment can take several
-			// minutes to crawl, analyze, and assess.
+			// The CLI timeout must outlast the server-side assessment
+			// timeout (vetting.AssessmentTimeout = 20m) plus HTTP overhead.
 			client := api.NewClient(
 				host,
 				hc.Token,
 				"/api/console/v1/graphql",
-				10*time.Minute,
+				22*time.Minute,
 			)
 
 			_, _ = fmt.Fprintf(f.IOStreams.ErrOut, "Assessing vendor from %s (this may take a few minutes)...\n", flagURL)
