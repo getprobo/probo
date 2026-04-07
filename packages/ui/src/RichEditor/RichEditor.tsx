@@ -10,7 +10,7 @@ import { HardBreak } from "@tiptap/extension-hard-break";
 import { Heading } from "@tiptap/extension-heading";
 import { HorizontalRule } from "@tiptap/extension-horizontal-rule";
 import { Italic } from "@tiptap/extension-italic";
-import { BulletList, ListItem, OrderedList } from "@tiptap/extension-list";
+import { BulletList, ListItem, ListKeymap, OrderedList } from "@tiptap/extension-list";
 import { Paragraph } from "@tiptap/extension-paragraph";
 import { Strike } from "@tiptap/extension-strike";
 import { TableKit } from "@tiptap/extension-table";
@@ -52,6 +52,7 @@ const extensions = [
   BulletList,
   OrderedList,
   ListItem,
+  ListKeymap,
   HorizontalRule,
   HardBreak,
   Dropcursor.configure({
