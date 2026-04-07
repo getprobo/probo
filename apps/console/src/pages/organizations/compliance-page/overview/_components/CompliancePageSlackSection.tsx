@@ -25,6 +25,7 @@ import { useOrganizationId } from "#/hooks/useOrganizationId";
 const fragment = graphql`
   fragment CompliancePageSlackSectionFragment on Organization {
     canConnectSlack: permission(action: "core:connector:initiate")
+    slackOAuth2Scopes
     slackConnections(first: 100) {
       __id
       edges {
@@ -144,7 +145,9 @@ export function CompliancePageSlackSection(props: { fragmentRef: CompliancePageS
               </p>
             </div>
             <Button variant="secondary" asChild>
-              <a href={getSlackConnectionUrl(organizationId)}>{__("Connect")}</a>
+              <a href={getSlackConnectionUrl(organizationId, organization.slackOAuth2Scopes)}>
+                {__("Connect")}
+              </a>
             </Button>
           </Card>
         )}
@@ -153,13 +156,15 @@ export function CompliancePageSlackSection(props: { fragmentRef: CompliancePageS
   );
 }
 
-function getSlackConnectionUrl(organizationId: string): string {
+function getSlackConnectionUrl(organizationId: string, scopes: readonly string[]): string {
   const baseUrl = import.meta.env.VITE_API_URL || window.location.origin;
   const url = new URL("/api/console/v1/connectors/initiate", baseUrl);
   url.searchParams.append("organization_id", organizationId);
   url.searchParams.append("provider", "SLACK");
+  for (const scope of scopes) {
+    url.searchParams.append("scope", scope);
+  }
   const redirectUrl = `/organizations/${organizationId}/compliance-page`;
   url.searchParams.append("continue", redirectUrl);
-  const finalUrl = url.toString();
-  return finalUrl;
+  return url.toString();
 }

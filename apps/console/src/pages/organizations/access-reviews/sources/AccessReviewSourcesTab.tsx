@@ -34,12 +34,12 @@ import type { AccessReviewSourcesTabFragment$key } from "#/__generated__/core/Ac
 import type { AccessReviewSourcesTabPaginationQuery } from "#/__generated__/core/AccessReviewSourcesTabPaginationQuery.graphql";
 import type { AccessReviewSourcesTabQuery } from "#/__generated__/core/AccessReviewSourcesTabQuery.graphql";
 import type { AddAccessSourceDialogConnectorProviderInfoFragment$key } from "#/__generated__/core/AddAccessSourceDialogConnectorProviderInfoFragment.graphql";
-import type { CreateAccessSourceDialogMutation } from "#/__generated__/core/CreateAccessSourceDialogMutation.graphql";
+import type { accessSourceMutationsCreateMutation } from "#/__generated__/core/accessSourceMutationsCreateMutation.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import { AccessSourceRow } from "../_components/AccessSourceRow";
 import { AddAccessSourceDialog, addAccessSourceDialogConnectorProviderInfoFragment } from "../dialogs/AddAccessSourceDialog";
-import { createAccessSourceMutation } from "../dialogs/CreateAccessSourceDialog";
+import { createAccessSourceMutation } from "../dialogs/accessSourceMutations";
 
 export const accessReviewSourcesTabQuery = graphql`
   query AccessReviewSourcesTabQuery($organizationId: ID!) {
@@ -131,7 +131,7 @@ export default function AccessReviewSourcesTab({ queryRef }: Props) {
   );
 
   const [createAccessSource, isCreatingSource]
-    = useMutation<CreateAccessSourceDialogMutation>(
+    = useMutation<accessSourceMutationsCreateMutation>(
       createAccessSourceMutation,
     );
 

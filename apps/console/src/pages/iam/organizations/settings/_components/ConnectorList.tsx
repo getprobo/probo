@@ -21,6 +21,7 @@ import { GoogleWorkspaceConnector } from "./GoogleWorkspaceConnector";
 
 const connectorListFragment = graphql`
   fragment ConnectorListFragment on Organization {
+    googleWorkspaceOAuth2Scopes
     scimConfiguration {
       ...GoogleWorkspaceConnectorFragment
     }
@@ -40,7 +41,10 @@ export function ConnectorList(props: { fKey: ConnectorListFragment$key }) {
           "Connect your identity provider to automatically sync users to your organization. Once connected, you don't need to configure SCIM manually.",
         )}
       </p>
-      <GoogleWorkspaceConnector fKey={data.scimConfiguration ?? null} />
+      <GoogleWorkspaceConnector
+        fKey={data.scimConfiguration ?? null}
+        oauth2Scopes={data.googleWorkspaceOAuth2Scopes}
+      />
     </div>
   );
 }

@@ -27,12 +27,12 @@ import { Link, useNavigate } from "react-router";
 import { ConnectionHandler, graphql } from "relay-runtime";
 import { z } from "zod";
 
-import type { CreateAccessSourceDialogMutation } from "#/__generated__/core/CreateAccessSourceDialogMutation.graphql";
+import type { accessSourceMutationsCreateMutation } from "#/__generated__/core/accessSourceMutationsCreateMutation.graphql";
 import type { CreateCsvAccessSourcePageQuery } from "#/__generated__/core/CreateCsvAccessSourcePageQuery.graphql";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
-import { createAccessSourceMutation } from "./dialogs/CreateAccessSourceDialog";
+import { createAccessSourceMutation } from "./dialogs/accessSourceMutations";
 
 export const createCsvAccessSourcePageQuery = graphql`
   query CreateCsvAccessSourcePageQuery($organizationId: ID!) {
@@ -81,7 +81,7 @@ export default function CreateCsvAccessSourcePage({
   );
 
   const [createAccessSource, isCreating]
-    = useMutation<CreateAccessSourceDialogMutation>(
+    = useMutation<accessSourceMutationsCreateMutation>(
       createAccessSourceMutation,
     );
 

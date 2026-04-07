@@ -40,9 +40,9 @@ import { graphql } from "relay-runtime";
 import type { AddAccessSourceDialogConnectorProviderInfoFragment$data } from "#/__generated__/core/AddAccessSourceDialogConnectorProviderInfoFragment.graphql";
 import type { AddAccessSourceDialogCreateAPIKeyConnectorMutation } from "#/__generated__/core/AddAccessSourceDialogCreateAPIKeyConnectorMutation.graphql";
 import type { AddAccessSourceDialogCreateClientCredentialsConnectorMutation } from "#/__generated__/core/AddAccessSourceDialogCreateClientCredentialsConnectorMutation.graphql";
-import type { CreateAccessSourceDialogMutation } from "#/__generated__/core/CreateAccessSourceDialogMutation.graphql";
+import type { accessSourceMutationsCreateMutation } from "#/__generated__/core/accessSourceMutationsCreateMutation.graphql";
 
-import { createAccessSourceMutation } from "./CreateAccessSourceDialog";
+import { createAccessSourceMutation } from "./accessSourceMutations";
 
 export const addAccessSourceDialogConnectorProviderInfoFragment = graphql`
   fragment AddAccessSourceDialogConnectorProviderInfoFragment on ConnectorProviderInfo @relay(plural: true) {
@@ -51,6 +51,7 @@ export const addAccessSourceDialogConnectorProviderInfoFragment = graphql`
     oauthConfigured
     apiKeySupported
     clientCredentialsSupported
+    oauth2Scopes
     extraSettings {
       key
       label
@@ -185,7 +186,7 @@ export function AddAccessSourceDialog({
   );
 
   const [createAccessSource]
-    = useMutation<CreateAccessSourceDialogMutation>(
+    = useMutation<accessSourceMutationsCreateMutation>(
       createAccessSourceMutation,
     );
   const [createAPIKeyConnector]
@@ -197,11 +198,14 @@ export function AddAccessSourceDialog({
       createClientCredentialsConnectorMutation,
     );
 
-  const connectOAuthProvider = (provider: string) => {
+  const connectOAuthProvider = (info: ProviderInfo) => {
     const baseURL = import.meta.env.VITE_API_URL || window.location.origin;
     const url = new URL("/api/console/v1/connectors/initiate", baseURL);
     url.searchParams.append("organization_id", organizationId);
-    url.searchParams.append("provider", provider);
+    url.searchParams.append("provider", info.provider);
+    for (const scope of info.oauth2Scopes) {
+      url.searchParams.append("scope", scope);
+    }
     url.searchParams.append(
       "continue",
       `/organizations/${organizationId}/access-reviews/sources`,
@@ -419,7 +423,7 @@ export function AddAccessSourceDialog({
         return (
           <Button
             variant="secondary"
-            onClick={() => connectOAuthProvider(info.provider)}
+            onClick={() => connectOAuthProvider(info)}
           >
             {__("Connect")}
           </Button>

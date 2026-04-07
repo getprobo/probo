@@ -45,6 +45,7 @@ const fragment = graphql`
     connector {
       provider
     }
+    oauth2Scopes
     connectionStatus
     selectedOrganization
     needsConfiguration
@@ -213,6 +214,9 @@ export function AccessSourceRow({ fKey, connectionId, organizationId }: Props) {
     url.searchParams.append("organization_id", organizationId);
     url.searchParams.append("provider", provider);
     url.searchParams.append("connector_id", accessSource.connectorId);
+    for (const scope of accessSource.oauth2Scopes) {
+      url.searchParams.append("scope", scope);
+    }
     url.searchParams.append(
       "continue",
       `/organizations/${organizationId}/access-reviews/sources`,

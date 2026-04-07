@@ -74,8 +74,9 @@ const updateSCIMBridgeMutation = graphql`
 
 export function GoogleWorkspaceConnector(props: {
   fKey: GoogleWorkspaceConnectorFragment$key | null;
+  oauth2Scopes: readonly string[];
 }) {
-  const { fKey } = props;
+  const { fKey, oauth2Scopes } = props;
   const data = useFragment<GoogleWorkspaceConnectorFragment$key>(googleWorkspaceConnectorFragment, fKey);
   const bridge = data?.bridge;
   const connector = bridge?.connector;
@@ -112,6 +113,9 @@ export function GoogleWorkspaceConnector(props: {
     const url = new URL("/api/console/v1/connectors/initiate", baseUrl);
     url.searchParams.append("organization_id", organizationId);
     url.searchParams.append("provider", "GOOGLE_WORKSPACE");
+    for (const scope of oauth2Scopes) {
+      url.searchParams.append("scope", scope);
+    }
     const continueUrl = `/organizations/${organizationId}/settings/scim`;
     url.searchParams.append("continue", continueUrl);
     window.location.href = url.toString();
