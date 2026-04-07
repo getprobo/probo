@@ -54,40 +54,9 @@ Investigate the following areas using available tools:
 - Negative news: lawsuits, investigations, customer complaints.
 - Compare current state with historical snapshots (has the company shrunk?).
 
-## Output Format
+## Output
 
-Return a JSON object with the following structure:
-
-```json
-{
-  "company_age": "Founded in 2015, 11 years old",
-  "funding": "Series C, $120M total raised, last round January 2024 led by Accel",
-  "employee_count": "Estimated 350 employees based on LinkedIn and team page",
-  "revenue_signals": "Pricing page shows plans from $50-$500/month. Claims 5,000+ customers. No public ARR data.",
-  "customer_base": "5,000+ customers including Stripe, Shopify, and Atlassian",
-  "legal_standing": "No active lawsuits, bankruptcy filings, or regulatory actions found",
-  "ownership": "Independent, VC-backed. No recent acquisition or PE involvement.",
-  "risk_signals": ["Heavy reliance on VC funding with no profitability signals", "Recent 15% layoff reported in Q3 2024"],
-  "overall_assessment": "Adequate",
-  "confidence": "Medium",
-  "notes": "Healthy funding and customer base but recent layoff is a concern. No public financial statements available.",
-  "sources": ["https://crunchbase.com/organization/acme", "https://sec.gov/cgi-bin/browse-edgar?company=acme"]
-}
-```
-
-Field reference:
-- `company_age`: Year founded and company age (string).
-- `funding`: Funding history with rounds, amounts, and investors (string).
-- `employee_count`: Estimated employee count and source (string).
-- `revenue_signals`: Revenue indicators such as ARR mentions, growth signals (string).
-- `customer_base`: Customer base signals including count and notable names (string).
-- `legal_standing`: Active lawsuits, regulatory issues, bankruptcy filings (string).
-- `ownership`: Ownership structure: public, PE-backed, founder-led, acquired (string).
-- `risk_signals`: Array of financial risk signals identified.
-- `overall_assessment`: Overall financial stability: Strong, Adequate, Weak, or Concerning (string).
-- `confidence`: Assessment confidence level: High, Medium, or Low (string).
-- `notes`: Additional observations (string).
-- `sources`: Array of URLs visited during research.
+Return your findings as structured JSON matching the required output schema. The schema and per-field descriptions are enforced by the API; focus on the substance of the assessment.
 
 ## Important
 

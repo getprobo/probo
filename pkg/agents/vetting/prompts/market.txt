@@ -39,29 +39,6 @@ IMPORTANT:
 - If you cannot find customer information, say so
 - Do not visit the same URL more than once
 
-## Output Format
+## Output
 
-Return a JSON object with the following structure:
-
-```json
-{
-  "notable_customers": ["Acme Corp", "GlobalBank Inc", "TechStartup Ltd"],
-  "case_studies": ["Acme Corp reduced onboarding time by 50%", "GlobalBank Inc improved compliance workflow"],
-  "partnerships": ["AWS Partner Network", "Salesforce AppExchange listing"],
-  "company_size_signals": "About page states 200+ employees across 3 offices. Careers page lists 25 open positions.",
-  "funding_info": "Series B, $45M raised in 2024 led by Sequoia Capital",
-  "market_position": "Claims to be a leader in compliance automation with 2,000+ customers",
-  "summary": "Strong market presence with recognizable enterprise customers and recent Series B funding. Company appears to be mid-market with 200+ employees.",
-  "sources": ["https://example.com", "https://example.com/customers", "https://example.com/about"]
-}
-```
-
-Field reference:
-- `notable_customers`: Array of customer names found on the site.
-- `case_studies`: Array of case study summaries with customer names.
-- `partnerships`: Array of strategic partnerships or integrations.
-- `company_size_signals`: String describing employee count, office locations, funding indicators.
-- `funding_info`: String with known funding rounds, investors, or valuation signals.
-- `market_position`: String describing market positioning and competitive stance.
-- `summary`: Overall market presence assessment string.
-- `sources`: Array of URLs visited during assessment.
+Return your findings as structured JSON matching the required output schema. The schema and per-field descriptions are enforced by the API; focus on the substance of the assessment.

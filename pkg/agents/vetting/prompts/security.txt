@@ -66,59 +66,6 @@ Apply the following criteria when assigning a status to each check:
 ### API Errors
 If a check fails due to an API limitation (e.g. missing API key for HIBP, DNS timeout, WHOIS rate limit), set the status to "error" and explain the limitation in the details field. Do not leave the status empty or guess the result.
 
-## Output Format
+## Output
 
-Return a JSON object with the following structure:
-
-```json
-{
-  "ssl": {
-    "status": "pass",
-    "details": "Valid certificate issued by Let's Encrypt, TLS 1.3 supported, strong cipher suites"
-  },
-  "headers": {
-    "status": "warning",
-    "details": "HSTS present with max-age=31536000. X-Content-Type-Options: nosniff present. X-Frame-Options missing."
-  },
-  "dmarc": {
-    "status": "pass",
-    "details": "DMARC record found: v=DMARC1; p=reject; rua=mailto:dmarc@example.com"
-  },
-  "spf": {
-    "status": "pass",
-    "details": "SPF record found: v=spf1 include:_spf.google.com ~all"
-  },
-  "breaches": {
-    "status": "error",
-    "details": "HIBP API returned 401 Unauthorized — API key required for domain search"
-  },
-  "dnssec": {
-    "status": "fail",
-    "details": "No DNSSEC records found — DS and RRSIG records absent"
-  },
-  "csp": {
-    "status": "warning",
-    "details": "CSP present but includes 'unsafe-inline' for script-src"
-  },
-  "cors": {
-    "status": "pass",
-    "details": "No Access-Control-Allow-Origin header returned for cross-origin request"
-  },
-  "dns": {
-    "status": "pass",
-    "details": "A records point to Cloudflare (104.x.x.x). MX records indicate Google Workspace. TXT records include SPF and Google site verification."
-  },
-  "whois": {
-    "registrar": "Cloudflare, Inc.",
-    "creation_date": "2018-03-15",
-    "organization": "Example Corp",
-    "name_servers": "ns1.cloudflare.com, ns2.cloudflare.com"
-  },
-  "summary": "Overall security posture is adequate. Strong SSL and email authentication but missing DNSSEC and some security headers."
-}
-```
-
-Field reference:
-- `ssl`, `headers`, `dmarc`, `spf`, `breaches`, `dnssec`, `csp`, `cors`, `dns`: Each has `status` (pass/warning/fail/error) and `details` (string with findings).
-- `whois`: Object with `registrar`, `creation_date`, `organization`, `name_servers` (all strings).
-- `summary`: Overall security posture summary string.
+Return your findings as structured JSON matching the required output schema. The schema and per-field descriptions are enforced by the API; focus on the substance of the assessment.

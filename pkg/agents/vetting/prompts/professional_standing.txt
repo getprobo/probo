@@ -57,33 +57,6 @@ IMPORTANT:
 - Distinguish between explicitly stated credentials and inferred qualifications
 - If this does not appear to be a professional services vendor, note that and report whatever team/about information you find
 
-## Output Format
+## Output
 
-Return your findings as JSON with the following fields:
-
-```json
-{
-  "vendor_type": "law_firm",
-  "licensing": "Partners admitted to NY, CA, and DC bars. Firm registered with state bar associations.",
-  "memberships": ["American Bar Association", "NY State Bar Association", "IAPP"],
-  "insurance": "Professional liability insurance maintained; specific coverage level not disclosed",
-  "team_credentials": "3 partners with 20+ years experience. Lead partner formerly at Skadden. CIPP/US certified privacy counsel on staff.",
-  "coi_policy": "Conflict of interest screening documented in engagement terms; independence standards referenced",
-  "client_base": "Serves Fortune 500 clients including financial services and technology sectors. Named clients: Acme Corp, BigBank Inc.",
-  "rating": "Strong",
-  "key_observations": "Well-credentialed law firm with clear bar admissions and professional memberships. COI policy documented. Insurance coverage mentioned but details not public.",
-  "sources": ["https://example.com/team", "https://example.com/about", "https://example.com/credentials"]
-}
-```
-
-Field reference:
-- `vendor_type`: Type of professional services firm: law_firm, accounting, consulting, audit, staffing, or other (string).
-- `licensing`: Professional licensing details such as bar admissions, CPA licenses (string).
-- `memberships`: Array of industry body memberships (ABA, AICPA, Big Four network, etc.).
-- `insurance`: Professional liability / E&O insurance coverage details (string).
-- `team_credentials`: Key team member qualifications and credentials (string).
-- `coi_policy`: Conflict of interest policy details (string).
-- `client_base`: Client base signals including notable clients and industry focus (string).
-- `rating`: Overall professional standing rating: Strong, Adequate, Weak, or N/A (string).
-- `key_observations`: Key observations about professional standing (string).
-- `sources`: Array of URLs visited during assessment.
+Return your findings as structured JSON matching the required output schema. The schema and per-field descriptions are enforced by the API; focus on the substance of the assessment.

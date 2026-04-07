@@ -62,43 +62,6 @@ IMPORTANT:
 - Note when AI governance documentation is absent — this is itself a finding
 - Do not penalize vendors that genuinely do not use AI in their products
 
-## Output Format
+## Output
 
-Return a JSON object with the following structure:
-
-```json
-{
-  "ai_involvement": "yes",
-  "use_cases": ["Content generation for customer support", "Automated fraud detection", "Personalized recommendations"],
-  "ai_policy_url": "https://example.com/responsible-ai",
-  "model_transparency": "Documentation describes use of transformer models with version tracking. Model cards published for each major release.",
-  "bias_controls": "Annual fairness audits conducted by third party. Demographic parity metrics published.",
-  "customer_data_training": "Customer data is not used for model training by default",
-  "opt_out_available": "Yes, opt-out available via account settings",
-  "training_data_details": "Models trained on licensed datasets. Data provenance documented in model cards.",
-  "human_oversight": "Human-in-the-loop required for all decisions affecting account status or access",
-  "ai_incident_handling": "AI-specific incident runbook documented. Model rollback capability within 1 hour.",
-  "automated_decisions": "GDPR Art. 22 addressed — users can request human review of automated decisions",
-  "eu_ai_act": "Vendor references EU AI Act in responsible AI page. Self-classified as limited risk.",
-  "rating": "Strong",
-  "summary": "Mature AI governance with transparent model documentation, opt-out mechanisms, and regulatory awareness.",
-  "sources": ["https://example.com/responsible-ai", "https://example.com/privacy", "https://example.com/trust"]
-}
-```
-
-Field reference:
-- `ai_involvement`: AI involvement status: yes, no, or unclear (string).
-- `use_cases`: Array of AI/ML use cases in the product or service.
-- `ai_policy_url`: URL to AI governance or responsible AI documentation (string).
-- `model_transparency`: Model transparency and explainability findings (string).
-- `bias_controls`: Bias detection and fairness measures (string).
-- `customer_data_training`: Whether customer data is used for model training (string).
-- `opt_out_available`: Whether training data opt-out is available (string).
-- `training_data_details`: Training data governance details (string).
-- `human_oversight`: Human oversight mechanisms for AI decisions (string).
-- `ai_incident_handling`: AI-specific incident handling procedures (string).
-- `automated_decisions`: GDPR Art. 22 automated decision-making compliance (string).
-- `eu_ai_act`: EU AI Act awareness and compliance indicators (string).
-- `rating`: Overall AI risk rating: Strong, Adequate, Weak, or N/A (string).
-- `summary`: Key findings summary (string).
-- `sources`: Array of URLs visited during assessment.
+Return your findings as structured JSON matching the required output schema. The schema and per-field descriptions are enforced by the API; focus on the substance of the assessment.
