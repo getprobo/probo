@@ -131,7 +131,7 @@ function VendorsPageQueryLoader() {
 export default function VendorsPageLoader() {
   return (
     <CoreRelayProvider>
-      <VendorsPageQueryLoader queryRef={queryRef} />
+      <VendorsPageQueryLoader />
     </CoreRelayProvider>
   );
 }
