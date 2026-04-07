@@ -37,7 +37,7 @@ const DefaultMaxTokens = 16384
 const AssessmentTimeout = 20 * time.Minute
 
 var (
-	//go:embed extraction_prompt.txt
+	//go:embed prompts/extraction.txt
 	extractionPrompt string
 )
 
