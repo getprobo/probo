@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.162.1] - 2026-04-07
+
+### Fixed
+
+- Fix invisible drag line on Safari in rich editor
+
 ## [0.162.0] - 2026-04-06
 
 ### Added
