@@ -326,34 +326,19 @@ func (impl *Implm) Run(
 		}
 	}
 
-	proboAgentCfg := impl.cfg.Agents.ResolveAgent(impl.cfg.Agents.Probo)
-	proboProviderCfg, ok := impl.cfg.Agents.Providers[proboAgentCfg.Provider]
-	if !ok {
-		return fmt.Errorf("unknown LLM provider %q for probo agent", proboAgentCfg.Provider)
-	}
-	proboLLMClient, err := buildLLMClient(proboProviderCfg, l.Named("llm.probo"), tp, r)
+	proboAgentCfg, proboLLMClient, err := impl.resolveAgentClient("probo", impl.cfg.Agents.Probo, l, tp, r)
 	if err != nil {
-		return fmt.Errorf("cannot create probo LLM client: %w", err)
+		return err
 	}
 
-	evidenceDescriberAgentCfg := impl.cfg.Agents.ResolveAgent(impl.cfg.Agents.EvidenceDescriber)
-	evidenceDescriberProviderCfg, ok := impl.cfg.Agents.Providers[evidenceDescriberAgentCfg.Provider]
-	if !ok {
-		return fmt.Errorf("unknown LLM provider %q for evidence-describer agent", evidenceDescriberAgentCfg.Provider)
-	}
-	evidenceDescriberLLMClient, err := buildLLMClient(evidenceDescriberProviderCfg, l.Named("llm.evidence-describer"), tp, r)
+	evidenceDescriberAgentCfg, evidenceDescriberLLMClient, err := impl.resolveAgentClient("evidence-describer", impl.cfg.Agents.EvidenceDescriber, l, tp, r)
 	if err != nil {
-		return fmt.Errorf("cannot create evidence describer LLM client: %w", err)
+		return err
 	}
 
-	vendorAssessorAgentCfg := impl.cfg.Agents.ResolveAgent(impl.cfg.Agents.VendorAssessor)
-	vendorAssessorProviderCfg, ok := impl.cfg.Agents.Providers[vendorAssessorAgentCfg.Provider]
-	if !ok {
-		return fmt.Errorf("unknown LLM provider %q for vendor-assessor agent", vendorAssessorAgentCfg.Provider)
-	}
-	vendorAssessorLLMClient, err := buildLLMClient(vendorAssessorProviderCfg, l.Named("llm.vendor-assessor"), tp, r)
+	vendorAssessorAgentCfg, vendorAssessorLLMClient, err := impl.resolveAgentClient("vendor-assessor", impl.cfg.Agents.VendorAssessor, l, tp, r)
 	if err != nil {
-		return fmt.Errorf("cannot create vendor assessor LLM client: %w", err)
+		return err
 	}
 
 	fileManagerService := filemanager.NewService(s3Client)
@@ -481,7 +466,7 @@ func (impl *Implm) Run(
 
 	mailmanService := mailman.NewService(pgClient, fileManagerService, impl.cfg.Auth.Cookie.Secret, baseURL, impl.cfg.AWS.Bucket, encryptionKey, l)
 
-	vendorAssessorMaxTokens := 16384
+	vendorAssessorMaxTokens := vetting.DefaultMaxTokens
 	if vendorAssessorAgentCfg.MaxTokens != nil {
 		vendorAssessorMaxTokens = *vendorAssessorAgentCfg.MaxTokens
 	}
