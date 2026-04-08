@@ -62,6 +62,13 @@ func DiffDocumentsTool() (agent.Tool, error) {
 
 			diff := computeDiff(linesA, linesB, labelA, labelB)
 
+			if diff.tooLarge {
+				return agent.ResultJSON(diffResult{
+					HasDifferences: true,
+					ErrorDetail:    diff.output,
+				}), nil
+			}
+
 			result := diffResult{
 				HasDifferences: diff.added > 0 || diff.removed > 0,
 				AddedLines:     diff.added,
@@ -83,9 +90,10 @@ func DiffDocumentsTool() (agent.Tool, error) {
 
 type (
 	diffOutput struct {
-		output  string
-		added   int
-		removed int
+		output   string
+		added    int
+		removed  int
+		tooLarge bool
 	}
 )
 
@@ -96,9 +104,8 @@ func computeDiff(linesA, linesB []string, labelA, labelB string) diffOutput {
 	// Build LCS table (bounded to prevent excessive memory for very large docs).
 	if m > 5000 || n > 5000 {
 		return diffOutput{
-			output:  "[documents too large for detailed diff]",
-			added:   0,
-			removed: 0,
+			output:   "documents too large for detailed diff (limit 5000 lines per side)",
+			tooLarge: true,
 		}
 	}
 

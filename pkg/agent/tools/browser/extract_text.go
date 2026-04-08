@@ -16,6 +16,7 @@ package browser
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/chromedp/chromedp"
@@ -57,6 +58,16 @@ func ExtractPageTextTool(b *Browser) (agent.Tool, error) {
 
 			var text string
 
+			// Cap the JS-side slice at 4 code units per rune so the
+			// DevTools transfer stays bounded even for huge pages;
+			// the Go-side rune truncation below then produces the
+			// final exact-length output.
+			jsMaxLen := maxTextLength * 4
+			extractJS := fmt.Sprintf(
+				`String(document.body?.innerText ?? '').slice(0, %d)`,
+				jsMaxLen,
+			)
+
 			err := chromedp.Run(
 				tabCtx,
 				chromedp.Navigate(p.URL),
@@ -67,7 +78,7 @@ func ExtractPageTextTool(b *Browser) (agent.Tool, error) {
 				chromedp.Sleep(500*time.Millisecond),
 				chromedp.Evaluate(`window.scrollTo(0, 0)`, nil),
 				chromedp.Sleep(200*time.Millisecond),
-				chromedp.Evaluate(`String(document.body?.innerText ?? '')`, &text),
+				chromedp.Evaluate(extractJS, &text),
 			)
 			if err != nil {
 				return agent.ResultError(b.classifyError(ctx, p.URL, err)), nil
