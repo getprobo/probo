@@ -2184,6 +2184,7 @@ input ConnectorFilter {
 type Connector {
     id: ID!
     provider: ConnectorProvider!
+    oauth2Scopes: [String!]! @goField(forceResolver: true)
     createdAt: Datetime!
 }
 
@@ -6804,7 +6805,6 @@ type AccessSource implements Node {
     needsConfiguration: Boolean! @goField(forceResolver: true)
     connectionStatus: AccessSourceConnectionStatus! @goField(forceResolver: true)
     selectedOrganization: String @goField(forceResolver: true)
-    oauth2Scopes: [String!]! @goField(forceResolver: true)
     createdAt: Datetime!
     updatedAt: Datetime!
 

@@ -522,30 +522,6 @@ func (r *accessSourceResolver) SelectedOrganization(ctx context.Context, obj *ty
 	return nil, nil
 }
 
-// Oauth2Scopes is the resolver for the oauth2Scopes field.
-func (r *accessSourceResolver) Oauth2Scopes(ctx context.Context, obj *types.AccessSource) ([]string, error) {
-	if obj.ConnectorID == nil {
-		return []string{}, nil
-	}
-
-	prb := r.ProboService(ctx, obj.ID.TenantID())
-
-	dbConnector, err := prb.Connectors.Get(ctx, *obj.ConnectorID)
-	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return []string{}, nil
-		}
-		r.logger.ErrorCtx(ctx, "cannot get connector for oauth2 scopes", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	scopes := drivers.ProviderOAuth2Scopes(dbConnector.Provider)
-	if scopes == nil {
-		return []string{}, nil
-	}
-	return scopes, nil
-}
-
 // Permission is the resolver for the permission field.
 func (r *accessSourceResolver) Permission(ctx context.Context, obj *types.AccessSource, action string) (bool, error) {
 	return r.Resolver.Permission(ctx, obj, action)
@@ -1005,6 +981,15 @@ func (r *complianceFrameworkResolver) Framework(ctx context.Context, obj *types.
 	}
 
 	return types.NewFramework(framework), nil
+}
+
+// Oauth2Scopes is the resolver for the oauth2Scopes field.
+func (r *connectorResolver) Oauth2Scopes(ctx context.Context, obj *types.Connector) ([]string, error) {
+	scopes := drivers.ProviderOAuth2Scopes(obj.Provider)
+	if scopes == nil {
+		return []string{}, nil
+	}
+	return scopes, nil
 }
 
 // Organization is the resolver for the organization field.
@@ -11880,6 +11865,9 @@ func (r *Resolver) ComplianceFramework() schema.ComplianceFrameworkResolver {
 	return &complianceFrameworkResolver{r}
 }
 
+// Connector returns schema.ConnectorResolver implementation.
+func (r *Resolver) Connector() schema.ConnectorResolver { return &connectorResolver{r} }
+
 // Control returns schema.ControlResolver implementation.
 func (r *Resolver) Control() schema.ControlResolver { return &controlResolver{r} }
 
@@ -12227,6 +12215,7 @@ type auditLogEntryResolver struct{ *Resolver }
 type auditLogEntryConnectionResolver struct{ *Resolver }
 type complianceExternalURLResolver struct{ *Resolver }
 type complianceFrameworkResolver struct{ *Resolver }
+type connectorResolver struct{ *Resolver }
 type controlResolver struct{ *Resolver }
 type controlConnectionResolver struct{ *Resolver }
 type customDomainResolver struct{ *Resolver }

@@ -44,8 +44,8 @@ const fragment = graphql`
     connectorId
     connector {
       provider
+      oauth2Scopes
     }
-    oauth2Scopes
     connectionStatus
     selectedOrganization
     needsConfiguration
@@ -206,15 +206,15 @@ export function AccessSourceRow({ fKey, connectionId, organizationId }: Props) {
   };
 
   const handleReconnect = () => {
-    const provider = accessSource.connector?.provider;
-    if (!provider || !accessSource.connectorId) return;
+    const connector = accessSource.connector;
+    if (!connector || !accessSource.connectorId) return;
 
     const baseURL = import.meta.env.VITE_API_URL || window.location.origin;
     const url = new URL("/api/console/v1/connectors/initiate", baseURL);
     url.searchParams.append("organization_id", organizationId);
-    url.searchParams.append("provider", provider);
+    url.searchParams.append("provider", connector.provider);
     url.searchParams.append("connector_id", accessSource.connectorId);
-    for (const scope of accessSource.oauth2Scopes) {
+    for (const scope of connector.oauth2Scopes) {
       url.searchParams.append("scope", scope);
     }
     url.searchParams.append(
