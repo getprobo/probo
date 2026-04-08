@@ -23,7 +23,7 @@ interactions:
             User-Agent:
                 - google-api-go-client/0.5
             X-Goog-Api-Client:
-                - gl-go/1.26.1 gdcl/0.269.0
+                - gl-go/1.26.2 gdcl/0.269.0
         url: https://admin.googleapis.com/admin/directory/v1/users?alt=json&customer=my_customer&maxResults=500&prettyPrint=false&projection=full
         method: GET
       response:
