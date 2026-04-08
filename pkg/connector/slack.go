@@ -111,20 +111,15 @@ func (c *SlackConnection) UnmarshalJSON(data []byte) error {
 
 func ParseSlackTokenResponse(body []byte, oauth2Conn OAuth2Connection, organizationID gid.GID) (*SlackConnection, *gid.GID, error) {
 	var slackResponse SlackTokenResponse
-	var buf bytes.Buffer
-	buf.Write(body)
-	if err := json.NewDecoder(&buf).Decode(&slackResponse); err != nil {
+	if err := json.NewDecoder(bytes.NewReader(body)).Decode(&slackResponse); err != nil {
 		return nil, nil, fmt.Errorf("cannot decode Slack token response: %w", err)
 	}
 
-	if slackResponse.IncomingWebhook == nil {
-		return nil, nil, fmt.Errorf("incoming webhook is required for Slack")
-	}
-
-	settings := SlackSettings{
-		WebhookURL: slackResponse.IncomingWebhook.URL,
-		Channel:    slackResponse.IncomingWebhook.Channel,
-		ChannelID:  slackResponse.IncomingWebhook.ChannelID,
+	settings := SlackSettings{}
+	if slackResponse.IncomingWebhook != nil {
+		settings.WebhookURL = slackResponse.IncomingWebhook.URL
+		settings.Channel = slackResponse.IncomingWebhook.Channel
+		settings.ChannelID = slackResponse.IncomingWebhook.ChannelID
 	}
 
 	return &SlackConnection{
