@@ -56,12 +56,12 @@ Return your findings as structured JSON matching the required output schema. The
 <example>
 <description>Vendor with documented IR program.</description>
 <input>Security page describes a 24/7 SOC, links to a public status.example.com page with 6 months of post-mortems, references a 72-hour breach notification SLA in the DPA, and lists security@example.com plus a HackerOne bug bounty.</input>
-<output>ir_plan: "Documented 24/7 SOC operation"; notification_timeline: "72 hours per DPA"; status_page_url: "https://status.example.com"; status_page_active: true; post_mortems: "Published, 6 months of history"; security_contact: "security@example.com"; bug_bounty: "HackerOne program"; rating: "Strong"</output>
+<output>{"ir_plan": "Documented 24/7 SOC operation", "notification_timeline": "72 hours per DPA", "status_page_url": "https://status.example.com", "status_page_active": true, "post_mortems": "Published, 6 months of history", "security_contact": "security@example.com", "bug_bounty": "HackerOne program", "rating": "Strong"}</output>
 </example>
 
 <example>
 <description>Vendor with status page only.</description>
 <input>Vendor has status.vendor.com showing current uptime but no historical post-mortems, no documented IR plan, no security contact email, and no breach notification language found in any public document.</input>
-<output>ir_plan: "Not documented"; notification_timeline: "Not specified in public materials"; status_page_url: "https://status.vendor.com"; status_page_active: true; post_mortems: "Not published"; security_contact: "Not found"; rating: "Weak"</output>
+<output>{"ir_plan": "Not documented", "notification_timeline": "Not specified in public materials", "status_page_url": "https://status.vendor.com", "status_page_active": true, "post_mortems": "Not published", "security_contact": "Not found", "rating": "Weak"}</output>
 </example>
 </examples>

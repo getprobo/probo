@@ -70,12 +70,12 @@ Return your findings as structured JSON matching the required output schema. The
 <example>
 <description>Active, well-maintained project.</description>
 <input>github.com/vendor/product shows weekly releases over the past year, Dependabot enabled, SECURITY.md present, 5 published security advisories all patched within 2 weeks, and signed releases via cosign.</input>
-<output>has_public_repos: true; release_cadence: "Weekly releases, last release within past 7 days"; dependency_management: "Dependabot enabled"; security_policy: "SECURITY.md present with disclosure address"; security_advisories: {total: 5, critical: 0, high: 2, medium: 3, low: 0, avg_time_to_fix: "~14 days"}; code_signing: "cosign-signed releases"; overall_assessment: "Strong"</output>
+<output>{"has_public_repos": true, "release_cadence": "Weekly releases, last release within past 7 days", "dependency_management": "Dependabot enabled", "security_policy": "SECURITY.md present with disclosure address", "security_advisories": {"total": 5, "critical": 0, "high": 2, "medium": 3, "low": 0, "avg_time_to_fix": "~14 days"}, "code_signing": "cosign-signed releases", "overall_assessment": "Strong"}</output>
 </example>
 
 <example>
 <description>Vendor with no public repositories.</description>
 <input>Vendor is a closed-source SaaS. No github.com/vendor or gitlab.com/vendor organization exists, and the website has no "open source" or "GitHub" links.</input>
-<output>has_public_repos: false; overall_assessment: "Not_Applicable"; notes: "No public code repositories found"</output>
+<output>{"has_public_repos": false, "overall_assessment": "Not_Applicable", "notes": "No public code repositories found"}</output>
 </example>
 </examples>

@@ -59,19 +59,19 @@ Analyze the vendor's documentation against applicable regulatory frameworks. Dow
 <example>
 <description>Vendor with comprehensive GDPR documentation.</description>
 <input>DPA references EU 2021 SCCs, names a DPO contact, lists Art. 28 processor obligations, specifies 72-hour breach notification, and includes a section on Article 35 DPIA assistance.</input>
-<output>gdpr={applicable: true, overall_status: "compliant", articles: [{article: "article_28", status: "compliant", notes: "All required elements present"}, {article: "article_32", status: "compliant", notes: "Security measures documented"}, {article: "article_33_34", status: "compliant", notes: "72-hour notification specified"}, {article: "article_35", status: "compliant", notes: "DPIA assistance clause present"}], notes: "Comprehensive GDPR compliance"}</output>
+<output>{"gdpr": {"applicable": true, "overall_status": "compliant", "articles": [{"article": "article_28", "status": "compliant", "notes": "All required elements present"}, {"article": "article_32", "status": "compliant", "notes": "Security measures documented"}, {"article": "article_33_34", "status": "compliant", "notes": "72-hour notification specified"}, {"article": "article_35", "status": "compliant", "notes": "DPIA assistance clause present"}], "notes": "Comprehensive GDPR compliance"}}</output>
 </example>
 
 <example>
 <description>HIPAA does not apply to a non-healthcare SaaS.</description>
 <input>Vendor is a project management SaaS with no mention of PHI, no BAA available, and no healthcare customers in case studies.</input>
-<output>hipaa={applicable: false, overall_status: "not_applicable", articles: [], notes: "Vendor does not handle PHI"}</output>
+<output>{"hipaa": {"applicable": false, "overall_status": "not_applicable", "articles": [], "notes": "Vendor does not handle PHI"}}</output>
 </example>
 
 <example>
 <description>Partial PCI DSS without full ROC.</description>
 <input>Trust page mentions "PCI DSS v4.0 SAQ-D Service Provider" but does not provide an Attestation of Compliance or audit date.</input>
-<output>pci_dss={applicable: true, overall_status: "partially_compliant", articles: [{article: "saq_type", status: "compliant", notes: "Self-Assessment Questionnaire SAQ-D"}, {article: "aoc", status: "not_assessed", notes: "AOC not publicly available"}], notes: "SAQ claimed but no AOC verified"}</output>
+<output>{"pci_dss": {"applicable": true, "overall_status": "partially_compliant", "articles": [{"article": "saq_type", "status": "compliant", "notes": "Self-Assessment Questionnaire SAQ-D"}, {"article": "aoc", "status": "not_assessed", "notes": "AOC not publicly available"}], "notes": "SAQ claimed but no AOC verified"}}</output>
 </example>
 </examples>
 
