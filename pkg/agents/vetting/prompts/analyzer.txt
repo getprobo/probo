@@ -63,18 +63,18 @@ Return your findings as structured JSON matching the required output schema. The
 <example>
 <description>Privacy policy with breach notification commitment.</description>
 <input>Privacy policy section: "We will notify affected users within 72 hours of confirming a personal data breach affecting their information, in accordance with GDPR Art. 33."</input>
-<output>document_type: "privacy_policy"; breach_notification: "72-hour notification to affected users, GDPR Art. 33 compliance"; gdpr_indicators: "GDPR Article 33 explicitly referenced"</output>
+<output>{"document_type": "privacy_policy", "breach_notification": "72-hour notification to affected users, GDPR Art. 33 compliance", "gdpr_indicators": "GDPR Article 33 explicitly referenced"}</output>
 </example>
 
 <example>
 <description>DPA with Standard Contractual Clauses.</description>
 <input>DPA Section 9: "For transfers of Personal Data outside the EEA, the parties incorporate the Standard Contractual Clauses (Module Two: Controller to Processor) approved by Commission Implementing Decision (EU) 2021/914."</input>
-<output>document_type: "dpa"; data_locations: ["EEA", "Outside EEA"]; subprocessor_terms: "EU 2021 SCCs Module Two (C2P) incorporated"; privacy_clauses: ["Standard Contractual Clauses 2021/914 Module Two for cross-border transfers"]</output>
+<output>{"document_type": "dpa", "data_locations": ["EEA", "Outside EEA"], "subprocessor_terms": "EU 2021 SCCs Module Two (C2P) incorporated", "privacy_clauses": ["Standard Contractual Clauses 2021/914 Module Two for cross-border transfers"]}</output>
 </example>
 
 <example>
 <description>Terms of service with low liability cap.</description>
 <input>ToS Section 14.3: "In no event shall Provider's aggregate liability exceed the fees paid by Customer in the twelve (12) months preceding the claim, or one hundred dollars ($100), whichever is greater."</input>
-<output>document_type: "terms_of_service"; liability_caps: "Aggregate liability capped at greater of 12 months fees or $100"; indemnification: "Not present in this document"</output>
+<output>{"document_type": "terms_of_service", "liability_caps": "Aggregate liability capped at greater of 12 months fees or $100", "indemnification": "Not present in this document"}</output>
 </example>
 </examples>

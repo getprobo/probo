@@ -42,18 +42,18 @@ Return your findings as structured JSON matching the required output schema. The
 <example>
 <description>Independently audited certification with proof.</description>
 <input>Trust center page shows "SOC 2 Type II" with a Coalfire badge, audit period "Jan 2025 - Dec 2025", and a "Request Report" link gated behind a form.</input>
-<output>certifications=[{name: "SOC 2 Type II", status: "current", details: "Audited by Coalfire, 2025 audit period, report available on request via trust center"}]</output>
+<output>{"certifications": [{"name": "SOC 2 Type II", "status": "current", "details": "Audited by Coalfire, 2025 audit period, report available on request via trust center"}]}</output>
 </example>
 
 <example>
 <description>Marketing claim without verifiable proof.</description>
 <input>Homepage footer displays a small "SOC 2" badge linking to /security, but the security page has no audit date, no auditor name, and no certificate number.</input>
-<output>certifications=[{name: "SOC 2", status: "claimed_unverified", details: "Badge displayed but no audit date, auditor, or certificate found"}]</output>
+<output>{"certifications": [{"name": "SOC 2", "status": "claimed_unverified", "details": "Badge displayed but no audit date, auditor, or certificate found"}]}</output>
 </example>
 
 <example>
 <description>Framework alignment is not certification.</description>
 <input>Security whitepaper says "Our security program aligns with NIST CSF and CIS Controls."</input>
-<output>certifications=[]; other_frameworks=["NIST CSF (alignment claimed, not certified)", "CIS Controls (alignment claimed, not certified)"]</output>
+<output>{"certifications": [], "other_frameworks": ["NIST CSF (alignment claimed, not certified)", "CIS Controls (alignment claimed, not certified)"]}</output>
 </example>
 </examples>
