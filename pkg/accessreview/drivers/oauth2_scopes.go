@@ -27,6 +27,7 @@ var providerOAuth2Scopes = map[coredata.ConnectorProvider][]string{
 	coredata.ConnectorProviderBrex:     {"openid", "offline_access"},
 	coredata.ConnectorProviderDocuSign: {"signature"},
 	coredata.ConnectorProviderLinear:   {"read"},
+	coredata.ConnectorProviderSlack:    {"users:read", "users:read.email"},
 	coredata.ConnectorProviderGoogleWorkspace: {
 		"https://www.googleapis.com/auth/admin.directory.user.readonly",
 		"https://www.googleapis.com/auth/admin.directory.group.member.readonly",
