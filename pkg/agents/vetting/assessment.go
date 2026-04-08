@@ -38,6 +38,11 @@ const (
 	// AssessmentTimeout is the hard upper bound on a single assessment
 	// run. This is also the timeout the CLI client should use.
 	AssessmentTimeout = 20 * time.Minute
+
+	// extractionTimeout is the dedicated budget for the final
+	// vendor_info_extractor turn. It runs outside the orchestrator's
+	// budget so a slow orchestrator can't starve the extractor.
+	extractionTimeout = 5 * time.Minute
 )
 
 // vendorCategoryEnum is the canonical list of allowed values for
@@ -248,6 +253,16 @@ func (a *Assessor) extractVendorInfo(ctx context.Context, document string) (*Ven
 		return nil, fmt.Errorf("cannot build vendor info output type: %w", err)
 	}
 
+	// Run the extractor on its own timeout so a slow orchestrator
+	// cannot starve the final JSON conversion step. The extractor has
+	// no tools and produces one structured JSON output; a few minutes
+	// is more than enough even when streaming is forced.
+	extractCtx, cancel := context.WithTimeout(
+		context.WithoutCancel(ctx),
+		extractionTimeout,
+	)
+	defer cancel()
+
 	extractor := agent.New(
 		"vendor_info_extractor",
 		a.cfg.Client,
@@ -259,7 +274,7 @@ func (a *Assessor) extractVendorInfo(ctx context.Context, document string) (*Ven
 	)
 
 	result, err := extractor.Run(
-		ctx,
+		extractCtx,
 		[]llm.Message{
 			{
 				Role:  llm.RoleUser,
