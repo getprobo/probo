@@ -28,6 +28,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/statelesstoken"
 )
 
 func TestBuildTokenRequest_PostForm(t *testing.T) {
@@ -310,4 +311,247 @@ func TestInitiateWithState_Scopes(t *testing.T) {
 		require.NoError(t, err)
 		assert.False(t, parsed.Query().Has("scope"), "scope param should be absent when no scopes provided")
 	})
+
+	t.Run("include_granted_scopes set when provider supports and caller requests", func(t *testing.T) {
+		t.Parallel()
+
+		c := &OAuth2Connector{
+			ClientID:                "id",
+			ClientSecret:            "secret",
+			RedirectURI:             "https://example.com/cb",
+			AuthURL:                 "https://provider.example.com/authorize",
+			SupportsIncrementalAuth: true,
+		}
+
+		orgID := gid.New(gid.NewTenantID(), 0)
+
+		u, err := c.InitiateWithState(
+			context.Background(),
+			OAuth2State{OrganizationID: orgID.String(), Provider: "TEST"},
+			InitiateOptions{
+				Scopes:               []string{"read:user"},
+				IncludeGrantedScopes: true,
+			},
+			nil,
+		)
+		require.NoError(t, err)
+
+		parsed, err := url.Parse(u)
+		require.NoError(t, err)
+		assert.Equal(t, "true", parsed.Query().Get("include_granted_scopes"))
+	})
+
+	t.Run("include_granted_scopes absent when provider does not support it", func(t *testing.T) {
+		t.Parallel()
+
+		c := &OAuth2Connector{
+			ClientID:                "id",
+			ClientSecret:            "secret",
+			RedirectURI:             "https://example.com/cb",
+			AuthURL:                 "https://provider.example.com/authorize",
+			SupportsIncrementalAuth: false,
+		}
+
+		orgID := gid.New(gid.NewTenantID(), 0)
+
+		u, err := c.InitiateWithState(
+			context.Background(),
+			OAuth2State{OrganizationID: orgID.String(), Provider: "TEST"},
+			InitiateOptions{
+				Scopes:               []string{"read:user"},
+				IncludeGrantedScopes: true,
+			},
+			nil,
+		)
+		require.NoError(t, err)
+
+		parsed, err := url.Parse(u)
+		require.NoError(t, err)
+		assert.False(t, parsed.Query().Has("include_granted_scopes"))
+	})
+
+	t.Run("include_granted_scopes absent when caller does not request", func(t *testing.T) {
+		t.Parallel()
+
+		c := &OAuth2Connector{
+			ClientID:                "id",
+			ClientSecret:            "secret",
+			RedirectURI:             "https://example.com/cb",
+			AuthURL:                 "https://provider.example.com/authorize",
+			SupportsIncrementalAuth: true,
+		}
+
+		orgID := gid.New(gid.NewTenantID(), 0)
+
+		u, err := c.InitiateWithState(
+			context.Background(),
+			OAuth2State{OrganizationID: orgID.String(), Provider: "TEST"},
+			InitiateOptions{Scopes: []string{"read:user"}},
+			nil,
+		)
+		require.NoError(t, err)
+
+		parsed, err := url.Parse(u)
+		require.NoError(t, err)
+		assert.False(t, parsed.Query().Has("include_granted_scopes"))
+	})
+
+	t.Run("prompt=consent skipped when incremental auth is active", func(t *testing.T) {
+		t.Parallel()
+
+		c := &OAuth2Connector{
+			ClientID:                "id",
+			ClientSecret:            "secret",
+			RedirectURI:             "https://example.com/cb",
+			AuthURL:                 "https://provider.example.com/authorize",
+			SupportsIncrementalAuth: true,
+			ExtraAuthParams: map[string]string{
+				"access_type": "offline",
+				"prompt":      "consent",
+			},
+		}
+
+		orgID := gid.New(gid.NewTenantID(), 0)
+
+		u, err := c.InitiateWithState(
+			context.Background(),
+			OAuth2State{OrganizationID: orgID.String(), Provider: "TEST"},
+			InitiateOptions{
+				Scopes:               []string{"read:user"},
+				IncludeGrantedScopes: true,
+			},
+			nil,
+		)
+		require.NoError(t, err)
+
+		parsed, err := url.Parse(u)
+		require.NoError(t, err)
+		assert.Equal(t, "offline", parsed.Query().Get("access_type"))
+		assert.False(t, parsed.Query().Has("prompt"), "prompt=consent should be skipped when doing incremental auth on a provider that supports it")
+		assert.Equal(t, "true", parsed.Query().Get("include_granted_scopes"))
+	})
+
+	t.Run("prompt=consent preserved on first install", func(t *testing.T) {
+		t.Parallel()
+
+		c := &OAuth2Connector{
+			ClientID:                "id",
+			ClientSecret:            "secret",
+			RedirectURI:             "https://example.com/cb",
+			AuthURL:                 "https://provider.example.com/authorize",
+			SupportsIncrementalAuth: true,
+			ExtraAuthParams: map[string]string{
+				"access_type": "offline",
+				"prompt":      "consent",
+			},
+		}
+
+		orgID := gid.New(gid.NewTenantID(), 0)
+
+		u, err := c.InitiateWithState(
+			context.Background(),
+			OAuth2State{OrganizationID: orgID.String(), Provider: "TEST"},
+			InitiateOptions{
+				Scopes:               []string{"read:user"},
+				IncludeGrantedScopes: false, // first install, no existing grant
+			},
+			nil,
+		)
+		require.NoError(t, err)
+
+		parsed, err := url.Parse(u)
+		require.NoError(t, err)
+		assert.Equal(t, "offline", parsed.Query().Get("access_type"))
+		assert.Equal(t, "consent", parsed.Query().Get("prompt"), "prompt=consent must still fire on first install so Google issues a refresh token")
+		assert.False(t, parsed.Query().Has("include_granted_scopes"))
+	})
+
+	t.Run("prompt=consent preserved when provider does not support incremental auth", func(t *testing.T) {
+		t.Parallel()
+
+		c := &OAuth2Connector{
+			ClientID:                "id",
+			ClientSecret:            "secret",
+			RedirectURI:             "https://example.com/cb",
+			AuthURL:                 "https://provider.example.com/authorize",
+			SupportsIncrementalAuth: false,
+			ExtraAuthParams: map[string]string{
+				"prompt": "consent",
+			},
+		}
+
+		orgID := gid.New(gid.NewTenantID(), 0)
+
+		u, err := c.InitiateWithState(
+			context.Background(),
+			OAuth2State{OrganizationID: orgID.String(), Provider: "TEST"},
+			InitiateOptions{
+				Scopes:               []string{"read:user"},
+				IncludeGrantedScopes: true, // caller requested, but provider does not support
+			},
+			nil,
+		)
+		require.NoError(t, err)
+
+		parsed, err := url.Parse(u)
+		require.NoError(t, err)
+		assert.Equal(t, "consent", parsed.Query().Get("prompt"), "prompt=consent must not be skipped for providers that do not support incremental auth")
+	})
+}
+
+// TestCompleteWithState_ScopeFallback verifies that when the provider's
+// token endpoint returns a successful token response that omits the
+// `scope` field (which RFC 6749 §5.1 allows when the granted scope is
+// identical to the requested scope), CompleteWithState falls back to
+// the RequestedScopes carried in the OAuth2State so the persisted
+// connection still carries the scope set. This is load-bearing for the
+// scope-union logic on subsequent reconnects -- without it we would
+// store empty scope and lose the diff.
+func TestCompleteWithState_ScopeFallback(t *testing.T) {
+	t.Parallel()
+
+	// Fake provider token endpoint: returns a valid token response
+	// with NO `scope` field, matching RFC 6749 §5.1 "identical to
+	// requested" shape.
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, http.MethodPost, r.Method)
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"access_token":"live-token","token_type":"Bearer","expires_in":3600}`))
+	}))
+	defer server.Close()
+
+	c := &OAuth2Connector{
+		ClientID:     "id",
+		ClientSecret: "secret",
+		RedirectURI:  "https://example.com/cb",
+		AuthURL:      "https://provider.example.com/authorize",
+		TokenURL:     server.URL,
+	}
+
+	orgID := gid.New(gid.NewTenantID(), 0)
+	stateData := OAuth2State{
+		OrganizationID:  orgID.String(),
+		Provider:        "TEST",
+		RequestedScopes: []string{"read:user", "write:user"},
+	}
+	stateToken, err := statelesstoken.NewToken(c.ClientSecret, OAuth2TokenType, OAuth2TokenTTL, stateData)
+	require.NoError(t, err)
+
+	// Fabricate a callback request with a code + the signed state.
+	req := httptest.NewRequest(http.MethodGet, "https://example.com/cb?code=the-code&state="+stateToken, nil)
+
+	conn, returnedState, err := c.CompleteWithState(context.Background(), req)
+	require.NoError(t, err)
+	require.NotNil(t, conn)
+	require.NotNil(t, returnedState)
+
+	oauth2Conn, ok := conn.(*OAuth2Connection)
+	require.True(t, ok, "expected *OAuth2Connection, got %T", conn)
+
+	assert.Equal(t, "live-token", oauth2Conn.AccessToken)
+	// The provider omitted scope, so CompleteWithState must fall back
+	// to the RequestedScopes carried in the state token, formatted as
+	// a space-separated RFC 6749 §3.3 scope string (sorted).
+	assert.Equal(t, "read:user write:user", oauth2Conn.Scope)
+	assert.Equal(t, []string{"read:user", "write:user"}, returnedState.RequestedScopes)
 }

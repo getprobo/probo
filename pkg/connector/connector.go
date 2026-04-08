@@ -32,6 +32,13 @@ type (
 	// a different set of scopes (e.g. SCIM bridge vs access review).
 	InitiateOptions struct {
 		Scopes []string
+		// IncludeGrantedScopes is honored only when the provider has
+		// SupportsIncrementalAuth=true.
+		IncludeGrantedScopes bool
+		// ConnectorID, when set, marks this flow as a reconnect of an
+		// existing connector: the callback updates the row in place
+		// instead of creating a new one.
+		ConnectorID string
 	}
 
 	Connector interface {
@@ -42,6 +49,7 @@ type (
 	Connection interface {
 		Type() ProtocolType
 		Client(ctx context.Context) (*http.Client, error)
+		Scopes() []string
 
 		json.Unmarshaler
 		json.Marshaler
