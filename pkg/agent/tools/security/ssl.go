@@ -72,10 +72,19 @@ func CheckSSLCertificateTool() (agent.Tool, error) {
 				}), nil
 			}
 
+			// This is a certificate inspection tool: we intentionally
+			// connect to servers whose certificates may be expired,
+			// self-signed, or otherwise invalid, because the whole
+			// point is to report back on the certificate state.
+			// InsecureSkipVerify disables the handshake's built-in
+			// verification; we then perform the verification manually
+			// below (x509.Verify) and surface the result in Valid.
+			// This pattern is safe here because we never send any
+			// credentials or confidential data over the connection.
 			dialer := &tls.Dialer{
 				NetDialer: &net.Dialer{Timeout: 10 * time.Second},
 				Config: &tls.Config{
-					InsecureSkipVerify: true,
+					InsecureSkipVerify: true, //nolint:gosec // cert inspector; verification happens manually below
 					ServerName:         p.Domain,
 				},
 			}
