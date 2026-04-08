@@ -63,15 +63,3 @@ func (t *InteractiveToolset) Tools() ([]agent.Tool, error) {
 		DownloadPDFTool,
 	)
 }
-
-// BuildReadOnlyTools returns read-only browser tools. Prefer
-// NewReadOnlyToolset() for composable usage with agent.WithToolsets.
-func BuildReadOnlyTools(b *Browser) ([]agent.Tool, error) {
-	return NewReadOnlyToolset(b).Tools()
-}
-
-// BuildTools returns all browser tools. Prefer NewInteractiveToolset()
-// for composable usage with agent.WithToolsets.
-func BuildTools(b *Browser) ([]agent.Tool, error) {
-	return NewInteractiveToolset(b).Tools()
-}

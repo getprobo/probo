@@ -49,9 +49,3 @@ func (t *Toolset) Tools() ([]agent.Tool, error) {
 		CheckDNSRecordsTool,
 	)
 }
-
-// BuildTools returns all security tools. Prefer NewToolset() for
-// composable usage with agent.WithToolsets.
-func BuildTools() ([]agent.Tool, error) {
-	return NewToolset().Tools()
-}

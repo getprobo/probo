@@ -14,38 +14,6 @@
 
 package agent
 
-// Toolset groups related tools that can be composed into agents.
-// Implementations should be stateless; Tools may be called multiple
-// times during an agent's lifetime.
-type Toolset interface {
-	Tools() ([]Tool, error)
-}
-
-// ToolsetFunc adapts a function to the Toolset interface.
-type ToolsetFunc func() ([]Tool, error)
-
-func (f ToolsetFunc) Tools() ([]Tool, error) { return f() }
-
-// ToolSlice wraps a pre-built slice of tools as a Toolset.
-type ToolSlice []Tool
-
-func (s ToolSlice) Tools() ([]Tool, error) { return []Tool(s), nil }
-
-// MergeToolsets combines multiple toolsets into a single toolset.
-func MergeToolsets(toolsets ...Toolset) Toolset {
-	return ToolsetFunc(func() ([]Tool, error) {
-		var all []Tool
-		for _, ts := range toolsets {
-			tools, err := ts.Tools()
-			if err != nil {
-				return nil, err
-			}
-			all = append(all, tools...)
-		}
-		return all, nil
-	})
-}
-
 // CollectTools calls each factory function and returns all tools.
 // This reduces the repetitive error-checking boilerplate in BuildTools
 // functions.
