@@ -26,10 +26,11 @@ type (
 	// initiate time via InitiateOptions, since the same provider may be used
 	// in multiple contexts requiring different scope sets.
 	providerDefinition struct {
-		AuthURL           string
-		TokenURL          string
-		ExtraAuthParams   map[string]string
-		TokenEndpointAuth string // "post-form" (default), "basic-form", or "basic-json"
+		AuthURL                 string
+		TokenURL                string
+		ExtraAuthParams         map[string]string
+		TokenEndpointAuth       string // "post-form" (default), "basic-form", or "basic-json"
+		SupportsIncrementalAuth bool
 	}
 )
 
@@ -79,6 +80,7 @@ var (
 				"access_type": "offline",
 				"prompt":      "consent",
 			},
+			SupportsIncrementalAuth: true,
 		},
 		"LINEAR": {
 			AuthURL:  "https://linear.app/oauth/authorize",
@@ -98,5 +100,6 @@ func ApplyProviderDefaults(provider string, redirectURI string, c *OAuth2Connect
 		c.TokenURL = def.TokenURL
 		c.ExtraAuthParams = def.ExtraAuthParams
 		c.TokenEndpointAuth = def.TokenEndpointAuth
+		c.SupportsIncrementalAuth = def.SupportsIncrementalAuth
 	}
 }

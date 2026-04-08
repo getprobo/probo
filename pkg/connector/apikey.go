@@ -32,6 +32,10 @@ func (c *APIKeyConnection) Type() ProtocolType {
 	return ProtocolAPIKey
 }
 
+func (c *APIKeyConnection) Scopes() []string {
+	return nil
+}
+
 func (c *APIKeyConnection) Client(ctx context.Context) (*http.Client, error) {
 	transport := &oauth2Transport{
 		token:      c.APIKey,

@@ -41,20 +41,22 @@ import (
 
 type (
 	OAuth2Connector struct {
-		ClientID          string
-		ClientSecret      string
-		RedirectURI       string
-		AuthURL           string
-		TokenURL          string
-		ExtraAuthParams   map[string]string // Optional: extra params for auth URL (e.g., access_type=offline for Google)
-		TokenEndpointAuth string            // "post-form" (default), "basic-form", or "basic-json"
+		ClientID                string
+		ClientSecret            string
+		RedirectURI             string
+		AuthURL                 string
+		TokenURL                string
+		ExtraAuthParams         map[string]string // Optional: extra params for auth URL (e.g., access_type=offline for Google)
+		TokenEndpointAuth       string            // "post-form" (default), "basic-form", or "basic-json"
+		SupportsIncrementalAuth bool
 	}
 
 	OAuth2State struct {
-		OrganizationID string `json:"oid"`
-		Provider       string `json:"provider"`
-		ContinueURL    string `json:"continue,omitempty"`
-		ConnectorID    string `json:"cid,omitempty"` // Set when reconnecting an existing connector
+		OrganizationID  string   `json:"oid"`
+		Provider        string   `json:"provider"`
+		ContinueURL     string   `json:"continue,omitempty"`
+		ConnectorID     string   `json:"cid,omitempty"` // Set when reconnecting an existing connector
+		RequestedScopes []string `json:"scopes,omitempty"`
 	}
 
 	OAuth2Connection struct {
@@ -105,15 +107,14 @@ func (c *OAuth2Connector) Initiate(
 	r *http.Request,
 ) (string, error) {
 	stateData := OAuth2State{
-		OrganizationID: organizationID.String(),
-		Provider:       provider,
+		OrganizationID:  organizationID.String(),
+		Provider:        provider,
+		ConnectorID:     opts.ConnectorID,
+		RequestedScopes: opts.Scopes,
 	}
 	if r != nil {
 		if continueURL := r.URL.Query().Get("continue"); continueURL != "" {
 			stateData.ContinueURL = continueURL
-		}
-		if connectorID := r.URL.Query().Get("connector_id"); connectorID != "" {
-			stateData.ConnectorID = connectorID
 		}
 	}
 	return c.InitiateWithState(ctx, stateData, opts, r)
@@ -141,8 +142,18 @@ func (c *OAuth2Connector) InitiateWithState(
 		authCodeQuery.Set("scope", strings.Join(opts.Scopes, " "))
 	}
 
-	// Add any extra auth params (e.g., access_type=offline, prompt=consent for Google)
+	incrementalAuth := c.SupportsIncrementalAuth && opts.IncludeGrantedScopes
+	if incrementalAuth {
+		authCodeQuery.Set("include_granted_scopes", "true")
+	}
+
+	// Skip prompt=consent when doing incremental auth so the user sees
+	// only the delta, not a full re-consent. First-install flows keep it
+	// because IncludeGrantedScopes is false there.
 	for k, v := range c.ExtraAuthParams {
+		if incrementalAuth && k == "prompt" && v == "consent" {
+			continue
+		}
 		authCodeQuery.Set(k, v)
 	}
 
@@ -225,11 +236,19 @@ func (c *OAuth2Connector) CompleteWithState(ctx context.Context, r *http.Request
 		return nil, nil, fmt.Errorf("cannot decode token response: %w", err)
 	}
 
+	grantedScope := rawToken.Scope
+	if grantedScope == "" {
+		// RFC 6749 §5.1: scope is OPTIONAL when identical to the
+		// requested scope. Fall back to what we asked for so
+		// subsequent reconnect diffs have a meaningful base.
+		grantedScope = FormatScopeString(payload.Data.RequestedScopes)
+	}
+
 	oauth2Conn := OAuth2Connection{
 		AccessToken:  rawToken.AccessToken,
 		RefreshToken: rawToken.RefreshToken,
 		TokenType:    rawToken.TokenType,
-		Scope:        rawToken.Scope,
+		Scope:        grantedScope,
 	}
 
 	// Convert expires_in (seconds) to expires_at (absolute time)
@@ -333,6 +352,10 @@ func (c *OAuth2Connector) buildTokenRequest(ctx context.Context, code, redirectU
 
 func (c *OAuth2Connection) Type() ProtocolType {
 	return ProtocolOAuth2
+}
+
+func (c *OAuth2Connection) Scopes() []string {
+	return ParseScopeString(c.Scope)
 }
 
 func (c *OAuth2Connection) Client(ctx context.Context) (*http.Client, error) {
