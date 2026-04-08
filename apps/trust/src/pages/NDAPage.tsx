@@ -289,7 +289,7 @@ export function NDAPage(props: {
             </div>
           </div>
           <a
-            href="https://www.getprobo.com/"
+            href="https://app.govrly.sa//"
             className="flex gap-1 text-sm font-medium text-txt-tertiary items-center py-6"
           >
             Powered by

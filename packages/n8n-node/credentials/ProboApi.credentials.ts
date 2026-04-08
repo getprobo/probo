@@ -13,7 +13,7 @@ export class ProboApi implements ICredentialType {
 
 	icon: Icon = { light: 'file:../icons/probo-light.svg', dark: 'file:../icons/probo.svg' };
 
-	documentationUrl = 'https://www.getprobo.com/docs';
+	documentationUrl = 'https://app.govrly.sa//docs';
 
 	properties: INodeProperties[] = [
 		{

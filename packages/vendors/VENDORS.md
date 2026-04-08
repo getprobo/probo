@@ -2871,10 +2871,10 @@ Govrly is an open-source compliance platform that helps startups achieve SOC 2 a
 
 | Resource | Link |
 |----------|------|
-| Website | [Link](https://www.getprobo.com/) |
-| Privacy Policy | [Link](https://www.getprobo.com/privacy) |
-| Terms of Service | [Link](https://www.getprobo.com/terms) |
-| Subprocessors List | [Link](https://www.getprobo.com/subprocessors) |
+| Website | [Link](https://app.govrly.sa//) |
+| Privacy Policy | [Link](https://app.govrly.sa//privacy) |
+| Terms of Service | [Link](https://app.govrly.sa//terms) |
+| Subprocessors List | [Link](https://app.govrly.sa//subprocessors) |
 
 **Category:** SECURITY
 
