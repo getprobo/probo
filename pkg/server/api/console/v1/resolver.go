@@ -225,7 +225,15 @@ func handleConnectorComplete(
 				return
 			}
 
-			cnnctr, err = svc.Connectors.Reconnect(r.Context(), connectorID, connection)
+			cnnctr, err = svc.Connectors.Reconnect(
+				r.Context(),
+				probo.ReconnectConnectorRequest{
+					ConnectorID:    connectorID,
+					OrganizationID: organizationID,
+					Provider:       connectorProvider,
+					Connection:     connection,
+				},
+			)
 			if err != nil {
 				panic(fmt.Errorf("cannot reconnect connector: %w", err))
 			}
