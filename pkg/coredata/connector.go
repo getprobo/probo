@@ -20,6 +20,7 @@ import (
 	"errors"
 	"fmt"
 	"maps"
+	"sort"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -114,6 +115,58 @@ func (c *Connectors) LoadAllByOrganizationIDProtocolAndProvider(
 	}
 
 	return nil
+}
+
+// LoadOneByOrganizationIDAndProvider loads the effective OAuth2
+// connector for an (organization, provider) pair, picking the row with
+// the widest stored scope set. Ties are broken by most recent
+// updated_at. Returns ErrResourceNotFound if no OAuth2 row exists.
+func (c *Connector) LoadOneByOrganizationIDAndProvider(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	encryptionKey cipher.EncryptionKey,
+	organizationID gid.GID,
+	provider ConnectorProvider,
+) error {
+	var connectors Connectors
+	if err := connectors.LoadAllByOrganizationIDProtocolAndProvider(
+		ctx,
+		conn,
+		scope,
+		organizationID,
+		ConnectorProtocolOAuth2,
+		provider,
+		encryptionKey,
+	); err != nil {
+		return fmt.Errorf("cannot load connectors: %w", err)
+	}
+
+	if len(connectors) == 0 {
+		return ErrResourceNotFound
+	}
+
+	// Widest-scope-wins, tiebreak by most recent updated_at.
+	sort.SliceStable(connectors, func(i, j int) bool {
+		ci, cj := connectorScopeCount(connectors[i]), connectorScopeCount(connectors[j])
+		if ci != cj {
+			return ci > cj
+		}
+		return connectors[i].UpdatedAt.After(connectors[j].UpdatedAt)
+	})
+
+	*c = *connectors[0]
+	return nil
+}
+
+// connectorScopeCount returns the number of scopes granted on a
+// decrypted connector's connection. Returns 0 if the connection is nil.
+// Used by the widest-scope selector.
+func connectorScopeCount(c *Connector) int {
+	if c == nil || c.Connection == nil {
+		return 0
+	}
+	return len(c.Connection.Scopes())
 }
 
 func (c *Connectors) LoadByOrganizationIDWithoutDecryptedConnection(
