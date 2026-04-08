@@ -60,6 +60,13 @@ type (
 		GitHubSettings              *coredata.GitHubConnectorSettings
 		OnePasswordUsersAPISettings *coredata.OnePasswordUsersAPISettings
 	}
+
+	ReconnectConnectorRequest struct {
+		ConnectorID    gid.GID
+		OrganizationID gid.GID
+		Provider       coredata.ConnectorProvider
+		Connection     connector.Connection
+	}
 )
 
 func (car *CreateConnectorRequest) Validate() error {
@@ -68,6 +75,15 @@ func (car *CreateConnectorRequest) Validate() error {
 	v.Check(car.Provider, "provider", validator.Required(), validator.OneOfSlice(coredata.ConnectorProviders()))
 	v.Check(car.Protocol, "protocol", validator.Required(), validator.OneOfSlice(coredata.ConnectorProtocols()))
 	v.Check(car.Connection, "connection", validator.Required())
+	return v.Error()
+}
+
+func (rcr *ReconnectConnectorRequest) Validate() error {
+	v := validator.New()
+	v.Check(rcr.ConnectorID, "connector_id", validator.Required(), validator.GID(coredata.ConnectorEntityType))
+	v.Check(rcr.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
+	v.Check(rcr.Provider, "provider", validator.Required(), validator.OneOfSlice(coredata.ConnectorProviders()))
+	v.Check(rcr.Connection, "connection", validator.Required())
 	return v.Error()
 }
 
@@ -129,32 +145,51 @@ func (s *ConnectorService) GetByOrganizationIDAndProvider(
 	organizationID gid.GID,
 	provider coredata.ConnectorProvider,
 ) (*coredata.Connector, error) {
-	var connectors coredata.Connectors
+	cnnctr := &coredata.Connector{}
 
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			return connectors.LoadAllByOrganizationIDProtocolAndProvider(
+			return cnnctr.LoadOneByOrganizationIDAndProvider(
 				ctx,
 				conn,
 				s.svc.scope,
-				organizationID,
-				coredata.ConnectorProtocolOAuth2,
-				provider,
 				s.svc.encryptionKey,
+				organizationID,
+				provider,
 			)
 		},
 	)
-
 	if err != nil {
 		return nil, fmt.Errorf("cannot get connector: %w", err)
 	}
 
-	if len(connectors) == 0 {
-		return nil, coredata.ErrResourceNotFound
+	return cnnctr, nil
+}
+
+// GetWithConnection loads a specific connector by ID and returns the
+// full *coredata.Connector with Connection populated. Used by the
+// initiate handler's explicit reconnect path (?connector_id=<id>),
+// which needs to read the stored scope set to compute the union.
+// Contrast with Get, which uses LoadMetadataByID and returns a
+// connector with Connection == nil.
+func (s *ConnectorService) GetWithConnection(
+	ctx context.Context,
+	connectorID gid.GID,
+) (*coredata.Connector, error) {
+	cnnctr := &coredata.Connector{}
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			return cnnctr.LoadByID(ctx, conn, s.svc.scope, connectorID, s.svc.encryptionKey)
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get connector: %w", err)
 	}
 
-	return connectors[0], nil
+	return cnnctr, nil
 }
 
 func (s *ConnectorService) Get(
@@ -288,29 +323,75 @@ func (s *ConnectorService) Create(
 	return newConnector, nil
 }
 
-// Reconnect updates an existing connector's connection (token) without
-// changing its settings or identity. Used when an OAuth token expires
-// and the user re-authenticates.
+// Reconnect updates an existing OAuth2 connector's connection (token)
+// in place. It validates that the loaded connector belongs to the
+// expected org and provider inside the same transaction, blocking
+// cross-org and cross-provider corruption via a crafted connector_id
+// in the initiate URL. Refresh tokens and Slack webhook settings are
+// preserved from the existing connection when the new one omits them.
 func (s *ConnectorService) Reconnect(
 	ctx context.Context,
-	connectorID gid.GID,
-	connection connector.Connection,
+	req ReconnectConnectorRequest,
 ) (*coredata.Connector, error) {
+	if err := req.Validate(); err != nil {
+		return nil, fmt.Errorf("cannot reconnect connector: %w", err)
+	}
+
 	cnnctr := &coredata.Connector{}
 
-	err := s.svc.pg.WithTx(ctx, func(ctx context.Context, conn pg.Tx) error {
-		if err := cnnctr.LoadMetadataByID(ctx, conn, s.svc.scope, connectorID); err != nil {
-			return fmt.Errorf("cannot load connector: %w", err)
-		}
+	err := s.svc.pg.WithTx(
+		ctx,
+		func(ctx context.Context, conn pg.Tx) error {
+			if err := cnnctr.LoadByID(ctx, conn, s.svc.scope, req.ConnectorID, s.svc.encryptionKey); err != nil {
+				return fmt.Errorf("cannot load connector: %w", err)
+			}
 
-		cnnctr.Connection = connection
-		cnnctr.UpdatedAt = time.Now()
+			if cnnctr.OrganizationID != req.OrganizationID {
+				return fmt.Errorf("cannot reconnect connector: organization mismatch")
+			}
+			if cnnctr.Provider != req.Provider {
+				return fmt.Errorf("cannot reconnect connector: provider mismatch")
+			}
+			if cnnctr.Protocol != coredata.ConnectorProtocolOAuth2 {
+				return fmt.Errorf("cannot reconnect connector: not an OAuth2 connector")
+			}
 
-		return cnnctr.Update(ctx, conn, s.svc.scope, s.svc.encryptionKey)
-	})
+			cnnctr.Connection = preserveConnectionFields(req.Connection, cnnctr.Connection)
+			cnnctr.UpdatedAt = time.Now()
+
+			return cnnctr.Update(ctx, conn, s.svc.scope, s.svc.encryptionKey)
+		},
+	)
 	if err != nil {
 		return nil, fmt.Errorf("cannot reconnect connector: %w", err)
 	}
 
 	return cnnctr, nil
+}
+
+// preserveConnectionFields returns newConn with refresh token and Slack
+// webhook settings copied from oldConn when newConn omits them. Google
+// omits refresh_token on incremental-auth reuse; a Slack access-review
+// reconnect with no incoming-webhook scope omits the webhook settings.
+func preserveConnectionFields(newConn, oldConn connector.Connection) connector.Connection {
+	switch n := newConn.(type) {
+	case *connector.OAuth2Connection:
+		if o, ok := oldConn.(*connector.OAuth2Connection); ok {
+			if n.RefreshToken == "" {
+				n.RefreshToken = o.RefreshToken
+			}
+		}
+	case *connector.SlackConnection:
+		if o, ok := oldConn.(*connector.SlackConnection); ok {
+			if n.RefreshToken == "" {
+				n.RefreshToken = o.RefreshToken
+			}
+			if n.Settings.WebhookURL == "" {
+				n.Settings.WebhookURL = o.Settings.WebhookURL
+				n.Settings.Channel = o.Settings.Channel
+				n.Settings.ChannelID = o.Settings.ChannelID
+			}
+		}
+	}
+	return newConn
 }
