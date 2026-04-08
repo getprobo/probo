@@ -4,16 +4,16 @@ import {
   ActionDropdown,
   Card,
   DropdownItem,
-  FileButton,
+  // FileButton,
   FrameworkLogo,
   FrameworkSelector,
-  IconFolderUpload,
+  // IconFolderUpload,
   IconPencil,
   IconTrashCan,
   PageHeader,
   useDialogRef,
 } from "@probo/ui";
-import { type ChangeEventHandler, useState } from "react";
+// import { type ChangeEventHandler, useState } from "react";
 import {
   graphql,
   type PreloadedQuery,
@@ -28,7 +28,7 @@ import {
   frameworksQuery,
   useDeleteFrameworkMutation,
 } from "#/hooks/graph/FrameworkGraph";
-import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
+// import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 
 import { FrameworkFormDialog } from "./dialogs/FrameworkFormDialog";
 
@@ -36,21 +36,21 @@ type Props = {
   queryRef: PreloadedQuery<FrameworkGraphListQuery>;
 };
 
-const importFrameworkMutation = graphql`
-  mutation FrameworksPageImportMutation(
-    $input: ImportFrameworkInput!
-    $connections: [ID!]!
-  ) {
-    importFramework(input: $input) {
-      frameworkEdge @prependEdge(connections: $connections) {
-        node {
-          id
-          ...FrameworksPageCardFragment
-        }
-      }
-    }
-  }
-`;
+// const importFrameworkMutation = graphql`
+//   mutation FrameworksPageImportMutation(
+//     $input: ImportFrameworkInput!
+//     $connections: [ID!]!
+//   ) {
+//     importFramework(input: $input) {
+//       frameworkEdge @prependEdge(connections: $connections) {
+//         node {
+//           id
+//           ...FrameworksPageCardFragment
+//         }
+//       }
+//     }
+//   }
+// `;
 
 export default function FrameworksPage(props: Props) {
   const { __ } = useTranslate();
@@ -59,66 +59,64 @@ export default function FrameworksPage(props: Props) {
   const connectionId = data.organization.frameworks!.__id;
   const frameworks
     = data.organization.frameworks?.edges.map(edge => edge.node) ?? [];
-  const [commitImport, isImporting] = useMutationWithToasts(
-    importFrameworkMutation,
-    {
-      successMessage: __("Framework imported successfully"),
-      errorMessage: __("Failed to import framework"),
-    },
-  );
-  const [isUploading, setUploading] = useState(false);
-  const dialogRef = useDialogRef();
+  // const [commitImport, isImporting] = useMutationWithToasts(
+  //   importFrameworkMutation,
+  //   {
+  //     successMessage: __("Framework imported successfully"),
+  //     errorMessage: __("Failed to import framework"),
+  //   },
+  // );
+  // const [isUploading, setUploading] = useState(false);
+  // const dialogRef = useDialogRef();
 
-  const importNamedFramework = async (name: string) => {
-    // For custom framework, open the form
-    if (name === "custom") {
-      console.log(name, dialogRef);
-      dialogRef.current?.open();
-      return;
-    }
-    // Otherwise load the JSON and send the file to the server
-    try {
-      setUploading(true);
-      const fileName = `${name}.json`;
-      const json = await fetch(`/data/frameworks/${fileName}`).then(res =>
-        res.text(),
-      );
-      const file = new File([json], fileName, {
-        type: "application/json",
-      });
-      await importFile(file);
-    } finally {
-      setUploading(false);
-    }
-  };
+  // const importNamedFramework = async (name: string) => {
+  //   if (name === "custom") {
+  //     console.log(name, dialogRef);
+  //     dialogRef.current?.open();
+  //     return;
+  //   }
+  //   try {
+  //     setUploading(true);
+  //     const fileName = `${name}.json`;
+  //     const json = await fetch(`/data/frameworks/${fileName}`).then(res =>
+  //       res.text(),
+  //     );
+  //     const file = new File([json], fileName, {
+  //       type: "application/json",
+  //     });
+  //     await importFile(file);
+  //   } finally {
+  //     setUploading(false);
+  //   }
+  // };
 
-  const importFile = (file: File) => {
-    return commitImport({
-      variables: {
-        input: {
-          organizationId: data.organization.id!,
-          file: null,
-        },
-        connections: [connectionId],
-      },
-      uploadables: {
-        "input.file": file,
-      },
-    });
-  };
+  // const importFile = (file: File) => {
+  //   return commitImport({
+  //     variables: {
+  //       input: {
+  //         organizationId: data.organization.id!,
+  //         file: null,
+  //       },
+  //       connections: [connectionId],
+  //     },
+  //     uploadables: {
+  //       "input.file": file,
+  //     },
+  //   });
+  // };
 
-  const handleUpload: ChangeEventHandler<HTMLInputElement> = (event) => {
-    const input = event.currentTarget;
-    const file = input.files?.[0];
-    if (!file) {
-      return;
-    }
-    void importFile(file).finally(() => {
-      input.value = "";
-    });
-  };
+  // const handleUpload: ChangeEventHandler<HTMLInputElement> = (event) => {
+  //   const input = event.currentTarget;
+  //   const file = input.files?.[0];
+  //   if (!file) {
+  //     return;
+  //   }
+  //   void importFile(file).finally(() => {
+  //     input.value = "";
+  //   });
+  // };
 
-  const isLoading = isUploading || isImporting;
+  // const isLoading = isUploading || isImporting;
 
   const hasAnyAction = frameworks.some(
     ({ canUpdate, canDelete }) => canUpdate || canDelete,
@@ -126,16 +124,16 @@ export default function FrameworksPage(props: Props) {
 
   return (
     <div className="space-y-6">
-      <FrameworkFormDialog
+      {/* <FrameworkFormDialog
         ref={dialogRef}
         connectionId={connectionId}
         organizationId={data.organization.id!}
-      />
+      /> */}
       <PageHeader
         title={__("Frameworks")}
         description={__("Manage your compliance frameworks")}
       >
-        {data.organization.canCreateFramework && (
+        {/* {data.organization.canCreateFramework && (
           <>
             <FileButton
               variant="secondary"
@@ -145,12 +143,12 @@ export default function FrameworksPage(props: Props) {
             >
               {__("Import")}
             </FileButton>
-            <FrameworkSelector
-              onSelect={name => void importNamedFramework(name)}
-              disabled={isLoading}
-            />
           </>
-        )}
+        )} */}
+        <FrameworkSelector
+          onSelect={() => {}}
+          disabled={false}
+        />
       </PageHeader>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
