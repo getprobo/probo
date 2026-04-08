@@ -195,7 +195,7 @@
 
     /* Text colors — slate tones for readability on navy */
     --color-txt-primary: #F1F5F9;
-    --color-invert: #0B1120;
+    --color-invert: #ffffff;
     --color-txt-invert: #F1F5F9;
     --color-txt-secondary: #94A3B8;
     --color-txt-tertiary: #64748B;
@@ -209,7 +209,7 @@
 
     /* Backgrounds — warm orange tints over navy */
     --color-primary: #F54900;
-    --color-invert: #0B1120;
+    --color-invert: #ffffff;
     --color-secondary: rgba(245, 73, 0, 0.06);
     --color-tertiary: transparent;
     --color-subtle: rgba(241, 245, 249, 0.03);
@@ -238,7 +238,7 @@
 
     /* Hover — brightened with subtle warmth */
     --color-primary-hover: #E04200;
-    --color-invert-hover: #0F172A;
+    --color-invert-hover: #F8FAFC;
     --color-secondary-hover: rgba(245, 73, 0, 0.10);
     --color-tertiary-hover: rgba(241, 245, 249, 0.04);
     --color-subtle-hover: rgba(241, 245, 249, 0.05);
@@ -249,7 +249,7 @@
 
     /* Pressed — deeper into the orange warmth */
     --color-primary-pressed: #CC3C00;
-    --color-invert-pressed: #162032;
+    --color-invert-pressed: #F1F5F9;
     --color-secondary-pressed: rgba(245, 73, 0, 0.14);
     --color-tertiary-pressed: rgba(241, 245, 249, 0.06);
     --color-subtle-pressed: rgba(241, 245, 249, 0.08);
