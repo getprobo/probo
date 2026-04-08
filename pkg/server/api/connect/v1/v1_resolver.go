@@ -1334,9 +1334,14 @@ func (r *organizationResolver) ScimConfiguration(ctx context.Context, obj *types
 	return types.NewSCIMConfiguration(config), nil
 }
 
-// GoogleWorkspaceOAuth2Scopes is the resolver for the googleWorkspaceOAuth2Scopes field.
-func (r *organizationResolver) GoogleWorkspaceOAuth2Scopes(ctx context.Context, obj *types.Organization) ([]string, error) {
-	return googleworkspace.OAuth2Scopes, nil
+// ScimBridgeTypes is the resolver for the scimBridgeTypes field.
+func (r *organizationResolver) ScimBridgeTypes(ctx context.Context, obj *types.Organization) ([]*types.SCIMBridgeTypeInfo, error) {
+	return []*types.SCIMBridgeTypeInfo{
+		{
+			Type:         coredata.SCIMBridgeTypeGoogleWorkspace,
+			Oauth2Scopes: googleworkspace.OAuth2Scopes,
+		},
+	}, nil
 }
 
 // AuditLogEntries is the resolver for the auditLogEntries field.

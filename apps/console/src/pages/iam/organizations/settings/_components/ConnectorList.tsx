@@ -21,7 +21,10 @@ import { GoogleWorkspaceConnector } from "./GoogleWorkspaceConnector";
 
 const connectorListFragment = graphql`
   fragment ConnectorListFragment on Organization {
-    googleWorkspaceOAuth2Scopes
+    scimBridgeTypes {
+      type
+      oauth2Scopes
+    }
     scimConfiguration {
       ...GoogleWorkspaceConnectorFragment
     }
@@ -33,6 +36,9 @@ export function ConnectorList(props: { fKey: ConnectorListFragment$key }) {
   const data = useFragment<ConnectorListFragment$key>(connectorListFragment, fKey);
   const { __ } = useTranslate();
 
+  const googleWorkspaceScopes
+    = data.scimBridgeTypes.find(info => info.type === "GOOGLE_WORKSPACE")?.oauth2Scopes ?? [];
+
   return (
     <div className="space-y-4">
       <h2 className="text-base font-medium">{__("Identity Provider")}</h2>
@@ -43,7 +49,7 @@ export function ConnectorList(props: { fKey: ConnectorListFragment$key }) {
       </p>
       <GoogleWorkspaceConnector
         fKey={data.scimConfiguration ?? null}
-        oauth2Scopes={data.googleWorkspaceOAuth2Scopes}
+        oauth2Scopes={googleWorkspaceScopes}
       />
     </div>
   );

@@ -250,7 +250,7 @@ type Organization implements Node {
   ): SAMLConfigurationConnection @goField(forceResolver: true)
 
   scimConfiguration: SCIMConfiguration @goField(forceResolver: true)
-  googleWorkspaceOAuth2Scopes: [String!]! @goField(forceResolver: true)
+  scimBridgeTypes: [SCIMBridgeTypeInfo!]! @goField(forceResolver: true)
 
   auditLogEntries(
     first: Int
@@ -420,6 +420,11 @@ enum ConnectorProvider
 enum SCIMBridgeType
   @goModel(model: "go.probo.inc/probo/pkg/coredata.SCIMBridgeType") {
   GOOGLE_WORKSPACE @goEnum(value: "go.probo.inc/probo/pkg/coredata.SCIMBridgeTypeGoogleWorkspace")
+}
+
+type SCIMBridgeTypeInfo {
+  type: SCIMBridgeType!
+  oauth2Scopes: [String!]!
 }
 
 enum SCIMBridgeState
