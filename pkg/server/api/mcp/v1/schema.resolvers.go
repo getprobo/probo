@@ -352,6 +352,7 @@ func (r *Resolver) UpdateRiskTool(ctx context.Context, req *mcp.CallToolRequest,
 			InherentImpact:     input.InherentImpact,
 			ResidualLikelihood: input.ResidualLikelihood,
 			ResidualImpact:     input.ResidualImpact,
+			Note:               input.Note,
 		},
 	)
 	if err != nil {
