@@ -47,7 +47,10 @@ func ClickElementTool(b *Browser) (agent.Tool, error) {
 			tabCtx, cancel := b.NewTab(ctx)
 			defer cancel()
 
-			var text string
+			var (
+				text         string
+				postClickURL string
+			)
 
 			err := chromedp.Run(
 				tabCtx,
@@ -56,10 +59,22 @@ func ClickElementTool(b *Browser) (agent.Tool, error) {
 				chromedp.WaitVisible(p.Selector),
 				chromedp.Click(p.Selector),
 				waitForPage(),
+				chromedp.Location(&postClickURL),
 				chromedp.Evaluate(`document.body.innerText`, &text),
 			)
 			if err != nil {
 				return agent.ResultError(b.classifyError(ctx, p.URL, err)), nil
+			}
+
+			// Revalidate the post-click URL: a click may navigate
+			// the page to a different host (redirect, JS navigation,
+			// <a href>), bypassing the initial checkURL. Reject the
+			// result if the new URL is outside the allowed scope or
+			// resolves to a non-public IP.
+			if postClickURL != "" && postClickURL != p.URL {
+				if r := b.checkURL(postClickURL); r != nil {
+					return *r, nil
+				}
 			}
 
 			runes := []rune(text)

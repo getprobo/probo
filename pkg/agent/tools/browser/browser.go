@@ -24,6 +24,7 @@ import (
 
 	"github.com/chromedp/chromedp"
 	"go.probo.inc/probo/pkg/agent"
+	"go.probo.inc/probo/pkg/agent/tools/internal/netcheck"
 )
 
 const (
@@ -66,7 +67,8 @@ func (b *Browser) SetAllowedDomain(domain string) {
 }
 
 // checkURL validates that the URL is allowed. It returns an error tool result
-// if the URL uses a disallowed scheme or is outside the allowed domains.
+// if the URL uses a disallowed scheme, resolves to a non-public IP, or is
+// outside the allowed domains.
 func (b *Browser) checkURL(rawURL string) *agent.ToolResult {
 	u, err := url.Parse(rawURL)
 	if err != nil {
@@ -79,6 +81,17 @@ func (b *Browser) checkURL(rawURL string) *agent.ToolResult {
 	if u.Scheme != "http" && u.Scheme != "https" {
 		return &agent.ToolResult{
 			Content: fmt.Sprintf("cannot navigate to URL with scheme %q: only http and https are allowed", u.Scheme),
+			IsError: true,
+		}
+	}
+
+	// Always reject URLs that resolve to non-public IPs, even when no
+	// allowed-domain list is set. This closes the SSRF path on browsers
+	// used for open-ended external research (e.g. the research browser
+	// in vendor assessments).
+	if err := netcheck.ValidatePublicURL(rawURL); err != nil {
+		return &agent.ToolResult{
+			Content: fmt.Sprintf("navigation blocked: %s", err),
 			IsError: true,
 		}
 	}
