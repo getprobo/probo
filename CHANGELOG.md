@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.163.2] - 2026-04-08
+
+### Added
+
+- Add prosemirror markdown renderer for MCP document content tools
+
+### Changed
+
+- Connector OAuth2 refactor
+
 ## [0.163.1] - 2026-04-07
 
 ### Fixed
