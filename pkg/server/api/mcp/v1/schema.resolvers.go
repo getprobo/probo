@@ -13,6 +13,8 @@ import (
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"go.probo.inc/probo/pkg/accessreview"
+	"go.probo.inc/probo/pkg/consent"
+	"go.probo.inc/probo/pkg/cookieprovider"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
@@ -3919,4 +3921,309 @@ func (r *Resolver) ListMeasureDocumentsTool(ctx context.Context, req *mcp.CallTo
 	}
 
 	return nil, types.NewListMeasureDocumentsOutput(docPage), nil
+}
+
+func (r *Resolver) ListCookieBannersTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListCookieBannersInput) (*mcp.CallToolResult, types.ListCookieBannersOutput, error) {
+	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionCookieBannerList)
+
+	pageOrderBy := page.OrderBy[coredata.CookieBannerOrderField]{
+		Field:     coredata.CookieBannerOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.CookieBannerOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	p, err := r.consentSvc.ListCookieBannersForOrganizationID(ctx, input.OrganizationID, cursor)
+	if err != nil {
+		return nil, types.ListCookieBannersOutput{}, fmt.Errorf("cannot list cookie banners: %w", err)
+	}
+
+	return nil, types.NewListCookieBannersOutput(p), nil
+}
+
+func (r *Resolver) GetCookieBannerTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetCookieBannerInput) (*mcp.CallToolResult, types.GetCookieBannerOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionCookieBannerGet)
+
+	banner, err := r.consentSvc.GetCookieBanner(ctx, input.ID)
+	if err != nil {
+		return nil, types.GetCookieBannerOutput{}, fmt.Errorf("cannot get cookie banner: %w", err)
+	}
+
+	return nil, types.GetCookieBannerOutput{
+		CookieBanner: types.NewCookieBanner(banner),
+	}, nil
+}
+
+func (r *Resolver) CreateCookieBannerTool(ctx context.Context, req *mcp.CallToolRequest, input *types.CreateCookieBannerInput) (*mcp.CallToolResult, types.CreateCookieBannerOutput, error) {
+	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionCookieBannerCreate)
+
+	banner, err := r.consentSvc.CreateCookieBanner(
+		ctx,
+		consent.CreateCookieBannerRequest{
+			OrganizationID: input.OrganizationID,
+			Name:           input.Name,
+			Domain:         input.Domain,
+		},
+	)
+	if err != nil {
+		return nil, types.CreateCookieBannerOutput{}, fmt.Errorf("cannot create cookie banner: %w", err)
+	}
+
+	return nil, types.CreateCookieBannerOutput{
+		CookieBanner: types.NewCookieBanner(banner),
+	}, nil
+}
+
+func (r *Resolver) UpdateCookieBannerTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateCookieBannerInput) (*mcp.CallToolResult, types.UpdateCookieBannerOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionCookieBannerUpdate)
+
+	updateReq := consent.UpdateCookieBannerRequest{
+		ID:                   input.ID,
+		Name:                 input.Name,
+		Domain:               input.Domain,
+		Title:                input.Title,
+		Description:          input.Description,
+		AcceptAllLabel:       input.AcceptAllLabel,
+		RejectAllLabel:       input.RejectAllLabel,
+		SavePreferencesLabel: input.SavePreferencesLabel,
+		PrivacyPolicyURL:     input.PrivacyPolicyURL,
+		ConsentExpiryDays:    input.ConsentExpiryDays,
+		ConsentMode:          input.ConsentMode,
+	}
+
+	if input.Theme != nil {
+		existing, err := r.consentSvc.GetCookieBanner(ctx, input.ID)
+		if err != nil {
+			return nil, types.UpdateCookieBannerOutput{}, fmt.Errorf("cannot get cookie banner for theme update: %w", err)
+		}
+		updateReq.Theme = types.MergeThemeInput(existing.Theme, input.Theme)
+	}
+
+	banner, err := r.consentSvc.UpdateCookieBanner(ctx, updateReq)
+	if err != nil {
+		return nil, types.UpdateCookieBannerOutput{}, fmt.Errorf("cannot update cookie banner: %w", err)
+	}
+
+	return nil, types.UpdateCookieBannerOutput{
+		CookieBanner: types.NewCookieBanner(banner),
+	}, nil
+}
+
+func (r *Resolver) DeleteCookieBannerTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteCookieBannerInput) (*mcp.CallToolResult, types.DeleteCookieBannerOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionCookieBannerDelete)
+
+	err := r.consentSvc.DeleteCookieBanner(ctx, input.ID)
+	if err != nil {
+		return nil, types.DeleteCookieBannerOutput{}, fmt.Errorf("cannot delete cookie banner: %w", err)
+	}
+
+	return nil, types.DeleteCookieBannerOutput{
+		DeletedCookieBannerID: input.ID,
+	}, nil
+}
+
+func (r *Resolver) PublishCookieBannerTool(ctx context.Context, req *mcp.CallToolRequest, input *types.PublishCookieBannerInput) (*mcp.CallToolResult, types.PublishCookieBannerOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionCookieBannerUpdate)
+
+	banner, err := r.consentSvc.PublishCookieBanner(ctx, input.ID)
+	if err != nil {
+		return nil, types.PublishCookieBannerOutput{}, fmt.Errorf("cannot publish cookie banner: %w", err)
+	}
+
+	return nil, types.PublishCookieBannerOutput{
+		CookieBanner: types.NewCookieBanner(banner),
+	}, nil
+}
+
+func (r *Resolver) DisableCookieBannerTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DisableCookieBannerInput) (*mcp.CallToolResult, types.DisableCookieBannerOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionCookieBannerUpdate)
+
+	banner, err := r.consentSvc.DisableCookieBanner(ctx, input.ID)
+	if err != nil {
+		return nil, types.DisableCookieBannerOutput{}, fmt.Errorf("cannot disable cookie banner: %w", err)
+	}
+
+	return nil, types.DisableCookieBannerOutput{
+		CookieBanner: types.NewCookieBanner(banner),
+	}, nil
+}
+
+func (r *Resolver) ListCookieCategoriesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListCookieCategoriesInput) (*mcp.CallToolResult, types.ListCookieCategoriesOutput, error) {
+	r.MustAuthorize(ctx, input.CookieBannerID, probo.ActionCookieCategoryList)
+
+	pageOrderBy := page.OrderBy[coredata.CookieCategoryOrderField]{
+		Field:     coredata.CookieCategoryOrderFieldRank,
+		Direction: page.OrderDirectionAsc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.CookieCategoryOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	p, err := r.consentSvc.ListCookieCategoriesForCookieBannerID(ctx, input.CookieBannerID, cursor)
+	if err != nil {
+		return nil, types.ListCookieCategoriesOutput{}, fmt.Errorf("cannot list cookie categories: %w", err)
+	}
+
+	return nil, types.NewListCookieCategoriesOutput(p), nil
+}
+
+func (r *Resolver) GetCookieCategoryTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetCookieCategoryInput) (*mcp.CallToolResult, types.GetCookieCategoryOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionCookieCategoryGet)
+
+	category, err := r.consentSvc.GetCookieCategory(ctx, input.ID)
+	if err != nil {
+		return nil, types.GetCookieCategoryOutput{}, fmt.Errorf("cannot get cookie category: %w", err)
+	}
+
+	return nil, types.GetCookieCategoryOutput{
+		CookieCategory: types.NewCookieCategory(category),
+	}, nil
+}
+
+func (r *Resolver) CreateCookieCategoryTool(ctx context.Context, req *mcp.CallToolRequest, input *types.CreateCookieCategoryInput) (*mcp.CallToolResult, types.CreateCookieCategoryOutput, error) {
+	r.MustAuthorize(ctx, input.CookieBannerID, probo.ActionCookieCategoryCreate)
+
+	category, err := r.consentSvc.CreateCookieCategory(
+		ctx,
+		consent.CreateCookieCategoryRequest{
+			CookieBannerID: input.CookieBannerID,
+			Name:           input.Name,
+			Description:    input.Description,
+			Rank:           input.Rank,
+			Cookies:        input.Cookies,
+		},
+	)
+	if err != nil {
+		return nil, types.CreateCookieCategoryOutput{}, fmt.Errorf("cannot create cookie category: %w", err)
+	}
+
+	return nil, types.CreateCookieCategoryOutput{
+		CookieCategory: types.NewCookieCategory(category),
+	}, nil
+}
+
+func (r *Resolver) UpdateCookieCategoryTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateCookieCategoryInput) (*mcp.CallToolResult, types.UpdateCookieCategoryOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionCookieCategoryUpdate)
+
+	var cookies *coredata.CookieItems
+	if input.Cookies != nil {
+		items := coredata.CookieItems(input.Cookies)
+		cookies = &items
+	}
+
+	category, err := r.consentSvc.UpdateCookieCategory(
+		ctx,
+		consent.UpdateCookieCategoryRequest{
+			ID:          input.ID,
+			Name:        input.Name,
+			Description: input.Description,
+			Rank:        input.Rank,
+			Cookies:     cookies,
+		},
+	)
+	if err != nil {
+		return nil, types.UpdateCookieCategoryOutput{}, fmt.Errorf("cannot update cookie category: %w", err)
+	}
+
+	return nil, types.UpdateCookieCategoryOutput{
+		CookieCategory: types.NewCookieCategory(category),
+	}, nil
+}
+
+func (r *Resolver) DeleteCookieCategoryTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteCookieCategoryInput) (*mcp.CallToolResult, types.DeleteCookieCategoryOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionCookieCategoryDelete)
+
+	err := r.consentSvc.DeleteCookieCategory(ctx, input.ID)
+	if err != nil {
+		return nil, types.DeleteCookieCategoryOutput{}, fmt.Errorf("cannot delete cookie category: %w", err)
+	}
+
+	return nil, types.DeleteCookieCategoryOutput{
+		DeletedCookieCategoryID: input.ID,
+	}, nil
+}
+
+func (r *Resolver) ListConsentRecordsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListConsentRecordsInput) (*mcp.CallToolResult, types.ListConsentRecordsOutput, error) {
+	r.MustAuthorize(ctx, input.CookieBannerID, probo.ActionConsentRecordList)
+
+	pageOrderBy := page.OrderBy[coredata.ConsentRecordOrderField]{
+		Field:     coredata.ConsentRecordOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.ConsentRecordOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	var filter *coredata.ConsentRecordFilter
+	if input.Filter != nil && input.Filter.Action != nil {
+		filter = coredata.NewConsentRecordFilter(input.Filter.Action)
+	} else {
+		filter = coredata.NewConsentRecordFilter(nil)
+	}
+
+	p, err := r.consentSvc.ListConsentRecordsForCookieBannerID(ctx, input.CookieBannerID, cursor, filter)
+	if err != nil {
+		return nil, types.ListConsentRecordsOutput{}, fmt.Errorf("cannot list consent records: %w", err)
+	}
+
+	return nil, types.NewListConsentRecordsOutput(p), nil
+}
+
+func (r *Resolver) ListCookieProvidersTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListCookieProvidersInput) (*mcp.CallToolResult, types.ListCookieProvidersOutput, error) {
+	var providers []cookieprovider.Provider
+	if input.Category != nil {
+		providers = cookieprovider.ByCategory(cookieprovider.Category(*input.Category))
+	} else {
+		providers = cookieprovider.All()
+	}
+
+	return nil, types.ListCookieProvidersOutput{
+		CookieProviders: providers,
+	}, nil
+}
+
+func (r *Resolver) GetCookieProviderTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetCookieProviderInput) (*mcp.CallToolResult, types.GetCookieProviderOutput, error) {
+	provider, ok := cookieprovider.ByKey(input.Key)
+	if !ok {
+		return nil, types.GetCookieProviderOutput{}, fmt.Errorf("cannot get cookie provider: unknown provider key %q", input.Key)
+	}
+
+	return nil, types.GetCookieProviderOutput{
+		CookieProvider: provider,
+	}, nil
+}
+
+func (r *Resolver) AddCookiesFromProviderTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddCookiesFromProviderInput) (*mcp.CallToolResult, types.AddCookiesFromProviderOutput, error) {
+	r.MustAuthorize(ctx, input.CookieCategoryID, probo.ActionCookieCategoryUpdate)
+
+	category, err := r.consentSvc.AddCookiesFromProvider(
+		ctx,
+		consent.AddCookiesFromProviderRequest{
+			CookieCategoryID: input.CookieCategoryID,
+			ProviderKey:      input.ProviderKey,
+		},
+	)
+	if err != nil {
+		return nil, types.AddCookiesFromProviderOutput{}, fmt.Errorf("cannot add cookies from provider: %w", err)
+	}
+
+	return nil, types.AddCookiesFromProviderOutput{
+		CookieCategory: types.NewCookieCategory(category),
+	}, nil
 }

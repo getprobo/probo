@@ -62,6 +62,7 @@ const fragment = graphql`
         )
         canListRightsRequests: permission(action: "core:rights-request:list")
         canListSnapshots: permission(action: "core:snapshot:list")
+        canListCookieBanners: permission(action: "core:cookie-banner:list")
         canGetTrustCenter: permission(action: "core:trust-center:get")
         canUpdateOrganization: permission(action: "iam:organization:update")
         canListStatesOfApplicability: permission(
@@ -209,6 +210,13 @@ export function Sidebar(props: { fKey: SidebarFragment$key }) {
           label={__("Access Reviews")}
           icon={IconKey}
           to={`${prefix}/access-reviews`}
+        />
+      )}
+      {organization.canListCookieBanners && (
+        <SidebarItem
+          label={__("Cookie Banners")}
+          icon={IconShield}
+          to={`${prefix}/cookie-banners`}
         />
       )}
       {organization.canGetTrustCenter && (

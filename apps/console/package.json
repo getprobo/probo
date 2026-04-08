@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^5.0.1",
+    "@probo/cookie-banner": "^0.0.0",
     "@probo/coredata": "^1.0.0",
     "@probo/helpers": "^1.0.0",
     "@probo/hooks": "1.0.0",

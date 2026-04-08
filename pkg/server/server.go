@@ -27,6 +27,7 @@ import (
 	"go.probo.inc/probo/pkg/accessreview"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/consent"
 	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/file"
 	"go.probo.inc/probo/pkg/iam"
@@ -47,6 +48,7 @@ type Config struct {
 	AllowedOrigins    []string
 	ExtraHeaderFields map[string]string
 	Probo             *probo.Service
+	Consent           *consent.Service
 	File              *file.Service
 	IAM               *iam.Service
 	Trust             *trust.Service
@@ -78,6 +80,7 @@ func NewServer(cfg Config) (*Server, error) {
 		BaseURL:           cfg.BaseURL,
 		AllowedOrigins:    cfg.AllowedOrigins,
 		Probo:             cfg.Probo,
+		Consent:           cfg.Consent,
 		File:              cfg.File,
 		IAM:               cfg.IAM,
 		Trust:             cfg.Trust,

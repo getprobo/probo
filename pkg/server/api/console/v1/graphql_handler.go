@@ -20,6 +20,8 @@ import (
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/accessreview"
 	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/baseurl"
+	"go.probo.inc/probo/pkg/consent"
 	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/mailman"
@@ -29,17 +31,30 @@ import (
 	"go.probo.inc/probo/pkg/server/gqlutils"
 )
 
-func NewGraphQLHandler(iamSvc *iam.Service, proboSvc *probo.Service, esignSvc *esign.Service, accessReviewSvc *accessreview.Service, mailmanSvc *mailman.Service, connectorRegistry *connector.ConnectorRegistry, customDomainCname string, logger *log.Logger) http.Handler {
+func NewGraphQLHandler(
+	iamSvc *iam.Service,
+	proboSvc *probo.Service,
+	consentSvc *consent.Service,
+	esignSvc *esign.Service,
+	accessReviewSvc *accessreview.Service,
+	mailmanSvc *mailman.Service,
+	connectorRegistry *connector.ConnectorRegistry,
+	customDomainCname string,
+	baseURL *baseurl.BaseURL,
+	logger *log.Logger,
+) http.Handler {
 	config := schema.Config{
 		Resolvers: &Resolver{
 			authorize:         authz.NewAuthorizeFunc(iamSvc, logger),
 			probo:             proboSvc,
+			consent:           consentSvc,
 			iam:               iamSvc,
 			esign:             esignSvc,
 			accessReview:      accessReviewSvc,
 			mailman:           mailmanSvc,
 			connectorRegistry: connectorRegistry,
 			customDomainCname: customDomainCname,
+			baseURL:           baseURL,
 			logger:            logger,
 		},
 	}

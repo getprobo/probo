@@ -1054,6 +1054,67 @@ func (b *AccessSourceBuilder) Create() string {
 	return CreateAccessSource(b.client, b.organizationID, b.attrs)
 }
 
+func CreateCookieBanner(c *testutil.Client, attrs ...Attrs) string {
+	c.T.Helper()
+
+	var a Attrs
+	if len(attrs) > 0 {
+		a = attrs[0]
+	}
+
+	const query = `
+		mutation($input: CreateCookieBannerInput!) {
+			createCookieBanner(input: $input) {
+				cookieBanner { id }
+			}
+		}
+	`
+
+	input := map[string]any{
+		"organizationId": c.GetOrganizationID().String(),
+		"name":           a.getString("name", SafeName("CookieBanner")),
+	}
+	if domain := a.getStringPtr("domain"); domain != nil {
+		input["domain"] = *domain
+	}
+
+	var result struct {
+		CreateCookieBanner struct {
+			CookieBanner struct {
+				ID string `json:"id"`
+			} `json:"cookieBanner"`
+		} `json:"createCookieBanner"`
+	}
+
+	err := c.Execute(query, map[string]any{"input": input}, &result)
+	require.NoError(c.T, err, "CreateCookieBanner mutation failed")
+
+	return result.CreateCookieBanner.CookieBanner.ID
+}
+
+type CookieBannerBuilder struct {
+	client *testutil.Client
+	attrs  Attrs
+}
+
+func NewCookieBanner(c *testutil.Client) *CookieBannerBuilder {
+	return &CookieBannerBuilder{client: c, attrs: Attrs{}}
+}
+
+func (b *CookieBannerBuilder) WithName(name string) *CookieBannerBuilder {
+	b.attrs["name"] = name
+	return b
+}
+
+func (b *CookieBannerBuilder) WithDomain(domain string) *CookieBannerBuilder {
+	b.attrs["domain"] = domain
+	return b
+}
+
+func (b *CookieBannerBuilder) Create() string {
+	return CreateCookieBanner(b.client, b.attrs)
+}
+
 func CreateAccessReviewCampaign(c *testutil.Client, organizationID string, attrs ...Attrs) string {
 	c.T.Helper()
 
@@ -1119,4 +1180,45 @@ func (b *AccessReviewCampaignBuilder) WithAccessSourceIDs(ids []string) *AccessR
 
 func (b *AccessReviewCampaignBuilder) Create() string {
 	return CreateAccessReviewCampaign(b.client, b.organizationID, b.attrs)
+}
+
+func CreateCookieCategory(c *testutil.Client, bannerID string, attrs ...Attrs) string {
+	c.T.Helper()
+
+	var a Attrs
+	if len(attrs) > 0 {
+		a = attrs[0]
+	}
+
+	const query = `
+		mutation($input: CreateCookieCategoryInput!) {
+			createCookieCategory(input: $input) {
+				cookieCategory { id }
+			}
+		}
+	`
+
+	input := map[string]any{
+		"cookieBannerId": bannerID,
+		"name":           a.getString("name", SafeName("Category")),
+	}
+	if desc := a.getStringPtr("description"); desc != nil {
+		input["description"] = *desc
+	}
+	if _, ok := a["rank"]; ok {
+		input["rank"] = a.getInt("rank", 0)
+	}
+
+	var result struct {
+		CreateCookieCategory struct {
+			CookieCategory struct {
+				ID string `json:"id"`
+			} `json:"cookieCategory"`
+		} `json:"createCookieCategory"`
+	}
+
+	err := c.Execute(query, map[string]any{"input": input}, &result)
+	require.NoError(c.T, err, "CreateCookieCategory mutation failed")
+
+	return result.CreateCookieCategory.CookieCategory.ID
 }

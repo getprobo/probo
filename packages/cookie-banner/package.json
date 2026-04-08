@@ -1,0 +1,22 @@
+{
+  "name": "@probo/cookie-banner",
+  "version": "0.0.0",
+  "type": "module",
+  "exports": {
+    "./headless": "./src/headless/index.ts",
+    "./styled": "./src/styled/index.ts",
+    "./banner": "./src/styled/banner-renderer.ts",
+    "./api": "./src/headless/api.ts",
+    "./i18n": "./src/headless/i18n.ts"
+  },
+  "scripts": {
+    "dev": "vite build --watch",
+    "build": "tsc --noEmit && vite build",
+    "check": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "terser": "^5.46.1",
+    "typescript": "~5.8.0",
+    "vite": "^6.3.0"
+  }
+}
