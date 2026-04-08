@@ -5,78 +5,78 @@
     --font-sans: "Geist", "sans-serif";
     --color-*: initial;
 
-    --color-black: #0f172a;
+    --color-black: #0F172A;
 
-    /* Surface layers — white page, soft gray cards, subtle gray overlays */
+    /* Surface layers — clean white base with subtle warm depth */
     --color-level-0: #ffffff;
-    --color-level-1: #f8fafc;
-    --color-level-2: #f1f5f9;
-    --color-level-3: #0f172a;
+    --color-level-1: #F8FAFC;
+    --color-level-2: #F1F5F9;
+    --color-level-3: #0F172A;
 
-    /* Text — deep navy #0f172a anchors the hierarchy */
-    --color-txt-primary: #0f172a;
+    /* Text — navy #0F172A anchors hierarchy, slate tones step down */
+    --color-txt-primary: #0F172A;
     --color-invert: #ffffff;
     --color-txt-invert: #ffffff;
     --color-txt-secondary: #334155;
-    --color-txt-tertiary: #64748b;
-    --color-txt-quaternary: #94a3b8;
-    --color-txt-disabled: #cbd5e1;
+    --color-txt-tertiary: #64748B;
+    --color-txt-quaternary: #94A3B8;
+    --color-txt-disabled: #CBD5E1;
     --color-txt-accent: #F54900;
-    --color-txt-danger: #dc2626;
-    --color-txt-success: #15803d;
-    --color-txt-info: #0369a1;
-    --color-txt-warning: #b45309;
+    --color-txt-danger: #DC2626;
+    --color-txt-success: #15803D;
+    --color-txt-info: #0369A1;
+    --color-txt-warning: #B45309;
 
-    /* Backgrounds — orange brand presence through warm tints */
+    /* Backgrounds — #F54900 brand orange woven through warm tints */
     --color-primary: #F54900;
     --color-invert: #ffffff;
     --color-secondary: #ffffff;
     --color-tertiary: transparent;
     --color-subtle: rgba(15, 23, 42, 0.03);
     --color-highlight: rgba(245, 73, 0, 0.06);
-    --color-active: #fff7ed;
+    --color-active: #FFF7ED;
     --color-accent: #F54900;
-    --color-danger: #fef2f2;
-    --color-danger-plain: #dc2626;
-    --color-danger-dark: #b91c1c;
-    --color-success: #f0fdf4;
-    --color-info: #eff6ff;
-    --color-warning: #fffbeb;
-    --color-dialog: #0f172a;
+    --color-danger: #FEF2F2;
+    --color-danger-plain: #DC2626;
+    --color-danger-dark: #B91C1C;
+    --color-success: #F0FDF4;
+    --color-info: #EFF6FF;
+    --color-warning: #FFFBEB;
+    --color-dialog: #0F172A;
 
-    /* Borders — crisp slate-based edges */
-    --color-border-solid: #e2e8f0;
-    --color-border-low: rgba(15, 23, 42, 0.08);
-    --color-border-mid: rgba(15, 23, 42, 0.14);
-    --color-border-strong: rgba(15, 23, 42, 0.25);
-    --color-border-active: #0f172a;
+    /* Borders — slate edges, accent orange, clean semantics */
+    --color-border-solid: #E2E8F0;
+    --color-border-low: rgba(15, 23, 42, 0.06);
+    --color-border-mid: rgba(15, 23, 42, 0.12);
+    --color-border-strong: rgba(15, 23, 42, 0.22);
+    --color-border-active: #0F172A;
     --color-border-accent: #F54900;
-    --color-border-danger: #dc2626;
-    --color-border-success: #16a34a;
-    --color-border-warning: #f59e0b;
-    --color-border-info: #0284c7;
+    --color-border-danger: #DC2626;
+    --color-border-success: #16A34A;
+    --color-border-warning: #F59E0B;
+    --color-border-info: #0284C7;
 
-    /* Hover */
+    /* Hover — subtle lifts with orange warmth */
     --color-primary-hover: #E04200;
-    --color-invert-hover: #f8fafc;
-    --color-secondary-hover: #f8fafc;
+    --color-invert-hover: #F8FAFC;
+    --color-secondary-hover: #F8FAFC;
     --color-tertiary-hover: rgba(15, 23, 42, 0.04);
     --color-subtle-hover: rgba(15, 23, 42, 0.05);
     --color-highlight-hover: rgba(245, 73, 0, 0.10);
     --color-accent-hover: #E04200;
-    --color-active-hover: #ffedd5;
-    --color-danger-hover: #b91c1c;
+    --color-active-hover: #FFEDD5;
+    --color-danger-hover: #B91C1C;
 
-    /* Pressed */
+    /* Pressed — deeper engagement states */
     --color-primary-pressed: #CC3C00;
-    --color-invert-pressed: #f1f5f9;
-    --color-secondary-pressed: #f1f5f9;
+    --color-invert-pressed: #F1F5F9;
+    --color-secondary-pressed: #F1F5F9;
     --color-tertiary-pressed: rgba(15, 23, 42, 0.06);
     --color-subtle-pressed: rgba(15, 23, 42, 0.08);
     --color-highlight-pressed: rgba(245, 73, 0, 0.14);
     --color-accent-pressed: #CC3C00;
-    --color-active-pressed: #fed7aa;
-    --color-danger-pressed: #991b1b;
+    --color-active-pressed: #FED7AA;
+    --color-danger-pressed: #991B1B;
 
     /* text-5xl */
     --text-5xl: 3rem;
@@ -156,32 +156,32 @@
     --text-xxs--letter-spacing: 0px;
     --text-xxs--font-weight: 400;
 
-    /* Shadows — layered depth with navy tint */
+    /* Shadows — navy-tinted depth, orange focus ring */
     --shadow-*: initial;
     --shadow-base:
-        0px 0px 0px 1px rgba(15, 23, 42, 0.05),
-        0px 1px 2px 0px rgba(15, 23, 42, 0.06),
-        0px 1px 3px 0px rgba(15, 23, 42, 0.1);
-    --shadow-hover:
-        0px 0px 0px 1px rgba(15, 23, 42, 0.05),
-        0px 3px 6px 0px rgba(15, 23, 42, 0.08),
-        0px 6px 12px 0px rgba(15, 23, 42, 0.08);
-    --shadow-focus: 0px 0px 0px 3px rgba(245, 73, 0, 0.2);
-    --shadow-mid:
         0px 0px 0px 1px rgba(15, 23, 42, 0.04),
-        0px 4px 8px -2px rgba(15, 23, 42, 0.06),
-        0px 8px 16px -4px rgba(15, 23, 42, 0.08);
+        0px 1px 2px 0px rgba(15, 23, 42, 0.05),
+        0px 1px 3px 0px rgba(15, 23, 42, 0.08);
+    --shadow-hover:
+        0px 0px 0px 1px rgba(15, 23, 42, 0.04),
+        0px 3px 6px 0px rgba(15, 23, 42, 0.06),
+        0px 6px 12px 0px rgba(15, 23, 42, 0.06);
+    --shadow-focus: 0px 0px 0px 3px rgba(245, 73, 0, 0.18);
+    --shadow-mid:
+        0px 0px 0px 1px rgba(15, 23, 42, 0.03),
+        0px 4px 8px -2px rgba(15, 23, 42, 0.05),
+        0px 8px 16px -4px rgba(15, 23, 42, 0.06);
 
-    /* Sidebar — white surface, orange brand accent for active state */
+    /* Sidebar — clean white, orange accent active, warm hover */
     --color-sidebar-bg: #ffffff;
-    --color-sidebar-border: #f1f5f9;
-    --color-sidebar-text: #64748b;
-    --color-sidebar-text-hover: #0f172a;
+    --color-sidebar-border: #F1F5F9;
+    --color-sidebar-text: #64748B;
+    --color-sidebar-text-hover: #0F172A;
     --color-sidebar-text-active: #F54900;
-    --color-sidebar-hover-bg: #f8fafc;
-    --color-sidebar-active-bg: #fff7ed;
-    --color-sidebar-active-hover-bg: #ffedd5;
-    --color-sidebar-active-pressed-bg: #fed7aa;
+    --color-sidebar-hover-bg: #F8FAFC;
+    --color-sidebar-active-bg: rgba(245, 73, 0, 0.06);
+    --color-sidebar-active-hover-bg: rgba(245, 73, 0, 0.10);
+    --color-sidebar-active-pressed-bg: rgba(245, 73, 0, 0.14);
 }
 
 /* Dark theme — govrly brand: navy #0F172A base, orange #F54900 accent */
