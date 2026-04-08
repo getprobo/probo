@@ -13,7 +13,7 @@
   },
   "author": {
     "name": "Govrly Inc",
-    "email": "hello@getprobo.com"
+    "email": "hello@govrly.com"
   },
   "files": [
     "dist"
@@ -33,7 +33,7 @@
   "keywords": [
     "n8n",
     "n8n-nodes",
-    "probo",
+    "govrly",
     "compliance",
     "soc2",
     "automation",

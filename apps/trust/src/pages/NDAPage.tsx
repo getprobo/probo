@@ -212,7 +212,7 @@ export function NDAPage(props: {
   const consentText = ndaSignature?.consentText
     ? ndaSignature.consentText
     : __(
-        "By clicking Review & Sign, you agree to the terms of this NDA. If you have questions about the NDA, please contact security@probo.com.",
+        "By clicking Review & Sign, you agree to the terms of this NDA. If you have questions about the NDA, please contact security@govrly.com.",
       );
 
   return (
