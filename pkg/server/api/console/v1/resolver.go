@@ -153,13 +153,16 @@ func NewMux(
 			http.Redirect(w, r, redirectURL, http.StatusSeeOther)
 		})
 
-		r.Get("/connectors/complete", handleConnectorComplete(
-			logger,
-			baseURL,
-			proboSvc,
-			connectorRegistry,
-			safeRedirect,
-		))
+		r.Get(
+			"/connectors/complete",
+			handleConnectorComplete(
+				logger,
+				baseURL,
+				proboSvc,
+				connectorRegistry,
+				safeRedirect,
+			),
+		)
 	})
 
 	return r
