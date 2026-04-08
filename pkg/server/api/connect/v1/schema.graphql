@@ -55,6 +55,9 @@ type Query {
   oidcProviders: [OIDCProviderInfo!]!
     @goField(forceResolver: true)
     @session(required: OPTIONAL)
+  signUpEnabled: Boolean!
+    @goField(forceResolver: true)
+    @session(required: NONE)
 }
 
 type Mutation {

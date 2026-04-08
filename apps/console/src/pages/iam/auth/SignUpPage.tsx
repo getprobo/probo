@@ -16,13 +16,21 @@ import { formatError } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
 import { Button, Field, useToast } from "@probo/ui";
-import { useMutation } from "react-relay";
+import { useEffect } from "react";
+import { useMutation, usePreloadedQuery, useQueryLoader } from "react-relay";
 import { Link, useNavigate } from "react-router";
 import { graphql } from "relay-runtime";
 import { z } from "zod";
 
 import type { SignUpPageMutation } from "#/__generated__/iam/SignUpPageMutation.graphql";
+import type { SignUpPageQuery } from "#/__generated__/iam/SignUpPageQuery.graphql";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
+
+const signUpPageQuery = graphql`
+  query SignUpPageQuery {
+    signUpEnabled
+  }
+`;
 
 const signUpMutation = graphql`
   mutation SignUpPageMutation($input: SignUpInput!) {
@@ -42,12 +50,14 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>;
 
-export default function SignUpPage() {
+function SignUpPageContent(props: { queryRef: NonNullable<ReturnType<typeof useQueryLoader<SignUpPageQuery>>[0]> }) {
   const { __ } = useTranslate();
   const { toast } = useToast();
   const navigate = useNavigate();
 
   usePageTitle(__("Sign up"));
+
+  const data = usePreloadedQuery<SignUpPageQuery>(signUpPageQuery, props.queryRef);
 
   const { register, handleSubmit, formState } = useFormWithSchema(schema, {
     defaultValues: {
@@ -94,6 +104,29 @@ export default function SignUpPage() {
       },
     });
   };
+
+  if (!data.signUpEnabled) {
+    return (
+      <div className="space-y-6 w-full max-w-md mx-auto pt-8 text-center">
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold">{__("Registration unavailable")}</h1>
+          <p className="text-txt-tertiary">
+            {__("New account registration is currently disabled. Please contact your administrator or reach out to Probo for assistance.")}
+          </p>
+        </div>
+
+        <div>
+          <Button
+            variant="secondary"
+            className="w-xs h-10 mx-auto"
+            to="/auth/login"
+          >
+            {__("Back to login")}
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 w-full max-w-md mx-auto pt-8">
@@ -153,4 +186,16 @@ export default function SignUpPage() {
       </div>
     </div>
   );
+}
+
+export default function SignUpPage() {
+  const [queryRef, loadQuery] = useQueryLoader<SignUpPageQuery>(signUpPageQuery);
+
+  useEffect(() => {
+    loadQuery({});
+  }, [loadQuery]);
+
+  if (!queryRef) return null;
+
+  return <SignUpPageContent queryRef={queryRef} />;
 }

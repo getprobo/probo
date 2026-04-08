@@ -188,6 +188,10 @@ func NewService(
 	return svc, nil
 }
 
+func (s *Service) IsSignUpEnabled() bool {
+	return !s.disableSignup
+}
+
 func (s *Service) Run(ctx context.Context) error {
 	wg := sync.WaitGroup{}
 	ctx, cancel := context.WithCancelCause(ctx)

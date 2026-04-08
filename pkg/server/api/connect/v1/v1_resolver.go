@@ -346,6 +346,11 @@ func (r *mutationResolver) SignUp(ctx context.Context, input types.SignUpInput) 
 			return nil, gqlutils.Invalid(ctx, err)
 		}
 
+		var errSignupDisabled *iam.ErrSignupDisabled
+		if errors.As(err, &errSignupDisabled) {
+			return nil, gqlutils.Forbidden(ctx, err)
+		}
+
 		r.logger.ErrorCtx(ctx, "cannot create identity with password", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
@@ -1775,6 +1780,11 @@ func (r *queryResolver) OidcProviders(ctx context.Context) ([]*types.OIDCProvide
 	}
 
 	return result, nil
+}
+
+// SignUpEnabled is the resolver for the signUpEnabled field.
+func (r *queryResolver) SignUpEnabled(ctx context.Context) (bool, error) {
+	return r.iam.IsSignUpEnabled(), nil
 }
 
 // TestLoginURL is the resolver for the testLoginUrl field.
