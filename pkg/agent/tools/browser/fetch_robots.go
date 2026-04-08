@@ -85,12 +85,16 @@ func FetchRobotsTxtTool() (agent.Tool, error) {
 			for scanner.Scan() {
 				line := strings.TrimSpace(scanner.Text())
 
+				// Directive names are case-insensitive but values
+				// (URLs, paths) are case-sensitive, so extract the
+				// original-case suffix from the raw line rather than
+				// reading it off the lowercased copy.
 				if after, ok := strings.CutPrefix(strings.ToLower(line), "sitemap:"); ok {
 					result.Sitemaps = append(result.Sitemaps, strings.TrimSpace(line[len(line)-len(after):]))
 				}
 
 				if after, ok := strings.CutPrefix(strings.ToLower(line), "disallow:"); ok {
-					path := strings.TrimSpace(after)
+					path := strings.TrimSpace(line[len(line)-len(after):])
 					if path != "" && len(result.Disallowed) < 50 {
 						result.Disallowed = append(result.Disallowed, path)
 					}
