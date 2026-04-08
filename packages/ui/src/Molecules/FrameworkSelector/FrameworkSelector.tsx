@@ -13,7 +13,7 @@ import { ISO27701 } from "../../Atoms/Frameworks/ISO27701";
 import { ISO42001 } from "../../Atoms/Frameworks/ISO42001";
 import { NIS2 } from "../../Atoms/Frameworks/NIS2";
 import { SOC2 } from "../../Atoms/Frameworks/SOC2";
-import { IconChevronDown, IconPlusLarge } from "../../Atoms/Icons";
+import { IconChevronDown, IconLock, IconPlusLarge } from "../../Atoms/Icons";
 
 const availableFrameworks = [
   {
@@ -93,7 +93,15 @@ type Props = {
   onSelect: (frameworkId: string) => void;
 };
 
-export function FrameworkSelector({ disabled, onSelect }: Props) {
+function handleContactSales(frameworkName: string) {
+  const subject = encodeURIComponent(`Interest in ${frameworkName} framework`);
+  const body = encodeURIComponent(
+    `Hi,\n\nI'm interested in enabling the ${frameworkName} framework on my account.\n\nPlease let me know how to proceed.\n\nThank you.`,
+  );
+  window.location.href = `mailto:sales@govrly.com?subject=${subject}&body=${body}`;
+}
+
+export function FrameworkSelector({ disabled }: Props) {
   const { __ } = useTranslate();
   return (
     <Dropdown
@@ -107,12 +115,12 @@ export function FrameworkSelector({ disabled, onSelect }: Props) {
         </Button>
       )}
     >
-      <FrameworkItem onClick={() => onSelect("custom")} />
+      <FrameworkItem onClick={() => handleContactSales("Custom")} />
       {availableFrameworks.map(framework => (
         <FrameworkItem
           key={framework.id}
           framework={framework}
-          onClick={() => onSelect(framework.id)}
+          onClick={() => handleContactSales(framework.name)}
         />
       ))}
     </Dropdown>
@@ -123,11 +131,11 @@ function FrameworkItem(props: { framework?: Framework; onClick: () => void }) {
   const { __ } = useTranslate();
   if (!props.framework) {
     return (
-      <DropdownItem onClick={props.onClick} className="">
+      <DropdownItem onClick={props.onClick} className="opacity-60">
         <div className="rounded-full size-8 bg-highlight text-txt-primary flex items-center justify-center">
           <IconPlusLarge size={16} />
         </div>
-        <div className="space-y-[2px]">
+        <div className="flex-1 space-y-[2px]">
           <div className="text-sm font-medium">
             {__("Custom framework")}
           </div>
@@ -135,13 +143,14 @@ function FrameworkItem(props: { framework?: Framework; onClick: () => void }) {
             {__("Start from scratch")}
           </div>
         </div>
+        <IconLock size={16} className="flex-none text-txt-secondary" />
       </DropdownItem>
     );
   }
   return (
-    <DropdownItem onClick={props.onClick} className="">
+    <DropdownItem onClick={props.onClick} className="opacity-60">
       {props.framework.logo}
-      <div className="space-y-[2px]">
+      <div className="flex-1 space-y-[2px]">
         <div className="text-sm font-medium">
           {props.framework.name}
         </div>
@@ -149,6 +158,7 @@ function FrameworkItem(props: { framework?: Framework; onClick: () => void }) {
           {props.framework.description}
         </div>
       </div>
+      <IconLock size={16} className="flex-none text-txt-secondary" />
     </DropdownItem>
   );
 }
