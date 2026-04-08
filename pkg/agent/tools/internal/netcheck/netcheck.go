@@ -25,13 +25,13 @@ import (
 )
 
 // IsPublicIP reports whether ip is a publicly routable address. It returns
-// false for loopback, private, link-local, multicast, and unspecified
-// addresses.
+// false for loopback, private, link-local, multicast (any range), and
+// unspecified addresses.
 func IsPublicIP(ip net.IP) bool {
 	if ip.IsLoopback() ||
 		ip.IsPrivate() ||
 		ip.IsLinkLocalUnicast() ||
-		ip.IsLinkLocalMulticast() ||
+		ip.IsMulticast() ||
 		ip.IsUnspecified() {
 		return false
 	}
