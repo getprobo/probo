@@ -1,10 +1,7 @@
 import { usePageTitle } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
 import {
-  Button,
-  Card,
   IconMagnifyingGlass,
-  IconPlusLarge,
   Input,
 } from "@probo/ui";
 import { useMemo, useState } from "react";
