@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.164.0] - 2026-04-09
+
+### Fixed
+
+- Fix famework_id filer
+
+### Changed
+
+- Rename State of Applicability to Statement of Applicability
+- Validate document content length by extracted text, not JSON size
+
 ## [0.163.2] - 2026-04-08
 
 ### Added
