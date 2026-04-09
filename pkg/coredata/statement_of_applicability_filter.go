@@ -20,18 +20,18 @@ import (
 )
 
 type (
-	StateOfApplicabilityFilter struct {
+	StatementOfApplicabilityFilter struct {
 		snapshotID **gid.GID
 	}
 )
 
-func NewStateOfApplicabilityFilter(snapshotID **gid.GID) *StateOfApplicabilityFilter {
-	return &StateOfApplicabilityFilter{
+func NewStatementOfApplicabilityFilter(snapshotID **gid.GID) *StatementOfApplicabilityFilter {
+	return &StatementOfApplicabilityFilter{
 		snapshotID: snapshotID,
 	}
 }
 
-func (f *StateOfApplicabilityFilter) SQLArguments() pgx.StrictNamedArgs {
+func (f *StatementOfApplicabilityFilter) SQLArguments() pgx.StrictNamedArgs {
 	args := pgx.StrictNamedArgs{}
 
 	if f.snapshotID == nil {
@@ -48,7 +48,7 @@ func (f *StateOfApplicabilityFilter) SQLArguments() pgx.StrictNamedArgs {
 	return args
 }
 
-func (f *StateOfApplicabilityFilter) SQLFragment() string {
+func (f *StatementOfApplicabilityFilter) SQLFragment() string {
 	return `
 CASE
 	WHEN @has_snapshot_filter::boolean = false THEN TRUE

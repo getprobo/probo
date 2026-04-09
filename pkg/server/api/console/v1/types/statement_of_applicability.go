@@ -21,32 +21,32 @@ import (
 )
 
 type (
-	StateOfApplicabilityOrderBy OrderBy[coredata.StateOfApplicabilityOrderField]
+	StatementOfApplicabilityOrderBy OrderBy[coredata.StatementOfApplicabilityOrderField]
 
-	StateOfApplicabilityConnection struct {
+	StatementOfApplicabilityConnection struct {
 		TotalCount int
-		Edges      []*StateOfApplicabilityEdge
+		Edges      []*StatementOfApplicabilityEdge
 		PageInfo   PageInfo
 
 		Resolver any
 		ParentID gid.GID
-		Filters  *coredata.StateOfApplicabilityFilter
+		Filters  *coredata.StatementOfApplicabilityFilter
 	}
 )
 
-func NewStateOfApplicabilityConnection(
-	p *page.Page[*coredata.StateOfApplicability, coredata.StateOfApplicabilityOrderField],
+func NewStatementOfApplicabilityConnection(
+	p *page.Page[*coredata.StatementOfApplicability, coredata.StatementOfApplicabilityOrderField],
 	parentType any,
 	parentID gid.GID,
-	filters *coredata.StateOfApplicabilityFilter,
-) *StateOfApplicabilityConnection {
-	var edges = make([]*StateOfApplicabilityEdge, len(p.Data))
+	filters *coredata.StatementOfApplicabilityFilter,
+) *StatementOfApplicabilityConnection {
+	var edges = make([]*StatementOfApplicabilityEdge, len(p.Data))
 
 	for i := range edges {
-		edges[i] = NewStateOfApplicabilityEdge(p.Data[i], p.Cursor.OrderBy.Field)
+		edges[i] = NewStatementOfApplicabilityEdge(p.Data[i], p.Cursor.OrderBy.Field)
 	}
 
-	return &StateOfApplicabilityConnection{
+	return &StatementOfApplicabilityConnection{
 		Edges:    edges,
 		PageInfo: *NewPageInfo(p),
 
@@ -56,15 +56,15 @@ func NewStateOfApplicabilityConnection(
 	}
 }
 
-func NewStateOfApplicabilityEdge(soa *coredata.StateOfApplicability, orderBy coredata.StateOfApplicabilityOrderField) *StateOfApplicabilityEdge {
-	return &StateOfApplicabilityEdge{
+func NewStatementOfApplicabilityEdge(soa *coredata.StatementOfApplicability, orderBy coredata.StatementOfApplicabilityOrderField) *StatementOfApplicabilityEdge {
+	return &StatementOfApplicabilityEdge{
 		Cursor: soa.CursorKey(orderBy),
-		Node:   NewStateOfApplicability(soa),
+		Node:   NewStatementOfApplicability(soa),
 	}
 }
 
-func NewStateOfApplicability(soa *coredata.StateOfApplicability) *StateOfApplicability {
-	return &StateOfApplicability{
+func NewStatementOfApplicability(soa *coredata.StatementOfApplicability) *StatementOfApplicability {
+	return &StatementOfApplicability{
 		ID: soa.ID,
 		Organization: &Organization{
 			ID: soa.OrganizationID,

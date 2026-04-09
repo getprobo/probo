@@ -15,16 +15,16 @@
 import { Suspense, useEffect } from "react";
 import { useQueryLoader } from "react-relay";
 
-import type { StatesOfApplicabilityPageQuery } from "#/__generated__/core/StatesOfApplicabilityPageQuery.graphql";
+import type { StatementsOfApplicabilityPageQuery } from "#/__generated__/core/StatementsOfApplicabilityPageQuery.graphql";
 import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
-import StatesOfApplicabilityPage, { statesOfApplicabilityPageQuery } from "./StatesOfApplicabilityPage";
+import StatementsOfApplicabilityPage, { statementsOfApplicabilityPageQuery } from "./StatementsOfApplicabilityPage";
 
-export default function StatesOfApplicabilityPageLoader() {
+export default function StatementsOfApplicabilityPageLoader() {
   const organizationId = useOrganizationId();
   const [queryRef, loadQuery]
-    = useQueryLoader<StatesOfApplicabilityPageQuery>(statesOfApplicabilityPageQuery);
+    = useQueryLoader<StatementsOfApplicabilityPageQuery>(statementsOfApplicabilityPageQuery);
 
   useEffect(() => {
     loadQuery({ organizationId });
@@ -36,7 +36,7 @@ export default function StatesOfApplicabilityPageLoader() {
 
   return (
     <Suspense fallback={<PageSkeleton />}>
-      <StatesOfApplicabilityPage queryRef={queryRef} />
+      <StatementsOfApplicabilityPage queryRef={queryRef} />
     </Suspense>
   );
 }

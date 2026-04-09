@@ -72,7 +72,7 @@ const (
 	DataProtectionImpactAssessmentEntityType   uint16 = 46
 	TransferImpactAssessmentEntityType         uint16 = 47
 	RightsRequestEntityType                    uint16 = 48
-	StateOfApplicabilityEntityType             uint16 = 49
+	StatementOfApplicabilityEntityType         uint16 = 49
 	ApplicabilityStatementEntityType           uint16 = 50
 	MembershipProfileEntityType                uint16 = 51
 	SCIMConfigurationEntityType                uint16 = 52
@@ -194,8 +194,8 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &TransferImpactAssessment{ID: id}, true
 	case RightsRequestEntityType:
 		return &RightsRequest{ID: id}, true
-	case StateOfApplicabilityEntityType:
-		return &StateOfApplicability{ID: id}, true
+	case StatementOfApplicabilityEntityType:
+		return &StatementOfApplicability{ID: id}, true
 	case ApplicabilityStatementEntityType:
 		return &ApplicabilityStatement{ID: id}, true
 	case MembershipProfileEntityType:

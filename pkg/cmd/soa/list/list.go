@@ -24,11 +24,11 @@ import (
 )
 
 const listQuery = `
-query($id: ID!, $first: Int, $after: CursorKey, $orderBy: StateOfApplicabilityOrder) {
+query($id: ID!, $first: Int, $after: CursorKey, $orderBy: StatementOfApplicabilityOrder) {
   node(id: $id) {
     __typename
     ... on Organization {
-      statesOfApplicability(first: $first, after: $after, orderBy: $orderBy) {
+      statementsOfApplicability(first: $first, after: $after, orderBy: $orderBy) {
         totalCount
         edges {
           node {
@@ -48,7 +48,7 @@ query($id: ID!, $first: Int, $after: CursorKey, $orderBy: StateOfApplicabilityOr
 }
 `
 
-type stateOfApplicability struct {
+type statementOfApplicability struct {
 	ID        string `json:"id"`
 	Name      string `json:"name"`
 	CreatedAt string `json:"createdAt"`
@@ -118,11 +118,11 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				listQuery,
 				variables,
 				flagLimit,
-				func(data json.RawMessage) (*api.Connection[stateOfApplicability], error) {
+				func(data json.RawMessage) (*api.Connection[statementOfApplicability], error) {
 					var resp struct {
 						Node *struct {
-							Typename              string                               `json:"__typename"`
-							StatesOfApplicability api.Connection[stateOfApplicability] `json:"statesOfApplicability"`
+							Typename                  string                                   `json:"__typename"`
+							StatementsOfApplicability api.Connection[statementOfApplicability] `json:"statementsOfApplicability"`
 						} `json:"node"`
 					}
 					if err := json.Unmarshal(data, &resp); err != nil {
@@ -134,7 +134,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 					if resp.Node.Typename != "Organization" {
 						return nil, fmt.Errorf("expected Organization node, got %s", resp.Node.Typename)
 					}
-					return &resp.Node.StatesOfApplicability, nil
+					return &resp.Node.StatementsOfApplicability, nil
 				},
 			)
 			if err != nil {
@@ -143,7 +143,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 
 			if *flagOutput == cmdutil.OutputJSON {
 				if soas == nil {
-					soas = []stateOfApplicability{}
+					soas = []statementOfApplicability{}
 				}
 				return cmdutil.PrintJSON(f.IOStreams.Out, soas)
 			}

@@ -16,21 +16,21 @@ import { Suspense, useEffect } from "react";
 import { useQueryLoader } from "react-relay";
 import { useParams } from "react-router";
 
-import type { StateOfApplicabilityDetailPageQuery } from "#/__generated__/core/StateOfApplicabilityDetailPageQuery.graphql";
+import type { StatementOfApplicabilityDetailPageQuery } from "#/__generated__/core/StatementOfApplicabilityDetailPageQuery.graphql";
 import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
 
-import StateOfApplicabilityDetailPage, { stateOfApplicabilityDetailPageQuery } from "./StateOfApplicabilityDetailPage";
+import StatementOfApplicabilityDetailPage, { statementOfApplicabilityDetailPageQuery } from "./StatementOfApplicabilityDetailPage";
 
-export default function StateOfApplicabilityDetailPageLoader() {
-  const { stateOfApplicabilityId } = useParams<{ stateOfApplicabilityId: string }>();
+export default function StatementOfApplicabilityDetailPageLoader() {
+  const { statementOfApplicabilityId } = useParams<{ statementOfApplicabilityId: string }>();
   const [queryRef, loadQuery]
-    = useQueryLoader<StateOfApplicabilityDetailPageQuery>(stateOfApplicabilityDetailPageQuery);
+    = useQueryLoader<StatementOfApplicabilityDetailPageQuery>(statementOfApplicabilityDetailPageQuery);
 
   useEffect(() => {
-    if (stateOfApplicabilityId) {
-      loadQuery({ stateOfApplicabilityId });
+    if (statementOfApplicabilityId) {
+      loadQuery({ statementOfApplicabilityId });
     }
-  }, [loadQuery, stateOfApplicabilityId]);
+  }, [loadQuery, statementOfApplicabilityId]);
 
   if (!queryRef) {
     return <PageSkeleton />;
@@ -38,7 +38,7 @@ export default function StateOfApplicabilityDetailPageLoader() {
 
   return (
     <Suspense fallback={<PageSkeleton />}>
-      <StateOfApplicabilityDetailPage queryRef={queryRef} />
+      <StatementOfApplicabilityDetailPage queryRef={queryRef} />
     </Suspense>
   );
 }

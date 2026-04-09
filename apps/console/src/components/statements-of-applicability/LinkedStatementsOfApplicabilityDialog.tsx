@@ -27,14 +27,14 @@ import { Suspense, useRef, useState } from "react";
 import { useLazyLoadQuery } from "react-relay";
 import { graphql } from "relay-runtime";
 
-import type { LinkedStatesOfApplicabilityDialogQuery } from "#/__generated__/core/LinkedStatesOfApplicabilityDialogQuery.graphql";
+import type { LinkedStatementsOfApplicabilityDialogQuery } from "#/__generated__/core/LinkedStatementsOfApplicabilityDialogQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 const query = graphql`
-    query LinkedStatesOfApplicabilityDialogQuery($organizationId: ID!) {
+    query LinkedStatementsOfApplicabilityDialogQuery($organizationId: ID!) {
         organization: node(id: $organizationId) {
             ... on Organization {
-                statesOfApplicability(first: 100) {
+                statementsOfApplicability(first: 100) {
                     edges {
                         node {
                             id
@@ -48,7 +48,7 @@ const query = graphql`
 `;
 
 type LinkedSOAInfo = {
-  stateOfApplicabilityId: string;
+  statementOfApplicabilityId: string;
   controlId: string;
 };
 
@@ -56,16 +56,16 @@ type Props = {
   children: ReactNode;
   connectionId: string;
   disabled?: boolean;
-  linkedStatesOfApplicability: readonly LinkedSOAInfo[];
+  linkedStatementsOfApplicability: readonly LinkedSOAInfo[];
   onLink: (
-    stateOfApplicabilityId: string,
+    statementOfApplicabilityId: string,
     applicability: boolean,
     justification: string | null,
   ) => void;
-  onUnlink: (stateOfApplicabilityId: string, controlId: string) => void;
+  onUnlink: (statementOfApplicabilityId: string, controlId: string) => void;
 };
 
-export function LinkedStatesOfApplicabilityDialog({
+export function LinkedStatementsOfApplicabilityDialog({
   children,
   ...props
 }: Props) {
@@ -75,10 +75,10 @@ export function LinkedStatesOfApplicabilityDialog({
     <Dialog
       ref={dialogRef}
       trigger={children}
-      title="Link State of Applicability"
+      title="Link Statement of Applicability"
     >
       <Suspense fallback={<div>Loading...</div>}>
-        <LinkedStatesOfApplicabilityDialogContent
+        <LinkedStatementsOfApplicabilityDialogContent
           {...props}
           onClose={() => dialogRef.current?.close()}
         />
@@ -87,7 +87,7 @@ export function LinkedStatesOfApplicabilityDialog({
   );
 }
 
-function LinkedStatesOfApplicabilityDialogContent(
+function LinkedStatementsOfApplicabilityDialogContent(
   props: Omit<Props, "children"> & { onClose: () => void },
 ) {
   const { __ } = useTranslate();
@@ -99,7 +99,7 @@ function LinkedStatesOfApplicabilityDialogContent(
   const [applicability, setApplicability] = useState(true);
   const [justification, setJustification] = useState("");
 
-  const data = useLazyLoadQuery<LinkedStatesOfApplicabilityDialogQuery>(
+  const data = useLazyLoadQuery<LinkedStatementsOfApplicabilityDialogQuery>(
     query,
     {
       organizationId,
@@ -108,18 +108,18 @@ function LinkedStatesOfApplicabilityDialogContent(
   );
 
   const linkedSOAIds = new Set(
-    props.linkedStatesOfApplicability.map(
-      soa => soa.stateOfApplicabilityId,
+    props.linkedStatementsOfApplicability.map(
+      soa => soa.statementOfApplicabilityId,
     ),
   );
   const linkedSOAMap = new Map(
-    props.linkedStatesOfApplicability.map(soa => [
-      soa.stateOfApplicabilityId,
+    props.linkedStatementsOfApplicability.map(soa => [
+      soa.statementOfApplicabilityId,
       soa,
     ]),
   );
-  const statesOfApplicability
-    = data.organization?.statesOfApplicability?.edges.map(
+  const statementsOfApplicability
+    = data.organization?.statementsOfApplicability?.edges.map(
       edge => edge.node,
     ) ?? [];
 
@@ -140,11 +140,11 @@ function LinkedStatesOfApplicabilityDialogContent(
     }
   };
 
-  const handleUnlink = (stateOfApplicabilityId: string) => {
-    const linkedSOA = linkedSOAMap.get(stateOfApplicabilityId);
+  const handleUnlink = (statementOfApplicabilityId: string) => {
+    const linkedSOA = linkedSOAMap.get(statementOfApplicabilityId);
     if (linkedSOA) {
       props.onUnlink(
-        linkedSOA.stateOfApplicabilityId,
+        linkedSOA.statementOfApplicabilityId,
         linkedSOA.controlId,
       );
     }
@@ -153,15 +153,15 @@ function LinkedStatesOfApplicabilityDialogContent(
   return (
     <>
       <DialogContent padded className="space-y-4">
-        {statesOfApplicability.length === 0
+        {statementsOfApplicability.length === 0
           ? (
               <div className="flex flex-col items-center justify-center py-12 text-center">
                 <div className="text-txt-secondary text-base mb-2">
-                  {__("No states of applicability available")}
+                  {__("No statements of applicability available")}
                 </div>
                 <div className="text-txt-tertiary text-sm">
                   {__(
-                    "Create a state of applicability first to link it to this control",
+                    "Create a statement of applicability first to link it to this control",
                   )}
                 </div>
               </div>
@@ -170,9 +170,9 @@ function LinkedStatesOfApplicabilityDialogContent(
               ? (
                   <div className="space-y-2">
                     <div className="text-sm font-medium mb-2">
-                      {__("Select a state of applicability:")}
+                      {__("Select a statement of applicability:")}
                     </div>
-                    {statesOfApplicability.map((soa) => {
+                    {statementsOfApplicability.map((soa) => {
                       const isLinked = linkedSOAIds.has(soa.id);
                       return (
                         <div

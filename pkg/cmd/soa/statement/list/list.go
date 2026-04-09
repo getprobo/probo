@@ -27,7 +27,7 @@ const listQuery = `
 query($id: ID!, $first: Int, $after: CursorKey, $orderBy: ApplicabilityStatementOrder) {
   node(id: $id) {
     __typename
-    ... on StateOfApplicability {
+    ... on StatementOfApplicability {
       applicabilityStatements(first: $first, after: $after, orderBy: $orderBy) {
         totalCount
         edges {
@@ -130,8 +130,8 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 					if resp.Node == nil {
 						return nil, fmt.Errorf("statement of applicability %s not found", args[0])
 					}
-					if resp.Node.Typename != "StateOfApplicability" {
-						return nil, fmt.Errorf("expected StateOfApplicability node, got %s", resp.Node.Typename)
+					if resp.Node.Typename != "StatementOfApplicability" {
+						return nil, fmt.Errorf("expected StatementOfApplicability node, got %s", resp.Node.Typename)
 					}
 					return &resp.Node.ApplicabilityStatements, nil
 				},

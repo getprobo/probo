@@ -42,56 +42,56 @@ import {
 import { useNavigate, useParams } from "react-router";
 import { z } from "zod";
 
-import type { StateOfApplicabilityDetailPageDeleteMutation } from "#/__generated__/core/StateOfApplicabilityDetailPageDeleteMutation.graphql";
-import type { StateOfApplicabilityDetailPageExportMutation } from "#/__generated__/core/StateOfApplicabilityDetailPageExportMutation.graphql";
-import type { StateOfApplicabilityDetailPageQuery } from "#/__generated__/core/StateOfApplicabilityDetailPageQuery.graphql";
-import type { StateOfApplicabilityDetailPageUpdateMutation } from "#/__generated__/core/StateOfApplicabilityDetailPageUpdateMutation.graphql";
+import type { StatementOfApplicabilityDetailPageDeleteMutation } from "#/__generated__/core/StatementOfApplicabilityDetailPageDeleteMutation.graphql";
+import type { StatementOfApplicabilityDetailPageExportMutation } from "#/__generated__/core/StatementOfApplicabilityDetailPageExportMutation.graphql";
+import type { StatementOfApplicabilityDetailPageQuery } from "#/__generated__/core/StatementOfApplicabilityDetailPageQuery.graphql";
+import type { StatementOfApplicabilityDetailPageUpdateMutation } from "#/__generated__/core/StatementOfApplicabilityDetailPageUpdateMutation.graphql";
 import { PeopleSelectField } from "#/components/form/PeopleSelectField";
 import { SnapshotBanner } from "#/components/SnapshotBanner";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
-import StateOfApplicabilityControlsTab from "./tabs/StateOfApplicabilityControlsTab";
+import StatementOfApplicabilityControlsTab from "./tabs/StatementOfApplicabilityControlsTab";
 
-export const stateOfApplicabilityDetailPageQuery = graphql`
-    query StateOfApplicabilityDetailPageQuery($stateOfApplicabilityId: ID!) {
-        node(id: $stateOfApplicabilityId) {
-            ... on StateOfApplicability {
+export const statementOfApplicabilityDetailPageQuery = graphql`
+    query StatementOfApplicabilityDetailPageQuery($statementOfApplicabilityId: ID!) {
+        node(id: $statementOfApplicabilityId) {
+            ... on StatementOfApplicability {
                 id
                 name
                 snapshotId
                 createdAt
                 updatedAt
-                canUpdate: permission(action: "core:state-of-applicability:update")
-                canDelete: permission(action: "core:state-of-applicability:delete")
-                canExport: permission(action: "core:state-of-applicability:export")
+                canUpdate: permission(action: "core:statement-of-applicability:update")
+                canDelete: permission(action: "core:statement-of-applicability:delete")
+                canExport: permission(action: "core:statement-of-applicability:export")
                 owner {
                     id
                     fullName
                 }
-                ...StateOfApplicabilityControlsTabFragment
+                ...StatementOfApplicabilityControlsTabFragment
             }
         }
     }
 `;
 
 const exportMutation = graphql`
-    mutation StateOfApplicabilityDetailPageExportMutation(
-        $input: ExportStateOfApplicabilityPDFInput!
+    mutation StatementOfApplicabilityDetailPageExportMutation(
+        $input: ExportStatementOfApplicabilityPDFInput!
     ) {
-        exportStateOfApplicabilityPDF(input: $input) {
+        exportStatementOfApplicabilityPDF(input: $input) {
             data
         }
     }
 `;
 
 const updateMutation = graphql`
-    mutation StateOfApplicabilityDetailPageUpdateMutation(
-        $input: UpdateStateOfApplicabilityInput!
+    mutation StatementOfApplicabilityDetailPageUpdateMutation(
+        $input: UpdateStatementOfApplicabilityInput!
     ) {
-        updateStateOfApplicability(input: $input) {
-            stateOfApplicability {
+        updateStatementOfApplicability(input: $input) {
+            statementOfApplicability {
                 id
                 name
                 sourceId
@@ -108,74 +108,75 @@ const updateMutation = graphql`
 `;
 
 const deleteMutation = graphql`
-    mutation StateOfApplicabilityDetailPageDeleteMutation(
-        $input: DeleteStateOfApplicabilityInput!
+    mutation StatementOfApplicabilityDetailPageDeleteMutation(
+        $input: DeleteStatementOfApplicabilityInput!
         $connections: [ID!]!
     ) {
-        deleteStateOfApplicability(input: $input) {
-            deletedStateOfApplicabilityId @deleteEdge(connections: $connections)
+        deleteStatementOfApplicability(input: $input) {
+            deletedStatementOfApplicabilityId @deleteEdge(connections: $connections)
         }
     }
 `;
 
-const StateOfApplicabilityConnectionKey = "StatesOfApplicabilityPage_statesOfApplicability";
+const StatementOfApplicabilityConnectionKey = "StatementsOfApplicabilityPage_statementsOfApplicability";
 
 type Props = {
-  queryRef: PreloadedQuery<StateOfApplicabilityDetailPageQuery>;
+  queryRef: PreloadedQuery<StatementOfApplicabilityDetailPageQuery>;
 };
 
-export default function StateOfApplicabilityDetailPage(props: Props) {
-  const { stateOfApplicabilityId, snapshotId } = useParams<{
-    stateOfApplicabilityId: string;
+export default function StatementOfApplicabilityDetailPage(props: Props) {
+  const { statementOfApplicabilityId, snapshotId } = useParams<{
+    statementOfApplicabilityId: string;
     snapshotId?: string;
   }>();
   const organizationId = useOrganizationId();
-  const data = usePreloadedQuery(stateOfApplicabilityDetailPageQuery, props.queryRef);
-  const stateOfApplicability = data.node;
+  const data = usePreloadedQuery(statementOfApplicabilityDetailPageQuery, props.queryRef);
+  const statementOfApplicability = data.node;
   const { __ } = useTranslate();
   const navigate = useNavigate();
   const isSnapshotMode = Boolean(snapshotId);
   const confirm = useConfirm();
   const { toast } = useToast();
 
-  if (!stateOfApplicabilityId || !stateOfApplicability) {
+  if (!statementOfApplicabilityId || !statementOfApplicability) {
     throw new Error(
-      "Cannot load state of applicability detail page without stateOfApplicabilityId parameter",
+      "Cannot load statement of applicability detail page without statementOfApplicabilityId parameter",
     );
   }
 
-  validateSnapshotConsistency(stateOfApplicability, snapshotId);
+  validateSnapshotConsistency(statementOfApplicability, snapshotId);
 
   const connectionId = ConnectionHandler.getConnectionID(
     organizationId,
-    StateOfApplicabilityConnectionKey,
+    StatementOfApplicabilityConnectionKey,
     { filter: { snapshotId: snapshotId ?? null } },
   );
 
-  const [deleteStateOfApplicability] = useMutation<StateOfApplicabilityDetailPageDeleteMutation>(deleteMutation);
+  const [deleteStatementOfApplicability]
+    = useMutation<StatementOfApplicabilityDetailPageDeleteMutation>(deleteMutation);
 
   const handleDelete = () => {
-    if (!stateOfApplicability.id || !stateOfApplicability.name) {
-      return alert(__("Failed to delete state of applicability: missing id or name"));
+    if (!statementOfApplicability.id || !statementOfApplicability.name) {
+      return alert(__("Failed to delete statement of applicability: missing id or name"));
     }
     confirm(
       () =>
-        promisifyMutation(deleteStateOfApplicability)({
+        promisifyMutation(deleteStatementOfApplicability)({
           variables: {
             input: {
-              stateOfApplicabilityId: stateOfApplicability.id!,
+              statementOfApplicabilityId: statementOfApplicability.id!,
             },
             connections: [connectionId],
           },
         })
           .then(() => {
-            void navigate(`/organizations/${organizationId}/states-of-applicability`);
+            void navigate(`/organizations/${organizationId}/statements-of-applicability`);
           })
           .catch((error) => {
             toast({
               title: __("Error"),
               description: formatError(
-                __("Failed to delete state of applicability"),
+                __("Failed to delete statement of applicability"),
                 error as GraphQLError,
               ),
               variant: "error",
@@ -186,52 +187,53 @@ export default function StateOfApplicabilityDetailPage(props: Props) {
           __(
             "This will permanently delete \"%s\". This action cannot be undone.",
           ),
-          stateOfApplicability.name,
+          statementOfApplicability.name,
         ),
       },
     );
   };
 
-  usePageTitle(stateOfApplicability.name || __("State of Applicability"));
+  usePageTitle(statementOfApplicability.name || __("Statement of Applicability"));
 
   const [isEditingName, setIsEditingName] = useState(false);
   const [isEditingOwner, setIsEditingOwner] = useState(false);
-  const [updateStateOfApplicability, isUpdating] = useMutationWithToasts<StateOfApplicabilityDetailPageUpdateMutation>(
-    updateMutation,
-    {
-      successMessage: __("State of Applicability updated successfully."),
-      errorMessage: __("Failed to update State of Applicability"),
-    },
-  );
+  const [updateStatementOfApplicability, isUpdating]
+    = useMutationWithToasts<StatementOfApplicabilityDetailPageUpdateMutation>(
+      updateMutation,
+      {
+        successMessage: __("Statement of Applicability updated successfully."),
+        errorMessage: __("Failed to update Statement of Applicability"),
+      },
+    );
 
-  const canUpdate = !isSnapshotMode && stateOfApplicability.canUpdate;
-  const canDelete = !isSnapshotMode && stateOfApplicability.canDelete;
+  const canUpdate = !isSnapshotMode && statementOfApplicability.canUpdate;
+  const canDelete = !isSnapshotMode && statementOfApplicability.canDelete;
 
-  const [exportStateOfApplicabilityPDF, isExporting]
-    = useMutationWithToasts<StateOfApplicabilityDetailPageExportMutation>(
+  const [exportStatementOfApplicabilityPDF, isExporting]
+    = useMutationWithToasts<StatementOfApplicabilityDetailPageExportMutation>(
       exportMutation,
       {
         successMessage: __(
-          "State of Applicability exported successfully.",
+          "Statement of Applicability exported successfully.",
         ),
-        errorMessage: __("Failed to export State of Applicability"),
+        errorMessage: __("Failed to export Statement of Applicability"),
       },
     );
 
   const handleExport = async () => {
-    if (!stateOfApplicability.id) return;
+    if (!statementOfApplicability.id) return;
 
-    await exportStateOfApplicabilityPDF({
+    await exportStatementOfApplicabilityPDF({
       variables: {
         input: {
-          stateOfApplicabilityId: stateOfApplicability.id,
+          statementOfApplicabilityId: statementOfApplicability.id,
         },
       },
       onCompleted: (data) => {
-        if (data.exportStateOfApplicabilityPDF?.data) {
+        if (data.exportStatementOfApplicabilityPDF?.data) {
           const link = window.document.createElement("a");
-          link.href = data.exportStateOfApplicabilityPDF.data;
-          link.download = `${stateOfApplicability.name || "state-of-applicability"}.pdf`;
+          link.href = data.exportStatementOfApplicabilityPDF.data;
+          link.download = `${statementOfApplicability.name || "statement-of-applicability"}.pdf`;
           window.document.body.appendChild(link);
           link.click();
           window.document.body.removeChild(link);
@@ -254,7 +256,7 @@ export default function StateOfApplicabilityDetailPage(props: Props) {
     reset: resetName,
   } = useFormWithSchema(nameSchema, {
     defaultValues: {
-      name: stateOfApplicability.name || "",
+      name: statementOfApplicability.name || "",
     },
   });
 
@@ -264,17 +266,17 @@ export default function StateOfApplicabilityDetailPage(props: Props) {
     reset: resetOwner,
   } = useFormWithSchema(ownerSchema, {
     defaultValues: {
-      ownerId: stateOfApplicability.owner?.id || "",
+      ownerId: statementOfApplicability.owner?.id || "",
     },
   });
 
   const handleUpdateName = handleSubmitName(async (data) => {
-    if (!stateOfApplicability.id) return;
+    if (!statementOfApplicability.id) return;
 
-    await updateStateOfApplicability({
+    await updateStatementOfApplicability({
       variables: {
         input: {
-          id: stateOfApplicability.id,
+          id: statementOfApplicability.id,
           name: data.name,
         },
       },
@@ -286,12 +288,12 @@ export default function StateOfApplicabilityDetailPage(props: Props) {
   });
 
   const handleUpdateOwner = handleSubmitOwner(async (data) => {
-    if (!stateOfApplicability.id) return;
+    if (!statementOfApplicability.id) return;
 
-    await updateStateOfApplicability({
+    await updateStatementOfApplicability({
       variables: {
         input: {
-          id: stateOfApplicability.id,
+          id: statementOfApplicability.id,
           ownerId: data.ownerId,
         },
       },
@@ -305,20 +307,20 @@ export default function StateOfApplicabilityDetailPage(props: Props) {
   const handleCancelNameEdit = () => {
     setIsEditingName(false);
     resetName({
-      name: stateOfApplicability.name || "",
+      name: statementOfApplicability.name || "",
     });
   };
 
   const handleCancelOwnerEdit = () => {
     setIsEditingOwner(false);
     resetOwner({
-      ownerId: stateOfApplicability.owner?.id || "",
+      ownerId: statementOfApplicability.owner?.id || "",
     });
   };
 
   const listUrl = snapshotId
-    ? `/organizations/${organizationId}/snapshots/${snapshotId}/states-of-applicability`
-    : `/organizations/${organizationId}/states-of-applicability`;
+    ? `/organizations/${organizationId}/snapshots/${snapshotId}/statements-of-applicability`
+    : `/organizations/${organizationId}/statements-of-applicability`;
 
   return (
     <div className="space-y-6">
@@ -326,13 +328,13 @@ export default function StateOfApplicabilityDetailPage(props: Props) {
       <Breadcrumb
         items={[
           {
-            label: __("States of Applicability"),
+            label: __("Statements of Applicability"),
             to: listUrl,
           },
           {
             label:
-                            stateOfApplicability.name
-                            || __("State of Applicability detail"),
+                            statementOfApplicability.name
+                            || __("Statement of Applicability detail"),
           },
         ]}
       />
@@ -371,7 +373,7 @@ export default function StateOfApplicabilityDetailPage(props: Props) {
               )
             : (
                 <div className="flex items-center gap-2">
-                  <span>{stateOfApplicability.name || ""}</span>
+                  <span>{statementOfApplicability.name || ""}</span>
                   {canUpdate && (
                     <Button
                       variant="quaternary"
@@ -383,7 +385,7 @@ export default function StateOfApplicabilityDetailPage(props: Props) {
               )
         }
       >
-        {stateOfApplicability.canExport && (
+        {statementOfApplicability.canExport && (
           <Button
             variant="secondary"
             icon={IconArrowDown}
@@ -445,7 +447,7 @@ export default function StateOfApplicabilityDetailPage(props: Props) {
                   : (
                       <div className="flex items-center gap-2">
                         <div className="text-sm text-txt-primary">
-                          {stateOfApplicability.owner
+                          {statementOfApplicability.owner
                             ?.fullName || "-"}
                         </div>
                         {canUpdate && (
@@ -466,7 +468,7 @@ export default function StateOfApplicabilityDetailPage(props: Props) {
                   {__("Created at")}
                 </div>
                 <div className="text-sm text-txt-primary">
-                  {formatDate(stateOfApplicability.createdAt)}
+                  {formatDate(statementOfApplicability.createdAt)}
                 </div>
               </div>
               <div>
@@ -474,21 +476,21 @@ export default function StateOfApplicabilityDetailPage(props: Props) {
                   {__("Updated at")}
                 </div>
                 <div className="text-sm text-txt-primary">
-                  {formatDate(stateOfApplicability.updatedAt)}
+                  {formatDate(statementOfApplicability.updatedAt)}
                 </div>
               </div>
             </div>
           </Card>
         </div>
 
-        {stateOfApplicability.id && (
+        {statementOfApplicability.id && (
           <div className="space-y-4">
             <h2 className="text-base font-medium">
               {__("Statements")}
             </h2>
-            <StateOfApplicabilityControlsTab
-              stateOfApplicability={
-                stateOfApplicability as typeof stateOfApplicability & {
+            <StatementOfApplicabilityControlsTab
+              statementOfApplicability={
+                statementOfApplicability as typeof statementOfApplicability & {
                   id: string;
                 }
               }

@@ -45,7 +45,7 @@ import { processingActivityRoutes } from "./routes/processingActivityRoutes";
 import { rightsRequestRoutes } from "./routes/rightsRequestRoutes";
 import { riskRoutes } from "./routes/riskRoutes";
 import { snapshotsRoutes } from "./routes/snapshotsRoutes";
-import { statesOfApplicabilityRoutes } from "./routes/statesOfApplicabilityRoutes";
+import { statementsOfApplicabilityRoutes } from "./routes/statementsOfApplicabilityRoutes";
 import { taskRoutes } from "./routes/taskRoutes";
 import { vendorRoutes } from "./routes/vendorRoutes";
 
@@ -288,7 +288,7 @@ const routes = [
           ...obligationRoutes,
           ...rightsRequestRoutes,
           ...processingActivityRoutes,
-          ...statesOfApplicabilityRoutes,
+          ...statementsOfApplicabilityRoutes,
           ...accessReviewRoutes,
           ...compliancePageRoutes,
           ...snapshotsRoutes,

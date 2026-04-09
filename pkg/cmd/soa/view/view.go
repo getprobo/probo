@@ -28,7 +28,7 @@ const viewQuery = `
 query($id: ID!) {
   node(id: $id) {
     __typename
-    ... on StateOfApplicability {
+    ... on StatementOfApplicability {
       id
       name
       owner {
@@ -104,8 +104,8 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 				return fmt.Errorf("statement of applicability %s not found", args[0])
 			}
 
-			if resp.Node.Typename != "StateOfApplicability" {
-				return fmt.Errorf("expected StateOfApplicability node, got %s", resp.Node.Typename)
+			if resp.Node.Typename != "StatementOfApplicability" {
+				return fmt.Errorf("expected StatementOfApplicability node, got %s", resp.Node.Typename)
 			}
 
 			if *flagOutput == cmdutil.OutputJSON {

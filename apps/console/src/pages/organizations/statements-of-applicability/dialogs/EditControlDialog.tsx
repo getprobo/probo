@@ -121,7 +121,7 @@ export const EditControlDialog = forwardRef<EditControlDialogRef>((_props, ref) 
       ref={dialogRef}
       className="max-w-lg"
       title={
-        <Breadcrumb items={[__("States of Applicability"), __("Edit Statement")]} />
+        <Breadcrumb items={[__("Statements of Applicability"), __("Edit Statement")]} />
       }
     >
       {control

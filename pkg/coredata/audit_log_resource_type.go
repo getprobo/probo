@@ -97,8 +97,8 @@ func ResourceTypeName(entityType uint16) string {
 		return "TransferImpactAssessment"
 	case RightsRequestEntityType:
 		return "RightsRequest"
-	case StateOfApplicabilityEntityType:
-		return "StateOfApplicability"
+	case StatementOfApplicabilityEntityType:
+		return "StatementOfApplicability"
 	case ApplicabilityStatementEntityType:
 		return "ApplicabilityStatement"
 	case WebhookSubscriptionEntityType:

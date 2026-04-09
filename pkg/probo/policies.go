@@ -145,7 +145,7 @@ var ViewerPolicy = policy.NewPolicy(
 		ActionFileGet, ActionFileDownloadUrl,
 		ActionSlackConnectionList, ActionConnectorList,
 		ActionRightsRequestGet, ActionRightsRequestList,
-		ActionStateOfApplicabilityGet, ActionStateOfApplicabilityList,
+		ActionStatementOfApplicabilityGet, ActionStatementOfApplicabilityList,
 		ActionApplicabilityStatementGet, ActionApplicabilityStatementList,
 		ActionWebhookSubscriptionGet, ActionWebhookSubscriptionList,
 		ActionAccessReviewCampaignGet, ActionAccessReviewCampaignList,
@@ -222,7 +222,7 @@ var AuditorPolicy = policy.NewPolicy(
 		ActionTransferImpactAssessmentGet, ActionTransferImpactAssessmentList,
 		ActionSnapshotGet, ActionSnapshotList,
 		ActionFileGet, ActionFileDownloadUrl,
-		ActionStateOfApplicabilityGet, ActionStateOfApplicabilityList,
+		ActionStatementOfApplicabilityGet, ActionStatementOfApplicabilityList,
 		ActionApplicabilityStatementGet, ActionApplicabilityStatementList,
 	).WithSID("entity-read-access").When(organizationCondition),
 
@@ -236,7 +236,7 @@ var AuditorPolicy = policy.NewPolicy(
 	).WithSID("employee-document-access").When(organizationCondition),
 
 	policy.Allow(
-		ActionStateOfApplicabilityExport,
+		ActionStatementOfApplicabilityExport,
 	).WithSID("soa-export").When(organizationCondition),
 ).WithDescription("Read-only probo access for auditors (excludes internal/employee content)")
 

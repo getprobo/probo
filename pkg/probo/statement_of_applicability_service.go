@@ -29,26 +29,26 @@ import (
 	"go.probo.inc/probo/pkg/validator"
 )
 
-type StateOfApplicabilityService struct {
+type StatementOfApplicabilityService struct {
 	svc               *TenantService
 	html2pdfConverter *html2pdf.Converter
 }
 
 type (
-	CreateStateOfApplicabilityRequest struct {
+	CreateStatementOfApplicabilityRequest struct {
 		OrganizationID gid.GID
 		Name           string
 		OwnerID        gid.GID
 	}
 
-	UpdateStateOfApplicabilityRequest struct {
-		StateOfApplicabilityID gid.GID
-		Name                   *string
-		OwnerID                *gid.GID
+	UpdateStatementOfApplicabilityRequest struct {
+		StatementOfApplicabilityID gid.GID
+		Name                       *string
+		OwnerID                    *gid.GID
 	}
 )
 
-func (csr *CreateStateOfApplicabilityRequest) Validate() error {
+func (csr *CreateStatementOfApplicabilityRequest) Validate() error {
 	v := validator.New()
 
 	v.Check(csr.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
@@ -58,23 +58,23 @@ func (csr *CreateStateOfApplicabilityRequest) Validate() error {
 	return v.Error()
 }
 
-func (usr *UpdateStateOfApplicabilityRequest) Validate() error {
+func (usr *UpdateStatementOfApplicabilityRequest) Validate() error {
 	v := validator.New()
 
-	v.Check(usr.StateOfApplicabilityID, "state_of_applicability_id", validator.Required(), validator.GID(coredata.StateOfApplicabilityEntityType))
+	v.Check(usr.StatementOfApplicabilityID, "statement_of_applicability_id", validator.Required(), validator.GID(coredata.StatementOfApplicabilityEntityType))
 	v.Check(usr.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(usr.OwnerID, "owner_id", validator.GID(coredata.MembershipProfileEntityType))
 
 	return v.Error()
 }
 
-func (s StateOfApplicabilityService) ListForOrganizationID(
+func (s StatementOfApplicabilityService) ListForOrganizationID(
 	ctx context.Context,
 	organizationID gid.GID,
-	cursor *page.Cursor[coredata.StateOfApplicabilityOrderField],
-	filter *coredata.StateOfApplicabilityFilter,
-) (*page.Page[*coredata.StateOfApplicability, coredata.StateOfApplicabilityOrderField], error) {
-	var statesOfApplicability coredata.StatesOfApplicability
+	cursor *page.Cursor[coredata.StatementOfApplicabilityOrderField],
+	filter *coredata.StatementOfApplicabilityFilter,
+) (*page.Page[*coredata.StatementOfApplicability, coredata.StatementOfApplicabilityOrderField], error) {
+	var statementsOfApplicability coredata.StatementsOfApplicability
 	organization := &coredata.Organization{}
 
 	err := s.svc.pg.WithConn(
@@ -84,7 +84,7 @@ func (s StateOfApplicabilityService) ListForOrganizationID(
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
-			err := statesOfApplicability.LoadByOrganizationID(
+			err := statementsOfApplicability.LoadByOrganizationID(
 				ctx,
 				conn,
 				s.svc.scope,
@@ -93,7 +93,7 @@ func (s StateOfApplicabilityService) ListForOrganizationID(
 				filter,
 			)
 			if err != nil {
-				return fmt.Errorf("cannot load states_of_applicability: %w", err)
+				return fmt.Errorf("cannot load statements_of_applicability: %w", err)
 			}
 
 			return nil
@@ -104,23 +104,23 @@ func (s StateOfApplicabilityService) ListForOrganizationID(
 		return nil, err
 	}
 
-	return page.NewPage(statesOfApplicability, cursor), nil
+	return page.NewPage(statementsOfApplicability, cursor), nil
 }
 
-func (s StateOfApplicabilityService) CountForOrganizationID(
+func (s StatementOfApplicabilityService) CountForOrganizationID(
 	ctx context.Context,
 	organizationID gid.GID,
-	filter *coredata.StateOfApplicabilityFilter,
+	filter *coredata.StatementOfApplicabilityFilter,
 ) (int, error) {
 	var count int
 
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) (err error) {
-			statesOfApplicability := &coredata.StatesOfApplicability{}
-			count, err = statesOfApplicability.CountByOrganizationID(ctx, conn, s.svc.scope, organizationID, filter)
+			statementsOfApplicability := &coredata.StatementsOfApplicability{}
+			count, err = statementsOfApplicability.CountByOrganizationID(ctx, conn, s.svc.scope, organizationID, filter)
 			if err != nil {
-				return fmt.Errorf("cannot count states_of_applicability: %w", err)
+				return fmt.Errorf("cannot count statements_of_applicability: %w", err)
 			}
 
 			return nil
@@ -134,16 +134,16 @@ func (s StateOfApplicabilityService) CountForOrganizationID(
 	return count, nil
 }
 
-func (s StateOfApplicabilityService) Get(
+func (s StatementOfApplicabilityService) Get(
 	ctx context.Context,
-	stateOfApplicabilityID gid.GID,
-) (*coredata.StateOfApplicability, error) {
-	stateOfApplicability := &coredata.StateOfApplicability{}
+	statementOfApplicabilityID gid.GID,
+) (*coredata.StatementOfApplicability, error) {
+	statementOfApplicability := &coredata.StatementOfApplicability{}
 
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			return stateOfApplicability.LoadByID(ctx, conn, s.svc.scope, stateOfApplicabilityID)
+			return statementOfApplicability.LoadByID(ctx, conn, s.svc.scope, statementOfApplicabilityID)
 		},
 	)
 
@@ -151,13 +151,13 @@ func (s StateOfApplicabilityService) Get(
 		return nil, err
 	}
 
-	return stateOfApplicability, nil
+	return statementOfApplicability, nil
 }
 
-func (s StateOfApplicabilityService) Create(
+func (s StatementOfApplicabilityService) Create(
 	ctx context.Context,
-	req CreateStateOfApplicabilityRequest,
-) (*coredata.StateOfApplicability, error) {
+	req CreateStatementOfApplicabilityRequest,
+) (*coredata.StatementOfApplicability, error) {
 	if err := req.Validate(); err != nil {
 		return nil, fmt.Errorf("invalid request: %w", err)
 	}
@@ -175,9 +175,9 @@ func (s StateOfApplicabilityService) Create(
 		return nil, fmt.Errorf("cannot load organization: %w", err)
 	}
 
-	stateOfApplicabilityID := gid.New(organization.ID.TenantID(), coredata.StateOfApplicabilityEntityType)
-	stateOfApplicability := &coredata.StateOfApplicability{
-		ID:             stateOfApplicabilityID,
+	statementOfApplicabilityID := gid.New(organization.ID.TenantID(), coredata.StatementOfApplicabilityEntityType)
+	statementOfApplicability := &coredata.StatementOfApplicability{
+		ID:             statementOfApplicabilityID,
 		OrganizationID: organization.ID,
 		Name:           req.Name,
 		OwnerID:        req.OwnerID,
@@ -188,8 +188,8 @@ func (s StateOfApplicabilityService) Create(
 	err = s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			if err := stateOfApplicability.Insert(ctx, conn, s.svc.scope); err != nil {
-				return fmt.Errorf("cannot insert state_of_applicability: %w", err)
+			if err := statementOfApplicability.Insert(ctx, conn, s.svc.scope); err != nil {
+				return fmt.Errorf("cannot insert statement_of_applicability: %w", err)
 			}
 
 			return nil
@@ -200,37 +200,37 @@ func (s StateOfApplicabilityService) Create(
 		return nil, err
 	}
 
-	return stateOfApplicability, nil
+	return statementOfApplicability, nil
 }
 
-func (s StateOfApplicabilityService) Update(
+func (s StatementOfApplicabilityService) Update(
 	ctx context.Context,
-	req UpdateStateOfApplicabilityRequest,
-) (*coredata.StateOfApplicability, error) {
+	req UpdateStatementOfApplicabilityRequest,
+) (*coredata.StatementOfApplicability, error) {
 	if err := req.Validate(); err != nil {
 		return nil, fmt.Errorf("invalid request: %w", err)
 	}
 
-	stateOfApplicability := &coredata.StateOfApplicability{}
+	statementOfApplicability := &coredata.StatementOfApplicability{}
 
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			if err := stateOfApplicability.LoadByID(ctx, conn, s.svc.scope, req.StateOfApplicabilityID); err != nil {
-				return fmt.Errorf("cannot load state_of_applicability: %w", err)
+			if err := statementOfApplicability.LoadByID(ctx, conn, s.svc.scope, req.StatementOfApplicabilityID); err != nil {
+				return fmt.Errorf("cannot load statement_of_applicability: %w", err)
 			}
 
 			if req.Name != nil {
-				stateOfApplicability.Name = *req.Name
+				statementOfApplicability.Name = *req.Name
 			}
 			if req.OwnerID != nil {
-				stateOfApplicability.OwnerID = *req.OwnerID
+				statementOfApplicability.OwnerID = *req.OwnerID
 			}
 
-			stateOfApplicability.UpdatedAt = time.Now()
+			statementOfApplicability.UpdatedAt = time.Now()
 
-			if err := stateOfApplicability.Update(ctx, conn, s.svc.scope); err != nil {
-				return fmt.Errorf("cannot update state_of_applicability: %w", err)
+			if err := statementOfApplicability.Update(ctx, conn, s.svc.scope); err != nil {
+				return fmt.Errorf("cannot update statement_of_applicability: %w", err)
 			}
 
 			return nil
@@ -241,24 +241,24 @@ func (s StateOfApplicabilityService) Update(
 		return nil, err
 	}
 
-	return stateOfApplicability, nil
+	return statementOfApplicability, nil
 }
 
-func (s StateOfApplicabilityService) Delete(
+func (s StatementOfApplicabilityService) Delete(
 	ctx context.Context,
-	stateOfApplicabilityID gid.GID,
+	statementOfApplicabilityID gid.GID,
 ) error {
-	stateOfApplicability := &coredata.StateOfApplicability{ID: stateOfApplicabilityID}
+	statementOfApplicability := &coredata.StatementOfApplicability{ID: statementOfApplicabilityID}
 
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			if err := stateOfApplicability.LoadByID(ctx, conn, s.svc.scope, stateOfApplicabilityID); err != nil {
-				return fmt.Errorf("cannot load state_of_applicability: %w", err)
+			if err := statementOfApplicability.LoadByID(ctx, conn, s.svc.scope, statementOfApplicabilityID); err != nil {
+				return fmt.Errorf("cannot load statement_of_applicability: %w", err)
 			}
 
-			if err := stateOfApplicability.Delete(ctx, conn, s.svc.scope); err != nil {
-				return fmt.Errorf("cannot delete state_of_applicability: %w", err)
+			if err := statementOfApplicability.Delete(ctx, conn, s.svc.scope); err != nil {
+				return fmt.Errorf("cannot delete statement_of_applicability: %w", err)
 			}
 
 			return nil
@@ -272,7 +272,7 @@ func (s StateOfApplicabilityService) Delete(
 	return nil
 }
 
-func (s StateOfApplicabilityService) GetApplicabilityStatement(
+func (s StatementOfApplicabilityService) GetApplicabilityStatement(
 	ctx context.Context,
 	applicabilityStatementID gid.GID,
 ) (*coredata.ApplicabilityStatement, error) {
@@ -291,9 +291,9 @@ func (s StateOfApplicabilityService) GetApplicabilityStatement(
 	return applicabilityStatement, nil
 }
 
-func (s StateOfApplicabilityService) ListApplicabilityStatements(
+func (s StatementOfApplicabilityService) ListApplicabilityStatements(
 	ctx context.Context,
-	stateOfApplicabilityID gid.GID,
+	statementOfApplicabilityID gid.GID,
 	cursor *page.Cursor[coredata.ApplicabilityStatementOrderField],
 ) (*page.Page[*coredata.ApplicabilityStatement, coredata.ApplicabilityStatementOrderField], error) {
 	var statements coredata.ApplicabilityStatements
@@ -301,7 +301,7 @@ func (s StateOfApplicabilityService) ListApplicabilityStatements(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := statements.LoadByStateOfApplicabilityID(ctx, conn, s.svc.scope, stateOfApplicabilityID, cursor); err != nil {
+			if err := statements.LoadByStatementOfApplicabilityID(ctx, conn, s.svc.scope, statementOfApplicabilityID, cursor); err != nil {
 				return fmt.Errorf("cannot load applicability statements: %w", err)
 			}
 			return nil
@@ -315,9 +315,9 @@ func (s StateOfApplicabilityService) ListApplicabilityStatements(
 	return page.NewPage(statements, cursor), nil
 }
 
-func (s StateOfApplicabilityService) CountApplicabilityStatements(
+func (s StatementOfApplicabilityService) CountApplicabilityStatements(
 	ctx context.Context,
-	stateOfApplicabilityID gid.GID,
+	statementOfApplicabilityID gid.GID,
 ) (int, error) {
 	var count int
 
@@ -325,7 +325,7 @@ func (s StateOfApplicabilityService) CountApplicabilityStatements(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			statements := &coredata.ApplicabilityStatements{}
-			count, err = statements.CountByStateOfApplicabilityID(ctx, conn, s.svc.scope, stateOfApplicabilityID)
+			count, err = statements.CountByStatementOfApplicabilityID(ctx, conn, s.svc.scope, statementOfApplicabilityID)
 			if err != nil {
 				return fmt.Errorf("cannot count applicability statements: %w", err)
 			}
@@ -340,35 +340,35 @@ func (s StateOfApplicabilityService) CountApplicabilityStatements(
 	return count, nil
 }
 
-func (s StateOfApplicabilityService) CreateApplicabilityStatement(
+func (s StatementOfApplicabilityService) CreateApplicabilityStatement(
 	ctx context.Context,
-	stateOfApplicabilityID gid.GID,
+	statementOfApplicabilityID gid.GID,
 	controlID gid.GID,
 	applicability bool,
 	justification *string,
 ) (*coredata.ApplicabilityStatement, error) {
 	var (
-		stateOfApplicability   = &coredata.StateOfApplicability{}
-		applicabilityStatement = &coredata.ApplicabilityStatement{}
-		now                    = time.Now()
+		statementOfApplicability = &coredata.StatementOfApplicability{}
+		applicabilityStatement   = &coredata.ApplicabilityStatement{}
+		now                      = time.Now()
 	)
 
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			if err := stateOfApplicability.LoadByID(ctx, conn, s.svc.scope, stateOfApplicabilityID); err != nil {
-				return fmt.Errorf("cannot load state of applicability: %w", err)
+			if err := statementOfApplicability.LoadByID(ctx, conn, s.svc.scope, statementOfApplicabilityID); err != nil {
+				return fmt.Errorf("cannot load statement of applicability: %w", err)
 			}
 
 			applicabilityStatement = &coredata.ApplicabilityStatement{
-				ID:                     gid.New(s.svc.scope.GetTenantID(), coredata.ApplicabilityStatementEntityType),
-				StateOfApplicabilityID: stateOfApplicabilityID,
-				ControlID:              controlID,
-				OrganizationID:         stateOfApplicability.OrganizationID,
-				Applicability:          applicability,
-				Justification:          justification,
-				CreatedAt:              now,
-				UpdatedAt:              now,
+				ID:                         gid.New(s.svc.scope.GetTenantID(), coredata.ApplicabilityStatementEntityType),
+				StatementOfApplicabilityID: statementOfApplicabilityID,
+				ControlID:                  controlID,
+				OrganizationID:             statementOfApplicability.OrganizationID,
+				Applicability:              applicability,
+				Justification:              justification,
+				CreatedAt:                  now,
+				UpdatedAt:                  now,
 			}
 
 			if err := applicabilityStatement.Insert(ctx, conn, s.svc.scope); err != nil {
@@ -385,7 +385,7 @@ func (s StateOfApplicabilityService) CreateApplicabilityStatement(
 	return applicabilityStatement, nil
 }
 
-func (s StateOfApplicabilityService) UpdateApplicabilityStatement(
+func (s StatementOfApplicabilityService) UpdateApplicabilityStatement(
 	ctx context.Context,
 	applicabilityStatementID gid.GID,
 	applicability bool,
@@ -414,7 +414,7 @@ func (s StateOfApplicabilityService) UpdateApplicabilityStatement(
 	return applicabilityStatement, nil
 }
 
-func (s StateOfApplicabilityService) DeleteApplicabilityStatement(
+func (s StatementOfApplicabilityService) DeleteApplicabilityStatement(
 	ctx context.Context,
 	applicabilityStatementID gid.GID,
 ) error {
@@ -428,7 +428,7 @@ func (s StateOfApplicabilityService) DeleteApplicabilityStatement(
 	)
 }
 
-func (s StateOfApplicabilityService) ListControlLinks(
+func (s StatementOfApplicabilityService) ListControlLinks(
 	ctx context.Context,
 	controlID gid.GID,
 	cursor *page.Cursor[coredata.ApplicabilityStatementOrderField],
@@ -445,27 +445,27 @@ func (s StateOfApplicabilityService) ListControlLinks(
 	return page.NewPage(controls, cursor), nil
 }
 
-func (s StateOfApplicabilityService) ExportPDF(
+func (s StatementOfApplicabilityService) ExportPDF(
 	ctx context.Context,
-	stateOfApplicabilityID gid.GID,
+	statementOfApplicabilityID gid.GID,
 ) ([]byte, error) {
-	var documentData docgen.StateOfApplicabilityData
+	var documentData docgen.StatementOfApplicabilityData
 
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			stateOfApplicability := &coredata.StateOfApplicability{}
-			if err := stateOfApplicability.LoadByID(ctx, conn, s.svc.scope, stateOfApplicabilityID); err != nil {
-				return fmt.Errorf("cannot load state of applicability: %w", err)
+			statementOfApplicability := &coredata.StatementOfApplicability{}
+			if err := statementOfApplicability.LoadByID(ctx, conn, s.svc.scope, statementOfApplicabilityID); err != nil {
+				return fmt.Errorf("cannot load statement of applicability: %w", err)
 			}
 
 			organization := &coredata.Organization{}
-			if err := organization.LoadByID(ctx, conn, s.svc.scope, stateOfApplicability.OrganizationID); err != nil {
+			if err := organization.LoadByID(ctx, conn, s.svc.scope, statementOfApplicability.OrganizationID); err != nil {
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
 			owner := &coredata.MembershipProfile{}
-			if err := owner.LoadByID(ctx, conn, s.svc.scope, stateOfApplicability.OwnerID); err != nil {
+			if err := owner.LoadByID(ctx, conn, s.svc.scope, statementOfApplicability.OwnerID); err != nil {
 				return fmt.Errorf("cannot load owner profile: %w", err)
 			}
 
@@ -480,16 +480,16 @@ func (s StateOfApplicabilityService) ExportPDF(
 					Direction: page.OrderDirectionAsc,
 				},
 			)
-			if err := applicabilityStatements.LoadByStateOfApplicabilityID(ctx, conn, s.svc.scope, stateOfApplicabilityID, cursor); err != nil {
+			if err := applicabilityStatements.LoadByStatementOfApplicabilityID(ctx, conn, s.svc.scope, statementOfApplicabilityID, cursor); err != nil {
 				return fmt.Errorf("cannot load applicability statements: %w", err)
 			}
 
 			if len(applicabilityStatements) == 0 {
 				// No linked controls, skip loading additional data
-				documentData = docgen.StateOfApplicabilityData{
-					Title:            stateOfApplicability.Name,
+				documentData = docgen.StatementOfApplicabilityData{
+					Title:            statementOfApplicability.Name,
 					OrganizationName: organization.Name,
-					CreatedAt:        stateOfApplicability.CreatedAt,
+					CreatedAt:        statementOfApplicability.CreatedAt,
 					TotalControls:    0,
 					FrameworkGroups:  []docgen.FrameworkControlGroup{},
 				}
@@ -602,19 +602,19 @@ func (s StateOfApplicabilityService) ExportPDF(
 			}
 
 			var snapshots coredata.Snapshots
-			snapshotType := coredata.SnapshotsTypeStatesOfApplicability
+			snapshotType := coredata.SnapshotsTypeStatementsOfApplicability
 
 			var version int
 			var publishedAt time.Time
 
-			if stateOfApplicability.SnapshotID != nil {
+			if statementOfApplicability.SnapshotID != nil {
 				snapshot := &coredata.Snapshot{}
-				if err := snapshot.LoadByID(ctx, conn, s.svc.scope, *stateOfApplicability.SnapshotID); err != nil {
+				if err := snapshot.LoadByID(ctx, conn, s.svc.scope, *statementOfApplicability.SnapshotID); err != nil {
 					return fmt.Errorf("cannot load snapshot: %w", err)
 				}
 				publishedAt = snapshot.CreatedAt
 				snapshotFilter := coredata.NewSnapshotFilter(&snapshotType).WithBeforeDate(&snapshot.CreatedAt)
-				snapshotCount, err := snapshots.CountByOrganizationID(ctx, conn, s.svc.scope, stateOfApplicability.OrganizationID, snapshotFilter)
+				snapshotCount, err := snapshots.CountByOrganizationID(ctx, conn, s.svc.scope, statementOfApplicability.OrganizationID, snapshotFilter)
 				if err != nil {
 					return fmt.Errorf("cannot count states of applicability snapshots: %w", err)
 				}
@@ -622,7 +622,7 @@ func (s StateOfApplicabilityService) ExportPDF(
 			} else {
 				publishedAt = time.Now()
 				snapshotFilter := coredata.NewSnapshotFilter(&snapshotType)
-				snapshotCount, err := snapshots.CountByOrganizationID(ctx, conn, s.svc.scope, stateOfApplicability.OrganizationID, snapshotFilter)
+				snapshotCount, err := snapshots.CountByOrganizationID(ctx, conn, s.svc.scope, statementOfApplicability.OrganizationID, snapshotFilter)
 				if err != nil {
 					return fmt.Errorf("cannot count states of applicability snapshots: %w", err)
 				}
@@ -641,10 +641,10 @@ func (s StateOfApplicabilityService) ExportPDF(
 				}
 			}
 
-			documentData = docgen.StateOfApplicabilityData{
-				Title:                       stateOfApplicability.Name,
+			documentData = docgen.StatementOfApplicabilityData{
+				Title:                       statementOfApplicability.Name,
 				OrganizationName:            organization.Name,
-				CreatedAt:                   stateOfApplicability.CreatedAt,
+				CreatedAt:                   statementOfApplicability.CreatedAt,
 				TotalControls:               len(applicabilityStatements),
 				FrameworkGroups:             frameworkGroups,
 				CompanyHorizontalLogoBase64: horizontalLogoBase64,
@@ -661,7 +661,7 @@ func (s StateOfApplicabilityService) ExportPDF(
 		return nil, err
 	}
 
-	htmlData, err := docgen.RenderStateOfApplicabilityHTML(documentData)
+	htmlData, err := docgen.RenderStatementOfApplicabilityHTML(documentData)
 	if err != nil {
 		return nil, fmt.Errorf("cannot render HTML: %w", err)
 	}

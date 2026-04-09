@@ -28,19 +28,19 @@ import { graphql } from "react-relay";
 import { useNavigate } from "react-router";
 import { z } from "zod";
 
-import type { CreateStateOfApplicabilityDialogMutation } from "#/__generated__/core/CreateStateOfApplicabilityDialogMutation.graphql";
+import type { CreateStatementOfApplicabilityDialogMutation } from "#/__generated__/core/CreateStatementOfApplicabilityDialogMutation.graphql";
 import { PeopleSelectField } from "#/components/form/PeopleSelectField";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 const createMutation = graphql`
-    mutation CreateStateOfApplicabilityDialogMutation(
-        $input: CreateStateOfApplicabilityInput!
+    mutation CreateStatementOfApplicabilityDialogMutation(
+        $input: CreateStatementOfApplicabilityInput!
         $connections: [ID!]!
     ) {
-        createStateOfApplicability(input: $input) {
-            stateOfApplicabilityEdge @prependEdge(connections: $connections) {
+        createStatementOfApplicability(input: $input) {
+            statementOfApplicabilityEdge @prependEdge(connections: $connections) {
                 node {
                     id
                     name
@@ -48,8 +48,8 @@ const createMutation = graphql`
                     snapshotId
                     createdAt
                     updatedAt
-                    canDelete: permission(action: "core:state-of-applicability:delete")
-                    ...StateOfApplicabilityRowFragment
+                    canDelete: permission(action: "core:statement-of-applicability:delete")
+                    ...StatementOfApplicabilityRowFragment
                 }
             }
         }
@@ -66,7 +66,7 @@ const schema = z.object({
   ownerId: z.string().min(1),
 });
 
-export function CreateStateOfApplicabilityDialog({
+export function CreateStatementOfApplicabilityDialog({
   children,
   connectionId,
 }: Props) {
@@ -84,19 +84,19 @@ export function CreateStateOfApplicabilityDialog({
   );
   const ref = useDialogRef();
 
-  const [createStateOfApplicability, isCreating]
-    = useMutationWithToasts<CreateStateOfApplicabilityDialogMutation>(
+  const [createStatementOfApplicability, isCreating]
+    = useMutationWithToasts<CreateStatementOfApplicabilityDialogMutation>(
       createMutation,
       {
         successMessage: __(
-          "State of applicability created successfully.",
+          "Statement of applicability created successfully.",
         ),
-        errorMessage: __("Failed to create state of applicability"),
+        errorMessage: __("Failed to create statement of applicability"),
       },
     );
 
   const onSubmit = async (data: z.infer<typeof schema>) => {
-    await createStateOfApplicability({
+    await createStatementOfApplicability({
       variables: {
         input: {
           name: data.name,
@@ -108,11 +108,11 @@ export function CreateStateOfApplicabilityDialog({
       onCompleted: (response) => {
         reset();
         ref.current?.close();
-        const stateOfApplicabilityId
-          = response.createStateOfApplicability.stateOfApplicabilityEdge
+        const statementOfApplicabilityId
+          = response.createStatementOfApplicability.statementOfApplicabilityEdge
             .node.id;
         void navigate(
-          `/organizations/${organizationId}/states-of-applicability/${stateOfApplicabilityId}`,
+          `/organizations/${organizationId}/statements-of-applicability/${statementOfApplicabilityId}`,
         );
       },
     });
@@ -125,8 +125,8 @@ export function CreateStateOfApplicabilityDialog({
       title={(
         <Breadcrumb
           items={[
-            __("States of Applicability"),
-            __("New State of Applicability"),
+            __("Statements of Applicability"),
+            __("New Statement of Applicability"),
           ]}
         />
       )}

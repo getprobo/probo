@@ -34,86 +34,86 @@ import {
 } from "react-relay";
 import { useParams } from "react-router";
 
-import type { StatesOfApplicabilityPageFragment$key } from "#/__generated__/core/StatesOfApplicabilityPageFragment.graphql";
-import type { StatesOfApplicabilityPagePaginationQuery } from "#/__generated__/core/StatesOfApplicabilityPagePaginationQuery.graphql";
-import type { StatesOfApplicabilityPageQuery } from "#/__generated__/core/StatesOfApplicabilityPageQuery.graphql";
+import type { StatementsOfApplicabilityPageFragment$key } from "#/__generated__/core/StatementsOfApplicabilityPageFragment.graphql";
+import type { StatementsOfApplicabilityPagePaginationQuery } from "#/__generated__/core/StatementsOfApplicabilityPagePaginationQuery.graphql";
+import type { StatementsOfApplicabilityPageQuery } from "#/__generated__/core/StatementsOfApplicabilityPageQuery.graphql";
 import { SnapshotBanner } from "#/components/SnapshotBanner";
 
-import { StateOfApplicabilityRow } from "./_components/StateOfApplicabilityRow";
-import { CreateStateOfApplicabilityDialog } from "./dialogs/CreateStateOfApplicabilityDialog";
+import { StatementOfApplicabilityRow } from "./_components/StatementOfApplicabilityRow";
+import { CreateStatementOfApplicabilityDialog } from "./dialogs/CreateStatementOfApplicabilityDialog";
 
-export const statesOfApplicabilityPageQuery = graphql`
-  query StatesOfApplicabilityPageQuery($organizationId: ID!) {
+export const statementsOfApplicabilityPageQuery = graphql`
+  query StatementsOfApplicabilityPageQuery($organizationId: ID!) {
       organization: node(id: $organizationId) {
           __typename
           ... on Organization {
               id
-              canCreateStateOfApplicability: permission(action: "core:state-of-applicability:create")
-              ...StatesOfApplicabilityPageFragment
+              canCreateStatementOfApplicability: permission(action: "core:statement-of-applicability:create")
+              ...StatementsOfApplicabilityPageFragment
           }
       }
   }
 `;
 
 const paginatedFragment = graphql`
-  fragment StatesOfApplicabilityPageFragment on Organization
-  @refetchable(queryName: "StatesOfApplicabilityPagePaginationQuery")
+  fragment StatementsOfApplicabilityPageFragment on Organization
+  @refetchable(queryName: "StatementsOfApplicabilityPagePaginationQuery")
   @argumentDefinitions(
       first: { type: "Int", defaultValue: 50 }
       order: {
-          type: "StateOfApplicabilityOrder"
+          type: "StatementOfApplicabilityOrder"
           defaultValue: { direction: DESC, field: CREATED_AT }
       }
       after: { type: "CursorKey", defaultValue: null }
       before: { type: "CursorKey", defaultValue: null }
       last: { type: "Int", defaultValue: null }
-      filter: { type: "StateOfApplicabilityFilter", defaultValue: { snapshotId: null } }
+      filter: { type: "StatementOfApplicabilityFilter", defaultValue: { snapshotId: null } }
   ) {
-      statesOfApplicability(
+      statementsOfApplicability(
           first: $first
           after: $after
           last: $last
           before: $before
           orderBy: $order
           filter: $filter
-      ) @connection(key: "StatesOfApplicabilityPage_statesOfApplicability", filters: ["filter"]) {
+      ) @connection(key: "StatementsOfApplicabilityPage_statementsOfApplicability", filters: ["filter"]) {
           __id
           edges {
               node {
                   id
-                  ...StateOfApplicabilityRowFragment
+                  ...StatementOfApplicabilityRowFragment
               }
           }
       }
   }
 `;
 
-export default function StatesOfApplicabilityPage({
+export default function StatementsOfApplicabilityPage({
   queryRef,
 }: {
-  queryRef: PreloadedQuery<StatesOfApplicabilityPageQuery>;
+  queryRef: PreloadedQuery<StatementsOfApplicabilityPageQuery>;
 }) {
   const { __ } = useTranslate();
   const { snapshotId } = useParams<{ snapshotId?: string }>();
   const isSnapshotMode = Boolean(snapshotId);
 
-  usePageTitle(__("States of Applicability"));
+  usePageTitle(__("Statements of Applicability"));
 
-  const { organization } = usePreloadedQuery(statesOfApplicabilityPageQuery, queryRef);
+  const { organization } = usePreloadedQuery(statementsOfApplicabilityPageQuery, queryRef);
 
   if (organization.__typename !== "Organization") {
     throw new Error("Organization not found");
   }
 
   const {
-    data: { statesOfApplicability },
+    data: { statementsOfApplicability },
     loadNext,
     hasNext,
     refetch,
     isLoadingNext,
   } = usePaginationFragment<
-    StatesOfApplicabilityPagePaginationQuery,
-    StatesOfApplicabilityPageFragment$key
+    StatementsOfApplicabilityPagePaginationQuery,
+    StatementsOfApplicabilityPageFragment$key
   >(paginatedFragment, organization);
 
   useEffect(() => {
@@ -129,24 +129,24 @@ export default function StatesOfApplicabilityPage({
     <div className="space-y-6">
       {snapshotId && <SnapshotBanner snapshotId={snapshotId} />}
       <PageHeader
-        title={__("States of Applicability")}
+        title={__("Statements of Applicability")}
         description={__(
-          "Manage states of applicability for your organization's frameworks.",
+          "Manage statements of applicability for your organization's frameworks.",
         )}
       >
         {!isSnapshotMode
-          && organization.canCreateStateOfApplicability && (
-          <CreateStateOfApplicabilityDialog
-            connectionId={statesOfApplicability.__id}
+          && organization.canCreateStatementOfApplicability && (
+          <CreateStatementOfApplicabilityDialog
+            connectionId={statementsOfApplicability.__id}
           >
             <Button icon={IconPlusLarge}>
-              {__("Add state of applicability")}
+              {__("Add statement of applicability")}
             </Button>
-          </CreateStateOfApplicabilityDialog>
+          </CreateStatementOfApplicabilityDialog>
         )}
       </PageHeader>
 
-      {statesOfApplicability && statesOfApplicability.edges.length > 0
+      {statementsOfApplicability && statementsOfApplicability.edges.length > 0
         ? (
             <Card>
               <Table>
@@ -158,11 +158,11 @@ export default function StatesOfApplicabilityPage({
                   </Tr>
                 </Thead>
                 <Tbody>
-                  {statesOfApplicability.edges.map(edge => (
-                    <StateOfApplicabilityRow
+                  {statementsOfApplicability.edges.map(edge => (
+                    <StatementOfApplicabilityRow
                       key={edge.node.id}
                       fKey={edge.node}
-                      connectionId={statesOfApplicability.__id}
+                      connectionId={statementsOfApplicability.__id}
                     />
                   ))}
                 </Tbody>
@@ -187,11 +187,11 @@ export default function StatesOfApplicabilityPage({
             <Card padded>
               <div className="text-center py-12">
                 <h3 className="text-lg font-semibold mb-2">
-                  {__("No states of applicability yet")}
+                  {__("No statements of applicability yet")}
                 </h3>
                 <p className="text-txt-tertiary mb-4">
                   {__(
-                    "Create your first state of applicability to get started.",
+                    "Create your first statement of applicability to get started.",
                   )}
                 </p>
               </div>

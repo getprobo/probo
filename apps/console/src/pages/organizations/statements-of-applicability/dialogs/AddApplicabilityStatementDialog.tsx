@@ -38,9 +38,9 @@ import type { AddApplicabilityStatementDialogQuery } from "#/__generated__/core/
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 
 const query = graphql`
-    query AddApplicabilityStatementDialogQuery($stateOfApplicabilityId: ID!, $organizationId: ID!) {
-        stateOfApplicability: node(id: $stateOfApplicabilityId) {
-            ... on StateOfApplicability {
+    query AddApplicabilityStatementDialogQuery($statementOfApplicabilityId: ID!, $organizationId: ID!) {
+        statementOfApplicability: node(id: $statementOfApplicabilityId) {
+            ... on StatementOfApplicability {
                 id
                 applicabilityStatements(first: 10000) {
                     edges {
@@ -138,7 +138,7 @@ const updateApplicabilityStatementMutation = graphql`
 `;
 
 export type AddApplicabilityStatementDialogRef = {
-  open: (stateOfApplicabilityId: string, organizationId: string, connectionId: string) => void;
+  open: (statementOfApplicabilityId: string, organizationId: string, connectionId: string) => void;
 };
 
 type ControlWithStatement = {
@@ -154,11 +154,11 @@ type ControlWithStatement = {
 
 function ControlRow({
   control,
-  stateOfApplicabilityId,
+  statementOfApplicabilityId,
   connectionId,
 }: {
   control: ControlWithStatement;
-  stateOfApplicabilityId: string;
+  statementOfApplicabilityId: string;
   connectionId: string;
 }) {
   const { __ } = useTranslate();
@@ -228,7 +228,7 @@ function ControlRow({
         await createApplicabilityStatement({
           variables: {
             input: {
-              stateOfApplicabilityId,
+              statementOfApplicabilityId,
               controlId: control.controlId,
               applicability: true,
               justification: null,
@@ -263,7 +263,7 @@ function ControlRow({
       await createApplicabilityStatement({
         variables: {
           input: {
-            stateOfApplicabilityId,
+            statementOfApplicabilityId,
             controlId: control.controlId,
             applicability: false,
             justification: justification || null,
@@ -333,11 +333,11 @@ function ControlRow({
 }
 
 function AddApplicabilityStatementDialogContent({
-  stateOfApplicabilityId,
+  statementOfApplicabilityId,
   organizationId,
   connectionId,
 }: {
-  stateOfApplicabilityId: string;
+  statementOfApplicabilityId: string;
   organizationId: string;
   connectionId: string;
 }) {
@@ -346,7 +346,7 @@ function AddApplicabilityStatementDialogContent({
   const [collapsedFrameworks, setCollapsedFrameworks] = useState<Set<string>>(new Set());
   const data = useLazyLoadQuery<AddApplicabilityStatementDialogQuery>(
     query,
-    { stateOfApplicabilityId, organizationId },
+    { statementOfApplicabilityId, organizationId },
     { fetchPolicy: "store-or-network" },
   );
 
@@ -355,7 +355,7 @@ function AddApplicabilityStatementDialogContent({
       string,
       { id: string; applicability: boolean; justification: string | null }
     >();
-    data.stateOfApplicability?.applicabilityStatements?.edges.forEach((edge) => {
+    data.statementOfApplicability?.applicabilityStatements?.edges.forEach((edge) => {
       map.set(edge.node.control.id, {
         id: edge.node.id,
         applicability: edge.node.applicability,
@@ -363,7 +363,7 @@ function AddApplicabilityStatementDialogContent({
       });
     });
     return map;
-  }, [data.stateOfApplicability?.applicabilityStatements]);
+  }, [data.statementOfApplicability?.applicabilityStatements]);
 
   const allControls = useMemo(() => {
     return (data.organization?.controls?.edges || []).map((edge) => {
@@ -459,7 +459,7 @@ function AddApplicabilityStatementDialogContent({
                                 <ControlRow
                                   key={control.controlId}
                                   control={control}
-                                  stateOfApplicabilityId={stateOfApplicabilityId}
+                                  statementOfApplicabilityId={statementOfApplicabilityId}
                                   connectionId={connectionId}
                                 />
                               ))}
@@ -488,7 +488,7 @@ export const AddApplicabilityStatementDialog = forwardRef<
   ({ onClose }, ref) => {
     const { __ } = useTranslate();
     const dialogRef = useDialogRef();
-    const [stateOfApplicabilityId, setStateOfApplicabilityId] = useState<string | null>(null);
+    const [statementOfApplicabilityId, setStatementOfApplicabilityId] = useState<string | null>(null);
     const [organizationId, setOrganizationId] = useState<string | null>(null);
     const [connectionId, setConnectionId] = useState<string | null>(null);
 
@@ -496,7 +496,7 @@ export const AddApplicabilityStatementDialog = forwardRef<
       ref,
       () => ({
         open: (soaId: string, orgId: string, connId: string) => {
-          setStateOfApplicabilityId(soaId);
+          setStatementOfApplicabilityId(soaId);
           setOrganizationId(orgId);
           setConnectionId(connId);
           dialogRef.current?.open();
@@ -506,7 +506,7 @@ export const AddApplicabilityStatementDialog = forwardRef<
     );
 
     const handleClose = () => {
-      setStateOfApplicabilityId(null);
+      setStatementOfApplicabilityId(null);
       setOrganizationId(null);
       setConnectionId(null);
       onClose?.();
@@ -518,12 +518,12 @@ export const AddApplicabilityStatementDialog = forwardRef<
         className="max-w-3xl"
         title={(
           <Breadcrumb
-            items={[__("States of Applicability"), __("Add Statement")]}
+            items={[__("Statements of Applicability"), __("Add Statement")]}
           />
         )}
         onClose={handleClose}
       >
-        {stateOfApplicabilityId && organizationId && connectionId
+        {statementOfApplicabilityId && organizationId && connectionId
           ? (
               <Suspense
                 fallback={(
@@ -536,7 +536,7 @@ export const AddApplicabilityStatementDialog = forwardRef<
                 )}
               >
                 <AddApplicabilityStatementDialogContent
-                  stateOfApplicabilityId={stateOfApplicabilityId}
+                  statementOfApplicabilityId={statementOfApplicabilityId}
                   organizationId={organizationId}
                   connectionId={connectionId}
                 />

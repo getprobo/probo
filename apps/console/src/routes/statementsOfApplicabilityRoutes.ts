@@ -17,33 +17,33 @@ import type { AppRoute } from "@probo/routes";
 
 import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
 
-export const statesOfApplicabilityRoutes = [
+export const statementsOfApplicabilityRoutes = [
   {
-    path: "states-of-applicability",
+    path: "statements-of-applicability",
     Fallback: PageSkeleton,
     Component: lazy(
-      () => import("#/pages/organizations/states-of-applicability/StatesOfApplicabilityPageLoader"),
+      () => import("#/pages/organizations/statements-of-applicability/StatementsOfApplicabilityPageLoader"),
     ),
   },
   {
-    path: "snapshots/:snapshotId/states-of-applicability",
+    path: "snapshots/:snapshotId/statements-of-applicability",
     Fallback: PageSkeleton,
     Component: lazy(
-      () => import("#/pages/organizations/states-of-applicability/StatesOfApplicabilityPageLoader"),
+      () => import("#/pages/organizations/statements-of-applicability/StatementsOfApplicabilityPageLoader"),
     ),
   },
   {
-    path: "states-of-applicability/:stateOfApplicabilityId",
+    path: "statements-of-applicability/:statementOfApplicabilityId",
     Fallback: PageSkeleton,
     Component: lazy(
-      () => import("#/pages/organizations/states-of-applicability/StateOfApplicabilityDetailPageLoader"),
+      () => import("#/pages/organizations/statements-of-applicability/StatementOfApplicabilityDetailPageLoader"),
     ),
   },
   {
-    path: "snapshots/:snapshotId/states-of-applicability/:stateOfApplicabilityId",
+    path: "snapshots/:snapshotId/statements-of-applicability/:statementOfApplicabilityId",
     Fallback: PageSkeleton,
     Component: lazy(
-      () => import("#/pages/organizations/states-of-applicability/StateOfApplicabilityDetailPageLoader"),
+      () => import("#/pages/organizations/statements-of-applicability/StatementOfApplicabilityDetailPageLoader"),
     ),
   },
 ] satisfies AppRoute[];

@@ -816,9 +816,9 @@ func (s ControlService) ListForSnapshotID(
 	return page.NewPage([]*coredata.Control(controls), cursor), nil
 }
 
-func (s ControlService) CountForStateOfApplicabilityID(
+func (s ControlService) CountForStatementOfApplicabilityID(
 	ctx context.Context,
-	stateOfApplicabilityID gid.GID,
+	statementOfApplicabilityID gid.GID,
 	filter *coredata.ControlFilter,
 ) (int, error) {
 	var count int
@@ -827,7 +827,7 @@ func (s ControlService) CountForStateOfApplicabilityID(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			controls := &coredata.Controls{}
-			count, err = controls.CountByStateOfApplicabilityID(ctx, conn, s.svc.scope, stateOfApplicabilityID, filter)
+			count, err = controls.CountByStatementOfApplicabilityID(ctx, conn, s.svc.scope, statementOfApplicabilityID, filter)
 			if err != nil {
 				return fmt.Errorf("cannot count controls: %w", err)
 			}

@@ -64,8 +64,8 @@ const fragment = graphql`
         canListSnapshots: permission(action: "core:snapshot:list")
         canGetTrustCenter: permission(action: "core:trust-center:get")
         canUpdateOrganization: permission(action: "iam:organization:update")
-        canListStatesOfApplicability: permission(
-            action: "core:state-of-applicability:list"
+        canListStatementsOfApplicability: permission(
+            action: "core:statement-of-applicability:list"
         )
         canListAccessReviewCampaigns: permission(
             action: "core:access-review-campaign:list"
@@ -183,11 +183,11 @@ export function Sidebar(props: { fKey: SidebarFragment$key }) {
           to={`${prefix}/processing-activities`}
         />
       )}
-      {organization.canListStatesOfApplicability && (
+      {organization.canListStatementsOfApplicability && (
         <SidebarItem
-          label={__("States of Applicability")}
+          label={__("Statements of Applicability")}
           icon={IconPageCheck}
-          to={`${prefix}/states-of-applicability`}
+          to={`${prefix}/statements-of-applicability`}
         />
       )}
       {organization.canListRightsRequests && (

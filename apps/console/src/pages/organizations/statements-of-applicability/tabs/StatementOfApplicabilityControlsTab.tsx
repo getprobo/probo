@@ -32,7 +32,7 @@ import { Suspense, useCallback, useRef } from "react";
 import { graphql, useFragment, useRelayEnvironment } from "react-relay";
 import { fetchQuery } from "relay-runtime";
 
-import type { StateOfApplicabilityControlsTabFragment$key } from "#/__generated__/core/StateOfApplicabilityControlsTabFragment.graphql";
+import type { StatementOfApplicabilityControlsTabFragment$key } from "#/__generated__/core/StatementOfApplicabilityControlsTabFragment.graphql";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
@@ -46,17 +46,17 @@ import {
 } from "../dialogs/EditControlDialog";
 
 const refetchStatementsQuery = graphql`
-    query StateOfApplicabilityControlsTabRefetchQuery($stateOfApplicabilityId: ID!) {
-        node(id: $stateOfApplicabilityId) {
-            ... on StateOfApplicability {
-                ...StateOfApplicabilityControlsTabFragment
+    query StatementOfApplicabilityControlsTabRefetchQuery($statementOfApplicabilityId: ID!) {
+        node(id: $statementOfApplicabilityId) {
+            ... on StatementOfApplicability {
+                ...StatementOfApplicabilityControlsTabFragment
             }
         }
     }
 `;
 
 export const controlsFragment = graphql`
-    fragment StateOfApplicabilityControlsTabFragment on StateOfApplicability {
+    fragment StatementOfApplicabilityControlsTabFragment on StatementOfApplicability {
         id
         organization {
             id
@@ -73,7 +73,7 @@ export const controlsFragment = graphql`
         )
 
         applicabilityStatements(first: 1000, orderBy: { direction: ASC, field: CONTROL_SECTION_TITLE })
-            @connection(key: "StateOfApplicabilityControlsTab_applicabilityStatements") {
+            @connection(key: "StatementOfApplicabilityControlsTab_applicabilityStatements") {
             __id
             edges {
                 node {
@@ -105,7 +105,7 @@ export const controlsFragment = graphql`
 `;
 
 const deleteApplicabilityStatementMutation = graphql`
-    mutation StateOfApplicabilityControlsTabDeleteMutation(
+    mutation StatementOfApplicabilityControlsTabDeleteMutation(
         $input: DeleteApplicabilityStatementInput!
         $connections: [ID!]!
     ) {
@@ -115,17 +115,17 @@ const deleteApplicabilityStatementMutation = graphql`
     }
 `;
 
-export default function StateOfApplicabilityControlsTab({
-  stateOfApplicability,
+export default function StatementOfApplicabilityControlsTab({
+  statementOfApplicability,
   isSnapshotMode = false,
 }: {
-  stateOfApplicability: StateOfApplicabilityControlsTabFragment$key & {
+  statementOfApplicability: StatementOfApplicabilityControlsTabFragment$key & {
     id: string;
   };
   isSnapshotMode?: boolean;
 }) {
   const { __ } = useTranslate();
-  const data = useFragment(controlsFragment, stateOfApplicability);
+  const data = useFragment(controlsFragment, statementOfApplicability);
   const environment = useRelayEnvironment();
   const organizationId = useOrganizationId();
   const addStatementDialogRef = useRef<AddApplicabilityStatementDialogRef>(null);
@@ -134,7 +134,7 @@ export default function StateOfApplicabilityControlsTab({
   const handleDialogClose = useCallback(() => {
     if (!data.id) return;
     fetchQuery(environment, refetchStatementsQuery, {
-      stateOfApplicabilityId: data.id,
+      statementOfApplicabilityId: data.id,
     }).subscribe({});
   }, [environment, data.id]);
 

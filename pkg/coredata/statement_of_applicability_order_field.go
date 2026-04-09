@@ -19,44 +19,44 @@ import (
 )
 
 type (
-	StateOfApplicabilityOrderField string
+	StatementOfApplicabilityOrderField string
 )
 
 const (
-	StateOfApplicabilityOrderFieldName      StateOfApplicabilityOrderField = "NAME"
-	StateOfApplicabilityOrderFieldCreatedAt StateOfApplicabilityOrderField = "CREATED_AT"
+	StatementOfApplicabilityOrderFieldName      StatementOfApplicabilityOrderField = "NAME"
+	StatementOfApplicabilityOrderFieldCreatedAt StatementOfApplicabilityOrderField = "CREATED_AT"
 )
 
-func (s StateOfApplicabilityOrderField) Column() string {
+func (s StatementOfApplicabilityOrderField) Column() string {
 	switch s {
-	case StateOfApplicabilityOrderFieldName:
+	case StatementOfApplicabilityOrderFieldName:
 		return "name"
-	case StateOfApplicabilityOrderFieldCreatedAt:
+	case StatementOfApplicabilityOrderFieldCreatedAt:
 		return "created_at"
 	}
 	panic(fmt.Sprintf("unsupported order by: %s", s))
 }
 
-func (s StateOfApplicabilityOrderField) String() string {
+func (s StatementOfApplicabilityOrderField) String() string {
 	return string(s)
 }
 
-func (s StateOfApplicabilityOrderField) IsValid() bool {
+func (s StatementOfApplicabilityOrderField) IsValid() bool {
 	switch s {
-	case StateOfApplicabilityOrderFieldName, StateOfApplicabilityOrderFieldCreatedAt:
+	case StatementOfApplicabilityOrderFieldName, StatementOfApplicabilityOrderFieldCreatedAt:
 		return true
 	}
 	return false
 }
 
-func (s StateOfApplicabilityOrderField) MarshalText() ([]byte, error) {
+func (s StatementOfApplicabilityOrderField) MarshalText() ([]byte, error) {
 	return []byte(s.String()), nil
 }
 
-func (s *StateOfApplicabilityOrderField) UnmarshalText(text []byte) error {
-	*s = StateOfApplicabilityOrderField(text)
+func (s *StatementOfApplicabilityOrderField) UnmarshalText(text []byte) error {
+	*s = StatementOfApplicabilityOrderField(text)
 	if !s.IsValid() {
-		return fmt.Errorf("%s is not a valid StateOfApplicabilityOrderField", string(text))
+		return fmt.Errorf("%s is not a valid StatementOfApplicabilityOrderField", string(text))
 	}
 	return nil
 }

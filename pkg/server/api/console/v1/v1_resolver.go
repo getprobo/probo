@@ -543,21 +543,21 @@ func (r *accessSourceConnectionResolver) TotalCount(ctx context.Context, obj *ty
 	panic(fmt.Errorf("unsupported resolver: %T", obj.Resolver))
 }
 
-// StateOfApplicability is the resolver for the stateOfApplicability field.
-func (r *applicabilityStatementResolver) StateOfApplicability(ctx context.Context, obj *types.ApplicabilityStatement) (*types.StateOfApplicability, error) {
-	if err := r.authorize(ctx, obj.StateOfApplicability.ID, probo.ActionStateOfApplicabilityGet); err != nil {
+// StatementOfApplicability is the resolver for the statementOfApplicability field.
+func (r *applicabilityStatementResolver) StatementOfApplicability(ctx context.Context, obj *types.ApplicabilityStatement) (*types.StatementOfApplicability, error) {
+	if err := r.authorize(ctx, obj.StatementOfApplicability.ID, probo.ActionStatementOfApplicabilityGet); err != nil {
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.StateOfApplicability.ID.TenantID())
+	prb := r.ProboService(ctx, obj.StatementOfApplicability.ID.TenantID())
 
-	soa, err := prb.StatesOfApplicability.Get(ctx, obj.StateOfApplicability.ID)
+	soa, err := prb.StatementsOfApplicability.Get(ctx, obj.StatementOfApplicability.ID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot get state of applicability", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot get statement of applicability", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewStateOfApplicability(soa), nil
+	return types.NewStatementOfApplicability(soa), nil
 }
 
 // Control is the resolver for the control field.
@@ -595,8 +595,8 @@ func (r *applicabilityStatementConnectionResolver) TotalCount(ctx context.Contex
 	prb := r.ProboService(ctx, obj.ParentID.TenantID())
 
 	switch obj.Resolver.(type) {
-	case *stateOfApplicabilityResolver:
-		count, err := prb.StatesOfApplicability.CountApplicabilityStatements(ctx, obj.ParentID)
+	case *statementOfApplicabilityResolver:
+		count, err := prb.StatementsOfApplicability.CountApplicabilityStatements(ctx, obj.ParentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count applicability statements", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
@@ -1289,8 +1289,8 @@ func (r *controlConnectionResolver) TotalCount(ctx context.Context, obj *types.C
 			return 0, gqlutils.Internal(ctx)
 		}
 		return count, nil
-	case *stateOfApplicabilityResolver:
-		count, err := prb.Controls.CountForStateOfApplicabilityID(ctx, obj.ParentID, obj.Filters)
+	case *statementOfApplicabilityResolver:
+		count, err := prb.Controls.CountForStatementOfApplicabilityID(ctx, obj.ParentID, obj.Filters)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count controls", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
@@ -4440,9 +4440,9 @@ func (r *mutationResolver) CreateApplicabilityStatement(ctx context.Context, inp
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, input.StateOfApplicabilityID.TenantID())
+	prb := r.ProboService(ctx, input.StatementOfApplicabilityID.TenantID())
 
-	applicabilityStatement, err := prb.StatesOfApplicability.CreateApplicabilityStatement(ctx, input.StateOfApplicabilityID, input.ControlID, input.Applicability, input.Justification)
+	applicabilityStatement, err := prb.StatementsOfApplicability.CreateApplicabilityStatement(ctx, input.StatementOfApplicabilityID, input.ControlID, input.Applicability, input.Justification)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot create applicability statement", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -4461,7 +4461,7 @@ func (r *mutationResolver) UpdateApplicabilityStatement(ctx context.Context, inp
 
 	prb := r.ProboService(ctx, input.ApplicabilityStatementID.TenantID())
 
-	applicabilityStatement, err := prb.StatesOfApplicability.UpdateApplicabilityStatement(ctx, input.ApplicabilityStatementID, input.Applicability, input.Justification)
+	applicabilityStatement, err := prb.StatementsOfApplicability.UpdateApplicabilityStatement(ctx, input.ApplicabilityStatementID, input.Applicability, input.Justification)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot update applicability statement", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -4480,7 +4480,7 @@ func (r *mutationResolver) DeleteApplicabilityStatement(ctx context.Context, inp
 
 	prb := r.ProboService(ctx, input.ApplicabilityStatementID.TenantID())
 
-	err := prb.StatesOfApplicability.DeleteApplicabilityStatement(ctx, input.ApplicabilityStatementID)
+	err := prb.StatementsOfApplicability.DeleteApplicabilityStatement(ctx, input.ApplicabilityStatementID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete applicability statement", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -5526,17 +5526,17 @@ func (r *mutationResolver) DeleteWebhookSubscription(ctx context.Context, input 
 	}, nil
 }
 
-// CreateStateOfApplicability is the resolver for the createStateOfApplicability field.
-func (r *mutationResolver) CreateStateOfApplicability(ctx context.Context, input types.CreateStateOfApplicabilityInput) (*types.CreateStateOfApplicabilityPayload, error) {
-	if err := r.authorize(ctx, input.OrganizationID, probo.ActionStateOfApplicabilityCreate); err != nil {
+// CreateStatementOfApplicability is the resolver for the createStatementOfApplicability field.
+func (r *mutationResolver) CreateStatementOfApplicability(ctx context.Context, input types.CreateStatementOfApplicabilityInput) (*types.CreateStatementOfApplicabilityPayload, error) {
+	if err := r.authorize(ctx, input.OrganizationID, probo.ActionStatementOfApplicabilityCreate); err != nil {
 		return nil, err
 	}
 
 	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
 
-	stateOfApplicability, err := prb.StatesOfApplicability.Create(
+	statementOfApplicability, err := prb.StatementsOfApplicability.Create(
 		ctx,
-		probo.CreateStateOfApplicabilityRequest{
+		probo.CreateStatementOfApplicabilityRequest{
 			OrganizationID: input.OrganizationID,
 			Name:           input.Name,
 			OwnerID:        input.OwnerID,
@@ -5549,18 +5549,18 @@ func (r *mutationResolver) CreateStateOfApplicability(ctx context.Context, input
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
-		r.logger.ErrorCtx(ctx, "cannot create state_of_applicability", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot create statement_of_applicability", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return &types.CreateStateOfApplicabilityPayload{
-		StateOfApplicabilityEdge: types.NewStateOfApplicabilityEdge(stateOfApplicability, coredata.StateOfApplicabilityOrderFieldCreatedAt),
+	return &types.CreateStatementOfApplicabilityPayload{
+		StatementOfApplicabilityEdge: types.NewStatementOfApplicabilityEdge(statementOfApplicability, coredata.StatementOfApplicabilityOrderFieldCreatedAt),
 	}, nil
 }
 
-// UpdateStateOfApplicability is the resolver for the updateStateOfApplicability field.
-func (r *mutationResolver) UpdateStateOfApplicability(ctx context.Context, input types.UpdateStateOfApplicabilityInput) (*types.UpdateStateOfApplicabilityPayload, error) {
-	if err := r.authorize(ctx, input.ID, probo.ActionStateOfApplicabilityUpdate); err != nil {
+// UpdateStatementOfApplicability is the resolver for the updateStatementOfApplicability field.
+func (r *mutationResolver) UpdateStatementOfApplicability(ctx context.Context, input types.UpdateStatementOfApplicabilityInput) (*types.UpdateStatementOfApplicabilityPayload, error) {
+	if err := r.authorize(ctx, input.ID, probo.ActionStatementOfApplicabilityUpdate); err != nil {
 		return nil, err
 	}
 
@@ -5571,12 +5571,12 @@ func (r *mutationResolver) UpdateStateOfApplicability(ctx context.Context, input
 		name = input.Name
 	}
 
-	stateOfApplicability, err := prb.StatesOfApplicability.Update(
+	statementOfApplicability, err := prb.StatementsOfApplicability.Update(
 		ctx,
-		probo.UpdateStateOfApplicabilityRequest{
-			StateOfApplicabilityID: input.ID,
-			Name:                   name,
-			OwnerID:                input.OwnerID,
+		probo.UpdateStatementOfApplicabilityRequest{
+			StatementOfApplicabilityID: input.ID,
+			Name:                       name,
+			OwnerID:                    input.OwnerID,
 		},
 	)
 	if err != nil {
@@ -5586,52 +5586,52 @@ func (r *mutationResolver) UpdateStateOfApplicability(ctx context.Context, input
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
-		r.logger.ErrorCtx(ctx, "cannot update state_of_applicability", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot update statement_of_applicability", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return &types.UpdateStateOfApplicabilityPayload{
-		StateOfApplicability: types.NewStateOfApplicability(stateOfApplicability),
+	return &types.UpdateStatementOfApplicabilityPayload{
+		StatementOfApplicability: types.NewStatementOfApplicability(statementOfApplicability),
 	}, nil
 }
 
-// DeleteStateOfApplicability is the resolver for the deleteStateOfApplicability field.
-func (r *mutationResolver) DeleteStateOfApplicability(ctx context.Context, input types.DeleteStateOfApplicabilityInput) (*types.DeleteStateOfApplicabilityPayload, error) {
-	if err := r.authorize(ctx, input.StateOfApplicabilityID, probo.ActionStateOfApplicabilityDelete); err != nil {
+// DeleteStatementOfApplicability is the resolver for the deleteStatementOfApplicability field.
+func (r *mutationResolver) DeleteStatementOfApplicability(ctx context.Context, input types.DeleteStatementOfApplicabilityInput) (*types.DeleteStatementOfApplicabilityPayload, error) {
+	if err := r.authorize(ctx, input.StatementOfApplicabilityID, probo.ActionStatementOfApplicabilityDelete); err != nil {
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, input.StateOfApplicabilityID.TenantID())
+	prb := r.ProboService(ctx, input.StatementOfApplicabilityID.TenantID())
 
-	err := prb.StatesOfApplicability.Delete(ctx, input.StateOfApplicabilityID)
+	err := prb.StatementsOfApplicability.Delete(ctx, input.StatementOfApplicabilityID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot delete state_of_applicability", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot delete statement_of_applicability", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return &types.DeleteStateOfApplicabilityPayload{
-		DeletedStateOfApplicabilityID: input.StateOfApplicabilityID,
+	return &types.DeleteStatementOfApplicabilityPayload{
+		DeletedStatementOfApplicabilityID: input.StatementOfApplicabilityID,
 	}, nil
 }
 
-// ExportStateOfApplicabilityPDF is the resolver for the exportStateOfApplicabilityPDF field.
-func (r *mutationResolver) ExportStateOfApplicabilityPDF(ctx context.Context, input types.ExportStateOfApplicabilityPDFInput) (*types.ExportStateOfApplicabilityPDFPayload, error) {
-	if err := r.authorize(ctx, input.StateOfApplicabilityID, probo.ActionStateOfApplicabilityExport); err != nil {
+// ExportStatementOfApplicabilityPDF is the resolver for the exportStatementOfApplicabilityPDF field.
+func (r *mutationResolver) ExportStatementOfApplicabilityPDF(ctx context.Context, input types.ExportStatementOfApplicabilityPDFInput) (*types.ExportStatementOfApplicabilityPDFPayload, error) {
+	if err := r.authorize(ctx, input.StatementOfApplicabilityID, probo.ActionStatementOfApplicabilityExport); err != nil {
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, input.StateOfApplicabilityID.TenantID())
+	prb := r.ProboService(ctx, input.StatementOfApplicabilityID.TenantID())
 
-	pdfData, err := prb.StatesOfApplicability.ExportPDF(ctx, input.StateOfApplicabilityID)
+	pdfData, err := prb.StatementsOfApplicability.ExportPDF(ctx, input.StatementOfApplicabilityID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot export state of applicability PDF", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot export statement of applicability PDF", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
 	base64Data := base64.StdEncoding.EncodeToString(pdfData)
 	dataURI := fmt.Sprintf("data:application/pdf;base64,%s", base64Data)
 
-	return &types.ExportStateOfApplicabilityPDFPayload{
+	return &types.ExportStatementOfApplicabilityPDFPayload{
 		Data: dataURI,
 	}, nil
 }
@@ -8522,20 +8522,20 @@ func (r *organizationResolver) Meetings(ctx context.Context, obj *types.Organiza
 	return types.NewMeetingConnection(page, r, obj.ID), nil
 }
 
-// StatesOfApplicability is the resolver for the statesOfApplicability field.
-func (r *organizationResolver) StatesOfApplicability(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.StateOfApplicabilityOrderBy, filter *types.StateOfApplicabilityFilter) (*types.StateOfApplicabilityConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionStateOfApplicabilityList); err != nil {
+// StatementsOfApplicability is the resolver for the statementsOfApplicability field.
+func (r *organizationResolver) StatementsOfApplicability(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.StatementOfApplicabilityOrderBy, filter *types.StatementOfApplicabilityFilter) (*types.StatementOfApplicabilityConnection, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionStatementOfApplicabilityList); err != nil {
 		return nil, err
 	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
-	pageOrderBy := page.OrderBy[coredata.StateOfApplicabilityOrderField]{
-		Field:     coredata.StateOfApplicabilityOrderFieldCreatedAt,
+	pageOrderBy := page.OrderBy[coredata.StatementOfApplicabilityOrderField]{
+		Field:     coredata.StatementOfApplicabilityOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
 	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.StateOfApplicabilityOrderField]{
+		pageOrderBy = page.OrderBy[coredata.StatementOfApplicabilityOrderField]{
 			Field:     orderBy.Field,
 			Direction: orderBy.Direction,
 		}
@@ -8543,18 +8543,18 @@ func (r *organizationResolver) StatesOfApplicability(ctx context.Context, obj *t
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	var stateOfApplicabilityFilter = coredata.NewStateOfApplicabilityFilter(nil)
+	var statementOfApplicabilityFilter = coredata.NewStatementOfApplicabilityFilter(nil)
 	if filter != nil {
-		stateOfApplicabilityFilter = coredata.NewStateOfApplicabilityFilter(&filter.SnapshotID)
+		statementOfApplicabilityFilter = coredata.NewStatementOfApplicabilityFilter(&filter.SnapshotID)
 	}
 
-	page, err := prb.StatesOfApplicability.ListForOrganizationID(ctx, obj.ID, cursor, stateOfApplicabilityFilter)
+	page, err := prb.StatementsOfApplicability.ListForOrganizationID(ctx, obj.ID, cursor, statementOfApplicabilityFilter)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list organization states_of_applicability", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot list organization statements_of_applicability", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewStateOfApplicabilityConnection(page, r, obj.ID, stateOfApplicabilityFilter), nil
+	return types.NewStatementOfApplicabilityConnection(page, r, obj.ID, statementOfApplicabilityFilter), nil
 }
 
 // MeasureCategories is the resolver for the measureCategories field.
@@ -9695,14 +9695,14 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			}
 			return types.NewRightsRequest(rightsRequest), nil
 		}
-	case coredata.StateOfApplicabilityEntityType:
-		action = probo.ActionStateOfApplicabilityGet
+	case coredata.StatementOfApplicabilityEntityType:
+		action = probo.ActionStatementOfApplicabilityGet
 		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
-			stateOfApplicability, err := prb.StatesOfApplicability.Get(ctx, id)
+			statementOfApplicability, err := prb.StatementsOfApplicability.Get(ctx, id)
 			if err != nil {
 				return nil, err
 			}
-			return types.NewStateOfApplicability(stateOfApplicability), nil
+			return types.NewStatementOfApplicability(statementOfApplicability), nil
 		}
 	case coredata.WebhookSubscriptionEntityType:
 		action = probo.ActionWebhookSubscriptionGet
@@ -10191,7 +10191,7 @@ func (r *snapshotConnectionResolver) TotalCount(ctx context.Context, obj *types.
 }
 
 // Organization is the resolver for the organization field.
-func (r *stateOfApplicabilityResolver) Organization(ctx context.Context, obj *types.StateOfApplicability) (*types.Organization, error) {
+func (r *statementOfApplicabilityResolver) Organization(ctx context.Context, obj *types.StatementOfApplicability) (*types.Organization, error) {
 	if err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
 		return nil, err
 	}
@@ -10211,7 +10211,7 @@ func (r *stateOfApplicabilityResolver) Organization(ctx context.Context, obj *ty
 }
 
 // Owner is the resolver for the owner field.
-func (r *stateOfApplicabilityResolver) Owner(ctx context.Context, obj *types.StateOfApplicability) (*types.Profile, error) {
+func (r *statementOfApplicabilityResolver) Owner(ctx context.Context, obj *types.StatementOfApplicability) (*types.Profile, error) {
 	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileGet); err != nil {
 		return nil, err
 	}
@@ -10231,7 +10231,7 @@ func (r *stateOfApplicabilityResolver) Owner(ctx context.Context, obj *types.Sta
 }
 
 // ApplicabilityStatements is the resolver for the applicabilityStatements field.
-func (r *stateOfApplicabilityResolver) ApplicabilityStatements(ctx context.Context, obj *types.StateOfApplicability, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ApplicabilityStatementOrderBy) (*types.ApplicabilityStatementConnection, error) {
+func (r *statementOfApplicabilityResolver) ApplicabilityStatements(ctx context.Context, obj *types.StatementOfApplicability, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ApplicabilityStatementOrderBy) (*types.ApplicabilityStatementConnection, error) {
 	if err := r.authorize(ctx, obj.ID, probo.ActionApplicabilityStatementList); err != nil {
 		return nil, err
 	}
@@ -10251,7 +10251,7 @@ func (r *stateOfApplicabilityResolver) ApplicabilityStatements(ctx context.Conte
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	p, err := prb.StatesOfApplicability.ListApplicabilityStatements(ctx, obj.ID, cursor)
+	p, err := prb.StatementsOfApplicability.ListApplicabilityStatements(ctx, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list applicability statements", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -10261,19 +10261,19 @@ func (r *stateOfApplicabilityResolver) ApplicabilityStatements(ctx context.Conte
 }
 
 // Permission is the resolver for the permission field.
-func (r *stateOfApplicabilityResolver) Permission(ctx context.Context, obj *types.StateOfApplicability, action string) (bool, error) {
+func (r *statementOfApplicabilityResolver) Permission(ctx context.Context, obj *types.StatementOfApplicability, action string) (bool, error) {
 	return r.Resolver.Permission(ctx, obj, action)
 }
 
 // TotalCount is the resolver for the totalCount field.
-func (r *stateOfApplicabilityConnectionResolver) TotalCount(ctx context.Context, obj *types.StateOfApplicabilityConnection) (int, error) {
+func (r *statementOfApplicabilityConnectionResolver) TotalCount(ctx context.Context, obj *types.StatementOfApplicabilityConnection) (int, error) {
 	prb := r.ProboService(ctx, obj.ParentID.TenantID())
 
 	switch obj.Resolver.(type) {
 	case *organizationResolver:
-		count, err := prb.StatesOfApplicability.CountForOrganizationID(ctx, obj.ParentID, obj.Filters)
+		count, err := prb.StatementsOfApplicability.CountForOrganizationID(ctx, obj.ParentID, obj.Filters)
 		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot count states_of_applicability", log.Error(err))
+			r.logger.ErrorCtx(ctx, "cannot count statements_of_applicability", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
 		}
 		return count, nil
@@ -12081,14 +12081,14 @@ func (r *Resolver) SnapshotConnection() schema.SnapshotConnectionResolver {
 	return &snapshotConnectionResolver{r}
 }
 
-// StateOfApplicability returns schema.StateOfApplicabilityResolver implementation.
-func (r *Resolver) StateOfApplicability() schema.StateOfApplicabilityResolver {
-	return &stateOfApplicabilityResolver{r}
+// StatementOfApplicability returns schema.StatementOfApplicabilityResolver implementation.
+func (r *Resolver) StatementOfApplicability() schema.StatementOfApplicabilityResolver {
+	return &statementOfApplicabilityResolver{r}
 }
 
-// StateOfApplicabilityConnection returns schema.StateOfApplicabilityConnectionResolver implementation.
-func (r *Resolver) StateOfApplicabilityConnection() schema.StateOfApplicabilityConnectionResolver {
-	return &stateOfApplicabilityConnectionResolver{r}
+// StatementOfApplicabilityConnection returns schema.StatementOfApplicabilityConnectionResolver implementation.
+func (r *Resolver) StatementOfApplicabilityConnection() schema.StatementOfApplicabilityConnectionResolver {
+	return &statementOfApplicabilityConnectionResolver{r}
 }
 
 // Task returns schema.TaskResolver implementation.
@@ -12267,8 +12267,8 @@ type riskConnectionResolver struct{ *Resolver }
 type slackConnectionResolver struct{ *Resolver }
 type snapshotResolver struct{ *Resolver }
 type snapshotConnectionResolver struct{ *Resolver }
-type stateOfApplicabilityResolver struct{ *Resolver }
-type stateOfApplicabilityConnectionResolver struct{ *Resolver }
+type statementOfApplicabilityResolver struct{ *Resolver }
+type statementOfApplicabilityConnectionResolver struct{ *Resolver }
 type taskResolver struct{ *Resolver }
 type taskConnectionResolver struct{ *Resolver }
 type transferImpactAssessmentResolver struct{ *Resolver }

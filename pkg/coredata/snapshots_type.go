@@ -24,14 +24,14 @@ type (
 )
 
 const (
-	SnapshotsTypeRisks                 SnapshotsType = "RISKS"
-	SnapshotsTypeVendors               SnapshotsType = "VENDORS"
-	SnapshotsTypeAssets                SnapshotsType = "ASSETS"
-	SnapshotsTypeData                  SnapshotsType = "DATA"
-	SnapshotsTypeFindings              SnapshotsType = "FINDINGS"
-	SnapshotsTypeObligations           SnapshotsType = "OBLIGATIONS"
-	SnapshotsTypeProcessingActivities  SnapshotsType = "PROCESSING_ACTIVITIES"
-	SnapshotsTypeStatesOfApplicability SnapshotsType = "STATES_OF_APPLICABILITY"
+	SnapshotsTypeRisks                     SnapshotsType = "RISKS"
+	SnapshotsTypeVendors                   SnapshotsType = "VENDORS"
+	SnapshotsTypeAssets                    SnapshotsType = "ASSETS"
+	SnapshotsTypeData                      SnapshotsType = "DATA"
+	SnapshotsTypeFindings                  SnapshotsType = "FINDINGS"
+	SnapshotsTypeObligations               SnapshotsType = "OBLIGATIONS"
+	SnapshotsTypeProcessingActivities      SnapshotsType = "PROCESSING_ACTIVITIES"
+	SnapshotsTypeStatementsOfApplicability SnapshotsType = "STATEMENTS_OF_APPLICABILITY"
 )
 
 func SnapshotsTypes() []SnapshotsType {
@@ -43,7 +43,7 @@ func SnapshotsTypes() []SnapshotsType {
 		SnapshotsTypeFindings,
 		SnapshotsTypeObligations,
 		SnapshotsTypeProcessingActivities,
-		SnapshotsTypeStatesOfApplicability,
+		SnapshotsTypeStatementsOfApplicability,
 	}
 }
 
@@ -77,8 +77,8 @@ func (st *SnapshotsType) Scan(value any) error {
 		*st = SnapshotsTypeObligations
 	case SnapshotsTypeProcessingActivities.String():
 		*st = SnapshotsTypeProcessingActivities
-	case SnapshotsTypeStatesOfApplicability.String():
-		*st = SnapshotsTypeStatesOfApplicability
+	case SnapshotsTypeStatementsOfApplicability.String():
+		*st = SnapshotsTypeStatementsOfApplicability
 	default:
 		return fmt.Errorf("invalid SnapshotsType value: %q", s)
 	}

@@ -27,16 +27,16 @@ import { useFragment, useMutation } from "react-relay";
 import { useParams } from "react-router";
 import { graphql } from "relay-runtime";
 
-import type { StateOfApplicabilityRowDeleteMutation } from "#/__generated__/core/StateOfApplicabilityRowDeleteMutation.graphql";
-import type { StateOfApplicabilityRowFragment$key } from "#/__generated__/core/StateOfApplicabilityRowFragment.graphql";
+import type { StatementOfApplicabilityRowDeleteMutation } from "#/__generated__/core/StatementOfApplicabilityRowDeleteMutation.graphql";
+import type { StatementOfApplicabilityRowFragment$key } from "#/__generated__/core/StatementOfApplicabilityRowFragment.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 const fragment = graphql`
-    fragment StateOfApplicabilityRowFragment on StateOfApplicability {
+    fragment StatementOfApplicabilityRowFragment on StatementOfApplicability {
         id
         name
         createdAt
-        canDelete: permission(action: "core:state-of-applicability:delete")
+        canDelete: permission(action: "core:statement-of-applicability:delete")
         statementsInfo: applicabilityStatements {
             totalCount
         }
@@ -44,22 +44,22 @@ const fragment = graphql`
 `;
 
 const deleteMutation = graphql`
-    mutation StateOfApplicabilityRowDeleteMutation(
-        $input: DeleteStateOfApplicabilityInput!
+    mutation StatementOfApplicabilityRowDeleteMutation(
+        $input: DeleteStatementOfApplicabilityInput!
         $connections: [ID!]!
     ) {
-        deleteStateOfApplicability(input: $input) {
-            deletedStateOfApplicabilityId @deleteEdge(connections: $connections)
+        deleteStatementOfApplicability(input: $input) {
+            deletedStatementOfApplicabilityId @deleteEdge(connections: $connections)
         }
     }
 `;
 
 type Props = {
-  fKey: StateOfApplicabilityRowFragment$key;
+  fKey: StatementOfApplicabilityRowFragment$key;
   connectionId: string;
 };
 
-export function StateOfApplicabilityRow({ fKey, connectionId }: Props) {
+export function StatementOfApplicabilityRow({ fKey, connectionId }: Props) {
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
   const { snapshotId } = useParams<{ snapshotId?: string }>();
@@ -67,21 +67,21 @@ export function StateOfApplicabilityRow({ fKey, connectionId }: Props) {
   const { toast } = useToast();
   const isSnapshotMode = Boolean(snapshotId);
 
-  const stateOfApplicability = useFragment(fragment, fKey);
-  const canDelete = !isSnapshotMode && stateOfApplicability.canDelete;
+  const statementOfApplicability = useFragment(fragment, fKey);
+  const canDelete = !isSnapshotMode && statementOfApplicability.canDelete;
 
-  const [deleteStateOfApplicability] = useMutation<StateOfApplicabilityRowDeleteMutation>(deleteMutation);
+  const [deleteStatementOfApplicability] = useMutation<StatementOfApplicabilityRowDeleteMutation>(deleteMutation);
 
   const handleDelete = () => {
-    if (!stateOfApplicability.id || !stateOfApplicability.name) {
-      return alert(__("Failed to delete state of applicability: missing id or name"));
+    if (!statementOfApplicability.id || !statementOfApplicability.name) {
+      return alert(__("Failed to delete statement of applicability: missing id or name"));
     }
     confirm(
       () =>
-        promisifyMutation(deleteStateOfApplicability)({
+        promisifyMutation(deleteStatementOfApplicability)({
           variables: {
             input: {
-              stateOfApplicabilityId: stateOfApplicability.id,
+              statementOfApplicabilityId: statementOfApplicability.id,
             },
             connections: [connectionId],
           },
@@ -89,7 +89,7 @@ export function StateOfApplicabilityRow({ fKey, connectionId }: Props) {
           toast({
             title: __("Error"),
             description: formatError(
-              __("Failed to delete state of applicability"),
+              __("Failed to delete statement of applicability"),
               error as GraphQLError,
             ),
             variant: "error",
@@ -100,25 +100,25 @@ export function StateOfApplicabilityRow({ fKey, connectionId }: Props) {
           __(
             "This will permanently delete \"%s\". This action cannot be undone.",
           ),
-          stateOfApplicability.name,
+          statementOfApplicability.name,
         ),
       },
     );
   };
 
   const detailUrl = snapshotId
-    ? `/organizations/${organizationId}/snapshots/${snapshotId}/states-of-applicability/${stateOfApplicability.id}`
-    : `/organizations/${organizationId}/states-of-applicability/${stateOfApplicability.id}`;
+    ? `/organizations/${organizationId}/snapshots/${snapshotId}/statements-of-applicability/${statementOfApplicability.id}`
+    : `/organizations/${organizationId}/statements-of-applicability/${statementOfApplicability.id}`;
 
   return (
     <Tr to={detailUrl}>
-      <Td>{stateOfApplicability.name}</Td>
+      <Td>{statementOfApplicability.name}</Td>
       <Td>
-        <time dateTime={stateOfApplicability.createdAt}>
-          {formatDate(stateOfApplicability.createdAt)}
+        <time dateTime={statementOfApplicability.createdAt}>
+          {formatDate(statementOfApplicability.createdAt)}
         </time>
       </Td>
-      <Td>{stateOfApplicability.statementsInfo?.totalCount ?? 0}</Td>
+      <Td>{statementOfApplicability.statementsInfo?.totalCount ?? 0}</Td>
       {canDelete && (
         <Td noLink width={50} className="text-end">
           <ActionDropdown>

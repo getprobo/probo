@@ -187,7 +187,7 @@ var (
 
 	transferImpactAssessmentsTemplate = template.Must(template.New("transferImpactAssessments").Funcs(templateFuncs).Parse(transferImpactAssessmentsTemplateContent))
 
-	stateOfApplicabilityTemplate = template.Must(template.New("state-of-applicability").Funcs(templateFuncs).Parse(soaTemplateContent))
+	statementOfApplicabilityTemplate = template.Must(template.New("statement-of-applicability").Funcs(templateFuncs).Parse(soaTemplateContent))
 )
 
 type (
@@ -279,7 +279,7 @@ type (
 		SupplementaryMeasures  *string
 	}
 
-	StateOfApplicabilityData struct {
+	StatementOfApplicabilityData struct {
 		Title                       string
 		OrganizationName            string
 		CreatedAt                   time.Time
@@ -382,9 +382,9 @@ func RenderTransferImpactAssessmentsTableHTML(data TransferImpactAssessmentTable
 	return buf.Bytes(), nil
 }
 
-func RenderStateOfApplicabilityHTML(data StateOfApplicabilityData) ([]byte, error) {
+func RenderStatementOfApplicabilityHTML(data StatementOfApplicabilityData) ([]byte, error) {
 	var buf bytes.Buffer
-	if err := stateOfApplicabilityTemplate.Execute(&buf, data); err != nil {
+	if err := statementOfApplicabilityTemplate.Execute(&buf, data); err != nil {
 		return nil, fmt.Errorf("cannot execute SOA template: %w", err)
 	}
 

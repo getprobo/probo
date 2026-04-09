@@ -1041,11 +1041,11 @@ WHERE %s
 	return nil
 }
 
-func (c *Controls) CountByStateOfApplicabilityID(
+func (c *Controls) CountByStatementOfApplicabilityID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
-	stateOfApplicabilityID gid.GID,
+	statementOfApplicabilityID gid.GID,
 	filter *ControlFilter,
 ) (int, error) {
 	q := `
@@ -1059,7 +1059,7 @@ WITH ctrl AS (
 	INNER JOIN
 		applicability_statements soac ON c.id = soac.control_id
 	WHERE
-		soac.state_of_applicability_id = @state_of_applicability_id
+		soac.statement_of_applicability_id = @statement_of_applicability_id
 )
 SELECT
 	COUNT(id)
@@ -1070,7 +1070,7 @@ WHERE %s
 `
 	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
 
-	args := pgx.NamedArgs{"state_of_applicability_id": stateOfApplicabilityID}
+	args := pgx.NamedArgs{"statement_of_applicability_id": statementOfApplicabilityID}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
 

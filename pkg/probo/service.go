@@ -117,7 +117,7 @@ type (
 		ProcessingActivities              *ProcessingActivityService
 		DataProtectionImpactAssessments   *DataProtectionImpactAssessmentService
 		TransferImpactAssessments         *TransferImpactAssessmentService
-		StatesOfApplicability             *StateOfApplicabilityService
+		StatementsOfApplicability         *StatementOfApplicabilityService
 		Files                             *FileService
 		CustomDomains                     *CustomDomainService
 		SlackMessages                     *slack.SlackMessageService
@@ -283,7 +283,7 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 		svc:               tenantService,
 		html2pdfConverter: s.html2pdfConverter,
 	}
-	tenantService.StatesOfApplicability = &StateOfApplicabilityService{
+	tenantService.StatementsOfApplicability = &StatementOfApplicabilityService{
 		svc:               tenantService,
 		html2pdfConverter: s.html2pdfConverter,
 	}

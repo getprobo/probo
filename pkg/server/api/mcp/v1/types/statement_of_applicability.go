@@ -18,8 +18,8 @@ import (
 	"go.probo.inc/probo/pkg/page"
 )
 
-func NewStateOfApplicability(s *coredata.StateOfApplicability) *StateOfApplicability {
-	return &StateOfApplicability{
+func NewStatementOfApplicability(s *coredata.StatementOfApplicability) *StatementOfApplicability {
+	return &StatementOfApplicability{
 		ID:             s.ID,
 		OrganizationID: s.OrganizationID,
 		Name:           s.Name,
@@ -30,33 +30,33 @@ func NewStateOfApplicability(s *coredata.StateOfApplicability) *StateOfApplicabi
 	}
 }
 
-func NewListStatesOfApplicabilityOutput(pg *page.Page[*coredata.StateOfApplicability, coredata.StateOfApplicabilityOrderField]) ListStatesOfApplicabilityOutput {
-	items := make([]*StateOfApplicability, 0, len(pg.Data))
+func NewListStatementsOfApplicabilityOutput(pg *page.Page[*coredata.StatementOfApplicability, coredata.StatementOfApplicabilityOrderField]) ListStatementsOfApplicabilityOutput {
+	items := make([]*StatementOfApplicability, 0, len(pg.Data))
 	for _, v := range pg.Data {
-		items = append(items, NewStateOfApplicability(v))
+		items = append(items, NewStatementOfApplicability(v))
 	}
 	var nextCursor *page.CursorKey
 	if len(pg.Data) > 0 {
 		cursorKey := pg.Data[len(pg.Data)-1].CursorKey(pg.Cursor.OrderBy.Field)
 		nextCursor = &cursorKey
 	}
-	return ListStatesOfApplicabilityOutput{
-		NextCursor:            nextCursor,
-		StatesOfApplicability: items,
+	return ListStatementsOfApplicabilityOutput{
+		NextCursor:                nextCursor,
+		StatementsOfApplicability: items,
 	}
 }
 
 func NewApplicabilityStatement(a *coredata.ApplicabilityStatement) *ApplicabilityStatement {
 	return &ApplicabilityStatement{
-		ID:                     a.ID,
-		StateOfApplicabilityID: a.StateOfApplicabilityID,
-		ControlID:              a.ControlID,
-		OrganizationID:         a.OrganizationID,
-		SnapshotID:             a.SnapshotID,
-		Applicability:          a.Applicability,
-		Justification:          a.Justification,
-		CreatedAt:              a.CreatedAt,
-		UpdatedAt:              a.UpdatedAt,
+		ID:                         a.ID,
+		StatementOfApplicabilityID: a.StatementOfApplicabilityID,
+		ControlID:                  a.ControlID,
+		OrganizationID:             a.OrganizationID,
+		SnapshotID:                 a.SnapshotID,
+		Applicability:              a.Applicability,
+		Justification:              a.Justification,
+		CreatedAt:                  a.CreatedAt,
+		UpdatedAt:                  a.UpdatedAt,
 	}
 }
 
