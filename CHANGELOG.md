@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.165.1] - 2026-04-09
+
+### Fixed
+
+- Fix registration unavailable page for authenticated users
+
 ## [0.165.0] - 2026-04-09
 
 ### Fixed
