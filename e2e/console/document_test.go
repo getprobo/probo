@@ -966,7 +966,7 @@ func TestDocument_MaxLength_Validation(t *testing.T) {
 
 	longTitle := strings.Repeat("a", 1001)
 
-	t.Run("create", func(t *testing.T) {
+	t.Run("create with long title", func(t *testing.T) {
 		query := `
 			mutation CreateDocument($input: CreateDocumentInput!) {
 				createDocument(input: $input) {
@@ -990,7 +990,7 @@ func TestDocument_MaxLength_Validation(t *testing.T) {
 		assert.Contains(t, err.Error(), "title")
 	})
 
-	t.Run("update", func(t *testing.T) {
+	t.Run("update with long title", func(t *testing.T) {
 		documentID := factory.NewDocument(owner).WithTitle("Max Length Test").Create()
 
 		query := `
@@ -1009,6 +1009,57 @@ func TestDocument_MaxLength_Validation(t *testing.T) {
 		})
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "title")
+	})
+
+	t.Run("create with long content", func(t *testing.T) {
+		query := `
+			mutation CreateDocument($input: CreateDocumentInput!) {
+				createDocument(input: $input) {
+					documentEdge {
+						node { id }
+					}
+				}
+			}
+		`
+
+		longContent := testutil.ProseMirrorTextDoc(strings.Repeat("a", 50_001))
+
+		_, err := owner.Do(query, map[string]any{
+			"input": map[string]any{
+				"organizationId": owner.GetOrganizationID().String(),
+				"title":          "Content Length Test",
+				"content":        longContent,
+				"documentType":   "POLICY",
+				"classification": "INTERNAL",
+			},
+		})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "content")
+	})
+
+	t.Run("update version with long content", func(t *testing.T) {
+		docID, versionID := createTestDocument(t, owner)
+		require.NotEmpty(t, docID)
+		require.NotEmpty(t, versionID)
+
+		query := `
+			mutation UpdateDocumentVersion($input: UpdateDocumentVersionInput!) {
+				updateDocumentVersion(input: $input) {
+					documentVersion { id }
+				}
+			}
+		`
+
+		longContent := testutil.ProseMirrorTextDoc(strings.Repeat("a", 50_001))
+
+		_, err := owner.Do(query, map[string]any{
+			"input": map[string]any{
+				"documentVersionId": versionID,
+				"content":           longContent,
+			},
+		})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "content")
 	})
 }
 

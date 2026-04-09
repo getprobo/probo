@@ -14,7 +14,10 @@
 
 package validator
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestProseMirrorDocumentContent(t *testing.T) {
 	t.Parallel()
@@ -47,6 +50,48 @@ func TestProseMirrorDocumentContent(t *testing.T) {
 			}
 			if err != nil && err.Code != ErrorCodeInvalidFormat {
 				t.Errorf("expected code %s, got %s", ErrorCodeInvalidFormat, err.Code)
+			}
+		})
+	}
+}
+
+func proseMirrorDoc(text string) string {
+	return `{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"` + text + `"}]}]}`
+}
+
+func TestProseMirrorDocumentMaxTextLength(t *testing.T) {
+	t.Parallel()
+
+	const maxLen = 10
+
+	tests := []struct {
+		name      string
+		value     any
+		wantError bool
+		wantCode  ErrorCode
+	}{
+		{"nil value", nil, false, ""},
+		{"nil *string", (*string)(nil), false, ""},
+		{"empty string", "", false, ""},
+		{"whitespace only", "   \n\t  ", false, ""},
+		{"under limit", proseMirrorDoc("hello"), false, ""},
+		{"at limit", proseMirrorDoc(strings.Repeat("a", maxLen)), false, ""},
+		{"over limit", proseMirrorDoc(strings.Repeat("a", maxLen+1)), true, ErrorCodeTooLong},
+		{"invalid json skipped", "not json", false, ""},
+		{"non-string", 42, true, ErrorCodeInvalidFormat},
+	}
+
+	fn := ProseMirrorDocumentMaxTextLength(maxLen)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			err := fn(tt.value)
+			if (err != nil) != tt.wantError {
+				t.Errorf("ProseMirrorDocumentMaxTextLength() error = %v, wantError %v", err, tt.wantError)
+			}
+			if err != nil && tt.wantCode != "" && err.Code != tt.wantCode {
+				t.Errorf("expected code %s, got %s", tt.wantCode, err.Code)
 			}
 		})
 	}

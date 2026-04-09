@@ -421,6 +421,82 @@ func TestLinkAttrs(t *testing.T) {
 	assert.Equal(t, "Example", *attrs.Title)
 }
 
+func TestTextLength(t *testing.T) {
+	t.Parallel()
+
+	t.Run(
+		"empty doc",
+		func(t *testing.T) {
+			t.Parallel()
+			n := Node{Type: NodeDoc}
+			assert.Equal(t, 0, n.TextLength())
+		},
+	)
+
+	t.Run(
+		"single text node",
+		func(t *testing.T) {
+			t.Parallel()
+			text := "hello"
+			n := Node{Type: NodeText, Text: &text}
+			assert.Equal(t, 5, n.TextLength())
+		},
+	)
+
+	t.Run(
+		"paragraph with text",
+		func(t *testing.T) {
+			t.Parallel()
+			raw := `{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"hello world"}]}]}`
+			doc, err := Parse(raw)
+			require.NoError(t, err)
+			assert.Equal(t, 11, doc.TextLength())
+		},
+	)
+
+	t.Run(
+		"multiple paragraphs",
+		func(t *testing.T) {
+			t.Parallel()
+			raw := `{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"aaa"}]},{"type":"paragraph","content":[{"type":"text","text":"bb"}]}]}`
+			doc, err := Parse(raw)
+			require.NoError(t, err)
+			assert.Equal(t, 5, doc.TextLength())
+		},
+	)
+
+	t.Run(
+		"formatted text counts only text",
+		func(t *testing.T) {
+			t.Parallel()
+			raw := `{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"plain "},{"type":"text","marks":[{"type":"bold"}],"text":"bold"}]}]}`
+			doc, err := Parse(raw)
+			require.NoError(t, err)
+			assert.Equal(t, 10, doc.TextLength())
+		},
+	)
+
+	t.Run(
+		"nested list structure",
+		func(t *testing.T) {
+			t.Parallel()
+			raw := `{"type":"doc","content":[{"type":"bulletList","content":[{"type":"listItem","content":[{"type":"paragraph","content":[{"type":"text","text":"item 1"}]}]},{"type":"listItem","content":[{"type":"paragraph","content":[{"type":"text","text":"item 2"}]}]}]}]}`
+			doc, err := Parse(raw)
+			require.NoError(t, err)
+			assert.Equal(t, 12, doc.TextLength())
+		},
+	)
+
+	t.Run(
+		"testdata document",
+		func(t *testing.T) {
+			t.Parallel()
+			doc := loadTestDocument(t)
+			assert.Greater(t, doc.TextLength(), 0)
+		},
+	)
+}
+
 func TestNodeWithNoAttrs(t *testing.T) {
 	t.Parallel()
 

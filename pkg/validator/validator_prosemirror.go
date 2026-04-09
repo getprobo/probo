@@ -15,6 +15,7 @@
 package validator
 
 import (
+	"fmt"
 	"strings"
 
 	"go.probo.inc/probo/pkg/prosemirror"
@@ -38,6 +39,38 @@ func ProseMirrorDocumentContent() ValidatorFunc {
 		}
 		if err := prosemirror.ValidateDocumentContentJSON(s); err != nil {
 			return newValidationError(ErrorCodeInvalidFormat, err.Error())
+		}
+		return nil
+	}
+}
+
+// ProseMirrorDocumentMaxTextLength validates that the total text content
+// within a ProseMirror/Tiptap JSON document does not exceed maxLength bytes.
+// Only user-visible text is counted; structural markup is excluded.
+// Nil, empty, and whitespace-only values pass. Invalid JSON is skipped
+// (let ProseMirrorDocumentContent handle format errors).
+func ProseMirrorDocumentMaxTextLength(maxLength int) ValidatorFunc {
+	return func(value any) *ValidationError {
+		actualValue, isNil := dereferenceValue(value)
+		if isNil {
+			return nil
+		}
+		s, ok := actualValue.(string)
+		if !ok {
+			return newValidationError(ErrorCodeInvalidFormat, "value must be a string")
+		}
+		if strings.TrimSpace(s) == "" {
+			return nil
+		}
+		n, err := prosemirror.Parse(s)
+		if err != nil {
+			return nil
+		}
+		if n.TextLength() > maxLength {
+			return newValidationError(
+				ErrorCodeTooLong,
+				fmt.Sprintf("text content must be at most %d characters", maxLength),
+			)
 		}
 		return nil
 	}

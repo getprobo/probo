@@ -110,7 +110,8 @@ type (
 )
 
 const (
-	documentMaxLength = 50_000
+	documentContentMaxTextLength = 50_000
+	documentContentMaxJSONBytes  = 500_000
 )
 
 func (cdr *CreateDocumentRequest) Validate() error {
@@ -121,8 +122,9 @@ func (cdr *CreateDocumentRequest) Validate() error {
 	v.Check(
 		cdr.Content,
 		"content",
-		validator.MaxLen(documentMaxLength),
+		validator.MaxLen(documentContentMaxJSONBytes),
 		validator.ProseMirrorDocumentContent(),
+		validator.ProseMirrorDocumentMaxTextLength(documentContentMaxTextLength),
 	)
 	v.Check(cdr.Classification, "classification", validator.Required(), validator.OneOfSlice(coredata.DocumentClassifications()))
 	v.Check(cdr.DocumentType, "document_type", validator.Required(), validator.OneOfSlice(coredata.DocumentTypes()))
@@ -149,8 +151,9 @@ func (udvr *UpdateDocumentVersionRequest) Validate() error {
 	v.Check(
 		udvr.Content,
 		"content",
-		validator.MaxLen(documentMaxLength),
+		validator.MaxLen(documentContentMaxJSONBytes),
 		validator.ProseMirrorDocumentContent(),
+		validator.ProseMirrorDocumentMaxTextLength(documentContentMaxTextLength),
 	)
 	v.Check(udvr.DocumentType, "document_type", validator.OneOfSlice(coredata.DocumentTypes()))
 

@@ -168,6 +168,20 @@ func (n Node) TableCellAttrs() (TableCellAttrs, error) {
 	return a, nil
 }
 
+// TextLength returns the total length of all text content in the node tree,
+// measured in bytes (consistent with Go's len on strings). Only text carried
+// by leaf text nodes is counted; structural markup is excluded.
+func (n Node) TextLength() int {
+	length := 0
+	if n.Text != nil {
+		length += len(*n.Text)
+	}
+	for _, child := range n.Content {
+		length += child.TextLength()
+	}
+	return length
+}
+
 // LinkAttrs parses and returns the link attributes from a link mark.
 func (m Mark) LinkAttrs() (LinkAttrs, error) {
 	var a LinkAttrs
