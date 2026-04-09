@@ -47,6 +47,36 @@ func Required() ValidatorFunc {
 	}
 }
 
+// NoDuplicates validates that a slice contains no duplicate elements.
+func NoDuplicates() ValidatorFunc {
+	return func(value any) *ValidationError {
+		actualValue, isNil := dereferenceValue(value)
+		if isNil {
+			return nil
+		}
+
+		rv := reflect.ValueOf(actualValue)
+		if rv.Kind() != reflect.Slice {
+			return newValidationError(ErrorCodeInvalidFormat, "value must be a slice")
+		}
+
+		if !rv.Type().Elem().Comparable() {
+			return newValidationError(ErrorCodeInvalidFormat, "slice elements must be comparable")
+		}
+
+		seen := make(map[any]struct{}, rv.Len())
+		for i := range rv.Len() {
+			elem := rv.Index(i).Interface()
+			if _, ok := seen[elem]; ok {
+				return newValidationError(ErrorCodeInvalidFormat, "must not contain duplicates")
+			}
+			seen[elem] = struct{}{}
+		}
+
+		return nil
+	}
+}
+
 // NotEmpty validates that a field is not empty.
 // Similar to Required, but can be used independently.
 func NotEmpty() ValidatorFunc {

@@ -21,19 +21,27 @@ import { graphql } from "relay-runtime";
 import { z } from "zod";
 
 import type { DocumentLayoutDrawer_documentFragment$key } from "#/__generated__/core/DocumentLayoutDrawer_documentFragment.graphql";
+import type { DocumentLayoutDrawer_updateApproversMutation } from "#/__generated__/core/DocumentLayoutDrawer_updateApproversMutation.graphql";
 import type { DocumentLayoutDrawer_updateClassificationMutation } from "#/__generated__/core/DocumentLayoutDrawer_updateClassificationMutation.graphql";
 import type { DocumentLayoutDrawer_versionFragment$key } from "#/__generated__/core/DocumentLayoutDrawer_versionFragment.graphql";
 import type { DocumentLayoutDrawerMutation } from "#/__generated__/core/DocumentLayoutDrawerMutation.graphql";
 import { ControlledField } from "#/components/form/ControlledField";
 import { DocumentClassificationOptions } from "#/components/form/DocumentClassificationOptions";
 import { DocumentTypeOptions } from "#/components/form/DocumentTypeOptions";
+import { PeopleMultiSelectField } from "#/components/form/PeopleMultiSelectField";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 const documentFragment = graphql`
   fragment DocumentLayoutDrawer_documentFragment on Document {
     id
     status
     archivedAt
     canUpdate: permission(action: "core:document:update")
+    defaultApprovers {
+      id
+      fullName
+      emailAddress
+    }
   }
 `;
 
@@ -72,12 +80,31 @@ const updateClassificationMutation = graphql`
   }
 `;
 
+const updateApproversMutation = graphql`
+  mutation DocumentLayoutDrawer_updateApproversMutation($input: UpdateDocumentInput!) {
+    updateDocument(input: $input) {
+      document {
+        id
+        defaultApprovers {
+          id
+          fullName
+          emailAddress
+        }
+      }
+    }
+  }
+`;
+
 const schema = z.object({
   documentType: z.enum(documentTypes),
 });
 
 const classificationSchema = z.object({
   classification: z.enum(documentClassifications),
+});
+
+const approversSchema = z.object({
+  approverIds: z.array(z.string()),
 });
 
 export function DocumentLayoutDrawer(props: {
@@ -87,9 +114,11 @@ export function DocumentLayoutDrawer(props: {
   const { documentFragmentRef, versionFragmentRef } = props;
 
   const { __ } = useTranslate();
+  const organizationId = useOrganizationId();
 
   const [isEditingType, setIsEditingType] = useState(false);
   const [isEditingClassification, setIsEditingClassification] = useState(false);
+  const [isEditingApprovers, setIsEditingApprovers] = useState(false);
 
   const { toast } = useToast();
   const document = useFragment<DocumentLayoutDrawer_documentFragment$key>(documentFragment, documentFragmentRef);
@@ -120,11 +149,27 @@ export function DocumentLayoutDrawer(props: {
     },
   );
 
+  const {
+    control: approversControl,
+    handleSubmit: handleApproversSubmit,
+    reset: resetApprovers,
+  } = useFormWithSchema(
+    approversSchema,
+    {
+      defaultValues: {
+        approverIds: document.defaultApprovers.map(a => a.id),
+      },
+    },
+  );
+
   const [updateDocumentType, isUpdatingDocumentType]
     = useMutation<DocumentLayoutDrawerMutation>(updateDocumentTypeMutation);
 
   const [updateClassification, isUpdatingClassification]
     = useMutation<DocumentLayoutDrawer_updateClassificationMutation>(updateClassificationMutation);
+
+  const [updateApprovers, isUpdatingApprovers]
+    = useMutation<DocumentLayoutDrawer_updateApproversMutation>(updateApproversMutation);
 
   const handleUpdateDocumentType = (data: {
     documentType: (typeof documentTypes)[number];
@@ -182,11 +227,74 @@ export function DocumentLayoutDrawer(props: {
     });
   };
 
+  const handleUpdateApprovers = (data: { approverIds: string[] }) => {
+    updateApprovers({
+      variables: {
+        input: {
+          id: document.id,
+          defaultApproverIds: data.approverIds,
+        },
+      },
+      onCompleted: () => {
+        setIsEditingApprovers(false);
+        toast({
+          title: __("Success"),
+          description: __("Approvers updated successfully"),
+          variant: "success",
+        });
+      },
+      onError: () => {
+        toast({
+          title: __("Error"),
+          description: __("Failed to update approvers"),
+          variant: "error",
+        });
+      },
+    });
+  };
+
   return (
     <Drawer>
       <div className="text-base text-txt-primary font-medium mb-4">
         {__("Properties")}
       </div>
+      <PropertyRow label={__("Approvers")}>
+        {isEditingApprovers
+          ? (
+              <EditablePropertyContent
+                onSave={() => void handleApproversSubmit(handleUpdateApprovers)()}
+                onCancel={() => {
+                  setIsEditingApprovers(false);
+                  resetApprovers({ approverIds: document.defaultApprovers.map(a => a.id) });
+                }}
+                disabled={isUpdatingApprovers}
+              >
+                <PeopleMultiSelectField
+                  name="approverIds"
+                  control={approversControl}
+                  organizationId={organizationId}
+                  selectedPeople={document.defaultApprovers.map(a => ({
+                    id: a.id,
+                    fullName: a.fullName,
+                    emailAddress: a.emailAddress,
+                  }))}
+                  placeholder={__("Add approvers...")}
+                />
+              </EditablePropertyContent>
+            )
+          : (
+              <ReadOnlyPropertyContent
+                onEdit={() => setIsEditingApprovers(true)}
+                canEdit={canEdit}
+              >
+                <div className="text-sm text-txt-secondary">
+                  {document.defaultApprovers.length > 0
+                    ? document.defaultApprovers.map(a => a.fullName).join(", ")
+                    : __("None")}
+                </div>
+              </ReadOnlyPropertyContent>
+            )}
+      </PropertyRow>
       <PropertyRow label={__("Type")}>
         {isEditingType
           ? (
@@ -251,11 +359,11 @@ export function DocumentLayoutDrawer(props: {
       </PropertyRow>
       <PropertyRow label={__("Status")}>
         <Badge
-          variant={isDraft ? "highlight" : "success"}
+          variant={version.status === "PUBLISHED" ? "success" : version.status === "PENDING_APPROVAL" ? "warning" : "highlight"}
           size="md"
           className="gap-2"
         >
-          {isDraft ? __("Draft") : __("Published")}
+          {version.status === "PUBLISHED" ? __("Published") : version.status === "PENDING_APPROVAL" ? __("Pending approval") : __("Draft")}
         </Badge>
       </PropertyRow>
       <PropertyRow label={__("Version")}>

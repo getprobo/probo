@@ -25,6 +25,7 @@ const (
 	DocumentVersionApprovalQuorumStatusPending  DocumentVersionApprovalQuorumStatus = "PENDING"
 	DocumentVersionApprovalQuorumStatusApproved DocumentVersionApprovalQuorumStatus = "APPROVED"
 	DocumentVersionApprovalQuorumStatusRejected DocumentVersionApprovalQuorumStatus = "REJECTED"
+	DocumentVersionApprovalQuorumStatusVoided   DocumentVersionApprovalQuorumStatus = "VOIDED"
 )
 
 func (s DocumentVersionApprovalQuorumStatus) MarshalText() ([]byte, error) {
@@ -41,6 +42,8 @@ func (s *DocumentVersionApprovalQuorumStatus) UnmarshalText(data []byte) error {
 		*s = DocumentVersionApprovalQuorumStatusApproved
 	case DocumentVersionApprovalQuorumStatusRejected.String():
 		*s = DocumentVersionApprovalQuorumStatusRejected
+	case DocumentVersionApprovalQuorumStatusVoided.String():
+		*s = DocumentVersionApprovalQuorumStatusVoided
 	default:
 		return fmt.Errorf("invalid DocumentVersionApprovalQuorumStatus value: %q", val)
 	}
@@ -58,6 +61,8 @@ func (s DocumentVersionApprovalQuorumStatus) String() string {
 		val = "APPROVED"
 	case DocumentVersionApprovalQuorumStatusRejected:
 		val = "REJECTED"
+	case DocumentVersionApprovalQuorumStatusVoided:
+		val = "VOIDED"
 	default:
 		panic(fmt.Errorf("invalid DocumentVersionApprovalQuorumStatus value: %q", string(s)))
 	}

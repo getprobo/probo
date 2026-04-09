@@ -21,12 +21,11 @@ import {
   DialogFooter,
   IconSend,
   IconUpload,
-  IconWarning,
   Textarea,
   useDialogRef,
   useToast,
 } from "@probo/ui";
-import { type Ref, useImperativeHandle, useRef } from "react";
+import { type Ref, useImperativeHandle, useMemo, useRef } from "react";
 import { useFragment, useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 import { z } from "zod";
@@ -43,36 +42,17 @@ export type PublishDialogRef = {
   open: () => void;
 };
 
-type Props = {
+type PublishDialogProps = {
   ref: Ref<PublishDialogRef>;
   documentId: string;
   documentFragmentRef: PublishDialog_documentFragment$key;
-  hasPendingApproval: boolean;
   onSuccess: () => void;
 };
 
 const documentFragment = graphql`
   fragment PublishDialog_documentFragment on Document {
-    lastPublishedVersion: versions(first: 1, orderBy: { field: CREATED_AT, direction: DESC }, filter: { statuses: [PUBLISHED] }) {
-      edges {
-        node {
-          approvalQuorums(first: 1, orderBy: { field: CREATED_AT, direction: DESC }) {
-            edges {
-              node {
-                decisions(first: 100) {
-                  edges {
-                    node {
-                      approver {
-                        id
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
+    defaultApprovers {
+      id
     }
   }
 `;
@@ -147,24 +127,20 @@ export function PublishDialog({
   ref,
   documentId,
   documentFragmentRef,
-  hasPendingApproval,
   onSuccess,
-}: Props) {
+}: PublishDialogProps) {
   const document = useFragment(documentFragment, documentFragmentRef);
   const { __ } = useTranslate();
   const { toast } = useToast();
   const organizationId = useOrganizationId();
   const dialogRef = useDialogRef();
 
-  const previousApproverIds = document.lastPublishedVersion.edges[0]
-    ?.node.approvalQuorums.edges[0]
-    ?.node.decisions?.edges.map(e => e.node.approver.id)
-    ?? [];
-
-  const schema = z.object({
+  const publishSchema = useMemo(() => z.object({
     changelog: z.string().min(1, __("Changelog is required")),
     approverIds: z.array(z.string()),
-  });
+  }), [__]);
+
+  const defaultApproverIds = document.defaultApprovers.map(a => a.id);
 
   const {
     control,
@@ -173,7 +149,7 @@ export function PublishDialog({
     reset,
     watch,
     formState: { errors },
-  } = useFormWithSchema(schema, {
+  } = useFormWithSchema(publishSchema, {
     defaultValues: {
       changelog: "",
       approverIds: [],
@@ -184,7 +160,7 @@ export function PublishDialog({
     open: () => {
       reset({
         changelog: "",
-        approverIds: previousApproverIds,
+        approverIds: defaultApproverIds,
       });
       dialogRef.current?.open();
     },
@@ -199,6 +175,7 @@ export function PublishDialog({
 
   const isBusy = isPublishingMajor || isPublishingMinor || isRequesting;
   const approverIds = watch("approverIds");
+  const hasApprovers = approverIds.length > 0;
   const actionRef = useRef<"publish" | "publish-minor" | "request-approval">("publish");
 
   const onPublishCompleted = (_: unknown, errors: ReadonlyArray<{ message: string }> | null) => {
@@ -223,7 +200,7 @@ export function PublishDialog({
     toast({ title: __("Error"), description: error.message, variant: "error" });
   };
 
-  const handlePublishMajor = (data: z.infer<typeof schema>) => {
+  const handlePublishMajor = (data: z.infer<typeof publishSchema>) => {
     publishMajor({
       variables: { input: { documentId, changelog: data.changelog } },
       onCompleted: onPublishCompleted,
@@ -231,7 +208,7 @@ export function PublishDialog({
     });
   };
 
-  const handlePublishMinor = (data: z.infer<typeof schema>) => {
+  const handlePublishMinor = (data: z.infer<typeof publishSchema>) => {
     publishMinor({
       variables: { input: { documentId, changelog: data.changelog } },
       onCompleted: onPublishCompleted,
@@ -239,7 +216,7 @@ export function PublishDialog({
     });
   };
 
-  const onRequestApproval = (data: z.infer<typeof schema>) => {
+  const onRequestApproval = (data: z.infer<typeof publishSchema>) => {
     requestApproval({
       variables: {
         input: {
@@ -276,12 +253,16 @@ export function PublishDialog({
     <Dialog className="max-w-xl" ref={dialogRef} title={__("Publish document")}>
       <form
         onSubmit={e => void handleSubmit((data) => {
-          if (actionRef.current === "publish") {
-            handlePublishMajor(data);
-          } else if (actionRef.current === "publish-minor") {
+          const action = actionRef.current;
+          actionRef.current = "publish";
+          if (action === "publish-minor") {
             handlePublishMinor(data);
-          } else {
+          } else if (action === "request-approval") {
             onRequestApproval(data);
+          } else if (data.approverIds.length > 0) {
+            onRequestApproval(data);
+          } else {
+            handlePublishMajor(data);
           }
         })(e)}
       >
@@ -303,63 +284,64 @@ export function PublishDialog({
                 <p className="text-xs text-txt-danger mt-1">{errors.changelog.message}</p>
               )}
             </div>
-            {hasPendingApproval
-              ? (
-                  <div className="flex items-start gap-2 rounded-lg bg-bg-warning/10 border border-border-warning p-3">
-                    <IconWarning size={16} className="text-txt-warning shrink-0 mt-0.5" />
-                    <p className="text-sm text-txt-warning">
-                      {__("An approval review is currently in progress. Publishing now will bypass the pending approval.")}
-                    </p>
-                  </div>
-                )
-              : (
-                  <div>
-                    <div className="text-sm font-medium text-txt-primary mb-1">
-                      {__("Request approval before publishing")}
-                    </div>
-                    <p className="text-xs text-txt-secondary mb-3">
-                      {__("Select approvers to review this document. The document will be published once all approvers have approved it. You can also publish directly without requiring approval.")}
-                    </p>
-                    <PeopleMultiSelectField
-                      name="approverIds"
-                      label={__("Approvers")}
-                      control={control}
-                      organizationId={organizationId}
-                      placeholder={__("Add approvers...")}
-                    />
-                  </div>
-                )}
+            <div>
+              <p className="text-xs text-txt-secondary mb-3">
+                {__("Approvers will receive an email and the document will be published as a major version once all have approved. Remove all approvers to publish directly as major.")}
+              </p>
+              <PeopleMultiSelectField
+                name="approverIds"
+                label={__("Approvers")}
+                control={control}
+                organizationId={organizationId}
+                placeholder={__("Add approvers...")}
+              />
+            </div>
           </div>
         </DialogContent>
         <DialogFooter>
-          <Button
-            type="submit"
-            variant="secondary"
-            icon={IconUpload}
-            onClick={() => { actionRef.current = "publish-minor"; }}
-            disabled={isBusy}
-          >
-            {__("Publish as minor")}
-          </Button>
-          <Button
-            type="submit"
-            variant="secondary"
-            icon={IconUpload}
-            onClick={() => { actionRef.current = "publish"; }}
-            disabled={isBusy}
-          >
-            {__("Publish now")}
-          </Button>
-          {!hasPendingApproval && (
-            <Button
-              type="submit"
-              icon={IconSend}
-              onClick={() => { actionRef.current = "request-approval"; }}
-              disabled={isBusy || approverIds.length === 0}
-            >
-              {__("Request approval")}
-            </Button>
-          )}
+          {hasApprovers
+            ? (
+                <>
+                  <Button
+                    type="submit"
+                    variant="secondary"
+                    icon={IconUpload}
+                    onClick={() => { actionRef.current = "publish-minor"; }}
+                    disabled={isBusy}
+                  >
+                    {__("Publish as minor")}
+                  </Button>
+                  <Button
+                    type="submit"
+                    icon={IconSend}
+                    onClick={() => { actionRef.current = "request-approval"; }}
+                    disabled={isBusy}
+                  >
+                    {__("Request approval")}
+                  </Button>
+                </>
+              )
+            : (
+                <>
+                  <Button
+                    type="submit"
+                    variant="secondary"
+                    icon={IconUpload}
+                    onClick={() => { actionRef.current = "publish-minor"; }}
+                    disabled={isBusy}
+                  >
+                    {__("Publish as minor")}
+                  </Button>
+                  <Button
+                    type="submit"
+                    icon={IconUpload}
+                    onClick={() => { actionRef.current = "publish"; }}
+                    disabled={isBusy}
+                  >
+                    {__("Publish as major")}
+                  </Button>
+                </>
+              )}
         </DialogFooter>
       </form>
     </Dialog>

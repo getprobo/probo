@@ -424,6 +424,40 @@ WHERE
 	return nil
 }
 
+func (d *DocumentVersionApprovalDecisions) VoidPendingByQuorumID(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+	quorumID gid.GID,
+	now time.Time,
+) error {
+	q := `
+UPDATE document_version_approval_decisions
+SET
+	state = 'VOIDED',
+	updated_at = @updated_at
+WHERE
+	%s
+	AND quorum_id = @quorum_id
+	AND state = 'PENDING'
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"quorum_id":  quorumID,
+		"updated_at": now,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	_, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot void pending approval decisions: %w", err)
+	}
+
+	return nil
+}
+
 func (d *DocumentVersionApprovalDecisions) CountByQuorumID(
 	ctx context.Context,
 	conn pg.Querier,

@@ -1577,6 +1577,28 @@ func (r *documentResolver) Controls(ctx context.Context, obj *types.Document, fi
 	return types.NewControlConnection(page, r, obj.ID, controlFilter), nil
 }
 
+// DefaultApprovers is the resolver for the defaultApprovers field.
+func (r *documentResolver) DefaultApprovers(ctx context.Context, obj *types.Document) ([]*types.Profile, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionDocumentGet); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	profiles, err := prb.Documents.GetDefaultApprovers(ctx, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot get default approvers", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	result := make([]*types.Profile, len(profiles))
+	for i, p := range profiles {
+		result[i] = types.NewProfile(p)
+	}
+
+	return result, nil
+}
+
 // Permission is the resolver for the permission field.
 func (r *documentResolver) Permission(ctx context.Context, obj *types.Document, action string) (bool, error) {
 	return r.Resolver.Permission(ctx, obj, action)
@@ -5247,6 +5269,7 @@ func (r *mutationResolver) CreateDocument(ctx context.Context, input types.Creat
 			Classification:        input.Classification,
 			DocumentType:          input.DocumentType,
 			TrustCenterVisibility: input.TrustCenterVisibility,
+			DefaultApproverIDs:    input.DefaultApproverIds,
 		},
 	)
 	if err != nil {
@@ -5275,12 +5298,18 @@ func (r *mutationResolver) UpdateDocument(ctx context.Context, input types.Updat
 
 	prb := r.ProboService(ctx, input.ID.TenantID())
 
+	var defaultApproverIDs *[]gid.GID
+	if input.DefaultApproverIds != nil {
+		defaultApproverIDs = &input.DefaultApproverIds
+	}
+
 	document, err := prb.Documents.Update(
 		ctx,
 		probo.UpdateDocumentRequest{
 			DocumentID:            input.ID,
 			Title:                 input.Title,
 			TrustCenterVisibility: input.TrustCenterVisibility,
+			DefaultApproverIDs:    defaultApproverIDs,
 		},
 	)
 
@@ -5659,6 +5688,10 @@ func (r *mutationResolver) PublishMajorDocumentVersion(ctx context.Context, inpu
 			return nil, gqlutils.Invalid(ctx, errNotDraft)
 		}
 
+		if errPending, ok := errors.AsType[*probo.ErrDocumentVersionPendingApproval](err); ok {
+			return nil, gqlutils.Conflict(ctx, errPending)
+		}
+
 		r.logger.ErrorCtx(ctx, "cannot publish major document version", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
@@ -5692,6 +5725,10 @@ func (r *mutationResolver) PublishMinorDocumentVersion(ctx context.Context, inpu
 			return nil, gqlutils.Invalid(ctx, errNotDraft)
 		}
 
+		if errPending, ok := errors.AsType[*probo.ErrDocumentVersionPendingApproval](err); ok {
+			return nil, gqlutils.Conflict(ctx, errPending)
+		}
+
 		r.logger.ErrorCtx(ctx, "cannot publish minor document version", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
@@ -5719,7 +5756,7 @@ func (r *mutationResolver) BulkPublishMajorDocumentVersions(ctx context.Context,
 
 	prb := r.ProboService(ctx, input.DocumentIds[0].TenantID())
 
-	versions, documents, err := prb.Documents.BulkPublishMajorVersions(ctx, probo.BulkPublishVersionsRequest{
+	versions, documents, err := prb.DocumentApprovals.BulkPublishMajorVersions(ctx, probo.BulkPublishVersionsRequest{
 		DocumentIDs: input.DocumentIds,
 		Changelog:   input.Changelog,
 	})
@@ -5820,6 +5857,10 @@ func (r *mutationResolver) RequestDocumentVersionApproval(ctx context.Context, i
 			return nil, gqlutils.Conflict(ctx, errArchived)
 		}
 
+		if errNotDraft, ok := errors.AsType[*probo.ErrDocumentVersionNotDraft](err); ok {
+			return nil, gqlutils.Conflict(ctx, errNotDraft)
+		}
+
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
@@ -5830,6 +5871,34 @@ func (r *mutationResolver) RequestDocumentVersionApproval(ctx context.Context, i
 
 	return &types.RequestDocumentVersionApprovalPayload{
 		ApprovalQuorum: types.NewDocumentVersionApprovalQuorum(quorum),
+	}, nil
+}
+
+// VoidDocumentVersionApproval is the resolver for the voidDocumentVersionApproval field.
+func (r *mutationResolver) VoidDocumentVersionApproval(ctx context.Context, input types.VoidDocumentVersionApprovalInput) (*types.VoidDocumentVersionApprovalPayload, error) {
+	if err := r.authorize(ctx, input.DocumentVersionID, probo.ActionDocumentVersionVoidApproval); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, input.DocumentVersionID.TenantID())
+
+	quorum, documentVersion, err := prb.DocumentApprovals.VoidApproval(ctx, input.DocumentVersionID)
+	if err != nil {
+		if errArchived, ok := errors.AsType[*probo.ErrDocumentArchived](err); ok {
+			return nil, gqlutils.Conflict(ctx, errArchived)
+		}
+
+		if errNotPending, ok := errors.AsType[*probo.ErrDocumentVersionNotPendingApproval](err); ok {
+			return nil, gqlutils.Conflict(ctx, errNotPending)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot void document version approval", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.VoidDocumentVersionApprovalPayload{
+		ApprovalQuorum:  types.NewDocumentVersionApprovalQuorum(quorum),
+		DocumentVersion: types.NewDocumentVersion(documentVersion),
 	}, nil
 }
 
@@ -5957,6 +6026,10 @@ func (r *mutationResolver) GenerateDocumentChangelog(ctx context.Context, input 
 
 	changelog, err := prb.Documents.GenerateChangelog(ctx, input.DocumentID)
 	if err != nil {
+		if errArchived, ok := errors.AsType[*probo.ErrDocumentArchived](err); ok {
+			return nil, gqlutils.Conflict(ctx, errArchived)
+		}
+
 		r.logger.ErrorCtx(ctx, "cannot generate document changelog", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
@@ -5976,6 +6049,14 @@ func (r *mutationResolver) CreateDraftDocumentVersion(ctx context.Context, input
 
 	documentVersion, err := prb.Documents.CreateDraft(ctx, input.DocumentID)
 	if err != nil {
+		if errArchived, ok := errors.AsType[*probo.ErrDocumentArchived](err); ok {
+			return nil, gqlutils.Conflict(ctx, errArchived)
+		}
+
+		if errNotPublished, ok := errors.AsType[*probo.ErrDocumentVersionNotPublished](err); ok {
+			return nil, gqlutils.Conflict(ctx, errNotPublished)
+		}
+
 		r.logger.ErrorCtx(ctx, "cannot create draft document version", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
@@ -5995,6 +6076,10 @@ func (r *mutationResolver) DeleteDraftDocumentVersion(ctx context.Context, input
 
 	err := prb.Documents.DeleteDraft(ctx, input.DocumentVersionID)
 	if err != nil {
+		if errArchived, ok := errors.AsType[*probo.ErrDocumentArchived](err); ok {
+			return nil, gqlutils.Conflict(ctx, errArchived)
+		}
+
 		r.logger.ErrorCtx(ctx, "cannot delete draft document version", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
@@ -6061,6 +6146,10 @@ func (r *mutationResolver) RequestSignature(ctx context.Context, input types.Req
 		},
 	)
 	if err != nil {
+		if errArchived, ok := errors.AsType[*probo.ErrDocumentArchived](err); ok {
+			return nil, gqlutils.Conflict(ctx, errArchived)
+		}
+
 		r.logger.ErrorCtx(ctx, "cannot request signature", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
@@ -6132,6 +6221,10 @@ func (r *mutationResolver) CancelSignatureRequest(ctx context.Context, input typ
 
 	err := prb.Documents.CancelSignatureRequest(ctx, input.DocumentVersionSignatureID)
 	if err != nil {
+		if errArchived, ok := errors.AsType[*probo.ErrDocumentArchived](err); ok {
+			return nil, gqlutils.Conflict(ctx, errArchived)
+		}
+
 		r.logger.ErrorCtx(ctx, "cannot cancel signature request", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
@@ -6165,53 +6258,6 @@ func (r *mutationResolver) SignDocument(ctx context.Context, input types.SignDoc
 	}, nil
 }
 
-// AddDocumentVersionApprover is the resolver for the addDocumentVersionApprover field.
-func (r *mutationResolver) AddDocumentVersionApprover(ctx context.Context, input types.AddDocumentVersionApproverInput) (*types.AddDocumentVersionApproverPayload, error) {
-	if err := r.authorize(ctx, input.DocumentVersionID, probo.ActionDocumentVersionAddApprover); err != nil {
-		return nil, err
-	}
-
-	prb := r.ProboService(ctx, input.DocumentVersionID.TenantID())
-
-	decision, err := prb.DocumentApprovals.AddApprover(ctx, input.DocumentVersionID, input.ApproverID)
-	if err != nil {
-		if errNotPending, ok := errors.AsType[*probo.ErrDocumentVersionNotPendingApproval](err); ok {
-			return nil, gqlutils.Invalid(ctx, errNotPending)
-		}
-
-		r.logger.ErrorCtx(ctx, "cannot add document version approver", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return &types.AddDocumentVersionApproverPayload{
-		ApprovalDecisionEdge: types.NewDocumentVersionApprovalDecisionEdge(decision, coredata.DocumentVersionApprovalDecisionOrderFieldCreatedAt),
-	}, nil
-}
-
-// RemoveDocumentVersionApprover is the resolver for the removeDocumentVersionApprover field.
-func (r *mutationResolver) RemoveDocumentVersionApprover(ctx context.Context, input types.RemoveDocumentVersionApproverInput) (*types.RemoveDocumentVersionApproverPayload, error) {
-	if err := r.authorize(ctx, input.ApprovalDecisionID, probo.ActionDocumentVersionRemoveApprover); err != nil {
-		return nil, err
-	}
-
-	prb := r.ProboService(ctx, input.ApprovalDecisionID.TenantID())
-
-	documentVersionID, err := prb.DocumentApprovals.RemoveApprover(ctx, input.ApprovalDecisionID)
-	if err != nil {
-		if errAlreadyMade, ok := errors.AsType[*probo.ErrApprovalDecisionAlreadyMade](err); ok {
-			return nil, gqlutils.Conflict(ctx, errAlreadyMade)
-		}
-
-		r.logger.ErrorCtx(ctx, "cannot remove document version approver", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return &types.RemoveDocumentVersionApproverPayload{
-		DeletedApprovalDecisionID: input.ApprovalDecisionID,
-		DocumentVersion:           &types.DocumentVersion{ID: documentVersionID},
-	}, nil
-}
-
 // ApproveDocumentVersion is the resolver for the approveDocumentVersion field.
 func (r *mutationResolver) ApproveDocumentVersion(ctx context.Context, input types.ApproveDocumentVersionInput) (*types.ApproveDocumentVersionPayload, error) {
 	if err := r.authorize(ctx, input.DocumentVersionID, probo.ActionDocumentVersionApprove); err != nil {
@@ -6238,6 +6284,10 @@ func (r *mutationResolver) ApproveDocumentVersion(ctx context.Context, input typ
 		SignerUA:          httpReq.UserAgent(),
 	})
 	if err != nil {
+		if errArchived, ok := errors.AsType[*probo.ErrDocumentArchived](err); ok {
+			return nil, gqlutils.Conflict(ctx, errArchived)
+		}
+
 		if errNotPending, ok := errors.AsType[*probo.ErrDocumentVersionNotPendingApproval](err); ok {
 			return nil, gqlutils.Invalid(ctx, errNotPending)
 		}
@@ -6275,6 +6325,10 @@ func (r *mutationResolver) RejectDocumentVersion(ctx context.Context, input type
 		Comment:           input.Comment,
 	})
 	if err != nil {
+		if errArchived, ok := errors.AsType[*probo.ErrDocumentArchived](err); ok {
+			return nil, gqlutils.Conflict(ctx, errArchived)
+		}
+
 		if errNotPending, ok := errors.AsType[*probo.ErrDocumentVersionNotPendingApproval](err); ok {
 			return nil, gqlutils.Invalid(ctx, errNotPending)
 		}

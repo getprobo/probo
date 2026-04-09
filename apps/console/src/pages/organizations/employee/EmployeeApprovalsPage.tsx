@@ -18,7 +18,6 @@ import { Card, Tbody, Th, Thead, Tr } from "@probo/ui";
 import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 
 import type { EmployeeApprovalsPageQuery } from "#/__generated__/core/EmployeeApprovalsPageQuery.graphql";
-import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import { ApprovableDocumentRow } from "./_components/ApprovableDocumentRow";
 
@@ -46,7 +45,6 @@ export function EmployeeApprovalsPage(props: {
 }) {
   const { queryRef } = props;
   const { __ } = useTranslate();
-  const organizationId = useOrganizationId();
 
   const {
     viewer: { approvableDocuments },
@@ -79,7 +77,6 @@ export function EmployeeApprovalsPage(props: {
                     <ApprovableDocumentRow
                       key={document.id}
                       fKey={document}
-                      organizationId={organizationId}
                     />
                   ))}
                 </Tbody>

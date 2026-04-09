@@ -66,45 +66,14 @@ func (p Document) CursorKey(orderBy DocumentOrderField) page.CursorKey {
 // AuthorizationAttributes returns the authorization attributes for policy evaluation.
 func (d *Document) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	q := `
-WITH document AS (
-	SELECT id, organization_id, status
-	FROM documents
-	WHERE id = $1
-	LIMIT 1
-),
-latest_version AS (
-	SELECT dv.id, dv.document_id, dv.status AS version_status
-	FROM document_versions dv
-	INNER JOIN document ON dv.document_id = document.id
-	ORDER BY dv.created_at DESC
-	LIMIT 1
-),
-last_quorum AS (
-	SELECT
-		lv.document_id,
-		q.status::text AS status
-	FROM document_version_approval_quorums q
-	INNER JOIN latest_version lv ON lv.id = q.version_id
-	ORDER BY q.created_at DESC
-	LIMIT 1
-)
-SELECT
-	document.organization_id,
-	document.status,
-	COALESCE(lv.version_status::text, ''),
-	COALESCE(lq.status, '')
-FROM document
-LEFT JOIN latest_version lv ON lv.document_id = document.id
-LEFT JOIN last_quorum lq ON lq.document_id = document.id;
+SELECT organization_id
+FROM documents
+WHERE id = $1
+LIMIT 1;
 `
 
-	var (
-		organizationID      gid.GID
-		documentStatus      DocumentStatus
-		latestVersionStatus string
-		lastQuorumStatus    string
-	)
-	if err := conn.QueryRow(ctx, q, d.ID).Scan(&organizationID, &documentStatus, &latestVersionStatus, &lastQuorumStatus); err != nil {
+	var organizationID gid.GID
+	if err := conn.QueryRow(ctx, q, d.ID).Scan(&organizationID); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrResourceNotFound
 		}
@@ -112,10 +81,7 @@ LEFT JOIN last_quorum lq ON lq.document_id = document.id;
 	}
 
 	return map[string]string{
-		"organization_id":    organizationID.String(),
-		"document_status":    documentStatus.String(),
-		"version_status":     latestVersionStatus,
-		"last_quorum_status": lastQuorumStatus,
+		"organization_id": organizationID.String(),
 	}, nil
 }
 
@@ -1117,7 +1083,7 @@ LIMIT 1
 	state, err := pgx.CollectOneRow(rows, pgx.RowTo[DocumentVersionApprovalDecisionState])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return DocumentVersionApprovalDecisionStatePending, nil
+			return "", nil
 		}
 		return "", fmt.Errorf("cannot collect approval state: %w", err)
 	}

@@ -78,6 +78,11 @@ export function DocumentVersionsDropdownItem(props: {
                   {__("Draft")}
                 </Badge>
               )}
+              {version.status === "PENDING_APPROVAL" && (
+                <Badge variant="warning" size="sm">
+                  {__("Pending approval")}
+                </Badge>
+              )}
             </div>
             <div className="text-xs text-txt-secondary whitespace-nowrap overflow-hidden text-ellipsis">
               {dateTimeFormat(version.publishedAt ?? version.updatedAt)}

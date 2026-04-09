@@ -5159,6 +5159,7 @@ components:
       type: string
       enum:
         - DRAFT
+        - PENDING_APPROVAL
         - PUBLISHED
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.DocumentVersionStatus
 
@@ -5495,6 +5496,11 @@ components:
         trust_center_visibility:
           $ref: "#/components/schemas/TrustCenterVisibility"
           description: Trust center visibility
+        default_approver_ids:
+          type: array
+          items:
+            $ref: "#/components/schemas/GID"
+          description: Default approver profile IDs
 
     AddDocumentOutput:
       type: object
@@ -5522,6 +5528,11 @@ components:
         trust_center_visibility:
           $ref: "#/components/schemas/TrustCenterVisibility"
           description: Trust center visibility
+        default_approver_ids:
+          type: array
+          items:
+            $ref: "#/components/schemas/GID"
+          description: Default approver profile IDs
 
     UpdateDocumentOutput:
       type: object
@@ -5859,6 +5870,23 @@ components:
         deleted_document_version_signature_id:
           $ref: "#/components/schemas/GID"
           description: Deleted document version signature ID
+
+    VoidDocumentVersionApprovalInput:
+      type: object
+      required:
+        - document_version_id
+      properties:
+        document_version_id:
+          $ref: "#/components/schemas/GID"
+          description: Document version ID
+
+    VoidDocumentVersionApprovalOutput:
+      type: object
+      required:
+        - document_version
+      properties:
+        document_version:
+          $ref: "#/components/schemas/DocumentVersion"
 
     MeetingOrderField:
       type: string
@@ -8474,6 +8502,15 @@ tools:
       $ref: "#/components/schemas/CancelSignatureRequestInput"
     outputSchema:
       $ref: "#/components/schemas/CancelSignatureRequestOutput"
+  - name: voidDocumentVersionApproval
+    description: Void a pending document version approval request
+    hints:
+      readonly: false
+      destructive: true
+    inputSchema:
+      $ref: "#/components/schemas/VoidDocumentVersionApprovalInput"
+    outputSchema:
+      $ref: "#/components/schemas/VoidDocumentVersionApprovalOutput"
   - name: listMeetings
     description: List all meetings for the organization
     hints:

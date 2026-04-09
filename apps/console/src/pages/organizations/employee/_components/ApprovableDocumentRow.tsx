@@ -22,6 +22,7 @@ import { Badge, Td, Tr } from "@probo/ui";
 import { graphql, useFragment } from "react-relay";
 
 import type { ApprovableDocumentRowFragment$key } from "#/__generated__/core/ApprovableDocumentRowFragment.graphql";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 const fragment = graphql`
   fragment ApprovableDocumentRowFragment on EmployeeDocument {
@@ -42,26 +43,32 @@ const fragment = graphql`
 
 export function ApprovableDocumentRow({
   fKey,
-  organizationId,
 }: {
   fKey: ApprovableDocumentRowFragment$key;
-  organizationId: string;
 }) {
-  const document = useFragment<ApprovableDocumentRowFragment$key>(fragment, fKey);
-  const lastVersion = document.lastVersion.edges[0].node;
+  const organizationId = useOrganizationId();
   const { __ } = useTranslate();
+  const document = useFragment<ApprovableDocumentRowFragment$key>(fragment, fKey);
+
+  const lastVersionEdge = document.lastVersion.edges[0];
+  if (!lastVersionEdge) return null;
+  const lastVersion = lastVersionEdge.node;
 
   const stateVariant = document.approvalState === "APPROVED"
     ? "success"
     : document.approvalState === "REJECTED"
       ? "danger"
-      : "warning";
+      : document.approvalState === "VOIDED"
+        ? "neutral"
+        : "warning";
 
   const stateLabel = document.approvalState === "APPROVED"
     ? __("Approved")
     : document.approvalState === "REJECTED"
       ? __("Rejected")
-      : __("Pending");
+      : document.approvalState === "VOIDED"
+        ? __("No longer required")
+        : __("Pending");
 
   return (
     <Tr to={`/organizations/${organizationId}/employee/approvals/${document.id}`}>

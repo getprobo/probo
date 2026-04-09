@@ -52,44 +52,15 @@ type (
 // AuthorizationAttributes returns the authorization attributes for policy evaluation.
 func (dv *DocumentVersion) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	q := `
-WITH document_version AS (
-	SELECT id, document_id, organization_id, status AS version_status
-	FROM document_versions
-	WHERE id = $1
-	LIMIT 1
-),
-document AS (
-	SELECT d.id, d.status
-	FROM documents d
-	INNER JOIN document_version ON d.id = document_version.document_id
-),
-last_quorum AS (
-	SELECT
-		q.version_id,
-		q.status::text AS status
-	FROM document_version_approval_quorums q
-	INNER JOIN document_version ON q.version_id = document_version.id
-	ORDER BY q.created_at DESC
-	LIMIT 1
-)
-SELECT
-	document_version.organization_id,
-	document.status,
-	document_version.version_status,
-	COALESCE(lq.status, '')
-FROM document_version
-INNER JOIN document ON document.id = document_version.document_id
-LEFT JOIN last_quorum lq ON lq.version_id = document_version.id;
+SELECT organization_id
+FROM document_versions
+WHERE id = $1
+LIMIT 1;
 `
 
-	var (
-		organizationID        gid.GID
-		documentStatus        DocumentStatus
-		documentVersionStatus DocumentVersionStatus
-		lastQuorumStatus      string
-	)
+	var organizationID gid.GID
 
-	if err := conn.QueryRow(ctx, q, dv.ID).Scan(&organizationID, &documentStatus, &documentVersionStatus, &lastQuorumStatus); err != nil {
+	if err := conn.QueryRow(ctx, q, dv.ID).Scan(&organizationID); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrResourceNotFound
 		}
@@ -97,10 +68,7 @@ LEFT JOIN last_quorum lq ON lq.version_id = document_version.id;
 	}
 
 	return map[string]string{
-		"organization_id":    organizationID.String(),
-		"document_status":    documentStatus.String(),
-		"version_status":     documentVersionStatus.String(),
-		"last_quorum_status": lastQuorumStatus,
+		"organization_id": organizationID.String(),
 	}, nil
 }
 
@@ -213,6 +181,9 @@ LIMIT 1;
 
 	documentVersion, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[DocumentVersion])
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
 		return fmt.Errorf("cannot collect document version: %w", err)
 	}
 
@@ -343,6 +314,9 @@ LIMIT 1;
 
 	documentVersion, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[DocumentVersion])
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
 		return fmt.Errorf("cannot collect document version: %w", err)
 	}
 
@@ -395,6 +369,9 @@ LIMIT 1;
 
 	documentVersion, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[DocumentVersion])
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
 		return fmt.Errorf("cannot collect document version: %w", err)
 	}
 
@@ -449,6 +426,9 @@ LIMIT 1;
 
 	documentVersion, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[DocumentVersion])
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
 		return fmt.Errorf("cannot collect document version: %w", err)
 	}
 

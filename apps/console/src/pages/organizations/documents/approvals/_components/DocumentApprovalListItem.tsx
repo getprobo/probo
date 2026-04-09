@@ -20,14 +20,10 @@ import {
   IconCircleCheck,
   IconCircleX,
   IconClock,
-  IconTrashCan,
-  Spinner,
-  useToast,
 } from "@probo/ui";
-import { useFragment, useMutation } from "react-relay";
+import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
-import type { DocumentApprovalListItem_removeApproverMutation } from "#/__generated__/core/DocumentApprovalListItem_removeApproverMutation.graphql";
 import type { DocumentApprovalListItemFragment$key } from "#/__generated__/core/DocumentApprovalListItemFragment.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
@@ -52,43 +48,11 @@ const fragment = graphql`
   }
 `;
 
-const removeApproverMutation = graphql`
-  mutation DocumentApprovalListItem_removeApproverMutation(
-    $input: RemoveDocumentVersionApproverInput!
-    $connections: [ID!]!
-  ) {
-    removeDocumentVersionApprover(input: $input) {
-      deletedApprovalDecisionId @deleteEdge(connections: $connections)
-      documentVersion {
-        id
-        approvalQuorums(first: 1, orderBy: { field: CREATED_AT, direction: DESC }) {
-          edges {
-            node {
-              id
-              status
-              decisions(first: 0) {
-                totalCount
-              }
-              approvedDecisions: decisions(first: 0 filter: { states: [APPROVED] }) {
-                totalCount
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-`;
-
 export function DocumentApprovalListItem(props: {
   fragmentRef: DocumentApprovalListItemFragment$key;
-  canManage: boolean;
-  connectionId: string;
-  onRefetch: () => void;
 }) {
-  const { fragmentRef, canManage, connectionId, onRefetch } = props;
+  const { fragmentRef } = props;
   const { __, dateTimeFormat } = useTranslate();
-  const { toast } = useToast();
   const organizationId = useOrganizationId();
 
   const decision = useFragment(fragment, fragmentRef);
@@ -96,10 +60,7 @@ export function DocumentApprovalListItem(props: {
   const isPending = decision.state === "PENDING";
   const isApproved = decision.state === "APPROVED";
   const isRejected = decision.state === "REJECTED";
-
-  const [removeApprover, isRemoving] = useMutation<DocumentApprovalListItem_removeApproverMutation>(
-    removeApproverMutation,
-  );
+  const isVoided = decision.state === "VOIDED";
 
   const reviewUrl = `/organizations/${organizationId}/employee/approvals/${decision.documentVersion.document.id}`;
 
@@ -113,10 +74,12 @@ export function DocumentApprovalListItem(props: {
           {isApproved && <IconCircleCheck size={16} className="text-txt-accent" />}
           {isRejected && <IconCircleX size={16} className="text-txt-danger" />}
           {isPending && <IconClock size={16} />}
+          {isVoided && <IconClock size={16} className="text-txt-secondary" />}
           <span>
             {isPending && sprintf(__("Requested on %s"), dateTimeFormat(decision.createdAt))}
             {isApproved && sprintf(__("Approved on %s"), dateTimeFormat(decision.decidedAt))}
             {isRejected && sprintf(__("Rejected on %s"), dateTimeFormat(decision.decidedAt))}
+            {isVoided && sprintf(__("Requested on %s"), dateTimeFormat(decision.createdAt))}
           </span>
         </div>
         {decision.comment && (
@@ -137,48 +100,11 @@ export function DocumentApprovalListItem(props: {
             {__("Review")}
           </Button>
         )}
-        {canManage && (
-          <Button
-            variant="quaternary"
-            icon={isRemoving ? Spinner : IconTrashCan}
-            disabled={isRemoving}
-            onClick={() => {
-              void removeApprover({
-                variables: {
-                  input: {
-                    approvalDecisionId: decision.id,
-                  },
-                  connections: [connectionId],
-                },
-                onCompleted: (_data, errors) => {
-                  if (errors?.length) {
-                    toast({
-                      title: __("Error"),
-                      description: errors[0].message,
-                      variant: "error",
-                    });
-                    return;
-                  }
-                  toast({
-                    title: __("Approver removed"),
-                    description: __("The approver has been removed successfully."),
-                    variant: "success",
-                  });
-                  onRefetch();
-                },
-                onError: (error) => {
-                  toast({
-                    title: __("Error"),
-                    description: error.message,
-                    variant: "error",
-                  });
-                },
-              });
-            }}
-          />
-        )}
-        {isPending && !decision.canApprove && !decision.canReject && !canManage && (
+        {isPending && !decision.canApprove && !decision.canReject && (
           <Badge variant="warning">{__("Pending")}</Badge>
+        )}
+        {isVoided && (
+          <Badge variant="neutral">{__("Voided")}</Badge>
         )}
       </div>
     </div>

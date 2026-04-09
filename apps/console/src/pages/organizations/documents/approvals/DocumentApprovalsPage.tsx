@@ -81,9 +81,8 @@ const versionFragment = graphql`
 
 export function DocumentApprovalsPage(props: {
   queryRef: PreloadedQuery<DocumentApprovalsPageQuery>;
-  onRefetch: () => void;
 }) {
-  const { queryRef, onRefetch } = props;
+  const { queryRef } = props;
 
   const { document, version } = usePreloadedQuery<DocumentApprovalsPageQuery>(
     documentApprovalsPageQuery,
@@ -109,7 +108,6 @@ export function DocumentApprovalsPage(props: {
       <DocumentApprovalsPageContent
         approvalListRef={approvalListRef}
         versionFragmentRef={versionFragmentRef}
-        onRefetch={onRefetch}
       />
     </Suspense>
   );
@@ -118,9 +116,8 @@ export function DocumentApprovalsPage(props: {
 function DocumentApprovalsPageContent(props: {
   approvalListRef: Parameters<typeof DocumentApprovalList>[0]["versionFragmentRef"];
   versionFragmentRef: DocumentApprovalsPage_versionFragment$key;
-  onRefetch: () => void;
 }) {
-  const { approvalListRef, versionFragmentRef, onRefetch } = props;
+  const { approvalListRef, versionFragmentRef } = props;
   const { __, dateTimeFormat } = useTranslate();
 
   const versionData = useFragment(versionFragment, versionFragmentRef);
@@ -129,7 +126,7 @@ function DocumentApprovalsPageContent(props: {
 
   return (
     <div className="space-y-8">
-      <DocumentApprovalList versionFragmentRef={approvalListRef} onRefetch={onRefetch} />
+      <DocumentApprovalList versionFragmentRef={approvalListRef} />
 
       {pastQuorums.length > 0 && (
         <div className="space-y-4">
@@ -137,8 +134,8 @@ function DocumentApprovalsPageContent(props: {
           {pastQuorums.map(({ node: quorum }) => (
             <div key={quorum.id} className="border border-border-solid rounded-lg p-4">
               <div className="flex items-center gap-2 mb-3">
-                <Badge variant={quorum.status === "APPROVED" ? "success" : "danger"}>
-                  {quorum.status === "APPROVED" ? __("Approved") : __("Rejected")}
+                <Badge variant={quorum.status === "APPROVED" ? "success" : quorum.status === "VOIDED" ? "neutral" : "danger"}>
+                  {quorum.status === "APPROVED" ? __("Approved") : quorum.status === "VOIDED" ? __("Voided") : __("Rejected")}
                 </Badge>
                 <span className="text-xs text-txt-secondary">
                   {dateTimeFormat(quorum.createdAt)}
@@ -159,8 +156,8 @@ function DocumentApprovalsPageContent(props: {
                       )}
                     </div>
                     <div className="ml-auto">
-                      <Badge variant={decision.state === "APPROVED" ? "success" : decision.state === "REJECTED" ? "danger" : "warning"}>
-                        {decision.state === "APPROVED" ? __("Approved") : decision.state === "REJECTED" ? __("Rejected") : __("Pending")}
+                      <Badge variant={decision.state === "APPROVED" ? "success" : decision.state === "REJECTED" ? "danger" : decision.state === "VOIDED" ? "neutral" : "warning"}>
+                        {decision.state === "APPROVED" ? __("Approved") : decision.state === "REJECTED" ? __("Rejected") : decision.state === "VOIDED" ? __("Voided") : __("Pending")}
                       </Badge>
                     </div>
                   </div>

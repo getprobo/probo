@@ -23,12 +23,11 @@ import { ConnectionHandler, graphql } from "relay-runtime";
 import type { DocumentActionsDropdown_archiveMutation } from "#/__generated__/core/DocumentActionsDropdown_archiveMutation.graphql";
 import type { DocumentActionsDropdown_createDraftMutation } from "#/__generated__/core/DocumentActionsDropdown_createDraftMutation.graphql";
 import type { DocumentActionsDropdown_documentFragment$key } from "#/__generated__/core/DocumentActionsDropdown_documentFragment.graphql";
+import type { DocumentActionsDropdown_exportVersionMutation } from "#/__generated__/core/DocumentActionsDropdown_exportVersionMutation.graphql";
 import type { DocumentActionsDropdown_unarchiveMutation } from "#/__generated__/core/DocumentActionsDropdown_unarchiveMutation.graphql";
 import type { DocumentActionsDropdown_versionFragment$key } from "#/__generated__/core/DocumentActionsDropdown_versionFragment.graphql";
-import type { DocumentActionsDropdownn_exportVersionMutation } from "#/__generated__/core/DocumentActionsDropdownn_exportVersionMutation.graphql";
 import { PdfDownloadDialog, type PdfDownloadDialogRef } from "#/components/documents/PdfDownloadDialog";
 import { DocumentsConnectionKey, useDeleteDocumentMutation, useDeleteDraftDocumentVersionMutation } from "#/hooks/graph/DocumentGraph";
-import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { CurrentUser } from "#/providers/CurrentUser";
 
@@ -129,7 +128,7 @@ const versionFragment = graphql`
 `;
 
 const exportDocumentVersionMutation = graphql`
-  mutation DocumentActionsDropdownn_exportVersionMutation(
+  mutation DocumentActionsDropdown_exportVersionMutation(
     $input: ExportDocumentVersionPDFInput!
   ) {
     exportDocumentVersionPDF(input: $input) {
@@ -138,7 +137,7 @@ const exportDocumentVersionMutation = graphql`
   }
 `;
 
-export function DocumentActionsDropdownn(props: {
+export function DocumentActionsDropdown(props: {
   documentFragmentRef: DocumentActionsDropdown_documentFragment$key;
   versionFragmentRef: DocumentActionsDropdown_versionFragment$key;
   onRefetch: () => void;
@@ -158,7 +157,7 @@ export function DocumentActionsDropdownn(props: {
   const version = useFragment<DocumentActionsDropdown_versionFragment$key>(versionFragment, versionFragmentRef);
 
   const lastVersion = document.versions.edges[0].node;
-  const hasDraft = lastVersion.status === "DRAFT";
+  const isLastVersionPublished = lastVersion.status === "PUBLISHED";
   const isDraft = version.status === "DRAFT";
 
   const [createDraftDocumentVersion, isCreatingDraft]
@@ -171,13 +170,7 @@ export function DocumentActionsDropdownn(props: {
   const [deleteDraftDocumentVersion, isDeletingDraft]
     = useDeleteDraftDocumentVersionMutation();
   const [exportDocumentVersion, isExporting]
-    = useMutationWithToasts<DocumentActionsDropdownn_exportVersionMutation>(
-      exportDocumentVersionMutation,
-      {
-        successMessage: __("PDF download started."),
-        errorMessage: __("Failed to generate PDF"),
-      },
-    );
+    = useMutation<DocumentActionsDropdown_exportVersionMutation>(exportDocumentVersionMutation);
 
   const handleCreateDraft = () => {
     const connectionId = ConnectionHandler.getConnectionID(document.id, "DocumentversionsDropdownMenu_versions");
@@ -205,7 +198,6 @@ export function DocumentActionsDropdownn(props: {
         void navigate(`/organizations/${organizationId}/documents/${document.id}/versions/${newVersionId}`);
       },
       onError(error) {
-        console.log(error);
         toast({ title: __("Error"), description: error.message, variant: "error" });
       },
     });
@@ -320,7 +312,7 @@ export function DocumentActionsDropdownn(props: {
     );
   };
 
-  const handleExportDocumentVersion = async (options: {
+  const handleExportDocumentVersion = (options: {
     withWatermark: boolean;
     withSignatures: boolean;
     watermarkEmail?: string;
@@ -333,10 +325,15 @@ export function DocumentActionsDropdownn(props: {
         && options.watermarkEmail && { watermarkEmail: options.watermarkEmail }),
     };
 
-    await exportDocumentVersion({
+    exportDocumentVersion({
       variables: { input },
       onCompleted: (data, errors) => {
         if (errors?.length) {
+          toast({
+            title: __("Error"),
+            description: errors[0]?.message || __("Failed to generate PDF"),
+            variant: "error",
+          });
           return;
         }
 
@@ -349,6 +346,9 @@ export function DocumentActionsDropdownn(props: {
           window.document.body.removeChild(link);
         }
       },
+      onError(error) {
+        toast({ title: __("Error"), description: error.message, variant: "error" });
+      },
     });
   };
 
@@ -356,12 +356,12 @@ export function DocumentActionsDropdownn(props: {
     <>
       <PdfDownloadDialog
         ref={pdfDownloadDialogRef}
-        onDownload={options => void handleExportDocumentVersion(options)}
+        onDownload={handleExportDocumentVersion}
         isLoading={isExporting}
         defaultEmail={defaultEmail}
       />
       <ActionDropdown variant="secondary">
-        {document.canUpdate && !hasDraft && (
+        {document.canUpdate && isLastVersionPublished && (
           <DropdownItem
             onClick={handleCreateDraft}
             icon={IconPencil}
@@ -388,7 +388,7 @@ export function DocumentActionsDropdownn(props: {
         >
           {__("Download PDF")}
         </DropdownItem>
-        {document.canArchive && (
+        {document.canArchive && document.status === "ACTIVE" && (
           <DropdownItem
             icon={IconArchive}
             disabled={isArchiving}
@@ -397,7 +397,7 @@ export function DocumentActionsDropdownn(props: {
             {__("Archive document")}
           </DropdownItem>
         )}
-        {document.canUnarchive && (
+        {document.canUnarchive && document.status === "ARCHIVED" && (
           <DropdownItem
             icon={IconArchive}
             disabled={isUnarchiving}

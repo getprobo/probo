@@ -2095,6 +2095,7 @@ func (r *Resolver) AddDocumentTool(ctx context.Context, req *mcp.CallToolRequest
 			Classification:        input.Classification,
 			DocumentType:          input.DocumentType,
 			TrustCenterVisibility: trustCenterVisibility,
+			DefaultApproverIDs:    input.DefaultApproverIds,
 		},
 	)
 	if err != nil {
@@ -2109,12 +2110,18 @@ func (r *Resolver) UpdateDocumentTool(ctx context.Context, req *mcp.CallToolRequ
 
 	svc := r.ProboService(ctx, input.ID)
 
+	var defaultApproverIDs *[]gid.GID
+	if input.DefaultApproverIds != nil {
+		defaultApproverIDs = &input.DefaultApproverIds
+	}
+
 	document, err := svc.Documents.Update(
 		ctx,
 		probo.UpdateDocumentRequest{
 			DocumentID:            input.ID,
 			Title:                 input.Title,
 			TrustCenterVisibility: input.TrustCenterVisibility,
+			DefaultApproverIDs:    defaultApproverIDs,
 		},
 	)
 	if err != nil {
@@ -3927,4 +3934,19 @@ func (r *Resolver) ListMeasureDocumentsTool(ctx context.Context, req *mcp.CallTo
 	}
 
 	return nil, types.NewListMeasureDocumentsOutput(docPage), nil
+}
+
+func (r *Resolver) VoidDocumentVersionApprovalTool(ctx context.Context, req *mcp.CallToolRequest, input *types.VoidDocumentVersionApprovalInput) (*mcp.CallToolResult, types.VoidDocumentVersionApprovalOutput, error) {
+	r.MustAuthorize(ctx, input.DocumentVersionID, probo.ActionDocumentVersionVoidApproval)
+
+	svc := r.ProboService(ctx, input.DocumentVersionID)
+
+	_, documentVersion, err := svc.DocumentApprovals.VoidApproval(ctx, input.DocumentVersionID)
+	if err != nil {
+		panic(fmt.Errorf("cannot void document version approval: %w", err))
+	}
+
+	return nil, types.VoidDocumentVersionApprovalOutput{
+		DocumentVersion: types.NewDocumentVersion(documentVersion),
+	}, nil
 }

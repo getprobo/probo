@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { formatError, type GraphQLError } from "@probo/helpers";
+import { formatDate, formatError, type GraphQLError } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
 import {
@@ -173,6 +173,7 @@ function VersionRow({
   const state = approvalDecision?.state;
   const isApproved = state === "APPROVED";
   const isRejected = state === "REJECTED";
+  const isVoided = state === "VOIDED";
 
   return (
     <div
@@ -189,7 +190,9 @@ function VersionRow({
           ? <IconCircleCheck size={20} className="text-txt-success" />
           : isRejected
             ? <IconCircleX size={20} className="text-txt-danger" />
-            : <IconRadioUnchecked size={20} className="text-txt-tertiary" />}
+            : isVoided
+              ? <IconRadioUnchecked size={20} className="text-txt-secondary" />
+              : <IconRadioUnchecked size={20} className="text-txt-tertiary" />}
       </div>
       <div className="flex-1 min-w-0">
         <p
@@ -199,13 +202,7 @@ function VersionRow({
           )}
         >
           {versionData.publishedAt
-            ? `v${versionData.major}.${versionData.minor} - ${(() => {
-              const date = new Date(versionData.publishedAt);
-              const day = String(date.getDate()).padStart(2, "0");
-              const month = String(date.getMonth() + 1).padStart(2, "0");
-              const year = date.getFullYear();
-              return `${day}/${month}/${year}`;
-            })()}`
+            ? `v${versionData.major}.${versionData.minor} - ${formatDate(versionData.publishedAt)}`
             : `v${versionData.major}.${versionData.minor}`}
         </p>
       </div>
@@ -214,9 +211,11 @@ function VersionRow({
           ? <Badge variant="success">{__("Approved")}</Badge>
           : isRejected
             ? <Badge variant="danger">{__("Rejected")}</Badge>
-            : isSelected
-              ? <Badge variant="info">{__("In review")}</Badge>
-              : <Badge variant="warning">{__("Pending")}</Badge>}
+            : isVoided
+              ? <Badge variant="neutral">{__("Voided")}</Badge>
+              : isSelected
+                ? <Badge variant="info">{__("In review")}</Badge>
+                : <Badge variant="warning">{__("Pending")}</Badge>}
       </div>
     </div>
   );
@@ -245,6 +244,20 @@ function ViewerDecision(props: {
   const isPending = decision.state === "PENDING";
   const isApproved = decision.state === "APPROVED";
   const isRejected = decision.state === "REJECTED";
+  const isVoided = decision.state === "VOIDED";
+
+  if (isVoided) {
+    return (
+      <>
+        <div className="flex items-center gap-2 text-sm text-txt-secondary mb-4">
+          <span>{__("Your approval is no longer required for this version.")}</span>
+        </div>
+        <Button onClick={onBack} className="h-10 w-full" variant="secondary">
+          {__("Back to Documents")}
+        </Button>
+      </>
+    );
+  }
 
   if (!decision.canApprove && !decision.canReject) {
     return (
@@ -484,10 +497,7 @@ function DocumentApproveContent({
   }, [selectedVersion?.id, exportPDF, toast, __]);
 
   return (
-    <div
-      className="fixed bg-level-2 flex flex-col"
-      style={{ top: "3rem", left: 0, right: 0, bottom: 0 }}
-    >
+    <div className="fixed inset-0 top-12 bg-level-2 flex flex-col">
       <div className="grid lg:grid-cols-2 min-h-0 h-full">
         <div className="w-full lg:w-[440px] mx-auto py-20 overflow-y-auto scrollbar-hide">
           <h1 className="text-2xl font-semibold mb-6">

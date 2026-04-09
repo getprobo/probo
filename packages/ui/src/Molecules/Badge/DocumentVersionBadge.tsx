@@ -17,14 +17,23 @@ import { useTranslate } from "@probo/i18n";
 import { Badge } from "../../Atoms/Badge/Badge";
 
 type Props = {
-  state: "DRAFT" | "PUBLISHED";
+  state: "DRAFT" | "PENDING_APPROVAL" | "PUBLISHED";
 };
 
 export function DocumentVersionBadge(props: Props) {
   const { __ } = useTranslate();
-  return (
-    <Badge variant={props.state === "DRAFT" ? "neutral" : "success"}>
-      {props.state === "DRAFT" ? __("Draft") : __("Published")}
-    </Badge>
-  );
+
+  const variant = {
+    DRAFT: "neutral",
+    PENDING_APPROVAL: "warning",
+    PUBLISHED: "success",
+  } as const;
+
+  const label = {
+    DRAFT: __("Draft"),
+    PENDING_APPROVAL: __("Pending approval"),
+    PUBLISHED: __("Published"),
+  } as const;
+
+  return <Badge variant={variant[props.state]}>{label[props.state]}</Badge>;
 }

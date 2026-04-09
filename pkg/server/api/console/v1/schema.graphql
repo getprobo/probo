@@ -104,6 +104,10 @@ enum DocumentVersionStatus
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.DocumentVersionStatusDraft"
         )
+    PENDING_APPROVAL
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DocumentVersionStatusPendingApproval"
+        )
     PUBLISHED
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.DocumentVersionStatusPublished"
@@ -2583,6 +2587,8 @@ type Document implements Node {
         filter: ControlFilter
     ): ControlConnection! @goField(forceResolver: true)
 
+    defaultApprovers: [Profile!]! @goField(forceResolver: true)
+
     status: DocumentStatus!
     archivedAt: Datetime
 
@@ -3934,6 +3940,9 @@ type Mutation {
     requestDocumentVersionApproval(
         input: RequestDocumentVersionApprovalInput!
     ): RequestDocumentVersionApprovalPayload!
+    voidDocumentVersionApproval(
+        input: VoidDocumentVersionApprovalInput!
+    ): VoidDocumentVersionApprovalPayload!
     bulkDeleteDocuments(
         input: BulkDeleteDocumentsInput!
     ): BulkDeleteDocumentsPayload!
@@ -3969,12 +3978,6 @@ type Mutation {
         input: CancelSignatureRequestInput!
     ): CancelSignatureRequestPayload!
     signDocument(input: SignDocumentInput!): SignDocumentPayload!
-    addDocumentVersionApprover(
-        input: AddDocumentVersionApproverInput!
-    ): AddDocumentVersionApproverPayload!
-    removeDocumentVersionApprover(
-        input: RemoveDocumentVersionApproverInput!
-    ): RemoveDocumentVersionApproverPayload!
     approveDocumentVersion(
         input: ApproveDocumentVersionInput!
     ): ApproveDocumentVersionPayload!
@@ -4668,6 +4671,7 @@ input CreateDocumentInput {
     documentType: DocumentType!
     classification: DocumentClassification!
     trustCenterVisibility: TrustCenterVisibility
+    defaultApproverIds: [ID!]
 }
 
 input UpdateDocumentInput {
@@ -4675,6 +4679,7 @@ input UpdateDocumentInput {
     title: String
     content: String
     trustCenterVisibility: TrustCenterVisibility
+    defaultApproverIds: [ID!]
 }
 
 input ExportDocumentVersionPDFInput {
@@ -5686,6 +5691,10 @@ enum DocumentVersionApprovalDecisionState
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.DocumentVersionApprovalDecisionStateRejected"
         )
+    VOIDED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DocumentVersionApprovalDecisionStateVoided"
+        )
 }
 
 enum DocumentVersionApprovalDecisionOrderField
@@ -5713,6 +5722,10 @@ enum DocumentVersionApprovalQuorumStatus
     REJECTED
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.DocumentVersionApprovalQuorumStatusRejected"
+        )
+    VOIDED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DocumentVersionApprovalQuorumStatusVoided"
         )
 }
 
@@ -5816,23 +5829,6 @@ type RejectDocumentVersionPayload {
     approvalDecision: DocumentVersionApprovalDecision!
 }
 
-input AddDocumentVersionApproverInput {
-    documentVersionId: ID!
-    approverId: ID!
-}
-
-type AddDocumentVersionApproverPayload {
-    approvalDecisionEdge: DocumentVersionApprovalDecisionEdge!
-}
-
-input RemoveDocumentVersionApproverInput {
-    approvalDecisionId: ID!
-}
-
-type RemoveDocumentVersionApproverPayload {
-    deletedApprovalDecisionId: ID!
-    documentVersion: DocumentVersion!
-}
 
 input RequestSignatureInput {
     documentVersionId: ID!
@@ -5895,6 +5891,15 @@ input RequestDocumentVersionApprovalInput {
 
 type RequestDocumentVersionApprovalPayload {
     approvalQuorum: DocumentVersionApprovalQuorum!
+}
+
+input VoidDocumentVersionApprovalInput {
+    documentVersionId: ID!
+}
+
+type VoidDocumentVersionApprovalPayload {
+    approvalQuorum: DocumentVersionApprovalQuorum!
+    documentVersion: DocumentVersion!
 }
 
 input PublishMajorDocumentVersionInput {

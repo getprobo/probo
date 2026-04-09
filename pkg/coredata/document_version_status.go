@@ -20,12 +20,13 @@ import (
 )
 
 type (
-	DocumentVersionStatus uint8
+	DocumentVersionStatus string
 )
 
 const (
-	DocumentVersionStatusDraft DocumentVersionStatus = iota
-	DocumentVersionStatusPublished
+	DocumentVersionStatusDraft           DocumentVersionStatus = "DRAFT"
+	DocumentVersionStatusPendingApproval DocumentVersionStatus = "PENDING_APPROVAL"
+	DocumentVersionStatusPublished       DocumentVersionStatus = "PUBLISHED"
 )
 
 func (ps DocumentVersionStatus) MarshalText() ([]byte, error) {
@@ -38,6 +39,8 @@ func (ps *DocumentVersionStatus) UnmarshalText(data []byte) error {
 	switch val {
 	case DocumentVersionStatusDraft.String():
 		*ps = DocumentVersionStatusDraft
+	case DocumentVersionStatusPendingApproval.String():
+		*ps = DocumentVersionStatusPendingApproval
 	case DocumentVersionStatusPublished.String():
 		*ps = DocumentVersionStatusPublished
 	default:
@@ -48,16 +51,16 @@ func (ps *DocumentVersionStatus) UnmarshalText(data []byte) error {
 }
 
 func (ps DocumentVersionStatus) String() string {
-	var val string
-
 	switch ps {
 	case DocumentVersionStatusDraft:
-		val = "DRAFT"
+		return "DRAFT"
+	case DocumentVersionStatusPendingApproval:
+		return "PENDING_APPROVAL"
 	case DocumentVersionStatusPublished:
-		val = "PUBLISHED"
+		return "PUBLISHED"
+	default:
+		panic(fmt.Errorf("invalid DocumentVersionStatus value: %q", string(ps)))
 	}
-
-	return val
 }
 
 func (ps *DocumentVersionStatus) Scan(value any) error {

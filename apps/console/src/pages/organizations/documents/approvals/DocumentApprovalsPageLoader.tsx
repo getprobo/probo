@@ -27,9 +27,8 @@ function DocumentApprovalsPageQueryLoader() {
     throw new Error(":documentId missing in route params");
   }
 
-  const { onRefetch: parentRefetch, approvalRequestedAt }
+  const { approvalRequestedAt }
     = useOutletContext<{
-      onRefetch: () => void;
       approvalRequestedAt?: number;
     }>();
 
@@ -48,16 +47,9 @@ function DocumentApprovalsPageQueryLoader() {
 
   useEffect(() => {
     if (!queryRef) {
-      loadQuery(
-        {
-          documentId: documentId,
-          versionId: versionId ?? "",
-          versionSpecified: !!versionId,
-        },
-        { fetchPolicy: "network-only" },
-      );
+      loadQueryParams();
     }
-  }, [queryRef, documentId, versionId, loadQuery]);
+  }, [queryRef, loadQueryParams]);
 
   // Reload approvals data whenever a new approval round is requested from the layout
   useEffect(() => {
@@ -66,16 +58,11 @@ function DocumentApprovalsPageQueryLoader() {
     }
   }, [approvalRequestedAt, loadQueryParams]);
 
-  const onRefetch = useCallback(() => {
-    parentRefetch();
-    loadQueryParams();
-  }, [parentRefetch, loadQueryParams]);
-
   if (!queryRef) {
     return <LinkCardSkeleton />;
   }
 
-  return <DocumentApprovalsPage queryRef={queryRef} onRefetch={onRefetch} />;
+  return <DocumentApprovalsPage queryRef={queryRef} />;
 }
 
 export default function DocumentApprovalsPageLoader() {

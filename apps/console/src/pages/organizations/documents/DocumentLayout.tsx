@@ -22,7 +22,7 @@ import { graphql } from "relay-runtime";
 import type { DocumentLayoutQuery } from "#/__generated__/core/DocumentLayoutQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
-import { DocumentActionsDropdownn } from "./_components/DocumentActionsDropdown";
+import { DocumentActionsDropdown } from "./_components/DocumentActionsDropdown";
 import { DocumentLayoutDrawer } from "./_components/DocumentLayoutDrawer";
 import { DocumentTitleForm } from "./_components/DocumentTitleForm";
 import { DocumentVersionsDropdown } from "./_components/DocumentVersionsDropdown";
@@ -142,7 +142,6 @@ export function DocumentLayout(props: { queryRef: PreloadedQuery<DocumentLayoutQ
   const isPublished = currentVersion.status === "PUBLISHED";
   const lastQuorum = currentVersion.approvalQuorums?.edges?.[0]?.node ?? null;
   const hasApprovals = lastQuorum != null;
-  const hasPendingApproval = lastQuorum?.status === "PENDING";
 
   const urlPrefix = versionId
     ? `/organizations/${organizationId}/documents/${document.id}/versions/${versionId}`
@@ -174,7 +173,7 @@ export function DocumentLayout(props: { queryRef: PreloadedQuery<DocumentLayoutQ
               </Button>
             )}
             <DocumentVersionsDropdown />
-            <DocumentActionsDropdownn
+            <DocumentActionsDropdown
               documentFragmentRef={document}
               versionFragmentRef={currentVersion}
               onRefetch={onRefetch}
@@ -223,7 +222,6 @@ export function DocumentLayout(props: { queryRef: PreloadedQuery<DocumentLayoutQ
         ref={publishDialogRef}
         documentId={document.id}
         documentFragmentRef={document}
-        hasPendingApproval={hasPendingApproval}
         onSuccess={handlePublishOrApproval}
       />
     </>

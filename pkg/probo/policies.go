@@ -20,71 +20,13 @@ import (
 )
 
 var (
-	organizationCondition   = policy.Equals("principal.organization_id", "resource.organization_id")
-	documentWriteActiveOnly = policy.Deny(
-		ActionDocumentUpdate,
-		ActionDocumentArchive,
-		ActionDocumentDraftVersionCreate,
-		ActionDocumentChangelogGenerate,
-		ActionDocumentSendSigningNotifications,
-		ActionDocumentVersionUpdate,
-		ActionDocumentVersionPublish,
-		ActionDocumentVersionRequestApproval,
-		ActionDocumentVersionApprove,
-		ActionDocumentVersionReject,
-		ActionDocumentVersionAddApprover,
-		ActionDocumentVersionRemoveApprover,
-		ActionDocumentVersionDeleteDraft,
-		ActionDocumentVersionSignatureRequest,
-		ActionDocumentVersionCancelSignature,
-	).WithSID("document-write-active-only").When(
-		organizationCondition,
-		policy.Equals("resource.document_status", "ARCHIVED"),
-	)
-	documentUnarchiveArchivedOnly = policy.Deny(
-		ActionDocumentUnarchive,
-	).WithSID("document-unarchive-archived-only").When(
-		organizationCondition,
-		policy.Equals("resource.document_status", "ACTIVE"),
-	)
-
-	// Deny requesting approval when a pending quorum exists
-	documentRequestApprovalNoPendingQuorum = policy.Deny(
-		ActionDocumentVersionRequestApproval,
-	).WithSID("document-request-approval-no-pending-quorum").When(
-		organizationCondition,
-		policy.Equals("resource.last_quorum_status", "PENDING"),
-	)
-
-	// Deny requesting approval when the version is already published
-	documentRequestApprovalNotPublished = policy.Deny(
-		ActionDocumentVersionRequestApproval,
-	).WithSID("document-request-approval-not-published").When(
-		organizationCondition,
-		policy.Equals("resource.version_status", "PUBLISHED"),
-	)
-
-	// Deny adding/removing approvers when there is no pending quorum
-	documentApproverRequiresPendingQuorum = policy.Deny(
-		ActionDocumentVersionAddApprover,
-		ActionDocumentVersionRemoveApprover,
-	).WithSID("document-approver-requires-pending-quorum").When(
-		organizationCondition,
-		policy.NotEquals("resource.last_quorum_status", "PENDING"),
-	)
+	organizationCondition = policy.Equals("principal.organization_id", "resource.organization_id")
 )
 
 // OwnerPolicy defines permissions for organization owners.
 var OwnerPolicy = policy.NewPolicy(
 	"probo:owner",
 	"Probo Owner",
-	documentWriteActiveOnly,
-	documentUnarchiveArchivedOnly,
-
-	documentRequestApprovalNoPendingQuorum,
-	documentRequestApprovalNotPublished,
-
-	documentApproverRequiresPendingQuorum,
 	policy.Allow("core:*").WithSID("full-core-access").When(organizationCondition),
 ).WithDescription("Full probo access for organization owners")
 
@@ -92,13 +34,6 @@ var OwnerPolicy = policy.NewPolicy(
 var AdminPolicy = policy.NewPolicy(
 	"probo:admin",
 	"Probo Admin",
-	documentWriteActiveOnly,
-	documentUnarchiveArchivedOnly,
-
-	documentRequestApprovalNoPendingQuorum,
-	documentRequestApprovalNotPublished,
-
-	documentApproverRequiresPendingQuorum,
 	policy.Allow("core:*").WithSID("full-core-access").When(organizationCondition),
 ).WithDescription("Probo admin access - can manage core entities")
 
@@ -106,7 +41,6 @@ var AdminPolicy = policy.NewPolicy(
 var ViewerPolicy = policy.NewPolicy(
 	"probo:viewer",
 	"Probo Viewer",
-	documentWriteActiveOnly,
 	policy.Allow(
 		ActionOrganizationGet,
 		ActionOrganizationGetLogoUrl,
@@ -244,7 +178,6 @@ var AuditorPolicy = policy.NewPolicy(
 var EmployeePolicy = policy.NewPolicy(
 	"probo:employee",
 	"Probo Employee",
-	documentWriteActiveOnly,
 	policy.Allow(
 		ActionOrganizationGet,
 		ActionOrganizationGetLogoUrl,
@@ -263,7 +196,6 @@ var EmployeePolicy = policy.NewPolicy(
 		ActionDocumentVersionApprovalList,
 		ActionDocumentVersionApprove,
 		ActionDocumentVersionReject,
-		ActionEmployeeDocumentVersionExportPDF,
 	).WithSID("document-version-approval").When(organizationCondition),
 ).WithDescription("Employee access - can sign documents, approve documents, and view internal content")
 

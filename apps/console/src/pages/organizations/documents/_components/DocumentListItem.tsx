@@ -28,6 +28,10 @@ const fragment = graphql`
     title
     updatedAt
     canDelete: permission(action: "core:document:delete")
+    defaultApprovers {
+      id
+      fullName
+    }
     recentVersions: versions(first: 2 orderBy: { field: CREATED_AT direction: DESC }) {
       edges {
         node {
@@ -41,15 +45,8 @@ const fragment = graphql`
             edges {
               node {
                 status
-                decisions(first: 20) {
+                decisions(first: 0) {
                   totalCount
-                  edges {
-                    node {
-                      approver {
-                        fullName
-                      }
-                    }
-                  }
                 }
                 approvedDecisions: decisions(first: 0 filter: { states: [APPROVED] }) {
                   totalCount
@@ -96,28 +93,29 @@ export function DocumentListItem(props: {
   } = props;
 
   const organizationId = useOrganizationId();
+  const { __ } = useTranslate();
+  const [deleteDocument] = useMutation<DocumentListItem_deleteMutation>(deleteDocumentMutation);
+  const confirm = useConfirm();
   const document = useFragment<DocumentListItemFragment$key>(
     fragment,
     fragmentRef,
   );
-  const lastVersion = document.recentVersions.edges[0].node;
-  const approverQuorum = lastVersion.approvalQuorums?.edges?.[0]?.node
-    ?? document.recentVersions.edges[1]?.node.approvalQuorums?.edges?.[0]?.node;
 
-  const { __ } = useTranslate();
+  const lastVersionEdge = document.recentVersions.edges[0];
+  if (!lastVersionEdge) return null;
+  const lastVersion = lastVersionEdge.node;
 
   const statusVariant = {
     DRAFT: "neutral",
+    PENDING_APPROVAL: "warning",
     PUBLISHED: "success",
   } as const;
 
   const statusLabel = {
     DRAFT: __("Draft"),
+    PENDING_APPROVAL: __("Pending approval"),
     PUBLISHED: __("Published"),
   } as const;
-
-  const [deleteDocument] = useMutation<DocumentListItem_deleteMutation>(deleteDocumentMutation);
-  const confirm = useConfirm();
 
   const handleDelete = () => {
     confirm(
@@ -172,23 +170,19 @@ export function DocumentListItem(props: {
       </Td>
       <Td className="w-60">
         {(() => {
-          const decisions = approverQuorum?.decisions;
-          if (!decisions?.edges.length) return "—";
-          const names = decisions.edges.map(e => e.node.approver.fullName).join(", ");
-          return decisions.totalCount > 20 ? `${names}...` : names;
+          if (lastVersion.status === "PENDING_APPROVAL") {
+            const quorum = lastVersion.approvalQuorums?.edges?.[0]?.node;
+            if (quorum) {
+              if (quorum.status === "REJECTED") return __("Rejected");
+              return `${quorum.approvedDecisions.totalCount}/${quorum.decisions.totalCount}`;
+            }
+            return "—";
+          }
+          if (!document.defaultApprovers.length) return "—";
+          return document.defaultApprovers.map(a => a.fullName).join(", ");
         })()}
       </Td>
-      <Td className="w-60">{formatDate(document.updatedAt)}</Td>
-      <Td className="w-20">
-        {(() => {
-          const lastQuorum = lastVersion.approvalQuorums?.edges?.[0]?.node;
-          return lastQuorum
-            ? lastQuorum.status === "REJECTED"
-              ? __("Rejected")
-              : `${lastQuorum.approvedDecisions.totalCount}/${lastQuorum.decisions.totalCount}`
-            : "—";
-        })()}
-      </Td>
+      <Td className="w-40">{formatDate(document.updatedAt)}</Td>
       <Td className="w-20">
         {lastVersion.signedSignatures.totalCount}
         /

@@ -29,6 +29,7 @@ const (
 	DocumentVersionApprovalDecisionStatePending  DocumentVersionApprovalDecisionState = "PENDING"
 	DocumentVersionApprovalDecisionStateApproved DocumentVersionApprovalDecisionState = "APPROVED"
 	DocumentVersionApprovalDecisionStateRejected DocumentVersionApprovalDecisionState = "REJECTED"
+	DocumentVersionApprovalDecisionStateVoided   DocumentVersionApprovalDecisionState = "VOIDED"
 )
 
 func (s DocumentVersionApprovalDecisionState) MarshalText() ([]byte, error) {
@@ -45,6 +46,8 @@ func (s *DocumentVersionApprovalDecisionState) UnmarshalText(data []byte) error 
 		*s = DocumentVersionApprovalDecisionStateApproved
 	case DocumentVersionApprovalDecisionStateRejected.String():
 		*s = DocumentVersionApprovalDecisionStateRejected
+	case DocumentVersionApprovalDecisionStateVoided.String():
+		*s = DocumentVersionApprovalDecisionStateVoided
 	default:
 		return fmt.Errorf("invalid DocumentVersionApprovalDecisionState value: %q", val)
 	}
@@ -62,6 +65,8 @@ func (s DocumentVersionApprovalDecisionState) String() string {
 		val = "APPROVED"
 	case DocumentVersionApprovalDecisionStateRejected:
 		val = "REJECTED"
+	case DocumentVersionApprovalDecisionStateVoided:
+		val = "VOIDED"
 	default:
 		panic(fmt.Errorf("invalid DocumentVersionApprovalDecisionState value: %q", string(s)))
 	}

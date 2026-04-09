@@ -365,15 +365,14 @@ export function DocumentList(props: {
                           </SortableTh>
                           <Th className="w-32">{__("Classification")}</Th>
                           <Th className="w-60">{__("Approvers")}</Th>
-                          <Th className="w-60">{__("Last update")}</Th>
-                          <Th className="w-20">{__("Approvals")}</Th>
+                          <Th className="w-40">{__("Last update")}</Th>
                           <Th className="w-20">{__("Signatures")}</Th>
                           {hasAnyAction && <Th className="w-18"></Th>}
                         </Tr>
                       )
                     : (
                         <Tr>
-                          <Th colspan={hasAnyAction ? 11 : 10} compact>
+                          <Th colspan={hasAnyAction ? 10 : 9} compact>
                             <div className="flex justify-between items-center h-8">
                               <div className="flex gap-2 items-center">
                                 {sprintf(__("%s documents selected"), selection.length)}

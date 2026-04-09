@@ -62,6 +62,12 @@ type (
 	ErrDocumentVersionNotDraft struct {
 	}
 
+	ErrDocumentVersionNotPublished struct {
+	}
+
+	ErrDocumentVersionPendingApproval struct {
+	}
+
 	ErrDocumentArchived struct {
 	}
 
@@ -78,12 +84,14 @@ type (
 		Classification        coredata.DocumentClassification
 		DocumentType          coredata.DocumentType
 		TrustCenterVisibility *coredata.TrustCenterVisibility
+		DefaultApproverIDs    []gid.GID
 	}
 
 	UpdateDocumentRequest struct {
 		DocumentID            gid.GID
 		Title                 *string
 		TrustCenterVisibility *coredata.TrustCenterVisibility
+		DefaultApproverIDs    *[]gid.GID
 	}
 
 	UpdateDocumentVersionRequest struct {
@@ -129,6 +137,11 @@ func (cdr *CreateDocumentRequest) Validate() error {
 	v.Check(cdr.Classification, "classification", validator.Required(), validator.OneOfSlice(coredata.DocumentClassifications()))
 	v.Check(cdr.DocumentType, "document_type", validator.Required(), validator.OneOfSlice(coredata.DocumentTypes()))
 	v.Check(cdr.TrustCenterVisibility, "trust_center_visibility", validator.OneOfSlice(coredata.TrustCenterVisibilities()))
+	v.Check(len(cdr.DefaultApproverIDs), "default_approver_ids", validator.Max(100))
+	v.Check(cdr.DefaultApproverIDs, "default_approver_ids", validator.NoDuplicates())
+	v.CheckEach(cdr.DefaultApproverIDs, "default_approver_ids", func(_ int, item any) {
+		v.Check(item, "default_approver_ids", validator.GID(coredata.MembershipProfileEntityType))
+	})
 
 	return v.Error()
 }
@@ -139,6 +152,13 @@ func (udr *UpdateDocumentRequest) Validate() error {
 	v.Check(udr.DocumentID, "document_id", validator.Required(), validator.GID(coredata.DocumentEntityType))
 	v.Check(udr.Title, "title", validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(udr.TrustCenterVisibility, "trust_center_visibility", validator.OneOfSlice(coredata.TrustCenterVisibilities()))
+	if udr.DefaultApproverIDs != nil {
+		v.Check(len(*udr.DefaultApproverIDs), "default_approver_ids", validator.Max(100))
+		v.Check(*udr.DefaultApproverIDs, "default_approver_ids", validator.NoDuplicates())
+		v.CheckEach(*udr.DefaultApproverIDs, "default_approver_ids", func(_ int, item any) {
+			v.Check(item, "default_approver_ids", validator.GID(coredata.MembershipProfileEntityType))
+		})
+	}
 
 	return v.Error()
 }
@@ -179,7 +199,15 @@ func (e ErrSignatureNotCancellable) Error() string {
 }
 
 func (e ErrDocumentVersionNotDraft) Error() string {
-	return "cannot update a published document version"
+	return "document version is not a draft"
+}
+
+func (e ErrDocumentVersionNotPublished) Error() string {
+	return "document version is not published"
+}
+
+func (e ErrDocumentVersionPendingApproval) Error() string {
+	return "cannot publish a document version that is pending approval"
 }
 
 func (e ErrDocumentArchived) Error() string {
@@ -212,6 +240,48 @@ func (s *DocumentService) Get(
 	}
 
 	return document, nil
+}
+
+func (s *DocumentService) GetDefaultApprovers(
+	ctx context.Context,
+	documentID gid.GID,
+) (coredata.MembershipProfiles, error) {
+	var approvers coredata.DocumentDefaultApprovers
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			return approvers.LoadByDocumentID(ctx, conn, s.svc.scope, documentID)
+		},
+	)
+
+	if err != nil {
+		return nil, fmt.Errorf("cannot load default approvers: %w", err)
+	}
+
+	if len(approvers) == 0 {
+		return nil, nil
+	}
+
+	profileIDs := make([]gid.GID, len(approvers))
+	for i, a := range approvers {
+		profileIDs[i] = a.ApproverProfileID
+	}
+
+	var profiles coredata.MembershipProfiles
+
+	err = s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			return profiles.LoadByIDs(ctx, conn, s.svc.scope, profileIDs)
+		},
+	)
+
+	if err != nil {
+		return nil, fmt.Errorf("cannot load approver profiles: %w", err)
+	}
+
+	return profiles, nil
 }
 
 func (s *DocumentService) GetByIDs(
@@ -343,6 +413,10 @@ func (s DocumentService) GenerateChangelog(
 				return fmt.Errorf("cannot load document: %w", err)
 			}
 
+			if document.ArchivedAt != nil {
+				return &ErrDocumentArchived{}
+			}
+
 			if document.CurrentPublishedMajor == nil {
 				initialVersionChangelog := "Initial version"
 				changelog = &initialVersionChangelog
@@ -375,37 +449,6 @@ func (s DocumentService) GenerateChangelog(
 	return changelog, nil
 }
 
-func (s *DocumentService) BulkPublishMajorVersions(
-	ctx context.Context,
-	req BulkPublishVersionsRequest,
-) ([]*coredata.DocumentVersion, []*coredata.Document, error) {
-	var publishedVersions []*coredata.DocumentVersion
-	var updatedDocuments []*coredata.Document
-
-	err := s.svc.pg.WithTx(
-		ctx,
-		func(ctx context.Context, tx pg.Tx) error {
-			for _, documentID := range req.DocumentIDs {
-				document, version, err := s.publishMajorVersionInTx(ctx, tx, documentID, &req.Changelog, true)
-				if err != nil {
-					return fmt.Errorf("cannot publish document %q: %w", documentID, err)
-				}
-
-				publishedVersions = append(publishedVersions, version)
-				updatedDocuments = append(updatedDocuments, document)
-			}
-
-			return nil
-		},
-	)
-
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return publishedVersions, updatedDocuments, nil
-}
-
 func (s *DocumentService) BulkPublishMinorVersions(
 	ctx context.Context,
 	req BulkPublishVersionsRequest,
@@ -417,6 +460,16 @@ func (s *DocumentService) BulkPublishMinorVersions(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			for _, documentID := range req.DocumentIDs {
+				dv := &coredata.DocumentVersion{}
+				if err := dv.LoadLatestVersion(ctx, tx, s.svc.scope, documentID); err != nil {
+					return fmt.Errorf("cannot load latest version for %q: %w", documentID, err)
+				}
+
+				// Skip documents already pending approval.
+				if dv.Status == coredata.DocumentVersionStatusPendingApproval {
+					continue
+				}
+
 				document, version, err := s.publishMinorVersionInTx(ctx, tx, documentID, &req.Changelog, true)
 				if err != nil {
 					return fmt.Errorf("cannot publish document %q: %w", documentID, err)
@@ -449,6 +502,15 @@ func (s *DocumentService) PublishMajorVersion(
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
+			dv := &coredata.DocumentVersion{}
+			if err := dv.LoadLatestVersion(ctx, tx, s.svc.scope, documentID); err != nil {
+				return fmt.Errorf("cannot load latest version: %w", err)
+			}
+
+			if dv.Status == coredata.DocumentVersionStatusPendingApproval {
+				return &ErrDocumentVersionPendingApproval{}
+			}
+
 			var err error
 
 			document, documentVersion, err = s.publishMajorVersionInTx(ctx, tx, documentID, changelog, false)
@@ -479,6 +541,15 @@ func (s *DocumentService) PublishMinorVersion(
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
+			dv := &coredata.DocumentVersion{}
+			if err := dv.LoadLatestVersion(ctx, tx, s.svc.scope, documentID); err != nil {
+				return fmt.Errorf("cannot load latest version: %w", err)
+			}
+
+			if dv.Status == coredata.DocumentVersionStatusPendingApproval {
+				return &ErrDocumentVersionPendingApproval{}
+			}
+
 			var err error
 
 			document, documentVersion, err = s.publishMinorVersionInTx(ctx, tx, documentID, changelog, false)
@@ -564,6 +635,13 @@ func (s *DocumentService) Create(
 
 			if err := documentVersion.Insert(ctx, conn, s.svc.scope); err != nil {
 				return fmt.Errorf("cannot create document version: %w", err)
+			}
+
+			if len(req.DefaultApproverIDs) > 0 {
+				approvers := &coredata.DocumentDefaultApprovers{}
+				if err := approvers.MergeByDocumentID(ctx, conn, s.svc.scope, documentID, organization.ID, req.DefaultApproverIDs); err != nil {
+					return fmt.Errorf("cannot set default approvers: %w", err)
+				}
 			}
 
 			return nil
@@ -916,19 +994,30 @@ func (s *DocumentService) RequestSignature(
 	ctx context.Context,
 	req RequestSignatureRequest,
 ) (*coredata.DocumentVersionSignature, error) {
-	documentVersion, err := s.GetVersion(ctx, req.DocumentVersionID)
-	if err != nil {
-		return nil, fmt.Errorf("cannot get document version: %w", err)
-	}
-
-	if documentVersion.Status != coredata.DocumentVersionStatusPublished {
-		return nil, fmt.Errorf("cannot request signature for unpublished version")
-	}
-
 	var signature *coredata.DocumentVersionSignature
-	err = s.svc.pg.WithTx(
+
+	err := s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
+			documentVersion := &coredata.DocumentVersion{}
+			if err := documentVersion.LoadByID(ctx, tx, s.svc.scope, req.DocumentVersionID); err != nil {
+				return fmt.Errorf("cannot load document version: %w", err)
+			}
+
+			document := &coredata.Document{}
+			if err := document.LoadByID(ctx, tx, s.svc.scope, documentVersion.DocumentID); err != nil {
+				return fmt.Errorf("cannot load document: %w", err)
+			}
+
+			if document.ArchivedAt != nil {
+				return &ErrDocumentArchived{}
+			}
+
+			if documentVersion.Status != coredata.DocumentVersionStatusPublished {
+				return fmt.Errorf("cannot request signature for unpublished version")
+			}
+
+			var err error
 			signature, err = s.createSignatureRequestInTx(ctx, tx, req.DocumentVersionID, req.Signatory, false)
 			if err != nil {
 				return fmt.Errorf("cannot create signature request: %w", err)
@@ -1015,12 +1104,16 @@ func (s *DocumentService) CreateDraft(
 				return fmt.Errorf("cannot load document: %w", err)
 			}
 
+			if document.ArchivedAt != nil {
+				return &ErrDocumentArchived{}
+			}
+
 			if err := latestVersion.LoadLatestVersion(ctx, conn, s.svc.scope, documentID); err != nil {
 				return fmt.Errorf("cannot load latest version: %w", err)
 			}
 
 			if latestVersion.Status != coredata.DocumentVersionStatusPublished {
-				return fmt.Errorf("cannot create draft from unpublished version")
+				return &ErrDocumentVersionNotPublished{}
 			}
 
 			draftVersion.ID = draftVersionID
@@ -1062,6 +1155,15 @@ func (s *DocumentService) DeleteDraft(
 		func(ctx context.Context, conn pg.Tx) error {
 			if err := documentVersion.LoadByID(ctx, conn, s.svc.scope, documentVersionID); err != nil {
 				return fmt.Errorf("cannot load document version: %w", err)
+			}
+
+			document := &coredata.Document{}
+			if err := document.LoadByID(ctx, conn, s.svc.scope, documentVersion.DocumentID); err != nil {
+				return fmt.Errorf("cannot load document: %w", err)
+			}
+
+			if document.ArchivedAt != nil {
+				return &ErrDocumentArchived{}
 			}
 
 			if documentVersion.Status != coredata.DocumentVersionStatusDraft {
@@ -1639,6 +1741,13 @@ func (s *DocumentService) Update(
 				}
 			}
 
+			if req.DefaultApproverIDs != nil {
+				defaultApprovers := &coredata.DocumentDefaultApprovers{}
+				if err := defaultApprovers.MergeByDocumentID(ctx, tx, s.svc.scope, req.DocumentID, document.OrganizationID, *req.DefaultApproverIDs); err != nil {
+					return fmt.Errorf("cannot update default approvers: %w", err)
+				}
+			}
+
 			return nil
 		},
 	)
@@ -1751,6 +1860,20 @@ func (s *DocumentService) CancelSignatureRequest(
 		func(ctx context.Context, tx pg.Tx) error {
 			if err := documentVersionSignature.LoadByID(ctx, tx, s.svc.scope, documentVersionSignatureID); err != nil {
 				return fmt.Errorf("cannot load document version signature: %w", err)
+			}
+
+			documentVersion := &coredata.DocumentVersion{}
+			if err := documentVersion.LoadByID(ctx, tx, s.svc.scope, documentVersionSignature.DocumentVersionID); err != nil {
+				return fmt.Errorf("cannot load document version: %w", err)
+			}
+
+			document := &coredata.Document{}
+			if err := document.LoadByID(ctx, tx, s.svc.scope, documentVersion.DocumentID); err != nil {
+				return fmt.Errorf("cannot load document: %w", err)
+			}
+
+			if document.ArchivedAt != nil {
+				return &ErrDocumentArchived{}
 			}
 
 			if documentVersionSignature.State != coredata.DocumentVersionSignatureStateRequested {
@@ -2269,7 +2392,7 @@ func (s *DocumentService) loadDraftForPublish(
 		return document, documentVersion, nil
 	}
 
-	if documentVersion.Status != coredata.DocumentVersionStatusDraft {
+	if documentVersion.Status != coredata.DocumentVersionStatusDraft && documentVersion.Status != coredata.DocumentVersionStatusPendingApproval {
 		return nil, nil, &ErrDocumentVersionNotDraft{}
 	}
 

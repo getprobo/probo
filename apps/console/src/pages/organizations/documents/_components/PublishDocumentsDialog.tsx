@@ -156,9 +156,10 @@ export function PublishDocumentsDialog({
           <div className="space-y-4">
             <div className="flex items-start gap-2 rounded-lg bg-bg-warning/10 border border-border-warning p-3">
               <IconWarning size={16} className="text-txt-warning shrink-0 mt-0.5" />
-              <p className="text-sm text-txt-warning">
-                {__("This will publish the selected documents directly without requiring approval.")}
-              </p>
+              <div className="text-sm text-txt-warning space-y-1">
+                <p>{__("Publishing as major will request approval for documents that have default approvers configured. Approvers will receive an email notification.")}</p>
+                <p>{__("Documents already published and pending approval will be skipped.")}</p>
+              </div>
             </div>
             <div>
               <label htmlFor="changelog" className="text-sm font-medium text-txt-primary mb-1 block">

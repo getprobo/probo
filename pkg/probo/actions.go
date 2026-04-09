@@ -197,11 +197,10 @@ const (
 	ActionDocumentVersionUpdate          = "core:document-version:update"
 	ActionDocumentVersionDeleteDraft     = "core:document-version:delete-draft"
 	ActionDocumentVersionRequestApproval = "core:document-version:request-approval"
+	ActionDocumentVersionVoidApproval    = "core:document-version:void-approval"
 	ActionDocumentVersionApprove         = "core:document-version:approve"
 	ActionDocumentVersionReject          = "core:document-version:reject"
 	ActionDocumentVersionApprovalList    = "core:document-version:approval-list"
-	ActionDocumentVersionAddApprover     = "core:document-version:add-approver"
-	ActionDocumentVersionRemoveApprover  = "core:document-version:remove-approver"
 	ActionDocumentVersionPublish         = "core:document-version:publish"
 	ActionDocumentVersionExport          = "core:document-version:export"
 
