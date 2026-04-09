@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.165.0] - 2026-04-09
+
+### Fixed
+
+- Show registration unavailable page when signup is disabled
+
+### Changed
+
+- Change document approval workflow
+
 ## [0.164.0] - 2026-04-09
 
 ### Fixed
