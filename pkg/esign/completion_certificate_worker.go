@@ -18,12 +18,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"sync"
 	"time"
 
 	"go.gearno.de/crypto/uuid"
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
+	"go.gearno.de/kit/worker"
 	"go.gearno.de/x/ref"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/filemanager"
@@ -37,41 +37,19 @@ import (
 // organization that owns the given trust center.
 type EmailPresenterConfigFunc func(ctx context.Context, organizationID gid.GID) (emails.PresenterConfig, error)
 
-type (
-	CompletionCertificateWorker struct {
-		pg                  *pg.Client
-		fileManager         *filemanager.Service
-		certificateGen      *CertificateGenerator
-		presenterConfigFunc EmailPresenterConfigFunc
-		bucket              string
-		logger              *log.Logger
-		interval            time.Duration
-		staleAfter          time.Duration
-		maxConcurrency      int
-	}
-
-	CompletionCertificateWorkerOption func(*CompletionCertificateWorker)
-)
+type completionCertificateHandler struct {
+	pg                  *pg.Client
+	fileManager         *filemanager.Service
+	certificateGen      *CertificateGenerator
+	presenterConfigFunc EmailPresenterConfigFunc
+	bucket              string
+	logger              *log.Logger
+	staleAfter          time.Duration
+}
 
 const (
 	certificateFilename = "certificate-of-completion.pdf"
 )
-
-func WithCompletionCertificateWorkerInterval(d time.Duration) CompletionCertificateWorkerOption {
-	return func(w *CompletionCertificateWorker) { w.interval = d }
-}
-
-func WithCompletionCertificateWorkerStaleAfter(d time.Duration) CompletionCertificateWorkerOption {
-	return func(w *CompletionCertificateWorker) { w.staleAfter = d }
-}
-
-func WithCompletionCertificateWorkerMaxConcurrency(n int) CompletionCertificateWorkerOption {
-	return func(w *CompletionCertificateWorker) {
-		if n > 0 {
-			w.maxConcurrency = n
-		}
-	}
-}
 
 func NewCompletionCertificateWorker(
 	pgClient *pg.Client,
@@ -80,123 +58,93 @@ func NewCompletionCertificateWorker(
 	presenterConfigFunc EmailPresenterConfigFunc,
 	bucket string,
 	logger *log.Logger,
-	opts ...CompletionCertificateWorkerOption,
-) *CompletionCertificateWorker {
-	w := &CompletionCertificateWorker{
+	opts ...worker.Option,
+) *worker.Worker[coredata.ElectronicSignature] {
+	h := &completionCertificateHandler{
 		pg:                  pgClient,
 		fileManager:         fileManager,
 		certificateGen:      certificateGen,
 		presenterConfigFunc: presenterConfigFunc,
 		bucket:              bucket,
 		logger:              logger,
-		interval:            10 * time.Second,
 		staleAfter:          10 * time.Minute,
-		maxConcurrency:      5,
 	}
 
-	for _, opt := range opts {
-		opt(w)
-	}
-
-	return w
+	return worker.New(
+		"completion-certificate-worker",
+		h,
+		logger,
+		opts...,
+	)
 }
 
-func (w *CompletionCertificateWorker) Run(ctx context.Context) error {
-	var (
-		wg  sync.WaitGroup
-		sem = make(chan struct{}, w.maxConcurrency)
-	)
-	defer wg.Wait()
+func (h *completionCertificateHandler) Claim(ctx context.Context) (coredata.ElectronicSignature, error) {
+	var signature coredata.ElectronicSignature
 
-LOOP:
-	select {
-	case <-ctx.Done():
-		return ctx.Err()
-	case <-time.After(w.interval):
-		// From there we should not accept cancelations anymore.
-		nonCancelableCtx := context.WithoutCancel(ctx)
-		w.recoverStaleCertificateRows(nonCancelableCtx)
-		for {
-			if err := w.processNext(ctx, sem, &wg); err != nil {
-				if !errors.Is(err, coredata.ErrResourceNotFound) {
-					w.logger.ErrorCtx(ctx, "cannot process certificate", log.Error(err))
-				}
-				break
-			}
-		}
-		goto LOOP
-	}
-}
-
-func (w *CompletionCertificateWorker) processNext(ctx context.Context, sem chan struct{}, wg *sync.WaitGroup) error {
-	select {
-	case sem <- struct{}{}:
-	case <-ctx.Done(): // FIXME: this will never be fired
-		return ctx.Err()
-	}
-
-	var (
-		signature coredata.ElectronicSignature
-		now       = time.Now()
-
-		// From there we should not accept cancelations anymore.
-		nonCancelableCtx = context.WithoutCancel(ctx)
-	)
-
-	if err := w.pg.WithTx(
-		nonCancelableCtx,
+	if err := h.pg.WithTx(
+		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			if err := signature.LoadNextCompletedWithoutCertificateForUpdate(nonCancelableCtx, tx); err != nil {
+			if err := signature.LoadNextCompletedWithoutCertificateForUpdate(ctx, tx); err != nil {
 				return err
 			}
+
+			now := time.Now()
 			scope := coredata.NewScopeFromObjectID(signature.ID)
 			signature.CertificateProcessingStartedAt = &now
 			signature.AttemptCount++
 			signature.LastAttemptedAt = &now
 			signature.UpdatedAt = now
 
-			if err := signature.Update(nonCancelableCtx, tx, scope); err != nil {
+			if err := signature.Update(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot update signature: %w", err)
 			}
 
 			return nil
 		},
 	); err != nil {
-		<-sem
-		return err
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return coredata.ElectronicSignature{}, worker.ErrNoTask
+		}
+		return coredata.ElectronicSignature{}, err
 	}
 
-	wg.Add(1)
-	go func(signature coredata.ElectronicSignature) {
-		defer wg.Done()
-		defer func() { <-sem }()
+	return signature, nil
+}
 
-		scope := coredata.NewScopeFromObjectID(signature.ID)
+func (h *completionCertificateHandler) Process(ctx context.Context, signature coredata.ElectronicSignature) error {
+	scope := coredata.NewScopeFromObjectID(signature.ID)
 
-		if err := w.generateAndCommit(nonCancelableCtx, &signature); err != nil {
-			if err := w.handleCertFailure(nonCancelableCtx, &signature, scope, err); err != nil {
-				w.logger.ErrorCtx(nonCancelableCtx, "cannot handle certificate failure", log.Error(err))
-			}
+	if err := h.generateAndCommit(ctx, &signature); err != nil {
+		if err := h.handleCertFailure(ctx, &signature, scope, err); err != nil {
+			h.logger.ErrorCtx(ctx, "cannot handle certificate failure", log.Error(err))
 		}
-	}(signature)
+		return err
+	}
 
 	return nil
 }
 
-func (w *CompletionCertificateWorker) generateAndCommit(
+func (h *completionCertificateHandler) RecoverStale(ctx context.Context) error {
+	return h.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			return coredata.ResetStaleCertificateProcessing(ctx, conn, h.staleAfter)
+		},
+	)
+}
+
+func (h *completionCertificateHandler) generateAndCommit(
 	ctx context.Context,
 	signature *coredata.ElectronicSignature,
 ) error {
-	var (
-		scope = coredata.NewScopeFromObjectID(signature.ID)
-	)
+	scope := coredata.NewScopeFromObjectID(signature.ID)
 
-	email, attachments, err := w.generateCertificate(ctx, signature, scope)
+	email, attachments, err := h.generateCertificate(ctx, signature, scope)
 	if err != nil {
 		return err
 	}
 
-	if err := w.pg.WithTx(
+	if err := h.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			signature.CertificateFileID = &attachments[1].FileID
@@ -232,7 +180,7 @@ func (w *CompletionCertificateWorker) generateAndCommit(
 	return nil
 }
 
-func (w *CompletionCertificateWorker) generateCertificate(
+func (h *completionCertificateHandler) generateCertificate(
 	ctx context.Context,
 	signature *coredata.ElectronicSignature,
 	scope coredata.Scoper,
@@ -243,7 +191,7 @@ func (w *CompletionCertificateWorker) generateCertificate(
 		organization = coredata.Organization{}
 	)
 
-	if err := w.pg.WithConn(
+	if err := h.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			if err := events.LoadBySignatureID(ctx, conn, scope, signature.ID); err != nil {
@@ -264,7 +212,7 @@ func (w *CompletionCertificateWorker) generateCertificate(
 		return nil, nil, err
 	}
 
-	certificatePDFReader, err := w.certificateGen.Generate(ctx, signature, events)
+	certificatePDFReader, err := h.certificateGen.Generate(ctx, signature, events)
 	if err != nil {
 		return nil, nil, fmt.Errorf("cannot generate certificate: %w", err)
 	}
@@ -272,7 +220,7 @@ func (w *CompletionCertificateWorker) generateCertificate(
 	certificateOfCompletionFile := coredata.File{
 		ID:             gid.New(scope.GetTenantID(), coredata.FileEntityType),
 		OrganizationID: signature.OrganizationID,
-		BucketName:     w.bucket,
+		BucketName:     h.bucket,
 		MimeType:       "application/pdf",
 		FileName:       certificateFilename,
 		FileKey:        uuid.MustNewV4().String(),
@@ -281,7 +229,7 @@ func (w *CompletionCertificateWorker) generateCertificate(
 		UpdatedAt:      time.Now(),
 	}
 
-	certificateOfCompletionFileSize, err := w.fileManager.PutFile(
+	certificateOfCompletionFileSize, err := h.fileManager.PutFile(
 		ctx,
 		&certificateOfCompletionFile,
 		certificatePDFReader,
@@ -296,7 +244,7 @@ func (w *CompletionCertificateWorker) generateCertificate(
 
 	certificateOfCompletionFile.FileSize = certificateOfCompletionFileSize
 
-	if err := w.pg.WithTx(
+	if err := h.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			if err := certificateOfCompletionFile.Insert(ctx, tx, scope); err != nil {
@@ -309,11 +257,11 @@ func (w *CompletionCertificateWorker) generateCertificate(
 		return nil, nil, err
 	}
 
-	presenterCfg, err := w.presenterConfigFunc(ctx, signature.OrganizationID)
+	presenterCfg, err := h.presenterConfigFunc(ctx, signature.OrganizationID)
 	if err != nil {
 		return nil, nil, fmt.Errorf("cannot resolve presenter config: %w", err)
 	}
-	emailPresenter := emails.NewPresenterFromConfig(w.fileManager, presenterCfg, ref.UnrefOrZero(signature.SignerFullName))
+	emailPresenter := emails.NewPresenterFromConfig(h.fileManager, presenterCfg, ref.UnrefOrZero(signature.SignerFullName))
 
 	docName := ref.UnrefOrZero(signature.DocumentName)
 	if docName == "" {
@@ -351,20 +299,20 @@ func (w *CompletionCertificateWorker) generateCertificate(
 	return email, attachments, nil
 }
 
-func (w *CompletionCertificateWorker) handleCertFailure(
+func (h *completionCertificateHandler) handleCertFailure(
 	ctx context.Context,
 	signature *coredata.ElectronicSignature,
 	scope coredata.Scoper,
 	processingError error,
 ) error {
-	w.logger.ErrorCtx(
+	h.logger.ErrorCtx(
 		ctx,
 		"certificate worker failure",
 		log.Error(processingError),
 		log.String("signature_id", signature.ID.String()),
 	)
 
-	return w.pg.WithTx(
+	return h.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			errStr := processingError.Error()
@@ -383,15 +331,4 @@ func (w *CompletionCertificateWorker) handleCertFailure(
 			return nil
 		},
 	)
-}
-
-func (w *CompletionCertificateWorker) recoverStaleCertificateRows(ctx context.Context) {
-	if err := w.pg.WithConn(
-		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
-			return coredata.ResetStaleCertificateProcessing(ctx, conn, w.staleAfter)
-		},
-	); err != nil {
-		w.logger.ErrorCtx(ctx, "cannot recover stale certificates", log.Error(err))
-	}
 }

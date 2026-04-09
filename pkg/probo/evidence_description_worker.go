@@ -18,159 +18,121 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"sync"
 	"time"
 
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
+	"go.gearno.de/kit/worker"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/evidencedescriber"
 	"go.probo.inc/probo/pkg/filemanager"
 )
 
 type (
-	EvidenceDescriptionWorker struct {
-		pg             *pg.Client
-		fileManager    *filemanager.Service
-		describer      *evidencedescriber.Describer
-		logger         *log.Logger
-		interval       time.Duration
-		staleAfter     time.Duration
-		maxConcurrency int
+	evidenceDescriptionHandler struct {
+		pg          *pg.Client
+		fileManager *filemanager.Service
+		describer   *evidencedescriber.Describer
+		logger      *log.Logger
+		staleAfter  time.Duration
 	}
 
-	EvidenceDescriptionWorkerOption func(*EvidenceDescriptionWorker)
+	EvidenceDescriptionWorkerConfig struct {
+		StaleAfter time.Duration
+	}
 )
-
-func WithEvidenceDescriptionWorkerInterval(d time.Duration) EvidenceDescriptionWorkerOption {
-	return func(w *EvidenceDescriptionWorker) { w.interval = d }
-}
-
-func WithEvidenceDescriptionWorkerStaleAfter(d time.Duration) EvidenceDescriptionWorkerOption {
-	return func(w *EvidenceDescriptionWorker) { w.staleAfter = d }
-}
-
-func WithEvidenceDescriptionWorkerMaxConcurrency(n int) EvidenceDescriptionWorkerOption {
-	return func(w *EvidenceDescriptionWorker) {
-		if n > 0 {
-			w.maxConcurrency = n
-		}
-	}
-}
 
 func NewEvidenceDescriptionWorker(
 	pgClient *pg.Client,
 	fileManager *filemanager.Service,
 	describer *evidencedescriber.Describer,
 	logger *log.Logger,
-	opts ...EvidenceDescriptionWorkerOption,
-) *EvidenceDescriptionWorker {
-	w := &EvidenceDescriptionWorker{
-		pg:             pgClient,
-		fileManager:    fileManager,
-		describer:      describer,
-		logger:         logger,
-		interval:       10 * time.Second,
-		staleAfter:     5 * time.Minute,
-		maxConcurrency: 10,
+	cfg EvidenceDescriptionWorkerConfig,
+	opts ...worker.Option,
+) *worker.Worker[coredata.Evidence] {
+	staleAfter := cfg.StaleAfter
+	if staleAfter == 0 {
+		staleAfter = 5 * time.Minute
 	}
 
-	for _, opt := range opts {
-		opt(w)
+	h := &evidenceDescriptionHandler{
+		pg:          pgClient,
+		fileManager: fileManager,
+		describer:   describer,
+		logger:      logger,
+		staleAfter:  staleAfter,
 	}
 
-	return w
+	return worker.New(
+		"evidence-description-worker",
+		h,
+		logger,
+		opts...,
+	)
 }
 
-func (w *EvidenceDescriptionWorker) Run(ctx context.Context) error {
-	var (
-		wg     sync.WaitGroup
-		sem    = make(chan struct{}, w.maxConcurrency)
-		ticker = time.NewTicker(w.interval)
-	)
-	defer ticker.Stop()
-	defer wg.Wait()
+func (h *evidenceDescriptionHandler) Claim(ctx context.Context) (coredata.Evidence, error) {
+	var evidence coredata.Evidence
 
-	for {
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		case <-ticker.C:
-			nonCancelableCtx := context.WithoutCancel(ctx)
-			w.recoverStaleRows(nonCancelableCtx)
-
-			for {
-				if err := w.processNext(ctx, sem, &wg); err != nil {
-					if !errors.Is(err, coredata.ErrResourceNotFound) {
-						w.logger.ErrorCtx(nonCancelableCtx, "cannot claim evidence for description", log.Error(err))
-					}
-					break
-				}
-			}
-		}
-	}
-}
-
-func (w *EvidenceDescriptionWorker) processNext(ctx context.Context, sem chan struct{}, wg *sync.WaitGroup) error {
-	select {
-	case sem <- struct{}{}:
-	case <-ctx.Done():
-		return ctx.Err()
-	}
-
-	var (
-		evidence         = coredata.Evidence{}
-		now              = time.Now()
-		nonCancelableCtx = context.WithoutCancel(ctx)
-	)
-
-	if err := w.pg.WithTx(
-		nonCancelableCtx,
+	if err := h.pg.WithTx(
+		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			if err := evidence.LoadNextPendingDescriptionForUpdateSkipLocked(
-				nonCancelableCtx,
-				tx,
-			); err != nil {
+			if err := evidence.LoadNextPendingDescriptionForUpdateSkipLocked(ctx, tx); err != nil {
 				return err
 			}
 
+			now := time.Now()
 			evidence.DescriptionStatus = coredata.EvidenceDescriptionStatusProcessing
 			evidence.DescriptionProcessingStartedAt = &now
 			evidence.UpdatedAt = now
-			if err := evidence.Update(nonCancelableCtx, tx, coredata.NewNoScope()); err != nil {
+			if err := evidence.Update(ctx, tx, coredata.NewNoScope()); err != nil {
 				return fmt.Errorf("cannot update evidence: %w", err)
 			}
 
 			return nil
 		},
 	); err != nil {
-		<-sem
-		return err
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return coredata.Evidence{}, worker.ErrNoTask
+		}
+		return coredata.Evidence{}, err
 	}
 
-	wg.Add(1)
-	go func(evidence coredata.Evidence) {
-		defer wg.Done()
-		defer func() { <-sem }()
+	return evidence, nil
+}
 
-		if err := w.describeAndCommit(nonCancelableCtx, &evidence); err != nil {
-			w.logger.ErrorCtx(
-				nonCancelableCtx,
-				"evidence description worker failure",
-				log.Error(err),
-				log.String("evidence_id", evidence.ID.String()),
-			)
+func (h *evidenceDescriptionHandler) Process(ctx context.Context, evidence coredata.Evidence) error {
+	if err := h.describeAndCommit(ctx, &evidence); err != nil {
+		h.logger.ErrorCtx(
+			ctx,
+			"evidence description worker failure",
+			log.Error(err),
+			log.String("evidence_id", evidence.ID.String()),
+		)
 
-			if err := w.failEvidence(nonCancelableCtx, &evidence); err != nil {
-				w.logger.ErrorCtx(nonCancelableCtx, "cannot mark evidence description as failed", log.Error(err))
-			}
+		if err := h.failEvidence(ctx, &evidence); err != nil {
+			h.logger.ErrorCtx(ctx, "cannot mark evidence description as failed", log.Error(err))
 		}
-	}(evidence)
+
+		return err
+	}
 
 	return nil
 }
 
-func (w *EvidenceDescriptionWorker) describeAndCommit(
+func (h *evidenceDescriptionHandler) RecoverStale(ctx context.Context) error {
+	return h.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := coredata.ResetStaleDescriptionProcessing(ctx, conn, h.staleAfter); err != nil {
+				return fmt.Errorf("cannot reset stale description processing: %w", err)
+			}
+			return nil
+		},
+	)
+}
+
+func (h *evidenceDescriptionHandler) describeAndCommit(
 	ctx context.Context,
 	evidence *coredata.Evidence,
 ) error {
@@ -181,7 +143,7 @@ func (w *EvidenceDescriptionWorker) describeAndCommit(
 	scope := coredata.NewScopeFromObjectID(evidence.ID)
 
 	var file coredata.File
-	if err := w.pg.WithConn(
+	if err := h.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			if err := file.LoadByID(ctx, conn, scope, *evidence.EvidenceFileId); err != nil {
@@ -193,17 +155,17 @@ func (w *EvidenceDescriptionWorker) describeAndCommit(
 		return fmt.Errorf("cannot load file: %w", err)
 	}
 
-	base64Data, mimeType, err := w.fileManager.GetFileBase64(ctx, &file)
+	base64Data, mimeType, err := h.fileManager.GetFileBase64(ctx, &file)
 	if err != nil {
 		return fmt.Errorf("cannot download file: %w", err)
 	}
 
-	description, err := w.describer.Describe(ctx, file.FileName, mimeType, base64Data)
+	description, err := h.describer.Describe(ctx, file.FileName, mimeType, base64Data)
 	if err != nil {
 		return fmt.Errorf("cannot describe evidence: %w", err)
 	}
 
-	return w.pg.WithTx(
+	return h.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			evidence.Description = description
@@ -219,13 +181,13 @@ func (w *EvidenceDescriptionWorker) describeAndCommit(
 	)
 }
 
-func (w *EvidenceDescriptionWorker) failEvidence(
+func (h *evidenceDescriptionHandler) failEvidence(
 	ctx context.Context,
 	evidence *coredata.Evidence,
 ) error {
 	scope := coredata.NewScopeFromObjectID(evidence.ID)
 
-	return w.pg.WithTx(
+	return h.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			evidence.DescriptionStatus = coredata.EvidenceDescriptionStatusFailed
@@ -238,18 +200,4 @@ func (w *EvidenceDescriptionWorker) failEvidence(
 			return nil
 		},
 	)
-}
-
-func (w *EvidenceDescriptionWorker) recoverStaleRows(ctx context.Context) {
-	if err := w.pg.WithConn(
-		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
-			if err := coredata.ResetStaleDescriptionProcessing(ctx, conn, w.staleAfter); err != nil {
-				return fmt.Errorf("cannot reset stale description processing: %w", err)
-			}
-			return nil
-		},
-	); err != nil {
-		w.logger.ErrorCtx(ctx, "cannot recover stale evidence descriptions", log.Error(err))
-	}
 }

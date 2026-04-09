@@ -18,120 +18,54 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"sync"
 	"time"
 
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
+	"go.gearno.de/kit/worker"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 )
 
-type (
-	SourceFetchWorker struct {
-		svc            *Service
-		pg             *pg.Client
-		logger         *log.Logger
-		interval       time.Duration
-		staleAfter     time.Duration
-		maxConcurrency int
-	}
-
-	SourceFetchWorkerOption func(*SourceFetchWorker)
-)
-
-func WithSourceFetchWorkerIntervalDuration(interval time.Duration) SourceFetchWorkerOption {
-	return func(w *SourceFetchWorker) {
-		w.interval = interval
-	}
-}
-
-func WithSourceFetchWorkerStaleAfter(staleAfter time.Duration) SourceFetchWorkerOption {
-	return func(w *SourceFetchWorker) {
-		w.staleAfter = staleAfter
-	}
-}
-
-func WithSourceFetchWorkerMaxConcurrency(maxConcurrency int) SourceFetchWorkerOption {
-	return func(w *SourceFetchWorker) {
-		w.maxConcurrency = maxConcurrency
-	}
+type sourceFetchHandler struct {
+	svc        *Service
+	pg         *pg.Client
+	logger     *log.Logger
+	staleAfter time.Duration
 }
 
 func NewSourceFetchWorker(
 	svc *Service,
 	pgClient *pg.Client,
 	logger *log.Logger,
-	opts ...SourceFetchWorkerOption,
-) *SourceFetchWorker {
-	w := &SourceFetchWorker{
-		svc:            svc,
-		pg:             pgClient,
-		logger:         logger,
-		interval:       30 * time.Second,
-		staleAfter:     5 * time.Minute,
-		maxConcurrency: 20,
+	opts ...worker.Option,
+) *worker.Worker[coredata.AccessReviewCampaignSourceFetch] {
+	h := &sourceFetchHandler{
+		svc:        svc,
+		pg:         pgClient,
+		logger:     logger,
+		staleAfter: 5 * time.Minute,
 	}
 
-	for _, opt := range opts {
-		opt(w)
-	}
-
-	return w
+	return worker.New(
+		"source-fetch-worker",
+		h,
+		logger,
+		opts...,
+	)
 }
 
-func (w *SourceFetchWorker) Run(ctx context.Context) error {
-	var (
-		wg     sync.WaitGroup
-		sem    = make(chan struct{}, w.maxConcurrency)
-		ticker = time.NewTicker(w.interval)
-	)
-	defer ticker.Stop()
-	defer wg.Wait()
+func (h *sourceFetchHandler) Claim(ctx context.Context) (coredata.AccessReviewCampaignSourceFetch, error) {
+	var sourceFetch coredata.AccessReviewCampaignSourceFetch
 
-	for {
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		case <-ticker.C:
-			nonCancelableCtx := context.WithoutCancel(ctx)
-			w.recoverStaleRows(nonCancelableCtx)
-			for {
-				if err := w.processNext(ctx, sem, &wg); err != nil {
-					if !errors.Is(err, coredata.ErrNoAccessReviewCampaignSourceFetchAvailable) {
-						w.logger.ErrorCtx(nonCancelableCtx, "cannot claim item", log.Error(err))
-					}
-					break
-				}
-			}
-		}
-	}
-}
-
-func (w *SourceFetchWorker) processNext(
-	ctx context.Context,
-	sem chan struct{},
-	wg *sync.WaitGroup,
-) error {
-	select {
-	case sem <- struct{}{}:
-	case <-ctx.Done():
-		return ctx.Err()
-	}
-
-	var (
-		sourceFetch      coredata.AccessReviewCampaignSourceFetch
-		now              = time.Now()
-		nonCancelableCtx = context.WithoutCancel(ctx)
-	)
-
-	if err := w.pg.WithTx(
-		nonCancelableCtx,
+	if err := h.pg.WithTx(
+		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			if err := sourceFetch.LoadNextQueuedForUpdateSkipLocked(nonCancelableCtx, tx); err != nil {
-				return err // sentinel errors checked by caller
+			if err := sourceFetch.LoadNextQueuedForUpdateSkipLocked(ctx, tx); err != nil {
+				return err
 			}
 
+			now := time.Now()
 			sourceFetch.Status = coredata.AccessReviewCampaignSourceFetchStatusFetching
 			sourceFetch.AttemptCount++
 			sourceFetch.LastError = nil
@@ -140,38 +74,60 @@ func (w *SourceFetchWorker) processNext(
 			sourceFetch.UpdatedAt = now
 
 			scope := coredata.NewScope(sourceFetch.TenantID)
-			if err := sourceFetch.Update(nonCancelableCtx, tx, scope); err != nil {
+			if err := sourceFetch.Update(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot update source fetch status: %w", err)
 			}
 			return nil
 		},
 	); err != nil {
-		<-sem
-		return fmt.Errorf("cannot claim source fetch: %w", err)
+		if errors.Is(err, coredata.ErrNoAccessReviewCampaignSourceFetchAvailable) {
+			return coredata.AccessReviewCampaignSourceFetch{}, worker.ErrNoTask
+		}
+		return coredata.AccessReviewCampaignSourceFetch{}, fmt.Errorf("cannot claim source fetch: %w", err)
 	}
 
-	wg.Add(1)
-	go func(sourceFetch coredata.AccessReviewCampaignSourceFetch) {
-		defer wg.Done()
-		defer func() { <-sem }()
-
-		if err := w.handle(nonCancelableCtx, &sourceFetch); err != nil {
-			w.logger.ErrorCtx(nonCancelableCtx, "cannot process source fetch", log.Error(err))
-		}
-	}(sourceFetch)
-
-	return nil
+	return sourceFetch, nil
 }
 
-func (w *SourceFetchWorker) handle(
+func (h *sourceFetchHandler) Process(ctx context.Context, sourceFetch coredata.AccessReviewCampaignSourceFetch) error {
+	return h.handle(ctx, &sourceFetch)
+}
+
+func (h *sourceFetchHandler) RecoverStale(ctx context.Context) error {
+	now := time.Now()
+	staleThreshold := now.Add(-h.staleAfter)
+
+	return h.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			var fetches coredata.AccessReviewCampaignSourceFetches
+			count, err := fetches.RecoverStale(ctx, tx, staleThreshold, now)
+			if err != nil {
+				return fmt.Errorf("cannot recover stale source fetches: %w", err)
+			}
+
+			if count > 0 {
+				h.logger.InfoCtx(
+					ctx,
+					"recovered stale source fetches",
+					log.Int64("count", count),
+				)
+			}
+
+			return nil
+		},
+	)
+}
+
+func (h *sourceFetchHandler) handle(
 	ctx context.Context,
 	sourceFetch *coredata.AccessReviewCampaignSourceFetch,
 ) error {
 	scope := coredata.NewScope(sourceFetch.TenantID)
 
-	campaign, err := w.svc.Campaigns(scope).Get(ctx, sourceFetch.AccessReviewCampaignID)
+	campaign, err := h.svc.Campaigns(scope).Get(ctx, sourceFetch.AccessReviewCampaignID)
 	if err != nil {
-		commitErr := w.commitFailedSourceFetch(
+		commitErr := h.commitFailedSourceFetch(
 			ctx,
 			sourceFetch,
 			fmt.Errorf("cannot load campaign: %w", err),
@@ -182,60 +138,31 @@ func (w *SourceFetchWorker) handle(
 		return fmt.Errorf("cannot load campaign: %w", err)
 	}
 
-	count, err := w.svc.Engine(scope).FetchSource(ctx, campaign, sourceFetch.AccessSourceID)
+	count, err := h.svc.Engine(scope).FetchSource(ctx, campaign, sourceFetch.AccessSourceID)
 	if err != nil {
-		commitErr := w.commitFailedSourceFetch(ctx, sourceFetch, err)
+		commitErr := h.commitFailedSourceFetch(ctx, sourceFetch, err)
 		if commitErr != nil {
 			return fmt.Errorf("cannot fetch source: %w, and cannot commit failed source fetch: %w", err, commitErr)
 		}
 
-		if finalizeErr := w.finalizeCampaignFetchLifecycle(ctx, sourceFetch.TenantID, sourceFetch.AccessReviewCampaignID); finalizeErr != nil {
+		if finalizeErr := h.finalizeCampaignFetchLifecycle(ctx, sourceFetch.TenantID, sourceFetch.AccessReviewCampaignID); finalizeErr != nil {
 			return fmt.Errorf("cannot finalize campaign after failed source fetch: %w", finalizeErr)
 		}
 		return fmt.Errorf("cannot fetch source: %w", err)
 	}
 
-	if err := w.commitSuccessfulSourceFetch(ctx, sourceFetch, count); err != nil {
+	if err := h.commitSuccessfulSourceFetch(ctx, sourceFetch, count); err != nil {
 		return fmt.Errorf("cannot commit successful source fetch: %w", err)
 	}
 
-	if err := w.finalizeCampaignFetchLifecycle(ctx, sourceFetch.TenantID, sourceFetch.AccessReviewCampaignID); err != nil {
+	if err := h.finalizeCampaignFetchLifecycle(ctx, sourceFetch.TenantID, sourceFetch.AccessReviewCampaignID); err != nil {
 		return fmt.Errorf("cannot finalize campaign fetch lifecycle: %w", err)
 	}
 
 	return nil
 }
 
-func (w *SourceFetchWorker) recoverStaleRows(ctx context.Context) {
-	now := time.Now()
-	staleThreshold := now.Add(-w.staleAfter)
-
-	err := w.pg.WithTx(
-		ctx,
-		func(ctx context.Context, tx pg.Tx) error {
-			var fetches coredata.AccessReviewCampaignSourceFetches
-			count, err := fetches.RecoverStale(ctx, tx, staleThreshold, now)
-			if err != nil {
-				return fmt.Errorf("cannot recover stale source fetches: %w", err)
-			}
-
-			if count > 0 {
-				w.logger.InfoCtx(
-					ctx,
-					"recovered stale source fetches",
-					log.Int64("count", count),
-				)
-			}
-
-			return nil
-		},
-	)
-	if err != nil {
-		w.logger.ErrorCtx(ctx, "cannot recover stale rows", log.Error(err))
-	}
-}
-
-func (w *SourceFetchWorker) commitFailedSourceFetch(
+func (h *sourceFetchHandler) commitFailedSourceFetch(
 	ctx context.Context,
 	sourceFetch *coredata.AccessReviewCampaignSourceFetch,
 	failureErr error,
@@ -251,7 +178,7 @@ func (w *SourceFetchWorker) commitFailedSourceFetch(
 	sourceFetch.CompletedAt = new(now)
 	sourceFetch.UpdatedAt = now
 
-	return w.pg.WithTx(
+	return h.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			return sourceFetch.Update(ctx, tx, scope)
@@ -259,7 +186,7 @@ func (w *SourceFetchWorker) commitFailedSourceFetch(
 	)
 }
 
-func (w *SourceFetchWorker) commitSuccessfulSourceFetch(
+func (h *sourceFetchHandler) commitSuccessfulSourceFetch(
 	ctx context.Context,
 	sourceFetch *coredata.AccessReviewCampaignSourceFetch,
 	fetchedAccountsCount int,
@@ -275,7 +202,7 @@ func (w *SourceFetchWorker) commitSuccessfulSourceFetch(
 	sourceFetch.CompletedAt = new(now)
 	sourceFetch.UpdatedAt = now
 
-	return w.pg.WithTx(
+	return h.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			return sourceFetch.Update(ctx, tx, scope)
@@ -283,14 +210,14 @@ func (w *SourceFetchWorker) commitSuccessfulSourceFetch(
 	)
 }
 
-func (w *SourceFetchWorker) finalizeCampaignFetchLifecycle(
+func (h *sourceFetchHandler) finalizeCampaignFetchLifecycle(
 	ctx context.Context,
 	tenantID gid.TenantID,
 	campaignID gid.GID,
 ) error {
 	scope := coredata.NewScope(tenantID)
 
-	return w.pg.WithTx(
+	return h.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			if err := lockCampaignForUpdate(ctx, tx, scope, campaignID); err != nil {

@@ -23,20 +23,20 @@ import (
 
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
+	"go.gearno.de/kit/worker"
 	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
 )
 
-// SourceNameWorker polls for access sources that have a connector but no
+// sourceNameHandler polls for access sources that have a connector but no
 // synced name, resolves the provider instance name, and updates the source.
-type SourceNameWorker struct {
+type sourceNameHandler struct {
 	pg                *pg.Client
 	encryptionKey     cipher.EncryptionKey
 	connectorRegistry *connector.ConnectorRegistry
 	logger            *log.Logger
-	interval          time.Duration
 }
 
 func NewSourceNameWorker(
@@ -44,54 +44,49 @@ func NewSourceNameWorker(
 	encryptionKey cipher.EncryptionKey,
 	connectorRegistry *connector.ConnectorRegistry,
 	logger *log.Logger,
-) *SourceNameWorker {
-	return &SourceNameWorker{
+	opts ...worker.Option,
+) *worker.Worker[coredata.AccessSource] {
+	h := &sourceNameHandler{
 		pg:                pgClient,
 		encryptionKey:     encryptionKey,
 		connectorRegistry: connectorRegistry,
 		logger:            logger,
-		interval:          10 * time.Second,
 	}
-}
 
-func (w *SourceNameWorker) Run(ctx context.Context) error {
-	w.logger.InfoCtx(ctx, "source name worker started",
-		log.String("interval", w.interval.String()),
+	defaultOpts := []worker.Option{
+		worker.WithInterval(10 * time.Second),
+		worker.WithMaxConcurrency(1),
+	}
+
+	return worker.New(
+		"source-name-worker",
+		h,
+		logger,
+		append(defaultOpts, opts...)...,
 	)
-
-	for {
-		select {
-		case <-ctx.Done():
-			w.logger.InfoCtx(context.WithoutCancel(ctx), "source name worker stopping")
-			return ctx.Err()
-		case <-time.After(w.interval):
-			nonCancelableCtx := context.WithoutCancel(ctx)
-			for {
-				if err := w.processNext(nonCancelableCtx); err != nil {
-					if !errors.Is(err, coredata.ErrNoAccessSourceNameSyncAvailable) {
-						w.logger.ErrorCtx(nonCancelableCtx, "cannot sync source name", log.Error(err))
-					}
-					break
-				}
-			}
-		}
-	}
 }
 
-func (w *SourceNameWorker) processNext(ctx context.Context) error {
+func (h *sourceNameHandler) Claim(ctx context.Context) (coredata.AccessSource, error) {
 	var source coredata.AccessSource
 
-	err := w.pg.WithTx(
+	err := h.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			return source.LoadNextUnsyncedNameForUpdateSkipLocked(ctx, tx)
 		},
 	)
 	if err != nil {
-		return err
+		if errors.Is(err, coredata.ErrNoAccessSourceNameSyncAvailable) {
+			return coredata.AccessSource{}, worker.ErrNoTask
+		}
+		return coredata.AccessSource{}, err
 	}
 
-	w.logger.InfoCtx(ctx, "syncing source name",
+	return source, nil
+}
+
+func (h *sourceNameHandler) Process(ctx context.Context, source coredata.AccessSource) error {
+	h.logger.InfoCtx(ctx, "syncing source name",
 		log.String("source_id", source.ID.String()),
 		log.String("current_name", source.Name),
 	)
@@ -101,7 +96,7 @@ func (w *SourceNameWorker) processNext(ctx context.Context) error {
 		resolver    drivers.NameResolver
 	)
 
-	err = w.pg.WithTx(
+	err := h.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			scope := coredata.NewScopeFromObjectID(source.ID)
@@ -109,7 +104,7 @@ func (w *SourceNameWorker) processNext(ctx context.Context) error {
 				return fmt.Errorf("source %s has no connector", source.ID)
 			}
 
-			if err := dbConnector.LoadByID(ctx, tx, scope, *source.ConnectorID, w.encryptionKey); err != nil {
+			if err := dbConnector.LoadByID(ctx, tx, scope, *source.ConnectorID, h.encryptionKey); err != nil {
 				return fmt.Errorf("cannot load connector %s: %w", *source.ConnectorID, err)
 			}
 
@@ -118,7 +113,7 @@ func (w *SourceNameWorker) processNext(ctx context.Context) error {
 				tokenBefore = oauth2Conn.AccessToken
 			}
 
-			httpClient, err := w.connectorHTTPClient(ctx, &dbConnector)
+			httpClient, err := h.connectorHTTPClient(ctx, &dbConnector)
 			if err != nil {
 				return fmt.Errorf("cannot create HTTP client for connector: %w", err)
 			}
@@ -126,18 +121,18 @@ func (w *SourceNameWorker) processNext(ctx context.Context) error {
 			if oauth2Conn, ok := dbConnector.Connection.(*connector.OAuth2Connection); ok {
 				if oauth2Conn.AccessToken != tokenBefore {
 					dbConnector.UpdatedAt = time.Now()
-					if err := dbConnector.Update(ctx, tx, scope, w.encryptionKey); err != nil {
+					if err := dbConnector.Update(ctx, tx, scope, h.encryptionKey); err != nil {
 						return fmt.Errorf("cannot persist refreshed token for connector %s: %w", *source.ConnectorID, err)
 					}
 				}
 			}
 
-			resolver = w.buildResolver(&dbConnector, httpClient)
+			resolver = h.buildResolver(&dbConnector, httpClient)
 			return nil
 		},
 	)
 	if err != nil {
-		w.logger.ErrorCtx(ctx, "cannot load connector for source name sync",
+		h.logger.ErrorCtx(ctx, "cannot load connector for source name sync",
 			log.String("source_id", source.ID.String()),
 			log.Error(err),
 		)
@@ -145,11 +140,11 @@ func (w *SourceNameWorker) processNext(ctx context.Context) error {
 	}
 
 	if resolver == nil {
-		w.logger.InfoCtx(ctx, "no name resolver for provider, keeping generic name",
+		h.logger.InfoCtx(ctx, "no name resolver for provider, keeping generic name",
 			log.String("source_id", source.ID.String()),
 			log.String("provider", dbConnector.Provider.String()),
 		)
-		return w.markNameSynced(ctx, &source)
+		return h.markNameSynced(ctx, &source)
 	}
 
 	resolveCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
@@ -157,7 +152,7 @@ func (w *SourceNameWorker) processNext(ctx context.Context) error {
 
 	instanceName, err := resolver.ResolveInstanceName(resolveCtx)
 	if err != nil {
-		w.logger.ErrorCtx(ctx, "cannot resolve instance name",
+		h.logger.ErrorCtx(ctx, "cannot resolve instance name",
 			log.String("source_id", source.ID.String()),
 			log.String("provider", dbConnector.Provider.String()),
 			log.Error(err),
@@ -166,31 +161,31 @@ func (w *SourceNameWorker) processNext(ctx context.Context) error {
 	}
 
 	if instanceName == "" {
-		w.logger.InfoCtx(ctx, "instance name is empty, keeping generic name",
+		h.logger.InfoCtx(ctx, "instance name is empty, keeping generic name",
 			log.String("source_id", source.ID.String()),
 			log.String("provider", dbConnector.Provider.String()),
 		)
-		return w.markNameSynced(ctx, &source)
+		return h.markNameSynced(ctx, &source)
 	}
 
 	displayName := drivers.ProviderDisplayName(dbConnector.Provider)
 	newName := displayName + " " + instanceName
 
-	w.logger.InfoCtx(ctx, "resolved source name",
+	h.logger.InfoCtx(ctx, "resolved source name",
 		log.String("source_id", source.ID.String()),
 		log.String("old_name", source.Name),
 		log.String("new_name", newName),
 	)
 
 	source.Name = newName
-	return w.markNameSynced(ctx, &source)
+	return h.markNameSynced(ctx, &source)
 }
 
-func (w *SourceNameWorker) markNameSynced(
+func (h *sourceNameHandler) markNameSynced(
 	ctx context.Context,
 	source *coredata.AccessSource,
 ) error {
-	return w.pg.WithTx(
+	return h.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			scope := coredata.NewScopeFromObjectID(source.ID)
@@ -212,7 +207,7 @@ func (w *SourceNameWorker) markNameSynced(
 // For OAuth2 connections it uses RefreshableClient when a refresh config
 // is registered for the provider, so that short-lived tokens are
 // transparently refreshed.
-func (w *SourceNameWorker) connectorHTTPClient(
+func (h *sourceNameHandler) connectorHTTPClient(
 	ctx context.Context,
 	dbConnector *coredata.Connector,
 ) (*http.Client, error) {
@@ -221,8 +216,8 @@ func (w *SourceNameWorker) connectorHTTPClient(
 		return dbConnector.Connection.Client(ctx)
 	}
 
-	if w.connectorRegistry != nil {
-		refreshCfg := w.connectorRegistry.GetOAuth2RefreshConfig(string(dbConnector.Provider))
+	if h.connectorRegistry != nil {
+		refreshCfg := h.connectorRegistry.GetOAuth2RefreshConfig(string(dbConnector.Provider))
 		if refreshCfg != nil {
 			return oauth2Conn.RefreshableClient(ctx, *refreshCfg)
 		}
@@ -231,7 +226,7 @@ func (w *SourceNameWorker) connectorHTTPClient(
 	return oauth2Conn.Client(ctx)
 }
 
-func (w *SourceNameWorker) buildResolver(
+func (h *sourceNameHandler) buildResolver(
 	dbConnector *coredata.Connector,
 	httpClient *http.Client,
 ) drivers.NameResolver {
@@ -249,7 +244,7 @@ func (w *SourceNameWorker) buildResolver(
 	case coredata.ConnectorProviderTally:
 		tallySettings, err := dbConnector.TallySettings()
 		if err != nil {
-			w.logger.Error("cannot read tally connector settings", log.Error(err))
+			h.logger.Error("cannot read tally connector settings", log.Error(err))
 			return nil
 		}
 		return drivers.NewTallyNameResolver(httpClient, tallySettings.OrganizationID)
@@ -262,21 +257,21 @@ func (w *SourceNameWorker) buildResolver(
 	case coredata.ConnectorProviderSentry:
 		sentrySettings, err := dbConnector.SentrySettings()
 		if err != nil {
-			w.logger.Error("cannot read sentry connector settings", log.Error(err))
+			h.logger.Error("cannot read sentry connector settings", log.Error(err))
 			return nil
 		}
 		return drivers.NewSentryNameResolver(httpClient, sentrySettings.OrganizationSlug)
 	case coredata.ConnectorProviderGitHub:
 		githubSettings, err := dbConnector.GitHubSettings()
 		if err != nil {
-			w.logger.Error("cannot read github connector settings", log.Error(err))
+			h.logger.Error("cannot read github connector settings", log.Error(err))
 			return nil
 		}
 		return drivers.NewGitHubNameResolver(httpClient, githubSettings.Organization)
 	case coredata.ConnectorProviderSupabase:
 		supabaseSettings, err := dbConnector.SupabaseSettings()
 		if err != nil {
-			w.logger.Error("cannot read supabase connector settings", log.Error(err))
+			h.logger.Error("cannot read supabase connector settings", log.Error(err))
 			return nil
 		}
 		return drivers.NewSupabaseNameResolver(supabaseSettings.OrganizationSlug)
