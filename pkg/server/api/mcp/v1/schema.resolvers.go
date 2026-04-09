@@ -1445,12 +1445,19 @@ func (r *Resolver) ListControlsTool(ctx context.Context, req *mcp.CallToolReques
 		controlFilter = coredata.NewControlFilter(input.Filter.Query)
 	}
 
-	page, err := prb.Controls.ListForOrganizationID(ctx, input.OrganizationID, cursor, controlFilter)
+	var controlPage *page.Page[*coredata.Control, coredata.ControlOrderField]
+	var err error
+
+	if input.Filter != nil && input.Filter.FrameworkID != nil {
+		controlPage, err = prb.Controls.ListForFrameworkID(ctx, *input.Filter.FrameworkID, cursor, controlFilter)
+	} else {
+		controlPage, err = prb.Controls.ListForOrganizationID(ctx, input.OrganizationID, cursor, controlFilter)
+	}
 	if err != nil {
 		panic(fmt.Errorf("cannot list organization controls: %w", err))
 	}
 
-	return nil, types.NewListControlsOutput(page), nil
+	return nil, types.NewListControlsOutput(controlPage), nil
 }
 
 func (r *Resolver) GetControlTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetControlInput) (*mcp.CallToolResult, types.GetControlOutput, error) {
