@@ -21,6 +21,7 @@ import (
 
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
+	"go.gearno.de/kit/worker"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
@@ -35,16 +36,20 @@ type (
 		connectorRegistry *connector.ConnectorRegistry
 		logger            *log.Logger
 
-		worker           *SourceFetchWorker
-		sourceNameWorker *SourceNameWorker
+		fetchWorker      *worker.Worker[coredata.AccessReviewCampaignSourceFetch]
+		sourceNameWorker *worker.Worker[coredata.AccessSource]
 	}
 
-	Option func(*Service)
+	Option func(*options)
+
+	options struct {
+		fetchInterval time.Duration
+	}
 )
 
 func WithFetchInterval(interval time.Duration) Option {
-	return func(s *Service) {
-		s.worker.interval = interval
+	return func(o *options) {
+		o.fetchInterval = interval
 	}
 }
 
@@ -55,6 +60,11 @@ func NewService(
 	logger *log.Logger,
 	opts ...Option,
 ) *Service {
+	var o options
+	for _, opt := range opts {
+		opt(&o)
+	}
+
 	s := &Service{
 		pg:                pgClient,
 		encryptionKey:     encryptionKey,
@@ -62,17 +72,26 @@ func NewService(
 		logger:            logger,
 	}
 
-	s.worker = NewSourceFetchWorker(s, pgClient, logger)
+	var fetchWorkerOpts []worker.Option
+	if o.fetchInterval > 0 {
+		fetchWorkerOpts = append(fetchWorkerOpts, worker.WithInterval(o.fetchInterval))
+	} else {
+		fetchWorkerOpts = append(fetchWorkerOpts, worker.WithInterval(30*time.Second))
+	}
+	fetchWorkerOpts = append(fetchWorkerOpts, worker.WithMaxConcurrency(20))
+
+	s.fetchWorker = NewSourceFetchWorker(
+		s,
+		pgClient,
+		logger,
+		fetchWorkerOpts...,
+	)
 	s.sourceNameWorker = NewSourceNameWorker(
 		pgClient,
 		encryptionKey,
 		connectorRegistry,
 		logger.Named("source-name"),
 	)
-
-	for _, opt := range opts {
-		opt(s)
-	}
 
 	return s
 }
@@ -134,14 +153,10 @@ func (s *Service) ResolveEntryOrganizationID(ctx context.Context, entryID gid.GI
 }
 
 func (s *Service) Run(ctx context.Context) error {
-	gCtx, cancel := context.WithCancel(context.WithoutCancel(ctx))
-	g, gCtx := errgroup.WithContext(gCtx)
+	g, gCtx := errgroup.WithContext(ctx)
 
-	g.Go(func() error { return s.worker.Run(gCtx) })
+	g.Go(func() error { return s.fetchWorker.Run(gCtx) })
 	g.Go(func() error { return s.sourceNameWorker.Run(gCtx) })
-
-	<-ctx.Done()
-	cancel()
 
 	return g.Wait()
 }

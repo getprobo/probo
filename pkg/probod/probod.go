@@ -41,6 +41,7 @@ import (
 	"go.gearno.de/kit/migrator"
 	"go.gearno.de/kit/pg"
 	"go.gearno.de/kit/unit"
+	"go.gearno.de/kit/worker"
 	"go.opentelemetry.io/otel/trace"
 	"go.probo.inc/probo/pkg/accessreview"
 	"go.probo.inc/probo/pkg/awsconfig"
@@ -580,8 +581,11 @@ func (impl *Implm) Run(
 			TLSRequired: impl.cfg.Notifications.Mailer.SMTP.TLSRequired,
 		},
 		l.Named("sending-worker"),
-		mailer.WithSendingWorkerSMTPTimeout(time.Second*10),
-		mailer.WithSendingWorkerInterval(time.Duration(impl.cfg.Notifications.Mailer.MailerInterval)*time.Second),
+		[]mailer.SendingWorkerOption{
+			mailer.WithSendingWorkerSMTPTimeout(time.Second * 10),
+		},
+		worker.WithInterval(time.Duration(impl.cfg.Notifications.Mailer.MailerInterval)*time.Second),
+		worker.WithMaxConcurrency(20),
 	)
 	wg.Go(
 		func() {
@@ -676,9 +680,11 @@ func (impl *Implm) Run(
 		fileManagerService,
 		evidenceDescriber,
 		l.Named("evidence-description-worker"),
-		probo.WithEvidenceDescriptionWorkerInterval(time.Duration(impl.cfg.EvidenceDescriber.Interval)*time.Second),
-		probo.WithEvidenceDescriptionWorkerStaleAfter(time.Duration(impl.cfg.EvidenceDescriber.StaleAfter)*time.Second),
-		probo.WithEvidenceDescriptionWorkerMaxConcurrency(impl.cfg.EvidenceDescriber.MaxConcurrency),
+		probo.EvidenceDescriptionWorkerConfig{
+			StaleAfter: time.Duration(impl.cfg.EvidenceDescriber.StaleAfter) * time.Second,
+		},
+		worker.WithInterval(time.Duration(impl.cfg.EvidenceDescriber.Interval)*time.Second),
+		worker.WithMaxConcurrency(impl.cfg.EvidenceDescriber.MaxConcurrency),
 	)
 	evidenceDescriptionWorkerCtx, stopEvidenceDescriptionWorker := context.WithCancel(context.Background())
 	wg.Go(
