@@ -8,5 +8,4 @@ WHERE dv.document_id = d.id;
 
 ALTER TABLE document_versions ALTER COLUMN document_type DROP DEFAULT;
 
--- TODO: drop the document_type column from documents.
 ALTER TABLE documents ALTER COLUMN document_type SET DEFAULT 'OTHER';
