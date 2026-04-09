@@ -12,17 +12,11 @@
 -- OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 -- PERFORMANCE OF THIS SOFTWARE.
 
-ALTER TABLE documents ALTER COLUMN title DROP NOT NULL;
+-- Drop legacy columns from documents that have been moved to document_versions.
+ALTER TABLE documents DROP COLUMN title;
+ALTER TABLE documents DROP COLUMN classification;
+ALTER TABLE documents DROP COLUMN document_type;
 
-ALTER TABLE documents DROP COLUMN description;
-
--- Move search_vector from documents to document_versions.
-DROP INDEX documents_search_idx;
-ALTER TABLE documents DROP COLUMN search_vector;
-
-ALTER TABLE document_versions ADD COLUMN search_vector tsvector
-GENERATED ALWAYS AS (
-    to_tsvector('simple', COALESCE(title, ''))
-) STORED;
-
-CREATE INDEX document_versions_search_idx ON document_versions USING gin(search_vector);
+-- Drop legacy approver tables replaced by approval quorums/decisions.
+DROP TABLE document_version_approvers;
+DROP TABLE document_approvers;
