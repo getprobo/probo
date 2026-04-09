@@ -98,6 +98,9 @@ const (
 	AccessReviewCampaignEntityType             uint16 = 72
 	AccessEntryEntityType                      uint16 = 73
 	AccessEntryDecisionHistoryEntityType       uint16 = 74
+	CookieBannerEntityType                     uint16 = 75
+	CookieCategoryEntityType                   uint16 = 76
+	ConsentRecordEntityType                    uint16 = 77
 )
 
 func NewEntityFromID(id gid.GID) (any, bool) {
@@ -244,6 +247,12 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &AccessEntry{ID: id}, true
 	case AccessEntryDecisionHistoryEntityType:
 		return &AccessEntryDecisionHistory{ID: id}, true
+	case CookieBannerEntityType:
+		return &CookieBanner{ID: id}, true
+	case CookieCategoryEntityType:
+		return &CookieCategory{ID: id}, true
+	case ConsentRecordEntityType:
+		return &ConsentRecord{ID: id}, true
 	default:
 		return nil, false
 	}
