@@ -57,7 +57,7 @@ type Query {
     @session(required: OPTIONAL)
   signUpEnabled: Boolean!
     @goField(forceResolver: true)
-    @session(required: NONE)
+    @session(required: OPTIONAL)
 }
 
 type Mutation {
