@@ -17,6 +17,7 @@ package prosemirror
 import (
 	"encoding/json"
 	"fmt"
+	"unicode/utf8"
 )
 
 type (
@@ -168,13 +169,12 @@ func (n Node) TableCellAttrs() (TableCellAttrs, error) {
 	return a, nil
 }
 
-// TextLength returns the total length of all text content in the node tree,
-// measured in bytes (consistent with Go's len on strings). Only text carried
-// by leaf text nodes is counted; structural markup is excluded.
+// TextLength returns the total number of characters (Unicode code points)
+// across all text nodes in the tree. Structural markup is excluded.
 func (n Node) TextLength() int {
 	length := 0
 	if n.Text != nil {
-		length += len(*n.Text)
+		length += utf8.RuneCountInString(*n.Text)
 	}
 	for _, child := range n.Content {
 		length += child.TextLength()

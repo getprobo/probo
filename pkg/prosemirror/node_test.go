@@ -488,6 +488,17 @@ func TestTextLength(t *testing.T) {
 	)
 
 	t.Run(
+		"multi-byte unicode characters",
+		func(t *testing.T) {
+			t.Parallel()
+			raw := `{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"café résumé"}]}]}`
+			doc, err := Parse(raw)
+			require.NoError(t, err)
+			assert.Equal(t, 11, doc.TextLength())
+		},
+	)
+
+	t.Run(
 		"testdata document",
 		func(t *testing.T) {
 			t.Parallel()
