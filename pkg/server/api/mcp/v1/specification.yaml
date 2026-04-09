@@ -4257,9 +4257,6 @@ components:
         organization_id:
           $ref: "#/components/schemas/GID"
           description: Organization ID
-        framework_id:
-          $ref: "#/components/schemas/GID"
-          description: Framework ID
         order_by:
           $ref: "#/components/schemas/ControlOrderBy"
           description: Control order by
@@ -4275,6 +4272,9 @@ components:
             query:
               type: string
               description: Search query
+            framework_id:
+              $ref: "#/components/schemas/GID"
+              description: Framework ID to filter controls by
 
     ListControlsOutput:
       type: object
