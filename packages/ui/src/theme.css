@@ -210,7 +210,7 @@
     /* Backgrounds — warm orange tints over navy */
     --color-primary: #F54900;
     --color-invert: #ffffff;
-    --color-secondary: rgba(245, 73, 0, 0.06);
+    --color-secondary: #ffffff0f;
     --color-tertiary: transparent;
     --color-subtle: rgba(241, 245, 249, 0.03);
     --color-highlight: rgba(245, 73, 0, 0.08);
