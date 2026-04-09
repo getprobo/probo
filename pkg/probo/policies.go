@@ -151,6 +151,9 @@ var ViewerPolicy = policy.NewPolicy(
 		ActionAccessReviewCampaignGet, ActionAccessReviewCampaignList,
 		ActionAccessEntryGet, ActionAccessEntryList,
 		ActionAccessSourceGet, ActionAccessSourceList,
+		ActionCookieBannerGet, ActionCookieBannerList,
+		ActionCookieCategoryGet, ActionCookieCategoryList,
+		ActionConsentRecordList,
 	).WithSID("entity-read-access").When(organizationCondition),
 
 	policy.Allow(

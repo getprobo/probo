@@ -386,4 +386,21 @@ const (
 	ActionAccessSourceUpdate = "core:access-source:update"
 	ActionAccessSourceDelete = "core:access-source:delete"
 	ActionAccessSourceSync   = "core:access-source:sync"
+
+	// CookieBanner actions
+	ActionCookieBannerGet    = "core:cookie-banner:get"
+	ActionCookieBannerList   = "core:cookie-banner:list"
+	ActionCookieBannerCreate = "core:cookie-banner:create"
+	ActionCookieBannerUpdate = "core:cookie-banner:update"
+	ActionCookieBannerDelete = "core:cookie-banner:delete"
+
+	// CookieCategory actions
+	ActionCookieCategoryGet    = "core:cookie-category:get"
+	ActionCookieCategoryList   = "core:cookie-category:list"
+	ActionCookieCategoryCreate = "core:cookie-category:create"
+	ActionCookieCategoryUpdate = "core:cookie-category:update"
+	ActionCookieCategoryDelete = "core:cookie-category:delete"
+
+	// ConsentRecord actions
+	ActionConsentRecordList = "core:consent-record:list"
 )

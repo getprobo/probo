@@ -7382,6 +7382,308 @@ components:
         audit_log_entry:
           $ref: "#/components/schemas/AuditLogEntry"
 
+    CookieBannerState:
+      type: string
+      enum:
+        - draft
+        - published
+        - disabled
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.CookieBannerState
+
+    ConsentAction:
+      type: string
+      enum:
+        - ACCEPT_ALL
+        - REJECT_ALL
+        - CUSTOMIZE
+        - ACCEPT_CATEGORY
+        - GPC
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.ConsentAction
+
+    ConsentMode:
+      type: string
+      enum:
+        - OPT_IN
+        - OPT_OUT
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.ConsentMode
+
+    CookieBannerOrderField:
+      type: string
+      enum:
+        - CREATED_AT
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.CookieBannerOrderField
+
+    CookieBannerOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/CookieBannerOrderField"
+          description: Cookie banner order field
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+          description: Cookie banner order direction
+
+    CookieCategoryOrderField:
+      type: string
+      enum:
+        - RANK
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.CookieCategoryOrderField
+
+    CookieCategoryOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/CookieCategoryOrderField"
+          description: Cookie category order field
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+          description: Cookie category order direction
+
+    ConsentRecordOrderField:
+      type: string
+      enum:
+        - CREATED_AT
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.ConsentRecordOrderField
+
+    ConsentRecordOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/ConsentRecordOrderField"
+          description: Consent record order field
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+          description: Consent record order direction
+
+    CookieBannerTheme:
+      type: object
+      properties:
+        primary_color:
+          type: string
+          description: Primary button color
+        primary_text_color:
+          type: string
+          description: Text color on primary buttons
+        secondary_color:
+          type: string
+          description: Secondary button color
+        secondary_text_color:
+          type: string
+          description: Text color on secondary buttons
+        background_color:
+          type: string
+          description: Banner background color
+        text_color:
+          type: string
+          description: Title text color
+        secondary_text_body_color:
+          type: string
+          description: Description text color
+        border_color:
+          type: string
+          description: Border color
+        font_family:
+          type: string
+          description: Font family
+        border_radius:
+          type: integer
+          description: Border radius in pixels
+        position:
+          type: string
+          description: Banner position (bottom, bottom-left, bottom-right, center)
+        revisit_position:
+          type: string
+          description: Revisit icon position (bottom-left, bottom-right)
+
+    CookieBanner:
+      type: object
+      required:
+        - id
+        - organization_id
+        - name
+        - domain
+        - state
+        - title
+        - description
+        - accept_all_label
+        - reject_all_label
+        - save_preferences_label
+        - privacy_policy_url
+        - consent_expiry_days
+        - consent_mode
+        - version
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Cookie banner ID
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        name:
+          type: string
+          description: Cookie banner name
+        domain:
+          type: string
+          description: Domain the banner is deployed on
+        state:
+          $ref: "#/components/schemas/CookieBannerState"
+          description: Cookie banner state
+        title:
+          type: string
+          description: Banner title displayed to visitors
+        description:
+          type: string
+          description: Banner description displayed to visitors
+        accept_all_label:
+          type: string
+          description: Accept all button label
+        reject_all_label:
+          type: string
+          description: Reject all button label
+        save_preferences_label:
+          type: string
+          description: Save preferences button label
+        privacy_policy_url:
+          type: string
+          description: Privacy policy URL
+        consent_expiry_days:
+          type: integer
+          description: Days until consent expires
+        consent_mode:
+          $ref: "#/components/schemas/ConsentMode"
+          description: Consent mode (opt-in requires explicit consent, opt-out assumes consent)
+        version:
+          type: integer
+          description: Banner configuration version
+        theme:
+          $ref: "#/components/schemas/CookieBannerTheme"
+          description: Visual theme configuration
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Update timestamp
+
+    CookieCategory:
+      type: object
+      required:
+        - id
+        - cookie_banner_id
+        - name
+        - description
+        - required
+        - rank
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Cookie category ID
+        cookie_banner_id:
+          $ref: "#/components/schemas/GID"
+          description: Cookie banner ID
+        name:
+          type: string
+          description: Category name
+        description:
+          type: string
+          description: Category description
+        required:
+          type: boolean
+          description: Whether this category is required
+        rank:
+          type: integer
+          description: Display order rank
+        cookies:
+          type: array
+          items:
+            $ref: "#/components/schemas/CookieCategoryItem"
+          description: Individual cookies managed by this category
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Update timestamp
+
+    CookieCategoryItem:
+      type: object
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.CookieItem
+      required:
+        - name
+        - duration
+        - description
+      properties:
+        name:
+          type: string
+          description: Cookie name
+        duration:
+          type: string
+          description: Cookie duration (e.g. "1 year", "session", "Never Expires")
+        description:
+          type: string
+          description: Cookie description
+
+    ConsentRecord:
+      type: object
+      required:
+        - id
+        - cookie_banner_id
+        - visitor_id
+        - consent_data
+        - action
+        - banner_version
+        - created_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Consent record ID
+        cookie_banner_id:
+          $ref: "#/components/schemas/GID"
+          description: Cookie banner ID
+        visitor_id:
+          type: string
+          description: Visitor identifier
+        ip_address:
+          type:
+            - string
+            - "null"
+          description: Anonymized IP address
+        user_agent:
+          type:
+            - string
+            - "null"
+          description: User agent string
+        consent_data:
+          type: string
+          description: Consent data as JSON string
+        action:
+          $ref: "#/components/schemas/ConsentAction"
+          description: Consent action
+        banner_version:
+          type: integer
+          description: Banner version at time of consent
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+
     ListAuditLogEntriesInput:
       type: object
       required:
@@ -7468,6 +7770,454 @@ components:
           format: date-time
           go.probo.inc/mcpgen/type: time.Time
           description: When the action was performed
+
+    ListCookieBannersInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        order_by:
+          $ref: "#/components/schemas/CookieBannerOrderBy"
+          description: Cookie banner order by
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Pagination cursor
+
+    ListCookieBannersOutput:
+      type: object
+      required:
+        - cookie_banners
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        cookie_banners:
+          type: array
+          items:
+            $ref: "#/components/schemas/CookieBanner"
+
+    GetCookieBannerInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Cookie banner ID
+
+    GetCookieBannerOutput:
+      type: object
+      required:
+        - cookie_banner
+      properties:
+        cookie_banner:
+          $ref: "#/components/schemas/CookieBanner"
+
+    CreateCookieBannerInput:
+      type: object
+      required:
+        - organization_id
+        - name
+        - domain
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        name:
+          type: string
+          description: Cookie banner name
+        domain:
+          type: string
+          description: Domain the banner is deployed on
+
+    CreateCookieBannerOutput:
+      type: object
+      required:
+        - cookie_banner
+      properties:
+        cookie_banner:
+          $ref: "#/components/schemas/CookieBanner"
+
+    UpdateCookieBannerInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Cookie banner ID
+        name:
+          type: string
+          description: Cookie banner name
+        domain:
+          type: string
+          description: Domain
+        title:
+          type: string
+          description: Banner title
+        description:
+          type: string
+          description: Banner description
+        accept_all_label:
+          type: string
+          description: Accept all button label
+        reject_all_label:
+          type: string
+          description: Reject all button label
+        save_preferences_label:
+          type: string
+          description: Save preferences button label
+        privacy_policy_url:
+          type: string
+          description: Privacy policy URL
+        consent_expiry_days:
+          type: integer
+          description: Days until consent expires
+        consent_mode:
+          $ref: "#/components/schemas/ConsentMode"
+          description: Consent mode (OPT_IN or OPT_OUT)
+        theme:
+          $ref: "#/components/schemas/CookieBannerTheme"
+          description: Visual theme configuration (partial update)
+
+    UpdateCookieBannerOutput:
+      type: object
+      required:
+        - cookie_banner
+      properties:
+        cookie_banner:
+          $ref: "#/components/schemas/CookieBanner"
+
+    DeleteCookieBannerInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Cookie banner ID
+
+    DeleteCookieBannerOutput:
+      type: object
+      required:
+        - deleted_cookie_banner_id
+      properties:
+        deleted_cookie_banner_id:
+          $ref: "#/components/schemas/GID"
+          description: Deleted cookie banner ID
+
+    PublishCookieBannerInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Cookie banner ID
+
+    PublishCookieBannerOutput:
+      type: object
+      required:
+        - cookie_banner
+      properties:
+        cookie_banner:
+          $ref: "#/components/schemas/CookieBanner"
+
+    DisableCookieBannerInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Cookie banner ID
+
+    DisableCookieBannerOutput:
+      type: object
+      required:
+        - cookie_banner
+      properties:
+        cookie_banner:
+          $ref: "#/components/schemas/CookieBanner"
+
+    ListCookieCategoriesInput:
+      type: object
+      required:
+        - cookie_banner_id
+      properties:
+        cookie_banner_id:
+          $ref: "#/components/schemas/GID"
+          description: Cookie banner ID
+        order_by:
+          $ref: "#/components/schemas/CookieCategoryOrderBy"
+          description: Cookie category order by
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Pagination cursor
+
+    ListCookieCategoriesOutput:
+      type: object
+      required:
+        - cookie_categories
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        cookie_categories:
+          type: array
+          items:
+            $ref: "#/components/schemas/CookieCategory"
+
+    GetCookieCategoryInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Cookie category ID
+
+    GetCookieCategoryOutput:
+      type: object
+      required:
+        - cookie_category
+      properties:
+        cookie_category:
+          $ref: "#/components/schemas/CookieCategory"
+
+    CreateCookieCategoryInput:
+      type: object
+      required:
+        - cookie_banner_id
+        - name
+        - description
+        - rank
+      properties:
+        cookie_banner_id:
+          $ref: "#/components/schemas/GID"
+          description: Cookie banner ID
+        name:
+          type: string
+          description: Category name
+        description:
+          type: string
+          description: Category description
+        rank:
+          type: integer
+          description: Display order rank
+        cookies:
+          type: array
+          items:
+            $ref: "#/components/schemas/CookieCategoryItem"
+          description: Individual cookies managed by this category
+
+    CreateCookieCategoryOutput:
+      type: object
+      required:
+        - cookie_category
+      properties:
+        cookie_category:
+          $ref: "#/components/schemas/CookieCategory"
+
+    UpdateCookieCategoryInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Cookie category ID
+        name:
+          type: string
+          description: Category name
+        description:
+          type: string
+          description: Category description
+        rank:
+          type: integer
+          description: Display order rank
+        cookies:
+          type: array
+          items:
+            $ref: "#/components/schemas/CookieCategoryItem"
+          description: Individual cookies managed by this category
+
+    UpdateCookieCategoryOutput:
+      type: object
+      required:
+        - cookie_category
+      properties:
+        cookie_category:
+          $ref: "#/components/schemas/CookieCategory"
+
+    DeleteCookieCategoryInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Cookie category ID
+
+    DeleteCookieCategoryOutput:
+      type: object
+      required:
+        - deleted_cookie_category_id
+      properties:
+        deleted_cookie_category_id:
+          $ref: "#/components/schemas/GID"
+          description: Deleted cookie category ID
+
+    CookieProviderCookie:
+      type: object
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/cookieprovider.Cookie
+      required:
+        - name
+        - duration
+        - description
+      properties:
+        name:
+          type: string
+          description: Cookie name or pattern
+        duration:
+          type: string
+          description: Cookie duration
+        description:
+          type: string
+          description: Cookie description
+
+    CookieProvider:
+      type: object
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/cookieprovider.Provider
+      required:
+        - key
+        - name
+        - description
+        - category
+        - website_url
+        - cookies
+      properties:
+        key:
+          type: string
+          description: Unique provider key
+        name:
+          type: string
+          description: Provider name
+        description:
+          type: string
+          description: Provider description
+        category:
+          type: string
+          description: Default cookie category (Necessary, Analytics, Marketing, Preferences)
+        website_url:
+          type: string
+          description: Provider website URL
+        cookies:
+          type: array
+          items:
+            $ref: "#/components/schemas/CookieProviderCookie"
+          description: Cookies set by this provider
+
+    ListCookieProvidersInput:
+      type: object
+      properties:
+        category:
+          type: string
+          description: Filter by cookie category (Necessary, Analytics, Marketing, Preferences)
+
+    ListCookieProvidersOutput:
+      type: object
+      required:
+        - cookie_providers
+      properties:
+        cookie_providers:
+          type: array
+          items:
+            $ref: "#/components/schemas/CookieProvider"
+
+    GetCookieProviderInput:
+      type: object
+      required:
+        - key
+      properties:
+        key:
+          type: string
+          description: Provider key
+
+    GetCookieProviderOutput:
+      type: object
+      required:
+        - cookie_provider
+      properties:
+        cookie_provider:
+          $ref: "#/components/schemas/CookieProvider"
+
+    AddCookiesFromProviderInput:
+      type: object
+      required:
+        - cookie_category_id
+        - provider_key
+      properties:
+        cookie_category_id:
+          $ref: "#/components/schemas/GID"
+          description: Cookie category ID to add cookies to
+        provider_key:
+          type: string
+          description: Provider key from the cookie provider library
+
+    AddCookiesFromProviderOutput:
+      type: object
+      required:
+        - cookie_category
+      properties:
+        cookie_category:
+          $ref: "#/components/schemas/CookieCategory"
+
+    ListConsentRecordsInput:
+      type: object
+      required:
+        - cookie_banner_id
+      properties:
+        cookie_banner_id:
+          $ref: "#/components/schemas/GID"
+          description: Cookie banner ID
+        order_by:
+          $ref: "#/components/schemas/ConsentRecordOrderBy"
+          description: Consent record order by
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Pagination cursor
+        filter:
+          type: object
+          properties:
+            action:
+              $ref: "#/components/schemas/ConsentAction"
+              description: Filter by consent action
+
+    ListConsentRecordsOutput:
+      type: object
+      required:
+        - consent_records
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        consent_records:
+          type: array
+          items:
+            $ref: "#/components/schemas/ConsentRecord"
 
 tools:
   - name: listOrganizations
@@ -8806,3 +9556,140 @@ tools:
       $ref: "#/components/schemas/ListAuditLogEntriesInput"
     outputSchema:
       $ref: "#/components/schemas/ListAuditLogEntriesOutput"
+  - name: listCookieBanners
+    description: List all cookie banners for the organization
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/ListCookieBannersInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListCookieBannersOutput"
+  - name: getCookieBanner
+    description: Get a cookie banner by ID
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/GetCookieBannerInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetCookieBannerOutput"
+  - name: createCookieBanner
+    description: Create a new cookie banner
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/CreateCookieBannerInput"
+    outputSchema:
+      $ref: "#/components/schemas/CreateCookieBannerOutput"
+  - name: updateCookieBanner
+    description: Update a cookie banner
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/UpdateCookieBannerInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateCookieBannerOutput"
+  - name: deleteCookieBanner
+    description: Delete a cookie banner
+    hints:
+      readonly: false
+      destructive: true
+    inputSchema:
+      $ref: "#/components/schemas/DeleteCookieBannerInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteCookieBannerOutput"
+  - name: publishCookieBanner
+    description: Publish a cookie banner to make it active
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/PublishCookieBannerInput"
+    outputSchema:
+      $ref: "#/components/schemas/PublishCookieBannerOutput"
+  - name: disableCookieBanner
+    description: Disable a published cookie banner
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/DisableCookieBannerInput"
+    outputSchema:
+      $ref: "#/components/schemas/DisableCookieBannerOutput"
+  - name: listCookieCategories
+    description: List all cookie categories for a cookie banner
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/ListCookieCategoriesInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListCookieCategoriesOutput"
+  - name: getCookieCategory
+    description: Get a cookie category by ID
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/GetCookieCategoryInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetCookieCategoryOutput"
+  - name: createCookieCategory
+    description: Create a new cookie category for a banner
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/CreateCookieCategoryInput"
+    outputSchema:
+      $ref: "#/components/schemas/CreateCookieCategoryOutput"
+  - name: updateCookieCategory
+    description: Update a cookie category
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/UpdateCookieCategoryInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateCookieCategoryOutput"
+  - name: deleteCookieCategory
+    description: Delete a cookie category
+    hints:
+      readonly: false
+      destructive: true
+    inputSchema:
+      $ref: "#/components/schemas/DeleteCookieCategoryInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteCookieCategoryOutput"
+  - name: listCookieProviders
+    description: List known cookie providers from the built-in library, optionally filtered by category
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/ListCookieProvidersInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListCookieProvidersOutput"
+  - name: getCookieProvider
+    description: Get details of a known cookie provider by key
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/GetCookieProviderInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetCookieProviderOutput"
+  - name: addCookiesFromProvider
+    description: Add cookies from a known provider to an existing cookie category
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/AddCookiesFromProviderInput"
+    outputSchema:
+      $ref: "#/components/schemas/AddCookiesFromProviderOutput"
+  - name: listConsentRecords
+    description: List consent records for a cookie banner
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/ListConsentRecordsInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListConsentRecordsOutput"

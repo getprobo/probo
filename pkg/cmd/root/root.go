@@ -26,6 +26,7 @@ import (
 	cmdconfig "go.probo.inc/probo/pkg/cmd/config"
 	cmdcontext "go.probo.inc/probo/pkg/cmd/context"
 	"go.probo.inc/probo/pkg/cmd/control"
+	"go.probo.inc/probo/pkg/cmd/cookiebanner"
 	"go.probo.inc/probo/pkg/cmd/evidence"
 	"go.probo.inc/probo/pkg/cmd/finding"
 	"go.probo.inc/probo/pkg/cmd/framework"
@@ -76,6 +77,7 @@ func NewCmdRoot(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(cmdconfig.NewCmdConfig(f))
 	cmd.AddCommand(cmdcontext.NewCmdContext(f))
 	cmd.AddCommand(control.NewCmdControl(f))
+	cmd.AddCommand(cookiebanner.NewCmdCookieBanner(f))
 	cmd.AddCommand(evidence.NewCmdEvidence(f))
 	cmd.AddCommand(finding.NewCmdFinding(f))
 	cmd.AddCommand(framework.NewCmdFramework(f))

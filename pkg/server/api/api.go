@@ -28,6 +28,7 @@ import (
 	"go.probo.inc/probo/pkg/accessreview"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/consent"
 	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/file"
 	"go.probo.inc/probo/pkg/iam"
@@ -36,6 +37,7 @@ import (
 	"go.probo.inc/probo/pkg/securecookie"
 	connect_v1 "go.probo.inc/probo/pkg/server/api/connect/v1"
 	console_v1 "go.probo.inc/probo/pkg/server/api/console/v1"
+	cookiebanner_v1 "go.probo.inc/probo/pkg/server/api/cookiebanner/v1"
 	files_v1 "go.probo.inc/probo/pkg/server/api/files/v1"
 	mcp_v1 "go.probo.inc/probo/pkg/server/api/mcp/v1"
 	slack_v1 "go.probo.inc/probo/pkg/server/api/slack/v1"
@@ -49,6 +51,7 @@ type (
 		BaseURL           *baseurl.BaseURL
 		AllowedOrigins    []string
 		Probo             *probo.Service
+		Consent           *consent.Service
 		File              *file.Service
 		IAM               *iam.Service
 		Trust             *trust.Service
@@ -74,6 +77,7 @@ type (
 		csrf                  *http.CrossOriginProtection
 		compliancePageHandler http.Handler
 		consoleHandler        http.Handler
+		cookieBannerHandler   http.Handler
 		filesHandler          http.Handler
 		mcpHandler            http.Handler
 		slackHandler          http.Handler
@@ -135,6 +139,10 @@ func NewServer(cfg Config) (*Server, error) {
 	// POSTs from external identity providers by design.
 	csrf.AddInsecureBypassPattern("POST /connect/v1/saml/2.0/consume")
 
+	// Cookie banner endpoints are cross-origin by design (embedded widget).
+	csrf.AddInsecureBypassPattern("GET /cookie-banner/v1/*")
+	csrf.AddInsecureBypassPattern("POST /cookie-banner/v1/*")
+
 	csrf.SetDenyHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		httpserver.RenderJSON(
 			w,
@@ -148,6 +156,10 @@ func NewServer(cfg Config) (*Server, error) {
 	return &Server{
 		cfg:  cfg,
 		csrf: csrf,
+		cookieBannerHandler: cookiebanner_v1.NewMux(
+			cfg.Logger.Named("cookiebanner.v1"),
+			cfg.Consent,
+		),
 		compliancePageHandler: trust_v1.NewMux(
 			cfg.Logger.Named("trust.v1"),
 			cfg.IAM,
@@ -161,6 +173,7 @@ func NewServer(cfg Config) (*Server, error) {
 		consoleHandler: console_v1.NewMux(
 			cfg.Logger.Named("console.v1"),
 			cfg.Probo,
+			cfg.Consent,
 			cfg.IAM,
 			cfg.ESign,
 			cfg.AccessReview,
@@ -178,6 +191,7 @@ func NewServer(cfg Config) (*Server, error) {
 		mcpHandler: mcp_v1.NewMux(
 			cfg.Logger.Named("mcp.v1"),
 			cfg.Probo,
+			cfg.Consent,
 			cfg.IAM,
 			cfg.AccessReview,
 			cfg.TokenSecret,
@@ -238,6 +252,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	router.Use(cors.Handler(corsOpts))
 
+	router.Mount("/cookie-banner/v1", http.StripPrefix("/cookie-banner/v1", s.cookieBannerHandler))
 	router.Mount("/console/v1", http.StripPrefix("/console/v1", s.consoleHandler))
 	router.Mount("/connect/v1", http.StripPrefix("/connect/v1", s.connectHandler))
 	router.Mount("/files/v1", http.StripPrefix("/files/v1", s.filesHandler))

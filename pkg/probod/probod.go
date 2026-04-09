@@ -47,6 +47,7 @@ import (
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/certmanager"
 	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/consent"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/crypto/keys"
@@ -500,6 +501,8 @@ func (impl *Implm) Run(
 		return fmt.Errorf("cannot create probo service: %w", err)
 	}
 
+	consentService := consent.NewService(pgClient)
+
 	trustService := trust.NewService(
 		pgClient,
 		s3Client,
@@ -528,6 +531,7 @@ func (impl *Implm) Run(
 			AllowedOrigins:    impl.cfg.Api.Cors.AllowedOrigins,
 			ExtraHeaderFields: impl.cfg.Api.ExtraHeaderFields,
 			Probo:             proboService,
+			Consent:           consentService,
 			File:              fileService,
 			IAM:               iamService,
 			Trust:             trustService,
