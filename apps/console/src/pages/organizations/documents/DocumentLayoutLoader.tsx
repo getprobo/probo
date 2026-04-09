@@ -42,7 +42,7 @@ function DocumentLayoutQueryLoader() {
   const onRefetch = useCallback(() => {
     loadQuery(
       { documentId, versionId: versionId ?? "", versionSpecified: !!versionId },
-      { fetchPolicy: "network-only" },
+      { fetchPolicy: "store-and-network" },
     );
   }, [documentId, versionId, loadQuery]);
 

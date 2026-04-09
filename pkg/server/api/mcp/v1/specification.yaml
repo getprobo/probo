@@ -5518,6 +5518,18 @@ components:
         id:
           $ref: "#/components/schemas/GID"
           description: Document ID
+        title:
+          type: string
+          description: Document title
+        content:
+          type: string
+          description: Document content in markdown format
+        classification:
+          $ref: "#/components/schemas/DocumentClassification"
+          description: Document classification
+        document_type:
+          $ref: "#/components/schemas/DocumentType"
+          description: Document type
         trust_center_visibility:
           $ref: "#/components/schemas/TrustCenterVisibility"
           description: Trust center visibility
@@ -5528,6 +5540,25 @@ components:
           description: Default approver profile IDs
 
     UpdateDocumentOutput:
+      type: object
+      required:
+        - document
+      properties:
+        document:
+          $ref: "#/components/schemas/Document"
+        document_version:
+          $ref: "#/components/schemas/DocumentVersion"
+
+    DeleteDocumentDraftInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Document ID
+
+    DeleteDocumentDraftOutput:
       type: object
       required:
         - document
@@ -5618,75 +5649,6 @@ components:
       properties:
         document_version:
           $ref: "#/components/schemas/DocumentVersion"
-
-    CreateDraftDocumentVersionInput:
-      type: object
-      required:
-        - document_id
-      properties:
-        document_id:
-          $ref: "#/components/schemas/GID"
-          description: Document ID
-        content:
-          type: string
-          description: Document content in markdown format
-
-    CreateDraftDocumentVersionOutput:
-      type: object
-      description: Created draft; document_version.content is markdown
-      required:
-        - document_version
-      properties:
-        document_version:
-          $ref: "#/components/schemas/DocumentVersion"
-
-    UpdateDocumentVersionInput:
-      type: object
-      required:
-        - document_version_id
-      properties:
-        document_version_id:
-          $ref: "#/components/schemas/GID"
-          description: Document version ID
-        title:
-          type: string
-          description: Document version title
-        content:
-          type: string
-          description: Document content in markdown format
-        classification:
-          $ref: "#/components/schemas/DocumentClassification"
-          description: Document classification
-        document_type:
-          $ref: "#/components/schemas/DocumentType"
-          description: Document type
-
-    UpdateDocumentVersionOutput:
-      type: object
-      description: Updated draft; document_version.content is markdown
-      required:
-        - document_version
-      properties:
-        document_version:
-          $ref: "#/components/schemas/DocumentVersion"
-
-    DeleteDraftDocumentVersionInput:
-      type: object
-      required:
-        - document_version_id
-      properties:
-        document_version_id:
-          $ref: "#/components/schemas/GID"
-          description: Document version ID
-
-    DeleteDraftDocumentVersionOutput:
-      type: object
-      required:
-        - deleted_document_version_id
-      properties:
-        deleted_document_version_id:
-          $ref: "#/components/schemas/GID"
-          description: Deleted document version ID
 
     PublishMajorDocumentVersionInput:
       type: object
@@ -8372,6 +8334,15 @@ tools:
       $ref: "#/components/schemas/UpdateDocumentInput"
     outputSchema:
       $ref: "#/components/schemas/UpdateDocumentOutput"
+  - name: deleteDocumentDraft
+    description: Delete the latest draft version of a document, reverting to the last published version. Cannot delete the initial v0.1 draft.
+    hints:
+      readonly: false
+      destructive: true
+    inputSchema:
+      $ref: "#/components/schemas/DeleteDocumentDraftInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteDocumentDraftOutput"
   - name: archiveDocument
     description: Archive a document to prevent further modifications
     hints:
@@ -8406,30 +8377,6 @@ tools:
       $ref: "#/components/schemas/GetDocumentVersionInput"
     outputSchema:
       $ref: "#/components/schemas/GetDocumentVersionOutput"
-  - name: createDraftDocumentVersion
-    description: Create a new draft version from the latest published version
-    hints:
-      readonly: false
-    inputSchema:
-      $ref: "#/components/schemas/CreateDraftDocumentVersionInput"
-    outputSchema:
-      $ref: "#/components/schemas/CreateDraftDocumentVersionOutput"
-  - name: updateDocumentVersion
-    description: Update an existing draft document version content
-    hints:
-      readonly: false
-    inputSchema:
-      $ref: "#/components/schemas/UpdateDocumentVersionInput"
-    outputSchema:
-      $ref: "#/components/schemas/UpdateDocumentVersionOutput"
-  - name: deleteDraftDocumentVersion
-    description: Delete a draft document version
-    hints:
-      readonly: false
-    inputSchema:
-      $ref: "#/components/schemas/DeleteDraftDocumentVersionInput"
-    outputSchema:
-      $ref: "#/components/schemas/DeleteDraftDocumentVersionOutput"
   - name: publishMajorDocumentVersion
     description: Publish a draft document version as a new major version
     hints:

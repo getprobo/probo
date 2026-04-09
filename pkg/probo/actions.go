@@ -186,7 +186,7 @@ const (
 	ActionDocumentChangelogGenerate        = "core:document:generate-changelog"
 	ActionDocumentArchive                  = "core:document:archive"
 	ActionDocumentUnarchive                = "core:document:unarchive"
-	ActionDocumentDraftVersionCreate       = "core:document:create-draft-version"
+	ActionDocumentDeleteDraft              = "core:document:delete-draft"
 	ActionDocumentSendSigningNotifications = "core:document:send-signing-notifications"
 
 	// DocumentVersion actions
@@ -194,8 +194,6 @@ const (
 	ActionDocumentVersionList            = "core:document-version:list"
 	ActionDocumentVersionExportPDF       = "core:document-version:export-pdf"
 	ActionDocumentVersionSign            = "core:document-version:sign"
-	ActionDocumentVersionUpdate          = "core:document-version:update"
-	ActionDocumentVersionDeleteDraft     = "core:document-version:delete-draft"
 	ActionDocumentVersionRequestApproval = "core:document-version:request-approval"
 	ActionDocumentVersionVoidApproval    = "core:document-version:void-approval"
 	ActionDocumentVersionApprove         = "core:document-version:approve"

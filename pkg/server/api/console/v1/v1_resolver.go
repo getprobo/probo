@@ -5303,16 +5303,23 @@ func (r *mutationResolver) UpdateDocument(ctx context.Context, input types.Updat
 		defaultApproverIDs = &input.DefaultApproverIds
 	}
 
-	document, err := prb.Documents.Update(
+	document, documentVersion, draftCreated, err := prb.Documents.Update(
 		ctx,
 		probo.UpdateDocumentRequest{
 			DocumentID:            input.ID,
+			Title:                 input.Title,
+			Content:               input.Content,
+			Classification:        input.Classification,
+			DocumentType:          input.DocumentType,
 			TrustCenterVisibility: input.TrustCenterVisibility,
 			DefaultApproverIDs:    defaultApproverIDs,
 		},
 	)
 
 	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
 		if errArchived, ok := errors.AsType[*probo.ErrDocumentArchived](err); ok {
 			return nil, gqlutils.Conflict(ctx, errArchived)
 		}
@@ -5323,7 +5330,48 @@ func (r *mutationResolver) UpdateDocument(ctx context.Context, input types.Updat
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return &types.UpdateDocumentPayload{
+	payload := &types.UpdateDocumentPayload{
+		Document: types.NewDocument(document),
+	}
+
+	if documentVersion != nil {
+		payload.DocumentVersion = types.NewDocumentVersion(documentVersion)
+	}
+
+	if draftCreated {
+		payload.DocumentVersionEdge = types.NewDocumentVersionEdge(
+			documentVersion,
+			coredata.DocumentVersionOrderFieldCreatedAt,
+		)
+	}
+
+	return payload, nil
+}
+
+// DeleteDocumentDraft is the resolver for the deleteDocumentDraft field.
+func (r *mutationResolver) DeleteDocumentDraft(ctx context.Context, input types.DeleteDocumentDraftInput) (*types.DeleteDocumentDraftPayload, error) {
+	if err := r.authorize(ctx, input.DocumentID, probo.ActionDocumentDeleteDraft); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, input.DocumentID.TenantID())
+
+	document, err := prb.Documents.DeleteDraft(ctx, input.DocumentID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+		if errNotDeletable, ok := errors.AsType[*probo.ErrDocumentDraftNotDeletable](err); ok {
+			return nil, gqlutils.Conflict(ctx, errNotDeletable)
+		}
+		if errArchived, ok := errors.AsType[*probo.ErrDocumentArchived](err); ok {
+			return nil, gqlutils.Conflict(ctx, errArchived)
+		}
+		r.logger.ErrorCtx(ctx, "cannot delete document draft", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.DeleteDocumentDraftPayload{
 		Document: types.NewDocument(document),
 	}, nil
 }
@@ -6035,98 +6083,6 @@ func (r *mutationResolver) GenerateDocumentChangelog(ctx context.Context, input 
 
 	return &types.GenerateDocumentChangelogPayload{
 		Changelog: *changelog,
-	}, nil
-}
-
-// CreateDraftDocumentVersion is the resolver for the createDraftDocumentVersion field.
-func (r *mutationResolver) CreateDraftDocumentVersion(ctx context.Context, input types.CreateDraftDocumentVersionInput) (*types.CreateDraftDocumentVersionPayload, error) {
-	if err := r.authorize(ctx, input.DocumentID, probo.ActionDocumentDraftVersionCreate); err != nil {
-		return nil, err
-	}
-
-	prb := r.ProboService(ctx, input.DocumentID.TenantID())
-
-	documentVersion, err := prb.Documents.CreateDraft(ctx, input.DocumentID)
-	if err != nil {
-		if errArchived, ok := errors.AsType[*probo.ErrDocumentArchived](err); ok {
-			return nil, gqlutils.Conflict(ctx, errArchived)
-		}
-
-		if errNotPublished, ok := errors.AsType[*probo.ErrDocumentVersionNotPublished](err); ok {
-			return nil, gqlutils.Conflict(ctx, errNotPublished)
-		}
-
-		r.logger.ErrorCtx(ctx, "cannot create draft document version", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return &types.CreateDraftDocumentVersionPayload{
-		DocumentVersionEdge: types.NewDocumentVersionEdge(documentVersion, coredata.DocumentVersionOrderFieldCreatedAt),
-	}, nil
-}
-
-// DeleteDraftDocumentVersion is the resolver for the deleteDraftDocumentVersion field.
-func (r *mutationResolver) DeleteDraftDocumentVersion(ctx context.Context, input types.DeleteDraftDocumentVersionInput) (*types.DeleteDraftDocumentVersionPayload, error) {
-	if err := r.authorize(ctx, input.DocumentVersionID, probo.ActionDocumentVersionDeleteDraft); err != nil {
-		return nil, err
-	}
-
-	prb := r.ProboService(ctx, input.DocumentVersionID.TenantID())
-
-	err := prb.Documents.DeleteDraft(ctx, input.DocumentVersionID)
-	if err != nil {
-		if errArchived, ok := errors.AsType[*probo.ErrDocumentArchived](err); ok {
-			return nil, gqlutils.Conflict(ctx, errArchived)
-		}
-
-		r.logger.ErrorCtx(ctx, "cannot delete draft document version", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return &types.DeleteDraftDocumentVersionPayload{
-		DeletedDocumentVersionID: input.DocumentVersionID,
-	}, nil
-}
-
-// UpdateDocumentVersion is the resolver for the updateDocumentVersion field.
-func (r *mutationResolver) UpdateDocumentVersion(ctx context.Context, input types.UpdateDocumentVersionInput) (*types.UpdateDocumentVersionPayload, error) {
-	if err := r.authorize(ctx, input.DocumentVersionID, probo.ActionDocumentVersionUpdate); err != nil {
-		return nil, err
-	}
-
-	prb := r.ProboService(ctx, input.DocumentVersionID.TenantID())
-
-	documentVersion, err := prb.Documents.UpdateVersion(
-		ctx,
-		probo.UpdateDocumentVersionRequest{
-			ID:             input.DocumentVersionID,
-			Title:          input.Title,
-			Content:        input.Content,
-			Classification: input.Classification,
-			DocumentType:   input.DocumentType,
-		},
-	)
-	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
-		}
-
-		if errNotDraft, ok := errors.AsType[*probo.ErrDocumentVersionNotDraft](err); ok {
-			return nil, gqlutils.Conflict(ctx, errNotDraft)
-		}
-
-		if errArchived, ok := errors.AsType[*probo.ErrDocumentArchived](err); ok {
-			return nil, gqlutils.Conflict(ctx, errArchived)
-		}
-		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
-		}
-		r.logger.ErrorCtx(ctx, "cannot update document version", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return &types.UpdateDocumentVersionPayload{
-		DocumentVersion: types.NewDocumentVersion(documentVersion),
 	}, nil
 }
 
