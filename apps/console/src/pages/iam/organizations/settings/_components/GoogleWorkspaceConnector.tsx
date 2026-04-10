@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { sprintf } from "@probo/helpers";
+import { formatError, type GraphQLError, sprintf } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import {
   Badge,
@@ -25,14 +25,14 @@ import {
   IconSettingsGear2,
   Input,
   useDialogRef,
+  useToast,
 } from "@probo/ui";
 import { useState } from "react";
-import { graphql, useFragment } from "react-relay";
+import { graphql, useFragment, useMutation } from "react-relay";
 
 import type { GoogleWorkspaceConnectorDeleteMutation } from "#/__generated__/iam/GoogleWorkspaceConnectorDeleteMutation.graphql";
 import type { GoogleWorkspaceConnectorFragment$key } from "#/__generated__/iam/GoogleWorkspaceConnectorFragment.graphql";
 import type { GoogleWorkspaceConnectorUpdateSCIMBridgeMutation } from "#/__generated__/iam/GoogleWorkspaceConnectorUpdateSCIMBridgeMutation.graphql";
-import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 const googleWorkspaceConnectorFragment = graphql`
@@ -85,27 +85,20 @@ export function GoogleWorkspaceConnector(props: {
 
   const organizationId = useOrganizationId();
   const { __, dateTimeFormat } = useTranslate();
+  const { toast } = useToast();
   const dialogRef = useDialogRef();
   const excludedUserNamesDialogRef = useDialogRef();
 
   const [newUser, setNewUser] = useState("");
 
   const [deleteSCIMConfiguration, isDeleting]
-    = useMutationWithToasts<GoogleWorkspaceConnectorDeleteMutation>(
+    = useMutation<GoogleWorkspaceConnectorDeleteMutation>(
       deleteSCIMConfigurationMutation,
-      {
-        successMessage: __("Google Workspace disconnected successfully"),
-        errorMessage: __("Failed to disconnect Google Workspace"),
-      },
     );
 
   const [updateSCIMBridge, isUpdating]
-    = useMutationWithToasts<GoogleWorkspaceConnectorUpdateSCIMBridgeMutation>(
+    = useMutation<GoogleWorkspaceConnectorUpdateSCIMBridgeMutation>(
       updateSCIMBridgeMutation,
-      {
-        successMessage: __("Excluded user names updated successfully"),
-        errorMessage: __("Failed to update excluded user names"),
-      },
     );
 
   const handleConnect = () => {
@@ -131,8 +124,34 @@ export function GoogleWorkspaceConnector(props: {
           scimConfigurationId: scimConfigurationId,
         },
       },
-      onCompleted: () => {
+      onCompleted(_, errors) {
+        if (errors?.length) {
+          toast({
+            title: __("Error"),
+            description: formatError(
+              __("Failed to disconnect Google Workspace"),
+              errors as GraphQLError[],
+            ),
+            variant: "error",
+          });
+          return;
+        }
+        toast({
+          title: __("Success"),
+          description: __("Google Workspace disconnected successfully"),
+          variant: "success",
+        });
         dialogRef.current?.close();
+      },
+      onError(error) {
+        toast({
+          title: __("Error"),
+          description: formatError(
+            __("Failed to disconnect Google Workspace"),
+            error as GraphQLError,
+          ),
+          variant: "error",
+        });
       },
       updater: (store) => {
         const organizationRecord = store.get(organizationId);
@@ -155,6 +174,34 @@ export function GoogleWorkspaceConnector(props: {
           scimBridgeId: bridgeId,
           excludedUserNames: newList,
         },
+      },
+      onCompleted(_, errors) {
+        if (errors?.length) {
+          toast({
+            title: __("Error"),
+            description: formatError(
+              __("Failed to update excluded user names"),
+              errors as GraphQLError[],
+            ),
+            variant: "error",
+          });
+          return;
+        }
+        toast({
+          title: __("Success"),
+          description: __("Excluded user names updated successfully"),
+          variant: "success",
+        });
+      },
+      onError(error) {
+        toast({
+          title: __("Error"),
+          description: formatError(
+            __("Failed to update excluded user names"),
+            error as GraphQLError,
+          ),
+          variant: "error",
+        });
       },
     });
   };

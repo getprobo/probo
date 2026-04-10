@@ -97,61 +97,10 @@ func NewMux(
 
 		r.Handle("/graphql", graphqlHandler)
 
-		r.Get("/connectors/initiate", func(w http.ResponseWriter, r *http.Request) {
-			provider := r.URL.Query().Get("provider")
-			if provider == "" {
-				httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("missing provider parameter"))
-				return
-			}
-
-			if _, err := connectorRegistry.Get(provider); err != nil {
-				httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("unsupported provider: %q", provider))
-				return
-			}
-
-			organizationID, err := gid.ParseGID(r.URL.Query().Get("organization_id"))
-			if err != nil {
-				panic(fmt.Errorf("cannot parse organization id: %w", err))
-			}
-
-			apiKey := authn.APIKeyFromContext(r.Context())
-			if apiKey != nil {
-				httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("api key authentication cannot be used for this endpoint"))
-				return
-			}
-
-			identity := authn.IdentityFromContext(r.Context())
-			if identity == nil {
-				httpserver.RenderError(w, http.StatusUnauthorized, fmt.Errorf("authentication required"))
-				return
-			}
-			session := authn.SessionFromContext(r.Context())
-			if session == nil {
-				httpserver.RenderError(w, http.StatusUnauthorized, fmt.Errorf("authentication required"))
-				return
-			}
-
-			if err := iamSvc.Authorizer.Authorize(r.Context(), iam.AuthorizeParams{
-				Principal: identity.ID,
-				Resource:  organizationID,
-				Session:   &session.ID,
-				Action:    probo.ActionConnectorInitiate,
-			}); err != nil {
-				httpserver.RenderError(w, http.StatusForbidden, err)
-				return
-			}
-
-			opts := connector.InitiateOptions{
-				Scopes: r.URL.Query()["scope"],
-			}
-
-			redirectURL, err := connectorRegistry.Initiate(r.Context(), provider, organizationID, opts, r)
-			if err != nil {
-				panic(fmt.Errorf("cannot initiate connector: %w", err))
-			}
-
-			http.Redirect(w, r, redirectURL, http.StatusSeeOther)
-		})
+		r.Get(
+			"/connectors/initiate",
+			handleConnectorInitiate(logger, proboSvc, iamSvc, connectorRegistry),
+		)
 
 		r.Get(
 			"/connectors/complete",
@@ -225,7 +174,15 @@ func handleConnectorComplete(
 				return
 			}
 
-			cnnctr, err = svc.Connectors.Reconnect(r.Context(), connectorID, connection)
+			cnnctr, err = svc.Connectors.Reconnect(
+				r.Context(),
+				probo.ReconnectConnectorRequest{
+					ConnectorID:    connectorID,
+					OrganizationID: organizationID,
+					Provider:       connectorProvider,
+					Connection:     connection,
+				},
+			)
 			if err != nil {
 				panic(fmt.Errorf("cannot reconnect connector: %w", err))
 			}
