@@ -5202,7 +5202,6 @@ components:
       type: string
       enum:
         - CREATED_AT
-        - VERSION
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.DocumentVersionOrderField
 
     DocumentVersionOrderBy:
