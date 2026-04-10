@@ -117,7 +117,7 @@ func (c *OAuth2Connector) Initiate(
 			stateData.ContinueURL = continueURL
 		}
 	}
-	return c.InitiateWithState(ctx, stateData, opts, r)
+	return c.InitiateWithState(ctx, stateData, opts)
 }
 
 // InitiateWithState generates an OAuth2 authorization URL with a custom state.
@@ -126,7 +126,6 @@ func (c *OAuth2Connector) InitiateWithState(
 	ctx context.Context,
 	stateData OAuth2State,
 	opts InitiateOptions,
-	r *http.Request,
 ) (string, error) {
 	state, err := statelesstoken.NewToken(c.ClientSecret, OAuth2TokenType, OAuth2TokenTTL, stateData)
 	if err != nil {
