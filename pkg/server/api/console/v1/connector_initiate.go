@@ -29,6 +29,10 @@ import (
 	"go.probo.inc/probo/pkg/server/api/authn"
 )
 
+var (
+	errInvalidReconnectConnector = errors.New("invalid reconnect connector")
+)
+
 func handleConnectorInitiate(
 	logger *log.Logger,
 	proboSvc *probo.Service,
@@ -91,8 +95,12 @@ func handleConnectorInitiate(
 				httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("cannot reconnect: connector not found"))
 				return
 			}
+			if errors.Is(err, errInvalidReconnectConnector) {
+				httpserver.RenderError(w, http.StatusBadRequest, err)
+				return
+			}
 			logger.ErrorCtx(r.Context(), "cannot look up existing connector", log.Error(err))
-			httpserver.RenderError(w, http.StatusInternalServerError, fmt.Errorf("cannot look up existing connector: %w", err))
+			httpserver.RenderError(w, http.StatusInternalServerError, fmt.Errorf("cannot look up existing connector"))
 			return
 		}
 
@@ -131,9 +139,17 @@ func loadExistingConnector(
 	if explicitID := r.URL.Query().Get("connector_id"); explicitID != "" {
 		parsedID, err := gid.ParseGID(explicitID)
 		if err != nil {
-			return nil, fmt.Errorf("cannot parse connector id: %w", err)
+			return nil, fmt.Errorf("%w: cannot parse connector id: %w", errInvalidReconnectConnector, err)
 		}
-		return prb.Connectors.GetWithConnection(r.Context(), parsedID)
+
+		found, err := prb.Connectors.GetWithConnection(r.Context(), parsedID)
+		if err != nil {
+			return nil, err
+		}
+		if err := validateReconnectConnector(found, organizationID, provider); err != nil {
+			return nil, err
+		}
+		return found, nil
 	}
 
 	found, err := prb.Connectors.GetByOrganizationIDAndProvider(
@@ -145,4 +161,34 @@ func loadExistingConnector(
 		return nil, nil
 	}
 	return found, err
+}
+
+func validateReconnectConnector(
+	c *coredata.Connector,
+	organizationID gid.GID,
+	provider string,
+) error {
+	if c == nil {
+		return fmt.Errorf("%w: connector not found", errInvalidReconnectConnector)
+	}
+
+	var connectorProvider coredata.ConnectorProvider
+	if err := connectorProvider.Scan(provider); err != nil {
+		return fmt.Errorf("%w: unsupported provider: %w", errInvalidReconnectConnector, err)
+	}
+
+	if c.OrganizationID != organizationID {
+		return fmt.Errorf("%w: organization mismatch", errInvalidReconnectConnector)
+	}
+	if c.Provider != connectorProvider {
+		return fmt.Errorf("%w: provider mismatch", errInvalidReconnectConnector)
+	}
+	if c.Protocol != coredata.ConnectorProtocolOAuth2 {
+		return fmt.Errorf("%w: not an OAuth2 connector", errInvalidReconnectConnector)
+	}
+	if c.Connection == nil {
+		return fmt.Errorf("%w: connector has nil connection", errInvalidReconnectConnector)
+	}
+
+	return nil
 }
