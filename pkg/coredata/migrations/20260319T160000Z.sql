@@ -104,6 +104,3 @@ LEFT JOIN document_approvers da ON da.document_id = dv.document_id
 WHERE dv.status = 'PUBLISHED'
     AND COALESCE(dva.approver_profile_id, da.approver_profile_id) IS NOT NULL
 ON CONFLICT (quorum_id, approver_id) DO NOTHING;
-
--- TODO: DROP TABLE document_version_approvers once confirmed safe
--- TODO: DROP TABLE document_approvers once confirmed safe
