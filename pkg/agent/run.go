@@ -387,6 +387,7 @@ func coreLoop(ctx context.Context, startAgent *Agent, inputMessages []llm.Messag
 				if s.opts.checkpointStore != nil && s.opts.runID != "" {
 					if saveErr := s.opts.checkpointStore.Save(ctx, s.opts.runID, cp); saveErr != nil {
 						s.logger.ErrorCtx(ctx, "cannot save suspension checkpoint", log.Error(saveErr))
+						se.Checkpoint = cp
 					}
 				} else {
 					se.Checkpoint = cp
