@@ -60,9 +60,6 @@ func restoreCheckpoint(
 	runID string,
 	registry AgentRegistry,
 ) (*Result, error) {
-	if cp.Version != CheckpointVersion {
-		return nil, fmt.Errorf("cannot restore: unsupported checkpoint version %d", cp.Version)
-	}
 	emitHook(agent, func(h RunHooks) { h.OnRunRestore(ctx, agent, cp) })
 
 	switch cp.Status {
