@@ -8,7 +8,7 @@
     <style>
         /* A4 Page Setup for printing */
         @page {
-            size: A4;
+            size: A4{{if .Landscape}} landscape{{end}};
             margin: 2.5cm;
 
             @bottom-right {
@@ -118,8 +118,16 @@
             widows: 3;
         }
 
+        .document-content hr {
+            border: none;
+            margin: 0;
+            padding: 0;
+            height: 0;
+            page-break-after: always;
+        }
+
         .document-content h1 {
-            font-size: 14pt;
+            font-size: 18pt;
             font-weight: bold;
             color: #000;
             margin: 20px 0 12px 0;

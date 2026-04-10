@@ -101,6 +101,7 @@ WITH stmt AS (
     WHERE
         a.%s
         AND a.id = @id
+        AND a.snapshot_id IS NULL
 )
 SELECT
     id,
@@ -179,6 +180,7 @@ INNER JOIN
     frameworks f ON f.id = c.framework_id
 WHERE
     soac.control_id = @control_id
+    AND soac.snapshot_id IS NULL
 LIMIT 1;
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -428,6 +430,7 @@ WITH stmt AS (
     WHERE
         a.%[1]s
         AND a.statement_of_applicability_id = @statement_of_applicability_id
+        AND a.snapshot_id IS NULL
 )
 SELECT
     id,
@@ -467,6 +470,58 @@ WHERE
 	return nil
 }
 
+func (sacs *ApplicabilityStatements) LoadAllByStatementOfApplicabilityID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	statementOfApplicabilityID gid.GID,
+) error {
+	q := `
+SELECT
+    a.id,
+    a.statement_of_applicability_id,
+    a.control_id,
+    a.organization_id,
+    a.snapshot_id,
+    a.applicability,
+    a.justification,
+    a.created_at,
+    a.updated_at,
+    f.name || ' - ' || c.section_title AS section_title
+FROM
+    applicability_statements a
+INNER JOIN
+    controls c ON c.id = a.control_id
+INNER JOIN
+    frameworks f ON f.id = c.framework_id
+WHERE
+    a.%s
+    AND a.statement_of_applicability_id = @statement_of_applicability_id
+    AND a.snapshot_id IS NULL
+ORDER BY
+    section_title ASC;
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"statement_of_applicability_id": statementOfApplicabilityID,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query applicability_statements: %w", err)
+	}
+
+	controls, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[ApplicabilityStatement])
+	if err != nil {
+		return fmt.Errorf("cannot collect applicability_statements: %w", err)
+	}
+
+	*sacs = controls
+	return nil
+}
+
 func (sacs *ApplicabilityStatements) CountByStatementOfApplicabilityID(
 	ctx context.Context,
 	conn pg.Querier,
@@ -480,11 +535,12 @@ FROM
     applicability_statements
 WHERE
     %s
-    AND statement_of_applicability_id = @statement_of_applicability_id;
+    AND statement_of_applicability_id = @statement_of_applicability_id
+    AND snapshot_id IS NULL;
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
-	args := pgx.NamedArgs{"statement_of_applicability_id": statementOfApplicabilityID}
+	args := pgx.StrictNamedArgs{"statement_of_applicability_id": statementOfApplicabilityID}
 	maps.Copy(args, scope.SQLArguments())
 
 	var count int
@@ -527,6 +583,7 @@ WITH soac_ctrl AS (
     WHERE
         soac.%[1]s
         AND soac.control_id = @control_id
+        AND soac.snapshot_id IS NULL
         AND soa.snapshot_id IS NULL
 )
 SELECT

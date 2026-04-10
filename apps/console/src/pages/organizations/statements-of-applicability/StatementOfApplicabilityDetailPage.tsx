@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { formatDate, formatError, type GraphQLError, promisifyMutation, sprintf, validateSnapshotConsistency } from "@probo/helpers";
+import { formatDate, formatError, type GraphQLError, promisifyMutation, sprintf } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
 import {
@@ -21,17 +21,17 @@ import {
   Button,
   Card,
   DropdownItem,
-  IconArrowDown,
   IconCheckmark1,
   IconCrossLargeX,
   IconPencil,
   IconTrashCan,
+  IconUpload,
   Input,
   PageHeader,
   useConfirm,
   useToast,
 } from "@probo/ui";
-import { Suspense, useState } from "react";
+import { useState } from "react";
 import {
   ConnectionHandler,
   graphql,
@@ -43,15 +43,13 @@ import { useNavigate, useParams } from "react-router";
 import { z } from "zod";
 
 import type { StatementOfApplicabilityDetailPageDeleteMutation } from "#/__generated__/core/StatementOfApplicabilityDetailPageDeleteMutation.graphql";
-import type { StatementOfApplicabilityDetailPageExportMutation } from "#/__generated__/core/StatementOfApplicabilityDetailPageExportMutation.graphql";
 import type { StatementOfApplicabilityDetailPageQuery } from "#/__generated__/core/StatementOfApplicabilityDetailPageQuery.graphql";
 import type { StatementOfApplicabilityDetailPageUpdateMutation } from "#/__generated__/core/StatementOfApplicabilityDetailPageUpdateMutation.graphql";
-import { PeopleSelectField } from "#/components/form/PeopleSelectField";
-import { SnapshotBanner } from "#/components/SnapshotBanner";
+import { PeopleMultiSelectField } from "#/components/form/PeopleMultiSelectField";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
-import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
+import { PublishStatementOfApplicabilityDialog } from "./dialogs/PublishStatementOfApplicabilityDialog";
 import StatementOfApplicabilityControlsTab from "./tabs/StatementOfApplicabilityControlsTab";
 
 export const statementOfApplicabilityDetailPageQuery = graphql`
@@ -60,28 +58,17 @@ export const statementOfApplicabilityDetailPageQuery = graphql`
             ... on StatementOfApplicability {
                 id
                 name
-                snapshotId
                 createdAt
                 updatedAt
-                canUpdate: permission(action: "core:statement-of-applicability:update")
-                canDelete: permission(action: "core:statement-of-applicability:delete")
-                canExport: permission(action: "core:statement-of-applicability:export")
-                owner {
+                defaultApprovers {
                     id
                     fullName
                 }
+                canUpdate: permission(action: "core:statement-of-applicability:update")
+                canDelete: permission(action: "core:statement-of-applicability:delete")
+                canPublish: permission(action: "core:statement-of-applicability:publish")
                 ...StatementOfApplicabilityControlsTabFragment
             }
-        }
-    }
-`;
-
-const exportMutation = graphql`
-    mutation StatementOfApplicabilityDetailPageExportMutation(
-        $input: ExportStatementOfApplicabilityPDFInput!
-    ) {
-        exportStatementOfApplicabilityPDF(input: $input) {
-            data
         }
     }
 `;
@@ -94,11 +81,9 @@ const updateMutation = graphql`
             statementOfApplicability {
                 id
                 name
-                sourceId
-                snapshotId
                 createdAt
                 updatedAt
-                owner {
+                defaultApprovers {
                     id
                     fullName
                 }
@@ -125,16 +110,14 @@ type Props = {
 };
 
 export default function StatementOfApplicabilityDetailPage(props: Props) {
-  const { statementOfApplicabilityId, snapshotId } = useParams<{
+  const { statementOfApplicabilityId } = useParams<{
     statementOfApplicabilityId: string;
-    snapshotId?: string;
   }>();
   const organizationId = useOrganizationId();
   const data = usePreloadedQuery(statementOfApplicabilityDetailPageQuery, props.queryRef);
   const statementOfApplicability = data.node;
   const { __ } = useTranslate();
   const navigate = useNavigate();
-  const isSnapshotMode = Boolean(snapshotId);
   const confirm = useConfirm();
   const { toast } = useToast();
 
@@ -144,12 +127,9 @@ export default function StatementOfApplicabilityDetailPage(props: Props) {
     );
   }
 
-  validateSnapshotConsistency(statementOfApplicability, snapshotId);
-
   const connectionId = ConnectionHandler.getConnectionID(
     organizationId,
     StatementOfApplicabilityConnectionKey,
-    { filter: { snapshotId: snapshotId ?? null } },
   );
 
   const [deleteStatementOfApplicability]
@@ -196,58 +176,14 @@ export default function StatementOfApplicabilityDetailPage(props: Props) {
   usePageTitle(statementOfApplicability.name || __("Statement of Applicability"));
 
   const [isEditingName, setIsEditingName] = useState(false);
-  const [isEditingOwner, setIsEditingOwner] = useState(false);
   const [updateStatementOfApplicability, isUpdating]
-    = useMutationWithToasts<StatementOfApplicabilityDetailPageUpdateMutation>(
-      updateMutation,
-      {
-        successMessage: __("Statement of Applicability updated successfully."),
-        errorMessage: __("Failed to update Statement of Applicability"),
-      },
-    );
+    = useMutation<StatementOfApplicabilityDetailPageUpdateMutation>(updateMutation);
 
-  const canUpdate = !isSnapshotMode && statementOfApplicability.canUpdate;
-  const canDelete = !isSnapshotMode && statementOfApplicability.canDelete;
-
-  const [exportStatementOfApplicabilityPDF, isExporting]
-    = useMutationWithToasts<StatementOfApplicabilityDetailPageExportMutation>(
-      exportMutation,
-      {
-        successMessage: __(
-          "Statement of Applicability exported successfully.",
-        ),
-        errorMessage: __("Failed to export Statement of Applicability"),
-      },
-    );
-
-  const handleExport = async () => {
-    if (!statementOfApplicability.id) return;
-
-    await exportStatementOfApplicabilityPDF({
-      variables: {
-        input: {
-          statementOfApplicabilityId: statementOfApplicability.id,
-        },
-      },
-      onCompleted: (data) => {
-        if (data.exportStatementOfApplicabilityPDF?.data) {
-          const link = window.document.createElement("a");
-          link.href = data.exportStatementOfApplicabilityPDF.data;
-          link.download = `${statementOfApplicability.name || "statement-of-applicability"}.pdf`;
-          window.document.body.appendChild(link);
-          link.click();
-          window.document.body.removeChild(link);
-        }
-      },
-    });
-  };
+  const canUpdate = statementOfApplicability.canUpdate;
+  const canDelete = statementOfApplicability.canDelete;
 
   const nameSchema = z.object({
     name: z.string().min(1, __("Name is required")),
-  });
-
-  const ownerSchema = z.object({
-    ownerId: z.string().min(1, __("Owner is required")),
   });
 
   const {
@@ -260,46 +196,34 @@ export default function StatementOfApplicabilityDetailPage(props: Props) {
     },
   });
 
-  const {
-    control: controlOwner,
-    handleSubmit: handleSubmitOwner,
-    reset: resetOwner,
-  } = useFormWithSchema(ownerSchema, {
-    defaultValues: {
-      ownerId: statementOfApplicability.owner?.id || "",
-    },
-  });
-
-  const handleUpdateName = handleSubmitName(async (data) => {
+  const handleUpdateName = handleSubmitName((data) => {
     if (!statementOfApplicability.id) return;
 
-    await updateStatementOfApplicability({
+    updateStatementOfApplicability({
       variables: {
         input: {
           id: statementOfApplicability.id,
           name: data.name,
         },
       },
-      onSuccess: () => {
+      onCompleted() {
+        toast({
+          title: __("Success"),
+          description: __("Statement of Applicability updated successfully."),
+          variant: "success",
+        });
         setIsEditingName(false);
         resetName({ name: data.name });
       },
-    });
-  });
-
-  const handleUpdateOwner = handleSubmitOwner(async (data) => {
-    if (!statementOfApplicability.id) return;
-
-    await updateStatementOfApplicability({
-      variables: {
-        input: {
-          id: statementOfApplicability.id,
-          ownerId: data.ownerId,
-        },
-      },
-      onSuccess: () => {
-        setIsEditingOwner(false);
-        resetOwner({ ownerId: data.ownerId });
+      onError(error) {
+        toast({
+          title: __("Error"),
+          description: formatError(
+            __("Failed to update Statement of Applicability"),
+            error as GraphQLError,
+          ),
+          variant: "error",
+        });
       },
     });
   });
@@ -311,20 +235,63 @@ export default function StatementOfApplicabilityDetailPage(props: Props) {
     });
   };
 
-  const handleCancelOwnerEdit = () => {
-    setIsEditingOwner(false);
-    resetOwner({
-      ownerId: statementOfApplicability.owner?.id || "",
+  const [isEditingApprovers, setIsEditingApprovers] = useState(false);
+  const defaultApproverIds = (statementOfApplicability.defaultApprovers ?? []).map(a => a.id);
+
+  const approversSchema = z.object({
+    defaultApproverIds: z.array(z.string()),
+  });
+
+  const {
+    control: approversControl,
+    handleSubmit: handleSubmitApprovers,
+    reset: resetApprovers,
+  } = useFormWithSchema(approversSchema, {
+    defaultValues: {
+      defaultApproverIds,
+    },
+  });
+
+  const handleUpdateApprovers = handleSubmitApprovers((data) => {
+    if (!statementOfApplicability.id) return;
+
+    updateStatementOfApplicability({
+      variables: {
+        input: {
+          id: statementOfApplicability.id,
+          defaultApproverIds: data.defaultApproverIds,
+        },
+      },
+      onCompleted() {
+        toast({
+          title: __("Success"),
+          description: __("Default approvers updated successfully."),
+          variant: "success",
+        });
+        setIsEditingApprovers(false);
+      },
+      onError(error) {
+        toast({
+          title: __("Error"),
+          description: formatError(
+            __("Failed to update default approvers"),
+            error as GraphQLError,
+          ),
+          variant: "error",
+        });
+      },
     });
+  });
+
+  const handleCancelApproversEdit = () => {
+    setIsEditingApprovers(false);
+    resetApprovers({ defaultApproverIds });
   };
 
-  const listUrl = snapshotId
-    ? `/organizations/${organizationId}/snapshots/${snapshotId}/statements-of-applicability`
-    : `/organizations/${organizationId}/statements-of-applicability`;
+  const listUrl = `/organizations/${organizationId}/statements-of-applicability`;
 
   return (
     <div className="space-y-6">
-      {snapshotId && <SnapshotBanner snapshotId={snapshotId} />}
       <Breadcrumb
         items={[
           {
@@ -385,15 +352,18 @@ export default function StatementOfApplicabilityDetailPage(props: Props) {
               )
         }
       >
-        {statementOfApplicability.canExport && (
-          <Button
-            variant="secondary"
-            icon={IconArrowDown}
-            onClick={() => void handleExport()}
-            disabled={isExporting}
+        {statementOfApplicability.canPublish && statementOfApplicability.id && (
+          <PublishStatementOfApplicabilityDialog
+            statementOfApplicabilityId={statementOfApplicability.id}
+            defaultApproverIds={defaultApproverIds}
           >
-            {__("Export")}
-          </Button>
+            <Button
+              variant="secondary"
+              icon={IconUpload}
+            >
+              {__("Publish")}
+            </Button>
+          </PublishStatementOfApplicabilityDialog>
         )}
         {canDelete && (
           <ActionDropdown variant="secondary">
@@ -415,56 +385,6 @@ export default function StatementOfApplicabilityDetailPage(props: Props) {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <div className="text-xs text-txt-tertiary font-semibold mb-1">
-                  {__("Owner")}
-                </div>
-                {isEditingOwner && canUpdate
-                  ? (
-                      <div className="flex items-center gap-2">
-                        <Suspense
-                          fallback={
-                            <div>{__("Loading...")}</div>
-                          }
-                        >
-                          <PeopleSelectField
-                            organizationId={organizationId}
-                            control={controlOwner}
-                            name="ownerId"
-                          />
-                        </Suspense>
-                        <Button
-                          variant="quaternary"
-                          icon={IconCheckmark1}
-                          onClick={() => void handleUpdateOwner()}
-                          disabled={isUpdating}
-                        />
-                        <Button
-                          variant="quaternary"
-                          icon={IconCrossLargeX}
-                          onClick={handleCancelOwnerEdit}
-                        />
-                      </div>
-                    )
-                  : (
-                      <div className="flex items-center gap-2">
-                        <div className="text-sm text-txt-primary">
-                          {statementOfApplicability.owner
-                            ?.fullName || "-"}
-                        </div>
-                        {canUpdate && (
-                          <Button
-                            variant="quaternary"
-                            icon={IconPencil}
-                            onClick={() =>
-                              setIsEditingOwner(true)}
-                          />
-                        )}
-                      </div>
-                    )}
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <div className="text-xs text-txt-tertiary font-semibold mb-1">
                   {__("Created at")}
                 </div>
                 <div className="text-sm text-txt-primary">
@@ -480,6 +400,54 @@ export default function StatementOfApplicabilityDetailPage(props: Props) {
                 </div>
               </div>
             </div>
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <div className="text-xs text-txt-tertiary font-semibold">
+                  {__("Default Approvers")}
+                </div>
+                {canUpdate && !isEditingApprovers && (
+                  <Button
+                    variant="quaternary"
+                    icon={IconPencil}
+                    onClick={() => setIsEditingApprovers(true)}
+                  />
+                )}
+              </div>
+              {isEditingApprovers && canUpdate
+                ? (
+                    <div className="space-y-2">
+                      <PeopleMultiSelectField
+                        name="defaultApproverIds"
+                        control={approversControl}
+                        organizationId={organizationId}
+                        placeholder={__("Add approvers...")}
+                      />
+                      <div className="flex gap-2">
+                        <Button
+                          variant="quaternary"
+                          icon={IconCheckmark1}
+                          onClick={() => void handleUpdateApprovers()}
+                          disabled={isUpdating}
+                        />
+                        <Button
+                          variant="quaternary"
+                          icon={IconCrossLargeX}
+                          onClick={handleCancelApproversEdit}
+                        />
+                      </div>
+                    </div>
+                  )
+                : (
+                    <div className="text-sm text-txt-primary">
+                      {statementOfApplicability.defaultApprovers
+                        && statementOfApplicability.defaultApprovers.length > 0
+                        ? statementOfApplicability.defaultApprovers
+                            .map(a => a.fullName)
+                            .join(", ")
+                        : __("None")}
+                    </div>
+                  )}
+            </div>
           </Card>
         </div>
 
@@ -494,7 +462,6 @@ export default function StatementOfApplicabilityDetailPage(props: Props) {
                   id: string;
                 }
               }
-              isSnapshotMode={isSnapshotMode}
             />
           </div>
         )}

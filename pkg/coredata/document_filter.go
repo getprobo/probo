@@ -28,6 +28,7 @@ type (
 		employeeFilterModes     []EmployeeFilterMode
 		documentTypes           []DocumentType
 		classifications         []DocumentClassification
+		contentSources          []DocumentContentSource
 		status                  []DocumentStatus
 	}
 )
@@ -71,6 +72,11 @@ func (f *DocumentFilter) WithClassifications(classifications []DocumentClassific
 	return f
 }
 
+func (f *DocumentFilter) WithContentSources(contentSources []DocumentContentSource) *DocumentFilter {
+	f.contentSources = contentSources
+	return f
+}
+
 func (f *DocumentFilter) WithStatus(status []DocumentStatus) *DocumentFilter {
 	f.status = status
 	return f
@@ -101,6 +107,14 @@ func (f *DocumentFilter) SQLArguments() pgx.NamedArgs {
 		}
 	}
 
+	var contentSources []string
+	if f.contentSources != nil {
+		contentSources = make([]string, len(f.contentSources))
+		for i, cs := range f.contentSources {
+			contentSources[i] = cs.String()
+		}
+	}
+
 	var status []string
 	if f.status != nil {
 		status = make([]string, len(f.status))
@@ -122,6 +136,7 @@ func (f *DocumentFilter) SQLArguments() pgx.NamedArgs {
 		"employee_filter_modes":     employeeFilterModes,
 		"document_types":            documentTypes,
 		"classifications":           classifications,
+		"content_sources":           contentSources,
 		"document_status":           status,
 	}
 }
@@ -206,6 +221,12 @@ func (f *DocumentFilter) SQLFragment() string {
 				ORDER BY dv.major DESC, dv.minor DESC
 				LIMIT 1
 			) = ANY(@classifications::document_classification[])
+		ELSE TRUE
+	END
+	AND
+	CASE
+		WHEN @content_sources::text[] IS NOT NULL THEN
+			documents.content_source::text = ANY(@content_sources::text[])
 		ELSE TRUE
 	END
 	AND

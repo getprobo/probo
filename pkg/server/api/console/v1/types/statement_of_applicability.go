@@ -30,7 +30,6 @@ type (
 
 		Resolver any
 		ParentID gid.GID
-		Filters  *coredata.StatementOfApplicabilityFilter
 	}
 )
 
@@ -38,7 +37,6 @@ func NewStatementOfApplicabilityConnection(
 	p *page.Page[*coredata.StatementOfApplicability, coredata.StatementOfApplicabilityOrderField],
 	parentType any,
 	parentID gid.GID,
-	filters *coredata.StatementOfApplicabilityFilter,
 ) *StatementOfApplicabilityConnection {
 	var edges = make([]*StatementOfApplicabilityEdge, len(p.Data))
 
@@ -52,7 +50,6 @@ func NewStatementOfApplicabilityConnection(
 
 		Resolver: parentType,
 		ParentID: parentID,
-		Filters:  filters,
 	}
 }
 
@@ -64,18 +61,21 @@ func NewStatementOfApplicabilityEdge(soa *coredata.StatementOfApplicability, ord
 }
 
 func NewStatementOfApplicability(soa *coredata.StatementOfApplicability) *StatementOfApplicability {
-	return &StatementOfApplicability{
+	s := &StatementOfApplicability{
 		ID: soa.ID,
 		Organization: &Organization{
 			ID: soa.OrganizationID,
 		},
-		Owner: &Profile{
-			ID: soa.OwnerID,
-		},
-		Name:       soa.Name,
-		SourceID:   soa.SourceID,
-		SnapshotID: soa.SnapshotID,
-		CreatedAt:  soa.CreatedAt,
-		UpdatedAt:  soa.UpdatedAt,
+		Name:      soa.Name,
+		CreatedAt: soa.CreatedAt,
+		UpdatedAt: soa.UpdatedAt,
 	}
+
+	if soa.DocumentID != nil {
+		s.Document = &Document{
+			ID: *soa.DocumentID,
+		}
+	}
+
+	return s
 }

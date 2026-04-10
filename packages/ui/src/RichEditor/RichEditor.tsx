@@ -67,7 +67,7 @@ const extensions = [
 ];
 
 const richEditorVariants = tv({
-  base: ["relative flex-1 py-14 pr-8 bg-level-1 shadow-base"],
+  base: ["relative flex-1 min-w-0 overflow-hidden py-14 pr-8 bg-level-1 shadow-base"],
   variants: {
     disabled: {
       true: "pl-8",

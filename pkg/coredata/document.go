@@ -35,6 +35,7 @@ type (
 		CurrentPublishedMajor *int                  `db:"current_published_major"`
 		CurrentPublishedMinor *int                  `db:"current_published_minor"`
 		TrustCenterVisibility TrustCenterVisibility `db:"trust_center_visibility"`
+		ContentSource         DocumentContentSource `db:"content_source"`
 		Status                DocumentStatus        `db:"status"`
 		ArchivedAt            *time.Time            `db:"archived_at"`
 		CreatedAt             time.Time             `db:"created_at"`
@@ -102,6 +103,7 @@ SELECT
     documents.organization_id,
     documents.current_published_major,
     documents.current_published_minor,
+    documents.content_source,
     documents.trust_center_visibility,
     documents.status,
     documents.archived_at,
@@ -161,6 +163,7 @@ SELECT
     documents.organization_id,
     documents.current_published_major,
     documents.current_published_minor,
+    documents.content_source,
     documents.trust_center_visibility,
     documents.status,
     documents.archived_at,
@@ -221,6 +224,7 @@ SELECT
     documents.organization_id,
     documents.current_published_major,
     documents.current_published_minor,
+    documents.content_source,
     documents.trust_center_visibility,
     documents.status,
     documents.archived_at,
@@ -311,6 +315,7 @@ base AS (
         documents.organization_id,
         documents.current_published_major,
         documents.current_published_minor,
+        documents.content_source,
         documents.trust_center_visibility,
         documents.status,
         documents.archived_at,
@@ -370,6 +375,7 @@ SELECT
     documents.organization_id,
     documents.current_published_major,
     documents.current_published_minor,
+    documents.content_source,
     documents.trust_center_visibility,
     documents.status,
     documents.archived_at,
@@ -443,6 +449,7 @@ base AS (
 		documents.organization_id,
 		documents.current_published_major,
 		documents.current_published_minor,
+		documents.content_source,
 		documents.trust_center_visibility,
 		documents.status,
 		documents.archived_at,
@@ -497,6 +504,7 @@ INSERT INTO
 		organization_id,
 		current_published_major,
 		current_published_minor,
+		content_source,
 		trust_center_visibility,
 		status,
 		archived_at,
@@ -509,6 +517,7 @@ VALUES (
     @organization_id,
     @current_published_major,
     @current_published_minor,
+    @content_source,
     @trust_center_visibility,
     @status,
     @archived_at,
@@ -523,6 +532,7 @@ VALUES (
 		"organization_id":         p.OrganizationID,
 		"current_published_major": p.CurrentPublishedMajor,
 		"current_published_minor": p.CurrentPublishedMinor,
+		"content_source":          p.ContentSource,
 		"trust_center_visibility": p.TrustCenterVisibility,
 		"status":                  p.Status,
 		"archived_at":             p.ArchivedAt,
@@ -675,6 +685,7 @@ base AS (
 		sd.current_published_major,
 		sd.current_published_minor,
 		sd.trust_center_visibility,
+		sd.content_source,
 		sd.status,
 		sd.archived_at,
 		sd.created_at,
@@ -774,6 +785,7 @@ base AS (
 		sd.current_published_major,
 		sd.current_published_minor,
 		sd.trust_center_visibility,
+		sd.content_source,
 		sd.status,
 		sd.archived_at,
 		sd.created_at,
@@ -873,6 +885,7 @@ base AS (
 		sd.current_published_major,
 		sd.current_published_minor,
 		sd.trust_center_visibility,
+		sd.content_source,
 		sd.status,
 		sd.archived_at,
 		sd.created_at,

@@ -64,6 +64,10 @@ enum DocumentType
   REPORT @goEnum(value: "go.probo.inc/probo/pkg/coredata.DocumentTypeReport")
   TEMPLATE
     @goEnum(value: "go.probo.inc/probo/pkg/coredata.DocumentTypeTemplate")
+  STATEMENT_OF_APPLICABILITY
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.DocumentTypeStatementOfApplicability"
+    )
 }
 
 type Document implements Node @nda {

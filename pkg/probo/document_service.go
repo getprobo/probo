@@ -74,6 +74,9 @@ type (
 	ErrDocumentNotArchived struct {
 	}
 
+	ErrDocumentVersionGenerated struct {
+	}
+
 	ErrDocumentVersionSignatureAlreadySigned struct {
 	}
 
@@ -216,6 +219,10 @@ func (e ErrDocumentArchived) Error() string {
 
 func (e ErrDocumentNotArchived) Error() string {
 	return "cannot unarchive a document that is not archived"
+}
+
+func (e ErrDocumentVersionGenerated) Error() string {
+	return "cannot edit a generated document version"
 }
 
 func (e ErrDocumentVersionSignatureAlreadySigned) Error() string {
@@ -584,6 +591,7 @@ func (s *DocumentService) Create(
 
 	document := &coredata.Document{
 		ID:                    documentID,
+		ContentSource:         coredata.DocumentContentSourceAuthored,
 		TrustCenterVisibility: coredata.TrustCenterVisibilityNone,
 		Status:                coredata.DocumentStatusActive,
 		CreatedAt:             now,
@@ -613,6 +621,7 @@ func (s *DocumentService) Create(
 		Status:         coredata.DocumentVersionStatusDraft,
 		Classification: req.Classification,
 		DocumentType:   req.DocumentType,
+		Orientation:    coredata.DocumentVersionOrientationPortrait,
 		CreatedAt:      now,
 		UpdatedAt:      now,
 	}
@@ -852,6 +861,10 @@ func (s *DocumentService) UpdateVersion(
 
 			if documentVersion.Status != coredata.DocumentVersionStatusDraft {
 				return &ErrDocumentVersionNotDraft{}
+			}
+
+			if document.ContentSource == coredata.DocumentContentSourceGenerated {
+				return &ErrDocumentVersionGenerated{}
 			}
 
 			if req.Content != nil {
@@ -1126,6 +1139,7 @@ func (s *DocumentService) CreateDraft(
 			draftVersion.Classification = latestVersion.Classification
 			draftVersion.DocumentType = latestVersion.DocumentType
 			draftVersion.Content = latestVersion.Content
+			draftVersion.Orientation = latestVersion.Orientation
 			draftVersion.Status = coredata.DocumentVersionStatusDraft
 			draftVersion.CreatedAt = now
 			draftVersion.UpdatedAt = now
@@ -2141,6 +2155,8 @@ func exportDocumentPDF(
 		}
 	}
 
+	isLandscape := version.Orientation == coredata.DocumentVersionOrientationLandscape
+
 	docData := docgen.DocumentData{
 		Title:                       version.Title,
 		Content:                     json.RawMessage([]byte(version.Content)),
@@ -2151,6 +2167,7 @@ func exportDocumentPDF(
 		PublishedAt:                 version.PublishedAt,
 		Signatures:                  signatureData,
 		CompanyHorizontalLogoBase64: horizontalLogoBase64,
+		Landscape:                   isLandscape,
 	}
 
 	htmlContent, err := docgen.RenderHTML(docData)
@@ -2158,9 +2175,14 @@ func exportDocumentPDF(
 		return nil, fmt.Errorf("cannot generate HTML: %w", err)
 	}
 
+	orientation := html2pdf.OrientationPortrait
+	if isLandscape {
+		orientation = html2pdf.OrientationLandscape
+	}
+
 	cfg := html2pdf.RenderConfig{
 		PageFormat:        html2pdf.PageFormatA4,
-		Orientation:       html2pdf.OrientationPortrait,
+		Orientation:       orientation,
 		MarginTop:         html2pdf.NewMarginInches(1.0),
 		MarginBottom:      html2pdf.NewMarginInches(1.0),
 		MarginLeft:        html2pdf.NewMarginInches(1.0),
