@@ -98,6 +98,7 @@ const (
 	AccessReviewCampaignEntityType             uint16 = 72
 	AccessEntryEntityType                      uint16 = 73
 	AccessEntryDecisionHistoryEntityType       uint16 = 74
+	AgentRunEntityType                         uint16 = 75
 )
 
 func NewEntityFromID(id gid.GID) (any, bool) {
@@ -244,6 +245,8 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &AccessEntry{ID: id}, true
 	case AccessEntryDecisionHistoryEntityType:
 		return &AccessEntryDecisionHistory{ID: id}, true
+	case AgentRunEntityType:
+		return &AgentRun{ID: id}, true
 	default:
 		return nil, false
 	}
