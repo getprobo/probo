@@ -278,7 +278,6 @@ func TestInitiateWithState_Scopes(t *testing.T) {
 			context.Background(),
 			OAuth2State{OrganizationID: orgID.String(), Provider: "TEST"},
 			InitiateOptions{Scopes: []string{"read:user", "write:user"}},
-			nil,
 		)
 		require.NoError(t, err)
 
@@ -303,7 +302,6 @@ func TestInitiateWithState_Scopes(t *testing.T) {
 			context.Background(),
 			OAuth2State{OrganizationID: orgID.String(), Provider: "TEST"},
 			InitiateOptions{},
-			nil,
 		)
 		require.NoError(t, err)
 
@@ -332,7 +330,6 @@ func TestInitiateWithState_Scopes(t *testing.T) {
 				Scopes:               []string{"read:user"},
 				IncludeGrantedScopes: true,
 			},
-			nil,
 		)
 		require.NoError(t, err)
 
@@ -361,7 +358,6 @@ func TestInitiateWithState_Scopes(t *testing.T) {
 				Scopes:               []string{"read:user"},
 				IncludeGrantedScopes: true,
 			},
-			nil,
 		)
 		require.NoError(t, err)
 
@@ -387,7 +383,6 @@ func TestInitiateWithState_Scopes(t *testing.T) {
 			context.Background(),
 			OAuth2State{OrganizationID: orgID.String(), Provider: "TEST"},
 			InitiateOptions{Scopes: []string{"read:user"}},
-			nil,
 		)
 		require.NoError(t, err)
 
@@ -420,7 +415,6 @@ func TestInitiateWithState_Scopes(t *testing.T) {
 				Scopes:               []string{"read:user"},
 				IncludeGrantedScopes: true,
 			},
-			nil,
 		)
 		require.NoError(t, err)
 
@@ -455,7 +449,6 @@ func TestInitiateWithState_Scopes(t *testing.T) {
 				Scopes:               []string{"read:user"},
 				IncludeGrantedScopes: false, // first install, no existing grant
 			},
-			nil,
 		)
 		require.NoError(t, err)
 
@@ -489,7 +482,6 @@ func TestInitiateWithState_Scopes(t *testing.T) {
 				Scopes:               []string{"read:user"},
 				IncludeGrantedScopes: true, // caller requested, but provider does not support
 			},
-			nil,
 		)
 		require.NoError(t, err)
 
