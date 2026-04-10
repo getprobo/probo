@@ -74,11 +74,17 @@ export const description: INodeProperties[] = [
 		},
 		options: [
 			{
-				displayName: 'Query',
-				name: 'query',
-				type: 'string',
-				default: '',
-				description: 'Search query to filter documents',
+				displayName: 'Classifications',
+				name: 'classifications',
+				type: 'multiOptions',
+				default: [],
+				description: 'Filter by document classification',
+				options: [
+					{ name: 'Confidential', value: 'CONFIDENTIAL' },
+					{ name: 'Internal', value: 'INTERNAL' },
+					{ name: 'Public', value: 'PUBLIC' },
+					{ name: 'Secret', value: 'SECRET' },
+				],
 			},
 			{
 				displayName: 'Document Types',
@@ -95,21 +101,16 @@ export const description: INodeProperties[] = [
 					{ name: 'Record', value: 'RECORD' },
 					{ name: 'Register', value: 'REGISTER' },
 					{ name: 'Report', value: 'REPORT' },
+					{ name: 'Statement of Applicability', value: 'STATEMENT_OF_APPLICABILITY' },
 					{ name: 'Template', value: 'TEMPLATE' },
 				],
 			},
 			{
-				displayName: 'Classifications',
-				name: 'classifications',
-				type: 'multiOptions',
-				default: [],
-				description: 'Filter by document classification',
-				options: [
-					{ name: 'Confidential', value: 'CONFIDENTIAL' },
-					{ name: 'Internal', value: 'INTERNAL' },
-					{ name: 'Public', value: 'PUBLIC' },
-					{ name: 'Secret', value: 'SECRET' },
-				],
+				displayName: 'Query',
+				name: 'query',
+				type: 'string',
+				default: '',
+				description: 'Search query to filter documents',
 			},
 			{
 				displayName: 'Status',
@@ -120,6 +121,17 @@ export const description: INodeProperties[] = [
 				options: [
 					{ name: 'Active', value: 'ACTIVE' },
 					{ name: 'Archived', value: 'ARCHIVED' },
+				],
+			},
+			{
+				displayName: 'Write Modes',
+				name: 'writeModes',
+				type: 'multiOptions',
+				default: [],
+				description: 'Filter by write mode',
+				options: [
+					{ name: 'Authored', value: 'AUTHORED' },
+					{ name: 'Generated', value: 'GENERATED' },
 				],
 			},
 		],
@@ -137,6 +149,7 @@ export async function execute(
 
 	const filter: IDataObject = {};
 	if (filters.query) filter.query = filters.query;
+	if ((filters.writeModes as string[])?.length) filter.writeModes = filters.writeModes;
 	if ((filters.documentTypes as string[])?.length) filter.documentTypes = filters.documentTypes;
 	if ((filters.classifications as string[])?.length) filter.classifications = filters.classifications;
 	filter.status = (filters.status as string[])?.length ? filters.status : ['ACTIVE'];

@@ -124,9 +124,18 @@ export function DocumentDetailsCard(props: {
   documentFragmentRef: DocumentDetailsCard_documentFragment$key;
   versionFragmentRef: DocumentDetailsCard_versionFragment$key;
   isEditable: boolean;
+  isGenerated?: boolean;
+  isLatestVersion?: boolean;
   onDocumentUpdated: () => void;
 }) {
-  const { documentFragmentRef, versionFragmentRef, isEditable, onDocumentUpdated } = props;
+  const {
+    documentFragmentRef,
+    versionFragmentRef,
+    isEditable,
+    isGenerated = false,
+    isLatestVersion = true,
+    onDocumentUpdated,
+  } = props;
 
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
@@ -140,6 +149,8 @@ export function DocumentDetailsCard(props: {
   const version = useFragment<DocumentDetailsCard_versionFragment$key>(versionFragment, versionFragmentRef);
 
   const canEdit = document.canUpdate && isEditable;
+  const canEditVersionFields = canEdit && !isGenerated;
+  const canEditApprovers = document.canUpdate && isLatestVersion;
 
   const { control, handleSubmit, reset } = useFormWithSchema(
     schema,
@@ -274,59 +285,6 @@ export function DocumentDetailsCard(props: {
       <div className="grid grid-cols-3 gap-4">
         <div>
           <div className="text-xs text-txt-tertiary font-semibold mb-1">
-            {__("Approvers")}
-          </div>
-          {isEditingApprovers
-            ? (
-                <div className="flex items-center gap-2">
-                  <div className="flex-1">
-                    <PeopleMultiSelectField
-                      name="approverIds"
-                      control={approversControl}
-                      organizationId={organizationId}
-                      selectedPeople={document.defaultApprovers.map(a => ({
-                        id: a.id,
-                        fullName: a.fullName,
-                        emailAddress: a.emailAddress,
-                      }))}
-                      placeholder={__("Add approvers...")}
-                    />
-                  </div>
-                  <Button
-                    variant="quaternary"
-                    icon={IconCheckmark1}
-                    onClick={() => void handleApproversSubmit(handleUpdateApprovers)()}
-                    disabled={isUpdatingApprovers}
-                  />
-                  <Button
-                    variant="quaternary"
-                    icon={IconCrossLargeX}
-                    onClick={() => {
-                      setIsEditingApprovers(false);
-                      resetApprovers({ approverIds: document.defaultApprovers.map(a => a.id) });
-                    }}
-                  />
-                </div>
-              )
-            : (
-                <div className="flex items-center gap-2">
-                  <div className="text-sm text-txt-primary">
-                    {document.defaultApprovers.length > 0
-                      ? document.defaultApprovers.map(a => a.fullName).join(", ")
-                      : __("None")}
-                  </div>
-                  {canEdit && (
-                    <Button
-                      variant="quaternary"
-                      icon={IconPencil}
-                      onClick={() => setIsEditingApprovers(true)}
-                    />
-                  )}
-                </div>
-              )}
-        </div>
-        <div>
-          <div className="text-xs text-txt-tertiary font-semibold mb-1">
             {__("Type")}
           </div>
           {isEditingType
@@ -362,7 +320,7 @@ export function DocumentDetailsCard(props: {
                   <div className="text-sm text-txt-primary">
                     {getDocumentTypeLabel(__, version.documentType)}
                   </div>
-                  {canEdit && (
+                  {canEditVersionFields && (
                     <Button
                       variant="quaternary"
                       icon={IconPencil}
@@ -409,7 +367,7 @@ export function DocumentDetailsCard(props: {
                   <div className="text-sm text-txt-primary">
                     {getDocumentClassificationLabel(__, version.classification)}
                   </div>
-                  {canEdit && (
+                  {canEditVersionFields && (
                     <Button
                       variant="quaternary"
                       icon={IconPencil}
@@ -419,6 +377,61 @@ export function DocumentDetailsCard(props: {
                 </div>
               )}
         </div>
+        {isLatestVersion && (
+          <div>
+            <div className="text-xs text-txt-tertiary font-semibold mb-1">
+              {__("Approvers")}
+            </div>
+            {isEditingApprovers
+              ? (
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1">
+                      <PeopleMultiSelectField
+                        name="approverIds"
+                        control={approversControl}
+                        organizationId={organizationId}
+                        selectedPeople={document.defaultApprovers.map(a => ({
+                          id: a.id,
+                          fullName: a.fullName,
+                          emailAddress: a.emailAddress,
+                        }))}
+                        placeholder={__("Add approvers...")}
+                      />
+                    </div>
+                    <Button
+                      variant="quaternary"
+                      icon={IconCheckmark1}
+                      onClick={() => void handleApproversSubmit(handleUpdateApprovers)()}
+                      disabled={isUpdatingApprovers}
+                    />
+                    <Button
+                      variant="quaternary"
+                      icon={IconCrossLargeX}
+                      onClick={() => {
+                        setIsEditingApprovers(false);
+                        resetApprovers({ approverIds: document.defaultApprovers.map(a => a.id) });
+                      }}
+                    />
+                  </div>
+                )
+              : (
+                  <div className="flex items-center gap-2">
+                    <div className="text-sm text-txt-primary">
+                      {document.defaultApprovers.length > 0
+                        ? document.defaultApprovers.map(a => a.fullName).join(", ")
+                        : __("None")}
+                    </div>
+                    {canEditApprovers && (
+                      <Button
+                        variant="quaternary"
+                        icon={IconPencil}
+                        onClick={() => setIsEditingApprovers(true)}
+                      />
+                    )}
+                  </div>
+                )}
+          </div>
+        )}
       </div>
       <div className="grid grid-cols-3 gap-4">
         <div>

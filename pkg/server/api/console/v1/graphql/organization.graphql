@@ -190,7 +190,6 @@ type Organization implements Node {
         last: Int
         before: CursorKey
         orderBy: StatementOfApplicabilityOrder
-        filter: StatementOfApplicabilityFilter = { snapshotId: null }
     ): StatementOfApplicabilityConnection! @goField(forceResolver: true)
 
     dataProtectionImpactAssessments(

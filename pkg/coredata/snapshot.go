@@ -124,6 +124,7 @@ FROM
 WHERE
 	%s
 	AND organization_id = @organization_id
+	AND type != 'STATEMENTS_OF_APPLICABILITY'
 	AND %s
 `
 
@@ -163,6 +164,7 @@ FROM
 WHERE
 	%s
 	AND organization_id = @organization_id
+	AND type != 'STATEMENTS_OF_APPLICABILITY'
 	AND %s
 `
 

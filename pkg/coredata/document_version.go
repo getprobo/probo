@@ -30,20 +30,21 @@ import (
 
 type (
 	DocumentVersion struct {
-		ID             gid.GID                `db:"id"`
-		OrganizationID gid.GID                `db:"organization_id"`
-		DocumentID     gid.GID                `db:"document_id"`
-		Title          string                 `db:"title"`
-		Major          int                    `db:"major"`
-		Minor          int                    `db:"minor"`
-		Classification DocumentClassification `db:"classification"`
-		DocumentType   DocumentType           `db:"document_type"`
-		Content        string                 `db:"content"`
-		Changelog      string                 `db:"changelog"`
-		Status         DocumentVersionStatus  `db:"status"`
-		PublishedAt    *time.Time             `db:"published_at"`
-		CreatedAt      time.Time              `db:"created_at"`
-		UpdatedAt      time.Time              `db:"updated_at"`
+		ID             gid.GID                    `db:"id"`
+		OrganizationID gid.GID                    `db:"organization_id"`
+		DocumentID     gid.GID                    `db:"document_id"`
+		Title          string                     `db:"title"`
+		Major          int                        `db:"major"`
+		Minor          int                        `db:"minor"`
+		Classification DocumentClassification     `db:"classification"`
+		DocumentType   DocumentType               `db:"document_type"`
+		Content        string                     `db:"content"`
+		Changelog      string                     `db:"changelog"`
+		Status         DocumentVersionStatus      `db:"status"`
+		Orientation    DocumentVersionOrientation `db:"orientation"`
+		PublishedAt    *time.Time                 `db:"published_at"`
+		CreatedAt      time.Time                  `db:"created_at"`
+		UpdatedAt      time.Time                  `db:"updated_at"`
 	}
 
 	DocumentVersions []*DocumentVersion
@@ -93,6 +94,7 @@ SELECT
 	content,
 	changelog,
 	status,
+	orientation,
 	published_at,
 	created_at,
 	updated_at
@@ -156,6 +158,7 @@ SELECT
 	content,
 	changelog,
 	status,
+	orientation,
 	published_at,
 	created_at,
 	updated_at
@@ -211,6 +214,8 @@ INSERT INTO document_versions (
 	content,
 	changelog,
 	status,
+	orientation,
+	published_at,
 	created_at,
 	updated_at
 )
@@ -227,6 +232,8 @@ VALUES (
 	@content,
 	@changelog,
 	@status,
+	@orientation,
+	@published_at,
 	@created_at,
 	@updated_at
 )
@@ -244,6 +251,8 @@ VALUES (
 		"content":         dv.Content,
 		"changelog":       dv.Changelog,
 		"status":          dv.Status,
+		"orientation":     dv.Orientation,
+		"published_at":    dv.PublishedAt,
 		"created_at":      dv.CreatedAt,
 		"updated_at":      dv.UpdatedAt,
 	}
@@ -285,6 +294,7 @@ SELECT
 	content,
 	changelog,
 	status,
+	orientation,
 	published_at,
 	created_at,
 	updated_at
@@ -344,6 +354,7 @@ SELECT
 	content,
 	changelog,
 	status,
+	orientation,
 	published_at,
 	created_at,
 	updated_at
@@ -399,6 +410,7 @@ SELECT
 	content,
 	changelog,
 	status,
+	orientation,
 	published_at,
 	created_at,
 	updated_at
@@ -453,6 +465,7 @@ UPDATE document_versions SET
 	published_at = @published_at,
 	classification = @classification,
 	document_type = @document_type,
+	orientation = @orientation,
 	updated_at = @updated_at
 WHERE %s
 	AND id = @document_version_id
@@ -471,6 +484,7 @@ WHERE %s
 		"published_at":        dv.PublishedAt,
 		"classification":      dv.Classification,
 		"document_type":       dv.DocumentType,
+		"orientation":         dv.Orientation,
 		"updated_at":          dv.UpdatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())

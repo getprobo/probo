@@ -24,7 +24,6 @@ import {
   useToast,
 } from "@probo/ui";
 import { useFragment, useMutation } from "react-relay";
-import { useParams } from "react-router";
 import { graphql } from "relay-runtime";
 
 import type { StatementOfApplicabilityRowDeleteMutation } from "#/__generated__/core/StatementOfApplicabilityRowDeleteMutation.graphql";
@@ -62,13 +61,11 @@ type Props = {
 export function StatementOfApplicabilityRow({ fKey, connectionId }: Props) {
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
-  const { snapshotId } = useParams<{ snapshotId?: string }>();
   const confirm = useConfirm();
   const { toast } = useToast();
-  const isSnapshotMode = Boolean(snapshotId);
 
   const statementOfApplicability = useFragment(fragment, fKey);
-  const canDelete = !isSnapshotMode && statementOfApplicability.canDelete;
+  const canDelete = statementOfApplicability.canDelete;
 
   const [deleteStatementOfApplicability] = useMutation<StatementOfApplicabilityRowDeleteMutation>(deleteMutation);
 
@@ -106,9 +103,7 @@ export function StatementOfApplicabilityRow({ fKey, connectionId }: Props) {
     );
   };
 
-  const detailUrl = snapshotId
-    ? `/organizations/${organizationId}/snapshots/${snapshotId}/statements-of-applicability/${statementOfApplicability.id}`
-    : `/organizations/${organizationId}/statements-of-applicability/${statementOfApplicability.id}`;
+  const detailUrl = `/organizations/${organizationId}/statements-of-applicability/${statementOfApplicability.id}`;
 
   return (
     <Tr to={detailUrl}>

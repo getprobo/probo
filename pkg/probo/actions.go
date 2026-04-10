@@ -338,12 +338,12 @@ const (
 	ActionRightsRequestDelete = "core:rights-request:delete"
 
 	// StatementOfApplicability actions
-	ActionStatementOfApplicabilityList   = "core:statement-of-applicability:list"
-	ActionStatementOfApplicabilityGet    = "core:statement-of-applicability:get"
-	ActionStatementOfApplicabilityCreate = "core:statement-of-applicability:create"
-	ActionStatementOfApplicabilityUpdate = "core:statement-of-applicability:update"
-	ActionStatementOfApplicabilityDelete = "core:statement-of-applicability:delete"
-	ActionStatementOfApplicabilityExport = "core:statement-of-applicability:export"
+	ActionStatementOfApplicabilityList    = "core:statement-of-applicability:list"
+	ActionStatementOfApplicabilityGet     = "core:statement-of-applicability:get"
+	ActionStatementOfApplicabilityCreate  = "core:statement-of-applicability:create"
+	ActionStatementOfApplicabilityUpdate  = "core:statement-of-applicability:update"
+	ActionStatementOfApplicabilityDelete  = "core:statement-of-applicability:delete"
+	ActionStatementOfApplicabilityPublish = "core:statement-of-applicability:publish"
 
 	ActionApplicabilityStatementGet    = "core:applicability-statement:get"
 	ActionApplicabilityStatementList   = "core:applicability-statement:list"

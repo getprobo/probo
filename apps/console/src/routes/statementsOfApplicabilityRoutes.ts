@@ -26,21 +26,7 @@ export const statementsOfApplicabilityRoutes = [
     ),
   },
   {
-    path: "snapshots/:snapshotId/statements-of-applicability",
-    Fallback: PageSkeleton,
-    Component: lazy(
-      () => import("#/pages/organizations/statements-of-applicability/StatementsOfApplicabilityPageLoader"),
-    ),
-  },
-  {
     path: "statements-of-applicability/:statementOfApplicabilityId",
-    Fallback: PageSkeleton,
-    Component: lazy(
-      () => import("#/pages/organizations/statements-of-applicability/StatementOfApplicabilityDetailPageLoader"),
-    ),
-  },
-  {
-    path: "snapshots/:snapshotId/statements-of-applicability/:statementOfApplicabilityId",
     Fallback: PageSkeleton,
     Component: lazy(
       () => import("#/pages/organizations/statements-of-applicability/StatementOfApplicabilityDetailPageLoader"),

@@ -6,7 +6,6 @@ package mcp_v1
 
 import (
 	"context"
-	"encoding/base64"
 	"errors"
 	"fmt"
 	"time"
@@ -2045,6 +2044,7 @@ func (r *Resolver) ListDocumentsTool(ctx context.Context, req *mcp.CallToolReque
 		}
 
 		documentFilter = coredata.NewDocumentFilter(query).
+			WithWriteModes(input.Filter.WriteModes).
 			WithDocumentTypes(input.Filter.DocumentTypes).
 			WithClassifications(input.Filter.Classifications).
 			WithStatus(input.Filter.Status)
@@ -2818,13 +2818,7 @@ func (r *Resolver) ListStatementsOfApplicabilityTool(ctx context.Context, req *m
 
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
-	noSnapshot := (*gid.GID)(nil)
-	filter := coredata.NewStatementOfApplicabilityFilter(&noSnapshot)
-	if input.Filter != nil {
-		filter = coredata.NewStatementOfApplicabilityFilter(&input.Filter.SnapshotID)
-	}
-
-	pg, err := prb.StatementsOfApplicability.ListForOrganizationID(ctx, input.OrganizationID, cursor, filter)
+	pg, err := prb.StatementsOfApplicability.ListForOrganizationID(ctx, input.OrganizationID, cursor)
 	if err != nil {
 		return nil, types.ListStatementsOfApplicabilityOutput{}, fmt.Errorf("failed to list statements of applicability: %w", err)
 	}
@@ -2855,7 +2849,6 @@ func (r *Resolver) AddStatementOfApplicabilityTool(ctx context.Context, req *mcp
 	soa, err := svc.StatementsOfApplicability.Create(ctx, probo.CreateStatementOfApplicabilityRequest{
 		OrganizationID: input.OrganizationID,
 		Name:           input.Name,
-		OwnerID:        input.OwnerID,
 	})
 	if err != nil {
 		return nil, types.AddStatementOfApplicabilityOutput{}, fmt.Errorf("failed to create statement of applicability: %w", err)
@@ -2874,7 +2867,6 @@ func (r *Resolver) UpdateStatementOfApplicabilityTool(ctx context.Context, req *
 	soa, err := svc.StatementsOfApplicability.Update(ctx, probo.UpdateStatementOfApplicabilityRequest{
 		StatementOfApplicabilityID: input.ID,
 		Name:                       input.Name,
-		OwnerID:                    input.OwnerID,
 	})
 	if err != nil {
 		return nil, types.UpdateStatementOfApplicabilityOutput{}, fmt.Errorf("failed to update statement of applicability: %w", err)
@@ -2897,27 +2889,6 @@ func (r *Resolver) DeleteStatementOfApplicabilityTool(ctx context.Context, req *
 
 	return nil, types.DeleteStatementOfApplicabilityOutput{
 		DeletedStatementOfApplicabilityID: input.ID,
-	}, nil
-}
-
-func (r *Resolver) ExportStatementOfApplicabilityPDFTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ExportStatementOfApplicabilityPDFInput) (*mcp.CallToolResult, types.ExportStatementOfApplicabilityPDFOutput, error) {
-	r.MustAuthorize(ctx, input.ID, probo.ActionStatementOfApplicabilityExport)
-
-	svc := r.ProboService(ctx, input.ID)
-
-	soa, err := svc.StatementsOfApplicability.Get(ctx, input.ID)
-	if err != nil {
-		return nil, types.ExportStatementOfApplicabilityPDFOutput{}, fmt.Errorf("failed to get statement of applicability: %w", err)
-	}
-
-	pdfData, err := svc.StatementsOfApplicability.ExportPDF(ctx, input.ID)
-	if err != nil {
-		return nil, types.ExportStatementOfApplicabilityPDFOutput{}, fmt.Errorf("failed to export statement of applicability PDF: %w", err)
-	}
-
-	return nil, types.ExportStatementOfApplicabilityPDFOutput{
-		PdfBase64: base64.StdEncoding.EncodeToString(pdfData),
-		Filename:  soa.Name + ".pdf",
 	}, nil
 }
 
@@ -3933,5 +3904,21 @@ func (r *Resolver) DeleteDocumentDraftTool(ctx context.Context, req *mcp.CallToo
 
 	return nil, types.DeleteDocumentDraftOutput{
 		Document: types.NewDocument(document),
+	}, nil
+}
+
+func (r *Resolver) PublishStatementOfApplicabilityTool(ctx context.Context, req *mcp.CallToolRequest, input *types.PublishStatementOfApplicabilityInput) (*mcp.CallToolResult, types.PublishStatementOfApplicabilityOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionStatementOfApplicabilityPublish)
+
+	svc := r.ProboService(ctx, input.ID)
+
+	document, documentVersion, err := svc.GeneratedDocuments.PublishStatementOfApplicability(ctx, input.ID, input.ApproverIds)
+	if err != nil {
+		return nil, types.PublishStatementOfApplicabilityOutput{}, fmt.Errorf("cannot publish statement of applicability: %w", err)
+	}
+
+	return nil, types.PublishStatementOfApplicabilityOutput{
+		DocumentID:        document.ID,
+		DocumentVersionID: documentVersion.ID,
 	}, nil
 }

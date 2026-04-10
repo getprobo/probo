@@ -33,6 +33,11 @@ type (
 	}
 
 	ControlObligations []*ControlObligation
+
+	ControlObligationType struct {
+		ControlID      gid.GID        `db:"control_id"`
+		ObligationType ObligationType `db:"obligation_type"`
+	}
 )
 
 func (co ControlObligation) Upsert(
@@ -136,4 +141,49 @@ WHERE %s
 	}
 
 	return count, nil
+}
+
+func LoadObligationTypesByControlIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	controlIDs []gid.GID,
+) ([]ControlObligationType, error) {
+	q := `
+WITH control_obls AS (
+    SELECT DISTINCT
+        co.control_id,
+        o.type AS obligation_type,
+        o.tenant_id
+    FROM
+        controls_obligations co
+    INNER JOIN
+        obligations o ON co.obligation_id = o.id
+    WHERE
+        co.control_id = ANY(@control_ids)
+)
+SELECT
+    control_id,
+    obligation_type
+FROM
+    control_obls
+WHERE
+    %s;
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"control_ids": controlIDs}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot load obligation types by control IDs: %w", err)
+	}
+
+	result, err := pgx.CollectRows(rows, pgx.RowToStructByName[ControlObligationType])
+	if err != nil {
+		return nil, fmt.Errorf("cannot collect control obligation types: %w", err)
+	}
+
+	return result, nil
 }

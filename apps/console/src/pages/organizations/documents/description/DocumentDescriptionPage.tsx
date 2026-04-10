@@ -42,6 +42,7 @@ export const documentDescriptionPageQuery = graphql`
       ... on Document {
         id
         status
+        writeMode
         canUpdate: permission(action: "core:document:update")
         # We use this on /documents/:documentId/description
         lastVersion: versions(first: 1 orderBy: { field: CREATED_AT, direction: DESC }) @skip(if: $versionSpecified) {
@@ -146,7 +147,8 @@ export function DocumentDescriptionPage(props: {
 
   const canEdit = isEditable
     && document.canUpdate
-    && document.status !== "ARCHIVED";
+    && document.status !== "ARCHIVED"
+    && document.writeMode !== "GENERATED";
 
   // The editor key must change on explicit actions (delete draft, edit
   // title/type) but NOT on auto-save side effects (cursor preservation).

@@ -78,10 +78,6 @@ input ControlFilter {
     query: String
 }
 
-input StatementOfApplicabilityFilter {
-    snapshotId: ID
-}
-
 type Control implements Node {
     id: ID!
     organization: Organization @goField(forceResolver: true)
@@ -163,10 +159,8 @@ type ControlEdge {
 type StatementOfApplicability implements Node {
     id: ID!
     name: String!
-    sourceId: ID
-    snapshotId: ID
+    document: Document @goField(forceResolver: true)
     organization: Organization @goField(forceResolver: true)
-    owner: Profile! @goField(forceResolver: true)
     createdAt: Datetime!
     updatedAt: Datetime!
 
@@ -273,9 +267,9 @@ extend type Mutation {
     deleteStatementOfApplicability(
         input: DeleteStatementOfApplicabilityInput!
     ): DeleteStatementOfApplicabilityPayload!
-    exportStatementOfApplicabilityPDF(
-        input: ExportStatementOfApplicabilityPDFInput!
-    ): ExportStatementOfApplicabilityPDFPayload!
+    publishStatementOfApplicability(
+        input: PublishStatementOfApplicabilityInput!
+    ): PublishStatementOfApplicabilityPayload!
 }
 
 input CreateControlInput {
@@ -372,13 +366,11 @@ input DeleteControlSnapshotMappingInput {
 input CreateStatementOfApplicabilityInput {
     organizationId: ID!
     name: String!
-    ownerId: ID!
 }
 
 input UpdateStatementOfApplicabilityInput {
     id: ID!
     name: String
-    ownerId: ID
 }
 
 input ApplicabilityStatementInput {
@@ -391,8 +383,9 @@ input DeleteStatementOfApplicabilityInput {
     statementOfApplicabilityId: ID!
 }
 
-input ExportStatementOfApplicabilityPDFInput {
+input PublishStatementOfApplicabilityInput {
     statementOfApplicabilityId: ID!
+    approverIds: [ID!]
 }
 
 type CreateControlPayload {
@@ -481,6 +474,7 @@ type DeleteStatementOfApplicabilityPayload {
     deletedStatementOfApplicabilityId: ID!
 }
 
-type ExportStatementOfApplicabilityPDFPayload {
-    data: String!
+type PublishStatementOfApplicabilityPayload {
+    documentEdge: DocumentEdge!
+    documentVersionEdge: DocumentVersionEdge!
 }

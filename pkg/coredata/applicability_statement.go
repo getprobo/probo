@@ -156,7 +156,6 @@ WITH current_soa AS (
     WHERE
         %s
         AND id = @statement_of_applicability_id
-        AND snapshot_id IS NULL
 )
 SELECT
     soac.id,
@@ -351,7 +350,6 @@ WITH current_soa AS (
     WHERE
         %s
         AND id = @statement_of_applicability_id
-        AND snapshot_id IS NULL
 )
 DELETE FROM applicability_statements
 WHERE statement_of_applicability_id IN (SELECT id FROM current_soa)
@@ -467,6 +465,57 @@ WHERE
 	return nil
 }
 
+func (sacs *ApplicabilityStatements) LoadAllByStatementOfApplicabilityID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	statementOfApplicabilityID gid.GID,
+) error {
+	q := `
+SELECT
+    a.id,
+    a.statement_of_applicability_id,
+    a.control_id,
+    a.organization_id,
+    a.snapshot_id,
+    a.applicability,
+    a.justification,
+    a.created_at,
+    a.updated_at,
+    f.name || ' - ' || c.section_title AS section_title
+FROM
+    applicability_statements a
+INNER JOIN
+    controls c ON c.id = a.control_id
+INNER JOIN
+    frameworks f ON f.id = c.framework_id
+WHERE
+    a.%s
+    AND a.statement_of_applicability_id = @statement_of_applicability_id
+ORDER BY
+    section_title ASC;
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"statement_of_applicability_id": statementOfApplicabilityID,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query applicability_statements: %w", err)
+	}
+
+	controls, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[ApplicabilityStatement])
+	if err != nil {
+		return fmt.Errorf("cannot collect applicability_statements: %w", err)
+	}
+
+	*sacs = controls
+	return nil
+}
+
 func (sacs *ApplicabilityStatements) CountByStatementOfApplicabilityID(
 	ctx context.Context,
 	conn pg.Querier,
@@ -484,7 +533,7 @@ WHERE
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
-	args := pgx.NamedArgs{"statement_of_applicability_id": statementOfApplicabilityID}
+	args := pgx.StrictNamedArgs{"statement_of_applicability_id": statementOfApplicabilityID}
 	maps.Copy(args, scope.SQLArguments())
 
 	var count int

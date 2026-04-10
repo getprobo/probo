@@ -60,6 +60,10 @@ enum ElectronicSignatureDocumentType
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.ElectronicSignatureDocumentTypeOther"
         )
+    STATEMENT_OF_APPLICABILITY
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ElectronicSignatureDocumentTypeStatementOfApplicability"
+        )
 }
 
 enum ElectronicSignatureEventType

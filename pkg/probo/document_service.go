@@ -77,6 +77,12 @@ type (
 	ErrDocumentNotArchived struct {
 	}
 
+	ErrDocumentGenerated struct {
+	}
+
+	ErrDocumentVersionGenerated struct {
+	}
+
 	ErrDocumentVersionSignatureAlreadySigned struct {
 	}
 
@@ -215,6 +221,14 @@ func (e ErrDocumentDraftNotDeletable) Error() string {
 
 func (e ErrDocumentNotArchived) Error() string {
 	return "cannot unarchive a document that is not archived"
+}
+
+func (e ErrDocumentGenerated) Error() string {
+	return "cannot create draft for a generated document"
+}
+
+func (e ErrDocumentVersionGenerated) Error() string {
+	return "cannot edit a generated document version"
 }
 
 func (e ErrDocumentVersionSignatureAlreadySigned) Error() string {
@@ -587,6 +601,7 @@ func (s *DocumentService) Create(
 
 	document := &coredata.Document{
 		ID:                    documentID,
+		WriteMode:             coredata.DocumentWriteModeAuthored,
 		TrustCenterVisibility: coredata.TrustCenterVisibilityNone,
 		Status:                coredata.DocumentStatusActive,
 		CreatedAt:             now,
@@ -616,6 +631,7 @@ func (s *DocumentService) Create(
 		Status:         coredata.DocumentVersionStatusDraft,
 		Classification: req.Classification,
 		DocumentType:   req.DocumentType,
+		Orientation:    coredata.DocumentVersionOrientationPortrait,
 		CreatedAt:      now,
 		UpdatedAt:      now,
 	}
@@ -1100,6 +1116,7 @@ func (s *DocumentService) createDraftInTx(
 		Classification: latestVersion.Classification,
 		DocumentType:   latestVersion.DocumentType,
 		Content:        latestVersion.Content,
+		Orientation:    latestVersion.Orientation,
 		Status:         coredata.DocumentVersionStatusDraft,
 		CreatedAt:      now,
 		UpdatedAt:      now,
@@ -1677,6 +1694,10 @@ func (s *DocumentService) Update(
 
 			hasVersionChanges := req.Title != nil || req.Content != nil || req.Classification != nil || req.DocumentType != nil
 
+			if hasVersionChanges && document.WriteMode == coredata.DocumentWriteModeGenerated {
+				return &ErrDocumentVersionGenerated{}
+			}
+
 			if !hasVersionChanges {
 				if req.DefaultApproverIDs != nil {
 					defaultApprovers := &coredata.DocumentDefaultApprovers{}
@@ -2191,6 +2212,8 @@ func exportDocumentPDF(
 		}
 	}
 
+	isLandscape := version.Orientation == coredata.DocumentVersionOrientationLandscape
+
 	docData := docgen.DocumentData{
 		Title:                       version.Title,
 		Content:                     json.RawMessage([]byte(version.Content)),
@@ -2201,6 +2224,7 @@ func exportDocumentPDF(
 		PublishedAt:                 version.PublishedAt,
 		Signatures:                  signatureData,
 		CompanyHorizontalLogoBase64: horizontalLogoBase64,
+		Landscape:                   isLandscape,
 	}
 
 	htmlContent, err := docgen.RenderHTML(docData)
@@ -2208,9 +2232,14 @@ func exportDocumentPDF(
 		return nil, fmt.Errorf("cannot generate HTML: %w", err)
 	}
 
+	orientation := html2pdf.OrientationPortrait
+	if isLandscape {
+		orientation = html2pdf.OrientationLandscape
+	}
+
 	cfg := html2pdf.RenderConfig{
 		PageFormat:        html2pdf.PageFormatA4,
-		Orientation:       html2pdf.OrientationPortrait,
+		Orientation:       orientation,
 		MarginTop:         html2pdf.NewMarginInches(1.0),
 		MarginBottom:      html2pdf.NewMarginInches(1.0),
 		MarginLeft:        html2pdf.NewMarginInches(1.0),

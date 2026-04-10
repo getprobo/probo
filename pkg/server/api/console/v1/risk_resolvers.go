@@ -344,6 +344,7 @@ func (r *riskResolver) Documents(ctx context.Context, obj *types.Risk, first *in
 	var documentFilter = coredata.NewDocumentFilter(nil)
 	if filter != nil {
 		documentFilter = coredata.NewDocumentFilter(filter.Query).
+			WithWriteModes(filter.WriteModes).
 			WithDocumentTypes(filter.DocumentTypes).
 			WithClassifications(filter.Classifications)
 	}

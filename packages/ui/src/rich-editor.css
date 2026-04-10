@@ -59,7 +59,7 @@
     }
 
     table {
-        @apply border border-border-mid border-collapse;
+        @apply border border-border-mid border-collapse w-max;
         tbody {
             @apply border border-border-mid border-collapse;
         }
@@ -85,7 +85,7 @@
     }
 
     .tableWrapper {
-        @apply relative overflow-x-auto my-4;
+        @apply relative overflow-auto my-4 max-h-[70vh];
     }
 
     .mermaid-block {

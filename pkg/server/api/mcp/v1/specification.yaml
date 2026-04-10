@@ -5144,6 +5144,7 @@ components:
         - RECORD
         - REPORT
         - TEMPLATE
+        - STATEMENT_OF_APPLICABILITY
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.DocumentType
 
     DocumentClassification:
@@ -5169,6 +5170,13 @@ components:
         - ACTIVE
         - ARCHIVED
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.DocumentStatus
+
+    DocumentWriteMode:
+      type: string
+      enum:
+        - AUTHORED
+        - GENERATED
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.DocumentWriteMode
 
     DocumentVersionSignatureState:
       type: string
@@ -5244,6 +5252,7 @@ components:
         - id
         - organization_id
         - trust_center_visibility
+        - write_mode
         - status
         - created_at
         - updated_at
@@ -5267,6 +5276,9 @@ components:
         trust_center_visibility:
           $ref: "#/components/schemas/TrustCenterVisibility"
           description: Trust center visibility
+        write_mode:
+          $ref: "#/components/schemas/DocumentWriteMode"
+          description: Write mode (authored or generated)
         status:
           $ref: "#/components/schemas/DocumentStatus"
           description: Document status
@@ -5419,6 +5431,11 @@ components:
             query:
               type: string
               description: Search query
+            write_modes:
+              type: array
+              items:
+                $ref: "#/components/schemas/DocumentWriteMode"
+              description: Filter by write mode (AUTHORED or GENERATED)
             trust_center_visibilities:
               type: array
               items:
@@ -6119,7 +6136,6 @@ components:
         - id
         - organization_id
         - name
-        - owner_id
         - created_at
         - updated_at
       properties:
@@ -6132,14 +6148,11 @@ components:
         name:
           type: string
           description: Statement of applicability name
-        owner_id:
-          $ref: "#/components/schemas/GID"
-          description: Owner profile ID
-        snapshot_id:
+        document_id:
           anyOf:
             - $ref: "#/components/schemas/GID"
             - type: "null"
-          description: Snapshot ID
+          description: Associated document ID
         created_at:
           type: string
           format: date-time
@@ -6211,7 +6224,6 @@ components:
       required:
         - organization_id
         - name
-        - owner_id
       properties:
         organization_id:
           $ref: "#/components/schemas/GID"
@@ -6219,9 +6231,6 @@ components:
         name:
           type: string
           description: Statement of applicability name
-        owner_id:
-          $ref: "#/components/schemas/GID"
-          description: Owner profile ID
 
     AddStatementOfApplicabilityOutput:
       type: object
@@ -6242,9 +6251,6 @@ components:
         name:
           type: string
           description: Statement of applicability name
-        owner_id:
-          $ref: "#/components/schemas/GID"
-          description: Owner profile ID
 
     UpdateStatementOfApplicabilityOutput:
       type: object
@@ -6272,7 +6278,8 @@ components:
           $ref: "#/components/schemas/GID"
           description: Deleted statement of applicability ID
 
-    ExportStatementOfApplicabilityPDFInput:
+
+    PublishStatementOfApplicabilityInput:
       type: object
       required:
         - id
@@ -6280,19 +6287,24 @@ components:
         id:
           $ref: "#/components/schemas/GID"
           description: Statement of applicability ID
+        approver_ids:
+          type: array
+          items:
+            $ref: "#/components/schemas/GID"
+          description: Optional approver profile IDs. If provided, creates a draft pending approval instead of publishing immediately.
 
-    ExportStatementOfApplicabilityPDFOutput:
+    PublishStatementOfApplicabilityOutput:
       type: object
       required:
-        - pdf_base64
-        - filename
+        - document_id
+        - document_version_id
       properties:
-        pdf_base64:
-          type: string
-          description: Base64-encoded PDF content
-        filename:
-          type: string
-          description: Suggested filename for the PDF
+        document_id:
+          $ref: "#/components/schemas/GID"
+          description: Created or updated document ID
+        document_version_id:
+          $ref: "#/components/schemas/GID"
+          description: Created document version ID
 
     ApplicabilityStatementOrderField:
       type: string
@@ -8597,15 +8609,14 @@ tools:
       $ref: "#/components/schemas/DeleteStatementOfApplicabilityInput"
     outputSchema:
       $ref: "#/components/schemas/DeleteStatementOfApplicabilityOutput"
-  - name: exportStatementOfApplicabilityPDF
-    description: Export a statement of applicability as a PDF document
+  - name: publishStatementOfApplicability
+    description: Publish a statement of applicability as a document. If a document already exists, a new version is created.
     hints:
-      readonly: true
-      idempotent: true
+      readonly: false
     inputSchema:
-      $ref: "#/components/schemas/ExportStatementOfApplicabilityPDFInput"
+      $ref: "#/components/schemas/PublishStatementOfApplicabilityInput"
     outputSchema:
-      $ref: "#/components/schemas/ExportStatementOfApplicabilityPDFOutput"
+      $ref: "#/components/schemas/PublishStatementOfApplicabilityOutput"
   - name: listApplicabilityStatements
     description: List all applicability statements for a statement of applicability
     hints:

@@ -25,6 +25,7 @@ import * as meeting from './meeting';
 import * as organization from './organization';
 import * as user from './user';
 import * as risk from './risk';
+import * as statementOfApplicability from './statementOfApplicability';
 import * as vendor from './vendor';
 
 export interface ResourceModule {
@@ -50,6 +51,7 @@ export const resources: Record<string, ResourceModule> = {
 	organization: organization as ResourceModule,
 	user: user as ResourceModule,
 	risk: risk as ResourceModule,
+	statementOfApplicability: statementOfApplicability as ResourceModule,
 	vendor: vendor as ResourceModule,
 };
 

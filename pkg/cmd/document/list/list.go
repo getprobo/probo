@@ -78,6 +78,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 		flagOrderBy        string
 		flagOrderDir       string
 		flagQuery          string
+		flagWriteMode      string
 		flagDocumentType   string
 		flagClassification string
 		flagStatus         string
@@ -148,11 +149,21 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 			if flagQuery != "" {
 				filter["query"] = flagQuery
 			}
+			if flagWriteMode != "" {
+				if err := cmdutil.ValidateEnum(
+					"write-mode",
+					flagWriteMode,
+					[]string{"AUTHORED", "GENERATED"},
+				); err != nil {
+					return err
+				}
+				filter["writeModes"] = []string{flagWriteMode}
+			}
 			if flagDocumentType != "" {
 				if err := cmdutil.ValidateEnum(
 					"document-type",
 					flagDocumentType,
-					[]string{"OTHER", "GOVERNANCE", "POLICY", "PROCEDURE", "PLAN", "REGISTER", "RECORD", "REPORT", "TEMPLATE"},
+					[]string{"OTHER", "GOVERNANCE", "POLICY", "PROCEDURE", "PLAN", "REGISTER", "RECORD", "REPORT", "TEMPLATE", "STATEMENT_OF_APPLICABILITY"},
 				); err != nil {
 					return err
 				}
@@ -261,7 +272,8 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagOrderBy, "order-by", "", "Order by field (TITLE, CREATED_AT, UPDATED_AT, DOCUMENT_TYPE)")
 	cmd.Flags().StringVar(&flagOrderDir, "order-direction", "DESC", "Sort direction (ASC, DESC)")
 	cmd.Flags().StringVarP(&flagQuery, "query", "q", "", "Search query")
-	cmd.Flags().StringVar(&flagDocumentType, "document-type", "", "Filter by document type (OTHER, GOVERNANCE, POLICY, PROCEDURE, PLAN, REGISTER, RECORD, REPORT, TEMPLATE)")
+	cmd.Flags().StringVar(&flagWriteMode, "write-mode", "", "Filter by write mode (AUTHORED, GENERATED)")
+	cmd.Flags().StringVar(&flagDocumentType, "document-type", "", "Filter by document type (OTHER, GOVERNANCE, POLICY, PROCEDURE, PLAN, REGISTER, RECORD, REPORT, TEMPLATE, STATEMENT_OF_APPLICABILITY)")
 	cmd.Flags().StringVar(&flagClassification, "classification", "", "Filter by classification (PUBLIC, INTERNAL, CONFIDENTIAL, SECRET)")
 	cmd.Flags().StringVar(&flagStatus, "status", "", "Filter by status (ACTIVE, ARCHIVED)")
 	flagOutput = cmdutil.AddOutputFlag(cmd)

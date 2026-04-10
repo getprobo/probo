@@ -17,34 +17,28 @@ package probo
 import (
 	"context"
 	"fmt"
-	"io"
 	"time"
 
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/docgen"
 	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/html2pdf"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/validator"
 )
 
 type StatementOfApplicabilityService struct {
-	svc               *TenantService
-	html2pdfConverter *html2pdf.Converter
+	svc *TenantService
 }
 
 type (
 	CreateStatementOfApplicabilityRequest struct {
 		OrganizationID gid.GID
 		Name           string
-		OwnerID        gid.GID
 	}
 
 	UpdateStatementOfApplicabilityRequest struct {
 		StatementOfApplicabilityID gid.GID
 		Name                       *string
-		OwnerID                    *gid.GID
 	}
 )
 
@@ -53,7 +47,6 @@ func (csr *CreateStatementOfApplicabilityRequest) Validate() error {
 
 	v.Check(csr.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
 	v.Check(csr.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
-	v.Check(csr.OwnerID, "owner_id", validator.Required(), validator.GID(coredata.MembershipProfileEntityType))
 
 	return v.Error()
 }
@@ -63,7 +56,6 @@ func (usr *UpdateStatementOfApplicabilityRequest) Validate() error {
 
 	v.Check(usr.StatementOfApplicabilityID, "statement_of_applicability_id", validator.Required(), validator.GID(coredata.StatementOfApplicabilityEntityType))
 	v.Check(usr.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
-	v.Check(usr.OwnerID, "owner_id", validator.GID(coredata.MembershipProfileEntityType))
 
 	return v.Error()
 }
@@ -72,7 +64,6 @@ func (s StatementOfApplicabilityService) ListForOrganizationID(
 	ctx context.Context,
 	organizationID gid.GID,
 	cursor *page.Cursor[coredata.StatementOfApplicabilityOrderField],
-	filter *coredata.StatementOfApplicabilityFilter,
 ) (*page.Page[*coredata.StatementOfApplicability, coredata.StatementOfApplicabilityOrderField], error) {
 	var statementsOfApplicability coredata.StatementsOfApplicability
 	organization := &coredata.Organization{}
@@ -90,7 +81,6 @@ func (s StatementOfApplicabilityService) ListForOrganizationID(
 				s.svc.scope,
 				organization.ID,
 				cursor,
-				filter,
 			)
 			if err != nil {
 				return fmt.Errorf("cannot load statements_of_applicability: %w", err)
@@ -110,7 +100,6 @@ func (s StatementOfApplicabilityService) ListForOrganizationID(
 func (s StatementOfApplicabilityService) CountForOrganizationID(
 	ctx context.Context,
 	organizationID gid.GID,
-	filter *coredata.StatementOfApplicabilityFilter,
 ) (int, error) {
 	var count int
 
@@ -118,7 +107,7 @@ func (s StatementOfApplicabilityService) CountForOrganizationID(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			statementsOfApplicability := &coredata.StatementsOfApplicability{}
-			count, err = statementsOfApplicability.CountByOrganizationID(ctx, conn, s.svc.scope, organizationID, filter)
+			count, err = statementsOfApplicability.CountByOrganizationID(ctx, conn, s.svc.scope, organizationID)
 			if err != nil {
 				return fmt.Errorf("cannot count statements_of_applicability: %w", err)
 			}
@@ -180,7 +169,6 @@ func (s StatementOfApplicabilityService) Create(
 		ID:             statementOfApplicabilityID,
 		OrganizationID: organization.ID,
 		Name:           req.Name,
-		OwnerID:        req.OwnerID,
 		CreatedAt:      now,
 		UpdatedAt:      now,
 	}
@@ -222,9 +210,6 @@ func (s StatementOfApplicabilityService) Update(
 
 			if req.Name != nil {
 				statementOfApplicability.Name = *req.Name
-			}
-			if req.OwnerID != nil {
-				statementOfApplicability.OwnerID = *req.OwnerID
 			}
 
 			statementOfApplicability.UpdatedAt = time.Now()
@@ -443,249 +428,4 @@ func (s StatementOfApplicabilityService) ListControlLinks(
 	}
 
 	return page.NewPage(controls, cursor), nil
-}
-
-func (s StatementOfApplicabilityService) ExportPDF(
-	ctx context.Context,
-	statementOfApplicabilityID gid.GID,
-) ([]byte, error) {
-	var documentData docgen.StatementOfApplicabilityData
-
-	err := s.svc.pg.WithConn(
-		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
-			statementOfApplicability := &coredata.StatementOfApplicability{}
-			if err := statementOfApplicability.LoadByID(ctx, conn, s.svc.scope, statementOfApplicabilityID); err != nil {
-				return fmt.Errorf("cannot load statement of applicability: %w", err)
-			}
-
-			organization := &coredata.Organization{}
-			if err := organization.LoadByID(ctx, conn, s.svc.scope, statementOfApplicability.OrganizationID); err != nil {
-				return fmt.Errorf("cannot load organization: %w", err)
-			}
-
-			owner := &coredata.MembershipProfile{}
-			if err := owner.LoadByID(ctx, conn, s.svc.scope, statementOfApplicability.OwnerID); err != nil {
-				return fmt.Errorf("cannot load owner profile: %w", err)
-			}
-
-			// Load applicability statements
-			var applicabilityStatements coredata.ApplicabilityStatements
-			cursor := page.NewCursor(
-				10000,
-				nil,
-				page.Head,
-				page.OrderBy[coredata.ApplicabilityStatementOrderField]{
-					Field:     coredata.ApplicabilityStatementOrderFieldControlSectionTitle,
-					Direction: page.OrderDirectionAsc,
-				},
-			)
-			if err := applicabilityStatements.LoadByStatementOfApplicabilityID(ctx, conn, s.svc.scope, statementOfApplicabilityID, cursor); err != nil {
-				return fmt.Errorf("cannot load applicability statements: %w", err)
-			}
-
-			if len(applicabilityStatements) == 0 {
-				// No linked controls, skip loading additional data
-				documentData = docgen.StatementOfApplicabilityData{
-					Title:            statementOfApplicability.Name,
-					OrganizationName: organization.Name,
-					CreatedAt:        statementOfApplicability.CreatedAt,
-					TotalControls:    0,
-					FrameworkGroups:  []docgen.FrameworkControlGroup{},
-				}
-				return nil
-			}
-
-			frameworkControlsMap := make(map[string][]docgen.ControlData)
-			frameworkOrder := []string{}
-
-			for _, stmt := range applicabilityStatements {
-				// Load control
-				control := &coredata.Control{}
-				if err := control.LoadByID(ctx, conn, s.svc.scope, stmt.ControlID); err != nil {
-					return fmt.Errorf("cannot load control: %w", err)
-				}
-
-				// Load framework
-				framework := &coredata.Framework{}
-				if err := framework.LoadByID(ctx, conn, s.svc.scope, control.FrameworkID); err != nil {
-					return fmt.Errorf("cannot load framework: %w", err)
-				}
-
-				// Count legal obligations
-				var controlObligations coredata.ControlObligations
-				legalType := coredata.ObligationTypeLegal
-				legalFilter := coredata.NewControlObligationFilter(&legalType)
-				legalCount, err := controlObligations.CountByControlID(ctx, conn, s.svc.scope, stmt.ControlID, legalFilter)
-				if err != nil {
-					return fmt.Errorf("cannot count legal obligations: %w", err)
-				}
-
-				// Count contractual obligations
-				contractualType := coredata.ObligationTypeContractual
-				contractualFilter := coredata.NewControlObligationFilter(&contractualType)
-				contractualCount, err := controlObligations.CountByControlID(ctx, conn, s.svc.scope, stmt.ControlID, contractualFilter)
-				if err != nil {
-					return fmt.Errorf("cannot count contractual obligations: %w", err)
-				}
-
-				// Check if control has risk
-				var controlsWithRisk coredata.ControlsWithRisk
-				if err := controlsWithRisk.LoadByControlIDs(ctx, conn, s.svc.scope, []gid.GID{stmt.ControlID}); err != nil {
-					return fmt.Errorf("cannot load controls with risks: %w", err)
-				}
-				hasRisk := len(controlsWithRisk) > 0
-
-				if _, exists := frameworkControlsMap[framework.Name]; !exists {
-					frameworkOrder = append(frameworkOrder, framework.Name)
-					frameworkControlsMap[framework.Name] = []docgen.ControlData{}
-				}
-
-				var regulatory *bool
-				var contractual *bool
-				var bestPractice *bool
-				var riskAssessment *bool
-
-				if stmt.Applicability {
-					falseVal := false
-					trueVal := true
-
-					regulatory = &falseVal
-					contractual = &falseVal
-					riskAssessment = &falseVal
-
-					if legalCount > 0 {
-						regulatory = &trueVal
-					}
-					if contractualCount > 0 {
-						contractual = &trueVal
-					}
-					if hasRisk {
-						riskAssessment = &trueVal
-					}
-
-					bestPractice = &control.BestPractice
-				}
-
-				applicability := stmt.Applicability
-
-				implemented := control.Implemented.String()
-				frameworkControlsMap[framework.Name] = append(
-					frameworkControlsMap[framework.Name],
-					docgen.ControlData{
-						FrameworkName: framework.Name,
-						SectionTitle:  control.SectionTitle,
-						Name:          control.Name,
-						Applicability: &applicability,
-						Justification: stmt.Justification,
-						BestPractice:  bestPractice,
-						Implemented:   &implemented,
-						NotImplementedJustification: func() *string {
-							if control.Implemented == coredata.ControlImplementationStateImplemented {
-								return nil
-							}
-							return control.NotImplementedJustification
-						}(),
-						Regulatory:     regulatory,
-						Contractual:    contractual,
-						RiskAssessment: riskAssessment,
-					},
-				)
-			}
-
-			frameworkGroups := make([]docgen.FrameworkControlGroup, len(frameworkOrder))
-			for i, frameworkName := range frameworkOrder {
-				frameworkGroups[i] = docgen.FrameworkControlGroup{
-					FrameworkName: frameworkName,
-					Controls:      frameworkControlsMap[frameworkName],
-				}
-			}
-
-			var snapshots coredata.Snapshots
-			snapshotType := coredata.SnapshotsTypeStatementsOfApplicability
-
-			var version int
-			var publishedAt time.Time
-
-			if statementOfApplicability.SnapshotID != nil {
-				snapshot := &coredata.Snapshot{}
-				if err := snapshot.LoadByID(ctx, conn, s.svc.scope, *statementOfApplicability.SnapshotID); err != nil {
-					return fmt.Errorf("cannot load snapshot: %w", err)
-				}
-				publishedAt = snapshot.CreatedAt
-				snapshotFilter := coredata.NewSnapshotFilter(&snapshotType).WithBeforeDate(&snapshot.CreatedAt)
-				snapshotCount, err := snapshots.CountByOrganizationID(ctx, conn, s.svc.scope, statementOfApplicability.OrganizationID, snapshotFilter)
-				if err != nil {
-					return fmt.Errorf("cannot count states of applicability snapshots: %w", err)
-				}
-				version = snapshotCount
-			} else {
-				publishedAt = time.Now()
-				snapshotFilter := coredata.NewSnapshotFilter(&snapshotType)
-				snapshotCount, err := snapshots.CountByOrganizationID(ctx, conn, s.svc.scope, statementOfApplicability.OrganizationID, snapshotFilter)
-				if err != nil {
-					return fmt.Errorf("cannot count states of applicability snapshots: %w", err)
-				}
-				version = snapshotCount + 1
-			}
-
-			horizontalLogoBase64 := ""
-			if organization.HorizontalLogoFileID != nil {
-				fileRecord := &coredata.File{}
-				fileErr := fileRecord.LoadByID(ctx, conn, s.svc.scope, *organization.HorizontalLogoFileID)
-				if fileErr == nil {
-					base64Data, mimeType, logoErr := s.svc.fileManager.GetFileBase64(ctx, fileRecord)
-					if logoErr == nil {
-						horizontalLogoBase64 = fmt.Sprintf("data:%s;base64,%s", mimeType, base64Data)
-					}
-				}
-			}
-
-			documentData = docgen.StatementOfApplicabilityData{
-				Title:                       statementOfApplicability.Name,
-				OrganizationName:            organization.Name,
-				CreatedAt:                   statementOfApplicability.CreatedAt,
-				TotalControls:               len(applicabilityStatements),
-				FrameworkGroups:             frameworkGroups,
-				CompanyHorizontalLogoBase64: horizontalLogoBase64,
-				Version:                     version,
-				PublishedAt:                 publishedAt,
-				Approver:                    owner.FullName,
-			}
-
-			return nil
-		},
-	)
-
-	if err != nil {
-		return nil, err
-	}
-
-	htmlData, err := docgen.RenderStatementOfApplicabilityHTML(documentData)
-	if err != nil {
-		return nil, fmt.Errorf("cannot render HTML: %w", err)
-	}
-
-	cfg := html2pdf.RenderConfig{
-		PageFormat:      html2pdf.PageFormatA4,
-		Orientation:     html2pdf.OrientationPortrait,
-		MarginTop:       html2pdf.NewMarginInches(1.0),
-		MarginBottom:    html2pdf.NewMarginInches(1.0),
-		MarginLeft:      html2pdf.NewMarginInches(1.0),
-		MarginRight:     html2pdf.NewMarginInches(1.0),
-		PrintBackground: true,
-		Scale:           1.0,
-	}
-
-	pdfReader, err := s.html2pdfConverter.GeneratePDF(ctx, htmlData, cfg)
-	if err != nil {
-		return nil, fmt.Errorf("cannot generate PDF: %w", err)
-	}
-
-	pdfData, err := io.ReadAll(pdfReader)
-	if err != nil {
-		return nil, fmt.Errorf("cannot read PDF data: %w", err)
-	}
-
-	return pdfData, nil
 }

@@ -37,6 +37,36 @@ enum DocumentType
     REPORT @goEnum(value: "go.probo.inc/probo/pkg/coredata.DocumentTypeReport")
     TEMPLATE
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.DocumentTypeTemplate")
+    STATEMENT_OF_APPLICABILITY
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DocumentTypeStatementOfApplicability"
+        )
+}
+
+enum DocumentVersionOrientation
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.DocumentVersionOrientation"
+    ) {
+    PORTRAIT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DocumentVersionOrientationPortrait"
+        )
+    LANDSCAPE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DocumentVersionOrientationLandscape"
+        )
+}
+
+enum DocumentWriteMode
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.DocumentWriteMode") {
+    AUTHORED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DocumentWriteModeAuthored"
+        )
+    GENERATED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DocumentWriteModeGenerated"
+        )
 }
 
 enum DocumentClassification
@@ -199,6 +229,7 @@ input DocumentVersionOrder
 
 input DocumentFilter {
     query: String
+    writeModes: [DocumentWriteMode!]
     documentTypes: [DocumentType!]
     classifications: [DocumentClassification!]
     status: [DocumentStatus!]
@@ -259,6 +290,7 @@ type Document implements Node {
 
     defaultApprovers: [Profile!]! @goField(forceResolver: true)
 
+    writeMode: DocumentWriteMode!
     status: DocumentStatus!
     archivedAt: Datetime
 
@@ -279,6 +311,7 @@ type DocumentVersion implements Node {
     title: String!
     classification: DocumentClassification!
     documentType: DocumentType!
+    orientation: DocumentVersionOrientation!
     approvers(
         first: Int
         after: CursorKey

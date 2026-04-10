@@ -48,6 +48,8 @@ export {
   documentTypes,
   getDocumentClassificationLabel,
   documentClassifications,
+  documentWriteModes,
+  getDocumentWriteModeLabel,
 } from "./documents";
 export { getAssetTypeVariant } from "./assets";
 export {

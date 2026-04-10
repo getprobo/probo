@@ -7,7 +7,6 @@ package console_v1
 
 import (
 	"context"
-	"encoding/base64"
 	"errors"
 	"fmt"
 
@@ -15,7 +14,6 @@ import (
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
@@ -229,6 +227,7 @@ func (r *controlResolver) Documents(ctx context.Context, obj *types.Control, fir
 	var documentFilter = coredata.NewDocumentFilter(nil)
 	if filter != nil {
 		documentFilter = coredata.NewDocumentFilter(filter.Query).
+			WithWriteModes(filter.WriteModes).
 			WithDocumentTypes(filter.DocumentTypes).
 			WithClassifications(filter.Classifications)
 	}
@@ -768,7 +767,6 @@ func (r *mutationResolver) CreateStatementOfApplicability(ctx context.Context, i
 		probo.CreateStatementOfApplicabilityRequest{
 			OrganizationID: input.OrganizationID,
 			Name:           input.Name,
-			OwnerID:        input.OwnerID,
 		},
 	)
 	if err != nil {
@@ -805,7 +803,6 @@ func (r *mutationResolver) UpdateStatementOfApplicability(ctx context.Context, i
 		probo.UpdateStatementOfApplicabilityRequest{
 			StatementOfApplicabilityID: input.ID,
 			Name:                       name,
-			OwnerID:                    input.OwnerID,
 		},
 	)
 	if err != nil {
@@ -843,26 +840,51 @@ func (r *mutationResolver) DeleteStatementOfApplicability(ctx context.Context, i
 	}, nil
 }
 
-// ExportStatementOfApplicabilityPDF is the resolver for the exportStatementOfApplicabilityPDF field.
-func (r *mutationResolver) ExportStatementOfApplicabilityPDF(ctx context.Context, input types.ExportStatementOfApplicabilityPDFInput) (*types.ExportStatementOfApplicabilityPDFPayload, error) {
-	if err := r.authorize(ctx, input.StatementOfApplicabilityID, probo.ActionStatementOfApplicabilityExport); err != nil {
+// PublishStatementOfApplicability is the resolver for the publishStatementOfApplicability field.
+func (r *mutationResolver) PublishStatementOfApplicability(ctx context.Context, input types.PublishStatementOfApplicabilityInput) (*types.PublishStatementOfApplicabilityPayload, error) {
+	if err := r.authorize(ctx, input.StatementOfApplicabilityID, probo.ActionStatementOfApplicabilityPublish); err != nil {
 		return nil, err
 	}
 
 	prb := r.ProboService(ctx, input.StatementOfApplicabilityID.TenantID())
 
-	pdfData, err := prb.StatementsOfApplicability.ExportPDF(ctx, input.StatementOfApplicabilityID)
+	document, documentVersion, err := prb.GeneratedDocuments.PublishStatementOfApplicability(ctx, input.StatementOfApplicabilityID, input.ApproverIds)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot export statement of applicability PDF", log.Error(err))
+		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
+			return nil, gqlutils.Conflict(ctx, err)
+		}
+		r.logger.ErrorCtx(ctx, "cannot publish statement of applicability", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	base64Data := base64.StdEncoding.EncodeToString(pdfData)
-	dataURI := fmt.Sprintf("data:application/pdf;base64,%s", base64Data)
-
-	return &types.ExportStatementOfApplicabilityPDFPayload{
-		Data: dataURI,
+	return &types.PublishStatementOfApplicabilityPayload{
+		DocumentEdge:        types.NewDocumentEdge(document, coredata.DocumentOrderFieldCreatedAt),
+		DocumentVersionEdge: types.NewDocumentVersionEdge(documentVersion, coredata.DocumentVersionOrderFieldCreatedAt),
 	}, nil
+}
+
+// Document is the resolver for the document field.
+func (r *statementOfApplicabilityResolver) Document(ctx context.Context, obj *types.StatementOfApplicability) (*types.Document, error) {
+	if obj.Document == nil {
+		return nil, nil
+	}
+
+	if err := r.authorize(ctx, obj.Document.ID, probo.ActionDocumentGet); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, obj.Document.ID.TenantID())
+
+	document, err := prb.Documents.Get(ctx, obj.Document.ID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, nil
+		}
+		r.logger.ErrorCtx(ctx, "cannot load document", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewDocument(document), nil
 }
 
 // Organization is the resolver for the organization field.
@@ -883,26 +905,6 @@ func (r *statementOfApplicabilityResolver) Organization(ctx context.Context, obj
 	}
 
 	return types.NewOrganization(organization), nil
-}
-
-// Owner is the resolver for the owner field.
-func (r *statementOfApplicabilityResolver) Owner(ctx context.Context, obj *types.StatementOfApplicability) (*types.Profile, error) {
-	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileGet); err != nil {
-		return nil, err
-	}
-
-	loaders := dataloader.FromContext(ctx)
-
-	owner, err := loaders.Profile.Load(ctx, obj.Owner.ID)
-	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
-		}
-		r.logger.ErrorCtx(ctx, "cannot load owner", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return types.NewProfile(owner), nil
 }
 
 // ApplicabilityStatements is the resolver for the applicabilityStatements field.
@@ -946,7 +948,7 @@ func (r *statementOfApplicabilityConnectionResolver) TotalCount(ctx context.Cont
 
 	switch obj.Resolver.(type) {
 	case *organizationResolver:
-		count, err := prb.StatementsOfApplicability.CountForOrganizationID(ctx, obj.ParentID, obj.Filters)
+		count, err := prb.StatementsOfApplicability.CountForOrganizationID(ctx, obj.ParentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count statements_of_applicability", log.Error(err))
 			return 0, gqlutils.Internal(ctx)

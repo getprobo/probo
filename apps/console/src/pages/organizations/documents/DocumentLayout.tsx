@@ -67,6 +67,7 @@ export const documentLayoutQuery = graphql`
       ... on Document {
         id
         status
+        writeMode
         canPublish: permission(action: "core:document-version:publish")
         ...PublishDialog_documentFragment
         controlInfo: controls(first: 0) {
@@ -146,6 +147,7 @@ export function DocumentLayout(props: { queryRef: PreloadedQuery<DocumentLayoutQ
   const isPendingApproval = currentVersion.status === "PENDING_APPROVAL";
   const isDraft = currentVersion.status === "DRAFT";
   const isPublished = currentVersion.status === "PUBLISHED";
+  const isGenerated = document.writeMode === "GENERATED";
   const isEditable = isLatestVersion && !isPendingApproval;
   const lastQuorum = currentVersion.approvalQuorums?.edges?.[0]?.node ?? null;
   const hasApprovals = lastQuorum != null;
@@ -223,11 +225,12 @@ export function DocumentLayout(props: { queryRef: PreloadedQuery<DocumentLayoutQ
               fKey={currentVersion}
               documentId={document.id}
               documentStatus={document.status}
-              isEditable={isEditable}
+              isEditable={isEditable && !isGenerated}
               onDocumentUpdated={handleDocumentUpdated}
             />
           )}
         >
+          {isGenerated && <Badge variant="neutral">{__("Generated")}</Badge>}
           <Badge
             variant={currentVersion.status === "PUBLISHED" ? "success" : currentVersion.status === "PENDING_APPROVAL" ? "warning" : "highlight"}
           >
@@ -239,6 +242,8 @@ export function DocumentLayout(props: { queryRef: PreloadedQuery<DocumentLayoutQ
           documentFragmentRef={document}
           versionFragmentRef={currentVersion}
           isEditable={isEditable}
+          isGenerated={isGenerated}
+          isLatestVersion={isLatestVersion}
           onDocumentUpdated={handleDocumentUpdated}
         />
 

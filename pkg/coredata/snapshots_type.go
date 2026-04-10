@@ -43,7 +43,6 @@ func SnapshotsTypes() []SnapshotsType {
 		SnapshotsTypeFindings,
 		SnapshotsTypeObligations,
 		SnapshotsTypeProcessingActivities,
-		SnapshotsTypeStatementsOfApplicability,
 	}
 }
 

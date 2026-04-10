@@ -540,7 +540,7 @@ func (r *organizationResolver) Controls(ctx context.Context, obj *types.Organiza
 }
 
 // StatementsOfApplicability is the resolver for the statementsOfApplicability field.
-func (r *organizationResolver) StatementsOfApplicability(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.StatementOfApplicabilityOrderBy, filter *types.StatementOfApplicabilityFilter) (*types.StatementOfApplicabilityConnection, error) {
+func (r *organizationResolver) StatementsOfApplicability(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.StatementOfApplicabilityOrderBy) (*types.StatementOfApplicabilityConnection, error) {
 	if err := r.authorize(ctx, obj.ID, probo.ActionStatementOfApplicabilityList); err != nil {
 		return nil, err
 	}
@@ -560,18 +560,13 @@ func (r *organizationResolver) StatementsOfApplicability(ctx context.Context, ob
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	var statementOfApplicabilityFilter = coredata.NewStatementOfApplicabilityFilter(nil)
-	if filter != nil {
-		statementOfApplicabilityFilter = coredata.NewStatementOfApplicabilityFilter(&filter.SnapshotID)
-	}
-
-	page, err := prb.StatementsOfApplicability.ListForOrganizationID(ctx, obj.ID, cursor, statementOfApplicabilityFilter)
+	page, err := prb.StatementsOfApplicability.ListForOrganizationID(ctx, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list organization statements_of_applicability", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewStatementOfApplicabilityConnection(page, r, obj.ID, statementOfApplicabilityFilter), nil
+	return types.NewStatementOfApplicabilityConnection(page, r, obj.ID), nil
 }
 
 // DataProtectionImpactAssessments is the resolver for the dataProtectionImpactAssessments field.
@@ -670,6 +665,7 @@ func (r *organizationResolver) Documents(ctx context.Context, obj *types.Organiz
 	var documentFilter = coredata.NewDocumentFilter(nil)
 	if filter != nil {
 		documentFilter = coredata.NewDocumentFilter(filter.Query).
+			WithWriteModes(filter.WriteModes).
 			WithDocumentTypes(filter.DocumentTypes).
 			WithClassifications(filter.Classifications).
 			WithStatus(filter.Status)

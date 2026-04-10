@@ -28,6 +28,7 @@ type (
 		employeeFilterModes     []EmployeeFilterMode
 		documentTypes           []DocumentType
 		classifications         []DocumentClassification
+		writeModes              []DocumentWriteMode
 		status                  []DocumentStatus
 	}
 )
@@ -71,6 +72,11 @@ func (f *DocumentFilter) WithClassifications(classifications []DocumentClassific
 	return f
 }
 
+func (f *DocumentFilter) WithWriteModes(writeModes []DocumentWriteMode) *DocumentFilter {
+	f.writeModes = writeModes
+	return f
+}
+
 func (f *DocumentFilter) WithStatus(status []DocumentStatus) *DocumentFilter {
 	f.status = status
 	return f
@@ -101,6 +107,14 @@ func (f *DocumentFilter) SQLArguments() pgx.NamedArgs {
 		}
 	}
 
+	var writeModes []string
+	if f.writeModes != nil {
+		writeModes = make([]string, len(f.writeModes))
+		for i, cs := range f.writeModes {
+			writeModes[i] = cs.String()
+		}
+	}
+
 	var status []string
 	if f.status != nil {
 		status = make([]string, len(f.status))
@@ -122,6 +136,7 @@ func (f *DocumentFilter) SQLArguments() pgx.NamedArgs {
 		"employee_filter_modes":     employeeFilterModes,
 		"document_types":            documentTypes,
 		"classifications":           classifications,
+		"write_modes":               writeModes,
 		"document_status":           status,
 	}
 }
@@ -206,6 +221,12 @@ func (f *DocumentFilter) SQLFragment() string {
 				ORDER BY dv.major DESC, dv.minor DESC
 				LIMIT 1
 			) = ANY(@classifications::document_classification[])
+		ELSE TRUE
+	END
+	AND
+	CASE
+		WHEN @write_modes::text[] IS NOT NULL THEN
+			documents.write_mode::text = ANY(@write_modes::text[])
 		ELSE TRUE
 	END
 	AND

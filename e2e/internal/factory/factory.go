@@ -1128,3 +1128,92 @@ func (b *AccessReviewCampaignBuilder) WithAccessSourceIDs(ids []string) *AccessR
 func (b *AccessReviewCampaignBuilder) Create() string {
 	return CreateAccessReviewCampaign(b.client, b.organizationID, b.attrs)
 }
+
+type StatementOfApplicabilityBuilder struct {
+	client *testutil.Client
+	attrs  Attrs
+}
+
+func NewStatementOfApplicability(c *testutil.Client) *StatementOfApplicabilityBuilder {
+	return &StatementOfApplicabilityBuilder{client: c, attrs: Attrs{}}
+}
+
+func (b *StatementOfApplicabilityBuilder) WithName(name string) *StatementOfApplicabilityBuilder {
+	b.attrs["name"] = name
+	return b
+}
+
+func (b *StatementOfApplicabilityBuilder) Create() string {
+	b.client.T.Helper()
+
+	a := b.attrs
+
+	const query = `
+		mutation($input: CreateStatementOfApplicabilityInput!) {
+			createStatementOfApplicability(input: $input) {
+				statementOfApplicabilityEdge {
+					node { id }
+				}
+			}
+		}
+	`
+
+	input := map[string]any{
+		"organizationId": b.client.GetOrganizationID().String(),
+		"name":           a.getString("name", SafeName("SOA")),
+	}
+
+	var result struct {
+		CreateStatementOfApplicability struct {
+			StatementOfApplicabilityEdge struct {
+				Node struct {
+					ID string `json:"id"`
+				} `json:"node"`
+			} `json:"statementOfApplicabilityEdge"`
+		} `json:"createStatementOfApplicability"`
+	}
+
+	err := b.client.Execute(query, map[string]any{"input": input}, &result)
+	require.NoError(b.client.T, err, "createStatementOfApplicability mutation failed")
+
+	return result.CreateStatementOfApplicability.StatementOfApplicabilityEdge.Node.ID
+}
+
+func CreateApplicabilityStatement(c *testutil.Client, soaID, controlID string, applicability bool, justification *string) string {
+	c.T.Helper()
+
+	const query = `
+		mutation($input: CreateApplicabilityStatementInput!) {
+			createApplicabilityStatement(input: $input) {
+				applicabilityStatementEdge {
+					node { id }
+				}
+			}
+		}
+	`
+
+	input := map[string]any{
+		"statementOfApplicabilityId": soaID,
+		"controlId":                  controlID,
+		"applicability":              applicability,
+	}
+
+	if justification != nil {
+		input["justification"] = *justification
+	}
+
+	var result struct {
+		CreateApplicabilityStatement struct {
+			ApplicabilityStatementEdge struct {
+				Node struct {
+					ID string `json:"id"`
+				} `json:"node"`
+			} `json:"applicabilityStatementEdge"`
+		} `json:"createApplicabilityStatement"`
+	}
+
+	err := c.Execute(query, map[string]any{"input": input}, &result)
+	require.NoError(c.T, err, "createApplicabilityStatement mutation failed")
+
+	return result.CreateApplicabilityStatement.ApplicabilityStatementEdge.Node.ID
+}

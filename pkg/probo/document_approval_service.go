@@ -136,7 +136,7 @@ func (s *DocumentApprovalService) RequestApproval(
 				return &ErrDocumentVersionNotDraft{}
 			}
 
-			q, err := s.requestApprovalInTx(ctx, tx, document, documentVersion, req.ApproverIDs, req.Changelog)
+			q, err := s.RequestApprovalInTx(ctx, tx, document, documentVersion, req.ApproverIDs, req.Changelog)
 			if err != nil {
 				return err
 			}
@@ -158,7 +158,7 @@ func (s *DocumentApprovalService) RequestApproval(
 	return quorum, nil
 }
 
-func (s *DocumentApprovalService) requestApprovalInTx(
+func (s *DocumentApprovalService) RequestApprovalInTx(
 	ctx context.Context,
 	tx pg.Tx,
 	document *coredata.Document,
@@ -264,7 +264,7 @@ func (s *DocumentApprovalService) BulkPublishMajorVersions(
 						approverIDs[i] = a.ApproverProfileID
 					}
 
-					if _, err := s.requestApprovalInTx(ctx, tx, document, dv, approverIDs, &req.Changelog); err != nil {
+					if _, err := s.RequestApprovalInTx(ctx, tx, document, dv, approverIDs, &req.Changelog); err != nil {
 						return fmt.Errorf("cannot request approval for %q: %w", documentID, err)
 					}
 				} else {
