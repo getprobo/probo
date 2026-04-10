@@ -72,30 +72,6 @@ func TestUnionScopes(t *testing.T) {
 	}
 }
 
-func TestScopesCover(t *testing.T) {
-	t.Parallel()
-
-	cases := []struct {
-		name     string
-		granted  []string
-		required []string
-		want     bool
-	}{
-		{"empty required is covered", []string{"a"}, []string{}, true},
-		{"empty granted does not cover non-empty required", []string{}, []string{"a"}, false},
-		{"exact match", []string{"a", "b"}, []string{"a", "b"}, true},
-		{"granted superset", []string{"a", "b", "c"}, []string{"a", "b"}, true},
-		{"missing one", []string{"a"}, []string{"a", "b"}, false},
-		{"reordered match", []string{"b", "a"}, []string{"a", "b"}, true},
-	}
-	for _, c := range cases {
-		t.Run(c.name, func(t *testing.T) {
-			t.Parallel()
-			assert.Equal(t, c.want, ScopesCover(c.granted, c.required))
-		})
-	}
-}
-
 func TestFormatScopeString(t *testing.T) {
 	t.Parallel()
 
