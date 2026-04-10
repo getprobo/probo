@@ -44,6 +44,8 @@ type (
 	}
 
 	SlackTokenResponse struct {
+		Ok              bool             `json:"ok"`
+		Error           string           `json:"error,omitempty"`
 		IncomingWebhook *IncomingWebhook `json:"incoming_webhook,omitempty"`
 	}
 )
@@ -113,6 +115,16 @@ func ParseSlackTokenResponse(body []byte, oauth2Conn OAuth2Connection, organizat
 	var slackResponse SlackTokenResponse
 	if err := json.NewDecoder(bytes.NewReader(body)).Decode(&slackResponse); err != nil {
 		return nil, nil, fmt.Errorf("cannot decode Slack token response: %w", err)
+	}
+
+	if slackResponse.Error != "" {
+		return nil, nil, fmt.Errorf("cannot complete Slack OAuth2 flow: %s", slackResponse.Error)
+	}
+	if !slackResponse.Ok {
+		return nil, nil, fmt.Errorf("cannot complete Slack OAuth2 flow: ok=false")
+	}
+	if oauth2Conn.AccessToken == "" {
+		return nil, nil, fmt.Errorf("cannot complete Slack OAuth2 flow: missing access token")
 	}
 
 	settings := SlackSettings{}
