@@ -76,21 +76,3 @@ func UnionScopes(scopeSets ...[]string) []string {
 	sort.Strings(out)
 	return out
 }
-
-// ScopesCover reports whether `granted` already contains every scope in
-// `required`. An empty `required` set is trivially covered.
-func ScopesCover(granted, required []string) bool {
-	if len(required) == 0 {
-		return true
-	}
-	grantedSet := make(map[string]struct{}, len(granted))
-	for _, s := range granted {
-		grantedSet[s] = struct{}{}
-	}
-	for _, r := range required {
-		if _, ok := grantedSet[r]; !ok {
-			return false
-		}
-	}
-	return true
-}
