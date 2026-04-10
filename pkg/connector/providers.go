@@ -14,25 +14,21 @@
 
 package connector
 
-const (
-	// CallbackPath is the HTTP path for the OAuth2 callback endpoint.
-	CallbackPath = "/api/console/v1/connectors/complete"
-)
+// CallbackPath is the HTTP path for the OAuth2 callback endpoint.
+const CallbackPath = "/api/console/v1/connectors/complete"
 
-type (
-	// providerDefinition holds the static OAuth2 properties for a provider.
-	// These are intrinsic to the provider and do not vary between deployments.
-	// Scopes are not part of this — they are passed by the caller at
-	// initiate time via InitiateOptions, since the same provider may be used
-	// in multiple contexts requiring different scope sets.
-	providerDefinition struct {
-		AuthURL                 string
-		TokenURL                string
-		ExtraAuthParams         map[string]string
-		TokenEndpointAuth       string // "post-form" (default), "basic-form", or "basic-json"
-		SupportsIncrementalAuth bool
-	}
-)
+// providerDefinition holds the static OAuth2 properties for a provider.
+// These are intrinsic to the provider and do not vary between deployments.
+// Scopes are not part of this — they are passed by the caller at
+// initiate time via InitiateOptions, since the same provider may be used
+// in multiple contexts requiring different scope sets.
+type providerDefinition struct {
+	AuthURL                 string
+	TokenURL                string
+	ExtraAuthParams         map[string]string
+	TokenEndpointAuth       string // "post-form" (default), "basic-form", or "basic-json"
+	SupportsIncrementalAuth bool
+}
 
 // providerDefinitions maps provider names to their static OAuth2 definitions.
 // Only ClientID and ClientSecret come from deployment config.
