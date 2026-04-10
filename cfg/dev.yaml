@@ -26,7 +26,7 @@ probod:
         domain: "localhost"
         secret: "this-is-a-secure-secret-for-cookie-signing-at-least-32-bytes"
         duration: 24
-        secure: true
+        secure: false
 
   trust-center:
     http-addr: ":8085"
@@ -62,7 +62,7 @@ probod:
       domain: "localhost"
       secret: "this-is-a-secure-secret-for-cookie-signing-at-least-32-bytes"
       duration: 24
-      secure: true
+      secure: false
     password:
       pepper: "this-is-a-secure-pepper-for-password-hashing-at-least-32-bytes"
       iterations: 1000000
@@ -109,6 +109,32 @@ probod:
       directory: "https://localhost:14000/dir"
       email: "admin@getprobo.com"
       key-type: "EC256"
+      root-ca: |
+        -----BEGIN CERTIFICATE-----
+        MIIELTCCApWgAwIBAgIRAOnkjZP5Vw6xBd39TQTiRfwwDQYJKoZIhvcNAQELBQAw
+        XzEeMBwGA1UEChMVbWtjZXJ0IGRldmVsb3BtZW50IENBMRowGAYDVQQLDBFlbWls
+        eUBNYWMgKEVtaWx5KTEhMB8GA1UEAwwYbWtjZXJ0IGVtaWx5QE1hYyAoRW1pbHkp
+        MB4XDTI2MDQwNTEzMjA1OFoXDTI4MDcwNTEzMjA1OFowRTEnMCUGA1UEChMebWtj
+        ZXJ0IGRldmVsb3BtZW50IGNlcnRpZmljYXRlMRowGAYDVQQLDBFlbWlseUBNYWMg
+        KEVtaWx5KTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAOokO/yG3uRd
+        p9EiSmc74NEXliXUaAiEApz4KaP+KPqxU82gFyUlsjE02fadtuPL/+jfCulWrOdd
+        LzfPhAsLxuXtTV6Nm1R4bLi8QWieqMG/Zop95MMDQyVzgOGGqslm8Anr0BNC7rL2
+        bGD+fS0Ub6UGuMRUCnrP9I2bIRvp8RYMT6iY5lSIKebVnOViplp1sX+u8fXwzSet
+        D+DBYBUOQuRAjSuJYOGXQ6i8CvckhKFzj5VfzyKjUIpxvf1G9iMJMO9/YjMtI2ia
+        URFs/bntOjoCcDPSVLM5o8YMySBAhakEA3gzRHt9t/LAEoRS1aZzrt9po7ZNdbEl
+        /QJoilHptsMCAwEAAaN+MHwwDgYDVR0PAQH/BAQDAgWgMBMGA1UdJQQMMAoGCCsG
+        AQUFBwMBMB8GA1UdIwQYMBaAFKn13tcqVOHgSGuRsqK7RdSjGu3vMDQGA1UdEQQt
+        MCuCCWxvY2FsaG9zdIIGcGViYmxlhwR/AAABhxAAAAAAAAAAAAAAAAAAAAABMA0G
+        CSqGSIb3DQEBCwUAA4IBgQCYt2KQsR3VTiVozd/ckZvtKll/Ut9s8o4meNS0Y5GT
+        8QsCDFsC+OI/vDrAqIpk9sNIv3uTdBgqPMf4j3Noos+BfIBrWFGdpZ9eOYja+KaX
+        nFz9vNXtRZFZxKx6mRdEk+xFrO3kAnCavfz36BtdTQ0mfnMvq3Pi/5AnAo3Pkjb1
+        P2J98+9q1cKj56hXSx+8/7bQbY53IArROpPyjl8y+npkxKsR5yWxBDJXijTk2ZpU
+        TrCma/stb9hLBF/LuI3A7VWiapoaQwpDM80UmYe/gxwgOxwoFPP74OJec/+26CwQ
+        T96kXQdXf5FTX8Figlw0a61Wyu11mCSv7lJvsqn8oGfPwyTaHc9a/Vajkvw5kP0l
+        uYZnBTlK+/8UDFGLw1x6GMzYr6+ej6G4BXNbew1ZgqNSvXJPDINMls4wv4jIKUd0
+        jaFemXUuic75xbYYNigxcJMPfCSAOzMdpoK+kiTOyunXSSIB8HhdIzEVZWXyXkuV
+        8TDzI76TS6Nk/CA8/R+5NMQ=
+        -----END CERTIFICATE-----
 
   connectors:
     - provider: "SLACK"
