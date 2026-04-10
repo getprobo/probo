@@ -64,11 +64,19 @@ func (h *runHandle) stop() {
 }
 
 func WithAgentRunSupervisorInterval(d time.Duration) AgentRunSupervisorOption {
-	return func(s *AgentRunSupervisor) { s.interval = d }
+	return func(s *AgentRunSupervisor) {
+		if d > 0 {
+			s.interval = d
+		}
+	}
 }
 
 func WithAgentRunSupervisorLeaseDuration(d time.Duration) AgentRunSupervisorOption {
-	return func(s *AgentRunSupervisor) { s.leaseDuration = d }
+	return func(s *AgentRunSupervisor) {
+		if d > 0 {
+			s.leaseDuration = d
+		}
+	}
 }
 
 func WithAgentRunSupervisorMaxConcurrency(n int) AgentRunSupervisorOption {
