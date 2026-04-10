@@ -324,6 +324,10 @@ func coreLoop(ctx context.Context, startAgent *Agent, inputMessages []llm.Messag
 			return s.finishRun(ctx, nil, fmt.Errorf("cannot complete: %w", err))
 		}
 
+		if s.turns >= s.agent.maxTurns {
+			return s.finishRun(ctx, nil, &MaxTurnsExceededError{MaxTurns: s.agent.maxTurns})
+		}
+
 		if ch := stopSignalFrom(ctx); ch != nil {
 			select {
 			case <-ch:
@@ -341,10 +345,6 @@ func coreLoop(ctx context.Context, startAgent *Agent, inputMessages []llm.Messag
 				return s.finishRun(ctx, nil, se)
 			default:
 			}
-		}
-
-		if s.turns >= s.agent.maxTurns {
-			return s.finishRun(ctx, nil, &MaxTurnsExceededError{MaxTurns: s.agent.maxTurns})
 		}
 
 		fullMessages := buildFullMessages(s.systemPrompt, s.messages)

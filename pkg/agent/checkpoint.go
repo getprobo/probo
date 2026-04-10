@@ -35,7 +35,7 @@ type (
 		// Approval-interrupted checkpoints carry pending tool calls.
 		PendingToolCalls []llm.ToolCall            `json:"pending_tool_calls,omitempty"`
 		PendingApprovals []llm.ToolCall            `json:"pending_approvals,omitempty"`
-		ApprovalInput    map[string]ApprovalResult `json:"approval_input,omitempty"`
+		ApprovalInput    map[string]ApprovalResult `json:"approval_input,omitempty"` // keyed by tool call ID
 
 		// Nested agent-as-tool suspension: one entry per suspended inner agent.
 		AllToolCalls     []llm.ToolCall         `json:"all_tool_calls,omitempty"`

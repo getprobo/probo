@@ -284,40 +284,8 @@ func (s *AgentRunSupervisor) executeRun(ctx context.Context, run *coredata.Agent
 		}
 	}
 
-	// Update run status based on outcome.
-	now := time.Now()
-	run.UpdatedAt = now
-	run.StartedAt = nil
-	run.LeaseOwner = nil
-	run.LeaseExpiresAt = nil
-
-	var (
-		suspended   bool
-		interrupted bool
-	)
-	if runErr != nil {
-		_, suspended = errors.AsType[*agent.SuspendedError](runErr)
-		_, interrupted = errors.AsType[*agent.InterruptedError](runErr)
-	}
-
-	switch {
-	case runErr == nil:
-		run.Status = coredata.AgentRunStatusCompleted
-		if result != nil {
-			data, _ := json.Marshal(result)
-			run.Result = data
-		}
-		run.StopRequested = false
-
-	case interrupted:
-		run.Status = coredata.AgentRunStatusAwaitingApproval
-
-	default:
-		run.Status = coredata.AgentRunStatusFailed
-		msg := runErr.Error()
-		run.ErrorMessage = &msg
-	}
-
+	// Heartbeat loss: another worker may have taken over. Do not commit
+	// any status — stale recovery will handle the row.
 	if cause := context.Cause(ctx); errors.Is(cause, ErrAgentRunLeaseLost) || errors.Is(cause, ErrAgentRunHeartbeatFailed) {
 		s.logger.WarnCtx(
 			context.WithoutCancel(ctx),
@@ -332,13 +300,41 @@ func (s *AgentRunSupervisor) executeRun(ctx context.Context, run *coredata.Agent
 	// row as RUNNING so stale recovery resets it to PENDING on restart.
 	// The checkpoint was already saved by coreLoop before returning
 	// SuspendedError, so Restore will pick up where it left off.
-	if suspended {
-		s.logger.InfoCtx(
-			context.WithoutCancel(ctx),
-			"agent run suspended by infrastructure; leaving for stale recovery",
-			log.String("run_id", runID),
-		)
-		return
+	if runErr != nil {
+		if _, ok := errors.AsType[*agent.SuspendedError](runErr); ok {
+			s.logger.InfoCtx(
+				context.WithoutCancel(ctx),
+				"agent run suspended by infrastructure; leaving for stale recovery",
+				log.String("run_id", runID),
+			)
+			return
+		}
+	}
+
+	// Update run status based on outcome.
+	now := time.Now()
+	run.UpdatedAt = now
+	run.StartedAt = nil
+	run.LeaseOwner = nil
+	run.LeaseExpiresAt = nil
+
+	switch {
+	case runErr == nil:
+		run.Status = coredata.AgentRunStatusCompleted
+		if result != nil {
+			data, err := json.Marshal(result)
+			if err != nil {
+				s.logger.ErrorCtx(ctx, "cannot marshal agent run result", log.Error(err))
+			} else {
+				run.Result = data
+			}
+		}
+		run.StopRequested = false
+
+	default:
+		run.Status = coredata.AgentRunStatusFailed
+		msg := runErr.Error()
+		run.ErrorMessage = &msg
 	}
 
 	commitCtx := context.WithoutCancel(ctx)
