@@ -29,7 +29,7 @@ import (
 )
 
 type (
-	ConsentRecord struct {
+	CookieConsentRecord struct {
 		ID             gid.GID             `db:"id"`
 		CookieBannerID gid.GID             `db:"cookie_banner_id"`
 		VisitorID      string              `db:"visitor_id"`
@@ -40,10 +40,10 @@ type (
 		CreatedAt      time.Time           `db:"created_at"`
 	}
 
-	ConsentRecords []*ConsentRecord
+	CookieConsentRecords []*CookieConsentRecord
 )
 
-func (r *ConsentRecord) CursorKey(field CookieConsentRecordOrderField) page.CursorKey {
+func (r *CookieConsentRecord) CursorKey(field CookieConsentRecordOrderField) page.CursorKey {
 	switch field {
 	case CookieConsentRecordOrderFieldCreatedAt:
 		return page.NewCursorKey(r.ID, r.CreatedAt)
@@ -52,7 +52,7 @@ func (r *ConsentRecord) CursorKey(field CookieConsentRecordOrderField) page.Curs
 	panic(fmt.Sprintf("unsupported order by: %s", field))
 }
 
-func (r *ConsentRecord) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
+func (r *CookieConsentRecord) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	q := `
 SELECT cb.organization_id
 FROM cookie_consent_records cr
@@ -72,7 +72,7 @@ LIMIT 1;
 	return map[string]string{"organization_id": organizationID.String()}, nil
 }
 
-func (r *ConsentRecords) LoadByCookieBannerID(
+func (r *CookieConsentRecords) LoadByCookieBannerID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
@@ -111,7 +111,7 @@ WHERE
 		return fmt.Errorf("cannot query consent records: %w", err)
 	}
 
-	records, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[ConsentRecord])
+	records, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[CookieConsentRecord])
 	if err != nil {
 		return fmt.Errorf("cannot collect consent records: %w", err)
 	}
@@ -121,7 +121,7 @@ WHERE
 	return nil
 }
 
-func (r *ConsentRecords) CountByCookieBannerID(
+func (r *CookieConsentRecords) CountByCookieBannerID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
@@ -155,7 +155,7 @@ WHERE
 	return count, nil
 }
 
-func (r *ConsentRecord) Insert(
+func (r *CookieConsentRecord) Insert(
 	ctx context.Context,
 	tx pg.Tx,
 	scope Scoper,

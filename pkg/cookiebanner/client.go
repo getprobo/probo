@@ -16,6 +16,7 @@ package cookiebanner
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -82,6 +83,15 @@ type (
 		Rank             *int
 		Cookies          *coredata.CookieItems
 	}
+
+	CreateCookieConsentRecordRequest struct {
+		CookieBannerID gid.GID
+		VisitorID      string
+		IPAddress      *string
+		UserAgent      *string
+		ConsentData    json.RawMessage
+		Action         coredata.CookieConsentAction
+	}
 )
 
 func (r *CreateCookieBannerRequest) Validate() error {
@@ -128,6 +138,16 @@ func (r *UpdateCookieCategoryRequest) Validate() error {
 	v.Check(r.Name, "name", validator.SafeTextNoNewLine(255))
 	v.Check(r.Description, "description", validator.SafeText(1000))
 	v.Check(r.Rank, "rank", validator.Min(0))
+
+	return v.Error()
+}
+
+func (r *CreateCookieConsentRecordRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(r.CookieBannerID, "cookie_banner_id", validator.Required(), validator.GID(coredata.CookieBannerEntityType))
+	v.Check(r.VisitorID, "visitor_id", validator.Required(), validator.NotEmpty())
+	v.Check(r.Action, "action", validator.Required(), validator.OneOfSlice(coredata.CookieConsentActions()))
 
 	return v.Error()
 }
@@ -642,4 +662,98 @@ func (c *Client) DeleteCookieCategory(
 			return nil
 		},
 	)
+}
+
+func (c *Client) CreateCookieConsentRecord(
+	ctx context.Context,
+	scope coredata.Scoper,
+	req CreateCookieConsentRecordRequest,
+) (*coredata.CookieConsentRecord, error) {
+	if err := req.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid request: %w", err)
+	}
+
+	var record *coredata.CookieConsentRecord
+
+	err := c.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			record = &coredata.CookieConsentRecord{
+				ID:             gid.New(scope.GetTenantID(), coredata.CookieConsentRecordEntityType),
+				CookieBannerID: req.CookieBannerID,
+				VisitorID:      req.VisitorID,
+				IPAddress:      req.IPAddress,
+				UserAgent:      req.UserAgent,
+				ConsentData:    req.ConsentData,
+				Action:         req.Action,
+				CreatedAt:      time.Now(),
+			}
+
+			if err := record.Insert(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot insert consent record: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return record, nil
+}
+
+func (c *Client) ListCookieConsentRecordsForBanner(
+	ctx context.Context,
+	scope coredata.Scoper,
+	bannerID gid.GID,
+	cursor *page.Cursor[coredata.CookieConsentRecordOrderField],
+	filter *coredata.CookieConsentRecordFilter,
+) (coredata.CookieConsentRecords, error) {
+	var records coredata.CookieConsentRecords
+
+	err := c.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := records.LoadByCookieBannerID(ctx, conn, scope, bannerID, cursor, filter); err != nil {
+				return fmt.Errorf("cannot list consent records: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return records, nil
+}
+
+func (c *Client) CountCookieConsentRecordsForBanner(
+	ctx context.Context,
+	scope coredata.Scoper,
+	bannerID gid.GID,
+	filter *coredata.CookieConsentRecordFilter,
+) (int, error) {
+	var count int
+
+	err := c.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			var records coredata.CookieConsentRecords
+			var err error
+
+			count, err = records.CountByCookieBannerID(ctx, conn, scope, bannerID, filter)
+			if err != nil {
+				return fmt.Errorf("cannot count consent records: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
 }
