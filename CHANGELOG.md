@@ -4,7 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
-## [0.165.2] - 2026-04-09
+## [0.165.3] - 2026-04-10
+
+### Fixed
+
+- Fix MCP data owner serialization and document ordering
+
+## [0.165.2] - 2026-04-10
 
 ### Fixed
 
