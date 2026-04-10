@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.165.2] - 2026-04-09
+
+### Fixed
+
+- Fix MCP snapshot issues for SOA and vendors
+
+### Changed
+
+- Move document title ownership from document to version
+
 ## [0.165.1] - 2026-04-09
 
 ### Fixed
