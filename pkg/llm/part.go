@@ -20,17 +20,17 @@ type (
 	}
 
 	TextPart struct {
-		Text string
+		Text string `json:"text"`
 	}
 
 	ImagePart struct {
-		URL string
+		URL string `json:"url"`
 	}
 
 	FilePart struct {
-		Data     string // base64-encoded content
-		MimeType string // e.g. "application/pdf", "text/csv", "image/png"
-		Filename string
+		Data     string `json:"data"`      // base64-encoded content
+		MimeType string `json:"mime_type"` // e.g. "application/pdf", "text/csv", "image/png"
+		Filename string `json:"filename"`
 	}
 )
 
