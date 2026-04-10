@@ -220,7 +220,7 @@ func (c *Client) GetCookieBanner(
 	return &banner, nil
 }
 
-func (c *Client) ListCookieBanners(
+func (c *Client) ListCookieBannersForOrganization(
 	ctx context.Context,
 	scope coredata.Scoper,
 	organizationID gid.GID,
@@ -246,7 +246,7 @@ func (c *Client) ListCookieBanners(
 	return banners, nil
 }
 
-func (c *Client) CountCookieBanners(
+func (c *Client) CountCookieBannersForOrganization(
 	ctx context.Context,
 	scope coredata.Scoper,
 	organizationID gid.GID,
@@ -512,7 +512,7 @@ func (c *Client) GetCookieCategory(
 	return &category, nil
 }
 
-func (c *Client) ListCookieCategories(
+func (c *Client) ListCookieCategoriesForBanner(
 	ctx context.Context,
 	scope coredata.Scoper,
 	bannerID gid.GID,
@@ -537,7 +537,7 @@ func (c *Client) ListCookieCategories(
 	return categories, nil
 }
 
-func (c *Client) CountCookieCategories(
+func (c *Client) CountCookieCategoriesForBanner(
 	ctx context.Context,
 	scope coredata.Scoper,
 	bannerID gid.GID,
