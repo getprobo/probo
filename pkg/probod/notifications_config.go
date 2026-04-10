@@ -14,6 +14,8 @@
 
 package probod
 
+import "go.probo.inc/probo/pkg/duration"
+
 type NotificationsConfig struct {
 	Mailer  MailerConfig  `json:"mailer"`
 	Slack   SlackConfig   `json:"slack"`
@@ -21,6 +23,6 @@ type NotificationsConfig struct {
 }
 
 type WebhookConfig struct {
-	SenderInterval int `json:"sender-interval"`
-	CacheTTL       int `json:"cache-ttl"`
+	SenderInterval duration.Duration `json:"sender-interval"`
+	CacheTTL       duration.Duration `json:"cache-ttl"`
 }
