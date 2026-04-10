@@ -77,10 +77,10 @@ type (
 
 	UpdateCookieCategoryRequest struct {
 		CookieCategoryID gid.GID
-		Name        *string
-		Description *string
-		Rank        *int
-		Cookies     *coredata.CookieItems
+		Name             *string
+		Description      *string
+		Rank             *int
+		Cookies          *coredata.CookieItems
 	}
 )
 
