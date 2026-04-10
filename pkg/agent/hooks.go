@@ -24,6 +24,7 @@ import (
 type RunHooks interface {
 	OnRunStart(ctx context.Context, agent *Agent, messages []llm.Message)
 	OnRunEnd(ctx context.Context, agent *Agent, result *Result, err error)
+	OnRunRestore(ctx context.Context, agent *Agent, checkpoint *Checkpoint)
 	OnLLMStart(ctx context.Context, agent *Agent, messages []llm.Message)
 	OnLLMEnd(ctx context.Context, agent *Agent, response *llm.ChatCompletionResponse, err error)
 	OnToolStart(ctx context.Context, agent *Agent, tool Tool, arguments string)
@@ -39,6 +40,7 @@ var _ RunHooks = NoOpHooks{}
 
 func (NoOpHooks) OnRunStart(context.Context, *Agent, []llm.Message)                    {}
 func (NoOpHooks) OnRunEnd(context.Context, *Agent, *Result, error)                     {}
+func (NoOpHooks) OnRunRestore(context.Context, *Agent, *Checkpoint)                    {}
 func (NoOpHooks) OnLLMStart(context.Context, *Agent, []llm.Message)                    {}
 func (NoOpHooks) OnLLMEnd(context.Context, *Agent, *llm.ChatCompletionResponse, error) {}
 func (NoOpHooks) OnToolStart(context.Context, *Agent, Tool, string)                    {}
