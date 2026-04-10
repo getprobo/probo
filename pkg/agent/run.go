@@ -33,6 +33,8 @@ const tracerName = "go.probo.inc/probo/pkg/agent"
 type (
 	CallLLMFunc func(ctx context.Context, agent *Agent, req *llm.ChatCompletionRequest) (*llm.ChatCompletionResponse, error)
 
+	RunOption func(*runOpts)
+
 	runOpts struct {
 		callLLM             CallLLMFunc
 		onEvent             func(ctx context.Context, ev StreamEvent)
@@ -40,6 +42,9 @@ type (
 		skipSessionLoad     bool
 		initialUsage        llm.Usage
 		initialTurns        int
+		checkpointStore     CheckpointStore
+		runID               string
+		toolUsedInRun       bool
 	}
 
 	loopState struct {
@@ -65,6 +70,13 @@ type (
 	}
 )
 
+func WithCheckpointStore(store CheckpointStore, runID string) RunOption {
+	return func(o *runOpts) {
+		o.checkpointStore = store
+		o.runID = runID
+	}
+}
+
 func noopEvent(_ context.Context, _ StreamEvent) {}
 
 func blockingCallLLM(ctx context.Context, agent *Agent, req *llm.ChatCompletionRequest) (*llm.ChatCompletionResponse, error) {
@@ -72,15 +84,19 @@ func blockingCallLLM(ctx context.Context, agent *Agent, req *llm.ChatCompletionR
 }
 
 func (a *Agent) Run(ctx context.Context, messages []llm.Message) (*Result, error) {
-	return coreLoop(
-		ctx,
-		a,
-		messages,
-		runOpts{
-			callLLM: blockingCallLLM,
-			onEvent: noopEvent,
-		},
-	)
+	return a.RunWithOpts(ctx, messages)
+}
+
+func (a *Agent) RunWithOpts(ctx context.Context, messages []llm.Message, opts ...RunOption) (*Result, error) {
+	ro := runOpts{
+		callLLM: blockingCallLLM,
+		onEvent: noopEvent,
+	}
+	for _, opt := range opts {
+		opt(&ro)
+	}
+
+	return coreLoop(ctx, a, messages, ro)
 }
 
 func (s *loopState) resolveAgentTools(ctx context.Context) error {
@@ -106,6 +122,20 @@ func (s *loopState) finishRun(ctx context.Context, result *Result, err error) (*
 	}()
 
 	if err != nil {
+		if _, ok := errors.AsType[*SuspendedError](err); ok {
+			s.runSpan.SetAttributes(attribute.Bool("agent.suspended", true))
+			s.opts.onEvent(ctx, StreamEvent{Type: StreamEventSuspended, Agent: s.agent})
+
+			s.logger.InfoCtx(
+				ctx,
+				"agent run suspended",
+				log.String("agent", s.agent.name),
+				log.Int("turns", s.turns),
+			)
+
+			return result, err
+		}
+
 		s.runSpan.RecordError(err)
 		s.runSpan.SetStatus(codes.Error, err.Error())
 		s.opts.onEvent(ctx, StreamEvent{Type: StreamEventError, Agent: s.agent, Err: err})
@@ -160,6 +190,21 @@ func (s *loopState) finishRun(ctx context.Context, result *Result, err error) (*
 	return result, err
 }
 
+func (s *loopState) buildCheckpoint(status CheckpointStatus) *Checkpoint {
+	msgsCopy := make([]llm.Message, len(s.messages))
+	copy(msgsCopy, s.messages)
+
+	return &Checkpoint{
+		Version:       CheckpointVersion,
+		Status:        status,
+		AgentName:     s.agent.name,
+		Messages:      msgsCopy,
+		Usage:         s.totalUsage,
+		Turns:         s.turns,
+		ToolUsedInRun: s.toolUsedInRun,
+	}
+}
+
 func (s *loopState) applyHandoff(ctx context.Context, handoffTarget *Handoff) error {
 	emitHook(s.agent, func(h RunHooks) { h.OnHandoff(ctx, s.agent, handoffTarget.Agent) })
 	emitAgentHook(handoffTarget.Agent, func(h AgentHooks) { h.OnHandoff(ctx, handoffTarget.Agent, s.agent) })
@@ -206,6 +251,7 @@ func coreLoop(ctx context.Context, startAgent *Agent, inputMessages []llm.Messag
 		systemPrompt:  startAgent.buildSystemPrompt(ctx),
 		totalUsage:    opts.initialUsage,
 		turns:         opts.initialTurns,
+		toolUsedInRun: opts.toolUsedInRun,
 		tracer:        otel.GetTracerProvider().Tracer(tracerName),
 		opts:          opts,
 		logger:        startAgent.logger,
@@ -276,6 +322,25 @@ func coreLoop(ctx context.Context, startAgent *Agent, inputMessages []llm.Messag
 	for {
 		if err := ctx.Err(); err != nil {
 			return s.finishRun(ctx, nil, fmt.Errorf("cannot complete: %w", err))
+		}
+
+		if ch := stopSignalFrom(ctx); ch != nil {
+			select {
+			case <-ch:
+				cp := s.buildCheckpoint(CheckpointStatusSuspended)
+				se := &SuspendedError{RunID: s.opts.runID}
+
+				if s.opts.checkpointStore != nil && s.opts.runID != "" {
+					if saveErr := s.opts.checkpointStore.Save(ctx, s.opts.runID, cp); saveErr != nil {
+						s.logger.ErrorCtx(ctx, "cannot save suspension checkpoint", log.Error(saveErr))
+					}
+				} else {
+					se.Checkpoint = cp
+				}
+
+				return s.finishRun(ctx, nil, se)
+			default:
+			}
 		}
 
 		if s.turns >= s.agent.maxTurns {
@@ -373,6 +438,21 @@ func coreLoop(ctx context.Context, startAgent *Agent, inputMessages []llm.Messag
 			s.messages = append(s.messages, toolMsgs...)
 
 			if err != nil {
+				if se, ok := errors.AsType[*SuspendedError](err); ok {
+					outerCP := s.buildCheckpoint(CheckpointStatusSuspended)
+					if se.Checkpoint != nil {
+						outerCP.AllToolCalls = se.Checkpoint.AllToolCalls
+						outerCP.InnerCheckpoints = se.Checkpoint.InnerCheckpoints
+						outerCP.CompletedCalls = se.Checkpoint.CompletedCalls
+					}
+					if s.opts.checkpointStore != nil && s.opts.runID != "" {
+						if saveErr := s.opts.checkpointStore.Save(ctx, s.opts.runID, outerCP); saveErr != nil {
+							s.logger.ErrorCtx(ctx, "cannot save checkpoint", log.Error(saveErr))
+						}
+					}
+					return s.finishRun(ctx, nil, &SuspendedError{RunID: s.opts.runID})
+				}
+
 				if nae, ok := errors.AsType[*needsApprovalError](err); ok {
 					s.logger.InfoCtx(
 						ctx,
@@ -382,6 +462,15 @@ func coreLoop(ctx context.Context, startAgent *Agent, inputMessages []llm.Messag
 
 					msgsCopy := make([]llm.Message, len(s.messages))
 					copy(msgsCopy, s.messages)
+
+					if s.opts.checkpointStore != nil && s.opts.runID != "" {
+						cp := s.buildCheckpoint(CheckpointStatusAwaitingApproval)
+						cp.PendingToolCalls = nae.allToolCalls
+						cp.PendingApprovals = nae.pendingApprovals
+						if saveErr := s.opts.checkpointStore.Save(ctx, s.opts.runID, cp); saveErr != nil {
+							s.logger.ErrorCtx(ctx, "cannot save approval checkpoint", log.Error(saveErr))
+						}
+					}
 
 					return s.finishRun(
 						ctx,
@@ -407,6 +496,29 @@ func coreLoop(ctx context.Context, startAgent *Agent, inputMessages []llm.Messag
 
 					msgsCopy := make([]llm.Message, len(s.messages))
 					copy(msgsCopy, s.messages)
+
+					if s.opts.checkpointStore != nil && s.opts.runID != "" {
+						cp := s.buildCheckpoint(CheckpointStatusAwaitingApproval)
+						cp.PendingToolCalls = nie.inner.ToolCalls
+						cp.PendingApprovals = nie.inner.PendingApprovals
+						cp.AllToolCalls = nie.allToolCalls
+						cp.CompletedCalls = nie.completedCalls
+						cp.InnerCheckpoints = map[string]*Checkpoint{
+							nie.toolCallID: {
+								Version:          CheckpointVersion,
+								Status:           CheckpointStatusAwaitingApproval,
+								AgentName:        nie.inner.Agent.name,
+								Messages:         nie.inner.Messages,
+								Usage:            nie.inner.Usage,
+								Turns:            nie.inner.Turns,
+								PendingToolCalls: nie.inner.ToolCalls,
+								PendingApprovals: nie.inner.PendingApprovals,
+							},
+						}
+						if saveErr := s.opts.checkpointStore.Save(ctx, s.opts.runID, cp); saveErr != nil {
+							s.logger.ErrorCtx(ctx, "cannot save nested approval checkpoint", log.Error(saveErr))
+						}
+					}
 
 					return s.finishRun(
 						ctx,
@@ -464,6 +576,14 @@ func coreLoop(ctx context.Context, startAgent *Agent, inputMessages []llm.Messag
 			if handoffTarget != nil {
 				if handoffErr := s.applyHandoff(ctx, handoffTarget); handoffErr != nil {
 					return s.finishRun(ctx, nil, handoffErr)
+				}
+			}
+
+			// Save incremental checkpoint after completed tool-call turn.
+			if s.opts.checkpointStore != nil && s.opts.runID != "" {
+				cp := s.buildCheckpoint(CheckpointStatusSuspended)
+				if saveErr := s.opts.checkpointStore.Save(ctx, s.opts.runID, cp); saveErr != nil {
+					s.logger.ErrorCtx(ctx, "cannot save checkpoint", log.Error(saveErr))
 				}
 			}
 
@@ -590,13 +710,13 @@ func executeWithHandoff(
 		tr, err := executeSingleTool(ctx, tracer, agent, toolCalls[i], descriptors[i].(Tool), onEvent, logger)
 		if err != nil {
 			if ie, ok := errors.AsType[*InterruptedError](err); ok {
-				var completed []completedCall
+				var completed []CompletedCall
 				for j := range results {
 					completed = append(
 						completed,
-						completedCall{
-							toolCallID: toolCalls[j].ID,
-							result:     results[j].Result,
+						CompletedCall{
+							ToolCallID: toolCalls[j].ID,
+							Result:     results[j].Result,
 						},
 					)
 				}
@@ -690,40 +810,98 @@ func executeParallel(
 	wg.Wait()
 
 	for i, entry := range entries {
-		var ie *InterruptedError
-		if entry.err != nil && errors.As(entry.err, &ie) {
-			var completed []completedCall
+		ie, ok := errors.AsType[*InterruptedError](entry.err)
+		if !ok {
+			continue
+		}
+
+		var completed []CompletedCall
+		for j, other := range entries {
+			if j == i {
+				continue
+			}
+			if other.err != nil {
+				completed = append(
+					completed,
+					CompletedCall{
+						ToolCallID: toolCalls[j].ID,
+						Result: ToolResult{
+							Content: fmt.Sprintf("Error: %s", other.err.Error()),
+							IsError: true,
+						},
+					},
+				)
+				continue
+			}
+			completed = append(
+				completed,
+				CompletedCall{
+					ToolCallID: toolCalls[j].ID,
+					Result:     other.result,
+				},
+			)
+		}
+		return nil, nil, &nestedInterruptionError{
+			inner:          ie,
+			toolCallID:     toolCalls[i].ID,
+			allToolCalls:   toolCalls,
+			completedCalls: completed,
+		}
+	}
+
+	// Check for suspended inner agents (stop signal propagated).
+	for i, entry := range entries {
+		if entry.err == nil {
+			continue
+		}
+		se, ok := errors.AsType[*SuspendedError](entry.err)
+		if ok && se.Checkpoint != nil {
+			innerCheckpoints := make(map[string]*Checkpoint)
+			var completed []CompletedCall
+
 			for j, other := range entries {
 				if j == i {
 					continue
 				}
-				if other.err != nil {
+				if other.err == nil {
 					completed = append(
 						completed,
-						completedCall{
-							toolCallID: toolCalls[j].ID,
-							result: ToolResult{
+						CompletedCall{
+							ToolCallID: toolCalls[j].ID,
+							Result:     other.result,
+						},
+					)
+					continue
+				}
+				otherSE, ok := errors.AsType[*SuspendedError](other.err)
+				if ok && otherSE.Checkpoint != nil {
+					innerCheckpoints[toolCalls[j].ID] = otherSE.Checkpoint
+				} else {
+					completed = append(
+						completed,
+						CompletedCall{
+							ToolCallID: toolCalls[j].ID,
+							Result: ToolResult{
 								Content: fmt.Sprintf("Error: %s", other.err.Error()),
 								IsError: true,
 							},
 						},
 					)
-					continue
 				}
-				completed = append(
-					completed,
-					completedCall{
-						toolCallID: toolCalls[j].ID,
-						result:     other.result,
-					},
-				)
 			}
-			return nil, nil, &nestedInterruptionError{
-				inner:          ie,
-				toolCallID:     toolCalls[i].ID,
-				allToolCalls:   toolCalls,
-				completedCalls: completed,
+
+			innerCheckpoints[toolCalls[i].ID] = se.Checkpoint
+
+			outerSE := &SuspendedError{
+				Checkpoint: &Checkpoint{
+					Version:          CheckpointVersion,
+					Status:           CheckpointStatusSuspended,
+					AllToolCalls:     toolCalls,
+					InnerCheckpoints: innerCheckpoints,
+					CompletedCalls:   completed,
+				},
 			}
+			return nil, nil, outerSE
 		}
 	}
 
@@ -817,6 +995,17 @@ func executeSingleTool(
 	if err != nil {
 		if _, ok := errors.AsType[*InterruptedError](err); ok {
 			toolSpan.SetAttributes(attribute.Bool("tool.interrupted", true))
+			toolSpan.End()
+
+			onEvent(ctx, StreamEvent{Type: StreamEventToolEnd, Agent: agent, Tool: tool, Err: err})
+			emitHook(agent, func(h RunHooks) { h.OnToolEnd(ctx, agent, tool, ToolResult{}, err) })
+			emitAgentHook(agent, func(h AgentHooks) { h.OnToolEnd(ctx, agent, tool, ToolResult{}) })
+
+			return ToolResult{}, err
+		}
+
+		if _, ok := errors.AsType[*SuspendedError](err); ok {
+			toolSpan.SetAttributes(attribute.Bool("tool.suspended", true))
 			toolSpan.End()
 
 			onEvent(ctx, StreamEvent{Type: StreamEventToolEnd, Agent: agent, Tool: tool, Err: err})
@@ -930,8 +1119,24 @@ func runOutputGuardrails(ctx context.Context, agent *Agent, message llm.Message)
 // are not re-evaluated because the messages were already validated in the
 // original Run call.
 func Resume(ctx context.Context, interrupted *InterruptedError, input ResumeInput) (*Result, error) {
+	return ResumeWithOpts(ctx, interrupted, input)
+}
+
+func ResumeWithOpts(ctx context.Context, interrupted *InterruptedError, input ResumeInput, opts ...RunOption) (*Result, error) {
+	ro := runOpts{
+		callLLM: blockingCallLLM,
+		onEvent: noopEvent,
+	}
+	for _, opt := range opts {
+		opt(&ro)
+	}
+
+	return resumeWithOpts(ctx, interrupted, input, ro)
+}
+
+func resumeWithOpts(ctx context.Context, interrupted *InterruptedError, input ResumeInput, ro runOpts) (*Result, error) {
 	if interrupted.outerState != nil {
-		return resumeNested(ctx, interrupted, input)
+		return resumeNested(ctx, interrupted, input, ro)
 	}
 
 	tracer := otel.GetTracerProvider().Tracer(tracerName)
@@ -1028,7 +1233,7 @@ func Resume(ctx context.Context, interrupted *InterruptedError, input ResumeInpu
 			break
 		}
 
-		tr, execErr := executeSingleTool(ctx, tracer, agent, tc, desc.(Tool), noopEvent, logger)
+		tr, execErr := executeSingleTool(ctx, tracer, agent, tc, desc.(Tool), ro.onEvent, logger)
 		if execErr != nil {
 			return nil, execErr
 		}
@@ -1077,17 +1282,20 @@ func Resume(ctx context.Context, interrupted *InterruptedError, input ResumeInpu
 		resumeAgent,
 		messages,
 		runOpts{
-			callLLM:             blockingCallLLM,
-			onEvent:             noopEvent,
+			callLLM:             ro.callLLM,
+			onEvent:             ro.onEvent,
 			skipInputGuardrails: true,
 			skipSessionLoad:     true,
 			initialUsage:        interrupted.Usage,
 			initialTurns:        interrupted.Turns,
+			checkpointStore:     ro.checkpointStore,
+			runID:               ro.runID,
+			toolUsedInRun:       ro.toolUsedInRun,
 		},
 	)
 }
 
-func resumeNested(ctx context.Context, interrupted *InterruptedError, input ResumeInput) (*Result, error) {
+func resumeNested(ctx context.Context, interrupted *InterruptedError, input ResumeInput, ro runOpts) (*Result, error) {
 	outer := interrupted.outerState
 	logger := outer.agent.logger
 
@@ -1098,10 +1306,10 @@ func resumeNested(ctx context.Context, interrupted *InterruptedError, input Resu
 		log.String("inner_agent", interrupted.Agent.name),
 	)
 
-	innerResult, err := Resume(ctx, outer.innerInterrupt, input)
+	innerResult, err := resumeWithOpts(ctx, outer.innerInterrupt, input, ro)
 	if err != nil {
-		var innerIE *InterruptedError
-		if errors.As(err, &innerIE) {
+		innerIE, ok := errors.AsType[*InterruptedError](err)
+		if ok {
 			return nil, &InterruptedError{
 				ToolCalls:        innerIE.ToolCalls,
 				PendingApprovals: innerIE.PendingApprovals,
@@ -1126,7 +1334,7 @@ func resumeNested(ctx context.Context, interrupted *InterruptedError, input Resu
 
 	completedMap := make(map[string]ToolResult, len(outer.completedCalls))
 	for _, cc := range outer.completedCalls {
-		completedMap[cc.toolCallID] = cc.result
+		completedMap[cc.ToolCallID] = cc.Result
 	}
 
 	messages := make([]llm.Message, len(outer.messages))
@@ -1157,12 +1365,15 @@ func resumeNested(ctx context.Context, interrupted *InterruptedError, input Resu
 		outer.agent,
 		messages,
 		runOpts{
-			callLLM:             blockingCallLLM,
-			onEvent:             noopEvent,
+			callLLM:             ro.callLLM,
+			onEvent:             ro.onEvent,
 			skipInputGuardrails: true,
 			skipSessionLoad:     true,
 			initialUsage:        outer.usage,
 			initialTurns:        outer.turns,
+			checkpointStore:     ro.checkpointStore,
+			runID:               ro.runID,
+			toolUsedInRun:       ro.toolUsedInRun,
 		},
 	)
 }
