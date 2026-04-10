@@ -269,6 +269,7 @@ WITH
 INSERT INTO vendor_compliance_reports (
 	tenant_id,
 	id,
+	organization_id,
 	snapshot_id,
 	source_id,
 	vendor_id,
@@ -282,6 +283,7 @@ INSERT INTO vendor_compliance_reports (
 SELECT
 	@tenant_id,
 	generate_gid(decode_base64_unpadded(@tenant_id), @vendor_compliance_report_entity_type),
+	@organization_id,
 	@snapshot_id,
 	vcr.id,
 	sv.id,

@@ -2869,7 +2869,13 @@ func (r *Resolver) ListStatementsOfApplicabilityTool(ctx context.Context, req *m
 
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
-	pg, err := prb.StatementsOfApplicability.ListForOrganizationID(ctx, input.OrganizationID, cursor, coredata.NewStatementOfApplicabilityFilter(nil))
+	noSnapshot := (*gid.GID)(nil)
+	filter := coredata.NewStatementOfApplicabilityFilter(&noSnapshot)
+	if input.Filter != nil {
+		filter = coredata.NewStatementOfApplicabilityFilter(&input.Filter.SnapshotID)
+	}
+
+	pg, err := prb.StatementsOfApplicability.ListForOrganizationID(ctx, input.OrganizationID, cursor, filter)
 	if err != nil {
 		return nil, types.ListStatementsOfApplicabilityOutput{}, fmt.Errorf("failed to list statements of applicability: %w", err)
 	}

@@ -4996,7 +4996,7 @@ components:
         - OBLIGATIONS
         - CONTINUAL_IMPROVEMENTS
         - PROCESSING_ACTIVITIES
-        - STATES_OF_APPLICABILITY
+        - STATEMENTS_OF_APPLICABILITY
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.SnapshotsType
 
     SnapshotOrderField:
@@ -6173,6 +6173,15 @@ components:
         cursor:
           $ref: "#/components/schemas/CursorKey"
           description: Page cursor
+        filter:
+          type: object
+          properties:
+            snapshot_id:
+              anyOf:
+                - $ref: "#/components/schemas/GID"
+                - type: "null"
+              description: Filter by snapshot ID. Defaults to null, which returns only statements of applicability with no snapshot (current live data). Pass a specific snapshot ID to retrieve statements of applicability as they were at that snapshot.
+              default: null
 
     ListStatementsOfApplicabilityOutput:
       type: object
