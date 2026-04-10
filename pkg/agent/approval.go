@@ -29,8 +29,8 @@ type (
 	}
 
 	ApprovalResult struct {
-		Approved bool
-		Message  string
+		Approved bool   `json:"approved"`
+		Message  string `json:"message"`
 	}
 
 	ResumeInput struct {
