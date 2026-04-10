@@ -17,10 +17,10 @@ package cookiebanner
 import "errors"
 
 var (
-	ErrBannerNotFound              = errors.New("cookie banner not found")
-	ErrCategoryNotFound            = errors.New("cookie category not found")
-	ErrBannerNotDraft              = errors.New("cookie banner is not in draft state")
-	ErrBannerAlreadyPublished      = errors.New("cookie banner is already published")
-	ErrBannerAlreadyDisabled       = errors.New("cookie banner is already disabled")
+	ErrBannerNotFound               = errors.New("cookie banner not found")
+	ErrCategoryNotFound             = errors.New("cookie category not found")
+	ErrBannerNotDraft               = errors.New("cookie banner is not in draft state")
+	ErrBannerAlreadyPublished       = errors.New("cookie banner is already published")
+	ErrBannerAlreadyDisabled        = errors.New("cookie banner is already disabled")
 	ErrCannotDeleteRequiredCategory = errors.New("cannot delete required cookie category")
 )
