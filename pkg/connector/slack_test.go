@@ -64,4 +64,28 @@ func TestParseSlackTokenResponse(t *testing.T) {
 		assert.Empty(t, conn.Settings.ChannelID)
 		assert.Equal(t, "xoxb-test", conn.AccessToken)
 	})
+
+	t.Run("slack error response", func(t *testing.T) {
+		t.Parallel()
+		body := []byte(`{"ok":false,"error":"invalid_code"}`)
+
+		conn, returnedOrgID, err := ParseSlackTokenResponse(body, base, orgID)
+		require.Error(t, err)
+		assert.Nil(t, conn)
+		assert.Nil(t, returnedOrgID)
+		assert.ErrorContains(t, err, "invalid_code")
+	})
+
+	t.Run("missing access token", func(t *testing.T) {
+		t.Parallel()
+		body := []byte(`{"ok":true}`)
+		connWithoutToken := base
+		connWithoutToken.AccessToken = ""
+
+		conn, returnedOrgID, err := ParseSlackTokenResponse(body, connWithoutToken, orgID)
+		require.Error(t, err)
+		assert.Nil(t, conn)
+		assert.Nil(t, returnedOrgID)
+		assert.ErrorContains(t, err, "missing access token")
+	})
 }
