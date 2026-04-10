@@ -290,18 +290,17 @@ func TestDocument_Update(t *testing.T) {
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
 	t.Run(
-		"update title via document version",
+		"update title via document",
 		func(t *testing.T) {
 			t.Parallel()
 
 			doc := factory.NewDocument(owner).
 				WithTitle("Document to Update")
-			doc.Create()
-			versionID := doc.VersionID()
+			documentID := doc.Create()
 
 			query := `
-				mutation UpdateDocumentVersion($input: UpdateDocumentVersionInput!) {
-					updateDocumentVersion(input: $input) {
+				mutation UpdateDocument($input: UpdateDocumentInput!) {
+					updateDocument(input: $input) {
 						documentVersion {
 							id
 							title
@@ -311,33 +310,32 @@ func TestDocument_Update(t *testing.T) {
 			`
 
 			var result struct {
-				UpdateDocumentVersion struct {
+				UpdateDocument struct {
 					DocumentVersion struct {
 						ID    string `json:"id"`
 						Title string `json:"title"`
 					} `json:"documentVersion"`
-				} `json:"updateDocumentVersion"`
+				} `json:"updateDocument"`
 			}
 
 			err := owner.Execute(query, map[string]any{
 				"input": map[string]any{
-					"documentVersionId": versionID,
-					"title":             "Updated Document Title",
+					"id":    documentID,
+					"title": "Updated Document Title",
 				},
 			}, &result)
 			require.NoError(t, err)
-			assert.Equal(t, "Updated Document Title", result.UpdateDocumentVersion.DocumentVersion.Title)
+			assert.Equal(t, "Updated Document Title", result.UpdateDocument.DocumentVersion.Title)
 		},
 	)
 }
 
-func TestDocumentVersion_Update_TitleValidation(t *testing.T) {
+func TestDocument_Update_TitleValidation(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
 	doc := factory.NewDocument(owner).WithTitle("Validation Test Document")
-	doc.Create()
-	baseVersionID := doc.VersionID()
+	baseDocumentID := doc.Create()
 
 	tests := []struct {
 		name              string
@@ -347,41 +345,41 @@ func TestDocumentVersion_Update_TitleValidation(t *testing.T) {
 	}{
 		{
 			name:  "title with HTML tags",
-			setup: func() string { return baseVersionID },
+			setup: func() string { return baseDocumentID },
 			input: func(id string) map[string]any {
-				return map[string]any{"documentVersionId": id, "title": "<script>alert('xss')</script>"}
+				return map[string]any{"id": id, "title": "<script>alert('xss')</script>"}
 			},
 			wantErrorContains: "HTML",
 		},
 		{
 			name:  "title with newline",
-			setup: func() string { return baseVersionID },
+			setup: func() string { return baseDocumentID },
 			input: func(id string) map[string]any {
-				return map[string]any{"documentVersionId": id, "title": "Test\nDocument"}
+				return map[string]any{"id": id, "title": "Test\nDocument"}
 			},
 			wantErrorContains: "newline",
 		},
 		{
 			name:  "title with carriage return",
-			setup: func() string { return baseVersionID },
+			setup: func() string { return baseDocumentID },
 			input: func(id string) map[string]any {
-				return map[string]any{"documentVersionId": id, "title": "Test\rDocument"}
+				return map[string]any{"id": id, "title": "Test\rDocument"}
 			},
 			wantErrorContains: "carriage return",
 		},
 		{
 			name:  "title with null byte",
-			setup: func() string { return baseVersionID },
+			setup: func() string { return baseDocumentID },
 			input: func(id string) map[string]any {
-				return map[string]any{"documentVersionId": id, "title": "Test\x00Document"}
+				return map[string]any{"id": id, "title": "Test\x00Document"}
 			},
 			wantErrorContains: "control character",
 		},
 		{
 			name:  "title with zero-width space",
-			setup: func() string { return baseVersionID },
+			setup: func() string { return baseDocumentID },
 			input: func(id string) map[string]any {
-				return map[string]any{"documentVersionId": id, "title": "Test\u200BDocument"}
+				return map[string]any{"id": id, "title": "Test\u200BDocument"}
 			},
 			wantErrorContains: "zero-width",
 		},
@@ -389,11 +387,11 @@ func TestDocumentVersion_Update_TitleValidation(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			versionID := tt.setup()
+			documentID := tt.setup()
 
 			query := `
-				mutation UpdateDocumentVersion($input: UpdateDocumentVersionInput!) {
-					updateDocumentVersion(input: $input) {
+				mutation UpdateDocument($input: UpdateDocumentInput!) {
+					updateDocument(input: $input) {
 						documentVersion {
 							id
 						}
@@ -401,7 +399,7 @@ func TestDocumentVersion_Update_TitleValidation(t *testing.T) {
 				}
 			`
 
-			_, err := owner.Do(query, map[string]any{"input": tt.input(versionID)})
+			_, err := owner.Do(query, map[string]any{"input": tt.input(documentID)})
 			require.Error(t, err)
 			assert.Contains(t, err.Error(), tt.wantErrorContains)
 		})
@@ -979,14 +977,13 @@ func TestDocument_MaxLength_Validation(t *testing.T) {
 		assert.Contains(t, err.Error(), "title")
 	})
 
-	t.Run("update version", func(t *testing.T) {
+	t.Run("update document with long title", func(t *testing.T) {
 		doc := factory.NewDocument(owner).WithTitle("Max Length Test")
-		doc.Create()
-		versionID := doc.VersionID()
+		documentID := doc.Create()
 
 		query := `
-			mutation UpdateDocumentVersion($input: UpdateDocumentVersionInput!) {
-				updateDocumentVersion(input: $input) {
+			mutation UpdateDocument($input: UpdateDocumentInput!) {
+				updateDocument(input: $input) {
 					documentVersion { id }
 				}
 			}
@@ -994,8 +991,8 @@ func TestDocument_MaxLength_Validation(t *testing.T) {
 
 		_, err := owner.Do(query, map[string]any{
 			"input": map[string]any{
-				"documentVersionId": versionID,
-				"title":             longTitle,
+				"id":    documentID,
+				"title": longTitle,
 			},
 		})
 		require.Error(t, err)
@@ -1028,15 +1025,14 @@ func TestDocument_MaxLength_Validation(t *testing.T) {
 		assert.Contains(t, err.Error(), "content")
 	})
 
-	t.Run("update version with long content", func(t *testing.T) {
-		docID, versionID := createTestDocument(t, owner)
+	t.Run("update document with long content", func(t *testing.T) {
+		docID, _ := createTestDocument(t, owner)
 		require.NotEmpty(t, docID)
-		require.NotEmpty(t, versionID)
 
 		query := `
-			mutation UpdateDocumentVersion($input: UpdateDocumentVersionInput!) {
-				updateDocumentVersion(input: $input) {
-					documentVersion { id }
+			mutation UpdateDocument($input: UpdateDocumentInput!) {
+				updateDocument(input: $input) {
+					document { id }
 				}
 			}
 		`
@@ -1045,8 +1041,8 @@ func TestDocument_MaxLength_Validation(t *testing.T) {
 
 		_, err := owner.Do(query, map[string]any{
 			"input": map[string]any{
-				"documentVersionId": versionID,
-				"content":           longContent,
+				"id":      docID,
+				"content": longContent,
 			},
 		})
 		require.Error(t, err)

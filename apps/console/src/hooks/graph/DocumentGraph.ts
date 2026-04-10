@@ -16,7 +16,6 @@ import { useTranslate } from "@probo/i18n";
 import { graphql } from "relay-runtime";
 
 import type { DocumentGraphBulkExportDocumentsMutation } from "#/__generated__/core/DocumentGraphBulkExportDocumentsMutation.graphql";
-import type { DocumentGraphDeleteDraftMutation } from "#/__generated__/core/DocumentGraphDeleteDraftMutation.graphql";
 import type { DocumentGraphDeleteMutation } from "#/__generated__/core/DocumentGraphDeleteMutation.graphql";
 import type { DocumentGraphSendSigningNotificationsMutation } from "#/__generated__/core/DocumentGraphSendSigningNotificationsMutation.graphql";
 
@@ -43,29 +42,6 @@ export function useDeleteDocumentMutation() {
     {
       successMessage: __("Document deleted successfully."),
       errorMessage: __("Failed to delete document"),
-    },
-  );
-}
-
-const deleteDraftDocumentVersionMutation = graphql`
-  mutation DocumentGraphDeleteDraftMutation(
-    $input: DeleteDraftDocumentVersionInput!
-    $connections: [ID!]!
-  ) {
-    deleteDraftDocumentVersion(input: $input) {
-      deletedDocumentVersionId @deleteEdge(connections: $connections)
-    }
-  }
-`;
-
-export function useDeleteDraftDocumentVersionMutation() {
-  const { __ } = useTranslate();
-
-  return useMutationWithToasts<DocumentGraphDeleteDraftMutation>(
-    deleteDraftDocumentVersionMutation,
-    {
-      successMessage: __("Draft deleted successfully."),
-      errorMessage: __("Failed to delete draft"),
     },
   );
 }

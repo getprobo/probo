@@ -22,7 +22,6 @@ import { z } from "zod";
 
 import type { DocumentLayoutDrawer_documentFragment$key } from "#/__generated__/core/DocumentLayoutDrawer_documentFragment.graphql";
 import type { DocumentLayoutDrawer_updateApproversMutation } from "#/__generated__/core/DocumentLayoutDrawer_updateApproversMutation.graphql";
-import type { DocumentLayoutDrawer_updateClassificationMutation } from "#/__generated__/core/DocumentLayoutDrawer_updateClassificationMutation.graphql";
 import type { DocumentLayoutDrawer_versionFragment$key } from "#/__generated__/core/DocumentLayoutDrawer_versionFragment.graphql";
 import type { DocumentLayoutDrawerMutation } from "#/__generated__/core/DocumentLayoutDrawerMutation.graphql";
 import { ControlledField } from "#/components/form/ControlledField";
@@ -58,23 +57,21 @@ const versionFragment = graphql`
   }
 `;
 
-const updateDocumentTypeMutation = graphql`
-  mutation DocumentLayoutDrawerMutation($input: UpdateDocumentVersionInput!) {
-    updateDocumentVersion(input: $input) {
+const updateDocumentMutation = graphql`
+  mutation DocumentLayoutDrawerMutation($input: UpdateDocumentInput!) {
+    updateDocument(input: $input) {
+      document {
+        id
+      }
       documentVersion {
         id
         documentType
-      }
-    }
-  }
-`;
-
-const updateClassificationMutation = graphql`
-  mutation DocumentLayoutDrawer_updateClassificationMutation($input: UpdateDocumentVersionInput!) {
-    updateDocumentVersion(input: $input) {
-      documentVersion {
-        id
         classification
+        major
+        minor
+        status
+        updatedAt
+        publishedAt
       }
     }
   }
@@ -110,8 +107,9 @@ const approversSchema = z.object({
 export function DocumentLayoutDrawer(props: {
   documentFragmentRef: DocumentLayoutDrawer_documentFragment$key;
   versionFragmentRef: DocumentLayoutDrawer_versionFragment$key;
+  onRefetch: () => void;
 }) {
-  const { documentFragmentRef, versionFragmentRef } = props;
+  const { documentFragmentRef, versionFragmentRef, onRefetch } = props;
 
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
@@ -162,11 +160,8 @@ export function DocumentLayoutDrawer(props: {
     },
   );
 
-  const [updateDocumentType, isUpdatingDocumentType]
-    = useMutation<DocumentLayoutDrawerMutation>(updateDocumentTypeMutation);
-
-  const [updateClassification, isUpdatingClassification]
-    = useMutation<DocumentLayoutDrawer_updateClassificationMutation>(updateClassificationMutation);
+  const [updateDocument, isUpdatingDocument]
+    = useMutation<DocumentLayoutDrawerMutation>(updateDocumentMutation);
 
   const [updateApprovers, isUpdatingApprovers]
     = useMutation<DocumentLayoutDrawer_updateApproversMutation>(updateApproversMutation);
@@ -174,15 +169,19 @@ export function DocumentLayoutDrawer(props: {
   const handleUpdateDocumentType = (data: {
     documentType: (typeof documentTypes)[number];
   }) => {
-    updateDocumentType({
+    updateDocument({
       variables: {
         input: {
-          documentVersionId: version.id,
+          id: document.id,
           documentType: data.documentType,
         },
       },
-      onCompleted: () => {
+      onCompleted: (data) => {
         setIsEditingType(false);
+        const draftReturned = !!data.updateDocument.documentVersion;
+        if (isDraft !== draftReturned) {
+          onRefetch();
+        }
         toast({
           title: __("Success"),
           description: __("Document type updated successfully"),
@@ -202,15 +201,19 @@ export function DocumentLayoutDrawer(props: {
   const handleUpdateClassification = (data: {
     classification: (typeof documentClassifications)[number];
   }) => {
-    updateClassification({
+    updateDocument({
       variables: {
         input: {
-          documentVersionId: version.id,
+          id: document.id,
           classification: data.classification,
         },
       },
-      onCompleted: () => {
+      onCompleted: (data) => {
         setIsEditingClassification(false);
+        const draftReturned = !!data.updateDocument.documentVersion;
+        if (isDraft !== draftReturned) {
+          onRefetch();
+        }
         toast({
           title: __("Success"),
           description: __("Document classification updated successfully"),
@@ -304,7 +307,7 @@ export function DocumentLayoutDrawer(props: {
                   setIsEditingType(false);
                   reset();
                 }}
-                disabled={isUpdatingDocumentType}
+                disabled={isUpdatingDocument}
               >
                 <ControlledField
                   name="documentType"
@@ -318,7 +321,7 @@ export function DocumentLayoutDrawer(props: {
           : (
               <ReadOnlyPropertyContent
                 onEdit={() => setIsEditingType(true)}
-                canEdit={canEdit && isDraft}
+                canEdit={canEdit}
               >
                 <div className="text-sm text-txt-secondary">
                   {getDocumentTypeLabel(__, version.documentType)}
@@ -335,7 +338,7 @@ export function DocumentLayoutDrawer(props: {
                   setIsEditingClassification(false);
                   resetClassification();
                 }}
-                disabled={isUpdatingClassification}
+                disabled={isUpdatingDocument}
               >
                 <ControlledField
                   name="classification"
@@ -349,7 +352,7 @@ export function DocumentLayoutDrawer(props: {
           : (
               <ReadOnlyPropertyContent
                 onEdit={() => setIsEditingClassification(true)}
-                canEdit={canEdit && isDraft}
+                canEdit={canEdit}
               >
                 <div className="text-sm text-txt-secondary">
                   {getDocumentClassificationLabel(__, version.classification)}

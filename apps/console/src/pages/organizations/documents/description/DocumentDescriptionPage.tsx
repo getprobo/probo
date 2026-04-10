@@ -17,6 +17,7 @@ import { useTranslate } from "@probo/i18n";
 import { RichEditor, useToast } from "@probo/ui";
 import { useCallback } from "react";
 import { type PreloadedQuery, useMutation, usePreloadedQuery } from "react-relay";
+import { useOutletContext } from "react-router";
 import { graphql } from "relay-runtime";
 import { useDebounceCallback } from "usehooks-ts";
 
@@ -39,6 +40,9 @@ export const documentDescriptionPageQuery = graphql`
     document: node(id: $documentId) {
       __typename
       ... on Document {
+        id
+        status
+        canUpdate: permission(action: "core:document:update")
         # We use this on /documents/:documentId/description
         lastVersion: versions(first: 1 orderBy: { field: CREATED_AT, direction: DESC }) @skip(if: $versionSpecified) {
           edges {
@@ -55,10 +59,15 @@ export const documentDescriptionPageQuery = graphql`
 `;
 
 const updateContentMutation = graphql`
-  mutation DocumentDescriptionPage_updateContentMutation($input: UpdateDocumentVersionInput!) {
-    updateDocumentVersion(input: $input) {
+  mutation DocumentDescriptionPage_updateContentMutation($input: UpdateDocumentInput!) {
+    updateDocument(input: $input) {
+      document {
+        id
+      }
       documentVersion {
+        id
         content
+        status
       }
     }
   }
@@ -69,6 +78,7 @@ export function DocumentDescriptionPage(props: { queryRef: PreloadedQuery<Docume
 
   const { __ } = useTranslate();
   const { toast } = useToast();
+  const { onRefetch } = useOutletContext<{ onRefetch: () => void }>();
 
   const { document, version } = usePreloadedQuery<DocumentDescriptionPageQuery>(
     documentDescriptionPageQuery,
@@ -83,16 +93,20 @@ export function DocumentDescriptionPage(props: { queryRef: PreloadedQuery<Docume
 
   const [updateContent, _] = useMutation<DocumentDescriptionPage_updateContentMutation>(updateContentMutation);
 
+  const documentId = document.id;
+
+  const wasDraft = currentVersion.status === "DRAFT";
+
   const handleUpdate = useDebounceCallback(
     useCallback((content: string) => {
       updateContent({
         variables: {
           input: {
-            documentVersionId: currentVersion.id,
+            id: documentId,
             content,
           },
         },
-        onCompleted: (_, errors) => {
+        onCompleted: (data, errors) => {
           if (errors?.length) {
             toast({
               title: __("Error"),
@@ -100,6 +114,13 @@ export function DocumentDescriptionPage(props: { queryRef: PreloadedQuery<Docume
               variant: "error",
             });
             return;
+          }
+
+          // Refetch layout when draft status changes (created or deleted)
+          // so the drawer and header reflect the current version.
+          const draftReturned = !!data.updateDocument.documentVersion;
+          if (wasDraft !== draftReturned) {
+            onRefetch();
           }
 
           toast({
@@ -116,16 +137,25 @@ export function DocumentDescriptionPage(props: { queryRef: PreloadedQuery<Docume
           });
         },
       });
-    }, [currentVersion.id, updateContent, toast, __]),
+    }, [documentId, wasDraft, updateContent, toast, __, onRefetch]),
     autoSaveIntervalMs,
   );
+
+  // When viewing a specific historical version, the editor is read-only.
+  // When viewing the latest version, editing is allowed if the user has
+  // update permission and the document is not archived — the backend
+  // will auto-create a draft if needed.
+  const isViewingSpecificVersion = !!version;
+  const canEdit = !isViewingSpecificVersion
+    && document.canUpdate
+    && document.status !== "ARCHIVED";
 
   return (
     <RichEditor
       className="flex-1"
       content={currentVersion.content}
       data-theme="document"
-      disabled={currentVersion.status !== "DRAFT"}
+      disabled={!canEdit}
       onChangeContent={handleUpdate}
     />
   );

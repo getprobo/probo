@@ -24,9 +24,9 @@ import type { DocumentTitleFormFragment$key } from "#/__generated__/core/Documen
 import type { DocumentTitleFormMutation } from "#/__generated__/core/DocumentTitleFormMutation.graphql";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 
-const updateDocumentVersionTitleMutation = graphql`
-  mutation DocumentTitleFormMutation($input: UpdateDocumentVersionInput!) {
-    updateDocumentVersion(input: $input) {
+const updateDocumentTitleMutation = graphql`
+  mutation DocumentTitleFormMutation($input: UpdateDocumentInput!) {
+    updateDocument(input: $input) {
       documentVersion {
         ...DocumentTitleFormFragment
       }
@@ -39,7 +39,7 @@ const fragment = graphql`
     id
     title
     status
-    canUpdate: permission(action: "core:document-version:update")
+    canUpdate: permission(action: "core:document:update")
   }
 `;
 
@@ -47,15 +47,15 @@ const schema = z.object({
   title: z.string().min(1, "Title is required").max(255),
 });
 
-export function DocumentTitleForm(props: { fKey: DocumentTitleFormFragment$key }) {
-  const { fKey } = props;
+export function DocumentTitleForm(props: { fKey: DocumentTitleFormFragment$key; documentId: string }) {
+  const { fKey, documentId } = props;
 
   const { __ } = useTranslate();
   const { toast } = useToast();
 
   const version = useFragment<DocumentTitleFormFragment$key>(fragment, fKey);
-  const [updateDocumentVersion, isUpdating]
-    = useMutation<DocumentTitleFormMutation>(updateDocumentVersionTitleMutation);
+  const [updateDocument, isUpdating]
+    = useMutation<DocumentTitleFormMutation>(updateDocumentTitleMutation);
 
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const { register, handleSubmit, reset } = useFormWithSchema(
@@ -68,10 +68,10 @@ export function DocumentTitleForm(props: { fKey: DocumentTitleFormFragment$key }
   );
 
   const handleUpdateTitle = (data: { title: string }) => {
-    updateDocumentVersion({
+    updateDocument({
       variables: {
         input: {
-          documentVersionId: version.id,
+          id: documentId,
           title: data.title,
         },
       },

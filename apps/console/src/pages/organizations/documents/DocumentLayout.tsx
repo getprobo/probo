@@ -122,10 +122,16 @@ export function DocumentLayout(props: { queryRef: PreloadedQuery<DocumentLayoutQ
 
   const publishDialogRef = useRef<PublishDialogRef>(null);
   const [approvalRequestedAt, setApprovalRequestedAt] = useState(0);
+  const [draftDeletedAt, setDraftDeletedAt] = useState(0);
 
   const handlePublishOrApproval = useCallback(() => {
     onRefetch();
     setApprovalRequestedAt(Date.now());
+  }, [onRefetch]);
+
+  const handleDraftDeleted = useCallback(() => {
+    onRefetch();
+    setDraftDeletedAt(Date.now());
   }, [onRefetch]);
 
   const { document, version } = usePreloadedQuery<DocumentLayoutQuery>(documentLayoutQuery, queryRef);
@@ -178,13 +184,13 @@ export function DocumentLayout(props: { queryRef: PreloadedQuery<DocumentLayoutQ
             <DocumentActionsDropdown
               documentFragmentRef={document}
               versionFragmentRef={currentVersion}
-              onRefetch={onRefetch}
+              onDraftDeleted={handleDraftDeleted}
             />
           </div>
         </div>
 
         <PageHeader
-          title={<DocumentTitleForm fKey={currentVersion} />}
+          title={<DocumentTitleForm fKey={currentVersion} documentId={document.id} />}
         />
 
         <Tabs>
@@ -215,10 +221,10 @@ export function DocumentLayout(props: { queryRef: PreloadedQuery<DocumentLayoutQ
           )}
         </Tabs>
 
-        <Outlet context={{ onRefetch, approvalRequestedAt }} />
+        <Outlet context={{ onRefetch, approvalRequestedAt, draftDeletedAt }} />
       </div>
 
-      <DocumentLayoutDrawer documentFragmentRef={document} versionFragmentRef={currentVersion} />
+      <DocumentLayoutDrawer documentFragmentRef={document} versionFragmentRef={currentVersion} onRefetch={onRefetch} />
 
       <PublishDialog
         ref={publishDialogRef}
