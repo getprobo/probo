@@ -338,9 +338,13 @@ WHERE
 	}
 	maps.Copy(args, scope.SQLArguments())
 
-	_, err := tx.Exec(ctx, q, args)
+	result, err := tx.Exec(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot update cookie banner: %w", err)
+	}
+
+	if result.RowsAffected() == 0 {
+		return ErrResourceNotFound
 	}
 
 	return nil

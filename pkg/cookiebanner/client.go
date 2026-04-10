@@ -127,6 +127,7 @@ func (r *UpdateCookieCategoryRequest) Validate() error {
 	v.Check(r.CookieCategoryID, "cookie_category_id", validator.Required(), validator.GID(coredata.CookieCategoryEntityType))
 	v.Check(r.Name, "name", validator.SafeTextNoNewLine(255))
 	v.Check(r.Description, "description", validator.SafeText(1000))
+	v.Check(r.Rank, "rank", validator.Min(0))
 
 	return v.Error()
 }
