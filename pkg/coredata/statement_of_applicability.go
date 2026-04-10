@@ -33,9 +33,7 @@ type (
 		ID             gid.GID   `db:"id"`
 		OrganizationID gid.GID   `db:"organization_id"`
 		Name           string    `db:"name"`
-		SourceID       *gid.GID  `db:"source_id"`
-		SnapshotID     *gid.GID  `db:"snapshot_id"`
-		OwnerID        gid.GID   `db:"owner_profile_id"`
+		DocumentID     *gid.GID  `db:"document_id"`
 		CreatedAt      time.Time `db:"created_at"`
 		UpdatedAt      time.Time `db:"updated_at"`
 	}
@@ -79,9 +77,7 @@ SELECT
     id,
     organization_id,
     name,
-    source_id,
-    snapshot_id,
-    owner_profile_id,
+    document_id,
     created_at,
     updated_at
 FROM
@@ -89,6 +85,7 @@ FROM
 WHERE
     %s
     AND id = @statement_of_applicability_id
+    AND snapshot_id IS NULL
 LIMIT 1;
 `
 
@@ -121,16 +118,13 @@ func (s *StatementsOfApplicability) LoadByOrganizationID(
 	scope Scoper,
 	organizationID gid.GID,
 	cursor *page.Cursor[StatementOfApplicabilityOrderField],
-	filter *StatementOfApplicabilityFilter,
 ) error {
 	q := `
 SELECT
     id,
     organization_id,
     name,
-    source_id,
-    snapshot_id,
-    owner_profile_id,
+    document_id,
     created_at,
     updated_at
 FROM
@@ -138,14 +132,13 @@ FROM
 WHERE
     %s
     AND organization_id = @organization_id
-    AND %s
+    AND snapshot_id IS NULL
     AND %s
 `
-	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.NamedArgs{"organization_id": organizationID}
 	maps.Copy(args, scope.SQLArguments())
-	maps.Copy(args, filter.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
@@ -167,7 +160,6 @@ func (s *StatementsOfApplicability) CountByOrganizationID(
 	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
-	filter *StatementOfApplicabilityFilter,
 ) (int, error) {
 	q := `
 SELECT
@@ -177,15 +169,14 @@ FROM
 WHERE
     %s
     AND organization_id = @organization_id
-    AND %s
+    AND snapshot_id IS NULL
 `
-	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"organization_id": organizationID,
 	}
 	maps.Copy(args, scope.SQLArguments())
-	maps.Copy(args, filter.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)
 	var count int
@@ -208,9 +199,7 @@ INSERT INTO
         id,
         organization_id,
         name,
-        source_id,
-        snapshot_id,
-        owner_profile_id,
+        document_id,
         created_at,
         updated_at
     )
@@ -219,9 +208,7 @@ VALUES (
     @statement_of_applicability_id,
     @organization_id,
     @name,
-    @source_id,
-    @snapshot_id,
-    @owner_profile_id,
+    @document_id,
     @created_at,
     @updated_at
 );
@@ -232,9 +219,7 @@ VALUES (
 		"statement_of_applicability_id": s.ID,
 		"organization_id":               s.OrganizationID,
 		"name":                          s.Name,
-		"source_id":                     s.SourceID,
-		"snapshot_id":                   s.SnapshotID,
-		"owner_profile_id":              s.OwnerID,
+		"document_id":                   s.DocumentID,
 		"created_at":                    s.CreatedAt,
 		"updated_at":                    s.UpdatedAt,
 	}
@@ -262,11 +247,12 @@ func (s *StatementOfApplicability) Update(
 UPDATE statements_of_applicability
 SET
     name = @name,
-    owner_profile_id = @owner_profile_id,
+    document_id = @document_id,
     updated_at = @updated_at
 WHERE
     %s
     AND id = @statement_of_applicability_id
+    AND snapshot_id IS NULL
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -274,7 +260,7 @@ WHERE
 	args := pgx.StrictNamedArgs{
 		"statement_of_applicability_id": s.ID,
 		"name":                          s.Name,
-		"owner_profile_id":              s.OwnerID,
+		"document_id":                   s.DocumentID,
 		"updated_at":                    s.UpdatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
@@ -307,6 +293,7 @@ DELETE FROM statements_of_applicability
 WHERE
     %s
     AND id = @statement_of_applicability_id
+    AND snapshot_id IS NULL
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
@@ -322,142 +309,6 @@ WHERE
 
 	if result.RowsAffected() == 0 {
 		return ErrResourceNotFound
-	}
-
-	return nil
-}
-
-func (soas StatementsOfApplicability) Snapshot(ctx context.Context, conn pg.Tx, scope Scoper, organizationID, snapshotID gid.GID) error {
-	if err := soas.insertStatementOfApplicabilitySnapshots(ctx, conn, scope, organizationID, snapshotID); err != nil {
-		return fmt.Errorf("cannot insert statement_of_applicability snapshots: %w", err)
-	}
-
-	if err := soas.insertStatementOfApplicabilityControlSnapshots(ctx, conn, scope, organizationID, snapshotID); err != nil {
-		return fmt.Errorf("cannot insert statement_of_applicability_control snapshots: %w", err)
-	}
-
-	return nil
-}
-
-func (soas StatementsOfApplicability) insertStatementOfApplicabilitySnapshots(
-	ctx context.Context,
-	conn pg.Querier,
-	scope Scoper,
-	organizationID gid.GID,
-	snapshotID gid.GID,
-) error {
-	query := `
-INSERT INTO statements_of_applicability (
-    id,
-    tenant_id,
-    organization_id,
-    name,
-    source_id,
-    snapshot_id,
-    owner_profile_id,
-    created_at,
-    updated_at
-)
-SELECT
-    generate_gid(decode_base64_unpadded(@tenant_id), @statement_of_applicability_entity_type),
-    @tenant_id,
-    soa.organization_id,
-    soa.name,
-    soa.id,
-    @snapshot_id,
-    soa.owner_profile_id,
-    soa.created_at,
-    soa.updated_at
-FROM statements_of_applicability soa
-WHERE
-    %s
-    AND soa.organization_id = @organization_id
-    AND soa.snapshot_id IS NULL
-`
-
-	query = fmt.Sprintf(query, scope.SQLFragment())
-
-	args := pgx.StrictNamedArgs{
-		"tenant_id":                              scope.GetTenantID(),
-		"snapshot_id":                            snapshotID,
-		"organization_id":                        organizationID,
-		"statement_of_applicability_entity_type": StatementOfApplicabilityEntityType,
-	}
-	maps.Copy(args, scope.SQLArguments())
-
-	_, err := conn.Exec(ctx, query, args)
-	if err != nil {
-		return fmt.Errorf("cannot insert statement_of_applicability snapshots: %w", err)
-	}
-
-	return nil
-}
-
-func (soas StatementsOfApplicability) insertStatementOfApplicabilityControlSnapshots(
-	ctx context.Context,
-	conn pg.Querier,
-	scope Scoper,
-	organizationID gid.GID,
-	snapshotID gid.GID,
-) error {
-	query := `
-WITH source_soa AS (
-    SELECT id, organization_id
-    FROM statements_of_applicability
-    WHERE
-        %s
-        AND organization_id = @organization_id
-        AND snapshot_id IS NULL
-),
-snapshot_soa AS (
-    SELECT id, source_id
-    FROM statements_of_applicability
-    WHERE snapshot_id = @snapshot_id
-)
-INSERT INTO applicability_statements (
-    id,
-    statement_of_applicability_id,
-    control_id,
-    organization_id,
-    tenant_id,
-    snapshot_id,
-    applicability,
-    justification,
-    created_at,
-    updated_at
-)
-SELECT
-    generate_gid(decode_base64_unpadded(@tenant_id), @applicability_statement_entity_type),
-    snapshot_soa.id,
-    soac.control_id,
-    soac.organization_id,
-    @tenant_id,
-    @snapshot_id,
-    soac.applicability,
-    soac.justification,
-    soac.created_at,
-    soac.updated_at
-FROM applicability_statements soac
-INNER JOIN source_soa
-    ON soac.statement_of_applicability_id = source_soa.id
-INNER JOIN snapshot_soa
-    ON snapshot_soa.source_id = source_soa.id
-WHERE soac.snapshot_id IS NULL
-`
-
-	query = fmt.Sprintf(query, scope.SQLFragment())
-
-	args := pgx.StrictNamedArgs{
-		"tenant_id":                           scope.GetTenantID(),
-		"snapshot_id":                         snapshotID,
-		"organization_id":                     organizationID,
-		"applicability_statement_entity_type": ApplicabilityStatementEntityType,
-	}
-	maps.Copy(args, scope.SQLArguments())
-
-	_, err := conn.Exec(ctx, query, args)
-	if err != nil {
-		return fmt.Errorf("cannot insert statement_of_applicability_control snapshots: %w", err)
 	}
 
 	return nil

@@ -12,24 +12,37 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { lazy } from "@probo/react-lazy";
-import type { AppRoute } from "@probo/routes";
+package coredata
 
-import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
+import "fmt"
 
-export const statementsOfApplicabilityRoutes = [
-  {
-    path: "statements-of-applicability",
-    Fallback: PageSkeleton,
-    Component: lazy(
-      () => import("#/pages/organizations/statements-of-applicability/StatementsOfApplicabilityPageLoader"),
-    ),
-  },
-  {
-    path: "statements-of-applicability/:statementOfApplicabilityId",
-    Fallback: PageSkeleton,
-    Component: lazy(
-      () => import("#/pages/organizations/statements-of-applicability/StatementOfApplicabilityDetailPageLoader"),
-    ),
-  },
-] satisfies AppRoute[];
+type (
+	DocumentContentSource string
+)
+
+const (
+	DocumentContentSourceAuthored  DocumentContentSource = "AUTHORED"
+	DocumentContentSourceGenerated DocumentContentSource = "GENERATED"
+)
+
+func (e DocumentContentSource) IsValid() bool {
+	switch e {
+	case DocumentContentSourceAuthored, DocumentContentSourceGenerated:
+		return true
+	}
+	return false
+}
+
+func (e DocumentContentSource) String() string { return string(e) }
+
+func (e *DocumentContentSource) UnmarshalText(text []byte) error {
+	*e = DocumentContentSource(text)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid DocumentContentSource", string(text))
+	}
+	return nil
+}
+
+func (e DocumentContentSource) MarshalText() ([]byte, error) {
+	return []byte(e.String()), nil
+}

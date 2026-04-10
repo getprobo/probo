@@ -137,3 +137,57 @@ WHERE %s
 
 	return count, nil
 }
+
+type ObligationCount struct {
+	ControlID      gid.GID        `db:"control_id"`
+	ObligationType ObligationType `db:"obligation_type"`
+	Count          int            `db:"count"`
+}
+
+func CountObligationsByControlIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	controlIDs []gid.GID,
+) ([]ObligationCount, error) {
+	q := `
+WITH control_obls AS (
+    SELECT
+        co.control_id,
+        o.type AS obligation_type,
+        o.tenant_id
+    FROM
+        controls_obligations co
+    INNER JOIN
+        obligations o ON co.obligation_id = o.id
+    WHERE
+        co.control_id = ANY(@control_ids)
+)
+SELECT
+    control_id,
+    obligation_type,
+    COUNT(*) AS count
+FROM
+    control_obls
+WHERE
+    %s
+GROUP BY
+    control_id, obligation_type;
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"control_ids": controlIDs}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot count obligations by control IDs: %w", err)
+	}
+
+	counts, err := pgx.CollectRows(rows, pgx.RowToStructByName[ObligationCount])
+	if err != nil {
+		return nil, fmt.Errorf("cannot collect obligation counts: %w", err)
+	}
+
+	return counts, nil
+}

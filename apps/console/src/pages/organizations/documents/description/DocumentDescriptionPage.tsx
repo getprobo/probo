@@ -39,6 +39,7 @@ export const documentDescriptionPageQuery = graphql`
     document: node(id: $documentId) {
       __typename
       ... on Document {
+        contentSource
         # We use this on /documents/:documentId/description
         lastVersion: versions(first: 1 orderBy: { field: CREATED_AT, direction: DESC }) @skip(if: $versionSpecified) {
           edges {
@@ -125,7 +126,7 @@ export function DocumentDescriptionPage(props: { queryRef: PreloadedQuery<Docume
       className="flex-1"
       content={currentVersion.content}
       data-theme="document"
-      disabled={currentVersion.status !== "DRAFT"}
+      disabled={currentVersion.status !== "DRAFT" || document.contentSource === "GENERATED"}
       onChangeContent={handleUpdate}
     />
   );

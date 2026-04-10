@@ -117,12 +117,10 @@ const deleteApplicabilityStatementMutation = graphql`
 
 export default function StatementOfApplicabilityControlsTab({
   statementOfApplicability,
-  isSnapshotMode = false,
 }: {
   statementOfApplicability: StatementOfApplicabilityControlsTabFragment$key & {
     id: string;
   };
-  isSnapshotMode?: boolean;
 }) {
   const { __ } = useTranslate();
   const data = useFragment(controlsFragment, statementOfApplicability);
@@ -166,12 +164,9 @@ export default function StatementOfApplicabilityControlsTab({
     },
   );
 
-  const canCreate
-    = !isSnapshotMode && data.canCreateApplicabilityStatement;
-  const canUpdate
-    = !isSnapshotMode && data.canUpdateApplicabilityStatement;
-  const canDelete
-    = !isSnapshotMode && data.canDeleteApplicabilityStatement;
+  const canCreate = data.canCreateApplicabilityStatement;
+  const canUpdate = data.canUpdateApplicabilityStatement;
+  const canDelete = data.canDeleteApplicabilityStatement;
 
   const handleOpenAddStatementDialog = () => {
     if (!data.organization || !connectionId) return;

@@ -1074,6 +1074,10 @@ enum DocumentType
     REPORT @goEnum(value: "go.probo.inc/probo/pkg/coredata.DocumentTypeReport")
     TEMPLATE
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.DocumentTypeTemplate")
+    STATEMENT_OF_APPLICABILITY
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DocumentTypeStatementOfApplicability"
+        )
 }
 
 enum DocumentClassification
@@ -1402,10 +1406,6 @@ enum SnapshotsType
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.SnapshotsTypeProcessingActivities"
         )
-    STATEMENTS_OF_APPLICABILITY
-        @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.SnapshotsTypeStatementsOfApplicability"
-        )
 }
 
 enum SnapshotOrderField
@@ -1672,6 +1672,7 @@ input DocumentFilter {
     query: String
     documentTypes: [DocumentType!]
     classifications: [DocumentClassification!]
+    contentSources: [DocumentContentSource!]
     status: [DocumentStatus!]
 }
 
@@ -1691,10 +1692,6 @@ input ProfileFilter {
 }
 
 input DatumFilter {
-    snapshotId: ID
-}
-
-input StatementOfApplicabilityFilter {
     snapshotId: ID
 }
 
@@ -1965,7 +1962,6 @@ type Organization implements Node {
         last: Int
         before: CursorKey
         orderBy: StatementOfApplicabilityOrder
-        filter: StatementOfApplicabilityFilter = { snapshotId: null }
     ): StatementOfApplicabilityConnection! @goField(forceResolver: true)
 
     measureCategories: [String!]! @goField(forceResolver: true)
@@ -2587,6 +2583,7 @@ type Document implements Node {
 
     defaultApprovers: [Profile!]! @goField(forceResolver: true)
 
+    contentSource: DocumentContentSource!
     status: DocumentStatus!
     archivedAt: Datetime
 
@@ -2762,10 +2759,9 @@ type WebhookEventEdge {
 type StatementOfApplicability implements Node {
     id: ID!
     name: String!
-    sourceId: ID
-    snapshotId: ID
+    document: Document @goField(forceResolver: true)
     organization: Organization @goField(forceResolver: true)
-    owner: Profile! @goField(forceResolver: true)
+    defaultApprovers: [Profile!]! @goField(forceResolver: true)
     createdAt: Datetime!
     updatedAt: Datetime!
 
@@ -3919,9 +3915,9 @@ type Mutation {
     deleteStatementOfApplicability(
         input: DeleteStatementOfApplicabilityInput!
     ): DeleteStatementOfApplicabilityPayload!
-    exportStatementOfApplicabilityPDF(
-        input: ExportStatementOfApplicabilityPDFInput!
-    ): ExportStatementOfApplicabilityPDFPayload!
+    publishStatementOfApplicability(
+        input: PublishStatementOfApplicabilityInput!
+    ): PublishStatementOfApplicabilityPayload!
     publishMajorDocumentVersion(
         input: PublishMajorDocumentVersionInput!
     ): PublishDocumentVersionPayload!
@@ -4738,13 +4734,13 @@ input DeleteMeetingInput {
 input CreateStatementOfApplicabilityInput {
     organizationId: ID!
     name: String!
-    ownerId: ID!
+    defaultApproverIds: [ID!]
 }
 
 input UpdateStatementOfApplicabilityInput {
     id: ID!
     name: String
-    ownerId: ID
+    defaultApproverIds: [ID!]
 }
 
 input ApplicabilityStatementInput {
@@ -4757,12 +4753,14 @@ input DeleteStatementOfApplicabilityInput {
     statementOfApplicabilityId: ID!
 }
 
-input ExportStatementOfApplicabilityPDFInput {
+input PublishStatementOfApplicabilityInput {
     statementOfApplicabilityId: ID!
+    approverIds: [ID!]
 }
 
-type ExportStatementOfApplicabilityPDFPayload {
-    data: String!
+type PublishStatementOfApplicabilityPayload {
+    documentEdge: DocumentEdge!
+    documentVersionEdge: DocumentVersionEdge!
 }
 
 input StatementOfApplicabilityOrder
@@ -5598,11 +5596,40 @@ type DocumentVersion implements Node {
 
     signed: Boolean! @goField(forceResolver: true)
 
+    orientation: DocumentVersionOrientation!
     publishedAt: Datetime
     createdAt: Datetime!
     updatedAt: Datetime!
 
     permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+enum DocumentVersionOrientation
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.DocumentVersionOrientation"
+    ) {
+    PORTRAIT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DocumentVersionOrientationPortrait"
+        )
+    LANDSCAPE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DocumentVersionOrientationLandscape"
+        )
+}
+
+enum DocumentContentSource
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.DocumentContentSource"
+    ) {
+    AUTHORED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DocumentContentSourceAuthored"
+        )
+    GENERATED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DocumentContentSourceGenerated"
+        )
 }
 
 type DocumentVersionSignatureConnection
@@ -6388,6 +6415,10 @@ enum ElectronicSignatureDocumentType
     PRIVACY_POLICY
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.ElectronicSignatureDocumentTypePrivacyPolicy"
+        )
+    STATEMENT_OF_APPLICABILITY
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ElectronicSignatureDocumentTypeStatementOfApplicability"
         )
     OTHER
         @goEnum(

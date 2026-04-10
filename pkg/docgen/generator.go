@@ -44,9 +44,6 @@ var (
 	//go:embed transfer_impact_assessments_template.html
 	transferImpactAssessmentsTemplateContent string
 
-	//go:embed soa_template.html
-	soaTemplateContent string
-
 	templateFuncs = template.FuncMap{
 		"now":                  func() time.Time { return time.Now() },
 		"eq":                   func(a, b any) bool { return a == b },
@@ -186,8 +183,6 @@ var (
 	dataProtectionImpactAssessmentsTemplate = template.Must(template.New("dataProtectionImpactAssessments").Funcs(templateFuncs).Parse(dataProtectionImpactAssessmentsTemplateContent))
 
 	transferImpactAssessmentsTemplate = template.Must(template.New("transferImpactAssessments").Funcs(templateFuncs).Parse(transferImpactAssessmentsTemplateContent))
-
-	statementOfApplicabilityTemplate = template.Must(template.New("statement-of-applicability").Funcs(templateFuncs).Parse(soaTemplateContent))
 )
 
 type (
@@ -205,6 +200,7 @@ type (
 		Signatures                  []SignatureData
 		CompanyHorizontalLogoBase64 string
 		MermaidJS                   template.JS
+		Landscape                   bool
 	}
 
 	SignatureData struct {
@@ -377,15 +373,6 @@ func RenderTransferImpactAssessmentsTableHTML(data TransferImpactAssessmentTable
 	var buf bytes.Buffer
 	if err := transferImpactAssessmentsTemplate.Execute(&buf, data); err != nil {
 		return nil, fmt.Errorf("cannot execute transfer impact assessments template: %w", err)
-	}
-
-	return buf.Bytes(), nil
-}
-
-func RenderStatementOfApplicabilityHTML(data StatementOfApplicabilityData) ([]byte, error) {
-	var buf bytes.Buffer
-	if err := statementOfApplicabilityTemplate.Execute(&buf, data); err != nil {
-		return nil, fmt.Errorf("cannot execute SOA template: %w", err)
 	}
 
 	return buf.Bytes(), nil

@@ -25,19 +25,16 @@ import {
   Thead,
   Tr,
 } from "@probo/ui";
-import { useEffect } from "react";
 import {
   graphql,
   type PreloadedQuery,
   usePaginationFragment,
   usePreloadedQuery,
 } from "react-relay";
-import { useParams } from "react-router";
 
 import type { StatementsOfApplicabilityPageFragment$key } from "#/__generated__/core/StatementsOfApplicabilityPageFragment.graphql";
 import type { StatementsOfApplicabilityPagePaginationQuery } from "#/__generated__/core/StatementsOfApplicabilityPagePaginationQuery.graphql";
 import type { StatementsOfApplicabilityPageQuery } from "#/__generated__/core/StatementsOfApplicabilityPageQuery.graphql";
-import { SnapshotBanner } from "#/components/SnapshotBanner";
 
 import { StatementOfApplicabilityRow } from "./_components/StatementOfApplicabilityRow";
 import { CreateStatementOfApplicabilityDialog } from "./dialogs/CreateStatementOfApplicabilityDialog";
@@ -67,7 +64,6 @@ const paginatedFragment = graphql`
       after: { type: "CursorKey", defaultValue: null }
       before: { type: "CursorKey", defaultValue: null }
       last: { type: "Int", defaultValue: null }
-      filter: { type: "StatementOfApplicabilityFilter", defaultValue: { snapshotId: null } }
   ) {
       statementsOfApplicability(
           first: $first
@@ -75,8 +71,7 @@ const paginatedFragment = graphql`
           last: $last
           before: $before
           orderBy: $order
-          filter: $filter
-      ) @connection(key: "StatementsOfApplicabilityPage_statementsOfApplicability", filters: ["filter"]) {
+      ) @connection(key: "StatementsOfApplicabilityPage_statementsOfApplicability") {
           __id
           edges {
               node {
@@ -94,8 +89,6 @@ export default function StatementsOfApplicabilityPage({
   queryRef: PreloadedQuery<StatementsOfApplicabilityPageQuery>;
 }) {
   const { __ } = useTranslate();
-  const { snapshotId } = useParams<{ snapshotId?: string }>();
-  const isSnapshotMode = Boolean(snapshotId);
 
   usePageTitle(__("Statements of Applicability"));
 
@@ -109,33 +102,21 @@ export default function StatementsOfApplicabilityPage({
     data: { statementsOfApplicability },
     loadNext,
     hasNext,
-    refetch,
     isLoadingNext,
   } = usePaginationFragment<
     StatementsOfApplicabilityPagePaginationQuery,
     StatementsOfApplicabilityPageFragment$key
   >(paginatedFragment, organization);
 
-  useEffect(() => {
-    if (snapshotId) {
-      refetch(
-        { filter: { snapshotId } },
-        { fetchPolicy: "store-or-network" },
-      );
-    }
-  }, [snapshotId, refetch]);
-
   return (
     <div className="space-y-6">
-      {snapshotId && <SnapshotBanner snapshotId={snapshotId} />}
       <PageHeader
         title={__("Statements of Applicability")}
         description={__(
           "Manage statements of applicability for your organization's frameworks.",
         )}
       >
-        {!isSnapshotMode
-          && organization.canCreateStatementOfApplicability && (
+        {organization.canCreateStatementOfApplicability && (
           <CreateStatementOfApplicabilityDialog
             connectionId={statementsOfApplicability.__id}
           >

@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { documentClassifications, documentTypes, getDocumentClassificationLabel, getDocumentTypeLabel, sprintf } from "@probo/helpers";
+import { documentClassifications, documentContentSources, documentTypes, getDocumentClassificationLabel, getDocumentContentSourceLabel, getDocumentTypeLabel, sprintf } from "@probo/helpers";
 import { useList } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
 import { Button, Card, Checkbox, IconArchive, IconArrowDown, IconCrossLargeX, IconSignature, IconTrashCan, IconUpload, Option, Select, Tbody, Th, Thead, Tr, useConfirm } from "@probo/ui";
@@ -23,7 +23,7 @@ import { ConnectionHandler, graphql } from "relay-runtime";
 import type { DocumentListBulkArchiveMutation } from "#/__generated__/core/DocumentListBulkArchiveMutation.graphql";
 import type { DocumentListBulkUnarchiveMutation } from "#/__generated__/core/DocumentListBulkUnarchiveMutation.graphql";
 import type { DocumentListFragment$key } from "#/__generated__/core/DocumentListFragment.graphql";
-import type { DocumentClassification, DocumentOrderField, DocumentsListQuery, DocumentType } from "#/__generated__/core/DocumentsListQuery.graphql";
+import type { DocumentClassification, DocumentContentSource, DocumentOrderField, DocumentsListQuery, DocumentType } from "#/__generated__/core/DocumentsListQuery.graphql";
 import { BulkExportDialog, type BulkExportDialogRef } from "#/components/documents/BulkExportDialog";
 import { type Order, SortableTable, SortableTh } from "#/components/SortableTable";
 import { useBulkDeleteDocumentsMutation, useBulkExportDocumentsMutation } from "#/hooks/graph/DocumentGraph";
@@ -50,6 +50,7 @@ const fragment = graphql`
     status: { type: "[DocumentStatus!]", defaultValue: [ACTIVE] }
     documentTypes: { type: "[DocumentType!]", defaultValue: null }
     classifications: { type: "[DocumentClassification!]", defaultValue: null }
+    contentSources: { type: "[DocumentContentSource!]", defaultValue: null }
   ) {
     documents(
       first: $first
@@ -57,7 +58,7 @@ const fragment = graphql`
       last: $last
       before: $before
       orderBy: $order
-      filter: { status: $status documentTypes: $documentTypes classifications: $classifications }
+      filter: { status: $status documentTypes: $documentTypes classifications: $classifications contentSources: $contentSources }
     ) @connection(key: "DocumentsListQuery_documents" filters: ["orderBy", "filter"]) {
       __id
       edges {
@@ -130,6 +131,7 @@ export function DocumentList(props: {
 
   const [documentTypeFilter, setDocumentTypeFilter] = useState<DocumentType | null>(null);
   const [classificationFilter, setClassificationFilter] = useState<DocumentClassification | null>(null);
+  const [contentSourceFilter, setContentSourceFilter] = useState<DocumentContentSource | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const refetch = pagination.refetch;
@@ -140,11 +142,12 @@ export function DocumentList(props: {
           status: [tab],
           documentTypes: documentTypeFilter ? [documentTypeFilter] : null,
           classifications: classificationFilter ? [classificationFilter] : null,
+          contentSources: contentSourceFilter ? [contentSourceFilter] : null,
         },
         { fetchPolicy: "store-and-network" },
       );
     });
-  }, [tab, refetch, documentTypeFilter, classificationFilter]);
+  }, [tab, refetch, documentTypeFilter, classificationFilter, contentSourceFilter]);
 
   const documents = pagination.data.documents.edges.map(({ node }) => node);
   const connectionId = pagination.data.documents.__id;
@@ -194,6 +197,7 @@ export function DocumentList(props: {
             status: [tab],
             documentTypes: newType ? [newType] : null,
             classifications: classificationFilter ? [classificationFilter] : null,
+            contentSources: contentSourceFilter ? [contentSourceFilter] : null,
           },
         },
       ),
@@ -214,6 +218,28 @@ export function DocumentList(props: {
             status: [tab],
             documentTypes: documentTypeFilter ? [documentTypeFilter] : null,
             classifications: newClassification ? [newClassification] : null,
+            contentSources: contentSourceFilter ? [contentSourceFilter] : null,
+          },
+        },
+      ),
+    );
+  };
+
+  const handleContentSourceFilterChange = (value: string) => {
+    const newContentSource = value === "ALL" ? null : (value as DocumentContentSource);
+    clear();
+    setContentSourceFilter(newContentSource);
+    onConnectionIdChange(
+      ConnectionHandler.getConnectionID(
+        organizationId,
+        "DocumentsListQuery_documents",
+        {
+          orderBy: { direction: "ASC", field: "TITLE" },
+          filter: {
+            status: [tab],
+            documentTypes: documentTypeFilter ? [documentTypeFilter] : null,
+            classifications: classificationFilter ? [classificationFilter] : null,
+            contentSources: newContentSource ? [newContentSource] : null,
           },
         },
       ),
@@ -297,6 +323,7 @@ export function DocumentList(props: {
             status: [tab],
             documentTypes: documentTypeFilter ? [documentTypeFilter] : null,
             classifications: classificationFilter ? [classificationFilter] : null,
+            contentSources: contentSourceFilter ? [contentSourceFilter] : null,
           },
         },
       ),
@@ -309,12 +336,24 @@ export function DocumentList(props: {
       status: [tab],
       documentTypes: documentTypeFilter ? [documentTypeFilter] : null,
       classifications: classificationFilter ? [classificationFilter] : null,
+      contentSources: contentSourceFilter ? [contentSourceFilter] : null,
     });
   };
 
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-4">
+        <Select
+          value={contentSourceFilter ?? "ALL"}
+          onValueChange={handleContentSourceFilterChange}
+        >
+          <Option value="ALL">{__("All sources")}</Option>
+          {documentContentSources.map(source => (
+            <Option key={source} value={source}>
+              {getDocumentContentSourceLabel(__, source) ?? source}
+            </Option>
+          ))}
+        </Select>
         <Select
           value={documentTypeFilter ?? "ALL"}
           onValueChange={handleDocumentTypeFilterChange}

@@ -12,6 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+import { formatError, type GraphQLError } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import {
   Breadcrumb,
@@ -21,17 +22,17 @@ import {
   DialogFooter,
   Field,
   useDialogRef,
+  useToast,
 } from "@probo/ui";
 import type { ReactNode } from "react";
-import { Suspense } from "react";
-import { graphql } from "react-relay";
+import { useMutation } from "react-relay";
 import { useNavigate } from "react-router";
+import { graphql } from "relay-runtime";
 import { z } from "zod";
 
 import type { CreateStatementOfApplicabilityDialogMutation } from "#/__generated__/core/CreateStatementOfApplicabilityDialogMutation.graphql";
-import { PeopleSelectField } from "#/components/form/PeopleSelectField";
+import { PeopleMultiSelectField } from "#/components/form/PeopleMultiSelectField";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
-import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 const createMutation = graphql`
@@ -44,8 +45,6 @@ const createMutation = graphql`
                 node {
                     id
                     name
-                    sourceId
-                    snapshotId
                     createdAt
                     updatedAt
                     canDelete: permission(action: "core:statement-of-applicability:delete")
@@ -63,7 +62,7 @@ type Props = {
 
 const schema = z.object({
   name: z.string().min(1),
-  ownerId: z.string().min(1),
+  defaultApproverIds: z.array(z.string()),
 });
 
 export function CreateStatementOfApplicabilityDialog({
@@ -71,41 +70,39 @@ export function CreateStatementOfApplicabilityDialog({
   connectionId,
 }: Props) {
   const { __ } = useTranslate();
+  const { toast } = useToast();
   const organizationId = useOrganizationId();
   const navigate = useNavigate();
-  const { control, register, handleSubmit, reset } = useFormWithSchema(
+  const { register, handleSubmit, reset, control } = useFormWithSchema(
     schema,
     {
       defaultValues: {
         name: "",
-        ownerId: "",
+        defaultApproverIds: [],
       },
     },
   );
   const ref = useDialogRef();
 
   const [createStatementOfApplicability, isCreating]
-    = useMutationWithToasts<CreateStatementOfApplicabilityDialogMutation>(
-      createMutation,
-      {
-        successMessage: __(
-          "Statement of applicability created successfully.",
-        ),
-        errorMessage: __("Failed to create statement of applicability"),
-      },
-    );
+    = useMutation<CreateStatementOfApplicabilityDialogMutation>(createMutation);
 
-  const onSubmit = async (data: z.infer<typeof schema>) => {
-    await createStatementOfApplicability({
+  const onSubmit = (data: z.infer<typeof schema>) => {
+    createStatementOfApplicability({
       variables: {
         input: {
           name: data.name,
           organizationId,
-          ownerId: data.ownerId,
+          defaultApproverIds: data.defaultApproverIds.length > 0 ? data.defaultApproverIds : undefined,
         },
         connections: [connectionId],
       },
-      onCompleted: (response) => {
+      onCompleted(response) {
+        toast({
+          title: __("Success"),
+          description: __("Statement of applicability created successfully."),
+          variant: "success",
+        });
         reset();
         ref.current?.close();
         const statementOfApplicabilityId
@@ -114,6 +111,16 @@ export function CreateStatementOfApplicabilityDialog({
         void navigate(
           `/organizations/${organizationId}/statements-of-applicability/${statementOfApplicabilityId}`,
         );
+      },
+      onError(error) {
+        toast({
+          title: __("Error"),
+          description: formatError(
+            __("Failed to create statement of applicability"),
+            error as GraphQLError,
+          ),
+          variant: "error",
+        });
       },
     });
   };
@@ -139,15 +146,13 @@ export function CreateStatementOfApplicabilityDialog({
             type="text"
             required
           />
-          <Field label={__("Owner")}>
-            <Suspense fallback={<div>{__("Loading...")}</div>}>
-              <PeopleSelectField
-                organizationId={organizationId}
-                control={control}
-                name="ownerId"
-              />
-            </Suspense>
-          </Field>
+          <PeopleMultiSelectField
+            name="defaultApproverIds"
+            label={__("Default Approvers")}
+            control={control}
+            organizationId={organizationId}
+            placeholder={__("Add approvers...")}
+          />
         </DialogContent>
         <DialogFooter>
           <Button disabled={isCreating} type="submit">

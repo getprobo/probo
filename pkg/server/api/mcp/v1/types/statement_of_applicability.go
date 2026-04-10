@@ -23,8 +23,7 @@ func NewStatementOfApplicability(s *coredata.StatementOfApplicability) *Statemen
 		ID:             s.ID,
 		OrganizationID: s.OrganizationID,
 		Name:           s.Name,
-		OwnerID:        s.OwnerID,
-		SnapshotID:     s.SnapshotID,
+		DocumentID:     s.DocumentID,
 		CreatedAt:      s.CreatedAt,
 		UpdatedAt:      s.UpdatedAt,
 	}
