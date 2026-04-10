@@ -28,12 +28,12 @@ import (
 	"go.probo.inc/probo/pkg/validator"
 )
 
-type Client struct {
+type Service struct {
 	pg *pg.Client
 }
 
-func NewClient(pgClient *pg.Client) *Client {
-	return &Client{pg: pgClient}
+func NewService(pgClient *pg.Client) *Service {
+	return &Service{pg: pgClient}
 }
 
 var defaultCategories = []struct {
@@ -152,7 +152,7 @@ func (r *CreateCookieConsentRecordRequest) Validate() error {
 	return v.Error()
 }
 
-func (c *Client) CreateCookieBanner(
+func (s *Service) CreateCookieBanner(
 	ctx context.Context,
 	scope coredata.Scoper,
 	req CreateCookieBannerRequest,
@@ -163,7 +163,7 @@ func (c *Client) CreateCookieBanner(
 
 	var banner *coredata.CookieBanner
 
-	err := c.pg.WithTx(
+	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			now := time.Now()
@@ -213,14 +213,14 @@ func (c *Client) CreateCookieBanner(
 	return banner, nil
 }
 
-func (c *Client) GetCookieBanner(
+func (s *Service) GetCookieBanner(
 	ctx context.Context,
 	scope coredata.Scoper,
 	bannerID gid.GID,
 ) (*coredata.CookieBanner, error) {
 	var banner coredata.CookieBanner
 
-	err := c.pg.WithConn(
+	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			if err := banner.LoadByID(ctx, conn, scope, bannerID); err != nil {
@@ -240,7 +240,7 @@ func (c *Client) GetCookieBanner(
 	return &banner, nil
 }
 
-func (c *Client) ListCookieBannersForOrganization(
+func (s *Service) ListCookieBannersForOrganization(
 	ctx context.Context,
 	scope coredata.Scoper,
 	organizationID gid.GID,
@@ -249,7 +249,7 @@ func (c *Client) ListCookieBannersForOrganization(
 ) (coredata.CookieBanners, error) {
 	var banners coredata.CookieBanners
 
-	err := c.pg.WithConn(
+	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			if err := banners.LoadByOrganizationID(ctx, conn, scope, organizationID, cursor, filter); err != nil {
@@ -266,7 +266,7 @@ func (c *Client) ListCookieBannersForOrganization(
 	return banners, nil
 }
 
-func (c *Client) CountCookieBannersForOrganization(
+func (s *Service) CountCookieBannersForOrganization(
 	ctx context.Context,
 	scope coredata.Scoper,
 	organizationID gid.GID,
@@ -274,7 +274,7 @@ func (c *Client) CountCookieBannersForOrganization(
 ) (int, error) {
 	var count int
 
-	err := c.pg.WithConn(
+	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			var banners coredata.CookieBanners
@@ -295,7 +295,7 @@ func (c *Client) CountCookieBannersForOrganization(
 	return count, nil
 }
 
-func (c *Client) UpdateCookieBanner(
+func (s *Service) UpdateCookieBanner(
 	ctx context.Context,
 	scope coredata.Scoper,
 	req UpdateCookieBannerRequest,
@@ -306,7 +306,7 @@ func (c *Client) UpdateCookieBanner(
 
 	var banner coredata.CookieBanner
 
-	err := c.pg.WithTx(
+	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			if err := banner.LoadByID(ctx, tx, scope, req.CookieBannerID); err != nil {
@@ -353,14 +353,14 @@ func (c *Client) UpdateCookieBanner(
 	return &banner, nil
 }
 
-func (c *Client) PublishCookieBanner(
+func (s *Service) PublishCookieBanner(
 	ctx context.Context,
 	scope coredata.Scoper,
 	bannerID gid.GID,
 ) (*coredata.CookieBanner, error) {
 	var banner coredata.CookieBanner
 
-	err := c.pg.WithTx(
+	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			if err := banner.LoadByID(ctx, tx, scope, bannerID); err != nil {
@@ -391,14 +391,14 @@ func (c *Client) PublishCookieBanner(
 	return &banner, nil
 }
 
-func (c *Client) DisableCookieBanner(
+func (s *Service) DisableCookieBanner(
 	ctx context.Context,
 	scope coredata.Scoper,
 	bannerID gid.GID,
 ) (*coredata.CookieBanner, error) {
 	var banner coredata.CookieBanner
 
-	err := c.pg.WithTx(
+	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			if err := banner.LoadByID(ctx, tx, scope, bannerID); err != nil {
@@ -429,12 +429,12 @@ func (c *Client) DisableCookieBanner(
 	return &banner, nil
 }
 
-func (c *Client) DeleteCookieBanner(
+func (s *Service) DeleteCookieBanner(
 	ctx context.Context,
 	scope coredata.Scoper,
 	bannerID gid.GID,
 ) error {
-	return c.pg.WithTx(
+	return s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			var banner coredata.CookieBanner
@@ -458,7 +458,7 @@ func (c *Client) DeleteCookieBanner(
 	)
 }
 
-func (c *Client) CreateCookieCategory(
+func (s *Service) CreateCookieCategory(
 	ctx context.Context,
 	scope coredata.Scoper,
 	req CreateCookieCategoryRequest,
@@ -469,7 +469,7 @@ func (c *Client) CreateCookieCategory(
 
 	var category *coredata.CookieCategory
 
-	err := c.pg.WithTx(
+	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			now := time.Now()
@@ -505,14 +505,14 @@ func (c *Client) CreateCookieCategory(
 	return category, nil
 }
 
-func (c *Client) GetCookieCategory(
+func (s *Service) GetCookieCategory(
 	ctx context.Context,
 	scope coredata.Scoper,
 	categoryID gid.GID,
 ) (*coredata.CookieCategory, error) {
 	var category coredata.CookieCategory
 
-	err := c.pg.WithConn(
+	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			if err := category.LoadByID(ctx, conn, scope, categoryID); err != nil {
@@ -532,7 +532,7 @@ func (c *Client) GetCookieCategory(
 	return &category, nil
 }
 
-func (c *Client) ListCookieCategoriesForBanner(
+func (s *Service) ListCookieCategoriesForBanner(
 	ctx context.Context,
 	scope coredata.Scoper,
 	bannerID gid.GID,
@@ -540,7 +540,7 @@ func (c *Client) ListCookieCategoriesForBanner(
 ) (coredata.CookieCategories, error) {
 	var categories coredata.CookieCategories
 
-	err := c.pg.WithConn(
+	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			if err := categories.LoadByCookieBannerID(ctx, conn, scope, bannerID, cursor); err != nil {
@@ -557,14 +557,14 @@ func (c *Client) ListCookieCategoriesForBanner(
 	return categories, nil
 }
 
-func (c *Client) CountCookieCategoriesForBanner(
+func (s *Service) CountCookieCategoriesForBanner(
 	ctx context.Context,
 	scope coredata.Scoper,
 	bannerID gid.GID,
 ) (int, error) {
 	var count int
 
-	err := c.pg.WithConn(
+	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			var categories coredata.CookieCategories
@@ -585,7 +585,7 @@ func (c *Client) CountCookieCategoriesForBanner(
 	return count, nil
 }
 
-func (c *Client) UpdateCookieCategory(
+func (s *Service) UpdateCookieCategory(
 	ctx context.Context,
 	scope coredata.Scoper,
 	req UpdateCookieCategoryRequest,
@@ -596,7 +596,7 @@ func (c *Client) UpdateCookieCategory(
 
 	var category coredata.CookieCategory
 
-	err := c.pg.WithTx(
+	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			if err := category.LoadByID(ctx, tx, scope, req.CookieCategoryID); err != nil {
@@ -635,12 +635,12 @@ func (c *Client) UpdateCookieCategory(
 	return &category, nil
 }
 
-func (c *Client) DeleteCookieCategory(
+func (s *Service) DeleteCookieCategory(
 	ctx context.Context,
 	scope coredata.Scoper,
 	categoryID gid.GID,
 ) error {
-	return c.pg.WithTx(
+	return s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			var category coredata.CookieCategory
@@ -664,7 +664,7 @@ func (c *Client) DeleteCookieCategory(
 	)
 }
 
-func (c *Client) CreateCookieConsentRecord(
+func (s *Service) CreateCookieConsentRecord(
 	ctx context.Context,
 	scope coredata.Scoper,
 	req CreateCookieConsentRecordRequest,
@@ -675,7 +675,7 @@ func (c *Client) CreateCookieConsentRecord(
 
 	var record *coredata.CookieConsentRecord
 
-	err := c.pg.WithTx(
+	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			record = &coredata.CookieConsentRecord{
@@ -703,7 +703,7 @@ func (c *Client) CreateCookieConsentRecord(
 	return record, nil
 }
 
-func (c *Client) ListCookieConsentRecordsForBanner(
+func (s *Service) ListCookieConsentRecordsForBanner(
 	ctx context.Context,
 	scope coredata.Scoper,
 	bannerID gid.GID,
@@ -712,7 +712,7 @@ func (c *Client) ListCookieConsentRecordsForBanner(
 ) (coredata.CookieConsentRecords, error) {
 	var records coredata.CookieConsentRecords
 
-	err := c.pg.WithConn(
+	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			if err := records.LoadByCookieBannerID(ctx, conn, scope, bannerID, cursor, filter); err != nil {
@@ -729,7 +729,7 @@ func (c *Client) ListCookieConsentRecordsForBanner(
 	return records, nil
 }
 
-func (c *Client) CountCookieConsentRecordsForBanner(
+func (s *Service) CountCookieConsentRecordsForBanner(
 	ctx context.Context,
 	scope coredata.Scoper,
 	bannerID gid.GID,
@@ -737,7 +737,7 @@ func (c *Client) CountCookieConsentRecordsForBanner(
 ) (int, error) {
 	var count int
 
-	err := c.pg.WithConn(
+	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			var records coredata.CookieConsentRecords
