@@ -112,7 +112,6 @@ func ensureAgentRunsTable(t *testing.T, client *pg.Client) {
 	ensureTableOnce.Do(func() {
 		ctx := context.Background()
 		tableErr = client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-			// Check if the table already exists.
 			var exists bool
 			err := conn.QueryRow(
 				ctx,
@@ -125,31 +124,13 @@ func ensureAgentRunsTable(t *testing.T, client *pg.Client) {
 				return nil
 			}
 
-			// Run the migration DDL.
-			_, err = conn.Exec(ctx, `
-				CREATE TABLE agent_runs (
-					id              TEXT NOT NULL PRIMARY KEY,
-					tenant_id       TEXT NOT NULL,
-					organization_id TEXT NOT NULL,
-					start_agent_name TEXT NOT NULL,
-					status          TEXT NOT NULL DEFAULT 'PENDING',
-					checkpoint      JSONB,
-					input_messages  JSONB NOT NULL,
-					result          JSONB,
-					error_message   TEXT,
-					stop_requested  BOOLEAN NOT NULL DEFAULT FALSE,
-					started_at      TIMESTAMPTZ,
-					lease_owner     TEXT,
-					lease_expires_at TIMESTAMPTZ,
-					created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
-					updated_at      TIMESTAMPTZ NOT NULL DEFAULT now()
-				);
-				CREATE INDEX idx_agent_runs_status ON agent_runs (status)
-					WHERE status IN ('PENDING', 'RUNNING', 'SUSPENDED');
-				CREATE INDEX idx_agent_runs_organization_status ON agent_runs (organization_id, status, created_at);
-				CREATE INDEX idx_agent_runs_running_lease ON agent_runs (lease_expires_at)
-					WHERE status = 'RUNNING';
-			`)
+			// Read from the embedded migration to avoid schema drift.
+			ddl, err := coredata.Migrations.ReadFile("migrations/20260410T120000Z.sql")
+			if err != nil {
+				return fmt.Errorf("cannot read agent_runs migration: %w", err)
+			}
+
+			_, err = conn.Exec(ctx, string(ddl))
 			return err
 		})
 	})
