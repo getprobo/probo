@@ -38,6 +38,15 @@ probod:
     password:
       pepper: "this-is-a-secure-pepper-for-password-hashing-at-least-32-bytes"
       iterations: 600000
+    oauth2-server:
+      signing-keys:
+        - key-file: "./testdata/oauth2_signing_key.pem"
+          kid: "test-key-1"
+          active: true
+      access-token-duration: 10
+      refresh-token-duration: 10
+      authorization-code-duration: 5
+      device-code-duration: 15
 
   trust-center:
     http-addr: ":10080"

@@ -16,9 +16,6 @@ package scim
 
 import (
 	"context"
-	"crypto/rand"
-	"crypto/sha256"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"net"
@@ -37,6 +34,8 @@ import (
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
+	"go.probo.inc/probo/pkg/crypto/hash"
+	"go.probo.inc/probo/pkg/crypto/rand"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
@@ -88,16 +87,11 @@ func (s *Service) Run(ctx context.Context) error {
 }
 
 func HashToken(token string) []byte {
-	hash := sha256.Sum256([]byte(token))
-	return hash[:]
+	return hash.SHA256String(token)
 }
 
 func GenerateToken() (string, error) {
-	bytes := make([]byte, 32)
-	if _, err := rand.Read(bytes); err != nil {
-		return "", fmt.Errorf("cannot generate random token: %w", err)
-	}
-	return hex.EncodeToString(bytes), nil
+	return rand.HexString(32)
 }
 
 // ValidateToken validates a bearer token and returns the SCIM configuration

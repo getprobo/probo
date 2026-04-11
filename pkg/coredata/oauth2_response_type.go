@@ -12,26 +12,39 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package hash
+package coredata
 
-import (
-	"crypto/sha256"
-	"encoding/hex"
+import "fmt"
+
+type (
+	OAuth2ResponseType  string
+	OAuth2ResponseTypes []OAuth2ResponseType
 )
 
-func SHA256(data []byte) []byte {
-	h := sha256.Sum256(data)
-	return h[:]
+const (
+	OAuth2ResponseTypeCode OAuth2ResponseType = "code"
+)
+
+func (r OAuth2ResponseType) IsValid() bool {
+	switch r {
+	case OAuth2ResponseTypeCode:
+		return true
+	}
+
+	return false
 }
 
-func SHA256String(s string) []byte {
-	return SHA256([]byte(s))
+func (r OAuth2ResponseType) String() string { return string(r) }
+
+func (r *OAuth2ResponseType) UnmarshalText(text []byte) error {
+	*r = OAuth2ResponseType(text)
+	if !r.IsValid() {
+		return fmt.Errorf("%s is not a valid OAuth2ResponseType", string(text))
+	}
+
+	return nil
 }
 
-func SHA256Hex(data []byte) string {
-	return hex.EncodeToString(SHA256(data))
-}
-
-func SHA256HexString(s string) string {
-	return SHA256Hex([]byte(s))
+func (r OAuth2ResponseType) MarshalText() ([]byte, error) {
+	return []byte(r.String()), nil
 }

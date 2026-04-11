@@ -1128,3 +1128,71 @@ func (b *AccessReviewCampaignBuilder) WithAccessSourceIDs(ids []string) *AccessR
 func (b *AccessReviewCampaignBuilder) Create() string {
 	return CreateAccessReviewCampaign(b.client, b.organizationID, b.attrs)
 }
+
+type OAuth2ClientResult struct {
+	ClientID     string
+	ClientSecret string
+}
+
+// CreateOAuth2Client registers a confidential OAuth2 client with sensible
+// defaults for testing the authorization code + refresh token flows.
+func CreateOAuth2Client(c *testutil.Client, attrs Attrs) OAuth2ClientResult {
+	input := map[string]any{
+		"organization_id": c.GetOrganizationID().String(),
+		"client_name":     SafeName("OAuth2 Client"),
+		"visibility":      "private",
+		"redirect_uris":   []string{"http://localhost:9999/callback"},
+		"grant_types": []string{
+			"authorization_code",
+			"refresh_token",
+		},
+		"response_types":             []string{"code"},
+		"token_endpoint_auth_method": "client_secret_basic",
+		"scopes":                     "openid email profile",
+	}
+
+	for k, v := range attrs {
+		input[k] = v
+	}
+
+	resp, raw, err := testutil.OAuth2RegisterClient(c, input)
+	require.NoError(c.T, err, "OAuth2 client registration failed")
+	require.NotNil(c.T, resp, "OAuth2 client registration returned nil (status=%d body=%s)", raw.StatusCode, string(raw.Body))
+
+	return OAuth2ClientResult{
+		ClientID:     resp.ClientID,
+		ClientSecret: resp.ClientSecret,
+	}
+}
+
+// CreatePublicOAuth2Client registers a public OAuth2 client (no secret) with
+// the device code grant type for testing the device flow.
+func CreatePublicOAuth2Client(c *testutil.Client, attrs Attrs) OAuth2ClientResult {
+	input := map[string]any{
+		"organization_id": c.GetOrganizationID().String(),
+		"client_name":     SafeName("Public OAuth2 Client"),
+		"visibility":      "private",
+		"redirect_uris":   []string{"http://localhost:9999/callback"},
+		"grant_types": []string{
+			"authorization_code",
+			"refresh_token",
+			"urn:ietf:params:oauth:grant-type:device_code",
+		},
+		"response_types":             []string{"code"},
+		"token_endpoint_auth_method": "none",
+		"scopes":                     "openid email profile",
+	}
+
+	for k, v := range attrs {
+		input[k] = v
+	}
+
+	resp, raw, err := testutil.OAuth2RegisterClient(c, input)
+	require.NoError(c.T, err, "public OAuth2 client registration failed")
+	require.NotNil(c.T, resp, "public OAuth2 client registration returned nil (status=%d body=%s)", raw.StatusCode, string(raw.Body))
+
+	return OAuth2ClientResult{
+		ClientID:     resp.ClientID,
+		ClientSecret: resp.ClientSecret,
+	}
+}

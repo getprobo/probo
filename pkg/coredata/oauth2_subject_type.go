@@ -12,26 +12,36 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package hash
+package coredata
 
-import (
-	"crypto/sha256"
-	"encoding/hex"
+import "fmt"
+
+type OAuth2SubjectType string
+
+const (
+	OAuth2SubjectTypePublic OAuth2SubjectType = "public"
 )
 
-func SHA256(data []byte) []byte {
-	h := sha256.Sum256(data)
-	return h[:]
+func (s OAuth2SubjectType) IsValid() bool {
+	switch s {
+	case OAuth2SubjectTypePublic:
+		return true
+	}
+
+	return false
 }
 
-func SHA256String(s string) []byte {
-	return SHA256([]byte(s))
+func (s OAuth2SubjectType) String() string { return string(s) }
+
+func (s *OAuth2SubjectType) UnmarshalText(text []byte) error {
+	*s = OAuth2SubjectType(text)
+	if !s.IsValid() {
+		return fmt.Errorf("%s is not a valid OAuth2SubjectType", string(text))
+	}
+
+	return nil
 }
 
-func SHA256Hex(data []byte) string {
-	return hex.EncodeToString(SHA256(data))
-}
-
-func SHA256HexString(s string) string {
-	return SHA256Hex([]byte(s))
+func (s OAuth2SubjectType) MarshalText() ([]byte, error) {
+	return []byte(s.String()), nil
 }

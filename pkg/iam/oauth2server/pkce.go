@@ -12,26 +12,32 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package hash
+package oauth2server
 
 import (
 	"crypto/sha256"
-	"encoding/hex"
+	"crypto/subtle"
+	"encoding/base64"
+
+	"go.probo.inc/probo/pkg/coredata"
 )
 
-func SHA256(data []byte) []byte {
-	h := sha256.Sum256(data)
-	return h[:]
+func ValidateCodeChallenge(verifier, challenge string, method coredata.OAuth2CodeChallengeMethod) bool {
+	if verifier == "" || challenge == "" {
+		return false
+	}
+
+	switch method {
+	case coredata.OAuth2CodeChallengeMethodS256:
+		return validateS256(verifier, challenge)
+	default:
+		return false
+	}
 }
 
-func SHA256String(s string) []byte {
-	return SHA256([]byte(s))
-}
+func validateS256(verifier, challenge string) bool {
+	h := sha256.Sum256([]byte(verifier))
+	computed := base64.RawURLEncoding.EncodeToString(h[:])
 
-func SHA256Hex(data []byte) string {
-	return hex.EncodeToString(SHA256(data))
-}
-
-func SHA256HexString(s string) string {
-	return SHA256Hex([]byte(s))
+	return subtle.ConstantTimeCompare([]byte(computed), []byte(challenge)) == 1
 }

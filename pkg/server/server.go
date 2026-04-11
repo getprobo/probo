@@ -27,9 +27,11 @@ import (
 	"go.probo.inc/probo/pkg/accessreview"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/uri"
 	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/file"
 	"go.probo.inc/probo/pkg/iam"
+	"go.probo.inc/probo/pkg/iam/oauth2server"
 	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/securecookie"
@@ -68,7 +70,9 @@ type Server struct {
 	trustWebServer     *trust_web.Server
 	router             *chi.Mux
 	extraHeaderFields  map[string]string
+	baseURL            string
 	proboService       *probo.Service
+	iamService         *iam.Service
 	trustService       *trust.Service
 	logger             *log.Logger
 }
@@ -116,7 +120,9 @@ func NewServer(cfg Config) (*Server, error) {
 		trustWebServer:     trustWebServer,
 		router:             router,
 		extraHeaderFields:  cfg.ExtraHeaderFields,
+		baseURL:            cfg.BaseURL.String(),
 		proboService:       cfg.Probo,
+		iamService:         cfg.IAM,
 		trustService:       cfg.Trust,
 		logger:             cfg.Logger,
 	}
@@ -127,6 +133,9 @@ func NewServer(cfg Config) (*Server, error) {
 }
 
 func (s *Server) setupRoutes(baseURL string) {
+	// OIDC discovery endpoint must be at the issuer root per OIDC Discovery 1.0 §4.
+	s.router.Get("/.well-known/openid-configuration", s.oidcDiscoveryHandler)
+
 	s.router.Mount("/api", http.StripPrefix("/api", s.apiServer))
 	s.router.Mount("/mail-actions", http.StripPrefix("/mail-actions", s.mailActionsHandler))
 
@@ -148,6 +157,25 @@ func (s *Server) setExtraHeaders(w http.ResponseWriter) {
 	for key, value := range s.extraHeaderFields {
 		w.Header().Set(key, value)
 	}
+}
+
+func (s *Server) oidcDiscoveryHandler(w http.ResponseWriter, r *http.Request) {
+	api := s.baseURL + "/api/connect/v1"
+
+	endpoints := oauth2server.Endpoints{
+		Authorization:       uri.URI(api + "/oauth2/authorize"),
+		Token:               uri.URI(api + "/oauth2/token"),
+		Userinfo:            uri.URI(api + "/oauth2/userinfo"),
+		JWKS:                uri.URI(api + "/oauth2/jwks"),
+		Registration:        uri.URI(api + "/oauth2/register"),
+		Introspection:       uri.URI(api + "/oauth2/introspect"),
+		Revocation:          uri.URI(api + "/oauth2/revoke"),
+		DeviceAuthorization: uri.URI(api + "/oauth2/device"),
+	}
+
+	metadata := s.iamService.OAuth2ServerService.Metadata(endpoints)
+	w.Header().Set("Cache-Control", "public, max-age=3600")
+	httpserver.RenderJSON(w, http.StatusOK, metadata)
 }
 
 func (s *Server) handleCustomDomain404(w http.ResponseWriter, r *http.Request) {

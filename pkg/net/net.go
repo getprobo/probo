@@ -12,26 +12,19 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package hash
+package net
 
-import (
-	"crypto/sha256"
-	"encoding/hex"
-)
+import "net"
 
-func SHA256(data []byte) []byte {
-	h := sha256.Sum256(data)
-	return h[:]
-}
+// IsLoopback reports whether host is a loopback address. It recognizes
+// "localhost" by name and delegates to net.IP.IsLoopback for IP addresses,
+// which covers 127.0.0.0/8, ::1, and IPv4-mapped variants like
+// ::ffff:127.0.0.1.
+func IsLoopback(host string) bool {
+	if host == "localhost" {
+		return true
+	}
 
-func SHA256String(s string) []byte {
-	return SHA256([]byte(s))
-}
-
-func SHA256Hex(data []byte) string {
-	return hex.EncodeToString(SHA256(data))
-}
-
-func SHA256HexString(s string) string {
-	return SHA256Hex([]byte(s))
+	ip := net.ParseIP(host)
+	return ip != nil && ip.IsLoopback()
 }

@@ -25,6 +25,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"os"
 	"strings"
 	"sync"
 	"time"
@@ -57,6 +58,7 @@ import (
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/html2pdf"
 	"go.probo.inc/probo/pkg/iam"
+	"go.probo.inc/probo/pkg/iam/oauth2server"
 	"go.probo.inc/probo/pkg/iam/oidc"
 	"go.probo.inc/probo/pkg/mailer"
 	"go.probo.inc/probo/pkg/mailman"
@@ -377,6 +379,48 @@ func (impl *Implm) Run(
 		}
 	}
 
+	if len(impl.cfg.Auth.OAuth2Server.SigningKeys) == 0 {
+		return fmt.Errorf("cannot configure OAuth2 server: at least one signing key is required")
+	}
+
+	var oauth2SigningKeys oauth2server.SigningKeys
+	var hasActive bool
+	for _, keyCfg := range impl.cfg.Auth.OAuth2Server.SigningKeys {
+		keyPEM, err := os.ReadFile(keyCfg.KeyFile)
+		if err != nil {
+			return fmt.Errorf("cannot read OAuth2 server signing key file: %w", err)
+		}
+
+		signer, err := pemutil.DecodePrivateKey(keyPEM)
+		if err != nil {
+			return fmt.Errorf("cannot decode OAuth2 server signing key: %w", err)
+		}
+
+		rsaKey, ok := signer.(*rsa.PrivateKey)
+		if !ok {
+			return fmt.Errorf("OAuth2 server signing key is not an RSA key")
+		}
+
+		kid := keyCfg.KID
+		if kid == "" {
+			kid = "default"
+		}
+
+		if keyCfg.Active {
+			hasActive = true
+		}
+
+		oauth2SigningKeys = append(oauth2SigningKeys, oauth2server.SigningKey{
+			PrivateKey: rsaKey,
+			KID:        kid,
+			Active:     keyCfg.Active,
+		})
+	}
+
+	if !hasActive {
+		return fmt.Errorf("cannot configure OAuth2 server: at least one signing key must be active")
+	}
+
 	if err := emails.UploadStaticAssets(
 		ctx,
 		s3Client,
@@ -420,6 +464,8 @@ func (impl *Implm) Run(
 				ClientSecret: impl.cfg.Auth.Microsoft.ClientSecret,
 				Enabled:      impl.cfg.Auth.Microsoft.Enabled,
 			},
+			OAuth2ServerSigningKeys: oauth2SigningKeys,
+			OAuth2ServerOptions:     oauth2ServerOptions(impl.cfg.Auth.OAuth2Server),
 		},
 	)
 	if err != nil {
@@ -1099,4 +1145,26 @@ func parseIPs(strs []string) []net.IP {
 		}
 	}
 	return ips
+}
+
+func oauth2ServerOptions(cfg OAuth2ServerConfig) []oauth2server.Option {
+	var opts []oauth2server.Option
+
+	if cfg.AccessTokenDuration > 0 {
+		opts = append(opts, oauth2server.WithAccessTokenDuration(time.Duration(cfg.AccessTokenDuration)*time.Second))
+	}
+
+	if cfg.RefreshTokenDuration > 0 {
+		opts = append(opts, oauth2server.WithRefreshTokenDuration(time.Duration(cfg.RefreshTokenDuration)*time.Second))
+	}
+
+	if cfg.AuthorizationCodeDuration > 0 {
+		opts = append(opts, oauth2server.WithAuthorizationCodeDuration(time.Duration(cfg.AuthorizationCodeDuration)*time.Second))
+	}
+
+	if cfg.DeviceCodeDuration > 0 {
+		opts = append(opts, oauth2server.WithDeviceCodeDuration(time.Duration(cfg.DeviceCodeDuration)*time.Second))
+	}
+
+	return opts
 }
