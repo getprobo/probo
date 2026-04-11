@@ -43,6 +43,7 @@ import (
 	"go.gearno.de/kit/unit"
 	"go.opentelemetry.io/otel/trace"
 	"go.probo.inc/probo/pkg/accessreview"
+	"go.probo.inc/probo/pkg/agents/vetting"
 	"go.probo.inc/probo/pkg/awsconfig"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/certmanager"
@@ -108,22 +109,21 @@ type (
 
 	// Config represents the probod application configuration.
 	Config struct {
-		BaseURL           string                  `json:"base-url"`
-		EncryptionKey     string                  `json:"encryption-key"`
-		Pg                PgConfig                `json:"pg"`
-		Api               APIConfig               `json:"api"`
-		Auth              AuthConfig              `json:"auth"`
-		TrustCenter       TrustCenterConfig       `json:"trust-center"`
-		AWS               AWSConfig               `json:"aws"`
-		Notifications     NotificationsConfig     `json:"notifications"`
-		Connectors        []ConnectorConfig       `json:"connectors"`
-		LLM               LLMSettings             `json:"llm"`
-		ProboAgent        LLMConfig               `json:"probo-agent"`
-		EvidenceDescriber EvidenceDescriberConfig `json:"evidence-describer"`
-		ChromeDPAddr      string                  `json:"chrome-dp-addr"`
-		CustomDomains     CustomDomainsConfig     `json:"custom-domains"`
-		SCIMBridge        SCIMBridgeConfig        `json:"scim-bridge"`
-		ESign             ESignConfig             `json:"esign"`
+		BaseURL        string              `json:"base-url"`
+		EncryptionKey  string              `json:"encryption-key"`
+		Pg             PgConfig            `json:"pg"`
+		Api            APIConfig           `json:"api"`
+		Auth           AuthConfig          `json:"auth"`
+		TrustCenter    TrustCenterConfig   `json:"trust-center"`
+		AWS            AWSConfig           `json:"aws"`
+		Notifications  NotificationsConfig `json:"notifications"`
+		Connectors     []ConnectorConfig   `json:"connectors"`
+		Agents         AgentsConfig        `json:"agents"`
+		ChromeDPAddr   string              `json:"chrome-dp-addr"`
+		SearchEndpoint string              `json:"search-endpoint"`
+		CustomDomains  CustomDomainsConfig `json:"custom-domains"`
+		SCIMBridge     SCIMBridgeConfig    `json:"scim-bridge"`
+		ESign          ESignConfig         `json:"esign"`
 	}
 
 	// TrustCenterConfig contains trust center server configuration.
@@ -218,11 +218,6 @@ func New() *Implm {
 			},
 			ESign: ESignConfig{
 				TSAURL: "http://timestamp.digicert.com",
-			},
-			EvidenceDescriber: EvidenceDescriberConfig{
-				Interval:       10,
-				StaleAfter:     300,
-				MaxConcurrency: 10,
 			},
 		},
 	}
@@ -329,24 +324,19 @@ func (impl *Implm) Run(
 		}
 	}
 
-	proboAgentCfg := impl.cfg.LLM.ResolveLLMConfig(impl.cfg.ProboAgent)
-	proboProviderCfg, ok := impl.cfg.LLM.Providers[proboAgentCfg.Provider]
-	if !ok {
-		return fmt.Errorf("unknown LLM provider %q for probo agent", proboAgentCfg.Provider)
-	}
-	proboLLMClient, err := buildLLMClient(proboProviderCfg, l.Named("llm.probo"), tp, r)
+	proboAgentCfg, proboLLMClient, err := impl.resolveAgentClient("probo", impl.cfg.Agents.Probo, l, tp, r)
 	if err != nil {
-		return fmt.Errorf("cannot create probo LLM client: %w", err)
+		return err
 	}
 
-	edLLMCfg := impl.cfg.LLM.ResolveLLMConfig(impl.cfg.EvidenceDescriber.LLMConfig())
-	edProviderCfg, ok := impl.cfg.LLM.Providers[edLLMCfg.Provider]
-	if !ok {
-		return fmt.Errorf("unknown LLM provider %q for evidence-describer agent", edLLMCfg.Provider)
-	}
-	evidenceDescriberLLMClient, err := buildLLMClient(edProviderCfg, l.Named("llm.evidence-describer"), tp, r)
+	evidenceDescriberAgentCfg, evidenceDescriberLLMClient, err := impl.resolveAgentClient("evidence-describer", impl.cfg.Agents.EvidenceDescriber, l, tp, r)
 	if err != nil {
-		return fmt.Errorf("cannot create evidence describer LLM client: %w", err)
+		return err
+	}
+
+	vendorAssessorAgentCfg, vendorAssessorLLMClient, err := impl.resolveAgentClient("vendor-assessor", impl.cfg.Agents.VendorAssessor, l, tp, r)
+	if err != nil {
+		return err
 	}
 
 	fileManagerService := filemanager.NewService(s3Client)
@@ -474,6 +464,19 @@ func (impl *Implm) Run(
 
 	mailmanService := mailman.NewService(pgClient, fileManagerService, impl.cfg.Auth.Cookie.Secret, baseURL, impl.cfg.AWS.Bucket, encryptionKey, l)
 
+	vendorAssessorMaxTokens := vetting.DefaultMaxTokens
+	if vendorAssessorAgentCfg.MaxTokens != nil {
+		vendorAssessorMaxTokens = *vendorAssessorAgentCfg.MaxTokens
+	}
+	vendorAssessor := vetting.NewAssessor(vetting.Config{
+		Client:         vendorAssessorLLMClient,
+		Model:          vendorAssessorAgentCfg.ModelName,
+		MaxTokens:      vendorAssessorMaxTokens,
+		ChromeAddr:     impl.cfg.ChromeDPAddr,
+		SearchEndpoint: impl.cfg.SearchEndpoint,
+		Logger:         l.Named("vendor-assessor"),
+	})
+
 	proboService, err := probo.NewService(
 		ctx,
 		encryptionKey,
@@ -495,6 +498,7 @@ func (impl *Implm) Run(
 		esignService,
 		defaultConnectorRegistry,
 		time.Duration(impl.cfg.Auth.InvitationConfirmationTokenValidity)*time.Second,
+		vendorAssessor,
 	)
 	if err != nil {
 		return fmt.Errorf("cannot create probo service: %w", err)
@@ -666,9 +670,9 @@ func (impl *Implm) Run(
 	evidenceDescriber := evidencedescriber.New(
 		evidenceDescriberLLMClient,
 		evidencedescriber.Config{
-			Model:     edLLMCfg.ModelName,
-			Temp:      *edLLMCfg.Temperature,
-			MaxTokens: *edLLMCfg.MaxTokens,
+			Model:     evidenceDescriberAgentCfg.ModelName,
+			Temp:      *evidenceDescriberAgentCfg.Temperature,
+			MaxTokens: *evidenceDescriberAgentCfg.MaxTokens,
 		},
 	)
 	evidenceDescriptionWorker := probo.NewEvidenceDescriptionWorker(
@@ -676,9 +680,6 @@ func (impl *Implm) Run(
 		fileManagerService,
 		evidenceDescriber,
 		l.Named("evidence-description-worker"),
-		probo.WithEvidenceDescriptionWorkerInterval(time.Duration(impl.cfg.EvidenceDescriber.Interval)*time.Second),
-		probo.WithEvidenceDescriptionWorkerStaleAfter(time.Duration(impl.cfg.EvidenceDescriber.StaleAfter)*time.Second),
-		probo.WithEvidenceDescriptionWorkerMaxConcurrency(impl.cfg.EvidenceDescriber.MaxConcurrency),
 	)
 	evidenceDescriptionWorkerCtx, stopEvidenceDescriptionWorker := context.WithCancel(context.Background())
 	wg.Go(

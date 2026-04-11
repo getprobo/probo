@@ -32,8 +32,14 @@ type (
 		MimeType string // e.g. "application/pdf", "text/csv", "image/png"
 		Filename string
 	}
+
+	ThinkingPart struct {
+		Text      string
+		Signature string // Anthropic thinking signature for multi-turn continuity
+	}
 )
 
-func (TextPart) part()  {}
-func (ImagePart) part() {}
-func (FilePart) part()  {}
+func (TextPart) part()     {}
+func (ImagePart) part()    {}
+func (FilePart) part()     {}
+func (ThinkingPart) part() {}
