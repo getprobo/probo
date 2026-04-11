@@ -18,11 +18,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"sync"
 	"time"
 
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
+	"go.gearno.de/kit/worker"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/hash"
 	"go.probo.inc/probo/pkg/filemanager"
@@ -40,38 +40,24 @@ const (
 )
 
 type (
-	SealingWorker struct {
-		pg             *pg.Client
-		fileManager    *filemanager.Service
-		tsaClient      *TSAClient
-		logger         *log.Logger
-		interval       time.Duration
-		tsaTimeout     time.Duration
-		staleAfter     time.Duration
-		maxConcurrency int
+	sealingHandler struct {
+		pg          *pg.Client
+		fileManager *filemanager.Service
+		tsaClient   *TSAClient
+		logger      *log.Logger
+		tsaTimeout  time.Duration
+		staleAfter  time.Duration
 	}
 
-	SealingWorkerOption func(*SealingWorker)
+	SealingWorkerOption func(*sealingHandler)
 )
 
-func WithSealingWorkerInterval(d time.Duration) SealingWorkerOption {
-	return func(w *SealingWorker) { w.interval = d }
-}
-
 func WithSealingWorkerTSATimeout(d time.Duration) SealingWorkerOption {
-	return func(w *SealingWorker) { w.tsaTimeout = d }
+	return func(h *sealingHandler) { h.tsaTimeout = d }
 }
 
 func WithSealingWorkerStaleAfter(d time.Duration) SealingWorkerOption {
-	return func(w *SealingWorker) { w.staleAfter = d }
-}
-
-func WithSealingWorkerMaxConcurrency(n int) SealingWorkerOption {
-	return func(w *SealingWorker) {
-		if n > 0 {
-			w.maxConcurrency = n
-		}
-	}
+	return func(h *sealingHandler) { h.staleAfter = d }
 }
 
 func NewSealingWorker(
@@ -79,110 +65,82 @@ func NewSealingWorker(
 	fileManager *filemanager.Service,
 	tsaClient *TSAClient,
 	logger *log.Logger,
-	opts ...SealingWorkerOption,
-) *SealingWorker {
-	w := &SealingWorker{
-		pg:             pgClient,
-		fileManager:    fileManager,
-		tsaClient:      tsaClient,
-		logger:         logger,
-		interval:       10 * time.Second,
-		tsaTimeout:     10 * time.Second,
-		staleAfter:     5 * time.Minute,
-		maxConcurrency: 5,
+	handlerOpts []SealingWorkerOption,
+	workerOpts ...worker.Option,
+) *worker.Worker[coredata.ElectronicSignature] {
+	h := &sealingHandler{
+		pg:          pgClient,
+		fileManager: fileManager,
+		tsaClient:   tsaClient,
+		logger:      logger,
+		tsaTimeout:  10 * time.Second,
+		staleAfter:  5 * time.Minute,
 	}
 
-	for _, opt := range opts {
-		opt(w)
+	for _, opt := range handlerOpts {
+		opt(h)
 	}
 
-	return w
+	return worker.New(
+		"sealing-worker",
+		h,
+		logger,
+		workerOpts...,
+	)
 }
 
-func (w *SealingWorker) Run(ctx context.Context) error {
-	var (
-		wg  sync.WaitGroup
-		sem = make(chan struct{}, w.maxConcurrency)
-	)
+func (h *sealingHandler) Claim(ctx context.Context) (coredata.ElectronicSignature, error) {
+	var signature coredata.ElectronicSignature
 
-	defer wg.Wait()
-
-LOOP:
-	select {
-	case <-ctx.Done():
-		return ctx.Err()
-	case <-time.After(w.interval):
-		// From there we should not accept cancelations anymore.
-		nonCancelableCtx := context.WithoutCancel(ctx)
-		w.recoverStaleRows(nonCancelableCtx)
-
-		for {
-			if err := w.processNext(ctx, sem, &wg); err != nil {
-				if !errors.Is(err, coredata.ErrResourceNotFound) {
-					w.logger.ErrorCtx(nonCancelableCtx, "cannot claim signature", log.Error(err))
-				}
-				break
-			}
-		}
-
-		goto LOOP
-	}
-}
-
-func (w *SealingWorker) processNext(ctx context.Context, sem chan struct{}, wg *sync.WaitGroup) error {
-	select {
-	case sem <- struct{}{}:
-	case <-ctx.Done():
-		return ctx.Err()
-	}
-
-	var (
-		signature = coredata.ElectronicSignature{}
-		now       = time.Now()
-
-		// From there we should not accept cancelations anymore.
-		nonCancelableCtx = context.WithoutCancel(ctx)
-	)
-
-	if err := w.pg.WithTx(
-		nonCancelableCtx,
+	if err := h.pg.WithTx(
+		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			if err := signature.LoadNextAcceptedForUpdateSkipLocked(nonCancelableCtx, tx); err != nil {
+			if err := signature.LoadNextAcceptedForUpdateSkipLocked(ctx, tx); err != nil {
 				return err
 			}
 
+			now := time.Now()
 			signature.Status = coredata.ElectronicSignatureStatusProcessing
 			signature.ProcessingStartedAt = &now
 			signature.AttemptCount++
 			signature.LastAttemptedAt = &now
 			signature.UpdatedAt = now
-			if err := signature.Update(nonCancelableCtx, tx, coredata.NewNoScope()); err != nil {
+			if err := signature.Update(ctx, tx, coredata.NewNoScope()); err != nil {
 				return fmt.Errorf("cannot update signature: %w", err)
 			}
 
 			return nil
 		},
 	); err != nil {
-		<-sem
-		return err
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return coredata.ElectronicSignature{}, worker.ErrNoTask
+		}
+		return coredata.ElectronicSignature{}, err
 	}
 
-	wg.Add(1)
-	go func(signature coredata.ElectronicSignature) {
-		defer wg.Done()
-		defer func() { <-sem }()
+	return signature, nil
+}
 
-		if err := w.sealAndCommit(nonCancelableCtx, &signature); err != nil {
-			if err := w.failSignature(nonCancelableCtx, &signature, err); err != nil {
-				w.logger.ErrorCtx(nonCancelableCtx, "cannot fail signature", log.Error(err))
-			}
+func (h *sealingHandler) Process(ctx context.Context, signature coredata.ElectronicSignature) error {
+	if err := h.sealAndCommit(ctx, &signature); err != nil {
+		if err := h.failSignature(ctx, &signature, err); err != nil {
+			h.logger.ErrorCtx(ctx, "cannot fail signature", log.Error(err))
 		}
-	}(signature)
-
+		return err
+	}
 	return nil
 }
 
-func (w *SealingWorker) sealAndCommit(
+func (h *sealingHandler) RecoverStale(ctx context.Context) error {
+	return h.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			return coredata.ResetStaleProcessingSignatures(ctx, conn, h.staleAfter)
+		},
+	)
+}
+
+func (h *sealingHandler) sealAndCommit(
 	ctx context.Context,
 	signature *coredata.ElectronicSignature,
 ) error {
@@ -192,7 +150,7 @@ func (w *SealingWorker) sealAndCommit(
 		events []coredata.ElectronicSignatureEvent
 	)
 
-	if err := w.pg.WithConn(
+	if err := h.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			if err := file.LoadByID(ctx, conn, scope, signature.FileID); err != nil {
@@ -205,7 +163,7 @@ func (w *SealingWorker) sealAndCommit(
 		return fmt.Errorf("%w: %w", ErrLoadFile, err)
 	}
 
-	pdfBytes, err := w.fileManager.GetFileBytes(ctx, &file)
+	pdfBytes, err := h.fileManager.GetFileBytes(ctx, &file)
 	if err != nil {
 		return fmt.Errorf("%w: %w", ErrDownloadPDF, err)
 	}
@@ -227,9 +185,9 @@ func (w *SealingWorker) sealAndCommit(
 		),
 	)
 
-	tsaCtx, cancel := context.WithTimeout(ctx, w.tsaTimeout)
+	tsaCtx, cancel := context.WithTimeout(ctx, h.tsaTimeout)
 	defer cancel()
-	tsaToken, err := w.tsaClient.Timestamp(tsaCtx, []byte(seal))
+	tsaToken, err := h.tsaClient.Timestamp(tsaCtx, []byte(seal))
 	if err != nil {
 		return fmt.Errorf("%w: %w", ErrTSATimestamp, err)
 	}
@@ -242,7 +200,7 @@ func (w *SealingWorker) sealAndCommit(
 		),
 	)
 
-	if err := w.pg.WithTx(
+	if err := h.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			var current coredata.ElectronicSignature
@@ -282,21 +240,21 @@ func (w *SealingWorker) sealAndCommit(
 	return nil
 }
 
-func (w *SealingWorker) failSignature(
+func (h *sealingHandler) failSignature(
 	ctx context.Context,
 	signature *coredata.ElectronicSignature,
 	processingError error,
 ) error {
 	scope := coredata.NewScopeFromObjectID(signature.ID)
 
-	w.logger.ErrorCtx(
+	h.logger.ErrorCtx(
 		ctx,
 		"sealing worker failure",
 		log.Error(processingError),
 		log.String("signature_id", signature.ID.String()),
 	)
 
-	return w.pg.WithTx(
+	return h.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			errStr := userFacingError(processingError)
@@ -334,16 +292,5 @@ func userFacingError(err error) string {
 		return "Unable to generate the cryptographic seal."
 	default:
 		return "An unexpected error occurred while processing your signature."
-	}
-}
-
-func (w *SealingWorker) recoverStaleRows(ctx context.Context) {
-	if err := w.pg.WithConn(
-		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
-			return coredata.ResetStaleProcessingSignatures(ctx, conn, w.staleAfter)
-		},
-	); err != nil {
-		w.logger.ErrorCtx(ctx, "cannot recover stale signatures", log.Error(err))
 	}
 }

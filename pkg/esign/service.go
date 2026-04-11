@@ -111,18 +111,17 @@ func NewService(
 func (s *Service) Run(ctx context.Context, presenterConfigFunc EmailPresenterConfigFunc) error {
 	g, gctx := errgroup.WithContext(ctx)
 
-	nonCancelableCtx := context.WithoutCancel(ctx)
-
-	sealingWorkerCtx, stopSealingWorker := context.WithCancel(nonCancelableCtx)
+	sealingWorkerCtx, stopSealingWorker := context.WithCancel(ctx)
 	sealingWorker := NewSealingWorker(
 		s.pg,
 		s.fileManager,
 		s.tsaClient,
 		s.logger.Named("sealing-worker"),
+		nil,
 	)
 	g.Go(func() error { return sealingWorker.Run(sealingWorkerCtx) })
 
-	certWorkerCtx, stopCertWorker := context.WithCancel(nonCancelableCtx)
+	certWorkerCtx, stopCertWorker := context.WithCancel(ctx)
 	certWorker := NewCompletionCertificateWorker(
 		s.pg,
 		s.fileManager,

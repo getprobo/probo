@@ -22,28 +22,26 @@ import (
 	"fmt"
 	"net"
 	"net/smtp"
-	"sync"
 	"time"
 
 	"github.com/jhillyerd/enmime"
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
+	"go.gearno.de/kit/worker"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/filemanager"
 )
 
 type (
-	SendingWorker struct {
-		pg             *pg.Client
-		fileManager    *filemanager.Service
-		logger         *log.Logger
-		smtp           SMTPConfig
-		senderName     string
-		senderEmail    string
-		interval       time.Duration
-		smtpTimeout    time.Duration
-		staleAfter     time.Duration
-		maxConcurrency int
+	sendingHandler struct {
+		pg          *pg.Client
+		fileManager *filemanager.Service
+		logger      *log.Logger
+		smtp        SMTPConfig
+		senderName  string
+		senderEmail string
+		smtpTimeout time.Duration
+		staleAfter  time.Duration
 	}
 
 	SMTPConfig struct {
@@ -53,27 +51,15 @@ type (
 		TLSRequired bool
 	}
 
-	SendingWorkerOption func(*SendingWorker)
+	SendingWorkerOption func(*sendingHandler)
 )
 
-func WithSendingWorkerInterval(d time.Duration) SendingWorkerOption {
-	return func(w *SendingWorker) { w.interval = d }
-}
-
 func WithSendingWorkerSMTPTimeout(d time.Duration) SendingWorkerOption {
-	return func(w *SendingWorker) { w.smtpTimeout = d }
+	return func(h *sendingHandler) { h.smtpTimeout = d }
 }
 
 func WithSendingWorkerStaleAfter(d time.Duration) SendingWorkerOption {
-	return func(w *SendingWorker) { w.staleAfter = d }
-}
-
-func WithSendingWorkerMaxConcurrency(n int) SendingWorkerOption {
-	return func(w *SendingWorker) {
-		if n > 0 {
-			w.maxConcurrency = n
-		}
-	}
+	return func(h *sendingHandler) { h.staleAfter = d }
 }
 
 func NewSendingWorker(
@@ -83,75 +69,39 @@ func NewSendingWorker(
 	senderEmail string,
 	smtpCfg SMTPConfig,
 	logger *log.Logger,
-	opts ...SendingWorkerOption,
-) *SendingWorker {
-	w := &SendingWorker{
-		pg:             pgClient,
-		fileManager:    fileManager,
-		logger:         logger,
-		smtp:           smtpCfg,
-		senderName:     senderName,
-		senderEmail:    senderEmail,
-		interval:       30 * time.Second,
-		smtpTimeout:    25 * time.Second,
-		staleAfter:     5 * time.Minute,
-		maxConcurrency: 20,
+	handlerOpts []SendingWorkerOption,
+	workerOpts ...worker.Option,
+) *worker.Worker[coredata.Email] {
+	h := &sendingHandler{
+		pg:          pgClient,
+		fileManager: fileManager,
+		logger:      logger,
+		smtp:        smtpCfg,
+		senderName:  senderName,
+		senderEmail: senderEmail,
+		smtpTimeout: 25 * time.Second,
+		staleAfter:  5 * time.Minute,
 	}
 
-	for _, opt := range opts {
-		opt(w)
+	for _, opt := range handlerOpts {
+		opt(h)
 	}
 
-	return w
+	return worker.New(
+		"sending-worker",
+		h,
+		logger,
+		workerOpts...,
+	)
 }
 
-func (w *SendingWorker) Run(ctx context.Context) error {
-	var (
-		wg  sync.WaitGroup
-		sem = make(chan struct{}, w.maxConcurrency)
-	)
+func (h *sendingHandler) Claim(ctx context.Context) (coredata.Email, error) {
+	var email coredata.Email
 
-	defer wg.Wait()
-
-	ticker := time.NewTicker(w.interval)
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		case <-ticker.C:
-			nonCancelableCtx := context.WithoutCancel(ctx)
-			w.recoverStaleRows(nonCancelableCtx)
-
-			for {
-				if err := w.processNext(ctx, sem, &wg); err != nil {
-					if !errors.Is(err, coredata.ErrNoUnsentEmail) {
-						w.logger.ErrorCtx(nonCancelableCtx, "cannot process email", log.Error(err))
-					}
-					break
-				}
-			}
-		}
-	}
-}
-
-func (w *SendingWorker) processNext(ctx context.Context, sem chan struct{}, wg *sync.WaitGroup) error {
-	select {
-	case sem <- struct{}{}:
-	case <-ctx.Done():
-		return ctx.Err()
-	}
-
-	var (
-		email            = coredata.Email{}
-		nonCancelableCtx = context.WithoutCancel(ctx)
-	)
-
-	if err := w.pg.WithTx(
-		nonCancelableCtx,
+	if err := h.pg.WithTx(
+		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			if err := email.LoadNextPendingForUpdateSkipLocked(nonCancelableCtx, tx); err != nil {
+			if err := email.LoadNextPendingForUpdateSkipLocked(ctx, tx); err != nil {
 				return err
 			}
 
@@ -162,39 +112,48 @@ func (w *SendingWorker) processNext(ctx context.Context, sem chan struct{}, wg *
 			email.LastAttemptedAt = &now
 			email.UpdatedAt = now
 
-			if err := email.Update(nonCancelableCtx, tx); err != nil {
+			if err := email.Update(ctx, tx); err != nil {
 				return fmt.Errorf("cannot update email: %w", err)
 			}
 
 			return nil
 		},
 	); err != nil {
-		<-sem
-		return err
+		if errors.Is(err, coredata.ErrNoUnsentEmail) {
+			return coredata.Email{}, worker.ErrNoTask
+		}
+		return coredata.Email{}, err
 	}
 
-	wg.Add(1)
-	go func(email coredata.Email) {
-		defer wg.Done()
-		defer func() { <-sem }()
+	return email, nil
+}
 
-		if sendErr := w.sendAndCommit(nonCancelableCtx, &email); sendErr != nil {
-			if failErr := w.failEmail(nonCancelableCtx, &email, sendErr); failErr != nil {
-				w.logger.ErrorCtx(nonCancelableCtx, "cannot fail email", log.Error(failErr))
-			}
+func (h *sendingHandler) Process(ctx context.Context, email coredata.Email) error {
+	if sendErr := h.sendAndCommit(ctx, &email); sendErr != nil {
+		if failErr := h.failEmail(ctx, &email, sendErr); failErr != nil {
+			h.logger.ErrorCtx(ctx, "cannot fail email", log.Error(failErr))
 		}
-	}(email)
-
+		return sendErr
+	}
 	return nil
 }
 
-func (w *SendingWorker) sendAndCommit(
+func (h *sendingHandler) RecoverStale(ctx context.Context) error {
+	return h.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			return coredata.ResetStaleProcessingEmails(ctx, conn, h.staleAfter)
+		},
+	)
+}
+
+func (h *sendingHandler) sendAndCommit(
 	ctx context.Context,
 	email *coredata.Email,
 ) error {
 	var buf bytes.Buffer
 
-	if err := w.pg.WithConn(
+	if err := h.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			var attachments coredata.EmailAttachments
@@ -202,14 +161,14 @@ func (w *SendingWorker) sendAndCommit(
 				return fmt.Errorf("cannot load email attachments: %w", err)
 			}
 
-			fromName := w.senderName
+			fromName := h.senderName
 			if email.SenderName != nil {
-				fromName = *email.SenderName + " via " + w.senderName
+				fromName = *email.SenderName + " via " + h.senderName
 			}
 
 			mail := enmime.Builder().
 				Subject(email.Subject).
-				From(fromName, w.senderEmail).
+				From(fromName, h.senderEmail).
 				To(email.RecipientName, email.RecipientEmail).
 				Text([]byte(email.TextBody))
 
@@ -233,7 +192,7 @@ func (w *SendingWorker) sendAndCommit(
 					return fmt.Errorf("cannot load file record for attachment %s: %w", att.Filename, err)
 				}
 
-				data, err := w.fileManager.GetFileBytes(ctx, &file)
+				data, err := h.fileManager.GetFileBytes(ctx, &file)
 				if err != nil {
 					return fmt.Errorf("cannot download attachment %s: %w", att.Filename, err)
 				}
@@ -256,17 +215,17 @@ func (w *SendingWorker) sendAndCommit(
 		return err
 	}
 
-	sendCtx, cancel := context.WithTimeout(ctx, w.smtpTimeout)
+	sendCtx, cancel := context.WithTimeout(ctx, h.smtpTimeout)
 	defer cancel()
 
-	if err := w.sendMail(sendCtx, []string{email.RecipientEmail}, buf.Bytes()); err != nil {
+	if err := h.sendMail(sendCtx, []string{email.RecipientEmail}, buf.Bytes()); err != nil {
 		if errors.Is(err, context.DeadlineExceeded) {
-			return fmt.Errorf("email sending timed out after %s: %w", w.smtpTimeout, err)
+			return fmt.Errorf("email sending timed out after %s: %w", h.smtpTimeout, err)
 		}
 		return fmt.Errorf("cannot send email: %w", err)
 	}
 
-	if err := w.pg.WithTx(
+	if err := h.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			now := time.Now()
@@ -283,7 +242,7 @@ func (w *SendingWorker) sendAndCommit(
 			return nil
 		},
 	); err != nil {
-		w.logger.ErrorCtx(ctx,
+		h.logger.ErrorCtx(ctx,
 			"email sent but failed to commit status update; will not re-queue to avoid duplicate delivery",
 			log.Error(err),
 			log.String("email_id", email.ID.String()),
@@ -293,19 +252,19 @@ func (w *SendingWorker) sendAndCommit(
 	return nil
 }
 
-func (w *SendingWorker) failEmail(
+func (h *sendingHandler) failEmail(
 	ctx context.Context,
 	email *coredata.Email,
 	processingError error,
 ) error {
-	w.logger.ErrorCtx(
+	h.logger.ErrorCtx(
 		ctx,
 		"sending worker failure",
 		log.Error(processingError),
 		log.String("email_id", email.ID.String()),
 	)
 
-	return w.pg.WithTx(
+	return h.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			errStr := processingError.Error()
@@ -328,26 +287,15 @@ func (w *SendingWorker) failEmail(
 	)
 }
 
-func (w *SendingWorker) recoverStaleRows(ctx context.Context) {
-	if err := w.pg.WithConn(
-		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
-			return coredata.ResetStaleProcessingEmails(ctx, conn, w.staleAfter)
-		},
-	); err != nil {
-		w.logger.ErrorCtx(ctx, "cannot recover stale emails", log.Error(err))
-	}
-}
-
-func (w *SendingWorker) sendMail(ctx context.Context, to []string, msg []byte) error {
-	host, _, err := net.SplitHostPort(w.smtp.Addr)
+func (h *sendingHandler) sendMail(ctx context.Context, to []string, msg []byte) error {
+	host, _, err := net.SplitHostPort(h.smtp.Addr)
 	if err != nil {
 		return fmt.Errorf("invalid address: %w", err)
 	}
 
 	var d net.Dialer
 
-	conn, err := d.DialContext(ctx, "tcp", w.smtp.Addr)
+	conn, err := d.DialContext(ctx, "tcp", h.smtp.Addr)
 	if err != nil {
 		return fmt.Errorf("connection error: %w", err)
 	}
@@ -365,20 +313,20 @@ func (w *SendingWorker) sendMail(ctx context.Context, to []string, msg []byte) e
 	}
 	defer func() { _ = c.Quit() }()
 
-	if w.smtp.TLSRequired {
+	if h.smtp.TLSRequired {
 		if err := c.StartTLS(&tls.Config{ServerName: host}); err != nil {
 			return fmt.Errorf("TLS negotiation error: %w", err)
 		}
 	}
 
-	if w.smtp.User != "" && w.smtp.Password != "" {
-		auth := smtp.PlainAuth("", w.smtp.User, w.smtp.Password, host)
+	if h.smtp.User != "" && h.smtp.Password != "" {
+		auth := smtp.PlainAuth("", h.smtp.User, h.smtp.Password, host)
 		if err = c.Auth(auth); err != nil {
 			return fmt.Errorf("SMTP authentication error: %w", err)
 		}
 	}
 
-	if err = c.Mail(w.senderEmail); err != nil {
+	if err = c.Mail(h.senderEmail); err != nil {
 		return fmt.Errorf("MAIL FROM error: %w", err)
 	}
 
