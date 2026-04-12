@@ -7,6 +7,7 @@ import {
   IconClock,
   IconFire3,
   IconGroup1,
+  IconHome,
   IconInboxEmpty,
   IconListStack,
   IconLock,
@@ -19,6 +20,7 @@ import {
   IconShield,
   IconStore,
   IconTodo,
+  SidebarGroup,
   SidebarItem,
 } from "@probo/ui";
 import { useFragment } from "react-relay";
@@ -66,140 +68,198 @@ export function Sidebar(props: { fKey: SidebarFragment$key }) {
   const prefix = `/organizations/${organizationId}`;
 
   return (
-    <ul className="space-y-[2px]">
-      {organization.canGetContext && (
+    <div className="space-y-1">
+      {/* Overview - standalone top item */}
+      <ul className="space-y-0.5">
         <SidebarItem
-          label={__("Context")}
-          icon={IconPageTextSolid}
-          to={`${prefix}/context`}
-        />
-      )}
-      {organization.canListTasks && (
-        <SidebarItem
-          label={__("Tasks")}
-          icon={IconInboxEmpty}
+          label={__("Overview")}
+          icon={IconHome}
           to={`${prefix}/tasks`}
         />
+      </ul>
+
+      {/* Work */}
+      {(organization.canListTasks || organization.canGetContext) && (
+        <SidebarGroup label={__("Work")}>
+          {organization.canListTasks && (
+            <SidebarItem
+              label={__("Tasks")}
+              icon={IconInboxEmpty}
+              to={`${prefix}/tasks`}
+            />
+          )}
+          {organization.canGetContext && (
+            <SidebarItem
+              label={__("Context")}
+              icon={IconPageTextSolid}
+              to={`${prefix}/context`}
+            />
+          )}
+        </SidebarGroup>
       )}
-      {organization.canListMeasures && (
-        <SidebarItem
-          label={__("Measures")}
-          icon={IconTodo}
-          to={`${prefix}/measures`}
-        />
+
+      {/* Governance */}
+      {(organization.canListFrameworks
+        || organization.canListMeasures
+        || organization.canListAudits
+        || organization.canListStatesOfApplicability
+        || organization.canGetTrustCenter) && (
+        <SidebarGroup label={__("Governance")}>
+          {organization.canGetTrustCenter && (
+            <SidebarItem
+              label={__("Compliance")}
+              icon={IconShield}
+              to={`${prefix}/compliance-page`}
+            />
+          )}
+          {organization.canListFrameworks && (
+            <SidebarItem
+              label={__("Frameworks")}
+              icon={IconBank}
+              to={`${prefix}/frameworks`}
+            />
+          )}
+          {organization.canListMeasures && (
+            <SidebarItem
+              label={__("Measures")}
+              icon={IconTodo}
+              to={`${prefix}/measures`}
+            />
+          )}
+          {organization.canListAudits && (
+            <SidebarItem
+              label={__("Audits")}
+              icon={IconMedal}
+              to={`${prefix}/audits`}
+            />
+          )}
+          {organization.canListStatesOfApplicability && (
+            <SidebarItem
+              label={__("States of Applicability")}
+              icon={IconPageCheck}
+              to={`${prefix}/states-of-applicability`}
+            />
+          )}
+        </SidebarGroup>
       )}
-      {organization.canListRisks && (
-        <SidebarItem
-          label={__("Risks")}
-          icon={IconFire3}
-          to={`${prefix}/risks`}
-        />
+
+      {/* Risk Management */}
+      {(organization.canListRisks || organization.canListObligations) && (
+        <SidebarGroup label={__("Risk Management")}>
+          {organization.canListRisks && (
+            <SidebarItem
+              label={__("Risks")}
+              icon={IconFire3}
+              to={`${prefix}/risks`}
+            />
+          )}
+          {organization.canListObligations && (
+            <SidebarItem
+              label={__("Obligations")}
+              icon={IconBook}
+              to={`${prefix}/obligations`}
+            />
+          )}
+        </SidebarGroup>
       )}
-      {organization.canListFrameworks && (
-        <SidebarItem
-          label={__("Frameworks")}
-          icon={IconBank}
-          to={`${prefix}/frameworks`}
-        />
+
+      {/* Asset Management */}
+      {(organization.canListAssets || organization.canListRightsRequests) && (
+        <SidebarGroup label={__("Asset Management")}>
+          {organization.canListAssets && (
+            <SidebarItem
+              label={__("Assets")}
+              icon={IconBox}
+              to={`${prefix}/assets`}
+            />
+          )}
+          {organization.canListRightsRequests && (
+            <SidebarItem
+              label={__("Rights Requests")}
+              icon={IconLock}
+              to={`${prefix}/rights-requests`}
+            />
+          )}
+        </SidebarGroup>
       )}
-      {organization.canListMembers && (
-        <SidebarItem
-          label={__("People")}
-          icon={IconGroup1}
-          to={`${prefix}/people`}
-        />
+
+      {/* Company */}
+      {(organization.canListVendors || organization.canListMembers || organization.canListFindings) && (
+        <SidebarGroup label={__("Company")}>
+          {organization.canListVendors && (
+            <SidebarItem
+              label={__("Vendors")}
+              icon={IconStore}
+              to={`${prefix}/vendors`}
+            />
+          )}
+          {organization.canListMembers && (
+            <SidebarItem
+              label={__("People")}
+              icon={IconGroup1}
+              to={`${prefix}/people`}
+            />
+          )}
+          {organization.canListFindings && (
+            <SidebarItem
+              label={__("Findings")}
+              icon={IconMagnifyingGlass}
+              to={`${prefix}/findings`}
+            />
+          )}
+        </SidebarGroup>
       )}
-      {organization.canListVendors && (
-        <SidebarItem
-          label={__("Vendors")}
-          icon={IconStore}
-          to={`${prefix}/vendors`}
-        />
+
+      {/* Evidence */}
+      {(organization.canListDocuments || organization.canListSnapshots) && (
+        <SidebarGroup label={__("Evidence")}>
+          {organization.canListDocuments && (
+            <SidebarItem
+              label={__("Documents")}
+              icon={IconPageTextLine}
+              to={`${prefix}/documents`}
+            />
+          )}
+          {organization.canListSnapshots && (
+            <SidebarItem
+              label={__("Snapshots")}
+              icon={IconClock}
+              to={`${prefix}/snapshots`}
+            />
+          )}
+        </SidebarGroup>
       )}
-      {organization.canListDocuments && (
-        <SidebarItem
-          label={__("Documents")}
-          icon={IconPageTextLine}
-          to={`${prefix}/documents`}
-        />
+
+      {/* Data Management */}
+      {(organization.canListData || organization.canListProcessingActivities) && (
+        <SidebarGroup label={__("Data Management")}>
+          {organization.canListData && (
+            <SidebarItem
+              label={__("Data")}
+              icon={IconListStack}
+              to={`${prefix}/data`}
+            />
+          )}
+          {organization.canListProcessingActivities && (
+            <SidebarItem
+              label={__("Processing Activities")}
+              icon={IconCircleProgress}
+              to={`${prefix}/processing-activities`}
+            />
+          )}
+        </SidebarGroup>
       )}
-      {organization.canListAssets && (
-        <SidebarItem
-          label={__("Assets")}
-          icon={IconBox}
-          to={`${prefix}/assets`}
-        />
-      )}
-      {organization.canListData && (
-        <SidebarItem
-          label={__("Data")}
-          icon={IconListStack}
-          to={`${prefix}/data`}
-        />
-      )}
-      {organization.canListAudits && (
-        <SidebarItem
-          label={__("Audits")}
-          icon={IconMedal}
-          to={`${prefix}/audits`}
-        />
-      )}
-      {organization.canListFindings && (
-        <SidebarItem
-          label={__("Findings")}
-          icon={IconMagnifyingGlass}
-          to={`${prefix}/findings`}
-        />
-      )}
-      {organization.canListObligations && (
-        <SidebarItem
-          label={__("Obligations")}
-          icon={IconBook}
-          to={`${prefix}/obligations`}
-        />
-      )}
-      {organization.canListProcessingActivities && (
-        <SidebarItem
-          label={__("Processing Activities")}
-          icon={IconCircleProgress}
-          to={`${prefix}/processing-activities`}
-        />
-      )}
-      {organization.canListStatesOfApplicability && (
-        <SidebarItem
-          label={__("States of Applicability")}
-          icon={IconPageCheck}
-          to={`${prefix}/states-of-applicability`}
-        />
-      )}
-      {organization.canListRightsRequests && (
-        <SidebarItem
-          label={__("Rights Requests")}
-          icon={IconLock}
-          to={`${prefix}/rights-requests`}
-        />
-      )}
-      {organization.canListSnapshots && (
-        <SidebarItem
-          label={__("Snapshots")}
-          icon={IconClock}
-          to={`${prefix}/snapshots`}
-        />
-      )}
-      {organization.canGetTrustCenter && (
-        <SidebarItem
-          label={__("Compliance Page")}
-          icon={IconShield}
-          to={`${prefix}/compliance-page`}
-        />
-      )}
+
+      {/* Settings - standalone bottom item */}
       {organization.canUpdateOrganization && (
-        <SidebarItem
-          label={__("Settings")}
-          icon={IconSettingsGear2}
-          to={`${prefix}/settings`}
-        />
+        <ul className="space-y-0.5 mt-3">
+          <SidebarItem
+            label={__("Settings")}
+            icon={IconSettingsGear2}
+            to={`${prefix}/settings`}
+          />
+        </ul>
       )}
-    </ul>
+    </div>
   );
 }

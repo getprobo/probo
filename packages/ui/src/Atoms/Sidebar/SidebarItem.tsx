@@ -36,8 +36,10 @@ export function SidebarItem(props: Props) {
         className={({ isActive }) =>
           sidebarItem({ ...props, active: isActive, isCollapsed })}
       >
-        {props.icon && <props.icon size={16} />}
-        {isCollapsed ? null : props.label}
+        {props.icon && <props.icon size={16} className="shrink-0" />}
+        {isCollapsed ? null : (
+          <span className="truncate">{props.label}</span>
+        )}
       </NavLink>
       {props.children && <ul className="mt-3 ml-5">{props.children}</ul>}
     </li>

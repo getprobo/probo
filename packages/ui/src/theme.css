@@ -184,12 +184,12 @@
     --color-sidebar-active-pressed-bg: rgba(245, 73, 0, 0.14);
 }
 
-/* Dark theme — govrly brand: navy #0F172A base, orange #F54900 accent */
+/* Dark theme — govrly brand: #24262d base, orange #F54900 accent */
 :root[data-theme="dark"] {
-    --color-level-0: #0B1120;
-    --color-level-1: #0F172A;
-    --color-level-2: #162032;
-    --color-level-3: #1E293B;
+    --color-level-0: #24262d;
+    --color-level-1: #1e2027;
+    --color-level-2: #2c2e35;
+    --color-level-3: #34363d;
 
     --color-black: #F1F5F9;
 
@@ -222,7 +222,7 @@
     --color-success: rgba(34, 197, 94, 0.12);
     --color-info: rgba(59, 130, 246, 0.14);
     --color-warning: rgba(245, 158, 11, 0.12);
-    --color-dialog: #0F172A;
+    --color-dialog: #24262d;
 
     /* Borders — slate-based edges on navy */
     --color-border-solid: rgba(241, 245, 249, 0.08);
@@ -270,8 +270,8 @@
         0px 2px 4px 0px rgba(0, 0, 0, 0.4),
         0px 2px 12px 0px rgba(0, 0, 0, 0.25);
 
-    /* Sidebar — navy surface with orange accent */
-    --color-sidebar-bg: #0F172A;
+    /* Sidebar — dark surface with orange accent */
+    --color-sidebar-bg: #24262d;
     --color-sidebar-border: rgba(241, 245, 249, 0.08);
     --color-sidebar-text: #64748B;
     --color-sidebar-text-hover: #F1F5F9;
