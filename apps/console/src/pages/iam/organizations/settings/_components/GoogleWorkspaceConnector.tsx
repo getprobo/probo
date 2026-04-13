@@ -128,7 +128,7 @@ export function GoogleWorkspaceConnector(props: {
         if (errors?.length) {
           toast({
             title: __("Error"),
-            description: errors.map((e) => e.message).join(", "),
+            description: errors.map(e => e.message).join(", "),
             variant: "error",
           });
           return;
@@ -173,7 +173,7 @@ export function GoogleWorkspaceConnector(props: {
         if (errors?.length) {
           toast({
             title: __("Error"),
-            description: errors.map((e) => e.message).join(", "),
+            description: errors.map(e => e.message).join(", "),
             variant: "error",
           });
           return;
