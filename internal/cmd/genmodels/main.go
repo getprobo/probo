@@ -193,9 +193,7 @@ func buildSupports(params []string) string {
 		"ResponseFormat", "StructuredOutputs", "Reasoning",
 	}
 	for _, f := range fieldNames {
-		if fields[f] {
-			fmt.Fprintf(&buf, "			%s: true,\n", f)
-		}
+		fmt.Fprintf(&buf, "			%s: %t,\n", f, fields[f])
 	}
 	return buf.String()
 }
