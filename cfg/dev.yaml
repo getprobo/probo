@@ -94,16 +94,6 @@ probod:
       config:
         client-id: "your-slack-client-id"
         client-secret: "your-slack-client-secret"
-        redirect-uri: "https://localhost:8080/api/console/v1/connectors/complete"
-        auth-url: "https://slack.com/oauth/v2/authorize"
-        token-url: "https://slack.com/api/oauth.v2.access"
-
-        scopes:
-          - "chat:write"
-          - "channels:join"
-          - "incoming-webhook"
-          - "users:read"
-          - "users:read.email"
       settings:
         signing-secret: "your-slack-signing-secret"
     - provider: "GOOGLE_WORKSPACE"
@@ -111,105 +101,43 @@ probod:
       config:
         client-id: "your-google-client-id.apps.googleusercontent.com"
         client-secret: "your-google-client-secret"
-        redirect-uri: "http://localhost:8080/api/console/v1/connectors/complete"
-        auth-url: "https://accounts.google.com/o/oauth2/v2/auth"
-        token-url: "https://oauth2.googleapis.com/token"
-
-        scopes:
-          - "https://www.googleapis.com/auth/admin.directory.user.readonly"
-          - "https://www.googleapis.com/auth/admin.directory.userschema.readonly"
-          - "https://www.googleapis.com/auth/admin.directory.group.member.readonly"
-          - "https://www.googleapis.com/auth/admin.directory.customer.readonly"
-        extra-auth-params:
-          access_type: "offline"
-          prompt: "consent"
     - provider: "LINEAR"
       protocol: "oauth2"
       config:
         client-id: "your-linear-client-id"
         client-secret: "your-linear-client-secret"
-        redirect-uri: "http://localhost:8080/api/console/v1/connectors/complete"
-        auth-url: "https://linear.app/oauth/authorize"
-        token-url: "https://api.linear.app/oauth/token"
-
-        scopes:
-          - "read"
-          - "write"
     - provider: "BREX"
       protocol: "oauth2"
       config:
         client-id: "your-brex-client-id"
         client-secret: "your-brex-client-secret"
-        redirect-uri: "http://localhost:8080/api/console/v1/connectors/complete"
-        auth-url: "https://accounts-api.brex.com/oauth2/default/v1/authorize"
-        token-url: "https://accounts-api.brex.com/oauth2/default/v1/token"
-
-        scopes:
-          - "openid"
-          - "offline_access"
     - provider: "HUBSPOT"
       protocol: "oauth2"
       config:
         client-id: "your-hubspot-client-id"
         client-secret: "your-hubspot-client-secret"
-        redirect-uri: "http://localhost:8080/api/console/v1/connectors/complete"
-        auth-url: "https://app.hubspot.com/oauth/authorize"
-        token-url: "https://api.hubapi.com/oauth/v1/token"
-
-        scopes:
-          - "settings.users.read"
     - provider: "DOCUSIGN"
       protocol: "oauth2"
       config:
         client-id: "your-docusign-client-id"
         client-secret: "your-docusign-client-secret"
-        redirect-uri: "http://localhost:8080/api/console/v1/connectors/complete"
-        auth-url: "https://account-d.docusign.com/oauth/auth"
-        token-url: "https://account-d.docusign.com/oauth/token"
-
-        scopes:
-          - "signature"
-        token-endpoint-auth: "basic-form"
     - provider: "NOTION"
       protocol: "oauth2"
       config:
         client-id: "your-notion-client-id"
         client-secret: "your-notion-client-secret"
-        redirect-uri: "http://localhost:8080/api/console/v1/connectors/complete"
-        auth-url: "https://api.notion.com/v1/oauth/authorize"
-        token-url: "https://api.notion.com/v1/oauth/token"
-
-        extra-auth-params:
-          owner: "user"
-        token-endpoint-auth: "basic-json"
     - provider: "GITHUB"
       protocol: "oauth2"
       config:
         client-id: "your-github-client-id"
         client-secret: "your-github-client-secret"
-        redirect-uri: "http://localhost:8080/api/console/v1/connectors/complete"
-        auth-url: "https://github.com/login/oauth/authorize"
-        token-url: "https://github.com/login/oauth/access_token"
-
-        scopes:
-          - "read:org"
     - provider: "SENTRY"
       protocol: "oauth2"
       config:
         client-id: "your-sentry-client-id"
         client-secret: "your-sentry-client-secret"
-        redirect-uri: "http://localhost:8080/api/console/v1/connectors/complete"
-        auth-url: "https://sentry.io/oauth/authorize/"
-        token-url: "https://sentry.io/oauth/token/"
-
-        scopes:
-          - "org:read"
-          - "member:read"
     - provider: "INTERCOM"
       protocol: "oauth2"
       config:
         client-id: "your-intercom-client-id"
         client-secret: "your-intercom-client-secret"
-        redirect-uri: "http://localhost:8080/api/console/v1/connectors/complete"
-        auth-url: "https://app.intercom.com/oauth"
-        token-url: "https://api.intercom.io/auth/eagle/token"
