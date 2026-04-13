@@ -25,18 +25,30 @@ import (
 func TestRegistry_Lookup(t *testing.T) {
 	t.Parallel()
 
-	r := llm.DefaultRegistry()
+	r := llm.NewRegistry(map[string]llm.ModelDefinition{
+		"acme/test-model-1.5": {
+			Name:            "Acme: Test Model 1.5",
+			Provider:        "acme",
+			ContextLength:   8192,
+			MaxOutputTokens: 4096,
+			Supports: llm.SupportedParameters{
+				Temperature: true,
+				Reasoning:   true,
+			},
+		},
+	})
 
 	t.Run(
-		"by full openrouter id",
+		"by full id",
 		func(t *testing.T) {
 			t.Parallel()
 
-			m, ok := r.Lookup("anthropic/claude-opus-4.6")
+			m, ok := r.Lookup("acme/test-model-1.5")
 			require.True(t, ok)
-			assert.Equal(t, "anthropic", m.Provider)
-			assert.Greater(t, m.ContextLength, 0)
-			assert.Greater(t, m.MaxOutputTokens, 0)
+			assert.Equal(t, "acme/test-model-1.5", m.ID)
+			assert.Equal(t, "acme", m.Provider)
+			assert.Equal(t, 8192, m.ContextLength)
+			assert.Equal(t, 4096, m.MaxOutputTokens)
 		},
 	)
 
@@ -45,9 +57,9 @@ func TestRegistry_Lookup(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-			m, ok := r.Lookup("claude-opus-4.6")
+			m, ok := r.Lookup("test-model-1.5")
 			require.True(t, ok)
-			assert.Equal(t, "anthropic", m.Provider)
+			assert.Equal(t, "acme", m.Provider)
 		},
 	)
 
@@ -56,9 +68,9 @@ func TestRegistry_Lookup(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-			m, ok := r.Lookup("claude-opus-4-6")
+			m, ok := r.Lookup("test-model-1-5")
 			require.True(t, ok)
-			assert.Equal(t, "anthropic", m.Provider)
+			assert.Equal(t, "acme", m.Provider)
 		},
 	)
 
@@ -87,7 +99,7 @@ func TestRegistry_Lookup(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-			_, ok := r.Lookup("anthropic/")
+			_, ok := r.Lookup("acme/")
 			assert.False(t, ok)
 		},
 	)
@@ -96,30 +108,33 @@ func TestRegistry_Lookup(t *testing.T) {
 func TestRegistry_Capabilities(t *testing.T) {
 	t.Parallel()
 
-	r := llm.DefaultRegistry()
-
-	t.Run(
-		"anthropic claude supports temperature and top_p but not frequency_penalty",
-		func(t *testing.T) {
-			t.Parallel()
-
-			m, ok := r.Lookup("anthropic/claude-opus-4.6")
-			require.True(t, ok)
-			assert.True(t, m.Supports.Temperature)
-			assert.True(t, m.Supports.TopP)
-			assert.True(t, m.Supports.TopK)
-			assert.True(t, m.Supports.Reasoning)
-			assert.False(t, m.Supports.FrequencyPenalty)
-			assert.False(t, m.Supports.PresencePenalty)
+	r := llm.NewRegistry(map[string]llm.ModelDefinition{
+		"acme/reasoning-model": {
+			Name:     "Acme: Reasoning Model",
+			Provider: "acme",
+			Supports: llm.SupportedParameters{
+				Reasoning: true,
+				Seed:      true,
+			},
 		},
-	)
+		"acme/chat-model": {
+			Name:     "Acme: Chat Model",
+			Provider: "acme",
+			Supports: llm.SupportedParameters{
+				Temperature:      true,
+				TopP:             true,
+				TopK:             true,
+				FrequencyPenalty: true,
+			},
+		},
+	})
 
 	t.Run(
-		"openai gpt-5.4 is a reasoning model without temperature",
+		"reasoning model has reasoning and seed but not temperature",
 		func(t *testing.T) {
 			t.Parallel()
 
-			m, ok := r.Lookup("openai/gpt-5.4")
+			m, ok := r.Lookup("acme/reasoning-model")
 			require.True(t, ok)
 			assert.True(t, m.Supports.Reasoning)
 			assert.True(t, m.Supports.Seed)
@@ -129,14 +144,17 @@ func TestRegistry_Capabilities(t *testing.T) {
 	)
 
 	t.Run(
-		"openai o3 is a reasoning model without temperature",
+		"chat model has temperature and penalties but not reasoning",
 		func(t *testing.T) {
 			t.Parallel()
 
-			m, ok := r.Lookup("openai/o3")
+			m, ok := r.Lookup("acme/chat-model")
 			require.True(t, ok)
-			assert.True(t, m.Supports.Reasoning)
-			assert.False(t, m.Supports.Temperature)
+			assert.True(t, m.Supports.Temperature)
+			assert.True(t, m.Supports.TopP)
+			assert.True(t, m.Supports.TopK)
+			assert.True(t, m.Supports.FrequencyPenalty)
+			assert.False(t, m.Supports.Reasoning)
 		},
 	)
 }
