@@ -33,7 +33,7 @@ import (
 type (
 	AgentRunSupervisor struct {
 		pg             *pg.Client
-		store          *coredata.PGCheckpointStore
+		store          *coredata.PGCheckpointer
 		registry       agent.AgentRegistry
 		logger         *log.Logger
 		interval       time.Duration
@@ -89,7 +89,7 @@ func WithAgentRunSupervisorMaxConcurrency(n int) AgentRunSupervisorOption {
 
 func NewAgentRunSupervisor(
 	pgClient *pg.Client,
-	store *coredata.PGCheckpointStore,
+	store *coredata.PGCheckpointer,
 	registry agent.AgentRegistry,
 	logger *log.Logger,
 	opts ...AgentRunSupervisorOption,
@@ -286,7 +286,7 @@ func (s *AgentRunSupervisor) executeRun(ctx context.Context, run *coredata.Agent
 				result, runErr = a.RunWithOpts(
 					ctx,
 					inputMsgs,
-					agent.WithCheckpointStore(s.store, runID),
+					agent.WithCheckpointer(s.store, runID),
 				)
 			}
 		}
