@@ -268,7 +268,7 @@ pkg/server/api/mcp/v1/types/types.go: pkg/server/api/mcp/v1/specification.yaml p
 
 .PHONY: genmodels
 genmodels: ## Refresh LLM model registry from OpenRouter
-	cd pkg/llm && $(GO_BASE) run go.probo.inc/probo/internal/cmd/genmodels
+	$(GO_GENERATE) ./pkg/llm
 
 .PHONY: help
 help: ## Show this help
