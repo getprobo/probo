@@ -29,13 +29,13 @@ type (
 	}
 
 	ToolCall struct {
-		ID       string       `json:"id"`
-		Function FunctionCall `json:"function"`
+		ID       string
+		Function FunctionCall
 	}
 
 	FunctionCall struct {
-		Name      string `json:"name"`
-		Arguments string `json:"arguments"`
+		Name      string
+		Arguments string
 	}
 
 	Tool struct {

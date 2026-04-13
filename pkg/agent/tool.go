@@ -25,8 +25,8 @@ import (
 
 type (
 	ToolResult struct {
-		Content string `json:"content"`
-		IsError bool   `json:"is_error"`
+		Content string
+		IsError bool
 	}
 
 	ToolDescriptor interface {
