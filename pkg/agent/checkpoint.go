@@ -21,40 +21,38 @@ import (
 )
 
 type (
-	CheckpointStatus string
+	AgentStatus string
 
 	Checkpoint struct {
-		Version       int              `json:"version"`
-		Status        CheckpointStatus `json:"status"`
-		AgentName     string           `json:"agent_name"`
-		Messages      []llm.Message    `json:"messages"`
-		Usage         llm.Usage        `json:"usage"`
-		Turns         int              `json:"turns"`
-		ToolUsedInRun bool             `json:"tool_used_in_run"`
+		Status        AgentStatus
+		AgentName     string
+		Messages      []llm.Message
+		Usage         llm.Usage
+		Turns         int
+		ToolUsedInRun bool
 
 		// Approval-interrupted checkpoints carry pending tool calls.
-		PendingToolCalls []llm.ToolCall            `json:"pending_tool_calls,omitempty"`
-		PendingApprovals []llm.ToolCall            `json:"pending_approvals,omitempty"`
-		ApprovalInput    map[string]ApprovalResult `json:"approval_input,omitempty"` // keyed by tool call ID
+		PendingToolCalls []llm.ToolCall
+		PendingApprovals []llm.ToolCall
+		ApprovalInput    map[string]ApprovalResult // keyed by tool call ID
 
 		// Nested agent-as-tool suspension: one entry per suspended inner agent.
-		AllToolCalls     []llm.ToolCall         `json:"all_tool_calls,omitempty"`
-		InnerCheckpoints map[string]*Checkpoint `json:"inner_checkpoints,omitempty"`
-		CompletedCalls   []CompletedCall        `json:"completed_calls,omitempty"`
+		AllToolCalls     []llm.ToolCall
+		InnerCheckpoints map[string]*Checkpoint
+		CompletedCalls   []CompletedCall
 	}
 
 	CompletedCall struct {
-		ToolCallID string     `json:"tool_call_id"`
-		Result     ToolResult `json:"result"`
+		ToolCallID string
+		Result     ToolResult
 	}
 
-	// CheckpointStore is supervisor-internal. Implementations may use raw
+	// Checkpointer is supervisor-internal. Implementations may use raw
 	// run IDs because public API/service methods perform tenant scoping and
 	// authorization before a run reaches the supervisor.
-	CheckpointStore interface {
+	Checkpointer interface {
 		Save(ctx context.Context, runID string, cp *Checkpoint) error
 		Load(ctx context.Context, runID string) (*Checkpoint, error)
-		Delete(ctx context.Context, runID string) error
 	}
 
 	AgentRegistry interface {
@@ -68,11 +66,10 @@ type (
 )
 
 const (
-	CheckpointVersion  = 1
 	MaxCheckpointBytes = 10 * 1024 * 1024
 
-	CheckpointStatusSuspended        CheckpointStatus = "suspended"
-	CheckpointStatusAwaitingApproval CheckpointStatus = "awaiting_approval"
+	AgentStatusSuspended        AgentStatus = "suspended"
+	AgentStatusAwaitingApproval AgentStatus = "awaiting_approval"
 )
 
 func (e *SuspendedError) Error() string {
