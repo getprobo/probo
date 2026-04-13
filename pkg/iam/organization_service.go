@@ -273,6 +273,15 @@ func (s *OrganizationService) UpdateMempership(
 				return fmt.Errorf("cannot update membership: %w", err)
 			}
 
+			profile := &coredata.MembershipProfile{}
+			if err := profile.LoadByIdentityIDAndOrganizationID(ctx, tx, scope, membership.IdentityID, membership.OrganizationID); err != nil {
+				return fmt.Errorf("cannot load profile: %w", err)
+			}
+
+			if err := webhook.InsertData(ctx, tx, scope, organizationID, coredata.WebhookEventTypeUserUpdated, webhooktypes.NewUser(profile, &membership)); err != nil {
+				return fmt.Errorf("cannot insert webhook event: %w", err)
+			}
+
 			return nil
 		},
 	); err != nil {
@@ -323,7 +332,7 @@ func (s *OrganizationService) RemoveUser(
 				}
 			}
 
-			if err := webhook.InsertData(ctx, tx, scope, organizationID, coredata.WebhookEventTypeUserDeleted, webhooktypes.NewUser(&profile)); err != nil {
+			if err := webhook.InsertData(ctx, tx, scope, organizationID, coredata.WebhookEventTypeUserDeleted, webhooktypes.NewUser(&profile, membership)); err != nil {
 				return fmt.Errorf("cannot insert webhook event: %w", err)
 			}
 
@@ -946,7 +955,7 @@ func (s *OrganizationService) CreateUser(ctx context.Context, req *CreateUserReq
 				return fmt.Errorf("cannot insert membership: %w", err)
 			}
 
-			if err := webhook.InsertData(ctx, conn, scope, req.OrganizationID, coredata.WebhookEventTypeUserCreated, webhooktypes.NewUser(profile)); err != nil {
+			if err := webhook.InsertData(ctx, conn, scope, req.OrganizationID, coredata.WebhookEventTypeUserCreated, webhooktypes.NewUser(profile, membership)); err != nil {
 				return fmt.Errorf("cannot insert webhook event: %w", err)
 			}
 
@@ -999,7 +1008,12 @@ func (s *OrganizationService) UpdateUser(ctx context.Context, req *UpdateUserReq
 				return fmt.Errorf("cannot update profile: %w", err)
 			}
 
-			if err := webhook.InsertData(ctx, conn, scope, profile.OrganizationID, coredata.WebhookEventTypeUserUpdated, webhooktypes.NewUser(profile)); err != nil {
+			membership := &coredata.Membership{}
+			if err := membership.LoadByIdentityIDAndOrganizationID(ctx, conn, scope, profile.IdentityID, profile.OrganizationID); err != nil {
+				return fmt.Errorf("cannot load membership: %w", err)
+			}
+
+			if err := webhook.InsertData(ctx, conn, scope, profile.OrganizationID, coredata.WebhookEventTypeUserUpdated, webhooktypes.NewUser(profile, membership)); err != nil {
 				return fmt.Errorf("cannot insert webhook event: %w", err)
 			}
 

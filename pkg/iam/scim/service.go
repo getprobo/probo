@@ -330,7 +330,7 @@ func (s *Service) CreateUser(
 			}
 		}
 
-		if err := webhook.InsertData(ctx, tx, scope, config.OrganizationID, eventType, webhooktypes.NewUser(profile)); err != nil {
+		if err := webhook.InsertData(ctx, tx, scope, config.OrganizationID, eventType, webhooktypes.NewUser(profile, membership)); err != nil {
 			return fmt.Errorf("cannot insert webhook event: %w", err)
 		}
 
@@ -748,7 +748,7 @@ func (s *Service) updateUser(
 				}
 			}
 
-			if err := webhook.InsertData(ctx, tx, scope, config.OrganizationID, coredata.WebhookEventTypeUserUpdated, webhooktypes.NewUser(profile)); err != nil {
+			if err := webhook.InsertData(ctx, tx, scope, config.OrganizationID, coredata.WebhookEventTypeUserUpdated, webhooktypes.NewUser(profile, membership)); err != nil {
 				return fmt.Errorf("cannot insert webhook event: %w", err)
 			}
 
@@ -797,25 +797,30 @@ func (s *Service) DeleteUser(
 				return fmt.Errorf("cannot expire pending invitations: %w", err)
 			}
 
-			membership := &coredata.Membership{}
-			if err := membership.LoadByIdentityIDAndOrganizationID(
+			var membership *coredata.Membership
+			m := &coredata.Membership{}
+			if err := m.LoadByIdentityIDAndOrganizationID(
 				ctx, tx, scope, profile.IdentityID, config.OrganizationID,
 			); err != nil {
 				if !errors.Is(err, coredata.ErrResourceNotFound) {
 					return fmt.Errorf("cannot load membership: %w", err)
 				}
 			} else {
-				if err := membership.Delete(ctx, tx, scope, membership.ID); err != nil {
-					return fmt.Errorf("cannot delete membership: %w", err)
-				}
+				membership = m
+			}
+
+			if err := webhook.InsertData(ctx, tx, scope, config.OrganizationID, coredata.WebhookEventTypeUserDeleted, webhooktypes.NewUser(profile, membership)); err != nil {
+				return fmt.Errorf("cannot insert webhook event: %w", err)
 			}
 
 			if err := profile.Delete(ctx, tx, scope, profile.ID); err != nil {
 				return fmt.Errorf("cannot delete profile: %w", err)
 			}
 
-			if err := webhook.InsertData(ctx, tx, scope, config.OrganizationID, coredata.WebhookEventTypeUserDeleted, webhooktypes.NewUser(profile)); err != nil {
-				return fmt.Errorf("cannot insert webhook event: %w", err)
+			if membership != nil {
+				if err := membership.Delete(ctx, tx, scope, membership.ID); err != nil {
+					return fmt.Errorf("cannot delete membership: %w", err)
+				}
 			}
 
 			return nil

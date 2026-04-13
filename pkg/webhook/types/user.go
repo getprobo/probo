@@ -22,31 +22,38 @@ import (
 	"go.probo.inc/probo/pkg/mail"
 )
 
-type User struct {
-	ID                       gid.GID                `json:"id"`
-	OrganizationID           gid.GID                `json:"organizationId"`
-	EmailAddress             mail.Addr              `json:"emailAddress"`
-	FullName                 string                 `json:"fullName"`
-	Kind                     *string                `json:"kind"`
-	Source                   coredata.ProfileSource `json:"source"`
-	State                    coredata.ProfileState  `json:"state"`
-	AdditionalEmailAddresses mail.Addrs             `json:"additionalEmailAddresses"`
-	Position                 *string                `json:"position"`
-	ContractStartDate        *time.Time             `json:"contractStartDate"`
-	ContractEndDate          *time.Time             `json:"contractEndDate"`
-	CreatedAt                time.Time              `json:"createdAt"`
-	UpdatedAt                time.Time              `json:"updatedAt"`
-}
+type (
+	User struct {
+		ID                       gid.GID                `json:"id"`
+		OrganizationID           gid.GID                `json:"organizationId"`
+		EmailAddress             mail.Addr              `json:"emailAddress"`
+		FullName                 string                 `json:"fullName"`
+		Kind                     *string                `json:"kind"`
+		Source                   coredata.ProfileSource `json:"source"`
+		AdditionalEmailAddresses mail.Addrs             `json:"additionalEmailAddresses"`
+		Position                 *string                `json:"position"`
+		ContractStartDate        *time.Time             `json:"contractStartDate"`
+		ContractEndDate          *time.Time             `json:"contractEndDate"`
+		CreatedAt                time.Time              `json:"createdAt"`
+		UpdatedAt                time.Time              `json:"updatedAt"`
+		Membership               *UserMembership        `json:"membership"`
+	}
 
-func NewUser(p *coredata.MembershipProfile) *User {
-	return &User{
+	UserMembership struct {
+		ID    gid.GID                 `json:"id"`
+		Role  coredata.MembershipRole `json:"role"`
+		State coredata.ProfileState   `json:"state"`
+	}
+)
+
+func NewUser(p *coredata.MembershipProfile, m *coredata.Membership) *User {
+	u := &User{
 		ID:                       p.ID,
 		OrganizationID:           p.OrganizationID,
 		EmailAddress:             p.EmailAddress,
 		FullName:                 p.FullName,
 		Kind:                     p.Kind,
 		Source:                   p.Source,
-		State:                    p.State,
 		AdditionalEmailAddresses: p.AdditionalEmailAddresses,
 		Position:                 p.Position,
 		ContractStartDate:        p.ContractStartDate,
@@ -54,4 +61,14 @@ func NewUser(p *coredata.MembershipProfile) *User {
 		CreatedAt:                p.CreatedAt,
 		UpdatedAt:                p.UpdatedAt,
 	}
+
+	if m != nil {
+		u.Membership = &UserMembership{
+			ID:    m.ID,
+			Role:  m.Role,
+			State: p.State,
+		}
+	}
+
+	return u
 }

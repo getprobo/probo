@@ -612,6 +612,7 @@ func (impl *Implm) Run(
 		Interval:      time.Duration(impl.cfg.Notifications.Webhook.SenderInterval) * time.Second,
 		CacheTTL:      time.Duration(impl.cfg.Notifications.Webhook.CacheTTL) * time.Second,
 		EncryptionKey: encryptionKey,
+		Host:          baseURL.String(),
 	})
 	wg.Go(
 		func() {
