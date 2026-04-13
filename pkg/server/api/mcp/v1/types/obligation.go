@@ -20,7 +20,7 @@ import (
 )
 
 func NewObligation(o *coredata.Obligation) *Obligation {
-	return &Obligation{
+	obligation := &Obligation{
 		ID:                     o.ID,
 		OrganizationID:         o.OrganizationID,
 		SnapshotID:             o.SnapshotID,
@@ -37,6 +37,13 @@ func NewObligation(o *coredata.Obligation) *Obligation {
 		CreatedAt:              o.CreatedAt,
 		UpdatedAt:              o.UpdatedAt,
 	}
+
+	if o.SourceID != nil {
+		s := o.SourceID.String()
+		obligation.SourceID = &s
+	}
+
+	return obligation
 }
 
 func NewListObligationsOutput(obligationPage *page.Page[*coredata.Obligation, coredata.ObligationOrderField]) ListObligationsOutput {

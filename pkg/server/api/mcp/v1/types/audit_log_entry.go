@@ -15,12 +15,14 @@
 package types
 
 import (
+	"encoding/json"
+
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/page"
 )
 
 func NewAuditLogEntry(e *coredata.AuditLogEntry) *AuditLogEntry {
-	return &AuditLogEntry{
+	entry := &AuditLogEntry{
 		ID:             e.ID,
 		OrganizationID: e.OrganizationID,
 		ActorID:        e.ActorID,
@@ -30,6 +32,15 @@ func NewAuditLogEntry(e *coredata.AuditLogEntry) *AuditLogEntry {
 		ResourceID:     e.ResourceID,
 		CreatedAt:      e.CreatedAt,
 	}
+
+	if len(e.Metadata) > 0 {
+		var m map[string]any
+		if json.Unmarshal(e.Metadata, &m) == nil {
+			entry.Metadata = &m
+		}
+	}
+
+	return entry
 }
 
 func NewListAuditLogEntriesOutput(p *page.Page[*coredata.AuditLogEntry, coredata.AuditLogEntryOrderField]) ListAuditLogEntriesOutput {
