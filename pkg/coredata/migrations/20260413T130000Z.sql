@@ -13,4 +13,4 @@
 -- PERFORMANCE OF THIS SOFTWARE.
 
 CREATE UNIQUE INDEX idx_cookie_banners_unique_active_origin
-    ON cookie_banners (tenant_id, origin) WHERE state = 'ACTIVE';
+    ON cookie_banners (tenant_id, origin) WHERE state = 'ACTIVE'::cookie_banner_state;

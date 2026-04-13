@@ -376,32 +376,6 @@ func (s *Service) GetActiveCookieBanner(
 	return &banner, nil
 }
 
-func (s *Service) GetActiveCookieBannerByOrigin(
-	ctx context.Context,
-	origin string,
-) (*coredata.CookieBanner, error) {
-	var banner coredata.CookieBanner
-
-	err := s.pg.WithConn(
-		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
-			if err := banner.LoadActiveByOrigin(ctx, conn, CanonicalizeOrigin(origin)); err != nil {
-				if errors.Is(err, coredata.ErrResourceNotFound) {
-					return ErrBannerNotFound
-				}
-				return fmt.Errorf("cannot load cookie banner: %w", err)
-			}
-
-			return nil
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	return &banner, nil
-}
-
 func (s *Service) ListCookieBannersForOrganization(
 	ctx context.Context,
 	scope coredata.Scoper,
