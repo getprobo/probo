@@ -119,6 +119,52 @@ LIMIT 1;
 	return nil
 }
 
+func (b *CookieBanner) LoadActiveByID(
+	ctx context.Context,
+	conn pg.Querier,
+	bannerID gid.GID,
+) error {
+	q := `
+SELECT
+	id,
+	organization_id,
+	name,
+	origin,
+	state,
+	privacy_policy_url,
+	consent_expiry_days,
+	consent_mode,
+	created_at,
+	updated_at
+FROM
+	cookie_banners
+WHERE
+	id = @banner_id
+	AND state = 'ACTIVE'
+LIMIT 1;
+`
+
+	args := pgx.StrictNamedArgs{"banner_id": bannerID}
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query cookie banners: %w", err)
+	}
+
+	banner, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[CookieBanner])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect cookie banner: %w", err)
+	}
+
+	*b = banner
+
+	return nil
+}
+
 func (b *CookieBanner) LoadActiveByOrigin(
 	ctx context.Context,
 	conn pg.Querier,

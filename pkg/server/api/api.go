@@ -28,6 +28,7 @@ import (
 	"go.probo.inc/probo/pkg/accessreview"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/file"
 	"go.probo.inc/probo/pkg/iam"
@@ -36,6 +37,7 @@ import (
 	"go.probo.inc/probo/pkg/securecookie"
 	connect_v1 "go.probo.inc/probo/pkg/server/api/connect/v1"
 	console_v1 "go.probo.inc/probo/pkg/server/api/console/v1"
+	cookiebanner_v1 "go.probo.inc/probo/pkg/server/api/cookiebanner/v1"
 	files_v1 "go.probo.inc/probo/pkg/server/api/files/v1"
 	mcp_v1 "go.probo.inc/probo/pkg/server/api/mcp/v1"
 	slack_v1 "go.probo.inc/probo/pkg/server/api/slack/v1"
@@ -56,6 +58,7 @@ type (
 		AccessReview      *accessreview.Service
 		Slack             *slack.Service
 		Mailman           *mailman.Service
+		CookieBanner      *cookiebanner.Service
 		Cookie            securecookie.Config
 		TokenSecret       string
 		ConnectorRegistry *connector.ConnectorRegistry
@@ -74,6 +77,7 @@ type (
 		csrf                  *http.CrossOriginProtection
 		compliancePageHandler http.Handler
 		consoleHandler        http.Handler
+		cookieBannerHandler   http.Handler
 		filesHandler          http.Handler
 		mcpHandler            http.Handler
 		slackHandler          http.Handler
@@ -135,6 +139,12 @@ func NewServer(cfg Config) (*Server, error) {
 	// POSTs from external identity providers by design.
 	csrf.AddInsecureBypassPattern("POST /connect/v1/saml/2.0/consume")
 
+	// The cookie banner API is called cross-origin from customer websites
+	// by the JS SDK. CORS is handled by the cookie banner middleware.
+	csrf.AddInsecureBypassPattern("GET /cookie-banner/v1/*")
+	csrf.AddInsecureBypassPattern("POST /cookie-banner/v1/*")
+	csrf.AddInsecureBypassPattern("OPTIONS /cookie-banner/v1/*")
+
 	csrf.SetDenyHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		httpserver.RenderJSON(
 			w,
@@ -170,6 +180,10 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.ConnectorRegistry,
 			cfg.BaseURL,
 			cfg.CustomDomainCname,
+		),
+		cookieBannerHandler: cookiebanner_v1.NewMux(
+			cfg.Logger.Named("cookiebanner.v1"),
+			cfg.CookieBanner,
 		),
 		filesHandler: files_v1.NewMux(
 			cfg.Logger.Named("files.v1"),
@@ -240,6 +254,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	router.Mount("/console/v1", http.StripPrefix("/console/v1", s.consoleHandler))
 	router.Mount("/connect/v1", http.StripPrefix("/connect/v1", s.connectHandler))
+	router.Mount("/cookie-banner/v1", http.StripPrefix("/cookie-banner/v1", s.cookieBannerHandler))
 	router.Mount("/files/v1", http.StripPrefix("/files/v1", s.filesHandler))
 	router.Mount("/trust/v1", http.StripPrefix("/trust/v1", s.compliancePageHandler))
 	router.Mount("/mcp/v1", http.StripPrefix("/mcp/v1", s.mcpHandler))

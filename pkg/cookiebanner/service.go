@@ -156,7 +156,7 @@ func (r *CreateCookieConsentRecordRequest) Validate() error {
 	return v.Error()
 }
 
-func canonicalizeOrigin(raw string) string {
+func CanonicalizeOrigin(raw string) string {
 	u, err := url.Parse(raw)
 	if err != nil {
 		return raw
@@ -269,7 +269,7 @@ func (s *Service) CreateCookieBanner(
 				ID:                gid.New(scope.GetTenantID(), coredata.CookieBannerEntityType),
 				OrganizationID:    req.OrganizationID,
 				Name:              req.Name,
-				Origin:            canonicalizeOrigin(req.Origin),
+				Origin:            CanonicalizeOrigin(req.Origin),
 				State:             coredata.CookieBannerStateActive,
 				PrivacyPolicyURL:  req.PrivacyPolicyURL,
 				ConsentExpiryDays: req.ConsentExpiryDays,
@@ -334,6 +334,58 @@ func (s *Service) GetCookieBanner(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			if err := banner.LoadByID(ctx, conn, scope, bannerID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return ErrBannerNotFound
+				}
+				return fmt.Errorf("cannot load cookie banner: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &banner, nil
+}
+
+func (s *Service) GetActiveCookieBanner(
+	ctx context.Context,
+	bannerID gid.GID,
+) (*coredata.CookieBanner, error) {
+	var banner coredata.CookieBanner
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := banner.LoadActiveByID(ctx, conn, bannerID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return ErrBannerNotFound
+				}
+				return fmt.Errorf("cannot load cookie banner: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &banner, nil
+}
+
+func (s *Service) GetActiveCookieBannerByOrigin(
+	ctx context.Context,
+	origin string,
+) (*coredata.CookieBanner, error) {
+	var banner coredata.CookieBanner
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := banner.LoadActiveByOrigin(ctx, conn, CanonicalizeOrigin(origin)); err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrBannerNotFound
 				}
@@ -432,7 +484,7 @@ func (s *Service) UpdateCookieBanner(
 				banner.Name = *req.Name
 			}
 			if req.Origin != nil {
-				banner.Origin = canonicalizeOrigin(*req.Origin)
+				banner.Origin = CanonicalizeOrigin(*req.Origin)
 			}
 			if req.PrivacyPolicyURL != nil {
 				banner.PrivacyPolicyURL = *req.PrivacyPolicyURL

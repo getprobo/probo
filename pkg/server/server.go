@@ -27,6 +27,7 @@ import (
 	"go.probo.inc/probo/pkg/accessreview"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/file"
 	"go.probo.inc/probo/pkg/iam"
@@ -54,6 +55,7 @@ type Config struct {
 	AccessReview      *accessreview.Service
 	Slack             *slack.Service
 	Mailman           *mailman.Service
+	CookieBanner      *cookiebanner.Service
 	Cookie            securecookie.Config
 	TokenSecret       string
 	ConnectorRegistry *connector.ConnectorRegistry
@@ -85,6 +87,7 @@ func NewServer(cfg Config) (*Server, error) {
 		AccessReview:      cfg.AccessReview,
 		Slack:             cfg.Slack,
 		Mailman:           cfg.Mailman,
+		CookieBanner:      cfg.CookieBanner,
 		Cookie:            cfg.Cookie,
 		TokenSecret:       cfg.TokenSecret,
 		ConnectorRegistry: cfg.ConnectorRegistry,
