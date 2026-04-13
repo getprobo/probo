@@ -212,6 +212,7 @@ WHERE
 func (c *CookieCategories) LoadAllByCookieBannerID(
 	ctx context.Context,
 	conn pg.Querier,
+	scope Scoper,
 	cookieBannerID gid.GID,
 ) error {
 	q := `
@@ -229,12 +230,16 @@ SELECT
 FROM
 	cookie_categories
 WHERE
-	cookie_banner_id = @cookie_banner_id
+	%s
+	AND cookie_banner_id = @cookie_banner_id
 ORDER BY
 	rank ASC, id ASC;
 `
 
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
 	args := pgx.StrictNamedArgs{"cookie_banner_id": cookieBannerID}
+	maps.Copy(args, scope.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {

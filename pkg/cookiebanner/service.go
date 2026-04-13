@@ -283,7 +283,7 @@ func (s *Service) CreateCookieBanner(
 			}
 
 			var categories coredata.CookieCategories
-			if err := categories.LoadAllByCookieBannerID(ctx, tx, banner.ID); err != nil {
+			if err := categories.LoadAllByCookieBannerID(ctx, tx, scope, banner.ID); err != nil {
 				return fmt.Errorf("cannot load cookie categories: %w", err)
 			}
 
@@ -430,7 +430,7 @@ func (s *Service) UpdateCookieBanner(
 
 			if consentChanged {
 				var categories coredata.CookieCategories
-				if err := categories.LoadAllByCookieBannerID(ctx, tx, banner.ID); err != nil {
+				if err := categories.LoadAllByCookieBannerID(ctx, tx, scope, banner.ID); err != nil {
 					return fmt.Errorf("cannot load cookie categories: %w", err)
 				}
 
@@ -635,7 +635,7 @@ func (s *Service) CreateCookieCategory(
 			}
 
 			var categories coredata.CookieCategories
-			if err := categories.LoadAllByCookieBannerID(ctx, tx, req.CookieBannerID); err != nil {
+			if err := categories.LoadAllByCookieBannerID(ctx, tx, scope, req.CookieBannerID); err != nil {
 				return fmt.Errorf("cannot load cookie categories: %w", err)
 			}
 
@@ -779,7 +779,7 @@ func (s *Service) UpdateCookieCategory(
 			}
 
 			var categories coredata.CookieCategories
-			if err := categories.LoadAllByCookieBannerID(ctx, tx, category.CookieBannerID); err != nil {
+			if err := categories.LoadAllByCookieBannerID(ctx, tx, scope, category.CookieBannerID); err != nil {
 				return fmt.Errorf("cannot load cookie categories: %w", err)
 			}
 
@@ -829,7 +829,7 @@ func (s *Service) DeleteCookieCategory(
 			}
 
 			var categories coredata.CookieCategories
-			if err := categories.LoadAllByCookieBannerID(ctx, tx, bannerID); err != nil {
+			if err := categories.LoadAllByCookieBannerID(ctx, tx, scope, bannerID); err != nil {
 				return fmt.Errorf("cannot load cookie categories: %w", err)
 			}
 
