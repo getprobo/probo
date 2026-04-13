@@ -243,7 +243,8 @@ generate: pkg/server/api/connect/v1/schema/schema.go \
 	pkg/server/api/trust/v1/schema/schema.go \
 	pkg/server/api/trust/v1/types/types.go \
 	pkg/server/api/mcp/v1/server/server.go \
-	pkg/server/api/mcp/v1/types/types.go
+	pkg/server/api/mcp/v1/types/types.go \
+	pkg/llm/registry_gen.go
 	$(NPM) --workspace @probo/console run relay
 	$(NPM) --workspace @probo/trust run relay
 
@@ -265,6 +266,9 @@ pkg/server/api/trust/v1/v1_resolver.go: pkg/server/api/trust/v1/gqlgen.yaml pkg/
 pkg/server/api/mcp/v1/server/server.go \
 pkg/server/api/mcp/v1/types/types.go: pkg/server/api/mcp/v1/specification.yaml pkg/server/api/mcp/v1/mcpgen.yaml
 	$(GO_GENERATE) ./pkg/server/api/mcp/v1
+
+pkg/llm/registry_gen.go: pkg/llm/registry.go internal/cmd/genmodels/main.go
+	$(GO_GENERATE) ./pkg/llm
 
 .PHONY: help
 help: ## Show this help
@@ -291,6 +295,7 @@ clean: ## Clean the project (node_modules and build artifacts)
 	$(RM) -f pkg/server/api/console/v1/schema/schema.go pkg/server/api/console/v1/types/types.go
 	$(RM) -f pkg/server/api/trust/v1/schema/schema.go pkg/server/api/trust/v1/types/types.go
 	$(RM) -f pkg/server/api/mcp/v1/server/server.go pkg/server/api/mcp/v1/types/types.go
+	$(RM) -f pkg/llm/registry_gen.go
 	find apps -type d -name __generated__ -exec $(RM) -rf {} +
 
 .PHONY: stack-up
