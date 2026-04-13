@@ -96,7 +96,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "cannot fetch models: %v\n", err)
 		os.Exit(1)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		fmt.Fprintf(os.Stderr, "cannot fetch models: unexpected status %s\n", resp.Status)
