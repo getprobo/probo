@@ -243,8 +243,7 @@ generate: pkg/server/api/connect/v1/schema/schema.go \
 	pkg/server/api/trust/v1/schema/schema.go \
 	pkg/server/api/trust/v1/types/types.go \
 	pkg/server/api/mcp/v1/server/server.go \
-	pkg/server/api/mcp/v1/types/types.go \
-	pkg/llm/registry_gen.go
+	pkg/server/api/mcp/v1/types/types.go
 	$(NPM) --workspace @probo/console run relay
 	$(NPM) --workspace @probo/trust run relay
 
@@ -267,8 +266,9 @@ pkg/server/api/mcp/v1/server/server.go \
 pkg/server/api/mcp/v1/types/types.go: pkg/server/api/mcp/v1/specification.yaml pkg/server/api/mcp/v1/mcpgen.yaml
 	$(GO_GENERATE) ./pkg/server/api/mcp/v1
 
-pkg/llm/registry_gen.go: pkg/llm/registry.go internal/cmd/genmodels/main.go
-	$(GO_GENERATE) ./pkg/llm
+.PHONY: genmodels
+genmodels: ## Refresh LLM model registry from OpenRouter
+	cd pkg/llm && $(GO_BASE) run go.probo.inc/probo/internal/cmd/genmodels
 
 .PHONY: help
 help: ## Show this help
