@@ -29,7 +29,7 @@ import (
 // that may have been active (including handoff targets).
 func Restore(
 	ctx context.Context,
-	store CheckpointStore,
+	store Checkpointer,
 	runID string,
 	registry AgentRegistry,
 ) (*Result, error) {
@@ -40,10 +40,6 @@ func Restore(
 	if cp == nil {
 		return nil, fmt.Errorf("cannot restore: no checkpoint for run %s", runID)
 	}
-	if cp.Version != CheckpointVersion {
-		return nil, fmt.Errorf("cannot restore: unsupported checkpoint version %d", cp.Version)
-	}
-
 	agent, err := registry.Agent(cp.AgentName)
 	if err != nil {
 		return nil, fmt.Errorf("cannot resolve agent %q: %w", cp.AgentName, err)
@@ -56,17 +52,17 @@ func restoreCheckpoint(
 	ctx context.Context,
 	agent *Agent,
 	cp *Checkpoint,
-	store CheckpointStore,
+	store Checkpointer,
 	runID string,
 	registry AgentRegistry,
 ) (*Result, error) {
 	emitHook(agent, func(h RunHooks) { h.OnRunRestore(ctx, agent, cp) })
 
 	switch cp.Status {
-	case CheckpointStatusSuspended:
+	case AgentStatusSuspended:
 		return restoreSuspended(ctx, agent, cp, store, runID, registry)
 
-	case CheckpointStatusAwaitingApproval:
+	case AgentStatusAwaitingApproval:
 		return restoreAwaitingApproval(ctx, agent, cp, store, runID, registry)
 
 	default:
@@ -78,7 +74,7 @@ func restoreSuspended(
 	ctx context.Context,
 	agent *Agent,
 	cp *Checkpoint,
-	store CheckpointStore,
+	store Checkpointer,
 	runID string,
 	registry AgentRegistry,
 ) (*Result, error) {
@@ -94,7 +90,7 @@ func continueFromMessages(
 	agent *Agent,
 	messages []llm.Message,
 	cp *Checkpoint,
-	store CheckpointStore,
+	store Checkpointer,
 	runID string,
 ) (*Result, error) {
 	messagesCopy := make([]llm.Message, len(messages))
@@ -121,7 +117,7 @@ func continueFromMessages(
 			skipSessionLoad:     true,
 			initialUsage:        cp.Usage,
 			initialTurns:        cp.Turns,
-			checkpointStore:     store,
+			checkpointer:        store,
 			runID:               runID,
 			toolUsedInRun:       cp.ToolUsedInRun,
 		},
@@ -132,7 +128,7 @@ func restoreNestedSuspended(
 	ctx context.Context,
 	agent *Agent,
 	cp *Checkpoint,
-	store CheckpointStore,
+	store Checkpointer,
 	runID string,
 	registry AgentRegistry,
 ) (*Result, error) {
@@ -277,7 +273,7 @@ func restoreAwaitingApproval(
 	ctx context.Context,
 	agent *Agent,
 	cp *Checkpoint,
-	store CheckpointStore,
+	store Checkpointer,
 	runID string,
 	registry AgentRegistry,
 ) (*Result, error) {
@@ -338,11 +334,11 @@ func restoreAwaitingApproval(
 			ie,
 			ResumeInput{Approvals: cp.ApprovalInput},
 			runOpts{
-				callLLM:         blockingCallLLM,
-				onEvent:         noopEvent,
-				checkpointStore: store,
-				runID:           runID,
-				toolUsedInRun:   cp.ToolUsedInRun,
+				callLLM:       blockingCallLLM,
+				onEvent:       noopEvent,
+				checkpointer:  store,
+				runID:         runID,
+				toolUsedInRun: cp.ToolUsedInRun,
 			},
 		)
 	}

@@ -419,7 +419,7 @@ RETURNING
 
 // ClearCheckpoint is the explicit path for removing persisted checkpoint
 // data. AgentRun.Update intentionally does not write checkpoint so status
-// commits cannot erase a checkpoint saved by PGCheckpointStore.Save.
+// commits cannot erase a checkpoint saved by PGCheckpointer.Save.
 func (e *AgentRun) ClearCheckpoint(
 	ctx context.Context,
 	tx pg.Tx,
@@ -651,20 +651,20 @@ func LoadRunningStopRequestedIDs(ctx context.Context, conn pg.Querier) ([]string
 	return ids, nil
 }
 
-// PGCheckpointStore implements agent.CheckpointStore backed by the
+// PGCheckpointer implements agent.Checkpointer backed by the
 // agent_runs table checkpoint column. It is supervisor-internal and
 // intentionally uses raw run IDs with no tenant scope; public service/API
 // methods must load AgentRun through scoped coredata methods before invoking
 // lifecycle transitions.
-type PGCheckpointStore struct {
+type PGCheckpointer struct {
 	pg *pg.Client
 }
 
-func NewPGCheckpointStore(pgClient *pg.Client) *PGCheckpointStore {
-	return &PGCheckpointStore{pg: pgClient}
+func NewPGCheckpointer(pgClient *pg.Client) *PGCheckpointer {
+	return &PGCheckpointer{pg: pgClient}
 }
 
-func (s *PGCheckpointStore) Save(ctx context.Context, runID string, cp *agent.Checkpoint) error {
+func (s *PGCheckpointer) Save(ctx context.Context, runID string, cp *agent.Checkpoint) error {
 	data, err := marshalAgentCheckpoint(cp)
 	if err != nil {
 		return err
@@ -694,7 +694,7 @@ func (s *PGCheckpointStore) Save(ctx context.Context, runID string, cp *agent.Ch
 	)
 }
 
-func (s *PGCheckpointStore) Load(ctx context.Context, runID string) (*agent.Checkpoint, error) {
+func (s *PGCheckpointer) Load(ctx context.Context, runID string) (*agent.Checkpoint, error) {
 	var cp *agent.Checkpoint
 
 	err := s.pg.WithConn(
@@ -730,10 +730,6 @@ func (s *PGCheckpointStore) Load(ctx context.Context, runID string) (*agent.Chec
 				return fmt.Errorf("cannot unmarshal checkpoint: %w", err)
 			}
 
-			if cp.Version != agent.CheckpointVersion {
-				return fmt.Errorf("cannot load checkpoint: unsupported checkpoint version %d", cp.Version)
-			}
-
 			return nil
 		},
 	)
@@ -741,42 +737,12 @@ func (s *PGCheckpointStore) Load(ctx context.Context, runID string) (*agent.Chec
 	return cp, err
 }
 
-func (s *PGCheckpointStore) Delete(ctx context.Context, runID string) error {
-	return s.pg.WithConn(
-		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
-			q := `UPDATE agent_runs SET checkpoint = NULL, updated_at = now() WHERE id = @id;`
-
-			args := pgx.StrictNamedArgs{"id": runID}
-
-			_, err := conn.Exec(ctx, q, args)
-			if err != nil {
-				return fmt.Errorf("cannot delete checkpoint: %w", err)
-			}
-
-			// Delete is intentionally idempotent: callers use it for cleanup after
-			// completion, and a concurrently-cleared checkpoint is already the
-			// desired state.
-			return nil
-		},
-	)
-}
-
 func marshalAgentCheckpoint(cp *agent.Checkpoint) ([]byte, error) {
 	if cp == nil {
 		return nil, fmt.Errorf("cannot marshal checkpoint: checkpoint is required")
 	}
 
-	next := *cp
-	if next.Version == 0 {
-		next.Version = agent.CheckpointVersion
-	}
-
-	if next.Version != agent.CheckpointVersion {
-		return nil, fmt.Errorf("cannot marshal checkpoint: unsupported checkpoint version %d", next.Version)
-	}
-
-	data, err := json.Marshal(&next)
+	data, err := json.Marshal(cp)
 	if err != nil {
 		return nil, fmt.Errorf("cannot marshal checkpoint: %w", err)
 	}
