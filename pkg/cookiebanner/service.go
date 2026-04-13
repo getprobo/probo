@@ -19,6 +19,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/url"
+	"strings"
 	"time"
 
 	"go.gearno.de/kit/pg"
@@ -154,6 +156,23 @@ func (r *CreateCookieConsentRecordRequest) Validate() error {
 	return v.Error()
 }
 
+func canonicalizeOrigin(raw string) string {
+	u, err := url.Parse(raw)
+	if err != nil {
+		return raw
+	}
+
+	host := u.Hostname()
+	host = strings.TrimPrefix(host, "www.")
+
+	port := u.Port()
+	if port != "" {
+		return u.Scheme + "://" + host + ":" + port
+	}
+
+	return u.Scheme + "://" + host
+}
+
 func buildSnapshot(
 	banner *coredata.CookieBanner,
 	categories coredata.CookieCategories,
@@ -250,7 +269,7 @@ func (s *Service) CreateCookieBanner(
 				ID:                gid.New(scope.GetTenantID(), coredata.CookieBannerEntityType),
 				OrganizationID:    req.OrganizationID,
 				Name:              req.Name,
-				Origin:            req.Origin,
+				Origin:            canonicalizeOrigin(req.Origin),
 				State:             coredata.CookieBannerStateActive,
 				PrivacyPolicyURL:  req.PrivacyPolicyURL,
 				ConsentExpiryDays: req.ConsentExpiryDays,
@@ -413,7 +432,7 @@ func (s *Service) UpdateCookieBanner(
 				banner.Name = *req.Name
 			}
 			if req.Origin != nil {
-				banner.Origin = *req.Origin
+				banner.Origin = canonicalizeOrigin(*req.Origin)
 			}
 			if req.PrivacyPolicyURL != nil {
 				banner.PrivacyPolicyURL = *req.PrivacyPolicyURL
