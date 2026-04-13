@@ -32,7 +32,8 @@
     "handlebars": "4.7.9",
     "@langchain/community": "^1.1.25",
     "lodash": "^4.18.1",
-    "lodash-es": "^4.18.1"
+    "lodash-es": "^4.18.1",
+    "axios": "^1.15.0"
   },
   "license": "MIT",
   "packageManager": "npm@11.8.0",
