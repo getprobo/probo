@@ -42,7 +42,7 @@ type (
 		skipSessionLoad     bool
 		initialUsage        llm.Usage
 		initialTurns        int
-		checkpointStore     CheckpointStore
+		checkpointer        Checkpointer
 		runID               string
 		toolUsedInRun       bool
 	}
@@ -70,9 +70,9 @@ type (
 	}
 )
 
-func WithCheckpointStore(store CheckpointStore, runID string) RunOption {
+func WithCheckpointer(cp Checkpointer, runID string) RunOption {
 	return func(o *runOpts) {
-		o.checkpointStore = store
+		o.checkpointer = cp
 		o.runID = runID
 	}
 }
@@ -190,12 +190,11 @@ func (s *loopState) finishRun(ctx context.Context, result *Result, err error) (*
 	return result, err
 }
 
-func (s *loopState) buildCheckpoint(status CheckpointStatus) *Checkpoint {
+func (s *loopState) buildCheckpoint(status AgentStatus) *Checkpoint {
 	msgsCopy := make([]llm.Message, len(s.messages))
 	copy(msgsCopy, s.messages)
 
 	return &Checkpoint{
-		Version:       CheckpointVersion,
 		Status:        status,
 		AgentName:     s.agent.name,
 		Messages:      msgsCopy,
@@ -331,11 +330,11 @@ func coreLoop(ctx context.Context, startAgent *Agent, inputMessages []llm.Messag
 		if ch := stopSignalFrom(ctx); ch != nil {
 			select {
 			case <-ch:
-				cp := s.buildCheckpoint(CheckpointStatusSuspended)
+				cp := s.buildCheckpoint(AgentStatusSuspended)
 				se := &SuspendedError{RunID: s.opts.runID}
 
-				if s.opts.checkpointStore != nil && s.opts.runID != "" {
-					if saveErr := s.opts.checkpointStore.Save(ctx, s.opts.runID, cp); saveErr != nil {
+				if s.opts.checkpointer != nil && s.opts.runID != "" {
+					if saveErr := s.opts.checkpointer.Save(ctx, s.opts.runID, cp); saveErr != nil {
 						s.logger.ErrorCtx(ctx, "cannot save suspension checkpoint", log.Error(saveErr))
 						se.Checkpoint = cp
 					}
@@ -440,14 +439,14 @@ func coreLoop(ctx context.Context, startAgent *Agent, inputMessages []llm.Messag
 
 			if err != nil {
 				if se, ok := errors.AsType[*SuspendedError](err); ok {
-					outerCP := s.buildCheckpoint(CheckpointStatusSuspended)
+					outerCP := s.buildCheckpoint(AgentStatusSuspended)
 					if se.Checkpoint != nil {
 						outerCP.AllToolCalls = se.Checkpoint.AllToolCalls
 						outerCP.InnerCheckpoints = se.Checkpoint.InnerCheckpoints
 						outerCP.CompletedCalls = se.Checkpoint.CompletedCalls
 					}
-					if s.opts.checkpointStore != nil && s.opts.runID != "" {
-						if saveErr := s.opts.checkpointStore.Save(ctx, s.opts.runID, outerCP); saveErr != nil {
+					if s.opts.checkpointer != nil && s.opts.runID != "" {
+						if saveErr := s.opts.checkpointer.Save(ctx, s.opts.runID, outerCP); saveErr != nil {
 							s.logger.ErrorCtx(ctx, "cannot save checkpoint", log.Error(saveErr))
 						}
 					}
@@ -464,11 +463,11 @@ func coreLoop(ctx context.Context, startAgent *Agent, inputMessages []llm.Messag
 					msgsCopy := make([]llm.Message, len(s.messages))
 					copy(msgsCopy, s.messages)
 
-					if s.opts.checkpointStore != nil && s.opts.runID != "" {
-						cp := s.buildCheckpoint(CheckpointStatusAwaitingApproval)
+					if s.opts.checkpointer != nil && s.opts.runID != "" {
+						cp := s.buildCheckpoint(AgentStatusAwaitingApproval)
 						cp.PendingToolCalls = nae.allToolCalls
 						cp.PendingApprovals = nae.pendingApprovals
-						if saveErr := s.opts.checkpointStore.Save(ctx, s.opts.runID, cp); saveErr != nil {
+						if saveErr := s.opts.checkpointer.Save(ctx, s.opts.runID, cp); saveErr != nil {
 							s.logger.ErrorCtx(ctx, "cannot save approval checkpoint", log.Error(saveErr))
 						}
 					}
@@ -498,16 +497,15 @@ func coreLoop(ctx context.Context, startAgent *Agent, inputMessages []llm.Messag
 					msgsCopy := make([]llm.Message, len(s.messages))
 					copy(msgsCopy, s.messages)
 
-					if s.opts.checkpointStore != nil && s.opts.runID != "" {
-						cp := s.buildCheckpoint(CheckpointStatusAwaitingApproval)
+					if s.opts.checkpointer != nil && s.opts.runID != "" {
+						cp := s.buildCheckpoint(AgentStatusAwaitingApproval)
 						cp.PendingToolCalls = nie.inner.ToolCalls
 						cp.PendingApprovals = nie.inner.PendingApprovals
 						cp.AllToolCalls = nie.allToolCalls
 						cp.CompletedCalls = nie.completedCalls
 						cp.InnerCheckpoints = map[string]*Checkpoint{
 							nie.toolCallID: {
-								Version:          CheckpointVersion,
-								Status:           CheckpointStatusAwaitingApproval,
+								Status:           AgentStatusAwaitingApproval,
 								AgentName:        nie.inner.Agent.name,
 								Messages:         nie.inner.Messages,
 								Usage:            nie.inner.Usage,
@@ -516,7 +514,7 @@ func coreLoop(ctx context.Context, startAgent *Agent, inputMessages []llm.Messag
 								PendingApprovals: nie.inner.PendingApprovals,
 							},
 						}
-						if saveErr := s.opts.checkpointStore.Save(ctx, s.opts.runID, cp); saveErr != nil {
+						if saveErr := s.opts.checkpointer.Save(ctx, s.opts.runID, cp); saveErr != nil {
 							s.logger.ErrorCtx(ctx, "cannot save nested approval checkpoint", log.Error(saveErr))
 						}
 					}
@@ -581,9 +579,9 @@ func coreLoop(ctx context.Context, startAgent *Agent, inputMessages []llm.Messag
 			}
 
 			// Save incremental checkpoint after completed tool-call turn.
-			if s.opts.checkpointStore != nil && s.opts.runID != "" {
-				cp := s.buildCheckpoint(CheckpointStatusSuspended)
-				if saveErr := s.opts.checkpointStore.Save(ctx, s.opts.runID, cp); saveErr != nil {
+			if s.opts.checkpointer != nil && s.opts.runID != "" {
+				cp := s.buildCheckpoint(AgentStatusSuspended)
+				if saveErr := s.opts.checkpointer.Save(ctx, s.opts.runID, cp); saveErr != nil {
 					s.logger.ErrorCtx(ctx, "cannot save checkpoint", log.Error(saveErr))
 				}
 			}
@@ -895,8 +893,7 @@ func executeParallel(
 
 			outerSE := &SuspendedError{
 				Checkpoint: &Checkpoint{
-					Version:          CheckpointVersion,
-					Status:           CheckpointStatusSuspended,
+					Status:           AgentStatusSuspended,
 					AllToolCalls:     toolCalls,
 					InnerCheckpoints: innerCheckpoints,
 					CompletedCalls:   completed,
@@ -1289,7 +1286,7 @@ func resumeWithOpts(ctx context.Context, interrupted *InterruptedError, input Re
 			skipSessionLoad:     true,
 			initialUsage:        interrupted.Usage,
 			initialTurns:        interrupted.Turns,
-			checkpointStore:     ro.checkpointStore,
+			checkpointer:        ro.checkpointer,
 			runID:               ro.runID,
 			toolUsedInRun:       ro.toolUsedInRun,
 		},
@@ -1372,7 +1369,7 @@ func resumeNested(ctx context.Context, interrupted *InterruptedError, input Resu
 			skipSessionLoad:     true,
 			initialUsage:        outer.usage,
 			initialTurns:        outer.turns,
-			checkpointStore:     ro.checkpointStore,
+			checkpointer:        ro.checkpointer,
 			runID:               ro.runID,
 			toolUsedInRun:       ro.toolUsedInRun,
 		},

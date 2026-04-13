@@ -26,18 +26,18 @@ import (
 	"go.probo.inc/probo/pkg/llm"
 )
 
-type memoryCheckpointStore struct {
+type memoryCheckpointer struct {
 	mu          sync.Mutex
 	checkpoints map[string]*agent.Checkpoint
 }
 
-func newMemoryCheckpointStore() *memoryCheckpointStore {
-	return &memoryCheckpointStore{
+func newMemoryCheckpointer() *memoryCheckpointer {
+	return &memoryCheckpointer{
 		checkpoints: make(map[string]*agent.Checkpoint),
 	}
 }
 
-func (s *memoryCheckpointStore) Save(_ context.Context, runID string, cp *agent.Checkpoint) error {
+func (s *memoryCheckpointer) Save(_ context.Context, runID string, cp *agent.Checkpoint) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -46,7 +46,7 @@ func (s *memoryCheckpointStore) Save(_ context.Context, runID string, cp *agent.
 	return nil
 }
 
-func (s *memoryCheckpointStore) Load(_ context.Context, runID string) (*agent.Checkpoint, error) {
+func (s *memoryCheckpointer) Load(_ context.Context, runID string) (*agent.Checkpoint, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -57,14 +57,6 @@ func (s *memoryCheckpointStore) Load(_ context.Context, runID string) (*agent.Ch
 
 	clone := *cp
 	return &clone, nil
-}
-
-func (s *memoryCheckpointStore) Delete(_ context.Context, runID string) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	delete(s.checkpoints, runID)
-	return nil
 }
 
 type simpleRegistry struct {
@@ -87,7 +79,7 @@ func TestRestore(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-			store := newMemoryCheckpointStore()
+			store := newMemoryCheckpointer()
 			registry := &simpleRegistry{agents: map[string]*agent.Agent{}}
 
 			_, err := agent.Restore(
@@ -99,41 +91,6 @@ func TestRestore(t *testing.T) {
 
 			require.Error(t, err)
 			assert.Contains(t, err.Error(), "no checkpoint")
-		},
-	)
-
-	t.Run(
-		"unsupported checkpoint version returns error",
-		func(t *testing.T) {
-			t.Parallel()
-
-			store := newMemoryCheckpointStore()
-			err := store.Save(context.Background(), "run-1", &agent.Checkpoint{
-				Version:   999,
-				Status:    agent.CheckpointStatusSuspended,
-				AgentName: "test-agent",
-			})
-			require.NoError(t, err)
-
-			registry := &simpleRegistry{
-				agents: map[string]*agent.Agent{
-					"test-agent": agent.New(
-						"test-agent",
-						newTestClient(&mockProvider{}),
-						agent.WithModel("test-model"),
-					),
-				},
-			}
-
-			_, err = agent.Restore(
-				context.Background(),
-				store,
-				"run-1",
-				registry,
-			)
-
-			require.Error(t, err)
-			assert.Contains(t, err.Error(), "unsupported checkpoint version")
 		},
 	)
 
@@ -155,10 +112,9 @@ func TestRestore(t *testing.T) {
 				agent.WithModel("test-model"),
 			)
 
-			store := newMemoryCheckpointStore()
+			store := newMemoryCheckpointer()
 			err := store.Save(context.Background(), "run-suspended", &agent.Checkpoint{
-				Version:   1,
-				Status:    agent.CheckpointStatusSuspended,
+				Status:    agent.AgentStatusSuspended,
 				AgentName: "test-agent",
 				Messages: []llm.Message{
 					{
@@ -217,10 +173,9 @@ func TestRestore(t *testing.T) {
 				}),
 			)
 
-			store := newMemoryCheckpointStore()
+			store := newMemoryCheckpointer()
 			err := store.Save(context.Background(), "run-approval", &agent.Checkpoint{
-				Version:   1,
-				Status:    agent.CheckpointStatusAwaitingApproval,
+				Status:    agent.AgentStatusAwaitingApproval,
 				AgentName: "test-agent",
 				Messages: []llm.Message{
 					{
@@ -304,10 +259,9 @@ func TestRestore(t *testing.T) {
 				}),
 			)
 
-			store := newMemoryCheckpointStore()
+			store := newMemoryCheckpointer()
 			err = store.Save(context.Background(), "run-approved", &agent.Checkpoint{
-				Version:   1,
-				Status:    agent.CheckpointStatusAwaitingApproval,
+				Status:    agent.AgentStatusAwaitingApproval,
 				AgentName: "test-agent",
 				Messages: []llm.Message{
 					{
@@ -371,10 +325,9 @@ func TestRestore(t *testing.T) {
 				agent.WithModel("test-model"),
 			)
 
-			store := newMemoryCheckpointStore()
+			store := newMemoryCheckpointer()
 			err := store.Save(context.Background(), "run-nested", &agent.Checkpoint{
-				Version:   1,
-				Status:    agent.CheckpointStatusAwaitingApproval,
+				Status:    agent.AgentStatusAwaitingApproval,
 				AgentName: "test-agent",
 				Messages: []llm.Message{
 					{
@@ -402,13 +355,11 @@ func TestRestore(t *testing.T) {
 				},
 				InnerCheckpoints: map[string]*agent.Checkpoint{
 					"tc_inner_1": {
-						Version:   1,
-						Status:    agent.CheckpointStatusAwaitingApproval,
+						Status:    agent.AgentStatusAwaitingApproval,
 						AgentName: "inner-agent-1",
 					},
 					"tc_inner_2": {
-						Version:   1,
-						Status:    agent.CheckpointStatusAwaitingApproval,
+						Status:    agent.AgentStatusAwaitingApproval,
 						AgentName: "inner-agent-2",
 					},
 				},
@@ -453,10 +404,9 @@ func TestRestore(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-			store := newMemoryCheckpointStore()
+			store := newMemoryCheckpointer()
 			err := store.Save(context.Background(), "run-unknown", &agent.Checkpoint{
-				Version:   1,
-				Status:    agent.CheckpointStatusSuspended,
+				Status:    agent.AgentStatusSuspended,
 				AgentName: "missing-agent",
 			})
 			require.NoError(t, err)
@@ -488,10 +438,9 @@ func TestRestore(t *testing.T) {
 				agent.WithModel("test-model"),
 			)
 
-			store := newMemoryCheckpointStore()
+			store := newMemoryCheckpointer()
 			err := store.Save(context.Background(), "run-bad-status", &agent.Checkpoint{
-				Version:   1,
-				Status:    agent.CheckpointStatus("bogus"),
+				Status:    agent.AgentStatus("bogus"),
 				AgentName: "test-agent",
 			})
 			require.NoError(t, err)
