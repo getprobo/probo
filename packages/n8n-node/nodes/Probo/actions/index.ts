@@ -17,6 +17,7 @@ import * as asset from './asset';
 import * as audit from './audit';
 import * as control from './control';
 import * as datum from './datum';
+import * as document from './document';
 import * as execute from './execute';
 import * as framework from './framework';
 import * as measure from './measure';
@@ -41,6 +42,7 @@ export const resources: Record<string, ResourceModule> = {
 	audit: audit as ResourceModule,
 	control: control as ResourceModule,
 	datum: datum as ResourceModule,
+	document: document as ResourceModule,
 	execute: execute as ResourceModule,
 	framework: framework as ResourceModule,
 	measure: measure as ResourceModule,

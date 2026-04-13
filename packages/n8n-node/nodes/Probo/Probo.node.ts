@@ -97,6 +97,11 @@ export class Probo implements INodeType {
 						description: 'Manage data',
 					},
 					{
+						name: 'Document',
+						value: 'document',
+						description: 'Manage documents, versions, and signatures',
+					},
+					{
 						name: 'Execute',
 						value: 'execute',
 						description: 'Execute a GraphQL query or mutation',

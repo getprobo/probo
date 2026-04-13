@@ -3956,3 +3956,18 @@ func (r *Resolver) VoidDocumentVersionApprovalTool(ctx context.Context, req *mcp
 		DocumentVersion: types.NewDocumentVersion(documentVersion),
 	}, nil
 }
+
+func (r *Resolver) SendSigningNotificationsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.SendSigningNotificationsInput) (*mcp.CallToolResult, types.SendSigningNotificationsOutput, error) {
+	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionDocumentSendSigningNotifications)
+
+	svc := r.ProboService(ctx, input.OrganizationID)
+
+	err := svc.Documents.SendSigningNotifications(ctx, input.OrganizationID)
+	if err != nil {
+		panic(fmt.Errorf("cannot send signing notifications: %w", err))
+	}
+
+	return nil, types.SendSigningNotificationsOutput{
+		Success: true,
+	}, nil
+}
