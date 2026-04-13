@@ -23,5 +23,6 @@ var (
 	ErrBannerAlreadyActive          = errors.New("cookie banner is already active")
 	ErrBannerAlreadyInactive        = errors.New("cookie banner is already inactive")
 	ErrVersionNotPublished          = errors.New("cookie banner version is not published")
+	ErrNoDraftVersion               = errors.New("no draft cookie banner version to publish")
 	ErrCannotDeleteRequiredCategory = errors.New("cannot delete required cookie category")
 )

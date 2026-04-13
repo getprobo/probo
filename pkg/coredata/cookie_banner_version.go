@@ -275,6 +275,53 @@ LIMIT 1;
 	return nil
 }
 
+func (v *CookieBannerVersion) LoadLatestByCookieBannerID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	cookieBannerID gid.GID,
+) error {
+	q := `
+SELECT
+	id,
+	cookie_banner_id,
+	version,
+	state,
+	snapshot,
+	created_at,
+	updated_at
+FROM
+	cookie_banner_versions
+WHERE
+	%s
+	AND cookie_banner_id = @cookie_banner_id
+ORDER BY version DESC
+LIMIT 1;
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"cookie_banner_id": cookieBannerID}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query cookie banner versions: %w", err)
+	}
+
+	ver, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[CookieBannerVersion])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+		return fmt.Errorf("cannot collect cookie banner version: %w", err)
+	}
+
+	*v = ver
+
+	return nil
+}
+
 func (v *CookieBannerVersion) LoadNextVersion(
 	ctx context.Context,
 	conn pg.Querier,

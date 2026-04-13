@@ -222,7 +222,7 @@ WHERE
 	return count, nil
 }
 
-func (c *CookieCategories) LoadAllPublicByCookieBannerID(
+func (c *CookieCategories) LoadAllByCookieBannerID(
 	ctx context.Context,
 	conn pg.Querier,
 	cookieBannerID gid.GID,
