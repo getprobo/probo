@@ -282,6 +282,15 @@ func (s *Service) CreateCookieBanner(
 				}
 			}
 
+			var categories coredata.CookieCategories
+			if err := categories.LoadAllByCookieBannerID(ctx, tx, banner.ID); err != nil {
+				return fmt.Errorf("cannot load cookie categories: %w", err)
+			}
+
+			if _, err := s.ensureDraftVersion(ctx, tx, scope, banner, categories); err != nil {
+				return fmt.Errorf("cannot ensure draft version: %w", err)
+			}
+
 			return nil
 		},
 	)
