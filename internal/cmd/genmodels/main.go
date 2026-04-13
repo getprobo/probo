@@ -136,7 +136,6 @@ var generatedModels = map[string]ModelDefinition{
 			&buf,
 			`	%q: {
 		Name:            %q,
-		Provider:        %q,
 		ContextLength:   %d,
 		MaxOutputTokens: %d,
 		Supports: SupportedParameters{
@@ -145,7 +144,6 @@ var generatedModels = map[string]ModelDefinition{
 `,
 			m.ID,
 			m.Name,
-			provider,
 			m.ContextLen,
 			m.TopProvider.MaxCompletionTokens,
 			buildSupports(m.SupportedParams),

@@ -28,7 +28,6 @@ func TestRegistry_Lookup(t *testing.T) {
 	r := llm.NewRegistry(map[string]llm.ModelDefinition{
 		"acme/test-model-1.5": {
 			Name:            "Acme: Test Model 1.5",
-			Provider:        "acme",
 			ContextLength:   8192,
 			MaxOutputTokens: 4096,
 			Supports: llm.SupportedParameters{
@@ -46,7 +45,7 @@ func TestRegistry_Lookup(t *testing.T) {
 			m, ok := r.Lookup("acme/test-model-1.5")
 			require.True(t, ok)
 			assert.Equal(t, "acme/test-model-1.5", m.ID)
-			assert.Equal(t, "acme", m.Provider)
+			assert.Equal(t, "acme", m.Provider())
 			assert.Equal(t, 8192, m.ContextLength)
 			assert.Equal(t, 4096, m.MaxOutputTokens)
 		},
@@ -59,7 +58,7 @@ func TestRegistry_Lookup(t *testing.T) {
 
 			m, ok := r.Lookup("test-model-1.5")
 			require.True(t, ok)
-			assert.Equal(t, "acme", m.Provider)
+			assert.Equal(t, "acme", m.Provider())
 		},
 	)
 
@@ -70,7 +69,7 @@ func TestRegistry_Lookup(t *testing.T) {
 
 			m, ok := r.Lookup("test-model-1-5")
 			require.True(t, ok)
-			assert.Equal(t, "acme", m.Provider)
+			assert.Equal(t, "acme", m.Provider())
 		},
 	)
 
@@ -110,16 +109,14 @@ func TestRegistry_Capabilities(t *testing.T) {
 
 	r := llm.NewRegistry(map[string]llm.ModelDefinition{
 		"acme/reasoning-model": {
-			Name:     "Acme: Reasoning Model",
-			Provider: "acme",
+			Name: "Acme: Reasoning Model",
 			Supports: llm.SupportedParameters{
 				Reasoning: true,
 				Seed:      true,
 			},
 		},
 		"acme/chat-model": {
-			Name:     "Acme: Chat Model",
-			Provider: "acme",
+			Name: "Acme: Chat Model",
 			Supports: llm.SupportedParameters{
 				Temperature:      true,
 				TopP:             true,

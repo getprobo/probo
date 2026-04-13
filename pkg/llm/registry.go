@@ -24,7 +24,6 @@ type (
 	ModelDefinition struct {
 		ID              string
 		Name            string
-		Provider        string
 		ContextLength   int
 		MaxOutputTokens int
 		Supports        SupportedParameters
@@ -87,6 +86,13 @@ func (r *Registry) Lookup(modelID string) (ModelDefinition, bool) {
 		return *m, true
 	}
 	return ModelDefinition{}, false
+}
+
+// Provider returns the provider prefix from the model ID (e.g. "anthropic"
+// from "anthropic/claude-opus-4.6").
+func (m *ModelDefinition) Provider() string {
+	provider, _, _ := strings.Cut(m.ID, "/")
+	return provider
 }
 
 func (r *Registry) index(m *ModelDefinition) {
