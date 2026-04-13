@@ -450,7 +450,7 @@ func coreLoop(ctx context.Context, startAgent *Agent, inputMessages []llm.Messag
 							s.logger.ErrorCtx(ctx, "cannot save checkpoint", log.Error(saveErr))
 						}
 					}
-					return s.finishRun(ctx, nil, &SuspendedError{RunID: s.opts.runID})
+					return s.finishRun(ctx, nil, &SuspendedError{RunID: s.opts.runID, Checkpoint: outerCP})
 				}
 
 				if nae, ok := errors.AsType[*needsApprovalError](err); ok {
@@ -854,7 +854,7 @@ func executeParallel(
 			continue
 		}
 		se, ok := errors.AsType[*SuspendedError](entry.err)
-		if ok && se.Checkpoint != nil {
+		if ok {
 			innerCheckpoints := make(map[string]*Checkpoint)
 			var completed []CompletedCall
 
