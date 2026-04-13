@@ -152,7 +152,9 @@ func handleConnectorComplete(
 
 		connection, state, err := connectorRegistry.CompleteWithState(r.Context(), provider, r)
 		if err != nil {
-			panic(fmt.Errorf("cannot complete connector: %w", err))
+			logger.ErrorCtx(r.Context(), "cannot complete connector", log.Error(err))
+			httpserver.RenderError(w, http.StatusInternalServerError, fmt.Errorf("internal error"))
+			return
 		}
 
 		organizationID, err := gid.ParseGID(state.OrganizationID)
@@ -184,7 +186,9 @@ func handleConnectorComplete(
 				},
 			)
 			if err != nil {
-				panic(fmt.Errorf("cannot reconnect connector: %w", err))
+				logger.ErrorCtx(r.Context(), "cannot reconnect connector", log.Error(err))
+				httpserver.RenderError(w, http.StatusInternalServerError, fmt.Errorf("internal error"))
+				return
 			}
 		} else {
 			cnnctr, err = svc.Connectors.Create(
@@ -197,7 +201,9 @@ func handleConnectorComplete(
 				},
 			)
 			if err != nil {
-				panic(fmt.Errorf("cannot create connector: %w", err))
+				logger.ErrorCtx(r.Context(), "cannot create connector", log.Error(err))
+				httpserver.RenderError(w, http.StatusInternalServerError, fmt.Errorf("internal error"))
+				return
 			}
 		}
 

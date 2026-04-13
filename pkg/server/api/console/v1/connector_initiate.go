@@ -116,7 +116,9 @@ func handleConnectorInitiate(
 
 		redirectURL, err := connectorRegistry.Initiate(r.Context(), provider, organizationID, opts, r)
 		if err != nil {
-			panic(fmt.Errorf("cannot initiate connector: %w", err))
+			logger.ErrorCtx(r.Context(), "cannot initiate connector", log.Error(err))
+			httpserver.RenderError(w, http.StatusInternalServerError, fmt.Errorf("internal error"))
+			return
 		}
 
 		http.Redirect(w, r, redirectURL, http.StatusSeeOther)
@@ -158,4 +160,3 @@ func loadExistingConnector(
 	}
 	return found, err
 }
-
