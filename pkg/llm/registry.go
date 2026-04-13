@@ -19,8 +19,6 @@ import (
 	"sync"
 )
 
-//go:generate go run go.probo.inc/probo/internal/cmd/genmodels
-
 type (
 	// ModelDefinition describes a model's capabilities and limits.
 	ModelDefinition struct {
@@ -61,11 +59,11 @@ var (
 )
 
 // NewRegistry builds a registry from the given model definitions.
-func NewRegistry(models []ModelDefinition) *Registry {
+func NewRegistry(models map[string]ModelDefinition) *Registry {
 	r := &Registry{byID: make(map[string]*ModelDefinition, len(models)*3)}
-	for i := range models {
-		m := &models[i]
-		r.index(m)
+	for id, m := range models {
+		m.ID = id
+		r.index(&m)
 	}
 	return r
 }

@@ -118,7 +118,7 @@ func main() {
 
 package llm
 
-var generatedModels = []ModelDefinition{
+var generatedModels = map[string]ModelDefinition{
 `,
 		iscHeader,
 		openRouterURL,
@@ -134,8 +134,7 @@ var generatedModels = []ModelDefinition{
 
 		fmt.Fprintf(
 			&buf,
-			`	{
-		ID:              %q,
+			`	%q: {
 		Name:            %q,
 		Provider:        %q,
 		ContextLength:   %d,
