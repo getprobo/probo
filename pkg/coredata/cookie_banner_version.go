@@ -45,6 +45,7 @@ type (
 
 	CookieBannerVersion struct {
 		ID             gid.GID                  `db:"id"`
+		OrganizationID gid.GID                  `db:"organization_id"`
 		CookieBannerID gid.GID                  `db:"cookie_banner_id"`
 		Version        int                      `db:"version"`
 		State          CookieBannerVersionState `db:"state"`
@@ -66,23 +67,7 @@ func (v *CookieBannerVersion) CursorKey(field CookieBannerVersionOrderField) pag
 }
 
 func (v *CookieBannerVersion) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
-	q := `
-SELECT cb.organization_id
-FROM cookie_banner_versions cbv
-JOIN cookie_banners cb ON cbv.cookie_banner_id = cb.id
-WHERE cbv.id = $1
-LIMIT 1;
-`
-
-	var organizationID gid.GID
-	if err := conn.QueryRow(ctx, q, v.ID).Scan(&organizationID); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, ErrResourceNotFound
-		}
-		return nil, fmt.Errorf("cannot query cookie banner version authorization attributes: %w", err)
-	}
-
-	return map[string]string{"organization_id": organizationID.String()}, nil
+	return map[string]string{"organization_id": v.OrganizationID.String()}, nil
 }
 
 func (v *CookieBannerVersion) GetSnapshot() (CookieBannerVersionSnapshot, error) {
@@ -111,6 +96,7 @@ func (v *CookieBannerVersion) LoadByID(
 	q := `
 SELECT
 	id,
+	organization_id,
 	cookie_banner_id,
 	version,
 	state,
@@ -158,6 +144,7 @@ func (v *CookieBannerVersions) LoadByCookieBannerID(
 	q := `
 SELECT
 	id,
+	organization_id,
 	cookie_banner_id,
 	version,
 	state,
@@ -234,6 +221,7 @@ func (v *CookieBannerVersion) LoadByCookieBannerIDAndVersion(
 	q := `
 SELECT
 	id,
+	organization_id,
 	cookie_banner_id,
 	version,
 	state,
@@ -284,6 +272,7 @@ func (v *CookieBannerVersion) LoadLatestByCookieBannerID(
 	q := `
 SELECT
 	id,
+	organization_id,
 	cookie_banner_id,
 	version,
 	state,
@@ -362,6 +351,7 @@ func (v *CookieBannerVersion) Insert(
 INSERT INTO cookie_banner_versions (
 	id,
 	tenant_id,
+	organization_id,
 	cookie_banner_id,
 	version,
 	state,
@@ -371,6 +361,7 @@ INSERT INTO cookie_banner_versions (
 ) VALUES (
 	@id,
 	@tenant_id,
+	@organization_id,
 	@cookie_banner_id,
 	@version,
 	@state,
@@ -383,6 +374,7 @@ INSERT INTO cookie_banner_versions (
 	args := pgx.StrictNamedArgs{
 		"id":               v.ID,
 		"tenant_id":        scope.GetTenantID(),
+		"organization_id":  v.OrganizationID,
 		"cookie_banner_id": v.CookieBannerID,
 		"version":          v.Version,
 		"state":            v.State,

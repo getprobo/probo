@@ -17,7 +17,6 @@ package coredata
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"maps"
 	"time"
@@ -31,6 +30,7 @@ import (
 type (
 	CookieConsentRecord struct {
 		ID                    gid.GID             `db:"id"`
+		OrganizationID        gid.GID             `db:"organization_id"`
 		CookieBannerID        gid.GID             `db:"cookie_banner_id"`
 		CookieBannerVersionID gid.GID             `db:"cookie_banner_version_id"`
 		VisitorID             string              `db:"visitor_id"`
@@ -54,23 +54,7 @@ func (r *CookieConsentRecord) CursorKey(field CookieConsentRecordOrderField) pag
 }
 
 func (r *CookieConsentRecord) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
-	q := `
-SELECT cb.organization_id
-FROM cookie_consent_records cr
-JOIN cookie_banners cb ON cr.cookie_banner_id = cb.id
-WHERE cr.id = $1
-LIMIT 1;
-`
-
-	var organizationID gid.GID
-	if err := conn.QueryRow(ctx, q, r.ID).Scan(&organizationID); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, ErrResourceNotFound
-		}
-		return nil, fmt.Errorf("cannot query consent record authorization attributes: %w", err)
-	}
-
-	return map[string]string{"organization_id": organizationID.String()}, nil
+	return map[string]string{"organization_id": r.OrganizationID.String()}, nil
 }
 
 func (r *CookieConsentRecords) LoadByCookieBannerID(
@@ -84,6 +68,7 @@ func (r *CookieConsentRecords) LoadByCookieBannerID(
 	q := `
 SELECT
 	id,
+	organization_id,
 	cookie_banner_id,
 	cookie_banner_version_id,
 	visitor_id,
@@ -166,6 +151,7 @@ func (r *CookieConsentRecord) Insert(
 INSERT INTO cookie_consent_records (
 	id,
 	tenant_id,
+	organization_id,
 	cookie_banner_id,
 	cookie_banner_version_id,
 	visitor_id,
@@ -177,6 +163,7 @@ INSERT INTO cookie_consent_records (
 ) VALUES (
 	@id,
 	@tenant_id,
+	@organization_id,
 	@cookie_banner_id,
 	@cookie_banner_version_id,
 	@visitor_id,
@@ -191,6 +178,7 @@ INSERT INTO cookie_consent_records (
 	args := pgx.StrictNamedArgs{
 		"id":                       r.ID,
 		"tenant_id":                scope.GetTenantID(),
+		"organization_id":          r.OrganizationID,
 		"cookie_banner_id":         r.CookieBannerID,
 		"cookie_banner_version_id": r.CookieBannerVersionID,
 		"visitor_id":               r.VisitorID,

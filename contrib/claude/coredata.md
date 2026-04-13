@@ -24,14 +24,28 @@ type (
 
 Use pointer types (`*T`) for nullable database columns.
 
+## Denormalized `organization_id`
+
+Every entity that belongs to an organization carries its own `organization_id` column and Go field — even when the organization can be inferred by walking a foreign key chain. This avoids JOIN queries in `AuthorizationAttributes`, which is called on every authorized request.
+
+When creating a child entity, copy `OrganizationID` from its parent (e.g. from the banner when creating a category or version). The `AuthorizationAttributes` method then returns the field directly without any database query:
+
+```go
+func (c *CookieCategory) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
+	return map[string]string{"organization_id": c.OrganizationID.String()}, nil
+}
+```
+
 ## Scoper interface
 
 `Scoper` provides tenant isolation. Two implementations:
 
-| Type | Constructor | `SQLFragment()` | `GetTenantID()` | Use case |
-|------|-------------|-----------------|-----------------|----------|
-| `Scope` | `NewScope(tenantID)` or `NewScopeFromObjectID(gid)` | `"tenant_id = @tenant_id"` | Returns tenant ID | Multi-tenant queries (default) |
-| `NoScope` | `NewNoScope()` | `"TRUE"` | **Panics** — never call | Cross-tenant / administrative queries |
+
+| Type      | Constructor                                         | `SQLFragment()`            | `GetTenantID()`         | Use case                              |
+| --------- | --------------------------------------------------- | -------------------------- | ----------------------- | ------------------------------------- |
+| `Scope`   | `NewScope(tenantID)` or `NewScopeFromObjectID(gid)` | `"tenant_id = @tenant_id"` | Returns tenant ID       | Multi-tenant queries (default)        |
+| `NoScope` | `NewNoScope()`                                      | `"TRUE"`                   | **Panics** — never call | Cross-tenant / administrative queries |
+
 
 Always inject `tenant_id` at INSERT time using `scope.GetTenantID()`, never from the struct.
 
@@ -63,17 +77,19 @@ maps.Copy(args, cursor.SQLArguments())
 
 ## Standard method signatures
 
-| Method | Receiver | Returns | Purpose |
-|--------|----------|---------|---------|
-| `LoadByID(ctx, conn, scope, id)` | `*Entity` | `error` | Single entity by ID |
-| `LoadBy*(ctx, conn, scope, key)` | `*Entity` | `error` | Single entity by unique key |
-| `LoadAllBy*(ctx, conn, scope, parentID, cursor, filter)` | `*Entities` | `error` | Paginated list |
-| `CountBy*(ctx, conn, scope, parentID, filter)` | `*Entities` | `(int, error)` | Count matching rows |
-| `Insert(ctx, conn, scope)` | `*Entity` | `error` | Insert, uses `scope.GetTenantID()` |
-| `Update(ctx, conn, scope)` | `*Entity` | `error` | Update with `RETURNING` |
-| `Delete(ctx, conn, scope)` | `*Entity` | `error` | Delete entity |
-| `CursorKey(orderField)` | `*Entity` | `page.CursorKey` | Cursor for pagination |
-| `AuthorizationAttributes(ctx, conn)` | `*Entity` | `(map[string]string, error)` | Attributes for IAM policy evaluation |
+
+| Method                                                   | Receiver    | Returns                      | Purpose                              |
+| -------------------------------------------------------- | ----------- | ---------------------------- | ------------------------------------ |
+| `LoadByID(ctx, conn, scope, id)`                         | `*Entity`   | `error`                      | Single entity by ID                  |
+| `LoadBy*(ctx, conn, scope, key)`                         | `*Entity`   | `error`                      | Single entity by unique key          |
+| `LoadAllBy*(ctx, conn, scope, parentID, cursor, filter)` | `*Entities` | `error`                      | Paginated list                       |
+| `CountBy*(ctx, conn, scope, parentID, filter)`           | `*Entities` | `(int, error)`               | Count matching rows                  |
+| `Insert(ctx, conn, scope)`                               | `*Entity`   | `error`                      | Insert, uses `scope.GetTenantID()`   |
+| `Update(ctx, conn, scope)`                               | `*Entity`   | `error`                      | Update with `RETURNING`              |
+| `Delete(ctx, conn, scope)`                               | `*Entity`   | `error`                      | Delete entity                        |
+| `CursorKey(orderField)`                                  | `*Entity`   | `page.CursorKey`             | Cursor for pagination                |
+| `AuthorizationAttributes(ctx, conn)`                     | `*Entity`   | `(map[string]string, error)` | Attributes for IAM policy evaluation |
+
 
 ## Row collection
 
@@ -171,3 +187,4 @@ Files in `pkg/coredata/migrations/` use timestamp naming: `YYYYMMDDTHHMMSSZ.sql`
 3. **Order field file** (`entity_order_field.go`) — order field type, constants, `Column`, `IsValid`, marshaling
 4. **Entity type constant** — add to `entity_type_reg.go` and `NewEntityFromID`
 5. **Migration** — `YYYYMMDDTHHMMSSZ.sql` with CREATE TABLE
+

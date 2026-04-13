@@ -39,6 +39,7 @@ type (
 
 	CookieCategory struct {
 		ID             gid.GID     `db:"id"`
+		OrganizationID gid.GID     `db:"organization_id"`
 		CookieBannerID gid.GID     `db:"cookie_banner_id"`
 		Name           string      `db:"name"`
 		Description    string      `db:"description"`
@@ -77,23 +78,7 @@ func (c *CookieCategory) CursorKey(field CookieCategoryOrderField) page.CursorKe
 }
 
 func (c *CookieCategory) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
-	q := `
-SELECT cb.organization_id
-FROM cookie_categories cc
-JOIN cookie_banners cb ON cc.cookie_banner_id = cb.id
-WHERE cc.id = $1
-LIMIT 1;
-`
-
-	var organizationID gid.GID
-	if err := conn.QueryRow(ctx, q, c.ID).Scan(&organizationID); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, ErrResourceNotFound
-		}
-		return nil, fmt.Errorf("cannot query cookie category authorization attributes: %w", err)
-	}
-
-	return map[string]string{"organization_id": organizationID.String()}, nil
+	return map[string]string{"organization_id": c.OrganizationID.String()}, nil
 }
 
 func (c *CookieCategory) LoadByID(
@@ -105,6 +90,7 @@ func (c *CookieCategory) LoadByID(
 	q := `
 SELECT
 	id,
+	organization_id,
 	cookie_banner_id,
 	name,
 	description,
@@ -154,6 +140,7 @@ func (c *CookieCategories) LoadByCookieBannerID(
 	q := `
 SELECT
 	id,
+	organization_id,
 	cookie_banner_id,
 	name,
 	description,
@@ -230,6 +217,7 @@ func (c *CookieCategories) LoadAllByCookieBannerID(
 	q := `
 SELECT
 	id,
+	organization_id,
 	cookie_banner_id,
 	name,
 	description,
@@ -272,6 +260,7 @@ func (c *CookieCategory) Insert(
 INSERT INTO cookie_categories (
 	id,
 	tenant_id,
+	organization_id,
 	cookie_banner_id,
 	name,
 	description,
@@ -283,6 +272,7 @@ INSERT INTO cookie_categories (
 ) VALUES (
 	@id,
 	@tenant_id,
+	@organization_id,
 	@cookie_banner_id,
 	@name,
 	@description,
@@ -297,6 +287,7 @@ INSERT INTO cookie_categories (
 	args := pgx.StrictNamedArgs{
 		"id":               c.ID,
 		"tenant_id":        scope.GetTenantID(),
+		"organization_id":  c.OrganizationID,
 		"cookie_banner_id": c.CookieBannerID,
 		"name":             c.Name,
 		"description":      c.Description,
@@ -333,6 +324,7 @@ WHERE
 	AND id = @id
 RETURNING
 	id,
+	organization_id,
 	cookie_banner_id,
 	name,
 	description,

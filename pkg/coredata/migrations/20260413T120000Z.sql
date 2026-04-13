@@ -31,6 +31,7 @@ CREATE TYPE cookie_banner_version_state AS ENUM ('DRAFT', 'PUBLISHED');
 CREATE TABLE cookie_banner_versions (
     id TEXT PRIMARY KEY,
     tenant_id TEXT NOT NULL,
+    organization_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
     cookie_banner_id TEXT NOT NULL REFERENCES cookie_banners(id) ON DELETE CASCADE,
     version INTEGER NOT NULL,
     state cookie_banner_version_state NOT NULL,
@@ -42,6 +43,10 @@ CREATE TABLE cookie_banner_versions (
         UNIQUE (cookie_banner_id, version)
 );
 
--- Add version reference to consent records
+-- Denormalize organization_id onto categories and consent records
+ALTER TABLE cookie_categories
+    ADD COLUMN organization_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE;
+
 ALTER TABLE cookie_consent_records
+    ADD COLUMN organization_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
     ADD COLUMN cookie_banner_version_id TEXT NOT NULL REFERENCES cookie_banner_versions(id);

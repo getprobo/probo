@@ -206,6 +206,7 @@ func (s *Service) ensureDraftVersion(
 	now := time.Now()
 	version := &coredata.CookieBannerVersion{
 		ID:             gid.New(scope.GetTenantID(), coredata.CookieBannerVersionEntityType),
+		OrganizationID: banner.OrganizationID,
 		CookieBannerID: banner.ID,
 		State:          coredata.CookieBannerVersionStateDraft,
 		CreatedAt:      now,
@@ -265,6 +266,7 @@ func (s *Service) CreateCookieBanner(
 			for _, dc := range defaultCategories {
 				category := &coredata.CookieCategory{
 					ID:             gid.New(scope.GetTenantID(), coredata.CookieCategoryEntityType),
+					OrganizationID: banner.OrganizationID,
 					CookieBannerID: banner.ID,
 					Name:           dc.Name,
 					Description:    dc.Description,
@@ -591,6 +593,14 @@ func (s *Service) CreateCookieCategory(
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
+			var banner coredata.CookieBanner
+			if err := banner.LoadByID(ctx, tx, scope, req.CookieBannerID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return ErrBannerNotFound
+				}
+				return fmt.Errorf("cannot load cookie banner: %w", err)
+			}
+
 			now := time.Now()
 
 			cookies := req.Cookies
@@ -600,6 +610,7 @@ func (s *Service) CreateCookieCategory(
 
 			category = &coredata.CookieCategory{
 				ID:             gid.New(scope.GetTenantID(), coredata.CookieCategoryEntityType),
+				OrganizationID: banner.OrganizationID,
 				CookieBannerID: req.CookieBannerID,
 				Name:           req.Name,
 				Description:    req.Description,
@@ -612,11 +623,6 @@ func (s *Service) CreateCookieCategory(
 
 			if err := category.Insert(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot insert cookie category: %w", err)
-			}
-
-			var banner coredata.CookieBanner
-			if err := banner.LoadByID(ctx, tx, scope, req.CookieBannerID); err != nil {
-				return fmt.Errorf("cannot load cookie banner: %w", err)
 			}
 
 			var categories coredata.CookieCategories
@@ -934,15 +940,16 @@ func (s *Service) CreateCookieConsentRecord(
 			}
 
 			record = &coredata.CookieConsentRecord{
-				ID:                     gid.New(scope.GetTenantID(), coredata.CookieConsentRecordEntityType),
-				CookieBannerID:         req.CookieBannerID,
-				CookieBannerVersionID:  publishedVersion.ID,
-				VisitorID:              req.VisitorID,
-				IPAddress:              req.IPAddress,
-				UserAgent:              req.UserAgent,
-				ConsentData:            req.ConsentData,
-				Action:                 req.Action,
-				CreatedAt:              time.Now(),
+				ID:                    gid.New(scope.GetTenantID(), coredata.CookieConsentRecordEntityType),
+				OrganizationID:        publishedVersion.OrganizationID,
+				CookieBannerID:        req.CookieBannerID,
+				CookieBannerVersionID: publishedVersion.ID,
+				VisitorID:             req.VisitorID,
+				IPAddress:             req.IPAddress,
+				UserAgent:             req.UserAgent,
+				ConsentData:           req.ConsentData,
+				Action:                req.Action,
+				CreatedAt:             time.Now(),
 			}
 
 			if err := record.Insert(ctx, tx, scope); err != nil {
