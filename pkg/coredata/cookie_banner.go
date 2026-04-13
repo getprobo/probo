@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
@@ -118,10 +119,10 @@ LIMIT 1;
 	return nil
 }
 
-func (b *CookieBanner) LoadActiveByID(
+func (b *CookieBanner) LoadActiveByOrigin(
 	ctx context.Context,
 	conn pg.Querier,
-	bannerID gid.GID,
+	origin string,
 ) error {
 	q := `
 SELECT
@@ -138,12 +139,12 @@ SELECT
 FROM
 	cookie_banners
 WHERE
-	id = @banner_id
+	origin = @origin
 	AND state = 'ACTIVE'
 LIMIT 1;
 `
 
-	args := pgx.StrictNamedArgs{"banner_id": bannerID}
+	args := pgx.StrictNamedArgs{"origin": origin}
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -298,6 +299,12 @@ INSERT INTO cookie_banners (
 
 	_, err := tx.Exec(ctx, q, args)
 	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) {
+			if pgErr.Code == "23505" && pgErr.ConstraintName == "idx_cookie_banners_unique_active_origin" {
+				return ErrResourceAlreadyExists
+			}
+		}
 		return fmt.Errorf("cannot insert cookie banner: %w", err)
 	}
 
@@ -340,6 +347,12 @@ WHERE
 
 	result, err := tx.Exec(ctx, q, args)
 	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) {
+			if pgErr.Code == "23505" && pgErr.ConstraintName == "idx_cookie_banners_unique_active_origin" {
+				return ErrResourceAlreadyExists
+			}
+		}
 		return fmt.Errorf("cannot update cookie banner: %w", err)
 	}
 

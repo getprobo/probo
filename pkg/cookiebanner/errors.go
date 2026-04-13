@@ -25,4 +25,5 @@ var (
 	ErrVersionNotPublished          = errors.New("cookie banner version is not published")
 	ErrNoDraftVersion               = errors.New("no draft cookie banner version to publish")
 	ErrCannotDeleteRequiredCategory = errors.New("cannot delete required cookie category")
+	ErrOriginAlreadyInUse           = errors.New("origin is already used by another active cookie banner")
 )

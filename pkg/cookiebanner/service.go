@@ -100,7 +100,7 @@ func (r *CreateCookieBannerRequest) Validate() error {
 
 	v.Check(r.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
 	v.Check(r.Name, "name", validator.Required(), validator.SafeTextNoNewLine(255))
-	v.Check(r.Origin, "origin", validator.Required(), validator.NotEmpty())
+	v.Check(r.Origin, "origin", validator.Required(), validator.Origin())
 	v.Check(r.PrivacyPolicyURL, "privacy_policy_url", validator.Required(), validator.URL())
 	v.Check(r.ConsentExpiryDays, "consent_expiry_days", validator.Required(), validator.Min(1))
 	v.Check(r.ConsentMode, "consent_mode", validator.Required(), validator.OneOfSlice(coredata.CookieConsentModes()))
@@ -113,7 +113,7 @@ func (r *UpdateCookieBannerRequest) Validate() error {
 
 	v.Check(r.CookieBannerID, "cookie_banner_id", validator.Required(), validator.GID(coredata.CookieBannerEntityType))
 	v.Check(r.Name, "name", validator.SafeTextNoNewLine(255))
-	v.Check(r.Origin, "origin", validator.NotEmpty())
+	v.Check(r.Origin, "origin", validator.Origin())
 	v.Check(r.PrivacyPolicyURL, "privacy_policy_url", validator.URL())
 	v.Check(r.ConsentExpiryDays, "consent_expiry_days", validator.Min(1))
 	v.Check(r.ConsentMode, "consent_mode", validator.OneOfSlice(coredata.CookieConsentModes()))
@@ -260,6 +260,9 @@ func (s *Service) CreateCookieBanner(
 			}
 
 			if err := banner.Insert(ctx, tx, scope); err != nil {
+				if errors.Is(err, coredata.ErrResourceAlreadyExists) {
+					return ErrOriginAlreadyInUse
+				}
 				return fmt.Errorf("cannot insert cookie banner: %w", err)
 			}
 
@@ -425,6 +428,9 @@ func (s *Service) UpdateCookieBanner(
 			banner.UpdatedAt = time.Now()
 
 			if err := banner.Update(ctx, tx, scope); err != nil {
+				if errors.Is(err, coredata.ErrResourceAlreadyExists) {
+					return ErrOriginAlreadyInUse
+				}
 				return fmt.Errorf("cannot update cookie banner: %w", err)
 			}
 
@@ -512,6 +518,9 @@ func (s *Service) ActivateCookieBanner(
 			banner.UpdatedAt = time.Now()
 
 			if err := banner.Update(ctx, tx, scope); err != nil {
+				if errors.Is(err, coredata.ErrResourceAlreadyExists) {
+					return ErrOriginAlreadyInUse
+				}
 				return fmt.Errorf("cannot update cookie banner: %w", err)
 			}
 

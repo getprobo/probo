@@ -128,6 +128,42 @@ func TestHTTPSUrl(t *testing.T) {
 	})
 }
 
+func TestOrigin(t *testing.T) {
+	tests := []struct {
+		name      string
+		value     any
+		wantError bool
+	}{
+		{"valid https origin", "https://example.com", false},
+		{"valid http origin", "http://example.com", false},
+		{"valid with port", "http://localhost:3000", false},
+		{"valid https with port", "https://example.com:8443", false},
+		{"valid with trailing slash", "https://example.com/", false},
+		{"invalid - has path", "https://example.com/path", true},
+		{"invalid - has query", "https://example.com?q=1", true},
+		{"invalid - has fragment", "https://example.com#section", true},
+		{"invalid - has userinfo", "https://user:pass@example.com", true},
+		{"invalid - no scheme", "example.com", true},
+		{"invalid - ftp scheme", "ftp://example.com", true},
+		{"invalid - no host", "https://", true},
+		{"empty string", "", false},
+		{"nil pointer", (*string)(nil), false},
+		{"non-string", 123, true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := Origin()(tt.value)
+			if (err != nil) != tt.wantError {
+				t.Errorf("Origin() error = %v, wantError %v", err, tt.wantError)
+			}
+			if err != nil && err.Code != ErrorCodeInvalidFormat {
+				t.Errorf("Expected error code %s, got %s", ErrorCodeInvalidFormat, err.Code)
+			}
+		})
+	}
+}
+
 func TestDomain(t *testing.T) {
 	t.Run("valid domain", func(t *testing.T) {
 		str := "example.com"
