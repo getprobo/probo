@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.166.0] - 2026-04-13
+
+### Added
+
+- Add membership and host to user webhook payload
+- Add document resource to n8n node and MCP sendSigningNotifications tool
+- Add document CLI commands
+- Add CookieBanner service and models
+
+### Fixed
+
+- Fix missing fields in MCP type serializers
+
 ## [0.165.3] - 2026-04-10
 
 ### Fixed
