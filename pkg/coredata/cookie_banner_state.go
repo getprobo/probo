@@ -22,16 +22,14 @@ import (
 type CookieBannerState string
 
 const (
-	CookieBannerStateDraft     CookieBannerState = "DRAFT"
-	CookieBannerStatePublished CookieBannerState = "PUBLISHED"
-	CookieBannerStateDisabled  CookieBannerState = "DISABLED"
+	CookieBannerStateActive   CookieBannerState = "ACTIVE"
+	CookieBannerStateInactive CookieBannerState = "INACTIVE"
 )
 
 func CookieBannerStates() []CookieBannerState {
 	return []CookieBannerState{
-		CookieBannerStateDraft,
-		CookieBannerStatePublished,
-		CookieBannerStateDisabled,
+		CookieBannerStateActive,
+		CookieBannerStateInactive,
 	}
 }
 
@@ -51,12 +49,10 @@ func (s *CookieBannerState) Scan(value any) error {
 	}
 
 	switch CookieBannerState(v) {
-	case CookieBannerStateDraft:
-		*s = CookieBannerStateDraft
-	case CookieBannerStatePublished:
-		*s = CookieBannerStatePublished
-	case CookieBannerStateDisabled:
-		*s = CookieBannerStateDisabled
+	case CookieBannerStateActive:
+		*s = CookieBannerStateActive
+	case CookieBannerStateInactive:
+		*s = CookieBannerStateInactive
 	default:
 		return fmt.Errorf("invalid CookieBannerState value: %q", v)
 	}
@@ -65,9 +61,8 @@ func (s *CookieBannerState) Scan(value any) error {
 
 func (s CookieBannerState) Value() (driver.Value, error) {
 	switch s {
-	case CookieBannerStateDraft,
-		CookieBannerStatePublished,
-		CookieBannerStateDisabled:
+	case CookieBannerStateActive,
+		CookieBannerStateInactive:
 		return string(s), nil
 	default:
 		return nil, fmt.Errorf("invalid CookieBannerState: %s", s)

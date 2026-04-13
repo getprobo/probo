@@ -101,6 +101,7 @@ const (
 	CookieBannerEntityType                     uint16 = 75
 	CookieCategoryEntityType                   uint16 = 76
 	CookieConsentRecordEntityType              uint16 = 77
+	CookieBannerVersionEntityType              uint16 = 78
 )
 
 func NewEntityFromID(id gid.GID) (any, bool) {
@@ -253,6 +254,8 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &CookieCategory{ID: id}, true
 	case CookieConsentRecordEntityType:
 		return &CookieConsentRecord{ID: id}, true
+	case CookieBannerVersionEntityType:
+		return &CookieBannerVersion{ID: id}, true
 	default:
 		return nil, false
 	}

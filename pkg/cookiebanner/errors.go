@@ -19,8 +19,9 @@ import "errors"
 var (
 	ErrBannerNotFound               = errors.New("cookie banner not found")
 	ErrCategoryNotFound             = errors.New("cookie category not found")
-	ErrBannerNotDraft               = errors.New("cookie banner is not in draft state")
-	ErrBannerAlreadyPublished       = errors.New("cookie banner is already published")
-	ErrBannerAlreadyDisabled        = errors.New("cookie banner is already disabled")
+	ErrVersionNotFound              = errors.New("cookie banner version not found")
+	ErrBannerAlreadyActive          = errors.New("cookie banner is already active")
+	ErrBannerAlreadyInactive        = errors.New("cookie banner is already inactive")
+	ErrVersionNotPublished          = errors.New("cookie banner version is not published")
 	ErrCannotDeleteRequiredCategory = errors.New("cannot delete required cookie category")
 )

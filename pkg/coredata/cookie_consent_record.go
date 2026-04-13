@@ -30,14 +30,15 @@ import (
 
 type (
 	CookieConsentRecord struct {
-		ID             gid.GID             `db:"id"`
-		CookieBannerID gid.GID             `db:"cookie_banner_id"`
-		VisitorID      string              `db:"visitor_id"`
-		IPAddress      *string             `db:"ip_address"`
-		UserAgent      *string             `db:"user_agent"`
-		ConsentData    json.RawMessage     `db:"consent_data"`
-		Action         CookieConsentAction `db:"action"`
-		CreatedAt      time.Time           `db:"created_at"`
+		ID                    gid.GID             `db:"id"`
+		CookieBannerID        gid.GID             `db:"cookie_banner_id"`
+		CookieBannerVersionID gid.GID             `db:"cookie_banner_version_id"`
+		VisitorID             string              `db:"visitor_id"`
+		IPAddress             *string             `db:"ip_address"`
+		UserAgent             *string             `db:"user_agent"`
+		ConsentData           json.RawMessage     `db:"consent_data"`
+		Action                CookieConsentAction `db:"action"`
+		CreatedAt             time.Time           `db:"created_at"`
 	}
 
 	CookieConsentRecords []*CookieConsentRecord
@@ -84,6 +85,7 @@ func (r *CookieConsentRecords) LoadByCookieBannerID(
 SELECT
 	id,
 	cookie_banner_id,
+	cookie_banner_version_id,
 	visitor_id,
 	ip_address,
 	user_agent,
@@ -165,6 +167,7 @@ INSERT INTO cookie_consent_records (
 	id,
 	tenant_id,
 	cookie_banner_id,
+	cookie_banner_version_id,
 	visitor_id,
 	ip_address,
 	user_agent,
@@ -175,6 +178,7 @@ INSERT INTO cookie_consent_records (
 	@id,
 	@tenant_id,
 	@cookie_banner_id,
+	@cookie_banner_version_id,
 	@visitor_id,
 	@ip_address,
 	@user_agent,
@@ -185,15 +189,16 @@ INSERT INTO cookie_consent_records (
 `
 
 	args := pgx.StrictNamedArgs{
-		"id":               r.ID,
-		"tenant_id":        scope.GetTenantID(),
-		"cookie_banner_id": r.CookieBannerID,
-		"visitor_id":       r.VisitorID,
-		"ip_address":       r.IPAddress,
-		"user_agent":       r.UserAgent,
-		"consent_data":     r.ConsentData,
-		"action":           r.Action,
-		"created_at":       r.CreatedAt,
+		"id":                       r.ID,
+		"tenant_id":                scope.GetTenantID(),
+		"cookie_banner_id":         r.CookieBannerID,
+		"cookie_banner_version_id": r.CookieBannerVersionID,
+		"visitor_id":               r.VisitorID,
+		"ip_address":               r.IPAddress,
+		"user_agent":               r.UserAgent,
+		"consent_data":             r.ConsentData,
+		"action":                   r.Action,
+		"created_at":               r.CreatedAt,
 	}
 
 	_, err := tx.Exec(ctx, q, args)

@@ -86,6 +86,7 @@ type (
 
 	CreateCookieConsentRecordRequest struct {
 		CookieBannerID gid.GID
+		Version        int
 		VisitorID      string
 		IPAddress      *string
 		UserAgent      *string
@@ -146,6 +147,7 @@ func (r *CreateCookieConsentRecordRequest) Validate() error {
 	v := validator.New()
 
 	v.Check(r.CookieBannerID, "cookie_banner_id", validator.Required(), validator.GID(coredata.CookieBannerEntityType))
+	v.Check(r.Version, "version", validator.Required(), validator.Min(1))
 	v.Check(r.VisitorID, "visitor_id", validator.Required(), validator.NotEmpty())
 	v.Check(r.Action, "action", validator.Required(), validator.OneOfSlice(coredata.CookieConsentActions()))
 
@@ -173,7 +175,7 @@ func (s *Service) CreateCookieBanner(
 				OrganizationID:    req.OrganizationID,
 				Name:              req.Name,
 				Origin:            req.Origin,
-				State:             coredata.CookieBannerStateDraft,
+				State:             coredata.CookieBannerStateActive,
 				PrivacyPolicyURL:  req.PrivacyPolicyURL,
 				ConsentExpiryDays: req.ConsentExpiryDays,
 				ConsentMode:       req.ConsentMode,
@@ -316,11 +318,6 @@ func (s *Service) UpdateCookieBanner(
 				return fmt.Errorf("cannot load cookie banner: %w", err)
 			}
 
-			// TODO: remove this guard once we add versioning.
-			if banner.State != coredata.CookieBannerStateDraft {
-				return ErrBannerNotDraft
-			}
-
 			if req.Name != nil {
 				banner.Name = *req.Name
 			}
@@ -353,7 +350,81 @@ func (s *Service) UpdateCookieBanner(
 	return &banner, nil
 }
 
-func (s *Service) PublishCookieBanner(
+func (s *Service) PublishCookieBannerVersion(
+	ctx context.Context,
+	scope coredata.Scoper,
+	bannerID gid.GID,
+) (*coredata.CookieBannerVersion, error) {
+	var version *coredata.CookieBannerVersion
+
+	err := s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			var banner coredata.CookieBanner
+			if err := banner.LoadByID(ctx, tx, scope, bannerID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return ErrBannerNotFound
+				}
+				return fmt.Errorf("cannot load cookie banner: %w", err)
+			}
+
+			var categories coredata.CookieCategories
+			if err := categories.LoadAllPublicByCookieBannerID(ctx, tx, bannerID); err != nil {
+				return fmt.Errorf("cannot load cookie categories: %w", err)
+			}
+
+			snapshotCategories := make([]coredata.CookieBannerVersionSnapshotCategory, len(categories))
+			for i, c := range categories {
+				snapshotCategories[i] = coredata.CookieBannerVersionSnapshotCategory{
+					Name:        c.Name,
+					Description: c.Description,
+					Required:    c.Required,
+					Cookies:     c.Cookies,
+				}
+			}
+
+			snapshot := coredata.CookieBannerVersionSnapshot{
+				PrivacyPolicyURL:  banner.PrivacyPolicyURL,
+				ConsentExpiryDays: banner.ConsentExpiryDays,
+				ConsentMode:       string(banner.ConsentMode),
+				Categories:        snapshotCategories,
+			}
+
+			now := time.Now()
+
+			version = &coredata.CookieBannerVersion{
+				ID:             gid.New(scope.GetTenantID(), coredata.CookieBannerVersionEntityType),
+				CookieBannerID: bannerID,
+				State:          coredata.CookieBannerVersionStatePublished,
+				CreatedAt:      now,
+				UpdatedAt:      now,
+			}
+
+			nextVersion, err := version.LoadNextVersion(ctx, tx, scope, bannerID)
+			if err != nil {
+				return fmt.Errorf("cannot determine next version: %w", err)
+			}
+			version.Version = nextVersion
+
+			if err := version.SetSnapshot(snapshot); err != nil {
+				return fmt.Errorf("cannot set snapshot: %w", err)
+			}
+
+			if err := version.Insert(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot insert cookie banner version: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return version, nil
+}
+
+func (s *Service) ActivateCookieBanner(
 	ctx context.Context,
 	scope coredata.Scoper,
 	bannerID gid.GID,
@@ -370,11 +441,11 @@ func (s *Service) PublishCookieBanner(
 				return fmt.Errorf("cannot load cookie banner: %w", err)
 			}
 
-			if banner.State == coredata.CookieBannerStatePublished {
-				return ErrBannerAlreadyPublished
+			if banner.State == coredata.CookieBannerStateActive {
+				return ErrBannerAlreadyActive
 			}
 
-			banner.State = coredata.CookieBannerStatePublished
+			banner.State = coredata.CookieBannerStateActive
 			banner.UpdatedAt = time.Now()
 
 			if err := banner.Update(ctx, tx, scope); err != nil {
@@ -391,7 +462,7 @@ func (s *Service) PublishCookieBanner(
 	return &banner, nil
 }
 
-func (s *Service) DisableCookieBanner(
+func (s *Service) DeactivateCookieBanner(
 	ctx context.Context,
 	scope coredata.Scoper,
 	bannerID gid.GID,
@@ -408,11 +479,11 @@ func (s *Service) DisableCookieBanner(
 				return fmt.Errorf("cannot load cookie banner: %w", err)
 			}
 
-			if banner.State == coredata.CookieBannerStateDisabled {
-				return ErrBannerAlreadyDisabled
+			if banner.State == coredata.CookieBannerStateInactive {
+				return ErrBannerAlreadyInactive
 			}
 
-			banner.State = coredata.CookieBannerStateDisabled
+			banner.State = coredata.CookieBannerStateInactive
 			banner.UpdatedAt = time.Now()
 
 			if err := banner.Update(ctx, tx, scope); err != nil {
@@ -443,10 +514,6 @@ func (s *Service) DeleteCookieBanner(
 					return ErrBannerNotFound
 				}
 				return fmt.Errorf("cannot load cookie banner: %w", err)
-			}
-
-			if banner.State != coredata.CookieBannerStateDraft {
-				return ErrBannerNotDraft
 			}
 
 			if err := banner.Delete(ctx, tx, scope); err != nil {
@@ -664,6 +731,86 @@ func (s *Service) DeleteCookieCategory(
 	)
 }
 
+func (s *Service) GetCookieBannerVersion(
+	ctx context.Context,
+	scope coredata.Scoper,
+	versionID gid.GID,
+) (*coredata.CookieBannerVersion, error) {
+	var version coredata.CookieBannerVersion
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := version.LoadByID(ctx, conn, scope, versionID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return ErrVersionNotFound
+				}
+				return fmt.Errorf("cannot load cookie banner version: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &version, nil
+}
+
+func (s *Service) ListCookieBannerVersionsForBanner(
+	ctx context.Context,
+	scope coredata.Scoper,
+	bannerID gid.GID,
+	cursor *page.Cursor[coredata.CookieBannerVersionOrderField],
+) (coredata.CookieBannerVersions, error) {
+	var versions coredata.CookieBannerVersions
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := versions.LoadByCookieBannerID(ctx, conn, scope, bannerID, cursor); err != nil {
+				return fmt.Errorf("cannot list cookie banner versions: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return versions, nil
+}
+
+func (s *Service) CountCookieBannerVersionsForBanner(
+	ctx context.Context,
+	scope coredata.Scoper,
+	bannerID gid.GID,
+) (int, error) {
+	var count int
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			var versions coredata.CookieBannerVersions
+			var err error
+
+			count, err = versions.CountByCookieBannerID(ctx, conn, scope, bannerID)
+			if err != nil {
+				return fmt.Errorf("cannot count cookie banner versions: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
 func (s *Service) CreateCookieConsentRecord(
 	ctx context.Context,
 	scope coredata.Scoper,
@@ -678,15 +825,28 @@ func (s *Service) CreateCookieConsentRecord(
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
+			var publishedVersion coredata.CookieBannerVersion
+			if err := publishedVersion.LoadByCookieBannerIDAndVersion(ctx, tx, scope, req.CookieBannerID, req.Version); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return ErrVersionNotFound
+				}
+				return fmt.Errorf("cannot load cookie banner version: %w", err)
+			}
+
+			if publishedVersion.State != coredata.CookieBannerVersionStatePublished {
+				return ErrVersionNotPublished
+			}
+
 			record = &coredata.CookieConsentRecord{
-				ID:             gid.New(scope.GetTenantID(), coredata.CookieConsentRecordEntityType),
-				CookieBannerID: req.CookieBannerID,
-				VisitorID:      req.VisitorID,
-				IPAddress:      req.IPAddress,
-				UserAgent:      req.UserAgent,
-				ConsentData:    req.ConsentData,
-				Action:         req.Action,
-				CreatedAt:      time.Now(),
+				ID:                     gid.New(scope.GetTenantID(), coredata.CookieConsentRecordEntityType),
+				CookieBannerID:         req.CookieBannerID,
+				CookieBannerVersionID:  publishedVersion.ID,
+				VisitorID:              req.VisitorID,
+				IPAddress:              req.IPAddress,
+				UserAgent:              req.UserAgent,
+				ConsentData:            req.ConsentData,
+				Action:                 req.Action,
+				CreatedAt:              time.Now(),
 			}
 
 			if err := record.Insert(ctx, tx, scope); err != nil {

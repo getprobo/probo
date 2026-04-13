@@ -118,7 +118,7 @@ LIMIT 1;
 	return nil
 }
 
-func (b *CookieBanner) LoadPublishedByID(
+func (b *CookieBanner) LoadActiveByID(
 	ctx context.Context,
 	conn pg.Querier,
 	bannerID gid.GID,
@@ -139,7 +139,7 @@ FROM
 	cookie_banners
 WHERE
 	id = @banner_id
-	AND state = 'PUBLISHED'
+	AND state = 'ACTIVE'
 LIMIT 1;
 `
 
