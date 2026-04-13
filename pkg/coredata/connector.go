@@ -147,7 +147,7 @@ func (c *Connector) LoadOneByOrganizationIDAndProvider(
 	}
 
 	// Widest-scope-wins, tiebreak by most recent updated_at.
-	sort.SliceStable(connectors, func(i, j int) bool {
+	sort.Slice(connectors, func(i, j int) bool {
 		ci, cj := connectorScopeCount(connectors[i]), connectorScopeCount(connectors[j])
 		if ci != cj {
 			return ci > cj

@@ -356,7 +356,8 @@ func (s *ConnectorService) Reconnect(
 				return fmt.Errorf("cannot reconnect connector: not an OAuth2 connector")
 			}
 
-			cnnctr.Connection = preserveConnectionFields(req.Connection, cnnctr.Connection)
+			preserveConnectionFields(req.Connection, cnnctr.Connection)
+			cnnctr.Connection = req.Connection
 			cnnctr.UpdatedAt = time.Now()
 
 			return cnnctr.Update(ctx, conn, s.svc.scope, s.svc.encryptionKey)
@@ -369,11 +370,11 @@ func (s *ConnectorService) Reconnect(
 	return cnnctr, nil
 }
 
-// preserveConnectionFields returns newConn with refresh token and Slack
-// webhook settings copied from oldConn when newConn omits them. Google
+// preserveConnectionFields copies refresh token and Slack webhook
+// settings from oldConn into newConn when newConn omits them. Google
 // omits refresh_token on incremental-auth reuse; a Slack access-review
 // reconnect with no incoming-webhook scope omits the webhook settings.
-func preserveConnectionFields(newConn, oldConn connector.Connection) connector.Connection {
+func preserveConnectionFields(newConn, oldConn connector.Connection) {
 	switch n := newConn.(type) {
 	case *connector.OAuth2Connection:
 		if o, ok := oldConn.(*connector.OAuth2Connection); ok {
@@ -393,5 +394,4 @@ func preserveConnectionFields(newConn, oldConn connector.Connection) connector.C
 			}
 		}
 	}
-	return newConn
 }

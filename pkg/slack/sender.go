@@ -160,7 +160,7 @@ func (s *Sender) sendMessage(ctx context.Context, tx pg.Querier, message *coreda
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, nil, fmt.Errorf("cannot send slack message: no connector configured for organization")
 		}
-		return nil, nil, fmt.Errorf("cannot load slack connector: %w", err)
+		return nil, nil, fmt.Errorf("cannot send slack message: %w", err)
 	}
 
 	if c.Connection == nil {
@@ -284,7 +284,7 @@ func (s *Sender) updateMessage(ctx context.Context, tx pg.Querier, updateMessage
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return fmt.Errorf("cannot update slack message: no connector configured for organization")
 		}
-		return fmt.Errorf("cannot load slack connector: %w", err)
+		return fmt.Errorf("cannot update slack message: %w", err)
 	}
 
 	if c.Connection == nil {

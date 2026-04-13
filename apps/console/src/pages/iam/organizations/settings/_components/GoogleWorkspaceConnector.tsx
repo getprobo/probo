@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { formatError, type GraphQLError, sprintf } from "@probo/helpers";
+import { sprintf } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import {
   Badge,
@@ -128,10 +128,7 @@ export function GoogleWorkspaceConnector(props: {
         if (errors?.length) {
           toast({
             title: __("Error"),
-            description: formatError(
-              __("Failed to disconnect Google Workspace"),
-              errors as GraphQLError[],
-            ),
+            description: errors.map((e) => e.message).join(", "),
             variant: "error",
           });
           return;
@@ -146,10 +143,7 @@ export function GoogleWorkspaceConnector(props: {
       onError(error) {
         toast({
           title: __("Error"),
-          description: formatError(
-            __("Failed to disconnect Google Workspace"),
-            error as GraphQLError,
-          ),
+          description: error.message,
           variant: "error",
         });
       },
@@ -179,10 +173,7 @@ export function GoogleWorkspaceConnector(props: {
         if (errors?.length) {
           toast({
             title: __("Error"),
-            description: formatError(
-              __("Failed to update excluded user names"),
-              errors as GraphQLError[],
-            ),
+            description: errors.map((e) => e.message).join(", "),
             variant: "error",
           });
           return;
@@ -196,10 +187,7 @@ export function GoogleWorkspaceConnector(props: {
       onError(error) {
         toast({
           title: __("Error"),
-          description: formatError(
-            __("Failed to update excluded user names"),
-            error as GraphQLError,
-          ),
+          description: error.message,
           variant: "error",
         });
       },

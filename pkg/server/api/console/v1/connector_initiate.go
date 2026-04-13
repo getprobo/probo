@@ -29,9 +29,7 @@ import (
 	"go.probo.inc/probo/pkg/server/api/authn"
 )
 
-var (
-	errInvalidReconnectConnector = errors.New("invalid reconnect connector")
-)
+var errInvalidReconnectConnector = errors.New("invalid reconnect connector")
 
 func handleConnectorInitiate(
 	logger *log.Logger,
@@ -53,7 +51,8 @@ func handleConnectorInitiate(
 
 		organizationID, err := gid.ParseGID(r.URL.Query().Get("organization_id"))
 		if err != nil {
-			panic(fmt.Errorf("cannot parse organization id: %w", err))
+			httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("invalid organization_id parameter"))
+			return
 		}
 
 		if authn.APIKeyFromContext(r.Context()) != nil {
@@ -100,7 +99,7 @@ func handleConnectorInitiate(
 				return
 			}
 			logger.ErrorCtx(r.Context(), "cannot look up existing connector", log.Error(err))
-			httpserver.RenderError(w, http.StatusInternalServerError, fmt.Errorf("cannot look up existing connector"))
+			httpserver.RenderError(w, http.StatusInternalServerError, fmt.Errorf("internal error"))
 			return
 		}
 
@@ -146,9 +145,6 @@ func loadExistingConnector(
 		if err != nil {
 			return nil, err
 		}
-		if err := validateReconnectConnector(found, organizationID, provider); err != nil {
-			return nil, err
-		}
 		return found, nil
 	}
 
@@ -163,32 +159,3 @@ func loadExistingConnector(
 	return found, err
 }
 
-func validateReconnectConnector(
-	c *coredata.Connector,
-	organizationID gid.GID,
-	provider string,
-) error {
-	if c == nil {
-		return fmt.Errorf("%w: connector not found", errInvalidReconnectConnector)
-	}
-
-	var connectorProvider coredata.ConnectorProvider
-	if err := connectorProvider.Scan(provider); err != nil {
-		return fmt.Errorf("%w: unsupported provider: %w", errInvalidReconnectConnector, err)
-	}
-
-	if c.OrganizationID != organizationID {
-		return fmt.Errorf("%w: organization mismatch", errInvalidReconnectConnector)
-	}
-	if c.Provider != connectorProvider {
-		return fmt.Errorf("%w: provider mismatch", errInvalidReconnectConnector)
-	}
-	if c.Protocol != coredata.ConnectorProtocolOAuth2 {
-		return fmt.Errorf("%w: not an OAuth2 connector", errInvalidReconnectConnector)
-	}
-	if c.Connection == nil {
-		return fmt.Errorf("%w: connector has nil connection", errInvalidReconnectConnector)
-	}
-
-	return nil
-}
