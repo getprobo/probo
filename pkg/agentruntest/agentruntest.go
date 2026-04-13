@@ -37,6 +37,7 @@ var (
 	pgOnce          sync.Once
 	pgInitErr       error
 	ensureTableOnce sync.Once
+	ensureTableErr  error
 )
 
 // PGClient returns a shared pg.Client connected to the test database.
@@ -99,10 +100,9 @@ func PGClient(t *testing.T) *pg.Client {
 func EnsureAgentRunsTable(t *testing.T, client *pg.Client) {
 	t.Helper()
 
-	var tableErr error
 	ensureTableOnce.Do(func() {
 		ctx := context.Background()
-		tableErr = client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		ensureTableErr = client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 			var exists bool
 			err := conn.QueryRow(
 				ctx,
@@ -125,7 +125,7 @@ func EnsureAgentRunsTable(t *testing.T, client *pg.Client) {
 			return err
 		})
 	})
-	require.NoError(t, tableErr, "cannot ensure agent_runs table")
+	require.NoError(t, ensureTableErr, "cannot ensure agent_runs table")
 }
 
 // CleanupAgentRun deletes an agent run by ID. Safe to call from
