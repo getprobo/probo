@@ -14,6 +14,8 @@
 
 package llm
 
+//go:generate go run go.probo.inc/probo/internal/cmd/genmodels
+
 import (
 	"strings"
 	"sync"
