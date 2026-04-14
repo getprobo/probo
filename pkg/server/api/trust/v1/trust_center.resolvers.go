@@ -15,6 +15,7 @@ import (
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/compliancepage"
 	"go.probo.inc/probo/pkg/server/api/trust/v1/schema"
@@ -609,6 +610,239 @@ func (r *subprocessorConnectionResolver) TotalCount(ctx context.Context, obj *ty
 	return 0, gqlutils.Internal(ctx)
 }
 
+// LogoFileURL is the resolver for the logoFileUrl field.
+func (r *trustCenterResolver) LogoFileURL(ctx context.Context, obj *types.TrustCenter) (*string, error) {
+	trustService := r.TrustService(ctx, obj.ID.TenantID())
+
+	return trustService.TrustCenters.GenerateLogoURL(ctx, obj.ID, 1*time.Hour)
+}
+
+// DarkLogoFileURL is the resolver for the darkLogoFileUrl field.
+func (r *trustCenterResolver) DarkLogoFileURL(ctx context.Context, obj *types.TrustCenter) (*string, error) {
+	trustService := r.TrustService(ctx, obj.ID.TenantID())
+
+	return trustService.TrustCenters.GenerateDarkLogoURL(ctx, obj.ID, 1*time.Hour)
+}
+
+// NonDisclosureAgreement is the resolver for the nonDisclosureAgreement field.
+func (r *trustCenterResolver) NonDisclosureAgreement(ctx context.Context, obj *types.TrustCenter) (*types.NonDisclosureAgreement, error) {
+	trustCenter := compliancepage.CompliancePageFromContext(ctx)
+	if trustCenter.NonDisclosureAgreementFileID == nil {
+		return nil, nil
+	}
+
+	trustService := r.TrustService(ctx, obj.ID.TenantID())
+
+	file, err := trustService.TrustCenters.GetNDAFile(ctx, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load NDA file", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+	if file == nil {
+		return nil, nil
+	}
+
+	return types.NewNonDisclosureAgreement(file), nil
+}
+
+// ViewerSubscription is the resolver for the viewerSubscription field.
+func (r *trustCenterResolver) ViewerSubscription(ctx context.Context, obj *types.TrustCenter) (*types.MailingListSubscriber, error) {
+	trustCenter := compliancepage.CompliancePageFromContext(ctx)
+	if trustCenter.MailingListID == nil {
+		return nil, nil
+	}
+
+	identity := authn.IdentityFromContext(ctx)
+	if identity == nil {
+		return nil, nil
+	}
+
+	subscriber, err := r.mailman.GetSubscriber(ctx, *trustCenter.MailingListID, identity.EmailAddress)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot get mailing list subscription", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	if subscriber == nil {
+		return nil, nil
+	}
+
+	return types.NewMailingListSubscriber(subscriber), nil
+}
+
+// Organization is the resolver for the organization field.
+func (r *trustCenterResolver) Organization(ctx context.Context, obj *types.TrustCenter) (*types.Organization, error) {
+	return obj.Organization, nil
+}
+
+// Documents is the resolver for the documents field.
+func (r *trustCenterResolver) Documents(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.DocumentConnection, error) {
+	trustService := r.TrustService(ctx, obj.ID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.DocumentOrderField]{
+		Field:     coredata.DocumentOrderFieldTitle,
+		Direction: page.OrderDirectionAsc,
+	}
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	documentPage, err := trustService.Documents.ListForOrganizationId(ctx, obj.Organization.ID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list public documents", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewDocumentConnection(documentPage), nil
+}
+
+// Audits is the resolver for the audits field.
+func (r *trustCenterResolver) Audits(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.AuditConnection, error) {
+	trustService := r.TrustService(ctx, obj.ID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.AuditOrderField]{
+		Field:     coredata.AuditOrderFieldValidFrom,
+		Direction: page.OrderDirectionDesc,
+	}
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	auditPage, err := trustService.Audits.ListForOrganizationId(ctx, obj.Organization.ID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list public audits", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewAuditConnection(auditPage), nil
+}
+
+// Subprocessors is the resolver for the subprocessors field.
+func (r *trustCenterResolver) Subprocessors(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.SubprocessorConnection, error) {
+	trustService := r.TrustService(ctx, obj.ID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.VendorOrderField]{
+		Field:     coredata.VendorOrderFieldName,
+		Direction: page.OrderDirectionAsc,
+	}
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	vendorPage, err := trustService.Vendors.ListForOrganizationId(ctx, obj.Organization.ID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list subprocessors", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewSubprocessorConnection(vendorPage, r, obj.ID), nil
+}
+
+// References is the resolver for the references field.
+func (r *trustCenterResolver) References(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.TrustCenterReferenceConnection, error) {
+	trustService := r.TrustService(ctx, obj.ID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.TrustCenterReferenceOrderField]{
+		Field:     coredata.TrustCenterReferenceOrderFieldRank,
+		Direction: page.OrderDirectionAsc,
+	}
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	referencePage, err := trustService.TrustCenterReferences.ListForTrustCenterID(ctx, obj.ID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list public trust center references", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewTrustCenterReferenceConnection(referencePage), nil
+}
+
+// TrustCenterFiles is the resolver for the trustCenterFiles field.
+func (r *trustCenterResolver) TrustCenterFiles(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.TrustCenterFileConnection, error) {
+	trustService := r.TrustService(ctx, obj.ID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.TrustCenterFileOrderField]{
+		Field:     coredata.TrustCenterFileOrderFieldName,
+		Direction: page.OrderDirectionAsc,
+	}
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	filter := coredata.NewTrustCenterFileFilter(
+		coredata.WithTrustCenterFileVisibilities(
+			coredata.TrustCenterVisibilityPublic,
+			coredata.TrustCenterVisibilityPrivate,
+		),
+	)
+	trustCenterFilePage, err := trustService.TrustCenterFiles.ListForOrganizationId(ctx, obj.Organization.ID, cursor, filter)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list public trust center files", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewTrustCenterFileConnection(trustCenterFilePage), nil
+}
+
+// ComplianceFrameworks is the resolver for the complianceFrameworks field.
+func (r *trustCenterResolver) ComplianceFrameworks(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.ComplianceFrameworkConnection, error) {
+	trustService := r.TrustService(ctx, obj.ID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.ComplianceFrameworkOrderField]{
+		Field:     coredata.ComplianceFrameworkOrderFieldRank,
+		Direction: page.OrderDirectionAsc,
+	}
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	cfPage, err := trustService.ComplianceFrameworks.ListByTrustCenterID(ctx, obj.ID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list compliance frameworks", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewComplianceFrameworkConnection(cfPage), nil
+}
+
+// ExternalUrls is the resolver for the externalUrls field.
+func (r *trustCenterResolver) ExternalUrls(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.ComplianceExternalURLConnection, error) {
+	trustService := r.TrustService(ctx, obj.ID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.ComplianceExternalURLOrderField]{
+		Field:     coredata.ComplianceExternalURLOrderFieldRank,
+		Direction: page.OrderDirectionAsc,
+	}
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	result, err := trustService.ComplianceExternalURLs.ListForTrustCenterID(ctx, obj.ID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list compliance external URLs", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewComplianceExternalURLConnection(result), nil
+}
+
+// Updates is the resolver for the updates field.
+func (r *trustCenterResolver) Updates(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.MailingListUpdateConnection, error) {
+	trustService := r.TrustService(ctx, obj.ID.TenantID())
+
+	tc, err := trustService.TrustCenters.Get(ctx, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load trust center", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	if tc.MailingListID == nil {
+		return &types.MailingListUpdateConnection{Edges: []*types.MailingListUpdateEdge{}, PageInfo: &types.PageInfo{}}, nil
+	}
+
+	pageOrderBy := page.OrderBy[coredata.MailingListUpdateOrderField]{
+		Field:     coredata.MailingListUpdateOrderFieldUpdatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	result, err := r.mailman.ListSentMailingListUpdates(ctx, *tc.MailingListID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list mailing list updates", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewMailingListUpdateConnection(result), nil
+}
+
 // IsUserAuthorized is the resolver for the isUserAuthorized field.
 func (r *trustCenterFileResolver) IsUserAuthorized(ctx context.Context, obj *types.TrustCenterFile) (bool, error) {
 	trustService := r.TrustService(ctx, obj.ID.TenantID())
@@ -725,6 +959,9 @@ func (r *Resolver) SubprocessorConnection() schema.SubprocessorConnectionResolve
 	return &subprocessorConnectionResolver{r}
 }
 
+// TrustCenter returns schema.TrustCenterResolver implementation.
+func (r *Resolver) TrustCenter() schema.TrustCenterResolver { return &trustCenterResolver{r} }
+
 // TrustCenterFile returns schema.TrustCenterFileResolver implementation.
 func (r *Resolver) TrustCenterFile() schema.TrustCenterFileResolver {
 	return &trustCenterFileResolver{r}
@@ -741,5 +978,6 @@ type documentResolver struct{ *Resolver }
 type frameworkResolver struct{ *Resolver }
 type reportResolver struct{ *Resolver }
 type subprocessorConnectionResolver struct{ *Resolver }
+type trustCenterResolver struct{ *Resolver }
 type trustCenterFileResolver struct{ *Resolver }
 type trustCenterReferenceResolver struct{ *Resolver }

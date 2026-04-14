@@ -10,8 +10,6 @@ import (
 
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/iam"
-	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
@@ -41,50 +39,6 @@ func (r *auditLogEntryConnectionResolver) TotalCount(ctx context.Context, obj *t
 	}
 
 	return count, nil
-}
-
-// AuditLogEntries is the resolver for the auditLogEntries field.
-func (r *organizationResolver) AuditLogEntries(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AuditLogEntryOrderBy, filter *types.AuditLogEntryFilter) (*types.AuditLogEntryConnection, error) {
-	if err := r.authorize(ctx, obj.ID, iam.ActionAuditLogEntryList); err != nil {
-		return nil, err
-	}
-
-	pageOrderBy := page.OrderBy[coredata.AuditLogEntryOrderField]{
-		Field:     coredata.AuditLogEntryOrderFieldCreatedAt,
-		Direction: page.OrderDirectionDesc,
-	}
-	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.AuditLogEntryOrderField]{
-			Field:     orderBy.Field,
-			Direction: orderBy.Direction,
-		}
-	}
-
-	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
-
-	coredataFilter := coredata.NewAuditLogEntryFilter()
-	if filter != nil {
-		if filter.Action != nil {
-			coredataFilter.WithAction(*filter.Action)
-		}
-		if filter.ActorID != nil {
-			coredataFilter.WithActorID(*filter.ActorID)
-		}
-		if filter.ResourceType != nil {
-			coredataFilter.WithResourceType(*filter.ResourceType)
-		}
-		if filter.ResourceID != nil {
-			coredataFilter.WithResourceID(*filter.ResourceID)
-		}
-	}
-
-	p, err := r.iam.OrganizationService.ListAuditLogEntries(ctx, obj.ID, cursor, coredataFilter)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list audit log entries", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return types.NewAuditLogEntryConnection(p, r, obj.ID, coredataFilter), nil
 }
 
 // AuditLogEntry returns schema.AuditLogEntryResolver implementation.

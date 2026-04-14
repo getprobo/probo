@@ -1,15 +1,3 @@
-extend type Organization {
-    trustCenter: TrustCenter @goField(forceResolver: true)
-    customDomain: CustomDomain @goField(forceResolver: true)
-    trustCenterFiles(
-        first: Int
-        after: CursorKey
-        last: Int
-        before: CursorKey
-        orderBy: TrustCenterFileOrder
-    ): TrustCenterFileConnection! @goField(forceResolver: true)
-}
-
 enum TrustCenterVisibility
     @goModel(model: "go.probo.inc/probo/pkg/coredata.TrustCenterVisibility") {
     NONE

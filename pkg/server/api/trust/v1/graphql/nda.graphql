@@ -1,7 +1,3 @@
-extend type TrustCenter {
-  nonDisclosureAgreement: NonDisclosureAgreement @goField(forceResolver: true)
-}
-
 type NonDisclosureAgreement {
   fileName: String!
   fileUrl: String! @goField(forceResolver: true)

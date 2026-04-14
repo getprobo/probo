@@ -8,12 +8,10 @@ package console_v1
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/vikstrous/dataloadgen"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
@@ -178,11 +176,6 @@ func (r *mutationResolver) UploadMeasureEvidence(ctx context.Context, input type
 	return &types.UploadMeasureEvidencePayload{
 		EvidenceEdge: types.NewEvidenceEdge(evidence, coredata.EvidenceOrderFieldCreatedAt),
 	}, nil
-}
-
-// Evidences is the resolver for the evidences field.
-func (r *organizationResolver) Evidences(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.EvidenceOrderBy) (*types.EvidenceConnection, error) {
-	panic(fmt.Errorf("not implemented: Evidences - evidences"))
 }
 
 // Evidence returns schema.EvidenceResolver implementation.

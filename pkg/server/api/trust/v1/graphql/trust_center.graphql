@@ -1,3 +1,73 @@
+type TrustCenter implements Node {
+  id: ID!
+  active: Boolean!
+  slug: String!
+  logoFileUrl: String @goField(forceResolver: true)
+  darkLogoFileUrl: String @goField(forceResolver: true)
+
+  nonDisclosureAgreement: NonDisclosureAgreement @goField(forceResolver: true)
+
+  viewerSubscription: MailingListSubscriber @goField(forceResolver: true)
+
+  organization: Organization! @goField(forceResolver: true)
+
+  documents(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+  ): DocumentConnection! @goField(forceResolver: true)
+
+  audits(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+  ): AuditConnection! @goField(forceResolver: true)
+
+  subprocessors(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+  ): SubprocessorConnection! @goField(forceResolver: true)
+
+  references(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+  ): TrustCenterReferenceConnection! @goField(forceResolver: true)
+
+  trustCenterFiles(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+  ): TrustCenterFileConnection! @goField(forceResolver: true)
+
+  complianceFrameworks(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+  ): ComplianceFrameworkConnection! @goField(forceResolver: true)
+
+  externalUrls(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+  ): ComplianceExternalURLConnection! @goField(forceResolver: true)
+
+  updates(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+  ): MailingListUpdateConnection! @goField(forceResolver: true)
+}
+
 enum DocumentType
   @goModel(model: "go.probo.inc/probo/pkg/coredata.DocumentType") {
   OTHER @goEnum(value: "go.probo.inc/probo/pkg/coredata.DocumentTypeOther")

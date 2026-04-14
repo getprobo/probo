@@ -21,50 +21,6 @@ import (
 	"go.probo.inc/probo/pkg/server/gqlutils/types/cursor"
 )
 
-// Profiles is the resolver for the profiles field.
-func (r *identityResolver) Profiles(ctx context.Context, obj *types.Identity, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProfileOrderBy, filter *types.ProfileFilter) (*types.ProfileConnection, error) {
-	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileList, authz.WithSkipAssumptionCheck()); err != nil {
-		return nil, err
-	}
-
-	filters := coredata.NewMembershipProfileFilter(nil).WithMembership()
-	if filter != nil {
-		filters = coredata.NewMembershipProfileFilter(filter.ExcludeContractEnded).WithMembership()
-		if filter.State != nil {
-			filters.WithState(*filter.State)
-		}
-	}
-
-	if gqlutils.OnlyTotalCountSelected(ctx) {
-		return &types.ProfileConnection{
-			Resolver: r,
-			ParentID: obj.ID,
-			Filters:  filters,
-		}, nil
-	}
-
-	pageOrderBy := page.OrderBy[coredata.MembershipProfileOrderField]{
-		Field:     coredata.MembershipProfileOrderFieldFullName,
-		Direction: page.OrderDirectionAsc,
-	}
-	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.MembershipProfileOrderField]{
-			Field:     orderBy.Field,
-			Direction: orderBy.Direction,
-		}
-	}
-
-	cursor := cursor.NewCursor(first, after, last, before, pageOrderBy)
-
-	page, err := r.iam.AccountService.ListProfilesForIdentity(ctx, obj.ID, cursor, filters)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list profiles", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return types.NewProfileConnection(page, r, obj.ID, filters), nil
-}
-
 // Permission is the resolver for the permission field.
 func (r *invitationResolver) Permission(ctx context.Context, obj *types.Invitation, action string) (bool, error) {
 	return r.Resolver.Permission(ctx, obj, action)
@@ -266,44 +222,6 @@ func (r *mutationResolver) RemoveUser(ctx context.Context, input types.RemoveUse
 	}
 
 	return &types.RemoveUserPayload{DeletedProfileID: input.ProfileID}, nil
-}
-
-// Profiles is the resolver for the profiles field.
-func (r *organizationResolver) Profiles(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProfileOrderBy) (*types.ProfileConnection, error) {
-	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileList); err != nil {
-		return nil, err
-	}
-
-	filter := coredata.NewMembershipProfileFilter(nil).WithMembership()
-
-	if gqlutils.OnlyTotalCountSelected(ctx) {
-		return &types.ProfileConnection{
-			Resolver: r,
-			ParentID: obj.ID,
-			Filters:  filter,
-		}, nil
-	}
-
-	pageOrderBy := page.OrderBy[coredata.MembershipProfileOrderField]{
-		Field:     coredata.MembershipProfileOrderFieldFullName,
-		Direction: page.OrderDirectionAsc,
-	}
-	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.MembershipProfileOrderField]{
-			Field:     orderBy.Field,
-			Direction: orderBy.Direction,
-		}
-	}
-
-	cursor := cursor.NewCursor(first, after, last, before, pageOrderBy)
-
-	page, err := r.iam.OrganizationService.ListProfiles(ctx, obj.ID, cursor, filter)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list profiles", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return types.NewProfileConnection(page, r, obj.ID, filter), nil
 }
 
 // Identity is the resolver for the identity field.

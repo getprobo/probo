@@ -14,12 +14,10 @@ import (
 	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
-	"go.probo.inc/probo/pkg/slack"
 )
 
 // Oauth2Scopes is the resolver for the oauth2Scopes field.
@@ -165,96 +163,6 @@ func (r *mutationResolver) DeleteSlackConnection(ctx context.Context, input type
 	return &types.DeleteSlackConnectionPayload{
 		DeletedSlackConnectionID: input.SlackConnectionID,
 	}, nil
-}
-
-// SlackConnections is the resolver for the slackConnections field.
-func (r *organizationResolver) SlackConnections(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.SlackConnectionConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionSlackConnectionList); err != nil {
-		return nil, err
-	}
-
-	prb := r.ProboService(ctx, obj.ID.TenantID())
-
-	slackProvider := coredata.ConnectorProviderSlack
-	filter := coredata.NewConnectorProviderFilter(&slackProvider)
-
-	pageOrderBy := page.OrderBy[coredata.ConnectorOrderField]{
-		Field:     coredata.ConnectorOrderFieldCreatedAt,
-		Direction: page.OrderDirectionDesc,
-	}
-
-	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
-
-	page, err := prb.Connectors.ListForOrganizationID(ctx, obj.ID, cursor, filter)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list organization slack connections", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return types.NewSlackConnectionConnection(page), nil
-}
-
-// SlackOAuth2Scopes is the resolver for the slackOAuth2Scopes field.
-func (r *organizationResolver) SlackOAuth2Scopes(ctx context.Context, obj *types.Organization) ([]string, error) {
-	return slack.OAuth2Scopes, nil
-}
-
-// Connectors is the resolver for the connectors field.
-func (r *organizationResolver) Connectors(ctx context.Context, obj *types.Organization, filter *types.ConnectorFilter) ([]*types.Connector, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionConnectorList); err != nil {
-		return nil, err
-	}
-
-	prb := r.ProboService(ctx, obj.ID.TenantID())
-
-	connectors, err := prb.Connectors.ListAllForOrganizationID(ctx, obj.ID)
-	if err != nil {
-		panic(fmt.Errorf("cannot list organization connectors: %w", err))
-	}
-
-	if filter != nil && len(filter.Providers) > 0 {
-		allowed := make(map[coredata.ConnectorProvider]struct{}, len(filter.Providers))
-		for _, provider := range filter.Providers {
-			allowed[provider] = struct{}{}
-		}
-
-		filtered := make(coredata.Connectors, 0, len(connectors))
-		for _, cnnctr := range connectors {
-			if _, ok := allowed[cnnctr.Provider]; ok {
-				filtered = append(filtered, cnnctr)
-			}
-		}
-		connectors = filtered
-	}
-
-	return types.NewConnectors(connectors), nil
-}
-
-// ConnectorProviderInfos is the resolver for the connectorProviderInfos field.
-func (r *organizationResolver) ConnectorProviderInfos(ctx context.Context, obj *types.Organization) ([]*types.ConnectorProviderInfo, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionConnectorList); err != nil {
-		return nil, err
-	}
-
-	var infos []*types.ConnectorProviderInfo
-	for _, provider := range coredata.ConnectorProviders() {
-		_, oauthErr := r.connectorRegistry.Get(string(provider))
-		scopes := drivers.ProviderOAuth2Scopes(provider)
-		if scopes == nil {
-			scopes = []string{}
-		}
-		info := &types.ConnectorProviderInfo{
-			Provider:                   provider,
-			DisplayName:                providerDisplayName(provider),
-			OauthConfigured:            oauthErr == nil,
-			APIKeySupported:            providerSupportsAPIKey(provider),
-			ClientCredentialsSupported: providerSupportsClientCredentials(provider),
-			Oauth2Scopes:               scopes,
-			ExtraSettings:              providerExtraSettings(provider),
-		}
-		infos = append(infos, info)
-	}
-	return infos, nil
 }
 
 // Permission is the resolver for the permission field.

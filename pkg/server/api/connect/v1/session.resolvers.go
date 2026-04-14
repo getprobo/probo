@@ -9,49 +9,10 @@ import (
 	"context"
 
 	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/iam"
-	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
-	"go.probo.inc/probo/pkg/server/gqlutils/types/cursor"
 )
-
-// Sessions is the resolver for the sessions field.
-func (r *identityResolver) Sessions(ctx context.Context, obj *types.Identity, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.SessionOrder) (*types.SessionConnection, error) {
-	if err := r.authorize(ctx, obj.ID, iam.ActionSessionList); err != nil {
-		return nil, err
-	}
-
-	if gqlutils.OnlyTotalCountSelected(ctx) {
-		return &types.SessionConnection{
-			Resolver: r,
-			ParentID: obj.ID,
-		}, nil
-	}
-
-	pageOrderBy := page.OrderBy[coredata.SessionOrderField]{
-		Field:     coredata.SessionOrderFieldCreatedAt,
-		Direction: page.OrderDirectionDesc,
-	}
-	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.SessionOrderField]{
-			Field:     orderBy.Field,
-			Direction: orderBy.Direction,
-		}
-	}
-
-	cursor := cursor.NewCursor(first, after, last, before, pageOrderBy)
-
-	page, err := r.iam.AccountService.ListSessions(ctx, obj.ID, cursor)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list sessions", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return types.NewSessionConnection(page, r, obj.ID), nil
-}
 
 // Identity is the resolver for the identity field.
 func (r *sessionResolver) Identity(ctx context.Context, obj *types.Session) (*types.Identity, error) {

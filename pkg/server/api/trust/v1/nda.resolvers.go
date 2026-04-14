@@ -137,27 +137,6 @@ func (r *nonDisclosureAgreementResolver) ViewerSignature(ctx context.Context, ob
 	return types.NewElectronicSignature(sig), nil
 }
 
-// NonDisclosureAgreement is the resolver for the nonDisclosureAgreement field.
-func (r *trustCenterResolver) NonDisclosureAgreement(ctx context.Context, obj *types.TrustCenter) (*types.NonDisclosureAgreement, error) {
-	trustCenter := compliancepage.CompliancePageFromContext(ctx)
-	if trustCenter.NonDisclosureAgreementFileID == nil {
-		return nil, nil
-	}
-
-	trustService := r.TrustService(ctx, obj.ID.TenantID())
-
-	file, err := trustService.TrustCenters.GetNDAFile(ctx, obj.ID)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot load NDA file", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-	if file == nil {
-		return nil, nil
-	}
-
-	return types.NewNonDisclosureAgreement(file), nil
-}
-
 // NonDisclosureAgreement returns schema.NonDisclosureAgreementResolver implementation.
 func (r *Resolver) NonDisclosureAgreement() schema.NonDisclosureAgreementResolver {
 	return &nonDisclosureAgreementResolver{r}

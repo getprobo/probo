@@ -99,36 +99,6 @@ func (r *mutationResolver) DeleteWebhookSubscription(ctx context.Context, input 
 	}, nil
 }
 
-// WebhookSubscriptions is the resolver for the webhookSubscriptions field.
-func (r *organizationResolver) WebhookSubscriptions(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.WebhookSubscriptionOrderBy) (*types.WebhookSubscriptionConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionWebhookSubscriptionList); err != nil {
-		return nil, err
-	}
-
-	prb := r.ProboService(ctx, obj.ID.TenantID())
-
-	pageOrderBy := page.OrderBy[coredata.WebhookSubscriptionOrderField]{
-		Field:     coredata.WebhookSubscriptionOrderFieldCreatedAt,
-		Direction: page.OrderDirectionDesc,
-	}
-	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.WebhookSubscriptionOrderField]{
-			Field:     orderBy.Field,
-			Direction: orderBy.Direction,
-		}
-	}
-
-	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
-
-	page, err := prb.WebhookSubscriptions.ListForOrganizationID(ctx, obj.ID, cursor)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list organization webhook subscriptions", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return types.NewWebhookSubscriptionConnection(page, r, obj.ID), nil
-}
-
 // TotalCount is the resolver for the totalCount field.
 func (r *webhookEventConnectionResolver) TotalCount(ctx context.Context, obj *types.WebhookEventConnection) (int, error) {
 	if err := r.authorize(ctx, obj.ParentID, probo.ActionWebhookSubscriptionGet); err != nil {

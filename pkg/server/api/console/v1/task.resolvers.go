@@ -115,36 +115,6 @@ func (r *mutationResolver) DeleteTask(ctx context.Context, input types.DeleteTas
 	}, nil
 }
 
-// Tasks is the resolver for the tasks field.
-func (r *organizationResolver) Tasks(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TaskOrderBy) (*types.TaskConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionTaskList); err != nil {
-		return nil, err
-	}
-
-	prb := r.ProboService(ctx, obj.ID.TenantID())
-
-	pageOrderBy := page.OrderBy[coredata.TaskOrderField]{
-		Field:     coredata.TaskOrderFieldCreatedAt,
-		Direction: page.OrderDirectionDesc,
-	}
-	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.TaskOrderField]{
-			Field:     orderBy.Field,
-			Direction: orderBy.Direction,
-		}
-	}
-
-	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
-
-	page, err := prb.Tasks.ListForOrganizationID(ctx, obj.ID, cursor)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list organization tasks", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return types.NewTaskConnection(page, r, obj.ID), nil
-}
-
 // AssignedTo is the resolver for the assignedTo field.
 func (r *taskResolver) AssignedTo(ctx context.Context, obj *types.Task) (*types.Profile, error) {
 	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileGet); err != nil {

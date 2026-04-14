@@ -14,7 +14,6 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
-	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
@@ -183,36 +182,6 @@ func (r *mutationResolver) DeleteMeeting(ctx context.Context, input types.Delete
 	return &types.DeleteMeetingPayload{
 		DeletedMeetingID: input.MeetingID,
 	}, nil
-}
-
-// Meetings is the resolver for the meetings field.
-func (r *organizationResolver) Meetings(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MeetingOrderBy) (*types.MeetingConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionMeetingList); err != nil {
-		return nil, err
-	}
-
-	prb := r.ProboService(ctx, obj.ID.TenantID())
-
-	pageOrderBy := page.OrderBy[coredata.MeetingOrderField]{
-		Field:     coredata.MeetingOrderFieldCreatedAt,
-		Direction: page.OrderDirectionDesc,
-	}
-	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.MeetingOrderField]{
-			Field:     orderBy.Field,
-			Direction: orderBy.Direction,
-		}
-	}
-
-	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
-
-	page, err := prb.Meetings.ListForOrganizationID(ctx, obj.ID, cursor)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list organization meetings", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return types.NewMeetingConnection(page, r, obj.ID), nil
 }
 
 // Meeting returns schema.MeetingResolver implementation.

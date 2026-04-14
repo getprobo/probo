@@ -1,13 +1,3 @@
-extend type Organization {
-    tasks(
-        first: Int
-        after: CursorKey
-        last: Int
-        before: CursorKey
-        orderBy: TaskOrder
-    ): TaskConnection! @goField(forceResolver: true)
-}
-
 enum TaskState @goModel(model: "go.probo.inc/probo/pkg/coredata.TaskState") {
     TODO @goEnum(value: "go.probo.inc/probo/pkg/coredata.TaskStateTodo")
     IN_PROGRESS @goEnum(value: "go.probo.inc/probo/pkg/coredata.TaskStateInProgress")

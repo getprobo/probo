@@ -1,22 +1,3 @@
-extend type Organization {
-    audits(
-        first: Int
-        after: CursorKey
-        last: Int
-        before: CursorKey
-        orderBy: AuditOrder
-    ): AuditConnection! @goField(forceResolver: true)
-
-    findings(
-        first: Int
-        after: CursorKey
-        last: Int
-        before: CursorKey
-        orderBy: FindingOrder
-        filter: FindingFilter = { snapshotId: null }
-    ): FindingConnection @goField(forceResolver: true)
-}
-
 enum AuditState @goModel(model: "go.probo.inc/probo/pkg/coredata.AuditState") {
     NOT_STARTED
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.AuditStateNotStarted")

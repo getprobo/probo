@@ -8,13 +8,1093 @@ package console_v1
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/accessreview/drivers"
+	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
+	"go.probo.inc/probo/pkg/page"
+	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/server/gqlutils/types/cursor"
+	"go.probo.inc/probo/pkg/slack"
 )
+
+// LogoURL is the resolver for the logoUrl field.
+func (r *organizationResolver) LogoURL(ctx context.Context, obj *types.Organization) (*string, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGetLogoUrl); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	logoURL, err := prb.Organizations.GenerateLogoURL(ctx, obj.ID, 1*time.Hour)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot generate logo url", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return logoURL, nil
+}
+
+// HorizontalLogoURL is the resolver for the horizontalLogoUrl field.
+func (r *organizationResolver) HorizontalLogoURL(ctx context.Context, obj *types.Organization) (*string, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGetHorizontalLogoUrl); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	horizontalLogoURL, err := prb.Organizations.GenerateHorizontalLogoURL(ctx, obj.ID, 1*time.Hour)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot generate horizontal logo url", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return horizontalLogoURL, nil
+}
+
+// Context is the resolver for the context field.
+func (r *organizationResolver) Context(ctx context.Context, obj *types.Organization) (*types.OrganizationContext, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionOrganizationContextGet); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	orgContext, err := prb.Organizations.GetContext(ctx, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load organization context", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewOrganizationContext(orgContext), nil
+}
+
+// Profiles is the resolver for the profiles field.
+func (r *organizationResolver) Profiles(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProfileOrderBy, filter *types.ProfileFilter) (*types.ProfileConnection, error) {
+	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileList); err != nil {
+		return nil, err
+	}
+
+	if gqlutils.OnlyTotalCountSelected(ctx) {
+		return &types.ProfileConnection{
+			Resolver: r,
+			ParentID: obj.ID,
+		}, nil
+	}
+
+	filters := coredata.NewMembershipProfileFilter(nil).WithMembership()
+	if filter != nil {
+		filters = coredata.NewMembershipProfileFilter(filter.ExcludeContractEnded).WithMembership()
+	}
+
+	pageOrderBy := page.OrderBy[coredata.MembershipProfileOrderField]{
+		Field:     coredata.MembershipProfileOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy.Field = coredata.MembershipProfileOrderField(orderBy.Field)
+		pageOrderBy.Direction = page.OrderDirection(orderBy.Direction)
+	}
+
+	cursor := cursor.NewCursor(first, after, last, before, pageOrderBy)
+
+	page, err := r.iam.OrganizationService.ListProfiles(ctx, obj.ID, cursor, filters)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list profiles", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewProfileConnection(page, r, obj.ID, filters), nil
+}
+
+// MeasureCategories is the resolver for the measureCategories field.
+func (r *organizationResolver) MeasureCategories(ctx context.Context, obj *types.Organization) ([]string, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionMeasureList); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	categories, err := prb.Measures.ListDistinctCategoriesForOrganizationID(ctx, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list measure categories", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return categories, nil
+}
+
+// AccessSources is the resolver for the accessSources field.
+func (r *organizationResolver) AccessSources(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AccessSourceOrder) (*types.AccessSourceConnection, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionAccessSourceList); err != nil {
+		return nil, err
+	}
+
+	scope := coredata.NewScopeFromObjectID(obj.ID)
+
+	pageOrderBy := page.OrderBy[coredata.AccessSourceOrderField]{
+		Field:     coredata.AccessSourceOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.AccessSourceOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	p, err := r.accessReview.Sources(scope).ListForOrganizationID(ctx, obj.ID, cursor)
+	if err != nil {
+		panic(fmt.Errorf("cannot list access sources: %w", err))
+	}
+
+	return types.NewAccessSourceConnection(p, r, obj.ID), nil
+}
+
+// AccessReviewCampaigns is the resolver for the accessReviewCampaigns field.
+func (r *organizationResolver) AccessReviewCampaigns(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AccessReviewCampaignOrder) (*types.AccessReviewCampaignConnection, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionAccessReviewCampaignList); err != nil {
+		return nil, err
+	}
+
+	scope := coredata.NewScopeFromObjectID(obj.ID)
+
+	pageOrderBy := page.OrderBy[coredata.AccessReviewCampaignOrderField]{
+		Field:     coredata.AccessReviewCampaignOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.AccessReviewCampaignOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	p, err := r.accessReview.Campaigns(scope).ListForOrganizationID(ctx, obj.ID, cursor)
+	if err != nil {
+		panic(fmt.Errorf("cannot list access review campaigns: %w", err))
+	}
+
+	return types.NewAccessReviewCampaignConnection(p, r, obj.ID), nil
+}
+
+// Assets is the resolver for the assets field.
+func (r *organizationResolver) Assets(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AssetOrderBy, filter *types.AssetFilter) (*types.AssetConnection, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionAssetList); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.AssetOrderField]{
+		Field:     coredata.AssetOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.AssetOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	assetFilter := coredata.NewAssetFilter(nil)
+	if filter != nil {
+		assetFilter = coredata.NewAssetFilter(&filter.SnapshotID)
+	}
+
+	page, err := prb.Assets.ListForOrganizationID(ctx, obj.ID, cursor, assetFilter)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list organization assets", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewAssetConnection(page, r, obj.ID, filter), nil
+}
+
+// Assets is the resolver for the assets field.
+func (r *organizationResolver) Data(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DatumOrderBy, filter *types.DatumFilter) (*types.DatumConnection, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionDatumList); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.DatumOrderField]{
+		Field:     coredata.DatumOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.DatumOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	datumFilter := coredata.NewDatumFilter(nil)
+	if filter != nil {
+		datumFilter = coredata.NewDatumFilter(&filter.SnapshotID)
+	}
+
+	page, err := prb.Data.ListForOrganizationID(ctx, obj.ID, cursor, datumFilter)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list organization data", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewDataConnection(page, r, obj.ID, filter), nil
+}
+
+// Audits is the resolver for the audits field.
+func (r *organizationResolver) Audits(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AuditOrderBy) (*types.AuditConnection, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionAuditList); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.AuditOrderField]{
+		Field:     coredata.AuditOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.AuditOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	page, err := prb.Audits.ListForOrganizationID(ctx, obj.ID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list organization audits", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewAuditConnection(page, r, obj.ID), nil
+}
+
+// Findings is the resolver for the findings field.
+func (r *organizationResolver) Findings(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.FindingOrder, filter *types.FindingFilter) (*types.FindingConnection, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionFindingList); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.FindingOrderField]{
+		Field:     coredata.FindingOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.FindingOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	var (
+		kind     *coredata.FindingKind
+		status   *coredata.FindingStatus
+		priority *coredata.FindingPriority
+		ownerID  *gid.GID
+	)
+	if filter != nil {
+		kind = filter.Kind
+		status = filter.Status
+		priority = filter.Priority
+		ownerID = filter.OwnerID
+	}
+
+	findingFilter := coredata.NewFindingFilter(nil, kind, status, priority, ownerID)
+	if filter != nil {
+		findingFilter = coredata.NewFindingFilter(&filter.SnapshotID, kind, status, priority, ownerID)
+	}
+
+	page, err := prb.Findings.ListForOrganizationID(ctx, obj.ID, cursor, findingFilter)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list organization findings", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewFindingConnection(page, r, obj.ID, filter), nil
+}
+
+// AuditLogEntries is the resolver for the auditLogEntries field.
+func (r *organizationResolver) AuditLogEntries(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AuditLogEntryOrderBy, filter *types.AuditLogEntryFilter) (*types.AuditLogEntryConnection, error) {
+	if err := r.authorize(ctx, obj.ID, iam.ActionAuditLogEntryList); err != nil {
+		return nil, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.AuditLogEntryOrderField]{
+		Field:     coredata.AuditLogEntryOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.AuditLogEntryOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	coredataFilter := coredata.NewAuditLogEntryFilter()
+	if filter != nil {
+		if filter.Action != nil {
+			coredataFilter.WithAction(*filter.Action)
+		}
+		if filter.ActorID != nil {
+			coredataFilter.WithActorID(*filter.ActorID)
+		}
+		if filter.ResourceType != nil {
+			coredataFilter.WithResourceType(*filter.ResourceType)
+		}
+		if filter.ResourceID != nil {
+			coredataFilter.WithResourceID(*filter.ResourceID)
+		}
+	}
+
+	p, err := r.iam.OrganizationService.ListAuditLogEntries(ctx, obj.ID, cursor, coredataFilter)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list audit log entries", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewAuditLogEntryConnection(p, r, obj.ID, coredataFilter), nil
+}
+
+// SlackConnections is the resolver for the slackConnections field.
+func (r *organizationResolver) SlackConnections(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.SlackConnectionConnection, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionSlackConnectionList); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	slackProvider := coredata.ConnectorProviderSlack
+	filter := coredata.NewConnectorProviderFilter(&slackProvider)
+
+	pageOrderBy := page.OrderBy[coredata.ConnectorOrderField]{
+		Field:     coredata.ConnectorOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	page, err := prb.Connectors.ListForOrganizationID(ctx, obj.ID, cursor, filter)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list organization slack connections", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewSlackConnectionConnection(page), nil
+}
+
+// SlackOAuth2Scopes is the resolver for the slackOAuth2Scopes field.
+func (r *organizationResolver) SlackOAuth2Scopes(ctx context.Context, obj *types.Organization) ([]string, error) {
+	return slack.OAuth2Scopes, nil
+}
+
+// Connectors is the resolver for the connectors field.
+func (r *organizationResolver) Connectors(ctx context.Context, obj *types.Organization, filter *types.ConnectorFilter) ([]*types.Connector, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionConnectorList); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	connectors, err := prb.Connectors.ListAllForOrganizationID(ctx, obj.ID)
+	if err != nil {
+		panic(fmt.Errorf("cannot list organization connectors: %w", err))
+	}
+
+	if filter != nil && len(filter.Providers) > 0 {
+		allowed := make(map[coredata.ConnectorProvider]struct{}, len(filter.Providers))
+		for _, provider := range filter.Providers {
+			allowed[provider] = struct{}{}
+		}
+
+		filtered := make(coredata.Connectors, 0, len(connectors))
+		for _, cnnctr := range connectors {
+			if _, ok := allowed[cnnctr.Provider]; ok {
+				filtered = append(filtered, cnnctr)
+			}
+		}
+		connectors = filtered
+	}
+
+	return types.NewConnectors(connectors), nil
+}
+
+// ConnectorProviderInfos is the resolver for the connectorProviderInfos field.
+func (r *organizationResolver) ConnectorProviderInfos(ctx context.Context, obj *types.Organization) ([]*types.ConnectorProviderInfo, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionConnectorList); err != nil {
+		return nil, err
+	}
+
+	var infos []*types.ConnectorProviderInfo
+	for _, provider := range coredata.ConnectorProviders() {
+		_, oauthErr := r.connectorRegistry.Get(string(provider))
+		scopes := drivers.ProviderOAuth2Scopes(provider)
+		if scopes == nil {
+			scopes = []string{}
+		}
+		info := &types.ConnectorProviderInfo{
+			Provider:                   provider,
+			DisplayName:                providerDisplayName(provider),
+			OauthConfigured:            oauthErr == nil,
+			APIKeySupported:            providerSupportsAPIKey(provider),
+			ClientCredentialsSupported: providerSupportsClientCredentials(provider),
+			Oauth2Scopes:               scopes,
+			ExtraSettings:              providerExtraSettings(provider),
+		}
+		infos = append(infos, info)
+	}
+	return infos, nil
+}
+
+// Controls is the resolver for the controls field.
+func (r *organizationResolver) Controls(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) (*types.ControlConnection, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionControlList); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.ControlOrderField]{
+		Field:     coredata.ControlOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.ControlOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	var controlFilter = coredata.NewControlFilter(nil)
+	if filter != nil {
+		controlFilter = coredata.NewControlFilter(filter.Query)
+	}
+
+	page, err := prb.Controls.ListForOrganizationID(ctx, obj.ID, cursor, controlFilter)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list controls", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewControlConnection(page, r, obj.ID, controlFilter), nil
+}
+
+// StatementsOfApplicability is the resolver for the statementsOfApplicability field.
+func (r *organizationResolver) StatementsOfApplicability(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.StatementOfApplicabilityOrderBy, filter *types.StatementOfApplicabilityFilter) (*types.StatementOfApplicabilityConnection, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionStatementOfApplicabilityList); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.StatementOfApplicabilityOrderField]{
+		Field:     coredata.StatementOfApplicabilityOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.StatementOfApplicabilityOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	var statementOfApplicabilityFilter = coredata.NewStatementOfApplicabilityFilter(nil)
+	if filter != nil {
+		statementOfApplicabilityFilter = coredata.NewStatementOfApplicabilityFilter(&filter.SnapshotID)
+	}
+
+	page, err := prb.StatementsOfApplicability.ListForOrganizationID(ctx, obj.ID, cursor, statementOfApplicabilityFilter)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list organization statements_of_applicability", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewStatementOfApplicabilityConnection(page, r, obj.ID, statementOfApplicabilityFilter), nil
+}
+
+// DataProtectionImpactAssessments is the resolver for the dataProtectionImpactAssessments field.
+func (r *organizationResolver) DataProtectionImpactAssessments(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DataProtectionImpactAssessmentOrderBy, filter *types.DataProtectionImpactAssessmentFilter) (*types.DataProtectionImpactAssessmentConnection, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionDataProtectionImpactAssessmentList); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.DataProtectionImpactAssessmentOrderField]{
+		Field:     coredata.DataProtectionImpactAssessmentOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.DataProtectionImpactAssessmentOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	dpiaFilter := coredata.NewDataProtectionImpactAssessmentFilter(nil)
+	if filter != nil {
+		dpiaFilter = coredata.NewDataProtectionImpactAssessmentFilter(&filter.SnapshotID)
+	}
+
+	page, err := prb.DataProtectionImpactAssessments.ListForOrganizationID(ctx, obj.ID, cursor, dpiaFilter)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list organization data protection impact assessments", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewDataProtectionImpactAssessmentConnection(page, r, obj.ID, dpiaFilter), nil
+}
+
+// TransferImpactAssessments is the resolver for the transferImpactAssessments field.
+func (r *organizationResolver) TransferImpactAssessments(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TransferImpactAssessmentOrderBy, filter *types.TransferImpactAssessmentFilter) (*types.TransferImpactAssessmentConnection, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionTransferImpactAssessmentList); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.TransferImpactAssessmentOrderField]{
+		Field:     coredata.TransferImpactAssessmentOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.TransferImpactAssessmentOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	tiaFilter := coredata.NewTransferImpactAssessmentFilter(nil)
+	if filter != nil {
+		tiaFilter = coredata.NewTransferImpactAssessmentFilter(&filter.SnapshotID)
+	}
+
+	page, err := prb.TransferImpactAssessments.ListForOrganizationID(ctx, obj.ID, cursor, tiaFilter)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list organization transfer impact assessments", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewTransferImpactAssessmentConnection(page, r, obj.ID, tiaFilter), nil
+}
+
+// Documents is the resolver for the documents field.
+func (r *organizationResolver) Documents(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentOrderBy, filter *types.DocumentFilter) (*types.DocumentConnection, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionDocumentList); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.DocumentOrderField]{
+		Field:     coredata.DocumentOrderFieldTitle,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.DocumentOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	var documentFilter = coredata.NewDocumentFilter(nil)
+	if filter != nil {
+		documentFilter = coredata.NewDocumentFilter(filter.Query).
+			WithDocumentTypes(filter.DocumentTypes).
+			WithClassifications(filter.Classifications).
+			WithStatus(filter.Status)
+	}
+
+	page, err := prb.Documents.ListByOrganizationID(ctx, obj.ID, cursor, documentFilter)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list organization documents", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewDocumentConnection(page, r, obj.ID, documentFilter), nil
+}
+
+// Evidences is the resolver for the evidences field.
+func (r *organizationResolver) Evidences(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.EvidenceOrderBy) (*types.EvidenceConnection, error) {
+	panic(fmt.Errorf("not implemented: Evidences - evidences"))
+}
+
+// Frameworks is the resolver for the frameworks field.
+func (r *organizationResolver) Frameworks(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.FrameworkOrderBy) (*types.FrameworkConnection, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionFrameworkList); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.FrameworkOrderField]{
+		Field:     coredata.FrameworkOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.FrameworkOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	page, err := prb.Frameworks.ListForOrganizationID(ctx, obj.ID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list organization frameworks", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewFrameworkConnection(page, r, obj.ID), nil
+}
+
+// Measures is the resolver for the measures field.
+func (r *organizationResolver) Measures(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MeasureOrderBy, filter *types.MeasureFilter) (*types.MeasureConnection, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionMeasureList); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.MeasureOrderField]{
+		Field:     coredata.MeasureOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.MeasureOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	var measureFilter = coredata.NewMeasureFilter(nil, nil, nil)
+	if filter != nil {
+		measureFilter = coredata.NewMeasureFilter(filter.Query, filter.State, filter.Category)
+	}
+
+	page, err := prb.Measures.ListForOrganizationID(ctx, obj.ID, cursor, measureFilter)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list organization measures", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewMeasureConnection(page, r, obj.ID, measureFilter), nil
+}
+
+// Meetings is the resolver for the meetings field.
+func (r *organizationResolver) Meetings(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MeetingOrderBy) (*types.MeetingConnection, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionMeetingList); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.MeetingOrderField]{
+		Field:     coredata.MeetingOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.MeetingOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	page, err := prb.Meetings.ListForOrganizationID(ctx, obj.ID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list organization meetings", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewMeetingConnection(page, r, obj.ID), nil
+}
+
+// Obligations is the resolver for the obligations field.
+func (r *organizationResolver) Obligations(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ObligationOrderBy, filter *types.ObligationFilter) (*types.ObligationConnection, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionObligationList); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.ObligationOrderField]{
+		Field:     coredata.ObligationOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.ObligationOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	obligationFilter := coredata.NewObligationFilter(nil)
+	if filter != nil {
+		obligationFilter = coredata.NewObligationFilter(&filter.SnapshotID)
+	}
+
+	page, err := prb.Obligations.ListForOrganizationID(ctx, obj.ID, cursor, obligationFilter)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list organization obligations", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewObligationConnection(page, r, obj.ID, filter), nil
+}
+
+// ProcessingActivities is the resolver for the processingActivities field.
+func (r *organizationResolver) ProcessingActivities(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProcessingActivityOrderBy, filter *types.ProcessingActivityFilter) (*types.ProcessingActivityConnection, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionProcessingActivityList); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.ProcessingActivityOrderField]{
+		Field:     coredata.ProcessingActivityOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.ProcessingActivityOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	processingActivityFilter := coredata.NewProcessingActivityFilter(nil)
+	if filter != nil {
+		processingActivityFilter = coredata.NewProcessingActivityFilter(&filter.SnapshotID)
+	}
+
+	page, err := prb.ProcessingActivities.ListForOrganizationID(ctx, obj.ID, cursor, processingActivityFilter)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list organization processing activities", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewProcessingActivityConnection(page, r, obj.ID, filter), nil
+}
+
+// RightsRequests is the resolver for the rightsRequests field.
+func (r *organizationResolver) RightsRequests(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RightsRequestOrderBy) (*types.RightsRequestConnection, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionRightsRequestList); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.RightsRequestOrderField]{
+		Field:     coredata.RightsRequestOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.RightsRequestOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	page, err := prb.RightsRequests.ListForOrganizationID(ctx, obj.ID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list organization rights requests", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewRightsRequestConnection(page, r, obj.ID), nil
+}
+
+// Risks is the resolver for the risks field.
+func (r *organizationResolver) Risks(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskOrderBy, filter *types.RiskFilter) (*types.RiskConnection, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionRiskList); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.RiskOrderField]{
+		Field:     coredata.RiskOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.RiskOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	var riskFilter = coredata.NewRiskFilter(nil, nil)
+	if filter != nil {
+		riskFilter = coredata.NewRiskFilter(filter.Query, &filter.SnapshotID)
+	}
+
+	page, err := prb.Risks.ListForOrganizationID(ctx, obj.ID, cursor, riskFilter)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list organization risks", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewRiskConnection(page, r, obj.ID, riskFilter), nil
+}
+
+// Snapshots is the resolver for the snapshots field.
+func (r *organizationResolver) Snapshots(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.SnapshotOrderBy) (*types.SnapshotConnection, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionSnapshotList); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.SnapshotOrderField]{
+		Field:     coredata.SnapshotOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.SnapshotOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	page, err := prb.Snapshots.ListForOrganizationID(ctx, obj.ID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list organization snapshots", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewSnapshotConnection(page, r, obj.ID), nil
+}
+
+// Tasks is the resolver for the tasks field.
+func (r *organizationResolver) Tasks(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TaskOrderBy) (*types.TaskConnection, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionTaskList); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.TaskOrderField]{
+		Field:     coredata.TaskOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.TaskOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	page, err := prb.Tasks.ListForOrganizationID(ctx, obj.ID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list organization tasks", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewTaskConnection(page, r, obj.ID), nil
+}
+
+// TrustCenter is the resolver for the trustCenter field.
+func (r *organizationResolver) TrustCenter(ctx context.Context, obj *types.Organization) (*types.TrustCenter, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionTrustCenterGet); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	trustCenter, err := prb.TrustCenters.GetByOrganizationID(ctx, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot get trust center", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	var file *coredata.File
+	if trustCenter.NonDisclosureAgreementFileID != nil {
+		file, err = prb.Files.Get(ctx, *trustCenter.NonDisclosureAgreementFileID)
+		if err != nil {
+			r.logger.ErrorCtx(ctx, "cannot get NDA file", log.Error(err))
+			return nil, gqlutils.Internal(ctx)
+		}
+	}
+
+	return types.NewTrustCenter(trustCenter, file), nil
+}
+
+// CustomDomain is the resolver for the customDomain field.
+func (r *organizationResolver) CustomDomain(ctx context.Context, obj *types.Organization) (*types.CustomDomain, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionCustomDomainGet); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	domain, err := prb.CustomDomains.GetOrganizationCustomDomain(ctx, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot get custom domain", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	if domain == nil {
+		return nil, nil
+	}
+
+	return types.NewCustomDomain(domain, r.customDomainCname), nil
+}
+
+// TrustCenterFiles is the resolver for the trustCenterFiles field.
+func (r *organizationResolver) TrustCenterFiles(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.TrustCenterFileOrderField]) (*types.TrustCenterFileConnection, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionTrustCenterFileList); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.TrustCenterFileOrderField]{
+		Field:     coredata.TrustCenterFileOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.TrustCenterFileOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	pageResult, err := prb.TrustCenterFiles.ListForOrganizationID(ctx, obj.ID, cursor, &coredata.TrustCenterFileFilter{})
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list organization trust center files", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewTrustCenterFileConnection(pageResult, obj.ID), nil
+}
+
+// Vendors is the resolver for the vendors field.
+func (r *organizationResolver) Vendors(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.VendorOrderBy, filter *types.VendorFilter) (*types.VendorConnection, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionVendorList); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.VendorOrderField]{
+		Field:     coredata.VendorOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.VendorOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	var vendorFilter = coredata.NewVendorFilter(nil, nil)
+	if filter != nil {
+		vendorFilter = coredata.NewVendorFilter(&filter.SnapshotID, nil)
+	}
+
+	page, err := prb.Vendors.ListForOrganizationID(ctx, obj.ID, cursor, vendorFilter)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list organization vendors", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewVendorConnection(page, r, obj.ID), nil
+}
+
+// WebhookSubscriptions is the resolver for the webhookSubscriptions field.
+func (r *organizationResolver) WebhookSubscriptions(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.WebhookSubscriptionOrderBy) (*types.WebhookSubscriptionConnection, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionWebhookSubscriptionList); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.WebhookSubscriptionOrderField]{
+		Field:     coredata.WebhookSubscriptionOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.WebhookSubscriptionOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	page, err := prb.WebhookSubscriptions.ListForOrganizationID(ctx, obj.ID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list organization webhook subscriptions", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewWebhookSubscriptionConnection(page, r, obj.ID), nil
+}
+
+// Permission is the resolver for the permission field.
+func (r *organizationResolver) Permission(ctx context.Context, obj *types.Organization, action string) (bool, error) {
+	return r.Resolver.Permission(ctx, obj, action)
+}
 
 // Permission is the resolver for the permission field.
 func (r *profileResolver) Permission(ctx context.Context, obj *types.Profile, action string) (bool, error) {
@@ -49,6 +1129,9 @@ func (r *profileConnectionResolver) TotalCount(ctx context.Context, obj *types.P
 	return 0, gqlutils.Internal(ctx)
 }
 
+// Organization returns schema.OrganizationResolver implementation.
+func (r *Resolver) Organization() schema.OrganizationResolver { return &organizationResolver{r} }
+
 // Profile returns schema.ProfileResolver implementation.
 func (r *Resolver) Profile() schema.ProfileResolver { return &profileResolver{r} }
 
@@ -57,5 +1140,6 @@ func (r *Resolver) ProfileConnection() schema.ProfileConnectionResolver {
 	return &profileConnectionResolver{r}
 }
 
+type organizationResolver struct{ *Resolver }
 type profileResolver struct{ *Resolver }
 type profileConnectionResolver struct{ *Resolver }

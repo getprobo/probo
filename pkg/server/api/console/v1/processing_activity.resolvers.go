@@ -155,42 +155,6 @@ func (r *mutationResolver) ExportProcessingActivitiesPDF(ctx context.Context, in
 	}, nil
 }
 
-// ProcessingActivities is the resolver for the processingActivities field.
-func (r *organizationResolver) ProcessingActivities(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProcessingActivityOrderBy, filter *types.ProcessingActivityFilter) (*types.ProcessingActivityConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionProcessingActivityList); err != nil {
-		return nil, err
-	}
-
-	prb := r.ProboService(ctx, obj.ID.TenantID())
-
-	pageOrderBy := page.OrderBy[coredata.ProcessingActivityOrderField]{
-		Field:     coredata.ProcessingActivityOrderFieldCreatedAt,
-		Direction: page.OrderDirectionDesc,
-	}
-
-	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.ProcessingActivityOrderField]{
-			Field:     orderBy.Field,
-			Direction: orderBy.Direction,
-		}
-	}
-
-	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
-
-	processingActivityFilter := coredata.NewProcessingActivityFilter(nil)
-	if filter != nil {
-		processingActivityFilter = coredata.NewProcessingActivityFilter(&filter.SnapshotID)
-	}
-
-	page, err := prb.ProcessingActivities.ListForOrganizationID(ctx, obj.ID, cursor, processingActivityFilter)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list organization processing activities", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return types.NewProcessingActivityConnection(page, r, obj.ID, filter), nil
-}
-
 // Organization is the resolver for the organization field.
 func (r *processingActivityResolver) Organization(ctx context.Context, obj *types.ProcessingActivity) (*types.Organization, error) {
 	if err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {

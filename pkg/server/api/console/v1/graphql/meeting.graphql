@@ -1,13 +1,3 @@
-extend type Organization {
-    meetings(
-        first: Int
-        after: CursorKey
-        last: Int
-        before: CursorKey
-        orderBy: MeetingOrder
-    ): MeetingConnection! @goField(forceResolver: true)
-}
-
 enum MeetingOrderField
     @goModel(model: "go.probo.inc/probo/pkg/coredata.MeetingOrderField") {
     DATE @goEnum(value: "go.probo.inc/probo/pkg/coredata.MeetingOrderFieldDate")

@@ -1,3 +1,49 @@
+type Organization implements Node {
+  id: ID!
+  name: String!
+  logoUrl: String @goField(forceResolver: true)
+  horizontalLogoUrl: String @goField(forceResolver: true)
+  email: String
+  description: String
+  websiteUrl: String
+  headquarterAddress: String
+  createdAt: Datetime!
+  updatedAt: Datetime!
+
+  profiles(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+    orderBy: ProfileOrder
+  ): ProfileConnection @goField(forceResolver: true)
+
+  samlConfigurations(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+  ): SAMLConfigurationConnection @goField(forceResolver: true)
+
+  scimConfiguration: SCIMConfiguration @goField(forceResolver: true)
+  scimBridgeTypes: [SCIMBridgeTypeInfo!]! @goField(forceResolver: true)
+
+  auditLogEntries(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+    orderBy: AuditLogEntryOrder
+    filter: AuditLogEntryFilter
+  ): AuditLogEntryConnection! @goField(forceResolver: true)
+
+  viewer: Profile @goField(forceResolver: true)
+
+  permission(action: String!): Boolean!
+    @goField(forceResolver: true)
+    @session(required: PRESENT)
+}
+
 extend type Mutation {
   createOrganization(
     input: CreateOrganizationInput!

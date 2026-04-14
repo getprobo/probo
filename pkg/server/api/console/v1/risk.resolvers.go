@@ -239,41 +239,6 @@ func (r *mutationResolver) DeleteRiskObligationMapping(ctx context.Context, inpu
 	}, nil
 }
 
-// Risks is the resolver for the risks field.
-func (r *organizationResolver) Risks(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskOrderBy, filter *types.RiskFilter) (*types.RiskConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionRiskList); err != nil {
-		return nil, err
-	}
-
-	prb := r.ProboService(ctx, obj.ID.TenantID())
-
-	pageOrderBy := page.OrderBy[coredata.RiskOrderField]{
-		Field:     coredata.RiskOrderFieldCreatedAt,
-		Direction: page.OrderDirectionDesc,
-	}
-	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.RiskOrderField]{
-			Field:     orderBy.Field,
-			Direction: orderBy.Direction,
-		}
-	}
-
-	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
-
-	var riskFilter = coredata.NewRiskFilter(nil, nil)
-	if filter != nil {
-		riskFilter = coredata.NewRiskFilter(filter.Query, &filter.SnapshotID)
-	}
-
-	page, err := prb.Risks.ListForOrganizationID(ctx, obj.ID, cursor, riskFilter)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list organization risks", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return types.NewRiskConnection(page, r, obj.ID, riskFilter), nil
-}
-
 // Owner is the resolver for the owner field.
 func (r *riskResolver) Owner(ctx context.Context, obj *types.Risk) (*types.Profile, error) {
 	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileGet); err != nil {

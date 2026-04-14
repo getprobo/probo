@@ -1,14 +1,3 @@
-extend type Organization {
-    risks(
-        first: Int
-        after: CursorKey
-        last: Int
-        before: CursorKey
-        orderBy: RiskOrder
-        filter: RiskFilter = { snapshotId: null }
-    ): RiskConnection! @goField(forceResolver: true)
-}
-
 enum RiskTreatment
     @goModel(model: "go.probo.inc/probo/pkg/coredata.RiskTreatment") {
     MITIGATED

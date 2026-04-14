@@ -1,14 +1,3 @@
-extend type Organization {
-    processingActivities(
-        first: Int
-        after: CursorKey
-        last: Int
-        before: CursorKey
-        orderBy: ProcessingActivityOrder
-        filter: ProcessingActivityFilter = { snapshotId: null }
-    ): ProcessingActivityConnection! @goField(forceResolver: true)
-}
-
 enum ProcessingActivitySpecialOrCriminalDatum
     @goModel(
         model: "go.probo.inc/probo/pkg/coredata.ProcessingActivitySpecialOrCriminalDatum"

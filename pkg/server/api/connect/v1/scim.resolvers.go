@@ -12,7 +12,6 @@ import (
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/iam"
-	"go.probo.inc/probo/pkg/iam/scim/bridge/provider/googleworkspace"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/types"
@@ -104,36 +103,6 @@ func (r *mutationResolver) UpdateSCIMBridge(ctx context.Context, input types.Upd
 
 	return &types.UpdateSCIMBridgePayload{
 		ScimBridge: types.NewSCIMBridge(bridge),
-	}, nil
-}
-
-// ScimConfiguration is the resolver for the scimConfiguration field.
-func (r *organizationResolver) ScimConfiguration(ctx context.Context, obj *types.Organization) (*types.SCIMConfiguration, error) {
-	if err := r.authorize(ctx, obj.ID, iam.ActionSCIMConfigurationGet); err != nil {
-		return nil, err
-	}
-
-	config, err := r.iam.OrganizationService.GetSCIMConfiguration(ctx, obj.ID)
-	if err != nil {
-		var notFound *iam.ErrNoSCIMConfigurationFound
-		if errors.As(err, &notFound) {
-			return nil, nil
-		}
-
-		r.logger.ErrorCtx(ctx, "cannot get scim configuration", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return types.NewSCIMConfiguration(config), nil
-}
-
-// ScimBridgeTypes is the resolver for the scimBridgeTypes field.
-func (r *organizationResolver) ScimBridgeTypes(ctx context.Context, obj *types.Organization) ([]*types.SCIMBridgeTypeInfo, error) {
-	return []*types.SCIMBridgeTypeInfo{
-		{
-			Type:         coredata.SCIMBridgeTypeGoogleWorkspace,
-			Oauth2Scopes: googleworkspace.OAuth2Scopes,
-		},
 	}, nil
 }
 

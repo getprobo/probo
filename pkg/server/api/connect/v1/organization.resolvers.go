@@ -9,13 +9,19 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/iam"
+	"go.probo.inc/probo/pkg/iam/scim/bridge/provider/googleworkspace"
+	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/server/api/authn"
+	"go.probo.inc/probo/pkg/server/api/authz"
+	"go.probo.inc/probo/pkg/server/api/connect/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/server/gqlutils/types/cursor"
 )
 
 // CreateOrganization is the resolver for the createOrganization field.
@@ -148,3 +154,206 @@ func (r *mutationResolver) DeleteOrganization(ctx context.Context, input types.D
 func (r *mutationResolver) DeleteOrganizationHorizontalLogo(ctx context.Context, input types.DeleteOrganizationHorizontalLogoInput) (*types.DeleteOrganizationHorizontalLogoPayload, error) {
 	panic(fmt.Errorf("not implemented: DeleteOrganizationHorizontalLogo - deleteOrganizationHorizontalLogo"))
 }
+
+// LogoURL is the resolver for the logoUrl field.
+func (r *organizationResolver) LogoURL(ctx context.Context, obj *types.Organization) (*string, error) {
+	if err := r.authorize(ctx, obj.ID, iam.ActionOrganizationGet, authz.WithSkipAssumptionCheck()); err != nil {
+		return nil, err
+	}
+
+	presignedURL, err := r.iam.OrganizationService.GenerateLogoURL(ctx, obj.ID, 1*time.Hour)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot generate logo URL", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return presignedURL, nil
+}
+
+// HorizontalLogoURL is the resolver for the horizontalLogoUrl field.
+func (r *organizationResolver) HorizontalLogoURL(ctx context.Context, obj *types.Organization) (*string, error) {
+	if err := r.authorize(ctx, obj.ID, iam.ActionOrganizationGet); err != nil {
+		return nil, err
+	}
+
+	presignedURL, err := r.iam.OrganizationService.GenerateHorizontalLogoURL(ctx, obj.ID, 1*time.Hour)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot generate horizontal logo URL", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return presignedURL, nil
+}
+
+// Profiles is the resolver for the profiles field.
+func (r *organizationResolver) Profiles(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProfileOrderBy) (*types.ProfileConnection, error) {
+	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileList); err != nil {
+		return nil, err
+	}
+
+	filter := coredata.NewMembershipProfileFilter(nil).WithMembership()
+
+	if gqlutils.OnlyTotalCountSelected(ctx) {
+		return &types.ProfileConnection{
+			Resolver: r,
+			ParentID: obj.ID,
+			Filters:  filter,
+		}, nil
+	}
+
+	pageOrderBy := page.OrderBy[coredata.MembershipProfileOrderField]{
+		Field:     coredata.MembershipProfileOrderFieldFullName,
+		Direction: page.OrderDirectionAsc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.MembershipProfileOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := cursor.NewCursor(first, after, last, before, pageOrderBy)
+
+	page, err := r.iam.OrganizationService.ListProfiles(ctx, obj.ID, cursor, filter)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list profiles", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewProfileConnection(page, r, obj.ID, filter), nil
+}
+
+// SamlConfigurations is the resolver for the samlConfigurations field.
+func (r *organizationResolver) SamlConfigurations(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.SAMLConfigurationConnection, error) {
+	if err := r.authorize(ctx, obj.ID, iam.ActionSAMLConfigurationList); err != nil {
+		return nil, err
+	}
+
+	if gqlutils.OnlyTotalCountSelected(ctx) {
+		return &types.SAMLConfigurationConnection{
+			Resolver: r,
+			ParentID: obj.ID,
+		}, nil
+	}
+
+	pageOrderBy := page.OrderBy[coredata.SAMLConfigurationOrderField]{
+		Field:     coredata.SAMLConfigurationOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+
+	cursor := cursor.NewCursor(first, after, last, before, pageOrderBy)
+
+	page, err := r.iam.OrganizationService.ListSAMLConfigurations(ctx, obj.ID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list saml configurations", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewSAMLConfigurationConnection(page, r, obj.ID), nil
+}
+
+// ScimConfiguration is the resolver for the scimConfiguration field.
+func (r *organizationResolver) ScimConfiguration(ctx context.Context, obj *types.Organization) (*types.SCIMConfiguration, error) {
+	if err := r.authorize(ctx, obj.ID, iam.ActionSCIMConfigurationGet); err != nil {
+		return nil, err
+	}
+
+	config, err := r.iam.OrganizationService.GetSCIMConfiguration(ctx, obj.ID)
+	if err != nil {
+		var notFound *iam.ErrNoSCIMConfigurationFound
+		if errors.As(err, &notFound) {
+			return nil, nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot get scim configuration", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewSCIMConfiguration(config), nil
+}
+
+// ScimBridgeTypes is the resolver for the scimBridgeTypes field.
+func (r *organizationResolver) ScimBridgeTypes(ctx context.Context, obj *types.Organization) ([]*types.SCIMBridgeTypeInfo, error) {
+	return []*types.SCIMBridgeTypeInfo{
+		{
+			Type:         coredata.SCIMBridgeTypeGoogleWorkspace,
+			Oauth2Scopes: googleworkspace.OAuth2Scopes,
+		},
+	}, nil
+}
+
+// AuditLogEntries is the resolver for the auditLogEntries field.
+func (r *organizationResolver) AuditLogEntries(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AuditLogEntryOrderBy, filter *types.AuditLogEntryFilter) (*types.AuditLogEntryConnection, error) {
+	if err := r.authorize(ctx, obj.ID, iam.ActionAuditLogEntryList); err != nil {
+		return nil, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.AuditLogEntryOrderField]{
+		Field:     coredata.AuditLogEntryOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.AuditLogEntryOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	c := cursor.NewCursor(first, after, last, before, pageOrderBy)
+
+	coredataFilter := coredata.NewAuditLogEntryFilter()
+	if filter != nil {
+		if filter.Action != nil {
+			coredataFilter.WithAction(*filter.Action)
+		}
+		if filter.ActorID != nil {
+			coredataFilter.WithActorID(*filter.ActorID)
+		}
+		if filter.ResourceType != nil {
+			coredataFilter.WithResourceType(*filter.ResourceType)
+		}
+		if filter.ResourceID != nil {
+			coredataFilter.WithResourceID(*filter.ResourceID)
+		}
+	}
+
+	p, err := r.iam.OrganizationService.ListAuditLogEntries(ctx, obj.ID, c, coredataFilter)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list audit log entries", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewAuditLogEntryConnection(p, r, obj.ID, coredataFilter), nil
+}
+
+// Viewer is the resolver for the viewer field.
+func (r *organizationResolver) Viewer(ctx context.Context, obj *types.Organization) (*types.Profile, error) {
+	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileGet); err != nil {
+		return nil, err
+	}
+
+	identity := authn.IdentityFromContext(ctx)
+
+	profile, err := r.iam.OrganizationService.GetProfileForIdentityAndOrganization(ctx, identity.ID, obj.ID)
+	if err != nil {
+		var errNotFound *iam.ErrProfileNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot get profile", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewProfile(profile), nil
+}
+
+// Permission is the resolver for the permission field.
+func (r *organizationResolver) Permission(ctx context.Context, obj *types.Organization, action string) (bool, error) {
+	return r.Resolver.Permission(ctx, obj, action)
+}
+
+// Organization returns schema.OrganizationResolver implementation.
+func (r *Resolver) Organization() schema.OrganizationResolver { return &organizationResolver{r} }
+
+type organizationResolver struct{ *Resolver }

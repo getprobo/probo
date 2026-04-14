@@ -1,14 +1,3 @@
-extend type Organization {
-    measures(
-        first: Int
-        after: CursorKey
-        last: Int
-        before: CursorKey
-        orderBy: MeasureOrder
-        filter: MeasureFilter
-    ): MeasureConnection! @goField(forceResolver: true)
-}
-
 enum MeasureState
     @goModel(model: "go.probo.inc/probo/pkg/coredata.MeasureState") {
     NOT_STARTED

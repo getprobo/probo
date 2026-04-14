@@ -10,7 +10,6 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/vektah/gqlparser/v2/gqlerror"
@@ -19,12 +18,122 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/mail"
+	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/authz"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/server/gqlutils/types/cursor"
 )
+
+// Profiles is the resolver for the profiles field.
+func (r *identityResolver) Profiles(ctx context.Context, obj *types.Identity, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProfileOrderBy, filter *types.ProfileFilter) (*types.ProfileConnection, error) {
+	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileList, authz.WithSkipAssumptionCheck()); err != nil {
+		return nil, err
+	}
+
+	filters := coredata.NewMembershipProfileFilter(nil).WithMembership()
+	if filter != nil {
+		filters = coredata.NewMembershipProfileFilter(filter.ExcludeContractEnded).WithMembership()
+		if filter.State != nil {
+			filters.WithState(*filter.State)
+		}
+	}
+
+	if gqlutils.OnlyTotalCountSelected(ctx) {
+		return &types.ProfileConnection{
+			Resolver: r,
+			ParentID: obj.ID,
+			Filters:  filters,
+		}, nil
+	}
+
+	pageOrderBy := page.OrderBy[coredata.MembershipProfileOrderField]{
+		Field:     coredata.MembershipProfileOrderFieldFullName,
+		Direction: page.OrderDirectionAsc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.MembershipProfileOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := cursor.NewCursor(first, after, last, before, pageOrderBy)
+
+	page, err := r.iam.AccountService.ListProfilesForIdentity(ctx, obj.ID, cursor, filters)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list profiles", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewProfileConnection(page, r, obj.ID, filters), nil
+}
+
+// Sessions is the resolver for the sessions field.
+func (r *identityResolver) Sessions(ctx context.Context, obj *types.Identity, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.SessionOrder) (*types.SessionConnection, error) {
+	if err := r.authorize(ctx, obj.ID, iam.ActionSessionList); err != nil {
+		return nil, err
+	}
+
+	if gqlutils.OnlyTotalCountSelected(ctx) {
+		return &types.SessionConnection{
+			Resolver: r,
+			ParentID: obj.ID,
+		}, nil
+	}
+
+	pageOrderBy := page.OrderBy[coredata.SessionOrderField]{
+		Field:     coredata.SessionOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.SessionOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := cursor.NewCursor(first, after, last, before, pageOrderBy)
+
+	page, err := r.iam.AccountService.ListSessions(ctx, obj.ID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list sessions", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewSessionConnection(page, r, obj.ID), nil
+}
+
+// PersonalAPIKeys is the resolver for the personalAPIKeys field.
+func (r *identityResolver) PersonalAPIKeys(ctx context.Context, obj *types.Identity, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.PersonalAPIKeyConnection, error) {
+	if err := r.authorize(ctx, obj.ID, iam.ActionPersonalAPIKeyList); err != nil {
+		return nil, err
+	}
+
+	if gqlutils.OnlyTotalCountSelected(ctx) {
+		return &types.PersonalAPIKeyConnection{
+			Resolver: r,
+			ParentID: obj.ID,
+		}, nil
+	}
+
+	pageOrderBy := page.OrderBy[coredata.PersonalAPIKeyOrderField]{
+		Field:     coredata.PersonalAPIKeyOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+
+	cursor := cursor.NewCursor(first, after, last, before, pageOrderBy)
+
+	page, err := r.iam.AccountService.ListPersonalAPIKeys(ctx, obj.ID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list personal api keys", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewPersonalAPIKeyConnection(page, r, obj.ID), nil
+}
 
 // SsoLoginURL is the resolver for the ssoLoginURL field.
 func (r *identityResolver) SsoLoginURL(ctx context.Context, obj *types.Identity) (*string, error) {
@@ -525,63 +634,6 @@ func (r *mutationResolver) RevokeAllSessions(ctx context.Context) (*types.Revoke
 	return &types.RevokeAllSessionsPayload{RevokedCount: int(revokedCount)}, nil
 }
 
-// LogoURL is the resolver for the logoUrl field.
-func (r *organizationResolver) LogoURL(ctx context.Context, obj *types.Organization) (*string, error) {
-	if err := r.authorize(ctx, obj.ID, iam.ActionOrganizationGet, authz.WithSkipAssumptionCheck()); err != nil {
-		return nil, err
-	}
-
-	presignedURL, err := r.iam.OrganizationService.GenerateLogoURL(ctx, obj.ID, 1*time.Hour)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot generate logo URL", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return presignedURL, nil
-}
-
-// HorizontalLogoURL is the resolver for the horizontalLogoUrl field.
-func (r *organizationResolver) HorizontalLogoURL(ctx context.Context, obj *types.Organization) (*string, error) {
-	if err := r.authorize(ctx, obj.ID, iam.ActionOrganizationGet); err != nil {
-		return nil, err
-	}
-
-	presignedURL, err := r.iam.OrganizationService.GenerateHorizontalLogoURL(ctx, obj.ID, 1*time.Hour)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot generate horizontal logo URL", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return presignedURL, nil
-}
-
-// Viewer is the resolver for the viewer field.
-func (r *organizationResolver) Viewer(ctx context.Context, obj *types.Organization) (*types.Profile, error) {
-	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileGet); err != nil {
-		return nil, err
-	}
-
-	identity := authn.IdentityFromContext(ctx)
-
-	profile, err := r.iam.OrganizationService.GetProfileForIdentityAndOrganization(ctx, identity.ID, obj.ID)
-	if err != nil {
-		var errNotFound *iam.ErrProfileNotFound
-		if errors.As(err, &errNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
-		}
-
-		r.logger.ErrorCtx(ctx, "cannot get profile", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return types.NewProfile(profile), nil
-}
-
-// Permission is the resolver for the permission field.
-func (r *organizationResolver) Permission(ctx context.Context, obj *types.Organization, action string) (bool, error) {
-	return r.Resolver.Permission(ctx, obj, action)
-}
-
 // Node is the resolver for the node field.
 func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error) {
 	var (
@@ -797,13 +849,9 @@ func (r *Resolver) Identity() schema.IdentityResolver { return &identityResolver
 // Mutation returns schema.MutationResolver implementation.
 func (r *Resolver) Mutation() schema.MutationResolver { return &mutationResolver{r} }
 
-// Organization returns schema.OrganizationResolver implementation.
-func (r *Resolver) Organization() schema.OrganizationResolver { return &organizationResolver{r} }
-
 // Query returns schema.QueryResolver implementation.
 func (r *Resolver) Query() schema.QueryResolver { return &queryResolver{r} }
 
 type identityResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
-type organizationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }

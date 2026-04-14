@@ -259,36 +259,6 @@ func (r *mutationResolver) ExportFramework(ctx context.Context, input types.Expo
 	}, nil
 }
 
-// Frameworks is the resolver for the frameworks field.
-func (r *organizationResolver) Frameworks(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.FrameworkOrderBy) (*types.FrameworkConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionFrameworkList); err != nil {
-		return nil, err
-	}
-
-	prb := r.ProboService(ctx, obj.ID.TenantID())
-
-	pageOrderBy := page.OrderBy[coredata.FrameworkOrderField]{
-		Field:     coredata.FrameworkOrderFieldCreatedAt,
-		Direction: page.OrderDirectionDesc,
-	}
-	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.FrameworkOrderField]{
-			Field:     orderBy.Field,
-			Direction: orderBy.Direction,
-		}
-	}
-
-	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
-
-	page, err := prb.Frameworks.ListForOrganizationID(ctx, obj.ID, cursor)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list organization frameworks", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return types.NewFrameworkConnection(page, r, obj.ID), nil
-}
-
 // Framework returns schema.FrameworkResolver implementation.
 func (r *Resolver) Framework() schema.FrameworkResolver { return &frameworkResolver{r} }
 

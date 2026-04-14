@@ -12,11 +12,9 @@ import (
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/iam"
-	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
-	"go.probo.inc/probo/pkg/server/gqlutils/types/cursor"
 )
 
 // CreateSAMLConfiguration is the resolver for the createSAMLConfiguration field.
@@ -114,35 +112,6 @@ func (r *mutationResolver) DeleteSAMLConfiguration(ctx context.Context, input ty
 	}
 
 	return &types.DeleteSAMLConfigurationPayload{DeletedSamlConfigurationID: input.SamlConfigurationID}, nil
-}
-
-// SamlConfigurations is the resolver for the samlConfigurations field.
-func (r *organizationResolver) SamlConfigurations(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.SAMLConfigurationConnection, error) {
-	if err := r.authorize(ctx, obj.ID, iam.ActionSAMLConfigurationList); err != nil {
-		return nil, err
-	}
-
-	if gqlutils.OnlyTotalCountSelected(ctx) {
-		return &types.SAMLConfigurationConnection{
-			Resolver: r,
-			ParentID: obj.ID,
-		}, nil
-	}
-
-	pageOrderBy := page.OrderBy[coredata.SAMLConfigurationOrderField]{
-		Field:     coredata.SAMLConfigurationOrderFieldCreatedAt,
-		Direction: page.OrderDirectionDesc,
-	}
-
-	cursor := cursor.NewCursor(first, after, last, before, pageOrderBy)
-
-	page, err := r.iam.OrganizationService.ListSAMLConfigurations(ctx, obj.ID, cursor)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list saml configurations", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return types.NewSAMLConfigurationConnection(page, r, obj.ID), nil
 }
 
 // TestLoginURL is the resolver for the testLoginUrl field.

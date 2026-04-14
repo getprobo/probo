@@ -16,7 +16,6 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
-	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/saferedirect"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/compliancepage"
@@ -350,164 +349,6 @@ func (r *queryResolver) OidcProviders(ctx context.Context) ([]*types.OIDCProvide
 	return result, nil
 }
 
-// LogoFileURL is the resolver for the logoFileUrl field.
-func (r *trustCenterResolver) LogoFileURL(ctx context.Context, obj *types.TrustCenter) (*string, error) {
-	trustService := r.TrustService(ctx, obj.ID.TenantID())
-
-	return trustService.TrustCenters.GenerateLogoURL(ctx, obj.ID, 1*time.Hour)
-}
-
-// DarkLogoFileURL is the resolver for the darkLogoFileUrl field.
-func (r *trustCenterResolver) DarkLogoFileURL(ctx context.Context, obj *types.TrustCenter) (*string, error) {
-	trustService := r.TrustService(ctx, obj.ID.TenantID())
-
-	return trustService.TrustCenters.GenerateDarkLogoURL(ctx, obj.ID, 1*time.Hour)
-}
-
-// Organization is the resolver for the organization field.
-func (r *trustCenterResolver) Organization(ctx context.Context, obj *types.TrustCenter) (*types.Organization, error) {
-	return obj.Organization, nil
-}
-
-// Documents is the resolver for the documents field.
-func (r *trustCenterResolver) Documents(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.DocumentConnection, error) {
-	trustService := r.TrustService(ctx, obj.ID.TenantID())
-
-	pageOrderBy := page.OrderBy[coredata.DocumentOrderField]{
-		Field:     coredata.DocumentOrderFieldTitle,
-		Direction: page.OrderDirectionAsc,
-	}
-	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
-
-	documentPage, err := trustService.Documents.ListForOrganizationId(ctx, obj.Organization.ID, cursor)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list public documents", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return types.NewDocumentConnection(documentPage), nil
-}
-
-// Audits is the resolver for the audits field.
-func (r *trustCenterResolver) Audits(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.AuditConnection, error) {
-	trustService := r.TrustService(ctx, obj.ID.TenantID())
-
-	pageOrderBy := page.OrderBy[coredata.AuditOrderField]{
-		Field:     coredata.AuditOrderFieldValidFrom,
-		Direction: page.OrderDirectionDesc,
-	}
-	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
-
-	auditPage, err := trustService.Audits.ListForOrganizationId(ctx, obj.Organization.ID, cursor)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list public audits", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return types.NewAuditConnection(auditPage), nil
-}
-
-// Subprocessors is the resolver for the subprocessors field.
-func (r *trustCenterResolver) Subprocessors(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.SubprocessorConnection, error) {
-	trustService := r.TrustService(ctx, obj.ID.TenantID())
-
-	pageOrderBy := page.OrderBy[coredata.VendorOrderField]{
-		Field:     coredata.VendorOrderFieldName,
-		Direction: page.OrderDirectionAsc,
-	}
-	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
-
-	vendorPage, err := trustService.Vendors.ListForOrganizationId(ctx, obj.Organization.ID, cursor)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list subprocessors", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return types.NewSubprocessorConnection(vendorPage, r, obj.ID), nil
-}
-
-// References is the resolver for the references field.
-func (r *trustCenterResolver) References(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.TrustCenterReferenceConnection, error) {
-	trustService := r.TrustService(ctx, obj.ID.TenantID())
-
-	pageOrderBy := page.OrderBy[coredata.TrustCenterReferenceOrderField]{
-		Field:     coredata.TrustCenterReferenceOrderFieldRank,
-		Direction: page.OrderDirectionAsc,
-	}
-	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
-
-	referencePage, err := trustService.TrustCenterReferences.ListForTrustCenterID(ctx, obj.ID, cursor)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list public trust center references", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return types.NewTrustCenterReferenceConnection(referencePage), nil
-}
-
-// TrustCenterFiles is the resolver for the trustCenterFiles field.
-func (r *trustCenterResolver) TrustCenterFiles(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.TrustCenterFileConnection, error) {
-	trustService := r.TrustService(ctx, obj.ID.TenantID())
-
-	pageOrderBy := page.OrderBy[coredata.TrustCenterFileOrderField]{
-		Field:     coredata.TrustCenterFileOrderFieldName,
-		Direction: page.OrderDirectionAsc,
-	}
-	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
-
-	filter := coredata.NewTrustCenterFileFilter(
-		coredata.WithTrustCenterFileVisibilities(
-			coredata.TrustCenterVisibilityPublic,
-			coredata.TrustCenterVisibilityPrivate,
-		),
-	)
-	trustCenterFilePage, err := trustService.TrustCenterFiles.ListForOrganizationId(ctx, obj.Organization.ID, cursor, filter)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list public trust center files", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return types.NewTrustCenterFileConnection(trustCenterFilePage), nil
-}
-
-// ComplianceFrameworks is the resolver for the complianceFrameworks field.
-func (r *trustCenterResolver) ComplianceFrameworks(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.ComplianceFrameworkConnection, error) {
-	trustService := r.TrustService(ctx, obj.ID.TenantID())
-
-	pageOrderBy := page.OrderBy[coredata.ComplianceFrameworkOrderField]{
-		Field:     coredata.ComplianceFrameworkOrderFieldRank,
-		Direction: page.OrderDirectionAsc,
-	}
-	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
-
-	cfPage, err := trustService.ComplianceFrameworks.ListByTrustCenterID(ctx, obj.ID, cursor)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list compliance frameworks", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return types.NewComplianceFrameworkConnection(cfPage), nil
-}
-
-// ExternalUrls is the resolver for the externalUrls field.
-func (r *trustCenterResolver) ExternalUrls(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.ComplianceExternalURLConnection, error) {
-	trustService := r.TrustService(ctx, obj.ID.TenantID())
-
-	pageOrderBy := page.OrderBy[coredata.ComplianceExternalURLOrderField]{
-		Field:     coredata.ComplianceExternalURLOrderFieldRank,
-		Direction: page.OrderDirectionAsc,
-	}
-	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
-
-	result, err := trustService.ComplianceExternalURLs.ListForTrustCenterID(ctx, obj.ID, cursor)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list compliance external URLs", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return types.NewComplianceExternalURLConnection(result), nil
-}
-
 // Mutation returns schema.MutationResolver implementation.
 func (r *Resolver) Mutation() schema.MutationResolver { return &mutationResolver{r} }
 
@@ -517,10 +358,6 @@ func (r *Resolver) Organization() schema.OrganizationResolver { return &organiza
 // Query returns schema.QueryResolver implementation.
 func (r *Resolver) Query() schema.QueryResolver { return &queryResolver{r} }
 
-// TrustCenter returns schema.TrustCenterResolver implementation.
-func (r *Resolver) TrustCenter() schema.TrustCenterResolver { return &trustCenterResolver{r} }
-
 type mutationResolver struct{ *Resolver }
 type organizationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
-type trustCenterResolver struct{ *Resolver }

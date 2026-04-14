@@ -1,24 +1,3 @@
-extend type Identity {
-  profiles(
-    first: Int
-    after: CursorKey
-    last: Int
-    before: CursorKey
-    orderBy: ProfileOrder
-    filter: ProfileFilter
-  ): ProfileConnection @goField(forceResolver: true)
-}
-
-extend type Organization {
-  profiles(
-    first: Int
-    after: CursorKey
-    last: Int
-    before: CursorKey
-    orderBy: ProfileOrder
-  ): ProfileConnection @goField(forceResolver: true)
-}
-
 type Profile implements Node {
   id: ID!
   fullName: String!

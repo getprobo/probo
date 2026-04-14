@@ -64,36 +64,6 @@ func (r *mutationResolver) DeleteSnapshot(ctx context.Context, input types.Delet
 	}, nil
 }
 
-// Snapshots is the resolver for the snapshots field.
-func (r *organizationResolver) Snapshots(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.SnapshotOrderBy) (*types.SnapshotConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionSnapshotList); err != nil {
-		return nil, err
-	}
-
-	prb := r.ProboService(ctx, obj.ID.TenantID())
-
-	pageOrderBy := page.OrderBy[coredata.SnapshotOrderField]{
-		Field:     coredata.SnapshotOrderFieldCreatedAt,
-		Direction: page.OrderDirectionDesc,
-	}
-	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.SnapshotOrderField]{
-			Field:     orderBy.Field,
-			Direction: orderBy.Direction,
-		}
-	}
-
-	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
-
-	page, err := prb.Snapshots.ListForOrganizationID(ctx, obj.ID, cursor)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list organization snapshots", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return types.NewSnapshotConnection(page, r, obj.ID), nil
-}
-
 // Organization is the resolver for the organization field.
 func (r *snapshotResolver) Organization(ctx context.Context, obj *types.Snapshot) (*types.Organization, error) {
 	if err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {

@@ -15,7 +15,6 @@ import (
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
@@ -324,78 +323,6 @@ func (r *mutationResolver) ExportTransferImpactAssessmentsPDF(ctx context.Contex
 	return &types.ExportTransferImpactAssessmentsPDFPayload{
 		Data: fmt.Sprintf("data:application/pdf;base64,%s", base64.StdEncoding.EncodeToString(pdf)),
 	}, nil
-}
-
-// DataProtectionImpactAssessments is the resolver for the dataProtectionImpactAssessments field.
-func (r *organizationResolver) DataProtectionImpactAssessments(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DataProtectionImpactAssessmentOrderBy, filter *types.DataProtectionImpactAssessmentFilter) (*types.DataProtectionImpactAssessmentConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionDataProtectionImpactAssessmentList); err != nil {
-		return nil, err
-	}
-
-	prb := r.ProboService(ctx, obj.ID.TenantID())
-
-	pageOrderBy := page.OrderBy[coredata.DataProtectionImpactAssessmentOrderField]{
-		Field:     coredata.DataProtectionImpactAssessmentOrderFieldCreatedAt,
-		Direction: page.OrderDirectionDesc,
-	}
-
-	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.DataProtectionImpactAssessmentOrderField]{
-			Field:     orderBy.Field,
-			Direction: orderBy.Direction,
-		}
-	}
-
-	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
-
-	dpiaFilter := coredata.NewDataProtectionImpactAssessmentFilter(nil)
-	if filter != nil {
-		dpiaFilter = coredata.NewDataProtectionImpactAssessmentFilter(&filter.SnapshotID)
-	}
-
-	page, err := prb.DataProtectionImpactAssessments.ListForOrganizationID(ctx, obj.ID, cursor, dpiaFilter)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list organization data protection impact assessments", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return types.NewDataProtectionImpactAssessmentConnection(page, r, obj.ID, dpiaFilter), nil
-}
-
-// TransferImpactAssessments is the resolver for the transferImpactAssessments field.
-func (r *organizationResolver) TransferImpactAssessments(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TransferImpactAssessmentOrderBy, filter *types.TransferImpactAssessmentFilter) (*types.TransferImpactAssessmentConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionTransferImpactAssessmentList); err != nil {
-		return nil, err
-	}
-
-	prb := r.ProboService(ctx, obj.ID.TenantID())
-
-	pageOrderBy := page.OrderBy[coredata.TransferImpactAssessmentOrderField]{
-		Field:     coredata.TransferImpactAssessmentOrderFieldCreatedAt,
-		Direction: page.OrderDirectionDesc,
-	}
-
-	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.TransferImpactAssessmentOrderField]{
-			Field:     orderBy.Field,
-			Direction: orderBy.Direction,
-		}
-	}
-
-	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
-
-	tiaFilter := coredata.NewTransferImpactAssessmentFilter(nil)
-	if filter != nil {
-		tiaFilter = coredata.NewTransferImpactAssessmentFilter(&filter.SnapshotID)
-	}
-
-	page, err := prb.TransferImpactAssessments.ListForOrganizationID(ctx, obj.ID, cursor, tiaFilter)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list organization transfer impact assessments", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return types.NewTransferImpactAssessmentConnection(page, r, obj.ID, tiaFilter), nil
 }
 
 // ProcessingActivity is the resolver for the processingActivity field.

@@ -1,38 +1,3 @@
-extend type Organization {
-    documents(
-        first: Int
-        after: CursorKey
-        last: Int
-        before: CursorKey
-        orderBy: DocumentOrder
-        filter: DocumentFilter
-    ): DocumentConnection! @goField(forceResolver: true)
-}
-
-extend type Viewer {
-    signableDocuments(
-        organizationId: ID!
-        first: Int
-        after: CursorKey
-        last: Int
-        before: CursorKey
-        orderBy: DocumentOrder
-    ): EmployeeDocumentConnection! @goField(forceResolver: true)
-
-    signableDocument(id: ID!): EmployeeDocument @goField(forceResolver: true)
-
-    approvableDocuments(
-        organizationId: ID!
-        first: Int
-        after: CursorKey
-        last: Int
-        before: CursorKey
-        orderBy: DocumentOrder
-    ): EmployeeDocumentConnection! @goField(forceResolver: true)
-
-    approvableDocument(id: ID!): EmployeeDocument @goField(forceResolver: true)
-}
-
 enum DocumentVersionStatus
     @goModel(model: "go.probo.inc/probo/pkg/coredata.DocumentVersionStatus") {
     DRAFT

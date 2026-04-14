@@ -66,28 +66,33 @@ type Identity implements Node {
   createdAt: Datetime!
   updatedAt: Datetime!
 
+  profiles(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+    orderBy: ProfileOrder
+    filter: ProfileFilter
+  ): ProfileConnection @goField(forceResolver: true)
+
+  sessions(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+    orderBy: SessionOrder
+  ): SessionConnection @goField(forceResolver: true)
+
+  personalAPIKeys(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+  ): PersonalAPIKeyConnection @goField(forceResolver: true)
+
   ssoLoginURL: String
     @goField(forceResolver: true)
     @session(required: PRESENT)
-
-  permission(action: String!): Boolean!
-    @goField(forceResolver: true)
-    @session(required: PRESENT)
-}
-
-type Organization implements Node {
-  id: ID!
-  name: String!
-  logoUrl: String @goField(forceResolver: true)
-  horizontalLogoUrl: String @goField(forceResolver: true)
-  email: String
-  description: String
-  websiteUrl: String
-  headquarterAddress: String
-  createdAt: Datetime!
-  updatedAt: Datetime!
-
-  viewer: Profile @goField(forceResolver: true)
 
   permission(action: String!): Boolean!
     @goField(forceResolver: true)

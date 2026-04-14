@@ -13,16 +13,6 @@ input SessionOrder {
   field: SessionOrderField!
 }
 
-extend type Identity {
-  sessions(
-    first: Int
-    after: CursorKey
-    last: Int
-    before: CursorKey
-    orderBy: SessionOrder
-  ): SessionConnection @goField(forceResolver: true)
-}
-
 type Session implements Node {
   id: ID!
   identity: Identity @goField(forceResolver: true)

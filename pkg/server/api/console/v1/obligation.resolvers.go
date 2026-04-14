@@ -13,7 +13,6 @@ import (
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/iam"
-	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
@@ -197,42 +196,6 @@ func (r *obligationConnectionResolver) TotalCount(ctx context.Context, obj *type
 
 	r.logger.ErrorCtx(ctx, "unsupported resolver")
 	return 0, gqlutils.Internal(ctx)
-}
-
-// Obligations is the resolver for the obligations field.
-func (r *organizationResolver) Obligations(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ObligationOrderBy, filter *types.ObligationFilter) (*types.ObligationConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionObligationList); err != nil {
-		return nil, err
-	}
-
-	prb := r.ProboService(ctx, obj.ID.TenantID())
-
-	pageOrderBy := page.OrderBy[coredata.ObligationOrderField]{
-		Field:     coredata.ObligationOrderFieldCreatedAt,
-		Direction: page.OrderDirectionDesc,
-	}
-
-	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.ObligationOrderField]{
-			Field:     orderBy.Field,
-			Direction: orderBy.Direction,
-		}
-	}
-
-	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
-
-	obligationFilter := coredata.NewObligationFilter(nil)
-	if filter != nil {
-		obligationFilter = coredata.NewObligationFilter(&filter.SnapshotID)
-	}
-
-	page, err := prb.Obligations.ListForOrganizationID(ctx, obj.ID, cursor, obligationFilter)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list organization obligations", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return types.NewObligationConnection(page, r, obj.ID, filter), nil
 }
 
 // Obligation returns schema.ObligationResolver implementation.

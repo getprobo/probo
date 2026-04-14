@@ -386,41 +386,6 @@ func (r *mutationResolver) DeleteMeasureDocumentMapping(ctx context.Context, inp
 	}, nil
 }
 
-// Measures is the resolver for the measures field.
-func (r *organizationResolver) Measures(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MeasureOrderBy, filter *types.MeasureFilter) (*types.MeasureConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionMeasureList); err != nil {
-		return nil, err
-	}
-
-	prb := r.ProboService(ctx, obj.ID.TenantID())
-
-	pageOrderBy := page.OrderBy[coredata.MeasureOrderField]{
-		Field:     coredata.MeasureOrderFieldCreatedAt,
-		Direction: page.OrderDirectionDesc,
-	}
-	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.MeasureOrderField]{
-			Field:     orderBy.Field,
-			Direction: orderBy.Direction,
-		}
-	}
-
-	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
-
-	var measureFilter = coredata.NewMeasureFilter(nil, nil, nil)
-	if filter != nil {
-		measureFilter = coredata.NewMeasureFilter(filter.Query, filter.State, filter.Category)
-	}
-
-	page, err := prb.Measures.ListForOrganizationID(ctx, obj.ID, cursor, measureFilter)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list organization measures", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return types.NewMeasureConnection(page, r, obj.ID, measureFilter), nil
-}
-
 // Measure returns schema.MeasureResolver implementation.
 func (r *Resolver) Measure() schema.MeasureResolver { return &measureResolver{r} }
 

@@ -1,8 +1,3 @@
-extend type Organization {
-  scimConfiguration: SCIMConfiguration @goField(forceResolver: true)
-  scimBridgeTypes: [SCIMBridgeTypeInfo!]! @goField(forceResolver: true)
-}
-
 type SCIMConfiguration implements Node {
   id: ID!
   endpointUrl: String! @goField(forceResolver: true)

@@ -1,14 +1,3 @@
-extend type TrustCenter {
-  viewerSubscription: MailingListSubscriber @goField(forceResolver: true)
-
-  updates(
-    first: Int
-    after: CursorKey
-    last: Int
-    before: CursorKey
-  ): MailingListUpdateConnection! @goField(forceResolver: true)
-}
-
 type MailingListUpdate implements Node {
   id: ID!
   title: String!

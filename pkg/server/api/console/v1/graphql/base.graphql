@@ -311,35 +311,28 @@ type Query {
 
 type Viewer {
     id: ID!
-}
 
-type Organization implements Node {
-    id: ID!
-    name: String!
-    logoUrl: String @goField(forceResolver: true)
-    horizontalLogoUrl: String @goField(forceResolver: true)
-
-    description: String
-    websiteUrl: String
-    email: String
-    headquarterAddress: String
-    context: OrganizationContext @goField(forceResolver: true)
-
-    profiles(
+    signableDocuments(
+        organizationId: ID!
         first: Int
         after: CursorKey
         last: Int
         before: CursorKey
-        orderBy: ProfileOrder
-        filter: ProfileFilter
-    ): ProfileConnection! @goField(forceResolver: true)
+        orderBy: DocumentOrder
+    ): EmployeeDocumentConnection! @goField(forceResolver: true)
 
-    measureCategories: [String!]! @goField(forceResolver: true)
+    signableDocument(id: ID!): EmployeeDocument @goField(forceResolver: true)
 
-    createdAt: Datetime!
-    updatedAt: Datetime!
+    approvableDocuments(
+        organizationId: ID!
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: DocumentOrder
+    ): EmployeeDocumentConnection! @goField(forceResolver: true)
 
-    permission(action: String!): Boolean! @goField(forceResolver: true)
+    approvableDocument(id: ID!): EmployeeDocument @goField(forceResolver: true)
 }
 
 type Mutation {

@@ -558,41 +558,6 @@ func (r *mutationResolver) AssessVendor(ctx context.Context, input types.AssessV
 	}, nil
 }
 
-// Vendors is the resolver for the vendors field.
-func (r *organizationResolver) Vendors(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.VendorOrderBy, filter *types.VendorFilter) (*types.VendorConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionVendorList); err != nil {
-		return nil, err
-	}
-
-	prb := r.ProboService(ctx, obj.ID.TenantID())
-
-	pageOrderBy := page.OrderBy[coredata.VendorOrderField]{
-		Field:     coredata.VendorOrderFieldCreatedAt,
-		Direction: page.OrderDirectionDesc,
-	}
-	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.VendorOrderField]{
-			Field:     orderBy.Field,
-			Direction: orderBy.Direction,
-		}
-	}
-
-	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
-
-	var vendorFilter = coredata.NewVendorFilter(nil, nil)
-	if filter != nil {
-		vendorFilter = coredata.NewVendorFilter(&filter.SnapshotID, nil)
-	}
-
-	page, err := prb.Vendors.ListForOrganizationID(ctx, obj.ID, cursor, vendorFilter)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list organization vendors", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return types.NewVendorConnection(page, r, obj.ID), nil
-}
-
 // Organization is the resolver for the organization field.
 func (r *vendorResolver) Organization(ctx context.Context, obj *types.Vendor) (*types.Organization, error) {
 	if err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {

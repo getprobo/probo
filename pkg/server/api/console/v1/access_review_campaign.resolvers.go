@@ -955,64 +955,6 @@ func (r *mutationResolver) FlagAccessEntry(ctx context.Context, input types.Flag
 	}, nil
 }
 
-// AccessSources is the resolver for the accessSources field.
-func (r *organizationResolver) AccessSources(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AccessSourceOrder) (*types.AccessSourceConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionAccessSourceList); err != nil {
-		return nil, err
-	}
-
-	scope := coredata.NewScopeFromObjectID(obj.ID)
-
-	pageOrderBy := page.OrderBy[coredata.AccessSourceOrderField]{
-		Field:     coredata.AccessSourceOrderFieldCreatedAt,
-		Direction: page.OrderDirectionDesc,
-	}
-	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.AccessSourceOrderField]{
-			Field:     orderBy.Field,
-			Direction: orderBy.Direction,
-		}
-	}
-
-	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
-
-	p, err := r.accessReview.Sources(scope).ListForOrganizationID(ctx, obj.ID, cursor)
-	if err != nil {
-		panic(fmt.Errorf("cannot list access sources: %w", err))
-	}
-
-	return types.NewAccessSourceConnection(p, r, obj.ID), nil
-}
-
-// AccessReviewCampaigns is the resolver for the accessReviewCampaigns field.
-func (r *organizationResolver) AccessReviewCampaigns(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AccessReviewCampaignOrder) (*types.AccessReviewCampaignConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionAccessReviewCampaignList); err != nil {
-		return nil, err
-	}
-
-	scope := coredata.NewScopeFromObjectID(obj.ID)
-
-	pageOrderBy := page.OrderBy[coredata.AccessReviewCampaignOrderField]{
-		Field:     coredata.AccessReviewCampaignOrderFieldCreatedAt,
-		Direction: page.OrderDirectionDesc,
-	}
-	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.AccessReviewCampaignOrderField]{
-			Field:     orderBy.Field,
-			Direction: orderBy.Direction,
-		}
-	}
-
-	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
-
-	p, err := r.accessReview.Campaigns(scope).ListForOrganizationID(ctx, obj.ID, cursor)
-	if err != nil {
-		panic(fmt.Errorf("cannot list access review campaigns: %w", err))
-	}
-
-	return types.NewAccessReviewCampaignConnection(p, r, obj.ID), nil
-}
-
 // AccessEntry returns schema.AccessEntryResolver implementation.
 func (r *Resolver) AccessEntry() schema.AccessEntryResolver { return &accessEntryResolver{r} }
 

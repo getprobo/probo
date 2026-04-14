@@ -10,9 +10,7 @@ import (
 	"errors"
 
 	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/mailman"
-	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/compliancepage"
 	"go.probo.inc/probo/pkg/server/api/trust/v1/types"
@@ -80,58 +78,4 @@ func (r *mutationResolver) UnsubscribeFromMailingList(ctx context.Context) (*typ
 	}
 
 	return &types.UnsubscribeFromMailingListPayload{DeletedMailingListSubscriberID: &subscriber.ID}, nil
-}
-
-// ViewerSubscription is the resolver for the viewerSubscription field.
-func (r *trustCenterResolver) ViewerSubscription(ctx context.Context, obj *types.TrustCenter) (*types.MailingListSubscriber, error) {
-	trustCenter := compliancepage.CompliancePageFromContext(ctx)
-	if trustCenter.MailingListID == nil {
-		return nil, nil
-	}
-
-	identity := authn.IdentityFromContext(ctx)
-	if identity == nil {
-		return nil, nil
-	}
-
-	subscriber, err := r.mailman.GetSubscriber(ctx, *trustCenter.MailingListID, identity.EmailAddress)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot get mailing list subscription", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	if subscriber == nil {
-		return nil, nil
-	}
-
-	return types.NewMailingListSubscriber(subscriber), nil
-}
-
-// Updates is the resolver for the updates field.
-func (r *trustCenterResolver) Updates(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.MailingListUpdateConnection, error) {
-	trustService := r.TrustService(ctx, obj.ID.TenantID())
-
-	tc, err := trustService.TrustCenters.Get(ctx, obj.ID)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot load trust center", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	if tc.MailingListID == nil {
-		return &types.MailingListUpdateConnection{Edges: []*types.MailingListUpdateEdge{}, PageInfo: &types.PageInfo{}}, nil
-	}
-
-	pageOrderBy := page.OrderBy[coredata.MailingListUpdateOrderField]{
-		Field:     coredata.MailingListUpdateOrderFieldUpdatedAt,
-		Direction: page.OrderDirectionDesc,
-	}
-	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
-
-	result, err := r.mailman.ListSentMailingListUpdates(ctx, *tc.MailingListID, cursor)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list mailing list updates", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return types.NewMailingListUpdateConnection(result), nil
 }
