@@ -81,7 +81,7 @@ func parseForwardedFor(header string) string {
 		header = header[:i]
 	}
 
-	for _, part := range strings.Split(header, ";") {
+	for part := range strings.SplitSeq(header, ";") {
 		part = strings.TrimSpace(part)
 		if !strings.HasPrefix(strings.ToLower(part), "for=") {
 			continue
