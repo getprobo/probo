@@ -15,8 +15,9 @@
 import { formatError } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import { RichEditor, useToast } from "@probo/ui";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { type PreloadedQuery, useMutation, usePreloadedQuery } from "react-relay";
+import { useOutletContext, useParams } from "react-router";
 import { graphql } from "relay-runtime";
 import { useDebounceCallback } from "usehooks-ts";
 
@@ -39,6 +40,9 @@ export const documentDescriptionPageQuery = graphql`
     document: node(id: $documentId) {
       __typename
       ... on Document {
+        id
+        status
+        canUpdate: permission(action: "core:document:update")
         # We use this on /documents/:documentId/description
         lastVersion: versions(first: 1 orderBy: { field: CREATED_AT, direction: DESC }) @skip(if: $versionSpecified) {
           edges {
@@ -55,20 +59,30 @@ export const documentDescriptionPageQuery = graphql`
 `;
 
 const updateContentMutation = graphql`
-  mutation DocumentDescriptionPage_updateContentMutation($input: UpdateDocumentVersionInput!) {
-    updateDocumentVersion(input: $input) {
+  mutation DocumentDescriptionPage_updateContentMutation($input: UpdateDocumentInput!) {
+    updateDocument(input: $input) {
+      document {
+        id
+      }
       documentVersion {
+        id
         content
+        status
       }
     }
   }
 `;
 
-export function DocumentDescriptionPage(props: { queryRef: PreloadedQuery<DocumentDescriptionPageQuery> }) {
-  const { queryRef } = props;
+export function DocumentDescriptionPage(props: {
+  queryRef: PreloadedQuery<DocumentDescriptionPageQuery>;
+  versionChangedAt: number;
+}) {
+  const { queryRef, versionChangedAt } = props;
 
   const { __ } = useTranslate();
   const { toast } = useToast();
+  const { versionId } = useParams();
+  const { onRefetch } = useOutletContext<{ onRefetch: () => void }>();
 
   const { document, version } = usePreloadedQuery<DocumentDescriptionPageQuery>(
     documentDescriptionPageQuery,
@@ -81,18 +95,21 @@ export function DocumentDescriptionPage(props: { queryRef: PreloadedQuery<Docume
   const lastVersion = document.lastVersion?.edges[0].node;
   const currentVersion = lastVersion ?? version as NonNullable<typeof lastVersion | typeof version>;
 
-  const [updateContent, _] = useMutation<DocumentDescriptionPage_updateContentMutation>(updateContentMutation);
+  const [updateContent] = useMutation<DocumentDescriptionPage_updateContentMutation>(updateContentMutation);
+
+  const documentId = document.id;
+  const wasDraft = currentVersion.status === "DRAFT";
 
   const handleUpdate = useDebounceCallback(
     useCallback((content: string) => {
       updateContent({
         variables: {
           input: {
-            documentVersionId: currentVersion.id,
+            id: documentId,
             content,
           },
         },
-        onCompleted: (_, errors) => {
+        onCompleted: (data, errors) => {
           if (errors?.length) {
             toast({
               title: __("Error"),
@@ -100,6 +117,15 @@ export function DocumentDescriptionPage(props: { queryRef: PreloadedQuery<Docume
               variant: "error",
             });
             return;
+          }
+
+          // Refetch the layout when draft status changes (draft created
+          // or auto-deleted) so the drawer and header reflect the current
+          // version. This does NOT remount the editor because the editor
+          // key is based on versionChangedAt (explicit actions only).
+          const draftReturned = !!data.updateDocument.documentVersion;
+          if (wasDraft !== draftReturned) {
+            onRefetch();
           }
 
           toast({
@@ -116,16 +142,60 @@ export function DocumentDescriptionPage(props: { queryRef: PreloadedQuery<Docume
           });
         },
       });
-    }, [currentVersion.id, updateContent, toast, __]),
+    }, [documentId, wasDraft, updateContent, toast, __, onRefetch]),
     autoSaveIntervalMs,
   );
 
+  // When viewing a specific historical version, the editor is read-only.
+  // When viewing the latest version, editing is allowed if the user has
+  // update permission and the document is not archived — the backend
+  // will auto-create a draft if needed.
+  const isViewingSpecificVersion = !!version;
+  const canEdit = !isViewingSpecificVersion
+    && document.canUpdate
+    && document.status !== "ARCHIVED";
+
+  // The editor key must change on explicit actions (delete draft, edit
+  // title/type) but NOT on auto-save side effects (cursor preservation).
+  // We track a "data generation" that only increments when an explicit
+  // action (versionChangedAt change) is followed by fresh data arriving
+  // (currentVersion.id change). This uses React's "adjust state during
+  // render" pattern so we avoid refs-during-render and setState-in-effects.
+  const [prevVCA, setPrevVCA] = useState(versionChangedAt);
+  const [prevVersionId, setPrevVersionId] = useState(currentVersion.id);
+  const [dataGeneration, setDataGeneration] = useState(0);
+  const [pendingExplicit, setPendingExplicit] = useState(false);
+
+  if (versionChangedAt !== prevVCA) {
+    setPrevVCA(versionChangedAt);
+    if (currentVersion.id !== prevVersionId) {
+      // Both changed at once — data was already available.
+      setPrevVersionId(currentVersion.id);
+      setDataGeneration(g => g + 1);
+      setPendingExplicit(false);
+    } else {
+      // Explicit action fired but data hasn't arrived yet.
+      setPendingExplicit(true);
+    }
+  } else if (currentVersion.id !== prevVersionId) {
+    setPrevVersionId(currentVersion.id);
+    if (pendingExplicit) {
+      // Fresh data arrived for a pending explicit action — remount.
+      setDataGeneration(g => g + 1);
+      setPendingExplicit(false);
+    }
+    // Otherwise auto-save changed the version — don't bump generation.
+  }
+
+  const editorKey = `${versionId ?? "latest"}-${dataGeneration}`;
+
   return (
     <RichEditor
+      key={editorKey}
       className="flex-1"
       content={currentVersion.content}
       data-theme="document"
-      disabled={currentVersion.status !== "DRAFT"}
+      disabled={!canEdit}
       onChangeContent={handleUpdate}
     />
   );

@@ -29,13 +29,15 @@ mutation($input: UpdateDocumentInput!) {
     document {
       id
       trustCenterVisibility
-      versions(first: 1) {
-        edges {
-          node {
-            title
-          }
-        }
-      }
+    }
+    documentVersion {
+      id
+      title
+      major
+      minor
+      status
+      documentType
+      classification
     }
   }
 }
@@ -46,19 +48,27 @@ type updateResponse struct {
 		Document struct {
 			ID                    string `json:"id"`
 			TrustCenterVisibility string `json:"trustCenterVisibility"`
-			Versions              struct {
-				Edges []struct {
-					Node struct {
-						Title string `json:"title"`
-					} `json:"node"`
-				} `json:"edges"`
-			} `json:"versions"`
 		} `json:"document"`
+		DocumentVersion *struct {
+			ID             string `json:"id"`
+			Title          string `json:"title"`
+			Major          int    `json:"major"`
+			Minor          int    `json:"minor"`
+			Status         string `json:"status"`
+			DocumentType   string `json:"documentType"`
+			Classification string `json:"classification"`
+		} `json:"documentVersion"`
 	} `json:"updateDocument"`
 }
 
 func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
-	var flagTrustCenterVisibility string
+	var (
+		flagTitle                 string
+		flagContent               string
+		flagDocumentType          string
+		flagClassification        string
+		flagTrustCenterVisibility string
+	)
 
 	cmd := &cobra.Command{
 		Use:   "update <id>",
@@ -86,6 +96,32 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 				"id": args[0],
 			}
 
+			if cmd.Flags().Changed("title") {
+				input["title"] = flagTitle
+			}
+			if cmd.Flags().Changed("content") {
+				input["content"] = flagContent
+			}
+			if cmd.Flags().Changed("document-type") {
+				if err := cmdutil.ValidateEnum(
+					"document-type",
+					flagDocumentType,
+					[]string{"OTHER", "GOVERNANCE", "POLICY", "PROCEDURE", "PLAN", "REGISTER", "RECORD", "REPORT", "TEMPLATE"},
+				); err != nil {
+					return err
+				}
+				input["documentType"] = flagDocumentType
+			}
+			if cmd.Flags().Changed("classification") {
+				if err := cmdutil.ValidateEnum(
+					"classification",
+					flagClassification,
+					[]string{"PUBLIC", "INTERNAL", "CONFIDENTIAL", "SECRET"},
+				); err != nil {
+					return err
+				}
+				input["classification"] = flagClassification
+			}
 			if cmd.Flags().Changed("trust-center-visibility") {
 				if err := cmdutil.ValidateEnum(
 					"trust-center-visibility",
@@ -115,21 +151,31 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			doc := resp.UpdateDocument.Document
-			title := doc.ID
-			if len(doc.Versions.Edges) > 0 {
-				title = doc.Versions.Edges[0].Node.Title
+			if v := resp.UpdateDocument.DocumentVersion; v != nil {
+				_, _ = fmt.Fprintf(
+					f.IOStreams.Out,
+					"Updated document %s (%s v%d.%d)\n",
+					doc.ID,
+					v.Title,
+					v.Major,
+					v.Minor,
+				)
+			} else {
+				_, _ = fmt.Fprintf(
+					f.IOStreams.Out,
+					"Updated document %s\n",
+					doc.ID,
+				)
 			}
-			_, _ = fmt.Fprintf(
-				f.IOStreams.Out,
-				"Updated document %s (%s)\n",
-				doc.ID,
-				title,
-			)
 
 			return nil
 		},
 	}
 
+	cmd.Flags().StringVar(&flagTitle, "title", "", "Document title")
+	cmd.Flags().StringVar(&flagContent, "content", "", "Document content")
+	cmd.Flags().StringVar(&flagDocumentType, "document-type", "", "Document type: OTHER, GOVERNANCE, POLICY, PROCEDURE, PLAN, REGISTER, RECORD, REPORT, TEMPLATE")
+	cmd.Flags().StringVar(&flagClassification, "classification", "", "Classification: PUBLIC, INTERNAL, CONFIDENTIAL, SECRET")
 	cmd.Flags().StringVar(&flagTrustCenterVisibility, "trust-center-visibility", "", "Trust center visibility: NONE, PRIVATE, PUBLIC")
 
 	return cmd

@@ -19,7 +19,6 @@ import (
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
 	"go.probo.inc/probo/pkg/cmd/document/archive"
 	"go.probo.inc/probo/pkg/cmd/document/create"
-	createdraft "go.probo.inc/probo/pkg/cmd/document/create-draft"
 	"go.probo.inc/probo/pkg/cmd/document/delete"
 	deletedraft "go.probo.inc/probo/pkg/cmd/document/delete-draft"
 	"go.probo.inc/probo/pkg/cmd/document/list"
@@ -28,7 +27,6 @@ import (
 	publishminor "go.probo.inc/probo/pkg/cmd/document/publish-minor"
 	"go.probo.inc/probo/pkg/cmd/document/unarchive"
 	"go.probo.inc/probo/pkg/cmd/document/update"
-	updateversion "go.probo.inc/probo/pkg/cmd/document/update-version"
 	"go.probo.inc/probo/pkg/cmd/document/view"
 	viewversion "go.probo.inc/probo/pkg/cmd/document/view-version"
 )
@@ -48,9 +46,7 @@ func NewCmdDocument(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(unarchive.NewCmdUnarchive(f))
 	cmd.AddCommand(listversions.NewCmdListVersions(f))
 	cmd.AddCommand(viewversion.NewCmdViewVersion(f))
-	cmd.AddCommand(createdraft.NewCmdCreateDraft(f))
 	cmd.AddCommand(deletedraft.NewCmdDeleteDraft(f))
-	cmd.AddCommand(updateversion.NewCmdUpdateVersion(f))
 	cmd.AddCommand(publishmajor.NewCmdPublishMajor(f))
 	cmd.AddCommand(publishminor.NewCmdPublishMinor(f))
 

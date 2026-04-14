@@ -14,7 +14,7 @@
 
 import { useEffect } from "react";
 import { useQueryLoader } from "react-relay";
-import { useParams } from "react-router";
+import { useOutletContext, useParams } from "react-router";
 
 import type { DocumentDescriptionPageQuery } from "#/__generated__/core/DocumentDescriptionPageQuery.graphql";
 import { LinkCardSkeleton } from "#/components/skeletons/LinkCardSkeleton";
@@ -28,23 +28,26 @@ function DocumentDescriptionPageQueryLoader() {
     throw new Error(":documentId missing in route params");
   }
 
+  const { versionChangedAt } = useOutletContext<{ versionChangedAt: number }>();
   const [queryRef, loadQuery] = useQueryLoader<DocumentDescriptionPageQuery>(documentDescriptionPageQuery);
 
   useEffect(() => {
-    if (!queryRef) {
-      loadQuery({
-        documentId: documentId,
-        versionId: versionId ?? "",
-        versionSpecified: !!versionId,
-      });
-    }
-  });
+    loadQuery(
+      { documentId, versionId: versionId ?? "", versionSpecified: !!versionId },
+      { fetchPolicy: versionChangedAt > 0 ? "network-only" : "store-or-network" },
+    );
+  }, [documentId, versionId, versionChangedAt, loadQuery]);
 
   if (!queryRef) {
     return <LinkCardSkeleton />;
   }
 
-  return <DocumentDescriptionPage queryRef={queryRef} />;
+  return (
+    <DocumentDescriptionPage
+      queryRef={queryRef}
+      versionChangedAt={versionChangedAt}
+    />
+  );
 }
 
 export default function DocumentDescriptionPageLoader() {

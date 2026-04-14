@@ -71,6 +71,9 @@ type (
 	ErrDocumentArchived struct {
 	}
 
+	ErrDocumentDraftNotDeletable struct {
+	}
+
 	ErrDocumentNotArchived struct {
 	}
 
@@ -89,16 +92,12 @@ type (
 
 	UpdateDocumentRequest struct {
 		DocumentID            gid.GID
+		Title                 *string
+		Content               *string
+		Classification        *coredata.DocumentClassification
+		DocumentType          *coredata.DocumentType
 		TrustCenterVisibility *coredata.TrustCenterVisibility
 		DefaultApproverIDs    *[]gid.GID
-	}
-
-	UpdateDocumentVersionRequest struct {
-		ID             gid.GID
-		Title          *string
-		Content        *string
-		Classification *coredata.DocumentClassification
-		DocumentType   *coredata.DocumentType
 	}
 
 	RequestSignatureRequest struct {
@@ -158,24 +157,16 @@ func (udr *UpdateDocumentRequest) Validate() error {
 			v.Check(item, "default_approver_ids", validator.GID(coredata.MembershipProfileEntityType))
 		})
 	}
-
-	return v.Error()
-}
-
-func (udvr *UpdateDocumentVersionRequest) Validate() error {
-	v := validator.New()
-
-	v.Check(udvr.ID, "id", validator.Required(), validator.GID(coredata.DocumentVersionEntityType))
-	v.Check(udvr.Title, "title", validator.SafeTextNoNewLine(TitleMaxLength))
-	v.Check(udvr.Classification, "classification", validator.OneOfSlice(coredata.DocumentClassifications()))
+	v.Check(udr.Title, "title", validator.SafeTextNoNewLine(TitleMaxLength))
+	v.Check(udr.Classification, "classification", validator.OneOfSlice(coredata.DocumentClassifications()))
 	v.Check(
-		udvr.Content,
+		udr.Content,
 		"content",
 		validator.MaxLen(documentContentMaxJSONBytes),
 		validator.ProseMirrorDocumentContent(),
 		validator.ProseMirrorDocumentMaxTextLength(documentContentMaxTextLength),
 	)
-	v.Check(udvr.DocumentType, "document_type", validator.OneOfSlice(coredata.DocumentTypes()))
+	v.Check(udr.DocumentType, "document_type", validator.OneOfSlice(coredata.DocumentTypes()))
 
 	return v.Error()
 }
@@ -212,6 +203,10 @@ func (e ErrDocumentVersionPendingApproval) Error() string {
 
 func (e ErrDocumentArchived) Error() string {
 	return "cannot modify an archived document"
+}
+
+func (e ErrDocumentDraftNotDeletable) Error() string {
+	return "latest version is not a deletable draft"
 }
 
 func (e ErrDocumentNotArchived) Error() string {
@@ -824,68 +819,39 @@ func (s *DocumentService) signDocumentVersionInTx(
 	return documentVersionSignature, nil
 }
 
-func (s *DocumentService) UpdateVersion(
+func (s *DocumentService) updateVersionInTx(
 	ctx context.Context,
-	req UpdateDocumentVersionRequest,
-) (*coredata.DocumentVersion, error) {
-	documentVersion := &coredata.DocumentVersion{}
-	document := &coredata.Document{}
-
-	if err := req.Validate(); err != nil {
-		return nil, err
+	tx pg.Tx,
+	draftVersion *coredata.DocumentVersion,
+	content *string,
+	classification *coredata.DocumentClassification,
+	documentType *coredata.DocumentType,
+	title *string,
+) error {
+	if content != nil {
+		sanitized, err := prosemirror.SanitizeDocumentJSON(*content)
+		if err != nil {
+			return fmt.Errorf("cannot sanitize document content: %w", err)
+		}
+		draftVersion.Content = sanitized
 	}
 
-	err := s.svc.pg.WithTx(
-		ctx,
-		func(ctx context.Context, conn pg.Tx) error {
-			if err := documentVersion.LoadByID(ctx, conn, s.svc.scope, req.ID); err != nil {
-				return fmt.Errorf("cannot load document version %q: %w", req.ID, err)
-			}
+	if title != nil {
+		draftVersion.Title = *title
+	}
+	if classification != nil {
+		draftVersion.Classification = *classification
+	}
+	if documentType != nil {
+		draftVersion.DocumentType = *documentType
+	}
+	draftVersion.UpdatedAt = time.Now()
 
-			if err := document.LoadByID(ctx, conn, s.svc.scope, documentVersion.DocumentID); err != nil {
-				return fmt.Errorf("cannot load document %q: %w", documentVersion.DocumentID, err)
-			}
-
-			if document.ArchivedAt != nil {
-				return &ErrDocumentArchived{}
-			}
-
-			if documentVersion.Status != coredata.DocumentVersionStatusDraft {
-				return &ErrDocumentVersionNotDraft{}
-			}
-
-			if req.Content != nil {
-				content, err := prosemirror.SanitizeDocumentJSON(*req.Content)
-				if err != nil {
-					return fmt.Errorf("cannot sanitize document content: %w", err)
-				}
-				documentVersion.Content = content
-			}
-
-			if req.Title != nil {
-				documentVersion.Title = *req.Title
-			}
-			if req.Classification != nil {
-				documentVersion.Classification = *req.Classification
-			}
-			if req.DocumentType != nil {
-				documentVersion.DocumentType = *req.DocumentType
-			}
-			documentVersion.UpdatedAt = time.Now()
-
-			if err := documentVersion.Update(ctx, conn, s.svc.scope); err != nil {
-				return fmt.Errorf("cannot update document version: %w", err)
-			}
-
-			return nil
-		},
-	)
-
-	if err != nil {
-		return nil, err
+	if err := draftVersion.Update(ctx, tx, s.svc.scope); err != nil {
+		return fmt.Errorf("cannot update document version: %w", err)
 	}
 
-	return documentVersion, nil
+	return nil
 }
 
 func (s *DocumentService) GetVersionSignature(
@@ -1087,101 +1053,46 @@ func (s *DocumentService) IsVersionSignedByUserEmail(
 	return signed, nil
 }
 
-func (s *DocumentService) CreateDraft(
+func (s *DocumentService) createDraftInTx(
 	ctx context.Context,
-	documentID gid.GID,
+	tx pg.Tx,
+	document *coredata.Document,
+	latestVersion *coredata.DocumentVersion,
 ) (*coredata.DocumentVersion, error) {
-	draftVersionID := gid.New(s.svc.scope.GetTenantID(), coredata.DocumentVersionEntityType)
-
-	latestVersion := &coredata.DocumentVersion{}
-	document := &coredata.Document{}
-	draftVersion := &coredata.DocumentVersion{}
 	now := time.Now()
 
-	err := s.svc.pg.WithTx(
-		ctx,
-		func(ctx context.Context, conn pg.Tx) error {
-			if err := document.LoadByID(ctx, conn, s.svc.scope, documentID); err != nil {
-				return fmt.Errorf("cannot load document: %w", err)
-			}
+	draftVersion := &coredata.DocumentVersion{
+		ID:             gid.New(s.svc.scope.GetTenantID(), coredata.DocumentVersionEntityType),
+		OrganizationID: document.OrganizationID,
+		DocumentID:     document.ID,
+		Title:          latestVersion.Title,
+		Major:          latestVersion.Major,
+		Minor:          latestVersion.Minor + 1,
+		Classification: latestVersion.Classification,
+		DocumentType:   latestVersion.DocumentType,
+		Content:        latestVersion.Content,
+		Status:         coredata.DocumentVersionStatusDraft,
+		CreatedAt:      now,
+		UpdatedAt:      now,
+	}
 
-			if document.ArchivedAt != nil {
-				return &ErrDocumentArchived{}
-			}
-
-			if err := latestVersion.LoadLatestVersion(ctx, conn, s.svc.scope, documentID); err != nil {
-				return fmt.Errorf("cannot load latest version: %w", err)
-			}
-
-			if latestVersion.Status != coredata.DocumentVersionStatusPublished {
-				return &ErrDocumentVersionNotPublished{}
-			}
-
-			draftVersion.ID = draftVersionID
-			draftVersion.OrganizationID = document.OrganizationID
-			draftVersion.DocumentID = documentID
-			draftVersion.Title = latestVersion.Title
-			draftVersion.Major = latestVersion.Major
-			draftVersion.Minor = latestVersion.Minor + 1
-			draftVersion.Classification = latestVersion.Classification
-			draftVersion.DocumentType = latestVersion.DocumentType
-			draftVersion.Content = latestVersion.Content
-			draftVersion.Status = coredata.DocumentVersionStatusDraft
-			draftVersion.CreatedAt = now
-			draftVersion.UpdatedAt = now
-
-			if err := draftVersion.Insert(ctx, conn, s.svc.scope); err != nil {
-				return fmt.Errorf("cannot create draft: %w", err)
-			}
-
-			return nil
-		},
-	)
-
-	if err != nil {
-		return nil, err
+	if err := draftVersion.Insert(ctx, tx, s.svc.scope); err != nil {
+		return nil, fmt.Errorf("cannot create draft: %w", err)
 	}
 
 	return draftVersion, nil
 }
 
-func (s *DocumentService) DeleteDraft(
+func (s *DocumentService) deleteDraftInTx(
 	ctx context.Context,
-	documentVersionID gid.GID,
+	tx pg.Tx,
+	draftVersion *coredata.DocumentVersion,
 ) error {
-	documentVersion := &coredata.DocumentVersion{}
+	if err := draftVersion.Delete(ctx, tx, s.svc.scope); err != nil {
+		return fmt.Errorf("cannot delete document version: %w", err)
+	}
 
-	return s.svc.pg.WithTx(
-		ctx,
-		func(ctx context.Context, conn pg.Tx) error {
-			if err := documentVersion.LoadByID(ctx, conn, s.svc.scope, documentVersionID); err != nil {
-				return fmt.Errorf("cannot load document version: %w", err)
-			}
-
-			document := &coredata.Document{}
-			if err := document.LoadByID(ctx, conn, s.svc.scope, documentVersion.DocumentID); err != nil {
-				return fmt.Errorf("cannot load document: %w", err)
-			}
-
-			if document.ArchivedAt != nil {
-				return &ErrDocumentArchived{}
-			}
-
-			if documentVersion.Status != coredata.DocumentVersionStatusDraft {
-				return fmt.Errorf("cannot delete published document version")
-			}
-
-			if documentVersion.Major == 0 && documentVersion.Minor == 1 {
-				return fmt.Errorf("cannot delete the first version of a document")
-			}
-
-			if err := documentVersion.Delete(ctx, conn, s.svc.scope); err != nil {
-				return fmt.Errorf("cannot delete document version: %w", err)
-			}
-
-			return nil
-		},
-	)
+	return nil
 }
 
 func (s *DocumentService) SoftDelete(
@@ -1698,12 +1609,14 @@ func (s *DocumentService) ListForMeasureID(
 func (s *DocumentService) Update(
 	ctx context.Context,
 	req UpdateDocumentRequest,
-) (*coredata.Document, error) {
+) (*coredata.Document, *coredata.DocumentVersion, bool, error) {
 	if err := req.Validate(); err != nil {
-		return nil, err
+		return nil, nil, false, err
 	}
 
 	document := &coredata.Document{}
+	var resultVersion *coredata.DocumentVersion
+	var draftCreated bool
 	now := time.Now()
 
 	err := s.svc.pg.WithTx(
@@ -1727,6 +1640,73 @@ func (s *DocumentService) Update(
 				return fmt.Errorf("cannot update document: %w", err)
 			}
 
+			// Handle draft version logic for title/content/classification/type changes.
+			latestVersion := &coredata.DocumentVersion{}
+			if err := latestVersion.LoadLatestVersion(ctx, tx, s.svc.scope, req.DocumentID); err != nil {
+				return fmt.Errorf("cannot load latest version: %w", err)
+			}
+
+			hasVersionChanges := req.Title != nil || req.Content != nil || req.Classification != nil || req.DocumentType != nil
+
+			if !hasVersionChanges {
+				if req.DefaultApproverIDs != nil {
+					defaultApprovers := &coredata.DocumentDefaultApprovers{}
+					if err := defaultApprovers.MergeByDocumentID(ctx, tx, s.svc.scope, req.DocumentID, document.OrganizationID, *req.DefaultApproverIDs); err != nil {
+						return fmt.Errorf("cannot update default approvers: %w", err)
+					}
+				}
+				return nil
+			}
+
+			if latestVersion.Status == coredata.DocumentVersionStatusDraft {
+				// Draft exists: update it with any new values.
+				if err := s.updateVersionInTx(ctx, tx, latestVersion, req.Content, req.Classification, req.DocumentType, req.Title); err != nil {
+					return err
+				}
+
+				// If there is a published version and the draft matches it, delete the draft.
+				// Never delete the initial draft (v0.1) since there's nothing to fall back to.
+				if document.CurrentPublishedMajor != nil && (latestVersion.Major != 0 || latestVersion.Minor != 1) {
+					publishedVersion := &coredata.DocumentVersion{}
+					if err := publishedVersion.LoadByDocumentIDAndVersion(
+						ctx,
+						tx,
+						s.svc.scope,
+						req.DocumentID,
+						*document.CurrentPublishedMajor,
+						*document.CurrentPublishedMinor,
+					); err != nil {
+						return fmt.Errorf("cannot load published version: %w", err)
+					}
+
+					if latestVersion.Title == publishedVersion.Title &&
+						latestVersion.Content == publishedVersion.Content &&
+						latestVersion.Classification == publishedVersion.Classification &&
+						latestVersion.DocumentType == publishedVersion.DocumentType {
+						if err := s.deleteDraftInTx(ctx, tx, latestVersion); err != nil {
+							return err
+						}
+						resultVersion = nil
+						return nil
+					}
+				}
+
+				resultVersion = latestVersion
+			} else {
+				// No draft exists: create one.
+				draftVersion, err := s.createDraftInTx(ctx, tx, document, latestVersion)
+				if err != nil {
+					return err
+				}
+
+				if err := s.updateVersionInTx(ctx, tx, draftVersion, req.Content, req.Classification, req.DocumentType, req.Title); err != nil {
+					return err
+				}
+
+				resultVersion = draftVersion
+				draftCreated = true
+			}
+
 			if req.DefaultApproverIDs != nil {
 				defaultApprovers := &coredata.DocumentDefaultApprovers{}
 				if err := defaultApprovers.MergeByDocumentID(ctx, tx, s.svc.scope, req.DocumentID, document.OrganizationID, *req.DefaultApproverIDs); err != nil {
@@ -1735,6 +1715,47 @@ func (s *DocumentService) Update(
 			}
 
 			return nil
+		},
+	)
+
+	if err != nil {
+		return nil, nil, false, err
+	}
+
+	return document, resultVersion, draftCreated, nil
+}
+
+func (s *DocumentService) DeleteDraft(
+	ctx context.Context,
+	documentID gid.GID,
+) (*coredata.Document, error) {
+	document := &coredata.Document{}
+
+	err := s.svc.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			if err := document.LoadByID(ctx, tx, s.svc.scope, documentID); err != nil {
+				return fmt.Errorf("cannot load document %q: %w", documentID, err)
+			}
+
+			if document.ArchivedAt != nil {
+				return &ErrDocumentArchived{}
+			}
+
+			latestVersion := &coredata.DocumentVersion{}
+			if err := latestVersion.LoadLatestVersion(ctx, tx, s.svc.scope, documentID); err != nil {
+				return fmt.Errorf("cannot load latest version: %w", err)
+			}
+
+			if latestVersion.Status != coredata.DocumentVersionStatusDraft {
+				return &ErrDocumentDraftNotDeletable{}
+			}
+
+			if latestVersion.Major == 0 && latestVersion.Minor == 1 {
+				return &ErrDocumentDraftNotDeletable{}
+			}
+
+			return s.deleteDraftInTx(ctx, tx, latestVersion)
 		},
 	)
 

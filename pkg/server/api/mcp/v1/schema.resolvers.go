@@ -2115,10 +2115,23 @@ func (r *Resolver) UpdateDocumentTool(ctx context.Context, req *mcp.CallToolRequ
 		defaultApproverIDs = &input.DefaultApproverIds
 	}
 
-	document, err := svc.Documents.Update(
+	var content *string
+	if input.Content != nil {
+		c, err := markdownToProseMirrorJSON(*input.Content)
+		if err != nil {
+			panic(fmt.Errorf("cannot convert markdown to prosemirror: %w", err))
+		}
+		content = &c
+	}
+
+	document, documentVersion, _, err := svc.Documents.Update(
 		ctx,
 		probo.UpdateDocumentRequest{
 			DocumentID:            input.ID,
+			Title:                 input.Title,
+			Content:               content,
+			Classification:        input.Classification,
+			DocumentType:          input.DocumentType,
 			TrustCenterVisibility: input.TrustCenterVisibility,
 			DefaultApproverIDs:    defaultApproverIDs,
 		},
@@ -2127,9 +2140,15 @@ func (r *Resolver) UpdateDocumentTool(ctx context.Context, req *mcp.CallToolRequ
 		panic(fmt.Errorf("cannot update document: %w", err))
 	}
 
-	return nil, types.UpdateDocumentOutput{
+	output := types.UpdateDocumentOutput{
 		Document: types.NewDocument(document),
-	}, nil
+	}
+
+	if documentVersion != nil {
+		output.DocumentVersion = types.NewDocumentVersion(documentVersion)
+	}
+
+	return nil, output, nil
 }
 
 func (r *Resolver) ListDocumentVersionsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListDocumentVersionsInput) (*mcp.CallToolResult, types.ListDocumentVersionsOutput, error) {
@@ -2169,72 +2188,6 @@ func (r *Resolver) GetDocumentVersionTool(ctx context.Context, req *mcp.CallTool
 
 	return nil, types.GetDocumentVersionOutput{
 		DocumentVersion: types.NewDocumentVersion(version),
-	}, nil
-}
-
-func (r *Resolver) CreateDraftDocumentVersionTool(ctx context.Context, req *mcp.CallToolRequest, input *types.CreateDraftDocumentVersionInput) (*mcp.CallToolResult, types.CreateDraftDocumentVersionOutput, error) {
-	r.MustAuthorize(ctx, input.DocumentID, probo.ActionDocumentDraftVersionCreate)
-
-	svc := r.ProboService(ctx, input.DocumentID)
-
-	draftVersion, err := svc.Documents.CreateDraft(ctx, input.DocumentID)
-	if err != nil {
-		panic(fmt.Errorf("cannot create draft document version: %w", err))
-	}
-
-	if input.Content != nil {
-		content, err := markdownToProseMirrorJSON(*input.Content)
-		if err != nil {
-			panic(fmt.Errorf("cannot convert markdown to prosemirror: %w", err))
-		}
-
-		draftVersion, err = svc.Documents.UpdateVersion(
-			ctx,
-			probo.UpdateDocumentVersionRequest{
-				ID:      draftVersion.ID,
-				Content: &content,
-			},
-		)
-		if err != nil {
-			panic(fmt.Errorf("cannot update draft document version content: %w", err))
-		}
-	}
-
-	return nil, types.CreateDraftDocumentVersionOutput{
-		DocumentVersion: types.NewDocumentVersion(draftVersion),
-	}, nil
-}
-
-func (r *Resolver) UpdateDocumentVersionTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateDocumentVersionInput) (*mcp.CallToolResult, types.UpdateDocumentVersionOutput, error) {
-	r.MustAuthorize(ctx, input.DocumentVersionID, probo.ActionDocumentVersionUpdate)
-
-	svc := r.ProboService(ctx, input.DocumentVersionID)
-
-	var content *string
-	if input.Content != nil {
-		c, err := markdownToProseMirrorJSON(*input.Content)
-		if err != nil {
-			panic(fmt.Errorf("cannot convert markdown to prosemirror: %w", err))
-		}
-		content = &c
-	}
-
-	documentVersion, err := svc.Documents.UpdateVersion(
-		ctx,
-		probo.UpdateDocumentVersionRequest{
-			ID:             input.DocumentVersionID,
-			Title:          input.Title,
-			Content:        content,
-			Classification: input.Classification,
-			DocumentType:   input.DocumentType,
-		},
-	)
-	if err != nil {
-		panic(fmt.Errorf("cannot update document version: %w", err))
-	}
-
-	return nil, types.UpdateDocumentVersionOutput{
-		DocumentVersion: types.NewDocumentVersion(documentVersion),
 	}, nil
 }
 
@@ -2309,21 +2262,6 @@ func (r *Resolver) RequestDocumentVersionSignatureTool(ctx context.Context, req 
 
 	return nil, types.RequestDocumentVersionSignatureOutput{
 		DocumentVersionSignature: types.NewDocumentVersionSignature(documentVersionSignature),
-	}, nil
-}
-
-func (r *Resolver) DeleteDraftDocumentVersionTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteDraftDocumentVersionInput) (*mcp.CallToolResult, types.DeleteDraftDocumentVersionOutput, error) {
-	r.MustAuthorize(ctx, input.DocumentVersionID, probo.ActionDocumentVersionDeleteDraft)
-
-	svc := r.ProboService(ctx, input.DocumentVersionID)
-
-	err := svc.Documents.DeleteDraft(ctx, input.DocumentVersionID)
-	if err != nil {
-		panic(fmt.Errorf("cannot delete draft document version: %w", err))
-	}
-
-	return nil, types.DeleteDraftDocumentVersionOutput{
-		DeletedDocumentVersionID: input.DocumentVersionID,
 	}, nil
 }
 
@@ -3969,5 +3907,20 @@ func (r *Resolver) SendSigningNotificationsTool(ctx context.Context, req *mcp.Ca
 
 	return nil, types.SendSigningNotificationsOutput{
 		Success: true,
+	}, nil
+}
+
+func (r *Resolver) DeleteDocumentDraftTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteDocumentDraftInput) (*mcp.CallToolResult, types.DeleteDocumentDraftOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionDocumentDeleteDraft)
+
+	svc := r.ProboService(ctx, input.ID)
+
+	document, err := svc.Documents.DeleteDraft(ctx, input.ID)
+	if err != nil {
+		return nil, types.DeleteDocumentDraftOutput{}, fmt.Errorf("cannot delete document draft: %w", err)
+	}
+
+	return nil, types.DeleteDocumentDraftOutput{
+		Document: types.NewDocument(document),
 	}, nil
 }

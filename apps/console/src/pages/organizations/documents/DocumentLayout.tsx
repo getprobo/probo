@@ -122,10 +122,16 @@ export function DocumentLayout(props: { queryRef: PreloadedQuery<DocumentLayoutQ
 
   const publishDialogRef = useRef<PublishDialogRef>(null);
   const [approvalRequestedAt, setApprovalRequestedAt] = useState(0);
+  const [versionChangedAt, setVersionChangedAt] = useState(0);
 
   const handlePublishOrApproval = useCallback(() => {
     onRefetch();
     setApprovalRequestedAt(Date.now());
+  }, [onRefetch]);
+
+  const handleVersionChanged = useCallback(() => {
+    onRefetch();
+    setVersionChangedAt(Date.now());
   }, [onRefetch]);
 
   const { document, version } = usePreloadedQuery<DocumentLayoutQuery>(documentLayoutQuery, queryRef);
@@ -178,13 +184,20 @@ export function DocumentLayout(props: { queryRef: PreloadedQuery<DocumentLayoutQ
             <DocumentActionsDropdown
               documentFragmentRef={document}
               versionFragmentRef={currentVersion}
-              onRefetch={onRefetch}
+              onVersionChanged={handleVersionChanged}
             />
           </div>
         </div>
 
         <PageHeader
-          title={<DocumentTitleForm fKey={currentVersion} />}
+          title={(
+            <DocumentTitleForm
+              fKey={currentVersion}
+              documentId={document.id}
+              documentStatus={document.status}
+              onVersionChanged={handleVersionChanged}
+            />
+          )}
         />
 
         <Tabs>
@@ -207,18 +220,22 @@ export function DocumentLayout(props: { queryRef: PreloadedQuery<DocumentLayoutQ
             <TabLink to={`${urlPrefix}/signatures`}>
               {__("Signatures")}
               <TabBadge>
-                {currentVersion.signedSignatures.totalCount}
+                {currentVersion.signedSignatures?.totalCount ?? 0}
                 /
-                {currentVersion.signatures.totalCount}
+                {currentVersion.signatures?.totalCount ?? 0}
               </TabBadge>
             </TabLink>
           )}
         </Tabs>
 
-        <Outlet context={{ onRefetch, approvalRequestedAt }} />
+        <Outlet context={{ onRefetch, approvalRequestedAt, versionChangedAt }} />
       </div>
 
-      <DocumentLayoutDrawer documentFragmentRef={document} versionFragmentRef={currentVersion} />
+      <DocumentLayoutDrawer
+        documentFragmentRef={document}
+        versionFragmentRef={currentVersion}
+        onVersionChanged={handleVersionChanged}
+      />
 
       <PublishDialog
         ref={publishDialogRef}

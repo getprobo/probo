@@ -220,7 +220,7 @@ func TestDocumentVersion_PublishVersion(t *testing.T) {
 	assert.Equal(t, 0, result.Node.Versions.Edges[0].Node.Minor)
 }
 
-func TestDocumentVersion_CreateDraft(t *testing.T) {
+func TestDocumentVersion_AutoCreateDraft(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
@@ -228,38 +228,112 @@ func TestDocumentVersion_CreateDraft(t *testing.T) {
 	docID, _ := createTestDocument(t, owner)
 	approveTestDocument(t, owner, docID)
 
+	// Updating content should auto-create a draft
 	query := `
-		mutation CreateDraftDocumentVersion($input: CreateDraftDocumentVersionInput!) {
-			createDraftDocumentVersion(input: $input) {
-				documentVersionEdge {
-					node {
-						id
-						status
-					}
+		mutation UpdateDocument($input: UpdateDocumentInput!) {
+			updateDocument(input: $input) {
+				document {
+					id
+				}
+				documentVersion {
+					id
+					status
+					content
 				}
 			}
 		}
 	`
 
 	var result struct {
-		CreateDraftDocumentVersion struct {
-			DocumentVersionEdge struct {
-				Node struct {
-					ID     string `json:"id"`
-					Status string `json:"status"`
-				} `json:"node"`
-			} `json:"documentVersionEdge"`
-		} `json:"createDraftDocumentVersion"`
+		UpdateDocument struct {
+			Document struct {
+				ID string `json:"id"`
+			} `json:"document"`
+			DocumentVersion *struct {
+				ID      string `json:"id"`
+				Status  string `json:"status"`
+				Content string `json:"content"`
+			} `json:"documentVersion"`
+		} `json:"updateDocument"`
 	}
 
 	err := owner.Execute(query, map[string]any{
 		"input": map[string]any{
-			"documentID": docID,
+			"id":      docID,
+			"content": testutil.ProseMirrorTextDoc("Updated content"),
 		},
 	}, &result)
 	require.NoError(t, err)
 
-	assert.Equal(t, "DRAFT", result.CreateDraftDocumentVersion.DocumentVersionEdge.Node.Status)
+	require.NotNil(t, result.UpdateDocument.DocumentVersion)
+	assert.Equal(t, "DRAFT", result.UpdateDocument.DocumentVersion.Status)
+}
+
+func TestDocumentVersion_AutoDeleteDraft(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+
+	// Create and approve a document (auto-publishes on approval)
+	docID, _ := createTestDocument(t, owner)
+	approveTestDocument(t, owner, docID)
+
+	// First update to create a draft
+	query := `
+		mutation UpdateDocument($input: UpdateDocumentInput!) {
+			updateDocument(input: $input) {
+				document {
+					id
+				}
+				documentVersion {
+					id
+					status
+				}
+			}
+		}
+	`
+
+	var createResult struct {
+		UpdateDocument struct {
+			Document struct {
+				ID string `json:"id"`
+			} `json:"document"`
+			DocumentVersion *struct {
+				ID     string `json:"id"`
+				Status string `json:"status"`
+			} `json:"documentVersion"`
+		} `json:"updateDocument"`
+	}
+
+	err := owner.Execute(query, map[string]any{
+		"input": map[string]any{
+			"id":      docID,
+			"content": testutil.ProseMirrorTextDoc("Updated content"),
+		},
+	}, &createResult)
+	require.NoError(t, err)
+	require.NotNil(t, createResult.UpdateDocument.DocumentVersion)
+
+	// Now revert content to match the published version — draft should be auto-deleted
+	var revertResult struct {
+		UpdateDocument struct {
+			Document struct {
+				ID string `json:"id"`
+			} `json:"document"`
+			DocumentVersion *struct {
+				ID string `json:"id"`
+			} `json:"documentVersion"`
+		} `json:"updateDocument"`
+	}
+
+	err = owner.Execute(query, map[string]any{
+		"input": map[string]any{
+			"id":      docID,
+			"content": testutil.ProseMirrorTextDoc("Initial content"),
+		},
+	}, &revertResult)
+	require.NoError(t, err)
+
+	assert.Nil(t, revertResult.UpdateDocument.DocumentVersion)
 }
 
 func TestDocumentVersion_RequestSignature(t *testing.T) {
@@ -536,18 +610,17 @@ func TestDocumentVersion_BulkPublishMinorSkipsPendingApproval(t *testing.T) {
 	docID, _ := createTestDocument(t, owner)
 	approveTestDocument(t, owner, docID)
 
-	// Create a draft so we can publish minor
+	// Create a draft by updating content (auto-creates draft)
 	_, err := owner.Do(`
-		mutation($input: CreateDraftDocumentVersionInput!) {
-			createDraftDocumentVersion(input: $input) {
-				documentVersionEdge {
-					node { id }
-				}
+		mutation($input: UpdateDocumentInput!) {
+			updateDocument(input: $input) {
+				documentVersion { id }
 			}
 		}
 	`, map[string]any{
 		"input": map[string]any{
-			"documentID": docID,
+			"id":      docID,
+			"content": testutil.ProseMirrorTextDoc("Updated content to create a draft"),
 		},
 	})
 	require.NoError(t, err)
@@ -643,6 +716,128 @@ func TestDocumentVersion_BulkRequestSignatures(t *testing.T) {
 	for _, edge := range result.BulkRequestSignatures.DocumentVersionSignatureEdges {
 		assert.Equal(t, "REQUESTED", edge.Node.State)
 	}
+}
+
+func TestDocumentVersion_AutoCreateDraftOnClassificationOrTypeUpdate(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+
+	t.Run("documentType update creates draft", func(t *testing.T) {
+		t.Parallel()
+
+		// Create and approve a document (auto-publishes on approval)
+		docID, _ := createTestDocument(t, owner)
+		approveTestDocument(t, owner, docID)
+
+		// Updating documentType should auto-create a draft
+		query := `
+			mutation UpdateDocument($input: UpdateDocumentInput!) {
+				updateDocument(input: $input) {
+					document {
+						id
+					}
+					documentVersion {
+						id
+						status
+					}
+				}
+			}
+		`
+
+		var result struct {
+			UpdateDocument struct {
+				Document struct {
+					ID string `json:"id"`
+				} `json:"document"`
+				DocumentVersion *struct {
+					ID     string `json:"id"`
+					Status string `json:"status"`
+				} `json:"documentVersion"`
+			} `json:"updateDocument"`
+		}
+
+		err := owner.Execute(query, map[string]any{
+			"input": map[string]any{
+				"id":           docID,
+				"documentType": "PROCEDURE",
+			},
+		}, &result)
+		require.NoError(t, err)
+
+		require.NotNil(t, result.UpdateDocument.DocumentVersion)
+		assert.Equal(t, "DRAFT", result.UpdateDocument.DocumentVersion.Status)
+	})
+
+	t.Run("classification update creates draft", func(t *testing.T) {
+		t.Parallel()
+
+		// Create and approve a document (auto-publishes on approval)
+		docID, _ := createTestDocument(t, owner)
+		approveTestDocument(t, owner, docID)
+
+		// Updating classification should auto-create a draft
+		query := `
+			mutation UpdateDocument($input: UpdateDocumentInput!) {
+				updateDocument(input: $input) {
+					document {
+						id
+					}
+					documentVersion {
+						id
+						status
+					}
+				}
+			}
+		`
+
+		var result struct {
+			UpdateDocument struct {
+				Document struct {
+					ID string `json:"id"`
+				} `json:"document"`
+				DocumentVersion *struct {
+					ID     string `json:"id"`
+					Status string `json:"status"`
+				} `json:"documentVersion"`
+			} `json:"updateDocument"`
+		}
+
+		err := owner.Execute(query, map[string]any{
+			"input": map[string]any{
+				"id":             docID,
+				"classification": "CONFIDENTIAL",
+			},
+		}, &result)
+		require.NoError(t, err)
+
+		require.NotNil(t, result.UpdateDocument.DocumentVersion)
+		assert.Equal(t, "DRAFT", result.UpdateDocument.DocumentVersion.Status)
+	})
+}
+
+func TestDocumentVersion_ViewerCannotUpdateDocument(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
+
+	// Create and approve a document (auto-publishes on approval)
+	docID, _ := createTestDocument(t, owner)
+	approveTestDocument(t, owner, docID)
+
+	// Viewer attempts to update content on the published document
+	_, err := viewer.Do(`
+		mutation UpdateDocument($input: UpdateDocumentInput!) {
+			updateDocument(input: $input) {
+				document { id }
+			}
+		}
+	`, map[string]any{
+		"input": map[string]any{
+			"id":      docID,
+			"content": testutil.ProseMirrorTextDoc("Viewer updated content"),
+		},
+	})
+	testutil.RequireForbiddenError(t, err, "viewer should not be able to update document")
 }
 
 func TestDocumentVersion_BulkDelete(t *testing.T) {
@@ -1142,4 +1337,149 @@ func TestDocument_DefaultApprovers(t *testing.T) {
 
 		assert.Empty(t, result.UpdateDocument.Document.DefaultApprovers)
 	})
+}
+
+func TestDocumentVersion_DeleteDraft(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+
+	const query = `
+		mutation DeleteDocumentDraft($input: DeleteDocumentDraftInput!) {
+			deleteDocumentDraft(input: $input) {
+				document {
+					id
+				}
+			}
+		}
+	`
+
+	t.Run(
+		"delete draft after publishing",
+		func(t *testing.T) {
+			t.Parallel()
+
+			docID, _ := createTestDocument(t, owner)
+			approveTestDocument(t, owner, docID)
+
+			// Create a draft by updating content
+			updateQuery := `
+				mutation UpdateDocument($input: UpdateDocumentInput!) {
+					updateDocument(input: $input) {
+						document { id }
+						documentVersion { id status }
+					}
+				}
+			`
+			var updateResult struct {
+				UpdateDocument struct {
+					Document struct {
+						ID string `json:"id"`
+					} `json:"document"`
+					DocumentVersion *struct {
+						ID     string `json:"id"`
+						Status string `json:"status"`
+					} `json:"documentVersion"`
+				} `json:"updateDocument"`
+			}
+			err := owner.Execute(updateQuery, map[string]any{
+				"input": map[string]any{
+					"id":      docID,
+					"content": testutil.ProseMirrorTextDoc("Draft content"),
+				},
+			}, &updateResult)
+			require.NoError(t, err)
+			require.NotNil(t, updateResult.UpdateDocument.DocumentVersion)
+			assert.Equal(t, "DRAFT", updateResult.UpdateDocument.DocumentVersion.Status)
+
+			// Now delete the draft
+			var result struct {
+				DeleteDocumentDraft struct {
+					Document struct {
+						ID string `json:"id"`
+					} `json:"document"`
+				} `json:"deleteDocumentDraft"`
+			}
+			err = owner.Execute(query, map[string]any{
+				"input": map[string]any{"documentId": docID},
+			}, &result)
+			require.NoError(t, err)
+			assert.Equal(t, docID, result.DeleteDocumentDraft.Document.ID)
+		},
+	)
+
+	t.Run(
+		"cannot delete initial v0.1 draft",
+		func(t *testing.T) {
+			t.Parallel()
+
+			docID, _ := createTestDocument(t, owner)
+
+			var result struct{}
+			err := owner.Execute(query, map[string]any{
+				"input": map[string]any{"documentId": docID},
+			}, &result)
+			require.Error(t, err)
+		},
+	)
+
+	t.Run(
+		"cannot delete when latest is published",
+		func(t *testing.T) {
+			t.Parallel()
+
+			docID, _ := createTestDocument(t, owner)
+			approveTestDocument(t, owner, docID)
+
+			var result struct{}
+			err := owner.Execute(query, map[string]any{
+				"input": map[string]any{"documentId": docID},
+			}, &result)
+			require.Error(t, err)
+		},
+	)
+
+	t.Run(
+		"viewer cannot delete draft",
+		func(t *testing.T) {
+			t.Parallel()
+
+			viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
+
+			docID, _ := createTestDocument(t, owner)
+			approveTestDocument(t, owner, docID)
+
+			// Create a draft
+			updateQuery := `
+				mutation UpdateDocument($input: UpdateDocumentInput!) {
+					updateDocument(input: $input) {
+						document { id }
+						documentVersion { id }
+					}
+				}
+			`
+			var updateResult struct {
+				UpdateDocument struct {
+					Document struct {
+						ID string `json:"id"`
+					} `json:"document"`
+					DocumentVersion *struct {
+						ID string `json:"id"`
+					} `json:"documentVersion"`
+				} `json:"updateDocument"`
+			}
+			err := owner.Execute(updateQuery, map[string]any{
+				"input": map[string]any{
+					"id":      docID,
+					"content": testutil.ProseMirrorTextDoc("Draft content"),
+				},
+			}, &updateResult)
+			require.NoError(t, err)
+
+			var result struct{}
+			err = viewer.Execute(query, map[string]any{
+				"input": map[string]any{"documentId": docID},
+			}, &result)
+			testutil.RequireForbiddenError(t, err, "viewer should not be able to delete document draft")
+		},
+	)
 }

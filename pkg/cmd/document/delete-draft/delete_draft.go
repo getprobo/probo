@@ -24,9 +24,11 @@ import (
 )
 
 const deleteDraftMutation = `
-mutation($input: DeleteDraftDocumentVersionInput!) {
-  deleteDraftDocumentVersion(input: $input) {
-    deletedDocumentVersionId
+mutation($input: DeleteDocumentDraftInput!) {
+  deleteDocumentDraft(input: $input) {
+    document {
+      id
+    }
   }
 }
 `
@@ -35,8 +37,8 @@ func NewCmdDeleteDraft(f *cmdutil.Factory) *cobra.Command {
 	var flagYes bool
 
 	cmd := &cobra.Command{
-		Use:   "delete-draft <document-version-id>",
-		Short: "Delete a draft document version",
+		Use:   "delete-draft <document-id>",
+		Short: "Delete the draft version of a document",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if !flagYes {
@@ -46,7 +48,7 @@ func NewCmdDeleteDraft(f *cmdutil.Factory) *cobra.Command {
 
 				var confirmed bool
 				err := huh.NewConfirm().
-					Title(fmt.Sprintf("Delete draft version %s?", args[0])).
+					Title(fmt.Sprintf("Delete draft for document %s?", args[0])).
 					Value(&confirmed).
 					Run()
 				if err != nil {
@@ -78,7 +80,7 @@ func NewCmdDeleteDraft(f *cmdutil.Factory) *cobra.Command {
 				deleteDraftMutation,
 				map[string]any{
 					"input": map[string]any{
-						"documentVersionId": args[0],
+						"documentId": args[0],
 					},
 				},
 			)
@@ -88,7 +90,7 @@ func NewCmdDeleteDraft(f *cmdutil.Factory) *cobra.Command {
 
 			_, _ = fmt.Fprintf(
 				f.IOStreams.Out,
-				"Deleted draft version %s\n",
+				"Deleted draft for document %s\n",
 				args[0],
 			)
 

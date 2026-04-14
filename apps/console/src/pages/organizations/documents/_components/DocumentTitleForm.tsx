@@ -24,9 +24,9 @@ import type { DocumentTitleFormFragment$key } from "#/__generated__/core/Documen
 import type { DocumentTitleFormMutation } from "#/__generated__/core/DocumentTitleFormMutation.graphql";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 
-const updateDocumentVersionTitleMutation = graphql`
-  mutation DocumentTitleFormMutation($input: UpdateDocumentVersionInput!) {
-    updateDocumentVersion(input: $input) {
+const updateDocumentTitleMutation = graphql`
+  mutation DocumentTitleFormMutation($input: UpdateDocumentInput!) {
+    updateDocument(input: $input) {
       documentVersion {
         ...DocumentTitleFormFragment
       }
@@ -36,10 +36,9 @@ const updateDocumentVersionTitleMutation = graphql`
 
 const fragment = graphql`
   fragment DocumentTitleFormFragment on DocumentVersion {
-    id
     title
     status
-    canUpdate: permission(action: "core:document-version:update")
+    canUpdate: permission(action: "core:document:update")
   }
 `;
 
@@ -47,40 +46,52 @@ const schema = z.object({
   title: z.string().min(1, "Title is required").max(255),
 });
 
-export function DocumentTitleForm(props: { fKey: DocumentTitleFormFragment$key }) {
-  const { fKey } = props;
+export function DocumentTitleForm(props: {
+  fKey: DocumentTitleFormFragment$key;
+  documentId: string;
+  documentStatus: string;
+  onVersionChanged: () => void;
+}) {
+  const { fKey, documentId, documentStatus, onVersionChanged } = props;
 
   const { __ } = useTranslate();
   const { toast } = useToast();
 
   const version = useFragment<DocumentTitleFormFragment$key>(fragment, fKey);
-  const [updateDocumentVersion, isUpdating]
-    = useMutation<DocumentTitleFormMutation>(updateDocumentVersionTitleMutation);
+  const [updateDocument, isUpdating]
+    = useMutation<DocumentTitleFormMutation>(updateDocumentTitleMutation);
 
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const { register, handleSubmit, reset } = useFormWithSchema(
     schema,
     {
-      defaultValues: {
+      values: {
         title: version.title,
       },
     },
   );
 
+  const isDraft = version.status === "DRAFT";
+  const canEdit = version.canUpdate && documentStatus !== "ARCHIVED";
+
   const handleUpdateTitle = (data: { title: string }) => {
-    updateDocumentVersion({
+    updateDocument({
       variables: {
         input: {
-          documentVersionId: version.id,
+          id: documentId,
           title: data.title,
         },
       },
-      onCompleted(_, errors) {
+      onCompleted(data, errors) {
         if (errors?.length) {
           toast({ title: __("Error"), description: formatError(__("Failed to update document"), errors), variant: "error" });
           return;
         }
         setIsEditingTitle(false);
+        const draftReturned = !!data.updateDocument.documentVersion;
+        if (isDraft !== draftReturned) {
+          onVersionChanged();
+        }
       },
       onError(error) {
         toast({ title: __("Error"), description: error.message, variant: "error" });
@@ -99,7 +110,7 @@ export function DocumentTitleForm(props: { fKey: DocumentTitleFormFragment$key }
             onKeyDown={(e) => {
               if (e.key === "Escape") {
                 setIsEditingTitle(false);
-                reset();
+                reset({ title: version.title });
               }
               if (e.key === "Enter") {
                 void handleSubmit(handleUpdateTitle)();
@@ -117,7 +128,7 @@ export function DocumentTitleForm(props: { fKey: DocumentTitleFormFragment$key }
             icon={IconCrossLargeX}
             onClick={() => {
               setIsEditingTitle(false);
-              reset();
+              reset({ title: version.title });
             }}
           />
         </div>
@@ -125,7 +136,7 @@ export function DocumentTitleForm(props: { fKey: DocumentTitleFormFragment$key }
     : (
         <div className="flex items-center gap-2">
           <span>{version.title}</span>
-          {version.canUpdate && version.status === "DRAFT" && (
+          {canEdit && (
             <Button
               variant="quaternary"
               icon={IconPencil}

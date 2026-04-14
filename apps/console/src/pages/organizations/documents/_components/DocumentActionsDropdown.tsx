@@ -14,20 +14,20 @@
 
 import { formatError, sprintf } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
-import { ActionDropdown, DropdownItem, IconArchive, IconArrowDown, IconPencil, IconTrashCan, useConfirm, useToast } from "@probo/ui";
+import { ActionDropdown, DropdownItem, IconArchive, IconArrowDown, IconTrashCan, useConfirm, useToast } from "@probo/ui";
 import { use, useRef } from "react";
 import { useFragment, useMutation } from "react-relay";
-import { useNavigate, useParams } from "react-router";
+import { useNavigate } from "react-router";
 import { ConnectionHandler, graphql } from "relay-runtime";
 
 import type { DocumentActionsDropdown_archiveMutation } from "#/__generated__/core/DocumentActionsDropdown_archiveMutation.graphql";
-import type { DocumentActionsDropdown_createDraftMutation } from "#/__generated__/core/DocumentActionsDropdown_createDraftMutation.graphql";
+import type { DocumentActionsDropdown_deleteDocumentDraftMutation } from "#/__generated__/core/DocumentActionsDropdown_deleteDocumentDraftMutation.graphql";
 import type { DocumentActionsDropdown_documentFragment$key } from "#/__generated__/core/DocumentActionsDropdown_documentFragment.graphql";
 import type { DocumentActionsDropdown_exportVersionMutation } from "#/__generated__/core/DocumentActionsDropdown_exportVersionMutation.graphql";
 import type { DocumentActionsDropdown_unarchiveMutation } from "#/__generated__/core/DocumentActionsDropdown_unarchiveMutation.graphql";
 import type { DocumentActionsDropdown_versionFragment$key } from "#/__generated__/core/DocumentActionsDropdown_versionFragment.graphql";
 import { PdfDownloadDialog, type PdfDownloadDialogRef } from "#/components/documents/PdfDownloadDialog";
-import { DocumentsConnectionKey, useDeleteDocumentMutation, useDeleteDraftDocumentVersionMutation } from "#/hooks/graph/DocumentGraph";
+import { DocumentsConnectionKey, useDeleteDocumentMutation } from "#/hooks/graph/DocumentGraph";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { CurrentUser } from "#/providers/CurrentUser";
 
@@ -35,49 +35,10 @@ const documentFragment = graphql`
   fragment DocumentActionsDropdown_documentFragment on Document {
     id
     status
-    canUpdate: permission(action: "core:document:update")
     canArchive: permission(action: "core:document:archive")
     canUnarchive: permission(action: "core:document:unarchive")
     canDelete: permission(action: "core:document:delete")
-    versions(first: 1 orderBy: { field: CREATED_AT, direction: DESC }) {
-      totalCount
-      edges {
-        node {
-          id
-          title
-          status
-        }
-      }
-    }
-  }
-`;
-
-const createDraftDocumentVersionMutation = graphql`
-  mutation DocumentActionsDropdown_createDraftMutation(
-    $input: CreateDraftDocumentVersionInput!
-    $connections: [ID!]!
-  ) {
-    createDraftDocumentVersion(input: $input) {
-      documentVersionEdge @prependEdge(connections: $connections) {
-        node {
-          id
-          content
-          status
-          publishedAt
-          major
-          minor
-          updatedAt
-          signatures(first: 100) {
-            edges {
-              node {
-                id
-                state
-              }
-            }
-          }
-        }
-      }
-    }
+    canDeleteDraft: permission(action: "core:document:delete-draft")
   }
 `;
 
@@ -90,7 +51,6 @@ const archiveDocumentMutation = graphql`
         id
         status
         archivedAt
-        canUpdate: permission(action: "core:document:update")
         canArchive: permission(action: "core:document:archive")
         canUnarchive: permission(action: "core:document:unarchive")
         canDelete: permission(action: "core:document:delete")
@@ -108,10 +68,22 @@ const unarchiveDocumentMutation = graphql`
         id
         status
         archivedAt
-        canUpdate: permission(action: "core:document:update")
         canArchive: permission(action: "core:document:archive")
         canUnarchive: permission(action: "core:document:unarchive")
         canDelete: permission(action: "core:document:delete")
+      }
+    }
+  }
+`;
+
+const deleteDocumentDraftMutation = graphql`
+  mutation DocumentActionsDropdown_deleteDocumentDraftMutation(
+    $input: DeleteDocumentDraftInput!
+  ) {
+    deleteDocumentDraft(input: $input) {
+      document {
+        id
+        status
       }
     }
   }
@@ -124,7 +96,6 @@ const versionFragment = graphql`
     major
     minor
     status
-    canDeleteDraft: permission(action: "core:document-version:delete-draft")
   }
 `;
 
@@ -141,13 +112,12 @@ const exportDocumentVersionMutation = graphql`
 export function DocumentActionsDropdown(props: {
   documentFragmentRef: DocumentActionsDropdown_documentFragment$key;
   versionFragmentRef: DocumentActionsDropdown_versionFragment$key;
-  onRefetch: () => void;
+  onVersionChanged: () => void;
 }) {
-  const { documentFragmentRef, versionFragmentRef, onRefetch } = props;
+  const { documentFragmentRef, versionFragmentRef, onVersionChanged } = props;
 
   const organizationId = useOrganizationId();
   const navigate = useNavigate();
-  const { versionId } = useParams();
   const { __ } = useTranslate();
   const { email: defaultEmail } = use(CurrentUser);
   const pdfDownloadDialogRef = useRef<PdfDownloadDialogRef>(null);
@@ -157,52 +127,15 @@ export function DocumentActionsDropdown(props: {
   const document = useFragment<DocumentActionsDropdown_documentFragment$key>(documentFragment, documentFragmentRef);
   const version = useFragment<DocumentActionsDropdown_versionFragment$key>(versionFragment, versionFragmentRef);
 
-  const lastVersion = document.versions.edges[0].node;
-  const isLastVersionPublished = lastVersion.status === "PUBLISHED";
-  const isDraft = version.status === "DRAFT";
-
-  const [createDraftDocumentVersion, isCreatingDraft]
-    = useMutation<DocumentActionsDropdown_createDraftMutation>(createDraftDocumentVersionMutation);
   const [deleteDocument, isDeleting] = useDeleteDocumentMutation();
   const [archiveDocument, isArchiving]
     = useMutation<DocumentActionsDropdown_archiveMutation>(archiveDocumentMutation);
   const [unarchiveDocument, isUnarchiving]
     = useMutation<DocumentActionsDropdown_unarchiveMutation>(unarchiveDocumentMutation);
-  const [deleteDraftDocumentVersion, isDeletingDraft]
-    = useDeleteDraftDocumentVersionMutation();
+  const [deleteDocumentDraft, isDeletingDraft]
+    = useMutation<DocumentActionsDropdown_deleteDocumentDraftMutation>(deleteDocumentDraftMutation);
   const [exportDocumentVersion, isExporting]
     = useMutation<DocumentActionsDropdown_exportVersionMutation>(exportDocumentVersionMutation);
-
-  const handleCreateDraft = () => {
-    const connectionId = ConnectionHandler.getConnectionID(document.id, "DocumentversionsDropdownMenu_versions");
-    createDraftDocumentVersion({
-      variables: {
-        input: {
-          documentID: document.id,
-        },
-        connections: [connectionId],
-      },
-      onCompleted: (response, errors) => {
-        if (errors) {
-          toast({
-            variant: "error",
-            title: __("Error creating draft"),
-            description:
-                  errors[0]?.message || __("An unknown error occurred"),
-          });
-          return;
-        }
-
-        const newVersionId
-          = response.createDraftDocumentVersion.documentVersionEdge.node.id;
-
-        void navigate(`/organizations/${organizationId}/documents/${document.id}/versions/${newVersionId}`);
-      },
-      onError(error) {
-        toast({ title: __("Error"), description: error.message, variant: "error" });
-      },
-    });
-  };
 
   const handleArchive = () => {
     confirm(
@@ -227,7 +160,7 @@ export function DocumentActionsDropdown(props: {
       {
         message: sprintf(
           __("This will archive the document \"%s\". It will no longer be editable."),
-          lastVersion.title,
+          version.title,
         ),
         variant: "danger",
         label: __("Archive"),
@@ -249,6 +182,36 @@ export function DocumentActionsDropdown(props: {
         toast({ title: __("Error"), description: error.message, variant: "error" });
       },
     });
+  };
+
+  const handleDeleteDraft = () => {
+    confirm(
+      () =>
+        new Promise<void>((resolve) => {
+          deleteDocumentDraft({
+            variables: { input: { documentId: document.id } },
+            onCompleted(_, errors) {
+              if (errors?.length) {
+                toast({ title: __("Error"), description: formatError(__("Failed to delete draft"), errors), variant: "error" });
+              } else {
+                toast({ title: __("Success"), description: __("Draft deleted successfully."), variant: "success" });
+                onVersionChanged();
+                void navigate(`/organizations/${organizationId}/documents/${document.id}/description`);
+              }
+              resolve();
+            },
+            onError(error) {
+              toast({ title: __("Error"), description: error.message, variant: "error" });
+              resolve();
+            },
+          });
+        }),
+      {
+        message: __("This will delete the current draft and revert to the last published version."),
+        variant: "danger",
+        label: __("Delete draft"),
+      },
+    );
   };
 
   const handleDelete = () => {
@@ -273,41 +236,7 @@ export function DocumentActionsDropdown(props: {
           __(
             "This will permanently delete the document \"%s\". This action cannot be undone.",
           ),
-          lastVersion.title,
-        ),
-      },
-    );
-  };
-
-  const handleDeleteDraft = () => {
-    const versionsConnectionId = ConnectionHandler.getConnectionID(document.id, "DocumentversionsDropdownMenu_versions");
-    const lastVersionConnectionId = ConnectionHandler.getConnectionID(
-      document.id,
-      "DocumentversionsDropdownMenu_lastVersion",
-      { orderBy: { field: "CREATED_AT", direction: "DESC" } },
-    );
-    confirm(
-      () =>
-        deleteDraftDocumentVersion({
-          variables: {
-            input: { documentVersionId: version.id },
-            connections: [versionsConnectionId, lastVersionConnectionId],
-          },
-          onSuccess() {
-            if (versionId) {
-              void navigate(`/organizations/${organizationId}/documents/${document.id}`);
-            } else {
-              onRefetch();
-            }
-          },
-        }),
-      {
-        message: sprintf(
-          __(
-            "This will permanently delete the draft version %s of \"%s\". This action cannot be undone.",
-          ),
-          `${version.major}.${version.minor}`,
-          lastVersion.title,
+          version.title,
         ),
       },
     );
@@ -362,26 +291,6 @@ export function DocumentActionsDropdown(props: {
         defaultEmail={defaultEmail}
       />
       <ActionDropdown variant="secondary">
-        {document.canUpdate && isLastVersionPublished && (
-          <DropdownItem
-            onClick={handleCreateDraft}
-            icon={IconPencil}
-            disabled={isCreatingDraft}
-          >
-            {__("Create new draft")}
-          </DropdownItem>
-        )}
-        {isDraft
-          && document.versions.totalCount > 1
-          && version.canDeleteDraft && (
-          <DropdownItem
-            onClick={handleDeleteDraft}
-            icon={IconTrashCan}
-            disabled={isDeletingDraft}
-          >
-            {__("Delete draft document")}
-          </DropdownItem>
-        )}
         <DropdownItem
           onClick={() => pdfDownloadDialogRef.current?.open()}
           icon={IconArrowDown}
@@ -389,6 +298,15 @@ export function DocumentActionsDropdown(props: {
         >
           {__("Download PDF")}
         </DropdownItem>
+        {document.canDeleteDraft && version.status === "DRAFT" && !(version.major === 0 && version.minor === 1) && (
+          <DropdownItem
+            icon={IconTrashCan}
+            disabled={isDeletingDraft}
+            onClick={handleDeleteDraft}
+          >
+            {__("Delete draft")}
+          </DropdownItem>
+        )}
         {document.canArchive && document.status === "ACTIVE" && (
           <DropdownItem
             icon={IconArchive}
