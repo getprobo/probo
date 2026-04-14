@@ -167,10 +167,14 @@ func (h *Handler) handlePostConsent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	httpserver.RenderJSON(w, http.StatusCreated, postConsentResponse{
-		ID:        record.ID.String(),
-		VisitorID: record.VisitorID,
-		Action:    string(record.Action),
-		CreatedAt: record.CreatedAt,
-	})
+	httpserver.RenderJSON(
+		w,
+		http.StatusCreated,
+		postConsentResponse{
+			ID:        record.ID.String(),
+			VisitorID: record.VisitorID,
+			Action:    string(record.Action),
+			CreatedAt: record.CreatedAt,
+		},
+	)
 }

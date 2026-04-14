@@ -75,6 +75,22 @@ maps.Copy(args, cursor.SQLArguments())
 
 **All SQL must be static** after `fmt.Sprintf()` injection — no conditional string building. Use `CASE WHEN` in SQL for optional filter logic.
 
+**Use Go enum constants as named parameters** — never hardcode string literals like `'ACTIVE'` or `'PUBLISHED'` in SQL. Use a named parameter (`@state`) and pass the Go constant via `pgx.StrictNamedArgs`:
+
+```go
+// Good — Go constant as named parameter
+q := `SELECT ... FROM cookie_banners WHERE id = @id AND state = @state;`
+args := pgx.StrictNamedArgs{
+    "id":    bannerID,
+    "state": CookieBannerStateActive,
+}
+
+// Bad — hardcoded string literal in SQL
+q := `SELECT ... FROM cookie_banners WHERE id = @id AND state = 'ACTIVE';`
+```
+
+This ensures the compiler catches renamed or removed enum values instead of silently producing wrong results at runtime.
+
 ## Standard method signatures
 
 
