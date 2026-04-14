@@ -159,7 +159,20 @@ return nil, fmt.Errorf("cannot load trust center: %w", err)
 return nil, fmt.Errorf("cannot create SAML service: %w", err)
 ```
 
-Sentinel errors in grouped `var ()` blocks. Custom error types implement `Unwrap() error`. Use `errors.Is` / `errors.As` for checks.
+Sentinel errors in grouped `var ()` blocks. Custom error types implement `Unwrap() error`. Use `errors.Is` for sentinel checks. Use `errors.AsType[T](err)` (generic form) instead of `errors.As(err, &ptr)` for type assertions:
+
+```go
+// Good
+if e, ok := errors.AsType[*ValidationError](err); ok {
+	// use e
+}
+
+// Bad — avoid the two-argument form
+var ve *ValidationError
+if errors.As(err, &ve) {
+	// use ve
+}
+```
 
 ### Naming
 
