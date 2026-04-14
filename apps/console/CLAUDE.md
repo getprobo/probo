@@ -8,7 +8,7 @@ React 19 + Vite + TypeScript + Relay + TailwindCSS. Port 5173.
 |---------|---------|
 | `npm run dev` | Start dev server (port 5173) |
 | `npm run build` | Production build |
-| `npm run relay` (from repo root) | Regenerate Relay artifacts |
+| `make relay` | Merge split schemas and regenerate Relay artifacts |
 
 ## Routes
 

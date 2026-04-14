@@ -20,8 +20,7 @@ Configured in `apps/console/src/environments.ts`. Each has its own store with 1-
 Config lives in `relay.config.json` at the repo root with three projects (`core`, `iam`, `trust`) mapped to different source directories and schemas. Each project uses `schema` pointing to `base.graphql` and `schemaExtensions` pointing to the `graphql/` directory containing the per-entity schema files. Generated files go into `__generated__/` directories.
 
 ```sh
-npm run relay          # clean + compile (from repo root)
-npm run relay-compile  # compile only (from repo root)
+make relay  # merge split schemas + clean + compile
 ```
 
 Custom scalar mappings: `Datetime → string`, `GID → string`, `CursorKey → string`, `Duration → string`, `BigInt → number`, `EmailAddr → string`.

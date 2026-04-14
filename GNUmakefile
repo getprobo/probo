@@ -225,7 +225,7 @@ RELAY_SCHEMAS = \
 
 .PHONY: relay
 relay: $(RELAY_SCHEMAS)
-	$(NPM) run relay
+	$(NPX) relay-compiler
 
 MERGE_GRAPHQL = contrib/merge-graphql-schema.sh
 
@@ -262,8 +262,8 @@ generate: pkg/server/api/connect/v1/schema/schema.go \
 	pkg/server/api/trust/v1/schema/schema.go \
 	pkg/server/api/trust/v1/types/types.go \
 	pkg/server/api/mcp/v1/server/server.go \
-	pkg/server/api/mcp/v1/types/types.go
-	$(NPM) run relay
+	pkg/server/api/mcp/v1/types/types.go \
+	relay
 
 pkg/server/api/connect/v1/schema/schema.go \
 pkg/server/api/connect/v1/types/types.go: pkg/server/api/connect/v1/gqlgen.yaml $(wildcard pkg/server/api/connect/v1/graphql/*.graphql)

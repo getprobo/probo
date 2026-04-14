@@ -24,7 +24,7 @@ jobs:
         with:
           go: "false"
       - run: "npm --workspace @probo/emails run build"
-      - run: "npm run relay"
+      - run: "make relay"
       - name: "Build console"
         run: |
           npm --workspace @probo/console run check
