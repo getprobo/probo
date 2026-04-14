@@ -18,6 +18,7 @@ import (
 	"net/url"
 	"regexp"
 	"slices"
+	"strings"
 
 	"go.probo.inc/probo/pkg/gid"
 )
@@ -160,7 +161,7 @@ func Origin() ValidatorFunc {
 			return newValidationError(ErrorCodeInvalidFormat, "must be a valid origin (e.g. https://example.com)")
 		}
 
-		if parsedURL.Host == "" || parsedURL.Hostname() == "" {
+		if parsedURL.Host == "" || parsedURL.Hostname() == "" || strings.HasSuffix(parsedURL.Host, ":") {
 			return newValidationError(ErrorCodeInvalidFormat, "must be a valid origin (e.g. https://example.com)")
 		}
 
