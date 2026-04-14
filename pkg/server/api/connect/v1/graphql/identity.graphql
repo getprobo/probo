@@ -1,0 +1,40 @@
+type Identity implements Node {
+  id: ID!
+  email: EmailAddr!
+  fullName: String!
+  emailVerified: Boolean!
+  createdAt: Datetime!
+  updatedAt: Datetime!
+
+  profiles(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+    orderBy: ProfileOrder
+    filter: ProfileFilter
+  ): ProfileConnection @goField(forceResolver: true)
+
+  sessions(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+    orderBy: SessionOrder
+  ): SessionConnection @goField(forceResolver: true)
+
+  personalAPIKeys(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+  ): PersonalAPIKeyConnection @goField(forceResolver: true)
+
+  ssoLoginURL: String
+    @goField(forceResolver: true)
+    @session(required: PRESENT)
+
+  permission(action: String!): Boolean!
+    @goField(forceResolver: true)
+    @session(required: PRESENT)
+}

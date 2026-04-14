@@ -1,0 +1,25 @@
+type Viewer {
+    id: ID!
+
+    signableDocuments(
+        organizationId: ID!
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: DocumentOrder
+    ): EmployeeDocumentConnection! @goField(forceResolver: true)
+
+    signableDocument(id: ID!): EmployeeDocument @goField(forceResolver: true)
+
+    approvableDocuments(
+        organizationId: ID!
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: DocumentOrder
+    ): EmployeeDocumentConnection! @goField(forceResolver: true)
+
+    approvableDocument(id: ID!): EmployeeDocument @goField(forceResolver: true)
+}

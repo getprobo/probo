@@ -9,13 +9,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
-	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
@@ -23,23 +21,6 @@ import (
 	"go.probo.inc/probo/pkg/server/gqlutils"
 	"go.probo.inc/probo/pkg/validator"
 )
-
-// DownloadURL is the resolver for the downloadUrl field.
-func (r *fileResolver) DownloadURL(ctx context.Context, obj *types.File) (string, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionFileDownloadUrl); err != nil {
-		return "", err
-	}
-
-	prb := r.ProboService(ctx, obj.ID.TenantID())
-
-	downloadUrl, err := prb.Files.GenerateFileTempURL(ctx, obj.ID, 60*time.Second)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot generate download URL", log.Error(err))
-		return "", gqlutils.Internal(ctx)
-	}
-
-	return downloadUrl, nil
-}
 
 // UpdateOrganizationContext is the resolver for the updateOrganizationContext field.
 func (r *mutationResolver) UpdateOrganizationContext(ctx context.Context, input types.UpdateOrganizationContextInput) (*types.UpdateOrganizationContextPayload, error) {
@@ -431,177 +412,11 @@ func (r *queryResolver) Viewer(ctx context.Context) (*types.Viewer, error) {
 	return &types.Viewer{ID: viewerID}, nil
 }
 
-// SignableDocuments is the resolver for the signableDocuments field.
-func (r *viewerResolver) SignableDocuments(ctx context.Context, obj *types.Viewer, organizationID gid.GID, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentOrderBy) (*types.EmployeeDocumentConnection, error) {
-	if err := r.authorize(ctx, organizationID, probo.ActionEmployeeDocumentList); err != nil {
-		return nil, err
-	}
-
-	prb := r.ProboService(ctx, organizationID.TenantID())
-
-	pageOrderBy := page.OrderBy[coredata.DocumentOrderField]{
-		Field:     coredata.DocumentOrderFieldCreatedAt,
-		Direction: page.OrderDirectionDesc,
-	}
-	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.DocumentOrderField]{
-			Field:     orderBy.Field,
-			Direction: orderBy.Direction,
-		}
-	}
-
-	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
-
-	identity := authn.IdentityFromContext(ctx)
-
-	documentFilter := coredata.NewDocumentFilter(nil).WithEmployeeIdentityID(&identity.ID, coredata.EmployeeFilterModeSignature)
-
-	documentsPage, err := prb.Documents.ListByOrganizationID(ctx, organizationID, cursor, documentFilter)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list organization signable documents", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	employeeDocuments := make([]*types.EmployeeDocument, len(documentsPage.Data))
-	for i, doc := range documentsPage.Data {
-		employeeDocuments[i] = &types.EmployeeDocument{
-			ID:           doc.ID,
-			Title:        doc.Title,
-			DocumentType: doc.DocumentType,
-			CreatedAt:    doc.CreatedAt,
-			UpdatedAt:    doc.UpdatedAt,
-			FilterMode:   types.EmployeeDocumentFilterModeSignature,
-		}
-	}
-
-	page := page.NewPage(employeeDocuments, documentsPage.Cursor)
-
-	return types.NewEmployeeDocumentConnection(page), nil
-}
-
-// SignableDocument is the resolver for the signableDocument field.
-func (r *viewerResolver) SignableDocument(ctx context.Context, obj *types.Viewer, id gid.GID) (*types.EmployeeDocument, error) {
-	if err := r.authorize(ctx, id, probo.ActionEmployeeDocumentGet); err != nil {
-		return nil, err
-	}
-
-	prb := r.ProboService(ctx, id.TenantID())
-
-	identity := authn.IdentityFromContext(ctx)
-
-	documentFilter := coredata.NewDocumentFilter(nil).WithEmployeeIdentityID(&identity.ID, coredata.EmployeeFilterModeSignature)
-	document, err := prb.Documents.GetWithFilter(ctx, id, documentFilter)
-	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
-		}
-
-		r.logger.ErrorCtx(ctx, "cannot get signable document", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return &types.EmployeeDocument{
-		ID:           document.ID,
-		Title:        document.Title,
-		DocumentType: document.DocumentType,
-		CreatedAt:    document.CreatedAt,
-		UpdatedAt:    document.UpdatedAt,
-		FilterMode:   types.EmployeeDocumentFilterModeSignature,
-	}, nil
-}
-
-// ApprovableDocuments is the resolver for the approvableDocuments field.
-func (r *viewerResolver) ApprovableDocuments(ctx context.Context, obj *types.Viewer, organizationID gid.GID, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentOrderBy) (*types.EmployeeDocumentConnection, error) {
-	if err := r.authorize(ctx, organizationID, probo.ActionEmployeeDocumentList); err != nil {
-		return nil, err
-	}
-
-	prb := r.ProboService(ctx, organizationID.TenantID())
-
-	pageOrderBy := page.OrderBy[coredata.DocumentOrderField]{
-		Field:     coredata.DocumentOrderFieldCreatedAt,
-		Direction: page.OrderDirectionDesc,
-	}
-	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.DocumentOrderField]{
-			Field:     orderBy.Field,
-			Direction: orderBy.Direction,
-		}
-	}
-
-	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
-
-	identity := authn.IdentityFromContext(ctx)
-
-	documentFilter := coredata.NewDocumentFilter(nil).WithEmployeeIdentityID(&identity.ID, coredata.EmployeeFilterModeApproval)
-
-	documentsPage, err := prb.Documents.ListByOrganizationID(ctx, organizationID, cursor, documentFilter)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list organization approvable documents", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	employeeDocuments := make([]*types.EmployeeDocument, len(documentsPage.Data))
-	for i, doc := range documentsPage.Data {
-		employeeDocuments[i] = &types.EmployeeDocument{
-			ID:           doc.ID,
-			Title:        doc.Title,
-			DocumentType: doc.DocumentType,
-			CreatedAt:    doc.CreatedAt,
-			UpdatedAt:    doc.UpdatedAt,
-			FilterMode:   types.EmployeeDocumentFilterModeApproval,
-		}
-	}
-
-	page := page.NewPage(employeeDocuments, documentsPage.Cursor)
-
-	return types.NewEmployeeDocumentConnection(page), nil
-}
-
-// ApprovableDocument is the resolver for the approvableDocument field.
-func (r *viewerResolver) ApprovableDocument(ctx context.Context, obj *types.Viewer, id gid.GID) (*types.EmployeeDocument, error) {
-	if err := r.authorize(ctx, id, probo.ActionEmployeeDocumentGet); err != nil {
-		return nil, err
-	}
-
-	prb := r.ProboService(ctx, id.TenantID())
-
-	identity := authn.IdentityFromContext(ctx)
-
-	documentFilter := coredata.NewDocumentFilter(nil).WithEmployeeIdentityID(&identity.ID, coredata.EmployeeFilterModeApproval)
-	document, err := prb.Documents.GetWithFilter(ctx, id, documentFilter)
-	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
-		}
-
-		r.logger.ErrorCtx(ctx, "cannot get approvable document", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return &types.EmployeeDocument{
-		ID:           document.ID,
-		Title:        document.Title,
-		DocumentType: document.DocumentType,
-		CreatedAt:    document.CreatedAt,
-		UpdatedAt:    document.UpdatedAt,
-		FilterMode:   types.EmployeeDocumentFilterModeApproval,
-	}, nil
-}
-
-// File returns schema.FileResolver implementation.
-func (r *Resolver) File() schema.FileResolver { return &fileResolver{r} }
-
 // Mutation returns schema.MutationResolver implementation.
 func (r *Resolver) Mutation() schema.MutationResolver { return &mutationResolver{r} }
 
 // Query returns schema.QueryResolver implementation.
 func (r *Resolver) Query() schema.QueryResolver { return &queryResolver{r} }
 
-// Viewer returns schema.ViewerResolver implementation.
-func (r *Resolver) Viewer() schema.ViewerResolver { return &viewerResolver{r} }
-
-type fileResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
-type viewerResolver struct{ *Resolver }

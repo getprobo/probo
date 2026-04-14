@@ -16,32 +16,8 @@ scalar Datetime
 scalar Upload
 scalar EmailAddr
 
-enum OrderDirection
-  @goModel(model: "go.probo.inc/probo/pkg/page.OrderDirection") {
-  ASC @goEnum(value: "go.probo.inc/probo/pkg/page.OrderDirectionAsc")
-  DESC @goEnum(value: "go.probo.inc/probo/pkg/page.OrderDirectionDesc")
-}
-
 interface Node {
   id: ID!
-}
-
-type PageInfo {
-  hasNextPage: Boolean!
-  hasPreviousPage: Boolean!
-  startCursor: CursorKey
-  endCursor: CursorKey
-}
-
-type OIDCProviderInfo {
-  name: String!
-  loginURL: String!
-}
-
-enum ReauthenticationReason {
-  SESSION_EXPIRED
-  SENSITIVE_ACTION
-  POLICY_REQUIREMENT
 }
 
 type Query {
@@ -58,69 +34,4 @@ type Query {
     @session(required: OPTIONAL)
 }
 
-type Identity implements Node {
-  id: ID!
-  email: EmailAddr!
-  fullName: String!
-  emailVerified: Boolean!
-  createdAt: Datetime!
-  updatedAt: Datetime!
-
-  profiles(
-    first: Int
-    after: CursorKey
-    last: Int
-    before: CursorKey
-    orderBy: ProfileOrder
-    filter: ProfileFilter
-  ): ProfileConnection @goField(forceResolver: true)
-
-  sessions(
-    first: Int
-    after: CursorKey
-    last: Int
-    before: CursorKey
-    orderBy: SessionOrder
-  ): SessionConnection @goField(forceResolver: true)
-
-  personalAPIKeys(
-    first: Int
-    after: CursorKey
-    last: Int
-    before: CursorKey
-  ): PersonalAPIKeyConnection @goField(forceResolver: true)
-
-  ssoLoginURL: String
-    @goField(forceResolver: true)
-    @session(required: PRESENT)
-
-  permission(action: String!): Boolean!
-    @goField(forceResolver: true)
-    @session(required: PRESENT)
-}
-
-type Mutation {
-  signIn(input: SignInInput!): SignInPayload @session(required: OPTIONAL)
-  signUp(input: SignUpInput!): SignUpPayload @session(required: NONE)
-  signOut: SignOutPayload @session(required: PRESENT)
-  activateAccount(
-    input: ActivateAccountInput!
-  ): ActivateAccountPayload @session(required: OPTIONAL)
-  forgotPassword(input: ForgotPasswordInput!): ForgotPasswordPayload
-    @session(required: NONE)
-  resetPassword(input: ResetPasswordInput!): ResetPasswordPayload
-    @session(required: NONE)
-  verifyEmail(input: VerifyEmailInput!): VerifyEmailPayload
-    @session(required: OPTIONAL)
-  changePassword(input: ChangePasswordInput!): ChangePasswordPayload
-    @session(required: PRESENT)
-  changeEmail(input: ChangeEmailInput!): ChangeEmailPayload
-    @session(required: PRESENT)
-  assumeOrganizationSession(
-    input: AssumeOrganizationSessionInput!
-  ): AssumeOrganizationSessionPayload @session(required: PRESENT)
-
-  revokeSession(input: RevokeSessionInput!): RevokeSessionPayload!
-    @session(required: PRESENT)
-  revokeAllSessions: RevokeAllSessionsPayload @session(required: PRESENT)
-}
+type Mutation

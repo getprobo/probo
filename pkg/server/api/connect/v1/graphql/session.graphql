@@ -1,3 +1,35 @@
+enum ReauthenticationReason {
+  SESSION_EXPIRED
+  SENSITIVE_ACTION
+  POLICY_REQUIREMENT
+}
+
+extend type Mutation {
+  signIn(input: SignInInput!): SignInPayload @session(required: OPTIONAL)
+  signUp(input: SignUpInput!): SignUpPayload @session(required: NONE)
+  signOut: SignOutPayload @session(required: PRESENT)
+  activateAccount(
+    input: ActivateAccountInput!
+  ): ActivateAccountPayload @session(required: OPTIONAL)
+  forgotPassword(input: ForgotPasswordInput!): ForgotPasswordPayload
+    @session(required: NONE)
+  resetPassword(input: ResetPasswordInput!): ResetPasswordPayload
+    @session(required: NONE)
+  verifyEmail(input: VerifyEmailInput!): VerifyEmailPayload
+    @session(required: OPTIONAL)
+  changePassword(input: ChangePasswordInput!): ChangePasswordPayload
+    @session(required: PRESENT)
+  changeEmail(input: ChangeEmailInput!): ChangeEmailPayload
+    @session(required: PRESENT)
+  assumeOrganizationSession(
+    input: AssumeOrganizationSessionInput!
+  ): AssumeOrganizationSessionPayload @session(required: PRESENT)
+
+  revokeSession(input: RevokeSessionInput!): RevokeSessionPayload!
+    @session(required: PRESENT)
+  revokeAllSessions: RevokeAllSessionsPayload @session(required: PRESENT)
+}
+
 enum SessionOrderField
   @goModel(model: "go.probo.inc/probo/pkg/coredata.SessionOrderField") {
   CREATED_AT

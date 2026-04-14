@@ -9,14 +9,10 @@ import (
 	"context"
 	"errors"
 	"strings"
-	"time"
 
 	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/iam"
-	"go.probo.inc/probo/pkg/saferedirect"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/compliancepage"
 	"go.probo.inc/probo/pkg/server/api/trust/v1/schema"
@@ -24,171 +20,6 @@ import (
 	"go.probo.inc/probo/pkg/server/gqlutils"
 	"go.probo.inc/probo/pkg/trust"
 )
-
-// SendMagicLink is the resolver for the sendMagicLink field.
-func (r *mutationResolver) SendMagicLink(ctx context.Context, input types.SendMagicLinkInput) (*types.SendMagicLinkPayload, error) {
-	trustCenter := compliancepage.CompliancePageFromContext(ctx)
-
-	baseURL := compliancepage.CompliancePageBaseURLFromContext(ctx)
-
-	safeRedirect := saferedirect.New(saferedirect.StaticHosts(baseurl.MustParse(*baseURL).Host()))
-
-	if input.Continue != nil {
-		_, ok := safeRedirect.Validate(ctx, *input.Continue)
-		if !ok {
-			return nil, gqlutils.Invalidf(ctx, "invalid continue URL")
-		}
-	}
-
-	req := &iam.SendMagicLinkRequest{
-		Email:            input.Email,
-		CompliancePageID: &trustCenter.ID,
-		OrganizationID:   trustCenter.OrganizationID,
-		URLPath:          "verify-magic-link",
-		Continue:         input.Continue,
-	}
-
-	if err := r.iam.AuthService.SendMagicLink(ctx, req); err != nil {
-		r.logger.ErrorCtx(ctx, "cannot send magic link", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return nil, nil
-}
-
-// VerifyMagicLink is the resolver for the verifyMagicLink field.
-func (r *mutationResolver) VerifyMagicLink(ctx context.Context, input types.VerifyMagicLinkInput) (*types.VerifyMagicLinkPayload, error) {
-	session := authn.SessionFromContext(ctx)
-	identity := authn.IdentityFromContext(ctx)
-
-	email, err := r.iam.AuthService.GetMagicLinkEmail(ctx, input.Token)
-	if err != nil {
-		var errExpiredToken *iam.ErrExpiredToken
-		if errors.As(err, &errExpiredToken) {
-			return nil, gqlutils.Invalid(ctx, err)
-		}
-
-		var errInvalidToken *iam.ErrInvalidToken
-		if errors.As(err, &errInvalidToken) {
-			return nil, gqlutils.Invalid(ctx, err)
-		}
-
-		r.logger.ErrorCtx(ctx, "cannot get magic link email", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	var continueURL *string
-
-	switch {
-	case session == nil:
-		var err error
-		identity, session, continueURL, err = r.iam.AuthService.OpenSessionWithMagicLink(ctx, input.Token)
-		if err != nil {
-			var errExpiredToken *iam.ErrExpiredToken
-			if errors.As(err, &errExpiredToken) {
-				return nil, gqlutils.Invalid(ctx, err)
-			}
-
-			var errInvalidToken *iam.ErrInvalidToken
-			if errors.As(err, &errInvalidToken) {
-				return nil, gqlutils.Invalid(ctx, err)
-			}
-
-			r.logger.ErrorCtx(ctx, "cannot open session with magic link", log.Error(err))
-			return nil, gqlutils.Internal(ctx)
-		}
-	case identity.EmailAddress != email:
-		if err := r.iam.SessionService.CloseSession(ctx, session.ID); err != nil {
-			r.logger.ErrorCtx(ctx, "cannot close session", log.Error(err))
-			return nil, gqlutils.Internal(ctx)
-		}
-
-		var err error
-		identity, session, continueURL, err = r.iam.AuthService.OpenSessionWithMagicLink(ctx, input.Token)
-		if err != nil {
-			var errExpiredToken *iam.ErrExpiredToken
-			if errors.As(err, &errExpiredToken) {
-				return nil, gqlutils.Invalid(ctx, err)
-			}
-
-			var errInvalidToken *iam.ErrInvalidToken
-			if errors.As(err, &errInvalidToken) {
-				return nil, gqlutils.Invalid(ctx, err)
-			}
-
-			r.logger.ErrorCtx(ctx, "cannot open session with magic link", log.Error(err))
-			return nil, gqlutils.Internal(ctx)
-		}
-	}
-
-	trustCenter := compliancepage.CompliancePageFromContext(ctx)
-
-	if _, err := r.trust.ProvisionMember(ctx, trustCenter.ID, identity.ID); err != nil {
-		r.logger.ErrorCtx(ctx, "cannot provision member", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	w := gqlutils.HTTPResponseWriterFromContext(ctx)
-	r.sessionCookie.Set(w, session)
-
-	return &types.VerifyMagicLinkPayload{
-		Continue: continueURL,
-	}, nil
-}
-
-// UpdateFullName is the resolver for the updateFullName field.
-func (r *mutationResolver) UpdateFullName(ctx context.Context, input types.UpdateFullNameInput) (*types.UpdateFullNamePayload, error) {
-	identity := authn.IdentityFromContext(ctx)
-	if identity == nil {
-		return nil, gqlutils.Unauthenticatedf(ctx, "authentication is required to request access")
-	}
-
-	identity, err := r.iam.AccountService.UpdateIdentity(
-		ctx,
-		identity.ID,
-		&iam.UpdateIdentityRequest{
-			FullName: input.FullName,
-		},
-	)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot update identity", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	compliancePage := compliancepage.CompliancePageFromContext(ctx)
-
-	profile, err := r.iam.OrganizationService.GetProfileForIdentityAndOrganization(ctx, identity.ID, compliancePage.OrganizationID)
-	if err != nil {
-		if _, ok := errors.AsType[*iam.ErrProfileNotFound](err); !ok {
-			r.logger.ErrorCtx(ctx, "cannot get profile", log.Error(err))
-			return nil, gqlutils.Internal(ctx)
-		}
-	}
-
-	if profile.Source == coredata.ProfileSourceManual {
-		if _, err := r.iam.OrganizationService.UpdateUser(ctx, &iam.UpdateUserRequest{
-			ID:                       profile.ID,
-			FullName:                 identity.FullName,
-			AdditionalEmailAddresses: profile.AdditionalEmailAddresses,
-			Kind:                     profile.Kind,
-			Position:                 profile.Position,
-			ContractStartDate:        &profile.ContractStartDate,
-			ContractEndDate:          &profile.ContractEndDate,
-		}); err != nil {
-			r.logger.ErrorCtx(ctx, "cannot update profile", log.Error(err))
-			return nil, gqlutils.Internal(ctx)
-		}
-	}
-
-	return &types.UpdateFullNamePayload{Success: true}, nil
-}
-
-// LogoURL is the resolver for the logoUrl field.
-func (r *organizationResolver) LogoURL(ctx context.Context, obj *types.Organization) (*string, error) {
-	trustService := r.TrustService(ctx, obj.ID.TenantID())
-
-	return trustService.Organizations.GenerateLogoURL(ctx, obj.ID, 1*time.Hour)
-}
 
 // Viewer is the resolver for the viewer field.
 func (r *queryResolver) Viewer(ctx context.Context) (*types.Identity, error) {
@@ -352,12 +183,8 @@ func (r *queryResolver) OidcProviders(ctx context.Context) ([]*types.OIDCProvide
 // Mutation returns schema.MutationResolver implementation.
 func (r *Resolver) Mutation() schema.MutationResolver { return &mutationResolver{r} }
 
-// Organization returns schema.OrganizationResolver implementation.
-func (r *Resolver) Organization() schema.OrganizationResolver { return &organizationResolver{r} }
-
 // Query returns schema.QueryResolver implementation.
 func (r *Resolver) Query() schema.QueryResolver { return &queryResolver{r} }
 
 type mutationResolver struct{ *Resolver }
-type organizationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }

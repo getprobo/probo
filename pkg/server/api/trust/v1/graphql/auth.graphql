@@ -1,3 +1,12 @@
+extend type Mutation {
+  sendMagicLink(input: SendMagicLinkInput!): SendMagicLinkPayload
+    @session(required: OPTIONAL)
+  verifyMagicLink(input: VerifyMagicLinkInput!): VerifyMagicLinkPayload
+    @session(required: OPTIONAL)
+  updateFullName(input: UpdateFullNameInput!): UpdateFullNamePayload
+    @session(required: PRESENT)
+}
+
 input SendMagicLinkInput {
   email: EmailAddr!
   continue: String

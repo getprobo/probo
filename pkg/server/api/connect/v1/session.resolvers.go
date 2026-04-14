@@ -7,12 +7,466 @@ package connect_v1
 
 import (
 	"context"
+	"errors"
 
+	"github.com/vektah/gqlparser/v2/gqlerror"
 	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/iam"
+	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
 )
+
+// SignIn is the resolver for the signIn field.
+func (r *mutationResolver) SignIn(ctx context.Context, input types.SignInInput) (*types.SignInPayload, error) {
+	identity, err := r.iam.AuthService.CheckCredentials(ctx, input.Email, input.Password)
+	if err != nil {
+		var errInvalidPassword *iam.ErrInvalidPassword
+		if errors.As(err, &errInvalidPassword) {
+			return nil, gqlutils.Invalid(ctx, err)
+		}
+
+		var errInvalidCredentials *iam.ErrInvalidCredentials
+		if errors.As(err, &errInvalidCredentials) {
+			return nil, &gqlerror.Error{
+				Message: err.Error(),
+				Extensions: map[string]any{
+					"code": "INVALID_CREDENTIALS",
+				},
+			}
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot check credentials", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	session := authn.SessionFromContext(ctx)
+
+	switch {
+	case session == nil:
+		var err error
+		session, err = r.iam.AuthService.OpenSessionWithPassword(
+			ctx,
+			identity.ID,
+		)
+		if err != nil {
+			r.logger.ErrorCtx(ctx, "cannot create session", log.Error(err))
+			return nil, gqlutils.Internal(ctx)
+		}
+	case session.IdentityID != identity.ID:
+		if err := r.iam.SessionService.CloseSession(ctx, session.ID); err != nil {
+			r.logger.ErrorCtx(ctx, "cannot close session", log.Error(err))
+			return nil, gqlutils.Internal(ctx)
+		}
+
+		session, err = r.iam.AuthService.OpenSessionWithPassword(
+			ctx,
+			identity.ID,
+		)
+		if err != nil {
+			r.logger.ErrorCtx(ctx, "cannot create session", log.Error(err))
+			return nil, gqlutils.Internal(ctx)
+		}
+	}
+
+	w := gqlutils.HTTPResponseWriterFromContext(ctx)
+	r.sessionCookie.Set(w, session)
+
+	if input.OrganizationID != nil {
+		var err error
+		_, _, err = r.iam.SessionService.OpenPasswordChildSessionForOrganization(ctx, session.ID, *input.OrganizationID)
+		if err != nil {
+			// Here session middleware already took care of expired/nil root session so we only handle membership related errors
+			var errMembershipNotFound *iam.ErrMembershipNotFound
+			var errUserInactive *iam.ErrUserInactive
+
+			if errors.As(err, &errMembershipNotFound) || errors.As(err, &errUserInactive) {
+				return nil, gqlutils.Forbiddenf(ctx, "forbidden")
+			}
+
+			r.logger.ErrorCtx(ctx, "cannot assume organization", log.Error(err))
+			return nil, gqlutils.Internal(ctx)
+		}
+	}
+
+	return &types.SignInPayload{
+		Identity: types.NewIdentity(identity),
+		Session:  types.NewSession(session),
+	}, nil
+}
+
+// SignUp is the resolver for the signUp field.
+func (r *mutationResolver) SignUp(ctx context.Context, input types.SignUpInput) (*types.SignUpPayload, error) {
+	identity, session, err := r.iam.AuthService.CreateIdentityWithPassword(
+		ctx,
+		&iam.CreateIdentityWithPasswordRequest{
+			Email:    input.Email,
+			Password: input.Password,
+			FullName: input.FullName,
+		},
+	)
+	if err != nil {
+		var errIdentityAlreadyExists *iam.ErrIdentityAlreadyExists
+		if errors.As(err, &errIdentityAlreadyExists) {
+			return nil, gqlutils.Invalid(ctx, err)
+		}
+
+		var errSignupDisabled *iam.ErrSignupDisabled
+		if errors.As(err, &errSignupDisabled) {
+			return nil, gqlutils.Forbidden(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot create identity with password", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	w := gqlutils.HTTPResponseWriterFromContext(ctx)
+	r.sessionCookie.Set(w, session)
+
+	return &types.SignUpPayload{
+		Identity: types.NewIdentity(identity),
+	}, nil
+}
+
+// SignOut is the resolver for the signOut field.
+func (r *mutationResolver) SignOut(ctx context.Context) (*types.SignOutPayload, error) {
+	session := authn.SessionFromContext(ctx)
+
+	err := r.iam.SessionService.CloseSession(ctx, session.ID)
+	if err != nil {
+		var ErrSessionNotFound *iam.ErrSessionNotFound
+		if errors.As(err, &ErrSessionNotFound) {
+			return &types.SignOutPayload{}, nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot close session", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	w := gqlutils.HTTPResponseWriterFromContext(ctx)
+	r.sessionCookie.Clear(w)
+
+	return &types.SignOutPayload{Success: true}, nil
+}
+
+// ActivateAccount is the resolver for the activateAccount field.
+func (r *mutationResolver) ActivateAccount(ctx context.Context, input types.ActivateAccountInput) (*types.ActivateAccountPayload, error) {
+	session := authn.SessionFromContext(ctx)
+
+	if session != nil {
+		// Sign out any other account before activating a new one
+		err := r.iam.SessionService.CloseSession(ctx, session.ID)
+		if err != nil {
+			var ErrSessionNotFound *iam.ErrSessionNotFound
+			if !errors.As(err, &ErrSessionNotFound) {
+				r.logger.ErrorCtx(ctx, "cannot close session", log.Error(err))
+				return nil, gqlutils.Internal(ctx)
+			}
+
+		}
+
+		w := gqlutils.HTTPResponseWriterFromContext(ctx)
+		r.sessionCookie.Clear(w)
+	}
+
+	identity, user, err := r.iam.AuthService.ActivateAccount(
+		ctx,
+		&iam.ActivateAccountRequest{
+			InvitationToken: input.Token,
+		},
+	)
+	if err != nil {
+		var (
+			errInvalidToken       *iam.ErrInvalidToken
+			errInvitationNotFound *iam.ErrInvitationNotFound
+			errInvitationExpired  *iam.ErrInvitationExpired
+
+			isInvalidErr = errors.As(err, &errInvalidToken) ||
+				errors.As(err, &errInvitationNotFound) ||
+				errors.As(err, &errInvitationExpired)
+		)
+
+		if isInvalidErr {
+			return nil, gqlutils.Invalid(ctx, err)
+		}
+
+		if _, ok := errors.AsType[*iam.ErrInvitationAlreadyAccepted](err); ok {
+			return nil, gqlutils.AccountAlreadyActivated(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot activate account from invitation", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	var ssoLoginURL *string
+	samlConfigs, err := r.iam.AccountService.ListSAMLConfigurationsForEmail(ctx, user.EmailAddress)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list saml configurations", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	for _, samlConfig := range samlConfigs {
+		if samlConfig.OrganizationID != user.OrganizationID {
+			continue
+		}
+
+		ssoLoginURL = new(r.SSOLoginURL(samlConfig.ID))
+	}
+
+	if ssoLoginURL != nil {
+		return &types.ActivateAccountPayload{
+			CreatePasswordToken: nil,
+			SsoLoginURL:         ssoLoginURL,
+			Profile:             types.NewProfile(user),
+		}, nil
+	}
+
+	var createPasswordToken *string
+	if identity.HashedPassword == nil {
+		token, err := r.iam.AuthService.GetResetPasswordToken(ctx, identity.EmailAddress)
+		if err != nil {
+			r.logger.ErrorCtx(ctx, "cannot generate password create token", log.Error(err))
+			return nil, gqlutils.Internal(ctx)
+		}
+
+		createPasswordToken = &token
+	}
+
+	return &types.ActivateAccountPayload{
+		CreatePasswordToken: createPasswordToken,
+		SsoLoginURL:         nil,
+		Profile:             types.NewProfile(user),
+	}, nil
+}
+
+// ForgotPassword is the resolver for the forgotPassword field.
+func (r *mutationResolver) ForgotPassword(ctx context.Context, input types.ForgotPasswordInput) (*types.ForgotPasswordPayload, error) {
+	err := r.iam.AuthService.SendPasswordResetInstructionByEmail(
+		ctx,
+		input.Email,
+	)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot send password reset instruction by email", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.ForgotPasswordPayload{
+		Success: true,
+	}, nil
+}
+
+// ResetPassword is the resolver for the resetPassword field.
+func (r *mutationResolver) ResetPassword(ctx context.Context, input types.ResetPasswordInput) (*types.ResetPasswordPayload, error) {
+	err := r.iam.AuthService.ResetPassword(
+		ctx,
+		&iam.ResetPasswordRequest{
+			Token:    input.Token,
+			Password: input.Password,
+		},
+	)
+	if err != nil {
+		var errInvalidToken *iam.ErrInvalidToken
+		if errors.As(err, &errInvalidToken) {
+			return nil, gqlutils.Invalid(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot reset password", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.ResetPasswordPayload{
+		Success: true,
+	}, nil
+}
+
+// VerifyEmail is the resolver for the verifyEmail field.
+func (r *mutationResolver) VerifyEmail(ctx context.Context, input types.VerifyEmailInput) (*types.VerifyEmailPayload, error) {
+	err := r.iam.AccountService.VerifyEmail(ctx, input.Token)
+	if err != nil {
+		var (
+			errInvalidToken              *iam.ErrInvalidToken
+			errIdentityNotFound          *iam.ErrIdentityNotFound
+			errEmailAlreadyVerified      *iam.ErrEmailAlreadyVerified
+			errEmailVerificationMismatch *iam.ErrEmailVerificationMismatch
+
+			isInvalidErr = errors.As(err, &errInvalidToken) ||
+				errors.As(err, &errEmailVerificationMismatch)
+		)
+
+		if isInvalidErr {
+			return nil, gqlutils.Invalid(ctx, err)
+		}
+
+		if errors.As(err, &errEmailAlreadyVerified) {
+			return nil, gqlutils.Conflict(ctx, err)
+		}
+
+		if errors.As(err, &errIdentityNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot verify email", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.VerifyEmailPayload{
+		Success: true,
+	}, nil
+}
+
+// ChangePassword is the resolver for the changePassword field.
+func (r *mutationResolver) ChangePassword(ctx context.Context, input types.ChangePasswordInput) (*types.ChangePasswordPayload, error) {
+	identity := authn.IdentityFromContext(ctx)
+
+	err := r.iam.AccountService.ChangePassword(
+		ctx,
+		identity.ID,
+		&iam.ChangePasswordRequest{
+			CurrentPassword: input.CurrentPassword,
+			NewPassword:     input.NewPassword,
+		},
+	)
+	if err != nil {
+		var (
+			errInvalidPassword  *iam.ErrInvalidPassword
+			errIdentityNotFound *iam.ErrIdentityNotFound
+		)
+
+		if errors.As(err, &errInvalidPassword) {
+			return nil, gqlutils.Invalid(ctx, err)
+		}
+
+		if errors.As(err, &errIdentityNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot change password", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.ChangePasswordPayload{
+		Success: true,
+	}, nil
+}
+
+// ChangeEmail is the resolver for the changeEmail field.
+func (r *mutationResolver) ChangeEmail(ctx context.Context, input types.ChangeEmailInput) (*types.ChangeEmailPayload, error) {
+	identity := authn.IdentityFromContext(ctx)
+
+	err := r.iam.AccountService.ChangeEmail(
+		ctx,
+		identity.ID,
+		&iam.ChangeEmailRequest{
+			NewEmail: input.NewEmail,
+			Password: input.Password,
+		},
+	)
+	if err != nil {
+		var (
+			errInvalidPassword  *iam.ErrInvalidPassword
+			errIdentityNotFound *iam.ErrIdentityNotFound
+		)
+
+		if errors.As(err, &errInvalidPassword) {
+			return nil, gqlutils.Invalid(ctx, err)
+		}
+
+		if errors.As(err, &errIdentityNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot change email", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.ChangeEmailPayload{
+		Success: true,
+	}, nil
+}
+
+// AssumeOrganizationSession is the resolver for the assumeOrganizationSession field.
+func (r *mutationResolver) AssumeOrganizationSession(ctx context.Context, input types.AssumeOrganizationSessionInput) (*types.AssumeOrganizationSessionPayload, error) {
+	rootSession := authn.SessionFromContext(ctx)
+
+	childSession, membership, err := r.iam.SessionService.AssumeOrganizationSession(ctx, rootSession.ID, input.OrganizationID, input.Continue)
+	if err != nil {
+		var (
+			errMembershipNotFound             *iam.ErrMembershipNotFound
+			errPasswordAuthenticationRequired *iam.ErrPasswordAuthenticationRequired
+			errSAMLAuthenticationRequired     *iam.ErrSAMLAuthenticationRequired
+		)
+
+		switch {
+		case errors.As(err, &errMembershipNotFound):
+			return nil, gqlutils.NotFound(ctx, err)
+
+		case errors.As(err, &errPasswordAuthenticationRequired):
+			return &types.AssumeOrganizationSessionPayload{
+				Result: types.PasswordRequired{
+					Reason: types.ReauthenticationReason(errPasswordAuthenticationRequired.Reason),
+				},
+			}, nil
+
+		case errors.As(err, &errSAMLAuthenticationRequired):
+			return &types.AssumeOrganizationSessionPayload{
+				Result: types.SAMLAuthenticationRequired{
+					Reason: types.ReauthenticationReason(errSAMLAuthenticationRequired.Reason),
+				},
+			}, nil
+
+		default:
+			r.logger.ErrorCtx(ctx, "cannot assume organization session", log.Error(err))
+			return nil, gqlutils.Internal(ctx)
+		}
+	}
+
+	return &types.AssumeOrganizationSessionPayload{
+		Result: types.OrganizationSessionCreated{
+			Session:    types.NewSession(childSession),
+			Membership: types.NewMembership(membership),
+		},
+	}, nil
+}
+
+// RevokeSession is the resolver for the revokeSession field.
+func (r *mutationResolver) RevokeSession(ctx context.Context, input types.RevokeSessionInput) (*types.RevokeSessionPayload, error) {
+	if err := r.authorize(ctx, input.SessionID, iam.ActionSessionRevoke); err != nil {
+		return nil, err
+	}
+
+	identity := authn.IdentityFromContext(ctx)
+
+	err := r.iam.SessionService.RevokeSession(ctx, identity.ID, input.SessionID)
+	if err != nil {
+		var ErrSessionExpired *iam.ErrSessionExpired
+		if errors.As(err, &ErrSessionExpired) {
+			return &types.RevokeSessionPayload{Success: true}, nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot revoke session", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.RevokeSessionPayload{Success: true}, nil
+}
+
+// RevokeAllSessions is the resolver for the revokeAllSessions field.
+func (r *mutationResolver) RevokeAllSessions(ctx context.Context) (*types.RevokeAllSessionsPayload, error) {
+	if err := r.authorize(ctx, authn.SessionFromContext(ctx).ID, iam.ActionSessionRevokeAll); err != nil {
+		return nil, err
+	}
+
+	session := authn.SessionFromContext(ctx)
+
+	revokedCount, err := r.iam.SessionService.RevokeAllSessions(ctx, session.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot revoke all sessions", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.RevokeAllSessionsPayload{RevokedCount: int(revokedCount)}, nil
+}
 
 // Identity is the resolver for the identity field.
 func (r *sessionResolver) Identity(ctx context.Context, obj *types.Session) (*types.Identity, error) {
