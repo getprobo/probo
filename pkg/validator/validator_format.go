@@ -160,7 +160,7 @@ func Origin() ValidatorFunc {
 			return newValidationError(ErrorCodeInvalidFormat, "must be a valid origin (e.g. https://example.com)")
 		}
 
-		if parsedURL.Host == "" {
+		if parsedURL.Host == "" || parsedURL.Hostname() == "" {
 			return newValidationError(ErrorCodeInvalidFormat, "must be a valid origin (e.g. https://example.com)")
 		}
 

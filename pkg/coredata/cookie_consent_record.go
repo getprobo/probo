@@ -223,7 +223,7 @@ WHERE
 	%s
 	AND cookie_banner_id = @cookie_banner_id
 	AND visitor_id = @visitor_id
-ORDER BY created_at DESC
+ORDER BY created_at DESC, id DESC
 LIMIT 1;
 `
 

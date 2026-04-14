@@ -19,6 +19,7 @@ import (
 	"errors"
 	"net"
 	"net/http"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 	"go.gearno.de/kit/httpserver"
@@ -164,6 +165,13 @@ func (h *Handler) handlePostConsent(w http.ResponseWriter, r *http.Request) {
 
 func clientIP(r *http.Request) string {
 	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
+		// X-Forwarded-For may contain a comma-separated chain; use only the
+		// leftmost (client) entry.
+		if i := strings.IndexByte(xff, ','); i != -1 {
+			xff = xff[:i]
+		}
+		xff = strings.TrimSpace(xff)
+
 		if ip, _, err := net.SplitHostPort(xff); err == nil {
 			return ip
 		}
