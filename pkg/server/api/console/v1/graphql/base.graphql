@@ -27,8 +27,4 @@ type Query {
     viewer: Viewer!
 }
 
-type Mutation {
-    updateOrganizationContext(
-        input: UpdateOrganizationContextInput!
-    ): UpdateOrganizationContextPayload!
-}
+type Mutation

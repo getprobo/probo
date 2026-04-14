@@ -19,39 +19,7 @@ import (
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
-	"go.probo.inc/probo/pkg/validator"
 )
-
-// UpdateOrganizationContext is the resolver for the updateOrganizationContext field.
-func (r *mutationResolver) UpdateOrganizationContext(ctx context.Context, input types.UpdateOrganizationContextInput) (*types.UpdateOrganizationContextPayload, error) {
-	if err := r.authorize(ctx, input.OrganizationID, probo.ActionOrganizationContextUpdate); err != nil {
-		return nil, err
-	}
-
-	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
-
-	req := probo.UpdateOrganizationContextRequest{
-		OrganizationID: input.OrganizationID,
-		Product:        gqlutils.UnwrapOmittable(input.Product),
-		Architecture:   gqlutils.UnwrapOmittable(input.Architecture),
-		Team:           gqlutils.UnwrapOmittable(input.Team),
-		Processes:      gqlutils.UnwrapOmittable(input.Processes),
-		Customers:      gqlutils.UnwrapOmittable(input.Customers),
-	}
-
-	organizationContext, err := prb.Organizations.UpdateContext(ctx, req)
-	if err != nil {
-		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
-		}
-		r.logger.ErrorCtx(ctx, "cannot update organization context", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return &types.UpdateOrganizationContextPayload{
-		Context: types.NewOrganizationContext(organizationContext),
-	}, nil
-}
 
 // Node is the resolver for the node field.
 func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error) {

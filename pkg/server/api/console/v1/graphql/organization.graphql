@@ -336,3 +336,9 @@ type Organization implements Node {
 
     permission(action: String!): Boolean! @goField(forceResolver: true)
 }
+
+extend type Mutation {
+    updateOrganizationContext(
+        input: UpdateOrganizationContextInput!
+    ): UpdateOrganizationContextPayload!
+}
