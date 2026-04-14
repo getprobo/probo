@@ -17,6 +17,7 @@ package coredata
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"maps"
 	"time"
@@ -193,6 +194,61 @@ INSERT INTO cookie_consent_records (
 	if err != nil {
 		return fmt.Errorf("cannot insert consent record: %w", err)
 	}
+
+	return nil
+}
+
+func (r *CookieConsentRecord) LoadLatestByVisitorAndBannerID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	cookieBannerID gid.GID,
+	visitorID string,
+) error {
+	q := `
+SELECT
+	id,
+	organization_id,
+	cookie_banner_id,
+	cookie_banner_version_id,
+	visitor_id,
+	ip_address,
+	user_agent,
+	consent_data,
+	action,
+	created_at
+FROM
+	cookie_consent_records
+WHERE
+	%s
+	AND cookie_banner_id = @cookie_banner_id
+	AND visitor_id = @visitor_id
+ORDER BY created_at DESC
+LIMIT 1;
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"cookie_banner_id": cookieBannerID,
+		"visitor_id":       visitorID,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query consent records: %w", err)
+	}
+
+	record, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[CookieConsentRecord])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+		return fmt.Errorf("cannot collect consent record: %w", err)
+	}
+
+	*r = record
 
 	return nil
 }

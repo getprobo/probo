@@ -95,6 +95,32 @@ type (
 		ConsentData    json.RawMessage
 		Action         coredata.CookieConsentAction
 	}
+
+	RecordConsentRequest struct {
+		Version     int
+		VisitorID   string
+		IPAddress   *string
+		UserAgent   *string
+		ConsentData json.RawMessage
+		Action      coredata.CookieConsentAction
+	}
+
+	BannerConfig struct {
+		BannerID          gid.GID                                        `json:"banner_id"`
+		Version           int                                            `json:"version"`
+		PrivacyPolicyURL  string                                         `json:"privacy_policy_url"`
+		ConsentExpiryDays int                                            `json:"consent_expiry_days"`
+		ConsentMode       string                                         `json:"consent_mode"`
+		Categories        []coredata.CookieBannerVersionSnapshotCategory `json:"categories"`
+	}
+
+	VisitorConsent struct {
+		VisitorID   string                       `json:"visitor_id"`
+		Version     int                          `json:"version"`
+		Action      coredata.CookieConsentAction `json:"action"`
+		ConsentData json.RawMessage              `json:"consent_data"`
+		CreatedAt   time.Time                    `json:"created_at"`
+	}
 )
 
 func (r *CreateCookieBannerRequest) Validate() error {
@@ -149,6 +175,16 @@ func (r *CreateCookieConsentRecordRequest) Validate() error {
 	v := validator.New()
 
 	v.Check(r.CookieBannerID, "cookie_banner_id", validator.Required(), validator.GID(coredata.CookieBannerEntityType))
+	v.Check(r.Version, "version", validator.Required(), validator.Min(1))
+	v.Check(r.VisitorID, "visitor_id", validator.Required(), validator.NotEmpty())
+	v.Check(r.Action, "action", validator.Required(), validator.OneOfSlice(coredata.CookieConsentActions()))
+
+	return v.Error()
+}
+
+func (r *RecordConsentRequest) Validate() error {
+	v := validator.New()
+
 	v.Check(r.Version, "version", validator.Required(), validator.Min(1))
 	v.Check(r.VisitorID, "visitor_id", validator.Required(), validator.NotEmpty())
 	v.Check(r.Action, "action", validator.Required(), validator.OneOfSlice(coredata.CookieConsentActions()))
@@ -1082,4 +1118,174 @@ func (s *Service) CountCookieConsentRecordsForBanner(
 	}
 
 	return count, nil
+}
+
+func (s *Service) GetActiveBannerConfig(
+	ctx context.Context,
+	bannerID gid.GID,
+) (*BannerConfig, error) {
+	var config *BannerConfig
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			var banner coredata.CookieBanner
+			if err := banner.LoadActiveByID(ctx, conn, bannerID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return ErrBannerNotFound
+				}
+				return fmt.Errorf("cannot load active cookie banner: %w", err)
+			}
+
+			scope := coredata.NewScopeFromObjectID(banner.ID)
+
+			var version coredata.CookieBannerVersion
+			if err := version.LoadLatestPublishedByCookieBannerID(ctx, conn, scope, banner.ID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return ErrNoPublishedVersion
+				}
+				return fmt.Errorf("cannot load latest published version: %w", err)
+			}
+
+			snapshot, err := version.GetSnapshot()
+			if err != nil {
+				return fmt.Errorf("cannot get version snapshot: %w", err)
+			}
+
+			config = &BannerConfig{
+				BannerID:          banner.ID,
+				Version:           version.Version,
+				PrivacyPolicyURL:  snapshot.PrivacyPolicyURL,
+				ConsentExpiryDays: snapshot.ConsentExpiryDays,
+				ConsentMode:       snapshot.ConsentMode,
+				Categories:        snapshot.Categories,
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return config, nil
+}
+
+func (s *Service) GetVisitorConsent(
+	ctx context.Context,
+	bannerID gid.GID,
+	visitorID string,
+) (*VisitorConsent, error) {
+	var consent *VisitorConsent
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			var banner coredata.CookieBanner
+			if err := banner.LoadActiveByID(ctx, conn, bannerID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return ErrBannerNotFound
+				}
+				return fmt.Errorf("cannot load active cookie banner: %w", err)
+			}
+
+			scope := coredata.NewScopeFromObjectID(banner.ID)
+
+			var record coredata.CookieConsentRecord
+			if err := record.LoadLatestByVisitorAndBannerID(ctx, conn, scope, banner.ID, visitorID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return ErrConsentNotFound
+				}
+				return fmt.Errorf("cannot load consent record: %w", err)
+			}
+
+			var version coredata.CookieBannerVersion
+			if err := version.LoadByID(ctx, conn, scope, record.CookieBannerVersionID); err != nil {
+				return fmt.Errorf("cannot load cookie banner version: %w", err)
+			}
+
+			consent = &VisitorConsent{
+				VisitorID:   record.VisitorID,
+				Version:     version.Version,
+				Action:      record.Action,
+				ConsentData: record.ConsentData,
+				CreatedAt:   record.CreatedAt,
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return consent, nil
+}
+
+func (s *Service) RecordConsent(
+	ctx context.Context,
+	bannerID gid.GID,
+	req RecordConsentRequest,
+) (*coredata.CookieConsentRecord, error) {
+	if err := req.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid request: %w", err)
+	}
+
+	if req.IPAddress != nil {
+		anonymized := AnonymizeIP(*req.IPAddress)
+		req.IPAddress = &anonymized
+	}
+
+	var record *coredata.CookieConsentRecord
+
+	err := s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			var banner coredata.CookieBanner
+			if err := banner.LoadActiveByID(ctx, tx, bannerID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return ErrBannerNotFound
+				}
+				return fmt.Errorf("cannot load active cookie banner: %w", err)
+			}
+
+			scope := coredata.NewScopeFromObjectID(banner.ID)
+
+			var publishedVersion coredata.CookieBannerVersion
+			if err := publishedVersion.LoadByCookieBannerIDAndVersion(ctx, tx, scope, banner.ID, req.Version); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return ErrVersionNotFound
+				}
+				return fmt.Errorf("cannot load cookie banner version: %w", err)
+			}
+
+			if publishedVersion.State != coredata.CookieBannerVersionStatePublished {
+				return ErrVersionNotPublished
+			}
+
+			record = &coredata.CookieConsentRecord{
+				ID:                    gid.New(scope.GetTenantID(), coredata.CookieConsentRecordEntityType),
+				OrganizationID:        banner.OrganizationID,
+				CookieBannerID:        banner.ID,
+				CookieBannerVersionID: publishedVersion.ID,
+				VisitorID:             req.VisitorID,
+				IPAddress:             req.IPAddress,
+				UserAgent:             req.UserAgent,
+				ConsentData:           req.ConsentData,
+				Action:                req.Action,
+				CreatedAt:             time.Now(),
+			}
+
+			if err := record.Insert(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot insert consent record: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return record, nil
 }
