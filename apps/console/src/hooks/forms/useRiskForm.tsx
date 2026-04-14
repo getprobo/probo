@@ -42,6 +42,10 @@ const RiskFragment = graphql`
     # eslint-disable-next-line relay/unused-fields
     residualImpact
     # eslint-disable-next-line relay/unused-fields
+    inherentRiskScore
+    # eslint-disable-next-line relay/unused-fields
+    residualRiskScore
+    # eslint-disable-next-line relay/unused-fields
     note
     owner {
       id

@@ -506,6 +506,7 @@ SET
 WHERE %s
 	AND id = @risk_id
 	AND snapshot_id IS NULL
+RETURNING inherent_risk_score, residual_risk_score
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
@@ -525,8 +526,15 @@ WHERE %s
 	}
 	maps.Copy(args, scope.SQLArguments())
 
-	_, err := conn.Exec(ctx, q, args)
-	return err
+	err := conn.QueryRow(ctx, q, args).Scan(
+		&r.InherentRiskScore,
+		&r.ResidualRiskScore,
+	)
+	if err != nil {
+		return fmt.Errorf("cannot update risk: %w", err)
+	}
+
+	return nil
 }
 
 func (r *Risk) Delete(
