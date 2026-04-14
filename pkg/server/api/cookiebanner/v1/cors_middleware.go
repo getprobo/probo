@@ -22,6 +22,7 @@ import (
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/server/jsonutil"
 )
 
 func newCORSMiddleware(logger *log.Logger, cookieBannerSvc *cookiebanner.Service) func(http.Handler) http.Handler {
@@ -36,30 +37,30 @@ func newCORSMiddleware(logger *log.Logger, cookieBannerSvc *cookiebanner.Service
 
 				bannerIDStr := chi.URLParam(r, "bannerID")
 				if bannerIDStr == "" {
-					http.Error(w, "forbidden", http.StatusForbidden)
+					jsonutil.RenderForbidden(w)
 					return
 				}
 
 				bannerID, err := gid.ParseGID(bannerIDStr)
 				if err != nil {
-					http.Error(w, "forbidden", http.StatusForbidden)
+					jsonutil.RenderForbidden(w)
 					return
 				}
 
 				banner, err := cookieBannerSvc.GetActiveCookieBanner(r.Context(), bannerID)
 				if err != nil {
 					if errors.Is(err, cookiebanner.ErrBannerNotFound) {
-						http.Error(w, "forbidden", http.StatusForbidden)
+						jsonutil.RenderForbidden(w)
 						return
 					}
 					logger.ErrorCtx(r.Context(), "cannot load cookie banner for CORS check", log.Error(err))
-					http.Error(w, "internal server error", http.StatusInternalServerError)
+					jsonutil.RenderInternalServerError(w)
 					return
 				}
 
 				canonicalOrigin := cookiebanner.CanonicalizeOrigin(origin)
 				if banner.Origin != canonicalOrigin {
-					http.Error(w, "forbidden", http.StatusForbidden)
+					jsonutil.RenderForbidden(w)
 					return
 				}
 

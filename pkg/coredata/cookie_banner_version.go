@@ -450,14 +450,17 @@ FROM
 WHERE
 	%s
 	AND cookie_banner_id = @cookie_banner_id
-	AND state = 'PUBLISHED'
+	AND state = @state
 ORDER BY version DESC
 LIMIT 1;
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
-	args := pgx.StrictNamedArgs{"cookie_banner_id": cookieBannerID}
+	args := pgx.StrictNamedArgs{
+		"cookie_banner_id": cookieBannerID,
+		"state":            CookieBannerVersionStatePublished,
+	}
 	maps.Copy(args, scope.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)

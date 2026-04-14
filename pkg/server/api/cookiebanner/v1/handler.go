@@ -17,9 +17,9 @@ package cookiebanner_v1
 import (
 	"encoding/json"
 	"errors"
-	"net"
+	"fmt"
 	"net/http"
-	"strings"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"go.gearno.de/kit/httpserver"
@@ -27,6 +27,8 @@ import (
 	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/server/api/clientip"
+	"go.probo.inc/probo/pkg/server/jsonutil"
 )
 
 type Handler struct {
@@ -45,6 +47,7 @@ func NewMux(
 
 	r := chi.NewMux()
 	r.Use(newCORSMiddleware(logger, cookieBannerSvc))
+	r.Use(clientip.NewMiddleware())
 	r.Get("/{bannerID}/config", h.handleGetConfig)
 	r.Get("/{bannerID}/consents/{visitorID}", h.handleGetConsent)
 	r.Post("/{bannerID}/consents", h.handlePostConsent)
@@ -55,22 +58,22 @@ func NewMux(
 func (h *Handler) handleGetConfig(w http.ResponseWriter, r *http.Request) {
 	bannerID, err := gid.ParseGID(chi.URLParam(r, "bannerID"))
 	if err != nil {
-		httpserver.RenderJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid banner id"})
+		jsonutil.RenderBadRequest(w, fmt.Errorf("invalid banner id"))
 		return
 	}
 
 	config, err := h.cookieBannerSvc.GetActiveBannerConfig(r.Context(), bannerID)
 	if err != nil {
 		if errors.Is(err, cookiebanner.ErrBannerNotFound) {
-			httpserver.RenderJSON(w, http.StatusNotFound, map[string]string{"error": "banner not found"})
+			jsonutil.RenderNotFound(w, fmt.Errorf("banner not found"))
 			return
 		}
 		if errors.Is(err, cookiebanner.ErrNoPublishedVersion) {
-			httpserver.RenderJSON(w, http.StatusNotFound, map[string]string{"error": "no published version"})
+			jsonutil.RenderNotFound(w, fmt.Errorf("no published version"))
 			return
 		}
 		h.logger.ErrorCtx(r.Context(), "cannot get banner config", log.Error(err))
-		httpserver.RenderJSON(w, http.StatusInternalServerError, map[string]string{"error": "internal server error"})
+		jsonutil.RenderInternalServerError(w)
 		return
 	}
 
@@ -80,55 +83,64 @@ func (h *Handler) handleGetConfig(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) handleGetConsent(w http.ResponseWriter, r *http.Request) {
 	bannerID, err := gid.ParseGID(chi.URLParam(r, "bannerID"))
 	if err != nil {
-		httpserver.RenderJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid banner id"})
+		jsonutil.RenderBadRequest(w, fmt.Errorf("invalid banner id"))
 		return
 	}
 
 	visitorID := chi.URLParam(r, "visitorID")
 	if visitorID == "" {
-		httpserver.RenderJSON(w, http.StatusBadRequest, map[string]string{"error": "missing visitor id"})
+		jsonutil.RenderBadRequest(w, fmt.Errorf("missing visitor id"))
 		return
 	}
 
 	consent, err := h.cookieBannerSvc.GetVisitorConsent(r.Context(), bannerID, visitorID)
 	if err != nil {
 		if errors.Is(err, cookiebanner.ErrBannerNotFound) {
-			httpserver.RenderJSON(w, http.StatusNotFound, map[string]string{"error": "banner not found"})
+			jsonutil.RenderNotFound(w, fmt.Errorf("banner not found"))
 			return
 		}
 		if errors.Is(err, cookiebanner.ErrConsentNotFound) {
-			httpserver.RenderJSON(w, http.StatusNotFound, map[string]string{"error": "consent not found"})
+			jsonutil.RenderNotFound(w, fmt.Errorf("consent not found"))
 			return
 		}
 		h.logger.ErrorCtx(r.Context(), "cannot get visitor consent", log.Error(err))
-		httpserver.RenderJSON(w, http.StatusInternalServerError, map[string]string{"error": "internal server error"})
+		jsonutil.RenderInternalServerError(w)
 		return
 	}
 
 	httpserver.RenderJSON(w, http.StatusOK, consent)
 }
 
-type postConsentBody struct {
-	VisitorID   string                       `json:"visitor_id"`
-	Version     int                          `json:"version"`
-	Action      coredata.CookieConsentAction `json:"action"`
-	ConsentData json.RawMessage              `json:"consent_data"`
-}
+type (
+	postConsentBody struct {
+		VisitorID   string                       `json:"visitor_id"`
+		Version     int                          `json:"version"`
+		Action      coredata.CookieConsentAction `json:"action"`
+		ConsentData json.RawMessage              `json:"consent_data"`
+	}
+
+	postConsentResponse struct {
+		ID        string    `json:"id"`
+		VisitorID string    `json:"visitor_id"`
+		Action    string    `json:"action"`
+		CreatedAt time.Time `json:"created_at"`
+	}
+)
 
 func (h *Handler) handlePostConsent(w http.ResponseWriter, r *http.Request) {
 	bannerID, err := gid.ParseGID(chi.URLParam(r, "bannerID"))
 	if err != nil {
-		httpserver.RenderJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid banner id"})
+		jsonutil.RenderBadRequest(w, fmt.Errorf("invalid banner id"))
 		return
 	}
 
 	var body postConsentBody
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		httpserver.RenderJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid request body"})
+		jsonutil.RenderBadRequest(w, fmt.Errorf("invalid request body"))
 		return
 	}
 
-	ip := clientIP(r)
+	ip := clientip.FromContext(r.Context())
 	ua := r.UserAgent()
 
 	req := cookiebanner.RecordConsentRequest{
@@ -143,45 +155,22 @@ func (h *Handler) handlePostConsent(w http.ResponseWriter, r *http.Request) {
 	record, err := h.cookieBannerSvc.RecordConsent(r.Context(), bannerID, req)
 	if err != nil {
 		if errors.Is(err, cookiebanner.ErrBannerNotFound) {
-			httpserver.RenderJSON(w, http.StatusNotFound, map[string]string{"error": "banner not found"})
+			jsonutil.RenderNotFound(w, fmt.Errorf("banner not found"))
 			return
 		}
 		if errors.Is(err, cookiebanner.ErrVersionNotFound) || errors.Is(err, cookiebanner.ErrVersionNotPublished) {
-			httpserver.RenderJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid version"})
+			jsonutil.RenderBadRequest(w, fmt.Errorf("invalid version"))
 			return
 		}
 		h.logger.ErrorCtx(r.Context(), "cannot record consent", log.Error(err))
-		httpserver.RenderJSON(w, http.StatusInternalServerError, map[string]string{"error": "internal server error"})
+		jsonutil.RenderInternalServerError(w)
 		return
 	}
 
-	httpserver.RenderJSON(w, http.StatusCreated, map[string]string{
-		"id":         record.ID.String(),
-		"visitor_id": record.VisitorID,
-		"action":     string(record.Action),
-		"created_at": record.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+	httpserver.RenderJSON(w, http.StatusCreated, postConsentResponse{
+		ID:        record.ID.String(),
+		VisitorID: record.VisitorID,
+		Action:    string(record.Action),
+		CreatedAt: record.CreatedAt,
 	})
-}
-
-func clientIP(r *http.Request) string {
-	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
-		// X-Forwarded-For may contain a comma-separated chain; use only the
-		// leftmost (client) entry.
-		if i := strings.IndexByte(xff, ','); i != -1 {
-			xff = xff[:i]
-		}
-		xff = strings.TrimSpace(xff)
-
-		if ip, _, err := net.SplitHostPort(xff); err == nil {
-			return ip
-		}
-		return xff
-	}
-
-	ip, _, err := net.SplitHostPort(r.RemoteAddr)
-	if err != nil {
-		return r.RemoteAddr
-	}
-
-	return ip
 }

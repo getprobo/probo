@@ -140,11 +140,14 @@ FROM
 	cookie_banners
 WHERE
 	id = @banner_id
-	AND state = 'ACTIVE'
+	AND state = @state
 LIMIT 1;
 `
 
-	args := pgx.StrictNamedArgs{"banner_id": bannerID}
+	args := pgx.StrictNamedArgs{
+		"banner_id": bannerID,
+		"state":     CookieBannerStateActive,
+	}
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -188,13 +191,16 @@ FROM
 WHERE
 	%s
 	AND origin = @origin
-	AND state = 'ACTIVE'
+	AND state = @state
 LIMIT 1;
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
-	args := pgx.StrictNamedArgs{"origin": origin}
+	args := pgx.StrictNamedArgs{
+		"origin": origin,
+		"state":  CookieBannerStateActive,
+	}
 	maps.Copy(args, scope.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
