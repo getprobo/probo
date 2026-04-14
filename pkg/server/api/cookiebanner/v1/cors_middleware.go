@@ -26,54 +26,56 @@ import (
 
 func newCORSMiddleware(logger *log.Logger, cookieBannerSvc *cookiebanner.Service) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			origin := r.Header.Get("Origin")
-			if origin == "" {
-				next.ServeHTTP(w, r)
-				return
-			}
+		return http.HandlerFunc(
+			func(w http.ResponseWriter, r *http.Request) {
+				origin := r.Header.Get("Origin")
+				if origin == "" {
+					next.ServeHTTP(w, r)
+					return
+				}
 
-			bannerIDStr := chi.URLParam(r, "bannerID")
-			if bannerIDStr == "" {
-				http.Error(w, "forbidden", http.StatusForbidden)
-				return
-			}
-
-			bannerID, err := gid.ParseGID(bannerIDStr)
-			if err != nil {
-				http.Error(w, "forbidden", http.StatusForbidden)
-				return
-			}
-
-			banner, err := cookieBannerSvc.GetActiveCookieBanner(r.Context(), bannerID)
-			if err != nil {
-				if errors.Is(err, cookiebanner.ErrBannerNotFound) {
+				bannerIDStr := chi.URLParam(r, "bannerID")
+				if bannerIDStr == "" {
 					http.Error(w, "forbidden", http.StatusForbidden)
 					return
 				}
-				logger.ErrorCtx(r.Context(), "cannot load cookie banner for CORS check", log.Error(err))
-				http.Error(w, "internal server error", http.StatusInternalServerError)
-				return
-			}
 
-			canonicalOrigin := cookiebanner.CanonicalizeOrigin(origin)
-			if banner.Origin != canonicalOrigin {
-				http.Error(w, "forbidden", http.StatusForbidden)
-				return
-			}
+				bannerID, err := gid.ParseGID(bannerIDStr)
+				if err != nil {
+					http.Error(w, "forbidden", http.StatusForbidden)
+					return
+				}
 
-			w.Header().Set("Access-Control-Allow-Origin", origin)
-			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-			w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-			w.Header().Set("Access-Control-Max-Age", "600")
-			w.Header().Set("Vary", "Origin")
+				banner, err := cookieBannerSvc.GetActiveCookieBanner(r.Context(), bannerID)
+				if err != nil {
+					if errors.Is(err, cookiebanner.ErrBannerNotFound) {
+						http.Error(w, "forbidden", http.StatusForbidden)
+						return
+					}
+					logger.ErrorCtx(r.Context(), "cannot load cookie banner for CORS check", log.Error(err))
+					http.Error(w, "internal server error", http.StatusInternalServerError)
+					return
+				}
 
-			if r.Method == http.MethodOptions {
-				w.WriteHeader(http.StatusNoContent)
-				return
-			}
+				canonicalOrigin := cookiebanner.CanonicalizeOrigin(origin)
+				if banner.Origin != canonicalOrigin {
+					http.Error(w, "forbidden", http.StatusForbidden)
+					return
+				}
 
-			next.ServeHTTP(w, r)
-		})
+				w.Header().Set("Access-Control-Allow-Origin", origin)
+				w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+				w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+				w.Header().Set("Access-Control-Max-Age", "600")
+				w.Header().Set("Vary", "Origin")
+
+				if r.Method == http.MethodOptions {
+					w.WriteHeader(http.StatusNoContent)
+					return
+				}
+
+				next.ServeHTTP(w, r)
+			},
+		)
 	}
 }

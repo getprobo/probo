@@ -168,6 +168,7 @@ LIMIT 1;
 func (b *CookieBanner) LoadActiveByOrigin(
 	ctx context.Context,
 	conn pg.Querier,
+	scope Scoper,
 	origin string,
 ) error {
 	q := `
@@ -185,12 +186,16 @@ SELECT
 FROM
 	cookie_banners
 WHERE
-	origin = @origin
+	%s
+	AND origin = @origin
 	AND state = 'ACTIVE'
 LIMIT 1;
 `
 
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
 	args := pgx.StrictNamedArgs{"origin": origin}
+	maps.Copy(args, scope.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -345,8 +350,7 @@ INSERT INTO cookie_banners (
 
 	_, err := tx.Exec(ctx, q, args)
 	if err != nil {
-		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) {
+		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
 			if pgErr.Code == "23505" && pgErr.ConstraintName == "idx_cookie_banners_unique_active_origin" {
 				return ErrResourceAlreadyExists
 			}
@@ -393,8 +397,7 @@ WHERE
 
 	result, err := tx.Exec(ctx, q, args)
 	if err != nil {
-		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) {
+		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
 			if pgErr.Code == "23505" && pgErr.ConstraintName == "idx_cookie_banners_unique_active_origin" {
 				return ErrResourceAlreadyExists
 			}
