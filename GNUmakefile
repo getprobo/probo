@@ -218,9 +218,29 @@ bin/probod-bootstrap:
 @probo/emails:
 	$(NPM) --workspace $@ run build
 
+RELAY_SCHEMAS = \
+	pkg/server/api/connect/v1/schema.graphql \
+	pkg/server/api/console/v1/schema.graphql \
+	pkg/server/api/trust/v1/schema.graphql
+
 .PHONY: relay
-relay:
+relay: $(RELAY_SCHEMAS)
 	$(NPM) run relay
+
+MERGE_GRAPHQL = contrib/merge-graphql-schema.sh
+
+CONNECT_GQL = $(wildcard pkg/server/api/connect/v1/graphql/*.graphql)
+CONSOLE_GQL = $(wildcard pkg/server/api/console/v1/graphql/*.graphql)
+TRUST_GQL   = $(wildcard pkg/server/api/trust/v1/graphql/*.graphql)
+
+pkg/server/api/connect/v1/schema.graphql: $(CONNECT_GQL)
+	$(MERGE_GRAPHQL) $@ pkg/server/api/connect/v1/graphql
+
+pkg/server/api/console/v1/schema.graphql: $(CONSOLE_GQL)
+	$(MERGE_GRAPHQL) $@ pkg/server/api/console/v1/graphql
+
+pkg/server/api/trust/v1/schema.graphql: $(TRUST_GQL)
+	$(MERGE_GRAPHQL) $@ pkg/server/api/trust/v1/graphql
 
 .PHONY: @probo/console
 @probo/console: NODE_ENV=production
@@ -290,6 +310,7 @@ clean: ## Clean the project (node_modules and build artifacts)
 	$(RM) -f pkg/server/api/console/v1/schema/schema.go pkg/server/api/console/v1/types/types.go
 	$(RM) -f pkg/server/api/trust/v1/schema/schema.go pkg/server/api/trust/v1/types/types.go
 	$(RM) -f pkg/server/api/mcp/v1/server/server.go pkg/server/api/mcp/v1/types/types.go
+	$(RM) -f $(RELAY_SCHEMAS)
 	$(RM) -f pkg/llm/registry_gen.go
 	find apps -type d -name __generated__ -exec $(RM) -rf {} +
 
