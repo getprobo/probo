@@ -47,7 +47,7 @@ const getLevel = (score: number): 0 | 1 | 2 => {
   if (score >= 15) {
     return 2;
   }
-  if (score > 6) {
+  if (score >= 5) {
     return 1;
   }
   return 0;
@@ -62,7 +62,7 @@ const cellKey = (impact: number, likelihood: number) =>
 export function RisksChart({ organizationId, type, risks }: Props) {
   const { __ } = useTranslate();
 
-  const legend = [__("Low"), __("Medium"), __("High")];
+  const legend = [__("Low"), __("High"), __("Critical")];
 
   const impacts = getRiskImpacts(__).reverse();
   const likelihoods = getRiskLikelihoods(__);
