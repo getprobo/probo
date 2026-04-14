@@ -17,7 +17,7 @@ import { useTranslate } from "@probo/i18n";
 import { RichEditor, useToast } from "@probo/ui";
 import { useCallback, useState } from "react";
 import { type PreloadedQuery, useMutation, usePreloadedQuery } from "react-relay";
-import { useOutletContext, useParams } from "react-router";
+import { useOutletContext } from "react-router";
 import { graphql } from "relay-runtime";
 import { useDebounceCallback } from "usehooks-ts";
 
@@ -81,8 +81,10 @@ export function DocumentDescriptionPage(props: {
 
   const { __ } = useTranslate();
   const { toast } = useToast();
-  const { versionId } = useParams();
-  const { onRefetch } = useOutletContext<{ onRefetch: () => void }>();
+  const { onDocumentUpdated, isEditable } = useOutletContext<{
+    onDocumentUpdated: () => void;
+    isEditable: boolean;
+  }>();
 
   const { document, version } = usePreloadedQuery<DocumentDescriptionPageQuery>(
     documentDescriptionPageQuery,
@@ -119,13 +121,9 @@ export function DocumentDescriptionPage(props: {
             return;
           }
 
-          // Refetch the layout when draft status changes (draft created
-          // or auto-deleted) so the drawer and header reflect the current
-          // version. This does NOT remount the editor because the editor
-          // key is based on versionChangedAt (explicit actions only).
           const draftReturned = !!data.updateDocument.documentVersion;
           if (wasDraft !== draftReturned) {
-            onRefetch();
+            onDocumentUpdated();
           }
 
           toast({
@@ -142,16 +140,11 @@ export function DocumentDescriptionPage(props: {
           });
         },
       });
-    }, [documentId, wasDraft, updateContent, toast, __, onRefetch]),
+    }, [documentId, wasDraft, updateContent, toast, __, onDocumentUpdated]),
     autoSaveIntervalMs,
   );
 
-  // When viewing a specific historical version, the editor is read-only.
-  // When viewing the latest version, editing is allowed if the user has
-  // update permission and the document is not archived — the backend
-  // will auto-create a draft if needed.
-  const isViewingSpecificVersion = !!version;
-  const canEdit = !isViewingSpecificVersion
+  const canEdit = isEditable
     && document.canUpdate
     && document.status !== "ARCHIVED";
 
@@ -187,7 +180,7 @@ export function DocumentDescriptionPage(props: {
     // Otherwise auto-save changed the version — don't bump generation.
   }
 
-  const editorKey = `${versionId ?? "latest"}-${dataGeneration}`;
+  const editorKey = `${version?.id ?? document.id}-${dataGeneration}`;
 
   return (
     <RichEditor

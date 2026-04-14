@@ -56,8 +56,9 @@ export const documentVersionsDropdownMenuQuery = graphql`
 
 export function DocumentVersionsDropdownMenu(props: {
   queryRef: PreloadedQuery<DocumentVersionsDropdownMenuQuery>;
+  currentTab: string | undefined;
 }) {
-  const { queryRef } = props;
+  const { queryRef, currentTab } = props;
 
   const { document, version } = usePreloadedQuery<DocumentVersionsDropdownMenuQuery>(
     documentVersionsDropdownMenuQuery,
@@ -77,6 +78,7 @@ export function DocumentVersionsDropdownMenu(props: {
           key={version.id}
           fragmentRef={version}
           active={version.id === currentVersion.id}
+          currentTab={currentTab}
         />
       ))}
     </>

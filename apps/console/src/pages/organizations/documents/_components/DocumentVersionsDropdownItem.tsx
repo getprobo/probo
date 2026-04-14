@@ -16,7 +16,7 @@ import { useTranslate } from "@probo/i18n";
 import { Badge, DropdownItem } from "@probo/ui";
 import { clsx } from "clsx";
 import { useFragment } from "react-relay";
-import { Link, useLocation, useParams } from "react-router";
+import { Link, useParams } from "react-router";
 import { graphql } from "relay-runtime";
 
 import type {
@@ -38,8 +38,9 @@ const fragment = graphql`
 export function DocumentVersionsDropdownItem(props: {
   fragmentRef: DocumentVersionsDropdownItemFragment$key;
   active?: boolean;
+  currentTab: string | undefined;
 }) {
-  const { fragmentRef, active } = props;
+  const { fragmentRef, active, currentTab } = props;
 
   const { dateTimeFormat, __ } = useTranslate();
   const organizationId = useOrganizationId();
@@ -50,12 +51,10 @@ export function DocumentVersionsDropdownItem(props: {
 
   const version = useFragment<DocumentVersionsDropdownItemFragment$key>(fragment, fragmentRef);
 
-  const suffix = useLocation().pathname.split("/").at(-1);
-
   return (
     <DropdownItem asChild>
       <Link
-        to={`/organizations/${organizationId}/documents/${documentId}/versions/${version.id}/${suffix}`}
+        to={`/organizations/${organizationId}/documents/${documentId}/versions/${version.id}/${currentTab}`}
         className="flex items-center gap-2 py-2 px-[10px] w-full hover:bg-tertiary-hover cursor-pointer rounded"
       >
         <div className="flex gap-3 w-full overflow-hidden">

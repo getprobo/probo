@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { Suspense, useCallback, useEffect } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import { useQueryLoader } from "react-relay";
 import { useParams } from "react-router";
 
@@ -29,13 +29,28 @@ function DocumentLayoutQueryLoader() {
   }
   const [queryRef, loadQuery] = useQueryLoader<DocumentLayoutQuery>(documentLayoutQuery);
 
+  // Detect param changes (e.g. navigating from versioned to versionless URL)
+  // and refetch without remounting the component tree.
+  const paramsKey = `${documentId}-${versionId}`;
+  const [prevParamsKey, setPrevParamsKey] = useState(paramsKey);
+  if (queryRef && paramsKey !== prevParamsKey) {
+    setPrevParamsKey(paramsKey);
+    loadQuery(
+      { documentId, versionId: versionId ?? "", versionSpecified: !!versionId },
+      { fetchPolicy: "store-and-network" },
+    );
+  }
+
   useEffect(() => {
     if (!queryRef) {
-      loadQuery({
-        documentId,
-        versionId: versionId ?? "",
-        versionSpecified: !!versionId,
-      });
+      loadQuery(
+        {
+          documentId,
+          versionId: versionId ?? "",
+          versionSpecified: !!versionId,
+        },
+        { fetchPolicy: "store-and-network" },
+      );
     }
   });
 
@@ -52,11 +67,11 @@ function DocumentLayoutQueryLoader() {
 }
 
 export default function DocumentLayoutLoader() {
-  const { documentId, versionId } = useParams();
+  const { documentId } = useParams();
 
   return (
     <CoreRelayProvider>
-      <Suspense key={`${documentId}-${versionId}`} fallback={<PageSkeleton />}>
+      <Suspense key={documentId} fallback={<PageSkeleton />}>
         <DocumentLayoutQueryLoader />
       </Suspense>
     </CoreRelayProvider>

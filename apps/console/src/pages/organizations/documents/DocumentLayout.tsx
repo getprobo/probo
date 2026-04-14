@@ -13,17 +13,17 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 import { useTranslate } from "@probo/i18n";
-import { Breadcrumb, Button, IconUpload, PageHeader, TabBadge, TabLink, Tabs } from "@probo/ui";
+import { Badge, Breadcrumb, Button, IconUpload, PageHeader, TabBadge, TabLink, Tabs } from "@probo/ui";
 import { useCallback, useRef, useState } from "react";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
-import { Outlet, useParams } from "react-router";
+import { Outlet, useLocation, useNavigate, useParams } from "react-router";
 import { graphql } from "relay-runtime";
 
 import type { DocumentLayoutQuery } from "#/__generated__/core/DocumentLayoutQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import { DocumentActionsDropdown } from "./_components/DocumentActionsDropdown";
-import { DocumentLayoutDrawer } from "./_components/DocumentLayoutDrawer";
+import { DocumentDetailsCard } from "./_components/DocumentDetailsCard";
 import { DocumentTitleForm } from "./_components/DocumentTitleForm";
 import { DocumentVersionsDropdown } from "./_components/DocumentVersionsDropdown";
 import { PublishDialog, type PublishDialogRef } from "./_components/PublishDialog";
@@ -39,7 +39,7 @@ export const documentLayoutQuery = graphql`
         status
         ...DocumentTitleFormFragment
         ...DocumentActionsDropdown_versionFragment
-        ...DocumentLayoutDrawer_versionFragment
+        ...DocumentDetailsCard_versionFragment
         signatures(first: 0 filter: { activeContract: true }) {
           totalCount
         }
@@ -73,9 +73,9 @@ export const documentLayoutQuery = graphql`
           totalCount
         }
         ...DocumentActionsDropdown_documentFragment
-        ...DocumentLayoutDrawer_documentFragment
-        # We use this on /documents/:documentId
-        lastVersion: versions(first: 1 orderBy: { field: CREATED_AT, direction: DESC }) @skip(if: $versionSpecified) {
+        ...DocumentDetailsCard_documentFragment
+        lastVersion: versions(first: 1 orderBy: { field: CREATED_AT, direction: DESC })
+        @connection(key: "DocumentLayout_lastVersion") {
           edges {
             node {
               id
@@ -83,7 +83,7 @@ export const documentLayoutQuery = graphql`
               status
               ...DocumentTitleFormFragment
               ...DocumentActionsDropdown_versionFragment
-              ...DocumentLayoutDrawer_versionFragment
+              ...DocumentDetailsCard_versionFragment
               signatures(first: 0 filter: { activeContract: true }) {
                 totalCount
               }
@@ -117,6 +117,8 @@ export function DocumentLayout(props: { queryRef: PreloadedQuery<DocumentLayoutQ
 
   const organizationId = useOrganizationId();
   const { versionId } = useParams();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const { __ } = useTranslate();
 
@@ -129,27 +131,53 @@ export function DocumentLayout(props: { queryRef: PreloadedQuery<DocumentLayoutQ
     setApprovalRequestedAt(Date.now());
   }, [onRefetch]);
 
-  const handleVersionChanged = useCallback(() => {
-    onRefetch();
-    setVersionChangedAt(Date.now());
-  }, [onRefetch]);
-
   const { document, version } = usePreloadedQuery<DocumentLayoutQuery>(documentLayoutQuery, queryRef);
   if (document.__typename !== "Document" || (version && version.__typename !== "DocumentVersion")) {
     throw new Error("invalid node type");
   }
-  const lastVersion = document.lastVersion?.edges[0].node;
+  const lastVersion = document.lastVersion?.edges[0]?.node;
 
   if (!version && !lastVersion) {
     throw new Error("current version not specified");
   }
 
-  // It is ok to cas as NonNullable here since we know we have either version or lastVersion
-  const currentVersion = version ?? lastVersion as NonNullable<typeof version | typeof lastVersion>;
+  const currentVersion = version ?? lastVersion;
+  const isLatestVersion = currentVersion.id === lastVersion?.id;
+  const isPendingApproval = currentVersion.status === "PENDING_APPROVAL";
   const isDraft = currentVersion.status === "DRAFT";
   const isPublished = currentVersion.status === "PUBLISHED";
+  const isEditable = isLatestVersion && !isPendingApproval;
   const lastQuorum = currentVersion.approvalQuorums?.edges?.[0]?.node ?? null;
   const hasApprovals = lastQuorum != null;
+
+  const currentTab = location.pathname.split("/").at(-1);
+
+  // For changes on the current version (type, classification, title, content).
+  // Refreshes layout data but does NOT remount the editor.
+  const handleDocumentUpdated = useCallback(() => {
+    if (versionId) {
+      void navigate(
+        `/organizations/${organizationId}/documents/${document.id}/${currentTab}`,
+        { replace: true },
+      );
+    } else {
+      onRefetch();
+    }
+  }, [versionId, currentTab, navigate, organizationId, document.id, onRefetch]);
+
+  // For structural version changes (delete draft, revert).
+  // Refreshes layout data AND remounts the editor via versionChangedAt.
+  const handleVersionChanged = useCallback(() => {
+    if (versionId) {
+      void navigate(
+        `/organizations/${organizationId}/documents/${document.id}/${currentTab}`,
+        { replace: true },
+      );
+    } else {
+      onRefetch();
+      setVersionChangedAt(Date.now());
+    }
+  }, [versionId, currentTab, navigate, organizationId, document.id, onRefetch]);
 
   const urlPrefix = versionId
     ? `/organizations/${organizationId}/documents/${document.id}/versions/${versionId}`
@@ -180,7 +208,7 @@ export function DocumentLayout(props: { queryRef: PreloadedQuery<DocumentLayoutQ
                 {__("Publish")}
               </Button>
             )}
-            <DocumentVersionsDropdown />
+            <DocumentVersionsDropdown currentTab={currentTab} />
             <DocumentActionsDropdown
               documentFragmentRef={document}
               versionFragmentRef={currentVersion}
@@ -195,9 +223,23 @@ export function DocumentLayout(props: { queryRef: PreloadedQuery<DocumentLayoutQ
               fKey={currentVersion}
               documentId={document.id}
               documentStatus={document.status}
-              onVersionChanged={handleVersionChanged}
+              isEditable={isEditable}
+              onDocumentUpdated={handleDocumentUpdated}
             />
           )}
+        >
+          <Badge
+            variant={currentVersion.status === "PUBLISHED" ? "success" : currentVersion.status === "PENDING_APPROVAL" ? "warning" : "highlight"}
+          >
+            {currentVersion.status === "PUBLISHED" ? __("Published") : currentVersion.status === "PENDING_APPROVAL" ? __("Pending approval") : __("Draft")}
+          </Badge>
+        </PageHeader>
+
+        <DocumentDetailsCard
+          documentFragmentRef={document}
+          versionFragmentRef={currentVersion}
+          isEditable={isEditable}
+          onDocumentUpdated={handleDocumentUpdated}
         />
 
         <Tabs>
@@ -228,14 +270,16 @@ export function DocumentLayout(props: { queryRef: PreloadedQuery<DocumentLayoutQ
           )}
         </Tabs>
 
-        <Outlet context={{ onRefetch, approvalRequestedAt, versionChangedAt }} />
+        <Outlet
+          context={{
+            onRefetch,
+            onDocumentUpdated: handleDocumentUpdated,
+            approvalRequestedAt,
+            versionChangedAt,
+            isEditable,
+          }}
+        />
       </div>
-
-      <DocumentLayoutDrawer
-        documentFragmentRef={document}
-        versionFragmentRef={currentVersion}
-        onVersionChanged={handleVersionChanged}
-      />
 
       <PublishDialog
         ref={publishDialogRef}

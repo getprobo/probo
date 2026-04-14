@@ -50,9 +50,10 @@ export function DocumentTitleForm(props: {
   fKey: DocumentTitleFormFragment$key;
   documentId: string;
   documentStatus: string;
-  onVersionChanged: () => void;
+  isEditable: boolean;
+  onDocumentUpdated: () => void;
 }) {
-  const { fKey, documentId, documentStatus, onVersionChanged } = props;
+  const { fKey, documentId, documentStatus, isEditable, onDocumentUpdated } = props;
 
   const { __ } = useTranslate();
   const { toast } = useToast();
@@ -72,7 +73,7 @@ export function DocumentTitleForm(props: {
   );
 
   const isDraft = version.status === "DRAFT";
-  const canEdit = version.canUpdate && documentStatus !== "ARCHIVED";
+  const canEdit = version.canUpdate && isEditable && documentStatus !== "ARCHIVED";
 
   const handleUpdateTitle = (data: { title: string }) => {
     updateDocument({
@@ -90,7 +91,7 @@ export function DocumentTitleForm(props: {
         setIsEditingTitle(false);
         const draftReturned = !!data.updateDocument.documentVersion;
         if (isDraft !== draftReturned) {
-          onVersionChanged();
+          onDocumentUpdated();
         }
       },
       onError(error) {

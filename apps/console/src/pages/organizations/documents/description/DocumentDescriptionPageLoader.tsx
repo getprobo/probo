@@ -34,7 +34,7 @@ function DocumentDescriptionPageQueryLoader() {
   useEffect(() => {
     loadQuery(
       { documentId, versionId: versionId ?? "", versionSpecified: !!versionId },
-      { fetchPolicy: versionChangedAt > 0 ? "network-only" : "store-or-network" },
+      { fetchPolicy: "network-only" },
     );
   }, [documentId, versionId, versionChangedAt, loadQuery]);
 

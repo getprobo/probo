@@ -22,7 +22,8 @@ import type { DocumentVersionsDropdownMenuQuery } from "#/__generated__/core/Doc
 
 import { DocumentVersionsDropdownMenu, documentVersionsDropdownMenuQuery } from "./DocumentVersionsDropdownMenu";
 
-export function DocumentVersionsDropdown() {
+export function DocumentVersionsDropdown(props: { currentTab: string | undefined }) {
+  const { currentTab } = props;
   const { documentId, versionId } = useParams();
   if (!documentId) {
     throw new Error(":documentId missing in route params");
@@ -33,7 +34,7 @@ export function DocumentVersionsDropdown() {
 
   return (
     <Dropdown
-      onOpenChange={open => open && !queryRef && loadQuery({ documentId, versionId: versionId ?? "", versionSpecified: !!versionId })}
+      onOpenChange={open => open && loadQuery({ documentId, versionId: versionId ?? "", versionSpecified: !!versionId }, { fetchPolicy: "network-only" })}
       toggle={(
         <Button icon={IconClock} variant="secondary">
           {__("Version history")}
@@ -44,7 +45,7 @@ export function DocumentVersionsDropdown() {
       <Suspense>
         {queryRef
           && (
-            <DocumentVersionsDropdownMenu queryRef={queryRef} />
+            <DocumentVersionsDropdownMenu queryRef={queryRef} currentTab={currentTab} />
           )}
       </Suspense>
     </Dropdown>
