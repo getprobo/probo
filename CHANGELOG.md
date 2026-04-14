@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.167.0] - 2026-04-14
+
+### Added
+
+- Add LLM model registry with OpenRouter auto-generation
+- Improve connectors
+
 ## [0.166.0] - 2026-04-13
 
 ### Added
