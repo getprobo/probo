@@ -10,7 +10,7 @@ GraphQL API using `gqlgen`. Schema-first approach.
 | `gqlgen.yaml` | Hand-written | Codegen config |
 | `resolver.go` | Hand-written | Root `Resolver` struct and `NewMux` |
 | `graphql_handler.go` | Hand-written | Handler setup |
-| `*.resolvers.go` | Generated stubs | Per-entity resolver files (edit the bodies) |
+| `*_resolvers.go` | Generated stubs | Per-entity resolver files (edit the bodies) |
 | `schema/schema.go` | **Generated — DO NOT EDIT** | Executable schema |
 | `types/types.go` | **Generated — DO NOT EDIT** | Type definitions |
 

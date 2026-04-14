@@ -14,7 +14,7 @@ resolver:
   layout: "follow-schema"
   dir: "."
   package: "trust_v1"
-  filename_template: "{name}.resolvers.go"
+  filename_template: "{name}_resolvers.go"
 
 autobind: []
 call_argument_directives_with_null: true
