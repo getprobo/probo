@@ -49,7 +49,7 @@ Detailed guides for specific subsystems live in `contrib/claude/`:
 
 Every feature must be exposed through **all three interfaces**: GraphQL, MCP, and CLI. When adding a new endpoint or editing an existing type, keep all three in sync:
 
-- **GraphQL** — `pkg/server/api/console/v1/schema.graphql` (+ codegen)
+- **GraphQL** — `pkg/server/api/console/v1/graphql/*.graphql` (+ codegen)
 - **MCP** — `pkg/server/api/mcp/v1/` (+ codegen)
 - **CLI** — `cmd/`
 

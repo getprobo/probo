@@ -194,13 +194,10 @@ docker-build:
 .PHONY: bin/probod
 bin/probod: pkg/server/api/connect/v1/schema/schema.go \
 	pkg/server/api/connect/v1/types/types.go \
-	pkg/server/api/connect/v1/v1_resolver.go \
 	pkg/server/api/console/v1/schema/schema.go \
 	pkg/server/api/console/v1/types/types.go \
-	pkg/server/api/console/v1/v1_resolver.go \
 	pkg/server/api/trust/v1/schema/schema.go \
 	pkg/server/api/trust/v1/types/types.go \
-	pkg/server/api/trust/v1/v1_resolver.go \
 	pkg/server/api/mcp/v1/server/server.go \
 	pkg/server/api/mcp/v1/types/types.go \
 	apps/console/dist/index.html \
@@ -249,18 +246,15 @@ generate: pkg/server/api/connect/v1/schema/schema.go \
 	$(NPM) run relay
 
 pkg/server/api/connect/v1/schema/schema.go \
-pkg/server/api/connect/v1/types/types.go \
-pkg/server/api/connect/v1/v1_resolver.go: pkg/server/api/connect/v1/gqlgen.yaml pkg/server/api/connect/v1/schema.graphql
+pkg/server/api/connect/v1/types/types.go: pkg/server/api/connect/v1/gqlgen.yaml $(wildcard pkg/server/api/connect/v1/graphql/*.graphql)
 	$(GO_GENERATE) ./pkg/server/api/connect/v1
 
 pkg/server/api/console/v1/schema/schema.go \
-pkg/server/api/console/v1/types/types.go \
-pkg/server/api/console/v1/v1_resolver.go: pkg/server/api/console/v1/gqlgen.yaml pkg/server/api/console/v1/schema.graphql
+pkg/server/api/console/v1/types/types.go: pkg/server/api/console/v1/gqlgen.yaml $(wildcard pkg/server/api/console/v1/graphql/*.graphql)
 	$(GO_GENERATE) ./pkg/server/api/console/v1
 
 pkg/server/api/trust/v1/schema/schema.go \
-pkg/server/api/trust/v1/types/types.go \
-pkg/server/api/trust/v1/v1_resolver.go: pkg/server/api/trust/v1/gqlgen.yaml pkg/server/api/trust/v1/schema.graphql
+pkg/server/api/trust/v1/types/types.go: pkg/server/api/trust/v1/gqlgen.yaml $(wildcard pkg/server/api/trust/v1/graphql/*.graphql)
 	$(GO_GENERATE) ./pkg/server/api/trust/v1
 
 pkg/server/api/mcp/v1/server/server.go \

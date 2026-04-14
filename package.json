@@ -23,7 +23,7 @@
     "turbo": "^2.5.3"
   },
   "graphql": {
-    "schema": "./pkg/server/api/console/v1/schema.graphql"
+    "schema": "./pkg/server/api/console/v1/graphql/"
   },
   "overrides": {
     "brace-expansion": "^5.0.5",
