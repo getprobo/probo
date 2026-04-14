@@ -64,6 +64,7 @@ import (
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/securecookie"
 	"go.probo.inc/probo/pkg/server"
+	"go.probo.inc/probo/pkg/server/trustedproxy"
 	"go.probo.inc/probo/pkg/slack"
 	"go.probo.inc/probo/pkg/trust"
 	"go.probo.inc/probo/pkg/webhook"
@@ -767,6 +768,9 @@ func (impl *Implm) runApiServer(
 	tracer := tp.Tracer("go.probo.inc/probo/pkg/probod")
 	ctx, span := tracer.Start(ctx, "probod.runApiServer")
 	defer span.End()
+
+	trustedProxies := parseIPs(impl.cfg.Api.ProxyProtocol.TrustedProxies)
+	handler = trustedproxy.NewMiddleware(trustedProxies)(handler)
 
 	apiServer := httpserver.NewServer(
 		impl.cfg.Api.Addr,

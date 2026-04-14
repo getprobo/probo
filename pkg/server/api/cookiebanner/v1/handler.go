@@ -47,7 +47,6 @@ func NewMux(
 
 	r := chi.NewMux()
 	r.Use(newCORSMiddleware(logger, cookieBannerSvc))
-	r.Use(clientip.NewMiddleware())
 	r.Get("/{bannerID}/config", h.handleGetConfig)
 	r.Get("/{bannerID}/consents/{visitorID}", h.handleGetConsent)
 	r.Post("/{bannerID}/consents", h.handlePostConsent)
@@ -140,7 +139,7 @@ func (h *Handler) handlePostConsent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ip := clientip.FromContext(r.Context())
+	ip := clientip.Extract(r)
 	ua := r.UserAgent()
 
 	req := cookiebanner.RecordConsentRequest{

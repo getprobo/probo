@@ -15,34 +15,10 @@
 package clientip
 
 import (
-	"context"
 	"net"
 	"net/http"
 	"strings"
 )
-
-type ctxKey struct{}
-
-// NewMiddleware returns an HTTP middleware that extracts the client IP
-// from standard proxy headers and stores it in the request context.
-func NewMiddleware() func(http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			ip := Extract(r)
-			ctx := context.WithValue(r.Context(), ctxKey{}, ip)
-			next.ServeHTTP(w, r.WithContext(ctx))
-		})
-	}
-}
-
-// FromContext returns the client IP stored by the middleware, or an
-// empty string if the middleware has not run.
-func FromContext(ctx context.Context) string {
-	if ip, ok := ctx.Value(ctxKey{}).(string); ok {
-		return ip
-	}
-	return ""
-}
 
 // Extract resolves the client IP address from standard proxy headers
 // in priority order: RFC 7239 Forwarded, then X-Forwarded-For, then
