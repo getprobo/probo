@@ -59,8 +59,8 @@ type (
 	FinishReason string
 
 	Usage struct {
-		InputTokens  int
-		OutputTokens int
+		InputTokens  int `json:"input_tokens"`
+		OutputTokens int `json:"output_tokens"`
 	}
 
 	ChatCompletionResponse struct {

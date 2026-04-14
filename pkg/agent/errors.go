@@ -59,7 +59,7 @@ type (
 		inner          *InterruptedError
 		toolCallID     string
 		allToolCalls   []llm.ToolCall
-		completedCalls []completedCall
+		completedCalls []CompletedCall
 	}
 
 	outerLoopState struct {
@@ -69,13 +69,8 @@ type (
 		turns          int
 		allToolCalls   []llm.ToolCall
 		toolCallID     string
-		completedCalls []completedCall
+		completedCalls []CompletedCall
 		innerInterrupt *InterruptedError
-	}
-
-	completedCall struct {
-		toolCallID string
-		result     ToolResult
 	}
 )
 
