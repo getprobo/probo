@@ -174,7 +174,7 @@ Each entity gets a unique `uint16` constant in `entity_type_reg.go`. **Never reu
 
 ## Migrations
 
-- Files in `pkg/coredata/migrations/` .
+- Files in `pkg/coredata/migrations/` use timestamp naming: `YYYYMMDDTHHMMSSZ.sql` (UTC).
 - Run `date -u +"%Y%m%dT%H%M%SZ.sql"` to get the name of the new migration file.
 - One logical change per file.
 
