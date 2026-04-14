@@ -15,11 +15,11 @@ Configured in `apps/console/src/environments.ts`. Each has its own store with 1-
 
 ## Relay compiler
 
-Config lives in `apps/console/relay.config.json` with two projects (`core`, `iam`) mapped to different source directories and schemas. Generated files go into `__generated__/` directories.
+Config lives in `relay.config.json` at the repo root with three projects (`core`, `iam`, `trust`) mapped to different source directories and schemas. Generated files go into `__generated__/` directories.
 
 ```sh
-npm run relay          # clean + compile
-npm run relay-compile  # compile only
+npm run relay          # clean + compile (from repo root)
+npm run relay-compile  # compile only (from repo root)
 ```
 
 Custom scalar mappings: `Datetime → string`, `GID → string`, `CursorKey → string`, `Duration → string`, `BigInt → number`, `EmailAddr → string`.

@@ -1,10 +1,29 @@
 {
-  "root": "../..",
+  "root": ".",
+  "sources": {
+    "apps/console/src/pages/iam": "iam",
+    "apps/console/src": "core",
+    "apps/trust/src": "trust"
+  },
   "projects": {
+    "core": {
+      "schema": "pkg/server/api/console/v1/schema.graphql",
+      "language": "typescript",
+      "noFutureProofEnums": true,
+      "output": "apps/console/src/__generated__/core",
+      "relativizeJsModulePaths": false,
+      "customScalarTypes": {
+        "Datetime": "string",
+        "GID": "string",
+        "CursorKey": "string",
+        "Duration": "string",
+        "BigInt": "number",
+        "EmailAddr": "string"
+      }
+    },
     "iam": {
       "schema": "pkg/server/api/connect/v1/schema.graphql",
       "language": "typescript",
-      "eagerEsModules": true,
       "noFutureProofEnums": true,
       "output": "apps/console/src/__generated__/iam",
       "relativizeJsModulePaths": false,
@@ -17,25 +36,15 @@
         "EmailAddr": "string"
       }
     },
-    "core": {
-      "schema": "pkg/server/api/console/v1/schema.graphql",
+    "trust": {
+      "schema": "pkg/server/api/trust/v1/schema.graphql",
       "language": "typescript",
-      "eagerEsModules": true,
       "noFutureProofEnums": true,
-      "output": "apps/console/src/__generated__/core",
-      "relativizeJsModulePaths": false,
       "customScalarTypes": {
         "Datetime": "string",
-        "GID": "string",
         "CursorKey": "string",
-        "Duration": "string",
-        "BigInt": "number",
         "EmailAddr": "string"
       }
     }
-  },
-  "sources": {
-    "apps/console/src/pages/iam": "iam",
-    "apps/console/src": "core"
   }
 }

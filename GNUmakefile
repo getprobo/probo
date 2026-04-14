@@ -221,17 +221,19 @@ bin/probod-bootstrap:
 @probo/emails:
 	$(NPM) --workspace $@ run build
 
+.PHONY: relay
+relay:
+	$(NPM) run relay
+
 .PHONY: @probo/console
 @probo/console: NODE_ENV=production
-@probo/console:
-	$(NPM) --workspace $@ run relay
+@probo/console: relay
 	$(NPM) --workspace $@ run check
 	$(NPM) --workspace $@ run build
 
 .PHONY: @probo/trust
 @probo/trust: NODE_ENV=production
-@probo/trust:
-	$(NPM) --workspace $@ run relay
+@probo/trust: relay
 	$(NPM) --workspace $@ run check
 	$(NPM) --workspace $@ run build
 
@@ -244,8 +246,7 @@ generate: pkg/server/api/connect/v1/schema/schema.go \
 	pkg/server/api/trust/v1/types/types.go \
 	pkg/server/api/mcp/v1/server/server.go \
 	pkg/server/api/mcp/v1/types/types.go
-	$(NPM) --workspace @probo/console run relay
-	$(NPM) --workspace @probo/trust run relay
+	$(NPM) run relay
 
 pkg/server/api/connect/v1/schema/schema.go \
 pkg/server/api/connect/v1/types/types.go \

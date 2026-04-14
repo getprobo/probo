@@ -27,14 +27,13 @@ jobs:
         with:
           go: "false"
       - run: "npm --workspace @probo/emails run build"
+      - run: "npm run relay"
       - name: "Build console"
         run: |
-          npm --workspace @probo/console run relay
           npm --workspace @probo/console run check
           NODE_ENV=production npm --workspace @probo/console run build
       - name: "Build trust"
         run: |
-          npm --workspace @probo/trust run relay
           npm --workspace @probo/trust run check
           NODE_ENV=production npm --workspace @probo/trust run build
       - uses: "actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f" # v7
@@ -305,9 +304,7 @@ jobs:
           go: "false"
       - uses: reviewdog/action-setup@d8a7baabd7f3e8544ee4dbde3ee41d0011c3a93f # v1.5.0
       - name: "Generate Relay artifacts"
-        run: |
-          npm --workspace @probo/console run relay
-          npm --workspace @probo/trust run relay
+        run: npm run relay
       - name: "Run eslint"
         env:
           REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
