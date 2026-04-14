@@ -1,0 +1,152 @@
+extend type Organization {
+    obligations(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: ObligationOrder
+        filter: ObligationFilter = { snapshotId: null }
+    ): ObligationConnection! @goField(forceResolver: true)
+}
+
+enum ObligationStatus
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.ObligationStatus") {
+    NON_COMPLIANT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ObligationStatusNonCompliant"
+        )
+    PARTIALLY_COMPLIANT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ObligationStatusPartiallyCompliant"
+        )
+    COMPLIANT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ObligationStatusCompliant"
+        )
+}
+
+enum ObligationType
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.ObligationType") {
+    LEGAL @goEnum(value: "go.probo.inc/probo/pkg/coredata.ObligationTypeLegal")
+    CONTRACTUAL
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ObligationTypeContractual"
+        )
+}
+
+enum ObligationOrderField
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.ObligationOrderField") {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ObligationOrderFieldCreatedAt"
+        )
+    LAST_REVIEW_DATE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ObligationOrderFieldLastReviewDate"
+        )
+    DUE_DATE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ObligationOrderFieldDueDate"
+        )
+    STATUS
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ObligationOrderFieldStatus"
+        )
+}
+
+input ObligationOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ObligationOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: ObligationOrderField!
+}
+
+input ObligationFilter {
+    snapshotId: ID
+}
+
+type Obligation implements Node {
+    id: ID!
+    snapshotId: ID
+    sourceId: ID
+    organization: Organization! @goField(forceResolver: true)
+    area: String
+    source: String
+    requirement: String
+    actionsToBeImplemented: String
+    regulator: String
+    owner: Profile! @goField(forceResolver: true)
+    lastReviewDate: Datetime
+    dueDate: Datetime
+    status: ObligationStatus!
+    type: ObligationType!
+    createdAt: Datetime!
+    updatedAt: Datetime!
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type ObligationConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ObligationConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [ObligationEdge!]!
+    pageInfo: PageInfo!
+}
+
+type ObligationEdge {
+    cursor: CursorKey!
+    node: Obligation!
+}
+
+extend type Mutation {
+    createObligation(input: CreateObligationInput!): CreateObligationPayload!
+    updateObligation(input: UpdateObligationInput!): UpdateObligationPayload!
+    deleteObligation(input: DeleteObligationInput!): DeleteObligationPayload!
+}
+
+input CreateObligationInput {
+    organizationId: ID!
+    area: String
+    source: String
+    requirement: String
+    actionsToBeImplemented: String
+    regulator: String
+    ownerId: ID!
+    lastReviewDate: Datetime
+    dueDate: Datetime
+    status: ObligationStatus!
+    type: ObligationType!
+}
+
+input UpdateObligationInput {
+    id: ID!
+    area: String @goField(omittable: true)
+    source: String @goField(omittable: true)
+    requirement: String @goField(omittable: true)
+    actionsToBeImplemented: String @goField(omittable: true)
+    regulator: String @goField(omittable: true)
+    ownerId: ID
+    lastReviewDate: Datetime @goField(omittable: true)
+    dueDate: Datetime @goField(omittable: true)
+    status: ObligationStatus
+    type: ObligationType
+}
+
+input DeleteObligationInput {
+    obligationId: ID!
+}
+
+type CreateObligationPayload {
+    obligationEdge: ObligationEdge!
+}
+
+type UpdateObligationPayload {
+    obligation: Obligation!
+}
+
+type DeleteObligationPayload {
+    deletedObligationId: ID!
+}

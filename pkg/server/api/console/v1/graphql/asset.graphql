@@ -1,0 +1,241 @@
+extend type Organization {
+    assets(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: AssetOrder
+        filter: AssetFilter = { snapshotId: null }
+    ): AssetConnection! @goField(forceResolver: true)
+
+    data(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: DatumOrder
+        filter: DatumFilter = { snapshotId: null }
+    ): DatumConnection! @goField(forceResolver: true)
+}
+
+enum AssetType @goModel(model: "go.probo.inc/probo/pkg/coredata.AssetType") {
+    PHYSICAL @goEnum(value: "go.probo.inc/probo/pkg/coredata.AssetTypePhysical")
+    VIRTUAL @goEnum(value: "go.probo.inc/probo/pkg/coredata.AssetTypeVirtual")
+}
+
+enum AssetOrderField
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.AssetOrderField") {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AssetOrderFieldCreatedAt"
+        )
+    AMOUNT
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.AssetOrderFieldAmount")
+}
+
+enum DatumOrderField
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.DatumOrderField") {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DatumOrderFieldCreatedAt"
+        )
+    NAME @goEnum(value: "go.probo.inc/probo/pkg/coredata.DatumOrderFieldName")
+    DATA_CLASSIFICATION
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DatumOrderFieldDataClassification"
+        )
+}
+
+enum DataClassification
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.DataClassification") {
+    PUBLIC
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DataClassificationPublic"
+        )
+    INTERNAL
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DataClassificationInternal"
+        )
+    CONFIDENTIAL
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DataClassificationConfidential"
+        )
+    SECRET
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DataClassificationSecret"
+        )
+}
+
+input AssetOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.AssetOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: AssetOrderField!
+}
+
+input DatumOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.DatumOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: DatumOrderField!
+}
+
+input AssetFilter {
+    snapshotId: ID
+}
+
+input DatumFilter {
+    snapshotId: ID
+}
+
+type Asset implements Node {
+    id: ID!
+    snapshotId: ID
+    name: String!
+    amount: Int!
+    owner: Profile! @goField(forceResolver: true)
+    vendors(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: VendorOrder
+    ): VendorConnection! @goField(forceResolver: true)
+    assetType: AssetType!
+    dataTypesStored: String!
+    organization: Organization! @goField(forceResolver: true)
+    createdAt: Datetime!
+    updatedAt: Datetime!
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type Datum implements Node
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.Datum"
+    ) {
+    id: ID!
+    snapshotId: ID
+    name: String!
+    dataClassification: DataClassification!
+    owner: Profile! @goField(forceResolver: true)
+    vendors(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: VendorOrder
+    ): VendorConnection! @goField(forceResolver: true)
+    organization: Organization! @goField(forceResolver: true)
+    createdAt: Datetime!
+    updatedAt: Datetime!
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type AssetConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.AssetConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [AssetEdge!]!
+    pageInfo: PageInfo!
+}
+
+type AssetEdge {
+    cursor: CursorKey!
+    node: Asset!
+}
+
+type DatumConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.DatumConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [DatumEdge!]!
+    pageInfo: PageInfo!
+}
+
+type DatumEdge {
+    cursor: CursorKey!
+    node: Datum!
+}
+
+extend type Mutation {
+    createAsset(input: CreateAssetInput!): CreateAssetPayload!
+    updateAsset(input: UpdateAssetInput!): UpdateAssetPayload!
+    deleteAsset(input: DeleteAssetInput!): DeleteAssetPayload!
+    createDatum(input: CreateDatumInput!): CreateDatumPayload!
+    updateDatum(input: UpdateDatumInput!): UpdateDatumPayload!
+    deleteDatum(input: DeleteDatumInput!): DeleteDatumPayload!
+}
+
+input CreateAssetInput {
+    organizationId: ID!
+    name: String!
+    amount: Int!
+    ownerId: ID!
+    assetType: AssetType!
+    dataTypesStored: String!
+    vendorIds: [ID!]
+}
+
+input UpdateAssetInput {
+    id: ID!
+    name: String
+    amount: Int
+    ownerId: ID
+    assetType: AssetType
+    dataTypesStored: String
+    vendorIds: [ID!]
+}
+
+input DeleteAssetInput {
+    assetId: ID!
+}
+
+input CreateDatumInput {
+    organizationId: ID!
+    name: String!
+    dataClassification: DataClassification!
+    ownerId: ID!
+    vendorIds: [ID!]
+}
+
+input UpdateDatumInput {
+    id: ID!
+    name: String
+    dataClassification: DataClassification
+    ownerId: ID
+    vendorIds: [ID!]
+}
+
+input DeleteDatumInput {
+    datumId: ID!
+}
+
+type CreateAssetPayload {
+    assetEdge: AssetEdge!
+}
+
+type UpdateAssetPayload {
+    asset: Asset!
+}
+
+type DeleteAssetPayload {
+    deletedAssetId: ID!
+}
+
+type CreateDatumPayload {
+    datumEdge: DatumEdge!
+}
+
+type UpdateDatumPayload {
+    datum: Datum!
+}
+
+type DeleteDatumPayload {
+    deletedDatumId: ID!
+}

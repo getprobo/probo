@@ -1,0 +1,413 @@
+extend type Organization {
+    audits(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: AuditOrder
+    ): AuditConnection! @goField(forceResolver: true)
+
+    findings(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: FindingOrder
+        filter: FindingFilter = { snapshotId: null }
+    ): FindingConnection @goField(forceResolver: true)
+}
+
+enum AuditState @goModel(model: "go.probo.inc/probo/pkg/coredata.AuditState") {
+    NOT_STARTED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.AuditStateNotStarted")
+    IN_PROGRESS
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.AuditStateInProgress")
+    COMPLETED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.AuditStateCompleted")
+    REJECTED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.AuditStateRejected")
+    OUTDATED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.AuditStateOutdated")
+}
+
+enum FindingKind
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.FindingKind") {
+    MINOR_NONCONFORMITY
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.FindingKindMinorNonconformity"
+        )
+    MAJOR_NONCONFORMITY
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.FindingKindMajorNonconformity"
+        )
+    OBSERVATION
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.FindingKindObservation"
+        )
+    EXCEPTION
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.FindingKindException"
+        )
+}
+
+enum FindingStatus
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.FindingStatus") {
+    OPEN
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.FindingStatusOpen"
+        )
+    IN_PROGRESS
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.FindingStatusInProgress"
+        )
+    CLOSED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.FindingStatusClosed"
+        )
+    RISK_ACCEPTED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.FindingStatusRiskAccepted"
+        )
+    MITIGATED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.FindingStatusMitigated"
+        )
+    FALSE_POSITIVE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.FindingStatusFalsePositive"
+        )
+}
+
+enum FindingPriority
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.FindingPriority") {
+    LOW
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.FindingPriorityLow"
+        )
+    MEDIUM
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.FindingPriorityMedium"
+        )
+    HIGH
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.FindingPriorityHigh"
+        )
+}
+
+enum AuditOrderField
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.AuditOrderField") {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AuditOrderFieldCreatedAt"
+        )
+    VALID_FROM
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AuditOrderFieldValidFrom"
+        )
+    VALID_UNTIL
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AuditOrderFieldValidUntil"
+        )
+    STATE @goEnum(value: "go.probo.inc/probo/pkg/coredata.AuditOrderFieldState")
+}
+
+enum FindingOrderField
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.FindingOrderField") {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.FindingOrderFieldCreatedAt"
+        )
+    REFERENCE_ID
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.FindingOrderFieldReferenceId"
+        )
+    IDENTIFIED_ON
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.FindingOrderFieldIdentifiedOn"
+        )
+    DUE_DATE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.FindingOrderFieldDueDate"
+        )
+    STATUS
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.FindingOrderFieldStatus"
+        )
+    PRIORITY
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.FindingOrderFieldPriority"
+        )
+    KIND
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.FindingOrderFieldKind"
+        )
+}
+
+input AuditOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.AuditOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: AuditOrderField!
+}
+
+input FindingOrder {
+    field: FindingOrderField!
+    direction: OrderDirection!
+}
+
+input FindingFilter {
+    snapshotId: ID
+    kind: FindingKind
+    status: FindingStatus
+    priority: FindingPriority
+    ownerId: ID
+}
+
+type Audit implements Node {
+    id: ID!
+    name: String
+    organization: Organization @goField(forceResolver: true)
+    framework: Framework @goField(forceResolver: true)
+    validFrom: Datetime
+    validUntil: Datetime
+    report: Report @goField(forceResolver: true)
+    reportUrl: String @goField(forceResolver: true)
+    state: AuditState!
+
+    controls(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: ControlOrder
+        filter: ControlFilter
+    ): ControlConnection @goField(forceResolver: true)
+
+    findings(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: FindingOrder
+        filter: FindingFilter = { snapshotId: null }
+    ): FindingConnection @goField(forceResolver: true)
+
+    trustCenterVisibility: TrustCenterVisibility!
+    createdAt: Datetime!
+    updatedAt: Datetime!
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type Finding implements Node {
+    id: ID!
+    snapshotId: ID
+    organization: Organization @goField(forceResolver: true)
+    kind: FindingKind!
+    referenceId: String!
+    description: String
+    source: String
+    audits(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: AuditOrder
+    ): AuditConnection @goField(forceResolver: true)
+    identifiedOn: Datetime
+    rootCause: String
+    correctiveAction: String
+    owner: Profile @goField(forceResolver: true)
+    dueDate: Datetime
+    status: FindingStatus!
+    priority: FindingPriority!
+    risk: Risk @goField(forceResolver: true)
+    effectivenessCheck: String
+    createdAt: Datetime!
+    updatedAt: Datetime!
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type Report implements Node {
+    id: ID!
+    objectKey: String!
+    mimeType: String!
+    filename: String!
+    size: Int!
+    downloadUrl: String @goField(forceResolver: true)
+    createdAt: Datetime!
+    updatedAt: Datetime!
+    audit: Audit @goField(forceResolver: true)
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type AuditConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.AuditConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [AuditEdge!]!
+    pageInfo: PageInfo!
+}
+
+type AuditEdge {
+    cursor: CursorKey!
+    node: Audit!
+}
+
+type FindingConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.FindingConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [FindingEdge!]!
+    pageInfo: PageInfo!
+}
+
+type FindingEdge
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.FindingEdge"
+    ) {
+    cursor: CursorKey!
+    node: Finding!
+}
+
+extend type Mutation {
+    createAudit(input: CreateAuditInput!): CreateAuditPayload
+    updateAudit(input: UpdateAuditInput!): UpdateAuditPayload
+    deleteAudit(input: DeleteAuditInput!): DeleteAuditPayload
+    uploadAuditReport(input: UploadAuditReportInput!): UploadAuditReportPayload
+    deleteAuditReport(input: DeleteAuditReportInput!): DeleteAuditReportPayload
+    createFinding(input: CreateFindingInput!): CreateFindingPayload
+    updateFinding(input: UpdateFindingInput!): UpdateFindingPayload
+    deleteFinding(input: DeleteFindingInput!): DeleteFindingPayload
+    createFindingAuditMapping(
+        input: CreateFindingAuditMappingInput!
+    ): CreateFindingAuditMappingPayload
+    deleteFindingAuditMapping(
+        input: DeleteFindingAuditMappingInput!
+    ): DeleteFindingAuditMappingPayload
+}
+
+input CreateAuditInput {
+    organizationId: ID!
+    frameworkId: ID!
+    name: String
+    validFrom: Datetime
+    validUntil: Datetime
+    state: AuditState
+    trustCenterVisibility: TrustCenterVisibility
+    file: Upload
+}
+
+input UpdateAuditInput {
+    id: ID!
+    name: String @goField(omittable: true)
+    validFrom: Datetime
+    validUntil: Datetime
+    state: AuditState
+    trustCenterVisibility: TrustCenterVisibility
+}
+
+input DeleteAuditInput {
+    auditId: ID!
+}
+
+input UploadAuditReportInput {
+    auditId: ID!
+    file: Upload!
+}
+
+input DeleteAuditReportInput {
+    auditId: ID!
+}
+
+input CreateFindingInput {
+    organizationId: ID!
+    kind: FindingKind!
+    description: String
+    source: String
+    identifiedOn: Datetime
+    rootCause: String
+    correctiveAction: String
+    ownerId: ID
+    dueDate: Datetime
+    status: FindingStatus!
+    priority: FindingPriority!
+    riskId: ID
+    effectivenessCheck: String
+}
+
+input UpdateFindingInput {
+    id: ID!
+    description: String @goField(omittable: true)
+    source: String @goField(omittable: true)
+    identifiedOn: Datetime @goField(omittable: true)
+    rootCause: String @goField(omittable: true)
+    correctiveAction: String @goField(omittable: true)
+    ownerId: ID
+    dueDate: Datetime @goField(omittable: true)
+    status: FindingStatus
+    priority: FindingPriority
+    riskId: ID @goField(omittable: true)
+    effectivenessCheck: String @goField(omittable: true)
+}
+
+input DeleteFindingInput {
+    findingId: ID!
+}
+
+input CreateFindingAuditMappingInput {
+    findingId: ID!
+    auditId: ID!
+    referenceId: String!
+}
+
+input DeleteFindingAuditMappingInput {
+    findingId: ID!
+    auditId: ID!
+}
+
+type CreateAuditPayload {
+    auditEdge: AuditEdge
+}
+
+type UpdateAuditPayload {
+    audit: Audit
+}
+
+type DeleteAuditPayload {
+    deletedAuditId: ID
+}
+
+type UploadAuditReportPayload {
+    audit: Audit
+}
+
+type DeleteAuditReportPayload {
+    audit: Audit
+}
+
+type CreateFindingPayload {
+    findingEdge: FindingEdge
+}
+
+type UpdateFindingPayload {
+    finding: Finding
+}
+
+type DeleteFindingPayload {
+    deletedFindingId: ID
+}
+
+type CreateFindingAuditMappingPayload {
+    findingEdge: FindingEdge
+    auditEdge: AuditEdge
+}
+
+type DeleteFindingAuditMappingPayload {
+    deletedFindingId: ID
+    deletedAuditId: ID
+}

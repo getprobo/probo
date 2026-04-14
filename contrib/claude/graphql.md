@@ -1,6 +1,15 @@
 # GraphQL (Go Backend — gqlgen)
 
-Schema-first GraphQL using [gqlgen](https://gqlgen.com/). The schema is hand-written; Go types and resolvers are generated.
+Schema-first GraphQL using [gqlgen](https://gqlgen.com/). The schema is hand-written and split into per-entity files under `graphql/`; Go types and resolvers are generated.
+
+## Schema file organization
+
+Each API's schema lives in `pkg/server/api/{api}/v1/graphql/` as multiple `.graphql` files, one per coredata model:
+
+- `base.graphql` — directives, scalars, Node interface, PageInfo, OrderDirection, root Query/Mutation/Organization types
+- Entity files (e.g., `vendor.graphql`, `control.graphql`) — use `extend type Organization`, `extend type Mutation`, etc.
+
+gqlgen's `follow-schema` layout generates one resolver file per schema file (e.g., `vendor.resolvers.go`). Types that get extended across files (Organization, Mutation, Viewer, TrustCenter) must be defined in `base.graphql`.
 
 ## Connection types and `@goModel`
 
@@ -40,13 +49,15 @@ enum VendorOrderField
 
 ## Schema directives
 
-| Directive | Target | Purpose |
-|-----------|--------|---------|
-| `@goModel(model: "...")` | `OBJECT`, `ENUM`, `INPUT_OBJECT`, `SCALAR`, `INTERFACE`, `UNION` | Map GraphQL type to existing Go type |
-| `@goEnum(value: "...")` | `ENUM_VALUE` | Map enum value to Go constant |
-| `@goField(forceResolver: true)` | `FIELD_DEFINITION` | Force a resolver function instead of struct field |
-| `@goField(name: "...")` | `FIELD_DEFINITION`, `INPUT_FIELD_DEFINITION` | Override Go field name |
-| `@goField(omittable: true)` | `INPUT_FIELD_DEFINITION` | Use `graphql.Omittable[T]` for distinguishing null vs absent |
+
+| Directive                       | Target                                                           | Purpose                                                      |
+| ------------------------------- | ---------------------------------------------------------------- | ------------------------------------------------------------ |
+| `@goModel(model: "...")`        | `OBJECT`, `ENUM`, `INPUT_OBJECT`, `SCALAR`, `INTERFACE`, `UNION` | Map GraphQL type to existing Go type                         |
+| `@goEnum(value: "...")`         | `ENUM_VALUE`                                                     | Map enum value to Go constant                                |
+| `@goField(forceResolver: true)` | `FIELD_DEFINITION`                                               | Force a resolver function instead of struct field            |
+| `@goField(name: "...")`         | `FIELD_DEFINITION`, `INPUT_FIELD_DEFINITION`                     | Override Go field name                                       |
+| `@goField(omittable: true)`     | `INPUT_FIELD_DEFINITION`                                         | Use `graphql.Omittable[T]` for distinguishing null vs absent |
+
 
 ## Cursor pagination schema types
 
@@ -158,7 +169,8 @@ Default page size is **25** when neither `first` nor `last` is provided.
 ## Adding a new paginated field — checklist
 
 1. **Schema** — add `enum XxxOrderField` (with `@goModel`/`@goEnum`), `input XxxOrder`, `type XxxConnection` (with `@goModel` and `totalCount` using `@goField(forceResolver: true)`), `type XxxEdge`, and the connection field with Relay arguments on the parent type
-2. **Coredata** — add `*_order_field.go` (with `Column()`, `IsValid()`, marshaling), `CursorKey(field)` method on the entity, and the `LoadAllBy*` query using cursor SQL fragments + `page.NewPage()`
+2. **Coredata** — add `*_order_field.go` (with `Column()`, `IsValid()`, marshaling), `CursorKey(field)` method on the entity, and the `LoadAllBy`* query using cursor SQL fragments + `page.NewPage()`
 3. **API types** — add `*_connection.go` with `OrderBy` alias, connection struct, `NewXxxConnection`, `NewXxxEdge`
 4. **Resolver** — implement the resolver (authorize, build order, build cursor, call service, build connection)
 5. **Codegen** — run `go generate` for the relevant API package
+

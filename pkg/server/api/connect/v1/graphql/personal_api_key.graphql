@@ -1,0 +1,63 @@
+extend type Identity {
+  personalAPIKeys(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+  ): PersonalAPIKeyConnection @goField(forceResolver: true)
+}
+
+type PersonalAPIKey implements Node {
+  id: ID!
+  name: String!
+  expiresAt: Datetime!
+  lastUsedAt: Datetime
+  createdAt: Datetime!
+
+  token: String @goField(forceResolver: true)
+
+  permission(action: String!): Boolean!
+    @goField(forceResolver: true)
+    @session(required: PRESENT)
+}
+
+type PersonalAPIKeyConnection
+  @goModel(
+    model: "go.probo.inc/probo/pkg/server/api/connect/v1/types.PersonalAPIKeyConnection"
+  ) {
+  edges: [PersonalAPIKeyEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int @goField(forceResolver: true)
+}
+
+type PersonalAPIKeyEdge {
+  node: PersonalAPIKey!
+  cursor: CursorKey!
+}
+
+extend type Mutation {
+  createPersonalAPIKey(
+    input: CreatePersonalAPIKeyInput!
+  ): CreatePersonalAPIKeyPayload @session(required: PRESENT)
+  revokePersonalAPIKey(
+    input: RevokePersonalAPIKeyInput!
+  ): RevokePersonalAPIKeyPayload @session(required: PRESENT)
+}
+
+input CreatePersonalAPIKeyInput {
+  name: String!
+  expiresAt: Datetime!
+}
+
+input RevokePersonalAPIKeyInput {
+  personalAPIKeyId: ID!
+}
+
+type CreatePersonalAPIKeyPayload {
+  personalAPIKeyEdge: PersonalAPIKeyEdge!
+  token: String!
+}
+
+type RevokePersonalAPIKeyPayload {
+  personalAPIKeyId: ID!
+}

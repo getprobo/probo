@@ -1,0 +1,271 @@
+extend type Identity {
+  profiles(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+    orderBy: ProfileOrder
+    filter: ProfileFilter
+  ): ProfileConnection @goField(forceResolver: true)
+}
+
+extend type Organization {
+  profiles(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+    orderBy: ProfileOrder
+  ): ProfileConnection @goField(forceResolver: true)
+}
+
+type Profile implements Node {
+  id: ID!
+  fullName: String!
+  emailAddress: EmailAddr!
+  source: String!
+  state: ProfileState!
+  additionalEmailAddresses: [EmailAddr!]!
+  kind: String
+  position: String
+  contractStartDate: Datetime
+  contractEndDate: Datetime
+  createdAt: Datetime!
+  updatedAt: Datetime!
+
+  identity: Identity @goField(forceResolver: true)
+  organization: Organization @goField(forceResolver: true)
+  membership: Membership @goField(forceResolver: true)
+  pendingInvitations(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+    orderBy: InvitationOrder
+  ): InvitationConnection @goField(forceResolver: true)
+
+  permission(action: String!): Boolean!
+    @goField(forceResolver: true)
+    @session(required: PRESENT)
+}
+
+enum ProfileState
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.ProfileState") {
+  ACTIVE @goEnum(value: "go.probo.inc/probo/pkg/coredata.ProfileStateActive")
+  INACTIVE
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.ProfileStateInactive")
+}
+
+enum ProfileSource
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.ProfileSource") {
+  MANUAL
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.ProfileSourceManual")
+  SAML @goEnum(value: "go.probo.inc/probo/pkg/coredata.ProfileSourceSAML")
+  SCIM @goEnum(value: "go.probo.inc/probo/pkg/coredata.ProfileSourceSCIM")
+}
+
+enum MembershipRole
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.MembershipRole") {
+  OWNER @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipRoleOwner")
+  ADMIN @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipRoleAdmin")
+  EMPLOYEE
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipRoleEmployee")
+  VIEWER @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipRoleViewer")
+  AUDITOR
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipRoleAuditor")
+}
+
+type Membership implements Node {
+  id: ID!
+  createdAt: Datetime!
+  role: MembershipRole!
+
+  lastSession: Session @goField(forceResolver: true)
+
+  permission(action: String!): Boolean!
+    @goField(forceResolver: true)
+    @session(required: PRESENT)
+}
+
+type Invitation implements Node {
+  id: ID!
+  expiresAt: Datetime!
+  acceptedAt: Datetime
+  createdAt: Datetime!
+  status: InvitationStatus!
+
+  permission(action: String!): Boolean!
+    @goField(forceResolver: true)
+    @session(required: PRESENT)
+}
+
+enum InvitationStatus
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.InvitationStatus") {
+  PENDING
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.InvitationStatusPending")
+  ACCEPTED
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.InvitationStatusAccepted")
+  EXPIRED
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.InvitationStatusExpired")
+}
+
+enum InvitationOrderField
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.InvitationOrderField") {
+  CREATED_AT
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.InvitationOrderFieldCreatedAt"
+    )
+}
+
+input InvitationOrder
+  @goModel(
+    model: "go.probo.inc/probo/pkg/server/api/connect/v1/types.InvitationOrderBy"
+  ) {
+  direction: OrderDirection!
+  field: InvitationOrderField!
+}
+
+type InvitationConnection
+  @goModel(
+    model: "go.probo.inc/probo/pkg/server/api/connect/v1/types.InvitationConnection"
+  ) {
+  edges: [InvitationEdge!]!
+  pageInfo: PageInfo!
+}
+
+type InvitationEdge {
+  node: Invitation!
+  cursor: CursorKey!
+}
+
+enum ProfileOrderField
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.MembershipProfileOrderField") {
+  FULL_NAME
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.MembershipProfileOrderFieldFullName"
+    )
+  CREATED_AT
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.MembershipProfileOrderFieldCreatedAt"
+    )
+  KIND @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipProfileOrderFieldKind")
+  ORGANIZATION_NAME
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.MembershipProfileOrderFieldOrganizationName"
+    )
+  STATE
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.MembershipProfileOrderFieldState"
+    )
+}
+
+input ProfileFilter {
+  excludeContractEnded: Boolean
+  state: ProfileState
+}
+
+input ProfileOrder
+  @goModel(
+    model: "go.probo.inc/probo/pkg/server/api/connect/v1/types.ProfileOrderBy"
+  ) {
+  direction: OrderDirection!
+  field: ProfileOrderField!
+}
+
+type ProfileConnection
+  @goModel(
+    model: "go.probo.inc/probo/pkg/server/api/connect/v1/types.ProfileConnection"
+  ) {
+  totalCount: Int @goField(forceResolver: true)
+  edges: [ProfileEdge!]!
+  pageInfo: PageInfo!
+}
+
+type ProfileEdge {
+  cursor: CursorKey!
+  node: Profile!
+}
+
+extend type Mutation {
+  createUser(input: CreateUserInput!): CreateUserPayload
+    @session(required: PRESENT)
+  inviteUser(input: InviteUserInput!): InviteUserPayload
+    @session(required: PRESENT)
+  deactivateUser(input: DeactivateUserInput!): DeactivateUserPayload
+  updateUser(input: UpdateUserInput!): UpdateUserPayload!
+  updateMembership(input: UpdateMembershipInput!): UpdateMembershipPayload!
+  removeUser(input: RemoveUserInput!): RemoveUserPayload
+    @session(required: PRESENT)
+}
+
+input CreateUserInput {
+  organizationId: ID!
+  fullName: String!
+  emailAddress: EmailAddr!
+  role: MembershipRole!
+  additionalEmailAddresses: [EmailAddr!]
+  kind: String
+  position: String
+  contractStartDate: Datetime @goField(omittable: true)
+  contractEndDate: Datetime @goField(omittable: true)
+}
+
+input InviteUserInput {
+  organizationId: ID!
+  profileId: ID!
+}
+
+input ActivateUserInput {
+  organizationId: ID!
+  profileId: ID!
+}
+
+input DeactivateUserInput {
+  organizationId: ID!
+  profileId: ID!
+}
+
+input UpdateUserInput {
+  id: ID!
+  fullName: String!
+  additionalEmailAddresses: [EmailAddr!]
+  kind: String
+  position: String
+  contractStartDate: Datetime @goField(omittable: true)
+  contractEndDate: Datetime @goField(omittable: true)
+}
+
+input UpdateMembershipInput {
+  organizationId: ID!
+  membershipId: ID!
+  role: MembershipRole!
+}
+
+input RemoveUserInput {
+  organizationId: ID!
+  profileId: ID!
+}
+
+type CreateUserPayload {
+  profileEdge: ProfileEdge!
+}
+
+type InviteUserPayload {
+  invitationEdge: InvitationEdge!
+}
+
+type DeactivateUserPayload {
+  success: Boolean!
+}
+
+type UpdateUserPayload {
+  profile: Profile!
+}
+
+type UpdateMembershipPayload {
+  membership: Membership!
+}
+
+type RemoveUserPayload {
+  deletedProfileId: ID!
+}

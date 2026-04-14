@@ -1,0 +1,83 @@
+type OrganizationContext {
+    organizationId: ID!
+    product: String
+    architecture: String
+    team: String
+    processes: String
+    customers: String
+}
+
+enum ProfileState
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.ProfileState") {
+  ACTIVE @goEnum(value: "go.probo.inc/probo/pkg/coredata.ProfileStateActive")
+  INACTIVE
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.ProfileStateInactive")
+}
+
+type Profile implements Node {
+    id: ID!
+    fullName: String!
+    emailAddress: EmailAddr!
+    state: ProfileState!
+    additionalEmailAddresses: [EmailAddr!]!
+    kind: String
+    position: String
+    contractStartDate: Datetime
+    contractEndDate: Datetime
+    createdAt: Datetime!
+    updatedAt: Datetime!
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+enum ProfileOrderField
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.MembershipProfileOrderField") {
+    FULL_NAME
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.MembershipProfileOrderFieldFullName"
+        )
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.MembershipProfileOrderFieldCreatedAt"
+        )
+    KIND @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipProfileOrderFieldKind")
+}
+
+input ProfileOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ProfileOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: ProfileOrderField!
+}
+
+input ProfileFilter {
+    excludeContractEnded: Boolean
+}
+
+type ProfileConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ProfileConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [ProfileEdge!]!
+    pageInfo: PageInfo!
+}
+
+type ProfileEdge {
+    cursor: CursorKey!
+    node: Profile!
+}
+
+input UpdateOrganizationContextInput {
+    organizationId: ID!
+    product: String @goField(omittable: true)
+    architecture: String @goField(omittable: true)
+    team: String @goField(omittable: true)
+    processes: String @goField(omittable: true)
+    customers: String @goField(omittable: true)
+}
+
+type UpdateOrganizationContextPayload {
+    context: OrganizationContext!
+}

@@ -1,4 +1,5 @@
-schema: ["schema.graphql"]
+schema:
+  - "graphql/*.graphql"
 
 exec:
   filename: "schema/schema.go"
@@ -12,7 +13,7 @@ resolver:
   layout: "follow-schema"
   dir: "."
   package: "console_v1"
-  filename_template: "v1_resolver.go"
+  filename_template: "{name}.resolvers.go"
 
 autobind: []
 call_argument_directives_with_null: true

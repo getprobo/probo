@@ -1,0 +1,116 @@
+extend type Organization {
+    frameworks(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: FrameworkOrder
+    ): FrameworkConnection! @goField(forceResolver: true)
+}
+
+enum FrameworkOrderField
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.FrameworkOrderField") {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.FrameworkOrderFieldCreatedAt"
+        )
+}
+
+input FrameworkOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.FrameworkOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: FrameworkOrderField!
+}
+
+type Framework implements Node {
+    id: ID!
+    name: String!
+    description: String
+
+    organization: Organization! @goField(forceResolver: true)
+
+    controls(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: ControlOrder
+        filter: ControlFilter
+    ): ControlConnection! @goField(forceResolver: true)
+    lightLogoURL: String @goField(forceResolver: true)
+    darkLogoURL: String @goField(forceResolver: true)
+
+    createdAt: Datetime!
+    updatedAt: Datetime!
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type FrameworkConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.FrameworkConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [FrameworkEdge!]!
+    pageInfo: PageInfo!
+}
+
+type FrameworkEdge {
+    cursor: CursorKey!
+    node: Framework!
+}
+
+extend type Mutation {
+    createFramework(input: CreateFrameworkInput!): CreateFrameworkPayload!
+    updateFramework(input: UpdateFrameworkInput!): UpdateFrameworkPayload!
+    importFramework(input: ImportFrameworkInput!): ImportFrameworkPayload!
+    deleteFramework(input: DeleteFrameworkInput!): DeleteFrameworkPayload!
+    exportFramework(input: ExportFrameworkInput!): ExportFrameworkPayload!
+}
+
+input CreateFrameworkInput {
+    organizationId: ID!
+    name: String!
+    description: String
+}
+
+input UpdateFrameworkInput {
+    id: ID!
+    name: String
+    description: String @goField(omittable: true)
+}
+
+input ImportFrameworkInput {
+    organizationId: ID!
+    file: Upload!
+}
+
+input DeleteFrameworkInput {
+    frameworkId: ID!
+}
+
+input ExportFrameworkInput {
+    frameworkId: ID!
+}
+
+type CreateFrameworkPayload {
+    frameworkEdge: FrameworkEdge!
+}
+
+type UpdateFrameworkPayload {
+    framework: Framework!
+}
+
+type ImportFrameworkPayload {
+    frameworkEdge: FrameworkEdge!
+}
+
+type DeleteFrameworkPayload {
+    deletedFrameworkId: ID!
+}
+
+type ExportFrameworkPayload {
+    exportJobId: ID!
+}

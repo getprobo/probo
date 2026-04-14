@@ -1,0 +1,145 @@
+extend type Organization {
+    rightsRequests(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: RightsRequestOrder
+    ): RightsRequestConnection! @goField(forceResolver: true)
+}
+
+enum RightsRequestType
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.RightsRequestType") {
+    ACCESS
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RightsRequestTypeAccess"
+        )
+    DELETION
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RightsRequestTypeDeletion"
+        )
+    PORTABILITY
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RightsRequestTypePortability"
+        )
+}
+
+enum RightsRequestState
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.RightsRequestState") {
+    TODO
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.RightsRequestStateTodo")
+    IN_PROGRESS
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RightsRequestStateInProgress"
+        )
+    DONE
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.RightsRequestStateDone")
+}
+
+enum RightsRequestOrderField
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.RightsRequestOrderField") {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RightsRequestOrderFieldCreatedAt"
+        )
+    DEADLINE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RightsRequestOrderFieldDeadline"
+        )
+    STATE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RightsRequestOrderFieldState"
+        )
+    TYPE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RightsRequestOrderFieldType"
+        )
+}
+
+input RightsRequestOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.RightsRequestOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: RightsRequestOrderField!
+}
+
+type RightsRequest implements Node {
+    id: ID!
+    organization: Organization! @goField(forceResolver: true)
+    requestType: RightsRequestType!
+    requestState: RightsRequestState!
+    dataSubject: String
+    contact: String
+    details: String
+    deadline: Datetime
+    actionTaken: String
+    createdAt: Datetime!
+    updatedAt: Datetime!
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type RightsRequestConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.RightsRequestConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [RightsRequestEdge!]!
+    pageInfo: PageInfo!
+}
+
+type RightsRequestEdge {
+    cursor: CursorKey!
+    node: RightsRequest!
+}
+
+extend type Mutation {
+    createRightsRequest(
+        input: CreateRightsRequestInput!
+    ): CreateRightsRequestPayload!
+    updateRightsRequest(
+        input: UpdateRightsRequestInput!
+    ): UpdateRightsRequestPayload!
+    deleteRightsRequest(
+        input: DeleteRightsRequestInput!
+    ): DeleteRightsRequestPayload!
+}
+
+input CreateRightsRequestInput {
+    organizationId: ID!
+    requestType: RightsRequestType!
+    requestState: RightsRequestState!
+    dataSubject: String
+    contact: String
+    details: String
+    deadline: Datetime
+    actionTaken: String
+}
+
+input UpdateRightsRequestInput {
+    id: ID!
+    requestType: RightsRequestType
+    requestState: RightsRequestState
+    dataSubject: String @goField(omittable: true)
+    contact: String @goField(omittable: true)
+    details: String @goField(omittable: true)
+    deadline: Datetime @goField(omittable: true)
+    actionTaken: String @goField(omittable: true)
+}
+
+input DeleteRightsRequestInput {
+    rightsRequestId: ID!
+}
+
+type CreateRightsRequestPayload {
+    rightsRequestEdge: RightsRequestEdge!
+}
+
+type UpdateRightsRequestPayload {
+    rightsRequest: RightsRequest!
+}
+
+type DeleteRightsRequestPayload {
+    deletedRightsRequestId: ID!
+}

@@ -1,0 +1,119 @@
+extend type Organization {
+  samlConfigurations(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+  ): SAMLConfigurationConnection @goField(forceResolver: true)
+}
+
+type SAMLConfiguration implements Node {
+  id: ID!
+  emailDomain: String!
+  enforcementPolicy: SAMLEnforcementPolicy!
+  domainVerifiedAt: Datetime
+  domainVerificationToken: String
+  idpEntityId: String!
+  idpSsoUrl: String!
+  idpCertificate: String!
+  autoSignupEnabled: Boolean!
+  createdAt: Datetime!
+  updatedAt: Datetime!
+  testLoginUrl: String! @goField(forceResolver: true)
+  attributeMappings: SAMLAttributeMappings!
+
+  permission(action: String!): Boolean!
+    @goField(forceResolver: true)
+    @session(required: PRESENT)
+}
+
+type SAMLAttributeMappings {
+  email: String!
+  firstName: String!
+  lastName: String!
+  role: String!
+}
+
+enum SAMLEnforcementPolicy
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.SAMLEnforcementPolicy") {
+  OFF @goEnum(value: "go.probo.inc/probo/pkg/coredata.SAMLEnforcementPolicyOff")
+  OPTIONAL
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.SAMLEnforcementPolicyOptional"
+    )
+  REQUIRED
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.SAMLEnforcementPolicyRequired"
+    )
+}
+
+type SAMLConfigurationConnection
+  @goModel(
+    model: "go.probo.inc/probo/pkg/server/api/connect/v1/types.SAMLConfigurationConnection"
+  ) {
+  edges: [SAMLConfigurationEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int @goField(forceResolver: true)
+}
+
+type SAMLConfigurationEdge {
+  node: SAMLConfiguration!
+  cursor: CursorKey!
+}
+
+extend type Mutation {
+  createSAMLConfiguration(
+    input: CreateSAMLConfigurationInput!
+  ): CreateSAMLConfigurationPayload @session(required: PRESENT)
+  updateSAMLConfiguration(
+    input: UpdateSAMLConfigurationInput!
+  ): UpdateSAMLConfigurationPayload @session(required: PRESENT)
+  deleteSAMLConfiguration(
+    input: DeleteSAMLConfigurationInput!
+  ): DeleteSAMLConfigurationPayload @session(required: PRESENT)
+}
+
+input CreateSAMLConfigurationInput {
+  organizationId: ID!
+  emailDomain: String!
+  idpEntityId: String!
+  idpSsoUrl: String!
+  idpCertificate: String!
+  autoSignupEnabled: Boolean!
+  attributeMappings: SAMLAttributeMappingsInput
+}
+
+input SAMLAttributeMappingsInput {
+  email: String
+  firstName: String
+  lastName: String
+  role: String
+}
+
+input UpdateSAMLConfigurationInput {
+  organizationId: ID!
+  samlConfigurationId: ID!
+  idpEntityId: String
+  idpSsoUrl: String
+  idpCertificate: String
+  autoSignupEnabled: Boolean
+  enforcementPolicy: SAMLEnforcementPolicy!
+  attributeMappings: SAMLAttributeMappingsInput
+}
+
+input DeleteSAMLConfigurationInput {
+  organizationId: ID!
+  samlConfigurationId: ID!
+}
+
+type CreateSAMLConfigurationPayload {
+  samlConfigurationEdge: SAMLConfigurationEdge!
+}
+
+type UpdateSAMLConfigurationPayload {
+  samlConfiguration: SAMLConfiguration
+}
+
+type DeleteSAMLConfigurationPayload {
+  deletedSamlConfigurationId: ID!
+}

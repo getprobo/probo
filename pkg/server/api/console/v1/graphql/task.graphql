@@ -1,0 +1,137 @@
+extend type Organization {
+    tasks(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: TaskOrder
+    ): TaskConnection! @goField(forceResolver: true)
+}
+
+enum TaskState @goModel(model: "go.probo.inc/probo/pkg/coredata.TaskState") {
+    TODO @goEnum(value: "go.probo.inc/probo/pkg/coredata.TaskStateTodo")
+    IN_PROGRESS @goEnum(value: "go.probo.inc/probo/pkg/coredata.TaskStateInProgress")
+    DONE @goEnum(value: "go.probo.inc/probo/pkg/coredata.TaskStateDone")
+}
+
+enum TaskPriority
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.TaskPriority") {
+    URGENT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TaskPriorityUrgent"
+        )
+    HIGH
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TaskPriorityHigh"
+        )
+    MEDIUM
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TaskPriorityMedium"
+        )
+    LOW
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TaskPriorityLow"
+        )
+}
+
+enum TaskOrderField
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.TaskOrderField") {
+    PRIORITY_RANK
+    CREATED_AT
+}
+
+input TaskOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.TaskOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: TaskOrderField!
+}
+
+type Task implements Node {
+    id: ID!
+    name: String!
+    description: String
+    state: TaskState!
+    priority: TaskPriority!
+    rank: Int!
+    timeEstimate: Duration
+    deadline: Datetime
+    assignedTo: Profile @goField(forceResolver: true)
+
+    organization: Organization! @goField(forceResolver: true)
+    measure: Measure @goField(forceResolver: true)
+
+    evidences(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: EvidenceOrder
+    ): EvidenceConnection! @goField(forceResolver: true)
+
+    createdAt: Datetime!
+    updatedAt: Datetime!
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type TaskConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.TaskConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [TaskEdge!]!
+    pageInfo: PageInfo!
+}
+
+type TaskEdge {
+    cursor: CursorKey!
+    node: Task!
+}
+
+extend type Mutation {
+    createTask(input: CreateTaskInput!): CreateTaskPayload!
+    updateTask(input: UpdateTaskInput!): UpdateTaskPayload!
+    deleteTask(input: DeleteTaskInput!): DeleteTaskPayload!
+}
+
+input CreateTaskInput {
+    organizationId: ID!
+    measureId: ID
+    name: String!
+    description: String
+    priority: TaskPriority!
+    timeEstimate: Duration
+    assignedToId: ID
+    deadline: Datetime
+}
+
+input UpdateTaskInput {
+    taskId: ID!
+    name: String
+    description: String @goField(omittable: true)
+    state: TaskState
+    priority: TaskPriority
+    rank: Int
+    timeEstimate: Duration @goField(omittable: true)
+    deadline: Datetime @goField(omittable: true)
+    assignedToId: ID @goField(omittable: true)
+    measureId: ID @goField(omittable: true)
+}
+
+input DeleteTaskInput {
+    taskId: ID!
+}
+
+type CreateTaskPayload {
+    taskEdge: TaskEdge!
+}
+
+type UpdateTaskPayload {
+    task: Task!
+}
+
+type DeleteTaskPayload {
+    deletedTaskId: ID!
+}

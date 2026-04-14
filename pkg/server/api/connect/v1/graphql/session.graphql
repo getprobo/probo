@@ -1,0 +1,169 @@
+enum SessionOrderField
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.SessionOrderField") {
+  CREATED_AT
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.SessionOrderFieldCreatedAt")
+  EXPIRED_AT
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.SessionOrderFieldExpiredAt")
+  UPDATED_AT
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.SessionOrderFieldUpdatedAt")
+}
+
+input SessionOrder {
+  direction: OrderDirection!
+  field: SessionOrderField!
+}
+
+extend type Identity {
+  sessions(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+    orderBy: SessionOrder
+  ): SessionConnection @goField(forceResolver: true)
+}
+
+type Session implements Node {
+  id: ID!
+  identity: Identity @goField(forceResolver: true)
+  ipAddress: String!
+  userAgent: String!
+  updatedAt: Datetime!
+  createdAt: Datetime!
+  expiresAt: Datetime!
+
+  permission(action: String!): Boolean!
+    @goField(forceResolver: true)
+    @session(required: PRESENT)
+}
+
+type SessionConnection
+  @goModel(
+    model: "go.probo.inc/probo/pkg/server/api/connect/v1/types.SessionConnection"
+  ) {
+  edges: [SessionEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int @goField(forceResolver: true)
+}
+
+type SessionEdge {
+  node: Session!
+  cursor: CursorKey!
+}
+
+input SignInInput {
+  organizationId: ID
+  email: EmailAddr!
+  password: String!
+}
+
+input SignUpInput {
+  email: EmailAddr!
+  password: String!
+  fullName: String!
+}
+
+input ActivateAccountInput {
+  token: String!
+}
+
+input ForgotPasswordInput {
+  email: EmailAddr!
+}
+
+input ResetPasswordInput {
+  token: String!
+  password: String!
+}
+
+input VerifyEmailInput {
+  token: String!
+}
+
+input ChangePasswordInput {
+  currentPassword: String!
+  newPassword: String!
+}
+
+input ChangeEmailInput {
+  newEmail: EmailAddr!
+  password: String!
+}
+
+input AssumeOrganizationSessionInput {
+  organizationId: ID!
+  continue: String!
+}
+
+input RevokeSessionInput {
+  sessionId: ID!
+}
+
+type SignInPayload {
+  identity: Identity
+  session: Session
+}
+
+type SignUpPayload {
+  identity: Identity
+}
+
+type SignOutPayload {
+  success: Boolean!
+}
+
+type ActivateAccountPayload {
+  createPasswordToken: String
+  ssoLoginUrl: String
+  profile: Profile
+}
+
+type ForgotPasswordPayload {
+  success: Boolean!
+}
+
+type ResetPasswordPayload {
+  success: Boolean!
+}
+
+type VerifyEmailPayload {
+  success: Boolean!
+}
+
+type ChangePasswordPayload {
+  success: Boolean!
+}
+
+type ChangeEmailPayload {
+  success: Boolean!
+}
+
+union AssumeOrganizationSessionResult =
+  | OrganizationSessionCreated
+  | PasswordRequired
+  | SAMLAuthenticationRequired
+
+type OrganizationSessionCreated {
+  session: Session!
+  membership: Membership!
+}
+
+type PasswordRequired {
+  reason: ReauthenticationReason!
+}
+
+type SAMLAuthenticationRequired {
+  reason: ReauthenticationReason!
+}
+
+type AssumeOrganizationSessionPayload {
+  result: AssumeOrganizationSessionResult!
+}
+
+type RevokeSessionPayload {
+  success: Boolean!
+}
+
+type RevokeAllSessionsPayload {
+  revokedCount: Int!
+}

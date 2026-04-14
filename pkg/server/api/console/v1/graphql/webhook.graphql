@@ -1,0 +1,179 @@
+extend type Organization {
+    webhookSubscriptions(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: WebhookSubscriptionOrder
+    ): WebhookSubscriptionConnection! @goField(forceResolver: true)
+}
+
+enum WebhookEventType
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.WebhookEventType") {
+    MEETING_CREATED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeMeetingCreated")
+    MEETING_UPDATED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeMeetingUpdated")
+    MEETING_DELETED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeMeetingDeleted")
+    VENDOR_CREATED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeVendorCreated")
+    VENDOR_UPDATED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeVendorUpdated")
+    VENDOR_DELETED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeVendorDeleted")
+    USER_CREATED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeUserCreated")
+    USER_UPDATED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeUserUpdated")
+    USER_DELETED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeUserDeleted")
+    OBLIGATION_CREATED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeObligationCreated")
+    OBLIGATION_UPDATED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeObligationUpdated")
+    OBLIGATION_DELETED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeObligationDeleted")
+}
+
+enum WebhookEventStatus
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.WebhookEventStatus") {
+    PENDING
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventStatusPending")
+    SUCCEEDED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventStatusSucceeded")
+    FAILED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventStatusFailed")
+}
+
+enum WebhookSubscriptionOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.WebhookSubscriptionOrderField"
+    ) {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.WebhookSubscriptionOrderFieldCreatedAt"
+        )
+}
+
+enum WebhookEventOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.WebhookEventOrderField"
+    ) {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.WebhookEventOrderFieldCreatedAt"
+        )
+}
+
+input WebhookSubscriptionOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.WebhookSubscriptionOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: WebhookSubscriptionOrderField!
+}
+
+input WebhookEventOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.WebhookEventOrderBy"
+    ) {
+    field: WebhookEventOrderField!
+    direction: OrderDirection!
+}
+
+type WebhookSubscription implements Node {
+    id: ID!
+    organization: Organization @goField(forceResolver: true)
+    endpointUrl: String!
+    signingSecret: String! @goField(forceResolver: true)
+    selectedEvents: [WebhookEventType!]!
+    createdAt: Datetime!
+    updatedAt: Datetime!
+
+    events(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: WebhookEventOrder
+    ): WebhookEventConnection! @goField(forceResolver: true)
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type WebhookEvent implements Node {
+    id: ID!
+    webhookSubscriptionId: ID!
+    status: WebhookEventStatus!
+    response: String
+    createdAt: Datetime!
+}
+
+type WebhookSubscriptionConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.WebhookSubscriptionConnection"
+    ) {
+    edges: [WebhookSubscriptionEdge!]!
+    pageInfo: PageInfo!
+    totalCount: Int! @goField(forceResolver: true)
+}
+
+type WebhookSubscriptionEdge {
+    cursor: CursorKey!
+    node: WebhookSubscription!
+}
+
+type WebhookEventConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.WebhookEventConnection"
+    ) {
+    edges: [WebhookEventEdge!]!
+    pageInfo: PageInfo!
+    totalCount: Int! @goField(forceResolver: true)
+}
+
+type WebhookEventEdge {
+    cursor: CursorKey!
+    node: WebhookEvent!
+}
+
+extend type Mutation {
+    createWebhookSubscription(
+        input: CreateWebhookSubscriptionInput!
+    ): CreateWebhookSubscriptionPayload!
+    updateWebhookSubscription(
+        input: UpdateWebhookSubscriptionInput!
+    ): UpdateWebhookSubscriptionPayload!
+    deleteWebhookSubscription(
+        input: DeleteWebhookSubscriptionInput!
+    ): DeleteWebhookSubscriptionPayload!
+}
+
+input CreateWebhookSubscriptionInput {
+    organizationId: ID!
+    endpointUrl: String!
+    selectedEvents: [WebhookEventType!]!
+}
+
+input UpdateWebhookSubscriptionInput {
+    id: ID!
+    endpointUrl: String
+    selectedEvents: [WebhookEventType!]
+}
+
+input DeleteWebhookSubscriptionInput {
+    webhookSubscriptionId: ID!
+}
+
+type CreateWebhookSubscriptionPayload {
+    webhookSubscriptionEdge: WebhookSubscriptionEdge!
+}
+
+type UpdateWebhookSubscriptionPayload {
+    webhookSubscription: WebhookSubscription!
+}
+
+type DeleteWebhookSubscriptionPayload {
+    deletedWebhookSubscriptionId: ID!
+}

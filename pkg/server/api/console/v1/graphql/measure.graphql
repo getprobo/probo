@@ -1,0 +1,200 @@
+extend type Organization {
+    measures(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: MeasureOrder
+        filter: MeasureFilter
+    ): MeasureConnection! @goField(forceResolver: true)
+}
+
+enum MeasureState
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.MeasureState") {
+    NOT_STARTED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.MeasureStateNotStarted")
+    IN_PROGRESS
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.MeasureStateInProgress")
+    NOT_APPLICABLE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.MeasureStateNotApplicable"
+        )
+    IMPLEMENTED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.MeasureStateImplemented"
+        )
+    UNKNOWN
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.MeasureStateUnknown"
+        )
+    NOT_IMPLEMENTED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.MeasureStateNotImplemented"
+        )
+}
+
+enum MeasureOrderField
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.MeasureOrderField") {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.MeasureOrderFieldCreatedAt"
+        )
+    NAME @goEnum(value: "go.probo.inc/probo/pkg/coredata.MeasureOrderFieldName")
+}
+
+input MeasureOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.MeasureOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: MeasureOrderField!
+}
+
+input MeasureFilter {
+    query: String
+    state: MeasureState
+    category: String
+}
+
+type Measure implements Node {
+    id: ID!
+    category: String!
+    name: String!
+    description: String
+    state: MeasureState!
+
+    evidences(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: EvidenceOrder
+    ): EvidenceConnection! @goField(forceResolver: true)
+
+    tasks(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: TaskOrder
+    ): TaskConnection! @goField(forceResolver: true)
+
+    risks(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: RiskOrder
+        filter: RiskFilter
+    ): RiskConnection! @goField(forceResolver: true)
+
+    controls(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: ControlOrder
+        filter: ControlFilter
+    ): ControlConnection! @goField(forceResolver: true)
+
+    documents(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: DocumentOrder
+        filter: DocumentFilter
+    ): DocumentConnection! @goField(forceResolver: true)
+
+    createdAt: Datetime!
+    updatedAt: Datetime!
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type MeasureConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.MeasureConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [MeasureEdge!]!
+    pageInfo: PageInfo!
+}
+
+type MeasureEdge {
+    cursor: CursorKey!
+    node: Measure!
+}
+
+extend type Mutation {
+    createMeasure(input: CreateMeasureInput!): CreateMeasurePayload!
+    updateMeasure(input: UpdateMeasureInput!): UpdateMeasurePayload!
+    importMeasure(input: ImportMeasureInput!): ImportMeasurePayload!
+    deleteMeasure(input: DeleteMeasureInput!): DeleteMeasurePayload!
+    createMeasureDocumentMapping(
+        input: CreateMeasureDocumentMappingInput!
+    ): CreateMeasureDocumentMappingPayload!
+    deleteMeasureDocumentMapping(
+        input: DeleteMeasureDocumentMappingInput!
+    ): DeleteMeasureDocumentMappingPayload!
+}
+
+input CreateMeasureInput {
+    organizationId: ID!
+    name: String!
+    description: String
+    category: String!
+}
+
+input UpdateMeasureInput {
+    id: ID!
+    name: String
+    description: String @goField(omittable: true)
+    category: String
+    state: MeasureState
+}
+
+input ImportMeasureInput {
+    organizationId: ID!
+    file: Upload!
+}
+
+input DeleteMeasureInput {
+    measureId: ID!
+}
+
+input CreateMeasureDocumentMappingInput {
+    measureId: ID!
+    documentId: ID!
+}
+
+input DeleteMeasureDocumentMappingInput {
+    measureId: ID!
+    documentId: ID!
+}
+
+type CreateMeasurePayload {
+    measureEdge: MeasureEdge!
+}
+
+type UpdateMeasurePayload {
+    measure: Measure!
+}
+
+type ImportMeasurePayload {
+    measureEdges: [MeasureEdge!]!
+}
+
+type DeleteMeasurePayload {
+    deletedMeasureId: ID!
+}
+
+type CreateMeasureDocumentMappingPayload {
+    measureEdge: MeasureEdge!
+    documentEdge: DocumentEdge!
+}
+
+type DeleteMeasureDocumentMappingPayload {
+    deletedMeasureId: ID!
+    deletedDocumentId: ID!
+}

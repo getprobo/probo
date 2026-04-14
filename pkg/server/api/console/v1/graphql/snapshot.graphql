@@ -1,0 +1,113 @@
+extend type Organization {
+    snapshots(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: SnapshotOrder
+    ): SnapshotConnection! @goField(forceResolver: true)
+}
+
+enum SnapshotsType
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.SnapshotsType") {
+    RISKS @goEnum(value: "go.probo.inc/probo/pkg/coredata.SnapshotsTypeRisks")
+    VENDORS
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.SnapshotsTypeVendors")
+    ASSETS @goEnum(value: "go.probo.inc/probo/pkg/coredata.SnapshotsTypeAssets")
+    DATA @goEnum(value: "go.probo.inc/probo/pkg/coredata.SnapshotsTypeData")
+    FINDINGS
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.SnapshotsTypeFindings"
+        )
+    OBLIGATIONS
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.SnapshotsTypeObligations"
+        )
+    PROCESSING_ACTIVITIES
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.SnapshotsTypeProcessingActivities"
+        )
+    STATEMENTS_OF_APPLICABILITY
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.SnapshotsTypeStatementsOfApplicability"
+        )
+}
+
+enum SnapshotOrderField
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.SnapshotOrderField") {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.SnapshotOrderFieldCreatedAt"
+        )
+    NAME
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.SnapshotOrderFieldName")
+    TYPE
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.SnapshotOrderFieldType")
+}
+
+input SnapshotOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.SnapshotOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: SnapshotOrderField!
+}
+
+type Snapshot implements Node {
+    id: ID!
+    organization: Organization! @goField(forceResolver: true)
+    name: String!
+    description: String
+    type: SnapshotsType!
+
+    controls(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: ControlOrder
+        filter: ControlFilter
+    ): ControlConnection! @goField(forceResolver: true)
+
+    createdAt: Datetime!
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type SnapshotConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.SnapshotConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [SnapshotEdge!]!
+    pageInfo: PageInfo!
+}
+
+type SnapshotEdge {
+    cursor: CursorKey!
+    node: Snapshot!
+}
+
+extend type Mutation {
+    createSnapshot(input: CreateSnapshotInput!): CreateSnapshotPayload!
+    deleteSnapshot(input: DeleteSnapshotInput!): DeleteSnapshotPayload!
+}
+
+input CreateSnapshotInput {
+    organizationId: ID!
+    name: String!
+    description: String
+    type: SnapshotsType!
+}
+
+input DeleteSnapshotInput {
+    snapshotId: ID!
+}
+
+type CreateSnapshotPayload {
+    snapshotEdge: SnapshotEdge!
+}
+
+type DeleteSnapshotPayload {
+    deletedSnapshotId: ID!
+}

@@ -6,18 +6,26 @@ GraphQL API using `gqlgen`. Schema-first approach.
 
 | File | Type | Notes |
 |------|------|-------|
-| `schema.graphql` | Hand-written | GraphQL schema definition |
+| `graphql/*.graphql` | Hand-written | GraphQL schema split by entity (one file per coredata model) |
 | `gqlgen.yaml` | Hand-written | Codegen config |
 | `resolver.go` | Hand-written | Root `Resolver` struct and `NewMux` |
 | `graphql_handler.go` | Hand-written | Handler setup |
-| `v1_resolver.go` | Generated stubs | Resolver method implementations (edit the bodies) |
+| `*.resolvers.go` | Generated stubs | Per-entity resolver files (edit the bodies) |
 | `schema/schema.go` | **Generated — DO NOT EDIT** | Executable schema |
 | `types/types.go` | **Generated — DO NOT EDIT** | Type definitions |
 
+## Schema file organization
+
+Schema files live in `graphql/` and are split by coredata model:
+- `base.graphql` — directives, scalars, Node, PageInfo, root Query/Mutation/Organization/Viewer types
+- Entity files (e.g., `vendor.graphql`, `control.graphql`) — use `extend type Organization`, `extend type Mutation`, etc. to add fields
+
+When adding a new entity, create a new `.graphql` file in `graphql/`. Types that get extended across files (Organization, Mutation, Viewer) must be defined in `base.graphql`.
+
 ## Important rules
 
-- **Never edit generated files** (`schema/schema.go`, `types/types.go`). Only edit `schema.graphql` and resolver bodies.
-- **After any change to `schema.graphql`**, always run codegen:
+- **Never edit generated files** (`schema/schema.go`, `types/types.go`). Only edit `graphql/*.graphql` and resolver bodies.
+- **After any change to `graphql/*.graphql`**, always run codegen:
 
 ```
 go generate ./pkg/server/api/console/v1

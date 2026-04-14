@@ -1,0 +1,92 @@
+extend type Organization {
+    evidences(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: EvidenceOrder
+    ): EvidenceConnection! @goField(forceResolver: true)
+}
+
+enum EvidenceState
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.EvidenceState") {
+    FULFILLED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.EvidenceStateFulfilled")
+    REQUESTED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.EvidenceStateRequested")
+}
+
+enum EvidenceType
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.EvidenceType") {
+    FILE @goEnum(value: "go.probo.inc/probo/pkg/coredata.EvidenceTypeFile")
+    LINK @goEnum(value: "go.probo.inc/probo/pkg/coredata.EvidenceTypeLink")
+}
+
+enum EvidenceOrderField
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.EvidenceOrderField") {
+    CREATED_AT
+}
+
+input EvidenceOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.EvidenceOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: EvidenceOrderField!
+}
+
+type Evidence implements Node {
+    id: ID!
+    size: Int!
+    state: EvidenceState!
+    type: EvidenceType!
+    file: File @goField(forceResolver: true)
+    url: String
+    description: String
+
+    task: Task @goField(forceResolver: true)
+    measure: Measure! @goField(forceResolver: true)
+
+    createdAt: Datetime!
+    updatedAt: Datetime!
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type EvidenceConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.EvidenceConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [EvidenceEdge!]!
+    pageInfo: PageInfo!
+}
+
+type EvidenceEdge {
+    cursor: CursorKey!
+    node: Evidence!
+}
+
+extend type Mutation {
+    deleteEvidence(input: DeleteEvidenceInput!): DeleteEvidencePayload!
+    uploadMeasureEvidence(
+        input: UploadMeasureEvidenceInput!
+    ): UploadMeasureEvidencePayload!
+}
+
+input DeleteEvidenceInput {
+    evidenceId: ID!
+}
+
+input UploadMeasureEvidenceInput {
+    measureId: ID!
+    file: Upload!
+}
+
+type DeleteEvidencePayload {
+    deletedEvidenceId: ID!
+}
+
+type UploadMeasureEvidencePayload {
+    evidenceEdge: EvidenceEdge!
+}

@@ -1,0 +1,506 @@
+extend type Organization {
+    controls(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: ControlOrder
+        filter: ControlFilter
+    ): ControlConnection! @goField(forceResolver: true)
+
+    statementsOfApplicability(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: StatementOfApplicabilityOrder
+        filter: StatementOfApplicabilityFilter = { snapshotId: null }
+    ): StatementOfApplicabilityConnection! @goField(forceResolver: true)
+}
+
+enum ControlImplementationState
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.ControlImplementationState"
+    ) {
+    IMPLEMENTED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ControlImplementationStateImplemented"
+        )
+    NOT_IMPLEMENTED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ControlImplementationStateNotImplemented"
+        )
+}
+
+enum ControlOrderField
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.ControlOrderField") {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ControlOrderFieldCreatedAt"
+        )
+    SECTION_TITLE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ControlOrderFieldSectionTitle"
+        )
+}
+
+enum ApplicabilityStatementOrderField
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.ApplicabilityStatementOrderField") {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ApplicabilityStatementOrderFieldCreatedAt"
+        )
+    CONTROL_SECTION_TITLE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ApplicabilityStatementOrderFieldControlSectionTitle"
+        )
+}
+
+enum StatementOfApplicabilityOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.StatementOfApplicabilityOrderField"
+    ) {
+    NAME
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.StatementOfApplicabilityOrderFieldName"
+        )
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.StatementOfApplicabilityOrderFieldCreatedAt"
+        )
+}
+
+input ControlOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ControlOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: ControlOrderField!
+}
+
+input ApplicabilityStatementOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ApplicabilityStatementOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: ApplicabilityStatementOrderField!
+}
+
+input StatementOfApplicabilityOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.StatementOfApplicabilityOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: StatementOfApplicabilityOrderField!
+}
+
+input ControlFilter {
+    query: String
+}
+
+input StatementOfApplicabilityFilter {
+    snapshotId: ID
+}
+
+type Control implements Node {
+    id: ID!
+    organization: Organization @goField(forceResolver: true)
+    sectionTitle: String!
+    name: String!
+    description: String
+    bestPractice: Boolean!
+    implemented: ControlImplementationState!
+    notImplementedJustification: String
+    regulatory: Boolean! @goField(forceResolver: true)
+    contractual: Boolean! @goField(forceResolver: true)
+    riskAssessment: Boolean! @goField(forceResolver: true)
+
+    framework: Framework! @goField(forceResolver: true)
+
+    measures(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: MeasureOrder
+        filter: MeasureFilter
+    ): MeasureConnection! @goField(forceResolver: true)
+
+    documents(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: DocumentOrder
+        filter: DocumentFilter
+    ): DocumentConnection! @goField(forceResolver: true)
+
+    audits(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: AuditOrder
+    ): AuditConnection! @goField(forceResolver: true)
+
+    obligations(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: ObligationOrder
+        filter: ObligationFilter
+    ): ObligationConnection! @goField(forceResolver: true)
+
+    snapshots(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: SnapshotOrder
+    ): SnapshotConnection! @goField(forceResolver: true)
+
+    createdAt: Datetime!
+    updatedAt: Datetime!
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type ControlConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ControlConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [ControlEdge!]!
+    pageInfo: PageInfo!
+}
+
+type ControlEdge {
+    cursor: CursorKey!
+    node: Control!
+}
+
+type StatementOfApplicability implements Node {
+    id: ID!
+    name: String!
+    sourceId: ID
+    snapshotId: ID
+    organization: Organization @goField(forceResolver: true)
+    owner: Profile! @goField(forceResolver: true)
+    createdAt: Datetime!
+    updatedAt: Datetime!
+
+    applicabilityStatements(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: ApplicabilityStatementOrder
+    ): ApplicabilityStatementConnection! @goField(forceResolver: true)
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type ApplicabilityStatementConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ApplicabilityStatementConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [ApplicabilityStatementEdge!]!
+    pageInfo: PageInfo!
+}
+
+type ApplicabilityStatementEdge {
+    cursor: CursorKey!
+    node: ApplicabilityStatement!
+}
+
+type ApplicabilityStatement implements Node {
+    id: ID!
+    statementOfApplicability: StatementOfApplicability! @goField(forceResolver: true)
+    control: Control! @goField(forceResolver: true)
+    applicability: Boolean!
+    justification: String!
+    createdAt: Datetime!
+    updatedAt: Datetime!
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type StatementOfApplicabilityConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.StatementOfApplicabilityConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [StatementOfApplicabilityEdge!]!
+    pageInfo: PageInfo!
+}
+
+type StatementOfApplicabilityEdge {
+    cursor: CursorKey!
+    node: StatementOfApplicability!
+}
+
+extend type Mutation {
+    createControl(input: CreateControlInput!): CreateControlPayload!
+    updateControl(input: UpdateControlInput!): UpdateControlPayload!
+    deleteControl(input: DeleteControlInput!): DeleteControlPayload!
+    createControlMeasureMapping(
+        input: CreateControlMeasureMappingInput!
+    ): CreateControlMeasureMappingPayload!
+    createControlDocumentMapping(
+        input: CreateControlDocumentMappingInput!
+    ): CreateControlDocumentMappingPayload!
+    deleteControlMeasureMapping(
+        input: DeleteControlMeasureMappingInput!
+    ): DeleteControlMeasureMappingPayload!
+    deleteControlDocumentMapping(
+        input: DeleteControlDocumentMappingInput!
+    ): DeleteControlDocumentMappingPayload!
+    createApplicabilityStatement(
+        input: CreateApplicabilityStatementInput!
+    ): CreateApplicabilityStatementPayload!
+    updateApplicabilityStatement(
+        input: UpdateApplicabilityStatementInput!
+    ): UpdateApplicabilityStatementPayload!
+    deleteApplicabilityStatement(
+        input: DeleteApplicabilityStatementInput!
+    ): DeleteApplicabilityStatementPayload!
+    createControlAuditMapping(
+        input: CreateControlAuditMappingInput!
+    ): CreateControlAuditMappingPayload
+    deleteControlAuditMapping(
+        input: DeleteControlAuditMappingInput!
+    ): DeleteControlAuditMappingPayload
+    createControlObligationMapping(
+        input: CreateControlObligationMappingInput!
+    ): CreateControlObligationMappingPayload!
+    deleteControlObligationMapping(
+        input: DeleteControlObligationMappingInput!
+    ): DeleteControlObligationMappingPayload!
+    createControlSnapshotMapping(
+        input: CreateControlSnapshotMappingInput!
+    ): CreateControlSnapshotMappingPayload!
+    deleteControlSnapshotMapping(
+        input: DeleteControlSnapshotMappingInput!
+    ): DeleteControlSnapshotMappingPayload!
+    createStatementOfApplicability(
+        input: CreateStatementOfApplicabilityInput!
+    ): CreateStatementOfApplicabilityPayload!
+    updateStatementOfApplicability(
+        input: UpdateStatementOfApplicabilityInput!
+    ): UpdateStatementOfApplicabilityPayload!
+    deleteStatementOfApplicability(
+        input: DeleteStatementOfApplicabilityInput!
+    ): DeleteStatementOfApplicabilityPayload!
+    exportStatementOfApplicabilityPDF(
+        input: ExportStatementOfApplicabilityPDFInput!
+    ): ExportStatementOfApplicabilityPDFPayload!
+}
+
+input CreateControlInput {
+    frameworkId: ID!
+    sectionTitle: String!
+    name: String!
+    description: String
+    bestPractice: Boolean!
+    implemented: ControlImplementationState!
+    notImplementedJustification: String
+}
+
+input UpdateControlInput {
+    id: ID!
+    sectionTitle: String
+    name: String
+    description: String @goField(omittable: true)
+    bestPractice: Boolean
+    implemented: ControlImplementationState
+    notImplementedJustification: String @goField(omittable: true)
+}
+
+input DeleteControlInput {
+    controlId: ID!
+}
+
+input CreateControlMeasureMappingInput {
+    controlId: ID!
+    measureId: ID!
+}
+
+input CreateControlDocumentMappingInput {
+    controlId: ID!
+    documentId: ID!
+}
+
+input DeleteControlMeasureMappingInput {
+    controlId: ID!
+    measureId: ID!
+}
+
+input DeleteControlDocumentMappingInput {
+    controlId: ID!
+    documentId: ID!
+}
+
+input CreateApplicabilityStatementInput {
+    statementOfApplicabilityId: ID!
+    controlId: ID!
+    applicability: Boolean!
+    justification: String
+}
+
+input UpdateApplicabilityStatementInput {
+    applicabilityStatementId: ID!
+    applicability: Boolean!
+    justification: String
+}
+
+input DeleteApplicabilityStatementInput {
+    applicabilityStatementId: ID!
+}
+
+input CreateControlAuditMappingInput {
+    controlId: ID!
+    auditId: ID!
+}
+
+input DeleteControlAuditMappingInput {
+    controlId: ID!
+    auditId: ID!
+}
+
+input CreateControlObligationMappingInput {
+    controlId: ID!
+    obligationId: ID!
+}
+
+input DeleteControlObligationMappingInput {
+    controlId: ID!
+    obligationId: ID!
+}
+
+input CreateControlSnapshotMappingInput {
+    controlId: ID!
+    snapshotId: ID!
+}
+
+input DeleteControlSnapshotMappingInput {
+    controlId: ID!
+    snapshotId: ID!
+}
+
+input CreateStatementOfApplicabilityInput {
+    organizationId: ID!
+    name: String!
+    ownerId: ID!
+}
+
+input UpdateStatementOfApplicabilityInput {
+    id: ID!
+    name: String
+    ownerId: ID
+}
+
+input ApplicabilityStatementInput {
+    controlId: ID!
+    applicability: Boolean!
+    justification: String
+}
+
+input DeleteStatementOfApplicabilityInput {
+    statementOfApplicabilityId: ID!
+}
+
+input ExportStatementOfApplicabilityPDFInput {
+    statementOfApplicabilityId: ID!
+}
+
+type CreateControlPayload {
+    controlEdge: ControlEdge!
+}
+
+type UpdateControlPayload {
+    control: Control!
+}
+
+type DeleteControlPayload {
+    deletedControlId: ID!
+}
+
+type CreateControlMeasureMappingPayload {
+    controlEdge: ControlEdge!
+    measureEdge: MeasureEdge!
+}
+
+type CreateControlDocumentMappingPayload {
+    controlEdge: ControlEdge!
+    documentEdge: DocumentEdge!
+}
+
+type DeleteControlMeasureMappingPayload {
+    deletedControlId: ID!
+    deletedMeasureId: ID!
+}
+
+type DeleteControlDocumentMappingPayload {
+    deletedControlId: ID!
+    deletedDocumentId: ID!
+}
+
+type CreateApplicabilityStatementPayload {
+    applicabilityStatementEdge: ApplicabilityStatementEdge!
+}
+
+type UpdateApplicabilityStatementPayload {
+    applicabilityStatement: ApplicabilityStatement!
+}
+
+type DeleteApplicabilityStatementPayload {
+    deletedApplicabilityStatementId: ID!
+}
+
+type CreateControlAuditMappingPayload {
+    controlEdge: ControlEdge
+    auditEdge: AuditEdge
+}
+
+type DeleteControlAuditMappingPayload {
+    deletedControlId: ID
+    deletedAuditId: ID
+}
+
+type CreateControlObligationMappingPayload {
+    controlEdge: ControlEdge!
+    obligationEdge: ObligationEdge!
+}
+
+type DeleteControlObligationMappingPayload {
+    deletedControlId: ID!
+    deletedObligationId: ID!
+}
+
+type CreateControlSnapshotMappingPayload {
+    controlEdge: ControlEdge!
+    snapshotEdge: SnapshotEdge!
+}
+
+type DeleteControlSnapshotMappingPayload {
+    deletedControlId: ID!
+    deletedSnapshotId: ID!
+}
+
+type CreateStatementOfApplicabilityPayload {
+    statementOfApplicabilityEdge: StatementOfApplicabilityEdge!
+}
+
+type UpdateStatementOfApplicabilityPayload {
+    statementOfApplicability: StatementOfApplicability!
+}
+
+type DeleteStatementOfApplicabilityPayload {
+    deletedStatementOfApplicabilityId: ID!
+}
+
+type ExportStatementOfApplicabilityPDFPayload {
+    data: String!
+}

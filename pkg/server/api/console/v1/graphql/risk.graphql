@@ -1,0 +1,270 @@
+extend type Organization {
+    risks(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: RiskOrder
+        filter: RiskFilter = { snapshotId: null }
+    ): RiskConnection! @goField(forceResolver: true)
+}
+
+enum RiskTreatment
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.RiskTreatment") {
+    MITIGATED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.RiskTreatmentMitigated")
+    ACCEPTED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.RiskTreatmentAccepted")
+    AVOIDED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.RiskTreatmentAvoided")
+    TRANSFERRED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RiskTreatmentTransferred"
+        )
+}
+
+enum RiskOrderField
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.RiskOrderField") {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RiskOrderFieldCreatedAt"
+        )
+    UPDATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RiskOrderFieldUpdatedAt"
+        )
+    NAME @goEnum(value: "go.probo.inc/probo/pkg/coredata.RiskOrderFieldName")
+    CATEGORY
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.RiskOrderFieldCategory")
+    TREATMENT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RiskOrderFieldTreatment"
+        )
+    INHERENT_RISK_SCORE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RiskOrderFieldInherentRiskScore"
+        )
+    RESIDUAL_RISK_SCORE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RiskOrderFieldResidualRiskScore"
+        )
+    OWNER_FULL_NAME
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RiskOrderFieldOwnerFullName"
+        )
+}
+
+input RiskOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.RiskOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: RiskOrderField!
+}
+
+input RiskFilter {
+    query: String
+    snapshotId: ID
+}
+
+type Risk implements Node {
+    id: ID!
+    snapshotId: ID
+    name: String!
+    description: String
+    category: String!
+    treatment: RiskTreatment!
+    inherentLikelihood: Int!
+    inherentImpact: Int!
+    inherentRiskScore: Int!
+    residualLikelihood: Int!
+    residualImpact: Int!
+    residualRiskScore: Int!
+    note: String!
+
+    owner: Profile @goField(forceResolver: true)
+    organization: Organization! @goField(forceResolver: true)
+
+    measures(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: MeasureOrder
+        filter: MeasureFilter
+    ): MeasureConnection! @goField(forceResolver: true)
+
+    documents(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: DocumentOrder
+        filter: DocumentFilter
+    ): DocumentConnection! @goField(forceResolver: true)
+
+    controls(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: ControlOrder
+        filter: ControlFilter
+    ): ControlConnection! @goField(forceResolver: true)
+
+    obligations(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: ObligationOrder
+        filter: ObligationFilter
+    ): ObligationConnection! @goField(forceResolver: true)
+
+    createdAt: Datetime!
+    updatedAt: Datetime!
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type RiskConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.RiskConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [RiskEdge!]!
+    pageInfo: PageInfo!
+}
+
+type RiskEdge {
+    cursor: CursorKey!
+    node: Risk!
+}
+
+extend type Mutation {
+    createRisk(input: CreateRiskInput!): CreateRiskPayload!
+    updateRisk(input: UpdateRiskInput!): UpdateRiskPayload!
+    deleteRisk(input: DeleteRiskInput!): DeleteRiskPayload!
+    createRiskMeasureMapping(
+        input: CreateRiskMeasureMappingInput!
+    ): CreateRiskMeasureMappingPayload!
+    deleteRiskMeasureMapping(
+        input: DeleteRiskMeasureMappingInput!
+    ): DeleteRiskMeasureMappingPayload!
+    createRiskDocumentMapping(
+        input: CreateRiskDocumentMappingInput!
+    ): CreateRiskDocumentMappingPayload!
+    deleteRiskDocumentMapping(
+        input: DeleteRiskDocumentMappingInput!
+    ): DeleteRiskDocumentMappingPayload!
+    createRiskObligationMapping(
+        input: CreateRiskObligationMappingInput!
+    ): CreateRiskObligationMappingPayload!
+    deleteRiskObligationMapping(
+        input: DeleteRiskObligationMappingInput!
+    ): DeleteRiskObligationMappingPayload!
+}
+
+input CreateRiskInput {
+    organizationId: ID!
+    name: String!
+    description: String
+    category: String!
+    ownerId: ID
+    treatment: RiskTreatment!
+    inherentLikelihood: Int!
+    inherentImpact: Int!
+    residualLikelihood: Int
+    residualImpact: Int
+    note: String
+}
+
+input UpdateRiskInput {
+    id: ID!
+    name: String
+    description: String @goField(omittable: true)
+    category: String
+    ownerId: ID @goField(omittable: true)
+    treatment: RiskTreatment
+    inherentLikelihood: Int
+    inherentImpact: Int
+    residualLikelihood: Int
+    residualImpact: Int
+    note: String
+}
+
+input DeleteRiskInput {
+    riskId: ID!
+}
+
+input CreateRiskMeasureMappingInput {
+    riskId: ID!
+    measureId: ID!
+}
+
+input DeleteRiskMeasureMappingInput {
+    riskId: ID!
+    measureId: ID!
+}
+
+input CreateRiskDocumentMappingInput {
+    riskId: ID!
+    documentId: ID!
+}
+
+input DeleteRiskDocumentMappingInput {
+    riskId: ID!
+    documentId: ID!
+}
+
+input CreateRiskObligationMappingInput {
+    riskId: ID!
+    obligationId: ID!
+}
+
+input DeleteRiskObligationMappingInput {
+    riskId: ID!
+    obligationId: ID!
+}
+
+type CreateRiskPayload {
+    riskEdge: RiskEdge!
+}
+
+type UpdateRiskPayload {
+    risk: Risk!
+}
+
+type DeleteRiskPayload {
+    deletedRiskId: ID!
+}
+
+type CreateRiskMeasureMappingPayload {
+    riskEdge: RiskEdge!
+    measureEdge: MeasureEdge!
+}
+
+type DeleteRiskMeasureMappingPayload {
+    deletedMeasureId: ID!
+    deletedRiskId: ID!
+}
+
+type CreateRiskDocumentMappingPayload {
+    riskEdge: RiskEdge!
+    documentEdge: DocumentEdge!
+}
+
+type DeleteRiskDocumentMappingPayload {
+    deletedRiskId: ID!
+    deletedDocumentId: ID!
+}
+
+type CreateRiskObligationMappingPayload {
+    riskEdge: RiskEdge!
+    obligationEdge: ObligationEdge!
+}
+
+type DeleteRiskObligationMappingPayload {
+    deletedRiskId: ID!
+    deletedObligationId: ID!
+}

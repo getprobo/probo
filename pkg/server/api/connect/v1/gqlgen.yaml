@@ -1,5 +1,5 @@
 schema:
-  - "schema.graphql"
+  - "graphql/*.graphql"
   - "../../../gqlutils/directives/session/schema.graphql"
 
 exec:
@@ -14,7 +14,7 @@ resolver:
   layout: "follow-schema"
   dir: "."
   package: "connect_v1"
-  filename_template: "v1_resolver.go"
+  filename_template: "{name}.resolvers.go"
 
 autobind: []
 call_argument_directives_with_null: true

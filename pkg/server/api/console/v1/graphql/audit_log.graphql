@@ -1,0 +1,81 @@
+extend type Organization {
+    auditLogEntries(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: AuditLogEntryOrder
+        filter: AuditLogEntryFilter
+    ): AuditLogEntryConnection! @goField(forceResolver: true)
+}
+
+enum AuditLogActorType
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.AuditLogActorType"
+    ) {
+    USER
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AuditLogActorTypeUser"
+        )
+    API_KEY
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AuditLogActorTypeAPIKey"
+        )
+    SYSTEM
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AuditLogActorTypeSystem"
+        )
+}
+
+enum AuditLogEntryOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.AuditLogEntryOrderField"
+    ) {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AuditLogEntryOrderFieldCreatedAt"
+        )
+}
+
+input AuditLogEntryOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.AuditLogEntryOrderBy"
+    ) {
+    field: AuditLogEntryOrderField!
+    direction: OrderDirection!
+}
+
+input AuditLogEntryFilter {
+    action: String
+    actorId: ID
+    resourceType: String
+    resourceId: ID
+}
+
+type AuditLogEntry implements Node {
+    id: ID!
+    organization: Organization @goField(forceResolver: true)
+    actorId: ID!
+    actorType: AuditLogActorType!
+    action: String!
+    resourceType: String!
+    resourceId: ID!
+    metadata: String
+    createdAt: Datetime!
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type AuditLogEntryConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.AuditLogEntryConnection"
+    ) {
+    edges: [AuditLogEntryEdge!]!
+    pageInfo: PageInfo!
+    totalCount: Int! @goField(forceResolver: true)
+}
+
+type AuditLogEntryEdge {
+    cursor: CursorKey!
+    node: AuditLogEntry!
+}

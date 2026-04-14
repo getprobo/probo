@@ -1,0 +1,826 @@
+extend type Organization {
+    documents(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: DocumentOrder
+        filter: DocumentFilter
+    ): DocumentConnection! @goField(forceResolver: true)
+}
+
+extend type Viewer {
+    signableDocuments(
+        organizationId: ID!
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: DocumentOrder
+    ): EmployeeDocumentConnection! @goField(forceResolver: true)
+
+    signableDocument(id: ID!): EmployeeDocument @goField(forceResolver: true)
+
+    approvableDocuments(
+        organizationId: ID!
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: DocumentOrder
+    ): EmployeeDocumentConnection! @goField(forceResolver: true)
+
+    approvableDocument(id: ID!): EmployeeDocument @goField(forceResolver: true)
+}
+
+enum DocumentVersionStatus
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.DocumentVersionStatus") {
+    DRAFT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DocumentVersionStatusDraft"
+        )
+    PENDING_APPROVAL
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DocumentVersionStatusPendingApproval"
+        )
+    PUBLISHED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DocumentVersionStatusPublished"
+        )
+}
+
+enum DocumentStatus
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.DocumentStatus") {
+    ACTIVE
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.DocumentStatusActive")
+    ARCHIVED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.DocumentStatusArchived")
+}
+
+enum DocumentType
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.DocumentType") {
+    OTHER @goEnum(value: "go.probo.inc/probo/pkg/coredata.DocumentTypeOther")
+    GOVERNANCE
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.DocumentTypeGovernance")
+    POLICY @goEnum(value: "go.probo.inc/probo/pkg/coredata.DocumentTypePolicy")
+    PROCEDURE
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.DocumentTypeProcedure")
+    PLAN @goEnum(value: "go.probo.inc/probo/pkg/coredata.DocumentTypePlan")
+    REGISTER
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.DocumentTypeRegister")
+    RECORD @goEnum(value: "go.probo.inc/probo/pkg/coredata.DocumentTypeRecord")
+    REPORT @goEnum(value: "go.probo.inc/probo/pkg/coredata.DocumentTypeReport")
+    TEMPLATE
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.DocumentTypeTemplate")
+}
+
+enum DocumentClassification
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.DocumentClassification") {
+    PUBLIC
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DocumentClassificationPublic"
+        )
+    INTERNAL
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DocumentClassificationInternal"
+        )
+    CONFIDENTIAL
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DocumentClassificationConfidential"
+        )
+    SECRET
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DocumentClassificationSecret"
+        )
+}
+
+enum DocumentOrderField
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.DocumentOrderField") {
+    TITLE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DocumentOrderFieldTitle"
+        )
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DocumentOrderFieldCreatedAt"
+        )
+    UPDATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DocumentOrderFieldUpdatedAt"
+        )
+    DOCUMENT_TYPE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DocumentOrderFieldDocumentType"
+        )
+}
+
+enum DocumentVersionOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.DocumentVersionOrderField"
+    ) {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DocumentVersionOrderFieldCreatedAt"
+        )
+}
+
+enum DocumentVersionSignatureState
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.DocumentVersionSignatureState"
+    ) {
+    REQUESTED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DocumentVersionSignatureStateRequested"
+        )
+    SIGNED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DocumentVersionSignatureStateSigned"
+        )
+}
+
+enum DocumentVersionSignatureOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.DocumentVersionSignatureOrderField"
+    ) {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DocumentVersionSignatureOrderFieldCreatedAt"
+        )
+    SIGNED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DocumentVersionSignatureOrderFieldSignedAt"
+        )
+}
+
+enum DocumentVersionApprovalDecisionState
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.DocumentVersionApprovalDecisionState"
+    ) {
+    PENDING
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DocumentVersionApprovalDecisionStatePending"
+        )
+    APPROVED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DocumentVersionApprovalDecisionStateApproved"
+        )
+    REJECTED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DocumentVersionApprovalDecisionStateRejected"
+        )
+    VOIDED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DocumentVersionApprovalDecisionStateVoided"
+        )
+}
+
+enum DocumentVersionApprovalDecisionOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.DocumentVersionApprovalDecisionOrderField"
+    ) {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DocumentVersionApprovalDecisionOrderFieldCreatedAt"
+        )
+}
+
+enum DocumentVersionApprovalQuorumStatus
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.DocumentVersionApprovalQuorumStatus"
+    ) {
+    PENDING
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DocumentVersionApprovalQuorumStatusPending"
+        )
+    APPROVED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DocumentVersionApprovalQuorumStatusApproved"
+        )
+    REJECTED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DocumentVersionApprovalQuorumStatusRejected"
+        )
+    VOIDED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DocumentVersionApprovalQuorumStatusVoided"
+        )
+}
+
+enum DocumentVersionApprovalQuorumOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.DocumentVersionApprovalQuorumOrderField"
+    ) {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DocumentVersionApprovalQuorumOrderFieldCreatedAt"
+        )
+}
+
+input DocumentOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.DocumentOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: DocumentOrderField!
+}
+
+input DocumentVersionOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.DocumentVersionOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: DocumentVersionOrderField!
+}
+
+input DocumentFilter {
+    query: String
+    documentTypes: [DocumentType!]
+    classifications: [DocumentClassification!]
+    status: [DocumentStatus!]
+}
+
+input DocumentVersionFilter {
+    statuses: [DocumentVersionStatus!]
+}
+
+input DocumentVersionSignatureOrder {
+    field: DocumentVersionSignatureOrderField!
+    direction: OrderDirection!
+}
+
+input DocumentVersionSignatureFilter {
+    states: [DocumentVersionSignatureState!]
+    activeContract: Boolean
+}
+
+input DocumentVersionApprovalQuorumOrder {
+    field: DocumentVersionApprovalQuorumOrderField!
+    direction: OrderDirection!
+}
+
+input DocumentVersionApprovalDecisionFilter {
+    states: [DocumentVersionApprovalDecisionState!]
+}
+
+input DocumentVersionApprovalDecisionOrder {
+    field: DocumentVersionApprovalDecisionOrderField!
+    direction: OrderDirection!
+}
+
+type Document implements Node {
+    id: ID!
+    currentPublishedMajor: Int
+    currentPublishedMinor: Int
+    trustCenterVisibility: TrustCenterVisibility!
+    organization: Organization! @goField(forceResolver: true)
+
+    versions(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: DocumentVersionOrder
+        filter: DocumentVersionFilter
+    ): DocumentVersionConnection! @goField(forceResolver: true)
+
+    controls(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: ControlOrder
+        filter: ControlFilter
+    ): ControlConnection! @goField(forceResolver: true)
+
+    defaultApprovers: [Profile!]! @goField(forceResolver: true)
+
+    status: DocumentStatus!
+    archivedAt: Datetime
+
+    createdAt: Datetime!
+    updatedAt: Datetime!
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type DocumentVersion implements Node {
+    id: ID!
+    document: Document! @goField(forceResolver: true)
+    status: DocumentVersionStatus!
+    major: Int!
+    minor: Int!
+    content: String!
+    changelog: String!
+    title: String!
+    classification: DocumentClassification!
+    documentType: DocumentType!
+    approvers(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: ProfileOrder
+    ): ProfileConnection! @goField(forceResolver: true)
+
+    signatures(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: DocumentVersionSignatureOrder
+        filter: DocumentVersionSignatureFilter
+    ): DocumentVersionSignatureConnection! @goField(forceResolver: true)
+
+    approvalQuorums(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: DocumentVersionApprovalQuorumOrder
+    ): DocumentVersionApprovalQuorumConnection! @goField(forceResolver: true)
+
+    signed: Boolean! @goField(forceResolver: true)
+
+    publishedAt: Datetime
+    createdAt: Datetime!
+    updatedAt: Datetime!
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type DocumentVersionSignature implements Node {
+    id: ID!
+    documentVersion: DocumentVersion! @goField(forceResolver: true)
+    state: DocumentVersionSignatureState!
+    signedBy: Profile! @goField(forceResolver: true)
+    signedAt: Datetime
+    requestedAt: Datetime!
+    createdAt: Datetime!
+    updatedAt: Datetime!
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type DocumentVersionApprovalDecision implements Node {
+    id: ID!
+    quorum: DocumentVersionApprovalQuorum! @goField(forceResolver: true)
+    documentVersion: DocumentVersion! @goField(forceResolver: true)
+    approver: Profile! @goField(forceResolver: true)
+    state: DocumentVersionApprovalDecisionState!
+    comment: String
+    decidedAt: Datetime
+    createdAt: Datetime!
+    updatedAt: Datetime!
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type DocumentVersionApprovalQuorum implements Node {
+    id: ID!
+    documentVersion: DocumentVersion! @goField(forceResolver: true)
+    status: DocumentVersionApprovalQuorumStatus!
+    decisions(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: DocumentVersionApprovalDecisionOrder
+        filter: DocumentVersionApprovalDecisionFilter
+    ): DocumentVersionApprovalDecisionConnection! @goField(forceResolver: true)
+    createdAt: Datetime!
+    updatedAt: Datetime!
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type EmployeeDocument
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.EmployeeDocument"
+    ) {
+    id: ID!
+    title: String!
+    signed: Boolean @goField(forceResolver: true)
+    approvalState: DocumentVersionApprovalDecisionState @goField(forceResolver: true)
+
+    versions(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: DocumentVersionOrder
+    ): EmployeeDocumentVersionConnection! @goField(forceResolver: true)
+
+    createdAt: Datetime!
+    updatedAt: Datetime!
+}
+
+type EmployeeDocumentVersion
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.EmployeeDocumentVersion"
+    ) {
+    id: ID!
+    major: Int!
+    minor: Int!
+    status: DocumentVersionStatus!
+    classification: DocumentClassification!
+    documentType: DocumentType!
+    signed: Boolean! @goField(forceResolver: true)
+    approvalDecision: DocumentVersionApprovalDecision @goField(forceResolver: true)
+    publishedAt: Datetime
+    createdAt: Datetime!
+    updatedAt: Datetime!
+}
+
+type DocumentConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.DocumentConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [DocumentEdge!]!
+    pageInfo: PageInfo!
+}
+
+type DocumentEdge {
+    cursor: CursorKey!
+    node: Document!
+}
+
+type DocumentVersionConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.DocumentVersionConnection"
+    ) {
+    edges: [DocumentVersionEdge!]!
+    pageInfo: PageInfo!
+    totalCount: Int! @goField(forceResolver: true)
+}
+
+type DocumentVersionEdge {
+    cursor: CursorKey!
+    node: DocumentVersion!
+}
+
+type DocumentVersionSignatureConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.DocumentVersionSignatureConnection"
+    ) {
+    edges: [DocumentVersionSignatureEdge!]!
+    pageInfo: PageInfo!
+    totalCount: Int! @goField(forceResolver: true)
+}
+
+type DocumentVersionSignatureEdge {
+    cursor: CursorKey!
+    node: DocumentVersionSignature!
+}
+
+type DocumentVersionApprovalQuorumConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.DocumentVersionApprovalQuorumConnection"
+    ) {
+    edges: [DocumentVersionApprovalQuorumEdge!]!
+    pageInfo: PageInfo!
+    totalCount: Int! @goField(forceResolver: true)
+}
+
+type DocumentVersionApprovalQuorumEdge {
+    cursor: CursorKey!
+    node: DocumentVersionApprovalQuorum!
+}
+
+type DocumentVersionApprovalDecisionConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.DocumentVersionApprovalDecisionConnection"
+    ) {
+    edges: [DocumentVersionApprovalDecisionEdge!]!
+    pageInfo: PageInfo!
+    totalCount: Int! @goField(forceResolver: true)
+}
+
+type DocumentVersionApprovalDecisionEdge {
+    cursor: CursorKey!
+    node: DocumentVersionApprovalDecision!
+}
+
+type EmployeeDocumentConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.EmployeeDocumentConnection"
+    ) {
+    edges: [EmployeeDocumentEdge!]!
+    pageInfo: PageInfo!
+}
+
+type EmployeeDocumentEdge
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.EmployeeDocumentEdge"
+    ) {
+    cursor: CursorKey!
+    node: EmployeeDocument!
+}
+
+type EmployeeDocumentVersionConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.EmployeeDocumentVersionConnection"
+    ) {
+    edges: [EmployeeDocumentVersionEdge!]!
+    pageInfo: PageInfo!
+}
+
+type EmployeeDocumentVersionEdge
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.EmployeeDocumentVersionEdge"
+    ) {
+    cursor: CursorKey!
+    node: EmployeeDocumentVersion!
+}
+
+extend type Mutation {
+    createDocument(input: CreateDocumentInput!): CreateDocumentPayload!
+    updateDocument(input: UpdateDocumentInput!): UpdateDocumentPayload!
+    deleteDocumentDraft(input: DeleteDocumentDraftInput!): DeleteDocumentDraftPayload!
+    archiveDocument(input: ArchiveDocumentInput!): ArchiveDocumentPayload!
+    unarchiveDocument(input: UnarchiveDocumentInput!): UnarchiveDocumentPayload!
+    deleteDocument(input: DeleteDocumentInput!): DeleteDocumentPayload!
+    publishMajorDocumentVersion(
+        input: PublishMajorDocumentVersionInput!
+    ): PublishDocumentVersionPayload!
+    publishMinorDocumentVersion(
+        input: PublishMinorDocumentVersionInput!
+    ): PublishDocumentVersionPayload!
+    bulkPublishMajorDocumentVersions(
+        input: BulkPublishDocumentVersionsInput!
+    ): BulkPublishDocumentVersionsPayload!
+    bulkPublishMinorDocumentVersions(
+        input: BulkPublishDocumentVersionsInput!
+    ): BulkPublishDocumentVersionsPayload!
+    requestDocumentVersionApproval(
+        input: RequestDocumentVersionApprovalInput!
+    ): RequestDocumentVersionApprovalPayload!
+    voidDocumentVersionApproval(
+        input: VoidDocumentVersionApprovalInput!
+    ): VoidDocumentVersionApprovalPayload!
+    bulkDeleteDocuments(
+        input: BulkDeleteDocumentsInput!
+    ): BulkDeleteDocumentsPayload!
+    bulkArchiveDocuments(
+        input: BulkArchiveDocumentsInput!
+    ): BulkArchiveDocumentsPayload!
+    bulkUnarchiveDocuments(
+        input: BulkUnarchiveDocumentsInput!
+    ): BulkUnarchiveDocumentsPayload!
+    bulkExportDocuments(
+        input: BulkExportDocumentsInput!
+    ): BulkExportDocumentsPayload!
+    generateDocumentChangelog(
+        input: GenerateDocumentChangelogInput!
+    ): GenerateDocumentChangelogPayload!
+    requestSignature(input: RequestSignatureInput!): RequestSignaturePayload!
+    bulkRequestSignatures(
+        input: BulkRequestSignaturesInput!
+    ): BulkRequestSignaturesPayload!
+    sendSigningNotifications(
+        input: SendSigningNotificationsInput!
+    ): SendSigningNotificationsPayload!
+    cancelSignatureRequest(
+        input: CancelSignatureRequestInput!
+    ): CancelSignatureRequestPayload!
+    signDocument(input: SignDocumentInput!): SignDocumentPayload!
+    approveDocumentVersion(
+        input: ApproveDocumentVersionInput!
+    ): ApproveDocumentVersionPayload!
+    rejectDocumentVersion(
+        input: RejectDocumentVersionInput!
+    ): RejectDocumentVersionPayload!
+    exportDocumentVersionPDF(
+        input: ExportDocumentVersionPDFInput!
+    ): ExportDocumentVersionPDFPayload!
+    exportEmployeeDocumentVersionPDF(
+        input: ExportEmployeeDocumentVersionPDFInput!
+    ): ExportEmployeeDocumentVersionPDFPayload!
+}
+
+input CreateDocumentInput {
+    organizationId: ID!
+    title: String!
+    content: String
+    documentType: DocumentType!
+    classification: DocumentClassification!
+    trustCenterVisibility: TrustCenterVisibility
+    defaultApproverIds: [ID!]
+}
+
+input UpdateDocumentInput {
+    id: ID!
+    title: String
+    content: String
+    classification: DocumentClassification
+    documentType: DocumentType
+    trustCenterVisibility: TrustCenterVisibility
+    defaultApproverIds: [ID!]
+}
+
+input DeleteDocumentDraftInput {
+    documentId: ID!
+}
+
+input ArchiveDocumentInput {
+    documentId: ID!
+}
+
+input UnarchiveDocumentInput {
+    documentId: ID!
+}
+
+input DeleteDocumentInput {
+    documentId: ID!
+}
+
+input ExportDocumentVersionPDFInput {
+    documentVersionId: ID!
+    withWatermark: Boolean!
+    watermarkEmail: EmailAddr
+    withSignatures: Boolean!
+}
+
+input ExportEmployeeDocumentVersionPDFInput {
+    documentVersionId: ID!
+}
+
+input PublishMajorDocumentVersionInput {
+    documentId: ID!
+    changelog: String
+}
+
+input PublishMinorDocumentVersionInput {
+    documentId: ID!
+    changelog: String
+}
+
+input BulkPublishDocumentVersionsInput {
+    documentIds: [ID!]!
+    changelog: String!
+}
+
+input RequestDocumentVersionApprovalInput {
+    documentId: ID!
+    approverIds: [ID!]!
+    changelog: String
+}
+
+input VoidDocumentVersionApprovalInput {
+    documentVersionId: ID!
+}
+
+input BulkDeleteDocumentsInput {
+    documentIds: [ID!]!
+}
+
+input BulkArchiveDocumentsInput {
+    documentIds: [ID!]!
+}
+
+input BulkUnarchiveDocumentsInput {
+    documentIds: [ID!]!
+}
+
+input BulkExportDocumentsInput {
+    documentIds: [ID!]!
+    withWatermark: Boolean!
+    watermarkEmail: EmailAddr
+    withSignatures: Boolean!
+}
+
+input GenerateDocumentChangelogInput {
+    documentId: ID!
+}
+
+input RequestSignatureInput {
+    documentVersionId: ID!
+    signatoryId: ID!
+}
+
+input BulkRequestSignaturesInput {
+    documentIds: [ID!]!
+    signatoryIds: [ID!]!
+}
+
+input SendSigningNotificationsInput {
+    organizationId: ID!
+}
+
+input CancelSignatureRequestInput {
+    documentVersionSignatureId: ID!
+}
+
+input SignDocumentInput {
+    documentVersionId: ID!
+}
+
+input ApproveDocumentVersionInput {
+    documentVersionId: ID!
+    comment: String
+}
+
+input RejectDocumentVersionInput {
+    documentVersionId: ID!
+    comment: String
+}
+
+type CreateDocumentPayload {
+    documentEdge: DocumentEdge!
+    documentVersionEdge: DocumentVersionEdge!
+}
+
+type UpdateDocumentPayload {
+    document: Document!
+    documentVersion: DocumentVersion
+    documentVersionEdge: DocumentVersionEdge
+}
+
+type DeleteDocumentDraftPayload {
+    document: Document!
+}
+
+type ArchiveDocumentPayload {
+    document: Document!
+}
+
+type UnarchiveDocumentPayload {
+    document: Document!
+}
+
+type DeleteDocumentPayload {
+    deletedDocumentId: ID!
+}
+
+type ExportDocumentVersionPDFPayload {
+    data: String!
+}
+
+type ExportEmployeeDocumentVersionPDFPayload {
+    data: String!
+}
+
+type PublishDocumentVersionPayload {
+    document: Document!
+    documentVersion: DocumentVersion!
+}
+
+type BulkPublishDocumentVersionsPayload {
+    documentVersions: [DocumentVersion!]!
+    documents: [Document!]!
+}
+
+type RequestDocumentVersionApprovalPayload {
+    approvalQuorum: DocumentVersionApprovalQuorum!
+}
+
+type VoidDocumentVersionApprovalPayload {
+    approvalQuorum: DocumentVersionApprovalQuorum!
+    documentVersion: DocumentVersion!
+}
+
+type BulkDeleteDocumentsPayload {
+    deletedDocumentIds: [ID!]!
+}
+
+type BulkArchiveDocumentsPayload {
+    documents: [Document!]!
+}
+
+type BulkUnarchiveDocumentsPayload {
+    documents: [Document!]!
+}
+
+type BulkExportDocumentsPayload {
+    exportJobId: ID!
+}
+
+type RequestSignaturePayload {
+    documentVersionSignatureEdge: DocumentVersionSignatureEdge!
+}
+
+type BulkRequestSignaturesPayload {
+    documentVersionSignatureEdges: [DocumentVersionSignatureEdge!]!
+}
+
+type SendSigningNotificationsPayload {
+    success: Boolean!
+}
+
+type CancelSignatureRequestPayload {
+    deletedDocumentVersionSignatureId: ID!
+}
+
+type SignDocumentPayload {
+    documentVersionSignature: DocumentVersionSignature!
+}
+
+type ApproveDocumentVersionPayload {
+    approvalDecision: DocumentVersionApprovalDecision!
+}
+
+type RejectDocumentVersionPayload {
+    approvalDecision: DocumentVersionApprovalDecision!
+}
+
+type GenerateDocumentChangelogPayload {
+    changelog: String!
+}

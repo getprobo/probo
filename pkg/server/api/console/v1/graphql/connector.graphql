@@ -1,0 +1,148 @@
+extend type Organization {
+    slackConnections(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+    ): SlackConnectionConnection! @goField(forceResolver: true)
+    slackOAuth2Scopes: [String!]! @goField(forceResolver: true)
+    connectors(filter: ConnectorFilter): [Connector!]! @goField(forceResolver: true)
+    connectorProviderInfos: [ConnectorProviderInfo!]! @goField(forceResolver: true)
+}
+
+enum ConnectorProvider
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.ConnectorProvider") {
+    SLACK @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderSlack")
+    GOOGLE_WORKSPACE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderGoogleWorkspace"
+        )
+    LINEAR @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderLinear")
+    ONE_PASSWORD
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderOnePassword"
+        )
+    HUBSPOT
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderHubSpot")
+    DOCUSIGN
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderDocuSign")
+    NOTION @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderNotion")
+    BREX @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderBrex")
+    TALLY @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderTally")
+    CLOUDFLARE
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderCloudflare")
+    OPENAI @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderOpenAI")
+    SENTRY @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderSentry")
+    SUPABASE
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderSupabase")
+    GITHUB @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderGitHub")
+    INTERCOM
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderIntercom")
+    RESEND @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderResend")
+}
+
+type ConnectorProviderInfo {
+    provider: ConnectorProvider!
+    displayName: String!
+    oauthConfigured: Boolean!
+    apiKeySupported: Boolean!
+    clientCredentialsSupported: Boolean!
+    oauth2Scopes: [String!]!
+    extraSettings: [ConnectorProviderSettingInfo!]!
+}
+
+type ConnectorProviderSettingInfo {
+    key: String!
+    label: String!
+    required: Boolean!
+}
+
+input ConnectorFilter {
+    providers: [ConnectorProvider!]
+}
+
+type Connector {
+    id: ID!
+    provider: ConnectorProvider!
+    oauth2Scopes: [String!]! @goField(forceResolver: true)
+    createdAt: Datetime!
+}
+
+type SlackConnection implements Node {
+    id: ID!
+    channel: String
+    channelId: String
+    createdAt: Datetime!
+    updatedAt: Datetime!
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type SlackConnectionConnection {
+    edges: [SlackConnectionEdge!]!
+    pageInfo: PageInfo!
+}
+
+type SlackConnectionEdge {
+    cursor: CursorKey!
+    node: SlackConnection!
+}
+
+extend type Mutation {
+    createAPIKeyConnector(
+        input: CreateAPIKeyConnectorInput!
+    ): CreateAPIKeyConnectorPayload!
+    createClientCredentialsConnector(
+        input: CreateClientCredentialsConnectorInput!
+    ): CreateClientCredentialsConnectorPayload!
+    deleteConnector(input: DeleteConnectorInput!): DeleteConnectorPayload!
+    deleteSlackConnection(
+        input: DeleteSlackConnectionInput!
+    ): DeleteSlackConnectionPayload!
+}
+
+input CreateAPIKeyConnectorInput {
+    organizationId: ID!
+    provider: ConnectorProvider!
+    apiKey: String!
+    tallyOrganizationId: String
+    sentryOrganizationSlug: String
+    supabaseOrganizationSlug: String
+    githubOrganization: String
+    onePasswordScimBridgeUrl: String
+}
+
+type CreateAPIKeyConnectorPayload {
+    connector: Connector!
+}
+
+input CreateClientCredentialsConnectorInput {
+    organizationId: ID!
+    provider: ConnectorProvider!
+    clientId: String!
+    clientSecret: String!
+    tokenUrl: String!
+    scope: String
+    onePasswordAccountId: String
+    onePasswordRegion: String
+}
+
+type CreateClientCredentialsConnectorPayload {
+    connector: Connector
+}
+
+input DeleteConnectorInput {
+    connectorId: ID!
+}
+
+type DeleteConnectorPayload {
+    deletedConnectorId: ID!
+}
+
+input DeleteSlackConnectionInput {
+    slackConnectionId: ID!
+}
+
+type DeleteSlackConnectionPayload {
+    deletedSlackConnectionId: ID!
+}

@@ -7,7 +7,8 @@
   },
   "projects": {
     "core": {
-      "schema": "pkg/server/api/console/v1/schema.graphql",
+      "schema": "pkg/server/api/console/v1/graphql/base.graphql",
+      "schemaExtensions": ["pkg/server/api/console/v1/graphql"],
       "language": "typescript",
       "noFutureProofEnums": true,
       "output": "apps/console/src/__generated__/core",
@@ -22,7 +23,8 @@
       }
     },
     "iam": {
-      "schema": "pkg/server/api/connect/v1/schema.graphql",
+      "schema": "pkg/server/api/connect/v1/graphql/base.graphql",
+      "schemaExtensions": ["pkg/server/api/connect/v1/graphql"],
       "language": "typescript",
       "noFutureProofEnums": true,
       "output": "apps/console/src/__generated__/iam",
@@ -37,7 +39,8 @@
       }
     },
     "trust": {
-      "schema": "pkg/server/api/trust/v1/schema.graphql",
+      "schema": "pkg/server/api/trust/v1/graphql/base.graphql",
+      "schemaExtensions": ["pkg/server/api/trust/v1/graphql"],
       "language": "typescript",
       "noFutureProofEnums": true,
       "customScalarTypes": {

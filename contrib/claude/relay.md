@@ -6,16 +6,18 @@ The console app uses [Relay](https://relay.dev/) as its GraphQL client. All Grap
 
 Two Relay environments connect to two separate GraphQL APIs:
 
-| Environment | Endpoint | Purpose |
-|-------------|----------|---------|
-| `coreEnvironment` | `/api/console/v1/graphql` | Main application data |
-| `iamEnvironment` | `/api/connect/v1/graphql` | Authentication / identity |
+
+| Environment       | Endpoint                  | Purpose                   |
+| ----------------- | ------------------------- | ------------------------- |
+| `coreEnvironment` | `/api/console/v1/graphql` | Main application data     |
+| `iamEnvironment`  | `/api/connect/v1/graphql` | Authentication / identity |
+
 
 Configured in `apps/console/src/environments.ts`. Each has its own store with 1-minute query cache expiration.
 
 ## Relay compiler
 
-Config lives in `relay.config.json` at the repo root with three projects (`core`, `iam`, `trust`) mapped to different source directories and schemas. Generated files go into `__generated__/` directories.
+Config lives in `relay.config.json` at the repo root with three projects (`core`, `iam`, `trust`) mapped to different source directories and schemas. Each project uses `schema` pointing to `base.graphql` and `schemaExtensions` pointing to the `graphql/` directory containing the per-entity schema files. Generated files go into `__generated__/` directories.
 
 ```sh
 npm run relay          # clean + compile (from repo root)
@@ -381,7 +383,7 @@ return () => {
 
 ## File organization
 
-GraphQL operations are colocated with the components that use them. See [`contrib/claude/app-arborescence.md`](app-arborescence.md) for the full folder layout.
+GraphQL operations are colocated with the components that use them. See `[contrib/claude/app-arborescence.md](app-arborescence.md)` for the full folder layout.
 
 ```
 pages/organizations/vendors/

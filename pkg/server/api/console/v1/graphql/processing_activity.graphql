@@ -1,0 +1,298 @@
+extend type Organization {
+    processingActivities(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: ProcessingActivityOrder
+        filter: ProcessingActivityFilter = { snapshotId: null }
+    ): ProcessingActivityConnection! @goField(forceResolver: true)
+}
+
+enum ProcessingActivitySpecialOrCriminalDatum
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.ProcessingActivitySpecialOrCriminalDatum"
+    ) {
+    YES
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ProcessingActivitySpecialOrCriminalDatumYes"
+        )
+    NO
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ProcessingActivitySpecialOrCriminalDatumNo"
+        )
+    POSSIBLE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ProcessingActivitySpecialOrCriminalDatumPossible"
+        )
+}
+
+enum ProcessingActivityLawfulBasis
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.ProcessingActivityLawfulBasis"
+    ) {
+    LEGITIMATE_INTEREST
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ProcessingActivityLawfulBasisLegitimateInterest"
+        )
+    CONSENT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ProcessingActivityLawfulBasisConsent"
+        )
+    CONTRACTUAL_NECESSITY
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ProcessingActivityLawfulBasisContractualNecessity"
+        )
+    LEGAL_OBLIGATION
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ProcessingActivityLawfulBasisLegalObligation"
+        )
+    VITAL_INTERESTS
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ProcessingActivityLawfulBasisVitalInterests"
+        )
+    PUBLIC_TASK
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ProcessingActivityLawfulBasisPublicTask"
+        )
+}
+
+enum ProcessingActivityTransferSafeguard
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.ProcessingActivityTransferSafeguard"
+    ) {
+    STANDARD_CONTRACTUAL_CLAUSES
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ProcessingActivityTransferSafeguardStandardContractualClauses"
+        )
+    BINDING_CORPORATE_RULES
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ProcessingActivityTransferSafeguardBindingCorporateRules"
+        )
+    ADEQUACY_DECISION
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ProcessingActivityTransferSafeguardAdequacyDecision"
+        )
+    DEROGATIONS
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ProcessingActivityTransferSafeguardDerogations"
+        )
+    CODES_OF_CONDUCT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ProcessingActivityTransferSafeguardCodesOfConduct"
+        )
+    CERTIFICATION_MECHANISMS
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ProcessingActivityTransferSafeguardCertificationMechanisms"
+        )
+}
+
+enum ProcessingActivityDataProtectionImpactAssessment
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.ProcessingActivityDataProtectionImpactAssessment"
+    ) {
+    NEEDED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ProcessingActivityDataProtectionImpactAssessmentNeeded"
+        )
+    NOT_NEEDED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ProcessingActivityDataProtectionImpactAssessmentNotNeeded"
+        )
+}
+
+enum ProcessingActivityTransferImpactAssessment
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.ProcessingActivityTransferImpactAssessment"
+    ) {
+    NEEDED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ProcessingActivityTransferImpactAssessmentNeeded"
+        )
+    NOT_NEEDED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ProcessingActivityTransferImpactAssessmentNotNeeded"
+        )
+}
+
+enum ProcessingActivityRole
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.ProcessingActivityRole") {
+    CONTROLLER
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ProcessingActivityRoleController"
+        )
+    PROCESSOR
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ProcessingActivityRoleProcessor"
+        )
+}
+
+enum ProcessingActivityOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.ProcessingActivityOrderField"
+    ) {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ProcessingActivityOrderFieldCreatedAt"
+        )
+    NAME
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ProcessingActivityOrderFieldName"
+        )
+}
+
+input ProcessingActivityOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ProcessingActivityOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: ProcessingActivityOrderField!
+}
+
+input ProcessingActivityFilter {
+    snapshotId: ID
+}
+
+type ProcessingActivity implements Node {
+    id: ID!
+    snapshotId: ID
+    sourceId: ID
+    organization: Organization! @goField(forceResolver: true)
+    name: String!
+    purpose: String
+    dataSubjectCategory: String
+    personalDataCategory: String
+    specialOrCriminalData: ProcessingActivitySpecialOrCriminalDatum!
+    consentEvidenceLink: String
+    lawfulBasis: ProcessingActivityLawfulBasis!
+    recipients: String
+    location: String
+    internationalTransfers: Boolean!
+    transferSafeguards: ProcessingActivityTransferSafeguard
+    retentionPeriod: String
+    securityMeasures: String
+    dataProtectionImpactAssessmentNeeded: ProcessingActivityDataProtectionImpactAssessment!
+    transferImpactAssessmentNeeded: ProcessingActivityTransferImpactAssessment!
+    lastReviewDate: Datetime
+    nextReviewDate: Datetime
+    role: ProcessingActivityRole!
+    dataProtectionOfficer: Profile @goField(forceResolver: true)
+    vendors(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: VendorOrder
+    ): VendorConnection! @goField(forceResolver: true)
+    dataProtectionImpactAssessment: DataProtectionImpactAssessment
+        @goField(forceResolver: true)
+    transferImpactAssessment: TransferImpactAssessment
+        @goField(forceResolver: true)
+    createdAt: Datetime!
+    updatedAt: Datetime!
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type ProcessingActivityConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ProcessingActivityConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [ProcessingActivityEdge!]!
+    pageInfo: PageInfo!
+}
+
+type ProcessingActivityEdge {
+    cursor: CursorKey!
+    node: ProcessingActivity!
+}
+
+extend type Mutation {
+    createProcessingActivity(
+        input: CreateProcessingActivityInput!
+    ): CreateProcessingActivityPayload!
+    updateProcessingActivity(
+        input: UpdateProcessingActivityInput!
+    ): UpdateProcessingActivityPayload!
+    deleteProcessingActivity(
+        input: DeleteProcessingActivityInput!
+    ): DeleteProcessingActivityPayload!
+    exportProcessingActivitiesPDF(
+        input: ExportProcessingActivitiesPDFInput!
+    ): ExportProcessingActivitiesPDFPayload!
+}
+
+input CreateProcessingActivityInput {
+    organizationId: ID!
+    name: String!
+    purpose: String
+    dataSubjectCategory: String
+    personalDataCategory: String
+    specialOrCriminalData: ProcessingActivitySpecialOrCriminalDatum!
+    consentEvidenceLink: String
+    lawfulBasis: ProcessingActivityLawfulBasis!
+    recipients: String
+    location: String
+    internationalTransfers: Boolean!
+    transferSafeguards: ProcessingActivityTransferSafeguard
+    retentionPeriod: String
+    securityMeasures: String
+    dataProtectionImpactAssessmentNeeded: ProcessingActivityDataProtectionImpactAssessment!
+    transferImpactAssessmentNeeded: ProcessingActivityTransferImpactAssessment!
+    lastReviewDate: Datetime
+    nextReviewDate: Datetime
+    role: ProcessingActivityRole!
+    dataProtectionOfficerId: ID
+    vendorIds: [ID!]
+}
+
+input UpdateProcessingActivityInput {
+    id: ID!
+    name: String
+    purpose: String @goField(omittable: true)
+    dataSubjectCategory: String @goField(omittable: true)
+    personalDataCategory: String @goField(omittable: true)
+    specialOrCriminalData: ProcessingActivitySpecialOrCriminalDatum
+    consentEvidenceLink: String
+    lawfulBasis: ProcessingActivityLawfulBasis
+    recipients: String @goField(omittable: true)
+    location: String @goField(omittable: true)
+    internationalTransfers: Boolean
+    transferSafeguards: ProcessingActivityTransferSafeguard
+        @goField(omittable: true)
+    retentionPeriod: String @goField(omittable: true)
+    securityMeasures: String @goField(omittable: true)
+    dataProtectionImpactAssessmentNeeded: ProcessingActivityDataProtectionImpactAssessment
+    transferImpactAssessmentNeeded: ProcessingActivityTransferImpactAssessment
+    lastReviewDate: Datetime @goField(omittable: true)
+    nextReviewDate: Datetime @goField(omittable: true)
+    role: ProcessingActivityRole
+    dataProtectionOfficerId: ID @goField(omittable: true)
+    vendorIds: [ID!]
+}
+
+input DeleteProcessingActivityInput {
+    processingActivityId: ID!
+}
+
+input ExportProcessingActivitiesPDFInput {
+    organizationId: ID!
+    filter: ProcessingActivityFilter
+}
+
+type CreateProcessingActivityPayload {
+    processingActivityEdge: ProcessingActivityEdge!
+}
+
+type UpdateProcessingActivityPayload {
+    processingActivity: ProcessingActivity!
+}
+
+type DeleteProcessingActivityPayload {
+    deletedProcessingActivityId: ID!
+}
+
+type ExportProcessingActivitiesPDFPayload {
+    data: String!
+}

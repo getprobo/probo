@@ -1,0 +1,56 @@
+extend type Mutation {
+  createOrganization(
+    input: CreateOrganizationInput!
+  ): CreateOrganizationPayload @session(required: PRESENT)
+  updateOrganization(
+    input: UpdateOrganizationInput!
+  ): UpdateOrganizationPayload @session(required: PRESENT)
+  deleteOrganization(
+    input: DeleteOrganizationInput!
+  ): DeleteOrganizationPayload @session(required: PRESENT)
+  deleteOrganizationHorizontalLogo(
+    input: DeleteOrganizationHorizontalLogoInput!
+  ): DeleteOrganizationHorizontalLogoPayload @session(required: PRESENT)
+}
+
+input CreateOrganizationInput {
+  name: String!
+  logoFile: Upload
+  horizontalLogoFile: Upload
+}
+
+input UpdateOrganizationInput {
+  organizationId: ID!
+  name: String
+  logoFile: Upload
+  horizontalLogoFile: Upload
+  description: String @goField(omittable: true)
+  websiteUrl: String @goField(omittable: true)
+  email: String @goField(omittable: true)
+  headquarterAddress: String @goField(omittable: true)
+}
+
+input DeleteOrganizationInput {
+  organizationId: ID!
+}
+
+input DeleteOrganizationHorizontalLogoInput {
+  organizationId: ID!
+}
+
+type CreateOrganizationPayload {
+  organization: Organization
+  profile: Profile!
+}
+
+type UpdateOrganizationPayload {
+  organization: Organization
+}
+
+type DeleteOrganizationPayload {
+  deletedOrganizationId: ID!
+}
+
+type DeleteOrganizationHorizontalLogoPayload {
+  organization: Organization!
+}

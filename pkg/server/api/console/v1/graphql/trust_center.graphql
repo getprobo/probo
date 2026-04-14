@@ -1,0 +1,771 @@
+extend type Organization {
+    trustCenter: TrustCenter @goField(forceResolver: true)
+    customDomain: CustomDomain @goField(forceResolver: true)
+    trustCenterFiles(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: TrustCenterFileOrder
+    ): TrustCenterFileConnection! @goField(forceResolver: true)
+}
+
+enum TrustCenterVisibility
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.TrustCenterVisibility") {
+    NONE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TrustCenterVisibilityNone"
+        )
+    PRIVATE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TrustCenterVisibilityPrivate"
+        )
+    PUBLIC
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TrustCenterVisibilityPublic"
+        )
+}
+
+enum SearchEngineIndexing
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.SearchEngineIndexing"
+    ) {
+    INDEXABLE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.SearchEngineIndexingIndexable"
+        )
+    NOT_INDEXABLE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.SearchEngineIndexingNotIndexable"
+        )
+}
+
+enum TrustCenterDocumentAccessStatus
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.TrustCenterDocumentAccessStatus"
+    ) {
+    REQUESTED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TrustCenterDocumentAccessStatusRequested"
+        )
+    GRANTED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TrustCenterDocumentAccessStatusGranted"
+        )
+    REJECTED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TrustCenterDocumentAccessStatusRejected"
+        )
+    REVOKED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TrustCenterDocumentAccessStatusRevoked"
+        )
+}
+
+enum TrustCenterAccessOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.TrustCenterAccessOrderField"
+    ) {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TrustCenterAccessOrderFieldCreatedAt"
+        )
+}
+
+enum TrustCenterAccessState
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.TrustCenterAccessState"
+    ) {
+    ACTIVE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TrustCenterAccessStateActive"
+        )
+    INACTIVE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TrustCenterAccessStateInactive"
+        )
+}
+
+enum TrustCenterDocumentAccessOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.TrustCenterDocumentAccessOrderField"
+    ) {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TrustCenterDocumentAccessOrderFieldCreatedAt"
+        )
+}
+
+enum TrustCenterReferenceOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.TrustCenterReferenceOrderField"
+    ) {
+    RANK
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TrustCenterReferenceOrderFieldRank"
+        )
+    NAME
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TrustCenterReferenceOrderFieldName"
+        )
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TrustCenterReferenceOrderFieldCreatedAt"
+        )
+    UPDATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TrustCenterReferenceOrderFieldUpdatedAt"
+        )
+}
+
+enum ComplianceExternalURLOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.ComplianceExternalURLOrderField"
+    ) {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ComplianceExternalURLOrderFieldCreatedAt"
+        )
+    RANK
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ComplianceExternalURLOrderFieldRank"
+        )
+}
+
+enum ComplianceFrameworkOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.ComplianceFrameworkOrderField"
+    ) {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ComplianceFrameworkOrderFieldCreatedAt"
+        )
+    RANK
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ComplianceFrameworkOrderFieldRank"
+        )
+}
+
+enum ComplianceFrameworkVisibility
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.ComplianceFrameworkVisibility"
+    ) {
+    NONE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ComplianceFrameworkVisibilityNone"
+        )
+    PUBLIC
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ComplianceFrameworkVisibilityPublic"
+        )
+}
+
+enum TrustCenterFileOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.TrustCenterFileOrderField"
+    ) {
+    NAME
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TrustCenterFileOrderFieldName"
+        )
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TrustCenterFileOrderFieldCreatedAt"
+        )
+    UPDATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TrustCenterFileOrderFieldUpdatedAt"
+        )
+}
+
+enum SSLStatus
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.CustomDomainSSLStatus") {
+    PENDING
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CustomDomainSSLStatusPending"
+        )
+    PROVISIONING
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CustomDomainSSLStatusProvisioning"
+        )
+    ACTIVE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CustomDomainSSLStatusActive"
+        )
+    RENEWING
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CustomDomainSSLStatusRenewing"
+        )
+    EXPIRED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CustomDomainSSLStatusExpired"
+        )
+    FAILED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CustomDomainSSLStatusFailed"
+        )
+}
+
+input TrustCenterAccessOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.TrustCenterAccessOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: TrustCenterAccessOrderField!
+}
+
+input TrustCenterDocumentAccessOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.TrustCenterDocumentAccessOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: TrustCenterDocumentAccessOrderField!
+}
+
+input TrustCenterReferenceOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.TrustCenterReferenceOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: TrustCenterReferenceOrderField!
+}
+
+input TrustCenterFileOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.TrustCenterFileOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: TrustCenterFileOrderField!
+}
+
+input ComplianceExternalURLOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ComplianceExternalURLOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: ComplianceExternalURLOrderField!
+}
+
+input ComplianceFrameworkOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ComplianceFrameworkOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: ComplianceFrameworkOrderField!
+}
+
+type TrustCenter implements Node
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.TrustCenter"
+    ) {
+    id: ID!
+    active: Boolean!
+    searchEngineIndexing: SearchEngineIndexing!
+    logoFileUrl: String @goField(forceResolver: true)
+    darkLogoFileUrl: String @goField(forceResolver: true)
+    ndaFileName: String
+    ndaFileUrl: String @goField(forceResolver: true)
+    createdAt: Datetime!
+    updatedAt: Datetime!
+    organization: Organization! @goField(forceResolver: true)
+
+    accesses(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: TrustCenterAccessOrder
+    ): TrustCenterAccessConnection! @goField(forceResolver: true)
+
+    references(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: TrustCenterReferenceOrder
+    ): TrustCenterReferenceConnection! @goField(forceResolver: true)
+
+    complianceFrameworks(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: ComplianceFrameworkOrder
+    ): ComplianceFrameworkConnection! @goField(forceResolver: true)
+
+    externalUrls(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: ComplianceExternalURLOrder
+    ): ComplianceExternalURLConnection! @goField(forceResolver: true)
+
+    mailingList: MailingList @goField(forceResolver: true)
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type TrustCenterConnection {
+    edges: [TrustCenterEdge!]!
+    pageInfo: PageInfo!
+}
+
+type TrustCenterEdge {
+    cursor: CursorKey!
+    node: TrustCenter!
+}
+
+type TrustCenterAccess implements Node {
+    id: ID!
+    ndaSignature: ElectronicSignature @goField(forceResolver: true)
+    createdAt: Datetime!
+    updatedAt: Datetime!
+    pendingRequestCount: Int! @goField(forceResolver: true)
+    activeCount: Int! @goField(forceResolver: true)
+    organizationId: ID!
+    identityID: ID!
+
+    profile: Profile! @goField(forceResolver: true)
+
+    availableDocumentAccesses(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: TrustCenterDocumentAccessOrder
+    ): TrustCenterDocumentAccessConnection! @goField(forceResolver: true)
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type TrustCenterDocumentAccess
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.TrustCenterDocumentAccess"
+    ) {
+    id: ID!
+    status: TrustCenterDocumentAccessStatus!
+    document: Document @goField(forceResolver: true)
+    report: Report @goField(forceResolver: true)
+    trustCenterFile: TrustCenterFile @goField(forceResolver: true)
+}
+
+type TrustCenterDocumentAccessConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.TrustCenterDocumentAccessConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [TrustCenterDocumentAccessEdge!]!
+    pageInfo: PageInfo!
+}
+
+type TrustCenterDocumentAccessEdge {
+    cursor: CursorKey!
+    node: TrustCenterDocumentAccess!
+}
+
+type TrustCenterAccessConnection {
+    edges: [TrustCenterAccessEdge!]!
+    pageInfo: PageInfo!
+}
+
+type TrustCenterAccessEdge {
+    cursor: CursorKey!
+    node: TrustCenterAccess!
+}
+
+type TrustCenterReference implements Node {
+    id: ID!
+    name: String!
+    description: String
+    websiteUrl: String!
+    logoUrl: String! @goField(forceResolver: true)
+    rank: Int!
+    createdAt: Datetime!
+    updatedAt: Datetime!
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type TrustCenterReferenceConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.TrustCenterReferenceConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [TrustCenterReferenceEdge!]!
+    pageInfo: PageInfo!
+}
+
+type TrustCenterReferenceEdge {
+    cursor: CursorKey!
+    node: TrustCenterReference!
+}
+
+type ComplianceFramework implements Node
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ComplianceFramework"
+    ) {
+    id: ID!
+    framework: Framework! @goField(forceResolver: true)
+    rank: Int!
+    visibility: ComplianceFrameworkVisibility!
+    createdAt: Datetime!
+    updatedAt: Datetime!
+}
+
+type ComplianceFrameworkConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ComplianceFrameworkConnection"
+    ) {
+    edges: [ComplianceFrameworkEdge!]!
+    pageInfo: PageInfo!
+}
+
+type ComplianceFrameworkEdge {
+    cursor: CursorKey!
+    node: ComplianceFramework!
+}
+
+type ComplianceExternalURL implements Node {
+    id: ID!
+    name: String!
+    url: String!
+    rank: Int!
+    createdAt: Datetime!
+    updatedAt: Datetime!
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type ComplianceExternalURLConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ComplianceExternalURLConnection"
+    ) {
+    edges: [ComplianceExternalURLEdge!]!
+    pageInfo: PageInfo!
+}
+
+type ComplianceExternalURLEdge {
+    cursor: CursorKey!
+    node: ComplianceExternalURL!
+}
+
+type TrustCenterFile implements Node {
+    id: ID!
+    name: String!
+    category: String!
+    fileUrl: String! @goField(forceResolver: true)
+    trustCenterVisibility: TrustCenterVisibility!
+    createdAt: Datetime!
+    updatedAt: Datetime!
+    organization: Organization! @goField(forceResolver: true)
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type TrustCenterFileConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.TrustCenterFileConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [TrustCenterFileEdge!]!
+    pageInfo: PageInfo!
+}
+
+type TrustCenterFileEdge {
+    cursor: CursorKey!
+    node: TrustCenterFile!
+}
+
+type CustomDomain implements Node {
+    id: ID!
+    organization: Organization!
+    domain: String!
+    sslStatus: SSLStatus!
+    sslExpiresAt: Datetime
+    dnsRecords: [DNSRecordInstruction!]!
+    createdAt: Datetime!
+    updatedAt: Datetime!
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type DNSRecordInstruction {
+    type: String!
+    name: String!
+    value: String!
+    ttl: Int!
+    purpose: String!
+}
+
+extend type Mutation {
+    updateTrustCenter(input: UpdateTrustCenterInput!): UpdateTrustCenterPayload!
+    uploadTrustCenterNDA(
+        input: UploadTrustCenterNDAInput!
+    ): UploadTrustCenterNDAPayload!
+    deleteTrustCenterNDA(
+        input: DeleteTrustCenterNDAInput!
+    ): DeleteTrustCenterNDAPayload!
+    updateTrustCenterBrand(
+        input: UpdateTrustCenterBrandInput!
+    ): UpdateTrustCenterBrandPayload!
+    updateTrustCenterAccess(
+        input: UpdateTrustCenterAccessInput!
+    ): UpdateTrustCenterAccessPayload!
+    deleteTrustCenterAccess(
+        input: DeleteTrustCenterAccessInput!
+    ): DeleteTrustCenterAccessPayload!
+    createTrustCenterReference(
+        input: CreateTrustCenterReferenceInput!
+    ): CreateTrustCenterReferencePayload!
+    updateTrustCenterReference(
+        input: UpdateTrustCenterReferenceInput!
+    ): UpdateTrustCenterReferencePayload!
+    deleteTrustCenterReference(
+        input: DeleteTrustCenterReferenceInput!
+    ): DeleteTrustCenterReferencePayload!
+    createComplianceFramework(
+        input: CreateComplianceFrameworkInput!
+    ): CreateComplianceFrameworkPayload!
+    updateComplianceFramework(
+        input: UpdateComplianceFrameworkInput!
+    ): UpdateComplianceFrameworkPayload!
+    deleteComplianceFramework(
+        input: DeleteComplianceFrameworkInput!
+    ): DeleteComplianceFrameworkPayload!
+    createComplianceExternalURL(
+        input: CreateComplianceExternalURLInput!
+    ): CreateComplianceExternalURLPayload!
+    updateComplianceExternalURL(
+        input: UpdateComplianceExternalURLInput!
+    ): UpdateComplianceExternalURLPayload!
+    deleteComplianceExternalURL(
+        input: DeleteComplianceExternalURLInput!
+    ): DeleteComplianceExternalURLPayload!
+    createTrustCenterFile(
+        input: CreateTrustCenterFileInput!
+    ): CreateTrustCenterFilePayload!
+    updateTrustCenterFile(
+        input: UpdateTrustCenterFileInput!
+    ): UpdateTrustCenterFilePayload!
+    getTrustCenterFile(
+        input: GetTrustCenterFileInput!
+    ): GetTrustCenterFilePayload!
+    deleteTrustCenterFile(
+        input: DeleteTrustCenterFileInput!
+    ): DeleteTrustCenterFilePayload!
+    createCustomDomain(
+        input: CreateCustomDomainInput!
+    ): CreateCustomDomainPayload!
+    deleteCustomDomain(
+        input: DeleteCustomDomainInput!
+    ): DeleteCustomDomainPayload!
+}
+
+input UpdateTrustCenterInput {
+    trustCenterId: ID!
+    active: Boolean
+    searchEngineIndexing: SearchEngineIndexing
+}
+
+input UploadTrustCenterNDAInput {
+    trustCenterId: ID!
+    fileName: String!
+    file: Upload!
+}
+
+input DeleteTrustCenterNDAInput {
+    trustCenterId: ID!
+}
+
+input UpdateTrustCenterBrandInput {
+    trustCenterId: ID!
+    logoFile: Upload @goField(omittable: true)
+    darkLogoFile: Upload @goField(omittable: true)
+}
+
+input TrustCenterDocumentAccessInput {
+    id: ID!
+    status: TrustCenterDocumentAccessStatus!
+}
+
+input UpdateTrustCenterAccessInput {
+    id: ID!
+    name: String
+    state: TrustCenterAccessState
+    documents: [TrustCenterDocumentAccessInput!]
+    reports: [TrustCenterDocumentAccessInput!]
+    trustCenterFiles: [TrustCenterDocumentAccessInput!]
+}
+
+input DeleteTrustCenterAccessInput {
+    id: ID!
+}
+
+input CreateTrustCenterReferenceInput {
+    trustCenterId: ID!
+    name: String!
+    description: String
+    websiteUrl: String!
+    logoFile: Upload!
+}
+
+input UpdateTrustCenterReferenceInput {
+    id: ID!
+    name: String
+    description: String @goField(omittable: true)
+    websiteUrl: String
+    logoFile: Upload
+    rank: Int
+}
+
+input DeleteTrustCenterReferenceInput {
+    id: ID!
+}
+
+input CreateComplianceFrameworkInput {
+    trustCenterId: ID!
+    frameworkId: ID!
+}
+
+input UpdateComplianceFrameworkInput {
+    id: ID!
+    rank: Int!
+}
+
+input DeleteComplianceFrameworkInput {
+    id: ID!
+}
+
+input CreateComplianceExternalURLInput {
+    trustCenterId: ID!
+    name: String!
+    url: String!
+}
+
+input UpdateComplianceExternalURLInput {
+    id: ID!
+    name: String!
+    url: String!
+    rank: Int
+}
+
+input DeleteComplianceExternalURLInput {
+    id: ID!
+}
+
+input CreateTrustCenterFileInput {
+    organizationId: ID!
+    name: String!
+    category: String!
+    file: Upload!
+    trustCenterVisibility: TrustCenterVisibility!
+}
+
+input UpdateTrustCenterFileInput {
+    id: ID!
+    name: String
+    category: String
+    trustCenterVisibility: TrustCenterVisibility
+}
+
+input GetTrustCenterFileInput {
+    id: ID!
+}
+
+input DeleteTrustCenterFileInput {
+    id: ID!
+}
+
+input CreateCustomDomainInput {
+    organizationId: ID!
+    domain: String!
+}
+
+input DeleteCustomDomainInput {
+    organizationId: ID!
+}
+
+type UpdateTrustCenterPayload {
+    trustCenter: TrustCenter!
+}
+
+type UploadTrustCenterNDAPayload {
+    trustCenter: TrustCenter!
+}
+
+type DeleteTrustCenterNDAPayload {
+    trustCenter: TrustCenter!
+}
+
+type UpdateTrustCenterBrandPayload {
+    trustCenter: TrustCenter!
+}
+
+type UpdateTrustCenterAccessPayload {
+    trustCenterAccess: TrustCenterAccess!
+}
+
+type DeleteTrustCenterAccessPayload {
+    deletedTrustCenterAccessId: ID!
+}
+
+type CreateTrustCenterReferencePayload {
+    trustCenterReferenceEdge: TrustCenterReferenceEdge!
+}
+
+type UpdateTrustCenterReferencePayload {
+    trustCenterReference: TrustCenterReference!
+}
+
+type DeleteTrustCenterReferencePayload {
+    deletedTrustCenterReferenceId: ID!
+}
+
+type CreateComplianceFrameworkPayload {
+    complianceFrameworkEdge: ComplianceFrameworkEdge!
+}
+
+type UpdateComplianceFrameworkPayload {
+    complianceFramework: ComplianceFramework!
+}
+
+type DeleteComplianceFrameworkPayload {
+    deletedComplianceFrameworkId: ID!
+}
+
+type CreateComplianceExternalURLPayload {
+    complianceExternalUrlEdge: ComplianceExternalURLEdge!
+}
+
+type UpdateComplianceExternalURLPayload {
+    complianceExternalUrl: ComplianceExternalURL!
+}
+
+type DeleteComplianceExternalURLPayload {
+    deletedComplianceExternalUrlId: ID!
+}
+
+type CreateTrustCenterFilePayload {
+    trustCenterFileEdge: TrustCenterFileEdge!
+}
+
+type UpdateTrustCenterFilePayload {
+    trustCenterFile: TrustCenterFile!
+}
+
+type GetTrustCenterFilePayload {
+    trustCenterFile: TrustCenterFile!
+}
+
+type DeleteTrustCenterFilePayload {
+    deletedTrustCenterFileId: ID!
+}
+
+type CreateCustomDomainPayload {
+    customDomain: CustomDomain!
+}
+
+type DeleteCustomDomainPayload {
+    deletedCustomDomainId: ID!
+}

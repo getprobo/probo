@@ -1,0 +1,24 @@
+input SendMagicLinkInput {
+  email: EmailAddr!
+  continue: String
+}
+
+type SendMagicLinkPayload {
+  success: Boolean!
+}
+
+input VerifyMagicLinkInput {
+  token: String!
+}
+
+type VerifyMagicLinkPayload {
+  continue: String
+}
+
+input UpdateFullNameInput {
+  fullName: String!
+}
+
+type UpdateFullNamePayload {
+  success: Boolean!
+}

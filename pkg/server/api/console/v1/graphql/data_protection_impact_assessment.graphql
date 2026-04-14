@@ -1,0 +1,252 @@
+extend type Organization {
+    dataProtectionImpactAssessments(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: DataProtectionImpactAssessmentOrder
+        filter: DataProtectionImpactAssessmentFilter = { snapshotId: null }
+    ): DataProtectionImpactAssessmentConnection! @goField(forceResolver: true)
+
+    transferImpactAssessments(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: TransferImpactAssessmentOrder
+        filter: TransferImpactAssessmentFilter = { snapshotId: null }
+    ): TransferImpactAssessmentConnection! @goField(forceResolver: true)
+}
+
+enum DataProtectionImpactAssessmentResidualRisk
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.DataProtectionImpactAssessmentResidualRisk"
+    ) {
+    LOW
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DataProtectionImpactAssessmentResidualRiskLow"
+        )
+    MEDIUM
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DataProtectionImpactAssessmentResidualRiskMedium"
+        )
+    HIGH
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DataProtectionImpactAssessmentResidualRiskHigh"
+        )
+}
+
+enum DataProtectionImpactAssessmentOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.DataProtectionImpactAssessmentOrderField"
+    ) {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DataProtectionImpactAssessmentOrderFieldCreatedAt"
+        )
+}
+
+enum TransferImpactAssessmentOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.TransferImpactAssessmentOrderField"
+    ) {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TransferImpactAssessmentOrderFieldCreatedAt"
+        )
+}
+
+input DataProtectionImpactAssessmentOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.DataProtectionImpactAssessmentOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: DataProtectionImpactAssessmentOrderField!
+}
+
+input TransferImpactAssessmentOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.TransferImpactAssessmentOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: TransferImpactAssessmentOrderField!
+}
+
+input DataProtectionImpactAssessmentFilter {
+    snapshotId: ID
+}
+
+input TransferImpactAssessmentFilter {
+    snapshotId: ID
+}
+
+type DataProtectionImpactAssessment implements Node {
+    id: ID!
+    processingActivity: ProcessingActivity! @goField(forceResolver: true)
+    organization: Organization! @goField(forceResolver: true)
+    description: String
+    necessityAndProportionality: String
+    potentialRisk: String
+    mitigations: String
+    residualRisk: DataProtectionImpactAssessmentResidualRisk
+    createdAt: Datetime!
+    updatedAt: Datetime!
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type TransferImpactAssessment implements Node {
+    id: ID!
+    processingActivity: ProcessingActivity! @goField(forceResolver: true)
+    organization: Organization! @goField(forceResolver: true)
+    dataSubjects: String
+    legalMechanism: String
+    transfer: String
+    localLawRisk: String
+    supplementaryMeasures: String
+    createdAt: Datetime!
+    updatedAt: Datetime!
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type DataProtectionImpactAssessmentConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.DataProtectionImpactAssessmentConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [DataProtectionImpactAssessmentEdge!]!
+    pageInfo: PageInfo!
+}
+
+type DataProtectionImpactAssessmentEdge {
+    cursor: CursorKey!
+    node: DataProtectionImpactAssessment!
+}
+
+type TransferImpactAssessmentConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.TransferImpactAssessmentConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [TransferImpactAssessmentEdge!]!
+    pageInfo: PageInfo!
+}
+
+type TransferImpactAssessmentEdge {
+    cursor: CursorKey!
+    node: TransferImpactAssessment!
+}
+
+extend type Mutation {
+    createDataProtectionImpactAssessment(
+        input: CreateDataProtectionImpactAssessmentInput!
+    ): CreateDataProtectionImpactAssessmentPayload!
+    updateDataProtectionImpactAssessment(
+        input: UpdateDataProtectionImpactAssessmentInput!
+    ): UpdateDataProtectionImpactAssessmentPayload!
+    deleteDataProtectionImpactAssessment(
+        input: DeleteDataProtectionImpactAssessmentInput!
+    ): DeleteDataProtectionImpactAssessmentPayload!
+    createTransferImpactAssessment(
+        input: CreateTransferImpactAssessmentInput!
+    ): CreateTransferImpactAssessmentPayload!
+    updateTransferImpactAssessment(
+        input: UpdateTransferImpactAssessmentInput!
+    ): UpdateTransferImpactAssessmentPayload!
+    deleteTransferImpactAssessment(
+        input: DeleteTransferImpactAssessmentInput!
+    ): DeleteTransferImpactAssessmentPayload!
+    exportDataProtectionImpactAssessmentsPDF(
+        input: ExportDataProtectionImpactAssessmentsPDFInput!
+    ): ExportDataProtectionImpactAssessmentsPDFPayload!
+    exportTransferImpactAssessmentsPDF(
+        input: ExportTransferImpactAssessmentsPDFInput!
+    ): ExportTransferImpactAssessmentsPDFPayload!
+}
+
+input CreateDataProtectionImpactAssessmentInput {
+    processingActivityId: ID!
+    description: String
+    necessityAndProportionality: String
+    potentialRisk: String
+    mitigations: String
+    residualRisk: DataProtectionImpactAssessmentResidualRisk
+}
+
+input UpdateDataProtectionImpactAssessmentInput {
+    id: ID!
+    description: String @goField(omittable: true)
+    necessityAndProportionality: String @goField(omittable: true)
+    potentialRisk: String @goField(omittable: true)
+    mitigations: String @goField(omittable: true)
+    residualRisk: DataProtectionImpactAssessmentResidualRisk
+}
+
+input DeleteDataProtectionImpactAssessmentInput {
+    dataProtectionImpactAssessmentId: ID!
+}
+
+input CreateTransferImpactAssessmentInput {
+    processingActivityId: ID!
+    dataSubjects: String
+    legalMechanism: String
+    transfer: String
+    localLawRisk: String
+    supplementaryMeasures: String
+}
+
+input UpdateTransferImpactAssessmentInput {
+    id: ID!
+    dataSubjects: String @goField(omittable: true)
+    legalMechanism: String @goField(omittable: true)
+    transfer: String @goField(omittable: true)
+    localLawRisk: String @goField(omittable: true)
+    supplementaryMeasures: String @goField(omittable: true)
+}
+
+input DeleteTransferImpactAssessmentInput {
+    transferImpactAssessmentId: ID!
+}
+
+input ExportDataProtectionImpactAssessmentsPDFInput {
+    organizationId: ID!
+    filter: DataProtectionImpactAssessmentFilter
+}
+
+input ExportTransferImpactAssessmentsPDFInput {
+    organizationId: ID!
+    filter: TransferImpactAssessmentFilter
+}
+
+type CreateDataProtectionImpactAssessmentPayload {
+    dataProtectionImpactAssessment: DataProtectionImpactAssessment!
+}
+
+type UpdateDataProtectionImpactAssessmentPayload {
+    dataProtectionImpactAssessment: DataProtectionImpactAssessment!
+}
+
+type DeleteDataProtectionImpactAssessmentPayload {
+    deletedDataProtectionImpactAssessmentId: ID!
+}
+
+type CreateTransferImpactAssessmentPayload {
+    transferImpactAssessment: TransferImpactAssessment!
+}
+
+type UpdateTransferImpactAssessmentPayload {
+    transferImpactAssessment: TransferImpactAssessment!
+}
+
+type DeleteTransferImpactAssessmentPayload {
+    deletedTransferImpactAssessmentId: ID!
+}
+
+type ExportDataProtectionImpactAssessmentsPDFPayload {
+    data: String!
+}
+
+type ExportTransferImpactAssessmentsPDFPayload {
+    data: String!
+}

@@ -1,0 +1,67 @@
+extend type TrustCenter {
+  viewerSubscription: MailingListSubscriber @goField(forceResolver: true)
+
+  updates(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+  ): MailingListUpdateConnection! @goField(forceResolver: true)
+}
+
+type MailingListUpdate implements Node {
+  id: ID!
+  title: String!
+  body: String!
+  updatedAt: Datetime!
+}
+
+type MailingListUpdateConnection {
+  edges: [MailingListUpdateEdge!]!
+  pageInfo: PageInfo!
+}
+
+type MailingListUpdateEdge {
+  cursor: CursorKey!
+  node: MailingListUpdate!
+}
+
+enum MailingListSubscriberStatus
+  @goModel(
+    model: "go.probo.inc/probo/pkg/coredata.MailingListSubscriberStatus"
+  ) {
+  PENDING
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.MailingListSubscriberStatusPending"
+    )
+  CONFIRMED
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.MailingListSubscriberStatusConfirmed"
+    )
+}
+
+type MailingListSubscriber implements Node
+  @goModel(
+    model: "go.probo.inc/probo/pkg/server/api/trust/v1/types.MailingListSubscriber"
+  ) {
+  id: ID!
+  fullName: String!
+  email: EmailAddr!
+  status: MailingListSubscriberStatus!
+  createdAt: Datetime!
+  updatedAt: Datetime!
+}
+
+extend type Mutation {
+  subscribeToMailingList: SubscribeToMailingListPayload! @session(required: PRESENT)
+
+  unsubscribeFromMailingList: UnsubscribeFromMailingListPayload! @session(required: PRESENT)
+}
+
+type SubscribeToMailingListPayload {
+  subscription: MailingListSubscriber!
+}
+
+type UnsubscribeFromMailingListPayload {
+  deletedMailingListSubscriberId: ID
+}

@@ -1,0 +1,350 @@
+enum DocumentType
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.DocumentType") {
+  OTHER @goEnum(value: "go.probo.inc/probo/pkg/coredata.DocumentTypeOther")
+  GOVERNANCE
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.DocumentTypeGovernance")
+  POLICY @goEnum(value: "go.probo.inc/probo/pkg/coredata.DocumentTypePolicy")
+  PROCEDURE
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.DocumentTypeProcedure")
+  PLAN @goEnum(value: "go.probo.inc/probo/pkg/coredata.DocumentTypePlan")
+  REGISTER
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.DocumentTypeRegister")
+  RECORD @goEnum(value: "go.probo.inc/probo/pkg/coredata.DocumentTypeRecord")
+  REPORT @goEnum(value: "go.probo.inc/probo/pkg/coredata.DocumentTypeReport")
+  TEMPLATE
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.DocumentTypeTemplate")
+}
+
+type Document implements Node @nda {
+  id: ID!
+  title: String!
+  documentType: DocumentType!
+  isUserAuthorized: Boolean! @goField(forceResolver: true)
+  access: DocumentAccess @goField(forceResolver: true)
+}
+
+type DocumentConnection @nda {
+  edges: [DocumentEdge!]!
+  pageInfo: PageInfo!
+}
+
+type DocumentEdge @nda {
+  cursor: CursorKey!
+  node: Document!
+}
+
+type Framework implements Node @nda {
+  id: ID!
+  name: String!
+  lightLogoURL: String @goField(forceResolver: true)
+  darkLogoURL: String @goField(forceResolver: true)
+}
+
+type Report implements Node @nda {
+  id: ID!
+  filename: String!
+  isUserAuthorized: Boolean! @goField(forceResolver: true)
+  access: DocumentAccess @goField(forceResolver: true)
+}
+
+type Audit implements Node @nda {
+  id: ID!
+  name: String
+  framework: Framework! @goField(forceResolver: true)
+  report: Report @goField(forceResolver: true)
+}
+
+type AuditConnection @nda {
+  edges: [AuditEdge!]!
+  pageInfo: PageInfo!
+}
+
+type AuditEdge @nda {
+  cursor: CursorKey!
+  node: Audit!
+}
+
+type ComplianceFramework implements Node
+  @goModel(
+    model: "go.probo.inc/probo/pkg/server/api/trust/v1/types.ComplianceFramework"
+  ) {
+  id: ID!
+  framework: Framework! @goField(forceResolver: true)
+}
+
+type ComplianceFrameworkConnection
+  @goModel(
+    model: "go.probo.inc/probo/pkg/server/api/trust/v1/types.ComplianceFrameworkConnection"
+  ) {
+  edges: [ComplianceFrameworkEdge!]!
+  pageInfo: PageInfo!
+}
+
+type ComplianceFrameworkEdge
+  @goModel(
+    model: "go.probo.inc/probo/pkg/server/api/trust/v1/types.ComplianceFrameworkEdge"
+  ) {
+  cursor: CursorKey!
+  node: ComplianceFramework!
+}
+
+enum SubprocessorCategory
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.VendorCategory") {
+  ANALYTICS
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.VendorCategoryAnalytics")
+  CLOUD_MONITORING
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.VendorCategoryCloudMonitoring"
+    )
+  CLOUD_PROVIDER
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.VendorCategoryCloudProvider"
+    )
+  COLLABORATION
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.VendorCategoryCollaboration"
+    )
+  CUSTOMER_SUPPORT
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.VendorCategoryCustomerSupport"
+    )
+  DATA_STORAGE_AND_PROCESSING
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.VendorCategoryDataStorageAndProcessing"
+    )
+  DOCUMENT_MANAGEMENT
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.VendorCategoryDocumentManagement"
+    )
+  EMPLOYEE_MANAGEMENT
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.VendorCategoryEmployeeManagement"
+    )
+  ENGINEERING
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.VendorCategoryEngineering")
+  FINANCE
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.VendorCategoryFinance")
+  IDENTITY_PROVIDER
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.VendorCategoryIdentityProvider"
+    )
+  IT @goEnum(value: "go.probo.inc/probo/pkg/coredata.VendorCategoryIT")
+  MARKETING
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.VendorCategoryMarketing")
+  OFFICE_OPERATIONS
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.VendorCategoryOfficeOperations"
+    )
+  OTHER @goEnum(value: "go.probo.inc/probo/pkg/coredata.VendorCategoryOther")
+  PASSWORD_MANAGEMENT
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.VendorCategoryPasswordManagement"
+    )
+  PRODUCT_AND_DESIGN
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.VendorCategoryProductAndDesign"
+    )
+  PROFESSIONAL_SERVICES
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.VendorCategoryProfessionalServices"
+    )
+  RECRUITING
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.VendorCategoryRecruiting")
+  SALES @goEnum(value: "go.probo.inc/probo/pkg/coredata.VendorCategorySales")
+  SECURITY
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.VendorCategorySecurity")
+  VERSION_CONTROL
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.VendorCategoryVersionControl"
+    )
+}
+
+type Subprocessor implements Node @nda {
+  id: ID!
+  name: String!
+  description: String
+  category: SubprocessorCategory!
+  websiteUrl: String
+  privacyPolicyUrl: String
+  countries: [CountryCode!]!
+}
+
+type SubprocessorConnection
+  @goModel(
+    model: "go.probo.inc/probo/pkg/server/api/trust/v1/types.SubprocessorConnection"
+  ) @nda {
+  edges: [SubprocessorEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int! @goField(forceResolver: true)
+}
+
+type SubprocessorEdge @nda {
+  cursor: CursorKey!
+  node: Subprocessor!
+}
+
+type TrustCenterReference implements Node @nda {
+  id: ID!
+  name: String!
+  description: String
+  websiteUrl: String!
+  logoUrl: String! @goField(forceResolver: true)
+}
+
+type TrustCenterReferenceConnection @nda {
+  edges: [TrustCenterReferenceEdge!]!
+  pageInfo: PageInfo!
+}
+
+type TrustCenterReferenceEdge @nda {
+  cursor: CursorKey!
+  node: TrustCenterReference!
+}
+
+type TrustCenterFile implements Node @nda {
+  id: ID!
+  name: String!
+  category: String!
+  isUserAuthorized: Boolean! @goField(forceResolver: true)
+  access: DocumentAccess @goField(forceResolver: true)
+}
+
+type TrustCenterFileConnection @nda {
+  edges: [TrustCenterFileEdge!]!
+  pageInfo: PageInfo!
+}
+
+type TrustCenterFileEdge @nda {
+  cursor: CursorKey!
+  node: TrustCenterFile!
+}
+
+type ComplianceExternalURL implements Node {
+  id: ID!
+  name: String!
+  url: String!
+  rank: Int!
+}
+
+type ComplianceExternalURLConnection {
+  edges: [ComplianceExternalURLEdge!]!
+  pageInfo: PageInfo!
+}
+
+type ComplianceExternalURLEdge {
+  cursor: CursorKey!
+  node: ComplianceExternalURL!
+}
+
+type TrustCenterAccess implements Node {
+  id: ID!
+  email: EmailAddr!
+  name: String!
+  createdAt: Datetime!
+  updatedAt: Datetime!
+}
+
+enum DocumentAccessStatus
+  @goModel(
+    model: "go.probo.inc/probo/pkg/coredata.TrustCenterDocumentAccessStatus"
+  ) {
+  REQUESTED
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.TrustCenterDocumentAccessStatusRequested"
+    )
+  GRANTED
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.TrustCenterDocumentAccessStatusGranted"
+    )
+  REJECTED
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.TrustCenterDocumentAccessStatusRejected"
+    )
+  REVOKED
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.TrustCenterDocumentAccessStatusRevoked"
+    )
+}
+
+type DocumentAccess implements Node {
+  id: ID!
+  status: DocumentAccessStatus!
+}
+
+extend type Mutation {
+  requestAllAccesses: RequestAccessesPayload! @session(required: PRESENT) @nda
+
+  exportDocumentPDF(input: ExportDocumentPDFInput!): ExportDocumentPDFPayload!
+    @session(required: OPTIONAL) @nda
+
+  exportReportPDF(input: ExportReportPDFInput!): ExportReportPDFPayload!
+    @session(required: OPTIONAL) @nda
+
+  exportTrustCenterFile(
+    input: ExportTrustCenterFileInput!
+  ): ExportTrustCenterFilePayload! @session(required: OPTIONAL) @nda
+
+  requestDocumentAccess(
+    input: RequestDocumentAccessInput!
+  ): RequestDocumentAccessPayload! @session(required: PRESENT) @nda
+
+  requestReportAccess(
+    input: RequestReportAccessInput!
+  ): RequestReportAccessPayload! @session(required: PRESENT) @nda
+
+  requestTrustCenterFileAccess(
+    input: RequestTrustCenterFileAccessInput!
+  ): RequestFileAccessPayload! @session(required: PRESENT) @nda
+}
+
+type RequestDocumentAccessPayload {
+  document: Document
+}
+
+type RequestReportAccessPayload {
+  audit: Audit
+}
+
+type RequestFileAccessPayload {
+  file: TrustCenterFile
+}
+
+type RequestAccessesPayload {
+  trustCenterAccess: TrustCenterAccess!
+}
+
+input ExportDocumentPDFInput {
+  documentId: ID!
+}
+
+input ExportReportPDFInput {
+  reportId: ID!
+}
+
+input RequestDocumentAccessInput {
+  documentId: ID!
+}
+
+input RequestReportAccessInput {
+  reportId: ID!
+}
+
+input RequestTrustCenterFileAccessInput {
+  trustCenterFileId: ID!
+}
+
+input ExportTrustCenterFileInput {
+  trustCenterFileId: ID!
+}
+
+type ExportDocumentPDFPayload {
+  data: String!
+}
+
+type ExportReportPDFPayload {
+  data: String!
+}
+
+type ExportTrustCenterFilePayload {
+  data: String!
+}

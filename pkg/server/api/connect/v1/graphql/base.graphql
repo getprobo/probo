@@ -1,0 +1,121 @@
+directive @goField(
+  forceResolver: Boolean
+  name: String
+  omittable: Boolean
+) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION
+
+directive @goModel(
+  model: String
+  models: [String!]
+) on OBJECT | INPUT_OBJECT | SCALAR | ENUM | INTERFACE | UNION
+
+directive @goEnum(value: String) on ENUM_VALUE
+
+scalar CursorKey
+scalar Datetime
+scalar Upload
+scalar EmailAddr
+
+enum OrderDirection
+  @goModel(model: "go.probo.inc/probo/pkg/page.OrderDirection") {
+  ASC @goEnum(value: "go.probo.inc/probo/pkg/page.OrderDirectionAsc")
+  DESC @goEnum(value: "go.probo.inc/probo/pkg/page.OrderDirectionDesc")
+}
+
+interface Node {
+  id: ID!
+}
+
+type PageInfo {
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  startCursor: CursorKey
+  endCursor: CursorKey
+}
+
+type OIDCProviderInfo {
+  name: String!
+  loginURL: String!
+}
+
+enum ReauthenticationReason {
+  SESSION_EXPIRED
+  SENSITIVE_ACTION
+  POLICY_REQUIREMENT
+}
+
+type Query {
+  node(id: ID!): Node @session(required: PRESENT)
+  viewer: Identity @session(required: PRESENT)
+  ssoLoginURL(email: EmailAddr!): String
+    @goField(forceResolver: true)
+    @session(required: OPTIONAL)
+  oidcProviders: [OIDCProviderInfo!]!
+    @goField(forceResolver: true)
+    @session(required: OPTIONAL)
+  signUpEnabled: Boolean!
+    @goField(forceResolver: true)
+    @session(required: OPTIONAL)
+}
+
+type Identity implements Node {
+  id: ID!
+  email: EmailAddr!
+  fullName: String!
+  emailVerified: Boolean!
+  createdAt: Datetime!
+  updatedAt: Datetime!
+
+  ssoLoginURL: String
+    @goField(forceResolver: true)
+    @session(required: PRESENT)
+
+  permission(action: String!): Boolean!
+    @goField(forceResolver: true)
+    @session(required: PRESENT)
+}
+
+type Organization implements Node {
+  id: ID!
+  name: String!
+  logoUrl: String @goField(forceResolver: true)
+  horizontalLogoUrl: String @goField(forceResolver: true)
+  email: String
+  description: String
+  websiteUrl: String
+  headquarterAddress: String
+  createdAt: Datetime!
+  updatedAt: Datetime!
+
+  viewer: Profile @goField(forceResolver: true)
+
+  permission(action: String!): Boolean!
+    @goField(forceResolver: true)
+    @session(required: PRESENT)
+}
+
+type Mutation {
+  signIn(input: SignInInput!): SignInPayload @session(required: OPTIONAL)
+  signUp(input: SignUpInput!): SignUpPayload @session(required: NONE)
+  signOut: SignOutPayload @session(required: PRESENT)
+  activateAccount(
+    input: ActivateAccountInput!
+  ): ActivateAccountPayload @session(required: OPTIONAL)
+  forgotPassword(input: ForgotPasswordInput!): ForgotPasswordPayload
+    @session(required: NONE)
+  resetPassword(input: ResetPasswordInput!): ResetPasswordPayload
+    @session(required: NONE)
+  verifyEmail(input: VerifyEmailInput!): VerifyEmailPayload
+    @session(required: OPTIONAL)
+  changePassword(input: ChangePasswordInput!): ChangePasswordPayload
+    @session(required: PRESENT)
+  changeEmail(input: ChangeEmailInput!): ChangeEmailPayload
+    @session(required: PRESENT)
+  assumeOrganizationSession(
+    input: AssumeOrganizationSessionInput!
+  ): AssumeOrganizationSessionPayload @session(required: PRESENT)
+
+  revokeSession(input: RevokeSessionInput!): RevokeSessionPayload!
+    @session(required: PRESENT)
+  revokeAllSessions: RevokeAllSessionsPayload @session(required: PRESENT)
+}
