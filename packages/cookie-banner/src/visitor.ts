@@ -26,7 +26,9 @@ export function getOrCreateVisitorId(bannerId: string): string {
     // localStorage unavailable
   }
 
-  const id = crypto.randomUUID();
+  const array = new Uint8Array(16);
+  crypto.getRandomValues(array);
+  const id = Array.from(array, (b) => b.toString(16).padStart(2, "0")).join("");
 
   try {
     localStorage.setItem(key, id);
