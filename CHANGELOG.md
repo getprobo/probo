@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.168.2] - 2026-04-15
+
+### Added
+
+- Enforce unicity of draft/pending document version in DB
+
 ## [0.168.1] - 2026-04-15
 
 ### Added
