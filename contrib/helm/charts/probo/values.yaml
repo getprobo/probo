@@ -331,7 +331,7 @@ seaweedfs:
 
   image:
     repository: chrislusf/seaweedfs
-    tag: "latest"
+    tag: "4.20@sha256:cea8339d21dad1b200adce581dd7434d254b8f5975f142c3b4c930ba78647eef"
     pullPolicy: IfNotPresent
 
   resources:
@@ -360,7 +360,7 @@ chrome:
 
   image:
     repository: chromedp/headless-shell
-    tag: "140.0.7259.2"
+    tag: "149.0.7779.3@sha256:b24482ae166e2c67135f5a8ba9575c257efdd8e2fd6b2e931f9d88ede3d72f3b"
     pullPolicy: IfNotPresent
 
   resources:
