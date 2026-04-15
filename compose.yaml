@@ -75,11 +75,13 @@ services:
       - "-config.file=/etc/loki/local-config.yaml"
 
   tempo:
-    image: "grafana/tempo:latest"
+    image: "grafana/tempo:2.10.4"
     command:
       - "-config.file=/etc/tempo.yaml"
     ports:
+      - "3200:3200"
       - "4317:4317"
+      - "4318:4318"
     volumes:
       - "./compose/tempo/tempo.yaml:/etc/tempo.yaml:ro"
       - "tempo-data:/var/tempo:rw"

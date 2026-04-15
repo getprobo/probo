@@ -1,33 +1,45 @@
+stream_over_http_enabled: true
+
 server:
   http_listen_port: 3200
+  log_level: info
+
+query_frontend:
+  search:
+    duration_slo: 5s
+    throughput_bytes_slo: 1.073741824e+09
+  trace_by_id:
+    duration_slo: 100ms
 
 distributor:
   receivers:
     otlp:
       protocols:
-        http:
+        grpc:
           endpoint: "0.0.0.0:4317"
+        http:
+          endpoint: "0.0.0.0:4318"
 
 ingester:
-  trace_idle_period: "10s"
-  max_block_bytes: 1_000_000
-  max_block_duration: "5m"
-  lifecycler:
-    ring:
-      kvstore:
-        store: "inmemory"
-      replication_factor: 1
+  max_block_duration: 5m
+
+compactor:
+  compaction:
+    block_retention: 720h
 
 storage:
   trace:
-    backend: "local"
-    local:
-      path: "/var/tempo/blocks"
+    backend: local
     wal:
-      path: "/var/tempo/wal"
-    pool:
-      max_workers: 100
-      queue_depth: 10000
+      path: /var/tempo/wal
+    local:
+      path: /var/tempo/blocks
+
+overrides:
+  defaults:
+    metrics_generator:
+      processors: [service-graphs, span-metrics, local-blocks]
+      generate_native_histograms: both
 
 usage_report:
   reporting_enabled: false
