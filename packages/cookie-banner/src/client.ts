@@ -1,0 +1,232 @@
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
+import { getConsentCookie, setConsentCookie } from "./cookie";
+import { NotFoundError } from "./errors";
+import { fetchJSON } from "./http";
+
+export interface CookieItem {
+  name: string;
+  duration: string;
+  description: string;
+}
+
+export interface Category {
+  name: string;
+  description: string;
+  required: boolean;
+  cookies: CookieItem[];
+}
+
+export interface BannerConfig {
+  banner_id: string;
+  version: number;
+  privacy_policy_url: string;
+  consent_expiry_days: number;
+  consent_mode: "OPT_IN" | "OPT_OUT";
+  categories: Category[];
+}
+
+export type ConsentAction = "ACCEPT_ALL" | "REJECT_ALL" | "CUSTOMIZE" | "GPC";
+
+export interface VisitorConsent {
+  visitor_id: string;
+  version: number;
+  action: ConsentAction;
+  consent_data: Record<string, boolean>;
+  created_at: string;
+}
+
+export interface ConsentRecord {
+  id: string;
+  visitor_id: string;
+  action: string;
+  created_at: string;
+}
+
+export interface CookieBannerClientOptions {
+  bannerId: string;
+  baseUrl: string;
+}
+
+const STORAGE_KEY_PREFIX = "probo_consent";
+
+function getOrCreateVisitorId(bannerId: string): string {
+  const key = `${STORAGE_KEY_PREFIX}:${bannerId}:vid`;
+
+  try {
+    const stored = localStorage.getItem(key);
+    if (stored) {
+      return stored;
+    }
+  } catch {
+    // localStorage unavailable
+  }
+
+  const id = crypto.randomUUID();
+
+  try {
+    localStorage.setItem(key, id);
+  } catch {
+    // localStorage unavailable
+  }
+
+  return id;
+}
+
+export class CookieBannerClient {
+  private readonly baseUrl: string;
+  private readonly bannerId: string;
+  private readonly visitorId: string;
+
+  private bannerConfig: BannerConfig | null = null;
+  private consent: VisitorConsent | null = null;
+
+  constructor(config: CookieBannerClientOptions) {
+    this.baseUrl = config.baseUrl.replace(/\/+$/, "");
+    this.bannerId = config.bannerId;
+    this.visitorId = getOrCreateVisitorId(config.bannerId);
+  }
+
+  async load(): Promise<void> {
+    const configUrl = `${this.baseUrl}/${this.bannerId}/config`;
+    const config = await fetchJSON<BannerConfig>(configUrl);
+    this.bannerConfig = config;
+
+    const cookie = getConsentCookie();
+    if (cookie && cookie.v === config.version && cookie.vid === this.visitorId) {
+      this.consent = {
+        visitor_id: cookie.vid,
+        version: cookie.v,
+        action: cookie.action,
+        consent_data: cookie.data,
+        created_at: "",
+      };
+      return;
+    }
+
+    const consentUrl = `${this.baseUrl}/${this.bannerId}/consents/${this.visitorId}`;
+    const apiConsent = await fetchJSON<VisitorConsent>(consentUrl).catch(
+      (err) => {
+        if (err instanceof NotFoundError) {
+          return null;
+        }
+        throw err;
+      },
+    );
+
+    if (apiConsent && apiConsent.version === config.version) {
+      this.consent = apiConsent;
+      setConsentCookie(
+        {
+          v: apiConsent.version,
+          vid: apiConsent.visitor_id,
+          action: apiConsent.action,
+          data: apiConsent.consent_data,
+        },
+        config.consent_expiry_days,
+      );
+    } else {
+      this.consent = null;
+    }
+  }
+
+  get config(): BannerConfig {
+    if (!this.bannerConfig) {
+      throw new Error("CookieBannerClient not loaded: call load() first");
+    }
+    return this.bannerConfig;
+  }
+
+  get visitorConsent(): VisitorConsent | null {
+    return this.consent;
+  }
+
+  get hasConsent(): boolean {
+    return this.consent !== null;
+  }
+
+  async acceptAll(): Promise<ConsentRecord> {
+    const cfg = this.config;
+
+    const consentData: Record<string, boolean> = {};
+    for (const cat of cfg.categories) {
+      consentData[cat.name] = true;
+    }
+
+    return this.recordConsent("ACCEPT_ALL", consentData);
+  }
+
+  async rejectAll(): Promise<ConsentRecord> {
+    const cfg = this.config;
+
+    const consentData: Record<string, boolean> = {};
+    for (const cat of cfg.categories) {
+      consentData[cat.name] = cat.required;
+    }
+
+    return this.recordConsent("REJECT_ALL", consentData);
+  }
+
+  async customize(
+    categories: Record<string, boolean>,
+  ): Promise<ConsentRecord> {
+    const cfg = this.config;
+
+    const consentData: Record<string, boolean> = {};
+    for (const cat of cfg.categories) {
+      consentData[cat.name] = cat.required || !!categories[cat.name];
+    }
+
+    return this.recordConsent("CUSTOMIZE", consentData);
+  }
+
+  private async recordConsent(
+    action: ConsentAction,
+    consentData: Record<string, boolean>,
+  ): Promise<ConsentRecord> {
+    const cfg = this.config;
+    const url = `${this.baseUrl}/${this.bannerId}/consents`;
+
+    const record = await fetchJSON<ConsentRecord>(url, {
+      method: "POST",
+      body: {
+        visitor_id: this.visitorId,
+        version: cfg.version,
+        action,
+        consent_data: consentData,
+      },
+    });
+
+    this.consent = {
+      visitor_id: this.visitorId,
+      version: cfg.version,
+      action,
+      consent_data: consentData,
+      created_at: record.created_at,
+    };
+
+    setConsentCookie(
+      {
+        v: cfg.version,
+        vid: this.visitorId,
+        action,
+        data: consentData,
+      },
+      cfg.consent_expiry_days,
+    );
+
+    return record;
+  }
+}

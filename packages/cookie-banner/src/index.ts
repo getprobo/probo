@@ -14,6 +14,17 @@
 
 export const VERSION = "0.0.0";
 
+export { CookieBannerClient } from "./client";
+export type {
+  BannerConfig,
+  Category,
+  ConsentAction,
+  ConsentRecord,
+  CookieBannerClientOptions,
+  CookieItem,
+  VisitorConsent,
+} from "./client";
+export type { ConsentCookie } from "./cookie";
 export {
   ApiError,
   BadRequestError,
@@ -24,12 +35,3 @@ export {
 } from "./errors";
 export { fetchJSON } from "./http";
 export type { RequestOptions } from "./http";
-
-export type CookieBannerConfig = {
-  bannerId: string;
-  baseUrl: string;
-};
-
-export async function init(_config: CookieBannerConfig): Promise<void> {
-  // TODO: implement
-}
