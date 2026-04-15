@@ -12,6 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+import { activateElements, observeAndActivate } from "./activation";
 import { getConsentCookie, setConsentCookie } from "./cookie";
 import { NotFoundError } from "./errors";
 import { fetchJSON } from "./http";
@@ -68,6 +69,7 @@ export class CookieBannerClient {
 
   private bannerConfig: BannerConfig | null = null;
   private consent: VisitorConsent | null = null;
+  private observer: MutationObserver | null = null;
 
   constructor(config: CookieBannerClientOptions) {
     this.baseUrl = config.baseUrl.replace(/\/+$/, "");
@@ -89,6 +91,7 @@ export class CookieBannerClient {
         consent_data: cookie.data,
         created_at: "",
       };
+      this.activate(cookie.data);
       return;
     }
 
@@ -113,6 +116,7 @@ export class CookieBannerClient {
         },
         config.consent_expiry_days,
       );
+      this.activate(apiConsent.consent_data);
     } else {
       this.consent = null;
     }
@@ -203,6 +207,22 @@ export class CookieBannerClient {
       cfg.consent_expiry_days,
     );
 
+    this.activate(consentData);
+
     return record;
+  }
+
+  private activate(consentData: Record<string, boolean>): void {
+    activateElements(consentData);
+    if (!this.observer) {
+      this.observer = observeAndActivate(consentData);
+    }
+  }
+
+  destroy(): void {
+    if (this.observer) {
+      this.observer.disconnect();
+      this.observer = null;
+    }
   }
 }

@@ -14,6 +14,7 @@
 
 export const VERSION = "0.0.0";
 
+export { activateElements, observeAndActivate } from "./activation";
 export { CookieBannerClient } from "./client";
 export type {
   BannerConfig,
