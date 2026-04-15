@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.168.0] - 2026-04-15
+
+### Fixed
+
+- Align risk severity across views
+- Set cookie secure flag to false in dev config
+- Fix risk controls tab missing pagination
+
+
+### Changed
+
+- Split GraphQL schemas into per-entity files
+- Consolidate document draft management into updateDocument
+- Replace document properties drawer with inline details card
+
 ## [0.167.0] - 2026-04-14
 
 ### Added
