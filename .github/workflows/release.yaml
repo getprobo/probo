@@ -516,3 +516,79 @@ jobs:
             packages/n8n-node/sbom.json
             packages/n8n-node/checksums.txt
           retention-days: 30
+
+  # ── Cookie banner SDK release ──────────────────────────────────────
+  cookie-banner-release:
+    name: "cookie-banner-release"
+    needs: [github-release]
+    runs-on: "ubuntu-latest"
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    steps:
+      - uses: "actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd" # v6
+        with:
+          fetch-depth: 0
+          submodules: recursive
+      - uses: "actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f" # v6
+        with:
+          node-version-file: ".nvmrc"
+          cache: "npm"
+          registry-url: "https://registry.npmjs.org"
+          scope: "@probo"
+      - run: "npm install -g npm@latest"
+      - run: "npm ci"
+      - name: "Check if publish is needed"
+        id: check
+        run: |
+          LOCAL=$(node -p "require('./packages/cookie-banner/package.json').version")
+          PUBLISHED=$(npm view @probo/cookie-banner version 2>/dev/null || echo "0.0.0")
+          echo "local=$LOCAL published=$PUBLISHED"
+          if [ "$LOCAL" = "$PUBLISHED" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
+      - run: "npm --workspace @probo/cookie-banner run build"
+        if: steps.check.outputs.skip != 'true'
+      - uses: "anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610" # v0.24.0
+        if: steps.check.outputs.skip != 'true'
+        with:
+          path: ./packages/cookie-banner
+          format: cyclonedx-json
+          output-file: packages/cookie-banner/sbom.json
+      - uses: "anchore/scan-action@e1165082ffb1fe366ebaf02d8526e7c4989ea9d2" # v7.4.0
+        if: steps.check.outputs.skip != 'true'
+        with:
+          path: ./packages/cookie-banner
+          fail-build: true
+          severity-cutoff: critical
+      - name: "Generate checksums for dist files"
+        id: checksum
+        if: steps.check.outputs.skip != 'true'
+        run: |
+          cd packages/cookie-banner/dist
+          find . -type f | while read file; do
+            echo "$(sha256sum "$file" | head -c 64)  $file"
+          done > ../checksums.txt
+          echo "hashes=$(cat ../checksums.txt | base64 -w0)" >> "$GITHUB_OUTPUT"
+      - run: "npm --workspace @probo/cookie-banner publish --access public --dry-run"
+        if: steps.check.outputs.skip != 'true'
+      # - run: "npm --workspace @probo/cookie-banner publish --access public"
+      #   if: steps.check.outputs.skip != 'true'
+      - uses: "actions/attest-sbom@c604332985a26aa8cf1bdc465b92731239ec6b9e" # v4
+        if: steps.check.outputs.skip != 'true'
+        with:
+          subject-path: "packages/cookie-banner/dist/**"
+          sbom-path: "packages/cookie-banner/sbom.json"
+      - uses: "actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32" # v4
+        if: steps.check.outputs.skip != 'true'
+        with:
+          subject-path: "packages/cookie-banner/dist/**"
+      - uses: "actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f" # v7
+        if: steps.check.outputs.skip != 'true'
+        with:
+          name: "cookie-banner-sbom"
+          path: |
+            packages/cookie-banner/sbom.json
+            packages/cookie-banner/checksums.txt
+          retention-days: 30
