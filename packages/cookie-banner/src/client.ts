@@ -15,6 +15,7 @@
 import { getConsentCookie, setConsentCookie } from "./cookie";
 import { NotFoundError } from "./errors";
 import { fetchJSON } from "./http";
+import { getOrCreateVisitorId } from "./visitor";
 
 export interface CookieItem {
   name: string;
@@ -58,31 +59,6 @@ export interface ConsentRecord {
 export interface CookieBannerClientOptions {
   bannerId: string;
   baseUrl: string;
-}
-
-const STORAGE_KEY_PREFIX = "probo_consent";
-
-function getOrCreateVisitorId(bannerId: string): string {
-  const key = `${STORAGE_KEY_PREFIX}:${bannerId}:vid`;
-
-  try {
-    const stored = localStorage.getItem(key);
-    if (stored) {
-      return stored;
-    }
-  } catch {
-    // localStorage unavailable
-  }
-
-  const id = crypto.randomUUID();
-
-  try {
-    localStorage.setItem(key, id);
-  } catch {
-    // localStorage unavailable
-  }
-
-  return id;
 }
 
 export class CookieBannerClient {
