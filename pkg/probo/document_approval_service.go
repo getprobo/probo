@@ -106,6 +106,18 @@ func (s *DocumentApprovalService) RequestApproval(
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
+			profiles := &coredata.MembershipProfiles{}
+			if err := profiles.LoadByIDs(ctx, tx, s.svc.scope, req.ApproverIDs); err != nil {
+				return fmt.Errorf("cannot load approver profiles: %w", err)
+			}
+
+			now := time.Now()
+			for _, p := range *profiles {
+				if p.ContractEndDate != nil && p.ContractEndDate.Before(now) {
+					return &ErrProfileContractEnded{ProfileID: p.ID}
+				}
+			}
+
 			document := &coredata.Document{}
 			if err := document.LoadByID(ctx, tx, s.svc.scope, req.DocumentID); err != nil {
 				return fmt.Errorf("cannot load document: %w", err)

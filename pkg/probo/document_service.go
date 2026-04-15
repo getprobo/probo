@@ -80,6 +80,10 @@ type (
 	ErrDocumentVersionSignatureAlreadySigned struct {
 	}
 
+	ErrProfileContractEnded struct {
+		ProfileID gid.GID
+	}
+
 	CreateDocumentRequest struct {
 		OrganizationID        gid.GID
 		Title                 string
@@ -215,6 +219,10 @@ func (e ErrDocumentNotArchived) Error() string {
 
 func (e ErrDocumentVersionSignatureAlreadySigned) Error() string {
 	return "document version signature already signed"
+}
+
+func (e ErrProfileContractEnded) Error() string {
+	return fmt.Sprintf("cannot use profile %q: contract has ended", e.ProfileID)
 }
 
 func (s *DocumentService) Get(
@@ -883,6 +891,18 @@ func (s *DocumentService) BulkRequestSignatures(
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
+			profiles := &coredata.MembershipProfiles{}
+			if err := profiles.LoadByIDs(ctx, tx, s.svc.scope, req.SignatoryIDs); err != nil {
+				return fmt.Errorf("cannot load signatory profiles: %w", err)
+			}
+
+			now := time.Now()
+			for _, p := range *profiles {
+				if p.ContractEndDate != nil && p.ContractEndDate.Before(now) {
+					return &ErrProfileContractEnded{ProfileID: p.ID}
+				}
+			}
+
 			for _, documentID := range req.DocumentIDs {
 				documentVersion := &coredata.DocumentVersion{}
 				if err := documentVersion.LoadLatestVersion(ctx, tx, s.svc.scope, documentID); err != nil {
@@ -982,6 +1002,15 @@ func (s *DocumentService) RequestSignature(
 
 			if documentVersion.Status != coredata.DocumentVersionStatusPublished {
 				return fmt.Errorf("cannot request signature for unpublished version")
+			}
+
+			profile := &coredata.MembershipProfile{}
+			if err := profile.LoadByID(ctx, tx, s.svc.scope, req.Signatory); err != nil {
+				return fmt.Errorf("cannot load signatory profile: %w", err)
+			}
+
+			if profile.ContractEndDate != nil && profile.ContractEndDate.Before(time.Now()) {
+				return &ErrProfileContractEnded{ProfileID: profile.ID}
 			}
 
 			var err error

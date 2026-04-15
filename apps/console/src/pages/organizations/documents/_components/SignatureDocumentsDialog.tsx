@@ -37,6 +37,7 @@ import { graphql } from "relay-runtime";
 import { z } from "zod";
 
 import type { SignatureDocumentsDialogMutation } from "#/__generated__/core/SignatureDocumentsDialogMutation.graphql";
+import type { SignatureDocumentsDialogPeopleFragment$key } from "#/__generated__/core/SignatureDocumentsDialogPeopleFragment.graphql";
 import type { SignatureDocumentsDialogPeopleQuery } from "#/__generated__/core/SignatureDocumentsDialogPeopleQuery.graphql";
 import type { SignatureDocumentsDialogPeopleRefetchQuery } from "#/__generated__/core/SignatureDocumentsDialogPeopleRefetchQuery.graphql";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
@@ -203,7 +204,10 @@ function PeopleList({
     hasNext,
     loadNext,
     isLoadingNext,
-  } = usePaginationFragment<SignatureDocumentsDialogPeopleRefetchQuery>(
+  } = usePaginationFragment<
+    SignatureDocumentsDialogPeopleRefetchQuery,
+    SignatureDocumentsDialogPeopleFragment$key
+  >(
     signatureDocumentsDialogPeopleFragment,
     data.organization,
   );
