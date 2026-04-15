@@ -382,7 +382,7 @@ return () => {
 
 ## File organization
 
-GraphQL operations are colocated with the components that use them. See `[contrib/claude/app-arborescence.md](app-arborescence.md)` for the full folder layout.
+GraphQL operations are colocated with the components that use them. See [`contrib/claude/app-arborescence.md`](app-arborescence.md) for the full folder layout.
 
 ```
 pages/organizations/vendors/
