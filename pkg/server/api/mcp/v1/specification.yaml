@@ -5181,6 +5181,7 @@ components:
       type: string
       enum:
         - CREATED_AT
+        - UPDATED_AT
         - TITLE
         - DOCUMENT_TYPE
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.DocumentOrderField
@@ -5433,6 +5434,11 @@ components:
               items:
                 $ref: "#/components/schemas/DocumentClassification"
               description: Document classifications
+            status:
+              type: array
+              items:
+                $ref: "#/components/schemas/DocumentStatus"
+              description: Document statuses
 
     ListDocumentsOutput:
       type: object
@@ -5616,6 +5622,14 @@ components:
         cursor:
           $ref: "#/components/schemas/CursorKey"
           description: Page cursor
+        filter:
+          type: object
+          properties:
+            statuses:
+              type: array
+              items:
+                $ref: "#/components/schemas/DocumentVersionStatus"
+              description: Document version statuses
 
     ListDocumentVersionsOutput:
       type: object
@@ -8327,7 +8341,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/TakeSnapshotOutput"
   - name: listDocuments
-    description: List all documents for the organization
+    description: List documents for the organization. By default only ACTIVE documents are returned; pass status filter to include ARCHIVED.
     hints:
       readonly: true
       idempotent: true

@@ -60,6 +60,39 @@ export const description: INodeProperties[] = [
 		default: 50,
 		description: 'Max number of results to return',
 	},
+	{
+		displayName: 'Filters',
+		name: 'filters',
+		type: 'collection',
+		placeholder: 'Add Filter',
+		default: {},
+		displayOptions: {
+			show: {
+				resource: ['document'],
+				operation: ['getAllSignatures'],
+			},
+		},
+		options: [
+			{
+				displayName: 'States',
+				name: 'states',
+				type: 'multiOptions',
+				default: [],
+				description: 'Filter by signature state',
+				options: [
+					{ name: 'Requested', value: 'REQUESTED' },
+					{ name: 'Signed', value: 'SIGNED' },
+				],
+			},
+			{
+				displayName: 'Active Contract',
+				name: 'activeContract',
+				type: 'boolean',
+				default: false,
+				description: 'Whether to filter by active contract status',
+			},
+		],
+	},
 ];
 
 export async function execute(
@@ -69,12 +102,19 @@ export async function execute(
 	const documentVersionId = this.getNodeParameter('documentVersionId', itemIndex) as string;
 	const returnAll = this.getNodeParameter('returnAll', itemIndex) as boolean;
 	const limit = this.getNodeParameter('limit', itemIndex, 50) as number;
+	const filters = this.getNodeParameter('filters', itemIndex, {}) as IDataObject;
+
+	const filter: IDataObject = {};
+	if ((filters.states as string[])?.length) filter.states = filters.states;
+	if (filters.activeContract !== undefined) filter.activeContract = filters.activeContract;
+
+	const hasFilter = Object.keys(filter).length > 0;
 
 	const query = `
-		query GetDocumentVersionSignatures($documentVersionId: ID!, $first: Int, $after: CursorKey) {
+		query GetDocumentVersionSignatures($documentVersionId: ID!, $first: Int, $after: CursorKey${hasFilter ? ', $filter: DocumentVersionSignatureFilter' : ''}) {
 			node(id: $documentVersionId) {
 				... on DocumentVersion {
-					signatures(first: $first, after: $after) {
+					signatures(first: $first, after: $after${hasFilter ? ', filter: $filter' : ''}) {
 						edges {
 							node {
 								id
@@ -100,10 +140,13 @@ export async function execute(
 		}
 	`;
 
+	const variables: IDataObject = { documentVersionId };
+	if (hasFilter) variables.filter = filter;
+
 	const signatures = await proboApiRequestAllItems.call(
 		this,
 		query,
-		{ documentVersionId },
+		variables,
 		(response) => {
 			const data = response?.data as IDataObject | undefined;
 			const node = data?.node as IDataObject | undefined;

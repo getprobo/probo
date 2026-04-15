@@ -2036,7 +2036,8 @@ func (r *Resolver) ListDocumentsTool(ctx context.Context, req *mcp.CallToolReque
 
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
-	documentFilter := coredata.NewDocumentFilter(nil)
+	documentFilter := coredata.NewDocumentFilter(nil).
+		WithStatus([]coredata.DocumentStatus{coredata.DocumentStatusActive})
 	if input.Filter != nil {
 		var query *string
 		if input.Filter.Query != nil && *input.Filter.Query != "" {
@@ -2045,7 +2046,12 @@ func (r *Resolver) ListDocumentsTool(ctx context.Context, req *mcp.CallToolReque
 
 		documentFilter = coredata.NewDocumentFilter(query).
 			WithDocumentTypes(input.Filter.DocumentTypes).
-			WithClassifications(input.Filter.Classifications)
+			WithClassifications(input.Filter.Classifications).
+			WithStatus(input.Filter.Status)
+
+		if len(input.Filter.Status) == 0 {
+			documentFilter = documentFilter.WithStatus([]coredata.DocumentStatus{coredata.DocumentStatusActive})
+		}
 	}
 
 	docPage, err := prb.Documents.ListByOrganizationID(ctx, input.OrganizationID, cursor, documentFilter)
@@ -2168,7 +2174,12 @@ func (r *Resolver) ListDocumentVersionsTool(ctx context.Context, req *mcp.CallTo
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 	svc := r.ProboService(ctx, input.DocumentID)
 
-	versionPage, err := svc.Documents.ListVersions(ctx, input.DocumentID, cursor, coredata.NewDocumentVersionFilter())
+	versionFilter := coredata.NewDocumentVersionFilter()
+	if input.Filter != nil && len(input.Filter.Statuses) > 0 {
+		versionFilter = versionFilter.WithStatuses(input.Filter.Statuses...)
+	}
+
+	versionPage, err := svc.Documents.ListVersions(ctx, input.DocumentID, cursor, versionFilter)
 	if err != nil {
 		panic(fmt.Errorf("cannot list document versions: %w", err))
 	}

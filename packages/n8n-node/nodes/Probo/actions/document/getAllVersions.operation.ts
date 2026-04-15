@@ -60,6 +60,33 @@ export const description: INodeProperties[] = [
 		default: 50,
 		description: 'Max number of results to return',
 	},
+	{
+		displayName: 'Filters',
+		name: 'filters',
+		type: 'collection',
+		placeholder: 'Add Filter',
+		default: {},
+		displayOptions: {
+			show: {
+				resource: ['document'],
+				operation: ['getAllVersions'],
+			},
+		},
+		options: [
+			{
+				displayName: 'Statuses',
+				name: 'statuses',
+				type: 'multiOptions',
+				default: [],
+				description: 'Filter by version status',
+				options: [
+					{ name: 'Draft', value: 'DRAFT' },
+					{ name: 'Pending Approval', value: 'PENDING_APPROVAL' },
+					{ name: 'Published', value: 'PUBLISHED' },
+				],
+			},
+		],
+	},
 ];
 
 export async function execute(
@@ -69,12 +96,18 @@ export async function execute(
 	const documentId = this.getNodeParameter('documentId', itemIndex) as string;
 	const returnAll = this.getNodeParameter('returnAll', itemIndex) as boolean;
 	const limit = this.getNodeParameter('limit', itemIndex, 50) as number;
+	const filters = this.getNodeParameter('filters', itemIndex, {}) as IDataObject;
+
+	const filter: IDataObject = {};
+	if ((filters.statuses as string[])?.length) filter.statuses = filters.statuses;
+
+	const hasFilter = Object.keys(filter).length > 0;
 
 	const query = `
-		query GetDocumentVersions($documentId: ID!, $first: Int, $after: CursorKey) {
+		query GetDocumentVersions($documentId: ID!, $first: Int, $after: CursorKey${hasFilter ? ', $filter: DocumentVersionFilter' : ''}) {
 			node(id: $documentId) {
 				... on Document {
-					versions(first: $first, after: $after) {
+					versions(first: $first, after: $after${hasFilter ? ', filter: $filter' : ''}) {
 						edges {
 							node {
 								id
@@ -101,10 +134,13 @@ export async function execute(
 		}
 	`;
 
+	const variables: IDataObject = { documentId };
+	if (hasFilter) variables.filter = filter;
+
 	const versions = await proboApiRequestAllItems.call(
 		this,
 		query,
-		{ documentId },
+		variables,
 		(response) => {
 			const data = response?.data as IDataObject | undefined;
 			const node = data?.node as IDataObject | undefined;
