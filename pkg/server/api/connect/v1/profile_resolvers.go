@@ -13,48 +13,12 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/page"
-	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/authz"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
 	"go.probo.inc/probo/pkg/server/gqlutils/types/cursor"
 )
-
-// Permission is the resolver for the permission field.
-func (r *invitationResolver) Permission(ctx context.Context, obj *types.Invitation, action string) (bool, error) {
-	return r.Resolver.Permission(ctx, obj, action)
-}
-
-// LastSession is the resolver for the lastSession field.
-func (r *membershipResolver) LastSession(ctx context.Context, obj *types.Membership) (*types.Session, error) {
-	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipGet, authz.WithSkipAssumptionCheck()); err != nil {
-		return nil, err
-	}
-
-	session := authn.SessionFromContext(ctx)
-	if session == nil {
-		return nil, nil
-	}
-
-	childSession, err := r.iam.SessionService.GetActiveSessionForMembership(ctx, session.ID, obj.ID)
-	if err != nil {
-		var errSessionNotFound *iam.ErrSessionNotFound
-		if errors.As(err, &errSessionNotFound) {
-			return nil, nil
-		}
-
-		r.logger.ErrorCtx(ctx, "cannot get active session for membership", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return types.NewSession(childSession), nil
-}
-
-// Permission is the resolver for the permission field.
-func (r *membershipResolver) Permission(ctx context.Context, obj *types.Membership, action string) (bool, error) {
-	return r.Resolver.Permission(ctx, obj, action)
-}
 
 // CreateUser is the resolver for the createUser field.
 func (r *mutationResolver) CreateUser(ctx context.Context, input types.CreateUserInput) (*types.CreateUserPayload, error) {
@@ -88,40 +52,6 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input types.CreateUse
 
 	return &types.CreateUserPayload{
 		ProfileEdge: types.NewProfileEdge(profile, coredata.MembershipProfileOrderFieldCreatedAt),
-	}, nil
-}
-
-// InviteUser is the resolver for the inviteUser field.
-func (r *mutationResolver) InviteUser(ctx context.Context, input types.InviteUserInput) (*types.InviteUserPayload, error) {
-	if err := r.authorize(ctx, input.ProfileID, iam.ActionInvitationCreate); err != nil {
-		return nil, err
-	}
-
-	invitation, err := r.iam.OrganizationService.InviteUser(
-		ctx,
-		&iam.CreateInvitationRequest{
-			OrganizationID: input.OrganizationID,
-			ProfileID:      input.ProfileID,
-		},
-	)
-	if err != nil {
-		var errOrganizationNotFound *iam.ErrOrganizationNotFound
-		var errUserAlreadyExists *iam.ErrUserAlreadyExists
-
-		if errors.As(err, &errOrganizationNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
-		}
-
-		if errors.As(err, &errUserAlreadyExists) {
-			return nil, gqlutils.Conflict(ctx, err)
-		}
-
-		r.logger.ErrorCtx(ctx, "cannot invite user", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return &types.InviteUserPayload{
-		InvitationEdge: types.NewInvitationEdge(invitation, coredata.InvitationOrderFieldCreatedAt),
 	}, nil
 }
 
@@ -172,29 +102,6 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input types.UpdateUse
 
 	return &types.UpdateUserPayload{
 		Profile: types.NewProfile(profile),
-	}, nil
-}
-
-// UpdateMembership is the resolver for the updateMembership field.
-func (r *mutationResolver) UpdateMembership(ctx context.Context, input types.UpdateMembershipInput) (*types.UpdateMembershipPayload, error) {
-	if err := r.authorize(ctx, input.MembershipID, iam.ActionMembershipUpdate); err != nil {
-		return nil, err
-	}
-
-	if input.Role == coredata.MembershipRoleOwner {
-		if err := r.authorize(ctx, input.MembershipID, iam.ActionMembershipRoleSetOwner); err != nil {
-			return nil, err
-		}
-	}
-
-	membership, err := r.iam.OrganizationService.UpdateMempership(ctx, input.OrganizationID, input.MembershipID, input.Role)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot update membership", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return &types.UpdateMembershipPayload{
-		Membership: types.NewMembership(membership),
 	}, nil
 }
 
@@ -339,12 +246,6 @@ func (r *profileConnectionResolver) TotalCount(ctx context.Context, obj *types.P
 	return nil, gqlutils.Internal(ctx)
 }
 
-// Invitation returns schema.InvitationResolver implementation.
-func (r *Resolver) Invitation() schema.InvitationResolver { return &invitationResolver{r} }
-
-// Membership returns schema.MembershipResolver implementation.
-func (r *Resolver) Membership() schema.MembershipResolver { return &membershipResolver{r} }
-
 // Profile returns schema.ProfileResolver implementation.
 func (r *Resolver) Profile() schema.ProfileResolver { return &profileResolver{r} }
 
@@ -353,7 +254,5 @@ func (r *Resolver) ProfileConnection() schema.ProfileConnectionResolver {
 	return &profileConnectionResolver{r}
 }
 
-type invitationResolver struct{ *Resolver }
-type membershipResolver struct{ *Resolver }
 type profileResolver struct{ *Resolver }
 type profileConnectionResolver struct{ *Resolver }

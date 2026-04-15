@@ -1,4 +1,0 @@
-type OIDCProviderInfo {
-  name: String!
-  loginURL: String!
-}

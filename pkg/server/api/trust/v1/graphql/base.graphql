@@ -30,4 +30,9 @@ type Query {
     @session(required: OPTIONAL)
 }
 
+type OIDCProviderInfo {
+  name: String!
+  loginURL: String!
+}
+
 type Mutation

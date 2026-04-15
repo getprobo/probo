@@ -43,80 +43,6 @@ enum ProfileSource
   SCIM @goEnum(value: "go.probo.inc/probo/pkg/coredata.ProfileSourceSCIM")
 }
 
-enum MembershipRole
-  @goModel(model: "go.probo.inc/probo/pkg/coredata.MembershipRole") {
-  OWNER @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipRoleOwner")
-  ADMIN @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipRoleAdmin")
-  EMPLOYEE
-    @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipRoleEmployee")
-  VIEWER @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipRoleViewer")
-  AUDITOR
-    @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipRoleAuditor")
-}
-
-type Membership implements Node {
-  id: ID!
-  createdAt: Datetime!
-  role: MembershipRole!
-
-  lastSession: Session @goField(forceResolver: true)
-
-  permission(action: String!): Boolean!
-    @goField(forceResolver: true)
-    @session(required: PRESENT)
-}
-
-type Invitation implements Node {
-  id: ID!
-  expiresAt: Datetime!
-  acceptedAt: Datetime
-  createdAt: Datetime!
-  status: InvitationStatus!
-
-  permission(action: String!): Boolean!
-    @goField(forceResolver: true)
-    @session(required: PRESENT)
-}
-
-enum InvitationStatus
-  @goModel(model: "go.probo.inc/probo/pkg/coredata.InvitationStatus") {
-  PENDING
-    @goEnum(value: "go.probo.inc/probo/pkg/coredata.InvitationStatusPending")
-  ACCEPTED
-    @goEnum(value: "go.probo.inc/probo/pkg/coredata.InvitationStatusAccepted")
-  EXPIRED
-    @goEnum(value: "go.probo.inc/probo/pkg/coredata.InvitationStatusExpired")
-}
-
-enum InvitationOrderField
-  @goModel(model: "go.probo.inc/probo/pkg/coredata.InvitationOrderField") {
-  CREATED_AT
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.InvitationOrderFieldCreatedAt"
-    )
-}
-
-input InvitationOrder
-  @goModel(
-    model: "go.probo.inc/probo/pkg/server/api/connect/v1/types.InvitationOrderBy"
-  ) {
-  direction: OrderDirection!
-  field: InvitationOrderField!
-}
-
-type InvitationConnection
-  @goModel(
-    model: "go.probo.inc/probo/pkg/server/api/connect/v1/types.InvitationConnection"
-  ) {
-  edges: [InvitationEdge!]!
-  pageInfo: PageInfo!
-}
-
-type InvitationEdge {
-  node: Invitation!
-  cursor: CursorKey!
-}
-
 enum ProfileOrderField
   @goModel(model: "go.probo.inc/probo/pkg/coredata.MembershipProfileOrderField") {
   FULL_NAME
@@ -168,11 +94,8 @@ type ProfileEdge {
 extend type Mutation {
   createUser(input: CreateUserInput!): CreateUserPayload
     @session(required: PRESENT)
-  inviteUser(input: InviteUserInput!): InviteUserPayload
-    @session(required: PRESENT)
   deactivateUser(input: DeactivateUserInput!): DeactivateUserPayload
   updateUser(input: UpdateUserInput!): UpdateUserPayload!
-  updateMembership(input: UpdateMembershipInput!): UpdateMembershipPayload!
   removeUser(input: RemoveUserInput!): RemoveUserPayload
     @session(required: PRESENT)
 }
@@ -187,11 +110,6 @@ input CreateUserInput {
   position: String
   contractStartDate: Datetime @goField(omittable: true)
   contractEndDate: Datetime @goField(omittable: true)
-}
-
-input InviteUserInput {
-  organizationId: ID!
-  profileId: ID!
 }
 
 input ActivateUserInput {
@@ -214,12 +132,6 @@ input UpdateUserInput {
   contractEndDate: Datetime @goField(omittable: true)
 }
 
-input UpdateMembershipInput {
-  organizationId: ID!
-  membershipId: ID!
-  role: MembershipRole!
-}
-
 input RemoveUserInput {
   organizationId: ID!
   profileId: ID!
@@ -229,20 +141,12 @@ type CreateUserPayload {
   profileEdge: ProfileEdge!
 }
 
-type InviteUserPayload {
-  invitationEdge: InvitationEdge!
-}
-
 type DeactivateUserPayload {
   success: Boolean!
 }
 
 type UpdateUserPayload {
   profile: Profile!
-}
-
-type UpdateMembershipPayload {
-  membership: Membership!
 }
 
 type RemoveUserPayload {

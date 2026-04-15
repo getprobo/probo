@@ -1,0 +1,64 @@
+type Invitation implements Node {
+  id: ID!
+  expiresAt: Datetime!
+  acceptedAt: Datetime
+  createdAt: Datetime!
+  status: InvitationStatus!
+
+  permission(action: String!): Boolean!
+    @goField(forceResolver: true)
+    @session(required: PRESENT)
+}
+
+enum InvitationStatus
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.InvitationStatus") {
+  PENDING
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.InvitationStatusPending")
+  ACCEPTED
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.InvitationStatusAccepted")
+  EXPIRED
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.InvitationStatusExpired")
+}
+
+enum InvitationOrderField
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.InvitationOrderField") {
+  CREATED_AT
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.InvitationOrderFieldCreatedAt"
+    )
+}
+
+input InvitationOrder
+  @goModel(
+    model: "go.probo.inc/probo/pkg/server/api/connect/v1/types.InvitationOrderBy"
+  ) {
+  direction: OrderDirection!
+  field: InvitationOrderField!
+}
+
+type InvitationConnection
+  @goModel(
+    model: "go.probo.inc/probo/pkg/server/api/connect/v1/types.InvitationConnection"
+  ) {
+  edges: [InvitationEdge!]!
+  pageInfo: PageInfo!
+}
+
+type InvitationEdge {
+  node: Invitation!
+  cursor: CursorKey!
+}
+
+extend type Mutation {
+  inviteUser(input: InviteUserInput!): InviteUserPayload
+    @session(required: PRESENT)
+}
+
+input InviteUserInput {
+  organizationId: ID!
+  profileId: ID!
+}
+
+type InviteUserPayload {
+  invitationEdge: InvitationEdge!
+}
