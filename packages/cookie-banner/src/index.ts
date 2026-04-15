@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -13,6 +13,17 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 export const VERSION = "0.0.0";
+
+export {
+  ApiError,
+  BadRequestError,
+  InternalServerError,
+  NetworkError,
+  NotFoundError,
+  TimeoutError,
+} from "./errors";
+export { fetchJSON } from "./http";
+export type { RequestOptions } from "./http";
 
 export type CookieBannerConfig = {
   bannerId: string;
