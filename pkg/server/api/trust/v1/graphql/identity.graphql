@@ -1,8 +1,0 @@
-type Identity implements Node {
-  id: ID!
-  email: EmailAddr!
-  fullName: String!
-  emailVerified: Boolean!
-  createdAt: Datetime!
-  updatedAt: Datetime!
-}
