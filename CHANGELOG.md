@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.168.1] - 2026-04-15
+
+### Added
+
+- Add document filters to MCP and n8n APIs
+
+### Fixed
+
+- Filter people with ended contracts from signature request dialog
+
 ## [0.168.0] - 2026-04-15
 
 ### Fixed
