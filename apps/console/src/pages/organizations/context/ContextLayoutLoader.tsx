@@ -14,15 +14,11 @@
 
 import { usePageTitle } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
-import { PageHeader, TabLink, Tabs } from "@probo/ui";
+import { PageHeader } from "@probo/ui";
 import { Outlet } from "react-router";
-
-import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 export default function ContextLayoutLoader() {
   const { __ } = useTranslate();
-  const organizationId = useOrganizationId();
-  const prefix = `/organizations/${organizationId}/context`;
 
   usePageTitle(__("Context"));
 
@@ -31,13 +27,9 @@ export default function ContextLayoutLoader() {
       <PageHeader
         title={__("Context")}
         description={__(
-          "Structured company information and meetings for AI assistants and compliance workflows.",
+          "Structured company information for AI assistants and compliance workflows.",
         )}
       />
-      <Tabs>
-        <TabLink to={prefix} end>{__("Context")}</TabLink>
-        <TabLink to={`${prefix}/meetings`}>{__("Meetings")}</TabLink>
-      </Tabs>
       <Outlet />
     </div>
   );

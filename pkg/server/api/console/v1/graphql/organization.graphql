@@ -245,14 +245,6 @@ type Organization implements Node {
         filter: MeasureFilter
     ): MeasureConnection! @goField(forceResolver: true)
 
-    meetings(
-        first: Int
-        after: CursorKey
-        last: Int
-        before: CursorKey
-        orderBy: MeetingOrder
-    ): MeetingConnection! @goField(forceResolver: true)
-
     obligations(
         first: Int
         after: CursorKey

@@ -68,7 +68,7 @@ const (
 	SAMLConfigurationEntityType                uint16 = 42
 	PersonalAPIKeyEntityType                   uint16 = 43
 	_                                          uint16 = 44 // PersonalAPIKeyMembershipEntityType - removed
-	MeetingEntityType                          uint16 = 45
+	_                                          uint16 = 45 // MeetingEntityType - removed
 	DataProtectionImpactAssessmentEntityType   uint16 = 46
 	TransferImpactAssessmentEntityType         uint16 = 47
 	RightsRequestEntityType                    uint16 = 48
@@ -196,8 +196,6 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &SAMLConfiguration{ID: id}, true
 	case PersonalAPIKeyEntityType:
 		return &PersonalAPIKey{ID: id}, true
-	case MeetingEntityType:
-		return &Meeting{ID: id}, true
 	case DataProtectionImpactAssessmentEntityType:
 		return &DataProtectionImpactAssessment{ID: id}, true
 	case TransferImpactAssessmentEntityType:
