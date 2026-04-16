@@ -37,8 +37,10 @@ export class ProboCategoryList extends ProboElement {
       return;
     }
 
-    this.root = this.findAncestor<ProboCookieBannerRoot>("-root");
+    this.root = this.findAncestor<ProboCookieBannerRoot>("probo-cookie-banner-root");
     if (!this.root) return;
+
+    this.validateTemplate();
 
     try {
       const config = this.root.bannerConfig;
@@ -75,6 +77,22 @@ export class ProboCategoryList extends ProboElement {
 
       wrapper.appendChild(clone);
       this.appendChild(wrapper);
+    }
+  }
+
+  private validateTemplate(): void {
+    if (!this.template) return;
+    const content = this.template.content;
+    const missing: string[] = [];
+    if (!content.querySelector("probo-category-toggle")) {
+      missing.push("probo-category-toggle");
+    }
+    if (!content.querySelector("probo-cookie-list")) {
+      missing.push("probo-cookie-list");
+    }
+    if (missing.length > 0) {
+      this.warn(`<probo-category-list> template is missing required elements: ${missing.join(", ")}`);
+      this.emitValidation(missing);
     }
   }
 

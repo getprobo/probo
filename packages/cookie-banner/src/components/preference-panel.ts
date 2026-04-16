@@ -16,6 +16,11 @@ import { ProboElement } from "./base";
 import type { ProboRootElement } from "./base";
 import type { ProboCookieBannerRoot } from "./cookie-banner-root";
 
+const REQUIRED_CHILDREN = [
+  "probo-category-list",
+  "probo-save-button",
+] as const;
+
 export class ProboPreferencePanel extends ProboElement {
   private root: ProboRootElement | null = null;
   private onStateChange = (e: Event): void => {
@@ -44,11 +49,26 @@ export class ProboPreferencePanel extends ProboElement {
         }
       });
     }
+
+    this.scheduleValidation(() => this.validate());
   }
 
   disconnectedCallback(): void {
     if (this.root) {
       this.root.removeEventListener("probo-state", this.onStateChange);
+    }
+  }
+
+  private validate(): void {
+    const missing: string[] = [];
+    for (const tag of REQUIRED_CHILDREN) {
+      if (!this.querySelector(tag)) {
+        missing.push(tag);
+      }
+    }
+    if (missing.length > 0) {
+      this.warn(`<probo-preference-panel> is missing required children: ${missing.join(", ")}`);
+      this.emitValidation(missing);
     }
   }
 }
