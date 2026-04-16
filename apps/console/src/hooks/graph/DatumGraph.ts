@@ -21,11 +21,12 @@ import { graphql } from "relay-runtime";
 /* eslint-disable relay/unused-fields, relay/must-colocate-fragment-spreads */
 
 export const dataQuery = graphql`
-  query DatumGraphListQuery($organizationId: ID!, $snapshotId: ID = null) {
+  query DatumGraphListQuery($organizationId: ID!) {
     node(id: $organizationId) {
       ... on Organization {
         canCreateDatum: permission(action: "core:datum:create")
-        ...DataPageFragment @arguments(snapshotId: $snapshotId)
+        canPublishDatum: permission(action: "core:datum:publish")
+        ...DataPageFragment
       }
     }
   }
@@ -36,7 +37,6 @@ export const datumNodeQuery = graphql`
     node(id: $dataId) {
       ... on Datum {
         id
-        snapshotId
         name
         dataClassification
         owner {

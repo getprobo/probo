@@ -2192,13 +2192,6 @@ components:
         organization_id:
           $ref: "#/components/schemas/GID"
           description: Organization ID
-        snapshot_id:
-          anyOf:
-            - $ref: "#/components/schemas/GID"
-              description: Snapshot ID
-            - type: "null"
-              description: No snapshot
-          description: Snapshot ID
         name:
           type: string
           description: Datum name
@@ -2234,16 +2227,6 @@ components:
         cursor:
           $ref: "#/components/schemas/CursorKey"
           description: Page cursor
-        filter:
-          type: object
-          properties:
-            snapshot_id:
-              anyOf:
-                - $ref: "#/components/schemas/GID"
-                - type: "null"
-              description: Filter by snapshot ID. Defaults to null, which returns only data with no snapshot (current live data). Pass a specific snapshot ID to retrieve data as it was at that snapshot.
-              default: null
-
     ListDataOutput:
       type: object
       required:
@@ -4991,7 +4974,6 @@ components:
         - RISKS
         - VENDORS
         - ASSETS
-        - DATA
         - NONCONFORMITIES
         - OBLIGATIONS
         - CONTINUAL_IMPROVEMENTS
@@ -6278,6 +6260,33 @@ components:
           $ref: "#/components/schemas/GID"
           description: Deleted statement of applicability ID
 
+
+    PublishDataListInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        approver_ids:
+          type: array
+          items:
+            $ref: "#/components/schemas/GID"
+          description: Optional approver profile IDs. If provided, creates a draft pending approval instead of publishing immediately.
+
+    PublishDataListOutput:
+      type: object
+      required:
+        - document_id
+        - document_version_id
+      properties:
+        document_id:
+          $ref: "#/components/schemas/GID"
+          description: Created or updated document ID
+        document_version_id:
+          $ref: "#/components/schemas/GID"
+          description: Created document version ID
 
     PublishStatementOfApplicabilityInput:
       type: object
@@ -8345,7 +8354,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/GetSnapshotOutput"
   - name: takeSnapshot
-    description: Take a snapshot of a collection of objects (risks, vendors, assets, data, findings, obligations, or processing activities)
+    description: Take a snapshot of a collection of objects (risks, vendors, assets, findings, obligations, or processing activities)
     hints:
       readonly: false
     inputSchema:
@@ -8609,6 +8618,14 @@ tools:
       $ref: "#/components/schemas/DeleteStatementOfApplicabilityInput"
     outputSchema:
       $ref: "#/components/schemas/DeleteStatementOfApplicabilityOutput"
+  - name: publishDataList
+    description: Publish the data list for an organization as a document. If a document already exists, a new version is created.
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/PublishDataListInput"
+    outputSchema:
+      $ref: "#/components/schemas/PublishDataListOutput"
   - name: publishStatementOfApplicability
     description: Publish a statement of applicability as a document. If a document already exists, a new version is created.
     hints:

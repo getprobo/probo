@@ -25,7 +25,6 @@ import (
 type Datum struct {
 	ID                 gid.GID                     `json:"id"`
 	OrganizationID     gid.GID                     `json:"-"`
-	SnapshotID         *gid.GID                    `json:"snapshotId,omitempty"`
 	Name               string                      `json:"name"`
 	DataClassification coredata.DataClassification `json:"dataClassification"`
 	Owner              *Profile                    `json:"owner"`
@@ -48,7 +47,6 @@ type (
 
 		Resolver any
 		ParentID gid.GID
-		Filter   *DatumFilter
 	}
 )
 
@@ -56,7 +54,6 @@ func NewDataConnection(
 	p *page.Page[*coredata.Datum, coredata.DatumOrderField],
 	parentType any,
 	parentID gid.GID,
-	filter *DatumFilter,
 ) *DatumConnection {
 	edges := make([]*DatumEdge, len(p.Data))
 	for i, datum := range p.Data {
@@ -69,7 +66,6 @@ func NewDataConnection(
 
 		Resolver: parentType,
 		ParentID: parentID,
-		Filter:   filter,
 	}
 }
 
@@ -84,7 +80,6 @@ func NewDatum(d *coredata.Datum) *Datum {
 		},
 		OrganizationID:     d.OrganizationID,
 		Name:               d.Name,
-		SnapshotID:         d.SnapshotID,
 		DataClassification: d.DataClassification,
 		CreatedAt:          d.CreatedAt,
 		UpdatedAt:          d.UpdatedAt,

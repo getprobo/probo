@@ -14,7 +14,7 @@
 
 type Translator = (s: string) => string;
 
-export const documentTypes = ["OTHER", "GOVERNANCE", "POLICY", "PROCEDURE", "PLAN", "REGISTER", "RECORD", "REPORT", "TEMPLATE", "STATEMENT_OF_APPLICABILITY"] as const;
+export const documentTypes = ["OTHER", "GOVERNANCE", "POLICY", "PROCEDURE", "PLAN", "REGISTER", "RECORD", "REPORT", "TEMPLATE", "STATEMENT_OF_APPLICABILITY", "DATA_LIST"] as const;
 
 export function getDocumentTypeLabel(__: Translator, type: string) {
     switch (type) {
@@ -38,6 +38,8 @@ export function getDocumentTypeLabel(__: Translator, type: string) {
             return __("Template");
         case "STATEMENT_OF_APPLICABILITY":
             return __("Statement of Applicability");
+        case "DATA_LIST":
+            return __("Data List");
     }
 }
 

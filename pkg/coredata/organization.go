@@ -39,6 +39,7 @@ type (
 		Email                *string      `db:"email"`
 		HeadquarterAddress   *string      `db:"headquarter_address"`
 		CustomDomainID       *gid.GID     `db:"custom_domain_id"`
+		DataListDocumentID   *gid.GID     `db:"data_list_document_id"`
 		CreatedAt            time.Time    `db:"created_at"`
 		UpdatedAt            time.Time    `db:"updated_at"`
 	}
@@ -91,6 +92,7 @@ SELECT
     email,
     headquarter_address,
     custom_domain_id,
+    data_list_document_id,
     created_at,
     updated_at
 FROM
@@ -143,6 +145,7 @@ SELECT
     email,
     headquarter_address,
     custom_domain_id,
+    data_list_document_id,
     created_at,
     updated_at
 FROM
@@ -246,9 +249,10 @@ INSERT INTO organizations (
     email,
     headquarter_address,
     custom_domain_id,
+    data_list_document_id,
     created_at,
     updated_at
-) VALUES (@tenant_id, @id, @name, @logo_file_id, @horizontal_logo_file_id, @description, @website_url, @email, @headquarter_address, @custom_domain_id, @created_at, @updated_at)
+) VALUES (@tenant_id, @id, @name, @logo_file_id, @horizontal_logo_file_id, @description, @website_url, @email, @headquarter_address, @custom_domain_id, @data_list_document_id, @created_at, @updated_at)
 `
 
 	args := pgx.StrictNamedArgs{
@@ -262,6 +266,7 @@ INSERT INTO organizations (
 		"email":                   o.Email,
 		"headquarter_address":     o.HeadquarterAddress,
 		"custom_domain_id":        o.CustomDomainID,
+		"data_list_document_id":   o.DataListDocumentID,
 		"created_at":              o.CreatedAt,
 		"updated_at":              o.UpdatedAt,
 	}
@@ -290,6 +295,7 @@ SET
     email = @email,
     headquarter_address = @headquarter_address,
     custom_domain_id = @custom_domain_id,
+    data_list_document_id = @data_list_document_id,
     updated_at = @updated_at
 WHERE
     %s
@@ -308,6 +314,7 @@ WHERE
 		"email":                   o.Email,
 		"headquarter_address":     o.HeadquarterAddress,
 		"custom_domain_id":        o.CustomDomainID,
+		"data_list_document_id":   o.DataListDocumentID,
 		"updated_at":              o.UpdatedAt,
 	}
 
@@ -359,6 +366,7 @@ SELECT
     email,
     headquarter_address,
     custom_domain_id,
+    data_list_document_id,
     created_at,
     updated_at
 FROM

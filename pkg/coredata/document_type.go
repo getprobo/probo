@@ -34,6 +34,7 @@ const (
 	DocumentTypeReport                   DocumentType = "REPORT"
 	DocumentTypeTemplate                 DocumentType = "TEMPLATE"
 	DocumentTypeStatementOfApplicability DocumentType = "STATEMENT_OF_APPLICABILITY"
+	DocumentTypeDataList                 DocumentType = "DATA_LIST"
 )
 
 func DocumentTypes() []DocumentType {
@@ -48,6 +49,7 @@ func DocumentTypes() []DocumentType {
 		DocumentTypeReport,
 		DocumentTypeTemplate,
 		DocumentTypeStatementOfApplicability,
+		DocumentTypeDataList,
 	}
 }
 
@@ -79,6 +81,8 @@ func (dt *DocumentType) UnmarshalText(data []byte) error {
 		*dt = DocumentTypeTemplate
 	case DocumentTypeStatementOfApplicability.String():
 		*dt = DocumentTypeStatementOfApplicability
+	case DocumentTypeDataList.String():
+		*dt = DocumentTypeDataList
 	default:
 		return fmt.Errorf("invalid DocumentType value: %q", val)
 	}

@@ -18,7 +18,6 @@ export const snapshotTypes = [
   "RISKS",
   "VENDORS",
   "ASSETS",
-  "DATA",
   "FINDINGS",
   "OBLIGATIONS",
   "PROCESSING_ACTIVITIES",
@@ -36,8 +35,6 @@ export function getSnapshotTypeLabel(__: Translator, type: string | null | undef
       return __("Vendors");
     case "ASSETS":
       return __("Assets");
-    case "DATA":
-      return __("Data");
     case "FINDINGS":
     case "NONCONFORMITIES":
     case "CONTINUAL_IMPROVEMENTS":
@@ -59,8 +56,6 @@ export function getSnapshotTypeUrlPath(type?: string): string {
       return "/vendors";
     case "ASSETS":
       return "/assets";
-    case "DATA":
-      return "/data";
     case "FINDINGS":
     case "NONCONFORMITIES":
     case "CONTINUAL_IMPROVEMENTS":

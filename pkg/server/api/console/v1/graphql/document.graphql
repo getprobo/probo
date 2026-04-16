@@ -41,6 +41,10 @@ enum DocumentType
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.DocumentTypeStatementOfApplicability"
         )
+    DATA_LIST
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DocumentTypeDataList"
+        )
 }
 
 enum DocumentVersionOrientation

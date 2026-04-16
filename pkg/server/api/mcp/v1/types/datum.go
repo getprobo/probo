@@ -25,7 +25,6 @@ func NewDatum(d *coredata.Datum) *Datum {
 		Name:               d.Name,
 		OwnerID:            d.OwnerID,
 		OrganizationID:     d.OrganizationID,
-		SnapshotID:         d.SnapshotID,
 		DataClassification: d.DataClassification,
 		CreatedAt:          d.CreatedAt,
 		UpdatedAt:          d.UpdatedAt,

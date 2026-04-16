@@ -296,6 +296,21 @@ type (
 		BestPractice         string
 		RiskAssessment       string
 	}
+
+	DataListData struct {
+		Title            string
+		OrganizationName string
+		CreatedAt        time.Time
+		TotalData        int
+		Rows             []DataListRow
+	}
+
+	DataListRow struct {
+		Name           string
+		Classification string
+		Owner          string
+		Vendors        string
+	}
 )
 
 func BoolLabel(v bool) string {
