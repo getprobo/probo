@@ -46,17 +46,30 @@ export function Sidebar({ children }: PropsWithChildren) {
     <sidebarContext.Provider value={{ open }}>
       <aside
         className={clsx(
-          "border-r border-border-solid relative pt-16 flex-none",
-          open ? "px-4 w-[280px]" : "px-2",
+          "border-r border-border-solid pt-16 flex-none flex flex-col",
+          open && "w-[280px]",
         )}
       >
-        {children}
-        <Button
-          variant="tertiary"
-          icon={open ? IconCollapse : IconExpand}
-          onClick={() => setOpen(!open)}
-          className="absolute bottom-4 left-4"
-        />
+        <div
+          className={clsx(
+            "flex-1 pb-2",
+            open ? "px-4" : "px-2",
+          )}
+        >
+          {children}
+        </div>
+        <div
+          className={clsx(
+            "sticky bottom-0 flex-none border-t border-border-solid bg-level-0 py-2",
+            open ? "px-4" : "px-2",
+          )}
+        >
+          <Button
+            variant="tertiary"
+            icon={open ? IconCollapse : IconExpand}
+            onClick={() => setOpen(!open)}
+          />
+        </div>
       </aside>
     </sidebarContext.Provider>
   );
