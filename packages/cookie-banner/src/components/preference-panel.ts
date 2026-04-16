@@ -29,14 +29,6 @@ export class ProboPreferencePanel extends ProboElement {
   };
 
   connectedCallback(): void {
-    this.shadow.innerHTML = `
-      <style>
-        :host { display: block; }
-        :host([hidden]) { display: none; }
-      </style>
-      <slot></slot>
-    `;
-
     this.hidden = true;
     this.root = this.findAncestor<ProboCookieBannerRoot>("probo-cookie-banner-root");
 
@@ -77,10 +69,6 @@ export class ProboSaveButton extends ProboElement {
   private root: ProboRootElement | null = null;
 
   connectedCallback(): void {
-    this.shadow.innerHTML = `
-      <style>:host { display: contents; }</style>
-      <slot></slot>
-    `;
     this.root = this.findAncestor<ProboCookieBannerRoot>("probo-cookie-banner-root");
     this.addEventListener("click", this.handleClick);
   }

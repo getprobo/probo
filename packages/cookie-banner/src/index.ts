@@ -54,6 +54,3 @@ export {
 } from "./errors";
 export { fetchJSON } from "./http";
 export type { RequestOptions } from "./http";
-
-import { registerComponents } from "./components";
-registerComponents();

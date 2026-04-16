@@ -30,14 +30,6 @@ export class ProboBanner extends ProboElement {
   };
 
   connectedCallback(): void {
-    this.shadow.innerHTML = `
-      <style>
-        :host { display: block; }
-        :host([hidden]) { display: none; }
-      </style>
-      <slot></slot>
-    `;
-
     this.hidden = true;
     this.root = this.findAncestor<ProboCookieBannerRoot>("probo-cookie-banner-root");
 

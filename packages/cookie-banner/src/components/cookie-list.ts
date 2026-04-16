@@ -21,11 +21,6 @@ export class ProboCookieList extends ProboElement {
   private template: HTMLTemplateElement | null = null;
 
   connectedCallback(): void {
-    this.shadow.innerHTML = `
-      <style>:host { display: contents; }</style>
-      <slot name="items"></slot>
-    `;
-
     this.template = this.querySelector("template");
     if (!this.template) {
       this.warn("<probo-cookie-list> requires a <template> child");
@@ -51,8 +46,6 @@ export class ProboCookieList extends ProboElement {
 
     const wrapper = document.createElement("probo-cookie");
     wrapper.setAttribute("name", cookie.name);
-    wrapper.setAttribute("slot", "items");
-
     const clone = this.template.content.cloneNode(true) as DocumentFragment;
     this.fillSlots(clone, {
       name: cookie.name,
@@ -77,11 +70,4 @@ export class ProboCookieList extends ProboElement {
   }
 }
 
-export class ProboCookie extends ProboElement {
-  connectedCallback(): void {
-    this.shadow.innerHTML = `
-      <style>:host { display: contents; }</style>
-      <slot></slot>
-    `;
-  }
-}
+export class ProboCookie extends ProboElement {}

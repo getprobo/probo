@@ -26,11 +26,6 @@ export class ProboCategoryList extends ProboElement {
   };
 
   connectedCallback(): void {
-    this.shadow.innerHTML = `
-      <style>:host { display: contents; }</style>
-      <slot name="items"></slot>
-    `;
-
     this.template = this.querySelector("template");
     if (!this.template) {
       this.warn("<probo-category-list> requires a <template> child");
@@ -62,7 +57,6 @@ export class ProboCategoryList extends ProboElement {
     for (const cat of categories) {
       const wrapper = document.createElement("probo-category");
       wrapper.setAttribute("name", cat.name);
-      wrapper.setAttribute("slot", "items");
       if (cat.required) {
         wrapper.setAttribute("required", "");
       }
