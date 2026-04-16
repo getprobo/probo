@@ -307,6 +307,32 @@ WHERE
 	return count, nil
 }
 
+func (sources *AccessSources) CountByConnectorID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	connectorID gid.GID,
+) (int, error) {
+	q := `
+SELECT COUNT(id)
+FROM access_sources
+WHERE
+    %s
+    AND connector_id = @connector_id;
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"connector_id": connectorID}
+	maps.Copy(args, scope.SQLArguments())
+
+	var count int
+	if err := conn.QueryRow(ctx, q, args).Scan(&count); err != nil {
+		return 0, fmt.Errorf("cannot count access_sources by connector ID: %w", err)
+	}
+
+	return count, nil
+}
+
 // LoadScopeSourcesByCampaignID loads the campaign scope sources in deterministic
 // name order. Only explicitly scoped sources are returned.
 func (sources *AccessSources) LoadScopeSourcesByCampaignID(
