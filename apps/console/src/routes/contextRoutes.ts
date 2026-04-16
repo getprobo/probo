@@ -33,29 +33,6 @@ export const contextRoutes = [
           () => import("#/pages/organizations/context/ContextPageLoader"),
         ),
       },
-      {
-        path: "meetings",
-        Fallback: LinkCardSkeleton,
-        Component: lazy(
-          () => import("#/pages/organizations/meetings/MeetingsPageLoader"),
-        ),
-      },
-      {
-        path: "meetings/:meetingId",
-        Fallback: PageSkeleton,
-        Component: lazy(
-          () => import("#/pages/organizations/meetings/MeetingDetailPageLoader"),
-        ),
-        children: [
-          {
-            index: true,
-            Fallback: LinkCardSkeleton,
-            Component: lazy(
-              () => import("#/pages/organizations/meetings/tabs/MeetingMinutesTab"),
-            ),
-          },
-        ],
-      },
     ],
   },
 ] satisfies AppRoute[];

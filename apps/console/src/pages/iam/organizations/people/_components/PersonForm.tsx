@@ -225,7 +225,7 @@ export function PersonForm(props: {
                 {watchedRole === "VIEWER" && <p>{__("Read-only access")}</p>}
                 {watchedRole === "AUDITOR" && (
                   <p>
-                    {__("Read-only access without settings, tasks and meetings")}
+                    {__("Read-only access without settings and tasks")}
                   </p>
                 )}
                 {watchedRole === "EMPLOYEE" && (

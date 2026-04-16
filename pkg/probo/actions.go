@@ -293,13 +293,6 @@ const (
 	ActionFileGet         = "core:file:get"
 	ActionFileDownloadUrl = "core:file:download-url"
 
-	// Meeting actions
-	ActionMeetingList   = "core:meeting:list"
-	ActionMeetingGet    = "core:meeting:get"
-	ActionMeetingCreate = "core:meeting:create"
-	ActionMeetingUpdate = "core:meeting:update"
-	ActionMeetingDelete = "core:meeting:delete"
-
 	// Connector actions
 	ActionConnectorInitiate = "core:connector:initiate"
 

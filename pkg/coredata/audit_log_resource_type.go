@@ -89,8 +89,6 @@ func ResourceTypeName(entityType uint16) string {
 		return "Membership"
 	case TrustCenterFileEntityType:
 		return "TrustCenterFile"
-	case MeetingEntityType:
-		return "Meeting"
 	case DataProtectionImpactAssessmentEntityType:
 		return "DataProtectionImpactAssessment"
 	case TransferImpactAssessmentEntityType:

@@ -31,12 +31,11 @@ export default function ContextLayoutLoader() {
       <PageHeader
         title={__("Context")}
         description={__(
-          "Structured company information and meetings for AI assistants and compliance workflows.",
+          "Structured company information for AI assistants and compliance workflows.",
         )}
       />
       <Tabs>
         <TabLink to={prefix} end>{__("Context")}</TabLink>
-        <TabLink to={`${prefix}/meetings`}>{__("Meetings")}</TabLink>
       </Tabs>
       <Outlet />
     </div>
