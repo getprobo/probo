@@ -12,32 +12,12 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import * as esbuild from "esbuild";
+import { ProboThemedBanner } from "./themed-banner";
 
-const shared = {
-  bundle: true,
-  target: "es2020",
-};
+export { ProboThemedBanner };
 
-await Promise.all([
-  esbuild.build({
-    ...shared,
-    entryPoints: ["src/index.ts"],
-    outfile: "dist/cookie-banner.mjs",
-    format: "esm",
-  }),
-  esbuild.build({
-    ...shared,
-    entryPoints: ["src/themed-banner/index.ts"],
-    outfile: "dist/cookie-banner-themed.mjs",
-    format: "esm",
-  }),
-  esbuild.build({
-    ...shared,
-    entryPoints: ["src/themed-banner/iife.ts"],
-    outfile: "dist/cookie-banner.iife.js",
-    format: "iife",
-    globalName: "ProboCookieBanner",
-    minify: true,
-  }),
-]);
+export function registerThemedBanner(): void {
+  if (!customElements.get("probo-cookie-banner")) {
+    customElements.define("probo-cookie-banner", ProboThemedBanner);
+  }
+}
