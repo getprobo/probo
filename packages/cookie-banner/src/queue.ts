@@ -82,15 +82,25 @@ export async function flush(bannerId: string): Promise<void> {
     return;
   }
 
-  const remaining: PendingConsent[] = [];
+  const sentTimestamps: number[] = [];
 
   for (const entry of queue) {
     try {
       await fetchJSON(entry.url, { method: "POST", body: entry.body });
+      sentTimestamps.push(entry.timestamp);
     } catch {
-      remaining.push(entry);
+      // will remain in queue
     }
   }
 
-  writeQueue(bannerId, remaining);
+  if (sentTimestamps.length === 0) {
+    return;
+  }
+
+  const sentSet = new Set(sentTimestamps);
+  const current = readQueue(bannerId);
+  writeQueue(
+    bannerId,
+    current.filter((entry) => !sentSet.has(entry.timestamp)),
+  );
 }

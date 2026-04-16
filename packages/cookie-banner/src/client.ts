@@ -97,6 +97,7 @@ export class CookieBannerClient {
         created_at: "",
       };
       this.activate(cookie.data);
+      void flush(this.bannerId);
       return;
     }
 
