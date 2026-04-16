@@ -1,6 +1,7 @@
 services:
   postgres:
     image: "postgres:18.3@sha256:52e6ffd11fddd081ae63880b635b2a61c14008c17fc98cdc7ce5472265516dd0"
+    pull_policy: missing
     shm_size: "1g"
     command: >
       postgres -c "shared_buffers=1GB"
@@ -22,6 +23,7 @@ services:
 
   seaweedfs:
     image: "chrislusf/seaweedfs:4.20@sha256:cea8339d21dad1b200adce581dd7434d254b8f5975f142c3b4c930ba78647eef"
+    pull_policy: missing
     command: >
       server
       -s3
@@ -40,6 +42,7 @@ services:
 
   grafana:
     image: "grafana/grafana:13.0.0@sha256:a03d9e604e4dba58c5e64458a879701f46ef64af1f596058aacfad9aacdcab34"
+    pull_policy: missing
     ports:
       - "3001:3000"
     volumes:
@@ -53,6 +56,7 @@ services:
 
   prometheus:
     image: "prom/prometheus:v3.11.2@sha256:5550dc63da361dc30f6fe02ac0e4dfc736ededfef3c8d12a634db04a67824d78"
+    pull_policy: missing
     volumes:
       - "./compose/prometheus/prometheus.yaml:/etc/prometheus/prometheus.yml"
       - "prometheus-data:/prometheus"
@@ -69,13 +73,15 @@ services:
 
   loki:
     image: "grafana/loki:3.7.1@sha256:73e905b51a7f917f7a1075e4be68759df30226e03dcb3cd2213b989cc0dc8eb4"
+    pull_policy: missing
     ports:
       - "3100:3100"
     command:
       - "-config.file=/etc/loki/local-config.yaml"
 
   tempo:
-    image: "grafana/tempo:2.10.4"
+    image: "grafana/tempo:2.10.4@sha256:a6616c9d224770c883a67b50e4941e99c5df81b076ef05f516bb7cce5a96cec0"
+    pull_policy: missing
     command:
       - "-config.file=/etc/tempo.yaml"
     ports:
@@ -88,6 +94,7 @@ services:
 
   mailpit:
     image: "axllent/mailpit:v1.29.6@sha256:0b5c5f7ffd3c93474baa7fd3869c1462e5a3d03256ed0933dfc0e7d81d794036"
+    pull_policy: missing
     ports:
       - "1025:1025" # SMTP server
       - "8025:8025" # Web UI
@@ -100,6 +107,7 @@ services:
 
   chrome:
     image: "chromedp/headless-shell:149.0.7779.3@sha256:b24482ae166e2c67135f5a8ba9575c257efdd8e2fd6b2e931f9d88ede3d72f3b"
+    pull_policy: missing
     ports:
       - "9222:9222"
     command:
@@ -116,6 +124,7 @@ services:
 
   pebble:
     image: "ghcr.io/letsencrypt/pebble:2.10.0@sha256:68cf1ec8a8db96f64244d5f559c448bc8e54f2934e0dd53a414eabffda7a6f22"
+    pull_policy: missing
     ports:
       - "14000:14000" # ACME server
       - "15000:15000" # Management interface
@@ -129,6 +138,7 @@ services:
 
   pebble-challtestsrv:
     image: "ghcr.io/letsencrypt/pebble-challtestsrv:2.10.0@sha256:df85447c39114cd2b3da971e751682ad2db19a996034b47d5392cd4a0f43406a"
+    pull_policy: missing
     ports:
       - "8055:8055" # HTTP-01 challenge test server
       - "8053:8053" # DNS server
@@ -137,6 +147,7 @@ services:
 
   keycloak:
     image: "quay.io/keycloak/keycloak:26.6.1@sha256:26ae26445475f7fac5f90ee138b1bdb64324f5815fb16133ffdbdb122d97c4d8"
+    pull_policy: missing
     user: root
     environment:
       KC_HOSTNAME: localhost
