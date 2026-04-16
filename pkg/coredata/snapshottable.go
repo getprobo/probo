@@ -32,8 +32,6 @@ func GetSnapshottable(snapshotType SnapshotsType) (Snapshottable, error) {
 		return Assets{}, nil
 	case SnapshotsTypeRisks:
 		return Risks{}, nil
-	case SnapshotsTypeData:
-		return Data{}, nil
 	case SnapshotsTypeFindings:
 		return Findings{}, nil
 	case SnapshotsTypeObligations:

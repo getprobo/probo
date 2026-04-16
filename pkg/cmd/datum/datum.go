@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,43 +12,21 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package coredata
+package datum
 
 import (
-	"github.com/jackc/pgx/v5"
-	"go.probo.inc/probo/pkg/gid"
+	"github.com/spf13/cobra"
+	"go.probo.inc/probo/pkg/cmd/cmdutil"
+	"go.probo.inc/probo/pkg/cmd/datum/publish"
 )
 
-type (
-	DatumFilter struct {
-		snapshotID **gid.GID
-	}
-)
-
-func NewDatumFilter(snapshotID **gid.GID) *DatumFilter {
-	return &DatumFilter{
-		snapshotID: snapshotID,
-	}
-}
-
-func (f *DatumFilter) SQLArguments() pgx.NamedArgs {
-	args := pgx.NamedArgs{}
-
-	if f.snapshotID != nil && *f.snapshotID != nil {
-		args["filter_snapshot_id"] = **f.snapshotID
+func NewCmdDatum(f *cmdutil.Factory) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "datum <command>",
+		Short: "Manage data",
 	}
 
-	return args
-}
+	cmd.AddCommand(publish.NewCmdPublish(f))
 
-func (f *DatumFilter) SQLFragment() string {
-	if f.snapshotID == nil {
-		return "TRUE"
-	}
-
-	if *f.snapshotID == nil {
-		return "snapshot_id IS NULL"
-	} else {
-		return "snapshot_id = @filter_snapshot_id"
-	}
+	return cmd
 }

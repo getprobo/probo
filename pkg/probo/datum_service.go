@@ -119,7 +119,6 @@ func (s DatumService) GetByOwnerID(
 func (s DatumService) CountForOrganizationID(
 	ctx context.Context,
 	organizationID gid.GID,
-	filter *coredata.DatumFilter,
 ) (int, error) {
 	var count int
 
@@ -127,7 +126,7 @@ func (s DatumService) CountForOrganizationID(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			data := coredata.Data{}
-			count, err = data.CountByOrganizationID(ctx, conn, s.svc.scope, organizationID, filter)
+			count, err = data.CountByOrganizationID(ctx, conn, s.svc.scope, organizationID)
 			if err != nil {
 				return fmt.Errorf("cannot count data: %w", err)
 			}
@@ -147,7 +146,6 @@ func (s DatumService) ListForOrganizationID(
 	ctx context.Context,
 	organizationID gid.GID,
 	cursor *page.Cursor[coredata.DatumOrderField],
-	filter *coredata.DatumFilter,
 ) (*page.Page[*coredata.Datum, coredata.DatumOrderField], error) {
 	var data coredata.Data
 
@@ -160,7 +158,6 @@ func (s DatumService) ListForOrganizationID(
 				s.svc.scope,
 				organizationID,
 				cursor,
-				filter,
 			)
 		},
 	)

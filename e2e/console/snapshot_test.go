@@ -140,7 +140,7 @@ func TestSnapshot_List(t *testing.T) {
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
 	// Create multiple snapshots
-	snapshotTypes := []string{"RISKS", "VENDORS", "ASSETS", "DATA"}
+	snapshotTypes := []string{"RISKS", "VENDORS", "ASSETS"}
 	for i, snapshotType := range snapshotTypes {
 		query := `
 			mutation CreateSnapshot($input: CreateSnapshotInput!) {
@@ -212,14 +212,14 @@ func TestSnapshot_List(t *testing.T) {
 		"id": owner.GetOrganizationID().String(),
 	}, &result)
 	require.NoError(t, err)
-	assert.GreaterOrEqual(t, result.Node.Snapshots.TotalCount, 4)
+	assert.GreaterOrEqual(t, result.Node.Snapshots.TotalCount, len(snapshotTypes))
 }
 
 func TestSnapshot_Types(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
-	snapshotTypes := []string{"RISKS", "VENDORS", "ASSETS", "DATA"}
+	snapshotTypes := []string{"RISKS", "VENDORS", "ASSETS"}
 
 	for _, snapshotType := range snapshotTypes {
 		t.Run(snapshotType, func(t *testing.T) {

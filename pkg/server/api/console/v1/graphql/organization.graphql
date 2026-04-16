@@ -130,13 +130,14 @@ type Organization implements Node {
         filter: AssetFilter = { snapshotId: null }
     ): AssetConnection! @goField(forceResolver: true)
 
+    dataListDocument: Document @goField(forceResolver: true)
+
     data(
         first: Int
         after: CursorKey
         last: Int
         before: CursorKey
         orderBy: DatumOrder
-        filter: DatumFilter = { snapshotId: null }
     ): DatumConnection! @goField(forceResolver: true)
 
     audits(
