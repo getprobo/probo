@@ -12,6 +12,11 @@
       "import": "./dist/cookie-banner.mjs",
       "default": "./dist/cookie-banner.mjs"
     },
+    "./themed-banner": {
+      "types": "./dist/themed-banner/index.d.ts",
+      "import": "./dist/cookie-banner-themed.mjs",
+      "default": "./dist/cookie-banner-themed.mjs"
+    },
     "./iife": "./dist/cookie-banner.iife.js"
   },
   "scripts": {
