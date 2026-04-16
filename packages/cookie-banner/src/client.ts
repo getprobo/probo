@@ -16,6 +16,7 @@ import { activateElements, observeAndActivate } from "./activation";
 import { getConsentCookie, setConsentCookie } from "./cookie";
 import { NotFoundError } from "./errors";
 import { fetchJSON } from "./http";
+import { enqueue, flush } from "./queue";
 import { getOrCreateVisitorId } from "./visitor";
 
 export interface CookieItem {
@@ -124,6 +125,8 @@ export class CookieBannerClient {
     } else {
       this.consent = null;
     }
+
+    void flush(this.bannerId);
   }
 
   get config(): BannerConfig {
@@ -182,23 +185,30 @@ export class CookieBannerClient {
   ): Promise<ConsentRecord> {
     const cfg = this.config;
     const url = `${this.baseUrl}/${this.bannerId}/consents`;
+    const body = {
+      visitor_id: this.visitorId,
+      version: cfg.version,
+      action,
+      consent_data: consentData,
+    };
 
-    const record = await fetchJSON<ConsentRecord>(url, {
-      method: "POST",
-      body: {
-        visitor_id: this.visitorId,
-        version: cfg.version,
-        action,
-        consent_data: consentData,
-      },
-    });
+    let record: ConsentRecord | null = null;
+    try {
+      record = await fetchJSON<ConsentRecord>(url, {
+        method: "POST",
+        body,
+      });
+      void flush(this.bannerId);
+    } catch {
+      enqueue(this.bannerId, url, body);
+    }
 
     this.consent = {
       visitor_id: this.visitorId,
       version: cfg.version,
       action,
       consent_data: consentData,
-      created_at: record.created_at,
+      created_at: record?.created_at ?? "",
     };
 
     setConsentCookie(
@@ -213,7 +223,12 @@ export class CookieBannerClient {
 
     this.activate(consentData);
 
-    return record;
+    return record ?? {
+      id: "",
+      visitor_id: this.visitorId,
+      action,
+      created_at: "",
+    };
   }
 
   private activate(consentData: Record<string, boolean>): void {

@@ -21,9 +21,9 @@ import {
   TimeoutError,
 } from "./errors";
 
-const DEFAULT_TIMEOUT_MS = 10_000;
-const MAX_RETRIES = 3;
-const BASE_DELAY_MS = 1_000;
+const DEFAULT_TIMEOUT_MS = 5_000;
+const MAX_RETRIES = 2;
+const BASE_DELAY_MS = 500;
 
 export interface RequestOptions {
   method?: string;
