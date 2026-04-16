@@ -55,8 +55,8 @@ export function Layout({
   );
   return (
     <LayoutContext value={layoutContext}>
-      <div className="text-txt-primary bg-level-0">
-        <header className="absolute z-2 left-0 right-0 px-4 flex items-center border-b border-border-solid h-12 bg-level-0">
+      <div className="text-txt-primary bg-level-0 min-h-screen">
+        <header className="fixed top-0 z-2 left-0 right-0 px-4 flex items-center border-b border-border-solid h-12 bg-level-0">
           <Link to="/">
             <Logo className="w-12 h-5" />
           </Link>
@@ -77,11 +77,11 @@ export function Layout({
           )}
           <div className="ml-auto">{headerTrailing}</div>
         </header>
-        <div className="flex h-screen" id="main">
+        <div className="flex min-h-screen" id="main">
           {sidebar && <Sidebar>{sidebar}</Sidebar>}
           <main
             className={clsx(
-              "overflow-y-auto w-full mt-12 transition-all duration-300 h-[calc(100vh-48px)]",
+              "w-full mt-12 transition-all duration-300",
               hasDrawer && "pr-105",
             )}
           >
@@ -111,7 +111,7 @@ export function Drawer({
   return createPortal(
     <aside
       className={clsx(
-        "absolute pt-20 top-0 right-0 w-105 px-6 pb-8 border-border-solid border-l h-screen",
+        "fixed pt-20 top-0 right-0 w-105 px-6 pb-8 border-border-solid border-l h-screen bg-level-0",
         className,
       )}
     >
