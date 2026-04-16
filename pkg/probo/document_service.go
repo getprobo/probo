@@ -926,7 +926,7 @@ func (s *DocumentService) BulkRequestSignatures(
 				}
 
 				if documentVersion.Status != coredata.DocumentVersionStatusPublished {
-					return fmt.Errorf("cannot request signature for unpublished document %q", documentID)
+					return &ErrDocumentVersionNotPublished{}
 				}
 
 				for _, signatoryID := range req.SignatoryIDs {
@@ -1017,7 +1017,7 @@ func (s *DocumentService) RequestSignature(
 			}
 
 			if documentVersion.Status != coredata.DocumentVersionStatusPublished {
-				return fmt.Errorf("cannot request signature for unpublished version")
+				return &ErrDocumentVersionNotPublished{}
 			}
 
 			profile := &coredata.MembershipProfile{}

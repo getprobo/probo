@@ -350,6 +350,10 @@ func (r *documentVersionApprovalDecisionResolver) Quorum(ctx context.Context, ob
 
 	quorum, err := prb.DocumentApprovals.GetQuorum(ctx, obj.Quorum.ID)
 	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
 		r.logger.ErrorCtx(ctx, "cannot get approval quorum", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
@@ -367,12 +371,20 @@ func (r *documentVersionApprovalDecisionResolver) DocumentVersion(ctx context.Co
 
 	quorum, err := prb.DocumentApprovals.GetQuorum(ctx, obj.Quorum.ID)
 	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
 		r.logger.ErrorCtx(ctx, "cannot get approval quorum", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
 	documentVersion, err := prb.Documents.GetVersion(ctx, quorum.VersionID)
 	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
 		r.logger.ErrorCtx(ctx, "cannot get document version", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
@@ -458,6 +470,10 @@ func (r *documentVersionApprovalQuorumResolver) DocumentVersion(ctx context.Cont
 
 	documentVersion, err := prb.Documents.GetVersion(ctx, obj.DocumentVersion.ID)
 	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
 		r.logger.ErrorCtx(ctx, "cannot get document version", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
@@ -559,6 +575,10 @@ func (r *documentVersionSignatureResolver) DocumentVersion(ctx context.Context, 
 
 	documentVersion, err := prb.Documents.GetVersion(ctx, obj.DocumentVersion.ID)
 	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
 		r.logger.ErrorCtx(ctx, "cannot get document version", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
@@ -1056,6 +1076,10 @@ func (r *mutationResolver) BulkPublishMajorDocumentVersions(ctx context.Context,
 		Changelog:   input.Changelog,
 	})
 	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
 		if errArchived, ok := errors.AsType[*probo.ErrDocumentArchived](err); ok {
 			return nil, gqlutils.Conflict(ctx, errArchived)
 		}
@@ -1106,6 +1130,10 @@ func (r *mutationResolver) BulkPublishMinorDocumentVersions(ctx context.Context,
 		Changelog:   input.Changelog,
 	})
 	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
 		if errArchived, ok := errors.AsType[*probo.ErrDocumentArchived](err); ok {
 			return nil, gqlutils.Conflict(ctx, errArchived)
 		}
@@ -1183,6 +1211,10 @@ func (r *mutationResolver) VoidDocumentVersionApproval(ctx context.Context, inpu
 
 	quorum, documentVersion, err := prb.DocumentApprovals.VoidApproval(ctx, input.DocumentVersionID)
 	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
 		if errArchived, ok := errors.AsType[*probo.ErrDocumentArchived](err); ok {
 			return nil, gqlutils.Conflict(ctx, errArchived)
 		}
@@ -1354,8 +1386,16 @@ func (r *mutationResolver) RequestSignature(ctx context.Context, input types.Req
 		},
 	)
 	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
 		if errArchived, ok := errors.AsType[*probo.ErrDocumentArchived](err); ok {
 			return nil, gqlutils.Conflict(ctx, errArchived)
+		}
+
+		if errNotPublished, ok := errors.AsType[*probo.ErrDocumentVersionNotPublished](err); ok {
+			return nil, gqlutils.Conflict(ctx, errNotPublished)
 		}
 
 		if errContractEnded, ok := errors.AsType[*probo.ErrProfileContractEnded](err); ok {
@@ -1395,6 +1435,14 @@ func (r *mutationResolver) BulkRequestSignatures(ctx context.Context, input type
 		},
 	)
 	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		if errNotPublished, ok := errors.AsType[*probo.ErrDocumentVersionNotPublished](err); ok {
+			return nil, gqlutils.Conflict(ctx, errNotPublished)
+		}
+
 		if errContractEnded, ok := errors.AsType[*probo.ErrProfileContractEnded](err); ok {
 			return nil, gqlutils.Conflict(ctx, errContractEnded)
 		}
