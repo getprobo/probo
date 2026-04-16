@@ -1670,14 +1670,14 @@ func (s OrganizationService) UpdateSCIMBridge(
 			err := bridge.LoadByID(ctx, tx, scope, bridgeID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
-					return fmt.Errorf("SCIM bridge not found")
+					return NewSCIMBridgeNotFoundError(bridgeID)
 				}
 
 				return fmt.Errorf("cannot load SCIM bridge: %w", err)
 			}
 
 			if bridge.OrganizationID != organizationID {
-				return fmt.Errorf("SCIM bridge not found")
+				return NewSCIMBridgeNotFoundError(bridgeID)
 			}
 
 			bridge.ExcludedUserNames = excludedUserNames
