@@ -22,7 +22,7 @@ import {
 } from "./errors";
 
 const DEFAULT_TIMEOUT_MS = 5_000;
-const MAX_RETRIES = 2;
+const MAX_ATTEMPTS = 3;
 const BASE_DELAY_MS = 500;
 
 export interface RequestOptions {
@@ -129,7 +129,7 @@ export async function fetchJSON<T>(
 
   let lastError: Error | undefined;
 
-  for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
     if (attempt > 0) {
       await delay(jitteredBackoff(attempt - 1));
     }
@@ -138,6 +138,9 @@ export async function fetchJSON<T>(
     try {
       response = await fetchWithTimeout(url, init, timeout);
     } catch (err) {
+      if (signal?.aborted) {
+        throw err;
+      }
       if (err instanceof TimeoutError || err instanceof NetworkError) {
         lastError = err;
         continue;

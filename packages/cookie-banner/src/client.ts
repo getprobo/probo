@@ -233,9 +233,10 @@ export class CookieBannerClient {
 
   private activate(consentData: Record<string, boolean>): void {
     activateElements(consentData);
-    if (!this.observer) {
-      this.observer = observeAndActivate(consentData);
+    if (this.observer) {
+      this.observer.disconnect();
     }
+    this.observer = observeAndActivate(consentData);
   }
 
   destroy(): void {

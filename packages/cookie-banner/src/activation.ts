@@ -30,9 +30,14 @@ const ACTIVATABLE_TAGS = new Set([
 
 function activateScript(el: HTMLScriptElement): void {
   const replacement = document.createElement("script");
+  const originalType = el.getAttribute("data-type");
 
   for (const attr of el.attributes) {
-    if (attr.name === "type" || attr.name === ATTR_CATEGORY) {
+    if (
+      attr.name === "type" ||
+      attr.name === "data-type" ||
+      attr.name === ATTR_CATEGORY
+    ) {
       continue;
     }
     if (attr.name === ATTR_SRC) {
@@ -42,7 +47,9 @@ function activateScript(el: HTMLScriptElement): void {
     replacement.setAttribute(attr.name, attr.value);
   }
 
-  replacement.setAttribute("type", "text/javascript");
+  if (originalType) {
+    replacement.setAttribute("type", originalType);
+  }
   replacement.setAttribute(ATTR_ACTIVATED, "");
 
   if (el.textContent) {
