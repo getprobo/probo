@@ -25,6 +25,24 @@ export type {
   CookieItem,
   VisitorConsent,
 } from "./client";
+export {
+  ProboElement,
+  ProboBanner,
+  ProboAcceptButton,
+  ProboRejectButton,
+  ProboCustomizeButton,
+  ProboCookieBannerRoot,
+  ProboPreferencePanel,
+  ProboSaveButton,
+  ProboCategoryList,
+  ProboCategory,
+  ProboCategoryToggle,
+  ProboCookieList,
+  ProboCookie,
+  ProboSettingsButton,
+  registerComponents,
+} from "./components";
+export type { ProboState, ProboRootElement, ConsentDraft } from "./components";
 export type { ConsentCookie } from "./cookie";
 export {
   ApiError,
@@ -36,3 +54,6 @@ export {
 } from "./errors";
 export { fetchJSON } from "./http";
 export type { RequestOptions } from "./http";
+
+import { registerComponents } from "./components";
+registerComponents();
