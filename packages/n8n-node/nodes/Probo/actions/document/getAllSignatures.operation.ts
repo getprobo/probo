@@ -126,7 +126,7 @@ export async function execute(
 								signedBy {
 									id
 									fullName
-									primaryEmailAddress
+									emailAddress
 								}
 							}
 						}

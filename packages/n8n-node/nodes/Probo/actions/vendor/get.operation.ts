@@ -90,7 +90,7 @@ export async function execute(
 		? `businessOwner {
 			id
 			fullName
-			primaryEmailAddress
+			emailAddress
 		}`
 		: '';
 
@@ -98,7 +98,7 @@ export async function execute(
 		? `securityOwner {
 			id
 			fullName
-			primaryEmailAddress
+			emailAddress
 		}`
 		: '';
 

@@ -107,7 +107,7 @@ export async function execute(
 		? `owner {
 			id
 			fullName
-			primaryEmailAddress
+			emailAddress
 		}`
 		: '';
 
