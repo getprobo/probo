@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.169.0] - 2026-04-16
+
+### Changed
+
+- Add SOA as document: replace export/snapshot with publish workflow
+
 ## [0.168.2] - 2026-04-15
 
 ### Added
