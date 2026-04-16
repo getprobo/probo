@@ -50,7 +50,6 @@ export class ProboCookieBannerRoot extends ProboElement implements ProboRootElem
   }
 
   connectedCallback(): void {
-    this.shadow.innerHTML = `<style>:host { display: contents; }</style><slot></slot>`;
     this.initClient();
   }
 

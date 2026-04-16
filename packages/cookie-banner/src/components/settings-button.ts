@@ -12,14 +12,19 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { ProboElement } from "./base";
 import type { ProboRootElement } from "./base";
 import type { ProboCookieBannerRoot } from "./cookie-banner-root";
 
 const COOKIE_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="8" cy="9" r="1" fill="currentColor"/><circle cx="15" cy="11" r="1" fill="currentColor"/><circle cx="10" cy="15" r="1" fill="currentColor"/><circle cx="13" cy="7" r="1" fill="currentColor"/></svg>`;
 
-export class ProboSettingsButton extends ProboElement {
+export class ProboSettingsButton extends HTMLElement {
+  private shadow: ShadowRoot;
   private root: ProboRootElement | null = null;
+
+  constructor() {
+    super();
+    this.shadow = this.attachShadow({ mode: "open" });
+  }
 
   static get observedAttributes(): string[] {
     return ["position"];
@@ -69,7 +74,7 @@ export class ProboSettingsButton extends ProboElement {
     `;
 
     this.hidden = true;
-    this.root = this.findAncestor<ProboCookieBannerRoot>("probo-cookie-banner-root");
+    this.root = this.findRoot();
 
     if (this.root) {
       this.root.addEventListener("probo-state", this.onStateChange);
@@ -86,6 +91,17 @@ export class ProboSettingsButton extends ProboElement {
     if (this.root) {
       this.root.removeEventListener("probo-state", this.onStateChange);
     }
+  }
+
+  private findRoot(): ProboCookieBannerRoot | null {
+    let el: HTMLElement | null = this.parentElement;
+    while (el) {
+      if (el.tagName.toLowerCase() === "probo-cookie-banner-root") {
+        return el as ProboCookieBannerRoot;
+      }
+      el = el.parentElement;
+    }
+    return null;
   }
 
   private onStateChange = (e: Event): void => {

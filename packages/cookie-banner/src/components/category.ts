@@ -16,12 +16,6 @@ import type { CookieItem } from "../client";
 import { ProboElement } from "./base";
 
 export class ProboCategory extends ProboElement {
-  connectedCallback(): void {
-    this.shadow.innerHTML = `
-      <style>:host { display: contents; }</style>
-      <slot></slot>
-    `;
-  }
 
   get categoryName(): string {
     return this.getAttribute("name") ?? "";

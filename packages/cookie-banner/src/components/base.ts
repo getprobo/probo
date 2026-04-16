@@ -21,25 +21,13 @@ export interface ConsentDraft {
 }
 
 export class ProboElement extends HTMLElement {
-  protected shadow: ShadowRoot;
-
-  constructor() {
-    super();
-    this.shadow = this.attachShadow({ mode: "open" });
-  }
-
   protected findAncestor<T extends HTMLElement>(tagName: string): T | null {
-    let node: Node | null = this as Node;
-    while (node) {
-      const root = node.getRootNode();
-      if (root instanceof ShadowRoot) {
-        node = root.host;
-      } else {
-        node = (node as HTMLElement).parentElement;
+    let el: HTMLElement | null = this.parentElement;
+    while (el) {
+      if (el.tagName.toLowerCase() === tagName) {
+        return el as T;
       }
-      if (node instanceof HTMLElement && node.tagName.toLowerCase() === tagName) {
-        return node as T;
-      }
+      el = el.parentElement;
     }
     return null;
   }

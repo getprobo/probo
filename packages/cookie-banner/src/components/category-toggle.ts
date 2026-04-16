@@ -23,13 +23,6 @@ export class ProboCategoryToggle extends ProboElement {
   private checkbox: HTMLInputElement | null = null;
 
   connectedCallback(): void {
-    this.shadow.innerHTML = `
-      <style>
-        :host { display: inline-block; }
-      </style>
-      <slot></slot>
-    `;
-
     this.root = this.findAncestor<ProboCookieBannerRoot>("probo-cookie-banner-root");
     this.category = this.findAncestor<ProboCategory>("probo-category");
 

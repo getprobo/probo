@@ -20,10 +20,6 @@ class ProboActionButton extends ProboElement {
   protected root: ProboRootElement | null = null;
 
   connectedCallback(): void {
-    this.shadow.innerHTML = `
-      <style>:host { display: contents; }</style>
-      <slot></slot>
-    `;
     this.root = this.findAncestor<ProboCookieBannerRoot>("probo-cookie-banner-root");
     this.addEventListener("click", this.handleClick);
   }
