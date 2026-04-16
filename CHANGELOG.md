@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.169.1] - 2026-04-16
+
+### Fixed
+
+- Fix Profile email field in n8n-node GraphQL queries
+
 ## [0.169.0] - 2026-04-16
 
 ### Changed
