@@ -54,7 +54,7 @@ const deleteSCIMConfigurationMutation = graphql`
     $input: DeleteSCIMConfigurationInput!
   ) {
     deleteSCIMConfiguration(input: $input) {
-      deletedScimConfigurationId
+      deletedScimConfigurationId @deleteRecord
     }
   }
 `;
@@ -146,12 +146,6 @@ export function GoogleWorkspaceConnector(props: {
           description: error.message,
           variant: "error",
         });
-      },
-      updater: (store) => {
-        const organizationRecord = store.get(organizationId);
-        if (organizationRecord) {
-          organizationRecord.setValue(null, "scimConfiguration");
-        }
       },
     });
   };
