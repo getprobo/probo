@@ -72,7 +72,11 @@ export class CookieBannerClient {
   private observer: MutationObserver | null = null;
 
   constructor(config: CookieBannerClientOptions) {
-    this.baseUrl = config.baseUrl.replace(/\/+$/, "");
+    let base = config.baseUrl;
+    while (base.endsWith("/")) {
+      base = base.slice(0, -1);
+    }
+    this.baseUrl = base;
     this.bannerId = config.bannerId;
     this.visitorId = getOrCreateVisitorId(config.bannerId);
   }
