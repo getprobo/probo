@@ -93,14 +93,13 @@ export async function flush(bannerId: string): Promise<void> {
     }
   }
 
-  if (sentTimestamps.length === 0) {
-    return;
-  }
-
   const sentSet = new Set(sentTimestamps);
+  const cutoff = now - MAX_AGE_MS;
   const current = readQueue(bannerId);
   writeQueue(
     bannerId,
-    current.filter((entry) => !sentSet.has(entry.timestamp)),
+    current.filter(
+      (entry) => !sentSet.has(entry.timestamp) && entry.timestamp > cutoff,
+    ),
   );
 }
