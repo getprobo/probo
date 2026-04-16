@@ -76,7 +76,7 @@ async function parseErrorBody(response: Response): Promise<ApiErrorBody> {
 }
 
 async function fetchWithTimeout(
-  url: string,
+  url: URL | string,
   init: RequestInit,
   timeout: number,
 ): Promise<Response> {
@@ -109,7 +109,7 @@ async function fetchWithTimeout(
 }
 
 export async function fetchJSON<T>(
-  url: string,
+  url: URL | string,
   options: RequestOptions = {},
 ): Promise<T> {
   const { method = "GET", headers, body, timeout = DEFAULT_TIMEOUT_MS, signal } = options;

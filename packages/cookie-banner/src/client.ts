@@ -64,7 +64,7 @@ export interface CookieBannerClientOptions {
 }
 
 export class CookieBannerClient {
-  private readonly baseUrl: string;
+  private readonly baseUrl: URL;
   private readonly bannerId: string;
   private readonly visitorId: string;
 
@@ -74,16 +74,16 @@ export class CookieBannerClient {
 
   constructor(config: CookieBannerClientOptions) {
     let base = config.baseUrl;
-    while (base.endsWith("/")) {
-      base = base.slice(0, -1);
+    if (!base.endsWith("/")) {
+      base += "/";
     }
-    this.baseUrl = base;
+    this.baseUrl = new URL(base);
     this.bannerId = config.bannerId;
     this.visitorId = getOrCreateVisitorId(config.bannerId);
   }
 
   async load(): Promise<void> {
-    const configUrl = `${this.baseUrl}/${this.bannerId}/config`;
+    const configUrl = new URL(`${this.bannerId}/config`, this.baseUrl);
     const config = await fetchJSON<BannerConfig>(configUrl);
     this.bannerConfig = config;
 
@@ -101,7 +101,10 @@ export class CookieBannerClient {
       return;
     }
 
-    const consentUrl = `${this.baseUrl}/${this.bannerId}/consents/${this.visitorId}`;
+    const consentUrl = new URL(
+      `${this.bannerId}/consents/${this.visitorId}`,
+      this.baseUrl,
+    );
     const apiConsent = await fetchJSON<VisitorConsent>(consentUrl).catch(
       (err) => {
         if (err instanceof NotFoundError) {
@@ -185,7 +188,7 @@ export class CookieBannerClient {
     consentData: Record<string, boolean>,
   ): Promise<ConsentRecord> {
     const cfg = this.config;
-    const url = `${this.baseUrl}/${this.bannerId}/consents`;
+    const url = new URL(`${this.bannerId}/consents`, this.baseUrl);
     const body = {
       visitor_id: this.visitorId,
       version: cfg.version,
@@ -201,7 +204,7 @@ export class CookieBannerClient {
       });
       void flush(this.bannerId);
     } catch {
-      enqueue(this.bannerId, url, body);
+      enqueue(this.bannerId, url.href, body);
     }
 
     this.consent = {
