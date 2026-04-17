@@ -69,11 +69,12 @@ func NewMux(
 
 	sessionMiddleware := authn.NewSessionMiddleware(svc, cookieConfig)
 	apiKeyMiddleware := authn.NewAPIKeyMiddleware(svc, tokenSecret)
+	oauth2Middleware := authn.NewOAuth2AccessTokenMiddleware(svc)
 	graphqlHandler := NewGraphQLHandler(svc, logger, baseURL, cookieConfig)
 	samlHandler := NewSAMLHandler(svc, cookieConfig, baseURL, logger)
 	scimHandler := NewSCIMHandler(svc, logger.Named("scim"))
 
-	router := r.With(sessionMiddleware, apiKeyMiddleware)
+	router := r.With(sessionMiddleware, apiKeyMiddleware, oauth2Middleware)
 
 	oidcHandler := NewOIDCHandler(svc, cookieConfig, logger, allowedRedirectHost, isTrustCenterDomain)
 
@@ -87,6 +88,29 @@ func NewMux(
 	// SCIM 2.0 endpoints - these use their own bearer token authentication
 	scimServer := NewSCIMServer(scimHandler)
 	r.Mount("/scim/2.0", http.StripPrefix("/scim/2.0", scimHandler.BearerTokenMiddleware(scimServer)))
+
+	// OAuth2 / OpenID Connect server endpoints.
+	oauth2Handler := NewOAuth2Handler(svc, cookieConfig, baseURL, logger)
+
+	// Public endpoints (no authentication).
+	r.Get("/oauth2/jwks", oauth2Handler.JWKSHandler)
+	r.Post("/oauth2/token", oauth2Handler.TokenHandler)
+	r.Post("/oauth2/device", oauth2Handler.DeviceAuthHandler)
+
+	// Bearer-token authenticated endpoints.
+	bearerAuth := r.With(oauth2Handler.BearerTokenMiddleware)
+	bearerAuth.Get("/oauth2/userinfo", oauth2Handler.UserInfoHandler)
+
+	// Client-authenticated endpoints.
+	clientAuth := r.With(oauth2Handler.ClientAuthMiddleware)
+	clientAuth.Post("/oauth2/introspect", oauth2Handler.IntrospectHandler)
+	clientAuth.Post("/oauth2/revoke", oauth2Handler.RevokeHandler)
+
+	// Session-authenticated endpoints.
+	router.Get("/oauth2/authorize", oauth2Handler.AuthorizeHandler)
+
+	requireIdentity := router.With(authn.NewIdentityPresenceMiddleware())
+	requireIdentity.Post("/oauth2/register", oauth2Handler.RegisterHandler)
 
 	return r
 }

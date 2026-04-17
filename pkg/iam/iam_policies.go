@@ -123,6 +123,23 @@ var IAMSelfManagePersonalAPIKeyPolicy = policy.NewPolicy(
 ).
 	WithDescription("Allows users to manage their own personal API keys")
 
+// IAMSelfManageOAuth2ConsentPolicy allows users to manage their own OAuth2 consents.
+var IAMSelfManageOAuth2ConsentPolicy = policy.NewPolicy(
+	"iam:self-manage-oauth2-consent",
+	"Self-Manage OAuth2 Consents",
+
+	policy.Allow(
+		ActionOAuth2ConsentGet,
+		ActionOAuth2ConsentApprove,
+	).
+		WithSID("manage-own-consents").
+		When(
+			policy.Equals("principal.id", "resource.identity_id"),
+			policy.Equals("principal.session_id", "resource.session_id"),
+		),
+).
+	WithDescription("Allows users to view and approve their own OAuth2 consents")
+
 // IAMOwnerPolicy defines permissions for organization owners.
 var IAMOwnerPolicy = policy.NewPolicy(
 	"iam:owner",

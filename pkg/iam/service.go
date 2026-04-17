@@ -33,9 +33,11 @@ import (
 	"go.probo.inc/probo/pkg/crypto/passwdhash"
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/iam/oauth2server"
 	"go.probo.inc/probo/pkg/iam/oidc"
 	"go.probo.inc/probo/pkg/iam/saml"
 	"go.probo.inc/probo/pkg/iam/scim"
+	"go.probo.inc/probo/pkg/uri"
 )
 
 type (
@@ -64,6 +66,7 @@ type (
 		OIDCService           *oidc.Service
 		SCIMService           *scim.Service
 		APIKeyService         *APIKeyService
+		OAuth2ServerService   *oauth2server.Service
 		Authorizer            *Authorizer
 
 		samlDomainVerifier *SAMLDomainVerifier
@@ -91,6 +94,8 @@ type (
 		SCIMBridgePollInterval         time.Duration
 		GoogleOIDC                     oidc.ProviderConfig
 		MicrosoftOIDC                  oidc.ProviderConfig
+		OAuth2ServerSigningKeys        oauth2server.SigningKeys
+		OAuth2ServerOptions            []oauth2server.Option
 	}
 )
 
@@ -177,6 +182,14 @@ func NewService(
 		},
 	)
 
+	svc.OAuth2ServerService = oauth2server.NewService(
+		pgClient,
+		cfg.OAuth2ServerSigningKeys,
+		uri.URI(cfg.BaseURL.String()),
+		cfg.Logger.Named("oauth2server"),
+		cfg.OAuth2ServerOptions...,
+	)
+
 	svc.samlDomainVerifier = NewSAMLDomainVerifier(
 		pgClient,
 		cfg.Logger,
@@ -233,12 +246,22 @@ func (s *Service) Run(ctx context.Context) error {
 		},
 	)
 
+	oauth2Ctx, stopOAuth2Server := context.WithCancel(context.WithoutCancel(ctx))
+	wg.Go(
+		func() {
+			if err := s.OAuth2ServerService.Run(oauth2Ctx); err != nil {
+				cancel(fmt.Errorf("oauth2 server service crashed: %w", err))
+			}
+		},
+	)
+
 	<-ctx.Done()
 
 	stopSAML()
 	stopOIDC()
 	stopDomainVerifier()
 	stopSCIM()
+	stopOAuth2Server()
 
 	wg.Wait()
 

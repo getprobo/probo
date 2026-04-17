@@ -54,6 +54,8 @@ type Client struct {
 	userID         gid.GID
 	profileID      gid.GID
 	organizationID gid.GID
+	email          string
+	password       string
 }
 
 func NewClient(t testing.TB, role TestRole) *Client {
@@ -106,6 +108,9 @@ func (c *Client) setupTestUser() {
 	email := fmt.Sprintf("test-%s@e2e.probo.test", uniqueID)
 	password := "TestPassword123!"
 	fullName := fmt.Sprintf("Test User %s", uniqueID)
+
+	c.email = email
+	c.password = password
 
 	// Sign up
 	c.userID = c.signUp(email, password, fullName)
@@ -489,6 +494,35 @@ func (c *Client) assumeOrganizationSession() {
 		},
 	}, nil)
 	require.NoError(c.T, err, "assumeOrganizationSession mutation failed")
+}
+
+// NewClientWithNewSession creates a new Client that signs in as the same
+// identity but with a fresh HTTP session (new cookie jar). This is useful for
+// testing session-scoped authorization.
+func NewClientWithNewSession(t testing.TB, from *Client) *Client {
+	t.Helper()
+
+	jar, err := cookiejar.New(nil)
+	require.NoError(t, err, "cannot create cookie jar")
+
+	client := &Client{
+		T:              t,
+		baseURL:        from.baseURL,
+		mailpitBaseURL: from.mailpitBaseURL,
+		role:           from.role,
+		userID:         from.userID,
+		organizationID: from.organizationID,
+		email:          from.email,
+		password:       from.password,
+		httpClient: &http.Client{
+			Jar:     jar,
+			Timeout: 30 * time.Second,
+		},
+	}
+
+	client.signIn(client.email, client.password)
+
+	return client
 }
 
 func (c *Client) GetUserID() gid.GID {
