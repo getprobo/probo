@@ -21,7 +21,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/pkg/agent"
-	"go.probo.inc/probo/pkg/agents/vetting"
+	"go.probo.inc/probo/pkg/vetting"
 )
 
 func TestOutputType_SchemaGeneration(t *testing.T) {

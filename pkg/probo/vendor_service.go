@@ -23,7 +23,7 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.gearno.de/x/ref"
 	"go.probo.inc/probo/pkg/agent"
-	"go.probo.inc/probo/pkg/agents/vetting"
+	"go.probo.inc/probo/pkg/vetting"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"

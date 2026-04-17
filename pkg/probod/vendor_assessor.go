@@ -18,7 +18,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"go.gearno.de/kit/log"
 	"go.opentelemetry.io/otel/trace"
-	"go.probo.inc/probo/pkg/agents/vetting"
+	"go.probo.inc/probo/pkg/vetting"
 	"go.probo.inc/probo/pkg/probo"
 )
 
