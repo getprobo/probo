@@ -12,8 +12,6 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-//go:build !e2e
-
 package probod
 
 import (
@@ -24,13 +22,21 @@ import (
 	"go.probo.inc/probo/pkg/probo"
 )
 
-// buildVendorAssessor wires the real LLM/browser-driven vendor assessor.
-// The e2e-tagged twin substitutes a deterministic stub.
+// buildVendorAssessor wires the vendor assessment agent. It is an opt-in
+// feature: deployments that do not set `llm.vendor-assessor.provider` get a
+// DisabledVendorAssessor that reports the feature as unavailable. The
+// vendor-assessor does not inherit the default provider because its
+// pipeline (LLM + browser + search) is expensive and should not be enabled
+// implicitly.
 func (impl *Implm) buildVendorAssessor(
 	l *log.Logger,
 	tp trace.TracerProvider,
 	r prometheus.Registerer,
 ) (probo.VendorAssessor, error) {
+	if impl.cfg.Agents.VendorAssessor.Provider == "" {
+		return probo.DisabledVendorAssessor{}, nil
+	}
+
 	agentCfg, llmClient, err := impl.resolveAgentClient("vendor-assessor", impl.cfg.Agents.VendorAssessor, l, tp, r)
 	if err != nil {
 		return nil, err
