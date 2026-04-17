@@ -119,7 +119,7 @@ type (
 		AWS               AWSConfig               `json:"aws"`
 		Notifications     NotificationsConfig     `json:"notifications"`
 		Connectors        []ConnectorConfig       `json:"connectors"`
-		Agents            AgentsConfig            `json:"agents"`
+		Agents            AgentsConfig            `json:"llm"`
 		EvidenceDescriber EvidenceDescriberConfig `json:"evidence-describer"`
 		ChromeDPAddr      string                  `json:"chrome-dp-addr"`
 		SearchEndpoint    string                  `json:"search-endpoint"`

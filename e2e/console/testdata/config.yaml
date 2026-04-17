@@ -61,12 +61,12 @@ probod:
     slack:
       sender-interval: 60
 
-  agents:
+  llm:
     providers:
       openai:
         type: "openai"
         api-key: "thisisnotasecret"
-    default:
+    defaults:
       provider: "openai"
       model-name: "gpt-4o"
       temperature: 0.1
