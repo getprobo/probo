@@ -44,6 +44,25 @@ type TestEnv struct {
 	cmd            *exec.Cmd
 	done           chan error
 	outputBuf      *bytes.Buffer
+	outputWriter   *switchableWriter
+}
+
+type switchableWriter struct {
+	mu sync.Mutex
+	w  io.Writer
+}
+
+func (s *switchableWriter) Write(p []byte) (int, error) {
+	s.mu.Lock()
+	w := s.w
+	s.mu.Unlock()
+	return w.Write(p)
+}
+
+func (s *switchableWriter) switchTo(w io.Writer) {
+	s.mu.Lock()
+	s.w = w
+	s.mu.Unlock()
 }
 
 func Setup() {
@@ -93,8 +112,10 @@ func Setup() {
 		} else {
 			var buf bytes.Buffer
 			testEnv.outputBuf = &buf
-			cmd.Stdout = &buf
-			cmd.Stderr = &buf
+			sw := &switchableWriter{w: &buf}
+			testEnv.outputWriter = sw
+			cmd.Stdout = sw
+			cmd.Stderr = sw
 		}
 
 		testEnv.cmd = cmd
@@ -126,8 +147,7 @@ func Setup() {
 		}
 
 		if !verbose {
-			cmd.Stdout = io.Discard
-			cmd.Stderr = io.Discard
+			testEnv.outputWriter.switchTo(io.Discard)
 		}
 	})
 }

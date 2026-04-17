@@ -22,11 +22,10 @@ import type { ConsentPageQuery } from "#/__generated__/iam/ConsentPageQuery.grap
 import ConsentPage, { consentPageQuery } from "./ConsentPage";
 
 function ConsentPageQueryLoader() {
-  const [searchParams] = useSearchParams();
-  const consentId = searchParams.get("consent_id") ?? "";
-
   const [queryRef, loadQuery]
     = useQueryLoader<ConsentPageQuery>(consentPageQuery);
+  const [searchParams] = useSearchParams();
+  const consentId = searchParams.get("consent_id") ?? "";
 
   useEffect(() => {
     loadQuery({ consentId });
@@ -69,8 +68,11 @@ function ConsentErrorFallback() {
 }
 
 export default function ConsentPageLoader() {
+  const [searchParams] = useSearchParams();
+  const consentId = searchParams.get("consent_id") ?? "";
+
   return (
-    <ConsentErrorBoundary fallback={<ConsentErrorFallback />}>
+    <ConsentErrorBoundary key={consentId} fallback={<ConsentErrorFallback />}>
       <ConsentPageQueryLoader />
     </ConsentErrorBoundary>
   );

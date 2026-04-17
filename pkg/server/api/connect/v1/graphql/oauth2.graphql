@@ -1,7 +1,7 @@
 extend type Mutation {
-    authorizeDevice(
-        input: AuthorizeDeviceInput!
-    ): AuthorizeDevicePayload @session(required: PRESENT)
+  authorizeDevice(
+    input: AuthorizeDeviceInput!
+  ): AuthorizeDevicePayload @session(required: PRESENT)
 
   approveConsent(
     input: ApproveConsentInput!
