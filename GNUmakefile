@@ -44,6 +44,18 @@ E2E_COVER_DIR ?= $(CURDIR)/coverage/e2e
 DOCKER_IMAGE_NAME=	ghcr.io/getprobo/probo
 DOCKER_TAG_NAME?=	latest
 
+PROBOD_BIN_DEPS= pkg/server/api/connect/v1/schema/schema.go \
+	pkg/server/api/connect/v1/types/types.go \
+	pkg/server/api/console/v1/schema/schema.go \
+	pkg/server/api/console/v1/types/types.go \
+	pkg/server/api/trust/v1/schema/schema.go \
+	pkg/server/api/trust/v1/types/types.go \
+	pkg/server/api/mcp/v1/server/server.go \
+	pkg/server/api/mcp/v1/types/types.go \
+	apps/console/dist/index.html \
+	apps/trust/dist/index.html \
+	@probo/emails
+
 PROBOD_BIN_EXTRA_DEPS=
 PROBOD_BIN=	bin/probod
 PROBOD_E2E_BIN=	bin/probod-e2e
@@ -128,8 +140,8 @@ test-bench: test ## Run benchmark tests
 
 .PHONY: test-e2e
 test-e2e: CGO_ENABLED=1
-test-e2e: bin/probod-e2e ## Run console e2e tests
-	PROBO_E2E_BINARY=$(CURDIR)/bin/probod-e2e \
+test-e2e: $(PROBOD_E2E_BIN) ## Run console e2e tests
+	PROBO_E2E_BINARY=$(CURDIR)/$(PROBOD_E2E_BIN) \
 	PROBO_E2E_CONFIG=$(E2E_CONFIG) \
 	GOTESTSUM_FORMAT=testname $(GO_TEST) -count=1 ./e2e/console/...
 
@@ -193,36 +205,14 @@ docker-build:
 	$(DOCKER_BUILD) --tag $(DOCKER_IMAGE_NAME):$(DOCKER_TAG_NAME) --file Dockerfile .
 
 .PHONY: bin/probod
-bin/probod: pkg/server/api/connect/v1/schema/schema.go \
-	pkg/server/api/connect/v1/types/types.go \
-	pkg/server/api/console/v1/schema/schema.go \
-	pkg/server/api/console/v1/types/types.go \
-	pkg/server/api/trust/v1/schema/schema.go \
-	pkg/server/api/trust/v1/types/types.go \
-	pkg/server/api/mcp/v1/server/server.go \
-	pkg/server/api/mcp/v1/types/types.go \
-	apps/console/dist/index.html \
-	apps/trust/dist/index.html \
-	$(PROBOD_BIN_EXTRA_DEPS) \
-	@probo/emails
+bin/probod: $(PROBOD_BIN_DEPS) $(PROBOD_BIN_EXTRA_DEPS)
 	$(GO_BUILD) -o $(PROBOD_BIN) $(PROBOD_SRC)
 
 # probod built with -tags=e2e. The tag swaps the real vendor assessor for
 # a deterministic stub so e2e tests avoid the real LLM/browser pipeline.
 # Never ship this binary.
 .PHONY: bin/probod-e2e
-bin/probod-e2e: pkg/server/api/connect/v1/schema/schema.go \
-	pkg/server/api/connect/v1/types/types.go \
-	pkg/server/api/console/v1/schema/schema.go \
-	pkg/server/api/console/v1/types/types.go \
-	pkg/server/api/trust/v1/schema/schema.go \
-	pkg/server/api/trust/v1/types/types.go \
-	pkg/server/api/mcp/v1/server/server.go \
-	pkg/server/api/mcp/v1/types/types.go \
-	apps/console/dist/index.html \
-	apps/trust/dist/index.html \
-	$(PROBOD_BIN_EXTRA_DEPS) \
-	@probo/emails
+bin/probod-e2e: $(PROBOD_BIN_DEPS) $(PROBOD_BIN_EXTRA_DEPS)
 	$(GO_BUILD) -tags=e2e -o $(PROBOD_E2E_BIN) $(PROBOD_SRC)
 
 .PHONY: bin/prb
