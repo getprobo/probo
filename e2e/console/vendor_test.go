@@ -986,6 +986,140 @@ func TestVendor_OmittableWebsiteUrl(t *testing.T) {
 	})
 }
 
+func TestVendor_Assess(t *testing.T) {
+	t.Parallel()
+
+	const query = `
+		mutation AssessVendor($input: AssessVendorInput!) {
+			assessVendor(input: $input) {
+				vendor {
+					id
+					name
+					websiteUrl
+				}
+				report
+				subprocessors {
+					name
+					country
+					purpose
+				}
+			}
+		}
+	`
+
+	type resultShape struct {
+		AssessVendor struct {
+			Vendor struct {
+				ID         string  `json:"id"`
+				Name       string  `json:"name"`
+				WebsiteUrl *string `json:"websiteUrl"`
+			} `json:"vendor"`
+			Report        string `json:"report"`
+			Subprocessors []struct {
+				Name    string `json:"name"`
+				Country string `json:"country"`
+				Purpose string `json:"purpose"`
+			} `json:"subprocessors"`
+		} `json:"assessVendor"`
+	}
+
+	t.Run("owner can assess a vendor", func(t *testing.T) {
+		t.Parallel()
+
+		owner := testutil.NewClient(t, testutil.RoleOwner)
+		vendorID := factory.NewVendor(owner).WithName("Original Name").Create()
+
+		var result resultShape
+		err := owner.Execute(query, map[string]any{
+			"input": map[string]any{
+				"id":         vendorID,
+				"websiteUrl": "https://vendor.example.com",
+			},
+		}, &result)
+		require.NoError(t, err)
+
+		assert.Equal(t, vendorID, result.AssessVendor.Vendor.ID)
+		assert.Equal(t, "Stub Vendor", result.AssessVendor.Vendor.Name)
+		require.NotNil(t, result.AssessVendor.Vendor.WebsiteUrl)
+		assert.Equal(t, "https://vendor.example.com", *result.AssessVendor.Vendor.WebsiteUrl)
+		assert.NotEmpty(t, result.AssessVendor.Report)
+		require.Len(t, result.AssessVendor.Subprocessors, 1)
+		assert.Equal(t, "Example Subprocessor", result.AssessVendor.Subprocessors[0].Name)
+	})
+
+	t.Run("admin can assess a vendor", func(t *testing.T) {
+		t.Parallel()
+
+		owner := testutil.NewClient(t, testutil.RoleOwner)
+		admin := testutil.NewClientInOrg(t, testutil.RoleAdmin, owner)
+		vendorID := factory.NewVendor(owner).WithName("Admin-assessed vendor").Create()
+
+		var result resultShape
+		err := admin.Execute(query, map[string]any{
+			"input": map[string]any{
+				"id":         vendorID,
+				"websiteUrl": "https://admin.example.com",
+			},
+		}, &result)
+		require.NoError(t, err)
+		assert.Equal(t, vendorID, result.AssessVendor.Vendor.ID)
+	})
+
+	t.Run("viewer cannot assess a vendor", func(t *testing.T) {
+		t.Parallel()
+
+		owner := testutil.NewClient(t, testutil.RoleOwner)
+		viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
+		vendorID := factory.NewVendor(owner).WithName("Viewer attempt").Create()
+
+		var result resultShape
+		err := viewer.Execute(query, map[string]any{
+			"input": map[string]any{
+				"id":         vendorID,
+				"websiteUrl": "https://viewer.example.com",
+			},
+		}, &result)
+		testutil.RequireForbiddenError(t, err)
+	})
+
+	t.Run("cannot assess vendor from another organization", func(t *testing.T) {
+		t.Parallel()
+
+		org1Owner := testutil.NewClient(t, testutil.RoleOwner)
+		org2Owner := testutil.NewClient(t, testutil.RoleOwner)
+		vendorID := factory.NewVendor(org1Owner).WithName("Org1 vendor").Create()
+
+		var result resultShape
+		err := org2Owner.Execute(query, map[string]any{
+			"input": map[string]any{
+				"id":         vendorID,
+				"websiteUrl": "https://cross-tenant.example.com",
+			},
+		}, &result)
+		require.Error(t, err, "vendor assess must not cross tenant boundaries")
+	})
+
+	t.Run("procedure is optional", func(t *testing.T) {
+		t.Parallel()
+
+		owner := testutil.NewClient(t, testutil.RoleOwner)
+		vendorID := factory.NewVendor(owner).WithName("Procedure test").Create()
+
+		procedure := "Focus on SOC 2 controls and data residency"
+
+		var result resultShape
+		err := owner.Execute(query, map[string]any{
+			"input": map[string]any{
+				"id":         vendorID,
+				"websiteUrl": "https://procedure.example.com",
+				"procedure":  procedure,
+			},
+		}, &result)
+		require.NoError(t, err)
+		assert.NotEmpty(t, result.AssessVendor.Report)
+	})
+}
+
 func TestVendor_TenantIsolation(t *testing.T) {
 	t.Parallel()
 

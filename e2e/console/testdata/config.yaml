@@ -71,6 +71,7 @@ probod:
       model-name: "gpt-4o"
       temperature: 0.1
       max-tokens: 4096
+    stub-vendor-assessor: true
 
   evidence-describer:
     interval: 10
