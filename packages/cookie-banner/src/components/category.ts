@@ -18,7 +18,7 @@ import { ProboElement } from "./base";
 export class ProboCategory extends ProboElement {
 
   get categoryName(): string {
-    return this.getAttribute("name") ?? "";
+    return this.getAttribute("name") ?? "Other";
   }
 
   get required(): boolean {

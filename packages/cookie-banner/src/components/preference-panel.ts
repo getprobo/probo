@@ -26,6 +26,9 @@ export class ProboPreferencePanel extends ProboElement {
   private onStateChange = (e: Event): void => {
     const { state } = (e as CustomEvent).detail;
     this.hidden = state !== "panel";
+    if (state === "panel") {
+      (this.root as ProboCookieBannerRoot).resetDraft();
+    }
   };
 
   connectedCallback(): void {
@@ -34,12 +37,6 @@ export class ProboPreferencePanel extends ProboElement {
 
     if (this.root) {
       this.root.addEventListener("probo-state", this.onStateChange);
-      this.root.addEventListener("probo-state", (e: Event) => {
-        const { state } = (e as CustomEvent).detail;
-        if (state === "panel") {
-          (this.root as ProboCookieBannerRoot).resetDraft();
-        }
-      });
     }
 
     this.scheduleValidation(() => this.validate());

@@ -53,6 +53,13 @@ export class ProboCookieBannerRoot extends ProboElement implements ProboRootElem
     this.initClient();
   }
 
+  disconnectedCallback(): void {
+    if (this._client) {
+      this._client.destroy();
+      this._client = null;
+    }
+  }
+
   setState(state: ProboState): void {
     const prev = this._state;
     this._state = state;
