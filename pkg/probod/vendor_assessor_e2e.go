@@ -12,20 +12,34 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+//go:build e2e
+
 package probod
 
 import (
 	"context"
+	"fmt"
+	"net/url"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"go.gearno.de/kit/log"
+	"go.opentelemetry.io/otel/trace"
 	"go.probo.inc/probo/pkg/agent"
 	"go.probo.inc/probo/pkg/agents/vetting"
 	"go.probo.inc/probo/pkg/probo"
 )
 
-// stubVendorAssessor satisfies probo.VendorAssessor with a deterministic
-// result. It exists so end-to-end tests can exercise the assessVendor
-// GraphQL mutation, MCP tool and CLI command without running the full
-// LLM and browser pipeline.
+// buildVendorAssessor returns a deterministic stub. It replaces the real
+// LLM/browser-driven assessor only in binaries built with `-tags=e2e` so
+// the production binary can never serve this fixture.
+func (impl *Implm) buildVendorAssessor(
+	_ *log.Logger,
+	_ trace.TracerProvider,
+	_ prometheus.Registerer,
+) (probo.VendorAssessor, error) {
+	return stubVendorAssessor{}, nil
+}
+
 type stubVendorAssessor struct{}
 
 var _ probo.VendorAssessor = (*stubVendorAssessor)(nil)
@@ -36,6 +50,11 @@ func (stubVendorAssessor) Assess(
 	_ string,
 	_ agent.ProgressReporter,
 ) (*vetting.Result, error) {
+	privacyURL, err := url.JoinPath(websiteURL, "privacy")
+	if err != nil {
+		return nil, fmt.Errorf("cannot build stub privacy URL: %w", err)
+	}
+
 	return &vetting.Result{
 		Document: "stub vendor assessment report",
 		Info: vetting.VendorInfo{
@@ -43,7 +62,7 @@ func (stubVendorAssessor) Assess(
 			Description:      "Deterministic stub output used in e2e tests",
 			Category:         "OTHER",
 			VendorType:       "SAAS",
-			PrivacyPolicyURL: websiteURL + "/privacy",
+			PrivacyPolicyURL: privacyURL,
 			Subprocessors: []vetting.Subprocessor{
 				{
 					Name:    "Example Subprocessor",

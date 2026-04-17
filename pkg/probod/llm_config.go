@@ -49,11 +49,6 @@ type (
 		Probo             LLMAgentConfig               `json:"probo"`
 		EvidenceDescriber LLMAgentConfig               `json:"evidence-describer"`
 		VendorAssessor    LLMAgentConfig               `json:"vendor-assessor"`
-
-		// StubVendorAssessor replaces the real LLM/browser-driven vendor
-		// assessor with a deterministic stub. Intended for end-to-end
-		// tests only; must never be enabled in production.
-		StubVendorAssessor bool `json:"stub-vendor-assessor"`
 	}
 )
 

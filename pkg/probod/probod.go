@@ -44,7 +44,6 @@ import (
 	"go.gearno.de/kit/worker"
 	"go.opentelemetry.io/otel/trace"
 	"go.probo.inc/probo/pkg/accessreview"
-	"go.probo.inc/probo/pkg/agents/vetting"
 	"go.probo.inc/probo/pkg/awsconfig"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/certmanager"
@@ -337,27 +336,9 @@ func (impl *Implm) Run(
 		return err
 	}
 
-	var vendorAssessor probo.VendorAssessor
-	if impl.cfg.Agents.StubVendorAssessor {
-		vendorAssessor = stubVendorAssessor{}
-	} else {
-		vendorAssessorAgentCfg, vendorAssessorLLMClient, err := impl.resolveAgentClient("vendor-assessor", impl.cfg.Agents.VendorAssessor, l, tp, r)
-		if err != nil {
-			return err
-		}
-
-		vendorAssessorMaxTokens := vetting.DefaultMaxTokens
-		if vendorAssessorAgentCfg.MaxTokens != nil {
-			vendorAssessorMaxTokens = *vendorAssessorAgentCfg.MaxTokens
-		}
-		vendorAssessor = vetting.NewAssessor(vetting.Config{
-			Client:         vendorAssessorLLMClient,
-			Model:          vendorAssessorAgentCfg.ModelName,
-			MaxTokens:      vendorAssessorMaxTokens,
-			ChromeAddr:     impl.cfg.ChromeDPAddr,
-			SearchEndpoint: impl.cfg.SearchEndpoint,
-			Logger:         l.Named("vendor-assessor"),
-		})
+	vendorAssessor, err := impl.buildVendorAssessor(l, tp, r)
+	if err != nil {
+		return err
 	}
 
 	fileManagerService := filemanager.NewService(s3Client)
