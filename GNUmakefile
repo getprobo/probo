@@ -58,7 +58,6 @@ PROBOD_BIN_DEPS= pkg/server/api/connect/v1/schema/schema.go \
 
 PROBOD_BIN_EXTRA_DEPS=
 PROBOD_BIN=	bin/probod
-PROBOD_E2E_BIN=	bin/probod-e2e
 PROBOD_SRC=	cmd/probod/main.go
 
 PRB_BIN=	bin/prb
@@ -140,13 +139,13 @@ test-bench: test ## Run benchmark tests
 
 .PHONY: test-e2e
 test-e2e: CGO_ENABLED=1
-test-e2e: $(PROBOD_E2E_BIN) ## Run console e2e tests
-	PROBO_E2E_BINARY=$(CURDIR)/$(PROBOD_E2E_BIN) \
+test-e2e: $(PROBOD_BIN) ## Run console e2e tests
+	PROBO_E2E_BINARY=$(CURDIR)/$(PROBOD_BIN) \
 	PROBO_E2E_CONFIG=$(E2E_CONFIG) \
 	GOTESTSUM_FORMAT=testname $(GO_TEST) -count=1 ./e2e/console/...
 
 bin/probod-coverage:
-	CGO_ENABLED=0 $(GO_BUILD) -tags=e2e -cover -o $@ $(PROBOD_SRC)
+	CGO_ENABLED=0 $(GO_BUILD) -cover -o $@ $(PROBOD_SRC)
 
 .PHONY: test-e2e-coverage
 test-e2e-coverage: bin/probod-coverage ## Run e2e tests with coverage
@@ -207,13 +206,6 @@ docker-build:
 .PHONY: $(PROBOD_BIN)
 $(PROBOD_BIN): $(PROBOD_BIN_DEPS) $(PROBOD_BIN_EXTRA_DEPS)
 	$(GO_BUILD) -o $(PROBOD_BIN) $(PROBOD_SRC)
-
-# probod built with -tags=e2e. The tag swaps the real vendor assessor for
-# a deterministic stub so e2e tests avoid the real LLM/browser pipeline.
-# Never ship this binary.
-.PHONY: $(PROBOD_E2E_BIN)
-$(PROBOD_E2E_BIN): $(PROBOD_BIN_DEPS) $(PROBOD_BIN_EXTRA_DEPS)
-	$(GO_BUILD) -tags=e2e -o $(PROBOD_E2E_BIN) $(PROBOD_SRC)
 
 .PHONY: bin/prb
 bin/prb:

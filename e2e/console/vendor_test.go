@@ -986,6 +986,12 @@ func TestVendor_OmittableWebsiteUrl(t *testing.T) {
 	})
 }
 
+// TestVendor_Assess exercises the assessVendor mutation through authorization
+// and tenant-isolation paths without running the real LLM/browser pipeline.
+// The e2e config deliberately omits `llm.vendor-assessor.provider`, so an
+// authorized call reaches DisabledVendorAssessor and surfaces a stable
+// UNAVAILABLE error. Happy-path payload shape is covered by unit tests in
+// pkg/probo.
 func TestVendor_Assess(t *testing.T) {
 	t.Parallel()
 
@@ -994,14 +1000,6 @@ func TestVendor_Assess(t *testing.T) {
 			assessVendor(input: $input) {
 				vendor {
 					id
-					name
-					websiteUrl
-				}
-				report
-				subprocessors {
-					name
-					country
-					purpose
 				}
 			}
 		}
@@ -1010,24 +1008,16 @@ func TestVendor_Assess(t *testing.T) {
 	type resultShape struct {
 		AssessVendor struct {
 			Vendor struct {
-				ID         string  `json:"id"`
-				Name       string  `json:"name"`
-				WebsiteUrl *string `json:"websiteUrl"`
+				ID string `json:"id"`
 			} `json:"vendor"`
-			Report        string `json:"report"`
-			Subprocessors []struct {
-				Name    string `json:"name"`
-				Country string `json:"country"`
-				Purpose string `json:"purpose"`
-			} `json:"subprocessors"`
 		} `json:"assessVendor"`
 	}
 
-	t.Run("owner can assess a vendor", func(t *testing.T) {
+	t.Run("owner call surfaces the disabled error", func(t *testing.T) {
 		t.Parallel()
 
 		owner := testutil.NewClient(t, testutil.RoleOwner)
-		vendorID := factory.NewVendor(owner).WithName("Original Name").Create()
+		vendorID := factory.NewVendor(owner).WithName("Unconfigured assess").Create()
 
 		var result resultShape
 		err := owner.Execute(query, map[string]any{
@@ -1036,18 +1026,10 @@ func TestVendor_Assess(t *testing.T) {
 				"websiteUrl": "https://vendor.example.com",
 			},
 		}, &result)
-		require.NoError(t, err)
-
-		assert.Equal(t, vendorID, result.AssessVendor.Vendor.ID)
-		assert.Equal(t, "Stub Vendor", result.AssessVendor.Vendor.Name)
-		require.NotNil(t, result.AssessVendor.Vendor.WebsiteUrl)
-		assert.Equal(t, "https://vendor.example.com", *result.AssessVendor.Vendor.WebsiteUrl)
-		assert.NotEmpty(t, result.AssessVendor.Report)
-		require.Len(t, result.AssessVendor.Subprocessors, 1)
-		assert.Equal(t, "Example Subprocessor", result.AssessVendor.Subprocessors[0].Name)
+		testutil.RequireErrorCode(t, err, "UNAVAILABLE")
 	})
 
-	t.Run("admin can assess a vendor", func(t *testing.T) {
+	t.Run("admin call surfaces the disabled error", func(t *testing.T) {
 		t.Parallel()
 
 		owner := testutil.NewClient(t, testutil.RoleOwner)
@@ -1061,8 +1043,7 @@ func TestVendor_Assess(t *testing.T) {
 				"websiteUrl": "https://admin.example.com",
 			},
 		}, &result)
-		require.NoError(t, err)
-		assert.Equal(t, vendorID, result.AssessVendor.Vendor.ID)
+		testutil.RequireErrorCode(t, err, "UNAVAILABLE")
 	})
 
 	t.Run("viewer cannot assess a vendor", func(t *testing.T) {
@@ -1099,24 +1080,21 @@ func TestVendor_Assess(t *testing.T) {
 		require.Error(t, err, "vendor assess must not cross tenant boundaries")
 	})
 
-	t.Run("procedure is optional", func(t *testing.T) {
+	t.Run("procedure is accepted on the input", func(t *testing.T) {
 		t.Parallel()
 
 		owner := testutil.NewClient(t, testutil.RoleOwner)
 		vendorID := factory.NewVendor(owner).WithName("Procedure test").Create()
-
-		procedure := "Focus on SOC 2 controls and data residency"
 
 		var result resultShape
 		err := owner.Execute(query, map[string]any{
 			"input": map[string]any{
 				"id":         vendorID,
 				"websiteUrl": "https://procedure.example.com",
-				"procedure":  procedure,
+				"procedure":  "Focus on SOC 2 controls and data residency",
 			},
 		}, &result)
-		require.NoError(t, err)
-		assert.NotEmpty(t, result.AssessVendor.Report)
+		testutil.RequireErrorCode(t, err, "UNAVAILABLE")
 	})
 }
 
