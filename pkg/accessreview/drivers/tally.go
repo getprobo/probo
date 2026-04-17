@@ -115,7 +115,7 @@ func (d *TallyDriver) listUsers(ctx context.Context) ([]AccountRecord, error) {
 		record := AccountRecord{
 			Email:       u.Email,
 			FullName:    u.FullName,
-			Active:      !u.IsDeleted,
+			Active:      new(!u.IsDeleted),
 			ExternalID:  u.ID,
 			MFAStatus:   mfaStatus,
 			AuthMethod:  coredata.AccessEntryAuthMethodUnknown,
@@ -169,7 +169,7 @@ func (d *TallyDriver) listInvites(ctx context.Context) ([]AccountRecord, error) 
 	for _, inv := range invites {
 		record := AccountRecord{
 			Email:       inv.Email,
-			Active:      false,
+			Active:      new(false),
 			ExternalID:  inv.ID,
 			MFAStatus:   coredata.MFAStatusUnknown,
 			AuthMethod:  coredata.AccessEntryAuthMethodUnknown,

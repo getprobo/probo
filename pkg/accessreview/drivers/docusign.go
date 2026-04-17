@@ -93,7 +93,7 @@ func (d *DocuSignDriver) ListAccounts(ctx context.Context) ([]AccountRecord, err
 				FullName:    u.UserName,
 				Role:        u.PermissionProfileName,
 				JobTitle:    u.JobTitle,
-				Active:      strings.EqualFold(u.UserStatus, "active"),
+				Active:      new(strings.EqualFold(u.UserStatus, "active")),
 				IsAdmin:     strings.EqualFold(u.IsAdmin, "True"),
 				ExternalID:  u.UserID,
 				MFAStatus:   coredata.MFAStatusUnknown,

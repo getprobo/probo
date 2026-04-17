@@ -109,7 +109,7 @@ func (d *GoogleWorkspaceDriver) ListAccounts(ctx context.Context) ([]AccountReco
 			rec := AccountRecord{
 				Email:       u.PrimaryEmail,
 				FullName:    u.Name.FullName,
-				Active:      !u.Suspended && !u.Archived,
+				Active:      new(!u.Suspended && !u.Archived),
 				IsAdmin:     u.IsAdmin,
 				ExternalID:  u.Id,
 				MFAStatus:   coredata.MFAStatusUnknown,

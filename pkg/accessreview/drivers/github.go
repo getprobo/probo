@@ -119,7 +119,7 @@ func (d *GitHubDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 			Email:       profile.Email,
 			FullName:    fullName,
 			Role:        membership.Role,
-			Active:      membership.State == "active",
+			Active:      new(membership.State == "active"),
 			IsAdmin:     membership.Role == "admin",
 			MFAStatus:   mfaStatus,
 			AuthMethod:  coredata.AccessEntryAuthMethodUnknown,

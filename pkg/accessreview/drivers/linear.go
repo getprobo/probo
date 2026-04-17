@@ -97,7 +97,7 @@ func (d *LinearDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 				Email:       u.Email,
 				FullName:    u.Name,
 				Role:        linearRole(u.Admin, u.Guest),
-				Active:      u.Active,
+				Active:      new(u.Active),
 				IsAdmin:     u.Admin,
 				ExternalID:  u.ID,
 				MFAStatus:   coredata.MFAStatusUnknown,

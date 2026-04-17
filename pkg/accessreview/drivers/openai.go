@@ -68,7 +68,7 @@ func (d *OpenAIDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 				Email:       u.Email,
 				FullName:    u.Name,
 				Role:        openaiRole(u.Role),
-				Active:      !u.Disabled,
+				Active:      new(!u.Disabled),
 				IsAdmin:     u.Role == "owner",
 				ExternalID:  u.ID,
 				MFAStatus:   coredata.MFAStatusUnknown,

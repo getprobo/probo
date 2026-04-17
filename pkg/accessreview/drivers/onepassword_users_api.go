@@ -86,7 +86,7 @@ func (d *OnePasswordUsersAPIDriver) ListAccounts(ctx context.Context) ([]Account
 			record := AccountRecord{
 				Email:       u.Email,
 				FullName:    u.DisplayName,
-				Active:      u.State == "ACTIVE",
+				Active:      new(u.State == "ACTIVE"),
 				ExternalID:  u.ID,
 				MFAStatus:   coredata.MFAStatusUnknown,
 				AuthMethod:  coredata.AccessEntryAuthMethodUnknown,

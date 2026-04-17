@@ -57,7 +57,6 @@ func (d *ResendDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 	for _, k := range resp.Data {
 		record := AccountRecord{
 			FullName:    k.Name,
-			Active:      true,
 			IsAdmin:     false,
 			ExternalID:  k.ID,
 			MFAStatus:   coredata.MFAStatusUnknown,

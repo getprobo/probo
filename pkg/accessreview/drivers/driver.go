@@ -23,13 +23,23 @@ import (
 )
 
 // AccountRecord represents a single account from an access source or identity
-// source. All fields are best-effort; sources populate what they can.
+// source. All fields are best-effort; sources populate what they can. Drivers
+// must return ALL accounts the source exposes (including inactive / suspended
+// / deleted); classification is the job of the reviewer or of an agent run
+// against the campaign, not of the fetch pipeline.
+//
+// Active is three-valued: nil means the source API has no explicit
+// account-status signal for this account (the driver cannot tell), a non-nil
+// pointer means the driver observed an explicit signal (true = active at
+// source, false = deactivated / suspended / deleted). Drivers whose API does
+// not distinguish active from deactivated accounts must leave Active nil
+// rather than fabricate a value.
 type AccountRecord struct {
 	Email       string
 	FullName    string
 	Role        string // system role/permission (e.g. "Admin", "Viewer")
 	JobTitle    string // HR job title / department (e.g. "Software Engineer")
-	Active      bool
+	Active      *bool
 	IsAdmin     bool
 	MFAStatus   coredata.MFAStatus
 	AuthMethod  coredata.AccessEntryAuthMethod

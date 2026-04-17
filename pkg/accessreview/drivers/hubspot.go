@@ -99,7 +99,6 @@ func (d *HubSpotDriver) ListAccounts(ctx context.Context) ([]AccountRecord, erro
 				Email:       u.Email,
 				FullName:    fullName,
 				Role:        role,
-				Active:      true,
 				IsAdmin:     u.SuperAdmin,
 				ExternalID:  u.ID,
 				MFAStatus:   coredata.MFAStatusUnknown,

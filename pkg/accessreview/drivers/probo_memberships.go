@@ -69,7 +69,7 @@ func (d *ProboMembershipsDriver) ListAccounts(ctx context.Context) ([]AccountRec
 					Email:       account.Email,
 					FullName:    account.FullName,
 					Role:        role,
-					Active:      account.State == string(coredata.ProfileStateActive),
+					Active:      new(account.State == string(coredata.ProfileStateActive)),
 					IsAdmin:     isAdmin,
 					ExternalID:  account.ID.String(),
 					CreatedAt:   &createdAt,

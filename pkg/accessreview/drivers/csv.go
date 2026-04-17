@@ -88,7 +88,7 @@ func (d *CSVDriver) ListAccounts(_ context.Context) ([]AccountRecord, error) {
 			record.IsAdmin = strings.TrimSpace(strings.ToLower(row[idx])) == "true"
 		}
 		if idx, ok := colIndex["active"]; ok && idx < len(row) {
-			record.Active = strings.TrimSpace(strings.ToLower(row[idx])) == "true"
+			record.Active = new(strings.TrimSpace(strings.ToLower(row[idx])) == "true")
 		}
 		if idx, ok := colIndex["external_id"]; ok && idx < len(row) {
 			record.ExternalID = strings.TrimSpace(row[idx])
