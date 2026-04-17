@@ -22,7 +22,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
-	"go.probo.inc/probo/pkg/agents"
 	"go.probo.inc/probo/pkg/certmanager"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/coredata"
@@ -80,7 +79,10 @@ type (
 		scope                             coredata.Scoper
 		baseURL                           string
 		tokenSecret                       string
-		agent                             *agents.Agent
+		llmClient                         *llm.Client
+		llmModel                          string
+		llmTemperature                    float64
+		llmMaxTokens                      int
 		vendorAssessor                    VendorAssessor
 		fileManager                       *filemanager.Service
 		esign                             *esign.Service
@@ -190,7 +192,10 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 		baseURL:        s.baseURL,
 		scope:          coredata.NewScope(tenantID),
 		tokenSecret:    s.tokenSecret,
-		agent:          agents.NewAgent(nil, s.llmClient, s.llmModel, s.llmTemperature, s.llmMaxTokens),
+		llmClient:      s.llmClient,
+		llmModel:       s.llmModel,
+		llmTemperature: s.llmTemperature,
+		llmMaxTokens:   s.llmMaxTokens,
 		vendorAssessor: s.vendorAssessor,
 		fileManager:    s.fileManager,
 		esign:          s.esign,
