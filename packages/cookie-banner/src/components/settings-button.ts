@@ -54,8 +54,8 @@ export class ProboSettingsButton extends HTMLElement {
           gap: 6px;
           border: none;
           border-radius: var(--probo-settings-radius, 9999px);
-          background: var(--probo-settings-bg, #1a1a1a);
-          color: var(--probo-settings-color, #ffffff);
+          background: var(--probo-settings-bg, var(--probo-accent, #1a1a1a));
+          color: var(--probo-settings-color, var(--probo-accent-text, #ffffff));
           padding: var(--probo-settings-padding, 10px);
           cursor: pointer;
           font-family: inherit;
