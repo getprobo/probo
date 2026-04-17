@@ -412,11 +412,14 @@ func coreLoop(ctx context.Context, startAgent *Agent, inputMessages []llm.Messag
 				if resp.Message.Text() == "" {
 					s.messages = s.messages[:len(s.messages)-1]
 				}
-				s.messages = append(s.messages, llm.Message{
-					Role:  llm.RoleUser,
-					Parts: []llm.Part{llm.TextPart{Text: synthesisNudge}},
-				})
-				s.logger.InfoCtx(
+				s.messages = append(
+					s.messages,
+					llm.Message{
+						Role:  llm.RoleUser,
+						Parts: []llm.Part{llm.TextPart{Text: synthesisNudge}},
+					},
+				)
+				s.logger.WarnCtx(
 					ctx,
 					"entering synthesis turn: forcing structured output with tool_choice=none",
 					log.Int("turn", s.turns),
@@ -425,16 +428,17 @@ func coreLoop(ctx context.Context, startAgent *Agent, inputMessages []llm.Messag
 				continue
 			}
 
-			// Synthesis turn ran but produced no text. Retry the same
-			// turn a bounded number of times so the model gets another
-			// chance to emit the required JSON output. The empty
-			// assistant turn must be dropped from history because
-			// Anthropic rejects requests where the last message is a
-			// thinking-only assistant turn.
+			// Anthropic extended-thinking models can return a synthesis turn
+			// that contains only thinking blocks and no text part, leaving us
+			// with no structured output to validate. Retry the same turn a
+			// bounded number of times so the model gets another chance to
+			// emit the required JSON output. The empty assistant turn must be
+			// dropped from history because Anthropic rejects requests where
+			// the last message is a thinking-only assistant turn.
 			if structuredFormat != nil && resp.Message.Text() == "" && emptyOutputRetries < s.agent.maxEmptyOutputRetries && s.turns < s.agent.maxTurns {
 				emptyOutputRetries++
 				s.messages = s.messages[:len(s.messages)-1]
-				s.logger.InfoCtx(
+				s.logger.WarnCtx(
 					ctx,
 					"retrying turn: structured output expected but got empty text",
 					log.Int("turn", s.turns),
@@ -552,7 +556,8 @@ func coreLoop(ctx context.Context, startAgent *Agent, inputMessages []llm.Messag
 
 			if isFinal {
 				s.messages = append(
-					s.messages, llm.Message{
+					s.messages,
+					llm.Message{
 						Role:  llm.RoleAssistant,
 						Parts: []llm.Part{llm.TextPart{Text: finalOutput}},
 					},
