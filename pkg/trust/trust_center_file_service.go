@@ -25,7 +25,7 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
-	"go.probo.inc/probo/pkg/watermarkpdf"
+	"go.probo.inc/probo/pkg/pdfutils"
 )
 
 type TrustCenterFileService struct {
@@ -104,7 +104,7 @@ func (s *TrustCenterFileService) ExportFile(
 	}
 
 	if mimeType == "application/pdf" {
-		watermarkedPDF, err := watermarkpdf.AddConfidentialWithTimestamp(fileData, email)
+		watermarkedPDF, err := pdfutils.AddConfidentialWithTimestamp(fileData, email)
 		if err != nil {
 			return nil, "", fmt.Errorf("cannot add watermark to PDF: %w", err)
 		}

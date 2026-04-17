@@ -25,7 +25,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/mail"
-	"go.probo.inc/probo/pkg/watermarkpdf"
+	"go.probo.inc/probo/pkg/pdfutils"
 )
 
 type ReportService struct {
@@ -112,7 +112,7 @@ func (s ReportService) ExportPDF(
 		return nil, fmt.Errorf("cannot export report PDF: %w", err)
 	}
 
-	watermarkedPDF, err := watermarkpdf.AddConfidentialWithTimestamp(pdfData, email)
+	watermarkedPDF, err := pdfutils.AddConfidentialWithTimestamp(pdfData, email)
 	if err != nil {
 		return nil, fmt.Errorf("cannot add watermark to PDF: %w", err)
 	}

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        @page {
+            size: {{- if .Landscape}} A4 landscape {{- else}} A4 {{- end}};
+            margin: 1in;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            font-size: 10pt;
+            line-height: 1.5;
+            color: #1a1a1a;
+            margin: 0;
+            padding: 0;
+        }
+
+        .signatures-title {
+            font-size: 13pt;
+            font-weight: bold;
+            color: #000;
+            margin-bottom: 15px;
+        }
+
+        .signatures-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 9pt;
+            margin-top: 10px;
+        }
+
+        .signatures-table th,
+        .signatures-table td {
+            padding: 6px 8px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+
+        .signatures-table th {
+            background: #f5f5f5;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .signature-signed {
+            color: #000;
+            font-weight: bold;
+        }
+
+        .signature-requested {
+            color: #666;
+            font-style: italic;
+        }
+    </style>
+</head>
+
+<body>
+    <h2 class="signatures-title">Document Signatures</h2>
+    <table class="signatures-table">
+        <thead>
+            <tr>
+                <th>Signatory</th>
+                <th>Status</th>
+                <th>Requested Date</th>
+                <th>Signed Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{- range .Signatures}}
+            <tr>
+                <td>{{.SignedBy}}</td>
+                <td>
+                    {{- if eq (string .State) "SIGNED"}}
+                    <span class="signature-signed">{{string .State}}</span>
+                    {{- else}}
+                    <span class="signature-requested">{{string .State}}</span>
+                    {{- end}}
+                </td>
+                <td>{{.RequestedAt.Format "Jan 2, 2006"}}</td>
+                <td>
+                    {{- if .SignedAt}}
+                    {{.SignedAt.Format "Jan 2, 2006"}}
+                    {{- else}}
+                    -
+                    {{- end}}
+                </td>
+            </tr>
+            {{- end}}
+        </tbody>
+    </table>
+</body>
+
+</html>

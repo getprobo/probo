@@ -16,26 +16,19 @@ package trust
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"io"
-
-	"errors"
 
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/docgen"
 	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/html2pdf"
 	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
-	"go.probo.inc/probo/pkg/watermarkpdf"
+	"go.probo.inc/probo/pkg/pdfutils"
 )
 
 type (
 	DocumentService struct {
-		svc               *TenantService
-		html2pdfConverter *html2pdf.Converter
+		svc *TenantService
 	}
 
 	ErrDocumentArchived struct{}
@@ -82,7 +75,7 @@ func (s *DocumentService) ExportPDF(
 		return nil, fmt.Errorf("cannot export document PDF: %w", err)
 	}
 
-	watermarkedPDF, err := watermarkpdf.AddConfidentialWithTimestamp(pdfData, email)
+	watermarkedPDF, err := pdfutils.AddConfidentialWithTimestamp(pdfData, email)
 	if err != nil {
 		return nil, fmt.Errorf("cannot add watermark to PDF: %w", err)
 	}
@@ -141,8 +134,7 @@ func (s *DocumentService) exportPDFData(
 ) ([]byte, error) {
 	document := &coredata.Document{}
 	version := &coredata.DocumentVersion{}
-	organization := &coredata.Organization{}
-	var approverNames []string
+	fileRecord := &coredata.File{}
 
 	err := s.svc.pg.WithConn(
 		ctx,
@@ -163,54 +155,12 @@ func (s *DocumentService) exportPDFData(
 				return fmt.Errorf("cannot load latest published document version: %w", err)
 			}
 
-			lastQuorum := &coredata.DocumentVersionApprovalQuorum{}
-			if err := lastQuorum.LoadLastByDocumentVersionID(ctx, conn, s.svc.scope, version.ID); err != nil {
-				if !errors.Is(err, coredata.ErrResourceNotFound) {
-					return fmt.Errorf("cannot load last approval quorum: %w", err)
-				}
-			} else if lastQuorum.Status == coredata.DocumentVersionApprovalQuorumStatusApproved {
-				approvedDecisions := &coredata.DocumentVersionApprovalDecisions{}
-				approvedFilter := coredata.NewDocumentVersionApprovalDecisionFilter(
-					coredata.DocumentVersionApprovalDecisionStates{coredata.DocumentVersionApprovalDecisionStateApproved},
-				)
-				if err := approvedDecisions.LoadByQuorumID(
-					ctx,
-					conn,
-					s.svc.scope,
-					lastQuorum.ID,
-					page.NewCursor(
-						100,
-						nil,
-						page.Head,
-						page.OrderBy[coredata.DocumentVersionApprovalDecisionOrderField]{
-							Field:     coredata.DocumentVersionApprovalDecisionOrderFieldCreatedAt,
-							Direction: page.OrderDirectionAsc,
-						},
-					),
-					approvedFilter,
-				); err != nil {
-					return fmt.Errorf("cannot load approved decisions: %w", err)
-				}
-
-				approverProfileIDs := make([]gid.GID, 0, len(*approvedDecisions))
-				for _, d := range *approvedDecisions {
-					approverProfileIDs = append(approverProfileIDs, d.ApproverID)
-				}
-
-				if len(approverProfileIDs) > 0 {
-					profiles := coredata.MembershipProfiles{}
-					if err := profiles.LoadByIDs(ctx, conn, s.svc.scope, approverProfileIDs); err != nil {
-						return fmt.Errorf("cannot load approver profiles: %w", err)
-					}
-
-					for _, p := range profiles {
-						approverNames = append(approverNames, p.FullName)
-					}
-				}
+			if version.FileID == nil {
+				return fmt.Errorf("cannot export document: publication PDF not yet generated")
 			}
 
-			if err := organization.LoadByID(ctx, conn, s.svc.scope, document.OrganizationID); err != nil {
-				return fmt.Errorf("cannot load organization: %w", err)
+			if err := fileRecord.LoadByID(ctx, conn, s.svc.scope, *version.FileID); err != nil {
+				return fmt.Errorf("cannot load document version file: %w", err)
 			}
 
 			return nil
@@ -221,65 +171,9 @@ func (s *DocumentService) exportPDFData(
 		return nil, err
 	}
 
-	classification := docgen.ClassificationSecret
-	switch version.Classification {
-	case coredata.DocumentClassificationPublic:
-		classification = docgen.ClassificationPublic
-	case coredata.DocumentClassificationInternal:
-		classification = docgen.ClassificationInternal
-	case coredata.DocumentClassificationConfidential:
-		classification = docgen.ClassificationConfidential
-	}
-
-	horizontalLogoBase64 := ""
-	if organization.HorizontalLogoFileID != nil {
-		fileRecord := &coredata.File{}
-		fileErr := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-			return fileRecord.LoadByID(ctx, conn, s.svc.scope, *organization.HorizontalLogoFileID)
-		})
-		if fileErr == nil {
-			base64Data, mimeType, logoErr := s.svc.fileManager.GetFileBase64(ctx, fileRecord)
-			if logoErr == nil {
-				horizontalLogoBase64 = fmt.Sprintf("data:%s;base64,%s", mimeType, base64Data)
-			}
-		}
-	}
-
-	docData := docgen.DocumentData{
-		Title:                       version.Title,
-		Content:                     json.RawMessage([]byte(version.Content)),
-		Major:                       version.Major,
-		Minor:                       version.Minor,
-		Classification:              classification,
-		Approvers:                   approverNames,
-		PublishedAt:                 version.PublishedAt,
-		CompanyHorizontalLogoBase64: horizontalLogoBase64,
-	}
-
-	htmlContent, err := docgen.RenderHTML(docData)
+	pdfData, err := s.svc.fileManager.GetFileBytes(ctx, fileRecord)
 	if err != nil {
-		return nil, fmt.Errorf("cannot generate HTML: %w", err)
-	}
-
-	cfg := html2pdf.RenderConfig{
-		PageFormat:      html2pdf.PageFormatA4,
-		Orientation:     html2pdf.OrientationPortrait,
-		MarginTop:       html2pdf.NewMarginInches(1.0),
-		MarginBottom:    html2pdf.NewMarginInches(1.0),
-		MarginLeft:      html2pdf.NewMarginInches(1.0),
-		MarginRight:     html2pdf.NewMarginInches(1.0),
-		PrintBackground: true,
-		Scale:           1.0,
-	}
-
-	pdfReader, err := s.html2pdfConverter.GeneratePDF(ctx, htmlContent, cfg)
-	if err != nil {
-		return nil, fmt.Errorf("cannot generate PDF: %w", err)
-	}
-
-	pdfData, err := io.ReadAll(pdfReader)
-	if err != nil {
-		return nil, fmt.Errorf("cannot read PDF data: %w", err)
+		return nil, fmt.Errorf("cannot fetch document PDF file: %w", err)
 	}
 
 	return pdfData, nil

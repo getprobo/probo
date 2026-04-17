@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package watermarkpdf
+package pdfutils
 
 import (
 	"bytes"
@@ -20,6 +20,7 @@ import (
 	"image"
 	"image/color"
 	"image/png"
+	"io"
 	"math"
 	"time"
 
@@ -46,6 +47,20 @@ var (
 	fontSizeRatio = 72.0 / float64(fontDPI)
 	fontColor     = color.RGBA{0, 0, 0, 255}
 )
+
+func MergePDFs(pdfs ...[]byte) ([]byte, error) {
+	readers := make([]io.ReadSeeker, len(pdfs))
+	for i, pdf := range pdfs {
+		readers[i] = bytes.NewReader(pdf)
+	}
+
+	var buf bytes.Buffer
+	if err := api.MergeRaw(readers, &buf, false, nil); err != nil {
+		return nil, fmt.Errorf("cannot merge PDFs: %w", err)
+	}
+
+	return buf.Bytes(), nil
+}
 
 func AddConfidentialWithTimestamp(pdfData []byte, email mail.Addr) ([]byte, error) {
 	reader := bytes.NewReader(pdfData)
