@@ -14,7 +14,9 @@
 
 package accessreview
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestNormalizeAccountKey(t *testing.T) {
 	t.Parallel()

@@ -137,6 +137,23 @@ func (e *ReviewEngine) FetchSource(
 					incrementalTag = coredata.AccessEntryIncrementalTagUnchanged
 				}
 
+				var (
+					flags        []coredata.AccessEntryFlag
+					flagReasons  []string
+					decision     = coredata.AccessEntryDecisionPending
+					decisionNote *string
+					decidedAt    *time.Time
+				)
+
+				if !account.Active {
+					flags = []coredata.AccessEntryFlag{coredata.AccessEntryFlagInactive}
+					flagReasons = []string{"Account is inactive at the source"}
+					decision = coredata.AccessEntryDecisionApproved
+					note := "Auto-approved: account is inactive at the source"
+					decisionNote = &note
+					decidedAt = &now
+				}
+
 				entry := &coredata.AccessEntry{
 					ID:                     gid.New(e.scope.GetTenantID(), coredata.AccessEntryEntityType),
 					OrganizationID:         campaign.OrganizationID,
@@ -155,9 +172,11 @@ func (e *ReviewEngine) FetchSource(
 					ExternalID:             account.ExternalID,
 					AccountKey:             accountKey,
 					IncrementalTag:         incrementalTag,
-					Flags:                  []coredata.AccessEntryFlag{},
-					FlagReasons:            []string{},
-					Decision:               coredata.AccessEntryDecisionPending,
+					Flags:                  flags,
+					FlagReasons:            flagReasons,
+					Decision:               decision,
+					DecisionNote:           decisionNote,
+					DecidedAt:              decidedAt,
 					CreatedAt:              now,
 					UpdatedAt:              now,
 				}

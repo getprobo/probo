@@ -547,3 +547,26 @@ func TestCompleteWithState_ScopeFallback(t *testing.T) {
 	assert.Equal(t, "read:user write:user", oauth2Conn.Scope)
 	assert.Equal(t, []string{"read:user", "write:user"}, returnedState.RequestedScopes)
 }
+
+func TestHTTPAuthScheme(t *testing.T) {
+	t.Parallel()
+
+	cases := map[string]string{
+		"Bearer": "Bearer",
+		"bearer": "Bearer",
+		"BEARER": "Bearer",
+		"MAC":    "MAC",
+		"mac":    "MAC",
+		// Slack returns these and they are not valid HTTP auth schemes --
+		// normalize to Bearer so the Authorization header is well-formed.
+		"bot":  "Bearer",
+		"user": "Bearer",
+		"":     "Bearer",
+	}
+	for input, want := range cases {
+		t.Run(input, func(t *testing.T) {
+			t.Parallel()
+			assert.Equal(t, want, httpAuthScheme(input))
+		})
+	}
+}

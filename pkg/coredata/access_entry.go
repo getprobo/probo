@@ -572,12 +572,24 @@ WHERE
 	return nil
 }
 
+// Upsert inserts the entry or refreshes the fields that always track the
+// current state of the source (email, role, flags-computed-fresh, ...).
+//
+// Fields that capture a reviewer's decision -- flags, flag_reasons, decision,
+// decision_note, decided_by, decided_at -- are written on the initial INSERT
+// but intentionally excluded from the ON CONFLICT update set. A second,
+// guarded UPDATE refreshes them only while the stored decision is still
+// PENDING, so a locked decision (and the flags that drove it) survives every
+// subsequent source poll.
+//
+// Both statements run on the caller's transaction so the whole upsert is
+// atomic.
 func (e *AccessEntry) Upsert(
 	ctx context.Context,
-	conn pg.Querier,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
-	q := `
+	insertQ := `
 INSERT INTO access_entries (
     id,
     tenant_id,
@@ -650,7 +662,7 @@ ON CONFLICT (access_review_campaign_id, access_source_id, account_key) DO UPDATE
     incremental_tag = EXCLUDED.incremental_tag,
     updated_at = EXCLUDED.updated_at
 `
-	args := pgx.StrictNamedArgs{
+	insertArgs := pgx.StrictNamedArgs{
 		"id":                        e.ID,
 		"tenant_id":                 scope.GetTenantID(),
 		"organization_id":           e.OrganizationID,
@@ -680,9 +692,42 @@ ON CONFLICT (access_review_campaign_id, access_source_id, account_key) DO UPDATE
 		"updated_at":                e.UpdatedAt,
 	}
 
-	_, err := conn.Exec(ctx, q, args)
-	if err != nil {
+	if _, err := conn.Exec(ctx, insertQ, insertArgs); err != nil {
 		return fmt.Errorf("cannot upsert access entry: %w", err)
+	}
+
+	updateQ := `
+UPDATE access_entries SET
+    flags = @flags,
+    flag_reasons = @flag_reasons,
+    decision = @decision,
+    decision_note = @decision_note,
+    decided_by = @decided_by,
+    decided_at = @decided_at
+WHERE
+    %s
+    AND access_review_campaign_id = @access_review_campaign_id
+    AND access_source_id = @access_source_id
+    AND account_key = @account_key
+    AND decision = 'PENDING'
+`
+	updateQ = fmt.Sprintf(updateQ, scope.SQLFragment())
+
+	updateArgs := pgx.StrictNamedArgs{
+		"flags":                     e.Flags,
+		"flag_reasons":              e.FlagReasons,
+		"decision":                  e.Decision,
+		"decision_note":             e.DecisionNote,
+		"decided_by":                e.DecidedBy,
+		"decided_at":                e.DecidedAt,
+		"access_review_campaign_id": e.AccessReviewCampaignID,
+		"access_source_id":          e.AccessSourceID,
+		"account_key":               e.AccountKey,
+	}
+	maps.Copy(updateArgs, scope.SQLArguments())
+
+	if _, err := conn.Exec(ctx, updateQ, updateArgs); err != nil {
+		return fmt.Errorf("cannot refresh access entry decision bundle: %w", err)
 	}
 
 	return nil
