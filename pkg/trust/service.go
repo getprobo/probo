@@ -122,7 +122,7 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 	}
 
 	tenantService.TrustCenters = &TrustCenterService{svc: tenantService}
-	tenantService.Documents = &DocumentService{svc: tenantService, html2pdfConverter: s.html2pdfConverter}
+	tenantService.Documents = &DocumentService{svc: tenantService}
 	tenantService.Audits = &AuditService{svc: tenantService}
 	tenantService.Vendors = &VendorService{svc: tenantService}
 	tenantService.Frameworks = &FrameworkService{svc: tenantService}

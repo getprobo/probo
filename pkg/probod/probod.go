@@ -632,6 +632,20 @@ func (impl *Implm) Run(
 		},
 	)
 
+	documentPDFWorker := probo.NewDocumentPDFWorker(
+		proboService,
+		l.Named("document-pdf-worker"),
+		worker.WithInterval(30*time.Second),
+	)
+	documentPDFWorkerCtx, stopDocumentPDFWorker := context.WithCancel(context.Background())
+	wg.Go(
+		func() {
+			if err := documentPDFWorker.Run(documentPDFWorkerCtx); err != nil {
+				cancel(fmt.Errorf("document pdf worker crashed: %w", err))
+			}
+		},
+	)
+
 	accessReviewWorkerCtx, stopAccessReviewWorker := context.WithCancel(context.Background())
 	wg.Go(
 		func() {
@@ -725,6 +739,7 @@ func (impl *Implm) Run(
 	stopESignService()
 	stopMailingListWorker()
 	stopEvidenceDescriptionWorker()
+	stopDocumentPDFWorker()
 	stopExportJobExporter()
 	stopAccessReviewWorker()
 	stopIAMService()

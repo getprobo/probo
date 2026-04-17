@@ -1483,3 +1483,100 @@ func TestDocumentVersion_DeleteDraft(t *testing.T) {
 		},
 	)
 }
+
+func TestDocumentVersion_ExportPDFSignatures(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+
+	t.Run(
+		"can export draft with signatures",
+		func(t *testing.T) {
+			t.Parallel()
+
+			_, docVersionID := createTestDocument(t, owner)
+
+			var result struct {
+				ExportDocumentVersionPDF struct {
+					Data string `json:"data"`
+				} `json:"exportDocumentVersionPDF"`
+			}
+
+			err := owner.Execute(`
+				mutation ExportPDF($input: ExportDocumentVersionPDFInput!) {
+					exportDocumentVersionPDF(input: $input) {
+						data
+					}
+				}
+			`, map[string]any{
+				"input": map[string]any{
+					"documentVersionId": docVersionID,
+					"withWatermark":     false,
+					"withSignatures":    true,
+				},
+			}, &result)
+			require.NoError(t, err)
+			assert.NotEmpty(t, result.ExportDocumentVersionPDF.Data)
+		},
+	)
+
+	t.Run(
+		"can export published with signatures",
+		func(t *testing.T) {
+			t.Parallel()
+
+			docID, _ := createTestDocument(t, owner)
+			approveTestDocument(t, owner, docID)
+
+			var versionResult struct {
+				Node struct {
+					Versions struct {
+						Edges []struct {
+							Node struct {
+								ID string `json:"id"`
+							} `json:"node"`
+						} `json:"edges"`
+					} `json:"versions"`
+				} `json:"node"`
+			}
+
+			err := owner.Execute(`
+				query GetVersions($id: ID!) {
+					node(id: $id) {
+						... on Document {
+							versions(first: 1, orderBy: { field: CREATED_AT, direction: DESC }) {
+								edges { node { id } }
+							}
+						}
+					}
+				}
+			`, map[string]any{"id": docID}, &versionResult)
+			require.NoError(t, err)
+			require.NotEmpty(t, versionResult.Node.Versions.Edges)
+
+			publishedVersionID := versionResult.Node.Versions.Edges[0].Node.ID
+
+			var result struct {
+				ExportDocumentVersionPDF struct {
+					Data string `json:"data"`
+				} `json:"exportDocumentVersionPDF"`
+			}
+
+			err = owner.Execute(`
+				mutation ExportPDF($input: ExportDocumentVersionPDFInput!) {
+					exportDocumentVersionPDF(input: $input) {
+						data
+					}
+				}
+			`, map[string]any{
+				"input": map[string]any{
+					"documentVersionId": publishedVersionID,
+					"withWatermark":     false,
+					"withSignatures":    true,
+				},
+			}, &result)
+			require.NoError(t, err)
+			assert.NotEmpty(t, result.ExportDocumentVersionPDF.Data)
+		},
+	)
+}
