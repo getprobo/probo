@@ -422,14 +422,13 @@ func TestRunTyped(t *testing.T) {
 				City string `json:"city"`
 			}
 
-			weatherTool, err := FunctionTool[Params](
+			weatherTool := FunctionTool[Params](
 				"get_weather",
 				"Get weather for a city",
 				func(_ context.Context, p Params) (ToolResult, error) {
 					return ToolResult{Content: "Sunny, 22°C in " + p.City}, nil
 				},
 			)
-			require.NoError(t, err)
 
 			// Three responses: (1) tool call, (2) free-text summary
 			// that triggers promotion to the synthesis turn, (3) the

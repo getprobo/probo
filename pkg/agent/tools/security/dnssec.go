@@ -37,7 +37,7 @@ type (
 	}
 )
 
-func CheckDNSSECTool() (agent.Tool, error) {
+func CheckDNSSECTool() agent.Tool {
 	return agent.FunctionTool(
 		"check_dnssec",
 		"Check if DNSSEC is enabled for a domain by looking up DNSKEY records.",

@@ -28,11 +28,11 @@ func NewToolset(endpoint string) *Toolset {
 	return &Toolset{endpoint: endpoint}
 }
 
-func (t *Toolset) Tools() ([]agent.Tool, error) {
-	return agent.CollectTools(
-		func() (agent.Tool, error) { return WebSearchTool(t.endpoint) },
-		func() (agent.Tool, error) { return CheckGovernmentDBTool(t.endpoint) },
-		CheckWaybackTool,
-		DiffDocumentsTool,
-	)
+func (t *Toolset) Tools() []agent.Tool {
+	return []agent.Tool{
+		WebSearchTool(t.endpoint),
+		CheckGovernmentDBTool(t.endpoint),
+		CheckWaybackTool(),
+		DiffDocumentsTool(),
+	}
 }

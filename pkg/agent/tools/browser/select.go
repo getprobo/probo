@@ -30,7 +30,7 @@ type (
 	}
 )
 
-func SelectOptionTool(b *Browser) (agent.Tool, error) {
+func SelectOptionTool(b *Browser) agent.Tool {
 	return agent.FunctionTool(
 		"select_option",
 		"Navigate to a URL, select an option from a <select> dropdown, and return the page text after selection. Useful for changing page size dropdowns (e.g. 'show 100 per page').",

@@ -62,7 +62,7 @@ func splitTrimmed(s, sep string) []string {
 	return out
 }
 
-func CheckCORSTool() (agent.Tool, error) {
+func CheckCORSTool() agent.Tool {
 	return agent.FunctionTool(
 		"check_cors",
 		"Send a CORS preflight (OPTIONS) request to a URL with a given Origin and analyze the Access-Control-* response headers, flagging wildcard origins and origin reflection.",

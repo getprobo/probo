@@ -43,7 +43,7 @@ type (
 	}
 )
 
-func DownloadPDFTool() (agent.Tool, error) {
+func DownloadPDFTool() agent.Tool {
 	client := &http.Client{
 		Timeout:   30 * time.Second,
 		Transport: netcheck.NewPinnedTransport(),

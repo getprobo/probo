@@ -28,7 +28,7 @@ type (
 	}
 )
 
-func ClickElementTool(b *Browser) (agent.Tool, error) {
+func ClickElementTool(b *Browser) agent.Tool {
 	return agent.FunctionTool(
 		"click_element",
 		"Navigate to a URL, click an element matching a CSS selector, and return the page text after the click. Useful for pagination buttons, 'show all' links, tabs, and other interactive elements.",

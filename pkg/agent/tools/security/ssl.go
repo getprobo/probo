@@ -60,7 +60,7 @@ func protocolName(version uint16) string {
 	}
 }
 
-func CheckSSLCertificateTool() (agent.Tool, error) {
+func CheckSSLCertificateTool() agent.Tool {
 	return agent.FunctionTool(
 		"check_ssl_certificate",
 		"Check the SSL/TLS certificate for a domain, returning issuer, expiry, protocol version, and validity.",

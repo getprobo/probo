@@ -41,7 +41,7 @@ type (
 	queryOption func(*dns.MsgHeader)
 )
 
-func CheckDNSRecordsTool() (agent.Tool, error) {
+func CheckDNSRecordsTool() agent.Tool {
 	return agent.FunctionTool(
 		"check_dns_records",
 		"Query DNS records for a domain (A, AAAA, MX, CNAME, TXT, NS). Reveals hosting provider, email provider, and additional security signals.",

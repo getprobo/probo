@@ -49,7 +49,7 @@ func parseDMARCTag(record, tag string) string {
 	return ""
 }
 
-func CheckDMARCTool() (agent.Tool, error) {
+func CheckDMARCTool() agent.Tool {
 	return agent.FunctionTool(
 		"check_dmarc",
 		"Check the DMARC DNS record for a domain, returning the policy, percentage, and reporting addresses.",

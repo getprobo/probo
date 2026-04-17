@@ -72,7 +72,7 @@ func parseCSPDirectives(raw string) []cspDirective {
 	return directives
 }
 
-func AnalyzeCSPTool() (agent.Tool, error) {
+func AnalyzeCSPTool() agent.Tool {
 	return agent.FunctionTool(
 		"analyze_csp",
 		"Analyze the Content-Security-Policy header for a URL, parsing directives and flagging unsafe patterns like unsafe-eval, unsafe-inline, and wildcard sources.",

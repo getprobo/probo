@@ -48,7 +48,7 @@ type (
 	}
 )
 
-func CheckGovernmentDBTool(searchEndpoint string) (agent.Tool, error) {
+func CheckGovernmentDBTool(searchEndpoint string) agent.Tool {
 	client := &http.Client{Timeout: 15 * time.Second}
 
 	return agent.FunctionTool(

@@ -68,23 +68,14 @@ func newOrchestratorAgent(
 	searchEndpoint string,
 	reporter agent.ProgressReporter,
 ) (*agent.Agent, error) {
-	readOnlyBrowserTools, err := browser.NewReadOnlyToolset(vendorBrowser).Tools()
-	if err != nil {
-		return nil, fmt.Errorf("cannot build read-only browser tools: %w", err)
-	}
+	readOnlyBrowserTools := browser.NewReadOnlyToolset(vendorBrowser).Tools()
 
 	// Unrestricted browser tools for sub-agents that need to follow links
 	// to external sites (subprocessor lists hosted on OneTrust/Transcend,
 	// research, vendor comparison).
-	unrestrictedBrowserTools, err := browser.NewInteractiveToolset(researchBrowser).Tools()
-	if err != nil {
-		return nil, fmt.Errorf("cannot build unrestricted browser tools: %w", err)
-	}
+	unrestrictedBrowserTools := browser.NewInteractiveToolset(researchBrowser).Tools()
 
-	securityTools, err := security.NewToolset().Tools()
-	if err != nil {
-		return nil, fmt.Errorf("cannot build security tools: %w", err)
-	}
+	securityTools := security.NewToolset().Tools()
 
 	maxTokensOpt := agent.WithMaxTokens(maxTokens)
 	loggerOpt := agent.WithLogger(logger)
@@ -101,11 +92,7 @@ func newOrchestratorAgent(
 	// find subprocessor pages hosted on third-party platforms.
 	subprocessorTools := unrestrictedBrowserTools
 	if searchEndpoint != "" {
-		searchTool, err := search.WebSearchTool(searchEndpoint)
-		if err != nil {
-			return nil, fmt.Errorf("cannot build subprocessor search tool: %w", err)
-		}
-		subprocessorTools = append(subprocessorTools, searchTool)
+		subprocessorTools = append(subprocessorTools, search.WebSearchTool(searchEndpoint))
 	}
 
 	// Core sub-agents that always run.
@@ -186,30 +173,12 @@ func newOrchestratorAgent(
 
 	// Optional sub-agents: only added when a search endpoint is configured.
 	if searchEndpoint != "" {
-		researchBrowserTools, err := browser.NewInteractiveToolset(researchBrowser).Tools()
-		if err != nil {
-			return nil, fmt.Errorf("cannot build research browser tools: %w", err)
-		}
+		researchBrowserTools := browser.NewInteractiveToolset(researchBrowser).Tools()
 
-		searchTool, err := search.WebSearchTool(searchEndpoint)
-		if err != nil {
-			return nil, fmt.Errorf("cannot build web search tool: %w", err)
-		}
-
-		govDBTool, err := search.CheckGovernmentDBTool(searchEndpoint)
-		if err != nil {
-			return nil, fmt.Errorf("cannot build government DB tool: %w", err)
-		}
-
-		waybackTool, err := search.CheckWaybackTool()
-		if err != nil {
-			return nil, fmt.Errorf("cannot build wayback tool: %w", err)
-		}
-
-		diffTool, err := search.DiffDocumentsTool()
-		if err != nil {
-			return nil, fmt.Errorf("cannot build diff tool: %w", err)
-		}
+		searchTool := search.WebSearchTool(searchEndpoint)
+		govDBTool := search.CheckGovernmentDBTool(searchEndpoint)
+		waybackTool := search.CheckWaybackTool()
+		diffTool := search.DiffDocumentsTool()
 
 		// withResearchTools returns a fresh slice combining the supplied
 		// extra tools with the research browser tools. The fresh

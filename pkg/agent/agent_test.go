@@ -351,14 +351,13 @@ func TestRun(t *testing.T) {
 				City string `json:"city"`
 			}
 
-			weatherTool, err := agent.FunctionTool[Params](
+			weatherTool := agent.FunctionTool[Params](
 				"get_weather",
 				"Get weather for a city",
 				func(_ context.Context, p Params) (agent.ToolResult, error) {
 					return agent.ToolResult{Content: "Sunny, 22°C in " + p.City}, nil
 				},
 			)
-			require.NoError(t, err)
 
 			provider := &mockProvider{
 				responses: []*llm.ChatCompletionResponse{
@@ -411,14 +410,13 @@ func TestRun(t *testing.T) {
 			}
 
 			type Params struct{}
-			noopTool, err := agent.FunctionTool[Params](
+			noopTool := agent.FunctionTool[Params](
 				"noop",
 				"No-op",
 				func(_ context.Context, _ Params) (agent.ToolResult, error) {
 					return agent.ToolResult{Content: "ok"}, nil
 				},
 			)
-			require.NoError(t, err)
 
 			ag := agent.New(
 				"assistant",
@@ -428,7 +426,7 @@ func TestRun(t *testing.T) {
 				agent.WithMaxTurns(2),
 			)
 
-			_, err = ag.Run(
+			_, err := ag.Run(
 				context.Background(),
 				[]llm.Message{userMessage("loop")},
 			)
@@ -447,14 +445,13 @@ func TestRun(t *testing.T) {
 
 			type Params struct{}
 			makeTool := func(name string) agent.Tool {
-				tool, err := agent.FunctionTool[Params](
+				tool := agent.FunctionTool[Params](
 					name,
 					"desc",
 					func(_ context.Context, _ Params) (agent.ToolResult, error) {
 						return agent.ToolResult{Content: "ok"}, nil
 					},
 				)
-				require.NoError(t, err)
 				return tool
 			}
 
@@ -553,22 +550,20 @@ func TestRun(t *testing.T) {
 
 			type Params struct{}
 
-			tool1, err := agent.FunctionTool[Params](
+			tool1 := agent.FunctionTool[Params](
 				"first",
 				"First tool",
 				func(_ context.Context, _ Params) (agent.ToolResult, error) {
 					return agent.ToolResult{Content: "result_1"}, nil
 				},
 			)
-			require.NoError(t, err)
-			tool2, err := agent.FunctionTool[Params](
+			tool2 := agent.FunctionTool[Params](
 				"second",
 				"Second tool",
 				func(_ context.Context, _ Params) (agent.ToolResult, error) {
 					return agent.ToolResult{Content: "result_2"}, nil
 				},
 			)
-			require.NoError(t, err)
 
 			provider := &mockProvider{
 				responses: []*llm.ChatCompletionResponse{
@@ -622,22 +617,20 @@ func TestRun(t *testing.T) {
 
 			type Params struct{}
 
-			successTool, err := agent.FunctionTool[Params](
+			successTool := agent.FunctionTool[Params](
 				"succeed",
 				"Always succeeds",
 				func(_ context.Context, _ Params) (agent.ToolResult, error) {
 					return agent.ToolResult{Content: "success_result"}, nil
 				},
 			)
-			require.NoError(t, err)
-			failTool, err := agent.FunctionTool[Params](
+			failTool := agent.FunctionTool[Params](
 				"fail",
 				"Always fails",
 				func(_ context.Context, _ Params) (agent.ToolResult, error) {
 					return agent.ToolResult{}, errors.New("tool exploded")
 				},
 			)
-			require.NoError(t, err)
 
 			provider := &mockProvider{
 				responses: []*llm.ChatCompletionResponse{
@@ -696,7 +689,7 @@ func TestRun(t *testing.T) {
 			var capturedTenantID string
 
 			type Params struct{}
-			tool, err := agent.FunctionTool[Params](
+			tool := agent.FunctionTool[Params](
 				"check_tenant",
 				"Check current tenant",
 				func(ctx context.Context, _ Params) (agent.ToolResult, error) {
@@ -705,7 +698,6 @@ func TestRun(t *testing.T) {
 					return agent.ToolResult{Content: "tenant: " + rc.TenantID}, nil
 				},
 			)
-			require.NoError(t, err)
 
 			provider := &mockProvider{
 				responses: []*llm.ChatCompletionResponse{
@@ -1069,14 +1061,13 @@ func TestRun_Hooks(t *testing.T) {
 			t.Parallel()
 
 			type Params struct{}
-			noopTool, err := agent.FunctionTool[Params](
+			noopTool := agent.FunctionTool[Params](
 				"noop",
 				"No-op",
 				func(_ context.Context, _ Params) (agent.ToolResult, error) {
 					return agent.ToolResult{Content: "ok"}, nil
 				},
 			)
-			require.NoError(t, err)
 
 			provider := &mockProvider{
 				responses: []*llm.ChatCompletionResponse{
@@ -1354,14 +1345,13 @@ func TestRun_ToolUseBehavior(t *testing.T) {
 			t.Parallel()
 
 			type Params struct{}
-			tool, err := agent.FunctionTool[Params](
+			tool := agent.FunctionTool[Params](
 				"compute",
 				"Compute something",
 				func(_ context.Context, _ Params) (agent.ToolResult, error) {
 					return agent.ToolResult{Content: "computed_result"}, nil
 				},
 			)
-			require.NoError(t, err)
 
 			provider := &mockProvider{
 				responses: []*llm.ChatCompletionResponse{
@@ -1399,22 +1389,20 @@ func TestRun_ToolUseBehavior(t *testing.T) {
 
 			type Params struct{}
 
-			tool1, err := agent.FunctionTool[Params](
+			tool1 := agent.FunctionTool[Params](
 				"search",
 				"Search",
 				func(_ context.Context, _ Params) (agent.ToolResult, error) {
 					return agent.ToolResult{Content: "search_result"}, nil
 				},
 			)
-			require.NoError(t, err)
-			tool2, err := agent.FunctionTool[Params](
+			tool2 := agent.FunctionTool[Params](
 				"submit",
 				"Submit",
 				func(_ context.Context, _ Params) (agent.ToolResult, error) {
 					return agent.ToolResult{Content: "submitted"}, nil
 				},
 			)
-			require.NoError(t, err)
 
 			provider := &mockProvider{
 				responses: []*llm.ChatCompletionResponse{
@@ -1449,14 +1437,13 @@ func TestRun_ToolUseBehavior(t *testing.T) {
 			t.Parallel()
 
 			type Params struct{}
-			tool, err := agent.FunctionTool[Params](
+			tool := agent.FunctionTool[Params](
 				"noop",
 				"No-op",
 				func(_ context.Context, _ Params) (agent.ToolResult, error) {
 					return agent.ToolResult{Content: "ok"}, nil
 				},
 			)
-			require.NoError(t, err)
 
 			provider := &mockProvider{
 				responses: []*llm.ChatCompletionResponse{
@@ -1492,14 +1479,13 @@ func TestRun_ToolUseBehavior(t *testing.T) {
 			t.Parallel()
 
 			type Params struct{}
-			tool, err := agent.FunctionTool[Params](
+			tool := agent.FunctionTool[Params](
 				"compute",
 				"Compute something",
 				func(_ context.Context, _ Params) (agent.ToolResult, error) {
 					return agent.ToolResult{Content: "result"}, nil
 				},
 			)
-			require.NoError(t, err)
 
 			provider := &mockProvider{
 				responses: []*llm.ChatCompletionResponse{
@@ -1520,7 +1506,7 @@ func TestRun_ToolUseBehavior(t *testing.T) {
 				})),
 			)
 
-			_, err = ag.Run(
+			_, err := ag.Run(
 				context.Background(),
 				[]llm.Message{userMessage("compute")},
 			)
@@ -1581,14 +1567,13 @@ func TestRun_Approval(t *testing.T) {
 				},
 			}
 
-			deleteTool, err := agent.FunctionTool[struct{}](
+			deleteTool := agent.FunctionTool[struct{}](
 				"delete_account",
 				"Deletes the user account",
 				func(_ context.Context, _ struct{}) (agent.ToolResult, error) {
 					return agent.ToolResult{Content: "deleted"}, nil
 				},
 			)
-			require.NoError(t, err)
 
 			ag := agent.New(
 				"assistant",
@@ -1600,7 +1585,7 @@ func TestRun_Approval(t *testing.T) {
 				}),
 			)
 
-			_, err = ag.Run(
+			_, err := ag.Run(
 				context.Background(),
 				[]llm.Message{userMessage("Delete my account")},
 			)
@@ -1623,7 +1608,7 @@ func TestRun_Approval(t *testing.T) {
 
 			var toolExecuted bool
 
-			deleteTool, err := agent.FunctionTool[struct{}](
+			deleteTool := agent.FunctionTool[struct{}](
 				"delete_account",
 				"Deletes the user account",
 				func(_ context.Context, _ struct{}) (agent.ToolResult, error) {
@@ -1631,7 +1616,6 @@ func TestRun_Approval(t *testing.T) {
 					return agent.ToolResult{Content: "account deleted"}, nil
 				},
 			)
-			require.NoError(t, err)
 
 			provider := &mockProvider{
 				responses: []*llm.ChatCompletionResponse{
@@ -1653,7 +1637,7 @@ func TestRun_Approval(t *testing.T) {
 				}),
 			)
 
-			_, err = ag.Run(
+			_, err := ag.Run(
 				context.Background(),
 				[]llm.Message{userMessage("Delete my account")},
 			)
@@ -1683,7 +1667,7 @@ func TestRun_Approval(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-			deleteTool, err := agent.FunctionTool[struct{}](
+			deleteTool := agent.FunctionTool[struct{}](
 				"delete_account",
 				"Deletes the user account",
 				func(_ context.Context, _ struct{}) (agent.ToolResult, error) {
@@ -1691,7 +1675,6 @@ func TestRun_Approval(t *testing.T) {
 					return agent.ToolResult{}, nil
 				},
 			)
-			require.NoError(t, err)
 
 			provider := &mockProvider{
 				responses: []*llm.ChatCompletionResponse{
@@ -1713,7 +1696,7 @@ func TestRun_Approval(t *testing.T) {
 				}),
 			)
 
-			_, err = ag.Run(
+			_, err := ag.Run(
 				context.Background(),
 				[]llm.Message{userMessage("Delete my account")},
 			)
@@ -1751,14 +1734,13 @@ func TestRun_Approval(t *testing.T) {
 				},
 			}
 
-			safeTool, err := agent.FunctionTool[struct{}](
+			safeTool := agent.FunctionTool[struct{}](
 				"safe_tool",
 				"A safe tool",
 				func(_ context.Context, _ struct{}) (agent.ToolResult, error) {
 					return agent.ToolResult{Content: "safe result"}, nil
 				},
 			)
-			require.NoError(t, err)
 
 			ag := agent.New(
 				"assistant",
@@ -1789,7 +1771,7 @@ func TestRun_Approval(t *testing.T) {
 
 			var safeExecuted, dangerExecuted bool
 
-			safeTool, err := agent.FunctionTool[struct{}](
+			safeTool := agent.FunctionTool[struct{}](
 				"safe_action",
 				"A safe action",
 				func(_ context.Context, _ struct{}) (agent.ToolResult, error) {
@@ -1797,9 +1779,8 @@ func TestRun_Approval(t *testing.T) {
 					return agent.ToolResult{Content: "safe done"}, nil
 				},
 			)
-			require.NoError(t, err)
 
-			dangerTool, err := agent.FunctionTool[struct{}](
+			dangerTool := agent.FunctionTool[struct{}](
 				"danger_action",
 				"A dangerous action",
 				func(_ context.Context, _ struct{}) (agent.ToolResult, error) {
@@ -1807,7 +1788,6 @@ func TestRun_Approval(t *testing.T) {
 					return agent.ToolResult{Content: "danger done"}, nil
 				},
 			)
-			require.NoError(t, err)
 
 			provider := &mockProvider{
 				responses: []*llm.ChatCompletionResponse{
@@ -1835,7 +1815,7 @@ func TestRun_Approval(t *testing.T) {
 				}),
 			)
 
-			_, err = ag.Run(
+			_, err := ag.Run(
 				context.Background(),
 				[]llm.Message{userMessage("Do both")},
 			)
@@ -1943,14 +1923,13 @@ func TestResume(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-			deleteTool, err := agent.FunctionTool[struct{}](
+			deleteTool := agent.FunctionTool[struct{}](
 				"delete_account",
 				"Deletes the user account",
 				func(_ context.Context, _ struct{}) (agent.ToolResult, error) {
 					return agent.ToolResult{Content: "deleted"}, nil
 				},
 			)
-			require.NoError(t, err)
 
 			provider := &mockProvider{
 				responses: []*llm.ChatCompletionResponse{
@@ -1972,7 +1951,7 @@ func TestResume(t *testing.T) {
 				}),
 			)
 
-			_, err = ag.Run(
+			_, err := ag.Run(
 				context.Background(),
 				[]llm.Message{userMessage("Delete my account")},
 			)
@@ -2152,14 +2131,13 @@ func TestRunStreamed(t *testing.T) {
 			t.Parallel()
 
 			type Params struct{}
-			tool, err := agent.FunctionTool[Params](
+			tool := agent.FunctionTool[Params](
 				"noop",
 				"No-op",
 				func(_ context.Context, _ Params) (agent.ToolResult, error) {
 					return agent.ToolResult{Content: "ok"}, nil
 				},
 			)
-			require.NoError(t, err)
 
 			stream1 := &mockChatStream{
 				events: []llm.ChatCompletionStreamEvent{
@@ -2378,22 +2356,20 @@ func TestClone(t *testing.T) {
 			t.Parallel()
 
 			type Params struct{}
-			tool1, err := agent.FunctionTool[Params](
+			tool1 := agent.FunctionTool[Params](
 				"t1",
 				"desc",
 				func(_ context.Context, _ Params) (agent.ToolResult, error) {
 					return agent.ToolResult{Content: "ok"}, nil
 				},
 			)
-			require.NoError(t, err)
-			tool2, err := agent.FunctionTool[Params](
+			tool2 := agent.FunctionTool[Params](
 				"t2",
 				"desc",
 				func(_ context.Context, _ Params) (agent.ToolResult, error) {
 					return agent.ToolResult{Content: "ok"}, nil
 				},
 			)
-			require.NoError(t, err)
 
 			provider := &mockProvider{
 				responses: []*llm.ChatCompletionResponse{
@@ -2500,14 +2476,13 @@ func TestGenerateSchema_EmbeddedStruct(t *testing.T) {
 		Name string `json:"name"`
 	}
 
-	tool, err := agent.FunctionTool[Params](
+	tool := agent.FunctionTool[Params](
 		"create",
 		"Create item",
 		func(_ context.Context, _ Params) (agent.ToolResult, error) {
 			return agent.ToolResult{Content: "ok"}, nil
 		},
 	)
-	require.NoError(t, err)
 
 	var schema map[string]any
 	require.NoError(t, json.Unmarshal(tool.Definition().Parameters, &schema))
@@ -2675,14 +2650,13 @@ func TestRun_UnknownToolCall(t *testing.T) {
 	}
 
 	type Params struct{}
-	tool, err := agent.FunctionTool[Params](
+	tool := agent.FunctionTool[Params](
 		"real_tool",
 		"A real tool",
 		func(_ context.Context, _ Params) (agent.ToolResult, error) {
 			return agent.ToolResult{Content: "ok"}, nil
 		},
 	)
-	require.NoError(t, err)
 
 	ag := agent.New(
 		"assistant",
@@ -2691,7 +2665,7 @@ func TestRun_UnknownToolCall(t *testing.T) {
 		agent.WithTools(tool),
 	)
 
-	_, err = ag.Run(
+	_, err := ag.Run(
 		context.Background(),
 		[]llm.Message{userMessage("test")},
 	)
@@ -2743,14 +2717,13 @@ func TestClone_WithApprovalConfig(t *testing.T) {
 		},
 	}
 
-	deleteTool, err := agent.FunctionTool[struct{}](
+	deleteTool := agent.FunctionTool[struct{}](
 		"delete",
 		"Delete something",
 		func(_ context.Context, _ struct{}) (agent.ToolResult, error) {
 			return agent.ToolResult{Content: "deleted"}, nil
 		},
 	)
-	require.NoError(t, err)
 
 	original := agent.New(
 		"assistant",
@@ -2764,7 +2737,7 @@ func TestClone_WithApprovalConfig(t *testing.T) {
 
 	cloned := original.Clone()
 
-	_, err = cloned.Run(
+	_, err := cloned.Run(
 		context.Background(),
 		[]llm.Message{userMessage("delete it")},
 	)
@@ -2795,7 +2768,7 @@ func TestRun_HandoffWithPreHandoffTools(t *testing.T) {
 			var executionOrder []string
 
 			type Params struct{}
-			tool1, err := agent.FunctionTool[Params](
+			tool1 := agent.FunctionTool[Params](
 				"prepare",
 				"Prepare data",
 				func(_ context.Context, _ Params) (agent.ToolResult, error) {
@@ -2803,7 +2776,6 @@ func TestRun_HandoffWithPreHandoffTools(t *testing.T) {
 					return agent.ToolResult{Content: "prepared"}, nil
 				},
 			)
-			require.NoError(t, err)
 
 			provider := &mockProvider{
 				responses: []*llm.ChatCompletionResponse{
@@ -2855,15 +2827,14 @@ func TestRun_HandoffWithPreHandoffTools(t *testing.T) {
 			t.Parallel()
 
 			type Params struct{}
-			tool1, err := agent.FunctionTool[Params](
+			tool1 := agent.FunctionTool[Params](
 				"prepare",
 				"Prepare data",
 				func(_ context.Context, _ Params) (agent.ToolResult, error) {
 					return agent.ToolResult{Content: "prepared"}, nil
 				},
 			)
-			require.NoError(t, err)
-			tool2, err := agent.FunctionTool[Params](
+			tool2 := agent.FunctionTool[Params](
 				"finalize",
 				"Finalize data",
 				func(_ context.Context, _ Params) (agent.ToolResult, error) {
@@ -2871,7 +2842,6 @@ func TestRun_HandoffWithPreHandoffTools(t *testing.T) {
 					return agent.ToolResult{}, nil
 				},
 			)
-			require.NoError(t, err)
 
 			provider := &mockProvider{
 				responses: []*llm.ChatCompletionResponse{
@@ -2941,14 +2911,13 @@ func TestRun_HandoffWithPreHandoffTools(t *testing.T) {
 			t.Parallel()
 
 			type Params struct{}
-			failingTool, err := agent.FunctionTool[Params](
+			failingTool := agent.FunctionTool[Params](
 				"prepare",
 				"Prepare data",
 				func(_ context.Context, _ Params) (agent.ToolResult, error) {
 					return agent.ToolResult{}, errors.New("preparation failed")
 				},
 			)
-			require.NoError(t, err)
 
 			provider := &mockProvider{
 				responses: []*llm.ChatCompletionResponse{
@@ -2981,7 +2950,7 @@ func TestRun_HandoffWithPreHandoffTools(t *testing.T) {
 				agent.WithHandoffs(specialist),
 			)
 
-			_, err = router.Run(
+			_, err := router.Run(
 				context.Background(),
 				[]llm.Message{userMessage("prepare and transfer")},
 			)

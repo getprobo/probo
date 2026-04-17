@@ -54,7 +54,7 @@ func parseSPFPolicy(record string) string {
 	return ""
 }
 
-func CheckSPFTool() (agent.Tool, error) {
+func CheckSPFTool() agent.Tool {
 	return agent.FunctionTool(
 		"check_spf",
 		"Check the SPF (Sender Policy Framework) DNS record for a domain, returning the raw record and its policy qualifier.",

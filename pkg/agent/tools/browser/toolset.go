@@ -28,16 +28,16 @@ func NewReadOnlyToolset(b *Browser) *ReadOnlyToolset {
 	return &ReadOnlyToolset{browser: b}
 }
 
-func (t *ReadOnlyToolset) Tools() ([]agent.Tool, error) {
-	return agent.CollectTools(
-		func() (agent.Tool, error) { return NavigateToURLTool(t.browser) },
-		func() (agent.Tool, error) { return ExtractPageTextTool(t.browser) },
-		func() (agent.Tool, error) { return ExtractLinksTool(t.browser) },
-		func() (agent.Tool, error) { return FindLinksMatchingTool(t.browser) },
-		FetchRobotsTxtTool,
-		FetchSitemapTool,
-		DownloadPDFTool,
-	)
+func (t *ReadOnlyToolset) Tools() []agent.Tool {
+	return []agent.Tool{
+		NavigateToURLTool(t.browser),
+		ExtractPageTextTool(t.browser),
+		ExtractLinksTool(t.browser),
+		FindLinksMatchingTool(t.browser),
+		FetchRobotsTxtTool(),
+		FetchSitemapTool(),
+		DownloadPDFTool(),
+	}
 }
 
 // InteractiveToolset provides all browser tools including click and select.
@@ -50,16 +50,16 @@ func NewInteractiveToolset(b *Browser) *InteractiveToolset {
 	return &InteractiveToolset{browser: b}
 }
 
-func (t *InteractiveToolset) Tools() ([]agent.Tool, error) {
-	return agent.CollectTools(
-		func() (agent.Tool, error) { return NavigateToURLTool(t.browser) },
-		func() (agent.Tool, error) { return ExtractPageTextTool(t.browser) },
-		func() (agent.Tool, error) { return ExtractLinksTool(t.browser) },
-		func() (agent.Tool, error) { return FindLinksMatchingTool(t.browser) },
-		func() (agent.Tool, error) { return ClickElementTool(t.browser) },
-		func() (agent.Tool, error) { return SelectOptionTool(t.browser) },
-		FetchRobotsTxtTool,
-		FetchSitemapTool,
-		DownloadPDFTool,
-	)
+func (t *InteractiveToolset) Tools() []agent.Tool {
+	return []agent.Tool{
+		NavigateToURLTool(t.browser),
+		ExtractPageTextTool(t.browser),
+		ExtractLinksTool(t.browser),
+		FindLinksMatchingTool(t.browser),
+		ClickElementTool(t.browser),
+		SelectOptionTool(t.browser),
+		FetchRobotsTxtTool(),
+		FetchSitemapTool(),
+		DownloadPDFTool(),
+	}
 }

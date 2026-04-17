@@ -43,7 +43,7 @@ const (
 	maxDiffOutput = 16000
 )
 
-func DiffDocumentsTool() (agent.Tool, error) {
+func DiffDocumentsTool() agent.Tool {
 	return agent.FunctionTool(
 		"diff_documents",
 		"Compare two document texts and return a unified diff showing the differences. Useful for comparing current vs. archived versions of privacy policies, terms of service, or other legal documents.",

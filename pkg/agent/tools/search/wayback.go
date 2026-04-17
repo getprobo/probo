@@ -56,7 +56,7 @@ type (
 	waybackCDXResponse = [][]string
 )
 
-func CheckWaybackTool() (agent.Tool, error) {
+func CheckWaybackTool() agent.Tool {
 	client := &http.Client{Timeout: 15 * time.Second}
 
 	return agent.FunctionTool(

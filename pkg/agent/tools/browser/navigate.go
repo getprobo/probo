@@ -33,7 +33,7 @@ type (
 	}
 )
 
-func NavigateToURLTool(b *Browser) (agent.Tool, error) {
+func NavigateToURLTool(b *Browser) agent.Tool {
 	return agent.FunctionTool(
 		"navigate_to_url",
 		"Navigate to a URL and return the page title, meta description, and final URL after redirects.",

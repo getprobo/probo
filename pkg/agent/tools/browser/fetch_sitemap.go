@@ -44,7 +44,7 @@ const (
 	maxSitemapURLs = 200
 )
 
-func FetchSitemapTool() (agent.Tool, error) {
+func FetchSitemapTool() agent.Tool {
 	client := &http.Client{Timeout: 15 * time.Second}
 
 	return agent.FunctionTool(

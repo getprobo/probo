@@ -72,7 +72,7 @@ func headersFromResponse(resp *http.Response) headersResult {
 	}
 }
 
-func CheckSecurityHeadersTool() (agent.Tool, error) {
+func CheckSecurityHeadersTool() agent.Tool {
 	return agent.FunctionTool(
 		"check_security_headers",
 		"Check security-related HTTP headers for a URL (HSTS, CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy, Cross-Origin-*-Policy). Also checks if HTTP redirects to HTTPS.",

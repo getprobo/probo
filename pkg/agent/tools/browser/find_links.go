@@ -30,7 +30,7 @@ type (
 	}
 )
 
-func FindLinksMatchingTool(b *Browser) (agent.Tool, error) {
+func FindLinksMatchingTool(b *Browser) agent.Tool {
 	return agent.FunctionTool(
 		"find_links_matching",
 		"Navigate to a URL and extract links whose href or text matches a keyword (case-insensitive).",

@@ -33,7 +33,7 @@ type (
 	}
 )
 
-func ExtractLinksTool(b *Browser) (agent.Tool, error) {
+func ExtractLinksTool(b *Browser) agent.Tool {
 	return agent.FunctionTool(
 		"extract_links",
 		"Navigate to a URL and extract all links (<a> elements) with their href and text.",

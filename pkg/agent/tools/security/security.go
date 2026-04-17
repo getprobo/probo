@@ -35,17 +35,17 @@ type Toolset struct{}
 // NewToolset creates a security toolset.
 func NewToolset() *Toolset { return &Toolset{} }
 
-func (t *Toolset) Tools() ([]agent.Tool, error) {
-	return agent.CollectTools(
-		CheckSSLCertificateTool,
-		CheckSecurityHeadersTool,
-		CheckDMARCTool,
-		CheckSPFTool,
-		CheckBreachesTool,
-		CheckDNSSECTool,
-		AnalyzeCSPTool,
-		CheckCORSTool,
-		CheckWhoisTool,
-		CheckDNSRecordsTool,
-	)
+func (t *Toolset) Tools() []agent.Tool {
+	return []agent.Tool{
+		CheckSSLCertificateTool(),
+		CheckSecurityHeadersTool(),
+		CheckDMARCTool(),
+		CheckSPFTool(),
+		CheckBreachesTool(),
+		CheckDNSSECTool(),
+		AnalyzeCSPTool(),
+		CheckCORSTool(),
+		CheckWhoisTool(),
+		CheckDNSRecordsTool(),
+	}
 }

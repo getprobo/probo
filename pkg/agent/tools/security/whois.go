@@ -44,7 +44,7 @@ type (
 	}
 )
 
-func CheckWhoisTool() (agent.Tool, error) {
+func CheckWhoisTool() agent.Tool {
 	return agent.FunctionTool(
 		"check_whois",
 		"Perform a WHOIS lookup on a domain to retrieve registration details including registrar, creation date, expiry date, registrant organization, and name servers.",

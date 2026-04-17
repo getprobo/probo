@@ -48,7 +48,7 @@ type (
 // WebSearchTool creates a tool that searches the web using a SearXNG instance.
 // The endpoint should be the base URL of the SearXNG instance (e.g.
 // "http://localhost:8888").
-func WebSearchTool(endpoint string) (agent.Tool, error) {
+func WebSearchTool(endpoint string) agent.Tool {
 	client := &http.Client{Timeout: 15 * time.Second}
 
 	return agent.FunctionTool(

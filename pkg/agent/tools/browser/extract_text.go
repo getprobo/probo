@@ -33,7 +33,7 @@ type (
 	}
 )
 
-func ExtractPageTextTool(b *Browser) (agent.Tool, error) {
+func ExtractPageTextTool(b *Browser) agent.Tool {
 	return agent.FunctionTool(
 		"extract_page_text",
 		"Navigate to a URL and extract the visible text content of the page, truncated to 32000 characters.",

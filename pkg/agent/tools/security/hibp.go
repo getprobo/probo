@@ -54,7 +54,7 @@ type (
 	}
 )
 
-func CheckBreachesTool() (agent.Tool, error) {
+func CheckBreachesTool() agent.Tool {
 	return agent.FunctionTool(
 		"check_breaches",
 		"Check if a domain has been involved in known data breaches using the Have I Been Pwned API.",

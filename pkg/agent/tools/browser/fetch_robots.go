@@ -38,7 +38,7 @@ type (
 	}
 )
 
-func FetchRobotsTxtTool() (agent.Tool, error) {
+func FetchRobotsTxtTool() agent.Tool {
 	client := &http.Client{Timeout: 10 * time.Second}
 
 	return agent.FunctionTool(

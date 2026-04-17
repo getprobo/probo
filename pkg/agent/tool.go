@@ -73,20 +73,30 @@ type (
 	}
 )
 
+// FunctionTool creates a tool whose parameters are typed by P. The JSON
+// schema advertised to the LLM is generated from P at construction time.
+//
+// Schema generation is derived from a compile-time Go type: a failure
+// here is a programmer error (bad struct tag, unsupported type), not a
+// runtime condition, so we panic rather than returning an error. The
+// same applies to the required-fields metadata parsed back out of the
+// generated schema.
 func FunctionTool[P any](
 	name string,
 	description string,
 	fn func(ctx context.Context, params P) (ToolResult, error),
-) (Tool, error) {
+) Tool {
 	schema, err := jsonSchemaFor[P]()
 	if err != nil {
-		return nil, fmt.Errorf("cannot create tool %q: %w", name, err)
+		panic(fmt.Sprintf("agent: cannot generate JSON schema for tool %q: %s", name, err))
 	}
 
 	var parsed struct {
 		Required []string `json:"required"`
 	}
-	_ = json.Unmarshal(schema, &parsed)
+	if err := json.Unmarshal(schema, &parsed); err != nil {
+		panic(fmt.Sprintf("agent: cannot parse generated schema for tool %q: %s", name, err))
+	}
 
 	return &functionTool[P]{
 		name:           name,
@@ -94,7 +104,7 @@ func FunctionTool[P any](
 		fn:             fn,
 		schema:         schema,
 		requiredFields: parsed.Required,
-	}, nil
+	}
 }
 
 func (t *functionTool[P]) Name() string { return t.name }
