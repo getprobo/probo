@@ -101,7 +101,6 @@ type (
 		Assets                            *AssetService
 		Data                              *DatumService
 		Audits                            *AuditService
-		Meetings                          *MeetingService
 		WebhookSubscriptions              *WebhookSubscriptionService
 		Reports                           *ReportService
 		TrustCenters                      *TrustCenterService
@@ -246,7 +245,6 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 	tenantService.Assets = &AssetService{svc: tenantService}
 	tenantService.Data = &DatumService{svc: tenantService}
 	tenantService.Audits = &AuditService{svc: tenantService}
-	tenantService.Meetings = &MeetingService{svc: tenantService}
 	tenantService.WebhookSubscriptions = &WebhookSubscriptionService{svc: tenantService}
 	tenantService.Reports = &ReportService{svc: tenantService}
 	tenantService.TrustCenters = &TrustCenterService{svc: tenantService}

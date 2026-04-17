@@ -275,15 +275,6 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			}
 			return types.NewTrustCenterAccess(trustCenterAccess), nil
 		}
-	case coredata.MeetingEntityType:
-		action = probo.ActionMeetingGet
-		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
-			meeting, err := prb.Meetings.Get(ctx, id)
-			if err != nil {
-				return nil, err
-			}
-			return types.NewMeeting(meeting), nil
-		}
 	case coredata.RightsRequestEntityType:
 		action = probo.ActionRightsRequestGet
 		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {

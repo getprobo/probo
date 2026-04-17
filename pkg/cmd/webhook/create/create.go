@@ -62,11 +62,11 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "create",
 		Short: "Create a webhook subscription",
-		Example: `  # Create a webhook for all meeting events
-  prb webhook create --url https://example.com/webhook --event MEETING_CREATED --event MEETING_UPDATED
+		Example: `  # Create a webhook for vendor events
+  prb webhook create --url https://example.com/webhook --event VENDOR_CREATED --event VENDOR_UPDATED
 
   # Create a webhook for all supported events
-  prb webhook create --url https://example.com/webhook --event MEETING_CREATED --event MEETING_UPDATED --event MEETING_DELETED --event VENDOR_CREATED --event VENDOR_UPDATED --event VENDOR_DELETED`,
+  prb webhook create --url https://example.com/webhook --event VENDOR_CREATED --event VENDOR_UPDATED --event VENDOR_DELETED --event USER_CREATED --event USER_UPDATED --event USER_DELETED --event OBLIGATION_CREATED --event OBLIGATION_UPDATED --event OBLIGATION_DELETED`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			for _, e := range flagEvents {
