@@ -572,9 +572,16 @@ WHERE
 	return nil
 }
 
+// Upsert inserts the entry or refreshes the source-tracking fields from the
+// caller. Columns that capture a reviewer's or an agent's verdict -- flags,
+// flag_reasons, decision, decision_note, decided_by, decided_at -- are
+// intentionally absent from the ON CONFLICT DO UPDATE SET clause, so an
+// existing row's verdict survives every subsequent source poll untouched.
+// Those columns are written on the initial INSERT (new row) and can only be
+// changed afterwards through AccessEntry.Update.
 func (e *AccessEntry) Upsert(
 	ctx context.Context,
-	conn pg.Querier,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -636,20 +643,21 @@ INSERT INTO access_entries (
     @updated_at
 )
 ON CONFLICT (access_review_campaign_id, access_source_id, account_key) DO UPDATE SET
-    email = EXCLUDED.email,
-    full_name = EXCLUDED.full_name,
-    role = EXCLUDED.role,
-    job_title = EXCLUDED.job_title,
-    is_admin = EXCLUDED.is_admin,
-    mfa_status = EXCLUDED.mfa_status,
-    auth_method = EXCLUDED.auth_method,
-    account_type = EXCLUDED.account_type,
-    last_login = EXCLUDED.last_login,
+    email              = EXCLUDED.email,
+    full_name          = EXCLUDED.full_name,
+    role               = EXCLUDED.role,
+    job_title          = EXCLUDED.job_title,
+    is_admin           = EXCLUDED.is_admin,
+    mfa_status         = EXCLUDED.mfa_status,
+    auth_method        = EXCLUDED.auth_method,
+    account_type       = EXCLUDED.account_type,
+    last_login         = EXCLUDED.last_login,
     account_created_at = EXCLUDED.account_created_at,
-    external_id = EXCLUDED.external_id,
-    incremental_tag = EXCLUDED.incremental_tag,
-    updated_at = EXCLUDED.updated_at
+    external_id        = EXCLUDED.external_id,
+    incremental_tag    = EXCLUDED.incremental_tag,
+    updated_at         = EXCLUDED.updated_at
 `
+
 	args := pgx.StrictNamedArgs{
 		"id":                        e.ID,
 		"tenant_id":                 scope.GetTenantID(),
@@ -680,8 +688,7 @@ ON CONFLICT (access_review_campaign_id, access_source_id, account_key) DO UPDATE
 		"updated_at":                e.UpdatedAt,
 	}
 
-	_, err := conn.Exec(ctx, q, args)
-	if err != nil {
+	if _, err := conn.Exec(ctx, q, args); err != nil {
 		return fmt.Errorf("cannot upsert access entry: %w", err)
 	}
 
