@@ -16,10 +16,7 @@ package search
 
 import (
 	"context"
-	"encoding/json"
-	"io"
 	"net/http"
-	"net/url"
 	"time"
 
 	"go.probo.inc/probo/pkg/agent"
@@ -66,52 +63,9 @@ func WebSearchTool(endpoint string) (agent.Tool, error) {
 				maxResults = 10
 			}
 
-			u, err := url.Parse(endpoint + "/search")
-			if err != nil {
-				return agent.ResultErrorf("invalid search endpoint: %s", err), nil
-			}
-
-			q := u.Query()
-			q.Set("q", p.Query)
-			q.Set("format", "json")
-			q.Set("categories", "general")
-			u.RawQuery = q.Encode()
-
-			req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
-			if err != nil {
-				return agent.ResultErrorf("cannot create search request: %s", err), nil
-			}
-
-			resp, err := client.Do(req)
+			results, err := searxngSearch(ctx, client, endpoint, p.Query, maxResults)
 			if err != nil {
 				return agent.ResultErrorf("search request failed: %s", err), nil
-			}
-			defer func() { _ = resp.Body.Close() }()
-
-			body, err := io.ReadAll(resp.Body)
-			if err != nil {
-				return agent.ResultErrorf("cannot read search response: %s", err), nil
-			}
-
-			if resp.StatusCode != http.StatusOK {
-				return agent.ResultErrorf("search returned status %d: %s", resp.StatusCode, string(body)), nil
-			}
-
-			var searxResp searxngResponse
-			if err := json.Unmarshal(body, &searxResp); err != nil {
-				return agent.ResultErrorf("cannot parse search response: %s", err), nil
-			}
-
-			results := make([]searchResult, 0, maxResults)
-			for i, r := range searxResp.Results {
-				if i >= maxResults {
-					break
-				}
-				results = append(results, searchResult{
-					Title:   r.Title,
-					URL:     r.URL,
-					Snippet: r.Content,
-				})
 			}
 
 			return agent.ResultJSON(results), nil
