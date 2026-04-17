@@ -12,6 +12,24 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-export const VERSION = "0.0.0";
+import type { CookieItem } from "../client";
+import { ProboElement } from "./base";
 
-export { registerComponents } from "./components";
+export class ProboCategory extends ProboElement {
+
+  get categoryName(): string {
+    return this.getAttribute("name") ?? "Other";
+  }
+
+  get required(): boolean {
+    return this.hasAttribute("required");
+  }
+
+  get cookies(): CookieItem[] {
+    try {
+      return JSON.parse(this.getAttribute("cookies") ?? "[]");
+    } catch {
+      return [];
+    }
+  }
+}

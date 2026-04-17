@@ -12,6 +12,12 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-export const VERSION = "0.0.0";
+import { ProboThemedBanner } from "./themed-banner";
 
-export { registerComponents } from "./components";
+export { ProboThemedBanner };
+
+export function registerThemedBanner(): void {
+  if (!customElements.get("probo-cookie-banner")) {
+    customElements.define("probo-cookie-banner", ProboThemedBanner);
+  }
+}

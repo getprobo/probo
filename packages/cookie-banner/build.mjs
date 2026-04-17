@@ -15,7 +15,6 @@
 import * as esbuild from "esbuild";
 
 const shared = {
-  entryPoints: ["src/index.ts"],
   bundle: true,
   target: "es2020",
 };
@@ -23,14 +22,22 @@ const shared = {
 await Promise.all([
   esbuild.build({
     ...shared,
+    entryPoints: ["src/index.ts"],
+    outfile: "dist/cookie-banner.mjs",
+    format: "esm",
+  }),
+  esbuild.build({
+    ...shared,
+    entryPoints: ["src/themed-banner/index.ts"],
+    outfile: "dist/cookie-banner-themed.mjs",
+    format: "esm",
+  }),
+  esbuild.build({
+    ...shared,
+    entryPoints: ["src/themed-banner/iife.ts"],
     outfile: "dist/cookie-banner.iife.js",
     format: "iife",
     globalName: "ProboCookieBanner",
     minify: true,
-  }),
-  esbuild.build({
-    ...shared,
-    outfile: "dist/cookie-banner.mjs",
-    format: "esm",
   }),
 ]);

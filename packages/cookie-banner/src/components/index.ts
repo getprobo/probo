@@ -12,6 +12,19 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-export const VERSION = "0.0.0";
-
-export { registerComponents } from "./components";
+export { ProboElement } from "./base";
+export type { ProboState, ProboRootElement, ConsentDraft } from "./base";
+export { ProboBanner } from "./banner";
+export {
+  ProboAcceptButton,
+  ProboCustomizeButton,
+  ProboRejectButton,
+} from "./buttons";
+export { ProboCategory } from "./category";
+export { ProboCategoryList } from "./category-list";
+export { ProboCategoryToggle } from "./category-toggle";
+export { ProboCookieBannerRoot } from "./cookie-banner-root";
+export { ProboCookie, ProboCookieList } from "./cookie-list";
+export { ProboPreferencePanel, ProboSaveButton } from "./preference-panel";
+export { ProboSettingsButton } from "./settings-button";
+export { registerComponents } from "./register";
