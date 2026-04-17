@@ -30,21 +30,23 @@ import (
 
 type (
 	DocumentVersion struct {
-		ID             gid.GID                    `db:"id"`
-		OrganizationID gid.GID                    `db:"organization_id"`
-		DocumentID     gid.GID                    `db:"document_id"`
-		Title          string                     `db:"title"`
-		Major          int                        `db:"major"`
-		Minor          int                        `db:"minor"`
-		Classification DocumentClassification     `db:"classification"`
-		DocumentType   DocumentType               `db:"document_type"`
-		Content        string                     `db:"content"`
-		Changelog      string                     `db:"changelog"`
-		Status         DocumentVersionStatus      `db:"status"`
-		Orientation    DocumentVersionOrientation `db:"orientation"`
-		PublishedAt    *time.Time                 `db:"published_at"`
-		CreatedAt      time.Time                  `db:"created_at"`
-		UpdatedAt      time.Time                  `db:"updated_at"`
+		ID              gid.GID                    `db:"id"`
+		OrganizationID  gid.GID                    `db:"organization_id"`
+		DocumentID      gid.GID                    `db:"document_id"`
+		Title           string                     `db:"title"`
+		Major           int                        `db:"major"`
+		Minor           int                        `db:"minor"`
+		Classification  DocumentClassification     `db:"classification"`
+		DocumentType    DocumentType               `db:"document_type"`
+		Content         string                     `db:"content"`
+		Changelog       string                     `db:"changelog"`
+		Status          DocumentVersionStatus      `db:"status"`
+		Orientation     DocumentVersionOrientation `db:"orientation"`
+		FileID          *gid.GID                   `db:"file_id"`
+		PdfAttemptCount int                        `db:"pdf_attempt_count"`
+		PublishedAt     *time.Time                 `db:"published_at"`
+		CreatedAt       time.Time                  `db:"created_at"`
+		UpdatedAt       time.Time                  `db:"updated_at"`
 	}
 
 	DocumentVersions []*DocumentVersion
@@ -95,6 +97,8 @@ SELECT
 	changelog,
 	status,
 	orientation,
+	file_id,
+	pdf_attempt_count,
 	published_at,
 	created_at,
 	updated_at
@@ -159,6 +163,8 @@ SELECT
 	changelog,
 	status,
 	orientation,
+	file_id,
+	pdf_attempt_count,
 	published_at,
 	created_at,
 	updated_at
@@ -215,6 +221,8 @@ INSERT INTO document_versions (
 	changelog,
 	status,
 	orientation,
+	file_id,
+	pdf_attempt_count,
 	published_at,
 	created_at,
 	updated_at
@@ -233,28 +241,32 @@ VALUES (
 	@changelog,
 	@status,
 	@orientation,
+	@file_id,
+	@pdf_attempt_count,
 	@published_at,
 	@created_at,
 	@updated_at
 )
 `
 	args := pgx.StrictNamedArgs{
-		"tenant_id":       scope.GetTenantID(),
-		"id":              dv.ID,
-		"organization_id": dv.OrganizationID,
-		"document_id":     dv.DocumentID,
-		"title":           dv.Title,
-		"major":           dv.Major,
-		"minor":           dv.Minor,
-		"classification":  dv.Classification,
-		"document_type":   dv.DocumentType,
-		"content":         dv.Content,
-		"changelog":       dv.Changelog,
-		"status":          dv.Status,
-		"orientation":     dv.Orientation,
-		"published_at":    dv.PublishedAt,
-		"created_at":      dv.CreatedAt,
-		"updated_at":      dv.UpdatedAt,
+		"tenant_id":         scope.GetTenantID(),
+		"id":                dv.ID,
+		"organization_id":   dv.OrganizationID,
+		"document_id":       dv.DocumentID,
+		"title":             dv.Title,
+		"major":             dv.Major,
+		"minor":             dv.Minor,
+		"classification":    dv.Classification,
+		"document_type":     dv.DocumentType,
+		"content":           dv.Content,
+		"changelog":         dv.Changelog,
+		"status":            dv.Status,
+		"orientation":       dv.Orientation,
+		"file_id":           dv.FileID,
+		"pdf_attempt_count": dv.PdfAttemptCount,
+		"published_at":      dv.PublishedAt,
+		"created_at":        dv.CreatedAt,
+		"updated_at":        dv.UpdatedAt,
 	}
 
 	_, err := conn.Exec(ctx, q, args)
@@ -295,6 +307,8 @@ SELECT
 	changelog,
 	status,
 	orientation,
+	file_id,
+	pdf_attempt_count,
 	published_at,
 	created_at,
 	updated_at
@@ -355,6 +369,8 @@ SELECT
 	changelog,
 	status,
 	orientation,
+	file_id,
+	pdf_attempt_count,
 	published_at,
 	created_at,
 	updated_at
@@ -411,6 +427,8 @@ SELECT
 	changelog,
 	status,
 	orientation,
+	file_id,
+	pdf_attempt_count,
 	published_at,
 	created_at,
 	updated_at
@@ -466,6 +484,8 @@ UPDATE document_versions SET
 	classification = @classification,
 	document_type = @document_type,
 	orientation = @orientation,
+	file_id = @file_id,
+	pdf_attempt_count = @pdf_attempt_count,
 	updated_at = @updated_at
 WHERE %s
 	AND id = @document_version_id
@@ -485,6 +505,8 @@ WHERE %s
 		"classification":      dv.Classification,
 		"document_type":       dv.DocumentType,
 		"orientation":         dv.Orientation,
+		"file_id":             dv.FileID,
+		"pdf_attempt_count":   dv.PdfAttemptCount,
 		"updated_at":          dv.UpdatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
@@ -519,6 +541,87 @@ WHERE %s
 	if err != nil {
 		return fmt.Errorf("cannot delete document version: %w", err)
 	}
+
+	return nil
+}
+
+func (dv *DocumentVersion) ClaimNextPublishedWithoutFileForUpdate(
+	ctx context.Context,
+	conn pg.Tx,
+	maxAttempts int,
+) error {
+	q := `
+SELECT
+	dv.id,
+	dv.organization_id,
+	dv.document_id,
+	dv.title,
+	dv.major,
+	dv.minor,
+	dv.classification,
+	dv.document_type,
+	dv.content,
+	dv.changelog,
+	dv.status,
+	dv.orientation,
+	dv.file_id,
+	dv.pdf_attempt_count,
+	dv.published_at,
+	dv.created_at,
+	dv.updated_at
+FROM
+	document_versions dv
+INNER JOIN
+	documents d ON d.id = dv.document_id AND d.tenant_id = dv.tenant_id
+WHERE
+	dv.status = 'PUBLISHED'
+	AND dv.file_id IS NULL
+	AND dv.pdf_attempt_count < @max_pdf_attempts
+	AND d.deleted_at IS NULL
+ORDER BY dv.created_at ASC
+LIMIT 1
+FOR UPDATE OF dv SKIP LOCKED;
+`
+
+	rows, err := conn.Query(ctx, q, pgx.StrictNamedArgs{
+		"max_pdf_attempts": maxAttempts,
+	})
+	if err != nil {
+		return fmt.Errorf("cannot query document versions: %w", err)
+	}
+
+	result, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[DocumentVersion])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrNoDocumentPDFJobAvailable
+		}
+		return fmt.Errorf("cannot collect document version: %w", err)
+	}
+
+	now := time.Now()
+	result.PdfAttemptCount++
+	result.UpdatedAt = now
+
+	uq := `
+UPDATE document_versions SET
+	pdf_attempt_count = @pdf_attempt_count,
+	updated_at = @updated_at
+WHERE
+	tenant_id = @tenant_id
+	AND id = @id
+`
+	uargs := pgx.StrictNamedArgs{
+		"id":                result.ID,
+		"tenant_id":         result.ID.TenantID(),
+		"pdf_attempt_count": result.PdfAttemptCount,
+		"updated_at":        result.UpdatedAt,
+	}
+
+	if _, err := conn.Exec(ctx, uq, uargs); err != nil {
+		return fmt.Errorf("cannot mark document version as generating PDF: %w", err)
+	}
+
+	*dv = result
 
 	return nil
 }

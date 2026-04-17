@@ -16,6 +16,7 @@ package probo
 
 import (
 	"archive/zip"
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -40,10 +41,10 @@ import (
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
+	"go.probo.inc/probo/pkg/pdfutils"
 	"go.probo.inc/probo/pkg/prosemirror"
 	"go.probo.inc/probo/pkg/statelesstoken"
 	"go.probo.inc/probo/pkg/validator"
-	"go.probo.inc/probo/pkg/watermarkpdf"
 )
 
 type (
@@ -2149,13 +2150,180 @@ func exportDocumentPDF(
 	documentVersionID gid.GID,
 	options ExportPDFOptions,
 ) ([]byte, error) {
-	document := &coredata.Document{}
 	version := &coredata.DocumentVersion{}
-	organization := &coredata.Organization{}
-
 	if err := version.LoadByID(ctx, conn, scope, documentVersionID); err != nil {
 		return nil, fmt.Errorf("cannot load document version: %w", err)
 	}
+
+	// Published versions with a stored PDF: use the stored file,
+	// append signature page and watermark as needed.
+	if version.FileID != nil {
+		return exportStoredPDF(ctx, svc, html2pdfConverter, conn, scope, version, options)
+	}
+
+	// No stored PDF: generate on the fly without watermark — watermark is
+	// applied after merging the signature page so all pages are watermarked.
+	generateOptions := options
+	generateOptions.WithWatermark = false
+	generateOptions.WatermarkEmail = nil
+
+	pdfData, err := generateDocumentPDF(ctx, svc, html2pdfConverter, conn, scope, version, generateOptions)
+	if err != nil {
+		return nil, err
+	}
+
+	if options.WithSignatures {
+		signaturePagePDF, err := generateSignaturePagePDF(ctx, svc, html2pdfConverter, conn, scope, version)
+		if err != nil {
+			return nil, fmt.Errorf("cannot generate signature page: %w", err)
+		}
+
+		if signaturePagePDF != nil {
+			pdfData, err = pdfutils.MergePDFs(pdfData, signaturePagePDF)
+			if err != nil {
+				return nil, fmt.Errorf("cannot merge signature page: %w", err)
+			}
+		}
+	}
+
+	if options.WithWatermark {
+		if options.WatermarkEmail == nil {
+			return nil, fmt.Errorf("watermark email is required with watermark enabled")
+		}
+
+		pdfData, err = pdfutils.AddConfidentialWithTimestamp(pdfData, *options.WatermarkEmail)
+		if err != nil {
+			return nil, fmt.Errorf("cannot add watermark to PDF: %w", err)
+		}
+	}
+
+	return pdfData, nil
+}
+
+func exportStoredPDF(
+	ctx context.Context,
+	svc *TenantService,
+	html2pdfConverter *html2pdf.Converter,
+	conn pg.Querier,
+	scope coredata.Scoper,
+	version *coredata.DocumentVersion,
+	options ExportPDFOptions,
+) ([]byte, error) {
+	fileRecord := &coredata.File{}
+	if err := fileRecord.LoadByID(ctx, conn, scope, *version.FileID); err != nil {
+		return nil, fmt.Errorf("cannot load document version file: %w", err)
+	}
+
+	pdfData, err := svc.fileManager.GetFileBytes(ctx, fileRecord)
+	if err != nil {
+		return nil, fmt.Errorf("cannot download document version PDF: %w", err)
+	}
+
+	if options.WithSignatures {
+		signaturePagePDF, err := generateSignaturePagePDF(ctx, svc, html2pdfConverter, conn, scope, version)
+		if err != nil {
+			return nil, fmt.Errorf("cannot generate signature page: %w", err)
+		}
+
+		if signaturePagePDF != nil {
+			pdfData, err = pdfutils.MergePDFs(pdfData, signaturePagePDF)
+			if err != nil {
+				return nil, fmt.Errorf("cannot merge signature page: %w", err)
+			}
+		}
+	}
+
+	if options.WithWatermark {
+		if options.WatermarkEmail == nil {
+			return nil, fmt.Errorf("watermark email is required with watermark enabled")
+		}
+
+		pdfData, err = pdfutils.AddConfidentialWithTimestamp(pdfData, *options.WatermarkEmail)
+		if err != nil {
+			return nil, fmt.Errorf("cannot add watermark to PDF: %w", err)
+		}
+	}
+
+	return pdfData, nil
+}
+
+func generateSignaturePagePDF(
+	ctx context.Context,
+	svc *TenantService,
+	html2pdfConverter *html2pdf.Converter,
+	conn pg.Querier,
+	scope coredata.Scoper,
+	version *coredata.DocumentVersion,
+) ([]byte, error) {
+	signaturesWithPeople := &coredata.DocumentVersionSignaturesWithPeople{}
+	if err := signaturesWithPeople.LoadByDocumentVersionIDWithPeople(ctx, conn, scope, version.ID, 1_000); err != nil {
+		return nil, fmt.Errorf("cannot load document version signatures: %w", err)
+	}
+
+	if len(*signaturesWithPeople) == 0 {
+		return nil, nil
+	}
+
+	signatureData := make([]docgen.SignatureData, len(*signaturesWithPeople))
+	for i, sig := range *signaturesWithPeople {
+		signatureData[i] = docgen.SignatureData{
+			SignedBy:    sig.SignedByFullName,
+			SignedAt:    sig.SignedAt,
+			State:       sig.State,
+			RequestedAt: sig.RequestedAt,
+		}
+	}
+
+	isLandscape := version.Orientation == coredata.DocumentVersionOrientationLandscape
+
+	htmlContent, err := docgen.RenderSignaturePageHTML(docgen.SignaturePageData{
+		Signatures: signatureData,
+		Landscape:  isLandscape,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("cannot render signature page HTML: %w", err)
+	}
+
+	orientation := html2pdf.OrientationPortrait
+	if isLandscape {
+		orientation = html2pdf.OrientationLandscape
+	}
+
+	cfg := html2pdf.RenderConfig{
+		PageFormat:      html2pdf.PageFormatA4,
+		Orientation:     orientation,
+		MarginTop:       html2pdf.NewMarginInches(1.0),
+		MarginBottom:    html2pdf.NewMarginInches(1.0),
+		MarginLeft:      html2pdf.NewMarginInches(1.0),
+		MarginRight:     html2pdf.NewMarginInches(1.0),
+		PrintBackground: true,
+		Scale:           1.0,
+	}
+
+	pdfReader, err := html2pdfConverter.GeneratePDF(ctx, htmlContent, cfg)
+	if err != nil {
+		return nil, fmt.Errorf("cannot generate signature page PDF: %w", err)
+	}
+
+	pdfData, err := io.ReadAll(pdfReader)
+	if err != nil {
+		return nil, fmt.Errorf("cannot read signature page PDF: %w", err)
+	}
+
+	return pdfData, nil
+}
+
+func generateDocumentPDF(
+	ctx context.Context,
+	svc *TenantService,
+	html2pdfConverter *html2pdf.Converter,
+	conn pg.Querier,
+	scope coredata.Scoper,
+	version *coredata.DocumentVersion,
+	options ExportPDFOptions,
+) ([]byte, error) {
+	document := &coredata.Document{}
+	organization := &coredata.Organization{}
 
 	if err := document.LoadByID(ctx, conn, scope, version.DocumentID); err != nil {
 		return nil, fmt.Errorf("cannot load document: %w", err)
@@ -2165,7 +2333,7 @@ func exportDocumentPDF(
 	var approverNames []string
 
 	lastQuorum := &coredata.DocumentVersionApprovalQuorum{}
-	if err := lastQuorum.LoadLastByDocumentVersionID(ctx, conn, scope, documentVersionID); err != nil {
+	if err := lastQuorum.LoadLastByDocumentVersionID(ctx, conn, scope, version.ID); err != nil {
 		if !errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, fmt.Errorf("cannot load last approval quorum: %w", err)
 		}
@@ -2215,24 +2383,6 @@ func exportDocumentPDF(
 		return nil, fmt.Errorf("cannot load organization: %w", err)
 	}
 
-	var signatureData []docgen.SignatureData
-	if options.WithSignatures {
-		signaturesWithPeople := &coredata.DocumentVersionSignaturesWithPeople{}
-		if err := signaturesWithPeople.LoadByDocumentVersionIDWithPeople(ctx, conn, scope, documentVersionID, 1_000); err != nil {
-			return nil, fmt.Errorf("cannot load document version signatures: %w", err)
-		}
-
-		signatureData = make([]docgen.SignatureData, len(*signaturesWithPeople))
-		for i, sig := range *signaturesWithPeople {
-			signatureData[i] = docgen.SignatureData{
-				SignedBy:    sig.SignedByFullName,
-				SignedAt:    sig.SignedAt,
-				State:       sig.State,
-				RequestedAt: sig.RequestedAt,
-			}
-		}
-	}
-
 	classification := docgen.ClassificationSecret
 	switch version.Classification {
 	case coredata.DocumentClassificationPublic:
@@ -2265,7 +2415,6 @@ func exportDocumentPDF(
 		Classification:              classification,
 		Approvers:                   approverNames,
 		PublishedAt:                 version.PublishedAt,
-		Signatures:                  signatureData,
 		CompanyHorizontalLogoBase64: horizontalLogoBase64,
 		Landscape:                   isLandscape,
 	}
@@ -2307,7 +2456,7 @@ func exportDocumentPDF(
 			return nil, fmt.Errorf("watermark email is required with watermark enabled")
 		}
 
-		watermarkedPDF, err := watermarkpdf.AddConfidentialWithTimestamp(pdfData, *options.WatermarkEmail)
+		watermarkedPDF, err := pdfutils.AddConfidentialWithTimestamp(pdfData, *options.WatermarkEmail)
 		if err != nil {
 			return nil, fmt.Errorf("cannot add watermark to PDF: %w", err)
 		}
@@ -2598,4 +2747,82 @@ func (s *DocumentService) publishMinorVersionInTx(
 	}
 
 	return document, documentVersion, nil
+}
+
+func (s *DocumentService) generateAndUploadPublicationPDF(
+	ctx context.Context,
+	documentVersion *coredata.DocumentVersion,
+) error {
+	var pdfData []byte
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			var err error
+			pdfData, err = exportDocumentPDF(
+				ctx,
+				s.svc,
+				s.html2pdfConverter,
+				conn,
+				s.svc.scope,
+				documentVersion.ID,
+				ExportPDFOptions{},
+			)
+			return err
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("cannot generate publication PDF: %w", err)
+	}
+
+	now := time.Now()
+
+	fileRecord := &coredata.File{
+		ID:             gid.New(s.svc.scope.GetTenantID(), coredata.FileEntityType),
+		OrganizationID: documentVersion.OrganizationID,
+		BucketName:     s.svc.bucket,
+		MimeType:       "application/pdf",
+		FileName:       fmt.Sprintf("%s v%d.%d.pdf", documentVersion.Title, documentVersion.Major, documentVersion.Minor),
+		FileKey:        uuid.MustNewV4().String(),
+		Visibility:     coredata.FileVisibilityPrivate,
+		CreatedAt:      now,
+		UpdatedAt:      now,
+	}
+
+	fileSize, err := s.svc.fileManager.PutFile(
+		ctx,
+		fileRecord,
+		bytes.NewReader(pdfData),
+		map[string]string{
+			"type":                "document-version-pdf",
+			"document-version-id": documentVersion.ID.String(),
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("cannot upload publication PDF: %w", err)
+	}
+
+	fileRecord.FileSize = fileSize
+
+	err = s.svc.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			if err := fileRecord.Insert(ctx, tx, s.svc.scope); err != nil {
+				return fmt.Errorf("cannot insert file record: %w", err)
+			}
+
+			documentVersion.FileID = &fileRecord.ID
+			documentVersion.UpdatedAt = now
+			if err := documentVersion.Update(ctx, tx, s.svc.scope); err != nil {
+				return fmt.Errorf("cannot update document version with file ID: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("cannot save publication PDF file record: %w", err)
+	}
+
+	return nil
 }

@@ -44,6 +44,9 @@ var (
 	//go:embed transfer_impact_assessments_template.html
 	transferImpactAssessmentsTemplateContent string
 
+	//go:embed signature_page_template.html
+	signaturePageTemplateContent string
+
 	templateFuncs = template.FuncMap{
 		"now":                  func() time.Time { return time.Now() },
 		"eq":                   func(a, b any) bool { return a == b },
@@ -183,6 +186,8 @@ var (
 	dataProtectionImpactAssessmentsTemplate = template.Must(template.New("dataProtectionImpactAssessments").Funcs(templateFuncs).Parse(dataProtectionImpactAssessmentsTemplateContent))
 
 	transferImpactAssessmentsTemplate = template.Must(template.New("transferImpactAssessments").Funcs(templateFuncs).Parse(transferImpactAssessmentsTemplateContent))
+
+	signaturePageTemplate = template.Must(template.New("signaturePage").Funcs(templateFuncs).Parse(signaturePageTemplateContent))
 )
 
 type (
@@ -208,6 +213,11 @@ type (
 		SignedAt    *time.Time
 		State       coredata.DocumentVersionSignatureState
 		RequestedAt time.Time
+	}
+
+	SignaturePageData struct {
+		Signatures []SignatureData
+		Landscape  bool
 	}
 
 	ProcessingActivityTableData struct {
@@ -394,6 +404,15 @@ func RenderHTML(data DocumentData) ([]byte, error) {
 	var buf bytes.Buffer
 	if err := documentTemplate.Execute(&buf, page); err != nil {
 		return nil, fmt.Errorf("cannot execute template: %w", err)
+	}
+
+	return buf.Bytes(), nil
+}
+
+func RenderSignaturePageHTML(data SignaturePageData) ([]byte, error) {
+	var buf bytes.Buffer
+	if err := signaturePageTemplate.Execute(&buf, data); err != nil {
+		return nil, fmt.Errorf("cannot execute signature page template: %w", err)
 	}
 
 	return buf.Bytes(), nil
