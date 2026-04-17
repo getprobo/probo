@@ -104,5 +104,12 @@ export { IconBrandFacebook } from "./IconBrandFacebook";
 export { IconBrandLinkedin } from "./IconBrandLinkedin";
 export { IconBrandX } from "./IconBrandX";
 export { IconGlobe } from "./IconGlobe";
+export {
+  ArrowsClockwise as IconArrowsClockwise,
+  Envelope as IconEnvelope,
+  LockOpen as IconLockOpen,
+  User as IconUser,
+  UserCircle as IconUserCircle,
+} from "@phosphor-icons/react";
 export { SocialIcon } from "./SocialIcon";
 export type { SocialIconProps } from "./SocialIcon";
