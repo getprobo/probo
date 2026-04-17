@@ -561,6 +561,18 @@ type oauth2Transport struct {
 
 func (t *oauth2Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	req2 := req.Clone(req.Context())
-	req2.Header.Set("Authorization", t.tokenType+" "+t.token)
+	req2.Header.Set("Authorization", httpAuthScheme(t.tokenType)+" "+t.token)
 	return t.underlying.RoundTrip(req2)
+}
+
+// httpAuthScheme maps an OAuth2 token_type response value to the HTTP auth
+// scheme to send on subsequent requests. Providers that return non-conformant
+// types (Slack's "bot"/"user", empty strings, etc.) are normalized to Bearer.
+func httpAuthScheme(tokenType string) string {
+	switch strings.ToLower(tokenType) {
+	case "mac":
+		return "MAC"
+	default:
+		return "Bearer"
+	}
 }
