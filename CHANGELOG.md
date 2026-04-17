@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.170.0] - 2026-04-17
+
+### Added
+
+- Add @probo/cookie-banner SDK package scaffold
+- Add webhook subscription MCP tools and N8N operations
+
+### Fixed
+
+- Preserve shared connector on SCIM disconnect
+- Handle NotFound and NotPublished errors in document resolvers
+
 ## [0.169.1] - 2026-04-16
 
 ### Fixed
