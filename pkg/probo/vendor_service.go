@@ -16,6 +16,7 @@ package probo
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -31,10 +32,15 @@ import (
 	webhooktypes "go.probo.inc/probo/pkg/webhook/types"
 )
 
+// ErrVendorAssessmentDisabled is returned by VendorAssessor.Assess when the
+// deployment has not configured an LLM provider for vendor assessment.
+var ErrVendorAssessmentDisabled = errors.New("vendor assessment is not configured on this deployment")
+
 // VendorAssessor produces a vendor assessment report from a website URL and
-// an optional procedure description. The real implementation lives in
-// pkg/agents/vetting; a stub implementation is used in tests where running
-// the full LLM and browser pipeline is undesirable.
+// an optional procedure description. Implementations that cannot perform
+// assessment (missing LLM credentials, misconfigured provider) must return
+// ErrVendorAssessmentDisabled from Assess so callers can surface a stable
+// "feature unavailable" error instead of a generic internal error.
 type VendorAssessor interface {
 	Assess(
 		ctx context.Context,
@@ -42,6 +48,22 @@ type VendorAssessor interface {
 		procedure string,
 		reporter agent.ProgressReporter,
 	) (*vetting.Result, error)
+}
+
+// DisabledVendorAssessor is the VendorAssessor implementation used when no
+// LLM provider is configured for the vendor-assessor agent. Its Assess
+// method always returns ErrVendorAssessmentDisabled.
+type DisabledVendorAssessor struct{}
+
+var _ VendorAssessor = DisabledVendorAssessor{}
+
+func (DisabledVendorAssessor) Assess(
+	_ context.Context,
+	_ string,
+	_ string,
+	_ agent.ProgressReporter,
+) (*vetting.Result, error) {
+	return nil, ErrVendorAssessmentDisabled
 }
 
 type (
