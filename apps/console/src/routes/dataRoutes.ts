@@ -33,21 +33,7 @@ export const dataRoutes = [
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ organizationId }) =>
       loadQuery<DatumGraphListQuery>(coreEnvironment, dataQuery, {
-        organizationId: organizationId,
-        snapshotId: null,
-      }),
-    ),
-    Component: withQueryRef(
-      lazy(() => import("#/pages/organizations/data/DataPage")),
-    ),
-  },
-  {
-    path: "snapshots/:snapshotId/data",
-    Fallback: PageSkeleton,
-    loader: loaderFromQueryLoader(({ organizationId, snapshotId }) =>
-      loadQuery<DatumGraphListQuery>(coreEnvironment, dataQuery, {
         organizationId,
-        snapshotId,
       }),
     ),
     Component: withQueryRef(
@@ -56,18 +42,6 @@ export const dataRoutes = [
   },
   {
     path: "data/:dataId",
-    Fallback: PageSkeleton,
-    loader: loaderFromQueryLoader(({ dataId }) =>
-      loadQuery<DatumGraphNodeQuery>(coreEnvironment, datumNodeQuery, {
-        dataId,
-      }),
-    ),
-    Component: withQueryRef(
-      lazy(() => import("../pages/organizations/data/DatumDetailsPage")),
-    ),
-  },
-  {
-    path: "snapshots/:snapshotId/data/:dataId",
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ dataId }) =>
       loadQuery<DatumGraphNodeQuery>(coreEnvironment, datumNodeQuery, {

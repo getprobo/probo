@@ -12,7 +12,6 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { validateSnapshotConsistency } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import {
   ActionDropdown,
@@ -29,14 +28,12 @@ import {
   type PreloadedQuery,
   usePreloadedQuery,
 } from "react-relay";
-import { useParams } from "react-router";
 import { z } from "zod";
 
 import type { DatumGraphNodeQuery } from "#/__generated__/core/DatumGraphNodeQuery.graphql";
 import { ControlledField } from "#/components/form/ControlledField";
 import { PeopleSelectField } from "#/components/form/PeopleSelectField";
 import { VendorsMultiSelectField } from "#/components/form/VendorsMultiSelectField";
-import { SnapshotBanner } from "#/components/SnapshotBanner";
 import {
   datumNodeQuery,
   useDeleteDatum,
@@ -57,9 +54,6 @@ type Props = {
 };
 
 export default function DatumDetailsPage(props: Props) {
-  const { snapshotId } = useParams<{ snapshotId?: string }>();
-  const isSnapshotMode = Boolean(snapshotId);
-
   const queryData = usePreloadedQuery<DatumGraphNodeQuery>(
     datumNodeQuery,
     props.queryRef,
@@ -67,16 +61,12 @@ export default function DatumDetailsPage(props: Props) {
 
   const datumEntry = queryData.node;
 
-  validateSnapshotConsistency(datumEntry, snapshotId);
-
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
 
   const deleteDatum = useDeleteDatum(
     datumEntry,
-    ConnectionHandler.getConnectionID(organizationId, "DataPage_data", {
-      filter: { snapshotId: snapshotId || null },
-    }),
+    ConnectionHandler.getConnectionID(organizationId, "DataPage_data"),
   );
 
   const vendors = datumEntry?.vendors?.edges.map(edge => edge.node) ?? [];
@@ -110,27 +100,18 @@ export default function DatumDetailsPage(props: Props) {
     }
   });
 
-  const breadcrumbDataUrl = isSnapshotMode
-    ? `/organizations/${organizationId}/snapshots/${snapshotId}/data`
-    : `/organizations/${organizationId}/data`;
-
   const breadcrumbItems = [
     {
       label: __("Data"),
-      to: breadcrumbDataUrl,
+      to: `/organizations/${organizationId}/data`,
     },
     {
       label: datumEntry?.name || "",
     },
   ];
 
-  const disabled = !isSnapshotMode && datumEntry.canUpdate;
-
   return (
     <div className="space-y-6">
-      {isSnapshotMode && snapshotId && (
-        <SnapshotBanner snapshotId={snapshotId} />
-      )}
       <Breadcrumb items={breadcrumbItems} />
 
       <div className="flex justify-between items-start">
@@ -138,7 +119,7 @@ export default function DatumDetailsPage(props: Props) {
           <div className="text-2xl">{datumEntry?.name}</div>
           <Badge variant="info">{datumEntry?.dataClassification}</Badge>
         </div>
-        {!isSnapshotMode && datumEntry.canDelete && (
+        {datumEntry.canDelete && (
           <ActionDropdown variant="secondary">
             <DropdownItem
               variant="danger"
@@ -156,7 +137,7 @@ export default function DatumDetailsPage(props: Props) {
           label={__("Name")}
           {...register("name")}
           type="text"
-          disabled={!disabled}
+          disabled={!datumEntry.canUpdate}
         />
 
         <ControlledField
@@ -164,7 +145,7 @@ export default function DatumDetailsPage(props: Props) {
           name="dataClassification"
           type="select"
           label={__("Classification")}
-          disabled={!disabled}
+          disabled={!datumEntry.canUpdate}
         >
           <Option value="PUBLIC">{__("Public")}</Option>
           <Option value="INTERNAL">{__("Internal")}</Option>
@@ -177,7 +158,7 @@ export default function DatumDetailsPage(props: Props) {
           control={control}
           name="ownerId"
           label={__("Owner")}
-          disabled={!disabled}
+          disabled={!datumEntry.canUpdate}
         />
 
         <VendorsMultiSelectField
@@ -185,19 +166,17 @@ export default function DatumDetailsPage(props: Props) {
           control={control}
           name="vendorIds"
           label={__("Vendors")}
-          disabled={!disabled}
+          disabled={!datumEntry.canUpdate}
           selectedVendors={vendors}
         />
 
-        {!isSnapshotMode && (
-          <div className="flex justify-end">
-            {formState.isDirty && datumEntry.canUpdate && (
-              <Button type="submit" disabled={formState.isSubmitting}>
-                {formState.isSubmitting ? __("Updating...") : __("Update")}
-              </Button>
-            )}
-          </div>
-        )}
+        <div className="flex justify-end">
+          {formState.isDirty && datumEntry.canUpdate && (
+            <Button type="submit" disabled={formState.isSubmitting}>
+              {formState.isSubmitting ? __("Updating...") : __("Update")}
+            </Button>
+          )}
+        </div>
       </form>
     </div>
   );
