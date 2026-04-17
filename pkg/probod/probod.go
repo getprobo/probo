@@ -337,9 +337,27 @@ func (impl *Implm) Run(
 		return err
 	}
 
-	vendorAssessorAgentCfg, vendorAssessorLLMClient, err := impl.resolveAgentClient("vendor-assessor", impl.cfg.Agents.VendorAssessor, l, tp, r)
-	if err != nil {
-		return err
+	var vendorAssessor probo.VendorAssessor
+	if impl.cfg.Agents.StubVendorAssessor {
+		vendorAssessor = stubVendorAssessor{}
+	} else {
+		vendorAssessorAgentCfg, vendorAssessorLLMClient, err := impl.resolveAgentClient("vendor-assessor", impl.cfg.Agents.VendorAssessor, l, tp, r)
+		if err != nil {
+			return err
+		}
+
+		vendorAssessorMaxTokens := vetting.DefaultMaxTokens
+		if vendorAssessorAgentCfg.MaxTokens != nil {
+			vendorAssessorMaxTokens = *vendorAssessorAgentCfg.MaxTokens
+		}
+		vendorAssessor = vetting.NewAssessor(vetting.Config{
+			Client:         vendorAssessorLLMClient,
+			Model:          vendorAssessorAgentCfg.ModelName,
+			MaxTokens:      vendorAssessorMaxTokens,
+			ChromeAddr:     impl.cfg.ChromeDPAddr,
+			SearchEndpoint: impl.cfg.SearchEndpoint,
+			Logger:         l.Named("vendor-assessor"),
+		})
 	}
 
 	fileManagerService := filemanager.NewService(s3Client)
@@ -466,19 +484,6 @@ func (impl *Implm) Run(
 	)
 
 	mailmanService := mailman.NewService(pgClient, fileManagerService, impl.cfg.Auth.Cookie.Secret, baseURL, impl.cfg.AWS.Bucket, encryptionKey, l)
-
-	vendorAssessorMaxTokens := vetting.DefaultMaxTokens
-	if vendorAssessorAgentCfg.MaxTokens != nil {
-		vendorAssessorMaxTokens = *vendorAssessorAgentCfg.MaxTokens
-	}
-	vendorAssessor := vetting.NewAssessor(vetting.Config{
-		Client:         vendorAssessorLLMClient,
-		Model:          vendorAssessorAgentCfg.ModelName,
-		MaxTokens:      vendorAssessorMaxTokens,
-		ChromeAddr:     impl.cfg.ChromeDPAddr,
-		SearchEndpoint: impl.cfg.SearchEndpoint,
-		Logger:         l.Named("vendor-assessor"),
-	})
 
 	proboService, err := probo.NewService(
 		ctx,
