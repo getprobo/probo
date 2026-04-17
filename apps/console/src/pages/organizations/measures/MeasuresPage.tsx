@@ -185,8 +185,6 @@ export default function MeasuresPage({ queryRef }: MeasuresPageProps) {
   const [isPending, startTransition] = useTransition();
   const [queryFilter, setQueryFilter] = useState<string | null>(null);
   const [stateFilter, setStateFilter] = useState<MeasureState | null>(null);
-  const [categoryFilter, setCategoryFilter] = useState<string | null>(urlCategory);
-
   const { data, loadNext, hasNext, isLoadingNext, refetch }
     = usePaginationFragment<MeasuresPageRefetchQuery, MeasuresPageFragment$key>(
       measuresPageFragment,
@@ -199,7 +197,7 @@ export default function MeasuresPage({ queryRef }: MeasuresPageProps) {
         {
           query: queryFilter,
           state: stateFilter,
-          category: categoryFilter,
+          category: urlCategory,
           ...overrides,
         },
         { fetchPolicy: "network-only" },
@@ -208,6 +206,7 @@ export default function MeasuresPage({ queryRef }: MeasuresPageProps) {
   };
 
   const initialUrlCategory = useRef(urlCategory);
+  const prevUrlCategory = useRef(urlCategory);
   useEffect(() => {
     if (initialUrlCategory.current) {
       startTransition(() => {
@@ -224,12 +223,11 @@ export default function MeasuresPage({ queryRef }: MeasuresPageProps) {
   }, [refetch, startTransition]);
 
   useEffect(() => {
-    if (urlCategory !== categoryFilter) {
-      setCategoryFilter(urlCategory);
+    if (urlCategory !== prevUrlCategory.current) {
+      prevUrlCategory.current = urlCategory;
       refetchFilters({ category: urlCategory });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [urlCategory]);
+  });
 
   const handleQueryFilterChange = (value: string) => {
     const newQuery = value === "" ? null : value;
@@ -245,7 +243,6 @@ export default function MeasuresPage({ queryRef }: MeasuresPageProps) {
 
   const handleCategoryFilterChange = (value: string) => {
     const newCategory = value === "ALL" ? null : value;
-    setCategoryFilter(newCategory);
     setSearchParams((prev) => {
       const next = new URLSearchParams(prev);
       if (newCategory) {
@@ -261,7 +258,7 @@ export default function MeasuresPage({ queryRef }: MeasuresPageProps) {
   const currentFilter = {
     query: queryFilter,
     state: stateFilter,
-    category: categoryFilter,
+    category: urlCategory,
   };
 
   const connectionId = ConnectionHandler.getConnectionID(
@@ -274,7 +271,7 @@ export default function MeasuresPage({ queryRef }: MeasuresPageProps) {
     MeasuresConnectionKey,
     { filter: { query: null, state: null, category: null } },
   );
-  const hasActiveFilter = queryFilter || stateFilter || categoryFilter;
+  const hasActiveFilter = queryFilter || stateFilter || urlCategory;
   const createConnectionIds = hasActiveFilter
     ? [allFiltersNullConnectionId, connectionId]
     : [connectionId];
@@ -362,7 +359,7 @@ export default function MeasuresPage({ queryRef }: MeasuresPageProps) {
           <Option value="NOT_APPLICABLE">{getMeasureStateLabel(__, "NOT_APPLICABLE")}</Option>
         </Select>
         <Select
-          value={categoryFilter ?? "ALL"}
+          value={urlCategory ?? "ALL"}
           onValueChange={handleCategoryFilterChange}
         >
           <Option value="ALL">{__("All categories")}</Option>
