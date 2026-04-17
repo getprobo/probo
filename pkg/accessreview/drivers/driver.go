@@ -23,7 +23,10 @@ import (
 )
 
 // AccountRecord represents a single account from an access source or identity
-// source. All fields are best-effort; sources populate what they can.
+// source. All fields are best-effort; sources populate what they can. Drivers
+// must return ALL accounts (including inactive / suspended / deleted), and set
+// Active accordingly. The review engine attaches flags and a pre-set decision
+// to inactive entries.
 type AccountRecord struct {
 	Email       string
 	FullName    string
