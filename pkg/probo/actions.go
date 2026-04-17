@@ -234,11 +234,12 @@ const (
 	ActionAssetDelete = "core:asset:delete"
 
 	// Datum actions
-	ActionDatumGet    = "core:datum:get"
-	ActionDatumList   = "core:datum:list"
-	ActionDatumCreate = "core:datum:create"
-	ActionDatumUpdate = "core:datum:update"
-	ActionDatumDelete = "core:datum:delete"
+	ActionDatumGet     = "core:datum:get"
+	ActionDatumList    = "core:datum:list"
+	ActionDatumCreate  = "core:datum:create"
+	ActionDatumUpdate  = "core:datum:update"
+	ActionDatumDelete  = "core:datum:delete"
+	ActionDatumPublish = "core:datum:publish"
 
 	// Audit actions
 	ActionAuditGet          = "core:audit:get"

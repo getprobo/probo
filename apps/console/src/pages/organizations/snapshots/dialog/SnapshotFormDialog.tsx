@@ -85,7 +85,7 @@ export default function SnapshotFormDialog(props: Props) {
     defaultValues: {
       name: "",
       description: "",
-      type: "DATA",
+      type: "RISKS",
     },
   });
 

@@ -256,8 +256,32 @@ func (r *organizationResolver) Assets(ctx context.Context, obj *types.Organizati
 	return types.NewAssetConnection(page, r, obj.ID, filter), nil
 }
 
-// Assets is the resolver for the assets field.
-func (r *organizationResolver) Data(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DatumOrderBy, filter *types.DatumFilter) (*types.DatumConnection, error) {
+// DataListDocument is the resolver for the dataListDocument field.
+func (r *organizationResolver) DataListDocument(ctx context.Context, obj *types.Organization) (*types.Document, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionDocumentGet); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	dataDocumentID, err := prb.GeneratedDocuments.GetDataListDocumentID(ctx, obj.ID)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get data export document ID: %w", err)
+	}
+	if dataDocumentID == nil {
+		return nil, nil
+	}
+
+	doc, err := prb.Documents.Get(ctx, *dataDocumentID)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get data export document: %w", err)
+	}
+
+	return types.NewDocument(doc), nil
+}
+
+// Data is the resolver for the data field.
+func (r *organizationResolver) Data(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DatumOrderBy) (*types.DatumConnection, error) {
 	if err := r.authorize(ctx, obj.ID, probo.ActionDatumList); err != nil {
 		return nil, err
 	}
@@ -277,18 +301,13 @@ func (r *organizationResolver) Data(ctx context.Context, obj *types.Organization
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	datumFilter := coredata.NewDatumFilter(nil)
-	if filter != nil {
-		datumFilter = coredata.NewDatumFilter(&filter.SnapshotID)
-	}
-
-	page, err := prb.Data.ListForOrganizationID(ctx, obj.ID, cursor, datumFilter)
+	page, err := prb.Data.ListForOrganizationID(ctx, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list organization data", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewDataConnection(page, r, obj.ID, filter), nil
+	return types.NewDataConnection(page, r, obj.ID), nil
 }
 
 // Audits is the resolver for the audits field.

@@ -658,13 +658,7 @@ func (r *Resolver) ListDataTool(ctx context.Context, req *mcp.CallToolRequest, i
 
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
-	noSnapshot := (*gid.GID)(nil)
-	datumFilter := coredata.NewDatumFilter(&noSnapshot)
-	if input.Filter != nil {
-		datumFilter = coredata.NewDatumFilter(&input.Filter.SnapshotID)
-	}
-
-	page, err := prb.Data.ListForOrganizationID(ctx, input.OrganizationID, cursor, datumFilter)
+	page, err := prb.Data.ListForOrganizationID(ctx, input.OrganizationID, cursor)
 	if err != nil {
 		panic(fmt.Errorf("cannot list organization data: %w", err))
 	}
@@ -3918,6 +3912,22 @@ func (r *Resolver) PublishStatementOfApplicabilityTool(ctx context.Context, req 
 	}
 
 	return nil, types.PublishStatementOfApplicabilityOutput{
+		DocumentID:        document.ID,
+		DocumentVersionID: documentVersion.ID,
+	}, nil
+}
+
+func (r *Resolver) PublishDataListTool(ctx context.Context, req *mcp.CallToolRequest, input *types.PublishDataListInput) (*mcp.CallToolResult, types.PublishDataListOutput, error) {
+	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionDatumPublish)
+
+	svc := r.ProboService(ctx, input.OrganizationID)
+
+	document, documentVersion, err := svc.GeneratedDocuments.PublishDataList(ctx, input.OrganizationID, input.ApproverIds)
+	if err != nil {
+		return nil, types.PublishDataListOutput{}, fmt.Errorf("cannot publish data list: %w", err)
+	}
+
+	return nil, types.PublishDataListOutput{
 		DocumentID:        document.ID,
 		DocumentVersionID: documentVersion.ID,
 	}, nil

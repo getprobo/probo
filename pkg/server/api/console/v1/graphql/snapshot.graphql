@@ -4,7 +4,6 @@ enum SnapshotsType
     VENDORS
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.SnapshotsTypeVendors")
     ASSETS @goEnum(value: "go.probo.inc/probo/pkg/coredata.SnapshotsTypeAssets")
-    DATA @goEnum(value: "go.probo.inc/probo/pkg/coredata.SnapshotsTypeData")
     FINDINGS
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.SnapshotsTypeFindings"

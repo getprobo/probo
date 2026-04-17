@@ -220,12 +220,7 @@ func (r *datumConnectionResolver) TotalCount(ctx context.Context, obj *types.Dat
 
 	switch obj.Resolver.(type) {
 	case *organizationResolver:
-		datumFilter := coredata.NewDatumFilter(nil)
-		if obj.Filter != nil {
-			datumFilter = coredata.NewDatumFilter(&obj.Filter.SnapshotID)
-		}
-
-		count, err := prb.Data.CountForOrganizationID(ctx, obj.ParentID, datumFilter)
+		count, err := prb.Data.CountForOrganizationID(ctx, obj.ParentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count data", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
@@ -402,6 +397,29 @@ func (r *mutationResolver) DeleteDatum(ctx context.Context, input types.DeleteDa
 
 	return &types.DeleteDatumPayload{
 		DeletedDatumID: input.DatumID,
+	}, nil
+}
+
+// PublishDataList is the resolver for the publishDataList field.
+func (r *mutationResolver) PublishDataList(ctx context.Context, input types.PublishDataListInput) (*types.PublishDataListPayload, error) {
+	if err := r.authorize(ctx, input.OrganizationID, probo.ActionDatumPublish); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
+
+	document, documentVersion, err := prb.GeneratedDocuments.PublishDataList(ctx, input.OrganizationID, input.ApproverIds)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
+			return nil, gqlutils.Conflict(ctx, err)
+		}
+		r.logger.ErrorCtx(ctx, "cannot publish data list", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.PublishDataListPayload{
+		DocumentEdge:        types.NewDocumentEdge(document, coredata.DocumentOrderFieldCreatedAt),
+		DocumentVersionEdge: types.NewDocumentVersionEdge(documentVersion, coredata.DocumentVersionOrderFieldCreatedAt),
 	}, nil
 }
 
