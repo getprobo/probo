@@ -25,11 +25,13 @@ export const THEMED_STYLES = `
     --_accent-text: var(--probo-accent-text, #ffffff);
     --_overlay: var(--probo-overlay, rgba(0, 0, 0, 0.4));
     --_z-index: var(--probo-z-index, 2147483646);
+    --_btn-radius: var(--probo-btn-radius, 8px);
+    --_font-size: var(--probo-font-size, 14px);
 
     all: initial;
     font-family: var(--_font);
     color: var(--_text);
-    font-size: 14px;
+    font-size: var(--_font-size);
     line-height: 1.5;
     box-sizing: border-box;
   }
@@ -61,7 +63,7 @@ export const THEMED_STYLES = `
   }
 
   .title {
-    font-size: 16px;
+    font-size: calc(var(--_font-size) + 2px);
     font-weight: 600;
     margin: 0 0 8px;
   }
@@ -69,7 +71,6 @@ export const THEMED_STYLES = `
   .description {
     color: var(--_text-secondary);
     margin: 0 0 20px;
-    font-size: 14px;
   }
 
   .description a {
@@ -87,12 +88,12 @@ export const THEMED_STYLES = `
     flex: 1;
     min-width: 0;
     padding: 10px 16px;
-    border-radius: 8px;
+    border-radius: var(--_btn-radius);
     border: 1px solid var(--_border);
     background: var(--_bg);
     color: var(--_text);
     font-family: var(--_font);
-    font-size: 14px;
+    font-size: var(--_font-size);
     font-weight: 500;
     cursor: pointer;
     transition: background 0.15s, border-color 0.15s;
@@ -127,7 +128,6 @@ export const THEMED_STYLES = `
     padding: 4px;
     color: var(--_text);
     font-family: var(--_font);
-    font-size: 14px;
     display: flex;
     align-items: center;
     gap: 4px;
@@ -165,17 +165,16 @@ export const THEMED_STYLES = `
 
   .category-name {
     font-weight: 500;
-    font-size: 14px;
   }
 
   .category-description {
     color: var(--_text-secondary);
-    font-size: 13px;
+    font-size: calc(var(--_font-size) - 1px);
     margin-top: 2px;
   }
 
   .category-required {
-    font-size: 12px;
+    font-size: calc(var(--_font-size) - 2px);
     color: var(--_text-secondary);
     font-style: italic;
   }
@@ -242,7 +241,7 @@ export const THEMED_STYLES = `
     display: flex;
     justify-content: space-between;
     align-items: baseline;
-    font-size: 12px;
+    font-size: calc(var(--_font-size) - 2px);
     gap: 8px;
   }
 

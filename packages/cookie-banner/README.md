@@ -66,6 +66,8 @@ probo-cookie-banner {
   --probo-accent-text: #ffffff;
   --probo-overlay: rgba(0, 0, 0, 0.4);
   --probo-z-index: 2147483646;
+  --probo-btn-radius: 8px;
+  --probo-font-size: 14px;
 }
 ```
 
