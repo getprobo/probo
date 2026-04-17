@@ -583,6 +583,10 @@ type oauth2Transport struct {
 
 func (t *oauth2Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	req2 := req.Clone(req.Context())
-	req2.Header.Set("Authorization", t.tokenType+" "+t.token)
+	// tokenType from the provider's OAuth response is not always a valid HTTP
+	// auth scheme (Slack returns "bot" / "user", some providers send an empty
+	// string), so we always send "Bearer" -- the only scheme any connector in
+	// this codebase actually needs.
+	req2.Header.Set("Authorization", "Bearer "+t.token)
 	return t.underlying.RoundTrip(req2)
 }
