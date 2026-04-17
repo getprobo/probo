@@ -24,7 +24,7 @@ import {
   Spinner,
 } from "@probo/ui";
 import { IconMinusLarge } from "@probo/ui/src/Atoms/Icons/IconMinusLarge";
-import { type ComponentProps, useRef, useState } from "react";
+import { type ComponentProps, useCallback, useRef, useState } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 
 // Worker for PDF.js
@@ -51,24 +51,26 @@ export function PDFPreview({ src, name }: { src: string; name?: string }) {
     setScale(scale * factor);
   };
 
-  const movePage = (direction: 1 | -1) => () => {
-    if (currentPage === 1 && direction === -1) {
-      return;
-    }
-    const newPage = currentPage + direction;
-    const page = documentRef.current?.pages.current[newPage - 1];
-    if (!page) {
-      return;
-    }
-    page.scrollIntoView({
-      behavior: "smooth",
-      block: "start",
-      inline: "center",
+  const movePage = useCallback((direction: 1 | -1) => {
+    setCurrentPage((prev) => {
+      if (prev === 1 && direction === -1) {
+        return prev;
+      }
+      const newPage = prev + direction;
+      const page = documentRef.current?.pages.current[newPage - 1];
+      if (!page) {
+        return prev;
+      }
+      page.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+        inline: "center",
+      });
+      return newPage;
     });
-    setCurrentPage(newPage);
-  };
+  }, []);
 
-  const resolveCurrentPage = () => {
+  const resolveCurrentPage = useCallback(() => {
     if (!wrapperRef.current) {
       return;
     }
@@ -81,10 +83,11 @@ export function PDFPreview({ src, name }: { src: string; name?: string }) {
     for (let i = 0; i < pages.length; i++) {
       const childRect = pages[i].getBoundingClientRect();
       if (childRect.top <= parentMiddleY && childRect.bottom >= parentMiddleY) {
-        return setCurrentPage(i + 1);
+        setCurrentPage(i + 1);
+        return;
       }
     }
-  };
+  }, []);
 
   const handleDownload = () => {
     const link = document.createElement("a");
@@ -100,7 +103,7 @@ export function PDFPreview({ src, name }: { src: string; name?: string }) {
         <div>{name}</div>
         <div className="mx-auto flex gap-1 items-center">
           <button
-            onClick={movePage(-1)}
+            onClick={() => movePage(-1)}
             className={btnClass}
             disabled={currentPage === 1}
           >
@@ -112,7 +115,7 @@ export function PDFPreview({ src, name }: { src: string; name?: string }) {
             /
             {numPages}
           </div>
-          <button onClick={movePage(1)} className={btnClass}>
+          <button onClick={() => movePage(1)} className={btnClass}>
             <IconChevronRight size={16} />
           </button>
         </div>

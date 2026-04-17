@@ -380,8 +380,9 @@ function WebhookEventsDialog({
   );
 
   useEffect(() => {
-    void loadEvents();
     dialogRef.current?.open();
+    const id = requestAnimationFrame(() => void loadEvents());
+    return () => cancelAnimationFrame(id);
   }, [loadEvents, dialogRef]);
 
   return (
