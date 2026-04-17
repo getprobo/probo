@@ -111,21 +111,22 @@ type (
 
 	// Config represents the probod application configuration.
 	Config struct {
-		BaseURL        string              `json:"base-url"`
-		EncryptionKey  string              `json:"encryption-key"`
-		Pg             PgConfig            `json:"pg"`
-		Api            APIConfig           `json:"api"`
-		Auth           AuthConfig          `json:"auth"`
-		TrustCenter    TrustCenterConfig   `json:"trust-center"`
-		AWS            AWSConfig           `json:"aws"`
-		Notifications  NotificationsConfig `json:"notifications"`
-		Connectors     []ConnectorConfig   `json:"connectors"`
-		Agents         AgentsConfig        `json:"agents"`
-		ChromeDPAddr   string              `json:"chrome-dp-addr"`
-		SearchEndpoint string              `json:"search-endpoint"`
-		CustomDomains  CustomDomainsConfig `json:"custom-domains"`
-		SCIMBridge     SCIMBridgeConfig    `json:"scim-bridge"`
-		ESign          ESignConfig         `json:"esign"`
+		BaseURL           string                  `json:"base-url"`
+		EncryptionKey     string                  `json:"encryption-key"`
+		Pg                PgConfig                `json:"pg"`
+		Api               APIConfig               `json:"api"`
+		Auth              AuthConfig              `json:"auth"`
+		TrustCenter       TrustCenterConfig       `json:"trust-center"`
+		AWS               AWSConfig               `json:"aws"`
+		Notifications     NotificationsConfig     `json:"notifications"`
+		Connectors        []ConnectorConfig       `json:"connectors"`
+		Agents            AgentsConfig            `json:"agents"`
+		EvidenceDescriber EvidenceDescriberConfig `json:"evidence-describer"`
+		ChromeDPAddr      string                  `json:"chrome-dp-addr"`
+		SearchEndpoint    string                  `json:"search-endpoint"`
+		CustomDomains     CustomDomainsConfig     `json:"custom-domains"`
+		SCIMBridge        SCIMBridgeConfig        `json:"scim-bridge"`
+		ESign             ESignConfig             `json:"esign"`
 	}
 
 	// TrustCenterConfig contains trust center server configuration.

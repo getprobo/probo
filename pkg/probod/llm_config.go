@@ -31,6 +31,15 @@ type (
 		MaxTokens   *int     `json:"max-tokens"`
 	}
 
+	// EvidenceDescriberConfig holds worker-side tuning for the evidence
+	// description background worker. LLM parameters for the same worker
+	// live under AgentsConfig.EvidenceDescriber.
+	EvidenceDescriberConfig struct {
+		Interval       int `json:"interval"`    // seconds between polls
+		StaleAfter     int `json:"stale-after"` // seconds before a claim is recycled
+		MaxConcurrency int `json:"max-concurrency"`
+	}
+
 	// AgentsConfig groups LLM provider credentials and per-agent model
 	// settings. Default is used as a fallback when an agent-specific field
 	// is zero-valued.
