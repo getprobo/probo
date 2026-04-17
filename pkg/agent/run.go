@@ -31,11 +31,6 @@ import (
 const (
 	tracerName = "go.probo.inc/probo/pkg/agent"
 
-	// maxEmptyOutputRetries bounds the number of times the core loop
-	// will re-ask the model to produce a structured output after it
-	// returned a thinking-only empty response.
-	maxEmptyOutputRetries = 2
-
 	// synthesisNudge is the static user message appended after tool
 	// exploration completes, asking the model to produce the final
 	// structured output on the next (synthesis) turn.
@@ -436,7 +431,7 @@ func coreLoop(ctx context.Context, startAgent *Agent, inputMessages []llm.Messag
 			// assistant turn must be dropped from history because
 			// Anthropic rejects requests where the last message is a
 			// thinking-only assistant turn.
-			if structuredFormat != nil && resp.Message.Text() == "" && emptyOutputRetries < maxEmptyOutputRetries && s.turns < s.agent.maxTurns {
+			if structuredFormat != nil && resp.Message.Text() == "" && emptyOutputRetries < s.agent.maxEmptyOutputRetries && s.turns < s.agent.maxTurns {
 				emptyOutputRetries++
 				s.messages = s.messages[:len(s.messages)-1]
 				s.logger.InfoCtx(
