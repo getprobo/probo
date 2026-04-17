@@ -3922,3 +3922,129 @@ func (r *Resolver) PublishStatementOfApplicabilityTool(ctx context.Context, req 
 		DocumentVersionID: documentVersion.ID,
 	}, nil
 }
+
+func (r *Resolver) ListWebhookSubscriptionsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListWebhookSubscriptionsInput) (*mcp.CallToolResult, types.ListWebhookSubscriptionsOutput, error) {
+	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionWebhookSubscriptionList)
+
+	prb := r.ProboService(ctx, input.OrganizationID)
+
+	pageOrderBy := page.OrderBy[coredata.WebhookSubscriptionOrderField]{
+		Field:     coredata.WebhookSubscriptionOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.WebhookSubscriptionOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	page, err := prb.WebhookSubscriptions.ListForOrganizationID(ctx, input.OrganizationID, cursor)
+	if err != nil {
+		panic(fmt.Errorf("cannot list webhook subscriptions: %w", err))
+	}
+
+	return nil, types.NewListWebhookSubscriptionsOutput(page), nil
+}
+
+func (r *Resolver) GetWebhookSubscriptionTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetWebhookSubscriptionInput) (*mcp.CallToolResult, types.GetWebhookSubscriptionOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionWebhookSubscriptionGet)
+
+	prb := r.ProboService(ctx, input.ID)
+
+	subscription, err := prb.WebhookSubscriptions.Get(ctx, input.ID)
+	if err != nil {
+		return nil, types.GetWebhookSubscriptionOutput{}, fmt.Errorf("failed to get webhook subscription: %w", err)
+	}
+
+	return nil, types.GetWebhookSubscriptionOutput{
+		WebhookSubscription: types.NewWebhookSubscription(subscription),
+	}, nil
+}
+
+func (r *Resolver) CreateWebhookSubscriptionTool(ctx context.Context, req *mcp.CallToolRequest, input *types.CreateWebhookSubscriptionInput) (*mcp.CallToolResult, types.CreateWebhookSubscriptionOutput, error) {
+	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionWebhookSubscriptionCreate)
+
+	prb := r.ProboService(ctx, input.OrganizationID)
+
+	subscription, err := prb.WebhookSubscriptions.Create(
+		ctx,
+		probo.CreateWebhookSubscriptionRequest{
+			OrganizationID: input.OrganizationID,
+			EndpointURL:    input.EndpointURL,
+			SelectedEvents: input.SelectedEvents,
+		},
+	)
+	if err != nil {
+		return nil, types.CreateWebhookSubscriptionOutput{}, fmt.Errorf("failed to create webhook subscription: %w", err)
+	}
+
+	return nil, types.CreateWebhookSubscriptionOutput{
+		WebhookSubscription: types.NewWebhookSubscription(subscription),
+	}, nil
+}
+
+func (r *Resolver) UpdateWebhookSubscriptionTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateWebhookSubscriptionInput) (*mcp.CallToolResult, types.UpdateWebhookSubscriptionOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionWebhookSubscriptionUpdate)
+
+	prb := r.ProboService(ctx, input.ID)
+
+	subscription, err := prb.WebhookSubscriptions.Update(
+		ctx,
+		probo.UpdateWebhookSubscriptionRequest{
+			WebhookSubscriptionID: input.ID,
+			EndpointURL:           input.EndpointURL,
+			SelectedEvents:        input.SelectedEvents,
+		},
+	)
+	if err != nil {
+		return nil, types.UpdateWebhookSubscriptionOutput{}, fmt.Errorf("failed to update webhook subscription: %w", err)
+	}
+
+	return nil, types.UpdateWebhookSubscriptionOutput{
+		WebhookSubscription: types.NewWebhookSubscription(subscription),
+	}, nil
+}
+
+func (r *Resolver) DeleteWebhookSubscriptionTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteWebhookSubscriptionInput) (*mcp.CallToolResult, types.DeleteWebhookSubscriptionOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionWebhookSubscriptionDelete)
+
+	prb := r.ProboService(ctx, input.ID)
+
+	err := prb.WebhookSubscriptions.Delete(ctx, input.ID)
+	if err != nil {
+		return nil, types.DeleteWebhookSubscriptionOutput{}, fmt.Errorf("failed to delete webhook subscription: %w", err)
+	}
+
+	return nil, types.DeleteWebhookSubscriptionOutput{
+		DeletedWebhookSubscriptionID: input.ID,
+	}, nil
+}
+
+func (r *Resolver) ListWebhookEventsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListWebhookEventsInput) (*mcp.CallToolResult, types.ListWebhookEventsOutput, error) {
+	r.MustAuthorize(ctx, input.WebhookSubscriptionID, probo.ActionWebhookSubscriptionGet)
+
+	prb := r.ProboService(ctx, input.WebhookSubscriptionID)
+
+	pageOrderBy := page.OrderBy[coredata.WebhookEventOrderField]{
+		Field:     coredata.WebhookEventOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.WebhookEventOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	page, err := prb.WebhookSubscriptions.ListEventsForSubscriptionID(ctx, input.WebhookSubscriptionID, cursor)
+	if err != nil {
+		panic(fmt.Errorf("cannot list webhook events: %w", err))
+	}
+
+	return nil, types.NewListWebhookEventsOutput(page), nil
+}

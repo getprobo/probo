@@ -27,6 +27,7 @@ import * as user from './user';
 import * as risk from './risk';
 import * as statementOfApplicability from './statementOfApplicability';
 import * as vendor from './vendor';
+import * as webhook from './webhook';
 
 export interface ResourceModule {
 	description: INodeProperties[];
@@ -53,6 +54,7 @@ export const resources: Record<string, ResourceModule> = {
 	risk: risk as ResourceModule,
 	statementOfApplicability: statementOfApplicability as ResourceModule,
 	vendor: vendor as ResourceModule,
+	webhook: webhook as ResourceModule,
 };
 
 export function getAllResourceOperations(): INodeProperties[] {

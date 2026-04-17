@@ -146,6 +146,11 @@ export class Probo implements INodeType {
 						value: 'vendor',
 						description: 'Manage vendors',
 					},
+					{
+						name: 'Webhook',
+						value: 'webhook',
+						description: 'Manage webhook subscriptions',
+					},
 				],
 				default: 'execute',
 			},

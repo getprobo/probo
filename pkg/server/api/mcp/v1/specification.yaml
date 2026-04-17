@@ -5950,6 +5950,284 @@ components:
           format: date-time
           description: Update timestamp
 
+    WebhookEventType:
+      type: string
+      enum:
+        - "meeting:created"
+        - "meeting:updated"
+        - "meeting:deleted"
+        - "vendor:created"
+        - "vendor:updated"
+        - "vendor:deleted"
+        - "user:created"
+        - "user:updated"
+        - "user:deleted"
+        - "obligation:created"
+        - "obligation:updated"
+        - "obligation:deleted"
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.WebhookEventType
+
+    WebhookEventStatus:
+      type: string
+      enum:
+        - PENDING
+        - SUCCEEDED
+        - FAILED
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.WebhookEventStatus
+
+    WebhookSubscriptionOrderField:
+      type: string
+      enum:
+        - CREATED_AT
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.WebhookSubscriptionOrderField
+
+    WebhookSubscriptionOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/WebhookSubscriptionOrderField"
+          description: Webhook subscription order field
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+          description: Order direction
+
+    WebhookEventOrderField:
+      type: string
+      enum:
+        - CREATED_AT
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.WebhookEventOrderField
+
+    WebhookEventOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/WebhookEventOrderField"
+          description: Webhook event order field
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+          description: Order direction
+
+    WebhookSubscription:
+      type: object
+      required:
+        - id
+        - organization_id
+        - endpoint_url
+        - selected_events
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Webhook subscription ID
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        endpoint_url:
+          type: string
+          description: The HTTPS endpoint URL that receives webhook events
+        selected_events:
+          type: array
+          items:
+            $ref: "#/components/schemas/WebhookEventType"
+          description: List of event types this subscription listens to
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Update timestamp
+
+    WebhookEvent:
+      type: object
+      required:
+        - id
+        - webhook_subscription_id
+        - status
+        - created_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Webhook event ID
+        webhook_subscription_id:
+          $ref: "#/components/schemas/GID"
+          description: Webhook subscription ID
+        status:
+          $ref: "#/components/schemas/WebhookEventStatus"
+          description: Delivery status
+        response:
+          anyOf:
+            - type: string
+            - type: "null"
+          description: HTTP response body from the endpoint
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+
+    ListWebhookSubscriptionsInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        order_by:
+          $ref: "#/components/schemas/WebhookSubscriptionOrderBy"
+          description: Order by
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+
+    ListWebhookSubscriptionsOutput:
+      type: object
+      required:
+        - webhook_subscriptions
+      properties:
+        webhook_subscriptions:
+          type: array
+          items:
+            $ref: "#/components/schemas/WebhookSubscription"
+          description: List of webhook subscriptions
+        next_cursor:
+          anyOf:
+            - $ref: "#/components/schemas/CursorKey"
+            - type: "null"
+          description: Next page cursor
+
+    GetWebhookSubscriptionInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Webhook subscription ID
+
+    GetWebhookSubscriptionOutput:
+      type: object
+      required:
+        - webhook_subscription
+      properties:
+        webhook_subscription:
+          $ref: "#/components/schemas/WebhookSubscription"
+
+    CreateWebhookSubscriptionInput:
+      type: object
+      required:
+        - organization_id
+        - endpoint_url
+        - selected_events
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        endpoint_url:
+          type: string
+          description: The HTTPS endpoint URL that receives webhook events
+        selected_events:
+          type: array
+          items:
+            $ref: "#/components/schemas/WebhookEventType"
+          description: List of event types to subscribe to
+
+    CreateWebhookSubscriptionOutput:
+      type: object
+      required:
+        - webhook_subscription
+      properties:
+        webhook_subscription:
+          $ref: "#/components/schemas/WebhookSubscription"
+
+    UpdateWebhookSubscriptionInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Webhook subscription ID
+        endpoint_url:
+          type: string
+          description: The HTTPS endpoint URL that receives webhook events
+        selected_events:
+          type: array
+          items:
+            $ref: "#/components/schemas/WebhookEventType"
+          description: List of event types to subscribe to
+
+    UpdateWebhookSubscriptionOutput:
+      type: object
+      required:
+        - webhook_subscription
+      properties:
+        webhook_subscription:
+          $ref: "#/components/schemas/WebhookSubscription"
+
+    DeleteWebhookSubscriptionInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Webhook subscription ID
+
+    DeleteWebhookSubscriptionOutput:
+      type: object
+      required:
+        - deleted_webhook_subscription_id
+      properties:
+        deleted_webhook_subscription_id:
+          $ref: "#/components/schemas/GID"
+          description: Deleted webhook subscription ID
+
+    ListWebhookEventsInput:
+      type: object
+      required:
+        - webhook_subscription_id
+      properties:
+        webhook_subscription_id:
+          $ref: "#/components/schemas/GID"
+          description: Webhook subscription ID
+        order_by:
+          $ref: "#/components/schemas/WebhookEventOrderBy"
+          description: Order by
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+
+    ListWebhookEventsOutput:
+      type: object
+      required:
+        - webhook_events
+      properties:
+        webhook_events:
+          type: array
+          items:
+            $ref: "#/components/schemas/WebhookEvent"
+          description: List of webhook events
+        next_cursor:
+          anyOf:
+            - $ref: "#/components/schemas/CursorKey"
+            - type: "null"
+          description: Next page cursor
+
     ListMeetingsInput:
       type: object
       required:
@@ -8845,3 +9123,55 @@ tools:
       $ref: "#/components/schemas/ListAuditLogEntriesInput"
     outputSchema:
       $ref: "#/components/schemas/ListAuditLogEntriesOutput"
+  - name: listWebhookSubscriptions
+    description: List all webhook subscriptions for the organization
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/ListWebhookSubscriptionsInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListWebhookSubscriptionsOutput"
+  - name: getWebhookSubscription
+    description: Get a webhook subscription by ID
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/GetWebhookSubscriptionInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetWebhookSubscriptionOutput"
+  - name: createWebhookSubscription
+    description: Create a new webhook subscription for the organization. The endpoint URL must use HTTPS. Selected events determine which events trigger webhook deliveries.
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/CreateWebhookSubscriptionInput"
+    outputSchema:
+      $ref: "#/components/schemas/CreateWebhookSubscriptionOutput"
+  - name: updateWebhookSubscription
+    description: Update a webhook subscription's endpoint URL or selected events
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/UpdateWebhookSubscriptionInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateWebhookSubscriptionOutput"
+  - name: deleteWebhookSubscription
+    description: Delete a webhook subscription
+    hints:
+      readonly: false
+      destructive: true
+    inputSchema:
+      $ref: "#/components/schemas/DeleteWebhookSubscriptionInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteWebhookSubscriptionOutput"
+  - name: listWebhookEvents
+    description: List webhook delivery events for a subscription. Shows delivery status (PENDING, SUCCEEDED, FAILED) and response details.
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/ListWebhookEventsInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListWebhookEventsOutput"
