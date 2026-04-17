@@ -21,6 +21,8 @@ import (
 
 	"go.gearno.de/kit/pg"
 	"go.gearno.de/x/ref"
+	"go.probo.inc/probo/pkg/agent"
+	"go.probo.inc/probo/pkg/agents/vetting"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
@@ -28,6 +30,19 @@ import (
 	"go.probo.inc/probo/pkg/webhook"
 	webhooktypes "go.probo.inc/probo/pkg/webhook/types"
 )
+
+// VendorAssessor produces a vendor assessment report from a website URL and
+// an optional procedure description. The real implementation lives in
+// pkg/agents/vetting; a stub implementation is used in tests where running
+// the full LLM and browser pipeline is undesirable.
+type VendorAssessor interface {
+	Assess(
+		ctx context.Context,
+		websiteURL string,
+		procedure string,
+		reporter agent.ProgressReporter,
+	) (*vetting.Result, error)
+}
 
 type (
 	VendorService struct {

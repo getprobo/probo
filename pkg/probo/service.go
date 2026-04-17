@@ -23,7 +23,6 @@ import (
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/agents"
-	"go.probo.inc/probo/pkg/agents/vetting"
 	"go.probo.inc/probo/pkg/certmanager"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/coredata"
@@ -70,7 +69,7 @@ type (
 		esign                   *esign.Service
 		connectorRegistry       *connector.ConnectorRegistry
 		invitationTokenValidity time.Duration
-		vendorAssessor          *vetting.Assessor
+		vendorAssessor          VendorAssessor
 	}
 
 	TenantService struct {
@@ -82,7 +81,7 @@ type (
 		baseURL                           string
 		tokenSecret                       string
 		agent                             *agents.Agent
-		vendorAssessor                    *vetting.Assessor
+		vendorAssessor                    VendorAssessor
 		fileManager                       *filemanager.Service
 		esign                             *esign.Service
 		Frameworks                        *FrameworkService
@@ -149,7 +148,7 @@ func NewService(
 	esignService *esign.Service,
 	connectorRegistry *connector.ConnectorRegistry,
 	invitationTokenValidity time.Duration,
-	vendorAssessor *vetting.Assessor,
+	vendorAssessor VendorAssessor,
 ) (*Service, error) {
 	if bucket == "" {
 		return nil, fmt.Errorf("bucket is required")
