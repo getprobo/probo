@@ -18,8 +18,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"go.gearno.de/kit/log"
 	"go.opentelemetry.io/otel/trace"
-	"go.probo.inc/probo/pkg/vetting"
 	"go.probo.inc/probo/pkg/probo"
+	"go.probo.inc/probo/pkg/vetting"
 )
 
 // buildVendorAssessor wires the vendor assessment agent. It is an opt-in
