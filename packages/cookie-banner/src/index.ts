@@ -14,43 +14,4 @@
 
 export const VERSION = "0.0.0";
 
-export { activateElements, observeAndActivate } from "./activation";
-export { CookieBannerClient } from "./client";
-export type {
-  BannerConfig,
-  Category,
-  ConsentAction,
-  ConsentRecord,
-  CookieBannerClientOptions,
-  CookieItem,
-  VisitorConsent,
-} from "./client";
-export {
-  ProboElement,
-  ProboBanner,
-  ProboAcceptButton,
-  ProboRejectButton,
-  ProboCustomizeButton,
-  ProboCookieBannerRoot,
-  ProboPreferencePanel,
-  ProboSaveButton,
-  ProboCategoryList,
-  ProboCategory,
-  ProboCategoryToggle,
-  ProboCookieList,
-  ProboCookie,
-  ProboSettingsButton,
-  registerComponents,
-} from "./components";
-export type { ProboState, ProboRootElement, ConsentDraft } from "./components";
-export type { ConsentCookie } from "./cookie";
-export {
-  ApiError,
-  BadRequestError,
-  InternalServerError,
-  NetworkError,
-  NotFoundError,
-  TimeoutError,
-} from "./errors";
-export { fetchJSON } from "./http";
-export type { RequestOptions } from "./http";
+export { registerComponents } from "./components";
