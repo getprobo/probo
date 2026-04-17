@@ -73,6 +73,11 @@ probod:
       model-name: gpt-4o
       temperature: 0.1
       max-tokens: 4096
+    # vendor-assessor is opt-in: uncomment to enable AI-driven
+    # vendor assessment. Without this block the feature returns
+    # UNAVAILABLE to callers.
+    # vendor-assessor:
+    #   provider: openai
 
   evidence-describer:
     interval: 10
