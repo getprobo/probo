@@ -116,6 +116,9 @@ export class ProboCookieBannerRoot extends ProboElement implements ProboRootElem
       return;
     }
 
+    // Element was disconnected while load() was in-flight.
+    if (!this._client) return;
+
     this._config = this._client.config;
     this._draft = this.buildDraft(this._config);
 
