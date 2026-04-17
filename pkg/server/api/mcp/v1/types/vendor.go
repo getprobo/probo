@@ -122,18 +122,22 @@ func NewUpdateVendorOutput(v *coredata.Vendor) UpdateVendorOutput {
 	}
 }
 
-func NewAssessVendorOutput(result *probo.AssessVendorResult) AssessVendorOutput {
-	subprocessors := make([]*VendorSubprocessor, len(result.Subprocessors))
-	for i, sp := range result.Subprocessors {
-		subprocessors[i] = &VendorSubprocessor{
+func NewVendorSubprocessors(sps []probo.Subprocessor) []*VendorSubprocessor {
+	result := make([]*VendorSubprocessor, len(sps))
+	for i, sp := range sps {
+		result[i] = &VendorSubprocessor{
 			Name:    sp.Name,
 			Country: sp.Country,
 			Purpose: sp.Purpose,
 		}
 	}
+	return result
+}
+
+func NewAssessVendorOutput(result *probo.AssessVendorResult) AssessVendorOutput {
 	return AssessVendorOutput{
 		Vendor:        NewVendor(result.Vendor),
 		Report:        result.Report,
-		Subprocessors: subprocessors,
+		Subprocessors: NewVendorSubprocessors(result.Subprocessors),
 	}
 }
