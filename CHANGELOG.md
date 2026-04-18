@@ -226,6 +226,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - Add rich text editor for documents with TipTap (tables, links, mermaid diagrams, slash commands, auto-save)
+  Migration of existing documents should be done running `cmd/migrate-document-versions-markdown/main.go -pg-dsn <pg-dsn>`.
 - Add prosemirror-based PDF rendering for documents
 - Add migration command for document version markdown-to-prosemirror conversion
 
