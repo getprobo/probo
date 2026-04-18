@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,21 +12,22 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package agents
+package browser
 
 import (
-	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/llm"
+	"go.probo.inc/probo/pkg/agent/tools/internal/netcheck"
 )
 
-type Agent struct {
-	l         *log.Logger
-	client    *llm.Client
-	model     string
-	temp      float64
-	maxTokens int
+// validatePublicURL checks that a URL uses an http(s) scheme and that its
+// host does not resolve to a private, loopback, or link-local IP address.
+// This prevents SSRF attacks where the LLM could be tricked into requesting
+// internal network endpoints.
+func validatePublicURL(rawURL string) error {
+	return netcheck.ValidatePublicURL(rawURL)
 }
 
-func NewAgent(l *log.Logger, client *llm.Client, model string, temp float64, maxTokens int) *Agent {
-	return &Agent{l: l, client: client, model: model, temp: temp, maxTokens: maxTokens}
+// validatePublicDomain checks that a domain does not resolve to a private,
+// loopback, or link-local IP address.
+func validatePublicDomain(domain string) error {
+	return netcheck.ValidatePublicDomain(domain)
 }

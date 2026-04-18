@@ -541,20 +541,27 @@ func (r *mutationResolver) AssessVendor(ctx context.Context, input types.AssessV
 
 	prb := r.ProboService(ctx, input.ID.TenantID())
 
-	vendor, err := prb.Vendors.Assess(
+	result, err := prb.Vendors.Assess(
 		ctx,
 		probo.AssessVendorRequest{
 			ID:         input.ID,
 			WebsiteURL: input.WebsiteURL,
+			Procedure:  input.Procedure,
 		},
 	)
 	if err != nil {
+		if errors.Is(err, probo.ErrVendorAssessmentDisabled) {
+			return nil, gqlutils.Unavailable(ctx, probo.ErrVendorAssessmentDisabled)
+		}
+
 		r.logger.ErrorCtx(ctx, "cannot assess vendor", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.AssessVendorPayload{
-		Vendor: types.NewVendor(vendor),
+		Vendor:        types.NewVendor(result.Vendor),
+		Report:        result.Report,
+		Subprocessors: types.NewVendorSubprocessors(result.Subprocessors),
 	}, nil
 }
 

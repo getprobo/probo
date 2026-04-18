@@ -17,6 +17,7 @@ package probo
 import (
 	"archive/zip"
 	"context"
+	_ "embed"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -32,12 +33,14 @@ import (
 	"go.gearno.de/crypto/uuid"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/packages/emails"
+	"go.probo.inc/probo/pkg/agent"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/docgen"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/html2pdf"
 	"go.probo.inc/probo/pkg/iam"
+	"go.probo.inc/probo/pkg/llm"
 	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/prosemirror"
@@ -457,13 +460,49 @@ func (s DocumentService) GenerateChangelog(
 	}
 
 	if changelog == nil {
-		changelog, err = s.svc.agent.GenerateChangelog(ctx, publishedVersion.Content, draftVersion.Content)
+		changelog, err = s.generateChangelog(ctx, publishedVersion.Content, draftVersion.Content)
 		if err != nil {
 			return nil, fmt.Errorf("cannot generate changelog: %w", err)
 		}
 	}
 
 	return changelog, nil
+}
+
+//go:embed prompts/changelog_generator.txt
+var changelogGeneratorSystemPrompt string
+
+func (s DocumentService) generateChangelog(
+	ctx context.Context,
+	oldContent, newContent string,
+) (*string, error) {
+	ag := agent.New(
+		"changelog_generator",
+		s.svc.llmClient,
+		agent.WithInstructions(changelogGeneratorSystemPrompt),
+		agent.WithModel(s.svc.llmModel),
+		agent.WithTemperature(s.svc.llmTemperature),
+		agent.WithMaxTokens(s.svc.llmMaxTokens),
+	)
+
+	result, err := ag.Run(
+		ctx,
+		[]llm.Message{
+			{
+				Role: llm.RoleUser,
+				Parts: []llm.Part{
+					llm.TextPart{Text: fmt.Sprintf("Old content: %s", oldContent)},
+					llm.TextPart{Text: fmt.Sprintf("New content: %s", newContent)},
+				},
+			},
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot generate changelog: %w", err)
+	}
+
+	text := result.FinalMessage().Text()
+	return &text, nil
 }
 
 func (s *DocumentService) BulkPublishMinorVersions(

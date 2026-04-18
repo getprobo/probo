@@ -119,10 +119,10 @@ type (
 		AWS               AWSConfig               `json:"aws"`
 		Notifications     NotificationsConfig     `json:"notifications"`
 		Connectors        []ConnectorConfig       `json:"connectors"`
-		LLM               LLMSettings             `json:"llm"`
-		ProboAgent        LLMConfig               `json:"probo-agent"`
+		Agents            AgentsConfig            `json:"llm"`
 		EvidenceDescriber EvidenceDescriberConfig `json:"evidence-describer"`
 		ChromeDPAddr      string                  `json:"chrome-dp-addr"`
+		SearchEndpoint    string                  `json:"search-endpoint"`
 		CustomDomains     CustomDomainsConfig     `json:"custom-domains"`
 		SCIMBridge        SCIMBridgeConfig        `json:"scim-bridge"`
 		ESign             ESignConfig             `json:"esign"`
@@ -220,11 +220,6 @@ func New() *Implm {
 			},
 			ESign: ESignConfig{
 				TSAURL: "http://timestamp.digicert.com",
-			},
-			EvidenceDescriber: EvidenceDescriberConfig{
-				Interval:       10,
-				StaleAfter:     300,
-				MaxConcurrency: 10,
 			},
 		},
 	}
@@ -331,24 +326,19 @@ func (impl *Implm) Run(
 		}
 	}
 
-	proboAgentCfg := impl.cfg.LLM.ResolveLLMConfig(impl.cfg.ProboAgent)
-	proboProviderCfg, ok := impl.cfg.LLM.Providers[proboAgentCfg.Provider]
-	if !ok {
-		return fmt.Errorf("unknown LLM provider %q for probo agent", proboAgentCfg.Provider)
-	}
-	proboLLMClient, err := buildLLMClient(proboProviderCfg, l.Named("llm.probo"), tp, r)
+	proboAgentCfg, proboLLMClient, err := impl.resolveAgentClient("probo", impl.cfg.Agents.Probo, l, tp, r)
 	if err != nil {
-		return fmt.Errorf("cannot create probo LLM client: %w", err)
+		return err
 	}
 
-	edLLMCfg := impl.cfg.LLM.ResolveLLMConfig(impl.cfg.EvidenceDescriber.LLMConfig())
-	edProviderCfg, ok := impl.cfg.LLM.Providers[edLLMCfg.Provider]
-	if !ok {
-		return fmt.Errorf("unknown LLM provider %q for evidence-describer agent", edLLMCfg.Provider)
-	}
-	evidenceDescriberLLMClient, err := buildLLMClient(edProviderCfg, l.Named("llm.evidence-describer"), tp, r)
+	evidenceDescriberAgentCfg, evidenceDescriberLLMClient, err := impl.resolveAgentClient("evidence-describer", impl.cfg.Agents.EvidenceDescriber, l, tp, r)
 	if err != nil {
-		return fmt.Errorf("cannot create evidence describer LLM client: %w", err)
+		return err
+	}
+
+	vendorAssessor, err := impl.buildVendorAssessor(l, tp, r)
+	if err != nil {
+		return err
 	}
 
 	fileManagerService := filemanager.NewService(s3Client)
@@ -497,6 +487,7 @@ func (impl *Implm) Run(
 		esignService,
 		defaultConnectorRegistry,
 		time.Duration(impl.cfg.Auth.InvitationConfirmationTokenValidity)*time.Second,
+		vendorAssessor,
 	)
 	if err != nil {
 		return fmt.Errorf("cannot create probo service: %w", err)
@@ -672,9 +663,9 @@ func (impl *Implm) Run(
 	evidenceDescriber := evidencedescriber.New(
 		evidenceDescriberLLMClient,
 		evidencedescriber.Config{
-			Model:     edLLMCfg.ModelName,
-			Temp:      *edLLMCfg.Temperature,
-			MaxTokens: *edLLMCfg.MaxTokens,
+			Model:     evidenceDescriberAgentCfg.ModelName,
+			Temp:      *evidenceDescriberAgentCfg.Temperature,
+			MaxTokens: *evidenceDescriberAgentCfg.MaxTokens,
 		},
 	)
 	evidenceDescriptionWorker := probo.NewEvidenceDescriptionWorker(

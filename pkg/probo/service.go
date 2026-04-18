@@ -22,7 +22,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
-	"go.probo.inc/probo/pkg/agents"
 	"go.probo.inc/probo/pkg/certmanager"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/coredata"
@@ -69,6 +68,7 @@ type (
 		esign                   *esign.Service
 		connectorRegistry       *connector.ConnectorRegistry
 		invitationTokenValidity time.Duration
+		vendorAssessor          VendorAssessor
 	}
 
 	TenantService struct {
@@ -79,7 +79,11 @@ type (
 		scope                             coredata.Scoper
 		baseURL                           string
 		tokenSecret                       string
-		agent                             *agents.Agent
+		llmClient                         *llm.Client
+		llmModel                          string
+		llmTemperature                    float64
+		llmMaxTokens                      int
+		vendorAssessor                    VendorAssessor
 		fileManager                       *filemanager.Service
 		esign                             *esign.Service
 		Frameworks                        *FrameworkService
@@ -146,6 +150,7 @@ func NewService(
 	esignService *esign.Service,
 	connectorRegistry *connector.ConnectorRegistry,
 	invitationTokenValidity time.Duration,
+	vendorAssessor VendorAssessor,
 ) (*Service, error) {
 	if bucket == "" {
 		return nil, fmt.Errorf("bucket is required")
@@ -172,6 +177,7 @@ func NewService(
 		esign:                   esignService,
 		connectorRegistry:       connectorRegistry,
 		invitationTokenValidity: invitationTokenValidity,
+		vendorAssessor:          vendorAssessor,
 	}
 
 	return svc, nil
@@ -179,16 +185,20 @@ func NewService(
 
 func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 	tenantService := &TenantService{
-		pg:            s.pg,
-		s3:            s.s3,
-		bucket:        s.bucket,
-		encryptionKey: s.encryptionKey,
-		baseURL:       s.baseURL,
-		scope:         coredata.NewScope(tenantID),
-		tokenSecret:   s.tokenSecret,
-		agent:         agents.NewAgent(nil, s.llmClient, s.llmModel, s.llmTemperature, s.llmMaxTokens),
-		fileManager:   s.fileManager,
-		esign:         s.esign,
+		pg:             s.pg,
+		s3:             s.s3,
+		bucket:         s.bucket,
+		encryptionKey:  s.encryptionKey,
+		baseURL:        s.baseURL,
+		scope:          coredata.NewScope(tenantID),
+		tokenSecret:    s.tokenSecret,
+		llmClient:      s.llmClient,
+		llmModel:       s.llmModel,
+		llmTemperature: s.llmTemperature,
+		llmMaxTokens:   s.llmMaxTokens,
+		vendorAssessor: s.vendorAssessor,
+		fileManager:    s.fileManager,
+		esign:          s.esign,
 	}
 
 	tenantService.Frameworks = &FrameworkService{

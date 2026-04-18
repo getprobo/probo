@@ -28,7 +28,14 @@ import (
 	"go.probo.inc/probo/pkg/llm"
 )
 
-const tracerName = "go.probo.inc/probo/pkg/agent"
+const (
+	tracerName = "go.probo.inc/probo/pkg/agent"
+
+	// synthesisNudge is the static user message appended after tool
+	// exploration completes, asking the model to produce the final
+	// structured output on the next (synthesis) turn.
+	synthesisNudge = "Based on everything you have gathered, produce the final structured output now."
+)
 
 type (
 	CallLLMFunc func(ctx context.Context, agent *Agent, req *llm.ChatCompletionRequest) (*llm.ChatCompletionResponse, error)
@@ -68,7 +75,32 @@ type (
 func noopEvent(_ context.Context, _ StreamEvent) {}
 
 func blockingCallLLM(ctx context.Context, agent *Agent, req *llm.ChatCompletionRequest) (*llm.ChatCompletionResponse, error) {
-	return agent.client.ChatCompletion(ctx, req)
+	resp, err := agent.client.ChatCompletion(ctx, req)
+	if err == nil {
+		return resp, nil
+	}
+
+	// Some providers (e.g. Anthropic) require streaming for large
+	// max_tokens or when thinking is enabled. Fall back to streaming
+	// transparently when the blocking call returns ErrStreamingRequired.
+	var streamRequired *llm.ErrStreamingRequired
+	if !errors.As(err, &streamRequired) {
+		return nil, err
+	}
+
+	stream, sErr := agent.client.ChatCompletionStream(ctx, req)
+	if sErr != nil {
+		return nil, err // return the original error
+	}
+	defer stream.Close()
+
+	acc := llm.NewStreamAccumulator(stream)
+	for acc.Next() {
+	}
+	if sErr := acc.Err(); sErr != nil {
+		return nil, sErr
+	}
+	return acc.Response(), nil
 }
 
 func (a *Agent) Run(ctx context.Context, messages []llm.Message) (*Result, error) {
@@ -273,6 +305,24 @@ func coreLoop(ctx context.Context, startAgent *Agent, inputMessages []llm.Messag
 		log.Int("tool_count", len(s.toolDefs)),
 	)
 
+	emptyOutputRetries := 0
+
+	structuredFormat := resolveStructuredFormat(s.agent)
+
+	// When the agent has both tools and a structured output request,
+	// we delay structured output enforcement until a dedicated
+	// synthesis turn. Enforcing the schema during tool exploration
+	// causes models with extended thinking to stuff planning prose
+	// into the first text field of the schema as a scratchpad,
+	// burning the entire max_tokens budget on thinking-inside-JSON
+	// before ever producing a valid object. Instead, we let the
+	// model freely call tools without a schema, then force one final
+	// synthesis turn with ToolChoice=none + schema enforced once the
+	// model signals it has enough information (finish_reason=stop).
+	// Agents without tools or without a structured output request
+	// do not need this dance and enforce the schema immediately.
+	exploring := structuredFormat != nil && len(s.toolDefs) > 0
+
 	for {
 		if err := ctx.Err(); err != nil {
 			return s.finishRun(ctx, nil, fmt.Errorf("cannot complete: %w", err))
@@ -284,14 +334,20 @@ func coreLoop(ctx context.Context, startAgent *Agent, inputMessages []llm.Messag
 
 		fullMessages := buildFullMessages(s.systemPrompt, s.messages)
 
-		responseFormat := s.agent.responseFormat
-		if responseFormat == nil && s.agent.outputType != nil {
-			responseFormat = s.agent.outputType.responseFormat()
+		var responseFormat *llm.ResponseFormat
+		if !exploring {
+			responseFormat = structuredFormat
 		}
 
 		toolChoice := s.agent.modelSettings.ToolChoice
 		if s.toolUsedInRun && s.agent.resetToolChoice && toolChoice != nil {
 			toolChoice = nil
+		}
+		if !exploring && structuredFormat != nil && len(s.toolDefs) > 0 {
+			// On the synthesis turn, forbid further tool calls so the
+			// model is forced to convert what it has into JSON.
+			none := llm.ToolChoice{Type: llm.ToolChoiceNone}
+			toolChoice = &none
 		}
 
 		req := &llm.ChatCompletionRequest{
@@ -306,6 +362,7 @@ func coreLoop(ctx context.Context, startAgent *Agent, inputMessages []llm.Messag
 			ToolChoice:        toolChoice,
 			ParallelToolCalls: s.agent.modelSettings.ParallelToolCalls,
 			ResponseFormat:    responseFormat,
+			Thinking:          s.agent.modelSettings.Thinking,
 		}
 
 		s.logger.InfoCtx(
@@ -336,6 +393,62 @@ func coreLoop(ctx context.Context, startAgent *Agent, inputMessages []llm.Messag
 
 		switch resp.FinishReason {
 		case llm.FinishReasonStop, llm.FinishReasonLength:
+			// Model signalled it has nothing more to do with tools.
+			// If we have a structured output request but haven't
+			// enforced the schema yet, promote this turn to the
+			// synthesis turn: the next iteration runs with
+			// ToolChoice=none and the schema enforced, so the model
+			// converts what it has gathered into JSON in one shot.
+			//
+			// Anthropic requires the last message in the conversation
+			// to be a user message, so we cannot simply continue after
+			// an assistant stop turn. Drop empty (thinking-only) turns
+			// from history and append a user nudge that asks for the
+			// final structured output. Non-empty assistant turns stay
+			// in history so the model can reference its own
+			// conclusions during synthesis.
+			if exploring && s.turns < s.agent.maxTurns {
+				exploring = false
+				if resp.Message.Text() == "" {
+					s.messages = s.messages[:len(s.messages)-1]
+				}
+				s.messages = append(
+					s.messages,
+					llm.Message{
+						Role:  llm.RoleUser,
+						Parts: []llm.Part{llm.TextPart{Text: synthesisNudge}},
+					},
+				)
+				s.logger.WarnCtx(
+					ctx,
+					"entering synthesis turn: forcing structured output with tool_choice=none",
+					log.Int("turn", s.turns),
+					log.Int("output_tokens", resp.Usage.OutputTokens),
+				)
+				continue
+			}
+
+			// Anthropic extended-thinking models can return a synthesis turn
+			// that contains only thinking blocks and no text part, leaving us
+			// with no structured output to validate. Retry the same turn a
+			// bounded number of times so the model gets another chance to
+			// emit the required JSON output. The empty assistant turn must be
+			// dropped from history because Anthropic rejects requests where
+			// the last message is a thinking-only assistant turn.
+			if structuredFormat != nil && resp.Message.Text() == "" && emptyOutputRetries < s.agent.maxEmptyOutputRetries && s.turns < s.agent.maxTurns {
+				emptyOutputRetries++
+				s.messages = s.messages[:len(s.messages)-1]
+				s.logger.WarnCtx(
+					ctx,
+					"retrying turn: structured output expected but got empty text",
+					log.Int("turn", s.turns),
+					log.Int("retry", emptyOutputRetries),
+					log.Int("output_tokens", resp.Usage.OutputTokens),
+				)
+				continue
+			}
+			emptyOutputRetries = 0
+
 			if err := runOutputGuardrails(ctx, s.agent, resp.Message); err != nil {
 				return s.finishRun(ctx, nil, err)
 			}
@@ -354,6 +467,7 @@ func coreLoop(ctx context.Context, startAgent *Agent, inputMessages []llm.Messag
 
 		case llm.FinishReasonToolCalls:
 			s.toolUsedInRun = true
+			emptyOutputRetries = 0
 
 			s.logger.InfoCtx(
 				ctx,
@@ -442,7 +556,8 @@ func coreLoop(ctx context.Context, startAgent *Agent, inputMessages []llm.Messag
 
 			if isFinal {
 				s.messages = append(
-					s.messages, llm.Message{
+					s.messages,
+					llm.Message{
 						Role:  llm.RoleAssistant,
 						Parts: []llm.Part{llm.TextPart{Text: finalOutput}},
 					},
@@ -852,12 +967,24 @@ func executeSingleTool(
 	emitHook(agent, func(h RunHooks) { h.OnToolEnd(ctx, agent, tool, result, nil) })
 	emitAgentHook(agent, func(h AgentHooks) { h.OnToolEnd(ctx, agent, tool, result) })
 
-	logger.InfoCtx(
-		ctx,
-		"tool execution completed",
-		log.String("tool", tool.Name()),
-		log.Bool("is_error", result.IsError),
-	)
+	if result.IsError {
+		content := result.Content
+		if len(content) > 200 {
+			content = content[:200] + "... (truncated)"
+		}
+		logger.WarnCtx(
+			ctx,
+			"tool returned error",
+			log.String("tool", tool.Name()),
+			log.String("content", content),
+		)
+	} else {
+		logger.InfoCtx(
+			ctx,
+			"tool execution completed",
+			log.String("tool", tool.Name()),
+		)
+	}
 
 	return result, nil
 }
@@ -1177,4 +1304,19 @@ func emitAgentHook(agent *Agent, fn func(AgentHooks)) {
 	if agent.agentHooks != nil {
 		fn(agent.agentHooks)
 	}
+}
+
+// resolveStructuredFormat returns the structured output request the
+// agent wants enforced on its final turn, or nil if none. An agent can
+// declare structured output through either WithOutputType (typed
+// sub-agents) or a directly-set responseFormat (the RunTyped
+// convenience wrapper).
+func resolveStructuredFormat(a *Agent) *llm.ResponseFormat {
+	if a.responseFormat != nil {
+		return a.responseFormat
+	}
+	if a.outputType != nil {
+		return a.outputType.responseFormat()
+	}
+	return nil
 }
