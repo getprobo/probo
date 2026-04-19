@@ -177,7 +177,7 @@ var trustCenterIDKey = &ctxKey{name: "trust_center_id"}
 
 ## Logging
 
-`go.gearno.de/kit/log` — named, context-aware structured logging with typed fields. **Never log PII, PHI, or other sensitive data** (e.g. emails, names, passwords, tokens, health records). Log opaque identifiers (IDs, request IDs) instead.
+`go.gearno.de/kit/log` — named, context-aware structured logging with typed fields. **Never log PII, PHI, or other sensitive data** (e.g. emails, names, passwords, tokens, health records). Log opaque identifiers (IDs, request IDs) instead. See [`contrib/claude/logging.md`](logging.md) for the full guide (allowed/forbidden data, field helpers, wiring patterns).
 
 ```go
 l.InfoCtx(

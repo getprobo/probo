@@ -10,6 +10,7 @@ Detailed guides for specific subsystems live in `contrib/claude/`:
 - [`contrib/claude/go-worker.md`](contrib/claude/go-worker.md) — Go worker pattern (poll-based, bounded concurrency, FOR UPDATE SKIP LOCKED)
 - [`contrib/claude/gid.md`](contrib/claude/gid.md) — Global identifiers (GID layout, TenantID, entity type registry)
 - [`contrib/claude/coredata.md`](contrib/claude/coredata.md) — Data access layer (Scoper, SQL patterns, filters, order fields, migrations)
+- [`contrib/claude/logging.md`](contrib/claude/logging.md) — Structured logging (PII-free rules, field helpers, logger wiring)
 - [`contrib/claude/graphql.md`](contrib/claude/graphql.md) — Go GraphQL backend (gqlgen, @goModel, connection types, cursor pagination)
 - [`contrib/claude/mcp.md`](contrib/claude/mcp.md) — MCP API patterns (specification.yaml, mcpgen, resolvers, type helpers)
 - [`contrib/claude/cli.md`](contrib/claude/cli.md) — CLI command patterns (cobra, huh prompts, pagination, output formatting)
