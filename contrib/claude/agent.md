@@ -1,4 +1,4 @@
-# pkg/agent
+# Agent (`pkg/agent`)
 
 LLM agent orchestration framework.
 

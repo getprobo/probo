@@ -5,6 +5,8 @@ CLI commands use [cobra](https://github.com/spf13/cobra) with `pkg/cmd/cmdutil.F
 ## Directory structure
 
 ```
+cmd/prb/main.go                           # Binary entry point
+pkg/cmd/root/                             # Root command, registers all subcommands
 pkg/cmd/<resource>/<resource>.go          # Group command, wires verbs
 pkg/cmd/<resource>/list/list.go           # List verb
 pkg/cmd/<resource>/create/create.go       # Create verb
@@ -14,6 +16,7 @@ pkg/cmd/<resource>/delete/delete.go       # Delete verb
 pkg/cmd/cmdutil/                          # Factory, flags, output helpers
 pkg/cmd/iostreams/                        # Terminal I/O abstraction
 pkg/cli/api/                              # GraphQL client, pagination
+pkg/cli/config/                           # Config file management (hosts, tokens, default org)
 ```
 
 Register group commands in `pkg/cmd/root/root.go` with `cmd.AddCommand()`.

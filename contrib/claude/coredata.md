@@ -2,6 +2,9 @@
 
 All raw SQL lives in `pkg/coredata` — never in service, handler, or resolver packages. One file per entity, with companion `*_filter.go` and `*_order_field.go` files when needed.
 
+- Database: `go.gearno.de/kit/pg`
+- UUID: `go.gearno.de/crypto/uuid` (never use `github.com/google/uuid`)
+
 ## Entity struct pattern
 
 Every entity uses `gid.GID` for its ID, `db` tags for pgx mapping, and `CreatedAt`/`UpdatedAt` timestamps. The `tenant_id` column exists in the database but is **never** stored on the Go struct — it is injected at query time via `Scoper`.
