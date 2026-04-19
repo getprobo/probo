@@ -156,9 +156,11 @@ func (f *AssetFilter) SQLFragment() string {
     if f.snapshotID == nil {
         return "TRUE"
     }
+
     if *f.snapshotID == nil {
         return "snapshot_id IS NULL"
     }
+
     return "snapshot_id = @filter_snapshot_id"
 }
 
@@ -166,6 +168,7 @@ func (f *AssetFilter) SQLArguments() pgx.NamedArgs {
     if f.snapshotID == nil || *f.snapshotID == nil {
         return pgx.NamedArgs{}
     }
+
     return pgx.NamedArgs{"filter_snapshot_id": **f.snapshotID}
 }
 ```
@@ -208,4 +211,3 @@ Each entity gets a unique `uint16` constant in `entity_type_reg.go`. **Never reu
 3. **Order field file** (`entity_order_field.go`) — order field type, constants, `Column`, `IsValid`, marshaling
 4. **Entity type constant** — add to `entity_type_reg.go` and `NewEntityFromID`
 5. **Migration** — `YYYYMMDDTHHMMSSZ.sql` with CREATE TABLE
-
