@@ -12,10 +12,6 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { useCallback, useState } from "react";
-import { type PreloadedQuery, useMutation, usePreloadedQuery } from "react-relay";
-import { graphql } from "relay-runtime";
-
 import { formatError } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
@@ -28,6 +24,9 @@ import {
   IconUserCircle,
   useToast,
 } from "@probo/ui";
+import { useCallback, useState } from "react";
+import { type PreloadedQuery, useMutation, usePreloadedQuery } from "react-relay";
+import { graphql } from "relay-runtime";
 
 import type { ConsentPageMutation } from "#/__generated__/iam/ConsentPageMutation.graphql";
 import type { ConsentPageQuery } from "#/__generated__/iam/ConsentPageQuery.graphql";
