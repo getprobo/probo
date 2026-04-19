@@ -17,6 +17,7 @@ package statelesstoken
 import (
 	"crypto/hmac"
 	"crypto/sha256"
+	"crypto/subtle"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -133,7 +134,7 @@ func ValidateToken[T any](secret string, tokenType string, tokenString string) (
 	h.Write([]byte(encodedPayload))
 	expectedSignature := base64.RawURLEncoding.EncodeToString(h.Sum(nil))
 
-	if providedSignature != expectedSignature {
+	if subtle.ConstantTimeCompare([]byte(providedSignature), []byte(expectedSignature)) != 1 {
 		return nil, &ErrInvalidToken{message: "invalid token signature"}
 	}
 
