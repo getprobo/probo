@@ -31,12 +31,22 @@ export function CodeSnippets() {
 ></script>`;
 
   const handleCopy = () => {
-    void navigator.clipboard.writeText(code);
-    toast({
-      title: __("Copied"),
-      description: __("Code copied to clipboard"),
-      variant: "success",
-    });
+    navigator.clipboard.writeText(code).then(
+      () => {
+        toast({
+          title: __("Copied"),
+          description: __("Code copied to clipboard"),
+          variant: "success",
+        });
+      },
+      () => {
+        toast({
+          title: __("Error"),
+          description: __("Failed to copy to clipboard"),
+          variant: "error",
+        });
+      },
+    );
   };
 
   return (

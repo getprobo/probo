@@ -67,12 +67,14 @@ const createMutation = graphql`
 interface CategoryDialogProps {
   cookieBannerId: string;
   connectionId: string;
+  nextRank: number;
   onOpenChange: (open: boolean) => void;
 }
 
 export function CategoryDialog({
   cookieBannerId,
   connectionId,
+  nextRank,
   onOpenChange,
 }: CategoryDialogProps) {
   const { __ } = useTranslate();
@@ -93,7 +95,7 @@ export function CategoryDialog({
           name,
           description,
           required: false,
-          rank: 0,
+          rank: nextRank,
         },
         connections: [connectionId],
       },

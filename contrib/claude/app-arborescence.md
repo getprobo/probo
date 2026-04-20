@@ -326,16 +326,10 @@ pages/organizations/vendors/
   VendorsPageLoader.tsx            # lazy entry — providers + Suspense + query loader
   VendorsPage.tsx                  # page component (usePreloadedQuery)
   VendorsPageSkeleton.tsx          # loading fallback
-<<<<<<< HEAD
-  VendorDetailPageLoader.tsx       # lazy entry for detail view
-  VendorDetailPage.tsx             # detail page component
-  VendorDetailPageSkeleton.tsx     # detail loading fallback
-=======
   VendorDetailLayoutLoader.tsx     # lazy entry for detail layout
   VendorDetailLayout.tsx           # layout — breadcrumbs, tabs, <Outlet />
   VendorDetailLayoutSkeleton.tsx   # detail loading fallback
   NewVendorPage.tsx                # mutation-only page — default export, wraps itself in the Relay provider
->>>>>>> 4dcc034f7 (Update contrib guides)
   _components/                     # sub-components used only by vendor pages
     VendorContactRow.tsx
     VendorRiskSummary.tsx

@@ -123,7 +123,15 @@ export function CategorySection({ categoryKey }: CategorySectionProps) {
           ...input,
         },
       },
-      onCompleted() {
+      onCompleted(_response, errors) {
+        if (errors?.length) {
+          toast({
+            title: __("Error"),
+            description: errors[0].message,
+            variant: "error",
+          });
+          return;
+        }
         toast({
           title: __("Success"),
           description: __("Category updated"),
@@ -169,6 +177,7 @@ export function CategorySection({ categoryKey }: CategorySectionProps) {
 
   const handleSaveEditCookie = () => {
     if (editingCookieIndex === null) return;
+    if (!cookieForm.name.trim()) return;
     const newCookies = category.cookies.map((c, i) =>
       i === editingCookieIndex
         ? { ...cookieForm }
