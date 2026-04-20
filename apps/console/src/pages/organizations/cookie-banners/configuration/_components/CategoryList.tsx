@@ -14,7 +14,7 @@
 
 import { formatError, type GraphQLError } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
-import { Badge, Button, Card, IconArrowDown, IconArrowUp, useToast } from "@probo/ui";
+import { Badge, Button, Card, IconArrowDown, IconArrowUp, useConfirm, useToast } from "@probo/ui";
 import { useState } from "react";
 import { useFragment, useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
@@ -87,6 +87,7 @@ interface CategoryListProps {
 export function CategoryList({ cookieBannerKey }: CategoryListProps) {
   const { __ } = useTranslate();
   const { toast } = useToast();
+  const confirm = useConfirm();
   const [showCreateDialog, setShowCreateDialog] = useState(false);
 
   const banner = useFragment(categoryListFragment, cookieBannerKey);
@@ -98,19 +99,35 @@ export function CategoryList({ cookieBannerKey }: CategoryListProps) {
 
   const sorted = [...categories].sort((a, b) => a.rank - b.rank);
 
-  const handleDelete = (categoryId: string) => {
-    deleteCategory({
-      variables: {
-        input: { cookieCategoryId: categoryId },
-        connections: [connectionId],
+  const handleDelete = (categoryId: string, categoryName: string) => {
+    confirm(
+      () =>
+        new Promise<void>((resolve) => {
+          deleteCategory({
+            variables: {
+              input: { cookieCategoryId: categoryId },
+              connections: [connectionId],
+            },
+            onCompleted(_, errors) {
+              if (errors?.length) {
+                toast({ title: __("Error"), description: errors[0].message, variant: "error" });
+              } else {
+                toast({ title: __("Success"), description: __("Category deleted"), variant: "success" });
+              }
+              resolve();
+            },
+            onError(error) {
+              toast({ title: __("Error"), description: formatError(__("Failed to delete category"), error as GraphQLError), variant: "error" });
+              resolve();
+            },
+          });
+        }),
+      {
+        message: __("Are you sure you want to delete the category \"%s\"? Any cookies in this category will be moved to Uncategorised.").replace("%s", categoryName),
+        variant: "danger",
+        label: __("Delete"),
       },
-      onCompleted() {
-        toast({ title: __("Success"), description: __("Category deleted"), variant: "success" });
-      },
-      onError(error) {
-        toast({ title: __("Error"), description: formatError(__("Failed to delete category"), error as GraphQLError), variant: "error" });
-      },
-    });
+    );
   };
 
   const handleMoveUp = (index: number) => {
@@ -181,7 +198,7 @@ export function CategoryList({ cookieBannerKey }: CategoryListProps) {
                   <Button
                     variant="danger"
                     className="h-6 px-2 text-xs"
-                    onClick={() => handleDelete(category.id)}
+                    onClick={() => handleDelete(category.id, category.name)}
                   >
                     {__("Delete")}
                   </Button>

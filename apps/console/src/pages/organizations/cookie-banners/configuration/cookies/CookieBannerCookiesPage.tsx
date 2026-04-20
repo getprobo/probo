@@ -12,12 +12,14 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+import { formatError, type GraphQLError } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
-import { Button, Card, IconPlusSmall } from "@probo/ui";
+import { Button, Card, IconPlusSmall, useConfirm, useToast } from "@probo/ui";
 import { useState } from "react";
-import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
+import { type PreloadedQuery, useMutation, usePreloadedQuery } from "react-relay";
 import { graphql } from "relay-runtime";
 
+import type { CookieBannerCookiesPageDeleteMutation } from "#/__generated__/core/CookieBannerCookiesPageDeleteMutation.graphql";
 import type { CookieBannerCookiesPageQuery } from "#/__generated__/core/CookieBannerCookiesPageQuery.graphql";
 
 import { CategoryDialog } from "../_components/CategoryDialog";
@@ -38,9 +40,30 @@ export const cookieBannerCookiesPageQuery = graphql`
             node {
               id
               rank
+              name
+              kind
               ...CategorySectionFragment
             }
           }
+        }
+      }
+    }
+  }
+`;
+
+const deleteCategoryMutation = graphql`
+  mutation CookieBannerCookiesPageDeleteMutation(
+    $input: DeleteCookieCategoryInput!
+    $connections: [ID!]!
+  ) {
+    deleteCookieCategory(input: $input) {
+      deletedCookieCategoryId @deleteEdge(connections: $connections)
+      cookieBanner {
+        id
+        latestVersion {
+          id
+          version
+          state
         }
       }
     }
@@ -55,6 +78,8 @@ export default function CookieBannerCookiesPage({
   queryRef,
 }: CookieBannerCookiesPageProps) {
   const { __ } = useTranslate();
+  const { toast } = useToast();
+  const confirm = useConfirm();
   const data = usePreloadedQuery(cookieBannerCookiesPageQuery, queryRef);
 
   if (data.node.__typename !== "CookieBanner") {
@@ -66,7 +91,56 @@ export default function CookieBannerCookiesPage({
   const categories = banner.categories.edges.map(e => e.node);
   const sorted = [...categories].sort((a, b) => a.rank - b.rank);
 
+  const [deleteCategory]
+    = useMutation<CookieBannerCookiesPageDeleteMutation>(deleteCategoryMutation);
+
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+
+  const handleDeleteCategory = (categoryId: string, categoryName: string) => {
+    confirm(
+      () =>
+        new Promise<void>((resolve) => {
+          deleteCategory({
+            variables: {
+              input: { cookieCategoryId: categoryId },
+              connections: [connectionId],
+            },
+            onCompleted(_, errors) {
+              if (errors?.length) {
+                toast({
+                  title: __("Error"),
+                  description: errors[0].message,
+                  variant: "error",
+                });
+              } else {
+                toast({
+                  title: __("Success"),
+                  description: __("Category deleted"),
+                  variant: "success",
+                });
+              }
+              resolve();
+            },
+            onError(error) {
+              toast({
+                title: __("Error"),
+                description: formatError(
+                  __("Failed to delete category"),
+                  error as GraphQLError,
+                ),
+                variant: "error",
+              });
+              resolve();
+            },
+          });
+        }),
+      {
+        message: __("Are you sure you want to delete the category \"%s\"? Any cookies in this category will be moved to Uncategorised.").replace("%s", categoryName),
+        variant: "danger",
+        label: __("Delete"),
+      },
+    );
+  };
 
   return (
     <div className="space-y-6">
@@ -85,7 +159,15 @@ export default function CookieBannerCookiesPage({
       )}
 
       {sorted.map(category => (
-        <CategorySection key={category.id} categoryKey={category} />
+        <CategorySection
+          key={category.id}
+          categoryKey={category}
+          onDelete={
+            category.kind === "NORMAL"
+              ? () => handleDeleteCategory(category.id, category.name)
+              : undefined
+          }
+        />
       ))}
 
       {showCreateDialog && (
