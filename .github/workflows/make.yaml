@@ -216,12 +216,10 @@ jobs:
           echo dev-server > packages/emails/dist/placeholder
       - name: "Generate Go code"
         run: |
-          pids=()
-          go generate ./pkg/server/api/connect/v1 & pids+=($!)
-          go generate ./pkg/server/api/console/v1 & pids+=($!)
-          go generate ./pkg/server/api/trust/v1 & pids+=($!)
-          go generate ./pkg/server/api/mcp/v1 & pids+=($!)
-          for pid in "${pids[@]}"; do wait "$pid"; done
+          go generate ./pkg/server/api/connect/v1
+          go generate ./pkg/server/api/console/v1
+          go generate ./pkg/server/api/trust/v1
+          go generate ./pkg/server/api/mcp/v1
       - name: "Build binaries"
         env:
           CGO_ENABLED: "0"

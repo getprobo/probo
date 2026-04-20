@@ -269,12 +269,14 @@ pkg/server/api/connect/v1/schema/schema.go \
 pkg/server/api/connect/v1/types/types.go: pkg/server/api/connect/v1/gqlgen.yaml pkg/server/api/connect/v1/graphql $(CONNECT_GQL)
 	$(GO_GENERATE) ./pkg/server/api/connect/v1
 
+# gqlgen instances must run sequentially: parallel runs race on the Go build
+# cache and cause gqlgen's Rewriter.getSource() to panic with empty source.
 pkg/server/api/console/v1/schema/schema.go \
-pkg/server/api/console/v1/types/types.go: pkg/server/api/console/v1/gqlgen.yaml pkg/server/api/console/v1/graphql $(CONSOLE_GQL)
+pkg/server/api/console/v1/types/types.go: pkg/server/api/console/v1/gqlgen.yaml pkg/server/api/console/v1/graphql $(CONSOLE_GQL) | pkg/server/api/connect/v1/types/types.go
 	$(GO_GENERATE) ./pkg/server/api/console/v1
 
 pkg/server/api/trust/v1/schema/schema.go \
-pkg/server/api/trust/v1/types/types.go: pkg/server/api/trust/v1/gqlgen.yaml pkg/server/api/trust/v1/graphql $(TRUST_GQL)
+pkg/server/api/trust/v1/types/types.go: pkg/server/api/trust/v1/gqlgen.yaml pkg/server/api/trust/v1/graphql $(TRUST_GQL) | pkg/server/api/console/v1/types/types.go
 	$(GO_GENERATE) ./pkg/server/api/trust/v1
 
 pkg/server/api/mcp/v1/server/server.go \
