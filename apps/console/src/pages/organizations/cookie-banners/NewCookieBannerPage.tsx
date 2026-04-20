@@ -55,7 +55,7 @@ export default function NewCookieBannerPage() {
 
   usePageTitle(__("New Cookie Banner"));
 
-  const [commitMutation, isInFlight]
+  const [createCookieBanner, isCreating]
     = useMutation<NewCookieBannerPageMutation>(createCookieBannerMutation);
 
   const [name, setName] = useState("");
@@ -67,7 +67,7 @@ export default function NewCookieBannerPage() {
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    commitMutation({
+    createCookieBanner({
       variables: {
         input: {
           organizationId,
@@ -162,8 +162,8 @@ export default function NewCookieBannerPage() {
             </div>
           </div>
 
-          <Button type="submit" disabled={isInFlight}>
-            {isInFlight ? __("Creating...") : __("Create Banner")}
+          <Button type="submit" disabled={isCreating}>
+            {isCreating ? __("Creating...") : __("Create Banner")}
           </Button>
         </form>
       </Card>

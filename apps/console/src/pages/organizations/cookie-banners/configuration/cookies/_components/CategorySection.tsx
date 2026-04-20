@@ -95,7 +95,7 @@ export function CategorySection({ categoryKey }: CategorySectionProps) {
   const { __ } = useTranslate();
   const { toast } = useToast();
 
-  const [commitUpdate, isUpdating]
+  const [updateCategory, isUpdating]
     = useMutation<CategorySectionUpdateMutation>(updateCategoryMutation);
 
   const [isEditingCategory, setIsEditingCategory] = useState(false);
@@ -116,7 +116,7 @@ export function CategorySection({ categoryKey }: CategorySectionProps) {
     input: Record<string, unknown>,
     onSuccess?: () => void,
   ) => {
-    commitUpdate({
+    updateCategory({
       variables: {
         input: {
           cookieCategoryId: category.id,

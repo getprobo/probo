@@ -82,7 +82,7 @@ export function CookieDialog({ categories, onOpenChange }: CookieDialogProps) {
   const { toast } = useToast();
   const dialogRef = useDialogRef();
 
-  const [commitUpdate, isUpdating] = useMutation<CookieDialogUpdateMutation>(updateCategoryMutation);
+  const [updateCategory, isUpdating] = useMutation<CookieDialogUpdateMutation>(updateCategoryMutation);
 
   const [categoryId, setCategoryId] = useState(categories[0]?.id ?? "");
   const [name, setName] = useState("");
@@ -101,7 +101,7 @@ export function CookieDialog({ categories, onOpenChange }: CookieDialogProps) {
       description: c.description,
     }));
 
-    commitUpdate({
+    updateCategory({
       variables: {
         input: {
           cookieCategoryId: categoryId,

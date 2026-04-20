@@ -264,7 +264,32 @@ The `@connection(key: "...", filters: [...])` directive on the fragment tells Re
 
 ### `useMutation`
 
-Direct Relay hook for simple cases:
+Direct Relay hook for simple cases.
+
+#### Naming convention
+
+Name the destructured result of `useMutation` after the **graphql tagged-template variable**, dropping the `Mutation` suffix:
+
+| Tagged node variable | Commit function | In-flight boolean |
+|----------------------|-----------------|-------------------|
+| `createCookieBannerMutation` | `createCookieBanner` | `isCreating` or `isCreatingCookieBanner` |
+| `updateBannerMutation` | `updateBanner` | `isUpdating` |
+| `deleteCategoryMutation` | `deleteCategory` | `isDeleting` |
+| `activateMutation` | `activate` | `isActivating` |
+
+**Never** use generic names like `commitMutation`, `commit`, or `isInFlight`.
+
+```tsx
+// Bad
+const [commitMutation, isInFlight] = useMutation<Mutation>(createCookieBannerMutation);
+commitMutation({ variables: { ... } });
+
+// Good
+const [createCookieBanner, isCreating] = useMutation<Mutation>(createCookieBannerMutation);
+createCookieBanner({ variables: { ... } });
+```
+
+#### Examples
 
 ```tsx
 const [deleteVendor] = useMutation<VendorGraphDeleteMutation>(deleteVendorMutation);

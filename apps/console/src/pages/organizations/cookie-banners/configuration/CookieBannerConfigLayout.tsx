@@ -115,15 +115,15 @@ export default function CookieBannerConfigLayout({ queryRef }: CookieBannerConfi
 
   const banner = data.node;
 
-  const [commitActivate, isActivating] = useMutation<CookieBannerConfigLayoutActivateMutation>(activateMutation);
-  const [commitDeactivate, isDeactivating] = useMutation<CookieBannerConfigLayoutDeactivateMutation>(
+  const [activate, isActivating] = useMutation<CookieBannerConfigLayoutActivateMutation>(activateMutation);
+  const [deactivate, isDeactivating] = useMutation<CookieBannerConfigLayoutDeactivateMutation>(
     deactivateMutation,
   );
-  const [commitPublish, isPublishing] = useMutation<CookieBannerConfigLayoutPublishMutation>(publishMutation);
+  const [publish, isPublishing] = useMutation<CookieBannerConfigLayoutPublishMutation>(publishMutation);
 
   const handleToggleState = () => {
     if (banner.state === "ACTIVE") {
-      commitDeactivate({
+      deactivate({
         variables: { input: { cookieBannerId: banner.id } },
         onCompleted() {
           toast({ title: __("Success"), description: __("Banner deactivated"), variant: "success" });
@@ -133,7 +133,7 @@ export default function CookieBannerConfigLayout({ queryRef }: CookieBannerConfi
         },
       });
     } else {
-      commitActivate({
+      activate({
         variables: { input: { cookieBannerId: banner.id } },
         onCompleted() {
           toast({ title: __("Success"), description: __("Banner activated"), variant: "success" });
@@ -146,7 +146,7 @@ export default function CookieBannerConfigLayout({ queryRef }: CookieBannerConfi
   };
 
   const handlePublish = () => {
-    commitPublish({
+    publish({
       variables: { input: { cookieBannerId: banner.id } },
       onCompleted() {
         toast({ title: __("Success"), description: __("Version published"), variant: "success" });

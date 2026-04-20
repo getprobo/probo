@@ -63,7 +63,7 @@ export function BannerSettingsForm({ cookieBannerKey }: BannerSettingsFormProps)
 
   const banner = useFragment(bannerSettingsFormFragment, cookieBannerKey);
 
-  const [commitMutation, isInFlight] = useMutation<BannerSettingsFormMutation>(updateBannerMutation);
+  const [updateBanner, isUpdating] = useMutation<BannerSettingsFormMutation>(updateBannerMutation);
 
   const [name, setName] = useState(banner.name);
   const [origin, setOrigin] = useState(banner.origin);
@@ -74,7 +74,7 @@ export function BannerSettingsForm({ cookieBannerKey }: BannerSettingsFormProps)
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    commitMutation({
+    updateBanner({
       variables: {
         input: {
           cookieBannerId: banner.id,
@@ -131,8 +131,8 @@ export function BannerSettingsForm({ cookieBannerKey }: BannerSettingsFormProps)
             </div>
           </div>
 
-          <Button type="submit" disabled={isInFlight}>
-            {isInFlight ? __("Saving...") : __("Save")}
+          <Button type="submit" disabled={isUpdating}>
+            {isUpdating ? __("Saving...") : __("Save")}
           </Button>
         </form>
       </Card>

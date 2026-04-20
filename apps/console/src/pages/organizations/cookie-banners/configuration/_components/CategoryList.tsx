@@ -102,13 +102,13 @@ export function CategoryList({ cookieBannerKey }: CategoryListProps) {
   const connectionId = banner.categories.__id;
   const categories = banner.categories.edges.map(e => e.node);
 
-  const [commitDelete] = useMutation<CategoryListDeleteMutation>(deleteCategoryMutation);
-  const [commitUpdate] = useMutation<CategoryListUpdateMutation>(updateCategoryMutation);
+  const [deleteCategory] = useMutation<CategoryListDeleteMutation>(deleteCategoryMutation);
+  const [updateCategory] = useMutation<CategoryListUpdateMutation>(updateCategoryMutation);
 
   const sorted = [...categories].sort((a, b) => a.rank - b.rank);
 
   const handleDelete = (categoryId: string) => {
-    commitDelete({
+    deleteCategory({
       variables: {
         input: { cookieCategoryId: categoryId },
         connections: [connectionId],
@@ -126,13 +126,13 @@ export function CategoryList({ cookieBannerKey }: CategoryListProps) {
     if (index === 0) return;
     const current = sorted[index];
     const above = sorted[index - 1];
-    commitUpdate({
+    updateCategory({
       variables: { input: { cookieCategoryId: current.id, rank: above.rank } },
       onError(error) {
         toast({ title: __("Error"), description: formatError(__("Failed to reorder"), error as GraphQLError), variant: "error" });
       },
     });
-    commitUpdate({
+    updateCategory({
       variables: { input: { cookieCategoryId: above.id, rank: current.rank } },
       onError(error) {
         toast({ title: __("Error"), description: formatError(__("Failed to reorder"), error as GraphQLError), variant: "error" });
@@ -144,13 +144,13 @@ export function CategoryList({ cookieBannerKey }: CategoryListProps) {
     if (index >= sorted.length - 1) return;
     const current = sorted[index];
     const below = sorted[index + 1];
-    commitUpdate({
+    updateCategory({
       variables: { input: { cookieCategoryId: current.id, rank: below.rank } },
       onError(error) {
         toast({ title: __("Error"), description: formatError(__("Failed to reorder"), error as GraphQLError), variant: "error" });
       },
     });
-    commitUpdate({
+    updateCategory({
       variables: { input: { cookieCategoryId: below.id, rank: current.rank } },
       onError(error) {
         toast({ title: __("Error"), description: formatError(__("Failed to reorder"), error as GraphQLError), variant: "error" });

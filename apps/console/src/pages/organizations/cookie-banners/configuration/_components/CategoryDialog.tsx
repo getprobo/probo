@@ -78,7 +78,7 @@ export function CategoryDialog({
   const { __ } = useTranslate();
   const { toast } = useToast();
 
-  const [commitCreate, isCreating] = useMutation<CategoryDialogCreateMutation>(createMutation);
+  const [create, isCreating] = useMutation<CategoryDialogCreateMutation>(createMutation);
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -86,7 +86,7 @@ export function CategoryDialog({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    commitCreate({
+    create({
       variables: {
         input: {
           cookieBannerId,
