@@ -37,7 +37,6 @@ export default function CookieBannerSnippetPage() {
         description={__("Mark scripts, iframes, and other third-party resources with a data-cookie-consent attribute so they only load after the visitor grants consent for the corresponding category. Replace src with data-src (or href with data-href) to prevent the browser from loading the resource before consent is given.")}
       >
         <div className="space-y-4">
-          <h4 className="text-sm font-medium">{__("Scripts")}</h4>
           <Card className="border">
             <pre className="overflow-x-auto p-4 text-sm font-mono text-invert bg-accent rounded-lg">
               <code>
@@ -54,65 +53,8 @@ export default function CookieBannerSnippetPage() {
             </pre>
           </Card>
 
-          <h4 className="text-sm font-medium">{__("Inline scripts")}</h4>
-          <Card className="border">
-            <pre className="overflow-x-auto p-4 text-sm font-mono text-invert bg-accent rounded-lg">
-              <code>
-                {`<script
-  type="text/plain"
-  data-cookie-consent="analytics"
-  data-type="text/javascript"
->
-  // This code runs only after consent
-  gtag('config', 'G-XXXXXXX');
-</script>`}
-              </code>
-            </pre>
-          </Card>
-
-          <h4 className="text-sm font-medium">{__("Iframes & embeds")}</h4>
-          <Card className="border">
-            <pre className="overflow-x-auto p-4 text-sm font-mono text-invert bg-accent rounded-lg">
-              <code>
-                {`<iframe
-  data-cookie-consent="marketing"
-  data-src="https://www.youtube.com/embed/VIDEO_ID"
-  width="560"
-  height="315"
-></iframe>`}
-              </code>
-            </pre>
-          </Card>
-
-          <h4 className="text-sm font-medium">{__("Images, video & audio")}</h4>
-          <Card className="border">
-            <pre className="overflow-x-auto p-4 text-sm font-mono text-invert bg-accent rounded-lg">
-              <code>
-                {`<img
-  data-cookie-consent="analytics"
-  data-src="https://tracker.example.com/pixel.gif"
-  width="1"
-  height="1"
-/>`}
-              </code>
-            </pre>
-          </Card>
-
-          <h4 className="text-sm font-medium">{__("Stylesheets")}</h4>
-          <Card className="border">
-            <pre className="overflow-x-auto p-4 text-sm font-mono text-invert bg-accent rounded-lg">
-              <code>
-                {`<link
-  rel="stylesheet"
-  data-cookie-consent="marketing"
-  data-href="https://widgets.example.com/styles.css"
-/>`}
-              </code>
-            </pre>
-          </Card>
-
           <p className="text-sm text-txt-secondary">
-            {__("Supported elements: script, iframe, img, video, audio, embed, object, and link. The data-cookie-consent value must match a category name configured in your banner settings.")}
+            {__("The same approach works for iframes, images, stylesheets, and other elements. See our documentation for the full list of supported elements and detailed integration guides.")}
           </p>
         </div>
       </Step>
