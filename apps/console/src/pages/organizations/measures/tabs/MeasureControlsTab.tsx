@@ -48,7 +48,6 @@ export const controlsFragment = graphql`
       __id
       edges {
         node {
-          id
           ...LinkedControlsCardFragment
         }
       }

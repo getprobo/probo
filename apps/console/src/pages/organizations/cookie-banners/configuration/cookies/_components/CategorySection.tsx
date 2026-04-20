@@ -43,7 +43,6 @@ export const categorySectionFragment = graphql`
     name
     description
     required
-    rank
     cookies {
       name
       duration
