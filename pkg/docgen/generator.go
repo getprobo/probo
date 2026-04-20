@@ -291,6 +291,7 @@ type (
 		Justification        string
 		Implemented          string
 		NotImplJustification string
+		MaturityLevel        string
 		Regulatory           string
 		Contractual          string
 		BestPractice         string
@@ -303,6 +304,27 @@ func BoolLabel(v bool) string {
 		return "Yes"
 	}
 	return "No"
+}
+
+func MaturityLabel(l *coredata.ControlMaturityLevel) string {
+	if l == nil {
+		return "Not set"
+	}
+	switch *l {
+	case coredata.ControlMaturityLevelNone:
+		return "0 - None"
+	case coredata.ControlMaturityLevelInitial:
+		return "1 - Initial"
+	case coredata.ControlMaturityLevelManaged:
+		return "2 - Managed"
+	case coredata.ControlMaturityLevelDefined:
+		return "3 - Defined"
+	case coredata.ControlMaturityLevelQuantitativelyManaged:
+		return "4 - Quantitatively Managed"
+	case coredata.ControlMaturityLevelOptimizing:
+		return "5 - Optimizing"
+	}
+	return "Not set"
 }
 
 const (

@@ -40,6 +40,7 @@ type (
 		BestPractice                bool
 		Implemented                 coredata.ControlImplementationState
 		NotImplementedJustification *string
+		MaturityLevel               *coredata.ControlMaturityLevel
 	}
 
 	UpdateControlRequest struct {
@@ -50,6 +51,7 @@ type (
 		BestPractice                *bool
 		Implemented                 *coredata.ControlImplementationState
 		NotImplementedJustification **string
+		MaturityLevel               **coredata.ControlMaturityLevel
 	}
 )
 
@@ -72,6 +74,21 @@ func (ccr *CreateControlRequest) Validate() error {
 		}),
 	)
 
+	if ccr.MaturityLevel != nil {
+		v.Check(
+			*ccr.MaturityLevel,
+			"maturity_level",
+			validator.OneOfSlice([]string{
+				string(coredata.ControlMaturityLevelNone),
+				string(coredata.ControlMaturityLevelInitial),
+				string(coredata.ControlMaturityLevelManaged),
+				string(coredata.ControlMaturityLevelDefined),
+				string(coredata.ControlMaturityLevelQuantitativelyManaged),
+				string(coredata.ControlMaturityLevelOptimizing),
+			}),
+		)
+	}
+
 	return v.Error()
 }
 
@@ -91,6 +108,21 @@ func (ucr *UpdateControlRequest) Validate() error {
 			string(coredata.ControlImplementationStateNotImplemented),
 		}),
 	)
+
+	if ucr.MaturityLevel != nil && *ucr.MaturityLevel != nil {
+		v.Check(
+			**ucr.MaturityLevel,
+			"maturity_level",
+			validator.OneOfSlice([]string{
+				string(coredata.ControlMaturityLevelNone),
+				string(coredata.ControlMaturityLevelInitial),
+				string(coredata.ControlMaturityLevelManaged),
+				string(coredata.ControlMaturityLevelDefined),
+				string(coredata.ControlMaturityLevelQuantitativelyManaged),
+				string(coredata.ControlMaturityLevelOptimizing),
+			}),
+		)
+	}
 
 	return v.Error()
 }
@@ -868,6 +900,7 @@ func (s ControlService) Create(
 		BestPractice:                req.BestPractice,
 		Implemented:                 req.Implemented,
 		NotImplementedJustification: notImplementedJustification,
+		MaturityLevel:               req.MaturityLevel,
 		CreatedAt:                   now,
 		UpdatedAt:                   now,
 	}
@@ -983,6 +1016,10 @@ func (s ControlService) Update(
 
 			if req.NotImplementedJustification != nil && control.Implemented == coredata.ControlImplementationStateNotImplemented {
 				control.NotImplementedJustification = *req.NotImplementedJustification
+			}
+
+			if req.MaturityLevel != nil {
+				control.MaturityLevel = *req.MaturityLevel
 			}
 
 			control.UpdatedAt = time.Now()

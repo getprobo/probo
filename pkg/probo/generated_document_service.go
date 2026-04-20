@@ -315,6 +315,11 @@ func (s *GeneratedDocumentService) buildStatementOfApplicabilityDocumentData(
 			riskAssessment = docgen.BoolLabel(hasRisk)
 		}
 
+		maturityLevel := "-"
+		if applicable {
+			maturityLevel = docgen.MaturityLabel(control.MaturityLevel)
+		}
+
 		rows = append(rows, docgen.SOARow{
 			FrameworkName:        framework.Name,
 			ControlSection:       control.SectionTitle,
@@ -323,6 +328,7 @@ func (s *GeneratedDocumentService) buildStatementOfApplicabilityDocumentData(
 			Justification:        justification,
 			Implemented:          implemented,
 			NotImplJustification: notImplJustification,
+			MaturityLevel:        maturityLevel,
 			Regulatory:           regulatory,
 			Contractual:          contractual,
 			BestPractice:         bestPractice,

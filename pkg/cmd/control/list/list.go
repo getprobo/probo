@@ -37,6 +37,8 @@ query($id: ID!, $first: Int, $after: CursorKey, $orderBy: ControlOrder, $filter:
             name
             description
             bestPractice
+            implemented
+            maturityLevel
           }
         }
         pageInfo {
@@ -50,11 +52,13 @@ query($id: ID!, $first: Int, $after: CursorKey, $orderBy: ControlOrder, $filter:
 `
 
 type control struct {
-	ID           string  `json:"id"`
-	SectionTitle string  `json:"sectionTitle"`
-	Name         string  `json:"name"`
-	Description  *string `json:"description"`
-	BestPractice bool    `json:"bestPractice"`
+	ID            string  `json:"id"`
+	SectionTitle  string  `json:"sectionTitle"`
+	Name          string  `json:"name"`
+	Description   *string `json:"description"`
+	BestPractice  bool    `json:"bestPractice"`
+	Implemented   string  `json:"implemented"`
+	MaturityLevel *string `json:"maturityLevel"`
 }
 
 func NewCmdList(f *cmdutil.Factory) *cobra.Command {
@@ -163,15 +167,20 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				if c.BestPractice {
 					bp = "Yes"
 				}
+				maturity := "-"
+				if c.MaturityLevel != nil {
+					maturity = *c.MaturityLevel
+				}
 				rows = append(rows, []string{
 					c.ID,
 					c.SectionTitle,
 					c.Name,
 					bp,
+					maturity,
 				})
 			}
 
-			t := cmdutil.NewTable("ID", "SECTION", "NAME", "BEST PRACTICE").Rows(rows...)
+			t := cmdutil.NewTable("ID", "SECTION", "NAME", "BEST PRACTICE", "MATURITY").Rows(rows...)
 
 			_, _ = fmt.Fprintln(f.IOStreams.Out, t)
 

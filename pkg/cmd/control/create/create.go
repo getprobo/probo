@@ -35,11 +35,21 @@ mutation($input: CreateControlInput!) {
         bestPractice
         implemented
         notImplementedJustification
+        maturityLevel
       }
     }
   }
 }
 `
+
+var maturityLevelValues = []string{
+	"NONE",
+	"INITIAL",
+	"MANAGED",
+	"DEFINED",
+	"QUANTITATIVELY_MANAGED",
+	"OPTIMIZING",
+}
 
 type createResponse struct {
 	CreateControl struct {
@@ -52,6 +62,7 @@ type createResponse struct {
 				BestPractice                bool    `json:"bestPractice"`
 				Implemented                 string  `json:"implemented"`
 				NotImplementedJustification *string `json:"notImplementedJustification"`
+				MaturityLevel               *string `json:"maturityLevel"`
 			} `json:"node"`
 		} `json:"controlEdge"`
 	} `json:"createControl"`
@@ -66,6 +77,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 		flagBestPractice                bool
 		flagNotImplemented              bool
 		flagNotImplementedJustification string
+		flagMaturityLevel               string
 	)
 
 	cmd := &cobra.Command{
@@ -114,6 +126,13 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				input["notImplementedJustification"] = flagNotImplementedJustification
 			}
 
+			if flagMaturityLevel != "" {
+				if err := cmdutil.ValidateEnum("maturity-level", flagMaturityLevel, maturityLevelValues); err != nil {
+					return err
+				}
+				input["maturityLevel"] = flagMaturityLevel
+			}
+
 			data, err := client.Do(
 				createMutation,
 				map[string]any{"input": input},
@@ -146,6 +165,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().BoolVar(&flagBestPractice, "best-practice", false, "Mark as best practice")
 	cmd.Flags().BoolVar(&flagNotImplemented, "not-implemented", false, "Mark as not implemented")
 	cmd.Flags().StringVar(&flagNotImplementedJustification, "not-implemented-justification", "", "Justification for non-implementation")
+	cmd.Flags().StringVar(&flagMaturityLevel, "maturity-level", "", "CMMI maturity level (NONE, INITIAL, MANAGED, DEFINED, QUANTITATIVELY_MANAGED, OPTIMIZING)")
 
 	_ = cmd.MarkFlagRequired("framework")
 	_ = cmd.MarkFlagRequired("section-title")

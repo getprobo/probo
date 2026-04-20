@@ -51,6 +51,11 @@ export {
   documentWriteModes,
   getDocumentWriteModeLabel,
 } from "./documents";
+export {
+  controlMaturityLevels,
+  getControlMaturityLevelLabel,
+  type ControlMaturityLevel,
+} from "./controls";
 export { getAssetTypeVariant } from "./assets";
 export {
   getSnapshotTypeLabel,

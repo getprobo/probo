@@ -28,6 +28,7 @@
             { "type": "tableHeader", "attrs": { "colspan": 1, "rowspan": 2, "colwidth": [130] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Justification for non-applicability", "marks": [{ "type": "bold" }] }] }] },
             { "type": "tableHeader", "attrs": { "colspan": 1, "rowspan": 2, "colwidth": [70] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Implemented", "marks": [{ "type": "bold" }] }] }] },
             { "type": "tableHeader", "attrs": { "colspan": 1, "rowspan": 2, "colwidth": [110] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Justification for non-implementation", "marks": [{ "type": "bold" }] }] }] },
+            { "type": "tableHeader", "attrs": { "colspan": 1, "rowspan": 2, "colwidth": [90] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Maturity", "marks": [{ "type": "bold" }] }] }] },
             { "type": "tableHeader", "attrs": { "colspan": 4, "rowspan": 1 }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Justification for inclusion", "marks": [{ "type": "bold" }] }] }] }
           ]
         },
@@ -49,6 +50,7 @@
             { "type": "tableCell", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [130] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": {{json .Justification}} }] }] },
             { "type": "tableCell", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [70] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": {{json .Implemented}} }] }] },
             { "type": "tableCell", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [110] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": {{json .NotImplJustification}} }] }] },
+            { "type": "tableCell", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [90] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": {{json .MaturityLevel}} }] }] },
             { "type": "tableCell", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [60] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": {{json .Regulatory}} }] }] },
             { "type": "tableCell", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [60] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": {{json .Contractual}} }] }] },
             { "type": "tableCell", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [60] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": {{json .BestPractice}} }] }] },
@@ -123,6 +125,28 @@
     {
       "type": "paragraph",
       "content": [{ "type": "text", "text": "Provides the rationale when a control is not implemented. This field is empty for implemented controls or when the control is not applicable." }]
+    },
+    {
+      "type": "heading",
+      "attrs": { "level": 3 },
+      "content": [{ "type": "text", "text": "Maturity" }]
+    },
+    {
+      "type": "paragraph",
+      "content": [{ "type": "text", "text": "Maturity level of the control, expressed on a CMMI 0-5 scale (Capability Maturity Model Integration). This is a best practice for ISO 27001 clause 9.1 (effectiveness measurement) and is required by frameworks such as HITRUST CSF." }]
+    },
+    {
+      "type": "bulletList",
+      "content": [
+        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "0 - None: ", "marks": [{ "type": "bold" }] }, { "type": "text", "text": "the control is not implemented or does not exist." }] }] },
+        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "1 - Initial: ", "marks": [{ "type": "bold" }] }, { "type": "text", "text": "ad-hoc and unpredictable, depending on individual effort." }] }] },
+        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "2 - Managed: ", "marks": [{ "type": "bold" }] }, { "type": "text", "text": "the process is planned and tracked." }] }] },
+        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "3 - Defined: ", "marks": [{ "type": "bold" }] }, { "type": "text", "text": "documented, standardized and integrated into the organization." }] }] },
+        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "4 - Quantitatively Managed: ", "marks": [{ "type": "bold" }] }, { "type": "text", "text": "measured, controlled with metrics and statistical objectives." }] }] },
+        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "5 - Optimizing: ", "marks": [{ "type": "bold" }] }, { "type": "text", "text": "continuous improvement based on quantitative analysis." }] }] },
+        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Not set: ", "marks": [{ "type": "bold" }] }, { "type": "text", "text": "the maturity level has not yet been assessed." }] }] },
+        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "-: ", "marks": [{ "type": "bold" }] }, { "type": "text", "text": "Not applicable (control is not applicable)." }] }] }
+      ]
     },
     {
       "type": "heading",

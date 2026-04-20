@@ -12,7 +12,11 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { formatError, type GraphQLError } from "@probo/helpers";
+import {
+  formatError,
+  getControlMaturityLevelLabel,
+  type GraphQLError,
+} from "@probo/helpers";
 import { promisifyMutation } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import {
@@ -390,6 +394,14 @@ export default function FrameworkControlPage({ queryRef }: Props) {
                 <div className="text-sm mt-0.5 whitespace-pre-wrap">{control.notImplementedJustification}</div>
               </div>
             )}
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-txt-secondary">{__("Maturity level")}</span>
+              <Badge variant="neutral" size="sm">
+                {control.maturityLevel
+                  ? getControlMaturityLevelLabel(__, control.maturityLevel)
+                  : __("Not set")}
+              </Badge>
+            </div>
           </div>
         </Card>
         <div className="mb-4">

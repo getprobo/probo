@@ -21,6 +21,7 @@ import {
   DialogContent,
   DialogFooter,
   Input,
+  Select,
   Textarea,
   useDialogRef,
 } from "@probo/ui";
@@ -31,6 +32,10 @@ import { graphql } from "relay-runtime";
 import { z } from "zod";
 
 import type { FrameworkControlDialogFragment$key } from "#/__generated__/core/FrameworkControlDialogFragment.graphql";
+import {
+  ControlMaturityLevelOptions,
+  MATURITY_LEVEL_UNSET,
+} from "#/components/form/ControlMaturityLevelOptions";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 
@@ -50,6 +55,7 @@ const controlFragment = graphql`
         bestPractice
         implemented
         notImplementedJustification
+        maturityLevel
     }
 `;
 
@@ -85,6 +91,15 @@ const schema = z.object({
   bestPractice: z.boolean(),
   implemented: z.enum(["IMPLEMENTED", "NOT_IMPLEMENTED"]),
   notImplementedJustification: z.string().optional().nullable(),
+  maturityLevel: z.enum([
+    MATURITY_LEVEL_UNSET,
+    "NONE",
+    "INITIAL",
+    "MANAGED",
+    "DEFINED",
+    "QUANTITATIVELY_MANAGED",
+    "OPTIMIZING",
+  ]),
 });
 
 export function FrameworkControlDialog(props: Props) {
@@ -103,7 +118,7 @@ export function FrameworkControlDialog(props: Props) {
     },
   );
 
-  const defaultValues = useMemo(
+  const defaultValues = useMemo<z.infer<typeof schema>>(
     () => ({
       name: frameworkControl?.name ?? "",
       description: frameworkControl?.description ?? "",
@@ -111,6 +126,7 @@ export function FrameworkControlDialog(props: Props) {
       bestPractice: frameworkControl?.bestPractice ?? true,
       implemented: frameworkControl?.implemented ?? "IMPLEMENTED",
       notImplementedJustification: frameworkControl?.notImplementedJustification ?? "",
+      maturityLevel: frameworkControl?.maturityLevel ?? MATURITY_LEVEL_UNSET,
     }),
     [frameworkControl],
   );
@@ -126,8 +142,13 @@ export function FrameworkControlDialog(props: Props) {
 
   const bestPracticeValue = watch("bestPractice");
   const implementedValue = watch("implemented");
+  const maturityLevelValue = watch("maturityLevel");
 
   const onSubmit = async (data: z.infer<typeof schema>) => {
+    const maturityLevel = data.maturityLevel === MATURITY_LEVEL_UNSET
+      ? null
+      : data.maturityLevel;
+
     if (frameworkControl) {
       await mutate({
         variables: {
@@ -139,6 +160,7 @@ export function FrameworkControlDialog(props: Props) {
             bestPractice: data.bestPractice,
             implemented: data.implemented,
             notImplementedJustification: data.implemented === "IMPLEMENTED" ? null : (data.notImplementedJustification || null),
+            maturityLevel,
           },
         },
       });
@@ -153,6 +175,7 @@ export function FrameworkControlDialog(props: Props) {
             bestPractice: data.bestPractice ?? true,
             implemented: data.implemented ?? "IMPLEMENTED",
             notImplementedJustification: data.implemented === "IMPLEMENTED" ? null : (data.notImplementedJustification || null),
+            maturityLevel,
           },
           connections: [props.connectionId!],
         },
@@ -226,6 +249,17 @@ export function FrameworkControlDialog(props: Props) {
                 {...register("notImplementedJustification")}
               />
             )}
+            <div className="flex items-center gap-2">
+              <span className="text-sm">{__("Maturity level")}</span>
+              <Select
+                id="maturityLevel"
+                value={maturityLevelValue}
+                onValueChange={value =>
+                  setValue("maturityLevel", value as typeof maturityLevelValue)}
+              >
+                <ControlMaturityLevelOptions />
+              </Select>
+            </div>
           </div>
         </DialogContent>
         <DialogFooter>

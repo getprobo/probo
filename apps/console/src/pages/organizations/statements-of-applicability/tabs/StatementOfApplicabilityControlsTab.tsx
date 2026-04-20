@@ -12,6 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+import { getControlMaturityLevelLabel } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import {
   ActionDropdown,
@@ -87,6 +88,7 @@ export const controlsFragment = graphql`
                         bestPractice
                         implemented
                         notImplementedJustification
+                        maturityLevel
                         regulatory
                         contractual
                         riskAssessment
@@ -151,6 +153,7 @@ export default function StatementOfApplicabilityControlsTab({
     bestPractice: edge.node.control.bestPractice,
     implemented: edge.node.control.implemented,
     notImplementedJustification: edge.node.control.notImplementedJustification,
+    maturityLevel: edge.node.control.maturityLevel,
     regulatory: edge.node.control.regulatory,
     contractual: edge.node.control.contractual,
     riskAssessment: edge.node.control.riskAssessment,
@@ -220,14 +223,15 @@ export default function StatementOfApplicabilityControlsTab({
         <Table className="table-fixed w-full">
           <Thead>
             <Tr>
-              <Th className="w-[10%]">{__("Framework")}</Th>
-              <Th className="w-[20%]">{__("Control")}</Th>
-              <Th className="w-[15%]">{__("Applicability")}</Th>
-              <Th className="w-[15%]">{__("Implemented")}</Th>
-              <Th className="w-[8%]">{__("Regulatory")}</Th>
-              <Th className="w-[8%]">{__("Contractual")}</Th>
-              <Th className="w-[8%]">{__("Best Practice")}</Th>
-              <Th className="w-[8%]">{__("Risk Assessment")}</Th>
+              <Th className="w-[9%]">{__("Framework")}</Th>
+              <Th className="w-[17%]">{__("Control")}</Th>
+              <Th className="w-[12%]">{__("Applicability")}</Th>
+              <Th className="w-[12%]">{__("Implemented")}</Th>
+              <Th className="w-[14%]">{__("Maturity")}</Th>
+              <Th className="w-[7%]">{__("Regulatory")}</Th>
+              <Th className="w-[7%]">{__("Contractual")}</Th>
+              <Th className="w-[7%]">{__("Best Practice")}</Th>
+              <Th className="w-[7%]">{__("Risk Assessment")}</Th>
               {(canUpdate || canDelete) && (
                 <Th className="w-[4%]"></Th>
               )}
@@ -237,7 +241,7 @@ export default function StatementOfApplicabilityControlsTab({
             {linkedControls.length === 0 && (
               <Tr>
                 <Td
-                  colSpan={canUpdate || canDelete ? 9 : 8}
+                  colSpan={canUpdate || canDelete ? 10 : 9}
                   className="text-center text-txt-secondary py-12"
                 >
                   {__("No controls linked")}
@@ -300,6 +304,17 @@ export default function StatementOfApplicabilityControlsTab({
                             </p>
                           )}
                         </div>
+                      )}
+                </Td>
+                <Td>
+                  {control.applicability === false
+                    ? <span className="text-txt-tertiary">-</span>
+                    : (
+                        <Badge variant="neutral" size="sm">
+                          {control.maturityLevel
+                            ? getControlMaturityLevelLabel(__, control.maturityLevel)
+                            : __("Not set")}
+                        </Badge>
                       )}
                 </Td>
                 <Td>

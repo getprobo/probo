@@ -4266,6 +4266,13 @@ components:
             - string
             - "null"
           description: Justification for non-implementation
+        maturity_level:
+          type:
+            - string
+            - "null"
+          enum: [NONE, INITIAL, MANAGED, DEFINED, QUANTITATIVELY_MANAGED, OPTIMIZING, null]
+          description: CMMI 0-5 maturity level of the control
+          go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.ControlMaturityLevel
         created_at:
           type: string
           format: date-time
@@ -4370,6 +4377,13 @@ components:
             - string
             - "null"
           description: Justification for non-implementation
+        maturity_level:
+          type:
+            - string
+            - "null"
+          enum: [NONE, INITIAL, MANAGED, DEFINED, QUANTITATIVELY_MANAGED, OPTIMIZING, null]
+          description: CMMI 0-5 maturity level of the control
+          go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.ControlMaturityLevel
 
     AddControlOutput:
       type: object
@@ -4408,6 +4422,12 @@ components:
         not_implemented_justification:
           type: ["string", "null"]
           description: Justification for non-implementation
+          go.probo.inc/mcpgen/omittable: true
+        maturity_level:
+          type: ["string", "null"]
+          enum: [NONE, INITIAL, MANAGED, DEFINED, QUANTITATIVELY_MANAGED, OPTIMIZING, null]
+          description: CMMI 0-5 maturity level of the control
+          go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.ControlMaturityLevel
           go.probo.inc/mcpgen/omittable: true
 
     UpdateControlOutput:

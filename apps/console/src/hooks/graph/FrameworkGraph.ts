@@ -120,6 +120,7 @@ export const frameworkControlNodeQuery = graphql`
         bestPractice
         implemented
         notImplementedJustification
+        maturityLevel
         canUpdate: permission(action: "core:control:update")
         canDelete: permission(action: "core:control:delete")
         canCreateMeasureMapping: permission(
