@@ -266,6 +266,18 @@ func (s *OrganizationService) UpdateMempership(
 				return NewMembershipNotFoundError(membership.ID)
 			}
 
+			if membership.Role == coredata.MembershipRoleOwner && role != coredata.MembershipRoleOwner {
+				profiles := coredata.MembershipProfiles{}
+				count, err := profiles.CountActiveOwnerByOrganizationID(ctx, tx, scope, organizationID)
+				if err != nil {
+					return fmt.Errorf("cannot count active owners: %w", err)
+				}
+
+				if count <= 1 {
+					return NewLastActiveOwnerError(membershipID)
+				}
+			}
+
 			membership.Role = role
 			membership.UpdatedAt = time.Now()
 
