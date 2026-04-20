@@ -16,9 +16,8 @@ import { useTranslate } from "@probo/i18n";
 import { Card } from "@probo/ui";
 import type { ReactNode } from "react";
 
-import { ThemePreview } from "#/pages/organizations/cookie-banners/configuration/theme/_components/ThemePreview";
-
 import { CodeSnippets } from "./_components/CodeSnippets";
+import { ThemePreview } from "./_components/ThemePreview";
 
 export default function CookieBannerSnippetPage() {
   const { __ } = useTranslate();

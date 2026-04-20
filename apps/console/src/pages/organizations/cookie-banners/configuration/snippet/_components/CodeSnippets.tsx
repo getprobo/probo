@@ -14,7 +14,6 @@
 
 import { useTranslate } from "@probo/i18n";
 import { Button, Card, useToast } from "@probo/ui";
-import { useState } from "react";
 import { useParams } from "react-router";
 
 export function CodeSnippets() {
@@ -24,52 +23,15 @@ export function CodeSnippets() {
 
   const baseUrl = `${window.location.origin}/api/cookie-banner/v1`;
 
-  const tabs = [
-    {
-      label: __("Script Tag"),
-      code: `<script
+  const code = `<script
   src="https://cdn.jsdelivr.net/npm/@probo/cookie-banner/dist/cookie-banner.iife.js"
   data-banner-id="${cookieBannerId}"
   data-base-url="${baseUrl}"
   data-position="bottom-left"
-></script>`,
-    },
-    {
-      label: __("ES Module"),
-      code: `import { registerThemedBanner } from "@probo/cookie-banner/themed-banner";
-
-registerThemedBanner();
-
-// In your HTML or template:
-// <probo-cookie-banner
-//   banner-id="${cookieBannerId}"
-//   base-url="${baseUrl}"
-//   position="bottom-left"
-// ></probo-cookie-banner>`,
-    },
-    {
-      label: __("Headless"),
-      code: `import { registerComponents } from "@probo/cookie-banner";
-
-registerComponents();
-
-// Build your own UI with headless components:
-// <probo-cookie-banner-root banner-id="${cookieBannerId}" base-url="${baseUrl}">
-//   <probo-banner>
-//     <probo-accept-button><button>Accept all</button></probo-accept-button>
-//     <probo-reject-button><button>Reject all</button></probo-reject-button>
-//     <probo-customize-button><button>Customize</button></probo-customize-button>
-//   </probo-banner>
-//   <probo-settings-button position="bottom-left"></probo-settings-button>
-// </probo-cookie-banner-root>`,
-    },
-  ];
-
-  const [activeTab, setActiveTab] = useState(0);
-  const activeCode = tabs[activeTab].code;
+></script>`;
 
   const handleCopy = () => {
-    void navigator.clipboard.writeText(activeCode);
+    void navigator.clipboard.writeText(code);
     toast({
       title: __("Copied"),
       description: __("Code copied to clipboard"),
@@ -78,31 +40,30 @@ registerComponents();
   };
 
   return (
-    <Card className="rounded-lg border">
-      <div className="flex items-center justify-between border-b border-border-low px-1">
-        <div className="flex">
-          {tabs.map((tab, i) => (
-            <button
-              key={tab.label}
-              type="button"
-              onClick={() => setActiveTab(i)}
-              className={`cursor-pointer px-3 py-2.5 text-sm font-light border-b-2 border-border-low -mb-px transition-colors ${
-                i === activeTab
-                  ? "border-border-mid text-foreground font-semibold"
-                  : "border-transparent text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
+    <div className="space-y-3">
+      <Card className="rounded-lg border">
+        <div className="flex items-center justify-end border-b border-border-low px-1 py-1">
+          <Button variant="secondary" onClick={handleCopy}>
+            {__("Copy")}
+          </Button>
         </div>
-        <Button variant="secondary" onClick={handleCopy}>
-          {__("Copy")}
-        </Button>
-      </div>
-      <pre className="overflow-x-auto p-4 text-sm font-mono bg-muted/30 rounded-b-lg text-invert bg-accent">
-        <code>{activeCode}</code>
-      </pre>
-    </Card>
+        <pre className="overflow-x-auto p-4 text-sm font-mono rounded-b-lg text-invert bg-accent">
+          <code>{code}</code>
+        </pre>
+      </Card>
+
+      <p className="text-sm text-txt-secondary">
+        {__("Looking for ES module or headless integration?")}
+        {" "}
+        <a
+          href="https://docs.getprobo.com/guides/cookie-banner"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-txt-primary underline hover:no-underline"
+        >
+          {__("See our documentation for detailed integration guides.")}
+        </a>
+      </p>
+    </div>
   );
 }
