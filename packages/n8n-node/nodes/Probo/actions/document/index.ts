@@ -34,6 +34,10 @@ import * as getAllSignaturesOp from './getAllSignatures.operation';
 import * as requestSignatureOp from './requestSignature.operation';
 import * as cancelSignatureOp from './cancelSignature.operation';
 import * as sendSigningNotificationsOp from './sendSigningNotifications.operation';
+import * as getApprovalQuorumOp from './getApprovalQuorum.operation';
+import * as getAllApprovalQuorumsOp from './getAllApprovalQuorums.operation';
+import * as getApprovalDecisionOp from './getApprovalDecision.operation';
+import * as getAllApprovalDecisionsOp from './getAllApprovalDecisions.operation';
 
 export const description: INodeProperties[] = [
 	{
@@ -90,10 +94,34 @@ export const description: INodeProperties[] = [
 				action: 'Get a document',
 			},
 			{
+				name: 'Get Approval Decision',
+				value: 'getApprovalDecision',
+				description: 'Get an approval decision',
+				action: 'Get an approval decision',
+			},
+			{
+				name: 'Get Approval Quorum',
+				value: 'getApprovalQuorum',
+				description: 'Get an approval quorum',
+				action: 'Get an approval quorum',
+			},
+			{
 				name: 'Get Many',
 				value: 'getAll',
 				description: 'Get many documents',
 				action: 'Get many documents',
+			},
+			{
+				name: 'Get Many Approval Decisions',
+				value: 'getAllApprovalDecisions',
+				description: 'Get many approval decisions for an approval quorum',
+				action: 'Get many approval decisions',
+			},
+			{
+				name: 'Get Many Approval Quorums',
+				value: 'getAllApprovalQuorums',
+				description: 'Get many approval quorums for a document version',
+				action: 'Get many approval quorums',
 			},
 			{
 				name: 'Get Many Signatures',
@@ -197,6 +225,10 @@ export const description: INodeProperties[] = [
 	...requestSignatureOp.description,
 	...cancelSignatureOp.description,
 	...sendSigningNotificationsOp.description,
+	...getApprovalQuorumOp.description,
+	...getAllApprovalQuorumsOp.description,
+	...getApprovalDecisionOp.description,
+	...getAllApprovalDecisionsOp.description,
 ];
 
 export {
@@ -221,4 +253,8 @@ export {
 	requestSignatureOp as requestSignature,
 	cancelSignatureOp as cancelSignature,
 	sendSigningNotificationsOp as sendSigningNotifications,
+	getApprovalQuorumOp as getApprovalQuorum,
+	getAllApprovalQuorumsOp as getAllApprovalQuorums,
+	getApprovalDecisionOp as getApprovalDecision,
+	getAllApprovalDecisionsOp as getAllApprovalDecisions,
 };

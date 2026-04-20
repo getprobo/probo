@@ -82,6 +82,32 @@ components:
           $ref: "#/components/schemas/OrderDirection"
           description: Vendor order direction
 
+    DocumentVersionApprovalQuorumOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/DocumentVersionApprovalQuorumOrderField"
+          description: Order field
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+          description: Order direction
+
+    DocumentVersionApprovalDecisionOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/DocumentVersionApprovalDecisionOrderField"
+          description: Order field
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+          description: Order direction
+
     ProfileOrderBy:
       type: object
       required:
@@ -5164,6 +5190,36 @@ components:
         - PUBLISHED
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.DocumentVersionStatus
 
+    DocumentVersionApprovalQuorumStatus:
+      type: string
+      enum:
+        - PENDING
+        - APPROVED
+        - REJECTED
+        - VOIDED
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.DocumentVersionApprovalQuorumStatus
+
+    DocumentVersionApprovalQuorumOrderField:
+      type: string
+      enum:
+        - CREATED_AT
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.DocumentVersionApprovalQuorumOrderField
+
+    DocumentVersionApprovalDecisionState:
+      type: string
+      enum:
+        - PENDING
+        - APPROVED
+        - REJECTED
+        - VOIDED
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.DocumentVersionApprovalDecisionState
+
+    DocumentVersionApprovalDecisionOrderField:
+      type: string
+      enum:
+        - CREATED_AT
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.DocumentVersionApprovalDecisionOrderField
+
     DocumentStatus:
       type: string
       enum:
@@ -5353,6 +5409,83 @@ components:
             - "null"
           format: date-time
           description: Published timestamp
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Update timestamp
+
+    DocumentVersionApprovalQuorum:
+      type: object
+      required:
+        - id
+        - organization_id
+        - version_id
+        - status
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Approval quorum ID
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        version_id:
+          $ref: "#/components/schemas/GID"
+          description: Document version ID
+        status:
+          $ref: "#/components/schemas/DocumentVersionApprovalQuorumStatus"
+          description: Approval quorum status
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Update timestamp
+
+    DocumentVersionApprovalDecision:
+      type: object
+      required:
+        - id
+        - organization_id
+        - quorum_id
+        - approver_id
+        - state
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Approval decision ID
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        quorum_id:
+          $ref: "#/components/schemas/GID"
+          description: Approval quorum ID
+        approver_id:
+          $ref: "#/components/schemas/GID"
+          description: Approver profile ID
+        state:
+          $ref: "#/components/schemas/DocumentVersionApprovalDecisionState"
+          description: Decision state
+        comment:
+          type:
+            - string
+            - "null"
+          description: Approval or rejection comment
+        decided_at:
+          type:
+            - string
+            - "null"
+          format: date-time
+          description: Decision timestamp
         created_at:
           type: string
           format: date-time
@@ -5875,6 +6008,110 @@ components:
       properties:
         document_version:
           $ref: "#/components/schemas/DocumentVersion"
+
+    ListDocumentVersionApprovalQuorumsInput:
+      type: object
+      required:
+        - document_version_id
+      properties:
+        document_version_id:
+          $ref: "#/components/schemas/GID"
+          description: Document version ID
+        order_by:
+          $ref: "#/components/schemas/DocumentVersionApprovalQuorumOrderBy"
+          description: Order by
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+
+    ListDocumentVersionApprovalQuorumsOutput:
+      type: object
+      required:
+        - approval_quorums
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        approval_quorums:
+          type: array
+          items:
+            $ref: "#/components/schemas/DocumentVersionApprovalQuorum"
+
+    GetDocumentVersionApprovalQuorumInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Approval quorum ID
+
+    GetDocumentVersionApprovalQuorumOutput:
+      type: object
+      required:
+        - approval_quorum
+      properties:
+        approval_quorum:
+          $ref: "#/components/schemas/DocumentVersionApprovalQuorum"
+
+    ListDocumentVersionApprovalDecisionsInput:
+      type: object
+      required:
+        - quorum_id
+      properties:
+        quorum_id:
+          $ref: "#/components/schemas/GID"
+          description: Approval quorum ID
+        order_by:
+          $ref: "#/components/schemas/DocumentVersionApprovalDecisionOrderBy"
+          description: Order by
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+        filter:
+          type: object
+          properties:
+            states:
+              type: array
+              items:
+                $ref: "#/components/schemas/DocumentVersionApprovalDecisionState"
+              description: Filter by decision states
+
+    ListDocumentVersionApprovalDecisionsOutput:
+      type: object
+      required:
+        - approval_decisions
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        approval_decisions:
+          type: array
+          items:
+            $ref: "#/components/schemas/DocumentVersionApprovalDecision"
+
+    GetDocumentVersionApprovalDecisionInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Approval decision ID
+
+    GetDocumentVersionApprovalDecisionOutput:
+      type: object
+      required:
+        - approval_decision
+      properties:
+        approval_decision:
+          $ref: "#/components/schemas/DocumentVersionApprovalDecision"
 
     SendSigningNotificationsInput:
       type: object
@@ -9175,3 +9412,39 @@ tools:
       $ref: "#/components/schemas/ListWebhookEventsInput"
     outputSchema:
       $ref: "#/components/schemas/ListWebhookEventsOutput"
+  - name: listDocumentVersionApprovalQuorums
+    description: List approval quorums for a document version
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/ListDocumentVersionApprovalQuorumsInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListDocumentVersionApprovalQuorumsOutput"
+  - name: getDocumentVersionApprovalQuorum
+    description: Get a document version approval quorum by ID
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/GetDocumentVersionApprovalQuorumInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetDocumentVersionApprovalQuorumOutput"
+  - name: listDocumentVersionApprovalDecisions
+    description: List approval decisions for an approval quorum
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/ListDocumentVersionApprovalDecisionsInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListDocumentVersionApprovalDecisionsOutput"
+  - name: getDocumentVersionApprovalDecision
+    description: Get a document version approval decision by ID
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/GetDocumentVersionApprovalDecisionInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetDocumentVersionApprovalDecisionOutput"

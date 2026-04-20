@@ -4048,3 +4048,91 @@ func (r *Resolver) ListWebhookEventsTool(ctx context.Context, req *mcp.CallToolR
 
 	return nil, types.NewListWebhookEventsOutput(page), nil
 }
+
+func (r *Resolver) ListDocumentVersionApprovalQuorumsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListDocumentVersionApprovalQuorumsInput) (*mcp.CallToolResult, types.ListDocumentVersionApprovalQuorumsOutput, error) {
+	r.MustAuthorize(ctx, input.DocumentVersionID, probo.ActionDocumentVersionApprovalList)
+
+	svc := r.ProboService(ctx, input.DocumentVersionID)
+
+	pageOrderBy := page.OrderBy[coredata.DocumentVersionApprovalQuorumOrderField]{
+		Field:     coredata.DocumentVersionApprovalQuorumOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.DocumentVersionApprovalQuorumOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	p, err := svc.DocumentApprovals.ListQuorums(ctx, input.DocumentVersionID, cursor)
+	if err != nil {
+		panic(fmt.Errorf("cannot list approval quorums: %w", err))
+	}
+
+	return nil, types.NewListDocumentVersionApprovalQuorumsOutput(p), nil
+}
+
+func (r *Resolver) GetDocumentVersionApprovalQuorumTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetDocumentVersionApprovalQuorumInput) (*mcp.CallToolResult, types.GetDocumentVersionApprovalQuorumOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionDocumentVersionApprovalList)
+
+	svc := r.ProboService(ctx, input.ID)
+
+	quorum, err := svc.DocumentApprovals.GetQuorum(ctx, input.ID)
+	if err != nil {
+		panic(fmt.Errorf("cannot get approval quorum: %w", err))
+	}
+
+	return nil, types.GetDocumentVersionApprovalQuorumOutput{
+		ApprovalQuorum: types.NewDocumentVersionApprovalQuorum(quorum),
+	}, nil
+}
+
+func (r *Resolver) ListDocumentVersionApprovalDecisionsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListDocumentVersionApprovalDecisionsInput) (*mcp.CallToolResult, types.ListDocumentVersionApprovalDecisionsOutput, error) {
+	r.MustAuthorize(ctx, input.QuorumID, probo.ActionDocumentVersionApprovalList)
+
+	svc := r.ProboService(ctx, input.QuorumID)
+
+	pageOrderBy := page.OrderBy[coredata.DocumentVersionApprovalDecisionOrderField]{
+		Field:     coredata.DocumentVersionApprovalDecisionOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.DocumentVersionApprovalDecisionOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	var states []coredata.DocumentVersionApprovalDecisionState
+	if input.Filter != nil {
+		states = input.Filter.States
+	}
+	filter := coredata.NewDocumentVersionApprovalDecisionFilter(states)
+
+	p, err := svc.DocumentApprovals.ListDecisions(ctx, input.QuorumID, cursor, filter)
+	if err != nil {
+		panic(fmt.Errorf("cannot list approval decisions: %w", err))
+	}
+
+	return nil, types.NewListDocumentVersionApprovalDecisionsOutput(p), nil
+}
+
+func (r *Resolver) GetDocumentVersionApprovalDecisionTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetDocumentVersionApprovalDecisionInput) (*mcp.CallToolResult, types.GetDocumentVersionApprovalDecisionOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionDocumentVersionApprovalList)
+
+	svc := r.ProboService(ctx, input.ID)
+
+	decision, err := svc.DocumentApprovals.GetDecision(ctx, input.ID)
+	if err != nil {
+		panic(fmt.Errorf("cannot get approval decision: %w", err))
+	}
+
+	return nil, types.GetDocumentVersionApprovalDecisionOutput{
+		ApprovalDecision: types.NewDocumentVersionApprovalDecision(decision),
+	}, nil
+}

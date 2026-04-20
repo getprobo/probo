@@ -190,3 +190,64 @@ func NewListDocumentVersionSignaturesOutput(signaturePage *page.Page[*coredata.D
 		DocumentVersionSignatures: signatures,
 	}
 }
+
+func NewDocumentVersionApprovalQuorum(q *coredata.DocumentVersionApprovalQuorum) *DocumentVersionApprovalQuorum {
+	return &DocumentVersionApprovalQuorum{
+		ID:             q.ID,
+		OrganizationID: q.OrganizationID,
+		VersionID:      q.VersionID,
+		Status:         q.Status,
+		CreatedAt:      q.CreatedAt,
+		UpdatedAt:      q.UpdatedAt,
+	}
+}
+
+func NewListDocumentVersionApprovalQuorumsOutput(quorumPage *page.Page[*coredata.DocumentVersionApprovalQuorum, coredata.DocumentVersionApprovalQuorumOrderField]) ListDocumentVersionApprovalQuorumsOutput {
+	quorums := make([]*DocumentVersionApprovalQuorum, 0, len(quorumPage.Data))
+	for _, q := range quorumPage.Data {
+		quorums = append(quorums, NewDocumentVersionApprovalQuorum(q))
+	}
+
+	var nextCursor *page.CursorKey
+	if len(quorumPage.Data) > 0 {
+		cursorKey := quorumPage.Data[len(quorumPage.Data)-1].CursorKey(quorumPage.Cursor.OrderBy.Field)
+		nextCursor = &cursorKey
+	}
+
+	return ListDocumentVersionApprovalQuorumsOutput{
+		NextCursor:      nextCursor,
+		ApprovalQuorums: quorums,
+	}
+}
+
+func NewDocumentVersionApprovalDecision(d *coredata.DocumentVersionApprovalDecision) *DocumentVersionApprovalDecision {
+	return &DocumentVersionApprovalDecision{
+		ID:             d.ID,
+		OrganizationID: d.OrganizationID,
+		QuorumID:       d.QuorumID,
+		ApproverID:     d.ApproverID,
+		State:          d.State,
+		Comment:        d.Comment,
+		DecidedAt:      d.DecidedAt,
+		CreatedAt:      d.CreatedAt,
+		UpdatedAt:      d.UpdatedAt,
+	}
+}
+
+func NewListDocumentVersionApprovalDecisionsOutput(decisionPage *page.Page[*coredata.DocumentVersionApprovalDecision, coredata.DocumentVersionApprovalDecisionOrderField]) ListDocumentVersionApprovalDecisionsOutput {
+	decisions := make([]*DocumentVersionApprovalDecision, 0, len(decisionPage.Data))
+	for _, d := range decisionPage.Data {
+		decisions = append(decisions, NewDocumentVersionApprovalDecision(d))
+	}
+
+	var nextCursor *page.CursorKey
+	if len(decisionPage.Data) > 0 {
+		cursorKey := decisionPage.Data[len(decisionPage.Data)-1].CursorKey(decisionPage.Cursor.OrderBy.Field)
+		nextCursor = &cursorKey
+	}
+
+	return ListDocumentVersionApprovalDecisionsOutput{
+		NextCursor:        nextCursor,
+		ApprovalDecisions: decisions,
+	}
+}

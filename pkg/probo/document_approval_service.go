@@ -739,6 +739,29 @@ func (s *DocumentApprovalService) CountDecisions(
 	return count, nil
 }
 
+func (s *DocumentApprovalService) GetDecision(
+	ctx context.Context,
+	decisionID gid.GID,
+) (*coredata.DocumentVersionApprovalDecision, error) {
+	decision := &coredata.DocumentVersionApprovalDecision{}
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := decision.LoadByID(ctx, conn, s.svc.scope, decisionID); err != nil {
+				return fmt.Errorf("cannot load approval decision: %w", err)
+			}
+			return nil
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return decision, nil
+}
+
 func (s *DocumentApprovalService) GetViewerDecision(
 	ctx context.Context,
 	documentVersionID gid.GID,

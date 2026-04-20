@@ -22,12 +22,16 @@ import (
 	"go.probo.inc/probo/pkg/cmd/document/delete"
 	deletedraft "go.probo.inc/probo/pkg/cmd/document/delete-draft"
 	"go.probo.inc/probo/pkg/cmd/document/list"
+	listapprovaldecisions "go.probo.inc/probo/pkg/cmd/document/list-approval-decisions"
+	listapprovalquorums "go.probo.inc/probo/pkg/cmd/document/list-approval-quorums"
 	listversions "go.probo.inc/probo/pkg/cmd/document/list-versions"
 	publishmajor "go.probo.inc/probo/pkg/cmd/document/publish-major"
 	publishminor "go.probo.inc/probo/pkg/cmd/document/publish-minor"
 	"go.probo.inc/probo/pkg/cmd/document/unarchive"
 	"go.probo.inc/probo/pkg/cmd/document/update"
 	"go.probo.inc/probo/pkg/cmd/document/view"
+	viewapprovaldecision "go.probo.inc/probo/pkg/cmd/document/view-approval-decision"
+	viewapprovalquorum "go.probo.inc/probo/pkg/cmd/document/view-approval-quorum"
 	viewversion "go.probo.inc/probo/pkg/cmd/document/view-version"
 )
 
@@ -49,6 +53,10 @@ func NewCmdDocument(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(deletedraft.NewCmdDeleteDraft(f))
 	cmd.AddCommand(publishmajor.NewCmdPublishMajor(f))
 	cmd.AddCommand(publishminor.NewCmdPublishMinor(f))
+	cmd.AddCommand(listapprovalquorums.NewCmdListApprovalQuorums(f))
+	cmd.AddCommand(viewapprovalquorum.NewCmdViewApprovalQuorum(f))
+	cmd.AddCommand(listapprovaldecisions.NewCmdListApprovalDecisions(f))
+	cmd.AddCommand(viewapprovaldecision.NewCmdViewApprovalDecision(f))
 
 	return cmd
 }
