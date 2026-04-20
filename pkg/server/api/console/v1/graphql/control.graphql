@@ -12,6 +12,34 @@ enum ControlImplementationState
         )
 }
 
+enum ControlMaturityLevel
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.ControlMaturityLevel") {
+    NONE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ControlMaturityLevelNone"
+        )
+    INITIAL
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ControlMaturityLevelInitial"
+        )
+    MANAGED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ControlMaturityLevelManaged"
+        )
+    DEFINED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ControlMaturityLevelDefined"
+        )
+    QUANTITATIVELY_MANAGED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ControlMaturityLevelQuantitativelyManaged"
+        )
+    OPTIMIZING
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ControlMaturityLevelOptimizing"
+        )
+}
+
 enum ControlOrderField
     @goModel(model: "go.probo.inc/probo/pkg/coredata.ControlOrderField") {
     CREATED_AT
@@ -87,6 +115,7 @@ type Control implements Node {
     bestPractice: Boolean!
     implemented: ControlImplementationState!
     notImplementedJustification: String
+    maturityLevel: ControlMaturityLevel
     regulatory: Boolean! @goField(forceResolver: true)
     contractual: Boolean! @goField(forceResolver: true)
     riskAssessment: Boolean! @goField(forceResolver: true)
@@ -280,6 +309,7 @@ input CreateControlInput {
     bestPractice: Boolean!
     implemented: ControlImplementationState!
     notImplementedJustification: String
+    maturityLevel: ControlMaturityLevel
 }
 
 input UpdateControlInput {
@@ -290,6 +320,7 @@ input UpdateControlInput {
     bestPractice: Boolean
     implemented: ControlImplementationState
     notImplementedJustification: String @goField(omittable: true)
+    maturityLevel: ControlMaturityLevel @goField(omittable: true)
 }
 
 input DeleteControlInput {

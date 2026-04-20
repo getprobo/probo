@@ -19,6 +19,12 @@ import (
 )
 
 func NewControl(c *coredata.Control) *Control {
+	var maturityLevel *string
+	if c.MaturityLevel != nil {
+		s := string(*c.MaturityLevel)
+		maturityLevel = &s
+	}
+
 	return &Control{
 		ID:                          c.ID,
 		OrganizationID:              c.OrganizationID,
@@ -29,6 +35,7 @@ func NewControl(c *coredata.Control) *Control {
 		BestPractice:                c.BestPractice,
 		Implemented:                 ControlImplemented(c.Implemented),
 		NotImplementedJustification: c.NotImplementedJustification,
+		MaturityLevel:               maturityLevel,
 		CreatedAt:                   c.CreatedAt,
 		UpdatedAt:                   c.UpdatedAt,
 	}

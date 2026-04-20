@@ -74,6 +74,7 @@ type (
 				BestPractice                *bool   `json:"best_practice,omitempty"`
 				Implemented                 string  `json:"implemented,omitempty"`
 				NotImplementedJustification *string `json:"not_implemented_justification,omitempty"`
+				MaturityLevel               *string `json:"maturity_level,omitempty"`
 			} `json:"controls"`
 		}
 	}
@@ -612,6 +613,13 @@ func (s FrameworkService) Import(
 			if implemented == coredata.ControlImplementationStateNotImplemented {
 				notImplementedJustification = control.NotImplementedJustification
 			}
+			var maturityLevel *coredata.ControlMaturityLevel
+			if control.MaturityLevel != nil {
+				ml := coredata.ControlMaturityLevel(*control.MaturityLevel)
+				if ml.IsValid() {
+					maturityLevel = &ml
+				}
+			}
 			control := &coredata.Control{
 				ID:                          controlID,
 				FrameworkID:                 frameworkID,
@@ -622,6 +630,7 @@ func (s FrameworkService) Import(
 				BestPractice:                bestPractice,
 				Implemented:                 implemented,
 				NotImplementedJustification: notImplementedJustification,
+				MaturityLevel:               maturityLevel,
 				CreatedAt:                   now,
 				UpdatedAt:                   now,
 			}

@@ -1473,6 +1473,12 @@ func (r *Resolver) AddControlTool(ctx context.Context, req *mcp.CallToolRequest,
 
 	svc := r.ProboService(ctx, input.FrameworkID)
 
+	var maturityLevel *coredata.ControlMaturityLevel
+	if input.MaturityLevel != nil {
+		v := coredata.ControlMaturityLevel(*input.MaturityLevel)
+		maturityLevel = &v
+	}
+
 	control, err := svc.Controls.Create(
 		ctx,
 		probo.CreateControlRequest{
@@ -1483,6 +1489,7 @@ func (r *Resolver) AddControlTool(ctx context.Context, req *mcp.CallToolRequest,
 			BestPractice:                input.BestPractice,
 			Implemented:                 coredata.ControlImplementationState(input.Implemented),
 			NotImplementedJustification: input.NotImplementedJustification,
+			MaturityLevel:               maturityLevel,
 		},
 	)
 	if err != nil {
@@ -1505,6 +1512,16 @@ func (r *Resolver) UpdateControlTool(ctx context.Context, req *mcp.CallToolReque
 		implemented = &v
 	}
 
+	var maturityLevel **coredata.ControlMaturityLevel
+	if rawMaturity := UnwrapOmittable(input.MaturityLevel); rawMaturity != nil {
+		var inner *coredata.ControlMaturityLevel
+		if *rawMaturity != nil {
+			v := coredata.ControlMaturityLevel(**rawMaturity)
+			inner = &v
+		}
+		maturityLevel = &inner
+	}
+
 	control, err := svc.Controls.Update(
 		ctx,
 		probo.UpdateControlRequest{
@@ -1515,6 +1532,7 @@ func (r *Resolver) UpdateControlTool(ctx context.Context, req *mcp.CallToolReque
 			BestPractice:                input.BestPractice,
 			Implemented:                 implemented,
 			NotImplementedJustification: UnwrapOmittable(input.NotImplementedJustification),
+			MaturityLevel:               maturityLevel,
 		},
 	)
 	if err != nil {

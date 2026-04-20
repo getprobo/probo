@@ -417,6 +417,7 @@ func (r *mutationResolver) CreateControl(ctx context.Context, input types.Create
 			BestPractice:                input.BestPractice,
 			Implemented:                 input.Implemented,
 			NotImplementedJustification: input.NotImplementedJustification,
+			MaturityLevel:               input.MaturityLevel,
 		},
 	)
 	if err != nil {
@@ -454,6 +455,7 @@ func (r *mutationResolver) UpdateControl(ctx context.Context, input types.Update
 			BestPractice:                input.BestPractice,
 			Implemented:                 input.Implemented,
 			NotImplementedJustification: gqlutils.UnwrapOmittable(input.NotImplementedJustification),
+			MaturityLevel:               gqlutils.UnwrapOmittable(input.MaturityLevel),
 		},
 	)
 

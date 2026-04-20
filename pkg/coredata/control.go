@@ -39,6 +39,7 @@ type (
 		BestPractice                bool                       `db:"best_practice"`
 		Implemented                 ControlImplementationState `db:"implemented"`
 		NotImplementedJustification *string                    `db:"not_implemented_justification"`
+		MaturityLevel               *ControlMaturityLevel      `db:"maturity_level"`
 		CreatedAt                   time.Time                  `db:"created_at"`
 		UpdatedAt                   time.Time                  `db:"updated_at"`
 	}
@@ -135,6 +136,7 @@ WITH ctrl AS (
 		c.best_practice,
 		c.implemented,
 		c.not_implemented_justification,
+		c.maturity_level,
 		c.created_at,
 		c.updated_at,
 		c.search_vector
@@ -155,6 +157,7 @@ SELECT
 	best_practice,
 	implemented,
 	not_implemented_justification,
+	maturity_level,
 	created_at,
 	updated_at
 FROM
@@ -248,6 +251,7 @@ WITH ctrl AS (
 		c.best_practice,
 		c.implemented,
 		c.not_implemented_justification,
+		c.maturity_level,
 		c.created_at,
 		c.updated_at,
 		c.search_vector
@@ -268,6 +272,7 @@ SELECT
 	best_practice,
 	implemented,
 	not_implemented_justification,
+	maturity_level,
 	created_at,
 	updated_at
 FROM
@@ -367,6 +372,7 @@ WITH ctrl AS (
 		c.best_practice,
 		c.implemented,
 		c.not_implemented_justification,
+		c.maturity_level,
 		c.created_at,
 		c.updated_at,
 		c.search_vector
@@ -393,6 +399,7 @@ SELECT
 	best_practice,
 	implemented,
 	not_implemented_justification,
+	maturity_level,
 	created_at,
 	updated_at
 FROM
@@ -474,6 +481,7 @@ SELECT
 	best_practice,
 	implemented,
 	not_implemented_justification,
+	maturity_level,
     created_at,
     updated_at
 FROM
@@ -570,6 +578,7 @@ WITH ctrl AS (
 		c.best_practice,
 		c.implemented,
 		c.not_implemented_justification,
+		c.maturity_level,
 		c.created_at,
 		c.updated_at,
 		c.search_vector
@@ -590,6 +599,7 @@ SELECT
 	best_practice,
 	implemented,
 	not_implemented_justification,
+	maturity_level,
 	created_at,
 	updated_at
 FROM
@@ -638,6 +648,7 @@ SELECT
     best_practice,
     implemented,
     not_implemented_justification,
+    maturity_level,
     created_at,
     updated_at
 FROM
@@ -688,6 +699,7 @@ SELECT
     best_practice,
     implemented,
     not_implemented_justification,
+    maturity_level,
     created_at,
     updated_at
 FROM
@@ -737,6 +749,7 @@ SELECT
     best_practice,
     implemented,
     not_implemented_justification,
+    maturity_level,
     created_at,
     updated_at
 FROM
@@ -783,6 +796,7 @@ INSERT INTO
         best_practice,
         implemented,
         not_implemented_justification,
+        maturity_level,
         created_at,
         updated_at
     )
@@ -797,6 +811,7 @@ VALUES (
 	@best_practice,
 	@implemented,
 	@not_implemented_justification,
+	@maturity_level,
     @created_at,
     @updated_at
 );
@@ -813,6 +828,7 @@ VALUES (
 		"best_practice":                 c.BestPractice,
 		"implemented":                   c.Implemented,
 		"not_implemented_justification": c.NotImplementedJustification,
+		"maturity_level":                c.MaturityLevel,
 		"created_at":                    c.CreatedAt,
 		"updated_at":                    c.UpdatedAt,
 	}
@@ -866,6 +882,7 @@ UPDATE controls SET
 	best_practice = @best_practice,
 	implemented = @implemented,
 	not_implemented_justification = @not_implemented_justification,
+	maturity_level = @maturity_level,
     updated_at = @updated_at
 WHERE %s
     AND id = @control_id
@@ -880,6 +897,7 @@ WHERE %s
 		"best_practice":                 c.BestPractice,
 		"implemented":                   c.Implemented,
 		"not_implemented_justification": c.NotImplementedJustification,
+		"maturity_level":                c.MaturityLevel,
 		"updated_at":                    c.UpdatedAt,
 	}
 
@@ -920,6 +938,7 @@ WITH ctrl AS (
 		c.best_practice,
 		c.implemented,
 		c.not_implemented_justification,
+		c.maturity_level,
 		c.created_at,
 		c.updated_at,
 		c.search_vector
@@ -940,6 +959,7 @@ SELECT
 	best_practice,
 	implemented,
 	not_implemented_justification,
+	maturity_level,
 	created_at,
 	updated_at
 FROM
@@ -991,6 +1011,7 @@ WITH ctrl AS (
 		c.best_practice,
 		c.implemented,
 		c.not_implemented_justification,
+		c.maturity_level,
 		c.created_at,
 		c.updated_at,
 		c.search_vector
@@ -1011,6 +1032,7 @@ SELECT
 	best_practice,
 	implemented,
 	not_implemented_justification,
+	maturity_level,
 	created_at,
 	updated_at
 FROM

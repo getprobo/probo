@@ -34,6 +34,7 @@ mutation($input: UpdateControlInput!) {
       bestPractice
       implemented
       notImplementedJustification
+      maturityLevel
     }
   }
 }
@@ -49,8 +50,18 @@ type updateResponse struct {
 			BestPractice                bool    `json:"bestPractice"`
 			Implemented                 string  `json:"implemented"`
 			NotImplementedJustification *string `json:"notImplementedJustification"`
+			MaturityLevel               *string `json:"maturityLevel"`
 		} `json:"control"`
 	} `json:"updateControl"`
+}
+
+var maturityLevelValues = []string{
+	"NONE",
+	"INITIAL",
+	"MANAGED",
+	"DEFINED",
+	"QUANTITATIVELY_MANAGED",
+	"OPTIMIZING",
 }
 
 func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
@@ -61,6 +72,7 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 		flagBestPractice                bool
 		flagNotImplemented              bool
 		flagNotImplementedJustification string
+		flagMaturityLevel               string
 	)
 
 	cmd := &cobra.Command{
@@ -120,6 +132,16 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 					input["notImplementedJustification"] = flagNotImplementedJustification
 				}
 			}
+			if cmd.Flags().Changed("maturity-level") {
+				if flagMaturityLevel == "" {
+					input["maturityLevel"] = nil
+				} else {
+					if err := cmdutil.ValidateEnum("maturity-level", flagMaturityLevel, maturityLevelValues); err != nil {
+						return err
+					}
+					input["maturityLevel"] = flagMaturityLevel
+				}
+			}
 
 			if len(input) == 1 {
 				return fmt.Errorf("at least one field must be specified for update")
@@ -156,6 +178,7 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().BoolVar(&flagBestPractice, "best-practice", false, "Mark as best practice")
 	cmd.Flags().BoolVar(&flagNotImplemented, "not-implemented", false, "Mark as not implemented")
 	cmd.Flags().StringVar(&flagNotImplementedJustification, "not-implemented-justification", "", "Justification for non-implementation")
+	cmd.Flags().StringVar(&flagMaturityLevel, "maturity-level", "", "CMMI maturity level (NONE, INITIAL, MANAGED, DEFINED, QUANTITATIVELY_MANAGED, OPTIMIZING). Empty string clears the value.")
 
 	return cmd
 }

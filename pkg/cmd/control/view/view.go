@@ -34,6 +34,9 @@ query($id: ID!) {
       name
       description
       bestPractice
+      implemented
+      notImplementedJustification
+      maturityLevel
       framework {
         id
         name
@@ -47,13 +50,16 @@ query($id: ID!) {
 
 type viewResponse struct {
 	Node *struct {
-		Typename     string  `json:"__typename"`
-		ID           string  `json:"id"`
-		SectionTitle string  `json:"sectionTitle"`
-		Name         string  `json:"name"`
-		Description  *string `json:"description"`
-		BestPractice bool    `json:"bestPractice"`
-		Framework    struct {
+		Typename                    string  `json:"__typename"`
+		ID                          string  `json:"id"`
+		SectionTitle                string  `json:"sectionTitle"`
+		Name                        string  `json:"name"`
+		Description                 *string `json:"description"`
+		BestPractice                bool    `json:"bestPractice"`
+		Implemented                 string  `json:"implemented"`
+		NotImplementedJustification *string `json:"notImplementedJustification"`
+		MaturityLevel               *string `json:"maturityLevel"`
+		Framework                   struct {
 			ID   string `json:"id"`
 			Name string `json:"name"`
 		} `json:"framework"`
@@ -138,6 +144,16 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 				bp = "Yes"
 			}
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Best Practice:"), bp)
+			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Implemented:"), c.Implemented)
+			if c.Implemented == "NOT_IMPLEMENTED" && c.NotImplementedJustification != nil && *c.NotImplementedJustification != "" {
+				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Justification:"), *c.NotImplementedJustification)
+			}
+
+			maturity := "Not set"
+			if c.MaturityLevel != nil {
+				maturity = *c.MaturityLevel
+			}
+			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Maturity:"), maturity)
 
 			_, _ = fmt.Fprintln(out)
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Created:"), cmdutil.FormatTime(c.CreatedAt))
