@@ -8,6 +8,7 @@ Detailed guides for specific subsystems live in `contrib/claude/`:
 - [`contrib/claude/go-testing.md`](contrib/claude/go-testing.md) — Go test conventions (parallel, require vs assert, naming)
 - [`contrib/claude/go-service.md`](contrib/claude/go-service.md) — Go service orchestration (Run, graceful shutdown, crash propagation)
 - [`contrib/claude/go-worker.md`](contrib/claude/go-worker.md) — Go worker pattern (poll-based, bounded concurrency, FOR UPDATE SKIP LOCKED)
+- [`contrib/claude/httpclient.md`](contrib/claude/httpclient.md) — HTTP client (kit/httpclient, SSRF protection by default, connector wiring)
 - [`contrib/claude/gid.md`](contrib/claude/gid.md) — Global identifiers (GID layout, TenantID, entity type registry)
 - [`contrib/claude/coredata.md`](contrib/claude/coredata.md) — Data access layer (Scoper, SQL patterns, filters, order fields, migrations)
 - [`contrib/claude/logging.md`](contrib/claude/logging.md) — Structured logging (PII-free rules, field helpers, logger wiring)

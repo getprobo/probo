@@ -49,6 +49,12 @@ type (
 		ExtraAuthParams         map[string]string // Optional: extra params for auth URL (e.g., access_type=offline for Google)
 		TokenEndpointAuth       string            // "post-form" (default), "basic-form", or "basic-json"
 		SupportsIncrementalAuth bool
+
+		// HTTPClient is used for the OAuth2 token-exchange request
+		// issued from CompleteWithState. It must be set by callers;
+		// ApplyProviderDefaults assigns an SSRF-protected client for
+		// production use. Tests may inject a loopback-friendly one.
+		HTTPClient *http.Client
 	}
 
 	OAuth2State struct {
@@ -208,7 +214,7 @@ func (c *OAuth2Connector) CompleteWithState(ctx context.Context, r *http.Request
 		return nil, nil, err
 	}
 
-	tokenResp, err := http.DefaultClient.Do(tokenRequest)
+	tokenResp, err := c.HTTPClient.Do(tokenRequest)
 	if err != nil {
 		return nil, nil, fmt.Errorf("cannot post token URL: %w", err)
 	}
@@ -363,7 +369,14 @@ func (c *OAuth2Connection) Client(ctx context.Context) (*http.Client, error) {
 
 // ClientWithOptions returns an HTTP client with the given options.
 // Use this to add logging and tracing to the HTTP client.
+//
+// SSRF protection is always enabled: the underlying connector URL
+// (for example a 1Password SCIM bridge URL) is customer-supplied,
+// so dials to private, loopback, or other reserved address ranges
+// are refused. Hardcoded provider hosts on public IPs are
+// unaffected.
 func (c *OAuth2Connection) ClientWithOptions(ctx context.Context, opts ...httpclient.Option) (*http.Client, error) {
+	opts = append(opts, httpclient.WithSSRFProtection())
 	transport := &oauth2Transport{
 		token:      c.AccessToken,
 		tokenType:  c.TokenType,
@@ -388,6 +401,11 @@ func (c *OAuth2Connection) RefreshableClient(ctx context.Context, cfg OAuth2Refr
 	if c.RefreshToken == "" {
 		return c.ClientWithOptions(ctx, opts...)
 	}
+
+	// All HTTP traffic on this path (token refresh + API calls)
+	// must reject private/loopback/reserved peer IPs because the
+	// configured TokenURL or API host can be customer-influenced.
+	opts = append(opts, httpclient.WithSSRFProtection())
 
 	// Determine auth style based on TokenEndpointAuth
 	authStyle := oauth2.AuthStyleInParams
@@ -461,6 +479,10 @@ func (c *OAuth2Connection) clientCredentialsClient(ctx context.Context, opts ...
 	if c.AccessToken != "" && !c.ExpiresAt.IsZero() && c.ExpiresAt.After(time.Now()) {
 		return c.ClientWithOptions(ctx, opts...)
 	}
+
+	// TokenURL is stored from customer-supplied connector settings;
+	// reject dials to private/loopback/reserved peer IPs.
+	opts = append(opts, httpclient.WithSSRFProtection())
 
 	formData := url.Values{}
 	formData.Set("grant_type", "client_credentials")

@@ -14,6 +14,8 @@
 
 package connector
 
+import "go.gearno.de/kit/httpclient"
+
 // CallbackPath is the HTTP path for the OAuth2 callback endpoint.
 const CallbackPath = "/api/console/v1/connectors/complete"
 
@@ -87,9 +89,11 @@ var (
 
 // ApplyProviderDefaults sets the redirect URI and applies static provider
 // defaults (auth URL, token URL, extra params, token endpoint auth) onto
-// an OAuth2Connector. Call this before registering the connector.
+// an OAuth2Connector, and wires an SSRF-protected HTTP client for the
+// token exchange request. Call this before registering the connector.
 func ApplyProviderDefaults(provider string, redirectURI string, c *OAuth2Connector) {
 	c.RedirectURI = redirectURI
+	c.HTTPClient = httpclient.DefaultClient(httpclient.WithSSRFProtection())
 
 	if def, ok := providerDefinitions[provider]; ok {
 		c.AuthURL = def.AuthURL

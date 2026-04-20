@@ -27,6 +27,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.gearno.de/kit/httpclient"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/statelesstoken"
 )
@@ -228,7 +229,9 @@ func TestClientCredentialsClient(t *testing.T) {
 		TokenURL:     server.URL,
 	}
 
-	client, err := conn.clientCredentialsClient(context.Background())
+	// httptest binds to loopback, which the SSRF-protected default
+	// transport refuses; relax just for this test.
+	client, err := conn.clientCredentialsClient(context.Background(), httpclient.WithSSRFAllowLoopback())
 	require.NoError(t, err)
 	require.NotNil(t, client)
 
@@ -518,6 +521,9 @@ func TestCompleteWithState_ScopeFallback(t *testing.T) {
 		RedirectURI:  "https://example.com/cb",
 		AuthURL:      "https://provider.example.com/authorize",
 		TokenURL:     server.URL,
+		// httptest binds to loopback, which the SSRF-protected
+		// default client refuses; inject a permissive client.
+		HTTPClient: httpclient.DefaultClient(httpclient.WithSSRFProtection(), httpclient.WithSSRFAllowLoopback()),
 	}
 
 	orgID := gid.New(gid.NewTenantID(), 0)

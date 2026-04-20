@@ -40,7 +40,7 @@ func (c *APIKeyConnection) Client(ctx context.Context) (*http.Client, error) {
 	transport := &oauth2Transport{
 		token:      c.APIKey,
 		tokenType:  "Bearer",
-		underlying: httpclient.DefaultPooledTransport(),
+		underlying: httpclient.DefaultPooledTransport(httpclient.WithSSRFProtection()),
 	}
 	return &http.Client{Transport: transport}, nil
 }

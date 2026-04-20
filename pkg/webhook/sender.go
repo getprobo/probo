@@ -88,7 +88,7 @@ func NewSender(pg *pg.Client, logger *log.Logger, cfg Config) *Sender {
 	return &Sender{
 		pg:             pg,
 		logger:         logger,
-		httpClient:     httpclient.DefaultPooledClient(httpclient.WithLogger(logger)),
+		httpClient:     httpclient.DefaultPooledClient(httpclient.WithLogger(logger), httpclient.WithSSRFProtection()),
 		encryptionKey:  cfg.EncryptionKey,
 		host:           cfg.Host,
 		cacheCreatedAt: time.Now(),
