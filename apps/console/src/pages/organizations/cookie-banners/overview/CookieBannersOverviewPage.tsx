@@ -29,7 +29,7 @@ export const cookieBannersOverviewPageQuery = graphql`
     organization: node(id: $organizationId) {
       __typename
       ... on Organization {
-        cookieBanners(first: 50, orderBy: { field: CREATED_AT, direction: DESC }) {
+        cookieBanners(first: 50, orderBy: { field: CREATED_AT, direction: DESC }) @required(action: THROW) {
           edges {
             node {
               id

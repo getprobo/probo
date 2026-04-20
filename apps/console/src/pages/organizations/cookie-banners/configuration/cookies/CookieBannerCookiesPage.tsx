@@ -90,6 +90,7 @@ export default function CookieBannerCookiesPage({
         <CategoryDialog
           cookieBannerId={banner.id}
           connectionId={connectionId}
+          nextRank={sorted.length > 0 ? sorted[sorted.length - 1].rank + 1 : 0}
           onOpenChange={setShowCreateDialog}
         />
       )}
