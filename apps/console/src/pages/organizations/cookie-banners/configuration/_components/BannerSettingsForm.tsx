@@ -43,6 +43,11 @@ const updateBannerMutation = graphql`
         privacyPolicyUrl
         consentExpiryDays
         consentMode
+        latestVersion {
+          id
+          version
+          state
+        }
       }
     }
   }

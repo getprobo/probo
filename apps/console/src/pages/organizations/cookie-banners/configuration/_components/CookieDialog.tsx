@@ -48,6 +48,14 @@ const updateCategoryMutation = graphql`
         }
         updatedAt
       }
+      cookieBanner {
+        id
+        latestVersion {
+          id
+          version
+          state
+        }
+      }
     }
   }
 `;

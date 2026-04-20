@@ -309,6 +309,12 @@ func (r *mutationResolver) PublishCookieBannerVersion(ctx context.Context, input
 		return nil, gqlutils.Internal(ctx)
 	}
 
+	banner, err := r.cookieBanner.GetCookieBanner(ctx, scope, input.CookieBannerID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot get cookie banner", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
 	return &types.PublishCookieBannerVersionPayload{
 		CookieBannerVersion: &types.CookieBannerVersion{
 			ID:        version.ID,
@@ -317,6 +323,7 @@ func (r *mutationResolver) PublishCookieBannerVersion(ctx context.Context, input
 			CreatedAt: version.CreatedAt,
 			UpdatedAt: version.UpdatedAt,
 		},
+		CookieBanner: types.NewCookieBanner(banner),
 	}, nil
 }
 
@@ -363,8 +370,15 @@ func (r *mutationResolver) CreateCookieCategory(ctx context.Context, input types
 		return nil, gqlutils.Internal(ctx)
 	}
 
+	banner, err := r.cookieBanner.GetCookieBanner(ctx, scope, input.CookieBannerID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot get cookie banner", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
 	return &types.CreateCookieCategoryPayload{
 		CookieCategoryEdge: types.NewCookieCategoryEdge(category, coredata.CookieCategoryOrderFieldRank),
+		CookieBanner:       types.NewCookieBanner(banner),
 	}, nil
 }
 
@@ -411,8 +425,16 @@ func (r *mutationResolver) UpdateCookieCategory(ctx context.Context, input types
 		return nil, gqlutils.Internal(ctx)
 	}
 
+	bannerScope := coredata.NewScopeFromObjectID(category.CookieBannerID)
+	banner, err := r.cookieBanner.GetCookieBanner(ctx, bannerScope, category.CookieBannerID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot get cookie banner", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
 	return &types.UpdateCookieCategoryPayload{
 		CookieCategory: types.NewCookieCategory(category),
+		CookieBanner:   types.NewCookieBanner(banner),
 	}, nil
 }
 
@@ -424,7 +446,18 @@ func (r *mutationResolver) DeleteCookieCategory(ctx context.Context, input types
 
 	scope := coredata.NewScopeFromObjectID(input.CookieCategoryID)
 
-	err := r.cookieBanner.DeleteCookieCategory(ctx, scope, input.CookieCategoryID)
+	category, err := r.cookieBanner.GetCookieCategory(ctx, scope, input.CookieCategoryID)
+	if err != nil {
+		if errors.Is(err, cookiebanner.ErrCategoryNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+		r.logger.ErrorCtx(ctx, "cannot get cookie category", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	bannerID := category.CookieBannerID
+
+	err = r.cookieBanner.DeleteCookieCategory(ctx, scope, input.CookieCategoryID)
 	if err != nil {
 		if errors.Is(err, cookiebanner.ErrCategoryNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
@@ -436,8 +469,16 @@ func (r *mutationResolver) DeleteCookieCategory(ctx context.Context, input types
 		return nil, gqlutils.Internal(ctx)
 	}
 
+	bannerScope := coredata.NewScopeFromObjectID(bannerID)
+	banner, err := r.cookieBanner.GetCookieBanner(ctx, bannerScope, bannerID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot get cookie banner", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
 	return &types.DeleteCookieCategoryPayload{
 		DeletedCookieCategoryID: input.CookieCategoryID,
+		CookieBanner:           types.NewCookieBanner(banner),
 	}, nil
 }
 

@@ -52,6 +52,14 @@ const createMutation = graphql`
           updatedAt
         }
       }
+      cookieBanner {
+        id
+        latestVersion {
+          id
+          version
+          state
+        }
+      }
     }
   }
 `;

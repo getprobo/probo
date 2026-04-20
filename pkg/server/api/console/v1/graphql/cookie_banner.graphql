@@ -254,16 +254,20 @@ type DeactivateCookieBannerPayload {
 
 type PublishCookieBannerVersionPayload {
     cookieBannerVersion: CookieBannerVersion!
+    cookieBanner: CookieBanner!
 }
 
 type CreateCookieCategoryPayload {
     cookieCategoryEdge: CookieCategoryEdge!
+    cookieBanner: CookieBanner!
 }
 
 type UpdateCookieCategoryPayload {
     cookieCategory: CookieCategory!
+    cookieBanner: CookieBanner!
 }
 
 type DeleteCookieCategoryPayload {
     deletedCookieCategoryId: ID!
+    cookieBanner: CookieBanner!
 }

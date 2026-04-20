@@ -50,6 +50,14 @@ const deleteCategoryMutation = graphql`
   ) {
     deleteCookieCategory(input: $input) {
       deletedCookieCategoryId @deleteEdge(connections: $connections)
+      cookieBanner {
+        id
+        latestVersion {
+          id
+          version
+          state
+        }
+      }
     }
   }
 `;
@@ -68,6 +76,14 @@ const updateCategoryMutation = graphql`
           description
         }
         updatedAt
+      }
+      cookieBanner {
+        id
+        latestVersion {
+          id
+          version
+          state
+        }
       }
     }
   }

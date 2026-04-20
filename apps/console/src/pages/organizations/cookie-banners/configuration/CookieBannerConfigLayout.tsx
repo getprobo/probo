@@ -86,6 +86,14 @@ const publishMutation = graphql`
         version
         state
       }
+      cookieBanner {
+        id
+        latestVersion {
+          id
+          version
+          state
+        }
+      }
     }
   }
 `;
@@ -108,7 +116,9 @@ export default function CookieBannerConfigLayout({ queryRef }: CookieBannerConfi
   const banner = data.node;
 
   const [commitActivate, isActivating] = useMutation<CookieBannerConfigLayoutActivateMutation>(activateMutation);
-  const [commitDeactivate, isDeactivating] = useMutation<CookieBannerConfigLayoutDeactivateMutation>(deactivateMutation);
+  const [commitDeactivate, isDeactivating] = useMutation<CookieBannerConfigLayoutDeactivateMutation>(
+    deactivateMutation,
+  );
   const [commitPublish, isPublishing] = useMutation<CookieBannerConfigLayoutPublishMutation>(publishMutation);
 
   const handleToggleState = () => {
@@ -164,7 +174,22 @@ export default function CookieBannerConfigLayout({ queryRef }: CookieBannerConfi
       />
 
       <PageHeader
-        title={banner.name}
+        title={(
+          <div className="align-baseline">
+            {banner.name}
+            {banner.latestVersion?.version != null && (
+              <span className="font-mono text-base text-txt-secondary ml-2">
+                v
+                {banner.latestVersion.version}
+                {banner.latestVersion.state === "DRAFT" && (
+                  <span className="text-xs font-sans">
+                    &nbsp;(draft)
+                  </span>
+                )}
+              </span>
+            )}
+          </div>
+        )}
         description={banner.origin}
       >
         <Badge variant={banner.state === "ACTIVE" ? "success" : "danger"}>
