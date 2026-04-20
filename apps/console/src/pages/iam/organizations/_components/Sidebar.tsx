@@ -63,7 +63,7 @@ const fragment = graphql`
         canListRightsRequests: permission(action: "core:rights-request:list")
         canListSnapshots: permission(action: "core:snapshot:list")
         canGetTrustCenter: permission(action: "core:trust-center:get")
-        canListCookieBanners: permission(action: "core:cookie-banner:list")
+        # canListCookieBanners: permission(action: "core:cookie-banner:list")
         canUpdateOrganization: permission(action: "iam:organization:update")
         canListStatementsOfApplicability: permission(
             action: "core:statement-of-applicability:list"
