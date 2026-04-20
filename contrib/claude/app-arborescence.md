@@ -6,11 +6,11 @@ Conventions for organising pages, routes, and supporting files in Probo frontend
 
 ## Related guides
 
-| Topic | Guide |
-|-------|-------|
-| `@probo/ui`, Tailwind, `tailwind-variants`, folders, skeletons, compound modules | [`contrib/claude/ui.md`](ui.md) |
-| React component shape, props, file/export conventions | [`contrib/claude/react-components.md`](react-components.md) |
-| Relay queries, fragments, loaders, `queryRef` | [`contrib/claude/relay.md`](relay.md) |
+| Topic                                                                            | Guide                                                       |
+| -------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| `@probo/ui`, Tailwind, `tailwind-variants`, folders, skeletons, compound modules | [`contrib/claude/ui.md`](ui.md)                             |
+| React component shape, props, file/export conventions                            | [`contrib/claude/react-components.md`](react-components.md) |
+| Relay queries, fragments, loaders, `queryRef`                                    | [`contrib/claude/relay.md`](relay.md)                       |
 
 ## Single arborescence principle
 
@@ -58,14 +58,84 @@ import { compliancePageRoutes } from "./pages/organizations/compliance-page/rout
 
 Each page folder may contain a subset of these files. Names use PascalCase matching the feature.
 
-| File | Role |
-|------|------|
-| `routes.ts` | Route definitions for this folder. Exports an array spread into the parent route tree. Uses `lazy()` from `@probo/react-lazy` to point at loaders / pages. |
-| `MyPageLoader.tsx` | Bundle entry point imported by `lazy()` in the route. **Default export.** loads data via Relay, renders a skeleton while loading, then mounts the page with `queryRef`. |
-| `MyPage.tsx` | The actual page component. Receives `queryRef` from the loader, calls `usePreloadedQuery`. |
-| `MyPageSkeleton.tsx` | `Suspense` fallback rendered while the page is still receiving data. Also used as the route-level `Fallback`. |
-| `MyPageError.tsx` | Error boundary rendering component for this page's error state. |
-| `_components/` | Sub-components scoped to this page (see [below](#_components-folder)). |
+| File                 | Role                                                                                                                                                                                                           |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `routes.ts`          | Route definitions for this folder. Exports an array spread into the parent route tree. Uses `lazy()` from `@probo/react-lazy` to point at loaders / pages.                                                     |
+| `MyLayout.tsx`       | A **layout route** component that renders shared chrome (`Breadcrumb`, `PageHeader`, `Tabs`, …) and an `<Outlet />`. Named with the **`Layout` suffix** — never `Page` — to make its role obvious at a glance. |
+| `MyLayoutLoader.tsx` | Loader for a layout that needs data (same pattern as `MyPageLoader`).                                                                                                                                          |
+| `MyPageLoader.tsx`   | Bundle entry point imported by `lazy()` in the route. **Default export.** loads data via Relay, renders a skeleton while loading, then mounts the page with `queryRef`. Only needed when the page reads data.  |
+| `MyPage.tsx`         | The actual page component. Receives `queryRef` from the loader (when data is loaded), or is the **default export** directly imported by `lazy()` when no data is needed.                                       |
+| `MyPageSkeleton.tsx` | `Suspense` fallback rendered while the page is still receiving data. Also used as the route-level `Fallback`. Only needed when the page reads data.                                                            |
+| `MyPageError.tsx`    | Error boundary rendering component for this page's error state.                                                                                                                                                |
+| `_components/`       | Sub-components scoped to this page (see [below](#_components-folder)).                                                                                                                                         |
+
+### Layout vs Page naming
+
+A component is a **layout** when it renders `<Outlet />` and exists to provide shared UI (breadcrumbs, tabs, page header) around child routes. It is a **page** when it renders final content with no `<Outlet />`.
+
+Use the correct suffix so the role is clear from the file name alone:
+
+```text
+// Bad — a layout route named as a "Page"
+VendorDetailPage.tsx          # renders <Outlet />, wraps child routes
+CookieBannerConfigPage.tsx    # renders tabs + <Outlet />
+
+// Good — layout routes use the "Layout" suffix
+VendorDetailLayout.tsx
+CookieBannerConfigLayout.tsx
+```
+
+## When do you need a loader, query, or Relay provider?
+
+The loader / query / provider scaffolding exists to support Relay — it isn't boilerplate to copy into every page. Match the files to what the page actually does:
+
+| Page has…                            | Files needed                                                                                                                             |
+| ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| No Relay data and no mutation        | `MyPage.tsx` only. `lazy()` imports it directly. No loader, no skeleton, no provider, no query.                                          |
+| A mutation only (no query)           | `MyPage.tsx` wrapped in the appropriate Relay provider (e.g. `IAMRelayProvider`, `CoreRelayProvider`). No loader, no skeleton, no query. |
+| A query (with or without a mutation) | Full pattern: `MyPageLoader.tsx` (provider + `useQueryLoader` + skeleton) → `MyPage.tsx` (`usePreloadedQuery`) + `MyPageSkeleton.tsx`.   |
+
+Layouts follow the same rule. A layout that only renders a `PageHeader` and an `<Outlet />` does **not** need a query, loader, skeleton, or provider — just a plain component imported by `lazy()` in `routes.ts`.
+
+### Example: mutation only, no query
+
+See [`pages/iam/organizations/NewOrganizationPage.tsx`](../../apps/console/src/pages/iam/organizations/NewOrganizationPage.tsx) for a reference. The page is the default export, wraps its inner component in `IAMRelayProvider` so the mutation has a Relay environment, and has no loader / skeleton / query.
+
+```tsx
+// pages/iam/organizations/NewOrganizationPage.tsx
+function NewOrganizationPageInner() {
+  const [createOrganization, isCreating]
+    = useMutation<NewOrganizationPageMutation>(createOrganizationMutation);
+  // …
+}
+
+export default function NewOrganizationPage() {
+  return (
+    <IAMRelayProvider>
+      <NewOrganizationPageInner />
+    </IAMRelayProvider>
+  );
+}
+```
+
+### Example: no data at all
+
+```tsx
+// pages/organizations/cookie-banners/CookieBannerLayout.tsx
+export default function CookieBannerLayout() {
+  const { __ } = useTranslate();
+  usePageTitle(__("Cookie Banners"));
+
+  return (
+    <div className="space-y-6">
+      <PageHeader title={__("Cookie Banners")} />
+      <Outlet />
+    </div>
+  );
+}
+```
+
+`routes.ts` points `lazy()` at `CookieBannerLayout` directly — no `CookieBannerLayoutLoader`, no `cookieBannerLayoutQuery`, no skeleton.
 
 ### `routes.ts`
 
@@ -87,11 +157,11 @@ export const vendorRoutes = [
   {
     path: "vendors/:vendorId",
     Fallback: VendorsPageSkeleton,
-    Component: lazy(() => import("./VendorDetailPageLoader")),
+    Component: lazy(() => import("./VendorDetailLayoutLoader")),
     children: [
       {
         path: "overview",
-        Component: lazy(() => import("./tabs/VendorOverviewTab")),
+        Component: lazy(() => import("./overview/VendorOverviewPage")),
       },
     ],
   },
@@ -198,11 +268,11 @@ pages/organizations/vendors/VendorsPageSkeleton.tsx
 
 Sub-components that are used **only** by a single page live in a `_components/` folder next to that page. The underscore prefix visually distinguishes them from route-segment folders.
 
-| Situation | Where the component lives |
-|-----------|--------------------------|
-| Used by one page only | `pages/organizations/vendors/_components/` |
+| Situation                                  | Where the component lives                                                          |
+| ------------------------------------------ | ---------------------------------------------------------------------------------- |
+| Used by one page only                      | `pages/organizations/vendors/_components/`                                         |
 | Used by multiple pages in the same feature | Nearest common ancestor's `_components/` (e.g. `pages/organizations/_components/`) |
-| Reusable UI primitive | `@probo/ui` package |
+| Reusable UI primitive                      | `@probo/ui` package                                                                |
 
 ### Do / don't: component placement
 
@@ -223,6 +293,29 @@ src/components/VendorContactRow.tsx     # only used by VendorContactsTab
 pages/organizations/vendors/_components/VendorContactRow.tsx
 ```
 
+## Child-route folder naming
+
+Folders that contain child-route pages are named after the **resource or concept** the page represents, not after the UX component that currently renders them. UX patterns change (tabs become pages, drawers become routes, etc.); the resource name stays stable.
+
+### Do / don't: child-route folders
+
+```text
+// Bad — folder named after a UI element
+configuration/
+  tabs/                            # "tabs" is a UI component, not a resource
+    VendorOverviewTab.tsx
+    VendorComplianceTab.tsx
+
+// Good — folders named after the resource each child route represents
+configuration/
+  overview/
+    VendorOverviewPage.tsx
+  compliance/
+    VendorCompliancePage.tsx
+```
+
+This also means child-route components use the `*Page` suffix (not `*Tab`), because they are pages in their own right — the fact that a tab bar navigates between them is an implementation detail of the parent layout.
+
 ## Full example tree
 
 Target layout for a `vendors` feature under `pages/organizations/`:
@@ -233,14 +326,23 @@ pages/organizations/vendors/
   VendorsPageLoader.tsx            # lazy entry — providers + Suspense + query loader
   VendorsPage.tsx                  # page component (usePreloadedQuery)
   VendorsPageSkeleton.tsx          # loading fallback
+<<<<<<< HEAD
   VendorDetailPageLoader.tsx       # lazy entry for detail view
   VendorDetailPage.tsx             # detail page component
   VendorDetailPageSkeleton.tsx     # detail loading fallback
+=======
+  VendorDetailLayoutLoader.tsx     # lazy entry for detail layout
+  VendorDetailLayout.tsx           # layout — breadcrumbs, tabs, <Outlet />
+  VendorDetailLayoutSkeleton.tsx   # detail loading fallback
+  NewVendorPage.tsx                # mutation-only page — default export, wraps itself in the Relay provider
+>>>>>>> 4dcc034f7 (Update contrib guides)
   _components/                     # sub-components used only by vendor pages
     VendorContactRow.tsx
     VendorRiskSummary.tsx
-  tabs/                            # tab content for the detail page
-    VendorOverviewTab.tsx
-    VendorComplianceTab.tsx
-    VendorContactsTab.tsx
+  overview/                        # child route: /vendors/:vendorId/overview
+    VendorOverviewPage.tsx
+  compliance/                      # child route: /vendors/:vendorId/compliance
+    VendorCompliancePage.tsx
+  contacts/                        # child route: /vendors/:vendorId/contacts
+    VendorContactsPage.tsx
 ```

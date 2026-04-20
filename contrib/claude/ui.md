@@ -1,6 +1,6 @@
 # UI system (`@probo/ui`)
 
-Shared React UI for Probo apps lives in the **`@probo/ui`** workspace package ([`packages/ui`](../../packages/ui)). This document describes **target** conventions for building and styling those components.
+Shared React UI for Probo apps lives in the **`@probo/ui`** workspace package ([`packages/ui`](../../packages/ui)), as well as ad-hoc components created in apps (under `apps/*/src`). This document describes **target** conventions for building and styling those components, whether shared or app-local.
 
 **Today's codebase does not fully match these rules.** The tree still uses layouts like `Atoms/`, `Molecules/`, and `Layouts/`, and many files mix ad-hoc Tailwind on `className` with `tailwind-variants`. Treat this guide as the direction for new work and refactors, not as a description of the current tree.
 
@@ -87,6 +87,36 @@ const row = tv({
 export function Row({ bordered, children }: { bordered?: boolean; children: React.ReactNode }) {
   return <div className={row({ bordered })}>{children}</div>;
 }
+```
+
+## Icons
+
+Icons come from two sources, in this order of preference:
+
+1. **`@phosphor-icons/react`** — the default icon library. Import the specific icon directly: `import { CookieIcon } from "@phosphor-icons/react"`. Prefer phosphor whenever it has the icon you need; it covers the vast majority of use cases and keeps the iconography consistent across the product.
+2. **`@probo/ui` `Icon*` set** — the curated, in-house icons (`IconBank`, `IconShield`, `IconCircleCheck`, …). Use these only when phosphor doesn't have a suitable equivalent, or when you specifically need a bespoke Probo-branded icon.
+
+**Never use emoji characters (🍪, ✅, ⚠️, …) as icons in UI.** Emojis render inconsistently across platforms, don't inherit `currentColor`, and can't be sized or styled like an SVG. If neither `@phosphor-icons/react` nor `@probo/ui` has what you need, add the missing icon to `@probo/ui` rather than falling back to emoji.
+
+### Do / don't: icon source
+
+```tsx
+// Bad — emoji used as an icon
+<div className="mb-2 text-4xl">🍪</div>
+```
+
+```tsx
+// Good — phosphor icon as the default choice
+import { CookieIcon } from "@phosphor-icons/react";
+
+<CookieIcon size={48} weight="duotone" className="text-muted-foreground" />
+```
+
+```tsx
+// Good — @probo/ui icon when phosphor has no suitable equivalent
+import { IconShield } from "@probo/ui";
+
+<IconShield className="size-6 text-muted-foreground" />
 ```
 
 ## Folder layout
