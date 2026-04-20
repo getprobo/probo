@@ -24,12 +24,12 @@ export const cookieBannerRoutes = [
   {
     path: "cookie-banners",
     Fallback: PageSkeleton,
-    Component: lazy(() => import("#/pages/organizations/cookie-banners/CookieBannerLayout")),
+    Component: lazy(() => import("#/pages/organizations/cookie-banners/CookieBannersLayout")),
     children: [
       {
         index: true,
         Fallback: LinkCardSkeleton,
-        Component: lazy(() => import("#/pages/organizations/cookie-banners/overview/CookieBannerOverviewPageLoader")),
+        Component: lazy(() => import("#/pages/organizations/cookie-banners/overview/CookieBannersOverviewPageLoader")),
       },
       {
         path: "new",
@@ -64,11 +64,6 @@ export const cookieBannerRoutes = [
         path: "snippet",
         Fallback: LinkCardSkeleton,
         Component: lazy(() => import("#/pages/organizations/cookie-banners/configuration/snippet/CookieBannerSnippetPage")),
-      },
-      {
-        path: "theme",
-        Fallback: LinkCardSkeleton,
-        Component: lazy(() => import("#/pages/organizations/cookie-banners/configuration/theme/CookieBannerThemePage")),
       },
     ],
   },

@@ -16,6 +16,8 @@ import { useTranslate } from "@probo/i18n";
 import { Card } from "@probo/ui";
 import type { ReactNode } from "react";
 
+import { ThemePreview } from "#/pages/organizations/cookie-banners/configuration/theme/_components/ThemePreview";
+
 import { CodeSnippets } from "./_components/CodeSnippets";
 
 export default function CookieBannerSnippetPage() {
@@ -33,6 +35,14 @@ export default function CookieBannerSnippetPage() {
 
       <Step
         number={2}
+        title={__("Customize the theme")}
+        description={__("Adjust colors, fonts, and spacing to match your brand. The generated CSS snippet can be added to your website to override the default banner styles.")}
+      >
+        <ThemePreview />
+      </Step>
+
+      <Step
+        number={3}
         title={__("Tag third-party elements with consent categories")}
         description={__("Mark scripts, iframes, and other third-party resources with a data-cookie-consent attribute so they only load after the visitor grants consent for the corresponding category. Replace src with data-src (or href with data-href) to prevent the browser from loading the resource before consent is given.")}
       >

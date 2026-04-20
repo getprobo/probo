@@ -18,10 +18,10 @@ import {
   Badge,
   Breadcrumb,
   Button,
-  IconImage,
   IconListStack,
   IconPageTextLine,
   IconSettingsGear2,
+  IconSquareBehindSquare2,
   PageHeader,
   TabLink,
   Tabs,
@@ -190,7 +190,31 @@ export default function CookieBannerConfigLayout({ queryRef }: CookieBannerConfi
             )}
           </div>
         )}
-        description={banner.origin}
+        description={(
+          <span className="flex items-center gap-3 text-sm text-txt-secondary">
+            <span>
+              <span className="font-medium text-txt-primary">{__("Origin")}</span>
+              {" "}
+              {banner.origin}
+            </span>
+            <span className="text-border-primary">·</span>
+            <span className="flex items-center gap-1">
+              <span className="font-medium text-txt-primary">{__("ID")}</span>
+              {" "}
+              {banner.id}
+              <button
+                type="button"
+                className="p-1 rounded hover:bg-bg-hover transition-colors cursor-pointer"
+                onClick={() => {
+                  void navigator.clipboard.writeText(banner.id);
+                  toast({ title: __("Copied"), description: __("Banner ID copied to clipboard"), variant: "success" });
+                }}
+              >
+                <IconSquareBehindSquare2 size={16} />
+              </button>
+            </span>
+          </span>
+        )}
       >
         <Badge variant={banner.state === "ACTIVE" ? "success" : "danger"}>
           {banner.state === "ACTIVE" ? __("Active") : __("Inactive")}
@@ -220,11 +244,7 @@ export default function CookieBannerConfigLayout({ queryRef }: CookieBannerConfi
         </TabLink>
         <TabLink to={`/organizations/${organizationId}/cookie-banners/${cookieBannerId}/snippet`}>
           <IconPageTextLine size={20} />
-          {__("Snippet")}
-        </TabLink>
-        <TabLink to={`/organizations/${organizationId}/cookie-banners/${cookieBannerId}/theme`}>
-          <IconImage size={20} />
-          {__("Theme")}
+          {__("JS / CSS snippets")}
         </TabLink>
       </Tabs>
 

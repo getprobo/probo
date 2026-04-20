@@ -15,15 +15,15 @@
 import { Suspense, useEffect } from "react";
 import { useQueryLoader } from "react-relay";
 
-import type { CookieBannerOverviewPageQuery } from "#/__generated__/core/CookieBannerOverviewPageQuery.graphql";
+import type { CookieBannersOverviewPageQuery } from "#/__generated__/core/CookieBannersOverviewPageQuery.graphql";
 import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
-import CookieBannerOverviewPage, { cookieBannerOverviewPageQuery } from "./CookieBannerOverviewPage";
+import { CookieBannersOverviewPage, cookieBannersOverviewPageQuery } from "./CookieBannersOverviewPage";
 
-export default function CookieBannerOverviewPageLoader() {
+export default function CookieBannersOverviewPageLoader() {
   const organizationId = useOrganizationId();
-  const [queryRef, loadQuery] = useQueryLoader<CookieBannerOverviewPageQuery>(cookieBannerOverviewPageQuery);
+  const [queryRef, loadQuery] = useQueryLoader<CookieBannersOverviewPageQuery>(cookieBannersOverviewPageQuery);
 
   useEffect(() => {
     loadQuery({ organizationId });
@@ -35,7 +35,7 @@ export default function CookieBannerOverviewPageLoader() {
 
   return (
     <Suspense fallback={<PageSkeleton />}>
-      <CookieBannerOverviewPage queryRef={queryRef} />
+      <CookieBannersOverviewPage queryRef={queryRef} />
     </Suspense>
   );
 }

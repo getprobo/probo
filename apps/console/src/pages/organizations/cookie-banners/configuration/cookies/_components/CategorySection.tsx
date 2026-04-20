@@ -274,9 +274,20 @@ export function CategorySection({ categoryKey }: CategorySectionProps) {
               </div>
             )}
         {!isEditingCategory && (
-          <p className="mt-1 text-sm text-muted-foreground">
-            {category.description}
-          </p>
+          <>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {category.description}
+            </p>
+            <p className="mt-2 text-xs text-txt-secondary/70">
+              {__("Block elements until consent is given:")}
+              {" "}
+              <code className="rounded bg-muted px-1 py-0.5 font-mono text-[11px]">
+                data-cookie-consent=&quot;
+                {category.name.toLowerCase()}
+                &quot;
+              </code>
+            </p>
+          </>
         )}
       </div>
 

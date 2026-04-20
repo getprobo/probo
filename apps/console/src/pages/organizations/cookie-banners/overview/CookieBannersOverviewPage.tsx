@@ -18,13 +18,13 @@ import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { Link } from "react-router";
 import { graphql } from "relay-runtime";
 
-import type { CookieBannerOverviewPageQuery } from "#/__generated__/core/CookieBannerOverviewPageQuery.graphql";
+import type { CookieBannersOverviewPageQuery } from "#/__generated__/core/CookieBannersOverviewPageQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import { CookieBannerEmptyState } from "./_components/CookieBannerEmptyState";
 
-export const cookieBannerOverviewPageQuery = graphql`
-  query CookieBannerOverviewPageQuery($organizationId: ID!) {
+export const cookieBannersOverviewPageQuery = graphql`
+  query CookieBannersOverviewPageQuery($organizationId: ID!) {
     organization: node(id: $organizationId) {
       __typename
       ... on Organization {
@@ -44,15 +44,15 @@ export const cookieBannerOverviewPageQuery = graphql`
   }
 `;
 
-interface CookieBannerOverviewPageProps {
-  queryRef: PreloadedQuery<CookieBannerOverviewPageQuery>;
+interface CookieBannersOverviewPageProps {
+  queryRef: PreloadedQuery<CookieBannersOverviewPageQuery>;
 }
 
-export default function CookieBannerOverviewPage({ queryRef }: CookieBannerOverviewPageProps) {
+export function CookieBannersOverviewPage({ queryRef }: CookieBannersOverviewPageProps) {
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
 
-  const { organization } = usePreloadedQuery(cookieBannerOverviewPageQuery, queryRef);
+  const { organization } = usePreloadedQuery(cookieBannersOverviewPageQuery, queryRef);
   if (organization.__typename !== "Organization") {
     throw new Error("invalid type for node");
   }
