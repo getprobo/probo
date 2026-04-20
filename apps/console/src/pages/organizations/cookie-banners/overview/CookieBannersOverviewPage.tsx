@@ -12,8 +12,9 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+import { usePageTitle } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
-import { Badge, Button, Card } from "@probo/ui";
+import { Badge, Button, Card, PageHeader } from "@probo/ui";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { Link } from "react-router";
 import { graphql } from "relay-runtime";
@@ -52,6 +53,8 @@ export function CookieBannersOverviewPage({ queryRef }: CookieBannersOverviewPag
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
 
+  usePageTitle(__("Cookie Banners"));
+
   const { organization } = usePreloadedQuery(cookieBannersOverviewPageQuery, queryRef);
   if (organization.__typename !== "Organization") {
     throw new Error("invalid type for node");
@@ -62,40 +65,57 @@ export function CookieBannersOverviewPage({ queryRef }: CookieBannersOverviewPag
 
   if (banners.length === 0) {
     return (
-      <CookieBannerEmptyState>
-        <Button to={newBannerHref}>{__("Create your first banner")}</Button>
-      </CookieBannerEmptyState>
+      <div className="space-y-6">
+        <PageHeader
+          title={__("Cookie Banners")}
+          description={__(
+            "Manage cookie consent banners for your websites. Configure categories, cookies, and install the SDK.",
+          )}
+        />
+        <CookieBannerEmptyState>
+          <Button to={newBannerHref}>{__("Create your first banner")}</Button>
+        </CookieBannerEmptyState>
+      </div>
     );
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-end">
-        <Button to={newBannerHref}>{__("Create Banner")}</Button>
-      </div>
+    <div className="space-y-6">
+      <PageHeader
+        title={__("Cookie Banners")}
+        description={__(
+          "Manage cookie consent banners for your websites. Configure categories, cookies, and install the SDK.",
+        )}
+      />
 
-      <Card className="divide-y divide-border rounded-lg border">
-        {banners.map(banner => (
-          <Link
-            key={banner.id}
-            to={`/organizations/${organizationId}/cookie-banners/${banner.id}`}
-            className="flex items-center justify-between gap-4 p-4 hover:bg-muted/50 transition-colors"
-          >
-            <div className="min-w-0 flex-1">
-              <div className="font-medium">{banner.name}</div>
-              <div className="text-sm text-muted-foreground truncate">{banner.origin}</div>
-            </div>
-            <div className="flex items-center gap-3">
-              <Badge variant={banner.state === "ACTIVE" ? "success" : "danger"}>
-                {banner.state === "ACTIVE" ? __("Active") : __("Inactive")}
-              </Badge>
-              <span className="text-xs text-muted-foreground">
-                {new Date(banner.createdAt).toLocaleDateString()}
-              </span>
-            </div>
-          </Link>
-        ))}
-      </Card>
+      <div className="space-y-4">
+        <div className="flex justify-end">
+          <Button to={newBannerHref}>{__("Create Banner")}</Button>
+        </div>
+
+        <Card className="divide-y divide-border rounded-lg border">
+          {banners.map(banner => (
+            <Link
+              key={banner.id}
+              to={`/organizations/${organizationId}/cookie-banners/${banner.id}`}
+              className="flex items-center justify-between gap-4 p-4 hover:bg-muted/50 transition-colors"
+            >
+              <div className="min-w-0 flex-1">
+                <div className="font-medium">{banner.name}</div>
+                <div className="text-sm text-muted-foreground truncate">{banner.origin}</div>
+              </div>
+              <div className="flex items-center gap-3">
+                <Badge variant={banner.state === "ACTIVE" ? "success" : "danger"}>
+                  {banner.state === "ACTIVE" ? __("Active") : __("Inactive")}
+                </Badge>
+                <span className="text-xs text-muted-foreground">
+                  {new Date(banner.createdAt).toLocaleDateString()}
+                </span>
+              </div>
+            </Link>
+          ))}
+        </Card>
+      </div>
     </div>
   );
 }

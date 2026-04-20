@@ -16,10 +16,10 @@ import { formatError, type GraphQLError } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
 import {
+  Breadcrumb,
   Button,
   Card,
   Field,
-  IconChevronLeft,
   Input,
   Label,
   Option,
@@ -29,7 +29,7 @@ import {
 } from "@probo/ui";
 import { type FormEvent, useState } from "react";
 import { useMutation } from "react-relay";
-import { Link, useNavigate } from "react-router";
+import { useNavigate } from "react-router";
 import { graphql } from "relay-runtime";
 
 import type { NewCookieBannerPageMutation } from "#/__generated__/core/NewCookieBannerPageMutation.graphql";
@@ -99,13 +99,17 @@ export default function NewCookieBannerPage() {
 
   return (
     <div className="space-y-6">
-      <Link
-        to={`/organizations/${organizationId}/cookie-banners`}
-        className="mb-4 inline-flex gap-2 items-center"
-      >
-        <IconChevronLeft size={16} />
-        {__("Back")}
-      </Link>
+      <Breadcrumb
+        items={[
+          {
+            label: __("Cookie Banners"),
+            to: `/organizations/${organizationId}/cookie-banners`,
+          },
+          {
+            label: __("New"),
+          },
+        ]}
+      />
       <PageHeader
         title={__("Create Cookie Banner")}
         description={__(
