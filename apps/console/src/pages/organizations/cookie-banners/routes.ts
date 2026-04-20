@@ -45,6 +45,7 @@ export const cookieBannerRoutes = [
       {
         path: "",
         loader: () => {
+          // eslint-disable-next-line @typescript-eslint/only-throw-error
           throw redirect("settings");
         },
         Component: Fragment,
@@ -52,7 +53,12 @@ export const cookieBannerRoutes = [
       {
         path: "settings",
         Fallback: LinkCardSkeleton,
-        Component: lazy(() => import("#/pages/organizations/cookie-banners/configuration/settings/CookieBannerSettingsPage")),
+        Component: lazy(() => import("#/pages/organizations/cookie-banners/configuration/settings/CookieBannerSettingsPageLoader")),
+      },
+      {
+        path: "cookies",
+        Fallback: LinkCardSkeleton,
+        Component: lazy(() => import("#/pages/organizations/cookie-banners/configuration/cookies/CookieBannerCookiesPageLoader")),
       },
       {
         path: "snippet",

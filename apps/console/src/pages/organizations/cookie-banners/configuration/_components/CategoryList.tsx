@@ -16,14 +16,32 @@ import { formatError, type GraphQLError } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import { Badge, Button, Card, IconArrowDown, IconArrowUp, useToast } from "@probo/ui";
 import { useState } from "react";
-import { useMutation } from "react-relay";
+import { useFragment, useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 
+import type { CategoryList_cookieBanner$key } from "#/__generated__/core/CategoryList_cookieBanner.graphql";
 import type { CategoryListDeleteMutation } from "#/__generated__/core/CategoryListDeleteMutation.graphql";
 import type { CategoryListUpdateMutation } from "#/__generated__/core/CategoryListUpdateMutation.graphql";
 
 import { CategoryDialog } from "./CategoryDialog";
-import { CookieDialog } from "./CookieDialog";
+
+const categoryListFragment = graphql`
+  fragment CategoryList_cookieBanner on CookieBanner {
+    id
+    categories(first: 50, orderBy: { field: RANK, direction: ASC }) {
+      __id
+      edges {
+        node {
+          id
+          name
+          description
+          required
+          rank
+        }
+      }
+    }
+  }
+`;
 
 const deleteCategoryMutation = graphql`
   mutation CategoryListDeleteMutation(
@@ -55,31 +73,18 @@ const updateCategoryMutation = graphql`
   }
 `;
 
-interface Category {
-  id: string;
-  name: string;
-  description: string;
-  required: boolean;
-  rank: number;
-  cookies: ReadonlyArray<{
-    name: string;
-    duration: string;
-    description: string;
-  }>;
-}
-
 interface CategoryListProps {
-  cookieBannerId: string;
-  categories: ReadonlyArray<Category>;
-  connectionId: string;
+  cookieBannerKey: CategoryList_cookieBanner$key;
 }
 
-export function CategoryList({ cookieBannerId, categories, connectionId }: CategoryListProps) {
+export function CategoryList({ cookieBannerKey }: CategoryListProps) {
   const { __ } = useTranslate();
   const { toast } = useToast();
   const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
-  const [showCookieDialog, setShowCookieDialog] = useState(false);
+
+  const banner = useFragment(categoryListFragment, cookieBannerKey);
+  const connectionId = banner.categories.__id;
+  const categories = banner.categories.edges.map(e => e.node);
 
   const [commitDelete] = useMutation<CategoryListDeleteMutation>(deleteCategoryMutation);
   const [commitUpdate] = useMutation<CategoryListUpdateMutation>(updateCategoryMutation);
@@ -140,17 +145,14 @@ export function CategoryList({ cookieBannerId, categories, connectionId }: Categ
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="font-medium">{__("Categories")}</h3>
-        <div className="flex items-center gap-2">
-          <Button variant="secondary" onClick={() => setShowCookieDialog(true)}>
-            {__("Add Cookie")}
-          </Button>
-          <Button variant="secondary" onClick={() => setShowCreateDialog(true)}>
-            {__("Add Category")}
-          </Button>
-        </div>
+        <h3 className="font-medium">{__("Categories Sorting")}</h3>
+        <Button variant="secondary" onClick={() => setShowCreateDialog(true)}>
+          {__("Add Category")}
+        </Button>
       </div>
-
+      <p className="text-sm text-txt-secondary">
+        {__("Categories will be displayed in your cookie banner in the same order as below.")}
+      </p>
       <Card className="divide-y divide-border-low rounded-lg border">
         {sorted.map((category, index) => (
           <div key={category.id} className="p-4">
@@ -180,13 +182,6 @@ export function CategoryList({ cookieBannerId, categories, connectionId }: Categ
                     <IconArrowDown size={14} />
                   </button>
                 </div>
-                <Button
-                  variant="secondary"
-                  className="h-6 px-2 text-xs"
-                  onClick={() => setEditingCategory(category)}
-                >
-                  {__("Edit")}
-                </Button>
                 {!category.required && (
                   <Button
                     variant="danger"
@@ -199,51 +194,15 @@ export function CategoryList({ cookieBannerId, categories, connectionId }: Categ
               </div>
             </div>
             <p className="text-sm text-muted-foreground mb-2">{category.description}</p>
-
-            {category.cookies.length > 0 && (
-              <div className="mt-3 rounded bg-muted/50 p-3">
-                <div className="text-xs font-medium text-muted-foreground mb-2">
-                  {__("Cookies")}
-                  {" "}
-                  (
-                  {category.cookies.length}
-                  )
-                </div>
-                <div className="space-y-1">
-                  {category.cookies.map((cookie, i) => (
-                    <div key={i} className="flex items-baseline justify-between text-xs">
-                      <code className="font-mono">{cookie.name}</code>
-                      <span className="text-muted-foreground">{cookie.duration}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
         ))}
       </Card>
 
       {showCreateDialog && (
         <CategoryDialog
-          cookieBannerId={cookieBannerId}
+          cookieBannerId={banner.id}
           connectionId={connectionId}
           onOpenChange={setShowCreateDialog}
-        />
-      )}
-
-      {editingCategory && (
-        <CategoryDialog
-          cookieBannerId={cookieBannerId}
-          connectionId={connectionId}
-          category={editingCategory}
-          onOpenChange={(open) => { if (!open) setEditingCategory(null); }}
-        />
-      )}
-
-      {showCookieDialog && (
-        <CookieDialog
-          categories={sorted}
-          onOpenChange={setShowCookieDialog}
         />
       )}
     </div>

@@ -14,44 +14,12 @@
 
 import { useTranslate } from "@probo/i18n";
 import { Card } from "@probo/ui";
-import { useLazyLoadQuery } from "react-relay";
-import { useParams } from "react-router";
-import { graphql } from "relay-runtime";
-
-import type { CookieBannerSnippetPageQuery } from "#/__generated__/core/CookieBannerSnippetPageQuery.graphql";
+import type { ReactNode } from "react";
 
 import { CodeSnippets } from "./_components/CodeSnippets";
 
-const snippetPageQuery = graphql`
-  query CookieBannerSnippetPageQuery($cookieBannerId: ID!) {
-    node(id: $cookieBannerId) {
-      __typename
-      ... on CookieBanner {
-        id
-        origin
-      }
-    }
-  }
-`;
-
 export default function CookieBannerSnippetPage() {
   const { __ } = useTranslate();
-  const { cookieBannerId } = useParams<{ cookieBannerId: string }>();
-  if (!cookieBannerId) {
-    throw new Error("Missing :cookieBannerId param in route");
-  }
-
-  const data = useLazyLoadQuery<CookieBannerSnippetPageQuery>(
-    snippetPageQuery,
-    { cookieBannerId },
-  );
-
-  if (data.node.__typename !== "CookieBanner") {
-    throw new Error("invalid type for node");
-  }
-
-  const banner = data.node;
-  const baseUrl = `${window.location.origin}/api/cookie-banner/v1`;
 
   return (
     <div className="space-y-10">
@@ -60,7 +28,7 @@ export default function CookieBannerSnippetPage() {
         title={__("Add the cookie banner snippet")}
         description={__("Include the Probo cookie banner on your website by adding one of the following snippets. The banner will automatically appear and collect visitor consent.")}
       >
-        <CodeSnippets bannerId={banner.id} baseUrl={baseUrl} />
+        <CodeSnippets />
       </Step>
 
       <Step
@@ -72,7 +40,8 @@ export default function CookieBannerSnippetPage() {
           <h4 className="text-sm font-medium">{__("Scripts")}</h4>
           <Card className="border">
             <pre className="overflow-x-auto p-4 text-sm font-mono text-invert bg-accent rounded-lg">
-              <code>{`<!-- Before: loads immediately -->
+              <code>
+                {`<!-- Before: loads immediately -->
 <script src="https://analytics.example.com/tracker.js"></script>
 
 <!-- After: loads only when "analytics" consent is granted -->
@@ -80,56 +49,65 @@ export default function CookieBannerSnippetPage() {
   type="text/plain"
   data-cookie-consent="analytics"
   data-src="https://analytics.example.com/tracker.js"
-></script>`}</code>
+></script>`}
+              </code>
             </pre>
           </Card>
 
           <h4 className="text-sm font-medium">{__("Inline scripts")}</h4>
           <Card className="border">
             <pre className="overflow-x-auto p-4 text-sm font-mono text-invert bg-accent rounded-lg">
-              <code>{`<script
+              <code>
+                {`<script
   type="text/plain"
   data-cookie-consent="analytics"
   data-type="text/javascript"
 >
   // This code runs only after consent
   gtag('config', 'G-XXXXXXX');
-</script>`}</code>
+</script>`}
+              </code>
             </pre>
           </Card>
 
           <h4 className="text-sm font-medium">{__("Iframes & embeds")}</h4>
           <Card className="border">
             <pre className="overflow-x-auto p-4 text-sm font-mono text-invert bg-accent rounded-lg">
-              <code>{`<iframe
+              <code>
+                {`<iframe
   data-cookie-consent="marketing"
   data-src="https://www.youtube.com/embed/VIDEO_ID"
   width="560"
   height="315"
-></iframe>`}</code>
+></iframe>`}
+              </code>
             </pre>
           </Card>
 
           <h4 className="text-sm font-medium">{__("Images, video & audio")}</h4>
           <Card className="border">
             <pre className="overflow-x-auto p-4 text-sm font-mono text-invert bg-accent rounded-lg">
-              <code>{`<img
+              <code>
+                {`<img
   data-cookie-consent="analytics"
   data-src="https://tracker.example.com/pixel.gif"
   width="1"
   height="1"
-/>`}</code>
+/>`}
+              </code>
             </pre>
           </Card>
 
           <h4 className="text-sm font-medium">{__("Stylesheets")}</h4>
           <Card className="border">
             <pre className="overflow-x-auto p-4 text-sm font-mono text-invert bg-accent rounded-lg">
-              <code>{`<link
+              <code>
+                {`<link
   rel="stylesheet"
   data-cookie-consent="marketing"
   data-href="https://widgets.example.com/styles.css"
-/>`}</code>
+/>`}
+              </code>
             </pre>
           </Card>
 
@@ -142,17 +120,14 @@ export default function CookieBannerSnippetPage() {
   );
 }
 
-function Step({
-  number,
-  title,
-  description,
-  children,
-}: {
+interface StepProps {
   number: number;
   title: string;
   description: string;
-  children: React.ReactNode;
-}) {
+  children: ReactNode;
+}
+
+function Step({ number, title, description, children }: StepProps) {
   return (
     <div className="flex gap-4">
       <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent text-sm font-semibold text-invert">

@@ -16,10 +16,22 @@ import { formatError, type GraphQLError } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import { Button, Card, Field, Input, Label, Option, Select, useToast } from "@probo/ui";
 import { useState } from "react";
-import { useMutation } from "react-relay";
+import { useFragment, useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 
+import type { BannerSettingsForm_cookieBanner$key } from "#/__generated__/core/BannerSettingsForm_cookieBanner.graphql";
 import type { BannerSettingsFormMutation } from "#/__generated__/core/BannerSettingsFormMutation.graphql";
+
+const bannerSettingsFormFragment = graphql`
+  fragment BannerSettingsForm_cookieBanner on CookieBanner {
+    id
+    name
+    origin
+    privacyPolicyUrl
+    consentExpiryDays
+    consentMode
+  }
+`;
 
 const updateBannerMutation = graphql`
   mutation BannerSettingsFormMutation($input: UpdateCookieBannerInput!) {
@@ -37,19 +49,14 @@ const updateBannerMutation = graphql`
 `;
 
 interface BannerSettingsFormProps {
-  banner: {
-    id: string;
-    name: string;
-    origin: string;
-    privacyPolicyUrl: string;
-    consentExpiryDays: number;
-    consentMode: string;
-  };
+  cookieBannerKey: BannerSettingsForm_cookieBanner$key;
 }
 
-export function BannerSettingsForm({ banner }: BannerSettingsFormProps) {
+export function BannerSettingsForm({ cookieBannerKey }: BannerSettingsFormProps) {
   const { __ } = useTranslate();
   const { toast } = useToast();
+
+  const banner = useFragment(bannerSettingsFormFragment, cookieBannerKey);
 
   const [commitMutation, isInFlight] = useMutation<BannerSettingsFormMutation>(updateBannerMutation);
 
@@ -70,7 +77,7 @@ export function BannerSettingsForm({ banner }: BannerSettingsFormProps) {
           origin,
           privacyPolicyUrl,
           consentExpiryDays: parseInt(consentExpiryDays, 10),
-          consentMode: consentMode as "OPT_IN" | "OPT_OUT",
+          consentMode: consentMode,
         },
       },
       onCompleted() {
@@ -112,7 +119,7 @@ export function BannerSettingsForm({ banner }: BannerSettingsFormProps) {
             </div>
             <div className="space-y-2">
               <Label>{__("Consent Mode")}</Label>
-              <Select value={consentMode} onValueChange={setConsentMode}>
+              <Select value={consentMode} onValueChange={v => setConsentMode(v as "OPT_IN" | "OPT_OUT")}>
                 <Option value="OPT_IN">{__("Opt-in")}</Option>
                 <Option value="OPT_OUT">{__("Opt-out")}</Option>
               </Select>

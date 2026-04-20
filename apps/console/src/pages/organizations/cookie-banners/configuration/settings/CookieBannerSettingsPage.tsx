@@ -12,8 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { useLazyLoadQuery } from "react-relay";
-import { useParams } from "react-router";
+import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { graphql } from "relay-runtime";
 
 import type { CookieBannerSettingsPageQuery } from "#/__generated__/core/CookieBannerSettingsPageQuery.graphql";
@@ -21,68 +20,35 @@ import type { CookieBannerSettingsPageQuery } from "#/__generated__/core/CookieB
 import { BannerSettingsForm } from "../_components/BannerSettingsForm";
 import { CategoryList } from "../_components/CategoryList";
 
-const settingsPageQuery = graphql`
+export const cookieBannerSettingsPageQuery = graphql`
   query CookieBannerSettingsPageQuery($cookieBannerId: ID!) {
     node(id: $cookieBannerId) {
       __typename
       ... on CookieBanner {
-        id
-        name
-        origin
-        privacyPolicyUrl
-        consentExpiryDays
-        consentMode
-        categories(first: 50, orderBy: { field: RANK, direction: ASC }) {
-          __id
-          edges {
-            node {
-              id
-              name
-              description
-              required
-              rank
-              cookies {
-                name
-                duration
-                description
-              }
-              createdAt
-              updatedAt
-            }
-          }
-        }
+        ...BannerSettingsForm_cookieBanner
+        ...CategoryList_cookieBanner
       }
     }
   }
 `;
 
-export default function CookieBannerSettingsPage() {
-  const { cookieBannerId } = useParams<{ cookieBannerId: string }>();
-  if (!cookieBannerId) {
-    throw new Error("Missing :cookieBannerId param in route");
-  }
+interface CookieBannerSettingsPageProps {
+  queryRef: PreloadedQuery<CookieBannerSettingsPageQuery>;
+}
 
-  const data = useLazyLoadQuery<CookieBannerSettingsPageQuery>(
-    settingsPageQuery,
-    { cookieBannerId },
-  );
+export default function CookieBannerSettingsPage({
+  queryRef,
+}: CookieBannerSettingsPageProps) {
+  const data = usePreloadedQuery(cookieBannerSettingsPageQuery, queryRef);
 
   if (data.node.__typename !== "CookieBanner") {
     throw new Error("invalid type for node");
   }
 
-  const banner = data.node;
-  const connectionId = banner.categories.__id;
-
   return (
     <div className="space-y-8">
-      <BannerSettingsForm banner={banner} />
-
-      <CategoryList
-        cookieBannerId={banner.id}
-        categories={banner.categories.edges.map(e => e.node)}
-        connectionId={connectionId}
-      />
+      <BannerSettingsForm cookieBannerKey={data.node} />
+      <CategoryList cookieBannerKey={data.node} />
     </div>
   );
 }

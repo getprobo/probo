@@ -15,22 +15,21 @@
 import { useTranslate } from "@probo/i18n";
 import { Button, Card, useToast } from "@probo/ui";
 import { useState } from "react";
+import { useParams } from "react-router";
 
-interface CodeSnippetsProps {
-  bannerId: string;
-  baseUrl: string;
-}
-
-export function CodeSnippets({ bannerId, baseUrl }: CodeSnippetsProps) {
+export function CodeSnippets() {
   const { __ } = useTranslate();
   const { toast } = useToast();
+  const { cookieBannerId } = useParams<{ cookieBannerId: string }>();
+
+  const baseUrl = `${window.location.origin}/api/cookie-banner/v1`;
 
   const tabs = [
     {
       label: __("Script Tag"),
       code: `<script
   src="https://cdn.jsdelivr.net/npm/@probo/cookie-banner/dist/cookie-banner.iife.js"
-  data-banner-id="${bannerId}"
+  data-banner-id="${cookieBannerId}"
   data-base-url="${baseUrl}"
   data-position="bottom-left"
 ></script>`,
@@ -43,7 +42,7 @@ registerThemedBanner();
 
 // In your HTML or template:
 // <probo-cookie-banner
-//   banner-id="${bannerId}"
+//   banner-id="${cookieBannerId}"
 //   base-url="${baseUrl}"
 //   position="bottom-left"
 // ></probo-cookie-banner>`,
@@ -55,7 +54,7 @@ registerThemedBanner();
 registerComponents();
 
 // Build your own UI with headless components:
-// <probo-cookie-banner-root banner-id="${bannerId}" base-url="${baseUrl}">
+// <probo-cookie-banner-root banner-id="${cookieBannerId}" base-url="${baseUrl}">
 //   <probo-banner>
 //     <probo-accept-button><button>Accept all</button></probo-accept-button>
 //     <probo-reject-button><button>Reject all</button></probo-reject-button>

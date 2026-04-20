@@ -19,6 +19,7 @@ import {
   Breadcrumb,
   Button,
   IconImage,
+  IconListStack,
   IconPageTextLine,
   IconSettingsGear2,
   PageHeader,
@@ -187,6 +188,10 @@ export default function CookieBannerConfigLayout({ queryRef }: CookieBannerConfi
         <TabLink to={`/organizations/${organizationId}/cookie-banners/${cookieBannerId}/settings`}>
           <IconSettingsGear2 size={20} />
           {__("Settings")}
+        </TabLink>
+        <TabLink to={`/organizations/${organizationId}/cookie-banners/${cookieBannerId}/cookies`}>
+          <IconListStack size={20} />
+          {__("Cookies")}
         </TabLink>
         <TabLink to={`/organizations/${organizationId}/cookie-banners/${cookieBannerId}/snippet`}>
           <IconPageTextLine size={20} />
