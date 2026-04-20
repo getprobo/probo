@@ -312,7 +312,7 @@ type Organization implements Node {
         last: Int
         before: CursorKey
         orderBy: CookieBannerOrder
-    ): CookieBannerConnection! @goField(forceResolver: true)
+    ): CookieBannerConnection @goField(forceResolver: true)
 
     vendors(
         first: Int

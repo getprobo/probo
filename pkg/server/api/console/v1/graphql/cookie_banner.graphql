@@ -67,7 +67,7 @@ type CookieBanner implements Node {
     consentExpiryDays: Int!
     consentMode: CookieConsentMode!
 
-    organization: Organization! @goField(forceResolver: true)
+    organization: Organization @goField(forceResolver: true)
 
     categories(
         first: Int
@@ -75,7 +75,7 @@ type CookieBanner implements Node {
         last: Int
         before: CursorKey
         orderBy: CookieCategoryOrder
-    ): CookieCategoryConnection! @goField(forceResolver: true)
+    ): CookieCategoryConnection @goField(forceResolver: true)
 
     latestVersion: CookieBannerVersion @goField(forceResolver: true)
 
@@ -87,7 +87,7 @@ type CookieBanner implements Node {
 
 type CookieCategory implements Node {
     id: ID!
-    cookieBanner: CookieBanner! @goField(forceResolver: true)
+    cookieBanner: CookieBanner @goField(forceResolver: true)
     name: String!
     description: String!
     required: Boolean!

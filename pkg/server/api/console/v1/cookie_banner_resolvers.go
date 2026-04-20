@@ -478,7 +478,7 @@ func (r *mutationResolver) DeleteCookieCategory(ctx context.Context, input types
 
 	return &types.DeleteCookieCategoryPayload{
 		DeletedCookieCategoryID: input.CookieCategoryID,
-		CookieBanner:           types.NewCookieBanner(banner),
+		CookieBanner:            types.NewCookieBanner(banner),
 	}, nil
 }
 
