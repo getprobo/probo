@@ -42,7 +42,7 @@ export const categorySectionFragment = graphql`
     id
     name
     description
-    required
+    kind
     cookies {
       name
       duration
@@ -269,7 +269,7 @@ export function CategorySection({ categoryKey }: CategorySectionProps) {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="font-medium">{category.name}</span>
-                  {category.required && (
+                  {category.kind === "NECESSARY" && (
                     <Badge variant="neutral">{__("Required")}</Badge>
                   )}
                 </div>
@@ -314,7 +314,7 @@ export function CategorySection({ categoryKey }: CategorySectionProps) {
             editingCookieIndex === index
               ? (
                   <Tr key={index}>
-                    <Td>
+                    <Td className="pr-3">
                       <Input
                         value={cookieForm.name}
                         onChange={e =>
@@ -322,7 +322,7 @@ export function CategorySection({ categoryKey }: CategorySectionProps) {
                         placeholder={__("Cookie name")}
                       />
                     </Td>
-                    <Td>
+                    <Td className="pr-3">
                       <Input
                         value={cookieForm.duration}
                         onChange={e =>
@@ -333,7 +333,7 @@ export function CategorySection({ categoryKey }: CategorySectionProps) {
                         placeholder={__("e.g. 1 year")}
                       />
                     </Td>
-                    <Td>
+                    <Td className="pr-3">
                       <Input
                         value={cookieForm.description}
                         onChange={e =>

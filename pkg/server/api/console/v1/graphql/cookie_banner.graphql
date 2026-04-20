@@ -90,7 +90,7 @@ type CookieCategory implements Node {
     cookieBanner: CookieBanner @goField(forceResolver: true)
     name: String!
     description: String!
-    required: Boolean!
+    kind: String!
     rank: Int!
     cookies: [CookieItem!]!
     createdAt: Datetime!
@@ -212,7 +212,6 @@ input CreateCookieCategoryInput {
     cookieBannerId: ID!
     name: String!
     description: String!
-    required: Boolean!
     rank: Int!
     cookies: [CookieItemInput!]
 }

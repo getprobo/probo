@@ -41,7 +41,7 @@ const createMutation = graphql`
           id
           name
           description
-          required
+          kind
           rank
           cookies {
             name
@@ -94,7 +94,6 @@ export function CategoryDialog({
           cookieBannerId,
           name,
           description,
-          required: false,
           rank: nextRank,
         },
         connections: [connectionId],

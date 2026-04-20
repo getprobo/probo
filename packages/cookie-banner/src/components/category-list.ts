@@ -57,9 +57,7 @@ export class ProboCategoryList extends ProboElement {
     for (const cat of categories) {
       const wrapper = document.createElement("probo-category");
       wrapper.setAttribute("name", cat.name);
-      if (cat.required) {
-        wrapper.setAttribute("required", "");
-      }
+      wrapper.setAttribute("kind", cat.kind);
       wrapper.setAttribute("description", cat.description);
       wrapper.setAttribute("cookies", JSON.stringify(cat.cookies));
 

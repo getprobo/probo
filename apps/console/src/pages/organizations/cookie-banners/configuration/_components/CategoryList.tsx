@@ -28,14 +28,16 @@ import { CategoryDialog } from "./CategoryDialog";
 const categoryListFragment = graphql`
   fragment CategoryList_cookieBanner on CookieBanner {
     id
-    categories(first: 50, orderBy: { field: RANK, direction: ASC }) @required(action: THROW) {
+    categories(first: 50, orderBy: { field: RANK, direction: ASC })
+      @connection(key: "CategoryList_categories")
+      @required(action: THROW) {
       __id
       edges {
         node {
           id
           name
           description
-          required
+          kind
           rank
         }
       }
@@ -152,7 +154,7 @@ export function CategoryList({ cookieBannerKey }: CategoryListProps) {
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
                 <span className="font-medium">{category.name}</span>
-                {category.required && (
+                {category.kind === "NECESSARY" && (
                   <Badge variant="neutral">{__("Required")}</Badge>
                 )}
               </div>
@@ -175,7 +177,7 @@ export function CategoryList({ cookieBannerKey }: CategoryListProps) {
                     <IconArrowDown size={14} />
                   </button>
                 </div>
-                {!category.required && (
+                {category.kind === "NORMAL" && (
                   <Button
                     variant="danger"
                     className="h-6 px-2 text-xs"

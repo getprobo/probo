@@ -49,7 +49,7 @@ export class ProboCategoryToggle extends ProboElement {
     if (!this.category || !this.root) return;
 
     const name = this.category.categoryName;
-    const isRequired = this.category.required;
+    const isRequired = this.category.kind === "NECESSARY";
 
     if (isRequired) {
       this.checkbox.checked = true;

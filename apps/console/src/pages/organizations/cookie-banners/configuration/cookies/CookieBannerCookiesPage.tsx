@@ -30,7 +30,9 @@ export const cookieBannerCookiesPageQuery = graphql`
       __typename
       ... on CookieBanner {
         id
-        categories(first: 50, orderBy: { field: RANK, direction: ASC }) @required(action: THROW) {
+        categories(first: 50, orderBy: { field: RANK, direction: ASC })
+          @connection(key: "CookieBannerCookiesPage_categories")
+          @required(action: THROW) {
           __id
           edges {
             node {

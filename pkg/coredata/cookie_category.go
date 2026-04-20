@@ -38,16 +38,16 @@ type (
 	CookieItems []CookieItem
 
 	CookieCategory struct {
-		ID             gid.GID     `db:"id"`
-		OrganizationID gid.GID     `db:"organization_id"`
-		CookieBannerID gid.GID     `db:"cookie_banner_id"`
-		Name           string      `db:"name"`
-		Description    string      `db:"description"`
-		Required       bool        `db:"required"`
-		Rank           int         `db:"rank"`
-		Cookies        CookieItems `db:"cookies"`
-		CreatedAt      time.Time   `db:"created_at"`
-		UpdatedAt      time.Time   `db:"updated_at"`
+		ID             gid.GID            `db:"id"`
+		OrganizationID gid.GID            `db:"organization_id"`
+		CookieBannerID gid.GID            `db:"cookie_banner_id"`
+		Name           string             `db:"name"`
+		Description    string             `db:"description"`
+		Kind           CookieCategoryKind `db:"kind"`
+		Rank           int                `db:"rank"`
+		Cookies        CookieItems        `db:"cookies"`
+		CreatedAt      time.Time          `db:"created_at"`
+		UpdatedAt      time.Time          `db:"updated_at"`
 	}
 
 	CookieCategories []*CookieCategory
@@ -105,7 +105,7 @@ SELECT
 	cookie_banner_id,
 	name,
 	description,
-	required,
+	kind,
 	rank,
 	cookies,
 	created_at,
@@ -155,7 +155,7 @@ SELECT
 	cookie_banner_id,
 	name,
 	description,
-	required,
+	kind,
 	rank,
 	cookies,
 	created_at,
@@ -233,7 +233,7 @@ SELECT
 	cookie_banner_id,
 	name,
 	description,
-	required,
+	kind,
 	rank,
 	cookies,
 	created_at,
@@ -280,7 +280,7 @@ INSERT INTO cookie_categories (
 	cookie_banner_id,
 	name,
 	description,
-	required,
+	kind,
 	rank,
 	cookies,
 	created_at,
@@ -292,7 +292,7 @@ INSERT INTO cookie_categories (
 	@cookie_banner_id,
 	@name,
 	@description,
-	@required,
+	@kind,
 	@rank,
 	@cookies,
 	@created_at,
@@ -307,7 +307,7 @@ INSERT INTO cookie_categories (
 		"cookie_banner_id": c.CookieBannerID,
 		"name":             c.Name,
 		"description":      c.Description,
-		"required":         c.Required,
+		"kind":             c.Kind,
 		"rank":             c.Rank,
 		"cookies":          c.Cookies,
 		"created_at":       c.CreatedAt,
@@ -343,7 +343,7 @@ RETURNING
 	cookie_banner_id,
 	name,
 	description,
-	required,
+	kind,
 	rank,
 	cookies,
 	created_at,
@@ -446,6 +446,59 @@ WHERE
 	if err != nil {
 		return fmt.Errorf("cannot delete cookie category: %w", err)
 	}
+
+	return nil
+}
+
+func (c *CookieCategory) LoadUncategorisedByCookieBannerID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	cookieBannerID gid.GID,
+) error {
+	q := `
+SELECT
+	id,
+	organization_id,
+	cookie_banner_id,
+	name,
+	description,
+	kind,
+	rank,
+	cookies,
+	created_at,
+	updated_at
+FROM
+	cookie_categories
+WHERE
+	%s
+	AND cookie_banner_id = @cookie_banner_id
+	AND kind = @kind
+LIMIT 1;
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"cookie_banner_id": cookieBannerID,
+		"kind":             CookieCategoryKindUncategorised,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query uncategorised cookie category: %w", err)
+	}
+
+	category, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[CookieCategory])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+		return fmt.Errorf("cannot collect uncategorised cookie category: %w", err)
+	}
+
+	*c = category
 
 	return nil
 }

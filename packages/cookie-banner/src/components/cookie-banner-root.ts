@@ -86,7 +86,7 @@ export class ProboCookieBannerRoot extends ProboElement implements ProboRootElem
     const existing = this._client?.visitorConsent?.consent_data;
 
     for (const cat of config.categories) {
-      if (cat.required) {
+      if (cat.kind === "NECESSARY") {
         draft[cat.name] = true;
       } else if (existing && cat.name in existing) {
         draft[cat.name] = existing[cat.name];

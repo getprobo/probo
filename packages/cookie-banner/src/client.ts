@@ -28,7 +28,7 @@ export interface CookieItem {
 export interface Category {
   name: string;
   description: string;
-  required: boolean;
+  kind: string;
   cookies: CookieItem[];
 }
 
@@ -164,7 +164,7 @@ export class CookieBannerClient {
 
     const consentData: Record<string, boolean> = {};
     for (const cat of cfg.categories) {
-      consentData[cat.name] = cat.required;
+      consentData[cat.name] = cat.kind === "NECESSARY";
     }
 
     return this.recordConsent("REJECT_ALL", consentData);
@@ -177,7 +177,7 @@ export class CookieBannerClient {
 
     const consentData: Record<string, boolean> = {};
     for (const cat of cfg.categories) {
-      consentData[cat.name] = cat.required || !!categories[cat.name];
+      consentData[cat.name] = cat.kind === "NECESSARY" || !!categories[cat.name];
     }
 
     return this.recordConsent("CUSTOMIZE", consentData);

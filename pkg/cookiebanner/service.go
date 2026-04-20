@@ -41,13 +41,14 @@ func NewService(pgClient *pg.Client) *Service {
 var defaultCategories = []struct {
 	Name        string
 	Description string
-	Required    bool
+	Kind        coredata.CookieCategoryKind
 	Rank        int
 }{
-	{"Necessary", "Essential cookies required for the website to function properly.", true, 0},
-	{"Analytics", "Cookies that help understand how visitors interact with the website.", false, 1},
-	{"Advertising", "Cookies used to deliver relevant advertisements and track campaigns.", false, 2},
-	{"Functional", "Cookies that enable enhanced functionality and personalization.", false, 3},
+	{"Necessary", "Essential cookies required for the website to function properly.", coredata.CookieCategoryKindNecessary, 0},
+	{"Analytics", "Cookies that help understand how visitors interact with the website.", coredata.CookieCategoryKindNormal, 1},
+	{"Advertising", "Cookies used to deliver relevant advertisements and track campaigns.", coredata.CookieCategoryKindNormal, 2},
+	{"Functional", "Cookies that enable enhanced functionality and personalization.", coredata.CookieCategoryKindNormal, 3},
+	{"Uncategorised", "Cookies that have not been assigned to a category yet.", coredata.CookieCategoryKindUncategorised, 4},
 }
 
 type (
@@ -64,7 +65,6 @@ type (
 		CookieBannerID gid.GID
 		Name           string
 		Description    string
-		Required       bool
 		Rank           int
 		Cookies        coredata.CookieItems
 	}
@@ -230,7 +230,7 @@ func buildSnapshot(
 		snapshotCategories[i] = coredata.CookieBannerVersionSnapshotCategory{
 			Name:        c.Name,
 			Description: c.Description,
-			Required:    c.Required,
+			Kind:        c.Kind,
 			Cookies:     c.Cookies,
 		}
 	}
@@ -340,7 +340,7 @@ func (s *Service) CreateCookieBanner(
 					CookieBannerID: banner.ID,
 					Name:           dc.Name,
 					Description:    dc.Description,
-					Required:       dc.Required,
+					Kind:           dc.Kind,
 					Rank:           dc.Rank,
 					Cookies:        coredata.CookieItems{},
 					CreatedAt:      now,
@@ -725,7 +725,7 @@ func (s *Service) CreateCookieCategory(
 				CookieBannerID: req.CookieBannerID,
 				Name:           req.Name,
 				Description:    req.Description,
-				Required:       req.Required,
+				Kind:           coredata.CookieCategoryKindNormal,
 				Rank:           req.Rank,
 				Cookies:        cookies,
 				CreatedAt:      now,
@@ -964,11 +964,42 @@ func (s *Service) DeleteCookieCategory(
 				return fmt.Errorf("cannot load cookie category: %w", err)
 			}
 
-			if category.Required {
-				return ErrCannotDeleteRequiredCategory
+			if category.Kind != coredata.CookieCategoryKindNormal {
+				return ErrCannotDeleteSystemCategory
 			}
 
 			bannerID := category.CookieBannerID
+
+			if len(category.Cookies) > 0 {
+				var uncategorised coredata.CookieCategory
+				err := uncategorised.LoadUncategorisedByCookieBannerID(ctx, tx, scope, bannerID)
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					now := time.Now()
+					uncategorised = coredata.CookieCategory{
+						ID:             gid.New(scope.GetTenantID(), coredata.CookieCategoryEntityType),
+						OrganizationID: category.OrganizationID,
+						CookieBannerID: bannerID,
+						Name:           "Uncategorised",
+						Description:    "Cookies that have not been assigned to a category yet.",
+						Kind:           coredata.CookieCategoryKindUncategorised,
+						Rank:           category.Rank + 1,
+						Cookies:        category.Cookies,
+						CreatedAt:      now,
+						UpdatedAt:      now,
+					}
+					if err := uncategorised.Insert(ctx, tx, scope); err != nil {
+						return fmt.Errorf("cannot create uncategorised cookie category: %w", err)
+					}
+				} else if err != nil {
+					return fmt.Errorf("cannot load uncategorised cookie category: %w", err)
+				} else {
+					uncategorised.Cookies = append(uncategorised.Cookies, category.Cookies...)
+					uncategorised.UpdatedAt = time.Now()
+					if err := uncategorised.Update(ctx, tx, scope); err != nil {
+						return fmt.Errorf("cannot update uncategorised cookie category: %w", err)
+					}
+				}
+			}
 
 			if err := category.Delete(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot delete cookie category: %w", err)

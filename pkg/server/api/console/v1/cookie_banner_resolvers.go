@@ -354,7 +354,6 @@ func (r *mutationResolver) CreateCookieCategory(ctx context.Context, input types
 			CookieBannerID: input.CookieBannerID,
 			Name:           input.Name,
 			Description:    input.Description,
-			Required:       input.Required,
 			Rank:           input.Rank,
 			Cookies:        cookies,
 		},
@@ -461,7 +460,7 @@ func (r *mutationResolver) DeleteCookieCategory(ctx context.Context, input types
 		if errors.Is(err, cookiebanner.ErrCategoryNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
-		if errors.Is(err, cookiebanner.ErrCannotDeleteRequiredCategory) {
+		if errors.Is(err, cookiebanner.ErrCannotDeleteSystemCategory) {
 			return nil, gqlutils.Conflict(ctx, err)
 		}
 		r.logger.ErrorCtx(ctx, "cannot delete cookie category", log.Error(err))

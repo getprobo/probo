@@ -37,10 +37,10 @@ type (
 	}
 
 	CookieBannerVersionSnapshotCategory struct {
-		Name        string      `json:"name"`
-		Description string      `json:"description"`
-		Required    bool        `json:"required"`
-		Cookies     CookieItems `json:"cookies"`
+		Name        string             `json:"name"`
+		Description string             `json:"description"`
+		Kind        CookieCategoryKind `json:"kind"`
+		Cookies     CookieItems        `json:"cookies"`
 	}
 
 	CookieBannerVersion struct {

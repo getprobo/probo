@@ -12,24 +12,16 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import type { CookieItem } from "../client";
-import { ProboElement } from "./base";
+package coredata
 
-export class ProboCategory extends ProboElement {
+type CookieCategoryKind string
 
-  get categoryName(): string {
-    return this.getAttribute("name") ?? "Other";
-  }
+const (
+	CookieCategoryKindNormal        CookieCategoryKind = "NORMAL"
+	CookieCategoryKindNecessary     CookieCategoryKind = "NECESSARY"
+	CookieCategoryKindUncategorised CookieCategoryKind = "UNCATEGORISED"
+)
 
-  get kind(): string {
-    return this.getAttribute("kind") ?? "NORMAL";
-  }
-
-  get cookies(): CookieItem[] {
-    try {
-      return JSON.parse(this.getAttribute("cookies") ?? "[]");
-    } catch {
-      return [];
-    }
-  }
+func (k CookieCategoryKind) IsRequired() bool {
+	return k == CookieCategoryKindNecessary
 }
