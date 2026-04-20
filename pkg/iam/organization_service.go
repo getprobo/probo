@@ -266,7 +266,12 @@ func (s *OrganizationService) UpdateMempership(
 				return NewMembershipNotFoundError(membership.ID)
 			}
 
-			if membership.Role == coredata.MembershipRoleOwner && role != coredata.MembershipRoleOwner {
+			profile := &coredata.MembershipProfile{}
+			if err := profile.LoadByIdentityIDAndOrganizationID(ctx, tx, scope, membership.IdentityID, membership.OrganizationID); err != nil {
+				return fmt.Errorf("cannot load profile: %w", err)
+			}
+
+			if membership.Role == coredata.MembershipRoleOwner && role != coredata.MembershipRoleOwner && profile.State == coredata.ProfileStateActive {
 				profiles := coredata.MembershipProfiles{}
 				count, err := profiles.CountActiveOwnerByOrganizationID(ctx, tx, scope, organizationID)
 				if err != nil {
@@ -283,11 +288,6 @@ func (s *OrganizationService) UpdateMempership(
 
 			if err := membership.Update(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot update membership: %w", err)
-			}
-
-			profile := &coredata.MembershipProfile{}
-			if err := profile.LoadByIdentityIDAndOrganizationID(ctx, tx, scope, membership.IdentityID, membership.OrganizationID); err != nil {
-				return fmt.Errorf("cannot load profile: %w", err)
 			}
 
 			if err := webhook.InsertData(ctx, tx, scope, organizationID, coredata.WebhookEventTypeUserUpdated, webhooktypes.NewUser(profile, &membership)); err != nil {
