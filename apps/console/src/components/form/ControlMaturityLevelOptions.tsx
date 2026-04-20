@@ -19,14 +19,11 @@ import {
 import { useTranslate } from "@probo/i18n";
 import { Option } from "@probo/ui";
 
-export const MATURITY_LEVEL_UNSET = "__unset__" as const;
-
 export function ControlMaturityLevelOptions() {
   const { __ } = useTranslate();
 
   return (
     <>
-      <Option value={MATURITY_LEVEL_UNSET}>{__("Not set")}</Option>
       {controlMaturityLevels.map(level => (
         <Option key={level} value={level}>
           {getControlMaturityLevelLabel(__, level)}

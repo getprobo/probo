@@ -81,7 +81,6 @@ export async function execute(
 								sectionTitle
 								name
 								description
-								implemented
 								maturityLevel
 								createdAt
 								updatedAt

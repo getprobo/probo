@@ -1473,12 +1473,6 @@ func (r *Resolver) AddControlTool(ctx context.Context, req *mcp.CallToolRequest,
 
 	svc := r.ProboService(ctx, input.FrameworkID)
 
-	var maturityLevel *coredata.ControlMaturityLevel
-	if input.MaturityLevel != nil {
-		v := coredata.ControlMaturityLevel(*input.MaturityLevel)
-		maturityLevel = &v
-	}
-
 	control, err := svc.Controls.Create(
 		ctx,
 		probo.CreateControlRequest{
@@ -1487,9 +1481,8 @@ func (r *Resolver) AddControlTool(ctx context.Context, req *mcp.CallToolRequest,
 			Description:                 input.Description,
 			SectionTitle:                input.SectionTitle,
 			BestPractice:                input.BestPractice,
-			Implemented:                 coredata.ControlImplementationState(input.Implemented),
+			MaturityLevel:               coredata.ControlMaturityLevel(input.MaturityLevel),
 			NotImplementedJustification: input.NotImplementedJustification,
-			MaturityLevel:               maturityLevel,
 		},
 	)
 	if err != nil {
@@ -1506,20 +1499,10 @@ func (r *Resolver) UpdateControlTool(ctx context.Context, req *mcp.CallToolReque
 
 	svc := r.ProboService(ctx, input.ID)
 
-	var implemented *coredata.ControlImplementationState
-	if input.Implemented != nil {
-		v := coredata.ControlImplementationState(*input.Implemented)
-		implemented = &v
-	}
-
-	var maturityLevel **coredata.ControlMaturityLevel
-	if rawMaturity := UnwrapOmittable(input.MaturityLevel); rawMaturity != nil {
-		var inner *coredata.ControlMaturityLevel
-		if *rawMaturity != nil {
-			v := coredata.ControlMaturityLevel(**rawMaturity)
-			inner = &v
-		}
-		maturityLevel = &inner
+	var maturityLevel *coredata.ControlMaturityLevel
+	if input.MaturityLevel != nil {
+		v := coredata.ControlMaturityLevel(*input.MaturityLevel)
+		maturityLevel = &v
 	}
 
 	control, err := svc.Controls.Update(
@@ -1530,9 +1513,8 @@ func (r *Resolver) UpdateControlTool(ctx context.Context, req *mcp.CallToolReque
 			Description:                 UnwrapOmittable(input.Description),
 			SectionTitle:                input.SectionTitle,
 			BestPractice:                input.BestPractice,
-			Implemented:                 implemented,
-			NotImplementedJustification: UnwrapOmittable(input.NotImplementedJustification),
 			MaturityLevel:               maturityLevel,
+			NotImplementedJustification: UnwrapOmittable(input.NotImplementedJustification),
 		},
 	)
 	if err != nil {

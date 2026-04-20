@@ -289,17 +289,8 @@ func (s *GeneratedDocumentService) buildStatementOfApplicabilityDocumentData(
 			justification = *stmt.Justification
 		}
 
-		implemented := "-"
-		if applicable {
-			if control.Implemented == coredata.ControlImplementationStateImplemented {
-				implemented = "Yes"
-			} else {
-				implemented = "No"
-			}
-		}
-
 		notImplJustification := "-"
-		if applicable && control.Implemented != coredata.ControlImplementationStateImplemented && control.NotImplementedJustification != nil {
+		if applicable && control.MaturityLevel == coredata.ControlMaturityLevelNone && control.NotImplementedJustification != nil {
 			notImplJustification = *control.NotImplementedJustification
 		}
 
@@ -328,9 +319,8 @@ func (s *GeneratedDocumentService) buildStatementOfApplicabilityDocumentData(
 			ControlName:          control.Name,
 			Applicability:        docgen.BoolLabel(applicable),
 			Justification:        justification,
-			Implemented:          implemented,
-			NotImplJustification: notImplJustification,
 			MaturityLevel:        maturityLevel,
+			NotImplJustification: notImplJustification,
 			Regulatory:           regulatory,
 			Contractual:          contractual,
 			BestPractice:         bestPractice,

@@ -32,7 +32,6 @@ mutation($input: UpdateControlInput!) {
       name
       description
       bestPractice
-      implemented
       notImplementedJustification
       maturityLevel
     }
@@ -48,9 +47,8 @@ type updateResponse struct {
 			Name                        string  `json:"name"`
 			Description                 *string `json:"description"`
 			BestPractice                bool    `json:"bestPractice"`
-			Implemented                 string  `json:"implemented"`
 			NotImplementedJustification *string `json:"notImplementedJustification"`
-			MaturityLevel               *string `json:"maturityLevel"`
+			MaturityLevel               string  `json:"maturityLevel"`
 		} `json:"control"`
 	} `json:"updateControl"`
 }
@@ -70,9 +68,8 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 		flagName                        string
 		flagDescription                 string
 		flagBestPractice                bool
-		flagNotImplemented              bool
-		flagNotImplementedJustification string
 		flagMaturityLevel               string
+		flagNotImplementedJustification string
 	)
 
 	cmd := &cobra.Command{
@@ -118,28 +115,17 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 			if cmd.Flags().Changed("best-practice") {
 				input["bestPractice"] = flagBestPractice
 			}
-			if cmd.Flags().Changed("not-implemented") {
-				if flagNotImplemented {
-					input["implemented"] = "NOT_IMPLEMENTED"
-				} else {
-					input["implemented"] = "IMPLEMENTED"
+			if cmd.Flags().Changed("maturity-level") {
+				if err := cmdutil.ValidateEnum("maturity-level", flagMaturityLevel, maturityLevelValues); err != nil {
+					return err
 				}
+				input["maturityLevel"] = flagMaturityLevel
 			}
 			if cmd.Flags().Changed("not-implemented-justification") {
 				if flagNotImplementedJustification == "" {
 					input["notImplementedJustification"] = nil
 				} else {
 					input["notImplementedJustification"] = flagNotImplementedJustification
-				}
-			}
-			if cmd.Flags().Changed("maturity-level") {
-				if flagMaturityLevel == "" {
-					input["maturityLevel"] = nil
-				} else {
-					if err := cmdutil.ValidateEnum("maturity-level", flagMaturityLevel, maturityLevelValues); err != nil {
-						return err
-					}
-					input["maturityLevel"] = flagMaturityLevel
 				}
 			}
 
@@ -176,9 +162,8 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagName, "name", "", "Control name")
 	cmd.Flags().StringVar(&flagDescription, "description", "", "Control description")
 	cmd.Flags().BoolVar(&flagBestPractice, "best-practice", false, "Mark as best practice")
-	cmd.Flags().BoolVar(&flagNotImplemented, "not-implemented", false, "Mark as not implemented")
-	cmd.Flags().StringVar(&flagNotImplementedJustification, "not-implemented-justification", "", "Justification for non-implementation")
-	cmd.Flags().StringVar(&flagMaturityLevel, "maturity-level", "", "CMMI maturity level (NONE, INITIAL, MANAGED, DEFINED, QUANTITATIVELY_MANAGED, OPTIMIZING). Empty string clears the value.")
+	cmd.Flags().StringVar(&flagMaturityLevel, "maturity-level", "", "CMMI maturity level (NONE, INITIAL, MANAGED, DEFINED, QUANTITATIVELY_MANAGED, OPTIMIZING)")
+	cmd.Flags().StringVar(&flagNotImplementedJustification, "not-implemented-justification", "", "Justification when maturity level is NONE")
 
 	return cmd
 }

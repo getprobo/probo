@@ -26,9 +26,8 @@
             { "type": "tableHeader", "attrs": { "colspan": 1, "rowspan": 2, "colwidth": [250] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Control", "marks": [{ "type": "bold" }] }] }] },
             { "type": "tableHeader", "attrs": { "colspan": 1, "rowspan": 2, "colwidth": [70] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Applicability", "marks": [{ "type": "bold" }] }] }] },
             { "type": "tableHeader", "attrs": { "colspan": 1, "rowspan": 2, "colwidth": [130] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Justification for non-applicability", "marks": [{ "type": "bold" }] }] }] },
-            { "type": "tableHeader", "attrs": { "colspan": 1, "rowspan": 2, "colwidth": [70] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Implemented", "marks": [{ "type": "bold" }] }] }] },
-            { "type": "tableHeader", "attrs": { "colspan": 1, "rowspan": 2, "colwidth": [110] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Justification for non-implementation", "marks": [{ "type": "bold" }] }] }] },
             { "type": "tableHeader", "attrs": { "colspan": 1, "rowspan": 2, "colwidth": [90] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Maturity", "marks": [{ "type": "bold" }] }] }] },
+            { "type": "tableHeader", "attrs": { "colspan": 1, "rowspan": 2, "colwidth": [110] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Justification for non-implementation", "marks": [{ "type": "bold" }] }] }] },
             { "type": "tableHeader", "attrs": { "colspan": 4, "rowspan": 1 }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Justification for inclusion", "marks": [{ "type": "bold" }] }] }] }
           ]
         },
@@ -48,9 +47,8 @@
             { "type": "tableCell", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [250] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": {{json (printf "[%s] " .ControlSection)}}, "marks": [{ "type": "code" }] }, { "type": "text", "text": {{json .ControlName}} }] }] },
             { "type": "tableCell", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [70] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": {{json .Applicability}} }] }] },
             { "type": "tableCell", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [130] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": {{json .Justification}} }] }] },
-            { "type": "tableCell", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [70] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": {{json .Implemented}} }] }] },
-            { "type": "tableCell", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [110] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": {{json .NotImplJustification}} }] }] },
             { "type": "tableCell", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [90] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": {{json .MaturityLevel}} }] }] },
+            { "type": "tableCell", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [110] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": {{json .NotImplJustification}} }] }] },
             { "type": "tableCell", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [60] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": {{json .Regulatory}} }] }] },
             { "type": "tableCell", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [60] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": {{json .Contractual}} }] }] },
             { "type": "tableCell", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [60] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": {{json .BestPractice}} }] }] },
@@ -107,28 +105,6 @@
     {
       "type": "heading",
       "attrs": { "level": 3 },
-      "content": [{ "type": "text", "text": "Implemented" }]
-    },
-    {
-      "type": "bulletList",
-      "content": [
-        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Yes: ", "marks": [{ "type": "bold" }] }, { "type": "text", "text": "The control has been implemented by the organization." }] }] },
-        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "No: ", "marks": [{ "type": "bold" }] }, { "type": "text", "text": "The control has not been implemented (with justification provided)." }] }] },
-        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "-: ", "marks": [{ "type": "bold" }] }, { "type": "text", "text": "Not applicable (control is not applicable)." }] }] }
-      ]
-    },
-    {
-      "type": "heading",
-      "attrs": { "level": 3 },
-      "content": [{ "type": "text", "text": "Justification for non-implementation" }]
-    },
-    {
-      "type": "paragraph",
-      "content": [{ "type": "text", "text": "Provides the rationale when a control is not implemented. This field is empty for implemented controls or when the control is not applicable." }]
-    },
-    {
-      "type": "heading",
-      "attrs": { "level": 3 },
       "content": [{ "type": "text", "text": "Maturity" }]
     },
     {
@@ -144,9 +120,17 @@
         { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "3 - Defined: ", "marks": [{ "type": "bold" }] }, { "type": "text", "text": "documented, standardized and integrated into the organization." }] }] },
         { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "4 - Quantitatively Managed: ", "marks": [{ "type": "bold" }] }, { "type": "text", "text": "measured, controlled with metrics and statistical objectives." }] }] },
         { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "5 - Optimizing: ", "marks": [{ "type": "bold" }] }, { "type": "text", "text": "continuous improvement based on quantitative analysis." }] }] },
-        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Not set: ", "marks": [{ "type": "bold" }] }, { "type": "text", "text": "the maturity level has not yet been assessed." }] }] },
         { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "-: ", "marks": [{ "type": "bold" }] }, { "type": "text", "text": "Not applicable (control is not applicable)." }] }] }
       ]
+    },
+    {
+      "type": "heading",
+      "attrs": { "level": 3 },
+      "content": [{ "type": "text", "text": "Justification for non-implementation" }]
+    },
+    {
+      "type": "paragraph",
+      "content": [{ "type": "text", "text": "Provides the rationale when a control has a maturity level of 0 - None. This field is empty for controls with higher maturity levels or when the control is not applicable." }]
     },
     {
       "type": "heading",

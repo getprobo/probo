@@ -30,18 +30,17 @@ import (
 
 type (
 	Control struct {
-		ID                          gid.GID                    `db:"id"`
-		OrganizationID              gid.GID                    `db:"organization_id"`
-		SectionTitle                string                     `db:"section_title"`
-		FrameworkID                 gid.GID                    `db:"framework_id"`
-		Name                        string                     `db:"name"`
-		Description                 *string                    `db:"description"`
-		BestPractice                bool                       `db:"best_practice"`
-		Implemented                 ControlImplementationState `db:"implemented"`
-		NotImplementedJustification *string                    `db:"not_implemented_justification"`
-		MaturityLevel               *ControlMaturityLevel      `db:"maturity_level"`
-		CreatedAt                   time.Time                  `db:"created_at"`
-		UpdatedAt                   time.Time                  `db:"updated_at"`
+		ID                          gid.GID              `db:"id"`
+		OrganizationID              gid.GID              `db:"organization_id"`
+		SectionTitle                string               `db:"section_title"`
+		FrameworkID                 gid.GID              `db:"framework_id"`
+		Name                        string               `db:"name"`
+		Description                 *string              `db:"description"`
+		BestPractice                bool                 `db:"best_practice"`
+		NotImplementedJustification *string              `db:"not_implemented_justification"`
+		MaturityLevel               ControlMaturityLevel `db:"maturity_level"`
+		CreatedAt                   time.Time            `db:"created_at"`
+		UpdatedAt                   time.Time            `db:"updated_at"`
 	}
 
 	Controls []*Control
@@ -134,7 +133,6 @@ WITH ctrl AS (
 		c.name,
 		c.description,
 		c.best_practice,
-		c.implemented,
 		c.not_implemented_justification,
 		c.maturity_level,
 		c.created_at,
@@ -155,7 +153,6 @@ SELECT
 	name,
 	description,
 	best_practice,
-	implemented,
 	not_implemented_justification,
 	maturity_level,
 	created_at,
@@ -249,7 +246,6 @@ WITH ctrl AS (
 		c.name,
 		c.description,
 		c.best_practice,
-		c.implemented,
 		c.not_implemented_justification,
 		c.maturity_level,
 		c.created_at,
@@ -270,7 +266,6 @@ SELECT
 	name,
 	description,
 	best_practice,
-	implemented,
 	not_implemented_justification,
 	maturity_level,
 	created_at,
@@ -370,7 +365,6 @@ WITH ctrl AS (
 		c.name,
 		c.description,
 		c.best_practice,
-		c.implemented,
 		c.not_implemented_justification,
 		c.maturity_level,
 		c.created_at,
@@ -397,7 +391,6 @@ SELECT
 	name,
 	description,
 	best_practice,
-	implemented,
 	not_implemented_justification,
 	maturity_level,
 	created_at,
@@ -479,7 +472,6 @@ SELECT
     name,
     description,
 	best_practice,
-	implemented,
 	not_implemented_justification,
 	maturity_level,
     created_at,
@@ -576,7 +568,6 @@ WITH ctrl AS (
 		c.name,
 		c.description,
 		c.best_practice,
-		c.implemented,
 		c.not_implemented_justification,
 		c.maturity_level,
 		c.created_at,
@@ -597,7 +588,6 @@ SELECT
 	name,
 	description,
 	best_practice,
-	implemented,
 	not_implemented_justification,
 	maturity_level,
 	created_at,
@@ -646,7 +636,6 @@ SELECT
     name,
     description,
     best_practice,
-    implemented,
     not_implemented_justification,
     maturity_level,
     created_at,
@@ -697,7 +686,6 @@ SELECT
     name,
     description,
     best_practice,
-    implemented,
     not_implemented_justification,
     maturity_level,
     created_at,
@@ -747,7 +735,6 @@ SELECT
     name,
     description,
     best_practice,
-    implemented,
     not_implemented_justification,
     maturity_level,
     created_at,
@@ -794,7 +781,6 @@ INSERT INTO
         name,
         description,
         best_practice,
-        implemented,
         not_implemented_justification,
         maturity_level,
         created_at,
@@ -809,7 +795,6 @@ VALUES (
     @name,
     @description,
 	@best_practice,
-	@implemented,
 	@not_implemented_justification,
 	@maturity_level,
     @created_at,
@@ -826,7 +811,6 @@ VALUES (
 		"name":                          c.Name,
 		"description":                   c.Description,
 		"best_practice":                 c.BestPractice,
-		"implemented":                   c.Implemented,
 		"not_implemented_justification": c.NotImplementedJustification,
 		"maturity_level":                c.MaturityLevel,
 		"created_at":                    c.CreatedAt,
@@ -880,7 +864,6 @@ UPDATE controls SET
     description = @description,
     section_title = @section_title,
 	best_practice = @best_practice,
-	implemented = @implemented,
 	not_implemented_justification = @not_implemented_justification,
 	maturity_level = @maturity_level,
     updated_at = @updated_at
@@ -895,7 +878,6 @@ WHERE %s
 		"description":                   c.Description,
 		"section_title":                 c.SectionTitle,
 		"best_practice":                 c.BestPractice,
-		"implemented":                   c.Implemented,
 		"not_implemented_justification": c.NotImplementedJustification,
 		"maturity_level":                c.MaturityLevel,
 		"updated_at":                    c.UpdatedAt,
@@ -936,7 +918,6 @@ WITH ctrl AS (
 		c.name,
 		c.description,
 		c.best_practice,
-		c.implemented,
 		c.not_implemented_justification,
 		c.maturity_level,
 		c.created_at,
@@ -957,7 +938,6 @@ SELECT
 	name,
 	description,
 	best_practice,
-	implemented,
 	not_implemented_justification,
 	maturity_level,
 	created_at,
@@ -1009,7 +989,6 @@ WITH ctrl AS (
 		c.name,
 		c.description,
 		c.best_practice,
-		c.implemented,
 		c.not_implemented_justification,
 		c.maturity_level,
 		c.created_at,
@@ -1030,7 +1009,6 @@ SELECT
 	name,
 	description,
 	best_practice,
-	implemented,
 	not_implemented_justification,
 	maturity_level,
 	created_at,

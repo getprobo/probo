@@ -38,9 +38,8 @@ type (
 		Description                 *string
 		SectionTitle                string
 		BestPractice                bool
-		Implemented                 coredata.ControlImplementationState
+		MaturityLevel               coredata.ControlMaturityLevel
 		NotImplementedJustification *string
-		MaturityLevel               *coredata.ControlMaturityLevel
 	}
 
 	UpdateControlRequest struct {
@@ -49,9 +48,8 @@ type (
 		Description                 **string
 		SectionTitle                *string
 		BestPractice                *bool
-		Implemented                 *coredata.ControlImplementationState
+		MaturityLevel               *coredata.ControlMaturityLevel
 		NotImplementedJustification **string
-		MaturityLevel               **coredata.ControlMaturityLevel
 	}
 )
 
@@ -65,29 +63,11 @@ func (ccr *CreateControlRequest) Validate() error {
 	v.Check(ccr.NotImplementedJustification, "not_implemented_justification", validator.SafeText(ContentMaxLength))
 
 	v.Check(
-		ccr.Implemented,
-		"implemented",
+		ccr.MaturityLevel,
+		"maturity_level",
 		validator.Required(),
-		validator.OneOfSlice([]string{
-			string(coredata.ControlImplementationStateImplemented),
-			string(coredata.ControlImplementationStateNotImplemented),
-		}),
+		validator.OneOfSlice(coredata.ControlMaturityLevels()),
 	)
-
-	if ccr.MaturityLevel != nil {
-		v.Check(
-			*ccr.MaturityLevel,
-			"maturity_level",
-			validator.OneOfSlice([]string{
-				string(coredata.ControlMaturityLevelNone),
-				string(coredata.ControlMaturityLevelInitial),
-				string(coredata.ControlMaturityLevelManaged),
-				string(coredata.ControlMaturityLevelDefined),
-				string(coredata.ControlMaturityLevelQuantitativelyManaged),
-				string(coredata.ControlMaturityLevelOptimizing),
-			}),
-		)
-	}
 
 	return v.Error()
 }
@@ -100,27 +80,12 @@ func (ucr *UpdateControlRequest) Validate() error {
 	v.Check(ucr.Description, "description", validator.SafeText(ContentMaxLength))
 	v.Check(ucr.SectionTitle, "section_title", validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(ucr.NotImplementedJustification, "not_implemented_justification", validator.SafeText(ContentMaxLength))
-	v.Check(
-		ucr.Implemented,
-		"implemented",
-		validator.OneOfSlice([]string{
-			string(coredata.ControlImplementationStateImplemented),
-			string(coredata.ControlImplementationStateNotImplemented),
-		}),
-	)
 
-	if ucr.MaturityLevel != nil && *ucr.MaturityLevel != nil {
+	if ucr.MaturityLevel != nil {
 		v.Check(
-			**ucr.MaturityLevel,
+			*ucr.MaturityLevel,
 			"maturity_level",
-			validator.OneOfSlice([]string{
-				string(coredata.ControlMaturityLevelNone),
-				string(coredata.ControlMaturityLevelInitial),
-				string(coredata.ControlMaturityLevelManaged),
-				string(coredata.ControlMaturityLevelDefined),
-				string(coredata.ControlMaturityLevelQuantitativelyManaged),
-				string(coredata.ControlMaturityLevelOptimizing),
-			}),
+			validator.OneOfSlice(coredata.ControlMaturityLevels()),
 		)
 	}
 
@@ -887,7 +852,7 @@ func (s ControlService) Create(
 	framework := &coredata.Framework{}
 
 	notImplementedJustification := req.NotImplementedJustification
-	if req.Implemented == coredata.ControlImplementationStateImplemented {
+	if req.MaturityLevel != coredata.ControlMaturityLevelNone {
 		notImplementedJustification = nil
 	}
 
@@ -898,9 +863,8 @@ func (s ControlService) Create(
 		Description:                 req.Description,
 		SectionTitle:                req.SectionTitle,
 		BestPractice:                req.BestPractice,
-		Implemented:                 req.Implemented,
-		NotImplementedJustification: notImplementedJustification,
 		MaturityLevel:               req.MaturityLevel,
+		NotImplementedJustification: notImplementedJustification,
 		CreatedAt:                   now,
 		UpdatedAt:                   now,
 	}
@@ -1007,19 +971,15 @@ func (s ControlService) Update(
 				control.BestPractice = *req.BestPractice
 			}
 
-			if req.Implemented != nil {
-				control.Implemented = *req.Implemented
-				if *req.Implemented == coredata.ControlImplementationStateImplemented {
+			if req.MaturityLevel != nil {
+				control.MaturityLevel = *req.MaturityLevel
+				if *req.MaturityLevel != coredata.ControlMaturityLevelNone {
 					control.NotImplementedJustification = nil
 				}
 			}
 
-			if req.NotImplementedJustification != nil && control.Implemented == coredata.ControlImplementationStateNotImplemented {
+			if req.NotImplementedJustification != nil && control.MaturityLevel == coredata.ControlMaturityLevelNone {
 				control.NotImplementedJustification = *req.NotImplementedJustification
-			}
-
-			if req.MaturityLevel != nil {
-				control.MaturityLevel = *req.MaturityLevel
 			}
 
 			control.UpdatedAt = time.Now()

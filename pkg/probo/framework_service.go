@@ -72,7 +72,6 @@ type (
 				Name                        string  `json:"name"`
 				Description                 string  `json:"description"`
 				BestPractice                *bool   `json:"best_practice,omitempty"`
-				Implemented                 string  `json:"implemented,omitempty"`
 				NotImplementedJustification *string `json:"not_implemented_justification,omitempty"`
 				MaturityLevel               *string `json:"maturity_level,omitempty"`
 			} `json:"controls"`
@@ -605,20 +604,16 @@ func (s FrameworkService) Import(
 			if control.BestPractice != nil {
 				bestPractice = *control.BestPractice
 			}
-			implemented := coredata.ControlImplementationState(control.Implemented)
-			if !implemented.IsValid() {
-				implemented = coredata.ControlImplementationStateImplemented
-			}
-			var notImplementedJustification *string
-			if implemented == coredata.ControlImplementationStateNotImplemented {
-				notImplementedJustification = control.NotImplementedJustification
-			}
-			var maturityLevel *coredata.ControlMaturityLevel
+			maturityLevel := coredata.ControlMaturityLevelInitial
 			if control.MaturityLevel != nil {
 				ml := coredata.ControlMaturityLevel(*control.MaturityLevel)
 				if ml.IsValid() {
-					maturityLevel = &ml
+					maturityLevel = ml
 				}
+			}
+			var notImplementedJustification *string
+			if maturityLevel == coredata.ControlMaturityLevelNone {
+				notImplementedJustification = control.NotImplementedJustification
 			}
 			control := &coredata.Control{
 				ID:                          controlID,
@@ -628,9 +623,8 @@ func (s FrameworkService) Import(
 				Name:                        control.Name,
 				Description:                 &description,
 				BestPractice:                bestPractice,
-				Implemented:                 implemented,
-				NotImplementedJustification: notImplementedJustification,
 				MaturityLevel:               maturityLevel,
+				NotImplementedJustification: notImplementedJustification,
 				CreatedAt:                   now,
 				UpdatedAt:                   now,
 			}

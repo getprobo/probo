@@ -118,7 +118,6 @@ export const frameworkControlNodeQuery = graphql`
         sectionTitle
         description
         bestPractice
-        implemented
         notImplementedJustification
         maturityLevel
         canUpdate: permission(action: "core:control:update")

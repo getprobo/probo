@@ -46,7 +46,6 @@ export async function execute(
 					sectionTitle
 					name
 					description
-					implemented
 					notImplementedJustification
 					maturityLevel
 					createdAt

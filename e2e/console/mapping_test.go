@@ -78,12 +78,12 @@ func TestControlMeasureMapping_CreateDelete(t *testing.T) {
 		}
 	`, map[string]any{
 		"input": map[string]any{
-			"frameworkId":  frameworkID,
-			"name":         "Control for Mapping",
-			"description":  "Test control for mapping",
-			"sectionTitle": "Section 1",
-			"bestPractice": true,
-			"implemented":  "IMPLEMENTED",
+			"frameworkId":   frameworkID,
+			"name":          "Control for Mapping",
+			"description":   "Test control for mapping",
+			"sectionTitle":  "Section 1",
+			"bestPractice":  true,
+			"maturityLevel": "INITIAL",
 		},
 	}, &createControlResult)
 	require.NoError(t, err)
@@ -358,12 +358,12 @@ func TestControlDocumentMapping_CreateDelete(t *testing.T) {
 		}
 	`, map[string]any{
 		"input": map[string]any{
-			"frameworkId":  frameworkID,
-			"name":         "Control for Document Mapping",
-			"description":  "Test control",
-			"sectionTitle": "Section 1",
-			"bestPractice": true,
-			"implemented":  "IMPLEMENTED",
+			"frameworkId":   frameworkID,
+			"name":          "Control for Document Mapping",
+			"description":   "Test control",
+			"sectionTitle":  "Section 1",
+			"bestPractice":  true,
+			"maturityLevel": "INITIAL",
 		},
 	}, &createControlResult)
 	require.NoError(t, err)
@@ -498,12 +498,12 @@ func TestControlAuditMapping_CreateDelete(t *testing.T) {
 		}
 	`, map[string]any{
 		"input": map[string]any{
-			"frameworkId":  frameworkID,
-			"name":         "Control for Audit Mapping",
-			"description":  "Test control",
-			"sectionTitle": "Section 1",
-			"bestPractice": true,
-			"implemented":  "IMPLEMENTED",
+			"frameworkId":   frameworkID,
+			"name":          "Control for Audit Mapping",
+			"description":   "Test control",
+			"sectionTitle":  "Section 1",
+			"bestPractice":  true,
+			"maturityLevel": "INITIAL",
 		},
 	}, &createControlResult)
 	require.NoError(t, err)
@@ -636,12 +636,12 @@ func TestControlSnapshotMapping_CreateDelete(t *testing.T) {
 		}
 	`, map[string]any{
 		"input": map[string]any{
-			"frameworkId":  frameworkID,
-			"name":         "Control for Snapshot Mapping",
-			"description":  "Test control",
-			"sectionTitle": "Section 1",
-			"bestPractice": true,
-			"implemented":  "IMPLEMENTED",
+			"frameworkId":   frameworkID,
+			"name":          "Control for Snapshot Mapping",
+			"description":   "Test control",
+			"sectionTitle":  "Section 1",
+			"bestPractice":  true,
+			"maturityLevel": "INITIAL",
 		},
 	}, &createControlResult)
 	require.NoError(t, err)

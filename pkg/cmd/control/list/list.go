@@ -21,6 +21,8 @@ import (
 	"github.com/spf13/cobra"
 	"go.probo.inc/probo/pkg/cli/api"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
+	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/docgen"
 )
 
 const listQuery = `
@@ -37,7 +39,6 @@ query($id: ID!, $first: Int, $after: CursorKey, $orderBy: ControlOrder, $filter:
             name
             description
             bestPractice
-            implemented
             maturityLevel
           }
         }
@@ -57,8 +58,7 @@ type control struct {
 	Name          string  `json:"name"`
 	Description   *string `json:"description"`
 	BestPractice  bool    `json:"bestPractice"`
-	Implemented   string  `json:"implemented"`
-	MaturityLevel *string `json:"maturityLevel"`
+	MaturityLevel string  `json:"maturityLevel"`
 }
 
 func NewCmdList(f *cmdutil.Factory) *cobra.Command {
@@ -167,16 +167,12 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				if c.BestPractice {
 					bp = "Yes"
 				}
-				maturity := "-"
-				if c.MaturityLevel != nil {
-					maturity = *c.MaturityLevel
-				}
 				rows = append(rows, []string{
 					c.ID,
 					c.SectionTitle,
 					c.Name,
 					bp,
-					maturity,
+					docgen.MaturityLabel(coredata.ControlMaturityLevel(c.MaturityLevel)),
 				})
 			}
 

@@ -383,25 +383,17 @@ export default function FrameworkControlPage({ queryRef }: Props) {
               </Badge>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-sm text-txt-secondary">{__("Implemented")}</span>
-              <Badge variant={control.implemented === "IMPLEMENTED" ? "success" : "warning"} size="sm">
-                {control.implemented === "IMPLEMENTED" ? __("Implemented") : __("Not Implemented")}
+              <span className="text-sm text-txt-secondary">{__("Maturity level")}</span>
+              <Badge variant="neutral" size="sm">
+                {getControlMaturityLevelLabel(__, control.maturityLevel ?? "NONE")}
               </Badge>
             </div>
-            {control.implemented === "NOT_IMPLEMENTED" && control.notImplementedJustification && (
+            {control.maturityLevel === "NONE" && control.notImplementedJustification && (
               <div>
                 <span className="text-xs text-txt-secondary">{__("Justification for non-implementation")}</span>
                 <div className="text-sm mt-0.5 whitespace-pre-wrap">{control.notImplementedJustification}</div>
               </div>
             )}
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-txt-secondary">{__("Maturity level")}</span>
-              <Badge variant="neutral" size="sm">
-                {control.maturityLevel
-                  ? getControlMaturityLevelLabel(__, control.maturityLevel)
-                  : __("Not set")}
-              </Badge>
-            </div>
           </div>
         </Card>
         <div className="mb-4">

@@ -4212,7 +4212,7 @@ components:
         - section_title
         - name
         - best_practice
-        - implemented
+        - maturity_level
         - created_at
         - updated_at
       properties:
@@ -4239,23 +4239,16 @@ components:
         best_practice:
           type: boolean
           description: Whether control is a best practice
-        implemented:
+        maturity_level:
           type: string
-          enum: [IMPLEMENTED, NOT_IMPLEMENTED]
-          description: Control implementation state
-          go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.ControlImplementationState
+          enum: [NONE, INITIAL, MANAGED, DEFINED, QUANTITATIVELY_MANAGED, OPTIMIZING]
+          description: CMMI 0-5 maturity level of the control
+          go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.ControlMaturityLevel
         not_implemented_justification:
           type:
             - string
             - "null"
           description: Justification for non-implementation
-        maturity_level:
-          type:
-            - string
-            - "null"
-          enum: [NONE, INITIAL, MANAGED, DEFINED, QUANTITATIVELY_MANAGED, OPTIMIZING, null]
-          description: CMMI 0-5 maturity level of the control
-          go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.ControlMaturityLevel
         created_at:
           type: string
           format: date-time
@@ -4330,7 +4323,7 @@ components:
         - section_title
         - name
         - best_practice
-        - implemented
+        - maturity_level
       properties:
         organization_id:
           $ref: "#/components/schemas/GID"
@@ -4350,23 +4343,16 @@ components:
         best_practice:
           type: boolean
           description: Whether control is a best practice
-        implemented:
+        maturity_level:
           type: string
-          enum: [IMPLEMENTED, NOT_IMPLEMENTED]
-          description: Control implementation state
-          go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.ControlImplementationState
+          enum: [NONE, INITIAL, MANAGED, DEFINED, QUANTITATIVELY_MANAGED, OPTIMIZING]
+          description: CMMI 0-5 maturity level of the control
+          go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.ControlMaturityLevel
         not_implemented_justification:
           type:
             - string
             - "null"
           description: Justification for non-implementation
-        maturity_level:
-          type:
-            - string
-            - "null"
-          enum: [NONE, INITIAL, MANAGED, DEFINED, QUANTITATIVELY_MANAGED, OPTIMIZING, null]
-          description: CMMI 0-5 maturity level of the control
-          go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.ControlMaturityLevel
 
     AddControlOutput:
       type: object
@@ -4397,20 +4383,14 @@ components:
         best_practice:
           type: boolean
           description: Whether control is a best practice
-        implemented:
+        maturity_level:
           type: string
-          enum: [IMPLEMENTED, NOT_IMPLEMENTED]
-          description: Control implementation state
-          go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.ControlImplementationState
+          enum: [NONE, INITIAL, MANAGED, DEFINED, QUANTITATIVELY_MANAGED, OPTIMIZING]
+          description: CMMI 0-5 maturity level of the control
+          go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.ControlMaturityLevel
         not_implemented_justification:
           type: ["string", "null"]
           description: Justification for non-implementation
-          go.probo.inc/mcpgen/omittable: true
-        maturity_level:
-          type: ["string", "null"]
-          enum: [NONE, INITIAL, MANAGED, DEFINED, QUANTITATIVELY_MANAGED, OPTIMIZING, null]
-          description: CMMI 0-5 maturity level of the control
-          go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.ControlMaturityLevel
           go.probo.inc/mcpgen/omittable: true
 
     UpdateControlOutput:

@@ -370,7 +370,7 @@ type snapshotControl struct {
 	applicability               bool
 	justification               *string
 	bestPractice                bool
-	implemented                 string
+	maturityLevel               string
 	notImplementedJustification *string
 	hasLegal                    bool
 	hasContractual              bool
@@ -403,7 +403,7 @@ SELECT
     stmt.applicability,
     stmt.justification,
     c.best_practice,
-    c.implemented,
+    c.maturity_level,
     c.not_implemented_justification,
     EXISTS (
         SELECT 1 FROM controls_obligations co
@@ -442,7 +442,7 @@ ORDER BY f.name, c.section_title;
 			&sc.applicability,
 			&sc.justification,
 			&sc.bestPractice,
-			&sc.implemented,
+			&sc.maturityLevel,
 			&sc.notImplementedJustification,
 			&sc.hasLegal,
 			&sc.hasContractual,
@@ -458,17 +458,13 @@ ORDER BY f.name, c.section_title;
 			justification = *sc.justification
 		}
 
-		implemented := "-"
+		maturityLevel := "-"
 		if applicable {
-			if sc.implemented == "IMPLEMENTED" {
-				implemented = "Yes"
-			} else {
-				implemented = "No"
-			}
+			maturityLevel = docgen.MaturityLabel(coredata.ControlMaturityLevel(sc.maturityLevel))
 		}
 
 		notImplJustification := "-"
-		if applicable && sc.implemented != "IMPLEMENTED" && sc.notImplementedJustification != nil {
+		if applicable && sc.maturityLevel == "NONE" && sc.notImplementedJustification != nil {
 			notImplJustification = *sc.notImplementedJustification
 		}
 
@@ -489,7 +485,7 @@ ORDER BY f.name, c.section_title;
 			ControlName:          sc.controlName,
 			Applicability:        docgen.BoolLabel(applicable),
 			Justification:        justification,
-			Implemented:          implemented,
+			MaturityLevel:        maturityLevel,
 			NotImplJustification: notImplJustification,
 			Regulatory:           regulatory,
 			Contractual:          contractual,

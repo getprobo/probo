@@ -248,12 +248,12 @@ func CreateControl(c *testutil.Client, frameworkID string, attrs ...Attrs) strin
 	`
 
 	input := map[string]any{
-		"frameworkId":  frameworkID,
-		"name":         a.getString("name", SafeName("Control")),
-		"description":  a.getString("description", "Test control description"),
-		"sectionTitle": a.getString("sectionTitle", fmt.Sprintf("Section %s", gofakeit.LetterN(3))),
-		"bestPractice": a.getBool("bestPractice", true),
-		"implemented":  a.getString("implemented", "IMPLEMENTED"),
+		"frameworkId":   frameworkID,
+		"name":          a.getString("name", SafeName("Control")),
+		"description":   a.getString("description", "Test control description"),
+		"sectionTitle":  a.getString("sectionTitle", fmt.Sprintf("Section %s", gofakeit.LetterN(3))),
+		"bestPractice":  a.getBool("bestPractice", true),
+		"maturityLevel": a.getString("maturityLevel", "INITIAL"),
 	}
 
 	if justification := a.getStringPtr("notImplementedJustification"); justification != nil {
@@ -502,8 +502,8 @@ func (b *ControlBuilder) WithBestPractice(bestPractice bool) *ControlBuilder {
 	return b
 }
 
-func (b *ControlBuilder) WithImplemented(implemented string) *ControlBuilder {
-	b.attrs["implemented"] = implemented
+func (b *ControlBuilder) WithMaturityLevel(maturityLevel string) *ControlBuilder {
+	b.attrs["maturityLevel"] = maturityLevel
 	return b
 }
 

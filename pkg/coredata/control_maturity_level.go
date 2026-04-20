@@ -32,6 +32,17 @@ const (
 	ControlMaturityLevelOptimizing            ControlMaturityLevel = "OPTIMIZING"
 )
 
+func ControlMaturityLevels() []ControlMaturityLevel {
+	return []ControlMaturityLevel{
+		ControlMaturityLevelNone,
+		ControlMaturityLevelInitial,
+		ControlMaturityLevelManaged,
+		ControlMaturityLevelDefined,
+		ControlMaturityLevelQuantitativelyManaged,
+		ControlMaturityLevelOptimizing,
+	}
+}
+
 func (l ControlMaturityLevel) IsValid() bool {
 	switch l {
 	case ControlMaturityLevelNone,
