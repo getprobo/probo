@@ -64,6 +64,7 @@ export default function CookieBannerSnippetPage() {
 
           <p className="text-sm text-txt-secondary">
             {__("The same approach works for iframes, images, stylesheets, and other elements.")}
+            {" "}
             <a
               href="https://docs.getprobo.com/docs/product/cookie-banner/blocking-resources.html"
               target="_blank"

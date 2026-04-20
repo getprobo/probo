@@ -12,7 +12,6 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { CookieIcon } from "@phosphor-icons/react";
 import { useTranslate } from "@probo/i18n";
 import {
   IconBank,
@@ -220,13 +219,13 @@ export function Sidebar(props: { fKey: SidebarFragment$key }) {
           to={`${prefix}/compliance-page`}
         />
       )}
-      {organization.canListCookieBanners && (
+      {/* {organization.canListCookieBanners && (
         <SidebarItem
           label={__("Cookie Banners")}
           icon={CookieIcon}
           to={`${prefix}/cookie-banners`}
         />
-      )}
+      )} */}
       {organization.canUpdateOrganization && (
         <SidebarItem
           label={__("Settings")}
