@@ -12,6 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+import { CookieIcon } from "@phosphor-icons/react";
 import { useTranslate } from "@probo/i18n";
 import {
   IconBank,
@@ -63,6 +64,7 @@ const fragment = graphql`
         canListRightsRequests: permission(action: "core:rights-request:list")
         canListSnapshots: permission(action: "core:snapshot:list")
         canGetTrustCenter: permission(action: "core:trust-center:get")
+        canListCookieBanners: permission(action: "core:cookie-banner:list")
         canUpdateOrganization: permission(action: "iam:organization:update")
         canListStatementsOfApplicability: permission(
             action: "core:statement-of-applicability:list"
@@ -216,6 +218,13 @@ export function Sidebar(props: { fKey: SidebarFragment$key }) {
           label={__("Compliance Page")}
           icon={IconShield}
           to={`${prefix}/compliance-page`}
+        />
+      )}
+      {organization.canListCookieBanners && (
+        <SidebarItem
+          label={__("Cookie Banners")}
+          icon={CookieIcon}
+          to={`${prefix}/cookie-banners`}
         />
       )}
       {organization.canUpdateOrganization && (

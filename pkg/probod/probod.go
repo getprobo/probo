@@ -49,6 +49,7 @@ import (
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/certmanager"
 	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/crypto/keys"
@@ -522,6 +523,8 @@ func (impl *Implm) Run(
 
 	mailmanService := mailman.NewService(pgClient, fileManagerService, impl.cfg.Auth.Cookie.Secret, baseURL, impl.cfg.AWS.Bucket, encryptionKey, l)
 
+	cookieBannerService := cookiebanner.NewService(pgClient)
+
 	proboService, err := probo.NewService(
 		ctx,
 		encryptionKey,
@@ -582,6 +585,7 @@ func (impl *Implm) Run(
 			ESign:             esignService,
 			AccessReview:      accessReviewService,
 			Mailman:           mailmanService,
+			CookieBanner:      cookieBannerService,
 			Slack:             slackService,
 			ConnectorRegistry: defaultConnectorRegistry,
 			BaseURL:           baseURL,

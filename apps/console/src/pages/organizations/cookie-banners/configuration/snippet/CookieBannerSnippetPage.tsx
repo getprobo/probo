@@ -1,0 +1,170 @@
+// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
+import { useTranslate } from "@probo/i18n";
+import { Card } from "@probo/ui";
+import { useLazyLoadQuery } from "react-relay";
+import { useParams } from "react-router";
+import { graphql } from "relay-runtime";
+
+import type { CookieBannerSnippetPageQuery } from "#/__generated__/core/CookieBannerSnippetPageQuery.graphql";
+
+import { CodeSnippets } from "./_components/CodeSnippets";
+
+const snippetPageQuery = graphql`
+  query CookieBannerSnippetPageQuery($cookieBannerId: ID!) {
+    node(id: $cookieBannerId) {
+      __typename
+      ... on CookieBanner {
+        id
+        origin
+      }
+    }
+  }
+`;
+
+export default function CookieBannerSnippetPage() {
+  const { __ } = useTranslate();
+  const { cookieBannerId } = useParams<{ cookieBannerId: string }>();
+  if (!cookieBannerId) {
+    throw new Error("Missing :cookieBannerId param in route");
+  }
+
+  const data = useLazyLoadQuery<CookieBannerSnippetPageQuery>(
+    snippetPageQuery,
+    { cookieBannerId },
+  );
+
+  if (data.node.__typename !== "CookieBanner") {
+    throw new Error("invalid type for node");
+  }
+
+  const banner = data.node;
+  const baseUrl = `${window.location.origin}/api/cookie-banner/v1`;
+
+  return (
+    <div className="space-y-10">
+      <Step
+        number={1}
+        title={__("Add the cookie banner snippet")}
+        description={__("Include the Probo cookie banner on your website by adding one of the following snippets. The banner will automatically appear and collect visitor consent.")}
+      >
+        <CodeSnippets bannerId={banner.id} baseUrl={baseUrl} />
+      </Step>
+
+      <Step
+        number={2}
+        title={__("Tag third-party elements with consent categories")}
+        description={__("Mark scripts, iframes, and other third-party resources with a data-cookie-consent attribute so they only load after the visitor grants consent for the corresponding category. Replace src with data-src (or href with data-href) to prevent the browser from loading the resource before consent is given.")}
+      >
+        <div className="space-y-4">
+          <h4 className="text-sm font-medium">{__("Scripts")}</h4>
+          <Card className="border">
+            <pre className="overflow-x-auto p-4 text-sm font-mono text-invert bg-accent rounded-lg">
+              <code>{`<!-- Before: loads immediately -->
+<script src="https://analytics.example.com/tracker.js"></script>
+
+<!-- After: loads only when "analytics" consent is granted -->
+<script
+  type="text/plain"
+  data-cookie-consent="analytics"
+  data-src="https://analytics.example.com/tracker.js"
+></script>`}</code>
+            </pre>
+          </Card>
+
+          <h4 className="text-sm font-medium">{__("Inline scripts")}</h4>
+          <Card className="border">
+            <pre className="overflow-x-auto p-4 text-sm font-mono text-invert bg-accent rounded-lg">
+              <code>{`<script
+  type="text/plain"
+  data-cookie-consent="analytics"
+  data-type="text/javascript"
+>
+  // This code runs only after consent
+  gtag('config', 'G-XXXXXXX');
+</script>`}</code>
+            </pre>
+          </Card>
+
+          <h4 className="text-sm font-medium">{__("Iframes & embeds")}</h4>
+          <Card className="border">
+            <pre className="overflow-x-auto p-4 text-sm font-mono text-invert bg-accent rounded-lg">
+              <code>{`<iframe
+  data-cookie-consent="marketing"
+  data-src="https://www.youtube.com/embed/VIDEO_ID"
+  width="560"
+  height="315"
+></iframe>`}</code>
+            </pre>
+          </Card>
+
+          <h4 className="text-sm font-medium">{__("Images, video & audio")}</h4>
+          <Card className="border">
+            <pre className="overflow-x-auto p-4 text-sm font-mono text-invert bg-accent rounded-lg">
+              <code>{`<img
+  data-cookie-consent="analytics"
+  data-src="https://tracker.example.com/pixel.gif"
+  width="1"
+  height="1"
+/>`}</code>
+            </pre>
+          </Card>
+
+          <h4 className="text-sm font-medium">{__("Stylesheets")}</h4>
+          <Card className="border">
+            <pre className="overflow-x-auto p-4 text-sm font-mono text-invert bg-accent rounded-lg">
+              <code>{`<link
+  rel="stylesheet"
+  data-cookie-consent="marketing"
+  data-href="https://widgets.example.com/styles.css"
+/>`}</code>
+            </pre>
+          </Card>
+
+          <p className="text-sm text-txt-secondary">
+            {__("Supported elements: script, iframe, img, video, audio, embed, object, and link. The data-cookie-consent value must match a category name configured in your banner settings.")}
+          </p>
+        </div>
+      </Step>
+    </div>
+  );
+}
+
+function Step({
+  number,
+  title,
+  description,
+  children,
+}: {
+  number: number;
+  title: string;
+  description: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex gap-4">
+      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent text-sm font-semibold text-invert">
+        {number}
+      </div>
+      <div className="min-w-0 flex-1 space-y-4">
+        <div>
+          <h3 className="text-lg font-medium">{title}</h3>
+          <p className="mt-1 text-sm text-txt-secondary">{description}</p>
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+}

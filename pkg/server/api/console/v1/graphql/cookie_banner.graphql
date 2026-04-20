@@ -1,0 +1,269 @@
+enum CookieBannerState
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.CookieBannerState") {
+    ACTIVE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CookieBannerStateActive"
+        )
+    INACTIVE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CookieBannerStateInactive"
+        )
+}
+
+enum CookieConsentMode
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.CookieConsentMode") {
+    OPT_IN
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CookieConsentModeOptIn"
+        )
+    OPT_OUT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CookieConsentModeOptOut"
+        )
+}
+
+enum CookieBannerOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.CookieBannerOrderField"
+    ) {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CookieBannerOrderFieldCreatedAt"
+        )
+}
+
+enum CookieCategoryOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.CookieCategoryOrderField"
+    ) {
+    RANK
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CookieCategoryOrderFieldRank"
+        )
+}
+
+input CookieBannerOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.CookieBannerOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: CookieBannerOrderField!
+}
+
+input CookieCategoryOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.CookieCategoryOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: CookieCategoryOrderField!
+}
+
+type CookieBanner implements Node {
+    id: ID!
+    name: String!
+    origin: String!
+    state: CookieBannerState!
+    privacyPolicyUrl: String!
+    consentExpiryDays: Int!
+    consentMode: CookieConsentMode!
+
+    organization: Organization! @goField(forceResolver: true)
+
+    categories(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: CookieCategoryOrder
+    ): CookieCategoryConnection! @goField(forceResolver: true)
+
+    latestVersion: CookieBannerVersion @goField(forceResolver: true)
+
+    createdAt: Datetime!
+    updatedAt: Datetime!
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type CookieCategory implements Node {
+    id: ID!
+    cookieBanner: CookieBanner! @goField(forceResolver: true)
+    name: String!
+    description: String!
+    required: Boolean!
+    rank: Int!
+    cookies: [CookieItem!]!
+    createdAt: Datetime!
+    updatedAt: Datetime!
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type CookieItem {
+    name: String!
+    duration: String!
+    description: String!
+}
+
+type CookieBannerVersion implements Node {
+    id: ID!
+    version: Int!
+    state: String!
+    createdAt: Datetime!
+    updatedAt: Datetime!
+}
+
+type CookieBannerConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.CookieBannerConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [CookieBannerEdge!]!
+    pageInfo: PageInfo!
+}
+
+type CookieBannerEdge {
+    cursor: CursorKey!
+    node: CookieBanner!
+}
+
+type CookieCategoryConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.CookieCategoryConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [CookieCategoryEdge!]!
+    pageInfo: PageInfo!
+}
+
+type CookieCategoryEdge {
+    cursor: CursorKey!
+    node: CookieCategory!
+}
+
+extend type Mutation {
+    createCookieBanner(
+        input: CreateCookieBannerInput!
+    ): CreateCookieBannerPayload!
+    updateCookieBanner(
+        input: UpdateCookieBannerInput!
+    ): UpdateCookieBannerPayload!
+    deleteCookieBanner(
+        input: DeleteCookieBannerInput!
+    ): DeleteCookieBannerPayload!
+    activateCookieBanner(
+        input: ActivateCookieBannerInput!
+    ): ActivateCookieBannerPayload!
+    deactivateCookieBanner(
+        input: DeactivateCookieBannerInput!
+    ): DeactivateCookieBannerPayload!
+    publishCookieBannerVersion(
+        input: PublishCookieBannerVersionInput!
+    ): PublishCookieBannerVersionPayload!
+    createCookieCategory(
+        input: CreateCookieCategoryInput!
+    ): CreateCookieCategoryPayload!
+    updateCookieCategory(
+        input: UpdateCookieCategoryInput!
+    ): UpdateCookieCategoryPayload!
+    deleteCookieCategory(
+        input: DeleteCookieCategoryInput!
+    ): DeleteCookieCategoryPayload!
+}
+
+input CreateCookieBannerInput {
+    organizationId: ID!
+    name: String!
+    origin: String!
+    privacyPolicyUrl: String!
+    consentExpiryDays: Int!
+    consentMode: CookieConsentMode!
+}
+
+input UpdateCookieBannerInput {
+    cookieBannerId: ID!
+    name: String
+    origin: String
+    privacyPolicyUrl: String
+    consentExpiryDays: Int
+    consentMode: CookieConsentMode
+}
+
+input DeleteCookieBannerInput {
+    cookieBannerId: ID!
+}
+
+input ActivateCookieBannerInput {
+    cookieBannerId: ID!
+}
+
+input DeactivateCookieBannerInput {
+    cookieBannerId: ID!
+}
+
+input PublishCookieBannerVersionInput {
+    cookieBannerId: ID!
+}
+
+input CreateCookieCategoryInput {
+    cookieBannerId: ID!
+    name: String!
+    description: String!
+    required: Boolean!
+    rank: Int!
+    cookies: [CookieItemInput!]
+}
+
+input UpdateCookieCategoryInput {
+    cookieCategoryId: ID!
+    name: String
+    description: String
+    rank: Int
+    cookies: [CookieItemInput!]
+}
+
+input DeleteCookieCategoryInput {
+    cookieCategoryId: ID!
+}
+
+input CookieItemInput {
+    name: String!
+    duration: String!
+    description: String!
+}
+
+type CreateCookieBannerPayload {
+    cookieBannerEdge: CookieBannerEdge!
+}
+
+type UpdateCookieBannerPayload {
+    cookieBanner: CookieBanner!
+}
+
+type DeleteCookieBannerPayload {
+    deletedCookieBannerId: ID!
+}
+
+type ActivateCookieBannerPayload {
+    cookieBanner: CookieBanner!
+}
+
+type DeactivateCookieBannerPayload {
+    cookieBanner: CookieBanner!
+}
+
+type PublishCookieBannerVersionPayload {
+    cookieBannerVersion: CookieBannerVersion!
+}
+
+type CreateCookieCategoryPayload {
+    cookieCategoryEdge: CookieCategoryEdge!
+}
+
+type UpdateCookieCategoryPayload {
+    cookieCategory: CookieCategory!
+}
+
+type DeleteCookieCategoryPayload {
+    deletedCookieCategoryId: ID!
+}

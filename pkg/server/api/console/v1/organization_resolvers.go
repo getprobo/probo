@@ -1044,6 +1044,37 @@ func (r *organizationResolver) TrustCenterFiles(ctx context.Context, obj *types.
 	return types.NewTrustCenterFileConnection(pageResult, obj.ID), nil
 }
 
+// CookieBanners is the resolver for the cookieBanners field.
+func (r *organizationResolver) CookieBanners(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.CookieBannerOrderBy) (*types.CookieBannerConnection, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionCookieBannerList); err != nil {
+		return nil, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.CookieBannerOrderField]{
+		Field:     coredata.CookieBannerOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.CookieBannerOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+	scope := coredata.NewScopeFromObjectID(obj.ID)
+
+	banners, err := r.cookieBanner.ListCookieBannersForOrganization(ctx, scope, obj.ID, cursor, coredata.NewCookieBannerFilter(nil))
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list cookie banners", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	p := page.NewPage(banners, cursor)
+
+	return types.NewCookieBannerConnection(p, r, obj.ID), nil
+}
+
 // Vendors is the resolver for the vendors field.
 func (r *organizationResolver) Vendors(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.VendorOrderBy, filter *types.VendorFilter) (*types.VendorConnection, error) {
 	if err := r.authorize(ctx, obj.ID, probo.ActionVendorList); err != nil {

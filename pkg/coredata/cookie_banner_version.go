@@ -67,7 +67,18 @@ func (v *CookieBannerVersion) CursorKey(field CookieBannerVersionOrderField) pag
 }
 
 func (v *CookieBannerVersion) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
-	return map[string]string{"organization_id": v.OrganizationID.String()}, nil
+	q := `SELECT organization_id FROM cookie_banner_versions WHERE id = $1 LIMIT 1;`
+
+	var organizationID gid.GID
+	if err := conn.QueryRow(ctx, q, v.ID).Scan(&organizationID); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrResourceNotFound
+		}
+
+		return nil, fmt.Errorf("cannot query cookie banner version authorization attributes: %w", err)
+	}
+
+	return map[string]string{"organization_id": organizationID.String()}, nil
 }
 
 func (v *CookieBannerVersion) GetSnapshot() (CookieBannerVersionSnapshot, error) {

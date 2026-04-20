@@ -332,6 +332,42 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			}
 			return types.NewAccessEntry(entry), nil
 		}
+	case coredata.CookieBannerEntityType:
+		action = probo.ActionCookieBannerGet
+		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
+			scope := coredata.NewScopeFromObjectID(id)
+			banner, err := r.cookieBanner.GetCookieBanner(ctx, scope, id)
+			if err != nil {
+				return nil, err
+			}
+			return types.NewCookieBanner(banner), nil
+		}
+	case coredata.CookieCategoryEntityType:
+		action = probo.ActionCookieCategoryGet
+		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
+			scope := coredata.NewScopeFromObjectID(id)
+			category, err := r.cookieBanner.GetCookieCategory(ctx, scope, id)
+			if err != nil {
+				return nil, err
+			}
+			return types.NewCookieCategory(category), nil
+		}
+	case coredata.CookieBannerVersionEntityType:
+		action = probo.ActionCookieBannerVersionGet
+		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
+			scope := coredata.NewScopeFromObjectID(id)
+			version, err := r.cookieBanner.GetCookieBannerVersion(ctx, scope, id)
+			if err != nil {
+				return nil, err
+			}
+			return &types.CookieBannerVersion{
+				ID:        version.ID,
+				Version:   version.Version,
+				State:     string(version.State),
+				CreatedAt: version.CreatedAt,
+				UpdatedAt: version.UpdatedAt,
+			}, nil
+		}
 	default:
 	}
 

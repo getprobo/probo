@@ -377,4 +377,25 @@ const (
 	ActionAccessSourceUpdate = "core:access-source:update"
 	ActionAccessSourceDelete = "core:access-source:delete"
 	ActionAccessSourceSync   = "core:access-source:sync"
+
+	// CookieBanner actions
+	ActionCookieBannerGet        = "core:cookie-banner:get"
+	ActionCookieBannerList       = "core:cookie-banner:list"
+	ActionCookieBannerCreate     = "core:cookie-banner:create"
+	ActionCookieBannerUpdate     = "core:cookie-banner:update"
+	ActionCookieBannerDelete     = "core:cookie-banner:delete"
+	ActionCookieBannerActivate   = "core:cookie-banner:activate"
+	ActionCookieBannerDeactivate = "core:cookie-banner:deactivate"
+
+	// CookieBannerVersion actions
+	ActionCookieBannerVersionGet     = "core:cookie-banner-version:get"
+	ActionCookieBannerVersionList    = "core:cookie-banner-version:list"
+	ActionCookieBannerVersionPublish = "core:cookie-banner-version:publish"
+
+	// CookieCategory actions
+	ActionCookieCategoryGet    = "core:cookie-category:get"
+	ActionCookieCategoryList   = "core:cookie-category:list"
+	ActionCookieCategoryCreate = "core:cookie-category:create"
+	ActionCookieCategoryUpdate = "core:cookie-category:update"
+	ActionCookieCategoryDelete = "core:cookie-category:delete"
 )

@@ -306,6 +306,14 @@ type Organization implements Node {
         orderBy: TrustCenterFileOrder
     ): TrustCenterFileConnection! @goField(forceResolver: true)
 
+    cookieBanners(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: CookieBannerOrder
+    ): CookieBannerConnection! @goField(forceResolver: true)
+
     vendors(
         first: Int
         after: CursorKey

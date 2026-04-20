@@ -78,7 +78,18 @@ func (c *CookieCategory) CursorKey(field CookieCategoryOrderField) page.CursorKe
 }
 
 func (c *CookieCategory) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
-	return map[string]string{"organization_id": c.OrganizationID.String()}, nil
+	q := `SELECT organization_id FROM cookie_categories WHERE id = $1 LIMIT 1;`
+
+	var organizationID gid.GID
+	if err := conn.QueryRow(ctx, q, c.ID).Scan(&organizationID); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrResourceNotFound
+		}
+
+		return nil, fmt.Errorf("cannot query cookie category authorization attributes: %w", err)
+	}
+
+	return map[string]string{"organization_id": organizationID.String()}, nil
 }
 
 func (c *CookieCategory) LoadByID(

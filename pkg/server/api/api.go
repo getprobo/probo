@@ -182,6 +182,7 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.ESign,
 			cfg.AccessReview,
 			cfg.Mailman,
+			cfg.CookieBanner,
 			cfg.Cookie,
 			cfg.TokenSecret,
 			cfg.ConnectorRegistry,

@@ -46,10 +46,12 @@ func NewMux(
 	}
 
 	r := chi.NewMux()
-	r.Use(newCORSMiddleware(logger, cookieBannerSvc))
-	r.Get("/{bannerID}/config", h.handleGetConfig)
-	r.Get("/{bannerID}/consents/{visitorID}", h.handleGetConsent)
-	r.Post("/{bannerID}/consents", h.handlePostConsent)
+	r.Route("/{bannerID}", func(r chi.Router) {
+		r.Use(newCORSMiddleware(logger, cookieBannerSvc))
+		r.Get("/config", h.handleGetConfig)
+		r.Get("/consents/{visitorID}", h.handleGetConsent)
+		r.Post("/consents", h.handlePostConsent)
+	})
 
 	return r
 }
