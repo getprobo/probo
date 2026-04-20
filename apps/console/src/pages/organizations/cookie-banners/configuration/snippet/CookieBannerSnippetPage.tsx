@@ -63,7 +63,15 @@ export default function CookieBannerSnippetPage() {
           </Card>
 
           <p className="text-sm text-txt-secondary">
-            {__("The same approach works for iframes, images, stylesheets, and other elements. See our documentation for the full list of supported elements and detailed integration guides.")}
+            {__("The same approach works for iframes, images, stylesheets, and other elements.")}
+            <a
+              href="https://docs.getprobo.com/docs/product/cookie-banner/blocking-resources.html"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-txt-primary underline hover:no-underline"
+            >
+              {__("See our documentation for the full list of supported elements and detailed integration guides.")}
+            </a>
           </p>
         </div>
       </Step>
