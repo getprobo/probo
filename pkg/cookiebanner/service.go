@@ -82,8 +82,12 @@ type (
 		CookieCategoryID gid.GID
 		Name             *string
 		Description      *string
-		Rank             *int
 		Cookies          *coredata.CookieItems
+	}
+
+	ReorderCookieCategoryRequest struct {
+		CookieCategoryID gid.GID
+		Rank             int
 	}
 
 	CreateCookieConsentRecordRequest struct {
@@ -166,6 +170,14 @@ func (r *UpdateCookieCategoryRequest) Validate() error {
 	v.Check(r.CookieCategoryID, "cookie_category_id", validator.Required(), validator.GID(coredata.CookieCategoryEntityType))
 	v.Check(r.Name, "name", validator.SafeTextNoNewLine(255))
 	v.Check(r.Description, "description", validator.SafeText(1000))
+
+	return v.Error()
+}
+
+func (r *ReorderCookieCategoryRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(r.CookieCategoryID, "cookie_category_id", validator.Required(), validator.GID(coredata.CookieCategoryEntityType))
 	v.Check(r.Rank, "rank", validator.Min(0))
 
 	return v.Error()
@@ -850,9 +862,6 @@ func (s *Service) UpdateCookieCategory(
 			if req.Description != nil {
 				category.Description = *req.Description
 			}
-			if req.Rank != nil {
-				category.Rank = *req.Rank
-			}
 			if req.Cookies != nil {
 				category.Cookies = *req.Cookies
 			}
@@ -885,6 +894,58 @@ func (s *Service) UpdateCookieCategory(
 	}
 
 	return &category, nil
+}
+
+func (s *Service) ReorderCookieCategory(
+	ctx context.Context,
+	scope coredata.Scoper,
+	req ReorderCookieCategoryRequest,
+) (*coredata.CookieBanner, error) {
+	if err := req.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid request: %w", err)
+	}
+
+	var banner coredata.CookieBanner
+
+	err := s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			var category coredata.CookieCategory
+			if err := category.LoadByID(ctx, tx, scope, req.CookieCategoryID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return ErrCategoryNotFound
+				}
+				return fmt.Errorf("cannot load cookie category: %w", err)
+			}
+
+			category.Rank = req.Rank
+			category.UpdatedAt = time.Now()
+
+			if err := category.UpdateRank(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot reorder cookie category: %w", err)
+			}
+
+			if err := banner.LoadByID(ctx, tx, scope, category.CookieBannerID); err != nil {
+				return fmt.Errorf("cannot load cookie banner: %w", err)
+			}
+
+			var categories coredata.CookieCategories
+			if err := categories.LoadAllByCookieBannerID(ctx, tx, scope, category.CookieBannerID); err != nil {
+				return fmt.Errorf("cannot load cookie categories: %w", err)
+			}
+
+			if _, err := s.ensureDraftVersion(ctx, tx, scope, &banner, categories); err != nil {
+				return fmt.Errorf("cannot ensure draft version: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &banner, nil
 }
 
 func (s *Service) DeleteCookieCategory(

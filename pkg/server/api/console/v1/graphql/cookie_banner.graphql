@@ -169,6 +169,9 @@ extend type Mutation {
     deleteCookieCategory(
         input: DeleteCookieCategoryInput!
     ): DeleteCookieCategoryPayload!
+    reorderCookieCategory(
+        input: ReorderCookieCategoryInput!
+    ): ReorderCookieCategoryPayload!
 }
 
 input CreateCookieBannerInput {
@@ -218,12 +221,16 @@ input UpdateCookieCategoryInput {
     cookieCategoryId: ID!
     name: String
     description: String
-    rank: Int
     cookies: [CookieItemInput!]
 }
 
 input DeleteCookieCategoryInput {
     cookieCategoryId: ID!
+}
+
+input ReorderCookieCategoryInput {
+    cookieCategoryId: ID!
+    rank: Int!
 }
 
 input CookieItemInput {
@@ -269,5 +276,9 @@ type UpdateCookieCategoryPayload {
 
 type DeleteCookieCategoryPayload {
     deletedCookieCategoryId: ID!
+    cookieBanner: CookieBanner!
+}
+
+type ReorderCookieCategoryPayload {
     cookieBanner: CookieBanner!
 }

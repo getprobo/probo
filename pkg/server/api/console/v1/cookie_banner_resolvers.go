@@ -410,7 +410,6 @@ func (r *mutationResolver) UpdateCookieCategory(ctx context.Context, input types
 			CookieCategoryID: input.CookieCategoryID,
 			Name:             input.Name,
 			Description:      input.Description,
-			Rank:             input.Rank,
 			Cookies:          cookies,
 		},
 	)
@@ -479,6 +478,38 @@ func (r *mutationResolver) DeleteCookieCategory(ctx context.Context, input types
 	return &types.DeleteCookieCategoryPayload{
 		DeletedCookieCategoryID: input.CookieCategoryID,
 		CookieBanner:            types.NewCookieBanner(banner),
+	}, nil
+}
+
+// ReorderCookieCategory is the resolver for the reorderCookieCategory field.
+func (r *mutationResolver) ReorderCookieCategory(ctx context.Context, input types.ReorderCookieCategoryInput) (*types.ReorderCookieCategoryPayload, error) {
+	if err := r.authorize(ctx, input.CookieCategoryID, probo.ActionCookieCategoryUpdate); err != nil {
+		return nil, err
+	}
+
+	scope := coredata.NewScopeFromObjectID(input.CookieCategoryID)
+
+	banner, err := r.cookieBanner.ReorderCookieCategory(
+		ctx,
+		scope,
+		cookiebanner.ReorderCookieCategoryRequest{
+			CookieCategoryID: input.CookieCategoryID,
+			Rank:             input.Rank,
+		},
+	)
+	if err != nil {
+		if errors.Is(err, cookiebanner.ErrCategoryNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+		}
+		r.logger.ErrorCtx(ctx, "cannot reorder cookie category", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.ReorderCookieCategoryPayload{
+		CookieBanner: types.NewCookieBanner(banner),
 	}, nil
 }
 

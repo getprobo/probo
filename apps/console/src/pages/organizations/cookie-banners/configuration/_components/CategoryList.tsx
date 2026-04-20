@@ -21,7 +21,7 @@ import { graphql } from "relay-runtime";
 
 import type { CategoryList_cookieBanner$key } from "#/__generated__/core/CategoryList_cookieBanner.graphql";
 import type { CategoryListDeleteMutation } from "#/__generated__/core/CategoryListDeleteMutation.graphql";
-import type { CategoryListUpdateMutation } from "#/__generated__/core/CategoryListUpdateMutation.graphql";
+import type { CategoryListReorderMutation } from "#/__generated__/core/CategoryListReorderMutation.graphql";
 
 import { CategoryDialog } from "./CategoryDialog";
 
@@ -62,23 +62,12 @@ const deleteCategoryMutation = graphql`
   }
 `;
 
-const updateCategoryMutation = graphql`
-  mutation CategoryListUpdateMutation($input: UpdateCookieCategoryInput!) {
-    updateCookieCategory(input: $input) {
-      cookieCategory {
-        id
-        name
-        description
-        rank
-        cookies {
-          name
-          duration
-          description
-        }
-        updatedAt
-      }
+const reorderCategoryMutation = graphql`
+  mutation CategoryListReorderMutation($input: ReorderCookieCategoryInput!) {
+    reorderCookieCategory(input: $input) {
       cookieBanner {
         id
+        ...CategoryList_cookieBanner
         latestVersion {
           id
           version
@@ -103,7 +92,7 @@ export function CategoryList({ cookieBannerKey }: CategoryListProps) {
   const categories = banner.categories.edges.map(e => e.node);
 
   const [deleteCategory] = useMutation<CategoryListDeleteMutation>(deleteCategoryMutation);
-  const [updateCategory] = useMutation<CategoryListUpdateMutation>(updateCategoryMutation);
+  const [reorderCategory] = useMutation<CategoryListReorderMutation>(reorderCategoryMutation);
 
   const sorted = [...categories].sort((a, b) => a.rank - b.rank);
 
@@ -126,14 +115,8 @@ export function CategoryList({ cookieBannerKey }: CategoryListProps) {
     if (index === 0) return;
     const current = sorted[index];
     const above = sorted[index - 1];
-    updateCategory({
+    reorderCategory({
       variables: { input: { cookieCategoryId: current.id, rank: above.rank } },
-      onError(error) {
-        toast({ title: __("Error"), description: formatError(__("Failed to reorder"), error as GraphQLError), variant: "error" });
-      },
-    });
-    updateCategory({
-      variables: { input: { cookieCategoryId: above.id, rank: current.rank } },
       onError(error) {
         toast({ title: __("Error"), description: formatError(__("Failed to reorder"), error as GraphQLError), variant: "error" });
       },
@@ -144,14 +127,8 @@ export function CategoryList({ cookieBannerKey }: CategoryListProps) {
     if (index >= sorted.length - 1) return;
     const current = sorted[index];
     const below = sorted[index + 1];
-    updateCategory({
+    reorderCategory({
       variables: { input: { cookieCategoryId: current.id, rank: below.rank } },
-      onError(error) {
-        toast({ title: __("Error"), description: formatError(__("Failed to reorder"), error as GraphQLError), variant: "error" });
-      },
-    });
-    updateCategory({
-      variables: { input: { cookieCategoryId: below.id, rank: current.rank } },
       onError(error) {
         toast({ title: __("Error"), description: formatError(__("Failed to reorder"), error as GraphQLError), variant: "error" });
       },

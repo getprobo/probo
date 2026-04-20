@@ -332,7 +332,6 @@ UPDATE cookie_categories
 SET
 	name = @name,
 	description = @description,
-	rank = @rank,
 	cookies = @cookies,
 	updated_at = @updated_at
 WHERE
@@ -357,7 +356,6 @@ RETURNING
 		"id":          c.ID,
 		"name":        c.Name,
 		"description": c.Description,
-		"rank":        c.Rank,
 		"cookies":     c.Cookies,
 		"updated_at":  c.UpdatedAt,
 	}
@@ -374,6 +372,55 @@ RETURNING
 	}
 
 	*c = category
+
+	return nil
+}
+
+func (c *CookieCategory) UpdateRank(
+	ctx context.Context,
+	tx pg.Tx,
+	scope Scoper,
+) error {
+	q := `
+WITH old AS (
+	SELECT rank AS old_rank
+	FROM cookie_categories
+	WHERE %s AND id = @id AND cookie_banner_id = @cookie_banner_id
+)
+UPDATE cookie_categories
+SET
+	rank = CASE
+		WHEN id = @id THEN @new_rank
+		ELSE rank + CASE
+			WHEN @new_rank < old.old_rank THEN 1
+			WHEN @new_rank > old.old_rank THEN -1
+		END
+	END,
+	updated_at = @updated_at
+FROM old
+WHERE %s
+	AND cookie_banner_id = @cookie_banner_id
+	AND (
+		id = @id
+		OR (rank BETWEEN LEAST(old.old_rank, @new_rank) AND GREATEST(old.old_rank, @new_rank))
+	);
+`
+
+	scopeFragment := scope.SQLFragment()
+	q = fmt.Sprintf(q, scopeFragment, scopeFragment)
+
+	args := pgx.StrictNamedArgs{
+		"id":               c.ID,
+		"new_rank":         c.Rank,
+		"cookie_banner_id": c.CookieBannerID,
+		"updated_at":       c.UpdatedAt,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	_, err := tx.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot update cookie category rank: %w", err)
+	}
 
 	return nil
 }
