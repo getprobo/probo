@@ -949,6 +949,10 @@ func (s *Service) MoveCookieToCategory(
 				return fmt.Errorf("cannot load target cookie category: %w", err)
 			}
 
+			if source.ID == target.ID {
+				return ErrSameCategoryMove
+			}
+
 			if source.CookieBannerID != target.CookieBannerID {
 				return ErrCategoriesBannerMismatch
 			}

@@ -42,6 +42,24 @@ enum CookieCategoryOrderField
         )
 }
 
+enum CookieCategoryKind
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.CookieCategoryKind"
+    ) {
+    NORMAL
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CookieCategoryKindNormal"
+        )
+    NECESSARY
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CookieCategoryKindNecessary"
+        )
+    UNCATEGORISED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CookieCategoryKindUncategorised"
+        )
+}
+
 input CookieBannerOrder
     @goModel(
         model: "go.probo.inc/probo/pkg/server/api/console/v1/types.CookieBannerOrderBy"
@@ -90,7 +108,7 @@ type CookieCategory implements Node {
     cookieBanner: CookieBanner @goField(forceResolver: true)
     name: String!
     description: String!
-    kind: String!
+    kind: CookieCategoryKind!
     rank: Int!
     cookies: [CookieItem!]!
     createdAt: Datetime!

@@ -77,7 +77,7 @@ func NewCookieCategory(c *coredata.CookieCategory) *CookieCategory {
 		},
 		Name:        c.Name,
 		Description: c.Description,
-		Kind:        string(c.Kind),
+		Kind:        c.Kind,
 		Rank:        c.Rank,
 		Cookies:     cookies,
 		CreatedAt:   c.CreatedAt,

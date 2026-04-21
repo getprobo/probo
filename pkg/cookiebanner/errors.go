@@ -30,4 +30,5 @@ var (
 	ErrConsentNotFound            = errors.New("consent record not found")
 	ErrCookieNotFound             = errors.New("cookie not found in source category")
 	ErrCategoriesBannerMismatch   = errors.New("source and target categories belong to different banners")
+	ErrSameCategoryMove           = errors.New("source and target cookie categories must be different")
 )

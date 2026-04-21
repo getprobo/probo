@@ -357,7 +357,7 @@ export function CategorySection({ categoryKey, onDelete }: CategorySectionProps)
             editingCookieIndex === index
               ? (
                   <EditCookieRow
-                    key={index}
+                    key={cookie.name}
                     cookie={{
                       name: cookie.name,
                       duration: cookie.duration,
@@ -369,7 +369,7 @@ export function CategorySection({ categoryKey, onDelete }: CategorySectionProps)
                   />
                 )
               : (
-                  <Tr key={index}>
+                  <Tr key={cookie.name}>
                     <Td>
                       <code className="text-sm font-mono">{cookie.name}</code>
                     </Td>
