@@ -23,6 +23,7 @@ Detailed guides for specific subsystems live in `contrib/claude/`:
 - [`contrib/claude/relay.md`](contrib/claude/relay.md) — Frontend Relay client (queries, fragments, mutations, pagination)
 - [`contrib/claude/react-components.md`](contrib/claude/react-components.md) — React component shape (file/export, props, configure vs data via hooks)
 - [`contrib/claude/ui.md`](contrib/claude/ui.md) — @probo/ui, Tailwind, tailwind-variants, folders, skeletons, compound components
+- [`contrib/claude/config.md`](contrib/claude/config.md) — Configuration propagation (all files to update when config changes)
 - [`contrib/claude/commit.md`](contrib/claude/commit.md) — Commit message conventions
 - [`contrib/claude/license.md`](contrib/claude/license.md) — ISC license header (all file types)
 - [`contrib/claude/release.md`](contrib/claude/release.md) — Release process (version bump, changelog, tag, push)
