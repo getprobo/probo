@@ -55,6 +55,8 @@ export class ProboCategoryList extends ProboElement {
     if (!this.template) return;
 
     for (const cat of categories) {
+      if (cat.cookies.length === 0) continue;
+
       const wrapper = document.createElement("probo-category");
       wrapper.setAttribute("name", cat.name);
       wrapper.setAttribute("kind", cat.kind);
