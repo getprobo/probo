@@ -31,22 +31,18 @@ import { useState } from "react";
 import { useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 
-import type { CookieDialogUpdateMutation } from "#/__generated__/core/CookieDialogUpdateMutation.graphql";
+import type { CookieDialogCreateMutation } from "#/__generated__/core/CookieDialogCreateMutation.graphql";
 
-const updateCategoryMutation = graphql`
-  mutation CookieDialogUpdateMutation($input: UpdateCookieCategoryInput!) {
-    updateCookieCategory(input: $input) {
-      cookieCategory {
-        id
-        name
-        description
-        rank
-        cookies {
+const createCookieMutation = graphql`
+  mutation CookieDialogCreateMutation($input: CreateCookieInput!) {
+    createCookie(input: $input) {
+      cookieEdge {
+        node {
+          id
           name
           duration
           description
         }
-        updatedAt
       }
       cookieBanner {
         id
@@ -60,16 +56,9 @@ const updateCategoryMutation = graphql`
   }
 `;
 
-interface CookieEntry {
-  name: string;
-  duration: string;
-  description: string;
-}
-
 interface Category {
   id: string;
   name: string;
-  cookies: ReadonlyArray<CookieEntry>;
 }
 
 interface CookieDialogProps {
@@ -82,7 +71,7 @@ export function CookieDialog({ categories, onOpenChange }: CookieDialogProps) {
   const { toast } = useToast();
   const dialogRef = useDialogRef();
 
-  const [updateCategory, isUpdating] = useMutation<CookieDialogUpdateMutation>(updateCategoryMutation);
+  const [createCookie, isCreating] = useMutation<CookieDialogCreateMutation>(createCookieMutation);
 
   const [categoryId, setCategoryId] = useState(categories[0]?.id ?? "");
   const [name, setName] = useState("");
@@ -92,30 +81,29 @@ export function CookieDialog({ categories, onOpenChange }: CookieDialogProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    const category = categories.find(c => c.id === categoryId);
-    if (!category) return;
-
-    const existingCookies = category.cookies.map(c => ({
-      name: c.name,
-      duration: c.duration,
-      description: c.description,
-    }));
-
-    updateCategory({
+    createCookie({
       variables: {
         input: {
           cookieCategoryId: categoryId,
-          cookies: [
-            ...existingCookies,
-            {
-              name: name.trim(),
-              duration: duration.trim(),
-              description: description.trim(),
-            },
-          ],
+          name: name.trim(),
+          duration: duration.trim(),
+          description: description.trim(),
         },
       },
-      onCompleted() {
+      onCompleted(_response, errors) {
+        if (errors?.length) {
+          const isConflict = errors.some(
+            e => (e as unknown as GraphQLError).extensions?.code === "CONFLICT",
+          );
+          toast({
+            title: __("Error"),
+            description: isConflict
+              ? __("A cookie with this name already exists in this banner")
+              : errors[0].message,
+            variant: "error",
+          });
+          return;
+        }
         toast({ title: __("Success"), description: __("Cookie added"), variant: "success" });
         dialogRef.current?.close();
       },
@@ -163,8 +151,8 @@ export function CookieDialog({ categories, onOpenChange }: CookieDialogProps) {
         </DialogContent>
 
         <DialogFooter>
-          <Button type="submit" disabled={isUpdating}>
-            {isUpdating ? __("Adding...") : __("Add Cookie")}
+          <Button type="submit" disabled={isCreating}>
+            {isCreating ? __("Adding...") : __("Add Cookie")}
           </Button>
         </DialogFooter>
       </form>

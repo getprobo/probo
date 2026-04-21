@@ -104,7 +104,7 @@ This ensures the compiler catches renamed or removed enum values instead of sile
 | `LoadAllBy*(ctx, conn, scope, parentID, cursor, filter)` | `*Entities` | `error`                      | Paginated list                       |
 | `CountBy*(ctx, conn, scope, parentID, filter)`           | `*Entities` | `(int, error)`               | Count matching rows                  |
 | `Insert(ctx, conn, scope)`                               | `*Entity`   | `error`                      | Insert, uses `scope.GetTenantID()`   |
-| `Update(ctx, conn, scope)`                               | `*Entity`   | `error`                      | Update with `RETURNING`              |
+| `Update(ctx, conn, scope)`                               | `*Entity`   | `error`                      | Update via `Exec` (no `RETURNING`)   |
 | `Delete(ctx, conn, scope)`                               | `*Entity`   | `error`                      | Delete entity                        |
 | `CursorKey(orderField)`                                  | `*Entity`   | `page.CursorKey`             | Cursor for pagination                |
 | `AuthorizationAttributes(ctx, conn)`                     | `*Entity`   | `(map[string]string, error)` | Attributes for IAM policy evaluation |
@@ -112,8 +112,10 @@ This ensures the compiler catches renamed or removed enum values instead of sile
 
 ## Row collection
 
+Use `conn.Query` + `pgx.Collect*` only for `SELECT` and `INSERT … RETURNING` statements that return rows. For `UPDATE` and `DELETE`, use `conn.Exec` — there is no need for `RETURNING` since the caller already owns all the field values.
+
 ```go
-// Single row
+// Single row (SELECT / INSERT … RETURNING)
 rows, err := conn.Query(ctx, q, args)
 asset, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Asset])
 if errors.Is(err, pgx.ErrNoRows) {
@@ -121,10 +123,13 @@ if errors.Is(err, pgx.ErrNoRows) {
 }
 *a = asset
 
-// Multiple rows
+// Multiple rows (SELECT)
 rows, err := conn.Query(ctx, q, args)
 assets, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Asset])
 *a = assets
+
+// Update / Delete — no RETURNING
+_, err := conn.Exec(ctx, q, args)
 ```
 
 ## Sentinel errors

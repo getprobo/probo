@@ -35,8 +35,11 @@ import { useState } from "react";
 import { useFragment, useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 
+import type { CategorySectionCreateCookieMutation } from "#/__generated__/core/CategorySectionCreateCookieMutation.graphql";
+import type { CategorySectionDeleteCookieMutation } from "#/__generated__/core/CategorySectionDeleteCookieMutation.graphql";
 import type { CategorySectionFragment$key } from "#/__generated__/core/CategorySectionFragment.graphql";
 import type { CategorySectionMoveCookieMutation } from "#/__generated__/core/CategorySectionMoveCookieMutation.graphql";
+import type { CategorySectionUpdateCookieMutation } from "#/__generated__/core/CategorySectionUpdateCookieMutation.graphql";
 import type { CategorySectionUpdateMutation } from "#/__generated__/core/CategorySectionUpdateMutation.graphql";
 
 import { AddCookieRow } from "./AddCookieRow";
@@ -55,10 +58,16 @@ export const categorySectionFragment = graphql`
     name
     description
     kind
-    cookies {
-      name
-      duration
-      description
+    cookies(first: 100, orderBy: { field: CREATED_AT, direction: ASC }) @required(action: THROW) {
+      edges {
+        node {
+          id
+          name
+          duration
+          description
+          ...EditCookieRowFragment
+        }
+      }
     }
     cookieBanner @required(action: THROW) {
       categories(first: 50, orderBy: { field: RANK, direction: ASC }) @required(action: THROW) {
@@ -66,11 +75,6 @@ export const categorySectionFragment = graphql`
           node {
             id
             name
-            cookies {
-              name
-              duration
-              description
-            }
           }
         }
       }
@@ -88,13 +92,75 @@ const updateCategoryMutation = graphql`
         name
         description
         rank
-        cookies {
+        updatedAt
+      }
+      cookieBanner {
+        id
+        latestVersion {
+          id
+          version
+          state
+        }
+      }
+    }
+  }
+`;
+
+const createCookieMutation = graphql`
+  mutation CategorySectionCreateCookieMutation(
+    $input: CreateCookieInput!
+  ) {
+    createCookie(input: $input) {
+      cookieEdge {
+        node {
+          id
           name
           duration
           description
         }
+      }
+      cookieBanner {
+        id
+        latestVersion {
+          id
+          version
+          state
+        }
+      }
+    }
+  }
+`;
+
+const updateCookieMutation = graphql`
+  mutation CategorySectionUpdateCookieMutation(
+    $input: UpdateCookieInput!
+  ) {
+    updateCookie(input: $input) {
+      cookie {
+        id
+        name
+        duration
+        description
         updatedAt
       }
+      cookieBanner {
+        id
+        latestVersion {
+          id
+          version
+          state
+        }
+      }
+    }
+  }
+`;
+
+const deleteCookieMutation = graphql`
+  mutation CategorySectionDeleteCookieMutation(
+    $input: DeleteCookieInput!
+  ) {
+    deleteCookie(input: $input) {
+      deletedCookieId
       cookieBanner {
         id
         latestVersion {
@@ -112,21 +178,13 @@ const moveCookieMutation = graphql`
     $input: MoveCookieToCategoryInput!
   ) {
     moveCookieToCategory(input: $input) {
-      sourceCookieCategory {
+      cookie {
         id
-        cookies {
-          name
-          duration
-          description
-        }
-        updatedAt
-      }
-      targetCookieCategory {
-        id
-        cookies {
-          name
-          duration
-          description
+        name
+        duration
+        description
+        cookieCategory {
+          id
         }
         updatedAt
       }
@@ -154,22 +212,29 @@ export function CategorySection({ categoryKey, onDelete }: CategorySectionProps)
 
   const [updateCategory, isUpdating]
     = useMutation<CategorySectionUpdateMutation>(updateCategoryMutation);
+  const [createCookie, isCreating]
+    = useMutation<CategorySectionCreateCookieMutation>(createCookieMutation);
+  const [updateCookie, isUpdatingCookie]
+    = useMutation<CategorySectionUpdateCookieMutation>(updateCookieMutation);
+  const [deleteCookie]
+    = useMutation<CategorySectionDeleteCookieMutation>(deleteCookieMutation);
   const [moveCookie]
     = useMutation<CategorySectionMoveCookieMutation>(moveCookieMutation);
 
   const [isEditingCategory, setIsEditingCategory] = useState(false);
-  const [editingCookieIndex, setEditingCookieIndex] = useState<number | null>(null);
+  const [editingCookieId, setEditingCookieId] = useState<string | null>(null);
   const [isAddingCookie, setIsAddingCookie] = useState(false);
 
-  const doUpdate = (
-    input: Record<string, unknown>,
-    onSuccess?: () => void,
-  ) => {
+  const cookies = category.cookies.edges.map(e => e.node);
+  const isMutating = isUpdating || isCreating || isUpdatingCookie;
+
+  const handleSaveCategory = (name: string, description: string) => {
     updateCategory({
       variables: {
         input: {
           cookieCategoryId: category.id,
-          ...input,
+          name,
+          description,
         },
       },
       onCompleted(_response, errors) {
@@ -186,7 +251,7 @@ export function CategorySection({ categoryKey, onDelete }: CategorySectionProps)
           description: __("Category updated"),
           variant: "success",
         });
-        onSuccess?.();
+        setIsEditingCategory(false);
       },
       onError(error) {
         toast({
@@ -201,62 +266,138 @@ export function CategorySection({ categoryKey, onDelete }: CategorySectionProps)
     });
   };
 
-  const handleSaveCategory = (name: string, description: string) => {
-    doUpdate({ name, description }, () => {
-      setIsEditingCategory(false);
-    });
-  };
-
-  const handleSaveEditCookie = (index: number, cookie: CookieEntry) => {
-    if (!cookie.name.trim()) return;
-    const newCookies = category.cookies.map((c, i) =>
-      i === index
-        ? { ...cookie }
-        : { name: c.name, duration: c.duration, description: c.description },
-    );
-    doUpdate({ cookies: newCookies }, () => {
-      setEditingCookieIndex(null);
-    });
-  };
-
-  const handleDeleteCookie = (index: number) => {
-    const newCookies = category.cookies
-      .filter((_, i) => i !== index)
-      .map(c => ({
-        name: c.name,
-        duration: c.duration,
-        description: c.description,
-      }));
-    doUpdate({ cookies: newCookies });
-  };
-
   const handleSaveNewCookie = (cookie: CookieEntry) => {
     if (!cookie.name.trim()) return;
-    const newCookies = [
-      ...category.cookies.map(c => ({
-        name: c.name,
-        duration: c.duration,
-        description: c.description,
-      })),
-      { ...cookie },
-    ];
-    doUpdate({ cookies: newCookies }, () => {
-      setIsAddingCookie(false);
+    createCookie({
+      variables: {
+        input: {
+          cookieCategoryId: category.id,
+          name: cookie.name,
+          duration: cookie.duration,
+          description: cookie.description,
+        },
+      },
+      onCompleted(_response, errors) {
+        if (errors?.length) {
+          const isConflict = errors.some(
+            e => (e as unknown as GraphQLError).extensions?.code === "CONFLICT",
+          );
+          toast({
+            title: __("Error"),
+            description: isConflict
+              ? __("A cookie with this name already exists in this banner")
+              : errors[0].message,
+            variant: "error",
+          });
+          return;
+        }
+        toast({
+          title: __("Success"),
+          description: __("Cookie added"),
+          variant: "success",
+        });
+        setIsAddingCookie(false);
+      },
+      onError(error) {
+        toast({
+          title: __("Error"),
+          description: formatError(
+            __("Failed to add cookie"),
+            error as GraphQLError,
+          ),
+          variant: "error",
+        });
+      },
+    });
+  };
+
+  const handleSaveEditCookie = (cookieId: string, cookie: CookieEntry) => {
+    if (!cookie.name.trim()) return;
+    updateCookie({
+      variables: {
+        input: {
+          cookieId,
+          name: cookie.name,
+          duration: cookie.duration,
+          description: cookie.description,
+        },
+      },
+      onCompleted(_response, errors) {
+        if (errors?.length) {
+          const isConflict = errors.some(
+            e => (e as unknown as GraphQLError).extensions?.code === "CONFLICT",
+          );
+          toast({
+            title: __("Error"),
+            description: isConflict
+              ? __("A cookie with this name already exists in this banner")
+              : errors[0].message,
+            variant: "error",
+          });
+          return;
+        }
+        toast({
+          title: __("Success"),
+          description: __("Cookie updated"),
+          variant: "success",
+        });
+        setEditingCookieId(null);
+      },
+      onError(error) {
+        toast({
+          title: __("Error"),
+          description: formatError(
+            __("Failed to update cookie"),
+            error as GraphQLError,
+          ),
+          variant: "error",
+        });
+      },
+    });
+  };
+
+  const handleDeleteCookie = (cookieId: string) => {
+    deleteCookie({
+      variables: {
+        input: { cookieId },
+      },
+      onCompleted(_response, errors) {
+        if (errors?.length) {
+          toast({
+            title: __("Error"),
+            description: errors[0].message,
+            variant: "error",
+          });
+          return;
+        }
+        toast({
+          title: __("Success"),
+          description: __("Cookie deleted"),
+          variant: "success",
+        });
+      },
+      onError(error) {
+        toast({
+          title: __("Error"),
+          description: formatError(
+            __("Failed to delete cookie"),
+            error as GraphQLError,
+          ),
+          variant: "error",
+        });
+      },
     });
   };
 
   const allCategories = category.cookieBanner.categories.edges.map(e => e.node) ?? [];
   const siblingCategories = allCategories.filter(c => c.id !== category.id);
 
-  const handleMoveCookie = (cookieIndex: number, targetCategoryId: string) => {
-    const cookie = category.cookies[cookieIndex];
-
+  const handleMoveCookie = (cookieId: string, targetCategoryId: string) => {
     moveCookie({
       variables: {
         input: {
-          sourceCookieCategoryId: category.id,
+          cookieId,
           targetCookieCategoryId: targetCategoryId,
-          cookieName: cookie.name,
         },
       },
       onCompleted(_response, errors) {
@@ -353,23 +494,19 @@ export function CategorySection({ categoryKey, onDelete }: CategorySectionProps)
           </Tr>
         </Thead>
         <Tbody>
-          {category.cookies.map((cookie, index) =>
-            editingCookieIndex === index
+          {cookies.map(cookie =>
+            editingCookieId === cookie.id
               ? (
                   <EditCookieRow
-                    key={cookie.name}
-                    cookie={{
-                      name: cookie.name,
-                      duration: cookie.duration,
-                      description: cookie.description,
-                    }}
-                    isUpdating={isUpdating}
-                    onSave={updated => handleSaveEditCookie(index, updated)}
-                    onCancel={() => setEditingCookieIndex(null)}
+                    key={cookie.id}
+                    cookieKey={cookie}
+                    isUpdating={isMutating}
+                    onSave={updated => handleSaveEditCookie(cookie.id, updated)}
+                    onCancel={() => setEditingCookieId(null)}
                   />
                 )
               : (
-                  <Tr key={cookie.name}>
+                  <Tr key={cookie.id}>
                     <Td>
                       <code className="text-sm font-mono">{cookie.name}</code>
                     </Td>
@@ -384,7 +521,7 @@ export function CategorySection({ categoryKey, onDelete }: CategorySectionProps)
                         <button
                           type="button"
                           onClick={() => {
-                            setEditingCookieIndex(index);
+                            setEditingCookieId(cookie.id);
                             setIsAddingCookie(false);
                           }}
                           className="p-1 rounded cursor-pointer"
@@ -406,7 +543,7 @@ export function CategorySection({ categoryKey, onDelete }: CategorySectionProps)
                               <DropdownItem
                                 className="text-sm"
                                 key={cat.id}
-                                onSelect={() => handleMoveCookie(index, cat.id)}
+                                onSelect={() => handleMoveCookie(cookie.id, cat.id)}
                               >
                                 {cat.name}
                               </DropdownItem>
@@ -415,7 +552,7 @@ export function CategorySection({ categoryKey, onDelete }: CategorySectionProps)
                         )}
                         <button
                           type="button"
-                          onClick={() => handleDeleteCookie(index)}
+                          onClick={() => handleDeleteCookie(cookie.id)}
                           className="p-1 rounded cursor-pointer text-danger-dark"
                         >
                           <IconTrashCan size={14} />
@@ -427,7 +564,7 @@ export function CategorySection({ categoryKey, onDelete }: CategorySectionProps)
           )}
           {isAddingCookie && (
             <AddCookieRow
-              isUpdating={isUpdating}
+              isUpdating={isMutating}
               onSave={handleSaveNewCookie}
               onCancel={() => setIsAddingCookie(false)}
             />
@@ -441,7 +578,7 @@ export function CategorySection({ categoryKey, onDelete }: CategorySectionProps)
             variant="secondary"
             onClick={() => {
               setIsAddingCookie(true);
-              setEditingCookieIndex(null);
+              setEditingCookieId(null);
             }}
           >
             <IconPlusSmall size={14} />

@@ -110,17 +110,63 @@ type CookieCategory implements Node {
     description: String!
     kind: CookieCategoryKind!
     rank: Int!
-    cookies: [CookieItem!]!
+
+    cookies(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: CookieOrder
+    ): CookieConnection @goField(forceResolver: true)
+
     createdAt: Datetime!
     updatedAt: Datetime!
 
     permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
-type CookieItem {
+enum CookieOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.CookieOrderField"
+    ) {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CookieOrderFieldCreatedAt"
+        )
+}
+
+input CookieOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.CookieOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: CookieOrderField!
+}
+
+type Cookie implements Node {
+    id: ID!
+    cookieCategory: CookieCategory @goField(forceResolver: true)
     name: String!
     duration: String!
     description: String!
+    createdAt: Datetime!
+    updatedAt: Datetime!
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type CookieConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.CookieConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [CookieEdge!]!
+    pageInfo: PageInfo!
+}
+
+type CookieEdge {
+    cursor: CursorKey!
+    node: Cookie!
 }
 
 type CookieBannerVersion implements Node {
@@ -193,6 +239,9 @@ extend type Mutation {
     moveCookieToCategory(
         input: MoveCookieToCategoryInput!
     ): MoveCookieToCategoryPayload!
+    createCookie(input: CreateCookieInput!): CreateCookiePayload!
+    updateCookie(input: UpdateCookieInput!): UpdateCookiePayload!
+    deleteCookie(input: DeleteCookieInput!): DeleteCookiePayload!
 }
 
 input CreateCookieBannerInput {
@@ -234,14 +283,12 @@ input CreateCookieCategoryInput {
     name: String!
     description: String!
     rank: Int!
-    cookies: [CookieItemInput!]
 }
 
 input UpdateCookieCategoryInput {
     cookieCategoryId: ID!
     name: String
     description: String
-    cookies: [CookieItemInput!]
 }
 
 input DeleteCookieCategoryInput {
@@ -253,16 +300,27 @@ input ReorderCookieCategoryInput {
     rank: Int!
 }
 
-input CookieItemInput {
+input MoveCookieToCategoryInput {
+    cookieId: ID!
+    targetCookieCategoryId: ID!
+}
+
+input CreateCookieInput {
+    cookieCategoryId: ID!
     name: String!
     duration: String!
     description: String!
 }
 
-input MoveCookieToCategoryInput {
-    sourceCookieCategoryId: ID!
-    targetCookieCategoryId: ID!
-    cookieName: String!
+input UpdateCookieInput {
+    cookieId: ID!
+    name: String
+    duration: String
+    description: String
+}
+
+input DeleteCookieInput {
+    cookieId: ID!
 }
 
 type CreateCookieBannerPayload {
@@ -310,7 +368,21 @@ type ReorderCookieCategoryPayload {
 }
 
 type MoveCookieToCategoryPayload {
-    sourceCookieCategory: CookieCategory!
-    targetCookieCategory: CookieCategory!
+    cookie: Cookie!
+    cookieBanner: CookieBanner!
+}
+
+type CreateCookiePayload {
+    cookieEdge: CookieEdge!
+    cookieBanner: CookieBanner!
+}
+
+type UpdateCookiePayload {
+    cookie: Cookie!
+    cookieBanner: CookieBanner!
+}
+
+type DeleteCookiePayload {
+    deletedCookieId: ID!
     cookieBanner: CookieBanner!
 }

@@ -20,6 +20,16 @@ import (
 	"go.probo.inc/probo/pkg/validator"
 )
 
+// CookieCategory is the resolver for the cookieCategory field.
+func (r *cookieResolver) CookieCategory(ctx context.Context, obj *types.Cookie) (*types.CookieCategory, error) {
+	return obj.CookieCategory, nil
+}
+
+// Permission is the resolver for the permission field.
+func (r *cookieResolver) Permission(ctx context.Context, obj *types.Cookie, action string) (bool, error) {
+	return r.Resolver.Permission(ctx, obj, action)
+}
+
 // Organization is the resolver for the organization field.
 func (r *cookieBannerResolver) Organization(ctx context.Context, obj *types.CookieBanner) (*types.Organization, error) {
 	return obj.Organization, nil
@@ -120,6 +130,37 @@ func (r *cookieCategoryResolver) CookieBanner(ctx context.Context, obj *types.Co
 	return obj.CookieBanner, nil
 }
 
+// Cookies is the resolver for the cookies field.
+func (r *cookieCategoryResolver) Cookies(ctx context.Context, obj *types.CookieCategory, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.CookieOrderBy) (*types.CookieConnection, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionCookieList); err != nil {
+		return nil, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.CookieOrderField]{
+		Field:     coredata.CookieOrderFieldCreatedAt,
+		Direction: page.OrderDirectionAsc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.CookieOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+	scope := coredata.NewScopeFromObjectID(obj.ID)
+
+	cookies, err := r.cookieBanner.ListCookiesForCategory(ctx, scope, obj.ID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list cookies", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	p := page.NewPage(cookies, cursor)
+
+	return types.NewCookieConnection(p, r, obj.ID), nil
+}
+
 // Permission is the resolver for the permission field.
 func (r *cookieCategoryResolver) Permission(ctx context.Context, obj *types.CookieCategory, action string) (bool, error) {
 	return r.Resolver.Permission(ctx, obj, action)
@@ -136,6 +177,23 @@ func (r *cookieCategoryConnectionResolver) TotalCount(ctx context.Context, obj *
 	count, err := r.cookieBanner.CountCookieCategoriesForBanner(ctx, scope, obj.ParentID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot count cookie categories", log.Error(err))
+		return 0, gqlutils.Internal(ctx)
+	}
+
+	return count, nil
+}
+
+// TotalCount is the resolver for the totalCount field.
+func (r *cookieConnectionResolver) TotalCount(ctx context.Context, obj *types.CookieConnection) (int, error) {
+	if err := r.authorize(ctx, obj.ParentID, probo.ActionCookieList); err != nil {
+		return 0, err
+	}
+
+	scope := coredata.NewScopeFromObjectID(obj.ParentID)
+
+	count, err := r.cookieBanner.CountCookiesForCategory(ctx, scope, obj.ParentID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot count cookies", log.Error(err))
 		return 0, gqlutils.Internal(ctx)
 	}
 
@@ -335,18 +393,6 @@ func (r *mutationResolver) CreateCookieCategory(ctx context.Context, input types
 
 	scope := coredata.NewScopeFromObjectID(input.CookieBannerID)
 
-	var cookies coredata.CookieItems
-	if input.Cookies != nil {
-		cookies = make(coredata.CookieItems, len(input.Cookies))
-		for i, c := range input.Cookies {
-			cookies[i] = coredata.CookieItem{
-				Name:        c.Name,
-				Duration:    c.Duration,
-				Description: c.Description,
-			}
-		}
-	}
-
 	category, err := r.cookieBanner.CreateCookieCategory(
 		ctx,
 		scope,
@@ -355,7 +401,6 @@ func (r *mutationResolver) CreateCookieCategory(ctx context.Context, input types
 			Name:           input.Name,
 			Description:    input.Description,
 			Rank:           input.Rank,
-			Cookies:        cookies,
 		},
 	)
 	if err != nil {
@@ -389,19 +434,6 @@ func (r *mutationResolver) UpdateCookieCategory(ctx context.Context, input types
 
 	scope := coredata.NewScopeFromObjectID(input.CookieCategoryID)
 
-	var cookies *coredata.CookieItems
-	if input.Cookies != nil {
-		items := make(coredata.CookieItems, len(input.Cookies))
-		for i, c := range input.Cookies {
-			items[i] = coredata.CookieItem{
-				Name:        c.Name,
-				Duration:    c.Duration,
-				Description: c.Description,
-			}
-		}
-		cookies = &items
-	}
-
 	category, err := r.cookieBanner.UpdateCookieCategory(
 		ctx,
 		scope,
@@ -409,7 +441,6 @@ func (r *mutationResolver) UpdateCookieCategory(ctx context.Context, input types
 			CookieCategoryID: input.CookieCategoryID,
 			Name:             input.Name,
 			Description:      input.Description,
-			Cookies:          cookies,
 		},
 	)
 	if err != nil {
@@ -514,7 +545,7 @@ func (r *mutationResolver) ReorderCookieCategory(ctx context.Context, input type
 
 // MoveCookieToCategory is the resolver for the moveCookieToCategory field.
 func (r *mutationResolver) MoveCookieToCategory(ctx context.Context, input types.MoveCookieToCategoryInput) (*types.MoveCookieToCategoryPayload, error) {
-	if err := r.authorize(ctx, input.SourceCookieCategoryID, probo.ActionCookieCategoryUpdate); err != nil {
+	if err := r.authorize(ctx, input.CookieID, probo.ActionCookieUpdate); err != nil {
 		return nil, err
 	}
 
@@ -522,12 +553,14 @@ func (r *mutationResolver) MoveCookieToCategory(ctx context.Context, input types
 		return nil, err
 	}
 
+	scope := coredata.NewScopeFromObjectID(input.CookieID)
+
 	result, err := r.cookieBanner.MoveCookieToCategory(
 		ctx,
+		scope,
 		cookiebanner.MoveCookieToCategoryRequest{
-			SourceCookieCategoryID: input.SourceCookieCategoryID,
+			CookieID:               input.CookieID,
 			TargetCookieCategoryID: input.TargetCookieCategoryID,
-			CookieName:             input.CookieName,
 		},
 	)
 	if err != nil {
@@ -537,7 +570,7 @@ func (r *mutationResolver) MoveCookieToCategory(ctx context.Context, input types
 		case errors.Is(err, cookiebanner.ErrCookieNotFound):
 			return nil, gqlutils.NotFound(ctx, err)
 		case errors.Is(err, cookiebanner.ErrCategoriesBannerMismatch):
-			return nil, gqlutils.NotFoundf(ctx, "source or target category not found")
+			return nil, gqlutils.NotFoundf(ctx, "cookie or target category not found")
 		default:
 			if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 				return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
@@ -548,11 +581,144 @@ func (r *mutationResolver) MoveCookieToCategory(ctx context.Context, input types
 	}
 
 	return &types.MoveCookieToCategoryPayload{
-		SourceCookieCategory: types.NewCookieCategory(result.SourceCategory),
-		TargetCookieCategory: types.NewCookieCategory(result.TargetCategory),
-		CookieBanner:         types.NewCookieBanner(result.Banner),
+		Cookie:       types.NewCookie(result.Cookie),
+		CookieBanner: types.NewCookieBanner(result.Banner),
 	}, nil
 }
+
+// CreateCookie is the resolver for the createCookie field.
+func (r *mutationResolver) CreateCookie(ctx context.Context, input types.CreateCookieInput) (*types.CreateCookiePayload, error) {
+	if err := r.authorize(ctx, input.CookieCategoryID, probo.ActionCookieCreate); err != nil {
+		return nil, err
+	}
+
+	scope := coredata.NewScopeFromObjectID(input.CookieCategoryID)
+
+	cookie, err := r.cookieBanner.CreateCookie(
+		ctx,
+		scope,
+		cookiebanner.CreateCookieRequest{
+			CookieCategoryID: input.CookieCategoryID,
+			Name:             input.Name,
+			Duration:         input.Duration,
+			Description:      input.Description,
+		},
+	)
+	if err != nil {
+		if errors.Is(err, cookiebanner.ErrCookieNameAlreadyExists) {
+			return nil, gqlutils.Conflict(ctx, err)
+		}
+		if errors.Is(err, cookiebanner.ErrCategoryNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+		}
+		r.logger.ErrorCtx(ctx, "cannot create cookie", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	bannerScope := coredata.NewScopeFromObjectID(cookie.CookieBannerID)
+	banner, err := r.cookieBanner.GetCookieBanner(ctx, bannerScope, cookie.CookieBannerID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot get cookie banner", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.CreateCookiePayload{
+		CookieEdge:   types.NewCookieEdge(cookie, coredata.CookieOrderFieldCreatedAt),
+		CookieBanner: types.NewCookieBanner(banner),
+	}, nil
+}
+
+// UpdateCookie is the resolver for the updateCookie field.
+func (r *mutationResolver) UpdateCookie(ctx context.Context, input types.UpdateCookieInput) (*types.UpdateCookiePayload, error) {
+	if err := r.authorize(ctx, input.CookieID, probo.ActionCookieUpdate); err != nil {
+		return nil, err
+	}
+
+	scope := coredata.NewScopeFromObjectID(input.CookieID)
+
+	cookie, err := r.cookieBanner.UpdateCookie(
+		ctx,
+		scope,
+		cookiebanner.UpdateCookieRequest{
+			CookieID:    input.CookieID,
+			Name:        input.Name,
+			Duration:    input.Duration,
+			Description: input.Description,
+		},
+	)
+	if err != nil {
+		if errors.Is(err, cookiebanner.ErrCookieNameAlreadyExists) {
+			return nil, gqlutils.Conflict(ctx, err)
+		}
+		if errors.Is(err, cookiebanner.ErrCookieNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+		}
+		r.logger.ErrorCtx(ctx, "cannot update cookie", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	bannerScope := coredata.NewScopeFromObjectID(cookie.CookieBannerID)
+	banner, err := r.cookieBanner.GetCookieBanner(ctx, bannerScope, cookie.CookieBannerID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot get cookie banner", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.UpdateCookiePayload{
+		Cookie:       types.NewCookie(cookie),
+		CookieBanner: types.NewCookieBanner(banner),
+	}, nil
+}
+
+// DeleteCookie is the resolver for the deleteCookie field.
+func (r *mutationResolver) DeleteCookie(ctx context.Context, input types.DeleteCookieInput) (*types.DeleteCookiePayload, error) {
+	if err := r.authorize(ctx, input.CookieID, probo.ActionCookieDelete); err != nil {
+		return nil, err
+	}
+
+	scope := coredata.NewScopeFromObjectID(input.CookieID)
+
+	cookie, err := r.cookieBanner.GetCookie(ctx, scope, input.CookieID)
+	if err != nil {
+		if errors.Is(err, cookiebanner.ErrCookieNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+		r.logger.ErrorCtx(ctx, "cannot get cookie", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	bannerID := cookie.CookieBannerID
+
+	err = r.cookieBanner.DeleteCookie(ctx, scope, input.CookieID)
+	if err != nil {
+		if errors.Is(err, cookiebanner.ErrCookieNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+		r.logger.ErrorCtx(ctx, "cannot delete cookie", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	bannerScope := coredata.NewScopeFromObjectID(bannerID)
+	banner, err := r.cookieBanner.GetCookieBanner(ctx, bannerScope, bannerID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot get cookie banner", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.DeleteCookiePayload{
+		DeletedCookieID: input.CookieID,
+		CookieBanner:    types.NewCookieBanner(banner),
+	}, nil
+}
+
+// Cookie returns schema.CookieResolver implementation.
+func (r *Resolver) Cookie() schema.CookieResolver { return &cookieResolver{r} }
 
 // CookieBanner returns schema.CookieBannerResolver implementation.
 func (r *Resolver) CookieBanner() schema.CookieBannerResolver { return &cookieBannerResolver{r} }
@@ -570,7 +736,14 @@ func (r *Resolver) CookieCategoryConnection() schema.CookieCategoryConnectionRes
 	return &cookieCategoryConnectionResolver{r}
 }
 
+// CookieConnection returns schema.CookieConnectionResolver implementation.
+func (r *Resolver) CookieConnection() schema.CookieConnectionResolver {
+	return &cookieConnectionResolver{r}
+}
+
+type cookieResolver struct{ *Resolver }
 type cookieBannerResolver struct{ *Resolver }
 type cookieBannerConnectionResolver struct{ *Resolver }
 type cookieCategoryResolver struct{ *Resolver }
 type cookieCategoryConnectionResolver struct{ *Resolver }
+type cookieConnectionResolver struct{ *Resolver }

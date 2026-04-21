@@ -108,6 +108,7 @@ const (
 	OAuth2RefreshTokenEntityType               uint16 = 82
 	OAuth2AuthorizationCodeEntityType          uint16 = 83
 	OAuth2DeviceCodeEntityType                 uint16 = 84
+	CookieEntityType                           uint16 = 85
 )
 
 func NewEntityFromID(id gid.GID) (any, bool) {
@@ -272,6 +273,8 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &OAuth2AuthorizationCode{ID: id}, true
 	case OAuth2DeviceCodeEntityType:
 		return &OAuth2DeviceCode{ID: id}, true
+	case CookieEntityType:
+		return &Cookie{ID: id}, true
 	default:
 		return nil, false
 	}

@@ -45,7 +45,6 @@ type (
 		Description    string             `db:"description"`
 		Kind           CookieCategoryKind `db:"kind"`
 		Rank           int                `db:"rank"`
-		Cookies        CookieItems        `db:"cookies"`
 		CreatedAt      time.Time          `db:"created_at"`
 		UpdatedAt      time.Time          `db:"updated_at"`
 	}
@@ -107,7 +106,6 @@ SELECT
 	description,
 	kind,
 	rank,
-	cookies,
 	created_at,
 	updated_at
 FROM
@@ -157,7 +155,6 @@ SELECT
 	description,
 	kind,
 	rank,
-	cookies,
 	created_at,
 	updated_at
 FROM
@@ -235,7 +232,6 @@ SELECT
 	description,
 	kind,
 	rank,
-	cookies,
 	created_at,
 	updated_at
 FROM
@@ -282,7 +278,6 @@ INSERT INTO cookie_categories (
 	description,
 	kind,
 	rank,
-	cookies,
 	created_at,
 	updated_at
 ) VALUES (
@@ -294,7 +289,6 @@ INSERT INTO cookie_categories (
 	@description,
 	@kind,
 	@rank,
-	@cookies,
 	@created_at,
 	@updated_at
 )
@@ -309,7 +303,6 @@ INSERT INTO cookie_categories (
 		"description":      c.Description,
 		"kind":             c.Kind,
 		"rank":             c.Rank,
-		"cookies":          c.Cookies,
 		"created_at":       c.CreatedAt,
 		"updated_at":       c.UpdatedAt,
 	}
@@ -332,22 +325,10 @@ UPDATE cookie_categories
 SET
 	name = @name,
 	description = @description,
-	cookies = @cookies,
 	updated_at = @updated_at
 WHERE
 	%s
 	AND id = @id
-RETURNING
-	id,
-	organization_id,
-	cookie_banner_id,
-	name,
-	description,
-	kind,
-	rank,
-	cookies,
-	created_at,
-	updated_at
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -356,22 +337,14 @@ RETURNING
 		"id":          c.ID,
 		"name":        c.Name,
 		"description": c.Description,
-		"cookies":     c.Cookies,
 		"updated_at":  c.UpdatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
-	rows, err := tx.Query(ctx, q, args)
+	_, err := tx.Exec(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot update cookie category: %w", err)
 	}
-
-	category, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[CookieCategory])
-	if err != nil {
-		return fmt.Errorf("cannot collect updated cookie category: %w", err)
-	}
-
-	*c = category
 
 	return nil
 }
@@ -465,7 +438,6 @@ SELECT
 	description,
 	kind,
 	rank,
-	cookies,
 	created_at,
 	updated_at
 FROM

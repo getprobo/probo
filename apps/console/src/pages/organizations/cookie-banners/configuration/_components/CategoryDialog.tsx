@@ -43,11 +43,6 @@ const createMutation = graphql`
           description
           kind
           rank
-          cookies {
-            name
-            duration
-            description
-          }
           createdAt
           updatedAt
         }

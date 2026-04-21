@@ -398,4 +398,11 @@ const (
 	ActionCookieCategoryCreate = "core:cookie-category:create"
 	ActionCookieCategoryUpdate = "core:cookie-category:update"
 	ActionCookieCategoryDelete = "core:cookie-category:delete"
+
+	// Cookie actions
+	ActionCookieGet    = "core:cookie:get"
+	ActionCookieList   = "core:cookie:list"
+	ActionCookieCreate = "core:cookie:create"
+	ActionCookieUpdate = "core:cookie:update"
+	ActionCookieDelete = "core:cookie:delete"
 )

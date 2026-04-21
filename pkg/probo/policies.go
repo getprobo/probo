@@ -87,6 +87,7 @@ var ViewerPolicy = policy.NewPolicy(
 		ActionCookieBannerGet, ActionCookieBannerList,
 		ActionCookieBannerVersionGet, ActionCookieBannerVersionList,
 		ActionCookieCategoryGet, ActionCookieCategoryList,
+		ActionCookieGet, ActionCookieList,
 	).WithSID("entity-read-access").When(organizationCondition),
 
 	policy.Allow(

@@ -21,11 +21,11 @@ import (
 )
 
 type (
-	CookieCategoryOrderBy OrderBy[coredata.CookieCategoryOrderField]
+	CookieOrderBy OrderBy[coredata.CookieOrderField]
 
-	CookieCategoryConnection struct {
+	CookieConnection struct {
 		TotalCount int
-		Edges      []*CookieCategoryEdge
+		Edges      []*CookieEdge
 		PageInfo   PageInfo
 
 		Resolver any
@@ -33,18 +33,18 @@ type (
 	}
 )
 
-func NewCookieCategoryConnection(
-	p *page.Page[*coredata.CookieCategory, coredata.CookieCategoryOrderField],
+func NewCookieConnection(
+	p *page.Page[*coredata.Cookie, coredata.CookieOrderField],
 	parentType any,
 	parentID gid.GID,
-) *CookieCategoryConnection {
-	var edges = make([]*CookieCategoryEdge, len(p.Data))
+) *CookieConnection {
+	edges := make([]*CookieEdge, len(p.Data))
 
 	for i := range edges {
-		edges[i] = NewCookieCategoryEdge(p.Data[i], p.Cursor.OrderBy.Field)
+		edges[i] = NewCookieEdge(p.Data[i], p.Cursor.OrderBy.Field)
 	}
 
-	return &CookieCategoryConnection{
+	return &CookieConnection{
 		Edges:    edges,
 		PageInfo: *NewPageInfo(p),
 
@@ -53,23 +53,25 @@ func NewCookieCategoryConnection(
 	}
 }
 
-func NewCookieCategoryEdge(c *coredata.CookieCategory, orderBy coredata.CookieCategoryOrderField) *CookieCategoryEdge {
-	return &CookieCategoryEdge{
+func NewCookieEdge(c *coredata.Cookie, orderBy coredata.CookieOrderField) *CookieEdge {
+	return &CookieEdge{
 		Cursor: c.CursorKey(orderBy),
-		Node:   NewCookieCategory(c),
+		Node:   NewCookie(c),
 	}
 }
 
-func NewCookieCategory(c *coredata.CookieCategory) *CookieCategory {
-	return &CookieCategory{
+func NewCookie(c *coredata.Cookie) *Cookie {
+	return &Cookie{
 		ID: c.ID,
-		CookieBanner: &CookieBanner{
-			ID: c.CookieBannerID,
+		CookieCategory: &CookieCategory{
+			ID: c.CookieCategoryID,
+			CookieBanner: &CookieBanner{
+				ID: c.CookieBannerID,
+			},
 		},
 		Name:        c.Name,
+		Duration:    c.Duration,
 		Description: c.Description,
-		Kind:        c.Kind,
-		Rank:        c.Rank,
 		CreatedAt:   c.CreatedAt,
 		UpdatedAt:   c.UpdatedAt,
 	}

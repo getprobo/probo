@@ -15,24 +15,41 @@
 import { useTranslate } from "@probo/i18n";
 import { Button, Input, Td, Tr } from "@probo/ui";
 import { useState } from "react";
+import { useFragment } from "react-relay";
+import { graphql } from "relay-runtime";
+
+import type { EditCookieRowFragment$key } from "#/__generated__/core/EditCookieRowFragment.graphql";
 
 import type { CookieEntry } from "./CategorySection";
 
+export const editCookieRowFragment = graphql`
+  fragment EditCookieRowFragment on Cookie {
+    name
+    duration
+    description
+  }
+`;
+
 interface EditCookieRowProps {
-  cookie: CookieEntry;
+  cookieKey: EditCookieRowFragment$key;
   isUpdating: boolean;
   onSave: (cookie: CookieEntry) => void;
   onCancel: () => void;
 }
 
 export function EditCookieRow({
-  cookie,
+  cookieKey,
   isUpdating,
   onSave,
   onCancel,
 }: EditCookieRowProps) {
   const { __ } = useTranslate();
-  const [form, setForm] = useState<CookieEntry>(cookie);
+  const cookie = useFragment(editCookieRowFragment, cookieKey);
+  const [form, setForm] = useState<CookieEntry>({
+    name: cookie.name,
+    duration: cookie.duration,
+    description: cookie.description,
+  });
 
   return (
     <Tr>
