@@ -17,20 +17,18 @@ package testutil
 import (
 	"bytes"
 	"context"
-	"crypto/rand"
-	"crypto/rsa"
-	"crypto/x509"
-	"encoding/pem"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"sync"
 	"syscall"
 	"time"
 
 	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/bootstrap"
 )
 
 var (
@@ -68,16 +66,10 @@ func (s *switchableWriter) switchTo(w io.Writer) {
 func Setup() {
 	setupOnce.Do(func() {
 		binaryPath := os.Getenv("PROBO_E2E_BINARY")
-		configPath := os.Getenv("PROBO_E2E_CONFIG")
 		coverDir := os.Getenv("PROBO_E2E_COVERDIR")
 
 		if binaryPath == "" {
 			fmt.Fprintf(os.Stderr, "e2etest: PROBO_E2E_BINARY is required\n")
-			os.Exit(1)
-		}
-
-		if configPath == "" {
-			fmt.Fprintf(os.Stderr, "e2etest: PROBO_E2E_CONFIG is required\n")
 			os.Exit(1)
 		}
 
@@ -89,8 +81,9 @@ func Setup() {
 			}
 		}
 
-		if err := ensureSigningKey("./testdata/oauth2_signing_key.pem"); err != nil {
-			fmt.Fprintf(os.Stderr, "e2etest: cannot create signing key: %v\n", err)
+		configPath, err := generateConfig()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "e2etest: cannot generate config: %v\n", err)
 			os.Exit(1)
 		}
 
@@ -241,30 +234,93 @@ func GetMailpitBaseURL() string {
 	return testEnv.MailpitBaseURL
 }
 
-// ensureSigningKey creates a 2048-bit RSA PEM key at path if it does not
-// already exist. The key is used exclusively for e2e test JWT signing.
-func ensureSigningKey(path string) error {
-	if _, err := os.Stat(path); err == nil {
-		return nil
-	}
-
-	key, err := rsa.GenerateKey(rand.Reader, 2048)
+// generateConfig builds a probod config for the e2e suite via the
+// bootstrap package (which auto-generates SAML credentials) and
+// writes it to a temp file. A fresh OAuth2 signing key is minted
+// here and injected via env. Returns the path.
+func generateConfig() (string, error) {
+	oauth2SigningKey, err := bootstrap.GenerateOAuth2SigningKey()
 	if err != nil {
-		return fmt.Errorf("cannot generate RSA key: %w", err)
+		return "", fmt.Errorf("generate oauth2 signing key: %w", err)
 	}
 
-	data := pem.EncodeToMemory(&pem.Block{
-		Type:  "RSA PRIVATE KEY",
-		Bytes: x509.MarshalPKCS1PrivateKey(key),
+	env := map[string]string{
+		// Required.
+		"PROBOD_ENCRYPTION_KEY":     "thisisnotasecretAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+		"AUTH_COOKIE_SECRET":        "this-is-a-secure-secret-for-cookie-signing-at-least-32-bytes",
+		"AUTH_PASSWORD_PEPPER":      "this-is-a-secure-pepper-for-password-hashing-at-least-32-bytes",
+		"OAUTH2_SERVER_SIGNING_KEY": oauth2SigningKey,
+
+		// Unit.
+		"METRICS_ADDR": "localhost:19081",
+		"TRACING_ADDR": "localhost:14317",
+
+		// Probod base.
+		"PROBOD_BASE_URL": "http://localhost:18080",
+
+		// API.
+		"API_ADDR":                 "localhost:18080",
+		"API_CORS_ALLOWED_ORIGINS": "http://localhost:18080",
+
+		// PG.
+		"PG_DATABASE":  "probod_test",
+		"PG_POOL_SIZE": "10",
+
+		// Auth.
+		"AUTH_COOKIE_SECURE":       "false",
+		"AUTH_PASSWORD_ITERATIONS": "600000",
+
+		// OAuth2 server durations kept small for faster e2e flows.
+		"OAUTH2_SERVER_ACCESS_TOKEN_DURATION":       "10",
+		"OAUTH2_SERVER_REFRESH_TOKEN_DURATION":      "10",
+		"OAUTH2_SERVER_AUTHORIZATION_CODE_DURATION": "5",
+		"OAUTH2_SERVER_DEVICE_CODE_DURATION":        "15",
+
+		// Trust center.
+		"TRUST_CENTER_HTTP_ADDR":  ":10080",
+		"TRUST_CENTER_HTTPS_ADDR": ":10443",
+
+		// AWS / S3 (SeaweedFS).
+		"AWS_BUCKET":            "probod-test",
+		"AWS_ACCESS_KEY_ID":     "probod",
+		"AWS_SECRET_ACCESS_KEY": "thisisnotasecret",
+		"AWS_ENDPOINT":          "http://127.0.0.1:8333",
+
+		// Mailer.
+		"MAILER_SENDER_NAME":  "Probo Test",
+		"MAILER_SENDER_EMAIL": "no-reply@test.getprobo.com",
+		"MAILER_INTERVAL":     "1",
+
+		// LLM.
+		"OPENAI_API_KEY": "thisisnotasecret",
+
+		// Custom domains.
+		"CUSTOM_DOMAINS_CNAME_TARGET": "custom.test.getprobo.com",
+		"ACME_DIRECTORY":              "https://localhost:14000/dir",
+		"ACME_EMAIL":                  "admin@test.getprobo.com",
+	}
+
+	builder := bootstrap.NewBuilder(func(key string) string {
+		if v, ok := env[key]; ok {
+			return v
+		}
+		return os.Getenv(key)
 	})
 
-	if err := os.MkdirAll("testdata", 0755); err != nil {
-		return fmt.Errorf("cannot create testdata directory: %w", err)
+	cfg, err := builder.Build()
+	if err != nil {
+		return "", fmt.Errorf("build config: %w", err)
 	}
 
-	if err := os.WriteFile(path, data, 0600); err != nil {
-		return fmt.Errorf("cannot write key file: %w", err)
+	tmpDir, err := os.MkdirTemp("", "probo-e2e-")
+	if err != nil {
+		return "", fmt.Errorf("create temp dir: %w", err)
+	}
+	path := filepath.Join(tmpDir, "probod.yml")
+
+	if err := bootstrap.WriteConfig(cfg, path); err != nil {
+		return "", fmt.Errorf("write config: %w", err)
 	}
 
-	return nil
+	return path, nil
 }

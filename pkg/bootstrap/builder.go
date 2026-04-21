@@ -26,9 +26,10 @@ import (
 type EnvGetter func(key string) string
 
 type Builder struct {
-	getEnv          EnvGetter
-	samlCertificate string
-	samlPrivateKey  string
+	getEnv           EnvGetter
+	samlCertificate  string
+	samlPrivateKey   string
+	oauth2SigningKey string
 }
 
 func NewBuilder(getEnv EnvGetter) *Builder {
@@ -47,6 +48,8 @@ func (b *Builder) Build() (*probod.FullConfig, error) {
 	if err != nil {
 		return nil, fmt.Errorf("cannot get SAML credentials: %w", err)
 	}
+
+	oauth2SigningKey := b.getOAuth2SigningKey()
 
 	pgCACertBundle := b.getPgCACertBundle()
 
@@ -119,6 +122,17 @@ func (b *Builder) Build() (*probod.FullConfig, error) {
 					ClientID:     b.getEnv("AUTH_MICROSOFT_CLIENT_ID"),
 					ClientSecret: b.getEnv("AUTH_MICROSOFT_CLIENT_SECRET"),
 					Enabled:      b.getEnv("AUTH_MICROSOFT_CLIENT_ID") != "" && b.getEnv("AUTH_MICROSOFT_CLIENT_SECRET") != "",
+				},
+				OAuth2Server: probod.OAuth2ServerConfig{
+					SigningKeys: []probod.OAuth2SigningKeyConfig{{
+						PrivateKey: oauth2SigningKey,
+						KID:        b.getEnvOrDefault("OAUTH2_SERVER_SIGNING_KEY_KID", "default"),
+						Active:     true,
+					}},
+					AccessTokenDuration:       b.getEnvIntOrDefault("OAUTH2_SERVER_ACCESS_TOKEN_DURATION", 3600),
+					RefreshTokenDuration:      b.getEnvIntOrDefault("OAUTH2_SERVER_REFRESH_TOKEN_DURATION", 2592000),
+					AuthorizationCodeDuration: b.getEnvIntOrDefault("OAUTH2_SERVER_AUTHORIZATION_CODE_DURATION", 600),
+					DeviceCodeDuration:        b.getEnvIntOrDefault("OAUTH2_SERVER_DEVICE_CODE_DURATION", 600),
 				},
 			},
 			TrustCenter: probod.TrustCenterConfig{
@@ -323,6 +337,10 @@ func (b *Builder) validateRequired() error {
 		}
 	}
 
+	if b.oauth2SigningKey == "" && b.getEnv("OAUTH2_SERVER_SIGNING_KEY") == "" {
+		missing = append(missing, "OAUTH2_SERVER_SIGNING_KEY")
+	}
+
 	if slackClientID := b.getEnv("CONNECTOR_SLACK_CLIENT_ID"); slackClientID != "" {
 		slackRequired := []string{
 			"CONNECTOR_SLACK_CLIENT_SECRET",
@@ -386,6 +404,13 @@ func (b *Builder) getSAMLCredentials() (cert, key string, err error) {
 	}
 
 	return cert, key, nil
+}
+
+func (b *Builder) getOAuth2SigningKey() string {
+	if b.oauth2SigningKey != "" {
+		return b.oauth2SigningKey
+	}
+	return b.getEnv("OAUTH2_SERVER_SIGNING_KEY")
 }
 
 func (b *Builder) getPgCACertBundle() string {

@@ -11,7 +11,7 @@ When a configuration field is added, renamed, or removed in the Go config struct
 | 3 | `pkg/bootstrap/builder.go` | Env-var → struct mapping (`Build()` method) |
 | 4 | `pkg/bootstrap/builder.go` | Required-env validation (`validateRequired()`) |
 | 5 | `cfg/dev.yaml` | Local development config |
-| 6 | `e2e/console/testdata/config.yaml` | E2E test config |
+| 6 | `e2e/internal/testutil/testutil.go` | E2E env-var map fed to `bootstrap.NewBuilder` |
 | 7 | `contrib/lima/provision.sh` | Sandbox env vars passed to `probod-bootstrap` |
 | 8 | `contrib/helm/charts/probo/values.yaml` | Helm default values |
 | 9 | `contrib/helm/charts/probo/values-production.yaml.example` | Helm production template |
@@ -28,7 +28,7 @@ Go struct (pkg/probod/)
   ├─► bootstrap builder.go (env var → struct)
   │     │
   │     ├─► cfg/dev.yaml              (static YAML, local dev)
-  │     ├─► e2e/console/testdata/     (static YAML, tests)
+  │     ├─► e2e/internal/testutil/    (env map → bootstrap.Build, tests)
   │     ├─► contrib/lima/provision.sh  (env vars → probod-bootstrap)
   │     └─► Helm chart
   │           ├─ values.yaml           (user-facing knobs)
@@ -45,7 +45,7 @@ Go struct (pkg/probod/)
 2. **Env var naming** — follow the existing convention in `builder.go`: `SECTION_FIELD_NAME` (e.g. `AUTH_COOKIE_DOMAIN`, `CUSTOM_DOMAINS_RENEWAL_INTERVAL`).
 3. **Secrets** go through `secret.yaml` and are referenced via `secretKeyRef` in `deployment.yaml`. Non-secret values are set inline.
 4. **`cfg/dev.yaml`** uses safe, non-production defaults (plaintext passwords, `localhost`, `secure: false`).
-5. **`e2e/console/testdata/config.yaml`** mirrors `cfg/dev.yaml` but with test-specific values (different ports, `probod_test` DB, shorter intervals).
+5. **`e2e/internal/testutil/testutil.go`** builds the e2e config through `bootstrap.NewBuilder` with a test-only env-var map (different ports, `probod_test` DB, shorter intervals). Any new field whose test value differs from the bootstrap default must be added to that map.
 6. **`provision.sh`** only sets env vars that differ from `builder.go` defaults (e.g. `PROBOD_BASE_URL`, `AUTH_COOKIE_DOMAIN`, `AUTH_COOKIE_SECURE`). If the new field's default is acceptable in the sandbox, no env var is needed.
 7. **Helm `values.yaml`** exposes the field under the appropriate `probo.*` key with a sensible default. `values-production.yaml.example` includes it only when the production value differs or the user must set it.
 8. **Optional features** (custom domains, SAML, connectors, tracing) are gated by `{{- if }}` blocks in the Helm templates; follow the same pattern for new optional fields.

@@ -25,7 +25,6 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	"os"
 	"strings"
 	"sync"
 	"time"
@@ -389,12 +388,7 @@ func (impl *Implm) Run(
 	var oauth2SigningKeys oauth2server.SigningKeys
 	var hasActive bool
 	for _, keyCfg := range impl.cfg.Auth.OAuth2Server.SigningKeys {
-		keyPEM, err := os.ReadFile(keyCfg.KeyFile)
-		if err != nil {
-			return fmt.Errorf("cannot read OAuth2 server signing key file: %w", err)
-		}
-
-		signer, err := pemutil.DecodePrivateKey(keyPEM)
+		signer, err := pemutil.DecodePrivateKey([]byte(keyCfg.PrivateKey))
 		if err != nil {
 			return fmt.Errorf("cannot decode OAuth2 server signing key: %w", err)
 		}

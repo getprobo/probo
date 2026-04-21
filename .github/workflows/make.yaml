@@ -401,29 +401,14 @@ jobs:
           SKIP_APPS=1 make bin/probod
           wait $STACK_PID
       - run: "make stack-ps"
-      - name: "Inject root CA into e2e config"
-        run: |
-          python3 << 'EOF'
-          import yaml
-
-          with open('compose/pebble/certs/rootCA.pem', 'r') as f:
-              root_ca = f.read()
-
-          with open('e2e/console/testdata/config.yaml', 'r') as f:
-              config = yaml.safe_load(f)
-
-          config['probod']['custom-domains']['acme']['root-ca'] = root_ca
-
-          with open('e2e/console/testdata/config.yaml', 'w') as f:
-              yaml.dump(config, f, default_flow_style=False, allow_unicode=True)
-          EOF
       - name: "Run e2e tests"
         env:
           PROBO_E2E_BINARY: "${{ github.workspace }}/bin/probod"
-          PROBO_E2E_CONFIG: "${{ github.workspace }}/e2e/console/testdata/config.yaml"
           GOTESTSUM_FORMAT: "testname"
           GOTESTSUM_JUNITFILE: "junit-e2e.xml"
-        run: "CGO_ENABLED=1 go tool gotestsum -- -race -cover -coverprofile=coverage.out -count=1 ./e2e/console/..."
+        run: |
+          ACME_ROOT_CA="$(cat compose/pebble/certs/rootCA.pem)" \
+            CGO_ENABLED=1 go tool gotestsum -- -race -cover -coverprofile=coverage.out -count=1 ./e2e/console/...
       - name: "Upload test results"
         uses: "actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f" # v7
         if: "always()"

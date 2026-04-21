@@ -78,4 +78,3 @@ The project uses a `GNUmakefile` at the root. Builds run with `--jobs=$(nproc)` 
 | `GOOS` | (host) | Cross-compile target OS |
 | `TEST_FLAGS` | `-race -cover -coverprofile=coverage.out` | Extra flags passed to `go test` |
 | `DOCKER_BUILD_FLAGS` | (empty) | Extra flags for `docker build` |
-| `E2E_CONFIG` | `e2e/console/testdata/config.yaml` | E2E test config path |

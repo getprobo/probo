@@ -32,9 +32,10 @@ func mockEnv(env map[string]string) EnvGetter {
 
 func requiredEnv() map[string]string {
 	return map[string]string{
-		"PROBOD_ENCRYPTION_KEY": "test-encryption-key-32-bytes-long",
-		"AUTH_COOKIE_SECRET":    "test-cookie-secret-32-bytes-long!",
-		"AUTH_PASSWORD_PEPPER":  "test-password-pepper-32-bytes-lo",
+		"PROBOD_ENCRYPTION_KEY":     "test-encryption-key-32-bytes-long",
+		"AUTH_COOKIE_SECRET":        "test-cookie-secret-32-bytes-long!",
+		"AUTH_PASSWORD_PEPPER":      "test-password-pepper-32-bytes-lo",
+		"OAUTH2_SERVER_SIGNING_KEY": "test-oauth2-signing-key",
 	}
 }
 
@@ -47,7 +48,16 @@ func TestBuilder_Build_MissingRequiredEnvVars(t *testing.T) {
 		{
 			name:        "all missing",
 			env:         map[string]string{},
-			wantMissing: []string{"PROBOD_ENCRYPTION_KEY", "AUTH_COOKIE_SECRET", "AUTH_PASSWORD_PEPPER"},
+			wantMissing: []string{"PROBOD_ENCRYPTION_KEY", "AUTH_COOKIE_SECRET", "AUTH_PASSWORD_PEPPER", "OAUTH2_SERVER_SIGNING_KEY"},
+		},
+		{
+			name: "missing oauth2 signing key",
+			env: map[string]string{
+				"PROBOD_ENCRYPTION_KEY": "key",
+				"AUTH_COOKIE_SECRET":    "secret",
+				"AUTH_PASSWORD_PEPPER":  "pepper",
+			},
+			wantMissing: []string{"OAUTH2_SERVER_SIGNING_KEY"},
 		},
 		{
 			name: "missing encryption key",
@@ -413,6 +423,64 @@ func TestBuilder_Build_SAMLPreset(t *testing.T) {
 
 	assert.Equal(t, "preset-cert", cfg.Probod.Auth.SAML.Certificate)
 	assert.Equal(t, "preset-key", cfg.Probod.Auth.SAML.PrivateKey)
+}
+
+func TestBuilder_Build_OAuth2Defaults(t *testing.T) {
+	b := NewBuilder(mockEnv(requiredEnv()))
+
+	cfg, err := b.Build()
+	require.NoError(t, err)
+
+	require.Len(t, cfg.Probod.Auth.OAuth2Server.SigningKeys, 1)
+	sk := cfg.Probod.Auth.OAuth2Server.SigningKeys[0]
+	assert.Equal(t, "test-oauth2-signing-key", sk.PrivateKey)
+	assert.Equal(t, "default", sk.KID)
+	assert.True(t, sk.Active)
+
+	assert.Equal(t, 3600, cfg.Probod.Auth.OAuth2Server.AccessTokenDuration)
+	assert.Equal(t, 2592000, cfg.Probod.Auth.OAuth2Server.RefreshTokenDuration)
+	assert.Equal(t, 600, cfg.Probod.Auth.OAuth2Server.AuthorizationCodeDuration)
+	assert.Equal(t, 600, cfg.Probod.Auth.OAuth2Server.DeviceCodeDuration)
+}
+
+func TestBuilder_Build_OAuth2FromEnv(t *testing.T) {
+	env := requiredEnv()
+	env["OAUTH2_SERVER_SIGNING_KEY"] = "env-signing-key"
+	env["OAUTH2_SERVER_SIGNING_KEY_KID"] = "env-kid"
+	env["OAUTH2_SERVER_ACCESS_TOKEN_DURATION"] = "10"
+	env["OAUTH2_SERVER_REFRESH_TOKEN_DURATION"] = "20"
+	env["OAUTH2_SERVER_AUTHORIZATION_CODE_DURATION"] = "30"
+	env["OAUTH2_SERVER_DEVICE_CODE_DURATION"] = "40"
+
+	b := NewBuilder(mockEnv(env))
+
+	cfg, err := b.Build()
+	require.NoError(t, err)
+
+	require.Len(t, cfg.Probod.Auth.OAuth2Server.SigningKeys, 1)
+	sk := cfg.Probod.Auth.OAuth2Server.SigningKeys[0]
+	assert.Equal(t, "env-signing-key", sk.PrivateKey)
+	assert.Equal(t, "env-kid", sk.KID)
+	assert.True(t, sk.Active)
+
+	assert.Equal(t, 10, cfg.Probod.Auth.OAuth2Server.AccessTokenDuration)
+	assert.Equal(t, 20, cfg.Probod.Auth.OAuth2Server.RefreshTokenDuration)
+	assert.Equal(t, 30, cfg.Probod.Auth.OAuth2Server.AuthorizationCodeDuration)
+	assert.Equal(t, 40, cfg.Probod.Auth.OAuth2Server.DeviceCodeDuration)
+}
+
+func TestBuilder_Build_OAuth2Preset(t *testing.T) {
+	env := requiredEnv()
+	delete(env, "OAUTH2_SERVER_SIGNING_KEY")
+
+	b := NewBuilder(mockEnv(env))
+	b.oauth2SigningKey = "preset-signing-key"
+
+	cfg, err := b.Build()
+	require.NoError(t, err)
+
+	require.Len(t, cfg.Probod.Auth.OAuth2Server.SigningKeys, 1)
+	assert.Equal(t, "preset-signing-key", cfg.Probod.Auth.OAuth2Server.SigningKeys[0].PrivateKey)
 }
 
 func TestBuilder_Build_PgCABundleFromEnv(t *testing.T) {

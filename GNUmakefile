@@ -38,7 +38,6 @@ GO_TOOL=	$(GO_BASE) tool
 
 TEST_FLAGS?=	-race -cover -coverprofile=coverage.out
 
-E2E_CONFIG ?= $(CURDIR)/e2e/console/testdata/config.yaml
 E2E_COVER_DIR ?= $(CURDIR)/coverage/e2e
 
 DOCKER_IMAGE_NAME=	ghcr.io/getprobo/probo
@@ -129,7 +128,6 @@ test-bench: test ## Run benchmark tests
 test-e2e: CGO_ENABLED=1
 test-e2e: bin/probod ## Run console e2e tests
 	PROBO_E2E_BINARY=$(CURDIR)/bin/probod \
-	PROBO_E2E_CONFIG=$(E2E_CONFIG) \
 	GOTESTSUM_FORMAT=testname $(GO_TEST) -count=1 ./e2e/console/...
 
 bin/probod-coverage:
@@ -140,7 +138,6 @@ test-e2e-coverage: bin/probod-coverage ## Run e2e tests with coverage
 	@$(RM) -rf $(E2E_COVER_DIR) && $(MKDIR) -p $(E2E_COVER_DIR)
 	PROBO_E2E_BINARY=$(CURDIR)/bin/probod-coverage \
 	PROBO_E2E_COVERDIR=$(E2E_COVER_DIR) \
-	PROBO_E2E_CONFIG=$(E2E_CONFIG) \
 	CGO_ENABLED=1 $(GO) test -count=1 -v ./e2e/console/...
 	$(GO) tool covdata textfmt -i=$(E2E_COVER_DIR) -o=coverage-e2e.out
 	$(GO) tool cover -html=coverage-e2e.out -o=coverage-e2e.html
