@@ -28,6 +28,7 @@ export class ProboPreferencePanel extends ProboElement {
     this.hidden = state !== "panel";
     if (state === "panel") {
       (this.root as ProboCookieBannerRoot).resetDraft();
+      this.focusFirst();
     }
   };
 

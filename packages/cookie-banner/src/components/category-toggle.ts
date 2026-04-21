@@ -49,6 +49,7 @@ export class ProboCategoryToggle extends ProboElement {
     if (!this.category || !this.root) return;
 
     const name = this.category.categoryName;
+    this.checkbox.setAttribute("aria-label", name);
     const isRequired = this.category.kind === "NECESSARY";
 
     if (isRequired) {

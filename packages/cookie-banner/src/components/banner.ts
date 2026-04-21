@@ -27,6 +27,9 @@ export class ProboBanner extends ProboElement {
   private onStateChange = (e: Event): void => {
     const { state } = (e as CustomEvent).detail;
     this.hidden = state !== "banner";
+    if (state === "banner") {
+      this.focusFirst();
+    }
   };
 
   connectedCallback(): void {

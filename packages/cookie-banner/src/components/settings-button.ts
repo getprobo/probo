@@ -67,8 +67,8 @@ export class ProboSettingsButton extends HTMLElement {
         .icon { display: flex; flex-shrink: 0; }
         ::slotted(*) { display: contents; }
       </style>
-      <button part="button">
-        <span class="icon" part="icon">${COOKIE_ICON}</span>
+      <button part="button" aria-label="Cookie settings">
+        <span class="icon" part="icon" aria-hidden="true">${COOKIE_ICON}</span>
         <slot></slot>
       </button>
     `;

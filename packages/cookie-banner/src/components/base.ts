@@ -20,7 +20,16 @@ export interface ConsentDraft {
   [category: string]: boolean;
 }
 
+const FOCUSABLE = 'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
+
 export class ProboElement extends HTMLElement {
+  protected focusFirst(): void {
+    requestAnimationFrame(() => {
+      const el = this.querySelector<HTMLElement>(FOCUSABLE);
+      el?.focus();
+    });
+  }
+
   protected findAncestor<T extends HTMLElement>(tagName: string): T | null {
     let el: HTMLElement | null = this.parentElement;
     while (el) {

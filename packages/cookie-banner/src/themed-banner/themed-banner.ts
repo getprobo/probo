@@ -17,8 +17,8 @@ import type { ProboCookieBannerRoot } from "../components/cookie-banner-root";
 import type { BannerConfig } from "../client";
 import { THEMED_STYLES } from "./styles";
 
-const CLOSE_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
-const CHEVRON_DOWN = `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>`;
+const CLOSE_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
+const CHEVRON_DOWN = `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>`;
 
 export class ProboThemedBanner extends HTMLElement {
   private shadow: ShadowRoot;
@@ -52,9 +52,9 @@ export class ProboThemedBanner extends HTMLElement {
       <probo-cookie-banner-root banner-id="${this.esc(bannerId)}" base-url="${this.esc(baseUrl)}"${reopenAttr}>
         <probo-banner>
           <div class="floating" data-position="${this.esc(position)}">
-            <div class="card" role="dialog" aria-label="Cookie consent">
-              <p class="title">Cookie Preferences</p>
-              <p class="description" data-description>
+            <div class="card" role="dialog" aria-modal="true" aria-labelledby="probo-banner-title" aria-describedby="probo-banner-desc">
+              <p class="title" id="probo-banner-title">Cookie Preferences</p>
+              <p class="description" id="probo-banner-desc" data-description>
                 We use cookies to improve your experience and analyze site traffic.
               </p>
               <div class="buttons">
@@ -68,16 +68,16 @@ export class ProboThemedBanner extends HTMLElement {
 
         <probo-preference-panel>
           <div class="floating" data-position="${this.esc(position)}">
-            <div class="card" role="dialog" aria-label="Cookie preferences">
+            <div class="card" role="dialog" aria-modal="true" aria-labelledby="probo-panel-title">
               <div class="panel-header">
-                <p class="title" style="margin:0">Preferences</p>
+                <p class="title" id="probo-panel-title" style="margin:0">Preferences</p>
                 <button class="panel-close" data-action="back" aria-label="Close">
                   ${CLOSE_ICON}
                 </button>
               </div>
               <probo-category-list>
                 <template>
-                  <button class="cookie-toggle" data-action="toggle-cookies">
+                  <button class="cookie-toggle" data-action="toggle-cookies" aria-expanded="false" aria-label="Show cookie details">
                     ${CHEVRON_DOWN}
                   </button>
                   <div class="category-header">
@@ -141,6 +141,8 @@ export class ProboThemedBanner extends HTMLElement {
         cookieList.setAttribute("hidden", "");
         btn.classList.remove("open");
       }
+      btn.setAttribute("aria-expanded", String(open));
+      btn.setAttribute("aria-label", open ? "Hide cookie details" : "Show cookie details");
     });
   }
 
@@ -150,7 +152,7 @@ export class ProboThemedBanner extends HTMLElement {
 
     let html = "We use cookies to improve your experience and analyze site traffic.";
     if (config.privacy_policy_url) {
-      html += ` <a href="${this.esc(config.privacy_policy_url)}" target="_blank" rel="noopener">Privacy Policy</a>`;
+      html += ` <a href="${this.esc(config.privacy_policy_url)}" target="_blank" rel="noopener noreferrer">Privacy Policy</a>`;
     }
     el.innerHTML = html;
   }
