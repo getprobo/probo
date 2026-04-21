@@ -341,7 +341,7 @@ Relay directives handle connection updates automatically — no manual store man
 
 #### Connection setup
 
-Any connection that a mutation will add to or remove from **must** have a `@connection` directive and expose `__id`:
+Any connection that a mutation will add to or remove from **must** have a `@connection` directive. If the mutation needs the connection ID in the same fragment, expose `__id`; otherwise derive it with `ConnectionHandler.getConnectionID`:
 
 ```tsx
 const fragment = graphql`

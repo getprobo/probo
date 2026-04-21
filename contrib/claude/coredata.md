@@ -129,7 +129,13 @@ assets, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Asset])
 *a = assets
 
 // Update / Delete — no RETURNING
-_, err := conn.Exec(ctx, q, args)
+result, err := conn.Exec(ctx, q, args)
+if err != nil {
+    return err
+}
+if result.RowsAffected() == 0 {
+    return ErrResourceNotFound
+}
 ```
 
 ## Sentinel errors

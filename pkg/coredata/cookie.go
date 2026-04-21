@@ -327,7 +327,7 @@ WHERE
 	}
 	maps.Copy(args, scope.SQLArguments())
 
-	_, err := tx.Exec(ctx, q, args)
+	result, err := tx.Exec(ctx, q, args)
 	if err != nil {
 		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
 			if pgErr.Code == "23505" && pgErr.ConstraintName == "idx_cookies_unique_name_per_banner" {
@@ -335,6 +335,10 @@ WHERE
 			}
 		}
 		return fmt.Errorf("cannot update cookie: %w", err)
+	}
+
+	if result.RowsAffected() == 0 {
+		return ErrResourceNotFound
 	}
 
 	return nil
