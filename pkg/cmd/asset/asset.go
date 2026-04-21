@@ -16,7 +16,12 @@ package asset
 
 import (
 	"github.com/spf13/cobra"
+	"go.probo.inc/probo/pkg/cmd/asset/create"
+	"go.probo.inc/probo/pkg/cmd/asset/delete"
+	"go.probo.inc/probo/pkg/cmd/asset/list"
 	"go.probo.inc/probo/pkg/cmd/asset/publish"
+	"go.probo.inc/probo/pkg/cmd/asset/update"
+	"go.probo.inc/probo/pkg/cmd/asset/view"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
 )
 
@@ -26,6 +31,11 @@ func NewCmdAsset(f *cmdutil.Factory) *cobra.Command {
 		Short: "Manage assets",
 	}
 
+	cmd.AddCommand(list.NewCmdList(f))
+	cmd.AddCommand(create.NewCmdCreate(f))
+	cmd.AddCommand(view.NewCmdView(f))
+	cmd.AddCommand(update.NewCmdUpdate(f))
+	cmd.AddCommand(delete.NewCmdDelete(f))
 	cmd.AddCommand(publish.NewCmdPublish(f))
 
 	return cmd

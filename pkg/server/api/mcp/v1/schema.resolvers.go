@@ -4032,3 +4032,734 @@ func (r *Resolver) PublishAssetListTool(ctx context.Context, req *mcp.CallToolRe
 		DocumentVersionID: documentVersion.ID,
 	}, nil
 }
+
+// ListVendorContactsTool handles the listVendorContacts tool
+// List all contacts for a vendor
+func (r *Resolver) ListVendorContactsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListVendorContactsInput) (*mcp.CallToolResult, types.ListVendorContactsOutput, error) {
+	r.MustAuthorize(ctx, input.VendorID, probo.ActionVendorContactList)
+
+	prb := r.ProboService(ctx, input.VendorID)
+
+	pageOrderBy := page.OrderBy[coredata.VendorContactOrderField]{
+		Field:     coredata.VendorContactOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.VendorContactOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	p, err := prb.VendorContacts.List(ctx, input.VendorID, cursor)
+	if err != nil {
+		return nil, types.ListVendorContactsOutput{}, fmt.Errorf("cannot list vendor contacts: %w", err)
+	}
+
+	return nil, types.NewListVendorContactsOutput(p), nil
+}
+
+// AddVendorContactTool handles the addVendorContact tool
+// Add a new contact to a vendor
+func (r *Resolver) AddVendorContactTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddVendorContactInput) (*mcp.CallToolResult, types.AddVendorContactOutput, error) {
+	r.MustAuthorize(ctx, input.VendorID, probo.ActionVendorContactCreate)
+
+	prb := r.ProboService(ctx, input.VendorID)
+
+	emailAddr, err := mail.ParseAddr(input.Email)
+	if err != nil {
+		return nil, types.AddVendorContactOutput{}, fmt.Errorf("invalid email address: %w", err)
+	}
+
+	vendorContact, err := prb.VendorContacts.Create(ctx, probo.CreateVendorContactRequest{
+		VendorID: input.VendorID,
+		FullName: &input.FullName,
+		Email:    &emailAddr,
+		Phone:    &input.Phone,
+		Role:     &input.Role,
+	})
+	if err != nil {
+		return nil, types.AddVendorContactOutput{}, fmt.Errorf("cannot create vendor contact: %w", err)
+	}
+
+	return nil, types.AddVendorContactOutput{
+		VendorContact: types.NewVendorContact(vendorContact),
+	}, nil
+}
+
+// UpdateVendorContactTool handles the updateVendorContact tool
+// Update an existing vendor contact
+func (r *Resolver) UpdateVendorContactTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateVendorContactInput) (*mcp.CallToolResult, types.UpdateVendorContactOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionVendorContactUpdate)
+
+	prb := r.ProboService(ctx, input.ID)
+
+	updateReq := probo.UpdateVendorContactRequest{
+		ID: input.ID,
+	}
+
+	if input.FullName != nil {
+		updateReq.FullName = &input.FullName
+	}
+
+	if input.Email != nil {
+		emailAddr, err := mail.ParseAddr(*input.Email)
+		if err != nil {
+			return nil, types.UpdateVendorContactOutput{}, fmt.Errorf("invalid email address: %w", err)
+		}
+		emailPtr := &emailAddr
+		updateReq.Email = &emailPtr
+	}
+
+	if input.Phone != nil {
+		updateReq.Phone = &input.Phone
+	}
+
+	if input.Role != nil {
+		updateReq.Role = &input.Role
+	}
+
+	vendorContact, err := prb.VendorContacts.Update(ctx, updateReq)
+	if err != nil {
+		return nil, types.UpdateVendorContactOutput{}, fmt.Errorf("cannot update vendor contact: %w", err)
+	}
+
+	return nil, types.UpdateVendorContactOutput{
+		VendorContact: types.NewVendorContact(vendorContact),
+	}, nil
+}
+
+// DeleteVendorContactTool handles the deleteVendorContact tool
+// Delete a vendor contact
+func (r *Resolver) DeleteVendorContactTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteVendorContactInput) (*mcp.CallToolResult, types.DeleteVendorContactOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionVendorContactDelete)
+
+	prb := r.ProboService(ctx, input.ID)
+
+	err := prb.VendorContacts.Delete(ctx, input.ID)
+	if err != nil {
+		return nil, types.DeleteVendorContactOutput{}, fmt.Errorf("cannot delete vendor contact: %w", err)
+	}
+
+	return nil, types.DeleteVendorContactOutput{
+		DeletedVendorContactID: input.ID,
+	}, nil
+}
+
+// ListVendorServicesTool handles the listVendorServices tool
+// List all services for a vendor
+func (r *Resolver) ListVendorServicesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListVendorServicesInput) (*mcp.CallToolResult, types.ListVendorServicesOutput, error) {
+	r.MustAuthorize(ctx, input.VendorID, probo.ActionVendorServiceList)
+
+	prb := r.ProboService(ctx, input.VendorID)
+
+	pageOrderBy := page.OrderBy[coredata.VendorServiceOrderField]{
+		Field:     coredata.VendorServiceOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.VendorServiceOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	p, err := prb.VendorServices.List(ctx, input.VendorID, cursor)
+	if err != nil {
+		return nil, types.ListVendorServicesOutput{}, fmt.Errorf("cannot list vendor services: %w", err)
+	}
+
+	return nil, types.NewListVendorServicesOutput(p), nil
+}
+
+// AddVendorServiceTool handles the addVendorService tool
+// Add a new service to a vendor
+func (r *Resolver) AddVendorServiceTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddVendorServiceInput) (*mcp.CallToolResult, types.AddVendorServiceOutput, error) {
+	r.MustAuthorize(ctx, input.VendorID, probo.ActionVendorServiceCreate)
+
+	prb := r.ProboService(ctx, input.VendorID)
+
+	vendorService, err := prb.VendorServices.Create(ctx, probo.CreateVendorServiceRequest{
+		VendorID:    input.VendorID,
+		Name:        input.Name,
+		Description: input.Description,
+	})
+	if err != nil {
+		return nil, types.AddVendorServiceOutput{}, fmt.Errorf("cannot create vendor service: %w", err)
+	}
+
+	return nil, types.AddVendorServiceOutput{
+		VendorService: types.NewVendorService(vendorService),
+	}, nil
+}
+
+// UpdateVendorServiceTool handles the updateVendorService tool
+// Update an existing vendor service
+func (r *Resolver) UpdateVendorServiceTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateVendorServiceInput) (*mcp.CallToolResult, types.UpdateVendorServiceOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionVendorServiceUpdate)
+
+	prb := r.ProboService(ctx, input.ID)
+
+	updateReq := probo.UpdateVendorServiceRequest{
+		ID: input.ID,
+	}
+
+	if input.Name != nil {
+		updateReq.Name = input.Name
+	}
+
+	if input.Description != nil {
+		updateReq.Description = &input.Description
+	}
+
+	vendorService, err := prb.VendorServices.Update(ctx, updateReq)
+	if err != nil {
+		return nil, types.UpdateVendorServiceOutput{}, fmt.Errorf("cannot update vendor service: %w", err)
+	}
+
+	return nil, types.UpdateVendorServiceOutput{
+		VendorService: types.NewVendorService(vendorService),
+	}, nil
+}
+
+// DeleteVendorServiceTool handles the deleteVendorService tool
+// Delete a vendor service
+func (r *Resolver) DeleteVendorServiceTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteVendorServiceInput) (*mcp.CallToolResult, types.DeleteVendorServiceOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionVendorServiceDelete)
+
+	prb := r.ProboService(ctx, input.ID)
+
+	err := prb.VendorServices.Delete(ctx, input.ID)
+	if err != nil {
+		return nil, types.DeleteVendorServiceOutput{}, fmt.Errorf("cannot delete vendor service: %w", err)
+	}
+
+	return nil, types.DeleteVendorServiceOutput{
+		DeletedVendorServiceID: input.ID,
+	}, nil
+}
+func (r *Resolver) DeleteAssetTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteAssetInput) (*mcp.CallToolResult, types.DeleteAssetOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionAssetDelete)
+
+	svc := r.ProboService(ctx, input.ID)
+
+	err := svc.Assets.Delete(ctx, input.ID)
+	if err != nil {
+		return nil, types.DeleteAssetOutput{}, fmt.Errorf("failed to delete asset: %w", err)
+	}
+
+	return nil, types.DeleteAssetOutput{
+		DeletedAssetID: input.ID,
+	}, nil
+}
+func (r *Resolver) DeleteDatumTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteDatumInput) (*mcp.CallToolResult, types.DeleteDatumOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionDatumDelete)
+
+	svc := r.ProboService(ctx, input.ID)
+
+	err := svc.Data.Delete(ctx, input.ID)
+	if err != nil {
+		return nil, types.DeleteDatumOutput{}, fmt.Errorf("failed to delete datum: %w", err)
+	}
+
+	return nil, types.DeleteDatumOutput{
+		DeletedDatumID: input.ID,
+	}, nil
+}
+func (r *Resolver) DeleteObligationTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteObligationInput) (*mcp.CallToolResult, types.DeleteObligationOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionObligationDelete)
+
+	svc := r.ProboService(ctx, input.ID)
+
+	err := svc.Obligations.Delete(ctx, input.ID)
+	if err != nil {
+		return nil, types.DeleteObligationOutput{}, fmt.Errorf("failed to delete obligation: %w", err)
+	}
+
+	return nil, types.DeleteObligationOutput{
+		DeletedObligationID: input.ID,
+	}, nil
+}
+func (r *Resolver) DeleteAuditTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteAuditInput) (*mcp.CallToolResult, types.DeleteAuditOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionAuditDelete)
+
+	svc := r.ProboService(ctx, input.ID)
+
+	err := svc.Audits.Delete(ctx, input.ID)
+	if err != nil {
+		return nil, types.DeleteAuditOutput{}, fmt.Errorf("failed to delete audit: %w", err)
+	}
+
+	return nil, types.DeleteAuditOutput{
+		DeletedAuditID: input.ID,
+	}, nil
+}
+func (r *Resolver) ListRightsRequestsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListRightsRequestsInput) (*mcp.CallToolResult, types.ListRightsRequestsOutput, error) {
+	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionRightsRequestList)
+
+	prb := r.ProboService(ctx, input.OrganizationID)
+
+	pageOrderBy := page.OrderBy[coredata.RightsRequestOrderField]{
+		Field:     coredata.RightsRequestOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.RightsRequestOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	page, err := prb.RightsRequests.ListForOrganizationID(ctx, input.OrganizationID, cursor)
+	if err != nil {
+		panic(fmt.Errorf("cannot list organization rights requests: %w", err))
+	}
+
+	return nil, types.NewListRightsRequestsOutput(page), nil
+}
+func (r *Resolver) GetRightsRequestTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetRightsRequestInput) (*mcp.CallToolResult, types.GetRightsRequestOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionRightsRequestGet)
+
+	prb := r.ProboService(ctx, input.ID)
+
+	rightsRequest, err := prb.RightsRequests.Get(ctx, input.ID)
+	if err != nil {
+		return nil, types.GetRightsRequestOutput{}, fmt.Errorf("failed to get rights request: %w", err)
+	}
+
+	return nil, types.GetRightsRequestOutput{
+		RightsRequest: types.NewRightsRequest(rightsRequest),
+	}, nil
+}
+func (r *Resolver) AddRightsRequestTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddRightsRequestInput) (*mcp.CallToolResult, types.AddRightsRequestOutput, error) {
+	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionRightsRequestCreate)
+
+	svc := r.ProboService(ctx, input.OrganizationID)
+
+	rightsRequest, err := svc.RightsRequests.Create(
+		ctx,
+		&probo.CreateRightsRequestRequest{
+			OrganizationID: input.OrganizationID,
+			RequestType:    &input.RequestType,
+			RequestState:   &input.RequestState,
+			DataSubject:    &input.DataSubject,
+			Contact:        input.Contact,
+			Details:        input.Details,
+			Deadline:       input.Deadline,
+			ActionTaken:    input.ActionTaken,
+		},
+	)
+	if err != nil {
+		return nil, types.AddRightsRequestOutput{}, fmt.Errorf("failed to create rights request: %w", err)
+	}
+
+	return nil, types.AddRightsRequestOutput{
+		RightsRequest: types.NewRightsRequest(rightsRequest),
+	}, nil
+}
+func (r *Resolver) UpdateRightsRequestTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateRightsRequestInput) (*mcp.CallToolResult, types.UpdateRightsRequestOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionRightsRequestUpdate)
+
+	svc := r.ProboService(ctx, input.ID)
+
+	var dataSubject **string
+	if input.DataSubject != nil {
+		dataSubject = &input.DataSubject
+	}
+
+	rightsRequest, err := svc.RightsRequests.Update(
+		ctx,
+		&probo.UpdateRightsRequestRequest{
+			ID:           input.ID,
+			RequestType:  input.RequestType,
+			RequestState: input.RequestState,
+			DataSubject:  dataSubject,
+			Contact:      UnwrapOmittable(input.Contact),
+			Details:      UnwrapOmittable(input.Details),
+			Deadline:     UnwrapOmittable(input.Deadline),
+			ActionTaken:  UnwrapOmittable(input.ActionTaken),
+		},
+	)
+	if err != nil {
+		return nil, types.UpdateRightsRequestOutput{}, fmt.Errorf("failed to update rights request: %w", err)
+	}
+
+	return nil, types.UpdateRightsRequestOutput{
+		RightsRequest: types.NewRightsRequest(rightsRequest),
+	}, nil
+}
+func (r *Resolver) DeleteRightsRequestTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteRightsRequestInput) (*mcp.CallToolResult, types.DeleteRightsRequestOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionRightsRequestDelete)
+
+	svc := r.ProboService(ctx, input.ID)
+
+	err := svc.RightsRequests.Delete(ctx, input.ID)
+	if err != nil {
+		return nil, types.DeleteRightsRequestOutput{}, fmt.Errorf("failed to delete rights request: %w", err)
+	}
+
+	return nil, types.DeleteRightsRequestOutput{
+		DeletedRightsRequestID: input.ID,
+	}, nil
+}
+
+// GetTrustCenterTool handles the getTrustCenter tool
+// Get the trust center for an organization
+func (r *Resolver) GetTrustCenterTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetTrustCenterInput) (*mcp.CallToolResult, types.GetTrustCenterOutput, error) {
+	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionTrustCenterGet)
+
+	prb := r.ProboService(ctx, input.OrganizationID)
+
+	trustCenter, err := prb.TrustCenters.GetByOrganizationID(ctx, input.OrganizationID)
+	if err != nil {
+		return nil, types.GetTrustCenterOutput{}, fmt.Errorf("cannot get trust center: %w", err)
+	}
+
+	tc := types.NewTrustCenter(trustCenter)
+
+	logoURL, err := prb.TrustCenters.GenerateLogoURL(ctx, trustCenter.ID, 1*time.Hour)
+	if err == nil {
+		tc.LogoFileURL = logoURL
+	}
+
+	darkLogoURL, err := prb.TrustCenters.GenerateDarkLogoURL(ctx, trustCenter.ID, 1*time.Hour)
+	if err == nil {
+		tc.DarkLogoFileURL = darkLogoURL
+	}
+
+	ndaFileURL, err := prb.TrustCenters.GenerateNDAFileURL(ctx, trustCenter.ID, 15*time.Minute)
+	if err == nil {
+		tc.NdaFileURL = ndaFileURL
+	}
+
+	return nil, types.GetTrustCenterOutput{TrustCenter: tc}, nil
+}
+
+// UpdateTrustCenterTool handles the updateTrustCenter tool
+// Update the trust center settings
+func (r *Resolver) UpdateTrustCenterTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateTrustCenterInput) (*mcp.CallToolResult, types.UpdateTrustCenterOutput, error) {
+	r.MustAuthorize(ctx, input.TrustCenterID, probo.ActionTrustCenterUpdate)
+
+	prb := r.ProboService(ctx, input.TrustCenterID)
+
+	updateReq := &probo.UpdateTrustCenterRequest{
+		ID: input.TrustCenterID,
+	}
+	if active := UnwrapOmittable(input.Active); active != nil {
+		updateReq.Active = *active
+	}
+	if sei := UnwrapOmittable(input.SearchEngineIndexing); sei != nil {
+		updateReq.SearchEngineIndexing = *sei
+	}
+
+	trustCenter, _, err := prb.TrustCenters.Update(ctx, updateReq)
+	if err != nil {
+		return nil, types.UpdateTrustCenterOutput{}, fmt.Errorf("cannot update trust center: %w", err)
+	}
+
+	return nil, types.UpdateTrustCenterOutput{TrustCenter: types.NewTrustCenter(trustCenter)}, nil
+}
+
+// ListTrustCenterReferencesTool handles the listTrustCenterReferences tool
+// List all references for a trust center
+func (r *Resolver) ListTrustCenterReferencesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListTrustCenterReferencesInput) (*mcp.CallToolResult, types.ListTrustCenterReferencesOutput, error) {
+	r.MustAuthorize(ctx, input.TrustCenterID, probo.ActionTrustCenterReferenceList)
+
+	prb := r.ProboService(ctx, input.TrustCenterID)
+
+	pageOrderBy := page.OrderBy[coredata.TrustCenterReferenceOrderField]{
+		Field:     coredata.TrustCenterReferenceOrderFieldRank,
+		Direction: page.OrderDirectionAsc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.TrustCenterReferenceOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	p, err := prb.TrustCenterReferences.ListForTrustCenterID(ctx, input.TrustCenterID, cursor)
+	if err != nil {
+		return nil, types.ListTrustCenterReferencesOutput{}, fmt.Errorf("cannot list trust center references: %w", err)
+	}
+
+	return nil, types.NewListTrustCenterReferencesOutput(p), nil
+}
+
+// AddTrustCenterReferenceTool handles the addTrustCenterReference tool
+// Add a new reference to the trust center
+func (r *Resolver) AddTrustCenterReferenceTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddTrustCenterReferenceInput) (*mcp.CallToolResult, types.AddTrustCenterReferenceOutput, error) {
+	r.MustAuthorize(ctx, input.TrustCenterID, probo.ActionTrustCenterReferenceCreate)
+
+	prb := r.ProboService(ctx, input.TrustCenterID)
+
+	var websiteURL string
+	if input.WebsiteURL != nil {
+		websiteURL = *input.WebsiteURL
+	}
+
+	reference, err := prb.TrustCenterReferences.Create(
+		ctx,
+		&probo.CreateTrustCenterReferenceRequest{
+			TrustCenterID: input.TrustCenterID,
+			Name:          input.Name,
+			Description:   input.Description,
+			WebsiteURL:    websiteURL,
+		},
+	)
+	if err != nil {
+		return nil, types.AddTrustCenterReferenceOutput{}, fmt.Errorf("cannot add trust center reference: %w", err)
+	}
+
+	return nil, types.AddTrustCenterReferenceOutput{TrustCenterReference: types.NewTrustCenterReference(reference)}, nil
+}
+
+// UpdateTrustCenterReferenceTool handles the updateTrustCenterReference tool
+// Update a trust center reference
+func (r *Resolver) UpdateTrustCenterReferenceTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateTrustCenterReferenceInput) (*mcp.CallToolResult, types.UpdateTrustCenterReferenceOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionTrustCenterReferenceUpdate)
+
+	prb := r.ProboService(ctx, input.ID)
+
+	updateRefReq := &probo.UpdateTrustCenterReferenceRequest{
+		ID:          input.ID,
+		Description: UnwrapOmittable(input.Description),
+	}
+	if name := UnwrapOmittable(input.Name); name != nil {
+		updateRefReq.Name = *name
+	}
+	if websiteURL := UnwrapOmittable(input.WebsiteURL); websiteURL != nil {
+		updateRefReq.WebsiteURL = *websiteURL
+	}
+	if rank := UnwrapOmittable(input.Rank); rank != nil {
+		updateRefReq.Rank = *rank
+	}
+
+	reference, err := prb.TrustCenterReferences.Update(ctx, updateRefReq)
+	if err != nil {
+		return nil, types.UpdateTrustCenterReferenceOutput{}, fmt.Errorf("cannot update trust center reference: %w", err)
+	}
+
+	return nil, types.UpdateTrustCenterReferenceOutput{TrustCenterReference: types.NewTrustCenterReference(reference)}, nil
+}
+
+// DeleteTrustCenterReferenceTool handles the deleteTrustCenterReference tool
+// Delete a trust center reference
+func (r *Resolver) DeleteTrustCenterReferenceTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteTrustCenterReferenceInput) (*mcp.CallToolResult, types.DeleteTrustCenterReferenceOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionTrustCenterReferenceDelete)
+
+	prb := r.ProboService(ctx, input.ID)
+
+	err := prb.TrustCenterReferences.Delete(ctx, input.ID)
+	if err != nil {
+		return nil, types.DeleteTrustCenterReferenceOutput{}, fmt.Errorf("cannot delete trust center reference: %w", err)
+	}
+
+	return nil, types.DeleteTrustCenterReferenceOutput{DeletedTrustCenterReferenceID: input.ID}, nil
+}
+
+// ListTrustCenterFilesTool handles the listTrustCenterFiles tool
+// List all files for the trust center
+func (r *Resolver) ListTrustCenterFilesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListTrustCenterFilesInput) (*mcp.CallToolResult, types.ListTrustCenterFilesOutput, error) {
+	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionTrustCenterFileList)
+
+	prb := r.ProboService(ctx, input.OrganizationID)
+
+	pageOrderBy := page.OrderBy[coredata.TrustCenterFileOrderField]{
+		Field:     coredata.TrustCenterFileOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.TrustCenterFileOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+	filter := coredata.NewTrustCenterFileFilter()
+
+	p, err := prb.TrustCenterFiles.ListForOrganizationID(ctx, input.OrganizationID, cursor, filter)
+	if err != nil {
+		return nil, types.ListTrustCenterFilesOutput{}, fmt.Errorf("cannot list trust center files: %w", err)
+	}
+
+	files := make([]*types.TrustCenterFile, 0, len(p.Data))
+	for _, f := range p.Data {
+		fileURL, err := prb.TrustCenterFiles.GenerateFileURL(ctx, f.ID, 1*time.Hour)
+		if err != nil {
+			return nil, types.ListTrustCenterFilesOutput{}, fmt.Errorf("cannot generate file URL: %w", err)
+		}
+		files = append(files, types.NewTrustCenterFile(f, fileURL))
+	}
+
+	return nil, types.NewListTrustCenterFilesOutput(files, p), nil
+}
+
+// DeleteTrustCenterFileTool handles the deleteTrustCenterFile tool
+// Delete a trust center file
+func (r *Resolver) DeleteTrustCenterFileTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteTrustCenterFileInput) (*mcp.CallToolResult, types.DeleteTrustCenterFileOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionTrustCenterFileDelete)
+
+	prb := r.ProboService(ctx, input.ID)
+
+	err := prb.TrustCenterFiles.Delete(ctx, input.ID)
+	if err != nil {
+		return nil, types.DeleteTrustCenterFileOutput{}, fmt.Errorf("cannot delete trust center file: %w", err)
+	}
+
+	return nil, types.DeleteTrustCenterFileOutput{DeletedTrustCenterFileID: input.ID}, nil
+}
+
+// ListComplianceExternalURLsTool handles the listComplianceExternalURLs tool
+// List all external URLs for a trust center
+func (r *Resolver) ListComplianceExternalURLsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListComplianceExternalURLsInput) (*mcp.CallToolResult, types.ListComplianceExternalURLsOutput, error) {
+	r.MustAuthorize(ctx, input.TrustCenterID, probo.ActionComplianceExternalURLList)
+
+	prb := r.ProboService(ctx, input.TrustCenterID)
+
+	pageOrderBy := page.OrderBy[coredata.ComplianceExternalURLOrderField]{
+		Field:     coredata.ComplianceExternalURLOrderFieldRank,
+		Direction: page.OrderDirectionAsc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.ComplianceExternalURLOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	p, err := prb.ComplianceExternalURLs.List(ctx, input.TrustCenterID, cursor)
+	if err != nil {
+		return nil, types.ListComplianceExternalURLsOutput{}, fmt.Errorf("cannot list compliance external URLs: %w", err)
+	}
+
+	return nil, types.NewListComplianceExternalURLsOutput(p), nil
+}
+
+// AddComplianceExternalURLTool handles the addComplianceExternalURL tool
+// Add a new external URL to the trust center
+func (r *Resolver) AddComplianceExternalURLTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddComplianceExternalURLInput) (*mcp.CallToolResult, types.AddComplianceExternalURLOutput, error) {
+	r.MustAuthorize(ctx, input.TrustCenterID, probo.ActionComplianceExternalURLCreate)
+
+	prb := r.ProboService(ctx, input.TrustCenterID)
+
+	item, err := prb.ComplianceExternalURLs.Create(
+		ctx,
+		&probo.CreateComplianceExternalURLRequest{
+			TrustCenterID: input.TrustCenterID,
+			Name:          input.Name,
+			URL:           input.URL,
+		},
+	)
+	if err != nil {
+		return nil, types.AddComplianceExternalURLOutput{}, fmt.Errorf("cannot add compliance external URL: %w", err)
+	}
+
+	return nil, types.AddComplianceExternalURLOutput{ComplianceExternalURL: types.NewComplianceExternalURL(item)}, nil
+}
+
+// UpdateComplianceExternalURLTool handles the updateComplianceExternalURL tool
+// Update a compliance external URL
+func (r *Resolver) UpdateComplianceExternalURLTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateComplianceExternalURLInput) (*mcp.CallToolResult, types.UpdateComplianceExternalURLOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionComplianceExternalURLUpdate)
+
+	prb := r.ProboService(ctx, input.ID)
+
+	updateURLReq := &probo.UpdateComplianceExternalURLRequest{
+		ID: input.ID,
+	}
+
+	if name := UnwrapOmittable(input.Name); name != nil && *name != nil {
+		updateURLReq.Name = **name
+	}
+	if u := UnwrapOmittable(input.URL); u != nil && *u != nil {
+		updateURLReq.URL = **u
+	}
+	if rank := UnwrapOmittable(input.Rank); rank != nil {
+		updateURLReq.Rank = *rank
+	}
+
+	item, err := prb.ComplianceExternalURLs.Update(ctx, updateURLReq)
+	if err != nil {
+		return nil, types.UpdateComplianceExternalURLOutput{}, fmt.Errorf("cannot update compliance external URL: %w", err)
+	}
+
+	return nil, types.UpdateComplianceExternalURLOutput{ComplianceExternalURL: types.NewComplianceExternalURL(item)}, nil
+}
+
+// DeleteComplianceExternalURLTool handles the deleteComplianceExternalURL tool
+// Delete a compliance external URL
+func (r *Resolver) DeleteComplianceExternalURLTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteComplianceExternalURLInput) (*mcp.CallToolResult, types.DeleteComplianceExternalURLOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionComplianceExternalURLDelete)
+
+	prb := r.ProboService(ctx, input.ID)
+
+	err := prb.ComplianceExternalURLs.Delete(
+		ctx,
+		&probo.DeleteComplianceExternalURLRequest{
+			ID: input.ID,
+		},
+	)
+	if err != nil {
+		return nil, types.DeleteComplianceExternalURLOutput{}, fmt.Errorf("cannot delete compliance external URL: %w", err)
+	}
+
+	return nil, types.DeleteComplianceExternalURLOutput{DeletedComplianceExternalURLID: input.ID}, nil
+}
+
+// CreateCustomDomainTool handles the createCustomDomain tool
+// Create a custom domain for the organization
+func (r *Resolver) CreateCustomDomainTool(ctx context.Context, req *mcp.CallToolRequest, input *types.CreateCustomDomainInput) (*mcp.CallToolResult, types.CreateCustomDomainOutput, error) {
+	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionCustomDomainCreate)
+
+	prb := r.ProboService(ctx, input.OrganizationID)
+
+	domain, err := prb.CustomDomains.CreateCustomDomain(
+		ctx,
+		probo.CreateCustomDomainRequest{
+			OrganizationID: input.OrganizationID,
+			Domain:         input.Domain,
+		},
+	)
+	if err != nil {
+		return nil, types.CreateCustomDomainOutput{}, fmt.Errorf("cannot create custom domain: %w", err)
+	}
+
+	return nil, types.CreateCustomDomainOutput{CustomDomain: types.NewCustomDomain(domain)}, nil
+}
+
+// DeleteCustomDomainTool handles the deleteCustomDomain tool
+// Delete the custom domain for the organization
+func (r *Resolver) DeleteCustomDomainTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteCustomDomainInput) (*mcp.CallToolResult, types.DeleteCustomDomainOutput, error) {
+	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionCustomDomainDelete)
+
+	prb := r.ProboService(ctx, input.OrganizationID)
+
+	domain, err := prb.CustomDomains.GetOrganizationCustomDomain(ctx, input.OrganizationID)
+	if err != nil {
+		return nil, types.DeleteCustomDomainOutput{}, fmt.Errorf("cannot get custom domain: %w", err)
+	}
+
+	if domain == nil {
+		return nil, types.DeleteCustomDomainOutput{}, fmt.Errorf("organization has no custom domain")
+	}
+
+	deletedDomain := types.NewCustomDomain(domain)
+
+	if err := prb.CustomDomains.DeleteCustomDomain(ctx, input.OrganizationID); err != nil {
+		return nil, types.DeleteCustomDomainOutput{}, fmt.Errorf("cannot delete custom domain: %w", err)
+	}
+
+	return nil, types.DeleteCustomDomainOutput{DeletedCustomDomain: deletedDomain}, nil
+}

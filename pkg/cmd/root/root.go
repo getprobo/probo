@@ -19,6 +19,7 @@ import (
 	accessreview "go.probo.inc/probo/pkg/cmd/access-review"
 	cmdapi "go.probo.inc/probo/pkg/cmd/api"
 	"go.probo.inc/probo/pkg/cmd/asset"
+	"go.probo.inc/probo/pkg/cmd/audit"
 	"go.probo.inc/probo/pkg/cmd/auditlog"
 	"go.probo.inc/probo/pkg/cmd/auth"
 	"go.probo.inc/probo/pkg/cmd/browse"
@@ -29,13 +30,23 @@ import (
 	"go.probo.inc/probo/pkg/cmd/control"
 	"go.probo.inc/probo/pkg/cmd/datum"
 	"go.probo.inc/probo/pkg/cmd/document"
+	"go.probo.inc/probo/pkg/cmd/dpia"
 	"go.probo.inc/probo/pkg/cmd/evidence"
 	"go.probo.inc/probo/pkg/cmd/finding"
 	"go.probo.inc/probo/pkg/cmd/framework"
+	"go.probo.inc/probo/pkg/cmd/measure"
+	"go.probo.inc/probo/pkg/cmd/obligation"
 	"go.probo.inc/probo/pkg/cmd/org"
+	processingactivity "go.probo.inc/probo/pkg/cmd/processing-activity"
+	rightsrequest "go.probo.inc/probo/pkg/cmd/rights-request"
 	"go.probo.inc/probo/pkg/cmd/risk"
+	"go.probo.inc/probo/pkg/cmd/snapshot"
 	"go.probo.inc/probo/pkg/cmd/soa"
+	"go.probo.inc/probo/pkg/cmd/task"
+	"go.probo.inc/probo/pkg/cmd/tia"
+	trustcenter "go.probo.inc/probo/pkg/cmd/trust-center"
 	"go.probo.inc/probo/pkg/cmd/user"
+	"go.probo.inc/probo/pkg/cmd/vendormgmt"
 	"go.probo.inc/probo/pkg/cmd/version"
 	"go.probo.inc/probo/pkg/cmd/webhook"
 )
@@ -73,6 +84,7 @@ func NewCmdRoot(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(accessreview.NewCmdAccessReview(f))
 	cmd.AddCommand(cmdapi.NewCmdAPI(f))
 	cmd.AddCommand(asset.NewCmdAsset(f))
+	cmd.AddCommand(audit.NewCmdAudit(f))
 	cmd.AddCommand(auditlog.NewCmdAuditLog(f))
 	cmd.AddCommand(auth.NewCmdAuth(f))
 	cmd.AddCommand(browse.NewCmdBrowse(f))
@@ -82,13 +94,23 @@ func NewCmdRoot(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(control.NewCmdControl(f))
 	cmd.AddCommand(datum.NewCmdDatum(f))
 	cmd.AddCommand(document.NewCmdDocument(f))
+	cmd.AddCommand(dpia.NewCmdDPIA(f))
 	cmd.AddCommand(evidence.NewCmdEvidence(f))
 	cmd.AddCommand(finding.NewCmdFinding(f))
 	cmd.AddCommand(framework.NewCmdFramework(f))
+	cmd.AddCommand(measure.NewCmdMeasure(f))
+	cmd.AddCommand(obligation.NewCmdObligation(f))
 	cmd.AddCommand(org.NewCmdOrg(f))
+	cmd.AddCommand(processingactivity.NewCmdProcessingActivity(f))
+	cmd.AddCommand(rightsrequest.NewCmdRightsRequest(f))
 	cmd.AddCommand(risk.NewCmdRisk(f))
+	cmd.AddCommand(snapshot.NewCmdSnapshot(f))
 	cmd.AddCommand(soa.NewCmdSoa(f))
+	cmd.AddCommand(task.NewCmdTask(f))
+	cmd.AddCommand(tia.NewCmdTIA(f))
+	cmd.AddCommand(trustcenter.NewCmdTrustCenter(f))
 	cmd.AddCommand(user.NewCmdUser(f))
+	cmd.AddCommand(vendormgmt.NewCmdVendor(f))
 	cmd.AddCommand(version.NewCmdVersion(f))
 	cmd.AddCommand(webhook.NewCmdWebhook(f))
 

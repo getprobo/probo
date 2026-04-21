@@ -67,10 +67,7 @@ export const description: INodeProperties[] = [
 			},
 		},
 		options: [
-			{
-				name: 'Mitigated',
-				value: 'MITIGATED',
-			},
+			{ name: '(Unchanged)', value: '' },
 			{
 				name: 'Accepted',
 				value: 'ACCEPTED',
@@ -80,11 +77,15 @@ export const description: INodeProperties[] = [
 				value: 'AVOIDED',
 			},
 			{
+				name: 'Mitigated',
+				value: 'MITIGATED',
+			},
+			{
 				name: 'Transferred',
 				value: 'TRANSFERRED',
 			},
 		],
-		default: 'MITIGATED',
+		default: '',
 		description: 'The treatment strategy for the risk',
 	},
 	{

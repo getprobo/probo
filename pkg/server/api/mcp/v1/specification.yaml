@@ -30,6 +30,47 @@ components:
         - NAME
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.VendorOrderField
 
+    VendorContactOrderField:
+      type: string
+      enum:
+        - CREATED_AT
+        - FULL_NAME
+        - EMAIL
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.VendorContactOrderField
+
+    VendorContactOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/VendorContactOrderField"
+          description: Vendor contact order field
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+          description: Vendor contact order direction
+
+    VendorServiceOrderField:
+      type: string
+      enum:
+        - CREATED_AT
+        - NAME
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.VendorServiceOrderField
+
+    VendorServiceOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/VendorServiceOrderField"
+          description: Vendor service order field
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+          description: Vendor service order direction
+
     VendorRiskAssessmentOrderField:
       type: string
       enum:
@@ -803,6 +844,283 @@ components:
         deleted_vendor_id:
           $ref: "#/components/schemas/GID"
           description: Deleted vendor ID
+
+    VendorContact:
+      type: object
+      required:
+        - id
+        - vendor_id
+        - full_name
+        - email
+        - phone
+        - role
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Vendor contact ID
+        vendor_id:
+          $ref: "#/components/schemas/GID"
+          description: Vendor ID
+        full_name:
+          type: string
+          description: Full name
+        email:
+          type: string
+          description: Email address
+        phone:
+          type: string
+          description: Phone number
+        role:
+          type: string
+          description: Role
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Update timestamp
+
+    ListVendorContactsInput:
+      type: object
+      required:
+        - vendor_id
+      properties:
+        vendor_id:
+          $ref: "#/components/schemas/GID"
+          description: Vendor ID
+        order_by:
+          $ref: "#/components/schemas/VendorContactOrderBy"
+          description: Vendor contact order by
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+
+    ListVendorContactsOutput:
+      type: object
+      required:
+        - vendor_contacts
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        vendor_contacts:
+          type: array
+          items:
+            $ref: "#/components/schemas/VendorContact"
+
+    AddVendorContactInput:
+      type: object
+      required:
+        - vendor_id
+        - full_name
+        - email
+        - phone
+        - role
+      properties:
+        vendor_id:
+          $ref: "#/components/schemas/GID"
+          description: Vendor ID
+        full_name:
+          type: string
+          description: Full name
+        email:
+          type: string
+          description: Email address
+        phone:
+          type: string
+          description: Phone number
+        role:
+          type: string
+          description: Role
+
+    AddVendorContactOutput:
+      type: object
+      required:
+        - vendor_contact
+      properties:
+        vendor_contact:
+          $ref: "#/components/schemas/VendorContact"
+
+    UpdateVendorContactInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Vendor contact ID
+        full_name:
+          type: string
+          description: Full name
+        email:
+          type: string
+          description: Email address
+        phone:
+          type: string
+          description: Phone number
+        role:
+          type: string
+          description: Role
+
+    UpdateVendorContactOutput:
+      type: object
+      required:
+        - vendor_contact
+      properties:
+        vendor_contact:
+          $ref: "#/components/schemas/VendorContact"
+
+    DeleteVendorContactInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Vendor contact ID
+
+    DeleteVendorContactOutput:
+      type: object
+      required:
+        - deleted_vendor_contact_id
+      properties:
+        deleted_vendor_contact_id:
+          $ref: "#/components/schemas/GID"
+          description: Deleted vendor contact ID
+
+    VendorService:
+      type: object
+      required:
+        - id
+        - vendor_id
+        - name
+        - description
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Vendor service ID
+        vendor_id:
+          $ref: "#/components/schemas/GID"
+          description: Vendor ID
+        name:
+          type: string
+          description: Service name
+        description:
+          type: string
+          description: Service description
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Update timestamp
+
+    ListVendorServicesInput:
+      type: object
+      required:
+        - vendor_id
+      properties:
+        vendor_id:
+          $ref: "#/components/schemas/GID"
+          description: Vendor ID
+        order_by:
+          $ref: "#/components/schemas/VendorServiceOrderBy"
+          description: Vendor service order by
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+
+    ListVendorServicesOutput:
+      type: object
+      required:
+        - vendor_services
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        vendor_services:
+          type: array
+          items:
+            $ref: "#/components/schemas/VendorService"
+
+    AddVendorServiceInput:
+      type: object
+      required:
+        - vendor_id
+        - name
+      properties:
+        vendor_id:
+          $ref: "#/components/schemas/GID"
+          description: Vendor ID
+        name:
+          type: string
+          description: Service name
+        description:
+          type: string
+          description: Service description
+
+    AddVendorServiceOutput:
+      type: object
+      required:
+        - vendor_service
+      properties:
+        vendor_service:
+          $ref: "#/components/schemas/VendorService"
+
+    UpdateVendorServiceInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Vendor service ID
+        name:
+          type: string
+          description: Service name
+        description:
+          type: string
+          description: Service description
+
+    UpdateVendorServiceOutput:
+      type: object
+      required:
+        - vendor_service
+      properties:
+        vendor_service:
+          $ref: "#/components/schemas/VendorService"
+
+    DeleteVendorServiceInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Vendor service ID
+
+    DeleteVendorServiceOutput:
+      type: object
+      required:
+        - deleted_vendor_service_id
+      properties:
+        deleted_vendor_service_id:
+          $ref: "#/components/schemas/GID"
+          description: Deleted vendor service ID
 
     GetUserInput:
       type: object
@@ -2157,6 +2475,24 @@ components:
         asset:
           $ref: "#/components/schemas/Asset"
 
+    DeleteAssetInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Asset ID
+
+    DeleteAssetOutput:
+      type: object
+      required:
+        - deleted_asset_id
+      properties:
+        deleted_asset_id:
+          $ref: "#/components/schemas/GID"
+          description: Deleted asset ID
+
     DataClassification:
       type: string
       enum:
@@ -2336,6 +2672,24 @@ components:
       properties:
         datum:
           $ref: "#/components/schemas/Datum"
+
+    DeleteDatumInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Datum ID
+
+    DeleteDatumOutput:
+      type: object
+      required:
+        - deleted_datum_id
+      properties:
+        deleted_datum_id:
+          $ref: "#/components/schemas/GID"
+          description: Deleted datum ID
 
     FindingKind:
       type: string
@@ -3110,6 +3464,24 @@ components:
       properties:
         obligation:
           $ref: "#/components/schemas/Obligation"
+
+    DeleteObligationInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Obligation ID
+
+    DeleteObligationOutput:
+      type: object
+      required:
+        - deleted_obligation_id
+      properties:
+        deleted_obligation_id:
+          $ref: "#/components/schemas/GID"
+          description: Deleted obligation ID
 
     ProcessingActivityRole:
       type: string
@@ -4168,6 +4540,24 @@ components:
       properties:
         audit:
           $ref: "#/components/schemas/Audit"
+
+    DeleteAuditInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Audit ID
+
+    DeleteAuditOutput:
+      type: object
+      required:
+        - deleted_audit_id
+      properties:
+        deleted_audit_id:
+          $ref: "#/components/schemas/GID"
+          description: Deleted audit ID
 
     ControlOrderField:
       type: string
@@ -7824,6 +8214,837 @@ components:
           go.probo.inc/mcpgen/type: time.Time
           description: When the action was performed
 
+    RightsRequestType:
+      type: string
+      enum:
+        - ACCESS
+        - DELETION
+        - PORTABILITY
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.RightsRequestType
+
+    RightsRequestState:
+      type: string
+      enum:
+        - TODO
+        - IN_PROGRESS
+        - DONE
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.RightsRequestState
+
+    RightsRequestOrderField:
+      type: string
+      enum:
+        - CREATED_AT
+        - DEADLINE
+        - STATE
+        - TYPE
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.RightsRequestOrderField
+
+    RightsRequestOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/RightsRequestOrderField"
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+
+    RightsRequest:
+      type: object
+      required:
+        - id
+        - organization_id
+        - request_type
+        - request_state
+        - data_subject
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+        organization_id:
+          $ref: "#/components/schemas/GID"
+        request_type:
+          $ref: "#/components/schemas/RightsRequestType"
+        request_state:
+          $ref: "#/components/schemas/RightsRequestState"
+        data_subject:
+          type: string
+        contact:
+          type:
+            - string
+            - "null"
+        details:
+          type:
+            - string
+            - "null"
+        deadline:
+          anyOf:
+            - type: string
+              format: date-time
+            - type: "null"
+        action_taken:
+          type:
+            - string
+            - "null"
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ListRightsRequestsInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        order_by:
+          $ref: "#/components/schemas/RightsRequestOrderBy"
+          description: Rights request order by
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+
+    ListRightsRequestsOutput:
+      type: object
+      required:
+        - rights_requests
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        rights_requests:
+          type: array
+          items:
+            $ref: "#/components/schemas/RightsRequest"
+
+    GetRightsRequestInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Rights request ID
+
+    GetRightsRequestOutput:
+      type: object
+      required:
+        - rights_request
+      properties:
+        rights_request:
+          $ref: "#/components/schemas/RightsRequest"
+
+    AddRightsRequestInput:
+      type: object
+      required:
+        - organization_id
+        - request_type
+        - request_state
+        - data_subject
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        request_type:
+          $ref: "#/components/schemas/RightsRequestType"
+          description: Rights request type
+        request_state:
+          $ref: "#/components/schemas/RightsRequestState"
+          description: Rights request state
+        data_subject:
+          type: string
+          description: Data subject
+        contact:
+          type: string
+          description: Contact information
+        details:
+          type: string
+          description: Request details
+        deadline:
+          anyOf:
+            - type: string
+              format: date-time
+            - type: "null"
+          description: Deadline
+        action_taken:
+          type: string
+          description: Action taken
+
+    AddRightsRequestOutput:
+      type: object
+      required:
+        - rights_request
+      properties:
+        rights_request:
+          $ref: "#/components/schemas/RightsRequest"
+
+    UpdateRightsRequestInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Rights request ID
+        request_type:
+          $ref: "#/components/schemas/RightsRequestType"
+          description: Rights request type
+        request_state:
+          $ref: "#/components/schemas/RightsRequestState"
+          description: Rights request state
+        data_subject:
+          type: string
+          description: Data subject
+        contact:
+          type: ["string", "null"]
+          description: Contact information
+          go.probo.inc/mcpgen/omittable: true
+        details:
+          type: ["string", "null"]
+          description: Request details
+          go.probo.inc/mcpgen/omittable: true
+        deadline:
+          anyOf:
+            - type: string
+              format: date-time
+            - type: "null"
+          description: Deadline
+          go.probo.inc/mcpgen/omittable: true
+        action_taken:
+          type: ["string", "null"]
+          description: Action taken
+          go.probo.inc/mcpgen/omittable: true
+
+    UpdateRightsRequestOutput:
+      type: object
+      required:
+        - rights_request
+      properties:
+        rights_request:
+          $ref: "#/components/schemas/RightsRequest"
+
+    DeleteRightsRequestInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Rights request ID
+
+    DeleteRightsRequestOutput:
+      type: object
+      required:
+        - deleted_rights_request_id
+      properties:
+        deleted_rights_request_id:
+          $ref: "#/components/schemas/GID"
+          description: Deleted rights request ID
+
+    SearchEngineIndexing:
+      type: string
+      enum:
+        - INDEXABLE
+        - NOT_INDEXABLE
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.SearchEngineIndexing
+
+    SSLStatus:
+      type: string
+      enum:
+        - PENDING
+        - PROVISIONING
+        - ACTIVE
+        - RENEWING
+        - EXPIRED
+        - FAILED
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.CustomDomainSSLStatus
+
+    TrustCenterReferenceOrderField:
+      type: string
+      enum:
+        - RANK
+        - NAME
+        - CREATED_AT
+        - UPDATED_AT
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.TrustCenterReferenceOrderField
+
+    TrustCenterReferenceOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/TrustCenterReferenceOrderField"
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+
+    TrustCenterFileOrderField:
+      type: string
+      enum:
+        - NAME
+        - CREATED_AT
+        - UPDATED_AT
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.TrustCenterFileOrderField
+
+    TrustCenterFileOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/TrustCenterFileOrderField"
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+
+    ComplianceExternalURLOrderField:
+      type: string
+      enum:
+        - CREATED_AT
+        - RANK
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.ComplianceExternalURLOrderField
+
+    ComplianceExternalURLOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/ComplianceExternalURLOrderField"
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+
+    TrustCenter:
+      type: object
+      required:
+        - id
+        - organization_id
+        - active
+        - search_engine_indexing
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+        organization_id:
+          $ref: "#/components/schemas/GID"
+        active:
+          type: boolean
+        search_engine_indexing:
+          $ref: "#/components/schemas/SearchEngineIndexing"
+        logo_file_url:
+          type:
+            - string
+            - "null"
+        dark_logo_file_url:
+          type:
+            - string
+            - "null"
+        nda_file_name:
+          type:
+            - string
+            - "null"
+        nda_file_url:
+          type:
+            - string
+            - "null"
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    TrustCenterReference:
+      type: object
+      required:
+        - id
+        - name
+        - rank
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+        name:
+          type: string
+        description:
+          type:
+            - string
+            - "null"
+        website_url:
+          type:
+            - string
+            - "null"
+        logo_url:
+          type:
+            - string
+            - "null"
+        rank:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    TrustCenterFile:
+      type: object
+      required:
+        - id
+        - name
+        - category
+        - file_url
+        - trust_center_visibility
+        - organization_id
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+        name:
+          type: string
+        category:
+          type: string
+        file_url:
+          type: string
+        trust_center_visibility:
+          $ref: "#/components/schemas/TrustCenterVisibility"
+        organization_id:
+          $ref: "#/components/schemas/GID"
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ComplianceExternalURL:
+      type: object
+      required:
+        - id
+        - name
+        - url
+        - rank
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+        name:
+          type: string
+        url:
+          type: string
+        rank:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CustomDomain:
+      type: object
+      required:
+        - id
+        - organization_id
+        - domain
+        - ssl_status
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+        organization_id:
+          $ref: "#/components/schemas/GID"
+        domain:
+          type: string
+        ssl_status:
+          $ref: "#/components/schemas/SSLStatus"
+        ssl_expires_at:
+          anyOf:
+            - type: string
+              format: date-time
+            - type: "null"
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    GetTrustCenterInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+
+    GetTrustCenterOutput:
+      type: object
+      required:
+        - trust_center
+      properties:
+        trust_center:
+          $ref: "#/components/schemas/TrustCenter"
+
+    UpdateTrustCenterInput:
+      type: object
+      required:
+        - trust_center_id
+      properties:
+        trust_center_id:
+          $ref: "#/components/schemas/GID"
+          description: Trust center ID
+        active:
+          type:
+            - boolean
+            - "null"
+          description: Whether the trust center is active
+          go.probo.inc/mcpgen/omittable: true
+        search_engine_indexing:
+          anyOf:
+            - $ref: "#/components/schemas/SearchEngineIndexing"
+            - type: "null"
+          description: Search engine indexing setting
+          go.probo.inc/mcpgen/omittable: true
+
+    UpdateTrustCenterOutput:
+      type: object
+      required:
+        - trust_center
+      properties:
+        trust_center:
+          $ref: "#/components/schemas/TrustCenter"
+
+    ListTrustCenterReferencesInput:
+      type: object
+      required:
+        - trust_center_id
+      properties:
+        trust_center_id:
+          $ref: "#/components/schemas/GID"
+          description: Trust center ID
+        order_by:
+          $ref: "#/components/schemas/TrustCenterReferenceOrderBy"
+          description: Trust center reference order by
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+
+    ListTrustCenterReferencesOutput:
+      type: object
+      required:
+        - trust_center_references
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        trust_center_references:
+          type: array
+          items:
+            $ref: "#/components/schemas/TrustCenterReference"
+
+    AddTrustCenterReferenceInput:
+      type: object
+      required:
+        - trust_center_id
+        - name
+      properties:
+        trust_center_id:
+          $ref: "#/components/schemas/GID"
+          description: Trust center ID
+        name:
+          type: string
+          description: Reference name
+        description:
+          type: string
+          description: Reference description
+        website_url:
+          type: string
+          description: Reference website URL
+
+    AddTrustCenterReferenceOutput:
+      type: object
+      required:
+        - trust_center_reference
+      properties:
+        trust_center_reference:
+          $ref: "#/components/schemas/TrustCenterReference"
+
+    UpdateTrustCenterReferenceInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Trust center reference ID
+        name:
+          type:
+            - string
+            - "null"
+          description: Reference name
+          go.probo.inc/mcpgen/omittable: true
+        description:
+          type:
+            - string
+            - "null"
+          description: Reference description
+          go.probo.inc/mcpgen/omittable: true
+        website_url:
+          type:
+            - string
+            - "null"
+          description: Reference website URL
+          go.probo.inc/mcpgen/omittable: true
+        rank:
+          type:
+            - integer
+            - "null"
+          description: Reference rank
+          go.probo.inc/mcpgen/omittable: true
+
+    UpdateTrustCenterReferenceOutput:
+      type: object
+      required:
+        - trust_center_reference
+      properties:
+        trust_center_reference:
+          $ref: "#/components/schemas/TrustCenterReference"
+
+    DeleteTrustCenterReferenceInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Trust center reference ID
+
+    DeleteTrustCenterReferenceOutput:
+      type: object
+      required:
+        - deleted_trust_center_reference_id
+      properties:
+        deleted_trust_center_reference_id:
+          $ref: "#/components/schemas/GID"
+          description: Deleted trust center reference ID
+
+    ListTrustCenterFilesInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        order_by:
+          $ref: "#/components/schemas/TrustCenterFileOrderBy"
+          description: Trust center file order by
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+
+    ListTrustCenterFilesOutput:
+      type: object
+      required:
+        - trust_center_files
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        trust_center_files:
+          type: array
+          items:
+            $ref: "#/components/schemas/TrustCenterFile"
+
+    DeleteTrustCenterFileInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Trust center file ID
+
+    DeleteTrustCenterFileOutput:
+      type: object
+      required:
+        - deleted_trust_center_file_id
+      properties:
+        deleted_trust_center_file_id:
+          $ref: "#/components/schemas/GID"
+          description: Deleted trust center file ID
+
+    ListComplianceExternalURLsInput:
+      type: object
+      required:
+        - trust_center_id
+      properties:
+        trust_center_id:
+          $ref: "#/components/schemas/GID"
+          description: Trust center ID
+        order_by:
+          $ref: "#/components/schemas/ComplianceExternalURLOrderBy"
+          description: Compliance external URL order by
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+
+    ListComplianceExternalURLsOutput:
+      type: object
+      required:
+        - compliance_external_urls
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        compliance_external_urls:
+          type: array
+          items:
+            $ref: "#/components/schemas/ComplianceExternalURL"
+
+    AddComplianceExternalURLInput:
+      type: object
+      required:
+        - trust_center_id
+        - name
+        - url
+      properties:
+        trust_center_id:
+          $ref: "#/components/schemas/GID"
+          description: Trust center ID
+        name:
+          type: string
+          description: External URL name
+        url:
+          type: string
+          description: External URL
+
+    AddComplianceExternalURLOutput:
+      type: object
+      required:
+        - compliance_external_url
+      properties:
+        compliance_external_url:
+          $ref: "#/components/schemas/ComplianceExternalURL"
+
+    UpdateComplianceExternalURLInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Compliance external URL ID
+        name:
+          type:
+            - string
+            - "null"
+          description: External URL name
+          go.probo.inc/mcpgen/omittable: true
+        url:
+          type:
+            - string
+            - "null"
+          description: External URL
+          go.probo.inc/mcpgen/omittable: true
+        rank:
+          type:
+            - integer
+            - "null"
+          description: External URL rank
+          go.probo.inc/mcpgen/omittable: true
+
+    UpdateComplianceExternalURLOutput:
+      type: object
+      required:
+        - compliance_external_url
+      properties:
+        compliance_external_url:
+          $ref: "#/components/schemas/ComplianceExternalURL"
+
+    DeleteComplianceExternalURLInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Compliance external URL ID
+
+    DeleteComplianceExternalURLOutput:
+      type: object
+      required:
+        - deleted_compliance_external_url_id
+      properties:
+        deleted_compliance_external_url_id:
+          $ref: "#/components/schemas/GID"
+          description: Deleted compliance external URL ID
+
+    CreateCustomDomainInput:
+      type: object
+      required:
+        - organization_id
+        - domain
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        domain:
+          type: string
+          description: Custom domain name
+
+    CreateCustomDomainOutput:
+      type: object
+      required:
+        - custom_domain
+      properties:
+        custom_domain:
+          $ref: "#/components/schemas/CustomDomain"
+
+    DeleteCustomDomainInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+
+    DeleteCustomDomainOutput:
+      type: object
+      required:
+        - deleted_custom_domain
+      properties:
+        deleted_custom_domain:
+          $ref: "#/components/schemas/CustomDomain"
+
 tools:
   - name: listOrganizations
     description: List all organizations the user has access to
@@ -7943,6 +9164,74 @@ tools:
       $ref: "#/components/schemas/DeleteVendorInput"
     outputSchema:
       $ref: "#/components/schemas/DeleteVendorOutput"
+  - name: listVendorContacts
+    description: List all contacts for a vendor
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/ListVendorContactsInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListVendorContactsOutput"
+  - name: addVendorContact
+    description: Add a new contact to a vendor
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/AddVendorContactInput"
+    outputSchema:
+      $ref: "#/components/schemas/AddVendorContactOutput"
+  - name: updateVendorContact
+    description: Update an existing vendor contact
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/UpdateVendorContactInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateVendorContactOutput"
+  - name: deleteVendorContact
+    description: Delete a vendor contact
+    hints:
+      readonly: false
+      destructive: true
+    inputSchema:
+      $ref: "#/components/schemas/DeleteVendorContactInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteVendorContactOutput"
+  - name: listVendorServices
+    description: List all services for a vendor
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/ListVendorServicesInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListVendorServicesOutput"
+  - name: addVendorService
+    description: Add a new service to a vendor
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/AddVendorServiceInput"
+    outputSchema:
+      $ref: "#/components/schemas/AddVendorServiceOutput"
+  - name: updateVendorService
+    description: Update an existing vendor service
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/UpdateVendorServiceInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateVendorServiceOutput"
+  - name: deleteVendorService
+    description: Delete a vendor service
+    hints:
+      readonly: false
+      destructive: true
+    inputSchema:
+      $ref: "#/components/schemas/DeleteVendorServiceInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteVendorServiceOutput"
   - name: listRisks
     description: List all risks for the organization
     hints:
@@ -8158,6 +9447,15 @@ tools:
       $ref: "#/components/schemas/UpdateAssetInput"
     outputSchema:
       $ref: "#/components/schemas/UpdateAssetOutput"
+  - name: deleteAsset
+    description: Delete an asset
+    hints:
+      readonly: false
+      destructive: true
+    inputSchema:
+      $ref: "#/components/schemas/DeleteAssetInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteAssetOutput"
   - name: listData
     description: List all data for the organization
     hints:
@@ -8192,6 +9490,15 @@ tools:
       $ref: "#/components/schemas/UpdateDatumInput"
     outputSchema:
       $ref: "#/components/schemas/UpdateDatumOutput"
+  - name: deleteDatum
+    description: Delete a datum
+    hints:
+      readonly: false
+      destructive: true
+    inputSchema:
+      $ref: "#/components/schemas/DeleteDatumInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteDatumOutput"
   - name: listFindings
     description: List all findings (nonconformities, observations, exceptions) for the organization
     hints:
@@ -8295,6 +9602,15 @@ tools:
       $ref: "#/components/schemas/UpdateObligationInput"
     outputSchema:
       $ref: "#/components/schemas/UpdateObligationOutput"
+  - name: deleteObligation
+    description: Delete an obligation
+    hints:
+      readonly: false
+      destructive: true
+    inputSchema:
+      $ref: "#/components/schemas/DeleteObligationInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteObligationOutput"
   - name: listProcessingActivities
     description: List all processing activities for the organization
     hints:
@@ -8455,6 +9771,15 @@ tools:
       $ref: "#/components/schemas/UpdateAuditInput"
     outputSchema:
       $ref: "#/components/schemas/UpdateAuditOutput"
+  - name: deleteAudit
+    description: Delete an audit
+    hints:
+      readonly: false
+      destructive: true
+    inputSchema:
+      $ref: "#/components/schemas/DeleteAuditInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteAuditOutput"
   - name: getAuditReportUrl
     description: Get a presigned download URL for an audit's attached report. Returns a time-limited URL valid for 15 minutes. The audit must have an attached report.
     hints:
@@ -9214,3 +10539,166 @@ tools:
       $ref: "#/components/schemas/GetDocumentVersionApprovalDecisionInput"
     outputSchema:
       $ref: "#/components/schemas/GetDocumentVersionApprovalDecisionOutput"
+  - name: listRightsRequests
+    description: List all rights requests for the organization
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/ListRightsRequestsInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListRightsRequestsOutput"
+  - name: getRightsRequest
+    description: Get a rights request by ID
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/GetRightsRequestInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetRightsRequestOutput"
+  - name: addRightsRequest
+    description: Add a new rights request to the organization
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/AddRightsRequestInput"
+    outputSchema:
+      $ref: "#/components/schemas/AddRightsRequestOutput"
+  - name: updateRightsRequest
+    description: Update an existing rights request
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/UpdateRightsRequestInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateRightsRequestOutput"
+  - name: deleteRightsRequest
+    description: Delete a rights request
+    hints:
+      readonly: false
+      destructive: true
+    inputSchema:
+      $ref: "#/components/schemas/DeleteRightsRequestInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteRightsRequestOutput"
+  - name: getTrustCenter
+    description: Get the trust center for an organization
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/GetTrustCenterInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetTrustCenterOutput"
+  - name: updateTrustCenter
+    description: Update a trust center's settings
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/UpdateTrustCenterInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateTrustCenterOutput"
+  - name: listTrustCenterReferences
+    description: List all references for a trust center
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/ListTrustCenterReferencesInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListTrustCenterReferencesOutput"
+  - name: addTrustCenterReference
+    description: Add a new reference to a trust center
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/AddTrustCenterReferenceInput"
+    outputSchema:
+      $ref: "#/components/schemas/AddTrustCenterReferenceOutput"
+  - name: updateTrustCenterReference
+    description: Update an existing trust center reference
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/UpdateTrustCenterReferenceInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateTrustCenterReferenceOutput"
+  - name: deleteTrustCenterReference
+    description: Delete a trust center reference
+    hints:
+      readonly: false
+      destructive: true
+    inputSchema:
+      $ref: "#/components/schemas/DeleteTrustCenterReferenceInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteTrustCenterReferenceOutput"
+  - name: listTrustCenterFiles
+    description: List all files for the trust center
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/ListTrustCenterFilesInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListTrustCenterFilesOutput"
+  - name: deleteTrustCenterFile
+    description: Delete a trust center file
+    hints:
+      readonly: false
+      destructive: true
+    inputSchema:
+      $ref: "#/components/schemas/DeleteTrustCenterFileInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteTrustCenterFileOutput"
+  - name: listComplianceExternalURLs
+    description: List all compliance external URLs for a trust center
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/ListComplianceExternalURLsInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListComplianceExternalURLsOutput"
+  - name: addComplianceExternalURL
+    description: Add a new compliance external URL to a trust center
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/AddComplianceExternalURLInput"
+    outputSchema:
+      $ref: "#/components/schemas/AddComplianceExternalURLOutput"
+  - name: updateComplianceExternalURL
+    description: Update an existing compliance external URL
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/UpdateComplianceExternalURLInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateComplianceExternalURLOutput"
+  - name: deleteComplianceExternalURL
+    description: Delete a compliance external URL
+    hints:
+      readonly: false
+      destructive: true
+    inputSchema:
+      $ref: "#/components/schemas/DeleteComplianceExternalURLInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteComplianceExternalURLOutput"
+  - name: createCustomDomain
+    description: Create a custom domain for an organization
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/CreateCustomDomainInput"
+    outputSchema:
+      $ref: "#/components/schemas/CreateCustomDomainOutput"
+  - name: deleteCustomDomain
+    description: Delete the custom domain for an organization
+    hints:
+      readonly: false
+      destructive: true
+    inputSchema:
+      $ref: "#/components/schemas/DeleteCustomDomainInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteCustomDomainOutput"

@@ -77,6 +77,11 @@ export class Probo implements INodeType {
 				noDataExpression: true,
 				options: [
 					{
+						name: 'Access Review',
+						value: 'accessReview',
+						description: 'Manage access review campaigns',
+					},
+					{
 						name: 'Asset',
 						value: 'asset',
 						description: 'Manage assets',
@@ -85,6 +90,11 @@ export class Probo implements INodeType {
 						name: 'Audit',
 						value: 'audit',
 						description: 'Manage audits',
+					},
+					{
+						name: 'Audit Log',
+						value: 'auditLog',
+						description: 'View audit log entries',
 					},
 					{
 						name: 'Control',
@@ -102,9 +112,24 @@ export class Probo implements INodeType {
 						description: 'Manage documents, versions, and signatures',
 					},
 					{
+						name: 'DPIA',
+						value: 'dpia',
+						description: 'Manage data protection impact assessments',
+					},
+					{
+						name: 'Evidence',
+						value: 'evidence',
+						description: 'Manage evidences',
+					},
+					{
 						name: 'Execute',
 						value: 'execute',
 						description: 'Execute a GraphQL query or mutation',
+					},
+					{
+						name: 'Finding',
+						value: 'finding',
+						description: 'Manage findings',
 					},
 					{
 						name: 'Framework',
@@ -117,9 +142,29 @@ export class Probo implements INodeType {
 						description: 'Manage measures',
 					},
 					{
+						name: 'Obligation',
+						value: 'obligation',
+						description: 'Manage obligations',
+					},
+					{
 						name: 'Organization',
 						value: 'organization',
 						description: 'Manage organizations',
+					},
+					{
+						name: 'Organization Context',
+						value: 'organizationContext',
+						description: 'Manage organization context',
+					},
+					{
+						name: 'Processing Activity',
+						value: 'processingActivity',
+						description: 'Manage processing activities',
+					},
+					{
+						name: 'Rights Request',
+						value: 'rightsRequest',
+						description: 'Manage rights requests',
 					},
 					{
 						name: 'Risk',
@@ -127,9 +172,29 @@ export class Probo implements INodeType {
 						description: 'Manage risks',
 					},
 					{
+						name: 'Snapshot',
+						value: 'snapshot',
+						description: 'Manage snapshots',
+					},
+					{
 						name: 'Statement of Applicability',
 						value: 'statementOfApplicability',
 						description: 'Manage statements of applicability',
+					},
+					{
+						name: 'Task',
+						value: 'task',
+						description: 'Manage tasks',
+					},
+					{
+						name: 'TIA',
+						value: 'tia',
+						description: 'Manage transfer impact assessments',
+					},
+					{
+						name: 'Trust Center',
+						value: 'trustCenter',
+						description: 'Manage trust center',
 					},
 					{
 						name: 'User',

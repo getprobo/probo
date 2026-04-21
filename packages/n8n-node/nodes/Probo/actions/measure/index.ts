@@ -18,6 +18,8 @@ import * as updateOp from './update.operation';
 import * as deleteOp from './delete.operation';
 import * as getOp from './get.operation';
 import * as getAllOp from './getAll.operation';
+import * as linkDocumentOp from './linkDocument.operation';
+import * as unlinkDocumentOp from './unlinkDocument.operation';
 
 export const description: INodeProperties[] = [
 	{
@@ -56,6 +58,18 @@ export const description: INodeProperties[] = [
 				action: 'Get many measures',
 			},
 			{
+				name: 'Link Document',
+				value: 'linkDocument',
+				description: 'Link a document to a measure',
+				action: 'Link a document to a measure',
+			},
+			{
+				name: 'Unlink Document',
+				value: 'unlinkDocument',
+				description: 'Unlink a document from a measure',
+				action: 'Unlink a document from a measure',
+			},
+			{
 				name: 'Update',
 				value: 'update',
 				description: 'Update an existing measure',
@@ -69,6 +83,16 @@ export const description: INodeProperties[] = [
 	...deleteOp.description,
 	...getOp.description,
 	...getAllOp.description,
+	...linkDocumentOp.description,
+	...unlinkDocumentOp.description,
 ];
 
-export { createOp as create, updateOp as update, deleteOp as delete, getOp as get, getAllOp as getAll };
+export {
+	createOp as create,
+	updateOp as update,
+	deleteOp as delete,
+	getOp as get,
+	getAllOp as getAll,
+	linkDocumentOp as linkDocument,
+	unlinkDocumentOp as unlinkDocument,
+};

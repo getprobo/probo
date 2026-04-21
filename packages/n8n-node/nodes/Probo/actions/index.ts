@@ -13,18 +13,31 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 import type { IExecuteFunctions, INodeExecutionData, INodeProperties } from 'n8n-workflow';
+import * as accessReview from './accessReview';
 import * as asset from './asset';
 import * as audit from './audit';
+import * as auditLog from './auditLog';
 import * as control from './control';
 import * as datum from './datum';
 import * as document from './document';
+import * as dpia from './dpia';
+import * as evidence from './evidence';
 import * as execute from './execute';
+import * as finding from './finding';
 import * as framework from './framework';
 import * as measure from './measure';
+import * as obligation from './obligation';
 import * as organization from './organization';
+import * as organizationContext from './organizationContext';
+import * as processingActivity from './processingActivity';
+import * as rightsRequest from './rightsRequest';
 import * as user from './user';
 import * as risk from './risk';
+import * as snapshot from './snapshot';
 import * as statementOfApplicability from './statementOfApplicability';
+import * as task from './task';
+import * as tia from './tia';
+import * as trustCenter from './trustCenter';
 import * as vendor from './vendor';
 import * as webhook from './webhook';
 
@@ -39,18 +52,31 @@ export interface OperationModule {
 }
 
 export const resources: Record<string, ResourceModule> = {
+	accessReview: accessReview as ResourceModule,
 	asset: asset as ResourceModule,
 	audit: audit as ResourceModule,
+	auditLog: auditLog as ResourceModule,
 	control: control as ResourceModule,
 	datum: datum as ResourceModule,
 	document: document as ResourceModule,
+	dpia: dpia as ResourceModule,
+	evidence: evidence as ResourceModule,
 	execute: execute as ResourceModule,
+	finding: finding as ResourceModule,
 	framework: framework as ResourceModule,
 	measure: measure as ResourceModule,
+	obligation: obligation as ResourceModule,
 	organization: organization as ResourceModule,
+	organizationContext: organizationContext as ResourceModule,
+	processingActivity: processingActivity as ResourceModule,
+	rightsRequest: rightsRequest as ResourceModule,
 	user: user as ResourceModule,
 	risk: risk as ResourceModule,
+	snapshot: snapshot as ResourceModule,
 	statementOfApplicability: statementOfApplicability as ResourceModule,
+	task: task as ResourceModule,
+	tia: tia as ResourceModule,
+	trustCenter: trustCenter as ResourceModule,
 	vendor: vendor as ResourceModule,
 	webhook: webhook as ResourceModule,
 };
