@@ -122,7 +122,7 @@ export class ProboThemedBanner extends HTMLElement {
     });
 
     this.shadow.querySelector("[data-action=back]")?.addEventListener("click", () => {
-      root.setState("banner");
+      root.setState(root.client.hasConsent ? "hidden" : "banner");
     });
 
     this.shadow.addEventListener("click", (e: Event) => {
