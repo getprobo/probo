@@ -12,7 +12,11 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { activateElements, observeAndActivate } from "./activation";
+import {
+  activateElements,
+  deactivateElements,
+  observeAndActivate,
+} from "./activation";
 import { getConsentCookie, setConsentCookie } from "./cookie";
 import { NotFoundError } from "./errors";
 import { fetchJSON } from "./http";
@@ -236,6 +240,12 @@ export class CookieBannerClient {
   }
 
   private activate(consentData: Record<string, boolean>): void {
+    const categoryCookies: Record<string, string[]> = {};
+    for (const cat of this.config.categories) {
+      categoryCookies[cat.name] = cat.cookies.map((c) => c.name);
+    }
+
+    deactivateElements(consentData, categoryCookies);
     activateElements(consentData);
     if (this.observer) {
       this.observer.disconnect();

@@ -31,6 +31,7 @@ const ACTIVATABLE_TAGS = new Set([
 function activateScript(el: HTMLScriptElement): void {
   const replacement = document.createElement("script");
   const originalType = el.getAttribute("data-type");
+  const category = el.getAttribute(ATTR_CATEGORY);
 
   for (const attr of el.attributes) {
     if (
@@ -50,7 +51,7 @@ function activateScript(el: HTMLScriptElement): void {
   if (originalType) {
     replacement.setAttribute("type", originalType);
   }
-  replacement.setAttribute(ATTR_ACTIVATED, "");
+  replacement.setAttribute(ATTR_ACTIVATED, category || "");
 
   if (el.textContent) {
     replacement.textContent = el.textContent;
@@ -60,6 +61,8 @@ function activateScript(el: HTMLScriptElement): void {
 }
 
 function activateElement(el: Element): void {
+  const category = el.getAttribute(ATTR_CATEGORY);
+
   const src = el.getAttribute(ATTR_SRC);
   if (src) {
     el.setAttribute("src", src);
@@ -73,7 +76,7 @@ function activateElement(el: Element): void {
   }
 
   el.removeAttribute(ATTR_CATEGORY);
-  el.setAttribute(ATTR_ACTIVATED, "");
+  el.setAttribute(ATTR_ACTIVATED, category || "");
 }
 
 function tryActivate(
@@ -97,6 +100,107 @@ function tryActivate(
     activateScript(el);
   } else {
     activateElement(el);
+  }
+}
+
+function deactivateScript(el: HTMLScriptElement): void {
+  const category = el.getAttribute(ATTR_ACTIVATED);
+  const currentType = el.getAttribute("type");
+  const replacement = document.createElement("script");
+
+  for (const attr of el.attributes) {
+    if (
+      attr.name === ATTR_ACTIVATED ||
+      attr.name === "type" ||
+      attr.name === "src"
+    ) {
+      continue;
+    }
+    replacement.setAttribute(attr.name, attr.value);
+  }
+
+  const src = el.getAttribute("src");
+  if (src) {
+    replacement.setAttribute(ATTR_SRC, src);
+  }
+
+  if (currentType) {
+    replacement.setAttribute("data-type", currentType);
+  }
+  replacement.setAttribute("type", "text/plain");
+
+  if (category) {
+    replacement.setAttribute(ATTR_CATEGORY, category);
+  }
+
+  if (el.textContent) {
+    replacement.textContent = el.textContent;
+  }
+
+  el.parentNode!.replaceChild(replacement, el);
+}
+
+function deactivateElement(el: Element): void {
+  const category = el.getAttribute(ATTR_ACTIVATED);
+
+  const src = el.getAttribute("src");
+  if (src) {
+    el.setAttribute(ATTR_SRC, src);
+    el.removeAttribute("src");
+  }
+
+  const href = el.getAttribute("href");
+  if (href) {
+    el.setAttribute(ATTR_HREF, href);
+    el.removeAttribute("href");
+  }
+
+  if (category) {
+    el.setAttribute(ATTR_CATEGORY, category);
+  }
+  el.removeAttribute(ATTR_ACTIVATED);
+}
+
+function removeCookies(names: string[]): void {
+  const parts = location.hostname.split(".");
+  const rootDomain =
+    parts.length > 1 ? "." + parts.slice(-2).join(".") : location.hostname;
+
+  for (const name of names) {
+    document.cookie = `${name}=; path=/; max-age=0`;
+    document.cookie = `${name}=; path=/; domain=${rootDomain}; max-age=0`;
+  }
+}
+
+export function deactivateElements(
+  consentData: Record<string, boolean>,
+  categoryCookies: Record<string, string[]>,
+): void {
+  const elements = document.querySelectorAll(`[${ATTR_ACTIVATED}]`);
+  const cookiesToRemove = new Set<string>();
+
+  for (const el of elements) {
+    const category = el.getAttribute(ATTR_ACTIVATED);
+    if (!category || consentData[category]) {
+      continue;
+    }
+
+    if (el instanceof HTMLScriptElement) {
+      deactivateScript(el);
+    } else {
+      deactivateElement(el);
+    }
+
+    const cookies = categoryCookies[category];
+    if (cookies) {
+      for (const name of cookies) {
+        cookiesToRemove.add(name);
+      }
+    }
+  }
+
+  if (cookiesToRemove.size > 0) {
+    removeCookies([...cookiesToRemove]);
   }
 }
 
