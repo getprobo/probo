@@ -117,12 +117,7 @@ func (r *assetConnectionResolver) TotalCount(ctx context.Context, obj *types.Ass
 
 	switch obj.Resolver.(type) {
 	case *organizationResolver:
-		assetFilter := coredata.NewAssetFilter(nil)
-		if obj.Filter != nil {
-			assetFilter = coredata.NewAssetFilter(&obj.Filter.SnapshotID)
-		}
-
-		count, err := prb.Assets.CountForOrganizationID(ctx, obj.ParentID, assetFilter)
+		count, err := prb.Assets.CountForOrganizationID(ctx, obj.ParentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count assets", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
@@ -418,6 +413,29 @@ func (r *mutationResolver) PublishDataList(ctx context.Context, input types.Publ
 	}
 
 	return &types.PublishDataListPayload{
+		DocumentEdge:        types.NewDocumentEdge(document, coredata.DocumentOrderFieldCreatedAt),
+		DocumentVersionEdge: types.NewDocumentVersionEdge(documentVersion, coredata.DocumentVersionOrderFieldCreatedAt),
+	}, nil
+}
+
+// PublishAssetList is the resolver for the publishAssetList field.
+func (r *mutationResolver) PublishAssetList(ctx context.Context, input types.PublishAssetListInput) (*types.PublishAssetListPayload, error) {
+	if err := r.authorize(ctx, input.OrganizationID, probo.ActionAssetPublish); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
+
+	document, documentVersion, err := prb.GeneratedDocuments.PublishAssetList(ctx, input.OrganizationID, input.ApproverIds)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
+			return nil, gqlutils.Conflict(ctx, err)
+		}
+		r.logger.ErrorCtx(ctx, "cannot publish asset list", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.PublishAssetListPayload{
 		DocumentEdge:        types.NewDocumentEdge(document, coredata.DocumentOrderFieldCreatedAt),
 		DocumentVersionEdge: types.NewDocumentVersionEdge(documentVersion, coredata.DocumentVersionOrderFieldCreatedAt),
 	}, nil

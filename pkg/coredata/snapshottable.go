@@ -28,8 +28,6 @@ type Snapshottable interface {
 
 func GetSnapshottable(snapshotType SnapshotsType) (Snapshottable, error) {
 	switch snapshotType {
-	case SnapshotsTypeAssets:
-		return Assets{}, nil
 	case SnapshotsTypeRisks:
 		return Risks{}, nil
 	case SnapshotsTypeFindings:

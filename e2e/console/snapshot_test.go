@@ -104,7 +104,7 @@ func TestSnapshot_Delete(t *testing.T) {
 		"input": map[string]any{
 			"organizationId": owner.GetOrganizationID().String(),
 			"name":           fmt.Sprintf("Snapshot to Delete %d", time.Now().UnixNano()),
-			"type":           "ASSETS",
+			"type":           "VENDORS",
 		},
 	}, &createResult)
 	require.NoError(t, err)
@@ -140,7 +140,7 @@ func TestSnapshot_List(t *testing.T) {
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
 	// Create multiple snapshots
-	snapshotTypes := []string{"RISKS", "VENDORS", "ASSETS"}
+	snapshotTypes := []string{"RISKS", "VENDORS"}
 	for i, snapshotType := range snapshotTypes {
 		query := `
 			mutation CreateSnapshot($input: CreateSnapshotInput!) {
@@ -219,7 +219,7 @@ func TestSnapshot_Types(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
-	snapshotTypes := []string{"RISKS", "VENDORS", "ASSETS"}
+	snapshotTypes := []string{"RISKS", "VENDORS"}
 
 	for _, snapshotType := range snapshotTypes {
 		t.Run(snapshotType, func(t *testing.T) {

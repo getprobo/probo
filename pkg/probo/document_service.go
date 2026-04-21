@@ -1150,6 +1150,10 @@ func (s *DocumentService) SoftDelete(
 	return s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
+			if err := s.clearDocumentReferences(ctx, tx, []gid.GID{documentID}); err != nil {
+				return err
+			}
+
 			return document.SoftDelete(ctx, tx, s.svc.scope)
 		},
 	)
@@ -1168,6 +1172,10 @@ func (s *DocumentService) BulkSoftDelete(
 	return s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
+			if err := s.clearDocumentReferences(ctx, tx, documentIDs); err != nil {
+				return err
+			}
+
 			return documents.BulkSoftDelete(ctx, tx, s.svc.scope)
 		},
 	)
@@ -1201,6 +1209,10 @@ func (s *DocumentService) BulkArchive(
 				return fmt.Errorf("cannot delete measure mappings: %w", err)
 			}
 
+			if err := s.clearDocumentReferences(ctx, tx, documentIDs); err != nil {
+				return err
+			}
+
 			return documents.BulkArchive(ctx, tx, s.svc.scope)
 		},
 	)
@@ -1222,6 +1234,33 @@ func (s *DocumentService) BulkUnarchive(
 			return documents.BulkUnarchive(ctx, conn, s.svc.scope)
 		},
 	)
+}
+
+// clearDocumentReferences nullifies references to the given document IDs in
+// generated_documents and statements_of_applicability. This must be called
+// inside a transaction before soft-deleting or archiving documents, because
+// those operations are UPDATEs and do not trigger ON DELETE SET NULL.
+func (s *DocumentService) clearDocumentReferences(
+	ctx context.Context,
+	tx pg.Tx,
+	documentIDs []gid.GID,
+) error {
+	datum := coredata.Datum{}
+	if err := datum.ClearGeneratedDocumentID(ctx, tx, documentIDs); err != nil {
+		return err
+	}
+
+	asset := coredata.Asset{}
+	if err := asset.ClearGeneratedDocumentID(ctx, tx, documentIDs); err != nil {
+		return err
+	}
+
+	soa := coredata.StatementOfApplicability{}
+	if err := soa.ClearDocumentIDByDocumentIDs(ctx, tx, documentIDs); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (s *DocumentService) RequestExport(
@@ -1847,6 +1886,10 @@ func (s *DocumentService) Archive(
 			measureDocument := coredata.MeasureDocument{}
 			if err := measureDocument.DeleteByDocumentIDs(ctx, tx, s.svc.scope, []gid.GID{documentID}); err != nil {
 				return fmt.Errorf("cannot delete measure mappings: %w", err)
+			}
+
+			if err := s.clearDocumentReferences(ctx, tx, []gid.GID{documentID}); err != nil {
+				return err
 			}
 
 			document.Status = coredata.DocumentStatusArchived

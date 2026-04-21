@@ -18,6 +18,7 @@ import (
 	"github.com/spf13/cobra"
 	accessreview "go.probo.inc/probo/pkg/cmd/access-review"
 	cmdapi "go.probo.inc/probo/pkg/cmd/api"
+	"go.probo.inc/probo/pkg/cmd/asset"
 	"go.probo.inc/probo/pkg/cmd/auditlog"
 	"go.probo.inc/probo/pkg/cmd/auth"
 	"go.probo.inc/probo/pkg/cmd/browse"
@@ -71,6 +72,7 @@ func NewCmdRoot(f *cmdutil.Factory) *cobra.Command {
 
 	cmd.AddCommand(accessreview.NewCmdAccessReview(f))
 	cmd.AddCommand(cmdapi.NewCmdAPI(f))
+	cmd.AddCommand(asset.NewCmdAsset(f))
 	cmd.AddCommand(auditlog.NewCmdAuditLog(f))
 	cmd.AddCommand(auth.NewCmdAuth(f))
 	cmd.AddCommand(browse.NewCmdBrowse(f))

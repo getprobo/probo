@@ -30,8 +30,6 @@ import (
 type (
 	Asset struct {
 		ID              gid.GID   `db:"id"`
-		SnapshotID      *gid.GID  `db:"snapshot_id"`
-		SourceID        *gid.GID  `db:"source_id"`
 		Name            string    `db:"name"`
 		Amount          int       `db:"amount"`
 		OwnerID         gid.GID   `db:"owner_profile_id"`
@@ -80,8 +78,6 @@ func (a *Asset) LoadByID(
 	q := `
 SELECT
 	id,
-	snapshot_id,
-	source_id,
 	name,
 	organization_id,
 	owner_profile_id,
@@ -95,6 +91,7 @@ FROM
 WHERE
 	%s
 	AND id = @asset_id
+	AND snapshot_id IS NULL
 LIMIT 1;
 `
 
@@ -130,8 +127,6 @@ func (a *Asset) LoadByOwnerID(
 	q := `
 SELECT
 	id,
-	snapshot_id,
-	source_id,
 	name,
 	organization_id,
 	owner_profile_id,
@@ -145,6 +140,7 @@ FROM
 WHERE
 	%s
 	AND owner_profile_id = @owner_profile_id
+	AND snapshot_id IS NULL
 LIMIT 1;
 `
 
@@ -177,7 +173,6 @@ func (a *Assets) CountByOrganizationID(
 	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
-	filter *AssetFilter,
 ) (int, error) {
 	q := `
 SELECT
@@ -187,14 +182,13 @@ FROM
 WHERE
 	%s
 	AND organization_id = @organization_id
-	AND %s
+	AND snapshot_id IS NULL
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"organization_id": organizationID}
 	maps.Copy(args, scope.SQLArguments())
-	maps.Copy(args, filter.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)
 
@@ -212,13 +206,10 @@ func (a *Assets) LoadByOrganizationID(
 	scope Scoper,
 	organizationID gid.GID,
 	cursor *page.Cursor[AssetOrderField],
-	filter *AssetFilter,
 ) error {
 	q := `
 SELECT
 	id,
-	snapshot_id,
-	source_id,
 	name,
 	organization_id,
 	owner_profile_id,
@@ -232,16 +223,62 @@ FROM
 WHERE
 	%s
 	AND organization_id = @organization_id
-	AND %s
+	AND snapshot_id IS NULL
 	AND %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"organization_id": organizationID}
 	maps.Copy(args, scope.SQLArguments())
-	maps.Copy(args, filter.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query assets: %w", err)
+	}
+
+	assets, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Asset])
+	if err != nil {
+		return fmt.Errorf("cannot collect assets: %w", err)
+	}
+
+	*a = assets
+
+	return nil
+}
+
+func (a *Assets) LoadAllByOrganizationID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	organizationID gid.GID,
+) error {
+	q := `
+SELECT
+	id,
+	name,
+	organization_id,
+	owner_profile_id,
+	amount,
+	asset_type,
+	data_types_stored,
+	created_at,
+	updated_at
+FROM
+	assets
+WHERE
+	%s
+	AND organization_id = @organization_id
+	AND snapshot_id IS NULL
+ORDER BY
+	name ASC
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"organization_id": organizationID}
+	maps.Copy(args, scope.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -330,8 +367,6 @@ WHERE
 	AND snapshot_id IS NULL
 RETURNING
 	id,
-	snapshot_id,
-	source_id,
 	name,
 	organization_id,
 	owner_profile_id,
@@ -396,75 +431,108 @@ WHERE
 	return nil
 }
 
-func (assets Assets) Snapshot(ctx context.Context, conn pg.Tx, scope Scoper, organizationID, snapshotID gid.GID) error {
-	snapshotters := []AssetSnapshotter{Assets{}, Vendors{}, AssetVendors{}}
+func (a Asset) GetGeneratedDocumentID(
+	ctx context.Context,
+	conn pg.Querier,
+	organizationID gid.GID,
+) (*gid.GID, error) {
+	var documentID *gid.GID
 
-	for _, snapshotter := range snapshotters {
-		if err := snapshotter.InsertAssetSnapshots(ctx, conn, scope, organizationID, snapshotID); err != nil {
-			return fmt.Errorf("cannot create asset snapshots: (%T) %w", snapshotter, err)
-		}
+	err := conn.QueryRow(
+		ctx,
+		`
+SELECT
+	asset_list_document_id
+FROM
+	generated_documents
+WHERE
+	organization_id = @organization_id
+`,
+		pgx.NamedArgs{"organization_id": organizationID},
+	).Scan(&documentID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("cannot get asset list document ID: %w", err)
+	}
+
+	return documentID, nil
+}
+
+func (a Asset) UpsertGeneratedDocumentID(
+	ctx context.Context,
+	conn pg.Tx,
+	organizationID gid.GID,
+	tenantID gid.TenantID,
+	documentID gid.GID,
+) error {
+	now := time.Now()
+
+	_, err := conn.Exec(
+		ctx,
+		`
+INSERT INTO generated_documents (
+	organization_id,
+	tenant_id,
+	asset_list_document_id,
+	created_at,
+	updated_at
+) VALUES (
+	@organization_id,
+	@tenant_id,
+	@asset_list_document_id,
+	@created_at,
+	@updated_at
+)
+ON CONFLICT (organization_id) DO UPDATE
+SET
+	asset_list_document_id = @asset_list_document_id,
+	updated_at = @updated_at
+`,
+		pgx.NamedArgs{
+			"organization_id":        organizationID,
+			"tenant_id":              tenantID,
+			"asset_list_document_id": documentID,
+			"created_at":             now,
+			"updated_at":             now,
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("cannot upsert asset list document ID: %w", err)
 	}
 
 	return nil
 }
 
-func (assets Assets) InsertAssetSnapshots(
+func (a Asset) ClearGeneratedDocumentID(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
-	organizationID gid.GID,
-	snapshotID gid.GID,
+	documentIDs []gid.GID,
 ) error {
-	query := `
-WITH
-	source_assets AS (
-		SELECT *
-		FROM assets
-		WHERE %s AND organization_id = @organization_id AND snapshot_id IS NULL
-	)
-INSERT INTO assets (
-	tenant_id,
-	id,
-	snapshot_id,
-	source_id,
-	name,
-	organization_id,
-	owner_profile_id,
-	amount,
-	asset_type,
-	data_types_stored,
-	created_at,
-	updated_at
-)
-SELECT
-	@tenant_id,
-	generate_gid(decode_base64_unpadded(@tenant_id), @asset_entity_type),
-	@snapshot_id,
-	a.id,
-	a.name,
-	a.organization_id,
-	a.owner_profile_id,
-	a.amount,
-	a.asset_type,
-	a.data_types_stored,
-	a.created_at,
-	a.updated_at
-FROM source_assets a
-	`
-
-	query = fmt.Sprintf(query, scope.SQLFragment())
-
-	args := pgx.StrictNamedArgs{
-		"tenant_id":         scope.GetTenantID(),
-		"snapshot_id":       snapshotID,
-		"organization_id":   organizationID,
-		"asset_entity_type": AssetEntityType,
+	ids := make([]string, len(documentIDs))
+	for i, id := range documentIDs {
+		ids[i] = id.String()
 	}
-	maps.Copy(args, scope.SQLArguments())
 
-	_, err := conn.Exec(ctx, query, args)
+	_, err := conn.Exec(
+		ctx,
+		`
+UPDATE
+	generated_documents
+SET
+	asset_list_document_id = NULL,
+	updated_at = @now
+WHERE
+	asset_list_document_id = ANY(@ids)
+`,
+		pgx.NamedArgs{
+			"ids": ids,
+			"now": time.Now(),
+		},
+	)
 	if err != nil {
-		return fmt.Errorf("cannot insert asset snapshots: %w", err)
+		return fmt.Errorf("cannot clear asset list document references: %w", err)
 	}
 
 	return nil

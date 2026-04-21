@@ -16,7 +16,6 @@ import { faviconUrl, getAssetTypeVariant } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import { Avatar, Badge, Tbody, Td, Th, Thead, Tr } from "@probo/ui";
 import type { usePaginationFragmentHookType } from "react-relay/relay-hooks/usePaginationFragment";
-import { useParams } from "react-router";
 import type { OperationType } from "relay-runtime";
 
 import type {
@@ -66,17 +65,10 @@ export function ReadOnlyAssetsTable(props: Props) {
 function AssetRow({ entry }: { entry: AssetEntry }) {
   const organizationId = useOrganizationId();
   const { __ } = useTranslate();
-  const { snapshotId } = useParams<{ snapshotId?: string }>();
   const vendors = entry.vendors?.edges.map(edge => edge.node) ?? [];
 
   return (
-    <Tr
-      to={
-        snapshotId
-          ? `/organizations/${organizationId}/snapshots/${snapshotId}/assets/${entry.id}`
-          : `/organizations/${organizationId}/assets/${entry.id}`
-      }
-    >
+    <Tr to={`/organizations/${organizationId}/assets/${entry.id}`}>
       <Td>{entry.name}</Td>
       <Td>
         <Badge variant={getAssetTypeVariant(entry.assetType)}>

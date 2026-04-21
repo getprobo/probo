@@ -121,13 +121,14 @@ type Organization implements Node {
         orderBy: AccessReviewCampaignOrder
     ): AccessReviewCampaignConnection! @goField(forceResolver: true)
 
+    assetListDocument: Document @goField(forceResolver: true)
+
     assets(
         first: Int
         after: CursorKey
         last: Int
         before: CursorKey
         orderBy: AssetOrder
-        filter: AssetFilter = { snapshotId: null }
     ): AssetConnection! @goField(forceResolver: true)
 
     dataListDocument: Document @goField(forceResolver: true)

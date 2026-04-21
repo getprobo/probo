@@ -20,7 +20,7 @@ import (
 )
 
 func NewAsset(a *coredata.Asset) *Asset {
-	asset := &Asset{
+	return &Asset{
 		ID:              a.ID,
 		Name:            a.Name,
 		Amount:          a.Amount,
@@ -31,13 +31,6 @@ func NewAsset(a *coredata.Asset) *Asset {
 		CreatedAt:       a.CreatedAt,
 		UpdatedAt:       a.UpdatedAt,
 	}
-
-	if a.SnapshotID != nil {
-		s := a.SnapshotID.String()
-		asset.SnapshotID = &s
-	}
-
-	return asset
 }
 
 func NewListAssetsOutput(assetPage *page.Page[*coredata.Asset, coredata.AssetOrderField]) ListAssetsOutput {

@@ -18,16 +18,28 @@ import { useConfirm } from "@probo/ui";
 import { useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 
-import { useMutationWithToasts } from "../useMutationWithToasts";
+import type {
+  AssetGraphCreateMutation,
+  AssetType,
+} from "#/__generated__/core/AssetGraphCreateMutation.graphql";
+import type { AssetGraphDeleteMutation } from "#/__generated__/core/AssetGraphDeleteMutation.graphql";
+import type { AssetGraphUpdateMutation } from "#/__generated__/core/AssetGraphUpdateMutation.graphql";
 
 /* eslint-disable relay/unused-fields, relay/must-colocate-fragment-spreads */
 
 export const assetsQuery = graphql`
-  query AssetGraphListQuery($organizationId: ID!, $snapshotId: ID) {
+  query AssetGraphListQuery($organizationId: ID!) {
     node(id: $organizationId) {
       ... on Organization {
         canCreateAsset: permission(action: "core:asset:create")
-        ...AssetsPageFragment @arguments(snapshotId: $snapshotId)
+        canPublishAssets: permission(action: "core:asset:publish")
+        assetListDocument {
+          id
+          defaultApprovers {
+            id
+          }
+        }
+        ...AssetsPageFragment
       }
     }
   }
@@ -38,7 +50,6 @@ export const assetNodeQuery = graphql`
     node(id: $assetId) {
       ... on Asset {
         id
-        snapshotId
         name
         amount
         assetType
@@ -75,7 +86,6 @@ export const createAssetMutation = graphql`
       assetEdge @appendEdge(connections: $connections) {
         node {
           id
-          snapshotId
           name
           amount
           assetType
@@ -107,7 +117,6 @@ export const updateAssetMutation = graphql`
     updateAsset(input: $input) {
       asset {
         id
-        snapshotId
         name
         amount
         assetType
@@ -146,8 +155,7 @@ export const useDeleteAsset = (
   asset: { id?: string; name?: string },
   connectionId: string,
 ) => {
-  // eslint-disable-next-line relay/generated-typescript-types
-  const [mutate] = useMutation(deleteAssetMutation);
+  const [mutate] = useMutation<AssetGraphDeleteMutation>(deleteAssetMutation);
   const confirm = useConfirm();
   const { __ } = useTranslate();
 
@@ -160,7 +168,7 @@ export const useDeleteAsset = (
         promisifyMutation(mutate)({
           variables: {
             input: {
-              assetId: asset.id,
+              assetId: asset.id!,
             },
             connections: [connectionId],
           },
@@ -178,15 +186,14 @@ export const useDeleteAsset = (
 };
 
 export const useCreateAsset = (connectionId: string) => {
-  // eslint-disable-next-line relay/generated-typescript-types
-  const [mutate, isMutating] = useMutation(createAssetMutation);
+  const [mutate, isMutating] = useMutation<AssetGraphCreateMutation>(createAssetMutation);
   const { __ } = useTranslate();
 
   return [
     (input: {
       name: string;
       amount: number;
-      assetType: string;
+      assetType: AssetType;
       ownerId: string;
       organizationId: string;
       vendorIds?: string[];
@@ -228,16 +235,13 @@ export const useCreateAsset = (connectionId: string) => {
 
 export const useUpdateAsset = () => {
   const { __ } = useTranslate();
-  const [mutate] = useMutationWithToasts(updateAssetMutation, {
-    successMessage: __("Asset updated successfully"),
-    errorMessage: __("Failed to update asset"),
-  });
+  const [mutate] = useMutation<AssetGraphUpdateMutation>(updateAssetMutation);
 
   return (input: {
     id: string;
     name?: string;
     amount?: number;
-    assetType?: string;
+    assetType?: AssetType;
     dataTypesStored?: string;
     ownerId?: string;
     vendorIds?: string[];
@@ -246,7 +250,7 @@ export const useUpdateAsset = () => {
       return alert(__("Failed to update asset: asset ID is required"));
     }
 
-    return mutate({
+    return promisifyMutation(mutate)({
       variables: {
         input,
       },

@@ -313,3 +313,36 @@ WHERE
 
 	return nil
 }
+
+func (s StatementOfApplicability) ClearDocumentIDByDocumentIDs(
+	ctx context.Context,
+	conn pg.Tx,
+	documentIDs []gid.GID,
+) error {
+	ids := make([]string, len(documentIDs))
+	for i, id := range documentIDs {
+		ids[i] = id.String()
+	}
+
+	_, err := conn.Exec(
+		ctx,
+		`
+UPDATE
+	statements_of_applicability
+SET
+	document_id = NULL,
+	updated_at = @now
+WHERE
+	document_id = ANY(@ids)
+`,
+		pgx.NamedArgs{
+			"ids": ids,
+			"now": time.Now(),
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("cannot clear statement of applicability document references: %w", err)
+	}
+
+	return nil
+}

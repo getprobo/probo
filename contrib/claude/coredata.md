@@ -155,32 +155,30 @@ Map `pgx.ErrNoRows` to `ErrResourceNotFound`. Check unique constraint violations
 Filters implement `SQLFragment() string` and `SQLArguments() pgx.NamedArgs`. Use double pointers for three-state filtering: `nil` = no filter, `*nil` = IS NULL, `*val` = equals.
 
 ```go
-type AssetFilter struct {
-    snapshotID **gid.GID
+type CookieBannerFilter struct {
+    state *CookieBannerState
 }
 
-func NewAssetFilter(snapshotID **gid.GID) *AssetFilter {
-    return &AssetFilter{snapshotID: snapshotID}
+func NewCookieBannerFilter(state *CookieBannerState) *CookieBannerFilter {
+    return &CookieBannerFilter{state: state}
 }
 
-func (f *AssetFilter) SQLFragment() string {
-    if f.snapshotID == nil {
-        return "TRUE"
-    }
-
-    if *f.snapshotID == nil {
-        return "snapshot_id IS NULL"
-    }
-
-    return "snapshot_id = @filter_snapshot_id"
+func (f *CookieBannerFilter) SQLFragment() string {
+    return `(
+        CASE
+            WHEN @filter_state::text IS NOT NULL THEN
+                state = @filter_state::cookie_banner_state
+            ELSE TRUE
+        END
+    )`
 }
 
-func (f *AssetFilter) SQLArguments() pgx.NamedArgs {
-    if f.snapshotID == nil || *f.snapshotID == nil {
-        return pgx.NamedArgs{}
+func (f *CookieBannerFilter) SQLArguments() pgx.StrictNamedArgs {
+    args := pgx.StrictNamedArgs{"filter_state": nil}
+    if f.state != nil {
+        args["filter_state"] = string(*f.state)
     }
-
-    return pgx.NamedArgs{"filter_snapshot_id": **f.snapshotID}
+    return args
 }
 ```
 

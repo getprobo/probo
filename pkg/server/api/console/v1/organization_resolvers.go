@@ -221,8 +221,32 @@ func (r *organizationResolver) AccessReviewCampaigns(ctx context.Context, obj *t
 	return types.NewAccessReviewCampaignConnection(p, r, obj.ID), nil
 }
 
+// AssetListDocument is the resolver for the assetListDocument field.
+func (r *organizationResolver) AssetListDocument(ctx context.Context, obj *types.Organization) (*types.Document, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionDocumentGet); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	assetDocumentID, err := prb.GeneratedDocuments.GetAssetListDocumentID(ctx, obj.ID)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get asset list document ID: %w", err)
+	}
+	if assetDocumentID == nil {
+		return nil, nil
+	}
+
+	doc, err := prb.Documents.Get(ctx, *assetDocumentID)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get asset list document: %w", err)
+	}
+
+	return types.NewDocument(doc), nil
+}
+
 // Assets is the resolver for the assets field.
-func (r *organizationResolver) Assets(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AssetOrderBy, filter *types.AssetFilter) (*types.AssetConnection, error) {
+func (r *organizationResolver) Assets(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AssetOrderBy) (*types.AssetConnection, error) {
 	if err := r.authorize(ctx, obj.ID, probo.ActionAssetList); err != nil {
 		return nil, err
 	}
@@ -242,18 +266,13 @@ func (r *organizationResolver) Assets(ctx context.Context, obj *types.Organizati
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	assetFilter := coredata.NewAssetFilter(nil)
-	if filter != nil {
-		assetFilter = coredata.NewAssetFilter(&filter.SnapshotID)
-	}
-
-	page, err := prb.Assets.ListForOrganizationID(ctx, obj.ID, cursor, assetFilter)
+	page, err := prb.Assets.ListForOrganizationID(ctx, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list organization assets", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewAssetConnection(page, r, obj.ID, filter), nil
+	return types.NewAssetConnection(page, r, obj.ID), nil
 }
 
 // DataListDocument is the resolver for the dataListDocument field.

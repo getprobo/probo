@@ -311,6 +311,23 @@ type (
 		Owner          string
 		Vendors        string
 	}
+
+	AssetListData struct {
+		Title            string
+		OrganizationName string
+		CreatedAt        time.Time
+		TotalAssets      int
+		Rows             []AssetListRow
+	}
+
+	AssetListRow struct {
+		Name            string
+		AssetType       string
+		Amount          int
+		DataTypesStored string
+		Owner           string
+		Vendors         string
+	}
 )
 
 func BoolLabel(v bool) string {

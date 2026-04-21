@@ -125,7 +125,6 @@ func (s AssetService) GetByOwnerID(
 func (s AssetService) CountForOrganizationID(
 	ctx context.Context,
 	organizationID gid.GID,
-	filter *coredata.AssetFilter,
 ) (int, error) {
 	var count int
 
@@ -133,7 +132,7 @@ func (s AssetService) CountForOrganizationID(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			assets := coredata.Assets{}
-			count, err = assets.CountByOrganizationID(ctx, conn, s.svc.scope, organizationID, filter)
+			count, err = assets.CountByOrganizationID(ctx, conn, s.svc.scope, organizationID)
 			if err != nil {
 				return fmt.Errorf("cannot count assets: %w", err)
 			}
@@ -153,7 +152,6 @@ func (s AssetService) ListForOrganizationID(
 	ctx context.Context,
 	organizationID gid.GID,
 	cursor *page.Cursor[coredata.AssetOrderField],
-	filter *coredata.AssetFilter,
 ) (*page.Page[*coredata.Asset, coredata.AssetOrderField], error) {
 	var assets coredata.Assets
 
@@ -166,7 +164,6 @@ func (s AssetService) ListForOrganizationID(
 				s.svc.scope,
 				organizationID,
 				cursor,
-				filter,
 			)
 		},
 	)

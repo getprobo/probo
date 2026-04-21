@@ -1,0 +1,83 @@
+{
+  "type": "doc",
+  "content": [
+    {
+      "type": "heading",
+      "attrs": { "level": 1 },
+      "content": [{ "type": "text", "text": "1. Purpose" }]
+    },
+    {
+      "type": "paragraph",
+      "content": [{ "type": "text", "text": "This document provides a comprehensive inventory of assets managed by the organization. It serves as a record of all assets, their types, quantities, data stored, ownership, and associated vendors." }]
+    },
+    { "type": "horizontalRule" },
+    {
+      "type": "heading",
+      "attrs": { "level": 1 },
+      "content": [{ "type": "text", "text": "2. Asset Inventory" }]
+    },
+    {
+      "type": "table",
+      "content": [
+        {
+          "type": "tableRow",
+          "content": [
+            { "type": "tableHeader", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [150] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Name", "marks": [{ "type": "bold" }] }] }] },
+            { "type": "tableHeader", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [100] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Type", "marks": [{ "type": "bold" }] }] }] },
+            { "type": "tableHeader", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [80] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Amount", "marks": [{ "type": "bold" }] }] }] },
+            { "type": "tableHeader", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [120] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Data Types Stored", "marks": [{ "type": "bold" }] }] }] },
+            { "type": "tableHeader", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [150] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Owner", "marks": [{ "type": "bold" }] }] }] },
+            { "type": "tableHeader", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [200] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Vendors", "marks": [{ "type": "bold" }] }] }] }
+          ]
+        }{{range .Rows}},
+        {
+          "type": "tableRow",
+          "content": [
+            { "type": "tableCell", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [150] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": {{json .Name}} }] }] },
+            { "type": "tableCell", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [100] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": {{json .AssetType}} }] }] },
+            { "type": "tableCell", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [80] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": {{json (printf "%d" .Amount)}} }] }] },
+            { "type": "tableCell", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [120] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": {{json .DataTypesStored}} }] }] },
+            { "type": "tableCell", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [150] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": {{json .Owner}} }] }] },
+            { "type": "tableCell", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [200] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": {{json .Vendors}} }] }] }
+          ]
+        }{{end}}
+      ]
+    },
+    { "type": "horizontalRule" },
+    {
+      "type": "heading",
+      "attrs": { "level": 1 },
+      "content": [{ "type": "text", "text": "3. Definitions" }]
+    },
+    {
+      "type": "heading",
+      "attrs": { "level": 3 },
+      "content": [{ "type": "text", "text": "Asset Type" }]
+    },
+    {
+      "type": "bulletList",
+      "content": [
+        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Physical: ", "marks": [{ "type": "bold" }] }, { "type": "text", "text": "Tangible hardware assets such as servers, workstations, networking equipment, and storage devices." }] }] },
+        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Virtual: ", "marks": [{ "type": "bold" }] }, { "type": "text", "text": "Software-based assets such as cloud services, virtual machines, SaaS applications, and databases." }] }] }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": { "level": 3 },
+      "content": [{ "type": "text", "text": "Owner" }]
+    },
+    {
+      "type": "paragraph",
+      "content": [{ "type": "text", "text": "The individual responsible for the asset, including its maintenance, security, and compliance with applicable policies." }]
+    },
+    {
+      "type": "heading",
+      "attrs": { "level": 3 },
+      "content": [{ "type": "text", "text": "Vendors" }]
+    },
+    {
+      "type": "paragraph",
+      "content": [{ "type": "text", "text": "Third-party vendors that provide or support the asset." }]
+    }
+  ]
+}

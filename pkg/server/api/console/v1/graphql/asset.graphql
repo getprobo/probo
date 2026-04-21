@@ -62,13 +62,8 @@ input DatumOrder
     field: DatumOrderField!
 }
 
-input AssetFilter {
-    snapshotId: ID
-}
-
 type Asset implements Node {
     id: ID!
-    snapshotId: ID
     name: String!
     amount: Int!
     owner: Profile! @goField(forceResolver: true)
@@ -148,6 +143,9 @@ extend type Mutation {
     publishDataList(
         input: PublishDataListInput!
     ): PublishDataListPayload!
+    publishAssetList(
+        input: PublishAssetListInput!
+    ): PublishAssetListPayload!
 }
 
 input CreateAssetInput {
@@ -224,6 +222,16 @@ input PublishDataListInput {
 }
 
 type PublishDataListPayload {
+    documentEdge: DocumentEdge!
+    documentVersionEdge: DocumentVersionEdge!
+}
+
+input PublishAssetListInput {
+    organizationId: ID!
+    approverIds: [ID!]
+}
+
+type PublishAssetListPayload {
     documentEdge: DocumentEdge!
     documentVersionEdge: DocumentVersionEdge!
 }

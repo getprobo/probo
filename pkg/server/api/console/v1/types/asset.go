@@ -30,7 +30,6 @@ type (
 
 		Resolver any
 		ParentID gid.GID
-		Filter   *AssetFilter
 	}
 )
 
@@ -38,7 +37,6 @@ func NewAssetConnection(
 	p *page.Page[*coredata.Asset, coredata.AssetOrderField],
 	resolver any,
 	parentID gid.GID,
-	filter *AssetFilter,
 ) *AssetConnection {
 	edges := make([]*AssetEdge, len(p.Data))
 	for i, asset := range p.Data {
@@ -51,7 +49,6 @@ func NewAssetConnection(
 
 		Resolver: resolver,
 		ParentID: parentID,
-		Filter:   filter,
 	}
 }
 
@@ -64,10 +61,9 @@ func NewAssetEdge(asset *coredata.Asset, orderField coredata.AssetOrderField) *A
 
 func NewAsset(asset *coredata.Asset) *Asset {
 	return &Asset{
-		ID:         asset.ID,
-		SnapshotID: asset.SnapshotID,
-		Name:       asset.Name,
-		Amount:     asset.Amount,
+		ID:     asset.ID,
+		Name:   asset.Name,
+		Amount: asset.Amount,
 		Owner: &Profile{
 			ID: asset.OwnerID,
 		},

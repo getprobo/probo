@@ -18,6 +18,7 @@ import * as updateOp from './update.operation';
 import * as deleteOp from './delete.operation';
 import * as getOp from './get.operation';
 import * as getAllOp from './getAll.operation';
+import * as publishOp from './publish.operation';
 
 export const description: INodeProperties[] = [
 	{
@@ -56,6 +57,12 @@ export const description: INodeProperties[] = [
 				action: 'Get many assets',
 			},
 			{
+				name: 'Publish',
+				value: 'publish',
+				description: 'Publish the asset list as a document',
+				action: 'Publish the asset list',
+			},
+			{
 				name: 'Update',
 				value: 'update',
 				description: 'Update an existing asset',
@@ -69,6 +76,7 @@ export const description: INodeProperties[] = [
 	...deleteOp.description,
 	...getOp.description,
 	...getAllOp.description,
+	...publishOp.description,
 ];
 
-export { createOp as create, updateOp as update, deleteOp as delete, getOp as get, getAllOp as getAll };
+export { createOp as create, updateOp as update, deleteOp as delete, getOp as get, getAllOp as getAll, publishOp as publish };

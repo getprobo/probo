@@ -2003,11 +2003,6 @@ components:
         organization_id:
           $ref: "#/components/schemas/GID"
           description: Organization ID
-        snapshot_id:
-          type:
-            - string
-            - "null"
-          description: Snapshot ID
         name:
           type: string
           description: Asset name
@@ -2049,15 +2044,6 @@ components:
         cursor:
           $ref: "#/components/schemas/CursorKey"
           description: Page cursor
-        filter:
-          type: object
-          properties:
-            snapshot_id:
-              anyOf:
-                - $ref: "#/components/schemas/GID"
-                - type: "null"
-              description: Filter by snapshot ID. Defaults to null, which returns only assets with no snapshot (current live data). Pass a specific snapshot ID to retrieve assets as they were at that snapshot.
-              default: null
 
     ListAssetsOutput:
       type: object
@@ -4999,7 +4985,6 @@ components:
       enum:
         - RISKS
         - VENDORS
-        - ASSETS
         - NONCONFORMITIES
         - OBLIGATIONS
         - CONTINUAL_IMPROVEMENTS
@@ -6572,6 +6557,33 @@ components:
           description: Optional approver profile IDs. If provided, creates a draft pending approval instead of publishing immediately.
 
     PublishDataListOutput:
+      type: object
+      required:
+        - document_id
+        - document_version_id
+      properties:
+        document_id:
+          $ref: "#/components/schemas/GID"
+          description: Created or updated document ID
+        document_version_id:
+          $ref: "#/components/schemas/GID"
+          description: Created document version ID
+
+    PublishAssetListInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        approver_ids:
+          type: array
+          items:
+            $ref: "#/components/schemas/GID"
+          description: Optional approver profile IDs. If provided, creates a draft pending approval instead of publishing immediately.
+
+    PublishAssetListOutput:
       type: object
       required:
         - document_id
@@ -8650,7 +8662,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/GetSnapshotOutput"
   - name: takeSnapshot
-    description: Take a snapshot of a collection of objects (risks, vendors, assets, findings, obligations, or processing activities)
+    description: Take a snapshot of a collection of objects (risks, vendors, findings, obligations, or processing activities)
     hints:
       readonly: false
     inputSchema:
@@ -8870,6 +8882,14 @@ tools:
       $ref: "#/components/schemas/PublishDataListInput"
     outputSchema:
       $ref: "#/components/schemas/PublishDataListOutput"
+  - name: publishAssetList
+    description: Publish the asset list for an organization as a document. If a document already exists, a new version is created.
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/PublishAssetListInput"
+    outputSchema:
+      $ref: "#/components/schemas/PublishAssetListOutput"
   - name: publishStatementOfApplicability
     description: Publish a statement of applicability as a document. If a document already exists, a new version is created.
     hints:

@@ -227,11 +227,12 @@ const (
 	ActionRiskObligationMappingDelete = "core:risk:delete-obligation-mapping"
 
 	// Asset actions
-	ActionAssetGet    = "core:asset:get"
-	ActionAssetList   = "core:asset:list"
-	ActionAssetCreate = "core:asset:create"
-	ActionAssetUpdate = "core:asset:update"
-	ActionAssetDelete = "core:asset:delete"
+	ActionAssetGet     = "core:asset:get"
+	ActionAssetList    = "core:asset:list"
+	ActionAssetCreate  = "core:asset:create"
+	ActionAssetUpdate  = "core:asset:update"
+	ActionAssetDelete  = "core:asset:delete"
+	ActionAssetPublish = "core:asset:publish"
 
 	// Datum actions
 	ActionDatumGet     = "core:datum:get"

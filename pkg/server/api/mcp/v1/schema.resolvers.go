@@ -559,13 +559,7 @@ func (r *Resolver) ListAssetsTool(ctx context.Context, req *mcp.CallToolRequest,
 
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
-	noSnapshot := (*gid.GID)(nil)
-	assetFilter := coredata.NewAssetFilter(&noSnapshot)
-	if input.Filter != nil {
-		assetFilter = coredata.NewAssetFilter(&input.Filter.SnapshotID)
-	}
-
-	page, err := prb.Assets.ListForOrganizationID(ctx, input.OrganizationID, cursor, assetFilter)
+	page, err := prb.Assets.ListForOrganizationID(ctx, input.OrganizationID, cursor)
 	if err != nil {
 		panic(fmt.Errorf("cannot list organization assets: %w", err))
 	}
@@ -4018,6 +4012,22 @@ func (r *Resolver) PublishDataListTool(ctx context.Context, req *mcp.CallToolReq
 	}
 
 	return nil, types.PublishDataListOutput{
+		DocumentID:        document.ID,
+		DocumentVersionID: documentVersion.ID,
+	}, nil
+}
+
+func (r *Resolver) PublishAssetListTool(ctx context.Context, req *mcp.CallToolRequest, input *types.PublishAssetListInput) (*mcp.CallToolResult, types.PublishAssetListOutput, error) {
+	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionAssetPublish)
+
+	svc := r.ProboService(ctx, input.OrganizationID)
+
+	document, documentVersion, err := svc.GeneratedDocuments.PublishAssetList(ctx, input.OrganizationID, input.ApproverIds)
+	if err != nil {
+		return nil, types.PublishAssetListOutput{}, fmt.Errorf("cannot publish asset list: %w", err)
+	}
+
+	return nil, types.PublishAssetListOutput{
 		DocumentID:        document.ID,
 		DocumentVersionID: documentVersion.ID,
 	}, nil

@@ -38,7 +38,6 @@ func SnapshotsTypes() []SnapshotsType {
 	return []SnapshotsType{
 		SnapshotsTypeRisks,
 		SnapshotsTypeVendors,
-		SnapshotsTypeAssets,
 		SnapshotsTypeFindings,
 		SnapshotsTypeObligations,
 		SnapshotsTypeProcessingActivities,

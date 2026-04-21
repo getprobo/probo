@@ -33,21 +33,7 @@ export const assetRoutes = [
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ organizationId }) =>
       loadQuery<AssetGraphListQuery>(coreEnvironment, assetsQuery, {
-        organizationId: organizationId,
-        snapshotId: null,
-      }),
-    ),
-    Component: withQueryRef(
-      lazy(() => import("#/pages/organizations/assets/AssetsPage")),
-    ),
-  },
-  {
-    path: "snapshots/:snapshotId/assets",
-    Fallback: PageSkeleton,
-    loader: loaderFromQueryLoader(({ organizationId, snapshotId }) =>
-      loadQuery<AssetGraphListQuery>(coreEnvironment, assetsQuery, {
-        organizationId: organizationId,
-        snapshotId: snapshotId,
+        organizationId,
       }),
     ),
     Component: withQueryRef(
@@ -56,18 +42,6 @@ export const assetRoutes = [
   },
   {
     path: "assets/:assetId",
-    Fallback: PageSkeleton,
-    loader: loaderFromQueryLoader(({ assetId }) =>
-      loadQuery<AssetGraphNodeQuery>(coreEnvironment, assetNodeQuery, {
-        assetId,
-      }),
-    ),
-    Component: withQueryRef(
-      lazy(() => import("#/pages/organizations/assets/AssetDetailsPage")),
-    ),
-  },
-  {
-    path: "snapshots/:snapshotId/assets/:assetId",
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ assetId }) =>
       loadQuery<AssetGraphNodeQuery>(coreEnvironment, assetNodeQuery, {
