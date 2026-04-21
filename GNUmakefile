@@ -152,16 +152,16 @@ coverage-combined: coverage-report test-e2e-coverage ## Generate combined covera
 build: bin/probod bin/prb bin/probod-bootstrap
 
 CFG_DEV_OAUTH2_KEY = cfg/.dev-oauth2-signing-key.pem
-CFG_DEV_ENV       = cfg/dev.env
+DEV_ENV            = .env
 
 .PHONY: dev-config
-dev-config: cfg/dev.yaml ## Generate cfg/dev.yaml via probod-bootstrap (picks up edits to cfg/dev.env)
+dev-config: cfg/dev.yaml ## Generate cfg/dev.yaml via probod-bootstrap (picks up edits to .env)
 
 $(CFG_DEV_OAUTH2_KEY):
 	@$(MKDIR) $(@D)
 	$(OPENSSL) genrsa -out $@ 2048
 
-cfg/dev.yaml: bin/probod-bootstrap $(CFG_DEV_OAUTH2_KEY) $(wildcard $(CFG_DEV_ENV))
+cfg/dev.yaml: bin/probod-bootstrap $(CFG_DEV_OAUTH2_KEY) $(wildcard $(DEV_ENV))
 	@$(MKDIR) $(@D)
 	set -a; \
 	PROBOD_ENCRYPTION_KEY="thisisnotasecretAAAAAAAAAAAAAAAAAAAAAAAAAAA="; \
@@ -175,7 +175,7 @@ cfg/dev.yaml: bin/probod-bootstrap $(CFG_DEV_OAUTH2_KEY) $(wildcard $(CFG_DEV_EN
 	AWS_ENDPOINT=http://127.0.0.1:8333; \
 	OPENAI_API_KEY=thisisnotasecret; \
 	ACME_DIRECTORY=https://localhost:14000/dir; \
-	if [ -f $(CFG_DEV_ENV) ]; then . $(CFG_DEV_ENV); fi; \
+	if [ -f $(DEV_ENV) ]; then . $(DEV_ENV); fi; \
 	set +a; \
 	./bin/probod-bootstrap -output $@
 

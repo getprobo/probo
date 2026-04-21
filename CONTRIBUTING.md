@@ -88,12 +88,12 @@ Signed-off-by: John Doe <john.doe@example.org>
 
    ```bash
    # Optional: override any dev default (secrets, OAuth clients, LLM keys).
-   # cp cfg/dev.env.example cfg/dev.env && $EDITOR cfg/dev.env
+   # cp .env.example .env && $EDITOR .env
 
    make dev-config
    ```
 
-   The target stashes a dev-only RSA signing key under `cfg/.dev-oauth2-signing-key.pem` so tokens survive probod restarts, and sources `cfg/dev.env` if present so you can override defaults without editing the Makefile. `cfg/dev.yaml`, `cfg/dev.env`, and the signing key are all gitignored. Re-run the target to regenerate.
+   The target stashes a dev-only RSA signing key under `cfg/.dev-oauth2-signing-key.pem` so tokens survive probod restarts, and sources `.env` if present so you can override defaults without editing the Makefile. `cfg/dev.yaml`, `.env`, and the signing key are all gitignored. Re-run the target to regenerate.
 
 7. Start the development servers:
 

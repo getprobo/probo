@@ -21,4 +21,4 @@ pkg/server/api/*/v1/types/types.go
 pkg/server/api/*/v1/schema.graphql
 cfg/dev_local.yaml
 cfg/dev.yaml
-cfg/dev.env
+.env
