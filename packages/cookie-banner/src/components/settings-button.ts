@@ -42,9 +42,9 @@ export class ProboSettingsButton extends HTMLElement {
       <style>
         :host {
           position: fixed;
-          bottom: var(--probo-settings-bottom, 16px);
+          bottom: 16px;
           ${isRight ? "right" : "left"}: var(--probo-settings-offset, 16px);
-          z-index: var(--probo-settings-z-index, 2147483645);
+          z-index: var(--probo-z-index, 2147483646);
         }
         :host([hidden]) { display: none; }
         button {
