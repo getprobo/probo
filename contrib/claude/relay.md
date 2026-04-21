@@ -262,6 +262,8 @@ The `@connection(key: "...", filters: [...])` directive on the fragment tells Re
 
 ## Mutations
 
+Every mutation **must** update the Relay store so the UI reflects changes immediately — never rely on a page reload. Use `@appendEdge`/`@prependEdge` for creates, `@deleteEdge` for deletes, node `id` returns for in-place updates, and `updater` functions for complex multi-connection operations.
+
 ### `useMutation`
 
 Direct Relay hook for simple cases.
@@ -335,10 +337,51 @@ const onSubmit = (formData: FormData) => {
 
 ### Store update directives
 
-Relay directives handle connection updates automatically — no manual store manipulation needed:
+Relay directives handle connection updates automatically — no manual store manipulation needed.
+
+#### Connection setup
+
+Any connection that a mutation will add to or remove from **must** have a `@connection` directive and expose `__id`:
 
 ```tsx
-// Add new edge to the beginning of a connection
+const fragment = graphql`
+  fragment CategorySectionFragment on CookieCategory {
+    id
+    cookies(first: 100, orderBy: { field: CREATED_AT, direction: ASC })
+      @connection(key: "CategorySection_cookies")
+      @required(action: THROW) {
+      __id
+      edges {
+        node {
+          id
+          ...EditCookieRowFragment
+        }
+      }
+    }
+  }
+`;
+
+const category = useFragment(fragment, categoryKey);
+const connectionId = category.cookies.__id;
+```
+
+When the mutation is triggered from a component that doesn't have access to the connection's `__id` (e.g. a sibling's child rather than a direct descendant), derive the connection ID with `ConnectionHandler.getConnectionID`:
+
+```tsx
+import { ConnectionHandler } from "relay-runtime";
+
+const connectionId = ConnectionHandler.getConnectionID(
+  parentNodeId,           // the store ID of the node that owns the connection
+  "CategorySection_cookies", // the @connection key
+);
+```
+
+This is useful for dialogs, drawers, or other components rendered outside the subtree that reads the connection.
+
+#### Directive examples
+
+```tsx
+// Add new edge to a connection
 const createMutation = graphql`
   mutation CreateVendorMutation($input: CreateVendorInput!, $connections: [ID!]!) {
     createVendor(input: $input) {
@@ -361,7 +404,7 @@ const deleteMutation = graphql`
   }
 `;
 
-// Update in-place via fragment spread (no directive needed)
+// Update in-place (Relay matches by id — no directive needed)
 const updateMutation = graphql`
   mutation UpdateContactMutation($input: UpdateVendorContactInput!) {
     updateVendorContact(input: $input) {
@@ -374,6 +417,55 @@ const updateMutation = graphql`
 ```
 
 The `connections` variable is obtained from the `__id` field on the connection in the parent query/fragment.
+
+#### Fragment spreads in create mutations
+
+When a create mutation returns a new edge, its `node` selection **must** include all fragment spreads used by the list that renders it. This ensures the store has every field the UI needs to render the new item without a refetch:
+
+```tsx
+// Bad — missing fragment spread, child components will have missing data
+cookieEdge @appendEdge(connections: $connections) {
+  node { id name duration description }
+}
+
+// Good — spreads the same fragment the list uses to render each item
+cookieEdge @appendEdge(connections: $connections) {
+  node { id name duration description ...EditCookieRowFragment }
+}
+```
+
+#### `updater` for complex store changes
+
+When a single mutation affects multiple connections (e.g. moving an item between two lists) and the server payload doesn't return both an edge and a deletedId, use an `updater` function with `ConnectionHandler`:
+
+```tsx
+import { ConnectionHandler } from "relay-runtime";
+
+moveCookie({
+  variables: { input: { cookieId, targetCookieCategoryId: targetId } },
+  updater(store) {
+    const source = store.get(sourceCategoryId);
+    if (source) {
+      const sourceConn = ConnectionHandler.getConnection(source, "CategorySection_cookies");
+      if (sourceConn) ConnectionHandler.deleteNode(sourceConn, cookieId);
+    }
+
+    const target = store.get(targetId);
+    if (target) {
+      const targetConn = ConnectionHandler.getConnection(target, "CategorySection_cookies");
+      if (targetConn) {
+        const node = store.get(cookieId);
+        if (node) {
+          const edge = ConnectionHandler.createEdge(store, targetConn, node, "CookieEdge");
+          ConnectionHandler.insertEdgeAfter(targetConn, edge);
+        }
+      }
+    }
+  },
+});
+```
+
+Prefer declarative directives (`@appendEdge`, `@deleteEdge`) whenever possible; only fall back to `updater` when the operation cannot be expressed with directives alone.
 
 ### `useConfirm` for destructive actions
 

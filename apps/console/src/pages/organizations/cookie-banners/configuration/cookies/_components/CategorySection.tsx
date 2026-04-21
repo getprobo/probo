@@ -33,7 +33,7 @@ import {
 } from "@probo/ui";
 import { useState } from "react";
 import { useFragment, useMutation } from "react-relay";
-import { graphql } from "relay-runtime";
+import { ConnectionHandler, graphql } from "relay-runtime";
 
 import type { CategorySectionCreateCookieMutation } from "#/__generated__/core/CategorySectionCreateCookieMutation.graphql";
 import type { CategorySectionDeleteCookieMutation } from "#/__generated__/core/CategorySectionDeleteCookieMutation.graphql";
@@ -58,7 +58,10 @@ export const categorySectionFragment = graphql`
     name
     description
     kind
-    cookies(first: 100, orderBy: { field: CREATED_AT, direction: ASC }) @required(action: THROW) {
+    cookies(first: 100, orderBy: { field: CREATED_AT, direction: ASC })
+      @connection(key: "CategorySection_cookies")
+      @required(action: THROW) {
+      __id
       edges {
         node {
           id
@@ -109,14 +112,16 @@ const updateCategoryMutation = graphql`
 const createCookieMutation = graphql`
   mutation CategorySectionCreateCookieMutation(
     $input: CreateCookieInput!
+    $connections: [ID!]!
   ) {
     createCookie(input: $input) {
-      cookieEdge {
+      cookieEdge @appendEdge(connections: $connections) {
         node {
           id
           name
           duration
           description
+          ...EditCookieRowFragment
         }
       }
       cookieBanner {
@@ -158,9 +163,10 @@ const updateCookieMutation = graphql`
 const deleteCookieMutation = graphql`
   mutation CategorySectionDeleteCookieMutation(
     $input: DeleteCookieInput!
+    $connections: [ID!]!
   ) {
     deleteCookie(input: $input) {
-      deletedCookieId
+      deletedCookieId @deleteEdge(connections: $connections)
       cookieBanner {
         id
         latestVersion {
@@ -225,6 +231,7 @@ export function CategorySection({ categoryKey, onDelete }: CategorySectionProps)
   const [editingCookieId, setEditingCookieId] = useState<string | null>(null);
   const [isAddingCookie, setIsAddingCookie] = useState(false);
 
+  const cookiesConnectionId = category.cookies.__id;
   const cookies = category.cookies.edges.map(e => e.node);
   const isMutating = isUpdating || isCreating || isUpdatingCookie;
 
@@ -276,6 +283,7 @@ export function CategorySection({ categoryKey, onDelete }: CategorySectionProps)
           duration: cookie.duration,
           description: cookie.description,
         },
+        connections: [cookiesConnectionId],
       },
       onCompleted(_response, errors) {
         if (errors?.length) {
@@ -360,6 +368,7 @@ export function CategorySection({ categoryKey, onDelete }: CategorySectionProps)
     deleteCookie({
       variables: {
         input: { cookieId },
+        connections: [cookiesConnectionId],
       },
       onCompleted(_response, errors) {
         if (errors?.length) {
@@ -399,6 +408,38 @@ export function CategorySection({ categoryKey, onDelete }: CategorySectionProps)
           cookieId,
           targetCookieCategoryId: targetCategoryId,
         },
+      },
+      updater(store) {
+        const sourceCategory = store.get(category.id);
+        if (sourceCategory) {
+          const sourceConn = ConnectionHandler.getConnection(
+            sourceCategory,
+            "CategorySection_cookies",
+          );
+          if (sourceConn) {
+            ConnectionHandler.deleteNode(sourceConn, cookieId);
+          }
+        }
+
+        const targetCategory = store.get(targetCategoryId);
+        if (targetCategory) {
+          const targetConn = ConnectionHandler.getConnection(
+            targetCategory,
+            "CategorySection_cookies",
+          );
+          if (targetConn) {
+            const cookieRecord = store.get(cookieId);
+            if (cookieRecord) {
+              const newEdge = ConnectionHandler.createEdge(
+                store,
+                targetConn,
+                cookieRecord,
+                "CookieEdge",
+              );
+              ConnectionHandler.insertEdgeAfter(targetConn, newEdge);
+            }
+          }
+        }
       },
       onCompleted(_response, errors) {
         if (errors?.length) {
