@@ -59,7 +59,7 @@ export const categorySectionFragment = graphql`
     description
     kind
     cookies(first: 100, orderBy: { field: CREATED_AT, direction: ASC })
-      @connection(key: "CategorySection_cookies")
+      @connection(key: "CategorySection_cookies", filters: [])
       @required(action: THROW) {
       __id
       edges {

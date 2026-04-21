@@ -348,7 +348,7 @@ const fragment = graphql`
   fragment CategorySectionFragment on CookieCategory {
     id
     cookies(first: 100, orderBy: { field: CREATED_AT, direction: ASC })
-      @connection(key: "CategorySection_cookies")
+      @connection(key: "CategorySection_cookies", filters: [])
       @required(action: THROW) {
       __id
       edges {
@@ -364,6 +364,38 @@ const fragment = graphql`
 const category = useFragment(fragment, categoryKey);
 const connectionId = category.cookies.__id;
 ```
+
+#### `filters` on `@connection`
+
+By default Relay treats every non-pagination argument (`first`, `last`, `after`, `before` are excluded) as a **filter** and encodes its value into the connection's store identity. This means `ConnectionHandler.getConnection(record, key)` will fail to find the connection unless the exact same filter values are passed as a third argument.
+
+**Use `filters: []`** when the connection has fixed arguments (e.g. a hardcoded `orderBy`) and there is only ever one instance of the connection per parent node. This is the common case — it keeps `ConnectionHandler.getConnection` and `getConnectionID` simple:
+
+```graphql
+# Good — single fixed ordering, no filtered variants
+cookies(first: 100, orderBy: { field: CREATED_AT, direction: ASC })
+  @connection(key: "CategorySection_cookies", filters: [])
+```
+
+**List specific filter arguments** when the same connection is rendered with different filter values and you need Relay to maintain separate lists in the store (e.g. a table with user-selectable sorting or status filters):
+
+```graphql
+# Good — user can change the status filter, each variant is a separate list
+tasks(first: 50, status: $status, orderBy: $order)
+  @connection(key: "TaskList_tasks", filters: ["status"])
+```
+
+When `filters` includes an argument, `ConnectionHandler.getConnection` requires matching filter values:
+
+```tsx
+const conn = ConnectionHandler.getConnection(record, "TaskList_tasks", {
+  status: "OPEN",
+});
+```
+
+**Never omit `filters`** — rely on the explicit list rather than Relay's default (all non-pagination args), which silently breaks `ConnectionHandler` lookups and `updater` functions.
+
+#### Connection ID from outside the subtree
 
 When the mutation is triggered from a component that doesn't have access to the connection's `__id` (e.g. a sibling's child rather than a direct descendant), derive the connection ID with `ConnectionHandler.getConnectionID`:
 
