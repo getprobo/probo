@@ -38,7 +38,6 @@ import (
 	"go.probo.inc/probo/pkg/crypto/rand"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/mail"
-	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/webhook"
 	webhooktypes "go.probo.inc/probo/pkg/webhook/types"
 )
@@ -395,25 +394,11 @@ func (s *Service) ListUsers(
 	scope := coredata.NewScopeFromObjectID(config.OrganizationID)
 
 	var profiles coredata.MembershipProfiles
-	var totalCount int
 
 	err = s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			var err error
-			totalCount, err = profiles.CountByOrganizationID(ctx, conn, scope, config.OrganizationID, filter)
-			if err != nil {
-				return fmt.Errorf("cannot count profiles: %w", err)
-			}
-
-			orderBy := page.OrderBy[coredata.MembershipProfileOrderField]{
-				Field:     coredata.MembershipProfileOrderFieldCreatedAt,
-				Direction: page.OrderDirectionDesc,
-			}
-			cursor := page.NewCursor(count, nil, page.Head, orderBy)
-
-			err = profiles.LoadByOrganizationID(ctx, conn, scope, config.OrganizationID, cursor, filter)
-			if err != nil {
+			if err := profiles.LoadAllByOrganizationID(ctx, conn, scope, config.OrganizationID, filter); err != nil {
 				return fmt.Errorf("cannot load profiles: %w", err)
 			}
 
@@ -430,7 +415,7 @@ func (s *Service) ListUsers(
 		resources = append(resources, userToResource(p))
 	}
 
-	return resources, totalCount, nil
+	return resources, len(resources), nil
 }
 
 func (s *Service) ReplaceUser(
