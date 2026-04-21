@@ -24,10 +24,8 @@ import {
   IconPencil,
   IconPlusSmall,
   IconTrashCan,
-  Input,
   Tbody,
   Td,
-  Textarea,
   Th,
   Thead,
   Tr,
@@ -40,6 +38,16 @@ import { graphql } from "relay-runtime";
 import type { CategorySectionFragment$key } from "#/__generated__/core/CategorySectionFragment.graphql";
 import type { CategorySectionMoveCookieMutation } from "#/__generated__/core/CategorySectionMoveCookieMutation.graphql";
 import type { CategorySectionUpdateMutation } from "#/__generated__/core/CategorySectionUpdateMutation.graphql";
+
+import { AddCookieRow } from "./AddCookieRow";
+import { EditCategoryForm } from "./EditCategoryForm";
+import { EditCookieRow } from "./EditCookieRow";
+
+export interface CookieEntry {
+  name: string;
+  duration: string;
+  description: string;
+}
 
 export const categorySectionFragment = graphql`
   fragment CategorySectionFragment on CookieCategory {
@@ -134,12 +142,6 @@ const moveCookieMutation = graphql`
   }
 `;
 
-interface CookieEntry {
-  name: string;
-  duration: string;
-  description: string;
-}
-
 interface CategorySectionProps {
   categoryKey: CategorySectionFragment$key;
   onDelete?: () => void;
@@ -156,18 +158,8 @@ export function CategorySection({ categoryKey, onDelete }: CategorySectionProps)
     = useMutation<CategorySectionMoveCookieMutation>(moveCookieMutation);
 
   const [isEditingCategory, setIsEditingCategory] = useState(false);
-  const [editName, setEditName] = useState(category.name);
-  const [editDescription, setEditDescription] = useState(category.description);
-
-  const [editingCookieIndex, setEditingCookieIndex] = useState<number | null>(
-    null,
-  );
+  const [editingCookieIndex, setEditingCookieIndex] = useState<number | null>(null);
   const [isAddingCookie, setIsAddingCookie] = useState(false);
-  const [cookieForm, setCookieForm] = useState<CookieEntry>({
-    name: "",
-    duration: "",
-    description: "",
-  });
 
   const doUpdate = (
     input: Record<string, unknown>,
@@ -209,46 +201,22 @@ export function CategorySection({ categoryKey, onDelete }: CategorySectionProps)
     });
   };
 
-  const handleSaveCategory = () => {
-    doUpdate({ name: editName, description: editDescription }, () => {
+  const handleSaveCategory = (name: string, description: string) => {
+    doUpdate({ name, description }, () => {
       setIsEditingCategory(false);
     });
   };
 
-  const handleCancelCategoryEdit = () => {
-    setEditName(category.name);
-    setEditDescription(category.description);
-    setIsEditingCategory(false);
-  };
-
-  const handleStartEditCookie = (index: number) => {
-    const c = category.cookies[index];
-    setCookieForm({
-      name: c.name,
-      duration: c.duration,
-      description: c.description,
-    });
-    setEditingCookieIndex(index);
-    setIsAddingCookie(false);
-  };
-
-  const handleSaveEditCookie = () => {
-    if (editingCookieIndex === null) return;
-    if (!cookieForm.name.trim()) return;
+  const handleSaveEditCookie = (index: number, cookie: CookieEntry) => {
+    if (!cookie.name.trim()) return;
     const newCookies = category.cookies.map((c, i) =>
-      i === editingCookieIndex
-        ? { ...cookieForm }
+      i === index
+        ? { ...cookie }
         : { name: c.name, duration: c.duration, description: c.description },
     );
     doUpdate({ cookies: newCookies }, () => {
       setEditingCookieIndex(null);
-      setCookieForm({ name: "", duration: "", description: "" });
     });
-  };
-
-  const handleCancelEditCookie = () => {
-    setEditingCookieIndex(null);
-    setCookieForm({ name: "", duration: "", description: "" });
   };
 
   const handleDeleteCookie = (index: number) => {
@@ -262,31 +230,19 @@ export function CategorySection({ categoryKey, onDelete }: CategorySectionProps)
     doUpdate({ cookies: newCookies });
   };
 
-  const handleStartAddCookie = () => {
-    setCookieForm({ name: "", duration: "", description: "" });
-    setIsAddingCookie(true);
-    setEditingCookieIndex(null);
-  };
-
-  const handleSaveNewCookie = () => {
-    if (!cookieForm.name.trim()) return;
+  const handleSaveNewCookie = (cookie: CookieEntry) => {
+    if (!cookie.name.trim()) return;
     const newCookies = [
       ...category.cookies.map(c => ({
         name: c.name,
         duration: c.duration,
         description: c.description,
       })),
-      { ...cookieForm },
+      { ...cookie },
     ];
     doUpdate({ cookies: newCookies }, () => {
       setIsAddingCookie(false);
-      setCookieForm({ name: "", duration: "", description: "" });
     });
-  };
-
-  const handleCancelAddCookie = () => {
-    setIsAddingCookie(false);
-    setCookieForm({ name: "", duration: "", description: "" });
   };
 
   const allCategories = category.cookieBanner.categories.edges.map(e => e.node) ?? [];
@@ -336,33 +292,13 @@ export function CategorySection({ categoryKey, onDelete }: CategorySectionProps)
       <div className="p-4">
         {isEditingCategory
           ? (
-              <div className="space-y-3">
-                <Input
-                  value={editName}
-                  onChange={e => setEditName(e.target.value)}
-                  placeholder={__("Category name")}
-                />
-                <Textarea
-                  value={editDescription}
-                  onChange={e => setEditDescription(e.target.value)}
-                  placeholder={__("Category description")}
-                  rows={2}
-                />
-                <div className="flex items-center gap-2">
-                  <Button
-                    onClick={handleSaveCategory}
-                    disabled={isUpdating}
-                  >
-                    {isUpdating ? __("Saving...") : __("Save")}
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    onClick={handleCancelCategoryEdit}
-                  >
-                    {__("Cancel")}
-                  </Button>
-                </div>
-              </div>
+              <EditCategoryForm
+                name={category.name}
+                description={category.description}
+                isUpdating={isUpdating}
+                onSave={handleSaveCategory}
+                onCancel={() => setIsEditingCategory(false)}
+              />
             )
           : (
               <div className="flex items-center justify-between">
@@ -420,54 +356,17 @@ export function CategorySection({ categoryKey, onDelete }: CategorySectionProps)
           {category.cookies.map((cookie, index) =>
             editingCookieIndex === index
               ? (
-                  <Tr key={index}>
-                    <Td className="pr-3">
-                      <Input
-                        value={cookieForm.name}
-                        onChange={e =>
-                          setCookieForm({ ...cookieForm, name: e.target.value })}
-                        placeholder={__("Cookie name")}
-                      />
-                    </Td>
-                    <Td className="pr-3">
-                      <Input
-                        value={cookieForm.duration}
-                        onChange={e =>
-                          setCookieForm({
-                            ...cookieForm,
-                            duration: e.target.value,
-                          })}
-                        placeholder={__("e.g. 1 year")}
-                      />
-                    </Td>
-                    <Td className="pr-3">
-                      <Input
-                        value={cookieForm.description}
-                        onChange={e =>
-                          setCookieForm({
-                            ...cookieForm,
-                            description: e.target.value,
-                          })}
-                        placeholder={__("Description")}
-                      />
-                    </Td>
-                    <Td>
-                      <div className="flex items-center gap-1">
-                        <Button
-                          onClick={handleSaveEditCookie}
-                          disabled={isUpdating}
-                        >
-                          {__("Save")}
-                        </Button>
-                        <Button
-                          variant="secondary"
-                          onClick={handleCancelEditCookie}
-                        >
-                          {__("Cancel")}
-                        </Button>
-                      </div>
-                    </Td>
-                  </Tr>
+                  <EditCookieRow
+                    key={index}
+                    cookie={{
+                      name: cookie.name,
+                      duration: cookie.duration,
+                      description: cookie.description,
+                    }}
+                    isUpdating={isUpdating}
+                    onSave={updated => handleSaveEditCookie(index, updated)}
+                    onCancel={() => setEditingCookieIndex(null)}
+                  />
                 )
               : (
                   <Tr key={index}>
@@ -484,7 +383,10 @@ export function CategorySection({ categoryKey, onDelete }: CategorySectionProps)
                       <div className="flex items-center gap-1">
                         <button
                           type="button"
-                          onClick={() => handleStartEditCookie(index)}
+                          onClick={() => {
+                            setEditingCookieIndex(index);
+                            setIsAddingCookie(false);
+                          }}
                           className="p-1 rounded cursor-pointer"
                         >
                           <IconPencil size={14} />
@@ -524,51 +426,11 @@ export function CategorySection({ categoryKey, onDelete }: CategorySectionProps)
                 ),
           )}
           {isAddingCookie && (
-            <Tr>
-              <Td className="pr-3">
-                <Input
-                  value={cookieForm.name}
-                  onChange={e =>
-                    setCookieForm({ ...cookieForm, name: e.target.value })}
-                  placeholder={__("Cookie name")}
-                />
-              </Td>
-              <Td className="pr-3">
-                <Input
-                  value={cookieForm.duration}
-                  onChange={e =>
-                    setCookieForm({ ...cookieForm, duration: e.target.value })}
-                  placeholder={__("e.g. 1 year")}
-                />
-              </Td>
-              <Td className="pr-3">
-                <Input
-                  value={cookieForm.description}
-                  onChange={e =>
-                    setCookieForm({
-                      ...cookieForm,
-                      description: e.target.value,
-                    })}
-                  placeholder={__("Description")}
-                />
-              </Td>
-              <Td>
-                <div className="flex items-center gap-2">
-                  <Button
-                    onClick={handleSaveNewCookie}
-                    disabled={isUpdating}
-                  >
-                    {__("Save")}
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    onClick={handleCancelAddCookie}
-                  >
-                    {__("Cancel")}
-                  </Button>
-                </div>
-              </Td>
-            </Tr>
+            <AddCookieRow
+              isUpdating={isUpdating}
+              onSave={handleSaveNewCookie}
+              onCancel={() => setIsAddingCookie(false)}
+            />
           )}
         </Tbody>
       </table>
@@ -577,7 +439,10 @@ export function CategorySection({ categoryKey, onDelete }: CategorySectionProps)
         <div className="p-3 border-t border-border-low">
           <Button
             variant="secondary"
-            onClick={handleStartAddCookie}
+            onClick={() => {
+              setIsAddingCookie(true);
+              setEditingCookieIndex(null);
+            }}
           >
             <IconPlusSmall size={14} />
             {__("Add Cookie")}
