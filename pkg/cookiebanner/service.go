@@ -920,12 +920,13 @@ type MoveCookieToCategoryResult struct {
 
 func (s *Service) MoveCookieToCategory(
 	ctx context.Context,
-	scope coredata.Scoper,
 	req MoveCookieToCategoryRequest,
 ) (*MoveCookieToCategoryResult, error) {
 	if err := req.Validate(); err != nil {
 		return nil, fmt.Errorf("invalid request: %w", err)
 	}
+
+	scope := coredata.NewScopeFromObjectID(req.SourceCookieCategoryID)
 
 	var result MoveCookieToCategoryResult
 

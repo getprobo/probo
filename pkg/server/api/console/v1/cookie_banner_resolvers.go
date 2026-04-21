@@ -522,11 +522,8 @@ func (r *mutationResolver) MoveCookieToCategory(ctx context.Context, input types
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.SourceCookieCategoryID)
-
 	result, err := r.cookieBanner.MoveCookieToCategory(
 		ctx,
-		scope,
 		cookiebanner.MoveCookieToCategoryRequest{
 			SourceCookieCategoryID: input.SourceCookieCategoryID,
 			TargetCookieCategoryID: input.TargetCookieCategoryID,
@@ -540,7 +537,7 @@ func (r *mutationResolver) MoveCookieToCategory(ctx context.Context, input types
 		case errors.Is(err, cookiebanner.ErrCookieNotFound):
 			return nil, gqlutils.NotFound(ctx, err)
 		case errors.Is(err, cookiebanner.ErrCategoriesBannerMismatch):
-			return nil, gqlutils.Invalidf(ctx, "source and target categories must belong to the same banner")
+			return nil, gqlutils.NotFoundf(ctx, "source or target category not found")
 		default:
 			if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 				return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
