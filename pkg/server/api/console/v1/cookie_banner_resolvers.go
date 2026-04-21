@@ -512,6 +512,51 @@ func (r *mutationResolver) ReorderCookieCategory(ctx context.Context, input type
 	}, nil
 }
 
+// MoveCookieToCategory is the resolver for the moveCookieToCategory field.
+func (r *mutationResolver) MoveCookieToCategory(ctx context.Context, input types.MoveCookieToCategoryInput) (*types.MoveCookieToCategoryPayload, error) {
+	if err := r.authorize(ctx, input.SourceCookieCategoryID, probo.ActionCookieCategoryUpdate); err != nil {
+		return nil, err
+	}
+
+	if err := r.authorize(ctx, input.TargetCookieCategoryID, probo.ActionCookieCategoryUpdate); err != nil {
+		return nil, err
+	}
+
+	scope := coredata.NewScopeFromObjectID(input.SourceCookieCategoryID)
+
+	result, err := r.cookieBanner.MoveCookieToCategory(
+		ctx,
+		scope,
+		cookiebanner.MoveCookieToCategoryRequest{
+			SourceCookieCategoryID: input.SourceCookieCategoryID,
+			TargetCookieCategoryID: input.TargetCookieCategoryID,
+			CookieName:             input.CookieName,
+		},
+	)
+	if err != nil {
+		switch {
+		case errors.Is(err, cookiebanner.ErrCategoryNotFound):
+			return nil, gqlutils.NotFound(ctx, err)
+		case errors.Is(err, cookiebanner.ErrCookieNotFound):
+			return nil, gqlutils.NotFound(ctx, err)
+		case errors.Is(err, cookiebanner.ErrCategoriesBannerMismatch):
+			return nil, gqlutils.Invalidf(ctx, "source and target categories must belong to the same banner")
+		default:
+			if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+				return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			}
+			r.logger.ErrorCtx(ctx, "cannot move cookie to category", log.Error(err))
+			return nil, gqlutils.Internal(ctx)
+		}
+	}
+
+	return &types.MoveCookieToCategoryPayload{
+		SourceCookieCategory: types.NewCookieCategory(result.SourceCategory),
+		TargetCookieCategory: types.NewCookieCategory(result.TargetCategory),
+		CookieBanner:         types.NewCookieBanner(result.Banner),
+	}, nil
+}
+
 // CookieBanner returns schema.CookieBannerResolver implementation.
 func (r *Resolver) CookieBanner() schema.CookieBannerResolver { return &cookieBannerResolver{r} }
 

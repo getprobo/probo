@@ -90,6 +90,12 @@ type (
 		Rank             int
 	}
 
+	MoveCookieToCategoryRequest struct {
+		SourceCookieCategoryID gid.GID
+		TargetCookieCategoryID gid.GID
+		CookieName             string
+	}
+
 	CreateCookieConsentRecordRequest struct {
 		CookieBannerID gid.GID
 		Version        int
@@ -179,6 +185,16 @@ func (r *ReorderCookieCategoryRequest) Validate() error {
 
 	v.Check(r.CookieCategoryID, "cookie_category_id", validator.Required(), validator.GID(coredata.CookieCategoryEntityType))
 	v.Check(r.Rank, "rank", validator.Min(0))
+
+	return v.Error()
+}
+
+func (r *MoveCookieToCategoryRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(r.SourceCookieCategoryID, "source_cookie_category_id", validator.Required(), validator.GID(coredata.CookieCategoryEntityType))
+	v.Check(r.TargetCookieCategoryID, "target_cookie_category_id", validator.Required(), validator.GID(coredata.CookieCategoryEntityType))
+	v.Check(r.CookieName, "cookie_name", validator.Required())
 
 	return v.Error()
 }
@@ -896,6 +912,101 @@ func (s *Service) UpdateCookieCategory(
 	return &category, nil
 }
 
+type MoveCookieToCategoryResult struct {
+	SourceCategory *coredata.CookieCategory
+	TargetCategory *coredata.CookieCategory
+	Banner         *coredata.CookieBanner
+}
+
+func (s *Service) MoveCookieToCategory(
+	ctx context.Context,
+	scope coredata.Scoper,
+	req MoveCookieToCategoryRequest,
+) (*MoveCookieToCategoryResult, error) {
+	if err := req.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid request: %w", err)
+	}
+
+	var result MoveCookieToCategoryResult
+
+	err := s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			var source coredata.CookieCategory
+			if err := source.LoadByID(ctx, tx, scope, req.SourceCookieCategoryID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return ErrCategoryNotFound
+				}
+				return fmt.Errorf("cannot load source cookie category: %w", err)
+			}
+
+			var target coredata.CookieCategory
+			if err := target.LoadByID(ctx, tx, scope, req.TargetCookieCategoryID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return ErrCategoryNotFound
+				}
+				return fmt.Errorf("cannot load target cookie category: %w", err)
+			}
+
+			if source.CookieBannerID != target.CookieBannerID {
+				return ErrCategoriesBannerMismatch
+			}
+
+			cookieIdx := -1
+			for i, c := range source.Cookies {
+				if c.Name == req.CookieName {
+					cookieIdx = i
+					break
+				}
+			}
+			if cookieIdx == -1 {
+				return ErrCookieNotFound
+			}
+
+			cookie := source.Cookies[cookieIdx]
+			source.Cookies = append(source.Cookies[:cookieIdx], source.Cookies[cookieIdx+1:]...)
+			target.Cookies = append(target.Cookies, cookie)
+
+			now := time.Now()
+			source.UpdatedAt = now
+			target.UpdatedAt = now
+
+			if err := source.Update(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot update source cookie category: %w", err)
+			}
+
+			if err := target.Update(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot update target cookie category: %w", err)
+			}
+
+			var banner coredata.CookieBanner
+			if err := banner.LoadByID(ctx, tx, scope, source.CookieBannerID); err != nil {
+				return fmt.Errorf("cannot load cookie banner: %w", err)
+			}
+
+			var categories coredata.CookieCategories
+			if err := categories.LoadAllByCookieBannerID(ctx, tx, scope, source.CookieBannerID); err != nil {
+				return fmt.Errorf("cannot load cookie categories: %w", err)
+			}
+
+			if _, err := s.ensureDraftVersion(ctx, tx, scope, &banner, categories); err != nil {
+				return fmt.Errorf("cannot ensure draft version: %w", err)
+			}
+
+			result.SourceCategory = &source
+			result.TargetCategory = &target
+			result.Banner = &banner
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &result, nil
+}
+
 func (s *Service) ReorderCookieCategory(
 	ctx context.Context,
 	scope coredata.Scoper,
@@ -972,32 +1083,13 @@ func (s *Service) DeleteCookieCategory(
 
 			if len(category.Cookies) > 0 {
 				var uncategorised coredata.CookieCategory
-				err := uncategorised.LoadUncategorisedByCookieBannerID(ctx, tx, scope, bannerID)
-				if errors.Is(err, coredata.ErrResourceNotFound) {
-					now := time.Now()
-					uncategorised = coredata.CookieCategory{
-						ID:             gid.New(scope.GetTenantID(), coredata.CookieCategoryEntityType),
-						OrganizationID: category.OrganizationID,
-						CookieBannerID: bannerID,
-						Name:           "Uncategorised",
-						Description:    "Cookies that have not been assigned to a category yet.",
-						Kind:           coredata.CookieCategoryKindUncategorised,
-						Rank:           category.Rank + 1,
-						Cookies:        category.Cookies,
-						CreatedAt:      now,
-						UpdatedAt:      now,
-					}
-					if err := uncategorised.Insert(ctx, tx, scope); err != nil {
-						return fmt.Errorf("cannot create uncategorised cookie category: %w", err)
-					}
-				} else if err != nil {
+				if err := uncategorised.LoadUncategorisedByCookieBannerID(ctx, tx, scope, bannerID); err != nil {
 					return fmt.Errorf("cannot load uncategorised cookie category: %w", err)
-				} else {
-					uncategorised.Cookies = append(uncategorised.Cookies, category.Cookies...)
-					uncategorised.UpdatedAt = time.Now()
-					if err := uncategorised.Update(ctx, tx, scope); err != nil {
-						return fmt.Errorf("cannot update uncategorised cookie category: %w", err)
-					}
+				}
+				uncategorised.Cookies = append(uncategorised.Cookies, category.Cookies...)
+				uncategorised.UpdatedAt = time.Now()
+				if err := uncategorised.Update(ctx, tx, scope); err != nil {
+					return fmt.Errorf("cannot update uncategorised cookie category: %w", err)
 				}
 			}
 

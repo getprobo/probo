@@ -172,6 +172,9 @@ extend type Mutation {
     reorderCookieCategory(
         input: ReorderCookieCategoryInput!
     ): ReorderCookieCategoryPayload!
+    moveCookieToCategory(
+        input: MoveCookieToCategoryInput!
+    ): MoveCookieToCategoryPayload!
 }
 
 input CreateCookieBannerInput {
@@ -238,6 +241,12 @@ input CookieItemInput {
     description: String!
 }
 
+input MoveCookieToCategoryInput {
+    sourceCookieCategoryId: ID!
+    targetCookieCategoryId: ID!
+    cookieName: String!
+}
+
 type CreateCookieBannerPayload {
     cookieBannerEdge: CookieBannerEdge!
 }
@@ -279,5 +288,11 @@ type DeleteCookieCategoryPayload {
 }
 
 type ReorderCookieCategoryPayload {
+    cookieBanner: CookieBanner!
+}
+
+type MoveCookieToCategoryPayload {
+    sourceCookieCategory: CookieCategory!
+    targetCookieCategory: CookieCategory!
     cookieBanner: CookieBanner!
 }

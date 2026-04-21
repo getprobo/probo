@@ -38,6 +38,7 @@ import { useFragment, useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 
 import type { CategorySectionFragment$key } from "#/__generated__/core/CategorySectionFragment.graphql";
+import type { CategorySectionMoveCookieMutation } from "#/__generated__/core/CategorySectionMoveCookieMutation.graphql";
 import type { CategorySectionUpdateMutation } from "#/__generated__/core/CategorySectionUpdateMutation.graphql";
 
 export const categorySectionFragment = graphql`
@@ -98,6 +99,41 @@ const updateCategoryMutation = graphql`
   }
 `;
 
+const moveCookieMutation = graphql`
+  mutation CategorySectionMoveCookieMutation(
+    $input: MoveCookieToCategoryInput!
+  ) {
+    moveCookieToCategory(input: $input) {
+      sourceCookieCategory {
+        id
+        cookies {
+          name
+          duration
+          description
+        }
+        updatedAt
+      }
+      targetCookieCategory {
+        id
+        cookies {
+          name
+          duration
+          description
+        }
+        updatedAt
+      }
+      cookieBanner {
+        id
+        latestVersion {
+          id
+          version
+          state
+        }
+      }
+    }
+  }
+`;
+
 interface CookieEntry {
   name: string;
   duration: string;
@@ -116,6 +152,8 @@ export function CategorySection({ categoryKey, onDelete }: CategorySectionProps)
 
   const [updateCategory, isUpdating]
     = useMutation<CategorySectionUpdateMutation>(updateCategoryMutation);
+  const [moveCookie, _isMoving]
+    = useMutation<CategorySectionMoveCookieMutation>(moveCookieMutation);
 
   const [isEditingCategory, setIsEditingCategory] = useState(false);
   const [editName, setEditName] = useState(category.name);
@@ -256,23 +294,13 @@ export function CategorySection({ categoryKey, onDelete }: CategorySectionProps)
 
   const handleMoveCookie = (cookieIndex: number, targetCategoryId: string) => {
     const cookie = category.cookies[cookieIndex];
-    const targetCategory = siblingCategories.find(c => c.id === targetCategoryId);
-    if (!targetCategory) return;
 
-    const targetCookies = [
-      ...targetCategory.cookies.map(c => ({
-        name: c.name,
-        duration: c.duration,
-        description: c.description,
-      })),
-      { name: cookie.name, duration: cookie.duration, description: cookie.description },
-    ];
-
-    updateCategory({
+    moveCookie({
       variables: {
         input: {
-          cookieCategoryId: targetCategoryId,
-          cookies: targetCookies,
+          sourceCookieCategoryId: category.id,
+          targetCookieCategoryId: targetCategoryId,
+          cookieName: cookie.name,
         },
       },
       onCompleted(_response, errors) {
@@ -284,47 +312,10 @@ export function CategorySection({ categoryKey, onDelete }: CategorySectionProps)
           });
           return;
         }
-
-        const sourceCookies = category.cookies
-          .filter((_, i) => i !== cookieIndex)
-          .map(c => ({
-            name: c.name,
-            duration: c.duration,
-            description: c.description,
-          }));
-
-        updateCategory({
-          variables: {
-            input: {
-              cookieCategoryId: category.id,
-              cookies: sourceCookies,
-            },
-          },
-          onCompleted(_response, errors) {
-            if (errors?.length) {
-              toast({
-                title: __("Error"),
-                description: errors[0].message,
-                variant: "error",
-              });
-              return;
-            }
-            toast({
-              title: __("Success"),
-              description: __("Cookie moved"),
-              variant: "success",
-            });
-          },
-          onError(error) {
-            toast({
-              title: __("Error"),
-              description: formatError(
-                __("Failed to move cookie"),
-                error as GraphQLError,
-              ),
-              variant: "error",
-            });
-          },
+        toast({
+          title: __("Success"),
+          description: __("Cookie moved"),
+          variant: "success",
         });
       },
       onError(error) {

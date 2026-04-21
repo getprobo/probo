@@ -28,4 +28,6 @@ var (
 	ErrCannotDeleteSystemCategory = errors.New("cannot delete system cookie category")
 	ErrOriginAlreadyInUse         = errors.New("origin is already used by another active cookie banner")
 	ErrConsentNotFound            = errors.New("consent record not found")
+	ErrCookieNotFound             = errors.New("cookie not found in source category")
+	ErrCategoriesBannerMismatch   = errors.New("source and target categories belong to different banners")
 )
