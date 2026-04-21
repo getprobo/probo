@@ -154,8 +154,8 @@ export function CategorySection({ categoryKey, onDelete }: CategorySectionProps)
 
   const [updateCategory, isUpdating]
     = useMutation<CategorySectionUpdateMutation>(updateCategoryMutation);
-  const [moveCookie, _isMoving]
-    = useMutation<CategorySectionMoveCookieMutation>(moveCookieMutation);
+  const [moveCookie] =
+    useMutation<CategorySectionMoveCookieMutation>(moveCookieMutation);
 
   const [isEditingCategory, setIsEditingCategory] = useState(false);
   const [editingCookieIndex, setEditingCookieIndex] = useState<number | null>(null);

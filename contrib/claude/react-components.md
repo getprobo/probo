@@ -11,6 +11,24 @@ This document describes **how to define and shape** React components in Probo fr
 | `@probo/ui`, Tailwind, `tailwind-variants`, folders, skeletons, compound modules | [`contrib/claude/ui.md`](ui.md) |
 | Relay queries, fragments, loaders, `queryRef` | [`contrib/claude/relay.md`](relay.md) |
 
+## Destructuring
+
+**Never destructure a value you do not use.** If only one element of a tuple or object is needed, stop destructuring at that element or omit the unused keys. Do not assign to `_`-prefixed throwaway names.
+
+### Do / don't: unused destructured values
+
+```tsx
+// Bad — _isMoving is never read
+const [moveCookie, _isMoving] =
+  useMutation<MoveCookieMutation>(moveCookieMutation);
+```
+
+```tsx
+// Good — stop at the last element you need
+const [moveCookie] =
+  useMutation<MoveCookieMutation>(moveCookieMutation);
+```
+
 ## Component shape
 
 | Rule | Convention |
