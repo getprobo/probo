@@ -16,6 +16,8 @@ const ATTR_CATEGORY = "data-cookie-consent";
 const ATTR_SRC = "data-src";
 const ATTR_HREF = "data-href";
 const ATTR_ACTIVATED = "data-cookie-consent-activated";
+const ATTR_PLACEHOLDER = "data-cookie-consent-placeholder";
+const ATTR_HIDDEN = "data-cookie-consent-hidden";
 
 const ACTIVATABLE_TAGS = new Set([
   "SCRIPT",
@@ -27,6 +29,132 @@ const ACTIVATABLE_TAGS = new Set([
   "OBJECT",
   "LINK",
 ]);
+
+const VISUAL_TAGS = new Set([
+  "IFRAME",
+  "IMG",
+  "VIDEO",
+  "AUDIO",
+  "EMBED",
+  "OBJECT",
+]);
+
+const LOCK_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`;
+
+const PLACEHOLDER_STYLES = `
+[${ATTR_HIDDEN}] {
+  display: none !important;
+}
+[${ATTR_PLACEHOLDER}] {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 12px;
+  padding: 24px;
+  background: var(--probo-bg, #ffffff);
+  color: var(--probo-text-secondary, #555555);
+  border: 1px dashed var(--probo-border, #e0e0e0);
+  border-radius: var(--probo-radius, 12px);
+  font-family: var(--probo-font-family, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif);
+  font-size: var(--probo-font-size, 14px);
+  line-height: 1.5;
+  text-align: center;
+  box-sizing: border-box;
+  min-height: 120px;
+}
+[${ATTR_PLACEHOLDER}] .probo-ph-icon {
+  color: var(--probo-text-secondary, #555555);
+}
+[${ATTR_PLACEHOLDER}] .probo-ph-text {
+  margin: 0;
+}
+[${ATTR_PLACEHOLDER}] .probo-ph-text strong {
+  font-weight: 600;
+}
+[${ATTR_PLACEHOLDER}] .probo-ph-link {
+  background: none;
+  border: none;
+  color: var(--probo-accent, #1a1a1a);
+  text-decoration: underline;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: inherit;
+  padding: 0;
+}
+[${ATTR_PLACEHOLDER}] .probo-ph-link:hover {
+  opacity: 0.8;
+}
+`;
+
+let stylesInjected = false;
+
+function injectPlaceholderStyles(): void {
+  if (stylesInjected) return;
+  stylesInjected = true;
+
+  const style = document.createElement("style");
+  style.id = "probo-placeholder-styles";
+  style.textContent = PLACEHOLDER_STYLES;
+  document.head.appendChild(style);
+}
+
+function escapeHtml(s: string): string {
+  const el = document.createElement("span");
+  el.textContent = s;
+  return el.innerHTML;
+}
+
+function createPlaceholder(
+  el: Element,
+  category: string,
+  label?: string,
+): void {
+  if (el.hasAttribute(ATTR_HIDDEN)) return;
+
+  injectPlaceholderStyles();
+
+  const displayLabel = label || category;
+
+  const placeholder = document.createElement("div");
+  placeholder.setAttribute(ATTR_PLACEHOLDER, category);
+
+  const htmlEl = el as HTMLElement;
+
+  if (htmlEl.className) placeholder.className = htmlEl.className;
+
+  const w = el.getAttribute("width");
+  if (w) placeholder.style.width = /^\d+$/.test(w) ? w + "px" : w;
+
+  const h = el.getAttribute("height");
+  if (h) placeholder.style.height = /^\d+$/.test(h) ? h + "px" : h;
+
+  if (htmlEl.style?.cssText) placeholder.style.cssText += htmlEl.style.cssText;
+
+  placeholder.innerHTML = [
+    `<span class="probo-ph-icon">${LOCK_ICON}</span>`,
+    `<p class="probo-ph-text">This content requires <strong>${escapeHtml(displayLabel)}</strong> cookies.</p>`,
+    `<button type="button" class="probo-ph-link">Manage cookie preferences</button>`,
+  ].join("");
+
+  placeholder.querySelector(".probo-ph-link")!.addEventListener("click", () => {
+    document.dispatchEvent(new CustomEvent("probo-open-preferences"));
+  });
+
+  el.setAttribute(ATTR_HIDDEN, "");
+  el.parentNode!.insertBefore(placeholder, el.nextSibling);
+}
+
+function removePlaceholder(el: Element): void {
+  if (!el.hasAttribute(ATTR_HIDDEN)) return;
+
+  const next = el.nextElementSibling;
+  if (next?.hasAttribute(ATTR_PLACEHOLDER)) {
+    next.remove();
+  }
+
+  el.removeAttribute(ATTR_HIDDEN);
+}
 
 function activateScript(el: HTMLScriptElement): void {
   const replacement = document.createElement("script");
@@ -61,6 +189,8 @@ function activateScript(el: HTMLScriptElement): void {
 }
 
 function activateElement(el: Element): void {
+  removePlaceholder(el);
+
   const category = el.getAttribute(ATTR_CATEGORY);
 
   const src = el.getAttribute(ATTR_SRC);
@@ -140,7 +270,7 @@ function deactivateScript(el: HTMLScriptElement): void {
   el.parentNode!.replaceChild(replacement, el);
 }
 
-function deactivateElement(el: Element): void {
+function deactivateElement(el: Element, label?: string): void {
   const category = el.getAttribute(ATTR_ACTIVATED);
 
   const src = el.getAttribute("src");
@@ -159,6 +289,10 @@ function deactivateElement(el: Element): void {
     el.setAttribute(ATTR_CATEGORY, category);
   }
   el.removeAttribute(ATTR_ACTIVATED);
+
+  if (category && VISUAL_TAGS.has(el.tagName)) {
+    createPlaceholder(el, category, label);
+  }
 }
 
 function removeCookies(names: string[]): void {
@@ -175,6 +309,7 @@ function removeCookies(names: string[]): void {
 export function deactivateElements(
   consentData: Record<string, boolean>,
   categoryCookies: Record<string, string[]>,
+  categoryLabels: Record<string, string>,
 ): void {
   const elements = document.querySelectorAll(`[${ATTR_ACTIVATED}]`);
   const cookiesToRemove = new Set<string>();
@@ -188,7 +323,7 @@ export function deactivateElements(
     if (el instanceof HTMLScriptElement) {
       deactivateScript(el);
     } else {
-      deactivateElement(el);
+      deactivateElement(el, categoryLabels[category]);
     }
 
     const cookies = categoryCookies[category];
@@ -213,8 +348,33 @@ export function activateElements(
   }
 }
 
+export function addPlaceholders(
+  consentData: Record<string, boolean>,
+  categoryLabels: Record<string, string>,
+): void {
+  const elements = document.querySelectorAll(`[${ATTR_CATEGORY}]`);
+  for (const el of elements) {
+    const category = el.getAttribute(ATTR_CATEGORY);
+    if (!category || consentData[category]) continue;
+    if (!VISUAL_TAGS.has(el.tagName)) continue;
+    createPlaceholder(el, category, categoryLabels[category]);
+  }
+}
+
+function tryPlaceholder(
+  el: Element,
+  consentData: Record<string, boolean>,
+  categoryLabels: Record<string, string>,
+): void {
+  const category = el.getAttribute(ATTR_CATEGORY);
+  if (!category || consentData[category]) return;
+  if (!VISUAL_TAGS.has(el.tagName)) return;
+  createPlaceholder(el, category, categoryLabels[category]);
+}
+
 export function observeAndActivate(
   consentData: Record<string, boolean>,
+  categoryLabels: Record<string, string>,
 ): MutationObserver {
   const observer = new MutationObserver((mutations) => {
     for (const mutation of mutations) {
@@ -225,11 +385,13 @@ export function observeAndActivate(
 
         if (node.hasAttribute(ATTR_CATEGORY)) {
           tryActivate(node, consentData);
+          tryPlaceholder(node, consentData, categoryLabels);
         }
 
         const nested = node.querySelectorAll(`[${ATTR_CATEGORY}]`);
         for (const el of nested) {
           tryActivate(el, consentData);
+          tryPlaceholder(el, consentData, categoryLabels);
         }
       }
     }

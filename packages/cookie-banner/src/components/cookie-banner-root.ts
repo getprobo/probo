@@ -66,15 +66,21 @@ export class ProboCookieBannerRoot extends ProboElement implements ProboRootElem
   }
 
   connectedCallback(): void {
+    document.addEventListener("probo-open-preferences", this.onOpenPreferences);
     this.initClient();
   }
 
   disconnectedCallback(): void {
+    document.removeEventListener("probo-open-preferences", this.onOpenPreferences);
     if (this._client) {
       this._client.destroy();
       this._client = null;
     }
   }
+
+  private onOpenPreferences = (): void => {
+    this.setState("panel");
+  };
 
   setState(state: ProboState): void {
     const prev = this._state;

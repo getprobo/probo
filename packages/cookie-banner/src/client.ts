@@ -14,6 +14,7 @@
 
 import {
   activateElements,
+  addPlaceholders,
   deactivateElements,
   observeAndActivate,
 } from "./activation";
@@ -241,16 +242,19 @@ export class CookieBannerClient {
 
   private activate(consentData: Record<string, boolean>): void {
     const categoryCookies: Record<string, string[]> = {};
+    const categoryLabels: Record<string, string> = {};
     for (const cat of this.config.categories) {
       categoryCookies[cat.name] = cat.cookies.map((c) => c.name);
+      categoryLabels[cat.name] = cat.name;
     }
 
-    deactivateElements(consentData, categoryCookies);
+    deactivateElements(consentData, categoryCookies, categoryLabels);
     activateElements(consentData);
+    addPlaceholders(consentData, categoryLabels);
     if (this.observer) {
       this.observer.disconnect();
     }
-    this.observer = observeAndActivate(consentData);
+    this.observer = observeAndActivate(consentData, categoryLabels);
   }
 
   destroy(): void {
