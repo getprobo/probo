@@ -155,15 +155,15 @@ CFG_DEV_OAUTH2_KEY = cfg/.dev-oauth2-signing-key.pem
 CFG_DEV_ENV       = cfg/dev.env
 
 .PHONY: dev-config
-dev-config: cfg/dev.yaml ## Generate cfg/dev.yaml via probod-bootstrap (rerun after deleting the file)
+dev-config: cfg/dev.yaml ## Generate cfg/dev.yaml via probod-bootstrap (picks up edits to cfg/dev.env)
 
 $(CFG_DEV_OAUTH2_KEY):
 	@$(MKDIR) $(@D)
 	$(OPENSSL) genrsa -out $@ 2048
 
-cfg/dev.yaml: bin/probod-bootstrap $(CFG_DEV_OAUTH2_KEY)
+cfg/dev.yaml: bin/probod-bootstrap $(CFG_DEV_OAUTH2_KEY) $(wildcard $(CFG_DEV_ENV))
 	@$(MKDIR) $(@D)
-	@set -a; \
+	set -a; \
 	PROBOD_ENCRYPTION_KEY="thisisnotasecretAAAAAAAAAAAAAAAAAAAAAAAAAAA="; \
 	AUTH_COOKIE_SECRET="this-is-a-secure-secret-for-cookie-signing-at-least-32-bytes"; \
 	AUTH_PASSWORD_PEPPER="this-is-a-secure-pepper-for-password-hashing-at-least-32-bytes"; \
