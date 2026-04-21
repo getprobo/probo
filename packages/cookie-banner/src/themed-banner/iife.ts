@@ -33,6 +33,11 @@ if (script) {
         el.setAttribute("position", position);
       }
 
+      const reopenWidget = script.getAttribute("data-reopen-widget");
+      if (reopenWidget) {
+        el.setAttribute("reopen-widget", reopenWidget);
+      }
+
       document.body.appendChild(el);
     };
 
