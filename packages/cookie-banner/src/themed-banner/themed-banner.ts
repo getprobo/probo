@@ -17,7 +17,8 @@ import type { ProboCookieBannerRoot } from "../components/cookie-banner-root";
 import type { BannerConfig } from "../client";
 import { THEMED_STYLES } from "./styles";
 
-const BACK_ARROW = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>`;
+const CLOSE_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
+const CHEVRON_DOWN = `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>`;
 
 export class ProboThemedBanner extends HTMLElement {
   private shadow: ShadowRoot;
@@ -48,33 +49,35 @@ export class ProboThemedBanner extends HTMLElement {
       <style>${THEMED_STYLES}</style>
       <probo-cookie-banner-root banner-id="${this.esc(bannerId)}" base-url="${this.esc(baseUrl)}">
         <probo-banner>
-          <div class="overlay">
+          <div class="floating" data-position="${this.esc(position)}">
             <div class="card" role="dialog" aria-label="Cookie consent">
               <p class="title">Cookie Preferences</p>
               <p class="description" data-description>
                 We use cookies to improve your experience and analyze site traffic.
               </p>
               <div class="buttons">
-                <probo-reject-button><button class="btn">Reject all</button></probo-reject-button>
-                <probo-customize-button><button class="btn">Customize</button></probo-customize-button>
                 <probo-accept-button><button class="btn btn-primary">Accept all</button></probo-accept-button>
+                <probo-reject-button><button class="btn">Reject all</button></probo-reject-button>
+                <probo-customize-button><button class="btn btn-link">Customize</button></probo-customize-button>
               </div>
             </div>
           </div>
         </probo-banner>
 
         <probo-preference-panel>
-          <div class="overlay">
+          <div class="floating" data-position="${this.esc(position)}">
             <div class="card" role="dialog" aria-label="Cookie preferences">
               <div class="panel-header">
-                <button class="panel-back" data-action="back">
-                  ${BACK_ARROW} Back
-                </button>
                 <p class="title" style="margin:0">Preferences</p>
-                <div style="width:60px"></div>
+                <button class="panel-close" data-action="back" aria-label="Close">
+                  ${CLOSE_ICON}
+                </button>
               </div>
               <probo-category-list>
                 <template>
+                  <button class="cookie-toggle" data-action="toggle-cookies">
+                    ${CHEVRON_DOWN}
+                  </button>
                   <div class="category-header">
                     <div class="category-info">
                       <div class="category-name" data-slot="name"></div>
@@ -87,11 +90,12 @@ export class ProboThemedBanner extends HTMLElement {
                       </label>
                     </probo-category-toggle>
                   </div>
-                  <probo-cookie-list>
+                  <probo-cookie-list hidden>
                     <template>
                       <div class="cookie-item">
                         <span class="cookie-name" data-slot="name"></span>
-                        <span class="cookie-duration" data-slot="duration"></span>
+                        <span class="cookie-detail"><span class="cookie-label">Description:</span> <span data-slot="description"></span></span>
+                        <span class="cookie-detail"><span class="cookie-label">Duration:</span> <span data-slot="duration"></span></span>
                       </div>
                     </template>
                   </probo-cookie-list>
@@ -119,6 +123,22 @@ export class ProboThemedBanner extends HTMLElement {
 
     this.shadow.querySelector("[data-action=back]")?.addEventListener("click", () => {
       root.setState("banner");
+    });
+
+    this.shadow.addEventListener("click", (e: Event) => {
+      const btn = (e.target as Element).closest?.("[data-action=toggle-cookies]") as HTMLElement | null;
+      if (!btn) return;
+      const category = btn.closest("probo-category");
+      const cookieList = category?.querySelector("probo-cookie-list") as HTMLElement | null;
+      if (!cookieList) return;
+      const open = cookieList.hasAttribute("hidden");
+      if (open) {
+        cookieList.removeAttribute("hidden");
+        btn.classList.add("open");
+      } else {
+        cookieList.setAttribute("hidden", "");
+        btn.classList.remove("open");
+      }
     });
   }
 
