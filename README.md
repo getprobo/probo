@@ -48,6 +48,9 @@ Probo is designed to be accessible, transparent, and community-driven.
    # Build the project
    make build
 
+   # Generate the local dev config (writes cfg/dev.yaml)
+   make dev-config
+
    # Start the application using development settings
    bin/probod -cfg-file cfg/dev.yaml
    ```
@@ -65,7 +68,7 @@ To test the custom domains feature locally, add the CNAME target to your hosts f
 127.0.0.1 custom.getprobo.com
 ```
 
-This allows you to test custom trust center domains on your local machine. The CNAME target can be configured in `cfg/dev.yaml` under `custom-domains.cname-target`.
+This allows you to test custom trust center domains on your local machine. The generated `cfg/dev.yaml` sets the CNAME target via `custom-domains.cname-target`; change `CUSTOM_DOMAINS_CNAME_TARGET` before running `make dev-config` to override it.
 
 For detailed setup instructions, see our [Contributing Guide](CONTRIBUTING.md).
 

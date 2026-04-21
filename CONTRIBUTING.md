@@ -84,7 +84,18 @@ Signed-off-by: John Doe <john.doe@example.org>
    make stack-up
    ```
 
-6. Start the development servers:
+6. Generate the local dev config (writes `cfg/dev.yaml`):
+
+   ```bash
+   # Optional: override any dev default (secrets, OAuth clients, LLM keys).
+   # cp cfg/dev.env.example cfg/dev.env && $EDITOR cfg/dev.env
+
+   make dev-config
+   ```
+
+   The target stashes a dev-only RSA signing key under `cfg/.dev-oauth2-signing-key.pem` so tokens survive probod restarts, and sources `cfg/dev.env` if present so you can override defaults without editing the Makefile. `cfg/dev.yaml`, `cfg/dev.env`, and the signing key are all gitignored. Re-run the target to regenerate.
+
+7. Start the development servers:
 
    ```bash
    # In one terminal - start the API server

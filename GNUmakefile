@@ -151,6 +151,34 @@ coverage-combined: coverage-report test-e2e-coverage ## Generate combined covera
 .PHONY: build
 build: bin/probod bin/prb bin/probod-bootstrap
 
+CFG_DEV_OAUTH2_KEY = cfg/.dev-oauth2-signing-key.pem
+CFG_DEV_ENV       = cfg/dev.env
+
+.PHONY: dev-config
+dev-config: cfg/dev.yaml ## Generate cfg/dev.yaml via probod-bootstrap (rerun after deleting the file)
+
+$(CFG_DEV_OAUTH2_KEY):
+	@$(MKDIR) $(@D)
+	$(OPENSSL) genrsa -out $@ 2048
+
+cfg/dev.yaml: bin/probod-bootstrap $(CFG_DEV_OAUTH2_KEY)
+	@$(MKDIR) $(@D)
+	@set -a; \
+	PROBOD_ENCRYPTION_KEY="thisisnotasecretAAAAAAAAAAAAAAAAAAAAAAAAAAA="; \
+	AUTH_COOKIE_SECRET="this-is-a-secure-secret-for-cookie-signing-at-least-32-bytes"; \
+	AUTH_PASSWORD_PEPPER="this-is-a-secure-pepper-for-password-hashing-at-least-32-bytes"; \
+	AUTH_COOKIE_SECURE=false; \
+	OAUTH2_SERVER_SIGNING_KEY="$$($(CAT) $(CFG_DEV_OAUTH2_KEY))"; \
+	API_CORS_ALLOWED_ORIGINS="http://localhost:8080,http://localhost:5173,http://localhost:5174"; \
+	AWS_ACCESS_KEY_ID=probod; \
+	AWS_SECRET_ACCESS_KEY=thisisnotasecret; \
+	AWS_ENDPOINT=http://127.0.0.1:8333; \
+	OPENAI_API_KEY=thisisnotasecret; \
+	ACME_DIRECTORY=https://localhost:14000/dir; \
+	if [ -f $(CFG_DEV_ENV) ]; then . $(CFG_DEV_ENV); fi; \
+	set +a; \
+	./bin/probod-bootstrap -output $@
+
 .PHONY: sbom-docker
 sbom-docker: docker-build
 	$(SYFT) docker:$(DOCKER_IMAGE_NAME):$(DOCKER_TAG_NAME) -o cyclonedx-json \
