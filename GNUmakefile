@@ -161,7 +161,7 @@ $(CFG_DEV_OAUTH2_KEY):
 	@$(MKDIR) $(@D)
 	$(OPENSSL) genrsa -out $@ 2048
 
-cfg/dev.yaml: bin/probod-bootstrap $(CFG_DEV_OAUTH2_KEY) $(wildcard $(DEV_ENV))
+cfg/dev.yaml: bin/probod-bootstrap $(CFG_DEV_OAUTH2_KEY) compose/pebble/certs/rootCA.pem $(wildcard $(DEV_ENV))
 	@$(MKDIR) $(@D)
 	set -a; \
 	PROBOD_ENCRYPTION_KEY="thisisnotasecretAAAAAAAAAAAAAAAAAAAAAAAAAAA="; \
@@ -175,6 +175,7 @@ cfg/dev.yaml: bin/probod-bootstrap $(CFG_DEV_OAUTH2_KEY) $(wildcard $(DEV_ENV))
 	AWS_ENDPOINT=http://127.0.0.1:8333; \
 	OPENAI_API_KEY=thisisnotasecret; \
 	ACME_DIRECTORY=https://localhost:14000/dir; \
+	ACME_ROOT_CA="$$($(CAT) compose/pebble/certs/rootCA.pem)"; \
 	if [ -f $(DEV_ENV) ]; then . $(DEV_ENV); fi; \
 	set +a; \
 	./bin/probod-bootstrap -output $@
