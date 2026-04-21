@@ -129,7 +129,26 @@ function createPlaceholder(
   const h = el.getAttribute("height");
   if (h) placeholder.style.height = /^\d+$/.test(h) ? h + "px" : h;
 
-  if (htmlEl.style?.cssText) placeholder.style.cssText += htmlEl.style.cssText;
+  const DIMENSIONAL_PROPS = [
+    "width",
+    "height",
+    "min-width",
+    "min-height",
+    "max-width",
+    "max-height",
+    "aspect-ratio",
+    "margin",
+    "margin-top",
+    "margin-right",
+    "margin-bottom",
+    "margin-left",
+  ];
+  if (htmlEl.style) {
+    for (const prop of DIMENSIONAL_PROPS) {
+      const val = htmlEl.style.getPropertyValue(prop);
+      if (val) placeholder.style.setProperty(prop, val);
+    }
+  }
 
   placeholder.innerHTML = [
     `<span class="probo-ph-icon">${LOCK_ICON}</span>`,
@@ -295,10 +314,49 @@ function deactivateElement(el: Element, label?: string): void {
   }
 }
 
+const KNOWN_MULTI_PART_TLDS = new Set([
+  "co.uk",
+  "co.jp",
+  "co.kr",
+  "co.nz",
+  "co.za",
+  "co.in",
+  "co.id",
+  "com.au",
+  "com.br",
+  "com.cn",
+  "com.mx",
+  "com.tw",
+  "com.hk",
+  "com.sg",
+  "com.ar",
+  "com.co",
+  "com.tr",
+  "net.au",
+  "org.uk",
+  "org.au",
+  "ac.uk",
+  "gov.uk",
+  "ne.jp",
+  "or.jp",
+]);
+
+function getRootDomain(hostname: string): string {
+  const parts = hostname.split(".");
+  if (parts.length <= 2) {
+    return parts.length === 2 ? "." + hostname : hostname;
+  }
+
+  const lastTwo = parts.slice(-2).join(".");
+  if (KNOWN_MULTI_PART_TLDS.has(lastTwo)) {
+    return "." + parts.slice(-3).join(".");
+  }
+
+  return "." + lastTwo;
+}
+
 function removeCookies(names: string[]): void {
-  const parts = location.hostname.split(".");
-  const rootDomain =
-    parts.length > 1 ? "." + parts.slice(-2).join(".") : location.hostname;
+  const rootDomain = getRootDomain(location.hostname);
 
   for (const name of names) {
     document.cookie = `${name}=; path=/; max-age=0`;
