@@ -29,7 +29,7 @@ export class ProboThemedBanner extends HTMLElement {
   }
 
   static get observedAttributes(): string[] {
-    return ["banner-id", "base-url"];
+    return ["banner-id", "base-url", "reopen-widget"];
   }
 
   connectedCallback(): void {
@@ -44,10 +44,12 @@ export class ProboThemedBanner extends HTMLElement {
     }
 
     const position = this.getAttribute("position") ?? "bottom-left";
+    const reopenWidget = this.getAttribute("reopen-widget");
+    const reopenAttr = reopenWidget ? ` reopen-widget="${this.esc(reopenWidget)}"` : "";
 
     this.shadow.innerHTML = `
       <style>${THEMED_STYLES}</style>
-      <probo-cookie-banner-root banner-id="${this.esc(bannerId)}" base-url="${this.esc(baseUrl)}">
+      <probo-cookie-banner-root banner-id="${this.esc(bannerId)}" base-url="${this.esc(baseUrl)}"${reopenAttr}>
         <probo-banner>
           <div class="floating" data-position="${this.esc(position)}">
             <div class="card" role="dialog" aria-label="Cookie consent">

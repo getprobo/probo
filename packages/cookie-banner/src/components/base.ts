@@ -55,6 +55,7 @@ export interface ProboRootElement extends ProboElement {
   readonly client: CookieBannerClient;
   readonly bannerConfig: BannerConfig;
   readonly state: ProboState;
+  readonly reopenWidget: string;
   readonly consentDraft: ConsentDraft;
   setState(state: ProboState): void;
   updateDraft(category: string, value: boolean): void;

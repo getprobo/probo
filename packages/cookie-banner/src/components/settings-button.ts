@@ -77,7 +77,12 @@ export class ProboSettingsButton extends HTMLElement {
     this.root = this.findRoot();
 
     if (this.root) {
+      if (this.root.reopenWidget === "custom") {
+        return;
+      }
+
       this.root.addEventListener("probo-state", this.onStateChange);
+      this.root.addEventListener("probo-reopen-widget", this.onReopenWidgetChange);
       if (this.root.state === "hidden") {
         this.hidden = false;
       }
@@ -90,6 +95,7 @@ export class ProboSettingsButton extends HTMLElement {
   disconnectedCallback(): void {
     if (this.root) {
       this.root.removeEventListener("probo-state", this.onStateChange);
+      this.root.removeEventListener("probo-reopen-widget", this.onReopenWidgetChange);
     }
   }
 
@@ -107,6 +113,15 @@ export class ProboSettingsButton extends HTMLElement {
   private onStateChange = (e: Event): void => {
     const { state } = (e as CustomEvent).detail;
     this.hidden = state !== "hidden";
+  };
+
+  private onReopenWidgetChange = (e: Event): void => {
+    const { value } = (e as CustomEvent).detail;
+    if (value === "custom") {
+      this.hidden = true;
+      this.root?.removeEventListener("probo-state", this.onStateChange);
+      this.root?.removeEventListener("probo-reopen-widget", this.onReopenWidgetChange);
+    }
   };
 
   private handleClick = (): void => {

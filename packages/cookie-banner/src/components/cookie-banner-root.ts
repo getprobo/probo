@@ -24,7 +24,7 @@ export class ProboCookieBannerRoot extends ProboElement implements ProboRootElem
   private _draft: ConsentDraft = {};
 
   static get observedAttributes(): string[] {
-    return ["banner-id", "base-url"];
+    return ["banner-id", "base-url", "reopen-widget"];
   }
 
   get client(): CookieBannerClient {
@@ -41,12 +41,28 @@ export class ProboCookieBannerRoot extends ProboElement implements ProboRootElem
     return this._config;
   }
 
+  get reopenWidget(): string {
+    return this.getAttribute("reopen-widget") ?? "floating";
+  }
+
   get state(): ProboState {
     return this._state;
   }
 
   get consentDraft(): ConsentDraft {
     return this._draft;
+  }
+
+  attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null): void {
+    if (name === "reopen-widget" && oldValue !== newValue) {
+      this.dispatchEvent(
+        new CustomEvent("probo-reopen-widget", {
+          bubbles: true,
+          composed: true,
+          detail: { value: newValue ?? "floating" },
+        }),
+      );
+    }
   }
 
   connectedCallback(): void {

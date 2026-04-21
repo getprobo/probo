@@ -25,6 +25,7 @@ import { ProboCookieBannerRoot } from "./cookie-banner-root";
 import { ProboCookie, ProboCookieList } from "./cookie-list";
 import { ProboPreferencePanel, ProboSaveButton } from "./preference-panel";
 import { ProboSettingsButton } from "./settings-button";
+import { ProboSettingsLink } from "./settings-link";
 
 const elements: [string, CustomElementConstructor][] = [
   ["probo-cookie-banner-root", ProboCookieBannerRoot],
@@ -40,6 +41,7 @@ const elements: [string, CustomElementConstructor][] = [
   ["probo-cookie", ProboCookie],
   ["probo-save-button", ProboSaveButton],
   ["probo-settings-button", ProboSettingsButton],
+  ["probo-settings-link", ProboSettingsLink],
 ];
 
 export function registerComponents(): void {
