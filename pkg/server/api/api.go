@@ -141,9 +141,9 @@ func NewServer(cfg Config) (*Server, error) {
 
 	// The cookie banner API is called cross-origin from customer websites
 	// by the JS SDK. CORS is handled by the cookie banner middleware.
-	csrf.AddInsecureBypassPattern("GET /cookie-banner/v1/*")
-	csrf.AddInsecureBypassPattern("POST /cookie-banner/v1/*")
-	csrf.AddInsecureBypassPattern("OPTIONS /cookie-banner/v1/*")
+	// GET and OPTIONS are safe methods (always allowed), but we bypass
+	// POST explicitly since it comes from customer origins.
+	csrf.AddInsecureBypassPattern("POST /cookie-banner/v1/{rest...}")
 
 	// OAuth2 token, introspection, revocation, and device authorization
 	// endpoints receive cross-origin POSTs from external clients.
@@ -258,15 +258,21 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	router.MethodNotAllowed(methodNotAllowed)
 	router.NotFound(notFound)
 
-	router.Use(cors.Handler(corsOpts))
-
-	router.Mount("/console/v1", http.StripPrefix("/console/v1", s.consoleHandler))
-	router.Mount("/connect/v1", http.StripPrefix("/connect/v1", s.connectHandler))
+	// Cookie banner has its own per-banner CORS middleware; mount it
+	// outside the global CORS handler so OPTIONS preflights from
+	// customer websites are not swallowed by the stricter AllowedOrigins
+	// list that applies to console/connect routes.
 	router.Mount("/cookie-banner/v1", http.StripPrefix("/cookie-banner/v1", s.cookieBannerHandler))
-	router.Mount("/files/v1", http.StripPrefix("/files/v1", s.filesHandler))
-	router.Mount("/trust/v1", http.StripPrefix("/trust/v1", s.compliancePageHandler))
-	router.Mount("/mcp/v1", http.StripPrefix("/mcp/v1", s.mcpHandler))
-	router.Mount("/slack/v1", http.StripPrefix("/slack/v1", s.slackHandler))
+
+	router.Group(func(r chi.Router) {
+		r.Use(cors.Handler(corsOpts))
+		r.Mount("/console/v1", http.StripPrefix("/console/v1", s.consoleHandler))
+		r.Mount("/connect/v1", http.StripPrefix("/connect/v1", s.connectHandler))
+		r.Mount("/files/v1", http.StripPrefix("/files/v1", s.filesHandler))
+		r.Mount("/trust/v1", http.StripPrefix("/trust/v1", s.compliancePageHandler))
+		r.Mount("/mcp/v1", http.StripPrefix("/mcp/v1", s.mcpHandler))
+		r.Mount("/slack/v1", http.StripPrefix("/slack/v1", s.slackHandler))
+	})
 
 	s.csrf.Handler(router).ServeHTTP(w, r)
 }
