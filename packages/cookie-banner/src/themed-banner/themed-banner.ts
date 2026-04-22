@@ -104,8 +104,10 @@ export class ProboThemedBanner extends HTMLElement {
                 </template>
               </probo-category-list>
               <div class="buttons">
+                <probo-accept-button><button class="btn btn-primary">Accept all</button></probo-accept-button>
+                <probo-reject-button><button class="btn">Reject all</button></probo-reject-button>
                 <probo-save-button>
-                  <button class="btn btn-primary" style="flex:1">Save preferences</button>
+                  <button class="btn btn-link" style="flex:1">Save preferences</button>
                 </probo-save-button>
               </div>
             </div>
