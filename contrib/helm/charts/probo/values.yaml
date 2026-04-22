@@ -301,6 +301,16 @@ postgresql:
   password: ""  # REQUIRED when enabled=false: PostgreSQL password
   database: probod
   poolSize: 100
+  # Minimum number of warm connections kept in the pool. Raising this
+  # value avoids TLS + PostgreSQL startup handshake latency on bursty
+  # workloads (visible as spikes on pgxpool_acquire_duration_seconds).
+  minPoolSize: 10
+  # Maximum time a connection can be idle before being destroyed, in
+  # seconds. Default 1800 (30 minutes) matches pgx defaults.
+  maxConnIdleTimeSeconds: 1800
+  # Maximum lifetime of a connection before being recycled, in
+  # seconds. Default 3600 (1 hour) matches pgx defaults.
+  maxConnLifetimeSeconds: 3600
   # PostgreSQL TLS/SSL configuration
   # caBundle: |
   #   -----BEGIN CERTIFICATE-----

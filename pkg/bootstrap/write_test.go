@@ -111,11 +111,14 @@ func TestWriteConfig_CompleteConfig(t *testing.T) {
 				ExtraHeaderFields: map[string]string{},
 			},
 			Pg: probod.PgConfig{
-				Addr:     "localhost:5432",
-				Username: "postgres",
-				Password: "postgres",
-				Database: "probod",
-				PoolSize: 100,
+				Addr:                   "localhost:5432",
+				Username:               "postgres",
+				Password:               "postgres",
+				Database:               "probod",
+				PoolSize:               100,
+				MinPoolSize:            10,
+				MaxConnIdleTimeSeconds: 1800,
+				MaxConnLifetimeSeconds: 3600,
 			},
 			Connectors: []probod.ConnectorConfig{
 				{
@@ -147,6 +150,9 @@ func TestWriteConfig_CompleteConfig(t *testing.T) {
 	assert.Equal(t, cfg.Unit.Tracing.MaxBatchSize, loaded.Unit.Tracing.MaxBatchSize)
 	assert.Equal(t, cfg.Probod.Api.Cors.AllowedOrigins, loaded.Probod.Api.Cors.AllowedOrigins)
 	assert.Equal(t, cfg.Probod.Pg.PoolSize, loaded.Probod.Pg.PoolSize)
+	assert.Equal(t, cfg.Probod.Pg.MinPoolSize, loaded.Probod.Pg.MinPoolSize)
+	assert.Equal(t, cfg.Probod.Pg.MaxConnIdleTimeSeconds, loaded.Probod.Pg.MaxConnIdleTimeSeconds)
+	assert.Equal(t, cfg.Probod.Pg.MaxConnLifetimeSeconds, loaded.Probod.Pg.MaxConnLifetimeSeconds)
 	require.Len(t, loaded.Probod.Connectors, 1)
 	assert.Equal(t, "SLACK", loaded.Probod.Connectors[0].Provider)
 }

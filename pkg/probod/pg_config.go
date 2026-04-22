@@ -17,18 +17,22 @@ package probod
 import (
 	"crypto/x509"
 	"encoding/pem"
+	"time"
 
 	"go.gearno.de/kit/pg"
 )
 
 type PgConfig struct {
-	Addr         string `json:"addr"`
-	Username     string `json:"username"`
-	Password     string `json:"password"`
-	Database     string `json:"database"`
-	PoolSize     int32  `json:"pool-size"`
-	CACertBundle string `json:"ca-cert-bundle"`
-	Debug        bool   `json:"debug"`
+	Addr                   string `json:"addr"`
+	Username               string `json:"username"`
+	Password               string `json:"password"`
+	Database               string `json:"database"`
+	PoolSize               int32  `json:"pool-size"`
+	MinPoolSize            int32  `json:"min-pool-size"`
+	MaxConnIdleTimeSeconds int    `json:"max-conn-idle-time-seconds"`
+	MaxConnLifetimeSeconds int    `json:"max-conn-lifetime-seconds"`
+	CACertBundle           string `json:"ca-cert-bundle"`
+	Debug                  bool   `json:"debug"`
 }
 
 func (cfg PgConfig) Options(options ...pg.Option) []pg.Option {
@@ -38,6 +42,28 @@ func (cfg PgConfig) Options(options ...pg.Option) []pg.Option {
 		pg.WithPassword(cfg.Password),
 		pg.WithDatabase(cfg.Database),
 		pg.WithPoolSize(cfg.PoolSize),
+	}
+
+	if cfg.MinPoolSize > 0 {
+		opts = append(opts, pg.WithMinPoolSize(cfg.MinPoolSize))
+	}
+
+	if cfg.MaxConnIdleTimeSeconds > 0 {
+		opts = append(
+			opts,
+			pg.WithMaxConnIdleTime(
+				time.Duration(cfg.MaxConnIdleTimeSeconds)*time.Second,
+			),
+		)
+	}
+
+	if cfg.MaxConnLifetimeSeconds > 0 {
+		opts = append(
+			opts,
+			pg.WithMaxConnLifetime(
+				time.Duration(cfg.MaxConnLifetimeSeconds)*time.Second,
+			),
+		)
 	}
 
 	if cfg.Debug {

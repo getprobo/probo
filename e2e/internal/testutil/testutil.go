@@ -263,8 +263,9 @@ func generateConfig() (string, error) {
 		"API_CORS_ALLOWED_ORIGINS": "http://localhost:18080",
 
 		// PG.
-		"PG_DATABASE":  "probod_test",
-		"PG_POOL_SIZE": "10",
+		"PG_DATABASE":      "probod_test",
+		"PG_POOL_SIZE":     "10",
+		"PG_MIN_POOL_SIZE": "1",
 
 		// Auth.
 		"AUTH_COOKIE_SECURE":       "false",

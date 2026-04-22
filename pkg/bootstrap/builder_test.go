@@ -131,6 +131,9 @@ func TestBuilder_Build_Defaults(t *testing.T) {
 	assert.Equal(t, "postgres", cfg.Probod.Pg.Password)
 	assert.Equal(t, "probod", cfg.Probod.Pg.Database)
 	assert.Equal(t, int32(100), cfg.Probod.Pg.PoolSize)
+	assert.Equal(t, int32(10), cfg.Probod.Pg.MinPoolSize)
+	assert.Equal(t, 1800, cfg.Probod.Pg.MaxConnIdleTimeSeconds)
+	assert.Equal(t, 3600, cfg.Probod.Pg.MaxConnLifetimeSeconds)
 	assert.False(t, cfg.Probod.Pg.Debug)
 
 	// Auth config
@@ -233,6 +236,9 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	env["PG_PASSWORD"] = "secret123"
 	env["PG_DATABASE"] = "probo_prod"
 	env["PG_POOL_SIZE"] = "200"
+	env["PG_MIN_POOL_SIZE"] = "25"
+	env["PG_MAX_CONN_IDLE_TIME_SECONDS"] = "900"
+	env["PG_MAX_CONN_LIFETIME_SECONDS"] = "7200"
 	env["PG_DEBUG"] = "true"
 	// Auth
 	env["AUTH_DISABLE_SIGNUP"] = "true"
@@ -310,6 +316,9 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	assert.Equal(t, "secret123", cfg.Probod.Pg.Password)
 	assert.Equal(t, "probo_prod", cfg.Probod.Pg.Database)
 	assert.Equal(t, int32(200), cfg.Probod.Pg.PoolSize)
+	assert.Equal(t, int32(25), cfg.Probod.Pg.MinPoolSize)
+	assert.Equal(t, 900, cfg.Probod.Pg.MaxConnIdleTimeSeconds)
+	assert.Equal(t, 7200, cfg.Probod.Pg.MaxConnLifetimeSeconds)
 	assert.True(t, cfg.Probod.Pg.Debug)
 	// Auth
 	assert.True(t, cfg.Probod.Auth.DisableSignup)

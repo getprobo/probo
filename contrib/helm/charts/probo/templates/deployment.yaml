@@ -87,6 +87,12 @@ spec:
               value: {{ include "probo.postgresql.database" . | quote }}
             - name: PG_POOL_SIZE
               value: {{ .Values.postgresql.poolSize | default "100" | quote }}
+            - name: PG_MIN_POOL_SIZE
+              value: {{ .Values.postgresql.minPoolSize | default "10" | quote }}
+            - name: PG_MAX_CONN_IDLE_TIME_SECONDS
+              value: {{ .Values.postgresql.maxConnIdleTimeSeconds | default "1800" | quote }}
+            - name: PG_MAX_CONN_LIFETIME_SECONDS
+              value: {{ .Values.postgresql.maxConnLifetimeSeconds | default "3600" | quote }}
             {{- if .Values.postgresql.caBundle }}
             - name: PG_CA_BUNDLE
               valueFrom:
