@@ -12,10 +12,10 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-const STORAGE_KEY_PREFIX = "probo_consent";
+import { COOKIE_NAME } from "./cookie";
 
 export function getOrCreateVisitorId(bannerId: string): string {
-  const key = `${STORAGE_KEY_PREFIX}:${bannerId}:vid`;
+  const key = `${COOKIE_NAME}:${bannerId}:vid`;
 
   try {
     const stored = localStorage.getItem(key);

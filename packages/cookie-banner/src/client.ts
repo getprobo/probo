@@ -18,7 +18,8 @@ import {
   deactivateElements,
   observeAndActivate,
 } from "./activation";
-import { getConsentCookie, setConsentCookie } from "./cookie";
+import { COOKIE_NAME, getConsentCookie, setConsentCookie } from "./cookie";
+import { CookieDetector } from "./detector";
 import { NotFoundError } from "./errors";
 import { fetchJSON } from "./http";
 import { enqueue, flush } from "./queue";
@@ -77,6 +78,7 @@ export class CookieBannerClient {
   private bannerConfig: BannerConfig | null = null;
   private consent: VisitorConsent | null = null;
   private observer: MutationObserver | null = null;
+  private detector: CookieDetector | null = null;
 
   constructor(config: CookieBannerClientOptions) {
     let base = config.baseUrl;
@@ -92,6 +94,8 @@ export class CookieBannerClient {
     const configUrl = new URL(`${this.bannerId}/config`, this.baseUrl);
     const config = await fetchJSON<BannerConfig>(configUrl);
     this.bannerConfig = config;
+
+    this.startDetector(config);
 
     const cookie = getConsentCookie();
     if (cookie && cookie.v === config.version && cookie.vid === this.visitorId) {
@@ -242,7 +246,24 @@ export class CookieBannerClient {
     this.observer = observeAndActivate(consentData, categoryLabels);
   }
 
+  private startDetector(config: BannerConfig): void {
+    const knownNames = new Set<string>();
+    knownNames.add(COOKIE_NAME);
+    for (const cat of config.categories) {
+      for (const cookie of cat.cookies) {
+        knownNames.add(cookie.name);
+      }
+    }
+
+    this.detector = new CookieDetector(this.baseUrl, this.bannerId, knownNames);
+    this.detector.start();
+  }
+
   destroy(): void {
+    if (this.detector) {
+      this.detector.stop();
+      this.detector = null;
+    }
     if (this.observer) {
       this.observer.disconnect();
       this.observer = null;

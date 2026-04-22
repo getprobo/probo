@@ -14,7 +14,7 @@
 
 import type { ConsentAction } from "./client";
 
-const COOKIE_NAME = "probo_consent";
+export const COOKIE_NAME = "probo_consent";
 const SECONDS_PER_DAY = 86400;
 
 export interface ConsentCookie {

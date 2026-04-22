@@ -12,9 +12,8 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+import { COOKIE_NAME } from "./cookie";
 import { fetchJSON } from "./http";
-
-const STORAGE_KEY_PREFIX = "probo_consent";
 const MAX_QUEUE_SIZE = 10;
 const MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
 
@@ -25,7 +24,7 @@ interface PendingConsent {
 }
 
 function storageKey(bannerId: string): string {
-  return `${STORAGE_KEY_PREFIX}:${bannerId}:queue`;
+  return `${COOKIE_NAME}:${bannerId}:queue`;
 }
 
 function readQueue(bannerId: string): PendingConsent[] {

@@ -12,6 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+import { removeCookies } from "./cookie-utils";
 import { LOCK_ICON } from "./html";
 
 const ATTR_CATEGORY = "data-cookie-consent";
@@ -315,31 +316,6 @@ function deactivateElement(el: Element, label?: string): void {
   }
 }
 
-function getCandidateDomains(hostname: string): string[] {
-  const parts = hostname.split(".");
-  if (parts.length <= 1) return [];
-
-  const candidates: string[] = [];
-  // Try progressively broader parent domains. The browser silently
-  // ignores attempts to clear cookies on public suffixes, so
-  // over-trying is safe and avoids maintaining a TLD list.
-  for (let i = 0; i < parts.length - 1; i++) {
-    candidates.push("." + parts.slice(i).join("."));
-  }
-
-  return candidates;
-}
-
-function removeCookies(names: string[]): void {
-  const domains = getCandidateDomains(location.hostname);
-
-  for (const name of names) {
-    document.cookie = `${name}=; path=/; max-age=0`;
-    for (const domain of domains) {
-      document.cookie = `${name}=; path=/; domain=${domain}; max-age=0`;
-    }
-  }
-}
 
 export function deactivateElements(
   consentData: Record<string, boolean>,
