@@ -66,6 +66,8 @@ spec:
                   key: encryption-key
             - name: CHROME_DP_ADDR
               value: {{ include "probo.chrome.addr" . | quote }}
+            - name: BRANDING
+              value: {{ .Values.probo.branding | quote }}
             # API Configuration
             - name: API_ADDR
               value: ":{{ .Values.service.port }}"

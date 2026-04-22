@@ -128,6 +128,7 @@ type (
 		CustomDomains     CustomDomainsConfig     `json:"custom-domains"`
 		SCIMBridge        SCIMBridgeConfig        `json:"scim-bridge"`
 		ESign             ESignConfig             `json:"esign"`
+		Branding          bool                    `json:"branding"`
 	}
 
 	// TrustCenterConfig contains trust center server configuration.
@@ -223,6 +224,7 @@ func New() *Implm {
 			ESign: ESignConfig{
 				TSAURL: "http://timestamp.digicert.com",
 			},
+			Branding: true,
 			EvidenceDescriber: EvidenceDescriberConfig{
 				Interval:       10,
 				StaleAfter:     300,
@@ -517,7 +519,7 @@ func (impl *Implm) Run(
 
 	mailmanService := mailman.NewService(pgClient, fileManagerService, impl.cfg.Auth.Cookie.Secret, baseURL, impl.cfg.AWS.Bucket, encryptionKey, l)
 
-	cookieBannerService := cookiebanner.NewService(pgClient)
+	cookieBannerService := cookiebanner.NewService(pgClient, impl.cfg.Branding)
 
 	proboService, err := probo.NewService(
 		ctx,

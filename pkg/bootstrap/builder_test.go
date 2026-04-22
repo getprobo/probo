@@ -207,6 +207,9 @@ func TestBuilder_Build_Defaults(t *testing.T) {
 	// ESign config
 	assert.Equal(t, "http://timestamp.digicert.com", cfg.Probod.ESign.TSAURL)
 
+	// Branding
+	assert.True(t, cfg.Probod.Branding)
+
 	// No connectors by default
 	assert.Empty(t, cfg.Probod.Connectors)
 }
@@ -280,6 +283,8 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	env["SCIM_BRIDGE_POLL_INTERVAL"] = "60"
 	// ESign
 	env["ESIGN_TSA_URL"] = "http://custom.tsa.example.com"
+	// Branding
+	env["BRANDING"] = "false"
 
 	b := NewBuilder(mockEnv(env))
 	b.samlCertificate = "test-cert"
@@ -361,6 +366,8 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	assert.Equal(t, 60, cfg.Probod.SCIMBridge.PollInterval)
 	// ESign
 	assert.Equal(t, "http://custom.tsa.example.com", cfg.Probod.ESign.TSAURL)
+	// Branding
+	assert.False(t, cfg.Probod.Branding)
 }
 
 func TestBuilder_Build_SlackConnector(t *testing.T) {

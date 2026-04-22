@@ -225,6 +225,7 @@ func (b *Builder) Build() (*probod.FullConfig, error) {
 			ESign: probod.ESignConfig{
 				TSAURL: b.getEnvOrDefault("ESIGN_TSA_URL", "http://timestamp.digicert.com"),
 			},
+			Branding: b.getEnvBoolOrDefault("BRANDING", true),
 		},
 	}
 

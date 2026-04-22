@@ -31,11 +31,12 @@ import (
 )
 
 type Service struct {
-	pg *pg.Client
+	pg           *pg.Client
+	showBranding bool
 }
 
-func NewService(pgClient *pg.Client) *Service {
-	return &Service{pg: pgClient}
+func NewService(pgClient *pg.Client, showBranding bool) *Service {
+	return &Service{pg: pgClient, showBranding: showBranding}
 }
 
 var defaultCategories = []struct {
@@ -413,7 +414,7 @@ func (s *Service) CreateCookieBanner(
 				PrivacyPolicyURL:  req.PrivacyPolicyURL,
 				ConsentExpiryDays: req.ConsentExpiryDays,
 				ConsentMode:       req.ConsentMode,
-				ShowBranding:      true,
+				ShowBranding:      s.showBranding,
 				CreatedAt:         now,
 				UpdatedAt:         now,
 			}
