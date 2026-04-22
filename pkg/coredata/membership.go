@@ -286,6 +286,7 @@ func (m *Membership) Update(ctx context.Context, conn pg.Tx, scope Scoper) error
 UPDATE
     iam_memberships
 SET
+    identity_id = @identity_id,
     role = @role,
     updated_at = @updated_at
 WHERE
@@ -296,9 +297,10 @@ WHERE
 	query = fmt.Sprintf(query, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"id":         m.ID,
-		"role":       m.Role,
-		"updated_at": m.UpdatedAt,
+		"id":          m.ID,
+		"identity_id": m.IdentityID,
+		"role":        m.Role,
+		"updated_at":  m.UpdatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
 

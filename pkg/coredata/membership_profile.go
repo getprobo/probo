@@ -262,6 +262,87 @@ LIMIT 1;
 	return nil
 }
 
+func (p *MembershipProfile) LoadByExternalIDAndOrganizationID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	externalID string,
+	organizationID gid.GID,
+) error {
+	q := `
+SELECT
+    p.id,
+    p.identity_id,
+    p.organization_id,
+    i.email_address,
+    p.source,
+    p.state,
+    p.full_name,
+    p.kind,
+    p.additional_email_addresses,
+    p.position,
+    p.contract_start_date,
+    p.contract_end_date,
+    '' AS organization_name,
+    p.user_name,
+    p.external_id,
+    p.nickname,
+    p.locale,
+    p.timezone,
+    p.profile_url,
+    p.preferred_language,
+    p.given_name,
+    p.family_name,
+    p.formatted_name,
+    p.middle_name,
+    p.honorific_prefix,
+    p.honorific_suffix,
+    p.employee_number,
+    p.department,
+    p.cost_center,
+    p.enterprise_organization,
+    p.division,
+    p.manager_value,
+    p.created_at,
+    p.updated_at
+FROM
+    iam_membership_profiles p
+INNER JOIN identities i
+    ON i.id = p.identity_id
+WHERE
+    p.%s
+    AND p.external_id = @external_id
+    AND p.organization_id = @organization_id
+LIMIT 1;
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"external_id":     externalID,
+		"organization_id": organizationID,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query profile: %w", err)
+	}
+
+	profile, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[MembershipProfile])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect profile: %w", err)
+	}
+
+	*p = profile
+
+	return nil
+}
+
 func (p *MembershipProfiles) LoadByIDs(
 	ctx context.Context,
 	conn pg.Querier,
@@ -1149,6 +1230,7 @@ func (p *MembershipProfile) Update(
 UPDATE
     iam_membership_profiles
 SET
+    identity_id = @identity_id,
     source = @source,
     state = @state,
     full_name = @full_name,
@@ -1186,6 +1268,7 @@ WHERE
 
 	args := pgx.StrictNamedArgs{
 		"id":                         p.ID,
+		"identity_id":                p.IdentityID,
 		"source":                     p.Source,
 		"state":                      p.State,
 		"full_name":                  p.FullName,

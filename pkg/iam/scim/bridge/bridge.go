@@ -83,7 +83,7 @@ func (s *Bridge) Run(ctx context.Context) (created, updated, deleted, deactivate
 		existingSCIM, exists := scimUsersByEmail[email]
 		if !exists {
 			if err := s.scimClient.CreateUser(ctx, &pu); err != nil {
-				errs = append(errs, fmt.Errorf("cannot create user %q %q: %w", pu.ExternalID, pu.UserName, err))
+				errs = append(errs, fmt.Errorf("cannot create user %q: %w", pu.ExternalID, err))
 				continue
 			}
 			created++
@@ -104,7 +104,7 @@ func (s *Bridge) Run(ctx context.Context) (created, updated, deleted, deactivate
 
 			if needsUpdate {
 				if err := s.scimClient.UpdateUser(ctx, existingSCIM.ID, &pu); err != nil {
-					errs = append(errs, fmt.Errorf("cannot update user %q: %w", pu.UserName, err))
+					errs = append(errs, fmt.Errorf("cannot update user %q: %w", pu.ExternalID, err))
 					continue
 				}
 				updated++
@@ -121,7 +121,7 @@ func (s *Bridge) Run(ctx context.Context) (created, updated, deleted, deactivate
 
 		if s.isExcluded(email) {
 			if err := s.scimClient.DeleteUser(ctx, scimUser.ID); err != nil {
-				errs = append(errs, fmt.Errorf("cannot delete user %q: %w", email, err))
+				errs = append(errs, fmt.Errorf("cannot delete user %q: %w", scimUser.ExternalID, err))
 				continue
 			}
 			deleted++
@@ -133,7 +133,7 @@ func (s *Bridge) Run(ctx context.Context) (created, updated, deleted, deactivate
 		}
 
 		if err := s.scimClient.DeactivateUser(ctx, scimUser.ID); err != nil {
-			errs = append(errs, fmt.Errorf("cannot deactivate user %q: %w", email, err))
+			errs = append(errs, fmt.Errorf("cannot deactivate user %q: %w", scimUser.ExternalID, err))
 			continue
 		}
 		deactivated++

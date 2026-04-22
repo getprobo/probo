@@ -177,6 +177,7 @@ func (s *Service) CreateUser(
 
 		eventType := coredata.WebhookEventTypeUserUpdated
 		profile = &coredata.MembershipProfile{}
+
 		if err := profile.LoadByIdentityIDAndOrganizationID(
 			ctx,
 			tx,
@@ -184,42 +185,63 @@ func (s *Service) CreateUser(
 			identity.ID,
 			config.OrganizationID,
 		); err != nil {
-			if errors.Is(err, coredata.ErrResourceNotFound) {
+			if !errors.Is(err, coredata.ErrResourceNotFound) {
+				return fmt.Errorf("cannot load profile: %w", err)
+			}
+
+			// Profile not found by identity. Try by external ID to
+			// handle email renames in identity providers (e.g. Google
+			// Workspace) where the external ID stays the same but the
+			// email changes. If found, update it to point to the new
+			// identity.
+			if externalIdPtr != nil {
+				if err := profile.LoadByExternalIDAndOrganizationID(
+					ctx,
+					tx,
+					scope,
+					*externalIdPtr,
+					config.OrganizationID,
+				); err == nil {
+					// Migrate the existing membership to the new identity
+					// so the user's role is preserved.
+					oldIdentityID := profile.IdentityID
+					existingMembership := &coredata.Membership{}
+					if err := existingMembership.LoadByIdentityIDAndOrganizationID(
+						ctx,
+						tx,
+						scope,
+						oldIdentityID,
+						config.OrganizationID,
+					); err == nil {
+						existingMembership.IdentityID = identity.ID
+						existingMembership.UpdatedAt = now
+						if err := existingMembership.Update(ctx, tx, scope); err != nil {
+							return fmt.Errorf("cannot update membership identity: %w", err)
+						}
+					} else if !errors.Is(err, coredata.ErrResourceNotFound) {
+						return fmt.Errorf("cannot load membership for identity migration: %w", err)
+					}
+
+					profile.IdentityID = identity.ID
+					profile.EmailAddress = emailAddr
+					applyUserAttributes(profile, attrs, externalIdPtr, profileState, now)
+					if err := profile.Update(ctx, tx, scope); err != nil {
+						return fmt.Errorf("cannot update profile: %w", err)
+					}
+				} else if !errors.Is(err, coredata.ErrResourceNotFound) {
+					return fmt.Errorf("cannot load profile by external id: %w", err)
+				}
+			}
+
+			if profile.ID == (gid.GID{}) {
 				profile = &coredata.MembershipProfile{
-					ID:                     gid.New(config.OrganizationID.TenantID(), coredata.MembershipProfileEntityType),
-					IdentityID:             identity.ID,
-					OrganizationID:         config.OrganizationID,
-					EmailAddress:           emailAddr,
-					Source:                 coredata.ProfileSourceSCIM,
-					State:                  profileState,
-					FullName:               attrs.FullName,
-					Position:               &attrs.Title,
-					UserName:               &attrs.UserName,
-					ExternalID:             externalIdPtr,
-					Nickname:               ref.RefOrNil(attrs.Nickname),
-					Locale:                 ref.RefOrNil(attrs.Locale),
-					Timezone:               ref.RefOrNil(attrs.Timezone),
-					ProfileUrl:             ref.RefOrNil(attrs.ProfileUrl),
-					PreferredLanguage:      ref.RefOrNil(attrs.PreferredLanguage),
-					GivenName:              ref.RefOrNil(attrs.GivenName),
-					FamilyName:             ref.RefOrNil(attrs.FamilyName),
-					FormattedName:          ref.RefOrNil(attrs.FormattedName),
-					MiddleName:             ref.RefOrNil(attrs.MiddleName),
-					HonorificPrefix:        ref.RefOrNil(attrs.HonorificPrefix),
-					HonorificSuffix:        ref.RefOrNil(attrs.HonorificSuffix),
-					EmployeeNumber:         ref.RefOrNil(attrs.EmployeeNumber),
-					Department:             ref.RefOrNil(attrs.Department),
-					CostCenter:             ref.RefOrNil(attrs.CostCenter),
-					EnterpriseOrganization: ref.RefOrNil(attrs.EnterpriseOrganization),
-					Division:               ref.RefOrNil(attrs.Division),
-					ManagerValue:           ref.RefOrNil(attrs.ManagerValue),
-					CreatedAt:              now,
-					UpdatedAt:              now,
+					ID:             gid.New(config.OrganizationID.TenantID(), coredata.MembershipProfileEntityType),
+					IdentityID:     identity.ID,
+					OrganizationID: config.OrganizationID,
+					EmailAddress:   emailAddr,
+					CreatedAt:      now,
 				}
-				if attrs.UserType != "" {
-					kind := attrs.UserType
-					profile.Kind = &kind
-				}
+				applyUserAttributes(profile, attrs, externalIdPtr, profileState, now)
 
 				err = profile.Insert(ctx, tx)
 				if err != nil {
@@ -229,8 +251,6 @@ func (s *Service) CreateUser(
 					return fmt.Errorf("cannot insert profile: %w", err)
 				}
 				eventType = coredata.WebhookEventTypeUserCreated
-			} else {
-				return fmt.Errorf("cannot load profile: %w", err)
 			}
 		} else {
 			if profile.Source == coredata.ProfileSourceSCIM {
@@ -249,34 +269,7 @@ func (s *Service) CreateUser(
 				}
 			}
 
-			profile.Source = coredata.ProfileSourceSCIM
-			profile.State = profileState
-			profile.FullName = attrs.FullName
-			profile.Position = &attrs.Title
-			profile.UserName = &attrs.UserName
-			profile.ExternalID = externalIdPtr
-			profile.Nickname = ref.RefOrNil(attrs.Nickname)
-			profile.Locale = ref.RefOrNil(attrs.Locale)
-			profile.Timezone = ref.RefOrNil(attrs.Timezone)
-			profile.ProfileUrl = ref.RefOrNil(attrs.ProfileUrl)
-			profile.PreferredLanguage = ref.RefOrNil(attrs.PreferredLanguage)
-			profile.GivenName = ref.RefOrNil(attrs.GivenName)
-			profile.FamilyName = ref.RefOrNil(attrs.FamilyName)
-			profile.FormattedName = ref.RefOrNil(attrs.FormattedName)
-			profile.MiddleName = ref.RefOrNil(attrs.MiddleName)
-			profile.HonorificPrefix = ref.RefOrNil(attrs.HonorificPrefix)
-			profile.HonorificSuffix = ref.RefOrNil(attrs.HonorificSuffix)
-			profile.EmployeeNumber = ref.RefOrNil(attrs.EmployeeNumber)
-			profile.Department = ref.RefOrNil(attrs.Department)
-			profile.CostCenter = ref.RefOrNil(attrs.CostCenter)
-			profile.EnterpriseOrganization = ref.RefOrNil(attrs.EnterpriseOrganization)
-			profile.Division = ref.RefOrNil(attrs.Division)
-			profile.ManagerValue = ref.RefOrNil(attrs.ManagerValue)
-			profile.UpdatedAt = now
-			if attrs.UserType != "" {
-				kind := attrs.UserType
-				profile.Kind = &kind
-			}
+			applyUserAttributes(profile, attrs, externalIdPtr, profileState, now)
 			if err := profile.Update(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot update profile: %w", err)
 			}
@@ -740,6 +733,44 @@ func (s *Service) updateUser(
 	}
 
 	return profile, nil
+}
+
+func applyUserAttributes(
+	profile *coredata.MembershipProfile,
+	attrs scimUserAttributes,
+	externalID *string,
+	state coredata.ProfileState,
+	now time.Time,
+) {
+	profile.Source = coredata.ProfileSourceSCIM
+	profile.State = state
+	profile.FullName = attrs.FullName
+	profile.Position = &attrs.Title
+	profile.UserName = &attrs.UserName
+	profile.ExternalID = externalID
+	profile.Nickname = ref.RefOrNil(attrs.Nickname)
+	profile.Locale = ref.RefOrNil(attrs.Locale)
+	profile.Timezone = ref.RefOrNil(attrs.Timezone)
+	profile.ProfileUrl = ref.RefOrNil(attrs.ProfileUrl)
+	profile.PreferredLanguage = ref.RefOrNil(attrs.PreferredLanguage)
+	profile.GivenName = ref.RefOrNil(attrs.GivenName)
+	profile.FamilyName = ref.RefOrNil(attrs.FamilyName)
+	profile.FormattedName = ref.RefOrNil(attrs.FormattedName)
+	profile.MiddleName = ref.RefOrNil(attrs.MiddleName)
+	profile.HonorificPrefix = ref.RefOrNil(attrs.HonorificPrefix)
+	profile.HonorificSuffix = ref.RefOrNil(attrs.HonorificSuffix)
+	profile.EmployeeNumber = ref.RefOrNil(attrs.EmployeeNumber)
+	profile.Department = ref.RefOrNil(attrs.Department)
+	profile.CostCenter = ref.RefOrNil(attrs.CostCenter)
+	profile.EnterpriseOrganization = ref.RefOrNil(attrs.EnterpriseOrganization)
+	profile.Division = ref.RefOrNil(attrs.Division)
+	profile.ManagerValue = ref.RefOrNil(attrs.ManagerValue)
+	profile.UpdatedAt = now
+
+	if attrs.UserType != "" {
+		kind := attrs.UserType
+		profile.Kind = &kind
+	}
 }
 
 func (s *Service) DeleteUser(
