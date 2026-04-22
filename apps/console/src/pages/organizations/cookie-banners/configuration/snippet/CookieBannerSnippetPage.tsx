@@ -25,7 +25,7 @@ import { ThemePreview } from "./_components/ThemePreview";
 
 export const cookieBannerSnippetPageQuery = graphql`
   query CookieBannerSnippetPageQuery($cookieBannerId: ID!) {
-    node(id: $cookieBannerId) {
+    node(id: $cookieBannerId) @required(action: THROW) {
       __typename
       ... on CookieBanner {
         ...ThemePreview_cookieBanner
