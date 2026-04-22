@@ -283,7 +283,7 @@ function BannerPreview() {
           color: "var(--probo-text-secondary, #555555)",
         }}
       >
-        Powered by
+        Privacy by
         {" "}
         <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 25 24" fill="none" aria-hidden="true" style={{ verticalAlign: "-2px", display: "inline" }}>
           <g clipPath="url(#pc-preview)">
