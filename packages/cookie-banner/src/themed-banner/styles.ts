@@ -84,12 +84,16 @@ export const THEMED_STYLES = `
     border-radius: var(--_radius);
     box-shadow: var(--_shadow);
     width: 100%;
-    padding: 24px;
     pointer-events: auto;
   }
 
   probo-banner .card {
     max-width: 450px;
+    padding: 24px 24px 12px 24px;
+  }
+
+  probo-banner .buttons {
+    padding-bottom: 12px;
   }
 
   probo-preference-panel .card {
@@ -97,7 +101,6 @@ export const THEMED_STYLES = `
     max-height: 75vh;
     display: flex;
     flex-direction: column;
-    padding: 0;
   }
 
   probo-preference-panel probo-category-list {
@@ -188,9 +191,13 @@ export const THEMED_STYLES = `
     flex-direction: column;
   }
 
-  probo-preference-panel .buttons {
+  probo-preference-panel .footer {
     border-top: 1px solid var(--_border);
-    padding: 20px 24px 24px;
+    padding: 10px 24px;
+  }
+
+  probo-preference-panel .buttons {
+    padding: 10px 0;
   }
 
   probo-category {
@@ -345,6 +352,28 @@ export const THEMED_STYLES = `
   .cookie-label {
     font-weight: 500;
     color: var(--_text);
+  }
+
+  .branding {
+    text-align: center;
+  }
+
+  .branding a {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: calc(var(--_font-size) - 2px);
+    font-weight: 400;
+    color: var(--_text-secondary);
+    text-decoration: none;
+  }
+
+  .branding a:hover {
+    color: var(--_text);
+  }
+
+  .branding svg {
+    flex-shrink: 0;
   }
 
   [hidden] {

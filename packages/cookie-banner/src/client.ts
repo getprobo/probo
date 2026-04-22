@@ -43,6 +43,7 @@ export interface BannerConfig {
   privacy_policy_url: string;
   consent_expiry_days: number;
   consent_mode: "OPT_IN" | "OPT_OUT";
+  show_branding: boolean;
   categories: Category[];
 }
 

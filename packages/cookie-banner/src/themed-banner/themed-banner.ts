@@ -15,10 +15,8 @@
 import { registerComponents } from "../components";
 import type { ProboCookieBannerRoot } from "../components/cookie-banner-root";
 import type { BannerConfig } from "../client";
+import { BRANDING, CHEVRON_DOWN, CLOSE_ICON } from "../html";
 import { THEMED_STYLES } from "./styles";
-
-const CLOSE_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
-const CHEVRON_DOWN = `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>`;
 
 export class ProboThemedBanner extends HTMLElement {
   private shadow: ShadowRoot;
@@ -62,6 +60,7 @@ export class ProboThemedBanner extends HTMLElement {
                 <probo-reject-button><button class="btn">Reject all</button></probo-reject-button>
                 <probo-customize-button><button class="btn btn-link">Customize</button></probo-customize-button>
               </div>
+              ${BRANDING}
             </div>
           </div>
         </probo-banner>
@@ -103,12 +102,15 @@ export class ProboThemedBanner extends HTMLElement {
                   </probo-cookie-list>
                 </template>
               </probo-category-list>
-              <div class="buttons">
-                <probo-accept-button><button class="btn btn-primary">Accept all</button></probo-accept-button>
-                <probo-reject-button><button class="btn">Reject all</button></probo-reject-button>
-                <probo-save-button>
-                  <button class="btn btn-link" style="flex:1">Save preferences</button>
-                </probo-save-button>
+              <div class="footer">
+                <div class="buttons">
+                  <probo-accept-button><button class="btn btn-primary">Accept all</button></probo-accept-button>
+                  <probo-reject-button><button class="btn">Reject all</button></probo-reject-button>
+                  <probo-save-button>
+                    <button class="btn btn-link" style="flex:1">Save preferences</button>
+                  </probo-save-button>
+                </div>
+                ${BRANDING}
               </div>
             </div>
           </div>
@@ -123,6 +125,11 @@ export class ProboThemedBanner extends HTMLElement {
     root.addEventListener("probo-ready", (e: Event) => {
       const config = (e as CustomEvent).detail.config as BannerConfig;
       this.updateDescription(config);
+      if (!config.show_branding) {
+        this.shadow.querySelectorAll("[data-branding]").forEach(el => {
+          (el as HTMLElement).setAttribute("hidden", "");
+        });
+      }
     });
 
     this.shadow.querySelector("[data-action=back]")?.addEventListener("click", () => {

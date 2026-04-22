@@ -12,6 +12,8 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+import { LOCK_ICON } from "./html";
+
 const ATTR_CATEGORY = "data-cookie-consent";
 const ATTR_SRC = "data-src";
 const ATTR_HREF = "data-href";
@@ -39,7 +41,6 @@ const VISUAL_TAGS = new Set([
   "OBJECT",
 ]);
 
-const LOCK_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`;
 
 const PLACEHOLDER_STYLES = `
 [${ATTR_HIDDEN}] {
