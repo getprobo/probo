@@ -83,7 +83,7 @@ func (s *Bridge) Run(ctx context.Context) (created, updated, deleted, deactivate
 		existingSCIM, exists := scimUsersByEmail[email]
 		if !exists {
 			if err := s.scimClient.CreateUser(ctx, &pu); err != nil {
-				errs = append(errs, fmt.Errorf("cannot create user %q: %w", pu.UserName, err))
+				errs = append(errs, fmt.Errorf("cannot create user %q %q: %w", pu.ExternalID, pu.UserName, err))
 				continue
 			}
 			created++
