@@ -431,6 +431,7 @@ WHERE
 func (b *CookieBanner) UpdateShowBranding(
 	ctx context.Context,
 	tx pg.Tx,
+	scope Scoper,
 	show bool,
 ) error {
 	q := `
@@ -439,14 +440,20 @@ SET
 	show_branding = @show_branding,
 	updated_at = @updated_at
 WHERE
-	id = @id
+	%s
+	AND id = @id
 `
 
-	result, err := tx.Exec(ctx, q, pgx.StrictNamedArgs{
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
 		"id":            b.ID,
 		"show_branding": show,
 		"updated_at":    time.Now(),
-	})
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	result, err := tx.Exec(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot update cookie banner show_branding: %w", err)
 	}

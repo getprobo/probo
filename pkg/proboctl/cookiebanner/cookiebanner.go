@@ -15,7 +15,6 @@
 package cookiebanner
 
 import (
-	"context"
 	"fmt"
 	"strconv"
 
@@ -61,7 +60,7 @@ func newCmdSetBranding(newPG pgClientFactory) *cobra.Command {
 			defer pgClient.Close()
 
 			svc := cookiebanner.NewService(pgClient)
-			if err := svc.SetShowBranding(context.Background(), bannerID, show); err != nil {
+			if err := svc.SetShowBranding(cmd.Context(), bannerID, show); err != nil {
 				return err
 			}
 

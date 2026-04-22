@@ -1587,7 +1587,7 @@ func (s *Service) SetShowBranding(
 		func(ctx context.Context, tx pg.Tx) error {
 			var banner coredata.CookieBanner
 			banner.ID = bannerID
-			if err := banner.UpdateShowBranding(ctx, tx, show); err != nil {
+			if err := banner.UpdateShowBranding(ctx, tx, coredata.NewNoScope(), show); err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrBannerNotFound
 				}

@@ -16,6 +16,7 @@ package proboctl
 
 import (
 	"fmt"
+	"math"
 	"os"
 	"strconv"
 
@@ -72,6 +73,9 @@ func newPGClient(flagDSN string) (*pg.Client, error) {
 	}
 
 	poolSize := envIntOrDefault("PG_POOL_SIZE", 2)
+	if poolSize < 0 || poolSize > math.MaxInt32 {
+		return nil, fmt.Errorf("PG_POOL_SIZE %d out of range", poolSize)
+	}
 
 	opts := []pg.Option{
 		pg.WithAddr(addr),
