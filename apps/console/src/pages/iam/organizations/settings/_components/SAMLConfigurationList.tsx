@@ -14,6 +14,7 @@
 
 import { useCopy } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
+import { useCallback, useRef, useState } from "react";
 import {
   Button,
   Card,
@@ -80,7 +81,14 @@ export function SAMLConfigurationList(props: {
   const { __ } = useTranslate();
 
   const confirm = useConfirm();
-  const [isIdCopied, copyId] = useCopy();
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const copiedIdTimer = useRef<ReturnType<typeof setTimeout>>();
+  const copyId = useCallback((id: string) => {
+    navigator.clipboard.writeText(id);
+    setCopiedId(id);
+    clearTimeout(copiedIdTimer.current);
+    copiedIdTimer.current = setTimeout(() => setCopiedId(null), 2000);
+  }, []);
   const [isCopied, copy] = useCopy();
 
   const {
@@ -168,7 +176,7 @@ export function SAMLConfigurationList(props: {
                 className="font-mono text-xs text-gray-600 hover:text-gray-900"
                 title={__("Click to copy")}
               >
-                {isIdCopied ? __("Copied!") : config.id}
+                {copiedId === config.id ? __("Copied!") : config.id}
               </button>
             </Td>
             <Td>
