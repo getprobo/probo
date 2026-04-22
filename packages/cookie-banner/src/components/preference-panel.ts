@@ -78,15 +78,14 @@ export class ProboSaveButton extends ProboElement {
   private handleClick = (): void => {
     if (!this.root) return;
     const draft = { ...this.root.consentDraft };
-    void this.root.client.customize(draft).then(() => {
-      this.root!.setState("hidden");
-      this.root!.dispatchEvent(
-        new CustomEvent("probo-consent", {
-          bubbles: true,
-          composed: true,
-          detail: { action: "CUSTOMIZE", consent_data: draft },
-        }),
-      );
-    });
+    this.root.client.customize(draft);
+    this.root.setState("hidden");
+    this.root.dispatchEvent(
+      new CustomEvent("probo-consent", {
+        bubbles: true,
+        composed: true,
+        detail: { action: "CUSTOMIZE", consent_data: draft },
+      }),
+    );
   };
 }

@@ -34,32 +34,30 @@ class ProboActionButton extends ProboElement {
 export class ProboAcceptButton extends ProboActionButton {
   protected handleClick = (): void => {
     if (!this.root) return;
-    void this.root.client.acceptAll().then(() => {
-      this.root!.setState("hidden");
-      this.root!.dispatchEvent(
-        new CustomEvent("probo-consent", {
-          bubbles: true,
-          composed: true,
-          detail: { action: "ACCEPT_ALL" },
-        }),
-      );
-    });
+    this.root.client.acceptAll();
+    this.root.setState("hidden");
+    this.root.dispatchEvent(
+      new CustomEvent("probo-consent", {
+        bubbles: true,
+        composed: true,
+        detail: { action: "ACCEPT_ALL" },
+      }),
+    );
   };
 }
 
 export class ProboRejectButton extends ProboActionButton {
   protected handleClick = (): void => {
     if (!this.root) return;
-    void this.root.client.rejectAll().then(() => {
-      this.root!.setState("hidden");
-      this.root!.dispatchEvent(
-        new CustomEvent("probo-consent", {
-          bubbles: true,
-          composed: true,
-          detail: { action: "REJECT_ALL" },
-        }),
-      );
-    });
+    this.root.client.rejectAll();
+    this.root.setState("hidden");
+    this.root.dispatchEvent(
+      new CustomEvent("probo-consent", {
+        bubbles: true,
+        composed: true,
+        detail: { action: "REJECT_ALL" },
+      }),
+    );
   };
 }
 

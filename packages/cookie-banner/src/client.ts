@@ -153,7 +153,7 @@ export class CookieBannerClient {
     return this.consent !== null;
   }
 
-  async acceptAll(): Promise<ConsentRecord> {
+  acceptAll(): void {
     const cfg = this.config;
 
     const consentData: Record<string, boolean> = {};
@@ -161,10 +161,10 @@ export class CookieBannerClient {
       consentData[cat.name] = true;
     }
 
-    return this.recordConsent("ACCEPT_ALL", consentData);
+    this.recordConsent("ACCEPT_ALL", consentData);
   }
 
-  async rejectAll(): Promise<ConsentRecord> {
+  rejectAll(): void {
     const cfg = this.config;
 
     const consentData: Record<string, boolean> = {};
@@ -172,12 +172,10 @@ export class CookieBannerClient {
       consentData[cat.name] = cat.kind === "NECESSARY";
     }
 
-    return this.recordConsent("REJECT_ALL", consentData);
+    this.recordConsent("REJECT_ALL", consentData);
   }
 
-  async customize(
-    categories: Record<string, boolean>,
-  ): Promise<ConsentRecord> {
+  customize(categories: Record<string, boolean>): void {
     const cfg = this.config;
 
     const consentData: Record<string, boolean> = {};
@@ -185,39 +183,21 @@ export class CookieBannerClient {
       consentData[cat.name] = cat.kind === "NECESSARY" || !!categories[cat.name];
     }
 
-    return this.recordConsent("CUSTOMIZE", consentData);
+    this.recordConsent("CUSTOMIZE", consentData);
   }
 
-  private async recordConsent(
+  private recordConsent(
     action: ConsentAction,
     consentData: Record<string, boolean>,
-  ): Promise<ConsentRecord> {
+  ): void {
     const cfg = this.config;
-    const url = new URL(`${this.bannerId}/consents`, this.baseUrl);
-    const body = {
-      visitor_id: this.visitorId,
-      version: cfg.version,
-      action,
-      consent_data: consentData,
-    };
-
-    let record: ConsentRecord | null = null;
-    try {
-      record = await fetchJSON<ConsentRecord>(url, {
-        method: "POST",
-        body,
-      });
-      void flush(this.bannerId);
-    } catch {
-      enqueue(this.bannerId, url.href, body);
-    }
 
     this.consent = {
       visitor_id: this.visitorId,
       version: cfg.version,
       action,
       consent_data: consentData,
-      created_at: record?.created_at ?? "",
+      created_at: "",
     };
 
     setConsentCookie(
@@ -232,12 +212,16 @@ export class CookieBannerClient {
 
     this.activate(consentData);
 
-    return record ?? {
-      id: "",
+    const url = new URL(`${this.bannerId}/consents`, this.baseUrl);
+    const body = {
       visitor_id: this.visitorId,
+      version: cfg.version,
       action,
-      created_at: "",
+      consent_data: consentData,
     };
+    void fetchJSON<ConsentRecord>(url, { method: "POST", body })
+      .then(() => void flush(this.bannerId))
+      .catch(() => enqueue(this.bannerId, url.href, body));
   }
 
   private activate(consentData: Record<string, boolean>): void {

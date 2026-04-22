@@ -314,53 +314,29 @@ function deactivateElement(el: Element, label?: string): void {
   }
 }
 
-const KNOWN_MULTI_PART_TLDS = new Set([
-  "co.uk",
-  "co.jp",
-  "co.kr",
-  "co.nz",
-  "co.za",
-  "co.in",
-  "co.id",
-  "com.au",
-  "com.br",
-  "com.cn",
-  "com.mx",
-  "com.tw",
-  "com.hk",
-  "com.sg",
-  "com.ar",
-  "com.co",
-  "com.tr",
-  "net.au",
-  "org.uk",
-  "org.au",
-  "ac.uk",
-  "gov.uk",
-  "ne.jp",
-  "or.jp",
-]);
-
-function getRootDomain(hostname: string): string {
+function getCandidateDomains(hostname: string): string[] {
   const parts = hostname.split(".");
-  if (parts.length <= 2) {
-    return parts.length === 2 ? "." + hostname : hostname;
+  if (parts.length <= 1) return [];
+
+  const candidates: string[] = [];
+  // Try progressively broader parent domains. The browser silently
+  // ignores attempts to clear cookies on public suffixes, so
+  // over-trying is safe and avoids maintaining a TLD list.
+  for (let i = 0; i < parts.length - 1; i++) {
+    candidates.push("." + parts.slice(i).join("."));
   }
 
-  const lastTwo = parts.slice(-2).join(".");
-  if (KNOWN_MULTI_PART_TLDS.has(lastTwo)) {
-    return "." + parts.slice(-3).join(".");
-  }
-
-  return "." + lastTwo;
+  return candidates;
 }
 
 function removeCookies(names: string[]): void {
-  const rootDomain = getRootDomain(location.hostname);
+  const domains = getCandidateDomains(location.hostname);
 
   for (const name of names) {
     document.cookie = `${name}=; path=/; max-age=0`;
-    document.cookie = `${name}=; path=/; domain=${rootDomain}; max-age=0`;
+    for (const domain of domains) {
+      document.cookie = `${name}=; path=/; domain=${domain}; max-age=0`;
+    }
   }
 }
 
