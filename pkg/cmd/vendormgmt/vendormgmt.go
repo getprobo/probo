@@ -17,6 +17,7 @@ package vendormgmt
 import (
 	"github.com/spf13/cobra"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
+	"go.probo.inc/probo/pkg/cmd/vendormgmt/assess"
 	"go.probo.inc/probo/pkg/cmd/vendormgmt/create"
 	"go.probo.inc/probo/pkg/cmd/vendormgmt/delete"
 	"go.probo.inc/probo/pkg/cmd/vendormgmt/list"
@@ -35,6 +36,7 @@ func NewCmdVendor(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(view.NewCmdView(f))
 	cmd.AddCommand(update.NewCmdUpdate(f))
 	cmd.AddCommand(delete.NewCmdDelete(f))
+	cmd.AddCommand(assess.NewCmdAssess(f))
 
 	return cmd
 }

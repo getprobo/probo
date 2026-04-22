@@ -4763,3 +4763,23 @@ func (r *Resolver) DeleteCustomDomainTool(ctx context.Context, req *mcp.CallTool
 
 	return nil, types.DeleteCustomDomainOutput{DeletedCustomDomain: deletedDomain}, nil
 }
+
+func (r *Resolver) AssessVendorTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AssessVendorInput) (*mcp.CallToolResult, types.AssessVendorOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionVendorAssess)
+
+	svc := r.ProboService(ctx, input.ID)
+
+	result, err := svc.Vendors.Assess(
+		ctx,
+		probo.AssessVendorRequest{
+			ID:         input.ID,
+			WebsiteURL: input.WebsiteURL,
+			Procedure:  input.Procedure,
+		},
+	)
+	if err != nil {
+		return nil, types.AssessVendorOutput{}, fmt.Errorf("cannot assess vendor: %w", err)
+	}
+
+	return nil, types.NewAssessVendorOutput(result), nil
+}

@@ -18,6 +18,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
+	"go.probo.inc/probo/pkg/probo"
 )
 
 type (
@@ -102,4 +103,16 @@ func NewVendor(v *coredata.Vendor) *Vendor {
 	}
 
 	return object
+}
+
+func NewVendorSubprocessors(sps []probo.Subprocessor) []*VendorSubprocessor {
+	result := make([]*VendorSubprocessor, len(sps))
+	for i, sp := range sps {
+		result[i] = &VendorSubprocessor{
+			Name:    sp.Name,
+			Country: sp.Country,
+			Purpose: sp.Purpose,
+		}
+	}
+	return result
 }
