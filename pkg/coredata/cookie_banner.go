@@ -38,6 +38,7 @@ type (
 		PrivacyPolicyURL  string            `db:"privacy_policy_url"`
 		ConsentExpiryDays int               `db:"consent_expiry_days"`
 		ConsentMode       CookieConsentMode `db:"consent_mode"`
+		ShowBranding      bool              `db:"show_branding"`
 		CreatedAt         time.Time         `db:"created_at"`
 		UpdatedAt         time.Time         `db:"updated_at"`
 	}
@@ -85,6 +86,7 @@ SELECT
 	privacy_policy_url,
 	consent_expiry_days,
 	consent_mode,
+	show_branding,
 	created_at,
 	updated_at
 FROM
@@ -134,6 +136,7 @@ SELECT
 	privacy_policy_url,
 	consent_expiry_days,
 	consent_mode,
+	show_branding,
 	created_at,
 	updated_at
 FROM
@@ -184,6 +187,7 @@ SELECT
 	privacy_policy_url,
 	consent_expiry_days,
 	consent_mode,
+	show_branding,
 	created_at,
 	updated_at
 FROM
@@ -240,6 +244,7 @@ SELECT
 	privacy_policy_url,
 	consent_expiry_days,
 	consent_mode,
+	show_branding,
 	created_at,
 	updated_at
 FROM
@@ -323,6 +328,7 @@ INSERT INTO cookie_banners (
 	privacy_policy_url,
 	consent_expiry_days,
 	consent_mode,
+	show_branding,
 	created_at,
 	updated_at
 ) VALUES (
@@ -335,6 +341,7 @@ INSERT INTO cookie_banners (
 	@privacy_policy_url,
 	@consent_expiry_days,
 	@consent_mode,
+	@show_branding,
 	@created_at,
 	@updated_at
 )
@@ -350,6 +357,7 @@ INSERT INTO cookie_banners (
 		"privacy_policy_url":  b.PrivacyPolicyURL,
 		"consent_expiry_days": b.ConsentExpiryDays,
 		"consent_mode":        b.ConsentMode,
+		"show_branding":       b.ShowBranding,
 		"created_at":          b.CreatedAt,
 		"updated_at":          b.UpdatedAt,
 	}
@@ -381,6 +389,7 @@ SET
 	privacy_policy_url = @privacy_policy_url,
 	consent_expiry_days = @consent_expiry_days,
 	consent_mode = @consent_mode,
+	show_branding = @show_branding,
 	updated_at = @updated_at
 WHERE
 	%s
@@ -397,6 +406,7 @@ WHERE
 		"privacy_policy_url":  b.PrivacyPolicyURL,
 		"consent_expiry_days": b.ConsentExpiryDays,
 		"consent_mode":        b.ConsentMode,
+		"show_branding":       b.ShowBranding,
 		"updated_at":          b.UpdatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
@@ -414,6 +424,38 @@ WHERE
 	if result.RowsAffected() == 0 {
 		return ErrResourceNotFound
 	}
+
+	return nil
+}
+
+func (b *CookieBanner) UpdateShowBranding(
+	ctx context.Context,
+	tx pg.Tx,
+	show bool,
+) error {
+	q := `
+UPDATE cookie_banners
+SET
+	show_branding = @show_branding,
+	updated_at = @updated_at
+WHERE
+	id = @id
+`
+
+	result, err := tx.Exec(ctx, q, pgx.StrictNamedArgs{
+		"id":            b.ID,
+		"show_branding": show,
+		"updated_at":    time.Now(),
+	})
+	if err != nil {
+		return fmt.Errorf("cannot update cookie banner show_branding: %w", err)
+	}
+
+	if result.RowsAffected() == 0 {
+		return ErrResourceNotFound
+	}
+
+	b.ShowBranding = show
 
 	return nil
 }

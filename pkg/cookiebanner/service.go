@@ -132,6 +132,7 @@ type (
 		PrivacyPolicyURL  string                                         `json:"privacy_policy_url"`
 		ConsentExpiryDays int                                            `json:"consent_expiry_days"`
 		ConsentMode       string                                         `json:"consent_mode"`
+		ShowBranding      bool                                           `json:"show_branding"`
 		Categories        []coredata.CookieBannerVersionSnapshotCategory `json:"categories"`
 	}
 
@@ -412,6 +413,7 @@ func (s *Service) CreateCookieBanner(
 				PrivacyPolicyURL:  req.PrivacyPolicyURL,
 				ConsentExpiryDays: req.ConsentExpiryDays,
 				ConsentMode:       req.ConsentMode,
+				ShowBranding:      true,
 				CreatedAt:         now,
 				UpdatedAt:         now,
 			}
@@ -1561,6 +1563,7 @@ func (s *Service) GetActiveBannerConfig(
 				PrivacyPolicyURL:  snapshot.PrivacyPolicyURL,
 				ConsentExpiryDays: snapshot.ConsentExpiryDays,
 				ConsentMode:       snapshot.ConsentMode,
+				ShowBranding:      banner.ShowBranding,
 				Categories:        snapshot.Categories,
 			}
 
@@ -1572,6 +1575,27 @@ func (s *Service) GetActiveBannerConfig(
 	}
 
 	return config, nil
+}
+
+func (s *Service) SetShowBranding(
+	ctx context.Context,
+	bannerID gid.GID,
+	show bool,
+) error {
+	return s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			var banner coredata.CookieBanner
+			banner.ID = bannerID
+			if err := banner.UpdateShowBranding(ctx, tx, show); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return ErrBannerNotFound
+				}
+				return fmt.Errorf("cannot update show_branding: %w", err)
+			}
+			return nil
+		},
+	)
 }
 
 func (s *Service) GetVisitorConsent(
