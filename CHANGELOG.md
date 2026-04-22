@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.171.1] - 2026-04-22
+
+### Fixed
+
+- Add user external id in bridge logs
+
 ## [0.171.0] - 2026-04-22
 
 ### BREAKING CHANGES
