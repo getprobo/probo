@@ -255,6 +255,9 @@ export class CookieBannerClient {
       }
     }
 
+    if (this.detector) {
+      this.detector.stop();
+    }
     this.detector = new CookieDetector(this.baseUrl, this.bannerId, knownNames);
     this.detector.start();
   }
