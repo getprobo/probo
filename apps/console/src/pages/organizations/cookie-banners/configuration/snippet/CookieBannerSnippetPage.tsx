@@ -15,12 +15,36 @@
 import { useTranslate } from "@probo/i18n";
 import { Card } from "@probo/ui";
 import type { ReactNode } from "react";
+import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
+import { graphql } from "relay-runtime";
+
+import type { CookieBannerSnippetPageQuery } from "#/__generated__/core/CookieBannerSnippetPageQuery.graphql";
 
 import { CodeSnippets } from "./_components/CodeSnippets";
 import { ThemePreview } from "./_components/ThemePreview";
 
-export default function CookieBannerSnippetPage() {
+export const cookieBannerSnippetPageQuery = graphql`
+  query CookieBannerSnippetPageQuery($cookieBannerId: ID!) {
+    node(id: $cookieBannerId) {
+      __typename
+      ... on CookieBanner {
+        ...ThemePreview_cookieBanner
+      }
+    }
+  }
+`;
+
+interface CookieBannerSnippetPageProps {
+  queryRef: PreloadedQuery<CookieBannerSnippetPageQuery>;
+}
+
+export default function CookieBannerSnippetPage({ queryRef }: CookieBannerSnippetPageProps) {
   const { __ } = useTranslate();
+  const data = usePreloadedQuery(cookieBannerSnippetPageQuery, queryRef);
+
+  if (data.node.__typename !== "CookieBanner") {
+    throw new Error("invalid type for node");
+  }
 
   return (
     <div className="space-y-10">
@@ -37,7 +61,7 @@ export default function CookieBannerSnippetPage() {
         title={__("Customize the theme")}
         description={__("Adjust colors, fonts, and spacing to match your brand. The generated CSS snippet can be added to your website to override the default banner styles.")}
       >
-        <ThemePreview />
+        <ThemePreview cookieBannerKey={data.node} />
       </Step>
 
       <Step

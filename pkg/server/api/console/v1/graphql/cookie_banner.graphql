@@ -84,6 +84,7 @@ type CookieBanner implements Node {
     privacyPolicyUrl: String!
     consentExpiryDays: Int!
     consentMode: CookieConsentMode!
+    showBranding: Boolean!
 
     organization: Organization @goField(forceResolver: true)
 
