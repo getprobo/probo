@@ -129,8 +129,6 @@ export const THEMED_STYLES = `
   }
 
   .btn {
-    flex: 1;
-    min-width: 0;
     padding: 8px 10px;
     border-radius: var(--_btn-radius);
     border: 1px solid var(--_border);
@@ -139,6 +137,7 @@ export const THEMED_STYLES = `
     font-family: var(--_font);
     font-size: var(--_font-size);
     font-weight: 500;
+    line-height: normal;
     cursor: pointer;
     transition: background 0.15s, border-color 0.15s;
     white-space: nowrap;
