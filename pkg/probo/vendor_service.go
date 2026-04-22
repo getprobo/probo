@@ -16,17 +16,55 @@ package probo
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
 	"go.gearno.de/kit/pg"
+	"go.gearno.de/x/ref"
+	"go.probo.inc/probo/pkg/agent"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/validator"
+	"go.probo.inc/probo/pkg/vetting"
 	"go.probo.inc/probo/pkg/webhook"
 	webhooktypes "go.probo.inc/probo/pkg/webhook/types"
 )
+
+// ErrVendorAssessmentDisabled is returned by VendorAssessor.Assess when the
+// deployment has not configured an LLM provider for vendor assessment.
+var ErrVendorAssessmentDisabled = errors.New("vendor assessment is not configured on this deployment")
+
+// VendorAssessor produces a vendor assessment report from a website URL and
+// an optional procedure description. Implementations that cannot perform
+// assessment (missing LLM credentials, misconfigured provider) must return
+// ErrVendorAssessmentDisabled from Assess so callers can surface a stable
+// "feature unavailable" error instead of a generic internal error.
+type VendorAssessor interface {
+	Assess(
+		ctx context.Context,
+		websiteURL string,
+		procedure string,
+		reporter agent.ProgressReporter,
+	) (*vetting.Result, error)
+}
+
+// DisabledVendorAssessor is the VendorAssessor implementation used when no
+// LLM provider is configured for the vendor-assessor agent. Its Assess
+// method always returns ErrVendorAssessmentDisabled.
+type DisabledVendorAssessor struct{}
+
+var _ VendorAssessor = DisabledVendorAssessor{}
+
+func (DisabledVendorAssessor) Assess(
+	_ context.Context,
+	_ string,
+	_ string,
+	_ agent.ProgressReporter,
+) (*vetting.Result, error) {
+	return nil, ErrVendorAssessmentDisabled
+}
 
 type (
 	VendorService struct {
@@ -83,6 +121,19 @@ type (
 	AssessVendorRequest struct {
 		ID         gid.GID
 		WebsiteURL string
+		Procedure  *string
+	}
+
+	AssessVendorResult struct {
+		Vendor        *coredata.Vendor
+		Report        string
+		Subprocessors []Subprocessor
+	}
+
+	Subprocessor struct {
+		Name    string
+		Country string
+		Purpose string
 	}
 
 	CreateVendorRiskAssessmentRequest struct {
@@ -394,7 +445,14 @@ func (s VendorService) Update(
 				return fmt.Errorf("cannot update vendor: %w", err)
 			}
 
-			if err := webhook.InsertData(ctx, conn, s.svc.scope, vendor.OrganizationID, coredata.WebhookEventTypeVendorUpdated, webhooktypes.NewVendor(vendor)); err != nil {
+			if err := webhook.InsertData(
+				ctx,
+				conn,
+				s.svc.scope,
+				vendor.OrganizationID,
+				coredata.WebhookEventTypeVendorUpdated,
+				webhooktypes.NewVendor(vendor),
+			); err != nil {
 				return fmt.Errorf("cannot insert webhook event: %w", err)
 			}
 
@@ -470,7 +528,14 @@ func (s VendorService) Delete(
 				return fmt.Errorf("cannot load vendor: %w", err)
 			}
 
-			if err := webhook.InsertData(ctx, conn, s.svc.scope, vendor.OrganizationID, coredata.WebhookEventTypeVendorDeleted, webhooktypes.NewVendor(vendor)); err != nil {
+			if err := webhook.InsertData(
+				ctx,
+				conn,
+				s.svc.scope,
+				vendor.OrganizationID,
+				coredata.WebhookEventTypeVendorDeleted,
+				webhooktypes.NewVendor(vendor),
+			); err != nil {
 				return fmt.Errorf("cannot insert webhook event: %w", err)
 			}
 
@@ -547,7 +612,14 @@ func (s VendorService) Create(
 				return fmt.Errorf("cannot insert vendor: %w", err)
 			}
 
-			if err := webhook.InsertData(ctx, conn, s.svc.scope, organization.ID, coredata.WebhookEventTypeVendorCreated, webhooktypes.NewVendor(vendor)); err != nil {
+			if err := webhook.InsertData(
+				ctx,
+				conn,
+				s.svc.scope,
+				organization.ID,
+				coredata.WebhookEventTypeVendorCreated,
+				webhooktypes.NewVendor(vendor),
+			); err != nil {
 				return fmt.Errorf("cannot insert webhook event: %w", err)
 			}
 
@@ -763,32 +835,108 @@ func (s VendorService) GetByRiskAssessmentID(
 func (s VendorService) Assess(
 	ctx context.Context,
 	req AssessVendorRequest,
-) (*coredata.Vendor, error) {
-	vendorInfo, err := s.svc.agent.AssessVendor(ctx, req.WebsiteURL)
+) (*AssessVendorResult, error) {
+	result, err := s.svc.vendorAssessor.Assess(ctx, req.WebsiteURL, ref.UnrefOrZero(req.Procedure), nil)
 	if err != nil {
-		return nil, fmt.Errorf("cannot assess vendor info: %w", err)
+		return nil, fmt.Errorf("cannot assess vendor: %w", err)
 	}
 
-	vendor := &coredata.Vendor{
-		ID:                            req.ID,
-		Name:                          vendorInfo.Name,
-		WebsiteURL:                    &req.WebsiteURL,
-		Description:                   &vendorInfo.Description,
-		Category:                      coredata.VendorCategory(vendorInfo.Category),
-		HeadquarterAddress:            &vendorInfo.HeadquarterAddress,
-		LegalName:                     &vendorInfo.LegalName,
-		PrivacyPolicyURL:              &vendorInfo.PrivacyPolicyURL,
-		ServiceLevelAgreementURL:      &vendorInfo.ServiceLevelAgreementURL,
-		DataProcessingAgreementURL:    &vendorInfo.DataProcessingAgreementURL,
-		BusinessAssociateAgreementURL: &vendorInfo.BusinessAssociateAgreementURL,
-		SubprocessorsListURL:          &vendorInfo.SubprocessorsListURL,
-		SecurityPageURL:               &vendorInfo.SecurityPageURL,
-		TrustPageURL:                  &vendorInfo.TrustPageURL,
-		TermsOfServiceURL:             &vendorInfo.TermsOfServiceURL,
-		StatusPageURL:                 &vendorInfo.StatusPageURL,
-		Certifications:                vendorInfo.Certifications,
-		UpdatedAt:                     time.Now(),
+	vendor := &coredata.Vendor{}
+
+	err = s.svc.pg.WithTx(
+		ctx,
+		func(ctx context.Context, conn pg.Tx) error {
+			if err := vendor.LoadByID(ctx, conn, s.svc.scope, req.ID); err != nil {
+				return fmt.Errorf("cannot load vendor %q: %w", req.ID, err)
+			}
+
+			info := result.Info
+
+			if info.Name != "" {
+				vendor.Name = info.Name
+			}
+
+			vendor.WebsiteURL = &req.WebsiteURL
+			if info.Category != "" {
+				vendor.Category = coredata.VendorCategory(info.Category)
+			}
+			vendor.UpdatedAt = time.Now()
+
+			if info.Description != "" {
+				vendor.Description = &info.Description
+			}
+			if info.HeadquarterAddress != "" {
+				vendor.HeadquarterAddress = &info.HeadquarterAddress
+			}
+			if info.LegalName != "" {
+				vendor.LegalName = &info.LegalName
+			}
+			if info.PrivacyPolicyURL != "" {
+				vendor.PrivacyPolicyURL = &info.PrivacyPolicyURL
+			}
+			if info.ServiceLevelAgreementURL != "" {
+				vendor.ServiceLevelAgreementURL = &info.ServiceLevelAgreementURL
+			}
+			if info.DataProcessingAgreementURL != "" {
+				vendor.DataProcessingAgreementURL = &info.DataProcessingAgreementURL
+			}
+			if info.BusinessAssociateAgreementURL != "" {
+				vendor.BusinessAssociateAgreementURL = &info.BusinessAssociateAgreementURL
+			}
+			if info.SubprocessorsListURL != "" {
+				vendor.SubprocessorsListURL = &info.SubprocessorsListURL
+			}
+			if info.SecurityPageURL != "" {
+				vendor.SecurityPageURL = &info.SecurityPageURL
+			}
+			if info.TrustPageURL != "" {
+				vendor.TrustPageURL = &info.TrustPageURL
+			}
+			if info.TermsOfServiceURL != "" {
+				vendor.TermsOfServiceURL = &info.TermsOfServiceURL
+			}
+			if info.StatusPageURL != "" {
+				vendor.StatusPageURL = &info.StatusPageURL
+			}
+
+			if len(info.Certifications) > 0 {
+				vendor.Certifications = info.Certifications
+			}
+
+			if err := vendor.Update(ctx, conn, s.svc.scope); err != nil {
+				return fmt.Errorf("cannot update vendor: %w", err)
+			}
+
+			if err := webhook.InsertData(
+				ctx,
+				conn,
+				s.svc.scope,
+				vendor.OrganizationID,
+				coredata.WebhookEventTypeVendorUpdated,
+				webhooktypes.NewVendor(vendor),
+			); err != nil {
+				return fmt.Errorf("cannot insert webhook event: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
 	}
 
-	return vendor, nil
+	subprocessors := make([]Subprocessor, len(result.Info.Subprocessors))
+	for i, sp := range result.Info.Subprocessors {
+		subprocessors[i] = Subprocessor{
+			Name:    sp.Name,
+			Country: sp.Country,
+			Purpose: sp.Purpose,
+		}
+	}
+
+	return &AssessVendorResult{
+		Vendor:        vendor,
+		Report:        result.Document,
+		Subprocessors: subprocessors,
+	}, nil
 }

@@ -986,6 +986,118 @@ func TestVendor_OmittableWebsiteUrl(t *testing.T) {
 	})
 }
 
+// TestVendor_Assess exercises the assessVendor mutation through authorization
+// and tenant-isolation paths without running the real LLM/browser pipeline.
+// The e2e config deliberately omits `llm.vendor-assessor.provider`, so an
+// authorized call reaches DisabledVendorAssessor and surfaces a stable
+// UNAVAILABLE error. Happy-path payload shape is covered by unit tests in
+// pkg/probo.
+func TestVendor_Assess(t *testing.T) {
+	t.Parallel()
+
+	const query = `
+		mutation AssessVendor($input: AssessVendorInput!) {
+			assessVendor(input: $input) {
+				vendor {
+					id
+				}
+			}
+		}
+	`
+
+	type resultShape struct {
+		AssessVendor struct {
+			Vendor struct {
+				ID string `json:"id"`
+			} `json:"vendor"`
+		} `json:"assessVendor"`
+	}
+
+	t.Run("owner call surfaces the disabled error", func(t *testing.T) {
+		t.Parallel()
+
+		owner := testutil.NewClient(t, testutil.RoleOwner)
+		vendorID := factory.NewVendor(owner).WithName("Unconfigured assess").Create()
+
+		var result resultShape
+		err := owner.Execute(query, map[string]any{
+			"input": map[string]any{
+				"id":         vendorID,
+				"websiteUrl": "https://vendor.example.com",
+			},
+		}, &result)
+		testutil.RequireErrorCode(t, err, "UNAVAILABLE")
+	})
+
+	t.Run("admin call surfaces the disabled error", func(t *testing.T) {
+		t.Parallel()
+
+		owner := testutil.NewClient(t, testutil.RoleOwner)
+		admin := testutil.NewClientInOrg(t, testutil.RoleAdmin, owner)
+		vendorID := factory.NewVendor(owner).WithName("Admin-assessed vendor").Create()
+
+		var result resultShape
+		err := admin.Execute(query, map[string]any{
+			"input": map[string]any{
+				"id":         vendorID,
+				"websiteUrl": "https://admin.example.com",
+			},
+		}, &result)
+		testutil.RequireErrorCode(t, err, "UNAVAILABLE")
+	})
+
+	t.Run("viewer cannot assess a vendor", func(t *testing.T) {
+		t.Parallel()
+
+		owner := testutil.NewClient(t, testutil.RoleOwner)
+		viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
+		vendorID := factory.NewVendor(owner).WithName("Viewer attempt").Create()
+
+		var result resultShape
+		err := viewer.Execute(query, map[string]any{
+			"input": map[string]any{
+				"id":         vendorID,
+				"websiteUrl": "https://viewer.example.com",
+			},
+		}, &result)
+		testutil.RequireForbiddenError(t, err)
+	})
+
+	t.Run("cannot assess vendor from another organization", func(t *testing.T) {
+		t.Parallel()
+
+		org1Owner := testutil.NewClient(t, testutil.RoleOwner)
+		org2Owner := testutil.NewClient(t, testutil.RoleOwner)
+		vendorID := factory.NewVendor(org1Owner).WithName("Org1 vendor").Create()
+
+		var result resultShape
+		err := org2Owner.Execute(query, map[string]any{
+			"input": map[string]any{
+				"id":         vendorID,
+				"websiteUrl": "https://cross-tenant.example.com",
+			},
+		}, &result)
+		require.Error(t, err, "vendor assess must not cross tenant boundaries")
+	})
+
+	t.Run("procedure is accepted on the input", func(t *testing.T) {
+		t.Parallel()
+
+		owner := testutil.NewClient(t, testutil.RoleOwner)
+		vendorID := factory.NewVendor(owner).WithName("Procedure test").Create()
+
+		var result resultShape
+		err := owner.Execute(query, map[string]any{
+			"input": map[string]any{
+				"id":         vendorID,
+				"websiteUrl": "https://procedure.example.com",
+				"procedure":  "Focus on SOC 2 controls and data residency",
+			},
+		}, &result)
+		testutil.RequireErrorCode(t, err, "UNAVAILABLE")
+	})
+}
+
 func TestVendor_TenantIsolation(t *testing.T) {
 	t.Parallel()
 

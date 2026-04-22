@@ -273,7 +273,7 @@ func TestAgentTool_Execute(t *testing.T) {
 			var captured string
 
 			type Params struct{}
-			tenantTool, err := agent.FunctionTool[Params](
+			tenantTool := agent.FunctionTool[Params](
 				"get_tenant",
 				"Get tenant",
 				func(ctx context.Context, _ Params) (agent.ToolResult, error) {
@@ -282,7 +282,6 @@ func TestAgentTool_Execute(t *testing.T) {
 					return agent.ToolResult{Content: rc.TenantID}, nil
 				},
 			)
-			require.NoError(t, err)
 
 			provider := &mockProvider{
 				responses: []*llm.ChatCompletionResponse{
@@ -325,14 +324,13 @@ func TestAgentTool_Execute(t *testing.T) {
 				Expr string `json:"expr"`
 			}
 
-			calcTool, err := agent.FunctionTool[Params](
+			calcTool := agent.FunctionTool[Params](
 				"calc",
 				"Calculate expression",
 				func(_ context.Context, p Params) (agent.ToolResult, error) {
 					return agent.ToolResult{Content: "42"}, nil
 				},
 			)
-			require.NoError(t, err)
 
 			provider := &mockProvider{
 				responses: []*llm.ChatCompletionResponse{
@@ -413,12 +411,11 @@ func newNestedApprovalFixture(
 ) nestedApprovalFixture {
 	t.Helper()
 
-	deleteTool, err := agent.FunctionTool[struct{}](
+	deleteTool := agent.FunctionTool[struct{}](
 		"delete_file",
 		"Delete a file",
 		deleteFunc,
 	)
-	require.NoError(t, err)
 
 	innerProvider := &mockProvider{responses: innerResponses}
 
@@ -608,7 +605,7 @@ func TestAgentTool_Execute_NestedApproval(t *testing.T) {
 			var siblingCalled bool
 
 			type Params struct{}
-			siblingTool, err := agent.FunctionTool[Params](
+			siblingTool := agent.FunctionTool[Params](
 				"list_files",
 				"List files",
 				func(_ context.Context, _ Params) (agent.ToolResult, error) {
@@ -616,7 +613,6 @@ func TestAgentTool_Execute_NestedApproval(t *testing.T) {
 					return agent.ToolResult{Content: "file1.txt, file2.txt"}, nil
 				},
 			)
-			require.NoError(t, err)
 
 			f := newNestedApprovalFixture(
 				t,
@@ -644,7 +640,7 @@ func TestAgentTool_Execute_NestedApproval(t *testing.T) {
 				agent.WithTools(siblingTool),
 			)
 
-			_, err = f.outerAgent.Run(
+			_, err := f.outerAgent.Run(
 				context.Background(),
 				[]llm.Message{userMessage("List and delete files")},
 			)
@@ -675,7 +671,7 @@ func TestAgentTool_Execute_NestedApproval(t *testing.T) {
 
 			var toolExecuted bool
 
-			dangerTool, err := agent.FunctionTool[struct{}](
+			dangerTool := agent.FunctionTool[struct{}](
 				"danger",
 				"Dangerous operation",
 				func(_ context.Context, _ struct{}) (agent.ToolResult, error) {
@@ -683,7 +679,6 @@ func TestAgentTool_Execute_NestedApproval(t *testing.T) {
 					return agent.ToolResult{Content: "danger executed"}, nil
 				},
 			)
-			require.NoError(t, err)
 
 			cProvider := &mockProvider{
 				responses: []*llm.ChatCompletionResponse{
@@ -739,7 +734,7 @@ func TestAgentTool_Execute_NestedApproval(t *testing.T) {
 				agent.WithTools(agentB.AsTool("call_b", "Call agent B")),
 			)
 
-			_, err = agentA.Run(
+			_, err := agentA.Run(
 				context.Background(),
 				[]llm.Message{userMessage("start")},
 			)

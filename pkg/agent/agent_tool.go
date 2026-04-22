@@ -116,5 +116,20 @@ func (t *agentTool) Execute(ctx context.Context, arguments string) (ToolResult, 
 		return ToolResult{}, err
 	}
 
-	return ToolResult{Content: result.FinalMessage().Text()}, nil
+	text := result.FinalMessage().Text()
+
+	if t.agent.outputType != nil {
+		if !json.Valid([]byte(text)) {
+			preview := text
+			if len(preview) > 500 {
+				preview = preview[:500] + "... (truncated)"
+			}
+			return ToolResult{
+				Content: fmt.Sprintf("Sub-agent %q returned invalid JSON. Raw output:\n%s", t.agent.name, preview),
+				IsError: true,
+			}, nil
+		}
+	}
+
+	return ToolResult{Content: text}, nil
 }

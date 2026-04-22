@@ -174,7 +174,7 @@ func (b *Builder) Build() (*probod.FullConfig, error) {
 					CacheTTL:       b.getEnvIntOrDefault("WEBHOOK_CACHE_TTL", 86400),
 				},
 			},
-			LLM: probod.LLMSettings{
+			Agents: probod.AgentsConfig{
 				Providers: map[string]probod.LLMProviderConfig{
 					"openai": {
 						Type:   "openai",
@@ -185,27 +185,24 @@ func (b *Builder) Build() (*probod.FullConfig, error) {
 						APIKey: b.getEnv("ANTHROPIC_API_KEY"),
 					},
 				},
-				Defaults: probod.LLMConfig{
-					Provider:    b.getEnvOrDefault("LLM_DEFAULT_PROVIDER", "openai"),
-					ModelName:   b.getEnvOrDefault("LLM_DEFAULT_MODEL_NAME", "gpt-4o"),
-					Temperature: new(b.getEnvFloatOrDefault("LLM_DEFAULT_TEMPERATURE", 0.1)),
-					MaxTokens:   new(b.getEnvIntOrDefault("LLM_DEFAULT_MAX_TOKENS", 4096)),
+				Default: probod.LLMAgentConfig{
+					Provider:    b.getEnvOrDefault("AGENT_DEFAULT_PROVIDER", "openai"),
+					ModelName:   b.getEnvOrDefault("AGENT_DEFAULT_MODEL_NAME", "gpt-4o"),
+					Temperature: new(b.getEnvFloatOrDefault("AGENT_DEFAULT_TEMPERATURE", 0.1)),
+					MaxTokens:   new(b.getEnvIntOrDefault("AGENT_DEFAULT_MAX_TOKENS", 4096)),
 				},
-			},
-			ProboAgent: probod.LLMConfig{
-				Provider:    b.getEnvOrDefault("PROBO_AGENT_PROVIDER", ""),
-				ModelName:   b.getEnvOrDefault("PROBO_AGENT_MODEL_NAME", ""),
-				Temperature: b.getEnvFloatPtr("PROBO_AGENT_TEMPERATURE"),
-				MaxTokens:   b.getEnvIntPtr("PROBO_AGENT_MAX_TOKENS"),
-			},
-			EvidenceDescriber: probod.EvidenceDescriberConfig{
-				Interval:       b.getEnvIntOrDefault("EVIDENCE_DESCRIBER_INTERVAL", 10),
-				StaleAfter:     b.getEnvIntOrDefault("EVIDENCE_DESCRIBER_STALE_AFTER", 300),
-				MaxConcurrency: b.getEnvIntOrDefault("EVIDENCE_DESCRIBER_MAX_CONCURRENCY", 10),
-				Provider:       b.getEnvOrDefault("EVIDENCE_DESCRIBER_PROVIDER", ""),
-				ModelName:      b.getEnvOrDefault("EVIDENCE_DESCRIBER_MODEL_NAME", ""),
-				Temperature:    b.getEnvFloatPtr("EVIDENCE_DESCRIBER_TEMPERATURE"),
-				MaxTokens:      b.getEnvIntPtr("EVIDENCE_DESCRIBER_MAX_TOKENS"),
+				Probo: probod.LLMAgentConfig{
+					Provider:    b.getEnvOrDefault("AGENT_PROBO_PROVIDER", ""),
+					ModelName:   b.getEnvOrDefault("AGENT_PROBO_MODEL_NAME", ""),
+					Temperature: b.getEnvFloatPtr("AGENT_PROBO_TEMPERATURE"),
+					MaxTokens:   b.getEnvIntPtr("AGENT_PROBO_MAX_TOKENS"),
+				},
+				EvidenceDescriber: probod.LLMAgentConfig{
+					Provider:    b.getEnvOrDefault("AGENT_EVIDENCE_DESCRIBER_PROVIDER", ""),
+					ModelName:   b.getEnvOrDefault("AGENT_EVIDENCE_DESCRIBER_MODEL_NAME", ""),
+					Temperature: b.getEnvFloatPtr("AGENT_EVIDENCE_DESCRIBER_TEMPERATURE"),
+					MaxTokens:   b.getEnvIntPtr("AGENT_EVIDENCE_DESCRIBER_MAX_TOKENS"),
+				},
 			},
 			CustomDomains: probod.CustomDomainsConfig{
 				RenewalInterval:   b.getEnvIntOrDefault("CUSTOM_DOMAINS_RENEWAL_INTERVAL", 3600),

@@ -17,6 +17,7 @@ package types
 import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/page"
+	"go.probo.inc/probo/pkg/probo"
 )
 
 func NewVendorRiskAssessment(v *coredata.VendorRiskAssessment) *VendorRiskAssessment {
@@ -203,5 +204,25 @@ func NewListVendorServicesOutput(p *page.Page[*coredata.VendorService, coredata.
 	return ListVendorServicesOutput{
 		NextCursor:     nextCursor,
 		VendorServices: services,
+	}
+}
+
+func NewVendorSubprocessors(sps []probo.Subprocessor) []*VendorSubprocessor {
+	result := make([]*VendorSubprocessor, len(sps))
+	for i, sp := range sps {
+		result[i] = &VendorSubprocessor{
+			Name:    sp.Name,
+			Country: sp.Country,
+			Purpose: sp.Purpose,
+		}
+	}
+	return result
+}
+
+func NewAssessVendorOutput(result *probo.AssessVendorResult) AssessVendorOutput {
+	return AssessVendorOutput{
+		Vendor:        NewVendor(result.Vendor),
+		Report:        result.Report,
+		Subprocessors: NewVendorSubprocessors(result.Subprocessors),
 	}
 }
