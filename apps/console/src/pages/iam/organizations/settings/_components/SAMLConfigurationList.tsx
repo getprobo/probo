@@ -80,6 +80,7 @@ export function SAMLConfigurationList(props: {
   const { __ } = useTranslate();
 
   const confirm = useConfirm();
+  const [isIdCopied, copyId] = useCopy();
   const [isCopied, copy] = useCopy();
 
   const {
@@ -149,6 +150,7 @@ export function SAMLConfigurationList(props: {
     <Table>
       <Thead>
         <Tr>
+          <Th>{__("Configuration ID")}</Th>
           <Th>{__("Email Domain")}</Th>
           <Th>{__("Domain Status")}</Th>
           <Th>{__("SAML Status")}</Th>
@@ -160,6 +162,15 @@ export function SAMLConfigurationList(props: {
       <Tbody>
         {samlConfigurations.map(({ node: config }) => (
           <Tr key={config.id}>
+            <Td>
+              <button
+                onClick={() => copyId(config.id)}
+                className="font-mono text-xs text-gray-600 hover:text-gray-900"
+                title={__("Click to copy")}
+              >
+                {isIdCopied ? __("Copied!") : config.id}
+              </button>
+            </Td>
             <Td>
               <button
                 onClick={() => onEdit(config.id)}
