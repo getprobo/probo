@@ -39,6 +39,7 @@ type (
 		ConsentExpiryDays int               `db:"consent_expiry_days"`
 		ConsentMode       CookieConsentMode `db:"consent_mode"`
 		ShowBranding      bool              `db:"show_branding"`
+		DefaultLanguage   string            `db:"default_language"`
 		CreatedAt         time.Time         `db:"created_at"`
 		UpdatedAt         time.Time         `db:"updated_at"`
 	}
@@ -87,6 +88,7 @@ SELECT
 	consent_expiry_days,
 	consent_mode,
 	show_branding,
+	default_language,
 	created_at,
 	updated_at
 FROM
@@ -137,6 +139,7 @@ SELECT
 	consent_expiry_days,
 	consent_mode,
 	show_branding,
+	default_language,
 	created_at,
 	updated_at
 FROM
@@ -188,6 +191,7 @@ SELECT
 	consent_expiry_days,
 	consent_mode,
 	show_branding,
+	default_language,
 	created_at,
 	updated_at
 FROM
@@ -245,6 +249,7 @@ SELECT
 	consent_expiry_days,
 	consent_mode,
 	show_branding,
+	default_language,
 	created_at,
 	updated_at
 FROM
@@ -329,6 +334,7 @@ INSERT INTO cookie_banners (
 	consent_expiry_days,
 	consent_mode,
 	show_branding,
+	default_language,
 	created_at,
 	updated_at
 ) VALUES (
@@ -342,6 +348,7 @@ INSERT INTO cookie_banners (
 	@consent_expiry_days,
 	@consent_mode,
 	@show_branding,
+	@default_language,
 	@created_at,
 	@updated_at
 )
@@ -358,6 +365,7 @@ INSERT INTO cookie_banners (
 		"consent_expiry_days": b.ConsentExpiryDays,
 		"consent_mode":        b.ConsentMode,
 		"show_branding":       b.ShowBranding,
+		"default_language":    b.DefaultLanguage,
 		"created_at":          b.CreatedAt,
 		"updated_at":          b.UpdatedAt,
 	}
@@ -390,6 +398,7 @@ SET
 	consent_expiry_days = @consent_expiry_days,
 	consent_mode = @consent_mode,
 	show_branding = @show_branding,
+	default_language = @default_language,
 	updated_at = @updated_at
 WHERE
 	%s
@@ -407,6 +416,7 @@ WHERE
 		"consent_expiry_days": b.ConsentExpiryDays,
 		"consent_mode":        b.ConsentMode,
 		"show_branding":       b.ShowBranding,
+		"default_language":    b.DefaultLanguage,
 		"updated_at":          b.UpdatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
