@@ -127,6 +127,15 @@ type (
 		Action      coredata.CookieConsentAction
 	}
 
+	DetectedCookie struct {
+		Name     string
+		Duration string
+	}
+
+	ReportDetectedCookiesRequest struct {
+		Cookies []DetectedCookie
+	}
+
 	BannerConfig struct {
 		BannerID          gid.GID                                        `json:"banner_id"`
 		Version           int                                            `json:"version"`
@@ -1716,4 +1725,63 @@ func (s *Service) RecordConsent(
 	}
 
 	return record, nil
+}
+
+func (s *Service) ReportDetectedCookies(
+	ctx context.Context,
+	bannerID gid.GID,
+	req ReportDetectedCookiesRequest,
+) error {
+	return s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			var banner coredata.CookieBanner
+			if err := banner.LoadActiveByID(ctx, tx, bannerID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return ErrBannerNotFound
+				}
+				return fmt.Errorf("cannot load active cookie banner: %w", err)
+			}
+
+			scope := coredata.NewScopeFromObjectID(banner.ID)
+
+			var uncategorised coredata.CookieCategory
+			if err := uncategorised.LoadUncategorisedByCookieBannerID(ctx, tx, scope, banner.ID); err != nil {
+				return fmt.Errorf("cannot load uncategorised category: %w", err)
+			}
+
+			inserted := 0
+			now := time.Now()
+
+			for _, dc := range req.Cookies {
+				cookie := &coredata.Cookie{
+					ID:               gid.New(scope.GetTenantID(), coredata.CookieEntityType),
+					OrganizationID:   banner.OrganizationID,
+					CookieBannerID:   banner.ID,
+					CookieCategoryID: uncategorised.ID,
+					Name:             dc.Name,
+					Duration:         dc.Duration,
+					Description:      "",
+					CreatedAt:        now,
+					UpdatedAt:        now,
+				}
+
+				if err := cookie.Insert(ctx, tx, scope); err != nil {
+					if errors.Is(err, coredata.ErrResourceAlreadyExists) {
+						continue
+					}
+					return fmt.Errorf("cannot insert detected cookie: %w", err)
+				}
+				inserted++
+			}
+
+			if inserted > 0 {
+				if _, err := s.ensureDraftVersionForBanner(ctx, tx, scope, banner.ID); err != nil {
+					return fmt.Errorf("cannot ensure draft version: %w", err)
+				}
+			}
+
+			return nil
+		},
+	)
 }

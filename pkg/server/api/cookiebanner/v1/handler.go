@@ -19,6 +19,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -51,6 +52,7 @@ func NewMux(
 		r.Get("/config", h.handleGetConfig)
 		r.Get("/consents/{visitorID}", h.handleGetConsent)
 		r.Post("/consents", h.handlePostConsent)
+		r.Post("/detected-cookies", h.handleReportDetectedCookies)
 	})
 
 	return r
@@ -178,4 +180,72 @@ func (h *Handler) handlePostConsent(w http.ResponseWriter, r *http.Request) {
 			CreatedAt: record.CreatedAt,
 		},
 	)
+}
+
+type detectedCookieEntry struct {
+	Name     string `json:"name"`
+	Duration string `json:"duration"`
+}
+
+type reportDetectedCookiesBody struct {
+	Cookies []detectedCookieEntry `json:"cookies"`
+}
+
+const maxDetectedCookiesPerRequest = 100
+
+func (h *Handler) handleReportDetectedCookies(w http.ResponseWriter, r *http.Request) {
+	bannerID, err := gid.ParseGID(chi.URLParam(r, "bannerID"))
+	if err != nil {
+		jsonutil.RenderBadRequest(w, fmt.Errorf("invalid banner id"))
+		return
+	}
+
+	var body reportDetectedCookiesBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		jsonutil.RenderBadRequest(w, fmt.Errorf("invalid request body"))
+		return
+	}
+
+	if len(body.Cookies) == 0 {
+		jsonutil.RenderBadRequest(w, fmt.Errorf("cookies list is empty"))
+		return
+	}
+
+	if len(body.Cookies) > maxDetectedCookiesPerRequest {
+		jsonutil.RenderBadRequest(w, fmt.Errorf("too many cookies, maximum is %d", maxDetectedCookiesPerRequest))
+		return
+	}
+
+	detected := make([]cookiebanner.DetectedCookie, 0, len(body.Cookies))
+	for _, c := range body.Cookies {
+		name := strings.TrimSpace(c.Name)
+		if name == "" {
+			continue
+		}
+		detected = append(detected, cookiebanner.DetectedCookie{
+			Name:     name,
+			Duration: strings.TrimSpace(c.Duration),
+		})
+	}
+
+	if len(detected) == 0 {
+		jsonutil.RenderBadRequest(w, fmt.Errorf("no valid cookie names provided"))
+		return
+	}
+
+	req := cookiebanner.ReportDetectedCookiesRequest{
+		Cookies: detected,
+	}
+
+	if err := h.cookieBannerSvc.ReportDetectedCookies(r.Context(), bannerID, req); err != nil {
+		if errors.Is(err, cookiebanner.ErrBannerNotFound) {
+			jsonutil.RenderNotFound(w, fmt.Errorf("banner not found"))
+			return
+		}
+		h.logger.ErrorCtx(r.Context(), "cannot report detected cookies", log.Error(err))
+		jsonutil.RenderInternalServerError(w)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
