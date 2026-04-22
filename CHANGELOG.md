@@ -4,6 +4,45 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.171.0] - 2026-04-22
+
+### BREAKING CHANGES
+
+- OAuth2/OpenID Connect authorization server requires a new `probod.auth.oauth2-server` config block with at least one signing key
+
+### Added
+
+- Add OAuth2/OpenID Connect authorization server with PKCE, device grant, dynamic client registration, introspection, and revocation
+- Add cookie banner management UX with cookies catalog, categories, themed banner preview, and publishing workflow
+- Add cookie banner web components, headless and themed SDK entrypoints, and settings link element
+- Add approval quorum and decision read tools to MCP, CLI, and n8n
+- Add global branding config to control cookie banner Probo branding by default
+
+### Changed
+
+- Replace implemented boolean column on controls with a CMMI maturity level
+- Replace data snapshot export with document publish workflow
+- Replace asset snapshot export with document publish workflow
+- Prevent the last active owner of an organization from demoting themselves
+- Deduplicate existing connectors and enforce per-organization uniqueness
+
+### Fixed
+
+- Fix SCIM bridge PUT loop and missing pagination
+- Preserve reviewer decisions and notes on access-entry upsert
+- Include inactive accounts in access-review fetch
+- Always send Bearer auth for OAuth2 connectors regardless of returned token_type
+
+### Security
+
+- Mitigate SSRF on outbound HTTP client usage
+- Replace non-constant-time string comparisons in secure cookie and secure token packages
+- Bump langsmith and override @langchain/classic to fix GHSA-rr7j-v2q5-chgv
+
+### Removed
+
+- Remove meeting feature and related tables
+
 ## [0.170.0] - 2026-04-17
 
 ### Added
