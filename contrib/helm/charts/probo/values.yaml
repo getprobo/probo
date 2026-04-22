@@ -196,7 +196,7 @@ probo:
       - "https://probo.example.com"
       - "http://probo.example.com"
 
-  # Show Probo branding on cookie banners
+  # Show Probo branding
   branding: true
 
   # Extra HTTP headers to add to responses
