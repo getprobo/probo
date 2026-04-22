@@ -164,11 +164,19 @@ export const THEMED_STYLES = `
   }
 
   .panel-header {
+    padding: 24px;
+    border-bottom: 1px solid var(--_border);
+  }
+
+  .panel-header .description {
+    margin: 0;
+  }
+
+  .panel-header-title {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 24px;
-    border-bottom: 1px solid var(--_border);
+    margin: 0 0 8px;
   }
 
   .panel-close {

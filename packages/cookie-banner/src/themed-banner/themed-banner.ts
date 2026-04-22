@@ -67,12 +67,15 @@ export class ProboThemedBanner extends HTMLElement {
 
         <probo-preference-panel>
           <div class="floating" data-position="${this.esc(position)}">
-            <div class="card" role="dialog" aria-modal="true" aria-labelledby="probo-panel-title">
+            <div class="card" role="dialog" aria-modal="true" aria-labelledby="probo-panel-title" aria-describedby="probo-panel-desc">
               <div class="panel-header">
-                <p class="title" id="probo-panel-title" style="margin:0">Preferences</p>
-                <button class="panel-close" data-action="back" aria-label="Close">
-                  ${CLOSE_ICON}
-                </button>
+                <div class="panel-header-title">
+                  <p class="title" id="probo-panel-title" style="margin:0">Customise Preferences</p>
+                  <button class="panel-close" data-action="back" aria-label="Close">
+                    ${CLOSE_ICON}
+                  </button>
+                </div>
+                <p class="description" id="probo-panel-desc">Choose which cookie categories to allow. Necessary cookies are always active as they are needed for the site to work.</p>
               </div>
               <probo-category-list>
                 <template>
