@@ -364,6 +364,8 @@ jobs:
     runs-on: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache"
     permissions:
       contents: "read"
+    env:
+      HAS_DOCKER_TOKEN: ${{ secrets.DOCKER_HUB_TOKEN != '' }}
     steps:
       - uses: "actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd" # v6
         with:
@@ -372,6 +374,7 @@ jobs:
       - uses: "./.github/actions/setup"
       - uses: "docker/setup-compose-action@8cccb8c14b6500aaffebff1aa49c502c34d2e5e6" # v2.1.0
       - uses: "docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2" # v4.0.0
+        if: env.HAS_DOCKER_TOKEN == 'true'
         with:
           username: "gearnode"
           password: ${{ secrets.DOCKER_HUB_TOKEN }}
