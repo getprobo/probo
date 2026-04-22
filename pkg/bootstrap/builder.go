@@ -320,6 +320,17 @@ func (b *Builder) Build() (*probod.FullConfig, error) {
 		})
 	}
 
+	if googleWorkspaceClientID := b.getEnv("CONNECTOR_GOOGLE_WORKSPACE_CLIENT_ID"); googleWorkspaceClientID != "" {
+		cfg.Probod.Connectors = append(cfg.Probod.Connectors, probod.ConnectorConfig{
+			Provider: "GOOGLE_WORKSPACE",
+			Protocol: "oauth2",
+			RawConfig: probod.ConnectorConfigOAuth2{
+				ClientID:     googleWorkspaceClientID,
+				ClientSecret: b.getEnv("CONNECTOR_GOOGLE_WORKSPACE_CLIENT_SECRET"),
+			},
+		})
+	}
+
 	return cfg, nil
 }
 
@@ -365,6 +376,7 @@ func (b *Builder) validateRequired() error {
 		{"CONNECTOR_SENTRY", []string{"CLIENT_SECRET"}},
 		{"CONNECTOR_INTERCOM", []string{"CLIENT_SECRET"}},
 		{"CONNECTOR_BREX", []string{"CLIENT_SECRET"}},
+		{"CONNECTOR_GOOGLE_WORKSPACE", []string{"CLIENT_SECRET"}},
 	}
 
 	for _, p := range oauthProviders {

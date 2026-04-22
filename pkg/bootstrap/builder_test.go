@@ -85,6 +85,16 @@ func TestBuilder_Build_MissingRequiredEnvVars(t *testing.T) {
 			},
 			wantMissing: []string{"CONNECTOR_SLACK_CLIENT_SECRET", "CONNECTOR_SLACK_SIGNING_SECRET"},
 		},
+		{
+			name: "google workspace connector missing required fields",
+			env: map[string]string{
+				"PROBOD_ENCRYPTION_KEY":                "key",
+				"AUTH_COOKIE_SECRET":                   "secret",
+				"AUTH_PASSWORD_PEPPER":                 "pepper",
+				"CONNECTOR_GOOGLE_WORKSPACE_CLIENT_ID": "client-id",
+			},
+			wantMissing: []string{"CONNECTOR_GOOGLE_WORKSPACE_CLIENT_SECRET"},
+		},
 	}
 
 	for _, tt := range tests {
@@ -368,6 +378,27 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	assert.Equal(t, "http://custom.tsa.example.com", cfg.Probod.ESign.TSAURL)
 	// Branding
 	assert.False(t, cfg.Probod.Branding)
+}
+
+func TestBuilder_Build_GoogleWorkspaceConnector(t *testing.T) {
+	env := requiredEnv()
+	env["CONNECTOR_GOOGLE_WORKSPACE_CLIENT_ID"] = "gw-client-id"
+	env["CONNECTOR_GOOGLE_WORKSPACE_CLIENT_SECRET"] = "gw-client-secret"
+
+	b := NewBuilder(mockEnv(env))
+	b.samlCertificate = "test-cert"
+	b.samlPrivateKey = "test-key"
+
+	cfg, err := b.Build()
+	require.NoError(t, err)
+
+	require.Len(t, cfg.Probod.Connectors, 1)
+	connector := cfg.Probod.Connectors[0]
+	assert.Equal(t, "GOOGLE_WORKSPACE", connector.Provider)
+	assert.Equal(t, "oauth2", string(connector.Protocol))
+	rawConfig := connector.RawConfig.(probod.ConnectorConfigOAuth2)
+	assert.Equal(t, "gw-client-id", rawConfig.ClientID)
+	assert.Equal(t, "gw-client-secret", rawConfig.ClientSecret)
 }
 
 func TestBuilder_Build_SlackConnector(t *testing.T) {
