@@ -14,7 +14,6 @@
 
 import { useCopy } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
-import { useCallback, useRef, useState } from "react";
 import {
   Button,
   Card,
@@ -26,6 +25,7 @@ import {
   Tr,
   useConfirm,
 } from "@probo/ui";
+import { useCallback, useRef, useState } from "react";
 import { useFragment } from "react-relay";
 import { ConnectionHandler, graphql } from "relay-runtime";
 
@@ -84,7 +84,7 @@ export function SAMLConfigurationList(props: {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const copiedIdTimer = useRef<ReturnType<typeof setTimeout>>();
   const copyId = useCallback((id: string) => {
-    navigator.clipboard.writeText(id);
+    void navigator.clipboard.writeText(id);
     setCopiedId(id);
     clearTimeout(copiedIdTimer.current);
     copiedIdTimer.current = setTimeout(() => setCopiedId(null), 2000);
