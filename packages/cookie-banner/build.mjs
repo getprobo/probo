@@ -28,8 +28,8 @@ await Promise.all([
   }),
   esbuild.build({
     ...shared,
-    entryPoints: ["src/themed-banner/index.ts"],
-    outfile: "dist/cookie-banner-themed.mjs",
+    entryPoints: ["src/headless/index.ts"],
+    outfile: "dist/cookie-banner-headless.mjs",
     format: "esm",
   }),
   esbuild.build({

@@ -34,7 +34,7 @@ This automatically renders a fully styled consent dialog and a floating settings
 Import the pre-built themed banner as an ES module for use in bundled applications (React, Vue, Svelte, etc.):
 
 ```js
-import { registerThemedBanner } from "@probo/cookie-banner/themed-banner";
+import { registerThemedBanner } from "@probo/cookie-banner";
 
 registerThemedBanner();
 ```
@@ -92,7 +92,7 @@ Dark mode example:
 For complete control over the UI, import the headless Web Components directly. This entrypoint gives you unstyled building blocks that you compose and style yourself:
 
 ```js
-import { registerComponents } from "@probo/cookie-banner";
+import { registerComponents } from "@probo/cookie-banner/headless";
 
 registerComponents();
 ```

@@ -12,10 +12,10 @@
       "import": "./dist/cookie-banner.mjs",
       "default": "./dist/cookie-banner.mjs"
     },
-    "./themed-banner": {
-      "types": "./dist/themed-banner/index.d.ts",
-      "import": "./dist/cookie-banner-themed.mjs",
-      "default": "./dist/cookie-banner-themed.mjs"
+    "./headless": {
+      "types": "./dist/headless/index.d.ts",
+      "import": "./dist/cookie-banner-headless.mjs",
+      "default": "./dist/cookie-banner-headless.mjs"
     },
     "./iife": "./dist/cookie-banner.iife.js"
   },

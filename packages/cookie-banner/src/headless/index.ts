@@ -12,4 +12,4 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-export { ProboThemedBanner, registerThemedBanner } from "./themed-banner";
+export { registerComponents } from "../components";
