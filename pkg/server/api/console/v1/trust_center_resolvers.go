@@ -22,6 +22,7 @@ import (
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
+	domainconnect_v1 "go.probo.inc/probo/pkg/server/api/domainconnect/v1"
 	"go.probo.inc/probo/pkg/server/gqlutils"
 	"go.probo.inc/probo/pkg/statelesstoken"
 	"go.probo.inc/probo/pkg/validator"
@@ -59,12 +60,12 @@ func (r *customDomainResolver) DomainConnectSupported(ctx context.Context, obj *
 		return false, nil
 	}
 
-	settings, err := domainconnect.Discover(ctx, obj.Domain, r.resolverAddr)
+	settings, err := r.domainConnectClient.Discover(ctx, obj.Domain)
 	if err != nil {
 		return false, nil
 	}
 
-	if err := domainconnect.CheckTemplate(ctx, settings.URLAPI, r.domainConnect.ProviderID, r.domainConnect.ServiceID); err != nil {
+	if err := r.domainConnectClient.CheckTemplate(ctx, settings.URLAPI, r.domainConnect.ProviderID, r.domainConnect.ServiceID); err != nil {
 		return false, nil
 	}
 
@@ -718,7 +719,7 @@ func (r *mutationResolver) InitiateDomainConnect(ctx context.Context, input type
 		return nil, gqlutils.Invalidf(ctx, "Organization has no custom domain")
 	}
 
-	settings, err := domainconnect.Discover(ctx, domain.Domain, r.resolverAddr)
+	settings, err := r.domainConnectClient.Discover(ctx, domain.Domain)
 	if err != nil {
 		if errors.Is(err, domainconnect.ErrNotSupported) {
 			return nil, gqlutils.Invalidf(ctx, "Your DNS provider does not support Domain Connect")
@@ -728,7 +729,7 @@ func (r *mutationResolver) InitiateDomainConnect(ctx context.Context, input type
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	if err := domainconnect.CheckTemplate(ctx, settings.URLAPI, r.domainConnect.ProviderID, r.domainConnect.ServiceID); err != nil {
+	if err := r.domainConnectClient.CheckTemplate(ctx, settings.URLAPI, r.domainConnect.ProviderID, r.domainConnect.ServiceID); err != nil {
 		if errors.Is(err, domainconnect.ErrTemplateNotFound) {
 			return nil, gqlutils.Invalidf(ctx, "Your DNS provider does not support the Probo DNS template")
 		}
@@ -748,14 +749,14 @@ func (r *mutationResolver) InitiateDomainConnect(ctx context.Context, input type
 		continueURL = *input.ContinueURL
 	}
 
-	stateData := domainConnectState{
+	stateData := domainconnect_v1.State{
 		OrganizationID: input.OrganizationID.String(),
 		ContinueURL:    continueURL,
 	}
 
 	stateToken, err := statelesstoken.NewToken(
 		r.tokenSecret,
-		domainConnectTokenType,
+		domainconnect_v1.TokenType,
 		10*time.Minute,
 		stateData,
 	)

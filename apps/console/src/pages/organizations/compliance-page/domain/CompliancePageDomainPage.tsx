@@ -60,7 +60,7 @@ export function CompliancePageDomainPage(props: {
     } else if (dcResult === "error") {
       toast({
         title: __("Configuration failed"),
-        description: searchParams.get("error_description") ?? __("DNS configuration via Domain Connect failed"),
+        description: searchParams.get("error_description") || __("DNS configuration via Domain Connect failed"),
         variant: "error",
       });
     }

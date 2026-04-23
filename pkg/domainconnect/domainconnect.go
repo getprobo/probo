@@ -26,6 +26,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"math/big"
 	"net"
 	"net/http"
@@ -33,6 +34,11 @@ import (
 	"strings"
 
 	"go.gearno.de/kit/httpclient"
+	"go.gearno.de/kit/log"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/net/publicsuffix"
 )
 
@@ -40,6 +46,8 @@ var (
 	ErrNotSupported     = errors.New("domain does not support Domain Connect")
 	ErrTemplateNotFound = errors.New("DNS provider does not support the requested template")
 	ErrPermissionDenied = errors.New("permission denied by DNS provider")
+
+	tracerName = "go.probo.inc/probo/pkg/domainconnect"
 )
 
 // Config holds the Domain Connect service provider configuration.
@@ -69,25 +77,92 @@ type Settings struct {
 	URLAPI       string `json:"urlAPI"`
 }
 
+// Option configures a Client.
+type Option func(*Client)
+
+// Client performs Domain Connect discovery and template operations.
+type Client struct {
+	logger       *log.Logger
+	tracer       trace.Tracer
+	resolverAddr string
+	httpClient   *http.Client
+}
+
+// WithLogger sets the logger for the client.
+func WithLogger(l *log.Logger) Option {
+	return func(c *Client) {
+		c.logger = l
+	}
+}
+
+// WithTracerProvider sets the tracer provider for the client.
+func WithTracerProvider(tp trace.TracerProvider) Option {
+	return func(c *Client) {
+		c.tracer = tp.Tracer(tracerName)
+	}
+}
+
+// WithResolverAddr sets the DNS resolver address used for TXT lookups.
+func WithResolverAddr(addr string) Option {
+	return func(c *Client) {
+		c.resolverAddr = addr
+	}
+}
+
+// WithHTTPClient overrides the default SSRF-protected HTTP client.
+func WithHTTPClient(hc *http.Client) Option {
+	return func(c *Client) {
+		c.httpClient = hc
+	}
+}
+
+// NewClient creates a new Domain Connect client.
+func NewClient(opts ...Option) *Client {
+	c := &Client{
+		logger:     log.NewLogger(log.WithOutput(io.Discard)),
+		tracer:     otel.GetTracerProvider().Tracer(tracerName),
+		httpClient: httpclient.DefaultClient(httpclient.WithSSRFProtection()),
+	}
+
+	for _, opt := range opts {
+		opt(c)
+	}
+
+	c.logger = c.logger.Named("domainconnect")
+
+	return c
+}
+
 // Discover performs Domain Connect discovery for the given domain.
 //
 // It queries the _domainconnect TXT record for the registrable domain, then
 // fetches the provider settings from the well-known endpoint.
-func Discover(ctx context.Context, domain string, resolverAddr string) (*Settings, error) {
+func (c *Client) Discover(ctx context.Context, domain string) (*Settings, error) {
+	ctx, span := c.tracer.Start(
+		ctx,
+		"domainconnect.Discover",
+		trace.WithAttributes(attribute.String("domain", domain)),
+	)
+	defer span.End()
+
+	logger := c.logger.With(log.String("domain", domain))
+
 	registrable, err := publicsuffix.EffectiveTLDPlusOne(domain)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "cannot extract registrable domain")
 		return nil, fmt.Errorf("cannot extract registrable domain from %q: %w", domain, err)
 	}
 
 	txtHost := "_domainconnect." + registrable
 
 	var resolver *net.Resolver
-	if resolverAddr != "" {
+	if c.resolverAddr != "" {
 		resolver = &net.Resolver{
 			PreferGo: true,
 			Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
 				d := net.Dialer{}
-				return d.DialContext(ctx, "udp", resolverAddr)
+				return d.DialContext(ctx, "udp", c.resolverAddr)
 			},
 		}
 	} else {
@@ -96,26 +171,37 @@ func Discover(ctx context.Context, domain string, resolverAddr string) (*Setting
 
 	records, err := resolver.LookupTXT(ctx, txtHost)
 	if err != nil {
+		logger.InfoCtx(ctx, "domain does not support Domain Connect", log.String("txt_host", txtHost))
+		span.SetStatus(codes.Error, "not supported")
 		return nil, ErrNotSupported
 	}
 
 	if len(records) == 0 {
+		logger.InfoCtx(ctx, "no TXT records found for Domain Connect", log.String("txt_host", txtHost))
+		span.SetStatus(codes.Error, "not supported")
 		return nil, ErrNotSupported
 	}
 
 	apiHost := records[0]
+	span.SetAttributes(attribute.String("api_host", apiHost))
 
-	settingsURL := fmt.Sprintf("https://%s/v2/domainTemplates/providers", apiHost)
+	settingsURL := &url.URL{
+		Scheme: "https",
+		Host:   apiHost,
+		Path:   "/v2/domainTemplates/providers",
+	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, settingsURL, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, settingsURL.String(), nil)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "cannot create settings request")
 		return nil, fmt.Errorf("cannot create settings request: %w", err)
 	}
 
-	client := httpclient.DefaultClient(httpclient.WithSSRFProtection())
-
-	resp, err := client.Do(req)
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "cannot fetch settings")
 		return nil, fmt.Errorf("cannot fetch Domain Connect settings: %w", err)
 	}
 	defer func() { _ = resp.Body.Close() }()
@@ -135,38 +221,71 @@ func Discover(ctx context.Context, domain string, resolverAddr string) (*Setting
 		}
 	}
 
+	logger.InfoCtx(
+		ctx,
+		"Domain Connect discovery completed",
+		log.String("provider_name", settings.ProviderName),
+	)
+
 	return settings, nil
 }
 
 // CheckTemplate verifies that the DNS provider supports the given template.
-func CheckTemplate(ctx context.Context, apiURL string, providerID string, serviceID string) error {
-	u := fmt.Sprintf(
-		"%s/v2/domainTemplates/providers/%s/services/%s",
-		strings.TrimRight(apiURL, "/"),
-		url.PathEscape(providerID),
-		url.PathEscape(serviceID),
+func (c *Client) CheckTemplate(ctx context.Context, apiURL string, providerID string, serviceID string) error {
+	ctx, span := c.tracer.Start(
+		ctx,
+		"domainconnect.CheckTemplate",
+		trace.WithAttributes(
+			attribute.String("provider_id", providerID),
+			attribute.String("service_id", serviceID),
+		),
 	)
+	defer span.End()
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u, nil)
+	base, err := url.Parse(strings.TrimRight(apiURL, "/"))
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "cannot parse API URL")
+		return fmt.Errorf("cannot parse API URL: %w", err)
+	}
+
+	rawPath := "/v2/domainTemplates/providers/" + url.PathEscape(providerID) + "/services/" + url.PathEscape(serviceID)
+	base.Path = "/v2/domainTemplates/providers/" + providerID + "/services/" + serviceID
+	base.RawPath = rawPath
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, base.String(), nil)
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "cannot create template check request")
 		return fmt.Errorf("cannot create template check request: %w", err)
 	}
 
-	client := httpclient.DefaultClient(httpclient.WithSSRFProtection())
-
-	resp, err := client.Do(req)
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "cannot check template")
 		return fmt.Errorf("cannot check template: %w", err)
 	}
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode == http.StatusNotFound {
+		span.SetStatus(codes.Error, "template not found")
 		return ErrTemplateNotFound
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("cannot check template: unexpected status %d", resp.StatusCode)
+		err := fmt.Errorf("cannot check template: unexpected status %d", resp.StatusCode)
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "unexpected status")
+		return err
 	}
+
+	c.logger.InfoCtx(
+		ctx,
+		"Domain Connect template check passed",
+		log.String("provider_id", providerID),
+		log.String("service_id", serviceID),
+	)
 
 	return nil
 }
@@ -184,12 +303,14 @@ func BuildApplyURL(
 	params map[string]string,
 	redirectURI string,
 ) (string, error) {
-	base := fmt.Sprintf(
-		"%s/v2/domainTemplates/providers/%s/services/%s/apply",
-		strings.TrimRight(syncUXURL, "/"),
-		url.PathEscape(cfg.ProviderID),
-		url.PathEscape(cfg.ServiceID),
-	)
+	base, err := url.Parse(strings.TrimRight(syncUXURL, "/"))
+	if err != nil {
+		return "", fmt.Errorf("cannot parse sync UX URL: %w", err)
+	}
+
+	rawPath := "/v2/domainTemplates/providers/" + url.PathEscape(cfg.ProviderID) + "/services/" + url.PathEscape(cfg.ServiceID) + "/apply"
+	base.Path = "/v2/domainTemplates/providers/" + cfg.ProviderID + "/services/" + cfg.ServiceID + "/apply"
+	base.RawPath = rawPath
 
 	q := url.Values{}
 	q.Set("domain", domain)
@@ -215,7 +336,7 @@ func BuildApplyURL(
 		queryString += "&sig=" + url.QueryEscape(sig) + "&key=" + url.QueryEscape(cfg.KeyID)
 	}
 
-	return base + "?" + queryString, nil
+	return base.String() + "?" + queryString, nil
 }
 
 // ExtractHostAndDomain splits a fully qualified domain name into the host

@@ -46,19 +46,19 @@ import (
 
 type (
 	Resolver struct {
-		authorize         authz.AuthorizeFunc
-		probo             *probo.Service
-		iam               *iam.Service
-		esign             *esign.Service
-		accessReview      *accessreview.Service
-		mailman           *mailman.Service
-		cookieBanner      *cookiebanner.Service
-		connectorRegistry *connector.ConnectorRegistry
-		logger            *log.Logger
-		customDomainCname string
-		domainConnect     domainconnect.Config
-		resolverAddr      string
-		tokenSecret       string
+		authorize           authz.AuthorizeFunc
+		probo               *probo.Service
+		iam                 *iam.Service
+		esign               *esign.Service
+		accessReview        *accessreview.Service
+		mailman             *mailman.Service
+		cookieBanner        *cookiebanner.Service
+		connectorRegistry   *connector.ConnectorRegistry
+		logger              *log.Logger
+		customDomainCname   string
+		domainConnect       domainconnect.Config
+		domainConnectClient *domainconnect.Client
+		tokenSecret         string
 	}
 )
 
@@ -76,7 +76,7 @@ func NewMux(
 	baseURL *baseurl.BaseURL,
 	customDomainCname string,
 	domainConnectCfg domainconnect.Config,
-	resolverAddr string,
+	domainConnectClient *domainconnect.Client,
 ) *chi.Mux {
 	r := chi.NewMux()
 
@@ -92,7 +92,7 @@ func NewMux(
 		connectorRegistry,
 		customDomainCname,
 		domainConnectCfg,
-		resolverAddr,
+		domainConnectClient,
 		tokenSecret,
 		logger,
 	)
@@ -118,16 +118,6 @@ func NewMux(
 				baseURL,
 				proboSvc,
 				connectorRegistry,
-				safeRedirect,
-			),
-		)
-
-		r.Get(
-			"/domain-connect/callback",
-			handleDomainConnectCallback(
-				logger,
-				baseURL,
-				tokenSecret,
 				safeRedirect,
 			),
 		)

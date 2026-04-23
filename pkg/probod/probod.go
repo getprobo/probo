@@ -607,9 +607,12 @@ func (impl *Implm) Run(
 				KeyID:       impl.cfg.CustomDomains.DomainConnect.KeyID,
 				CallbackURL: impl.cfg.CustomDomains.DomainConnect.CallbackURL,
 			},
-			ResolverAddr: impl.cfg.CustomDomains.ResolverAddr,
-			TokenSecret:  impl.cfg.Auth.Cookie.Secret,
-			Logger:       l.Named("http.server"),
+			DomainConnectClient: domainconnect.NewClient(
+				domainconnect.WithLogger(l),
+				domainconnect.WithResolverAddr(impl.cfg.CustomDomains.ResolverAddr),
+			),
+			TokenSecret: impl.cfg.Auth.Cookie.Secret,
+			Logger:      l.Named("http.server"),
 			Cookie: securecookie.Config{
 				Name:     impl.cfg.Auth.Cookie.Name,
 				Domain:   impl.cfg.Auth.Cookie.Domain,
