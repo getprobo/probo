@@ -40,6 +40,7 @@ const createMutation = graphql`
         node {
           id
           name
+          slug
           description
           kind
           rank
@@ -78,7 +79,26 @@ export function CategoryDialog({
   const [create, isCreating] = useMutation<CategoryDialogCreateMutation>(createMutation);
 
   const [name, setName] = useState("");
+  const [slug, setSlug] = useState("");
+  const [slugTouched, setSlugTouched] = useState(false);
   const [description, setDescription] = useState("");
+
+  const handleNameChange = (value: string) => {
+    setName(value);
+    if (!slugTouched) {
+      setSlug(
+        value
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/^-|-$/g, ""),
+      );
+    }
+  };
+
+  const handleSlugChange = (value: string) => {
+    setSlugTouched(true);
+    setSlug(value);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -88,6 +108,7 @@ export function CategoryDialog({
         input: {
           cookieBannerId,
           name,
+          slug,
           description,
           rank: nextRank,
         },
@@ -113,7 +134,11 @@ export function CategoryDialog({
       <form onSubmit={handleSubmit}>
         <DialogContent padded className="space-y-4">
           <Field label={__("Name")}>
-            <Input value={name} onChange={e => setName(e.target.value)} required />
+            <Input value={name} onChange={e => handleNameChange(e.target.value)} required />
+          </Field>
+
+          <Field label={__("Slug")} help={__("Used as the data-cookie-consent attribute value")}>
+            <Input value={slug} onChange={e => handleSlugChange(e.target.value)} required pattern="[a-z0-9]+(-[a-z0-9]+)*" />
           </Field>
 
           <Field label={__("Description")}>

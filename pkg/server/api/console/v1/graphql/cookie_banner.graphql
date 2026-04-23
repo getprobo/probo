@@ -119,6 +119,7 @@ type CookieCategory implements Node {
     id: ID!
     cookieBanner: CookieBanner @goField(forceResolver: true)
     name: String!
+    slug: String!
     description: String!
     kind: CookieCategoryKind!
     rank: Int!
@@ -300,6 +301,7 @@ input PublishCookieBannerVersionInput {
 input CreateCookieCategoryInput {
     cookieBannerId: ID!
     name: String!
+    slug: String!
     description: String!
     rank: Int!
 }
@@ -307,6 +309,7 @@ input CreateCookieCategoryInput {
 input UpdateCookieCategoryInput {
     cookieCategoryId: ID!
     name: String
+    slug: String
     description: String
 }
 

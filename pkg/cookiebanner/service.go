@@ -53,6 +53,7 @@ type (
 	CreateCookieCategoryRequest struct {
 		CookieBannerID gid.GID
 		Name           string
+		Slug           string
 		Description    string
 		Rank           int
 	}
@@ -70,6 +71,7 @@ type (
 	UpdateCookieCategoryRequest struct {
 		CookieCategoryID gid.GID
 		Name             *string
+		Slug             *string
 		Description      *string
 	}
 
@@ -189,6 +191,7 @@ func (r *CreateCookieCategoryRequest) Validate() error {
 
 	v.Check(r.CookieBannerID, "cookie_banner_id", validator.Required(), validator.GID(coredata.CookieBannerEntityType))
 	v.Check(r.Name, "name", validator.Required(), validator.SafeTextNoNewLine(255))
+	v.Check(r.Slug, "slug", validator.Required(), validator.Slug(100))
 	v.Check(r.Description, "description", validator.Required(), validator.SafeText(1000))
 	v.Check(r.Rank, "rank", validator.Min(0))
 
@@ -200,6 +203,7 @@ func (r *UpdateCookieCategoryRequest) Validate() error {
 
 	v.Check(r.CookieCategoryID, "cookie_category_id", validator.Required(), validator.GID(coredata.CookieCategoryEntityType))
 	v.Check(r.Name, "name", validator.SafeTextNoNewLine(255))
+	v.Check(r.Slug, "slug", validator.Slug(100))
 	v.Check(r.Description, "description", validator.SafeText(1000))
 
 	return v.Error()
@@ -327,6 +331,7 @@ func buildSnapshot(
 		}
 		snapshotCategories[i] = coredata.CookieBannerVersionSnapshotCategory{
 			Name:        c.Name,
+			Slug:        c.Slug,
 			Description: c.Description,
 			Kind:        c.Kind,
 			Cookies:     cookies,
@@ -532,6 +537,7 @@ func (s *Service) CreateCookieBanner(
 					OrganizationID: banner.OrganizationID,
 					CookieBannerID: banner.ID,
 					Name:           dc.Name,
+					Slug:           dc.Slug,
 					Description:    dc.Description,
 					Kind:           dc.Kind,
 					Rank:           dc.Rank,
@@ -925,6 +931,7 @@ func (s *Service) CreateCookieCategory(
 				OrganizationID: banner.OrganizationID,
 				CookieBannerID: req.CookieBannerID,
 				Name:           req.Name,
+				Slug:           req.Slug,
 				Description:    req.Description,
 				Kind:           coredata.CookieCategoryKindNormal,
 				Rank:           req.Rank,
@@ -933,6 +940,9 @@ func (s *Service) CreateCookieCategory(
 			}
 
 			if err := category.Insert(ctx, tx, scope); err != nil {
+				if errors.Is(err, coredata.ErrResourceAlreadyExists) {
+					return ErrCategorySlugAlreadyExists
+				}
 				return fmt.Errorf("cannot insert cookie category: %w", err)
 			}
 
@@ -1274,6 +1284,9 @@ func (s *Service) UpdateCookieCategory(
 			if req.Name != nil {
 				category.Name = *req.Name
 			}
+			if req.Slug != nil {
+				category.Slug = *req.Slug
+			}
 			if req.Description != nil {
 				category.Description = *req.Description
 			}
@@ -1281,6 +1294,9 @@ func (s *Service) UpdateCookieCategory(
 			category.UpdatedAt = time.Now()
 
 			if err := category.Update(ctx, tx, scope); err != nil {
+				if errors.Is(err, coredata.ErrResourceAlreadyExists) {
+					return ErrCategorySlugAlreadyExists
+				}
 				return fmt.Errorf("cannot update cookie category: %w", err)
 			}
 

@@ -35,6 +35,7 @@ export interface CookieItem {
 
 export interface Category {
   name: string;
+  slug: string;
   description: string;
   kind: string;
   cookies: CookieItem[];
@@ -174,7 +175,7 @@ export class CookieBannerClient {
 
     const consentData: Record<string, boolean> = {};
     for (const cat of cfg.categories) {
-      consentData[cat.name] = true;
+      consentData[cat.slug] = true;
     }
 
     this.recordConsent("ACCEPT_ALL", consentData);
@@ -185,7 +186,7 @@ export class CookieBannerClient {
 
     const consentData: Record<string, boolean> = {};
     for (const cat of cfg.categories) {
-      consentData[cat.name] = cat.kind === "NECESSARY";
+      consentData[cat.slug] = cat.kind === "NECESSARY";
     }
 
     this.recordConsent("REJECT_ALL", consentData);
@@ -196,7 +197,7 @@ export class CookieBannerClient {
 
     const consentData: Record<string, boolean> = {};
     for (const cat of cfg.categories) {
-      consentData[cat.name] = cat.kind === "NECESSARY" || !!categories[cat.name];
+      consentData[cat.slug] = cat.kind === "NECESSARY" || !!categories[cat.slug];
     }
 
     this.recordConsent("CUSTOMIZE", consentData);
@@ -244,8 +245,8 @@ export class CookieBannerClient {
     const categoryCookies: Record<string, string[]> = {};
     const categoryLabels: Record<string, string> = {};
     for (const cat of this.config.categories) {
-      categoryCookies[cat.name] = cat.cookies.map((c) => c.name);
-      categoryLabels[cat.name] = cat.name;
+      categoryCookies[cat.slug] = cat.cookies.map((c) => c.name);
+      categoryLabels[cat.slug] = cat.name;
     }
 
     const texts = this.config.texts;

@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
@@ -42,6 +43,7 @@ type (
 		OrganizationID gid.GID            `db:"organization_id"`
 		CookieBannerID gid.GID            `db:"cookie_banner_id"`
 		Name           string             `db:"name"`
+		Slug           string             `db:"slug"`
 		Description    string             `db:"description"`
 		Kind           CookieCategoryKind `db:"kind"`
 		Rank           int                `db:"rank"`
@@ -103,6 +105,7 @@ SELECT
 	organization_id,
 	cookie_banner_id,
 	name,
+	slug,
 	description,
 	kind,
 	rank,
@@ -152,6 +155,7 @@ SELECT
 	organization_id,
 	cookie_banner_id,
 	name,
+	slug,
 	description,
 	kind,
 	rank,
@@ -229,6 +233,7 @@ SELECT
 	organization_id,
 	cookie_banner_id,
 	name,
+	slug,
 	description,
 	kind,
 	rank,
@@ -275,6 +280,7 @@ INSERT INTO cookie_categories (
 	organization_id,
 	cookie_banner_id,
 	name,
+	slug,
 	description,
 	kind,
 	rank,
@@ -286,6 +292,7 @@ INSERT INTO cookie_categories (
 	@organization_id,
 	@cookie_banner_id,
 	@name,
+	@slug,
 	@description,
 	@kind,
 	@rank,
@@ -300,6 +307,7 @@ INSERT INTO cookie_categories (
 		"organization_id":  c.OrganizationID,
 		"cookie_banner_id": c.CookieBannerID,
 		"name":             c.Name,
+		"slug":             c.Slug,
 		"description":      c.Description,
 		"kind":             c.Kind,
 		"rank":             c.Rank,
@@ -309,6 +317,11 @@ INSERT INTO cookie_categories (
 
 	_, err := tx.Exec(ctx, q, args)
 	if err != nil {
+		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
+			if pgErr.Code == "23505" && pgErr.ConstraintName == "idx_cookie_categories_unique_slug_per_banner" {
+				return ErrResourceAlreadyExists
+			}
+		}
 		return fmt.Errorf("cannot insert cookie category: %w", err)
 	}
 
@@ -324,6 +337,7 @@ func (c *CookieCategory) Update(
 UPDATE cookie_categories
 SET
 	name = @name,
+	slug = @slug,
 	description = @description,
 	updated_at = @updated_at
 WHERE
@@ -336,6 +350,7 @@ WHERE
 	args := pgx.StrictNamedArgs{
 		"id":          c.ID,
 		"name":        c.Name,
+		"slug":        c.Slug,
 		"description": c.Description,
 		"updated_at":  c.UpdatedAt,
 	}
@@ -343,6 +358,11 @@ WHERE
 
 	result, err := tx.Exec(ctx, q, args)
 	if err != nil {
+		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
+			if pgErr.Code == "23505" && pgErr.ConstraintName == "idx_cookie_categories_unique_slug_per_banner" {
+				return ErrResourceAlreadyExists
+			}
+		}
 		return fmt.Errorf("cannot update cookie category: %w", err)
 	}
 
@@ -443,6 +463,7 @@ SELECT
 	organization_id,
 	cookie_banner_id,
 	name,
+	slug,
 	description,
 	kind,
 	rank,

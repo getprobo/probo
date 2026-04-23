@@ -49,6 +49,7 @@ export class ProboCategoryToggle extends ProboElement {
     if (!this.category || !this.root) return;
 
     const name = this.category.categoryName;
+    const slug = this.category.categorySlug;
     this.checkbox.setAttribute("aria-label", name);
     const isRequired = this.category.kind === "NECESSARY";
 
@@ -59,14 +60,14 @@ export class ProboCategoryToggle extends ProboElement {
     }
 
     const draft = this.root.consentDraft;
-    this.checkbox.checked = !!draft[name];
+    this.checkbox.checked = !!draft[slug];
     this.checkbox.addEventListener("change", this.handleChange);
 
     if (this.root) {
       this.root.addEventListener("probo-state", (e: Event) => {
         const { state } = (e as CustomEvent).detail;
         if (state === "panel" && this.checkbox && this.category && this.root) {
-          this.checkbox.checked = !!this.root.consentDraft[this.category.categoryName];
+          this.checkbox.checked = !!this.root.consentDraft[this.category.categorySlug];
         }
       });
     }
@@ -74,6 +75,6 @@ export class ProboCategoryToggle extends ProboElement {
 
   private handleChange = (): void => {
     if (!this.checkbox || !this.category || !this.root) return;
-    this.root.updateDraft(this.category.categoryName, this.checkbox.checked);
+    this.root.updateDraft(this.category.categorySlug, this.checkbox.checked);
   };
 }

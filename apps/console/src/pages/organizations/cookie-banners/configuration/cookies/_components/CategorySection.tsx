@@ -56,6 +56,7 @@ export const categorySectionFragment = graphql`
   fragment CategorySectionFragment on CookieCategory {
     id
     name
+    slug
     description
     kind
     cookies(first: 100, orderBy: { field: CREATED_AT, direction: ASC })
@@ -93,6 +94,7 @@ const updateCategoryMutation = graphql`
       cookieCategory {
         id
         name
+        slug
         description
         rank
         updatedAt
@@ -235,12 +237,13 @@ export function CategorySection({ categoryKey, onDelete }: CategorySectionProps)
   const cookies = category.cookies.edges.map(e => e.node);
   const isMutating = isUpdating || isCreating || isUpdatingCookie;
 
-  const handleSaveCategory = (name: string, description: string) => {
+  const handleSaveCategory = (name: string, slug: string, description: string) => {
     updateCategory({
       variables: {
         input: {
           cookieCategoryId: category.id,
           name,
+          slug,
           description,
         },
       },
@@ -476,6 +479,7 @@ export function CategorySection({ categoryKey, onDelete }: CategorySectionProps)
           ? (
               <EditCategoryForm
                 name={category.name}
+                slug={category.slug}
                 description={category.description}
                 isUpdating={isUpdating}
                 onSave={handleSaveCategory}
@@ -517,7 +521,7 @@ export function CategorySection({ categoryKey, onDelete }: CategorySectionProps)
               {" "}
               <code className="rounded bg-muted px-1 py-0.5 font-mono text-[11px]">
                 data-cookie-consent=&quot;
-                {category.name.toLowerCase()}
+                {category.slug}
                 &quot;
               </code>
             </p>

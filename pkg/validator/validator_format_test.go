@@ -164,6 +164,49 @@ func TestOrigin(t *testing.T) {
 	}
 }
 
+func TestSlug(t *testing.T) {
+	tests := []struct {
+		name      string
+		value     any
+		maxLen    int
+		wantError bool
+		wantCode  ErrorCode
+	}{
+		{"valid simple slug", "analytics", 100, false, ""},
+		{"valid with hyphens", "my-category", 100, false, ""},
+		{"valid multi-segment", "my-cool-category", 100, false, ""},
+		{"valid single char", "a", 100, false, ""},
+		{"valid digits only", "123", 100, false, ""},
+		{"valid mixed", "cat2", 100, false, ""},
+		{"valid digit-hyphen-alpha", "1-a", 100, false, ""},
+		{"invalid - uppercase", "Analytics", 100, true, ErrorCodeInvalidFormat},
+		{"invalid - leading hyphen", "-analytics", 100, true, ErrorCodeInvalidFormat},
+		{"invalid - trailing hyphen", "analytics-", 100, true, ErrorCodeInvalidFormat},
+		{"invalid - consecutive hyphens", "my--category", 100, true, ErrorCodeInvalidFormat},
+		{"invalid - underscore", "my_category", 100, true, ErrorCodeInvalidFormat},
+		{"invalid - spaces", "my category", 100, true, ErrorCodeInvalidFormat},
+		{"invalid - special chars", "my@category", 100, true, ErrorCodeInvalidFormat},
+		{"invalid - dot", "my.category", 100, true, ErrorCodeInvalidFormat},
+		{"too long", "abcdefghijk", 10, true, ErrorCodeTooLong},
+		{"exactly max length", "abcdefghij", 10, false, ""},
+		{"empty string", "", 100, false, ""},
+		{"nil pointer", (*string)(nil), 100, false, ""},
+		{"non-string", 123, 100, true, ErrorCodeInvalidFormat},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := Slug(tt.maxLen)(tt.value)
+			if (err != nil) != tt.wantError {
+				t.Errorf("Slug(%d) error = %v, wantError %v", tt.maxLen, err, tt.wantError)
+			}
+			if err != nil && tt.wantCode != "" && err.Code != tt.wantCode {
+				t.Errorf("Expected error code %s, got %s", tt.wantCode, err.Code)
+			}
+		})
+	}
+}
+
 func TestDomain(t *testing.T) {
 	t.Run("valid domain", func(t *testing.T) {
 		str := "example.com"

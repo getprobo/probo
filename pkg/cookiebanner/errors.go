@@ -26,6 +26,7 @@ var (
 	ErrNoPublishedVersion         = errors.New("no published cookie banner version")
 	ErrNoDraftVersion             = errors.New("no draft cookie banner version to publish")
 	ErrCannotDeleteSystemCategory = errors.New("cannot delete system cookie category")
+	ErrCategorySlugAlreadyExists  = errors.New("a category with this slug already exists in this banner")
 	ErrOriginAlreadyInUse         = errors.New("origin is already used by another active cookie banner")
 	ErrConsentNotFound            = errors.New("consent record not found")
 	ErrCookieNotFound             = errors.New("cookie not found")

@@ -18,14 +18,16 @@ import { useState } from "react";
 
 interface EditCategoryFormProps {
   name: string;
+  slug: string;
   description: string;
   isUpdating: boolean;
-  onSave: (name: string, description: string) => void;
+  onSave: (name: string, slug: string, description: string) => void;
   onCancel: () => void;
 }
 
 export function EditCategoryForm({
   name,
+  slug,
   description,
   isUpdating,
   onSave,
@@ -33,6 +35,7 @@ export function EditCategoryForm({
 }: EditCategoryFormProps) {
   const { __ } = useTranslate();
   const [editName, setEditName] = useState(name);
+  const [editSlug, setEditSlug] = useState(slug);
   const [editDescription, setEditDescription] = useState(description);
 
   return (
@@ -42,6 +45,12 @@ export function EditCategoryForm({
         onChange={e => setEditName(e.target.value)}
         placeholder={__("Category name")}
       />
+      <Input
+        value={editSlug}
+        onChange={e => setEditSlug(e.target.value)}
+        placeholder={__("Category slug")}
+        pattern="[a-z0-9]+(-[a-z0-9]+)*"
+      />
       <Textarea
         value={editDescription}
         onChange={e => setEditDescription(e.target.value)}
@@ -50,7 +59,7 @@ export function EditCategoryForm({
       />
       <div className="flex items-center gap-2">
         <Button
-          onClick={() => onSave(editName, editDescription)}
+          onClick={() => onSave(editName, editSlug, editDescription)}
           disabled={isUpdating}
         >
           {isUpdating ? __("Saving...") : __("Save")}

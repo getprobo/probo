@@ -419,6 +419,7 @@ func (r *mutationResolver) CreateCookieCategory(ctx context.Context, input types
 		cookiebanner.CreateCookieCategoryRequest{
 			CookieBannerID: input.CookieBannerID,
 			Name:           input.Name,
+			Slug:           input.Slug,
 			Description:    input.Description,
 			Rank:           input.Rank,
 		},
@@ -426,6 +427,9 @@ func (r *mutationResolver) CreateCookieCategory(ctx context.Context, input types
 	if err != nil {
 		if errors.Is(err, cookiebanner.ErrBannerNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
+		}
+		if errors.Is(err, cookiebanner.ErrCategorySlugAlreadyExists) {
+			return nil, gqlutils.Conflict(ctx, err)
 		}
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
@@ -460,12 +464,16 @@ func (r *mutationResolver) UpdateCookieCategory(ctx context.Context, input types
 		cookiebanner.UpdateCookieCategoryRequest{
 			CookieCategoryID: input.CookieCategoryID,
 			Name:             input.Name,
+			Slug:             input.Slug,
 			Description:      input.Description,
 		},
 	)
 	if err != nil {
 		if errors.Is(err, cookiebanner.ErrCategoryNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
+		}
+		if errors.Is(err, cookiebanner.ErrCategorySlugAlreadyExists) {
+			return nil, gqlutils.Conflict(ctx, err)
 		}
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)

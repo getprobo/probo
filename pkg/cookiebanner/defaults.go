@@ -18,15 +18,16 @@ import "go.probo.inc/probo/pkg/coredata"
 
 var defaultCategories = []struct {
 	Name        string
+	Slug        string
 	Description string
 	Kind        coredata.CookieCategoryKind
 	Rank        int
 }{
-	{"Necessary", "Essential cookies required for the website to function properly.", coredata.CookieCategoryKindNecessary, 0},
-	{"Analytics", "Cookies that help understand how visitors interact with the website.", coredata.CookieCategoryKindNormal, 1},
-	{"Advertising", "Cookies used to deliver relevant advertisements and track campaigns.", coredata.CookieCategoryKindNormal, 2},
-	{"Functional", "Cookies that enable enhanced functionality and personalization.", coredata.CookieCategoryKindNormal, 3},
-	{"Uncategorised", "Cookies that have not been assigned to a category yet.", coredata.CookieCategoryKindUncategorised, 4},
+	{"Necessary", "necessary", "Essential cookies required for the website to function properly.", coredata.CookieCategoryKindNecessary, 0},
+	{"Analytics", "analytics", "Cookies that help understand how visitors interact with the website.", coredata.CookieCategoryKindNormal, 1},
+	{"Advertising", "advertising", "Cookies used to deliver relevant advertisements and track campaigns.", coredata.CookieCategoryKindNormal, 2},
+	{"Functional", "functional", "Cookies that enable enhanced functionality and personalization.", coredata.CookieCategoryKindNormal, 3},
+	{"Uncategorised", "uncategorised", "Cookies that have not been assigned to a category yet.", coredata.CookieCategoryKindUncategorised, 4},
 }
 
 var defaultUIStringsByLanguage = map[string]map[string]string{

@@ -67,6 +67,7 @@ func NewCookieCategory(c *coredata.CookieCategory) *CookieCategory {
 			ID: c.CookieBannerID,
 		},
 		Name:        c.Name,
+		Slug:        c.Slug,
 		Description: c.Description,
 		Kind:        c.Kind,
 		Rank:        c.Rank,

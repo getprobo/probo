@@ -15,6 +15,7 @@
 package validator
 
 import (
+	"fmt"
 	"net/url"
 	"regexp"
 	"slices"
@@ -25,6 +26,7 @@ import (
 
 var (
 	domainRegex = regexp.MustCompile(`^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)*[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$`)
+	slugRegex   = regexp.MustCompile(`^[a-z0-9]+(-[a-z0-9]+)*$`)
 )
 
 // URL validates that a string is a valid URL with http or https scheme.
@@ -171,6 +173,36 @@ func Origin() ValidatorFunc {
 
 		if parsedURL.RawQuery != "" || parsedURL.Fragment != "" || parsedURL.User != nil {
 			return newValidationError(ErrorCodeInvalidFormat, "must be a valid origin (e.g. https://example.com)")
+		}
+
+		return nil
+	}
+}
+
+// Slug validates that a string is a lowercase alphanumeric slug (with hyphens, no
+// leading/trailing hyphens, no consecutive hyphens) and does not exceed maxLen.
+func Slug(maxLen int) ValidatorFunc {
+	return func(value any) *ValidationError {
+		actualValue, isNil := dereferenceValue(value)
+		if isNil {
+			return nil
+		}
+
+		str, ok := actualValue.(string)
+		if !ok {
+			return newValidationError(ErrorCodeInvalidFormat, "value must be a string")
+		}
+
+		if str == "" {
+			return nil
+		}
+
+		if len(str) > maxLen {
+			return newValidationError(ErrorCodeTooLong, fmt.Sprintf("slug must be at most %d characters", maxLen))
+		}
+
+		if !slugRegex.MatchString(str) {
+			return newValidationError(ErrorCodeInvalidFormat, "slug must contain only lowercase letters, numbers, and hyphens")
 		}
 
 		return nil

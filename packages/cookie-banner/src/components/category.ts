@@ -21,6 +21,10 @@ export class ProboCategory extends ProboElement {
     return this.getAttribute("name") ?? "Other";
   }
 
+  get categorySlug(): string {
+    return this.getAttribute("slug") ?? this.categoryName.toLowerCase();
+  }
+
   get kind(): string {
     return this.getAttribute("kind") ?? "NORMAL";
   }
