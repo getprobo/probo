@@ -30,17 +30,17 @@ import (
 
 type (
 	CookieBannerVersionSnapshot struct {
-		PrivacyPolicyURL  string                                                  `json:"privacy_policy_url"`
-		ConsentExpiryDays int                                                     `json:"consent_expiry_days"`
-		ConsentMode       string                                                  `json:"consent_mode"`
-		DefaultLanguage   string                                                  `json:"default_language"`
-		Categories        []CookieBannerVersionSnapshotCategory                   `json:"categories"`
-		Translations      map[string]CookieBannerVersionSnapshotTranslation       `json:"translations,omitempty"`
+		PrivacyPolicyURL  string                                            `json:"privacy_policy_url"`
+		ConsentExpiryDays int                                               `json:"consent_expiry_days"`
+		ConsentMode       string                                            `json:"consent_mode"`
+		DefaultLanguage   string                                            `json:"default_language"`
+		Categories        []CookieBannerVersionSnapshotCategory             `json:"categories"`
+		Translations      map[string]CookieBannerVersionSnapshotTranslation `json:"translations,omitempty"`
 	}
 
 	CookieBannerVersionSnapshotTranslation struct {
-		UI         map[string]string                                    `json:"ui"`
-		Categories []CookieBannerVersionSnapshotCategoryTranslation     `json:"categories"`
+		UI         map[string]string                                `json:"ui"`
+		Categories []CookieBannerVersionSnapshotCategoryTranslation `json:"categories"`
 	}
 
 	CookieBannerVersionSnapshotCategoryTranslation struct {

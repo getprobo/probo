@@ -15,11 +15,11 @@
 package cookiebanner
 
 import (
-	"maps"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"net/url"
 	"strings"
 	"time"
@@ -1746,7 +1746,7 @@ func buildBannerConfig(
 	return &BannerConfig{
 		BannerID:           banner.ID,
 		Version:            version.Version,
-		Language:            resolvedLang,
+		Language:           resolvedLang,
 		DefaultLanguage:    defaultLang,
 		AvailableLanguages: availableLanguages,
 		PrivacyPolicyURL:   snapshot.PrivacyPolicyURL,

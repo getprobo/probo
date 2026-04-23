@@ -30,13 +30,13 @@ import (
 
 type (
 	CookieBannerTranslation struct {
-		ID               gid.GID         `db:"id"`
-		OrganizationID   gid.GID         `db:"organization_id"`
-		CookieBannerID   gid.GID         `db:"cookie_banner_id"`
-		Language         string          `db:"language"`
-		Translations     json.RawMessage `db:"translations"`
-		CreatedAt        time.Time       `db:"created_at"`
-		UpdatedAt        time.Time       `db:"updated_at"`
+		ID             gid.GID         `db:"id"`
+		OrganizationID gid.GID         `db:"organization_id"`
+		CookieBannerID gid.GID         `db:"cookie_banner_id"`
+		Language       string          `db:"language"`
+		Translations   json.RawMessage `db:"translations"`
+		CreatedAt      time.Time       `db:"created_at"`
+		UpdatedAt      time.Time       `db:"updated_at"`
 	}
 
 	CookieBannerTranslations []*CookieBannerTranslation
