@@ -1295,6 +1295,16 @@ func (s *DocumentService) clearDocumentReferences(
 		return err
 	}
 
+	finding := coredata.Finding{}
+	if err := finding.ClearGeneratedDocumentID(ctx, tx, documentIDs); err != nil {
+		return err
+	}
+
+	obligation := coredata.Obligation{}
+	if err := obligation.ClearGeneratedDocumentID(ctx, tx, documentIDs); err != nil {
+		return err
+	}
+
 	soa := coredata.StatementOfApplicability{}
 	if err := soa.ClearDocumentIDByDocumentIDs(ctx, tx, documentIDs); err != nil {
 		return err

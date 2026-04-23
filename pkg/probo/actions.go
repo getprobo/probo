@@ -264,13 +264,15 @@ const (
 	ActionFindingDelete             = "core:finding:delete"
 	ActionFindingAuditMappingCreate = "core:finding:create-audit-mapping"
 	ActionFindingAuditMappingDelete = "core:finding:delete-audit-mapping"
+	ActionFindingPublish            = "core:finding:publish"
 
 	// Obligation actions
-	ActionObligationGet    = "core:obligation:get"
-	ActionObligationList   = "core:obligation:list"
-	ActionObligationCreate = "core:obligation:create"
-	ActionObligationUpdate = "core:obligation:update"
-	ActionObligationDelete = "core:obligation:delete"
+	ActionObligationGet     = "core:obligation:get"
+	ActionObligationList    = "core:obligation:list"
+	ActionObligationCreate  = "core:obligation:create"
+	ActionObligationUpdate  = "core:obligation:update"
+	ActionObligationDelete  = "core:obligation:delete"
+	ActionObligationPublish = "core:obligation:publish"
 
 	// ProcessingActivity actions
 	ActionProcessingActivityList   = "core:processing-activity:list"

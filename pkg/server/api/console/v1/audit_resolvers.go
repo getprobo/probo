@@ -181,10 +181,7 @@ func (r *auditResolver) Findings(ctx context.Context, obj *types.Audit, first *i
 		ownerID = filter.OwnerID
 	}
 
-	findingFilter := coredata.NewFindingFilter(nil, kind, status, priority, ownerID)
-	if filter != nil {
-		findingFilter = coredata.NewFindingFilter(&filter.SnapshotID, kind, status, priority, ownerID)
-	}
+	findingFilter := coredata.NewFindingFilter(kind, status, priority, ownerID)
 
 	p, err := prb.Findings.ListForAuditID(ctx, obj.ID, cursor, findingFilter)
 	if err != nil {
@@ -363,10 +360,7 @@ func (r *findingConnectionResolver) TotalCount(ctx context.Context, obj *types.F
 		ownerID = obj.Filter.OwnerID
 	}
 
-	findingFilter := coredata.NewFindingFilter(nil, kind, status, priority, ownerID)
-	if obj.Filter != nil {
-		findingFilter = coredata.NewFindingFilter(&obj.Filter.SnapshotID, kind, status, priority, ownerID)
-	}
+	findingFilter := coredata.NewFindingFilter(kind, status, priority, ownerID)
 
 	switch obj.Resolver.(type) {
 	case *organizationResolver:
@@ -674,6 +668,29 @@ func (r *mutationResolver) DeleteFindingAuditMapping(ctx context.Context, input 
 	return &types.DeleteFindingAuditMappingPayload{
 		DeletedFindingID: &finding.ID,
 		DeletedAuditID:   &audit.ID,
+	}, nil
+}
+
+// PublishFindingList is the resolver for the publishFindingList field.
+func (r *mutationResolver) PublishFindingList(ctx context.Context, input types.PublishFindingListInput) (*types.PublishFindingListPayload, error) {
+	if err := r.authorize(ctx, input.OrganizationID, probo.ActionFindingPublish); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
+
+	document, documentVersion, err := prb.GeneratedDocuments.PublishFindingList(ctx, input.OrganizationID, input.ApproverIds)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
+			return nil, gqlutils.Conflict(ctx, err)
+		}
+		r.logger.ErrorCtx(ctx, "cannot publish finding list", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.PublishFindingListPayload{
+		DocumentEdge:        types.NewDocumentEdge(document, coredata.DocumentOrderFieldCreatedAt),
+		DocumentVersionEdge: types.NewDocumentVersionEdge(documentVersion, coredata.DocumentVersionOrderFieldCreatedAt),
 	}, nil
 }
 

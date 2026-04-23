@@ -36,7 +36,6 @@ import {
 import { clsx } from "clsx";
 import { useMemo, useState } from "react";
 import { useFragment } from "react-relay";
-import { useParams } from "react-router";
 import { graphql } from "relay-runtime";
 
 import type { LinkedObligationsCardFragment$key } from "#/__generated__/core/LinkedObligationsCardFragment.graphql";
@@ -203,16 +202,12 @@ function ObligationRow(props: {
   const { __ } = useTranslate();
   const obligation = useFragment(linkedObligationFragment, props.obligation);
   const organizationId = useOrganizationId();
-  const { snapshotId } = useParams<{ snapshotId?: string }>();
-  const isSnapshotMode = Boolean(snapshotId);
 
   const onDetach = () => {
     props.onClick(obligation.id);
   };
 
-  const detailsUrl = isSnapshotMode
-    ? `/organizations/${organizationId}/snapshots/${snapshotId}/obligations/${obligation.id}`
-    : `/organizations/${organizationId}/obligations/${obligation.id}`;
+  const detailsUrl = `/organizations/${organizationId}/obligations/${obligation.id}`;
 
   return (
     <Tr to={detailsUrl}>

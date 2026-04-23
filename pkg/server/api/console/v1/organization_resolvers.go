@@ -362,6 +362,30 @@ func (r *organizationResolver) Audits(ctx context.Context, obj *types.Organizati
 	return types.NewAuditConnection(page, r, obj.ID), nil
 }
 
+// FindingsDocument is the resolver for the findingsDocument field.
+func (r *organizationResolver) FindingsDocument(ctx context.Context, obj *types.Organization) (*types.Document, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionDocumentGet); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	findingDocumentID, err := prb.GeneratedDocuments.GetFindingsDocumentID(ctx, obj.ID)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get finding list document ID: %w", err)
+	}
+	if findingDocumentID == nil {
+		return nil, nil
+	}
+
+	doc, err := prb.Documents.Get(ctx, *findingDocumentID)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get finding list document: %w", err)
+	}
+
+	return types.NewDocument(doc), nil
+}
+
 // Findings is the resolver for the findings field.
 func (r *organizationResolver) Findings(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.FindingOrder, filter *types.FindingFilter) (*types.FindingConnection, error) {
 	if err := r.authorize(ctx, obj.ID, probo.ActionFindingList); err != nil {
@@ -397,10 +421,7 @@ func (r *organizationResolver) Findings(ctx context.Context, obj *types.Organiza
 		ownerID = filter.OwnerID
 	}
 
-	findingFilter := coredata.NewFindingFilter(nil, kind, status, priority, ownerID)
-	if filter != nil {
-		findingFilter = coredata.NewFindingFilter(&filter.SnapshotID, kind, status, priority, ownerID)
-	}
+	findingFilter := coredata.NewFindingFilter(kind, status, priority, ownerID)
 
 	page, err := prb.Findings.ListForOrganizationID(ctx, obj.ID, cursor, findingFilter)
 	if err != nil {
@@ -791,8 +812,32 @@ func (r *organizationResolver) Measures(ctx context.Context, obj *types.Organiza
 	return types.NewMeasureConnection(page, r, obj.ID, measureFilter), nil
 }
 
+// ObligationsDocument is the resolver for the obligationsDocument field.
+func (r *organizationResolver) ObligationsDocument(ctx context.Context, obj *types.Organization) (*types.Document, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionDocumentGet); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	obligationDocumentID, err := prb.GeneratedDocuments.GetObligationsDocumentID(ctx, obj.ID)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get obligation list document ID: %w", err)
+	}
+	if obligationDocumentID == nil {
+		return nil, nil
+	}
+
+	doc, err := prb.Documents.Get(ctx, *obligationDocumentID)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get obligation list document: %w", err)
+	}
+
+	return types.NewDocument(doc), nil
+}
+
 // Obligations is the resolver for the obligations field.
-func (r *organizationResolver) Obligations(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ObligationOrderBy, filter *types.ObligationFilter) (*types.ObligationConnection, error) {
+func (r *organizationResolver) Obligations(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ObligationOrderBy) (*types.ObligationConnection, error) {
 	if err := r.authorize(ctx, obj.ID, probo.ActionObligationList); err != nil {
 		return nil, err
 	}
@@ -813,18 +858,13 @@ func (r *organizationResolver) Obligations(ctx context.Context, obj *types.Organ
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	obligationFilter := coredata.NewObligationFilter(nil)
-	if filter != nil {
-		obligationFilter = coredata.NewObligationFilter(&filter.SnapshotID)
-	}
-
-	page, err := prb.Obligations.ListForOrganizationID(ctx, obj.ID, cursor, obligationFilter)
+	page, err := prb.Obligations.ListForOrganizationID(ctx, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list organization obligations", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewObligationConnection(page, r, obj.ID, filter), nil
+	return types.NewObligationConnection(page, r, obj.ID), nil
 }
 
 // ProcessingActivities is the resolver for the processingActivities field.

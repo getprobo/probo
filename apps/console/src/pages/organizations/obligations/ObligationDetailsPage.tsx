@@ -19,7 +19,6 @@ import {
   getObligationStatusOptions,
   getObligationStatusVariant,
   getObligationTypeOptions,
-  validateSnapshotConsistency,
 } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import {
@@ -43,12 +42,10 @@ import {
   type PreloadedQuery,
   usePreloadedQuery,
 } from "react-relay";
-import { useParams } from "react-router";
 import { z } from "zod";
 
 import type { ObligationGraphNodeQuery } from "#/__generated__/core/ObligationGraphNodeQuery.graphql";
 import { PeopleSelectField } from "#/components/form/PeopleSelectField";
-import { SnapshotBanner } from "#/components/SnapshotBanner";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
@@ -85,12 +82,8 @@ export default function ObligationDetailsPage(props: Props) {
   const { __ } = useTranslate();
   const { toast } = useToast();
   const organizationId = useOrganizationId();
-  const { snapshotId } = useParams<{ snapshotId?: string }>();
-  const isSnapshotMode = Boolean(snapshotId);
 
-  const disabled = isSnapshotMode || !obligation.canUpdate;
-
-  validateSnapshotConsistency(obligation, snapshotId);
+  const disabled = !obligation.canUpdate;
 
   const updateObligation = useUpdateObligation();
   const statusOptions = getObligationStatusOptions(__);
@@ -165,15 +158,10 @@ export default function ObligationDetailsPage(props: Props) {
     }
   });
 
-  const breadcrumbObligationsUrl = isSnapshotMode
-    ? `/organizations/${organizationId}/snapshots/${snapshotId}/obligations`
-    : `/organizations/${organizationId}/obligations`;
+  const breadcrumbObligationsUrl = `/organizations/${organizationId}/obligations`;
 
   return (
     <div className="space-y-6">
-      {isSnapshotMode && snapshotId && (
-        <SnapshotBanner snapshotId={snapshotId} />
-      )}
       <div className="flex justify-between items-start">
         <div>
           <Breadcrumb
@@ -201,7 +189,7 @@ export default function ObligationDetailsPage(props: Props) {
           </div>
         </div>
 
-        {!isSnapshotMode && obligation.canDelete && (
+        {obligation.canDelete && (
           <ActionDropdown>
             <DropdownItem
               icon={IconTrashCan}
@@ -378,20 +366,18 @@ export default function ObligationDetailsPage(props: Props) {
             />
           </Field>
 
-          {!isSnapshotMode && (
-            <div className="flex justify-end">
-              {obligation.canUpdate && (
-                <Button
-                  type="submit"
-                  disabled={formState.isSubmitting}
-                >
-                  {formState.isSubmitting
-                    ? __("Saving...")
-                    : __("Save Changes")}
-                </Button>
-              )}
-            </div>
-          )}
+          <div className="flex justify-end">
+            {obligation.canUpdate && (
+              <Button
+                type="submit"
+                disabled={formState.isSubmitting}
+              >
+                {formState.isSubmitting
+                  ? __("Saving...")
+                  : __("Save Changes")}
+              </Button>
+            )}
+          </div>
         </form>
       </Card>
     </div>

@@ -51,14 +51,8 @@ input ObligationOrder
     field: ObligationOrderField!
 }
 
-input ObligationFilter {
-    snapshotId: ID
-}
-
 type Obligation implements Node {
     id: ID!
-    snapshotId: ID
-    sourceId: ID
     organization: Organization! @goField(forceResolver: true)
     area: String
     source: String
@@ -94,6 +88,19 @@ extend type Mutation {
     createObligation(input: CreateObligationInput!): CreateObligationPayload!
     updateObligation(input: UpdateObligationInput!): UpdateObligationPayload!
     deleteObligation(input: DeleteObligationInput!): DeleteObligationPayload!
+    publishObligationList(
+        input: PublishObligationListInput!
+    ): PublishObligationListPayload!
+}
+
+input PublishObligationListInput {
+    organizationId: ID!
+    approverIds: [ID!]
+}
+
+type PublishObligationListPayload {
+    documentEdge: DocumentEdge!
+    documentVersionEdge: DocumentVersionEdge!
 }
 
 input CreateObligationInput {

@@ -23,7 +23,6 @@ func NewObligation(o *coredata.Obligation) *Obligation {
 	obligation := &Obligation{
 		ID:                     o.ID,
 		OrganizationID:         o.OrganizationID,
-		SnapshotID:             o.SnapshotID,
 		Area:                   o.Area,
 		Source:                 o.Source,
 		Requirement:            o.Requirement,
@@ -36,11 +35,6 @@ func NewObligation(o *coredata.Obligation) *Obligation {
 		Type:                   o.Type,
 		CreatedAt:              o.CreatedAt,
 		UpdatedAt:              o.UpdatedAt,
-	}
-
-	if o.SourceID != nil {
-		s := o.SourceID.String()
-		obligation.SourceID = &s
 	}
 
 	return obligation

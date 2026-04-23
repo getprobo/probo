@@ -107,7 +107,6 @@ type Risk implements Node {
         last: Int
         before: CursorKey
         orderBy: ObligationOrder
-        filter: ObligationFilter
     ): ObligationConnection! @goField(forceResolver: true)
 
     createdAt: Datetime!

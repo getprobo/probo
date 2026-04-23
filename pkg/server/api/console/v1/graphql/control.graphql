@@ -139,7 +139,6 @@ type Control implements Node {
         last: Int
         before: CursorKey
         orderBy: ObligationOrder
-        filter: ObligationFilter
     ): ObligationConnection! @goField(forceResolver: true)
 
     snapshots(

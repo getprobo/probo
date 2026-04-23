@@ -289,7 +289,6 @@ func (s *ObligationService) Delete(
 func (s ObligationService) CountForOrganizationID(
 	ctx context.Context,
 	organizationID gid.GID,
-	filter *coredata.ObligationFilter,
 ) (int, error) {
 	var count int
 
@@ -297,7 +296,7 @@ func (s ObligationService) CountForOrganizationID(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			obligations := coredata.Obligations{}
-			count, err = obligations.CountByOrganizationID(ctx, conn, s.svc.scope, organizationID, filter)
+			count, err = obligations.CountByOrganizationID(ctx, conn, s.svc.scope, organizationID)
 			if err != nil {
 				return fmt.Errorf("cannot count obligations: %w", err)
 			}
@@ -317,7 +316,6 @@ func (s ObligationService) ListForControlID(
 	ctx context.Context,
 	controlID gid.GID,
 	cursor *page.Cursor[coredata.ObligationOrderField],
-	filter *coredata.ObligationFilter,
 ) (*page.Page[*coredata.Obligation, coredata.ObligationOrderField], error) {
 	var obligations coredata.Obligations
 	control := &coredata.Control{}
@@ -329,7 +327,7 @@ func (s ObligationService) ListForControlID(
 				return fmt.Errorf("cannot load control: %w", err)
 			}
 
-			err := obligations.LoadByControlID(ctx, conn, s.svc.scope, control.ID, cursor, filter)
+			err := obligations.LoadByControlID(ctx, conn, s.svc.scope, control.ID, cursor)
 			if err != nil {
 				return fmt.Errorf("cannot load obligations: %w", err)
 			}
@@ -349,14 +347,13 @@ func (s ObligationService) ListForOrganizationID(
 	ctx context.Context,
 	organizationID gid.GID,
 	cursor *page.Cursor[coredata.ObligationOrderField],
-	filter *coredata.ObligationFilter,
 ) (*page.Page[*coredata.Obligation, coredata.ObligationOrderField], error) {
 	var obligations coredata.Obligations
 
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			err := obligations.LoadByOrganizationID(ctx, conn, s.svc.scope, organizationID, cursor, filter)
+			err := obligations.LoadByOrganizationID(ctx, conn, s.svc.scope, organizationID, cursor)
 			if err != nil {
 				return fmt.Errorf("cannot load obligations: %w", err)
 			}
@@ -375,7 +372,6 @@ func (s ObligationService) ListForOrganizationID(
 func (s ObligationService) CountForRiskID(
 	ctx context.Context,
 	riskID gid.GID,
-	filter *coredata.ObligationFilter,
 ) (int, error) {
 	var count int
 
@@ -383,7 +379,7 @@ func (s ObligationService) CountForRiskID(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			obligations := &coredata.Obligations{}
-			count, err = obligations.CountByRiskID(ctx, conn, s.svc.scope, riskID, filter)
+			count, err = obligations.CountByRiskID(ctx, conn, s.svc.scope, riskID)
 			if err != nil {
 				return fmt.Errorf("cannot count obligations: %w", err)
 			}
@@ -403,14 +399,13 @@ func (s ObligationService) ListForRiskID(
 	ctx context.Context,
 	riskID gid.GID,
 	cursor *page.Cursor[coredata.ObligationOrderField],
-	filter *coredata.ObligationFilter,
 ) (*page.Page[*coredata.Obligation, coredata.ObligationOrderField], error) {
 	var obligations coredata.Obligations
 
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			err := obligations.LoadByRiskID(ctx, conn, s.svc.scope, riskID, cursor, filter)
+			err := obligations.LoadByRiskID(ctx, conn, s.svc.scope, riskID, cursor)
 			if err != nil {
 				return fmt.Errorf("cannot load obligations: %w", err)
 			}

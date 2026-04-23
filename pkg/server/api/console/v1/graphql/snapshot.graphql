@@ -3,14 +3,6 @@ enum SnapshotsType
     RISKS @goEnum(value: "go.probo.inc/probo/pkg/coredata.SnapshotsTypeRisks")
     VENDORS
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.SnapshotsTypeVendors")
-    FINDINGS
-        @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.SnapshotsTypeFindings"
-        )
-    OBLIGATIONS
-        @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.SnapshotsTypeObligations"
-        )
     PROCESSING_ACTIVITIES
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.SnapshotsTypeProcessingActivities"

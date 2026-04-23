@@ -13,7 +13,6 @@ import (
 	"github.com/vikstrous/dataloadgen"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
@@ -272,7 +271,7 @@ func (r *controlResolver) Audits(ctx context.Context, obj *types.Control, first 
 }
 
 // Obligations is the resolver for the obligations field.
-func (r *controlResolver) Obligations(ctx context.Context, obj *types.Control, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ObligationOrderBy, filter *types.ObligationFilter) (*types.ObligationConnection, error) {
+func (r *controlResolver) Obligations(ctx context.Context, obj *types.Control, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ObligationOrderBy) (*types.ObligationConnection, error) {
 	if err := r.authorize(ctx, obj.ID, probo.ActionObligationList); err != nil {
 		return nil, err
 	}
@@ -292,18 +291,13 @@ func (r *controlResolver) Obligations(ctx context.Context, obj *types.Control, f
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	var snapshotID **gid.GID
-	if filter != nil {
-		snapshotID = &filter.SnapshotID
-	}
-	obligationFilter := coredata.NewObligationFilter(snapshotID)
-	page, err := prb.Obligations.ListForControlID(ctx, obj.ID, cursor, obligationFilter)
+	page, err := prb.Obligations.ListForControlID(ctx, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list control obligations", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewObligationConnection(page, r, obj.ID, filter), nil
+	return types.NewObligationConnection(page, r, obj.ID), nil
 }
 
 // Snapshots is the resolver for the snapshots field.

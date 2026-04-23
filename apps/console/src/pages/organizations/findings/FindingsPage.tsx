@@ -30,8 +30,10 @@ import {
   Button,
   Card,
   DropdownItem,
+  IconPageTextLine,
   IconPlusLarge,
   IconTrashCan,
+  IconUpload,
   Option,
   PageHeader,
   Select,
@@ -54,7 +56,7 @@ import {
   usePaginationFragment,
   usePreloadedQuery,
 } from "react-relay";
-import { useParams } from "react-router";
+import { Link, useNavigate } from "react-router";
 
 import type { FindingsPageDeleteMutation } from "#/__generated__/core/FindingsPageDeleteMutation.graphql";
 import type { FindingsPageFragment$key } from "#/__generated__/core/FindingsPageFragment.graphql";
@@ -66,20 +68,27 @@ import type {
   FindingStatus,
 } from "#/__generated__/core/FindingsPageRefetchQuery.graphql";
 import type { FindingsPageRowFragment$key } from "#/__generated__/core/FindingsPageRowFragment.graphql";
-import { SnapshotBanner } from "#/components/SnapshotBanner";
 import { usePeople } from "#/hooks/graph/PeopleGraph";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import { CreateFindingDialog } from "./dialogs/CreateFindingDialog";
+import { PublishFindingListDialog } from "./dialogs/PublishFindingListDialog";
 
 export const FindingsConnectionKey = "FindingsPage_findings";
 
 export const findingsPageQuery = graphql`
-  query FindingsPageListQuery($organizationId: ID!, $snapshotId: ID) {
+  query FindingsPageListQuery($organizationId: ID!) {
     node(id: $organizationId) {
       ... on Organization {
         canCreateFinding: permission(action: "core:finding:create")
-        ...FindingsPageFragment @arguments(snapshotId: $snapshotId)
+        canPublishFindings: permission(action: "core:finding:publish")
+        findingsDocument {
+          id
+          defaultApprovers {
+            id
+          }
+        }
+        ...FindingsPageFragment
       }
     }
   }
@@ -120,7 +129,6 @@ const findingsPageFragment = graphql`
   @argumentDefinitions(
     first: { type: "Int", defaultValue: 500 }
     after: { type: "CursorKey" }
-    snapshotId: { type: "ID", defaultValue: null }
     kind: { type: "FindingKind", defaultValue: null }
     status: { type: "FindingStatus", defaultValue: null }
     priority: { type: "FindingPriority", defaultValue: null }
@@ -131,7 +139,6 @@ const findingsPageFragment = graphql`
       first: $first
       after: $after
       filter: {
-        snapshotId: $snapshotId
         kind: $kind
         status: $status
         priority: $priority
@@ -165,12 +172,12 @@ interface FindingsPageProps {
 export default function FindingsPage({ queryRef }: FindingsPageProps) {
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
-  const { snapshotId } = useParams<{ snapshotId?: string }>();
-  const isSnapshotMode = Boolean(snapshotId);
 
   usePageTitle(__("Findings"));
 
+  const navigate = useNavigate();
   const organization = usePreloadedQuery(findingsPageQuery, queryRef);
+  const defaultApproverIds = (organization.node.findingsDocument?.defaultApprovers ?? []).map(a => a.id);
 
   const [isPending, startTransition] = useTransition();
   const [kindFilter, setKindFilter] = useState<FindingKind | null>(null);
@@ -192,7 +199,6 @@ export default function FindingsPage({ queryRef }: FindingsPageProps) {
           status: statusFilter,
           priority: priorityFilter,
           ownerId: ownerFilter,
-          snapshotId: snapshotId || null,
           ...overrides,
         },
         { fetchPolicy: "network-only" },
@@ -225,7 +231,6 @@ export default function FindingsPage({ queryRef }: FindingsPageProps) {
   };
 
   const currentFilter = {
-    snapshotId: snapshotId || null,
     kind: kindFilter,
     status: statusFilter,
     priority: priorityFilter,
@@ -242,7 +247,6 @@ export default function FindingsPage({ queryRef }: FindingsPageProps) {
     FindingsConnectionKey,
     {
       filter: {
-        snapshotId: snapshotId || null,
         kind: null,
         status: null,
         priority: null,
@@ -257,26 +261,49 @@ export default function FindingsPage({ queryRef }: FindingsPageProps) {
   const findings = data?.findings?.edges?.map(edge => edge.node) ?? [];
 
   const hasAnyAction
-    = !isSnapshotMode
-      && findings.some(({ canDelete, canUpdate }) => canDelete || canUpdate);
+    = findings.some(({ canDelete, canUpdate }) => canDelete || canUpdate);
 
   return (
     <div className="space-y-6">
-      {isSnapshotMode && snapshotId && (
-        <SnapshotBanner snapshotId={snapshotId} />
-      )}
       <PageHeader
         title={__("Findings")}
         description={__("Manage your organization's findings.")}
       >
-        {!isSnapshotMode && organization.node.canCreateFinding && (
-          <CreateFindingDialog
-            organizationId={organizationId}
-            connectionIds={createConnectionIds}
-          >
-            <Button icon={IconPlusLarge}>{__("Add finding")}</Button>
-          </CreateFindingDialog>
-        )}
+        <div className="flex gap-2">
+          {organization.node.findingsDocument?.id && (
+            <Button variant="secondary" asChild>
+              <Link
+                to={`/organizations/${organizationId}/documents/${organization.node.findingsDocument.id}`}
+              >
+                <IconPageTextLine size={16} />
+                {__("Document")}
+              </Link>
+            </Button>
+          )}
+          {organization.node.canPublishFindings && (
+            <PublishFindingListDialog
+              organizationId={organizationId}
+              defaultApproverIds={defaultApproverIds}
+              onPublished={(documentId) => {
+                void navigate(
+                  `/organizations/${organizationId}/documents/${documentId}`,
+                );
+              }}
+            >
+              <Button variant="secondary" icon={IconUpload}>
+                {__("Publish")}
+              </Button>
+            </PublishFindingListDialog>
+          )}
+          {organization.node.canCreateFinding && (
+            <CreateFindingDialog
+              organizationId={organizationId}
+              connectionIds={createConnectionIds}
+            >
+              <Button icon={IconPlusLarge}>{__("Add finding")}</Button>
+            </CreateFindingDialog>
+          )}
+        </div>
       </PageHeader>
 
       <div className="flex items-center gap-4">
@@ -342,7 +369,6 @@ export default function FindingsPage({ queryRef }: FindingsPageProps) {
                         key={finding.id}
                         findingKey={finding}
                         connectionId={connectionId}
-                        snapshotId={snapshotId}
                         hasAnyAction={hasAnyAction}
                       />
                     ))}
@@ -397,7 +423,6 @@ function getKindLabel(kind: string, __: (s: string) => string): string {
 type FindingRowProps = {
   findingKey: FindingsPageRowFragment$key;
   connectionId: string;
-  snapshotId?: string;
   hasAnyAction: boolean;
 };
 
@@ -408,7 +433,6 @@ function FindingRow(props: FindingRowProps) {
   const [deleteFinding] = useMutation<FindingsPageDeleteMutation>(deleteFindingMutation);
   const { toast } = useToast();
   const confirm = useConfirm();
-  const isSnapshotMode = Boolean(props.snapshotId);
 
   const handleDelete = () => {
     confirm(
@@ -464,9 +488,7 @@ function FindingRow(props: FindingRowProps) {
     );
   };
 
-  const detailsUrl = isSnapshotMode
-    ? `/organizations/${organizationId}/snapshots/${props.snapshotId}/findings/${finding.id}`
-    : `/organizations/${organizationId}/findings/${finding.id}`;
+  const detailsUrl = `/organizations/${organizationId}/findings/${finding.id}`;
 
   return (
     <Tr to={detailsUrl}>

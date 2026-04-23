@@ -120,6 +120,7 @@ FROM
 WHERE
 	%s
 	AND id = @finding_id
+	AND snapshot_id IS NULL
 LIMIT 1;
 `
 
@@ -158,6 +159,7 @@ FROM
 WHERE
 	%s
 	AND organization_id = @organization_id
+	AND snapshot_id IS NULL
 	AND %s
 `
 
@@ -212,6 +214,7 @@ FROM
 WHERE
 	%s
 	AND organization_id = @organization_id
+	AND snapshot_id IS NULL
 	AND %s
 	AND %s
 `
@@ -412,95 +415,6 @@ WHERE
 	return nil
 }
 
-func (fs Findings) Snapshot(ctx context.Context, conn pg.Tx, scope Scoper, organizationID, snapshotID gid.GID) error {
-	query := `
-INSERT INTO findings (
-	id,
-	tenant_id,
-	snapshot_id,
-	source_id,
-	organization_id,
-	kind,
-	reference_id,
-	description,
-	source,
-	identified_on,
-	root_cause,
-	corrective_action,
-	owner_id,
-	due_date,
-	status,
-	priority,
-	risk_id,
-	effectiveness_check,
-	created_at,
-	updated_at
-)
-SELECT
-	generate_gid(decode_base64_unpadded(@tenant_id), @finding_entity_type),
-	@tenant_id,
-	@snapshot_id,
-	f.id,
-	f.organization_id,
-	f.kind,
-	f.reference_id,
-	f.description,
-	f.source,
-	f.identified_on,
-	f.root_cause,
-	f.corrective_action,
-	f.owner_id,
-	f.due_date,
-	f.status,
-	f.priority,
-	f.risk_id,
-	f.effectiveness_check,
-	f.created_at,
-	f.updated_at
-FROM findings f
-WHERE %s AND f.organization_id = @organization_id AND f.snapshot_id IS NULL
-	`
-
-	query = fmt.Sprintf(query, scope.SQLFragment())
-
-	args := pgx.StrictNamedArgs{
-		"tenant_id":           scope.GetTenantID(),
-		"snapshot_id":         snapshotID,
-		"organization_id":     organizationID,
-		"finding_entity_type": FindingEntityType,
-	}
-	maps.Copy(args, scope.SQLArguments())
-
-	_, err := conn.Exec(ctx, query, args)
-	if err != nil {
-		return fmt.Errorf("cannot insert finding snapshots: %w", err)
-	}
-
-	auditQuery := `
-INSERT INTO findings_audits (finding_id, audit_id, reference_id, organization_id, tenant_id, created_at)
-SELECT
-	snap.id,
-	fa.audit_id,
-	fa.reference_id,
-	fa.organization_id,
-	fa.tenant_id,
-	fa.created_at
-FROM findings_audits fa
-JOIN findings live ON fa.finding_id = live.id AND live.snapshot_id IS NULL
-JOIN findings snap ON snap.source_id = live.id AND snap.snapshot_id = @snapshot_id
-WHERE %s AND live.organization_id = @organization_id
-	`
-
-	auditQuery = fmt.Sprintf(auditQuery, scope.SQLFragment())
-
-	_, err = conn.Exec(ctx, auditQuery, args)
-	if err != nil {
-		return fmt.Errorf("cannot insert finding audit snapshots: %w", err)
-	}
-
-	return nil
-}
-
 func (fs *Findings) LoadByAuditID(
 	ctx context.Context,
 	conn pg.Querier,
@@ -538,6 +452,7 @@ WITH f AS (
 		findings_audits fa ON fi.id = fa.finding_id
 	WHERE
 		fa.audit_id = @audit_id
+		AND fi.snapshot_id IS NULL
 )
 SELECT
 	id,
@@ -605,6 +520,7 @@ WITH f AS (
 		findings_audits fa ON fi.id = fa.finding_id
 	WHERE
 		fa.audit_id = @audit_id
+		AND fi.snapshot_id IS NULL
 )
 SELECT
 	COUNT(id)
@@ -630,4 +546,168 @@ WHERE
 	}
 
 	return count, nil
+}
+
+func (fs *Findings) LoadAllByOrganizationID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	organizationID gid.GID,
+) error {
+	q := `
+SELECT
+	id,
+	organization_id,
+	snapshot_id,
+	source_id,
+	kind,
+	reference_id,
+	description,
+	source,
+	identified_on,
+	root_cause,
+	corrective_action,
+	owner_id,
+	due_date,
+	status,
+	priority,
+	risk_id,
+	effectiveness_check,
+	created_at,
+	updated_at
+FROM
+	findings
+WHERE
+	%s
+	AND organization_id = @organization_id
+	AND snapshot_id IS NULL
+ORDER BY
+	reference_id ASC
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"organization_id": organizationID}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query findings: %w", err)
+	}
+
+	findings, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Finding])
+	if err != nil {
+		return fmt.Errorf("cannot collect findings: %w", err)
+	}
+
+	*fs = findings
+
+	return nil
+}
+
+func (f Finding) GetGeneratedDocumentID(
+	ctx context.Context,
+	conn pg.Querier,
+	organizationID gid.GID,
+) (*gid.GID, error) {
+	var documentID *gid.GID
+
+	err := conn.QueryRow(
+		ctx,
+		`
+SELECT
+	findings_document_id
+FROM
+	generated_documents
+WHERE
+	organization_id = @organization_id
+`,
+		pgx.NamedArgs{"organization_id": organizationID},
+	).Scan(&documentID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("cannot get finding list document ID: %w", err)
+	}
+
+	return documentID, nil
+}
+
+func (f Finding) UpsertGeneratedDocumentID(
+	ctx context.Context,
+	conn pg.Tx,
+	organizationID gid.GID,
+	tenantID gid.TenantID,
+	documentID gid.GID,
+) error {
+	now := time.Now()
+
+	_, err := conn.Exec(
+		ctx,
+		`
+INSERT INTO generated_documents (
+	organization_id,
+	tenant_id,
+	findings_document_id,
+	created_at,
+	updated_at
+) VALUES (
+	@organization_id,
+	@tenant_id,
+	@findings_document_id,
+	@created_at,
+	@updated_at
+)
+ON CONFLICT (organization_id) DO UPDATE
+SET
+	findings_document_id = @findings_document_id,
+	updated_at = @updated_at
+`,
+		pgx.NamedArgs{
+			"organization_id":      organizationID,
+			"tenant_id":            tenantID,
+			"findings_document_id": documentID,
+			"created_at":           now,
+			"updated_at":           now,
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("cannot upsert finding list document ID: %w", err)
+	}
+
+	return nil
+}
+
+func (f Finding) ClearGeneratedDocumentID(
+	ctx context.Context,
+	conn pg.Tx,
+	documentIDs []gid.GID,
+) error {
+	ids := make([]string, len(documentIDs))
+	for i, id := range documentIDs {
+		ids[i] = id.String()
+	}
+
+	_, err := conn.Exec(
+		ctx,
+		`
+UPDATE
+	generated_documents
+SET
+	findings_document_id = NULL,
+	updated_at = @now
+WHERE
+	findings_document_id = ANY(@ids)
+`,
+		pgx.NamedArgs{
+			"ids": ids,
+			"now": time.Now(),
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("cannot clear finding list document references: %w", err)
+	}
+
+	return nil
 }

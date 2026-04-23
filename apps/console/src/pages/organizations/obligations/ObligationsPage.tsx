@@ -26,8 +26,10 @@ import {
   Button,
   Card,
   DropdownItem,
+  IconPageTextLine,
   IconPlusLarge,
   IconTrashCan,
+  IconUpload,
   PageHeader,
   Table,
   Tbody,
@@ -44,7 +46,7 @@ import {
   usePaginationFragment,
   usePreloadedQuery,
 } from "react-relay";
-import { useParams } from "react-router";
+import { Link, useNavigate } from "react-router";
 
 import type { ObligationGraphDeleteMutation } from "#/__generated__/core/ObligationGraphDeleteMutation.graphql";
 import type { ObligationGraphListQuery } from "#/__generated__/core/ObligationGraphListQuery.graphql";
@@ -53,7 +55,6 @@ import type {
   ObligationsPageFragment$key,
 } from "#/__generated__/core/ObligationsPageFragment.graphql";
 import type { ObligationsPageRefetchQuery } from "#/__generated__/core/ObligationsPageRefetchQuery.graphql";
-import { SnapshotBanner } from "#/components/SnapshotBanner";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import {
@@ -62,6 +63,7 @@ import {
 } from "../../../hooks/graph/ObligationGraph";
 
 import { CreateObligationDialog } from "./dialogs/CreateObligationDialog";
+import { PublishObligationListDialog } from "./dialogs/PublishObligationListDialog";
 
 type Obligation
   = ObligationsPageFragment$data["obligations"]["edges"][number]["node"];
@@ -76,19 +78,16 @@ const obligationsPageFragment = graphql`
   @argumentDefinitions(
     first: { type: "Int", defaultValue: 500 }
     after: { type: "CursorKey" }
-    snapshotId: { type: "ID", defaultValue: null }
   ) {
     id
     obligations(
       first: $first
       after: $after
-      filter: { snapshotId: $snapshotId }
-    ) @connection(key: "ObligationsPage_obligations", filters: ["filter"]) {
+    ) @connection(key: "ObligationsPage_obligations") {
       __id
       edges {
         node {
           id
-          snapshotId
           area
           source
           status
@@ -112,12 +111,12 @@ const obligationsPageFragment = graphql`
 export default function ObligationsPage({ queryRef }: ObligationsPageProps) {
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
-  const { snapshotId } = useParams<{ snapshotId?: string }>();
-  const isSnapshotMode = Boolean(snapshotId);
+  const navigate = useNavigate();
 
   usePageTitle(__("Obligations"));
 
   const organization = usePreloadedQuery(obligationsQuery, queryRef);
+  const defaultApproverIds = (organization.node.obligationsDocument?.defaultApprovers ?? []).map(a => a.id);
 
   const {
     data: obligationsData,
@@ -133,26 +132,49 @@ export default function ObligationsPage({ queryRef }: ObligationsPageProps) {
     = obligationsData?.obligations?.edges?.map(edge => edge.node) ?? [];
 
   const hasAnyAction
-    = !isSnapshotMode
-      && obligations.some(({ canUpdate, canDelete }) => canDelete || canUpdate);
+    = obligations.some(({ canUpdate, canDelete }) => canDelete || canUpdate);
 
   return (
     <div className="space-y-6">
-      {isSnapshotMode && snapshotId && (
-        <SnapshotBanner snapshotId={snapshotId} />
-      )}
       <PageHeader
         title={__("Obligations")}
         description={__("Manage your organization's obligations.")}
       >
-        {!snapshotId && organization.node.canCreateObligation && (
-          <CreateObligationDialog
-            organizationId={organizationId}
-            connection={connectionId}
-          >
-            <Button icon={IconPlusLarge}>{__("Add obligation")}</Button>
-          </CreateObligationDialog>
-        )}
+        <div className="flex gap-2">
+          {organization.node.obligationsDocument?.id && (
+            <Button variant="secondary" asChild>
+              <Link
+                to={`/organizations/${organizationId}/documents/${organization.node.obligationsDocument.id}`}
+              >
+                <IconPageTextLine size={16} />
+                {__("Document")}
+              </Link>
+            </Button>
+          )}
+          {organization.node.canPublishObligations && (
+            <PublishObligationListDialog
+              organizationId={organizationId}
+              defaultApproverIds={defaultApproverIds}
+              onPublished={(documentId) => {
+                void navigate(
+                  `/organizations/${organizationId}/documents/${documentId}`,
+                );
+              }}
+            >
+              <Button variant="secondary" icon={IconUpload}>
+                {__("Publish")}
+              </Button>
+            </PublishObligationListDialog>
+          )}
+          {organization.node.canCreateObligation && (
+            <CreateObligationDialog
+              organizationId={organizationId}
+              connection={connectionId}
+            >
+              <Button icon={IconPlusLarge}>{__("Add obligation")}</Button>
+            </CreateObligationDialog>
+          )}
+        </div>
       </PageHeader>
 
       {obligations.length === 0
@@ -187,7 +209,6 @@ export default function ObligationsPage({ queryRef }: ObligationsPageProps) {
                       key={obligation.id}
                       obligation={obligation}
                       connectionId={connectionId}
-                      snapshotId={snapshotId}
                       hasAnyAction={hasAnyAction}
                     />
                   ))}
@@ -214,19 +235,16 @@ export default function ObligationsPage({ queryRef }: ObligationsPageProps) {
 function ObligationRow({
   obligation,
   connectionId,
-  snapshotId,
   hasAnyAction,
 }: {
   obligation: Obligation;
   connectionId: string;
-  snapshotId?: string;
   hasAnyAction: boolean;
 }) {
   const organizationId = useOrganizationId();
   const { __ } = useTranslate();
   const [deleteObligation] = useMutation<ObligationGraphDeleteMutation>(deleteObligationMutation);
   const confirm = useConfirm();
-  const isSnapshotMode = Boolean(snapshotId);
 
   const handleDelete = () => {
     confirm(
@@ -247,9 +265,7 @@ function ObligationRow({
     );
   };
 
-  const detailsUrl = isSnapshotMode
-    ? `/organizations/${organizationId}/snapshots/${snapshotId}/obligations/${obligation.id}`
-    : `/organizations/${organizationId}/obligations/${obligation.id}`;
+  const detailsUrl = `/organizations/${organizationId}/obligations/${obligation.id}`;
 
   return (
     <Tr to={detailsUrl}>

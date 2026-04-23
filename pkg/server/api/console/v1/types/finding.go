@@ -67,8 +67,7 @@ func NewFindingEdge(f *coredata.Finding, orderField coredata.FindingOrderField) 
 
 func NewFinding(f *coredata.Finding) *Finding {
 	finding := &Finding{
-		ID:         f.ID,
-		SnapshotID: f.SnapshotID,
+		ID: f.ID,
 		Organization: &Organization{
 			ID: f.OrganizationID,
 		},

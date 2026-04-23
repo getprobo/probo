@@ -24,11 +24,11 @@ import (
 )
 
 const listQuery = `
-query($id: ID!, $first: Int, $after: CursorKey, $orderBy: ObligationOrder, $filter: ObligationFilter) {
+query($id: ID!, $first: Int, $after: CursorKey, $orderBy: ObligationOrder) {
   node(id: $id) {
     __typename
     ... on Organization {
-      obligations(first: $first, after: $after, orderBy: $orderBy, filter: $filter) {
+      obligations(first: $first, after: $after, orderBy: $orderBy) {
         totalCount
         edges {
           node {

@@ -393,7 +393,7 @@ func (r *riskResolver) Controls(ctx context.Context, obj *types.Risk, first *int
 }
 
 // Obligations is the resolver for the obligations field.
-func (r *riskResolver) Obligations(ctx context.Context, obj *types.Risk, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ObligationOrderBy, filter *types.ObligationFilter) (*types.ObligationConnection, error) {
+func (r *riskResolver) Obligations(ctx context.Context, obj *types.Risk, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ObligationOrderBy) (*types.ObligationConnection, error) {
 	if err := r.authorize(ctx, obj.ID, probo.ActionObligationList); err != nil {
 		return nil, err
 	}
@@ -413,18 +413,13 @@ func (r *riskResolver) Obligations(ctx context.Context, obj *types.Risk, first *
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	var obligationFilter = coredata.NewObligationFilter(nil)
-	if filter != nil {
-		obligationFilter = coredata.NewObligationFilter(&filter.SnapshotID)
-	}
-
-	page, err := prb.Obligations.ListForRiskID(ctx, obj.ID, cursor, obligationFilter)
+	page, err := prb.Obligations.ListForRiskID(ctx, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list risk obligations", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewObligationConnection(page, r, obj.ID, filter), nil
+	return types.NewObligationConnection(page, r, obj.ID), nil
 }
 
 // Permission is the resolver for the permission field.

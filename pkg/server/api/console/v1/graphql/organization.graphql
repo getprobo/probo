@@ -150,13 +150,15 @@ type Organization implements Node {
         orderBy: AuditOrder
     ): AuditConnection! @goField(forceResolver: true)
 
+    findingsDocument: Document @goField(forceResolver: true)
+
     findings(
         first: Int
         after: CursorKey
         last: Int
         before: CursorKey
         orderBy: FindingOrder
-        filter: FindingFilter = { snapshotId: null }
+        filter: FindingFilter
     ): FindingConnection @goField(forceResolver: true)
 
     auditLogEntries(
@@ -247,13 +249,14 @@ type Organization implements Node {
         filter: MeasureFilter
     ): MeasureConnection! @goField(forceResolver: true)
 
+    obligationsDocument: Document @goField(forceResolver: true)
+
     obligations(
         first: Int
         after: CursorKey
         last: Int
         before: CursorKey
         orderBy: ObligationOrder
-        filter: ObligationFilter = { snapshotId: null }
     ): ObligationConnection! @goField(forceResolver: true)
 
     processingActivities(
