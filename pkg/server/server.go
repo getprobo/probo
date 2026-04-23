@@ -47,25 +47,25 @@ import (
 )
 
 type Config struct {
-	BaseURL           *baseurl.BaseURL
-	AllowedOrigins    []string
-	ExtraHeaderFields map[string]string
-	Probo             *probo.Service
-	File              *file.Service
-	IAM               *iam.Service
-	Trust             *trust.Service
-	ESign             *esign.Service
-	AccessReview      *accessreview.Service
-	Slack             *slack.Service
-	Mailman           *mailman.Service
-	CookieBanner      *cookiebanner.Service
-	Cookie            securecookie.Config
-	TokenSecret       string
-	ConnectorRegistry *connector.ConnectorRegistry
-	CustomDomainCname string
-	DomainConnect     domainconnect.Config
-	ResolverAddr      string
-	Logger            *log.Logger
+	BaseURL             *baseurl.BaseURL
+	AllowedOrigins      []string
+	ExtraHeaderFields   map[string]string
+	Probo               *probo.Service
+	File                *file.Service
+	IAM                 *iam.Service
+	Trust               *trust.Service
+	ESign               *esign.Service
+	AccessReview        *accessreview.Service
+	Slack               *slack.Service
+	Mailman             *mailman.Service
+	CookieBanner        *cookiebanner.Service
+	Cookie              securecookie.Config
+	TokenSecret         string
+	ConnectorRegistry   *connector.ConnectorRegistry
+	CustomDomainCname   string
+	DomainConnect       domainconnect.Config
+	DomainConnectClient *domainconnect.Client
+	Logger              *log.Logger
 }
 
 type Server struct {
@@ -84,24 +84,24 @@ type Server struct {
 
 func NewServer(cfg Config) (*Server, error) {
 	apiCfg := api.Config{
-		BaseURL:           cfg.BaseURL,
-		AllowedOrigins:    cfg.AllowedOrigins,
-		Probo:             cfg.Probo,
-		File:              cfg.File,
-		IAM:               cfg.IAM,
-		Trust:             cfg.Trust,
-		ESign:             cfg.ESign,
-		AccessReview:      cfg.AccessReview,
-		Slack:             cfg.Slack,
-		Mailman:           cfg.Mailman,
-		CookieBanner:      cfg.CookieBanner,
-		Cookie:            cfg.Cookie,
-		TokenSecret:       cfg.TokenSecret,
-		ConnectorRegistry: cfg.ConnectorRegistry,
-		CustomDomainCname: cfg.CustomDomainCname,
-		DomainConnect:     cfg.DomainConnect,
-		ResolverAddr:      cfg.ResolverAddr,
-		Logger:            cfg.Logger.Named("api"),
+		BaseURL:             cfg.BaseURL,
+		AllowedOrigins:      cfg.AllowedOrigins,
+		Probo:               cfg.Probo,
+		File:                cfg.File,
+		IAM:                 cfg.IAM,
+		Trust:               cfg.Trust,
+		ESign:               cfg.ESign,
+		AccessReview:        cfg.AccessReview,
+		Slack:               cfg.Slack,
+		Mailman:             cfg.Mailman,
+		CookieBanner:        cfg.CookieBanner,
+		Cookie:              cfg.Cookie,
+		TokenSecret:         cfg.TokenSecret,
+		ConnectorRegistry:   cfg.ConnectorRegistry,
+		CustomDomainCname:   cfg.CustomDomainCname,
+		DomainConnect:       cfg.DomainConnect,
+		DomainConnectClient: cfg.DomainConnectClient,
+		Logger:              cfg.Logger.Named("api"),
 	}
 
 	apiServer, err := api.NewServer(apiCfg)

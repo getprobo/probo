@@ -12,13 +12,14 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package console_v1
+package domainconnect_v1
 
 import (
 	"fmt"
 	"net/http"
 	"net/url"
 
+	"github.com/go-chi/chi/v5"
 	"go.gearno.de/kit/httpserver"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/baseurl"
@@ -26,14 +27,36 @@ import (
 	"go.probo.inc/probo/pkg/statelesstoken"
 )
 
-const domainConnectTokenType = "probo/domain-connect"
+const TokenType = "probo/domain-connect"
 
-type domainConnectState struct {
+type State struct {
 	OrganizationID string `json:"oid"`
 	ContinueURL    string `json:"continue,omitempty"`
 }
 
-func handleDomainConnectCallback(
+func NewMux(
+	logger *log.Logger,
+	baseURL *baseurl.BaseURL,
+	tokenSecret string,
+) *chi.Mux {
+	r := chi.NewMux()
+
+	safeRedirect := saferedirect.New(saferedirect.StaticHosts(baseURL.Host()))
+
+	r.Get(
+		"/callback",
+		handleCallback(
+			logger,
+			baseURL,
+			tokenSecret,
+			safeRedirect,
+		),
+	)
+
+	return r
+}
+
+func handleCallback(
 	logger *log.Logger,
 	baseURL *baseurl.BaseURL,
 	tokenSecret string,
@@ -48,9 +71,9 @@ func handleDomainConnectCallback(
 			return
 		}
 
-		payload, err := statelesstoken.ValidateToken[domainConnectState](
+		payload, err := statelesstoken.ValidateToken[State](
 			tokenSecret,
-			domainConnectTokenType,
+			TokenType,
 			stateToken,
 		)
 		if err != nil {
@@ -74,7 +97,9 @@ func handleDomainConnectCallback(
 
 		if dcErr := query.Get("error"); dcErr != "" {
 			q.Set("domain_connect", "error")
-			q.Set("error_description", query.Get("error_description"))
+			if desc := query.Get("error_description"); desc != "" {
+				q.Set("error_description", desc)
+			}
 		} else {
 			q.Set("domain_connect", "success")
 		}
