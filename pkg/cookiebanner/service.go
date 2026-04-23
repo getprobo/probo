@@ -15,6 +15,7 @@
 package cookiebanner
 
 import (
+	"maps"
 	"context"
 	"encoding/json"
 	"errors"
@@ -37,19 +38,6 @@ type Service struct {
 
 func NewService(pgClient *pg.Client, showBranding bool) *Service {
 	return &Service{pg: pgClient, showBranding: showBranding}
-}
-
-var defaultCategories = []struct {
-	Name        string
-	Description string
-	Kind        coredata.CookieCategoryKind
-	Rank        int
-}{
-	{"Necessary", "Essential cookies required for the website to function properly.", coredata.CookieCategoryKindNecessary, 0},
-	{"Analytics", "Cookies that help understand how visitors interact with the website.", coredata.CookieCategoryKindNormal, 1},
-	{"Advertising", "Cookies used to deliver relevant advertisements and track campaigns.", coredata.CookieCategoryKindNormal, 2},
-	{"Functional", "Cookies that enable enhanced functionality and personalization.", coredata.CookieCategoryKindNormal, 3},
-	{"Uncategorised", "Cookies that have not been assigned to a category yet.", coredata.CookieCategoryKindUncategorised, 4},
 }
 
 type (
@@ -137,13 +125,28 @@ type (
 	}
 
 	BannerConfig struct {
-		BannerID          gid.GID                                        `json:"banner_id"`
-		Version           int                                            `json:"version"`
-		PrivacyPolicyURL  string                                         `json:"privacy_policy_url"`
-		ConsentExpiryDays int                                            `json:"consent_expiry_days"`
-		ConsentMode       string                                         `json:"consent_mode"`
-		ShowBranding      bool                                           `json:"show_branding"`
-		Categories        []coredata.CookieBannerVersionSnapshotCategory `json:"categories"`
+		BannerID           gid.GID                                        `json:"banner_id"`
+		Version            int                                            `json:"version"`
+		Language           string                                         `json:"language"`
+		DefaultLanguage    string                                         `json:"default_language"`
+		AvailableLanguages []string                                       `json:"available_languages"`
+		PrivacyPolicyURL   string                                         `json:"privacy_policy_url"`
+		ConsentExpiryDays  int                                            `json:"consent_expiry_days"`
+		ConsentMode        string                                         `json:"consent_mode"`
+		ShowBranding       bool                                           `json:"show_branding"`
+		Categories         []coredata.CookieBannerVersionSnapshotCategory `json:"categories"`
+		Texts              map[string]string                              `json:"texts"`
+	}
+
+	UpsertCookieBannerTranslationRequest struct {
+		CookieBannerID gid.GID
+		Language       string
+		Translations   json.RawMessage
+	}
+
+	DeleteCookieBannerTranslationRequest struct {
+		CookieBannerID gid.GID
+		Language       string
 	}
 
 	VisitorConsent struct {
@@ -263,6 +266,24 @@ func (r *RecordConsentRequest) Validate() error {
 	return v.Error()
 }
 
+func (r *UpsertCookieBannerTranslationRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(r.CookieBannerID, "cookie_banner_id", validator.Required(), validator.GID(coredata.CookieBannerEntityType))
+	v.Check(r.Language, "language", validator.Required(), validator.SafeTextNoNewLine(10))
+
+	return v.Error()
+}
+
+func (r *DeleteCookieBannerTranslationRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(r.CookieBannerID, "cookie_banner_id", validator.Required(), validator.GID(coredata.CookieBannerEntityType))
+	v.Check(r.Language, "language", validator.Required(), validator.SafeTextNoNewLine(10))
+
+	return v.Error()
+}
+
 func CanonicalizeOrigin(raw string) string {
 	u, err := url.Parse(raw)
 	if err != nil {
@@ -284,6 +305,7 @@ func buildSnapshot(
 	banner *coredata.CookieBanner,
 	categories coredata.CookieCategories,
 	allCookies coredata.Cookies,
+	translations coredata.CookieBannerTranslations,
 ) coredata.CookieBannerVersionSnapshot {
 	cookiesByCategory := make(map[gid.GID]coredata.CookieItems)
 	for _, c := range allCookies {
@@ -311,12 +333,74 @@ func buildSnapshot(
 		}
 	}
 
+	snapshotTranslations := buildSnapshotTranslations(translations, categories)
+
 	return coredata.CookieBannerVersionSnapshot{
 		PrivacyPolicyURL:  banner.PrivacyPolicyURL,
 		ConsentExpiryDays: banner.ConsentExpiryDays,
 		ConsentMode:       string(banner.ConsentMode),
+		DefaultLanguage:   banner.DefaultLanguage,
 		Categories:        snapshotCategories,
+		Translations:      snapshotTranslations,
 	}
+}
+
+func buildSnapshotTranslations(
+	translations coredata.CookieBannerTranslations,
+	categories coredata.CookieCategories,
+) map[string]coredata.CookieBannerVersionSnapshotTranslation {
+	if len(translations) == 0 {
+		return nil
+	}
+
+	result := make(map[string]coredata.CookieBannerVersionSnapshotTranslation, len(translations))
+
+	for _, t := range translations {
+		var raw struct {
+			Categories map[string]struct {
+				Name        string `json:"name"`
+				Description string `json:"description"`
+			} `json:"categories"`
+		}
+		_ = json.Unmarshal(t.Translations, &raw)
+
+		ui := make(map[string]string)
+		var flat map[string]json.RawMessage
+		_ = json.Unmarshal(t.Translations, &flat)
+		for k, v := range flat {
+			if k == "categories" || k == "cookies" {
+				continue
+			}
+			var s string
+			if json.Unmarshal(v, &s) == nil {
+				ui[k] = s
+			}
+		}
+
+		catTranslations := make([]coredata.CookieBannerVersionSnapshotCategoryTranslation, len(categories))
+		for i, c := range categories {
+			if raw.Categories != nil {
+				if ct, ok := raw.Categories[c.ID.String()]; ok {
+					catTranslations[i] = coredata.CookieBannerVersionSnapshotCategoryTranslation{
+						Name:        ct.Name,
+						Description: ct.Description,
+					}
+					continue
+				}
+			}
+			catTranslations[i] = coredata.CookieBannerVersionSnapshotCategoryTranslation{
+				Name:        c.Name,
+				Description: c.Description,
+			}
+		}
+
+		result[t.Language] = coredata.CookieBannerVersionSnapshotTranslation{
+			UI:         ui,
+			Categories: catTranslations,
+		}
+	}
+
+	return result
 }
 
 func (s *Service) ensureDraftVersion(
@@ -326,8 +410,9 @@ func (s *Service) ensureDraftVersion(
 	banner *coredata.CookieBanner,
 	categories coredata.CookieCategories,
 	allCookies coredata.Cookies,
+	translations coredata.CookieBannerTranslations,
 ) (*coredata.CookieBannerVersion, error) {
-	snapshot := buildSnapshot(banner, categories, allCookies)
+	snapshot := buildSnapshot(banner, categories, allCookies, translations)
 
 	var latest coredata.CookieBannerVersion
 	err := latest.LoadLatestByCookieBannerID(ctx, tx, scope, banner.ID)
@@ -395,7 +480,12 @@ func (s *Service) ensureDraftVersionForBanner(
 		return nil, fmt.Errorf("cannot load cookies: %w", err)
 	}
 
-	return s.ensureDraftVersion(ctx, tx, scope, &banner, categories, allCookies)
+	var translations coredata.CookieBannerTranslations
+	if err := translations.LoadAllByCookieBannerID(ctx, tx, scope, bannerID); err != nil {
+		return nil, fmt.Errorf("cannot load cookie banner translations: %w", err)
+	}
+
+	return s.ensureDraftVersion(ctx, tx, scope, &banner, categories, allCookies, translations)
 }
 
 func (s *Service) CreateCookieBanner(
@@ -424,6 +514,7 @@ func (s *Service) CreateCookieBanner(
 				ConsentExpiryDays: req.ConsentExpiryDays,
 				ConsentMode:       req.ConsentMode,
 				ShowBranding:      s.showBranding,
+				DefaultLanguage:   "en",
 				CreatedAt:         now,
 				UpdatedAt:         now,
 			}
@@ -451,6 +542,25 @@ func (s *Service) CreateCookieBanner(
 				if err := category.Insert(ctx, tx, scope); err != nil {
 					return fmt.Errorf("cannot insert default cookie category %q: %w", dc.Name, err)
 				}
+			}
+
+			defaultTranslationsJSON, err := json.Marshal(defaultUIStrings)
+			if err != nil {
+				return fmt.Errorf("cannot marshal default UI strings: %w", err)
+			}
+
+			defaultTranslation := &coredata.CookieBannerTranslation{
+				ID:               gid.New(scope.GetTenantID(), coredata.CookieBannerTranslationEntityType),
+				OrganizationID:   banner.OrganizationID,
+				CookieBannerID:   banner.ID,
+				Language:         "en",
+				Translations:     defaultTranslationsJSON,
+				CreatedAt:        now,
+				UpdatedAt:        now,
+			}
+
+			if err := defaultTranslation.Insert(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot insert default translation: %w", err)
 			}
 
 			if _, err := s.ensureDraftVersionForBanner(ctx, tx, scope, banner.ID); err != nil {
@@ -1538,6 +1648,7 @@ func (s *Service) CountCookieConsentRecordsForBanner(
 func (s *Service) GetActiveBannerConfig(
 	ctx context.Context,
 	bannerID gid.GID,
+	lang string,
 ) (*BannerConfig, error) {
 	var config *BannerConfig
 
@@ -1567,15 +1678,7 @@ func (s *Service) GetActiveBannerConfig(
 				return fmt.Errorf("cannot get version snapshot: %w", err)
 			}
 
-			config = &BannerConfig{
-				BannerID:          banner.ID,
-				Version:           version.Version,
-				PrivacyPolicyURL:  snapshot.PrivacyPolicyURL,
-				ConsentExpiryDays: snapshot.ConsentExpiryDays,
-				ConsentMode:       snapshot.ConsentMode,
-				ShowBranding:      banner.ShowBranding,
-				Categories:        snapshot.Categories,
-			}
+			config = buildBannerConfig(&banner, &version, &snapshot, lang)
 
 			return nil
 		},
@@ -1585,6 +1688,68 @@ func (s *Service) GetActiveBannerConfig(
 	}
 
 	return config, nil
+}
+
+func buildBannerConfig(
+	banner *coredata.CookieBanner,
+	version *coredata.CookieBannerVersion,
+	snapshot *coredata.CookieBannerVersionSnapshot,
+	lang string,
+) *BannerConfig {
+	defaultLang := snapshot.DefaultLanguage
+	if defaultLang == "" {
+		defaultLang = "en"
+	}
+
+	availableLanguages := make([]string, 0, len(snapshot.Translations))
+	for l := range snapshot.Translations {
+		availableLanguages = append(availableLanguages, l)
+	}
+	if len(availableLanguages) == 0 {
+		availableLanguages = []string{defaultLang}
+	}
+
+	resolvedLang := defaultLang
+	if lang != "" {
+		if _, ok := snapshot.Translations[lang]; ok {
+			resolvedLang = lang
+		}
+	}
+
+	categories := snapshot.Categories
+	texts := make(map[string]string)
+
+	if t, ok := snapshot.Translations[resolvedLang]; ok {
+		maps.Copy(texts, t.UI)
+
+		if len(t.Categories) == len(categories) {
+			translated := make([]coredata.CookieBannerVersionSnapshotCategory, len(categories))
+			copy(translated, categories)
+			for i, ct := range t.Categories {
+				if ct.Name != "" {
+					translated[i].Name = ct.Name
+				}
+				if ct.Description != "" {
+					translated[i].Description = ct.Description
+				}
+			}
+			categories = translated
+		}
+	}
+
+	return &BannerConfig{
+		BannerID:           banner.ID,
+		Version:            version.Version,
+		Language:            resolvedLang,
+		DefaultLanguage:    defaultLang,
+		AvailableLanguages: availableLanguages,
+		PrivacyPolicyURL:   snapshot.PrivacyPolicyURL,
+		ConsentExpiryDays:  snapshot.ConsentExpiryDays,
+		ConsentMode:        snapshot.ConsentMode,
+		ShowBranding:       banner.ShowBranding,
+		Categories:         categories,
+		Texts:              texts,
+	}
 }
 
 func (s *Service) SetShowBranding(
@@ -1606,6 +1771,126 @@ func (s *Service) SetShowBranding(
 			return nil
 		},
 	)
+}
+
+func (s *Service) UpsertCookieBannerTranslation(
+	ctx context.Context,
+	scope coredata.Scoper,
+	req UpsertCookieBannerTranslationRequest,
+) (*coredata.CookieBannerTranslation, error) {
+	if err := req.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid request: %w", err)
+	}
+
+	var result *coredata.CookieBannerTranslation
+
+	err := s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			var banner coredata.CookieBanner
+			if err := banner.LoadByID(ctx, tx, scope, req.CookieBannerID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return ErrBannerNotFound
+				}
+				return fmt.Errorf("cannot load cookie banner: %w", err)
+			}
+
+			now := time.Now()
+
+			var existing coredata.CookieBannerTranslation
+			err := existing.LoadByCookieBannerIDAndLanguage(ctx, tx, scope, req.CookieBannerID, req.Language)
+
+			if err == nil {
+				existing.Translations = req.Translations
+				existing.UpdatedAt = now
+				if err := existing.Update(ctx, tx, scope); err != nil {
+					return fmt.Errorf("cannot update cookie banner translation: %w", err)
+				}
+				result = &existing
+			} else if errors.Is(err, coredata.ErrResourceNotFound) {
+				t := &coredata.CookieBannerTranslation{
+					ID:             gid.New(scope.GetTenantID(), coredata.CookieBannerTranslationEntityType),
+					OrganizationID: banner.OrganizationID,
+					CookieBannerID: req.CookieBannerID,
+					Language:       req.Language,
+					Translations:   req.Translations,
+					CreatedAt:      now,
+					UpdatedAt:      now,
+				}
+				if err := t.Insert(ctx, tx, scope); err != nil {
+					return fmt.Errorf("cannot insert cookie banner translation: %w", err)
+				}
+				result = t
+			} else {
+				return fmt.Errorf("cannot load cookie banner translation: %w", err)
+			}
+
+			if _, err := s.ensureDraftVersionForBanner(ctx, tx, scope, req.CookieBannerID); err != nil {
+				return fmt.Errorf("cannot ensure draft version: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+func (s *Service) DeleteCookieBannerTranslation(
+	ctx context.Context,
+	scope coredata.Scoper,
+	req DeleteCookieBannerTranslationRequest,
+) error {
+	if err := req.Validate(); err != nil {
+		return fmt.Errorf("invalid request: %w", err)
+	}
+
+	return s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			var translation coredata.CookieBannerTranslation
+			err := translation.LoadByCookieBannerIDAndLanguage(ctx, tx, scope, req.CookieBannerID, req.Language)
+			if err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return ErrTranslationNotFound
+				}
+				return fmt.Errorf("cannot load cookie banner translation: %w", err)
+			}
+
+			if err := translation.Delete(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot delete cookie banner translation: %w", err)
+			}
+
+			if _, err := s.ensureDraftVersionForBanner(ctx, tx, scope, req.CookieBannerID); err != nil {
+				return fmt.Errorf("cannot ensure draft version: %w", err)
+			}
+
+			return nil
+		},
+	)
+}
+
+func (s *Service) ListCookieBannerTranslations(
+	ctx context.Context,
+	scope coredata.Scoper,
+	cookieBannerID gid.GID,
+) (coredata.CookieBannerTranslations, error) {
+	var translations coredata.CookieBannerTranslations
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			return translations.LoadAllByCookieBannerID(ctx, conn, scope, cookieBannerID)
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return translations, nil
 }
 
 func (s *Service) GetVisitorConsent(
