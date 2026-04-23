@@ -315,7 +315,7 @@ jobs:
           path: "archives"
           merge-multiple: true
       - name: "Scan Docker image with Trivy"
-        uses: "aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1" # 0.35.0
+        uses: "aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25" # 0.36.0
         with:
           image-ref: "ghcr.io/getprobo/probo:${{ github.ref_name }}"
           format: "sarif"
@@ -324,6 +324,10 @@ jobs:
           ignore-unfixed: true
           vuln-type: "os,library"
           severity: "CRITICAL,HIGH"
+      - name: "Print Trivy findings"
+        if: always()
+        run: |
+          jq -r '.runs[] | (.results // [])[] | .message.text' trivy-results.sarif
       - name: "Upload Trivy scan results"
         uses: "github/codeql-action/upload-sarif@6bc82e05fd0ea64601dd4b465378bbcf57de0314" # v4.32.1
         if: always()
