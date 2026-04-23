@@ -126,16 +126,16 @@ type (
 	}
 
 	BannerConfig struct {
-		BannerID           gid.GID                                        `json:"banner_id"`
-		Version            int                                            `json:"version"`
-		Language           string                                         `json:"language"`
-		DefaultLanguage    string                                         `json:"default_language"`
-		PrivacyPolicyURL   string                                         `json:"privacy_policy_url"`
-		ConsentExpiryDays  int                                            `json:"consent_expiry_days"`
-		ConsentMode        string                                         `json:"consent_mode"`
-		ShowBranding       bool                                           `json:"show_branding"`
-		Categories         []coredata.CookieBannerVersionSnapshotCategory `json:"categories"`
-		Texts              map[string]string                              `json:"texts"`
+		BannerID          gid.GID                                        `json:"banner_id"`
+		Version           int                                            `json:"version"`
+		Language          string                                         `json:"language"`
+		DefaultLanguage   string                                         `json:"default_language"`
+		PrivacyPolicyURL  string                                         `json:"privacy_policy_url"`
+		ConsentExpiryDays int                                            `json:"consent_expiry_days"`
+		ConsentMode       string                                         `json:"consent_mode"`
+		ShowBranding      bool                                           `json:"show_branding"`
+		Categories        []coredata.CookieBannerVersionSnapshotCategory `json:"categories"`
+		Texts             map[string]string                              `json:"texts"`
 	}
 
 	UpsertCookieBannerTranslationRequest struct {
@@ -1735,16 +1735,16 @@ func buildBannerConfig(
 	}
 
 	return &BannerConfig{
-		BannerID:           banner.ID,
-		Version:            version.Version,
-		Language:           resolvedLang,
-		DefaultLanguage:    defaultLang,
-		PrivacyPolicyURL:   snapshot.PrivacyPolicyURL,
-		ConsentExpiryDays:  snapshot.ConsentExpiryDays,
-		ConsentMode:        snapshot.ConsentMode,
-		ShowBranding:       banner.ShowBranding,
-		Categories:         categories,
-		Texts:              texts,
+		BannerID:          banner.ID,
+		Version:           version.Version,
+		Language:          resolvedLang,
+		DefaultLanguage:   defaultLang,
+		PrivacyPolicyURL:  snapshot.PrivacyPolicyURL,
+		ConsentExpiryDays: snapshot.ConsentExpiryDays,
+		ConsentMode:       snapshot.ConsentMode,
+		ShowBranding:      banner.ShowBranding,
+		Categories:        categories,
+		Texts:             texts,
 	}
 }
 
