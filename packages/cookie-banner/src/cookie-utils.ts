@@ -12,25 +12,28 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// [unitSeconds, singular, plural, snapBuffer]
+import type { BannerTexts } from "./i18n";
+import { interpolate } from "./i18n";
+
+// [unitSeconds, textKey, snapBuffer]
 // snapBuffer: if the remainder is within this many seconds of the next
 // whole unit, round up instead of carrying into smaller units.
-const DURATION_UNITS: [number, string, string, number][] = [
-  [365 * 24 * 3600, "year", "years", 21 * 24 * 3600],
-  [30 * 24 * 3600, "month", "months", 2 * 24 * 3600],
-  [7 * 24 * 3600, "week", "weeks", 12 * 3600],
-  [24 * 3600, "day", "days", 0],
-  [3600, "hour", "hours", 5 * 60],
-  [60, "minute", "minutes", 15],
+const DURATION_UNITS: [number, string, number][] = [
+  [365 * 24 * 3600, "duration_year", 21 * 24 * 3600],
+  [30 * 24 * 3600, "duration_month", 2 * 24 * 3600],
+  [7 * 24 * 3600, "duration_week", 12 * 3600],
+  [24 * 3600, "duration_day", 0],
+  [3600, "duration_hour", 5 * 60],
+  [60, "duration_minute", 15],
 ];
 
-function humanizeDuration(seconds: number): string {
-  if (seconds <= 0) return "session";
+function humanizeDuration(seconds: number, texts?: BannerTexts): string {
+  if (seconds <= 0) return texts?.duration_session ?? "session";
 
   let remaining = seconds;
   const parts: string[] = [];
 
-  for (const [unit, singular, plural, snap] of DURATION_UNITS) {
+  for (const [unit, key, snap] of DURATION_UNITS) {
     if (remaining >= unit) {
       let count = Math.floor(remaining / unit);
       const leftover = remaining - count * unit;
@@ -44,11 +47,13 @@ function humanizeDuration(seconds: number): string {
         remaining = leftover;
       }
 
-      parts.push(count === 1 ? `1 ${singular}` : `${count} ${plural}`);
+      const tplKey = count === 1 ? `${key}_one` : `${key}_other`;
+      const tpl = texts?.[tplKey] ?? (count === 1 ? `{{count}} ${key.replace("duration_", "")}` : `{{count}} ${key.replace("duration_", "")}s`);
+      parts.push(interpolate(tpl, { count: String(count) }));
     }
   }
 
-  return parts.length > 0 ? parts.join(", ") : "session";
+  return parts.length > 0 ? parts.join(", ") : texts?.duration_session ?? "session";
 }
 
 export function parseCookieName(raw: string): string {
@@ -57,15 +62,16 @@ export function parseCookieName(raw: string): string {
   return raw.substring(0, eqIdx).trim();
 }
 
-export function parseDuration(raw: string): string {
+export function parseDuration(raw: string, texts?: BannerTexts): string {
+  const session = texts?.duration_session ?? "session";
   const parts = raw.split(";").map((s) => s.trim());
 
   for (const part of parts) {
     const lower = part.toLowerCase();
     if (lower.startsWith("max-age=")) {
       const val = parseInt(part.substring(8), 10);
-      if (isNaN(val) || val <= 0) return "session";
-      return humanizeDuration(val);
+      if (isNaN(val) || val <= 0) return session;
+      return humanizeDuration(val, texts);
     }
   }
 
@@ -74,16 +80,16 @@ export function parseDuration(raw: string): string {
     if (lower.startsWith("expires=")) {
       const dateStr = part.substring(8);
       const expires = new Date(dateStr);
-      if (isNaN(expires.getTime())) return "session";
+      if (isNaN(expires.getTime())) return session;
       const deltaSeconds = Math.round(
         (expires.getTime() - Date.now()) / 1000,
       );
-      if (deltaSeconds <= 0) return "session";
-      return humanizeDuration(deltaSeconds);
+      if (deltaSeconds <= 0) return session;
+      return humanizeDuration(deltaSeconds, texts);
     }
   }
 
-  return "session";
+  return session;
 }
 
 export function isDeletion(raw: string): boolean {

@@ -15,6 +15,7 @@
 import { registerComponents } from "../components";
 import type { ProboCookieBannerRoot } from "../components/cookie-banner-root";
 import type { BannerConfig } from "../client";
+import { interpolate } from "../i18n";
 import { BRANDING, CHEVRON_DOWN, CLOSE_ICON } from "../html";
 import { THEMED_STYLES } from "./styles";
 
@@ -27,7 +28,7 @@ export class ProboThemedBanner extends HTMLElement {
   }
 
   static get observedAttributes(): string[] {
-    return ["banner-id", "base-url", "reopen-widget"];
+    return ["banner-id", "base-url", "reopen-widget", "lang"];
   }
 
   connectedCallback(): void {
@@ -44,21 +45,21 @@ export class ProboThemedBanner extends HTMLElement {
     const position = this.getAttribute("position") ?? "bottom-left";
     const reopenWidget = this.getAttribute("reopen-widget");
     const reopenAttr = reopenWidget ? ` reopen-widget="${this.esc(reopenWidget)}"` : "";
+    const lang = this.getAttribute("lang");
+    const langAttr = lang ? ` lang="${this.esc(lang)}"` : "";
 
     this.shadow.innerHTML = `
       <style>${THEMED_STYLES}</style>
-      <probo-cookie-banner-root banner-id="${this.esc(bannerId)}" base-url="${this.esc(baseUrl)}"${reopenAttr}>
+      <probo-cookie-banner-root banner-id="${this.esc(bannerId)}" base-url="${this.esc(baseUrl)}"${reopenAttr}${langAttr}>
         <probo-banner>
           <div class="floating" data-position="${this.esc(position)}">
             <div class="card" role="dialog" aria-modal="true" aria-labelledby="probo-banner-title" aria-describedby="probo-banner-desc">
-              <p class="title" id="probo-banner-title">Cookie Preferences</p>
-              <p class="description" id="probo-banner-desc" data-description>
-                We use cookies to improve your experience and analyze site traffic.
-              </p>
+              <p class="title" id="probo-banner-title" data-text="banner_title"></p>
+              <p class="description" id="probo-banner-desc" data-text="banner_description"></p>
               <div class="buttons">
-                <probo-accept-button><button class="btn btn-primary">Accept all</button></probo-accept-button>
-                <probo-reject-button><button class="btn">Reject all</button></probo-reject-button>
-                <probo-customize-button><button class="btn btn-link">Customize</button></probo-customize-button>
+                <probo-accept-button><button class="btn btn-primary" data-text="button_accept_all"></button></probo-accept-button>
+                <probo-reject-button><button class="btn" data-text="button_reject_all"></button></probo-reject-button>
+                <probo-customize-button><button class="btn btn-link" data-text="button_customize"></button></probo-customize-button>
               </div>
               ${BRANDING}
             </div>
@@ -70,16 +71,16 @@ export class ProboThemedBanner extends HTMLElement {
             <div class="card" role="dialog" aria-modal="true" aria-labelledby="probo-panel-title" aria-describedby="probo-panel-desc">
               <div class="panel-header">
                 <div class="panel-header-title">
-                  <p class="title" id="probo-panel-title" style="margin:0">Customise Preferences</p>
-                  <button class="panel-close" data-action="back" aria-label="Close">
+                  <p class="title" id="probo-panel-title" style="margin:0" data-text="panel_title"></p>
+                  <button class="panel-close" data-action="back" data-aria-text="aria_close">
                     ${CLOSE_ICON}
                   </button>
                 </div>
-                <p class="description" id="probo-panel-desc">Choose which cookie categories to allow. Necessary cookies are always active as they are needed for the site to work.</p>
+                <p class="description" id="probo-panel-desc" data-text="panel_description"></p>
               </div>
               <probo-category-list>
                 <template>
-                  <button class="cookie-toggle" data-action="toggle-cookies" aria-expanded="false" aria-label="Show cookie details">
+                  <button class="cookie-toggle" data-action="toggle-cookies" aria-expanded="false" data-aria-text="aria_show_details">
                     ${CHEVRON_DOWN}
                   </button>
                   <div class="category-header">
@@ -98,8 +99,8 @@ export class ProboThemedBanner extends HTMLElement {
                     <template>
                       <div class="cookie-item">
                         <span class="cookie-name" data-slot="name"></span>
-                        <span class="cookie-detail"><span class="cookie-label">Description:</span> <span data-slot="description"></span></span>
-                        <span class="cookie-detail"><span class="cookie-label">Duration:</span> <span data-slot="duration"></span></span>
+                        <span class="cookie-detail" data-label="label_description"><span data-slot="description"></span></span>
+                        <span class="cookie-detail" data-label="label_duration"><span data-slot="duration"></span></span>
                       </div>
                     </template>
                   </probo-cookie-list>
@@ -107,10 +108,10 @@ export class ProboThemedBanner extends HTMLElement {
               </probo-category-list>
               <div class="footer">
                 <div class="buttons">
-                  <probo-accept-button><button class="btn btn-primary">Accept all</button></probo-accept-button>
-                  <probo-reject-button><button class="btn">Reject all</button></probo-reject-button>
+                  <probo-accept-button><button class="btn btn-primary" data-text="button_accept_all"></button></probo-accept-button>
+                  <probo-reject-button><button class="btn" data-text="button_reject_all"></button></probo-reject-button>
                   <probo-save-button>
-                    <button class="btn btn-link" style="flex:1">Save preferences</button>
+                    <button class="btn btn-link" style="flex:1" data-text="button_save"></button>
                   </probo-save-button>
                 </div>
                 ${BRANDING}
@@ -127,7 +128,7 @@ export class ProboThemedBanner extends HTMLElement {
 
     root.addEventListener("probo-ready", (e: Event) => {
       const config = (e as CustomEvent).detail.config as BannerConfig;
-      this.updateDescription(config);
+      this.applyTexts(config);
       if (!config.show_branding) {
         this.shadow.querySelectorAll("[data-branding]").forEach(el => {
           (el as HTMLElement).setAttribute("hidden", "");
@@ -154,19 +155,51 @@ export class ProboThemedBanner extends HTMLElement {
         btn.classList.remove("open");
       }
       btn.setAttribute("aria-expanded", String(open));
-      btn.setAttribute("aria-label", open ? "Hide cookie details" : "Show cookie details");
+      const texts = root.bannerConfig?.texts;
+      const showLabel = texts?.aria_show_details ?? "Show cookie details";
+      const hideLabel = texts?.aria_hide_details ?? "Hide cookie details";
+      btn.setAttribute("aria-label", open ? hideLabel : showLabel);
     });
   }
 
-  private updateDescription(config: BannerConfig): void {
-    const el = this.shadow.querySelector("[data-description]");
-    if (!el) return;
+  private applyTexts(config: BannerConfig): void {
+    const texts = config.texts ?? {};
 
-    let html = "We use cookies to improve your experience and analyze site traffic.";
-    if (config.privacy_policy_url) {
-      html += ` <a href="${this.esc(config.privacy_policy_url)}" target="_blank" rel="noopener noreferrer">Privacy Policy</a>`;
+    const necessaryCategory = config.categories.find(c => c.kind === "NECESSARY");
+    const necessaryCategoryName = necessaryCategory?.name ?? "Necessary";
+
+    this.shadow.querySelectorAll("[data-text]").forEach(el => {
+      const key = el.getAttribute("data-text")!;
+      const raw = texts[key];
+      if (!raw) return;
+
+      if (key === "banner_description") {
+        let link = "";
+        if (config.privacy_policy_url) {
+          const linkText = this.esc(texts.privacy_policy_link_text ?? "Privacy Policy");
+          link = `<a href="${this.esc(config.privacy_policy_url)}" target="_blank" rel="noopener noreferrer">${linkText}</a>`;
+        }
+        el.innerHTML = interpolate(raw, { privacy_policy_link: link });
+      } else if (key === "panel_description") {
+        el.textContent = interpolate(raw, { necessary_category: necessaryCategoryName });
+      } else {
+        el.textContent = raw;
+      }
+    });
+
+    this.shadow.querySelectorAll("[data-aria-text]").forEach(el => {
+      const key = el.getAttribute("data-aria-text")!;
+      const raw = texts[key];
+      if (raw) el.setAttribute("aria-label", raw);
+    });
+
+    const settingsBtn = this.shadow.querySelector("probo-settings-button");
+    if (settingsBtn) {
+      const ariaText = texts.aria_cookie_settings;
+      if (ariaText) {
+        settingsBtn.setAttribute("aria-settings-label", ariaText);
+      }
     }
-    el.innerHTML = html;
   }
 
   private esc(str: string): string {

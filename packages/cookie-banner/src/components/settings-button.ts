@@ -26,7 +26,7 @@ export class ProboSettingsButton extends HTMLElement {
   }
 
   static get observedAttributes(): string[] {
-    return ["position"];
+    return ["position", "aria-settings-label"];
   }
 
   private get position(): string {
@@ -89,6 +89,11 @@ export class ProboSettingsButton extends HTMLElement {
 
     const btn = this.shadow.querySelector("button");
     btn?.addEventListener("click", this.handleClick);
+
+    const ariaLabel = this.getAttribute("aria-settings-label");
+    if (ariaLabel && btn) {
+      btn.setAttribute("aria-label", ariaLabel);
+    }
   }
 
   disconnectedCallback(): void {

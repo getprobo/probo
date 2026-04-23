@@ -22,8 +22,13 @@ import { COOKIE_NAME, getConsentCookie, setConsentCookie } from "./cookie";
 import { CookieDetector } from "./detector";
 import { NotFoundError } from "./errors";
 import { fetchJSON } from "./http";
+import type { BannerTexts } from "./i18n";
+import { detectLanguage } from "./i18n";
 import { enqueue, flush } from "./queue";
 import { getOrCreateVisitorId } from "./visitor";
+
+export type { BannerTexts } from "./i18n";
+export { interpolate } from "./i18n";
 
 export interface CookieItem {
   name: string;
@@ -41,11 +46,15 @@ export interface Category {
 export interface BannerConfig {
   banner_id: string;
   version: number;
+  language: string;
+  default_language: string;
+  available_languages: string[];
   privacy_policy_url: string;
   consent_expiry_days: number;
   consent_mode: "OPT_IN" | "OPT_OUT";
   show_branding: boolean;
   categories: Category[];
+  texts: BannerTexts;
 }
 
 export type ConsentAction = "ACCEPT_ALL" | "REJECT_ALL" | "CUSTOMIZE" | "GPC";
@@ -68,12 +77,14 @@ export interface ConsentRecord {
 export interface CookieBannerClientOptions {
   bannerId: string;
   baseUrl: string;
+  lang?: string;
 }
 
 export class CookieBannerClient {
   private readonly baseUrl: URL;
   private readonly bannerId: string;
   private readonly visitorId: string;
+  private readonly lang: string;
 
   private bannerConfig: BannerConfig | null = null;
   private consent: VisitorConsent | null = null;
@@ -88,10 +99,14 @@ export class CookieBannerClient {
     this.baseUrl = new URL(base);
     this.bannerId = config.bannerId;
     this.visitorId = getOrCreateVisitorId(config.bannerId);
+    this.lang = detectLanguage(config.lang);
   }
 
   async load(): Promise<void> {
     const configUrl = new URL(`${this.bannerId}/config`, this.baseUrl);
+    if (this.lang) {
+      configUrl.searchParams.set("lang", this.lang);
+    }
     const config = await fetchJSON<BannerConfig>(configUrl);
     this.bannerConfig = config;
 
@@ -237,13 +252,14 @@ export class CookieBannerClient {
       categoryLabels[cat.name] = cat.name;
     }
 
+    const texts = this.config.texts;
     deactivateElements(consentData, categoryCookies, categoryLabels);
     activateElements(consentData);
-    addPlaceholders(consentData, categoryLabels);
+    addPlaceholders(consentData, categoryLabels, texts);
     if (this.observer) {
       this.observer.disconnect();
     }
-    this.observer = observeAndActivate(consentData, categoryLabels);
+    this.observer = observeAndActivate(consentData, categoryLabels, texts);
   }
 
   private startDetector(config: BannerConfig): void {

@@ -24,7 +24,7 @@ export class ProboCookieBannerRoot extends ProboElement implements ProboRootElem
   private _draft: ConsentDraft = {};
 
   static get observedAttributes(): string[] {
-    return ["banner-id", "base-url", "reopen-widget"];
+    return ["banner-id", "base-url", "reopen-widget", "lang"];
   }
 
   get client(): CookieBannerClient {
@@ -129,7 +129,9 @@ export class ProboCookieBannerRoot extends ProboElement implements ProboRootElem
       return;
     }
 
-    this._client = new CookieBannerClient({ bannerId, baseUrl });
+    const lang = this.getAttribute("lang") ?? undefined;
+
+    this._client = new CookieBannerClient({ bannerId, baseUrl, lang });
 
     try {
       await this._client.load();

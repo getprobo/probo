@@ -38,6 +38,11 @@ if (script) {
         el.setAttribute("reopen-widget", reopenWidget);
       }
 
+      const lang = script.getAttribute("data-lang");
+      if (lang) {
+        el.setAttribute("lang", lang);
+      }
+
       document.body.appendChild(el);
     };
 

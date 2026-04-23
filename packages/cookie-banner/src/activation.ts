@@ -12,6 +12,8 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+import type { BannerTexts } from "./i18n";
+import { interpolate } from "./i18n";
 import { removeCookies } from "./cookie-utils";
 import { LOCK_ICON } from "./html";
 
@@ -111,6 +113,7 @@ function createPlaceholder(
   el: Element,
   category: string,
   label?: string,
+  texts?: BannerTexts,
 ): void {
   if (el.hasAttribute(ATTR_HIDDEN)) return;
 
@@ -152,10 +155,15 @@ function createPlaceholder(
     }
   }
 
+  const phText = texts?.placeholder_text
+    ? interpolate(texts.placeholder_text, { category: escapeHtml(displayLabel) })
+    : `This content requires <strong>${escapeHtml(displayLabel)}</strong> cookies.`;
+  const phButton = texts?.placeholder_button ?? "Manage cookie preferences";
+
   placeholder.innerHTML = [
     `<span class="probo-ph-icon">${LOCK_ICON}</span>`,
-    `<p class="probo-ph-text">This content requires <strong>${escapeHtml(displayLabel)}</strong> cookies.</p>`,
-    `<button type="button" class="probo-ph-link">Manage cookie preferences</button>`,
+    `<p class="probo-ph-text">${phText}</p>`,
+    `<button type="button" class="probo-ph-link">${escapeHtml(phButton)}</button>`,
   ].join("");
 
   placeholder.querySelector(".probo-ph-link")!.addEventListener("click", () => {
@@ -362,13 +370,14 @@ export function activateElements(
 export function addPlaceholders(
   consentData: Record<string, boolean>,
   categoryLabels: Record<string, string>,
+  texts?: BannerTexts,
 ): void {
   const elements = document.querySelectorAll(`[${ATTR_CATEGORY}]`);
   for (const el of elements) {
     const category = el.getAttribute(ATTR_CATEGORY);
     if (!category || consentData[category]) continue;
     if (!VISUAL_TAGS.has(el.tagName)) continue;
-    createPlaceholder(el, category, categoryLabels[category]);
+    createPlaceholder(el, category, categoryLabels[category], texts);
   }
 }
 
@@ -376,16 +385,18 @@ function tryPlaceholder(
   el: Element,
   consentData: Record<string, boolean>,
   categoryLabels: Record<string, string>,
+  texts?: BannerTexts,
 ): void {
   const category = el.getAttribute(ATTR_CATEGORY);
   if (!category || consentData[category]) return;
   if (!VISUAL_TAGS.has(el.tagName)) return;
-  createPlaceholder(el, category, categoryLabels[category]);
+  createPlaceholder(el, category, categoryLabels[category], texts);
 }
 
 export function observeAndActivate(
   consentData: Record<string, boolean>,
   categoryLabels: Record<string, string>,
+  texts?: BannerTexts,
 ): MutationObserver {
   const observer = new MutationObserver((mutations) => {
     for (const mutation of mutations) {
@@ -396,13 +407,13 @@ export function observeAndActivate(
 
         if (node.hasAttribute(ATTR_CATEGORY)) {
           tryActivate(node, consentData);
-          tryPlaceholder(node, consentData, categoryLabels);
+          tryPlaceholder(node, consentData, categoryLabels, texts);
         }
 
         const nested = node.querySelectorAll(`[${ATTR_CATEGORY}]`);
         for (const el of nested) {
           tryActivate(el, consentData);
-          tryPlaceholder(el, consentData, categoryLabels);
+          tryPlaceholder(el, consentData, categoryLabels, texts);
         }
       }
     }

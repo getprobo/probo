@@ -13,8 +13,10 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 import type { CookieItem } from "../client";
+import { type BannerTexts, interpolate } from "../i18n";
 import { ProboElement } from "./base";
 import type { ProboCategory } from "./category";
+import type { ProboCookieBannerRoot } from "./cookie-banner-root";
 
 export class ProboCookieList extends ProboElement {
   private category: ProboCategory | null = null;
@@ -35,13 +37,16 @@ export class ProboCookieList extends ProboElement {
   private stamp(): void {
     if (!this.template || !this.category) return;
 
+    const root = this.findAncestor<ProboCookieBannerRoot>("probo-cookie-banner-root");
+    const texts = root?.bannerConfig?.texts;
+
     const cookies = this.category.cookies;
     for (const cookie of cookies) {
-      this.stampCookie(cookie);
+      this.stampCookie(cookie, texts);
     }
   }
 
-  private stampCookie(cookie: CookieItem): void {
+  private stampCookie(cookie: CookieItem, texts?: BannerTexts): void {
     if (!this.template) return;
 
     const wrapper = document.createElement("probo-cookie");
@@ -51,6 +56,10 @@ export class ProboCookieList extends ProboElement {
       name: cookie.name,
       duration: cookie.duration,
       description: cookie.description,
+    });
+    this.fillLabels(clone, texts, {
+      description: cookie.description,
+      duration: cookie.duration,
     });
 
     wrapper.appendChild(clone);
@@ -65,6 +74,25 @@ export class ProboCookieList extends ProboElement {
       const els = fragment.querySelectorAll(`[data-slot="${key}"]`);
       for (const el of els) {
         el.textContent = value;
+      }
+    }
+  }
+
+  private fillLabels(
+    fragment: DocumentFragment,
+    texts: BannerTexts | undefined,
+    values: Record<string, string>,
+  ): void {
+    const labels = fragment.querySelectorAll("[data-label]");
+    for (const el of labels) {
+      const key = el.getAttribute("data-label")!;
+      const slotName = key.replace("label_", "");
+      const value = values[slotName] ?? "";
+      const tpl = texts?.[key];
+      if (tpl) {
+        el.textContent = interpolate(tpl, { value });
+        const slot = el.querySelector(`[data-slot="${slotName}"]`);
+        if (slot) slot.remove();
       }
     }
   }
