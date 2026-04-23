@@ -531,6 +531,7 @@ func (s *Service) CreateCookieBanner(
 				return fmt.Errorf("cannot insert cookie banner: %w", err)
 			}
 
+			slugToGID := make(map[string]gid.GID, len(defaultCategories))
 			for _, dc := range defaultCategories {
 				category := &coredata.CookieCategory{
 					ID:             gid.New(scope.GetTenantID(), coredata.CookieCategoryEntityType),
@@ -548,12 +549,34 @@ func (s *Service) CreateCookieBanner(
 				if err := category.Insert(ctx, tx, scope); err != nil {
 					return fmt.Errorf("cannot insert default cookie category %q: %w", dc.Name, err)
 				}
+
+				slugToGID[dc.Slug] = category.ID
 			}
 
 			for lang, uiStrings := range defaultUIStringsByLanguage {
-				translationsJSON, err := json.Marshal(uiStrings)
+				blob := make(map[string]any, len(uiStrings)+1)
+				for k, v := range uiStrings {
+					blob[k] = v
+				}
+
+				if catDefaults, ok := defaultCategoryTranslationsByLanguage[lang]; ok {
+					catMap := make(map[string]map[string]string, len(catDefaults))
+					for slug, ct := range catDefaults {
+						if id, exists := slugToGID[slug]; exists {
+							catMap[id.String()] = map[string]string{
+								"name":        ct.Name,
+								"description": ct.Description,
+							}
+						}
+					}
+					if len(catMap) > 0 {
+						blob["categories"] = catMap
+					}
+				}
+
+				translationsJSON, err := json.Marshal(blob)
 				if err != nil {
-					return fmt.Errorf("cannot marshal default UI strings for %s: %w", lang, err)
+					return fmt.Errorf("cannot marshal default translations for %s: %w", lang, err)
 				}
 
 				translation := &coredata.CookieBannerTranslation{

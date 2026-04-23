@@ -25,7 +25,7 @@ import type { TranslationEditorMutation } from "#/__generated__/core/Translation
 import { BannerTranslationSection } from "./BannerTranslationSection";
 import { PanelTranslationSection } from "./PanelTranslationSection";
 import { PlaceholderTranslationSection } from "./PlaceholderTranslationSection";
-import { ALL_KEYS } from "./translationDefaults";
+import { ALL_KEYS, type TranslationKey } from "./translationDefaults";
 
 const upsertTranslationMutation = graphql`
   mutation TranslationEditorMutation(
@@ -49,14 +49,30 @@ const upsertTranslationMutation = graphql`
   }
 `;
 
-export type TranslationFormValues = Record<string, string>;
+export type TranslationFormValues = Record<TranslationKey, string> & {
+  categories: CategoryTranslations;
+};
+
+export interface CategoryInfo {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  kind: string;
+}
+
+export type CategoryTranslations = Record<
+  string,
+  { name: string; description: string }
+>;
 
 interface TranslationEditorProps {
   cookieBannerId: string;
   language: string;
   existingTranslations: Record<string, string> | null;
+  existingCategoryTranslations: CategoryTranslations | null;
   showBranding: boolean;
-  categoryNames: string[];
+  categories: CategoryInfo[];
   necessaryCategoryName: string;
 }
 
@@ -64,8 +80,9 @@ export function TranslationEditor({
   cookieBannerId,
   language,
   existingTranslations,
+  existingCategoryTranslations,
   showBranding,
-  categoryNames,
+  categories,
   necessaryCategoryName,
 }: TranslationEditorProps) {
   const { __ } = useTranslate();
@@ -75,24 +92,51 @@ export function TranslationEditor({
     = useMutation<TranslationEditorMutation>(upsertTranslationMutation);
 
   const defaultValues = useMemo(() => {
-    const values: Record<string, string> = {};
+    const translations: Record<string, string> = {};
     for (const key of ALL_KEYS) {
-      values[key] = existingTranslations?.[key] ?? "";
+      translations[key] = existingTranslations?.[key] ?? "";
     }
-    return values;
-  }, [existingTranslations]);
+
+    const catDefaults: CategoryTranslations = {};
+    for (const cat of categories) {
+      if (cat.kind === "UNCATEGORISED") continue;
+      const existing = existingCategoryTranslations?.[cat.id];
+      catDefaults[cat.id] = {
+        name: existing?.name ?? "",
+        description: existing?.description ?? "",
+      };
+    }
+
+    return {
+      ...translations,
+      categories: catDefaults,
+    } as TranslationFormValues;
+  }, [existingTranslations, existingCategoryTranslations, categories]);
 
   const methods = useForm<TranslationFormValues>({
     defaultValues,
   });
 
   const handleSave = (formData: TranslationFormValues) => {
+    const { categories: catTranslations, ...translations } = formData;
+    const payload: Record<string, unknown> = { ...translations };
+
+    const nonEmpty: CategoryTranslations = {};
+    for (const [id, entry] of Object.entries(catTranslations)) {
+      if (entry.name || entry.description) {
+        nonEmpty[id] = entry;
+      }
+    }
+    if (Object.keys(nonEmpty).length > 0) {
+      payload.categories = nonEmpty;
+    }
+
     upsertTranslation({
       variables: {
         input: {
           cookieBannerId,
           language,
-          translations: JSON.stringify(formData),
+          translations: JSON.stringify(payload),
         },
       },
       onCompleted() {
@@ -123,11 +167,11 @@ export function TranslationEditor({
       >
         <BannerTranslationSection showBranding={showBranding} />
         <PanelTranslationSection
-          categoryNames={categoryNames}
+          categories={categories}
           necessaryCategoryName={necessaryCategoryName}
         />
         <PlaceholderTranslationSection
-          exampleCategoryName={categoryNames[1] ?? categoryNames[0] ?? "Analytics"}
+          exampleCategoryName={categories[1]?.name ?? categories[0]?.name ?? "Analytics"}
         />
 
         <Button type="submit" disabled={isUpserting}>

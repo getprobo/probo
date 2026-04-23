@@ -30,6 +30,33 @@ var defaultCategories = []struct {
 	{"Uncategorised", "uncategorised", "Cookies that have not been assigned to a category yet.", coredata.CookieCategoryKindUncategorised, 4},
 }
 
+var defaultCategoryTranslationsByLanguage = map[string]map[string]struct {
+	Name        string
+	Description string
+}{
+	"fr": {
+		"necessary":     {"Nécessaires", "Cookies essentiels au bon fonctionnement du site web."},
+		"analytics":     {"Analytiques", "Cookies qui aident à comprendre comment les visiteurs interagissent avec le site web."},
+		"advertising":   {"Publicitaires", "Cookies utilisés pour diffuser des publicités pertinentes et suivre les campagnes."},
+		"functional":    {"Fonctionnels", "Cookies qui permettent des fonctionnalités améliorées et la personnalisation."},
+		"uncategorised": {"Non classés", "Cookies qui n'ont pas encore été assignés à une catégorie."},
+	},
+	"de": {
+		"necessary":     {"Notwendige", "Wesentliche Cookies, die für das ordnungsgemäße Funktionieren der Website erforderlich sind."},
+		"analytics":     {"Analytische", "Cookies, die helfen zu verstehen, wie Besucher mit der Website interagieren."},
+		"advertising":   {"Werbe", "Cookies, die verwendet werden, um relevante Werbung zu liefern und Kampagnen zu verfolgen."},
+		"functional":    {"Funktionale", "Cookies, die erweiterte Funktionalität und Personalisierung ermöglichen."},
+		"uncategorised": {"Nicht kategorisiert", "Cookies, die noch keiner Kategorie zugeordnet wurden."},
+	},
+	"es": {
+		"necessary":     {"Necesarias", "Cookies esenciales necesarias para el correcto funcionamiento del sitio web."},
+		"analytics":     {"Analíticas", "Cookies que ayudan a entender cómo los visitantes interactúan con el sitio web."},
+		"advertising":   {"Publicitarias", "Cookies utilizadas para mostrar anuncios relevantes y rastrear campañas."},
+		"functional":    {"Funcionales", "Cookies que permiten funcionalidades mejoradas y personalización."},
+		"uncategorised": {"Sin categoría", "Cookies que aún no han sido asignadas a una categoría."},
+	},
+}
+
 var defaultUIStringsByLanguage = map[string]map[string]string{
 	"en": {
 		"banner_title":             "Cookie Preferences",

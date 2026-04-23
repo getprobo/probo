@@ -18,21 +18,40 @@ interface PlaceholderPreviewProps {
   categoryName: string;
 }
 
+function LockIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+    </svg>
+  );
+}
+
 export function PlaceholderPreview({
   placeholderText,
   placeholderButton,
   categoryName,
 }: PlaceholderPreviewProps) {
-  const displayText = placeholderText.replace("{{category}}", categoryName);
+  const parts = placeholderText.split("{{category}}");
+  const hasPlaceholder = parts.length > 1;
 
   return (
     <div
       style={{
         background: "var(--probo-bg, #ffffff)",
-        color: "var(--probo-text, #1a1a1a)",
+        color: "var(--probo-text-secondary, #555555)",
         borderRadius: "var(--probo-radius, 12px)",
-        boxShadow:
-          "var(--probo-shadow, 0 4px 24px rgba(0, 0, 0, 0.12))",
+        border: "1px dashed var(--probo-border, #e0e0e0)",
         fontFamily:
           "var(--probo-font-family, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif)",
         fontSize: "var(--probo-font-size, 14px)",
@@ -43,47 +62,37 @@ export function PlaceholderPreview({
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        gap: 16,
+        gap: 12,
         textAlign: "center",
+        minHeight: 120,
+        boxSizing: "border-box",
       }}
     >
-      <div
-        style={{
-          width: 48,
-          height: 48,
-          borderRadius: "50%",
-          background:
-            "color-mix(in srgb, var(--probo-text, #1a1a1a) 8%, var(--probo-bg, #ffffff))",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          fontSize: 20,
-        }}
-      >
-        🍪
-      </div>
-      <p
-        style={{
-          color: "var(--probo-text-secondary, #555555)",
-          margin: 0,
-        }}
-      >
-        {displayText}
+      <span style={{ color: "var(--probo-text-secondary, #555555)" }}>
+        <LockIcon />
+      </span>
+      <p style={{ margin: 0 }}>
+        {hasPlaceholder
+          ? (
+              <>
+                {parts[0]}
+                <strong>{categoryName}</strong>
+                {parts[1]}
+              </>
+            )
+          : placeholderText.replace("{{category}}", categoryName)}
       </p>
       <button
         type="button"
         style={{
-          padding: "8px 16px",
-          borderRadius: "var(--probo-btn-radius, 8px)",
-          border: "1px solid var(--probo-border, #e0e0e0)",
-          background:
-            "color-mix(in srgb, var(--probo-text, #1a1a1a) 8%, var(--probo-bg, #ffffff))",
-          color: "var(--probo-text, #1a1a1a)",
-          fontFamily: "inherit",
-          fontSize: "var(--probo-font-size, 14px)",
-          fontWeight: 500,
-          lineHeight: "normal",
+          background: "none",
+          border: "none",
+          color: "var(--probo-accent, #1a1a1a)",
+          textDecoration: "underline",
           cursor: "pointer",
+          fontFamily: "inherit",
+          fontSize: "inherit",
+          padding: 0,
         }}
       >
         {placeholderButton}

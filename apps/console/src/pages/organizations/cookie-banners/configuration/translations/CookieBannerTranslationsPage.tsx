@@ -41,6 +41,8 @@ export const cookieBannerTranslationsPageQuery = graphql`
             node {
               id
               name
+              slug
+              description
               kind
             }
           }
@@ -79,30 +81,44 @@ export default function CookieBannerTranslationsPage({
     t => t.language === selectedLanguage,
   );
 
-  const translationJson = useMemo(() => {
-    if (!selectedTranslation) return null;
+  const { uiStrings, categoryTranslations } = useMemo(() => {
+    if (!selectedTranslation) {
+      return { uiStrings: null, categoryTranslations: null };
+    }
     try {
-      return JSON.parse(selectedTranslation.translations) as Record<
-        string,
-        string
-      >;
+      const raw = JSON.parse(selectedTranslation.translations) as Record<string, unknown>;
+      const ui: Record<string, string> = {};
+      let cats: Record<string, { name: string; description: string }> | null = null;
+
+      for (const [k, v] of Object.entries(raw)) {
+        if (k === "categories" && typeof v === "object" && v !== null) {
+          cats = v as Record<string, { name: string; description: string }>;
+        } else if (typeof v === "string") {
+          ui[k] = v;
+        }
+      }
+
+      return { uiStrings: ui, categoryTranslations: cats };
     } catch {
-      return null;
+      return { uiStrings: null, categoryTranslations: null };
     }
   }, [selectedTranslation]);
 
-  const categoryNames = useMemo(
+  const categories = useMemo(
     () =>
       banner.categories.edges.map(e => ({
+        id: e.node.id,
         name: e.node.name,
+        slug: e.node.slug,
+        description: e.node.description,
         kind: e.node.kind,
-      })) ?? [],
+      })),
     [banner.categories],
   );
 
   const necessaryCategoryName = useMemo(
-    () => categoryNames.find(c => c.kind === "NECESSARY")?.name ?? "Necessary",
-    [categoryNames],
+    () => categories.find(c => c.kind === "NECESSARY")?.name ?? "Necessary",
+    [categories],
   );
 
   return (
@@ -129,9 +145,10 @@ export default function CookieBannerTranslationsPage({
         key={selectedLanguage}
         cookieBannerId={banner.id}
         language={selectedLanguage}
-        existingTranslations={translationJson}
+        existingTranslations={uiStrings}
+        existingCategoryTranslations={categoryTranslations}
         showBranding={banner.showBranding}
-        categoryNames={categoryNames.map(c => c.name)}
+        categories={categories}
         necessaryCategoryName={necessaryCategoryName}
       />
 

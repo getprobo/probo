@@ -12,19 +12,29 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+interface CategoryPreview {
+  name: string;
+  description: string;
+  isNecessary: boolean;
+}
+
 interface PanelPreviewProps {
   panelTitle: string;
   panelDescription: string;
+  buttonAcceptAll: string;
+  buttonRejectAll: string;
   buttonSave: string;
-  categoryNames: string[];
+  categories: CategoryPreview[];
   necessaryCategoryName: string;
 }
 
 export function PanelPreview({
   panelTitle,
   panelDescription,
+  buttonAcceptAll,
+  buttonRejectAll,
   buttonSave,
-  categoryNames,
+  categories,
   necessaryCategoryName,
 }: PanelPreviewProps) {
   const descriptionParts = panelDescription.split(
@@ -46,7 +56,7 @@ export function PanelPreview({
         lineHeight: 1.5,
         maxWidth: 380,
         width: "100%",
-        padding: "24px",
+        padding: "24px 24px 12px 24px",
       }}
     >
       <p
@@ -79,9 +89,9 @@ export function PanelPreview({
       </p>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-        {categoryNames.map(name => (
+        {categories.map(cat => (
           <div
-            key={name}
+            key={cat.name}
             style={{
               display: "flex",
               alignItems: "center",
@@ -90,18 +100,32 @@ export function PanelPreview({
               borderBottom: "1px solid var(--probo-border, #e0e0e0)",
             }}
           >
-            <span style={{ fontWeight: 500 }}>{name}</span>
+            <div style={{ display: "flex", flexDirection: "column", gap: 2, flex: 1, minWidth: 0 }}>
+              <span style={{ fontWeight: 500 }}>{cat.name}</span>
+              {cat.description && (
+                <span
+                  style={{
+                    fontSize: "calc(var(--probo-font-size, 14px) - 2px)",
+                    color: "var(--probo-text-secondary, #555555)",
+                  }}
+                >
+                  {cat.description}
+                </span>
+              )}
+            </div>
             <div
               style={{
                 width: 36,
                 height: 20,
                 borderRadius: 10,
                 background:
-                  name === necessaryCategoryName
+                  cat.isNecessary
                     ? "var(--probo-accent, #1a1a1a)"
                     : "var(--probo-border, #e0e0e0)",
                 position: "relative",
                 cursor: "default",
+                flexShrink: 0,
+                marginLeft: 12,
               }}
             >
               <div
@@ -112,8 +136,7 @@ export function PanelPreview({
                   background: "var(--probo-bg, #ffffff)",
                   position: "absolute",
                   top: 2,
-                  left:
-                    name === necessaryCategoryName ? 18 : 2,
+                  left: cat.isNecessary ? 18 : 2,
                   transition: "left 0.2s",
                 }}
               />
@@ -122,11 +145,19 @@ export function PanelPreview({
         ))}
       </div>
 
-      <div style={{ marginTop: 20 }}>
+      <div
+        style={{
+          display: "flex",
+          gap: 8,
+          flexWrap: "wrap",
+          marginTop: 20,
+          paddingBottom: 12,
+        }}
+      >
         <button
           type="button"
           style={{
-            padding: "8px 16px",
+            padding: "8px 10px",
             borderRadius: "var(--probo-btn-radius, 8px)",
             border: "1px solid var(--probo-accent, #1a1a1a)",
             background: "var(--probo-accent, #1a1a1a)",
@@ -136,7 +167,46 @@ export function PanelPreview({
             fontWeight: 500,
             lineHeight: "normal",
             cursor: "pointer",
-            width: "100%",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {buttonAcceptAll}
+        </button>
+        <button
+          type="button"
+          style={{
+            padding: "8px 10px",
+            borderRadius: "var(--probo-btn-radius, 8px)",
+            border: "1px solid var(--probo-border, #e0e0e0)",
+            background:
+              "color-mix(in srgb, var(--probo-text, #1a1a1a) 8%, var(--probo-bg, #ffffff))",
+            color: "var(--probo-text, #1a1a1a)",
+            fontFamily: "inherit",
+            fontSize: "var(--probo-font-size, 14px)",
+            fontWeight: 500,
+            lineHeight: "normal",
+            cursor: "pointer",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {buttonRejectAll}
+        </button>
+        <button
+          type="button"
+          style={{
+            padding: "8px 10px",
+            borderRadius: "var(--probo-btn-radius, 8px)",
+            border: "none",
+            background: "transparent",
+            color: "var(--probo-accent, #1a1a1a)",
+            fontFamily: "inherit",
+            fontSize: "var(--probo-font-size, 14px)",
+            fontWeight: 500,
+            lineHeight: "normal",
+            cursor: "pointer",
+            whiteSpace: "nowrap",
+            textDecoration: "underline",
+            flex: 1,
           }}
         >
           {buttonSave}

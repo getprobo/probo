@@ -18,15 +18,18 @@ import { Controller, useFormContext, useWatch } from "react-hook-form";
 
 import { PanelPreview } from "./PanelPreview";
 import { TRANSLATION_LABELS } from "./translationDefaults";
-import type { TranslationFormValues } from "./TranslationEditor";
+import type {
+  CategoryInfo,
+  TranslationFormValues,
+} from "./TranslationEditor";
 
 interface PanelTranslationSectionProps {
-  categoryNames: string[];
+  categories: CategoryInfo[];
   necessaryCategoryName: string;
 }
 
 export function PanelTranslationSection({
-  categoryNames,
+  categories,
   necessaryCategoryName,
 }: PanelTranslationSectionProps) {
   const { __ } = useTranslate();
@@ -34,7 +37,21 @@ export function PanelTranslationSection({
 
   const panelTitle = useWatch({ control, name: "panel_title" });
   const panelDescription = useWatch({ control, name: "panel_description" });
+  const buttonAcceptAll = useWatch({ control, name: "button_accept_all" });
+  const buttonRejectAll = useWatch({ control, name: "button_reject_all" });
   const buttonSave = useWatch({ control, name: "button_save" });
+  const categoryTranslations = useWatch({ control, name: "categories" });
+
+  const visibleCategories = categories.filter(c => c.kind !== "UNCATEGORISED");
+
+  const previewCategories = categories.map((c) => {
+    const translated = categoryTranslations?.[c.id];
+    return {
+      name: translated?.name || c.name,
+      description: translated?.description || c.description,
+      isNecessary: c.kind === "NECESSARY",
+    };
+  });
 
   return (
     <div className="space-y-4">
@@ -57,9 +74,6 @@ export function PanelTranslationSection({
               render={({ field }) => (
                 <Field
                   label={__(TRANSLATION_LABELS.panel_description)}
-                  // description={__(
-                  //   "Use {{necessary_category}} to insert the necessary category name.",
-                  // )}
                 >
                   <Textarea {...field} rows={3} />
                 </Field>
@@ -127,12 +141,53 @@ export function PanelTranslationSection({
           <PanelPreview
             panelTitle={panelTitle}
             panelDescription={panelDescription}
+            buttonAcceptAll={buttonAcceptAll}
+            buttonRejectAll={buttonRejectAll}
             buttonSave={buttonSave}
-            categoryNames={categoryNames}
+            categories={previewCategories}
             necessaryCategoryName={necessaryCategoryName}
           />
         </div>
       </div>
+
+      {visibleCategories.length > 0 && (
+        <div className="space-y-4">
+          <h4 className="text-sm font-medium text-txt-secondary">
+            {__("Category names")}
+          </h4>
+          <div className="grid grid-cols-2 gap-4">
+            {visibleCategories.map(cat => (
+              <Card key={cat.id} className="border p-4 space-y-3">
+                <div className="text-sm text-txt-secondary">
+                  {cat.name}
+                  {" "}
+                  <span className="text-txt-secondary/60">
+                    {`(${cat.slug})`}
+                  </span>
+                </div>
+                <Controller
+                  control={control}
+                  name={`categories.${cat.id}.name`}
+                  render={({ field }) => (
+                    <Field label={__("Translated name")}>
+                      <Input {...field} placeholder={cat.name} />
+                    </Field>
+                  )}
+                />
+                <Controller
+                  control={control}
+                  name={`categories.${cat.id}.description`}
+                  render={({ field }) => (
+                    <Field label={__("Translated description")}>
+                      <Textarea {...field} placeholder={cat.description} rows={2} />
+                    </Field>
+                  )}
+                />
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
