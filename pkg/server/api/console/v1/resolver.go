@@ -30,6 +30,7 @@ import (
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/domainconnect"
 	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
@@ -55,6 +56,9 @@ type (
 		connectorRegistry *connector.ConnectorRegistry
 		logger            *log.Logger
 		customDomainCname string
+		domainConnect     domainconnect.Config
+		resolverAddr      string
+		tokenSecret       string
 	}
 )
 
@@ -71,6 +75,8 @@ func NewMux(
 	connectorRegistry *connector.ConnectorRegistry,
 	baseURL *baseurl.BaseURL,
 	customDomainCname string,
+	domainConnectCfg domainconnect.Config,
+	resolverAddr string,
 ) *chi.Mux {
 	r := chi.NewMux()
 
@@ -85,6 +91,9 @@ func NewMux(
 		cookieBannerSvc,
 		connectorRegistry,
 		customDomainCname,
+		domainConnectCfg,
+		resolverAddr,
+		tokenSecret,
 		logger,
 	)
 
@@ -109,6 +118,16 @@ func NewMux(
 				baseURL,
 				proboSvc,
 				connectorRegistry,
+				safeRedirect,
+			),
+		)
+
+		r.Get(
+			"/domain-connect/callback",
+			handleDomainConnectCallback(
+				logger,
+				baseURL,
+				tokenSecret,
 				safeRedirect,
 			),
 		)

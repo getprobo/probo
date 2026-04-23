@@ -9,11 +9,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/url"
 	"time"
 
 	"github.com/vikstrous/dataloadgen"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/domainconnect"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
@@ -21,6 +23,7 @@ import (
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/statelesstoken"
 	"go.probo.inc/probo/pkg/validator"
 )
 
@@ -48,6 +51,24 @@ func (r *complianceFrameworkResolver) Framework(ctx context.Context, obj *types.
 	}
 
 	return types.NewFramework(framework), nil
+}
+
+// DomainConnectSupported is the resolver for the domainConnectSupported field.
+func (r *customDomainResolver) DomainConnectSupported(ctx context.Context, obj *types.CustomDomain) (bool, error) {
+	if !r.domainConnect.Enabled() {
+		return false, nil
+	}
+
+	settings, err := domainconnect.Discover(ctx, obj.Domain, r.resolverAddr)
+	if err != nil {
+		return false, nil
+	}
+
+	if err := domainconnect.CheckTemplate(ctx, settings.URLAPI, r.domainConnect.ProviderID, r.domainConnect.ServiceID); err != nil {
+		return false, nil
+	}
+
+	return true, nil
 }
 
 // Permission is the resolver for the permission field.
@@ -672,6 +693,106 @@ func (r *mutationResolver) DeleteCustomDomain(ctx context.Context, input types.D
 
 	return &types.DeleteCustomDomainPayload{
 		DeletedCustomDomainID: deletedDomainID,
+	}, nil
+}
+
+// InitiateDomainConnect is the resolver for the initiateDomainConnect field.
+func (r *mutationResolver) InitiateDomainConnect(ctx context.Context, input types.InitiateDomainConnectInput) (*types.InitiateDomainConnectPayload, error) {
+	if err := r.authorize(ctx, input.OrganizationID, probo.ActionCustomDomainCreate); err != nil {
+		return nil, err
+	}
+
+	if !r.domainConnect.Enabled() {
+		return nil, gqlutils.Invalidf(ctx, "Domain Connect is not configured")
+	}
+
+	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
+
+	domain, err := prb.CustomDomains.GetOrganizationCustomDomain(ctx, input.OrganizationID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot get custom domain", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	if domain == nil {
+		return nil, gqlutils.Invalidf(ctx, "Organization has no custom domain")
+	}
+
+	settings, err := domainconnect.Discover(ctx, domain.Domain, r.resolverAddr)
+	if err != nil {
+		if errors.Is(err, domainconnect.ErrNotSupported) {
+			return nil, gqlutils.Invalidf(ctx, "Your DNS provider does not support Domain Connect")
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot discover Domain Connect settings", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	if err := domainconnect.CheckTemplate(ctx, settings.URLAPI, r.domainConnect.ProviderID, r.domainConnect.ServiceID); err != nil {
+		if errors.Is(err, domainconnect.ErrTemplateNotFound) {
+			return nil, gqlutils.Invalidf(ctx, "Your DNS provider does not support the Probo DNS template")
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot check Domain Connect template", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	host, registrableDomain, err := domainconnect.ExtractHostAndDomain(domain.Domain)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot extract host from domain", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	var continueURL string
+	if input.ContinueURL != nil {
+		continueURL = *input.ContinueURL
+	}
+
+	stateData := domainConnectState{
+		OrganizationID: input.OrganizationID.String(),
+		ContinueURL:    continueURL,
+	}
+
+	stateToken, err := statelesstoken.NewToken(
+		r.tokenSecret,
+		domainConnectTokenType,
+		10*time.Minute,
+		stateData,
+	)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot create state token", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	callbackURL := r.domainConnect.CallbackURL
+	if callbackURL != "" {
+		parsed, err := url.Parse(callbackURL)
+		if err == nil {
+			q := parsed.Query()
+			q.Set("state", stateToken)
+			parsed.RawQuery = q.Encode()
+			callbackURL = parsed.String()
+		}
+	}
+
+	redirectURL, err := domainconnect.BuildApplyURL(
+		r.domainConnect,
+		settings.URLSyncUX,
+		registrableDomain,
+		host,
+		map[string]string{
+			"IP":    r.customDomainCname,
+			"CNAME": r.customDomainCname,
+		},
+		callbackURL,
+	)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot build Domain Connect apply URL", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.InitiateDomainConnectPayload{
+		RedirectURL: redirectURL,
 	}, nil
 }
 

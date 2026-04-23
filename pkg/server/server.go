@@ -28,6 +28,7 @@ import (
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/cookiebanner"
+	"go.probo.inc/probo/pkg/domainconnect"
 	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/file"
 	"go.probo.inc/probo/pkg/iam"
@@ -62,6 +63,8 @@ type Config struct {
 	TokenSecret       string
 	ConnectorRegistry *connector.ConnectorRegistry
 	CustomDomainCname string
+	DomainConnect     domainconnect.Config
+	ResolverAddr      string
 	Logger            *log.Logger
 }
 
@@ -96,6 +99,8 @@ func NewServer(cfg Config) (*Server, error) {
 		TokenSecret:       cfg.TokenSecret,
 		ConnectorRegistry: cfg.ConnectorRegistry,
 		CustomDomainCname: cfg.CustomDomainCname,
+		DomainConnect:     cfg.DomainConnect,
+		ResolverAddr:      cfg.ResolverAddr,
 		Logger:            cfg.Logger.Named("api"),
 	}
 

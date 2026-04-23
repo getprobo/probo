@@ -29,6 +29,7 @@ import (
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/cookiebanner"
+	"go.probo.inc/probo/pkg/domainconnect"
 	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/file"
 	"go.probo.inc/probo/pkg/iam"
@@ -63,6 +64,8 @@ type (
 		TokenSecret       string
 		ConnectorRegistry *connector.ConnectorRegistry
 		CustomDomainCname string
+		DomainConnect     domainconnect.Config
+		ResolverAddr      string
 		Logger            *log.Logger
 	}
 
@@ -188,6 +191,8 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.ConnectorRegistry,
 			cfg.BaseURL,
 			cfg.CustomDomainCname,
+			cfg.DomainConnect,
+			cfg.ResolverAddr,
 		),
 		cookieBannerHandler: cookiebanner_v1.NewMux(
 			cfg.Logger.Named("cookiebanner.v1"),
