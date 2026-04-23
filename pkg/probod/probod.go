@@ -829,6 +829,9 @@ func (impl *Implm) runApiServer(
 		httpserver.WithTracerProvider(tp),
 	)
 
+	apiServer.ReadTimeout = 30 * time.Second
+	apiServer.WriteTimeout = 30 * time.Second
+
 	l.Info("starting api server", log.String("addr", apiServer.Addr))
 	span.AddEvent("API server starting")
 
