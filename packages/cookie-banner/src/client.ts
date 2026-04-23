@@ -27,9 +27,6 @@ import { detectLanguage } from "./i18n";
 import { enqueue, flush } from "./queue";
 import { getOrCreateVisitorId } from "./visitor";
 
-export type { BannerTexts } from "./i18n";
-export { interpolate } from "./i18n";
-
 export interface CookieItem {
   name: string;
   duration: string;
@@ -48,7 +45,6 @@ export interface BannerConfig {
   version: number;
   language: string;
   default_language: string;
-  available_languages: string[];
   privacy_policy_url: string;
   consent_expiry_days: number;
   consent_mode: "OPT_IN" | "OPT_OUT";

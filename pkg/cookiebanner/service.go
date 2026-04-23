@@ -130,7 +130,6 @@ type (
 		Version            int                                            `json:"version"`
 		Language           string                                         `json:"language"`
 		DefaultLanguage    string                                         `json:"default_language"`
-		AvailableLanguages []string                                       `json:"available_languages"`
 		PrivacyPolicyURL   string                                         `json:"privacy_policy_url"`
 		ConsentExpiryDays  int                                            `json:"consent_expiry_days"`
 		ConsentMode        string                                         `json:"consent_mode"`
@@ -1707,14 +1706,6 @@ func buildBannerConfig(
 		defaultLang = "en"
 	}
 
-	availableLanguages := make([]string, 0, len(snapshot.Translations))
-	for l := range snapshot.Translations {
-		availableLanguages = append(availableLanguages, l)
-	}
-	if len(availableLanguages) == 0 {
-		availableLanguages = []string{defaultLang}
-	}
-
 	resolvedLang := defaultLang
 	if lang != "" {
 		if _, ok := snapshot.Translations[lang]; ok {
@@ -1748,7 +1739,6 @@ func buildBannerConfig(
 		Version:            version.Version,
 		Language:           resolvedLang,
 		DefaultLanguage:    defaultLang,
-		AvailableLanguages: availableLanguages,
 		PrivacyPolicyURL:   snapshot.PrivacyPolicyURL,
 		ConsentExpiryDays:  snapshot.ConsentExpiryDays,
 		ConsentMode:        snapshot.ConsentMode,
