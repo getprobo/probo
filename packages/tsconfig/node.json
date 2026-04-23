@@ -1,0 +1,17 @@
+{
+    "$schema": "https://json.schemastore.org/tsconfig",
+    "display": "Node",
+    "extends": "./base.json",
+    "compilerOptions": {
+        "lib": [
+            "ES2023"
+        ],
+        "module": "CommonJS",
+        "moduleResolution": "node",
+        "allowJs": true,
+        "types": [
+            "node"
+        ],
+        "noEmit": true
+    }
+}
