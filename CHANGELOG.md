@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.172.0] - 2026-04-22
+
+### Added
+
+- Add missing resources to CLI, MCP, and n8n surfaces
+- Add cookie detection
+- Update kit with new pg config
+
+### Fixed
+- Handle SCIM user email rename via external ID fallback
+
+
 ## [0.171.1] - 2026-04-22
 
 ### Fixed
