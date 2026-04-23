@@ -545,23 +545,25 @@ func (s *Service) CreateCookieBanner(
 				}
 			}
 
-			defaultTranslationsJSON, err := json.Marshal(defaultUIStrings)
-			if err != nil {
-				return fmt.Errorf("cannot marshal default UI strings: %w", err)
-			}
+			for lang, uiStrings := range defaultUIStringsByLanguage {
+				translationsJSON, err := json.Marshal(uiStrings)
+				if err != nil {
+					return fmt.Errorf("cannot marshal default UI strings for %s: %w", lang, err)
+				}
 
-			defaultTranslation := &coredata.CookieBannerTranslation{
-				ID:               gid.New(scope.GetTenantID(), coredata.CookieBannerTranslationEntityType),
-				OrganizationID:   banner.OrganizationID,
-				CookieBannerID:   banner.ID,
-				Language:         "en",
-				Translations:     defaultTranslationsJSON,
-				CreatedAt:        now,
-				UpdatedAt:        now,
-			}
+				translation := &coredata.CookieBannerTranslation{
+					ID:             gid.New(scope.GetTenantID(), coredata.CookieBannerTranslationEntityType),
+					OrganizationID: banner.OrganizationID,
+					CookieBannerID: banner.ID,
+					Language:       lang,
+					Translations:   translationsJSON,
+					CreatedAt:      now,
+					UpdatedAt:      now,
+				}
 
-			if err := defaultTranslation.Insert(ctx, tx, scope); err != nil {
-				return fmt.Errorf("cannot insert default translation: %w", err)
+				if err := translation.Insert(ctx, tx, scope); err != nil {
+					return fmt.Errorf("cannot insert default translation for %s: %w", lang, err)
+				}
 			}
 
 			if _, err := s.ensureDraftVersionForBanner(ctx, tx, scope, banner.ID); err != nil {
