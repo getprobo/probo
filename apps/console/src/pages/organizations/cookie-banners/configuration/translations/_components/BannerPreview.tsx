@@ -28,7 +28,7 @@ function interpolateDescription(
   description: string,
   linkText: string,
 ): string {
-  return description.replace(
+  return description.replaceAll(
     "{{privacy_policy_link}}",
     linkText,
   );
@@ -79,22 +79,23 @@ export function BannerPreview({
         }}
       >
         {hasPlaceholder
-          ? (
-              <>
-                {descriptionParts[0]}
-                <a
-                  href="#"
-                  onClick={e => e.preventDefault()}
-                  style={{
-                    color: "var(--probo-accent, #1a1a1a)",
-                    textDecoration: "underline",
-                  }}
-                >
-                  {privacyPolicyLinkText}
-                </a>
-                {descriptionParts[1]}
-              </>
-            )
+          ? descriptionParts.map((part, i) => (
+              <span key={i}>
+                {part}
+                {i < descriptionParts.length - 1 && (
+                  <a
+                    href="#"
+                    onClick={e => e.preventDefault()}
+                    style={{
+                      color: "var(--probo-accent, #1a1a1a)",
+                      textDecoration: "underline",
+                    }}
+                  >
+                    {privacyPolicyLinkText}
+                  </a>
+                )}
+              </span>
+            ))
           : (
               interpolateDescription(bannerDescription, privacyPolicyLinkText)
             )}

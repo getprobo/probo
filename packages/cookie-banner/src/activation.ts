@@ -302,7 +302,7 @@ function deactivateScript(el: HTMLScriptElement): void {
   el.parentNode!.replaceChild(replacement, el);
 }
 
-function deactivateElement(el: Element, label?: string): void {
+function deactivateElement(el: Element, label?: string, texts?: BannerTexts): void {
   const category = el.getAttribute(ATTR_ACTIVATED);
 
   const src = el.getAttribute("src");
@@ -323,7 +323,7 @@ function deactivateElement(el: Element, label?: string): void {
   el.removeAttribute(ATTR_ACTIVATED);
 
   if (category && VISUAL_TAGS.has(el.tagName)) {
-    createPlaceholder(el, category, label);
+    createPlaceholder(el, category, label, texts);
   }
 }
 
@@ -332,6 +332,7 @@ export function deactivateElements(
   consentData: Record<string, boolean>,
   categoryCookies: Record<string, string[]>,
   categoryLabels: Record<string, string>,
+  texts?: BannerTexts,
 ): void {
   const elements = document.querySelectorAll(`[${ATTR_ACTIVATED}]`);
   const cookiesToRemove = new Set<string>();
@@ -345,7 +346,7 @@ export function deactivateElements(
     if (el instanceof HTMLScriptElement) {
       deactivateScript(el);
     } else {
-      deactivateElement(el, categoryLabels[category]);
+      deactivateElement(el, categoryLabels[category], texts);
     }
 
     const cookies = categoryCookies[category];

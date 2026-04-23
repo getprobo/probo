@@ -40,7 +40,7 @@ if (script) {
 
       const lang = script.getAttribute("data-lang");
       if (lang) {
-        el.setAttribute("lang", lang);
+        el.setAttribute("lang", lang.split("-")[0].toLowerCase());
       }
 
       document.body.appendChild(el);

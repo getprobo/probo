@@ -16,14 +16,20 @@ export interface BannerTexts {
   [key: string]: string;
 }
 
-export function detectLanguage(explicit?: string): string {
-  if (explicit) return explicit;
+function normalizeLocale(locale: string): string {
+  return locale.split("-")[0].toLowerCase();
+}
 
-  const htmlLang = document.documentElement.lang;
-  if (htmlLang) return htmlLang.split("-")[0];
+export function detectLanguage(explicit?: string): string {
+  if (explicit) return normalizeLocale(explicit);
+
+  if (typeof document !== "undefined" && document.documentElement) {
+    const htmlLang = document.documentElement.lang;
+    if (htmlLang) return normalizeLocale(htmlLang);
+  }
 
   if (typeof navigator !== "undefined" && navigator.language) {
-    return navigator.language.split("-")[0];
+    return normalizeLocale(navigator.language);
   }
 
   return "";

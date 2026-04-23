@@ -170,7 +170,7 @@ export class ProboThemedBanner extends HTMLElement {
 
     this.shadow.querySelectorAll("[data-text]").forEach(el => {
       const key = el.getAttribute("data-text")!;
-      const raw = texts[key];
+      const raw = texts[key] ?? "";
       if (!raw) return;
 
       if (key === "banner_description") {
@@ -190,7 +190,7 @@ export class ProboThemedBanner extends HTMLElement {
 
     this.shadow.querySelectorAll("[data-aria-text]").forEach(el => {
       const key = el.getAttribute("data-aria-text")!;
-      const raw = texts[key];
+      const raw = texts[key] ?? el.getAttribute("aria-label") ?? "";
       if (raw) el.setAttribute("aria-label", raw);
     });
 

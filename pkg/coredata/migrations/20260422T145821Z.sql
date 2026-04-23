@@ -18,7 +18,7 @@ ALTER TABLE cookie_banners ALTER COLUMN default_language DROP DEFAULT;
 CREATE TABLE cookie_banner_translations (
     id               TEXT PRIMARY KEY,
     tenant_id        TEXT NOT NULL,
-    organization_id  TEXT NOT NULL,
+    organization_id  TEXT NOT NULL REFERENCES organizations(id),
     cookie_banner_id TEXT NOT NULL REFERENCES cookie_banners(id) ON DELETE CASCADE,
     language         TEXT NOT NULL,
     translations     JSONB NOT NULL,

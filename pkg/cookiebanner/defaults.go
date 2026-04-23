@@ -16,6 +16,8 @@ package cookiebanner
 
 import "go.probo.inc/probo/pkg/coredata"
 
+var SupportedLanguages = []string{"en", "fr", "de", "es"}
+
 var defaultCategories = []struct {
 	Name        string
 	Slug        string

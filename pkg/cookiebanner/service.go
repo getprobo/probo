@@ -177,6 +177,7 @@ func (r *UpdateCookieBannerRequest) Validate() error {
 	v.Check(r.PrivacyPolicyURL, "privacy_policy_url", validator.URL())
 	v.Check(r.ConsentExpiryDays, "consent_expiry_days", validator.Min(1))
 	v.Check(r.ConsentMode, "consent_mode", validator.OneOfSlice(coredata.CookieConsentModes()))
+	v.Check(r.DefaultLanguage, "default_language", validator.OneOfSlice(SupportedLanguages))
 
 	return v.Error()
 }

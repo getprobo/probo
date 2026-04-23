@@ -250,7 +250,7 @@ export class CookieBannerClient {
     }
 
     const texts = this.config.texts;
-    deactivateElements(consentData, categoryCookies, categoryLabels);
+    deactivateElements(consentData, categoryCookies, categoryLabels, texts);
     activateElements(consentData);
     addPlaceholders(consentData, categoryLabels, texts);
     if (this.observer) {

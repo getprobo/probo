@@ -59,7 +59,10 @@ export function EditCategoryForm({
       />
       <div className="flex items-center gap-2">
         <Button
-          onClick={() => onSave(editName, editSlug, editDescription)}
+          onClick={() => {
+            if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(editSlug)) return;
+            onSave(editName, editSlug, editDescription);
+          }}
           disabled={isUpdating}
         >
           {isUpdating ? __("Saving...") : __("Save")}

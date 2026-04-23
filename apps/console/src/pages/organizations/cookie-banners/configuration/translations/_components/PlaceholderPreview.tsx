@@ -73,14 +73,13 @@ export function PlaceholderPreview({
       </span>
       <p style={{ margin: 0 }}>
         {hasPlaceholder
-          ? (
-              <>
-                {parts[0]}
-                <strong>{categoryName}</strong>
-                {parts[1]}
-              </>
-            )
-          : placeholderText.replace("{{category}}", categoryName)}
+          ? parts.map((part, i) => (
+              <span key={i}>
+                {part}
+                {i < parts.length - 1 && <strong>{categoryName}</strong>}
+              </span>
+            ))
+          : placeholderText}
       </p>
       <button
         type="button"

@@ -16,7 +16,22 @@ ALTER TABLE cookie_categories
     ADD COLUMN slug TEXT NOT NULL DEFAULT '';
 
 UPDATE cookie_categories
-SET slug = LOWER(REGEXP_REPLACE(REGEXP_REPLACE(name, '[^a-zA-Z0-9]+', '-', 'g'), '^-|-$', '', 'g'));
+SET slug = COALESCE(
+    NULLIF(LOWER(REGEXP_REPLACE(REGEXP_REPLACE(name, '[^a-zA-Z0-9]+', '-', 'g'), '^-|-$', '', 'g')), ''),
+    'category-' || SUBSTR(id, 1, 8)
+);
+
+WITH dupes AS (
+    SELECT id,
+           cookie_banner_id,
+           slug,
+           ROW_NUMBER() OVER (PARTITION BY cookie_banner_id, slug ORDER BY created_at) AS rn
+    FROM cookie_categories
+)
+UPDATE cookie_categories
+SET slug = cookie_categories.slug || '-' || dupes.rn
+FROM dupes
+WHERE cookie_categories.id = dupes.id AND dupes.rn > 1;
 
 ALTER TABLE cookie_categories ALTER COLUMN slug DROP DEFAULT;
 

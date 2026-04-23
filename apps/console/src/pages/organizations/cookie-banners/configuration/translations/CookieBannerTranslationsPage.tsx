@@ -68,11 +68,6 @@ export default function CookieBannerTranslationsPage({
 
   const banner = data.node;
 
-  const existingLanguages = useMemo(
-    () => banner.translations.map(t => t.language),
-    [banner.translations],
-  );
-
   const [selectedLanguage, setSelectedLanguage] = useState(
     () => banner.defaultLanguage,
   );
@@ -128,11 +123,7 @@ export default function CookieBannerTranslationsPage({
           value={selectedLanguage}
           onValueChange={setSelectedLanguage}
         >
-          {SUPPORTED_LANGUAGES.filter(
-            l =>
-              existingLanguages.includes(l.code)
-              || l.code === selectedLanguage,
-          ).map(l => (
+          {SUPPORTED_LANGUAGES.map(l => (
             <Option key={l.code} value={l.code}>
               {l.label}
               {l.code === banner.defaultLanguage ? ` (${__("default")})` : ""}

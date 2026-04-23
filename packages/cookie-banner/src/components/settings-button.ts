@@ -29,6 +29,15 @@ export class ProboSettingsButton extends HTMLElement {
     return ["position", "aria-settings-label"];
   }
 
+  attributeChangedCallback(name: string, _oldValue: string | null, newValue: string | null): void {
+    if (name === "aria-settings-label") {
+      const btn = this.shadow.querySelector("button");
+      if (btn && newValue) {
+        btn.setAttribute("aria-label", newValue);
+      }
+    }
+  }
+
   private get position(): string {
     return this.getAttribute("position") ?? "bottom-left";
   }

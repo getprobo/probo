@@ -44,6 +44,12 @@ export function PanelTranslationSection({
 
   const visibleCategories = categories.filter(c => c.kind !== "UNCATEGORISED");
 
+  const translatedNecessaryName = (() => {
+    const necessaryCat = categories.find(c => c.kind === "NECESSARY");
+    if (!necessaryCat) return necessaryCategoryName;
+    return categoryTranslations?.[necessaryCat.id]?.name || necessaryCategoryName;
+  })();
+
   const previewCategories = categories.map((c) => {
     const translated = categoryTranslations?.[c.id];
     return {
@@ -75,7 +81,7 @@ export function PanelTranslationSection({
                 <Field
                   label={__(TRANSLATION_LABELS.panel_description)}
                 >
-                  <p className="text-xs text-txt-secondary mb-2">{"Use {{necessary_category}} to refer to the required cookies category name."}</p>
+                  <p className="text-xs text-txt-secondary mb-2">{__("Use {{necessary_category}} to refer to the required cookies category name.")}</p>
                   <Textarea {...field} rows={3} />
                 </Field>
               )}
@@ -146,7 +152,7 @@ export function PanelTranslationSection({
             buttonRejectAll={buttonRejectAll}
             buttonSave={buttonSave}
             categories={previewCategories}
-            necessaryCategoryName={necessaryCategoryName}
+            necessaryCategoryName={translatedNecessaryName}
           />
         </div>
       </div>
