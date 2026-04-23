@@ -12,8 +12,79 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import type { BannerTexts } from "./i18n";
 import { interpolate } from "./i18n";
+
+interface DurationTexts {
+  [key: string]: string;
+}
+
+const durationTextsByLanguage: Record<string, DurationTexts> = {
+  en: {
+    duration_year_one: "{{count}} year",
+    duration_year_other: "{{count}} years",
+    duration_month_one: "{{count}} month",
+    duration_month_other: "{{count}} months",
+    duration_week_one: "{{count}} week",
+    duration_week_other: "{{count}} weeks",
+    duration_day_one: "{{count}} day",
+    duration_day_other: "{{count}} days",
+    duration_hour_one: "{{count}} hour",
+    duration_hour_other: "{{count}} hours",
+    duration_minute_one: "{{count}} minute",
+    duration_minute_other: "{{count}} minutes",
+    duration_session: "session",
+  },
+  fr: {
+    duration_year_one: "{{count}} an",
+    duration_year_other: "{{count}} ans",
+    duration_month_one: "{{count}} mois",
+    duration_month_other: "{{count}} mois",
+    duration_week_one: "{{count}} semaine",
+    duration_week_other: "{{count}} semaines",
+    duration_day_one: "{{count}} jour",
+    duration_day_other: "{{count}} jours",
+    duration_hour_one: "{{count}} heure",
+    duration_hour_other: "{{count}} heures",
+    duration_minute_one: "{{count}} minute",
+    duration_minute_other: "{{count}} minutes",
+    duration_session: "session",
+  },
+  de: {
+    duration_year_one: "{{count}} Jahr",
+    duration_year_other: "{{count}} Jahre",
+    duration_month_one: "{{count}} Monat",
+    duration_month_other: "{{count}} Monate",
+    duration_week_one: "{{count}} Woche",
+    duration_week_other: "{{count}} Wochen",
+    duration_day_one: "{{count}} Tag",
+    duration_day_other: "{{count}} Tage",
+    duration_hour_one: "{{count}} Stunde",
+    duration_hour_other: "{{count}} Stunden",
+    duration_minute_one: "{{count}} Minute",
+    duration_minute_other: "{{count}} Minuten",
+    duration_session: "Sitzung",
+  },
+  es: {
+    duration_year_one: "{{count}} año",
+    duration_year_other: "{{count}} años",
+    duration_month_one: "{{count}} mes",
+    duration_month_other: "{{count}} meses",
+    duration_week_one: "{{count}} semana",
+    duration_week_other: "{{count}} semanas",
+    duration_day_one: "{{count}} día",
+    duration_day_other: "{{count}} días",
+    duration_hour_one: "{{count}} hora",
+    duration_hour_other: "{{count}} horas",
+    duration_minute_one: "{{count}} minuto",
+    duration_minute_other: "{{count}} minutos",
+    duration_session: "sesión",
+  },
+};
+
+function getDurationTexts(lang?: string): DurationTexts {
+  if (lang && durationTextsByLanguage[lang]) return durationTextsByLanguage[lang];
+  return durationTextsByLanguage.en;
+}
 
 // [unitSeconds, textKey, snapBuffer]
 // snapBuffer: if the remainder is within this many seconds of the next
@@ -27,8 +98,9 @@ const DURATION_UNITS: [number, string, number][] = [
   [60, "duration_minute", 15],
 ];
 
-function humanizeDuration(seconds: number, texts?: BannerTexts): string {
-  if (seconds <= 0) return texts?.duration_session ?? "session";
+function humanizeDuration(seconds: number, lang?: string): string {
+  const texts = getDurationTexts(lang);
+  if (seconds <= 0) return texts.duration_session;
 
   let remaining = seconds;
   const parts: string[] = [];
@@ -48,12 +120,11 @@ function humanizeDuration(seconds: number, texts?: BannerTexts): string {
       }
 
       const tplKey = count === 1 ? `${key}_one` : `${key}_other`;
-      const tpl = texts?.[tplKey] ?? (count === 1 ? `{{count}} ${key.replace("duration_", "")}` : `{{count}} ${key.replace("duration_", "")}s`);
-      parts.push(interpolate(tpl, { count: String(count) }));
+      parts.push(interpolate(texts[tplKey], { count: String(count) }));
     }
   }
 
-  return parts.length > 0 ? parts.join(", ") : texts?.duration_session ?? "session";
+  return parts.length > 0 ? parts.join(", ") : texts.duration_session;
 }
 
 export function parseCookieName(raw: string): string {
@@ -62,8 +133,9 @@ export function parseCookieName(raw: string): string {
   return raw.substring(0, eqIdx).trim();
 }
 
-export function parseDuration(raw: string, texts?: BannerTexts): string {
-  const session = texts?.duration_session ?? "session";
+export function parseDuration(raw: string, lang?: string): string {
+  const texts = getDurationTexts(lang);
+  const session = texts.duration_session;
   const parts = raw.split(";").map((s) => s.trim());
 
   for (const part of parts) {
@@ -71,7 +143,7 @@ export function parseDuration(raw: string, texts?: BannerTexts): string {
     if (lower.startsWith("max-age=")) {
       const val = parseInt(part.substring(8), 10);
       if (isNaN(val) || val <= 0) return session;
-      return humanizeDuration(val, texts);
+      return humanizeDuration(val, lang);
     }
   }
 
@@ -85,7 +157,7 @@ export function parseDuration(raw: string, texts?: BannerTexts): string {
         (expires.getTime() - Date.now()) / 1000,
       );
       if (deltaSeconds <= 0) return session;
-      return humanizeDuration(deltaSeconds, texts);
+      return humanizeDuration(deltaSeconds, lang);
     }
   }
 
