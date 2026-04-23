@@ -73,7 +73,18 @@ func NewCookieBanner(b *coredata.CookieBanner) *CookieBanner {
 		ConsentExpiryDays: b.ConsentExpiryDays,
 		ConsentMode:       b.ConsentMode,
 		ShowBranding:      b.ShowBranding,
+		DefaultLanguage:   b.DefaultLanguage,
 		CreatedAt:         b.CreatedAt,
 		UpdatedAt:         b.UpdatedAt,
+	}
+}
+
+func NewCookieBannerTranslation(t *coredata.CookieBannerTranslation) *CookieBannerTranslation {
+	return &CookieBannerTranslation{
+		ID:           t.ID,
+		Language:     t.Language,
+		Translations: string(t.Translations),
+		CreatedAt:    t.CreatedAt,
+		UpdatedAt:    t.UpdatedAt,
 	}
 }

@@ -7,6 +7,7 @@ package console_v1
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 
 	"go.gearno.de/kit/log"
@@ -64,6 +65,24 @@ func (r *cookieBannerResolver) Categories(ctx context.Context, obj *types.Cookie
 	p := page.NewPage(categories, cursor)
 
 	return types.NewCookieCategoryConnection(p, r, obj.ID), nil
+}
+
+// Translations is the resolver for the translations field.
+func (r *cookieBannerResolver) Translations(ctx context.Context, obj *types.CookieBanner) ([]*types.CookieBannerTranslation, error) {
+	scope := coredata.NewScopeFromObjectID(obj.ID)
+
+	translations, err := r.cookieBanner.ListCookieBannerTranslations(ctx, scope, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list cookie banner translations", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	result := make([]*types.CookieBannerTranslation, len(translations))
+	for i, t := range translations {
+		result[i] = types.NewCookieBannerTranslation(t)
+	}
+
+	return result, nil
 }
 
 // LatestVersion is the resolver for the latestVersion field.
@@ -254,6 +273,7 @@ func (r *mutationResolver) UpdateCookieBanner(ctx context.Context, input types.U
 			PrivacyPolicyURL:  input.PrivacyPolicyURL,
 			ConsentExpiryDays: input.ConsentExpiryDays,
 			ConsentMode:       input.ConsentMode,
+			DefaultLanguage:   input.DefaultLanguage,
 		},
 	)
 	if err != nil {
@@ -713,6 +733,85 @@ func (r *mutationResolver) DeleteCookie(ctx context.Context, input types.DeleteC
 
 	return &types.DeleteCookiePayload{
 		DeletedCookieID: input.CookieID,
+		CookieBanner:    types.NewCookieBanner(banner),
+	}, nil
+}
+
+// UpsertCookieBannerTranslation is the resolver for the upsertCookieBannerTranslation field.
+func (r *mutationResolver) UpsertCookieBannerTranslation(ctx context.Context, input types.UpsertCookieBannerTranslationInput) (*types.UpsertCookieBannerTranslationPayload, error) {
+	if err := r.authorize(ctx, input.CookieBannerID, probo.ActionCookieBannerUpdate); err != nil {
+		return nil, err
+	}
+
+	scope := coredata.NewScopeFromObjectID(input.CookieBannerID)
+
+	translation, err := r.cookieBanner.UpsertCookieBannerTranslation(
+		ctx,
+		scope,
+		cookiebanner.UpsertCookieBannerTranslationRequest{
+			CookieBannerID: input.CookieBannerID,
+			Language:       input.Language,
+			Translations:   json.RawMessage(input.Translations),
+		},
+	)
+	if err != nil {
+		if errors.Is(err, cookiebanner.ErrBannerNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+		}
+		r.logger.ErrorCtx(ctx, "cannot upsert cookie banner translation", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	banner, err := r.cookieBanner.GetCookieBanner(ctx, scope, input.CookieBannerID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load cookie banner", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.UpsertCookieBannerTranslationPayload{
+		CookieBannerTranslation: types.NewCookieBannerTranslation(translation),
+		CookieBanner:            types.NewCookieBanner(banner),
+	}, nil
+}
+
+// DeleteCookieBannerTranslation is the resolver for the deleteCookieBannerTranslation field.
+func (r *mutationResolver) DeleteCookieBannerTranslation(ctx context.Context, input types.DeleteCookieBannerTranslationInput) (*types.DeleteCookieBannerTranslationPayload, error) {
+	if err := r.authorize(ctx, input.CookieBannerID, probo.ActionCookieBannerUpdate); err != nil {
+		return nil, err
+	}
+
+	scope := coredata.NewScopeFromObjectID(input.CookieBannerID)
+
+	err := r.cookieBanner.DeleteCookieBannerTranslation(
+		ctx,
+		scope,
+		cookiebanner.DeleteCookieBannerTranslationRequest{
+			CookieBannerID: input.CookieBannerID,
+			Language:       input.Language,
+		},
+	)
+	if err != nil {
+		if errors.Is(err, cookiebanner.ErrTranslationNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+		if errors.Is(err, cookiebanner.ErrBannerNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+		r.logger.ErrorCtx(ctx, "cannot delete cookie banner translation", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	banner, err := r.cookieBanner.GetCookieBanner(ctx, scope, input.CookieBannerID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load cookie banner", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.DeleteCookieBannerTranslationPayload{
+		DeletedLanguage: input.Language,
 		CookieBanner:    types.NewCookieBanner(banner),
 	}, nil
 }

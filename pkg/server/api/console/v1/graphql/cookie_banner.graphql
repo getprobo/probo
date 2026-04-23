@@ -85,6 +85,7 @@ type CookieBanner implements Node {
     consentExpiryDays: Int!
     consentMode: CookieConsentMode!
     showBranding: Boolean!
+    defaultLanguage: String!
 
     organization: Organization @goField(forceResolver: true)
 
@@ -96,12 +97,22 @@ type CookieBanner implements Node {
         orderBy: CookieCategoryOrder
     ): CookieCategoryConnection @goField(forceResolver: true)
 
+    translations: [CookieBannerTranslation!]! @goField(forceResolver: true)
+
     latestVersion: CookieBannerVersion @goField(forceResolver: true)
 
     createdAt: Datetime!
     updatedAt: Datetime!
 
     permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type CookieBannerTranslation implements Node {
+    id: ID!
+    language: String!
+    translations: String!
+    createdAt: Datetime!
+    updatedAt: Datetime!
 }
 
 type CookieCategory implements Node {
@@ -243,6 +254,12 @@ extend type Mutation {
     createCookie(input: CreateCookieInput!): CreateCookiePayload!
     updateCookie(input: UpdateCookieInput!): UpdateCookiePayload!
     deleteCookie(input: DeleteCookieInput!): DeleteCookiePayload!
+    upsertCookieBannerTranslation(
+        input: UpsertCookieBannerTranslationInput!
+    ): UpsertCookieBannerTranslationPayload!
+    deleteCookieBannerTranslation(
+        input: DeleteCookieBannerTranslationInput!
+    ): DeleteCookieBannerTranslationPayload!
 }
 
 input CreateCookieBannerInput {
@@ -261,6 +278,7 @@ input UpdateCookieBannerInput {
     privacyPolicyUrl: String
     consentExpiryDays: Int
     consentMode: CookieConsentMode
+    defaultLanguage: String
 }
 
 input DeleteCookieBannerInput {
@@ -385,5 +403,26 @@ type UpdateCookiePayload {
 
 type DeleteCookiePayload {
     deletedCookieId: ID!
+    cookieBanner: CookieBanner!
+}
+
+input UpsertCookieBannerTranslationInput {
+    cookieBannerId: ID!
+    language: String!
+    translations: String!
+}
+
+input DeleteCookieBannerTranslationInput {
+    cookieBannerId: ID!
+    language: String!
+}
+
+type UpsertCookieBannerTranslationPayload {
+    cookieBannerTranslation: CookieBannerTranslation!
+    cookieBanner: CookieBanner!
+}
+
+type DeleteCookieBannerTranslationPayload {
+    deletedLanguage: String!
     cookieBanner: CookieBanner!
 }

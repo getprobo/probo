@@ -64,6 +64,7 @@ type (
 		PrivacyPolicyURL  *string
 		ConsentExpiryDays *int
 		ConsentMode       *coredata.CookieConsentMode
+		DefaultLanguage   *string
 	}
 
 	UpdateCookieCategoryRequest struct {
@@ -706,7 +707,7 @@ func (s *Service) UpdateCookieBanner(
 				return fmt.Errorf("cannot load cookie banner: %w", err)
 			}
 
-			consentChanged := req.PrivacyPolicyURL != nil || req.ConsentExpiryDays != nil || req.ConsentMode != nil
+			consentChanged := req.PrivacyPolicyURL != nil || req.ConsentExpiryDays != nil || req.ConsentMode != nil || req.DefaultLanguage != nil
 
 			if req.Name != nil {
 				banner.Name = *req.Name
@@ -722,6 +723,9 @@ func (s *Service) UpdateCookieBanner(
 			}
 			if req.ConsentMode != nil {
 				banner.ConsentMode = *req.ConsentMode
+			}
+			if req.DefaultLanguage != nil {
+				banner.DefaultLanguage = *req.DefaultLanguage
 			}
 
 			banner.UpdatedAt = time.Now()
