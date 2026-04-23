@@ -61,10 +61,8 @@ export function BannerTranslationSection({
               render={({ field }) => (
                 <Field
                   label={__(TRANSLATION_LABELS.banner_description)}
-                  // description={__(
-                  //   "Use {{privacy_policy_link}} to insert the privacy policy link.",
-                  // )}
                 >
+                  <p className="text-xs text-txt-secondary mb-2">{"Use {{privacy_policy_link}} to insert the privacy policy link."}</p>
                   <Textarea {...field} rows={3} />
                 </Field>
               )}

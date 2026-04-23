@@ -75,6 +75,7 @@ export function PanelTranslationSection({
                 <Field
                   label={__(TRANSLATION_LABELS.panel_description)}
                 >
+                  <p className="text-xs text-txt-secondary mb-2">{"Use {{necessary_category}} to refer to the required cookies category name."}</p>
                   <Textarea {...field} rows={3} />
                 </Field>
               )}

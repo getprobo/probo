@@ -51,6 +51,7 @@ export function PlaceholderTranslationSection({
                 <Field
                   label={__(TRANSLATION_LABELS.placeholder_text)}
                 >
+                  <p className="text-xs text-txt-secondary mb-2">{"Use {{category}} to refer to the content category."}</p>
                   <Input {...field} />
                 </Field>
               )}
