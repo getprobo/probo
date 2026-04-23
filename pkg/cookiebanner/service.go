@@ -276,6 +276,38 @@ func (r *UpsertCookieBannerTranslationRequest) Validate() error {
 	v.Check(r.CookieBannerID, "cookie_banner_id", validator.Required(), validator.GID(coredata.CookieBannerEntityType))
 	v.Check(r.Language, "language", validator.Required(), validator.SafeTextNoNewLine(10))
 
+	var flat map[string]json.RawMessage
+	if err := json.Unmarshal(r.Translations, &flat); err != nil {
+		v.Check("", "translations", validator.Required())
+		return v.Error()
+	}
+
+	for key, raw := range flat {
+		if key == "categories" {
+			var cats map[string]json.RawMessage
+			if json.Unmarshal(raw, &cats) == nil {
+				for catID, catRaw := range cats {
+					var catFields map[string]json.RawMessage
+					if json.Unmarshal(catRaw, &catFields) == nil {
+						for field, fieldRaw := range catFields {
+							var s string
+							if json.Unmarshal(fieldRaw, &s) == nil {
+								v.Check(s, fmt.Sprintf("translations.categories.%s.%s", catID, field), validator.NoHTML(), validator.MaxLen(2000))
+							}
+						}
+					}
+				}
+			}
+			continue
+		}
+
+		var s string
+		if json.Unmarshal(raw, &s) != nil {
+			continue
+		}
+		v.Check(s, "translations."+key, validator.NoHTML(), validator.MaxLen(2000))
+	}
+
 	return v.Error()
 }
 

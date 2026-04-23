@@ -13,7 +13,6 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 import type { BannerTexts } from "./i18n";
-import { interpolate } from "./i18n";
 import { removeCookies } from "./cookie-utils";
 import { LOCK_ICON } from "./html";
 
@@ -155,9 +154,13 @@ function createPlaceholder(
     }
   }
 
-  const phText = texts?.placeholder_text
-    ? interpolate(texts.placeholder_text, { category: escapeHtml(displayLabel) })
-    : `This content requires <strong>${escapeHtml(displayLabel)}</strong> cookies.`;
+  let phText: string;
+  if (texts?.placeholder_text) {
+    const parts = texts.placeholder_text.split("{{category}}");
+    phText = parts.map(p => escapeHtml(p)).join(`<strong>${escapeHtml(displayLabel)}</strong>`);
+  } else {
+    phText = `This content requires <strong>${escapeHtml(displayLabel)}</strong> cookies.`;
+  }
   const phButton = texts?.placeholder_button ?? "Manage cookie preferences";
 
   placeholder.innerHTML = [

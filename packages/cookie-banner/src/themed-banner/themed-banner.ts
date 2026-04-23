@@ -179,7 +179,8 @@ export class ProboThemedBanner extends HTMLElement {
           const linkText = this.esc(texts.privacy_policy_link_text ?? "Privacy Policy");
           link = `<a href="${this.esc(config.privacy_policy_url)}" target="_blank" rel="noopener noreferrer">${linkText}</a>`;
         }
-        el.innerHTML = interpolate(raw, { privacy_policy_link: link });
+        const parts = raw.split("{{privacy_policy_link}}");
+        el.innerHTML = parts.map(p => this.esc(p)).join(link);
       } else if (key === "panel_description") {
         el.textContent = interpolate(raw, { necessary_category: necessaryCategoryName });
       } else {
