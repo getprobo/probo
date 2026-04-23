@@ -372,8 +372,8 @@ go.opentelemetry.io/otel/trace v1.43.0 h1:BkNrHpup+4k4w+ZZ86CZoHHEkohws8AY+WTX09
 go.opentelemetry.io/otel/trace v1.43.0/go.mod h1:/QJhyVBUUswCphDVxq+8mld+AvhXZLhe+8WVFxiFff0=
 go.opentelemetry.io/proto/otlp v1.10.0 h1:IQRWgT5srOCYfiWnpqUYz9CVmbO8bFmKcwYxpuCSL2g=
 go.opentelemetry.io/proto/otlp v1.10.0/go.mod h1:/CV4QoCR/S9yaPj8utp3lvQPoqMtxXdzn7ozvvozVqk=
-go.probo.inc/mcpgen v0.0.0-20260223192226-386b1fbe6184 h1:LH9uUR10Nt6ixEAtr7M8Drg97Ei519WEWM1mSWLkrhQ=
-go.probo.inc/mcpgen v0.0.0-20260223192226-386b1fbe6184/go.mod h1:HunWQGqLdMocExJh4tWaX7p+uRZ9GlKvBvOXHaFW6vM=
+go.probo.inc/mcpgen v0.0.0-20260428172408-1496ba9b4619 h1:LHOdoF7kYRXFtSP97eWpF1dIf0dBLrunRLOeU/pXt9c=
+go.probo.inc/mcpgen v0.0.0-20260428172408-1496ba9b4619/go.mod h1:HunWQGqLdMocExJh4tWaX7p+uRZ9GlKvBvOXHaFW6vM=
 go.uber.org/goleak v1.3.0 h1:2K3zAYmnTNqV73imy9J1T3WC+gmCePx2hEGkimedGto=
 go.uber.org/goleak v1.3.0/go.mod h1:CoHD4mav9JJNrW/WLlf7HGZPjdw8EucARQHekz1X6bE=
 go.yaml.in/yaml/v2 v2.4.4 h1:tuyd0P+2Ont/d6e2rl3be67goVK4R6deVxCUX5vyPaQ=

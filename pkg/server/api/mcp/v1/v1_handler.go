@@ -50,11 +50,9 @@ func NewMux(logger *log.Logger, proboSvc *probo.Service, iamSvc *iam.Service, ac
 		logger:       logger,
 	}
 
-	mcpServer := server.New(resolver)
+	mcpServer := server.New(resolver, mcpgenmcp.WithRecoverFunc(mcputils.NewRecoverFunc(logger)))
 
-	// Add panic recovery middleware to handle panics in goroutines spawned by MCP SDK
 	mcpServer.AddReceivingMiddleware(mcputils.LoggingMiddleware(logger))
-	mcpServer.AddReceivingMiddleware(mcputils.RecoveryMiddleware(logger))
 
 	getServer := func(r *http.Request) *mcp.Server { return mcpServer }
 	eventStore := mcp.NewMemoryEventStore(nil)
