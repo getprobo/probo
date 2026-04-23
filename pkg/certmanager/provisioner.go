@@ -369,6 +369,9 @@ func (p *Provisioner) provisionDomainCertificate(
 		}
 
 		domain.ProvisioningError = nil
+		if err := domain.Update(ctx, tx, coredata.NewNoScope()); err != nil {
+			return fmt.Errorf("cannot clear provisioning error: %w", err)
+		}
 
 		p.logger.InfoCtx(ctx, "DNS configuration verified, initiating HTTP challenge for domain", log.String("domain", domain.Domain))
 
