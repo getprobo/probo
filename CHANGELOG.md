@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.172.1] - 2026-04-22
+
+### Security
+
+- Bump github.com/jackc/pgx/v5 from 5.9.1 to 5.9.2
+
+
 ## [0.172.0] - 2026-04-22
 
 ### Added
