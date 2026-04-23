@@ -258,9 +258,6 @@ extend type Mutation {
     upsertCookieBannerTranslation(
         input: UpsertCookieBannerTranslationInput!
     ): UpsertCookieBannerTranslationPayload!
-    deleteCookieBannerTranslation(
-        input: DeleteCookieBannerTranslationInput!
-    ): DeleteCookieBannerTranslationPayload!
 }
 
 input CreateCookieBannerInput {
@@ -415,17 +412,7 @@ input UpsertCookieBannerTranslationInput {
     translations: String!
 }
 
-input DeleteCookieBannerTranslationInput {
-    cookieBannerId: ID!
-    language: String!
-}
-
 type UpsertCookieBannerTranslationPayload {
     cookieBannerTranslation: CookieBannerTranslation!
-    cookieBanner: CookieBanner!
-}
-
-type DeleteCookieBannerTranslationPayload {
-    deletedLanguage: String!
     cookieBanner: CookieBanner!
 }

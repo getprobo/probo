@@ -785,45 +785,6 @@ func (r *mutationResolver) UpsertCookieBannerTranslation(ctx context.Context, in
 	}, nil
 }
 
-// DeleteCookieBannerTranslation is the resolver for the deleteCookieBannerTranslation field.
-func (r *mutationResolver) DeleteCookieBannerTranslation(ctx context.Context, input types.DeleteCookieBannerTranslationInput) (*types.DeleteCookieBannerTranslationPayload, error) {
-	if err := r.authorize(ctx, input.CookieBannerID, probo.ActionCookieBannerUpdate); err != nil {
-		return nil, err
-	}
-
-	scope := coredata.NewScopeFromObjectID(input.CookieBannerID)
-
-	err := r.cookieBanner.DeleteCookieBannerTranslation(
-		ctx,
-		scope,
-		cookiebanner.DeleteCookieBannerTranslationRequest{
-			CookieBannerID: input.CookieBannerID,
-			Language:       input.Language,
-		},
-	)
-	if err != nil {
-		if errors.Is(err, cookiebanner.ErrTranslationNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
-		}
-		if errors.Is(err, cookiebanner.ErrBannerNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
-		}
-		r.logger.ErrorCtx(ctx, "cannot delete cookie banner translation", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	banner, err := r.cookieBanner.GetCookieBanner(ctx, scope, input.CookieBannerID)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot load cookie banner", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return &types.DeleteCookieBannerTranslationPayload{
-		DeletedLanguage: input.Language,
-		CookieBanner:    types.NewCookieBanner(banner),
-	}, nil
-}
-
 // Cookie returns schema.CookieResolver implementation.
 func (r *Resolver) Cookie() schema.CookieResolver { return &cookieResolver{r} }
 

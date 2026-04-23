@@ -146,11 +146,6 @@ type (
 		Translations   json.RawMessage
 	}
 
-	DeleteCookieBannerTranslationRequest struct {
-		CookieBannerID gid.GID
-		Language       string
-	}
-
 	VisitorConsent struct {
 		VisitorID   string                       `json:"visitor_id"`
 		Version     int                          `json:"version"`
@@ -307,15 +302,6 @@ func (r *UpsertCookieBannerTranslationRequest) Validate() error {
 		}
 		v.Check(s, "translations."+key, validator.NoHTML(), validator.MaxLen(2000))
 	}
-
-	return v.Error()
-}
-
-func (r *DeleteCookieBannerTranslationRequest) Validate() error {
-	v := validator.New()
-
-	v.Check(r.CookieBannerID, "cookie_banner_id", validator.Required(), validator.GID(coredata.CookieBannerEntityType))
-	v.Check(r.Language, "language", validator.Required(), validator.SafeTextNoNewLine(10))
 
 	return v.Error()
 }
@@ -1904,40 +1890,6 @@ func (s *Service) UpsertCookieBannerTranslation(
 	}
 
 	return result, nil
-}
-
-func (s *Service) DeleteCookieBannerTranslation(
-	ctx context.Context,
-	scope coredata.Scoper,
-	req DeleteCookieBannerTranslationRequest,
-) error {
-	if err := req.Validate(); err != nil {
-		return fmt.Errorf("invalid request: %w", err)
-	}
-
-	return s.pg.WithTx(
-		ctx,
-		func(ctx context.Context, tx pg.Tx) error {
-			var translation coredata.CookieBannerTranslation
-			err := translation.LoadByCookieBannerIDAndLanguage(ctx, tx, scope, req.CookieBannerID, req.Language)
-			if err != nil {
-				if errors.Is(err, coredata.ErrResourceNotFound) {
-					return ErrTranslationNotFound
-				}
-				return fmt.Errorf("cannot load cookie banner translation: %w", err)
-			}
-
-			if err := translation.Delete(ctx, tx, scope); err != nil {
-				return fmt.Errorf("cannot delete cookie banner translation: %w", err)
-			}
-
-			if _, err := s.ensureDraftVersionForBanner(ctx, tx, scope, req.CookieBannerID); err != nil {
-				return fmt.Errorf("cannot ensure draft version: %w", err)
-			}
-
-			return nil
-		},
-	)
 }
 
 func (s *Service) ListCookieBannerTranslations(
