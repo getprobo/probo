@@ -30,6 +30,7 @@ const bannerSettingsFormFragment = graphql`
     privacyPolicyUrl
     consentExpiryDays
     consentMode
+    defaultLanguage
   }
 `;
 
@@ -43,6 +44,7 @@ const updateBannerMutation = graphql`
         privacyPolicyUrl
         consentExpiryDays
         consentMode
+        defaultLanguage
         latestVersion {
           id
           version
@@ -70,6 +72,7 @@ export function BannerSettingsForm({ cookieBannerKey }: BannerSettingsFormProps)
   const [privacyPolicyUrl, setPrivacyPolicyUrl] = useState(banner.privacyPolicyUrl);
   const [consentExpiryDays, setConsentExpiryDays] = useState(String(banner.consentExpiryDays));
   const [consentMode, setConsentMode] = useState(banner.consentMode);
+  const [defaultLanguage, setDefaultLanguage] = useState(banner.defaultLanguage);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -83,6 +86,7 @@ export function BannerSettingsForm({ cookieBannerKey }: BannerSettingsFormProps)
           privacyPolicyUrl,
           consentExpiryDays: parseInt(consentExpiryDays, 10),
           consentMode: consentMode,
+          defaultLanguage,
         },
       },
       onCompleted() {
@@ -111,7 +115,7 @@ export function BannerSettingsForm({ cookieBannerKey }: BannerSettingsFormProps)
             <Input value={privacyPolicyUrl} onChange={e => setPrivacyPolicyUrl(e.target.value)} required />
           </Field>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label>{__("Consent Expiry (days)")}</Label>
               <Input
@@ -127,6 +131,15 @@ export function BannerSettingsForm({ cookieBannerKey }: BannerSettingsFormProps)
               <Select value={consentMode} onValueChange={v => setConsentMode(v as "OPT_IN" | "OPT_OUT")}>
                 <Option value="OPT_IN">{__("Opt-in")}</Option>
                 <Option value="OPT_OUT">{__("Opt-out")}</Option>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>{__("Default Language")}</Label>
+              <Select value={defaultLanguage} onValueChange={setDefaultLanguage}>
+                <Option value="en">{__("English")}</Option>
+                <Option value="fr">{__("French")}</Option>
+                <Option value="de">{__("German")}</Option>
+                <Option value="es">{__("Spanish")}</Option>
               </Select>
             </div>
           </div>

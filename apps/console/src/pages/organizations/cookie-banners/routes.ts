@@ -55,6 +55,11 @@ export const cookieBannerRoutes = [
         Component: lazy(() => import("#/pages/organizations/cookie-banners/configuration/cookies/CookieBannerCookiesPageLoader")),
       },
       {
+        path: "translations",
+        Fallback: LinkCardSkeleton,
+        Component: lazy(() => import("#/pages/organizations/cookie-banners/configuration/translations/CookieBannerTranslationsPageLoader")),
+      },
+      {
         path: "snippet",
         Fallback: LinkCardSkeleton,
         Component: lazy(() => import("#/pages/organizations/cookie-banners/configuration/snippet/CookieBannerSnippetPageLoader")),
