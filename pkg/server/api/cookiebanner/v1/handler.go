@@ -222,10 +222,14 @@ func (h *Handler) handleReportDetectedCookies(w http.ResponseWriter, r *http.Req
 		if name == "" {
 			continue
 		}
-		detected = append(detected, cookiebanner.DetectedCookie{
-			Name:     name,
-			Duration: strings.TrimSpace(c.Duration),
-		})
+
+		detected = append(
+			detected,
+			cookiebanner.DetectedCookie{
+				Name:     name,
+				Duration: strings.TrimSpace(c.Duration),
+			},
+		)
 	}
 
 	if len(detected) == 0 {
@@ -242,6 +246,7 @@ func (h *Handler) handleReportDetectedCookies(w http.ResponseWriter, r *http.Req
 			jsonutil.RenderNotFound(w, fmt.Errorf("banner not found"))
 			return
 		}
+
 		h.logger.ErrorCtx(r.Context(), "cannot report detected cookies", log.Error(err))
 		jsonutil.RenderInternalServerError(w)
 		return
