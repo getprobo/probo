@@ -24,11 +24,12 @@ func NewCustomDomain(d *coredata.CustomDomain, cnameTarget string) *CustomDomain
 		Organization: &Organization{
 			ID: d.OrganizationID,
 		},
-		Domain:       d.Domain,
-		SslStatus:    d.SSLStatus,
-		CreatedAt:    d.CreatedAt,
-		UpdatedAt:    d.UpdatedAt,
-		SslExpiresAt: d.SSLExpiresAt,
+		Domain:            d.Domain,
+		SslStatus:         d.SSLStatus,
+		CreatedAt:         d.CreatedAt,
+		UpdatedAt:         d.UpdatedAt,
+		SslExpiresAt:      d.SSLExpiresAt,
+		ProvisioningError: d.ProvisioningError,
 	}
 
 	// Convert DNS records

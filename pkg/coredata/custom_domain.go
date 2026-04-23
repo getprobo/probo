@@ -47,6 +47,7 @@ type (
 		SSLExpiresAt           *time.Time            `db:"ssl_expires_at"`
 		SSLRetryCount          int                   `db:"ssl_retry_count"`
 		SSLLastAttemptAt       *time.Time            `db:"ssl_last_attempt_at"`
+		ProvisioningError      *string               `db:"provisioning_error"`
 		CreatedAt              time.Time             `db:"created_at"`
 		UpdatedAt              time.Time             `db:"updated_at"`
 	}
@@ -171,6 +172,7 @@ SELECT
 	ssl_expires_at,
 	ssl_retry_count,
 	ssl_last_attempt_at,
+	provisioning_error,
 	created_at,
 	updated_at
 FROM
@@ -227,6 +229,7 @@ SELECT
 	ssl_expires_at,
 	ssl_retry_count,
 	ssl_last_attempt_at,
+	provisioning_error,
 	created_at,
 	updated_at
 FROM
@@ -283,6 +286,7 @@ SELECT
 	ssl_expires_at,
 	ssl_retry_count,
 	ssl_last_attempt_at,
+	provisioning_error,
 	created_at,
 	updated_at
 FROM
@@ -339,6 +343,7 @@ SELECT
 	ssl_expires_at,
 	ssl_retry_count,
 	ssl_last_attempt_at,
+	provisioning_error,
 	created_at,
 	updated_at
 FROM
@@ -401,6 +406,7 @@ INSERT INTO custom_domains (
 	ssl_expires_at,
 	ssl_retry_count,
 	ssl_last_attempt_at,
+	provisioning_error,
 	created_at,
 	updated_at
 ) VALUES (
@@ -419,6 +425,7 @@ INSERT INTO custom_domains (
 	@ssl_expires_at,
 	@ssl_retry_count,
 	@ssl_last_attempt_at,
+	@provisioning_error,
 	@created_at,
 	@updated_at
 )
@@ -440,6 +447,7 @@ INSERT INTO custom_domains (
 		"ssl_expires_at":            cd.SSLExpiresAt,
 		"ssl_retry_count":           cd.SSLRetryCount,
 		"ssl_last_attempt_at":       cd.SSLLastAttemptAt,
+		"provisioning_error":        cd.ProvisioningError,
 		"created_at":                cd.CreatedAt,
 		"updated_at":                cd.UpdatedAt,
 	}
@@ -485,6 +493,7 @@ SET
 	ssl_expires_at = @ssl_expires_at,
 	ssl_retry_count = @ssl_retry_count,
 	ssl_last_attempt_at = @ssl_last_attempt_at,
+	provisioning_error = @provisioning_error,
 	updated_at = @updated_at
 WHERE
 	%s
@@ -506,6 +515,7 @@ WHERE
 		"ssl_expires_at":            cd.SSLExpiresAt,
 		"ssl_retry_count":           cd.SSLRetryCount,
 		"ssl_last_attempt_at":       cd.SSLLastAttemptAt,
+		"provisioning_error":        cd.ProvisioningError,
 		"updated_at":                time.Now(),
 	}
 	maps.Copy(args, scope.SQLArguments())
@@ -567,6 +577,7 @@ SELECT
 	ssl_expires_at,
 	ssl_retry_count,
 	ssl_last_attempt_at,
+	provisioning_error,
 	created_at,
 	updated_at
 FROM
@@ -618,6 +629,7 @@ SELECT
 	ssl_expires_at,
 	ssl_retry_count,
 	ssl_last_attempt_at,
+	provisioning_error,
 	created_at,
 	updated_at
 FROM
@@ -670,6 +682,7 @@ SELECT
 	ssl_expires_at,
 	ssl_retry_count,
 	ssl_last_attempt_at,
+	provisioning_error,
 	created_at,
 	updated_at
 FROM
@@ -725,6 +738,7 @@ SELECT
 	ssl_expires_at,
 	ssl_retry_count,
 	ssl_last_attempt_at,
+	provisioning_error,
 	created_at,
 	updated_at
 FROM
@@ -775,6 +789,7 @@ SELECT
 	ssl_expires_at,
 	ssl_retry_count,
 	ssl_last_attempt_at,
+	provisioning_error,
 	created_at,
 	updated_at
 FROM

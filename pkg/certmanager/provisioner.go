@@ -298,6 +298,7 @@ func (p *Provisioner) resetStaleDomain(
 	fullDomain.HTTPChallengeKeyAuth = nil
 	fullDomain.HTTPChallengeURL = nil
 	fullDomain.HTTPOrderURL = nil
+	fullDomain.ProvisioningError = nil
 	fullDomain.SSLStatus = coredata.CustomDomainSSLStatusPending
 
 	if fullDomain.SSLLastAttemptAt != nil && time.Since(*fullDomain.SSLLastAttemptAt) > 24*time.Hour {
@@ -341,7 +342,13 @@ func (p *Provisioner) provisionDomainCertificate(
 				log.Error(err),
 			)
 
-			return err
+			errMsg := err.Error()
+			domain.ProvisioningError = &errMsg
+			if err := domain.Update(ctx, tx, coredata.NewNoScope()); err != nil {
+				return fmt.Errorf("cannot update domain with provisioning error: %w", err)
+			}
+
+			return nil
 		}
 
 		if err := p.checkCAARecords(domain.Domain); err != nil {
@@ -352,8 +359,16 @@ func (p *Provisioner) provisionDomainCertificate(
 				log.Error(err),
 			)
 
-			return err
+			errMsg := err.Error()
+			domain.ProvisioningError = &errMsg
+			if err := domain.Update(ctx, tx, coredata.NewNoScope()); err != nil {
+				return fmt.Errorf("cannot update domain with provisioning error: %w", err)
+			}
+
+			return nil
 		}
+
+		domain.ProvisioningError = nil
 
 		p.logger.InfoCtx(ctx, "DNS configuration verified, initiating HTTP challenge for domain", log.String("domain", domain.Domain))
 
@@ -406,6 +421,8 @@ func (p *Provisioner) provisionDomainCertificate(
 			log.Error(err),
 		)
 
+		errMsg := err.Error()
+		domain.ProvisioningError = &errMsg
 		domain.SSLRetryCount = domain.SSLRetryCount + 1
 		domain.SSLLastAttemptAt = new(time.Now())
 
@@ -445,6 +462,7 @@ func (p *Provisioner) provisionDomainCertificate(
 		log.Time("expires_at", cert.ExpiresAt),
 	)
 
+	domain.ProvisioningError = nil
 	domain.SSLCertificatePEM = cert.CertPEM
 	if err := domain.EncryptPrivateKey(cert.KeyPEM, p.encryptionKey); err != nil {
 		return fmt.Errorf("cannot encrypt private key: %w", err)

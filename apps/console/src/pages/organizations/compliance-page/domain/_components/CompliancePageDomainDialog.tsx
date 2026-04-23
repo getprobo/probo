@@ -35,6 +35,7 @@ const fragment = graphql`
   fragment CompliancePageDomainDialogFragment on CustomDomain {
     sslStatus
     domain
+    provisioningError
     dnsRecords {
       type
       name
@@ -115,6 +116,13 @@ export function CompliancePageDomainDialog(props: CompliancePageDomainDialogProp
             )
           : (
               <div>
+                {domain.provisioningError && (
+                  <div className="bg-danger-subtle text-danger rounded-lg p-4 mb-4">
+                    <p className="text-sm font-medium mb-1">{__("Provisioning error")}</p>
+                    <p className="text-sm">{domain.provisioningError}</p>
+                  </div>
+                )}
+
                 <h4 className="font-medium mb-3">{__("DNS Configuration")}</h4>
                 <p className="text-sm text-txt-secondary mb-4">
                   {__(
