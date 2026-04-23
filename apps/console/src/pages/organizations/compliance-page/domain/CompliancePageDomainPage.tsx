@@ -13,8 +13,10 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 import { useTranslate } from "@probo/i18n";
-import { Button, Card, IconPlusLarge } from "@probo/ui";
+import { Button, Card, IconPlusLarge, useToast } from "@probo/ui";
+import { useEffect } from "react";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
+import { useSearchParams } from "react-router";
 import { graphql } from "relay-runtime";
 
 import type { CompliancePageDomainPageQuery } from "#/__generated__/core/CompliancePageDomainPageQuery.graphql";
@@ -42,6 +44,33 @@ export function CompliancePageDomainPage(props: {
   const { queryRef } = props;
 
   const { __ } = useTranslate();
+  const { toast } = useToast();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  useEffect(() => {
+    const dcResult = searchParams.get("domain_connect");
+    if (!dcResult) return;
+
+    if (dcResult === "success") {
+      toast({
+        title: __("DNS configured"),
+        description: __("DNS record created successfully via Domain Connect"),
+        variant: "success",
+      });
+    } else if (dcResult === "error") {
+      toast({
+        title: __("Configuration failed"),
+        description: searchParams.get("error_description") ?? __("DNS configuration via Domain Connect failed"),
+        variant: "error",
+      });
+    }
+
+    setSearchParams((prev) => {
+      prev.delete("domain_connect");
+      prev.delete("error_description");
+      return prev;
+    }, { replace: true });
+  }, [searchParams, setSearchParams, toast, __]);
 
   const { organization } = usePreloadedQuery<CompliancePageDomainPageQuery>(
     compliancePageDomainPageQuery,

@@ -15,12 +15,21 @@
 package probod
 
 type CustomDomainsConfig struct {
-	RenewalInterval   int        `json:"renewal-interval"`
-	ProvisionInterval int        `json:"provision-interval"`
-	ResolverAddr      string     `json:"resolver-addr"`
-	CnameTarget       string     `json:"cname-target"`
-	CAAIssuerDomain   string     `json:"caa-issuer-domain"`
-	ACME              ACMEConfig `json:"acme"`
+	RenewalInterval   int                 `json:"renewal-interval"`
+	ProvisionInterval int                 `json:"provision-interval"`
+	ResolverAddr      string              `json:"resolver-addr"`
+	CnameTarget       string              `json:"cname-target"`
+	CAAIssuerDomain   string              `json:"caa-issuer-domain"`
+	ACME              ACMEConfig          `json:"acme"`
+	DomainConnect     DomainConnectConfig `json:"domain-connect"`
+}
+
+type DomainConnectConfig struct {
+	ProviderID  string `json:"provider-id"`
+	ServiceID   string `json:"service-id"`
+	PrivateKey  string `json:"private-key"`
+	KeyID       string `json:"key-id"`
+	CallbackURL string `json:"callback-url"`
 }
 
 type ACMEConfig struct {

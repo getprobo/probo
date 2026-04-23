@@ -31,6 +31,8 @@ import { graphql } from "relay-runtime";
 
 import type { CompliancePageDomainDialogFragment$key } from "#/__generated__/core/CompliancePageDomainDialogFragment.graphql";
 
+import { DomainConnectButton } from "./DomainConnectButton";
+
 const fragment = graphql`
   fragment CompliancePageDomainDialogFragment on CustomDomain {
     sslStatus
@@ -43,6 +45,7 @@ const fragment = graphql`
       ttl
       purpose
     }
+    domainConnectSupported
     sslExpiresAt
   }
 `;
@@ -183,13 +186,32 @@ export function CompliancePageDomainDialog(props: CompliancePageDomainDialogProp
                 </div>
 
                 {domain.sslStatus === "PENDING" && (
-                  <div className="bg-subtle rounded-lg p-4 mt-4">
-                    <p className="text-sm">
-                      {__(
-                        "After adding the DNS records, verification will happen automatically. This may take a few minutes to propagate.",
-                      )}
-                    </p>
-                  </div>
+                  <>
+                    {domain.domainConnectSupported && (
+                      <>
+                        <div className="relative my-6">
+                          <div className="absolute inset-0 flex items-center">
+                            <div className="w-full border-t border-border" />
+                          </div>
+                          <div className="relative flex justify-center text-sm">
+                            <span className="bg-white px-2 text-txt-secondary">
+                              {__("Or configure automatically")}
+                            </span>
+                          </div>
+                        </div>
+
+                        <DomainConnectButton />
+                      </>
+                    )}
+
+                    <div className="bg-subtle rounded-lg p-4 mt-4">
+                      <p className="text-sm">
+                        {__(
+                          "After adding the DNS records, verification will happen automatically. This may take a few minutes to propagate.",
+                        )}
+                      </p>
+                    </div>
+                  </>
                 )}
               </div>
             )}
