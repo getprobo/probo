@@ -65,7 +65,9 @@ func (h *Handler) handleGetConfig(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	config, err := h.cookieBannerSvc.GetActiveBannerConfig(r.Context(), bannerID)
+	lang := r.URL.Query().Get("lang")
+
+	config, err := h.cookieBannerSvc.GetActiveBannerConfig(r.Context(), bannerID, lang)
 	if err != nil {
 		if errors.Is(err, cookiebanner.ErrBannerNotFound) {
 			jsonutil.RenderNotFound(w, fmt.Errorf("banner not found"))
