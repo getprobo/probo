@@ -13,7 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 import type { CookieItem } from "../client";
-import { type BannerTexts, interpolate } from "../i18n";
+import { getCookieDetailLabels, interpolate } from "../i18n";
 import { ProboElement } from "./base";
 import type { ProboCategory } from "./category";
 import type { ProboCookieBannerRoot } from "./cookie-banner-root";
@@ -38,15 +38,16 @@ export class ProboCookieList extends ProboElement {
     if (!this.template || !this.category) return;
 
     const root = this.findAncestor<ProboCookieBannerRoot>("probo-cookie-banner-root");
-    const texts = root?.bannerConfig?.texts;
+    const lang = root?.bannerConfig?.language ?? "en";
+    const labels = getCookieDetailLabels(lang);
 
     const cookies = this.category.cookies;
     for (const cookie of cookies) {
-      this.stampCookie(cookie, texts);
+      this.stampCookie(cookie, labels);
     }
   }
 
-  private stampCookie(cookie: CookieItem, texts?: BannerTexts): void {
+  private stampCookie(cookie: CookieItem, labels: Record<string, string>): void {
     if (!this.template) return;
 
     const wrapper = document.createElement("probo-cookie");
@@ -57,7 +58,7 @@ export class ProboCookieList extends ProboElement {
       duration: cookie.duration,
       description: cookie.description,
     });
-    this.fillLabels(clone, texts, {
+    this.fillLabels(clone, labels, {
       description: cookie.description,
       duration: cookie.duration,
     });
@@ -80,15 +81,14 @@ export class ProboCookieList extends ProboElement {
 
   private fillLabels(
     fragment: DocumentFragment,
-    texts: BannerTexts | undefined,
+    labels: Record<string, string>,
     values: Record<string, string>,
   ): void {
-    const labels = fragment.querySelectorAll("[data-label]");
-    for (const el of labels) {
+    for (const el of fragment.querySelectorAll("[data-label]")) {
       const key = el.getAttribute("data-label")!;
       const slotName = key.replace("label_", "");
       const value = values[slotName] ?? "";
-      const tpl = texts?.[key];
+      const tpl = labels[key];
       if (tpl) {
         el.textContent = interpolate(tpl, { value });
         const slot = el.querySelector(`[data-slot="${slotName}"]`);

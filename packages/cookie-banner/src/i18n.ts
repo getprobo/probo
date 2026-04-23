@@ -35,3 +35,14 @@ export function interpolate(
 ): string {
   return template.replace(/\{\{(\w+)\}\}/g, (_, key) => vars[key] ?? "");
 }
+
+const COOKIE_DETAIL_LABELS: Record<string, Record<string, string>> = {
+  en: { label_description: "Description: {{value}}", label_duration: "Duration: {{value}}" },
+  fr: { label_description: "Description : {{value}}", label_duration: "Durée : {{value}}" },
+  de: { label_description: "Beschreibung: {{value}}", label_duration: "Dauer: {{value}}" },
+  es: { label_description: "Descripción: {{value}}", label_duration: "Duración: {{value}}" },
+};
+
+export function getCookieDetailLabels(lang: string): Record<string, string> {
+  return COOKIE_DETAIL_LABELS[lang] ?? COOKIE_DETAIL_LABELS.en;
+}
