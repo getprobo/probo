@@ -936,3 +936,642 @@ func BuildStatementOfApplicabilityDocument(data docgen.StatementOfApplicabilityD
 	}
 	return buf.String(), nil
 }
+
+func (s *GeneratedDocumentService) PublishFindingList(
+	ctx context.Context,
+	organizationID gid.GID,
+	approverIDs []gid.GID,
+) (*coredata.Document, *coredata.DocumentVersion, error) {
+	var (
+		document        *coredata.Document
+		documentVersion *coredata.DocumentVersion
+	)
+
+	err := s.svc.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			organization := &coredata.Organization{}
+			if err := organization.LoadByID(ctx, tx, s.svc.scope, organizationID); err != nil {
+				return fmt.Errorf("cannot load organization: %w", err)
+			}
+
+			documentData, err := s.buildFindingListDocumentData(ctx, tx, organization)
+			if err != nil {
+				return fmt.Errorf("cannot build document data: %w", err)
+			}
+
+			prosemirrorJSON, err := BuildFindingListDocument(documentData)
+			if err != nil {
+				return fmt.Errorf("cannot build prosemirror document: %w", err)
+			}
+
+			now := time.Now()
+
+			finding := coredata.Finding{}
+			findingDocumentID, err := finding.GetGeneratedDocumentID(ctx, tx, organizationID)
+			if err != nil {
+				return fmt.Errorf("cannot query generated documents: %w", err)
+			}
+
+			var existingDoc *coredata.Document
+			if findingDocumentID != nil {
+				doc := &coredata.Document{}
+				err = doc.LoadByID(ctx, tx, s.svc.scope, *findingDocumentID)
+				if err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
+					return fmt.Errorf("cannot load finding list document: %w", err)
+				}
+
+				if err == nil && doc.ArchivedAt == nil {
+					existingDoc = doc
+				} else {
+					if err := finding.ClearGeneratedDocumentID(ctx, tx, []gid.GID{*findingDocumentID}); err != nil {
+						return fmt.Errorf("cannot clear document reference: %w", err)
+					}
+				}
+			}
+
+			hasApprovers := len(approverIDs) > 0
+
+			if existingDoc == nil {
+				documentID := gid.New(s.svc.scope.GetTenantID(), coredata.DocumentEntityType)
+
+				document = &coredata.Document{
+					ID:                    documentID,
+					OrganizationID:        organizationID,
+					WriteMode:             coredata.DocumentWriteModeGenerated,
+					TrustCenterVisibility: coredata.TrustCenterVisibilityNone,
+					Status:                coredata.DocumentStatusActive,
+					CreatedAt:             now,
+					UpdatedAt:             now,
+				}
+
+				if err := document.Insert(ctx, tx, s.svc.scope); err != nil {
+					return fmt.Errorf("cannot insert document: %w", err)
+				}
+
+				if err := finding.UpsertGeneratedDocumentID(ctx, tx, organizationID, s.svc.scope.GetTenantID(), documentID); err != nil {
+					return fmt.Errorf("cannot upsert generated documents: %w", err)
+				}
+			} else {
+				document = existingDoc
+			}
+
+			var newMajor int
+			if document.CurrentPublishedMajor != nil {
+				newMajor = *document.CurrentPublishedMajor + 1
+			} else {
+				newMajor = 1
+			}
+
+			versionStatus := coredata.DocumentVersionStatusPublished
+			var publishedAt *time.Time
+			if hasApprovers {
+				versionStatus = coredata.DocumentVersionStatusDraft
+			} else {
+				publishedAt = &now
+			}
+
+			documentVersionID := gid.New(s.svc.scope.GetTenantID(), coredata.DocumentVersionEntityType)
+			documentVersion = &coredata.DocumentVersion{
+				ID:             documentVersionID,
+				OrganizationID: organizationID,
+				DocumentID:     document.ID,
+				Title:          "Finding Register",
+				Major:          newMajor,
+				Minor:          0,
+				Content:        prosemirrorJSON,
+				Status:         versionStatus,
+				Classification: coredata.DocumentClassificationConfidential,
+				DocumentType:   coredata.DocumentTypeRegister,
+				Orientation:    coredata.DocumentVersionOrientationPortrait,
+				PublishedAt:    publishedAt,
+				CreatedAt:      now,
+				UpdatedAt:      now,
+			}
+
+			if err := documentVersion.Insert(ctx, tx, s.svc.scope); err != nil {
+				if errors.Is(err, coredata.ErrResourceAlreadyExists) {
+					return fmt.Errorf("a version is pending approval, approve or reject it before publishing a new one: %w", err)
+				}
+				return fmt.Errorf("cannot insert document version: %w", err)
+			}
+
+			if hasApprovers {
+				defaultApprovers := &coredata.DocumentDefaultApprovers{}
+				if err := defaultApprovers.MergeByDocumentID(ctx, tx, s.svc.scope, document.ID, organizationID, approverIDs); err != nil {
+					return fmt.Errorf("cannot save default approvers: %w", err)
+				}
+
+				_, err := s.svc.DocumentApprovals.RequestApprovalInTx(
+					ctx,
+					tx,
+					document,
+					documentVersion,
+					approverIDs,
+					nil,
+				)
+				if err != nil {
+					return fmt.Errorf("cannot request approval: %w", err)
+				}
+			} else {
+				document.CurrentPublishedMajor = &newMajor
+				document.CurrentPublishedMinor = new(0)
+				document.UpdatedAt = now
+
+				if err := document.Update(ctx, tx, s.svc.scope); err != nil {
+					return fmt.Errorf("cannot update document: %w", err)
+				}
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return document, documentVersion, nil
+}
+
+func (s *GeneratedDocumentService) GetFindingsDocumentID(
+	ctx context.Context,
+	organizationID gid.GID,
+) (*gid.GID, error) {
+	var findingDocumentID *gid.GID
+
+	err := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		finding := coredata.Finding{}
+		var err error
+		findingDocumentID, err = finding.GetGeneratedDocumentID(ctx, conn, organizationID)
+		return err
+	})
+	if err != nil {
+		return nil, fmt.Errorf("cannot get finding list document ID: %w", err)
+	}
+
+	return findingDocumentID, nil
+}
+
+func (s *GeneratedDocumentService) buildFindingListDocumentData(
+	ctx context.Context,
+	conn pg.Querier,
+	organization *coredata.Organization,
+) (docgen.FindingListData, error) {
+	var findings coredata.Findings
+	if err := findings.LoadAllByOrganizationID(ctx, conn, s.svc.scope, organization.ID); err != nil {
+		return docgen.FindingListData{}, fmt.Errorf("cannot load findings: %w", err)
+	}
+
+	if len(findings) == 0 {
+		return docgen.FindingListData{
+			Title:            "Finding Register",
+			OrganizationName: organization.Name,
+			CreatedAt:        time.Now(),
+			TotalFindings:    0,
+		}, nil
+	}
+
+	ownerIDs := make([]gid.GID, 0, len(findings))
+	ownerIDSet := make(map[gid.GID]struct{})
+	for _, f := range findings {
+		if f.OwnerID != nil {
+			if _, ok := ownerIDSet[*f.OwnerID]; !ok {
+				ownerIDs = append(ownerIDs, *f.OwnerID)
+				ownerIDSet[*f.OwnerID] = struct{}{}
+			}
+		}
+	}
+
+	profileMap := make(map[gid.GID]*coredata.MembershipProfile)
+	if len(ownerIDs) > 0 {
+		var profiles coredata.MembershipProfiles
+		if err := profiles.LoadByIDs(ctx, conn, s.svc.scope, ownerIDs); err != nil {
+			return docgen.FindingListData{}, fmt.Errorf("cannot load profiles: %w", err)
+		}
+
+		for _, p := range profiles {
+			profileMap[p.ID] = p
+		}
+	}
+
+	rows := make([]docgen.FindingListRow, 0, len(findings))
+	for _, f := range findings {
+		ownerName := "-"
+		if f.OwnerID != nil {
+			if p, ok := profileMap[*f.OwnerID]; ok {
+				ownerName = p.FullName
+			}
+		}
+
+		description := "-"
+		if f.Description != nil && *f.Description != "" {
+			description = *f.Description
+		}
+
+		dueDate := "-"
+		if f.DueDate != nil {
+			dueDate = f.DueDate.Format("2006-01-02")
+		}
+
+		rows = append(rows, docgen.FindingListRow{
+			ReferenceID: f.ReferenceID,
+			Kind:        formatFindingKind(f.Kind),
+			Description: description,
+			Status:      formatFindingStatus(f.Status),
+			Priority:    formatFindingPriority(f.Priority),
+			Owner:       ownerName,
+			DueDate:     dueDate,
+		})
+	}
+
+	return docgen.FindingListData{
+		Title:            "Finding Register",
+		OrganizationName: organization.Name,
+		CreatedAt:        time.Now(),
+		TotalFindings:    len(findings),
+		Rows:             rows,
+	}, nil
+}
+
+func formatFindingKind(k coredata.FindingKind) string {
+	switch k {
+	case coredata.FindingKindMinorNonconformity:
+		return "Minor Nonconformity"
+	case coredata.FindingKindMajorNonconformity:
+		return "Major Nonconformity"
+	case coredata.FindingKindObservation:
+		return "Observation"
+	case coredata.FindingKindException:
+		return "Exception"
+	default:
+		return string(k)
+	}
+}
+
+func formatFindingStatus(s coredata.FindingStatus) string {
+	switch s {
+	case coredata.FindingStatusOpen:
+		return "Open"
+	case coredata.FindingStatusInProgress:
+		return "In Progress"
+	case coredata.FindingStatusClosed:
+		return "Closed"
+	case coredata.FindingStatusRiskAccepted:
+		return "Risk Accepted"
+	case coredata.FindingStatusMitigated:
+		return "Mitigated"
+	case coredata.FindingStatusFalsePositive:
+		return "False Positive"
+	default:
+		return string(s)
+	}
+}
+
+func formatFindingPriority(p coredata.FindingPriority) string {
+	switch p {
+	case coredata.FindingPriorityLow:
+		return "Low"
+	case coredata.FindingPriorityMedium:
+		return "Medium"
+	case coredata.FindingPriorityHigh:
+		return "High"
+	default:
+		return string(p)
+	}
+}
+
+var findingListTemplate = template.Must(
+	template.New("finding_list.json.tmpl").
+		Funcs(template.FuncMap{
+			"json": func(v any) (string, error) {
+				b, err := json.Marshal(v)
+				if err != nil {
+					return "", err
+				}
+				return string(b), nil
+			},
+		}).
+		ParseFS(Templates, "templates/finding_list.json.tmpl"),
+)
+
+func BuildFindingListDocument(data docgen.FindingListData) (string, error) {
+	var buf bytes.Buffer
+	if err := findingListTemplate.Execute(&buf, data); err != nil {
+		return "", fmt.Errorf("cannot execute finding list template: %w", err)
+	}
+	return buf.String(), nil
+}
+
+func (s *GeneratedDocumentService) PublishObligationList(
+	ctx context.Context,
+	organizationID gid.GID,
+	approverIDs []gid.GID,
+) (*coredata.Document, *coredata.DocumentVersion, error) {
+	var (
+		document        *coredata.Document
+		documentVersion *coredata.DocumentVersion
+	)
+
+	err := s.svc.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			organization := &coredata.Organization{}
+			if err := organization.LoadByID(ctx, tx, s.svc.scope, organizationID); err != nil {
+				return fmt.Errorf("cannot load organization: %w", err)
+			}
+
+			documentData, err := s.buildObligationListDocumentData(ctx, tx, organization)
+			if err != nil {
+				return fmt.Errorf("cannot build document data: %w", err)
+			}
+
+			prosemirrorJSON, err := BuildObligationListDocument(documentData)
+			if err != nil {
+				return fmt.Errorf("cannot build prosemirror document: %w", err)
+			}
+
+			now := time.Now()
+
+			obligation := coredata.Obligation{}
+			obligationDocumentID, err := obligation.GetGeneratedDocumentID(ctx, tx, organizationID)
+			if err != nil {
+				return fmt.Errorf("cannot query generated documents: %w", err)
+			}
+
+			var existingDoc *coredata.Document
+			if obligationDocumentID != nil {
+				doc := &coredata.Document{}
+				err = doc.LoadByID(ctx, tx, s.svc.scope, *obligationDocumentID)
+				if err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
+					return fmt.Errorf("cannot load obligation list document: %w", err)
+				}
+
+				if err == nil && doc.ArchivedAt == nil {
+					existingDoc = doc
+				} else {
+					if err := obligation.ClearGeneratedDocumentID(ctx, tx, []gid.GID{*obligationDocumentID}); err != nil {
+						return fmt.Errorf("cannot clear document reference: %w", err)
+					}
+				}
+			}
+
+			hasApprovers := len(approverIDs) > 0
+
+			if existingDoc == nil {
+				documentID := gid.New(s.svc.scope.GetTenantID(), coredata.DocumentEntityType)
+
+				document = &coredata.Document{
+					ID:                    documentID,
+					OrganizationID:        organizationID,
+					WriteMode:             coredata.DocumentWriteModeGenerated,
+					TrustCenterVisibility: coredata.TrustCenterVisibilityNone,
+					Status:                coredata.DocumentStatusActive,
+					CreatedAt:             now,
+					UpdatedAt:             now,
+				}
+
+				if err := document.Insert(ctx, tx, s.svc.scope); err != nil {
+					return fmt.Errorf("cannot insert document: %w", err)
+				}
+
+				if err := obligation.UpsertGeneratedDocumentID(ctx, tx, organizationID, s.svc.scope.GetTenantID(), documentID); err != nil {
+					return fmt.Errorf("cannot upsert generated documents: %w", err)
+				}
+			} else {
+				document = existingDoc
+			}
+
+			var newMajor int
+			if document.CurrentPublishedMajor != nil {
+				newMajor = *document.CurrentPublishedMajor + 1
+			} else {
+				newMajor = 1
+			}
+
+			versionStatus := coredata.DocumentVersionStatusPublished
+			var publishedAt *time.Time
+			if hasApprovers {
+				versionStatus = coredata.DocumentVersionStatusDraft
+			} else {
+				publishedAt = &now
+			}
+
+			documentVersionID := gid.New(s.svc.scope.GetTenantID(), coredata.DocumentVersionEntityType)
+			documentVersion = &coredata.DocumentVersion{
+				ID:             documentVersionID,
+				OrganizationID: organizationID,
+				DocumentID:     document.ID,
+				Title:          "Obligation Register",
+				Major:          newMajor,
+				Minor:          0,
+				Content:        prosemirrorJSON,
+				Status:         versionStatus,
+				Classification: coredata.DocumentClassificationConfidential,
+				DocumentType:   coredata.DocumentTypeRegister,
+				Orientation:    coredata.DocumentVersionOrientationPortrait,
+				PublishedAt:    publishedAt,
+				CreatedAt:      now,
+				UpdatedAt:      now,
+			}
+
+			if err := documentVersion.Insert(ctx, tx, s.svc.scope); err != nil {
+				if errors.Is(err, coredata.ErrResourceAlreadyExists) {
+					return fmt.Errorf("a version is pending approval, approve or reject it before publishing a new one: %w", err)
+				}
+				return fmt.Errorf("cannot insert document version: %w", err)
+			}
+
+			if hasApprovers {
+				defaultApprovers := &coredata.DocumentDefaultApprovers{}
+				if err := defaultApprovers.MergeByDocumentID(ctx, tx, s.svc.scope, document.ID, organizationID, approverIDs); err != nil {
+					return fmt.Errorf("cannot save default approvers: %w", err)
+				}
+
+				_, err := s.svc.DocumentApprovals.RequestApprovalInTx(
+					ctx,
+					tx,
+					document,
+					documentVersion,
+					approverIDs,
+					nil,
+				)
+				if err != nil {
+					return fmt.Errorf("cannot request approval: %w", err)
+				}
+			} else {
+				document.CurrentPublishedMajor = &newMajor
+				document.CurrentPublishedMinor = new(0)
+				document.UpdatedAt = now
+
+				if err := document.Update(ctx, tx, s.svc.scope); err != nil {
+					return fmt.Errorf("cannot update document: %w", err)
+				}
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return document, documentVersion, nil
+}
+
+func (s *GeneratedDocumentService) GetObligationsDocumentID(
+	ctx context.Context,
+	organizationID gid.GID,
+) (*gid.GID, error) {
+	var obligationDocumentID *gid.GID
+
+	err := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		obligation := coredata.Obligation{}
+		var err error
+		obligationDocumentID, err = obligation.GetGeneratedDocumentID(ctx, conn, organizationID)
+		return err
+	})
+	if err != nil {
+		return nil, fmt.Errorf("cannot get obligation list document ID: %w", err)
+	}
+
+	return obligationDocumentID, nil
+}
+
+func (s *GeneratedDocumentService) buildObligationListDocumentData(
+	ctx context.Context,
+	conn pg.Querier,
+	organization *coredata.Organization,
+) (docgen.ObligationListData, error) {
+	var obligations coredata.Obligations
+	if err := obligations.LoadAllByOrganizationID(ctx, conn, s.svc.scope, organization.ID); err != nil {
+		return docgen.ObligationListData{}, fmt.Errorf("cannot load obligations: %w", err)
+	}
+
+	if len(obligations) == 0 {
+		return docgen.ObligationListData{
+			Title:            "Obligation Register",
+			OrganizationName: organization.Name,
+			CreatedAt:        time.Now(),
+			TotalObligations: 0,
+		}, nil
+	}
+
+	ownerIDs := make([]gid.GID, 0, len(obligations))
+	ownerIDSet := make(map[gid.GID]struct{})
+	for _, o := range obligations {
+		if _, ok := ownerIDSet[o.OwnerID]; !ok {
+			ownerIDs = append(ownerIDs, o.OwnerID)
+			ownerIDSet[o.OwnerID] = struct{}{}
+		}
+	}
+
+	var profiles coredata.MembershipProfiles
+	if err := profiles.LoadByIDs(ctx, conn, s.svc.scope, ownerIDs); err != nil {
+		return docgen.ObligationListData{}, fmt.Errorf("cannot load profiles: %w", err)
+	}
+
+	profileMap := make(map[gid.GID]*coredata.MembershipProfile, len(profiles))
+	for _, p := range profiles {
+		profileMap[p.ID] = p
+	}
+
+	rows := make([]docgen.ObligationListRow, 0, len(obligations))
+	for _, o := range obligations {
+		ownerName := "-"
+		if p, ok := profileMap[o.OwnerID]; ok {
+			ownerName = p.FullName
+		}
+
+		area := "-"
+		if o.Area != nil && *o.Area != "" {
+			area = *o.Area
+		}
+
+		source := "-"
+		if o.Source != nil && *o.Source != "" {
+			source = *o.Source
+		}
+
+		requirement := "-"
+		if o.Requirement != nil && *o.Requirement != "" {
+			requirement = *o.Requirement
+		}
+
+		regulator := "-"
+		if o.Regulator != nil && *o.Regulator != "" {
+			regulator = *o.Regulator
+		}
+
+		dueDate := "-"
+		if o.DueDate != nil {
+			dueDate = o.DueDate.Format("2006-01-02")
+		}
+
+		rows = append(rows, docgen.ObligationListRow{
+			Area:        area,
+			Source:      source,
+			Requirement: requirement,
+			Status:      formatObligationStatus(o.Status),
+			Type:        formatObligationType(o.Type),
+			Regulator:   regulator,
+			Owner:       ownerName,
+			DueDate:     dueDate,
+		})
+	}
+
+	return docgen.ObligationListData{
+		Title:            "Obligation Register",
+		OrganizationName: organization.Name,
+		CreatedAt:        time.Now(),
+		TotalObligations: len(obligations),
+		Rows:             rows,
+	}, nil
+}
+
+func formatObligationStatus(s coredata.ObligationStatus) string {
+	switch s {
+	case coredata.ObligationStatusNonCompliant:
+		return "Non Compliant"
+	case coredata.ObligationStatusPartiallyCompliant:
+		return "Partially Compliant"
+	case coredata.ObligationStatusCompliant:
+		return "Compliant"
+	default:
+		return string(s)
+	}
+}
+
+func formatObligationType(t coredata.ObligationType) string {
+	switch t {
+	case coredata.ObligationTypeLegal:
+		return "Legal"
+	case coredata.ObligationTypeContractual:
+		return "Contractual"
+	default:
+		return string(t)
+	}
+}
+
+var obligationListTemplate = template.Must(
+	template.New("obligation_list.json.tmpl").
+		Funcs(template.FuncMap{
+			"json": func(v any) (string, error) {
+				b, err := json.Marshal(v)
+				if err != nil {
+					return "", err
+				}
+				return string(b), nil
+			},
+		}).
+		ParseFS(Templates, "templates/obligation_list.json.tmpl"),
+)
+
+func BuildObligationListDocument(data docgen.ObligationListData) (string, error) {
+	var buf bytes.Buffer
+	if err := obligationListTemplate.Execute(&buf, data); err != nil {
+		return "", fmt.Errorf("cannot execute obligation list template: %w", err)
+	}
+	return buf.String(), nil
+}

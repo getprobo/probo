@@ -21,34 +21,29 @@ import (
 
 type (
 	FindingFilter struct {
-		snapshotID **gid.GID
-		kind       *FindingKind
-		status     *FindingStatus
-		priority   *FindingPriority
-		ownerID    *gid.GID
+		kind     *FindingKind
+		status   *FindingStatus
+		priority *FindingPriority
+		ownerID  *gid.GID
 	}
 )
 
 func NewFindingFilter(
-	snapshotID **gid.GID,
 	kind *FindingKind,
 	status *FindingStatus,
 	priority *FindingPriority,
 	ownerID *gid.GID,
 ) *FindingFilter {
 	return &FindingFilter{
-		snapshotID: snapshotID,
-		kind:       kind,
-		status:     status,
-		priority:   priority,
-		ownerID:    ownerID,
+		kind:     kind,
+		status:   status,
+		priority: priority,
+		ownerID:  ownerID,
 	}
 }
 
 func (f *FindingFilter) SQLArguments() pgx.StrictNamedArgs {
 	args := pgx.StrictNamedArgs{
-		"has_snapshot_filter": false,
-		"filter_snapshot_id":  nil,
 		"has_kind_filter":     false,
 		"filter_kind":         nil,
 		"has_status_filter":   false,
@@ -57,13 +52,6 @@ func (f *FindingFilter) SQLArguments() pgx.StrictNamedArgs {
 		"filter_priority":     nil,
 		"has_owner_filter":    false,
 		"filter_owner_id":     nil,
-	}
-
-	if f.snapshotID != nil {
-		args["has_snapshot_filter"] = true
-		if *f.snapshotID != nil {
-			args["filter_snapshot_id"] = **f.snapshotID
-		}
 	}
 
 	if f.kind != nil {
@@ -92,14 +80,7 @@ func (f *FindingFilter) SQLArguments() pgx.StrictNamedArgs {
 func (f *FindingFilter) SQLFragment() string {
 	return `
 (
-    CASE
-        WHEN @has_snapshot_filter::boolean = false THEN TRUE
-        WHEN @has_snapshot_filter::boolean = true AND @filter_snapshot_id::text IS NOT NULL THEN
-            snapshot_id = @filter_snapshot_id::text
-        WHEN @has_snapshot_filter::boolean = true AND @filter_snapshot_id::text IS NULL THEN
-            snapshot_id IS NULL
-        ELSE TRUE
-    END
+    snapshot_id IS NULL
     AND
     CASE
         WHEN @has_kind_filter::boolean = false THEN TRUE

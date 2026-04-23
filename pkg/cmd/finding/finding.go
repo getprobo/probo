@@ -20,6 +20,7 @@ import (
 	"go.probo.inc/probo/pkg/cmd/finding/create"
 	"go.probo.inc/probo/pkg/cmd/finding/delete"
 	"go.probo.inc/probo/pkg/cmd/finding/list"
+	"go.probo.inc/probo/pkg/cmd/finding/publish"
 	"go.probo.inc/probo/pkg/cmd/finding/update"
 	"go.probo.inc/probo/pkg/cmd/finding/view"
 )
@@ -35,6 +36,7 @@ func NewCmdFinding(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(view.NewCmdView(f))
 	cmd.AddCommand(update.NewCmdUpdate(f))
 	cmd.AddCommand(delete.NewCmdDelete(f))
+	cmd.AddCommand(publish.NewCmdPublish(f))
 
 	return cmd
 }

@@ -20,6 +20,7 @@ import (
 	"go.probo.inc/probo/pkg/cmd/obligation/create"
 	"go.probo.inc/probo/pkg/cmd/obligation/delete"
 	"go.probo.inc/probo/pkg/cmd/obligation/list"
+	"go.probo.inc/probo/pkg/cmd/obligation/publish"
 	"go.probo.inc/probo/pkg/cmd/obligation/update"
 	"go.probo.inc/probo/pkg/cmd/obligation/view"
 )
@@ -35,6 +36,7 @@ func NewCmdObligation(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(view.NewCmdView(f))
 	cmd.AddCommand(update.NewCmdUpdate(f))
 	cmd.AddCommand(delete.NewCmdDelete(f))
+	cmd.AddCommand(publish.NewCmdPublish(f))
 
 	return cmd
 }

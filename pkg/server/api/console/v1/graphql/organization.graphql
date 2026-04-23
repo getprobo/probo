@@ -149,6 +149,8 @@ type Organization implements Node {
         orderBy: AuditOrder
     ): AuditConnection! @goField(forceResolver: true)
 
+    findingsDocument: Document @goField(forceResolver: true)
+
     findings(
         first: Int
         after: CursorKey
@@ -245,6 +247,8 @@ type Organization implements Node {
         orderBy: MeasureOrder
         filter: MeasureFilter
     ): MeasureConnection! @goField(forceResolver: true)
+
+    obligationsDocument: Document @goField(forceResolver: true)
 
     obligations(
         first: Int

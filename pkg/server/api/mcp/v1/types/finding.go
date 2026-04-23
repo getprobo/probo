@@ -23,7 +23,6 @@ func NewFinding(f *coredata.Finding) *Finding {
 	finding := &Finding{
 		ID:                 f.ID,
 		OrganizationID:     f.OrganizationID,
-		SnapshotID:         f.SnapshotID,
 		Kind:               f.Kind,
 		ReferenceID:        f.ReferenceID,
 		Description:        f.Description,
@@ -39,11 +38,6 @@ func NewFinding(f *coredata.Finding) *Finding {
 		EffectivenessCheck: f.EffectivenessCheck,
 		CreatedAt:          f.CreatedAt,
 		UpdatedAt:          f.UpdatedAt,
-	}
-
-	if f.SourceID != nil {
-		s := f.SourceID.String()
-		finding.SourceID = &s
 	}
 
 	return finding

@@ -13,7 +13,6 @@ import (
 	"github.com/vikstrous/dataloadgen"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
@@ -292,11 +291,7 @@ func (r *controlResolver) Obligations(ctx context.Context, obj *types.Control, f
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	var snapshotID **gid.GID
-	if filter != nil {
-		snapshotID = &filter.SnapshotID
-	}
-	obligationFilter := coredata.NewObligationFilter(snapshotID)
+	obligationFilter := coredata.NewObligationFilter()
 	page, err := prb.Obligations.ListForControlID(ctx, obj.ID, cursor, obligationFilter)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list control obligations", log.Error(err))
