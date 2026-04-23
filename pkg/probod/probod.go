@@ -31,6 +31,7 @@ import (
 
 	"go.probo.inc/probo/packages/emails"
 	pemutil "go.probo.inc/probo/pkg/crypto/pem"
+	"go.probo.inc/probo/pkg/duration"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	proxyproto "github.com/pires/go-proxyproto"
@@ -203,11 +204,11 @@ func New() *Implm {
 					},
 				},
 				Slack: SlackConfig{
-					SenderInterval: 60,
+					SenderInterval: duration.Duration(60 * time.Second),
 				},
 				Webhook: WebhookConfig{
-					SenderInterval: 5,
-					CacheTTL:       86400,
+					SenderInterval: duration.Duration(5 * time.Second),
+					CacheTTL:       duration.Duration(24 * time.Hour),
 				},
 			},
 			CustomDomains: CustomDomainsConfig{
@@ -647,7 +648,7 @@ func (impl *Implm) Run(
 
 	slackSenderCtx, stopSlackSender := context.WithCancel(context.Background())
 	slackSender := slack.NewSender(pgClient, l.Named("slack-sender"), encryptionKey, slack.Config{
-		Interval: time.Duration(impl.cfg.Notifications.Slack.SenderInterval) * time.Second,
+		Interval: time.Duration(impl.cfg.Notifications.Slack.SenderInterval),
 	})
 	wg.Go(
 		func() {
@@ -659,8 +660,8 @@ func (impl *Implm) Run(
 
 	webhookSenderCtx, stopWebhookSender := context.WithCancel(context.Background())
 	webhookSender := webhook.NewSender(pgClient, l.Named("webhook-sender"), webhook.Config{
-		Interval:      time.Duration(impl.cfg.Notifications.Webhook.SenderInterval) * time.Second,
-		CacheTTL:      time.Duration(impl.cfg.Notifications.Webhook.CacheTTL) * time.Second,
+		Interval:      time.Duration(impl.cfg.Notifications.Webhook.SenderInterval),
+		CacheTTL:      time.Duration(impl.cfg.Notifications.Webhook.CacheTTL),
 		EncryptionKey: encryptionKey,
 		Host:          baseURL.String(),
 	})

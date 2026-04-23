@@ -18,9 +18,11 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.probo.inc/probo/pkg/duration"
 	"go.probo.inc/probo/pkg/probod"
 )
 
@@ -169,10 +171,10 @@ func TestBuilder_Build_Defaults(t *testing.T) {
 	assert.Equal(t, "localhost:1025", cfg.Probod.Notifications.Mailer.SMTP.Addr)
 	assert.False(t, cfg.Probod.Notifications.Mailer.SMTP.TLSRequired)
 	assert.Equal(t, 60, cfg.Probod.Notifications.Mailer.MailerInterval)
-	assert.Equal(t, 60, cfg.Probod.Notifications.Slack.SenderInterval)
+	assert.Equal(t, duration.Duration(60*time.Second), cfg.Probod.Notifications.Slack.SenderInterval)
 	assert.Empty(t, cfg.Probod.Notifications.Slack.SigningSecret)
-	assert.Equal(t, 5, cfg.Probod.Notifications.Webhook.SenderInterval)
-	assert.Equal(t, 86400, cfg.Probod.Notifications.Webhook.CacheTTL)
+	assert.Equal(t, duration.Duration(5*time.Second), cfg.Probod.Notifications.Webhook.SenderInterval)
+	assert.Equal(t, duration.Duration(24*time.Hour), cfg.Probod.Notifications.Webhook.CacheTTL)
 
 	// LLM config — defaults
 	assert.Equal(t, "openai", cfg.Probod.LLM.Defaults.Provider)
@@ -262,8 +264,9 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	env["AWS_ENDPOINT"] = "https://s3.example.com"
 	env["AWS_USE_PATH_STYLE"] = "true"
 	// Notifications
-	env["WEBHOOK_SENDER_INTERVAL"] = "10"
-	env["WEBHOOK_CACHE_TTL"] = "3600"
+	env["SLACK_SENDER_INTERVAL"] = "2m"
+	env["WEBHOOK_SENDER_INTERVAL"] = "10s"
+	env["WEBHOOK_CACHE_TTL"] = "1h"
 	env["CONNECTOR_SLACK_SIGNING_SECRET"] = "slack-signing-secret"
 	// LLM — providers
 	env["OPENAI_API_KEY"] = "sk-test-key"
@@ -342,9 +345,10 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	assert.Equal(t, "https://s3.example.com", cfg.Probod.AWS.Endpoint)
 	assert.True(t, cfg.Probod.AWS.UsePathStyle)
 	// Notifications
+	assert.Equal(t, duration.Duration(2*time.Minute), cfg.Probod.Notifications.Slack.SenderInterval)
 	assert.Equal(t, "slack-signing-secret", cfg.Probod.Notifications.Slack.SigningSecret)
-	assert.Equal(t, 10, cfg.Probod.Notifications.Webhook.SenderInterval)
-	assert.Equal(t, 3600, cfg.Probod.Notifications.Webhook.CacheTTL)
+	assert.Equal(t, duration.Duration(10*time.Second), cfg.Probod.Notifications.Webhook.SenderInterval)
+	assert.Equal(t, duration.Duration(time.Hour), cfg.Probod.Notifications.Webhook.CacheTTL)
 	// LLM — providers
 	assert.Equal(t, "openai", cfg.Probod.LLM.Providers["openai"].Type)
 	assert.Equal(t, "sk-test-key", cfg.Probod.LLM.Providers["openai"].APIKey)

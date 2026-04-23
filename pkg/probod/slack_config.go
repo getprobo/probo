@@ -14,7 +14,9 @@
 
 package probod
 
+import "go.probo.inc/probo/pkg/duration"
+
 type SlackConfig struct {
-	SenderInterval int    `json:"sender-interval"`
-	SigningSecret  string `json:"signing-secret"`
+	SenderInterval duration.Duration `json:"sender-interval"`
+	SigningSecret  string            `json:"signing-secret"`
 }
