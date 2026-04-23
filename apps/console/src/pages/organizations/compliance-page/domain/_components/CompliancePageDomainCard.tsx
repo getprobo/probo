@@ -30,6 +30,7 @@ const fragment = graphql`
   fragment CompliancePageDomainCardFragment on CustomDomain {
     domain
     sslStatus
+    provisioningError
     canDelete: permission(action: "core:custom-domain:delete")
     ...CompliancePageDomainDialogFragment
   }
@@ -52,7 +53,9 @@ export function CompliancePageDomainCard(props: { fKey: CompliancePageDomainCard
               <div className="text-sm text-txt-secondary">
                 {domain.sslStatus === "ACTIVE"
                   ? __("Verified")
-                  : __("Pending verification")}
+                  : domain.provisioningError
+                    ? domain.provisioningError
+                    : __("Pending verification")}
               </div>
             </div>
             <Badge

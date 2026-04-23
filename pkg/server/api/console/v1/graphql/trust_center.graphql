@@ -471,6 +471,7 @@ type CustomDomain implements Node {
     domain: String!
     sslStatus: SSLStatus!
     sslExpiresAt: Datetime
+    provisioningError: String
     dnsRecords: [DNSRecordInstruction!]!
     createdAt: Datetime!
     updatedAt: Datetime!
