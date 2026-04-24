@@ -12,13 +12,4 @@
 -- OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 -- PERFORMANCE OF THIS SOFTWARE.
 
-ALTER TABLE evidences
-    ADD COLUMN assessment JSONB NULL;
-
-ALTER TABLE evidences
-    RENAME COLUMN description_status TO assessment_status;
-
-ALTER TABLE evidences
-    RENAME COLUMN description_processing_started_at TO assessment_processing_started_at;
-
 ALTER TYPE evidence_description_status RENAME TO evidence_assessment_status;
