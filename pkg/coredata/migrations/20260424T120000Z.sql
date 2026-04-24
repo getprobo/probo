@@ -15,7 +15,7 @@
 CREATE TABLE agent_runs (
     id              TEXT NOT NULL PRIMARY KEY,
     tenant_id       TEXT NOT NULL,
-    organization_id TEXT NOT NULL,
+    organization_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
     start_agent_name TEXT NOT NULL,
     status          TEXT NOT NULL DEFAULT 'PENDING',
     checkpoint      JSONB,

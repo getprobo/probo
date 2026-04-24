@@ -95,8 +95,13 @@ func PGClient(t *testing.T) *pg.Client {
 	return sharedPGClient
 }
 
-// EnsureAgentRunsTable creates the agent_runs table if it does not
-// exist, using the embedded migration.
+// EnsureAgentRunsTable creates the agent_runs table against the test
+// database using the embedded migration, if the table is not already
+// present. If the table exists with a stale schema (e.g. missing the
+// FK added later), drop it manually or let the production migration
+// runner apply the current version — this helper does not rewrite an
+// existing table to avoid racing concurrent test processes that share
+// the same database.
 func EnsureAgentRunsTable(t *testing.T, client *pg.Client) {
 	t.Helper()
 
@@ -104,25 +109,25 @@ func EnsureAgentRunsTable(t *testing.T, client *pg.Client) {
 		ctx := context.Background()
 		ensureTableErr = client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 			var exists bool
-			err := conn.QueryRow(
+			if err := conn.QueryRow(
 				ctx,
 				`SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'agent_runs')`,
-			).Scan(&exists)
-			if err != nil {
-				return err
+			).Scan(&exists); err != nil {
+				return fmt.Errorf("cannot check agent_runs existence: %w", err)
 			}
 			if exists {
 				return nil
 			}
 
-			// Read from the embedded migration to avoid schema drift.
 			ddl, err := coredata.Migrations.ReadFile("migrations/20260424T120000Z.sql")
 			if err != nil {
 				return fmt.Errorf("cannot read agent_runs migration: %w", err)
 			}
 
-			_, err = conn.Exec(ctx, string(ddl))
-			return err
+			if _, err := conn.Exec(ctx, string(ddl)); err != nil {
+				return fmt.Errorf("cannot apply agent_runs migration: %w", err)
+			}
+			return nil
 		})
 	})
 	require.NoError(t, ensureTableErr, "cannot ensure agent_runs table")
@@ -141,6 +146,8 @@ func CleanupAgentRun(client *pg.Client, id gid.GID) {
 }
 
 // InsertPendingRun inserts a PENDING agent run and registers cleanup.
+// A placeholder organization row is created first so the agent_runs FK
+// on organization_id is satisfied.
 func InsertPendingRun(
 	t *testing.T,
 	client *pg.Client,
@@ -171,16 +178,35 @@ func InsertPendingRun(
 	err = client.WithTx(
 		context.Background(),
 		func(ctx context.Context, tx pg.Tx) error {
+			if _, err := tx.Exec(
+				ctx,
+				`INSERT INTO organizations (id, tenant_id, name, created_at, updated_at) VALUES ($1, $2, $3, $4, $5)`,
+				orgID.String(), tenantID.String(), "test-org-"+orgID.String(), now, now,
+			); err != nil {
+				return fmt.Errorf("cannot insert placeholder organization: %w", err)
+			}
 			return run.Insert(ctx, tx, coredata.NewScope(tenantID))
 		},
 	)
 	require.NoError(t, err)
 
 	t.Cleanup(func() {
-		CleanupAgentRun(client, run.ID)
+		cleanupOrganization(client, orgID)
 	})
 
 	return run
+}
+
+// cleanupOrganization deletes the test organization row; the agent_runs
+// FK has ON DELETE CASCADE so the associated run is removed too.
+func cleanupOrganization(client *pg.Client, id gid.GID) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	_ = client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		_, err := conn.Exec(ctx, "DELETE FROM organizations WHERE id = $1", id.String())
+		return err
+	})
 }
 
 // LoadAgentRun loads an agent run by ID, failing the test on error.
