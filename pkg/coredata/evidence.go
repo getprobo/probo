@@ -565,6 +565,45 @@ FOR UPDATE SKIP LOCKED;
 	return nil
 }
 
+// MarkAssessmentFailed transitions the evidence row to FAILED without
+// touching description, assessment, or any other column. The worker's
+// in-memory evidence pointer may carry mutations from a partially
+// successful assess-and-commit (e.g. a new assessment that could not be
+// persisted); using the full Update method would write those back with
+// FAILED status. This targeted statement guarantees the failure path
+// only changes state-transition columns.
+func (e Evidence) MarkAssessmentFailed(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+) error {
+	q := `
+UPDATE
+    evidences
+SET
+    assessment_status = @assessment_status,
+    assessment_processing_started_at = NULL,
+    updated_at = @updated_at
+WHERE
+    %s
+    AND id = @evidence_id
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"evidence_id":       e.ID,
+		"assessment_status": EvidenceAssessmentStatusFailed,
+		"updated_at":        time.Now(),
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	if _, err := conn.Exec(ctx, q, args); err != nil {
+		return fmt.Errorf("cannot mark evidence assessment failed: %w", err)
+	}
+	return nil
+}
+
 func ResetStaleAssessmentProcessing(
 	ctx context.Context,
 	conn pg.Querier,

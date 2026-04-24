@@ -165,13 +165,12 @@ func (h *evidenceAssessmentHandler) assessAndCommit(
 		return fmt.Errorf("cannot describe evidence: %w", err)
 	}
 
-	if err := evidence.SetAssessment(assessment); err != nil {
-		return err
-	}
-
 	return h.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
+			if err := evidence.SetAssessment(assessment); err != nil {
+				return err
+			}
 			summary := assessment.Summary
 			evidence.Description = &summary
 			evidence.AssessmentStatus = coredata.EvidenceAssessmentStatusCompleted
@@ -195,14 +194,7 @@ func (h *evidenceAssessmentHandler) failEvidence(
 	return h.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			evidence.AssessmentStatus = coredata.EvidenceAssessmentStatusFailed
-			evidence.AssessmentProcessingStartedAt = nil
-			evidence.UpdatedAt = time.Now()
-			if err := evidence.Update(ctx, tx, scope); err != nil {
-				return fmt.Errorf("cannot update evidence: %w", err)
-			}
-
-			return nil
+			return evidence.MarkAssessmentFailed(ctx, tx, scope)
 		},
 	)
 }
