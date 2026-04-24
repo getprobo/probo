@@ -348,12 +348,17 @@ func buildSnapshot(
 		if cookies == nil {
 			cookies = coredata.CookieItems{}
 		}
+		gcmConsentTypes := c.GCMConsentTypes
+		if gcmConsentTypes == nil {
+			gcmConsentTypes = []string{}
+		}
 		snapshotCategories[i] = coredata.CookieBannerVersionSnapshotCategory{
-			Name:        c.Name,
-			Slug:        c.Slug,
-			Description: c.Description,
-			Kind:        c.Kind,
-			Cookies:     cookies,
+			Name:            c.Name,
+			Slug:            c.Slug,
+			Description:     c.Description,
+			Kind:            c.Kind,
+			Cookies:         cookies,
+			GCMConsentTypes: gcmConsentTypes,
 		}
 	}
 

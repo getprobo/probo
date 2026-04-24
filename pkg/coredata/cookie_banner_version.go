@@ -49,11 +49,12 @@ type (
 	}
 
 	CookieBannerVersionSnapshotCategory struct {
-		Name        string             `json:"name"`
-		Slug        string             `json:"slug"`
-		Description string             `json:"description"`
-		Kind        CookieCategoryKind `json:"kind"`
-		Cookies     CookieItems        `json:"cookies"`
+		Name            string             `json:"name"`
+		Slug            string             `json:"slug"`
+		Description     string             `json:"description"`
+		Kind            CookieCategoryKind `json:"kind"`
+		Cookies         CookieItems        `json:"cookies"`
+		GCMConsentTypes []string           `json:"gcm_consent_types"`
 	}
 
 	CookieBannerVersion struct {
