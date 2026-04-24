@@ -23,9 +23,25 @@ import (
 type (
 	AgentStatus string
 
+	// AgentConfig captures the subset of agent options that must remain
+	// stable across a suspend/restore cycle to keep the run coherent.
+	// Currently that is only MaxTurns, because Checkpoint.Turns is a
+	// counter compared against it — if the live agent's bound were
+	// lowered below the saved counter we would either short-circuit the
+	// restored run or fail the warning at restoreSuspended. Other loop
+	// bounds (maxEmptyOutputRetries, maxToolDepth) reset per turn and
+	// are safe to change mid-suspension. Live references (tools,
+	// handoffs, hooks, LLM client, approval callbacks, guardrails) are
+	// intentionally not snapshotted so deploys can update behavior
+	// while runs are paused.
+	AgentConfig struct {
+		MaxTurns int
+	}
+
 	Checkpoint struct {
 		Status        AgentStatus
 		AgentName     string
+		Config        AgentConfig
 		Messages      []llm.Message
 		Usage         llm.Usage
 		Turns         int

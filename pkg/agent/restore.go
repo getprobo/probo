@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"sync"
 
-	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/llm"
 )
 
@@ -44,8 +43,21 @@ func Restore(
 	if err != nil {
 		return nil, fmt.Errorf("cannot resolve agent %q: %w", cp.AgentName, err)
 	}
+	agent = applyCheckpointConfig(agent, cp.Config)
 
 	return restoreCheckpoint(ctx, agent, cp, store, runID, registry)
+}
+
+// applyCheckpointConfig returns a clone of agent with the bounds from
+// the checkpoint snapshot overriding the live values. Zero values in
+// cfg fall through to the live agent so older checkpoints written
+// before the Config field existed, or test-constructed Checkpoint
+// literals that omit Config, still resume correctly.
+func applyCheckpointConfig(agent *Agent, cfg AgentConfig) *Agent {
+	if cfg.MaxTurns <= 0 {
+		return agent
+	}
+	return agent.Clone(WithMaxTurns(cfg.MaxTurns))
 }
 
 func restoreCheckpoint(
@@ -95,16 +107,6 @@ func continueFromMessages(
 ) (*Result, error) {
 	messagesCopy := make([]llm.Message, len(messages))
 	copy(messagesCopy, messages)
-
-	if cp.Turns >= agent.maxTurns {
-		agent.logger.WarnCtx(
-			ctx,
-			"restored agent run has already reached max turns",
-			log.String("agent", agent.name),
-			log.Int("turns", cp.Turns),
-			log.Int("max_turns", agent.maxTurns),
-		)
-	}
 
 	return coreLoop(
 		ctx,
@@ -169,6 +171,7 @@ func restoreNestedSuspended(
 			entries[i].err = fmt.Errorf("cannot resolve inner agent %q: %w", innerCP.AgentName, err)
 			continue
 		}
+		innerAgent = applyCheckpointConfig(innerAgent, innerCP.Config)
 
 		wg.Add(1)
 		go func(i int, tc llm.ToolCall, innerAgent *Agent, innerCP *Checkpoint) {
@@ -297,6 +300,7 @@ func restoreAwaitingApproval(
 			if err != nil {
 				return nil, fmt.Errorf("cannot resolve inner agent %q: %w", innerCP.AgentName, err)
 			}
+			innerAgent = applyCheckpointConfig(innerAgent, innerCP.Config)
 
 			innerIE := &InterruptedError{
 				ToolCalls:        innerCP.PendingToolCalls,

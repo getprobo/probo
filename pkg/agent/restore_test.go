@@ -461,4 +461,100 @@ func TestRestore(t *testing.T) {
 			assert.Contains(t, err.Error(), "unknown checkpoint status")
 		},
 	)
+
+	t.Run(
+		"buildCheckpoint captures MaxTurns in config snapshot",
+		func(t *testing.T) {
+			t.Parallel()
+
+			ag := agent.New(
+				"producer-agent",
+				newTestClient(&mockProvider{}),
+				agent.WithModel("test-model"),
+				agent.WithMaxTurns(7),
+			)
+
+			store := newMemoryCheckpointer()
+
+			stopCh := make(chan struct{})
+			close(stopCh)
+			ctx := agent.WithStopSignal(context.Background(), stopCh)
+
+			_, err := ag.RunWithOpts(
+				ctx,
+				[]llm.Message{
+					{
+						Role:  llm.RoleUser,
+						Parts: []llm.Part{llm.TextPart{Text: "begin"}},
+					},
+				},
+				agent.WithCheckpointer(store, "run-save-side"),
+			)
+
+			var se *agent.SuspendedError
+			require.ErrorAs(t, err, &se)
+
+			cp, loadErr := store.Load(context.Background(), "run-save-side")
+			require.NoError(t, loadErr)
+			require.NotNil(t, cp)
+			assert.Equal(t, 7, cp.Config.MaxTurns)
+		},
+	)
+
+	t.Run(
+		"checkpoint config supersedes live agent config on restore",
+		func(t *testing.T) {
+			t.Parallel()
+
+			provider := &mockProvider{
+				responses: []*llm.ChatCompletionResponse{
+					stopResponse("Completed after resume."),
+				},
+			}
+
+			// Agent registered at restore time has a bound tighter
+			// than the count of turns already taken. Without the
+			// checkpoint config snapshot, coreLoop would immediately
+			// trip MaxTurnsExceededError on its first iteration.
+			restoreAgent := agent.New(
+				"test-agent",
+				newTestClient(provider),
+				agent.WithInstructions("Test."),
+				agent.WithModel("test-model"),
+				agent.WithMaxTurns(5),
+			)
+
+			store := newMemoryCheckpointer()
+			err := store.Save(context.Background(), "run-config", &agent.Checkpoint{
+				Status:    agent.AgentStatusSuspended,
+				AgentName: "test-agent",
+				Config:    agent.AgentConfig{MaxTurns: 20},
+				Messages: []llm.Message{
+					{
+						Role:  llm.RoleUser,
+						Parts: []llm.Part{llm.TextPart{Text: "hi"}},
+					},
+				},
+				Turns: 15,
+			})
+			require.NoError(t, err)
+
+			registry := &simpleRegistry{
+				agents: map[string]*agent.Agent{
+					"test-agent": restoreAgent,
+				},
+			}
+
+			result, err := agent.Restore(
+				context.Background(),
+				store,
+				"run-config",
+				registry,
+			)
+
+			require.NoError(t, err)
+			require.NotNil(t, result)
+			assert.Equal(t, "Completed after resume.", result.FinalMessage().Text())
+		},
+	)
 }
