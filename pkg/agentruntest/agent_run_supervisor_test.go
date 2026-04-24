@@ -121,6 +121,11 @@ func (r *simpleRegistry) Agent(name string) (*agent.Agent, error) {
 // Test 3: Supervisor picks up a PENDING run and completes it
 // ---------------------------------------------------------------------------
 
+// Supervisor tests are intentionally sequential. The supervisor claims
+// runs cross-tenant via LoadNextPendingForUpdateSkipLocked; running two
+// supervisors against the same test database would steal each other's
+// runs. If a per-tenant claim filter is ever added, these can go back
+// to t.Parallel().
 func TestAgentRunSupervisor_PicksUpAndCompletes(t *testing.T) {
 	client := agentruntest.PGClient(t)
 	store := coredata.NewPGCheckpointer(client)
@@ -608,14 +613,23 @@ func TestAgentRunSupervisor_SIGTERM(t *testing.T) {
 	killAndWait := func(cmd *exec.Cmd) {
 		require.NoError(t, cmd.Process.Signal(syscall.SIGTERM))
 		err := cmd.Wait()
-		if err != nil {
-			var exitErr *exec.ExitError
-			if errors.As(err, &exitErr) {
-				t.Logf("subprocess exited: %v", exitErr)
-			} else {
-				t.Fatalf("subprocess error: %v", err)
-			}
+		if err == nil {
+			return
 		}
+		exitErr, ok := errors.AsType[*exec.ExitError](err)
+		if !ok {
+			t.Fatalf("subprocess error: %v", err)
+		}
+		ws, ok := exitErr.Sys().(syscall.WaitStatus)
+		if !ok {
+			t.Fatalf("subprocess exited with unexpected wait status: %v", exitErr)
+		}
+		if ws.Signaled() && ws.Signal() == syscall.SIGTERM {
+			t.Logf("subprocess terminated by SIGTERM")
+			return
+		}
+		t.Fatalf("subprocess exited unexpectedly (signaled=%v signal=%v exit=%d): %v",
+			ws.Signaled(), ws.Signal(), ws.ExitStatus(), exitErr)
 	}
 
 	resetToPending := func() {
@@ -851,8 +865,11 @@ func runSIGTERMSubprocess() {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGTERM)
 	defer stop()
 
+	// signal.NotifyContext sets the cancellation cause to the signal,
+	// so context.Cause(ctx) returns syscall.SIGTERM rather than
+	// context.Canceled. Treat any ctx-cancellation outcome as graceful.
 	err = supervisor.Run(ctx)
-	if err != nil && !errors.Is(err, context.Canceled) {
+	if err != nil && ctx.Err() == nil {
 		fmt.Fprintf(os.Stderr, "subprocess: supervisor error: %v\n", err)
 		os.Exit(1)
 	}
