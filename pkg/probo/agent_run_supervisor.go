@@ -113,8 +113,20 @@ func NewAgentRunSupervisor(
 // closes the shutdown broadcast channel so in-flight Process calls can
 // checkpoint and exit, and waits for all of them to drain before
 // returning.
+//
+// signalShutdown is registered without a stop hook because it is
+// idempotent (sync.Once) and we want it to fire on every ctx
+// cancellation, even one that races with worker.Run returning.
 func (s *AgentRunSupervisor) Run(ctx context.Context) error {
-	stop := context.AfterFunc(ctx, s.handler.signalShutdown)
-	defer stop()
+	context.AfterFunc(ctx, s.handler.signalShutdown)
 	return s.worker.Run(ctx)
+}
+
+// ShutdownBroadcastForTests returns a channel that closes once the
+// supervisor has broadcast graceful shutdown to all in-flight runs.
+// Exposed for tests that need to synchronize tool release with shutdown
+// propagation; not a stable API and not part of the supervisor's public
+// operational contract.
+func (s *AgentRunSupervisor) ShutdownBroadcastForTests() <-chan struct{} {
+	return s.handler.shutdownCh
 }
