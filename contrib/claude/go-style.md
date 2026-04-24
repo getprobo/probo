@@ -175,6 +175,61 @@ type ctxKey struct{ name string }
 var trustCenterIDKey = &ctxKey{name: "trust_center_id"}
 ```
 
+## URL and query parameter construction
+
+**Never** build URLs with `fmt.Sprintf`, string concatenation, or any form of string formatting. Always use the `net/url` package to construct URLs safely.
+
+- Use `url.URL` struct to build full URLs (scheme, host, path, query).
+- Use `url.Values` to build query parameters, then call `.Encode()`.
+- Use `url.QueryEscape` or `url.PathEscape` when embedding a single value into a known-safe base.
+- Use the `pkg/baseurl.URLBuilder` when constructing URLs from configured base URLs.
+
+```go
+// Bad — fmt.Sprintf
+endpoint := fmt.Sprintf("https://api.example.com/users/%s?active=%t", userID, active)
+
+// Bad — string concatenation
+endpoint := "https://api.example.com/orgs/" + orgID + "/members"
+
+// Good — url.JoinPath escapes each segment and sets Path + RawPath
+u, err := url.JoinPath("https://api.example.com", "users", userID)
+if err != nil {
+	return fmt.Errorf("cannot build URL: %w", err)
+}
+
+parsed, err := url.Parse(u)
+if err != nil {
+	return fmt.Errorf("cannot parse URL: %w", err)
+}
+
+q := parsed.Query()
+q.Set("active", strconv.FormatBool(active))
+parsed.RawQuery = q.Encode()
+
+// Good — URLBuilder from pkg/baseurl
+u, err := baseURL.URL("/users", userID).
+	Query("active", strconv.FormatBool(active)).
+	Build()
+```
+
+The same rule applies to query parameters specifically: never concatenate `"?key=" + val + "&other=" + val2`. Always use `url.Values` and assign via `RawQuery`:
+
+```go
+// Bad
+raw := baseEndpoint + "?domain=" + domain + "&limit=100"
+
+// Good
+u, err := url.Parse(baseEndpoint)
+if err != nil {
+	return fmt.Errorf("cannot parse endpoint: %w", err)
+}
+
+q := u.Query()
+q.Set("domain", domain)
+q.Set("limit", "100")
+u.RawQuery = q.Encode()
+```
+
 ## Logging
 
 `go.gearno.de/kit/log` — named, context-aware structured logging with typed fields. **Never log PII, PHI, or other sensitive data** (e.g. emails, names, passwords, tokens, health records). Log opaque identifiers (IDs, request IDs) instead. See [`contrib/claude/logging.md`](logging.md) for the full guide (allowed/forbidden data, field helpers, wiring patterns).

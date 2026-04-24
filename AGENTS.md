@@ -4,7 +4,8 @@ Detailed guides for specific subsystems live in `contrib/claude/`:
 
 - [`contrib/claude/make.md`](contrib/claude/make.md) — GNUmakefile targets, codegen, overridable variables
 - [`contrib/claude/api-surface.md`](contrib/claude/api-surface.md) — GraphQL / MCP / CLI / n8n sync rules
-- [`contrib/claude/go-style.md`](contrib/claude/go-style.md) — Go project deps, style (declarations, calls, imports, errors, naming, logging)
+- [`contrib/claude/go-style.md`](contrib/claude/go-style.md) — Go project deps, style (declarations, calls, imports, errors, naming, logging, safe URL construction)
+- [`contrib/claude/ts-style.md`](contrib/claude/ts-style.md) — TypeScript style (safe URL construction)
 - [`contrib/claude/go-testing.md`](contrib/claude/go-testing.md) — Go test conventions (parallel, require vs assert, naming)
 - [`contrib/claude/go-service.md`](contrib/claude/go-service.md) — Go service orchestration (Run, graceful shutdown, crash propagation)
 - [`contrib/claude/go-worker.md`](contrib/claude/go-worker.md) — Go worker pattern (poll-based, bounded concurrency, FOR UPDATE SKIP LOCKED)
