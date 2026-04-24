@@ -14,3 +14,6 @@
 
 ALTER TABLE cookie_consent_records
     ADD COLUMN sdk_version TEXT NOT NULL DEFAULT '';
+
+ALTER TABLE cookie_consent_records
+    ALTER COLUMN sdk_version DROP DEFAULT;

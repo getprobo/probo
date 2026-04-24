@@ -5,4 +5,6 @@ ALTER TABLE cookie_banners ADD COLUMN cookie_policy_url TEXT NOT NULL DEFAULT ''
 
 UPDATE cookie_banners SET cookie_policy_url = privacy_policy_url WHERE cookie_policy_url = '';
 
+ALTER TABLE cookie_banners ALTER COLUMN cookie_policy_url DROP DEFAULT;
+
 ALTER TABLE cookie_banners ALTER COLUMN privacy_policy_url DROP NOT NULL;
