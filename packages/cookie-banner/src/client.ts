@@ -39,6 +39,7 @@ export interface Category {
   description: string;
   kind: string;
   cookies: CookieItem[];
+  gcm_consent_types: string[];
 }
 
 export interface BannerConfig {
@@ -108,6 +109,7 @@ export class CookieBannerClient {
     const config = await fetchJSON<BannerConfig>(configUrl);
     this.bannerConfig = config;
 
+    this.setGoogleConsentDefaults();
     this.startDetector(config);
 
     const cookie = getConsentCookie();
@@ -272,6 +274,8 @@ export class CookieBannerClient {
   }
 
   private activate(consentData: Record<string, boolean>): void {
+    this.updateGoogleConsentMode(consentData);
+
     const categoryCookies: Record<string, string[]> = {};
     const categoryLabels: Record<string, string> = {};
     for (const cat of this.config.categories) {
@@ -287,6 +291,55 @@ export class CookieBannerClient {
       this.observer.disconnect();
     }
     this.observer = observeAndActivate(consentData, categoryLabels, texts);
+  }
+
+  private hasGCMMapping(): boolean {
+    return this.config.categories.some(
+      (cat) => cat.gcm_consent_types && cat.gcm_consent_types.length > 0,
+    );
+  }
+
+  private setGoogleConsentDefaults(): void {
+    if (!this.hasGCMMapping()) return;
+
+    const w = window as unknown as Record<string, unknown>;
+    const gtag = w.gtag as ((...args: unknown[]) => void) | undefined;
+    if (typeof gtag !== "function") return;
+
+    const defaults: Record<string, string> = {};
+    for (const cat of this.config.categories) {
+      if (!cat.gcm_consent_types) continue;
+      for (const gcmType of cat.gcm_consent_types) {
+        defaults[gcmType] = "denied";
+      }
+    }
+
+    if (Object.keys(defaults).length > 0) {
+      gtag("consent", "default", defaults);
+    }
+  }
+
+  private updateGoogleConsentMode(
+    consentData: Record<string, boolean>,
+  ): void {
+    if (!this.hasGCMMapping()) return;
+
+    const w = window as unknown as Record<string, unknown>;
+    const gtag = w.gtag as ((...args: unknown[]) => void) | undefined;
+    if (typeof gtag !== "function") return;
+
+    const update: Record<string, string> = {};
+    for (const cat of this.config.categories) {
+      if (!cat.gcm_consent_types) continue;
+      const granted = !!consentData[cat.slug];
+      for (const gcmType of cat.gcm_consent_types) {
+        update[gcmType] = granted ? "granted" : "denied";
+      }
+    }
+
+    if (Object.keys(update).length > 0) {
+      gtag("consent", "update", update);
+    }
   }
 
   private startDetector(config: BannerConfig): void {
