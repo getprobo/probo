@@ -25,9 +25,9 @@ const REQUIRED_BUTTONS = [
 export class ProboBanner extends ProboElement {
   private root: ProboRootElement | null = null;
   private onStateChange = (e: Event): void => {
-    const { state } = (e as CustomEvent).detail;
+    const { state, prev } = (e as CustomEvent).detail;
     this.hidden = state !== "banner";
-    if (state === "banner") {
+    if (state === "banner" && prev !== "loading") {
       this.focusFirst();
     }
   };

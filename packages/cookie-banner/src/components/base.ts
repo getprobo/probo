@@ -26,7 +26,7 @@ export class ProboElement extends HTMLElement {
   protected focusFirst(): void {
     requestAnimationFrame(() => {
       const el = this.querySelector<HTMLElement>(FOCUSABLE);
-      el?.focus();
+      el?.focus({ preventScroll: true });
     });
   }
 
