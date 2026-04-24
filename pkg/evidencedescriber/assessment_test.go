@@ -23,7 +23,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.probo.inc/probo/pkg/coredata"
 )
 
 // TestAssessmentOutputType_DecoratesConfidenceEnum guards the
@@ -54,5 +53,5 @@ func TestAssessmentOutputType_DecoratesConfidenceEnum(t *testing.T) {
 	for i, v := range enumRaw {
 		actual[i] = v.(string)
 	}
-	assert.Equal(t, coredata.EvidenceAssessmentConfidenceEnum, actual)
+	assert.Equal(t, evidenceAssessmentConfidenceEnum, actual)
 }

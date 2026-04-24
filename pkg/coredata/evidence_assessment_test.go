@@ -21,47 +21,48 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestEvidence_SetAndGetAssessment_RoundTrip(t *testing.T) {
+// A representative payload shape. The coredata layer is schema-agnostic
+// so any JSON-serialisable struct should round-trip.
+type testAssessmentPayload struct {
+	Summary    string   `json:"summary"`
+	Confidence string   `json:"confidence"`
+	Frameworks []string `json:"frameworks"`
+}
+
+func TestEvidence_SetAssessment_ReadBack(t *testing.T) {
 	t.Parallel()
 
-	in := &EvidenceAssessment{
+	in := &testAssessmentPayload{
 		Summary:    "Google Workspace admin console showing enforced 2SV for all users.",
-		System:     "Google Workspace",
-		Setting:    "enforced 2-step verification",
-		Scope:      "organization-wide",
-		Language:   "en",
-		Frameworks: []string{"SOC2", "ISO27001"},
-		Issues:     []string{},
 		Confidence: "HIGH",
-		Readable:   true,
+		Frameworks: []string{"SOC2", "ISO27001"},
 	}
 
 	var e Evidence
 	require.NoError(t, e.SetAssessment(in))
 	require.NotEmpty(t, e.Assessment, "Assessment raw bytes should be populated")
 
-	out, err := e.GetAssessment()
-	require.NoError(t, err)
-	require.NotNil(t, out)
-	assert.Equal(t, in, out)
+	var out testAssessmentPayload
+	require.NoError(t, e.AssessmentInto(&out))
+	assert.Equal(t, *in, out)
 }
 
 func TestEvidence_SetAssessment_Nil_ClearsField(t *testing.T) {
 	t.Parallel()
 
 	e := Evidence{}
-	require.NoError(t, e.SetAssessment(&EvidenceAssessment{Summary: "stub"}))
+	require.NoError(t, e.SetAssessment(&testAssessmentPayload{Summary: "stub"}))
 	require.NotEmpty(t, e.Assessment)
 
 	require.NoError(t, e.SetAssessment(nil))
 	assert.Empty(t, e.Assessment, "nil input should clear the raw bytes")
 }
 
-func TestEvidence_GetAssessment_EmptyReturnsNil(t *testing.T) {
+func TestEvidence_AssessmentInto_EmptyIsNoOp(t *testing.T) {
 	t.Parallel()
 
 	var e Evidence
-	got, err := e.GetAssessment()
-	require.NoError(t, err)
-	assert.Nil(t, got)
+	out := testAssessmentPayload{Summary: "unchanged"}
+	require.NoError(t, e.AssessmentInto(&out))
+	assert.Equal(t, "unchanged", out.Summary, "empty column should leave dst untouched")
 }
