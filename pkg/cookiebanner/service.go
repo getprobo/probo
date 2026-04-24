@@ -1356,7 +1356,7 @@ func (s *Service) UpdateCookieCategory(
 				}
 				if *req.PostHogConsent {
 					var categories coredata.CookieCategories
-				if err := categories.ClearPostHogConsentByBannerID(ctx, tx, scope, category.CookieBannerID); err != nil {
+					if err := categories.ClearPostHogConsentByBannerID(ctx, tx, scope, category.CookieBannerID); err != nil {
 						return fmt.Errorf("cannot clear posthog consent: %w", err)
 					}
 				}
