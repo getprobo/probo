@@ -24,6 +24,8 @@ import { NotFoundError } from "./errors";
 import { fetchJSON } from "./http";
 import type { BannerTexts } from "./i18n";
 import { detectLanguage } from "./i18n";
+import type { ConsentIntegration } from "./integrations";
+import { createDefaultIntegrations } from "./integrations";
 import { enqueue, flush } from "./queue";
 import { getOrCreateVisitorId } from "./visitor";
 
@@ -40,6 +42,7 @@ export interface Category {
   kind: string;
   cookies: CookieItem[];
   gcm_consent_types: string[];
+  posthog_consent: boolean;
 }
 
 export interface BannerConfig {
@@ -84,6 +87,8 @@ export class CookieBannerClient {
   private readonly visitorId: string;
   private readonly lang: string;
 
+  private readonly integrations: ConsentIntegration[];
+
   private bannerConfig: BannerConfig | null = null;
   private consent: VisitorConsent | null = null;
   private observer: MutationObserver | null = null;
@@ -99,6 +104,7 @@ export class CookieBannerClient {
     this.bannerId = config.bannerId;
     this.visitorId = getOrCreateVisitorId(config.bannerId);
     this.lang = detectLanguage(config.lang);
+    this.integrations = createDefaultIntegrations();
   }
 
   async load(): Promise<void> {
@@ -109,7 +115,9 @@ export class CookieBannerClient {
     const config = await fetchJSON<BannerConfig>(configUrl);
     this.bannerConfig = config;
 
-    this.setGoogleConsentDefaults();
+    for (const integration of this.integrations) {
+      integration.setDefaults(config.categories);
+    }
     this.startDetector(config);
 
     const cookie = getConsentCookie();
@@ -274,7 +282,9 @@ export class CookieBannerClient {
   }
 
   private activate(consentData: Record<string, boolean>): void {
-    this.updateGoogleConsentMode(consentData);
+    for (const integration of this.integrations) {
+      integration.update(this.config.categories, consentData);
+    }
 
     const categoryCookies: Record<string, string[]> = {};
     const categoryLabels: Record<string, string> = {};
@@ -291,55 +301,6 @@ export class CookieBannerClient {
       this.observer.disconnect();
     }
     this.observer = observeAndActivate(consentData, categoryLabels, texts);
-  }
-
-  private hasGCMMapping(): boolean {
-    return this.config.categories.some(
-      (cat) => cat.gcm_consent_types && cat.gcm_consent_types.length > 0,
-    );
-  }
-
-  private setGoogleConsentDefaults(): void {
-    if (!this.hasGCMMapping()) return;
-
-    const w = window as unknown as Record<string, unknown>;
-    const gtag = w.gtag as ((...args: unknown[]) => void) | undefined;
-    if (typeof gtag !== "function") return;
-
-    const defaults: Record<string, string> = {};
-    for (const cat of this.config.categories) {
-      if (!cat.gcm_consent_types) continue;
-      for (const gcmType of cat.gcm_consent_types) {
-        defaults[gcmType] = "denied";
-      }
-    }
-
-    if (Object.keys(defaults).length > 0) {
-      gtag("consent", "default", defaults);
-    }
-  }
-
-  private updateGoogleConsentMode(
-    consentData: Record<string, boolean>,
-  ): void {
-    if (!this.hasGCMMapping()) return;
-
-    const w = window as unknown as Record<string, unknown>;
-    const gtag = w.gtag as ((...args: unknown[]) => void) | undefined;
-    if (typeof gtag !== "function") return;
-
-    const update: Record<string, string> = {};
-    for (const cat of this.config.categories) {
-      if (!cat.gcm_consent_types) continue;
-      const granted = !!consentData[cat.slug];
-      for (const gcmType of cat.gcm_consent_types) {
-        update[gcmType] = granted ? "granted" : "denied";
-      }
-    }
-
-    if (Object.keys(update).length > 0) {
-      gtag("consent", "update", update);
-    }
   }
 
   private startDetector(config: BannerConfig): void {

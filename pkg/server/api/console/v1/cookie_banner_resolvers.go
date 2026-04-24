@@ -472,6 +472,7 @@ func (r *mutationResolver) UpdateCookieCategory(ctx context.Context, input types
 			Slug:             input.Slug,
 			Description:      input.Description,
 			GCMConsentTypes:  gcmConsentTypes,
+			PostHogConsent:   input.PosthogConsent,
 		},
 	)
 	if err != nil {

@@ -31,8 +31,9 @@ interface EditCategoryFormProps {
   slug: string;
   description: string;
   gcmConsentTypes: string[];
+  posthogConsent: boolean;
   isUpdating: boolean;
-  onSave: (name: string, slug: string, description: string, gcmConsentTypes: string[]) => void;
+  onSave: (name: string, slug: string, description: string, gcmConsentTypes: string[], posthogConsent: boolean) => void;
   onCancel: () => void;
 }
 
@@ -41,6 +42,7 @@ export function EditCategoryForm({
   slug,
   description,
   gcmConsentTypes,
+  posthogConsent,
   isUpdating,
   onSave,
   onCancel,
@@ -50,6 +52,7 @@ export function EditCategoryForm({
   const [editSlug, setEditSlug] = useState(slug);
   const [editDescription, setEditDescription] = useState(description);
   const [editGcmTypes, setEditGcmTypes] = useState<string[]>(gcmConsentTypes);
+  const [editPosthogConsent, setEditPosthogConsent] = useState(posthogConsent);
 
   const toggleGcmType = (type: string) => {
     setEditGcmTypes(prev =>
@@ -102,11 +105,28 @@ export function EditCategoryForm({
           ))}
         </div>
       </div>
+      <div>
+        <label className="text-sm font-medium">
+          {__("PostHog")}
+        </label>
+        <p className="text-xs text-muted-foreground mb-2">
+          {__("Control PostHog tracking consent based on this category.")}
+        </p>
+        <label className="flex items-center gap-1.5 text-xs cursor-pointer">
+          <input
+            type="checkbox"
+            checked={editPosthogConsent}
+            onChange={() => setEditPosthogConsent(prev => !prev)}
+            className="rounded"
+          />
+          <span>{__("Opt in/out of PostHog tracking")}</span>
+        </label>
+      </div>
       <div className="flex items-center gap-2">
         <Button
           onClick={() => {
             if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(editSlug)) return;
-            onSave(editName, editSlug, editDescription, editGcmTypes);
+            onSave(editName, editSlug, editDescription, editGcmTypes, editPosthogConsent);
           }}
           disabled={isUpdating}
         >

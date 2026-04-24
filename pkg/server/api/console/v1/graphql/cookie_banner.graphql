@@ -124,6 +124,7 @@ type CookieCategory implements Node {
     kind: CookieCategoryKind!
     rank: Int!
     gcmConsentTypes: [String!]!
+    posthogConsent: Boolean!
 
     cookies(
         first: Int
@@ -310,6 +311,7 @@ input UpdateCookieCategoryInput {
     slug: String
     description: String
     gcmConsentTypes: [String!]
+    posthogConsent: Boolean
 }
 
 input DeleteCookieCategoryInput {

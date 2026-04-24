@@ -55,6 +55,7 @@ type (
 		Kind            CookieCategoryKind `json:"kind"`
 		Cookies         CookieItems        `json:"cookies"`
 		GCMConsentTypes []string           `json:"gcm_consent_types"`
+		PostHogConsent  bool               `json:"posthog_consent"`
 	}
 
 	CookieBannerVersion struct {

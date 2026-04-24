@@ -74,6 +74,7 @@ type (
 		Slug             *string
 		Description      *string
 		GCMConsentTypes  *[]string
+		PostHogConsent   *bool
 	}
 
 	CreateCookieRequest struct {
@@ -360,6 +361,7 @@ func buildSnapshot(
 			Kind:            c.Kind,
 			Cookies:         cookies,
 			GCMConsentTypes: gcmConsentTypes,
+			PostHogConsent:  c.PostHogConsent,
 		}
 	}
 
@@ -1346,6 +1348,9 @@ func (s *Service) UpdateCookieCategory(
 			}
 			if req.GCMConsentTypes != nil {
 				category.GCMConsentTypes = *req.GCMConsentTypes
+			}
+			if req.PostHogConsent != nil {
+				category.PostHogConsent = *req.PostHogConsent
 			}
 
 			category.UpdatedAt = time.Now()

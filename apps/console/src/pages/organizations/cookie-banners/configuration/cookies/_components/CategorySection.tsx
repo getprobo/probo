@@ -60,6 +60,7 @@ export const categorySectionFragment = graphql`
     description
     kind
     gcmConsentTypes
+    posthogConsent
     cookies(first: 100, orderBy: { field: CREATED_AT, direction: ASC })
       @connection(key: "CategorySection_cookies", filters: [])
       @required(action: THROW) {
@@ -99,6 +100,7 @@ const updateCategoryMutation = graphql`
         description
         rank
         gcmConsentTypes
+        posthogConsent
         updatedAt
       }
       cookieBanner {
@@ -239,7 +241,10 @@ export function CategorySection({ categoryKey, onDelete }: CategorySectionProps)
   const cookies = category.cookies.edges.map(e => e.node);
   const isMutating = isUpdating || isCreating || isUpdatingCookie;
 
-  const handleSaveCategory = (name: string, slug: string, description: string, gcmConsentTypes: string[]) => {
+  const handleSaveCategory = (
+    name: string, slug: string, description: string,
+    gcmConsentTypes: string[], posthogConsent: boolean,
+  ) => {
     updateCategory({
       variables: {
         input: {
@@ -248,6 +253,7 @@ export function CategorySection({ categoryKey, onDelete }: CategorySectionProps)
           slug,
           description,
           gcmConsentTypes,
+          posthogConsent,
         },
       },
       onCompleted(_response, errors) {
@@ -485,6 +491,7 @@ export function CategorySection({ categoryKey, onDelete }: CategorySectionProps)
                 slug={category.slug}
                 description={category.description}
                 gcmConsentTypes={[...category.gcmConsentTypes]}
+                posthogConsent={category.posthogConsent}
                 isUpdating={isUpdating}
                 onSave={handleSaveCategory}
                 onCancel={() => setIsEditingCategory(false)}
@@ -539,6 +546,16 @@ export function CategorySection({ categoryKey, onDelete }: CategorySectionProps)
                     {type}
                   </Badge>
                 ))}
+              </div>
+            )}
+            {category.posthogConsent && (
+              <div className="mt-2 flex items-center gap-1.5">
+                <span className="text-xs text-txt-secondary/70">
+                  {__("PostHog:")}
+                </span>
+                <Badge variant="neutral">
+                  {__("Tracking consent")}
+                </Badge>
               </div>
             )}
           </>
