@@ -52,7 +52,8 @@ input ProfileOrder
 }
 
 input ProfileFilter {
-    excludeContractEnded: Boolean
+    contractEnded: Boolean
+    state: ProfileState
 }
 
 type ProfileConnection

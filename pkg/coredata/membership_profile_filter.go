@@ -25,7 +25,7 @@ type (
 	MembershipProfileFilter struct {
 		withMembership        *bool
 		withTrustCenterAccess *bool
-		excludeContractEnded  *bool
+		contractEnded         *bool
 		currentDate           time.Time
 		email                 *mail.Addr
 		userName              *string
@@ -35,10 +35,10 @@ type (
 	}
 )
 
-func NewMembershipProfileFilter(excludeContractEnded *bool) *MembershipProfileFilter {
+func NewMembershipProfileFilter(contractEnded *bool) *MembershipProfileFilter {
 	return &MembershipProfileFilter{
-		excludeContractEnded: excludeContractEnded,
-		currentDate:          time.Now(),
+		contractEnded: contractEnded,
+		currentDate:   time.Now(),
 	}
 }
 
@@ -96,7 +96,7 @@ func (f *MembershipProfileFilter) SQLArguments() pgx.StrictNamedArgs {
 		"filter_external_id":       f.externalID,
 		"with_membership":          f.withMembership,
 		"with_trust_center_access": f.withTrustCenterAccess,
-		"exclude_contract_ended":   f.excludeContractEnded,
+		"contract_ended":           f.contractEnded,
 		"current_date":             f.currentDate,
 		"filter_state":             f.state,
 		"filter_source":            f.source,
@@ -132,7 +132,9 @@ AND (
 )
 AND (
     CASE
-        WHEN @exclude_contract_ended::boolean IS NOT NULL AND @exclude_contract_ended::boolean = true THEN
+        WHEN @contract_ended::boolean IS NOT NULL AND @contract_ended::boolean = true THEN
+            (p.contract_end_date IS NOT NULL AND p.contract_end_date < @current_date::date)
+        WHEN @contract_ended::boolean IS NOT NULL AND @contract_ended::boolean = false THEN
             (p.contract_end_date IS NULL OR p.contract_end_date >= @current_date::date)
         ELSE TRUE
     END

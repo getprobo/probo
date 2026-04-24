@@ -61,12 +61,13 @@ type profile struct {
 
 func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	var (
-		flagOrg      string
-		flagLimit    int
-		flagOrder    string
-		flagOrderDir string
-		flagActive   bool
-		flagOutput   *string
+		flagOrg           string
+		flagLimit         int
+		flagOrder         string
+		flagOrderDir      string
+		flagContractEnded string
+		flagState         string
+		flagOutput        *string
 	)
 
 	cmd := &cobra.Command{
@@ -76,8 +77,11 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 		Example: `  # List users in the default organization
   prb user list
 
-  # List only active users as JSON
-  prb user ls --active --json`,
+  # List only active users
+  prb user ls --state ACTIVE
+
+  # List users whose contract has ended
+  prb user ls --contract-ended true`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := cmdutil.ValidateOutputFlag(flagOutput); err != nil {
@@ -124,10 +128,24 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				}
 			}
 
-			if flagActive {
-				variables["filter"] = map[string]any{
-					"excludeContractEnded": true,
+			filter := map[string]any{}
+
+			if flagContractEnded != "" {
+				if err := cmdutil.ValidateEnum("contract-ended", flagContractEnded, []string{"true", "false"}); err != nil {
+					return err
 				}
+				filter["contractEnded"] = flagContractEnded == "true"
+			}
+
+			if flagState != "" {
+				if err := cmdutil.ValidateEnum("state", flagState, []string{"ACTIVE", "INACTIVE"}); err != nil {
+					return err
+				}
+				filter["state"] = flagState
+			}
+
+			if len(filter) > 0 {
+				variables["filter"] = filter
 			}
 
 			profiles, totalCount, err := api.Paginate(
@@ -210,7 +228,8 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().IntVarP(&flagLimit, "limit", "L", 30, "Maximum number of users to list")
 	cmd.Flags().StringVar(&flagOrder, "order-by", "", "Order by field (FULL_NAME, CREATED_AT, KIND)")
 	cmd.Flags().StringVar(&flagOrderDir, "order-direction", "DESC", "Sort direction (ASC, DESC)")
-	cmd.Flags().BoolVar(&flagActive, "active", false, "Exclude users whose contract has ended")
+	cmd.Flags().StringVar(&flagContractEnded, "contract-ended", "", "Filter by contract status (true or false)")
+	cmd.Flags().StringVar(&flagState, "state", "", "Filter by profile state (ACTIVE or INACTIVE)")
 	flagOutput = cmdutil.AddOutputFlag(cmd)
 
 	return cmd
