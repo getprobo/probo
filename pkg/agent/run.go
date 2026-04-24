@@ -227,8 +227,11 @@ func (s *loopState) buildCheckpoint(status AgentStatus) *Checkpoint {
 	copy(msgsCopy, s.messages)
 
 	return &Checkpoint{
-		Status:        status,
-		AgentName:     s.agent.name,
+		Status:    status,
+		AgentName: s.agent.name,
+		Config: AgentConfig{
+			MaxTurns: s.agent.maxTurns,
+		},
 		Messages:      msgsCopy,
 		Usage:         s.totalUsage,
 		Turns:         s.turns,
