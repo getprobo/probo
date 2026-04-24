@@ -128,6 +128,7 @@ cmd_status() {
         echo ""
         echo "Services (use VM IP to access from host):"
         echo "  Console:    http://${ip}:5173"
+        echo "  Trust:      http://${ip}:5174"
         echo "  API:        http://${ip}:8080"
         echo "  Grafana:    http://${ip}:3001"
         echo "  Mailpit:    http://${ip}:8025"

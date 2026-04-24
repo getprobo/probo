@@ -19,7 +19,7 @@ Use a sandbox when you need to:
 
 # Build and start the app (probo-stack starts automatically on boot)
 ./contrib/lima/sandbox.sh exec -- make build
-./contrib/lima/sandbox.sh exec -- sudo systemctl start probod probo-console
+./contrib/lima/sandbox.sh exec -- sudo systemctl start probod probo-console probo-trust
 
 # Get the VM IP and service URLs
 ./contrib/lima/sandbox.sh status
@@ -41,6 +41,7 @@ After `sandbox.sh status`, use the VM IP to access services from the host:
 | Service | URL |
 |---|---|
 | Console | `http://<vm-ip>:5173` |
+| Trust | `http://<vm-ip>:5174` |
 | API | `http://<vm-ip>:8080` |
 | Grafana | `http://<vm-ip>:3001` |
 | Mailpit | `http://<vm-ip>:8025` |
@@ -71,19 +72,20 @@ This file is sourced during provisioning before `probod-bootstrap` runs. Any var
 
 ## Systemd services
 
-The sandbox provisions three systemd services:
+The sandbox provisions four systemd services:
 
 | Service | Description | Starts on boot |
 |---|---|---|
 | `probo-stack` | Docker Compose stack (Postgres, SeaweedFS, Keycloak, etc.) | Yes |
 | `probod` | Probo API server (depends on `probo-stack`) | No |
 | `probo-console` | Console frontend dev server | No |
+| `probo-trust` | Trust frontend dev server | No |
 
-`probo-stack` starts automatically when the VM boots. `probod` and `probo-console` must be started manually after building.
+`probo-stack` starts automatically when the VM boots. `probod`, `probo-console`, and `probo-trust` must be started manually after building.
 
 Manage them with `systemctl`:
 ```bash
-./contrib/lima/sandbox.sh exec -- sudo systemctl start probod probo-console
+./contrib/lima/sandbox.sh exec -- sudo systemctl start probod probo-console probo-trust
 ./contrib/lima/sandbox.sh exec -- sudo systemctl stop probod
 ./contrib/lima/sandbox.sh exec -- sudo systemctl restart probod
 ./contrib/lima/sandbox.sh exec -- sudo systemctl status probod
@@ -95,7 +97,7 @@ Manage them with `systemctl`:
 **Start the app:**
 ```bash
 ./contrib/lima/sandbox.sh exec -- make build
-./contrib/lima/sandbox.sh exec -- sudo systemctl start probod probo-console
+./contrib/lima/sandbox.sh exec -- sudo systemctl start probod probo-console probo-trust
 ```
 
 **Run tests:**

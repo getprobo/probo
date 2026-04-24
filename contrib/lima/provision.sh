@@ -100,6 +100,12 @@ su - "${LIMA_USER}" -c "export PATH=/usr/local/go/bin:\$HOME/go/bin:\$PATH && cd
 
 mkdir -p /etc/probod
 
+OAUTH2_SIGNING_KEY_PATH=/etc/probod/oauth2-signing-key.pem
+if [ ! -f "${OAUTH2_SIGNING_KEY_PATH}" ]; then
+    openssl genrsa -out "${OAUTH2_SIGNING_KEY_PATH}" 2048
+    chmod 600 "${OAUTH2_SIGNING_KEY_PATH}"
+fi
+
 # Load developer-specific overrides (not committed to repo).
 if [ -f /workspace/.sandbox.env ]; then
     set -a
@@ -113,12 +119,17 @@ AUTH_COOKIE_SECURE=false \
 AUTH_COOKIE_SECRET="this-is-a-secure-secret-for-cookie-signing-at-least-32-bytes" \
 AUTH_PASSWORD_PEPPER="this-is-a-secure-pepper-for-password-hashing-at-least-32-bytes" \
 PROBOD_ENCRYPTION_KEY="thisisnotasecretAAAAAAAAAAAAAAAAAAAAAAAAAAA=" \
+OAUTH2_SERVER_SIGNING_KEY="$(cat "${OAUTH2_SIGNING_KEY_PATH}")" \
 API_CORS_ALLOWED_ORIGINS="http://${VM_IP}:8080,http://${VM_IP}:5173,http://${VM_IP}:5174" \
 AWS_ENDPOINT="http://127.0.0.1:8333" \
 AWS_ACCESS_KEY_ID="probod" \
 AWS_SECRET_ACCESS_KEY="thisisnotasecret" \
 AWS_USE_PATH_STYLE=true \
     /workspace/bin/probod-bootstrap -output /etc/probod/config.yml
+
+# probod runs as ${LIMA_USER} but bootstrap writes config.yml as root with 0600
+# because it contains secrets. Transfer ownership so probod can read it.
+chown "${LIMA_USER}:${LIMA_USER}" /etc/probod/config.yml "${OAUTH2_SIGNING_KEY_PATH}"
 
 echo "VITE_API_URL=http://${VM_IP}:8080" > /workspace/apps/console/.env
 echo "VITE_API_URL=http://${VM_IP}:8080" > /workspace/apps/trust/.env
@@ -129,7 +140,7 @@ cat > /etc/systemd/system/probo-node-modules.service << EOF
 [Unit]
 Description=Bind-mount VM-local node_modules over workspace
 DefaultDependencies=no
-Before=probo-console.service
+Before=probo-console.service probo-trust.service
 
 [Service]
 Type=oneshot
@@ -199,6 +210,33 @@ RestartSec=3s
 WantedBy=multi-user.target
 EOF
 
+cat > /etc/systemd/system/probo-trust.service << EOF
+[Unit]
+Description=Probo Trust Dev Server
+Requires=probo-node-modules.service
+After=probod.service probo-node-modules.service
+
+[Service]
+Type=simple
+User=${LIMA_USER}
+WorkingDirectory=/workspace
+ExecStart=/usr/bin/npm --workspace @probo/trust run dev -- --host 0.0.0.0
+Restart=on-failure
+RestartSec=3s
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
 systemctl daemon-reload
+systemctl enable --now probo-node-modules.service
 systemctl enable --now probo-stack.service
-systemctl enable probo-node-modules.service probod.service probo-console.service
+systemctl enable probod.service probo-console.service probo-trust.service
+
+# Populate VM-local node_modules with Linux-native binaries (esbuild, etc.).
+# The host's node_modules is macOS; `probo-node-modules.service` bind-mounts an
+# empty tree over /workspace/node_modules, and we install into it once here so
+# `make build` and the dev servers can run without cross-platform mismatches.
+if [ -z "$(ls -A /var/lib/probo/node_modules 2>/dev/null)" ]; then
+    su - "${LIMA_USER}" -c "cd /workspace && npm ci"
+fi
