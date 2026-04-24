@@ -56,6 +56,10 @@ git ls-tree <previous-tag> -- path/to/file
 If the file did not exist at the previous tag, the fix is part of the new
 feature and should not appear in `### Fixed`.
 
+**Escape underscores** — wrap identifiers containing underscores in
+backticks (e.g., `` `probo_consent` ``) so they are not rendered as
+italic in Markdown.
+
 **Summarize** related commits into a single line when appropriate.
 For example a series of `Add proboctl X commands` commits becomes
 `Add CLI`.

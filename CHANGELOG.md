@@ -4,6 +4,37 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.173.0] - 2026-04-24
+
+### Added
+
+- Add cookie banner internationalization with default translations for French, German, and Spanish
+- Add Google Consent Mode v2 integration to cookie banner SDK and console
+- Add PostHog consent integration and plugin system for cookie banner
+- Add Global Privacy Control (GPC) support to cookie banner SDK
+- Add vendor assessment agent
+- Add background PDF generation for published document versions
+- Add cookie banner deletion from overview page
+- Add cookie policy URL field to cookie banners
+- Add slug to cookie categories for stable consent identifiers
+- Add banner ID to `probo_consent` cookie
+- Add `probo_consent` cookie to necessary category on banner creation
+- Add Google Workspace connector to bootstrap
+- Surface domain provisioning errors to users
+- Show SAML configuration ID in SSO settings
+
+### Changed
+
+- Make cookie banner origin immutable after creation
+- Limit detected cookies to 100 per request in cookie banner SDK
+- Constrain PostHog consent to one normal category per banner
+- Move cookie detail labels and duration translations from backend to JS SDK
+
+### Fixed
+
+- Fix intrusive auto-focus on cookie banner initial load
+- Gracefully handle config fetch failure in cookie banner SDK
+
 ## [0.172.1] - 2026-04-22
 
 ### Security
