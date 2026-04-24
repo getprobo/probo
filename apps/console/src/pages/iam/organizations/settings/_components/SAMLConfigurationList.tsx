@@ -82,7 +82,7 @@ export function SAMLConfigurationList(props: {
 
   const confirm = useConfirm();
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const copiedIdTimer = useRef<ReturnType<typeof setTimeout>>();
+  const copiedIdTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const copyId = useCallback((id: string) => {
     void navigator.clipboard.writeText(id);
     setCopiedId(id);
