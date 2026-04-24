@@ -574,6 +574,7 @@ func (s *Service) CreateCookieBanner(
 					Kind:            dc.Kind,
 					Rank:            dc.Rank,
 					GCMConsentTypes: gcmConsentTypes,
+					PostHogConsent:  dc.PostHogConsent,
 					CreatedAt:       now,
 					UpdatedAt:       now,
 				}
@@ -1350,6 +1351,15 @@ func (s *Service) UpdateCookieCategory(
 				category.GCMConsentTypes = *req.GCMConsentTypes
 			}
 			if req.PostHogConsent != nil {
+				if *req.PostHogConsent && category.Kind != coredata.CookieCategoryKindNormal {
+					return ErrPostHogConsentKindInvalid
+				}
+				if *req.PostHogConsent {
+					var categories coredata.CookieCategories
+				if err := categories.ClearPostHogConsentByBannerID(ctx, tx, scope, category.CookieBannerID); err != nil {
+						return fmt.Errorf("cannot clear posthog consent: %w", err)
+					}
+				}
 				category.PostHogConsent = *req.PostHogConsent
 			}
 
@@ -2091,13 +2101,13 @@ func (s *Service) ReportDetectedCookies(
 					UpdatedAt:        now,
 				}
 
-				if err := cookie.Insert(ctx, tx, scope); err != nil {
-					if errors.Is(err, coredata.ErrResourceAlreadyExists) {
-						continue
-					}
+				ok, err := cookie.InsertIfNotExists(ctx, tx, scope)
+				if err != nil {
 					return fmt.Errorf("cannot insert detected cookie: %w", err)
 				}
-				inserted++
+				if ok {
+					inserted++
+				}
 			}
 
 			if inserted > 0 {

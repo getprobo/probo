@@ -490,6 +490,7 @@ export function CategorySection({ categoryKey, onDelete }: CategorySectionProps)
                 name={category.name}
                 slug={category.slug}
                 description={category.description}
+                kind={category.kind}
                 gcmConsentTypes={[...category.gcmConsentTypes]}
                 posthogConsent={category.posthogConsent}
                 isUpdating={isUpdating}

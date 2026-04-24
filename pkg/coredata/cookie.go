@@ -297,6 +297,59 @@ INSERT INTO cookies (
 	return nil
 }
 
+func (c *Cookie) InsertIfNotExists(
+	ctx context.Context,
+	tx pg.Tx,
+	scope Scoper,
+) (bool, error) {
+	q := `
+INSERT INTO cookies (
+	id,
+	tenant_id,
+	organization_id,
+	cookie_banner_id,
+	cookie_category_id,
+	name,
+	duration,
+	description,
+	created_at,
+	updated_at
+) VALUES (
+	@id,
+	@tenant_id,
+	@organization_id,
+	@cookie_banner_id,
+	@cookie_category_id,
+	@name,
+	@duration,
+	@description,
+	@created_at,
+	@updated_at
+)
+ON CONFLICT (cookie_banner_id, name) DO NOTHING
+`
+
+	args := pgx.StrictNamedArgs{
+		"id":                 c.ID,
+		"tenant_id":          scope.GetTenantID(),
+		"organization_id":    c.OrganizationID,
+		"cookie_banner_id":   c.CookieBannerID,
+		"cookie_category_id": c.CookieCategoryID,
+		"name":               c.Name,
+		"duration":           c.Duration,
+		"description":        c.Description,
+		"created_at":         c.CreatedAt,
+		"updated_at":         c.UpdatedAt,
+	}
+
+	result, err := tx.Exec(ctx, q, args)
+	if err != nil {
+		return false, fmt.Errorf("cannot insert cookie: %w", err)
+	}
+
+	return result.RowsAffected() > 0, nil
+}
+
 func (c *Cookie) Update(
 	ctx context.Context,
 	tx pg.Tx,

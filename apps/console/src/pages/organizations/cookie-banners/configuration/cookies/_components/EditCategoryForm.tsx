@@ -30,6 +30,7 @@ interface EditCategoryFormProps {
   name: string;
   slug: string;
   description: string;
+  kind: string;
   gcmConsentTypes: string[];
   posthogConsent: boolean;
   isUpdating: boolean;
@@ -41,6 +42,7 @@ export function EditCategoryForm({
   name,
   slug,
   description,
+  kind,
   gcmConsentTypes,
   posthogConsent,
   isUpdating,
@@ -105,23 +107,25 @@ export function EditCategoryForm({
           ))}
         </div>
       </div>
-      <div>
-        <label className="text-sm font-medium">
-          {__("PostHog")}
-        </label>
-        <p className="text-xs text-muted-foreground mb-2">
-          {__("Control PostHog tracking consent based on this category.")}
-        </p>
-        <label className="flex items-center gap-1.5 text-xs cursor-pointer">
-          <input
-            type="checkbox"
-            checked={editPosthogConsent}
-            onChange={() => setEditPosthogConsent(prev => !prev)}
-            className="rounded"
-          />
-          <span>{__("Opt in/out of PostHog tracking")}</span>
-        </label>
-      </div>
+      {kind === "NORMAL" && (
+        <div>
+          <label className="text-sm font-medium">
+            {__("PostHog")}
+          </label>
+          <p className="text-xs text-muted-foreground mb-2">
+            {__("Control PostHog tracking consent based on this category.")}
+          </p>
+          <label className="flex items-center gap-1.5 text-xs cursor-pointer">
+            <input
+              type="checkbox"
+              checked={editPosthogConsent}
+              onChange={() => setEditPosthogConsent(prev => !prev)}
+              className="rounded"
+            />
+            <span>{__("Opt in/out of PostHog tracking")}</span>
+          </label>
+        </div>
+      )}
       <div className="flex items-center gap-2">
         <Button
           onClick={() => {

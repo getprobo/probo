@@ -482,6 +482,9 @@ func (r *mutationResolver) UpdateCookieCategory(ctx context.Context, input types
 		if errors.Is(err, cookiebanner.ErrCategorySlugAlreadyExists) {
 			return nil, gqlutils.Conflict(ctx, err)
 		}
+		if errors.Is(err, cookiebanner.ErrPostHogConsentKindInvalid) {
+			return nil, gqlutils.Invalid(ctx, err)
+		}
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}

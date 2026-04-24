@@ -469,6 +469,39 @@ WHERE
 	return nil
 }
 
+func (c *CookieCategories) ClearPostHogConsentByBannerID(
+	ctx context.Context,
+	tx pg.Tx,
+	scope Scoper,
+	cookieBannerID gid.GID,
+) error {
+	q := `
+UPDATE cookie_categories
+SET
+	posthog_consent = false,
+	updated_at = @updated_at
+WHERE
+	%s
+	AND cookie_banner_id = @cookie_banner_id
+	AND posthog_consent = true
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"cookie_banner_id": cookieBannerID,
+		"updated_at":       time.Now(),
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	_, err := tx.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot clear posthog consent: %w", err)
+	}
+
+	return nil
+}
+
 func (c *CookieCategory) LoadUncategorisedByCookieBannerID(
 	ctx context.Context,
 	conn pg.Querier,

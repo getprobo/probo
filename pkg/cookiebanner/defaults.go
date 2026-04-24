@@ -25,12 +25,53 @@ var defaultCategories = []struct {
 	Kind            coredata.CookieCategoryKind
 	Rank            int
 	GCMConsentTypes []string
+	PostHogConsent  bool
 }{
-	{"Necessary", "necessary", "Essential cookies required for the website to function properly.", coredata.CookieCategoryKindNecessary, 0, []string{"security_storage"}},
-	{"Analytics", "analytics", "Cookies that help understand how visitors interact with the website.", coredata.CookieCategoryKindNormal, 1, []string{"analytics_storage"}},
-	{"Advertising", "advertising", "Cookies used to deliver relevant advertisements and track campaigns.", coredata.CookieCategoryKindNormal, 2, []string{"ad_storage", "ad_user_data", "ad_personalization"}},
-	{"Functional", "functional", "Cookies that enable enhanced functionality and personalization.", coredata.CookieCategoryKindNormal, 3, []string{"functionality_storage", "personalization_storage"}},
-	{"Uncategorised", "uncategorised", "Cookies that have not been assigned to a category yet.", coredata.CookieCategoryKindUncategorised, 4, nil},
+	{
+		Name:            "Necessary",
+		Slug:            "necessary",
+		Description:     "Essential cookies required for the website to function properly.",
+		Kind:            coredata.CookieCategoryKindNecessary,
+		Rank:            0,
+		GCMConsentTypes: []string{"security_storage"},
+		PostHogConsent:  false,
+	},
+	{
+		Name:            "Analytics",
+		Slug:            "analytics",
+		Description:     "Cookies that help understand how visitors interact with the website.",
+		Kind:            coredata.CookieCategoryKindNormal,
+		Rank:            1,
+		GCMConsentTypes: []string{"analytics_storage"},
+		PostHogConsent:  true,
+	},
+	{
+		Name:            "Advertising",
+		Slug:            "advertising",
+		Description:     "Cookies used to deliver relevant advertisements and track campaigns.",
+		Kind:            coredata.CookieCategoryKindNormal,
+		Rank:            2,
+		GCMConsentTypes: []string{"ad_storage", "ad_user_data", "ad_personalization"},
+		PostHogConsent:  false,
+	},
+	{
+		Name:            "Functional",
+		Slug:            "functional",
+		Description:     "Cookies that enable enhanced functionality and personalization.",
+		Kind:            coredata.CookieCategoryKindNormal,
+		Rank:            3,
+		GCMConsentTypes: []string{"functionality_storage", "personalization_storage"},
+		PostHogConsent:  false,
+	},
+	{
+		Name:            "Uncategorised",
+		Slug:            "uncategorised",
+		Description:     "Cookies that have not been assigned to a category yet.",
+		Kind:            coredata.CookieCategoryKindUncategorised,
+		Rank:            4,
+		GCMConsentTypes: nil,
+		PostHogConsent:  false,
+	},
 }
 
 var defaultCategoryTranslationsByLanguage = map[string]map[string]struct {
