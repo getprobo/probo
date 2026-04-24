@@ -100,16 +100,6 @@ func (e *Evidence) AuthorizationAttributes(
 	return attrsByID, nil
 }
 
-// assessmentArg returns the value to bind for the `assessment` JSONB
-// column. pgx rejects empty byte slices as invalid JSON, so an empty
-// Assessment is sent as NULL.
-func (e Evidence) assessmentArg() any {
-	if len(e.Assessment) == 0 {
-		return nil
-	}
-	return []byte(e.Assessment)
-}
-
 func (e Evidence) Upsert(
 	ctx context.Context,
 	conn pg.Querier,
@@ -171,13 +161,16 @@ WHERE evidences.state = 'REQUESTED';
 		"type":                             e.Type,
 		"url":                              e.URL,
 		"description":                      e.Description,
-		"assessment":                       e.assessmentArg(),
+		"assessment":                       e.Assessment.Arg(),
 		"assessment_status":                e.AssessmentStatus,
 		"assessment_processing_started_at": e.AssessmentProcessingStartedAt,
 	}
 	_, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot upsert evidence: %w", err)
+	}
 
-	return err
+	return nil
 }
 
 func (e Evidence) Insert(
@@ -239,7 +232,7 @@ VALUES (
 		"type":                             e.Type,
 		"url":                              e.URL,
 		"description":                      e.Description,
-		"assessment":                       e.assessmentArg(),
+		"assessment":                       e.Assessment.Arg(),
 		"assessment_status":                e.AssessmentStatus,
 		"assessment_processing_started_at": e.AssessmentProcessingStartedAt,
 	}
@@ -513,7 +506,7 @@ WHERE
 		"evidence_file_id":                 e.EvidenceFileId,
 		"url":                              e.URL,
 		"description":                      e.Description,
-		"assessment":                       e.assessmentArg(),
+		"assessment":                       e.Assessment.Arg(),
 		"assessment_status":                e.AssessmentStatus,
 		"assessment_processing_started_at": e.AssessmentProcessingStartedAt,
 		"updated_at":                       e.UpdatedAt,
@@ -521,8 +514,11 @@ WHERE
 	maps.Copy(args, scope.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot update evidence: %w", err)
+	}
 
-	return err
+	return nil
 }
 
 func (e Evidence) Delete(
@@ -618,6 +614,9 @@ WHERE
 `
 
 	_, err := conn.Exec(ctx, q, time.Now().Add(-staleAfter))
+	if err != nil {
+		return fmt.Errorf("cannot reset stale assessment processing: %w", err)
+	}
 
-	return err
+	return nil
 }

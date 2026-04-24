@@ -22,14 +22,36 @@ import (
 
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/agent"
-	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/llm"
 )
 
 //go:embed prompt.txt
 var systemPrompt string
 
+// EvidenceAssessmentConfidenceEnum is the canonical set of allowed
+// values for EvidenceAssessment.Confidence. It is injected into the
+// generated JSON schema via agent.OutputType.DecorateEnum because
+// jsonschema struct tags cannot encode enum constraints directly.
+var evidenceAssessmentConfidenceEnum = []string{"HIGH", "MEDIUM", "LOW"}
+
 type (
+	// EvidenceAssessment is the structured output produced by the
+	// evidence describer. The worker persists it as JSONB on the
+	// evidences table and derives Evidence.Description from Summary.
+	EvidenceAssessment struct {
+		Summary         string   `json:"summary"          jsonschema:"One plain-text sentence (two at most) summarising what the evidence shows; no markdown, no preamble. When readable is false this field must restate the rejection reason so downstream systems displaying only the summary still inform the user."`
+		System          string   `json:"system"           jsonschema:"Tool or platform shown (e.g. 'Google Workspace', 'GitHub', 'AWS IAM'); empty string if not identifiable."`
+		Setting         string   `json:"setting"          jsonschema:"Specific configuration, feature, or state demonstrated; empty string if not identifiable."`
+		Scope           string   `json:"scope"            jsonschema:"Who or what the evidence applies to (e.g. 'organization-wide', 'all users', 'repository acme/foo'); empty string if not stated."`
+		CapturedAt      string   `json:"captured_at"      jsonschema:"ISO-8601 date or datetime visible on the file; empty string if no date is shown."`
+		Language        string   `json:"language"         jsonschema:"BCP-47 language tag of the visible text (e.g. 'en', 'fr'); empty string if unclear."`
+		Frameworks      []string `json:"frameworks"       jsonschema:"Compliance frameworks the evidence is plausibly relevant to (e.g. 'SOC2', 'ISO27001'); empty when unclear."`
+		Issues          []string `json:"issues"           jsonschema:"Quality problems observed: redacted fields, crop, stale date, low resolution, etc."`
+		Confidence      string   `json:"confidence"       jsonschema:"Overall confidence in the System / Setting / Scope identification; one of HIGH, MEDIUM, LOW."`
+		Readable        bool     `json:"readable"         jsonschema:"True if the file is readable compliance evidence; false if unreadable or off-topic."`
+		RejectionReason string   `json:"rejection_reason" jsonschema:"Set only when readable is false; explains why the file is not usable evidence."`
+	}
+
 	Config struct {
 		Client    *llm.Client
 		Model     string
@@ -67,7 +89,7 @@ func (d *Describer) Describe(
 	filename string,
 	mimeType string,
 	fileBase64 string,
-) (*coredata.EvidenceAssessment, error) {
+) (*EvidenceAssessment, error) {
 	opts := []agent.Option{
 		agent.WithInstructions(systemPrompt),
 		agent.WithModel(d.cfg.Model),
@@ -101,7 +123,7 @@ func (d *Describer) Describe(
 		return nil, fmt.Errorf("cannot describe evidence: %w", err)
 	}
 
-	var a coredata.EvidenceAssessment
+	var a EvidenceAssessment
 	if err := json.Unmarshal([]byte(result.FinalMessage().Text()), &a); err != nil {
 		return nil, fmt.Errorf("cannot parse evidence assessment: %w", err)
 	}
@@ -110,38 +132,17 @@ func (d *Describer) Describe(
 }
 
 // assessmentOutputType builds the EvidenceAssessment structured output
-// type and decorates its JSON Schema with an explicit enum on
-// `confidence`. jsonschema-go reads struct tags only as free-form
-// descriptions, so the enum cannot be encoded in the tag itself;
-// see pkg/vetting/assessment.go for the same pattern applied to
-// VendorInfo.
+// type and decorates its JSON Schema with an explicit enum on the
+// `confidence` field.
 func assessmentOutputType() (*agent.OutputType, error) {
-	ot, err := agent.NewOutputType[coredata.EvidenceAssessment]("evidence_assessment")
+	ot, err := agent.NewOutputType[EvidenceAssessment]("evidence_assessment")
 	if err != nil {
 		return nil, fmt.Errorf("cannot create evidence assessment output type: %w", err)
 	}
-
-	var schema map[string]any
-	if err := json.Unmarshal(ot.Schema, &schema); err != nil {
-		return nil, fmt.Errorf("cannot unmarshal evidence assessment schema: %w", err)
+	if err := ot.DecorateEnum(map[string][]string{
+		"confidence": evidenceAssessmentConfidenceEnum,
+	}); err != nil {
+		return nil, fmt.Errorf("cannot decorate evidence assessment schema: %w", err)
 	}
-
-	properties, ok := schema["properties"].(map[string]any)
-	if !ok {
-		return nil, fmt.Errorf("evidence assessment schema has no properties")
-	}
-
-	confidence, ok := properties["confidence"].(map[string]any)
-	if !ok {
-		return nil, fmt.Errorf("evidence assessment schema has no confidence property")
-	}
-	confidence["enum"] = coredata.EvidenceAssessmentConfidenceEnum
-
-	decorated, err := json.Marshal(schema)
-	if err != nil {
-		return nil, fmt.Errorf("cannot marshal decorated evidence assessment schema: %w", err)
-	}
-	ot.Schema = decorated
-
 	return ot, nil
 }

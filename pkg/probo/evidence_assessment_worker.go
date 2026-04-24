@@ -86,7 +86,7 @@ func (h *evidenceAssessmentHandler) Claim(ctx context.Context) (coredata.Evidenc
 			evidence.AssessmentProcessingStartedAt = &now
 
 			evidence.UpdatedAt = now
-			if err := evidence.Update(ctx, tx, coredata.NewNoScope()); err != nil {
+			if err := evidence.Update(ctx, tx, coredata.NewScopeFromObjectID(evidence.ID)); err != nil {
 				return fmt.Errorf("cannot update evidence: %w", err)
 			}
 
@@ -140,7 +140,7 @@ func (h *evidenceAssessmentHandler) assessAndCommit(
 	evidence *coredata.Evidence,
 ) error {
 	if evidence.EvidenceFileId == nil {
-		return fmt.Errorf("evidence %s has no file", evidence.ID)
+		return fmt.Errorf("cannot assess evidence %s: no file attached", evidence.ID)
 	}
 
 	scope := coredata.NewScopeFromObjectID(evidence.ID)
