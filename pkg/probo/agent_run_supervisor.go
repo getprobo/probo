@@ -118,3 +118,11 @@ func (s *AgentRunSupervisor) Run(ctx context.Context) error {
 	defer stop()
 	return s.worker.Run(ctx)
 }
+
+// ShutdownBroadcast returns a channel that closes once the supervisor has
+// broadcast graceful shutdown to all in-flight runs. Exposed for tests
+// that need to synchronize tool release with shutdown propagation — not
+// part of the supervisor's public operational contract.
+func (s *AgentRunSupervisor) ShutdownBroadcast() <-chan struct{} {
+	return s.handler.shutdownCh
+}

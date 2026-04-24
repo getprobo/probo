@@ -273,9 +273,16 @@ func TestAgentRunSupervisor_StopAndResume(t *testing.T) {
 	// agent's stop channel.
 	cancel1()
 
-	// Give the AfterFunc goroutine a moment to close the broadcast and
-	// propagate into the per-run stopCh before the tool unblocks.
-	time.Sleep(500 * time.Millisecond)
+	// Wait for the shutdown broadcast to be observed (the AfterFunc
+	// goroutine closes it) before releasing the tool. This is
+	// deterministic: no wall-clock sleep. The per-run forwarder
+	// goroutine observes the same close synchronously and closes the
+	// agent stop channel.
+	select {
+	case <-supervisor.ShutdownBroadcast():
+	case <-time.After(5 * time.Second):
+		t.Fatal("timed out waiting for supervisor shutdown broadcast")
+	}
 
 	// Now release the tool. When the coreLoop resumes control at the
 	// next turn boundary it observes the closed stop channel, saves
