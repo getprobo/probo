@@ -36,10 +36,10 @@ type (
 		Thinking *int `json:"thinking"`
 	}
 
-	// EvidenceDescriberConfig holds worker-side tuning for the evidence
-	// description background worker. LLM parameters for the same worker
-	// live under AgentsConfig.EvidenceDescriber.
-	EvidenceDescriberConfig struct {
+	// EvidenceAssessmentConfig holds worker-side tuning for the evidence
+	// assessment background worker. LLM parameters for the same worker
+	// live under AgentsConfig.EvidenceAssessor.
+	EvidenceAssessmentConfig struct {
 		Interval       int `json:"interval"`    // seconds between polls
 		StaleAfter     int `json:"stale-after"` // seconds before a claim is recycled
 		MaxConcurrency int `json:"max-concurrency"`
@@ -89,13 +89,13 @@ type (
 	// settings. Default is used as a fallback when an agent-specific field
 	// is zero-valued.
 	AgentsConfig struct {
-		Providers         map[string]LLMProviderConfig `json:"providers"`
-		Default           LLMAgentConfig               `json:"defaults"`
-		Probo             LLMAgentConfig               `json:"probo"`
-		EvidenceDescriber LLMAgentConfig               `json:"evidence-describer"`
-		ThirdPartyVetter  LLMAgentConfig               `json:"third-party-vetter"`
-		TrackerMapping    LLMAgentConfig               `json:"tracker-mapping"`
-		Tools             AgentToolsConfig             `json:"tools"`
+		Providers        map[string]LLMProviderConfig `json:"providers"`
+		Default          LLMAgentConfig               `json:"defaults"`
+		Probo            LLMAgentConfig               `json:"probo"`
+		EvidenceAssessor LLMAgentConfig               `json:"evidence-assessor"`
+		ThirdPartyVetter LLMAgentConfig               `json:"third-party-vetter"`
+		TrackerMapping   LLMAgentConfig               `json:"tracker-mapping"`
+		Tools            AgentToolsConfig             `json:"tools"`
 	}
 )
 

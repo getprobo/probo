@@ -130,7 +130,7 @@ func (s EvidenceService) UploadMeasureEvidence(
 			}
 
 			evidence.OrganizationID = measure.OrganizationID
-			evidence.EvidenceFileId = &file.ID
+			evidence.EvidenceFileID = &file.ID
 			evidence.MeasureID = req.MeasureID
 
 			if err := evidence.Insert(ctx, conn, scope); err != nil {

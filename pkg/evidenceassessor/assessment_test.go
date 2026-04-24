@@ -12,10 +12,10 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// White-box test (package evidencedescriber, not _test) so it can reach
+// White-box test (package evidenceassessor, not _test) so it can reach
 // the unexported assessmentOutputType helper.
 
-package evidencedescriber
+package evidenceassessor
 
 import (
 	"encoding/json"
@@ -53,5 +53,5 @@ func TestAssessmentOutputType_DecoratesConfidenceEnum(t *testing.T) {
 	for i, v := range enumRaw {
 		actual[i] = v.(string)
 	}
-	assert.Equal(t, evidenceAssessmentConfidenceEnum, actual)
+	assert.Equal(t, assessmentConfidenceEnum, actual)
 }
