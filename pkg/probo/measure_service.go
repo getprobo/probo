@@ -425,15 +425,15 @@ func (s MeasureService) Import(
 
 						evidenceDescription := req.Measures[i].Tasks[j].RequestedEvidences[k].Name
 						evidence := &coredata.Evidence{
-							State:             coredata.EvidenceStateRequested,
-							ID:                evidenceID,
-							TaskID:            &task.ID,
-							ReferenceID:       req.Measures[i].Tasks[j].RequestedEvidences[k].ReferenceID,
-							Type:              req.Measures[i].Tasks[j].RequestedEvidences[k].Type,
-							Description:       &evidenceDescription,
-							DescriptionStatus: coredata.EvidenceDescriptionStatusPending,
-							CreatedAt:         now,
-							UpdatedAt:         now,
+							State:            coredata.EvidenceStateRequested,
+							ID:               evidenceID,
+							TaskID:           &task.ID,
+							ReferenceID:      req.Measures[i].Tasks[j].RequestedEvidences[k].ReferenceID,
+							Type:             req.Measures[i].Tasks[j].RequestedEvidences[k].Type,
+							Description:      &evidenceDescription,
+							AssessmentStatus: coredata.EvidenceAssessmentStatusPending,
+							CreatedAt:        now,
+							UpdatedAt:        now,
 						}
 
 						if err := evidence.Upsert(ctx, tx, s.svc.scope); err != nil {

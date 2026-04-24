@@ -20,52 +20,52 @@ import (
 )
 
 type (
-	EvidenceDescriptionStatus string
+	EvidenceAssessmentStatus string
 )
 
 const (
-	EvidenceDescriptionStatusPending    EvidenceDescriptionStatus = "PENDING"
-	EvidenceDescriptionStatusProcessing EvidenceDescriptionStatus = "PROCESSING"
-	EvidenceDescriptionStatusCompleted  EvidenceDescriptionStatus = "COMPLETED"
-	EvidenceDescriptionStatusFailed     EvidenceDescriptionStatus = "FAILED"
+	EvidenceAssessmentStatusPending    EvidenceAssessmentStatus = "PENDING"
+	EvidenceAssessmentStatusProcessing EvidenceAssessmentStatus = "PROCESSING"
+	EvidenceAssessmentStatusCompleted  EvidenceAssessmentStatus = "COMPLETED"
+	EvidenceAssessmentStatusFailed     EvidenceAssessmentStatus = "FAILED"
 )
 
-func (s EvidenceDescriptionStatus) MarshalText() ([]byte, error) {
+func (s EvidenceAssessmentStatus) MarshalText() ([]byte, error) {
 	return []byte(s.String()), nil
 }
 
-func (s *EvidenceDescriptionStatus) UnmarshalText(data []byte) error {
+func (s *EvidenceAssessmentStatus) UnmarshalText(data []byte) error {
 	val := string(data)
 
 	switch val {
-	case EvidenceDescriptionStatusPending.String():
-		*s = EvidenceDescriptionStatusPending
-	case EvidenceDescriptionStatusProcessing.String():
-		*s = EvidenceDescriptionStatusProcessing
-	case EvidenceDescriptionStatusCompleted.String():
-		*s = EvidenceDescriptionStatusCompleted
-	case EvidenceDescriptionStatusFailed.String():
-		*s = EvidenceDescriptionStatusFailed
+	case EvidenceAssessmentStatusPending.String():
+		*s = EvidenceAssessmentStatusPending
+	case EvidenceAssessmentStatusProcessing.String():
+		*s = EvidenceAssessmentStatusProcessing
+	case EvidenceAssessmentStatusCompleted.String():
+		*s = EvidenceAssessmentStatusCompleted
+	case EvidenceAssessmentStatusFailed.String():
+		*s = EvidenceAssessmentStatusFailed
 	default:
-		return fmt.Errorf("invalid EvidenceDescriptionStatus value: %q", val)
+		return fmt.Errorf("invalid EvidenceAssessmentStatus value: %q", val)
 	}
 
 	return nil
 }
 
-func (s EvidenceDescriptionStatus) String() string {
+func (s EvidenceAssessmentStatus) String() string {
 	return string(s)
 }
 
-func (s *EvidenceDescriptionStatus) Scan(value any) error {
+func (s *EvidenceAssessmentStatus) Scan(value any) error {
 	val, ok := value.(string)
 	if !ok {
-		return fmt.Errorf("invalid scan source for EvidenceDescriptionStatus, expected string got %T", value)
+		return fmt.Errorf("invalid scan source for EvidenceAssessmentStatus, expected string got %T", value)
 	}
 
 	return s.UnmarshalText([]byte(val))
 }
 
-func (s EvidenceDescriptionStatus) Value() (driver.Value, error) {
+func (s EvidenceAssessmentStatus) Value() (driver.Value, error) {
 	return s.String(), nil
 }

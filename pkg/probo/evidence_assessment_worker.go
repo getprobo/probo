@@ -29,7 +29,7 @@ import (
 )
 
 type (
-	evidenceDescriptionHandler struct {
+	evidenceAssessmentHandler struct {
 		pg          *pg.Client
 		fileManager *filemanager.Service
 		describer   *evidencedescriber.Describer
@@ -37,17 +37,17 @@ type (
 		staleAfter  time.Duration
 	}
 
-	EvidenceDescriptionWorkerConfig struct {
+	EvidenceAssessmentWorkerConfig struct {
 		StaleAfter time.Duration
 	}
 )
 
-func NewEvidenceDescriptionWorker(
+func NewEvidenceAssessmentWorker(
 	pgClient *pg.Client,
 	fileManager *filemanager.Service,
 	describer *evidencedescriber.Describer,
 	logger *log.Logger,
-	cfg EvidenceDescriptionWorkerConfig,
+	cfg EvidenceAssessmentWorkerConfig,
 	opts ...worker.Option,
 ) *worker.Worker[coredata.Evidence] {
 	staleAfter := cfg.StaleAfter
@@ -55,7 +55,7 @@ func NewEvidenceDescriptionWorker(
 		staleAfter = 5 * time.Minute
 	}
 
-	h := &evidenceDescriptionHandler{
+	h := &evidenceAssessmentHandler{
 		pg:          pgClient,
 		fileManager: fileManager,
 		describer:   describer,
@@ -64,26 +64,26 @@ func NewEvidenceDescriptionWorker(
 	}
 
 	return worker.New(
-		"evidence-description-worker",
+		"evidence-assessment-worker",
 		h,
 		logger,
 		opts...,
 	)
 }
 
-func (h *evidenceDescriptionHandler) Claim(ctx context.Context) (coredata.Evidence, error) {
+func (h *evidenceAssessmentHandler) Claim(ctx context.Context) (coredata.Evidence, error) {
 	var evidence coredata.Evidence
 
 	if err := h.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			if err := evidence.LoadNextPendingDescriptionForUpdateSkipLocked(ctx, tx); err != nil {
+			if err := evidence.LoadNextPendingAssessmentForUpdateSkipLocked(ctx, tx); err != nil {
 				return err
 			}
 
 			now := time.Now()
-			evidence.DescriptionStatus = coredata.EvidenceDescriptionStatusProcessing
-			evidence.DescriptionProcessingStartedAt = &now
+			evidence.AssessmentStatus = coredata.EvidenceAssessmentStatusProcessing
+			evidence.AssessmentProcessingStartedAt = &now
 			evidence.UpdatedAt = now
 			if err := evidence.Update(ctx, tx, coredata.NewNoScope()); err != nil {
 				return fmt.Errorf("cannot update evidence: %w", err)
@@ -101,17 +101,17 @@ func (h *evidenceDescriptionHandler) Claim(ctx context.Context) (coredata.Eviden
 	return evidence, nil
 }
 
-func (h *evidenceDescriptionHandler) Process(ctx context.Context, evidence coredata.Evidence) error {
-	if err := h.describeAndCommit(ctx, &evidence); err != nil {
+func (h *evidenceAssessmentHandler) Process(ctx context.Context, evidence coredata.Evidence) error {
+	if err := h.assessAndCommit(ctx, &evidence); err != nil {
 		h.logger.ErrorCtx(
 			ctx,
-			"evidence description worker failure",
+			"evidence assessment worker failure",
 			log.Error(err),
 			log.String("evidence_id", evidence.ID.String()),
 		)
 
 		if err := h.failEvidence(ctx, &evidence); err != nil {
-			h.logger.ErrorCtx(ctx, "cannot mark evidence description as failed", log.Error(err))
+			h.logger.ErrorCtx(ctx, "cannot mark evidence assessment as failed", log.Error(err))
 		}
 
 		return err
@@ -120,19 +120,19 @@ func (h *evidenceDescriptionHandler) Process(ctx context.Context, evidence cored
 	return nil
 }
 
-func (h *evidenceDescriptionHandler) RecoverStale(ctx context.Context) error {
+func (h *evidenceAssessmentHandler) RecoverStale(ctx context.Context) error {
 	return h.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := coredata.ResetStaleDescriptionProcessing(ctx, conn, h.staleAfter); err != nil {
-				return fmt.Errorf("cannot reset stale description processing: %w", err)
+			if err := coredata.ResetStaleAssessmentProcessing(ctx, conn, h.staleAfter); err != nil {
+				return fmt.Errorf("cannot reset stale assessment processing: %w", err)
 			}
 			return nil
 		},
 	)
 }
 
-func (h *evidenceDescriptionHandler) describeAndCommit(
+func (h *evidenceAssessmentHandler) assessAndCommit(
 	ctx context.Context,
 	evidence *coredata.Evidence,
 ) error {
@@ -160,17 +160,22 @@ func (h *evidenceDescriptionHandler) describeAndCommit(
 		return fmt.Errorf("cannot download file: %w", err)
 	}
 
-	description, err := h.describer.Describe(ctx, file.FileName, mimeType, base64Data)
+	assessment, err := h.describer.Describe(ctx, file.FileName, mimeType, base64Data)
 	if err != nil {
 		return fmt.Errorf("cannot describe evidence: %w", err)
+	}
+
+	if err := evidence.SetAssessment(assessment); err != nil {
+		return err
 	}
 
 	return h.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			evidence.Description = description
-			evidence.DescriptionStatus = coredata.EvidenceDescriptionStatusCompleted
-			evidence.DescriptionProcessingStartedAt = nil
+			summary := assessment.Summary
+			evidence.Description = &summary
+			evidence.AssessmentStatus = coredata.EvidenceAssessmentStatusCompleted
+			evidence.AssessmentProcessingStartedAt = nil
 			evidence.UpdatedAt = time.Now()
 			if err := evidence.Update(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot update evidence: %w", err)
@@ -181,7 +186,7 @@ func (h *evidenceDescriptionHandler) describeAndCommit(
 	)
 }
 
-func (h *evidenceDescriptionHandler) failEvidence(
+func (h *evidenceAssessmentHandler) failEvidence(
 	ctx context.Context,
 	evidence *coredata.Evidence,
 ) error {
@@ -190,8 +195,8 @@ func (h *evidenceDescriptionHandler) failEvidence(
 	return h.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			evidence.DescriptionStatus = coredata.EvidenceDescriptionStatusFailed
-			evidence.DescriptionProcessingStartedAt = nil
+			evidence.AssessmentStatus = coredata.EvidenceAssessmentStatusFailed
+			evidence.AssessmentProcessingStartedAt = nil
 			evidence.UpdatedAt = time.Now()
 			if err := evidence.Update(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot update evidence: %w", err)

@@ -728,30 +728,36 @@ func (impl *Implm) Run(
 		},
 	)
 
-	evidenceDescriber := evidencedescriber.New(
-		evidenceDescriberLLMClient,
-		evidencedescriber.Config{
-			Model:     evidenceDescriberAgentCfg.ModelName,
-			Temp:      *evidenceDescriberAgentCfg.Temperature,
-			MaxTokens: *evidenceDescriberAgentCfg.MaxTokens,
-		},
-	)
-	evidenceDescriptionWorker := probo.NewEvidenceDescriptionWorker(
+	evidenceDescriberCfg := evidencedescriber.Config{
+		Client:    evidenceDescriberLLMClient,
+		Model:     evidenceDescriberAgentCfg.ModelName,
+		Temp:      *evidenceDescriberAgentCfg.Temperature,
+		MaxTokens: *evidenceDescriberAgentCfg.MaxTokens,
+		Logger:    l.Named("evidence-describer"),
+	}
+	if evidenceDescriberAgentCfg.Thinking != nil {
+		evidenceDescriberCfg.Thinking = *evidenceDescriberAgentCfg.Thinking
+	}
+	evidenceDescriber, err := evidencedescriber.New(evidenceDescriberCfg)
+	if err != nil {
+		return fmt.Errorf("cannot build evidence describer: %w", err)
+	}
+	evidenceAssessmentWorker := probo.NewEvidenceAssessmentWorker(
 		pgClient,
 		fileManagerService,
 		evidenceDescriber,
-		l.Named("evidence-description-worker"),
-		probo.EvidenceDescriptionWorkerConfig{
+		l.Named("evidence-assessment-worker"),
+		probo.EvidenceAssessmentWorkerConfig{
 			StaleAfter: time.Duration(impl.cfg.EvidenceDescriber.StaleAfter) * time.Second,
 		},
 		worker.WithInterval(time.Duration(impl.cfg.EvidenceDescriber.Interval)*time.Second),
 		worker.WithMaxConcurrency(impl.cfg.EvidenceDescriber.MaxConcurrency),
 	)
-	evidenceDescriptionWorkerCtx, stopEvidenceDescriptionWorker := context.WithCancel(context.Background())
+	evidenceAssessmentWorkerCtx, stopEvidenceAssessmentWorker := context.WithCancel(context.Background())
 	wg.Go(
 		func() {
-			if err := evidenceDescriptionWorker.Run(evidenceDescriptionWorkerCtx); err != nil {
-				cancel(fmt.Errorf("evidence description worker crashed: %w", err))
+			if err := evidenceAssessmentWorker.Run(evidenceAssessmentWorkerCtx); err != nil {
+				cancel(fmt.Errorf("evidence assessment worker crashed: %w", err))
 			}
 		},
 	)
@@ -783,7 +789,7 @@ func (impl *Implm) Run(
 	stopWebhookSender()
 	stopESignService()
 	stopMailingListWorker()
-	stopEvidenceDescriptionWorker()
+	stopEvidenceAssessmentWorker()
 	stopDocumentPDFWorker()
 	stopExportJobExporter()
 	stopAccessReviewWorker()
