@@ -130,7 +130,7 @@ func queryWhois(ctx context.Context, server, domain string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("cannot connect to %s: %w", server, err)
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	_ = conn.SetDeadline(time.Now().Add(10 * time.Second))
 

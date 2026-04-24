@@ -92,7 +92,7 @@ func FetchSitemapTool() agent.Tool {
 						ErrorDetail: fmt.Sprintf("cannot decompress gzipped sitemap: %s", err),
 					}), nil
 				}
-				defer gz.Close()
+				defer func() { _ = gz.Close() }()
 				reader = gz
 			}
 

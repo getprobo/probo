@@ -95,7 +95,7 @@ func DownloadPDFTool() agent.Tool {
 					ErrorDetail: fmt.Sprintf("cannot create temp dir: %s", err),
 				}), nil
 			}
-			defer os.RemoveAll(tmpDir)
+			defer func() { _ = os.RemoveAll(tmpDir) }()
 
 			tmpFile := filepath.Join(tmpDir, "input.pdf")
 			if err := os.WriteFile(tmpFile, body, 0o600); err != nil {

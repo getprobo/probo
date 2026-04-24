@@ -92,7 +92,7 @@ func blockingCallLLM(ctx context.Context, agent *Agent, req *llm.ChatCompletionR
 	if sErr != nil {
 		return nil, err // return the original error
 	}
-	defer stream.Close()
+	defer func() { _ = stream.Close() }()
 
 	acc := llm.NewStreamAccumulator(stream)
 	for acc.Next() {
@@ -447,8 +447,6 @@ func coreLoop(ctx context.Context, startAgent *Agent, inputMessages []llm.Messag
 				)
 				continue
 			}
-			emptyOutputRetries = 0
-
 			if err := runOutputGuardrails(ctx, s.agent, resp.Message); err != nil {
 				return s.finishRun(ctx, nil, err)
 			}
