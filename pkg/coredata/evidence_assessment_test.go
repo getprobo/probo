@@ -55,7 +55,19 @@ func TestEvidence_SetAssessment_Nil_ClearsField(t *testing.T) {
 	require.NotEmpty(t, e.Assessment)
 
 	require.NoError(t, e.SetAssessment(nil))
-	assert.Empty(t, e.Assessment, "nil input should clear the raw bytes")
+	assert.Empty(t, e.Assessment, "untyped nil should clear the raw bytes")
+}
+
+func TestEvidence_SetAssessment_TypedNil_ClearsField(t *testing.T) {
+	t.Parallel()
+
+	e := Evidence{}
+	require.NoError(t, e.SetAssessment(&testAssessmentPayload{Summary: "stub"}))
+	require.NotEmpty(t, e.Assessment)
+
+	var typedNil *testAssessmentPayload
+	require.NoError(t, e.SetAssessment(typedNil))
+	assert.Empty(t, e.Assessment, "typed-nil pointer should clear, not persist JSON null")
 }
 
 func TestEvidence_AssessmentInto_EmptyIsNoOp(t *testing.T) {
