@@ -59,6 +59,7 @@ export const categorySectionFragment = graphql`
     slug
     description
     kind
+    gcmConsentTypes
     cookies(first: 100, orderBy: { field: CREATED_AT, direction: ASC })
       @connection(key: "CategorySection_cookies", filters: [])
       @required(action: THROW) {
@@ -97,6 +98,7 @@ const updateCategoryMutation = graphql`
         slug
         description
         rank
+        gcmConsentTypes
         updatedAt
       }
       cookieBanner {
@@ -237,7 +239,7 @@ export function CategorySection({ categoryKey, onDelete }: CategorySectionProps)
   const cookies = category.cookies.edges.map(e => e.node);
   const isMutating = isUpdating || isCreating || isUpdatingCookie;
 
-  const handleSaveCategory = (name: string, slug: string, description: string) => {
+  const handleSaveCategory = (name: string, slug: string, description: string, gcmConsentTypes: string[]) => {
     updateCategory({
       variables: {
         input: {
@@ -245,6 +247,7 @@ export function CategorySection({ categoryKey, onDelete }: CategorySectionProps)
           name,
           slug,
           description,
+          gcmConsentTypes,
         },
       },
       onCompleted(_response, errors) {
@@ -481,6 +484,7 @@ export function CategorySection({ categoryKey, onDelete }: CategorySectionProps)
                 name={category.name}
                 slug={category.slug}
                 description={category.description}
+                gcmConsentTypes={[...category.gcmConsentTypes]}
                 isUpdating={isUpdating}
                 onSave={handleSaveCategory}
                 onCancel={() => setIsEditingCategory(false)}
@@ -525,6 +529,18 @@ export function CategorySection({ categoryKey, onDelete }: CategorySectionProps)
                 &quot;
               </code>
             </p>
+            {category.gcmConsentTypes.length > 0 && (
+              <div className="mt-2 flex items-center gap-1.5">
+                <span className="text-xs text-txt-secondary/70">
+                  {__("Google Consent Mode:")}
+                </span>
+                {category.gcmConsentTypes.map(type => (
+                  <Badge key={type} variant="neutral">
+                    {type}
+                  </Badge>
+                ))}
+              </div>
+            )}
           </>
         )}
       </div>
