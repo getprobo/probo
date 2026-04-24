@@ -55,8 +55,6 @@ export class ProboCategoryList extends ProboElement {
     if (!this.template) return;
 
     for (const cat of categories) {
-      if (cat.cookies.length === 0) continue;
-
       const wrapper = document.createElement("probo-category");
       wrapper.setAttribute("name", cat.name);
       wrapper.setAttribute("slug", cat.slug);
@@ -69,6 +67,12 @@ export class ProboCategoryList extends ProboElement {
         name: cat.name,
         description: cat.description,
       });
+
+      const hasCookies = cat.cookies && cat.cookies.length > 0;
+      if (!hasCookies) {
+        clone.querySelector("[data-action=toggle-cookies]")?.remove();
+        clone.querySelector("probo-cookie-list")?.remove();
+      }
 
       wrapper.appendChild(clone);
       this.appendChild(wrapper);
