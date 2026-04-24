@@ -225,6 +225,11 @@ func (b *Builder) Build() (*probod.FullConfig, error) {
 			ESign: probod.ESignConfig{
 				TSAURL: b.getEnvOrDefault("ESIGN_TSA_URL", "http://timestamp.digicert.com"),
 			},
+			EvidenceDescriber: probod.EvidenceDescriberConfig{
+				Interval:       b.getEnvIntOrDefault("EVIDENCE_DESCRIBER_INTERVAL", 10),
+				StaleAfter:     b.getEnvIntOrDefault("EVIDENCE_DESCRIBER_STALE_AFTER", 300),
+				MaxConcurrency: b.getEnvIntOrDefault("EVIDENCE_DESCRIBER_MAX_CONCURRENCY", 10),
+			},
 			Branding: b.getEnvBoolOrDefault("BRANDING", true),
 		},
 	}
