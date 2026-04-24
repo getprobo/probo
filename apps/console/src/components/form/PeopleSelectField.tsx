@@ -61,7 +61,7 @@ function PeopleSelectWithQuery<TFieldValues extends FieldValues = FieldValues>(
 ) {
   const { __ } = useTranslate();
   const { name, organizationId, control } = props;
-  const people = usePeople(organizationId, { excludeContractEnded: true });
+  const people = usePeople(organizationId, { contractEnded: false });
 
   return (
     <Controller

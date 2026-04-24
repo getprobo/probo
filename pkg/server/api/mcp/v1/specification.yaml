@@ -180,6 +180,13 @@ components:
         - AUDITOR
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.MembershipRole
 
+    ProfileState:
+      type: string
+      enum:
+        - ACTIVE
+        - INACTIVE
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.ProfileState
+
     Profile:
       type: object
       required:
@@ -189,6 +196,7 @@ components:
         - email_address
         - additional_email_addresses
         - kind
+        - state
         - created_at
         - updated_at
       properties:
@@ -214,6 +222,9 @@ components:
             - string
             - "null"
           description: Profile kind
+        state:
+          $ref: "#/components/schemas/ProfileState"
+          description: Profile state (ACTIVE or INACTIVE)
         position:
           type:
             - string
@@ -260,9 +271,12 @@ components:
         filter:
           type: object
           properties:
-            exclude_contract_ended:
+            contract_ended:
               type: boolean
-              description: Exclude users with ended contracts
+              description: Filter by contract status. True returns only users with ended contracts, false returns only users with active or no contract.
+            state:
+              $ref: "#/components/schemas/ProfileState"
+              description: Filter by profile state (ACTIVE or INACTIVE)
 
     ListUsersOutput:
       type: object

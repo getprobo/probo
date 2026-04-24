@@ -49,13 +49,13 @@ export const peopleQuery = graphql`
  */
 export function usePeople(
   organizationId: string,
-  { excludeContractEnded }: { excludeContractEnded?: boolean } = {},
+  { contractEnded }: { contractEnded?: boolean } = {},
 ) {
   const data = useLazyLoadQuery<PeopleGraphQuery>(
     peopleQuery,
     {
       organizationId: organizationId,
-      filter: excludeContractEnded ? { excludeContractEnded: true } : null,
+      filter: contractEnded !== undefined ? { contractEnded } : null,
     },
     { fetchPolicy: "network-only" },
   );

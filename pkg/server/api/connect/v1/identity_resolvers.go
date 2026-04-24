@@ -30,7 +30,7 @@ func (r *identityResolver) Profiles(ctx context.Context, obj *types.Identity, fi
 
 	filters := coredata.NewMembershipProfileFilter(nil).WithMembership()
 	if filter != nil {
-		filters = coredata.NewMembershipProfileFilter(filter.ExcludeContractEnded).WithMembership()
+		filters = coredata.NewMembershipProfileFilter(filter.ContractEnded).WithMembership()
 		if filter.State != nil {
 			filters.WithState(*filter.State)
 		}
