@@ -314,35 +314,13 @@ func thirdPartyInfoOutputType() (*agent.OutputType, error) {
 		return nil, fmt.Errorf("cannot create thirdParty info output type: %w", err)
 	}
 
-	var schema map[string]any
-	if err := json.Unmarshal(outputType.Schema, &schema); err != nil {
-		return nil, fmt.Errorf("cannot unmarshal thirdParty info schema: %w", err)
-	}
-
-	properties, ok := schema["properties"].(map[string]any)
-	if !ok {
-		return nil, fmt.Errorf("thirdParty info schema has no properties")
-	}
-
-	enums := map[string][]string{
+	if err := outputType.DecorateEnum(map[string][]string{
 		"category":         thirdPartyCategoryEnum,
 		"third_party_type": thirdPartyTypeEnum,
+	}); err != nil {
+		return nil, fmt.Errorf("cannot decorate thirdParty info schema: %w", err)
 	}
-	for field, values := range enums {
-		prop, ok := properties[field].(map[string]any)
-		if !ok {
-			return nil, fmt.Errorf("thirdParty info schema has no %q property", field)
-		}
-
-		prop["enum"] = values
-	}
-
-	decorated, err := json.Marshal(schema)
-	if err != nil {
-		return nil, fmt.Errorf("cannot marshal decorated thirdParty info schema: %w", err)
-	}
-
-	strict, err := enforceStrictJSONSchema(decorated)
+	strict, err := enforceStrictJSONSchema(outputType.Schema)
 	if err != nil {
 		return nil, fmt.Errorf("cannot enforce strict thirdParty info schema: %w", err)
 	}
