@@ -274,7 +274,6 @@ input CreateCookieBannerInput {
 input UpdateCookieBannerInput {
     cookieBannerId: ID!
     name: String
-    origin: String
     privacyPolicyUrl: String
     consentExpiryDays: Int
     consentMode: CookieConsentMode

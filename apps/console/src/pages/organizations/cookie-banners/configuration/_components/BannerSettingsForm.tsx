@@ -40,7 +40,6 @@ const updateBannerMutation = graphql`
       cookieBanner {
         id
         name
-        origin
         privacyPolicyUrl
         consentExpiryDays
         consentMode
@@ -68,7 +67,6 @@ export function BannerSettingsForm({ cookieBannerKey }: BannerSettingsFormProps)
   const [updateBanner, isUpdating] = useMutation<BannerSettingsFormMutation>(updateBannerMutation);
 
   const [name, setName] = useState(banner.name);
-  const [origin, setOrigin] = useState(banner.origin);
   const [privacyPolicyUrl, setPrivacyPolicyUrl] = useState(banner.privacyPolicyUrl);
   const [consentExpiryDays, setConsentExpiryDays] = useState(String(banner.consentExpiryDays));
   const [consentMode, setConsentMode] = useState(banner.consentMode);
@@ -82,7 +80,6 @@ export function BannerSettingsForm({ cookieBannerKey }: BannerSettingsFormProps)
         input: {
           cookieBannerId: banner.id,
           name,
-          origin,
           privacyPolicyUrl,
           consentExpiryDays: parseInt(consentExpiryDays, 10),
           consentMode: consentMode,
@@ -108,7 +105,7 @@ export function BannerSettingsForm({ cookieBannerKey }: BannerSettingsFormProps)
           </Field>
 
           <Field label={__("Origin URL")}>
-            <Input value={origin} onChange={e => setOrigin(e.target.value)} required />
+            <Input value={banner.origin} disabled />
           </Field>
 
           <Field label={__("Privacy Policy URL")}>

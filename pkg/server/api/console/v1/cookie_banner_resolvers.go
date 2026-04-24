@@ -269,7 +269,6 @@ func (r *mutationResolver) UpdateCookieBanner(ctx context.Context, input types.U
 		cookiebanner.UpdateCookieBannerRequest{
 			CookieBannerID:    input.CookieBannerID,
 			Name:              input.Name,
-			Origin:            input.Origin,
 			PrivacyPolicyURL:  input.PrivacyPolicyURL,
 			ConsentExpiryDays: input.ConsentExpiryDays,
 			ConsentMode:       input.ConsentMode,
@@ -279,9 +278,6 @@ func (r *mutationResolver) UpdateCookieBanner(ctx context.Context, input types.U
 	if err != nil {
 		if errors.Is(err, cookiebanner.ErrBannerNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
-		}
-		if errors.Is(err, cookiebanner.ErrOriginAlreadyInUse) {
-			return nil, gqlutils.Conflict(ctx, err)
 		}
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)

@@ -392,7 +392,6 @@ func (b *CookieBanner) Update(
 UPDATE cookie_banners
 SET
 	name = @name,
-	origin = @origin,
 	state = @state,
 	privacy_policy_url = @privacy_policy_url,
 	consent_expiry_days = @consent_expiry_days,
@@ -410,7 +409,6 @@ WHERE
 	args := pgx.StrictNamedArgs{
 		"id":                  b.ID,
 		"name":                b.Name,
-		"origin":              b.Origin,
 		"state":               b.State,
 		"privacy_policy_url":  b.PrivacyPolicyURL,
 		"consent_expiry_days": b.ConsentExpiryDays,

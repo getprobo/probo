@@ -61,7 +61,6 @@ type (
 	UpdateCookieBannerRequest struct {
 		CookieBannerID    gid.GID
 		Name              *string
-		Origin            *string
 		PrivacyPolicyURL  *string
 		ConsentExpiryDays *int
 		ConsentMode       *coredata.CookieConsentMode
@@ -175,7 +174,6 @@ func (r *UpdateCookieBannerRequest) Validate() error {
 
 	v.Check(r.CookieBannerID, "cookie_banner_id", validator.Required(), validator.GID(coredata.CookieBannerEntityType))
 	v.Check(r.Name, "name", validator.SafeTextNoNewLine(255))
-	v.Check(r.Origin, "origin", validator.Origin())
 	v.Check(r.PrivacyPolicyURL, "privacy_policy_url", validator.URL())
 	v.Check(r.ConsentExpiryDays, "consent_expiry_days", validator.Min(1))
 	v.Check(r.ConsentMode, "consent_mode", validator.OneOfSlice(coredata.CookieConsentModes()))
@@ -774,9 +772,6 @@ func (s *Service) UpdateCookieBanner(
 
 			if req.Name != nil {
 				banner.Name = *req.Name
-			}
-			if req.Origin != nil {
-				banner.Origin = CanonicalizeOrigin(*req.Origin)
 			}
 			if req.PrivacyPolicyURL != nil {
 				banner.PrivacyPolicyURL = *req.PrivacyPolicyURL
