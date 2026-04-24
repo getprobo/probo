@@ -277,6 +277,8 @@ func (h *sourceNameHandler) buildResolver(
 		return drivers.NewSupabaseNameResolver(supabaseSettings.OrganizationSlug)
 	case coredata.ConnectorProviderIntercom:
 		return drivers.NewIntercomNameResolver(httpClient)
+	case coredata.ConnectorProviderNotion:
+		return drivers.NewNotionNameResolver(httpClient)
 	case coredata.ConnectorProviderResend:
 		return drivers.NewResendNameResolver()
 	default:

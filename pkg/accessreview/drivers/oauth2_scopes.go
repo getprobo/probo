@@ -33,8 +33,9 @@ var providerOAuth2Scopes = map[coredata.ConnectorProvider][]string{
 		"https://www.googleapis.com/auth/admin.directory.group.member.readonly",
 		"https://www.googleapis.com/auth/admin.directory.customer.readonly",
 	},
-	// Notion and Intercom intentionally omitted: Notion uses extra-auth-params
-	// instead of scopes, Intercom configures scopes at the app level.
+	// Notion and Intercom have no scopes here: Notion authorizes via
+	// extra-auth-params (owner=user), Intercom configures scopes at the app
+	// level.
 }
 
 // ProviderOAuth2Scopes returns the OAuth2 scopes the access review driver
