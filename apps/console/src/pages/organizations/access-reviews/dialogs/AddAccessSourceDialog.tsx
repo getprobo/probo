@@ -30,7 +30,7 @@ import {
   Select,
   useDialogRef,
   useToast,
-  VendorLogo,
+  ThirdPartyLogo,
 } from "@probo/ui";
 import { type ReactNode, useMemo, useState } from "react";
 import { useMutation } from "react-relay";
@@ -454,7 +454,7 @@ export function AddAccessSourceDialog({
 
     return (
       <Card key={info.provider} padded className="flex items-center gap-3">
-        <VendorLogo vendor={info.provider} tint className="size-6 shrink-0" />
+        <ThirdPartyLogo thirdParty={info.provider} tint className="size-6 shrink-0" />
         <div className="mr-auto">
           <h3 className="font-medium">{info.displayName}</h3>
         </div>

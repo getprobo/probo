@@ -334,49 +334,49 @@ ORDER BY d.name ASC;
 		return "", err
 	}
 
-	// Load vendors for each datum in this snapshot.
-	vendorRows, err := tx.Query(
+	// Load third_parties for each datum in this snapshot.
+	thirdPartyRows, err := tx.Query(
 		ctx,
 		`
 SELECT
     dv.datum_id,
     v.name
-FROM data_vendors dv
-JOIN vendors v ON v.id = dv.vendor_id
+FROM data_third_parties dv
+JOIN third_parties v ON v.id = dv.third_party_id
 WHERE dv.snapshot_id = @snapshot_id
 ORDER BY v.name ASC;
 `,
 		pgx.NamedArgs{"snapshot_id": snapshotID},
 	)
 	if err != nil {
-		return "", fmt.Errorf("cannot load snapshot data vendors: %w", err)
+		return "", fmt.Errorf("cannot load snapshot data third_parties: %w", err)
 	}
-	defer vendorRows.Close()
+	defer thirdPartyRows.Close()
 
-	vendorsByDatum := make(map[string][]string)
-	for vendorRows.Next() {
-		var datumID, vendorName string
-		if err := vendorRows.Scan(&datumID, &vendorName); err != nil {
-			return "", fmt.Errorf("cannot scan vendor: %w", err)
+	thirdPartiesByDatum := make(map[string][]string)
+	for thirdPartyRows.Next() {
+		var datumID, thirdPartyName string
+		if err := thirdPartyRows.Scan(&datumID, &thirdPartyName); err != nil {
+			return "", fmt.Errorf("cannot scan thirdParty: %w", err)
 		}
-		vendorsByDatum[datumID] = append(vendorsByDatum[datumID], vendorName)
+		thirdPartiesByDatum[datumID] = append(thirdPartiesByDatum[datumID], thirdPartyName)
 	}
-	if err := vendorRows.Err(); err != nil {
+	if err := thirdPartyRows.Err(); err != nil {
 		return "", err
 	}
 
 	dataRows := make([]docgen.DataListRow, len(data))
 	for i, d := range data {
-		vendors := "-"
-		if v, ok := vendorsByDatum[d.id]; ok && len(v) > 0 {
-			vendors = strings.Join(v, ", ")
+		thirdParties := "-"
+		if v, ok := thirdPartiesByDatum[d.id]; ok && len(v) > 0 {
+			thirdParties = strings.Join(v, ", ")
 		}
 
 		dataRows[i] = docgen.DataListRow{
 			Name:           d.name,
 			Classification: formatClassificationString(d.classification),
 			Owner:          d.ownerName,
-			Vendors:        vendors,
+			ThirdParties:   thirdParties,
 		}
 	}
 

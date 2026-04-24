@@ -1,0 +1,701 @@
+enum ThirdPartyCategory
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.ThirdPartyCategory") {
+    ANALYTICS
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ThirdPartyCategoryAnalytics"
+        )
+    CLOUD_MONITORING
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ThirdPartyCategoryCloudMonitoring"
+        )
+    CLOUD_PROVIDER
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ThirdPartyCategoryCloudProvider"
+        )
+    COLLABORATION
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ThirdPartyCategoryCollaboration"
+        )
+    CUSTOMER_SUPPORT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ThirdPartyCategoryCustomerSupport"
+        )
+    DATA_STORAGE_AND_PROCESSING
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ThirdPartyCategoryDataStorageAndProcessing"
+        )
+    DOCUMENT_MANAGEMENT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ThirdPartyCategoryDocumentManagement"
+        )
+    EMPLOYEE_MANAGEMENT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ThirdPartyCategoryEmployeeManagement"
+        )
+    ENGINEERING
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ThirdPartyCategoryEngineering"
+        )
+    FINANCE
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.ThirdPartyCategoryFinance")
+    IDENTITY_PROVIDER
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ThirdPartyCategoryIdentityProvider"
+        )
+    IT @goEnum(value: "go.probo.inc/probo/pkg/coredata.ThirdPartyCategoryIT")
+    MARKETING
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ThirdPartyCategoryMarketing"
+        )
+    OFFICE_OPERATIONS
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ThirdPartyCategoryOfficeOperations"
+        )
+    OTHER @goEnum(value: "go.probo.inc/probo/pkg/coredata.ThirdPartyCategoryOther")
+    PASSWORD_MANAGEMENT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ThirdPartyCategoryPasswordManagement"
+        )
+    PRODUCT_AND_DESIGN
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ThirdPartyCategoryProductAndDesign"
+        )
+    PROFESSIONAL_SERVICES
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ThirdPartyCategoryProfessionalServices"
+        )
+    RECRUITING
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ThirdPartyCategoryRecruiting"
+        )
+    SALES @goEnum(value: "go.probo.inc/probo/pkg/coredata.ThirdPartyCategorySales")
+    SECURITY
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.ThirdPartyCategorySecurity")
+    VERSION_CONTROL
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ThirdPartyCategoryVersionControl"
+        )
+}
+
+enum DataSensitivity
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.DataSensitivity") {
+    NONE @goEnum(value: "go.probo.inc/probo/pkg/coredata.DataSensitivityNone")
+    LOW @goEnum(value: "go.probo.inc/probo/pkg/coredata.DataSensitivityLow")
+    MEDIUM
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.DataSensitivityMedium")
+    HIGH @goEnum(value: "go.probo.inc/probo/pkg/coredata.DataSensitivityHigh")
+    CRITICAL
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DataSensitivityCritical"
+        )
+}
+
+enum BusinessImpact
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.BusinessImpact") {
+    LOW @goEnum(value: "go.probo.inc/probo/pkg/coredata.BusinessImpactLow")
+    MEDIUM
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.BusinessImpactMedium")
+    HIGH @goEnum(value: "go.probo.inc/probo/pkg/coredata.BusinessImpactHigh")
+    CRITICAL
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.BusinessImpactCritical")
+}
+
+enum ThirdPartyOrderField
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.ThirdPartyOrderField") {
+    NAME @goEnum(value: "go.probo.inc/probo/pkg/coredata.ThirdPartyOrderFieldName")
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ThirdPartyOrderFieldCreatedAt"
+        )
+    UPDATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ThirdPartyOrderFieldUpdatedAt"
+        )
+}
+
+enum ThirdPartyComplianceReportOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.ThirdPartyComplianceReportOrderField"
+    ) {
+    REPORT_DATE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ThirdPartyComplianceReportOrderFieldReportDate"
+        )
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ThirdPartyComplianceReportOrderFieldCreatedAt"
+        )
+}
+
+enum ThirdPartyContactOrderField
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.ThirdPartyContactOrderField") {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ThirdPartyContactOrderFieldCreatedAt"
+        )
+    FULL_NAME
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ThirdPartyContactOrderFieldFullName"
+        )
+    EMAIL
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ThirdPartyContactOrderFieldEmail"
+        )
+}
+
+enum ThirdPartyServiceOrderField
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.ThirdPartyServiceOrderField") {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ThirdPartyServiceOrderFieldCreatedAt"
+        )
+    NAME
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ThirdPartyServiceOrderFieldName"
+        )
+}
+
+enum ThirdPartyRiskAssessmentOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.ThirdPartyRiskAssessmentOrderField"
+    ) {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ThirdPartyRiskAssessmentOrderFieldCreatedAt"
+        )
+    EXPIRES_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ThirdPartyRiskAssessmentOrderFieldExpiresAt"
+        )
+}
+
+input ThirdPartyOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ThirdPartyOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: ThirdPartyOrderField!
+}
+
+input ThirdPartyComplianceReportOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ThirdPartyComplianceReportOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: ThirdPartyComplianceReportOrderField!
+}
+
+input ThirdPartyContactOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ThirdPartyContactOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: ThirdPartyContactOrderField!
+}
+
+input ThirdPartyServiceOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ThirdPartyServiceOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: ThirdPartyServiceOrderField!
+}
+
+input ThirdPartyRiskAssessmentOrder {
+    field: ThirdPartyRiskAssessmentOrderField!
+    direction: OrderDirection!
+}
+
+input ThirdPartyFilter {
+    snapshotId: ID
+}
+
+type ThirdParty implements Node {
+    id: ID!
+    snapshotId: ID
+    name: String!
+    category: ThirdPartyCategory!
+    description: String
+
+    organization: Organization! @goField(forceResolver: true)
+
+    complianceReports(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: ThirdPartyComplianceReportOrder
+    ): ThirdPartyComplianceReportConnection! @goField(forceResolver: true)
+
+    businessAssociateAgreement: ThirdPartyBusinessAssociateAgreement
+        @goField(forceResolver: true)
+    dataPrivacyAgreement: ThirdPartyDataPrivacyAgreement
+        @goField(forceResolver: true)
+
+    contacts(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: ThirdPartyContactOrder
+    ): ThirdPartyContactConnection! @goField(forceResolver: true)
+
+    services(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: ThirdPartyServiceOrder
+    ): ThirdPartyServiceConnection! @goField(forceResolver: true)
+
+    riskAssessments(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: ThirdPartyRiskAssessmentOrder
+    ): ThirdPartyRiskAssessmentConnection! @goField(forceResolver: true)
+
+    businessOwner: Profile @goField(forceResolver: true)
+    securityOwner: Profile @goField(forceResolver: true)
+
+    statusPageUrl: String
+    termsOfServiceUrl: String
+    privacyPolicyUrl: String
+    serviceLevelAgreementUrl: String
+    dataProcessingAgreementUrl: String
+    businessAssociateAgreementUrl: String
+    subprocessorsListUrl: String
+    certifications: [String!]!
+    countries: [CountryCode!]!
+    securityPageUrl: String
+    trustPageUrl: String
+    headquarterAddress: String
+    legalName: String
+    websiteUrl: String
+    showOnTrustCenter: Boolean!
+    createdAt: Datetime!
+    updatedAt: Datetime!
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type ThirdPartyComplianceReport implements Node {
+    id: ID!
+    thirdParty: ThirdParty! @goField(forceResolver: true)
+    reportDate: Datetime!
+    validUntil: Datetime
+    reportName: String!
+    file: File @goField(forceResolver: true)
+    createdAt: Datetime!
+    updatedAt: Datetime!
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type ThirdPartyBusinessAssociateAgreement implements Node {
+    id: ID!
+    thirdParty: ThirdParty! @goField(forceResolver: true)
+    validFrom: Datetime
+    validUntil: Datetime
+    fileName: String!
+    fileUrl: String! @goField(forceResolver: true)
+    fileSize: BigInt!
+    createdAt: Datetime!
+    updatedAt: Datetime!
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type ThirdPartyContact implements Node {
+    id: ID!
+    thirdParty: ThirdParty! @goField(forceResolver: true)
+    fullName: String
+    email: EmailAddr
+    phone: String
+    role: String
+    createdAt: Datetime!
+    updatedAt: Datetime!
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type ThirdPartyService implements Node {
+    id: ID!
+    thirdParty: ThirdParty! @goField(forceResolver: true)
+    name: String!
+    description: String
+    createdAt: Datetime!
+    updatedAt: Datetime!
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type ThirdPartyDataPrivacyAgreement implements Node {
+    id: ID!
+    thirdParty: ThirdParty! @goField(forceResolver: true)
+    validFrom: Datetime
+    validUntil: Datetime
+    fileName: String!
+    fileUrl: String! @goField(forceResolver: true)
+    fileSize: BigInt!
+    createdAt: Datetime!
+    updatedAt: Datetime!
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type ThirdPartyRiskAssessment implements Node {
+    id: ID!
+    thirdParty: ThirdParty! @goField(forceResolver: true)
+    expiresAt: Datetime!
+    dataSensitivity: DataSensitivity!
+    businessImpact: BusinessImpact!
+    notes: String
+    createdAt: Datetime!
+    updatedAt: Datetime!
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type ThirdPartyConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ThirdPartyConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [ThirdPartyEdge!]!
+    pageInfo: PageInfo!
+}
+
+type ThirdPartyEdge {
+    cursor: CursorKey!
+    node: ThirdParty!
+}
+
+type ThirdPartyComplianceReportConnection {
+    edges: [ThirdPartyComplianceReportEdge!]!
+    pageInfo: PageInfo!
+}
+
+type ThirdPartyComplianceReportEdge {
+    cursor: CursorKey!
+    node: ThirdPartyComplianceReport!
+}
+
+type ThirdPartyContactConnection {
+    edges: [ThirdPartyContactEdge!]!
+    pageInfo: PageInfo!
+}
+
+type ThirdPartyContactEdge {
+    cursor: CursorKey!
+    node: ThirdPartyContact!
+}
+
+type ThirdPartyServiceConnection {
+    edges: [ThirdPartyServiceEdge!]!
+    pageInfo: PageInfo!
+}
+
+type ThirdPartyServiceEdge {
+    cursor: CursorKey!
+    node: ThirdPartyService!
+}
+
+type ThirdPartyRiskAssessmentConnection {
+    edges: [ThirdPartyRiskAssessmentEdge!]!
+    pageInfo: PageInfo!
+}
+
+type ThirdPartyRiskAssessmentEdge {
+    cursor: CursorKey!
+    node: ThirdPartyRiskAssessment!
+}
+
+extend type Mutation {
+    createThirdParty(input: CreateThirdPartyInput!): CreateThirdPartyPayload!
+    updateThirdParty(input: UpdateThirdPartyInput!): UpdateThirdPartyPayload!
+    deleteThirdParty(input: DeleteThirdPartyInput!): DeleteThirdPartyPayload!
+    createThirdPartyContact(
+        input: CreateThirdPartyContactInput!
+    ): CreateThirdPartyContactPayload!
+    updateThirdPartyContact(
+        input: UpdateThirdPartyContactInput!
+    ): UpdateThirdPartyContactPayload!
+    deleteThirdPartyContact(
+        input: DeleteThirdPartyContactInput!
+    ): DeleteThirdPartyContactPayload!
+    createThirdPartyService(
+        input: CreateThirdPartyServiceInput!
+    ): CreateThirdPartyServicePayload!
+    updateThirdPartyService(
+        input: UpdateThirdPartyServiceInput!
+    ): UpdateThirdPartyServicePayload!
+    deleteThirdPartyService(
+        input: DeleteThirdPartyServiceInput!
+    ): DeleteThirdPartyServicePayload!
+    uploadThirdPartyComplianceReport(
+        input: UploadThirdPartyComplianceReportInput!
+    ): UploadThirdPartyComplianceReportPayload!
+    deleteThirdPartyComplianceReport(
+        input: DeleteThirdPartyComplianceReportInput!
+    ): DeleteThirdPartyComplianceReportPayload!
+    uploadThirdPartyBusinessAssociateAgreement(
+        input: UploadThirdPartyBusinessAssociateAgreementInput!
+    ): UploadThirdPartyBusinessAssociateAgreementPayload!
+    updateThirdPartyBusinessAssociateAgreement(
+        input: UpdateThirdPartyBusinessAssociateAgreementInput!
+    ): UpdateThirdPartyBusinessAssociateAgreementPayload!
+    deleteThirdPartyBusinessAssociateAgreement(
+        input: DeleteThirdPartyBusinessAssociateAgreementInput!
+    ): DeleteThirdPartyBusinessAssociateAgreementPayload!
+    uploadThirdPartyDataPrivacyAgreement(
+        input: UploadThirdPartyDataPrivacyAgreementInput!
+    ): UploadThirdPartyDataPrivacyAgreementPayload!
+    updateThirdPartyDataPrivacyAgreement(
+        input: UpdateThirdPartyDataPrivacyAgreementInput!
+    ): UpdateThirdPartyDataPrivacyAgreementPayload!
+    deleteThirdPartyDataPrivacyAgreement(
+        input: DeleteThirdPartyDataPrivacyAgreementInput!
+    ): DeleteThirdPartyDataPrivacyAgreementPayload!
+    createThirdPartyRiskAssessment(
+        input: CreateThirdPartyRiskAssessmentInput!
+    ): CreateThirdPartyRiskAssessmentPayload!
+    assessThirdParty(input: AssessThirdPartyInput!): AssessThirdPartyPayload!
+}
+
+input CreateThirdPartyInput {
+    organizationId: ID!
+    name: String!
+    description: String
+    headquarterAddress: String
+    legalName: String
+    websiteUrl: String
+    privacyPolicyUrl: String
+    category: ThirdPartyCategory
+    serviceLevelAgreementUrl: String
+    dataProcessingAgreementUrl: String
+    businessAssociateAgreementUrl: String
+    subprocessorsListUrl: String
+    certifications: [String!]
+    countries: [CountryCode!]
+    securityPageUrl: String
+    trustPageUrl: String
+    statusPageUrl: String
+    termsOfServiceUrl: String
+    businessOwnerId: ID
+    securityOwnerId: ID
+}
+
+input UpdateThirdPartyInput {
+    id: ID!
+    name: String
+    description: String @goField(omittable: true)
+    statusPageUrl: String @goField(omittable: true)
+    termsOfServiceUrl: String @goField(omittable: true)
+    privacyPolicyUrl: String @goField(omittable: true)
+    serviceLevelAgreementUrl: String @goField(omittable: true)
+    dataProcessingAgreementUrl: String @goField(omittable: true)
+    businessAssociateAgreementUrl: String @goField(omittable: true)
+    subprocessorsListUrl: String @goField(omittable: true)
+    websiteUrl: String @goField(omittable: true)
+    legalName: String @goField(omittable: true)
+    headquarterAddress: String @goField(omittable: true)
+    category: ThirdPartyCategory
+    certifications: [String!]
+    countries: [CountryCode!]
+    securityPageUrl: String @goField(omittable: true)
+    trustPageUrl: String @goField(omittable: true)
+    businessOwnerId: ID @goField(omittable: true)
+    securityOwnerId: ID @goField(omittable: true)
+    showOnTrustCenter: Boolean
+}
+
+input DeleteThirdPartyInput {
+    thirdPartyId: ID!
+}
+
+input CreateThirdPartyContactInput {
+    thirdPartyId: ID!
+    fullName: String
+    email: EmailAddr
+    phone: String
+    role: String
+}
+
+input UpdateThirdPartyContactInput {
+    id: ID!
+    fullName: String @goField(omittable: true)
+    email: EmailAddr @goField(omittable: true)
+    phone: String @goField(omittable: true)
+    role: String @goField(omittable: true)
+}
+
+input DeleteThirdPartyContactInput {
+    thirdPartyContactId: ID!
+}
+
+input CreateThirdPartyServiceInput {
+    thirdPartyId: ID!
+    name: String!
+    description: String
+    url: String
+    type: String
+}
+
+input UpdateThirdPartyServiceInput {
+    id: ID!
+    name: String
+    description: String @goField(omittable: true)
+    url: String
+    type: String
+}
+
+input DeleteThirdPartyServiceInput {
+    thirdPartyServiceId: ID!
+}
+
+input UploadThirdPartyComplianceReportInput {
+    thirdPartyId: ID!
+    reportDate: Datetime!
+    validUntil: Datetime
+    reportName: String!
+    file: Upload!
+}
+
+input DeleteThirdPartyComplianceReportInput {
+    reportId: ID!
+}
+
+input UploadThirdPartyBusinessAssociateAgreementInput {
+    thirdPartyId: ID!
+    validFrom: Datetime
+    validUntil: Datetime
+    fileName: String!
+    file: Upload!
+}
+
+input UpdateThirdPartyBusinessAssociateAgreementInput {
+    thirdPartyId: ID!
+    validFrom: Datetime @goField(omittable: true)
+    validUntil: Datetime @goField(omittable: true)
+}
+
+input DeleteThirdPartyBusinessAssociateAgreementInput {
+    thirdPartyId: ID!
+}
+
+input UploadThirdPartyDataPrivacyAgreementInput {
+    thirdPartyId: ID!
+    validFrom: Datetime
+    validUntil: Datetime
+    fileName: String!
+    file: Upload!
+}
+
+input UpdateThirdPartyDataPrivacyAgreementInput {
+    thirdPartyId: ID!
+    validFrom: Datetime @goField(omittable: true)
+    validUntil: Datetime @goField(omittable: true)
+}
+
+input DeleteThirdPartyDataPrivacyAgreementInput {
+    thirdPartyId: ID!
+}
+
+input CreateThirdPartyRiskAssessmentInput {
+    thirdPartyId: ID!
+    expiresAt: Datetime!
+    dataSensitivity: DataSensitivity!
+    businessImpact: BusinessImpact!
+    notes: String
+}
+
+input AssessThirdPartyInput {
+    id: ID!
+    websiteUrl: String!
+}
+
+type CreateThirdPartyPayload {
+    thirdPartyEdge: ThirdPartyEdge!
+}
+
+type UpdateThirdPartyPayload {
+    thirdParty: ThirdParty!
+}
+
+type DeleteThirdPartyPayload {
+    deletedThirdPartyId: ID!
+}
+
+type CreateThirdPartyContactPayload {
+    thirdPartyContactEdge: ThirdPartyContactEdge!
+}
+
+type UpdateThirdPartyContactPayload {
+    thirdPartyContact: ThirdPartyContact!
+}
+
+type DeleteThirdPartyContactPayload {
+    deletedThirdPartyContactId: ID!
+}
+
+type CreateThirdPartyServicePayload {
+    thirdPartyServiceEdge: ThirdPartyServiceEdge!
+}
+
+type UpdateThirdPartyServicePayload {
+    thirdPartyService: ThirdPartyService!
+}
+
+type DeleteThirdPartyServicePayload {
+    deletedThirdPartyServiceId: ID!
+}
+
+type UploadThirdPartyComplianceReportPayload {
+    thirdPartyComplianceReportEdge: ThirdPartyComplianceReportEdge!
+}
+
+type DeleteThirdPartyComplianceReportPayload {
+    deletedThirdPartyComplianceReportId: ID!
+}
+
+type UploadThirdPartyBusinessAssociateAgreementPayload {
+    thirdPartyBusinessAssociateAgreement: ThirdPartyBusinessAssociateAgreement!
+}
+
+type UpdateThirdPartyBusinessAssociateAgreementPayload {
+    thirdPartyBusinessAssociateAgreement: ThirdPartyBusinessAssociateAgreement!
+}
+
+type DeleteThirdPartyBusinessAssociateAgreementPayload {
+    deletedThirdPartyId: ID!
+}
+
+type UploadThirdPartyDataPrivacyAgreementPayload {
+    thirdPartyDataPrivacyAgreement: ThirdPartyDataPrivacyAgreement!
+}
+
+type UpdateThirdPartyDataPrivacyAgreementPayload {
+    thirdPartyDataPrivacyAgreement: ThirdPartyDataPrivacyAgreement!
+}
+
+type DeleteThirdPartyDataPrivacyAgreementPayload {
+    deletedThirdPartyId: ID!
+}
+
+type CreateThirdPartyRiskAssessmentPayload {
+    thirdPartyRiskAssessmentEdge: ThirdPartyRiskAssessmentEdge!
+}
+
+type ThirdPartySubprocessor {
+    name: String!
+    country: String!
+    purpose: String!
+}
+
+type AssessThirdPartyPayload {
+    thirdParty: ThirdParty!
+    report: String!
+    subprocessors: [ThirdPartySubprocessor!]!
+}

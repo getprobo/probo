@@ -27,8 +27,8 @@ func TestAuditLog_List(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
-	// Create a vendor to generate an audit log entry.
-	factory.NewVendor(owner).WithName(factory.SafeName("AuditVendor")).Create()
+	// Create a thirdParty to generate an audit log entry.
+	factory.NewThirdParty(owner).WithName(factory.SafeName("AuditThirdParty")).Create()
 
 	const query = `
 		query($orgId: ID!) {
@@ -78,20 +78,20 @@ func TestAuditLog_List(t *testing.T) {
 	require.NoError(t, err)
 	assert.GreaterOrEqual(t, result.Node.AuditLogEntries.TotalCount, 1)
 
-	// Find the vendor create entry.
+	// Find the thirdParty create entry.
 	found := false
 	for _, edge := range result.Node.AuditLogEntries.Edges {
-		if edge.Node.Action == "core:vendor:create" {
+		if edge.Node.Action == "core:third-party:create" {
 			found = true
 			assert.Equal(t, "USER", edge.Node.ActorType)
-			assert.Equal(t, "Vendor", edge.Node.ResourceType)
+			assert.Equal(t, "ThirdParty", edge.Node.ResourceType)
 			assert.NotEmpty(t, edge.Node.ActorID)
 			assert.NotEmpty(t, edge.Node.ResourceID)
 			assert.NotEmpty(t, edge.Node.CreatedAt)
 			break
 		}
 	}
-	assert.True(t, found, "expected to find core:vendor:create audit log entry")
+	assert.True(t, found, "expected to find core:thirdParty:create audit log entry")
 }
 
 func TestAuditLog_Filter(t *testing.T) {
@@ -99,7 +99,7 @@ func TestAuditLog_Filter(t *testing.T) {
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
 	// Create different resources to generate different audit log entries.
-	factory.NewVendor(owner).WithName(factory.SafeName("FilterVendor")).Create()
+	factory.NewThirdParty(owner).WithName(factory.SafeName("FilterThirdParty")).Create()
 
 	const query = `
 		query($orgId: ID!, $filter: AuditLogEntryFilter) {
@@ -139,12 +139,12 @@ func TestAuditLog_Filter(t *testing.T) {
 
 		err := owner.Execute(query, map[string]any{
 			"orgId":  owner.GetOrganizationID().String(),
-			"filter": map[string]any{"action": "core:vendor:create"},
+			"filter": map[string]any{"action": "core:third-party:create"},
 		}, &result)
 		require.NoError(t, err)
 		assert.GreaterOrEqual(t, result.Node.AuditLogEntries.TotalCount, 1)
 		for _, edge := range result.Node.AuditLogEntries.Edges {
-			assert.Equal(t, "core:vendor:create", edge.Node.Action)
+			assert.Equal(t, "core:third-party:create", edge.Node.Action)
 		}
 	})
 
@@ -167,12 +167,12 @@ func TestAuditLog_Filter(t *testing.T) {
 
 		err := owner.Execute(query, map[string]any{
 			"orgId":  owner.GetOrganizationID().String(),
-			"filter": map[string]any{"resourceType": "Vendor"},
+			"filter": map[string]any{"resourceType": "ThirdParty"},
 		}, &result)
 		require.NoError(t, err)
 		assert.GreaterOrEqual(t, result.Node.AuditLogEntries.TotalCount, 1)
 		for _, edge := range result.Node.AuditLogEntries.Edges {
-			assert.Equal(t, "Vendor", edge.Node.ResourceType)
+			assert.Equal(t, "ThirdParty", edge.Node.ResourceType)
 		}
 	})
 }
@@ -182,7 +182,7 @@ func TestAuditLog_RBAC(t *testing.T) {
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
 	// Generate an audit log entry.
-	factory.NewVendor(owner).WithName(factory.SafeName("RBACVendor")).Create()
+	factory.NewThirdParty(owner).WithName(factory.SafeName("RBACThirdParty")).Create()
 
 	const query = `
 		query($orgId: ID!) {
@@ -253,8 +253,8 @@ func TestAuditLog_TenantIsolation(t *testing.T) {
 	org1Owner := testutil.NewClient(t, testutil.RoleOwner)
 	org2Owner := testutil.NewClient(t, testutil.RoleOwner)
 
-	// Create a vendor in org1 to generate audit log entries.
-	factory.NewVendor(org1Owner).WithName(factory.SafeName("IsoVendor")).Create()
+	// Create a thirdParty in org1 to generate audit log entries.
+	factory.NewThirdParty(org1Owner).WithName(factory.SafeName("IsoThirdParty")).Create()
 
 	const query = `
 		query($orgId: ID!) {
@@ -275,7 +275,7 @@ func TestAuditLog_TenantIsolation(t *testing.T) {
 		}
 	`
 
-	// org2 should not see org1's audit log entries about vendors.
+	// org2 should not see org1's audit log entries about thirdParties.
 	var result struct {
 		Node struct {
 			AuditLogEntries struct {
@@ -298,9 +298,9 @@ func TestAuditLog_TenantIsolation(t *testing.T) {
 
 	for _, edge := range result.Node.AuditLogEntries.Edges {
 		// org2 may have its own audit log entries (from user/org creation),
-		// but should never see org1's vendor entries.
-		if edge.Node.ResourceType == "Vendor" {
-			t.Fatalf("org2 should not see org1's vendor audit log entries, but found: %s", edge.Node.Action)
+		// but should never see org1's thirdParty entries.
+		if edge.Node.ResourceType == "ThirdParty" {
+			t.Fatalf("org2 should not see org1's thirdParty audit log entries, but found: %s", edge.Node.Action)
 		}
 	}
 }

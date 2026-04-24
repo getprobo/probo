@@ -38,7 +38,7 @@ import * as statementOfApplicability from './statementOfApplicability';
 import * as task from './task';
 import * as tia from './tia';
 import * as trustCenter from './trustCenter';
-import * as vendor from './vendor';
+import * as thirdParty from './thirdParty';
 import * as webhook from './webhook';
 
 export interface ResourceModule {
@@ -77,7 +77,7 @@ export const resources: Record<string, ResourceModule> = {
 	task: task as ResourceModule,
 	tia: tia as ResourceModule,
 	trustCenter: trustCenter as ResourceModule,
-	vendor: vendor as ResourceModule,
+	thirdParty: thirdParty as ResourceModule,
 	webhook: webhook as ResourceModule,
 };
 

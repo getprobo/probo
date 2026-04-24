@@ -33,7 +33,7 @@ type (
 		Organization *dataloadgen.Loader[gid.GID, *coredata.Organization]
 		Framework    *dataloadgen.Loader[gid.GID, *coredata.Framework]
 		Control      *dataloadgen.Loader[gid.GID, *coredata.Control]
-		Vendor       *dataloadgen.Loader[gid.GID, *coredata.Vendor]
+		ThirdParty   *dataloadgen.Loader[gid.GID, *coredata.ThirdParty]
 		Document     *dataloadgen.Loader[gid.GID, *coredata.Document]
 		Profile      *dataloadgen.Loader[gid.GID, *coredata.MembershipProfile]
 		Risk         *dataloadgen.Loader[gid.GID, *coredata.Risk]
@@ -73,7 +73,7 @@ func (f *batchFetcher) newLoaders() *Loaders {
 		Organization: dataloadgen.NewMappedLoader(f.fetchOrganizations),
 		Framework:    dataloadgen.NewMappedLoader(f.fetchFrameworks),
 		Control:      dataloadgen.NewMappedLoader(f.fetchControls),
-		Vendor:       dataloadgen.NewMappedLoader(f.fetchVendors),
+		ThirdParty:   dataloadgen.NewMappedLoader(f.fetchThirdParties),
 		Document:     dataloadgen.NewMappedLoader(f.fetchDocuments),
 		Profile:      dataloadgen.NewMappedLoader(f.fetchProfiles),
 		Risk:         dataloadgen.NewMappedLoader(f.fetchRisks),
@@ -129,16 +129,16 @@ func (f *batchFetcher) fetchControls(ctx context.Context, keys []gid.GID) (map[g
 	return result, nil
 }
 
-func (f *batchFetcher) fetchVendors(ctx context.Context, keys []gid.GID) (map[gid.GID]*coredata.Vendor, error) {
+func (f *batchFetcher) fetchThirdParties(ctx context.Context, keys []gid.GID) (map[gid.GID]*coredata.ThirdParty, error) {
 	tenantSvc := f.probo.WithTenant(keys[0].TenantID())
 
-	vendors, err := tenantSvc.Vendors.GetByIDs(ctx, keys...)
+	thirdParties, err := tenantSvc.ThirdParties.GetByIDs(ctx, keys...)
 	if err != nil {
-		return nil, fmt.Errorf("cannot batch load vendors: %w", err)
+		return nil, fmt.Errorf("cannot batch load third_parties: %w", err)
 	}
 
-	result := make(map[gid.GID]*coredata.Vendor, len(vendors))
-	for _, v := range vendors {
+	result := make(map[gid.GID]*coredata.ThirdParty, len(thirdParties))
+	for _, v := range thirdParties {
 		result[v.ID] = v
 	}
 	return result, nil

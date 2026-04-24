@@ -202,9 +202,9 @@ export class Probo implements INodeType {
 						description: 'Manage organization users (profiles)',
 					},
 					{
-						name: 'Vendor',
-						value: 'vendor',
-						description: 'Manage vendors',
+						name: 'ThirdParty',
+						value: 'thirdParty',
+						description: 'Manage thirdParties',
 					},
 					{
 						name: 'Webhook',

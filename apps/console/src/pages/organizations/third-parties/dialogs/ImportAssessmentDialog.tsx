@@ -1,0 +1,114 @@
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
+import { useTranslate } from "@probo/i18n";
+import {
+  Button,
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  Field,
+  useDialogRef,
+} from "@probo/ui";
+import type { ReactNode } from "react";
+import { graphql } from "relay-runtime";
+import { z } from "zod";
+
+import { useFormWithSchema } from "#/hooks/useFormWithSchema";
+import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
+
+const schema = z.object({
+  url: z.string().url(),
+});
+
+const importAssessmentMutation = graphql`
+  mutation ImportAssessmentDialogMutation($input: AssessThirdPartyInput!) {
+    assessThirdParty(input: $input) {
+      thirdParty {
+        id
+        name
+        websiteUrl
+        ...useThirdPartyFormFragment
+        ...ThirdPartyComplianceTabFragment
+        ...ThirdPartyRiskAssessmentTabFragment
+      }
+    }
+  }
+`;
+
+type Props = {
+  thirdPartyId: string;
+  children: ReactNode;
+};
+
+export function ImportAssessmentDialog({ thirdPartyId, children }: Props) {
+  const { __ } = useTranslate();
+  const dialogRef = useDialogRef();
+  const { register, handleSubmit, reset, formState } = useFormWithSchema(
+    schema,
+    {
+      defaultValues: {
+        url: "",
+      },
+    },
+  );
+  const [assess, isAssessing] = useMutationWithToasts(
+    importAssessmentMutation,
+    {
+      successMessage: __("ThirdParty assessed successfully."),
+      errorMessage: __("Failed to assess thirdParty"),
+    },
+  );
+
+  const onSubmit = async (data: z.infer<typeof schema>) => {
+    await assess({
+      variables: {
+        input: {
+          id: thirdPartyId,
+          websiteUrl: data.url,
+        },
+      },
+      onSuccess: () => {
+        dialogRef.current?.close();
+        reset();
+      },
+    });
+  };
+
+  return (
+    <Dialog
+      ref={dialogRef}
+      trigger={children}
+      title={__("Assessment from website")}
+      className="max-w-lg"
+    >
+      <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
+        <DialogContent padded>
+          <Field
+            required
+            label={__("URL")}
+            type="text"
+            {...register("url")}
+            error={formState.errors.url?.message}
+          />
+        </DialogContent>
+        <DialogFooter>
+          <Button type="submit" disabled={isAssessing}>
+            {__("Assess")}
+          </Button>
+        </DialogFooter>
+      </form>
+    </Dialog>
+  );
+}

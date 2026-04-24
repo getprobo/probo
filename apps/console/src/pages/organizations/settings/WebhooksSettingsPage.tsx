@@ -155,9 +155,9 @@ const deleteWebhookSubscriptionMutation = graphql`
 `;
 
 const EVENT_TYPES = [
-  { value: "VENDOR_CREATED", label: "vendor:created" },
-  { value: "VENDOR_UPDATED", label: "vendor:updated" },
-  { value: "VENDOR_DELETED", label: "vendor:deleted" },
+  { value: "VENDOR_CREATED", label: "thirdParty:created" },
+  { value: "VENDOR_UPDATED", label: "thirdParty:updated" },
+  { value: "VENDOR_DELETED", label: "thirdParty:deleted" },
   { value: "USER_CREATED", label: "user:created" },
   { value: "USER_UPDATED", label: "user:updated" },
   { value: "USER_DELETED", label: "user:deleted" },

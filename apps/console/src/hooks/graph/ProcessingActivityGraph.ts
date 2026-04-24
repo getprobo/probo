@@ -83,7 +83,7 @@ export const processingActivityNodeQuery = graphql`
           id
           fullName
         }
-        vendors(first: 50) {
+        thirdParties(first: 50) {
           edges {
             node {
               id
@@ -175,7 +175,7 @@ export const createProcessingActivityMutation = graphql`
             id
             fullName
           }
-          vendors(first: 50) {
+          thirdParties(first: 50) {
             edges {
               node {
                 id
@@ -222,7 +222,7 @@ export const updateProcessingActivityMutation = graphql`
           id
           fullName
         }
-        vendors(first: 50) {
+        thirdParties(first: 50) {
           edges {
             node {
               id
@@ -308,7 +308,7 @@ export const useCreateProcessingActivity = (connectionId?: string) => {
     nextReviewDate?: string;
     role: string;
     dataProtectionOfficerId?: string;
-    vendorIds?: string[];
+    thirdPartyIds?: string[];
   }) => {
     if (!input.organizationId) {
       return alert(
@@ -345,7 +345,7 @@ export const useCreateProcessingActivity = (connectionId?: string) => {
           nextReviewDate: input.nextReviewDate,
           role: input.role,
           dataProtectionOfficerId: input.dataProtectionOfficerId,
-          vendorIds: input.vendorIds,
+          thirdPartyIds: input.thirdPartyIds,
         },
         connections: connectionId ? [connectionId] : [],
       },
@@ -379,7 +379,7 @@ export const useUpdateProcessingActivity = () => {
     nextReviewDate?: string | null;
     role?: string;
     dataProtectionOfficerId?: string | null;
-    vendorIds?: string[];
+    thirdPartyIds?: string[];
   }) => {
     if (!input.id) {
       return alert(__("Failed to update processing activity: ID is required"));

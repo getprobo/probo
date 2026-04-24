@@ -52,7 +52,7 @@ func (r *mutationResolver) CreateProcessingActivity(ctx context.Context, input t
 		NextReviewDate:                       input.NextReviewDate,
 		Role:                                 input.Role,
 		DataProtectionOfficerID:              input.DataProtectionOfficerID,
-		VendorIDs:                            input.VendorIds,
+		ThirdPartyIDs:                        input.ThirdPartyIds,
 	}
 
 	activity, err := prb.ProcessingActivities.Create(ctx, &req)
@@ -94,7 +94,7 @@ func (r *mutationResolver) UpdateProcessingActivity(ctx context.Context, input t
 		NextReviewDate:                       gqlutils.UnwrapOmittable(input.NextReviewDate),
 		Role:                                 input.Role,
 		DataProtectionOfficerID:              gqlutils.UnwrapOmittable(input.DataProtectionOfficerID),
-		VendorIDs:                            &input.VendorIds,
+		ThirdPartyIDs:                        &input.ThirdPartyIds,
 	}
 
 	activity, err := prb.ProcessingActivities.Update(ctx, &req)
@@ -201,20 +201,20 @@ func (r *processingActivityResolver) DataProtectionOfficer(ctx context.Context, 
 	return types.NewProfile(dpo), nil
 }
 
-// Vendors is the resolver for the vendors field.
-func (r *processingActivityResolver) Vendors(ctx context.Context, obj *types.ProcessingActivity, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.VendorOrderBy) (*types.VendorConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionVendorList); err != nil {
+// ThirdParties is the resolver for the third_parties field.
+func (r *processingActivityResolver) ThirdParties(ctx context.Context, obj *types.ProcessingActivity, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ThirdPartyOrderBy) (*types.ThirdPartyConnection, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionThirdPartyList); err != nil {
 		return nil, err
 	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
-	pageOrderBy := page.OrderBy[coredata.VendorOrderField]{
-		Field:     coredata.VendorOrderFieldCreatedAt,
+	pageOrderBy := page.OrderBy[coredata.ThirdPartyOrderField]{
+		Field:     coredata.ThirdPartyOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
 	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.VendorOrderField]{
+		pageOrderBy = page.OrderBy[coredata.ThirdPartyOrderField]{
 			Field:     orderBy.Field,
 			Direction: orderBy.Direction,
 		}
@@ -222,13 +222,13 @@ func (r *processingActivityResolver) Vendors(ctx context.Context, obj *types.Pro
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	page, err := prb.Vendors.ListForProcessingActivityID(ctx, obj.ID, cursor)
+	page, err := prb.ThirdParties.ListForProcessingActivityID(ctx, obj.ID, cursor)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list processing activity vendors", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot list processing activity third_parties", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewVendorConnection(page, r, obj.ID), nil
+	return types.NewThirdPartyConnection(page, r, obj.ID), nil
 }
 
 // DataProtectionImpactAssessment is the resolver for the dataProtectionImpactAssessment field.

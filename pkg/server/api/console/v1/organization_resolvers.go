@@ -1094,20 +1094,20 @@ func (r *organizationResolver) CookieBanners(ctx context.Context, obj *types.Org
 	return types.NewCookieBannerConnection(p, r, obj.ID), nil
 }
 
-// Vendors is the resolver for the vendors field.
-func (r *organizationResolver) Vendors(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.VendorOrderBy, filter *types.VendorFilter) (*types.VendorConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionVendorList); err != nil {
+// ThirdParties is the resolver for the third_parties field.
+func (r *organizationResolver) ThirdParties(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ThirdPartyOrderBy, filter *types.ThirdPartyFilter) (*types.ThirdPartyConnection, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionThirdPartyList); err != nil {
 		return nil, err
 	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
-	pageOrderBy := page.OrderBy[coredata.VendorOrderField]{
-		Field:     coredata.VendorOrderFieldCreatedAt,
+	pageOrderBy := page.OrderBy[coredata.ThirdPartyOrderField]{
+		Field:     coredata.ThirdPartyOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
 	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.VendorOrderField]{
+		pageOrderBy = page.OrderBy[coredata.ThirdPartyOrderField]{
 			Field:     orderBy.Field,
 			Direction: orderBy.Direction,
 		}
@@ -1115,18 +1115,18 @@ func (r *organizationResolver) Vendors(ctx context.Context, obj *types.Organizat
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	var vendorFilter = coredata.NewVendorFilter(nil, nil)
+	var thirdPartyFilter = coredata.NewThirdPartyFilter(nil, nil)
 	if filter != nil {
-		vendorFilter = coredata.NewVendorFilter(&filter.SnapshotID, nil)
+		thirdPartyFilter = coredata.NewThirdPartyFilter(&filter.SnapshotID, nil)
 	}
 
-	page, err := prb.Vendors.ListForOrganizationID(ctx, obj.ID, cursor, vendorFilter)
+	page, err := prb.ThirdParties.ListForOrganizationID(ctx, obj.ID, cursor, thirdPartyFilter)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list organization vendors", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot list organization third_parties", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewVendorConnection(page, r, obj.ID), nil
+	return types.NewThirdPartyConnection(page, r, obj.ID), nil
 }
 
 // WebhookSubscriptions is the resolver for the webhookSubscriptions field.
