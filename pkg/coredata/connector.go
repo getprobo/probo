@@ -59,6 +59,16 @@ func (j *jsonRawMessageOrNull) Scan(src any) error {
 	}
 }
 
+// Arg returns the value to bind for a JSONB named argument. pgx rejects
+// empty byte slices as invalid JSON, so an empty/nil value is sent as
+// SQL NULL.
+func (j jsonRawMessageOrNull) Arg() any {
+	if len(j) == 0 {
+		return nil
+	}
+	return []byte(j)
+}
+
 type (
 	Connector struct {
 		ID                  gid.GID              `db:"id"`
@@ -389,18 +399,13 @@ INSERT INTO connectors (
 		return fmt.Errorf("cannot encrypt connection: %w", err)
 	}
 
-	var settingsArg any
-	if len(c.RawSettings) > 0 {
-		settingsArg = []byte(c.RawSettings)
-	}
-
 	args := pgx.StrictNamedArgs{
 		"id":                   c.ID,
 		"tenant_id":            scope.GetTenantID(),
 		"organization_id":      c.OrganizationID,
 		"provider":             c.Provider,
 		"protocol":             c.Protocol,
-		"settings":             settingsArg,
+		"settings":             c.RawSettings.Arg(),
 		"encrypted_connection": encryptedConnection,
 		"created_at":           c.CreatedAt,
 		"updated_at":           c.UpdatedAt,
@@ -613,14 +618,9 @@ WHERE
 		return fmt.Errorf("cannot encrypt connection: %w", err)
 	}
 
-	var settingsArg any
-	if len(c.RawSettings) > 0 {
-		settingsArg = []byte(c.RawSettings)
-	}
-
 	args := pgx.StrictNamedArgs{
 		"id":                   c.ID,
-		"settings":             settingsArg,
+		"settings":             c.RawSettings.Arg(),
 		"encrypted_connection": encryptedConnection,
 		"updated_at":           c.UpdatedAt,
 	}
