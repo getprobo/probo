@@ -551,10 +551,10 @@ WHERE
 }
 
 // PGCheckpointer implements agent.Checkpointer backed by the
-// agent_runs table checkpoint column. It is supervisor-internal and
-// intentionally uses raw run IDs with no tenant scope; public service/API
-// methods must load AgentRun through scoped coredata methods before invoking
-// lifecycle transitions.
+// agent_runs table checkpoint column. Each query pins tenant_id derived
+// from the run GID so a caller that supplies an ID from a different
+// tenant fails closed rather than silently reading or overwriting
+// cross-tenant data.
 type PGCheckpointer struct {
 	pg *pg.Client
 }
@@ -564,6 +564,11 @@ func NewPGCheckpointer(pgClient *pg.Client) *PGCheckpointer {
 }
 
 func (s *PGCheckpointer) Save(ctx context.Context, runID string, cp *agent.Checkpoint) error {
+	tenantID, err := tenantIDFromRunID(runID)
+	if err != nil {
+		return err
+	}
+
 	data, err := marshalAgentCheckpoint(cp)
 	if err != nil {
 		return err
@@ -572,10 +577,19 @@ func (s *PGCheckpointer) Save(ctx context.Context, runID string, cp *agent.Check
 	return s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			q := `UPDATE agent_runs SET checkpoint = @checkpoint, updated_at = now() WHERE id = @id;`
+			q := `
+UPDATE agent_runs
+SET
+	checkpoint = @checkpoint,
+	updated_at = now()
+WHERE
+	id = @id
+	AND tenant_id = @tenant_id;
+`
 
 			args := pgx.StrictNamedArgs{
 				"id":         runID,
+				"tenant_id":  tenantID,
 				"checkpoint": json.RawMessage(data),
 			}
 
@@ -594,14 +608,28 @@ func (s *PGCheckpointer) Save(ctx context.Context, runID string, cp *agent.Check
 }
 
 func (s *PGCheckpointer) Load(ctx context.Context, runID string) (*agent.Checkpoint, error) {
+	tenantID, err := tenantIDFromRunID(runID)
+	if err != nil {
+		return nil, err
+	}
+
 	var cp *agent.Checkpoint
 
-	err := s.pg.WithConn(
+	err = s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			q := `SELECT checkpoint FROM agent_runs WHERE id = @id;`
+			q := `
+SELECT checkpoint
+FROM agent_runs
+WHERE
+	id = @id
+	AND tenant_id = @tenant_id;
+`
 
-			args := pgx.StrictNamedArgs{"id": runID}
+			args := pgx.StrictNamedArgs{
+				"id":        runID,
+				"tenant_id": tenantID,
+			}
 
 			rows, err := conn.Query(ctx, q, args)
 			if err != nil {
@@ -624,6 +652,10 @@ func (s *PGCheckpointer) Load(ctx context.Context, runID string) (*agent.Checkpo
 				return nil
 			}
 
+			if len(r.Checkpoint) > agent.MaxCheckpointBytes {
+				return fmt.Errorf("cannot load checkpoint: size %d exceeds limit %d", len(r.Checkpoint), agent.MaxCheckpointBytes)
+			}
+
 			cp = new(agent.Checkpoint)
 			if err := json.Unmarshal(r.Checkpoint, cp); err != nil {
 				return fmt.Errorf("cannot unmarshal checkpoint: %w", err)
@@ -634,6 +666,14 @@ func (s *PGCheckpointer) Load(ctx context.Context, runID string) (*agent.Checkpo
 	)
 
 	return cp, err
+}
+
+func tenantIDFromRunID(runID string) (string, error) {
+	g, err := gid.ParseGID(runID)
+	if err != nil {
+		return "", fmt.Errorf("cannot parse agent run id: %w", err)
+	}
+	return g.TenantID().String(), nil
 }
 
 func marshalAgentCheckpoint(cp *agent.Checkpoint) ([]byte, error) {
