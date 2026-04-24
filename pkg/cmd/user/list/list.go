@@ -61,13 +61,13 @@ type profile struct {
 
 func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	var (
-		flagOrg            string
-		flagLimit          int
-		flagOrder          string
-		flagOrderDir       string
-		flagContractEnded  string
-		flagState          string
-		flagOutput         *string
+		flagOrg           string
+		flagLimit         int
+		flagOrder         string
+		flagOrderDir      string
+		flagContractEnded string
+		flagState         string
+		flagOutput        *string
 	)
 
 	cmd := &cobra.Command{
