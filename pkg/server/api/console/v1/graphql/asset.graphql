@@ -67,13 +67,13 @@ type Asset implements Node {
     name: String!
     amount: Int!
     owner: Profile! @goField(forceResolver: true)
-    vendors(
+    thirdParties(
         first: Int
         after: CursorKey
         last: Int
         before: CursorKey
-        orderBy: VendorOrder
-    ): VendorConnection! @goField(forceResolver: true)
+        orderBy: ThirdPartyOrder
+    ): ThirdPartyConnection! @goField(forceResolver: true)
     assetType: AssetType!
     dataTypesStored: String!
     organization: Organization! @goField(forceResolver: true)
@@ -91,13 +91,13 @@ type Datum implements Node
     name: String!
     dataClassification: DataClassification!
     owner: Profile! @goField(forceResolver: true)
-    vendors(
+    thirdParties(
         first: Int
         after: CursorKey
         last: Int
         before: CursorKey
-        orderBy: VendorOrder
-    ): VendorConnection! @goField(forceResolver: true)
+        orderBy: ThirdPartyOrder
+    ): ThirdPartyConnection! @goField(forceResolver: true)
     organization: Organization! @goField(forceResolver: true)
     createdAt: Datetime!
     updatedAt: Datetime!
@@ -155,7 +155,7 @@ input CreateAssetInput {
     ownerId: ID!
     assetType: AssetType!
     dataTypesStored: String!
-    vendorIds: [ID!]
+    thirdPartyIds: [ID!]
 }
 
 input UpdateAssetInput {
@@ -165,7 +165,7 @@ input UpdateAssetInput {
     ownerId: ID
     assetType: AssetType
     dataTypesStored: String
-    vendorIds: [ID!]
+    thirdPartyIds: [ID!]
 }
 
 input DeleteAssetInput {
@@ -177,7 +177,7 @@ input CreateDatumInput {
     name: String!
     dataClassification: DataClassification!
     ownerId: ID!
-    vendorIds: [ID!]
+    thirdPartyIds: [ID!]
 }
 
 input UpdateDatumInput {
@@ -185,7 +185,7 @@ input UpdateDatumInput {
     name: String
     dataClassification: DataClassification
     ownerId: ID
-    vendorIds: [ID!]
+    thirdPartyIds: [ID!]
 }
 
 input DeleteDatumInput {

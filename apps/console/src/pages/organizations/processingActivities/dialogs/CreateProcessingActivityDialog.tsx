@@ -34,7 +34,7 @@ import { Controller } from "react-hook-form";
 import { z } from "zod";
 
 import { PeopleSelectField } from "#/components/form/PeopleSelectField";
-import { VendorsMultiSelectField } from "#/components/form/VendorsMultiSelectField";
+import { ThirdPartiesMultiSelectField } from "#/components/form/ThirdPartiesMultiSelectField";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 
 import {
@@ -67,7 +67,7 @@ const schema = z.object({
   nextReviewDate: z.string().optional(),
   role: z.enum(["CONTROLLER", "PROCESSOR"] as const),
   dataProtectionOfficerId: z.string().optional(),
-  vendorIds: z.array(z.string()).optional(),
+  thirdPartyIds: z.array(z.string()).optional(),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -110,7 +110,7 @@ export function CreateProcessingActivityDialog({
       nextReviewDate: "",
       role: "PROCESSOR" as const,
       dataProtectionOfficerId: "",
-      vendorIds: [],
+      thirdPartyIds: [],
     },
   });
 
@@ -137,7 +137,7 @@ export function CreateProcessingActivityDialog({
         nextReviewDate: formatDatetime(formData.nextReviewDate),
         role: formData.role,
         dataProtectionOfficerId: formData.dataProtectionOfficerId || undefined,
-        vendorIds: formData.vendorIds,
+        thirdPartyIds: formData.thirdPartyIds,
       });
 
       toast({
@@ -430,12 +430,12 @@ export function CreateProcessingActivityDialog({
             </div>
           </div>
 
-          <VendorsMultiSelectField
+          <ThirdPartiesMultiSelectField
             organizationId={organizationId}
             control={control}
-            name="vendorIds"
-            selectedVendors={[]}
-            label={__("Vendors")}
+            name="thirdPartyIds"
+            selectedThirdParties={[]}
+            label={__("Third Parties")}
           />
         </DialogContent>
 

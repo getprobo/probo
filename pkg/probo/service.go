@@ -72,59 +72,59 @@ type (
 	}
 
 	TenantService struct {
-		pg                                *pg.Client
-		s3                                *s3.Client
-		bucket                            string
-		encryptionKey                     cipher.EncryptionKey
-		scope                             coredata.Scoper
-		baseURL                           string
-		tokenSecret                       string
-		llmClient                         *llm.Client
-		llmModel                          string
-		llmTemperature                    float64
-		llmMaxTokens                      int
-		vendorAssessor                    VendorAssessor
-		fileManager                       *filemanager.Service
-		esign                             *esign.Service
-		Frameworks                        *FrameworkService
-		Measures                          *MeasureService
-		Tasks                             *TaskService
-		Evidences                         *EvidenceService
-		Organizations                     *OrganizationService
-		Vendors                           *VendorService
-		Documents                         *DocumentService
-		DocumentApprovals                 *DocumentApprovalService
-		Controls                          *ControlService
-		Risks                             *RiskService
-		VendorComplianceReports           *VendorComplianceReportService
-		VendorBusinessAssociateAgreements *VendorBusinessAssociateAgreementService
-		VendorContacts                    *VendorContactService
-		VendorDataPrivacyAgreements       *VendorDataPrivacyAgreementService
-		VendorServices                    *VendorServiceService
-		Connectors                        *ConnectorService
-		Assets                            *AssetService
-		Data                              *DatumService
-		Audits                            *AuditService
-		WebhookSubscriptions              *WebhookSubscriptionService
-		Reports                           *ReportService
-		TrustCenters                      *TrustCenterService
-		TrustCenterAccesses               *TrustCenterAccessService
-		TrustCenterReferences             *TrustCenterReferenceService
-		TrustCenterFiles                  *TrustCenterFileService
-		ComplianceFrameworks              *ComplianceFrameworkService
-		ComplianceExternalURLs            *ComplianceExternalURLService
-		Findings                          *FindingService
-		Obligations                       *ObligationService
-		Snapshots                         *SnapshotService
-		RightsRequests                    *RightsRequestService
-		ProcessingActivities              *ProcessingActivityService
-		DataProtectionImpactAssessments   *DataProtectionImpactAssessmentService
-		TransferImpactAssessments         *TransferImpactAssessmentService
-		StatementsOfApplicability         *StatementOfApplicabilityService
-		GeneratedDocuments                *GeneratedDocumentService
-		Files                             *FileService
-		CustomDomains                     *CustomDomainService
-		SlackMessages                     *slack.SlackMessageService
+		pg                                    *pg.Client
+		s3                                    *s3.Client
+		bucket                                string
+		encryptionKey                         cipher.EncryptionKey
+		scope                                 coredata.Scoper
+		baseURL                               string
+		tokenSecret                           string
+		llmClient                             *llm.Client
+		llmModel                              string
+		llmTemperature                        float64
+		llmMaxTokens                          int
+		vendorAssessor                        VendorAssessor
+		fileManager                           *filemanager.Service
+		esign                                 *esign.Service
+		Frameworks                            *FrameworkService
+		Measures                              *MeasureService
+		Tasks                                 *TaskService
+		Evidences                             *EvidenceService
+		Organizations                         *OrganizationService
+		ThirdParties                          *ThirdPartyService
+		Documents                             *DocumentService
+		DocumentApprovals                     *DocumentApprovalService
+		Controls                              *ControlService
+		Risks                                 *RiskService
+		ThirdPartyComplianceReports           *ThirdPartyComplianceReportService
+		ThirdPartyBusinessAssociateAgreements *ThirdPartyBusinessAssociateAgreementService
+		ThirdPartyContacts                    *ThirdPartyContactService
+		ThirdPartyDataPrivacyAgreements       *ThirdPartyDataPrivacyAgreementService
+		ThirdPartyServices                    *ThirdPartyServiceService
+		Connectors                            *ConnectorService
+		Assets                                *AssetService
+		Data                                  *DatumService
+		Audits                                *AuditService
+		WebhookSubscriptions                  *WebhookSubscriptionService
+		Reports                               *ReportService
+		TrustCenters                          *TrustCenterService
+		TrustCenterAccesses                   *TrustCenterAccessService
+		TrustCenterReferences                 *TrustCenterReferenceService
+		TrustCenterFiles                      *TrustCenterFileService
+		ComplianceFrameworks                  *ComplianceFrameworkService
+		ComplianceExternalURLs                *ComplianceExternalURLService
+		Findings                              *FindingService
+		Obligations                           *ObligationService
+		Snapshots                             *SnapshotService
+		RightsRequests                        *RightsRequestService
+		ProcessingActivities                  *ProcessingActivityService
+		DataProtectionImpactAssessments       *DataProtectionImpactAssessmentService
+		TransferImpactAssessments             *TransferImpactAssessmentService
+		StatementsOfApplicability             *StatementOfApplicabilityService
+		GeneratedDocuments                    *GeneratedDocumentService
+		Files                                 *FileService
+		CustomDomains                         *CustomDomainService
+		SlackMessages                         *slack.SlackMessageService
 	}
 )
 
@@ -220,7 +220,7 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 			),
 		),
 	}
-	tenantService.Vendors = &VendorService{svc: tenantService}
+	tenantService.ThirdParties = &ThirdPartyService{svc: tenantService}
 	tenantService.Documents = &DocumentService{
 		svc:                     tenantService,
 		html2pdfConverter:       s.html2pdfConverter,
@@ -241,16 +241,16 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 	}
 	tenantService.Controls = &ControlService{svc: tenantService}
 	tenantService.Risks = &RiskService{svc: tenantService}
-	tenantService.VendorComplianceReports = &VendorComplianceReportService{
+	tenantService.ThirdPartyComplianceReports = &ThirdPartyComplianceReportService{
 		svc: tenantService,
 		fileValidator: filevalidation.NewValidator(
 			filevalidation.WithCategories(filevalidation.CategoryDocument),
 		),
 	}
-	tenantService.VendorBusinessAssociateAgreements = &VendorBusinessAssociateAgreementService{svc: tenantService}
-	tenantService.VendorContacts = &VendorContactService{svc: tenantService}
-	tenantService.VendorDataPrivacyAgreements = &VendorDataPrivacyAgreementService{svc: tenantService}
-	tenantService.VendorServices = &VendorServiceService{svc: tenantService}
+	tenantService.ThirdPartyBusinessAssociateAgreements = &ThirdPartyBusinessAssociateAgreementService{svc: tenantService}
+	tenantService.ThirdPartyContacts = &ThirdPartyContactService{svc: tenantService}
+	tenantService.ThirdPartyDataPrivacyAgreements = &ThirdPartyDataPrivacyAgreementService{svc: tenantService}
+	tenantService.ThirdPartyServices = &ThirdPartyServiceService{svc: tenantService}
 	tenantService.Connectors = &ConnectorService{svc: tenantService}
 	tenantService.Assets = &AssetService{svc: tenantService}
 	tenantService.Data = &DatumService{svc: tenantService}

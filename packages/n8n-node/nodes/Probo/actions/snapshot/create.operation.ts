@@ -93,8 +93,8 @@ export const description: INodeProperties[] = [
 				value: 'STATEMENTS_OF_APPLICABILITY',
 			},
 			{
-				name: 'Vendors',
-				value: 'VENDORS',
+				name: 'ThirdParties',
+				value: 'THIRD_PARTIES',
 			},
 		],
 		default: 'RISKS',

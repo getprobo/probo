@@ -62,7 +62,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "create",
 		Short: "Create a webhook subscription",
-		Example: `  # Create a webhook for vendor events
+		Example: `  # Create a webhook for third-party events
   prb webhook create --url https://example.com/webhook --event VENDOR_CREATED --event VENDOR_UPDATED
 
   # Create a webhook for all supported events

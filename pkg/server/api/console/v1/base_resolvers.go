@@ -39,14 +39,14 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			}
 			return types.NewOrganization(organization), nil
 		}
-	case coredata.VendorEntityType:
-		action = probo.ActionVendorGet
+	case coredata.ThirdPartyEntityType:
+		action = probo.ActionThirdPartyGet
 		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
-			vendor, err := prb.Vendors.Get(ctx, id)
+			thirdParty, err := prb.ThirdParties.Get(ctx, id)
 			if err != nil {
 				return nil, err
 			}
-			return types.NewVendor(vendor), nil
+			return types.NewThirdParty(thirdParty), nil
 		}
 	case coredata.FrameworkEntityType:
 		action = probo.ActionFrameworkGet
@@ -111,32 +111,32 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			}
 			return types.NewRisk(risk), nil
 		}
-	case coredata.VendorComplianceReportEntityType:
-		action = probo.ActionVendorComplianceReportGet
+	case coredata.ThirdPartyComplianceReportEntityType:
+		action = probo.ActionThirdPartyComplianceReportGet
 		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
-			vendorComplianceReport, err := prb.VendorComplianceReports.Get(ctx, id)
+			thirdPartyComplianceReport, err := prb.ThirdPartyComplianceReports.Get(ctx, id)
 			if err != nil {
 				return nil, err
 			}
-			return types.NewVendorComplianceReport(vendorComplianceReport), nil
+			return types.NewThirdPartyComplianceReport(thirdPartyComplianceReport), nil
 		}
-	case coredata.VendorContactEntityType:
-		action = probo.ActionVendorContactGet
+	case coredata.ThirdPartyContactEntityType:
+		action = probo.ActionThirdPartyContactGet
 		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
-			vendorContact, err := prb.VendorContacts.Get(ctx, id)
+			thirdPartyContact, err := prb.ThirdPartyContacts.Get(ctx, id)
 			if err != nil {
 				return nil, err
 			}
-			return types.NewVendorContact(vendorContact), nil
+			return types.NewThirdPartyContact(thirdPartyContact), nil
 		}
-	case coredata.VendorServiceEntityType:
-		action = probo.ActionVendorServiceGet
+	case coredata.ThirdPartyServiceEntityType:
+		action = probo.ActionThirdPartyServiceGet
 		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
-			vendorService, err := prb.VendorServices.Get(ctx, id)
+			thirdPartyService, err := prb.ThirdPartyServices.Get(ctx, id)
 			if err != nil {
 				return nil, err
 			}
-			return types.NewVendorService(vendorService), nil
+			return types.NewThirdPartyService(thirdPartyService), nil
 		}
 	case coredata.DocumentVersionEntityType:
 		action = probo.ActionDocumentVersionList

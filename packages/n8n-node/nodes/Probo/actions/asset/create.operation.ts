@@ -111,8 +111,8 @@ export const description: INodeProperties[] = [
 		required: true,
 	},
 	{
-		displayName: 'Vendor IDs',
-		name: 'vendorIds',
+		displayName: 'ThirdParty IDs',
+		name: 'thirdPartyIds',
 		type: 'string',
 		displayOptions: {
 			show: {
@@ -121,7 +121,7 @@ export const description: INodeProperties[] = [
 			},
 		},
 		default: '',
-		description: 'Comma-separated list of vendor IDs',
+		description: 'Comma-separated list of thirdParty IDs',
 	},
 	{
 		displayName: 'Options',
@@ -144,11 +144,11 @@ export const description: INodeProperties[] = [
 				description: 'Whether to include owner details in the response',
 			},
 			{
-				displayName: 'Include Vendors',
-				name: 'includeVendors',
+				displayName: 'Include ThirdParties',
+				name: 'includeThirdParties',
 				type: 'boolean',
 				default: false,
-				description: 'Whether to include vendors in the response',
+				description: 'Whether to include thirdParties in the response',
 			},
 		],
 	},
@@ -164,10 +164,10 @@ export async function execute(
 	const ownerId = this.getNodeParameter('ownerId', itemIndex) as string;
 	const assetType = this.getNodeParameter('assetType', itemIndex) as string;
 	const dataTypesStored = this.getNodeParameter('dataTypesStored', itemIndex) as string;
-	const vendorIdsStr = this.getNodeParameter('vendorIds', itemIndex, '') as string;
+	const thirdPartyIdsStr = this.getNodeParameter('thirdPartyIds', itemIndex, '') as string;
 	const options = this.getNodeParameter('options', itemIndex, {}) as {
 		includeOwner?: boolean;
-		includeVendors?: boolean;
+		includeThirdParties?: boolean;
 	};
 
 	const ownerFragment = options.includeOwner
@@ -178,8 +178,8 @@ export async function execute(
 		}`
 		: '';
 
-	const vendorsFragment = options.includeVendors
-		? `vendors(first: 100) {
+	const thirdPartiesFragment = options.includeThirdParties
+		? `thirdParties(first: 100) {
 			edges {
 				node {
 					id
@@ -200,7 +200,7 @@ export async function execute(
 						assetType
 						dataTypesStored
 						${ownerFragment}
-						${vendorsFragment}
+						${thirdPartiesFragment}
 						createdAt
 						updatedAt
 					}
@@ -209,7 +209,7 @@ export async function execute(
 		}
 	`;
 
-	const vendorIds = vendorIdsStr ? vendorIdsStr.split(',').map((id) => id.trim()).filter(Boolean) : undefined;
+	const thirdPartyIds = thirdPartyIdsStr ? thirdPartyIdsStr.split(',').map((id) => id.trim()).filter(Boolean) : undefined;
 
 	const variables = {
 		input: {
@@ -219,7 +219,7 @@ export async function execute(
 			ownerId,
 			assetType,
 			dataTypesStored,
-			...(vendorIds && vendorIds.length > 0 && { vendorIds }),
+			...(thirdPartyIds && thirdPartyIds.length > 0 && { thirdPartyIds }),
 		},
 	};
 

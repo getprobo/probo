@@ -557,26 +557,26 @@ func (s *GeneratedDocumentService) buildDataListDocumentData(
 			ownerName = p.FullName
 		}
 
-		var vendors coredata.Vendors
-		if err := vendors.LoadAllByDatumID(ctx, conn, s.svc.scope, d.ID); err != nil {
-			return docgen.DataListData{}, fmt.Errorf("cannot load vendors for datum %s: %w", d.ID, err)
+		var thirdParties coredata.ThirdParties
+		if err := thirdParties.LoadAllByDatumID(ctx, conn, s.svc.scope, d.ID); err != nil {
+			return docgen.DataListData{}, fmt.Errorf("cannot load third_parties for datum %s: %w", d.ID, err)
 		}
 
-		vendorNames := make([]string, 0, len(vendors))
-		for _, v := range vendors {
-			vendorNames = append(vendorNames, v.Name)
+		thirdPartyNames := make([]string, 0, len(thirdParties))
+		for _, v := range thirdParties {
+			thirdPartyNames = append(thirdPartyNames, v.Name)
 		}
 
-		vendorStr := "-"
-		if len(vendorNames) > 0 {
-			vendorStr = strings.Join(vendorNames, ", ")
+		thirdPartyStr := "-"
+		if len(thirdPartyNames) > 0 {
+			thirdPartyStr = strings.Join(thirdPartyNames, ", ")
 		}
 
 		rows = append(rows, docgen.DataListRow{
 			Name:           d.Name,
 			Classification: formatClassification(d.DataClassification),
 			Owner:          ownerName,
-			Vendors:        vendorStr,
+			ThirdParties:   thirdPartyStr,
 		})
 	}
 
@@ -847,19 +847,19 @@ func (s *GeneratedDocumentService) buildAssetListDocumentData(
 			ownerName = p.FullName
 		}
 
-		var vendors coredata.Vendors
-		if err := vendors.LoadAllByAssetID(ctx, conn, s.svc.scope, a.ID); err != nil {
-			return docgen.AssetListData{}, fmt.Errorf("cannot load vendors for asset %s: %w", a.ID, err)
+		var thirdParties coredata.ThirdParties
+		if err := thirdParties.LoadAllByAssetID(ctx, conn, s.svc.scope, a.ID); err != nil {
+			return docgen.AssetListData{}, fmt.Errorf("cannot load third_parties for asset %s: %w", a.ID, err)
 		}
 
-		vendorNames := make([]string, 0, len(vendors))
-		for _, v := range vendors {
-			vendorNames = append(vendorNames, v.Name)
+		thirdPartyNames := make([]string, 0, len(thirdParties))
+		for _, v := range thirdParties {
+			thirdPartyNames = append(thirdPartyNames, v.Name)
 		}
 
-		vendorStr := "-"
-		if len(vendorNames) > 0 {
-			vendorStr = strings.Join(vendorNames, ", ")
+		thirdPartyStr := "-"
+		if len(thirdPartyNames) > 0 {
+			thirdPartyStr = strings.Join(thirdPartyNames, ", ")
 		}
 
 		rows = append(rows, docgen.AssetListRow{
@@ -868,7 +868,7 @@ func (s *GeneratedDocumentService) buildAssetListDocumentData(
 			Amount:          a.Amount,
 			DataTypesStored: a.DataTypesStored,
 			Owner:           ownerName,
-			Vendors:         vendorStr,
+			ThirdParties:    thirdPartyStr,
 		})
 	}
 

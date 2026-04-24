@@ -29,12 +29,12 @@ func ResourceTypeName(entityType uint16) string {
 		return "Evidence"
 	case ConnectorEntityType:
 		return "Connector"
-	case VendorRiskAssessmentEntityType:
-		return "VendorRiskAssessment"
-	case VendorEntityType:
-		return "Vendor"
-	case VendorComplianceReportEntityType:
-		return "VendorComplianceReport"
+	case ThirdPartyRiskAssessmentEntityType:
+		return "ThirdPartyRiskAssessment"
+	case ThirdPartyEntityType:
+		return "ThirdParty"
+	case ThirdPartyComplianceReportEntityType:
+		return "ThirdPartyComplianceReport"
 	case DocumentEntityType:
 		return "Document"
 	case IdentityEntityType:
@@ -59,20 +59,20 @@ func ResourceTypeName(entityType uint16) string {
 		return "TrustCenter"
 	case TrustCenterAccessEntityType:
 		return "TrustCenterAccess"
-	case VendorBusinessAssociateAgreementEntityType:
-		return "VendorBusinessAssociateAgreement"
+	case ThirdPartyBusinessAssociateAgreementEntityType:
+		return "ThirdPartyBusinessAssociateAgreement"
 	case FileEntityType:
 		return "File"
-	case VendorContactEntityType:
-		return "VendorContact"
-	case VendorDataPrivacyAgreementEntityType:
-		return "VendorDataPrivacyAgreement"
+	case ThirdPartyContactEntityType:
+		return "ThirdPartyContact"
+	case ThirdPartyDataPrivacyAgreementEntityType:
+		return "ThirdPartyDataPrivacyAgreement"
 	case FindingEntityType:
 		return "Finding"
 	case ObligationEntityType:
 		return "Obligation"
-	case VendorServiceEntityType:
-		return "VendorService"
+	case ThirdPartyServiceEntityType:
+		return "ThirdPartyService"
 	case SnapshotEntityType:
 		return "Snapshot"
 	case ProcessingActivityEntityType:

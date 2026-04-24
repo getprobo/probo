@@ -34,7 +34,7 @@ import { z } from "zod";
 import type { AssetGraphNodeQuery } from "#/__generated__/core/AssetGraphNodeQuery.graphql";
 import { ControlledField } from "#/components/form/ControlledField";
 import { PeopleSelectField } from "#/components/form/PeopleSelectField";
-import { VendorsMultiSelectField } from "#/components/form/VendorsMultiSelectField";
+import { ThirdPartiesMultiSelectField } from "#/components/form/ThirdPartiesMultiSelectField";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
@@ -50,7 +50,7 @@ const updateAssetSchema = z.object({
   assetType: z.enum(["PHYSICAL", "VIRTUAL"]),
   dataTypesStored: z.string().min(1, "Data types stored is required"),
   ownerId: z.string().min(1, "Owner is required"),
-  vendorIds: z.array(z.string()).optional(),
+  thirdPartyIds: z.array(z.string()).optional(),
 });
 
 type Props = {
@@ -72,8 +72,8 @@ export default function AssetDetailsPage(props: Props) {
   );
   const deleteAsset = useDeleteAsset(assetEntry, connectionId);
 
-  const vendors = assetEntry.vendors?.edges.map(edge => edge.node) ?? [];
-  const vendorIds = vendors.map(vendor => vendor.id);
+  const thirdParties = assetEntry.thirdParties?.edges.map(edge => edge.node) ?? [];
+  const thirdPartyIds = thirdParties.map(thirdParty => thirdParty.id);
 
   const { control, formState, handleSubmit, register, reset }
     = useFormWithSchema(updateAssetSchema, {
@@ -83,7 +83,7 @@ export default function AssetDetailsPage(props: Props) {
         assetType: assetEntry.assetType || "VIRTUAL",
         dataTypesStored: assetEntry.dataTypesStored || "",
         ownerId: assetEntry.owner?.id || "",
-        vendorIds: vendorIds,
+        thirdPartyIds: thirdPartyIds,
       },
     });
 
@@ -176,12 +176,12 @@ export default function AssetDetailsPage(props: Props) {
           disabled={!assetEntry.canUpdate}
         />
 
-        <VendorsMultiSelectField
+        <ThirdPartiesMultiSelectField
           organizationId={organizationId}
           control={control}
-          name="vendorIds"
-          selectedVendors={vendors}
-          label={__("Vendors")}
+          name="thirdPartyIds"
+          selectedThirdParties={thirdParties}
+          label={__("Third Parties")}
           disabled={!assetEntry.canUpdate}
         />
 

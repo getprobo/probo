@@ -28,7 +28,7 @@ type Datum struct {
 	Name               string                      `json:"name"`
 	DataClassification coredata.DataClassification `json:"dataClassification"`
 	Owner              *Profile                    `json:"owner"`
-	Vendors            *VendorConnection           `json:"vendors"`
+	ThirdParties       *ThirdPartyConnection       `json:"third_parties"`
 	Organization       *Organization               `json:"organization"`
 	CreatedAt          time.Time                   `json:"createdAt"`
 	UpdatedAt          time.Time                   `json:"updatedAt"`

@@ -166,13 +166,13 @@ type ProcessingActivity implements Node {
     nextReviewDate: Datetime
     role: ProcessingActivityRole!
     dataProtectionOfficer: Profile @goField(forceResolver: true)
-    vendors(
+    thirdParties(
         first: Int
         after: CursorKey
         last: Int
         before: CursorKey
-        orderBy: VendorOrder
-    ): VendorConnection! @goField(forceResolver: true)
+        orderBy: ThirdPartyOrder
+    ): ThirdPartyConnection! @goField(forceResolver: true)
     dataProtectionImpactAssessment: DataProtectionImpactAssessment
         @goField(forceResolver: true)
     transferImpactAssessment: TransferImpactAssessment
@@ -233,7 +233,7 @@ input CreateProcessingActivityInput {
     nextReviewDate: Datetime
     role: ProcessingActivityRole!
     dataProtectionOfficerId: ID
-    vendorIds: [ID!]
+    thirdPartyIds: [ID!]
 }
 
 input UpdateProcessingActivityInput {
@@ -258,7 +258,7 @@ input UpdateProcessingActivityInput {
     nextReviewDate: Datetime @goField(omittable: true)
     role: ProcessingActivityRole
     dataProtectionOfficerId: ID @goField(omittable: true)
-    vendorIds: [ID!]
+    thirdPartyIds: [ID!]
 }
 
 input DeleteProcessingActivityInput {

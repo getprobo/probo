@@ -33,7 +33,7 @@ import { z } from "zod";
 import type { DatumGraphNodeQuery } from "#/__generated__/core/DatumGraphNodeQuery.graphql";
 import { ControlledField } from "#/components/form/ControlledField";
 import { PeopleSelectField } from "#/components/form/PeopleSelectField";
-import { VendorsMultiSelectField } from "#/components/form/VendorsMultiSelectField";
+import { ThirdPartiesMultiSelectField } from "#/components/form/ThirdPartiesMultiSelectField";
 import {
   datumNodeQuery,
   useDeleteDatum,
@@ -46,7 +46,7 @@ const updateDatumSchema = z.object({
   name: z.string().min(1, "Name is required"),
   dataClassification: z.enum(["PUBLIC", "INTERNAL", "CONFIDENTIAL", "SECRET"]),
   ownerId: z.string().min(1, "Owner is required"),
-  vendorIds: z.array(z.string()).optional(),
+  thirdPartyIds: z.array(z.string()).optional(),
 });
 
 type Props = {
@@ -69,8 +69,8 @@ export default function DatumDetailsPage(props: Props) {
     ConnectionHandler.getConnectionID(organizationId, "DataPage_data"),
   );
 
-  const vendors = datumEntry?.vendors?.edges.map(edge => edge.node) ?? [];
-  const vendorIds = vendors.map(vendor => vendor.id);
+  const thirdParties = datumEntry?.thirdParties?.edges.map(edge => edge.node) ?? [];
+  const thirdPartyIds = thirdParties.map(thirdParty => thirdParty.id);
 
   const { control, formState, handleSubmit, register, reset }
     = useFormWithSchema(updateDatumSchema, {
@@ -78,7 +78,7 @@ export default function DatumDetailsPage(props: Props) {
         name: datumEntry?.name || "",
         dataClassification: datumEntry?.dataClassification || "PUBLIC",
         ownerId: datumEntry?.owner?.id || "",
-        vendorIds: vendorIds,
+        thirdPartyIds: thirdPartyIds,
       },
     });
 
@@ -161,13 +161,13 @@ export default function DatumDetailsPage(props: Props) {
           disabled={!datumEntry.canUpdate}
         />
 
-        <VendorsMultiSelectField
+        <ThirdPartiesMultiSelectField
           organizationId={organizationId}
           control={control}
-          name="vendorIds"
-          label={__("Vendors")}
+          name="thirdPartyIds"
+          label={__("Third Parties")}
           disabled={!datumEntry.canUpdate}
-          selectedVendors={vendors}
+          selectedThirdParties={thirdParties}
         />
 
         <div className="flex justify-end">

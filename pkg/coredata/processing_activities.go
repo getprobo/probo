@@ -506,7 +506,7 @@ WHERE
 }
 
 func (pas ProcessingActivities) Snapshot(ctx context.Context, conn pg.Tx, scope Scoper, organizationID, snapshotID gid.GID) error {
-	snapshotters := []ProcessingActivitySnapshotter{ProcessingActivities{}, Vendors{}, ProcessingActivityVendors{}, DataProtectionImpactAssessments{}, TransferImpactAssessments{}}
+	snapshotters := []ProcessingActivitySnapshotter{ProcessingActivities{}, ThirdParties{}, ProcessingActivityThirdParties{}, DataProtectionImpactAssessments{}, TransferImpactAssessments{}}
 
 	for _, snapshotter := range snapshotters {
 		if err := snapshotter.InsertProcessingActivitySnapshots(ctx, conn, scope, organizationID, snapshotID); err != nil {

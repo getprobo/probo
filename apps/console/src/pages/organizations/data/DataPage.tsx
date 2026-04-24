@@ -81,7 +81,7 @@ const paginatedDataFragment = graphql`
           owner {
             fullName
           }
-          vendors(first: 50) {
+          thirdParties(first: 50) {
             edges {
               node {
                 id
@@ -192,7 +192,7 @@ export default function DataPage(props: Props) {
             <Th>{__("Name")}</Th>
             <Th>{__("Classification")}</Th>
             <Th>{__("Owner")}</Th>
-            <Th>{__("Vendors")}</Th>
+            <Th>{__("Third Parties")}</Th>
             {hasAnyAction && <Th></Th>}
           </Tr>
         </Thead>
@@ -223,7 +223,7 @@ function DataRow({
   const organizationId = useOrganizationId();
   const { __ } = useTranslate();
   const deleteDatum = useDeleteDatum(entry, connectionId);
-  const vendors = entry.vendors?.edges.map(edge => edge.node) ?? [];
+  const thirdParties = entry.thirdParties?.edges.map(edge => edge.node) ?? [];
   const detailUrl = `/organizations/${organizationId}/data/${entry.id}`;
 
   return (
@@ -234,27 +234,27 @@ function DataRow({
       </Td>
       <Td>{entry.owner?.fullName ?? __("Unassigned")}</Td>
       <Td>
-        {vendors.length > 0
+        {thirdParties.length > 0
           ? (
               <div className="flex flex-wrap gap-1">
-                {vendors.slice(0, 3).map(vendor => (
+                {thirdParties.slice(0, 3).map(thirdParty => (
                   <Badge
-                    key={vendor.id}
+                    key={thirdParty.id}
                     variant="neutral"
                     className="flex items-center gap-1"
                   >
                     <Avatar
-                      name={vendor.name}
-                      src={faviconUrl(vendor.websiteUrl)}
+                      name={thirdParty.name}
+                      src={faviconUrl(thirdParty.websiteUrl)}
                       size="s"
                     />
-                    <span className="text-xs">{vendor.name}</span>
+                    <span className="text-xs">{thirdParty.name}</span>
                   </Badge>
                 ))}
-                {vendors.length > 3 && (
+                {thirdParties.length > 3 && (
                   <Badge variant="neutral" className="text-xs">
                     +
-                    {vendors.length - 3}
+                    {thirdParties.length - 3}
                   </Badge>
                 )}
               </div>

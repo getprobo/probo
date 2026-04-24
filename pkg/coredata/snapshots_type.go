@@ -25,7 +25,7 @@ type (
 
 const (
 	SnapshotsTypeRisks                     SnapshotsType = "RISKS"
-	SnapshotsTypeVendors                   SnapshotsType = "VENDORS"
+	SnapshotsTypeThirdParties              SnapshotsType = "THIRD_PARTIES"
 	SnapshotsTypeAssets                    SnapshotsType = "ASSETS"
 	SnapshotsTypeData                      SnapshotsType = "DATA"
 	SnapshotsTypeFindings                  SnapshotsType = "FINDINGS"
@@ -37,7 +37,7 @@ const (
 func SnapshotsTypes() []SnapshotsType {
 	return []SnapshotsType{
 		SnapshotsTypeRisks,
-		SnapshotsTypeVendors,
+		SnapshotsTypeThirdParties,
 		SnapshotsTypeFindings,
 		SnapshotsTypeObligations,
 		SnapshotsTypeProcessingActivities,
@@ -62,8 +62,8 @@ func (st *SnapshotsType) Scan(value any) error {
 	switch s {
 	case SnapshotsTypeRisks.String():
 		*st = SnapshotsTypeRisks
-	case SnapshotsTypeVendors.String():
-		*st = SnapshotsTypeVendors
+	case SnapshotsTypeThirdParties.String():
+		*st = SnapshotsTypeThirdParties
 	case SnapshotsTypeAssets.String():
 		*st = SnapshotsTypeAssets
 	case SnapshotsTypeData.String():

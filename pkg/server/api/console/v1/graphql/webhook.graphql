@@ -1,11 +1,11 @@
 enum WebhookEventType
     @goModel(model: "go.probo.inc/probo/pkg/coredata.WebhookEventType") {
     VENDOR_CREATED
-        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeVendorCreated")
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeThirdPartyCreated")
     VENDOR_UPDATED
-        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeVendorUpdated")
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeThirdPartyUpdated")
     VENDOR_DELETED
-        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeVendorDeleted")
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeThirdPartyDeleted")
     USER_CREATED
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeUserCreated")
     USER_UPDATED

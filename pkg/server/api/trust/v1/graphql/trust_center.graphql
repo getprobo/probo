@@ -162,74 +162,74 @@ type ComplianceFrameworkEdge
   node: ComplianceFramework!
 }
 
-enum SubprocessorCategory
-  @goModel(model: "go.probo.inc/probo/pkg/coredata.VendorCategory") {
+enum ThirdPartyCategory
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.ThirdPartyCategory") {
   ANALYTICS
-    @goEnum(value: "go.probo.inc/probo/pkg/coredata.VendorCategoryAnalytics")
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.ThirdPartyCategoryAnalytics")
   CLOUD_MONITORING
     @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.VendorCategoryCloudMonitoring"
+      value: "go.probo.inc/probo/pkg/coredata.ThirdPartyCategoryCloudMonitoring"
     )
   CLOUD_PROVIDER
     @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.VendorCategoryCloudProvider"
+      value: "go.probo.inc/probo/pkg/coredata.ThirdPartyCategoryCloudProvider"
     )
   COLLABORATION
     @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.VendorCategoryCollaboration"
+      value: "go.probo.inc/probo/pkg/coredata.ThirdPartyCategoryCollaboration"
     )
   CUSTOMER_SUPPORT
     @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.VendorCategoryCustomerSupport"
+      value: "go.probo.inc/probo/pkg/coredata.ThirdPartyCategoryCustomerSupport"
     )
   DATA_STORAGE_AND_PROCESSING
     @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.VendorCategoryDataStorageAndProcessing"
+      value: "go.probo.inc/probo/pkg/coredata.ThirdPartyCategoryDataStorageAndProcessing"
     )
   DOCUMENT_MANAGEMENT
     @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.VendorCategoryDocumentManagement"
+      value: "go.probo.inc/probo/pkg/coredata.ThirdPartyCategoryDocumentManagement"
     )
   EMPLOYEE_MANAGEMENT
     @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.VendorCategoryEmployeeManagement"
+      value: "go.probo.inc/probo/pkg/coredata.ThirdPartyCategoryEmployeeManagement"
     )
   ENGINEERING
-    @goEnum(value: "go.probo.inc/probo/pkg/coredata.VendorCategoryEngineering")
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.ThirdPartyCategoryEngineering")
   FINANCE
-    @goEnum(value: "go.probo.inc/probo/pkg/coredata.VendorCategoryFinance")
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.ThirdPartyCategoryFinance")
   IDENTITY_PROVIDER
     @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.VendorCategoryIdentityProvider"
+      value: "go.probo.inc/probo/pkg/coredata.ThirdPartyCategoryIdentityProvider"
     )
-  IT @goEnum(value: "go.probo.inc/probo/pkg/coredata.VendorCategoryIT")
+  IT @goEnum(value: "go.probo.inc/probo/pkg/coredata.ThirdPartyCategoryIT")
   MARKETING
-    @goEnum(value: "go.probo.inc/probo/pkg/coredata.VendorCategoryMarketing")
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.ThirdPartyCategoryMarketing")
   OFFICE_OPERATIONS
     @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.VendorCategoryOfficeOperations"
+      value: "go.probo.inc/probo/pkg/coredata.ThirdPartyCategoryOfficeOperations"
     )
-  OTHER @goEnum(value: "go.probo.inc/probo/pkg/coredata.VendorCategoryOther")
+  OTHER @goEnum(value: "go.probo.inc/probo/pkg/coredata.ThirdPartyCategoryOther")
   PASSWORD_MANAGEMENT
     @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.VendorCategoryPasswordManagement"
+      value: "go.probo.inc/probo/pkg/coredata.ThirdPartyCategoryPasswordManagement"
     )
   PRODUCT_AND_DESIGN
     @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.VendorCategoryProductAndDesign"
+      value: "go.probo.inc/probo/pkg/coredata.ThirdPartyCategoryProductAndDesign"
     )
   PROFESSIONAL_SERVICES
     @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.VendorCategoryProfessionalServices"
+      value: "go.probo.inc/probo/pkg/coredata.ThirdPartyCategoryProfessionalServices"
     )
   RECRUITING
-    @goEnum(value: "go.probo.inc/probo/pkg/coredata.VendorCategoryRecruiting")
-  SALES @goEnum(value: "go.probo.inc/probo/pkg/coredata.VendorCategorySales")
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.ThirdPartyCategoryRecruiting")
+  SALES @goEnum(value: "go.probo.inc/probo/pkg/coredata.ThirdPartyCategorySales")
   SECURITY
-    @goEnum(value: "go.probo.inc/probo/pkg/coredata.VendorCategorySecurity")
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.ThirdPartyCategorySecurity")
   VERSION_CONTROL
     @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.VendorCategoryVersionControl"
+      value: "go.probo.inc/probo/pkg/coredata.ThirdPartyCategoryVersionControl"
     )
 }
 
@@ -237,7 +237,7 @@ type Subprocessor implements Node @nda {
   id: ID!
   name: String!
   description: String
-  category: SubprocessorCategory!
+  category: ThirdPartyCategory!
   websiteUrl: String
   privacyPolicyUrl: String
   countries: [CountryCode!]!

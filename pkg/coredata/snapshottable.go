@@ -36,8 +36,8 @@ func GetSnapshottable(snapshotType SnapshotsType) (Snapshottable, error) {
 		return Obligations{}, nil
 	case SnapshotsTypeProcessingActivities:
 		return ProcessingActivities{}, nil
-	case SnapshotsTypeVendors:
-		return Vendors{}, nil
+	case SnapshotsTypeThirdParties:
+		return ThirdParties{}, nil
 	default:
 		return nil, fmt.Errorf("unsupported snapshot type: %s", snapshotType)
 	}

@@ -83,49 +83,49 @@ const (
 	ActionTrustCenterFileDelete     = "core:trust-center-file:delete"
 	ActionTrustCenterFileCreate     = "core:trust-center-file:create"
 
-	// Vendor actions
-	ActionVendorList   = "core:vendor:list"
-	ActionVendorGet    = "core:vendor:get"
-	ActionVendorCreate = "core:vendor:create"
-	ActionVendorUpdate = "core:vendor:update"
-	ActionVendorDelete = "core:vendor:delete"
-	ActionVendorAssess = "core:vendor:assess"
+	// ThirdParty actions
+	ActionThirdPartyList   = "core:third-party:list"
+	ActionThirdPartyGet    = "core:third-party:get"
+	ActionThirdPartyCreate = "core:third-party:create"
+	ActionThirdPartyUpdate = "core:third-party:update"
+	ActionThirdPartyDelete = "core:third-party:delete"
+	ActionThirdPartyAssess = "core:third-party:assess"
 
-	// VendorContact actions
-	ActionVendorContactGet    = "core:vendor-contact:get"
-	ActionVendorContactList   = "core:vendor-contact:list"
-	ActionVendorContactCreate = "core:vendor-contact:create"
-	ActionVendorContactUpdate = "core:vendor-contact:update"
-	ActionVendorContactDelete = "core:vendor-contact:delete"
+	// ThirdPartyContact actions
+	ActionThirdPartyContactGet    = "core:third-party-contact:get"
+	ActionThirdPartyContactList   = "core:third-party-contact:list"
+	ActionThirdPartyContactCreate = "core:third-party-contact:create"
+	ActionThirdPartyContactUpdate = "core:third-party-contact:update"
+	ActionThirdPartyContactDelete = "core:third-party-contact:delete"
 
-	// VendorService actions
-	ActionVendorServiceGet    = "core:vendor-service:get"
-	ActionVendorServiceList   = "core:vendor-service:list"
-	ActionVendorServiceCreate = "core:vendor-service:create"
-	ActionVendorServiceUpdate = "core:vendor-service:update"
-	ActionVendorServiceDelete = "core:vendor-service:delete"
+	// ThirdPartyService actions
+	ActionThirdPartyServiceGet    = "core:third-party-service:get"
+	ActionThirdPartyServiceList   = "core:third-party-service:list"
+	ActionThirdPartyServiceCreate = "core:third-party-service:create"
+	ActionThirdPartyServiceUpdate = "core:third-party-service:update"
+	ActionThirdPartyServiceDelete = "core:third-party-service:delete"
 
-	// VendorComplianceReport actions
-	ActionVendorComplianceReportGet    = "core:vendor-compliance-report:get"
-	ActionVendorComplianceReportList   = "core:vendor-compliance-report:list"
-	ActionVendorComplianceReportUpload = "core:vendor-compliance-report:upload"
-	ActionVendorComplianceReportDelete = "core:vendor-compliance-report:delete"
+	// ThirdPartyComplianceReport actions
+	ActionThirdPartyComplianceReportGet    = "core:third-party-compliance-report:get"
+	ActionThirdPartyComplianceReportList   = "core:third-party-compliance-report:list"
+	ActionThirdPartyComplianceReportUpload = "core:third-party-compliance-report:upload"
+	ActionThirdPartyComplianceReportDelete = "core:third-party-compliance-report:delete"
 
-	// VendorBusinessAssociateAgreement actions
-	ActionVendorBusinessAssociateAgreementGet    = "core:vendor-business-associate-agreement:get"
-	ActionVendorBusinessAssociateAgreementUpload = "core:vendor-business-associate-agreement:upload"
-	ActionVendorBusinessAssociateAgreementUpdate = "core:vendor-business-associate-agreement:update"
-	ActionVendorBusinessAssociateAgreementDelete = "core:vendor-business-associate-agreement:delete"
+	// ThirdPartyBusinessAssociateAgreement actions
+	ActionThirdPartyBusinessAssociateAgreementGet    = "core:third-party-business-associate-agreement:get"
+	ActionThirdPartyBusinessAssociateAgreementUpload = "core:third-party-business-associate-agreement:upload"
+	ActionThirdPartyBusinessAssociateAgreementUpdate = "core:third-party-business-associate-agreement:update"
+	ActionThirdPartyBusinessAssociateAgreementDelete = "core:third-party-business-associate-agreement:delete"
 
-	// VendorDataPrivacyAgreement actions
-	ActionVendorDataPrivacyAgreementGet    = "core:vendor-data-privacy-agreement:get"
-	ActionVendorDataPrivacyAgreementUpload = "core:vendor-data-privacy-agreement:upload"
-	ActionVendorDataPrivacyAgreementUpdate = "core:vendor-data-privacy-agreement:update"
-	ActionVendorDataPrivacyAgreementDelete = "core:vendor-data-privacy-agreement:delete"
+	// ThirdPartyDataPrivacyAgreement actions
+	ActionThirdPartyDataPrivacyAgreementGet    = "core:third-party-data-privacy-agreement:get"
+	ActionThirdPartyDataPrivacyAgreementUpload = "core:third-party-data-privacy-agreement:upload"
+	ActionThirdPartyDataPrivacyAgreementUpdate = "core:third-party-data-privacy-agreement:update"
+	ActionThirdPartyDataPrivacyAgreementDelete = "core:third-party-data-privacy-agreement:delete"
 
-	// VendorRiskAssessment actions
-	ActionVendorRiskAssessmentCreate = "core:vendor-risk-assessment:create"
-	ActionVendorRiskAssessmentList   = "core:vendor-risk-assessment:list"
+	// ThirdPartyRiskAssessment actions
+	ActionThirdPartyRiskAssessmentCreate = "core:third-party-risk-assessment:create"
+	ActionThirdPartyRiskAssessmentList   = "core:third-party-risk-assessment:list"
 
 	// Framework actions
 	ActionFrameworkGet    = "core:framework:get"

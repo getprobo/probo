@@ -174,32 +174,32 @@ const (
 			}
 		}`
 
-	createVendorMutation = `
-		mutation CreateVendor($input: CreateVendorInput!) {
-			createVendor(input: $input) {
-				vendorEdge { node { id } }
+	createThirdPartyMutation = `
+		mutation CreateThirdParty($input: CreateThirdPartyInput!) {
+			createThirdParty(input: $input) {
+				thirdPartyEdge { node { id } }
 			}
 		}`
 
-	updateVendorMutation = `
-		mutation UpdateVendor($input: UpdateVendorInput!) {
-			updateVendor(input: $input) {
-				vendor { id }
+	updateThirdPartyMutation = `
+		mutation UpdateThirdParty($input: UpdateThirdPartyInput!) {
+			updateThirdParty(input: $input) {
+				thirdParty { id }
 			}
 		}`
 
-	deleteVendorMutation = `
-		mutation DeleteVendor($input: DeleteVendorInput!) {
-			deleteVendor(input: $input) {
-				deletedVendorId
+	deleteThirdPartyMutation = `
+		mutation DeleteThirdParty($input: DeleteThirdPartyInput!) {
+			deleteThirdParty(input: $input) {
+				deletedThirdPartyId
 			}
 		}`
 
-	listVendorsQuery = `
-		query GetVendors($id: ID!) {
+	listThirdPartiesQuery = `
+		query GetThirdParties($id: ID!) {
 			node(id: $id) {
 				... on Organization {
-					vendors(first: 10) { totalCount }
+					thirdParties(first: 10) { totalCount }
 				}
 			}
 		}`
@@ -304,7 +304,7 @@ func TestRBAC(t *testing.T) {
 	measureID := factory.NewMeasure(owner).WithName("RBAC Test Measure").Create()
 	taskID := factory.NewTask(owner, measureID).WithName("RBAC Test Task").Create()
 	riskID := factory.NewRisk(owner).WithName("RBAC Test Risk").Create()
-	vendorID := factory.NewVendor(owner).WithName("RBAC Test Vendor").Create()
+	thirdPartyID := factory.NewThirdParty(owner).WithName("RBAC Test ThirdParty").Create()
 	accessSourceID := factory.NewAccessSource(owner, owner.GetOrganizationID().String()).WithName("RBAC Test Source").Create()
 	accessReviewCampaignID := factory.NewAccessReviewCampaign(owner, owner.GetOrganizationID().String()).WithName("RBAC Test Campaign").Create()
 
@@ -936,123 +936,123 @@ func TestRBAC(t *testing.T) {
 			shouldAllow: true,
 		},
 		{
-			name:   "owner can create vendor",
+			name:   "owner can create thirdParty",
 			role:   "owner",
 			client: owner,
-			query:  createVendorMutation,
+			query:  createThirdPartyMutation,
 			variables: func() map[string]any {
-				return map[string]any{"input": map[string]any{"organizationId": owner.GetOrganizationID().String(), "name": factory.SafeName("Vendor")}}
+				return map[string]any{"input": map[string]any{"organizationId": owner.GetOrganizationID().String(), "name": factory.SafeName("ThirdParty")}}
 			},
 			shouldAllow: true,
 		},
 		{
-			name:   "admin can create vendor",
+			name:   "admin can create thirdParty",
 			role:   "admin",
 			client: admin,
-			query:  createVendorMutation,
+			query:  createThirdPartyMutation,
 			variables: func() map[string]any {
-				return map[string]any{"input": map[string]any{"organizationId": owner.GetOrganizationID().String(), "name": factory.SafeName("Vendor")}}
+				return map[string]any{"input": map[string]any{"organizationId": owner.GetOrganizationID().String(), "name": factory.SafeName("ThirdParty")}}
 			},
 			shouldAllow: true,
 		},
 		{
-			name:   "viewer cannot create vendor",
+			name:   "viewer cannot create thirdParty",
 			role:   "viewer",
 			client: viewer,
-			query:  createVendorMutation,
+			query:  createThirdPartyMutation,
 			variables: func() map[string]any {
-				return map[string]any{"input": map[string]any{"organizationId": owner.GetOrganizationID().String(), "name": factory.SafeName("Vendor")}}
+				return map[string]any{"input": map[string]any{"organizationId": owner.GetOrganizationID().String(), "name": factory.SafeName("ThirdParty")}}
 			},
 			shouldAllow: false,
 		},
 		{
-			name:   "owner can update vendor",
+			name:   "owner can update thirdParty",
 			role:   "owner",
 			client: owner,
-			query:  updateVendorMutation,
+			query:  updateThirdPartyMutation,
 			variables: func() map[string]any {
-				return map[string]any{"input": map[string]any{"id": vendorID, "name": factory.SafeName("Updated Vendor")}}
+				return map[string]any{"input": map[string]any{"id": thirdPartyID, "name": factory.SafeName("Updated ThirdParty")}}
 			},
 			shouldAllow: true,
 		},
 		{
-			name:   "admin can update vendor",
+			name:   "admin can update thirdParty",
 			role:   "admin",
 			client: admin,
-			query:  updateVendorMutation,
+			query:  updateThirdPartyMutation,
 			variables: func() map[string]any {
-				return map[string]any{"input": map[string]any{"id": vendorID, "name": factory.SafeName("Updated Vendor")}}
+				return map[string]any{"input": map[string]any{"id": thirdPartyID, "name": factory.SafeName("Updated ThirdParty")}}
 			},
 			shouldAllow: true,
 		},
 		{
-			name:   "viewer cannot update vendor",
+			name:   "viewer cannot update thirdParty",
 			role:   "viewer",
 			client: viewer,
-			query:  updateVendorMutation,
+			query:  updateThirdPartyMutation,
 			variables: func() map[string]any {
-				return map[string]any{"input": map[string]any{"id": vendorID, "name": factory.SafeName("Updated Vendor")}}
+				return map[string]any{"input": map[string]any{"id": thirdPartyID, "name": factory.SafeName("Updated ThirdParty")}}
 			},
 			shouldAllow: false,
 		},
 		{
-			name:   "owner can delete vendor",
+			name:   "owner can delete thirdParty",
 			role:   "owner",
 			client: owner,
-			query:  deleteVendorMutation,
+			query:  deleteThirdPartyMutation,
 			variables: func() map[string]any {
-				id := factory.NewVendor(owner).WithName(factory.SafeName("ToDelete")).Create()
-				return map[string]any{"input": map[string]any{"vendorId": id}}
+				id := factory.NewThirdParty(owner).WithName(factory.SafeName("ToDelete")).Create()
+				return map[string]any{"input": map[string]any{"thirdPartyId": id}}
 			},
 			shouldAllow: true,
 		},
 		{
-			name:   "admin can delete vendor",
+			name:   "admin can delete thirdParty",
 			role:   "admin",
 			client: admin,
-			query:  deleteVendorMutation,
+			query:  deleteThirdPartyMutation,
 			variables: func() map[string]any {
-				id := factory.NewVendor(owner).WithName(factory.SafeName("ToDelete")).Create()
-				return map[string]any{"input": map[string]any{"vendorId": id}}
+				id := factory.NewThirdParty(owner).WithName(factory.SafeName("ToDelete")).Create()
+				return map[string]any{"input": map[string]any{"thirdPartyId": id}}
 			},
 			shouldAllow: true,
 		},
 		{
-			name:   "viewer cannot delete vendor",
+			name:   "viewer cannot delete thirdParty",
 			role:   "viewer",
 			client: viewer,
-			query:  deleteVendorMutation,
+			query:  deleteThirdPartyMutation,
 			variables: func() map[string]any {
-				id := factory.NewVendor(owner).WithName(factory.SafeName("ToDelete")).Create()
-				return map[string]any{"input": map[string]any{"vendorId": id}}
+				id := factory.NewThirdParty(owner).WithName(factory.SafeName("ToDelete")).Create()
+				return map[string]any{"input": map[string]any{"thirdPartyId": id}}
 			},
 			shouldAllow: false,
 		},
 		{
-			name:   "owner can list vendors",
+			name:   "owner can list thirdParties",
 			role:   "owner",
 			client: owner,
-			query:  listVendorsQuery,
+			query:  listThirdPartiesQuery,
 			variables: func() map[string]any {
 				return map[string]any{"id": owner.GetOrganizationID().String()}
 			},
 			shouldAllow: true,
 		},
 		{
-			name:   "admin can list vendors",
+			name:   "admin can list thirdParties",
 			role:   "admin",
 			client: admin,
-			query:  listVendorsQuery,
+			query:  listThirdPartiesQuery,
 			variables: func() map[string]any {
 				return map[string]any{"id": owner.GetOrganizationID().String()}
 			},
 			shouldAllow: true,
 		},
 		{
-			name:   "viewer can list vendors",
+			name:   "viewer can list thirdParties",
 			role:   "viewer",
 			client: viewer,
-			query:  listVendorsQuery,
+			query:  listThirdPartiesQuery,
 			variables: func() map[string]any {
 				return map[string]any{"id": owner.GetOrganizationID().String()}
 			},

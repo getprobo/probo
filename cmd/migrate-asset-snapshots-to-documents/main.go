@@ -338,41 +338,41 @@ ORDER BY a.name ASC;
 		return "", err
 	}
 
-	vendorRows, err := tx.Query(
+	thirdPartyRows, err := tx.Query(
 		ctx,
 		`
 SELECT
     av.asset_id,
     v.name
-FROM asset_vendors av
-JOIN vendors v ON v.id = av.vendor_id
+FROM asset_third_parties av
+JOIN third_parties v ON v.id = av.third_party_id
 WHERE av.snapshot_id = @snapshot_id
 ORDER BY v.name ASC;
 `,
 		pgx.NamedArgs{"snapshot_id": snapshotID},
 	)
 	if err != nil {
-		return "", fmt.Errorf("cannot load snapshot asset vendors: %w", err)
+		return "", fmt.Errorf("cannot load snapshot asset third_parties: %w", err)
 	}
-	defer vendorRows.Close()
+	defer thirdPartyRows.Close()
 
-	vendorsByAsset := make(map[string][]string)
-	for vendorRows.Next() {
-		var assetID, vendorName string
-		if err := vendorRows.Scan(&assetID, &vendorName); err != nil {
-			return "", fmt.Errorf("cannot scan vendor: %w", err)
+	thirdPartiesByAsset := make(map[string][]string)
+	for thirdPartyRows.Next() {
+		var assetID, thirdPartyName string
+		if err := thirdPartyRows.Scan(&assetID, &thirdPartyName); err != nil {
+			return "", fmt.Errorf("cannot scan thirdParty: %w", err)
 		}
-		vendorsByAsset[assetID] = append(vendorsByAsset[assetID], vendorName)
+		thirdPartiesByAsset[assetID] = append(thirdPartiesByAsset[assetID], thirdPartyName)
 	}
-	if err := vendorRows.Err(); err != nil {
+	if err := thirdPartyRows.Err(); err != nil {
 		return "", err
 	}
 
 	assetRows := make([]docgen.AssetListRow, len(assets))
 	for i, a := range assets {
-		vendors := "-"
-		if v, ok := vendorsByAsset[a.id]; ok && len(v) > 0 {
-			vendors = strings.Join(v, ", ")
+		thirdParties := "-"
+		if v, ok := thirdPartiesByAsset[a.id]; ok && len(v) > 0 {
+			thirdParties = strings.Join(v, ", ")
 		}
 
 		assetRows[i] = docgen.AssetListRow{
@@ -381,7 +381,7 @@ ORDER BY v.name ASC;
 			Amount:          a.amount,
 			DataTypesStored: a.dataTypesStored,
 			Owner:           a.ownerName,
-			Vendors:         vendors,
+			ThirdParties:    thirdParties,
 		}
 	}
 

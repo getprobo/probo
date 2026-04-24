@@ -598,7 +598,7 @@ func (r *subprocessorConnectionResolver) TotalCount(ctx context.Context, obj *ty
 
 	switch obj.Resolver.(type) {
 	case *trustCenterResolver:
-		count, err := trustService.Vendors.CountForTrustCenterId(ctx, obj.ParentID)
+		count, err := trustService.ThirdParties.CountForTrustCenterId(ctx, obj.ParentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count subprocessors", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
@@ -717,19 +717,19 @@ func (r *trustCenterResolver) Audits(ctx context.Context, obj *types.TrustCenter
 func (r *trustCenterResolver) Subprocessors(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.SubprocessorConnection, error) {
 	trustService := r.TrustService(ctx, obj.ID.TenantID())
 
-	pageOrderBy := page.OrderBy[coredata.VendorOrderField]{
-		Field:     coredata.VendorOrderFieldName,
+	pageOrderBy := page.OrderBy[coredata.ThirdPartyOrderField]{
+		Field:     coredata.ThirdPartyOrderFieldName,
 		Direction: page.OrderDirectionAsc,
 	}
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	vendorPage, err := trustService.Vendors.ListForOrganizationId(ctx, obj.Organization.ID, cursor)
+	thirdPartyPage, err := trustService.ThirdParties.ListForOrganizationId(ctx, obj.Organization.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list subprocessors", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewSubprocessorConnection(vendorPage, r, obj.ID), nil
+	return types.NewSubprocessorConnection(thirdPartyPage, r, obj.ID), nil
 }
 
 // References is the resolver for the references field.

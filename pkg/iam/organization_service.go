@@ -123,7 +123,7 @@ type (
 )
 
 var (
-	proboVendor = struct {
+	proboThirdParty = struct {
 		Name                 string
 		Description          string
 		LegalName            string
@@ -134,7 +134,7 @@ var (
 		SubprocessorsListURL string
 	}{
 		Name:                 "Probo",
-		Description:          "Probo is an open-source compliance platform that helps startups achieve SOC 2 and ISO 27001 certifications quickly and affordably, with expert guidance and no vendor lock-in.",
+		Description:          "Probo is an open-source compliance platform that helps startups achieve SOC 2 and ISO 27001 certifications quickly and affordably, with expert guidance and no thirdParty lock-in.",
 		LegalName:            "Probo Inc.",
 		HeadquarterAddress:   "490 Post St, Suite 640,San Francisco, CA 94102, United States",
 		WebsiteURL:           "https://www.getprobo.com/",
@@ -659,26 +659,26 @@ func (s *OrganizationService) CreateOrganization(
 				return fmt.Errorf("cannot insert trust center: %w", err)
 			}
 
-			proboData := &coredata.Vendor{
-				ID:                   gid.New(scope.GetTenantID(), coredata.VendorEntityType),
+			proboData := &coredata.ThirdParty{
+				ID:                   gid.New(scope.GetTenantID(), coredata.ThirdPartyEntityType),
 				TenantID:             organization.TenantID,
 				OrganizationID:       organization.ID,
-				Name:                 proboVendor.Name,
-				Description:          &proboVendor.Description,
-				Category:             coredata.VendorCategorySecurity,
-				HeadquarterAddress:   &proboVendor.HeadquarterAddress,
-				LegalName:            &proboVendor.LegalName,
-				WebsiteURL:           &proboVendor.WebsiteURL,
-				PrivacyPolicyURL:     &proboVendor.PrivacyPolicyURL,
-				TermsOfServiceURL:    &proboVendor.TermsOfServiceURL,
-				SubprocessorsListURL: &proboVendor.SubprocessorsListURL,
+				Name:                 proboThirdParty.Name,
+				Description:          &proboThirdParty.Description,
+				Category:             coredata.ThirdPartyCategorySecurity,
+				HeadquarterAddress:   &proboThirdParty.HeadquarterAddress,
+				LegalName:            &proboThirdParty.LegalName,
+				WebsiteURL:           &proboThirdParty.WebsiteURL,
+				PrivacyPolicyURL:     &proboThirdParty.PrivacyPolicyURL,
+				TermsOfServiceURL:    &proboThirdParty.TermsOfServiceURL,
+				SubprocessorsListURL: &proboThirdParty.SubprocessorsListURL,
 				ShowOnTrustCenter:    false,
 				CreatedAt:            now,
 				UpdatedAt:            now,
 			}
 
 			if err := proboData.Insert(ctx, tx, scope); err != nil {
-				return fmt.Errorf("cannot insert vendor: %w", err)
+				return fmt.Errorf("cannot insert thirdParty: %w", err)
 			}
 
 			return nil

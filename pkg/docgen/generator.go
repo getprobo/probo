@@ -248,7 +248,7 @@ type (
 		NextReviewDate                       *time.Time
 		Role                                 coredata.ProcessingActivityRole
 		DataProtectionOfficerFullName        *string
-		Vendors                              string
+		ThirdParties                         string
 	}
 
 	DataProtectionImpactAssessmentTableData struct {
@@ -319,7 +319,7 @@ type (
 		Name           string
 		Classification string
 		Owner          string
-		Vendors        string
+		ThirdParties   string
 	}
 
 	AssetListData struct {
@@ -336,7 +336,7 @@ type (
 		Amount          int
 		DataTypesStored string
 		Owner           string
-		Vendors         string
+		ThirdParties    string
 	}
 )
 

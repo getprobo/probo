@@ -48,7 +48,7 @@ import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import { EditableTable } from "../table/EditableTable";
 import { PeopleCell } from "../table/PeopleCell";
-import { VendorsCell } from "../table/VendorsCell";
+import { ThirdPartiesCell } from "../table/ThirdPartiesCell";
 
 type Props = {
   connectionId: string;
@@ -65,7 +65,7 @@ const schema = z.object({
   amount: z.coerce.number().min(1, "Amount is required"),
   assetType: z.enum(["PHYSICAL", "VIRTUAL"]),
   ownerId: z.string().trim().min(1, "Owner is required"),
-  vendorIds: z.array(z.string()).optional(),
+  thirdPartyIds: z.array(z.string()).optional(),
   dataTypesStored: z.string().trim().min(1, "Data types stored is required"),
   organizationId: z.string().trim().min(1, "Organization is required"),
 });
@@ -75,7 +75,7 @@ const defaultValue = {
   amount: 0,
   assetType: "VIRTUAL",
   ownerId: "",
-  vendorIds: [],
+  thirdPartyIds: [],
   dataTypesStored: "",
   organizationId: "",
 } satisfies z.infer<typeof schema>;
@@ -99,7 +99,7 @@ export function AssetsTable(props: Props) {
         __("Data Types stored"),
         __("Amount"),
         __("Owner"),
-        __("Vendors"),
+        __("Third Parties"),
       ]}
       schema={schema}
       updateMutation={updateAssetMutation}
@@ -154,10 +154,10 @@ export function AssetsTable(props: Props) {
             defaultValue={item?.owner}
             organizationId={organizationId}
           />
-          <VendorsCell
-            name="vendorIds"
+          <ThirdPartiesCell
+            name="thirdPartyIds"
             organizationId={organizationId}
-            defaultValue={item?.vendors?.edges?.map(edge => edge.node) ?? []}
+            defaultValue={item?.thirdParties?.edges?.map(edge => edge.node) ?? []}
           />
         </>
       )}
