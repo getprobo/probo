@@ -591,6 +591,23 @@ func (s *Service) CreateCookieBanner(
 				}
 
 				slugToGID[dc.Slug] = category.ID
+
+				if dc.Kind == coredata.CookieCategoryKindNecessary {
+					consentCookie := &coredata.Cookie{
+						ID:               gid.New(scope.GetTenantID(), coredata.CookieEntityType),
+						OrganizationID:   banner.OrganizationID,
+						CookieBannerID:   banner.ID,
+						CookieCategoryID: category.ID,
+						Name:             "probo_consent",
+						Duration:         fmt.Sprintf("%d days", req.ConsentExpiryDays),
+						Description:      "Stores your cookie consent preferences for this website.",
+						CreatedAt:        now,
+						UpdatedAt:        now,
+					}
+					if err := consentCookie.Insert(ctx, tx, scope); err != nil {
+						return fmt.Errorf("cannot insert probo_consent cookie: %w", err)
+					}
+				}
 			}
 
 			for lang, uiStrings := range defaultUIStringsByLanguage {
