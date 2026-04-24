@@ -80,9 +80,9 @@ func NewEvidence(e *coredata.Evidence) *Evidence {
 		UpdatedAt:   e.UpdatedAt,
 	}
 
-	if e.EvidenceFileId != nil {
+	if e.EvidenceFileID != nil {
 		evidence.File = &File{
-			ID: *e.EvidenceFileId,
+			ID: *e.EvidenceFileID,
 		}
 	}
 

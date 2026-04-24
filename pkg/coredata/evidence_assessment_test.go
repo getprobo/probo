@@ -43,7 +43,7 @@ func TestEvidence_SetAssessment_ReadBack(t *testing.T) {
 	require.NotEmpty(t, e.Assessment, "Assessment raw bytes should be populated")
 
 	var out testAssessmentPayload
-	require.NoError(t, e.AssessmentInto(&out))
+	require.NoError(t, e.GetAssessment(&out))
 	assert.Equal(t, *in, out)
 }
 
@@ -70,11 +70,11 @@ func TestEvidence_SetAssessment_TypedNil_ClearsField(t *testing.T) {
 	assert.Empty(t, e.Assessment, "typed-nil pointer should clear, not persist JSON null")
 }
 
-func TestEvidence_AssessmentInto_EmptyIsNoOp(t *testing.T) {
+func TestEvidence_GetAssessment_EmptyIsNoOp(t *testing.T) {
 	t.Parallel()
 
 	var e Evidence
 	out := testAssessmentPayload{Summary: "unchanged"}
-	require.NoError(t, e.AssessmentInto(&out))
+	require.NoError(t, e.GetAssessment(&out))
 	assert.Equal(t, "unchanged", out.Summary, "empty column should leave dst untouched")
 }

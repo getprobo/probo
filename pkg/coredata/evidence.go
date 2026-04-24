@@ -38,7 +38,7 @@ type (
 		ReferenceID                   string                   `db:"reference_id"`
 		Type                          EvidenceType             `db:"type"`
 		URL                           string                   `db:"url"`
-		EvidenceFileId                *gid.GID                 `db:"evidence_file_id"`
+		EvidenceFileID                *gid.GID                 `db:"evidence_file_id"`
 		Description                   *string                  `db:"description"`
 		Assessment                    jsonRawMessageOrNull     `db:"assessment"`
 		AssessmentStatus              EvidenceAssessmentStatus `db:"assessment_status"`
@@ -128,7 +128,7 @@ WHERE evidences.state = 'REQUESTED';
 		"measure_id":                       e.MeasureID,
 		"task_id":                          e.TaskID,
 		"reference_id":                     e.ReferenceID,
-		"evidence_file_id":                 e.EvidenceFileId,
+		"evidence_file_id":                 e.EvidenceFileID,
 		"created_at":                       e.CreatedAt,
 		"updated_at":                       e.UpdatedAt,
 		"state":                            e.State,
@@ -197,7 +197,7 @@ VALUES (
 		"measure_id":                       e.MeasureID,
 		"task_id":                          e.TaskID,
 		"reference_id":                     e.ReferenceID,
-		"evidence_file_id":                 e.EvidenceFileId,
+		"evidence_file_id":                 e.EvidenceFileID,
 		"created_at":                       e.CreatedAt,
 		"updated_at":                       e.UpdatedAt,
 		"state":                            e.State,
@@ -473,7 +473,7 @@ WHERE
 		"evidence_id":                      e.ID,
 		"type":                             e.Type,
 		"state":                            e.State,
-		"evidence_file_id":                 e.EvidenceFileId,
+		"evidence_file_id":                 e.EvidenceFileID,
 		"url":                              e.URL,
 		"description":                      e.Description,
 		"assessment":                       e.Assessment.Arg(),
@@ -565,17 +565,16 @@ FOR UPDATE SKIP LOCKED;
 	return nil
 }
 
-// MarkAssessmentFailed transitions the evidence row to FAILED without
-// touching description, assessment, or any other column. The worker's
-// in-memory evidence pointer may carry mutations from a partially
-// successful assess-and-commit (e.g. a new assessment that could not be
-// persisted); using the full Update method would write those back with
-// FAILED status. This targeted statement guarantees the failure path
-// only changes state-transition columns.
-func (e Evidence) MarkAssessmentFailed(
+// MarkEvidenceAssessmentFailed transitions the evidence row to FAILED
+// without touching description, assessment, or any other column. It
+// only needs the evidence ID, so it is a top-level func rather than a
+// method on Evidence — callers should not need to load the row first
+// when all they have is the ID.
+func MarkEvidenceAssessmentFailed(
 	ctx context.Context,
 	conn pg.Tx,
 	scope Scoper,
+	evidenceID gid.GID,
 ) error {
 	q := `
 UPDATE
@@ -592,7 +591,7 @@ WHERE
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"evidence_id":       e.ID,
+		"evidence_id":       evidenceID,
 		"assessment_status": EvidenceAssessmentStatusFailed,
 		"updated_at":        time.Now(),
 	}

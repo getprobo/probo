@@ -17,18 +17,18 @@ package coredata
 import (
 	"encoding/json"
 	"fmt"
+	"reflect"
 )
 
 // SetAssessment marshals a typed assessment into Evidence.Assessment.
-// Passing nil (untyped or typed) clears the field; we catch the typed
-// case by checking the marshalled output for the JSON literal "null"
-// so callers cannot accidentally persist a null JSONB value instead of
-// SQL NULL. The shape of the assessment is defined by its producer
-// (see pkg/evidencedescriber.EvidenceAssessment); this package is
-// intentionally agnostic about the schema and only owns the raw JSONB
-// round-trip.
+// Passing an untyped or typed nil clears the field; the typed case is
+// detected via reflection so callers cannot accidentally persist JSON
+// null instead of SQL NULL. The shape of the assessment is defined by
+// its producer (see pkg/evidenceassessor.EvidenceAssessment); this
+// package is intentionally agnostic about the schema and only owns the
+// raw JSONB round-trip.
 func (e *Evidence) SetAssessment(v any) error {
-	if v == nil {
+	if isNil(v) {
 		e.Assessment = nil
 		return nil
 	}
@@ -36,17 +36,13 @@ func (e *Evidence) SetAssessment(v any) error {
 	if err != nil {
 		return fmt.Errorf("cannot marshal evidence assessment: %w", err)
 	}
-	if string(data) == "null" {
-		e.Assessment = nil
-		return nil
-	}
 	e.Assessment = data
 	return nil
 }
 
-// AssessmentInto unmarshals Evidence.Assessment into dst. It is a no-op
+// GetAssessment unmarshals Evidence.Assessment into dst. It is a no-op
 // when the column is NULL/empty, leaving dst untouched.
-func (e *Evidence) AssessmentInto(dst any) error {
+func (e *Evidence) GetAssessment(dst any) error {
 	if len(e.Assessment) == 0 {
 		return nil
 	}
@@ -54,4 +50,19 @@ func (e *Evidence) AssessmentInto(dst any) error {
 		return fmt.Errorf("cannot unmarshal evidence assessment: %w", err)
 	}
 	return nil
+}
+
+// isNil returns true for untyped-nil and for typed-nil pointers, maps,
+// slices, channels, funcs, and interfaces. Plain struct values, zero
+// ints, and empty strings are not considered nil.
+func isNil(v any) bool {
+	if v == nil {
+		return true
+	}
+	rv := reflect.ValueOf(v)
+	switch rv.Kind() {
+	case reflect.Pointer, reflect.Map, reflect.Slice, reflect.Chan, reflect.Func, reflect.Interface:
+		return rv.IsNil()
+	}
+	return false
 }

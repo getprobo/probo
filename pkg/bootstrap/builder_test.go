@@ -194,10 +194,10 @@ func TestBuilder_Build_Defaults(t *testing.T) {
 	assert.Empty(t, cfg.Probod.Agents.Probo.ModelName)
 	assert.Nil(t, cfg.Probod.Agents.Probo.Temperature)
 	assert.Nil(t, cfg.Probod.Agents.Probo.MaxTokens)
-	assert.Empty(t, cfg.Probod.Agents.EvidenceDescriber.Provider)
-	assert.Empty(t, cfg.Probod.Agents.EvidenceDescriber.ModelName)
-	assert.Nil(t, cfg.Probod.Agents.EvidenceDescriber.Temperature)
-	assert.Nil(t, cfg.Probod.Agents.EvidenceDescriber.MaxTokens)
+	assert.Empty(t, cfg.Probod.Agents.EvidenceAssessor.Provider)
+	assert.Empty(t, cfg.Probod.Agents.EvidenceAssessor.ModelName)
+	assert.Nil(t, cfg.Probod.Agents.EvidenceAssessor.Temperature)
+	assert.Nil(t, cfg.Probod.Agents.EvidenceAssessor.MaxTokens)
 
 	// Custom domains config
 	assert.Equal(t, 3600, cfg.Probod.CustomDomains.RenewalInterval)
@@ -361,10 +361,10 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	assert.Empty(t, cfg.Probod.Agents.Probo.Provider)
 	assert.Empty(t, cfg.Probod.Agents.Probo.ModelName)
 	// Agents — evidence-describer overrides
-	assert.Equal(t, "anthropic", cfg.Probod.Agents.EvidenceDescriber.Provider)
-	assert.Equal(t, "claude-sonnet-4-20250514", cfg.Probod.Agents.EvidenceDescriber.ModelName)
-	assert.Equal(t, new(0.2), cfg.Probod.Agents.EvidenceDescriber.Temperature)
-	assert.Equal(t, new(4096), cfg.Probod.Agents.EvidenceDescriber.MaxTokens)
+	assert.Equal(t, "anthropic", cfg.Probod.Agents.EvidenceAssessor.Provider)
+	assert.Equal(t, "claude-sonnet-4-20250514", cfg.Probod.Agents.EvidenceAssessor.ModelName)
+	assert.Equal(t, new(0.2), cfg.Probod.Agents.EvidenceAssessor.Temperature)
+	assert.Equal(t, new(4096), cfg.Probod.Agents.EvidenceAssessor.MaxTokens)
 	// Custom domains
 	assert.Equal(t, "1.1.1.1:53", cfg.Probod.CustomDomains.ResolverAddr)
 	assert.Equal(t, "-----BEGIN EC PRIVATE KEY-----\ntest\n-----END EC PRIVATE KEY-----", cfg.Probod.CustomDomains.ACME.AccountKey)
