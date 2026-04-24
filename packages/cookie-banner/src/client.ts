@@ -235,9 +235,7 @@ export class CookieBannerClient {
     action: ConsentAction,
     consentData: Record<string, boolean>,
   ): void {
-    if (action !== "GPC") {
-      this._gpcApplied = false;
-    }
+    this._gpcApplied = action === "GPC";
 
     const cfg = this.config;
 
