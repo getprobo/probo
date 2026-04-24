@@ -107,12 +107,22 @@ export class CookieBannerClient {
     this.integrations = createDefaultIntegrations();
   }
 
+  get loaded(): boolean {
+    return this.bannerConfig !== null;
+  }
+
   async load(): Promise<void> {
     const configUrl = new URL(`${this.bannerId}/config`, this.baseUrl);
     if (this.lang) {
       configUrl.searchParams.set("lang", this.lang);
     }
-    const config = await fetchJSON<BannerConfig>(configUrl);
+
+    let config: BannerConfig;
+    try {
+      config = await fetchJSON<BannerConfig>(configUrl);
+    } catch {
+      return;
+    }
     this.bannerConfig = config;
 
     for (const integration of this.integrations) {
