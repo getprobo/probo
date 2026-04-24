@@ -123,7 +123,7 @@ func (r *organizationResolver) Profiles(ctx context.Context, obj *types.Organiza
 
 	filters := coredata.NewMembershipProfileFilter(nil).WithMembership()
 	if filter != nil {
-		filters = coredata.NewMembershipProfileFilter(filter.ExcludeContractEnded).WithMembership()
+		filters = coredata.NewMembershipProfileFilter(filter.ContractEnded).WithMembership()
 	}
 
 	pageOrderBy := page.OrderBy[coredata.MembershipProfileOrderField]{

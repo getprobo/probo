@@ -126,7 +126,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 
 			if flagActive {
 				variables["filter"] = map[string]any{
-					"excludeContractEnded": true,
+					"contractEnded": false,
 				}
 			}
 
@@ -210,7 +210,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().IntVarP(&flagLimit, "limit", "L", 30, "Maximum number of users to list")
 	cmd.Flags().StringVar(&flagOrder, "order-by", "", "Order by field (FULL_NAME, CREATED_AT, KIND)")
 	cmd.Flags().StringVar(&flagOrderDir, "order-direction", "DESC", "Sort direction (ASC, DESC)")
-	cmd.Flags().BoolVar(&flagActive, "active", false, "Exclude users whose contract has ended")
+	cmd.Flags().BoolVar(&flagActive, "active", false, "Show only users with active or no contract")
 	flagOutput = cmdutil.AddOutputFlag(cmd)
 
 	return cmd

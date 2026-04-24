@@ -65,7 +65,7 @@ function PeopleMultiSelectWithQuery<T extends FieldValues = FieldValues>(
 ) {
   const { __ } = useTranslate();
   const { name, organizationId, control, selectedPeople = [], placeholder } = props;
-  const people = usePeople(organizationId, { excludeContractEnded: true });
+  const people = usePeople(organizationId, { contractEnded: false });
   const [isOpen, setIsOpen] = useState(false);
 
   const allPeople = [...people];

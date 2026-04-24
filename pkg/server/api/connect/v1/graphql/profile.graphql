@@ -65,7 +65,7 @@ enum ProfileOrderField
 }
 
 input ProfileFilter {
-  excludeContractEnded: Boolean
+  contractEnded: Boolean
   state: ProfileState
 }
 

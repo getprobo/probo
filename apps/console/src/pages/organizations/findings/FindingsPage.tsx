@@ -550,7 +550,7 @@ function OwnerFilterSelect({
   onChange,
 }: OwnerFilterSelectProps) {
   const { __ } = useTranslate();
-  const people = usePeople(organizationId, { excludeContractEnded: true });
+  const people = usePeople(organizationId, { contractEnded: false });
 
   return (
     <Select value={value ?? "ALL"} onValueChange={onChange}>
