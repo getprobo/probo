@@ -82,8 +82,6 @@ type (
 )
 
 const (
-	MaxCheckpointBytes = 10 * 1024 * 1024
-
 	AgentStatusSuspended        AgentStatus = "suspended"
 	AgentStatusAwaitingApproval AgentStatus = "awaiting_approval"
 )

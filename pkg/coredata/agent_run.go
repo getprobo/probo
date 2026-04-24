@@ -551,20 +551,43 @@ WHERE
 }
 
 // PGCheckpointer implements agent.Checkpointer backed by the
-// agent_runs table checkpoint column. It is supervisor-internal and
-// intentionally uses raw run IDs with no tenant scope; public service/API
-// methods must load AgentRun through scoped coredata methods before invoking
-// lifecycle transitions.
+// agent_runs table checkpoint column. The runID is validated as a GID
+// up front so malformed identifiers fail closed; rows are then scoped
+// by primary key.
 type PGCheckpointer struct {
-	pg *pg.Client
+	pg                 *pg.Client
+	maxCheckpointBytes int
 }
 
-func NewPGCheckpointer(pgClient *pg.Client) *PGCheckpointer {
-	return &PGCheckpointer{pg: pgClient}
+type PGCheckpointerOption func(*PGCheckpointer)
+
+// WithMaxCheckpointBytes overrides the default per-checkpoint size cap
+// enforced on both Save and Load.
+func WithMaxCheckpointBytes(n int) PGCheckpointerOption {
+	return func(s *PGCheckpointer) {
+		if n > 0 {
+			s.maxCheckpointBytes = n
+		}
+	}
+}
+
+func NewPGCheckpointer(pgClient *pg.Client, opts ...PGCheckpointerOption) *PGCheckpointer {
+	s := &PGCheckpointer{
+		pg:                 pgClient,
+		maxCheckpointBytes: 10 * 1024 * 1024,
+	}
+	for _, opt := range opts {
+		opt(s)
+	}
+	return s
 }
 
 func (s *PGCheckpointer) Save(ctx context.Context, runID string, cp *agent.Checkpoint) error {
-	data, err := marshalAgentCheckpoint(cp)
+	if _, err := gid.ParseGID(runID); err != nil {
+		return fmt.Errorf("cannot parse agent run id: %w", err)
+	}
+
+	data, err := s.marshalAgentCheckpoint(cp)
 	if err != nil {
 		return err
 	}
@@ -572,7 +595,14 @@ func (s *PGCheckpointer) Save(ctx context.Context, runID string, cp *agent.Check
 	return s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			q := `UPDATE agent_runs SET checkpoint = @checkpoint, updated_at = now() WHERE id = @id;`
+			q := `
+UPDATE agent_runs
+SET
+	checkpoint = @checkpoint,
+	updated_at = now()
+WHERE
+	id = @id;
+`
 
 			args := pgx.StrictNamedArgs{
 				"id":         runID,
@@ -594,12 +624,21 @@ func (s *PGCheckpointer) Save(ctx context.Context, runID string, cp *agent.Check
 }
 
 func (s *PGCheckpointer) Load(ctx context.Context, runID string) (*agent.Checkpoint, error) {
+	if _, err := gid.ParseGID(runID); err != nil {
+		return nil, fmt.Errorf("cannot parse agent run id: %w", err)
+	}
+
 	var cp *agent.Checkpoint
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			q := `SELECT checkpoint FROM agent_runs WHERE id = @id;`
+			q := `
+SELECT checkpoint
+FROM agent_runs
+WHERE
+	id = @id;
+`
 
 			args := pgx.StrictNamedArgs{"id": runID}
 
@@ -624,6 +663,10 @@ func (s *PGCheckpointer) Load(ctx context.Context, runID string) (*agent.Checkpo
 				return nil
 			}
 
+			if len(r.Checkpoint) > s.maxCheckpointBytes {
+				return fmt.Errorf("cannot load checkpoint: size %d exceeds limit %d", len(r.Checkpoint), s.maxCheckpointBytes)
+			}
+
 			cp = new(agent.Checkpoint)
 			if err := json.Unmarshal(r.Checkpoint, cp); err != nil {
 				return fmt.Errorf("cannot unmarshal checkpoint: %w", err)
@@ -636,7 +679,7 @@ func (s *PGCheckpointer) Load(ctx context.Context, runID string) (*agent.Checkpo
 	return cp, err
 }
 
-func marshalAgentCheckpoint(cp *agent.Checkpoint) ([]byte, error) {
+func (s *PGCheckpointer) marshalAgentCheckpoint(cp *agent.Checkpoint) ([]byte, error) {
 	if cp == nil {
 		return nil, fmt.Errorf("cannot marshal checkpoint: checkpoint is required")
 	}
@@ -646,8 +689,8 @@ func marshalAgentCheckpoint(cp *agent.Checkpoint) ([]byte, error) {
 		return nil, fmt.Errorf("cannot marshal checkpoint: %w", err)
 	}
 
-	if len(data) > agent.MaxCheckpointBytes {
-		return nil, fmt.Errorf("cannot marshal checkpoint: size %d exceeds limit %d", len(data), agent.MaxCheckpointBytes)
+	if len(data) > s.maxCheckpointBytes {
+		return nil, fmt.Errorf("cannot marshal checkpoint: size %d exceeds limit %d", len(data), s.maxCheckpointBytes)
 	}
 
 	return data, nil
