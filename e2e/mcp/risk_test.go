@@ -86,4 +86,24 @@ func TestMCP_Risk_CRUD(t *testing.T) {
 		"id": addResult.Risk.ID,
 	}, &deleteResult)
 	assert.Equal(t, addResult.Risk.ID, deleteResult.DeletedRiskID)
+
+	// Get deleted risk returns sanitized not-found error
+	msg := mc.CallToolExpectError("getRisk", map[string]any{
+		"id": addResult.Risk.ID,
+	})
+	assert.Equal(t, "resource not found", msg)
+}
+
+func TestMCP_Risk_PermissionDenied(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	orgID := owner.GetOrganizationID().String()
+	viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
+	viewerMC := testutil.NewMCPClient(t, viewer)
+
+	msg := viewerMC.CallToolExpectError("addRisk", map[string]any{
+		"organizationId": orgID,
+		"name":           factory.SafeName("Risk"),
+	})
+	assert.Contains(t, msg, "permission denied")
 }

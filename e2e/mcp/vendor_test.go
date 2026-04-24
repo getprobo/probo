@@ -76,4 +76,42 @@ func TestMCP_Vendor_CRUD(t *testing.T) {
 		"id": addResult.Vendor.ID,
 	}, &deleteResult)
 	assert.Equal(t, addResult.Vendor.ID, deleteResult.DeletedVendorID)
+
+	// Update deleted vendor returns sanitized not-found error
+	msg := mc.CallToolExpectError("updateVendor", map[string]any{
+		"id":   addResult.Vendor.ID,
+		"name": "Should Fail",
+	})
+	assert.Equal(t, "resource not found", msg)
+}
+
+func TestMCP_Vendor_ValidationError(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	mc := testutil.NewMCPClient(t, owner)
+	orgID := owner.GetOrganizationID().String()
+
+	msg := mc.CallToolExpectToolError("addVendor", map[string]any{
+		"organizationId": orgID,
+		"name":           "",
+	})
+	assert.Contains(t, msg, "name")
+	assert.NotContains(t, msg, "pq:")
+	assert.NotContains(t, msg, "sql:")
+}
+
+func TestMCP_Vendor_PermissionDenied(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	orgID := owner.GetOrganizationID().String()
+	viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
+	viewerMC := testutil.NewMCPClient(t, viewer)
+
+	msg := viewerMC.CallToolExpectError("addVendor", map[string]any{
+		"organizationId": orgID,
+		"name":           factory.SafeName("Vendor"),
+	})
+	assert.Contains(t, msg, "permission denied")
+	assert.NotContains(t, msg, "pq:")
+	assert.NotContains(t, msg, "sql:")
 }

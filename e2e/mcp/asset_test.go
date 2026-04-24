@@ -92,4 +92,27 @@ func TestMCP_Asset_CRUD(t *testing.T) {
 		"id": addResult.Asset.ID,
 	}, &deleteResult)
 	assert.Equal(t, addResult.Asset.ID, deleteResult.DeletedAssetID)
+
+	// Get deleted asset returns sanitized not-found error
+	msg := mc.CallToolExpectError("getAsset", map[string]any{
+		"id": addResult.Asset.ID,
+	})
+	assert.Equal(t, "resource not found", msg)
+}
+
+func TestMCP_Asset_PermissionDenied(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	orgID := owner.GetOrganizationID().String()
+	viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
+	viewerMC := testutil.NewMCPClient(t, viewer)
+
+	msg := viewerMC.CallToolExpectError("addAsset", map[string]any{
+		"organizationId":  orgID,
+		"name":            factory.SafeName("Asset"),
+		"amount":          1,
+		"assetType":       "VIRTUAL",
+		"dataTypesStored": "PII",
+	})
+	assert.Contains(t, msg, "permission denied")
 }

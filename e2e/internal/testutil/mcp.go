@@ -204,6 +204,35 @@ func (mc *MCPClient) CallTool(toolName string, args map[string]any) *MCPToolResu
 	return &toolResult
 }
 
+// CallToolExpectError invokes an MCP tool and expects a JSON-RPC error.
+// It returns the error message.
+func (mc *MCPClient) CallToolExpectError(toolName string, args map[string]any) string {
+	_, err := mc.doRequest("tools/call", map[string]any{
+		"name":      toolName,
+		"arguments": args,
+	})
+	require.Error(mc.t, err, "expected MCP tools/call %s to fail", toolName)
+
+	var rpcErr *jsonrpcError
+	require.ErrorAs(mc.t, err, &rpcErr, "expected JSON-RPC error for %s", toolName)
+
+	return rpcErr.Message
+}
+
+// CallToolExpectToolError invokes an MCP tool and expects a tool-level error
+// (isError: true in the result). It returns the error text content.
+func (mc *MCPClient) CallToolExpectToolError(toolName string, args map[string]any) string {
+	tr := mc.CallTool(toolName, args)
+	require.True(mc.t, tr.IsError, "expected tool %s to return isError", toolName)
+	require.NotEmpty(mc.t, tr.Content, "tool %s returned no content", toolName)
+
+	var text string
+	err := json.Unmarshal(tr.Content[0].Text, &text)
+	require.NoError(mc.t, err, "cannot unmarshal error text for %s", toolName)
+
+	return text
+}
+
 // CallToolInto invokes an MCP tool and unmarshals the first text content into dest.
 func (mc *MCPClient) CallToolInto(toolName string, args map[string]any, dest any) {
 	tr := mc.CallTool(toolName, args)

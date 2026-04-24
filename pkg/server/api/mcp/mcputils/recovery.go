@@ -22,7 +22,9 @@ import (
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/iam"
+	"go.probo.inc/probo/pkg/validator"
 )
 
 func RecoveryMiddleware(logger *log.Logger) func(mcp.MethodHandler) mcp.MethodHandler {
@@ -36,6 +38,9 @@ func RecoveryMiddleware(logger *log.Logger) func(mcp.MethodHandler) mcp.MethodHa
 			}()
 
 			result, err = next(ctx, method, req)
+			if err != nil {
+				err = sanitizeError(ctx, logger, err)
+			}
 			return
 		}
 	}
@@ -47,16 +52,10 @@ func convertPanicToError(ctx context.Context, logger *log.Logger, panicValue any
 		return fmt.Errorf("internal server error")
 	}
 
-	var permissionDeniedErr *iam.ErrInsufficientPermissions
-	if errTyped, ok := panicValue.(error); ok && errors.As(errTyped, &permissionDeniedErr) {
-		return fmt.Errorf("permission denied: %s", permissionDeniedErr.Error())
-	}
-
 	if err, ok := panicValue.(error); ok {
-		return err
+		return sanitizeError(ctx, logger, err)
 	}
 
-	// Log unexpected panics with stack trace
 	logger.ErrorCtx(
 		ctx,
 		"unexpected panic in MCP method handler",
@@ -64,5 +63,45 @@ func convertPanicToError(ctx context.Context, logger *log.Logger, panicValue any
 		log.String("stack", string(debug.Stack())),
 	)
 
+	return fmt.Errorf("internal server error")
+}
+
+// sanitizeError classifies known error types and returns a clear message for
+// those. Unknown errors are logged and replaced with a generic internal error
+// to avoid leaking implementation details to the client.
+func sanitizeError(ctx context.Context, logger *log.Logger, err error) error {
+	var permissionDeniedErr *iam.ErrInsufficientPermissions
+	if errors.As(err, &permissionDeniedErr) {
+		return fmt.Errorf("permission denied")
+	}
+
+	var assumptionRequiredErr *iam.ErrAssumptionRequired
+	if errors.As(err, &assumptionRequiredErr) {
+		return fmt.Errorf("assumption required")
+	}
+
+	if errors.Is(err, coredata.ErrResourceNotFound) {
+		return fmt.Errorf("resource not found")
+	}
+
+	if errors.Is(err, coredata.ErrResourceAlreadyExists) {
+		return fmt.Errorf("resource already exists")
+	}
+
+	if errors.Is(err, coredata.ErrResourceInUse) {
+		return fmt.Errorf("resource is in use")
+	}
+
+	var validationErrors validator.ValidationErrors
+	if errors.As(err, &validationErrors) {
+		return validationErrors
+	}
+
+	var validationError *validator.ValidationError
+	if errors.As(err, &validationError) {
+		return validationError
+	}
+
+	logger.ErrorCtx(ctx, "internal error in MCP method handler", log.Error(err))
 	return fmt.Errorf("internal server error")
 }
