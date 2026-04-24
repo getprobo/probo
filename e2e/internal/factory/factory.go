@@ -139,7 +139,7 @@ func CreateUser(c *testutil.Client, attrs ...Attrs) string {
 	return result.CreateUser.ProfileEdge.Node.ID
 }
 
-func CreateVendor(c *testutil.Client, attrs ...Attrs) string {
+func CreateThirdParty(c *testutil.Client, attrs ...Attrs) string {
 	c.T.Helper()
 
 	var a Attrs
@@ -148,9 +148,9 @@ func CreateVendor(c *testutil.Client, attrs ...Attrs) string {
 	}
 
 	const query = `
-		mutation($input: CreateVendorInput!) {
-			createVendor(input: $input) {
-				vendorEdge {
+		mutation($input: CreateThirdPartyInput!) {
+			createThirdParty(input: $input) {
+				thirdPartyEdge {
 					node { id }
 				}
 			}
@@ -159,7 +159,7 @@ func CreateVendor(c *testutil.Client, attrs ...Attrs) string {
 
 	input := map[string]any{
 		"organizationId": c.GetOrganizationID().String(),
-		"name":           a.getString("name", SafeName("Vendor")),
+		"name":           a.getString("name", SafeName("ThirdParty")),
 	}
 	if desc := a.getStringPtr("description"); desc != nil {
 		input["description"] = *desc
@@ -172,19 +172,19 @@ func CreateVendor(c *testutil.Client, attrs ...Attrs) string {
 	}
 
 	var result struct {
-		CreateVendor struct {
-			VendorEdge struct {
+		CreateThirdParty struct {
+			ThirdPartyEdge struct {
 				Node struct {
 					ID string `json:"id"`
 				} `json:"node"`
-			} `json:"vendorEdge"`
-		} `json:"createVendor"`
+			} `json:"thirdPartyEdge"`
+		} `json:"createThirdParty"`
 	}
 
 	err := c.Execute(query, map[string]any{"input": input}, &result)
-	require.NoError(c.T, err, "createVendor mutation failed")
+	require.NoError(c.T, err, "createThirdParty mutation failed")
 
-	return result.CreateVendor.VendorEdge.Node.ID
+	return result.CreateThirdParty.ThirdPartyEdge.Node.ID
 }
 
 func CreateFramework(c *testutil.Client, attrs ...Attrs) string {
@@ -411,37 +411,37 @@ func CreateRisk(c *testutil.Client, attrs ...Attrs) string {
 	return result.CreateRisk.RiskEdge.Node.ID
 }
 
-type VendorBuilder struct {
+type ThirdPartyBuilder struct {
 	client *testutil.Client
 	attrs  Attrs
 }
 
-func NewVendor(c *testutil.Client) *VendorBuilder {
-	return &VendorBuilder{client: c, attrs: Attrs{}}
+func NewThirdParty(c *testutil.Client) *ThirdPartyBuilder {
+	return &ThirdPartyBuilder{client: c, attrs: Attrs{}}
 }
 
-func (b *VendorBuilder) WithName(name string) *VendorBuilder {
+func (b *ThirdPartyBuilder) WithName(name string) *ThirdPartyBuilder {
 	b.attrs["name"] = name
 	return b
 }
 
-func (b *VendorBuilder) WithDescription(desc string) *VendorBuilder {
+func (b *ThirdPartyBuilder) WithDescription(desc string) *ThirdPartyBuilder {
 	b.attrs["description"] = desc
 	return b
 }
 
-func (b *VendorBuilder) WithWebsiteUrl(url string) *VendorBuilder {
+func (b *ThirdPartyBuilder) WithWebsiteUrl(url string) *ThirdPartyBuilder {
 	b.attrs["websiteUrl"] = url
 	return b
 }
 
-func (b *VendorBuilder) WithCategory(category string) *VendorBuilder {
+func (b *ThirdPartyBuilder) WithCategory(category string) *ThirdPartyBuilder {
 	b.attrs["category"] = category
 	return b
 }
 
-func (b *VendorBuilder) Create() string {
-	return CreateVendor(b.client, b.attrs)
+func (b *ThirdPartyBuilder) Create() string {
+	return CreateThirdParty(b.client, b.attrs)
 }
 
 type FrameworkBuilder struct {

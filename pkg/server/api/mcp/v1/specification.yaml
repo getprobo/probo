@@ -22,74 +22,74 @@ components:
         - DESC
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/page.OrderDirection
 
-    VendorOrderField:
+    ThirdPartyOrderField:
       type: string
       enum:
         - CREATED_AT
         - UPDATED_AT
         - NAME
-      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.VendorOrderField
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.ThirdPartyOrderField
 
-    VendorContactOrderField:
+    ThirdPartyContactOrderField:
       type: string
       enum:
         - CREATED_AT
         - FULL_NAME
         - EMAIL
-      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.VendorContactOrderField
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.ThirdPartyContactOrderField
 
-    VendorContactOrderBy:
+    ThirdPartyContactOrderBy:
       type: object
       required:
         - field
         - direction
       properties:
         field:
-          $ref: "#/components/schemas/VendorContactOrderField"
-          description: Vendor contact order field
+          $ref: "#/components/schemas/ThirdPartyContactOrderField"
+          description: ThirdParty contact order field
         direction:
           $ref: "#/components/schemas/OrderDirection"
-          description: Vendor contact order direction
+          description: ThirdParty contact order direction
 
-    VendorServiceOrderField:
+    ThirdPartyServiceOrderField:
       type: string
       enum:
         - CREATED_AT
         - NAME
-      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.VendorServiceOrderField
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.ThirdPartyServiceOrderField
 
-    VendorServiceOrderBy:
+    ThirdPartyServiceOrderBy:
       type: object
       required:
         - field
         - direction
       properties:
         field:
-          $ref: "#/components/schemas/VendorServiceOrderField"
-          description: Vendor service order field
+          $ref: "#/components/schemas/ThirdPartyServiceOrderField"
+          description: ThirdParty service order field
         direction:
           $ref: "#/components/schemas/OrderDirection"
-          description: Vendor service order direction
+          description: ThirdParty service order direction
 
-    VendorRiskAssessmentOrderField:
+    ThirdPartyRiskAssessmentOrderField:
       type: string
       enum:
         - CREATED_AT
         - EXPIRES_AT
-      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.VendorRiskAssessmentOrderField
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.ThirdPartyRiskAssessmentOrderField
 
-    VendorRiskAssessmentOrderBy:
+    ThirdPartyRiskAssessmentOrderBy:
       type: object
       required:
         - field
         - direction
       properties:
         field:
-          $ref: "#/components/schemas/VendorRiskAssessmentOrderField"
-          description: Vendor risk assessment order field
+          $ref: "#/components/schemas/ThirdPartyRiskAssessmentOrderField"
+          description: ThirdParty risk assessment order field
         direction:
           $ref: "#/components/schemas/OrderDirection"
-          description: Vendor risk assessment order direction
+          description: ThirdParty risk assessment order direction
 
     DataSensitivity:
       type: string
@@ -110,18 +110,18 @@ components:
         - CRITICAL
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.BusinessImpact
 
-    VendorOrderBy:
+    ThirdPartyOrderBy:
       type: object
       required:
         - field
         - direction
       properties:
         field:
-          $ref: "#/components/schemas/VendorOrderField"
-          description: Vendor order field
+          $ref: "#/components/schemas/ThirdPartyOrderField"
+          description: ThirdParty order field
         direction:
           $ref: "#/components/schemas/OrderDirection"
-          description: Vendor order direction
+          description: ThirdParty order direction
 
     DocumentVersionApprovalQuorumOrderBy:
       type: object
@@ -331,7 +331,7 @@ components:
           format: date-time
           description: Update timestamp
 
-    ListVendorsInput:
+    ListThirdPartiesInput:
       type: object
       required:
         - organization_id
@@ -340,8 +340,8 @@ components:
           $ref: "#/components/schemas/GID"
           description: Organization ID
         order_by:
-          $ref: "#/components/schemas/VendorOrderBy"
-          description: Vendor order by
+          $ref: "#/components/schemas/ThirdPartyOrderBy"
+          description: ThirdParty order by
         size:
           type: integer
           description: Page size
@@ -355,23 +355,23 @@ components:
               anyOf:
                 - $ref: "#/components/schemas/GID"
                 - type: "null"
-              description: Filter by snapshot ID. Defaults to null, which returns only vendors with no snapshot (current live data). Pass a specific snapshot ID to retrieve vendors as they were at that snapshot.
+              description: Filter by snapshot ID. Defaults to null, which returns only third_parties with no snapshot (current live data). Pass a specific snapshot ID to retrieve third_parties as they were at that snapshot.
               default: null
 
-    ListVendorsOutput:
+    ListThirdPartiesOutput:
       type: object
       required:
-        - vendors
+        - third_parties
       properties:
         next_cursor:
           $ref: "#/components/schemas/CursorKey"
           description: Next cursor
-        vendors:
+        third_parties:
           type: array
           items:
-            $ref: "#/components/schemas/Vendor"
+            $ref: "#/components/schemas/ThirdParty"
 
-    Vendor:
+    ThirdParty:
       type: object
       required:
         - id
@@ -383,18 +383,18 @@ components:
       properties:
         id:
           $ref: "#/components/schemas/GID"
-          description: Vendor ID
+          description: ThirdParty ID
         organization_id:
           $ref: "#/components/schemas/GID"
           description: Organization ID
         name:
           type: string
-          description: Vendor name
+          description: ThirdParty name
         description:
           type:
             - string
             - "null"
-          description: Vendor description
+          description: ThirdParty description
         category:
           type: string
           enum:
@@ -420,7 +420,7 @@ components:
             - SALES
             - SECURITY
             - VERSION_CONTROL
-          description: Vendor category
+          description: ThirdParty category
         headquarter_address:
           type:
             - string
@@ -510,12 +510,12 @@ components:
           format: date-time
           description: Update timestamp
 
-    VendorRiskAssessment:
+    ThirdPartyRiskAssessment:
       type: object
       required:
         - id
         - organization_id
-        - vendor_id
+        - third_party_id
         - expires_at
         - data_sensitivity
         - business_impact
@@ -524,13 +524,13 @@ components:
       properties:
         id:
           $ref: "#/components/schemas/GID"
-          description: Vendor risk assessment ID
+          description: ThirdParty risk assessment ID
         organization_id:
           $ref: "#/components/schemas/GID"
           description: Organization ID
-        vendor_id:
+        third_party_id:
           $ref: "#/components/schemas/GID"
-          description: Vendor ID
+          description: ThirdParty ID
         expires_at:
           type: string
           format: date-time
@@ -560,17 +560,17 @@ components:
           format: date-time
           description: Update timestamp
 
-    ListVendorRiskAssessmentsInput:
+    ListThirdPartyRiskAssessmentsInput:
       type: object
       required:
-        - vendor_id
+        - third_party_id
       properties:
-        vendor_id:
+        third_party_id:
           $ref: "#/components/schemas/GID"
-          description: Vendor ID
+          description: ThirdParty ID
         order_by:
-          $ref: "#/components/schemas/VendorRiskAssessmentOrderBy"
-          description: Vendor risk assessment order by
+          $ref: "#/components/schemas/ThirdPartyRiskAssessmentOrderBy"
+          description: ThirdParty risk assessment order by
         size:
           type: integer
           description: Page size
@@ -578,30 +578,30 @@ components:
           $ref: "#/components/schemas/CursorKey"
           description: Page cursor
 
-    ListVendorRiskAssessmentsOutput:
+    ListThirdPartyRiskAssessmentsOutput:
       type: object
       required:
-        - vendor_risk_assessments
+        - third_party_risk_assessments
       properties:
         next_cursor:
           $ref: "#/components/schemas/CursorKey"
           description: Next cursor
-        vendor_risk_assessments:
+        third_party_risk_assessments:
           type: array
           items:
-            $ref: "#/components/schemas/VendorRiskAssessment"
+            $ref: "#/components/schemas/ThirdPartyRiskAssessment"
 
-    AddVendorRiskAssessmentInput:
+    AddThirdPartyRiskAssessmentInput:
       type: object
       required:
-        - vendor_id
+        - third_party_id
         - expires_at
         - data_sensitivity
         - business_impact
       properties:
-        vendor_id:
+        third_party_id:
           $ref: "#/components/schemas/GID"
-          description: Vendor ID
+          description: ThirdParty ID
         expires_at:
           type: string
           format: date-time
@@ -616,15 +616,15 @@ components:
           type: string
           description: Notes
 
-    AddVendorRiskAssessmentOutput:
+    AddThirdPartyRiskAssessmentOutput:
       type: object
       required:
-        - vendor_risk_assessment
+        - thirdParty_risk_assessment
       properties:
-        vendor_risk_assessment:
-          $ref: "#/components/schemas/VendorRiskAssessment"
+        thirdParty_risk_assessment:
+          $ref: "#/components/schemas/ThirdPartyRiskAssessment"
 
-    AddVendorInput:
+    AddThirdPartyInput:
       type: object
       required:
         - organization_id
@@ -635,10 +635,10 @@ components:
           description: Organization ID
         name:
           type: string
-          description: Vendor name
+          description: ThirdParty name
         description:
           type: string
-          description: Vendor description
+          description: ThirdParty description
         category:
           type: string
           enum:
@@ -664,7 +664,7 @@ components:
             - SALES
             - SECURITY
             - VERSION_CONTROL
-          description: Vendor category
+          description: ThirdParty category
         headquarter_address:
           type: string
           description: Headquarter address
@@ -718,28 +718,28 @@ components:
           type: string
           description: Trust page URL
 
-    AddVendorOutput:
+    AddThirdPartyOutput:
       type: object
       required:
-        - vendor
+        - thirdParty
       properties:
-        vendor:
-          $ref: "#/components/schemas/Vendor"
+        thirdParty:
+          $ref: "#/components/schemas/ThirdParty"
 
-    UpdateVendorInput:
+    UpdateThirdPartyInput:
       type: object
       required:
         - id
       properties:
         id:
           $ref: "#/components/schemas/GID"
-          description: Vendor ID
+          description: ThirdParty ID
         name:
           type: string
-          description: Vendor name
+          description: ThirdParty name
         description:
           type: string
-          description: Vendor description
+          description: ThirdParty description
         category:
           type: string
           enum:
@@ -765,7 +765,7 @@ components:
             - SALES
             - SECURITY
             - VERSION_CONTROL
-          description: Vendor category
+          description: ThirdParty category
         headquarter_address:
           type: string
           description: Headquarter address
@@ -819,37 +819,37 @@ components:
           type: string
           description: Trust page URL
 
-    UpdateVendorOutput:
+    UpdateThirdPartyOutput:
       type: object
       required:
-        - vendor
+        - thirdParty
       properties:
-        vendor:
-          $ref: "#/components/schemas/Vendor"
+        thirdParty:
+          $ref: "#/components/schemas/ThirdParty"
 
-    DeleteVendorInput:
+    DeleteThirdPartyInput:
       type: object
       required:
         - id
       properties:
         id:
           $ref: "#/components/schemas/GID"
-          description: Vendor ID
+          description: ThirdParty ID
 
-    DeleteVendorOutput:
+    DeleteThirdPartyOutput:
       type: object
       required:
-        - deleted_vendor_id
+        - deleted_third_party_id
       properties:
-        deleted_vendor_id:
+        deleted_third_party_id:
           $ref: "#/components/schemas/GID"
-          description: Deleted vendor ID
+          description: Deleted thirdParty ID
 
-    VendorContact:
+    ThirdPartyContact:
       type: object
       required:
         - id
-        - vendor_id
+        - third_party_id
         - full_name
         - email
         - phone
@@ -859,10 +859,10 @@ components:
       properties:
         id:
           $ref: "#/components/schemas/GID"
-          description: Vendor contact ID
-        vendor_id:
+          description: ThirdParty contact ID
+        third_party_id:
           $ref: "#/components/schemas/GID"
-          description: Vendor ID
+          description: ThirdParty ID
         full_name:
           type: string
           description: Full name
@@ -884,17 +884,17 @@ components:
           format: date-time
           description: Update timestamp
 
-    ListVendorContactsInput:
+    ListThirdPartyContactsInput:
       type: object
       required:
-        - vendor_id
+        - third_party_id
       properties:
-        vendor_id:
+        third_party_id:
           $ref: "#/components/schemas/GID"
-          description: Vendor ID
+          description: ThirdParty ID
         order_by:
-          $ref: "#/components/schemas/VendorContactOrderBy"
-          description: Vendor contact order by
+          $ref: "#/components/schemas/ThirdPartyContactOrderBy"
+          description: ThirdParty contact order by
         size:
           type: integer
           description: Page size
@@ -902,31 +902,31 @@ components:
           $ref: "#/components/schemas/CursorKey"
           description: Page cursor
 
-    ListVendorContactsOutput:
+    ListThirdPartyContactsOutput:
       type: object
       required:
-        - vendor_contacts
+        - third_party_contacts
       properties:
         next_cursor:
           $ref: "#/components/schemas/CursorKey"
           description: Next cursor
-        vendor_contacts:
+        third_party_contacts:
           type: array
           items:
-            $ref: "#/components/schemas/VendorContact"
+            $ref: "#/components/schemas/ThirdPartyContact"
 
-    AddVendorContactInput:
+    AddThirdPartyContactInput:
       type: object
       required:
-        - vendor_id
+        - third_party_id
         - full_name
         - email
         - phone
         - role
       properties:
-        vendor_id:
+        third_party_id:
           $ref: "#/components/schemas/GID"
-          description: Vendor ID
+          description: ThirdParty ID
         full_name:
           type: string
           description: Full name
@@ -940,22 +940,22 @@ components:
           type: string
           description: Role
 
-    AddVendorContactOutput:
+    AddThirdPartyContactOutput:
       type: object
       required:
-        - vendor_contact
+        - thirdParty_contact
       properties:
-        vendor_contact:
-          $ref: "#/components/schemas/VendorContact"
+        thirdParty_contact:
+          $ref: "#/components/schemas/ThirdPartyContact"
 
-    UpdateVendorContactInput:
+    UpdateThirdPartyContactInput:
       type: object
       required:
         - id
       properties:
         id:
           $ref: "#/components/schemas/GID"
-          description: Vendor contact ID
+          description: ThirdParty contact ID
         full_name:
           type: string
           description: Full name
@@ -969,37 +969,37 @@ components:
           type: string
           description: Role
 
-    UpdateVendorContactOutput:
+    UpdateThirdPartyContactOutput:
       type: object
       required:
-        - vendor_contact
+        - thirdParty_contact
       properties:
-        vendor_contact:
-          $ref: "#/components/schemas/VendorContact"
+        thirdParty_contact:
+          $ref: "#/components/schemas/ThirdPartyContact"
 
-    DeleteVendorContactInput:
+    DeleteThirdPartyContactInput:
       type: object
       required:
         - id
       properties:
         id:
           $ref: "#/components/schemas/GID"
-          description: Vendor contact ID
+          description: ThirdParty contact ID
 
-    DeleteVendorContactOutput:
+    DeleteThirdPartyContactOutput:
       type: object
       required:
-        - deleted_vendor_contact_id
+        - deleted_third_party_contact_id
       properties:
-        deleted_vendor_contact_id:
+        deleted_third_party_contact_id:
           $ref: "#/components/schemas/GID"
-          description: Deleted vendor contact ID
+          description: Deleted thirdParty contact ID
 
-    VendorService:
+    ThirdPartyService:
       type: object
       required:
         - id
-        - vendor_id
+        - third_party_id
         - name
         - description
         - created_at
@@ -1007,10 +1007,10 @@ components:
       properties:
         id:
           $ref: "#/components/schemas/GID"
-          description: Vendor service ID
-        vendor_id:
+          description: ThirdParty service ID
+        third_party_id:
           $ref: "#/components/schemas/GID"
-          description: Vendor ID
+          description: ThirdParty ID
         name:
           type: string
           description: Service name
@@ -1026,17 +1026,17 @@ components:
           format: date-time
           description: Update timestamp
 
-    ListVendorServicesInput:
+    ListThirdPartyServicesInput:
       type: object
       required:
-        - vendor_id
+        - third_party_id
       properties:
-        vendor_id:
+        third_party_id:
           $ref: "#/components/schemas/GID"
-          description: Vendor ID
+          description: ThirdParty ID
         order_by:
-          $ref: "#/components/schemas/VendorServiceOrderBy"
-          description: Vendor service order by
+          $ref: "#/components/schemas/ThirdPartyServiceOrderBy"
+          description: ThirdParty service order by
         size:
           type: integer
           description: Page size
@@ -1044,28 +1044,28 @@ components:
           $ref: "#/components/schemas/CursorKey"
           description: Page cursor
 
-    ListVendorServicesOutput:
+    ListThirdPartyServicesOutput:
       type: object
       required:
-        - vendor_services
+        - third_party_services
       properties:
         next_cursor:
           $ref: "#/components/schemas/CursorKey"
           description: Next cursor
-        vendor_services:
+        third_party_services:
           type: array
           items:
-            $ref: "#/components/schemas/VendorService"
+            $ref: "#/components/schemas/ThirdPartyService"
 
-    AddVendorServiceInput:
+    AddThirdPartyServiceInput:
       type: object
       required:
-        - vendor_id
+        - third_party_id
         - name
       properties:
-        vendor_id:
+        third_party_id:
           $ref: "#/components/schemas/GID"
-          description: Vendor ID
+          description: ThirdParty ID
         name:
           type: string
           description: Service name
@@ -1073,22 +1073,22 @@ components:
           type: string
           description: Service description
 
-    AddVendorServiceOutput:
+    AddThirdPartyServiceOutput:
       type: object
       required:
-        - vendor_service
+        - thirdParty_service
       properties:
-        vendor_service:
-          $ref: "#/components/schemas/VendorService"
+        thirdParty_service:
+          $ref: "#/components/schemas/ThirdPartyService"
 
-    UpdateVendorServiceInput:
+    UpdateThirdPartyServiceInput:
       type: object
       required:
         - id
       properties:
         id:
           $ref: "#/components/schemas/GID"
-          description: Vendor service ID
+          description: ThirdParty service ID
         name:
           type: string
           description: Service name
@@ -1096,33 +1096,33 @@ components:
           type: string
           description: Service description
 
-    UpdateVendorServiceOutput:
+    UpdateThirdPartyServiceOutput:
       type: object
       required:
-        - vendor_service
+        - thirdParty_service
       properties:
-        vendor_service:
-          $ref: "#/components/schemas/VendorService"
+        thirdParty_service:
+          $ref: "#/components/schemas/ThirdPartyService"
 
-    DeleteVendorServiceInput:
+    DeleteThirdPartyServiceInput:
       type: object
       required:
         - id
       properties:
         id:
           $ref: "#/components/schemas/GID"
-          description: Vendor service ID
+          description: ThirdParty service ID
 
-    DeleteVendorServiceOutput:
+    DeleteThirdPartyServiceOutput:
       type: object
       required:
-        - deleted_vendor_service_id
+        - deleted_third_party_service_id
       properties:
-        deleted_vendor_service_id:
+        deleted_third_party_service_id:
           $ref: "#/components/schemas/GID"
-          description: Deleted vendor service ID
+          description: Deleted thirdParty service ID
 
-    AssessVendorInput:
+    AssessThirdPartyInput:
       type: object
       required:
         - id
@@ -1130,15 +1130,15 @@ components:
       properties:
         id:
           $ref: "#/components/schemas/GID"
-          description: Vendor ID to assess
+          description: Third party ID to assess
         website_url:
           type: string
-          description: Vendor website URL to crawl and assess
+          description: Third party website URL to crawl and assess
         procedure:
           type: string
           description: Optional custom assessment procedure (overrides the default)
 
-    VendorSubprocessor:
+    ThirdPartySubprocessor:
       type: object
       required:
         - name
@@ -1155,22 +1155,22 @@ components:
           type: string
           description: Purpose of the sub-processor
 
-    AssessVendorOutput:
+    AssessThirdPartyOutput:
       type: object
       required:
-        - vendor
+        - third_party
         - report
         - subprocessors
       properties:
-        vendor:
-          $ref: "#/components/schemas/Vendor"
+        third_party:
+          $ref: "#/components/schemas/ThirdParty"
         report:
           type: string
-          description: Markdown-formatted vendor assessment report
+          description: Markdown-formatted third party assessment report
         subprocessors:
           type: array
           items:
-            $ref: "#/components/schemas/VendorSubprocessor"
+            $ref: "#/components/schemas/ThirdPartySubprocessor"
           description: Sub-processors discovered during the assessment
 
     GetUserInput:
@@ -2472,11 +2472,11 @@ components:
         data_types_stored:
           type: string
           description: Data types stored
-        vendor_ids:
+        third_party_ids:
           type: array
           items:
             $ref: "#/components/schemas/GID"
-          description: Vendor IDs
+          description: ThirdParty IDs
 
     AddAssetOutput:
       type: object
@@ -2512,11 +2512,11 @@ components:
         data_types_stored:
           type: string
           description: Data types stored
-        vendor_ids:
+        third_party_ids:
           type: array
           items:
             $ref: "#/components/schemas/GID"
-          description: Vendor IDs
+          description: ThirdParty IDs
 
     UpdateAssetOutput:
       type: object
@@ -2676,11 +2676,11 @@ components:
         owner_id:
           $ref: "#/components/schemas/GID"
           description: Owner ID
-        vendor_ids:
+        third_party_ids:
           type: array
           items:
             $ref: "#/components/schemas/GID"
-          description: Vendor IDs
+          description: ThirdParty IDs
 
     AddDatumOutput:
       type: object
@@ -2710,11 +2710,11 @@ components:
               $ref: "#/components/schemas/GID"
             - type: "null"
           description: Owner ID
-        vendor_ids:
+        third_party_ids:
           type: array
           items:
             $ref: "#/components/schemas/GID"
-          description: Vendor IDs
+          description: ThirdParty IDs
 
     UpdateDatumOutput:
       type: object
@@ -3853,11 +3853,11 @@ components:
             - $ref: "#/components/schemas/GID"
             - type: "null"
           description: Data protection officer profile ID
-        vendor_ids:
+        third_party_ids:
           type: array
           items:
             $ref: "#/components/schemas/GID"
-          description: Vendor IDs
+          description: ThirdParty IDs
 
     AddProcessingActivityOutput:
       type: object
@@ -3931,7 +3931,7 @@ components:
             - $ref: "#/components/schemas/GID"
             - type: "null"
           go.probo.inc/mcpgen/omittable: true
-        vendor_ids:
+        third_party_ids:
           type: array
           items:
             $ref: "#/components/schemas/GID"
@@ -5425,7 +5425,7 @@ components:
       type: string
       enum:
         - RISKS
-        - VENDORS
+        - THIRD_PARTIES
         - NONCONFORMITIES
         - OBLIGATIONS
         - CONTINUAL_IMPROVEMENTS
@@ -6542,9 +6542,9 @@ components:
     WebhookEventType:
       type: string
       enum:
-        - "vendor:created"
-        - "vendor:updated"
-        - "vendor:deleted"
+        - "third-party:created"
+        - "third-party:updated"
+        - "third-party:deleted"
         - "user:created"
         - "user:updated"
         - "user:deleted"
@@ -8197,13 +8197,13 @@ components:
           properties:
             action:
               type: string
-              description: Filter by action (e.g. "core:vendor:create")
+              description: Filter by action (e.g. "core:third-party:create")
             actor_id:
               $ref: "#/components/schemas/GID"
               description: Filter by actor ID
             resource_type:
               type: string
-              description: Filter by resource type (e.g. "Vendor")
+              description: Filter by resource type (e.g. "ThirdParty")
             resource_id:
               $ref: "#/components/schemas/GID"
               description: Filter by resource ID
@@ -8249,10 +8249,10 @@ components:
           description: Type of actor
         action:
           type: string
-          description: Action performed (e.g. "core:vendor:create")
+          description: Action performed (e.g. "core:third-party:create")
         resource_type:
           type: string
-          description: Type of resource affected (e.g. "Vendor")
+          description: Type of resource affected (e.g. "ThirdParty")
         resource_id:
           $ref: "#/components/schemas/GID"
           description: ID of the affected resource
@@ -9106,15 +9106,15 @@ tools:
       $ref: "#/components/schemas/ListOrganizationsInput"
     outputSchema:
       $ref: "#/components/schemas/ListOrganizationsOutput"
-  - name: listVendors
-    description: List all vendors for the organization
+  - name: listThirdParties
+    description: List all third_parties for the organization
     hints:
       readonly: true
       idempotent: true
     inputSchema:
-      $ref: "#/components/schemas/ListVendorsInput"
+      $ref: "#/components/schemas/ListThirdPartiesInput"
     outputSchema:
-      $ref: "#/components/schemas/ListVendorsOutput"
+      $ref: "#/components/schemas/ListThirdPartiesOutput"
   - name: listUsers
     description: List all users for the organization
     hints:
@@ -9173,124 +9173,124 @@ tools:
       $ref: "#/components/schemas/RemoveUserInput"
     outputSchema:
       $ref: "#/components/schemas/RemoveUserOutput"
-  - name: addVendor
-    description: Add a new vendor to the organization
+  - name: addThirdParty
+    description: Add a new thirdParty to the organization
     hints:
       readonly: false
     inputSchema:
-      $ref: "#/components/schemas/AddVendorInput"
+      $ref: "#/components/schemas/AddThirdPartyInput"
     outputSchema:
-      $ref: "#/components/schemas/AddVendorOutput"
-  - name: updateVendor
-    description: Update an existing vendor
+      $ref: "#/components/schemas/AddThirdPartyOutput"
+  - name: updateThirdParty
+    description: Update an existing thirdParty
     hints:
       readonly: false
     inputSchema:
-      $ref: "#/components/schemas/UpdateVendorInput"
+      $ref: "#/components/schemas/UpdateThirdPartyInput"
     outputSchema:
-      $ref: "#/components/schemas/UpdateVendorOutput"
-  - name: listVendorRiskAssessments
-    description: List all risk assessments for a vendor
+      $ref: "#/components/schemas/UpdateThirdPartyOutput"
+  - name: listThirdPartyRiskAssessments
+    description: List all risk assessments for a thirdParty
     hints:
       readonly: true
       idempotent: true
     inputSchema:
-      $ref: "#/components/schemas/ListVendorRiskAssessmentsInput"
+      $ref: "#/components/schemas/ListThirdPartyRiskAssessmentsInput"
     outputSchema:
-      $ref: "#/components/schemas/ListVendorRiskAssessmentsOutput"
-  - name: addVendorRiskAssessment
-    description: Add a new risk assessment for a vendor
+      $ref: "#/components/schemas/ListThirdPartyRiskAssessmentsOutput"
+  - name: addThirdPartyRiskAssessment
+    description: Add a new risk assessment for a thirdParty
     hints:
       readonly: false
     inputSchema:
-      $ref: "#/components/schemas/AddVendorRiskAssessmentInput"
+      $ref: "#/components/schemas/AddThirdPartyRiskAssessmentInput"
     outputSchema:
-      $ref: "#/components/schemas/AddVendorRiskAssessmentOutput"
-  - name: deleteVendor
-    description: Delete a vendor
+      $ref: "#/components/schemas/AddThirdPartyRiskAssessmentOutput"
+  - name: deleteThirdParty
+    description: Delete a thirdParty
     hints:
       readonly: false
       destructive: true
     inputSchema:
-      $ref: "#/components/schemas/DeleteVendorInput"
+      $ref: "#/components/schemas/DeleteThirdPartyInput"
     outputSchema:
-      $ref: "#/components/schemas/DeleteVendorOutput"
-  - name: listVendorContacts
-    description: List all contacts for a vendor
+      $ref: "#/components/schemas/DeleteThirdPartyOutput"
+  - name: listThirdPartyContacts
+    description: List all contacts for a thirdParty
     hints:
       readonly: true
       idempotent: true
     inputSchema:
-      $ref: "#/components/schemas/ListVendorContactsInput"
+      $ref: "#/components/schemas/ListThirdPartyContactsInput"
     outputSchema:
-      $ref: "#/components/schemas/ListVendorContactsOutput"
-  - name: addVendorContact
-    description: Add a new contact to a vendor
+      $ref: "#/components/schemas/ListThirdPartyContactsOutput"
+  - name: addThirdPartyContact
+    description: Add a new contact to a thirdParty
     hints:
       readonly: false
     inputSchema:
-      $ref: "#/components/schemas/AddVendorContactInput"
+      $ref: "#/components/schemas/AddThirdPartyContactInput"
     outputSchema:
-      $ref: "#/components/schemas/AddVendorContactOutput"
-  - name: updateVendorContact
-    description: Update an existing vendor contact
+      $ref: "#/components/schemas/AddThirdPartyContactOutput"
+  - name: updateThirdPartyContact
+    description: Update an existing thirdParty contact
     hints:
       readonly: false
     inputSchema:
-      $ref: "#/components/schemas/UpdateVendorContactInput"
+      $ref: "#/components/schemas/UpdateThirdPartyContactInput"
     outputSchema:
-      $ref: "#/components/schemas/UpdateVendorContactOutput"
-  - name: deleteVendorContact
-    description: Delete a vendor contact
+      $ref: "#/components/schemas/UpdateThirdPartyContactOutput"
+  - name: deleteThirdPartyContact
+    description: Delete a thirdParty contact
     hints:
       readonly: false
       destructive: true
     inputSchema:
-      $ref: "#/components/schemas/DeleteVendorContactInput"
+      $ref: "#/components/schemas/DeleteThirdPartyContactInput"
     outputSchema:
-      $ref: "#/components/schemas/DeleteVendorContactOutput"
-  - name: listVendorServices
-    description: List all services for a vendor
+      $ref: "#/components/schemas/DeleteThirdPartyContactOutput"
+  - name: listThirdPartyServices
+    description: List all services for a thirdParty
     hints:
       readonly: true
       idempotent: true
     inputSchema:
-      $ref: "#/components/schemas/ListVendorServicesInput"
+      $ref: "#/components/schemas/ListThirdPartyServicesInput"
     outputSchema:
-      $ref: "#/components/schemas/ListVendorServicesOutput"
-  - name: addVendorService
-    description: Add a new service to a vendor
+      $ref: "#/components/schemas/ListThirdPartyServicesOutput"
+  - name: addThirdPartyService
+    description: Add a new service to a thirdParty
     hints:
       readonly: false
     inputSchema:
-      $ref: "#/components/schemas/AddVendorServiceInput"
+      $ref: "#/components/schemas/AddThirdPartyServiceInput"
     outputSchema:
-      $ref: "#/components/schemas/AddVendorServiceOutput"
-  - name: updateVendorService
-    description: Update an existing vendor service
+      $ref: "#/components/schemas/AddThirdPartyServiceOutput"
+  - name: updateThirdPartyService
+    description: Update an existing thirdParty service
     hints:
       readonly: false
     inputSchema:
-      $ref: "#/components/schemas/UpdateVendorServiceInput"
+      $ref: "#/components/schemas/UpdateThirdPartyServiceInput"
     outputSchema:
-      $ref: "#/components/schemas/UpdateVendorServiceOutput"
-  - name: deleteVendorService
-    description: Delete a vendor service
+      $ref: "#/components/schemas/UpdateThirdPartyServiceOutput"
+  - name: deleteThirdPartyService
+    description: Delete a thirdParty service
     hints:
       readonly: false
       destructive: true
     inputSchema:
-      $ref: "#/components/schemas/DeleteVendorServiceInput"
+      $ref: "#/components/schemas/DeleteThirdPartyServiceInput"
     outputSchema:
-      $ref: "#/components/schemas/DeleteVendorServiceOutput"
-  - name: assessVendor
-    description: Run an AI-powered assessment on a vendor by crawling its website. Returns a markdown report, the discovered sub-processors, and an enriched vendor record. Long-running (up to 20 minutes).
+      $ref: "#/components/schemas/DeleteThirdPartyServiceOutput"
+  - name: assessThirdParty
+    description: Run an AI-powered assessment on a third party by crawling its website. Returns a markdown report, the discovered sub-processors, and an enriched third party record. Long-running (up to 20 minutes).
     hints:
       readonly: false
     inputSchema:
-      $ref: "#/components/schemas/AssessVendorInput"
+      $ref: "#/components/schemas/AssessThirdPartyInput"
     outputSchema:
-      $ref: "#/components/schemas/AssessVendorOutput"
+      $ref: "#/components/schemas/AssessThirdPartyOutput"
   - name: listRisks
     description: List all risks for the organization
     hints:
@@ -10046,7 +10046,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/GetSnapshotOutput"
   - name: takeSnapshot
-    description: Take a snapshot of a collection of objects (risks, vendors, findings, obligations, or processing activities)
+    description: Take a snapshot of a collection of objects (risks, third_parties, findings, obligations, or processing activities)
     hints:
       readonly: false
     inputSchema:

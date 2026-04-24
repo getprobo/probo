@@ -27,7 +27,7 @@ import { z } from "zod";
 
 import { ControlledField } from "#/components/form/ControlledField";
 import { PeopleSelectField } from "#/components/form/PeopleSelectField";
-import { VendorsMultiSelectField } from "#/components/form/VendorsMultiSelectField";
+import { ThirdPartiesMultiSelectField } from "#/components/form/ThirdPartiesMultiSelectField";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 
 import { useCreateDatum } from "../../../../hooks/graph/DatumGraph";
@@ -36,7 +36,7 @@ const schema = z.object({
   name: z.string().min(1, "Name is required"),
   dataClassification: z.enum(["PUBLIC", "INTERNAL", "CONFIDENTIAL", "SECRET"]),
   ownerId: z.string().min(1, "Owner is required"),
-  vendorIds: z.array(z.string()).optional(),
+  thirdPartyIds: z.array(z.string()).optional(),
 });
 
 type Props = {
@@ -59,7 +59,7 @@ export function CreateDatumDialog({
         name: "",
         dataClassification: "PUBLIC",
         ownerId: "",
-        vendorIds: [],
+        thirdPartyIds: [],
       },
     });
   const ref = useDialogRef();
@@ -105,11 +105,11 @@ export function CreateDatumDialog({
             name="ownerId"
             label={__("Owner")}
           />
-          <VendorsMultiSelectField
+          <ThirdPartiesMultiSelectField
             organizationId={organizationId}
             control={control}
-            name="vendorIds"
-            label={__("Vendors")}
+            name="thirdPartyIds"
+            label={__("Third Parties")}
           />
         </DialogContent>
         <DialogFooter>

@@ -27,7 +27,7 @@ import { z } from "zod";
 
 import { ControlledField } from "#/components/form/ControlledField";
 import { PeopleSelectField } from "#/components/form/PeopleSelectField";
-import { VendorsMultiSelectField } from "#/components/form/VendorsMultiSelectField";
+import { ThirdPartiesMultiSelectField } from "#/components/form/ThirdPartiesMultiSelectField";
 import { useCreateAsset } from "#/hooks/graph/AssetGraph";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 
@@ -36,7 +36,7 @@ const schema = z.object({
   amount: z.number().min(1, "Amount is required"),
   assetType: z.enum(["PHYSICAL", "VIRTUAL"]),
   ownerId: z.string().min(1, "Owner is required"),
-  vendorIds: z.array(z.string()).optional(),
+  thirdPartyIds: z.array(z.string()).optional(),
   dataTypesStored: z.string().min(1, "Data types stored is required"),
 });
 
@@ -59,7 +59,7 @@ export function CreateAssetDialog({
         amount: 0,
         assetType: "VIRTUAL",
         ownerId: "",
-        vendorIds: [],
+        thirdPartyIds: [],
       },
     });
   const ref = useDialogRef();
@@ -112,11 +112,11 @@ export function CreateAssetDialog({
             name="ownerId"
             label={__("Owner")}
           />
-          <VendorsMultiSelectField
+          <ThirdPartiesMultiSelectField
             organizationId={organizationId}
             control={control}
-            name="vendorIds"
-            label={__("Vendors")}
+            name="thirdPartyIds"
+            label={__("Third Parties")}
           />
         </DialogContent>
         <DialogFooter>

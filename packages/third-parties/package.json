@@ -1,0 +1,21 @@
+{
+  "name": "@probo/third-parties",
+  "version": "0.0.1",
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "data.json",
+    "LICENSE.md"
+  ],
+  "scripts": {
+    "build:md": "node scripts/build-md.mjs"
+  },
+  "exports": {
+    ".": {
+      "types": "./data.d.ts",
+      "default": "./data.json"
+    }
+  },
+  "license": "CC BY-SA 4.0"
+}

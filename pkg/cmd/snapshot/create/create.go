@@ -109,7 +109,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 						Title("Snapshot type").
 						Options(
 							huh.NewOption("Risks", "RISKS"),
-							huh.NewOption("Vendors", "VENDORS"),
+							huh.NewOption("Third Parties", "THIRD_PARTIES"),
 							huh.NewOption("Assets", "ASSETS"),
 							huh.NewOption("Findings", "FINDINGS"),
 							huh.NewOption("Obligations", "OBLIGATIONS"),

@@ -272,7 +272,7 @@ func (a *Authorizer) buildPoliciesForRole(role string) []*policy.Policy {
 }
 
 // resourceTypeFromAction extracts the resource type name from an action
-// string. For example, "core:vendor:create" returns "Vendor" and
+// string. For example, "core:third-party:create" returns "ThirdParty" and
 // "core:webhook-subscription:delete" returns "WebhookSubscription".
 func resourceTypeFromAction(action string) string {
 	parts := strings.Split(action, ":")

@@ -44,20 +44,20 @@ func (r *assetResolver) Owner(ctx context.Context, obj *types.Asset) (*types.Pro
 	return types.NewProfile(owner), nil
 }
 
-// Vendors is the resolver for the vendors field.
-func (r *assetResolver) Vendors(ctx context.Context, obj *types.Asset, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.VendorOrderBy) (*types.VendorConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionVendorList); err != nil {
+// ThirdParties is the resolver for the third_parties field.
+func (r *assetResolver) ThirdParties(ctx context.Context, obj *types.Asset, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ThirdPartyOrderBy) (*types.ThirdPartyConnection, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionThirdPartyList); err != nil {
 		return nil, err
 	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
-	pageOrderBy := page.OrderBy[coredata.VendorOrderField]{
-		Field:     coredata.VendorOrderFieldCreatedAt,
+	pageOrderBy := page.OrderBy[coredata.ThirdPartyOrderField]{
+		Field:     coredata.ThirdPartyOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
 	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.VendorOrderField]{
+		pageOrderBy = page.OrderBy[coredata.ThirdPartyOrderField]{
 			Field:     orderBy.Field,
 			Direction: orderBy.Direction,
 		}
@@ -65,13 +65,13 @@ func (r *assetResolver) Vendors(ctx context.Context, obj *types.Asset, first *in
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	page, err := prb.Vendors.ListForAssetID(ctx, obj.ID, cursor)
+	page, err := prb.ThirdParties.ListForAssetID(ctx, obj.ID, cursor)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list asset vendors", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot list asset third_parties", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewVendorConnection(page, r, obj.ID), nil
+	return types.NewThirdPartyConnection(page, r, obj.ID), nil
 }
 
 // Organization is the resolver for the organization field.
@@ -149,20 +149,20 @@ func (r *datumResolver) Owner(ctx context.Context, obj *types.Datum) (*types.Pro
 	return types.NewProfile(owner), nil
 }
 
-// Vendors is the resolver for the vendors field.
-func (r *datumResolver) Vendors(ctx context.Context, obj *types.Datum, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.VendorOrderBy) (*types.VendorConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionVendorList); err != nil {
+// ThirdParties is the resolver for the third_parties field.
+func (r *datumResolver) ThirdParties(ctx context.Context, obj *types.Datum, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ThirdPartyOrderBy) (*types.ThirdPartyConnection, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionThirdPartyList); err != nil {
 		return nil, err
 	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
-	pageOrderBy := page.OrderBy[coredata.VendorOrderField]{
-		Field:     coredata.VendorOrderFieldCreatedAt,
+	pageOrderBy := page.OrderBy[coredata.ThirdPartyOrderField]{
+		Field:     coredata.ThirdPartyOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
 	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.VendorOrderField]{
+		pageOrderBy = page.OrderBy[coredata.ThirdPartyOrderField]{
 			Field:     orderBy.Field,
 			Direction: orderBy.Direction,
 		}
@@ -170,13 +170,13 @@ func (r *datumResolver) Vendors(ctx context.Context, obj *types.Datum, first *in
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	page, err := prb.Data.ListVendors(ctx, obj.ID, cursor)
+	page, err := prb.Data.ListThirdParties(ctx, obj.ID, cursor)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list data vendors", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot list data third_parties", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewVendorConnection(page, r, obj.ID), nil
+	return types.NewThirdPartyConnection(page, r, obj.ID), nil
 }
 
 // Organization is the resolver for the organization field.
@@ -244,7 +244,7 @@ func (r *mutationResolver) CreateAsset(ctx context.Context, input types.CreateAs
 			OwnerID:         input.OwnerID,
 			AssetType:       input.AssetType,
 			DataTypesStored: input.DataTypesStored,
-			VendorIDs:       input.VendorIds,
+			ThirdPartyIDs:   input.ThirdPartyIds,
 		},
 	)
 
@@ -278,7 +278,7 @@ func (r *mutationResolver) UpdateAsset(ctx context.Context, input types.UpdateAs
 			OwnerID:         input.OwnerID,
 			AssetType:       input.AssetType,
 			DataTypesStored: input.DataTypesStored,
-			VendorIDs:       input.VendorIds,
+			ThirdPartyIDs:   input.ThirdPartyIds,
 		},
 	)
 	if err != nil {
@@ -328,7 +328,7 @@ func (r *mutationResolver) CreateDatum(ctx context.Context, input types.CreateDa
 			Name:               input.Name,
 			DataClassification: input.DataClassification,
 			OwnerID:            input.OwnerID,
-			VendorIDs:          input.VendorIds,
+			ThirdPartyIDs:      input.ThirdPartyIds,
 		},
 	)
 
@@ -360,7 +360,7 @@ func (r *mutationResolver) UpdateDatum(ctx context.Context, input types.UpdateDa
 			Name:               input.Name,
 			DataClassification: input.DataClassification,
 			OwnerID:            input.OwnerID,
-			VendorIDs:          input.VendorIds,
+			ThirdPartyIDs:      input.ThirdPartyIds,
 		},
 	)
 

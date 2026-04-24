@@ -66,7 +66,7 @@ type (
 		Frameworks    []compliancePageFramework
 		Documents     []compliancePageDocument
 		Audits        []compliancePageAudit
-		Vendors       []compliancePageVendor
+		ThirdParties  []compliancePageThirdParty
 		References    []compliancePageReference
 		ExternalLinks []compliancePageExternalLink
 	}
@@ -93,7 +93,7 @@ type (
 		ValidUntil string
 	}
 
-	compliancePageVendor struct {
+	compliancePageThirdParty struct {
 		Name      string
 		Category  string
 		Countries string
@@ -158,9 +158,9 @@ func (s *Service) RenderCompliancePageMarkdown(
 		return fmt.Errorf("cannot fetch audits: %w", err)
 	}
 
-	data.Vendors, err = s.fetchVendors(ctx, tenantSvc, org.ID)
+	data.ThirdParties, err = s.fetchThirdParties(ctx, tenantSvc, org.ID)
 	if err != nil {
-		return fmt.Errorf("cannot fetch vendors: %w", err)
+		return fmt.Errorf("cannot fetch third_parties: %w", err)
 	}
 
 	data.References, err = s.fetchReferences(ctx, tenantSvc, trustCenterID)
@@ -429,8 +429,8 @@ func (s *Service) fetchAudits(ctx context.Context, tenantSvc *TenantService, org
 	return audits, nil
 }
 
-func (s *Service) fetchVendors(ctx context.Context, tenantSvc *TenantService, orgID gid.GID) ([]compliancePageVendor, error) {
-	var vendors []compliancePageVendor
+func (s *Service) fetchThirdParties(ctx context.Context, tenantSvc *TenantService, orgID gid.GID) ([]compliancePageThirdParty, error) {
+	var thirdParties []compliancePageThirdParty
 
 	var cursorKey *page.CursorKey
 	for {
@@ -438,15 +438,15 @@ func (s *Service) fetchVendors(ctx context.Context, tenantSvc *TenantService, or
 			page.MaxCursorSize,
 			cursorKey,
 			page.Head,
-			page.OrderBy[coredata.VendorOrderField]{
-				Field:     coredata.VendorOrderFieldName,
+			page.OrderBy[coredata.ThirdPartyOrderField]{
+				Field:     coredata.ThirdPartyOrderFieldName,
 				Direction: page.OrderDirectionAsc,
 			},
 		)
 
-		result, err := tenantSvc.Vendors.ListForOrganizationId(ctx, orgID, cursor)
+		result, err := tenantSvc.ThirdParties.ListForOrganizationId(ctx, orgID, cursor)
 		if err != nil {
-			return nil, fmt.Errorf("cannot list vendors: %w", err)
+			return nil, fmt.Errorf("cannot list third_parties: %w", err)
 		}
 
 		for _, v := range result.Data {
@@ -455,9 +455,9 @@ func (s *Service) fetchVendors(ctx context.Context, tenantSvc *TenantService, or
 				countries = append(countries, c.String())
 			}
 
-			vendors = append(
-				vendors,
-				compliancePageVendor{
+			thirdParties = append(
+				thirdParties,
+				compliancePageThirdParty{
 					Name:      v.Name,
 					Category:  v.Category.String(),
 					Countries: strings.Join(countries, ", "),
@@ -471,11 +471,11 @@ func (s *Service) fetchVendors(ctx context.Context, tenantSvc *TenantService, or
 		}
 
 		last := result.Data[len(result.Data)-1]
-		ck := last.CursorKey(coredata.VendorOrderFieldName)
+		ck := last.CursorKey(coredata.ThirdPartyOrderFieldName)
 		cursorKey = &ck
 	}
 
-	return vendors, nil
+	return thirdParties, nil
 }
 
 func (s *Service) fetchReferences(ctx context.Context, tenantSvc *TenantService, trustCenterID gid.GID) ([]compliancePageReference, error) {

@@ -81,11 +81,11 @@ export const description: INodeProperties[] = [
 				description: 'Whether to include owner details in the response',
 			},
 			{
-				displayName: 'Include Vendors',
-				name: 'includeVendors',
+				displayName: 'Include ThirdParties',
+				name: 'includeThirdParties',
 				type: 'boolean',
 				default: false,
-				description: 'Whether to include vendors in the response',
+				description: 'Whether to include thirdParties in the response',
 			},
 		],
 	},
@@ -100,7 +100,7 @@ export async function execute(
 	const limit = this.getNodeParameter('limit', itemIndex, 50) as number;
 	const options = this.getNodeParameter('options', itemIndex, {}) as {
 		includeOwner?: boolean;
-		includeVendors?: boolean;
+		includeThirdParties?: boolean;
 	};
 
 	const ownerFragment = options.includeOwner
@@ -111,8 +111,8 @@ export async function execute(
 		}`
 		: '';
 
-	const vendorsFragment = options.includeVendors
-		? `vendors(first: 100) {
+	const thirdPartiesFragment = options.includeThirdParties
+		? `thirdParties(first: 100) {
 			edges {
 				node {
 					id
@@ -133,7 +133,7 @@ export async function execute(
 								name
 								dataClassification
 								${ownerFragment}
-								${vendorsFragment}
+								${thirdPartiesFragment}
 								createdAt
 								updatedAt
 							}

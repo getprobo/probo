@@ -58,7 +58,7 @@ export const assetNodeQuery = graphql`
           id
           fullName
         }
-        vendors(first: 50) {
+        thirdParties(first: 50) {
           edges {
             node {
               id
@@ -94,7 +94,7 @@ export const createAssetMutation = graphql`
             id
             fullName
           }
-          vendors(first: 50) {
+          thirdParties(first: 50) {
             edges {
               node {
                 id
@@ -125,7 +125,7 @@ export const updateAssetMutation = graphql`
           id
           fullName
         }
-        vendors(first: 50) {
+        thirdParties(first: 50) {
           edges {
             node {
               id
@@ -196,7 +196,7 @@ export const useCreateAsset = (connectionId: string) => {
       assetType: AssetType;
       ownerId: string;
       organizationId: string;
-      vendorIds?: string[];
+      thirdPartyIds?: string[];
       dataTypesStored: string;
     }) => {
       if (!input.name?.trim()) {
@@ -223,7 +223,7 @@ export const useCreateAsset = (connectionId: string) => {
             dataTypesStored: input.dataTypesStored || "",
             ownerId: input.ownerId,
             organizationId: input.organizationId,
-            vendorIds: input.vendorIds || [],
+            thirdPartyIds: input.thirdPartyIds || [],
           },
           connections: [connectionId],
         },
@@ -244,7 +244,7 @@ export const useUpdateAsset = () => {
     assetType?: AssetType;
     dataTypesStored?: string;
     ownerId?: string;
-    vendorIds?: string[];
+    thirdPartyIds?: string[];
   }) => {
     if (!input.id) {
       return alert(__("Failed to update asset: asset ID is required"));

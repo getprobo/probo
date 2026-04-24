@@ -97,13 +97,13 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 		}
 		return types.NewAudit(audit), nil
 
-	case coredata.VendorEntityType:
-		vendor, err := trustService.Vendors.Get(ctx, id)
+	case coredata.ThirdPartyEntityType:
+		thirdParty, err := trustService.ThirdParties.Get(ctx, id)
 		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot get vendor", log.Error(err))
+			r.logger.ErrorCtx(ctx, "cannot get thirdParty", log.Error(err))
 			return nil, gqlutils.Internal(ctx)
 		}
-		return types.NewSubprocessor(vendor), nil
+		return types.NewSubprocessor(thirdParty), nil
 
 	case coredata.TrustCenterEntityType:
 		trustCenter, err := trustService.TrustCenters.Get(ctx, id)

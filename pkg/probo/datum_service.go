@@ -36,7 +36,7 @@ type (
 		Name               string
 		DataClassification coredata.DataClassification
 		OwnerID            gid.GID
-		VendorIDs          []gid.GID
+		ThirdPartyIDs      []gid.GID
 	}
 
 	UpdateDatumRequest struct {
@@ -44,7 +44,7 @@ type (
 		Name               *string
 		DataClassification *coredata.DataClassification
 		OwnerID            *gid.GID
-		VendorIDs          []gid.GID
+		ThirdPartyIDs      []gid.GID
 	}
 )
 
@@ -55,8 +55,8 @@ func (cdr *CreateDatumRequest) Validate() error {
 	v.Check(cdr.Name, "name", validator.SafeTextNoNewLine(NameMaxLength))
 	v.Check(cdr.DataClassification, "data_classification", validator.Required(), validator.OneOfSlice(coredata.DataClassifications()))
 	v.Check(cdr.OwnerID, "owner_id", validator.Required(), validator.GID(coredata.MembershipProfileEntityType))
-	v.CheckEach(cdr.VendorIDs, "vendor_ids", func(index int, item any) {
-		v.Check(item, fmt.Sprintf("vendor_ids[%d]", index), validator.Required(), validator.GID(coredata.VendorEntityType))
+	v.CheckEach(cdr.ThirdPartyIDs, "third_party_ids", func(index int, item any) {
+		v.Check(item, fmt.Sprintf("third_party_ids[%d]", index), validator.Required(), validator.GID(coredata.ThirdPartyEntityType))
 	})
 
 	return v.Error()
@@ -69,8 +69,8 @@ func (udr *UpdateDatumRequest) Validate() error {
 	v.Check(udr.Name, "name", validator.SafeTextNoNewLine(NameMaxLength))
 	v.Check(udr.DataClassification, "data_classification", validator.OneOfSlice(coredata.DataClassifications()))
 	v.Check(udr.OwnerID, "owner_id", validator.GID(coredata.MembershipProfileEntityType))
-	v.CheckEach(udr.VendorIDs, "vendor_ids", func(index int, item any) {
-		v.Check(item, fmt.Sprintf("vendor_ids[%d]", index), validator.Required(), validator.GID(coredata.VendorEntityType))
+	v.CheckEach(udr.ThirdPartyIDs, "third_party_ids", func(index int, item any) {
+		v.Check(item, fmt.Sprintf("third_party_ids[%d]", index), validator.Required(), validator.GID(coredata.ThirdPartyEntityType))
 	})
 
 	return v.Error()
@@ -179,7 +179,7 @@ func (s DatumService) Update(
 
 	now := time.Now()
 	datum := &coredata.Datum{}
-	datumVendors := &coredata.DatumVendors{}
+	datumThirdParties := &coredata.DatumThirdParties{}
 
 	err := s.svc.pg.WithTx(ctx, func(ctx context.Context, conn pg.Tx) error {
 		if err := datum.LoadByID(ctx, conn, s.svc.scope, req.ID); err != nil {
@@ -205,9 +205,9 @@ func (s DatumService) Update(
 			return fmt.Errorf("cannot update data: %w", err)
 		}
 
-		if req.VendorIDs != nil {
-			if err := datumVendors.Merge(ctx, conn, s.svc.scope, datum.ID, datum.OrganizationID, req.VendorIDs); err != nil {
-				return fmt.Errorf("cannot update data vendors: %w", err)
+		if req.ThirdPartyIDs != nil {
+			if err := datumThirdParties.Merge(ctx, conn, s.svc.scope, datum.ID, datum.OrganizationID, req.ThirdPartyIDs); err != nil {
+				return fmt.Errorf("cannot update data third_parties: %w", err)
 			}
 		}
 
@@ -231,7 +231,7 @@ func (s DatumService) Create(
 
 	now := time.Now()
 	datumID := gid.New(s.svc.scope.GetTenantID(), coredata.DatumEntityType)
-	datumVendors := &coredata.DatumVendors{}
+	datumThirdParties := &coredata.DatumThirdParties{}
 
 	datum := &coredata.Datum{
 		ID:                 datumID,
@@ -255,9 +255,9 @@ func (s DatumService) Create(
 				return fmt.Errorf("cannot insert datum: %w", err)
 			}
 
-			if len(req.VendorIDs) > 0 {
-				if err := datumVendors.Insert(ctx, conn, s.svc.scope, datum.ID, datum.OrganizationID, req.VendorIDs); err != nil {
-					return fmt.Errorf("cannot create data vendors: %w", err)
+			if len(req.ThirdPartyIDs) > 0 {
+				if err := datumThirdParties.Insert(ctx, conn, s.svc.scope, datum.ID, datum.OrganizationID, req.ThirdPartyIDs); err != nil {
+					return fmt.Errorf("cannot create data third_parties: %w", err)
 				}
 			}
 
@@ -286,17 +286,17 @@ func (s DatumService) Delete(
 	)
 }
 
-func (s DatumService) ListVendors(
+func (s DatumService) ListThirdParties(
 	ctx context.Context,
 	datumID gid.GID,
-	cursor *page.Cursor[coredata.VendorOrderField],
-) (*page.Page[*coredata.Vendor, coredata.VendorOrderField], error) {
-	var vendors coredata.Vendors
+	cursor *page.Cursor[coredata.ThirdPartyOrderField],
+) (*page.Page[*coredata.ThirdParty, coredata.ThirdPartyOrderField], error) {
+	var thirdParties coredata.ThirdParties
 
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			return vendors.LoadByDatumID(ctx, conn, s.svc.scope, datumID, cursor)
+			return thirdParties.LoadByDatumID(ctx, conn, s.svc.scope, datumID, cursor)
 		},
 	)
 
@@ -304,5 +304,5 @@ func (s DatumService) ListVendors(
 		return nil, err
 	}
 
-	return page.NewPage(vendors, cursor), nil
+	return page.NewPage(thirdParties, cursor), nil
 }

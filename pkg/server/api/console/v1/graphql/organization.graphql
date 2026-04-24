@@ -315,14 +315,14 @@ type Organization implements Node {
         orderBy: CookieBannerOrder
     ): CookieBannerConnection @goField(forceResolver: true)
 
-    vendors(
+    thirdParties(
         first: Int
         after: CursorKey
         last: Int
         before: CursorKey
-        orderBy: VendorOrder
-        filter: VendorFilter = { snapshotId: null }
-    ): VendorConnection! @goField(forceResolver: true)
+        orderBy: ThirdPartyOrder
+        filter: ThirdPartyFilter = { snapshotId: null }
+    ): ThirdPartyConnection! @goField(forceResolver: true)
 
     webhookSubscriptions(
         first: Int

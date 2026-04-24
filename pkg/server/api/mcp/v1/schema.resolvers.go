@@ -43,19 +43,19 @@ func (r *Resolver) ListOrganizationsTool(ctx context.Context, req *mcp.CallToolR
 	return nil, result, nil
 }
 
-// ListVendorsTool handles the listVendors tool
-// List all vendors for the organization
-func (r *Resolver) ListVendorsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListVendorsInput) (*mcp.CallToolResult, types.ListVendorsOutput, error) {
-	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionVendorList)
+// ListThirdPartiesTool handles the listThirdParties tool
+// List all third_parties for the organization
+func (r *Resolver) ListThirdPartiesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListThirdPartiesInput) (*mcp.CallToolResult, types.ListThirdPartiesOutput, error) {
+	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionThirdPartyList)
 
 	prb := r.ProboService(ctx, input.OrganizationID)
 
-	pageOrderBy := page.OrderBy[coredata.VendorOrderField]{
-		Field:     coredata.VendorOrderFieldCreatedAt,
+	pageOrderBy := page.OrderBy[coredata.ThirdPartyOrderField]{
+		Field:     coredata.ThirdPartyOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
 	if input.OrderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.VendorOrderField]{
+		pageOrderBy = page.OrderBy[coredata.ThirdPartyOrderField]{
 			Field:     input.OrderBy.Field,
 			Direction: input.OrderBy.Direction,
 		}
@@ -64,29 +64,29 @@ func (r *Resolver) ListVendorsTool(ctx context.Context, req *mcp.CallToolRequest
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
 	noSnapshot := (*gid.GID)(nil)
-	vendorFilter := coredata.NewVendorFilter(&noSnapshot, nil)
+	thirdPartyFilter := coredata.NewThirdPartyFilter(&noSnapshot, nil)
 	if input.Filter != nil {
-		vendorFilter = coredata.NewVendorFilter(&input.Filter.SnapshotID, nil)
+		thirdPartyFilter = coredata.NewThirdPartyFilter(&input.Filter.SnapshotID, nil)
 	}
 
-	page, err := prb.Vendors.ListForOrganizationID(ctx, input.OrganizationID, cursor, vendorFilter)
+	page, err := prb.ThirdParties.ListForOrganizationID(ctx, input.OrganizationID, cursor, thirdPartyFilter)
 	if err != nil {
-		panic(fmt.Errorf("cannot list organization vendors: %w", err))
+		panic(fmt.Errorf("cannot list organization third_parties: %w", err))
 	}
 
-	return nil, types.NewListVendorsOutput(page), nil
+	return nil, types.NewListThirdPartiesOutput(page), nil
 }
 
-// AddVendorTool handles the addVendor tool
-// Add a new vendor to the organization
-func (r *Resolver) AddVendorTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddVendorInput) (*mcp.CallToolResult, types.AddVendorOutput, error) {
-	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionVendorCreate)
+// AddThirdPartyTool handles the addThirdParty tool
+// Add a new thirdParty to the organization
+func (r *Resolver) AddThirdPartyTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddThirdPartyInput) (*mcp.CallToolResult, types.AddThirdPartyOutput, error) {
+	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionThirdPartyCreate)
 
 	svc := r.ProboService(ctx, input.OrganizationID)
 
-	var category *coredata.VendorCategory
+	var category *coredata.ThirdPartyCategory
 	if input.Category != nil {
-		cat := coredata.VendorCategory(*input.Category)
+		cat := coredata.ThirdPartyCategory(*input.Category)
 		category = &cat
 	}
 
@@ -98,9 +98,9 @@ func (r *Resolver) AddVendorTool(ctx context.Context, req *mcp.CallToolRequest, 
 		}
 	}
 
-	vendor, err := svc.Vendors.Create(
+	thirdParty, err := svc.ThirdParties.Create(
 		ctx,
-		probo.CreateVendorRequest{
+		probo.CreateThirdPartyRequest{
 			OrganizationID:                input.OrganizationID,
 			Name:                          input.Name,
 			Description:                   input.Description,
@@ -124,16 +124,16 @@ func (r *Resolver) AddVendorTool(ctx context.Context, req *mcp.CallToolRequest, 
 		},
 	)
 	if err != nil {
-		return nil, types.AddVendorOutput{}, fmt.Errorf("failed to create vendor: %w", err)
+		return nil, types.AddThirdPartyOutput{}, fmt.Errorf("failed to create thirdParty: %w", err)
 	}
 
-	return nil, types.NewAddVendorOutput(vendor), nil
+	return nil, types.NewAddThirdPartyOutput(thirdParty), nil
 }
 
-// UpdateVendorTool handles the updateVendor tool
-// Update an existing vendor
-func (r *Resolver) UpdateVendorTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateVendorInput) (*mcp.CallToolResult, types.UpdateVendorOutput, error) {
-	r.MustAuthorize(ctx, input.ID, probo.ActionVendorUpdate)
+// UpdateThirdPartyTool handles the updateThirdParty tool
+// Update an existing thirdParty
+func (r *Resolver) UpdateThirdPartyTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateThirdPartyInput) (*mcp.CallToolResult, types.UpdateThirdPartyOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionThirdPartyUpdate)
 
 	svc := r.ProboService(ctx, input.ID)
 
@@ -212,9 +212,9 @@ func (r *Resolver) UpdateVendorTool(ctx context.Context, req *mcp.CallToolReques
 		securityOwnerID = &input.SecurityOwnerID
 	}
 
-	var category *coredata.VendorCategory
+	var category *coredata.ThirdPartyCategory
 	if input.Category != nil {
-		cat := coredata.VendorCategory(*input.Category)
+		cat := coredata.ThirdPartyCategory(*input.Category)
 		category = &cat
 	}
 
@@ -226,9 +226,9 @@ func (r *Resolver) UpdateVendorTool(ctx context.Context, req *mcp.CallToolReques
 		}
 	}
 
-	vendor, err := svc.Vendors.Update(
+	thirdParty, err := svc.ThirdParties.Update(
 		ctx,
-		probo.UpdateVendorRequest{
+		probo.UpdateThirdPartyRequest{
 			ID:                            input.ID,
 			Name:                          input.Name,
 			Description:                   description,
@@ -252,10 +252,10 @@ func (r *Resolver) UpdateVendorTool(ctx context.Context, req *mcp.CallToolReques
 		},
 	)
 	if err != nil {
-		return nil, types.UpdateVendorOutput{}, fmt.Errorf("failed to update vendor: %w", err)
+		return nil, types.UpdateThirdPartyOutput{}, fmt.Errorf("failed to update thirdParty: %w", err)
 	}
 
-	return nil, types.NewUpdateVendorOutput(vendor), nil
+	return nil, types.NewUpdateThirdPartyOutput(thirdParty), nil
 }
 
 func (r *Resolver) ListRisksTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListRisksInput) (*mcp.CallToolResult, types.ListRisksOutput, error) {
@@ -596,7 +596,7 @@ func (r *Resolver) AddAssetTool(ctx context.Context, req *mcp.CallToolRequest, i
 			OwnerID:         input.OwnerID,
 			AssetType:       input.AssetType,
 			DataTypesStored: input.DataTypesStored,
-			VendorIDs:       input.VendorIds,
+			ThirdPartyIDs:   input.ThirdPartyIds,
 		},
 	)
 	if err != nil {
@@ -622,7 +622,7 @@ func (r *Resolver) UpdateAssetTool(ctx context.Context, req *mcp.CallToolRequest
 			OwnerID:         input.OwnerID,
 			AssetType:       input.AssetType,
 			DataTypesStored: input.DataTypesStored,
-			VendorIDs:       input.VendorIds,
+			ThirdPartyIDs:   input.ThirdPartyIds,
 		},
 	)
 	if err != nil {
@@ -687,7 +687,7 @@ func (r *Resolver) AddDatumTool(ctx context.Context, req *mcp.CallToolRequest, i
 			Name:               input.Name,
 			DataClassification: input.DataClassification,
 			OwnerID:            input.OwnerID,
-			VendorIDs:          input.VendorIds,
+			ThirdPartyIDs:      input.ThirdPartyIds,
 		},
 	)
 	if err != nil {
@@ -711,7 +711,7 @@ func (r *Resolver) UpdateDatumTool(ctx context.Context, req *mcp.CallToolRequest
 			Name:               input.Name,
 			DataClassification: input.DataClassification,
 			OwnerID:            input.OwnerID,
-			VendorIDs:          input.VendorIds,
+			ThirdPartyIDs:      input.ThirdPartyIds,
 		},
 	)
 	if err != nil {
@@ -1021,7 +1021,7 @@ func (r *Resolver) AddProcessingActivityTool(ctx context.Context, req *mcp.CallT
 			NextReviewDate:                       input.NextReviewDate,
 			Role:                                 input.Role,
 			DataProtectionOfficerID:              input.DataProtectionOfficerID,
-			VendorIDs:                            input.VendorIds,
+			ThirdPartyIDs:                        input.ThirdPartyIds,
 		},
 	)
 	if err != nil {
@@ -1038,9 +1038,9 @@ func (r *Resolver) UpdateProcessingActivityTool(ctx context.Context, req *mcp.Ca
 
 	svc := r.ProboService(ctx, input.ID)
 
-	var vendorIDs *[]gid.GID
-	if input.VendorIds != nil {
-		vendorIDs = &input.VendorIds
+	var thirdPartyIDs *[]gid.GID
+	if input.ThirdPartyIds != nil {
+		thirdPartyIDs = &input.ThirdPartyIds
 	}
 
 	processingActivity, err := svc.ProcessingActivities.Update(
@@ -1066,7 +1066,7 @@ func (r *Resolver) UpdateProcessingActivityTool(ctx context.Context, req *mcp.Ca
 			NextReviewDate:                       UnwrapOmittable(input.NextReviewDate),
 			Role:                                 input.Role,
 			DataProtectionOfficerID:              UnwrapOmittable(input.DataProtectionOfficerID),
-			VendorIDs:                            vendorIDs,
+			ThirdPartyIDs:                        thirdPartyIDs,
 		},
 	)
 	if err != nil {
@@ -2853,19 +2853,19 @@ func (r *Resolver) DeleteApplicabilityStatementTool(ctx context.Context, req *mc
 	}, nil
 }
 
-// ListVendorRiskAssessmentsTool handles the listVendorRiskAssessments tool
-// List all risk assessments for a vendor
-func (r *Resolver) ListVendorRiskAssessmentsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListVendorRiskAssessmentsInput) (*mcp.CallToolResult, types.ListVendorRiskAssessmentsOutput, error) {
-	r.MustAuthorize(ctx, input.VendorID, probo.ActionVendorRiskAssessmentList)
+// ListThirdPartyRiskAssessmentsTool handles the listThirdPartyRiskAssessments tool
+// List all risk assessments for a thirdParty
+func (r *Resolver) ListThirdPartyRiskAssessmentsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListThirdPartyRiskAssessmentsInput) (*mcp.CallToolResult, types.ListThirdPartyRiskAssessmentsOutput, error) {
+	r.MustAuthorize(ctx, input.ThirdPartyID, probo.ActionThirdPartyRiskAssessmentList)
 
-	prb := r.ProboService(ctx, input.VendorID)
+	prb := r.ProboService(ctx, input.ThirdPartyID)
 
-	pageOrderBy := page.OrderBy[coredata.VendorRiskAssessmentOrderField]{
-		Field:     coredata.VendorRiskAssessmentOrderFieldCreatedAt,
+	pageOrderBy := page.OrderBy[coredata.ThirdPartyRiskAssessmentOrderField]{
+		Field:     coredata.ThirdPartyRiskAssessmentOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
 	if input.OrderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.VendorRiskAssessmentOrderField]{
+		pageOrderBy = page.OrderBy[coredata.ThirdPartyRiskAssessmentOrderField]{
 			Field:     input.OrderBy.Field,
 			Direction: input.OrderBy.Direction,
 		}
@@ -2873,25 +2873,25 @@ func (r *Resolver) ListVendorRiskAssessmentsTool(ctx context.Context, req *mcp.C
 
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
-	p, err := prb.Vendors.ListRiskAssessments(ctx, input.VendorID, cursor)
+	p, err := prb.ThirdParties.ListRiskAssessments(ctx, input.ThirdPartyID, cursor)
 	if err != nil {
-		return nil, types.ListVendorRiskAssessmentsOutput{}, fmt.Errorf("cannot list vendor risk assessments: %w", err)
+		return nil, types.ListThirdPartyRiskAssessmentsOutput{}, fmt.Errorf("cannot list thirdParty risk assessments: %w", err)
 	}
 
-	return nil, types.NewListVendorRiskAssessmentsOutput(p), nil
+	return nil, types.NewListThirdPartyRiskAssessmentsOutput(p), nil
 }
 
-// AddVendorRiskAssessmentTool handles the addVendorRiskAssessment tool
-// Add a new risk assessment for a vendor
-func (r *Resolver) AddVendorRiskAssessmentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddVendorRiskAssessmentInput) (*mcp.CallToolResult, types.AddVendorRiskAssessmentOutput, error) {
-	r.MustAuthorize(ctx, input.VendorID, probo.ActionVendorRiskAssessmentCreate)
+// AddThirdPartyRiskAssessmentTool handles the addThirdPartyRiskAssessment tool
+// Add a new risk assessment for a thirdParty
+func (r *Resolver) AddThirdPartyRiskAssessmentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddThirdPartyRiskAssessmentInput) (*mcp.CallToolResult, types.AddThirdPartyRiskAssessmentOutput, error) {
+	r.MustAuthorize(ctx, input.ThirdPartyID, probo.ActionThirdPartyRiskAssessmentCreate)
 
-	prb := r.ProboService(ctx, input.VendorID)
+	prb := r.ProboService(ctx, input.ThirdPartyID)
 
-	assessment, err := prb.Vendors.CreateRiskAssessment(
+	assessment, err := prb.ThirdParties.CreateRiskAssessment(
 		ctx,
-		probo.CreateVendorRiskAssessmentRequest{
-			VendorID:        input.VendorID,
+		probo.CreateThirdPartyRiskAssessmentRequest{
+			ThirdPartyID:    input.ThirdPartyID,
 			ExpiresAt:       input.ExpiresAt,
 			DataSensitivity: input.DataSensitivity,
 			BusinessImpact:  input.BusinessImpact,
@@ -2899,24 +2899,24 @@ func (r *Resolver) AddVendorRiskAssessmentTool(ctx context.Context, req *mcp.Cal
 		},
 	)
 	if err != nil {
-		return nil, types.AddVendorRiskAssessmentOutput{}, fmt.Errorf("failed to create vendor risk assessment: %w", err)
+		return nil, types.AddThirdPartyRiskAssessmentOutput{}, fmt.Errorf("failed to create thirdParty risk assessment: %w", err)
 	}
 
-	return nil, types.NewAddVendorRiskAssessmentOutput(assessment), nil
+	return nil, types.NewAddThirdPartyRiskAssessmentOutput(assessment), nil
 }
 
-func (r *Resolver) DeleteVendorTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteVendorInput) (*mcp.CallToolResult, types.DeleteVendorOutput, error) {
-	r.MustAuthorize(ctx, input.ID, probo.ActionVendorDelete)
+func (r *Resolver) DeleteThirdPartyTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteThirdPartyInput) (*mcp.CallToolResult, types.DeleteThirdPartyOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionThirdPartyDelete)
 
 	svc := r.ProboService(ctx, input.ID)
 
-	err := svc.Vendors.Delete(ctx, input.ID)
+	err := svc.ThirdParties.Delete(ctx, input.ID)
 	if err != nil {
-		return nil, types.DeleteVendorOutput{}, fmt.Errorf("failed to delete vendor: %w", err)
+		return nil, types.DeleteThirdPartyOutput{}, fmt.Errorf("failed to delete thirdParty: %w", err)
 	}
 
-	return nil, types.DeleteVendorOutput{
-		DeletedVendorID: input.ID,
+	return nil, types.DeleteThirdPartyOutput{
+		DeletedThirdPartyID: input.ID,
 	}, nil
 }
 
@@ -4033,19 +4033,19 @@ func (r *Resolver) PublishAssetListTool(ctx context.Context, req *mcp.CallToolRe
 	}, nil
 }
 
-// ListVendorContactsTool handles the listVendorContacts tool
-// List all contacts for a vendor
-func (r *Resolver) ListVendorContactsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListVendorContactsInput) (*mcp.CallToolResult, types.ListVendorContactsOutput, error) {
-	r.MustAuthorize(ctx, input.VendorID, probo.ActionVendorContactList)
+// ListThirdPartyContactsTool handles the listThirdPartyContacts tool
+// List all contacts for a thirdParty
+func (r *Resolver) ListThirdPartyContactsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListThirdPartyContactsInput) (*mcp.CallToolResult, types.ListThirdPartyContactsOutput, error) {
+	r.MustAuthorize(ctx, input.ThirdPartyID, probo.ActionThirdPartyContactList)
 
-	prb := r.ProboService(ctx, input.VendorID)
+	prb := r.ProboService(ctx, input.ThirdPartyID)
 
-	pageOrderBy := page.OrderBy[coredata.VendorContactOrderField]{
-		Field:     coredata.VendorContactOrderFieldCreatedAt,
+	pageOrderBy := page.OrderBy[coredata.ThirdPartyContactOrderField]{
+		Field:     coredata.ThirdPartyContactOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
 	if input.OrderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.VendorContactOrderField]{
+		pageOrderBy = page.OrderBy[coredata.ThirdPartyContactOrderField]{
 			Field:     input.OrderBy.Field,
 			Direction: input.OrderBy.Direction,
 		}
@@ -4053,50 +4053,50 @@ func (r *Resolver) ListVendorContactsTool(ctx context.Context, req *mcp.CallTool
 
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
-	p, err := prb.VendorContacts.List(ctx, input.VendorID, cursor)
+	p, err := prb.ThirdPartyContacts.List(ctx, input.ThirdPartyID, cursor)
 	if err != nil {
-		return nil, types.ListVendorContactsOutput{}, fmt.Errorf("cannot list vendor contacts: %w", err)
+		return nil, types.ListThirdPartyContactsOutput{}, fmt.Errorf("cannot list thirdParty contacts: %w", err)
 	}
 
-	return nil, types.NewListVendorContactsOutput(p), nil
+	return nil, types.NewListThirdPartyContactsOutput(p), nil
 }
 
-// AddVendorContactTool handles the addVendorContact tool
-// Add a new contact to a vendor
-func (r *Resolver) AddVendorContactTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddVendorContactInput) (*mcp.CallToolResult, types.AddVendorContactOutput, error) {
-	r.MustAuthorize(ctx, input.VendorID, probo.ActionVendorContactCreate)
+// AddThirdPartyContactTool handles the addThirdPartyContact tool
+// Add a new contact to a thirdParty
+func (r *Resolver) AddThirdPartyContactTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddThirdPartyContactInput) (*mcp.CallToolResult, types.AddThirdPartyContactOutput, error) {
+	r.MustAuthorize(ctx, input.ThirdPartyID, probo.ActionThirdPartyContactCreate)
 
-	prb := r.ProboService(ctx, input.VendorID)
+	prb := r.ProboService(ctx, input.ThirdPartyID)
 
 	emailAddr, err := mail.ParseAddr(input.Email)
 	if err != nil {
-		return nil, types.AddVendorContactOutput{}, fmt.Errorf("invalid email address: %w", err)
+		return nil, types.AddThirdPartyContactOutput{}, fmt.Errorf("invalid email address: %w", err)
 	}
 
-	vendorContact, err := prb.VendorContacts.Create(ctx, probo.CreateVendorContactRequest{
-		VendorID: input.VendorID,
-		FullName: &input.FullName,
-		Email:    &emailAddr,
-		Phone:    &input.Phone,
-		Role:     &input.Role,
+	thirdPartyContact, err := prb.ThirdPartyContacts.Create(ctx, probo.CreateThirdPartyContactRequest{
+		ThirdPartyID: input.ThirdPartyID,
+		FullName:     &input.FullName,
+		Email:        &emailAddr,
+		Phone:        &input.Phone,
+		Role:         &input.Role,
 	})
 	if err != nil {
-		return nil, types.AddVendorContactOutput{}, fmt.Errorf("cannot create vendor contact: %w", err)
+		return nil, types.AddThirdPartyContactOutput{}, fmt.Errorf("cannot create thirdParty contact: %w", err)
 	}
 
-	return nil, types.AddVendorContactOutput{
-		VendorContact: types.NewVendorContact(vendorContact),
+	return nil, types.AddThirdPartyContactOutput{
+		ThirdPartyContact: types.NewThirdPartyContact(thirdPartyContact),
 	}, nil
 }
 
-// UpdateVendorContactTool handles the updateVendorContact tool
-// Update an existing vendor contact
-func (r *Resolver) UpdateVendorContactTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateVendorContactInput) (*mcp.CallToolResult, types.UpdateVendorContactOutput, error) {
-	r.MustAuthorize(ctx, input.ID, probo.ActionVendorContactUpdate)
+// UpdateThirdPartyContactTool handles the updateThirdPartyContact tool
+// Update an existing thirdParty contact
+func (r *Resolver) UpdateThirdPartyContactTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateThirdPartyContactInput) (*mcp.CallToolResult, types.UpdateThirdPartyContactOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionThirdPartyContactUpdate)
 
 	prb := r.ProboService(ctx, input.ID)
 
-	updateReq := probo.UpdateVendorContactRequest{
+	updateReq := probo.UpdateThirdPartyContactRequest{
 		ID: input.ID,
 	}
 
@@ -4107,7 +4107,7 @@ func (r *Resolver) UpdateVendorContactTool(ctx context.Context, req *mcp.CallToo
 	if input.Email != nil {
 		emailAddr, err := mail.ParseAddr(*input.Email)
 		if err != nil {
-			return nil, types.UpdateVendorContactOutput{}, fmt.Errorf("invalid email address: %w", err)
+			return nil, types.UpdateThirdPartyContactOutput{}, fmt.Errorf("invalid email address: %w", err)
 		}
 		emailPtr := &emailAddr
 		updateReq.Email = &emailPtr
@@ -4121,46 +4121,46 @@ func (r *Resolver) UpdateVendorContactTool(ctx context.Context, req *mcp.CallToo
 		updateReq.Role = &input.Role
 	}
 
-	vendorContact, err := prb.VendorContacts.Update(ctx, updateReq)
+	thirdPartyContact, err := prb.ThirdPartyContacts.Update(ctx, updateReq)
 	if err != nil {
-		return nil, types.UpdateVendorContactOutput{}, fmt.Errorf("cannot update vendor contact: %w", err)
+		return nil, types.UpdateThirdPartyContactOutput{}, fmt.Errorf("cannot update thirdParty contact: %w", err)
 	}
 
-	return nil, types.UpdateVendorContactOutput{
-		VendorContact: types.NewVendorContact(vendorContact),
+	return nil, types.UpdateThirdPartyContactOutput{
+		ThirdPartyContact: types.NewThirdPartyContact(thirdPartyContact),
 	}, nil
 }
 
-// DeleteVendorContactTool handles the deleteVendorContact tool
-// Delete a vendor contact
-func (r *Resolver) DeleteVendorContactTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteVendorContactInput) (*mcp.CallToolResult, types.DeleteVendorContactOutput, error) {
-	r.MustAuthorize(ctx, input.ID, probo.ActionVendorContactDelete)
+// DeleteThirdPartyContactTool handles the deleteThirdPartyContact tool
+// Delete a thirdParty contact
+func (r *Resolver) DeleteThirdPartyContactTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteThirdPartyContactInput) (*mcp.CallToolResult, types.DeleteThirdPartyContactOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionThirdPartyContactDelete)
 
 	prb := r.ProboService(ctx, input.ID)
 
-	err := prb.VendorContacts.Delete(ctx, input.ID)
+	err := prb.ThirdPartyContacts.Delete(ctx, input.ID)
 	if err != nil {
-		return nil, types.DeleteVendorContactOutput{}, fmt.Errorf("cannot delete vendor contact: %w", err)
+		return nil, types.DeleteThirdPartyContactOutput{}, fmt.Errorf("cannot delete thirdParty contact: %w", err)
 	}
 
-	return nil, types.DeleteVendorContactOutput{
-		DeletedVendorContactID: input.ID,
+	return nil, types.DeleteThirdPartyContactOutput{
+		DeletedThirdPartyContactID: input.ID,
 	}, nil
 }
 
-// ListVendorServicesTool handles the listVendorServices tool
-// List all services for a vendor
-func (r *Resolver) ListVendorServicesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListVendorServicesInput) (*mcp.CallToolResult, types.ListVendorServicesOutput, error) {
-	r.MustAuthorize(ctx, input.VendorID, probo.ActionVendorServiceList)
+// ListThirdPartyServicesTool handles the listThirdPartyServices tool
+// List all services for a thirdParty
+func (r *Resolver) ListThirdPartyServicesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListThirdPartyServicesInput) (*mcp.CallToolResult, types.ListThirdPartyServicesOutput, error) {
+	r.MustAuthorize(ctx, input.ThirdPartyID, probo.ActionThirdPartyServiceList)
 
-	prb := r.ProboService(ctx, input.VendorID)
+	prb := r.ProboService(ctx, input.ThirdPartyID)
 
-	pageOrderBy := page.OrderBy[coredata.VendorServiceOrderField]{
-		Field:     coredata.VendorServiceOrderFieldCreatedAt,
+	pageOrderBy := page.OrderBy[coredata.ThirdPartyServiceOrderField]{
+		Field:     coredata.ThirdPartyServiceOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
 	if input.OrderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.VendorServiceOrderField]{
+		pageOrderBy = page.OrderBy[coredata.ThirdPartyServiceOrderField]{
 			Field:     input.OrderBy.Field,
 			Direction: input.OrderBy.Direction,
 		}
@@ -4168,43 +4168,43 @@ func (r *Resolver) ListVendorServicesTool(ctx context.Context, req *mcp.CallTool
 
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
-	p, err := prb.VendorServices.List(ctx, input.VendorID, cursor)
+	p, err := prb.ThirdPartyServices.List(ctx, input.ThirdPartyID, cursor)
 	if err != nil {
-		return nil, types.ListVendorServicesOutput{}, fmt.Errorf("cannot list vendor services: %w", err)
+		return nil, types.ListThirdPartyServicesOutput{}, fmt.Errorf("cannot list thirdParty services: %w", err)
 	}
 
-	return nil, types.NewListVendorServicesOutput(p), nil
+	return nil, types.NewListThirdPartyServicesOutput(p), nil
 }
 
-// AddVendorServiceTool handles the addVendorService tool
-// Add a new service to a vendor
-func (r *Resolver) AddVendorServiceTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddVendorServiceInput) (*mcp.CallToolResult, types.AddVendorServiceOutput, error) {
-	r.MustAuthorize(ctx, input.VendorID, probo.ActionVendorServiceCreate)
+// AddThirdPartyServiceTool handles the addThirdPartyService tool
+// Add a new service to a thirdParty
+func (r *Resolver) AddThirdPartyServiceTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddThirdPartyServiceInput) (*mcp.CallToolResult, types.AddThirdPartyServiceOutput, error) {
+	r.MustAuthorize(ctx, input.ThirdPartyID, probo.ActionThirdPartyServiceCreate)
 
-	prb := r.ProboService(ctx, input.VendorID)
+	prb := r.ProboService(ctx, input.ThirdPartyID)
 
-	vendorService, err := prb.VendorServices.Create(ctx, probo.CreateVendorServiceRequest{
-		VendorID:    input.VendorID,
-		Name:        input.Name,
-		Description: input.Description,
+	thirdPartyService, err := prb.ThirdPartyServices.Create(ctx, probo.CreateThirdPartyServiceRequest{
+		ThirdPartyID: input.ThirdPartyID,
+		Name:         input.Name,
+		Description:  input.Description,
 	})
 	if err != nil {
-		return nil, types.AddVendorServiceOutput{}, fmt.Errorf("cannot create vendor service: %w", err)
+		return nil, types.AddThirdPartyServiceOutput{}, fmt.Errorf("cannot create thirdParty service: %w", err)
 	}
 
-	return nil, types.AddVendorServiceOutput{
-		VendorService: types.NewVendorService(vendorService),
+	return nil, types.AddThirdPartyServiceOutput{
+		ThirdPartyService: types.NewThirdPartyService(thirdPartyService),
 	}, nil
 }
 
-// UpdateVendorServiceTool handles the updateVendorService tool
-// Update an existing vendor service
-func (r *Resolver) UpdateVendorServiceTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateVendorServiceInput) (*mcp.CallToolResult, types.UpdateVendorServiceOutput, error) {
-	r.MustAuthorize(ctx, input.ID, probo.ActionVendorServiceUpdate)
+// UpdateThirdPartyServiceTool handles the updateThirdPartyService tool
+// Update an existing thirdParty service
+func (r *Resolver) UpdateThirdPartyServiceTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateThirdPartyServiceInput) (*mcp.CallToolResult, types.UpdateThirdPartyServiceOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionThirdPartyServiceUpdate)
 
 	prb := r.ProboService(ctx, input.ID)
 
-	updateReq := probo.UpdateVendorServiceRequest{
+	updateReq := probo.UpdateThirdPartyServiceRequest{
 		ID: input.ID,
 	}
 
@@ -4216,30 +4216,30 @@ func (r *Resolver) UpdateVendorServiceTool(ctx context.Context, req *mcp.CallToo
 		updateReq.Description = &input.Description
 	}
 
-	vendorService, err := prb.VendorServices.Update(ctx, updateReq)
+	thirdPartyService, err := prb.ThirdPartyServices.Update(ctx, updateReq)
 	if err != nil {
-		return nil, types.UpdateVendorServiceOutput{}, fmt.Errorf("cannot update vendor service: %w", err)
+		return nil, types.UpdateThirdPartyServiceOutput{}, fmt.Errorf("cannot update thirdParty service: %w", err)
 	}
 
-	return nil, types.UpdateVendorServiceOutput{
-		VendorService: types.NewVendorService(vendorService),
+	return nil, types.UpdateThirdPartyServiceOutput{
+		ThirdPartyService: types.NewThirdPartyService(thirdPartyService),
 	}, nil
 }
 
-// DeleteVendorServiceTool handles the deleteVendorService tool
-// Delete a vendor service
-func (r *Resolver) DeleteVendorServiceTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteVendorServiceInput) (*mcp.CallToolResult, types.DeleteVendorServiceOutput, error) {
-	r.MustAuthorize(ctx, input.ID, probo.ActionVendorServiceDelete)
+// DeleteThirdPartyServiceTool handles the deleteThirdPartyService tool
+// Delete a thirdParty service
+func (r *Resolver) DeleteThirdPartyServiceTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteThirdPartyServiceInput) (*mcp.CallToolResult, types.DeleteThirdPartyServiceOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionThirdPartyServiceDelete)
 
 	prb := r.ProboService(ctx, input.ID)
 
-	err := prb.VendorServices.Delete(ctx, input.ID)
+	err := prb.ThirdPartyServices.Delete(ctx, input.ID)
 	if err != nil {
-		return nil, types.DeleteVendorServiceOutput{}, fmt.Errorf("cannot delete vendor service: %w", err)
+		return nil, types.DeleteThirdPartyServiceOutput{}, fmt.Errorf("cannot delete thirdParty service: %w", err)
 	}
 
-	return nil, types.DeleteVendorServiceOutput{
-		DeletedVendorServiceID: input.ID,
+	return nil, types.DeleteThirdPartyServiceOutput{
+		DeletedThirdPartyServiceID: input.ID,
 	}, nil
 }
 func (r *Resolver) DeleteAssetTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteAssetInput) (*mcp.CallToolResult, types.DeleteAssetOutput, error) {
@@ -4764,22 +4764,22 @@ func (r *Resolver) DeleteCustomDomainTool(ctx context.Context, req *mcp.CallTool
 	return nil, types.DeleteCustomDomainOutput{DeletedCustomDomain: deletedDomain}, nil
 }
 
-func (r *Resolver) AssessVendorTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AssessVendorInput) (*mcp.CallToolResult, types.AssessVendorOutput, error) {
-	r.MustAuthorize(ctx, input.ID, probo.ActionVendorAssess)
+func (r *Resolver) AssessThirdPartyTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AssessThirdPartyInput) (*mcp.CallToolResult, types.AssessThirdPartyOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionThirdPartyAssess)
 
 	svc := r.ProboService(ctx, input.ID)
 
-	result, err := svc.Vendors.Assess(
+	result, err := svc.ThirdParties.Assess(
 		ctx,
-		probo.AssessVendorRequest{
+		probo.AssessThirdPartyRequest{
 			ID:         input.ID,
 			WebsiteURL: input.WebsiteURL,
 			Procedure:  input.Procedure,
 		},
 	)
 	if err != nil {
-		return nil, types.AssessVendorOutput{}, fmt.Errorf("cannot assess vendor: %w", err)
+		return nil, types.AssessThirdPartyOutput{}, fmt.Errorf("cannot assess third party: %w", err)
 	}
 
-	return nil, types.NewAssessVendorOutput(result), nil
+	return nil, types.NewAssessThirdPartyOutput(result), nil
 }
