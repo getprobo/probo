@@ -20,56 +20,56 @@ import (
 )
 
 type (
-	EvidenceDescriptionStatus string
+	EvidenceAssessmentStatus string
 )
 
 const (
-	EvidenceDescriptionStatusPending    EvidenceDescriptionStatus = "PENDING"
-	EvidenceDescriptionStatusProcessing EvidenceDescriptionStatus = "PROCESSING"
-	EvidenceDescriptionStatusCompleted  EvidenceDescriptionStatus = "COMPLETED"
-	EvidenceDescriptionStatusFailed     EvidenceDescriptionStatus = "FAILED"
+	EvidenceAssessmentStatusPending    EvidenceAssessmentStatus = "PENDING"
+	EvidenceAssessmentStatusProcessing EvidenceAssessmentStatus = "PROCESSING"
+	EvidenceAssessmentStatusCompleted  EvidenceAssessmentStatus = "COMPLETED"
+	EvidenceAssessmentStatusFailed     EvidenceAssessmentStatus = "FAILED"
 )
 
 var (
-	_ fmt.Stringer             = EvidenceDescriptionStatus("")
-	_ encoding.TextMarshaler   = EvidenceDescriptionStatus("")
-	_ encoding.TextUnmarshaler = (*EvidenceDescriptionStatus)(nil)
+	_ fmt.Stringer             = EvidenceAssessmentStatus("")
+	_ encoding.TextMarshaler   = EvidenceAssessmentStatus("")
+	_ encoding.TextUnmarshaler = (*EvidenceAssessmentStatus)(nil)
 )
 
-func EvidenceDescriptionStatuses() []EvidenceDescriptionStatus {
-	return []EvidenceDescriptionStatus{
-		EvidenceDescriptionStatusPending,
-		EvidenceDescriptionStatusProcessing,
-		EvidenceDescriptionStatusCompleted,
-		EvidenceDescriptionStatusFailed,
+func EvidenceAssessmentStatuses() []EvidenceAssessmentStatus {
+	return []EvidenceAssessmentStatus{
+		EvidenceAssessmentStatusPending,
+		EvidenceAssessmentStatusProcessing,
+		EvidenceAssessmentStatusCompleted,
+		EvidenceAssessmentStatusFailed,
 	}
 }
 
-func (v EvidenceDescriptionStatus) IsValid() bool {
+func (v EvidenceAssessmentStatus) IsValid() bool {
 	switch v {
 	case
-		EvidenceDescriptionStatusPending,
-		EvidenceDescriptionStatusProcessing,
-		EvidenceDescriptionStatusCompleted,
-		EvidenceDescriptionStatusFailed:
+		EvidenceAssessmentStatusPending,
+		EvidenceAssessmentStatusProcessing,
+		EvidenceAssessmentStatusCompleted,
+		EvidenceAssessmentStatusFailed:
 		return true
 	}
 
 	return false
 }
 
-func (v EvidenceDescriptionStatus) String() string {
+func (v EvidenceAssessmentStatus) String() string {
 	return string(v)
 }
 
-func (v EvidenceDescriptionStatus) MarshalText() ([]byte, error) {
+func (v EvidenceAssessmentStatus) MarshalText() ([]byte, error) {
 	return []byte(v.String()), nil
 }
 
-func (v *EvidenceDescriptionStatus) UnmarshalText(text []byte) error {
-	val := EvidenceDescriptionStatus(text)
+func (v *EvidenceAssessmentStatus) UnmarshalText(text []byte) error {
+	val := EvidenceAssessmentStatus(text)
 	if !val.IsValid() {
-		return fmt.Errorf("invalid EvidenceDescriptionStatus value: %q", string(text))
+		return fmt.Errorf("invalid EvidenceAssessmentStatus value: %q", string(text))
 	}
 
 	*v = val
