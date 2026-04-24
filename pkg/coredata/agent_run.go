@@ -41,7 +41,6 @@ type (
 		InputMessages  json.RawMessage `db:"input_messages"`
 		Result         json.RawMessage `db:"result"`
 		ErrorMessage   *string         `db:"error_message"`
-		StopRequested  bool            `db:"stop_requested"`
 		StartedAt      *time.Time      `db:"started_at"`
 		LeaseOwner     *string         `db:"lease_owner"`
 		LeaseExpiresAt *time.Time      `db:"lease_expires_at"`
@@ -111,7 +110,6 @@ SELECT
 	input_messages,
 	result,
 	error_message,
-	stop_requested,
 	started_at,
 	lease_owner,
 	lease_expires_at,
@@ -164,7 +162,6 @@ SELECT
 	input_messages,
 	result,
 	error_message,
-	stop_requested,
 	started_at,
 	lease_owner,
 	lease_expires_at,
@@ -219,7 +216,6 @@ SELECT
 	input_messages,
 	result,
 	error_message,
-	stop_requested,
 	started_at,
 	lease_owner,
 	lease_expires_at,
@@ -317,7 +313,6 @@ RETURNING
 	input_messages,
 	result,
 	error_message,
-	stop_requested,
 	started_at,
 	lease_owner,
 	lease_expires_at,
@@ -362,7 +357,6 @@ SET
 	status = @status,
 	result = @result,
 	error_message = @error_message,
-	stop_requested = @stop_requested,
 	started_at = @started_at,
 	lease_owner = @lease_owner,
 	lease_expires_at = @lease_expires_at,
@@ -379,7 +373,6 @@ RETURNING
 	input_messages,
 	result,
 	error_message,
-	stop_requested,
 	started_at,
 	lease_owner,
 	lease_expires_at,
@@ -394,7 +387,6 @@ RETURNING
 		"status":           e.Status,
 		"result":           e.Result,
 		"error_message":    e.ErrorMessage,
-		"stop_requested":   e.StopRequested,
 		"started_at":       e.StartedAt,
 		"lease_owner":      e.LeaseOwner,
 		"lease_expires_at": e.LeaseExpiresAt,
@@ -481,7 +473,6 @@ RETURNING
 	input_messages,
 	result,
 	error_message,
-	stop_requested,
 	started_at,
 	lease_owner,
 	lease_expires_at,
@@ -526,7 +517,6 @@ SELECT
 	input_messages,
 	result,
 	error_message,
-	stop_requested,
 	started_at,
 	lease_owner,
 	lease_expires_at,
@@ -536,7 +526,6 @@ FROM
 	agent_runs
 WHERE
 	status = 'PENDING'
-	AND stop_requested = false
 ORDER BY created_at ASC
 LIMIT 1
 FOR UPDATE SKIP LOCKED;
@@ -564,8 +553,7 @@ FOR UPDATE SKIP LOCKED;
 // The worker refreshes lease_expires_at from a separate heartbeat goroutine,
 // so a long LLM or tool call is not considered stale while the process is alive.
 // Stale recovery returns rows to PENDING so the supervisor auto-resumes
-// from checkpoint when one exists. User-requested suspension remains
-// SUSPENDED and is resumed only by the Resume service method.
+// from checkpoint when one exists.
 func ResetStaleAgentRuns(ctx context.Context, conn pg.Querier) error {
 	q := `
 UPDATE agent_runs
@@ -574,7 +562,6 @@ SET
 	started_at = NULL,
 	lease_owner = NULL,
 	lease_expires_at = NULL,
-	stop_requested = false,
 	updated_at = now()
 WHERE
 	status = 'RUNNING'
@@ -622,33 +609,6 @@ WHERE
 	}
 
 	return tag.RowsAffected(), nil
-}
-
-// LoadRunningStopRequestedIDs returns IDs of running agent runs with
-// stop_requested = true.
-func LoadRunningStopRequestedIDs(ctx context.Context, conn pg.Querier) ([]string, error) {
-	q := `SELECT id FROM agent_runs WHERE status = 'RUNNING' AND stop_requested = true;`
-
-	rows, err := conn.Query(ctx, q)
-	if err != nil {
-		return nil, fmt.Errorf("cannot query stop-requested agent runs: %w", err)
-	}
-	defer rows.Close()
-
-	var ids []string
-	for rows.Next() {
-		var id string
-		if err := rows.Scan(&id); err != nil {
-			return nil, fmt.Errorf("cannot scan stop-requested agent run ID: %w", err)
-		}
-		ids = append(ids, id)
-	}
-
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("cannot iterate stop-requested agent runs: %w", err)
-	}
-
-	return ids, nil
 }
 
 // PGCheckpointer implements agent.Checkpointer backed by the

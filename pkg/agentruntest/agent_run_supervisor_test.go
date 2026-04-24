@@ -180,7 +180,6 @@ func TestAgentRunSupervisor_PicksUpAndCompletes(t *testing.T) {
 	assert.NotNil(t, completed.Result)
 	assert.Nil(t, completed.Checkpoint, "checkpoint should be cleared after completion")
 	assert.Nil(t, completed.ErrorMessage)
-	assert.False(t, completed.StopRequested)
 }
 
 // ---------------------------------------------------------------------------
@@ -191,7 +190,8 @@ func TestAgentRunSupervisor_StopAndResume(t *testing.T) {
 	client := agentruntest.PGClient(t)
 	store := coredata.NewPGCheckpointer(client)
 
-	// The tool blocks until signaled, giving us time to set stop_requested.
+	// The tool blocks until signaled, giving us time to trigger graceful
+	// shutdown via the supervisor context while the agent is mid-turn.
 	toolReady := make(chan struct{})
 	toolRelease := make(chan struct{})
 
@@ -267,29 +267,19 @@ func TestAgentRunSupervisor_StopAndResume(t *testing.T) {
 	running := agentruntest.LoadAgentRun(t, client, run.ID)
 	assert.Equal(t, coredata.AgentRunStatusRunning, running.Status)
 
-	// Set stop_requested in the database WHILE the tool is still blocked.
-	// The supervisor polls for this on each tick and signals the run's
-	// stop channel.
-	err := client.WithConn(
-		context.Background(),
-		func(ctx context.Context, conn pg.Querier) error {
-			_, err := conn.Exec(
-				ctx,
-				"UPDATE agent_runs SET stop_requested = true WHERE id = $1",
-				run.ID.String(),
-			)
-			return err
-		},
-	)
-	require.NoError(t, err)
+	// Trigger graceful shutdown of the supervisor: context.AfterFunc
+	// registered in Run() fires signalShutdown, closing the shutdown
+	// broadcast channel; the per-run forwarder goroutine closes the
+	// agent's stop channel.
+	cancel1()
 
-	// Give the supervisor at least one tick to poll stop requests and
-	// close the run's stop channel before the tool finishes.
-	time.Sleep(1 * time.Second)
+	// Give the AfterFunc goroutine a moment to close the broadcast and
+	// propagate into the per-run stopCh before the tool unblocks.
+	time.Sleep(500 * time.Millisecond)
 
-	// Now release the tool. After completion the coreLoop saves an
-	// incremental checkpoint and checks the stop signal at the next
-	// turn boundary — it should already be closed.
+	// Now release the tool. When the coreLoop resumes control at the
+	// next turn boundary it observes the closed stop channel, saves
+	// the suspension checkpoint, and returns SuspendedError.
 	close(toolRelease)
 
 	// Wait for the checkpoint to appear. The supervisor leaves the row
@@ -305,10 +295,6 @@ func TestAgentRunSupervisor_StopAndResume(t *testing.T) {
 		200*time.Millisecond,
 		"checkpoint should be saved after stop",
 	)
-
-	// Stop the first supervisor.
-	cancel1()
-	time.Sleep(500 * time.Millisecond)
 
 	// Verify checkpoint content.
 	cp, err := store.Load(context.Background(), run.ID.String())
@@ -327,7 +313,6 @@ func TestAgentRunSupervisor_StopAndResume(t *testing.T) {
 				ctx,
 				`UPDATE agent_runs
 				 SET status = 'PENDING',
-				     stop_requested = false,
 				     started_at = NULL,
 				     lease_owner = NULL,
 				     lease_expires_at = NULL,
@@ -633,7 +618,6 @@ func TestAgentRunSupervisor_SIGTERM(t *testing.T) {
 				_, err := conn.Exec(ctx, `
 					UPDATE agent_runs
 					SET status = 'PENDING',
-					    stop_requested = false,
 					    started_at = NULL,
 					    lease_owner = NULL,
 					    lease_expires_at = NULL,
