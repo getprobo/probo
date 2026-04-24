@@ -28,8 +28,8 @@ Field rules, in the order a reader will care about them:
 
 Do not guess. If a field cannot be determined from the file alone, leave it empty rather than inferring it from the filename, from the surrounding metadata, or from general knowledge about the platform.
 
-Example — readable:
-{"summary":"Google Workspace admin console showing enforced 2-step verification for all users in the organization, with no exceptions permitted.","system":"Google Workspace","setting":"enforced 2-step verification","scope":"organization-wide","captured_at":"","language":"en","frameworks":["SOC2","ISO27001"],"issues":[],"confidence":"HIGH","readable":true,"rejection_reason":""}
+Example — readable (no frameworks named on the file, so the array is empty):
+{"summary":"Google Workspace admin console showing enforced 2-step verification for all users in the organization, with no exceptions permitted.","system":"Google Workspace","setting":"enforced 2-step verification","scope":"organization-wide","captured_at":"","language":"en","frameworks":[],"issues":[],"confidence":"HIGH","readable":true,"rejection_reason":""}
 
 Example — unreadable:
 {"summary":"Unable to describe: image is blank and contains no recognisable compliance evidence.","system":"","setting":"","scope":"","captured_at":"","language":"","frameworks":[],"issues":[],"confidence":"LOW","readable":false,"rejection_reason":"Image is blank and contains no recognisable compliance evidence."}
