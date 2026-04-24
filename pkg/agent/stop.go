@@ -12,34 +12,20 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package llm
+package agent
 
-type (
-	Part interface {
-		part()
-	}
+import "context"
 
-	TextPart struct {
-		Text string `json:"text"`
-	}
+type stopSignalKey struct{}
 
-	ImagePart struct {
-		URL string `json:"url"`
-	}
+// WithStopSignal returns a derived context carrying a stop channel.
+// The agent loop checks this channel at each turn boundary.
+func WithStopSignal(ctx context.Context, ch <-chan struct{}) context.Context {
+	return context.WithValue(ctx, stopSignalKey{}, ch)
+}
 
-	FilePart struct {
-		Data     string `json:"data"`      // base64-encoded content
-		MimeType string `json:"mime_type"` // e.g. "application/pdf", "text/csv", "image/png"
-		Filename string `json:"filename"`
-	}
-
-	ThinkingPart struct {
-		Text      string
-		Signature string // Anthropic thinking signature for multi-turn continuity
-	}
-)
-
-func (TextPart) part()     {}
-func (ImagePart) part()    {}
-func (FilePart) part()     {}
-func (ThinkingPart) part() {}
+// stopSignalFrom retrieves the stop channel from the context, or nil.
+func stopSignalFrom(ctx context.Context) <-chan struct{} {
+	ch, _ := ctx.Value(stopSignalKey{}).(<-chan struct{})
+	return ch
+}

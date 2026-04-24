@@ -12,34 +12,47 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package llm
+package coredata
+
+import "fmt"
 
 type (
-	Part interface {
-		part()
-	}
-
-	TextPart struct {
-		Text string `json:"text"`
-	}
-
-	ImagePart struct {
-		URL string `json:"url"`
-	}
-
-	FilePart struct {
-		Data     string `json:"data"`      // base64-encoded content
-		MimeType string `json:"mime_type"` // e.g. "application/pdf", "text/csv", "image/png"
-		Filename string `json:"filename"`
-	}
-
-	ThinkingPart struct {
-		Text      string
-		Signature string // Anthropic thinking signature for multi-turn continuity
-	}
+	AgentRunOrderField string
 )
 
-func (TextPart) part()     {}
-func (ImagePart) part()    {}
-func (FilePart) part()     {}
-func (ThinkingPart) part() {}
+const (
+	AgentRunOrderFieldCreatedAt AgentRunOrderField = "CREATED_AT"
+)
+
+func (p AgentRunOrderField) Column() string {
+	switch p {
+	case AgentRunOrderFieldCreatedAt:
+		return "created_at"
+	}
+
+	panic(fmt.Sprintf("unsupported order by: %s", p))
+}
+
+func (p AgentRunOrderField) IsValid() bool {
+	switch p {
+	case AgentRunOrderFieldCreatedAt:
+		return true
+	}
+	return false
+}
+
+func (p AgentRunOrderField) String() string {
+	return string(p)
+}
+
+func (p *AgentRunOrderField) UnmarshalText(text []byte) error {
+	*p = AgentRunOrderField(text)
+	if !p.IsValid() {
+		return fmt.Errorf("%s is not a valid AgentRunOrderField", string(text))
+	}
+	return nil
+}
+
+func (p AgentRunOrderField) MarshalText() ([]byte, error) {
+	return []byte(p.String()), nil
+}
