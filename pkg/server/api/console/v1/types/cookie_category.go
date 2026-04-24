@@ -61,17 +61,22 @@ func NewCookieCategoryEdge(c *coredata.CookieCategory, orderBy coredata.CookieCa
 }
 
 func NewCookieCategory(c *coredata.CookieCategory) *CookieCategory {
+	gcmConsentTypes := c.GCMConsentTypes
+	if gcmConsentTypes == nil {
+		gcmConsentTypes = []string{}
+	}
 	return &CookieCategory{
 		ID: c.ID,
 		CookieBanner: &CookieBanner{
 			ID: c.CookieBannerID,
 		},
-		Name:        c.Name,
-		Slug:        c.Slug,
-		Description: c.Description,
-		Kind:        c.Kind,
-		Rank:        c.Rank,
-		CreatedAt:   c.CreatedAt,
-		UpdatedAt:   c.UpdatedAt,
+		Name:            c.Name,
+		Slug:            c.Slug,
+		Description:     c.Description,
+		Kind:            c.Kind,
+		Rank:            c.Rank,
+		GcmConsentTypes: gcmConsentTypes,
+		CreatedAt:       c.CreatedAt,
+		UpdatedAt:       c.UpdatedAt,
 	}
 }

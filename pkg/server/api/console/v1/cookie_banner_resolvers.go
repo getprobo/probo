@@ -458,6 +458,11 @@ func (r *mutationResolver) UpdateCookieCategory(ctx context.Context, input types
 
 	scope := coredata.NewScopeFromObjectID(input.CookieCategoryID)
 
+	var gcmConsentTypes *[]string
+	if input.GcmConsentTypes != nil {
+		gcmConsentTypes = &input.GcmConsentTypes
+	}
+
 	category, err := r.cookieBanner.UpdateCookieCategory(
 		ctx,
 		scope,
@@ -466,6 +471,7 @@ func (r *mutationResolver) UpdateCookieCategory(ctx context.Context, input types
 			Name:             input.Name,
 			Slug:             input.Slug,
 			Description:      input.Description,
+			GCMConsentTypes:  gcmConsentTypes,
 		},
 	)
 	if err != nil {
