@@ -39,16 +39,17 @@ type (
 	CookieItems []CookieItem
 
 	CookieCategory struct {
-		ID             gid.GID            `db:"id"`
-		OrganizationID gid.GID            `db:"organization_id"`
-		CookieBannerID gid.GID            `db:"cookie_banner_id"`
-		Name           string             `db:"name"`
-		Slug           string             `db:"slug"`
-		Description    string             `db:"description"`
-		Kind           CookieCategoryKind `db:"kind"`
-		Rank           int                `db:"rank"`
-		CreatedAt      time.Time          `db:"created_at"`
-		UpdatedAt      time.Time          `db:"updated_at"`
+		ID              gid.GID            `db:"id"`
+		OrganizationID  gid.GID            `db:"organization_id"`
+		CookieBannerID  gid.GID            `db:"cookie_banner_id"`
+		Name            string             `db:"name"`
+		Slug            string             `db:"slug"`
+		Description     string             `db:"description"`
+		Kind            CookieCategoryKind `db:"kind"`
+		Rank            int                `db:"rank"`
+		GCMConsentTypes []string           `db:"gcm_consent_types"`
+		CreatedAt       time.Time          `db:"created_at"`
+		UpdatedAt       time.Time          `db:"updated_at"`
 	}
 
 	CookieCategories []*CookieCategory
@@ -109,6 +110,7 @@ SELECT
 	description,
 	kind,
 	rank,
+	gcm_consent_types,
 	created_at,
 	updated_at
 FROM
@@ -159,6 +161,7 @@ SELECT
 	description,
 	kind,
 	rank,
+	gcm_consent_types,
 	created_at,
 	updated_at
 FROM
@@ -237,6 +240,7 @@ SELECT
 	description,
 	kind,
 	rank,
+	gcm_consent_types,
 	created_at,
 	updated_at
 FROM
@@ -284,6 +288,7 @@ INSERT INTO cookie_categories (
 	description,
 	kind,
 	rank,
+	gcm_consent_types,
 	created_at,
 	updated_at
 ) VALUES (
@@ -296,23 +301,25 @@ INSERT INTO cookie_categories (
 	@description,
 	@kind,
 	@rank,
+	@gcm_consent_types,
 	@created_at,
 	@updated_at
 )
 `
 
 	args := pgx.StrictNamedArgs{
-		"id":               c.ID,
-		"tenant_id":        scope.GetTenantID(),
-		"organization_id":  c.OrganizationID,
-		"cookie_banner_id": c.CookieBannerID,
-		"name":             c.Name,
-		"slug":             c.Slug,
-		"description":      c.Description,
-		"kind":             c.Kind,
-		"rank":             c.Rank,
-		"created_at":       c.CreatedAt,
-		"updated_at":       c.UpdatedAt,
+		"id":                c.ID,
+		"tenant_id":         scope.GetTenantID(),
+		"organization_id":   c.OrganizationID,
+		"cookie_banner_id":  c.CookieBannerID,
+		"name":              c.Name,
+		"slug":              c.Slug,
+		"description":       c.Description,
+		"kind":              c.Kind,
+		"rank":              c.Rank,
+		"gcm_consent_types": c.GCMConsentTypes,
+		"created_at":        c.CreatedAt,
+		"updated_at":        c.UpdatedAt,
 	}
 
 	_, err := tx.Exec(ctx, q, args)
@@ -339,6 +346,7 @@ SET
 	name = @name,
 	slug = @slug,
 	description = @description,
+	gcm_consent_types = @gcm_consent_types,
 	updated_at = @updated_at
 WHERE
 	%s
@@ -348,11 +356,12 @@ WHERE
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"id":          c.ID,
-		"name":        c.Name,
-		"slug":        c.Slug,
-		"description": c.Description,
-		"updated_at":  c.UpdatedAt,
+		"id":                c.ID,
+		"name":              c.Name,
+		"slug":              c.Slug,
+		"description":       c.Description,
+		"gcm_consent_types": c.GCMConsentTypes,
+		"updated_at":        c.UpdatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -467,6 +476,7 @@ SELECT
 	description,
 	kind,
 	rank,
+	gcm_consent_types,
 	created_at,
 	updated_at
 FROM
