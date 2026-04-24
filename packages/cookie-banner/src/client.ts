@@ -132,7 +132,7 @@ export class CookieBannerClient {
     this.startDetector(config);
 
     const cookie = getConsentCookie();
-    if (cookie && cookie.v === config.version && cookie.vid === this.visitorId) {
+    if (cookie && cookie.bid === this.bannerId && cookie.v === config.version && cookie.vid === this.visitorId) {
       this.consent = {
         visitor_id: cookie.vid,
         version: cookie.v,
@@ -164,6 +164,7 @@ export class CookieBannerClient {
       this._gpcApplied = apiConsent.action === "GPC";
       setConsentCookie(
         {
+          bid: this.bannerId,
           v: apiConsent.version,
           vid: apiConsent.visitor_id,
           action: apiConsent.action,
@@ -270,6 +271,7 @@ export class CookieBannerClient {
 
     setConsentCookie(
       {
+        bid: this.bannerId,
         v: cfg.version,
         vid: this.visitorId,
         action,
@@ -286,6 +288,7 @@ export class CookieBannerClient {
       version: cfg.version,
       action,
       consent_data: consentData,
+      sdk_version: __SDK_VERSION__,
     };
     void fetchJSON<ConsentRecord>(url, { method: "POST", body })
       .then(() => void flush(this.bannerId))

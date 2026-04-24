@@ -18,6 +18,7 @@ export const COOKIE_NAME = "probo_consent";
 const SECONDS_PER_DAY = 86400;
 
 export interface ConsentCookie {
+  bid: string;
   v: number;
   vid: string;
   action: ConsentAction;

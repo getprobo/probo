@@ -110,6 +110,7 @@ type (
 		UserAgent      *string
 		ConsentData    json.RawMessage
 		Action         coredata.CookieConsentAction
+		SdkVersion     string
 	}
 
 	RecordConsentRequest struct {
@@ -119,6 +120,7 @@ type (
 		UserAgent   *string
 		ConsentData json.RawMessage
 		Action      coredata.CookieConsentAction
+		SdkVersion  string
 	}
 
 	DetectedCookie struct {
@@ -1675,6 +1677,7 @@ func (s *Service) CreateCookieConsentRecord(
 				UserAgent:             req.UserAgent,
 				ConsentData:           req.ConsentData,
 				Action:                req.Action,
+				SdkVersion:            req.SdkVersion,
 				CreatedAt:             time.Now(),
 			}
 
@@ -2060,6 +2063,7 @@ func (s *Service) RecordConsent(
 				UserAgent:             req.UserAgent,
 				ConsentData:           req.ConsentData,
 				Action:                req.Action,
+				SdkVersion:            req.SdkVersion,
 				CreatedAt:             time.Now(),
 			}
 

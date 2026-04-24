@@ -12,38 +12,4 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { readFileSync } from "node:fs";
-import * as esbuild from "esbuild";
-
-const { version } = JSON.parse(readFileSync("./package.json", "utf-8"));
-
-const shared = {
-  bundle: true,
-  target: "es2020",
-  define: {
-    __SDK_VERSION__: JSON.stringify(version),
-  },
-};
-
-await Promise.all([
-  esbuild.build({
-    ...shared,
-    entryPoints: ["src/index.ts"],
-    outfile: "dist/cookie-banner.mjs",
-    format: "esm",
-  }),
-  esbuild.build({
-    ...shared,
-    entryPoints: ["src/headless/index.ts"],
-    outfile: "dist/cookie-banner-headless.mjs",
-    format: "esm",
-  }),
-  esbuild.build({
-    ...shared,
-    entryPoints: ["src/themed-banner/iife.ts"],
-    outfile: "dist/cookie-banner.iife.js",
-    format: "iife",
-    globalName: "ProboCookieBanner",
-    minify: true,
-  }),
-]);
+declare const __SDK_VERSION__: string;
