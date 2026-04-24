@@ -54,7 +54,7 @@ import (
 	"go.probo.inc/probo/pkg/crypto/keys"
 	"go.probo.inc/probo/pkg/crypto/passwdhash"
 	"go.probo.inc/probo/pkg/esign"
-	"go.probo.inc/probo/pkg/evidencedescriber"
+	"go.probo.inc/probo/pkg/evidenceassessor"
 	"go.probo.inc/probo/pkg/file"
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/html2pdf"
@@ -112,23 +112,23 @@ type (
 
 	// Config represents the probod application configuration.
 	Config struct {
-		BaseURL           string                  `json:"base-url"`
-		EncryptionKey     string                  `json:"encryption-key"`
-		Pg                PgConfig                `json:"pg"`
-		Api               APIConfig               `json:"api"`
-		Auth              AuthConfig              `json:"auth"`
-		TrustCenter       TrustCenterConfig       `json:"trust-center"`
-		AWS               AWSConfig               `json:"aws"`
-		Notifications     NotificationsConfig     `json:"notifications"`
-		Connectors        []ConnectorConfig       `json:"connectors"`
-		Agents            AgentsConfig            `json:"llm"`
-		EvidenceDescriber EvidenceDescriberConfig `json:"evidence-describer"`
-		ChromeDPAddr      string                  `json:"chrome-dp-addr"`
-		SearchEndpoint    string                  `json:"search-endpoint"`
-		CustomDomains     CustomDomainsConfig     `json:"custom-domains"`
-		SCIMBridge        SCIMBridgeConfig        `json:"scim-bridge"`
-		ESign             ESignConfig             `json:"esign"`
-		Branding          bool                    `json:"branding"`
+		BaseURL          string                   `json:"base-url"`
+		EncryptionKey    string                   `json:"encryption-key"`
+		Pg               PgConfig                 `json:"pg"`
+		Api              APIConfig                `json:"api"`
+		Auth             AuthConfig               `json:"auth"`
+		TrustCenter      TrustCenterConfig        `json:"trust-center"`
+		AWS              AWSConfig                `json:"aws"`
+		Notifications    NotificationsConfig      `json:"notifications"`
+		Connectors       []ConnectorConfig        `json:"connectors"`
+		Agents           AgentsConfig             `json:"llm"`
+		EvidenceAssessor EvidenceAssessmentConfig `json:"evidence-assessor"`
+		ChromeDPAddr     string                   `json:"chrome-dp-addr"`
+		SearchEndpoint   string                   `json:"search-endpoint"`
+		CustomDomains    CustomDomainsConfig      `json:"custom-domains"`
+		SCIMBridge       SCIMBridgeConfig         `json:"scim-bridge"`
+		ESign            ESignConfig              `json:"esign"`
+		Branding         bool                     `json:"branding"`
 	}
 
 	// TrustCenterConfig contains trust center server configuration.
@@ -228,7 +228,7 @@ func New() *Implm {
 				TSAURL: "http://timestamp.digicert.com",
 			},
 			Branding: true,
-			EvidenceDescriber: EvidenceDescriberConfig{
+			EvidenceAssessor: EvidenceAssessmentConfig{
 				Interval:       10,
 				StaleAfter:     300,
 				MaxConcurrency: 10,
@@ -343,7 +343,7 @@ func (impl *Implm) Run(
 		return err
 	}
 
-	evidenceDescriberAgentCfg, evidenceDescriberLLMClient, err := impl.resolveAgentClient("evidence-describer", impl.cfg.Agents.EvidenceDescriber, l, tp, r)
+	evidenceAssessorAgentCfg, evidenceAssessorLLMClient, err := impl.resolveAgentClient("evidence-assessor", impl.cfg.Agents.EvidenceAssessor, l, tp, r)
 	if err != nil {
 		return err
 	}
@@ -728,30 +728,36 @@ func (impl *Implm) Run(
 		},
 	)
 
-	evidenceDescriber := evidencedescriber.New(
-		evidenceDescriberLLMClient,
-		evidencedescriber.Config{
-			Model:     evidenceDescriberAgentCfg.ModelName,
-			Temp:      *evidenceDescriberAgentCfg.Temperature,
-			MaxTokens: *evidenceDescriberAgentCfg.MaxTokens,
-		},
-	)
-	evidenceDescriptionWorker := probo.NewEvidenceDescriptionWorker(
+	evidenceAssessorCfg := evidenceassessor.Config{
+		Client:    evidenceAssessorLLMClient,
+		Model:     evidenceAssessorAgentCfg.ModelName,
+		Temp:      *evidenceAssessorAgentCfg.Temperature,
+		MaxTokens: *evidenceAssessorAgentCfg.MaxTokens,
+		Logger:    l.Named("evidence-assessor"),
+	}
+	if evidenceAssessorAgentCfg.Thinking != nil {
+		evidenceAssessorCfg.Thinking = *evidenceAssessorAgentCfg.Thinking
+	}
+	evidenceAssessor, err := evidenceassessor.New(evidenceAssessorCfg)
+	if err != nil {
+		return fmt.Errorf("cannot build evidence describer: %w", err)
+	}
+	evidenceAssessmentWorker := probo.NewEvidenceAssessmentWorker(
 		pgClient,
 		fileManagerService,
-		evidenceDescriber,
-		l.Named("evidence-description-worker"),
-		probo.EvidenceDescriptionWorkerConfig{
-			StaleAfter: time.Duration(impl.cfg.EvidenceDescriber.StaleAfter) * time.Second,
+		evidenceAssessor,
+		l.Named("evidence-assessment-worker"),
+		probo.EvidenceAssessmentWorkerConfig{
+			StaleAfter: time.Duration(impl.cfg.EvidenceAssessor.StaleAfter) * time.Second,
 		},
-		worker.WithInterval(time.Duration(impl.cfg.EvidenceDescriber.Interval)*time.Second),
-		worker.WithMaxConcurrency(impl.cfg.EvidenceDescriber.MaxConcurrency),
+		worker.WithInterval(time.Duration(impl.cfg.EvidenceAssessor.Interval)*time.Second),
+		worker.WithMaxConcurrency(impl.cfg.EvidenceAssessor.MaxConcurrency),
 	)
-	evidenceDescriptionWorkerCtx, stopEvidenceDescriptionWorker := context.WithCancel(context.Background())
+	evidenceAssessmentWorkerCtx, stopEvidenceAssessmentWorker := context.WithCancel(context.Background())
 	wg.Go(
 		func() {
-			if err := evidenceDescriptionWorker.Run(evidenceDescriptionWorkerCtx); err != nil {
-				cancel(fmt.Errorf("evidence description worker crashed: %w", err))
+			if err := evidenceAssessmentWorker.Run(evidenceAssessmentWorkerCtx); err != nil {
+				cancel(fmt.Errorf("evidence assessment worker crashed: %w", err))
 			}
 		},
 	)
@@ -783,7 +789,7 @@ func (impl *Implm) Run(
 	stopWebhookSender()
 	stopESignService()
 	stopMailingListWorker()
-	stopEvidenceDescriptionWorker()
+	stopEvidenceAssessmentWorker()
 	stopDocumentPDFWorker()
 	stopExportJobExporter()
 	stopAccessReviewWorker()

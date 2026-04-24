@@ -243,12 +243,12 @@ func (s FrameworkService) Export(
 					for _, evidence := range evidences {
 						if evidence.Type != coredata.EvidenceTypeFile ||
 							evidence.State != coredata.EvidenceStateFulfilled ||
-							evidence.EvidenceFileId == nil {
+							evidence.EvidenceFileID == nil {
 							continue
 						}
 
 						evidence_file := &coredata.File{}
-						if err := evidence_file.LoadByID(ctx, conn, s.svc.scope, *evidence.EvidenceFileId); err != nil {
+						if err := evidence_file.LoadByID(ctx, conn, s.svc.scope, *evidence.EvidenceFileID); err != nil {
 							return fmt.Errorf("cannot load evidence file: %w", err)
 						}
 

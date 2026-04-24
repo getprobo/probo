@@ -304,34 +304,11 @@ func vendorInfoOutputType() (*agent.OutputType, error) {
 	if err != nil {
 		return nil, fmt.Errorf("cannot create vendor info output type: %w", err)
 	}
-
-	var schema map[string]any
-	if err := json.Unmarshal(outputType.Schema, &schema); err != nil {
-		return nil, fmt.Errorf("cannot unmarshal vendor info schema: %w", err)
-	}
-
-	properties, ok := schema["properties"].(map[string]any)
-	if !ok {
-		return nil, fmt.Errorf("vendor info schema has no properties")
-	}
-
-	enums := map[string][]string{
+	if err := outputType.DecorateEnum(map[string][]string{
 		"category":    vendorCategoryEnum,
 		"vendor_type": vendorTypeEnum,
+	}); err != nil {
+		return nil, fmt.Errorf("cannot decorate vendor info schema: %w", err)
 	}
-	for field, values := range enums {
-		prop, ok := properties[field].(map[string]any)
-		if !ok {
-			return nil, fmt.Errorf("vendor info schema has no %q property", field)
-		}
-		prop["enum"] = values
-	}
-
-	decorated, err := json.Marshal(schema)
-	if err != nil {
-		return nil, fmt.Errorf("cannot marshal decorated vendor info schema: %w", err)
-	}
-	outputType.Schema = decorated
-
 	return outputType, nil
 }

@@ -92,14 +92,14 @@ func (s EvidenceService) UploadMeasureEvidence(
 	}
 
 	evidence := &coredata.Evidence{
-		ID:                evidenceID,
-		MeasureID:         req.MeasureID,
-		State:             coredata.EvidenceStateFulfilled,
-		ReferenceID:       "custom-evidence-" + referenceID.String(),
-		Type:              coredata.EvidenceTypeFile,
-		DescriptionStatus: coredata.EvidenceDescriptionStatusPending,
-		CreatedAt:         now,
-		UpdatedAt:         now,
+		ID:               evidenceID,
+		MeasureID:        req.MeasureID,
+		State:            coredata.EvidenceStateFulfilled,
+		ReferenceID:      "custom-evidence-" + referenceID.String(),
+		Type:             coredata.EvidenceTypeFile,
+		AssessmentStatus: coredata.EvidenceAssessmentStatusPending,
+		CreatedAt:        now,
+		UpdatedAt:        now,
 	}
 
 	err = s.svc.pg.WithTx(
@@ -128,7 +128,7 @@ func (s EvidenceService) UploadMeasureEvidence(
 			}
 
 			evidence.OrganizationID = measure.OrganizationID
-			evidence.EvidenceFileId = &file.ID
+			evidence.EvidenceFileID = &file.ID
 			evidence.MeasureID = req.MeasureID
 
 			if err := evidence.Insert(ctx, conn, s.svc.scope); err != nil {
