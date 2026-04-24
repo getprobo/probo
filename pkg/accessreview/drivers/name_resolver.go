@@ -588,3 +588,42 @@ func NewResendNameResolver() NameResolver {
 func (r *resendNameResolver) ResolveInstanceName(_ context.Context) (string, error) {
 	return "Resend", nil
 }
+
+// notionNameResolver resolves the Notion workspace name via /v1/users/me.
+type notionNameResolver struct {
+	httpClient *http.Client
+}
+
+func NewNotionNameResolver(httpClient *http.Client) NameResolver {
+	return &notionNameResolver{httpClient: httpClient}
+}
+
+func (r *notionNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "https://api.notion.com/v1/users/me", nil)
+	if err != nil {
+		return "", fmt.Errorf("cannot create notion users/me request: %w", err)
+	}
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("Notion-Version", notionAPIVersion)
+
+	httpResp, err := r.httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("cannot execute notion users/me request: %w", err)
+	}
+	defer func() { _ = httpResp.Body.Close() }()
+
+	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
+		return "", fmt.Errorf("cannot fetch notion users/me: unexpected status %d", httpResp.StatusCode)
+	}
+
+	var resp struct {
+		Bot struct {
+			WorkspaceName string `json:"workspace_name"`
+		} `json:"bot"`
+	}
+	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
+		return "", fmt.Errorf("cannot decode notion users/me response: %w", err)
+	}
+
+	return resp.Bot.WorkspaceName, nil
+}
