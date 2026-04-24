@@ -19,17 +19,18 @@ import "go.probo.inc/probo/pkg/coredata"
 var SupportedLanguages = []string{"en", "fr", "de", "es"}
 
 var defaultCategories = []struct {
-	Name        string
-	Slug        string
-	Description string
-	Kind        coredata.CookieCategoryKind
-	Rank        int
+	Name            string
+	Slug            string
+	Description     string
+	Kind            coredata.CookieCategoryKind
+	Rank            int
+	GCMConsentTypes []string
 }{
-	{"Necessary", "necessary", "Essential cookies required for the website to function properly.", coredata.CookieCategoryKindNecessary, 0},
-	{"Analytics", "analytics", "Cookies that help understand how visitors interact with the website.", coredata.CookieCategoryKindNormal, 1},
-	{"Advertising", "advertising", "Cookies used to deliver relevant advertisements and track campaigns.", coredata.CookieCategoryKindNormal, 2},
-	{"Functional", "functional", "Cookies that enable enhanced functionality and personalization.", coredata.CookieCategoryKindNormal, 3},
-	{"Uncategorised", "uncategorised", "Cookies that have not been assigned to a category yet.", coredata.CookieCategoryKindUncategorised, 4},
+	{"Necessary", "necessary", "Essential cookies required for the website to function properly.", coredata.CookieCategoryKindNecessary, 0, []string{"security_storage"}},
+	{"Analytics", "analytics", "Cookies that help understand how visitors interact with the website.", coredata.CookieCategoryKindNormal, 1, []string{"analytics_storage"}},
+	{"Advertising", "advertising", "Cookies used to deliver relevant advertisements and track campaigns.", coredata.CookieCategoryKindNormal, 2, []string{"ad_storage", "ad_user_data", "ad_personalization"}},
+	{"Functional", "functional", "Cookies that enable enhanced functionality and personalization.", coredata.CookieCategoryKindNormal, 3, []string{"functionality_storage", "personalization_storage"}},
+	{"Uncategorised", "uncategorised", "Cookies that have not been assigned to a category yet.", coredata.CookieCategoryKindUncategorised, 4, nil},
 }
 
 var defaultCategoryTranslationsByLanguage = map[string]map[string]struct {

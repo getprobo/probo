@@ -73,6 +73,7 @@ type (
 		Name             *string
 		Slug             *string
 		Description      *string
+		GCMConsentTypes  *[]string
 	}
 
 	CreateCookieRequest struct {
@@ -557,17 +558,22 @@ func (s *Service) CreateCookieBanner(
 
 			slugToGID := make(map[string]gid.GID, len(defaultCategories))
 			for _, dc := range defaultCategories {
+				gcmConsentTypes := dc.GCMConsentTypes
+				if gcmConsentTypes == nil {
+					gcmConsentTypes = []string{}
+				}
 				category := &coredata.CookieCategory{
-					ID:             gid.New(scope.GetTenantID(), coredata.CookieCategoryEntityType),
-					OrganizationID: banner.OrganizationID,
-					CookieBannerID: banner.ID,
-					Name:           dc.Name,
-					Slug:           dc.Slug,
-					Description:    dc.Description,
-					Kind:           dc.Kind,
-					Rank:           dc.Rank,
-					CreatedAt:      now,
-					UpdatedAt:      now,
+					ID:              gid.New(scope.GetTenantID(), coredata.CookieCategoryEntityType),
+					OrganizationID:  banner.OrganizationID,
+					CookieBannerID:  banner.ID,
+					Name:            dc.Name,
+					Slug:            dc.Slug,
+					Description:     dc.Description,
+					Kind:            dc.Kind,
+					Rank:            dc.Rank,
+					GCMConsentTypes: gcmConsentTypes,
+					CreatedAt:       now,
+					UpdatedAt:       now,
 				}
 
 				if err := category.Insert(ctx, tx, scope); err != nil {
@@ -974,16 +980,17 @@ func (s *Service) CreateCookieCategory(
 			now := time.Now()
 
 			category = &coredata.CookieCategory{
-				ID:             gid.New(scope.GetTenantID(), coredata.CookieCategoryEntityType),
-				OrganizationID: banner.OrganizationID,
-				CookieBannerID: req.CookieBannerID,
-				Name:           req.Name,
-				Slug:           req.Slug,
-				Description:    req.Description,
-				Kind:           coredata.CookieCategoryKindNormal,
-				Rank:           req.Rank,
-				CreatedAt:      now,
-				UpdatedAt:      now,
+				ID:              gid.New(scope.GetTenantID(), coredata.CookieCategoryEntityType),
+				OrganizationID:  banner.OrganizationID,
+				CookieBannerID:  req.CookieBannerID,
+				Name:            req.Name,
+				Slug:            req.Slug,
+				Description:     req.Description,
+				Kind:            coredata.CookieCategoryKindNormal,
+				Rank:            req.Rank,
+				GCMConsentTypes: []string{},
+				CreatedAt:       now,
+				UpdatedAt:       now,
 			}
 
 			if err := category.Insert(ctx, tx, scope); err != nil {
@@ -1336,6 +1343,9 @@ func (s *Service) UpdateCookieCategory(
 			}
 			if req.Description != nil {
 				category.Description = *req.Description
+			}
+			if req.GCMConsentTypes != nil {
+				category.GCMConsentTypes = *req.GCMConsentTypes
 			}
 
 			category.UpdatedAt = time.Now()
