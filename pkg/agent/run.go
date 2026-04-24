@@ -1332,7 +1332,7 @@ func resumeWithOpts(ctx context.Context, interrupted *InterruptedError, input Re
 
 		desc, toolOK := toolMap[tc.Function.Name]
 		if !toolOK {
-			return nil, fmt.Errorf("unknown tool %q", tc.Function.Name)
+			return nil, fmt.Errorf("cannot dispatch unknown tool %q", tc.Function.Name)
 		}
 
 		if ht, ok := desc.(*handoffToolAdapter); ok {
