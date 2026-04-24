@@ -29,8 +29,5 @@ CREATE TABLE agent_runs (
     updated_at      TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_agent_runs_status ON agent_runs (status)
-    WHERE status IN ('PENDING', 'RUNNING', 'SUSPENDED');
-CREATE INDEX idx_agent_runs_organization_status ON agent_runs (organization_id, status, created_at);
 CREATE INDEX idx_agent_runs_running_lease ON agent_runs (lease_expires_at)
     WHERE status = 'RUNNING';
