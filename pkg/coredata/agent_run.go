@@ -442,67 +442,6 @@ WHERE
 	return nil
 }
 
-// SaveCheckpoint writes checkpoint inside the caller's transaction. Use
-// this from service methods that must update checkpoint and status
-// atomically, such as Approve.
-func (e *AgentRun) SaveCheckpoint(
-	ctx context.Context,
-	tx pg.Tx,
-	scope Scoper,
-	cp *agent.Checkpoint,
-) error {
-	data, err := marshalAgentCheckpoint(cp)
-	if err != nil {
-		return err
-	}
-
-	q := `
-UPDATE agent_runs
-SET
-	checkpoint = @checkpoint,
-	updated_at = now()
-WHERE
-	%s
-	AND id = @id
-RETURNING
-	id,
-	organization_id,
-	start_agent_name,
-	status,
-	checkpoint,
-	input_messages,
-	result,
-	error_message,
-	started_at,
-	lease_owner,
-	lease_expires_at,
-	created_at,
-	updated_at;
-`
-
-	q = fmt.Sprintf(q, scope.SQLFragment())
-
-	args := pgx.StrictNamedArgs{
-		"id":         e.ID.String(),
-		"checkpoint": json.RawMessage(data),
-	}
-	maps.Copy(args, scope.SQLArguments())
-
-	rows, err := tx.Query(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot save agent run checkpoint: %w", err)
-	}
-
-	entity, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[AgentRun])
-	if err != nil {
-		return fmt.Errorf("cannot save agent run checkpoint: %w", err)
-	}
-
-	*e = entity
-
-	return nil
-}
-
 func (e *AgentRun) LoadNextPendingForUpdateSkipLocked(
 	ctx context.Context,
 	tx pg.Tx,
