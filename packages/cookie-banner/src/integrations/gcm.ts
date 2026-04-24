@@ -22,18 +22,26 @@ export class GoogleConsentModeIntegration implements ConsentIntegration {
     );
   }
 
-  private getGtag(): ((...args: unknown[]) => void) | null {
+  private getConsentFn(): ((...args: unknown[]) => void) | null {
     const w = window as unknown as Record<string, unknown>;
-    const gtag = w.gtag as ((...args: unknown[]) => void) | undefined;
-    if (typeof gtag !== "function") return null;
-    return gtag;
+
+    if (typeof w.gtag === "function") {
+      return w.gtag as (...args: unknown[]) => void;
+    }
+
+    if (!Array.isArray(w.dataLayer)) return null;
+
+    const dataLayer = w.dataLayer as unknown[];
+    return function () {
+      dataLayer.push(arguments);
+    };
   }
 
   setDefaults(categories: Category[]): void {
     if (!this.hasMapping(categories)) return;
 
-    const gtag = this.getGtag();
-    if (!gtag) return;
+    const consentFn = this.getConsentFn();
+    if (!consentFn) return;
 
     const defaults: Record<string, string> = {};
     for (const cat of categories) {
@@ -44,7 +52,7 @@ export class GoogleConsentModeIntegration implements ConsentIntegration {
     }
 
     if (Object.keys(defaults).length > 0) {
-      gtag("consent", "default", defaults);
+      consentFn("consent", "default", defaults);
     }
   }
 
@@ -54,8 +62,8 @@ export class GoogleConsentModeIntegration implements ConsentIntegration {
   ): void {
     if (!this.hasMapping(categories)) return;
 
-    const gtag = this.getGtag();
-    if (!gtag) return;
+    const consentFn = this.getConsentFn();
+    if (!consentFn) return;
 
     const update: Record<string, string> = {};
     for (const cat of categories) {
@@ -67,7 +75,7 @@ export class GoogleConsentModeIntegration implements ConsentIntegration {
     }
 
     if (Object.keys(update).length > 0) {
-      gtag("consent", "update", update);
+      consentFn("consent", "update", update);
     }
   }
 }
