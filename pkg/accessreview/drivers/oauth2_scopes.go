@@ -31,6 +31,7 @@ var providerOAuth2Scopes = map[coredata.ConnectorProvider][]string{
 	coredata.ConnectorProviderGoogleWorkspace: {
 		"https://www.googleapis.com/auth/admin.directory.user.readonly",
 		"https://www.googleapis.com/auth/admin.directory.group.member.readonly",
+		"https://www.googleapis.com/auth/admin.directory.customer.readonly",
 	},
 	// Notion and Intercom intentionally omitted: Notion uses extra-auth-params
 	// instead of scopes, Intercom configures scopes at the app level.
