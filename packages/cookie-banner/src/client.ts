@@ -154,6 +154,7 @@ export class CookieBannerClient {
     }
 
     if (!this.consent && this.gpcDetected) {
+      console.log("GPC")
       this.gpc();
       this._gpcApplied = true;
     }
@@ -233,6 +234,10 @@ export class CookieBannerClient {
     action: ConsentAction,
     consentData: Record<string, boolean>,
   ): void {
+    if (action !== "GPC") {
+      this._gpcApplied = false;
+    }
+
     const cfg = this.config;
 
     this.consent = {

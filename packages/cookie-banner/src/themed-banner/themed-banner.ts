@@ -141,6 +141,14 @@ export class ProboThemedBanner extends HTMLElement {
       }
     });
 
+    root.addEventListener("probo-consent", (e: Event) => {
+      const { action } = (e as CustomEvent).detail;
+      if (action !== "GPC") {
+        const settingsBtn = this.shadow.querySelector("probo-settings-button");
+        settingsBtn?.removeAttribute("gpc-label");
+      }
+    });
+
     this.shadow.querySelector("[data-action=back]")?.addEventListener("click", () => {
       root.setState(root.client.hasConsent ? "hidden" : "banner");
     });
