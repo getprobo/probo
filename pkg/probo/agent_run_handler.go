@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"sync"
 	"time"
+	"unicode/utf8"
 
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
@@ -61,7 +62,7 @@ func (h *agentRunHandler) Claim(ctx context.Context) (coredata.AgentRun, error) 
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			if err := run.LoadNextPendingForUpdateSkipLocked(ctx, tx); err != nil {
-				return err
+				return fmt.Errorf("cannot load next pending agent run: %w", err)
 			}
 
 			run.Status = coredata.AgentRunStatusRunning
@@ -179,6 +180,28 @@ func (h *agentRunHandler) heartbeatLease(
 	}
 }
 
+const (
+	// agentRunErrorMessageMaxLen caps the error string persisted to the
+	// agent_runs.error_message column. Raw tool or LLM errors can embed
+	// URLs with credentials, response snippets containing PII, or partial
+	// records from failed DB lookups; the full context is logged while
+	// only a truncated summary is stored for caller-visible state.
+	agentRunErrorMessageMaxLen = 512
+)
+
+func sanitizeAgentRunError(err error) string {
+	msg := err.Error()
+	if len(msg) <= agentRunErrorMessageMaxLen {
+		return msg
+	}
+
+	cut := agentRunErrorMessageMaxLen
+	for cut > 0 && !utf8.RuneStart(msg[cut]) {
+		cut--
+	}
+	return msg[:cut] + "…"
+}
+
 func (h *agentRunHandler) executeRun(ctx context.Context, run *coredata.AgentRun) {
 	runID := run.ID.String()
 
@@ -257,7 +280,13 @@ func (h *agentRunHandler) executeRun(ctx context.Context, run *coredata.AgentRun
 
 	default:
 		run.Status = coredata.AgentRunStatusFailed
-		msg := runErr.Error()
+		h.logger.ErrorCtx(
+			context.WithoutCancel(ctx),
+			"agent run failed",
+			log.String("run_id", runID),
+			log.Error(runErr),
+		)
+		msg := sanitizeAgentRunError(runErr)
 		run.ErrorMessage = &msg
 	}
 
