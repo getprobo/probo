@@ -119,6 +119,7 @@ export class CookieBannerClient {
         consent_data: cookie.data,
         created_at: "",
       };
+      this._gpcApplied = cookie.action === "GPC";
       this.activate(cookie.data);
       void flush(this.bannerId);
       return;
@@ -139,6 +140,7 @@ export class CookieBannerClient {
 
     if (apiConsent && apiConsent.version === config.version) {
       this.consent = apiConsent;
+      this._gpcApplied = apiConsent.action === "GPC";
       setConsentCookie(
         {
           v: apiConsent.version,
@@ -154,7 +156,6 @@ export class CookieBannerClient {
     }
 
     if (!this.consent && this.gpcDetected) {
-      console.log("GPC")
       this.gpc();
       this._gpcApplied = true;
     }

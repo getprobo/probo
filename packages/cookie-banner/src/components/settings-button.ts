@@ -97,7 +97,7 @@ export class ProboSettingsButton extends HTMLElement {
     this.root = this.findRoot();
 
     if (this.root) {
-      if (this.root.reopenWidget === "custom") {
+      if (this.root.reopenWidget === "custom" && !this.root.gpcApplied) {
         return;
       }
 
@@ -142,7 +142,7 @@ export class ProboSettingsButton extends HTMLElement {
 
   private onReopenWidgetChange = (e: Event): void => {
     const { value } = (e as CustomEvent).detail;
-    if (value === "custom") {
+    if (value === "custom" && !this.root?.gpcApplied) {
       this.hidden = true;
       this.root?.removeEventListener("probo-state", this.onStateChange);
       this.root?.removeEventListener("probo-reopen-widget", this.onReopenWidgetChange);
