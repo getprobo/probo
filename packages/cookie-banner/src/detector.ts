@@ -21,6 +21,7 @@ interface DetectedCookieEntry {
 }
 
 const DEBOUNCE_MS = 2_000;
+const MAX_COOKIES_PER_REQUEST = 100;
 
 export class CookieDetector {
   private readonly reportUrl: URL;
@@ -118,13 +119,23 @@ export class CookieDetector {
   }
 
   private flush(): void {
-    const entries = Array.from(this.pending.values());
-    this.pending.clear();
-    if (entries.length === 0) return;
+    if (this.pending.size === 0) return;
+
+    const iter = this.pending.entries();
+    const entries: DetectedCookieEntry[] = [];
+    for (const [key, entry] of iter) {
+      entries.push(entry);
+      this.pending.delete(key);
+      if (entries.length >= MAX_COOKIES_PER_REQUEST) break;
+    }
 
     void fetchJSON(this.reportUrl, {
       method: "POST",
       body: { cookies: entries },
     }).catch(() => {});
+
+    if (this.pending.size > 0) {
+      this.scheduleFlush();
+    }
   }
 }
