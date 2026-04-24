@@ -22,7 +22,6 @@ CREATE TABLE agent_runs (
     input_messages  JSONB NOT NULL,
     result          JSONB,
     error_message   TEXT,
-    stop_requested  BOOLEAN NOT NULL DEFAULT FALSE,
     started_at      TIMESTAMPTZ,
     lease_owner     TEXT,
     lease_expires_at TIMESTAMPTZ,
