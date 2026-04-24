@@ -45,7 +45,8 @@ type (
 		OrganizationID    gid.GID
 		Name              string
 		Origin            string
-		PrivacyPolicyURL  string
+		PrivacyPolicyURL  *string
+		CookiePolicyURL   string
 		ConsentExpiryDays int
 		ConsentMode       coredata.CookieConsentMode
 	}
@@ -62,6 +63,7 @@ type (
 		CookieBannerID    gid.GID
 		Name              *string
 		PrivacyPolicyURL  *string
+		CookiePolicyURL   *string
 		ConsentExpiryDays *int
 		ConsentMode       *coredata.CookieConsentMode
 		DefaultLanguage   *string
@@ -133,7 +135,8 @@ type (
 		Version           int                                            `json:"version"`
 		Language          string                                         `json:"language"`
 		DefaultLanguage   string                                         `json:"default_language"`
-		PrivacyPolicyURL  string                                         `json:"privacy_policy_url"`
+		PrivacyPolicyURL  string                                         `json:"privacy_policy_url,omitempty"`
+		CookiePolicyURL   string                                         `json:"cookie_policy_url"`
 		ConsentExpiryDays int                                            `json:"consent_expiry_days"`
 		ConsentMode       string                                         `json:"consent_mode"`
 		ShowBranding      bool                                           `json:"show_branding"`
@@ -162,7 +165,8 @@ func (r *CreateCookieBannerRequest) Validate() error {
 	v.Check(r.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
 	v.Check(r.Name, "name", validator.Required(), validator.SafeTextNoNewLine(255))
 	v.Check(r.Origin, "origin", validator.Required(), validator.Origin())
-	v.Check(r.PrivacyPolicyURL, "privacy_policy_url", validator.Required(), validator.URL())
+	v.Check(r.PrivacyPolicyURL, "privacy_policy_url", validator.URL())
+	v.Check(r.CookiePolicyURL, "cookie_policy_url", validator.Required(), validator.URL())
 	v.Check(r.ConsentExpiryDays, "consent_expiry_days", validator.Required(), validator.Min(1))
 	v.Check(r.ConsentMode, "consent_mode", validator.Required(), validator.OneOfSlice(coredata.CookieConsentModes()))
 
@@ -175,6 +179,7 @@ func (r *UpdateCookieBannerRequest) Validate() error {
 	v.Check(r.CookieBannerID, "cookie_banner_id", validator.Required(), validator.GID(coredata.CookieBannerEntityType))
 	v.Check(r.Name, "name", validator.SafeTextNoNewLine(255))
 	v.Check(r.PrivacyPolicyURL, "privacy_policy_url", validator.URL())
+	v.Check(r.CookiePolicyURL, "cookie_policy_url", validator.URL())
 	v.Check(r.ConsentExpiryDays, "consent_expiry_days", validator.Min(1))
 	v.Check(r.ConsentMode, "consent_mode", validator.OneOfSlice(coredata.CookieConsentModes()))
 	v.Check(r.DefaultLanguage, "default_language", validator.OneOfSlice(SupportedLanguages))
@@ -367,6 +372,7 @@ func buildSnapshot(
 
 	return coredata.CookieBannerVersionSnapshot{
 		PrivacyPolicyURL:  banner.PrivacyPolicyURL,
+		CookiePolicyURL:   banner.CookiePolicyURL,
 		ConsentExpiryDays: banner.ConsentExpiryDays,
 		ConsentMode:       string(banner.ConsentMode),
 		DefaultLanguage:   banner.DefaultLanguage,
@@ -541,6 +547,7 @@ func (s *Service) CreateCookieBanner(
 				Origin:            CanonicalizeOrigin(req.Origin),
 				State:             coredata.CookieBannerStateActive,
 				PrivacyPolicyURL:  req.PrivacyPolicyURL,
+				CookiePolicyURL:   req.CookiePolicyURL,
 				ConsentExpiryDays: req.ConsentExpiryDays,
 				ConsentMode:       req.ConsentMode,
 				ShowBranding:      s.showBranding,
@@ -768,13 +775,20 @@ func (s *Service) UpdateCookieBanner(
 				return fmt.Errorf("cannot load cookie banner: %w", err)
 			}
 
-			consentChanged := req.PrivacyPolicyURL != nil || req.ConsentExpiryDays != nil || req.ConsentMode != nil || req.DefaultLanguage != nil
+			consentChanged := req.PrivacyPolicyURL != nil ||
+				req.CookiePolicyURL != nil ||
+				req.ConsentExpiryDays != nil ||
+				req.ConsentMode != nil ||
+				req.DefaultLanguage != nil
 
 			if req.Name != nil {
 				banner.Name = *req.Name
 			}
 			if req.PrivacyPolicyURL != nil {
-				banner.PrivacyPolicyURL = *req.PrivacyPolicyURL
+				banner.PrivacyPolicyURL = req.PrivacyPolicyURL
+			}
+			if req.CookiePolicyURL != nil {
+				banner.CookiePolicyURL = *req.CookiePolicyURL
 			}
 			if req.ConsentExpiryDays != nil {
 				banner.ConsentExpiryDays = *req.ConsentExpiryDays
@@ -1817,12 +1831,18 @@ func buildBannerConfig(
 		}
 	}
 
+	var privacyPolicyURL string
+	if snapshot.PrivacyPolicyURL != nil {
+		privacyPolicyURL = *snapshot.PrivacyPolicyURL
+	}
+
 	return &BannerConfig{
 		BannerID:          banner.ID,
 		Version:           version.Version,
 		Language:          resolvedLang,
 		DefaultLanguage:   defaultLang,
-		PrivacyPolicyURL:  snapshot.PrivacyPolicyURL,
+		PrivacyPolicyURL:  privacyPolicyURL,
+		CookiePolicyURL:   snapshot.CookiePolicyURL,
 		ConsentExpiryDays: snapshot.ConsentExpiryDays,
 		ConsentMode:       snapshot.ConsentMode,
 		ShowBranding:      banner.ShowBranding,

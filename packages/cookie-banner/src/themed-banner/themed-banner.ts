@@ -187,13 +187,21 @@ export class ProboThemedBanner extends HTMLElement {
       if (!raw) return;
 
       if (key === "banner_description") {
-        let link = "";
+        let privacyLink = "";
         if (config.privacy_policy_url) {
           const linkText = this.esc(texts.privacy_policy_link_text ?? "Privacy Policy");
-          link = `<a href="${this.esc(config.privacy_policy_url)}" target="_blank" rel="noopener noreferrer">${linkText}</a>`;
+          privacyLink = `<a href="${this.esc(config.privacy_policy_url)}" target="_blank" rel="noopener noreferrer">${linkText}</a>`;
         }
-        const parts = raw.split("{{privacy_policy_link}}");
-        el.innerHTML = parts.map(p => this.esc(p)).join(link);
+        let cookieLink = "";
+        if (config.cookie_policy_url) {
+          const linkText = this.esc(texts.cookie_policy_link_text ?? "Cookie Policy");
+          cookieLink = `<a href="${this.esc(config.cookie_policy_url)}" target="_blank" rel="noopener noreferrer">${linkText}</a>`;
+        }
+        const segments = raw.split("{{cookie_policy_link}}");
+        const html = segments.map(seg =>
+          seg.split("{{privacy_policy_link}}").map(p => this.esc(p)).join(privacyLink),
+        ).join(cookieLink);
+        el.innerHTML = html;
       } else if (key === "panel_description") {
         el.textContent = interpolate(raw, { necessary_category: necessaryCategoryName });
       } else {

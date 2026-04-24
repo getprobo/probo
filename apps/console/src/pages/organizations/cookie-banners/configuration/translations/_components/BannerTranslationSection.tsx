@@ -35,6 +35,10 @@ export function BannerTranslationSection({
   const buttonAcceptAll = useWatch({ control, name: "button_accept_all" });
   const buttonRejectAll = useWatch({ control, name: "button_reject_all" });
   const buttonCustomize = useWatch({ control, name: "button_customize" });
+  const cookiePolicyLinkText = useWatch({
+    control,
+    name: "cookie_policy_link_text",
+  });
   const privacyPolicyLinkText = useWatch({
     control,
     name: "privacy_policy_link_text",
@@ -62,7 +66,7 @@ export function BannerTranslationSection({
                 <Field
                   label={__(TRANSLATION_LABELS.banner_description)}
                 >
-                  <p className="text-xs text-txt-secondary mb-2">{"Use {{privacy_policy_link}} to insert the privacy policy link."}</p>
+                  <p className="text-xs text-txt-secondary mb-2">{"Use {{cookie_policy_link}} and {{privacy_policy_link}} to insert policy links."}</p>
                   <Textarea {...field} rows={3} />
                 </Field>
               )}
@@ -87,12 +91,23 @@ export function BannerTranslationSection({
                 )}
               />
             </div>
+            <Controller
+              control={control}
+              name="button_customize"
+              render={({ field }) => (
+                <Field label={__(TRANSLATION_LABELS.button_customize)}>
+                  <Input {...field} />
+                </Field>
+              )}
+            />
             <div className="grid grid-cols-2 gap-4">
               <Controller
                 control={control}
-                name="button_customize"
+                name="cookie_policy_link_text"
                 render={({ field }) => (
-                  <Field label={__(TRANSLATION_LABELS.button_customize)}>
+                  <Field
+                    label={__(TRANSLATION_LABELS.cookie_policy_link_text)}
+                  >
                     <Input {...field} />
                   </Field>
                 )}
@@ -119,6 +134,7 @@ export function BannerTranslationSection({
             buttonAcceptAll={buttonAcceptAll}
             buttonRejectAll={buttonRejectAll}
             buttonCustomize={buttonCustomize}
+            cookiePolicyLinkText={cookiePolicyLinkText}
             privacyPolicyLinkText={privacyPolicyLinkText}
             showBranding={showBranding}
           />

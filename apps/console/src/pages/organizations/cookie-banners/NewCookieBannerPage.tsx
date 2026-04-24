@@ -60,6 +60,7 @@ export default function NewCookieBannerPage() {
 
   const [name, setName] = useState("");
   const [origin, setOrigin] = useState("");
+  const [cookiePolicyUrl, setCookiePolicyUrl] = useState("");
   const [privacyPolicyUrl, setPrivacyPolicyUrl] = useState("");
   const [consentExpiryDays, setConsentExpiryDays] = useState("365");
   const [consentMode, setConsentMode] = useState("OPT_IN");
@@ -73,7 +74,8 @@ export default function NewCookieBannerPage() {
           organizationId,
           name,
           origin,
-          privacyPolicyUrl,
+          cookiePolicyUrl,
+          privacyPolicyUrl: privacyPolicyUrl || undefined,
           consentExpiryDays: parseInt(consentExpiryDays, 10),
           consentMode: consentMode as "OPT_IN" | "OPT_OUT",
         },
@@ -136,12 +138,20 @@ export default function NewCookieBannerPage() {
             />
           </Field>
 
+          <Field label={__("Cookie Policy URL")}>
+            <Input
+              value={cookiePolicyUrl}
+              onChange={e => setCookiePolicyUrl(e.target.value)}
+              placeholder="https://example.com/cookies"
+              required
+            />
+          </Field>
+
           <Field label={__("Privacy Policy URL")}>
             <Input
               value={privacyPolicyUrl}
               onChange={e => setPrivacyPolicyUrl(e.target.value)}
               placeholder="https://example.com/privacy"
-              required
             />
           </Field>
 

@@ -27,6 +27,7 @@ const bannerSettingsFormFragment = graphql`
     id
     name
     origin
+    cookiePolicyUrl
     privacyPolicyUrl
     consentExpiryDays
     consentMode
@@ -40,6 +41,7 @@ const updateBannerMutation = graphql`
       cookieBanner {
         id
         name
+        cookiePolicyUrl
         privacyPolicyUrl
         consentExpiryDays
         consentMode
@@ -67,7 +69,8 @@ export function BannerSettingsForm({ cookieBannerKey }: BannerSettingsFormProps)
   const [updateBanner, isUpdating] = useMutation<BannerSettingsFormMutation>(updateBannerMutation);
 
   const [name, setName] = useState(banner.name);
-  const [privacyPolicyUrl, setPrivacyPolicyUrl] = useState(banner.privacyPolicyUrl);
+  const [cookiePolicyUrl, setCookiePolicyUrl] = useState(banner.cookiePolicyUrl);
+  const [privacyPolicyUrl, setPrivacyPolicyUrl] = useState(banner.privacyPolicyUrl ?? "");
   const [consentExpiryDays, setConsentExpiryDays] = useState(String(banner.consentExpiryDays));
   const [consentMode, setConsentMode] = useState(banner.consentMode);
   const [defaultLanguage, setDefaultLanguage] = useState(banner.defaultLanguage);
@@ -80,7 +83,8 @@ export function BannerSettingsForm({ cookieBannerKey }: BannerSettingsFormProps)
         input: {
           cookieBannerId: banner.id,
           name,
-          privacyPolicyUrl,
+          cookiePolicyUrl,
+          privacyPolicyUrl: privacyPolicyUrl || undefined,
           consentExpiryDays: parseInt(consentExpiryDays, 10),
           consentMode: consentMode,
           defaultLanguage,
@@ -108,8 +112,12 @@ export function BannerSettingsForm({ cookieBannerKey }: BannerSettingsFormProps)
             <Input value={banner.origin} disabled />
           </Field>
 
+          <Field label={__("Cookie Policy URL")}>
+            <Input value={cookiePolicyUrl} onChange={e => setCookiePolicyUrl(e.target.value)} required />
+          </Field>
+
           <Field label={__("Privacy Policy URL")}>
-            <Input value={privacyPolicyUrl} onChange={e => setPrivacyPolicyUrl(e.target.value)} required />
+            <Input value={privacyPolicyUrl} onChange={e => setPrivacyPolicyUrl(e.target.value)} />
           </Field>
 
           <div className="grid grid-cols-3 gap-4">

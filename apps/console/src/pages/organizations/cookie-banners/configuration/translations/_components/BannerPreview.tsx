@@ -21,17 +21,8 @@ interface BannerPreviewProps {
   buttonRejectAll: string;
   buttonCustomize: string;
   privacyPolicyLinkText: string;
+  cookiePolicyLinkText: string;
   showBranding: boolean;
-}
-
-function interpolateDescription(
-  description: string,
-  linkText: string,
-): string {
-  return description.replaceAll(
-    "{{privacy_policy_link}}",
-    linkText,
-  );
 }
 
 export function BannerPreview({
@@ -41,10 +32,11 @@ export function BannerPreview({
   buttonRejectAll,
   buttonCustomize,
   privacyPolicyLinkText,
+  cookiePolicyLinkText,
   showBranding,
 }: BannerPreviewProps) {
-  const descriptionParts = bannerDescription.split("{{privacy_policy_link}}");
-  const hasPlaceholder = descriptionParts.length > 1;
+  const cookieParts = bannerDescription.split("{{cookie_policy_link}}");
+  const hasAnyPlaceholder = cookieParts.length > 1 || bannerDescription.includes("{{privacy_policy_link}}");
 
   return (
     <div
@@ -78,27 +70,27 @@ export function BannerPreview({
           margin: "0 0 20px",
         }}
       >
-        {hasPlaceholder
-          ? descriptionParts.map((part, i) => (
-              <span key={i}>
-                {part}
-                {i < descriptionParts.length - 1 && (
-                  <a
-                    href="#"
-                    onClick={e => e.preventDefault()}
-                    style={{
-                      color: "var(--probo-accent, #1a1a1a)",
-                      textDecoration: "underline",
-                    }}
-                  >
-                    {privacyPolicyLinkText}
+        {hasAnyPlaceholder
+          ? cookieParts.map((cookiePart, ci) => (
+              <span key={`c${ci}`}>
+                {cookiePart.split("{{privacy_policy_link}}").map((privPart, pi, arr) => (
+                  <span key={`p${pi}`}>
+                    {privPart}
+                    {pi < arr.length - 1 && (
+                      <a href="#" onClick={e => e.preventDefault()} style={{ color: "var(--probo-accent, #1a1a1a)", textDecoration: "underline" }}>
+                        {privacyPolicyLinkText}
+                      </a>
+                    )}
+                  </span>
+                ))}
+                {ci < cookieParts.length - 1 && (
+                  <a href="#" onClick={e => e.preventDefault()} style={{ color: "var(--probo-accent, #1a1a1a)", textDecoration: "underline" }}>
+                    {cookiePolicyLinkText}
                   </a>
                 )}
               </span>
             ))
-          : (
-              interpolateDescription(bannerDescription, privacyPolicyLinkText)
-            )}
+          : bannerDescription}
       </p>
       <div
         style={{

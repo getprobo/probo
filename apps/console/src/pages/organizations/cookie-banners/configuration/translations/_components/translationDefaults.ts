@@ -25,6 +25,7 @@ export const BANNER_KEYS = [
   "button_accept_all",
   "button_reject_all",
   "button_customize",
+  "cookie_policy_link_text",
   "privacy_policy_link_text",
 ] as const;
 
@@ -60,6 +61,7 @@ export const TRANSLATION_LABELS: Record<string, string> = {
   button_accept_all: "Accept all button",
   button_reject_all: "Reject all button",
   button_customize: "Customize button",
+  cookie_policy_link_text: "Cookie policy link text",
   privacy_policy_link_text: "Privacy policy link text",
   panel_title: "Panel title",
   panel_description: "Panel description",

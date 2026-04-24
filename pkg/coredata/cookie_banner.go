@@ -35,7 +35,8 @@ type (
 		Name              string            `db:"name"`
 		Origin            string            `db:"origin"`
 		State             CookieBannerState `db:"state"`
-		PrivacyPolicyURL  string            `db:"privacy_policy_url"`
+		PrivacyPolicyURL  *string           `db:"privacy_policy_url"`
+		CookiePolicyURL   string            `db:"cookie_policy_url"`
 		ConsentExpiryDays int               `db:"consent_expiry_days"`
 		ConsentMode       CookieConsentMode `db:"consent_mode"`
 		ShowBranding      bool              `db:"show_branding"`
@@ -85,6 +86,7 @@ SELECT
 	origin,
 	state,
 	privacy_policy_url,
+	cookie_policy_url,
 	consent_expiry_days,
 	consent_mode,
 	show_branding,
@@ -136,6 +138,7 @@ SELECT
 	origin,
 	state,
 	privacy_policy_url,
+	cookie_policy_url,
 	consent_expiry_days,
 	consent_mode,
 	show_branding,
@@ -188,6 +191,7 @@ SELECT
 	origin,
 	state,
 	privacy_policy_url,
+	cookie_policy_url,
 	consent_expiry_days,
 	consent_mode,
 	show_branding,
@@ -246,6 +250,7 @@ SELECT
 	origin,
 	state,
 	privacy_policy_url,
+	cookie_policy_url,
 	consent_expiry_days,
 	consent_mode,
 	show_branding,
@@ -331,6 +336,7 @@ INSERT INTO cookie_banners (
 	origin,
 	state,
 	privacy_policy_url,
+	cookie_policy_url,
 	consent_expiry_days,
 	consent_mode,
 	show_branding,
@@ -345,6 +351,7 @@ INSERT INTO cookie_banners (
 	@origin,
 	@state,
 	@privacy_policy_url,
+	@cookie_policy_url,
 	@consent_expiry_days,
 	@consent_mode,
 	@show_branding,
@@ -362,6 +369,7 @@ INSERT INTO cookie_banners (
 		"origin":              b.Origin,
 		"state":               b.State,
 		"privacy_policy_url":  b.PrivacyPolicyURL,
+		"cookie_policy_url":   b.CookiePolicyURL,
 		"consent_expiry_days": b.ConsentExpiryDays,
 		"consent_mode":        b.ConsentMode,
 		"show_branding":       b.ShowBranding,
@@ -394,6 +402,7 @@ SET
 	name = @name,
 	state = @state,
 	privacy_policy_url = @privacy_policy_url,
+	cookie_policy_url = @cookie_policy_url,
 	consent_expiry_days = @consent_expiry_days,
 	consent_mode = @consent_mode,
 	show_branding = @show_branding,
@@ -411,6 +420,7 @@ WHERE
 		"name":                b.Name,
 		"state":               b.State,
 		"privacy_policy_url":  b.PrivacyPolicyURL,
+		"cookie_policy_url":   b.CookiePolicyURL,
 		"consent_expiry_days": b.ConsentExpiryDays,
 		"consent_mode":        b.ConsentMode,
 		"show_branding":       b.ShowBranding,

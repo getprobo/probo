@@ -50,7 +50,8 @@ export interface BannerConfig {
   version: number;
   language: string;
   default_language: string;
-  privacy_policy_url: string;
+  privacy_policy_url?: string;
+  cookie_policy_url: string;
   consent_expiry_days: number;
   consent_mode: "OPT_IN" | "OPT_OUT";
   show_branding: boolean;
