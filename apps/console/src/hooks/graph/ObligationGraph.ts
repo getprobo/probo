@@ -25,11 +25,18 @@ import { useMutationWithToasts } from "../useMutationWithToasts";
 export const ObligationsConnectionKey = "ObligationsPage_obligations";
 
 export const obligationsQuery = graphql`
-  query ObligationGraphListQuery($organizationId: ID!, $snapshotId: ID) {
+  query ObligationGraphListQuery($organizationId: ID!) {
     node(id: $organizationId) {
       ... on Organization {
         canCreateObligation: permission(action: "core:obligation:create")
-        ...ObligationsPageFragment @arguments(snapshotId: $snapshotId)
+        canPublishObligations: permission(action: "core:obligation:publish")
+        obligationsDocument {
+          id
+          defaultApprovers {
+            id
+          }
+        }
+        ...ObligationsPageFragment
       }
     }
   }
@@ -40,8 +47,6 @@ export const obligationNodeQuery = graphql`
     node(id: $obligationId) {
       ... on Obligation {
         id
-        snapshotId
-        sourceId
         area
         source
         requirement

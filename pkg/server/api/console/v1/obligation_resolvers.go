@@ -112,6 +112,29 @@ func (r *mutationResolver) DeleteObligation(ctx context.Context, input types.Del
 	}, nil
 }
 
+// PublishObligationList is the resolver for the publishObligationList field.
+func (r *mutationResolver) PublishObligationList(ctx context.Context, input types.PublishObligationListInput) (*types.PublishObligationListPayload, error) {
+	if err := r.authorize(ctx, input.OrganizationID, probo.ActionObligationPublish); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
+
+	document, documentVersion, err := prb.GeneratedDocuments.PublishObligationList(ctx, input.OrganizationID, input.ApproverIds)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
+			return nil, gqlutils.Conflict(ctx, err)
+		}
+		r.logger.ErrorCtx(ctx, "cannot publish obligation list", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.PublishObligationListPayload{
+		DocumentEdge:        types.NewDocumentEdge(document, coredata.DocumentOrderFieldCreatedAt),
+		DocumentVersionEdge: types.NewDocumentVersionEdge(documentVersion, coredata.DocumentVersionOrderFieldCreatedAt),
+	}, nil
+}
+
 // Organization is the resolver for the organization field.
 func (r *obligationResolver) Organization(ctx context.Context, obj *types.Obligation) (*types.Organization, error) {
 	if err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
@@ -169,10 +192,7 @@ func (r *obligationConnectionResolver) TotalCount(ctx context.Context, obj *type
 
 	switch obj.Resolver.(type) {
 	case *organizationResolver:
-		obligationFilter := coredata.NewObligationFilter(nil)
-		if obj.Filter != nil {
-			obligationFilter = coredata.NewObligationFilter(&obj.Filter.SnapshotID)
-		}
+		obligationFilter := coredata.NewObligationFilter()
 
 		count, err := prb.Obligations.CountForOrganizationID(ctx, obj.ParentID, obligationFilter)
 		if err != nil {
@@ -181,10 +201,7 @@ func (r *obligationConnectionResolver) TotalCount(ctx context.Context, obj *type
 		}
 		return count, nil
 	case *riskResolver:
-		obligationFilter := coredata.NewObligationFilter(nil)
-		if obj.Filter != nil {
-			obligationFilter = coredata.NewObligationFilter(&obj.Filter.SnapshotID)
-		}
+		obligationFilter := coredata.NewObligationFilter()
 
 		count, err := prb.Obligations.CountForRiskID(ctx, obj.ParentID, obligationFilter)
 		if err != nil {

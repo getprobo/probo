@@ -16,39 +16,20 @@ package coredata
 
 import (
 	"github.com/jackc/pgx/v5"
-	"go.probo.inc/probo/pkg/gid"
 )
 
 type (
-	ObligationFilter struct {
-		snapshotID **gid.GID
-	}
+	ObligationFilter struct{}
 )
 
-func NewObligationFilter(snapshotID **gid.GID) *ObligationFilter {
-	return &ObligationFilter{
-		snapshotID: snapshotID,
-	}
+func NewObligationFilter() *ObligationFilter {
+	return &ObligationFilter{}
 }
 
 func (f *ObligationFilter) SQLArguments() pgx.NamedArgs {
-	args := pgx.NamedArgs{}
-
-	if f.snapshotID != nil && *f.snapshotID != nil {
-		args["filter_snapshot_id"] = **f.snapshotID
-	}
-
-	return args
+	return pgx.NamedArgs{}
 }
 
 func (f *ObligationFilter) SQLFragment() string {
-	if f.snapshotID == nil {
-		return "TRUE"
-	}
-
-	if *f.snapshotID == nil {
-		return "snapshot_id IS NULL"
-	} else {
-		return "snapshot_id = @filter_snapshot_id"
-	}
+	return "snapshot_id IS NULL"
 }

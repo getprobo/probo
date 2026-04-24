@@ -20,7 +20,6 @@ import {
   getStatusVariant,
   type GraphQLError,
   sprintf,
-  validateSnapshotConsistency,
 } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import {
@@ -48,7 +47,6 @@ import {
   useMutation,
   usePreloadedQuery,
 } from "react-relay";
-import { useParams } from "react-router";
 import { z } from "zod";
 
 import type { FindingDetailsPageDeleteMutation } from "#/__generated__/core/FindingDetailsPageDeleteMutation.graphql";
@@ -56,7 +54,6 @@ import type { FindingDetailsPageQuery } from "#/__generated__/core/FindingDetail
 import type { FindingDetailsPageUpdateMutation } from "#/__generated__/core/FindingDetailsPageUpdateMutation.graphql";
 import { ControlledField } from "#/components/form/ControlledField";
 import { PeopleSelectField } from "#/components/form/PeopleSelectField";
-import { SnapshotBanner } from "#/components/SnapshotBanner";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
@@ -67,7 +64,6 @@ export const findingDetailsPageQuery = graphql`
     node(id: $findingId) {
       ... on Finding {
         id
-        snapshotId
         kind
         referenceId
         description
@@ -166,11 +162,7 @@ export default function FindingDetailsPage(props: Props) {
   const { __ } = useTranslate();
   const { toast } = useToast();
   const organizationId = useOrganizationId();
-  const { snapshotId } = useParams<{ snapshotId?: string }>();
-  const isSnapshotMode = Boolean(snapshotId);
   const confirm = useConfirm();
-
-  validateSnapshotConsistency(finding, snapshotId);
 
   const [updateFinding] = useMutation<FindingDetailsPageUpdateMutation>(updateFindingMutation);
   const [deleteFinding] = useMutation<FindingDetailsPageDeleteMutation>(deleteFindingMutation);
@@ -181,7 +173,6 @@ export default function FindingDetailsPage(props: Props) {
       FindingsConnectionKey,
       {
         filter: {
-          snapshotId: snapshotId || null,
           kind: null,
           status: null,
           priority: null,
@@ -194,7 +185,6 @@ export default function FindingDetailsPage(props: Props) {
       FindingsConnectionKey,
       {
         filter: {
-          snapshotId: snapshotId || null,
           kind: finding.kind,
           status: null,
           priority: null,
@@ -322,15 +312,10 @@ export default function FindingDetailsPage(props: Props) {
     { value: "HIGH", label: __("High") },
   ];
 
-  const breadcrumbFindingsUrl = isSnapshotMode
-    ? `/organizations/${organizationId}/snapshots/${snapshotId}/findings`
-    : `/organizations/${organizationId}/findings`;
+  const breadcrumbFindingsUrl = `/organizations/${organizationId}/findings`;
 
   return (
     <div className="space-y-6">
-      {isSnapshotMode && snapshotId && (
-        <SnapshotBanner snapshotId={snapshotId} />
-      )}
       <Breadcrumb
         items={[
           {
@@ -370,19 +355,17 @@ export default function FindingDetailsPage(props: Props) {
                 : __("Low")}
           </Badge>
         </div>
-        {!isSnapshotMode && (
-          <ActionDropdown variant="secondary">
-            {finding.canDelete && (
-              <DropdownItem
-                variant="danger"
-                icon={IconTrashCan}
-                onClick={handleDelete}
-              >
-                {__("Delete")}
-              </DropdownItem>
-            )}
-          </ActionDropdown>
-        )}
+        <ActionDropdown variant="secondary">
+          {finding.canDelete && (
+            <DropdownItem
+              variant="danger"
+              icon={IconTrashCan}
+              onClick={handleDelete}
+            >
+              {__("Delete")}
+            </DropdownItem>
+          )}
+        </ActionDropdown>
       </div>
 
       <div className="max-w-4xl">
@@ -393,7 +376,6 @@ export default function FindingDetailsPage(props: Props) {
                 {...register("description")}
                 placeholder={__("Enter description")}
                 rows={3}
-                disabled={isSnapshotMode}
               />
             </Field>
 
@@ -405,7 +387,6 @@ export default function FindingDetailsPage(props: Props) {
                 <Input
                   {...register("source")}
                   placeholder={__("Enter source")}
-                  disabled={isSnapshotMode}
                 />
               </Field>
 
@@ -416,7 +397,6 @@ export default function FindingDetailsPage(props: Props) {
                 label={__("Owner")}
                 error={formState.errors.ownerId?.message}
                 optional
-                disabled={isSnapshotMode}
               />
             </div>
 
@@ -427,7 +407,6 @@ export default function FindingDetailsPage(props: Props) {
                 type="select"
                 label={__("Status")}
                 required
-                disabled={isSnapshotMode}
               >
                 {statusOptions.map(option => (
                   <Option key={option.value} value={option.value}>
@@ -449,7 +428,6 @@ export default function FindingDetailsPage(props: Props) {
                     <Select
                       value={field.value}
                       onValueChange={field.onChange}
-                      disabled={isSnapshotMode}
                     >
                       {priorityOptions.map(option => (
                         <Option key={option.value} value={option.value}>
@@ -472,7 +450,6 @@ export default function FindingDetailsPage(props: Props) {
                 <Input
                   {...register("identifiedOn")}
                   type="date"
-                  disabled={isSnapshotMode}
                 />
               </Field>
 
@@ -480,7 +457,6 @@ export default function FindingDetailsPage(props: Props) {
                 <Input
                   {...register("dueDate")}
                   type="date"
-                  disabled={isSnapshotMode}
                 />
               </Field>
             </div>
@@ -490,7 +466,6 @@ export default function FindingDetailsPage(props: Props) {
                 {...register("rootCause")}
                 placeholder={__("Enter root cause")}
                 rows={3}
-                disabled={isSnapshotMode}
               />
             </Field>
 
@@ -499,7 +474,6 @@ export default function FindingDetailsPage(props: Props) {
                 {...register("correctiveAction")}
                 placeholder={__("Enter corrective action")}
                 rows={3}
-                disabled={isSnapshotMode}
               />
             </Field>
 
@@ -508,13 +482,11 @@ export default function FindingDetailsPage(props: Props) {
                 {...register("effectivenessCheck")}
                 placeholder={__("Enter effectiveness check details")}
                 rows={3}
-                disabled={isSnapshotMode}
               />
             </Field>
 
             <div className="flex justify-end">
               {formState.isDirty
-                && !isSnapshotMode
                 && finding.canUpdate && (
                 <Button type="submit" disabled={formState.isSubmitting}>
                   {formState.isSubmitting ? __("Updating...") : __("Update")}

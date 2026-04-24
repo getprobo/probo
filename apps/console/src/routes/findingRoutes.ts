@@ -27,23 +27,7 @@ export const findingRoutes = [
     ),
   },
   {
-    path: "snapshots/:snapshotId/findings",
-    Fallback: PageSkeleton,
-    Component: lazy(
-      () =>
-        import("#/pages/organizations/findings/FindingsPageLoader"),
-    ),
-  },
-  {
     path: "findings/:findingId",
-    Fallback: PageSkeleton,
-    Component: lazy(
-      () =>
-        import("#/pages/organizations/findings/FindingDetailsPageLoader"),
-    ),
-  },
-  {
-    path: "snapshots/:snapshotId/findings/:findingId",
     Fallback: PageSkeleton,
     Component: lazy(
       () =>

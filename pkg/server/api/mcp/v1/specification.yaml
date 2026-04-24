@@ -2813,18 +2813,6 @@ components:
         organization_id:
           $ref: "#/components/schemas/GID"
           description: Organization ID
-        snapshot_id:
-          anyOf:
-            - $ref: "#/components/schemas/GID"
-              description: Snapshot ID
-            - type: "null"
-              description: No snapshot
-          description: Snapshot ID
-        source_id:
-          type:
-            - string
-            - "null"
-          description: Source ID
         kind:
           $ref: "#/components/schemas/FindingKind"
           description: Finding kind
@@ -2915,12 +2903,6 @@ components:
         filter:
           type: object
           properties:
-            snapshot_id:
-              anyOf:
-                - $ref: "#/components/schemas/GID"
-                - type: "null"
-              description: Filter by snapshot ID. Defaults to null, which returns only findings with no snapshot (current live data). Pass a specific snapshot ID to retrieve findings as they were at that snapshot.
-              default: null
             kind:
               anyOf:
                 - $ref: "#/components/schemas/FindingKind"
@@ -3265,18 +3247,6 @@ components:
         organization_id:
           $ref: "#/components/schemas/GID"
           description: Organization ID
-        snapshot_id:
-          anyOf:
-            - $ref: "#/components/schemas/GID"
-              description: Snapshot ID
-            - type: "null"
-              description: No snapshot
-          description: Snapshot ID
-        source_id:
-          type:
-            - string
-            - "null"
-          description: Source ID
         area:
           type:
             - string
@@ -3349,16 +3319,6 @@ components:
         cursor:
           $ref: "#/components/schemas/CursorKey"
           description: Page cursor
-        filter:
-          type: object
-          properties:
-            snapshot_id:
-              anyOf:
-                - $ref: "#/components/schemas/GID"
-                - type: "null"
-              description: Filter by snapshot ID. Defaults to null, which returns only obligations with no snapshot (current live data). Pass a specific snapshot ID to retrieve obligations as they were at that snapshot.
-              default: null
-
     ListObligationsOutput:
       type: object
       required:
@@ -7037,6 +6997,60 @@ components:
           $ref: "#/components/schemas/GID"
           description: Created document version ID
 
+    PublishFindingListInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        approver_ids:
+          type: array
+          items:
+            $ref: "#/components/schemas/GID"
+          description: Optional approver profile IDs. If provided, creates a draft pending approval instead of publishing immediately.
+
+    PublishFindingListOutput:
+      type: object
+      required:
+        - document_id
+        - document_version_id
+      properties:
+        document_id:
+          $ref: "#/components/schemas/GID"
+          description: Created or updated document ID
+        document_version_id:
+          $ref: "#/components/schemas/GID"
+          description: Created document version ID
+
+    PublishObligationListInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        approver_ids:
+          type: array
+          items:
+            $ref: "#/components/schemas/GID"
+          description: Optional approver profile IDs. If provided, creates a draft pending approval instead of publishing immediately.
+
+    PublishObligationListOutput:
+      type: object
+      required:
+        - document_id
+        - document_version_id
+      properties:
+        document_id:
+          $ref: "#/components/schemas/GID"
+          description: Created or updated document ID
+        document_version_id:
+          $ref: "#/components/schemas/GID"
+          description: Created document version ID
+
     PublishStatementOfApplicabilityInput:
       type: object
       required:
@@ -10274,6 +10288,22 @@ tools:
       $ref: "#/components/schemas/PublishAssetListInput"
     outputSchema:
       $ref: "#/components/schemas/PublishAssetListOutput"
+  - name: publishFindingList
+    description: Publish the finding register for an organization as a document. If a document already exists, a new version is created.
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/PublishFindingListInput"
+    outputSchema:
+      $ref: "#/components/schemas/PublishFindingListOutput"
+  - name: publishObligationList
+    description: Publish the obligation register for an organization as a document. If a document already exists, a new version is created.
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/PublishObligationListInput"
+    outputSchema:
+      $ref: "#/components/schemas/PublishObligationListOutput"
   - name: publishStatementOfApplicability
     description: Publish a statement of applicability as a document. If a document already exists, a new version is created.
     hints:

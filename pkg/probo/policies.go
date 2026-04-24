@@ -171,10 +171,6 @@ var AuditorPolicy = policy.NewPolicy(
 		ActionEmployeeDocumentGet, ActionEmployeeDocumentList,
 		ActionEmployeeDocumentVersionExportPDF,
 	).WithSID("employee-document-access").When(organizationCondition),
-
-	policy.Allow(
-		ActionStatementOfApplicabilityPublish,
-	).WithSID("soa-publish").When(organizationCondition),
 ).WithDescription("Read-only probo access for auditors (excludes internal/employee content)")
 
 // EmployeePolicy defines permissions for employee role.

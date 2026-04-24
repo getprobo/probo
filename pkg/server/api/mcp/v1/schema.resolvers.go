@@ -741,11 +741,9 @@ func (r *Resolver) ListFindingsTool(ctx context.Context, req *mcp.CallToolReques
 
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
-	noSnapshot := (*gid.GID)(nil)
-	findingFilter := coredata.NewFindingFilter(&noSnapshot, nil, nil, nil, nil)
+	findingFilter := coredata.NewFindingFilter(nil, nil, nil, nil)
 	if input.Filter != nil {
 		findingFilter = coredata.NewFindingFilter(
-			&input.Filter.SnapshotID,
 			input.Filter.Kind,
 			input.Filter.Status,
 			input.Filter.Priority,
@@ -857,11 +855,7 @@ func (r *Resolver) ListObligationsTool(ctx context.Context, req *mcp.CallToolReq
 
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
-	noSnapshot := (*gid.GID)(nil)
-	obligationFilter := coredata.NewObligationFilter(&noSnapshot)
-	if input.Filter != nil {
-		obligationFilter = coredata.NewObligationFilter(&input.Filter.SnapshotID)
-	}
+	obligationFilter := coredata.NewObligationFilter()
 
 	page, err := prb.Obligations.ListForOrganizationID(ctx, input.OrganizationID, cursor, obligationFilter)
 	if err != nil {
@@ -1610,7 +1604,7 @@ func (r *Resolver) ListControlObligationsTool(ctx context.Context, req *mcp.Call
 
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
-	obligationPage, err := prb.Obligations.ListForControlID(ctx, input.ControlID, cursor, coredata.NewObligationFilter(nil))
+	obligationPage, err := prb.Obligations.ListForControlID(ctx, input.ControlID, cursor, coredata.NewObligationFilter())
 	if err != nil {
 		return nil, types.ListControlObligationsOutput{}, fmt.Errorf("failed to list control obligations: %w", err)
 	}
@@ -1740,7 +1734,7 @@ func (r *Resolver) ListRiskObligationsTool(ctx context.Context, req *mcp.CallToo
 
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
-	obligationPage, err := prb.Obligations.ListForRiskID(ctx, input.RiskID, cursor, coredata.NewObligationFilter(nil))
+	obligationPage, err := prb.Obligations.ListForRiskID(ctx, input.RiskID, cursor, coredata.NewObligationFilter())
 	if err != nil {
 		return nil, types.ListRiskObligationsOutput{}, fmt.Errorf("failed to list risk obligations: %w", err)
 	}
@@ -4782,4 +4776,36 @@ func (r *Resolver) AssessVendorTool(ctx context.Context, req *mcp.CallToolReques
 	}
 
 	return nil, types.NewAssessVendorOutput(result), nil
+}
+
+func (r *Resolver) PublishFindingListTool(ctx context.Context, req *mcp.CallToolRequest, input *types.PublishFindingListInput) (*mcp.CallToolResult, types.PublishFindingListOutput, error) {
+	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionFindingPublish)
+
+	svc := r.ProboService(ctx, input.OrganizationID)
+
+	document, documentVersion, err := svc.GeneratedDocuments.PublishFindingList(ctx, input.OrganizationID, input.ApproverIds)
+	if err != nil {
+		return nil, types.PublishFindingListOutput{}, fmt.Errorf("cannot publish finding list: %w", err)
+	}
+
+	return nil, types.PublishFindingListOutput{
+		DocumentID:        document.ID,
+		DocumentVersionID: documentVersion.ID,
+	}, nil
+}
+
+func (r *Resolver) PublishObligationListTool(ctx context.Context, req *mcp.CallToolRequest, input *types.PublishObligationListInput) (*mcp.CallToolResult, types.PublishObligationListOutput, error) {
+	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionObligationPublish)
+
+	svc := r.ProboService(ctx, input.OrganizationID)
+
+	document, documentVersion, err := svc.GeneratedDocuments.PublishObligationList(ctx, input.OrganizationID, input.ApproverIds)
+	if err != nil {
+		return nil, types.PublishObligationListOutput{}, fmt.Errorf("cannot publish obligation list: %w", err)
+	}
+
+	return nil, types.PublishObligationListOutput{
+		DocumentID:        document.ID,
+		DocumentVersionID: documentVersion.ID,
+	}, nil
 }

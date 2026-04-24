@@ -338,6 +338,43 @@ type (
 		Owner           string
 		Vendors         string
 	}
+
+	FindingListData struct {
+		Title            string
+		OrganizationName string
+		CreatedAt        time.Time
+		TotalFindings    int
+		Rows             []FindingListRow
+	}
+
+	FindingListRow struct {
+		ReferenceID string
+		Kind        string
+		Description string
+		Status      string
+		Priority    string
+		Owner       string
+		DueDate     string
+	}
+
+	ObligationListData struct {
+		Title            string
+		OrganizationName string
+		CreatedAt        time.Time
+		TotalObligations int
+		Rows             []ObligationListRow
+	}
+
+	ObligationListRow struct {
+		Area        string
+		Source      string
+		Requirement string
+		Status      string
+		Type        string
+		Regulator   string
+		Owner       string
+		DueDate     string
+	}
 )
 
 func BoolLabel(v bool) string {

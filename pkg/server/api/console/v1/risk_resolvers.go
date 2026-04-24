@@ -413,10 +413,7 @@ func (r *riskResolver) Obligations(ctx context.Context, obj *types.Risk, first *
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	var obligationFilter = coredata.NewObligationFilter(nil)
-	if filter != nil {
-		obligationFilter = coredata.NewObligationFilter(&filter.SnapshotID)
-	}
+	obligationFilter := coredata.NewObligationFilter()
 
 	page, err := prb.Obligations.ListForRiskID(ctx, obj.ID, cursor, obligationFilter)
 	if err != nil {

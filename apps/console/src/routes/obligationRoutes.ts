@@ -36,20 +36,6 @@ export const obligationRoutes = [
     loader: loaderFromQueryLoader(({ organizationId }) =>
       loadQuery<ObligationGraphListQuery>(coreEnvironment, obligationsQuery, {
         organizationId,
-        snapshotId: null,
-      }),
-    ),
-    Component: withQueryRef(
-      lazy(() => import("#/pages/organizations/obligations/ObligationsPage")),
-    ),
-  },
-  {
-    path: "snapshots/:snapshotId/obligations",
-    Fallback: PageSkeleton,
-    loader: loaderFromQueryLoader(({ organizationId, snapshotId }) =>
-      loadQuery<ObligationGraphListQuery>(coreEnvironment, obligationsQuery, {
-        organizationId,
-        snapshotId,
       }),
     ),
     Component: withQueryRef(
@@ -58,24 +44,6 @@ export const obligationRoutes = [
   },
   {
     path: "obligations/:obligationId",
-    Fallback: PageSkeleton,
-    loader: loaderFromQueryLoader(({ obligationId }) =>
-      loadQuery<ObligationGraphNodeQuery>(
-        coreEnvironment,
-        obligationNodeQuery,
-        {
-          obligationId,
-        },
-      ),
-    ),
-    Component: withQueryRef(
-      lazy(
-        () => import("#/pages/organizations/obligations/ObligationDetailsPage"),
-      ),
-    ),
-  },
-  {
-    path: "snapshots/:snapshotId/obligations/:obligationId",
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ obligationId }) =>
       loadQuery<ObligationGraphNodeQuery>(

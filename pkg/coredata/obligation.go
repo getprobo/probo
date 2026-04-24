@@ -685,3 +685,164 @@ WHERE %s AND o.organization_id = @organization_id AND o.snapshot_id IS NULL
 
 	return nil
 }
+
+func (os *Obligations) LoadAllByOrganizationID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	organizationID gid.GID,
+) error {
+	q := `
+SELECT
+	id,
+	organization_id,
+	area,
+	source,
+	requirement,
+	actions_to_be_implemented,
+	regulator,
+	owner_profile_id,
+	last_review_date,
+	due_date,
+	status,
+	type,
+	snapshot_id,
+	source_id,
+	created_at,
+	updated_at
+FROM
+	obligations
+WHERE
+	%s
+	AND organization_id = @organization_id
+	AND snapshot_id IS NULL
+ORDER BY
+	created_at ASC
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"organization_id": organizationID}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query obligations: %w", err)
+	}
+
+	obligations, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Obligation])
+	if err != nil {
+		return fmt.Errorf("cannot collect obligations: %w", err)
+	}
+
+	*os = obligations
+
+	return nil
+}
+
+func (o Obligation) GetGeneratedDocumentID(
+	ctx context.Context,
+	conn pg.Querier,
+	organizationID gid.GID,
+) (*gid.GID, error) {
+	var documentID *gid.GID
+
+	err := conn.QueryRow(
+		ctx,
+		`
+SELECT
+	obligations_document_id
+FROM
+	generated_documents
+WHERE
+	organization_id = @organization_id
+`,
+		pgx.NamedArgs{"organization_id": organizationID},
+	).Scan(&documentID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("cannot get obligation list document ID: %w", err)
+	}
+
+	return documentID, nil
+}
+
+func (o Obligation) UpsertGeneratedDocumentID(
+	ctx context.Context,
+	conn pg.Tx,
+	organizationID gid.GID,
+	tenantID gid.TenantID,
+	documentID gid.GID,
+) error {
+	now := time.Now()
+
+	_, err := conn.Exec(
+		ctx,
+		`
+INSERT INTO generated_documents (
+	organization_id,
+	tenant_id,
+	obligations_document_id,
+	created_at,
+	updated_at
+) VALUES (
+	@organization_id,
+	@tenant_id,
+	@obligations_document_id,
+	@created_at,
+	@updated_at
+)
+ON CONFLICT (organization_id) DO UPDATE
+SET
+	obligations_document_id = @obligations_document_id,
+	updated_at = @updated_at
+`,
+		pgx.NamedArgs{
+			"organization_id":         organizationID,
+			"tenant_id":               tenantID,
+			"obligations_document_id": documentID,
+			"created_at":              now,
+			"updated_at":              now,
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("cannot upsert obligation list document ID: %w", err)
+	}
+
+	return nil
+}
+
+func (o Obligation) ClearGeneratedDocumentID(
+	ctx context.Context,
+	conn pg.Tx,
+	documentIDs []gid.GID,
+) error {
+	ids := make([]string, len(documentIDs))
+	for i, id := range documentIDs {
+		ids[i] = id.String()
+	}
+
+	_, err := conn.Exec(
+		ctx,
+		`
+UPDATE
+	generated_documents
+SET
+	obligations_document_id = NULL,
+	updated_at = @now
+WHERE
+	obligations_document_id = ANY(@ids)
+`,
+		pgx.NamedArgs{
+			"ids": ids,
+			"now": time.Now(),
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("cannot clear obligation list document references: %w", err)
+	}
+
+	return nil
+}
