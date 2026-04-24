@@ -53,6 +53,10 @@ export class ProboCookieBannerRoot extends ProboElement implements ProboRootElem
     return this._draft;
   }
 
+  get gpcApplied(): boolean {
+    return this._client?.gpcApplied ?? false;
+  }
+
   attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null): void {
     if (name === "reopen-widget" && oldValue !== newValue) {
       this.dispatchEvent(
@@ -150,7 +154,7 @@ export class ProboCookieBannerRoot extends ProboElement implements ProboRootElem
       new CustomEvent("probo-ready", {
         bubbles: true,
         composed: true,
-        detail: { config: this._config },
+        detail: { config: this._config, gpcApplied: this.gpcApplied },
       }),
     );
 

@@ -52,3 +52,14 @@ const COOKIE_DETAIL_LABELS: Record<string, Record<string, string>> = {
 export function getCookieDetailLabels(lang: string): Record<string, string> {
   return COOKIE_DETAIL_LABELS[lang] ?? COOKIE_DETAIL_LABELS.en;
 }
+
+const GPC_LABELS: Record<string, string> = {
+  en: "Opt-Out Preference Signal Honored",
+  fr: "Signal de préférence de désinscription respecté",
+  de: "Opt-Out-Präferenzsignal beachtet",
+  es: "Señal de exclusión respetada",
+};
+
+export function getGpcLabel(lang: string): string {
+  return GPC_LABELS[lang] ?? GPC_LABELS.en;
+}

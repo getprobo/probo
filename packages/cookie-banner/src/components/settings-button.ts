@@ -26,7 +26,7 @@ export class ProboSettingsButton extends HTMLElement {
   }
 
   static get observedAttributes(): string[] {
-    return ["position", "aria-settings-label"];
+    return ["position", "aria-settings-label", "gpc-label"];
   }
 
   attributeChangedCallback(name: string, _oldValue: string | null, newValue: string | null): void {
@@ -35,6 +35,9 @@ export class ProboSettingsButton extends HTMLElement {
       if (btn && newValue) {
         btn.setAttribute("aria-label", newValue);
       }
+    }
+    if (name === "gpc-label") {
+      this.updateGpcBadge(newValue);
     }
   }
 
@@ -73,10 +76,19 @@ export class ProboSettingsButton extends HTMLElement {
         }
         button:hover { opacity: 0.85; }
         .icon { display: flex; flex-shrink: 0; }
+        .gpc-badge {
+          display: none;
+          font-size: 11px;
+          line-height: 1;
+          font-weight: 600;
+          white-space: nowrap;
+        }
+        :host([gpc-label]) .gpc-badge { display: inline; }
         ::slotted(*) { display: contents; }
       </style>
       <button part="button" aria-label="Cookie settings">
         <span class="icon" part="icon" aria-hidden="true">${COOKIE_ICON}</span>
+        <span class="gpc-badge" part="gpc-badge"></span>
         <slot></slot>
       </button>
     `;
@@ -141,4 +153,11 @@ export class ProboSettingsButton extends HTMLElement {
     if (!this.root) return;
     this.root.setState("panel");
   };
+
+  private updateGpcBadge(label: string | null): void {
+    const badge = this.shadow.querySelector(".gpc-badge");
+    if (badge) {
+      badge.textContent = label ?? "";
+    }
+  }
 }

@@ -15,7 +15,7 @@
 import { registerComponents } from "../components";
 import type { ProboCookieBannerRoot } from "../components/cookie-banner-root";
 import type { BannerConfig } from "../client";
-import { interpolate } from "../i18n";
+import { getGpcLabel, interpolate } from "../i18n";
 import { BRANDING, CHEVRON_DOWN, CLOSE_ICON } from "../html";
 import { THEMED_STYLES } from "./styles";
 
@@ -127,12 +127,17 @@ export class ProboThemedBanner extends HTMLElement {
     const root = this.shadow.querySelector("probo-cookie-banner-root") as ProboCookieBannerRoot;
 
     root.addEventListener("probo-ready", (e: Event) => {
-      const config = (e as CustomEvent).detail.config as BannerConfig;
+      const detail = (e as CustomEvent).detail;
+      const config = detail.config as BannerConfig;
       this.applyTexts(config);
       if (!config.show_branding) {
         this.shadow.querySelectorAll("[data-branding]").forEach(el => {
           (el as HTMLElement).setAttribute("hidden", "");
         });
+      }
+      if (detail.gpcApplied) {
+        const settingsBtn = this.shadow.querySelector("probo-settings-button");
+        settingsBtn?.setAttribute("gpc-label", getGpcLabel(config.language));
       }
     });
 

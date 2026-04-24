@@ -66,6 +66,7 @@ export interface ProboRootElement extends ProboElement {
   readonly state: ProboState;
   readonly reopenWidget: string;
   readonly consentDraft: ConsentDraft;
+  readonly gpcApplied: boolean;
   setState(state: ProboState): void;
   updateDraft(category: string, value: boolean): void;
 }

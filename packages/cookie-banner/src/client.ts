@@ -87,6 +87,7 @@ export class CookieBannerClient {
   private consent: VisitorConsent | null = null;
   private observer: MutationObserver | null = null;
   private detector: CookieDetector | null = null;
+  private _gpcApplied = false;
 
   constructor(config: CookieBannerClientOptions) {
     let base = config.baseUrl;
@@ -152,6 +153,11 @@ export class CookieBannerClient {
       this.consent = null;
     }
 
+    if (!this.consent && this.gpcDetected) {
+      this.gpc();
+      this._gpcApplied = true;
+    }
+
     void flush(this.bannerId);
   }
 
@@ -168,6 +174,26 @@ export class CookieBannerClient {
 
   get hasConsent(): boolean {
     return this.consent !== null;
+  }
+
+  get gpcDetected(): boolean {
+    return typeof navigator !== "undefined" &&
+      (navigator as Navigator & { globalPrivacyControl?: boolean }).globalPrivacyControl === true;
+  }
+
+  get gpcApplied(): boolean {
+    return this._gpcApplied;
+  }
+
+  gpc(): void {
+    const cfg = this.config;
+
+    const consentData: Record<string, boolean> = {};
+    for (const cat of cfg.categories) {
+      consentData[cat.slug] = cat.kind === "NECESSARY";
+    }
+
+    this.recordConsent("GPC", consentData);
   }
 
   acceptAll(): void {
