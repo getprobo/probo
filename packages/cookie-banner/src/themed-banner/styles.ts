@@ -43,6 +43,7 @@ export const THEMED_STYLES = `
     position: fixed;
     z-index: var(--_z-index);
     padding: 24px;
+    max-width: 100vw;
     display: flex;
     pointer-events: none;
   }
@@ -155,6 +156,7 @@ export const THEMED_STYLES = `
     border: none;
     color: var(--_accent);
     text-decoration: underline;
+    padding: 8px 0;
   }
 
   .btn-primary {
@@ -211,7 +213,7 @@ export const THEMED_STYLES = `
   probo-category {
     display: block;
     border-bottom: 1px solid var(--_border);
-    padding: 12px 40px 12px 60px;
+    padding: 12px 40px;
     position: relative;
   }
 
@@ -239,12 +241,6 @@ export const THEMED_STYLES = `
     color: var(--_text-secondary);
     font-size: calc(var(--_font-size) - 1px);
     margin-top: 2px;
-  }
-
-  .category-required {
-    font-size: calc(var(--_font-size) - 2px);
-    color: var(--_text-secondary);
-    font-style: italic;
   }
 
   .toggle {
@@ -300,7 +296,7 @@ export const THEMED_STYLES = `
 
   .cookie-toggle {
     position: absolute;
-    left: 36px;
+    left: 16px;
     top: 14px;
     background: none;
     border: none;
@@ -349,17 +345,20 @@ export const THEMED_STYLES = `
   }
 
   .cookie-name {
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
     font-weight: 500;
     font-family: monospace;
   }
 
   .cookie-detail {
-    color: var(--_text-secondary);
+    font-weight: 500;
   }
 
-  .cookie-label {
-    font-weight: 500;
-    color: var(--_text);
+  .cookie-detail > span {
+    font-weight: 400;
   }
 
   .branding {
