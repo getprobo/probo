@@ -13,7 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 import type { CookieItem } from "../client";
-import { getCookieDetailLabels, interpolate } from "../i18n";
+import { getCookieDetailLabels } from "../i18n";
 import { ProboElement } from "./base";
 import type { ProboCategory } from "./category";
 import type { ProboCookieBannerRoot } from "./cookie-banner-root";
@@ -90,9 +90,13 @@ export class ProboCookieList extends ProboElement {
       const value = values[slotName] ?? "";
       const tpl = labels[key];
       if (tpl) {
-        el.textContent = interpolate(tpl, { value });
         const slot = el.querySelector(`[data-slot="${slotName}"]`);
-        if (slot) slot.remove();
+        const parts = tpl.split("{{value}}");
+        el.textContent = parts[0] ?? "";
+        if (slot) {
+          slot.textContent = value;
+          el.appendChild(slot);
+        }
       }
     }
   }
