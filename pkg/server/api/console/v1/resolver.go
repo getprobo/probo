@@ -30,6 +30,7 @@ import (
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/domainconnect"
 	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
@@ -45,16 +46,19 @@ import (
 
 type (
 	Resolver struct {
-		authorize         authz.AuthorizeFunc
-		probo             *probo.Service
-		iam               *iam.Service
-		esign             *esign.Service
-		accessReview      *accessreview.Service
-		mailman           *mailman.Service
-		cookieBanner      *cookiebanner.Service
-		connectorRegistry *connector.ConnectorRegistry
-		logger            *log.Logger
-		customDomainCname string
+		authorize           authz.AuthorizeFunc
+		probo               *probo.Service
+		iam                 *iam.Service
+		esign               *esign.Service
+		accessReview        *accessreview.Service
+		mailman             *mailman.Service
+		cookieBanner        *cookiebanner.Service
+		connectorRegistry   *connector.ConnectorRegistry
+		logger              *log.Logger
+		customDomainCname   string
+		domainConnect       domainconnect.Config
+		domainConnectClient *domainconnect.Client
+		tokenSecret         string
 	}
 )
 
@@ -71,6 +75,8 @@ func NewMux(
 	connectorRegistry *connector.ConnectorRegistry,
 	baseURL *baseurl.BaseURL,
 	customDomainCname string,
+	domainConnectCfg domainconnect.Config,
+	domainConnectClient *domainconnect.Client,
 ) *chi.Mux {
 	r := chi.NewMux()
 
@@ -85,6 +91,9 @@ func NewMux(
 		cookieBannerSvc,
 		connectorRegistry,
 		customDomainCname,
+		domainConnectCfg,
+		domainConnectClient,
+		tokenSecret,
 		logger,
 	)
 

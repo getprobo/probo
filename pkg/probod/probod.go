@@ -53,6 +53,7 @@ import (
 	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/crypto/keys"
 	"go.probo.inc/probo/pkg/crypto/passwdhash"
+	"go.probo.inc/probo/pkg/domainconnect"
 	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/evidencedescriber"
 	"go.probo.inc/probo/pkg/file"
@@ -486,6 +487,15 @@ func (impl *Implm) Run(
 		}
 	}
 
+	var domainConnectKey crypto.Signer
+	if impl.cfg.CustomDomains.DomainConnect.PrivateKey != "" {
+		domainConnectKey, err = pemutil.DecodePrivateKey([]byte(impl.cfg.CustomDomains.DomainConnect.PrivateKey))
+		if err != nil {
+			return fmt.Errorf("cannot decode Domain Connect private key: %w", err)
+		}
+		l.Info("using configured Domain Connect signing key")
+	}
+
 	acmeService, err := certmanager.NewACMEService(
 		impl.cfg.CustomDomains.ACME.Email,
 		keys.Type(impl.cfg.CustomDomains.ACME.KeyType),
@@ -586,8 +596,19 @@ func (impl *Implm) Run(
 			BaseURL:           baseURL,
 
 			CustomDomainCname: impl.cfg.CustomDomains.CnameTarget,
-			TokenSecret:       impl.cfg.Auth.Cookie.Secret,
-			Logger:            l.Named("http.server"),
+			DomainConnect: domainconnect.Config{
+				ProviderID:  impl.cfg.CustomDomains.DomainConnect.ProviderID,
+				ServiceID:   impl.cfg.CustomDomains.DomainConnect.ServiceID,
+				PrivateKey:  domainConnectKey,
+				KeyID:       impl.cfg.CustomDomains.DomainConnect.KeyID,
+				CallbackURL: impl.cfg.CustomDomains.DomainConnect.CallbackURL,
+			},
+			DomainConnectClient: domainconnect.NewClient(
+				domainconnect.WithLogger(l),
+				domainconnect.WithResolverAddr(impl.cfg.CustomDomains.ResolverAddr),
+			),
+			TokenSecret: impl.cfg.Auth.Cookie.Secret,
+			Logger:      l.Named("http.server"),
 			Cookie: securecookie.Config{
 				Name:     impl.cfg.Auth.Cookie.Name,
 				Domain:   impl.cfg.Auth.Cookie.Domain,
