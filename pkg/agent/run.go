@@ -976,7 +976,7 @@ func executeParallel(
 			continue
 		}
 		se, ok := errors.AsType[*SuspendedError](entry.err)
-		if ok {
+		if ok && se.Checkpoint != nil {
 			innerCheckpoints := make(map[string]*Checkpoint)
 			var completed []CompletedCall
 
