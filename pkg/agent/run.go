@@ -115,11 +115,7 @@ func blockingCallLLM(ctx context.Context, agent *Agent, req *llm.ChatCompletionR
 	return acc.Response(), nil
 }
 
-func (a *Agent) Run(ctx context.Context, messages []llm.Message) (*Result, error) {
-	return a.RunWithOpts(ctx, messages)
-}
-
-func (a *Agent) RunWithOpts(ctx context.Context, messages []llm.Message, opts ...RunOption) (*Result, error) {
+func (a *Agent) Run(ctx context.Context, messages []llm.Message, opts ...RunOption) (*Result, error) {
 	ro := runOpts{
 		callLLM: blockingCallLLM,
 		onEvent: noopEvent,
@@ -1244,11 +1240,7 @@ func runOutputGuardrails(ctx context.Context, agent *Agent, message llm.Message)
 // the provided ResumeInput, then re-enters the agent loop. Input guardrails
 // are not re-evaluated because the messages were already validated in the
 // original Run call.
-func Resume(ctx context.Context, interrupted *InterruptedError, input ResumeInput) (*Result, error) {
-	return ResumeWithOpts(ctx, interrupted, input)
-}
-
-func ResumeWithOpts(ctx context.Context, interrupted *InterruptedError, input ResumeInput, opts ...RunOption) (*Result, error) {
+func Resume(ctx context.Context, interrupted *InterruptedError, input ResumeInput, opts ...RunOption) (*Result, error) {
 	ro := runOpts{
 		callLLM: blockingCallLLM,
 		onEvent: noopEvent,

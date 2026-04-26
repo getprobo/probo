@@ -59,11 +59,7 @@ func (sr *StreamedRun) Wait() (*Result, error) {
 	return sr.result, sr.err
 }
 
-func (a *Agent) RunStreamed(ctx context.Context, messages []llm.Message) *StreamedRun {
-	return a.RunStreamedWithOpts(ctx, messages)
-}
-
-func (a *Agent) RunStreamedWithOpts(ctx context.Context, messages []llm.Message, opts ...RunOption) *StreamedRun {
+func (a *Agent) RunStreamed(ctx context.Context, messages []llm.Message, opts ...RunOption) *StreamedRun {
 	events := make(chan StreamEvent, 64)
 	sr := &StreamedRun{
 		Events: events,

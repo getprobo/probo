@@ -228,7 +228,7 @@ func (h *agentRunHandler) executeRun(ctx context.Context, run *coredata.AgentRun
 			if err := json.Unmarshal(run.InputMessages, &inputMsgs); err != nil {
 				runErr = fmt.Errorf("cannot unmarshal input messages: %w", err)
 			} else {
-				result, runErr = a.RunWithOpts(
+				result, runErr = a.Run(
 					ctx,
 					inputMsgs,
 					agent.WithCheckpointer(h.store, runID),

@@ -480,7 +480,7 @@ func TestRestore(t *testing.T) {
 			close(stopCh)
 			ctx := agent.WithStopSignal(context.Background(), stopCh)
 
-			_, err := ag.RunWithOpts(
+			_, err := ag.Run(
 				ctx,
 				[]llm.Message{
 					{
