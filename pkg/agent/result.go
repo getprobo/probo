@@ -21,7 +21,7 @@ type (
 		Messages  []llm.Message
 		Usage     llm.Usage
 		Turns     int
-		LastAgent *Agent
+		LastAgent *Agent `json:"-"`
 	}
 )
 
