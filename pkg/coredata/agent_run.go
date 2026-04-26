@@ -346,6 +346,11 @@ RETURNING
 	return nil
 }
 
+// Update intentionally does not write the checkpoint column. Status
+// commits and checkpoint persistence are split: PGCheckpointer.Save is
+// the only writer of checkpoint and ClearCheckpoint is the only path
+// to remove it. This prevents a status update from accidentally erasing
+// an in-flight checkpoint saved between Load and Update.
 func (e *AgentRun) Update(
 	ctx context.Context,
 	tx pg.Tx,
