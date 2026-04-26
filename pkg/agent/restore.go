@@ -250,6 +250,7 @@ func restoreNestedSuspended(
 			if err := store.Save(ctx, runID, &next); err != nil {
 				return nil, fmt.Errorf("cannot save nested restore progress: %w", err)
 			}
+			emitHook(agent, func(h RunHooks) { h.OnRunSnapshot(ctx, agent, &next) })
 		}
 		return &next, nil
 	}

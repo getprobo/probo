@@ -386,6 +386,8 @@ func coreLoop(ctx context.Context, startAgent *Agent, inputMessages []llm.Messag
 					if saveErr := s.opts.checkpointer.Save(ctx, s.opts.runID, cp); saveErr != nil {
 						s.logger.ErrorCtx(ctx, "cannot save suspension checkpoint", log.Error(saveErr))
 						se.Checkpoint = cp
+					} else {
+						emitHook(s.agent, func(h RunHooks) { h.OnRunSnapshot(ctx, s.agent, cp) })
 					}
 				} else {
 					se.Checkpoint = cp
@@ -559,6 +561,8 @@ func coreLoop(ctx context.Context, startAgent *Agent, inputMessages []llm.Messag
 					if s.opts.checkpointer != nil && s.opts.runID != "" {
 						if saveErr := s.opts.checkpointer.Save(ctx, s.opts.runID, outerCP); saveErr != nil {
 							s.logger.ErrorCtx(ctx, "cannot save checkpoint", log.Error(saveErr))
+						} else {
+							emitHook(s.agent, func(h RunHooks) { h.OnRunSnapshot(ctx, s.agent, outerCP) })
 						}
 					}
 					return s.finishRun(ctx, nil, &SuspendedError{RunID: s.opts.runID, Checkpoint: outerCP})
@@ -580,6 +584,8 @@ func coreLoop(ctx context.Context, startAgent *Agent, inputMessages []llm.Messag
 						cp.PendingApprovals = nae.pendingApprovals
 						if saveErr := s.opts.checkpointer.Save(ctx, s.opts.runID, cp); saveErr != nil {
 							s.logger.ErrorCtx(ctx, "cannot save approval checkpoint", log.Error(saveErr))
+						} else {
+							emitHook(s.agent, func(h RunHooks) { h.OnRunSnapshot(ctx, s.agent, cp) })
 						}
 					}
 
@@ -627,6 +633,8 @@ func coreLoop(ctx context.Context, startAgent *Agent, inputMessages []llm.Messag
 						}
 						if saveErr := s.opts.checkpointer.Save(ctx, s.opts.runID, cp); saveErr != nil {
 							s.logger.ErrorCtx(ctx, "cannot save nested approval checkpoint", log.Error(saveErr))
+						} else {
+							emitHook(s.agent, func(h RunHooks) { h.OnRunSnapshot(ctx, s.agent, cp) })
 						}
 					}
 
@@ -695,6 +703,8 @@ func coreLoop(ctx context.Context, startAgent *Agent, inputMessages []llm.Messag
 				cp := s.buildCheckpoint(AgentStatusSuspended)
 				if saveErr := s.opts.checkpointer.Save(ctx, s.opts.runID, cp); saveErr != nil {
 					s.logger.ErrorCtx(ctx, "cannot save checkpoint", log.Error(saveErr))
+				} else {
+					emitHook(s.agent, func(h RunHooks) { h.OnRunSnapshot(ctx, s.agent, cp) })
 				}
 			}
 
