@@ -614,6 +614,7 @@ input CreateThirdPartyRiskAssessmentInput {
 input AssessThirdPartyInput {
     id: ID!
     websiteUrl: String!
+    procedure: String
 }
 
 type CreateThirdPartyPayload {

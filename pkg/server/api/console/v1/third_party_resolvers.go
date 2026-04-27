@@ -546,9 +546,14 @@ func (r *mutationResolver) AssessThirdParty(ctx context.Context, input types.Ass
 		probo.AssessThirdPartyRequest{
 			ID:         input.ID,
 			WebsiteURL: input.WebsiteURL,
+			Procedure:  input.Procedure,
 		},
 	)
 	if err != nil {
+		if errors.Is(err, probo.ErrVendorAssessmentDisabled) {
+			return nil, gqlutils.Unavailable(ctx, probo.ErrVendorAssessmentDisabled)
+		}
+
 		r.logger.ErrorCtx(ctx, "cannot assess third party", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}

@@ -25,7 +25,7 @@
             { "type": "tableHeader", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [250] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Name", "marks": [{ "type": "bold" }] }] }] },
             { "type": "tableHeader", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [130] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Classification", "marks": [{ "type": "bold" }] }] }] },
             { "type": "tableHeader", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [180] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Owner", "marks": [{ "type": "bold" }] }] }] },
-            { "type": "tableHeader", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [250] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Vendors", "marks": [{ "type": "bold" }] }] }] }
+            { "type": "tableHeader", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [250] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Third Parties", "marks": [{ "type": "bold" }] }] }] }
           ]
         }{{range .Rows}},
         {
@@ -34,7 +34,7 @@
             { "type": "tableCell", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [250] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": {{json .Name}} }] }] },
             { "type": "tableCell", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [130] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": {{json .Classification}} }] }] },
             { "type": "tableCell", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [180] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": {{json .Owner}} }] }] },
-            { "type": "tableCell", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [250] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": {{json .Vendors}} }] }] }
+            { "type": "tableCell", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [250] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": {{json .ThirdParties}} }] }] }
           ]
         }{{end}}
       ]
@@ -71,11 +71,11 @@
     {
       "type": "heading",
       "attrs": { "level": 3 },
-      "content": [{ "type": "text", "text": "Vendors" }]
+      "content": [{ "type": "text", "text": "Third Parties" }]
     },
     {
       "type": "paragraph",
-      "content": [{ "type": "text", "text": "Third-party vendors that process or have access to the data asset." }]
+      "content": [{ "type": "text", "text": "Third parties that process or have access to the data asset." }]
     }
   ]
 }

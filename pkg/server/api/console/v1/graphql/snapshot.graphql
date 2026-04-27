@@ -1,7 +1,7 @@
 enum SnapshotsType
     @goModel(model: "go.probo.inc/probo/pkg/coredata.SnapshotsType") {
     RISKS @goEnum(value: "go.probo.inc/probo/pkg/coredata.SnapshotsTypeRisks")
-    VENDORS
+    THIRD_PARTIES
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.SnapshotsTypeThirdParties")
     FINDINGS
         @goEnum(
