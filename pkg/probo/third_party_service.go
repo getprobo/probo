@@ -33,8 +33,8 @@ import (
 )
 
 // ErrVendorAssessmentDisabled is returned by VendorAssessor.Assess when the
-// deployment has not configured an LLM provider for vendor assessment.
-var ErrVendorAssessmentDisabled = errors.New("vendor assessment is not configured on this deployment")
+// deployment has not configured an LLM provider for third-party assessment.
+var ErrVendorAssessmentDisabled = errors.New("third-party assessment is not configured on this deployment")
 
 // VendorAssessor produces a vendor assessment report from a website URL and
 // an optional procedure description. Implementations that cannot perform
