@@ -43,25 +43,32 @@ type Tool interface {
 
 ## Cancellation semantics
 
-`ctx.Done()` is a **graceful-suspend signal**, not a hard abort. When the
-caller cancels `ctx`, `Run`/`RunStreamed`/`Resume`/`Restore` finish their
-in-flight LLM call and tool, persist a checkpoint via the configured
-`Checkpointer`, and return `*SuspendedError`. Internally `coreLoop`
-shadows the incoming ctx with `context.WithoutCancel(ctx)` and uses the
-shadow for every downstream call so the cancel never kills work
-in-progress; only the at-boundary check observes the original ctx.
+`ctx.Done()` is a **graceful-suspend signal**, not a hard abort. When
+the caller cancels `ctx`, `Run`/`RunStreamed`/`Resume`/`Restore` let
+the in-flight LLM call and tool finish, persist a checkpoint via the
+configured `Checkpointer`, and return `*SuspendedError`. The framework
+shields downstream calls (LLM, tools, hooks, guardrails, save) from
+the cancellation so they complete naturally; the cancel is only
+observed at the next safe boundary.
+
+Use `agent.ErrSuspendForCheckpoint` as the cancel cause when the
+intent is graceful suspend — supervisors that distinguish a
+graceful-stop request from infrastructure-level causes (lease loss,
+heartbeat failure) inspect `context.Cause(ctx)` to dispatch.
 
 Implications:
 
-- A `context.WithTimeout` becomes a "max wall-clock budget then suspend"
-  — strictly better than today's "deadline kills work outright."
+- A `context.WithTimeout` becomes a "max wall-clock budget then
+  suspend" — strictly better than the alternative where the deadline
+  kills work outright.
 - There is no in-process hard-abort path. Callers that genuinely need
   to kill a run terminate the process; stale recovery handles the row.
-- Tools that need their own deadline must derive it themselves
-  (`context.WithTimeout(ctx, ...)` *inside* the tool body).
+- Tools receive a non-cancellable ctx; if a tool needs a hard deadline
+  it must derive its own with `context.WithTimeout(ctx, ...)` inside
+  the tool body.
 
 The supervisor (`pkg/probo/agent_run_handler.go`) maps a SIGTERM-driven
-shutdown broadcast onto a per-run `cancelRun(ErrSuspendForCheckpoint)`,
+shutdown broadcast onto a per-run `cancelRun(agent.ErrSuspendForCheckpoint)`,
 so the same contract drives both the public Go API and the worker
 infrastructure path.
 
