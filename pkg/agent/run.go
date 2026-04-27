@@ -115,6 +115,14 @@ func blockingCallLLM(ctx context.Context, agent *Agent, req *llm.ChatCompletionR
 	return acc.Response(), nil
 }
 
+// Run executes the agent loop. ctx is a graceful-stop signal: when it is
+// cancelled the loop checkpoints at its next safe boundary and returns
+// a *SuspendedError. The in-flight LLM call, the in-flight tool, and
+// the checkpoint write all run on a non-cancellable shadow of ctx so
+// they complete normally. ctx deadlines therefore become a "max
+// wall-clock budget, then suspend" rather than a hard cut-off; there
+// is no in-process hard-abort path. Callers that need to truly kill a
+// run must terminate the process.
 func (a *Agent) Run(ctx context.Context, messages []llm.Message, opts ...RunOption) (*Result, error) {
 	ro := runOpts{
 		callLLM: blockingCallLLM,
@@ -275,6 +283,16 @@ func (s *loopState) applyHandoff(ctx context.Context, handoffTarget *Handoff) er
 }
 
 func coreLoop(ctx context.Context, startAgent *Agent, inputMessages []llm.Message, opts runOpts) (*Result, error) {
+	// Cancellation contract: ctx.Done() means "graceful suspend" — the
+	// loop checkpoints at its next safe boundary and returns
+	// SuspendedError. Every downstream call (LLM, tools, hooks,
+	// guardrails, save) runs on a non-cancellable shadow so an in-flight
+	// turn completes naturally and the checkpoint write itself isn't
+	// killed by the cancel that triggered the suspend. outerCtx is
+	// retained only for the at-boundary cancellation check.
+	outerCtx := ctx
+	ctx = context.WithoutCancel(ctx)
+
 	s := &loopState{
 		agent:         startAgent,
 		inputMessages: inputMessages,
@@ -368,34 +386,26 @@ func coreLoop(ctx context.Context, startAgent *Agent, inputMessages []llm.Messag
 	exploring := structuredFormat != nil && len(s.toolDefs) > 0
 
 	for {
-		if err := ctx.Err(); err != nil {
-			return s.finishRun(ctx, nil, fmt.Errorf("cannot complete: %w", err))
+		if err := outerCtx.Err(); err != nil {
+			cp := s.buildCheckpoint(AgentStatusSuspended)
+			se := &SuspendedError{RunID: s.opts.runID}
+
+			if s.opts.checkpointer != nil && s.opts.runID != "" {
+				if saveErr := s.opts.checkpointer.Save(ctx, s.opts.runID, cp); saveErr != nil {
+					s.logger.ErrorCtx(ctx, "cannot save suspension checkpoint", log.Error(saveErr))
+					se.Checkpoint = cp
+				} else {
+					emitHook(s.agent, func(h RunHooks) { h.OnRunSnapshot(ctx, s.agent, cp) })
+				}
+			} else {
+				se.Checkpoint = cp
+			}
+
+			return s.finishRun(ctx, nil, se)
 		}
 
 		if s.turns >= s.agent.maxTurns {
 			return s.finishRun(ctx, nil, &MaxTurnsExceededError{MaxTurns: s.agent.maxTurns})
-		}
-
-		if ch := stopSignalFrom(ctx); ch != nil {
-			select {
-			case <-ch:
-				cp := s.buildCheckpoint(AgentStatusSuspended)
-				se := &SuspendedError{RunID: s.opts.runID}
-
-				if s.opts.checkpointer != nil && s.opts.runID != "" {
-					if saveErr := s.opts.checkpointer.Save(ctx, s.opts.runID, cp); saveErr != nil {
-						s.logger.ErrorCtx(ctx, "cannot save suspension checkpoint", log.Error(saveErr))
-						se.Checkpoint = cp
-					} else {
-						emitHook(s.agent, func(h RunHooks) { h.OnRunSnapshot(ctx, s.agent, cp) })
-					}
-				} else {
-					se.Checkpoint = cp
-				}
-
-				return s.finishRun(ctx, nil, se)
-			default:
-			}
 		}
 
 		fullMessages := buildFullMessages(s.systemPrompt, s.messages)
@@ -1250,6 +1260,10 @@ func runOutputGuardrails(ctx context.Context, agent *Agent, message llm.Message)
 // the provided ResumeInput, then re-enters the agent loop. Input guardrails
 // are not re-evaluated because the messages were already validated in the
 // original Run call.
+//
+// ctx follows the same graceful-suspend contract as Run: cancellation
+// produces a SuspendedError with a checkpoint covering progress up to
+// the next safe boundary. See Run for details.
 func Resume(ctx context.Context, interrupted *InterruptedError, input ResumeInput, opts ...RunOption) (*Result, error) {
 	ro := runOpts{
 		callLLM: blockingCallLLM,
@@ -1263,8 +1277,16 @@ func Resume(ctx context.Context, interrupted *InterruptedError, input ResumeInpu
 }
 
 func resumeWithOpts(ctx context.Context, interrupted *InterruptedError, input ResumeInput, ro runOpts) (*Result, error) {
+	// Same cancellation contract as Run: ctx.Done() means graceful
+	// suspend. Pre-loop tool execution and handoff callbacks run on the
+	// non-cancellable shadow so an in-flight tool completes; coreLoop
+	// receives the original ctx so it can detect cancellation at its
+	// next turn boundary and trigger the suspend path.
+	outerCtx := ctx
+	ctx = context.WithoutCancel(ctx)
+
 	if interrupted.outerState != nil {
-		return resumeNested(ctx, interrupted, input, ro)
+		return resumeNested(outerCtx, interrupted, input, ro)
 	}
 
 	tracer := otel.GetTracerProvider().Tracer(tracerName)
@@ -1406,7 +1428,7 @@ func resumeWithOpts(ctx context.Context, interrupted *InterruptedError, input Re
 	}
 
 	return coreLoop(
-		ctx,
+		outerCtx,
 		resumeAgent,
 		messages,
 		runOpts{
@@ -1424,6 +1446,12 @@ func resumeWithOpts(ctx context.Context, interrupted *InterruptedError, input Re
 }
 
 func resumeNested(ctx context.Context, interrupted *InterruptedError, input ResumeInput, ro runOpts) (*Result, error) {
+	// Same shadow as resumeWithOpts: pre-loop bridging work runs on
+	// the non-cancellable shadow; coreLoop receives outerCtx so it can
+	// detect a graceful-suspend cancel at its turn boundary.
+	outerCtx := ctx
+	ctx = context.WithoutCancel(ctx)
+
 	outer := interrupted.outerState
 	logger := outer.agent.logger
 
@@ -1434,7 +1462,7 @@ func resumeNested(ctx context.Context, interrupted *InterruptedError, input Resu
 		log.String("inner_agent", interrupted.Agent.name),
 	)
 
-	innerResult, err := resumeWithOpts(ctx, outer.innerInterrupt, input, ro)
+	innerResult, err := resumeWithOpts(outerCtx, outer.innerInterrupt, input, ro)
 	if err != nil {
 		innerIE, ok := errors.AsType[*InterruptedError](err)
 		if ok {
@@ -1489,7 +1517,7 @@ func resumeNested(ctx context.Context, interrupted *InterruptedError, input Resu
 	}
 
 	return coreLoop(
-		ctx,
+		outerCtx,
 		outer.agent,
 		messages,
 		runOpts{
