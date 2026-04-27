@@ -51,3 +51,10 @@ func TryRunContextFrom[C any](ctx context.Context) (C, bool) {
 	typed, ok := val.(C)
 	return typed, ok
 }
+
+// suspendShield splits ctx in two: signal keeps the cancel signal for
+// turn-boundary checks, work survives cancellation and carries every
+// downstream call (LLM, tools, hooks, save) through to completion.
+func suspendShield(ctx context.Context) (signal, work context.Context) {
+	return ctx, context.WithoutCancel(ctx)
+}
