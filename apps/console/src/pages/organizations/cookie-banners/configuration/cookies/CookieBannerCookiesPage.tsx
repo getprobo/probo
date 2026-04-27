@@ -145,7 +145,9 @@ export default function CookieBannerCookiesPage({
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h3 className="font-medium">{__("Cookies")}</h3>
+        <p className="text-sm text-muted-foreground">
+          {__("Organize cookies into categories and declare which cookies your site uses.")}
+        </p>
         <Button variant="secondary" onClick={() => setShowCreateDialog(true)}>
           <IconPlusSmall size={16} />
           {__("Add Category")}
