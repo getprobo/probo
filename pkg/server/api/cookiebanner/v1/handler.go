@@ -122,7 +122,6 @@ type (
 		Version     int                          `json:"version"`
 		Action      coredata.CookieConsentAction `json:"action"`
 		ConsentData json.RawMessage              `json:"consent_data"`
-		SdkVersion  string                       `json:"sdk_version"`
 	}
 
 	postConsentResponse struct {
@@ -148,6 +147,7 @@ func (h *Handler) handlePostConsent(w http.ResponseWriter, r *http.Request) {
 
 	ip := clientip.Extract(r)
 	ua := r.UserAgent()
+	sdkVersion := r.Header.Get("X-SDK-Version")
 
 	req := cookiebanner.RecordConsentRequest{
 		Version:     body.Version,
@@ -156,7 +156,7 @@ func (h *Handler) handlePostConsent(w http.ResponseWriter, r *http.Request) {
 		UserAgent:   &ua,
 		ConsentData: body.ConsentData,
 		Action:      body.Action,
-		SdkVersion:  body.SdkVersion,
+		SdkVersion:  sdkVersion,
 	}
 
 	record, err := h.cookieBannerSvc.RecordConsent(r.Context(), bannerID, req)

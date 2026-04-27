@@ -66,7 +66,7 @@ func newCORSMiddleware(logger *log.Logger, cookieBannerSvc *cookiebanner.Service
 
 				w.Header().Set("Access-Control-Allow-Origin", origin)
 				w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-				w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+				w.Header().Set("Access-Control-Allow-Headers", "Content-Type, X-SDK-Version")
 				w.Header().Set("Access-Control-Max-Age", "600")
 				w.Header().Set("Vary", "Origin")
 

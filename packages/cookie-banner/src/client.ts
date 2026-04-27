@@ -288,7 +288,6 @@ export class CookieBannerClient {
       version: cfg.version,
       action,
       consent_data: consentData,
-      sdk_version: __SDK_VERSION__,
     };
     void fetchJSON<ConsentRecord>(url, { method: "POST", body })
       .then(() => void flush(this.bannerId))

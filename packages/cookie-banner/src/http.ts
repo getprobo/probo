@@ -120,6 +120,7 @@ export async function fetchJSON<T>(
     credentials: "omit",
     headers: {
       Accept: "application/json",
+      "X-SDK-Version": __SDK_VERSION__,
       ...(body !== undefined && { "Content-Type": "application/json" }),
       ...headers,
     },
