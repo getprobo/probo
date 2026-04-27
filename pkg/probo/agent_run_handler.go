@@ -45,6 +45,13 @@ type agentRunHandler struct {
 var (
 	_ worker.Handler[coredata.AgentRun] = (*agentRunHandler)(nil)
 	_ worker.StaleRecoverer             = (*agentRunHandler)(nil)
+
+	// ErrSuspendForCheckpoint is the cancel cause used when the
+	// supervisor asks an in-flight run to gracefully suspend so it can
+	// checkpoint and exit. The agent loop sees ctx.Err() at its next
+	// turn boundary and returns *SuspendedError; executeRun treats
+	// that outcome as a graceful exit (no row-status commit).
+	ErrSuspendForCheckpoint = errors.New("agent run: graceful suspend requested")
 )
 
 // Claim loads the next pending agent run, marks it RUNNING with a lease
@@ -87,10 +94,11 @@ func (h *agentRunHandler) Claim(ctx context.Context) (coredata.AgentRun, error) 
 	return run, nil
 }
 
-// Process executes a single agent run. It spawns a heartbeat goroutine to
-// renew the lease while the run is active, and a forwarder goroutine that
-// bridges the handler-level shutdown signal to the run's agent stop
-// channel so the agent checkpoints cleanly at the next turn boundary.
+// Process executes a single agent run. It spawns a heartbeat goroutine
+// that renews the lease while the run is active, and a forwarder
+// goroutine that converts the handler-level shutdown broadcast into a
+// per-run ctx cancellation so the agent loop checkpoints cleanly at
+// its next turn boundary.
 //
 // The returned error mirrors the run outcome so the worker kit's
 // task metrics and OTel span status reflect actual agent failures.
@@ -101,13 +109,12 @@ func (h *agentRunHandler) Process(ctx context.Context, run coredata.AgentRun) er
 	runCtx, cancelRun := context.WithCancelCause(ctx)
 	defer cancelRun(nil)
 
-	stopCh := make(chan struct{})
 	forwarderDone := make(chan struct{})
 	defer close(forwarderDone)
 	go func() {
 		select {
 		case <-h.shutdownCh:
-			close(stopCh)
+			cancelRun(ErrSuspendForCheckpoint)
 		case <-forwarderDone:
 		}
 	}()
@@ -116,7 +123,6 @@ func (h *agentRunHandler) Process(ctx context.Context, run coredata.AgentRun) er
 	defer cancelHeartbeat()
 	go h.heartbeatLease(heartbeatCtx, run.ID.String(), cancelRun)
 
-	runCtx = agent.WithStopSignal(runCtx, stopCh)
 	return h.executeRun(runCtx, &run)
 }
 
