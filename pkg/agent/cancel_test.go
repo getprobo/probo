@@ -16,13 +16,48 @@ package agent_test
 
 import (
 	"context"
+	"sync"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/pkg/agent"
 	"go.probo.inc/probo/pkg/llm"
 )
+
+// blockingProvider holds the ChatCompletion call until a release
+// channel fires, so a test can race ctx cancellation against an
+// in-flight LLM call.
+type blockingProvider struct {
+	ready    chan struct{}
+	release  chan struct{}
+	response *llm.ChatCompletionResponse
+
+	mu       sync.Mutex
+	calls    int
+	ctxAtEnd error
+}
+
+func (p *blockingProvider) ChatCompletion(ctx context.Context, _ *llm.ChatCompletionRequest) (*llm.ChatCompletionResponse, error) {
+	p.mu.Lock()
+	p.calls++
+	first := p.calls == 1
+	p.mu.Unlock()
+
+	if first {
+		close(p.ready)
+		<-p.release
+		p.mu.Lock()
+		p.ctxAtEnd = ctx.Err()
+		p.mu.Unlock()
+	}
+	return p.response, nil
+}
+
+func (p *blockingProvider) ChatCompletionStream(_ context.Context, _ *llm.ChatCompletionRequest) (llm.ChatCompletionStream, error) {
+	return nil, assert.AnError
+}
 
 func TestRun_CtxCancelGracefulSuspend(t *testing.T) {
 	t.Parallel()
@@ -133,6 +168,90 @@ func TestRun_CtxCancelGracefulSuspend(t *testing.T) {
 			// can resume from the next turn.
 			assert.Equal(t, 1, cp.Turns)
 			assert.GreaterOrEqual(t, len(cp.Messages), 3, "user + assistant tool-call + tool result")
+		},
+	)
+
+	t.Run(
+		"cancel during in-flight LLM call shields the call",
+		func(t *testing.T) {
+			t.Parallel()
+
+			// First response is a tool call so the loop iterates back
+			// to its turn-boundary cancel check after the LLM returns.
+			provider := &blockingProvider{
+				ready:   make(chan struct{}),
+				release: make(chan struct{}),
+				response: &llm.ChatCompletionResponse{
+					Message: llm.Message{
+						Role: llm.RoleAssistant,
+						ToolCalls: []llm.ToolCall{{
+							ID:       "tc_inflight",
+							Function: llm.FunctionCall{Name: "noop", Arguments: `{}`},
+						}},
+					},
+					FinishReason: llm.FinishReasonToolCalls,
+				},
+			}
+
+			noopTool := agent.FunctionTool[struct{}](
+				"noop",
+				"no-op",
+				func(_ context.Context, _ struct{}) (agent.ToolResult, error) {
+					return agent.ToolResult{Content: "ok"}, nil
+				},
+			)
+
+			ag := agent.New(
+				"assistant",
+				newTestClient(provider),
+				agent.WithModel("test-model"),
+				agent.WithTools(noopTool),
+			)
+
+			store := newMemoryCheckpointer()
+
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+
+			done := make(chan error, 1)
+			go func() {
+				_, err := ag.Run(
+					ctx,
+					[]llm.Message{userMessage("hi")},
+					agent.WithCheckpointer(store, "run-inflight"),
+				)
+				done <- err
+			}()
+
+			// Wait until the provider is parked inside ChatCompletion,
+			// then cancel ctx while the call is still in flight.
+			select {
+			case <-provider.ready:
+			case <-time.After(2 * time.Second):
+				t.Fatal("LLM call never started")
+			}
+			cancel()
+			close(provider.release)
+
+			var err error
+			select {
+			case err = <-done:
+			case <-time.After(2 * time.Second):
+				t.Fatal("agent.Run did not return after release")
+			}
+
+			var se *agent.SuspendedError
+			require.ErrorAs(t, err, &se)
+
+			provider.mu.Lock()
+			assert.NoError(t, provider.ctxAtEnd, "ctx passed to LLM must remain non-cancellable so the call completes")
+			assert.Equal(t, 1, provider.calls, "second LLM call must not fire after cancel")
+			provider.mu.Unlock()
+
+			cp, loadErr := store.Load(context.Background(), "run-inflight")
+			require.NoError(t, loadErr)
+			require.NotNil(t, cp)
+			assert.Equal(t, agent.AgentStatusSuspended, cp.Status)
 		},
 	)
 }

@@ -504,6 +504,7 @@ func TestRun(t *testing.T) {
 			require.ErrorAs(t, err, &se)
 			require.NotNil(t, se.Checkpoint)
 			assert.Equal(t, agent.AgentStatusSuspended, se.Checkpoint.Status)
+			assert.NotEmpty(t, se.Checkpoint.Messages, "the input messages must land in the suspension checkpoint")
 			assert.Equal(t, 0, provider.calls)
 		},
 	)
