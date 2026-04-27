@@ -1,0 +1,13 @@
+name: "Generate Go code"
+description: "Run go generate for the API packages in parallel"
+runs:
+  using: "composite"
+  steps:
+    - shell: bash
+      run: |
+        pids=()
+        go generate ./pkg/server/api/connect/v1 & pids+=($!)
+        go generate ./pkg/server/api/console/v1 & pids+=($!)
+        go generate ./pkg/server/api/trust/v1 & pids+=($!)
+        go generate ./pkg/server/api/mcp/v1 & pids+=($!)
+        for pid in "${pids[@]}"; do wait "$pid"; done

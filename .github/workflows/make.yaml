@@ -78,11 +78,7 @@ jobs:
         with:
           name: "frontend-apps"
       - name: "Generate Go code"
-        run: |
-          go generate ./pkg/server/api/connect/v1
-          go generate ./pkg/server/api/console/v1
-          go generate ./pkg/server/api/trust/v1
-          go generate ./pkg/server/api/mcp/v1
+        uses: "./.github/actions/generate-go"
       - name: "Build binaries"
         env:
           CGO_ENABLED: "0"
@@ -209,11 +205,7 @@ jobs:
           echo dev-server > apps/trust/dist/index.html
           echo dev-server > packages/emails/dist/placeholder
       - name: "Generate Go code"
-        run: |
-          go generate ./pkg/server/api/connect/v1
-          go generate ./pkg/server/api/console/v1
-          go generate ./pkg/server/api/trust/v1
-          go generate ./pkg/server/api/mcp/v1
+        uses: "./.github/actions/generate-go"
       - name: "Build binaries"
         env:
           CGO_ENABLED: "0"
@@ -252,11 +244,7 @@ jobs:
           echo dev-server > apps/trust/dist/index.html
           echo dev-server > packages/emails/dist/placeholder
       - name: "Generate Go code"
-        run: |
-          go generate ./pkg/server/api/connect/v1
-          go generate ./pkg/server/api/console/v1
-          go generate ./pkg/server/api/trust/v1
-          go generate ./pkg/server/api/mcp/v1
+        uses: "./.github/actions/generate-go"
       - name: "Run gofmt"
         run: |
           output="$(gofmt -l apps cmd packages pkg e2e)"
