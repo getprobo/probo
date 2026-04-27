@@ -45,13 +45,6 @@ type agentRunHandler struct {
 var (
 	_ worker.Handler[coredata.AgentRun] = (*agentRunHandler)(nil)
 	_ worker.StaleRecoverer             = (*agentRunHandler)(nil)
-
-	// ErrSuspendForCheckpoint is the cancel cause used when the
-	// supervisor asks an in-flight run to gracefully suspend so it can
-	// checkpoint and exit. The agent loop sees ctx.Err() at its next
-	// turn boundary and returns *SuspendedError; executeRun treats
-	// that outcome as a graceful exit (no row-status commit).
-	ErrSuspendForCheckpoint = errors.New("agent run: graceful suspend requested")
 )
 
 // Claim loads the next pending agent run, marks it RUNNING with a lease
@@ -114,7 +107,7 @@ func (h *agentRunHandler) Process(ctx context.Context, run coredata.AgentRun) er
 	go func() {
 		select {
 		case <-h.shutdownCh:
-			cancelRun(ErrSuspendForCheckpoint)
+			cancelRun(agent.ErrSuspendForCheckpoint)
 		case <-forwarderDone:
 		}
 	}()

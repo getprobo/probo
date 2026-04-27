@@ -16,9 +16,20 @@ package agent
 
 import (
 	"context"
+	"errors"
 
 	"go.probo.inc/probo/pkg/llm"
 )
+
+// ErrSuspendForCheckpoint is the recommended cancel cause for callers
+// who want the agent loop to gracefully suspend (build a checkpoint
+// and return *SuspendedError) rather than treat the cancellation as a
+// silent close. The agent loop only inspects ctx.Err(); any cancel
+// cause produces a graceful suspend, but using this sentinel makes
+// the intent explicit and lets supervisors distinguish a user-driven
+// cancel from infrastructure-level causes (lease loss, heartbeat
+// failure) when they inspect context.Cause(ctx).
+var ErrSuspendForCheckpoint = errors.New("agent run: graceful suspend requested")
 
 type (
 	AgentStatus string
