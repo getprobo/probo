@@ -18,7 +18,6 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"crypto/rsa"
-	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -223,6 +222,34 @@ func TestBuildApplyURL(t *testing.T) {
 			assert.Contains(t, result, "/services/my%20service/")
 		},
 	)
+
+	t.Run(
+		"preserves path prefix in sync UX URL",
+		func(t *testing.T) {
+			t.Parallel()
+
+			cfg := domainconnect.Config{
+				ProviderID: "probo.inc",
+				ServiceID:  "customdomain",
+			}
+
+			result, err := domainconnect.BuildApplyURL(
+				cfg,
+				"https://dns.example.com/dnsapi",
+				"example.com",
+				"trust",
+				nil,
+				"",
+			)
+
+			require.NoError(t, err)
+
+			parsed, err := url.Parse(result)
+			require.NoError(t, err)
+
+			assert.Equal(t, "/dnsapi/v2/domainTemplates/providers/probo.inc/services/customdomain/apply", parsed.Path)
+		},
+	)
 }
 
 func TestSignAndVerify_ECDSA(t *testing.T) {
@@ -421,29 +448,18 @@ func TestClientCheckTemplate(t *testing.T) {
 			assert.NotErrorIs(t, err, domainconnect.ErrTemplateNotFound)
 		},
 	)
-}
-
-func TestClientDiscover(t *testing.T) {
-	t.Parallel()
 
 	t.Run(
-		"returns settings from provider",
+		"preserves path prefix in API URL",
 		func(t *testing.T) {
 			t.Parallel()
 
 			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				w.Header().Set("Content-Type", "application/json")
-				_ = json.NewEncoder(w).Encode(domainconnect.Settings{
-					ProviderName: "TestProvider",
-					URLSyncUX:    "https://sync.example.com",
-					URLAPI:       "https://api.example.com",
-				})
+				assert.Equal(t, "/dnsapi/v2/domainTemplates/providers/probo.inc/services/customdomain", r.URL.Path)
+				w.WriteHeader(http.StatusOK)
 			}))
 			defer srv.Close()
 
-			// Discover requires a real DNS TXT lookup which cannot be
-			// simulated with httptest. We verify the HTTP settings fetch
-			// indirectly through CheckTemplate.
 			c := domainconnect.NewClient(
 				domainconnect.WithHTTPClient(
 					httpclient.DefaultClient(
@@ -453,7 +469,7 @@ func TestClientDiscover(t *testing.T) {
 				),
 			)
 
-			err := c.CheckTemplate(context.Background(), srv.URL, "test", "svc")
+			err := c.CheckTemplate(context.Background(), srv.URL+"/dnsapi", "probo.inc", "customdomain")
 			assert.NoError(t, err)
 		},
 	)

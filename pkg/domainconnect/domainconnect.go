@@ -249,9 +249,12 @@ func (c *Client) CheckTemplate(ctx context.Context, apiURL string, providerID st
 		return fmt.Errorf("cannot parse API URL: %w", err)
 	}
 
-	rawPath := "/v2/domainTemplates/providers/" + url.PathEscape(providerID) + "/services/" + url.PathEscape(serviceID)
-	base.Path = "/v2/domainTemplates/providers/" + providerID + "/services/" + serviceID
-	base.RawPath = rawPath
+	prefixPath := strings.TrimRight(base.Path, "/")
+	prefixRawPath := strings.TrimRight(base.EscapedPath(), "/")
+	suffix := "/v2/domainTemplates/providers/" + providerID + "/services/" + serviceID
+	rawSuffix := "/v2/domainTemplates/providers/" + url.PathEscape(providerID) + "/services/" + url.PathEscape(serviceID)
+	base.Path = prefixPath + suffix
+	base.RawPath = prefixRawPath + rawSuffix
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, base.String(), nil)
 	if err != nil {
@@ -308,9 +311,12 @@ func BuildApplyURL(
 		return "", fmt.Errorf("cannot parse sync UX URL: %w", err)
 	}
 
-	rawPath := "/v2/domainTemplates/providers/" + url.PathEscape(cfg.ProviderID) + "/services/" + url.PathEscape(cfg.ServiceID) + "/apply"
-	base.Path = "/v2/domainTemplates/providers/" + cfg.ProviderID + "/services/" + cfg.ServiceID + "/apply"
-	base.RawPath = rawPath
+	prefixPath := strings.TrimRight(base.Path, "/")
+	prefixRawPath := strings.TrimRight(base.EscapedPath(), "/")
+	suffix := "/v2/domainTemplates/providers/" + cfg.ProviderID + "/services/" + cfg.ServiceID + "/apply"
+	rawSuffix := "/v2/domainTemplates/providers/" + url.PathEscape(cfg.ProviderID) + "/services/" + url.PathEscape(cfg.ServiceID) + "/apply"
+	base.Path = prefixPath + suffix
+	base.RawPath = prefixRawPath + rawSuffix
 
 	q := url.Values{}
 	q.Set("domain", domain)
