@@ -2,8 +2,8 @@
   "name": "probo",
   "description": "Probo monorepo containing applications and shared packages",
   "engines": {
-    "node": "v24.11.1",
-    "npm": "11.8.0"
+    "node": "^24.0.0",
+    "npm": "^11.8.0"
   },
   "workspaces": [
     "apps/*",
@@ -40,10 +40,6 @@
     "axios": "^1.15.0"
   },
   "license": "MIT",
-  "packageManager": "npm@11.8.0",
-  "volta": {
-    "node": "24.4.0"
-  },
   "dependencies": {
     "react-dom": "^19.2.1"
   }
