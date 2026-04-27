@@ -14,6 +14,7 @@
 
 import { faviconUrl } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
+import type { ThirdParty } from "@probo/third-parties";
 import {
   Avatar,
   Combobox,
@@ -24,7 +25,6 @@ import {
   IconPlusLarge,
   useDialogRef,
 } from "@probo/ui";
-import type { ThirdParty } from "@probo/third-parties";
 import { type ReactNode } from "react";
 
 import { useCreateThirdPartyMutation } from "#/hooks/graph/ThirdPartyGraph";

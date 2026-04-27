@@ -15,6 +15,7 @@
 import { downloadFile, formatDate } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
+import type { ThirdPartyCategory } from "@probo/third-parties";
 import {
   Button,
   Card,
@@ -25,7 +26,6 @@ import {
   Input,
   Option,
 } from "@probo/ui";
-import type { ThirdPartyCategory } from "@probo/third-parties";
 import { useMemo } from "react";
 import { graphql, useFragment } from "react-relay";
 import { useOutletContext, useParams } from "react-router";

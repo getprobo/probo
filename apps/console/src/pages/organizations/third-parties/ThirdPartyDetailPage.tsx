@@ -37,9 +37,9 @@ import type { ThirdPartyComplianceTabFragment$key } from "#/__generated__/core/T
 import type { ThirdPartyGraphNodeQuery } from "#/__generated__/core/ThirdPartyGraphNodeQuery.graphql";
 import { SnapshotBanner } from "#/components/SnapshotBanner";
 import {
-  useDeleteThirdParty,
   thirdPartyConnectionKey,
   thirdPartyNodeQuery,
+  useDeleteThirdParty,
 } from "#/hooks/graph/ThirdPartyGraph";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 

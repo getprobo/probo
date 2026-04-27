@@ -187,6 +187,11 @@ export class Probo implements INodeType {
 						description: 'Manage tasks',
 					},
 					{
+						name: 'ThirdParty',
+						value: 'thirdParty',
+						description: 'Manage third parties',
+					},
+					{
 						name: 'TIA',
 						value: 'tia',
 						description: 'Manage transfer impact assessments',
@@ -200,11 +205,6 @@ export class Probo implements INodeType {
 						name: 'User',
 						value: 'user',
 						description: 'Manage organization users (profiles)',
-					},
-					{
-						name: 'ThirdParty',
-						value: 'thirdParty',
-						description: 'Manage thirdParties',
 					},
 					{
 						name: 'Webhook',

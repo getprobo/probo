@@ -25,7 +25,7 @@ import type { ThirdPartyGraphNodeQuery } from "#/__generated__/core/ThirdPartyGr
 import { LinkCardSkeleton } from "#/components/skeletons/LinkCardSkeleton";
 import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
 import { coreEnvironment } from "#/environments";
-import { thirdPartyNodeQuery, thirdPartiesQuery } from "#/hooks/graph/ThirdPartyGraph";
+import { thirdPartiesQuery, thirdPartyNodeQuery } from "#/hooks/graph/ThirdPartyGraph";
 
 export const thirdPartyRoutes = [
   {

@@ -24,7 +24,9 @@ import { CompliancePageThirdPartiesPage, compliancePageThirdPartiesPageQuery } f
 
 function CompliancePageThirdPartiesPageQueryLoader() {
   const organizationId = useOrganizationId();
-  const [queryRef, loadQuery] = useQueryLoader<CompliancePageThirdPartiesPageQuery>(compliancePageThirdPartiesPageQuery);
+  const [queryRef, loadQuery] = useQueryLoader<CompliancePageThirdPartiesPageQuery>(
+    compliancePageThirdPartiesPageQuery,
+  );
 
   useEffect(() => {
     if (!queryRef) {

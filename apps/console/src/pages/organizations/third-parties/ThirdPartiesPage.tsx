@@ -46,15 +46,15 @@ import { SnapshotBanner } from "#/components/SnapshotBanner";
 import { SortableTable, SortableTh } from "#/components/SortableTable";
 import {
   paginatedThirdPartiesFragment,
-  useDeleteThirdParty,
   thirdPartiesQuery,
+  useDeleteThirdParty,
 } from "#/hooks/graph/ThirdPartyGraph";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import type { NodeOf } from "#/types";
 
 import { CreateThirdPartyDialog } from "./dialogs/CreateThirdPartyDialog";
 
-type ThirdParty = NodeOf<ThirdPartyGraphPaginatedFragment$data["third parties"]>;
+type ThirdParty = NodeOf<ThirdPartyGraphPaginatedFragment$data["thirdParties"]>;
 
 type Props = {
   queryRef: PreloadedQuery<ThirdPartyGraphListQuery>;
