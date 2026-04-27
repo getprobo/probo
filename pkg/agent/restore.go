@@ -26,6 +26,10 @@ import (
 // Restore continues a previously suspended or approval-interrupted agent run
 // from its last persisted checkpoint. The registry must contain all agents
 // that may have been active (including handoff targets).
+//
+// ctx follows the same graceful-suspend contract as Run: cancelling it
+// asks the resumed loop to checkpoint at the next safe boundary and
+// return a *SuspendedError with the new checkpoint. See Run for details.
 func Restore(
 	ctx context.Context,
 	store Checkpointer,
@@ -134,6 +138,15 @@ func restoreNestedSuspended(
 	runID string,
 	registry AgentRegistry,
 ) (*Result, error) {
+	// Graceful-suspend contract: the saveProgress closure and the
+	// snapshot hook must survive a cancellation on the supervisor's
+	// runCtx so a partial save can land before we surface
+	// SuspendedError. Use a non-cancellable shadow for those sites
+	// only; the recursive restoreCheckpoint call keeps the original
+	// ctx so the nested coreLoop sees the cancel and suspends at its
+	// own next turn boundary.
+	saveCtx := context.WithoutCancel(ctx)
+
 	type nestedRestoreEntry struct {
 		toolCall            llm.ToolCall
 		originalCheckpoint  *Checkpoint
@@ -247,10 +260,10 @@ func restoreNestedSuspended(
 		next.InnerCheckpoints = remainingInner
 		next.CompletedCalls = completedCalls
 		if store != nil && runID != "" {
-			if err := store.Save(ctx, runID, &next); err != nil {
+			if err := store.Save(saveCtx, runID, &next); err != nil {
 				return nil, fmt.Errorf("cannot save nested restore progress: %w", err)
 			}
-			emitHook(agent, func(h RunHooks) { h.OnRunSnapshot(ctx, agent, &next) })
+			emitHook(agent, func(h RunHooks) { h.OnRunSnapshot(saveCtx, agent, &next) })
 		}
 		return &next, nil
 	}

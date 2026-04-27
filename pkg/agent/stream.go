@@ -59,6 +59,11 @@ func (sr *StreamedRun) Wait() (*Result, error) {
 	return sr.result, sr.err
 }
 
+// RunStreamed launches the agent loop and returns immediately with a
+// StreamedRun whose Events channel emits incremental progress. ctx
+// follows the same graceful-suspend contract as Run: cancellation
+// triggers a checkpoint at the next safe boundary and the run finishes
+// with a *SuspendedError surfaced via Wait. See Run for details.
 func (a *Agent) RunStreamed(ctx context.Context, messages []llm.Message, opts ...RunOption) *StreamedRun {
 	events := make(chan StreamEvent, 64)
 	sr := &StreamedRun{
