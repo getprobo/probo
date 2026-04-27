@@ -354,10 +354,12 @@ export const THEMED_STYLES = `
   }
 
   .cookie-detail {
+    color: var(--_text);
     font-weight: 500;
   }
 
-  .cookie-detail > span {
+  .cookie-detail > span:last-child {
+    color: var(--_text-secondary);
     font-weight: 400;
   }
 
