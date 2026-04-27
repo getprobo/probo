@@ -166,7 +166,7 @@ func TestAgentRunSupervisor_PicksUpAndCompletes(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
-	go supervisor.Run(ctx)
+	go func() { _ = supervisor.Run(ctx) }()
 
 	// Poll until the run is completed.
 	require.Eventually(
@@ -258,7 +258,7 @@ func TestAgentRunSupervisor_StopAndResume(t *testing.T) {
 	ctx1, cancel1 := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel1()
 
-	go supervisor.Run(ctx1)
+	go func() { _ = supervisor.Run(ctx1) }()
 
 	// Wait for the tool to start executing — this confirms the supervisor
 	// claimed the run and the agent called the tool.
@@ -350,7 +350,7 @@ func TestAgentRunSupervisor_StopAndResume(t *testing.T) {
 	ctx2, cancel2 := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel2()
 
-	go supervisor2.Run(ctx2)
+	go func() { _ = supervisor2.Run(ctx2) }()
 
 	// The resumed run should load the checkpoint, call Restore, get the
 	// second LLM response (stopResponse), and complete.
@@ -529,8 +529,8 @@ func makeBattleTools(progressFile string) []agent.Tool {
 			mu.Unlock()
 			return agent.ToolResult{}, err
 		}
-		fmt.Fprintln(f, input.Task)
-		f.Close()
+		_, _ = fmt.Fprintln(f, input.Task)
+		_ = f.Close()
 		mu.Unlock()
 
 		return agent.ToolResult{Content: fmt.Sprintf("completed: %s", input.Task)}, nil
@@ -772,7 +772,7 @@ func TestAgentRunSupervisor_SIGTERM(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	go supervisor.Run(ctx)
+	go func() { _ = supervisor.Run(ctx) }()
 
 	require.Eventually(
 		t,
