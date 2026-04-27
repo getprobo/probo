@@ -10,11 +10,13 @@ import (
 	"encoding/json"
 	"errors"
 
+	"github.com/vikstrous/dataloadgen"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
+	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
@@ -23,7 +25,26 @@ import (
 
 // CookieCategory is the resolver for the cookieCategory field.
 func (r *cookieResolver) CookieCategory(ctx context.Context, obj *types.Cookie) (*types.CookieCategory, error) {
-	return obj.CookieCategory, nil
+	if obj.CookieCategory == nil {
+		return nil, nil
+	}
+
+	if err := r.authorize(ctx, obj.CookieCategory.ID, probo.ActionCookieCategoryGet); err != nil {
+		return nil, err
+	}
+
+	scope := coredata.NewScopeFromObjectID(obj.CookieCategory.ID)
+
+	category, err := r.cookieBanner.GetCookieCategory(ctx, scope, obj.CookieCategory.ID)
+	if err != nil {
+		if errors.Is(err, cookiebanner.ErrCategoryNotFound) {
+			return nil, nil
+		}
+		r.logger.ErrorCtx(ctx, "cannot get cookie category", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewCookieCategory(category), nil
 }
 
 // Permission is the resolver for the permission field.
@@ -33,7 +54,26 @@ func (r *cookieResolver) Permission(ctx context.Context, obj *types.Cookie, acti
 
 // Organization is the resolver for the organization field.
 func (r *cookieBannerResolver) Organization(ctx context.Context, obj *types.CookieBanner) (*types.Organization, error) {
-	return obj.Organization, nil
+	if obj.Organization == nil {
+		return nil, nil
+	}
+
+	if err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
+		return nil, err
+	}
+
+	loaders := dataloader.FromContext(ctx)
+
+	organization, err := loaders.Organization.Load(ctx, obj.Organization.ID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+		r.logger.ErrorCtx(ctx, "cannot get organization", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewOrganization(organization), nil
 }
 
 // Categories is the resolver for the categories field.
@@ -69,6 +109,10 @@ func (r *cookieBannerResolver) Categories(ctx context.Context, obj *types.Cookie
 
 // Translations is the resolver for the translations field.
 func (r *cookieBannerResolver) Translations(ctx context.Context, obj *types.CookieBanner) ([]*types.CookieBannerTranslation, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionCookieBannerGet); err != nil {
+		return nil, err
+	}
+
 	scope := coredata.NewScopeFromObjectID(obj.ID)
 
 	translations, err := r.cookieBanner.ListCookieBannerTranslations(ctx, scope, obj.ID)
@@ -190,6 +234,10 @@ func (r *cookieBannerConnectionResolver) TotalCount(ctx context.Context, obj *ty
 
 // Categories is the resolver for the categories field.
 func (r *cookieBannerVersionResolver) Categories(ctx context.Context, obj *types.CookieBannerVersion) ([]*types.CookieBannerVersionCategory, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionCookieBannerVersionGet); err != nil {
+		return nil, err
+	}
+
 	scope := coredata.NewScopeFromObjectID(obj.ID)
 
 	version, err := r.cookieBanner.GetCookieBannerVersion(ctx, scope, obj.ID)
@@ -229,7 +277,26 @@ func (r *cookieBannerVersionResolver) Categories(ctx context.Context, obj *types
 
 // CookieBanner is the resolver for the cookieBanner field.
 func (r *cookieCategoryResolver) CookieBanner(ctx context.Context, obj *types.CookieCategory) (*types.CookieBanner, error) {
-	return obj.CookieBanner, nil
+	if obj.CookieBanner == nil {
+		return nil, nil
+	}
+
+	if err := r.authorize(ctx, obj.CookieBanner.ID, probo.ActionCookieBannerGet); err != nil {
+		return nil, err
+	}
+
+	scope := coredata.NewScopeFromObjectID(obj.CookieBanner.ID)
+
+	banner, err := r.cookieBanner.GetCookieBanner(ctx, scope, obj.CookieBanner.ID)
+	if err != nil {
+		if errors.Is(err, cookiebanner.ErrBannerNotFound) {
+			return nil, nil
+		}
+		r.logger.ErrorCtx(ctx, "cannot get cookie banner", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewCookieBanner(banner), nil
 }
 
 // Cookies is the resolver for the cookies field.

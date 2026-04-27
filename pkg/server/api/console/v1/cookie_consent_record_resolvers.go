@@ -20,10 +20,6 @@ import (
 
 // CookieBanner is the resolver for the cookieBanner field.
 func (r *cookieConsentRecordResolver) CookieBanner(ctx context.Context, obj *types.CookieConsentRecord) (*types.CookieBanner, error) {
-	if obj.CookieBanner == nil {
-		return nil, nil
-	}
-
 	if err := r.authorize(ctx, obj.CookieBanner.ID, probo.ActionCookieBannerGet); err != nil {
 		return nil, err
 	}
@@ -44,10 +40,6 @@ func (r *cookieConsentRecordResolver) CookieBanner(ctx context.Context, obj *typ
 
 // CookieBannerVersion is the resolver for the cookieBannerVersion field.
 func (r *cookieConsentRecordResolver) CookieBannerVersion(ctx context.Context, obj *types.CookieConsentRecord) (*types.CookieBannerVersion, error) {
-	if obj.CookieBannerVersion == nil {
-		return nil, nil
-	}
-
 	if err := r.authorize(ctx, obj.CookieBannerVersion.ID, probo.ActionCookieBannerVersionGet); err != nil {
 		return nil, err
 	}
