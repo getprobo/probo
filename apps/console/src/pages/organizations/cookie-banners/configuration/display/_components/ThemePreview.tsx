@@ -157,8 +157,6 @@ export function ThemePreview({ cookieBannerKey }: ThemePreviewProps) {
         </div>
       </Card>
 
-      <h3 className="font-medium text-lg">{__("Preview")}</h3>
-
       <Card className="border overflow-hidden">
         <div
           className="relative flex items-end justify-center bg-[repeating-conic-gradient(#e5e7eb_0%_25%,transparent_0%_50%)] bg-size-[20px_20px] p-8"
@@ -169,7 +167,6 @@ export function ThemePreview({ cookieBannerKey }: ThemePreviewProps) {
       </Card>
 
       <div className="flex items-center justify-between">
-        <h3 className="font-medium text-lg">{__("CSS Snippet")}</h3>
         <Button variant="secondary" onClick={handleCopyCSS}>
           {__("Copy")}
         </Button>

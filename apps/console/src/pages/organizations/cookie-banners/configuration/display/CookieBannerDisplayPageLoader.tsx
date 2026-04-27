@@ -16,14 +16,14 @@ import { Suspense, useEffect } from "react";
 import { useQueryLoader } from "react-relay";
 import { useParams } from "react-router";
 
-import type { CookieBannerSnippetPageQuery } from "#/__generated__/core/CookieBannerSnippetPageQuery.graphql";
+import type { CookieBannerDisplayPageQuery } from "#/__generated__/core/CookieBannerDisplayPageQuery.graphql";
 import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
 
-import CookieBannerSnippetPage, { cookieBannerSnippetPageQuery } from "./CookieBannerSnippetPage";
+import CookieBannerDisplayPage, { cookieBannerDisplayPageQuery } from "./CookieBannerDisplayPage";
 
-export default function CookieBannerSnippetPageLoader() {
+export default function CookieBannerDisplayPageLoader() {
   const { cookieBannerId } = useParams<{ cookieBannerId: string }>();
-  const [queryRef, loadQuery] = useQueryLoader<CookieBannerSnippetPageQuery>(cookieBannerSnippetPageQuery);
+  const [queryRef, loadQuery] = useQueryLoader<CookieBannerDisplayPageQuery>(cookieBannerDisplayPageQuery);
 
   useEffect(() => {
     if (cookieBannerId) {
@@ -37,7 +37,7 @@ export default function CookieBannerSnippetPageLoader() {
 
   return (
     <Suspense fallback={<PageSkeleton />}>
-      <CookieBannerSnippetPage queryRef={queryRef} />
+      <CookieBannerDisplayPage queryRef={queryRef} />
     </Suspense>
   );
 }

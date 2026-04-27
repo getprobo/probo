@@ -247,9 +247,9 @@ export default function CookieBannerConfigLayout({ queryRef }: CookieBannerConfi
           <IconGlobe size={20} />
           {__("Translations")}
         </TabLink>
-        <TabLink to={`/organizations/${organizationId}/cookie-banners/${cookieBannerId}/snippet`}>
+        <TabLink to={`/organizations/${organizationId}/cookie-banners/${cookieBannerId}/display`}>
           <IconPageTextLine size={20} />
-          {__("JS / CSS snippets")}
+          {__("Display")}
         </TabLink>
       </Tabs>
 

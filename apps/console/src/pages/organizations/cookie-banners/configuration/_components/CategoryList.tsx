@@ -15,15 +15,12 @@
 import { formatError, type GraphQLError } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import { Badge, Button, Card, IconArrowDown, IconArrowUp, useConfirm, useToast } from "@probo/ui";
-import { useState } from "react";
 import { useFragment, useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 
 import type { CategoryList_cookieBanner$key } from "#/__generated__/core/CategoryList_cookieBanner.graphql";
 import type { CategoryListDeleteMutation } from "#/__generated__/core/CategoryListDeleteMutation.graphql";
 import type { CategoryListReorderMutation } from "#/__generated__/core/CategoryListReorderMutation.graphql";
-
-import { CategoryDialog } from "./CategoryDialog";
 
 const categoryListFragment = graphql`
   fragment CategoryList_cookieBanner on CookieBanner {
@@ -88,7 +85,6 @@ export function CategoryList({ cookieBannerKey }: CategoryListProps) {
   const { __ } = useTranslate();
   const { toast } = useToast();
   const confirm = useConfirm();
-  const [showCreateDialog, setShowCreateDialog] = useState(false);
 
   const banner = useFragment(categoryListFragment, cookieBannerKey);
   const connectionId = banner.categories.__id;
@@ -156,12 +152,7 @@ export function CategoryList({ cookieBannerKey }: CategoryListProps) {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="font-medium">{__("Categories Sorting")}</h3>
-        <Button variant="secondary" onClick={() => setShowCreateDialog(true)}>
-          {__("Add Category")}
-        </Button>
-      </div>
+      <h3 className="font-medium">{__("Categories Sorting")}</h3>
       <p className="text-sm text-txt-secondary">
         {__("Categories will be displayed in your cookie banner in the same order as below.")}
       </p>
@@ -210,14 +201,6 @@ export function CategoryList({ cookieBannerKey }: CategoryListProps) {
         ))}
       </Card>
 
-      {showCreateDialog && (
-        <CategoryDialog
-          cookieBannerId={banner.id}
-          connectionId={connectionId}
-          nextRank={sorted.length > 0 ? sorted[sorted.length - 1].rank + 1 : 0}
-          onOpenChange={setShowCreateDialog}
-        />
-      )}
     </div>
   );
 }

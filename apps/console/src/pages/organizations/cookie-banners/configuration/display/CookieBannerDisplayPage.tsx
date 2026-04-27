@@ -15,31 +15,29 @@
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { graphql } from "relay-runtime";
 
-import type { CookieBannerSettingsPageQuery } from "#/__generated__/core/CookieBannerSettingsPageQuery.graphql";
+import type { CookieBannerDisplayPageQuery } from "#/__generated__/core/CookieBannerDisplayPageQuery.graphql";
 
-import { BannerSettingsForm } from "../_components/BannerSettingsForm";
+import { CategoryList } from "../_components/CategoryList";
+import { ThemePreview } from "./_components/ThemePreview";
 
-import { CodeSnippets } from "./_components/CodeSnippets";
-
-export const cookieBannerSettingsPageQuery = graphql`
-  query CookieBannerSettingsPageQuery($cookieBannerId: ID!) {
-    node(id: $cookieBannerId) {
+export const cookieBannerDisplayPageQuery = graphql`
+  query CookieBannerDisplayPageQuery($cookieBannerId: ID!) {
+    node(id: $cookieBannerId) @required(action: THROW) {
       __typename
       ... on CookieBanner {
-        ...BannerSettingsForm_cookieBanner
+        ...CategoryList_cookieBanner
+        ...ThemePreview_cookieBanner
       }
     }
   }
 `;
 
-interface CookieBannerSettingsPageProps {
-  queryRef: PreloadedQuery<CookieBannerSettingsPageQuery>;
+interface CookieBannerDisplayPageProps {
+  queryRef: PreloadedQuery<CookieBannerDisplayPageQuery>;
 }
 
-export default function CookieBannerSettingsPage({
-  queryRef,
-}: CookieBannerSettingsPageProps) {
-  const data = usePreloadedQuery(cookieBannerSettingsPageQuery, queryRef);
+export default function CookieBannerDisplayPage({ queryRef }: CookieBannerDisplayPageProps) {
+  const data = usePreloadedQuery(cookieBannerDisplayPageQuery, queryRef);
 
   if (data.node.__typename !== "CookieBanner") {
     throw new Error("invalid type for node");
@@ -47,8 +45,8 @@ export default function CookieBannerSettingsPage({
 
   return (
     <div className="space-y-8">
-      <BannerSettingsForm cookieBannerKey={data.node} />
-      <CodeSnippets />
+      <CategoryList cookieBannerKey={data.node} />
+      <ThemePreview cookieBannerKey={data.node} />
     </div>
   );
 }

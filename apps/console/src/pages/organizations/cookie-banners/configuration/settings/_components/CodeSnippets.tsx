@@ -51,6 +51,7 @@ export function CodeSnippets() {
 
   return (
     <div className="space-y-3">
+      <h3 className="font-medium">{__("JS snippet")}</h3>
       <Card className="rounded-lg border">
         <div className="flex items-center justify-end border-b border-border-low px-1 py-1">
           <Button variant="secondary" onClick={handleCopy}>
