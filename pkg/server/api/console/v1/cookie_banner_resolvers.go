@@ -25,10 +25,6 @@ import (
 
 // CookieCategory is the resolver for the cookieCategory field.
 func (r *cookieResolver) CookieCategory(ctx context.Context, obj *types.Cookie) (*types.CookieCategory, error) {
-	if obj.CookieCategory == nil {
-		return nil, nil
-	}
-
 	if err := r.authorize(ctx, obj.CookieCategory.ID, probo.ActionCookieCategoryGet); err != nil {
 		return nil, err
 	}
@@ -54,10 +50,6 @@ func (r *cookieResolver) Permission(ctx context.Context, obj *types.Cookie, acti
 
 // Organization is the resolver for the organization field.
 func (r *cookieBannerResolver) Organization(ctx context.Context, obj *types.CookieBanner) (*types.Organization, error) {
-	if obj.Organization == nil {
-		return nil, nil
-	}
-
 	if err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
 		return nil, err
 	}
