@@ -7,8 +7,10 @@ package console_v1
 
 import (
 	"context"
+	"errors"
 
 	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
@@ -23,7 +25,32 @@ func (r *cookieConsentRecordResolver) CookieBanner(ctx context.Context, obj *typ
 
 // CookieBannerVersion is the resolver for the cookieBannerVersion field.
 func (r *cookieConsentRecordResolver) CookieBannerVersion(ctx context.Context, obj *types.CookieConsentRecord) (*types.CookieBannerVersion, error) {
-	return obj.CookieBannerVersion, nil
+	if obj.CookieBannerVersion == nil {
+		return nil, nil
+	}
+
+	if err := r.authorize(ctx, obj.CookieBannerVersion.ID, probo.ActionCookieBannerVersionGet); err != nil {
+		return nil, err
+	}
+
+	scope := coredata.NewScopeFromObjectID(obj.CookieBannerVersion.ID)
+
+	version, err := r.cookieBanner.GetCookieBannerVersion(ctx, scope, obj.CookieBannerVersion.ID)
+	if err != nil {
+		if errors.Is(err, cookiebanner.ErrVersionNotFound) {
+			return nil, nil
+		}
+		r.logger.ErrorCtx(ctx, "cannot get cookie banner version", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.CookieBannerVersion{
+		ID:        version.ID,
+		Version:   version.Version,
+		State:     string(version.State),
+		CreatedAt: version.CreatedAt,
+		UpdatedAt: version.UpdatedAt,
+	}, nil
 }
 
 // TotalCount is the resolver for the totalCount field.

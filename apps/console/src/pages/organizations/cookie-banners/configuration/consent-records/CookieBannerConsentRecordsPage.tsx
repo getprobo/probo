@@ -64,7 +64,7 @@ const consentRecordsFragment = graphql`
     last: { type: "Int", defaultValue: null }
     action: { type: "CookieConsentAction", defaultValue: null }
     visitorId: { type: "String", defaultValue: null }
-    cookieBannerVersionId: { type: "ID", defaultValue: null }
+    version: { type: "Int", defaultValue: null }
   ) {
     consentRecords(
       first: $first
@@ -75,7 +75,7 @@ const consentRecordsFragment = graphql`
       filter: {
         action: $action
         visitorId: $visitorId
-        cookieBannerVersionId: $cookieBannerVersionId
+        version: $version
       }
     )
       @connection(
@@ -109,7 +109,8 @@ export default function CookieBannerConsentRecordsPage({
   const [isPending, startTransition] = useTransition();
   const [actionFilter, setActionFilter] = useState<CookieConsentAction | null>(null);
   const [visitorIdFilter, setVisitorIdFilter] = useState<string>("");
-  const [versionIdFilter, setVersionIdFilter] = useState<string>("");
+  const [versionFilter, setVersionFilter] = useState<string>("");
+  const [versionError, setVersionError] = useState(false);
 
   const { data: fragmentData, ...pagination } = usePaginationFragment<
     CookieBannerConsentRecordsPageRefetchQuery,
@@ -124,7 +125,7 @@ export default function CookieBannerConsentRecordsPage({
         {
           action: actionFilter,
           visitorId: visitorIdFilter || null,
-          cookieBannerVersionId: versionIdFilter || null,
+          version: versionFilter ? parseInt(versionFilter, 10) : null,
           ...overrides,
         },
         { fetchPolicy: "network-only" },
@@ -142,8 +143,13 @@ export default function CookieBannerConsentRecordsPage({
     refetchFilters({ visitorId: visitorIdFilter || null });
   };
 
-  const handleVersionIdSubmit = () => {
-    refetchFilters({ cookieBannerVersionId: versionIdFilter || null });
+  const handleVersionSubmit = () => {
+    if (versionFilter && !/^\d+$/.test(versionFilter)) {
+      setVersionError(true);
+      return;
+    }
+    setVersionError(false);
+    refetchFilters({ version: versionFilter ? parseInt(versionFilter, 10) : null });
   };
 
   const refetchWithFilters: ComponentProps<typeof SortableTable>["refetch"] = ({ order }) => {
@@ -151,7 +157,7 @@ export default function CookieBannerConsentRecordsPage({
       order: { direction: order.direction, field: order.field as CookieConsentRecordOrderField },
       action: actionFilter,
       visitorId: visitorIdFilter || null,
-      cookieBannerVersionId: versionIdFilter || null,
+      version: versionFilter ? parseInt(versionFilter, 10) : null,
     });
   };
 
@@ -177,11 +183,15 @@ export default function CookieBannerConsentRecordsPage({
           className="w-48"
         />
         <Input
-          placeholder={__("Version ID")}
-          value={versionIdFilter}
-          onChange={e => setVersionIdFilter(e.target.value)}
-          onKeyDown={e => e.key === "Enter" && handleVersionIdSubmit()}
-          onBlur={handleVersionIdSubmit}
+          placeholder={__("Banner version")}
+          value={versionFilter}
+          invalid={versionError}
+          onChange={(e) => {
+            setVersionFilter(e.target.value);
+            setVersionError(false);
+          }}
+          onKeyDown={e => e.key === "Enter" && handleVersionSubmit()}
+          onBlur={handleVersionSubmit}
           className="w-48"
         />
       </div>
@@ -198,7 +208,7 @@ export default function CookieBannerConsentRecordsPage({
                   <Tr>
                     <Th>{__("Visitor ID")}</Th>
                     <Th>{__("Action")}</Th>
-                    <Th>{__("Version")}</Th>
+                    <Th>{__("Banner Version")}</Th>
                     <Th>{__("IP Address")}</Th>
                     <Th>{__("SDK Version")}</Th>
                     <Th>{__("Consent Data")}</Th>

@@ -13,7 +13,6 @@ import (
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
@@ -144,17 +143,17 @@ func (r *cookieBannerResolver) ConsentRecords(ctx context.Context, obj *types.Co
 	scope := coredata.NewScopeFromObjectID(obj.ID)
 
 	var (
-		action                *coredata.CookieConsentAction
-		visitorID             *string
-		cookieBannerVersionID *gid.GID
+		action    *coredata.CookieConsentAction
+		visitorID *string
+		version   *int
 	)
 	if filter != nil {
 		action = filter.Action
 		visitorID = filter.VisitorID
-		cookieBannerVersionID = filter.CookieBannerVersionID
+		version = filter.Version
 	}
 
-	coredataFilter := coredata.NewCookieConsentRecordFilter(action, visitorID, cookieBannerVersionID)
+	coredataFilter := coredata.NewCookieConsentRecordFilter(action, visitorID, version)
 
 	records, err := r.cookieBanner.ListCookieConsentRecordsForBanner(ctx, scope, obj.ID, cursor, coredataFilter)
 	if err != nil {

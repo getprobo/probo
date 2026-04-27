@@ -86,7 +86,6 @@ export function ConsentRecordRow({ recordKey }: ConsentRecordRowProps) {
         {record.cookieBannerVersion
           ? (
               <span className="font-mono text-sm">
-                v
                 {record.cookieBannerVersion.version}
               </span>
             )
