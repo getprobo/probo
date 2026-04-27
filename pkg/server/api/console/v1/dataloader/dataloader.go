@@ -20,6 +20,7 @@ import (
 	"net/http"
 
 	"github.com/vikstrous/dataloadgen"
+	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
@@ -30,22 +31,25 @@ type (
 	ctxKey struct{ name string }
 
 	Loaders struct {
-		Organization *dataloadgen.Loader[gid.GID, *coredata.Organization]
-		Framework    *dataloadgen.Loader[gid.GID, *coredata.Framework]
-		Control      *dataloadgen.Loader[gid.GID, *coredata.Control]
-		Vendor       *dataloadgen.Loader[gid.GID, *coredata.Vendor]
-		Document     *dataloadgen.Loader[gid.GID, *coredata.Document]
-		Profile      *dataloadgen.Loader[gid.GID, *coredata.MembershipProfile]
-		Risk         *dataloadgen.Loader[gid.GID, *coredata.Risk]
-		Measure      *dataloadgen.Loader[gid.GID, *coredata.Measure]
-		Task         *dataloadgen.Loader[gid.GID, *coredata.Task]
-		File         *dataloadgen.Loader[gid.GID, *coredata.File]
-		Report       *dataloadgen.Loader[gid.GID, *coredata.Report]
+		Organization   *dataloadgen.Loader[gid.GID, *coredata.Organization]
+		Framework      *dataloadgen.Loader[gid.GID, *coredata.Framework]
+		Control        *dataloadgen.Loader[gid.GID, *coredata.Control]
+		Vendor         *dataloadgen.Loader[gid.GID, *coredata.Vendor]
+		Document       *dataloadgen.Loader[gid.GID, *coredata.Document]
+		Profile        *dataloadgen.Loader[gid.GID, *coredata.MembershipProfile]
+		Risk           *dataloadgen.Loader[gid.GID, *coredata.Risk]
+		Measure        *dataloadgen.Loader[gid.GID, *coredata.Measure]
+		Task           *dataloadgen.Loader[gid.GID, *coredata.Task]
+		File           *dataloadgen.Loader[gid.GID, *coredata.File]
+		Report         *dataloadgen.Loader[gid.GID, *coredata.Report]
+		CookieBanner   *dataloadgen.Loader[gid.GID, *coredata.CookieBanner]
+		CookieCategory *dataloadgen.Loader[gid.GID, *coredata.CookieCategory]
 	}
 
 	batchFetcher struct {
-		probo *probo.Service
-		iam   *iam.Service
+		probo        *probo.Service
+		iam          *iam.Service
+		cookieBanner *cookiebanner.Service
 	}
 )
 
@@ -55,11 +59,11 @@ func FromContext(ctx context.Context) *Loaders {
 	return ctx.Value(loadersKey).(*Loaders)
 }
 
-func NewMiddleware(proboSvc *probo.Service, iamSvc *iam.Service) func(http.Handler) http.Handler {
+func NewMiddleware(proboSvc *probo.Service, iamSvc *iam.Service, cookieBannerSvc *cookiebanner.Service) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(
 			func(w http.ResponseWriter, r *http.Request) {
-				f := &batchFetcher{probo: proboSvc, iam: iamSvc}
+				f := &batchFetcher{probo: proboSvc, iam: iamSvc, cookieBanner: cookieBannerSvc}
 				loaders := f.newLoaders()
 				ctx := context.WithValue(r.Context(), loadersKey, loaders)
 				next.ServeHTTP(w, r.WithContext(ctx))
@@ -70,17 +74,19 @@ func NewMiddleware(proboSvc *probo.Service, iamSvc *iam.Service) func(http.Handl
 
 func (f *batchFetcher) newLoaders() *Loaders {
 	return &Loaders{
-		Organization: dataloadgen.NewMappedLoader(f.fetchOrganizations),
-		Framework:    dataloadgen.NewMappedLoader(f.fetchFrameworks),
-		Control:      dataloadgen.NewMappedLoader(f.fetchControls),
-		Vendor:       dataloadgen.NewMappedLoader(f.fetchVendors),
-		Document:     dataloadgen.NewMappedLoader(f.fetchDocuments),
-		Profile:      dataloadgen.NewMappedLoader(f.fetchProfiles),
-		Risk:         dataloadgen.NewMappedLoader(f.fetchRisks),
-		Measure:      dataloadgen.NewMappedLoader(f.fetchMeasures),
-		Task:         dataloadgen.NewMappedLoader(f.fetchTasks),
-		File:         dataloadgen.NewMappedLoader(f.fetchFiles),
-		Report:       dataloadgen.NewMappedLoader(f.fetchReports),
+		Organization:   dataloadgen.NewMappedLoader(f.fetchOrganizations),
+		Framework:      dataloadgen.NewMappedLoader(f.fetchFrameworks),
+		Control:        dataloadgen.NewMappedLoader(f.fetchControls),
+		Vendor:         dataloadgen.NewMappedLoader(f.fetchVendors),
+		Document:       dataloadgen.NewMappedLoader(f.fetchDocuments),
+		Profile:        dataloadgen.NewMappedLoader(f.fetchProfiles),
+		Risk:           dataloadgen.NewMappedLoader(f.fetchRisks),
+		Measure:        dataloadgen.NewMappedLoader(f.fetchMeasures),
+		Task:           dataloadgen.NewMappedLoader(f.fetchTasks),
+		File:           dataloadgen.NewMappedLoader(f.fetchFiles),
+		Report:         dataloadgen.NewMappedLoader(f.fetchReports),
+		CookieBanner:   dataloadgen.NewMappedLoader(f.fetchCookieBanners),
+		CookieCategory: dataloadgen.NewMappedLoader(f.fetchCookieCategories),
 	}
 }
 
@@ -244,6 +250,36 @@ func (f *batchFetcher) fetchReports(ctx context.Context, keys []gid.GID) (map[gi
 
 	result := make(map[gid.GID]*coredata.Report, len(reports))
 	for _, v := range reports {
+		result[v.ID] = v
+	}
+	return result, nil
+}
+
+func (f *batchFetcher) fetchCookieBanners(ctx context.Context, keys []gid.GID) (map[gid.GID]*coredata.CookieBanner, error) {
+	scope := coredata.NewScopeFromObjectID(keys[0])
+
+	banners, err := f.cookieBanner.GetCookieBannersByIDs(ctx, scope, keys...)
+	if err != nil {
+		return nil, fmt.Errorf("cannot batch load cookie banners: %w", err)
+	}
+
+	result := make(map[gid.GID]*coredata.CookieBanner, len(banners))
+	for _, v := range banners {
+		result[v.ID] = v
+	}
+	return result, nil
+}
+
+func (f *batchFetcher) fetchCookieCategories(ctx context.Context, keys []gid.GID) (map[gid.GID]*coredata.CookieCategory, error) {
+	scope := coredata.NewScopeFromObjectID(keys[0])
+
+	categories, err := f.cookieBanner.GetCookieCategoriesByIDs(ctx, scope, keys...)
+	if err != nil {
+		return nil, fmt.Errorf("cannot batch load cookie categories: %w", err)
+	}
+
+	result := make(map[gid.GID]*coredata.CookieCategory, len(categories))
+	for _, v := range categories {
 		result[v.ID] = v
 	}
 	return result, nil

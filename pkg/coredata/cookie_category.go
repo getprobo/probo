@@ -146,6 +146,53 @@ LIMIT 1;
 	return nil
 }
 
+func (c *CookieCategories) LoadByIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	categoryIDs []gid.GID,
+) error {
+	q := `
+SELECT
+	id,
+	organization_id,
+	cookie_banner_id,
+	name,
+	slug,
+	description,
+	kind,
+	rank,
+	gcm_consent_types,
+	posthog_consent,
+	created_at,
+	updated_at
+FROM
+	cookie_categories
+WHERE
+	%s
+	AND id = ANY(@category_ids)
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"category_ids": categoryIDs}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query cookie categories: %w", err)
+	}
+
+	categories, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[CookieCategory])
+	if err != nil {
+		return fmt.Errorf("cannot collect cookie categories: %w", err)
+	}
+
+	*c = categories
+
+	return nil
+}
+
 func (c *CookieCategories) LoadByCookieBannerID(
 	ctx context.Context,
 	conn pg.Querier,

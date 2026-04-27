@@ -9,10 +9,12 @@ import (
 	"context"
 	"errors"
 
+	"github.com/vikstrous/dataloadgen"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/probo"
+	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
@@ -24,11 +26,11 @@ func (r *cookieConsentRecordResolver) CookieBanner(ctx context.Context, obj *typ
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.CookieBanner.ID)
+	loaders := dataloader.FromContext(ctx)
 
-	banner, err := r.cookieBanner.GetCookieBanner(ctx, scope, obj.CookieBanner.ID)
+	banner, err := loaders.CookieBanner.Load(ctx, obj.CookieBanner.ID)
 	if err != nil {
-		if errors.Is(err, cookiebanner.ErrBannerNotFound) {
+		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
 			return nil, nil
 		}
 		r.logger.ErrorCtx(ctx, "cannot get cookie banner", log.Error(err))

@@ -234,6 +234,54 @@ LIMIT 1;
 	return nil
 }
 
+func (b *CookieBanners) LoadByIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	bannerIDs []gid.GID,
+) error {
+	q := `
+SELECT
+	id,
+	organization_id,
+	name,
+	origin,
+	state,
+	privacy_policy_url,
+	cookie_policy_url,
+	consent_expiry_days,
+	consent_mode,
+	show_branding,
+	default_language,
+	created_at,
+	updated_at
+FROM
+	cookie_banners
+WHERE
+	%s
+	AND id = ANY(@banner_ids)
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"banner_ids": bannerIDs}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query cookie banners: %w", err)
+	}
+
+	banners, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[CookieBanner])
+	if err != nil {
+		return fmt.Errorf("cannot collect cookie banners: %w", err)
+	}
+
+	*b = banners
+
+	return nil
+}
+
 func (b *CookieBanners) LoadByOrganizationID(
 	ctx context.Context,
 	conn pg.Querier,

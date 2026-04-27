@@ -692,6 +692,30 @@ func (s *Service) GetCookieBanner(
 	return &banner, nil
 }
 
+func (s *Service) GetCookieBannersByIDs(
+	ctx context.Context,
+	scope coredata.Scoper,
+	bannerIDs ...gid.GID,
+) (coredata.CookieBanners, error) {
+	var banners coredata.CookieBanners
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := banners.LoadByIDs(ctx, conn, scope, bannerIDs); err != nil {
+				return fmt.Errorf("cannot load cookie banners by ids: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return banners, nil
+}
+
 func (s *Service) GetActiveCookieBanner(
 	ctx context.Context,
 	bannerID gid.GID,
@@ -1070,6 +1094,30 @@ func (s *Service) GetCookieCategory(
 	}
 
 	return &category, nil
+}
+
+func (s *Service) GetCookieCategoriesByIDs(
+	ctx context.Context,
+	scope coredata.Scoper,
+	categoryIDs ...gid.GID,
+) (coredata.CookieCategories, error) {
+	var categories coredata.CookieCategories
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := categories.LoadByIDs(ctx, conn, scope, categoryIDs); err != nil {
+				return fmt.Errorf("cannot load cookie categories by ids: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return categories, nil
 }
 
 func (s *Service) ListCookieCategoriesForBanner(

@@ -93,7 +93,7 @@ func NewMux(
 		r.Use(authn.NewAPIKeyMiddleware(iamSvc, tokenSecret))
 		r.Use(authn.NewOAuth2AccessTokenMiddleware(iamSvc))
 		r.Use(authn.NewIdentityPresenceMiddleware())
-		r.Use(dataloader.NewMiddleware(proboSvc, iamSvc))
+		r.Use(dataloader.NewMiddleware(proboSvc, iamSvc, cookieBannerSvc))
 
 		r.Handle("/graphql", graphqlHandler)
 

@@ -29,11 +29,11 @@ func (r *cookieResolver) CookieCategory(ctx context.Context, obj *types.Cookie) 
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.CookieCategory.ID)
+	loaders := dataloader.FromContext(ctx)
 
-	category, err := r.cookieBanner.GetCookieCategory(ctx, scope, obj.CookieCategory.ID)
+	category, err := loaders.CookieCategory.Load(ctx, obj.CookieCategory.ID)
 	if err != nil {
-		if errors.Is(err, cookiebanner.ErrCategoryNotFound) {
+		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
 			return nil, nil
 		}
 		r.logger.ErrorCtx(ctx, "cannot get cookie category", log.Error(err))
@@ -277,11 +277,11 @@ func (r *cookieCategoryResolver) CookieBanner(ctx context.Context, obj *types.Co
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.CookieBanner.ID)
+	loaders := dataloader.FromContext(ctx)
 
-	banner, err := r.cookieBanner.GetCookieBanner(ctx, scope, obj.CookieBanner.ID)
+	banner, err := loaders.CookieBanner.Load(ctx, obj.CookieBanner.ID)
 	if err != nil {
-		if errors.Is(err, cookiebanner.ErrBannerNotFound) {
+		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
 			return nil, nil
 		}
 		r.logger.ErrorCtx(ctx, "cannot get cookie banner", log.Error(err))
