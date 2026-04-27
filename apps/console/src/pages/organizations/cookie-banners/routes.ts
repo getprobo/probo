@@ -64,6 +64,11 @@ export const cookieBannerRoutes = [
         Fallback: LinkCardSkeleton,
         Component: lazy(() => import("#/pages/organizations/cookie-banners/configuration/display/CookieBannerDisplayPageLoader")),
       },
+      {
+        path: "consent-records",
+        Fallback: LinkCardSkeleton,
+        Component: lazy(() => import("#/pages/organizations/cookie-banners/configuration/consent-records/CookieBannerConsentRecordsPageLoader")),
+      },
     ],
   },
 ] satisfies AppRoute[];

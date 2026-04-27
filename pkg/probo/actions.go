@@ -408,4 +408,7 @@ const (
 	ActionCookieCreate = "core:cookie:create"
 	ActionCookieUpdate = "core:cookie:update"
 	ActionCookieDelete = "core:cookie:delete"
+
+	// CookieConsentRecord actions
+	ActionCookieConsentRecordList = "core:cookie-consent-record:list"
 )

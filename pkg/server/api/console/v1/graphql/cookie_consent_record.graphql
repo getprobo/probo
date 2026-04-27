@@ -1,0 +1,84 @@
+# Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+#
+# Permission to use, copy, modify, and/or distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+# REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+# AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+# LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+# OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+# PERFORMANCE OF THIS SOFTWARE.
+
+enum CookieConsentAction
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.CookieConsentAction") {
+    ACCEPT_ALL
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CookieConsentActionAcceptAll"
+        )
+    REJECT_ALL
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CookieConsentActionRejectAll"
+        )
+    CUSTOMIZE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CookieConsentActionCustomize"
+        )
+    GPC
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CookieConsentActionGPC"
+        )
+}
+
+enum CookieConsentRecordOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.CookieConsentRecordOrderField"
+    ) {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CookieConsentRecordOrderFieldCreatedAt"
+        )
+}
+
+input CookieConsentRecordOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.CookieConsentRecordOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: CookieConsentRecordOrderField!
+}
+
+input CookieConsentRecordFilter {
+    action: CookieConsentAction
+    visitorId: String
+    cookieBannerVersionId: ID
+}
+
+type CookieConsentRecord implements Node {
+    id: ID!
+    cookieBanner: CookieBanner @goField(forceResolver: true)
+    cookieBannerVersion: CookieBannerVersion @goField(forceResolver: true)
+    visitorId: String!
+    ipAddress: String
+    userAgent: String
+    consentData: String!
+    action: CookieConsentAction!
+    sdkVersion: String!
+    createdAt: Datetime!
+}
+
+type CookieConsentRecordConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.CookieConsentRecordConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [CookieConsentRecordEdge!]!
+    pageInfo: PageInfo!
+}
+
+type CookieConsentRecordEdge {
+    cursor: CursorKey!
+    node: CookieConsentRecord!
+}

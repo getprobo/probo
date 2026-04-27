@@ -102,6 +102,15 @@ type CookieBanner implements Node {
 
     latestVersion: CookieBannerVersion @goField(forceResolver: true)
 
+    consentRecords(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: CookieConsentRecordOrder
+        filter: CookieConsentRecordFilter
+    ): CookieConsentRecordConnection @goField(forceResolver: true)
+
     createdAt: Datetime!
     updatedAt: Datetime!
 

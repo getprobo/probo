@@ -14,15 +14,27 @@
 
 package coredata
 
-import "github.com/jackc/pgx/v5"
+import (
+	"github.com/jackc/pgx/v5"
+
+	"go.probo.inc/probo/pkg/gid"
+)
 
 type CookieConsentRecordFilter struct {
-	action *CookieConsentAction
+	action                *CookieConsentAction
+	visitorID             *string
+	cookieBannerVersionID *gid.GID
 }
 
-func NewCookieConsentRecordFilter(action *CookieConsentAction) *CookieConsentRecordFilter {
+func NewCookieConsentRecordFilter(
+	action *CookieConsentAction,
+	visitorID *string,
+	cookieBannerVersionID *gid.GID,
+) *CookieConsentRecordFilter {
 	return &CookieConsentRecordFilter{
-		action: action,
+		action:                action,
+		visitorID:             visitorID,
+		cookieBannerVersionID: cookieBannerVersionID,
 	}
 }
 
@@ -31,7 +43,23 @@ func (f *CookieConsentRecordFilter) SQLFragment() string {
 (
 	CASE
 		WHEN @filter_action::text IS NOT NULL THEN
-			action = @filter_action::consent_action
+			action = @filter_action::cookie_consent_action
+		ELSE TRUE
+	END
+)
+AND
+(
+	CASE
+		WHEN @filter_visitor_id::text IS NOT NULL THEN
+			visitor_id = @filter_visitor_id
+		ELSE TRUE
+	END
+)
+AND
+(
+	CASE
+		WHEN @filter_cookie_banner_version_id::text IS NOT NULL THEN
+			cookie_banner_version_id = @filter_cookie_banner_version_id
 		ELSE TRUE
 	END
 )`
@@ -39,11 +67,21 @@ func (f *CookieConsentRecordFilter) SQLFragment() string {
 
 func (f *CookieConsentRecordFilter) SQLArguments() pgx.StrictNamedArgs {
 	args := pgx.StrictNamedArgs{
-		"filter_action": nil,
+		"filter_action":                   nil,
+		"filter_visitor_id":               nil,
+		"filter_cookie_banner_version_id": nil,
 	}
 
 	if f.action != nil {
 		args["filter_action"] = string(*f.action)
+	}
+
+	if f.visitorID != nil {
+		args["filter_visitor_id"] = *f.visitorID
+	}
+
+	if f.cookieBannerVersionID != nil {
+		args["filter_cookie_banner_version_id"] = f.cookieBannerVersionID.String()
 	}
 
 	return args

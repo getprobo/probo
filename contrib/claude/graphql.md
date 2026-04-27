@@ -7,9 +7,13 @@ Schema-first GraphQL using [gqlgen](https://gqlgen.com/). The schema is hand-wri
 Each API's schema lives in `pkg/server/api/{api}/v1/graphql/` as multiple `.graphql` files, one per coredata model:
 
 - `base.graphql` — directives, scalars, Node interface, PageInfo, OrderDirection, root Query/Mutation/Organization types
-- Entity files (e.g., `vendor.graphql`, `control.graphql`) — use `extend type Organization`, `extend type Mutation`, etc.
+- Entity files (e.g., `vendor.graphql`, `control.graphql`) — use `extend type Mutation` to add their mutations.
 
 gqlgen's `follow-schema` layout generates one resolver file per schema file (e.g., `vendor.resolvers.go`). Types that get extended across files (Organization, Mutation, Viewer, TrustCenter) must be defined in `base.graphql`.
+
+### `extend type` restrictions
+
+**The only permitted use of `extend type` is `extend type Mutation`.** Never use `extend type` on any other type — not on entity types, not on `Organization`, not on `Query`. If `CookieBanner` needs a `consentRecords` connection, add the field directly to the `CookieBanner` type definition in `cookie_banner.graphql` — do not write `extend type CookieBanner` in another file. This keeps each entity's full field set visible in one place and avoids resolver mis-routing across generated files.
 
 ## Connection types and `@goModel`
 
