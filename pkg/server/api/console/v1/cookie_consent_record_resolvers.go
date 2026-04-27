@@ -20,7 +20,26 @@ import (
 
 // CookieBanner is the resolver for the cookieBanner field.
 func (r *cookieConsentRecordResolver) CookieBanner(ctx context.Context, obj *types.CookieConsentRecord) (*types.CookieBanner, error) {
-	return obj.CookieBanner, nil
+	if obj.CookieBanner == nil {
+		return nil, nil
+	}
+
+	if err := r.authorize(ctx, obj.CookieBanner.ID, probo.ActionCookieBannerGet); err != nil {
+		return nil, err
+	}
+
+	scope := coredata.NewScopeFromObjectID(obj.CookieBanner.ID)
+
+	banner, err := r.cookieBanner.GetCookieBanner(ctx, scope, obj.CookieBanner.ID)
+	if err != nil {
+		if errors.Is(err, cookiebanner.ErrBannerNotFound) {
+			return nil, nil
+		}
+		r.logger.ErrorCtx(ctx, "cannot get cookie banner", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewCookieBanner(banner), nil
 }
 
 // CookieBannerVersion is the resolver for the cookieBannerVersion field.

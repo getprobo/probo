@@ -1738,6 +1738,34 @@ func (s *Service) ListCookieConsentRecordsForBanner(
 	return records, nil
 }
 
+func (s *Service) GetCookieConsentRecord(
+	ctx context.Context,
+	scope coredata.Scoper,
+	id gid.GID,
+) (*coredata.CookieConsentRecord, error) {
+	var record coredata.CookieConsentRecord
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := record.LoadByID(ctx, conn, scope, id); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return ErrConsentNotFound
+				}
+
+				return fmt.Errorf("cannot load consent record: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &record, nil
+}
+
 func (s *Service) CountCookieConsentRecordsForBanner(
 	ctx context.Context,
 	scope coredata.Scoper,

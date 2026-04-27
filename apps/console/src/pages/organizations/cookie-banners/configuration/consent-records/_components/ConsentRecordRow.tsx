@@ -19,8 +19,15 @@ import { graphql, useFragment } from "react-relay";
 
 import type { ConsentRecordRowFragment$key } from "#/__generated__/core/ConsentRecordRowFragment.graphql";
 
+import {
+  formatAnonymizedIp,
+  getActionLabel,
+  getActionVariant,
+} from "./consentRecordHelpers";
+
 const consentRecordFragment = graphql`
   fragment ConsentRecordRowFragment on CookieConsentRecord {
+    id
     visitorId
     action
     cookieBannerVersion {
@@ -29,40 +36,9 @@ const consentRecordFragment = graphql`
     }
     ipAddress
     sdkVersion
-    consentData
     createdAt
   }
 `;
-
-function getActionLabel(action: string, __: (s: string) => string): string {
-  switch (action) {
-    case "ACCEPT_ALL":
-      return __("Accept All");
-    case "REJECT_ALL":
-      return __("Reject All");
-    case "CUSTOMIZE":
-      return __("Customize");
-    case "GPC":
-      return __("GPC");
-    default:
-      return action;
-  }
-}
-
-function getActionVariant(action: string): "success" | "danger" | "warning" | "neutral" {
-  switch (action) {
-    case "ACCEPT_ALL":
-      return "success";
-    case "REJECT_ALL":
-      return "danger";
-    case "CUSTOMIZE":
-      return "warning";
-    case "GPC":
-      return "neutral";
-    default:
-      return "neutral";
-  }
-}
 
 interface ConsentRecordRowProps {
   recordKey: ConsentRecordRowFragment$key;
@@ -73,7 +49,7 @@ export function ConsentRecordRow({ recordKey }: ConsentRecordRowProps) {
   const record = useFragment(consentRecordFragment, recordKey);
 
   return (
-    <Tr>
+    <Tr to={record.id}>
       <Td>
         <span className="font-mono text-sm">{record.visitorId}</span>
       </Td>
@@ -92,15 +68,12 @@ export function ConsentRecordRow({ recordKey }: ConsentRecordRowProps) {
           : <span className="text-txt-tertiary">-</span>}
       </Td>
       <Td>
-        <span className="font-mono text-sm">{record.ipAddress ?? "-"}</span>
+        <span className="font-mono text-sm">
+          {record.ipAddress ? formatAnonymizedIp(record.ipAddress) : "-"}
+        </span>
       </Td>
       <Td>
         <span className="font-mono text-sm">{record.sdkVersion}</span>
-      </Td>
-      <Td>
-        <span className="font-mono text-xs max-w-48 truncate block" title={record.consentData}>
-          {record.consentData}
-        </span>
       </Td>
       <Td>
         <time dateTime={record.createdAt}>

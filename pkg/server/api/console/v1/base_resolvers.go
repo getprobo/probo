@@ -352,6 +352,16 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			}
 			return types.NewCookieCategory(category), nil
 		}
+	case coredata.CookieConsentRecordEntityType:
+		action = probo.ActionCookieConsentRecordList
+		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
+			scope := coredata.NewScopeFromObjectID(id)
+			record, err := r.cookieBanner.GetCookieConsentRecord(ctx, scope, id)
+			if err != nil {
+				return nil, err
+			}
+			return types.NewCookieConsentRecord(record), nil
+		}
 	case coredata.CookieBannerVersionEntityType:
 		action = probo.ActionCookieBannerVersionGet
 		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {

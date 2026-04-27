@@ -56,7 +56,18 @@ func (r *CookieConsentRecord) CursorKey(field CookieConsentRecordOrderField) pag
 }
 
 func (r *CookieConsentRecord) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
-	return map[string]string{"organization_id": r.OrganizationID.String()}, nil
+	q := `SELECT organization_id FROM cookie_consent_records WHERE id = $1 LIMIT 1;`
+
+	var organizationID gid.GID
+	if err := conn.QueryRow(ctx, q, r.ID).Scan(&organizationID); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrResourceNotFound
+		}
+
+		return nil, fmt.Errorf("cannot query consent record authorization attributes: %w", err)
+	}
+
+	return map[string]string{"organization_id": organizationID.String()}, nil
 }
 
 func (r *CookieConsentRecords) LoadByCookieBannerID(
@@ -199,6 +210,56 @@ INSERT INTO cookie_consent_records (
 	if err != nil {
 		return fmt.Errorf("cannot insert consent record: %w", err)
 	}
+
+	return nil
+}
+
+func (r *CookieConsentRecord) LoadByID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	id gid.GID,
+) error {
+	q := `
+SELECT
+	id,
+	organization_id,
+	cookie_banner_id,
+	cookie_banner_version_id,
+	visitor_id,
+	ip_address,
+	user_agent,
+	consent_data,
+	action,
+	sdk_version,
+	created_at
+FROM
+	cookie_consent_records
+WHERE
+	%s
+	AND id = @id
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"id": id}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query consent record: %w", err)
+	}
+
+	record, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[CookieConsentRecord])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect consent record: %w", err)
+	}
+
+	*r = record
 
 	return nil
 }

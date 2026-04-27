@@ -211,7 +211,6 @@ export default function CookieBannerConsentRecordsPage({
                     <Th>{__("Banner Version")}</Th>
                     <Th>{__("IP Address")}</Th>
                     <Th>{__("SDK Version")}</Th>
-                    <Th>{__("Consent Data")}</Th>
                     <SortableTh field="CREATED_AT">{__("Date")}</SortableTh>
                   </Tr>
                 </Thead>

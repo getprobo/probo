@@ -188,6 +188,45 @@ func (r *cookieBannerConnectionResolver) TotalCount(ctx context.Context, obj *ty
 	return count, nil
 }
 
+// Categories is the resolver for the categories field.
+func (r *cookieBannerVersionResolver) Categories(ctx context.Context, obj *types.CookieBannerVersion) ([]*types.CookieBannerVersionCategory, error) {
+	scope := coredata.NewScopeFromObjectID(obj.ID)
+
+	version, err := r.cookieBanner.GetCookieBannerVersion(ctx, scope, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot get cookie banner version", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	snapshot, err := version.GetSnapshot()
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot get version snapshot", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	categories := make([]*types.CookieBannerVersionCategory, len(snapshot.Categories))
+	for i, cat := range snapshot.Categories {
+		cookies := make([]*types.CookieBannerVersionCookie, len(cat.Cookies))
+		for j, c := range cat.Cookies {
+			cookies[j] = &types.CookieBannerVersionCookie{
+				Name:        c.Name,
+				Duration:    c.Duration,
+				Description: c.Description,
+			}
+		}
+
+		categories[i] = &types.CookieBannerVersionCategory{
+			Name:        cat.Name,
+			Slug:        cat.Slug,
+			Description: cat.Description,
+			Kind:        cat.Kind,
+			Cookies:     cookies,
+		}
+	}
+
+	return categories, nil
+}
+
 // CookieBanner is the resolver for the cookieBanner field.
 func (r *cookieCategoryResolver) CookieBanner(ctx context.Context, obj *types.CookieCategory) (*types.CookieBanner, error) {
 	return obj.CookieBanner, nil
@@ -848,6 +887,11 @@ func (r *Resolver) CookieBannerConnection() schema.CookieBannerConnectionResolve
 	return &cookieBannerConnectionResolver{r}
 }
 
+// CookieBannerVersion returns schema.CookieBannerVersionResolver implementation.
+func (r *Resolver) CookieBannerVersion() schema.CookieBannerVersionResolver {
+	return &cookieBannerVersionResolver{r}
+}
+
 // CookieCategory returns schema.CookieCategoryResolver implementation.
 func (r *Resolver) CookieCategory() schema.CookieCategoryResolver { return &cookieCategoryResolver{r} }
 
@@ -864,6 +908,7 @@ func (r *Resolver) CookieConnection() schema.CookieConnectionResolver {
 type cookieResolver struct{ *Resolver }
 type cookieBannerResolver struct{ *Resolver }
 type cookieBannerConnectionResolver struct{ *Resolver }
+type cookieBannerVersionResolver struct{ *Resolver }
 type cookieCategoryResolver struct{ *Resolver }
 type cookieCategoryConnectionResolver struct{ *Resolver }
 type cookieConnectionResolver struct{ *Resolver }

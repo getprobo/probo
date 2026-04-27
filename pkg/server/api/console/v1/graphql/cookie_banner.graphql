@@ -198,8 +198,23 @@ type CookieBannerVersion implements Node {
     id: ID!
     version: Int!
     state: String!
+    categories: [CookieBannerVersionCategory!]! @goField(forceResolver: true)
     createdAt: Datetime!
     updatedAt: Datetime!
+}
+
+type CookieBannerVersionCategory {
+    name: String!
+    slug: String!
+    description: String!
+    kind: CookieCategoryKind!
+    cookies: [CookieBannerVersionCookie!]!
+}
+
+type CookieBannerVersionCookie {
+    name: String!
+    duration: String!
+    description: String!
 }
 
 type CookieBannerConnection
