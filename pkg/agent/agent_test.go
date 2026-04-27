@@ -479,7 +479,7 @@ func TestRun(t *testing.T) {
 	)
 
 	t.Run(
-		"context cancellation",
+		"context cancellation triggers graceful suspend",
 		func(t *testing.T) {
 			t.Parallel()
 
@@ -500,8 +500,10 @@ func TestRun(t *testing.T) {
 
 			_, err := ag.Run(ctx, []llm.Message{userMessage("test")})
 
-			require.Error(t, err)
-			assert.Contains(t, err.Error(), "cannot complete")
+			var se *agent.SuspendedError
+			require.ErrorAs(t, err, &se)
+			require.NotNil(t, se.Checkpoint)
+			assert.Equal(t, agent.AgentStatusSuspended, se.Checkpoint.Status)
 			assert.Equal(t, 0, provider.calls)
 		},
 	)
