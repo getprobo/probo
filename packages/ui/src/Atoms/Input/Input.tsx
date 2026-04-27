@@ -29,11 +29,12 @@ export const input = tv({
   base: "w-full disabled:bg-transparent",
   variants: {
     invalid: {
-      true: "border-border-danger",
+      true: "border-border-danger hover:border-e-border-danger",
+      false: "border-border-mid hover:border-border-strong",
     },
     variant: {
       bordered:
-                "py-[6px] bg-secondary border border-border-mid rounded-[10px] hover:border-border-strong text-sm px-3 text-txt-primary",
+                "py-[6px] bg-secondary border  rounded-[10px]  text-sm px-3 text-txt-primary",
       ghost: "text-base text-txt-secondary outline-none",
       title: "text-2xl font-semibold text-txt-primary outline-none",
     },
@@ -56,6 +57,7 @@ export function Input({
       <div
         className={input({
           className: "flex items-center gap-2",
+          invalid,
         })}
         data-focus={focus}
       >
@@ -84,7 +86,7 @@ export function Input({
     <input
       {...props}
       aria-invalid={invalid}
-      className={input(props)}
+      className={input({ invalid, ...props })}
       onChange={(e) => {
         onValueChange?.(e.currentTarget.value);
         props.onChange?.(e);
