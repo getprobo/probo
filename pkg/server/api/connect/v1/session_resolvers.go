@@ -318,10 +318,12 @@ func (r *mutationResolver) VerifyEmail(ctx context.Context, input types.VerifyEm
 // ChangePassword is the resolver for the changePassword field.
 func (r *mutationResolver) ChangePassword(ctx context.Context, input types.ChangePasswordInput) (*types.ChangePasswordPayload, error) {
 	identity := authn.IdentityFromContext(ctx)
+	session := authn.SessionFromContext(ctx)
 
 	err := r.iam.AccountService.ChangePassword(
 		ctx,
 		identity.ID,
+		session.ID,
 		&iam.ChangePasswordRequest{
 			CurrentPassword: input.CurrentPassword,
 			NewPassword:     input.NewPassword,

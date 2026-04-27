@@ -343,6 +343,30 @@ WHERE
 	return result.RowsAffected(), nil
 }
 
+func (s *Sessions) ExpireAllForIdentity(ctx context.Context, conn pg.Querier, identityID gid.GID) (int64, error) {
+	q := `
+UPDATE iam_sessions
+SET
+    expired_at = NOW(),
+    updated_at = NOW(),
+    expire_reason = 'revoked'
+WHERE
+    identity_id = @identity_id
+    AND expire_reason IS NULL
+`
+
+	args := pgx.StrictNamedArgs{
+		"identity_id": identityID,
+	}
+
+	result, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return 0, fmt.Errorf("cannot query sessions: %w", err)
+	}
+
+	return result.RowsAffected(), nil
+}
+
 func (s *Session) LoadByRootSessionIDAndMembershipID(
 	ctx context.Context,
 	conn pg.Querier,

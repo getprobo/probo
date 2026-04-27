@@ -279,6 +279,11 @@ func (s AuthService) ResetPassword(
 				return fmt.Errorf("cannot update identity: %w", err)
 			}
 
+			sessions := coredata.Sessions{}
+			if _, err := sessions.ExpireAllForIdentity(ctx, tx, identity.ID); err != nil {
+				return fmt.Errorf("cannot expire sessions: %w", err)
+			}
+
 			return nil
 		},
 	)

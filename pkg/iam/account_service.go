@@ -235,7 +235,7 @@ func (s *AccountService) ListPendingInvitations(
 	return page.NewPage(invitations, cursor), nil
 }
 
-func (s AccountService) ChangePassword(ctx context.Context, identityID gid.GID, req *ChangePasswordRequest) error {
+func (s AccountService) ChangePassword(ctx context.Context, identityID gid.GID, currentSessionID gid.GID, req *ChangePasswordRequest) error {
 	if err := req.Validate(); err != nil {
 		return fmt.Errorf("invalid request: %w", err)
 	}
@@ -273,6 +273,11 @@ func (s AccountService) ChangePassword(ctx context.Context, identityID gid.GID, 
 			err = identity.Update(ctx, tx)
 			if err != nil {
 				return fmt.Errorf("cannot update identity: %w", err)
+			}
+
+			sessions := coredata.Sessions{}
+			if _, err := sessions.ExpireAllForIdentityExceptOneSession(ctx, tx, identity.ID, currentSessionID); err != nil {
+				return fmt.Errorf("cannot expire other sessions: %w", err)
 			}
 
 			// TODO: email to notify identity that their password has been changed
