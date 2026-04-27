@@ -15,10 +15,15 @@
 package agent
 
 import (
+	"errors"
 	"fmt"
 
 	"go.probo.inc/probo/pkg/llm"
 )
+
+// ErrSuspendForCheckpoint is the cancel cause to use when the caller
+// wants the agent loop to gracefully suspend.
+var ErrSuspendForCheckpoint = errors.New("agent run graceful suspend requested")
 
 type (
 	MaxTurnsExceededError struct {
