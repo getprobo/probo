@@ -476,9 +476,8 @@ func TestRestore(t *testing.T) {
 
 			store := newMemoryCheckpointer()
 
-			stopCh := make(chan struct{})
-			close(stopCh)
-			ctx := agent.WithStopSignal(context.Background(), stopCh)
+			ctx, cancel := context.WithCancel(context.Background())
+			cancel()
 
 			_, err := ag.Run(
 				ctx,
