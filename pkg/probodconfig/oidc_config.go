@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,19 +12,10 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package probod
+package probodconfig
 
-type CorsConfig struct {
-	AllowedOrigins []string `json:"allowed-origins"`
-}
-
-type ProxyProtocolConfig struct {
-	TrustedProxies []string `json:"trusted-proxies"`
-}
-
-type APIConfig struct {
-	Addr              string              `json:"addr"`
-	ProxyProtocol     ProxyProtocolConfig `json:"proxy-protocol"`
-	Cors              CorsConfig          `json:"cors"`
-	ExtraHeaderFields map[string]string   `json:"extra-header-fields"`
+type OIDCProviderConfig struct {
+	ClientID     string `json:"client-id"`
+	ClientSecret string `json:"client-secret"`
+	Enabled      bool   `json:"enabled"`
 }

@@ -12,10 +12,9 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package probod
+package probodconfig
 
-type OIDCProviderConfig struct {
-	ClientID     string `json:"client-id"`
-	ClientSecret string `json:"client-secret"`
-	Enabled      bool   `json:"enabled"`
+type SCIMBridgeConfig struct {
+	SyncInterval int `json:"sync-interval"`
+	PollInterval int `json:"poll-interval"`
 }

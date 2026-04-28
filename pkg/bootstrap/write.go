@@ -19,11 +19,11 @@ import (
 	"os"
 	"path/filepath"
 
-	"go.probo.inc/probo/pkg/probod"
+	"go.probo.inc/probo/pkg/probodconfig"
 	"sigs.k8s.io/yaml"
 )
 
-func WriteConfig(cfg *probod.FullConfig, path string) error {
+func WriteConfig(cfg *probodconfig.FullConfig, path string) error {
 	dir := filepath.Dir(path)
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return fmt.Errorf("create directory %s: %w", dir, err)

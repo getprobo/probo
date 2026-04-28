@@ -12,9 +12,18 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package probod
+package probodconfig
 
-type SCIMBridgeConfig struct {
-	SyncInterval int `json:"sync-interval"`
-	PollInterval int `json:"poll-interval"`
+type MailerConfig struct {
+	MailerInterval int        `json:"mailer-interval"`
+	SenderName     string     `json:"sender-name"`
+	SenderEmail    string     `json:"sender-email"`
+	SMTP           SMTPConfig `json:"smtp"`
+}
+
+type SMTPConfig struct {
+	Addr        string `json:"addr"`
+	User        string `json:"user"`
+	Password    string `json:"password"`
+	TLSRequired bool   `json:"tls-required"`
 }

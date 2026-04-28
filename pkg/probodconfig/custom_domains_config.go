@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,15 +12,21 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package probod
+package probodconfig
 
-type NotificationsConfig struct {
-	Mailer  MailerConfig  `json:"mailer"`
-	Slack   SlackConfig   `json:"slack"`
-	Webhook WebhookConfig `json:"webhook"`
+type CustomDomainsConfig struct {
+	RenewalInterval   int        `json:"renewal-interval"`
+	ProvisionInterval int        `json:"provision-interval"`
+	ResolverAddr      string     `json:"resolver-addr"`
+	CnameTarget       string     `json:"cname-target"`
+	CAAIssuerDomain   string     `json:"caa-issuer-domain"`
+	ACME              ACMEConfig `json:"acme"`
 }
 
-type WebhookConfig struct {
-	SenderInterval int `json:"sender-interval"`
-	CacheTTL       int `json:"cache-ttl"`
+type ACMEConfig struct {
+	Directory  string `json:"directory"`
+	Email      string `json:"email"`
+	KeyType    string `json:"key-type"`
+	AccountKey string `json:"account-key"`
+	RootCA     string `json:"root-ca"`
 }

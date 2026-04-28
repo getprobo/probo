@@ -21,7 +21,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.probo.inc/probo/pkg/probod"
+	"go.probo.inc/probo/pkg/probodconfig"
 )
 
 func mockEnv(env map[string]string) EnvGetter {
@@ -393,7 +393,7 @@ func TestBuilder_Build_GoogleWorkspaceConnector(t *testing.T) {
 	connector := cfg.Probod.Connectors[0]
 	assert.Equal(t, "GOOGLE_WORKSPACE", connector.Provider)
 	assert.Equal(t, "oauth2", string(connector.Protocol))
-	rawConfig := connector.RawConfig.(probod.ConnectorConfigOAuth2)
+	rawConfig := connector.RawConfig.(probodconfig.ConnectorConfigOAuth2)
 	assert.Equal(t, "gw-client-id", rawConfig.ClientID)
 	assert.Equal(t, "gw-client-secret", rawConfig.ClientSecret)
 }
@@ -415,7 +415,7 @@ func TestBuilder_Build_SlackConnector(t *testing.T) {
 	connector := cfg.Probod.Connectors[0]
 	assert.Equal(t, "SLACK", connector.Provider)
 	assert.Equal(t, "oauth2", string(connector.Protocol))
-	rawConfig := connector.RawConfig.(probod.ConnectorConfigOAuth2)
+	rawConfig := connector.RawConfig.(probodconfig.ConnectorConfigOAuth2)
 	assert.Equal(t, "slack-client-id", rawConfig.ClientID)
 	assert.Equal(t, "slack-client-secret", rawConfig.ClientSecret)
 	rawSettings := connector.RawSettings.(map[string]any)

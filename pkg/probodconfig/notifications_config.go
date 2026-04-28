@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,13 +12,15 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package probod
+package probodconfig
 
-type AWSConfig struct {
-	Region          string `json:"region"`
-	Bucket          string `json:"bucket"`
-	AccessKeyID     string `json:"access-key-id"`
-	SecretAccessKey string `json:"secret-access-key"`
-	Endpoint        string `json:"endpoint"`
-	UsePathStyle    bool   `json:"use-path-style"`
+type NotificationsConfig struct {
+	Mailer  MailerConfig  `json:"mailer"`
+	Slack   SlackConfig   `json:"slack"`
+	Webhook WebhookConfig `json:"webhook"`
+}
+
+type WebhookConfig struct {
+	SenderInterval int `json:"sender-interval"`
+	CacheTTL       int `json:"cache-ttl"`
 }

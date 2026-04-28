@@ -20,7 +20,7 @@ import (
 	"strconv"
 	"strings"
 
-	"go.probo.inc/probo/pkg/probod"
+	"go.probo.inc/probo/pkg/probodconfig"
 )
 
 type EnvGetter func(key string) string
@@ -39,7 +39,7 @@ func NewBuilder(getEnv EnvGetter) *Builder {
 	return &Builder{getEnv: getEnv}
 }
 
-func (b *Builder) Build() (*probod.FullConfig, error) {
+func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 	if err := b.validateRequired(); err != nil {
 		return nil, err
 	}
@@ -53,12 +53,12 @@ func (b *Builder) Build() (*probod.FullConfig, error) {
 
 	pgCACertBundle := b.getPgCACertBundle()
 
-	cfg := &probod.FullConfig{
-		Unit: probod.UnitConfig{
-			Metrics: probod.MetricsConfig{
+	cfg := &probodconfig.FullConfig{
+		Unit: probodconfig.UnitConfig{
+			Metrics: probodconfig.MetricsConfig{
 				Addr: b.getEnvOrDefault("METRICS_ADDR", "localhost:8081"),
 			},
-			Tracing: probod.TracingConfig{
+			Tracing: probodconfig.TracingConfig{
 				Addr:          b.getEnvOrDefault("TRACING_ADDR", "localhost:4317"),
 				MaxBatchSize:  b.getEnvIntOrDefault("TRACING_MAX_BATCH_SIZE", 512),
 				BatchTimeout:  b.getEnvIntOrDefault("TRACING_BATCH_TIMEOUT", 5),
@@ -66,21 +66,21 @@ func (b *Builder) Build() (*probod.FullConfig, error) {
 				MaxQueueSize:  b.getEnvIntOrDefault("TRACING_MAX_QUEUE_SIZE", 2048),
 			},
 		},
-		Probod: probod.Config{
+		Probod: probodconfig.Config{
 			BaseURL:       b.getEnvOrDefault("PROBOD_BASE_URL", "http://localhost:8080"),
 			EncryptionKey: b.getEnv("PROBOD_ENCRYPTION_KEY"),
 			ChromeDPAddr:  b.getEnvOrDefault("CHROME_DP_ADDR", "localhost:9222"),
-			Api: probod.APIConfig{
+			Api: probodconfig.APIConfig{
 				Addr: b.getEnvOrDefault("API_ADDR", ":8080"),
-				ProxyProtocol: probod.ProxyProtocolConfig{
+				ProxyProtocol: probodconfig.ProxyProtocolConfig{
 					TrustedProxies: b.parseOriginsList(b.getEnv("API_PROXY_PROTOCOL_TRUSTED_PROXIES")),
 				},
-				Cors: probod.CorsConfig{
+				Cors: probodconfig.CorsConfig{
 					AllowedOrigins: b.parseOriginsList(b.getEnvOrDefault("API_CORS_ALLOWED_ORIGINS", "http://localhost:8080")),
 				},
 				ExtraHeaderFields: make(map[string]string),
 			},
-			Pg: probod.PgConfig{
+			Pg: probodconfig.PgConfig{
 				Addr:                   b.getEnvOrDefault("PG_ADDR", "localhost:5432"),
 				Username:               b.getEnvOrDefault("PG_USERNAME", "postgres"),
 				Password:               b.getEnvOrDefault("PG_PASSWORD", "postgres"),
@@ -92,23 +92,23 @@ func (b *Builder) Build() (*probod.FullConfig, error) {
 				CACertBundle:           pgCACertBundle,
 				Debug:                  b.getEnvBoolOrDefault("PG_DEBUG", false),
 			},
-			Auth: probod.AuthConfig{
+			Auth: probodconfig.AuthConfig{
 				DisableSignup:                       b.getEnvBoolOrDefault("AUTH_DISABLE_SIGNUP", false),
 				InvitationConfirmationTokenValidity: b.getEnvIntOrDefault("AUTH_INVITATION_TOKEN_VALIDITY", 3600),
 				PasswordResetTokenValidity:          b.getEnvIntOrDefault("AUTH_PASSWORD_RESET_TOKEN_VALIDITY", 3600),
 				MagicLinkTokenValidity:              b.getEnvIntOrDefault("AUTH_MAGIC_LINK_TOKEN_VALIDITY", 900),
-				Cookie: probod.CookieConfig{
+				Cookie: probodconfig.CookieConfig{
 					Name:     b.getEnvOrDefault("AUTH_COOKIE_NAME", "SSID"),
 					Domain:   b.getEnvOrDefault("AUTH_COOKIE_DOMAIN", "localhost"),
 					Secret:   b.getEnv("AUTH_COOKIE_SECRET"),
 					Duration: b.getEnvIntOrDefault("AUTH_COOKIE_DURATION", 24),
 					Secure:   b.getEnvBoolOrDefault("AUTH_COOKIE_SECURE", true),
 				},
-				Password: probod.PasswordConfig{
+				Password: probodconfig.PasswordConfig{
 					Pepper:     b.getEnv("AUTH_PASSWORD_PEPPER"),
 					Iterations: b.getEnvIntOrDefault("AUTH_PASSWORD_ITERATIONS", 1000000),
 				},
-				SAML: probod.SAMLConfig{
+				SAML: probodconfig.SAMLConfig{
 					SessionDuration:                   b.getEnvIntOrDefault("SAML_SESSION_DURATION", 604800),
 					CleanupIntervalSeconds:            b.getEnvIntOrDefault("SAML_CLEANUP_INTERVAL_SECONDS", 0),
 					Certificate:                       samlCert,
@@ -116,18 +116,18 @@ func (b *Builder) Build() (*probod.FullConfig, error) {
 					DomainVerificationIntervalSeconds: b.getEnvIntOrDefault("SAML_DOMAIN_VERIFICATION_INTERVAL_SECONDS", 60),
 					DomainVerificationResolverAddr:    b.getEnvOrDefault("SAML_DOMAIN_VERIFICATION_RESOLVER_ADDR", "8.8.8.8:53"),
 				},
-				Google: probod.OIDCProviderConfig{
+				Google: probodconfig.OIDCProviderConfig{
 					ClientID:     b.getEnv("AUTH_GOOGLE_CLIENT_ID"),
 					ClientSecret: b.getEnv("AUTH_GOOGLE_CLIENT_SECRET"),
 					Enabled:      b.getEnv("AUTH_GOOGLE_CLIENT_ID") != "" && b.getEnv("AUTH_GOOGLE_CLIENT_SECRET") != "",
 				},
-				Microsoft: probod.OIDCProviderConfig{
+				Microsoft: probodconfig.OIDCProviderConfig{
 					ClientID:     b.getEnv("AUTH_MICROSOFT_CLIENT_ID"),
 					ClientSecret: b.getEnv("AUTH_MICROSOFT_CLIENT_SECRET"),
 					Enabled:      b.getEnv("AUTH_MICROSOFT_CLIENT_ID") != "" && b.getEnv("AUTH_MICROSOFT_CLIENT_SECRET") != "",
 				},
-				OAuth2Server: probod.OAuth2ServerConfig{
-					SigningKeys: []probod.OAuth2SigningKeyConfig{{
+				OAuth2Server: probodconfig.OAuth2ServerConfig{
+					SigningKeys: []probodconfig.OAuth2SigningKeyConfig{{
 						PrivateKey: oauth2SigningKey,
 						KID:        b.getEnvOrDefault("OAUTH2_SERVER_SIGNING_KEY_KID", "default"),
 						Active:     true,
@@ -138,14 +138,14 @@ func (b *Builder) Build() (*probod.FullConfig, error) {
 					DeviceCodeDuration:        b.getEnvIntOrDefault("OAUTH2_SERVER_DEVICE_CODE_DURATION", 600),
 				},
 			},
-			TrustCenter: probod.TrustCenterConfig{
+			TrustCenter: probodconfig.TrustCenterConfig{
 				HTTPAddr:  b.getEnvOrDefault("TRUST_CENTER_HTTP_ADDR", ":80"),
 				HTTPSAddr: b.getEnvOrDefault("TRUST_CENTER_HTTPS_ADDR", ":443"),
-				ProxyProtocol: probod.ProxyProtocolConfig{
+				ProxyProtocol: probodconfig.ProxyProtocolConfig{
 					TrustedProxies: b.parseOriginsList(b.getEnv("TRUST_CENTER_PROXY_PROTOCOL_TRUSTED_PROXIES")),
 				},
 			},
-			AWS: probod.AWSConfig{
+			AWS: probodconfig.AWSConfig{
 				Region:          b.getEnvOrDefault("AWS_REGION", "us-east-1"),
 				Bucket:          b.getEnvOrDefault("AWS_BUCKET", "probod"),
 				AccessKeyID:     b.getEnv("AWS_ACCESS_KEY_ID"),
@@ -153,29 +153,29 @@ func (b *Builder) Build() (*probod.FullConfig, error) {
 				Endpoint:        b.getEnv("AWS_ENDPOINT"),
 				UsePathStyle:    b.getEnvBoolOrDefault("AWS_USE_PATH_STYLE", false),
 			},
-			Notifications: probod.NotificationsConfig{
-				Mailer: probod.MailerConfig{
+			Notifications: probodconfig.NotificationsConfig{
+				Mailer: probodconfig.MailerConfig{
 					SenderName:     b.getEnvOrDefault("MAILER_SENDER_NAME", "Probo"),
 					SenderEmail:    b.getEnvOrDefault("MAILER_SENDER_EMAIL", "no-reply@notification.getprobo.com"),
 					MailerInterval: b.getEnvIntOrDefault("MAILER_INTERVAL", 60),
-					SMTP: probod.SMTPConfig{
+					SMTP: probodconfig.SMTPConfig{
 						Addr:        b.getEnvOrDefault("SMTP_ADDR", "localhost:1025"),
 						User:        b.getEnv("SMTP_USER"),
 						Password:    b.getEnv("SMTP_PASSWORD"),
 						TLSRequired: b.getEnvBoolOrDefault("SMTP_TLS_REQUIRED", false),
 					},
 				},
-				Slack: probod.SlackConfig{
+				Slack: probodconfig.SlackConfig{
 					SenderInterval: b.getEnvIntOrDefault("SLACK_SENDER_INTERVAL", 60),
 					SigningSecret:  b.getEnv("CONNECTOR_SLACK_SIGNING_SECRET"),
 				},
-				Webhook: probod.WebhookConfig{
+				Webhook: probodconfig.WebhookConfig{
 					SenderInterval: b.getEnvIntOrDefault("WEBHOOK_SENDER_INTERVAL", 5),
 					CacheTTL:       b.getEnvIntOrDefault("WEBHOOK_CACHE_TTL", 86400),
 				},
 			},
-			Agents: probod.AgentsConfig{
-				Providers: map[string]probod.LLMProviderConfig{
+			Agents: probodconfig.AgentsConfig{
+				Providers: map[string]probodconfig.LLMProviderConfig{
 					"openai": {
 						Type:   "openai",
 						APIKey: b.getEnv("OPENAI_API_KEY"),
@@ -185,32 +185,32 @@ func (b *Builder) Build() (*probod.FullConfig, error) {
 						APIKey: b.getEnv("ANTHROPIC_API_KEY"),
 					},
 				},
-				Default: probod.LLMAgentConfig{
+				Default: probodconfig.LLMAgentConfig{
 					Provider:    b.getEnvOrDefault("AGENT_DEFAULT_PROVIDER", "openai"),
 					ModelName:   b.getEnvOrDefault("AGENT_DEFAULT_MODEL_NAME", "gpt-4o"),
 					Temperature: new(b.getEnvFloatOrDefault("AGENT_DEFAULT_TEMPERATURE", 0.1)),
 					MaxTokens:   new(b.getEnvIntOrDefault("AGENT_DEFAULT_MAX_TOKENS", 4096)),
 				},
-				Probo: probod.LLMAgentConfig{
+				Probo: probodconfig.LLMAgentConfig{
 					Provider:    b.getEnvOrDefault("AGENT_PROBO_PROVIDER", ""),
 					ModelName:   b.getEnvOrDefault("AGENT_PROBO_MODEL_NAME", ""),
 					Temperature: b.getEnvFloatPtr("AGENT_PROBO_TEMPERATURE"),
 					MaxTokens:   b.getEnvIntPtr("AGENT_PROBO_MAX_TOKENS"),
 				},
-				EvidenceDescriber: probod.LLMAgentConfig{
+				EvidenceDescriber: probodconfig.LLMAgentConfig{
 					Provider:    b.getEnvOrDefault("AGENT_EVIDENCE_DESCRIBER_PROVIDER", ""),
 					ModelName:   b.getEnvOrDefault("AGENT_EVIDENCE_DESCRIBER_MODEL_NAME", ""),
 					Temperature: b.getEnvFloatPtr("AGENT_EVIDENCE_DESCRIBER_TEMPERATURE"),
 					MaxTokens:   b.getEnvIntPtr("AGENT_EVIDENCE_DESCRIBER_MAX_TOKENS"),
 				},
 			},
-			CustomDomains: probod.CustomDomainsConfig{
+			CustomDomains: probodconfig.CustomDomainsConfig{
 				RenewalInterval:   b.getEnvIntOrDefault("CUSTOM_DOMAINS_RENEWAL_INTERVAL", 3600),
 				ProvisionInterval: b.getEnvIntOrDefault("CUSTOM_DOMAINS_PROVISION_INTERVAL", 30),
 				CnameTarget:       b.getEnvOrDefault("CUSTOM_DOMAINS_CNAME_TARGET", "custom.getprobo.com"),
 				ResolverAddr:      b.getEnvOrDefault("CUSTOM_DOMAINS_RESOLVER_ADDR", "8.8.8.8:53"),
 				CAAIssuerDomain:   b.getEnvOrDefault("CUSTOM_DOMAINS_CAA_ISSUER_DOMAIN", "letsencrypt.org"),
-				ACME: probod.ACMEConfig{
+				ACME: probodconfig.ACMEConfig{
 					Directory:  b.getEnvOrDefault("ACME_DIRECTORY", "https://acme-v02.api.letsencrypt.org/directory"),
 					Email:      b.getEnvOrDefault("ACME_EMAIL", "admin@getprobo.com"),
 					KeyType:    b.getEnvOrDefault("ACME_KEY_TYPE", "EC256"),
@@ -218,14 +218,14 @@ func (b *Builder) Build() (*probod.FullConfig, error) {
 					AccountKey: b.getEnv("ACME_ACCOUNT_KEY"),
 				},
 			},
-			SCIMBridge: probod.SCIMBridgeConfig{
+			SCIMBridge: probodconfig.SCIMBridgeConfig{
 				SyncInterval: b.getEnvIntOrDefault("SCIM_BRIDGE_SYNC_INTERVAL", 900),
 				PollInterval: b.getEnvIntOrDefault("SCIM_BRIDGE_POLL_INTERVAL", 30),
 			},
-			ESign: probod.ESignConfig{
+			ESign: probodconfig.ESignConfig{
 				TSAURL: b.getEnvOrDefault("ESIGN_TSA_URL", "http://timestamp.digicert.com"),
 			},
-			EvidenceDescriber: probod.EvidenceDescriberConfig{
+			EvidenceDescriber: probodconfig.EvidenceDescriberConfig{
 				Interval:       b.getEnvIntOrDefault("EVIDENCE_DESCRIBER_INTERVAL", 10),
 				StaleAfter:     b.getEnvIntOrDefault("EVIDENCE_DESCRIBER_STALE_AFTER", 300),
 				MaxConcurrency: b.getEnvIntOrDefault("EVIDENCE_DESCRIBER_MAX_CONCURRENCY", 10),
@@ -235,10 +235,10 @@ func (b *Builder) Build() (*probod.FullConfig, error) {
 	}
 
 	if slackClientID := b.getEnv("CONNECTOR_SLACK_CLIENT_ID"); slackClientID != "" {
-		cfg.Probod.Connectors = append(cfg.Probod.Connectors, probod.ConnectorConfig{
+		cfg.Probod.Connectors = append(cfg.Probod.Connectors, probodconfig.ConnectorConfig{
 			Provider: "SLACK",
 			Protocol: "oauth2",
-			RawConfig: probod.ConnectorConfigOAuth2{
+			RawConfig: probodconfig.ConnectorConfigOAuth2{
 				ClientID:     slackClientID,
 				ClientSecret: b.getEnv("CONNECTOR_SLACK_CLIENT_SECRET"),
 			},
@@ -249,10 +249,10 @@ func (b *Builder) Build() (*probod.FullConfig, error) {
 	}
 
 	if hubspotClientID := b.getEnv("CONNECTOR_HUBSPOT_CLIENT_ID"); hubspotClientID != "" {
-		cfg.Probod.Connectors = append(cfg.Probod.Connectors, probod.ConnectorConfig{
+		cfg.Probod.Connectors = append(cfg.Probod.Connectors, probodconfig.ConnectorConfig{
 			Provider: "HUBSPOT",
 			Protocol: "oauth2",
-			RawConfig: probod.ConnectorConfigOAuth2{
+			RawConfig: probodconfig.ConnectorConfigOAuth2{
 				ClientID:     hubspotClientID,
 				ClientSecret: b.getEnv("CONNECTOR_HUBSPOT_CLIENT_SECRET"),
 			},
@@ -260,10 +260,10 @@ func (b *Builder) Build() (*probod.FullConfig, error) {
 	}
 
 	if docusignClientID := b.getEnv("CONNECTOR_DOCUSIGN_CLIENT_ID"); docusignClientID != "" {
-		cfg.Probod.Connectors = append(cfg.Probod.Connectors, probod.ConnectorConfig{
+		cfg.Probod.Connectors = append(cfg.Probod.Connectors, probodconfig.ConnectorConfig{
 			Provider: "DOCUSIGN",
 			Protocol: "oauth2",
-			RawConfig: probod.ConnectorConfigOAuth2{
+			RawConfig: probodconfig.ConnectorConfigOAuth2{
 				ClientID:     docusignClientID,
 				ClientSecret: b.getEnv("CONNECTOR_DOCUSIGN_CLIENT_SECRET"),
 			},
@@ -271,10 +271,10 @@ func (b *Builder) Build() (*probod.FullConfig, error) {
 	}
 
 	if notionClientID := b.getEnv("CONNECTOR_NOTION_CLIENT_ID"); notionClientID != "" {
-		cfg.Probod.Connectors = append(cfg.Probod.Connectors, probod.ConnectorConfig{
+		cfg.Probod.Connectors = append(cfg.Probod.Connectors, probodconfig.ConnectorConfig{
 			Provider: "NOTION",
 			Protocol: "oauth2",
-			RawConfig: probod.ConnectorConfigOAuth2{
+			RawConfig: probodconfig.ConnectorConfigOAuth2{
 				ClientID:     notionClientID,
 				ClientSecret: b.getEnv("CONNECTOR_NOTION_CLIENT_SECRET"),
 			},
@@ -282,10 +282,10 @@ func (b *Builder) Build() (*probod.FullConfig, error) {
 	}
 
 	if githubClientID := b.getEnv("CONNECTOR_GITHUB_CLIENT_ID"); githubClientID != "" {
-		cfg.Probod.Connectors = append(cfg.Probod.Connectors, probod.ConnectorConfig{
+		cfg.Probod.Connectors = append(cfg.Probod.Connectors, probodconfig.ConnectorConfig{
 			Provider: "GITHUB",
 			Protocol: "oauth2",
-			RawConfig: probod.ConnectorConfigOAuth2{
+			RawConfig: probodconfig.ConnectorConfigOAuth2{
 				ClientID:     githubClientID,
 				ClientSecret: b.getEnv("CONNECTOR_GITHUB_CLIENT_SECRET"),
 			},
@@ -293,10 +293,10 @@ func (b *Builder) Build() (*probod.FullConfig, error) {
 	}
 
 	if sentryClientID := b.getEnv("CONNECTOR_SENTRY_CLIENT_ID"); sentryClientID != "" {
-		cfg.Probod.Connectors = append(cfg.Probod.Connectors, probod.ConnectorConfig{
+		cfg.Probod.Connectors = append(cfg.Probod.Connectors, probodconfig.ConnectorConfig{
 			Provider: "SENTRY",
 			Protocol: "oauth2",
-			RawConfig: probod.ConnectorConfigOAuth2{
+			RawConfig: probodconfig.ConnectorConfigOAuth2{
 				ClientID:     sentryClientID,
 				ClientSecret: b.getEnv("CONNECTOR_SENTRY_CLIENT_SECRET"),
 			},
@@ -304,10 +304,10 @@ func (b *Builder) Build() (*probod.FullConfig, error) {
 	}
 
 	if intercomClientID := b.getEnv("CONNECTOR_INTERCOM_CLIENT_ID"); intercomClientID != "" {
-		cfg.Probod.Connectors = append(cfg.Probod.Connectors, probod.ConnectorConfig{
+		cfg.Probod.Connectors = append(cfg.Probod.Connectors, probodconfig.ConnectorConfig{
 			Provider: "INTERCOM",
 			Protocol: "oauth2",
-			RawConfig: probod.ConnectorConfigOAuth2{
+			RawConfig: probodconfig.ConnectorConfigOAuth2{
 				ClientID:     intercomClientID,
 				ClientSecret: b.getEnv("CONNECTOR_INTERCOM_CLIENT_SECRET"),
 			},
@@ -315,10 +315,10 @@ func (b *Builder) Build() (*probod.FullConfig, error) {
 	}
 
 	if brexClientID := b.getEnv("CONNECTOR_BREX_CLIENT_ID"); brexClientID != "" {
-		cfg.Probod.Connectors = append(cfg.Probod.Connectors, probod.ConnectorConfig{
+		cfg.Probod.Connectors = append(cfg.Probod.Connectors, probodconfig.ConnectorConfig{
 			Provider: "BREX",
 			Protocol: "oauth2",
-			RawConfig: probod.ConnectorConfigOAuth2{
+			RawConfig: probodconfig.ConnectorConfigOAuth2{
 				ClientID:     brexClientID,
 				ClientSecret: b.getEnv("CONNECTOR_BREX_CLIENT_SECRET"),
 			},
@@ -326,10 +326,10 @@ func (b *Builder) Build() (*probod.FullConfig, error) {
 	}
 
 	if googleWorkspaceClientID := b.getEnv("CONNECTOR_GOOGLE_WORKSPACE_CLIENT_ID"); googleWorkspaceClientID != "" {
-		cfg.Probod.Connectors = append(cfg.Probod.Connectors, probod.ConnectorConfig{
+		cfg.Probod.Connectors = append(cfg.Probod.Connectors, probodconfig.ConnectorConfig{
 			Provider: "GOOGLE_WORKSPACE",
 			Protocol: "oauth2",
-			RawConfig: probod.ConnectorConfigOAuth2{
+			RawConfig: probodconfig.ConnectorConfigOAuth2{
 				ClientID:     googleWorkspaceClientID,
 				ClientSecret: b.getEnv("CONNECTOR_GOOGLE_WORKSPACE_CLIENT_SECRET"),
 			},

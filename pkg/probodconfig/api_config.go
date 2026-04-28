@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,21 +12,19 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package probod
+package probodconfig
 
-type CustomDomainsConfig struct {
-	RenewalInterval   int        `json:"renewal-interval"`
-	ProvisionInterval int        `json:"provision-interval"`
-	ResolverAddr      string     `json:"resolver-addr"`
-	CnameTarget       string     `json:"cname-target"`
-	CAAIssuerDomain   string     `json:"caa-issuer-domain"`
-	ACME              ACMEConfig `json:"acme"`
+type CorsConfig struct {
+	AllowedOrigins []string `json:"allowed-origins"`
 }
 
-type ACMEConfig struct {
-	Directory  string `json:"directory"`
-	Email      string `json:"email"`
-	KeyType    string `json:"key-type"`
-	AccountKey string `json:"account-key"`
-	RootCA     string `json:"root-ca"`
+type ProxyProtocolConfig struct {
+	TrustedProxies []string `json:"trusted-proxies"`
+}
+
+type APIConfig struct {
+	Addr              string              `json:"addr"`
+	ProxyProtocol     ProxyProtocolConfig `json:"proxy-protocol"`
+	Cors              CorsConfig          `json:"cors"`
+	ExtraHeaderFields map[string]string   `json:"extra-header-fields"`
 }

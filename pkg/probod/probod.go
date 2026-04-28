@@ -73,71 +73,9 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-type (
-	Implm struct {
-		cfg Config
-	}
-
-	// FullConfig represents the complete configuration file structure.
-	// This is used by bootstrap to generate the YAML config file.
-	FullConfig struct {
-		Unit   UnitConfig `json:"unit"`
-		Probod Config     `json:"probod"`
-	}
-
-	// UnitConfig contains unit framework configuration.
-	UnitConfig struct {
-		Metrics MetricsConfig `json:"metrics"`
-		Tracing TracingConfig `json:"tracing"`
-	}
-
-	// MetricsConfig contains metrics server configuration.
-	MetricsConfig struct {
-		Addr string `json:"addr"`
-	}
-
-	// TracingConfig contains tracing configuration.
-	TracingConfig struct {
-		Addr          string `json:"addr"`
-		MaxBatchSize  int    `json:"max-batch-size"`
-		BatchTimeout  int    `json:"batch-timeout"`
-		ExportTimeout int    `json:"export-timeout"`
-		MaxQueueSize  int    `json:"max-queue-size"`
-	}
-
-	// ESignConfig contains electronic signature configuration.
-	ESignConfig struct {
-		TSAURL string `json:"tsa-url"`
-	}
-
-	// Config represents the probod application configuration.
-	Config struct {
-		BaseURL           string                  `json:"base-url"`
-		EncryptionKey     string                  `json:"encryption-key"`
-		Pg                PgConfig                `json:"pg"`
-		Api               APIConfig               `json:"api"`
-		Auth              AuthConfig              `json:"auth"`
-		TrustCenter       TrustCenterConfig       `json:"trust-center"`
-		AWS               AWSConfig               `json:"aws"`
-		Notifications     NotificationsConfig     `json:"notifications"`
-		Connectors        []ConnectorConfig       `json:"connectors"`
-		Agents            AgentsConfig            `json:"llm"`
-		EvidenceDescriber EvidenceDescriberConfig `json:"evidence-describer"`
-		ChromeDPAddr      string                  `json:"chrome-dp-addr"`
-		SearchEndpoint    string                  `json:"search-endpoint"`
-		CustomDomains     CustomDomainsConfig     `json:"custom-domains"`
-		SCIMBridge        SCIMBridgeConfig        `json:"scim-bridge"`
-		ESign             ESignConfig             `json:"esign"`
-		Branding          bool                    `json:"branding"`
-	}
-
-	// TrustCenterConfig contains trust center server configuration.
-	TrustCenterConfig struct {
-		HTTPAddr      string              `json:"http-addr"`
-		HTTPSAddr     string              `json:"https-addr"`
-		ProxyProtocol ProxyProtocolConfig `json:"proxy-protocol"`
-	}
-)
+type Implm struct {
+	cfg Config
+}
 
 var (
 	_ unit.Configurable = (*Implm)(nil)

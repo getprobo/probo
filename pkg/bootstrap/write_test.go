@@ -21,7 +21,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.probo.inc/probo/pkg/probod"
+	"go.probo.inc/probo/pkg/probodconfig"
 	"sigs.k8s.io/yaml"
 )
 
@@ -29,11 +29,11 @@ func TestWriteConfig(t *testing.T) {
 	tmpDir := t.TempDir()
 	configPath := filepath.Join(tmpDir, "probod.yml")
 
-	cfg := &probod.FullConfig{
-		Unit: probod.UnitConfig{
-			Metrics: probod.MetricsConfig{Addr: "localhost:9090"},
+	cfg := &probodconfig.FullConfig{
+		Unit: probodconfig.UnitConfig{
+			Metrics: probodconfig.MetricsConfig{Addr: "localhost:9090"},
 		},
-		Probod: probod.Config{
+		Probod: probodconfig.Config{
 			BaseURL:       "http://localhost:8080",
 			EncryptionKey: "test-key",
 		},
@@ -45,7 +45,7 @@ func TestWriteConfig(t *testing.T) {
 	data, err := os.ReadFile(configPath)
 	require.NoError(t, err)
 
-	var loaded probod.FullConfig
+	var loaded probodconfig.FullConfig
 	err = yaml.Unmarshal(data, &loaded)
 	require.NoError(t, err)
 
@@ -58,8 +58,8 @@ func TestWriteConfig_CreatesDirectory(t *testing.T) {
 	tmpDir := t.TempDir()
 	configPath := filepath.Join(tmpDir, "nested", "dir", "probod.yml")
 
-	cfg := &probod.FullConfig{
-		Probod: probod.Config{BaseURL: "http://localhost:8080"},
+	cfg := &probodconfig.FullConfig{
+		Probod: probodconfig.Config{BaseURL: "http://localhost:8080"},
 	}
 
 	err := WriteConfig(cfg, configPath)
@@ -73,7 +73,7 @@ func TestWriteConfig_FilePermissions(t *testing.T) {
 	tmpDir := t.TempDir()
 	configPath := filepath.Join(tmpDir, "probod.yml")
 
-	cfg := &probod.FullConfig{}
+	cfg := &probodconfig.FullConfig{}
 
 	err := WriteConfig(cfg, configPath)
 	require.NoError(t, err)
@@ -88,10 +88,10 @@ func TestWriteConfig_CompleteConfig(t *testing.T) {
 	tmpDir := t.TempDir()
 	configPath := filepath.Join(tmpDir, "probod.yml")
 
-	cfg := &probod.FullConfig{
-		Unit: probod.UnitConfig{
-			Metrics: probod.MetricsConfig{Addr: "localhost:8081"},
-			Tracing: probod.TracingConfig{
+	cfg := &probodconfig.FullConfig{
+		Unit: probodconfig.UnitConfig{
+			Metrics: probodconfig.MetricsConfig{Addr: "localhost:8081"},
+			Tracing: probodconfig.TracingConfig{
 				Addr:          "localhost:4317",
 				MaxBatchSize:  512,
 				BatchTimeout:  5,
@@ -99,18 +99,18 @@ func TestWriteConfig_CompleteConfig(t *testing.T) {
 				MaxQueueSize:  2048,
 			},
 		},
-		Probod: probod.Config{
+		Probod: probodconfig.Config{
 			BaseURL:       "http://localhost:8080",
 			EncryptionKey: "test-key",
 			ChromeDPAddr:  "localhost:9222",
-			Api: probod.APIConfig{
+			Api: probodconfig.APIConfig{
 				Addr: ":8080",
-				Cors: probod.CorsConfig{
+				Cors: probodconfig.CorsConfig{
 					AllowedOrigins: []string{"http://localhost:8080"},
 				},
 				ExtraHeaderFields: map[string]string{},
 			},
-			Pg: probod.PgConfig{
+			Pg: probodconfig.PgConfig{
 				Addr:                   "localhost:5432",
 				Username:               "postgres",
 				Password:               "postgres",
@@ -120,11 +120,11 @@ func TestWriteConfig_CompleteConfig(t *testing.T) {
 				MaxConnIdleTimeSeconds: 1800,
 				MaxConnLifetimeSeconds: 3600,
 			},
-			Connectors: []probod.ConnectorConfig{
+			Connectors: []probodconfig.ConnectorConfig{
 				{
 					Provider: "slack",
 					Protocol: "oauth2",
-					RawConfig: probod.ConnectorConfigOAuth2{
+					RawConfig: probodconfig.ConnectorConfigOAuth2{
 						ClientID:     "client-id",
 						ClientSecret: "client-secret",
 					},
@@ -142,7 +142,7 @@ func TestWriteConfig_CompleteConfig(t *testing.T) {
 	data, err := os.ReadFile(configPath)
 	require.NoError(t, err)
 
-	var loaded probod.FullConfig
+	var loaded probodconfig.FullConfig
 	err = yaml.Unmarshal(data, &loaded)
 	require.NoError(t, err)
 
