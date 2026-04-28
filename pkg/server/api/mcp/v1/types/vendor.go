@@ -29,7 +29,6 @@ func NewVendorRiskAssessment(v *coredata.VendorRiskAssessment) *VendorRiskAssess
 		DataSensitivity: v.DataSensitivity,
 		BusinessImpact:  v.BusinessImpact,
 		Notes:           v.Notes,
-		SnapshotID:      v.SnapshotID,
 		CreatedAt:       v.CreatedAt,
 		UpdatedAt:       v.UpdatedAt,
 	}

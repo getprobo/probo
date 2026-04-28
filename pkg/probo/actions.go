@@ -84,12 +84,13 @@ const (
 	ActionTrustCenterFileCreate     = "core:trust-center-file:create"
 
 	// Vendor actions
-	ActionVendorList   = "core:vendor:list"
-	ActionVendorGet    = "core:vendor:get"
-	ActionVendorCreate = "core:vendor:create"
-	ActionVendorUpdate = "core:vendor:update"
-	ActionVendorDelete = "core:vendor:delete"
-	ActionVendorAssess = "core:vendor:assess"
+	ActionVendorList    = "core:vendor:list"
+	ActionVendorGet     = "core:vendor:get"
+	ActionVendorCreate  = "core:vendor:create"
+	ActionVendorUpdate  = "core:vendor:update"
+	ActionVendorDelete  = "core:vendor:delete"
+	ActionVendorAssess  = "core:vendor:assess"
+	ActionVendorPublish = "core:vendor:publish"
 
 	// VendorContact actions
 	ActionVendorContactGet    = "core:vendor-contact:get"

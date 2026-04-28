@@ -37,8 +37,6 @@ type (
 		Email          *mail.Addr `db:"email"`
 		Phone          *string    `db:"phone"`
 		Role           *string    `db:"role"`
-		SnapshotID     *gid.GID   `db:"snapshot_id"`
-		SourceID       *gid.GID   `db:"source_id"`
 		CreatedAt      time.Time  `db:"created_at"`
 		UpdatedAt      time.Time  `db:"updated_at"`
 	}
@@ -88,8 +86,6 @@ SELECT
 	email,
 	phone,
 	role,
-	snapshot_id,
-	source_id,
 	created_at,
 	updated_at
 FROM
@@ -141,8 +137,6 @@ SELECT
 	email,
 	phone,
 	role,
-	snapshot_id,
-	source_id,
 	created_at,
 	updated_at
 FROM
@@ -150,6 +144,7 @@ FROM
 WHERE
 	%s
 	AND vendor_id = @vendor_id
+	AND snapshot_id IS NULL
 	AND %s
 `
 	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
@@ -159,6 +154,63 @@ WHERE
 	}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query vendor contacts: %w", err)
+	}
+	defer rows.Close()
+
+	vendorContacts, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[VendorContact])
+	if err != nil {
+		return fmt.Errorf("cannot collect vendor contacts: %w", err)
+	}
+
+	*vc = vendorContacts
+
+	return nil
+}
+
+func (vc *VendorContacts) LoadByVendorIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	vendorIDs []gid.GID,
+) error {
+	if len(vendorIDs) == 0 {
+		*vc = VendorContacts{}
+		return nil
+	}
+
+	q := `
+SELECT
+	id,
+	organization_id,
+	vendor_id,
+	full_name,
+	email,
+	phone,
+	role,
+	created_at,
+	updated_at
+FROM
+	vendor_contacts
+WHERE
+	%s
+	AND vendor_id = ANY(@vendor_ids)
+	AND snapshot_id IS NULL
+ORDER BY
+	vendor_id, full_name ASC
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	ids := make([]string, len(vendorIDs))
+	for i, id := range vendorIDs {
+		ids[i] = id.String()
+	}
+
+	args := pgx.StrictNamedArgs{"vendor_ids": ids}
+	maps.Copy(args, scope.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -292,70 +344,6 @@ WHERE
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot delete vendor contact: %w", err)
-	}
-
-	return nil
-}
-
-func (vc VendorContacts) InsertVendorSnapshots(
-	ctx context.Context,
-	conn pg.Tx,
-	scope Scoper,
-	organizationID gid.GID,
-	snapshotID gid.GID,
-) error {
-	query := `
-WITH
-	snapshot_vendors AS (
-		SELECT id, source_id
-		FROM vendors
-		WHERE organization_id = @organization_id AND snapshot_id = @snapshot_id
-	)
-INSERT INTO vendor_contacts (
-	tenant_id,
-	id,
-	organization_id,
-	snapshot_id,
-	source_id,
-	vendor_id,
-	full_name,
-	email,
-	phone,
-	role,
-	created_at,
-	updated_at
-)
-SELECT
-	@tenant_id,
-	generate_gid(decode_base64_unpadded(@tenant_id), @vendor_contact_entity_type),
-	@organization_id,
-	@snapshot_id,
-	vc.id,
-	sv.id,
-	vc.full_name,
-	vc.email,
-	vc.phone,
-	vc.role,
-	vc.created_at,
-	vc.updated_at
-FROM vendor_contacts vc
-INNER JOIN snapshot_vendors sv ON sv.source_id = vc.vendor_id
-WHERE %s AND vc.snapshot_id IS NULL
-	`
-
-	query = fmt.Sprintf(query, scope.SQLFragment())
-
-	args := pgx.StrictNamedArgs{
-		"tenant_id":                  scope.GetTenantID(),
-		"snapshot_id":                snapshotID,
-		"organization_id":            organizationID,
-		"vendor_contact_entity_type": VendorContactEntityType,
-	}
-	maps.Copy(args, scope.SQLArguments())
-
-	_, err := conn.Exec(ctx, query, args)
-	if err != nil {
-		return fmt.Errorf("cannot insert vendor contact snapshots: %w", err)
 	}
 
 	return nil

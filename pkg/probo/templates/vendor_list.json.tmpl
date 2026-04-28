@@ -1,0 +1,302 @@
+{
+  "type": "doc",
+  "content": [
+    {
+      "type": "heading",
+      "attrs": { "level": 1 },
+      "content": [{ "type": "text", "text": "1. Purpose" }]
+    },
+    {
+      "type": "paragraph",
+      "content": [{ "type": "text", "text": "This document provides a comprehensive register of all vendors used by the organization. It captures vendor profile information, services consumed, contacts, risk assessments, compliance reports, and contractual agreements (BAA, DPA) for each vendor." }]
+    },
+    { "type": "horizontalRule" },
+    {
+      "type": "heading",
+      "attrs": { "level": 1 },
+      "content": [{ "type": "text", "text": "2. Vendors" }]
+    }{{range $i, $r := .Rows}},
+    {
+      "type": "heading",
+      "attrs": { "level": 2 },
+      "content": [{ "type": "text", "text": {{json (printf "2.%d %s" (add $i 1) $r.Name)}} }]
+    },
+    {
+      "type": "heading",
+      "attrs": { "level": 3 },
+      "content": [{ "type": "text", "text": {{json (printf "2.%d.1 General Information" (add $i 1))}} }]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        { "type": "text", "text": "Legal Name: ", "marks": [{ "type": "bold" }] },
+        { "type": "text", "text": {{json $r.LegalName}} }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        { "type": "text", "text": "Description: ", "marks": [{ "type": "bold" }] },
+        { "type": "text", "text": {{json $r.Description}} }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        { "type": "text", "text": "Category: ", "marks": [{ "type": "bold" }] },
+        { "type": "text", "text": {{json $r.Category}} }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        { "type": "text", "text": "Headquarter Address: ", "marks": [{ "type": "bold" }] },
+        { "type": "text", "text": {{json $r.HeadquarterAddress}} }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        { "type": "text", "text": "Countries: ", "marks": [{ "type": "bold" }] },
+        { "type": "text", "text": {{json $r.Countries}} }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        { "type": "text", "text": "Certifications: ", "marks": [{ "type": "bold" }] },
+        { "type": "text", "text": {{json $r.Certifications}} }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": { "level": 3 },
+      "content": [{ "type": "text", "text": {{json (printf "2.%d.2 URLs & Pages" (add $i 1))}} }]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        { "type": "text", "text": "Website: ", "marks": [{ "type": "bold" }] },
+        { "type": "text", "text": {{json $r.WebsiteURL}} }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        { "type": "text", "text": "Privacy Policy: ", "marks": [{ "type": "bold" }] },
+        { "type": "text", "text": {{json $r.PrivacyPolicyURL}} }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        { "type": "text", "text": "Service Level Agreement: ", "marks": [{ "type": "bold" }] },
+        { "type": "text", "text": {{json $r.ServiceLevelAgreementURL}} }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        { "type": "text", "text": "Data Processing Agreement: ", "marks": [{ "type": "bold" }] },
+        { "type": "text", "text": {{json $r.DataProcessingAgreementURL}} }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        { "type": "text", "text": "Business Associate Agreement: ", "marks": [{ "type": "bold" }] },
+        { "type": "text", "text": {{json $r.BusinessAssociateAgreementURL}} }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        { "type": "text", "text": "Subprocessors List: ", "marks": [{ "type": "bold" }] },
+        { "type": "text", "text": {{json $r.SubprocessorsListURL}} }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        { "type": "text", "text": "Status Page: ", "marks": [{ "type": "bold" }] },
+        { "type": "text", "text": {{json $r.StatusPageURL}} }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        { "type": "text", "text": "Terms of Service: ", "marks": [{ "type": "bold" }] },
+        { "type": "text", "text": {{json $r.TermsOfServiceURL}} }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        { "type": "text", "text": "Security Page: ", "marks": [{ "type": "bold" }] },
+        { "type": "text", "text": {{json $r.SecurityPageURL}} }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        { "type": "text", "text": "Trust Page: ", "marks": [{ "type": "bold" }] },
+        { "type": "text", "text": {{json $r.TrustPageURL}} }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": { "level": 3 },
+      "content": [{ "type": "text", "text": {{json (printf "2.%d.3 Owners" (add $i 1))}} }]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        { "type": "text", "text": "Business Owner: ", "marks": [{ "type": "bold" }] },
+        { "type": "text", "text": {{json $r.BusinessOwner}} }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        { "type": "text", "text": "Security Owner: ", "marks": [{ "type": "bold" }] },
+        { "type": "text", "text": {{json $r.SecurityOwner}} }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": { "level": 3 },
+      "content": [{ "type": "text", "text": {{json (printf "2.%d.4 Services" (add $i 1))}} }]
+    }{{if $r.Services}}{{range $r.Services}},
+    {
+      "type": "paragraph",
+      "content": [
+        { "type": "text", "text": {{json (printf "%s — " .Name)}}, "marks": [{ "type": "bold" }] },
+        { "type": "text", "text": {{json .Description}} }
+      ]
+    }{{end}}{{else}},
+    {
+      "type": "paragraph",
+      "content": [{ "type": "text", "text": "No services recorded." }]
+    }{{end}},
+    {
+      "type": "heading",
+      "attrs": { "level": 3 },
+      "content": [{ "type": "text", "text": {{json (printf "2.%d.5 Contacts" (add $i 1))}} }]
+    }{{if $r.Contacts}}{{range $r.Contacts}},
+    {
+      "type": "paragraph",
+      "content": [
+        { "type": "text", "text": {{json (printf "%s — " .FullName)}}, "marks": [{ "type": "bold" }] },
+        { "type": "text", "text": {{json (printf "%s, %s, %s" .Role .Email .Phone)}} }
+      ]
+    }{{end}}{{else}},
+    {
+      "type": "paragraph",
+      "content": [{ "type": "text", "text": "No contacts recorded." }]
+    }{{end}},
+    {
+      "type": "heading",
+      "attrs": { "level": 3 },
+      "content": [{ "type": "text", "text": {{json (printf "2.%d.6 Risk Assessments" (add $i 1))}} }]
+    }{{if $r.RiskAssessments}}{{range $r.RiskAssessments}},
+    {
+      "type": "paragraph",
+      "content": [
+        { "type": "text", "text": "Assessed on: ", "marks": [{ "type": "bold" }] },
+        { "type": "text", "text": {{json .AssessedAt}} },
+        { "type": "text", "text": " · Expires on: ", "marks": [{ "type": "bold" }] },
+        { "type": "text", "text": {{json .ExpiresAt}} },
+        { "type": "text", "text": " · Data Sensitivity: ", "marks": [{ "type": "bold" }] },
+        { "type": "text", "text": {{json .DataSensitivity}} },
+        { "type": "text", "text": " · Business Impact: ", "marks": [{ "type": "bold" }] },
+        { "type": "text", "text": {{json .BusinessImpact}} }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        { "type": "text", "text": "Notes: ", "marks": [{ "type": "bold" }] },
+        { "type": "text", "text": {{json .Notes}} }
+      ]
+    }{{end}}{{else}},
+    {
+      "type": "paragraph",
+      "content": [{ "type": "text", "text": "No risk assessments recorded." }]
+    }{{end}},
+    {
+      "type": "heading",
+      "attrs": { "level": 3 },
+      "content": [{ "type": "text", "text": {{json (printf "2.%d.7 Compliance Reports" (add $i 1))}} }]
+    }{{if $r.ComplianceReports}}{{range $r.ComplianceReports}},
+    {
+      "type": "paragraph",
+      "content": [
+        { "type": "text", "text": {{json (printf "%s — " .ReportName)}}, "marks": [{ "type": "bold" }] },
+        { "type": "text", "text": {{json (printf "Date: %s · Valid Until: %s" .ReportDate .ValidUntil)}} }
+      ]
+    }{{end}}{{else}},
+    {
+      "type": "paragraph",
+      "content": [{ "type": "text", "text": "No compliance reports recorded." }]
+    }{{end}},
+    {
+      "type": "heading",
+      "attrs": { "level": 3 },
+      "content": [{ "type": "text", "text": {{json (printf "2.%d.8 Agreements" (add $i 1))}} }]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        { "type": "text", "text": "Business Associate Agreement: ", "marks": [{ "type": "bold" }] },
+        { "type": "text", "text": {{if $r.BusinessAssociateAgreement}}{{json (printf "Yes — From %s until %s" $r.BusinessAssociateAgreement.ValidFrom $r.BusinessAssociateAgreement.ValidUntil)}}{{else}}"No"{{end}} }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        { "type": "text", "text": "Data Privacy Agreement: ", "marks": [{ "type": "bold" }] },
+        { "type": "text", "text": {{if $r.DataPrivacyAgreement}}{{json (printf "Yes — From %s until %s" $r.DataPrivacyAgreement.ValidFrom $r.DataPrivacyAgreement.ValidUntil)}}{{else}}"No"{{end}} }
+      ]
+    }{{end}},
+    { "type": "horizontalRule" },
+    {
+      "type": "heading",
+      "attrs": { "level": 1 },
+      "content": [{ "type": "text", "text": "3. Annexes" }]
+    },
+    {
+      "type": "heading",
+      "attrs": { "level": 2 },
+      "content": [{ "type": "text", "text": "3.1 Lexicon" }]
+    },
+    {
+      "type": "heading",
+      "attrs": { "level": 3 },
+      "content": [{ "type": "text", "text": "Data Sensitivity" }]
+    },
+    {
+      "type": "bulletList",
+      "content": [
+        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "None: ", "marks": [{ "type": "bold" }] }, { "type": "text", "text": "No sensitive data is shared with the vendor." }] }] },
+        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Low: ", "marks": [{ "type": "bold" }] }, { "type": "text", "text": "The vendor processes low sensitivity data such as public information." }] }] },
+        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Medium: ", "marks": [{ "type": "bold" }] }, { "type": "text", "text": "The vendor processes medium sensitivity data such as internal business data." }] }] },
+        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "High: ", "marks": [{ "type": "bold" }] }, { "type": "text", "text": "The vendor processes high sensitivity data such as personal data, financial data, or trade secrets." }] }] },
+        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Critical: ", "marks": [{ "type": "bold" }] }, { "type": "text", "text": "The vendor processes the most sensitive categories of data, where unauthorized disclosure would cause severe harm." }] }] }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": { "level": 3 },
+      "content": [{ "type": "text", "text": "Business Impact" }]
+    },
+    {
+      "type": "bulletList",
+      "content": [
+        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Low: ", "marks": [{ "type": "bold" }] }, { "type": "text", "text": "Limited disruption to operations if the vendor service is unavailable." }] }] },
+        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Medium: ", "marks": [{ "type": "bold" }] }, { "type": "text", "text": "Significant disruption to operations if the vendor service is unavailable." }] }] },
+        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "High: ", "marks": [{ "type": "bold" }] }, { "type": "text", "text": "Severe disruption or outage if the vendor service is unavailable." }] }] },
+        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Critical: ", "marks": [{ "type": "bold" }] }, { "type": "text", "text": "Operations cannot continue if the vendor service is unavailable; immediate business-wide impact." }] }] }
+      ]
+    }
+  ]
+}

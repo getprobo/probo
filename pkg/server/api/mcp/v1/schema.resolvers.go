@@ -63,11 +63,7 @@ func (r *Resolver) ListVendorsTool(ctx context.Context, req *mcp.CallToolRequest
 
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
-	noSnapshot := (*gid.GID)(nil)
-	vendorFilter := coredata.NewVendorFilter(&noSnapshot, nil)
-	if input.Filter != nil {
-		vendorFilter = coredata.NewVendorFilter(&input.Filter.SnapshotID, nil)
-	}
+	vendorFilter := coredata.NewVendorFilter(nil)
 
 	page, err := prb.Vendors.ListForOrganizationID(ctx, input.OrganizationID, cursor, vendorFilter)
 	if err != nil {
@@ -4836,6 +4832,22 @@ func (r *Resolver) PublishTransferImpactAssessmentListTool(ctx context.Context, 
 	}
 
 	return nil, types.PublishTransferImpactAssessmentListOutput{
+		DocumentID:        document.ID,
+		DocumentVersionID: documentVersion.ID,
+	}, nil
+}
+
+func (r *Resolver) PublishVendorListTool(ctx context.Context, req *mcp.CallToolRequest, input *types.PublishVendorListInput) (*mcp.CallToolResult, types.PublishVendorListOutput, error) {
+	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionVendorPublish)
+
+	svc := r.ProboService(ctx, input.OrganizationID)
+
+	document, documentVersion, err := svc.GeneratedDocuments.PublishVendorList(ctx, input.OrganizationID, input.ApproverIds)
+	if err != nil {
+		return nil, types.PublishVendorListOutput{}, fmt.Errorf("cannot publish vendor list: %w", err)
+	}
+
+	return nil, types.PublishVendorListOutput{
 		DocumentID:        document.ID,
 		DocumentVersionID: documentVersion.ID,
 	}, nil

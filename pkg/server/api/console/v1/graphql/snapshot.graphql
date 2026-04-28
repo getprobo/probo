@@ -1,16 +1,6 @@
 enum SnapshotsType
     @goModel(model: "go.probo.inc/probo/pkg/coredata.SnapshotsType") {
     RISKS @goEnum(value: "go.probo.inc/probo/pkg/coredata.SnapshotsTypeRisks")
-    VENDORS
-        @goEnum(value: "go.probo.inc/probo/pkg/coredata.SnapshotsTypeVendors")
-    PROCESSING_ACTIVITIES
-        @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.SnapshotsTypeProcessingActivities"
-        )
-    STATEMENTS_OF_APPLICABILITY
-        @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.SnapshotsTypeStatementsOfApplicability"
-        )
 }
 
 enum SnapshotOrderField

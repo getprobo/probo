@@ -366,6 +366,73 @@ type (
 		LocalLawRisk           string
 		SupplementaryMeasures  string
 	}
+
+	VendorListData struct {
+		Title            string
+		OrganizationName string
+		CreatedAt        time.Time
+		TotalVendors     int
+		Rows             []VendorListRow
+	}
+
+	VendorListRow struct {
+		Name                          string
+		LegalName                     string
+		Description                   string
+		Category                      string
+		HeadquarterAddress            string
+		WebsiteURL                    string
+		PrivacyPolicyURL              string
+		ServiceLevelAgreementURL      string
+		DataProcessingAgreementURL    string
+		BusinessAssociateAgreementURL string
+		SubprocessorsListURL          string
+		StatusPageURL                 string
+		TermsOfServiceURL             string
+		SecurityPageURL               string
+		TrustPageURL                  string
+		Certifications                string
+		Countries                     string
+		BusinessOwner                 string
+		SecurityOwner                 string
+		Services                      []VendorListService
+		Contacts                      []VendorListContact
+		RiskAssessments               []VendorListRiskAssessment
+		ComplianceReports             []VendorListComplianceReport
+		BusinessAssociateAgreement    *VendorListAgreement
+		DataPrivacyAgreement          *VendorListAgreement
+	}
+
+	VendorListService struct {
+		Name        string
+		Description string
+	}
+
+	VendorListContact struct {
+		FullName string
+		Email    string
+		Phone    string
+		Role     string
+	}
+
+	VendorListRiskAssessment struct {
+		AssessedAt      string
+		ExpiresAt       string
+		DataSensitivity string
+		BusinessImpact  string
+		Notes           string
+	}
+
+	VendorListComplianceReport struct {
+		ReportName string
+		ReportDate string
+		ValidUntil string
+	}
+
+	VendorListAgreement struct {
+		ValidFrom  string
+		ValidUntil string
+	}
 )
 
 func BoolLabel(v bool) string {

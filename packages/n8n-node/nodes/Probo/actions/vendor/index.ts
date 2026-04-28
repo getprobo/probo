@@ -39,6 +39,7 @@ import * as updateBusinessAssociateAgreementOp from './updateBusinessAssociateAg
 import * as getDataPrivacyAgreementOp from './getDataPrivacyAgreement.operation';
 import * as deleteDataPrivacyAgreementOp from './deleteDataPrivacyAgreement.operation';
 import * as updateDataPrivacyAgreementOp from './updateDataPrivacyAgreement.operation';
+import * as publishOp from './publish.operation';
 
 export const description: INodeProperties[] = [
 	{
@@ -179,6 +180,12 @@ export const description: INodeProperties[] = [
 				action: 'Get a vendor service',
 			},
 			{
+				name: 'Publish List',
+				value: 'publish',
+				description: 'Publish the vendor register as a document version',
+				action: 'Publish the vendor register',
+			},
+			{
 				name: 'Update',
 				value: 'update',
 				description: 'Update an existing vendor',
@@ -237,6 +244,7 @@ export const description: INodeProperties[] = [
 	...getDataPrivacyAgreementOp.description,
 	...deleteDataPrivacyAgreementOp.description,
 	...updateDataPrivacyAgreementOp.description,
+	...publishOp.description,
 ];
 
 export {
@@ -266,4 +274,5 @@ export {
 	getDataPrivacyAgreementOp as getDataPrivacyAgreement,
 	deleteDataPrivacyAgreementOp as deleteDataPrivacyAgreement,
 	updateDataPrivacyAgreementOp as updateDataPrivacyAgreement,
+	publishOp as publish,
 };

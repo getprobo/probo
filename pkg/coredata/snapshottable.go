@@ -30,8 +30,6 @@ func GetSnapshottable(snapshotType SnapshotsType) (Snapshottable, error) {
 	switch snapshotType {
 	case SnapshotsTypeRisks:
 		return Risks{}, nil
-	case SnapshotsTypeVendors:
-		return Vendors{}, nil
 	default:
 		return nil, fmt.Errorf("unsupported snapshot type: %s", snapshotType)
 	}

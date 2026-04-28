@@ -109,12 +109,21 @@ export const useDeleteVendor = (
 export const vendorConnectionKey = "VendorsPage_vendors";
 
 export const vendorsQuery = graphql`
-  query VendorGraphListQuery($organizationId: ID!, $snapshotId: ID) {
+  query VendorGraphListQuery($organizationId: ID!) {
     node(id: $organizationId) {
       ... on Organization {
         id
         canCreateVendor: permission(action: "core:vendor:create")
-        ...VendorGraphPaginatedFragment @arguments(snapshotId: $snapshotId)
+        canPublishVendor: permission(action: "core:vendor:publish")
+        vendorsDocument {
+          id
+          currentPublishedMajor
+          currentPublishedMinor
+          defaultApprovers {
+            id
+          }
+        }
+        ...VendorGraphPaginatedFragment
       }
     }
   }
@@ -129,7 +138,6 @@ export const paginatedVendorsFragment = graphql`
     after: { type: "CursorKey", defaultValue: null }
     before: { type: "CursorKey", defaultValue: null }
     last: { type: "Int", defaultValue: null }
-    snapshotId: { type: "ID", defaultValue: null }
   ) {
     vendors(
       first: $first
@@ -137,13 +145,11 @@ export const paginatedVendorsFragment = graphql`
       last: $last
       before: $before
       orderBy: $order
-      filter: { snapshotId: $snapshotId }
-    ) @connection(key: "VendorsListQuery_vendors", filters: ["filter"]) {
+    ) @connection(key: "VendorsListQuery_vendors") {
       __id
       edges {
         node {
           id
-          snapshotId
           name
           websiteUrl
           updatedAt
@@ -174,7 +180,6 @@ export const vendorNodeQuery = graphql`
     node(id: $vendorId) {
       id
       ... on Vendor {
-        snapshotId
         name
         websiteUrl
         canAssess: permission(action: "core:vendor:assess")

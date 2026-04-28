@@ -1210,7 +1210,7 @@ func (r *organizationResolver) CookieBanners(ctx context.Context, obj *types.Org
 }
 
 // Vendors is the resolver for the vendors field.
-func (r *organizationResolver) Vendors(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.VendorOrderBy, filter *types.VendorFilter) (*types.VendorConnection, error) {
+func (r *organizationResolver) Vendors(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.VendorOrderBy) (*types.VendorConnection, error) {
 	if err := r.authorize(ctx, obj.ID, probo.ActionVendorList); err != nil {
 		return nil, err
 	}
@@ -1230,10 +1230,7 @@ func (r *organizationResolver) Vendors(ctx context.Context, obj *types.Organizat
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	var vendorFilter = coredata.NewVendorFilter(nil, nil)
-	if filter != nil {
-		vendorFilter = coredata.NewVendorFilter(&filter.SnapshotID, nil)
-	}
+	vendorFilter := coredata.NewVendorFilter(nil)
 
 	page, err := prb.Vendors.ListForOrganizationID(ctx, obj.ID, cursor, vendorFilter)
 	if err != nil {
@@ -1242,6 +1239,35 @@ func (r *organizationResolver) Vendors(ctx context.Context, obj *types.Organizat
 	}
 
 	return types.NewVendorConnection(page, r, obj.ID), nil
+}
+
+// VendorsDocument is the resolver for the vendorsDocument field.
+func (r *organizationResolver) VendorsDocument(ctx context.Context, obj *types.Organization) (*types.Document, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionDocumentGet); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	documentID, err := prb.GeneratedDocuments.GetVendorsDocumentID(ctx, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot get vendors document ID", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+	if documentID == nil {
+		return nil, nil
+	}
+
+	document, err := prb.Documents.Get(ctx, *documentID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, nil
+		}
+		r.logger.ErrorCtx(ctx, "cannot load vendors document", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewDocument(document), nil
 }
 
 // WebhookSubscriptions is the resolver for the webhookSubscriptions field.

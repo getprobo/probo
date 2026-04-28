@@ -37,8 +37,6 @@ type (
 		DataSensitivity DataSensitivity `db:"data_sensitivity"`
 		BusinessImpact  BusinessImpact  `db:"business_impact"`
 		Notes           *string         `db:"notes"`
-		SnapshotID      *gid.GID        `db:"snapshot_id"`
-		SourceID        *gid.GID        `db:"source_id"`
 		CreatedAt       time.Time       `db:"created_at"`
 		UpdatedAt       time.Time       `db:"updated_at"`
 	}
@@ -137,8 +135,6 @@ SELECT
     data_sensitivity,
     business_impact,
     notes,
-    snapshot_id,
-    source_id,
     created_at,
     updated_at
 FROM
@@ -186,8 +182,6 @@ SELECT
     data_sensitivity,
     business_impact,
     notes,
-    snapshot_id,
-    source_id,
     created_at,
     updated_at
 FROM
@@ -195,6 +189,7 @@ FROM
 WHERE
     %s
     AND vendor_id = @vendor_id
+    AND snapshot_id IS NULL
 ORDER BY
     created_at DESC
 LIMIT 1;
@@ -238,8 +233,6 @@ SELECT
     data_sensitivity,
     business_impact,
     notes,
-    snapshot_id,
-    source_id,
     created_at,
     updated_at
 FROM
@@ -247,6 +240,7 @@ FROM
 WHERE
     %s
     AND vendor_id = @vendor_id
+    AND snapshot_id IS NULL
 	AND %s
 `
 
@@ -271,66 +265,59 @@ WHERE
 	return nil
 }
 
-func (v VendorRiskAssessments) InsertVendorSnapshots(
+func (r *VendorRiskAssessments) LoadByVendorIDs(
 	ctx context.Context,
-	conn pg.Tx,
+	conn pg.Querier,
 	scope Scoper,
-	organizationID gid.GID,
-	snapshotID gid.GID,
+	vendorIDs []gid.GID,
 ) error {
-	query := `
-WITH
-	snapshot_vendors AS (
-		SELECT id, source_id
-		FROM vendors
-		WHERE organization_id = @organization_id AND snapshot_id = @snapshot_id
-	)
-INSERT INTO vendor_risk_assessments (
-	tenant_id,
-	id,
-	snapshot_id,
-	source_id,
-	organization_id,
-	vendor_id,
-	expires_at,
-	data_sensitivity,
-	business_impact,
-	notes,
-	created_at,
-	updated_at
-)
-SELECT
-	@tenant_id,
-	generate_gid(decode_base64_unpadded(@tenant_id), @vendor_risk_assessment_entity_type),
-	@snapshot_id,
-	vra.id,
-	vra.organization_id,
-	sv.id,
-	vra.expires_at,
-	vra.data_sensitivity,
-	vra.business_impact,
-	vra.notes,
-	vra.created_at,
-	vra.updated_at
-FROM vendor_risk_assessments vra
-INNER JOIN snapshot_vendors sv ON sv.source_id = vra.vendor_id
-WHERE %s AND vra.snapshot_id IS NULL
-	`
-
-	query = fmt.Sprintf(query, scope.SQLFragment())
-
-	args := pgx.StrictNamedArgs{
-		"tenant_id":                          scope.GetTenantID(),
-		"snapshot_id":                        snapshotID,
-		"organization_id":                    organizationID,
-		"vendor_risk_assessment_entity_type": VendorRiskAssessmentEntityType,
+	if len(vendorIDs) == 0 {
+		*r = VendorRiskAssessments{}
+		return nil
 	}
+
+	q := `
+SELECT
+    id,
+    organization_id,
+    vendor_id,
+    expires_at,
+    data_sensitivity,
+    business_impact,
+    notes,
+    created_at,
+    updated_at
+FROM
+    vendor_risk_assessments
+WHERE
+    %s
+    AND vendor_id = ANY(@vendor_ids)
+    AND snapshot_id IS NULL
+ORDER BY
+    vendor_id, created_at DESC
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	ids := make([]string, len(vendorIDs))
+	for i, id := range vendorIDs {
+		ids[i] = id.String()
+	}
+
+	args := pgx.StrictNamedArgs{"vendor_ids": ids}
 	maps.Copy(args, scope.SQLArguments())
 
-	_, err := conn.Exec(ctx, query, args)
+	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot insert vendor risk assessment snapshots: %w", err)
+		return fmt.Errorf("cannot query risk assessments: %w", err)
 	}
+
+	assessments, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[VendorRiskAssessment])
+	if err != nil {
+		return fmt.Errorf("cannot collect risk assessments: %w", err)
+	}
+
+	*r = assessments
 
 	return nil
 }

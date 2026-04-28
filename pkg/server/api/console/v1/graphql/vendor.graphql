@@ -206,13 +206,8 @@ input VendorRiskAssessmentOrder {
     direction: OrderDirection!
 }
 
-input VendorFilter {
-    snapshotId: ID
-}
-
 type Vendor implements Node {
     id: ID!
-    snapshotId: ID
     name: String!
     category: VendorCategory!
     description: String
@@ -462,6 +457,19 @@ extend type Mutation {
         input: CreateVendorRiskAssessmentInput!
     ): CreateVendorRiskAssessmentPayload!
     assessVendor(input: AssessVendorInput!): AssessVendorPayload!
+    publishVendorList(
+        input: PublishVendorListInput!
+    ): PublishVendorListPayload!
+}
+
+input PublishVendorListInput {
+    organizationId: ID!
+    approverIds: [ID!]
+}
+
+type PublishVendorListPayload {
+    documentEdge: DocumentEdge!
+    documentVersionEdge: DocumentVersionEdge!
 }
 
 input CreateVendorInput {

@@ -29,8 +29,8 @@ func TestMCP_Snapshot(t *testing.T) {
 	mc := testutil.NewMCPClient(t, owner)
 	orgID := owner.GetOrganizationID().String()
 
-	// Create a vendor so the snapshot has data
-	factory.CreateVendor(owner)
+	// Create a risk so the snapshot has data
+	factory.CreateRisk(owner)
 
 	// Take snapshot
 	var takeResult struct {
@@ -41,7 +41,7 @@ func TestMCP_Snapshot(t *testing.T) {
 	mc.CallToolInto("takeSnapshot", map[string]any{
 		"organizationId": orgID,
 		"name":           factory.SafeName("Snapshot"),
-		"snapshotsType":  "VENDORS",
+		"snapshotsType":  "RISKS",
 	}, &takeResult)
 	require.NotEmpty(t, takeResult.Snapshot.ID)
 

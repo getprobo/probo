@@ -20,8 +20,10 @@ import {
   Avatar,
   Button,
   DropdownItem,
+  IconPageTextLine,
   IconPlusLarge,
   IconTrashCan,
+  IconUpload,
   PageHeader,
   RiskBadge,
   Tbody,
@@ -35,14 +37,13 @@ import {
   usePaginationFragment,
   usePreloadedQuery,
 } from "react-relay";
-import { useParams } from "react-router";
+import { useNavigate } from "react-router";
 
 import type { VendorGraphListQuery } from "#/__generated__/core/VendorGraphListQuery.graphql";
 import type {
   VendorGraphPaginatedFragment$data,
   VendorGraphPaginatedFragment$key,
 } from "#/__generated__/core/VendorGraphPaginatedFragment.graphql";
-import { SnapshotBanner } from "#/components/SnapshotBanner";
 import { SortableTable, SortableTh } from "#/components/SortableTable";
 import {
   paginatedVendorsFragment,
@@ -53,6 +54,7 @@ import { useOrganizationId } from "#/hooks/useOrganizationId";
 import type { NodeOf } from "#/types";
 
 import { CreateVendorDialog } from "./dialogs/CreateVendorDialog";
+import { PublishVendorListDialog } from "./dialogs/PublishVendorListDialog";
 
 type Vendor = NodeOf<VendorGraphPaginatedFragment$data["vendors"]>;
 
@@ -63,8 +65,7 @@ type Props = {
 export default function VendorsPage(props: Props) {
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
-  const { snapshotId } = useParams<{ snapshotId?: string }>();
-  const isSnapshotMode = Boolean(snapshotId);
+  const navigate = useNavigate();
 
   const data = usePreloadedQuery(vendorsQuery, props.queryRef);
   // eslint-disable-next-line relay/generated-typescript-types
@@ -79,26 +80,54 @@ export default function VendorsPage(props: Props) {
   usePageTitle(__("Vendors"));
 
   const hasAnyAction
-    = !isSnapshotMode
-      && vendors.some(({ canUpdate, canDelete }) => canUpdate || canDelete);
+    = vendors.some(({ canUpdate, canDelete }) => canUpdate || canDelete);
+
+  const vendorsDocument = data.node?.vendorsDocument;
+  const defaultApproverIds
+    = vendorsDocument?.defaultApprovers?.map(a => a.id) ?? [];
 
   return (
     <div className="space-y-6">
-      {snapshotId && <SnapshotBanner snapshotId={snapshotId} />}
       <PageHeader
         title={__("Vendors")}
         description={__(
           "Vendors are third-party services that your company uses. Add them to keep track of their risk and compliance status.",
         )}
       >
-        {!isSnapshotMode && data.node.canCreateVendor && (
-          <CreateVendorDialog
-            connection={connectionId}
-            organizationId={organizationId}
-          >
-            <Button icon={IconPlusLarge}>{__("Add vendor")}</Button>
-          </CreateVendorDialog>
-        )}
+        <div className="flex gap-2">
+          {vendorsDocument && (
+            <Button
+              variant="secondary"
+              icon={IconPageTextLine}
+              onClick={() => void navigate(
+                `/organizations/${organizationId}/documents/${vendorsDocument.id}`,
+              )}
+            >
+              {__("Document")}
+            </Button>
+          )}
+          {data.node.canPublishVendor && (
+            <PublishVendorListDialog
+              organizationId={organizationId}
+              defaultApproverIds={defaultApproverIds}
+              onPublished={documentId => void navigate(
+                `/organizations/${organizationId}/documents/${documentId}`,
+              )}
+            >
+              <Button variant="secondary" icon={IconUpload}>
+                {__("Publish")}
+              </Button>
+            </PublishVendorListDialog>
+          )}
+          {data.node.canCreateVendor && (
+            <CreateVendorDialog
+              connection={connectionId}
+              organizationId={organizationId}
+            >
+              <Button icon={IconPlusLarge}>{__("Add vendor")}</Button>
+            </CreateVendorDialog>
+          )}
+        </div>
       </PageHeader>
       <SortableTable {...pagination}>
         <Thead>
@@ -137,16 +166,11 @@ function VendorRow({
   connectionId: string;
   hasAnyAction: boolean;
 }) {
-  const { snapshotId } = useParams<{ snapshotId?: string }>();
-  const isSnapshotMode = Boolean(snapshotId);
   const { __ } = useTranslate();
   const latestAssessment = vendor.riskAssessments?.edges[0]?.node;
   const deleteVendor = useDeleteVendor(vendor, connectionId);
 
-  const vendorUrl
-    = isSnapshotMode && snapshotId
-      ? `/organizations/${organizationId}/snapshots/${snapshotId}/vendors/${vendor.id}/overview`
-      : `/organizations/${organizationId}/vendors/${vendor.id}/overview`;
+  const vendorUrl = `/organizations/${organizationId}/vendors/${vendor.id}/overview`;
 
   return (
     <>

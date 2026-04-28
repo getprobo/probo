@@ -2563,3 +2563,536 @@ func BuildTransferImpactAssessmentListDocument(data docgen.TransferImpactAssessm
 	}
 	return buf.String(), nil
 }
+
+func (s *GeneratedDocumentService) PublishVendorList(
+	ctx context.Context,
+	organizationID gid.GID,
+	approverIDs []gid.GID,
+) (*coredata.Document, *coredata.DocumentVersion, error) {
+	// Phase 1: collect data and render the prosemirror document outside any
+	// write transaction. Both the bulk reads of vendors + sub-entities and the
+	// JSON template rendering are slow enough that holding write locks across
+	// them would needlessly block other writers.
+	var documentData docgen.VendorListData
+	err := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		organization := &coredata.Organization{}
+		if err := organization.LoadByID(ctx, conn, s.svc.scope, organizationID); err != nil {
+			return fmt.Errorf("cannot load organization: %w", err)
+		}
+
+		var err error
+		documentData, err = s.buildVendorListDocumentData(ctx, conn, organization)
+		if err != nil {
+			return fmt.Errorf("cannot build document data: %w", err)
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, nil, err
+	}
+
+	prosemirrorJSON, err := BuildVendorListDocument(documentData)
+	if err != nil {
+		return nil, nil, fmt.Errorf("cannot build prosemirror document: %w", err)
+	}
+
+	// Phase 2: persist the document and version in a write transaction.
+	var (
+		document        *coredata.Document
+		documentVersion *coredata.DocumentVersion
+	)
+
+	err = s.svc.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			now := time.Now()
+
+			vendor := coredata.Vendor{}
+			vendorDocumentID, err := vendor.GetGeneratedDocumentID(ctx, tx, organizationID)
+			if err != nil {
+				return fmt.Errorf("cannot query generated documents: %w", err)
+			}
+
+			var existingDoc *coredata.Document
+			if vendorDocumentID != nil {
+				doc := &coredata.Document{}
+				err = doc.LoadByID(ctx, tx, s.svc.scope, *vendorDocumentID)
+				if err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
+					return fmt.Errorf("cannot load vendor list document: %w", err)
+				}
+
+				if err == nil && doc.ArchivedAt == nil {
+					existingDoc = doc
+				} else {
+					if err := vendor.ClearGeneratedDocumentID(ctx, tx, []gid.GID{*vendorDocumentID}); err != nil {
+						return fmt.Errorf("cannot clear document reference: %w", err)
+					}
+				}
+			}
+
+			hasApprovers := len(approverIDs) > 0
+
+			if existingDoc == nil {
+				documentID := gid.New(s.svc.scope.GetTenantID(), coredata.DocumentEntityType)
+
+				document = &coredata.Document{
+					ID:                    documentID,
+					OrganizationID:        organizationID,
+					WriteMode:             coredata.DocumentWriteModeGenerated,
+					TrustCenterVisibility: coredata.TrustCenterVisibilityNone,
+					Status:                coredata.DocumentStatusActive,
+					CreatedAt:             now,
+					UpdatedAt:             now,
+				}
+
+				if err := document.Insert(ctx, tx, s.svc.scope); err != nil {
+					return fmt.Errorf("cannot insert document: %w", err)
+				}
+
+				if err := vendor.UpsertGeneratedDocumentID(ctx, tx, organizationID, s.svc.scope.GetTenantID(), documentID); err != nil {
+					return fmt.Errorf("cannot upsert generated documents: %w", err)
+				}
+			} else {
+				document = existingDoc
+			}
+
+			var newMajor int
+			if document.CurrentPublishedMajor != nil {
+				newMajor = *document.CurrentPublishedMajor + 1
+			} else {
+				newMajor = 1
+			}
+
+			versionStatus := coredata.DocumentVersionStatusPublished
+			var publishedAt *time.Time
+			if hasApprovers {
+				versionStatus = coredata.DocumentVersionStatusDraft
+			} else {
+				publishedAt = &now
+			}
+
+			documentVersionID := gid.New(s.svc.scope.GetTenantID(), coredata.DocumentVersionEntityType)
+			documentVersion = &coredata.DocumentVersion{
+				ID:             documentVersionID,
+				OrganizationID: organizationID,
+				DocumentID:     document.ID,
+				Title:          "Vendors",
+				Major:          newMajor,
+				Minor:          0,
+				Content:        prosemirrorJSON,
+				Status:         versionStatus,
+				Classification: coredata.DocumentClassificationConfidential,
+				DocumentType:   coredata.DocumentTypeRegister,
+				Orientation:    coredata.DocumentVersionOrientationPortrait,
+				PublishedAt:    publishedAt,
+				CreatedAt:      now,
+				UpdatedAt:      now,
+			}
+
+			if err := documentVersion.Insert(ctx, tx, s.svc.scope); err != nil {
+				if errors.Is(err, coredata.ErrResourceAlreadyExists) {
+					return fmt.Errorf("a version is pending approval, approve or reject it before publishing a new one: %w", err)
+				}
+				return fmt.Errorf("cannot insert document version: %w", err)
+			}
+
+			if hasApprovers {
+				defaultApprovers := &coredata.DocumentDefaultApprovers{}
+				if err := defaultApprovers.MergeByDocumentID(ctx, tx, s.svc.scope, document.ID, organizationID, approverIDs); err != nil {
+					return fmt.Errorf("cannot save default approvers: %w", err)
+				}
+
+				_, err := s.svc.DocumentApprovals.RequestApprovalInTx(
+					ctx,
+					tx,
+					document,
+					documentVersion,
+					approverIDs,
+					nil,
+				)
+				if err != nil {
+					return fmt.Errorf("cannot request approval: %w", err)
+				}
+			} else {
+				zero := 0
+				document.CurrentPublishedMajor = &newMajor
+				document.CurrentPublishedMinor = &zero
+				document.UpdatedAt = now
+
+				if err := document.Update(ctx, tx, s.svc.scope); err != nil {
+					return fmt.Errorf("cannot update document: %w", err)
+				}
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return document, documentVersion, nil
+}
+
+func (s *GeneratedDocumentService) GetVendorsDocumentID(
+	ctx context.Context,
+	organizationID gid.GID,
+) (*gid.GID, error) {
+	var documentID *gid.GID
+
+	err := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		vendor := coredata.Vendor{}
+		var err error
+		documentID, err = vendor.GetGeneratedDocumentID(ctx, conn, organizationID)
+		return err
+	})
+	if err != nil {
+		return nil, fmt.Errorf("cannot get vendor list document ID: %w", err)
+	}
+
+	return documentID, nil
+}
+
+func (s *GeneratedDocumentService) buildVendorListDocumentData(
+	ctx context.Context,
+	conn pg.Querier,
+	organization *coredata.Organization,
+) (docgen.VendorListData, error) {
+	var vendors coredata.Vendors
+	if err := vendors.LoadAllByOrganizationID(ctx, conn, s.svc.scope, organization.ID); err != nil {
+		return docgen.VendorListData{}, fmt.Errorf("cannot load vendors: %w", err)
+	}
+
+	if len(vendors) == 0 {
+		return docgen.VendorListData{
+			Title:            "Vendors",
+			OrganizationName: organization.Name,
+			CreatedAt:        time.Now(),
+			TotalVendors:     0,
+		}, nil
+	}
+
+	ownerIDSet := make(map[gid.GID]struct{})
+	ownerIDs := make([]gid.GID, 0)
+	for _, v := range vendors {
+		if v.BusinessOwnerID != nil {
+			if _, ok := ownerIDSet[*v.BusinessOwnerID]; !ok {
+				ownerIDs = append(ownerIDs, *v.BusinessOwnerID)
+				ownerIDSet[*v.BusinessOwnerID] = struct{}{}
+			}
+		}
+		if v.SecurityOwnerID != nil {
+			if _, ok := ownerIDSet[*v.SecurityOwnerID]; !ok {
+				ownerIDs = append(ownerIDs, *v.SecurityOwnerID)
+				ownerIDSet[*v.SecurityOwnerID] = struct{}{}
+			}
+		}
+	}
+
+	profileMap := make(map[gid.GID]*coredata.MembershipProfile)
+	if len(ownerIDs) > 0 {
+		var profiles coredata.MembershipProfiles
+		if err := profiles.LoadByIDs(ctx, conn, s.svc.scope, ownerIDs); err != nil {
+			return docgen.VendorListData{}, fmt.Errorf("cannot load owner profiles: %w", err)
+		}
+		for _, p := range profiles {
+			profileMap[p.ID] = p
+		}
+	}
+
+	vendorIDs := make([]gid.GID, len(vendors))
+	for i, v := range vendors {
+		vendorIDs[i] = v.ID
+	}
+
+	var allServices coredata.VendorServices
+	if err := allServices.LoadByVendorIDs(ctx, conn, s.svc.scope, vendorIDs); err != nil {
+		return docgen.VendorListData{}, fmt.Errorf("cannot load vendor services: %w", err)
+	}
+	servicesByVendor := make(map[gid.GID]coredata.VendorServices, len(vendors))
+	for _, vs := range allServices {
+		servicesByVendor[vs.VendorID] = append(servicesByVendor[vs.VendorID], vs)
+	}
+
+	var allContacts coredata.VendorContacts
+	if err := allContacts.LoadByVendorIDs(ctx, conn, s.svc.scope, vendorIDs); err != nil {
+		return docgen.VendorListData{}, fmt.Errorf("cannot load vendor contacts: %w", err)
+	}
+	contactsByVendor := make(map[gid.GID]coredata.VendorContacts, len(vendors))
+	for _, c := range allContacts {
+		contactsByVendor[c.VendorID] = append(contactsByVendor[c.VendorID], c)
+	}
+
+	var allAssessments coredata.VendorRiskAssessments
+	if err := allAssessments.LoadByVendorIDs(ctx, conn, s.svc.scope, vendorIDs); err != nil {
+		return docgen.VendorListData{}, fmt.Errorf("cannot load vendor risk assessments: %w", err)
+	}
+	assessmentsByVendor := make(map[gid.GID]coredata.VendorRiskAssessments, len(vendors))
+	for _, ra := range allAssessments {
+		assessmentsByVendor[ra.VendorID] = append(assessmentsByVendor[ra.VendorID], ra)
+	}
+
+	var allReports coredata.VendorComplianceReports
+	if err := allReports.LoadByVendorIDs(ctx, conn, s.svc.scope, vendorIDs); err != nil {
+		return docgen.VendorListData{}, fmt.Errorf("cannot load vendor compliance reports: %w", err)
+	}
+	reportsByVendor := make(map[gid.GID]coredata.VendorComplianceReports, len(vendors))
+	for _, r := range allReports {
+		reportsByVendor[r.VendorID] = append(reportsByVendor[r.VendorID], r)
+	}
+
+	var allBAAs coredata.VendorBusinessAssociateAgreements
+	if err := allBAAs.LoadByVendorIDs(ctx, conn, s.svc.scope, vendorIDs); err != nil {
+		return docgen.VendorListData{}, fmt.Errorf("cannot load vendor business associate agreements: %w", err)
+	}
+	baaByVendor := make(map[gid.GID]*coredata.VendorBusinessAssociateAgreement, len(allBAAs))
+	for _, b := range allBAAs {
+		baaByVendor[b.VendorID] = b
+	}
+
+	var allDPAs coredata.VendorDataPrivacyAgreements
+	if err := allDPAs.LoadByVendorIDs(ctx, conn, s.svc.scope, vendorIDs); err != nil {
+		return docgen.VendorListData{}, fmt.Errorf("cannot load vendor data privacy agreements: %w", err)
+	}
+	dpaByVendor := make(map[gid.GID]*coredata.VendorDataPrivacyAgreement, len(allDPAs))
+	for _, d := range allDPAs {
+		dpaByVendor[d.VendorID] = d
+	}
+
+	rows := make([]docgen.VendorListRow, 0, len(vendors))
+	for _, v := range vendors {
+		row := docgen.VendorListRow{
+			Name:                          v.Name,
+			LegalName:                     derefStringOrNotSpecified(v.LegalName),
+			Description:                   derefStringOrNotSpecified(v.Description),
+			Category:                      formatVendorCategory(v.Category),
+			HeadquarterAddress:            derefStringOrNotSpecified(v.HeadquarterAddress),
+			WebsiteURL:                    derefStringOrNotSpecified(v.WebsiteURL),
+			PrivacyPolicyURL:              derefStringOrNotSpecified(v.PrivacyPolicyURL),
+			ServiceLevelAgreementURL:      derefStringOrNotSpecified(v.ServiceLevelAgreementURL),
+			DataProcessingAgreementURL:    derefStringOrNotSpecified(v.DataProcessingAgreementURL),
+			BusinessAssociateAgreementURL: derefStringOrNotSpecified(v.BusinessAssociateAgreementURL),
+			SubprocessorsListURL:          derefStringOrNotSpecified(v.SubprocessorsListURL),
+			StatusPageURL:                 derefStringOrNotSpecified(v.StatusPageURL),
+			TermsOfServiceURL:             derefStringOrNotSpecified(v.TermsOfServiceURL),
+			SecurityPageURL:               derefStringOrNotSpecified(v.SecurityPageURL),
+			TrustPageURL:                  derefStringOrNotSpecified(v.TrustPageURL),
+			Certifications:                joinOrNotSpecified(v.Certifications),
+			Countries:                     formatCountries(v.Countries),
+			BusinessOwner:                 lookupProfileName(profileMap, v.BusinessOwnerID),
+			SecurityOwner:                 lookupProfileName(profileMap, v.SecurityOwnerID),
+		}
+
+		for _, vs := range servicesByVendor[v.ID] {
+			row.Services = append(row.Services, docgen.VendorListService{
+				Name:        vs.Name,
+				Description: derefStringOrNotSpecified(vs.Description),
+			})
+		}
+
+		for _, c := range contactsByVendor[v.ID] {
+			email := ""
+			if c.Email != nil {
+				email = c.Email.String()
+			}
+			row.Contacts = append(row.Contacts, docgen.VendorListContact{
+				FullName: derefStringOrNotSpecified(c.FullName),
+				Email:    stringOrNotSpecified(email),
+				Phone:    derefStringOrNotSpecified(c.Phone),
+				Role:     derefStringOrNotSpecified(c.Role),
+			})
+		}
+
+		for _, ra := range assessmentsByVendor[v.ID] {
+			row.RiskAssessments = append(row.RiskAssessments, docgen.VendorListRiskAssessment{
+				AssessedAt:      ra.CreatedAt.Format("2006-01-02"),
+				ExpiresAt:       ra.ExpiresAt.Format("2006-01-02"),
+				DataSensitivity: formatDataSensitivity(ra.DataSensitivity),
+				BusinessImpact:  formatBusinessImpact(ra.BusinessImpact),
+				Notes:           derefStringOrNotSpecified(ra.Notes),
+			})
+		}
+
+		for _, r := range reportsByVendor[v.ID] {
+			row.ComplianceReports = append(row.ComplianceReports, docgen.VendorListComplianceReport{
+				ReportName: r.ReportName,
+				ReportDate: r.ReportDate.Format("2006-01-02"),
+				ValidUntil: formatTimeOrNotSpecified(r.ValidUntil),
+			})
+		}
+
+		if baa := baaByVendor[v.ID]; baa != nil {
+			row.BusinessAssociateAgreement = &docgen.VendorListAgreement{
+				ValidFrom:  formatTimeOrNotSpecified(baa.ValidFrom),
+				ValidUntil: formatTimeOrNotSpecified(baa.ValidUntil),
+			}
+		}
+
+		if dpa := dpaByVendor[v.ID]; dpa != nil {
+			row.DataPrivacyAgreement = &docgen.VendorListAgreement{
+				ValidFrom:  formatTimeOrNotSpecified(dpa.ValidFrom),
+				ValidUntil: formatTimeOrNotSpecified(dpa.ValidUntil),
+			}
+		}
+
+		rows = append(rows, row)
+	}
+
+	return docgen.VendorListData{
+		Title:            "Vendors",
+		OrganizationName: organization.Name,
+		CreatedAt:        time.Now(),
+		TotalVendors:     len(vendors),
+		Rows:             rows,
+	}, nil
+}
+
+func stringOrNotSpecified(s string) string {
+	if s == "" {
+		return "Not specified"
+	}
+	return s
+}
+
+func formatTimeOrNotSpecified(t *time.Time) string {
+	if t == nil {
+		return "Not specified"
+	}
+	return t.Format("2006-01-02")
+}
+
+func joinOrNotSpecified(items []string) string {
+	if len(items) == 0 {
+		return "Not specified"
+	}
+	return strings.Join(items, ", ")
+}
+
+func formatCountries(c coredata.CountryCodes) string {
+	if len(c) == 0 {
+		return "Not specified"
+	}
+	parts := make([]string, len(c))
+	for i, cc := range c {
+		parts[i] = string(cc)
+	}
+	return strings.Join(parts, ", ")
+}
+
+func lookupProfileName(profiles map[gid.GID]*coredata.MembershipProfile, id *gid.GID) string {
+	if id == nil {
+		return "Not assigned"
+	}
+	if p, ok := profiles[*id]; ok {
+		return p.FullName
+	}
+	return "Not assigned"
+}
+
+func formatDataSensitivity(s coredata.DataSensitivity) string {
+	switch s {
+	case coredata.DataSensitivityNone:
+		return "None"
+	case coredata.DataSensitivityLow:
+		return "Low"
+	case coredata.DataSensitivityMedium:
+		return "Medium"
+	case coredata.DataSensitivityHigh:
+		return "High"
+	case coredata.DataSensitivityCritical:
+		return "Critical"
+	default:
+		return string(s)
+	}
+}
+
+func formatBusinessImpact(b coredata.BusinessImpact) string {
+	switch b {
+	case coredata.BusinessImpactLow:
+		return "Low"
+	case coredata.BusinessImpactMedium:
+		return "Medium"
+	case coredata.BusinessImpactHigh:
+		return "High"
+	case coredata.BusinessImpactCritical:
+		return "Critical"
+	default:
+		return string(b)
+	}
+}
+
+func formatVendorCategory(c coredata.VendorCategory) string {
+	switch c {
+	case coredata.VendorCategoryAnalytics:
+		return "Analytics"
+	case coredata.VendorCategoryCloudMonitoring:
+		return "Cloud Monitoring"
+	case coredata.VendorCategoryCloudProvider:
+		return "Cloud Provider"
+	case coredata.VendorCategoryCollaboration:
+		return "Collaboration"
+	case coredata.VendorCategoryCustomerSupport:
+		return "Customer Support"
+	case coredata.VendorCategoryDataStorageAndProcessing:
+		return "Data Storage and Processing"
+	case coredata.VendorCategoryDocumentManagement:
+		return "Document Management"
+	case coredata.VendorCategoryEmployeeManagement:
+		return "Employee Management"
+	case coredata.VendorCategoryEngineering:
+		return "Engineering"
+	case coredata.VendorCategoryFinance:
+		return "Finance"
+	case coredata.VendorCategoryIdentityProvider:
+		return "Identity Provider"
+	case coredata.VendorCategoryIT:
+		return "IT"
+	case coredata.VendorCategoryMarketing:
+		return "Marketing"
+	case coredata.VendorCategoryOfficeOperations:
+		return "Office Operations"
+	case coredata.VendorCategoryOther:
+		return "Other"
+	case coredata.VendorCategoryPasswordManagement:
+		return "Password Management"
+	case coredata.VendorCategoryProductAndDesign:
+		return "Product and Design"
+	case coredata.VendorCategoryProfessionalServices:
+		return "Professional Services"
+	case coredata.VendorCategoryRecruiting:
+		return "Recruiting"
+	case coredata.VendorCategorySales:
+		return "Sales"
+	case coredata.VendorCategorySecurity:
+		return "Security"
+	case coredata.VendorCategoryVersionControl:
+		return "Version Control"
+	default:
+		return string(c)
+	}
+}
+
+var vendorListTemplate = template.Must(
+	template.New("vendor_list.json.tmpl").
+		Funcs(template.FuncMap{
+			"json": func(v any) (string, error) {
+				b, err := json.Marshal(v)
+				if err != nil {
+					return "", err
+				}
+				return string(b), nil
+			},
+			"printf": fmt.Sprintf,
+			"add":    func(a, b int) int { return a + b },
+		}).
+		ParseFS(Templates, "templates/vendor_list.json.tmpl"),
+)
+
+func BuildVendorListDocument(data docgen.VendorListData) (string, error) {
+	var buf bytes.Buffer
+	if err := vendorListTemplate.Execute(&buf, data); err != nil {
+		return "", fmt.Errorf("cannot execute vendor list template: %w", err)
+	}
+	return buf.String(), nil
+}

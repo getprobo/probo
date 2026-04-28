@@ -34,20 +34,6 @@ export const vendorRoutes = [
     loader: loaderFromQueryLoader(({ organizationId }) =>
       loadQuery<VendorGraphListQuery>(coreEnvironment, vendorsQuery, {
         organizationId: organizationId,
-        snapshotId: null,
-      }),
-    ),
-    Component: withQueryRef(
-      lazy(() => import("#/pages/organizations/vendors/VendorsPage")),
-    ),
-  },
-  {
-    path: "snapshots/:snapshotId/vendors",
-    Fallback: PageSkeleton,
-    loader: loaderFromQueryLoader(({ organizationId, snapshotId }) =>
-      loadQuery<VendorGraphListQuery>(coreEnvironment, vendorsQuery, {
-        organizationId: organizationId,
-        snapshotId,
       }),
     ),
     Component: withQueryRef(
@@ -56,65 +42,6 @@ export const vendorRoutes = [
   },
   {
     path: "vendors/:vendorId",
-    Fallback: PageSkeleton,
-    loader: loaderFromQueryLoader(({ vendorId }) =>
-      loadQuery<VendorGraphNodeQuery>(coreEnvironment, vendorNodeQuery, {
-        vendorId: vendorId,
-      }),
-    ),
-    Component: withQueryRef(
-      lazy(() => import("../pages/organizations/vendors/VendorDetailPage")),
-    ),
-    children: [
-      {
-        path: "overview",
-        Fallback: LinkCardSkeleton,
-        Component: lazy(
-          () => import("../pages/organizations/vendors/tabs/VendorOverviewTab"),
-        ),
-      },
-      {
-        path: "certifications",
-        Fallback: LinkCardSkeleton,
-        Component: lazy(
-          () =>
-            import("../pages/organizations/vendors/tabs/VendorCertificationsTab"),
-        ),
-      },
-      {
-        path: "compliance",
-        Fallback: LinkCardSkeleton,
-        Component: lazy(
-          () =>
-            import("../pages/organizations/vendors/tabs/VendorComplianceTab"),
-        ),
-      },
-      {
-        path: "risks",
-        Fallback: LinkCardSkeleton,
-        Component: lazy(
-          () =>
-            import("../pages/organizations/vendors/tabs/VendorRiskAssessmentTab"),
-        ),
-      },
-      {
-        path: "contacts",
-        Fallback: LinkCardSkeleton,
-        Component: lazy(
-          () => import("../pages/organizations/vendors/tabs/VendorContactsTab"),
-        ),
-      },
-      {
-        path: "services",
-        Fallback: LinkCardSkeleton,
-        Component: lazy(
-          () => import("../pages/organizations/vendors/tabs/VendorServicesTab"),
-        ),
-      },
-    ],
-  },
-  {
-    path: "snapshots/:snapshotId/vendors/:vendorId",
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ vendorId }) =>
       loadQuery<VendorGraphNodeQuery>(coreEnvironment, vendorNodeQuery, {

@@ -329,8 +329,9 @@ type Organization implements Node {
         last: Int
         before: CursorKey
         orderBy: VendorOrder
-        filter: VendorFilter = { snapshotId: null }
     ): VendorConnection! @goField(forceResolver: true)
+
+    vendorsDocument: Document @goField(forceResolver: true)
 
     webhookSubscriptions(
         first: Int

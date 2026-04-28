@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { faviconUrl, validateSnapshotConsistency } from "@probo/helpers";
+import { faviconUrl } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import {
   ActionDropdown,
@@ -31,11 +31,10 @@ import {
   useFragment,
   usePreloadedQuery,
 } from "react-relay";
-import { Outlet, useParams } from "react-router";
+import { Outlet } from "react-router";
 
 import type { VendorComplianceTabFragment$key } from "#/__generated__/core/VendorComplianceTabFragment.graphql";
 import type { VendorGraphNodeQuery } from "#/__generated__/core/VendorGraphNodeQuery.graphql";
-import { SnapshotBanner } from "#/components/SnapshotBanner";
 import {
   useDeleteVendor,
   vendorConnectionKey,
@@ -54,10 +53,7 @@ export default function VendorDetailPage(props: Props) {
   const { node: vendor } = usePreloadedQuery(vendorNodeQuery, props.queryRef);
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
-  const { snapshotId } = useParams<{ snapshotId?: string }>();
-  const isSnapshotMode = Boolean(snapshotId);
 
-  validateSnapshotConsistency(vendor, snapshotId);
   const deleteVendor = useDeleteVendor(
     vendor,
     ConnectionHandler.getConnectionID(organizationId, vendorConnectionKey),
@@ -68,19 +64,13 @@ export default function VendorDetailPage(props: Props) {
     vendor as VendorComplianceTabFragment$key,
   ).complianceReports.edges.length;
 
-  const vendorsUrl
-    = isSnapshotMode && snapshotId
-      ? `/organizations/${organizationId}/snapshots/${snapshotId}/vendors`
-      : `/organizations/${organizationId}/vendors`;
+  const vendorsUrl = `/organizations/${organizationId}/vendors`;
 
   const baseVendorUrl
-    = isSnapshotMode && snapshotId
-      ? `/organizations/${organizationId}/snapshots/${snapshotId}/vendors/${vendor.id}`
-      : `/organizations/${organizationId}/vendors/${vendor.id}`;
+    = `/organizations/${organizationId}/vendors/${vendor.id}`;
 
   return (
     <div className="space-y-6">
-      {snapshotId && <SnapshotBanner snapshotId={snapshotId} />}
       <Breadcrumb
         items={[
           {
@@ -103,28 +93,26 @@ export default function VendorDetailPage(props: Props) {
           )}
           <div className="text-2xl">{vendor.name}</div>
         </div>
-        {!isSnapshotMode && (
-          <div className="flex gap-2 items-center">
-            {vendor.canAssess && (
-              <ImportAssessmentDialog vendorId={vendor.id}>
-                <Button icon={IconPageTextLine} variant="secondary">
-                  {__("Assessment From Website")}
-                </Button>
-              </ImportAssessmentDialog>
-            )}
-            {vendor.canDelete && (
-              <ActionDropdown variant="secondary">
-                <DropdownItem
-                  variant="danger"
-                  icon={IconTrashCan}
-                  onClick={deleteVendor}
-                >
-                  {__("Delete")}
-                </DropdownItem>
-              </ActionDropdown>
-            )}
-          </div>
-        )}
+        <div className="flex gap-2 items-center">
+          {vendor.canAssess && (
+            <ImportAssessmentDialog vendorId={vendor.id}>
+              <Button icon={IconPageTextLine} variant="secondary">
+                {__("Assessment From Website")}
+              </Button>
+            </ImportAssessmentDialog>
+          )}
+          {vendor.canDelete && (
+            <ActionDropdown variant="secondary">
+              <DropdownItem
+                variant="danger"
+                icon={IconTrashCan}
+                onClick={deleteVendor}
+              >
+                {__("Delete")}
+              </DropdownItem>
+            </ActionDropdown>
+          )}
+        </div>
       </div>
 
       <Tabs>

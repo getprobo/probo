@@ -362,15 +362,6 @@ components:
         cursor:
           $ref: "#/components/schemas/CursorKey"
           description: Page cursor
-        filter:
-          type: object
-          properties:
-            snapshot_id:
-              anyOf:
-                - $ref: "#/components/schemas/GID"
-                - type: "null"
-              description: Filter by snapshot ID. Defaults to null, which returns only vendors with no snapshot (current live data). Pass a specific snapshot ID to retrieve vendors as they were at that snapshot.
-              default: null
 
     ListVendorsOutput:
       type: object
@@ -560,11 +551,6 @@ components:
             - string
             - "null"
           description: Notes
-        snapshot_id:
-          anyOf:
-            - $ref: "#/components/schemas/GID"
-            - type: "null"
-          description: Snapshot ID
         created_at:
           type: string
           format: date-time
@@ -5372,7 +5358,6 @@ components:
       type: string
       enum:
         - RISKS
-        - VENDORS
         - NONCONFORMITIES
         - OBLIGATIONS
         - CONTINUAL_IMPROVEMENTS
@@ -7107,6 +7092,33 @@ components:
           description: Optional approver profile IDs. If provided, creates a draft pending approval instead of publishing immediately.
 
     PublishTransferImpactAssessmentListOutput:
+      type: object
+      required:
+        - document_id
+        - document_version_id
+      properties:
+        document_id:
+          $ref: "#/components/schemas/GID"
+          description: Created or updated document ID
+        document_version_id:
+          $ref: "#/components/schemas/GID"
+          description: Created document version ID
+
+    PublishVendorListInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        approver_ids:
+          type: array
+          items:
+            $ref: "#/components/schemas/GID"
+          description: Optional approver profile IDs. If provided, creates a draft pending approval instead of publishing immediately.
+
+    PublishVendorListOutput:
       type: object
       required:
         - document_id
@@ -10396,6 +10408,14 @@ tools:
       $ref: "#/components/schemas/PublishTransferImpactAssessmentListInput"
     outputSchema:
       $ref: "#/components/schemas/PublishTransferImpactAssessmentListOutput"
+  - name: publishVendorList
+    description: Publish the vendor register for an organization as a document. If a document already exists, a new version is created.
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/PublishVendorListInput"
+    outputSchema:
+      $ref: "#/components/schemas/PublishVendorListOutput"
   - name: publishStatementOfApplicability
     description: Publish a statement of applicability as a document. If a document already exists, a new version is created.
     hints:

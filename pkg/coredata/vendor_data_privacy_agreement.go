@@ -36,8 +36,6 @@ type (
 		ValidFrom      *time.Time `db:"valid_from"`
 		ValidUntil     *time.Time `db:"valid_until"`
 		FileID         gid.GID    `db:"file_id"`
-		SnapshotID     *gid.GID   `db:"snapshot_id"`
-		SourceID       *gid.GID   `db:"source_id"`
 		CreatedAt      time.Time  `db:"created_at"`
 		UpdatedAt      time.Time  `db:"updated_at"`
 	}
@@ -84,8 +82,6 @@ SELECT
 	valid_from,
 	valid_until,
 	file_id,
-	snapshot_id,
-	source_id,
 	created_at,
 	updated_at
 FROM
@@ -93,6 +89,7 @@ FROM
 WHERE
 	%s
 	AND vendor_id = @vendor_id
+	AND snapshot_id IS NULL
 LIMIT 1;
 `
 
@@ -116,6 +113,60 @@ LIMIT 1;
 	return nil
 }
 
+func (vdpas *VendorDataPrivacyAgreements) LoadByVendorIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	vendorIDs []gid.GID,
+) error {
+	if len(vendorIDs) == 0 {
+		*vdpas = VendorDataPrivacyAgreements{}
+		return nil
+	}
+
+	q := `
+SELECT
+	id,
+	organization_id,
+	vendor_id,
+	valid_from,
+	valid_until,
+	file_id,
+	created_at,
+	updated_at
+FROM
+	vendor_data_privacy_agreements
+WHERE
+	%s
+	AND vendor_id = ANY(@vendor_ids)
+	AND snapshot_id IS NULL
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	ids := make([]string, len(vendorIDs))
+	for i, id := range vendorIDs {
+		ids[i] = id.String()
+	}
+
+	args := pgx.NamedArgs{"vendor_ids": ids}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query vendor data privacy agreements: %w", err)
+	}
+
+	agreements, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[VendorDataPrivacyAgreement])
+	if err != nil {
+		return fmt.Errorf("cannot collect vendor data privacy agreements: %w", err)
+	}
+
+	*vdpas = agreements
+
+	return nil
+}
+
 func (vdpa *VendorDataPrivacyAgreement) LoadByID(
 	ctx context.Context,
 	conn pg.Querier,
@@ -130,8 +181,6 @@ SELECT
 	valid_from,
 	valid_until,
 	file_id,
-	snapshot_id,
-	source_id,
 	created_at,
 	updated_at
 FROM
@@ -215,8 +264,6 @@ INSERT INTO
 		valid_from,
 		valid_until,
 		file_id,
-		snapshot_id,
-		source_id,
 		created_at,
 		updated_at
 	)
@@ -228,8 +275,6 @@ VALUES (
 	@valid_from,
 	@valid_until,
 	@file_id,
-	@snapshot_id,
-	@source_id,
 	@created_at,
 	@updated_at
 )
@@ -238,8 +283,6 @@ ON CONFLICT (organization_id, vendor_id) DO UPDATE SET
 	valid_from = EXCLUDED.valid_from,
 	valid_until = EXCLUDED.valid_until,
 	file_id = EXCLUDED.file_id,
-	snapshot_id = EXCLUDED.snapshot_id,
-	source_id = EXCLUDED.source_id,
 	updated_at = EXCLUDED.updated_at
 `
 	args := pgx.StrictNamedArgs{
@@ -250,8 +293,6 @@ ON CONFLICT (organization_id, vendor_id) DO UPDATE SET
 		"valid_from":      vdpa.ValidFrom,
 		"valid_until":     vdpa.ValidUntil,
 		"file_id":         vdpa.FileID,
-		"snapshot_id":     vdpa.SnapshotID,
-		"source_id":       vdpa.SourceID,
 		"created_at":      vdpa.CreatedAt,
 		"updated_at":      vdpa.UpdatedAt,
 	}
@@ -315,66 +356,4 @@ WHERE
 
 	_, err := conn.Exec(ctx, q, args)
 	return err
-}
-
-func (vdpa VendorDataPrivacyAgreements) InsertVendorSnapshots(
-	ctx context.Context,
-	conn pg.Tx,
-	scope Scoper,
-	organizationID gid.GID,
-	snapshotID gid.GID,
-) error {
-	query := `
-WITH
-	snapshot_vendors AS (
-		SELECT id, source_id
-		FROM vendors
-		WHERE organization_id = @organization_id AND snapshot_id = @snapshot_id
-	)
-INSERT INTO vendor_data_privacy_agreements (
-	tenant_id,
-	id,
-	snapshot_id,
-	source_id,
-	organization_id,
-	vendor_id,
-	valid_from,
-	valid_until,
-	file_id,
-	created_at,
-	updated_at
-)
-SELECT
-	@tenant_id,
-	generate_gid(decode_base64_unpadded(@tenant_id), @vendor_data_privacy_agreement_entity_type),
-	@snapshot_id,
-	vdpa.id,
-	vdpa.organization_id,
-	sv.id,
-	vdpa.valid_from,
-	vdpa.valid_until,
-	vdpa.file_id,
-	vdpa.created_at,
-	vdpa.updated_at
-FROM vendor_data_privacy_agreements vdpa
-INNER JOIN snapshot_vendors sv ON sv.source_id = vdpa.vendor_id
-WHERE %s AND vdpa.snapshot_id IS NULL
-	`
-
-	query = fmt.Sprintf(query, scope.SQLFragment())
-
-	args := pgx.StrictNamedArgs{
-		"tenant_id":       scope.GetTenantID(),
-		"snapshot_id":     snapshotID,
-		"organization_id": organizationID,
-		"vendor_data_privacy_agreement_entity_type": VendorDataPrivacyAgreementEntityType,
-	}
-	maps.Copy(args, scope.SQLArguments())
-
-	_, err := conn.Exec(ctx, query, args)
-	if err != nil {
-		return fmt.Errorf("cannot insert vendor data privacy agreement snapshots: %w", err)
-	}
-
-	return nil
 }

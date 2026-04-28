@@ -21,6 +21,7 @@ import (
 	"go.probo.inc/probo/pkg/cmd/vendormgmt/create"
 	"go.probo.inc/probo/pkg/cmd/vendormgmt/delete"
 	"go.probo.inc/probo/pkg/cmd/vendormgmt/list"
+	"go.probo.inc/probo/pkg/cmd/vendormgmt/publish"
 	"go.probo.inc/probo/pkg/cmd/vendormgmt/update"
 	"go.probo.inc/probo/pkg/cmd/vendormgmt/view"
 )
@@ -37,6 +38,7 @@ func NewCmdVendor(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(update.NewCmdUpdate(f))
 	cmd.AddCommand(delete.NewCmdDelete(f))
 	cmd.AddCommand(assess.NewCmdAssess(f))
+	cmd.AddCommand(publish.NewCmdPublish(f))
 
 	return cmd
 }

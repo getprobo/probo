@@ -36,8 +36,6 @@ type (
 		ValidUntil     *time.Time `db:"valid_until"`
 		ReportName     string     `db:"report_name"`
 		ReportFileId   *gid.GID   `db:"report_file_id"`
-		SnapshotID     *gid.GID   `db:"snapshot_id"`
-		SourceID       *gid.GID   `db:"source_id"`
 		CreatedAt      time.Time  `db:"created_at"`
 		UpdatedAt      time.Time  `db:"updated_at"`
 	}
@@ -86,8 +84,6 @@ SELECT
 	valid_until,
 	report_name,
 	report_file_id,
-	snapshot_id,
-	source_id,
 	created_at,
 	updated_at
 FROM
@@ -95,6 +91,7 @@ FROM
 WHERE
 	%s
 	AND vendor_id = @vendor_id
+	AND snapshot_id IS NULL
 	AND %s
 `
 
@@ -103,6 +100,63 @@ WHERE
 	args := pgx.NamedArgs{"vendor_id": vendorID}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query vendor compliance reports: %w", err)
+	}
+
+	vendorComplianceReports, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[VendorComplianceReport])
+	if err != nil {
+		return fmt.Errorf("cannot collect vendor compliance reports: %w", err)
+	}
+
+	*vcs = vendorComplianceReports
+
+	return nil
+}
+
+func (vcs *VendorComplianceReports) LoadByVendorIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	vendorIDs []gid.GID,
+) error {
+	if len(vendorIDs) == 0 {
+		*vcs = VendorComplianceReports{}
+		return nil
+	}
+
+	q := `
+SELECT
+	id,
+	organization_id,
+	vendor_id,
+	report_date,
+	valid_until,
+	report_name,
+	report_file_id,
+	created_at,
+	updated_at
+FROM
+	vendor_compliance_reports
+WHERE
+	%s
+	AND vendor_id = ANY(@vendor_ids)
+	AND snapshot_id IS NULL
+ORDER BY
+	vendor_id, report_date DESC
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	ids := make([]string, len(vendorIDs))
+	for i, id := range vendorIDs {
+		ids[i] = id.String()
+	}
+
+	args := pgx.NamedArgs{"vendor_ids": ids}
+	maps.Copy(args, scope.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -134,8 +188,6 @@ SELECT
 	valid_until,
 	report_name,
 	report_file_id,
-	snapshot_id,
-	source_id,
 	created_at,
 	updated_at
 FROM
@@ -249,69 +301,5 @@ RETURNING report_file_id
 			return fmt.Errorf("cannot soft delete vendor compliance file: %w", err)
 		}
 	}
-	return nil
-}
-
-func (vcrs VendorComplianceReports) InsertVendorSnapshots(
-	ctx context.Context,
-	conn pg.Tx,
-	scope Scoper,
-	organizationID gid.GID,
-	snapshotID gid.GID,
-) error {
-	query := `
-WITH
-	snapshot_vendors AS (
-		SELECT id, source_id
-		FROM vendors
-		WHERE organization_id = @organization_id AND snapshot_id = @snapshot_id
-	)
-INSERT INTO vendor_compliance_reports (
-	tenant_id,
-	id,
-	organization_id,
-	snapshot_id,
-	source_id,
-	vendor_id,
-	report_date,
-	valid_until,
-	report_name,
-	report_file_id,
-	created_at,
-	updated_at
-)
-SELECT
-	@tenant_id,
-	generate_gid(decode_base64_unpadded(@tenant_id), @vendor_compliance_report_entity_type),
-	@organization_id,
-	@snapshot_id,
-	vcr.id,
-	sv.id,
-	vcr.report_date,
-	vcr.valid_until,
-	vcr.report_name,
-	vcr.report_file_id,
-	vcr.created_at,
-	vcr.updated_at
-FROM vendor_compliance_reports vcr
-INNER JOIN snapshot_vendors sv ON sv.source_id = vcr.vendor_id
-WHERE %s AND vcr.snapshot_id IS NULL
-	`
-
-	query = fmt.Sprintf(query, scope.SQLFragment())
-
-	args := pgx.StrictNamedArgs{
-		"tenant_id":                            scope.GetTenantID(),
-		"snapshot_id":                          snapshotID,
-		"organization_id":                      organizationID,
-		"vendor_compliance_report_entity_type": VendorComplianceReportEntityType,
-	}
-	maps.Copy(args, scope.SQLArguments())
-
-	_, err := conn.Exec(ctx, query, args)
-	if err != nil {
-		return fmt.Errorf("cannot insert vendor compliance report snapshots: %w", err)
-	}
-
 	return nil
 }
