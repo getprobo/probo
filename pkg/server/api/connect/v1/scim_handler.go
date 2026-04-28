@@ -32,6 +32,7 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
 	scimservice "go.probo.inc/probo/pkg/iam/scim"
+	"go.probo.inc/probo/pkg/server/api/clientip"
 )
 
 type (
@@ -337,12 +338,7 @@ func (h *scimResourceHandler) Delete(r *http.Request, id string) error {
 }
 
 func getIPAddress(r *http.Request) net.IP {
-	host, _, err := net.SplitHostPort(r.RemoteAddr)
-	if err != nil {
-		host = r.RemoteAddr
-	}
-
-	if ip := net.ParseIP(host); ip != nil {
+	if ip := net.ParseIP(clientip.Extract(r)); ip != nil {
 		return ip
 	}
 
