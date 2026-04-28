@@ -8,6 +8,7 @@ package connect_v1
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
@@ -55,25 +56,45 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input types.CreateUse
 	}, nil
 }
 
+// ActivateUser is the resolver for the activateUser field.
+func (r *mutationResolver) ActivateUser(ctx context.Context, input types.ActivateUserInput) (*types.ActivateUserPayload, error) {
+	panic(fmt.Errorf("not implemented: ActivateUser - activateUser"))
+}
+
 // DeactivateUser is the resolver for the deactivateUser field.
 func (r *mutationResolver) DeactivateUser(ctx context.Context, input types.DeactivateUserInput) (*types.DeactivateUserPayload, error) {
 	if err := r.authorize(ctx, input.ProfileID, iam.ActionMembershipProfileDeactivate); err != nil {
 		return nil, err
 	}
 
-	_, err := r.iam.OrganizationService.UpdateUserState(
+	profile, err := r.iam.OrganizationService.UpdateUserState(
 		ctx,
 		input.ProfileID,
 		coredata.ProfileStateInactive,
 	)
-
 	if err != nil {
+		var errProfileNotFound *iam.ErrProfileNotFound
+		var errManagedBySCIM *iam.ErrUserManagedBySCIM
+		var errLastActiveOwner *iam.ErrLastActiveOwner
+
+		if errors.As(err, &errProfileNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		if errors.As(err, &errManagedBySCIM) {
+			return nil, gqlutils.Conflict(ctx, err)
+		}
+
+		if errors.As(err, &errLastActiveOwner) {
+			return nil, gqlutils.Conflict(ctx, err)
+		}
+
 		r.logger.ErrorCtx(ctx, "cannot deactivate profile", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.DeactivateUserPayload{
-		Success: true,
+		Profile: types.NewProfile(profile),
 	}, nil
 }
 

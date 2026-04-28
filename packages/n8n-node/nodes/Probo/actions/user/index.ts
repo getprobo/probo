@@ -20,6 +20,8 @@ import * as inviteUserOp from './inviteUser.operation';
 import * as updateUserOp from './updateUser.operation';
 import * as updateMembershipOp from './updateMembership.operation';
 import * as removeUserOp from './removeUser.operation';
+import * as activateUserOp from './activateUser.operation';
+import * as deactivateUserOp from './deactivateUser.operation';
 
 export const description: INodeProperties[] = [
 	{
@@ -34,10 +36,22 @@ export const description: INodeProperties[] = [
 		},
 		options: [
 			{
+				name: 'Activate',
+				value: 'activateUser',
+				description: 'Reactivate a previously deactivated user',
+				action: 'Activate a user',
+			},
+			{
 				name: 'Create',
 				value: 'createUser',
 				description: 'Create a new user in the organization',
 				action: 'Create a user',
+			},
+			{
+				name: 'Deactivate',
+				value: 'deactivateUser',
+				description: 'Mark a user as inactive without deleting them',
+				action: 'Deactivate a user',
 			},
 			{
 				name: 'Get',
@@ -85,6 +99,8 @@ export const description: INodeProperties[] = [
 	...updateUserOp.description,
 	...updateMembershipOp.description,
 	...removeUserOp.description,
+	...activateUserOp.description,
+	...deactivateUserOp.description,
 ];
 
 export {
@@ -95,4 +111,6 @@ export {
 	updateUserOp as updateUser,
 	updateMembershipOp as updateMembership,
 	removeUserOp as removeUser,
+	activateUserOp as activateUser,
+	deactivateUserOp as deactivateUser,
 };

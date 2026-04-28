@@ -18,6 +18,8 @@ import {
   ActionDropdown,
   Badge,
   DropdownItem,
+  IconCircleCheck,
+  IconCircleX,
   IconMail,
   IconTrashCan,
   Option,
@@ -64,6 +66,8 @@ const fragment = graphql`
     canUpdate: permission(action: "iam:membership-profile:update")
     canInvite: permission(action: "iam:invitation:create")
     canDelete: permission(action: "iam:membership-profile:delete")
+    canActivate: permission(action: "iam:membership-profile:activate")
+    canDeactivate: permission(action: "iam:membership-profile:deactivate")
   }
 `;
 
@@ -107,6 +111,28 @@ const removeUserMutation = graphql`
   }
 `;
 
+const activateUserMutation = graphql`
+  mutation PeopleListItem_activateMutation($input: ActivateUserInput!) {
+    activateUser(input: $input) {
+      profile {
+        id
+        state
+      }
+    }
+  }
+`;
+
+const deactivateUserMutation = graphql`
+  mutation PeopleListItem_deactivateMutation($input: DeactivateUserInput!) {
+    deactivateUser(input: $input) {
+      profile {
+        id
+        state
+      }
+    }
+  }
+`;
+
 export function PeopleListItem(props: {
   connectionId: DataID;
   fKey: PeopleListItemFragment$key;
@@ -125,9 +151,12 @@ export function PeopleListItem(props: {
   const lastInvitation = profile.lastInvitation.edges[0]?.node;
 
   const isInactive = profile.state === "INACTIVE";
+  const isManagedBySCIM = profile.source === "SCIM";
 
-  const canSendActivationMail = isInactive && profile.source !== "SCIM" && profile.canInvite;
-  const canDelete = profile.canDelete && profile.source !== "SCIM";
+  const canSendActivationMail = isInactive && !isManagedBySCIM && profile.canInvite;
+  const canDelete = profile.canDelete && !isManagedBySCIM;
+  const canDeactivate = !isInactive && profile.canDeactivate && !isManagedBySCIM;
+  const canActivate = isInactive && profile.canActivate && !isManagedBySCIM;
 
   const [inviteUser]
     = useMutationWithToasts<PeopleListItem_inviteMutation>(inviteUserMutation, {
@@ -146,6 +175,20 @@ export function PeopleListItem(props: {
     {
       successMessage: __("Person removed successfully"),
       errorMessage: __("Failed to remove person"),
+    },
+  );
+  const [activateUser, isActivating] = useMutationWithToasts(
+    activateUserMutation,
+    {
+      successMessage: __("Person activated successfully"),
+      errorMessage: __("Failed to activate person"),
+    },
+  );
+  const [deactivateUser, isDeactivating] = useMutationWithToasts(
+    deactivateUserMutation,
+    {
+      successMessage: __("Person deactivated successfully"),
+      errorMessage: __("Failed to deactivate person"),
     },
   );
 
@@ -204,11 +247,56 @@ export function PeopleListItem(props: {
       },
     );
   };
+  const handleDeactivate = () => {
+    confirm(
+      () => {
+        return deactivateUser({
+          variables: {
+            input: {
+              profileId: profile.id,
+              organizationId: organizationId,
+            },
+          },
+        });
+      },
+      {
+        label: __("Deactivate"),
+        message: sprintf(
+          __("Deactivate %s? They will keep their profile but lose access until reactivated."),
+          profile.fullName,
+        ),
+      },
+    );
+  };
+  const handleActivate = () => {
+    confirm(
+      () => {
+        return activateUser({
+          variables: {
+            input: {
+              profileId: profile.id,
+              organizationId: organizationId,
+            },
+          },
+        });
+      },
+      {
+        label: __("Activate"),
+        variant: "primary",
+        message: sprintf(
+          __("Reactivate %s? They will regain access to the organization."),
+          profile.fullName,
+        ),
+      },
+    );
+  };
+
+  const isMutating = isRemoving || isActivating || isDeactivating;
 
   return (
     <Tr to={`/organizations/${organizationId}/people/${profile.id}`}>
       <Td className={clsx(
-        isRemoving && "opacity-60 pointer-events-none",
+        isMutating && "opacity-60 pointer-events-none",
         isInactive && "opacity-50",
       )}
       >
@@ -218,7 +306,7 @@ export function PeopleListItem(props: {
         <Badge variant={profile.state === "INACTIVE" ? "neutral" : "success"}>{profile.state}</Badge>
       </Td>
       <Td className={clsx(
-        isRemoving && "opacity-60 pointer-events-none",
+        isMutating && "opacity-60 pointer-events-none",
         isInactive && "opacity-50",
       )}
       >
@@ -232,7 +320,7 @@ export function PeopleListItem(props: {
           noLink
           className={clsx(
             "pr-4",
-            isRemoving && "opacity-60 pointer-events-none",
+            isMutating && "opacity-60 pointer-events-none",
             isInactive && "opacity-50",
           )}
         >
@@ -260,14 +348,14 @@ export function PeopleListItem(props: {
         </Td>
       )}
       <Td className={clsx(
-        isRemoving && "opacity-60 pointer-events-none",
+        isMutating && "opacity-60 pointer-events-none",
         isInactive && "opacity-50",
       )}
       >
         {new Date(profile.createdAt).toLocaleDateString()}
       </Td>
       <Td noLink width={160} className="text-end">
-        {(canSendActivationMail || canDelete) && (
+        {(canSendActivationMail || canActivate || canDeactivate || canDelete) && (
           <ActionDropdown>
             {canSendActivationMail && (
               <DropdownItem
@@ -275,6 +363,22 @@ export function PeopleListItem(props: {
                 icon={IconMail}
               >
                 {lastInvitation ? __("Resend activation mail") : __("Send activation mail")}
+              </DropdownItem>
+            )}
+            {canActivate && (
+              <DropdownItem
+                onClick={handleActivate}
+                icon={IconCircleCheck}
+              >
+                {__("Activate")}
+              </DropdownItem>
+            )}
+            {canDeactivate && (
+              <DropdownItem
+                onClick={handleDeactivate}
+                icon={IconCircleX}
+              >
+                {__("Deactivate")}
               </DropdownItem>
             )}
             {canDelete && (
