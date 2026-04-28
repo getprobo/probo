@@ -4,7 +4,7 @@ services:
     pull_policy: missing
     shm_size: "1g"
     command: >
-      postgres -c "shared_buffers=1GB"
+      postgres -c "shared_buffers=256MB"
                -c "max_connections=200"
                -c "log_statement=all"
     ports:

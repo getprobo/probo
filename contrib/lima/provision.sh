@@ -30,6 +30,7 @@ apt-get install -y -qq \
     ca-certificates \
     gnupg \
     lsb-release \
+    postgresql-client \
     unzip
 
 if ! command -v docker &>/dev/null; then
@@ -178,10 +179,11 @@ Requires=docker.service
 After=docker.service
 
 [Service]
-Type=simple
+Type=oneshot
+RemainAfterExit=yes
 User=root
 WorkingDirectory=/workspace
-ExecStart=/usr/bin/docker compose -f compose.yaml up
+ExecStart=/usr/bin/docker compose -f compose.yaml up -d --wait
 ExecStop=/usr/bin/docker compose -f compose.yaml down
 Restart=on-failure
 RestartSec=5s
@@ -200,6 +202,7 @@ After=probo-stack.service
 Type=simple
 User=${LIMA_USER}
 WorkingDirectory=/workspace
+ExecStartPre=/bin/bash -c 'for i in \$(seq 1 10); do pg_isready -h localhost -p 5432 -U probod -d probod -q && exit 0; sleep 1; done; echo "PostgreSQL not ready after 10s"; exit 1'
 ExecStart=/usr/local/bin/gow -r=false run ./cmd/probod -cfg-file /etc/probod/config.yml -format pretty
 Restart=on-failure
 RestartSec=3s
@@ -213,7 +216,7 @@ cat > /etc/systemd/system/probo-console.service << EOF
 [Unit]
 Description=Probo Console Dev Server
 Requires=probo-node-modules.service
-After=probo-node-modules.service
+After=probo-node-modules.service probod.service
 
 [Service]
 Type=simple
@@ -231,7 +234,7 @@ cat > /etc/systemd/system/probo-trust.service << EOF
 [Unit]
 Description=Probo Trust Dev Server
 Requires=probo-node-modules.service
-After=probo-node-modules.service
+After=probo-node-modules.service probod.service
 
 [Service]
 Type=simple
