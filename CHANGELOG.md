@@ -4,6 +4,28 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.174.0] - 2026-04-28
+
+### Added
+
+- Add agent run supervisor with checkpoint persistence and resume across restarts
+- Add finding and obligation publish to document system, replacing snapshot mode
+- Add `--state` and `--contract-ended` filters to CLI/MCP/GraphQL user list
+- Add Notion workspace name resolver for access review
+- Add `X-SDK-Version` header to cookie banner SDK requests
+
+### Changed
+
+- Rename `excludeContractEnded` to `contractEnded` (two-way) across MCP, GraphQL, CLI, frontend
+- Remove auditor's ability to publish SoA
+- Request Google customer directory scope for access-review name sync
+
+### Fixed
+
+- Fix copy-paste in rich editor
+- Fix long cookie name display and label colors in cookie banner
+- Fix suspension checkpoint fallback in nested and parallel agent execution
+
 ## [0.173.0] - 2026-04-24
 
 ### Added
