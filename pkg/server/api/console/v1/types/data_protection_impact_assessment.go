@@ -30,7 +30,6 @@ type (
 
 		Resolver any
 		ParentID gid.GID
-		Filter   *coredata.DataProtectionImpactAssessmentFilter
 	}
 )
 
@@ -38,7 +37,6 @@ func NewDataProtectionImpactAssessmentConnection(
 	p *page.Page[*coredata.DataProtectionImpactAssessment, coredata.DataProtectionImpactAssessmentOrderField],
 	parentType any,
 	parentID gid.GID,
-	filter *coredata.DataProtectionImpactAssessmentFilter,
 ) *DataProtectionImpactAssessmentConnection {
 	edges := make([]*DataProtectionImpactAssessmentEdge, len(p.Data))
 	for i, dpia := range p.Data {
@@ -51,7 +49,6 @@ func NewDataProtectionImpactAssessmentConnection(
 
 		Resolver: parentType,
 		ParentID: parentID,
-		Filter:   filter,
 	}
 }
 

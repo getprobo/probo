@@ -3709,15 +3709,6 @@ components:
         cursor:
           $ref: "#/components/schemas/CursorKey"
           description: Page cursor
-        filter:
-          type: object
-          properties:
-            snapshot_id:
-              anyOf:
-                - $ref: "#/components/schemas/GID"
-                - type: "null"
-              description: Filter by snapshot ID. Defaults to null, which returns only processing activities with no snapshot (current live data). Pass a specific snapshot ID to retrieve processing activities as they were at that snapshot.
-              default: null
 
     ListProcessingActivitiesOutput:
       type: object
@@ -4016,15 +4007,6 @@ components:
           type: integer
         cursor:
           $ref: "#/components/schemas/CursorKey"
-        filter:
-          type: object
-          properties:
-            snapshot_id:
-              anyOf:
-                - $ref: "#/components/schemas/GID"
-                - type: "null"
-              description: Filter by snapshot ID. Defaults to null, which returns only DPIAs with no snapshot (current live data). Pass a specific snapshot ID to retrieve DPIAs as they were at that snapshot.
-              default: null
 
     ListDataProtectionImpactAssessmentsOutput:
       type: object
@@ -4200,15 +4182,6 @@ components:
           type: integer
         cursor:
           $ref: "#/components/schemas/CursorKey"
-        filter:
-          type: object
-          properties:
-            snapshot_id:
-              anyOf:
-                - $ref: "#/components/schemas/GID"
-                - type: "null"
-              description: Filter by snapshot ID. Defaults to null, which returns only TIAs with no snapshot (current live data). Pass a specific snapshot ID to retrieve TIAs as they were at that snapshot.
-              default: null
 
     ListTransferImpactAssessmentsOutput:
       type: object
@@ -7053,6 +7026,87 @@ components:
           description: Optional approver profile IDs. If provided, creates a draft pending approval instead of publishing immediately.
 
     PublishObligationListOutput:
+      type: object
+      required:
+        - document_id
+        - document_version_id
+      properties:
+        document_id:
+          $ref: "#/components/schemas/GID"
+          description: Created or updated document ID
+        document_version_id:
+          $ref: "#/components/schemas/GID"
+          description: Created document version ID
+
+    PublishProcessingActivityListInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        approver_ids:
+          type: array
+          items:
+            $ref: "#/components/schemas/GID"
+          description: Optional approver profile IDs. If provided, creates a draft pending approval instead of publishing immediately.
+
+    PublishProcessingActivityListOutput:
+      type: object
+      required:
+        - document_id
+        - document_version_id
+      properties:
+        document_id:
+          $ref: "#/components/schemas/GID"
+          description: Created or updated document ID
+        document_version_id:
+          $ref: "#/components/schemas/GID"
+          description: Created document version ID
+
+    PublishDataProtectionImpactAssessmentListInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        approver_ids:
+          type: array
+          items:
+            $ref: "#/components/schemas/GID"
+          description: Optional approver profile IDs. If provided, creates a draft pending approval instead of publishing immediately.
+
+    PublishDataProtectionImpactAssessmentListOutput:
+      type: object
+      required:
+        - document_id
+        - document_version_id
+      properties:
+        document_id:
+          $ref: "#/components/schemas/GID"
+          description: Created or updated document ID
+        document_version_id:
+          $ref: "#/components/schemas/GID"
+          description: Created document version ID
+
+    PublishTransferImpactAssessmentListInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        approver_ids:
+          type: array
+          items:
+            $ref: "#/components/schemas/GID"
+          description: Optional approver profile IDs. If provided, creates a draft pending approval instead of publishing immediately.
+
+    PublishTransferImpactAssessmentListOutput:
       type: object
       required:
         - document_id
@@ -10318,6 +10372,30 @@ tools:
       $ref: "#/components/schemas/PublishObligationListInput"
     outputSchema:
       $ref: "#/components/schemas/PublishObligationListOutput"
+  - name: publishProcessingActivityList
+    description: Publish the processing activity register for an organization as a document. If a document already exists, a new version is created.
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/PublishProcessingActivityListInput"
+    outputSchema:
+      $ref: "#/components/schemas/PublishProcessingActivityListOutput"
+  - name: publishDataProtectionImpactAssessmentList
+    description: Publish the Data Protection Impact Assessment register for an organization as a document. If a document already exists, a new version is created.
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/PublishDataProtectionImpactAssessmentListInput"
+    outputSchema:
+      $ref: "#/components/schemas/PublishDataProtectionImpactAssessmentListOutput"
+  - name: publishTransferImpactAssessmentList
+    description: Publish the Transfer Impact Assessment register for an organization as a document. If a document already exists, a new version is created.
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/PublishTransferImpactAssessmentListInput"
+    outputSchema:
+      $ref: "#/components/schemas/PublishTransferImpactAssessmentListOutput"
   - name: publishStatementOfApplicability
     description: Publish a statement of applicability as a document. If a document already exists, a new version is created.
     hints:

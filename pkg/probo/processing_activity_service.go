@@ -17,22 +17,17 @@ package probo
 import (
 	"context"
 	"fmt"
-	"io"
-	"strings"
 	"time"
 
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/docgen"
 	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/html2pdf"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/validator"
 )
 
 type ProcessingActivityService struct {
-	svc               *TenantService
-	html2pdfConverter *html2pdf.Converter
+	svc *TenantService
 }
 
 type (
@@ -338,14 +333,13 @@ func (s ProcessingActivityService) ListForOrganizationID(
 	ctx context.Context,
 	organizationID gid.GID,
 	cursor *page.Cursor[coredata.ProcessingActivityOrderField],
-	filter *coredata.ProcessingActivityFilter,
 ) (*page.Page[*coredata.ProcessingActivity, coredata.ProcessingActivityOrderField], error) {
 	var processingActivities coredata.ProcessingActivities
 
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			err := processingActivities.LoadByOrganizationID(ctx, conn, s.svc.scope, organizationID, cursor, filter)
+			err := processingActivities.LoadByOrganizationID(ctx, conn, s.svc.scope, organizationID, cursor)
 			if err != nil {
 				return fmt.Errorf("cannot load processing activities: %w", err)
 			}
@@ -364,7 +358,6 @@ func (s ProcessingActivityService) ListForOrganizationID(
 func (s ProcessingActivityService) CountForOrganizationID(
 	ctx context.Context,
 	organizationID gid.GID,
-	filter *coredata.ProcessingActivityFilter,
 ) (int, error) {
 	var count int
 
@@ -372,7 +365,7 @@ func (s ProcessingActivityService) CountForOrganizationID(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			processingActivities := coredata.ProcessingActivities{}
-			count, err = processingActivities.CountByOrganizationID(ctx, conn, s.svc.scope, organizationID, filter)
+			count, err = processingActivities.CountByOrganizationID(ctx, conn, s.svc.scope, organizationID)
 			if err != nil {
 				return fmt.Errorf("cannot count processing activities: %w", err)
 			}
@@ -386,158 +379,4 @@ func (s ProcessingActivityService) CountForOrganizationID(
 	}
 
 	return count, nil
-}
-
-func (s *ProcessingActivityService) ExportPDF(
-	ctx context.Context,
-	organizationID gid.GID,
-	filter *coredata.ProcessingActivityFilter,
-) ([]byte, error) {
-	var tableData docgen.ProcessingActivityTableData
-
-	err := s.svc.pg.WithTx(
-		ctx,
-		func(ctx context.Context, conn pg.Tx) error {
-			var processingActivities coredata.ProcessingActivities
-			if err := processingActivities.LoadAllByOrganizationID(ctx, conn, s.svc.scope, organizationID, filter); err != nil {
-				return fmt.Errorf("cannot load processing activities: %w", err)
-			}
-
-			if len(processingActivities) == 0 {
-				return fmt.Errorf("no processing activities found: %w", coredata.ErrResourceNotFound)
-			}
-
-			organization := &coredata.Organization{}
-			if err := organization.LoadByID(ctx, conn, s.svc.scope, organizationID); err != nil {
-				return fmt.Errorf("cannot load organization: %w", err)
-			}
-
-			horizontalLogoBase64 := ""
-			if organization.HorizontalLogoFileID != nil {
-				fileRecord := &coredata.File{}
-				fileErr := fileRecord.LoadByID(ctx, conn, s.svc.scope, *organization.HorizontalLogoFileID)
-				if fileErr == nil {
-					base64Data, mimeType, logoErr := s.svc.fileManager.GetFileBase64(ctx, fileRecord)
-					if logoErr == nil {
-						horizontalLogoBase64 = fmt.Sprintf("data:%s;base64,%s", mimeType, base64Data)
-					}
-				}
-			}
-
-			var vendors coredata.Vendors
-			vendorMap, err := vendors.LoadAllByProcessingActivities(ctx, conn, s.svc.scope, organizationID, filter)
-			if err != nil {
-				return fmt.Errorf("cannot load vendors: %w", err)
-			}
-
-			var snapshots coredata.Snapshots
-			snapshotType := coredata.SnapshotsTypeProcessingActivities
-
-			var version int
-			var publishedAt time.Time
-
-			if snapshotID := filter.SnapshotID(); snapshotID != nil {
-				snapshot := &coredata.Snapshot{}
-				if err := snapshot.LoadByID(ctx, conn, s.svc.scope, *snapshotID); err != nil {
-					return fmt.Errorf("cannot load snapshot: %w", err)
-				}
-				publishedAt = snapshot.CreatedAt
-				snapshotFilter := coredata.NewSnapshotFilter(&snapshotType).WithBeforeDate(&snapshot.CreatedAt)
-				snapshotCount, err := snapshots.CountByOrganizationID(ctx, conn, s.svc.scope, organizationID, snapshotFilter)
-				if err != nil {
-					return fmt.Errorf("cannot count processing activities snapshots: %w", err)
-				}
-				version = snapshotCount
-			} else {
-				publishedAt = time.Now()
-				snapshotFilter := coredata.NewSnapshotFilter(&snapshotType)
-				snapshotCount, err := snapshots.CountByOrganizationID(ctx, conn, s.svc.scope, organizationID, snapshotFilter)
-				if err != nil {
-					return fmt.Errorf("cannot count processing activities snapshots: %w", err)
-				}
-				version = snapshotCount + 1
-			}
-
-			activities := make([]docgen.ProcessingActivityRowData, len(processingActivities))
-			for i, pa := range processingActivities {
-				dpoFullName := (*string)(nil)
-				if pa.DataProtectionOfficerID != nil {
-					dpo := &coredata.MembershipProfile{}
-					if err := dpo.LoadByID(ctx, conn, s.svc.scope, *pa.DataProtectionOfficerID); err == nil {
-						dpoFullName = &dpo.FullName
-					}
-				}
-
-				vendorsList := ""
-				if vendorNames, ok := vendorMap[pa.ID]; ok && len(vendorNames) > 0 {
-					vendorsList = strings.Join(vendorNames, ", ")
-				}
-
-				activities[i] = docgen.ProcessingActivityRowData{
-					Name:                                 pa.Name,
-					Purpose:                              pa.Purpose,
-					DataSubjectCategory:                  pa.DataSubjectCategory,
-					PersonalDataCategory:                 pa.PersonalDataCategory,
-					SpecialOrCriminalData:                pa.SpecialOrCriminalData,
-					ConsentEvidenceLink:                  pa.ConsentEvidenceLink,
-					LawfulBasis:                          pa.LawfulBasis,
-					Recipients:                           pa.Recipients,
-					Location:                             pa.Location,
-					InternationalTransfers:               pa.InternationalTransfers,
-					TransferSafeguards:                   pa.TransferSafeguard,
-					RetentionPeriod:                      pa.RetentionPeriod,
-					SecurityMeasures:                     pa.SecurityMeasures,
-					DataProtectionImpactAssessmentNeeded: pa.DataProtectionImpactAssessmentNeeded,
-					TransferImpactAssessmentNeeded:       pa.TransferImpactAssessmentNeeded,
-					LastReviewDate:                       pa.LastReviewDate,
-					NextReviewDate:                       pa.NextReviewDate,
-					Role:                                 pa.Role,
-					DataProtectionOfficerFullName:        dpoFullName,
-					Vendors:                              vendorsList,
-				}
-			}
-
-			tableData = docgen.ProcessingActivityTableData{
-				CompanyName:                 organization.Name,
-				CompanyHorizontalLogoBase64: horizontalLogoBase64,
-				Version:                     version,
-				PublishedAt:                 publishedAt,
-				Activities:                  activities,
-			}
-
-			return nil
-		},
-	)
-
-	if err != nil {
-		return nil, err
-	}
-
-	htmlContent, err := docgen.RenderProcessingActivitiesTableHTML(tableData)
-	if err != nil {
-		return nil, fmt.Errorf("cannot generate HTML: %w", err)
-	}
-
-	cfg := html2pdf.RenderConfig{
-		PageFormat:      html2pdf.PageFormatA4,
-		Orientation:     html2pdf.OrientationPortrait,
-		MarginTop:       html2pdf.NewMarginInches(0.98),
-		MarginBottom:    html2pdf.NewMarginInches(0.98),
-		MarginLeft:      html2pdf.NewMarginInches(0.98),
-		MarginRight:     html2pdf.NewMarginInches(0.98),
-		PrintBackground: true,
-		Scale:           1.0,
-	}
-
-	pdfReader, err := s.html2pdfConverter.GeneratePDF(ctx, htmlContent, cfg)
-	if err != nil {
-		return nil, fmt.Errorf("cannot generate PDF: %w", err)
-	}
-
-	pdfData, err := io.ReadAll(pdfReader)
-	if err != nil {
-		return nil, fmt.Errorf("cannot read PDF data: %w", err)
-	}
-
-	return pdfData, nil
 }

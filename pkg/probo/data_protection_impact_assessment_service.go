@@ -17,21 +17,17 @@ package probo
 import (
 	"context"
 	"fmt"
-	"io"
 	"time"
 
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/docgen"
 	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/html2pdf"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/validator"
 )
 
 type DataProtectionImpactAssessmentService struct {
-	svc               *TenantService
-	html2pdfConverter *html2pdf.Converter
+	svc *TenantService
 }
 
 type (
@@ -132,14 +128,13 @@ func (s DataProtectionImpactAssessmentService) ListForOrganizationID(
 	ctx context.Context,
 	organizationID gid.GID,
 	cursor *page.Cursor[coredata.DataProtectionImpactAssessmentOrderField],
-	filter *coredata.DataProtectionImpactAssessmentFilter,
 ) (*page.Page[*coredata.DataProtectionImpactAssessment, coredata.DataProtectionImpactAssessmentOrderField], error) {
 	var dpias coredata.DataProtectionImpactAssessments
 
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			err := dpias.LoadByOrganizationID(ctx, conn, s.svc.scope, organizationID, cursor, filter)
+			err := dpias.LoadByOrganizationID(ctx, conn, s.svc.scope, organizationID, cursor)
 			if err != nil {
 				return fmt.Errorf("cannot load data protection impact assessments: %w", err)
 			}
@@ -158,7 +153,6 @@ func (s DataProtectionImpactAssessmentService) ListForOrganizationID(
 func (s DataProtectionImpactAssessmentService) CountForOrganizationID(
 	ctx context.Context,
 	organizationID gid.GID,
-	filter *coredata.DataProtectionImpactAssessmentFilter,
 ) (int, error) {
 	var count int
 
@@ -166,7 +160,7 @@ func (s DataProtectionImpactAssessmentService) CountForOrganizationID(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			dpias := coredata.DataProtectionImpactAssessments{}
-			count, err = dpias.CountByOrganizationID(ctx, conn, s.svc.scope, organizationID, filter)
+			count, err = dpias.CountByOrganizationID(ctx, conn, s.svc.scope, organizationID)
 			return err
 		},
 	)
@@ -300,130 +294,4 @@ func (s *DataProtectionImpactAssessmentService) Delete(
 	)
 
 	return err
-}
-
-func (s *DataProtectionImpactAssessmentService) ExportPDF(
-	ctx context.Context,
-	organizationID gid.GID,
-	filter *coredata.DataProtectionImpactAssessmentFilter,
-) ([]byte, error) {
-	var tableData docgen.DataProtectionImpactAssessmentTableData
-
-	err := s.svc.pg.WithTx(
-		ctx,
-		func(ctx context.Context, conn pg.Tx) error {
-			var assessments coredata.DataProtectionImpactAssessments
-			if err := assessments.LoadAllByOrganizationID(ctx, conn, s.svc.scope, organizationID, filter); err != nil {
-				return fmt.Errorf("cannot load data protection impact assessments: %w", err)
-			}
-
-			if len(assessments) == 0 {
-				return fmt.Errorf("no data protection impact assessments found: %w", coredata.ErrResourceNotFound)
-			}
-
-			organization := &coredata.Organization{}
-			if err := organization.LoadByID(ctx, conn, s.svc.scope, organizationID); err != nil {
-				return fmt.Errorf("cannot load organization: %w", err)
-			}
-
-			horizontalLogoBase64 := ""
-			if organization.HorizontalLogoFileID != nil {
-				fileRecord := &coredata.File{}
-				fileErr := fileRecord.LoadByID(ctx, conn, s.svc.scope, *organization.HorizontalLogoFileID)
-				if fileErr == nil {
-					base64Data, mimeType, logoErr := s.svc.fileManager.GetFileBase64(ctx, fileRecord)
-					if logoErr == nil {
-						horizontalLogoBase64 = fmt.Sprintf("data:%s;base64,%s", mimeType, base64Data)
-					}
-				}
-			}
-
-			var snapshots coredata.Snapshots
-			snapshotType := coredata.SnapshotsTypeProcessingActivities
-
-			var version int
-			var publishedAt time.Time
-
-			if snapshotID := filter.SnapshotID(); snapshotID != nil {
-				snapshot := &coredata.Snapshot{}
-				if err := snapshot.LoadByID(ctx, conn, s.svc.scope, *snapshotID); err != nil {
-					return fmt.Errorf("cannot load snapshot: %w", err)
-				}
-				publishedAt = snapshot.CreatedAt
-				snapshotFilter := coredata.NewSnapshotFilter(&snapshotType).WithBeforeDate(&snapshot.CreatedAt)
-				snapshotCount, err := snapshots.CountByOrganizationID(ctx, conn, s.svc.scope, organizationID, snapshotFilter)
-				if err != nil {
-					return fmt.Errorf("cannot count processing activities snapshots: %w", err)
-				}
-				version = snapshotCount
-			} else {
-				publishedAt = time.Now()
-				snapshotFilter := coredata.NewSnapshotFilter(&snapshotType)
-				snapshotCount, err := snapshots.CountByOrganizationID(ctx, conn, s.svc.scope, organizationID, snapshotFilter)
-				if err != nil {
-					return fmt.Errorf("cannot count processing activities snapshots: %w", err)
-				}
-				version = snapshotCount + 1
-			}
-
-			assessmentRows := make([]docgen.DataProtectionImpactAssessmentRowData, len(assessments))
-			for i, assessment := range assessments {
-				processingActivity := &coredata.ProcessingActivity{}
-				if err := processingActivity.LoadByID(ctx, conn, s.svc.scope, assessment.ProcessingActivityID); err != nil {
-					return fmt.Errorf("cannot load processing activity: %w", err)
-				}
-
-				assessmentRows[i] = docgen.DataProtectionImpactAssessmentRowData{
-					ProcessingActivityName:      processingActivity.Name,
-					Description:                 assessment.Description,
-					NecessityAndProportionality: assessment.NecessityAndProportionality,
-					PotentialRisk:               assessment.PotentialRisk,
-					Mitigations:                 assessment.Mitigations,
-					ResidualRisk:                assessment.ResidualRisk,
-				}
-			}
-
-			tableData = docgen.DataProtectionImpactAssessmentTableData{
-				CompanyName:                 organization.Name,
-				CompanyHorizontalLogoBase64: horizontalLogoBase64,
-				Version:                     version,
-				PublishedAt:                 publishedAt,
-				Assessments:                 assessmentRows,
-			}
-
-			return nil
-		},
-	)
-
-	if err != nil {
-		return nil, err
-	}
-
-	htmlContent, err := docgen.RenderDataProtectionImpactAssessmentsTableHTML(tableData)
-	if err != nil {
-		return nil, fmt.Errorf("cannot render HTML: %w", err)
-	}
-
-	cfg := html2pdf.RenderConfig{
-		PageFormat:      html2pdf.PageFormatA4,
-		Orientation:     html2pdf.OrientationPortrait,
-		MarginTop:       html2pdf.NewMarginInches(0.98),
-		MarginBottom:    html2pdf.NewMarginInches(0.98),
-		MarginLeft:      html2pdf.NewMarginInches(0.98),
-		MarginRight:     html2pdf.NewMarginInches(0.98),
-		PrintBackground: true,
-		Scale:           1.0,
-	}
-
-	pdfReader, err := s.html2pdfConverter.GeneratePDF(ctx, htmlContent, cfg)
-	if err != nil {
-		return nil, fmt.Errorf("cannot generate PDF: %w", err)
-	}
-
-	pdfData, err := io.ReadAll(pdfReader)
-	if err != nil {
-		return nil, fmt.Errorf("cannot read PDF data: %w", err)
-	}
-
-	return pdfData, nil
 }

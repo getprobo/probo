@@ -52,14 +52,6 @@ input TransferImpactAssessmentOrder
     field: TransferImpactAssessmentOrderField!
 }
 
-input DataProtectionImpactAssessmentFilter {
-    snapshotId: ID
-}
-
-input TransferImpactAssessmentFilter {
-    snapshotId: ID
-}
-
 type DataProtectionImpactAssessment implements Node {
     id: ID!
     processingActivity: ProcessingActivity! @goField(forceResolver: true)
@@ -137,12 +129,12 @@ extend type Mutation {
     deleteTransferImpactAssessment(
         input: DeleteTransferImpactAssessmentInput!
     ): DeleteTransferImpactAssessmentPayload!
-    exportDataProtectionImpactAssessmentsPDF(
-        input: ExportDataProtectionImpactAssessmentsPDFInput!
-    ): ExportDataProtectionImpactAssessmentsPDFPayload!
-    exportTransferImpactAssessmentsPDF(
-        input: ExportTransferImpactAssessmentsPDFInput!
-    ): ExportTransferImpactAssessmentsPDFPayload!
+    publishDataProtectionImpactAssessmentList(
+        input: PublishDataProtectionImpactAssessmentListInput!
+    ): PublishDataProtectionImpactAssessmentListPayload!
+    publishTransferImpactAssessmentList(
+        input: PublishTransferImpactAssessmentListInput!
+    ): PublishTransferImpactAssessmentListPayload!
 }
 
 input CreateDataProtectionImpactAssessmentInput {
@@ -189,14 +181,14 @@ input DeleteTransferImpactAssessmentInput {
     transferImpactAssessmentId: ID!
 }
 
-input ExportDataProtectionImpactAssessmentsPDFInput {
+input PublishDataProtectionImpactAssessmentListInput {
     organizationId: ID!
-    filter: DataProtectionImpactAssessmentFilter
+    approverIds: [ID!]
 }
 
-input ExportTransferImpactAssessmentsPDFInput {
+input PublishTransferImpactAssessmentListInput {
     organizationId: ID!
-    filter: TransferImpactAssessmentFilter
+    approverIds: [ID!]
 }
 
 type CreateDataProtectionImpactAssessmentPayload {
@@ -223,10 +215,12 @@ type DeleteTransferImpactAssessmentPayload {
     deletedTransferImpactAssessmentId: ID!
 }
 
-type ExportDataProtectionImpactAssessmentsPDFPayload {
-    data: String!
+type PublishDataProtectionImpactAssessmentListPayload {
+    documentEdge: DocumentEdge!
+    documentVersionEdge: DocumentVersionEdge!
 }
 
-type ExportTransferImpactAssessmentsPDFPayload {
-    data: String!
+type PublishTransferImpactAssessmentListPayload {
+    documentEdge: DocumentEdge!
+    documentVersionEdge: DocumentVersionEdge!
 }

@@ -20,6 +20,7 @@ import (
 	"go.probo.inc/probo/pkg/cmd/tia/create"
 	"go.probo.inc/probo/pkg/cmd/tia/delete"
 	"go.probo.inc/probo/pkg/cmd/tia/list"
+	"go.probo.inc/probo/pkg/cmd/tia/publish"
 	"go.probo.inc/probo/pkg/cmd/tia/update"
 	"go.probo.inc/probo/pkg/cmd/tia/view"
 )
@@ -35,6 +36,7 @@ func NewCmdTIA(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(view.NewCmdView(f))
 	cmd.AddCommand(update.NewCmdUpdate(f))
 	cmd.AddCommand(delete.NewCmdDelete(f))
+	cmd.AddCommand(publish.NewCmdPublish(f))
 
 	return cmd
 }

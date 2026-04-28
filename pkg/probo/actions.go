@@ -275,12 +275,12 @@ const (
 	ActionObligationPublish = "core:obligation:publish"
 
 	// ProcessingActivity actions
-	ActionProcessingActivityList   = "core:processing-activity:list"
-	ActionProcessingActivityGet    = "core:processing-activity:get"
-	ActionProcessingActivityCreate = "core:processing-activity:create"
-	ActionProcessingActivityUpdate = "core:processing-activity:update"
-	ActionProcessingActivityDelete = "core:processing-activity:delete"
-	ActionProcessingActivityExport = "core:processing-activity:export"
+	ActionProcessingActivityList    = "core:processing-activity:list"
+	ActionProcessingActivityGet     = "core:processing-activity:get"
+	ActionProcessingActivityCreate  = "core:processing-activity:create"
+	ActionProcessingActivityUpdate  = "core:processing-activity:update"
+	ActionProcessingActivityDelete  = "core:processing-activity:delete"
+	ActionProcessingActivityPublish = "core:processing-activity:publish"
 
 	// Snapshot actions
 	ActionSnapshotGet    = "core:snapshot:get"
@@ -309,20 +309,20 @@ const (
 	ActionConnectorDelete = "core:connector:delete"
 
 	// DataProtectionImpactAssessment actions
-	ActionDataProtectionImpactAssessmentList   = "core:data-protection-impact-assessment:list"
-	ActionDataProtectionImpactAssessmentGet    = "core:data-protection-impact-assessment:get"
-	ActionDataProtectionImpactAssessmentCreate = "core:data-protection-impact-assessment:create"
-	ActionDataProtectionImpactAssessmentUpdate = "core:data-protection-impact-assessment:update"
-	ActionDataProtectionImpactAssessmentDelete = "core:data-protection-impact-assessment:delete"
-	ActionDataProtectionImpactAssessmentExport = "core:data-protection-impact-assessment:export"
+	ActionDataProtectionImpactAssessmentList    = "core:data-protection-impact-assessment:list"
+	ActionDataProtectionImpactAssessmentGet     = "core:data-protection-impact-assessment:get"
+	ActionDataProtectionImpactAssessmentCreate  = "core:data-protection-impact-assessment:create"
+	ActionDataProtectionImpactAssessmentUpdate  = "core:data-protection-impact-assessment:update"
+	ActionDataProtectionImpactAssessmentDelete  = "core:data-protection-impact-assessment:delete"
+	ActionDataProtectionImpactAssessmentPublish = "core:data-protection-impact-assessment:publish"
 
 	// TransferImpactAssessment actions
-	ActionTransferImpactAssessmentList   = "core:transfer-impact-assessment:list"
-	ActionTransferImpactAssessmentGet    = "core:transfer-impact-assessment:get"
-	ActionTransferImpactAssessmentCreate = "core:transfer-impact-assessment:create"
-	ActionTransferImpactAssessmentUpdate = "core:transfer-impact-assessment:update"
-	ActionTransferImpactAssessmentDelete = "core:transfer-impact-assessment:delete"
-	ActionTransferImpactAssessmentExport = "core:transfer-impact-assessment:export"
+	ActionTransferImpactAssessmentList    = "core:transfer-impact-assessment:list"
+	ActionTransferImpactAssessmentGet     = "core:transfer-impact-assessment:get"
+	ActionTransferImpactAssessmentCreate  = "core:transfer-impact-assessment:create"
+	ActionTransferImpactAssessmentUpdate  = "core:transfer-impact-assessment:update"
+	ActionTransferImpactAssessmentDelete  = "core:transfer-impact-assessment:delete"
+	ActionTransferImpactAssessmentPublish = "core:transfer-impact-assessment:publish"
 
 	// TrustCenterDocumentAccess actions
 	ActionTrustCenterDocumentAccessList = "core:trust-center-document-access:list"

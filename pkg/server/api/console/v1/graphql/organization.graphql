@@ -203,8 +203,10 @@ type Organization implements Node {
         last: Int
         before: CursorKey
         orderBy: DataProtectionImpactAssessmentOrder
-        filter: DataProtectionImpactAssessmentFilter = { snapshotId: null }
     ): DataProtectionImpactAssessmentConnection! @goField(forceResolver: true)
+
+    dataProtectionImpactAssessmentsDocument: Document
+        @goField(forceResolver: true)
 
     transferImpactAssessments(
         first: Int
@@ -212,8 +214,9 @@ type Organization implements Node {
         last: Int
         before: CursorKey
         orderBy: TransferImpactAssessmentOrder
-        filter: TransferImpactAssessmentFilter = { snapshotId: null }
     ): TransferImpactAssessmentConnection! @goField(forceResolver: true)
+
+    transferImpactAssessmentsDocument: Document @goField(forceResolver: true)
 
     documents(
         first: Int
@@ -265,8 +268,9 @@ type Organization implements Node {
         last: Int
         before: CursorKey
         orderBy: ProcessingActivityOrder
-        filter: ProcessingActivityFilter = { snapshotId: null }
     ): ProcessingActivityConnection! @goField(forceResolver: true)
+
+    processingActivitiesDocument: Document @goField(forceResolver: true)
 
     rightsRequests(
         first: Int

@@ -632,7 +632,7 @@ func (r *organizationResolver) StatementsOfApplicability(ctx context.Context, ob
 }
 
 // DataProtectionImpactAssessments is the resolver for the dataProtectionImpactAssessments field.
-func (r *organizationResolver) DataProtectionImpactAssessments(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DataProtectionImpactAssessmentOrderBy, filter *types.DataProtectionImpactAssessmentFilter) (*types.DataProtectionImpactAssessmentConnection, error) {
+func (r *organizationResolver) DataProtectionImpactAssessments(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DataProtectionImpactAssessmentOrderBy) (*types.DataProtectionImpactAssessmentConnection, error) {
 	if err := r.authorize(ctx, obj.ID, probo.ActionDataProtectionImpactAssessmentList); err != nil {
 		return nil, err
 	}
@@ -653,22 +653,46 @@ func (r *organizationResolver) DataProtectionImpactAssessments(ctx context.Conte
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	dpiaFilter := coredata.NewDataProtectionImpactAssessmentFilter(nil)
-	if filter != nil {
-		dpiaFilter = coredata.NewDataProtectionImpactAssessmentFilter(&filter.SnapshotID)
-	}
-
-	page, err := prb.DataProtectionImpactAssessments.ListForOrganizationID(ctx, obj.ID, cursor, dpiaFilter)
+	page, err := prb.DataProtectionImpactAssessments.ListForOrganizationID(ctx, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list organization data protection impact assessments", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewDataProtectionImpactAssessmentConnection(page, r, obj.ID, dpiaFilter), nil
+	return types.NewDataProtectionImpactAssessmentConnection(page, r, obj.ID), nil
+}
+
+// DataProtectionImpactAssessmentsDocument is the resolver for the dataProtectionImpactAssessmentsDocument field.
+func (r *organizationResolver) DataProtectionImpactAssessmentsDocument(ctx context.Context, obj *types.Organization) (*types.Document, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionDocumentGet); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	documentID, err := prb.GeneratedDocuments.GetDataProtectionImpactAssessmentsDocumentID(ctx, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot get DPIA list document ID", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+	if documentID == nil {
+		return nil, nil
+	}
+
+	document, err := prb.Documents.Get(ctx, *documentID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, nil
+		}
+		r.logger.ErrorCtx(ctx, "cannot load DPIA list document", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewDocument(document), nil
 }
 
 // TransferImpactAssessments is the resolver for the transferImpactAssessments field.
-func (r *organizationResolver) TransferImpactAssessments(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TransferImpactAssessmentOrderBy, filter *types.TransferImpactAssessmentFilter) (*types.TransferImpactAssessmentConnection, error) {
+func (r *organizationResolver) TransferImpactAssessments(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TransferImpactAssessmentOrderBy) (*types.TransferImpactAssessmentConnection, error) {
 	if err := r.authorize(ctx, obj.ID, probo.ActionTransferImpactAssessmentList); err != nil {
 		return nil, err
 	}
@@ -689,18 +713,42 @@ func (r *organizationResolver) TransferImpactAssessments(ctx context.Context, ob
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	tiaFilter := coredata.NewTransferImpactAssessmentFilter(nil)
-	if filter != nil {
-		tiaFilter = coredata.NewTransferImpactAssessmentFilter(&filter.SnapshotID)
-	}
-
-	page, err := prb.TransferImpactAssessments.ListForOrganizationID(ctx, obj.ID, cursor, tiaFilter)
+	page, err := prb.TransferImpactAssessments.ListForOrganizationID(ctx, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list organization transfer impact assessments", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewTransferImpactAssessmentConnection(page, r, obj.ID, tiaFilter), nil
+	return types.NewTransferImpactAssessmentConnection(page, r, obj.ID), nil
+}
+
+// TransferImpactAssessmentsDocument is the resolver for the transferImpactAssessmentsDocument field.
+func (r *organizationResolver) TransferImpactAssessmentsDocument(ctx context.Context, obj *types.Organization) (*types.Document, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionDocumentGet); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	documentID, err := prb.GeneratedDocuments.GetTransferImpactAssessmentsDocumentID(ctx, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot get TIA list document ID", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+	if documentID == nil {
+		return nil, nil
+	}
+
+	document, err := prb.Documents.Get(ctx, *documentID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, nil
+		}
+		r.logger.ErrorCtx(ctx, "cannot load TIA list document", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewDocument(document), nil
 }
 
 // Documents is the resolver for the documents field.
@@ -868,7 +916,7 @@ func (r *organizationResolver) Obligations(ctx context.Context, obj *types.Organ
 }
 
 // ProcessingActivities is the resolver for the processingActivities field.
-func (r *organizationResolver) ProcessingActivities(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProcessingActivityOrderBy, filter *types.ProcessingActivityFilter) (*types.ProcessingActivityConnection, error) {
+func (r *organizationResolver) ProcessingActivities(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProcessingActivityOrderBy) (*types.ProcessingActivityConnection, error) {
 	if err := r.authorize(ctx, obj.ID, probo.ActionProcessingActivityList); err != nil {
 		return nil, err
 	}
@@ -889,18 +937,42 @@ func (r *organizationResolver) ProcessingActivities(ctx context.Context, obj *ty
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	processingActivityFilter := coredata.NewProcessingActivityFilter(nil)
-	if filter != nil {
-		processingActivityFilter = coredata.NewProcessingActivityFilter(&filter.SnapshotID)
-	}
-
-	page, err := prb.ProcessingActivities.ListForOrganizationID(ctx, obj.ID, cursor, processingActivityFilter)
+	page, err := prb.ProcessingActivities.ListForOrganizationID(ctx, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list organization processing activities", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewProcessingActivityConnection(page, r, obj.ID, filter), nil
+	return types.NewProcessingActivityConnection(page, r, obj.ID), nil
+}
+
+// ProcessingActivitiesDocument is the resolver for the processingActivitiesDocument field.
+func (r *organizationResolver) ProcessingActivitiesDocument(ctx context.Context, obj *types.Organization) (*types.Document, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionDocumentGet); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	documentID, err := prb.GeneratedDocuments.GetProcessingActivitiesDocumentID(ctx, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot get processing activities document ID", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+	if documentID == nil {
+		return nil, nil
+	}
+
+	document, err := prb.Documents.Get(ctx, *documentID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, nil
+		}
+		r.logger.ErrorCtx(ctx, "cannot load processing activities document", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewDocument(document), nil
 }
 
 // RightsRequests is the resolver for the rightsRequests field.

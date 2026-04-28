@@ -28,6 +28,113 @@ import (
 	"go.probo.inc/probo/pkg/page"
 )
 
+func (d DataProtectionImpactAssessment) GetGeneratedDocumentID(
+	ctx context.Context,
+	conn pg.Querier,
+	organizationID gid.GID,
+) (*gid.GID, error) {
+	var documentID *gid.GID
+
+	err := conn.QueryRow(
+		ctx,
+		`
+SELECT
+	data_protection_impact_assessments_document_id
+FROM
+	generated_documents
+WHERE
+	organization_id = @organization_id
+`,
+		pgx.NamedArgs{"organization_id": organizationID},
+	).Scan(&documentID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("cannot get DPIA list document ID: %w", err)
+	}
+
+	return documentID, nil
+}
+
+func (d DataProtectionImpactAssessment) UpsertGeneratedDocumentID(
+	ctx context.Context,
+	conn pg.Tx,
+	organizationID gid.GID,
+	tenantID gid.TenantID,
+	documentID gid.GID,
+) error {
+	now := time.Now()
+
+	_, err := conn.Exec(
+		ctx,
+		`
+INSERT INTO generated_documents (
+	organization_id,
+	tenant_id,
+	data_protection_impact_assessments_document_id,
+	created_at,
+	updated_at
+) VALUES (
+	@organization_id,
+	@tenant_id,
+	@data_protection_impact_assessments_document_id,
+	@created_at,
+	@updated_at
+)
+ON CONFLICT (organization_id) DO UPDATE
+SET
+	data_protection_impact_assessments_document_id = @data_protection_impact_assessments_document_id,
+	updated_at = @updated_at
+`,
+		pgx.NamedArgs{
+			"organization_id": organizationID,
+			"tenant_id":       tenantID,
+			"data_protection_impact_assessments_document_id": documentID,
+			"created_at": now,
+			"updated_at": now,
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("cannot upsert DPIA list document ID: %w", err)
+	}
+
+	return nil
+}
+
+func (d DataProtectionImpactAssessment) ClearGeneratedDocumentID(
+	ctx context.Context,
+	conn pg.Tx,
+	documentIDs []gid.GID,
+) error {
+	ids := make([]string, len(documentIDs))
+	for i, id := range documentIDs {
+		ids[i] = id.String()
+	}
+
+	_, err := conn.Exec(
+		ctx,
+		`
+UPDATE
+	generated_documents
+SET
+	data_protection_impact_assessments_document_id = NULL,
+	updated_at = @now
+WHERE
+	data_protection_impact_assessments_document_id = ANY(@ids)
+`,
+		pgx.NamedArgs{
+			"ids": ids,
+			"now": time.Now(),
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("cannot clear DPIA list document references: %w", err)
+	}
+
+	return nil
+}
+
 type (
 	DataProtectionImpactAssessment struct {
 		ID                          gid.GID                                     `db:"id"`
@@ -76,7 +183,6 @@ func (dpias *DataProtectionImpactAssessments) CountByOrganizationID(
 	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
-	filter *DataProtectionImpactAssessmentFilter,
 ) (int, error) {
 	q := `
 SELECT
@@ -86,14 +192,13 @@ FROM
 WHERE
 	%s
 	AND organization_id = @organization_id
-	AND %s
+	AND snapshot_id IS NULL
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"organization_id": organizationID}
 	maps.Copy(args, scope.SQLArguments())
-	maps.Copy(args, filter.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)
 
@@ -112,7 +217,6 @@ func (dpias *DataProtectionImpactAssessments) LoadByOrganizationID(
 	scope Scoper,
 	organizationID gid.GID,
 	cursor *page.Cursor[DataProtectionImpactAssessmentOrderField],
-	filter *DataProtectionImpactAssessmentFilter,
 ) error {
 	q := `
 SELECT
@@ -133,15 +237,14 @@ FROM
 WHERE
 	%s
 	AND organization_id = @organization_id
-	AND %s
+	AND snapshot_id IS NULL
 	AND %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"organization_id": organizationID}
 	maps.Copy(args, scope.SQLArguments())
-	maps.Copy(args, filter.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
@@ -164,7 +267,6 @@ func (dpias *DataProtectionImpactAssessments) LoadAllByOrganizationID(
 	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
-	filter *DataProtectionImpactAssessmentFilter,
 ) error {
 	q := `
 SELECT
@@ -185,14 +287,13 @@ FROM
 WHERE
 	%s
 	AND organization_id = @organization_id
-	AND %s
+	AND snapshot_id IS NULL
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"organization_id": organizationID}
 	maps.Copy(args, scope.SQLArguments())
-	maps.Copy(args, filter.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -434,64 +535,6 @@ WHERE
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot delete data protection impact assessment: %w", err)
-	}
-
-	return nil
-}
-
-func (dpias DataProtectionImpactAssessments) InsertProcessingActivitySnapshots(
-	ctx context.Context,
-	conn pg.Tx,
-	scope Scoper,
-	organizationID gid.GID,
-	snapshotID gid.GID,
-) error {
-	query := `
-INSERT INTO processing_activity_data_protection_impact_assessments (
-	id,
-	tenant_id,
-	snapshot_id,
-	source_id,
-	organization_id,
-	processing_activity_id,
-	description,
-	necessity_and_proportionality,
-	potential_risk,
-	mitigations,
-	residual_risk,
-	created_at,
-	updated_at
-)
-SELECT
-	generate_gid(decode_base64_unpadded(@tenant_id), @dpia_entity_type),
-	@tenant_id,
-	@snapshot_id,
-	dpia.id,
-	dpia.organization_id,
-	pa_snapshot.id,
-	dpia.description,
-	dpia.necessity_and_proportionality,
-	dpia.potential_risk,
-	dpia.mitigations,
-	dpia.residual_risk,
-	dpia.created_at,
-	dpia.updated_at
-FROM processing_activity_data_protection_impact_assessments dpia
-INNER JOIN processing_activities pa_source ON dpia.processing_activity_id = pa_source.id AND pa_source.snapshot_id IS NULL
-INNER JOIN processing_activities pa_snapshot ON pa_source.id = pa_snapshot.source_id AND pa_snapshot.snapshot_id = @snapshot_id
-WHERE dpia.tenant_id = @tenant_id AND dpia.organization_id = @organization_id AND dpia.snapshot_id IS NULL
-	`
-
-	args := pgx.StrictNamedArgs{
-		"tenant_id":        scope.GetTenantID(),
-		"snapshot_id":      snapshotID,
-		"organization_id":  organizationID,
-		"dpia_entity_type": DataProtectionImpactAssessmentEntityType,
-	}
-
-	_, err := conn.Exec(ctx, query, args)
-	if err != nil {
-		return fmt.Errorf("cannot insert data protection impact assessment snapshots: %w", err)
 	}
 
 	return nil

@@ -956,13 +956,7 @@ func (r *Resolver) ListProcessingActivitiesTool(ctx context.Context, req *mcp.Ca
 
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
-	noSnapshot := (*gid.GID)(nil)
-	filter := coredata.NewProcessingActivityFilter(&noSnapshot)
-	if input.Filter != nil {
-		filter = coredata.NewProcessingActivityFilter(&input.Filter.SnapshotID)
-	}
-
-	page, err := prb.ProcessingActivities.ListForOrganizationID(ctx, input.OrganizationID, cursor, filter)
+	page, err := prb.ProcessingActivities.ListForOrganizationID(ctx, input.OrganizationID, cursor)
 	if err != nil {
 		panic(fmt.Errorf("cannot list organization processing activities: %w", err))
 	}
@@ -1103,13 +1097,7 @@ func (r *Resolver) ListDataProtectionImpactAssessmentsTool(ctx context.Context, 
 
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
-	noSnapshot := (*gid.GID)(nil)
-	filter := coredata.NewDataProtectionImpactAssessmentFilter(&noSnapshot)
-	if input.Filter != nil {
-		filter = coredata.NewDataProtectionImpactAssessmentFilter(&input.Filter.SnapshotID)
-	}
-
-	page, err := prb.DataProtectionImpactAssessments.ListForOrganizationID(ctx, input.OrganizationID, cursor, filter)
+	page, err := prb.DataProtectionImpactAssessments.ListForOrganizationID(ctx, input.OrganizationID, cursor)
 	if err != nil {
 		panic(fmt.Errorf("cannot list organization data protection impact assessments: %w", err))
 	}
@@ -1200,13 +1188,7 @@ func (r *Resolver) ListTransferImpactAssessmentsTool(ctx context.Context, req *m
 
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
-	noSnapshot := (*gid.GID)(nil)
-	filter := coredata.NewTransferImpactAssessmentFilter(&noSnapshot)
-	if input.Filter != nil {
-		filter = coredata.NewTransferImpactAssessmentFilter(&input.Filter.SnapshotID)
-	}
-
-	page, err := prb.TransferImpactAssessments.ListForOrganizationID(ctx, input.OrganizationID, cursor, filter)
+	page, err := prb.TransferImpactAssessments.ListForOrganizationID(ctx, input.OrganizationID, cursor)
 	if err != nil {
 		panic(fmt.Errorf("cannot list organization transfer impact assessments: %w", err))
 	}
@@ -4806,6 +4788,54 @@ func (r *Resolver) PublishObligationListTool(ctx context.Context, req *mcp.CallT
 	}
 
 	return nil, types.PublishObligationListOutput{
+		DocumentID:        document.ID,
+		DocumentVersionID: documentVersion.ID,
+	}, nil
+}
+
+func (r *Resolver) PublishProcessingActivityListTool(ctx context.Context, req *mcp.CallToolRequest, input *types.PublishProcessingActivityListInput) (*mcp.CallToolResult, types.PublishProcessingActivityListOutput, error) {
+	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionProcessingActivityPublish)
+
+	svc := r.ProboService(ctx, input.OrganizationID)
+
+	document, documentVersion, err := svc.GeneratedDocuments.PublishProcessingActivityList(ctx, input.OrganizationID, input.ApproverIds)
+	if err != nil {
+		return nil, types.PublishProcessingActivityListOutput{}, fmt.Errorf("cannot publish processing activity list: %w", err)
+	}
+
+	return nil, types.PublishProcessingActivityListOutput{
+		DocumentID:        document.ID,
+		DocumentVersionID: documentVersion.ID,
+	}, nil
+}
+
+func (r *Resolver) PublishDataProtectionImpactAssessmentListTool(ctx context.Context, req *mcp.CallToolRequest, input *types.PublishDataProtectionImpactAssessmentListInput) (*mcp.CallToolResult, types.PublishDataProtectionImpactAssessmentListOutput, error) {
+	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionDataProtectionImpactAssessmentPublish)
+
+	svc := r.ProboService(ctx, input.OrganizationID)
+
+	document, documentVersion, err := svc.GeneratedDocuments.PublishDataProtectionImpactAssessmentList(ctx, input.OrganizationID, input.ApproverIds)
+	if err != nil {
+		return nil, types.PublishDataProtectionImpactAssessmentListOutput{}, fmt.Errorf("cannot publish DPIA list: %w", err)
+	}
+
+	return nil, types.PublishDataProtectionImpactAssessmentListOutput{
+		DocumentID:        document.ID,
+		DocumentVersionID: documentVersion.ID,
+	}, nil
+}
+
+func (r *Resolver) PublishTransferImpactAssessmentListTool(ctx context.Context, req *mcp.CallToolRequest, input *types.PublishTransferImpactAssessmentListInput) (*mcp.CallToolResult, types.PublishTransferImpactAssessmentListOutput, error) {
+	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionTransferImpactAssessmentPublish)
+
+	svc := r.ProboService(ctx, input.OrganizationID)
+
+	document, documentVersion, err := svc.GeneratedDocuments.PublishTransferImpactAssessmentList(ctx, input.OrganizationID, input.ApproverIds)
+	if err != nil {
+		return nil, types.PublishTransferImpactAssessmentListOutput{}, fmt.Errorf("cannot publish TIA list: %w", err)
+	}
+
+	return nil, types.PublishTransferImpactAssessmentListOutput{
 		DocumentID:        document.ID,
 		DocumentVersionID: documentVersion.ID,
 	}, nil

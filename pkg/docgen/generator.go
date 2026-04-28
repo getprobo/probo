@@ -35,15 +35,6 @@ var (
 	//go:embed template.html
 	htmlTemplateContent string
 
-	//go:embed processing_activities_template.html
-	processingActivitiesTemplateContent string
-
-	//go:embed data_protection_impact_assessments_template.html
-	dataProtectionImpactAssessmentsTemplateContent string
-
-	//go:embed transfer_impact_assessments_template.html
-	transferImpactAssessmentsTemplateContent string
-
 	//go:embed signature_page_template.html
 	signaturePageTemplateContent string
 
@@ -181,12 +172,6 @@ var (
 
 	documentTemplate = template.Must(template.New("document").Funcs(templateFuncs).Parse(htmlTemplateContent))
 
-	processingActivitiesTemplate = template.Must(template.New("processingActivities").Funcs(templateFuncs).Parse(processingActivitiesTemplateContent))
-
-	dataProtectionImpactAssessmentsTemplate = template.Must(template.New("dataProtectionImpactAssessments").Funcs(templateFuncs).Parse(dataProtectionImpactAssessmentsTemplateContent))
-
-	transferImpactAssessmentsTemplate = template.Must(template.New("transferImpactAssessments").Funcs(templateFuncs).Parse(transferImpactAssessmentsTemplateContent))
-
 	signaturePageTemplate = template.Must(template.New("signaturePage").Funcs(templateFuncs).Parse(signaturePageTemplateContent))
 )
 
@@ -218,71 +203,6 @@ type (
 	SignaturePageData struct {
 		Signatures []SignatureData
 		Landscape  bool
-	}
-
-	ProcessingActivityTableData struct {
-		CompanyName                 string
-		CompanyHorizontalLogoBase64 string
-		Version                     int
-		PublishedAt                 time.Time
-		Activities                  []ProcessingActivityRowData
-	}
-
-	ProcessingActivityRowData struct {
-		Name                                 string
-		Purpose                              *string
-		DataSubjectCategory                  *string
-		PersonalDataCategory                 *string
-		SpecialOrCriminalData                coredata.ProcessingActivitySpecialOrCriminalDatum
-		ConsentEvidenceLink                  *string
-		LawfulBasis                          coredata.ProcessingActivityLawfulBasis
-		Recipients                           *string
-		Location                             *string
-		InternationalTransfers               bool
-		TransferSafeguards                   *coredata.ProcessingActivityTransferSafeguard
-		RetentionPeriod                      *string
-		SecurityMeasures                     *string
-		DataProtectionImpactAssessmentNeeded coredata.ProcessingActivityDataProtectionImpactAssessment
-		TransferImpactAssessmentNeeded       coredata.ProcessingActivityTransferImpactAssessment
-		LastReviewDate                       *time.Time
-		NextReviewDate                       *time.Time
-		Role                                 coredata.ProcessingActivityRole
-		DataProtectionOfficerFullName        *string
-		Vendors                              string
-	}
-
-	DataProtectionImpactAssessmentTableData struct {
-		CompanyName                 string
-		CompanyHorizontalLogoBase64 string
-		Version                     int
-		PublishedAt                 time.Time
-		Assessments                 []DataProtectionImpactAssessmentRowData
-	}
-
-	DataProtectionImpactAssessmentRowData struct {
-		ProcessingActivityName      string
-		Description                 *string
-		NecessityAndProportionality *string
-		PotentialRisk               *string
-		Mitigations                 *string
-		ResidualRisk                *coredata.DataProtectionImpactAssessmentResidualRisk
-	}
-
-	TransferImpactAssessmentTableData struct {
-		CompanyName                 string
-		CompanyHorizontalLogoBase64 string
-		Version                     int
-		PublishedAt                 time.Time
-		Assessments                 []TransferImpactAssessmentRowData
-	}
-
-	TransferImpactAssessmentRowData struct {
-		ProcessingActivityName string
-		DataSubjects           *string
-		LegalMechanism         *string
-		Transfer               *string
-		LocalLawRisk           *string
-		SupplementaryMeasures  *string
 	}
 
 	StatementOfApplicabilityData struct {
@@ -381,6 +301,71 @@ type (
 		Owner                  string
 		DueDate                string
 	}
+
+	ProcessingActivityListData struct {
+		Title                     string
+		OrganizationName          string
+		CreatedAt                 time.Time
+		TotalProcessingActivities int
+		Rows                      []ProcessingActivityListRow
+	}
+
+	ProcessingActivityListRow struct {
+		Name                                 string
+		Purpose                              string
+		Role                                 string
+		DataSubjectCategory                  string
+		PersonalDataCategory                 string
+		SpecialOrCriminalData                string
+		LawfulBasis                          string
+		ConsentEvidenceLink                  string
+		Recipients                           string
+		Location                             string
+		InternationalTransfers               string
+		TransferSafeguards                   string
+		RetentionPeriod                      string
+		SecurityMeasures                     string
+		DataProtectionImpactAssessmentNeeded string
+		TransferImpactAssessmentNeeded       string
+		LastReviewDate                       string
+		NextReviewDate                       string
+		DataProtectionOfficer                string
+		Vendors                              string
+	}
+
+	DataProtectionImpactAssessmentListData struct {
+		Title                                string
+		OrganizationName                     string
+		CreatedAt                            time.Time
+		TotalDataProtectionImpactAssessments int
+		Rows                                 []DataProtectionImpactAssessmentListRow
+	}
+
+	DataProtectionImpactAssessmentListRow struct {
+		ProcessingActivityName      string
+		Description                 string
+		NecessityAndProportionality string
+		PotentialRisk               string
+		Mitigations                 string
+		ResidualRisk                string
+	}
+
+	TransferImpactAssessmentListData struct {
+		Title                          string
+		OrganizationName               string
+		CreatedAt                      time.Time
+		TotalTransferImpactAssessments int
+		Rows                           []TransferImpactAssessmentListRow
+	}
+
+	TransferImpactAssessmentListRow struct {
+		ProcessingActivityName string
+		DataSubjects           string
+		Transfer               string
+		LegalMechanism         string
+		LocalLawRisk           string
+		SupplementaryMeasures  string
+	}
 )
 
 func BoolLabel(v bool) string {
@@ -456,33 +441,6 @@ func RenderSignaturePageHTML(data SignaturePageData) ([]byte, error) {
 	var buf bytes.Buffer
 	if err := signaturePageTemplate.Execute(&buf, data); err != nil {
 		return nil, fmt.Errorf("cannot execute signature page template: %w", err)
-	}
-
-	return buf.Bytes(), nil
-}
-
-func RenderProcessingActivitiesTableHTML(data ProcessingActivityTableData) ([]byte, error) {
-	var buf bytes.Buffer
-	if err := processingActivitiesTemplate.Execute(&buf, data); err != nil {
-		return nil, fmt.Errorf("cannot execute processing activities template: %w", err)
-	}
-
-	return buf.Bytes(), nil
-}
-
-func RenderDataProtectionImpactAssessmentsTableHTML(data DataProtectionImpactAssessmentTableData) ([]byte, error) {
-	var buf bytes.Buffer
-	if err := dataProtectionImpactAssessmentsTemplate.Execute(&buf, data); err != nil {
-		return nil, fmt.Errorf("cannot execute data protection impact assessments template: %w", err)
-	}
-
-	return buf.Bytes(), nil
-}
-
-func RenderTransferImpactAssessmentsTableHTML(data TransferImpactAssessmentTableData) ([]byte, error) {
-	var buf bytes.Buffer
-	if err := transferImpactAssessmentsTemplate.Execute(&buf, data); err != nil {
-		return nil, fmt.Errorf("cannot execute transfer impact assessments template: %w", err)
 	}
 
 	return buf.Bytes(), nil

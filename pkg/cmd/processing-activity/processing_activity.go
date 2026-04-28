@@ -20,6 +20,7 @@ import (
 	"go.probo.inc/probo/pkg/cmd/processing-activity/create"
 	"go.probo.inc/probo/pkg/cmd/processing-activity/delete"
 	"go.probo.inc/probo/pkg/cmd/processing-activity/list"
+	"go.probo.inc/probo/pkg/cmd/processing-activity/publish"
 	"go.probo.inc/probo/pkg/cmd/processing-activity/update"
 	"go.probo.inc/probo/pkg/cmd/processing-activity/view"
 )
@@ -36,6 +37,7 @@ func NewCmdProcessingActivity(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(view.NewCmdView(f))
 	cmd.AddCommand(update.NewCmdUpdate(f))
 	cmd.AddCommand(delete.NewCmdDelete(f))
+	cmd.AddCommand(publish.NewCmdPublish(f))
 
 	return cmd
 }

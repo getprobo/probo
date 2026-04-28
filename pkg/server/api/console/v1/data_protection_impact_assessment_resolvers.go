@@ -7,14 +7,11 @@ package console_v1
 
 import (
 	"context"
-	"encoding/base64"
 	"errors"
-	"fmt"
 
 	"github.com/vikstrous/dataloadgen"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
@@ -87,7 +84,7 @@ func (r *dataProtectionImpactAssessmentConnectionResolver) TotalCount(ctx contex
 
 	switch obj.Resolver.(type) {
 	case *organizationResolver:
-		count, err := prb.DataProtectionImpactAssessments.CountForOrganizationID(ctx, obj.ParentID, obj.Filter)
+		count, err := prb.DataProtectionImpactAssessments.CountForOrganizationID(ctx, obj.ParentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count organization data protection impact assessments", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
@@ -269,59 +266,49 @@ func (r *mutationResolver) DeleteTransferImpactAssessment(ctx context.Context, i
 	}, nil
 }
 
-// ExportDataProtectionImpactAssessmentsPDF is the resolver for the exportDataProtectionImpactAssessmentsPDF field.
-func (r *mutationResolver) ExportDataProtectionImpactAssessmentsPDF(ctx context.Context, input types.ExportDataProtectionImpactAssessmentsPDFInput) (*types.ExportDataProtectionImpactAssessmentsPDFPayload, error) {
-	if err := r.authorize(ctx, input.OrganizationID, probo.ActionDataProtectionImpactAssessmentExport); err != nil {
+// PublishDataProtectionImpactAssessmentList is the resolver for the publishDataProtectionImpactAssessmentList field.
+func (r *mutationResolver) PublishDataProtectionImpactAssessmentList(ctx context.Context, input types.PublishDataProtectionImpactAssessmentListInput) (*types.PublishDataProtectionImpactAssessmentListPayload, error) {
+	if err := r.authorize(ctx, input.OrganizationID, probo.ActionDataProtectionImpactAssessmentPublish); err != nil {
 		return nil, err
 	}
 
 	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
 
-	var snapshotIDPtr *gid.GID
-	if input.Filter != nil {
-		snapshotIDPtr = input.Filter.SnapshotID
-	}
-	dpiaFilter := coredata.NewDataProtectionImpactAssessmentFilter(&snapshotIDPtr)
-
-	pdf, err := prb.DataProtectionImpactAssessments.ExportPDF(ctx, input.OrganizationID, dpiaFilter)
+	document, documentVersion, err := prb.GeneratedDocuments.PublishDataProtectionImpactAssessmentList(ctx, input.OrganizationID, input.ApproverIds)
 	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
+			return nil, gqlutils.Conflict(ctx, err)
 		}
-		r.logger.ErrorCtx(ctx, "cannot export data protection impact assessments PDF", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot publish data protection impact assessment list", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return &types.ExportDataProtectionImpactAssessmentsPDFPayload{
-		Data: fmt.Sprintf("data:application/pdf;base64,%s", base64.StdEncoding.EncodeToString(pdf)),
+	return &types.PublishDataProtectionImpactAssessmentListPayload{
+		DocumentEdge:        types.NewDocumentEdge(document, coredata.DocumentOrderFieldCreatedAt),
+		DocumentVersionEdge: types.NewDocumentVersionEdge(documentVersion, coredata.DocumentVersionOrderFieldCreatedAt),
 	}, nil
 }
 
-// ExportTransferImpactAssessmentsPDF is the resolver for the exportTransferImpactAssessmentsPDF field.
-func (r *mutationResolver) ExportTransferImpactAssessmentsPDF(ctx context.Context, input types.ExportTransferImpactAssessmentsPDFInput) (*types.ExportTransferImpactAssessmentsPDFPayload, error) {
-	if err := r.authorize(ctx, input.OrganizationID, probo.ActionTransferImpactAssessmentExport); err != nil {
+// PublishTransferImpactAssessmentList is the resolver for the publishTransferImpactAssessmentList field.
+func (r *mutationResolver) PublishTransferImpactAssessmentList(ctx context.Context, input types.PublishTransferImpactAssessmentListInput) (*types.PublishTransferImpactAssessmentListPayload, error) {
+	if err := r.authorize(ctx, input.OrganizationID, probo.ActionTransferImpactAssessmentPublish); err != nil {
 		return nil, err
 	}
 
 	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
 
-	var snapshotIDPtr *gid.GID
-	if input.Filter != nil {
-		snapshotIDPtr = input.Filter.SnapshotID
-	}
-	tiaFilter := coredata.NewTransferImpactAssessmentFilter(&snapshotIDPtr)
-
-	pdf, err := prb.TransferImpactAssessments.ExportPDF(ctx, input.OrganizationID, tiaFilter)
+	document, documentVersion, err := prb.GeneratedDocuments.PublishTransferImpactAssessmentList(ctx, input.OrganizationID, input.ApproverIds)
 	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
+			return nil, gqlutils.Conflict(ctx, err)
 		}
-		r.logger.ErrorCtx(ctx, "cannot export transfer impact assessments PDF", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot publish transfer impact assessment list", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return &types.ExportTransferImpactAssessmentsPDFPayload{
-		Data: fmt.Sprintf("data:application/pdf;base64,%s", base64.StdEncoding.EncodeToString(pdf)),
+	return &types.PublishTransferImpactAssessmentListPayload{
+		DocumentEdge:        types.NewDocumentEdge(document, coredata.DocumentOrderFieldCreatedAt),
+		DocumentVersionEdge: types.NewDocumentVersionEdge(documentVersion, coredata.DocumentVersionOrderFieldCreatedAt),
 	}, nil
 }
 
@@ -378,7 +365,7 @@ func (r *transferImpactAssessmentConnectionResolver) TotalCount(ctx context.Cont
 
 	switch obj.Resolver.(type) {
 	case *organizationResolver:
-		count, err := prb.TransferImpactAssessments.CountForOrganizationID(ctx, obj.ParentID, obj.Filter)
+		count, err := prb.TransferImpactAssessments.CountForOrganizationID(ctx, obj.ParentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count organization transfer impact assessments", log.Error(err))
 			return 0, gqlutils.Internal(ctx)

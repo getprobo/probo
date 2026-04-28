@@ -281,16 +281,13 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 	tenantService.Snapshots = &SnapshotService{svc: tenantService}
 	tenantService.RightsRequests = &RightsRequestService{svc: tenantService}
 	tenantService.ProcessingActivities = &ProcessingActivityService{
-		svc:               tenantService,
-		html2pdfConverter: s.html2pdfConverter,
+		svc: tenantService,
 	}
 	tenantService.DataProtectionImpactAssessments = &DataProtectionImpactAssessmentService{
-		svc:               tenantService,
-		html2pdfConverter: s.html2pdfConverter,
+		svc: tenantService,
 	}
 	tenantService.TransferImpactAssessments = &TransferImpactAssessmentService{
-		svc:               tenantService,
-		html2pdfConverter: s.html2pdfConverter,
+		svc: tenantService,
 	}
 	tenantService.StatementsOfApplicability = &StatementOfApplicabilityService{
 		svc: tenantService,

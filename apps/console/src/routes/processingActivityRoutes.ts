@@ -39,27 +39,6 @@ export const processingActivityRoutes = [
         processingActivitiesQuery,
         {
           organizationId: organizationId,
-          snapshotId: null,
-        },
-      ),
-    ),
-    Component: withQueryRef(
-      lazy(
-        () =>
-          import("#/pages/organizations/processingActivities/ProcessingActivitiesPage"),
-      ),
-    ),
-  },
-  {
-    path: "snapshots/:snapshotId/processing-activities",
-    Fallback: PageSkeleton,
-    loader: loaderFromQueryLoader(({ organizationId, snapshotId }) =>
-      loadQuery<ProcessingActivityGraphListQuery>(
-        coreEnvironment,
-        processingActivitiesQuery,
-        {
-          organizationId: organizationId,
-          snapshotId,
         },
       ),
     ),
@@ -72,25 +51,6 @@ export const processingActivityRoutes = [
   },
   {
     path: "processing-activities/:activityId",
-    Fallback: PageSkeleton,
-    loader: loaderFromQueryLoader(({ activityId }) =>
-      loadQuery<ProcessingActivityGraphNodeQuery>(
-        coreEnvironment,
-        processingActivityNodeQuery,
-        {
-          processingActivityId: activityId,
-        },
-      ),
-    ),
-    Component: withQueryRef(
-      lazy(
-        () =>
-          import("#/pages/organizations/processingActivities/ProcessingActivityDetailsPage"),
-      ),
-    ),
-  },
-  {
-    path: "snapshots/:snapshotId/processing-activities/:activityId",
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ activityId }) =>
       loadQuery<ProcessingActivityGraphNodeQuery>(

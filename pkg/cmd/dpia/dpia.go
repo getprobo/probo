@@ -20,6 +20,7 @@ import (
 	"go.probo.inc/probo/pkg/cmd/dpia/create"
 	"go.probo.inc/probo/pkg/cmd/dpia/delete"
 	"go.probo.inc/probo/pkg/cmd/dpia/list"
+	"go.probo.inc/probo/pkg/cmd/dpia/publish"
 	"go.probo.inc/probo/pkg/cmd/dpia/update"
 	"go.probo.inc/probo/pkg/cmd/dpia/view"
 )
@@ -35,6 +36,7 @@ func NewCmdDPIA(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(view.NewCmdView(f))
 	cmd.AddCommand(update.NewCmdUpdate(f))
 	cmd.AddCommand(delete.NewCmdDelete(f))
+	cmd.AddCommand(publish.NewCmdPublish(f))
 
 	return cmd
 }

@@ -12,12 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import {
-  downloadFile,
-  promisifyMutation,
-  sprintf,
-  toDateInput,
-} from "@probo/helpers";
+import { promisifyMutation, sprintf } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
 import {
@@ -25,14 +20,12 @@ import {
   Badge,
   Button,
   Card,
-  Dropdown,
   DropdownItem,
-  IconArrowDown,
-  IconChevronDown,
+  IconPageTextLine,
   IconPlusLarge,
   IconTrashCan,
+  IconUpload,
   PageHeader,
-  Spinner,
   TabItem,
   Table,
   Tabs,
@@ -52,7 +45,7 @@ import {
   usePaginationFragment,
   usePreloadedQuery,
 } from "react-relay";
-import { useParams } from "react-router";
+import { Link, useNavigate } from "react-router";
 
 import type {
   ProcessingActivitiesPageDPIAFragment$data,
@@ -68,8 +61,6 @@ import type {
 } from "#/__generated__/core/ProcessingActivitiesPageTIAFragment.graphql";
 import type { ProcessingActivityGraphDeleteMutation } from "#/__generated__/core/ProcessingActivityGraphDeleteMutation.graphql";
 import type { ProcessingActivityGraphListQuery } from "#/__generated__/core/ProcessingActivityGraphListQuery.graphql";
-import { SnapshotBanner } from "#/components/SnapshotBanner";
-import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import type { NodeOf } from "#/types";
 
@@ -84,6 +75,9 @@ import {
 } from "../../../hooks/graph/ProcessingActivityGraph";
 
 import { CreateProcessingActivityDialog } from "./dialogs/CreateProcessingActivityDialog";
+import { PublishDataProtectionImpactAssessmentListDialog } from "./dialogs/PublishDataProtectionImpactAssessmentListDialog";
+import { PublishProcessingActivityListDialog } from "./dialogs/PublishProcessingActivityListDialog";
+import { PublishTransferImpactAssessmentListDialog } from "./dialogs/PublishTransferImpactAssessmentListDialog";
 
 interface ProcessingActivitiesPageProps {
   queryRef: PreloadedQuery<ProcessingActivityGraphListQuery>;
@@ -95,22 +89,15 @@ const processingActivitiesPageFragment = graphql`
     @argumentDefinitions(
         first: { type: "Int", defaultValue: 10 }
         after: { type: "CursorKey" }
-        snapshotId: { type: "ID", defaultValue: null }
     ) {
         id
-        processingActivities(
-            first: $first
-            after: $after
-            filter: { snapshotId: $snapshotId }
-        )
+        processingActivities(first: $first, after: $after)
             @connection(
                 key: "ProcessingActivitiesPage_processingActivities"
-                filters: ["filter"]
             ) {
             edges {
                 node {
                     id
-                    snapshotId
                     name
                     purpose
                     dataSubjectCategory
@@ -139,17 +126,11 @@ const dpiaListPageFragment = graphql`
     @argumentDefinitions(
         first: { type: "Int", defaultValue: 10 }
         after: { type: "CursorKey" }
-        snapshotId: { type: "ID", defaultValue: null }
     ) {
         id
-        dataProtectionImpactAssessments(
-            first: $first
-            after: $after
-            filter: { snapshotId: $snapshotId }
-        )
+        dataProtectionImpactAssessments(first: $first, after: $after)
             @connection(
                 key: "ProcessingActivitiesPage_dataProtectionImpactAssessments"
-                filters: ["filter"]
             ) {
             edges {
                 node {
@@ -177,17 +158,11 @@ const tiaListPageFragment = graphql`
     @argumentDefinitions(
         first: { type: "Int", defaultValue: 10 }
         after: { type: "CursorKey" }
-        snapshotId: { type: "ID", defaultValue: null }
     ) {
         id
-        transferImpactAssessments(
-            first: $first
-            after: $after
-            filter: { snapshotId: $snapshotId }
-        )
+        transferImpactAssessments(first: $first, after: $after)
             @connection(
                 key: "ProcessingActivitiesPage_transferImpactAssessments"
-                filters: ["filter"]
             ) {
             edges {
                 node {
@@ -209,43 +184,12 @@ const tiaListPageFragment = graphql`
     }
 `;
 
-const exportProcessingActivitiesPDFMutation = graphql`
-    mutation ProcessingActivitiesPageExportPDFMutation(
-        $input: ExportProcessingActivitiesPDFInput!
-    ) {
-        exportProcessingActivitiesPDF(input: $input) {
-            data
-        }
-    }
-`;
-
-const exportDataProtectionImpactAssessmentsPDFMutation = graphql`
-    mutation ProcessingActivitiesPageExportDPIAPDFMutation(
-        $input: ExportDataProtectionImpactAssessmentsPDFInput!
-    ) {
-        exportDataProtectionImpactAssessmentsPDF(input: $input) {
-            data
-        }
-    }
-`;
-
-const exportTransferImpactAssessmentsPDFMutation = graphql`
-    mutation ProcessingActivitiesPageExportTIAPDFMutation(
-        $input: ExportTransferImpactAssessmentsPDFInput!
-    ) {
-        exportTransferImpactAssessmentsPDF(input: $input) {
-            data
-        }
-    }
-`;
-
 export default function ProcessingActivitiesPage({
   queryRef,
 }: ProcessingActivitiesPageProps) {
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
-  const { snapshotId } = useParams<{ snapshotId?: string }>();
-  const isSnapshotMode = Boolean(snapshotId);
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<"activities" | "dpia" | "tia">(
     "activities",
   );
@@ -253,6 +197,17 @@ export default function ProcessingActivitiesPage({
   usePageTitle(__("Processing Activities"));
 
   const organization = usePreloadedQuery(processingActivitiesQuery, queryRef);
+
+  const paDocument = organization.node.processingActivitiesDocument;
+  const dpiaDocument = organization.node.dataProtectionImpactAssessmentsDocument;
+  const tiaDocument = organization.node.transferImpactAssessmentsDocument;
+  const paDefaultApproverIds = (paDocument?.defaultApprovers ?? []).map(a => a.id);
+  const dpiaDefaultApproverIds = (dpiaDocument?.defaultApprovers ?? []).map(a => a.id);
+  const tiaDefaultApproverIds = (tiaDocument?.defaultApprovers ?? []).map(a => a.id);
+
+  const goToDocument = (documentId: string) => {
+    void navigate(`/organizations/${organizationId}/documents/${documentId}`);
+  };
 
   const {
     data: activitiesData,
@@ -287,7 +242,6 @@ export default function ProcessingActivitiesPage({
   const connectionId = ConnectionHandler.getConnectionID(
     organizationId,
     ProcessingActivitiesConnectionKey,
-    { filter: { snapshotId: snapshotId || null } },
   );
   const activities
     = activitiesData?.processingActivities?.edges?.map(edge => edge.node)
@@ -300,178 +254,24 @@ export default function ProcessingActivitiesPage({
     = tiaData?.transferImpactAssessments?.edges?.map(edge => edge.node)
       ?? [];
 
-  const hasAnyAction
-    = !isSnapshotMode
-      && activities.some(({ canUpdate, canDelete }) => canUpdate || canDelete);
+  const hasAnyAction = activities.some(
+    ({ canUpdate, canDelete }) => canUpdate || canDelete,
+  );
 
-  const canExportPDF = organization.node.canExportProcessingActivities;
-
-  const [exportPDF, isExportingPDF] = useMutationWithToasts<{
-    response: {
-      exportProcessingActivitiesPDF?: {
-        data: string;
-      };
-    };
-    variables: {
-      input: {
-        organizationId: string;
-        filter: { snapshotId: string } | null;
-      };
-    };
-  }>(exportProcessingActivitiesPDFMutation, {
-    successMessage: __("PDF download started."),
-    errorMessage: __("Failed to generate PDF"),
-  });
-
-  const handleExportPDF = async () => {
-    await exportPDF({
-      variables: {
-        input: {
-          organizationId: organizationId,
-          filter: snapshotId ? { snapshotId } : null,
-        },
-      },
-      onCompleted: (data) => {
-        if (data.exportProcessingActivitiesPDF?.data) {
-          downloadFile(
-            data.exportProcessingActivitiesPDF.data,
-            `processing-activities-${toDateInput(new Date().toISOString())}.pdf`,
-          );
-        }
-      },
-    });
-  };
-
-  const canExportDPIAPDF
-    = organization.node.canExportDataProtectionImpactAssessments;
-
-  const [exportDPIAPDF, isExportingDPIAPDF] = useMutationWithToasts<{
-    response: {
-      exportDataProtectionImpactAssessmentsPDF?: {
-        data: string;
-      };
-    };
-    variables: {
-      input: {
-        organizationId: string;
-        filter: { snapshotId: string } | null;
-      };
-    };
-  }>(exportDataProtectionImpactAssessmentsPDFMutation, {
-    successMessage: __("PDF download started."),
-    errorMessage: __("Failed to generate PDF"),
-  });
-
-  const handleExportDPIAPDF = async () => {
-    await exportDPIAPDF({
-      variables: {
-        input: {
-          organizationId: organizationId,
-          filter: snapshotId ? { snapshotId } : null,
-        },
-      },
-      onCompleted: (data) => {
-        if (data.exportDataProtectionImpactAssessmentsPDF?.data) {
-          downloadFile(
-            data.exportDataProtectionImpactAssessmentsPDF.data,
-            `data-protection-impact-assessments-${toDateInput(new Date().toISOString())}.pdf`,
-          );
-        }
-      },
-    });
-  };
-
-  const canExportTIAPDF
-    = organization.node.canExportTransferImpactAssessments;
-
-  const [exportTIAPDF, isExportingTIAPDF] = useMutationWithToasts<{
-    response: {
-      exportTransferImpactAssessmentsPDF?: {
-        data: string;
-      };
-    };
-    variables: {
-      input: {
-        organizationId: string;
-        filter: { snapshotId: string } | null;
-      };
-    };
-  }>(exportTransferImpactAssessmentsPDFMutation, {
-    successMessage: __("PDF download started."),
-    errorMessage: __("Failed to generate PDF"),
-  });
-
-  const handleExportTIAPDF = async () => {
-    await exportTIAPDF({
-      variables: {
-        input: {
-          organizationId: organizationId,
-          filter: snapshotId ? { snapshotId } : null,
-        },
-      },
-      onCompleted: (data) => {
-        if (data.exportTransferImpactAssessmentsPDF?.data) {
-          downloadFile(
-            data.exportTransferImpactAssessmentsPDF.data,
-            `transfer-impact-assessments-${toDateInput(new Date().toISOString())}.pdf`,
-          );
-        }
-      },
-    });
-  };
+  const canPublishProcessingActivities
+    = organization.node.canPublishProcessingActivities;
+  const canPublishDPIA
+    = organization.node.canPublishDataProtectionImpactAssessments;
+  const canPublishTIA
+    = organization.node.canPublishTransferImpactAssessments;
 
   return (
     <div className="space-y-6">
-      {isSnapshotMode && snapshotId && (
-        <SnapshotBanner snapshotId={snapshotId} />
-      )}
       <PageHeader
         title={__("Processing Activities")}
         description={__("Manage your processing activities under GDPR")}
       >
-        {(canExportPDF || canExportDPIAPDF || canExportTIAPDF) && (
-          <Dropdown
-            toggle={(
-              <Button
-                variant="secondary"
-                icon={IconArrowDown}
-                iconAfter={IconChevronDown}
-              >
-                {__("Export")}
-              </Button>
-            )}
-          >
-            {canExportPDF && (
-              <DropdownItem
-                onClick={() => void handleExportPDF()}
-                disabled={isExportingPDF}
-                icon={isExportingPDF ? Spinner : undefined}
-              >
-                {__("Processing Activities")}
-              </DropdownItem>
-            )}
-            {canExportDPIAPDF && (
-              <DropdownItem
-                onClick={() => void handleExportDPIAPDF()}
-                disabled={isExportingDPIAPDF}
-                icon={isExportingDPIAPDF ? Spinner : undefined}
-              >
-                {__("Data Protection Impact Assessments")}
-              </DropdownItem>
-            )}
-            {canExportTIAPDF && (
-              <DropdownItem
-                onClick={() => void handleExportTIAPDF()}
-                disabled={isExportingTIAPDF}
-                icon={isExportingTIAPDF ? Spinner : undefined}
-              >
-                {__("Transfer Impact Assessments")}
-              </DropdownItem>
-            )}
-          </Dropdown>
-        )}
-        {!isSnapshotMode
-          && activeTab === "activities"
+        {activeTab === "activities"
           && organization.node.canCreateProcessingActivity && (
           <CreateProcessingActivityDialog
             organizationId={organizationId}
@@ -504,6 +304,84 @@ export default function ProcessingActivitiesPage({
           {__("Transfer Impact Assessments")}
         </TabItem>
       </Tabs>
+
+      <div className="flex justify-end gap-2">
+        {activeTab === "activities" && (
+          <>
+            {paDocument?.id && (
+              <Button variant="secondary" asChild>
+                <Link
+                  to={`/organizations/${organizationId}/documents/${paDocument.id}`}
+                >
+                  <IconPageTextLine size={16} />
+                  {__("Document")}
+                </Link>
+              </Button>
+            )}
+            {canPublishProcessingActivities && (
+              <PublishProcessingActivityListDialog
+                organizationId={organizationId}
+                defaultApproverIds={paDefaultApproverIds}
+                onPublished={goToDocument}
+              >
+                <Button variant="secondary" icon={IconUpload}>
+                  {__("Publish")}
+                </Button>
+              </PublishProcessingActivityListDialog>
+            )}
+          </>
+        )}
+        {activeTab === "dpia" && (
+          <>
+            {dpiaDocument?.id && (
+              <Button variant="secondary" asChild>
+                <Link
+                  to={`/organizations/${organizationId}/documents/${dpiaDocument.id}`}
+                >
+                  <IconPageTextLine size={16} />
+                  {__("Document")}
+                </Link>
+              </Button>
+            )}
+            {canPublishDPIA && (
+              <PublishDataProtectionImpactAssessmentListDialog
+                organizationId={organizationId}
+                defaultApproverIds={dpiaDefaultApproverIds}
+                onPublished={goToDocument}
+              >
+                <Button variant="secondary" icon={IconUpload}>
+                  {__("Publish")}
+                </Button>
+              </PublishDataProtectionImpactAssessmentListDialog>
+            )}
+          </>
+        )}
+        {activeTab === "tia" && (
+          <>
+            {tiaDocument?.id && (
+              <Button variant="secondary" asChild>
+                <Link
+                  to={`/organizations/${organizationId}/documents/${tiaDocument.id}`}
+                >
+                  <IconPageTextLine size={16} />
+                  {__("Document")}
+                </Link>
+              </Button>
+            )}
+            {canPublishTIA && (
+              <PublishTransferImpactAssessmentListDialog
+                organizationId={organizationId}
+                defaultApproverIds={tiaDefaultApproverIds}
+                onPublished={goToDocument}
+              >
+                <Button variant="secondary" icon={IconUpload}>
+                  {__("Publish")}
+                </Button>
+              </PublishTransferImpactAssessmentListDialog>
+            )}
+          </>
+        )}
+      </div>
 
       {activeTab === "activities" && (
         <>
@@ -706,8 +584,6 @@ function ActivityRow({
 }) {
   const organizationId = useOrganizationId();
   const { __ } = useTranslate();
-  const { snapshotId } = useParams<{ snapshotId?: string }>();
-  const isSnapshotMode = Boolean(snapshotId);
   const [deleteActivity] = useMutation<ProcessingActivityGraphDeleteMutation>(deleteProcessingActivityMutation);
   const confirm = useConfirm();
 
@@ -734,9 +610,7 @@ function ActivityRow({
   };
 
   const activityUrl
-    = isSnapshotMode && snapshotId
-      ? `/organizations/${organizationId}/snapshots/${snapshotId}/processing-activities/${activity.id}`
-      : `/organizations/${organizationId}/processing-activities/${activity.id}`;
+    = `/organizations/${organizationId}/processing-activities/${activity.id}`;
 
   return (
     <Tr to={activityUrl}>
@@ -790,13 +664,9 @@ function DPIARow({
 }) {
   const organizationId = useOrganizationId();
   const { __ } = useTranslate();
-  const { snapshotId } = useParams<{ snapshotId?: string }>();
-  const isSnapshotMode = Boolean(snapshotId);
 
   const activityUrl
-    = isSnapshotMode && snapshotId
-      ? `/organizations/${organizationId}/snapshots/${snapshotId}/processing-activities/${dpia.processingActivity.id}#dpia`
-      : `/organizations/${organizationId}/processing-activities/${dpia.processingActivity.id}#dpia`;
+    = `/organizations/${organizationId}/processing-activities/${dpia.processingActivity.id}#dpia`;
 
   return (
     <Tr to={activityUrl}>
@@ -848,13 +718,9 @@ function TIARow({
   >;
 }) {
   const organizationId = useOrganizationId();
-  const { snapshotId } = useParams<{ snapshotId?: string }>();
-  const isSnapshotMode = Boolean(snapshotId);
 
   const activityUrl
-    = isSnapshotMode && snapshotId
-      ? `/organizations/${organizationId}/snapshots/${snapshotId}/processing-activities/${tia.processingActivity.id}#tia`
-      : `/organizations/${organizationId}/processing-activities/${tia.processingActivity.id}#tia`;
+    = `/organizations/${organizationId}/processing-activities/${tia.processingActivity.id}#tia`;
 
   return (
     <Tr to={activityUrl}>

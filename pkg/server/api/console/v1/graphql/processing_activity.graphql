@@ -138,14 +138,8 @@ input ProcessingActivityOrder
     field: ProcessingActivityOrderField!
 }
 
-input ProcessingActivityFilter {
-    snapshotId: ID
-}
-
 type ProcessingActivity implements Node {
     id: ID!
-    snapshotId: ID
-    sourceId: ID
     organization: Organization! @goField(forceResolver: true)
     name: String!
     purpose: String
@@ -207,9 +201,9 @@ extend type Mutation {
     deleteProcessingActivity(
         input: DeleteProcessingActivityInput!
     ): DeleteProcessingActivityPayload!
-    exportProcessingActivitiesPDF(
-        input: ExportProcessingActivitiesPDFInput!
-    ): ExportProcessingActivitiesPDFPayload!
+    publishProcessingActivityList(
+        input: PublishProcessingActivityListInput!
+    ): PublishProcessingActivityListPayload!
 }
 
 input CreateProcessingActivityInput {
@@ -265,9 +259,9 @@ input DeleteProcessingActivityInput {
     processingActivityId: ID!
 }
 
-input ExportProcessingActivitiesPDFInput {
+input PublishProcessingActivityListInput {
     organizationId: ID!
-    filter: ProcessingActivityFilter
+    approverIds: [ID!]
 }
 
 type CreateProcessingActivityPayload {
@@ -282,6 +276,7 @@ type DeleteProcessingActivityPayload {
     deletedProcessingActivityId: ID!
 }
 
-type ExportProcessingActivitiesPDFPayload {
-    data: String!
+type PublishProcessingActivityListPayload {
+    documentEdge: DocumentEdge!
+    documentVersionEdge: DocumentVersionEdge!
 }

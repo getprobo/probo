@@ -16,7 +16,6 @@ import { formatError, type GraphQLError } from "@probo/helpers";
 import {
   formatDatetime,
   toDateInput,
-  validateSnapshotConsistency,
 } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import {
@@ -43,13 +42,11 @@ import {
   type PreloadedQuery,
   usePreloadedQuery,
 } from "react-relay";
-import { useParams } from "react-router";
 import { z } from "zod";
 
 import type { ProcessingActivityGraphNodeQuery } from "#/__generated__/core/ProcessingActivityGraphNodeQuery.graphql";
 import { PeopleSelectField } from "#/components/form/PeopleSelectField";
 import { VendorsMultiSelectField } from "#/components/form/VendorsMultiSelectField";
-import { SnapshotBanner } from "#/components/SnapshotBanner";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
@@ -121,8 +118,6 @@ export default function ProcessingActivityDetailsPage(props: Props) {
   const { __ } = useTranslate();
   const { toast } = useToast();
   const organizationId = useOrganizationId();
-  const { snapshotId } = useParams<{ snapshotId?: string }>();
-  const isSnapshotMode = Boolean(snapshotId);
 
   // Get initial tab from URL hash
   const getInitialTab = (): "overview" | "dpia" | "tia" => {
@@ -155,8 +150,6 @@ export default function ProcessingActivityDetailsPage(props: Props) {
   useEffect(() => {
     window.location.hash = activeTab === "overview" ? "" : activeTab;
   }, [activeTab]);
-
-  validateSnapshotConsistency(activity, snapshotId);
 
   const updateActivity = useUpdateProcessingActivity();
   const createDPIA = useCreateDataProtectionImpactAssessment();
@@ -199,7 +192,6 @@ export default function ProcessingActivityDetailsPage(props: Props) {
   const connectionId = ConnectionHandler.getConnectionID(
     organizationId,
     ProcessingActivitiesConnectionKey,
-    { filter: { snapshotId: snapshotId || null } },
   );
 
   const deleteActivity = useDeleteProcessingActivity(
@@ -425,15 +417,10 @@ export default function ProcessingActivityDetailsPage(props: Props) {
   });
 
   const breadcrumbProcessingActivitiesUrl
-    = isSnapshotMode && snapshotId
-      ? `/organizations/${organizationId}/snapshots/${snapshotId}/processing-activities`
-      : `/organizations/${organizationId}/processing-activities`;
+    = `/organizations/${organizationId}/processing-activities`;
 
   return (
     <div className="space-y-6">
-      {isSnapshotMode && snapshotId && (
-        <SnapshotBanner snapshotId={snapshotId} />
-      )}
       <div className="flex items-center justify-between">
         <Breadcrumb
           items={[
@@ -444,7 +431,7 @@ export default function ProcessingActivityDetailsPage(props: Props) {
             { label: activity.name! },
           ]}
         />
-        {!isSnapshotMode && activity.canDelete && (
+        {activity.canDelete && (
           <ActionDropdown>
             <DropdownItem onClick={deleteActivity} variant="danger">
               {__("Delete")}
@@ -489,7 +476,7 @@ export default function ProcessingActivityDetailsPage(props: Props) {
                     {...register("name")}
                     error={formState.errors.name?.message}
                     required
-                    disabled={isSnapshotMode || !activity.canUpdate}
+                    disabled={!activity.canUpdate}
                   />
 
                   <div>
@@ -508,7 +495,7 @@ export default function ProcessingActivityDetailsPage(props: Props) {
                           onValueChange={field.onChange}
                           value={field.value}
                           className="w-full"
-                          disabled={isSnapshotMode || !activity.canUpdate}
+                          disabled={!activity.canUpdate}
                         >
                           <RoleOptions />
                         </Select>
@@ -527,7 +514,7 @@ export default function ProcessingActivityDetailsPage(props: Props) {
                       {...register("purpose")}
                       placeholder={__("Describe the purpose of processing")}
                       rows={3}
-                      disabled={isSnapshotMode || !activity.canUpdate}
+                      disabled={!activity.canUpdate}
                     />
                   </div>
 
@@ -535,14 +522,14 @@ export default function ProcessingActivityDetailsPage(props: Props) {
                     label={__("Data Subject Category")}
                     {...register("dataSubjectCategory")}
                     placeholder={__("e.g., employees, customers, prospects")}
-                    disabled={isSnapshotMode || !activity.canUpdate}
+                    disabled={!activity.canUpdate}
                   />
 
                   <Field
                     label={__("Personal Data Category")}
                     {...register("personalDataCategory")}
                     placeholder={__("e.g., contact details, financial data")}
-                    disabled={isSnapshotMode || !activity.canUpdate}
+                    disabled={!activity.canUpdate}
                   />
 
                   <div>
@@ -563,7 +550,7 @@ export default function ProcessingActivityDetailsPage(props: Props) {
                           onValueChange={field.onChange}
                           value={field.value}
                           className="w-full"
-                          disabled={isSnapshotMode || !activity.canUpdate}
+                          disabled={!activity.canUpdate}
                         >
                           <SpecialOrCriminalDataOptions />
                         </Select>
@@ -580,7 +567,7 @@ export default function ProcessingActivityDetailsPage(props: Props) {
                     label={__("Consent Evidence Link")}
                     {...register("consentEvidenceLink")}
                     placeholder={__("Link to consent evidence if applicable")}
-                    disabled={isSnapshotMode || !activity.canUpdate}
+                    disabled={!activity.canUpdate}
                   />
 
                   <div>
@@ -599,7 +586,7 @@ export default function ProcessingActivityDetailsPage(props: Props) {
                           onValueChange={field.onChange}
                           value={field.value}
                           className="w-full"
-                          disabled={isSnapshotMode || !activity.canUpdate}
+                          disabled={!activity.canUpdate}
                         >
                           <LawfulBasisOptions />
                         </Select>
@@ -620,7 +607,7 @@ export default function ProcessingActivityDetailsPage(props: Props) {
                       id="lastReviewDate"
                       type="date"
                       {...register("lastReviewDate")}
-                      disabled={isSnapshotMode || !activity.canUpdate}
+                      disabled={!activity.canUpdate}
                     />
                   </div>
 
@@ -632,7 +619,7 @@ export default function ProcessingActivityDetailsPage(props: Props) {
                       id="nextReviewDate"
                       type="date"
                       {...register("nextReviewDate")}
-                      disabled={isSnapshotMode || !activity.canUpdate}
+                      disabled={!activity.canUpdate}
                     />
                   </div>
 
@@ -641,7 +628,7 @@ export default function ProcessingActivityDetailsPage(props: Props) {
                     control={control}
                     name="dataProtectionOfficerId"
                     label={__("Data Protection Officer")}
-                    disabled={isSnapshotMode || !activity.canUpdate}
+                    disabled={!activity.canUpdate}
                   />
                 </div>
 
@@ -650,14 +637,14 @@ export default function ProcessingActivityDetailsPage(props: Props) {
                     label={__("Recipients")}
                     {...register("recipients")}
                     placeholder={__("Who receives the data")}
-                    disabled={isSnapshotMode || !activity.canUpdate}
+                    disabled={!activity.canUpdate}
                   />
 
                   <Field
                     label={__("Location")}
                     {...register("location")}
                     placeholder={__("Where is the data processed")}
-                    disabled={isSnapshotMode || !activity.canUpdate}
+                    disabled={!activity.canUpdate}
                   />
 
                   <Controller
@@ -670,7 +657,7 @@ export default function ProcessingActivityDetailsPage(props: Props) {
                           <Checkbox
                             checked={field.value ?? false}
                             onChange={field.onChange}
-                            disabled={isSnapshotMode || !activity.canUpdate}
+                            disabled={!activity.canUpdate}
                           />
                           <span>
                             {__("Data is transferred internationally")}
@@ -694,7 +681,7 @@ export default function ProcessingActivityDetailsPage(props: Props) {
                           onValueChange={field.onChange}
                           value={field.value}
                           className="w-full"
-                          disabled={isSnapshotMode || !activity.canUpdate}
+                          disabled={!activity.canUpdate}
                         >
                           <TransferSafeguardsOptions />
                         </Select>
@@ -711,7 +698,7 @@ export default function ProcessingActivityDetailsPage(props: Props) {
                     label={__("Retention Period")}
                     {...register("retentionPeriod")}
                     placeholder={__("How long is data retained")}
-                    disabled={isSnapshotMode || !activity.canUpdate}
+                    disabled={!activity.canUpdate}
                   />
 
                   <div>
@@ -720,7 +707,7 @@ export default function ProcessingActivityDetailsPage(props: Props) {
                       {...register("securityMeasures")}
                       placeholder={__("Technical and organizational measures")}
                       rows={3}
-                      disabled={isSnapshotMode || !activity.canUpdate}
+                      disabled={!activity.canUpdate}
                     />
                   </div>
 
@@ -740,7 +727,7 @@ export default function ProcessingActivityDetailsPage(props: Props) {
                           onValueChange={field.onChange}
                           value={field.value}
                           className="w-full"
-                          disabled={isSnapshotMode || !activity.canUpdate}
+                          disabled={!activity.canUpdate}
                         >
                           <DataProtectionImpactAssessmentOptions />
                         </Select>
@@ -772,7 +759,7 @@ export default function ProcessingActivityDetailsPage(props: Props) {
                           onValueChange={field.onChange}
                           value={field.value}
                           className="w-full"
-                          disabled={isSnapshotMode || !activity.canUpdate}
+                          disabled={!activity.canUpdate}
                         >
                           <TransferImpactAssessmentOptions />
                         </Select>
@@ -796,24 +783,22 @@ export default function ProcessingActivityDetailsPage(props: Props) {
                 name="vendorIds"
                 selectedVendors={vendors}
                 label={__("Vendors")}
-                disabled={isSnapshotMode || !activity.canUpdate}
+                disabled={!activity.canUpdate}
               />
 
-              {!isSnapshotMode && (
-                <div className="flex justify-end pt-4">
-                  {activity.canUpdate && (
-                    <Button
-                      type="submit"
-                      variant="primary"
-                      disabled={formState.isSubmitting}
-                    >
-                      {formState.isSubmitting
-                        ? __("Saving...")
-                        : __("Save Changes")}
-                    </Button>
-                  )}
-                </div>
-              )}
+              <div className="flex justify-end pt-4">
+                {activity.canUpdate && (
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    disabled={formState.isSubmitting}
+                  >
+                    {formState.isSubmitting
+                      ? __("Saving...")
+                      : __("Save Changes")}
+                  </Button>
+                )}
+              </div>
             </form>
           </div>
         </Card>
@@ -829,7 +814,7 @@ export default function ProcessingActivityDetailsPage(props: Props) {
                     <h2 className="text-xl font-semibold mb-6 text-center">
                       {__("Data Protection Impact Assessment")}
                     </h2>
-                    {!isSnapshotMode && activity.canCreateDPIA && (
+                    {activity.canCreateDPIA && (
                       <Button
                         variant="primary"
                         onClick={() => setShowDpiaForm(true)}
@@ -845,8 +830,7 @@ export default function ProcessingActivityDetailsPage(props: Props) {
                       <h2 className="text-xl font-semibold">
                         {__("Data Protection Impact Assessment")}
                       </h2>
-                      {!isSnapshotMode
-                        && activity?.dataProtectionImpactAssessment?.id
+                      {activity?.dataProtectionImpactAssessment?.id
                         && !dpiaDeleted
                         && activity.dataProtectionImpactAssessment.canDelete && (
                         <Button variant="danger" onClick={deleteDPIA}>
@@ -867,7 +851,7 @@ export default function ProcessingActivityDetailsPage(props: Props) {
                             "Describe the processing activity and its purpose",
                           )}
                           rows={4}
-                          disabled={isSnapshotMode || !canCreateOrUpdateDPIA}
+                          disabled={!canCreateOrUpdateDPIA}
                         />
                       </div>
 
@@ -882,7 +866,7 @@ export default function ProcessingActivityDetailsPage(props: Props) {
                             "Explain why the processing is necessary and proportionate",
                           )}
                           rows={4}
-                          disabled={isSnapshotMode || !canCreateOrUpdateDPIA}
+                          disabled={!canCreateOrUpdateDPIA}
                         />
                       </div>
 
@@ -897,7 +881,7 @@ export default function ProcessingActivityDetailsPage(props: Props) {
                             "Describe the potential risks to data subjects",
                           )}
                           rows={4}
-                          disabled={isSnapshotMode || !canCreateOrUpdateDPIA}
+                          disabled={!canCreateOrUpdateDPIA}
                         />
                       </div>
 
@@ -912,7 +896,7 @@ export default function ProcessingActivityDetailsPage(props: Props) {
                             "Describe measures to mitigate the identified risks",
                           )}
                           rows={4}
-                          disabled={isSnapshotMode || !canCreateOrUpdateDPIA}
+                          disabled={!canCreateOrUpdateDPIA}
                         />
                       </div>
 
@@ -930,7 +914,7 @@ export default function ProcessingActivityDetailsPage(props: Props) {
                               onValueChange={field.onChange}
                               value={field.value}
                               className="w-full"
-                              disabled={isSnapshotMode || !canCreateOrUpdateDPIA}
+                              disabled={!canCreateOrUpdateDPIA}
                             >
                               <Option value="LOW">{__("Low")}</Option>
                               <Option value="MEDIUM">{__("Medium")}</Option>
@@ -940,37 +924,35 @@ export default function ProcessingActivityDetailsPage(props: Props) {
                         />
                       </div>
 
-                      {!isSnapshotMode && (
-                        <div className="flex justify-end gap-3 pt-4">
-                          {(!activity?.dataProtectionImpactAssessment?.id
-                            || dpiaDeleted) && (
-                            <Button
-                              type="button"
-                              variant="secondary"
-                              onClick={() => setShowDpiaForm(false)}
-                            >
-                              {__("Cancel")}
-                            </Button>
-                          )}
-                          {(activity?.dataProtectionImpactAssessment?.id
-                            && !dpiaDeleted
-                            ? activity.dataProtectionImpactAssessment.canUpdate
-                            : activity.canCreateDPIA) && (
-                            <Button
-                              type="submit"
-                              variant="primary"
-                              disabled={dpiaSubmitting}
-                            >
-                              {dpiaSubmitting
-                                ? __("Saving...")
-                                : activity?.dataProtectionImpactAssessment?.id
-                                  && !dpiaDeleted
-                                  ? __("Update DPIA")
-                                  : __("Create DPIA")}
-                            </Button>
-                          )}
-                        </div>
-                      )}
+                      <div className="flex justify-end gap-3 pt-4">
+                        {(!activity?.dataProtectionImpactAssessment?.id
+                          || dpiaDeleted) && (
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            onClick={() => setShowDpiaForm(false)}
+                          >
+                            {__("Cancel")}
+                          </Button>
+                        )}
+                        {(activity?.dataProtectionImpactAssessment?.id
+                          && !dpiaDeleted
+                          ? activity.dataProtectionImpactAssessment.canUpdate
+                          : activity.canCreateDPIA) && (
+                          <Button
+                            type="submit"
+                            variant="primary"
+                            disabled={dpiaSubmitting}
+                          >
+                            {dpiaSubmitting
+                              ? __("Saving...")
+                              : activity?.dataProtectionImpactAssessment?.id
+                                && !dpiaDeleted
+                                ? __("Update DPIA")
+                                : __("Create DPIA")}
+                          </Button>
+                        )}
+                      </div>
                     </form>
                   </>
                 )}
@@ -988,7 +970,7 @@ export default function ProcessingActivityDetailsPage(props: Props) {
                     <h2 className="text-xl font-semibold mb-6 text-center">
                       {__("Transfer Impact Assessment")}
                     </h2>
-                    {!isSnapshotMode && activity.canCreateTIA && (
+                    {activity.canCreateTIA && (
                       <Button
                         variant="primary"
                         onClick={() => setShowTiaForm(true)}
@@ -1004,8 +986,7 @@ export default function ProcessingActivityDetailsPage(props: Props) {
                       <h2 className="text-xl font-semibold">
                         {__("Transfer Impact Assessment")}
                       </h2>
-                      {!isSnapshotMode
-                        && activity?.transferImpactAssessment?.id
+                      {activity?.transferImpactAssessment?.id
                         && !tiaDeleted
                         && activity.transferImpactAssessment.canDelete && (
                         <Button variant="danger" onClick={deleteTIA}>
@@ -1026,7 +1007,7 @@ export default function ProcessingActivityDetailsPage(props: Props) {
                             "Describe the data subjects involved in the transfer",
                           )}
                           rows={4}
-                          disabled={isSnapshotMode || !canCreateOrUpdateTIA}
+                          disabled={!canCreateOrUpdateTIA}
                         />
                       </div>
 
@@ -1041,7 +1022,7 @@ export default function ProcessingActivityDetailsPage(props: Props) {
                             "Describe the legal mechanism for the transfer (e.g., SCCs, BCRs, adequacy decision)",
                           )}
                           rows={4}
-                          disabled={isSnapshotMode || !canCreateOrUpdateTIA}
+                          disabled={!canCreateOrUpdateTIA}
                         />
                       </div>
 
@@ -1054,7 +1035,7 @@ export default function ProcessingActivityDetailsPage(props: Props) {
                             "Describe the nature and details of the data transfer",
                           )}
                           rows={4}
-                          disabled={isSnapshotMode || !canCreateOrUpdateTIA}
+                          disabled={!canCreateOrUpdateTIA}
                         />
                       </div>
 
@@ -1069,7 +1050,7 @@ export default function ProcessingActivityDetailsPage(props: Props) {
                             "Assess the risks related to the local laws of the destination country",
                           )}
                           rows={4}
-                          disabled={isSnapshotMode || !canCreateOrUpdateTIA}
+                          disabled={!canCreateOrUpdateTIA}
                         />
                       </div>
 
@@ -1084,40 +1065,38 @@ export default function ProcessingActivityDetailsPage(props: Props) {
                             "Describe any supplementary measures taken to ensure adequate protection",
                           )}
                           rows={4}
-                          disabled={isSnapshotMode || !canCreateOrUpdateTIA}
+                          disabled={!canCreateOrUpdateTIA}
                         />
                       </div>
 
-                      {!isSnapshotMode && (
-                        <div className="flex justify-end gap-3 pt-4">
-                          {(!activity?.transferImpactAssessment?.id
-                            || tiaDeleted) && (
-                            <Button
-                              type="button"
-                              variant="secondary"
-                              onClick={() => setShowTiaForm(false)}
-                            >
-                              {__("Cancel")}
-                            </Button>
-                          )}
-                          {(activity?.transferImpactAssessment?.id && !tiaDeleted
-                            ? activity.transferImpactAssessment.canUpdate
-                            : activity.canCreateTIA) && (
-                            <Button
-                              type="submit"
-                              variant="primary"
-                              disabled={tiaSubmitting}
-                            >
-                              {tiaSubmitting
-                                ? __("Saving...")
-                                : activity?.transferImpactAssessment?.id
-                                  && !tiaDeleted
-                                  ? __("Update TIA")
-                                  : __("Create TIA")}
-                            </Button>
-                          )}
-                        </div>
-                      )}
+                      <div className="flex justify-end gap-3 pt-4">
+                        {(!activity?.transferImpactAssessment?.id
+                          || tiaDeleted) && (
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            onClick={() => setShowTiaForm(false)}
+                          >
+                            {__("Cancel")}
+                          </Button>
+                        )}
+                        {(activity?.transferImpactAssessment?.id && !tiaDeleted
+                          ? activity.transferImpactAssessment.canUpdate
+                          : activity.canCreateTIA) && (
+                          <Button
+                            type="submit"
+                            variant="primary"
+                            disabled={tiaSubmitting}
+                          >
+                            {tiaSubmitting
+                              ? __("Saving...")
+                              : activity?.transferImpactAssessment?.id
+                                && !tiaDeleted
+                                ? __("Update TIA")
+                                : __("Create TIA")}
+                          </Button>
+                        )}
+                      </div>
                     </form>
                   </>
                 )}

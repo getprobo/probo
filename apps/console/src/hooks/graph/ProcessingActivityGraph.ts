@@ -29,27 +29,42 @@ export type ProcessingActivityDPIAResidualRisk = "LOW" | "MEDIUM" | "HIGH";
 export const processingActivitiesQuery = graphql`
   query ProcessingActivityGraphListQuery(
     $organizationId: ID!
-    $snapshotId: ID
   ) {
     node(id: $organizationId) {
       ... on Organization {
         canCreateProcessingActivity: permission(
           action: "core:processing-activity:create"
         )
-        canExportProcessingActivities: permission(
-          action: "core:processing-activity:export"
+        canPublishProcessingActivities: permission(
+          action: "core:processing-activity:publish"
         )
-        canExportDataProtectionImpactAssessments: permission(
-          action: "core:data-protection-impact-assessment:export"
+        canPublishDataProtectionImpactAssessments: permission(
+          action: "core:data-protection-impact-assessment:publish"
         )
-        canExportTransferImpactAssessments: permission(
-          action: "core:transfer-impact-assessment:export"
+        canPublishTransferImpactAssessments: permission(
+          action: "core:transfer-impact-assessment:publish"
         )
-        ...ProcessingActivitiesPageFragment @arguments(snapshotId: $snapshotId)
+        processingActivitiesDocument {
+          id
+          defaultApprovers {
+            id
+          }
+        }
+        dataProtectionImpactAssessmentsDocument {
+          id
+          defaultApprovers {
+            id
+          }
+        }
+        transferImpactAssessmentsDocument {
+          id
+          defaultApprovers {
+            id
+          }
+        }
+        ...ProcessingActivitiesPageFragment
         ...ProcessingActivitiesPageDPIAFragment
-          @arguments(snapshotId: $snapshotId)
         ...ProcessingActivitiesPageTIAFragment
-          @arguments(snapshotId: $snapshotId)
       }
     }
   }
@@ -60,7 +75,6 @@ export const processingActivityNodeQuery = graphql`
     node(id: $processingActivityId) {
       ... on ProcessingActivity {
         id
-        snapshotId
         name
         purpose
         dataSubjectCategory

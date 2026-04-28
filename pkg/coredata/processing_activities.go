@@ -27,6 +27,113 @@ import (
 	"go.probo.inc/probo/pkg/page"
 )
 
+func (p ProcessingActivity) GetGeneratedDocumentID(
+	ctx context.Context,
+	conn pg.Querier,
+	organizationID gid.GID,
+) (*gid.GID, error) {
+	var documentID *gid.GID
+
+	err := conn.QueryRow(
+		ctx,
+		`
+SELECT
+	processing_activities_document_id
+FROM
+	generated_documents
+WHERE
+	organization_id = @organization_id
+`,
+		pgx.NamedArgs{"organization_id": organizationID},
+	).Scan(&documentID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("cannot get processing activity list document ID: %w", err)
+	}
+
+	return documentID, nil
+}
+
+func (p ProcessingActivity) UpsertGeneratedDocumentID(
+	ctx context.Context,
+	conn pg.Tx,
+	organizationID gid.GID,
+	tenantID gid.TenantID,
+	documentID gid.GID,
+) error {
+	now := time.Now()
+
+	_, err := conn.Exec(
+		ctx,
+		`
+INSERT INTO generated_documents (
+	organization_id,
+	tenant_id,
+	processing_activities_document_id,
+	created_at,
+	updated_at
+) VALUES (
+	@organization_id,
+	@tenant_id,
+	@processing_activities_document_id,
+	@created_at,
+	@updated_at
+)
+ON CONFLICT (organization_id) DO UPDATE
+SET
+	processing_activities_document_id = @processing_activities_document_id,
+	updated_at = @updated_at
+`,
+		pgx.NamedArgs{
+			"organization_id":                   organizationID,
+			"tenant_id":                         tenantID,
+			"processing_activities_document_id": documentID,
+			"created_at":                        now,
+			"updated_at":                        now,
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("cannot upsert processing activity list document ID: %w", err)
+	}
+
+	return nil
+}
+
+func (p ProcessingActivity) ClearGeneratedDocumentID(
+	ctx context.Context,
+	conn pg.Tx,
+	documentIDs []gid.GID,
+) error {
+	ids := make([]string, len(documentIDs))
+	for i, id := range documentIDs {
+		ids[i] = id.String()
+	}
+
+	_, err := conn.Exec(
+		ctx,
+		`
+UPDATE
+	generated_documents
+SET
+	processing_activities_document_id = NULL,
+	updated_at = @now
+WHERE
+	processing_activities_document_id = ANY(@ids)
+`,
+		pgx.NamedArgs{
+			"ids": ids,
+			"now": time.Now(),
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("cannot clear processing activity list document references: %w", err)
+	}
+
+	return nil
+}
+
 type (
 	ProcessingActivity struct {
 		ID                                   gid.GID                                          `db:"id"`
@@ -150,7 +257,6 @@ func (p *ProcessingActivities) CountByOrganizationID(
 	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
-	filter *ProcessingActivityFilter,
 ) (int, error) {
 	q := `
 SELECT
@@ -160,14 +266,13 @@ FROM
 WHERE
 	%s
 	AND organization_id = @organization_id
-	AND %s
+	AND snapshot_id IS NULL
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"organization_id": organizationID}
 	maps.Copy(args, scope.SQLArguments())
-	maps.Copy(args, filter.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)
 
@@ -180,13 +285,82 @@ WHERE
 	return count, nil
 }
 
+func (p *ProcessingActivities) LoadByIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	processingActivityIDs []gid.GID,
+) error {
+	if len(processingActivityIDs) == 0 {
+		*p = ProcessingActivities{}
+		return nil
+	}
+
+	q := `
+SELECT
+	id,
+	snapshot_id,
+	source_id,
+	organization_id,
+	name,
+	purpose,
+	data_subject_category,
+	personal_data_category,
+	special_or_criminal_data,
+	consent_evidence_link,
+	lawful_basis,
+	recipients,
+	location,
+	international_transfers,
+	transfer_safeguards,
+	retention_period,
+	security_measures,
+	data_protection_impact_assessment_needed,
+	transfer_impact_assessment_needed,
+	last_review_date,
+	next_review_date,
+	role,
+	dpo_profile_id,
+	created_at,
+	updated_at
+FROM
+	processing_activities
+WHERE
+	%s
+	AND id = ANY(@ids)
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	ids := make([]string, len(processingActivityIDs))
+	for i, id := range processingActivityIDs {
+		ids[i] = id.String()
+	}
+
+	args := pgx.StrictNamedArgs{"ids": ids}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query processing activities: %w", err)
+	}
+
+	processingActivities, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[ProcessingActivity])
+	if err != nil {
+		return fmt.Errorf("cannot collect processing activities: %w", err)
+	}
+
+	*p = processingActivities
+
+	return nil
+}
+
 func (p *ProcessingActivities) LoadByOrganizationID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 	cursor *page.Cursor[ProcessingActivityOrderField],
-	filter *ProcessingActivityFilter,
 ) error {
 	q := `
 SELECT
@@ -220,15 +394,14 @@ FROM
 WHERE
 	%s
 	AND organization_id = @organization_id
-	AND %s
+	AND snapshot_id IS NULL
 	AND %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"organization_id": organizationID}
 	maps.Copy(args, scope.SQLArguments())
-	maps.Copy(args, filter.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
@@ -251,7 +424,6 @@ func (p *ProcessingActivities) LoadAllByOrganizationID(
 	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
-	filter *ProcessingActivityFilter,
 ) error {
 	q := `
 SELECT
@@ -285,15 +457,14 @@ FROM
 WHERE
 	%s
 	AND organization_id = @organization_id
-	AND %s
+	AND snapshot_id IS NULL
 ORDER BY created_at DESC
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"organization_id": organizationID}
 	maps.Copy(args, scope.SQLArguments())
-	maps.Copy(args, filter.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -500,103 +671,6 @@ WHERE
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot delete processing activity: %w", err)
-	}
-
-	return nil
-}
-
-func (pas ProcessingActivities) Snapshot(ctx context.Context, conn pg.Tx, scope Scoper, organizationID, snapshotID gid.GID) error {
-	snapshotters := []ProcessingActivitySnapshotter{ProcessingActivities{}, Vendors{}, ProcessingActivityVendors{}, DataProtectionImpactAssessments{}, TransferImpactAssessments{}}
-
-	for _, snapshotter := range snapshotters {
-		if err := snapshotter.InsertProcessingActivitySnapshots(ctx, conn, scope, organizationID, snapshotID); err != nil {
-			return fmt.Errorf("cannot create processing activity snapshots: (%T) %w", snapshotter, err)
-		}
-	}
-
-	return nil
-}
-
-func (pas ProcessingActivities) InsertProcessingActivitySnapshots(
-	ctx context.Context,
-	conn pg.Tx,
-	scope Scoper,
-	organizationID gid.GID,
-	snapshotID gid.GID,
-) error {
-	query := `
-INSERT INTO processing_activities (
-	id,
-	tenant_id,
-	snapshot_id,
-	source_id,
-	organization_id,
-	name,
-	purpose,
-	data_subject_category,
-	personal_data_category,
-	special_or_criminal_data,
-	consent_evidence_link,
-	lawful_basis,
-	recipients,
-	location,
-	international_transfers,
-	transfer_safeguards,
-	retention_period,
-	security_measures,
-	data_protection_impact_assessment_needed,
-	transfer_impact_assessment_needed,
-	last_review_date,
-	next_review_date,
-	role,
-	dpo_profile_id,
-	created_at,
-	updated_at
-)
-SELECT
-	generate_gid(decode_base64_unpadded(@tenant_id), @processing_activity_entity_type),
-	@tenant_id,
-	@snapshot_id,
-	par.id,
-	par.organization_id,
-	par.name,
-	par.purpose,
-	par.data_subject_category,
-	par.personal_data_category,
-	par.special_or_criminal_data,
-	par.consent_evidence_link,
-	par.lawful_basis,
-	par.recipients,
-	par.location,
-	par.international_transfers,
-	par.transfer_safeguards,
-	par.retention_period,
-	par.security_measures,
-	par.data_protection_impact_assessment_needed,
-	par.transfer_impact_assessment_needed,
-	par.last_review_date,
-	par.next_review_date,
-	par.role,
-	par.dpo_profile_id,
-	par.created_at,
-	par.updated_at
-FROM processing_activities par
-WHERE %s AND par.organization_id = @organization_id AND par.snapshot_id IS NULL
-	`
-
-	query = fmt.Sprintf(query, scope.SQLFragment())
-
-	args := pgx.StrictNamedArgs{
-		"tenant_id":                       scope.GetTenantID(),
-		"snapshot_id":                     snapshotID,
-		"organization_id":                 organizationID,
-		"processing_activity_entity_type": ProcessingActivityEntityType,
-	}
-	maps.Copy(args, scope.SQLArguments())
-
-	_, err := conn.Exec(ctx, query, args)
-	if err != nil {
-		return fmt.Errorf("cannot insert processing activity snapshots: %w", err)
 	}
 
 	return nil

@@ -1616,3 +1616,950 @@ func BuildObligationListDocument(data docgen.ObligationListData) (string, error)
 	}
 	return buf.String(), nil
 }
+
+func (s *GeneratedDocumentService) PublishProcessingActivityList(
+	ctx context.Context,
+	organizationID gid.GID,
+	approverIDs []gid.GID,
+) (*coredata.Document, *coredata.DocumentVersion, error) {
+	var (
+		document        *coredata.Document
+		documentVersion *coredata.DocumentVersion
+	)
+
+	err := s.svc.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			organization := &coredata.Organization{}
+			if err := organization.LoadByID(ctx, tx, s.svc.scope, organizationID); err != nil {
+				return fmt.Errorf("cannot load organization: %w", err)
+			}
+
+			documentData, err := s.buildProcessingActivityListDocumentData(ctx, tx, organization)
+			if err != nil {
+				return fmt.Errorf("cannot build document data: %w", err)
+			}
+
+			prosemirrorJSON, err := BuildProcessingActivityListDocument(documentData)
+			if err != nil {
+				return fmt.Errorf("cannot build prosemirror document: %w", err)
+			}
+
+			now := time.Now()
+
+			processingActivity := coredata.ProcessingActivity{}
+			processingActivityDocumentID, err := processingActivity.GetGeneratedDocumentID(ctx, tx, organizationID)
+			if err != nil {
+				return fmt.Errorf("cannot query generated documents: %w", err)
+			}
+
+			var existingDoc *coredata.Document
+			if processingActivityDocumentID != nil {
+				doc := &coredata.Document{}
+				err = doc.LoadByID(ctx, tx, s.svc.scope, *processingActivityDocumentID)
+				if err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
+					return fmt.Errorf("cannot load processing activity list document: %w", err)
+				}
+
+				if err == nil && doc.ArchivedAt == nil {
+					existingDoc = doc
+				} else {
+					if err := processingActivity.ClearGeneratedDocumentID(ctx, tx, []gid.GID{*processingActivityDocumentID}); err != nil {
+						return fmt.Errorf("cannot clear document reference: %w", err)
+					}
+				}
+			}
+
+			hasApprovers := len(approverIDs) > 0
+
+			if existingDoc == nil {
+				documentID := gid.New(s.svc.scope.GetTenantID(), coredata.DocumentEntityType)
+
+				document = &coredata.Document{
+					ID:                    documentID,
+					OrganizationID:        organizationID,
+					WriteMode:             coredata.DocumentWriteModeGenerated,
+					TrustCenterVisibility: coredata.TrustCenterVisibilityNone,
+					Status:                coredata.DocumentStatusActive,
+					CreatedAt:             now,
+					UpdatedAt:             now,
+				}
+
+				if err := document.Insert(ctx, tx, s.svc.scope); err != nil {
+					return fmt.Errorf("cannot insert document: %w", err)
+				}
+
+				if err := processingActivity.UpsertGeneratedDocumentID(ctx, tx, organizationID, s.svc.scope.GetTenantID(), documentID); err != nil {
+					return fmt.Errorf("cannot upsert generated documents: %w", err)
+				}
+			} else {
+				document = existingDoc
+			}
+
+			var newMajor int
+			if document.CurrentPublishedMajor != nil {
+				newMajor = *document.CurrentPublishedMajor + 1
+			} else {
+				newMajor = 1
+			}
+
+			versionStatus := coredata.DocumentVersionStatusPublished
+			var publishedAt *time.Time
+			if hasApprovers {
+				versionStatus = coredata.DocumentVersionStatusDraft
+			} else {
+				publishedAt = &now
+			}
+
+			documentVersionID := gid.New(s.svc.scope.GetTenantID(), coredata.DocumentVersionEntityType)
+			documentVersion = &coredata.DocumentVersion{
+				ID:             documentVersionID,
+				OrganizationID: organizationID,
+				DocumentID:     document.ID,
+				Title:          "Processing Activities",
+				Major:          newMajor,
+				Minor:          0,
+				Content:        prosemirrorJSON,
+				Status:         versionStatus,
+				Classification: coredata.DocumentClassificationConfidential,
+				DocumentType:   coredata.DocumentTypeRegister,
+				Orientation:    coredata.DocumentVersionOrientationPortrait,
+				PublishedAt:    publishedAt,
+				CreatedAt:      now,
+				UpdatedAt:      now,
+			}
+
+			if err := documentVersion.Insert(ctx, tx, s.svc.scope); err != nil {
+				if errors.Is(err, coredata.ErrResourceAlreadyExists) {
+					return fmt.Errorf("a version is pending approval, approve or reject it before publishing a new one: %w", err)
+				}
+				return fmt.Errorf("cannot insert document version: %w", err)
+			}
+
+			if hasApprovers {
+				defaultApprovers := &coredata.DocumentDefaultApprovers{}
+				if err := defaultApprovers.MergeByDocumentID(ctx, tx, s.svc.scope, document.ID, organizationID, approverIDs); err != nil {
+					return fmt.Errorf("cannot save default approvers: %w", err)
+				}
+
+				_, err := s.svc.DocumentApprovals.RequestApprovalInTx(
+					ctx,
+					tx,
+					document,
+					documentVersion,
+					approverIDs,
+					nil,
+				)
+				if err != nil {
+					return fmt.Errorf("cannot request approval: %w", err)
+				}
+			} else {
+				document.CurrentPublishedMajor = &newMajor
+				document.CurrentPublishedMinor = new(0)
+				document.UpdatedAt = now
+
+				if err := document.Update(ctx, tx, s.svc.scope); err != nil {
+					return fmt.Errorf("cannot update document: %w", err)
+				}
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return document, documentVersion, nil
+}
+
+func (s *GeneratedDocumentService) GetProcessingActivitiesDocumentID(
+	ctx context.Context,
+	organizationID gid.GID,
+) (*gid.GID, error) {
+	var documentID *gid.GID
+
+	err := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		processingActivity := coredata.ProcessingActivity{}
+		var err error
+		documentID, err = processingActivity.GetGeneratedDocumentID(ctx, conn, organizationID)
+		return err
+	})
+	if err != nil {
+		return nil, fmt.Errorf("cannot get processing activity list document ID: %w", err)
+	}
+
+	return documentID, nil
+}
+
+func (s *GeneratedDocumentService) buildProcessingActivityListDocumentData(
+	ctx context.Context,
+	conn pg.Querier,
+	organization *coredata.Organization,
+) (docgen.ProcessingActivityListData, error) {
+	var processingActivities coredata.ProcessingActivities
+	if err := processingActivities.LoadAllByOrganizationID(ctx, conn, s.svc.scope, organization.ID); err != nil {
+		return docgen.ProcessingActivityListData{}, fmt.Errorf("cannot load processing activities: %w", err)
+	}
+
+	if len(processingActivities) == 0 {
+		return docgen.ProcessingActivityListData{
+			Title:                     "Processing Activities",
+			OrganizationName:          organization.Name,
+			CreatedAt:                 time.Now(),
+			TotalProcessingActivities: 0,
+		}, nil
+	}
+
+	var vendors coredata.Vendors
+	vendorMap, err := vendors.LoadAllByProcessingActivities(ctx, conn, s.svc.scope, organization.ID)
+	if err != nil {
+		return docgen.ProcessingActivityListData{}, fmt.Errorf("cannot load vendors: %w", err)
+	}
+
+	dpoIDs := make([]gid.GID, 0, len(processingActivities))
+	dpoIDSet := make(map[gid.GID]struct{})
+	for _, pa := range processingActivities {
+		if pa.DataProtectionOfficerID != nil {
+			if _, ok := dpoIDSet[*pa.DataProtectionOfficerID]; !ok {
+				dpoIDs = append(dpoIDs, *pa.DataProtectionOfficerID)
+				dpoIDSet[*pa.DataProtectionOfficerID] = struct{}{}
+			}
+		}
+	}
+
+	dpoMap := make(map[gid.GID]*coredata.MembershipProfile)
+	if len(dpoIDs) > 0 {
+		var profiles coredata.MembershipProfiles
+		if err := profiles.LoadByIDs(ctx, conn, s.svc.scope, dpoIDs); err != nil {
+			return docgen.ProcessingActivityListData{}, fmt.Errorf("cannot load DPO profiles: %w", err)
+		}
+
+		for _, p := range profiles {
+			dpoMap[p.ID] = p
+		}
+	}
+
+	rows := make([]docgen.ProcessingActivityListRow, 0, len(processingActivities))
+	for _, pa := range processingActivities {
+		dpoName := "Not assigned"
+		if pa.DataProtectionOfficerID != nil {
+			if p, ok := dpoMap[*pa.DataProtectionOfficerID]; ok {
+				dpoName = p.FullName
+			}
+		}
+
+		vendorStr := "None"
+		if vendorNames, ok := vendorMap[pa.ID]; ok && len(vendorNames) > 0 {
+			vendorStr = strings.Join(vendorNames, ", ")
+		}
+
+		rows = append(rows, docgen.ProcessingActivityListRow{
+			Name:                                 pa.Name,
+			Purpose:                              derefStringOrNotSpecified(pa.Purpose),
+			Role:                                 formatProcessingActivityRole(pa.Role),
+			DataSubjectCategory:                  derefStringOrNotSpecified(pa.DataSubjectCategory),
+			PersonalDataCategory:                 derefStringOrNotSpecified(pa.PersonalDataCategory),
+			SpecialOrCriminalData:                formatSpecialOrCriminalData(pa.SpecialOrCriminalData),
+			LawfulBasis:                          formatLawfulBasis(pa.LawfulBasis),
+			ConsentEvidenceLink:                  derefStringOrNotSpecified(pa.ConsentEvidenceLink),
+			Recipients:                           derefStringOrNotSpecified(pa.Recipients),
+			Location:                             derefStringOrNotSpecified(pa.Location),
+			InternationalTransfers:               yesNoLabel(pa.InternationalTransfers),
+			TransferSafeguards:                   formatTransferSafeguard(pa.TransferSafeguard),
+			RetentionPeriod:                      derefStringOrNotSpecified(pa.RetentionPeriod),
+			SecurityMeasures:                     derefStringOrNotSpecified(pa.SecurityMeasures),
+			DataProtectionImpactAssessmentNeeded: formatDPIANeeded(pa.DataProtectionImpactAssessmentNeeded),
+			TransferImpactAssessmentNeeded:       formatTIANeeded(pa.TransferImpactAssessmentNeeded),
+			LastReviewDate:                       formatDateOrNotSpecified(pa.LastReviewDate),
+			NextReviewDate:                       formatDateOrNotSpecified(pa.NextReviewDate),
+			DataProtectionOfficer:                dpoName,
+			Vendors:                              vendorStr,
+		})
+	}
+
+	return docgen.ProcessingActivityListData{
+		Title:                     "Processing Activities",
+		OrganizationName:          organization.Name,
+		CreatedAt:                 time.Now(),
+		TotalProcessingActivities: len(processingActivities),
+		Rows:                      rows,
+	}, nil
+}
+
+func derefStringOrNotSpecified(s *string) string {
+	if s == nil || *s == "" {
+		return "Not specified"
+	}
+	return *s
+}
+
+func formatDateOrNotSpecified(t *time.Time) string {
+	if t == nil {
+		return "Not specified"
+	}
+	return t.Format("January 2, 2006")
+}
+
+func yesNoLabel(b bool) string {
+	if b {
+		return "Yes"
+	}
+	return "No"
+}
+
+func formatProcessingActivityRole(role coredata.ProcessingActivityRole) string {
+	switch role {
+	case coredata.ProcessingActivityRoleController:
+		return "Controller"
+	case coredata.ProcessingActivityRoleProcessor:
+		return "Processor"
+	default:
+		return string(role)
+	}
+}
+
+func formatLawfulBasis(basis coredata.ProcessingActivityLawfulBasis) string {
+	switch basis {
+	case coredata.ProcessingActivityLawfulBasisConsent:
+		return "Consent"
+	case coredata.ProcessingActivityLawfulBasisContractualNecessity:
+		return "Contractual Necessity"
+	case coredata.ProcessingActivityLawfulBasisLegalObligation:
+		return "Legal Obligation"
+	case coredata.ProcessingActivityLawfulBasisLegitimateInterest:
+		return "Legitimate Interest"
+	case coredata.ProcessingActivityLawfulBasisPublicTask:
+		return "Public Task"
+	case coredata.ProcessingActivityLawfulBasisVitalInterests:
+		return "Vital Interests"
+	default:
+		return string(basis)
+	}
+}
+
+func formatSpecialOrCriminalData(data coredata.ProcessingActivitySpecialOrCriminalDatum) string {
+	switch data {
+	case coredata.ProcessingActivitySpecialOrCriminalDatumYes:
+		return "Yes"
+	case coredata.ProcessingActivitySpecialOrCriminalDatumNo:
+		return "No"
+	case coredata.ProcessingActivitySpecialOrCriminalDatumPossible:
+		return "Possible"
+	default:
+		return string(data)
+	}
+}
+
+func formatTransferSafeguard(safeguard *coredata.ProcessingActivityTransferSafeguard) string {
+	if safeguard == nil {
+		return "Not specified"
+	}
+	switch *safeguard {
+	case coredata.ProcessingActivityTransferSafeguardStandardContractualClauses:
+		return "Standard Contractual Clauses"
+	case coredata.ProcessingActivityTransferSafeguardBindingCorporateRules:
+		return "Binding Corporate Rules"
+	case coredata.ProcessingActivityTransferSafeguardAdequacyDecision:
+		return "Adequacy Decision"
+	case coredata.ProcessingActivityTransferSafeguardDerogations:
+		return "Derogations"
+	case coredata.ProcessingActivityTransferSafeguardCodesOfConduct:
+		return "Codes of Conduct"
+	case coredata.ProcessingActivityTransferSafeguardCertificationMechanisms:
+		return "Certification Mechanisms"
+	default:
+		return string(*safeguard)
+	}
+}
+
+func formatDPIANeeded(needed coredata.ProcessingActivityDataProtectionImpactAssessment) string {
+	switch needed {
+	case coredata.ProcessingActivityDataProtectionImpactAssessmentNeeded:
+		return "Yes"
+	case coredata.ProcessingActivityDataProtectionImpactAssessmentNotNeeded:
+		return "No"
+	default:
+		return string(needed)
+	}
+}
+
+func formatTIANeeded(needed coredata.ProcessingActivityTransferImpactAssessment) string {
+	switch needed {
+	case coredata.ProcessingActivityTransferImpactAssessmentNeeded:
+		return "Yes"
+	case coredata.ProcessingActivityTransferImpactAssessmentNotNeeded:
+		return "No"
+	default:
+		return string(needed)
+	}
+}
+
+func formatResidualRisk(risk *coredata.DataProtectionImpactAssessmentResidualRisk) string {
+	if risk == nil {
+		return "Not specified"
+	}
+	switch *risk {
+	case coredata.DataProtectionImpactAssessmentResidualRiskLow:
+		return "Low"
+	case coredata.DataProtectionImpactAssessmentResidualRiskMedium:
+		return "Medium"
+	case coredata.DataProtectionImpactAssessmentResidualRiskHigh:
+		return "High"
+	default:
+		return string(*risk)
+	}
+}
+
+var processingActivityListTemplate = template.Must(
+	template.New("processing_activity_list.json.tmpl").
+		Funcs(template.FuncMap{
+			"json": func(v any) (string, error) {
+				b, err := json.Marshal(v)
+				if err != nil {
+					return "", err
+				}
+				return string(b), nil
+			},
+			"printf": fmt.Sprintf,
+			"add":    func(a, b int) int { return a + b },
+		}).
+		ParseFS(Templates, "templates/processing_activity_list.json.tmpl"),
+)
+
+func BuildProcessingActivityListDocument(data docgen.ProcessingActivityListData) (string, error) {
+	var buf bytes.Buffer
+	if err := processingActivityListTemplate.Execute(&buf, data); err != nil {
+		return "", fmt.Errorf("cannot execute processing activity list template: %w", err)
+	}
+	return buf.String(), nil
+}
+
+func (s *GeneratedDocumentService) PublishDataProtectionImpactAssessmentList(
+	ctx context.Context,
+	organizationID gid.GID,
+	approverIDs []gid.GID,
+) (*coredata.Document, *coredata.DocumentVersion, error) {
+	var (
+		document        *coredata.Document
+		documentVersion *coredata.DocumentVersion
+	)
+
+	err := s.svc.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			organization := &coredata.Organization{}
+			if err := organization.LoadByID(ctx, tx, s.svc.scope, organizationID); err != nil {
+				return fmt.Errorf("cannot load organization: %w", err)
+			}
+
+			documentData, err := s.buildDataProtectionImpactAssessmentListDocumentData(ctx, tx, organization)
+			if err != nil {
+				return fmt.Errorf("cannot build document data: %w", err)
+			}
+
+			prosemirrorJSON, err := BuildDataProtectionImpactAssessmentListDocument(documentData)
+			if err != nil {
+				return fmt.Errorf("cannot build prosemirror document: %w", err)
+			}
+
+			now := time.Now()
+
+			dpia := coredata.DataProtectionImpactAssessment{}
+			dpiaDocumentID, err := dpia.GetGeneratedDocumentID(ctx, tx, organizationID)
+			if err != nil {
+				return fmt.Errorf("cannot query generated documents: %w", err)
+			}
+
+			var existingDoc *coredata.Document
+			if dpiaDocumentID != nil {
+				doc := &coredata.Document{}
+				err = doc.LoadByID(ctx, tx, s.svc.scope, *dpiaDocumentID)
+				if err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
+					return fmt.Errorf("cannot load DPIA list document: %w", err)
+				}
+
+				if err == nil && doc.ArchivedAt == nil {
+					existingDoc = doc
+				} else {
+					if err := dpia.ClearGeneratedDocumentID(ctx, tx, []gid.GID{*dpiaDocumentID}); err != nil {
+						return fmt.Errorf("cannot clear document reference: %w", err)
+					}
+				}
+			}
+
+			hasApprovers := len(approverIDs) > 0
+
+			if existingDoc == nil {
+				documentID := gid.New(s.svc.scope.GetTenantID(), coredata.DocumentEntityType)
+
+				document = &coredata.Document{
+					ID:                    documentID,
+					OrganizationID:        organizationID,
+					WriteMode:             coredata.DocumentWriteModeGenerated,
+					TrustCenterVisibility: coredata.TrustCenterVisibilityNone,
+					Status:                coredata.DocumentStatusActive,
+					CreatedAt:             now,
+					UpdatedAt:             now,
+				}
+
+				if err := document.Insert(ctx, tx, s.svc.scope); err != nil {
+					return fmt.Errorf("cannot insert document: %w", err)
+				}
+
+				if err := dpia.UpsertGeneratedDocumentID(ctx, tx, organizationID, s.svc.scope.GetTenantID(), documentID); err != nil {
+					return fmt.Errorf("cannot upsert generated documents: %w", err)
+				}
+			} else {
+				document = existingDoc
+			}
+
+			var newMajor int
+			if document.CurrentPublishedMajor != nil {
+				newMajor = *document.CurrentPublishedMajor + 1
+			} else {
+				newMajor = 1
+			}
+
+			versionStatus := coredata.DocumentVersionStatusPublished
+			var publishedAt *time.Time
+			if hasApprovers {
+				versionStatus = coredata.DocumentVersionStatusDraft
+			} else {
+				publishedAt = &now
+			}
+
+			documentVersionID := gid.New(s.svc.scope.GetTenantID(), coredata.DocumentVersionEntityType)
+			documentVersion = &coredata.DocumentVersion{
+				ID:             documentVersionID,
+				OrganizationID: organizationID,
+				DocumentID:     document.ID,
+				Title:          "Data Protection Impact Assessments",
+				Major:          newMajor,
+				Minor:          0,
+				Content:        prosemirrorJSON,
+				Status:         versionStatus,
+				Classification: coredata.DocumentClassificationConfidential,
+				DocumentType:   coredata.DocumentTypeRegister,
+				Orientation:    coredata.DocumentVersionOrientationPortrait,
+				PublishedAt:    publishedAt,
+				CreatedAt:      now,
+				UpdatedAt:      now,
+			}
+
+			if err := documentVersion.Insert(ctx, tx, s.svc.scope); err != nil {
+				if errors.Is(err, coredata.ErrResourceAlreadyExists) {
+					return fmt.Errorf("a version is pending approval, approve or reject it before publishing a new one: %w", err)
+				}
+				return fmt.Errorf("cannot insert document version: %w", err)
+			}
+
+			if hasApprovers {
+				defaultApprovers := &coredata.DocumentDefaultApprovers{}
+				if err := defaultApprovers.MergeByDocumentID(ctx, tx, s.svc.scope, document.ID, organizationID, approverIDs); err != nil {
+					return fmt.Errorf("cannot save default approvers: %w", err)
+				}
+
+				_, err := s.svc.DocumentApprovals.RequestApprovalInTx(
+					ctx,
+					tx,
+					document,
+					documentVersion,
+					approverIDs,
+					nil,
+				)
+				if err != nil {
+					return fmt.Errorf("cannot request approval: %w", err)
+				}
+			} else {
+				document.CurrentPublishedMajor = &newMajor
+				document.CurrentPublishedMinor = new(0)
+				document.UpdatedAt = now
+
+				if err := document.Update(ctx, tx, s.svc.scope); err != nil {
+					return fmt.Errorf("cannot update document: %w", err)
+				}
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return document, documentVersion, nil
+}
+
+func (s *GeneratedDocumentService) GetDataProtectionImpactAssessmentsDocumentID(
+	ctx context.Context,
+	organizationID gid.GID,
+) (*gid.GID, error) {
+	var documentID *gid.GID
+
+	err := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		dpia := coredata.DataProtectionImpactAssessment{}
+		var err error
+		documentID, err = dpia.GetGeneratedDocumentID(ctx, conn, organizationID)
+		return err
+	})
+	if err != nil {
+		return nil, fmt.Errorf("cannot get DPIA list document ID: %w", err)
+	}
+
+	return documentID, nil
+}
+
+func (s *GeneratedDocumentService) buildDataProtectionImpactAssessmentListDocumentData(
+	ctx context.Context,
+	conn pg.Querier,
+	organization *coredata.Organization,
+) (docgen.DataProtectionImpactAssessmentListData, error) {
+	var assessments coredata.DataProtectionImpactAssessments
+	if err := assessments.LoadAllByOrganizationID(ctx, conn, s.svc.scope, organization.ID); err != nil {
+		return docgen.DataProtectionImpactAssessmentListData{}, fmt.Errorf("cannot load DPIAs: %w", err)
+	}
+
+	if len(assessments) == 0 {
+		return docgen.DataProtectionImpactAssessmentListData{
+			Title:                                "Data Protection Impact Assessments",
+			OrganizationName:                     organization.Name,
+			CreatedAt:                            time.Now(),
+			TotalDataProtectionImpactAssessments: 0,
+		}, nil
+	}
+
+	processingActivityIDs := make([]gid.GID, 0, len(assessments))
+	processingActivityIDSet := make(map[gid.GID]struct{}, len(assessments))
+	for _, a := range assessments {
+		if _, ok := processingActivityIDSet[a.ProcessingActivityID]; !ok {
+			processingActivityIDs = append(processingActivityIDs, a.ProcessingActivityID)
+			processingActivityIDSet[a.ProcessingActivityID] = struct{}{}
+		}
+	}
+
+	var processingActivities coredata.ProcessingActivities
+	if err := processingActivities.LoadByIDs(ctx, conn, s.svc.scope, processingActivityIDs); err != nil {
+		return docgen.DataProtectionImpactAssessmentListData{}, fmt.Errorf("cannot load processing activities: %w", err)
+	}
+
+	processingActivityMap := make(map[gid.GID]*coredata.ProcessingActivity, len(processingActivities))
+	for _, pa := range processingActivities {
+		processingActivityMap[pa.ID] = pa
+	}
+
+	rows := make([]docgen.DataProtectionImpactAssessmentListRow, 0, len(assessments))
+	for _, a := range assessments {
+		paName := "-"
+		if pa, ok := processingActivityMap[a.ProcessingActivityID]; ok {
+			paName = pa.Name
+		}
+
+		rows = append(rows, docgen.DataProtectionImpactAssessmentListRow{
+			ProcessingActivityName:      paName,
+			Description:                 derefStringOrNotSpecified(a.Description),
+			NecessityAndProportionality: derefStringOrNotSpecified(a.NecessityAndProportionality),
+			PotentialRisk:               derefStringOrNotSpecified(a.PotentialRisk),
+			Mitigations:                 derefStringOrNotSpecified(a.Mitigations),
+			ResidualRisk:                formatResidualRisk(a.ResidualRisk),
+		})
+	}
+
+	return docgen.DataProtectionImpactAssessmentListData{
+		Title:                                "Data Protection Impact Assessments",
+		OrganizationName:                     organization.Name,
+		CreatedAt:                            time.Now(),
+		TotalDataProtectionImpactAssessments: len(assessments),
+		Rows:                                 rows,
+	}, nil
+}
+
+var dataProtectionImpactAssessmentListTemplate = template.Must(
+	template.New("data_protection_impact_assessment_list.json.tmpl").
+		Funcs(template.FuncMap{
+			"json": func(v any) (string, error) {
+				b, err := json.Marshal(v)
+				if err != nil {
+					return "", err
+				}
+				return string(b), nil
+			},
+			"printf": fmt.Sprintf,
+			"add":    func(a, b int) int { return a + b },
+		}).
+		ParseFS(Templates, "templates/data_protection_impact_assessment_list.json.tmpl"),
+)
+
+func BuildDataProtectionImpactAssessmentListDocument(data docgen.DataProtectionImpactAssessmentListData) (string, error) {
+	var buf bytes.Buffer
+	if err := dataProtectionImpactAssessmentListTemplate.Execute(&buf, data); err != nil {
+		return "", fmt.Errorf("cannot execute DPIA list template: %w", err)
+	}
+	return buf.String(), nil
+}
+
+func (s *GeneratedDocumentService) PublishTransferImpactAssessmentList(
+	ctx context.Context,
+	organizationID gid.GID,
+	approverIDs []gid.GID,
+) (*coredata.Document, *coredata.DocumentVersion, error) {
+	var (
+		document        *coredata.Document
+		documentVersion *coredata.DocumentVersion
+	)
+
+	err := s.svc.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			organization := &coredata.Organization{}
+			if err := organization.LoadByID(ctx, tx, s.svc.scope, organizationID); err != nil {
+				return fmt.Errorf("cannot load organization: %w", err)
+			}
+
+			documentData, err := s.buildTransferImpactAssessmentListDocumentData(ctx, tx, organization)
+			if err != nil {
+				return fmt.Errorf("cannot build document data: %w", err)
+			}
+
+			prosemirrorJSON, err := BuildTransferImpactAssessmentListDocument(documentData)
+			if err != nil {
+				return fmt.Errorf("cannot build prosemirror document: %w", err)
+			}
+
+			now := time.Now()
+
+			tia := coredata.TransferImpactAssessment{}
+			tiaDocumentID, err := tia.GetGeneratedDocumentID(ctx, tx, organizationID)
+			if err != nil {
+				return fmt.Errorf("cannot query generated documents: %w", err)
+			}
+
+			var existingDoc *coredata.Document
+			if tiaDocumentID != nil {
+				doc := &coredata.Document{}
+				err = doc.LoadByID(ctx, tx, s.svc.scope, *tiaDocumentID)
+				if err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
+					return fmt.Errorf("cannot load TIA list document: %w", err)
+				}
+
+				if err == nil && doc.ArchivedAt == nil {
+					existingDoc = doc
+				} else {
+					if err := tia.ClearGeneratedDocumentID(ctx, tx, []gid.GID{*tiaDocumentID}); err != nil {
+						return fmt.Errorf("cannot clear document reference: %w", err)
+					}
+				}
+			}
+
+			hasApprovers := len(approverIDs) > 0
+
+			if existingDoc == nil {
+				documentID := gid.New(s.svc.scope.GetTenantID(), coredata.DocumentEntityType)
+
+				document = &coredata.Document{
+					ID:                    documentID,
+					OrganizationID:        organizationID,
+					WriteMode:             coredata.DocumentWriteModeGenerated,
+					TrustCenterVisibility: coredata.TrustCenterVisibilityNone,
+					Status:                coredata.DocumentStatusActive,
+					CreatedAt:             now,
+					UpdatedAt:             now,
+				}
+
+				if err := document.Insert(ctx, tx, s.svc.scope); err != nil {
+					return fmt.Errorf("cannot insert document: %w", err)
+				}
+
+				if err := tia.UpsertGeneratedDocumentID(ctx, tx, organizationID, s.svc.scope.GetTenantID(), documentID); err != nil {
+					return fmt.Errorf("cannot upsert generated documents: %w", err)
+				}
+			} else {
+				document = existingDoc
+			}
+
+			var newMajor int
+			if document.CurrentPublishedMajor != nil {
+				newMajor = *document.CurrentPublishedMajor + 1
+			} else {
+				newMajor = 1
+			}
+
+			versionStatus := coredata.DocumentVersionStatusPublished
+			var publishedAt *time.Time
+			if hasApprovers {
+				versionStatus = coredata.DocumentVersionStatusDraft
+			} else {
+				publishedAt = &now
+			}
+
+			documentVersionID := gid.New(s.svc.scope.GetTenantID(), coredata.DocumentVersionEntityType)
+			documentVersion = &coredata.DocumentVersion{
+				ID:             documentVersionID,
+				OrganizationID: organizationID,
+				DocumentID:     document.ID,
+				Title:          "Transfer Impact Assessments",
+				Major:          newMajor,
+				Minor:          0,
+				Content:        prosemirrorJSON,
+				Status:         versionStatus,
+				Classification: coredata.DocumentClassificationConfidential,
+				DocumentType:   coredata.DocumentTypeRegister,
+				Orientation:    coredata.DocumentVersionOrientationPortrait,
+				PublishedAt:    publishedAt,
+				CreatedAt:      now,
+				UpdatedAt:      now,
+			}
+
+			if err := documentVersion.Insert(ctx, tx, s.svc.scope); err != nil {
+				if errors.Is(err, coredata.ErrResourceAlreadyExists) {
+					return fmt.Errorf("a version is pending approval, approve or reject it before publishing a new one: %w", err)
+				}
+				return fmt.Errorf("cannot insert document version: %w", err)
+			}
+
+			if hasApprovers {
+				defaultApprovers := &coredata.DocumentDefaultApprovers{}
+				if err := defaultApprovers.MergeByDocumentID(ctx, tx, s.svc.scope, document.ID, organizationID, approverIDs); err != nil {
+					return fmt.Errorf("cannot save default approvers: %w", err)
+				}
+
+				_, err := s.svc.DocumentApprovals.RequestApprovalInTx(
+					ctx,
+					tx,
+					document,
+					documentVersion,
+					approverIDs,
+					nil,
+				)
+				if err != nil {
+					return fmt.Errorf("cannot request approval: %w", err)
+				}
+			} else {
+				document.CurrentPublishedMajor = &newMajor
+				document.CurrentPublishedMinor = new(0)
+				document.UpdatedAt = now
+
+				if err := document.Update(ctx, tx, s.svc.scope); err != nil {
+					return fmt.Errorf("cannot update document: %w", err)
+				}
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return document, documentVersion, nil
+}
+
+func (s *GeneratedDocumentService) GetTransferImpactAssessmentsDocumentID(
+	ctx context.Context,
+	organizationID gid.GID,
+) (*gid.GID, error) {
+	var documentID *gid.GID
+
+	err := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		tia := coredata.TransferImpactAssessment{}
+		var err error
+		documentID, err = tia.GetGeneratedDocumentID(ctx, conn, organizationID)
+		return err
+	})
+	if err != nil {
+		return nil, fmt.Errorf("cannot get TIA list document ID: %w", err)
+	}
+
+	return documentID, nil
+}
+
+func (s *GeneratedDocumentService) buildTransferImpactAssessmentListDocumentData(
+	ctx context.Context,
+	conn pg.Querier,
+	organization *coredata.Organization,
+) (docgen.TransferImpactAssessmentListData, error) {
+	var assessments coredata.TransferImpactAssessments
+	if err := assessments.LoadAllByOrganizationID(ctx, conn, s.svc.scope, organization.ID); err != nil {
+		return docgen.TransferImpactAssessmentListData{}, fmt.Errorf("cannot load TIAs: %w", err)
+	}
+
+	if len(assessments) == 0 {
+		return docgen.TransferImpactAssessmentListData{
+			Title:                          "Transfer Impact Assessments",
+			OrganizationName:               organization.Name,
+			CreatedAt:                      time.Now(),
+			TotalTransferImpactAssessments: 0,
+		}, nil
+	}
+
+	processingActivityIDs := make([]gid.GID, 0, len(assessments))
+	processingActivityIDSet := make(map[gid.GID]struct{}, len(assessments))
+	for _, a := range assessments {
+		if _, ok := processingActivityIDSet[a.ProcessingActivityID]; !ok {
+			processingActivityIDs = append(processingActivityIDs, a.ProcessingActivityID)
+			processingActivityIDSet[a.ProcessingActivityID] = struct{}{}
+		}
+	}
+
+	var processingActivities coredata.ProcessingActivities
+	if err := processingActivities.LoadByIDs(ctx, conn, s.svc.scope, processingActivityIDs); err != nil {
+		return docgen.TransferImpactAssessmentListData{}, fmt.Errorf("cannot load processing activities: %w", err)
+	}
+
+	processingActivityMap := make(map[gid.GID]*coredata.ProcessingActivity, len(processingActivities))
+	for _, pa := range processingActivities {
+		processingActivityMap[pa.ID] = pa
+	}
+
+	rows := make([]docgen.TransferImpactAssessmentListRow, 0, len(assessments))
+	for _, a := range assessments {
+		paName := "-"
+		if pa, ok := processingActivityMap[a.ProcessingActivityID]; ok {
+			paName = pa.Name
+		}
+
+		rows = append(rows, docgen.TransferImpactAssessmentListRow{
+			ProcessingActivityName: paName,
+			DataSubjects:           derefStringOrNotSpecified(a.DataSubjects),
+			Transfer:               derefStringOrNotSpecified(a.Transfer),
+			LegalMechanism:         derefStringOrNotSpecified(a.LegalMechanism),
+			LocalLawRisk:           derefStringOrNotSpecified(a.LocalLawRisk),
+			SupplementaryMeasures:  derefStringOrNotSpecified(a.SupplementaryMeasures),
+		})
+	}
+
+	return docgen.TransferImpactAssessmentListData{
+		Title:                          "Transfer Impact Assessments",
+		OrganizationName:               organization.Name,
+		CreatedAt:                      time.Now(),
+		TotalTransferImpactAssessments: len(assessments),
+		Rows:                           rows,
+	}, nil
+}
+
+var transferImpactAssessmentListTemplate = template.Must(
+	template.New("transfer_impact_assessment_list.json.tmpl").
+		Funcs(template.FuncMap{
+			"json": func(v any) (string, error) {
+				b, err := json.Marshal(v)
+				if err != nil {
+					return "", err
+				}
+				return string(b), nil
+			},
+			"printf": fmt.Sprintf,
+			"add":    func(a, b int) int { return a + b },
+		}).
+		ParseFS(Templates, "templates/transfer_impact_assessment_list.json.tmpl"),
+)
+
+func BuildTransferImpactAssessmentListDocument(data docgen.TransferImpactAssessmentListData) (string, error) {
+	var buf bytes.Buffer
+	if err := transferImpactAssessmentListTemplate.Execute(&buf, data); err != nil {
+		return "", fmt.Errorf("cannot execute TIA list template: %w", err)
+	}
+	return buf.String(), nil
+}

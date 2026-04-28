@@ -1,0 +1,77 @@
+{
+  "type": "doc",
+  "content": [
+    {
+      "type": "heading",
+      "attrs": { "level": 1 },
+      "content": [{ "type": "text", "text": "1. Purpose" }]
+    },
+    {
+      "type": "paragraph",
+      "content": [{ "type": "text", "text": "This document contains Transfer Impact Assessments (TIAs) conducted for processing activities involving international transfers of personal data to countries outside the European Economic Area (EEA). TIAs evaluate the legal mechanisms used for transfers, assess risks related to local laws in destination countries, and document supplementary measures implemented to ensure an adequate level of data protection." }]
+    },
+    { "type": "horizontalRule" },
+    {
+      "type": "heading",
+      "attrs": { "level": 1 },
+      "content": [{ "type": "text", "text": "2. Records" }]
+    }{{range $i, $r := .Rows}},
+    {{if $i}}{ "type": "horizontalRule" },{{end}}
+    {
+      "type": "heading",
+      "attrs": { "level": 2 },
+      "content": [{ "type": "text", "text": {{json (printf "2.%d %s" (add $i 1) $r.ProcessingActivityName)}} }]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        { "type": "text", "text": "Data Subjects: ", "marks": [{ "type": "bold" }] },
+        { "type": "text", "text": {{json $r.DataSubjects}} }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        { "type": "text", "text": "Transfer: ", "marks": [{ "type": "bold" }] },
+        { "type": "text", "text": {{json $r.Transfer}} }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        { "type": "text", "text": "Legal Mechanism: ", "marks": [{ "type": "bold" }] },
+        { "type": "text", "text": {{json $r.LegalMechanism}} }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        { "type": "text", "text": "Local Law Risk: ", "marks": [{ "type": "bold" }] },
+        { "type": "text", "text": {{json $r.LocalLawRisk}} }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        { "type": "text", "text": "Supplementary Measures: ", "marks": [{ "type": "bold" }] },
+        { "type": "text", "text": {{json $r.SupplementaryMeasures}} }
+      ]
+    }{{end}},
+    { "type": "horizontalRule" },
+    {
+      "type": "heading",
+      "attrs": { "level": 1 },
+      "content": [{ "type": "text", "text": "3. Definitions" }]
+    },
+    {
+      "type": "bulletList",
+      "content": [
+        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Data Subjects: ", "marks": [{ "type": "bold" }] }, { "type": "text", "text": "The categories of individuals whose personal data is being transferred outside the European Economic Area (e.g., employees, customers, end users)." }] }] },
+        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Transfer: ", "marks": [{ "type": "bold" }] }, { "type": "text", "text": "A description of the international transfer being assessed, including the source and destination countries and the nature of the data flow." }] }] },
+        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Legal Mechanism: ", "marks": [{ "type": "bold" }] }, { "type": "text", "text": "The legal basis used to authorise the transfer (e.g., Standard Contractual Clauses, Binding Corporate Rules, an adequacy decision, or a derogation under Article 49 GDPR)." }] }] },
+        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Local Law Risk: ", "marks": [{ "type": "bold" }] }, { "type": "text", "text": "The assessment of laws and practices in the destination country that may impinge on the level of protection afforded to transferred personal data, including government access regimes." }] }] },
+        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Supplementary Measures: ", "marks": [{ "type": "bold" }] }, { "type": "text", "text": "The technical, contractual, and organisational measures put in place to bring the level of protection up to the EU standard when the chosen legal mechanism alone is not sufficient." }] }] }
+      ]
+    }
+  ]
+}

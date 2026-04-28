@@ -7,14 +7,11 @@ package console_v1
 
 import (
 	"context"
-	"encoding/base64"
 	"errors"
-	"fmt"
 
 	"github.com/vikstrous/dataloadgen"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
@@ -127,31 +124,26 @@ func (r *mutationResolver) DeleteProcessingActivity(ctx context.Context, input t
 	}, nil
 }
 
-// ExportProcessingActivitiesPDF is the resolver for the exportProcessingActivitiesPDF field.
-func (r *mutationResolver) ExportProcessingActivitiesPDF(ctx context.Context, input types.ExportProcessingActivitiesPDFInput) (*types.ExportProcessingActivitiesPDFPayload, error) {
-	if err := r.authorize(ctx, input.OrganizationID, probo.ActionProcessingActivityExport); err != nil {
+// PublishProcessingActivityList is the resolver for the publishProcessingActivityList field.
+func (r *mutationResolver) PublishProcessingActivityList(ctx context.Context, input types.PublishProcessingActivityListInput) (*types.PublishProcessingActivityListPayload, error) {
+	if err := r.authorize(ctx, input.OrganizationID, probo.ActionProcessingActivityPublish); err != nil {
 		return nil, err
 	}
 
 	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
 
-	var snapshotIDPtr *gid.GID
-	if input.Filter != nil {
-		snapshotIDPtr = input.Filter.SnapshotID
-	}
-	processingActivityFilter := coredata.NewProcessingActivityFilter(&snapshotIDPtr)
-
-	pdf, err := prb.ProcessingActivities.ExportPDF(ctx, input.OrganizationID, processingActivityFilter)
+	document, documentVersion, err := prb.GeneratedDocuments.PublishProcessingActivityList(ctx, input.OrganizationID, input.ApproverIds)
 	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
+			return nil, gqlutils.Conflict(ctx, err)
 		}
-		r.logger.ErrorCtx(ctx, "cannot export processing activities PDF", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot publish processing activity list", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return &types.ExportProcessingActivitiesPDFPayload{
-		Data: fmt.Sprintf("data:application/pdf;base64,%s", base64.StdEncoding.EncodeToString(pdf)),
+	return &types.PublishProcessingActivityListPayload{
+		DocumentEdge:        types.NewDocumentEdge(document, coredata.DocumentOrderFieldCreatedAt),
+		DocumentVersionEdge: types.NewDocumentVersionEdge(documentVersion, coredata.DocumentVersionOrderFieldCreatedAt),
 	}, nil
 }
 
@@ -286,12 +278,7 @@ func (r *processingActivityConnectionResolver) TotalCount(ctx context.Context, o
 
 	switch obj.Resolver.(type) {
 	case *organizationResolver:
-		processingActivityFilter := coredata.NewProcessingActivityFilter(nil)
-		if obj.Filter != nil {
-			processingActivityFilter = coredata.NewProcessingActivityFilter(&obj.Filter.SnapshotID)
-		}
-
-		count, err := prb.ProcessingActivities.CountForOrganizationID(ctx, obj.ParentID, processingActivityFilter)
+		count, err := prb.ProcessingActivities.CountForOrganizationID(ctx, obj.ParentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count organization processing activities", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
