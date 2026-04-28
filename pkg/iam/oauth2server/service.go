@@ -111,6 +111,15 @@ type (
 		IDToken      string
 		Scope        string
 	}
+
+	IntrospectResult struct {
+		ClientID   gid.GID
+		IdentityID gid.GID
+		Scopes     coredata.OAuth2Scopes
+		IssuedAt   time.Time
+		ExpiresAt  time.Time
+		TokenType  string
+	}
 )
 
 func WithAccessTokenDuration(d time.Duration) Option {
@@ -1142,35 +1151,103 @@ func (s *Service) LoadAccessToken(ctx context.Context, tokenValue string) (*core
 	return &token, nil
 }
 
-func (s *Service) IntrospectToken(ctx context.Context, clientID gid.GID, tokenValue string) (*coredata.OAuth2AccessToken, error) {
+// IntrospectToken looks up the token (access or refresh) bound to clientID and
+// returns its claims when active. It supports the optional token_type_hint
+// from RFC 7662 §2.1: when set, the hinted table is searched first and the
+// other one is used as a fallback. A nil result means the token is unknown,
+// expired, revoked, or does not belong to clientID and must be reported as
+// inactive.
+func (s *Service) IntrospectToken(
+	ctx context.Context,
+	clientID gid.GID,
+	tokenValue string,
+	tokenTypeHint *coredata.OAuth2TokenTypeHint,
+) (*IntrospectResult, error) {
 	var (
-		hashedValue = hash.SHA256String(tokenValue)
-		token       = coredata.OAuth2AccessToken{}
-		now         = time.Now()
+		hashedValue  = hash.SHA256String(tokenValue)
+		now          = time.Now()
+		accessToken  = coredata.OAuth2AccessToken{}
+		refreshToken = coredata.OAuth2RefreshToken{}
+		hasAccess    bool
+		hasRefresh   bool
 	)
+
+	loadAccess := func(ctx context.Context, conn pg.Querier) error {
+		if err := accessToken.LoadByHashedValueAndClientID(ctx, conn, hashedValue, clientID); err != nil {
+			if errors.Is(err, coredata.ErrResourceNotFound) {
+				return nil
+			}
+			return fmt.Errorf("cannot load access token: %w", err)
+		}
+		hasAccess = true
+		return nil
+	}
+
+	loadRefresh := func(ctx context.Context, conn pg.Querier) error {
+		if err := refreshToken.LoadByHashedValueAndClientID(ctx, conn, hashedValue, clientID); err != nil {
+			if errors.Is(err, coredata.ErrResourceNotFound) {
+				return nil
+			}
+			return fmt.Errorf("cannot load refresh token: %w", err)
+		}
+		hasRefresh = true
+		return nil
+	}
+
+	preferRefresh := tokenTypeHint != nil && *tokenTypeHint == coredata.OAuth2TokenTypeHintRefreshToken
 
 	if err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := token.LoadByHashedValueAndClientID(ctx, conn, hashedValue, clientID); err != nil {
-				if errors.Is(err, coredata.ErrResourceNotFound) {
+			if preferRefresh {
+				if err := loadRefresh(ctx, conn); err != nil {
+					return err
+				}
+				if hasRefresh {
 					return nil
 				}
-
-				return fmt.Errorf("cannot load access token: %w", err)
+				return loadAccess(ctx, conn)
 			}
 
-			return nil
+			if err := loadAccess(ctx, conn); err != nil {
+				return err
+			}
+			if hasAccess {
+				return nil
+			}
+			return loadRefresh(ctx, conn)
 		},
 	); err != nil {
 		return nil, err
 	}
 
-	if token.ID == gid.Nil || now.After(token.ExpiresAt) {
+	switch {
+	case hasAccess:
+		if now.After(accessToken.ExpiresAt) {
+			return nil, nil
+		}
+		return &IntrospectResult{
+			ClientID:   accessToken.ClientID,
+			IdentityID: accessToken.IdentityID,
+			Scopes:     accessToken.Scopes,
+			IssuedAt:   accessToken.CreatedAt,
+			ExpiresAt:  accessToken.ExpiresAt,
+			TokenType:  tokenTypeBearer,
+		}, nil
+	case hasRefresh:
+		if refreshToken.RevokedAt != nil || now.After(refreshToken.ExpiresAt) {
+			return nil, nil
+		}
+		return &IntrospectResult{
+			ClientID:   refreshToken.ClientID,
+			IdentityID: refreshToken.IdentityID,
+			Scopes:     refreshToken.Scopes,
+			IssuedAt:   refreshToken.CreatedAt,
+			ExpiresAt:  refreshToken.ExpiresAt,
+		}, nil
+	default:
 		return nil, nil
 	}
-
-	return &token, nil
 }
 
 func (s *Service) UserInfo(

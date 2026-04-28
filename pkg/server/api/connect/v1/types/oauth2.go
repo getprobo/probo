@@ -21,6 +21,7 @@ import (
 
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/iam/oauth2server"
 	"go.probo.inc/probo/pkg/uri"
 )
 
@@ -59,7 +60,8 @@ type (
 	}
 
 	OAuth2IntrospectInput struct {
-		Token string
+		Token         string
+		TokenTypeHint *coredata.OAuth2TokenTypeHint
 	}
 
 	OAuth2RevokeInput struct {
@@ -138,6 +140,14 @@ func (in *OAuth2IntrospectInput) DecodeForm(r *http.Request) error {
 	if in.Token == "" {
 		return fmt.Errorf("missing token parameter")
 	}
+
+	if hint := r.FormValue("token_type_hint"); hint != "" {
+		h := coredata.OAuth2TokenTypeHint(hint)
+		if h.IsValid() {
+			in.TokenTypeHint = &h
+		}
+	}
+
 	return nil
 }
 
@@ -317,14 +327,14 @@ func InactiveIntrospectResponse() *OAuth2IntrospectResponse {
 	return &OAuth2IntrospectResponse{Active: false}
 }
 
-func ActiveIntrospectResponse(token *coredata.OAuth2AccessToken) *OAuth2IntrospectResponse {
+func ActiveIntrospectResponse(result *oauth2server.IntrospectResult) *OAuth2IntrospectResponse {
 	return &OAuth2IntrospectResponse{
 		Active:    true,
-		Scope:     token.Scopes,
-		ClientID:  token.ClientID,
-		Sub:       token.IdentityID,
-		Exp:       token.ExpiresAt.Unix(),
-		Iat:       token.CreatedAt.Unix(),
-		TokenType: "Bearer",
+		Scope:     result.Scopes,
+		ClientID:  result.ClientID,
+		Sub:       result.IdentityID,
+		Exp:       result.ExpiresAt.Unix(),
+		Iat:       result.IssuedAt.Unix(),
+		TokenType: result.TokenType,
 	}
 }

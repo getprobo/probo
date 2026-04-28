@@ -252,6 +252,7 @@ func (h *OAuth2Handler) IntrospectHandler(w http.ResponseWriter, r *http.Request
 		r.Context(),
 		client.ID,
 		in.Token,
+		in.TokenTypeHint,
 	)
 	if err != nil || result == nil {
 		httpserver.RenderJSON(w, http.StatusOK, types.InactiveIntrospectResponse())

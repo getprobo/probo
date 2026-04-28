@@ -785,6 +785,171 @@ func TestOAuth2_Introspect(t *testing.T) {
 			assert.Equal(t, http.StatusUnauthorized, raw.StatusCode)
 		},
 	)
+
+	t.Run(
+		"active refresh token",
+		func(t *testing.T) {
+			t.Parallel()
+
+			client := factory.CreateOAuth2Client(owner, nil)
+			redirectURI := "http://localhost:9999/callback"
+
+			tokens := testutil.OAuth2PerformAuthorizationCodeFlow(
+				t,
+				owner,
+				client.ClientID,
+				client.ClientSecret,
+				redirectURI,
+			)
+			require.NotEmpty(t, tokens.RefreshToken,
+				"authorization code flow must mint a refresh token")
+
+			introspect, raw, err := testutil.OAuth2Introspect(
+				owner,
+				client.ClientID,
+				client.ClientSecret,
+				tokens.RefreshToken,
+			)
+			require.NoError(t, err)
+			require.Equal(t, http.StatusOK, raw.StatusCode)
+
+			assert.True(t, introspect.Active,
+				"valid refresh token must introspect as active")
+			assert.Empty(t, introspect.TokenType,
+				"refresh tokens have no OAuth2 token_type per RFC 6749 §5.1")
+			assert.Equal(t, client.ClientID, introspect.ClientID)
+			assert.NotEmpty(t, introspect.Sub)
+			assert.Greater(t, introspect.Exp, int64(0))
+			assert.NotEmpty(t, introspect.Scope)
+		},
+	)
+
+	t.Run(
+		"refresh token with matching hint",
+		func(t *testing.T) {
+			t.Parallel()
+
+			client := factory.CreateOAuth2Client(owner, nil)
+			redirectURI := "http://localhost:9999/callback"
+
+			tokens := testutil.OAuth2PerformAuthorizationCodeFlow(
+				t,
+				owner,
+				client.ClientID,
+				client.ClientSecret,
+				redirectURI,
+			)
+
+			introspect, raw, err := testutil.OAuth2IntrospectWithHint(
+				owner,
+				client.ClientID,
+				client.ClientSecret,
+				tokens.RefreshToken,
+				"refresh_token",
+			)
+			require.NoError(t, err)
+			require.Equal(t, http.StatusOK, raw.StatusCode)
+			assert.True(t, introspect.Active)
+		},
+	)
+
+	t.Run(
+		"access token still resolves with refresh_token hint",
+		func(t *testing.T) {
+			t.Parallel()
+
+			client := factory.CreateOAuth2Client(owner, nil)
+			redirectURI := "http://localhost:9999/callback"
+
+			tokens := testutil.OAuth2PerformAuthorizationCodeFlow(
+				t,
+				owner,
+				client.ClientID,
+				client.ClientSecret,
+				redirectURI,
+			)
+
+			introspect, raw, err := testutil.OAuth2IntrospectWithHint(
+				owner,
+				client.ClientID,
+				client.ClientSecret,
+				tokens.AccessToken,
+				"refresh_token",
+			)
+			require.NoError(t, err)
+			require.Equal(t, http.StatusOK, raw.StatusCode)
+			assert.True(t, introspect.Active,
+				"hint is advisory, server must fall back to other token types")
+			assert.Equal(t, "Bearer", introspect.TokenType)
+		},
+	)
+
+	t.Run(
+		"revoked refresh token is inactive",
+		func(t *testing.T) {
+			t.Parallel()
+
+			client := factory.CreateOAuth2Client(owner, nil)
+			redirectURI := "http://localhost:9999/callback"
+
+			tokens := testutil.OAuth2PerformAuthorizationCodeFlow(
+				t,
+				owner,
+				client.ClientID,
+				client.ClientSecret,
+				redirectURI,
+			)
+
+			revokeRaw, err := testutil.OAuth2RevokeWithHint(
+				owner,
+				client.ClientID,
+				client.ClientSecret,
+				tokens.RefreshToken,
+				"refresh_token",
+			)
+			require.NoError(t, err)
+			require.Equal(t, http.StatusOK, revokeRaw.StatusCode)
+
+			introspect, _, err := testutil.OAuth2Introspect(
+				owner,
+				client.ClientID,
+				client.ClientSecret,
+				tokens.RefreshToken,
+			)
+			require.NoError(t, err)
+			assert.False(t, introspect.Active,
+				"revoked refresh token must introspect as inactive")
+		},
+	)
+
+	t.Run(
+		"refresh token from different client is inactive",
+		func(t *testing.T) {
+			t.Parallel()
+
+			clientA := factory.CreateOAuth2Client(owner, nil)
+			clientB := factory.CreateOAuth2Client(owner, nil)
+			redirectURI := "http://localhost:9999/callback"
+
+			tokens := testutil.OAuth2PerformAuthorizationCodeFlow(
+				t,
+				owner,
+				clientA.ClientID,
+				clientA.ClientSecret,
+				redirectURI,
+			)
+
+			introspect, _, err := testutil.OAuth2Introspect(
+				owner,
+				clientB.ClientID,
+				clientB.ClientSecret,
+				tokens.RefreshToken,
+			)
+			require.NoError(t, err)
+			assert.False(t, introspect.Active,
+				"refresh token must only be introspectable by its issuing client")
+		},
+	)
 }
 
 // ---------------------------------------------------------------------------

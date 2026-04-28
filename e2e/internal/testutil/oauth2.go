@@ -718,8 +718,21 @@ func OAuth2Introspect(
 	c *Client,
 	clientID, clientSecret, token string,
 ) (*OAuth2IntrospectResponse, *OAuth2HTTPResponse, error) {
+	return OAuth2IntrospectWithHint(c, clientID, clientSecret, token, "")
+}
+
+// OAuth2IntrospectWithHint introspects a token with an optional
+// token_type_hint per RFC 7662.
+func OAuth2IntrospectWithHint(
+	c *Client,
+	clientID, clientSecret, token, tokenTypeHint string,
+) (*OAuth2IntrospectResponse, *OAuth2HTTPResponse, error) {
 	values := url.Values{
 		"token": {token},
+	}
+
+	if tokenTypeHint != "" {
+		values.Set("token_type_hint", tokenTypeHint)
 	}
 
 	raw, err := postFormWithBasicAuth(
