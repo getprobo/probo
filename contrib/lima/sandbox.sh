@@ -81,7 +81,6 @@ cmd_create() {
 cmd_start() {
     echo "Starting sandbox: ${VM_NAME}"
     limactl start "${VM_NAME}"
-    cmd_exec -- sudo systemctl start probod probo-console probo-trust
     echo ""
     cmd_status
 }

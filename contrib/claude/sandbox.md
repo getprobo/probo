@@ -92,26 +92,15 @@ Manage them with `systemctl`:
 
 **Start the app:**
 ```bash
-./contrib/lima/sandbox.sh exec -- make build
 ./contrib/lima/sandbox.sh exec -- sudo systemctl start probod probo-console probo-trust
 ```
 
 **Run tests:**
 ```bash
-./contrib/lima/sandbox.sh exec -- make build
 ./contrib/lima/sandbox.sh exec -- make test
 ```
 
 **Run e2e tests:**
 ```bash
 ./contrib/lima/sandbox.sh exec -- make test-e2e
-```
-
-**Restart after code changes:**
-Code changes are reflected immediately (virtiofs mount). Just rebuild and
-restart probod — no need to restart the VM.
-
-```bash
-./contrib/lima/sandbox.sh exec -- make build
-./contrib/lima/sandbox.sh exec -- sudo systemctl restart probod
 ```

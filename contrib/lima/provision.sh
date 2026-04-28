@@ -249,4 +249,4 @@ EOF
 systemctl daemon-reload
 systemctl enable --now probo-node-modules.service
 systemctl enable --now probo-stack.service
-systemctl enable probod.service probo-console.service probo-trust.service
+systemctl enable --now probod.service probo-console.service probo-trust.service
