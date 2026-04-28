@@ -29,7 +29,7 @@ export const input = tv({
   base: "w-full disabled:bg-transparent",
   variants: {
     invalid: {
-      true: "border-border-danger hover:border-e-border-danger",
+      true: "border-border-danger hover:border-border-danger",
       false: "border-border-mid hover:border-border-strong",
     },
     variant: {
