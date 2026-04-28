@@ -80,7 +80,7 @@ const consentRecordsFragment = graphql`
     )
       @connection(
         key: "CookieBannerConsentRecordsPage_consentRecords"
-        filters: ["filter"]
+        filters: ["filter", "orderBy"]
       ) @required(action: THROW) {
       edges {
         node {
@@ -119,13 +119,18 @@ export default function CookieBannerConsentRecordsPage({
 
   const records = fragmentData.consentRecords.edges.map(edge => edge.node) ?? [];
 
+  const parseVersion = (v: string): number | null => {
+    if (!v || !/^\d+$/.test(v)) return null;
+    return parseInt(v, 10);
+  };
+
   const refetchFilters = (overrides: Record<string, unknown> = {}) => {
     startTransition(() => {
       pagination.refetch(
         {
           action: actionFilter,
           visitorId: visitorIdFilter || null,
-          version: versionFilter ? parseInt(versionFilter, 10) : null,
+          version: parseVersion(versionFilter),
           ...overrides,
         },
         { fetchPolicy: "network-only" },
@@ -149,7 +154,7 @@ export default function CookieBannerConsentRecordsPage({
       return;
     }
     setVersionError(false);
-    refetchFilters({ version: versionFilter ? parseInt(versionFilter, 10) : null });
+    refetchFilters({ version: parseVersion(versionFilter) });
   };
 
   const refetchWithFilters: ComponentProps<typeof SortableTable>["refetch"] = ({ order }) => {
@@ -157,7 +162,7 @@ export default function CookieBannerConsentRecordsPage({
       order: { direction: order.direction, field: order.field as CookieConsentRecordOrderField },
       action: actionFilter,
       visitorId: visitorIdFilter || null,
-      version: versionFilter ? parseInt(versionFilter, 10) : null,
+      version: parseVersion(versionFilter),
     });
   };
 
