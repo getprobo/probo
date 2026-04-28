@@ -240,8 +240,8 @@ $(PROBOD_BIN): $(PROBOD_BIN_DEPS) $(PROBOD_BIN_EXTRA_DEPS)
 bin/prb:
 	$(GO_BUILD) -o $(PRB_BIN) $(PRB_SRC)
 
-.PHONY: bin/probod-bootstrap
-bin/probod-bootstrap:
+.PHONY: $(PROBOD_BOOTSTRAP_BIN)
+$(PROBOD_BOOTSTRAP_BIN):
 	$(GO_BUILD) -o $(PROBOD_BOOTSTRAP_BIN) $(PROBOD_BOOTSTRAP_SRC)
 
 .PHONY: @probo/emails
