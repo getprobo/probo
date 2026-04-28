@@ -12,19 +12,27 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package types
+import { lazy } from "@probo/react-lazy";
+import type { AppRoute } from "@probo/routes";
 
-import (
-	"go.probo.inc/probo/pkg/coredata"
-)
+import { LinkCardSkeleton } from "#/components/skeletons/LinkCardSkeleton";
+import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
 
-func NewOrganizationContext(oc *coredata.OrganizationContext) *OrganizationContext {
-	return &OrganizationContext{
-		OrganizationID: oc.OrganizationID,
-		Product:        oc.Product,
-		Architecture:   oc.Architecture,
-		Team:           oc.Team,
-		Processes:      oc.Processes,
-		Customers:      oc.Customers,
-	}
-}
+export const memoryRoutes = [
+  {
+    path: "memory",
+    Fallback: PageSkeleton,
+    Component: lazy(
+      () => import("#/pages/organizations/memory/MemoryLayoutLoader"),
+    ),
+    children: [
+      {
+        index: true,
+        Fallback: LinkCardSkeleton,
+        Component: lazy(
+          () => import("#/pages/organizations/memory/MemoryPageLoader"),
+        ),
+      },
+    ],
+  },
+] satisfies AppRoute[];

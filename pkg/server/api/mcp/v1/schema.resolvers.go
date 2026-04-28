@@ -2652,6 +2652,46 @@ func (r *Resolver) RemoveUserTool(ctx context.Context, req *mcp.CallToolRequest,
 	return nil, types.RemoveUserOutput{DeletedUserID: input.ProfileID}, nil
 }
 
+func (r *Resolver) DeactivateUserTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeactivateUserInput) (*mcp.CallToolResult, types.DeactivateUserOutput, error) {
+	r.MustAuthorize(ctx, input.ProfileID, iam.ActionMembershipProfileDeactivate)
+
+	profile, err := r.iamSvc.OrganizationService.UpdateUserState(ctx, input.ProfileID, coredata.ProfileStateInactive)
+	if err != nil {
+		var errProfileNotFound *iam.ErrProfileNotFound
+		var errManagedBySCIM *iam.ErrUserManagedBySCIM
+		var errLastOwner *iam.ErrLastActiveOwner
+		if errors.As(err, &errProfileNotFound) {
+			return nil, types.DeactivateUserOutput{}, fmt.Errorf("profile not found: %w", err)
+		}
+		if errors.As(err, &errManagedBySCIM) {
+			return nil, types.DeactivateUserOutput{}, fmt.Errorf("user is managed by SCIM and cannot be deactivated: %w", err)
+		}
+		if errors.As(err, &errLastOwner) {
+			return nil, types.DeactivateUserOutput{}, fmt.Errorf("cannot deactivate last active owner: %w", err)
+		}
+		return nil, types.DeactivateUserOutput{}, fmt.Errorf("deactivate user: %w", err)
+	}
+	return nil, types.DeactivateUserOutput{User: types.NewProfile(profile)}, nil
+}
+
+func (r *Resolver) ActivateUserTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ActivateUserInput) (*mcp.CallToolResult, types.ActivateUserOutput, error) {
+	r.MustAuthorize(ctx, input.ProfileID, iam.ActionMembershipProfileActivate)
+
+	profile, err := r.iamSvc.OrganizationService.UpdateUserState(ctx, input.ProfileID, coredata.ProfileStateActive)
+	if err != nil {
+		var errProfileNotFound *iam.ErrProfileNotFound
+		var errManagedBySCIM *iam.ErrUserManagedBySCIM
+		if errors.As(err, &errProfileNotFound) {
+			return nil, types.ActivateUserOutput{}, fmt.Errorf("profile not found: %w", err)
+		}
+		if errors.As(err, &errManagedBySCIM) {
+			return nil, types.ActivateUserOutput{}, fmt.Errorf("user is managed by SCIM and cannot be activated: %w", err)
+		}
+		return nil, types.ActivateUserOutput{}, fmt.Errorf("activate user: %w", err)
+	}
+	return nil, types.ActivateUserOutput{User: types.NewProfile(profile)}, nil
+}
+
 func (r *Resolver) DeleteDataProtectionImpactAssessmentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteDataProtectionImpactAssessmentInput) (*mcp.CallToolResult, types.DeleteDataProtectionImpactAssessmentOutput, error) {
 	r.MustAuthorize(ctx, input.ID, probo.ActionDataProtectionImpactAssessmentDelete)
 
@@ -3548,29 +3588,29 @@ func (r *Resolver) UnarchiveDocumentTool(ctx context.Context, req *mcp.CallToolR
 	}, nil
 }
 
-func (r *Resolver) GetOrganizationContextTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetOrganizationContextInput) (*mcp.CallToolResult, types.GetOrganizationContextOutput, error) {
-	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionOrganizationContextGet)
+func (r *Resolver) GetMemoryTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetMemoryInput) (*mcp.CallToolResult, types.GetMemoryOutput, error) {
+	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionMemoryGet)
 
 	prb := r.ProboService(ctx, input.OrganizationID)
 
-	orgContext, err := prb.Organizations.GetContext(ctx, input.OrganizationID)
+	memory, err := prb.Organizations.GetMemory(ctx, input.OrganizationID)
 	if err != nil {
-		return nil, types.GetOrganizationContextOutput{}, fmt.Errorf("cannot get organization context: %w", err)
+		return nil, types.GetMemoryOutput{}, fmt.Errorf("cannot get memory: %w", err)
 	}
 
-	return nil, types.GetOrganizationContextOutput{
-		OrganizationContext: types.NewOrganizationContext(orgContext),
+	return nil, types.GetMemoryOutput{
+		Memory: types.NewMemory(memory),
 	}, nil
 }
 
-func (r *Resolver) UpdateOrganizationContextTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateOrganizationContextInput) (*mcp.CallToolResult, types.UpdateOrganizationContextOutput, error) {
-	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionOrganizationContextUpdate)
+func (r *Resolver) UpdateMemoryTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateMemoryInput) (*mcp.CallToolResult, types.UpdateMemoryOutput, error) {
+	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionMemoryUpdate)
 
 	prb := r.ProboService(ctx, input.OrganizationID)
 
-	orgContext, err := prb.Organizations.UpdateContext(
+	memory, err := prb.Organizations.UpdateMemory(
 		ctx,
-		probo.UpdateOrganizationContextRequest{
+		probo.UpdateMemoryRequest{
 			OrganizationID: input.OrganizationID,
 			Product:        &input.Product,
 			Architecture:   &input.Architecture,
@@ -3580,11 +3620,11 @@ func (r *Resolver) UpdateOrganizationContextTool(ctx context.Context, req *mcp.C
 		},
 	)
 	if err != nil {
-		return nil, types.UpdateOrganizationContextOutput{}, fmt.Errorf("cannot update organization context: %w", err)
+		return nil, types.UpdateMemoryOutput{}, fmt.Errorf("cannot update memory: %w", err)
 	}
 
-	return nil, types.UpdateOrganizationContextOutput{
-		OrganizationContext: types.NewOrganizationContext(orgContext),
+	return nil, types.UpdateMemoryOutput{
+		Memory: types.NewMemory(memory),
 	}, nil
 }
 

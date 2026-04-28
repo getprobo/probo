@@ -24,9 +24,9 @@ import (
 )
 
 const updateMutation = `
-mutation($input: UpdateOrganizationContextInput!) {
-  updateOrganizationContext(input: $input) {
-    context {
+mutation($input: UpdateMemoryInput!) {
+  updateMemory(input: $input) {
+    memory {
       organizationId
       product
       architecture
@@ -39,16 +39,16 @@ mutation($input: UpdateOrganizationContextInput!) {
 `
 
 type updateResponse struct {
-	UpdateOrganizationContext struct {
-		Context struct {
+	UpdateMemory struct {
+		Memory struct {
 			OrganizationID string  `json:"organizationId"`
 			Product        *string `json:"product"`
 			Architecture   *string `json:"architecture"`
 			Team           *string `json:"team"`
 			Processes      *string `json:"processes"`
 			Customers      *string `json:"customers"`
-		} `json:"context"`
-	} `json:"updateOrganizationContext"`
+		} `json:"memory"`
+	} `json:"updateMemory"`
 }
 
 func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
@@ -63,9 +63,9 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "update",
-		Short: "Update organization context",
-		Example: `  prb context update --org <org-id> --product "We build compliance software"
-  prb context update --org <org-id> --architecture "Monolith deployed on AWS ECS"`,
+		Short: "Update organization memory",
+		Example: `  prb memory update --org <org-id> --product "We build compliance software"
+  prb memory update --org <org-id> --architecture "Monolith deployed on AWS ECS"`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := f.Config()
@@ -133,8 +133,8 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 
 			_, _ = fmt.Fprintf(
 				f.IOStreams.Out,
-				"Updated context for organization %s\n",
-				resp.UpdateOrganizationContext.Context.OrganizationID,
+				"Updated memory for organization %s\n",
+				resp.UpdateMemory.Memory.OrganizationID,
 			)
 
 			return nil

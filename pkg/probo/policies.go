@@ -100,7 +100,7 @@ var ViewerPolicy = policy.NewPolicy(
 	).WithSID("trust-center-read-access").When(organizationCondition),
 
 	policy.Allow(ActionCustomDomainGet).WithSID("custom-domain-read").When(organizationCondition),
-	policy.Allow(ActionOrganizationContextGet).WithSID("organization-context-read").When(organizationCondition),
+	policy.Allow(ActionMemoryGet).WithSID("memory-read").When(organizationCondition),
 	policy.Allow(
 		ActionDocumentVersionExportPDF, ActionDocumentVersionSign,
 	).WithSID("document-signing").When(organizationCondition),

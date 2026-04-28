@@ -47,7 +47,7 @@ type (
 		HeadquarterAddress **string
 	}
 
-	UpdateOrganizationContextRequest struct {
+	UpdateMemoryRequest struct {
 		OrganizationID gid.GID
 		Product        **string
 		Architecture   **string
@@ -72,15 +72,15 @@ func (uor *UpdateOrganizationRequest) Validate() error {
 	return v.Error()
 }
 
-func (uocr *UpdateOrganizationContextRequest) Validate() error {
+func (umr *UpdateMemoryRequest) Validate() error {
 	v := validator.New()
 
-	v.Check(uocr.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
-	v.Check(uocr.Product, "product", validator.SafeText(30_000))
-	v.Check(uocr.Architecture, "architecture", validator.SafeText(30_000))
-	v.Check(uocr.Team, "team", validator.SafeText(30_000))
-	v.Check(uocr.Processes, "processes", validator.SafeText(30_000))
-	v.Check(uocr.Customers, "customers", validator.SafeText(30_000))
+	v.Check(umr.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
+	v.Check(umr.Product, "product", validator.SafeText(30_000))
+	v.Check(umr.Architecture, "architecture", validator.SafeText(30_000))
+	v.Check(umr.Team, "team", validator.SafeText(30_000))
+	v.Check(umr.Processes, "processes", validator.SafeText(30_000))
+	v.Check(umr.Customers, "customers", validator.SafeText(30_000))
 
 	return v.Error()
 }
@@ -138,23 +138,23 @@ func (s OrganizationService) GetByIDs(
 	return organizations, nil
 }
 
-func (s OrganizationService) GetContext(
+func (s OrganizationService) GetMemory(
 	ctx context.Context,
 	organizationID gid.GID,
-) (*coredata.OrganizationContext, error) {
-	organizationContext := &coredata.OrganizationContext{}
+) (*coredata.Memory, error) {
+	memory := &coredata.Memory{}
 
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			err := organizationContext.LoadByOrganizationID(
+			err := memory.LoadByOrganizationID(
 				ctx,
 				conn,
 				s.svc.scope,
 				organizationID,
 			)
 			if err != nil {
-				return fmt.Errorf("cannot load organization context: %w", err)
+				return fmt.Errorf("cannot load memory: %w", err)
 			}
 
 			return nil
@@ -165,19 +165,19 @@ func (s OrganizationService) GetContext(
 		return nil, err
 	}
 
-	return organizationContext, nil
+	return memory, nil
 }
 
-func (s OrganizationService) UpdateContext(
+func (s OrganizationService) UpdateMemory(
 	ctx context.Context,
-	req UpdateOrganizationContextRequest,
-) (*coredata.OrganizationContext, error) {
+	req UpdateMemoryRequest,
+) (*coredata.Memory, error) {
 	if err := req.Validate(); err != nil {
 		return nil, fmt.Errorf("invalid request: %w", err)
 	}
 
 	organization := &coredata.Organization{}
-	organizationContext := &coredata.OrganizationContext{}
+	memory := &coredata.Memory{}
 
 	err := s.svc.pg.WithTx(
 		ctx,
@@ -186,34 +186,34 @@ func (s OrganizationService) UpdateContext(
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
-			if err := organizationContext.LoadByOrganizationID(ctx, tx, s.svc.scope, req.OrganizationID); err != nil {
-				return fmt.Errorf("cannot load organization context: %w", err)
+			if err := memory.LoadByOrganizationID(ctx, tx, s.svc.scope, req.OrganizationID); err != nil {
+				return fmt.Errorf("cannot load memory: %w", err)
 			}
 
 			if req.Product != nil {
-				organizationContext.Product = *req.Product
+				memory.Product = *req.Product
 			}
 
 			if req.Architecture != nil {
-				organizationContext.Architecture = *req.Architecture
+				memory.Architecture = *req.Architecture
 			}
 
 			if req.Team != nil {
-				organizationContext.Team = *req.Team
+				memory.Team = *req.Team
 			}
 
 			if req.Processes != nil {
-				organizationContext.Processes = *req.Processes
+				memory.Processes = *req.Processes
 			}
 
 			if req.Customers != nil {
-				organizationContext.Customers = *req.Customers
+				memory.Customers = *req.Customers
 			}
 
-			organizationContext.UpdatedAt = time.Now()
+			memory.UpdatedAt = time.Now()
 
-			if err := organizationContext.Update(ctx, tx, s.svc.scope); err != nil {
-				return fmt.Errorf("cannot update organization context: %w", err)
+			if err := memory.Update(ctx, tx, s.svc.scope); err != nil {
+				return fmt.Errorf("cannot update memory: %w", err)
 			}
 
 			return nil
@@ -224,7 +224,7 @@ func (s OrganizationService) UpdateContext(
 		return nil, err
 	}
 
-	return organizationContext, nil
+	return memory, nil
 }
 
 func (s OrganizationService) Update(

@@ -26,15 +26,15 @@ import (
 	"go.probo.inc/probo/pkg/validator"
 )
 
-// UpdateOrganizationContext is the resolver for the updateOrganizationContext field.
-func (r *mutationResolver) UpdateOrganizationContext(ctx context.Context, input types.UpdateOrganizationContextInput) (*types.UpdateOrganizationContextPayload, error) {
-	if err := r.authorize(ctx, input.OrganizationID, probo.ActionOrganizationContextUpdate); err != nil {
+// UpdateMemory is the resolver for the updateMemory field.
+func (r *mutationResolver) UpdateMemory(ctx context.Context, input types.UpdateMemoryInput) (*types.UpdateMemoryPayload, error) {
+	if err := r.authorize(ctx, input.OrganizationID, probo.ActionMemoryUpdate); err != nil {
 		return nil, err
 	}
 
 	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
 
-	req := probo.UpdateOrganizationContextRequest{
+	req := probo.UpdateMemoryRequest{
 		OrganizationID: input.OrganizationID,
 		Product:        gqlutils.UnwrapOmittable(input.Product),
 		Architecture:   gqlutils.UnwrapOmittable(input.Architecture),
@@ -43,17 +43,17 @@ func (r *mutationResolver) UpdateOrganizationContext(ctx context.Context, input 
 		Customers:      gqlutils.UnwrapOmittable(input.Customers),
 	}
 
-	organizationContext, err := prb.Organizations.UpdateContext(ctx, req)
+	memory, err := prb.Organizations.UpdateMemory(ctx, req)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
-		r.logger.ErrorCtx(ctx, "cannot update organization context", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot update memory", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return &types.UpdateOrganizationContextPayload{
-		Context: types.NewOrganizationContext(organizationContext),
+	return &types.UpdateMemoryPayload{
+		Memory: types.NewMemory(memory),
 	}, nil
 }
 
@@ -91,21 +91,21 @@ func (r *organizationResolver) HorizontalLogoURL(ctx context.Context, obj *types
 	return horizontalLogoURL, nil
 }
 
-// Context is the resolver for the context field.
-func (r *organizationResolver) Context(ctx context.Context, obj *types.Organization) (*types.OrganizationContext, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionOrganizationContextGet); err != nil {
+// Memory is the resolver for the memory field.
+func (r *organizationResolver) Memory(ctx context.Context, obj *types.Organization) (*types.Memory, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionMemoryGet); err != nil {
 		return nil, err
 	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
-	orgContext, err := prb.Organizations.GetContext(ctx, obj.ID)
+	memory, err := prb.Organizations.GetMemory(ctx, obj.ID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot load organization context", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot load memory", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewOrganizationContext(orgContext), nil
+	return types.NewMemory(memory), nil
 }
 
 // Profiles is the resolver for the profiles field.

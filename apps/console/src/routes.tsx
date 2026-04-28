@@ -35,12 +35,12 @@ import { CurrentUser } from "./providers/CurrentUser";
 import { accessReviewRoutes } from "./routes/accessReviewRoutes";
 import { assetRoutes } from "./routes/assetRoutes";
 import { auditRoutes } from "./routes/auditRoutes";
-import { contextRoutes } from "./routes/contextRoutes";
 import { dataRoutes } from "./routes/dataRoutes";
 import { documentsRoutes } from "./routes/documentsRoutes";
 import { findingRoutes } from "./routes/findingRoutes";
 import { frameworkRoutes } from "./routes/frameworkRoutes";
 import { measureRoutes } from "./routes/measureRoutes";
+import { memoryRoutes } from "./routes/memoryRoutes";
 import { obligationRoutes } from "./routes/obligationRoutes";
 import { processingActivityRoutes } from "./routes/processingActivityRoutes";
 import { rightsRequestRoutes } from "./routes/rightsRequestRoutes";
@@ -298,7 +298,7 @@ const routes = [
           ...assetRoutes,
           ...dataRoutes,
           ...auditRoutes,
-          ...contextRoutes,
+          ...memoryRoutes,
           ...findingRoutes,
           ...obligationRoutes,
           ...rightsRequestRoutes,

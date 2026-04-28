@@ -26,7 +26,6 @@ import (
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
 	"go.probo.inc/probo/pkg/cmd/completion"
 	cmdconfig "go.probo.inc/probo/pkg/cmd/config"
-	cmdcontext "go.probo.inc/probo/pkg/cmd/context"
 	"go.probo.inc/probo/pkg/cmd/control"
 	"go.probo.inc/probo/pkg/cmd/datum"
 	"go.probo.inc/probo/pkg/cmd/document"
@@ -35,6 +34,7 @@ import (
 	"go.probo.inc/probo/pkg/cmd/finding"
 	"go.probo.inc/probo/pkg/cmd/framework"
 	"go.probo.inc/probo/pkg/cmd/measure"
+	"go.probo.inc/probo/pkg/cmd/memory"
 	"go.probo.inc/probo/pkg/cmd/obligation"
 	"go.probo.inc/probo/pkg/cmd/org"
 	processingactivity "go.probo.inc/probo/pkg/cmd/processing-activity"
@@ -90,7 +90,6 @@ func NewCmdRoot(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(browse.NewCmdBrowse(f))
 	cmd.AddCommand(completion.NewCmdCompletion(f))
 	cmd.AddCommand(cmdconfig.NewCmdConfig(f))
-	cmd.AddCommand(cmdcontext.NewCmdContext(f))
 	cmd.AddCommand(control.NewCmdControl(f))
 	cmd.AddCommand(datum.NewCmdDatum(f))
 	cmd.AddCommand(document.NewCmdDocument(f))
@@ -99,6 +98,7 @@ func NewCmdRoot(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(finding.NewCmdFinding(f))
 	cmd.AddCommand(framework.NewCmdFramework(f))
 	cmd.AddCommand(measure.NewCmdMeasure(f))
+	cmd.AddCommand(memory.NewCmdMemory(f))
 	cmd.AddCommand(obligation.NewCmdObligation(f))
 	cmd.AddCommand(org.NewCmdOrg(f))
 	cmd.AddCommand(processingactivity.NewCmdProcessingActivity(f))

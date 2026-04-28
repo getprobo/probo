@@ -22,7 +22,7 @@ export const description: INodeProperties[] = [
 		type: 'string',
 		displayOptions: {
 			show: {
-				resource: ['organizationContext'],
+				resource: ['memory'],
 				operation: ['update'],
 			},
 		},
@@ -36,7 +36,7 @@ export const description: INodeProperties[] = [
 		type: 'string',
 		displayOptions: {
 			show: {
-				resource: ['organizationContext'],
+				resource: ['memory'],
 				operation: ['update'],
 			},
 		},
@@ -49,7 +49,7 @@ export const description: INodeProperties[] = [
 		type: 'string',
 		displayOptions: {
 			show: {
-				resource: ['organizationContext'],
+				resource: ['memory'],
 				operation: ['update'],
 			},
 		},
@@ -62,7 +62,7 @@ export const description: INodeProperties[] = [
 		type: 'string',
 		displayOptions: {
 			show: {
-				resource: ['organizationContext'],
+				resource: ['memory'],
 				operation: ['update'],
 			},
 		},
@@ -75,7 +75,7 @@ export const description: INodeProperties[] = [
 		type: 'string',
 		displayOptions: {
 			show: {
-				resource: ['organizationContext'],
+				resource: ['memory'],
 				operation: ['update'],
 			},
 		},
@@ -88,7 +88,7 @@ export const description: INodeProperties[] = [
 		type: 'string',
 		displayOptions: {
 			show: {
-				resource: ['organizationContext'],
+				resource: ['memory'],
 				operation: ['update'],
 			},
 		},
@@ -109,9 +109,9 @@ export async function execute(
 	const customers = this.getNodeParameter('customers', itemIndex, '') as string;
 
 	const query = `
-		mutation UpdateOrganizationContext($input: UpdateOrganizationContextInput!) {
-			updateOrganizationContext(input: $input) {
-				context {
+		mutation UpdateMemory($input: UpdateMemoryInput!) {
+			updateMemory(input: $input) {
+				memory {
 					organizationId
 					product
 					architecture

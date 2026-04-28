@@ -12,19 +12,39 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package types
+import type { INodeProperties } from 'n8n-workflow';
+import * as getOp from './get.operation';
+import * as updateOp from './update.operation';
 
-import (
-	"go.probo.inc/probo/pkg/coredata"
-)
+export const description: INodeProperties[] = [
+	{
+		displayName: 'Operation',
+		name: 'operation',
+		type: 'options',
+		noDataExpression: true,
+		displayOptions: {
+			show: {
+				resource: ['memory'],
+			},
+		},
+		options: [
+			{
+				name: 'Get',
+				value: 'get',
+				description: 'Get the organization memory',
+				action: 'Get the organization memory',
+			},
+			{
+				name: 'Update',
+				value: 'update',
+				description: 'Update the organization memory',
+				action: 'Update the organization memory',
+			},
+		],
+		default: 'get',
+	},
+	...getOp.description,
+	...updateOp.description,
+];
 
-func NewOrganizationContext(oc *coredata.OrganizationContext) *OrganizationContext {
-	return &OrganizationContext{
-		OrganizationID: oc.OrganizationID,
-		Product:        oc.Product,
-		Architecture:   oc.Architecture,
-		Team:           oc.Team,
-		Processes:      oc.Processes,
-		Customers:      oc.Customers,
-	}
-}
+export { getOp as get, updateOp as update };

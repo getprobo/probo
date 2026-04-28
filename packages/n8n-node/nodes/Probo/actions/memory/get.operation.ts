@@ -22,7 +22,7 @@ export const description: INodeProperties[] = [
 		type: 'string',
 		displayOptions: {
 			show: {
-				resource: ['organizationContext'],
+				resource: ['memory'],
 				operation: ['get'],
 			},
 		},
@@ -39,10 +39,10 @@ export async function execute(
 	const organizationId = this.getNodeParameter('organizationId', itemIndex) as string;
 
 	const query = `
-		query GetOrganizationContext($organizationId: ID!) {
+		query GetMemory($organizationId: ID!) {
 			node(id: $organizationId) {
 				... on Organization {
-					context {
+					memory {
 						organizationId
 						product
 						architecture

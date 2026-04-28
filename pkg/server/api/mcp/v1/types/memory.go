@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,25 +12,19 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { usePageTitle } from "@probo/hooks";
-import { useTranslate } from "@probo/i18n";
-import { PageHeader } from "@probo/ui";
-import { Outlet } from "react-router";
+package types
 
-export default function ContextLayoutLoader() {
-  const { __ } = useTranslate();
+import (
+	"go.probo.inc/probo/pkg/coredata"
+)
 
-  usePageTitle(__("Context"));
-
-  return (
-    <div className="space-y-6">
-      <PageHeader
-        title={__("Context")}
-        description={__(
-          "Structured company information for AI assistants and compliance workflows.",
-        )}
-      />
-      <Outlet />
-    </div>
-  );
+func NewMemory(m *coredata.Memory) *Memory {
+	return &Memory{
+		OrganizationID: m.OrganizationID,
+		Product:        m.Product,
+		Architecture:   m.Architecture,
+		Team:           m.Team,
+		Processes:      m.Processes,
+		Customers:      m.Customers,
+	}
 }

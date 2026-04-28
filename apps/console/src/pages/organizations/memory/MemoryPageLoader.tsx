@@ -16,26 +16,26 @@ import { useEffect } from "react";
 import { type PreloadedQuery, usePreloadedQuery, useQueryLoader } from "react-relay";
 import { graphql } from "relay-runtime";
 
-import type { ContextPageLoaderQuery } from "#/__generated__/core/ContextPageLoaderQuery.graphql";
+import type { MemoryPageLoaderQuery } from "#/__generated__/core/MemoryPageLoaderQuery.graphql";
 import { LinkCardSkeleton } from "#/components/skeletons/LinkCardSkeleton";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { CoreRelayProvider } from "#/providers/CoreRelayProvider";
 
-import ContextPage from "./ContextPage";
+import MemoryPage from "./MemoryPage";
 
-const contextPageQuery = graphql`
-  query ContextPageLoaderQuery($organizationId: ID!) {
+const memoryPageQuery = graphql`
+  query MemoryPageLoaderQuery($organizationId: ID!) {
     organization: node(id: $organizationId) {
       ... on Organization {
-        ...ContextPageFragment
+        ...MemoryPageFragment
       }
     }
   }
 `;
 
-function ContextPageQueryLoader() {
+function MemoryPageQueryLoader() {
   const organizationId = useOrganizationId();
-  const [queryRef, loadQuery] = useQueryLoader<ContextPageLoaderQuery>(contextPageQuery);
+  const [queryRef, loadQuery] = useQueryLoader<MemoryPageLoaderQuery>(memoryPageQuery);
 
   useEffect(() => {
     loadQuery({ organizationId });
@@ -43,19 +43,19 @@ function ContextPageQueryLoader() {
 
   if (!queryRef) return <LinkCardSkeleton />;
 
-  return <ContextPageInner queryRef={queryRef} />;
+  return <MemoryPageInner queryRef={queryRef} />;
 }
 
-function ContextPageInner({ queryRef }: { queryRef: PreloadedQuery<ContextPageLoaderQuery> }) {
-  const data = usePreloadedQuery(contextPageQuery, queryRef);
+function MemoryPageInner({ queryRef }: { queryRef: PreloadedQuery<MemoryPageLoaderQuery> }) {
+  const data = usePreloadedQuery(memoryPageQuery, queryRef);
 
-  return <ContextPage organization={data.organization} />;
+  return <MemoryPage organization={data.organization} />;
 }
 
-export default function ContextPageLoader() {
+export default function MemoryPageLoader() {
   return (
     <CoreRelayProvider>
-      <ContextPageQueryLoader />
+      <MemoryPageQueryLoader />
     </CoreRelayProvider>
   );
 }

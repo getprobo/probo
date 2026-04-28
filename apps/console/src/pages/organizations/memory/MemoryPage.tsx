@@ -26,15 +26,15 @@ import { useRef, useState } from "react";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
-import type { ContextPage_UpdateMutation } from "#/__generated__/core/ContextPage_UpdateMutation.graphql";
-import type { ContextPageFragment$key } from "#/__generated__/core/ContextPageFragment.graphql";
+import type { MemoryPage_UpdateMutation } from "#/__generated__/core/MemoryPage_UpdateMutation.graphql";
+import type { MemoryPageFragment$key } from "#/__generated__/core/MemoryPageFragment.graphql";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 
 const fragment = graphql`
-  fragment ContextPageFragment on Organization {
+  fragment MemoryPageFragment on Organization {
     id
-    canUpdateContext: permission(action: "core:organization-context:update")
-    context {
+    canUpdateMemory: permission(action: "core:memory:update")
+    memory {
       product
       architecture
       team
@@ -45,11 +45,11 @@ const fragment = graphql`
 `;
 
 const updateMutation = graphql`
-  mutation ContextPage_UpdateMutation(
-    $input: UpdateOrganizationContextInput!
+  mutation MemoryPage_UpdateMutation(
+    $input: UpdateMemoryInput!
   ) {
-    updateOrganizationContext(input: $input) {
-      context {
+    updateMemory(input: $input) {
+      memory {
         organizationId
         product
         architecture
@@ -71,13 +71,13 @@ type SectionConfig = {
 };
 
 type Props = {
-  organization: ContextPageFragment$key;
+  organization: MemoryPageFragment$key;
 };
 
-export default function ContextPage(props: Props) {
+export default function MemoryPage(props: Props) {
   const { __ } = useTranslate();
   const organization = useFragment(fragment, props.organization);
-  const context = organization.context;
+  const memory = organization.memory;
 
   const sections: SectionConfig[] = [
     {
@@ -113,29 +113,29 @@ export default function ContextPage(props: Props) {
   ];
 
   const values: Record<SectionKey, string | null> = {
-    product: context?.product ?? null,
-    architecture: context?.architecture ?? null,
-    team: context?.team ?? null,
-    processes: context?.processes ?? null,
-    customers: context?.customers ?? null,
+    product: memory?.product ?? null,
+    architecture: memory?.architecture ?? null,
+    team: memory?.team ?? null,
+    processes: memory?.processes ?? null,
+    customers: memory?.customers ?? null,
   };
 
   return (
     <div className="space-y-6">
       {sections.map(section => (
-        <ContextSection
+        <MemorySection
           key={section.key}
           section={section}
           organizationId={organization.id}
           value={values[section.key]}
-          canEdit={organization.canUpdateContext}
+          canEdit={organization.canUpdateMemory}
         />
       ))}
     </div>
   );
 }
 
-function ContextSection({
+function MemorySection({
   section,
   organizationId,
   value,
@@ -152,12 +152,12 @@ function ContextSection({
   const [displayedValue, setDisplayedValue] = useState(value ?? "");
   const justSavedRef = useRef(false);
 
-  const [updateContext, isUpdating]
-    = useMutationWithToasts<ContextPage_UpdateMutation>(
+  const [updateMemory, isUpdating]
+    = useMutationWithToasts<MemoryPage_UpdateMutation>(
       updateMutation,
       {
-        successMessage: __("Context updated successfully"),
-        errorMessage: __("Failed to update context"),
+        successMessage: __("Memory updated successfully"),
+        errorMessage: __("Failed to update memory"),
       },
     );
 
@@ -169,7 +169,7 @@ function ContextSection({
 
     const valueToSend = valueToSave.length > 0 ? valueToSave : null;
 
-    await updateContext({
+    await updateMemory({
       variables: {
         input: {
           organizationId,

@@ -26,9 +26,9 @@ import * as execute from './execute';
 import * as finding from './finding';
 import * as framework from './framework';
 import * as measure from './measure';
+import * as memory from './memory';
 import * as obligation from './obligation';
 import * as organization from './organization';
-import * as organizationContext from './organizationContext';
 import * as processingActivity from './processingActivity';
 import * as rightsRequest from './rightsRequest';
 import * as user from './user';
@@ -65,9 +65,9 @@ export const resources: Record<string, ResourceModule> = {
 	finding: finding as ResourceModule,
 	framework: framework as ResourceModule,
 	measure: measure as ResourceModule,
+	memory: memory as ResourceModule,
 	obligation: obligation as ResourceModule,
 	organization: organization as ResourceModule,
-	organizationContext: organizationContext as ResourceModule,
 	processingActivity: processingActivity as ResourceModule,
 	rightsRequest: rightsRequest as ResourceModule,
 	user: user as ResourceModule,

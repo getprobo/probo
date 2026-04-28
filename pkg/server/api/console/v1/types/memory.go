@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,23 +12,19 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package context
+package types
 
 import (
-	"github.com/spf13/cobra"
-	"go.probo.inc/probo/pkg/cmd/cmdutil"
-	"go.probo.inc/probo/pkg/cmd/context/get"
-	"go.probo.inc/probo/pkg/cmd/context/update"
+	"go.probo.inc/probo/pkg/coredata"
 )
 
-func NewCmdContext(f *cmdutil.Factory) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "context <command>",
-		Short: "Manage organization context",
+func NewMemory(m *coredata.Memory) *Memory {
+	return &Memory{
+		OrganizationID: m.OrganizationID,
+		Product:        m.Product,
+		Architecture:   m.Architecture,
+		Team:           m.Team,
+		Processes:      m.Processes,
+		Customers:      m.Customers,
 	}
-
-	cmd.AddCommand(get.NewCmdGet(f))
-	cmd.AddCommand(update.NewCmdUpdate(f))
-
-	return cmd
 }

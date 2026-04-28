@@ -23,9 +23,9 @@ const (
 	ActionOrganizationGetLogoUrl           = "core:organization:get-logo-url"
 	ActionOrganizationGetHorizontalLogoUrl = "core:organization:get-horizontal-logo-url"
 
-	// OrganizationContext actions
-	ActionOrganizationContextGet    = "core:organization-context:get"
-	ActionOrganizationContextUpdate = "core:organization-context:update"
+	// Memory actions
+	ActionMemoryGet    = "core:memory:get"
+	ActionMemoryUpdate = "core:memory:update"
 
 	// TrustCenter actions
 	ActionTrustCenterGet                          = "core:trust-center:get"

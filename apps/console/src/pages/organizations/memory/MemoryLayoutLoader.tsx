@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,33 +12,25 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package types
+import { usePageTitle } from "@probo/hooks";
+import { useTranslate } from "@probo/i18n";
+import { PageHeader } from "@probo/ui";
+import { Outlet } from "react-router";
 
-import (
-	"go.probo.inc/probo/pkg/coredata"
-)
+export default function MemoryLayoutLoader() {
+  const { __ } = useTranslate();
 
-func NewOrganization(o *coredata.Organization) *Organization {
-	org := &Organization{
-		ID:          o.ID,
-		Name:        o.Name,
-		Description: o.Description,
-		WebsiteURL:  o.WebsiteURL,
-		Email:       o.Email,
-		Memory: &Memory{
-			OrganizationID: o.ID,
-		},
+  usePageTitle(__("Memory"));
 
-		HeadquarterAddress: o.HeadquarterAddress,
-		CreatedAt:          o.CreatedAt,
-		UpdatedAt:          o.UpdatedAt,
-	}
-
-	if o.CustomDomainID != nil {
-		org.CustomDomain = &CustomDomain{
-			ID: *o.CustomDomainID,
-		}
-	}
-
-	return org
+  return (
+    <div className="space-y-6">
+      <PageHeader
+        title={__("Memory")}
+        description={__(
+          "Structured company memory for AI assistants and compliance workflows.",
+        )}
+      />
+      <Outlet />
+    </div>
+  );
 }

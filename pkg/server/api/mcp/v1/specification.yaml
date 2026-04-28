@@ -1390,6 +1390,48 @@ components:
           $ref: "#/components/schemas/GID"
           description: Deleted user (profile) ID
 
+    DeactivateUserInput:
+      type: object
+      required:
+        - organization_id
+        - profile_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        profile_id:
+          $ref: "#/components/schemas/GID"
+          description: User (profile) ID to deactivate
+
+    DeactivateUserOutput:
+      type: object
+      required:
+        - user
+      properties:
+        user:
+          $ref: "#/components/schemas/Profile"
+
+    ActivateUserInput:
+      type: object
+      required:
+        - organization_id
+        - profile_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        profile_id:
+          $ref: "#/components/schemas/GID"
+          description: User (profile) ID to activate
+
+    ActivateUserOutput:
+      type: object
+      required:
+        - user
+      properties:
+        user:
+          $ref: "#/components/schemas/Profile"
+
     GetProfileInput:
       type: object
       required:
@@ -8102,7 +8144,7 @@ components:
         campaign:
           $ref: "#/components/schemas/AccessReviewCampaign"
 
-    OrganizationContext:
+    Memory:
       type: object
       required:
         - organization_id
@@ -8126,7 +8168,7 @@ components:
           type: string
           description: Customers description
 
-    GetOrganizationContextInput:
+    GetMemoryInput:
       type: object
       required:
         - organization_id
@@ -8135,15 +8177,15 @@ components:
           $ref: "#/components/schemas/GID"
           description: Organization ID
 
-    GetOrganizationContextOutput:
+    GetMemoryOutput:
       type: object
       required:
-        - organization_context
+        - memory
       properties:
-        organization_context:
-          $ref: "#/components/schemas/OrganizationContext"
+        memory:
+          $ref: "#/components/schemas/Memory"
 
-    UpdateOrganizationContextInput:
+    UpdateMemoryInput:
       type: object
       required:
         - organization_id
@@ -8167,13 +8209,13 @@ components:
           type: string
           description: Customers description
 
-    UpdateOrganizationContextOutput:
+    UpdateMemoryOutput:
       type: object
       required:
-        - organization_context
+        - memory
       properties:
-        organization_context:
-          $ref: "#/components/schemas/OrganizationContext"
+        memory:
+          $ref: "#/components/schemas/Memory"
 
     GetAuditLogEntryInput:
       type: object
@@ -9187,6 +9229,22 @@ tools:
       $ref: "#/components/schemas/RemoveUserInput"
     outputSchema:
       $ref: "#/components/schemas/RemoveUserOutput"
+  - name: deactivateUser
+    description: Mark a user (profile) as inactive without deleting them
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/DeactivateUserInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeactivateUserOutput"
+  - name: activateUser
+    description: Reactivate a previously deactivated user (profile)
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/ActivateUserInput"
+    outputSchema:
+      $ref: "#/components/schemas/ActivateUserOutput"
   - name: addVendor
     description: Add a new vendor to the organization
     hints:
@@ -10489,23 +10547,23 @@ tools:
       $ref: "#/components/schemas/RemoveAccessReviewCampaignScopeSourceMCPInput"
     outputSchema:
       $ref: "#/components/schemas/RemoveAccessReviewCampaignScopeSourceMCPOutput"
-  - name: getOrganizationContext
-    description: Get the organization context containing structured sections about the company
+  - name: getMemory
+    description: Get the organization memory containing structured sections about the company
     hints:
       readonly: true
       idempotent: true
     inputSchema:
-      $ref: "#/components/schemas/GetOrganizationContextInput"
+      $ref: "#/components/schemas/GetMemoryInput"
     outputSchema:
-      $ref: "#/components/schemas/GetOrganizationContextOutput"
-  - name: updateOrganizationContext
-    description: Update the organization context sections (product, architecture, team, processes, customers)
+      $ref: "#/components/schemas/GetMemoryOutput"
+  - name: updateMemory
+    description: Update the organization memory sections (product, architecture, team, processes, customers)
     hints:
       readonly: false
     inputSchema:
-      $ref: "#/components/schemas/UpdateOrganizationContextInput"
+      $ref: "#/components/schemas/UpdateMemoryInput"
     outputSchema:
-      $ref: "#/components/schemas/UpdateOrganizationContextOutput"
+      $ref: "#/components/schemas/UpdateMemoryOutput"
   - name: getAuditLogEntry
     description: Get an audit log entry by ID
     hints:

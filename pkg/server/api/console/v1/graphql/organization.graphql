@@ -1,4 +1,4 @@
-type OrganizationContext {
+type Memory {
     organizationId: ID!
     product: String
     architecture: String
@@ -70,7 +70,7 @@ type ProfileEdge {
     node: Profile!
 }
 
-input UpdateOrganizationContextInput {
+input UpdateMemoryInput {
     organizationId: ID!
     product: String @goField(omittable: true)
     architecture: String @goField(omittable: true)
@@ -79,8 +79,8 @@ input UpdateOrganizationContextInput {
     customers: String @goField(omittable: true)
 }
 
-type UpdateOrganizationContextPayload {
-    context: OrganizationContext!
+type UpdateMemoryPayload {
+    memory: Memory!
 }
 
 type Organization implements Node {
@@ -93,7 +93,7 @@ type Organization implements Node {
     websiteUrl: String
     email: String
     headquarterAddress: String
-    context: OrganizationContext @goField(forceResolver: true)
+    memory: Memory @goField(forceResolver: true)
 
     profiles(
         first: Int
@@ -340,7 +340,7 @@ type Organization implements Node {
 }
 
 extend type Mutation {
-    updateOrganizationContext(
-        input: UpdateOrganizationContextInput!
-    ): UpdateOrganizationContextPayload!
+    updateMemory(
+        input: UpdateMemoryInput!
+    ): UpdateMemoryPayload!
 }

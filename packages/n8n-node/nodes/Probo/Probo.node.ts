@@ -142,6 +142,11 @@ export class Probo implements INodeType {
 						description: 'Manage measures',
 					},
 					{
+						name: 'Memory',
+						value: 'memory',
+						description: 'Manage organization memory',
+					},
+					{
 						name: 'Obligation',
 						value: 'obligation',
 						description: 'Manage obligations',
@@ -150,11 +155,6 @@ export class Probo implements INodeType {
 						name: 'Organization',
 						value: 'organization',
 						description: 'Manage organizations',
-					},
-					{
-						name: 'Organization Context',
-						value: 'organizationContext',
-						description: 'Manage organization context',
 					},
 					{
 						name: 'Processing Activity',

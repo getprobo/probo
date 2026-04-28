@@ -136,14 +136,14 @@ func TestOrganization_Update(t *testing.T) {
 	})
 }
 
-func TestOrganization_UpdateContext(t *testing.T) {
+func TestOrganization_UpdateMemory(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
 	query := `
-		mutation UpdateOrganizationContext($input: UpdateOrganizationContextInput!) {
-			updateOrganizationContext(input: $input) {
-				context {
+		mutation UpdateMemory($input: UpdateMemoryInput!) {
+			updateMemory(input: $input) {
+				memory {
 					organizationId
 					product
 					architecture
@@ -156,16 +156,16 @@ func TestOrganization_UpdateContext(t *testing.T) {
 	`
 
 	var result struct {
-		UpdateOrganizationContext struct {
-			Context struct {
+		UpdateMemory struct {
+			Memory struct {
 				OrganizationID string  `json:"organizationId"`
 				Product        *string `json:"product"`
 				Architecture   *string `json:"architecture"`
 				Team           *string `json:"team"`
 				Processes      *string `json:"processes"`
 				Customers      *string `json:"customers"`
-			} `json:"context"`
-		} `json:"updateOrganizationContext"`
+			} `json:"memory"`
+		} `json:"updateMemory"`
 	}
 
 	err := owner.Execute(query, map[string]any{
@@ -177,11 +177,11 @@ func TestOrganization_UpdateContext(t *testing.T) {
 	}, &result)
 	require.NoError(t, err)
 
-	assert.Equal(t, owner.GetOrganizationID().String(), result.UpdateOrganizationContext.Context.OrganizationID)
-	require.NotNil(t, result.UpdateOrganizationContext.Context.Product)
-	assert.Equal(t, "Our product provides compliance solutions.", *result.UpdateOrganizationContext.Context.Product)
-	require.NotNil(t, result.UpdateOrganizationContext.Context.Architecture)
-	assert.Equal(t, "Microservices architecture on AWS.", *result.UpdateOrganizationContext.Context.Architecture)
+	assert.Equal(t, owner.GetOrganizationID().String(), result.UpdateMemory.Memory.OrganizationID)
+	require.NotNil(t, result.UpdateMemory.Memory.Product)
+	assert.Equal(t, "Our product provides compliance solutions.", *result.UpdateMemory.Memory.Product)
+	require.NotNil(t, result.UpdateMemory.Memory.Architecture)
+	assert.Equal(t, "Microservices architecture on AWS.", *result.UpdateMemory.Memory.Architecture)
 }
 
 func TestOrganization_Get(t *testing.T) {

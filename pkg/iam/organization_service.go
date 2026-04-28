@@ -496,7 +496,7 @@ func (s *OrganizationService) CreateOrganization(
 			UpdatedAt:      now,
 		}
 
-		organizationContext = &coredata.OrganizationContext{
+		memory = &coredata.Memory{
 			OrganizationID: organizationID,
 			CreatedAt:      now,
 			UpdatedAt:      now,
@@ -647,8 +647,8 @@ func (s *OrganizationService) CreateOrganization(
 				return fmt.Errorf("cannot insert membership: %w", err)
 			}
 
-			if err := organizationContext.Insert(ctx, tx, scope); err != nil {
-				return fmt.Errorf("cannot insert organization context: %w", err)
+			if err := memory.Insert(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot insert memory: %w", err)
 			}
 
 			if err := mailingList.Insert(ctx, tx, scope); err != nil {

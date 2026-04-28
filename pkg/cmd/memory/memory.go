@@ -12,27 +12,23 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { lazy } from "@probo/react-lazy";
-import type { AppRoute } from "@probo/routes";
+package memory
 
-import { LinkCardSkeleton } from "#/components/skeletons/LinkCardSkeleton";
-import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
+import (
+	"github.com/spf13/cobra"
+	"go.probo.inc/probo/pkg/cmd/cmdutil"
+	"go.probo.inc/probo/pkg/cmd/memory/get"
+	"go.probo.inc/probo/pkg/cmd/memory/update"
+)
 
-export const contextRoutes = [
-  {
-    path: "context",
-    Fallback: PageSkeleton,
-    Component: lazy(
-      () => import("#/pages/organizations/context/ContextLayoutLoader"),
-    ),
-    children: [
-      {
-        index: true,
-        Fallback: LinkCardSkeleton,
-        Component: lazy(
-          () => import("#/pages/organizations/context/ContextPageLoader"),
-        ),
-      },
-    ],
-  },
-] satisfies AppRoute[];
+func NewCmdMemory(f *cmdutil.Factory) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "memory <command>",
+		Short: "Manage organization memory",
+	}
+
+	cmd.AddCommand(get.NewCmdGet(f))
+	cmd.AddCommand(update.NewCmdUpdate(f))
+
+	return cmd
+}

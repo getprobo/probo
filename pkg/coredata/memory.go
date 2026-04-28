@@ -27,7 +27,7 @@ import (
 )
 
 type (
-	OrganizationContext struct {
+	Memory struct {
 		OrganizationID gid.GID   `db:"organization_id"`
 		Product        *string   `db:"product"`
 		Architecture   *string   `db:"architecture"`
@@ -39,7 +39,7 @@ type (
 	}
 )
 
-func (oc *OrganizationContext) LoadByOrganizationID(
+func (m *Memory) LoadByOrganizationID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
@@ -56,7 +56,7 @@ SELECT
     created_at,
     updated_at
 FROM
-    organization_contexts
+    memories
 WHERE
     %s
     AND organization_id = @organization_id
@@ -70,30 +70,30 @@ LIMIT 1;
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot query organization context: %w", err)
+		return fmt.Errorf("cannot query memory: %w", err)
 	}
 
-	orgContext, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[OrganizationContext])
+	memory, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Memory])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
 
-		return fmt.Errorf("cannot collect organization context: %w", err)
+		return fmt.Errorf("cannot collect memory: %w", err)
 	}
 
-	*oc = orgContext
+	*m = memory
 
 	return nil
 }
 
-func (oc *OrganizationContext) Insert(
+func (m *Memory) Insert(
 	ctx context.Context,
 	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
-INSERT INTO organization_contexts (
+INSERT INTO memories (
     organization_id,
     tenant_id,
     product,
@@ -117,32 +117,32 @@ INSERT INTO organization_contexts (
 `
 
 	args := pgx.StrictNamedArgs{
-		"organization_id": oc.OrganizationID,
+		"organization_id": m.OrganizationID,
 		"tenant_id":       scope.GetTenantID(),
-		"product":         oc.Product,
-		"architecture":    oc.Architecture,
-		"team":            oc.Team,
-		"processes":       oc.Processes,
-		"customers":       oc.Customers,
-		"created_at":      oc.CreatedAt,
-		"updated_at":      oc.UpdatedAt,
+		"product":         m.Product,
+		"architecture":    m.Architecture,
+		"team":            m.Team,
+		"processes":       m.Processes,
+		"customers":       m.Customers,
+		"created_at":      m.CreatedAt,
+		"updated_at":      m.UpdatedAt,
 	}
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot insert organization context: %w", err)
+		return fmt.Errorf("cannot insert memory: %w", err)
 	}
 
 	return nil
 }
 
-func (oc *OrganizationContext) Update(
+func (m *Memory) Update(
 	ctx context.Context,
 	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
-UPDATE organization_contexts
+UPDATE memories
 SET
     product = @product,
     architecture = @architecture,
@@ -158,20 +158,20 @@ WHERE
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"organization_id": oc.OrganizationID,
-		"product":         oc.Product,
-		"architecture":    oc.Architecture,
-		"team":            oc.Team,
-		"processes":       oc.Processes,
-		"customers":       oc.Customers,
-		"updated_at":      oc.UpdatedAt,
+		"organization_id": m.OrganizationID,
+		"product":         m.Product,
+		"architecture":    m.Architecture,
+		"team":            m.Team,
+		"processes":       m.Processes,
+		"customers":       m.Customers,
+		"updated_at":      m.UpdatedAt,
 	}
 
 	maps.Copy(args, scope.SQLArguments())
 
 	result, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot update organization context: %w", err)
+		return fmt.Errorf("cannot update memory: %w", err)
 	}
 
 	if result.RowsAffected() == 0 {

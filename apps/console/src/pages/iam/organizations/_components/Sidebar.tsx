@@ -44,7 +44,7 @@ import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 const fragment = graphql`
     fragment SidebarFragment on Organization {
-        canGetContext: permission(action: "core:organization-context:get")
+        canGetMemory: permission(action: "core:memory:get")
         canListTasks: permission(action: "core:task:list")
         canListMeasures: permission(action: "core:measure:list")
         canListRisks: permission(action: "core:risk:list")
@@ -86,11 +86,11 @@ export function Sidebar(props: { fKey: SidebarFragment$key }) {
 
   return (
     <ul className="space-y-[2px]">
-      {organization.canGetContext && (
+      {organization.canGetMemory && (
         <SidebarItem
-          label={__("Context")}
+          label={__("Memory")}
           icon={IconPageTextSolid}
-          to={`${prefix}/context`}
+          to={`${prefix}/memory`}
         />
       )}
       {organization.canListTasks && (

@@ -30,7 +30,7 @@ query($id: ID!) {
     ... on Organization {
       id
       name
-      context {
+      memory {
         product
         architecture
         team
@@ -44,15 +44,15 @@ query($id: ID!) {
 
 type getResponse struct {
 	Node *struct {
-		ID      string `json:"id"`
-		Name    string `json:"name"`
-		Context *struct {
+		ID     string `json:"id"`
+		Name   string `json:"name"`
+		Memory *struct {
 			Product      *string `json:"product"`
 			Architecture *string `json:"architecture"`
 			Team         *string `json:"team"`
 			Processes    *string `json:"processes"`
 			Customers    *string `json:"customers"`
-		} `json:"context"`
+		} `json:"memory"`
 	} `json:"node"`
 }
 
@@ -64,8 +64,8 @@ func NewCmdGet(f *cmdutil.Factory) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:     "get",
-		Short:   "Get organization context",
-		Example: `  prb context get --org <org-id>`,
+		Short:   "Get organization memory",
+		Example: `  prb memory get --org <org-id>`,
 		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := cmdutil.ValidateOutputFlag(flagOutput); err != nil {
@@ -116,10 +116,10 @@ func NewCmdGet(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			if *flagOutput == cmdutil.OutputJSON {
-				return cmdutil.PrintJSON(f.IOStreams.Out, resp.Node.Context)
+				return cmdutil.PrintJSON(f.IOStreams.Out, resp.Node.Memory)
 			}
 
-			ctx := resp.Node.Context
+			memory := resp.Node.Memory
 			out := f.IOStreams.Out
 
 			bold := lipgloss.NewStyle().Bold(true)
@@ -129,11 +129,11 @@ func NewCmdGet(f *cmdutil.Factory) *cobra.Command {
 				title string
 				value *string
 			}{
-				{"Product", ctx.Product},
-				{"Architecture", ctx.Architecture},
-				{"Team", ctx.Team},
-				{"Processes", ctx.Processes},
-				{"Customers", ctx.Customers},
+				{"Product", memory.Product},
+				{"Architecture", memory.Architecture},
+				{"Team", memory.Team},
+				{"Processes", memory.Processes},
+				{"Customers", memory.Customers},
 			}
 
 			for _, s := range sections {
