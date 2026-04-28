@@ -1151,12 +1151,6 @@ func (s *Service) LoadAccessToken(ctx context.Context, tokenValue string) (*core
 	return &token, nil
 }
 
-// IntrospectToken looks up the token (access or refresh) bound to clientID and
-// returns its claims when active. It supports the optional token_type_hint
-// from RFC 7662 §2.1: when set, the hinted table is searched first and the
-// other one is used as a fallback. A nil result means the token is unknown,
-// expired, revoked, or does not belong to clientID and must be reported as
-// inactive.
 func (s *Service) IntrospectToken(
 	ctx context.Context,
 	clientID gid.GID,
