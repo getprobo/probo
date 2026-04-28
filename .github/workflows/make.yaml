@@ -395,7 +395,7 @@ jobs:
         run: |
           make stack-up &
           STACK_PID=$!
-          SKIP_APPS=1 make bin/probod
+          make bin/probod
           wait $STACK_PID
       - run: "make stack-ps"
       - name: "Run e2e tests"

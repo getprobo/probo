@@ -75,6 +75,7 @@ Signed-off-by: John Doe <john.doe@example.org>
 4. Build the project:
 
    ```bash
+   make generate WITH_APPS=1
    make build
    ```
 
@@ -105,7 +106,7 @@ Signed-off-by: John Doe <john.doe@example.org>
    npm -w @probo/console run dev
    ```
 
-The application should now be running at `http://localhost:3000`
+The application should now be running at `http://localhost:5173`
 
 For detailed information about all Docker services in the development stack, see [Docker Services Documentation](docs/DOCKER_SERVICES.md).
 

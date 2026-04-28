@@ -145,8 +145,9 @@ if [ -z "$(ls -A /var/lib/probo/node_modules 2>/dev/null)" ]; then
     su - "${LIMA_USER}" -c "cd /workspace && npm ci"
 fi
 
-# Build bin/probod to get dependencies, notably embedded files
-make -C /workspace bin/probod SKIP_APPS=1
+# Generate go and ts files for probod and apps, and create embedded files for probod
+make -C /workspace generate WITH_APPS=1
+make -C /workspace embed
 
 echo "VITE_API_URL=http://${VM_IP}:8080" > /workspace/apps/console/.env
 echo "VITE_API_URL=http://${VM_IP}:8080" > /workspace/apps/trust/.env

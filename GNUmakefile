@@ -44,7 +44,7 @@ E2E_COVER_DIR ?= $(CURDIR)/coverage/e2e
 DOCKER_IMAGE_NAME=	ghcr.io/getprobo/probo
 DOCKER_TAG_NAME?=	latest
 
-PROBOD_BIN_DEPS= pkg/server/api/connect/v1/schema/schema.go \
+GENERATED= pkg/server/api/connect/v1/schema/schema.go \
 	pkg/server/api/connect/v1/types/types.go \
 	pkg/server/api/console/v1/schema/schema.go \
 	pkg/server/api/console/v1/types/types.go \
@@ -52,7 +52,8 @@ PROBOD_BIN_DEPS= pkg/server/api/connect/v1/schema/schema.go \
 	pkg/server/api/trust/v1/types/types.go \
 	pkg/server/api/mcp/v1/server/server.go \
 	pkg/server/api/mcp/v1/types/types.go \
-	apps/console/dist/index.html \
+
+EMBEDDED= apps/console/dist/index.html \
 	apps/trust/dist/index.html \
 	@probo/emails
 
@@ -66,8 +67,9 @@ PRB_SRC=	cmd/prb/main.go
 PROBOD_BOOTSTRAP_BIN=	bin/probod-bootstrap
 PROBOD_BOOTSTRAP_SRC=	cmd/probod-bootstrap/main.go
 
-ifndef SKIP_APPS
-PROBOD_BIN_EXTRA_DEPS += \
+ifdef WITH_APPS
+GENERATED += relay
+EMBEDDED += \
 	@probo/console \
 	@probo/trust
 endif
@@ -85,7 +87,7 @@ lint-go: vet go-fmt go-fix go-lint
 lint-js: npm-lint
 
 .PHONY: vet
-vet: generate apps/console/dist/index.html apps/trust/dist/index.html @probo/emails
+vet: generate embed
 	$(GO_VET) ./...
 
 .PHONY: npm-lint
@@ -102,7 +104,7 @@ go-fmt:
 	fi
 
 .PHONY: go-fix
-go-fix: generate apps/console/dist/index.html apps/trust/dist/index.html @probo/emails
+go-fix: generate embed
 	@output="$$($(GO_BASE) fix -diff -omitzero=false ./apps/... ./cmd/... ./packages/... ./pkg/... ./e2e/...)"; \
 	if [ -n "$$output" ]; then \
 		echo "error: 'go fix' suggests changes; please apply them"; \
@@ -233,7 +235,7 @@ docker-build:
 	$(DOCKER_BUILD) --tag $(DOCKER_IMAGE_NAME):$(DOCKER_TAG_NAME) --file Dockerfile .
 
 .PHONY: $(PROBOD_BIN)
-$(PROBOD_BIN): $(PROBOD_BIN_DEPS) $(PROBOD_BIN_EXTRA_DEPS)
+$(PROBOD_BIN): generate embed
 	$(GO_BUILD) -o $(PROBOD_BIN) $(PROBOD_SRC)
 
 .PHONY: bin/prb
@@ -285,15 +287,10 @@ pkg/server/api/trust/v1/schema.graphql: pkg/server/api/trust/v1/graphql $(TRUST_
 	$(NPM) --workspace $@ run build
 
 .PHONY: generate
-generate: pkg/server/api/connect/v1/schema/schema.go \
-	pkg/server/api/connect/v1/types/types.go \
-	pkg/server/api/console/v1/schema/schema.go \
-	pkg/server/api/console/v1/types/types.go \
-	pkg/server/api/trust/v1/schema/schema.go \
-	pkg/server/api/trust/v1/types/types.go \
-	pkg/server/api/mcp/v1/server/server.go \
-	pkg/server/api/mcp/v1/types/types.go \
-	relay
+generate: $(GENERATED)
+
+.PHONY: embed
+embed: $(EMBEDDED)
 
 pkg/server/api/connect/v1/schema/schema.go \
 pkg/server/api/connect/v1/types/types.go: pkg/server/api/connect/v1/gqlgen.yaml pkg/server/api/connect/v1/graphql $(CONNECT_GQL)

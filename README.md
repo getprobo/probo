@@ -75,7 +75,7 @@ For detailed setup instructions, see our [Contributing Guide](CONTRIBUTING.md).
 ## 🏗️ Current Status
 
 Probo is in early development, focusing on building a solid foundation for
-compliance management. 
+compliance management.
 
 ## 🛠️ Tech Stack
 
