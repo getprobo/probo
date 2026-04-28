@@ -12,27 +12,27 @@ Use a sandbox when you need to:
 
 ```bash
 # Create a sandbox (first time only)
-./contrib/lima/sandbox.sh create
+make sandbox-create
 
 # Start an existing sandbox
-./contrib/lima/sandbox.sh start
+make sandbox-start
 
 # Get the VM IP and service URLs
-./contrib/lima/sandbox.sh status
+make sandbox-status
 
 # Interactive shell
-./contrib/lima/sandbox.sh ssh
+make sandbox-ssh
 
 # Stop (shutdown — preserves disk and Docker images, but running processes are lost)
-./contrib/lima/sandbox.sh stop
+make sandbox-stop
 
 # Delete entirely
-./contrib/lima/sandbox.sh delete
+make sandbox-delete
 ```
 
 ## Accessing services
 
-After `sandbox.sh status`, use the VM IP to access services from the host:
+After `make sandbox-status`, use the VM IP to access services from the host:
 
 | Service    | URL                         |
 | ---------- | --------------------------- |
@@ -64,7 +64,7 @@ AUTH_OIDC_CLIENT_ID=my-client-id
 AUTH_OIDC_CLIENT_SECRET=s3cret
 ```
 
-This file is sourced during provisioning before `probod-bootstrap` runs. Any variable set here overrides the defaults. The sandbox must be recreated (`delete` + `create`) for changes to take effect.
+This file is sourced during provisioning before `probod-bootstrap` runs. Any variable set here overrides the defaults. The sandbox must be recreated (`sandbox-delete` + `sandbox-create`) for changes to take effect.
 
 ## Systemd services
 
@@ -89,11 +89,6 @@ Manage them with `systemctl`:
 ```
 
 ## Common workflows
-
-**Start the app:**
-```bash
-./contrib/lima/sandbox.sh exec -- sudo systemctl start probod probo-console probo-trust
-```
 
 **Run tests:**
 ```bash
