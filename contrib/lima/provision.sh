@@ -98,6 +98,8 @@ VM_IP=$(ip -4 -j addr show dev lima0 | jq -r '.[0].addr_info[0].local')
 
 su - "${LIMA_USER}" -c "export PATH=/usr/local/go/bin:\$HOME/go/bin:\$PATH && cd /workspace && make bin/probod-bootstrap"
 
+make -C /workspace compose/pebble/certs/rootCA.pem compose/keycloak/probo-realm.json
+
 mkdir -p /etc/probod
 
 OAUTH2_SIGNING_KEY_PATH=/etc/probod/oauth2-signing-key.pem
@@ -125,11 +127,26 @@ AWS_ENDPOINT="http://127.0.0.1:8333" \
 AWS_ACCESS_KEY_ID="probod" \
 AWS_SECRET_ACCESS_KEY="thisisnotasecret" \
 AWS_USE_PATH_STYLE=true \
+ACME_DIRECTORY="https://127.0.0.1:14000/dir" \
+ACME_EMAIL="admin@getprobo.com" \
+ACME_KEY_TYPE="EC256" \
+ACME_ROOT_CA="$(cat /workspace/compose/pebble/certs/rootCA.pem)" \
     /workspace/bin/probod-bootstrap -output /etc/probod/config.yml
 
 # probod runs as ${LIMA_USER} but bootstrap writes config.yml as root with 0600
 # because it contains secrets. Transfer ownership so probod can read it.
 chown "${LIMA_USER}:${LIMA_USER}" /etc/probod/config.yml "${OAUTH2_SIGNING_KEY_PATH}"
+
+# Populate VM-local node_modules with Linux-native binaries (esbuild, etc.).
+# The host's node_modules is macOS; `probo-node-modules.service` bind-mounts an
+# empty tree over /workspace/node_modules, and we install into it once here so
+# `make build` and the dev servers can run without cross-platform mismatches.
+if [ -z "$(ls -A /var/lib/probo/node_modules 2>/dev/null)" ]; then
+    su - "${LIMA_USER}" -c "cd /workspace && npm ci"
+fi
+
+# Build bin/probod to get dependencies, notably embedded files
+make -C /workspace bin/probod SKIP_APPS=1
 
 echo "VITE_API_URL=http://${VM_IP}:8080" > /workspace/apps/console/.env
 echo "VITE_API_URL=http://${VM_IP}:8080" > /workspace/apps/trust/.env
@@ -154,7 +171,7 @@ WantedBy=multi-user.target
 EOF
 
 # Install systemd services for the sandbox
-cat > /etc/systemd/system/probo-stack.service << 'EOF'
+cat > /etc/systemd/system/probo-stack.service << EOF
 [Unit]
 Description=Probo Docker Compose Stack
 Requires=docker.service
@@ -183,7 +200,7 @@ After=probo-stack.service
 Type=simple
 User=${LIMA_USER}
 WorkingDirectory=/workspace
-ExecStart=/usr/local/bin/gow -r=false run ./cmd/probod -cfg-file /etc/probod/config.yml
+ExecStart=/usr/local/bin/gow -r=false run ./cmd/probod -cfg-file /etc/probod/config.yml -format pretty
 Restart=on-failure
 RestartSec=3s
 Environment=PATH=/usr/local/go/bin:/usr/local/bin:/usr/bin:/bin
@@ -232,11 +249,3 @@ systemctl daemon-reload
 systemctl enable --now probo-node-modules.service
 systemctl enable --now probo-stack.service
 systemctl enable probod.service probo-console.service probo-trust.service
-
-# Populate VM-local node_modules with Linux-native binaries (esbuild, etc.).
-# The host's node_modules is macOS; `probo-node-modules.service` bind-mounts an
-# empty tree over /workspace/node_modules, and we install into it once here so
-# `make build` and the dev servers can run without cross-platform mismatches.
-if [ -z "$(ls -A /var/lib/probo/node_modules 2>/dev/null)" ]; then
-    su - "${LIMA_USER}" -c "cd /workspace && npm ci"
-fi

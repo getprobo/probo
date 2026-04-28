@@ -76,15 +76,12 @@ cmd_create() {
     fi
 
     limactl create "${create_args[@]}" "${TEMPLATE}"
-    limactl start "${VM_NAME}"
-
-    echo ""
-    cmd_status
 }
 
 cmd_start() {
     echo "Starting sandbox: ${VM_NAME}"
     limactl start "${VM_NAME}"
+    cmd_exec -- sudo systemctl start probod probo-console probo-trust
     echo ""
     cmd_status
 }
