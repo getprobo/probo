@@ -82,8 +82,8 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 			},
 			Pg: probodconfig.PgConfig{
 				Addr:                   b.getEnvOrDefault("PG_ADDR", "localhost:5432"),
-				Username:               b.getEnvOrDefault("PG_USERNAME", "postgres"),
-				Password:               b.getEnvOrDefault("PG_PASSWORD", "postgres"),
+				Username:               b.getEnvOrDefault("PG_USERNAME", "probod"),
+				Password:               b.getEnvOrDefault("PG_PASSWORD", "probod"),
 				Database:               b.getEnvOrDefault("PG_DATABASE", "probod"),
 				PoolSize:               int32(b.getEnvIntOrDefault("PG_POOL_SIZE", 100)),
 				MinPoolSize:            int32(b.getEnvIntOrDefault("PG_MIN_POOL_SIZE", 10)),

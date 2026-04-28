@@ -61,7 +61,7 @@ cmd_create() {
     local -a create_args=(
         --name "${VM_NAME}"
         --tty=false
-        --set ".mounts = [{\"location\": \"${REPO_ROOT}\", \"mountPoint\": \"/workspace\", \"writable\": true}]"
+        --set ".mounts = [{\"location\": \"${REPO_ROOT}\", \"mountPoint\": \"/workspace\", \"writable\": true},{\"location\": \"/Users/${USER}/go\", \"mountPoint\": \"/home/${USER}.guest/go\", \"writable\": true}]"
         --mount-type virtiofs
     )
 

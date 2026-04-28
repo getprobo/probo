@@ -11,7 +11,7 @@ export LIMA_CIDATA_USER
 
 export DEBIAN_FRONTEND=noninteractive
 
-GO_VERSION="1.26.1"
+GO_VERSION="1.26.2"
 NODE_MAJOR=24
 NPM_VERSION="11.8.0"
 
@@ -71,8 +71,6 @@ chmod +x /etc/profile.d/go.sh
 export PATH="/usr/local/go/bin:$PATH"
 export HOME="${HOME:-/root}"
 
-GOBIN=/usr/local/bin /usr/local/go/bin/go install "gotest.tools/gotestsum@${GOTESTSUM_VERSION}"
-GOBIN=/usr/local/bin /usr/local/go/bin/go install "github.com/golangci/golangci-lint/v2/cmd/golangci-lint@${GOLANGCI_LINT_VERSION}"
 GOBIN=/usr/local/bin /usr/local/go/bin/go install "github.com/mitranim/gow@${GOW_VERSION}"
 
 if ! command -v node &>/dev/null || ! node --version | grep -q "v${NODE_MAJOR}"; then
@@ -137,21 +135,6 @@ ACME_ROOT_CA="$(cat /workspace/compose/pebble/certs/rootCA.pem)" \
 # because it contains secrets. Transfer ownership so probod can read it.
 chown "${LIMA_USER}:${LIMA_USER}" /etc/probod/config.yml "${OAUTH2_SIGNING_KEY_PATH}"
 
-# Populate VM-local node_modules with Linux-native binaries (esbuild, etc.).
-# The host's node_modules is macOS; `probo-node-modules.service` bind-mounts an
-# empty tree over /workspace/node_modules, and we install into it once here so
-# `make build` and the dev servers can run without cross-platform mismatches.
-if [ -z "$(ls -A /var/lib/probo/node_modules 2>/dev/null)" ]; then
-    su - "${LIMA_USER}" -c "cd /workspace && npm ci"
-fi
-
-# Generate go and ts files for probod and apps, and create embedded files for probod
-make -C /workspace generate WITH_APPS=1
-make -C /workspace embed
-
-echo "VITE_API_URL=http://${VM_IP}:8080" > /workspace/apps/console/.env
-echo "VITE_API_URL=http://${VM_IP}:8080" > /workspace/apps/trust/.env
-
 # Bind-mount VM-local node_modules over the shared workspace to avoid
 # platform conflicts between macOS host and Linux VM native binaries.
 cat > /etc/systemd/system/probo-node-modules.service << EOF
@@ -170,6 +153,22 @@ ExecStartPost=/bin/chown ${LIMA_USER}:${LIMA_USER} /var/lib/probo/node_modules
 [Install]
 WantedBy=multi-user.target
 EOF
+
+systemctl daemon-reload
+systemctl enable --now probo-node-modules.service
+
+# Populate VM-local node_modules with Linux-native binaries (esbuild, etc.).
+# The host's node_modules is macOS; `probo-node-modules.service` bind-mounts an
+# empty tree over /workspace/node_modules, and we install into it once here so
+# the dev servers can run without cross-platform mismatches.
+su - "${LIMA_USER}" -c "cd /workspace && npm ci"
+
+# Generate go and ts files for probod and apps, and create embedded files for probod
+make -C /workspace generate WITH_APPS=1
+make -C /workspace embed
+
+echo "VITE_API_URL=http://${VM_IP}:8080" > /workspace/apps/console/.env
+echo "VITE_API_URL=http://${VM_IP}:8080" > /workspace/apps/trust/.env
 
 # Install systemd services for the sandbox
 cat > /etc/systemd/system/probo-stack.service << EOF
@@ -214,7 +213,7 @@ cat > /etc/systemd/system/probo-console.service << EOF
 [Unit]
 Description=Probo Console Dev Server
 Requires=probo-node-modules.service
-After=probod.service probo-node-modules.service
+After=probo-node-modules.service
 
 [Service]
 Type=simple
@@ -232,7 +231,7 @@ cat > /etc/systemd/system/probo-trust.service << EOF
 [Unit]
 Description=Probo Trust Dev Server
 Requires=probo-node-modules.service
-After=probod.service probo-node-modules.service
+After=probo-node-modules.service
 
 [Service]
 Type=simple
@@ -247,6 +246,5 @@ WantedBy=multi-user.target
 EOF
 
 systemctl daemon-reload
-systemctl enable --now probo-node-modules.service
 systemctl enable --now probo-stack.service
 systemctl enable --now probod.service probo-console.service probo-trust.service

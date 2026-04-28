@@ -91,8 +91,8 @@ func New() *Implm {
 			},
 			Pg: PgConfig{
 				Addr:                   "localhost:5432",
-				Username:               "postgres",
-				Password:               "postgres",
+				Username:               "probod",
+				Password:               "probod",
 				Database:               "probod",
 				PoolSize:               100,
 				MinPoolSize:            10,
