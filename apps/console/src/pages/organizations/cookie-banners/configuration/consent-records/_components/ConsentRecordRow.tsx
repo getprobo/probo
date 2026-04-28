@@ -31,7 +31,6 @@ const consentRecordFragment = graphql`
     visitorId
     action
     cookieBannerVersion {
-      id
       version
     }
     ipAddress

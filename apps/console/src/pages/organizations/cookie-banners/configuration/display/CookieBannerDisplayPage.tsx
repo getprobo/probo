@@ -18,6 +18,7 @@ import { graphql } from "relay-runtime";
 import type { CookieBannerDisplayPageQuery } from "#/__generated__/core/CookieBannerDisplayPageQuery.graphql";
 
 import { CategoryList } from "../_components/CategoryList";
+
 import { ThemePreview } from "./_components/ThemePreview";
 
 export const cookieBannerDisplayPageQuery = graphql`
