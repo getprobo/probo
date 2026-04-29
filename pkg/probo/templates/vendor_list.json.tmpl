@@ -257,17 +257,12 @@
         { "type": "text", "text": "Data Privacy Agreement: ", "marks": [{ "type": "bold" }] },
         { "type": "text", "text": {{if $r.DataPrivacyAgreement}}{{json (printf "Yes — From %s until %s" $r.DataPrivacyAgreement.ValidFrom $r.DataPrivacyAgreement.ValidUntil)}}{{else}}"No"{{end}} }
       ]
-    }{{end}},
-    { "type": "horizontalRule" },
+    },
+    { "type": "horizontalRule" }{{end}},
     {
       "type": "heading",
       "attrs": { "level": 1 },
-      "content": [{ "type": "text", "text": "3. Annexes" }]
-    },
-    {
-      "type": "heading",
-      "attrs": { "level": 2 },
-      "content": [{ "type": "text", "text": "3.1 Lexicon" }]
+      "content": [{ "type": "text", "text": "3. Definitions" }]
     },
     {
       "type": "heading",

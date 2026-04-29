@@ -553,7 +553,7 @@ func (s *GeneratedDocumentService) buildDataListDocumentData(
 	rows := make([]docgen.DataListRow, 0, len(data))
 	for _, d := range data {
 		ownerName := "-"
-		if p, ok := profileMap[d.OwnerID]; ok {
+		if p, ok := profileMap[d.OwnerID]; ok && p.FullName != "" {
 			ownerName = p.FullName
 		}
 
@@ -600,7 +600,7 @@ func formatClassification(c coredata.DataClassification) string {
 	case coredata.DataClassificationSecret:
 		return "Secret"
 	default:
-		return string(c)
+		return stringOrNotSpecified(string(c))
 	}
 }
 
@@ -843,7 +843,7 @@ func (s *GeneratedDocumentService) buildAssetListDocumentData(
 	rows := make([]docgen.AssetListRow, 0, len(assets))
 	for _, a := range assets {
 		ownerName := "-"
-		if p, ok := profileMap[a.OwnerID]; ok {
+		if p, ok := profileMap[a.OwnerID]; ok && p.FullName != "" {
 			ownerName = p.FullName
 		}
 
@@ -866,7 +866,7 @@ func (s *GeneratedDocumentService) buildAssetListDocumentData(
 			Name:            a.Name,
 			AssetType:       formatAssetType(a.AssetType),
 			Amount:          a.Amount,
-			DataTypesStored: a.DataTypesStored,
+			DataTypesStored: stringOrNotSpecified(a.DataTypesStored),
 			Owner:           ownerName,
 			Vendors:         vendorStr,
 		})
@@ -888,7 +888,7 @@ func formatAssetType(t coredata.AssetType) string {
 	case coredata.AssetTypeVirtual:
 		return "Virtual"
 	default:
-		return string(t)
+		return stringOrNotSpecified(string(t))
 	}
 }
 
@@ -1159,7 +1159,7 @@ func (s *GeneratedDocumentService) buildFindingListDocumentData(
 	for _, f := range findings {
 		ownerName := "-"
 		if f.OwnerID != nil {
-			if p, ok := profileMap[*f.OwnerID]; ok {
+			if p, ok := profileMap[*f.OwnerID]; ok && p.FullName != "" {
 				ownerName = p.FullName
 			}
 		}
@@ -1235,7 +1235,7 @@ func formatFindingKind(k coredata.FindingKind) string {
 	case coredata.FindingKindException:
 		return "Exception"
 	default:
-		return string(k)
+		return stringOrNotSpecified(string(k))
 	}
 }
 
@@ -1254,7 +1254,7 @@ func formatFindingStatus(s coredata.FindingStatus) string {
 	case coredata.FindingStatusFalsePositive:
 		return "False Positive"
 	default:
-		return string(s)
+		return stringOrNotSpecified(string(s))
 	}
 }
 
@@ -1267,7 +1267,7 @@ func formatFindingPriority(p coredata.FindingPriority) string {
 	case coredata.FindingPriorityHigh:
 		return "High"
 	default:
-		return string(p)
+		return stringOrNotSpecified(string(p))
 	}
 }
 
@@ -1515,7 +1515,7 @@ func (s *GeneratedDocumentService) buildObligationListDocumentData(
 	rows := make([]docgen.ObligationListRow, 0, len(obligations))
 	for _, o := range obligations {
 		ownerName := "-"
-		if p, ok := profileMap[o.OwnerID]; ok {
+		if p, ok := profileMap[o.OwnerID]; ok && p.FullName != "" {
 			ownerName = p.FullName
 		}
 
@@ -1580,7 +1580,7 @@ func formatObligationStatus(s coredata.ObligationStatus) string {
 	case coredata.ObligationStatusCompliant:
 		return "Compliant"
 	default:
-		return string(s)
+		return stringOrNotSpecified(string(s))
 	}
 }
 
@@ -1591,7 +1591,7 @@ func formatObligationType(t coredata.ObligationType) string {
 	case coredata.ObligationTypeContractual:
 		return "Contractual"
 	default:
-		return string(t)
+		return stringOrNotSpecified(string(t))
 	}
 }
 
@@ -1845,7 +1845,7 @@ func (s *GeneratedDocumentService) buildProcessingActivityListDocumentData(
 	for _, pa := range processingActivities {
 		dpoName := "Not assigned"
 		if pa.DataProtectionOfficerID != nil {
-			if p, ok := dpoMap[*pa.DataProtectionOfficerID]; ok {
+			if p, ok := dpoMap[*pa.DataProtectionOfficerID]; ok && p.FullName != "" {
 				dpoName = p.FullName
 			}
 		}
@@ -1916,7 +1916,7 @@ func formatProcessingActivityRole(role coredata.ProcessingActivityRole) string {
 	case coredata.ProcessingActivityRoleProcessor:
 		return "Processor"
 	default:
-		return string(role)
+		return stringOrNotSpecified(string(role))
 	}
 }
 
@@ -1935,7 +1935,7 @@ func formatLawfulBasis(basis coredata.ProcessingActivityLawfulBasis) string {
 	case coredata.ProcessingActivityLawfulBasisVitalInterests:
 		return "Vital Interests"
 	default:
-		return string(basis)
+		return stringOrNotSpecified(string(basis))
 	}
 }
 
@@ -1948,7 +1948,7 @@ func formatSpecialOrCriminalData(data coredata.ProcessingActivitySpecialOrCrimin
 	case coredata.ProcessingActivitySpecialOrCriminalDatumPossible:
 		return "Possible"
 	default:
-		return string(data)
+		return stringOrNotSpecified(string(data))
 	}
 }
 
@@ -1970,7 +1970,7 @@ func formatTransferSafeguard(safeguard *coredata.ProcessingActivityTransferSafeg
 	case coredata.ProcessingActivityTransferSafeguardCertificationMechanisms:
 		return "Certification Mechanisms"
 	default:
-		return string(*safeguard)
+		return stringOrNotSpecified(string(*safeguard))
 	}
 }
 
@@ -1981,7 +1981,7 @@ func formatDPIANeeded(needed coredata.ProcessingActivityDataProtectionImpactAsse
 	case coredata.ProcessingActivityDataProtectionImpactAssessmentNotNeeded:
 		return "No"
 	default:
-		return string(needed)
+		return stringOrNotSpecified(string(needed))
 	}
 }
 
@@ -1992,7 +1992,7 @@ func formatTIANeeded(needed coredata.ProcessingActivityTransferImpactAssessment)
 	case coredata.ProcessingActivityTransferImpactAssessmentNotNeeded:
 		return "No"
 	default:
-		return string(needed)
+		return stringOrNotSpecified(string(needed))
 	}
 }
 
@@ -2008,7 +2008,7 @@ func formatResidualRisk(risk *coredata.DataProtectionImpactAssessmentResidualRis
 	case coredata.DataProtectionImpactAssessmentResidualRiskHigh:
 		return "High"
 	default:
-		return string(*risk)
+		return stringOrNotSpecified(string(*risk))
 	}
 }
 
@@ -2984,7 +2984,7 @@ func lookupProfileName(profiles map[gid.GID]*coredata.MembershipProfile, id *gid
 	if id == nil {
 		return "Not assigned"
 	}
-	if p, ok := profiles[*id]; ok {
+	if p, ok := profiles[*id]; ok && p.FullName != "" {
 		return p.FullName
 	}
 	return "Not assigned"
@@ -3003,7 +3003,7 @@ func formatDataSensitivity(s coredata.DataSensitivity) string {
 	case coredata.DataSensitivityCritical:
 		return "Critical"
 	default:
-		return string(s)
+		return stringOrNotSpecified(string(s))
 	}
 }
 
@@ -3018,7 +3018,7 @@ func formatBusinessImpact(b coredata.BusinessImpact) string {
 	case coredata.BusinessImpactCritical:
 		return "Critical"
 	default:
-		return string(b)
+		return stringOrNotSpecified(string(b))
 	}
 }
 
@@ -3069,7 +3069,7 @@ func formatVendorCategory(c coredata.VendorCategory) string {
 	case coredata.VendorCategoryVersionControl:
 		return "Version Control"
 	default:
-		return string(c)
+		return stringOrNotSpecified(string(c))
 	}
 }
 
