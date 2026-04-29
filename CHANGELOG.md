@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.176.1] - 2026-04-29
+
+### Fixed
+
+- Fix empty text nodes in generated documents
+
 ## [0.176.0] - 2026-04-29
 
 ### Added
