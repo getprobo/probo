@@ -137,8 +137,8 @@ func TestBuilder_Build_Defaults(t *testing.T) {
 
 	// PG config
 	assert.Equal(t, "localhost:5432", cfg.Probod.Pg.Addr)
-	assert.Equal(t, "postgres", cfg.Probod.Pg.Username)
-	assert.Equal(t, "postgres", cfg.Probod.Pg.Password)
+	assert.Equal(t, "probod", cfg.Probod.Pg.Username)
+	assert.Equal(t, "probod", cfg.Probod.Pg.Password)
 	assert.Equal(t, "probod", cfg.Probod.Pg.Database)
 	assert.Equal(t, int32(100), cfg.Probod.Pg.PoolSize)
 	assert.Equal(t, int32(10), cfg.Probod.Pg.MinPoolSize)

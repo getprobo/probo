@@ -4,20 +4,20 @@ The project uses a `GNUmakefile` at the root. Builds run with `--jobs=$(nproc)` 
 
 ## Everyday targets
 
-| Target                       | Purpose                                                                                                        |
-| ---------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| `make build`                 | Build `bin/probod`, `bin/prb`, and `bin/probod-bootstrap` (does not include frontend apps, codegen, and Relay) |
-| `make build WITH_APPS=1`     | Build `bin/probod`, `bin/prb`, and `bin/probod-bootstrap` (includes frontend apps, codegen, and Relay)         |
-| `make test`                  | Run tests with race detection and coverage                                                                     |
-| `make test MODULE=./pkg/foo` | Run tests for a single module                                                                                  |
-| `make test-verbose`          | Tests with verbose output                                                                                      |
-| `make test-short`            | Short tests only                                                                                               |
-| `make test-bench`            | Run benchmarks                                                                                                 |
-| `make test-e2e`              | Run console end-to-end tests (requires `bin/probod`)                                                           |
-| `make lint`                  | Run all linters: `vet` + `go-fmt` + `go-fix` + `go-lint` + `npm-lint`                                          |
-| `make fmt`                   | Format Go code (`go fmt ./...`)                                                                                |
-| `make clean`                 | Remove all build artifacts, `node_modules`, generated files, and coverage                                      |
-| `make help`                  | List targets with `##` doc comments                                                                            |
+| Target                       | Purpose                                                                                                |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `make build`                 | Build `bin/probod`, `bin/prb`, and `bin/probod-bootstrap` (does not include frontend apps and Relay)   |
+| `make build WITH_APPS=1`     | Build `bin/probod`, `bin/prb`, and `bin/probod-bootstrap` (includes frontend apps, codegen, and Relay) |
+| `make test`                  | Run tests with race detection and coverage                                                             |
+| `make test MODULE=./pkg/foo` | Run tests for a single module                                                                          |
+| `make test-verbose`          | Tests with verbose output                                                                              |
+| `make test-short`            | Short tests only                                                                                       |
+| `make test-bench`            | Run benchmarks                                                                                         |
+| `make test-e2e`              | Run console end-to-end tests (requires `bin/probod`)                                                   |
+| `make lint`                  | Run all linters: `vet` + `go-fmt` + `go-fix` + `go-lint` + `npm-lint`                                  |
+| `make fmt`                   | Format Go code (`go fmt ./...`)                                                                        |
+| `make clean`                 | Remove all build artifacts, `node_modules`, generated files, and coverage                              |
+| `make help`                  | List targets with `##` doc comments                                                                    |
 
 ## Infrastructure
 
