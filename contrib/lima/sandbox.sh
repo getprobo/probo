@@ -87,7 +87,7 @@ cmd_start() {
 }
 
 cmd_boot_logs() {
-    limactl shell probo-sandbox-fix -- sudo tail -f /var/log/cloud-init-output.log
+    limactl shell "${VM_NAME}" -- sudo tail -f /var/log/cloud-init-output.log
 }
 
 cmd_stop() {
