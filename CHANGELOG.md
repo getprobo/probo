@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.176.0] - 2026-04-29
+
+### Added
+
+- Add vendor publish to document system, replacing snapshot mode
+
 ## [0.175.0] - 2026-04-29
 
 ### Added
