@@ -120,6 +120,10 @@ func (r *mutationResolver) RemoveUser(ctx context.Context, input types.RemoveUse
 			return nil, gqlutils.Conflict(ctx, err)
 		}
 
+		if errors.Is(err, coredata.ErrResourceInUse) {
+			return nil, gqlutils.Conflict(ctx, err)
+		}
+
 		r.logger.ErrorCtx(ctx, "cannot remove user from organization", log.Error(err))
 
 		return nil, gqlutils.Internal(ctx)
