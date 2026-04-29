@@ -191,7 +191,7 @@ INSERT INTO document_versions (
 					"tenant_id":       org.tenantID,
 					"organization_id": org.organizationID,
 					"document_id":     documentID,
-					"title":           "Obligation List",
+					"title":           "Obligations",
 					"major":           major + 1,
 					"content":         content,
 					"published_at":    snap.publishedAt,
@@ -389,7 +389,7 @@ ORDER BY ob.created_at ASC;
 	}
 
 	docData := docgen.ObligationListData{
-		Title:            "Obligation List",
+		Title:            "Obligations",
 		OrganizationName: orgName,
 		CreatedAt:        publishedAt,
 		TotalObligations: len(obligationRows),

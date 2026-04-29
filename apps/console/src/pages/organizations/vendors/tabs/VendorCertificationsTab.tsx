@@ -30,7 +30,7 @@ import {
 import { clsx } from "clsx";
 import { useState } from "react";
 import { Controller } from "react-hook-form";
-import { useOutletContext, useParams } from "react-router";
+import { useOutletContext } from "react-router";
 
 import type { VendorGraphNodeQuery$data } from "#/__generated__/core/VendorGraphNodeQuery.graphql";
 import { useVendorForm } from "#/hooks/forms/useVendorForm";
@@ -44,13 +44,11 @@ export default function VendorCertificationsTab() {
   }>();
   const { __ } = useTranslate();
   const { control, handleSubmit } = useVendorForm(vendor);
-  const { snapshotId } = useParams<{ snapshotId?: string }>();
-  const isSnapshotMode = Boolean(snapshotId);
 
   return (
     <form
       className="space-y-4"
-      onSubmit={!isSnapshotMode && vendor.canUpdate
+      onSubmit={vendor.canUpdate
         ? e => void handleSubmit(e)
         : undefined}
     >
@@ -62,12 +60,12 @@ export default function VendorCertificationsTab() {
             <Certifications
               onValueChange={field.onChange}
               value={field.value ?? []}
-              readOnly={isSnapshotMode || !vendor.canUpdate}
+              readOnly={!vendor.canUpdate}
             />
           )}
         />
       </Card>
-      {!isSnapshotMode && vendor.canUpdate && (
+      {vendor.canUpdate && (
         <div className="flex justify-end">
           <Button type="submit">{__("Update vendor")}</Button>
         </div>

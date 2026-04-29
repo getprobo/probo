@@ -149,8 +149,6 @@ const (
 	ActionControlDocumentMappingDelete   = "core:control:delete-document-mapping"
 	ActionControlAuditMappingCreate      = "core:control:create-audit-mapping"
 	ActionControlAuditMappingDelete      = "core:control:delete-audit-mapping"
-	ActionControlSnapshotMappingCreate   = "core:control:create-snapshot-mapping"
-	ActionControlSnapshotMappingDelete   = "core:control:delete-snapshot-mapping"
 	ActionControlObligationMappingCreate = "core:control:create-obligation-mapping"
 	ActionControlObligationMappingDelete = "core:control:delete-obligation-mapping"
 
@@ -226,6 +224,7 @@ const (
 	ActionRiskDocumentMappingDelete   = "core:risk:delete-document-mapping"
 	ActionRiskObligationMappingCreate = "core:risk:create-obligation-mapping"
 	ActionRiskObligationMappingDelete = "core:risk:delete-obligation-mapping"
+	ActionRiskPublish                 = "core:risk:publish"
 
 	// Asset actions
 	ActionAssetGet     = "core:asset:get"
@@ -282,12 +281,6 @@ const (
 	ActionProcessingActivityUpdate  = "core:processing-activity:update"
 	ActionProcessingActivityDelete  = "core:processing-activity:delete"
 	ActionProcessingActivityPublish = "core:processing-activity:publish"
-
-	// Snapshot actions
-	ActionSnapshotGet    = "core:snapshot:get"
-	ActionSnapshotList   = "core:snapshot:list"
-	ActionSnapshotCreate = "core:snapshot:create"
-	ActionSnapshotDelete = "core:snapshot:delete"
 
 	// CustomDomain actions
 	ActionCustomDomainGet    = "core:custom-domain:get"

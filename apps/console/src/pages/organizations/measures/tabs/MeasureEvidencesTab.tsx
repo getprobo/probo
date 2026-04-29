@@ -114,10 +114,9 @@ export default function MeasureEvidencesTab() {
   const { measure } = useOutletContext<{
     measure: MeasureEvidencesTabFragment$key;
   }>();
-  const { measureId, evidenceId, snapshotId } = useParams<{
+  const { measureId, evidenceId } = useParams<{
     measureId: string;
     evidenceId: string;
-    snapshotId?: string;
   }>();
   if (!measureId) {
     throw new Error("Missing :measureId param in route");
@@ -132,7 +131,6 @@ export default function MeasureEvidencesTab() {
   const evidence = evidences.find(e => e.id === evidenceId);
   const organizationId = useOrganizationId();
   const dialogRef = useDialogRef();
-  const isSnapshotMode = Boolean(snapshotId);
 
   usePageTitle(pagination.data.name + " - " + __("Evidences"));
 
@@ -156,11 +154,9 @@ export default function MeasureEvidencesTab() {
               measureId={measureId}
               organizationId={organizationId}
               connectionId={connectionId}
-              hideActions={isSnapshotMode}
-              snapshotId={snapshotId}
             />
           ))}
-          {!isSnapshotMode && pagination.data.canUploadEvidence && (
+          {pagination.data.canUploadEvidence && (
             <TrButton
               colspan={5}
               onClick={() => dialogRef.current?.open()}
@@ -175,16 +171,13 @@ export default function MeasureEvidencesTab() {
         <EvidencePreviewDialog
           key={evidence.id}
           onClose={() => {
-            const baseUrl = isSnapshotMode
-              ? `/organizations/${organizationId}/snapshots/${snapshotId}/risks/measures/${measureId}/evidences`
-              : `/organizations/${organizationId}/measures/${measureId}/evidences`;
-            void navigate(baseUrl);
+            void navigate(`/organizations/${organizationId}/measures/${measureId}/evidences`);
           }}
           evidenceId={evidence.id}
           filename={evidence.file?.fileName || ""}
         />
       )}
-      {!isSnapshotMode && pagination.data.canUploadEvidence && (
+      {pagination.data.canUploadEvidence && (
         <CreateEvidenceDialog
           ref={dialogRef}
           measureId={measureId}
@@ -200,8 +193,6 @@ function EvidenceRow(props: {
   measureId: string;
   organizationId: string;
   connectionId: string;
-  hideActions?: boolean;
-  snapshotId?: string;
 }) {
   const evidence = useFragment(evidenceFragment, props.evidenceKey);
   const { __ } = useTranslate();
@@ -253,9 +244,7 @@ function EvidenceRow(props: {
     );
   };
 
-  const evidenceUrl = props.snapshotId
-    ? `/organizations/${props.organizationId}/snapshots/${props.snapshotId}/risks/measures/${props.measureId}/evidences/${evidence.id}`
-    : `/organizations/${props.organizationId}/measures/${props.measureId}/evidences/${evidence.id}`;
+  const evidenceUrl = `/organizations/${props.organizationId}/measures/${props.measureId}/evidences/${evidence.id}`;
 
   return (
     <>
@@ -275,26 +264,24 @@ function EvidenceRow(props: {
         <Td>{fileSize(__, evidence.file?.size || 0)}</Td>
         <Td>{formatDate(evidence.createdAt)}</Td>
         <Td noLink>
-          {!props.hideActions && (
-            <div className="flex gap-2">
-              <ActionDropdown>
-                <DropdownItem onClick={() => setIsDownloading(true)}>
-                  <IconArrowInbox size={16} />
-                  {__("Download")}
+          <div className="flex gap-2">
+            <ActionDropdown>
+              <DropdownItem onClick={() => setIsDownloading(true)}>
+                <IconArrowInbox size={16} />
+                {__("Download")}
+              </DropdownItem>
+              {evidence.canDelete && (
+                <DropdownItem
+                  variant="danger"
+                  icon={IconTrashCan}
+                  onClick={handleDelete}
+                  disabled={isDeleting}
+                >
+                  {__("Delete")}
                 </DropdownItem>
-                {evidence.canDelete && (
-                  <DropdownItem
-                    variant="danger"
-                    icon={IconTrashCan}
-                    onClick={handleDelete}
-                    disabled={isDeleting}
-                  >
-                    {__("Delete")}
-                  </DropdownItem>
-                )}
-              </ActionDropdown>
-            </div>
-          )}
+              )}
+            </ActionDropdown>
+          </div>
         </Td>
       </Tr>
     </>

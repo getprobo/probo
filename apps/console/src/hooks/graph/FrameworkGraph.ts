@@ -140,12 +140,6 @@ export const frameworkControlNodeQuery = graphql`
         canDeleteAuditMapping: permission(
           action: "core:control:delete-audit-mapping"
         )
-        canCreateSnapshotMapping: permission(
-          action: "core:control:create-snapshot-mapping"
-        )
-        canDeleteSnapshotMapping: permission(
-          action: "core:control:delete-snapshot-mapping"
-        )
         canCreateObligationMapping: permission(
           action: "core:control:create-obligation-mapping"
         )
@@ -189,16 +183,6 @@ export const frameworkControlNodeQuery = graphql`
             node {
               id
               ...LinkedObligationsCardFragment
-            }
-          }
-        }
-        snapshots(first: 100)
-          @connection(key: "FrameworkGraphControl_snapshots") {
-          __id
-          edges {
-            node {
-              id
-              ...LinkedSnapshotsCardFragment
             }
           }
         }

@@ -192,7 +192,7 @@ INSERT INTO document_versions (
 					"tenant_id":       org.tenantID,
 					"organization_id": org.organizationID,
 					"document_id":     documentID,
-					"title":           "Data List",
+					"title":           "Data",
 					"major":           major + 1,
 					"content":         content,
 					"published_at":    snap.publishedAt,
@@ -381,7 +381,7 @@ ORDER BY v.name ASC;
 	}
 
 	docData := docgen.DataListData{
-		Title:            "Data List",
+		Title:            "Data",
 		OrganizationName: orgName,
 		CreatedAt:        publishedAt,
 		TotalData:        len(dataRows),

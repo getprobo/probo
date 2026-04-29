@@ -51,7 +51,6 @@ func NewApplicabilityStatement(a *coredata.ApplicabilityStatement) *Applicabilit
 		StatementOfApplicabilityID: a.StatementOfApplicabilityID,
 		ControlID:                  a.ControlID,
 		OrganizationID:             a.OrganizationID,
-		SnapshotID:                 a.SnapshotID,
 		Applicability:              a.Applicability,
 		Justification:              a.Justification,
 		CreatedAt:                  a.CreatedAt,

@@ -73,8 +73,6 @@ func ResourceTypeName(entityType uint16) string {
 		return "Obligation"
 	case VendorServiceEntityType:
 		return "VendorService"
-	case SnapshotEntityType:
-		return "Snapshot"
 	case ProcessingActivityEntityType:
 		return "ProcessingActivity"
 	case TrustCenterReferenceEntityType:

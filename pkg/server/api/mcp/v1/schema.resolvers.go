@@ -274,10 +274,9 @@ func (r *Resolver) ListRisksTool(ctx context.Context, req *mcp.CallToolRequest, 
 
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
-	noSnapshot := (*gid.GID)(nil)
-	riskFilter := coredata.NewRiskFilter(nil, &noSnapshot)
+	riskFilter := coredata.NewRiskFilter(nil)
 	if input.Filter != nil {
-		riskFilter = coredata.NewRiskFilter(input.Filter.Query, &input.Filter.SnapshotID)
+		riskFilter = coredata.NewRiskFilter(input.Filter.Query)
 	}
 
 	page, err := prb.Risks.ListForOrganizationID(ctx, input.OrganizationID, cursor, riskFilter)
@@ -1511,11 +1510,6 @@ func (r *Resolver) LinkControlTool(ctx context.Context, req *mcp.CallToolRequest
 		if _, _, err := svc.Controls.CreateAuditMapping(ctx, input.ControlID, input.ResourceID); err != nil {
 			return nil, types.LinkControlOutput{}, fmt.Errorf("failed to link control to audit: %w", err)
 		}
-	case coredata.SnapshotEntityType:
-		r.MustAuthorize(ctx, input.ControlID, probo.ActionControlSnapshotMappingCreate)
-		if _, _, err := svc.Controls.CreateSnapshotMapping(ctx, input.ControlID, input.ResourceID); err != nil {
-			return nil, types.LinkControlOutput{}, fmt.Errorf("failed to link control to snapshot: %w", err)
-		}
 	case coredata.ObligationEntityType:
 		r.MustAuthorize(ctx, input.ControlID, probo.ActionControlObligationMappingCreate)
 		if _, _, err := svc.Controls.CreateObligationMapping(ctx, input.ControlID, input.ResourceID); err != nil {
@@ -1546,11 +1540,6 @@ func (r *Resolver) UnlinkControlTool(ctx context.Context, req *mcp.CallToolReque
 		r.MustAuthorize(ctx, input.ControlID, probo.ActionControlAuditMappingDelete)
 		if _, _, err := svc.Controls.DeleteAuditMapping(ctx, input.ControlID, input.ResourceID); err != nil {
 			return nil, types.UnlinkControlOutput{}, fmt.Errorf("failed to unlink control from audit: %w", err)
-		}
-	case coredata.SnapshotEntityType:
-		r.MustAuthorize(ctx, input.ControlID, probo.ActionControlSnapshotMappingDelete)
-		if _, _, err := svc.Controls.DeleteSnapshotMapping(ctx, input.ControlID, input.ResourceID); err != nil {
-			return nil, types.UnlinkControlOutput{}, fmt.Errorf("failed to unlink control from snapshot: %w", err)
 		}
 	case coredata.ObligationEntityType:
 		r.MustAuthorize(ctx, input.ControlID, probo.ActionControlObligationMappingDelete)
@@ -1666,32 +1655,6 @@ func (r *Resolver) ListControlAuditsTool(ctx context.Context, req *mcp.CallToolR
 	}
 
 	return nil, types.NewListControlAuditsOutput(auditPage), nil
-}
-
-func (r *Resolver) ListControlSnapshotsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListControlSnapshotsInput) (*mcp.CallToolResult, types.ListControlSnapshotsOutput, error) {
-	r.MustAuthorize(ctx, input.ControlID, probo.ActionControlGet)
-
-	prb := r.ProboService(ctx, input.ControlID)
-
-	pageOrderBy := page.OrderBy[coredata.SnapshotOrderField]{
-		Field:     coredata.SnapshotOrderFieldCreatedAt,
-		Direction: page.OrderDirectionDesc,
-	}
-	if input.OrderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.SnapshotOrderField]{
-			Field:     input.OrderBy.Field,
-			Direction: input.OrderBy.Direction,
-		}
-	}
-
-	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
-
-	snapshotPage, err := prb.Snapshots.ListForControlID(ctx, input.ControlID, cursor)
-	if err != nil {
-		return nil, types.ListControlSnapshotsOutput{}, fmt.Errorf("failed to list control snapshots: %w", err)
-	}
-
-	return nil, types.NewListControlSnapshotsOutput(snapshotPage), nil
 }
 
 func (r *Resolver) ListRiskObligationsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListRiskObligationsInput) (*mcp.CallToolResult, types.ListRiskObligationsOutput, error) {
@@ -1912,68 +1875,6 @@ func (r *Resolver) DeleteTaskTool(ctx context.Context, req *mcp.CallToolRequest,
 
 	return nil, types.DeleteTaskOutput{
 		DeletedTaskID: input.ID,
-	}, nil
-}
-
-func (r *Resolver) ListSnapshotsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListSnapshotsInput) (*mcp.CallToolResult, types.ListSnapshotsOutput, error) {
-	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionSnapshotList)
-
-	prb := r.ProboService(ctx, input.OrganizationID)
-
-	pageOrderBy := page.OrderBy[coredata.SnapshotOrderField]{
-		Field:     coredata.SnapshotOrderFieldCreatedAt,
-		Direction: page.OrderDirectionDesc,
-	}
-	if input.OrderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.SnapshotOrderField]{
-			Field:     input.OrderBy.Field,
-			Direction: input.OrderBy.Direction,
-		}
-	}
-
-	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
-
-	page, err := prb.Snapshots.ListForOrganizationID(ctx, input.OrganizationID, cursor)
-	if err != nil {
-		panic(fmt.Errorf("cannot list organization snapshots: %w", err))
-	}
-
-	return nil, types.NewListSnapshotsOutput(page), nil
-}
-
-func (r *Resolver) GetSnapshotTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetSnapshotInput) (*mcp.CallToolResult, types.GetSnapshotOutput, error) {
-	r.MustAuthorize(ctx, input.ID, probo.ActionSnapshotGet)
-
-	prb := r.ProboService(ctx, input.ID)
-
-	snapshot, err := prb.Snapshots.Get(ctx, input.ID)
-	if err != nil {
-		return nil, types.GetSnapshotOutput{}, fmt.Errorf("failed to get snapshot: %w", err)
-	}
-	return nil, types.GetSnapshotOutput{
-		Snapshot: types.NewSnapshot(snapshot),
-	}, nil
-}
-
-func (r *Resolver) TakeSnapshotTool(ctx context.Context, req *mcp.CallToolRequest, input *types.TakeSnapshotInput) (*mcp.CallToolResult, types.TakeSnapshotOutput, error) {
-	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionSnapshotCreate)
-
-	prb := r.ProboService(ctx, input.OrganizationID)
-
-	snapshot, err := prb.Snapshots.Create(
-		ctx,
-		&probo.CreateSnapshotRequest{
-			OrganizationID: input.OrganizationID,
-			Name:           input.Name,
-			Description:    input.Description,
-			Type:           input.Type,
-		},
-	)
-	if err != nil {
-		return nil, types.TakeSnapshotOutput{}, fmt.Errorf("failed to take snapshot: %w", err)
-	}
-	return nil, types.TakeSnapshotOutput{
-		Snapshot: types.NewSnapshot(snapshot),
 	}, nil
 }
 
@@ -2314,7 +2215,7 @@ func (r *Resolver) ListMeasureRisksTool(ctx context.Context, req *mcp.CallToolRe
 
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
-	riskPage, err := prb.Risks.ListForMeasureID(ctx, input.MeasureID, cursor, coredata.NewRiskFilter(nil, nil))
+	riskPage, err := prb.Risks.ListForMeasureID(ctx, input.MeasureID, cursor, coredata.NewRiskFilter(nil))
 	if err != nil {
 		return nil, types.ListMeasureRisksOutput{}, fmt.Errorf("failed to list measure risks: %w", err)
 	}
@@ -5189,4 +5090,20 @@ func (r *Resolver) GetCookieConsentRecordTool(ctx context.Context, req *mcp.Call
 		return nil, types.GetCookieConsentRecordOutput{}, fmt.Errorf("cannot get cookie consent record: %w", err)
 	}
 	return nil, types.GetCookieConsentRecordOutput{CookieConsentRecord: types.NewCookieConsentRecord(record)}, nil
+}
+
+func (r *Resolver) PublishRiskListTool(ctx context.Context, req *mcp.CallToolRequest, input *types.PublishRiskListInput) (*mcp.CallToolResult, types.PublishRiskListOutput, error) {
+	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionRiskPublish)
+
+	svc := r.ProboService(ctx, input.OrganizationID)
+
+	document, documentVersion, err := svc.GeneratedDocuments.PublishRiskList(ctx, input.OrganizationID, input.ApproverIds)
+	if err != nil {
+		return nil, types.PublishRiskListOutput{}, fmt.Errorf("cannot publish risk list: %w", err)
+	}
+
+	return nil, types.PublishRiskListOutput{
+		DocumentID:        document.ID,
+		DocumentVersionID: documentVersion.ID,
+	}, nil
 }

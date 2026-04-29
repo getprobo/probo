@@ -58,12 +58,6 @@ export {
 } from "./controls";
 export { getAssetTypeVariant } from "./assets";
 export {
-  getSnapshotTypeLabel,
-  getSnapshotTypeUrlPath,
-  snapshotTypes,
-  validateSnapshotConsistency,
-} from "./snapshots";
-export {
   getAuditStateLabel,
   getAuditStateVariant,
   auditStates,

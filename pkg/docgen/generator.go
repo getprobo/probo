@@ -259,6 +259,35 @@ type (
 		Vendors         string
 	}
 
+	RiskListData struct {
+		Title            string
+		OrganizationName string
+		CreatedAt        time.Time
+		TotalRisks       int
+		Rows             []RiskListRow
+	}
+
+	RiskListRow struct {
+		Name                    string
+		Description             string
+		Category                string
+		Treatment               string
+		Owner                   string
+		InherentLikelihood      int
+		InherentLikelihoodLabel string
+		InherentImpact          int
+		InherentImpactLabel     string
+		InherentRiskScore       int
+		InherentSeverity        string
+		ResidualLikelihood      int
+		ResidualLikelihoodLabel string
+		ResidualImpact          int
+		ResidualImpactLabel     string
+		ResidualRiskScore       int
+		ResidualSeverity        string
+		Note                    string
+	}
+
 	FindingListData struct {
 		Title            string
 		OrganizationName string

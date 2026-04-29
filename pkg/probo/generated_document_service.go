@@ -83,8 +83,6 @@ func (s *GeneratedDocumentService) PublishStatementOfApplicability(
 				}
 			}
 
-			hasApprovers := len(approverIDs) > 0
-
 			if existingDoc == nil {
 				documentID := gid.New(s.svc.scope.GetTenantID(), coredata.DocumentEntityType)
 
@@ -111,16 +109,11 @@ func (s *GeneratedDocumentService) PublishStatementOfApplicability(
 				document = existingDoc
 			}
 
-			var newMajor int
-			if document.CurrentPublishedMajor != nil {
-				newMajor = *document.CurrentPublishedMajor + 1
-			} else {
-				newMajor = 1
-			}
+			newMajor := nextDocumentMajor(document)
 
 			versionStatus := coredata.DocumentVersionStatusPublished
 			var publishedAt *time.Time
-			if hasApprovers {
+			if len(approverIDs) > 0 {
 				versionStatus = coredata.DocumentVersionStatusDraft
 			} else {
 				publishedAt = &now
@@ -144,41 +137,7 @@ func (s *GeneratedDocumentService) PublishStatementOfApplicability(
 				UpdatedAt:      now,
 			}
 
-			if err := documentVersion.Insert(ctx, tx, s.svc.scope); err != nil {
-				if errors.Is(err, coredata.ErrResourceAlreadyExists) {
-					return fmt.Errorf("a version is pending approval, approve or reject it before publishing a new one: %w", err)
-				}
-				return fmt.Errorf("cannot insert document version: %w", err)
-			}
-
-			if hasApprovers {
-				defaultApprovers := &coredata.DocumentDefaultApprovers{}
-				if err := defaultApprovers.MergeByDocumentID(ctx, tx, s.svc.scope, document.ID, soa.OrganizationID, approverIDs); err != nil {
-					return fmt.Errorf("cannot save default approvers: %w", err)
-				}
-
-				_, err := s.svc.DocumentApprovals.RequestApprovalInTx(
-					ctx,
-					tx,
-					document,
-					documentVersion,
-					approverIDs,
-					nil,
-				)
-				if err != nil {
-					return fmt.Errorf("cannot request approval: %w", err)
-				}
-			} else {
-				document.CurrentPublishedMajor = &newMajor
-				document.CurrentPublishedMinor = new(0)
-				document.UpdatedAt = now
-
-				if err := document.Update(ctx, tx, s.svc.scope); err != nil {
-					return fmt.Errorf("cannot update document: %w", err)
-				}
-			}
-
-			return nil
+			return s.publishOrRequestApproval(ctx, tx, document, documentVersion, soa.OrganizationID, approverIDs, newMajor, now)
 		},
 	)
 
@@ -415,12 +374,7 @@ func (s *GeneratedDocumentService) PublishDataList(
 				document = existingDoc
 			}
 
-			var newMajor int
-			if document.CurrentPublishedMajor != nil {
-				newMajor = *document.CurrentPublishedMajor + 1
-			} else {
-				newMajor = 1
-			}
+			newMajor := nextDocumentMajor(document)
 
 			versionStatus := coredata.DocumentVersionStatusPublished
 			var publishedAt *time.Time
@@ -435,7 +389,7 @@ func (s *GeneratedDocumentService) PublishDataList(
 				ID:             documentVersionID,
 				OrganizationID: organizationID,
 				DocumentID:     document.ID,
-				Title:          "Data List",
+				Title:          "Data",
 				Major:          newMajor,
 				Minor:          0,
 				Content:        prosemirrorJSON,
@@ -448,41 +402,7 @@ func (s *GeneratedDocumentService) PublishDataList(
 				UpdatedAt:      now,
 			}
 
-			if err := documentVersion.Insert(ctx, tx, s.svc.scope); err != nil {
-				if errors.Is(err, coredata.ErrResourceAlreadyExists) {
-					return fmt.Errorf("a version is pending approval, approve or reject it before publishing a new one: %w", err)
-				}
-				return fmt.Errorf("cannot insert document version: %w", err)
-			}
-
-			if hasApprovers {
-				defaultApprovers := &coredata.DocumentDefaultApprovers{}
-				if err := defaultApprovers.MergeByDocumentID(ctx, tx, s.svc.scope, document.ID, organizationID, approverIDs); err != nil {
-					return fmt.Errorf("cannot save default approvers: %w", err)
-				}
-
-				_, err := s.svc.DocumentApprovals.RequestApprovalInTx(
-					ctx,
-					tx,
-					document,
-					documentVersion,
-					approverIDs,
-					nil,
-				)
-				if err != nil {
-					return fmt.Errorf("cannot request approval: %w", err)
-				}
-			} else {
-				document.CurrentPublishedMajor = &newMajor
-				document.CurrentPublishedMinor = new(0)
-				document.UpdatedAt = now
-
-				if err := document.Update(ctx, tx, s.svc.scope); err != nil {
-					return fmt.Errorf("cannot update document: %w", err)
-				}
-			}
-
-			return nil
+			return s.publishOrRequestApproval(ctx, tx, document, documentVersion, organizationID, approverIDs, newMajor, now)
 		},
 	)
 
@@ -524,7 +444,7 @@ func (s *GeneratedDocumentService) buildDataListDocumentData(
 
 	if len(data) == 0 {
 		return docgen.DataListData{
-			Title:            "Data List",
+			Title:            "Data",
 			OrganizationName: organization.Name,
 			CreatedAt:        time.Now(),
 			TotalData:        0,
@@ -581,7 +501,7 @@ func (s *GeneratedDocumentService) buildDataListDocumentData(
 	}
 
 	return docgen.DataListData{
-		Title:            "Data List",
+		Title:            "Data",
 		OrganizationName: organization.Name,
 		CreatedAt:        time.Now(),
 		TotalData:        len(data),
@@ -705,12 +625,7 @@ func (s *GeneratedDocumentService) PublishAssetList(
 				document = existingDoc
 			}
 
-			var newMajor int
-			if document.CurrentPublishedMajor != nil {
-				newMajor = *document.CurrentPublishedMajor + 1
-			} else {
-				newMajor = 1
-			}
+			newMajor := nextDocumentMajor(document)
 
 			versionStatus := coredata.DocumentVersionStatusPublished
 			var publishedAt *time.Time
@@ -725,7 +640,7 @@ func (s *GeneratedDocumentService) PublishAssetList(
 				ID:             documentVersionID,
 				OrganizationID: organizationID,
 				DocumentID:     document.ID,
-				Title:          "Asset List",
+				Title:          "Assets",
 				Major:          newMajor,
 				Minor:          0,
 				Content:        prosemirrorJSON,
@@ -738,41 +653,7 @@ func (s *GeneratedDocumentService) PublishAssetList(
 				UpdatedAt:      now,
 			}
 
-			if err := documentVersion.Insert(ctx, tx, s.svc.scope); err != nil {
-				if errors.Is(err, coredata.ErrResourceAlreadyExists) {
-					return fmt.Errorf("a version is pending approval, approve or reject it before publishing a new one: %w", err)
-				}
-				return fmt.Errorf("cannot insert document version: %w", err)
-			}
-
-			if hasApprovers {
-				defaultApprovers := &coredata.DocumentDefaultApprovers{}
-				if err := defaultApprovers.MergeByDocumentID(ctx, tx, s.svc.scope, document.ID, organizationID, approverIDs); err != nil {
-					return fmt.Errorf("cannot save default approvers: %w", err)
-				}
-
-				_, err := s.svc.DocumentApprovals.RequestApprovalInTx(
-					ctx,
-					tx,
-					document,
-					documentVersion,
-					approverIDs,
-					nil,
-				)
-				if err != nil {
-					return fmt.Errorf("cannot request approval: %w", err)
-				}
-			} else {
-				document.CurrentPublishedMajor = &newMajor
-				document.CurrentPublishedMinor = new(0)
-				document.UpdatedAt = now
-
-				if err := document.Update(ctx, tx, s.svc.scope); err != nil {
-					return fmt.Errorf("cannot update document: %w", err)
-				}
-			}
-
-			return nil
+			return s.publishOrRequestApproval(ctx, tx, document, documentVersion, organizationID, approverIDs, newMajor, now)
 		},
 	)
 
@@ -814,7 +695,7 @@ func (s *GeneratedDocumentService) buildAssetListDocumentData(
 
 	if len(assets) == 0 {
 		return docgen.AssetListData{
-			Title:            "Asset List",
+			Title:            "Assets",
 			OrganizationName: organization.Name,
 			CreatedAt:        time.Now(),
 			TotalAssets:      0,
@@ -873,7 +754,7 @@ func (s *GeneratedDocumentService) buildAssetListDocumentData(
 	}
 
 	return docgen.AssetListData{
-		Title:            "Asset List",
+		Title:            "Assets",
 		OrganizationName: organization.Name,
 		CreatedAt:        time.Now(),
 		TotalAssets:      len(assets),
@@ -1016,12 +897,7 @@ func (s *GeneratedDocumentService) PublishFindingList(
 				document = existingDoc
 			}
 
-			var newMajor int
-			if document.CurrentPublishedMajor != nil {
-				newMajor = *document.CurrentPublishedMajor + 1
-			} else {
-				newMajor = 1
-			}
+			newMajor := nextDocumentMajor(document)
 
 			versionStatus := coredata.DocumentVersionStatusPublished
 			var publishedAt *time.Time
@@ -1036,7 +912,7 @@ func (s *GeneratedDocumentService) PublishFindingList(
 				ID:             documentVersionID,
 				OrganizationID: organizationID,
 				DocumentID:     document.ID,
-				Title:          "Finding List",
+				Title:          "Findings",
 				Major:          newMajor,
 				Minor:          0,
 				Content:        prosemirrorJSON,
@@ -1049,41 +925,7 @@ func (s *GeneratedDocumentService) PublishFindingList(
 				UpdatedAt:      now,
 			}
 
-			if err := documentVersion.Insert(ctx, tx, s.svc.scope); err != nil {
-				if errors.Is(err, coredata.ErrResourceAlreadyExists) {
-					return fmt.Errorf("a version is pending approval, approve or reject it before publishing a new one: %w", err)
-				}
-				return fmt.Errorf("cannot insert document version: %w", err)
-			}
-
-			if hasApprovers {
-				defaultApprovers := &coredata.DocumentDefaultApprovers{}
-				if err := defaultApprovers.MergeByDocumentID(ctx, tx, s.svc.scope, document.ID, organizationID, approverIDs); err != nil {
-					return fmt.Errorf("cannot save default approvers: %w", err)
-				}
-
-				_, err := s.svc.DocumentApprovals.RequestApprovalInTx(
-					ctx,
-					tx,
-					document,
-					documentVersion,
-					approverIDs,
-					nil,
-				)
-				if err != nil {
-					return fmt.Errorf("cannot request approval: %w", err)
-				}
-			} else {
-				document.CurrentPublishedMajor = &newMajor
-				document.CurrentPublishedMinor = new(0)
-				document.UpdatedAt = now
-
-				if err := document.Update(ctx, tx, s.svc.scope); err != nil {
-					return fmt.Errorf("cannot update document: %w", err)
-				}
-			}
-
-			return nil
+			return s.publishOrRequestApproval(ctx, tx, document, documentVersion, organizationID, approverIDs, newMajor, now)
 		},
 	)
 
@@ -1125,7 +967,7 @@ func (s *GeneratedDocumentService) buildFindingListDocumentData(
 
 	if len(findings) == 0 {
 		return docgen.FindingListData{
-			Title:            "Finding List",
+			Title:            "Findings",
 			OrganizationName: organization.Name,
 			CreatedAt:        time.Now(),
 			TotalFindings:    0,
@@ -1216,7 +1058,7 @@ func (s *GeneratedDocumentService) buildFindingListDocumentData(
 	}
 
 	return docgen.FindingListData{
-		Title:            "Finding List",
+		Title:            "Findings",
 		OrganizationName: organization.Name,
 		CreatedAt:        time.Now(),
 		TotalFindings:    len(findings),
@@ -1372,12 +1214,7 @@ func (s *GeneratedDocumentService) PublishObligationList(
 				document = existingDoc
 			}
 
-			var newMajor int
-			if document.CurrentPublishedMajor != nil {
-				newMajor = *document.CurrentPublishedMajor + 1
-			} else {
-				newMajor = 1
-			}
+			newMajor := nextDocumentMajor(document)
 
 			versionStatus := coredata.DocumentVersionStatusPublished
 			var publishedAt *time.Time
@@ -1392,7 +1229,7 @@ func (s *GeneratedDocumentService) PublishObligationList(
 				ID:             documentVersionID,
 				OrganizationID: organizationID,
 				DocumentID:     document.ID,
-				Title:          "Obligation List",
+				Title:          "Obligations",
 				Major:          newMajor,
 				Minor:          0,
 				Content:        prosemirrorJSON,
@@ -1405,41 +1242,7 @@ func (s *GeneratedDocumentService) PublishObligationList(
 				UpdatedAt:      now,
 			}
 
-			if err := documentVersion.Insert(ctx, tx, s.svc.scope); err != nil {
-				if errors.Is(err, coredata.ErrResourceAlreadyExists) {
-					return fmt.Errorf("a version is pending approval, approve or reject it before publishing a new one: %w", err)
-				}
-				return fmt.Errorf("cannot insert document version: %w", err)
-			}
-
-			if hasApprovers {
-				defaultApprovers := &coredata.DocumentDefaultApprovers{}
-				if err := defaultApprovers.MergeByDocumentID(ctx, tx, s.svc.scope, document.ID, organizationID, approverIDs); err != nil {
-					return fmt.Errorf("cannot save default approvers: %w", err)
-				}
-
-				_, err := s.svc.DocumentApprovals.RequestApprovalInTx(
-					ctx,
-					tx,
-					document,
-					documentVersion,
-					approverIDs,
-					nil,
-				)
-				if err != nil {
-					return fmt.Errorf("cannot request approval: %w", err)
-				}
-			} else {
-				document.CurrentPublishedMajor = &newMajor
-				document.CurrentPublishedMinor = new(0)
-				document.UpdatedAt = now
-
-				if err := document.Update(ctx, tx, s.svc.scope); err != nil {
-					return fmt.Errorf("cannot update document: %w", err)
-				}
-			}
-
-			return nil
+			return s.publishOrRequestApproval(ctx, tx, document, documentVersion, organizationID, approverIDs, newMajor, now)
 		},
 	)
 
@@ -1481,7 +1284,7 @@ func (s *GeneratedDocumentService) buildObligationListDocumentData(
 
 	if len(obligations) == 0 {
 		return docgen.ObligationListData{
-			Title:            "Obligation List",
+			Title:            "Obligations",
 			OrganizationName: organization.Name,
 			CreatedAt:        time.Now(),
 			TotalObligations: 0,
@@ -1563,7 +1366,7 @@ func (s *GeneratedDocumentService) buildObligationListDocumentData(
 	}
 
 	return docgen.ObligationListData{
-		Title:            "Obligation List",
+		Title:            "Obligations",
 		OrganizationName: organization.Name,
 		CreatedAt:        time.Now(),
 		TotalObligations: len(obligations),
@@ -1696,12 +1499,7 @@ func (s *GeneratedDocumentService) PublishProcessingActivityList(
 				document = existingDoc
 			}
 
-			var newMajor int
-			if document.CurrentPublishedMajor != nil {
-				newMajor = *document.CurrentPublishedMajor + 1
-			} else {
-				newMajor = 1
-			}
+			newMajor := nextDocumentMajor(document)
 
 			versionStatus := coredata.DocumentVersionStatusPublished
 			var publishedAt *time.Time
@@ -1729,41 +1527,7 @@ func (s *GeneratedDocumentService) PublishProcessingActivityList(
 				UpdatedAt:      now,
 			}
 
-			if err := documentVersion.Insert(ctx, tx, s.svc.scope); err != nil {
-				if errors.Is(err, coredata.ErrResourceAlreadyExists) {
-					return fmt.Errorf("a version is pending approval, approve or reject it before publishing a new one: %w", err)
-				}
-				return fmt.Errorf("cannot insert document version: %w", err)
-			}
-
-			if hasApprovers {
-				defaultApprovers := &coredata.DocumentDefaultApprovers{}
-				if err := defaultApprovers.MergeByDocumentID(ctx, tx, s.svc.scope, document.ID, organizationID, approverIDs); err != nil {
-					return fmt.Errorf("cannot save default approvers: %w", err)
-				}
-
-				_, err := s.svc.DocumentApprovals.RequestApprovalInTx(
-					ctx,
-					tx,
-					document,
-					documentVersion,
-					approverIDs,
-					nil,
-				)
-				if err != nil {
-					return fmt.Errorf("cannot request approval: %w", err)
-				}
-			} else {
-				document.CurrentPublishedMajor = &newMajor
-				document.CurrentPublishedMinor = new(0)
-				document.UpdatedAt = now
-
-				if err := document.Update(ctx, tx, s.svc.scope); err != nil {
-					return fmt.Errorf("cannot update document: %w", err)
-				}
-			}
-
-			return nil
+			return s.publishOrRequestApproval(ctx, tx, document, documentVersion, organizationID, approverIDs, newMajor, now)
 		},
 	)
 
@@ -2115,12 +1879,7 @@ func (s *GeneratedDocumentService) PublishDataProtectionImpactAssessmentList(
 				document = existingDoc
 			}
 
-			var newMajor int
-			if document.CurrentPublishedMajor != nil {
-				newMajor = *document.CurrentPublishedMajor + 1
-			} else {
-				newMajor = 1
-			}
+			newMajor := nextDocumentMajor(document)
 
 			versionStatus := coredata.DocumentVersionStatusPublished
 			var publishedAt *time.Time
@@ -2148,41 +1907,7 @@ func (s *GeneratedDocumentService) PublishDataProtectionImpactAssessmentList(
 				UpdatedAt:      now,
 			}
 
-			if err := documentVersion.Insert(ctx, tx, s.svc.scope); err != nil {
-				if errors.Is(err, coredata.ErrResourceAlreadyExists) {
-					return fmt.Errorf("a version is pending approval, approve or reject it before publishing a new one: %w", err)
-				}
-				return fmt.Errorf("cannot insert document version: %w", err)
-			}
-
-			if hasApprovers {
-				defaultApprovers := &coredata.DocumentDefaultApprovers{}
-				if err := defaultApprovers.MergeByDocumentID(ctx, tx, s.svc.scope, document.ID, organizationID, approverIDs); err != nil {
-					return fmt.Errorf("cannot save default approvers: %w", err)
-				}
-
-				_, err := s.svc.DocumentApprovals.RequestApprovalInTx(
-					ctx,
-					tx,
-					document,
-					documentVersion,
-					approverIDs,
-					nil,
-				)
-				if err != nil {
-					return fmt.Errorf("cannot request approval: %w", err)
-				}
-			} else {
-				document.CurrentPublishedMajor = &newMajor
-				document.CurrentPublishedMinor = new(0)
-				document.UpdatedAt = now
-
-				if err := document.Update(ctx, tx, s.svc.scope); err != nil {
-					return fmt.Errorf("cannot update document: %w", err)
-				}
-			}
-
-			return nil
+			return s.publishOrRequestApproval(ctx, tx, document, documentVersion, organizationID, approverIDs, newMajor, now)
 		},
 	)
 
@@ -2379,12 +2104,7 @@ func (s *GeneratedDocumentService) PublishTransferImpactAssessmentList(
 				document = existingDoc
 			}
 
-			var newMajor int
-			if document.CurrentPublishedMajor != nil {
-				newMajor = *document.CurrentPublishedMajor + 1
-			} else {
-				newMajor = 1
-			}
+			newMajor := nextDocumentMajor(document)
 
 			versionStatus := coredata.DocumentVersionStatusPublished
 			var publishedAt *time.Time
@@ -2412,41 +2132,7 @@ func (s *GeneratedDocumentService) PublishTransferImpactAssessmentList(
 				UpdatedAt:      now,
 			}
 
-			if err := documentVersion.Insert(ctx, tx, s.svc.scope); err != nil {
-				if errors.Is(err, coredata.ErrResourceAlreadyExists) {
-					return fmt.Errorf("a version is pending approval, approve or reject it before publishing a new one: %w", err)
-				}
-				return fmt.Errorf("cannot insert document version: %w", err)
-			}
-
-			if hasApprovers {
-				defaultApprovers := &coredata.DocumentDefaultApprovers{}
-				if err := defaultApprovers.MergeByDocumentID(ctx, tx, s.svc.scope, document.ID, organizationID, approverIDs); err != nil {
-					return fmt.Errorf("cannot save default approvers: %w", err)
-				}
-
-				_, err := s.svc.DocumentApprovals.RequestApprovalInTx(
-					ctx,
-					tx,
-					document,
-					documentVersion,
-					approverIDs,
-					nil,
-				)
-				if err != nil {
-					return fmt.Errorf("cannot request approval: %w", err)
-				}
-			} else {
-				document.CurrentPublishedMajor = &newMajor
-				document.CurrentPublishedMinor = new(0)
-				document.UpdatedAt = now
-
-				if err := document.Update(ctx, tx, s.svc.scope); err != nil {
-					return fmt.Errorf("cannot update document: %w", err)
-				}
-			}
-
-			return nil
+			return s.publishOrRequestApproval(ctx, tx, document, documentVersion, organizationID, approverIDs, newMajor, now)
 		},
 	)
 
@@ -2656,12 +2342,7 @@ func (s *GeneratedDocumentService) PublishVendorList(
 				document = existingDoc
 			}
 
-			var newMajor int
-			if document.CurrentPublishedMajor != nil {
-				newMajor = *document.CurrentPublishedMajor + 1
-			} else {
-				newMajor = 1
-			}
+			newMajor := nextDocumentMajor(document)
 
 			versionStatus := coredata.DocumentVersionStatusPublished
 			var publishedAt *time.Time
@@ -2689,42 +2370,7 @@ func (s *GeneratedDocumentService) PublishVendorList(
 				UpdatedAt:      now,
 			}
 
-			if err := documentVersion.Insert(ctx, tx, s.svc.scope); err != nil {
-				if errors.Is(err, coredata.ErrResourceAlreadyExists) {
-					return fmt.Errorf("a version is pending approval, approve or reject it before publishing a new one: %w", err)
-				}
-				return fmt.Errorf("cannot insert document version: %w", err)
-			}
-
-			if hasApprovers {
-				defaultApprovers := &coredata.DocumentDefaultApprovers{}
-				if err := defaultApprovers.MergeByDocumentID(ctx, tx, s.svc.scope, document.ID, organizationID, approverIDs); err != nil {
-					return fmt.Errorf("cannot save default approvers: %w", err)
-				}
-
-				_, err := s.svc.DocumentApprovals.RequestApprovalInTx(
-					ctx,
-					tx,
-					document,
-					documentVersion,
-					approverIDs,
-					nil,
-				)
-				if err != nil {
-					return fmt.Errorf("cannot request approval: %w", err)
-				}
-			} else {
-				zero := 0
-				document.CurrentPublishedMajor = &newMajor
-				document.CurrentPublishedMinor = &zero
-				document.UpdatedAt = now
-
-				if err := document.Update(ctx, tx, s.svc.scope); err != nil {
-					return fmt.Errorf("cannot update document: %w", err)
-				}
-			}
-
-			return nil
+			return s.publishOrRequestApproval(ctx, tx, document, documentVersion, organizationID, approverIDs, newMajor, now)
 		},
 	)
 
@@ -3095,4 +2741,351 @@ func BuildVendorListDocument(data docgen.VendorListData) (string, error) {
 		return "", fmt.Errorf("cannot execute vendor list template: %w", err)
 	}
 	return buf.String(), nil
+}
+
+var riskListTemplate = template.Must(
+	template.New("risk_list.json.tmpl").
+		Funcs(template.FuncMap{
+			"json": func(v any) (string, error) {
+				b, err := json.Marshal(v)
+				if err != nil {
+					return "", err
+				}
+				return string(b), nil
+			},
+			"printf": fmt.Sprintf,
+			"add":    func(a, b int) int { return a + b },
+		}).
+		ParseFS(Templates, "templates/risk_list.json.tmpl"),
+)
+
+func BuildRiskListDocument(data docgen.RiskListData) (string, error) {
+	var buf bytes.Buffer
+	if err := riskListTemplate.Execute(&buf, data); err != nil {
+		return "", fmt.Errorf("cannot execute risk list template: %w", err)
+	}
+	return buf.String(), nil
+}
+
+func (s *GeneratedDocumentService) PublishRiskList(
+	ctx context.Context,
+	organizationID gid.GID,
+	approverIDs []gid.GID,
+) (*coredata.Document, *coredata.DocumentVersion, error) {
+	var (
+		document        *coredata.Document
+		documentVersion *coredata.DocumentVersion
+	)
+
+	err := s.svc.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			organization := &coredata.Organization{}
+			if err := organization.LoadByID(ctx, tx, s.svc.scope, organizationID); err != nil {
+				return fmt.Errorf("cannot load organization: %w", err)
+			}
+
+			documentData, err := s.buildRiskListDocumentData(ctx, tx, organization)
+			if err != nil {
+				return fmt.Errorf("cannot build document data: %w", err)
+			}
+
+			prosemirrorJSON, err := BuildRiskListDocument(documentData)
+			if err != nil {
+				return fmt.Errorf("cannot build prosemirror document: %w", err)
+			}
+
+			now := time.Now()
+
+			risk := coredata.Risk{}
+			riskDocumentID, err := risk.GetGeneratedDocumentID(ctx, tx, organizationID)
+			if err != nil {
+				return fmt.Errorf("cannot query generated documents: %w", err)
+			}
+
+			var existingDoc *coredata.Document
+			if riskDocumentID != nil {
+				doc := &coredata.Document{}
+				err = doc.LoadByID(ctx, tx, s.svc.scope, *riskDocumentID)
+				if err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
+					return fmt.Errorf("cannot load risk list document: %w", err)
+				}
+
+				if err == nil && doc.ArchivedAt == nil {
+					existingDoc = doc
+				} else {
+					if err := risk.ClearGeneratedDocumentID(ctx, tx, []gid.GID{*riskDocumentID}); err != nil {
+						return fmt.Errorf("cannot clear document reference: %w", err)
+					}
+				}
+			}
+
+			hasApprovers := len(approverIDs) > 0
+
+			if existingDoc == nil {
+				documentID := gid.New(s.svc.scope.GetTenantID(), coredata.DocumentEntityType)
+
+				document = &coredata.Document{
+					ID:                    documentID,
+					OrganizationID:        organizationID,
+					WriteMode:             coredata.DocumentWriteModeGenerated,
+					TrustCenterVisibility: coredata.TrustCenterVisibilityNone,
+					Status:                coredata.DocumentStatusActive,
+					CreatedAt:             now,
+					UpdatedAt:             now,
+				}
+
+				if err := document.Insert(ctx, tx, s.svc.scope); err != nil {
+					return fmt.Errorf("cannot insert document: %w", err)
+				}
+
+				if err := risk.UpsertGeneratedDocumentID(ctx, tx, organizationID, s.svc.scope.GetTenantID(), documentID); err != nil {
+					return fmt.Errorf("cannot upsert generated documents: %w", err)
+				}
+			} else {
+				document = existingDoc
+			}
+
+			newMajor := nextDocumentMajor(document)
+
+			versionStatus := coredata.DocumentVersionStatusPublished
+			var publishedAt *time.Time
+			if hasApprovers {
+				versionStatus = coredata.DocumentVersionStatusDraft
+			} else {
+				publishedAt = &now
+			}
+
+			documentVersionID := gid.New(s.svc.scope.GetTenantID(), coredata.DocumentVersionEntityType)
+			documentVersion = &coredata.DocumentVersion{
+				ID:             documentVersionID,
+				OrganizationID: organizationID,
+				DocumentID:     document.ID,
+				Title:          "Risks",
+				Major:          newMajor,
+				Minor:          0,
+				Content:        prosemirrorJSON,
+				Status:         versionStatus,
+				Classification: coredata.DocumentClassificationConfidential,
+				DocumentType:   coredata.DocumentTypeRegister,
+				Orientation:    coredata.DocumentVersionOrientationPortrait,
+				PublishedAt:    publishedAt,
+				CreatedAt:      now,
+				UpdatedAt:      now,
+			}
+
+			return s.publishOrRequestApproval(ctx, tx, document, documentVersion, organizationID, approverIDs, newMajor, now)
+		},
+	)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return document, documentVersion, nil
+}
+
+func (s *GeneratedDocumentService) GetRisksDocumentID(
+	ctx context.Context,
+	organizationID gid.GID,
+) (*gid.GID, error) {
+	var riskDocumentID *gid.GID
+
+	err := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		risk := coredata.Risk{}
+		var err error
+		riskDocumentID, err = risk.GetGeneratedDocumentID(ctx, conn, organizationID)
+		return err
+	})
+	if err != nil {
+		return nil, fmt.Errorf("cannot get risk list document ID: %w", err)
+	}
+
+	return riskDocumentID, nil
+}
+
+func (s *GeneratedDocumentService) buildRiskListDocumentData(
+	ctx context.Context,
+	conn pg.Querier,
+	organization *coredata.Organization,
+) (docgen.RiskListData, error) {
+	var risks coredata.Risks
+	if err := risks.LoadAllByOrganizationID(ctx, conn, s.svc.scope, organization.ID); err != nil {
+		return docgen.RiskListData{}, fmt.Errorf("cannot load risks: %w", err)
+	}
+
+	if len(risks) == 0 {
+		return docgen.RiskListData{
+			Title:            "Risks",
+			OrganizationName: organization.Name,
+			CreatedAt:        time.Now(),
+			TotalRisks:       0,
+		}, nil
+	}
+
+	ownerIDs := make([]gid.GID, 0, len(risks))
+	ownerIDSet := make(map[gid.GID]struct{})
+	for _, r := range risks {
+		if r.OwnerID != nil {
+			if _, ok := ownerIDSet[*r.OwnerID]; !ok {
+				ownerIDs = append(ownerIDs, *r.OwnerID)
+				ownerIDSet[*r.OwnerID] = struct{}{}
+			}
+		}
+	}
+
+	profileMap := make(map[gid.GID]*coredata.MembershipProfile)
+	if len(ownerIDs) > 0 {
+		var profiles coredata.MembershipProfiles
+		if err := profiles.LoadByIDs(ctx, conn, s.svc.scope, ownerIDs); err != nil {
+			return docgen.RiskListData{}, fmt.Errorf("cannot load profiles: %w", err)
+		}
+
+		for _, p := range profiles {
+			profileMap[p.ID] = p
+		}
+	}
+
+	rows := make([]docgen.RiskListRow, 0, len(risks))
+	for _, r := range risks {
+		rows = append(rows, docgen.RiskListRow{
+			Name:                    r.Name,
+			Description:             derefStringOrNotSpecified(r.Description),
+			Category:                stringOrNotSpecified(r.Category),
+			Treatment:               formatRiskTreatment(r.Treatment),
+			Owner:                   lookupProfileName(profileMap, r.OwnerID),
+			InherentLikelihood:      r.InherentLikelihood,
+			InherentLikelihoodLabel: riskLikelihoodLabel(r.InherentLikelihood),
+			InherentImpact:          r.InherentImpact,
+			InherentImpactLabel:     riskImpactLabel(r.InherentImpact),
+			InherentRiskScore:       r.InherentRiskScore,
+			InherentSeverity:        riskSeverityLabel(r.InherentRiskScore),
+			ResidualLikelihood:      r.ResidualLikelihood,
+			ResidualLikelihoodLabel: riskLikelihoodLabel(r.ResidualLikelihood),
+			ResidualImpact:          r.ResidualImpact,
+			ResidualImpactLabel:     riskImpactLabel(r.ResidualImpact),
+			ResidualRiskScore:       r.ResidualRiskScore,
+			ResidualSeverity:        riskSeverityLabel(r.ResidualRiskScore),
+			Note:                    stringOrNotSpecified(r.Note),
+		})
+	}
+
+	return docgen.RiskListData{
+		Title:            "Risks",
+		OrganizationName: organization.Name,
+		CreatedAt:        time.Now(),
+		TotalRisks:       len(risks),
+		Rows:             rows,
+	}, nil
+}
+
+func riskLikelihoodLabel(v int) string {
+	switch v {
+	case 1:
+		return "Improbable"
+	case 2:
+		return "Remote"
+	case 3:
+		return "Occasional"
+	case 4:
+		return "Probable"
+	case 5:
+		return "Frequent"
+	default:
+		return "Unknown"
+	}
+}
+
+func riskImpactLabel(v int) string {
+	switch v {
+	case 1:
+		return "Negligible"
+	case 2:
+		return "Low"
+	case 3:
+		return "Moderate"
+	case 4:
+		return "Significant"
+	case 5:
+		return "Catastrophic"
+	default:
+		return "Unknown"
+	}
+}
+
+func riskSeverityLabel(score int) string {
+	switch {
+	case score >= 15:
+		return "Critical"
+	case score >= 5:
+		return "High"
+	default:
+		return "Low"
+	}
+}
+
+func formatRiskTreatment(t coredata.RiskTreatment) string {
+	switch t {
+	case coredata.RiskTreatmentMitigated:
+		return "Mitigated"
+	case coredata.RiskTreatmentAccepted:
+		return "Accepted"
+	case coredata.RiskTreatmentAvoided:
+		return "Avoided"
+	case coredata.RiskTreatmentTransferred:
+		return "Transferred"
+	default:
+		return stringOrNotSpecified(string(t))
+	}
+}
+
+// nextDocumentMajor returns the major version to use for a new published
+// version of a generated document.
+func nextDocumentMajor(doc *coredata.Document) int {
+	if doc.CurrentPublishedMajor != nil {
+		return *doc.CurrentPublishedMajor + 1
+	}
+	return 1
+}
+
+// publishOrRequestApproval inserts a freshly built generated document version
+// and either requests approval (if approverIDs is non-empty) or marks the
+// document as currently published at newMajor.0. The pending-approval insert
+// conflict is mapped to a friendlier error.
+func (s *GeneratedDocumentService) publishOrRequestApproval(
+	ctx context.Context,
+	tx pg.Tx,
+	document *coredata.Document,
+	version *coredata.DocumentVersion,
+	organizationID gid.GID,
+	approverIDs []gid.GID,
+	newMajor int,
+	now time.Time,
+) error {
+	if err := version.Insert(ctx, tx, s.svc.scope); err != nil {
+		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
+			return fmt.Errorf("a version is pending approval, approve or reject it before publishing a new one: %w", err)
+		}
+		return fmt.Errorf("cannot insert document version: %w", err)
+	}
+
+	if len(approverIDs) > 0 {
+		defaultApprovers := &coredata.DocumentDefaultApprovers{}
+		if err := defaultApprovers.MergeByDocumentID(ctx, tx, s.svc.scope, document.ID, organizationID, approverIDs); err != nil {
+			return fmt.Errorf("cannot save default approvers: %w", err)
+		}
+		if _, err := s.svc.DocumentApprovals.RequestApprovalInTx(ctx, tx, document, version, approverIDs, nil); err != nil {
+			return fmt.Errorf("cannot request approval: %w", err)
+		}
+		return nil
+	}
+
+	document.CurrentPublishedMajor = &newMajor
+	document.CurrentPublishedMinor = new(0)
+	document.UpdatedAt = now
+
+	if err := document.Update(ctx, tx, s.svc.scope); err != nil {
+		return fmt.Errorf("cannot update document: %w", err)
+	}
+	return nil
 }

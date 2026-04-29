@@ -286,16 +286,10 @@ type Organization implements Node {
         last: Int
         before: CursorKey
         orderBy: RiskOrder
-        filter: RiskFilter = { snapshotId: null }
+        filter: RiskFilter
     ): RiskConnection! @goField(forceResolver: true)
 
-    snapshots(
-        first: Int
-        after: CursorKey
-        last: Int
-        before: CursorKey
-        orderBy: SnapshotOrder
-    ): SnapshotConnection! @goField(forceResolver: true)
+    risksDocument: Document @goField(forceResolver: true)
 
     tasks(
         first: Int

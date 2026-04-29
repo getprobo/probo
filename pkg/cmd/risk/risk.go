@@ -20,6 +20,7 @@ import (
 	"go.probo.inc/probo/pkg/cmd/risk/create"
 	"go.probo.inc/probo/pkg/cmd/risk/delete"
 	"go.probo.inc/probo/pkg/cmd/risk/list"
+	"go.probo.inc/probo/pkg/cmd/risk/publish"
 	"go.probo.inc/probo/pkg/cmd/risk/update"
 	"go.probo.inc/probo/pkg/cmd/risk/view"
 )
@@ -35,6 +36,7 @@ func NewCmdRisk(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(view.NewCmdView(f))
 	cmd.AddCommand(update.NewCmdUpdate(f))
 	cmd.AddCommand(delete.NewCmdDelete(f))
+	cmd.AddCommand(publish.NewCmdPublish(f))
 
 	return cmd
 }

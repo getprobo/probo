@@ -300,37 +300,6 @@ func (r *controlResolver) Obligations(ctx context.Context, obj *types.Control, f
 	return types.NewObligationConnection(page, r, obj.ID), nil
 }
 
-// Snapshots is the resolver for the snapshots field.
-func (r *controlResolver) Snapshots(ctx context.Context, obj *types.Control, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.SnapshotOrderBy) (*types.SnapshotConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionSnapshotList); err != nil {
-		return nil, err
-	}
-
-	prb := r.ProboService(ctx, obj.ID.TenantID())
-
-	pageOrderBy := page.OrderBy[coredata.SnapshotOrderField]{
-		Field:     coredata.SnapshotOrderFieldCreatedAt,
-		Direction: page.OrderDirectionDesc,
-	}
-
-	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.SnapshotOrderField]{
-			Field:     orderBy.Field,
-			Direction: orderBy.Direction,
-		}
-	}
-
-	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
-
-	page, err := prb.Snapshots.ListForControlID(ctx, obj.ID, cursor)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list control snapshots", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return types.NewSnapshotConnection(page, r, obj.ID), nil
-}
-
 // Permission is the resolver for the permission field.
 func (r *controlResolver) Permission(ctx context.Context, obj *types.Control, action string) (bool, error) {
 	return r.Resolver.Permission(ctx, obj, action)
@@ -705,46 +674,6 @@ func (r *mutationResolver) DeleteControlObligationMapping(ctx context.Context, i
 	return &types.DeleteControlObligationMappingPayload{
 		DeletedControlID:    control.ID,
 		DeletedObligationID: obligation.ID,
-	}, nil
-}
-
-// CreateControlSnapshotMapping is the resolver for the createControlSnapshotMapping field.
-func (r *mutationResolver) CreateControlSnapshotMapping(ctx context.Context, input types.CreateControlSnapshotMappingInput) (*types.CreateControlSnapshotMappingPayload, error) {
-	if err := r.authorize(ctx, input.ControlID, probo.ActionControlSnapshotMappingCreate); err != nil {
-		return nil, err
-	}
-
-	prb := r.ProboService(ctx, input.SnapshotID.TenantID())
-
-	control, snapshot, err := prb.Controls.CreateSnapshotMapping(ctx, input.ControlID, input.SnapshotID)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot create control snapshot mapping", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return &types.CreateControlSnapshotMappingPayload{
-		ControlEdge:  types.NewControlEdge(control, coredata.ControlOrderFieldCreatedAt),
-		SnapshotEdge: types.NewSnapshotEdge(snapshot, coredata.SnapshotOrderFieldCreatedAt),
-	}, nil
-}
-
-// DeleteControlSnapshotMapping is the resolver for the deleteControlSnapshotMapping field.
-func (r *mutationResolver) DeleteControlSnapshotMapping(ctx context.Context, input types.DeleteControlSnapshotMappingInput) (*types.DeleteControlSnapshotMappingPayload, error) {
-	if err := r.authorize(ctx, input.ControlID, probo.ActionControlSnapshotMappingDelete); err != nil {
-		return nil, err
-	}
-
-	prb := r.ProboService(ctx, input.SnapshotID.TenantID())
-
-	control, snapshot, err := prb.Controls.DeleteSnapshotMapping(ctx, input.ControlID, input.SnapshotID)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot delete control snapshot mapping", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return &types.DeleteControlSnapshotMappingPayload{
-		DeletedControlID:  control.ID,
-		DeletedSnapshotID: snapshot.ID,
 	}, nil
 }
 

@@ -141,14 +141,6 @@ type Control implements Node {
         orderBy: ObligationOrder
     ): ObligationConnection! @goField(forceResolver: true)
 
-    snapshots(
-        first: Int
-        after: CursorKey
-        last: Int
-        before: CursorKey
-        orderBy: SnapshotOrder
-    ): SnapshotConnection! @goField(forceResolver: true)
-
     createdAt: Datetime!
     updatedAt: Datetime!
 
@@ -265,12 +257,6 @@ extend type Mutation {
     deleteControlObligationMapping(
         input: DeleteControlObligationMappingInput!
     ): DeleteControlObligationMappingPayload!
-    createControlSnapshotMapping(
-        input: CreateControlSnapshotMappingInput!
-    ): CreateControlSnapshotMappingPayload!
-    deleteControlSnapshotMapping(
-        input: DeleteControlSnapshotMappingInput!
-    ): DeleteControlSnapshotMappingPayload!
     createStatementOfApplicability(
         input: CreateStatementOfApplicabilityInput!
     ): CreateStatementOfApplicabilityPayload!
@@ -366,16 +352,6 @@ input DeleteControlObligationMappingInput {
     obligationId: ID!
 }
 
-input CreateControlSnapshotMappingInput {
-    controlId: ID!
-    snapshotId: ID!
-}
-
-input DeleteControlSnapshotMappingInput {
-    controlId: ID!
-    snapshotId: ID!
-}
-
 input CreateStatementOfApplicabilityInput {
     organizationId: ID!
     name: String!
@@ -463,16 +439,6 @@ type CreateControlObligationMappingPayload {
 type DeleteControlObligationMappingPayload {
     deletedControlId: ID!
     deletedObligationId: ID!
-}
-
-type CreateControlSnapshotMappingPayload {
-    controlEdge: ControlEdge!
-    snapshotEdge: SnapshotEdge!
-}
-
-type DeleteControlSnapshotMappingPayload {
-    deletedControlId: ID!
-    deletedSnapshotId: ID!
 }
 
 type CreateStatementOfApplicabilityPayload {

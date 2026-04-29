@@ -67,7 +67,6 @@ func NewRisk(r *coredata.Risk) *Risk {
 	risk := &Risk{
 		ID:                 r.ID,
 		Name:               r.Name,
-		SnapshotID:         r.SnapshotID,
 		Description:        r.Description,
 		Treatment:          r.Treatment,
 		InherentLikelihood: r.InherentLikelihood,

@@ -26,8 +26,6 @@ import * as linkAuditOp from './linkAudit.operation';
 import * as unlinkAuditOp from './unlinkAudit.operation';
 import * as linkObligationOp from './linkObligation.operation';
 import * as unlinkObligationOp from './unlinkObligation.operation';
-import * as linkSnapshotOp from './linkSnapshot.operation';
-import * as unlinkSnapshotOp from './unlinkSnapshot.operation';
 
 export const description: INodeProperties[] = [
 	{
@@ -90,12 +88,6 @@ export const description: INodeProperties[] = [
 				action: 'Link an obligation to a control',
 			},
 			{
-				name: 'Link Snapshot',
-				value: 'linkSnapshot',
-				description: 'Link a snapshot to a control',
-				action: 'Link a snapshot to a control',
-			},
-			{
 				name: 'Unlink Audit',
 				value: 'unlinkAudit',
 				description: 'Unlink an audit from a control',
@@ -120,12 +112,6 @@ export const description: INodeProperties[] = [
 				action: 'Unlink an obligation from a control',
 			},
 			{
-				name: 'Unlink Snapshot',
-				value: 'unlinkSnapshot',
-				description: 'Unlink a snapshot from a control',
-				action: 'Unlink a snapshot from a control',
-			},
-			{
 				name: 'Update',
 				value: 'update',
 				description: 'Update an existing control',
@@ -147,8 +133,6 @@ export const description: INodeProperties[] = [
 	...unlinkAuditOp.description,
 	...linkObligationOp.description,
 	...unlinkObligationOp.description,
-	...linkSnapshotOp.description,
-	...unlinkSnapshotOp.description,
 ];
 
 export {
@@ -165,6 +149,4 @@ export {
 	unlinkAuditOp as unlinkAudit,
 	linkObligationOp as linkObligation,
 	unlinkObligationOp as unlinkObligation,
-	linkSnapshotOp as linkSnapshot,
-	unlinkSnapshotOp as unlinkSnapshot,
 };

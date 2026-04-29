@@ -192,7 +192,7 @@ INSERT INTO document_versions (
 					"tenant_id":       org.tenantID,
 					"organization_id": org.organizationID,
 					"document_id":     documentID,
-					"title":           "Asset List",
+					"title":           "Assets",
 					"major":           major + 1,
 					"content":         content,
 					"published_at":    snap.publishedAt,
@@ -386,7 +386,7 @@ ORDER BY v.name ASC;
 	}
 
 	docData := docgen.AssetListData{
-		Title:            "Asset List",
+		Title:            "Assets",
 		OrganizationName: orgName,
 		CreatedAt:        publishedAt,
 		TotalAssets:      len(assetRows),

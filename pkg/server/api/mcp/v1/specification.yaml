@@ -1499,13 +1499,6 @@ components:
         organization_id:
           $ref: "#/components/schemas/GID"
           description: Organization ID
-        snapshot_id:
-          anyOf:
-            - type: string
-              $ref: "#/components/schemas/GID"
-            - type: "null"
-              description: No snapshot
-          description: Snapshot ID
         name:
           type: string
           description: Risk name
@@ -1579,12 +1572,6 @@ components:
             query:
               type: string
               description: Search query
-            snapshot_id:
-              anyOf:
-                - $ref: "#/components/schemas/GID"
-                - type: "null"
-              description: Filter by snapshot ID. Defaults to null, which returns only risks with no snapshot (current live data). Pass a specific snapshot ID to retrieve risks as they were at that snapshot.
-              default: null
 
     ListRisksOutput:
       type: object
@@ -4772,7 +4759,7 @@ components:
           description: Control ID
         resource_id:
           $ref: "#/components/schemas/GID"
-          description: ID of the resource to link (measure, document, audit, snapshot, or obligation)
+          description: ID of the resource to link (measure, document, audit, or obligation)
 
     LinkControlOutput:
       type: object
@@ -4788,7 +4775,7 @@ components:
           description: Control ID
         resource_id:
           $ref: "#/components/schemas/GID"
-          description: ID of the resource to unlink (measure, document, audit, snapshot, or obligation)
+          description: ID of the resource to unlink (measure, document, audit, or obligation)
 
     UnlinkControlOutput:
       type: object
@@ -4916,37 +4903,6 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Audit"
-
-    ListControlSnapshotsInput:
-      type: object
-      required:
-        - control_id
-      properties:
-        control_id:
-          $ref: "#/components/schemas/GID"
-          description: Control ID
-        cursor:
-          $ref: "#/components/schemas/CursorKey"
-          description: Page cursor
-        size:
-          type: integer
-          description: Page size
-        order_by:
-          $ref: "#/components/schemas/SnapshotOrderBy"
-          description: Snapshot order by
-
-    ListControlSnapshotsOutput:
-      type: object
-      required:
-        - snapshots
-      properties:
-        next_cursor:
-          $ref: "#/components/schemas/CursorKey"
-          description: Next cursor
-        snapshots:
-          type: array
-          items:
-            $ref: "#/components/schemas/Snapshot"
 
     ListRiskObligationsInput:
       type: object
@@ -5353,150 +5309,6 @@ components:
         deleted_task_id:
           $ref: "#/components/schemas/GID"
           description: Deleted task ID
-
-    SnapshotsType:
-      type: string
-      enum:
-        - RISKS
-        - NONCONFORMITIES
-        - OBLIGATIONS
-        - CONTINUAL_IMPROVEMENTS
-        - PROCESSING_ACTIVITIES
-        - STATEMENTS_OF_APPLICABILITY
-      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.SnapshotsType
-
-    SnapshotOrderField:
-      type: string
-      enum:
-        - CREATED_AT
-        - NAME
-        - TYPE
-      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.SnapshotOrderField
-
-    SnapshotOrderBy:
-      type: object
-      required:
-        - field
-        - direction
-      properties:
-        field:
-          $ref: "#/components/schemas/SnapshotOrderField"
-          description: Snapshot order field
-        direction:
-          $ref: "#/components/schemas/OrderDirection"
-          description: Snapshot order direction
-
-    Snapshot:
-      type: object
-      required:
-        - id
-        - organization_id
-        - name
-        - type
-        - created_at
-      properties:
-        id:
-          $ref: "#/components/schemas/GID"
-          description: Snapshot ID
-        organization_id:
-          $ref: "#/components/schemas/GID"
-          description: Organization ID
-        name:
-          type: string
-          description: Snapshot name
-        description:
-          anyOf:
-            - type: string
-              description: Snapshot description
-            - type: "null"
-              description: No description
-          description: Snapshot description
-        type:
-          $ref: "#/components/schemas/SnapshotsType"
-          description: Snapshot type
-        created_at:
-          type: string
-          format: date-time
-          description: Creation timestamp
-
-    ListSnapshotsInput:
-      type: object
-      required:
-        - organization_id
-      properties:
-        organization_id:
-          $ref: "#/components/schemas/GID"
-          description: Organization ID
-        order_by:
-          $ref: "#/components/schemas/SnapshotOrderBy"
-          description: Snapshot order by
-        size:
-          type: integer
-          description: Page size
-        cursor:
-          $ref: "#/components/schemas/CursorKey"
-          description: Page cursor
-
-    ListSnapshotsOutput:
-      type: object
-      required:
-        - snapshots
-      properties:
-        snapshots:
-          type: array
-          items:
-            $ref: "#/components/schemas/Snapshot"
-          description: List of snapshots
-        next_cursor:
-          anyOf:
-            - $ref: "#/components/schemas/CursorKey"
-            - type: "null"
-          description: Next page cursor
-
-    GetSnapshotInput:
-      type: object
-      required:
-        - id
-      properties:
-        id:
-          $ref: "#/components/schemas/GID"
-          description: Snapshot ID
-
-    GetSnapshotOutput:
-      type: object
-      required:
-        - snapshot
-      properties:
-        snapshot:
-          $ref: "#/components/schemas/Snapshot"
-
-    TakeSnapshotInput:
-      type: object
-      required:
-        - organization_id
-        - name
-        - type
-      properties:
-        organization_id:
-          $ref: "#/components/schemas/GID"
-          description: Organization ID
-        name:
-          type: string
-          description: Snapshot name
-        description:
-          type: string
-          description: Snapshot description
-        type:
-          $ref: "#/components/schemas/SnapshotsType"
-          description: Snapshot type (determines which collection to snapshot)
-
-    TakeSnapshotOutput:
-      type: object
-      required:
-        - snapshot
-      properties:
-        snapshot:
-          $ref: "#/components/schemas/Snapshot"
 
     DocumentType:
       type: string
@@ -6815,16 +6627,6 @@ components:
         cursor:
           $ref: "#/components/schemas/CursorKey"
           description: Page cursor
-        filter:
-          type: object
-          properties:
-            snapshot_id:
-              anyOf:
-                - $ref: "#/components/schemas/GID"
-                - type: "null"
-              description: Filter by snapshot ID. Defaults to null, which returns only statements of applicability with no snapshot (current live data). Pass a specific snapshot ID to retrieve statements of applicability as they were at that snapshot.
-              default: null
-
     ListStatementsOfApplicabilityOutput:
       type: object
       required:
@@ -7131,6 +6933,33 @@ components:
           $ref: "#/components/schemas/GID"
           description: Created document version ID
 
+    PublishRiskListInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        approver_ids:
+          type: array
+          items:
+            $ref: "#/components/schemas/GID"
+          description: Optional approver profile IDs. If provided, creates a draft pending approval instead of publishing immediately.
+
+    PublishRiskListOutput:
+      type: object
+      required:
+        - document_id
+        - document_version_id
+      properties:
+        document_id:
+          $ref: "#/components/schemas/GID"
+          description: Created or updated document ID
+        document_version_id:
+          $ref: "#/components/schemas/GID"
+          description: Created document version ID
+
     PublishStatementOfApplicabilityInput:
       type: object
       required:
@@ -7201,11 +7030,6 @@ components:
         organization_id:
           $ref: "#/components/schemas/GID"
           description: Organization ID
-        snapshot_id:
-          anyOf:
-            - $ref: "#/components/schemas/GID"
-            - type: "null"
-          description: Snapshot ID
         applicability:
           type: boolean
           description: Whether the control is applicable
@@ -10842,7 +10666,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/UpdateControlOutput"
   - name: linkControl
-    description: Link a resource to a control (measure, document, audit, snapshot, or obligation). The resource type is determined from the resource_id GID.
+    description: Link a resource to a control (measure, document, audit, or obligation). The resource type is determined from the resource_id GID.
     hints:
       readonly: false
     inputSchema:
@@ -10850,7 +10674,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/LinkControlOutput"
   - name: unlinkControl
-    description: Unlink a resource from a control (measure, document, audit, snapshot, or obligation). The resource type is determined from the resource_id GID.
+    description: Unlink a resource from a control (measure, document, audit, or obligation). The resource type is determined from the resource_id GID.
     hints:
       readonly: false
     inputSchema:
@@ -10893,15 +10717,6 @@ tools:
       $ref: "#/components/schemas/ListControlAuditsInput"
     outputSchema:
       $ref: "#/components/schemas/ListControlAuditsOutput"
-  - name: listControlSnapshots
-    description: List snapshots linked to a control
-    hints:
-      readonly: true
-      idempotent: true
-    inputSchema:
-      $ref: "#/components/schemas/ListControlSnapshotsInput"
-    outputSchema:
-      $ref: "#/components/schemas/ListControlSnapshotsOutput"
   - name: listRiskObligations
     description: List obligations linked to a risk
     hints:
@@ -10986,32 +10801,6 @@ tools:
       $ref: "#/components/schemas/DeleteTaskInput"
     outputSchema:
       $ref: "#/components/schemas/DeleteTaskOutput"
-  - name: listSnapshots
-    description: List all snapshots for the organization
-    hints:
-      readonly: true
-      idempotent: true
-    inputSchema:
-      $ref: "#/components/schemas/ListSnapshotsInput"
-    outputSchema:
-      $ref: "#/components/schemas/ListSnapshotsOutput"
-  - name: getSnapshot
-    description: Get a snapshot by ID
-    hints:
-      readonly: true
-      idempotent: true
-    inputSchema:
-      $ref: "#/components/schemas/GetSnapshotInput"
-    outputSchema:
-      $ref: "#/components/schemas/GetSnapshotOutput"
-  - name: takeSnapshot
-    description: Take a snapshot of a collection of objects (risks, vendors, findings, obligations, or processing activities)
-    hints:
-      readonly: false
-    inputSchema:
-      $ref: "#/components/schemas/TakeSnapshotInput"
-    outputSchema:
-      $ref: "#/components/schemas/TakeSnapshotOutput"
   - name: listDocuments
     description: List documents for the organization. By default only ACTIVE documents are returned; pass status filter to include ARCHIVED.
     hints:
@@ -11281,6 +11070,14 @@ tools:
       $ref: "#/components/schemas/PublishVendorListInput"
     outputSchema:
       $ref: "#/components/schemas/PublishVendorListOutput"
+  - name: publishRiskList
+    description: Publish the risk register for an organization as a document. If a document already exists, a new version is created.
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/PublishRiskListInput"
+    outputSchema:
+      $ref: "#/components/schemas/PublishRiskListOutput"
   - name: publishStatementOfApplicability
     description: Publish a statement of applicability as a document. If a document already exists, a new version is created.
     hints:

@@ -45,7 +45,6 @@ import { LinkedAuditsCard } from "#/components/audits/LinkedAuditsCard";
 import { LinkedDocumentsCard } from "#/components/documents/LinkedDocumentsCard";
 import { LinkedMeasuresCard } from "#/components/measures/LinkedMeasuresCard";
 import { LinkedObligationsCard } from "#/components/obligations/LinkedObligationsCard";
-import { LinkedSnapshotsCard } from "#/components/snapshots/LinkedSnapshotsCard";
 import { frameworkControlNodeQuery } from "#/hooks/graph/FrameworkGraph";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
@@ -159,33 +158,6 @@ const detachObligationMutation = graphql`
   }
 `;
 
-const attachSnapshotMutation = graphql`
-  mutation FrameworkControlPageAttachSnapshotMutation(
-      $input: CreateControlSnapshotMappingInput!
-      $connections: [ID!]!
-  ) {
-      createControlSnapshotMapping(input: $input) {
-          snapshotEdge @prependEdge(connections: $connections) {
-              node {
-                  id
-                  ...LinkedSnapshotsCardFragment
-              }
-          }
-      }
-  }
-`;
-
-const detachSnapshotMutation = graphql`
-  mutation FrameworkControlPageDetachSnapshotMutation(
-      $input: DeleteControlSnapshotMappingInput!
-      $connections: [ID!]!
-  ) {
-      deleteControlSnapshotMapping(input: $input) {
-          deletedSnapshotId @deleteEdge(connections: $connections)
-      }
-  }
-`;
-
 const deleteControlMutation = graphql`
   mutation FrameworkControlPageDeleteControlMutation(
       $input: DeleteControlInput!
@@ -236,14 +208,6 @@ export default function FrameworkControlPage({ queryRef }: Props) {
   // eslint-disable-next-line relay/generated-typescript-types
   const [attachAudit, isAttachingAudit] = useMutation(attachAuditMutation);
   // eslint-disable-next-line relay/generated-typescript-types
-  const [detachSnapshot, isDetachingSnapshot] = useMutation(
-    detachSnapshotMutation,
-  );
-  // eslint-disable-next-line relay/generated-typescript-types
-  const [attachSnapshot, isAttachingSnapshot] = useMutation(
-    attachSnapshotMutation,
-  );
-  // eslint-disable-next-line relay/generated-typescript-types
   const [deleteControl] = useMutation(deleteControlMutation);
 
   // eslint-disable-next-line relay/generated-typescript-types
@@ -266,10 +230,6 @@ export default function FrameworkControlPage({ queryRef }: Props) {
   const canLinkAudit = control.canCreateAuditMapping;
   const canUnlinkAudit = control.canDeleteAuditMapping;
   const auditsReadOnly = !canLinkAudit && !canUnlinkAudit;
-
-  const canLinkSnapshot = control.canCreateSnapshotMapping;
-  const canUnlinkSnapshot = control.canDeleteSnapshotMapping;
-  const snapshotsReadOnly = !canLinkSnapshot && !canUnlinkSnapshot;
 
   const canLinkObligation = control.canCreateObligationMapping;
   const canUnlinkObligation = control.canDeleteObligationMapping;
@@ -480,27 +440,6 @@ export default function FrameworkControlPage({ queryRef }: Props) {
               isAttachingObligation || isDetachingObligation
             }
             readOnly={obligationsReadOnly}
-          />
-        </div>
-        <div className="mb-4">
-          <LinkedSnapshotsCard
-            variant="card"
-            snapshots={
-              control.snapshots?.edges.map(edge => edge.node)
-              ?? []
-            }
-            params={{ controlId: control.id }}
-            connectionId={control.snapshots?.__id ?? ""}
-            onAttach={withErrorHandling(
-              attachSnapshot,
-              __("Failed to link snapshot"),
-            )}
-            onDetach={withErrorHandling(
-              detachSnapshot,
-              __("Failed to unlink snapshot"),
-            )}
-            disabled={isAttachingSnapshot || isDetachingSnapshot}
-            readOnly={snapshotsReadOnly}
           />
         </div>
       </div>

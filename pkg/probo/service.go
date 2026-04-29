@@ -115,7 +115,6 @@ type (
 		ComplianceExternalURLs            *ComplianceExternalURLService
 		Findings                          *FindingService
 		Obligations                       *ObligationService
-		Snapshots                         *SnapshotService
 		RightsRequests                    *RightsRequestService
 		ProcessingActivities              *ProcessingActivityService
 		DataProtectionImpactAssessments   *DataProtectionImpactAssessmentService
@@ -278,7 +277,6 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 	}
 	tenantService.Findings = &FindingService{svc: tenantService}
 	tenantService.Obligations = &ObligationService{svc: tenantService}
-	tenantService.Snapshots = &SnapshotService{svc: tenantService}
 	tenantService.RightsRequests = &RightsRequestService{svc: tenantService}
 	tenantService.ProcessingActivities = &ProcessingActivityService{
 		svc: tenantService,

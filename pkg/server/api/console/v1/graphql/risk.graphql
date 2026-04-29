@@ -53,12 +53,10 @@ input RiskOrder
 
 input RiskFilter {
     query: String
-    snapshotId: ID
 }
 
 type Risk implements Node {
     id: ID!
-    snapshotId: ID
     name: String!
     description: String
     category: String!
@@ -151,6 +149,19 @@ extend type Mutation {
     deleteRiskObligationMapping(
         input: DeleteRiskObligationMappingInput!
     ): DeleteRiskObligationMappingPayload!
+    publishRiskList(
+        input: PublishRiskListInput!
+    ): PublishRiskListPayload!
+}
+
+input PublishRiskListInput {
+    organizationId: ID!
+    approverIds: [ID!]
+}
+
+type PublishRiskListPayload {
+    documentEdge: DocumentEdge!
+    documentVersionEdge: DocumentVersionEdge!
 }
 
 input CreateRiskInput {

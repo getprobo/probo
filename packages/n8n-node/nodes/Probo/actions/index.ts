@@ -37,7 +37,6 @@ import * as processingActivity from './processingActivity';
 import * as rightsRequest from './rightsRequest';
 import * as user from './user';
 import * as risk from './risk';
-import * as snapshot from './snapshot';
 import * as statementOfApplicability from './statementOfApplicability';
 import * as task from './task';
 import * as tia from './tia';
@@ -80,7 +79,6 @@ export const resources: Record<string, ResourceModule> = {
 	rightsRequest: rightsRequest as ResourceModule,
 	user: user as ResourceModule,
 	risk: risk as ResourceModule,
-	snapshot: snapshot as ResourceModule,
 	statementOfApplicability: statementOfApplicability as ResourceModule,
 	task: task as ResourceModule,
 	tia: tia as ResourceModule,

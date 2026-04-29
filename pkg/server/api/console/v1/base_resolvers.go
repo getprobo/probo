@@ -239,15 +239,6 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			}
 			return types.NewTransferImpactAssessment(tia), nil
 		}
-	case coredata.SnapshotEntityType:
-		action = probo.ActionSnapshotList
-		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
-			snapshot, err := prb.Snapshots.Get(ctx, id)
-			if err != nil {
-				return nil, err
-			}
-			return types.NewSnapshot(snapshot), nil
-		}
 	case coredata.TrustCenterEntityType:
 		action = probo.ActionTrustCenterGet
 		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {

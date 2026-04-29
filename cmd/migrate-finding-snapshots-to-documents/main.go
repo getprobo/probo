@@ -191,7 +191,7 @@ INSERT INTO document_versions (
 					"tenant_id":       org.tenantID,
 					"organization_id": org.organizationID,
 					"document_id":     documentID,
-					"title":           "Finding List",
+					"title":           "Findings",
 					"major":           major + 1,
 					"content":         content,
 					"published_at":    snap.publishedAt,
@@ -403,7 +403,7 @@ ORDER BY f.reference_id ASC;
 	}
 
 	docData := docgen.FindingListData{
-		Title:            "Finding List",
+		Title:            "Findings",
 		OrganizationName: orgName,
 		CreatedAt:        publishedAt,
 		TotalFindings:    len(findingRows),

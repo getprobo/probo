@@ -45,7 +45,6 @@ import { obligationRoutes } from "./routes/obligationRoutes";
 import { processingActivityRoutes } from "./routes/processingActivityRoutes";
 import { rightsRequestRoutes } from "./routes/rightsRequestRoutes";
 import { riskRoutes } from "./routes/riskRoutes";
-import { snapshotsRoutes } from "./routes/snapshotsRoutes";
 import { statementsOfApplicabilityRoutes } from "./routes/statementsOfApplicabilityRoutes";
 import { taskRoutes } from "./routes/taskRoutes";
 import { vendorRoutes } from "./routes/vendorRoutes";
@@ -307,7 +306,6 @@ const routes = [
           ...accessReviewRoutes,
           ...compliancePageRoutes,
           ...cookieBannerRoutes,
-          ...snapshotsRoutes,
           {
             path: "*",
             Component: PageError,

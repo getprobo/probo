@@ -239,6 +239,29 @@ func (r *mutationResolver) DeleteRiskObligationMapping(ctx context.Context, inpu
 	}, nil
 }
 
+// PublishRiskList is the resolver for the publishRiskList field.
+func (r *mutationResolver) PublishRiskList(ctx context.Context, input types.PublishRiskListInput) (*types.PublishRiskListPayload, error) {
+	if err := r.authorize(ctx, input.OrganizationID, probo.ActionRiskPublish); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
+
+	document, documentVersion, err := prb.GeneratedDocuments.PublishRiskList(ctx, input.OrganizationID, input.ApproverIds)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
+			return nil, gqlutils.Conflict(ctx, err)
+		}
+		r.logger.ErrorCtx(ctx, "cannot publish risk list", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.PublishRiskListPayload{
+		DocumentEdge:        types.NewDocumentEdge(document, coredata.DocumentOrderFieldCreatedAt),
+		DocumentVersionEdge: types.NewDocumentVersionEdge(documentVersion, coredata.DocumentVersionOrderFieldCreatedAt),
+	}, nil
+}
+
 // Owner is the resolver for the owner field.
 func (r *riskResolver) Owner(ctx context.Context, obj *types.Risk) (*types.Profile, error) {
 	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileGet); err != nil {

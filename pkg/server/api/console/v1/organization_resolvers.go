@@ -1027,9 +1027,9 @@ func (r *organizationResolver) Risks(ctx context.Context, obj *types.Organizatio
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	var riskFilter = coredata.NewRiskFilter(nil, nil)
+	var riskFilter = coredata.NewRiskFilter(nil)
 	if filter != nil {
-		riskFilter = coredata.NewRiskFilter(filter.Query, &filter.SnapshotID)
+		riskFilter = coredata.NewRiskFilter(filter.Query)
 	}
 
 	page, err := prb.Risks.ListForOrganizationID(ctx, obj.ID, cursor, riskFilter)
@@ -1041,34 +1041,33 @@ func (r *organizationResolver) Risks(ctx context.Context, obj *types.Organizatio
 	return types.NewRiskConnection(page, r, obj.ID, riskFilter), nil
 }
 
-// Snapshots is the resolver for the snapshots field.
-func (r *organizationResolver) Snapshots(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.SnapshotOrderBy) (*types.SnapshotConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionSnapshotList); err != nil {
+// RisksDocument is the resolver for the risksDocument field.
+func (r *organizationResolver) RisksDocument(ctx context.Context, obj *types.Organization) (*types.Document, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionDocumentGet); err != nil {
 		return nil, err
 	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
-	pageOrderBy := page.OrderBy[coredata.SnapshotOrderField]{
-		Field:     coredata.SnapshotOrderFieldCreatedAt,
-		Direction: page.OrderDirectionDesc,
-	}
-	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.SnapshotOrderField]{
-			Field:     orderBy.Field,
-			Direction: orderBy.Direction,
-		}
-	}
-
-	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
-
-	page, err := prb.Snapshots.ListForOrganizationID(ctx, obj.ID, cursor)
+	documentID, err := prb.GeneratedDocuments.GetRisksDocumentID(ctx, obj.ID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list organization snapshots", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot get risks document ID", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+	if documentID == nil {
+		return nil, nil
+	}
+
+	document, err := prb.Documents.Get(ctx, *documentID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, nil
+		}
+		r.logger.ErrorCtx(ctx, "cannot load risks document", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewSnapshotConnection(page, r, obj.ID), nil
+	return types.NewDocument(document), nil
 }
 
 // Tasks is the resolver for the tasks field.

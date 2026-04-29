@@ -54,7 +54,7 @@ const (
 	_                                          uint16 = 28 // NonconformityEntityType - removed
 	ObligationEntityType                       uint16 = 29
 	VendorServiceEntityType                    uint16 = 30
-	SnapshotEntityType                         uint16 = 31
+	_                                          uint16 = 31 // SnapshotEntityType - removed
 	_                                          uint16 = 32 // ContinualImprovementEntityType - removed
 	ProcessingActivityEntityType               uint16 = 33
 	ExportJobEntityType                        uint16 = 34
@@ -176,8 +176,6 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &Obligation{ID: id}, true
 	case VendorServiceEntityType:
 		return &VendorService{ID: id}, true
-	case SnapshotEntityType:
-		return &Snapshot{ID: id}, true
 	case ProcessingActivityEntityType:
 		return &ProcessingActivity{ID: id}, true
 	case ExportJobEntityType:
