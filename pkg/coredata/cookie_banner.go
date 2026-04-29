@@ -30,20 +30,20 @@ import (
 
 type (
 	CookieBanner struct {
-		ID                           gid.GID           `db:"id"`
-		OrganizationID               gid.GID           `db:"organization_id"`
-		Name                         string            `db:"name"`
-		Origin                       string            `db:"origin"`
-		State                        CookieBannerState `db:"state"`
-		PrivacyPolicyURL             *string           `db:"privacy_policy_url"`
-		CookiePolicyURL              string            `db:"cookie_policy_url"`
-		ConsentExpiryDays            int               `db:"consent_expiry_days"`
-		ConsentMode                  CookieConsentMode `db:"consent_mode"`
-		ShowBranding                 bool              `db:"show_branding"`
-		DefaultLanguage              string            `db:"default_language"`
-		PatternAnalysisRequestedAt   *time.Time        `db:"pattern_analysis_requested_at"`
-		CreatedAt                    time.Time         `db:"created_at"`
-		UpdatedAt                    time.Time         `db:"updated_at"`
+		ID                         gid.GID           `db:"id"`
+		OrganizationID             gid.GID           `db:"organization_id"`
+		Name                       string            `db:"name"`
+		Origin                     string            `db:"origin"`
+		State                      CookieBannerState `db:"state"`
+		PrivacyPolicyURL           *string           `db:"privacy_policy_url"`
+		CookiePolicyURL            string            `db:"cookie_policy_url"`
+		ConsentExpiryDays          int               `db:"consent_expiry_days"`
+		ConsentMode                CookieConsentMode `db:"consent_mode"`
+		ShowBranding               bool              `db:"show_branding"`
+		DefaultLanguage            string            `db:"default_language"`
+		PatternAnalysisRequestedAt *time.Time        `db:"pattern_analysis_requested_at"`
+		CreatedAt                  time.Time         `db:"created_at"`
+		UpdatedAt                  time.Time         `db:"updated_at"`
 	}
 
 	CookieBannerPatternAnalysisTask struct {

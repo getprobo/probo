@@ -14,3 +14,5 @@
 
 ALTER TABLE cookie_banners
     ADD COLUMN pattern_analysis_requested_at TIMESTAMP WITH TIME ZONE;
+
+UPDATE cookie_banners SET pattern_analysis_requested_at = NOW();
