@@ -34,4 +34,7 @@ var (
 	ErrCategoriesBannerMismatch   = errors.New("source and target categories belong to different banners")
 	ErrSameCategoryMove           = errors.New("source and target cookie categories must be different")
 	ErrPostHogConsentKindInvalid  = errors.New("PostHog consent can only be enabled on normal categories")
+	ErrCookiePatternNotFound      = errors.New("cookie pattern not found")
+	ErrPatternAlreadyExists       = errors.New("a pattern with this name already exists in this banner")
+	ErrSamePatternCategoryMove    = errors.New("source and target cookie categories must be different")
 )

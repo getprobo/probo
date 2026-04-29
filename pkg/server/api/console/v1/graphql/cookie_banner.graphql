@@ -156,10 +156,50 @@ type CookieCategory implements Node {
         orderBy: CookieOrder
     ): CookieConnection @goField(forceResolver: true)
 
+    cookiePatterns(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: CookiePatternOrder
+    ): CookiePatternConnection @goField(forceResolver: true)
+
     createdAt: Datetime!
     updatedAt: Datetime!
 
     permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+enum CookiePatternMatchType
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.CookiePatternMatchType"
+    ) {
+    EXACT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CookiePatternMatchTypeExact"
+        )
+    PREFIX
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CookiePatternMatchTypePrefix"
+        )
+}
+
+enum CookiePatternOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.CookiePatternOrderField"
+    ) {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CookiePatternOrderFieldCreatedAt"
+        )
+}
+
+input CookiePatternOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.CookiePatternOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: CookiePatternOrderField!
 }
 
 enum CookieOrderField
@@ -205,6 +245,36 @@ type CookieConnection
 type CookieEdge {
     cursor: CursorKey!
     node: Cookie!
+}
+
+type CookiePattern implements Node {
+    id: ID!
+    cookieCategory: CookieCategory @goField(forceResolver: true)
+    pattern: String!
+    matchType: CookiePatternMatchType!
+    displayName: String!
+    duration: String!
+    description: String!
+    source: CookieSource!
+    cookieCount: Int! @goField(forceResolver: true)
+    createdAt: Datetime!
+    updatedAt: Datetime!
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type CookiePatternConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.CookiePatternConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [CookiePatternEdge!]!
+    pageInfo: PageInfo!
+}
+
+type CookiePatternEdge {
+    cursor: CursorKey!
+    node: CookiePattern!
 }
 
 type CookieBannerVersion implements Node {
@@ -295,6 +365,18 @@ extend type Mutation {
     createCookie(input: CreateCookieInput!): CreateCookiePayload!
     updateCookie(input: UpdateCookieInput!): UpdateCookiePayload!
     deleteCookie(input: DeleteCookieInput!): DeleteCookiePayload!
+    createCookiePattern(
+        input: CreateCookiePatternInput!
+    ): CreateCookiePatternPayload!
+    updateCookiePattern(
+        input: UpdateCookiePatternInput!
+    ): UpdateCookiePatternPayload!
+    deleteCookiePattern(
+        input: DeleteCookiePatternInput!
+    ): DeleteCookiePatternPayload!
+    moveCookiePatternToCategory(
+        input: MoveCookiePatternToCategoryInput!
+    ): MoveCookiePatternToCategoryPayload!
     upsertCookieBannerTranslation(
         input: UpsertCookieBannerTranslationInput!
     ): UpsertCookieBannerTranslationPayload!
@@ -446,6 +528,51 @@ type UpdateCookiePayload {
 
 type DeleteCookiePayload {
     deletedCookieId: ID!
+    cookieBanner: CookieBanner!
+}
+
+input CreateCookiePatternInput {
+    cookieCategoryId: ID!
+    pattern: String!
+    matchType: CookiePatternMatchType!
+    displayName: String!
+    duration: String!
+    description: String!
+}
+
+input UpdateCookiePatternInput {
+    cookiePatternId: ID!
+    displayName: String
+    duration: String
+    description: String
+}
+
+input DeleteCookiePatternInput {
+    cookiePatternId: ID!
+}
+
+input MoveCookiePatternToCategoryInput {
+    cookiePatternId: ID!
+    targetCookieCategoryId: ID!
+}
+
+type CreateCookiePatternPayload {
+    cookiePatternEdge: CookiePatternEdge!
+    cookieBanner: CookieBanner!
+}
+
+type UpdateCookiePatternPayload {
+    cookiePattern: CookiePattern!
+    cookieBanner: CookieBanner!
+}
+
+type DeleteCookiePatternPayload {
+    deletedCookiePatternId: ID!
+    cookieBanner: CookieBanner!
+}
+
+type MoveCookiePatternToCategoryPayload {
+    cookiePattern: CookiePattern!
     cookieBanner: CookieBanner!
 }
 

@@ -410,6 +410,13 @@ const (
 	ActionCookieUpdate = "core:cookie:update"
 	ActionCookieDelete = "core:cookie:delete"
 
+	// CookiePattern actions
+	ActionCookiePatternGet    = "core:cookie-pattern:get"
+	ActionCookiePatternList   = "core:cookie-pattern:list"
+	ActionCookiePatternCreate = "core:cookie-pattern:create"
+	ActionCookiePatternUpdate = "core:cookie-pattern:update"
+	ActionCookiePatternDelete = "core:cookie-pattern:delete"
+
 	// CookieConsentRecord actions
 	ActionCookieConsentRecordList = "core:cookie-consent-record:list"
 )
