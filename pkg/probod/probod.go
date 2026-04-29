@@ -656,6 +656,16 @@ func (impl *Implm) Run(
 		},
 	)
 
+	cookiePatternAnalysisWorker := cookiebanner.NewPatternAnalysisWorker(cookieBannerService, pgClient, l.Named("cookie-pattern-analysis-worker"))
+	cookiePatternAnalysisWorkerCtx, stopCookiePatternAnalysisWorker := context.WithCancel(context.Background())
+	wg.Go(
+		func() {
+			if err := cookiePatternAnalysisWorker.Run(cookiePatternAnalysisWorkerCtx); err != nil {
+				cancel(fmt.Errorf("cookie pattern analysis worker crashed: %w", err))
+			}
+		},
+	)
+
 	mailingListWorker := mailman.NewMailingListWorker(mailmanService, pgClient, l.Named("mailing-list-worker"))
 	mailingListWorkerCtx, stopMailingListWorker := context.WithCancel(context.Background())
 	wg.Go(
@@ -720,6 +730,7 @@ func (impl *Implm) Run(
 	stopTrustCenterServer()
 	stopWebhookSender()
 	stopESignService()
+	stopCookiePatternAnalysisWorker()
 	stopMailingListWorker()
 	stopEvidenceDescriptionWorker()
 	stopDocumentPDFWorker()

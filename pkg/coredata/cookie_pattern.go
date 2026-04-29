@@ -381,6 +381,68 @@ INSERT INTO cookie_patterns (
 	return nil
 }
 
+func (cp *CookiePattern) InsertIfNotExists(
+	ctx context.Context,
+	tx pg.Tx,
+	scope Scoper,
+) (bool, error) {
+	q := `
+INSERT INTO cookie_patterns (
+	id,
+	tenant_id,
+	organization_id,
+	cookie_banner_id,
+	cookie_category_id,
+	pattern,
+	match_type,
+	display_name,
+	duration,
+	description,
+	source,
+	created_at,
+	updated_at
+) VALUES (
+	@id,
+	@tenant_id,
+	@organization_id,
+	@cookie_banner_id,
+	@cookie_category_id,
+	@pattern,
+	@match_type,
+	@display_name,
+	@duration,
+	@description,
+	@source,
+	@created_at,
+	@updated_at
+)
+ON CONFLICT (cookie_banner_id, pattern) DO NOTHING
+`
+
+	args := pgx.StrictNamedArgs{
+		"id":                 cp.ID,
+		"tenant_id":          scope.GetTenantID(),
+		"organization_id":    cp.OrganizationID,
+		"cookie_banner_id":   cp.CookieBannerID,
+		"cookie_category_id": cp.CookieCategoryID,
+		"pattern":            cp.Pattern,
+		"match_type":         cp.MatchType,
+		"display_name":       cp.DisplayName,
+		"duration":           cp.Duration,
+		"description":        cp.Description,
+		"source":             cp.Source,
+		"created_at":         cp.CreatedAt,
+		"updated_at":         cp.UpdatedAt,
+	}
+
+	result, err := tx.Exec(ctx, q, args)
+	if err != nil {
+		return false, fmt.Errorf("cannot insert cookie pattern: %w", err)
+	}
+
+	return result.RowsAffected() > 0, nil
+}
+
 func (cp *CookiePattern) Update(
 	ctx context.Context,
 	tx pg.Tx,

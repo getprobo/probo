@@ -30,19 +30,25 @@ import (
 
 type (
 	CookieBanner struct {
-		ID                gid.GID           `db:"id"`
-		OrganizationID    gid.GID           `db:"organization_id"`
-		Name              string            `db:"name"`
-		Origin            string            `db:"origin"`
-		State             CookieBannerState `db:"state"`
-		PrivacyPolicyURL  *string           `db:"privacy_policy_url"`
-		CookiePolicyURL   string            `db:"cookie_policy_url"`
-		ConsentExpiryDays int               `db:"consent_expiry_days"`
-		ConsentMode       CookieConsentMode `db:"consent_mode"`
-		ShowBranding      bool              `db:"show_branding"`
-		DefaultLanguage   string            `db:"default_language"`
-		CreatedAt         time.Time         `db:"created_at"`
-		UpdatedAt         time.Time         `db:"updated_at"`
+		ID                           gid.GID           `db:"id"`
+		OrganizationID               gid.GID           `db:"organization_id"`
+		Name                         string            `db:"name"`
+		Origin                       string            `db:"origin"`
+		State                        CookieBannerState `db:"state"`
+		PrivacyPolicyURL             *string           `db:"privacy_policy_url"`
+		CookiePolicyURL              string            `db:"cookie_policy_url"`
+		ConsentExpiryDays            int               `db:"consent_expiry_days"`
+		ConsentMode                  CookieConsentMode `db:"consent_mode"`
+		ShowBranding                 bool              `db:"show_branding"`
+		DefaultLanguage              string            `db:"default_language"`
+		PatternAnalysisRequestedAt   *time.Time        `db:"pattern_analysis_requested_at"`
+		CreatedAt                    time.Time         `db:"created_at"`
+		UpdatedAt                    time.Time         `db:"updated_at"`
+	}
+
+	CookieBannerPatternAnalysisTask struct {
+		BannerID gid.GID
+		TenantID gid.TenantID
 	}
 
 	CookieBanners []*CookieBanner
@@ -91,6 +97,7 @@ SELECT
 	consent_mode,
 	show_branding,
 	default_language,
+	pattern_analysis_requested_at,
 	created_at,
 	updated_at
 FROM
@@ -143,6 +150,7 @@ SELECT
 	consent_mode,
 	show_branding,
 	default_language,
+	pattern_analysis_requested_at,
 	created_at,
 	updated_at
 FROM
@@ -196,6 +204,7 @@ SELECT
 	consent_mode,
 	show_branding,
 	default_language,
+	pattern_analysis_requested_at,
 	created_at,
 	updated_at
 FROM
@@ -253,6 +262,7 @@ SELECT
 	consent_mode,
 	show_branding,
 	default_language,
+	pattern_analysis_requested_at,
 	created_at,
 	updated_at
 FROM
@@ -303,6 +313,7 @@ SELECT
 	consent_mode,
 	show_branding,
 	default_language,
+	pattern_analysis_requested_at,
 	created_at,
 	updated_at
 FROM
@@ -389,6 +400,7 @@ INSERT INTO cookie_banners (
 	consent_mode,
 	show_branding,
 	default_language,
+	pattern_analysis_requested_at,
 	created_at,
 	updated_at
 ) VALUES (
@@ -404,26 +416,28 @@ INSERT INTO cookie_banners (
 	@consent_mode,
 	@show_branding,
 	@default_language,
+	@pattern_analysis_requested_at,
 	@created_at,
 	@updated_at
 )
 `
 
 	args := pgx.StrictNamedArgs{
-		"id":                  b.ID,
-		"tenant_id":           scope.GetTenantID(),
-		"organization_id":     b.OrganizationID,
-		"name":                b.Name,
-		"origin":              b.Origin,
-		"state":               b.State,
-		"privacy_policy_url":  b.PrivacyPolicyURL,
-		"cookie_policy_url":   b.CookiePolicyURL,
-		"consent_expiry_days": b.ConsentExpiryDays,
-		"consent_mode":        b.ConsentMode,
-		"show_branding":       b.ShowBranding,
-		"default_language":    b.DefaultLanguage,
-		"created_at":          b.CreatedAt,
-		"updated_at":          b.UpdatedAt,
+		"id":                            b.ID,
+		"tenant_id":                     scope.GetTenantID(),
+		"organization_id":               b.OrganizationID,
+		"name":                          b.Name,
+		"origin":                        b.Origin,
+		"state":                         b.State,
+		"privacy_policy_url":            b.PrivacyPolicyURL,
+		"cookie_policy_url":             b.CookiePolicyURL,
+		"consent_expiry_days":           b.ConsentExpiryDays,
+		"consent_mode":                  b.ConsentMode,
+		"show_branding":                 b.ShowBranding,
+		"default_language":              b.DefaultLanguage,
+		"pattern_analysis_requested_at": b.PatternAnalysisRequestedAt,
+		"created_at":                    b.CreatedAt,
+		"updated_at":                    b.UpdatedAt,
 	}
 
 	_, err := tx.Exec(ctx, q, args)
@@ -553,6 +567,80 @@ WHERE
 	_, err := tx.Exec(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot delete cookie banner: %w", err)
+	}
+
+	return nil
+}
+
+func (t *CookieBannerPatternAnalysisTask) ClaimNextForUpdateSkipLocked(
+	ctx context.Context,
+	tx pg.Tx,
+) error {
+	q := `
+SELECT
+	id,
+	tenant_id
+FROM
+	cookie_banners
+WHERE
+	pattern_analysis_requested_at IS NOT NULL
+ORDER BY
+	pattern_analysis_requested_at ASC
+FOR UPDATE SKIP LOCKED
+LIMIT 1;
+`
+
+	var tenantIDStr string
+	if err := tx.QueryRow(ctx, q).Scan(&t.BannerID, &tenantIDStr); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+		return fmt.Errorf("cannot claim banner for pattern analysis: %w", err)
+	}
+
+	if err := t.TenantID.UnmarshalText([]byte(tenantIDStr)); err != nil {
+		return fmt.Errorf("cannot parse tenant ID: %w", err)
+	}
+
+	return nil
+}
+
+func (t *CookieBannerPatternAnalysisTask) ClearPatternAnalysisFlag(
+	ctx context.Context,
+	tx pg.Tx,
+) error {
+	q := `
+UPDATE cookie_banners
+SET pattern_analysis_requested_at = NULL
+WHERE id = @id
+`
+
+	args := pgx.StrictNamedArgs{"id": t.BannerID}
+
+	_, err := tx.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot clear pattern analysis flag: %w", err)
+	}
+
+	return nil
+}
+
+func (b *CookieBanner) SetPatternAnalysisRequested(
+	ctx context.Context,
+	tx pg.Tx,
+) error {
+	q := `
+UPDATE cookie_banners
+SET pattern_analysis_requested_at = NOW()
+WHERE id = @id
+  AND pattern_analysis_requested_at IS NULL
+`
+
+	args := pgx.StrictNamedArgs{"id": b.ID}
+
+	_, err := tx.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot set pattern analysis requested: %w", err)
 	}
 
 	return nil

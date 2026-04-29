@@ -2674,6 +2674,10 @@ func (s *Service) ReportDetectedCookies(
 				if _, err := s.ensureDraftVersionForBanner(ctx, tx, scope, banner.ID); err != nil {
 					return fmt.Errorf("cannot ensure draft version: %w", err)
 				}
+
+				if err := banner.SetPatternAnalysisRequested(ctx, tx); err != nil {
+					return fmt.Errorf("cannot request pattern analysis: %w", err)
+				}
 			}
 
 			return nil

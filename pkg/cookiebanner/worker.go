@@ -1,0 +1,217 @@
+// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
+package cookiebanner
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"sort"
+	"strings"
+	"time"
+
+	"go.gearno.de/kit/log"
+	"go.gearno.de/kit/pg"
+	"go.gearno.de/kit/worker"
+	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
+)
+
+const patternMergeThreshold = 3
+
+type patternAnalysisHandler struct {
+	svc    *Service
+	pg     *pg.Client
+	logger *log.Logger
+}
+
+func NewPatternAnalysisWorker(
+	svc *Service,
+	pgClient *pg.Client,
+	logger *log.Logger,
+	opts ...worker.Option,
+) *worker.Worker[coredata.CookieBannerPatternAnalysisTask] {
+	h := &patternAnalysisHandler{
+		svc:    svc,
+		pg:     pgClient,
+		logger: logger,
+	}
+
+	return worker.New(
+		"cookie-pattern-analysis-worker",
+		h,
+		logger,
+		opts...,
+	)
+}
+
+func (h *patternAnalysisHandler) Claim(ctx context.Context) (coredata.CookieBannerPatternAnalysisTask, error) {
+	var task coredata.CookieBannerPatternAnalysisTask
+
+	if err := h.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			if err := task.ClaimNextForUpdateSkipLocked(ctx, tx); err != nil {
+				return err
+			}
+
+			return task.ClearPatternAnalysisFlag(ctx, tx)
+		},
+	); err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return coredata.CookieBannerPatternAnalysisTask{}, worker.ErrNoTask
+		}
+		return coredata.CookieBannerPatternAnalysisTask{}, fmt.Errorf("cannot claim pattern analysis task: %w", err)
+	}
+
+	return task, nil
+}
+
+func (h *patternAnalysisHandler) Process(ctx context.Context, task coredata.CookieBannerPatternAnalysisTask) error {
+	return h.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			scope := coredata.NewScope(task.TenantID)
+
+			var patterns coredata.CookiePatterns
+			if err := patterns.LoadAllByCookieBannerID(ctx, tx, scope, task.BannerID); err != nil {
+				return fmt.Errorf("cannot load patterns: %w", err)
+			}
+
+			prefixGroups := groupByPrefix(patterns)
+
+			merged := false
+			for prefix, group := range prefixGroups {
+				if len(group) < patternMergeThreshold {
+					continue
+				}
+
+				duration := mostCommonDuration(group)
+				source := bestSource(group)
+
+				prefixPattern := &coredata.CookiePattern{
+					ID:               gid.New(task.TenantID, coredata.CookiePatternEntityType),
+					OrganizationID:   group[0].OrganizationID,
+					CookieBannerID:   task.BannerID,
+					CookieCategoryID: group[0].CookieCategoryID,
+					Pattern:          prefix,
+					MatchType:        coredata.CookiePatternMatchTypePrefix,
+					DisplayName:      prefix + "*",
+					Duration:         duration,
+					Description:      "",
+					Source:           source,
+					CreatedAt:        time.Now(),
+					UpdatedAt:        time.Now(),
+				}
+
+				inserted, err := prefixPattern.InsertIfNotExists(ctx, tx, scope)
+				if err != nil {
+					return fmt.Errorf("cannot insert prefix pattern %q: %w", prefix, err)
+				}
+				if !inserted {
+					continue
+				}
+
+				for _, exactPattern := range group {
+					var cookies coredata.Cookies
+					if err := cookies.RelinkByCookiePatternID(ctx, tx, scope, exactPattern.ID, prefixPattern.ID); err != nil {
+						return fmt.Errorf("cannot relink cookies from pattern %q: %w", exactPattern.Pattern, err)
+					}
+
+					if err := exactPattern.Delete(ctx, tx, scope); err != nil {
+						return fmt.Errorf("cannot delete orphaned exact pattern %q: %w", exactPattern.Pattern, err)
+					}
+				}
+
+				merged = true
+				h.logger.InfoCtx(
+					ctx,
+					"merged exact patterns into prefix pattern",
+					log.String("prefix", prefix),
+					log.Int("count", len(group)),
+					log.String("banner_id", task.BannerID.String()),
+				)
+			}
+
+			if merged {
+				if _, err := h.svc.ensureDraftVersionForBanner(ctx, tx, scope, task.BannerID); err != nil {
+					return fmt.Errorf("cannot ensure draft version: %w", err)
+				}
+			}
+
+			return nil
+		},
+	)
+}
+
+func groupByPrefix(patterns coredata.CookiePatterns) map[string][]*coredata.CookiePattern {
+	groups := make(map[string][]*coredata.CookiePattern)
+
+	for _, p := range patterns {
+		if p.MatchType != coredata.CookiePatternMatchTypeExact {
+			continue
+		}
+
+		prefix := extractPrefix(p.Pattern)
+		if prefix == "" {
+			continue
+		}
+
+		groups[prefix] = append(groups[prefix], p)
+	}
+
+	return groups
+}
+
+func extractPrefix(name string) string {
+	for _, sep := range []byte{'_', '-'} {
+		idx := strings.IndexByte(name, sep)
+		if idx > 0 {
+			return name[:idx+1]
+		}
+	}
+
+	return ""
+}
+
+func bestSource(patterns []*coredata.CookiePattern) coredata.CookieSource {
+	for _, p := range patterns {
+		if p.Source == coredata.CookieSourceScript {
+			return coredata.CookieSourceScript
+		}
+	}
+	return coredata.CookieSourcePreExisting
+}
+
+func mostCommonDuration(patterns []*coredata.CookiePattern) string {
+	counts := make(map[string]int)
+	for _, p := range patterns {
+		counts[p.Duration]++
+	}
+
+	type entry struct {
+		duration string
+		count    int
+	}
+	entries := make([]entry, 0, len(counts))
+	for d, c := range counts {
+		entries = append(entries, entry{d, c})
+	}
+	sort.Slice(entries, func(i, j int) bool {
+		return entries[i].count > entries[j].count
+	})
+
+	return entries[0].duration
+}
