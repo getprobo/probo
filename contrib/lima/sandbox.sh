@@ -18,6 +18,7 @@ Usage: $(basename "$0") <command> [options]
 Commands:
   create [--cpus C] [--memory M] [--disk D]   Create a new sandbox VM
   start                                        Start a stopped sandbox
+  boot-logs                                    Show boot logs
   stop                                         Stop the sandbox
   restart                                      Stop + start the sandbox
   delete                                       Delete the sandbox entirely
@@ -83,6 +84,10 @@ cmd_start() {
     limactl start "${VM_NAME}"
     echo ""
     cmd_status
+}
+
+cmd_boot_logs() {
+    limactl shell probo-sandbox-fix -- sudo tail -f /var/log/cloud-init-output.log
 }
 
 cmd_stop() {
@@ -157,12 +162,13 @@ command="$1"
 shift
 
 case "${command}" in
-    create)  cmd_create "$@" ;;
-    start)   cmd_start ;;
-    stop)    cmd_stop ;;
-    restart) cmd_restart ;;
-    delete)  cmd_delete ;;
-    ssh)     cmd_ssh ;;
+    create)     cmd_create "$@" ;;
+    start)      cmd_start ;;
+    boot-logs)  cmd_boot_logs ;;
+    stop)       cmd_stop ;;
+    restart)    cmd_restart ;;
+    delete)     cmd_delete ;;
+    ssh)        cmd_ssh ;;
     exec)
         if [[ "${1:-}" == "--" ]]; then shift; fi
         cmd_exec "$@"

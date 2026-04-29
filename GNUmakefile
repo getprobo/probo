@@ -390,6 +390,10 @@ sandbox-create: ## Create a Lima sandbox VM for this worktree
 sandbox-start: ## Start the Lima sandbox VM
 	./contrib/lima/sandbox.sh start
 
+.PHONY: sandbox-boot-logs
+sandbox-boot-logs: ## Show the Lima sandbox VM boot logs
+	./contrib/lima/sandbox.sh boot-logs
+
 .PHONY: sandbox-stop
 sandbox-stop: ## Stop (hibernate) the Lima sandbox VM
 	./contrib/lima/sandbox.sh stop
