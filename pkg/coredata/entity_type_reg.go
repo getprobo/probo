@@ -111,6 +111,7 @@ const (
 	CookieEntityType                           uint16 = 85
 	CookieBannerTranslationEntityType          uint16 = 86
 	AgentRunEntityType                         uint16 = 87
+	CookiePatternEntityType                    uint16 = 88
 )
 
 func NewEntityFromID(id gid.GID) (any, bool) {
@@ -281,6 +282,8 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &CookieBannerTranslation{ID: id}, true
 	case AgentRunEntityType:
 		return &AgentRun{ID: id}, true
+	case CookiePatternEntityType:
+		return &CookiePattern{ID: id}, true
 	default:
 		return nil, false
 	}

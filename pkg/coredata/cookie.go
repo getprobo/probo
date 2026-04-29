@@ -30,16 +30,15 @@ import (
 
 type (
 	Cookie struct {
-		ID               gid.GID      `db:"id"`
-		OrganizationID   gid.GID      `db:"organization_id"`
-		CookieBannerID   gid.GID      `db:"cookie_banner_id"`
-		CookieCategoryID gid.GID      `db:"cookie_category_id"`
-		Name             string       `db:"name"`
-		Duration         string       `db:"duration"`
-		Description      string       `db:"description"`
-		Source           CookieSource `db:"source"`
-		CreatedAt        time.Time    `db:"created_at"`
-		UpdatedAt        time.Time    `db:"updated_at"`
+		ID              gid.GID      `db:"id"`
+		OrganizationID  gid.GID      `db:"organization_id"`
+		CookieBannerID  gid.GID      `db:"cookie_banner_id"`
+		CookiePatternID gid.GID      `db:"cookie_pattern_id"`
+		Name            string       `db:"name"`
+		Duration        string       `db:"duration"`
+		Source          CookieSource `db:"source"`
+		CreatedAt       time.Time    `db:"created_at"`
+		UpdatedAt       time.Time    `db:"updated_at"`
 	}
 
 	Cookies []*Cookie
@@ -80,10 +79,9 @@ SELECT
 	id,
 	organization_id,
 	cookie_banner_id,
-	cookie_category_id,
+	cookie_pattern_id,
 	name,
 	duration,
-	description,
 	source,
 	created_at,
 	updated_at
@@ -118,7 +116,85 @@ LIMIT 1;
 	return nil
 }
 
-func (c *Cookies) LoadByCookieCategoryID(
+func (c *Cookies) LoadByCookiePatternID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	cookiePatternID gid.GID,
+	cursor *page.Cursor[CookieOrderField],
+) error {
+	q := `
+SELECT
+	id,
+	organization_id,
+	cookie_banner_id,
+	cookie_pattern_id,
+	name,
+	duration,
+	source,
+	created_at,
+	updated_at
+FROM
+	cookies
+WHERE
+	%s
+	AND cookie_pattern_id = @cookie_pattern_id
+	AND %s
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"cookie_pattern_id": cookiePatternID}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, cursor.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query cookies: %w", err)
+	}
+
+	cookies, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Cookie])
+	if err != nil {
+		return fmt.Errorf("cannot collect cookies: %w", err)
+	}
+
+	*c = cookies
+
+	return nil
+}
+
+func (c *Cookies) CountByCookiePatternID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	cookiePatternID gid.GID,
+) (int, error) {
+	q := `
+SELECT
+	COUNT(id)
+FROM
+	cookies
+WHERE
+	%s
+	AND cookie_pattern_id = @cookie_pattern_id
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"cookie_pattern_id": cookiePatternID}
+	maps.Copy(args, scope.SQLArguments())
+
+	row := conn.QueryRow(ctx, q, args)
+
+	var count int
+	if err := row.Scan(&count); err != nil {
+		return 0, fmt.Errorf("cannot scan count: %w", err)
+	}
+
+	return count, nil
+}
+
+func (c *Cookies) LoadByCookieCategoryIDViaPattern(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
@@ -130,10 +206,9 @@ SELECT
 	id,
 	organization_id,
 	cookie_banner_id,
-	cookie_category_id,
+	cookie_pattern_id,
 	name,
 	duration,
-	description,
 	source,
 	created_at,
 	updated_at
@@ -141,7 +216,9 @@ FROM
 	cookies
 WHERE
 	%s
-	AND cookie_category_id = @cookie_category_id
+	AND cookie_pattern_id IN (
+		SELECT id FROM cookie_patterns WHERE cookie_category_id = @cookie_category_id
+	)
 	AND %s
 `
 
@@ -166,7 +243,7 @@ WHERE
 	return nil
 }
 
-func (c *Cookies) CountByCookieCategoryID(
+func (c *Cookies) CountByCookieCategoryIDViaPattern(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
@@ -179,7 +256,9 @@ FROM
 	cookies
 WHERE
 	%s
-	AND cookie_category_id = @cookie_category_id
+	AND cookie_pattern_id IN (
+		SELECT id FROM cookie_patterns WHERE cookie_category_id = @cookie_category_id
+	)
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -208,10 +287,9 @@ SELECT
 	id,
 	organization_id,
 	cookie_banner_id,
-	cookie_category_id,
+	cookie_pattern_id,
 	name,
 	duration,
-	description,
 	source,
 	created_at,
 	updated_at
@@ -255,10 +333,9 @@ INSERT INTO cookies (
 	tenant_id,
 	organization_id,
 	cookie_banner_id,
-	cookie_category_id,
+	cookie_pattern_id,
 	name,
 	duration,
-	description,
 	source,
 	created_at,
 	updated_at
@@ -267,10 +344,9 @@ INSERT INTO cookies (
 	@tenant_id,
 	@organization_id,
 	@cookie_banner_id,
-	@cookie_category_id,
+	@cookie_pattern_id,
 	@name,
 	@duration,
-	@description,
 	@source,
 	@created_at,
 	@updated_at
@@ -278,17 +354,16 @@ INSERT INTO cookies (
 `
 
 	args := pgx.StrictNamedArgs{
-		"id":                 c.ID,
-		"tenant_id":          scope.GetTenantID(),
-		"organization_id":    c.OrganizationID,
-		"cookie_banner_id":   c.CookieBannerID,
-		"cookie_category_id": c.CookieCategoryID,
-		"name":               c.Name,
-		"duration":           c.Duration,
-		"description":        c.Description,
-		"source":             c.Source,
-		"created_at":         c.CreatedAt,
-		"updated_at":         c.UpdatedAt,
+		"id":                c.ID,
+		"tenant_id":         scope.GetTenantID(),
+		"organization_id":   c.OrganizationID,
+		"cookie_banner_id":  c.CookieBannerID,
+		"cookie_pattern_id": c.CookiePatternID,
+		"name":              c.Name,
+		"duration":          c.Duration,
+		"source":            c.Source,
+		"created_at":        c.CreatedAt,
+		"updated_at":        c.UpdatedAt,
 	}
 
 	_, err := tx.Exec(ctx, q, args)
@@ -315,10 +390,9 @@ INSERT INTO cookies (
 	tenant_id,
 	organization_id,
 	cookie_banner_id,
-	cookie_category_id,
+	cookie_pattern_id,
 	name,
 	duration,
-	description,
 	source,
 	created_at,
 	updated_at
@@ -327,10 +401,9 @@ INSERT INTO cookies (
 	@tenant_id,
 	@organization_id,
 	@cookie_banner_id,
-	@cookie_category_id,
+	@cookie_pattern_id,
 	@name,
 	@duration,
-	@description,
 	@source,
 	@created_at,
 	@updated_at
@@ -341,18 +414,17 @@ ON CONFLICT (cookie_banner_id, name) DO UPDATE
 `
 
 	args := pgx.StrictNamedArgs{
-		"id":                 c.ID,
-		"tenant_id":          scope.GetTenantID(),
-		"organization_id":    c.OrganizationID,
-		"cookie_banner_id":   c.CookieBannerID,
-		"cookie_category_id": c.CookieCategoryID,
-		"name":               c.Name,
-		"duration":           c.Duration,
-		"description":        c.Description,
-		"source":             c.Source,
-		"source_script":      CookieSourceScript,
-		"created_at":         c.CreatedAt,
-		"updated_at":         c.UpdatedAt,
+		"id":                c.ID,
+		"tenant_id":         scope.GetTenantID(),
+		"organization_id":   c.OrganizationID,
+		"cookie_banner_id":  c.CookieBannerID,
+		"cookie_pattern_id": c.CookiePatternID,
+		"name":              c.Name,
+		"duration":          c.Duration,
+		"source":            c.Source,
+		"source_script":     CookieSourceScript,
+		"created_at":        c.CreatedAt,
+		"updated_at":        c.UpdatedAt,
 	}
 
 	result, err := tx.Exec(ctx, q, args)
@@ -371,10 +443,8 @@ func (c *Cookie) Update(
 	q := `
 UPDATE cookies
 SET
-	cookie_category_id = @cookie_category_id,
-	name = @name,
+	cookie_pattern_id = @cookie_pattern_id,
 	duration = @duration,
-	description = @description,
 	updated_at = @updated_at
 WHERE
 	%s
@@ -384,22 +454,15 @@ WHERE
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"id":                 c.ID,
-		"cookie_category_id": c.CookieCategoryID,
-		"name":               c.Name,
-		"duration":           c.Duration,
-		"description":        c.Description,
-		"updated_at":         c.UpdatedAt,
+		"id":                c.ID,
+		"cookie_pattern_id": c.CookiePatternID,
+		"duration":          c.Duration,
+		"updated_at":        c.UpdatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
 	result, err := tx.Exec(ctx, q, args)
 	if err != nil {
-		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
-			if pgErr.Code == "23505" && pgErr.ConstraintName == "idx_cookies_unique_name_per_banner" {
-				return ErrResourceAlreadyExists
-			}
-		}
 		return fmt.Errorf("cannot update cookie: %w", err)
 	}
 
@@ -435,35 +498,35 @@ WHERE
 	return nil
 }
 
-func (c *Cookies) MoveToCategoryByCookieCategoryID(
+func (c *Cookies) RelinkByCookiePatternID(
 	ctx context.Context,
 	tx pg.Tx,
 	scope Scoper,
-	sourceCategoryID gid.GID,
-	targetCategoryID gid.GID,
+	sourcePatternID gid.GID,
+	targetPatternID gid.GID,
 ) error {
 	q := `
 UPDATE cookies
 SET
-	cookie_category_id = @target_category_id,
+	cookie_pattern_id = @target_pattern_id,
 	updated_at = @updated_at
 WHERE
 	%s
-	AND cookie_category_id = @source_category_id
+	AND cookie_pattern_id = @source_pattern_id
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"source_category_id": sourceCategoryID,
-		"target_category_id": targetCategoryID,
-		"updated_at":         time.Now(),
+		"source_pattern_id": sourcePatternID,
+		"target_pattern_id": targetPatternID,
+		"updated_at":        time.Now(),
 	}
 	maps.Copy(args, scope.SQLArguments())
 
 	_, err := tx.Exec(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot move cookies to category: %w", err)
+		return fmt.Errorf("cannot relink cookies to pattern: %w", err)
 	}
 
 	return nil

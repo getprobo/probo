@@ -319,7 +319,7 @@ func (r *cookieCategoryResolver) Cookies(ctx context.Context, obj *types.CookieC
 
 	p := page.NewPage(cookies, cursor)
 
-	return types.NewCookieConnection(p, r, obj.ID), nil
+	return types.NewCookieConnection(p, r, obj.ID, obj.ID), nil
 }
 
 // Permission is the resolver for the permission field.
@@ -759,7 +759,7 @@ func (r *mutationResolver) MoveCookieToCategory(ctx context.Context, input types
 	}
 
 	return &types.MoveCookieToCategoryPayload{
-		Cookie:       types.NewCookie(result.Cookie),
+		Cookie:       types.NewCookie(result.Cookie, input.TargetCookieCategoryID),
 		CookieBanner: types.NewCookieBanner(result.Banner),
 	}, nil
 }
@@ -804,7 +804,7 @@ func (r *mutationResolver) CreateCookie(ctx context.Context, input types.CreateC
 	}
 
 	return &types.CreateCookiePayload{
-		CookieEdge:   types.NewCookieEdge(cookie, coredata.CookieOrderFieldCreatedAt),
+		CookieEdge:   types.NewCookieEdge(cookie, coredata.CookieOrderFieldCreatedAt, input.CookieCategoryID),
 		CookieBanner: types.NewCookieBanner(banner),
 	}, nil
 }
@@ -841,6 +841,13 @@ func (r *mutationResolver) UpdateCookie(ctx context.Context, input types.UpdateC
 		return nil, gqlutils.Internal(ctx)
 	}
 
+	patternScope := coredata.NewScopeFromObjectID(cookie.CookiePatternID)
+	pattern, err := r.cookieBanner.GetCookiePattern(ctx, patternScope, cookie.CookiePatternID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot get cookie pattern", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
 	bannerScope := coredata.NewScopeFromObjectID(cookie.CookieBannerID)
 	banner, err := r.cookieBanner.GetCookieBanner(ctx, bannerScope, cookie.CookieBannerID)
 	if err != nil {
@@ -849,7 +856,7 @@ func (r *mutationResolver) UpdateCookie(ctx context.Context, input types.UpdateC
 	}
 
 	return &types.UpdateCookiePayload{
-		Cookie:       types.NewCookie(cookie),
+		Cookie:       types.NewCookie(cookie, pattern.CookieCategoryID),
 		CookieBanner: types.NewCookieBanner(banner),
 	}, nil
 }

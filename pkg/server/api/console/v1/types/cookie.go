@@ -37,11 +37,12 @@ func NewCookieConnection(
 	p *page.Page[*coredata.Cookie, coredata.CookieOrderField],
 	parentType any,
 	parentID gid.GID,
+	cookieCategoryID gid.GID,
 ) *CookieConnection {
 	edges := make([]*CookieEdge, len(p.Data))
 
 	for i := range edges {
-		edges[i] = NewCookieEdge(p.Data[i], p.Cursor.OrderBy.Field)
+		edges[i] = NewCookieEdge(p.Data[i], p.Cursor.OrderBy.Field, cookieCategoryID)
 	}
 
 	return &CookieConnection{
@@ -53,27 +54,26 @@ func NewCookieConnection(
 	}
 }
 
-func NewCookieEdge(c *coredata.Cookie, orderBy coredata.CookieOrderField) *CookieEdge {
+func NewCookieEdge(c *coredata.Cookie, orderBy coredata.CookieOrderField, cookieCategoryID gid.GID) *CookieEdge {
 	return &CookieEdge{
 		Cursor: c.CursorKey(orderBy),
-		Node:   NewCookie(c),
+		Node:   NewCookie(c, cookieCategoryID),
 	}
 }
 
-func NewCookie(c *coredata.Cookie) *Cookie {
+func NewCookie(c *coredata.Cookie, cookieCategoryID gid.GID) *Cookie {
 	return &Cookie{
 		ID: c.ID,
 		CookieCategory: &CookieCategory{
-			ID: c.CookieCategoryID,
+			ID: cookieCategoryID,
 			CookieBanner: &CookieBanner{
 				ID: c.CookieBannerID,
 			},
 		},
-		Name:        c.Name,
-		Duration:    c.Duration,
-		Description: c.Description,
-		Source:      c.Source,
-		CreatedAt:   c.CreatedAt,
-		UpdatedAt:   c.UpdatedAt,
+		Name:      c.Name,
+		Duration:  c.Duration,
+		Source:    c.Source,
+		CreatedAt: c.CreatedAt,
+		UpdatedAt: c.UpdatedAt,
 	}
 }
