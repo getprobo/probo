@@ -29,6 +29,7 @@ import (
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/cookiebanner"
+	"go.probo.inc/probo/pkg/domainconnect"
 	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/file"
 	"go.probo.inc/probo/pkg/iam"
@@ -38,6 +39,7 @@ import (
 	connect_v1 "go.probo.inc/probo/pkg/server/api/connect/v1"
 	console_v1 "go.probo.inc/probo/pkg/server/api/console/v1"
 	cookiebanner_v1 "go.probo.inc/probo/pkg/server/api/cookiebanner/v1"
+	domainconnect_v1 "go.probo.inc/probo/pkg/server/api/domainconnect/v1"
 	files_v1 "go.probo.inc/probo/pkg/server/api/files/v1"
 	mcp_v1 "go.probo.inc/probo/pkg/server/api/mcp/v1"
 	slack_v1 "go.probo.inc/probo/pkg/server/api/slack/v1"
@@ -48,22 +50,24 @@ import (
 
 type (
 	Config struct {
-		BaseURL           *baseurl.BaseURL
-		AllowedOrigins    []string
-		Probo             *probo.Service
-		File              *file.Service
-		IAM               *iam.Service
-		Trust             *trust.Service
-		ESign             *esign.Service
-		AccessReview      *accessreview.Service
-		Slack             *slack.Service
-		Mailman           *mailman.Service
-		CookieBanner      *cookiebanner.Service
-		Cookie            securecookie.Config
-		TokenSecret       string
-		ConnectorRegistry *connector.ConnectorRegistry
-		CustomDomainCname string
-		Logger            *log.Logger
+		BaseURL             *baseurl.BaseURL
+		AllowedOrigins      []string
+		Probo               *probo.Service
+		File                *file.Service
+		IAM                 *iam.Service
+		Trust               *trust.Service
+		ESign               *esign.Service
+		AccessReview        *accessreview.Service
+		Slack               *slack.Service
+		Mailman             *mailman.Service
+		CookieBanner        *cookiebanner.Service
+		Cookie              securecookie.Config
+		TokenSecret         string
+		ConnectorRegistry   *connector.ConnectorRegistry
+		CustomDomainCname   string
+		DomainConnect       domainconnect.Config
+		DomainConnectClient *domainconnect.Client
+		Logger              *log.Logger
 	}
 
 	MCPConfig struct {
@@ -78,6 +82,7 @@ type (
 		compliancePageHandler http.Handler
 		consoleHandler        http.Handler
 		cookieBannerHandler   http.Handler
+		domainConnectHandler  http.Handler
 		filesHandler          http.Handler
 		mcpHandler            http.Handler
 		slackHandler          http.Handler
@@ -188,10 +193,17 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.ConnectorRegistry,
 			cfg.BaseURL,
 			cfg.CustomDomainCname,
+			cfg.DomainConnect,
+			cfg.DomainConnectClient,
 		),
 		cookieBannerHandler: cookiebanner_v1.NewMux(
 			cfg.Logger.Named("cookiebanner.v1"),
 			cfg.CookieBanner,
+		),
+		domainConnectHandler: domainconnect_v1.NewMux(
+			cfg.Logger.Named("domainconnect.v1"),
+			cfg.BaseURL,
+			cfg.TokenSecret,
 		),
 		filesHandler: files_v1.NewMux(
 			cfg.Logger.Named("files.v1"),
@@ -268,6 +280,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		r.Use(cors.Handler(corsOpts))
 		r.Mount("/console/v1", http.StripPrefix("/console/v1", s.consoleHandler))
 		r.Mount("/connect/v1", http.StripPrefix("/connect/v1", s.connectHandler))
+		r.Mount("/domain-connect/v1", http.StripPrefix("/domain-connect/v1", s.domainConnectHandler))
 		r.Mount("/files/v1", http.StripPrefix("/files/v1", s.filesHandler))
 		r.Mount("/trust/v1", http.StripPrefix("/trust/v1", s.compliancePageHandler))
 		r.Mount("/mcp/v1", http.StripPrefix("/mcp/v1", s.mcpHandler))

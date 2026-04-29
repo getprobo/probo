@@ -473,6 +473,7 @@ type CustomDomain implements Node {
     sslExpiresAt: Datetime
     provisioningError: String
     dnsRecords: [DNSRecordInstruction!]!
+    domainConnectSupported: Boolean! @goField(forceResolver: true)
     createdAt: Datetime!
     updatedAt: Datetime!
 
@@ -549,6 +550,9 @@ extend type Mutation {
     deleteCustomDomain(
         input: DeleteCustomDomainInput!
     ): DeleteCustomDomainPayload!
+    initiateDomainConnect(
+        input: InitiateDomainConnectInput!
+    ): InitiateDomainConnectPayload!
 }
 
 input UpdateTrustCenterInput {
@@ -675,6 +679,15 @@ input DeleteCustomDomainInput {
     organizationId: ID!
 }
 
+input InitiateDomainConnectInput {
+    organizationId: ID!
+    continueUrl: String
+}
+
+type InitiateDomainConnectPayload {
+    redirectUrl: String!
+}
+
 type UpdateTrustCenterPayload {
     trustCenter: TrustCenter!
 }
@@ -758,3 +771,4 @@ type CreateCustomDomainPayload {
 type DeleteCustomDomainPayload {
     deletedCustomDomainId: ID!
 }
+

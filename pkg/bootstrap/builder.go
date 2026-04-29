@@ -217,6 +217,13 @@ func (b *Builder) Build() (*probod.FullConfig, error) {
 					RootCA:     b.getEnv("ACME_ROOT_CA"),
 					AccountKey: b.getEnv("ACME_ACCOUNT_KEY"),
 				},
+				DomainConnect: probod.DomainConnectConfig{
+					ProviderID:  b.getEnvOrDefault("DOMAIN_CONNECT_PROVIDER_ID", ""),
+					ServiceID:   b.getEnvOrDefault("DOMAIN_CONNECT_SERVICE_ID", ""),
+					PrivateKey:  b.getEnv("DOMAIN_CONNECT_PRIVATE_KEY"),
+					KeyID:       b.getEnvOrDefault("DOMAIN_CONNECT_KEY_ID", ""),
+					CallbackURL: b.getEnvOrDefault("DOMAIN_CONNECT_CALLBACK_URL", ""),
+				},
 			},
 			SCIMBridge: probod.SCIMBridgeConfig{
 				SyncInterval: b.getEnvIntOrDefault("SCIM_BRIDGE_SYNC_INTERVAL", 900),
