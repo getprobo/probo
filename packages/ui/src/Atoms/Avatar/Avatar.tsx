@@ -22,7 +22,7 @@ type Props = {
 };
 
 const avatar = tv({
-  base: "bg-txt-success text-txt-invert rounded-full font-semibold flex items-center justify-center flex-none",
+  base: "bg-border-mid text-txt-invert! rounded-full font-semibold flex items-center justify-center flex-none",
   variants: {
     size: {
       s: "size-5 text-xss",
