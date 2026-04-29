@@ -81,15 +81,15 @@ type (
 	CreateCookieRequest struct {
 		CookieCategoryID gid.GID
 		Name             string
-		Duration         string
+		MaxAgeSeconds    *int
 		Description      string
 	}
 
 	UpdateCookieRequest struct {
-		CookieID    gid.GID
-		Name        *string
-		Duration    *string
-		Description *string
+		CookieID      gid.GID
+		Name          *string
+		MaxAgeSeconds **int
+		Description   *string
 	}
 
 	ReorderCookieCategoryRequest struct {
@@ -107,14 +107,14 @@ type (
 		Pattern          string
 		MatchType        coredata.CookiePatternMatchType
 		DisplayName      string
-		Duration         string
+		MaxAgeSeconds    *int
 		Description      string
 	}
 
 	UpdateCookiePatternRequest struct {
 		CookiePatternID gid.GID
 		DisplayName     *string
-		Duration        *string
+		MaxAgeSeconds   **int
 		Description     *string
 	}
 
@@ -150,9 +150,9 @@ type (
 	}
 
 	DetectedCookie struct {
-		Name     string
-		Duration string
-		Source   coredata.CookieSource
+		Name          string
+		MaxAgeSeconds *int
+		Source        coredata.CookieSource
 	}
 
 	ReportDetectedCookiesRequest struct {
@@ -244,7 +244,6 @@ func (r *CreateCookieRequest) Validate() error {
 
 	v.Check(r.CookieCategoryID, "cookie_category_id", validator.Required(), validator.GID(coredata.CookieCategoryEntityType))
 	v.Check(r.Name, "name", validator.Required(), validator.SafeTextNoNewLine(255))
-	v.Check(r.Duration, "duration", validator.Required(), validator.SafeTextNoNewLine(255))
 	v.Check(r.Description, "description", validator.SafeText(1000))
 
 	return v.Error()
@@ -255,7 +254,6 @@ func (r *UpdateCookieRequest) Validate() error {
 
 	v.Check(r.CookieID, "cookie_id", validator.Required(), validator.GID(coredata.CookieEntityType))
 	v.Check(r.Name, "name", validator.SafeTextNoNewLine(255))
-	v.Check(r.Duration, "duration", validator.SafeTextNoNewLine(255))
 	v.Check(r.Description, "description", validator.SafeText(1000))
 
 	return v.Error()
@@ -286,7 +284,6 @@ func (r *CreateCookiePatternRequest) Validate() error {
 		}(),
 	))
 	v.Check(r.DisplayName, "display_name", validator.Required(), validator.SafeTextNoNewLine(255))
-	v.Check(r.Duration, "duration", validator.Required(), validator.SafeTextNoNewLine(255))
 	v.Check(r.Description, "description", validator.SafeText(1000))
 
 	return v.Error()
@@ -297,7 +294,6 @@ func (r *UpdateCookiePatternRequest) Validate() error {
 
 	v.Check(r.CookiePatternID, "cookie_pattern_id", validator.Required(), validator.GID(coredata.CookiePatternEntityType))
 	v.Check(r.DisplayName, "display_name", validator.SafeTextNoNewLine(255))
-	v.Check(r.Duration, "duration", validator.SafeTextNoNewLine(255))
 	v.Check(r.Description, "description", validator.SafeText(1000))
 
 	return v.Error()
@@ -411,9 +407,9 @@ func buildSnapshot(
 		cookiesByCategory[p.CookieCategoryID] = append(
 			cookiesByCategory[p.CookieCategoryID],
 			coredata.CookieItem{
-				Name:        p.DisplayName,
-				Duration:    p.Duration,
-				Description: p.Description,
+				Name:          p.DisplayName,
+				MaxAgeSeconds: p.MaxAgeSeconds,
+				Description:   p.Description,
 			},
 		)
 	}
@@ -662,6 +658,7 @@ func (s *Service) CreateCookieBanner(
 				slugToGID[dc.Slug] = category.ID
 
 				if dc.Kind == coredata.CookieCategoryKindNecessary {
+					consentMaxAge := req.ConsentExpiryDays * 86400
 					consentPattern := &coredata.CookiePattern{
 						ID:               gid.New(scope.GetTenantID(), coredata.CookiePatternEntityType),
 						OrganizationID:   banner.OrganizationID,
@@ -670,7 +667,7 @@ func (s *Service) CreateCookieBanner(
 						Pattern:          "probo_consent",
 						MatchType:        coredata.CookiePatternMatchTypeExact,
 						DisplayName:      "probo_consent",
-						Duration:         fmt.Sprintf("%d days", req.ConsentExpiryDays),
+						MaxAgeSeconds:    &consentMaxAge,
 						Description:      "Stores your cookie consent preferences for this website.",
 						Source:           coredata.CookieSourceScript,
 						CreatedAt:        now,
@@ -686,7 +683,7 @@ func (s *Service) CreateCookieBanner(
 						CookieBannerID:  banner.ID,
 						CookiePatternID: consentPattern.ID,
 						Name:            "probo_consent",
-						Duration:        fmt.Sprintf("%d days", req.ConsentExpiryDays),
+						MaxAgeSeconds:   &consentMaxAge,
 						Source:          coredata.CookieSourceScript,
 						CreatedAt:       now,
 						UpdatedAt:       now,
@@ -1292,7 +1289,7 @@ func (s *Service) CreateCookie(
 				Pattern:          req.Name,
 				MatchType:        coredata.CookiePatternMatchTypeExact,
 				DisplayName:      req.Name,
-				Duration:         req.Duration,
+				MaxAgeSeconds:    req.MaxAgeSeconds,
 				Description:      req.Description,
 				Source:           coredata.CookieSourceScript,
 				CreatedAt:        now,
@@ -1312,7 +1309,7 @@ func (s *Service) CreateCookie(
 				CookieBannerID:  category.CookieBannerID,
 				CookiePatternID: pattern.ID,
 				Name:            req.Name,
-				Duration:        req.Duration,
+				MaxAgeSeconds:   req.MaxAgeSeconds,
 				Source:          coredata.CookieSourceScript,
 				CreatedAt:       now,
 				UpdatedAt:       now,
@@ -1425,7 +1422,7 @@ func (s *Service) CreateCookiePattern(
 				Pattern:          req.Pattern,
 				MatchType:        req.MatchType,
 				DisplayName:      req.DisplayName,
-				Duration:         req.Duration,
+				MaxAgeSeconds:    req.MaxAgeSeconds,
 				Description:      req.Description,
 				Source:           coredata.CookieSourceScript,
 				CreatedAt:        now,
@@ -1477,8 +1474,8 @@ func (s *Service) UpdateCookiePattern(
 			if req.DisplayName != nil {
 				pattern.DisplayName = *req.DisplayName
 			}
-			if req.Duration != nil {
-				pattern.Duration = *req.Duration
+			if req.MaxAgeSeconds != nil {
+				pattern.MaxAgeSeconds = *req.MaxAgeSeconds
 			}
 			if req.Description != nil {
 				pattern.Description = *req.Description
@@ -1702,8 +1699,8 @@ func (s *Service) UpdateCookie(
 				return fmt.Errorf("cannot load cookie: %w", err)
 			}
 
-			if req.Duration != nil {
-				cookie.Duration = *req.Duration
+			if req.MaxAgeSeconds != nil {
+				cookie.MaxAgeSeconds = *req.MaxAgeSeconds
 			}
 
 			cookie.UpdatedAt = time.Now()
@@ -2637,7 +2634,7 @@ func (s *Service) ReportDetectedCookies(
 						Pattern:          dc.Name,
 						MatchType:        coredata.CookiePatternMatchTypeExact,
 						DisplayName:      dc.Name,
-						Duration:         dc.Duration,
+						MaxAgeSeconds:    dc.MaxAgeSeconds,
 						Description:      "",
 						Source:           dc.Source,
 						CreatedAt:        now,
@@ -2659,7 +2656,7 @@ func (s *Service) ReportDetectedCookies(
 					CookieBannerID:  banner.ID,
 					CookiePatternID: patternID,
 					Name:            dc.Name,
-					Duration:        dc.Duration,
+					MaxAgeSeconds:   dc.MaxAgeSeconds,
 					Source:          dc.Source,
 					CreatedAt:       now,
 					UpdatedAt:       now,

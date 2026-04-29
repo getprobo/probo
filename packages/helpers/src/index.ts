@@ -109,6 +109,7 @@ export {
   formatDuration,
   parseDate,
 } from "./date";
+export { humanizeSeconds } from "./duration";
 export { getTrustCenterUrl } from "./trustCenter";
 export { detectSocialName } from "./socialUrl";
 export { formatError, type GraphQLError } from "./error";

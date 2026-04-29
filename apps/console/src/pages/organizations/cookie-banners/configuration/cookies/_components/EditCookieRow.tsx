@@ -21,11 +21,12 @@ import { graphql } from "relay-runtime";
 import type { EditCookieRowFragment$key } from "#/__generated__/core/EditCookieRowFragment.graphql";
 
 import type { CookieEntry } from "./CategorySection";
+import { DurationInput, fromMaxAgeSeconds, toMaxAgeSeconds } from "./DurationInput";
 
 export const editCookieRowFragment = graphql`
   fragment EditCookieRowFragment on CookiePattern {
     displayName
-    duration
+    maxAgeSeconds
     description
   }
 `;
@@ -45,39 +46,48 @@ export function EditCookieRow({
 }: EditCookieRowProps) {
   const { __ } = useTranslate();
   const cookie = useFragment(editCookieRowFragment, cookieKey);
-  const [form, setForm] = useState<CookieEntry>({
-    name: cookie.displayName,
-    duration: cookie.duration,
-    description: cookie.description,
-  });
+  const initial = fromMaxAgeSeconds(cookie.maxAgeSeconds ?? null);
+  const [name, setName] = useState(cookie.displayName);
+  const [durationValue, setDurationValue] = useState(initial.value);
+  const [durationUnit, setDurationUnit] = useState(initial.unit);
+  const [description, setDescription] = useState(cookie.description);
+
+  const handleSave = () => {
+    onSave({
+      name,
+      maxAgeSeconds: toMaxAgeSeconds(durationValue, durationUnit),
+      description,
+    });
+  };
 
   return (
     <Tr>
       <Td className="pr-3">
         <Input
-          value={form.name}
-          onChange={e => setForm({ ...form, name: e.target.value })}
+          value={name}
+          onChange={e => setName(e.target.value)}
           placeholder={__("Cookie name")}
         />
       </Td>
       <Td className="pr-3">
-        <Input
-          value={form.duration}
-          onChange={e => setForm({ ...form, duration: e.target.value })}
-          placeholder={__("e.g. 1 year")}
+        <DurationInput
+          value={durationValue}
+          unit={durationUnit}
+          onValueChange={setDurationValue}
+          onUnitChange={setDurationUnit}
         />
       </Td>
       <Td className="pr-3">
         <Input
-          value={form.description}
-          onChange={e => setForm({ ...form, description: e.target.value })}
+          value={description}
+          onChange={e => setDescription(e.target.value)}
           placeholder={__("Description")}
         />
       </Td>
       <Td>
         <div className="flex items-center gap-1">
           <Button
-            onClick={() => onSave(form)}
+            onClick={handleSave}
             disabled={isUpdating}
           >
             {__("Save")}

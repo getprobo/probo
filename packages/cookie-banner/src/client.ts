@@ -31,7 +31,7 @@ import { getOrCreateVisitorId } from "./visitor";
 
 export interface CookieItem {
   name: string;
-  duration: string;
+  max_age_seconds: number | null;
   description: string;
 }
 

@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { formatError, type GraphQLError } from "@probo/helpers";
+import { formatError, type GraphQLError, humanizeSeconds } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import {
   Badge,
@@ -48,7 +48,7 @@ import { EditCookieRow } from "./EditCookieRow";
 
 export interface CookieEntry {
   name: string;
-  duration: string;
+  maxAgeSeconds: number | null;
   description: string;
 }
 
@@ -69,7 +69,7 @@ export const categorySectionFragment = graphql`
         node {
           id
           displayName
-          duration
+          maxAgeSeconds
           description
           ...EditCookieRowFragment
         }
@@ -125,7 +125,7 @@ const createPatternMutation = graphql`
         node {
           id
           displayName
-          duration
+          maxAgeSeconds
           description
           ...EditCookieRowFragment
         }
@@ -150,7 +150,7 @@ const updatePatternMutation = graphql`
       cookiePattern {
         id
         displayName
-        duration
+        maxAgeSeconds
         description
         updatedAt
       }
@@ -193,7 +193,7 @@ const movePatternMutation = graphql`
       cookiePattern {
         id
         displayName
-        duration
+        maxAgeSeconds
         description
         cookieCategory {
           id
@@ -294,7 +294,7 @@ export function CategorySection({ categoryKey, onDelete }: CategorySectionProps)
           pattern: cookie.name,
           matchType: "EXACT",
           displayName: cookie.name,
-          duration: cookie.duration,
+          maxAgeSeconds: cookie.maxAgeSeconds,
           description: cookie.description,
         },
         connections: [patternsConnectionId],
@@ -340,7 +340,7 @@ export function CategorySection({ categoryKey, onDelete }: CategorySectionProps)
         input: {
           cookiePatternId: patternId,
           displayName: cookie.name,
-          duration: cookie.duration,
+          maxAgeSeconds: cookie.maxAgeSeconds,
           description: cookie.description,
         },
       },
@@ -592,7 +592,7 @@ export function CategorySection({ categoryKey, onDelete }: CategorySectionProps)
                       <code className="text-sm font-mono">{pattern.displayName}</code>
                     </Td>
                     <Td className="text-sm text-muted-foreground">
-                      {pattern.duration}
+                      {humanizeSeconds(pattern.maxAgeSeconds ?? null)}
                     </Td>
                     <Td className="text-sm text-muted-foreground">
                       {pattern.description}

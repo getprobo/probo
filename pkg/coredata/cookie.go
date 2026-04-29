@@ -35,7 +35,7 @@ type (
 		CookieBannerID  gid.GID      `db:"cookie_banner_id"`
 		CookiePatternID gid.GID      `db:"cookie_pattern_id"`
 		Name            string       `db:"name"`
-		Duration        string       `db:"duration"`
+		MaxAgeSeconds   *int         `db:"max_age_seconds"`
 		Source          CookieSource `db:"source"`
 		CreatedAt       time.Time    `db:"created_at"`
 		UpdatedAt       time.Time    `db:"updated_at"`
@@ -81,7 +81,7 @@ SELECT
 	cookie_banner_id,
 	cookie_pattern_id,
 	name,
-	duration,
+	max_age_seconds,
 	source,
 	created_at,
 	updated_at
@@ -130,7 +130,7 @@ SELECT
 	cookie_banner_id,
 	cookie_pattern_id,
 	name,
-	duration,
+	max_age_seconds,
 	source,
 	created_at,
 	updated_at
@@ -208,7 +208,7 @@ SELECT
 	cookie_banner_id,
 	cookie_pattern_id,
 	name,
-	duration,
+	max_age_seconds,
 	source,
 	created_at,
 	updated_at
@@ -289,7 +289,7 @@ SELECT
 	cookie_banner_id,
 	cookie_pattern_id,
 	name,
-	duration,
+	max_age_seconds,
 	source,
 	created_at,
 	updated_at
@@ -335,7 +335,7 @@ INSERT INTO cookies (
 	cookie_banner_id,
 	cookie_pattern_id,
 	name,
-	duration,
+	max_age_seconds,
 	source,
 	created_at,
 	updated_at
@@ -346,7 +346,7 @@ INSERT INTO cookies (
 	@cookie_banner_id,
 	@cookie_pattern_id,
 	@name,
-	@duration,
+	@max_age_seconds,
 	@source,
 	@created_at,
 	@updated_at
@@ -360,7 +360,7 @@ INSERT INTO cookies (
 		"cookie_banner_id":  c.CookieBannerID,
 		"cookie_pattern_id": c.CookiePatternID,
 		"name":              c.Name,
-		"duration":          c.Duration,
+		"max_age_seconds":   c.MaxAgeSeconds,
 		"source":            c.Source,
 		"created_at":        c.CreatedAt,
 		"updated_at":        c.UpdatedAt,
@@ -392,7 +392,7 @@ INSERT INTO cookies (
 	cookie_banner_id,
 	cookie_pattern_id,
 	name,
-	duration,
+	max_age_seconds,
 	source,
 	created_at,
 	updated_at
@@ -403,7 +403,7 @@ INSERT INTO cookies (
 	@cookie_banner_id,
 	@cookie_pattern_id,
 	@name,
-	@duration,
+	@max_age_seconds,
 	@source,
 	@created_at,
 	@updated_at
@@ -420,7 +420,7 @@ ON CONFLICT (cookie_banner_id, name) DO UPDATE
 		"cookie_banner_id":  c.CookieBannerID,
 		"cookie_pattern_id": c.CookiePatternID,
 		"name":              c.Name,
-		"duration":          c.Duration,
+		"max_age_seconds":   c.MaxAgeSeconds,
 		"source":            c.Source,
 		"source_script":     CookieSourceScript,
 		"created_at":        c.CreatedAt,
@@ -444,7 +444,7 @@ func (c *Cookie) Update(
 UPDATE cookies
 SET
 	cookie_pattern_id = @cookie_pattern_id,
-	duration = @duration,
+	max_age_seconds = @max_age_seconds,
 	updated_at = @updated_at
 WHERE
 	%s
@@ -456,7 +456,7 @@ WHERE
 	args := pgx.StrictNamedArgs{
 		"id":                c.ID,
 		"cookie_pattern_id": c.CookiePatternID,
-		"duration":          c.Duration,
+		"max_age_seconds":   c.MaxAgeSeconds,
 		"updated_at":        c.UpdatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())

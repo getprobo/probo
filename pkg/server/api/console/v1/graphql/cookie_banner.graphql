@@ -200,7 +200,7 @@ type CookiePattern implements Node {
     pattern: String!
     matchType: CookiePatternMatchType!
     displayName: String!
-    duration: String!
+    maxAgeSeconds: Int
     description: String!
     source: CookieSource!
     cookieCount: Int! @goField(forceResolver: true)
@@ -243,7 +243,7 @@ type CookieBannerVersionCategory {
 
 type CookieBannerVersionCookie {
     name: String!
-    duration: String!
+    maxAgeSeconds: Int
     description: String!
 }
 
@@ -434,14 +434,14 @@ input CreateCookiePatternInput {
     pattern: String!
     matchType: CookiePatternMatchType!
     displayName: String!
-    duration: String!
+    maxAgeSeconds: Int
     description: String!
 }
 
 input UpdateCookiePatternInput {
     cookiePatternId: ID!
     displayName: String
-    duration: String
+    maxAgeSeconds: Int @goField(omittable: true)
     description: String
 }
 

@@ -17,6 +17,7 @@ import { Button, Input, Td, Tr } from "@probo/ui";
 import { useState } from "react";
 
 import type { CookieEntry } from "./CategorySection";
+import { DurationInput, toMaxAgeSeconds } from "./DurationInput";
 
 interface AddCookieRowProps {
   isUpdating: boolean;
@@ -30,39 +31,47 @@ export function AddCookieRow({
   onCancel,
 }: AddCookieRowProps) {
   const { __ } = useTranslate();
-  const [form, setForm] = useState<CookieEntry>({
-    name: "",
-    duration: "",
-    description: "",
-  });
+  const [name, setName] = useState("");
+  const [durationValue, setDurationValue] = useState("");
+  const [durationUnit, setDurationUnit] = useState("days");
+  const [description, setDescription] = useState("");
+
+  const handleSave = () => {
+    onSave({
+      name,
+      maxAgeSeconds: toMaxAgeSeconds(durationValue, durationUnit),
+      description,
+    });
+  };
 
   return (
     <Tr>
       <Td className="pr-3">
         <Input
-          value={form.name}
-          onChange={e => setForm({ ...form, name: e.target.value })}
+          value={name}
+          onChange={e => setName(e.target.value)}
           placeholder={__("Cookie name")}
         />
       </Td>
       <Td className="pr-3">
-        <Input
-          value={form.duration}
-          onChange={e => setForm({ ...form, duration: e.target.value })}
-          placeholder={__("e.g. 1 year")}
+        <DurationInput
+          value={durationValue}
+          unit={durationUnit}
+          onValueChange={setDurationValue}
+          onUnitChange={setDurationUnit}
         />
       </Td>
       <Td className="pr-3">
         <Input
-          value={form.description}
-          onChange={e => setForm({ ...form, description: e.target.value })}
+          value={description}
+          onChange={e => setDescription(e.target.value)}
           placeholder={__("Description")}
         />
       </Td>
       <Td>
         <div className="flex items-center gap-2">
           <Button
-            onClick={() => onSave(form)}
+            onClick={handleSave}
             disabled={isUpdating}
           >
             {__("Save")}

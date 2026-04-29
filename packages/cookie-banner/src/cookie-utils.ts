@@ -98,7 +98,7 @@ const DURATION_UNITS: [number, string, number][] = [
   [60, "duration_minute", 15],
 ];
 
-function humanizeDuration(seconds: number, lang?: string): string {
+export function humanizeDuration(seconds: number, lang?: string): string {
   const texts = getDurationTexts(lang);
   if (seconds <= 0) return texts.duration_session;
 
@@ -133,17 +133,15 @@ export function parseCookieName(raw: string): string {
   return raw.substring(0, eqIdx).trim();
 }
 
-export function parseDuration(raw: string, lang?: string): string {
-  const texts = getDurationTexts(lang);
-  const session = texts.duration_session;
+export function parseMaxAgeSeconds(raw: string): number | null {
   const parts = raw.split(";").map((s) => s.trim());
 
   for (const part of parts) {
     const lower = part.toLowerCase();
     if (lower.startsWith("max-age=")) {
       const val = parseInt(part.substring(8), 10);
-      if (isNaN(val) || val <= 0) return session;
-      return humanizeDuration(val, lang);
+      if (isNaN(val) || val <= 0) return null;
+      return val;
     }
   }
 
@@ -152,16 +150,16 @@ export function parseDuration(raw: string, lang?: string): string {
     if (lower.startsWith("expires=")) {
       const dateStr = part.substring(8);
       const expires = new Date(dateStr);
-      if (isNaN(expires.getTime())) return session;
+      if (isNaN(expires.getTime())) return null;
       const deltaSeconds = Math.round(
         (expires.getTime() - Date.now()) / 1000,
       );
-      if (deltaSeconds <= 0) return session;
-      return humanizeDuration(deltaSeconds, lang);
+      if (deltaSeconds <= 0) return null;
+      return deltaSeconds;
     }
   }
 
-  return session;
+  return null;
 }
 
 export function isDeletion(raw: string): boolean {

@@ -13,6 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 import type { CookieItem } from "../client";
+import { humanizeDuration } from "../cookie-utils";
 import { getCookieDetailLabels } from "../i18n";
 import { ProboElement } from "./base";
 import type { ProboCategory } from "./category";
@@ -43,24 +44,28 @@ export class ProboCookieList extends ProboElement {
 
     const cookies = this.category.cookies;
     for (const cookie of cookies) {
-      this.stampCookie(cookie, labels);
+      this.stampCookie(cookie, labels, lang);
     }
   }
 
-  private stampCookie(cookie: CookieItem, labels: Record<string, string>): void {
+  private stampCookie(cookie: CookieItem, labels: Record<string, string>, lang: string): void {
     if (!this.template) return;
+
+    const duration = cookie.max_age_seconds != null
+      ? humanizeDuration(cookie.max_age_seconds, lang)
+      : humanizeDuration(0, lang);
 
     const wrapper = document.createElement("probo-cookie");
     wrapper.setAttribute("name", cookie.name);
     const clone = this.template.content.cloneNode(true) as DocumentFragment;
     this.fillSlots(clone, {
       name: cookie.name,
-      duration: cookie.duration,
+      duration,
       description: cookie.description,
     });
     this.fillLabels(clone, labels, {
       description: cookie.description,
-      duration: cookie.duration,
+      duration,
     });
 
     wrapper.appendChild(clone);

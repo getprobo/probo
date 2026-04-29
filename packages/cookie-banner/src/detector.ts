@@ -12,12 +12,12 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { isDeletion, parseCookieName, parseDuration } from "./cookie-utils";
+import { isDeletion, parseCookieName, parseMaxAgeSeconds } from "./cookie-utils";
 import { fetchJSON } from "./http";
 
 interface DetectedCookieEntry {
   name: string;
-  duration: string;
+  max_age_seconds: number | null;
   source: "script" | "pre-existing";
 }
 
@@ -93,10 +93,10 @@ export class CookieDetector {
     const name = parseCookieName(raw);
     if (!name || this.knownNames.has(name) || this.reported.has(name)) return;
 
-    const duration = parseDuration(raw);
+    const maxAgeSeconds = parseMaxAgeSeconds(raw);
 
     this.reported.add(name);
-    this.pending.set(name, { name, duration, source: "script" });
+    this.pending.set(name, { name, max_age_seconds: maxAgeSeconds, source: "script" });
     this.scheduleFlush();
   }
 
@@ -110,7 +110,7 @@ export class CookieDetector {
         continue;
       }
       this.reported.add(name);
-      this.pending.set(name, { name, duration: "session", source: "pre-existing" });
+      this.pending.set(name, { name, max_age_seconds: null, source: "pre-existing" });
     }
 
     if (this.pending.size > 0) {

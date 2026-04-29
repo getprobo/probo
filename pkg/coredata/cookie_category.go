@@ -31,9 +31,9 @@ import (
 
 type (
 	CookieItem struct {
-		Name        string `json:"name"`
-		Duration    string `json:"duration"`
-		Description string `json:"description"`
+		Name          string `json:"name"`
+		MaxAgeSeconds *int   `json:"max_age_seconds"`
+		Description   string `json:"description"`
 	}
 
 	CookieItems []CookieItem

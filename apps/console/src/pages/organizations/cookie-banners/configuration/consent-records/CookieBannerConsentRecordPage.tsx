@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { formatDate } from "@probo/helpers";
+import { formatDate, humanizeSeconds } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import { Badge, Breadcrumb, Card, PageHeader, PropertyRow } from "@probo/ui";
 import { useMemo } from "react";
@@ -49,7 +49,7 @@ export const cookieBannerConsentRecordPageQuery = graphql`
             kind
             cookies {
               name
-              duration
+              maxAgeSeconds
               description
             }
           }
@@ -217,7 +217,7 @@ export default function CookieBannerConsentRecordPage({
                                     {cookie.name}
                                   </td>
                                   <td className="py-1 pr-4 text-txt-secondary">
-                                    {cookie.duration}
+                                    {humanizeSeconds(cookie.maxAgeSeconds ?? null)}
                                   </td>
                                   <td className="py-1 text-txt-secondary">
                                     {cookie.description}

@@ -224,9 +224,9 @@ func (r *cookieBannerVersionResolver) Categories(ctx context.Context, obj *types
 		cookies := make([]*types.CookieBannerVersionCookie, len(cat.Cookies))
 		for j, c := range cat.Cookies {
 			cookies[j] = &types.CookieBannerVersionCookie{
-				Name:        c.Name,
-				Duration:    c.Duration,
-				Description: c.Description,
+				Name:          c.Name,
+				MaxAgeSeconds: c.MaxAgeSeconds,
+				Description:   c.Description,
 			}
 		}
 
@@ -754,7 +754,7 @@ func (r *mutationResolver) CreateCookiePattern(ctx context.Context, input types.
 			Pattern:          input.Pattern,
 			MatchType:        input.MatchType,
 			DisplayName:      input.DisplayName,
-			Duration:         input.Duration,
+			MaxAgeSeconds:    input.MaxAgeSeconds,
 			Description:      input.Description,
 		},
 	)
@@ -799,7 +799,7 @@ func (r *mutationResolver) UpdateCookiePattern(ctx context.Context, input types.
 		cookiebanner.UpdateCookiePatternRequest{
 			CookiePatternID: input.CookiePatternID,
 			DisplayName:     input.DisplayName,
-			Duration:        input.Duration,
+			MaxAgeSeconds:   gqlutils.UnwrapOmittable(input.MaxAgeSeconds),
 			Description:     input.Description,
 		},
 	)

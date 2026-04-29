@@ -37,7 +37,7 @@ type (
 		Pattern          string                 `db:"pattern"`
 		MatchType        CookiePatternMatchType `db:"match_type"`
 		DisplayName      string                 `db:"display_name"`
-		Duration         string                 `db:"duration"`
+		MaxAgeSeconds    *int                   `db:"max_age_seconds"`
 		Description      string                 `db:"description"`
 		Source           CookieSource           `db:"source"`
 		CreatedAt        time.Time              `db:"created_at"`
@@ -86,7 +86,7 @@ SELECT
 	pattern,
 	match_type,
 	display_name,
-	duration,
+	max_age_seconds,
 	description,
 	source,
 	created_at,
@@ -138,7 +138,7 @@ SELECT
 	pattern,
 	match_type,
 	display_name,
-	duration,
+	max_age_seconds,
 	description,
 	source,
 	created_at,
@@ -201,7 +201,7 @@ SELECT
 	pattern,
 	match_type,
 	display_name,
-	duration,
+	max_age_seconds,
 	description,
 	source,
 	created_at,
@@ -281,7 +281,7 @@ SELECT
 	pattern,
 	match_type,
 	display_name,
-	duration,
+	max_age_seconds,
 	description,
 	source,
 	created_at,
@@ -330,7 +330,7 @@ INSERT INTO cookie_patterns (
 	pattern,
 	match_type,
 	display_name,
-	duration,
+	max_age_seconds,
 	description,
 	source,
 	created_at,
@@ -344,7 +344,7 @@ INSERT INTO cookie_patterns (
 	@pattern,
 	@match_type,
 	@display_name,
-	@duration,
+	@max_age_seconds,
 	@description,
 	@source,
 	@created_at,
@@ -361,7 +361,7 @@ INSERT INTO cookie_patterns (
 		"pattern":            cp.Pattern,
 		"match_type":         cp.MatchType,
 		"display_name":       cp.DisplayName,
-		"duration":           cp.Duration,
+		"max_age_seconds":    cp.MaxAgeSeconds,
 		"description":        cp.Description,
 		"source":             cp.Source,
 		"created_at":         cp.CreatedAt,
@@ -396,7 +396,7 @@ INSERT INTO cookie_patterns (
 	pattern,
 	match_type,
 	display_name,
-	duration,
+	max_age_seconds,
 	description,
 	source,
 	created_at,
@@ -410,7 +410,7 @@ INSERT INTO cookie_patterns (
 	@pattern,
 	@match_type,
 	@display_name,
-	@duration,
+	@max_age_seconds,
 	@description,
 	@source,
 	@created_at,
@@ -428,7 +428,7 @@ ON CONFLICT (cookie_banner_id, pattern) DO NOTHING
 		"pattern":            cp.Pattern,
 		"match_type":         cp.MatchType,
 		"display_name":       cp.DisplayName,
-		"duration":           cp.Duration,
+		"max_age_seconds":    cp.MaxAgeSeconds,
 		"description":        cp.Description,
 		"source":             cp.Source,
 		"created_at":         cp.CreatedAt,
@@ -453,7 +453,7 @@ UPDATE cookie_patterns
 SET
 	cookie_category_id = @cookie_category_id,
 	display_name = @display_name,
-	duration = @duration,
+	max_age_seconds = @max_age_seconds,
 	description = @description,
 	updated_at = @updated_at
 WHERE
@@ -467,7 +467,7 @@ WHERE
 		"id":                 cp.ID,
 		"cookie_category_id": cp.CookieCategoryID,
 		"display_name":       cp.DisplayName,
-		"duration":           cp.Duration,
+		"max_age_seconds":    cp.MaxAgeSeconds,
 		"description":        cp.Description,
 		"updated_at":         cp.UpdatedAt,
 	}

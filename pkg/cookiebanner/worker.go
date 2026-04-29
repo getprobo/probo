@@ -94,7 +94,7 @@ func (h *patternAnalysisHandler) Process(ctx context.Context, task coredata.Cook
 			merged := false
 			for prefix, group := range mergeGroups {
 
-				duration := mostCommonDuration(group)
+				maxAge := mostCommonMaxAge(group)
 				source := bestSource(group)
 
 				prefixPattern := &coredata.CookiePattern{
@@ -105,7 +105,7 @@ func (h *patternAnalysisHandler) Process(ctx context.Context, task coredata.Cook
 					Pattern:          prefix,
 					MatchType:        coredata.CookiePatternMatchTypePrefix,
 					DisplayName:      prefix + "*",
-					Duration:         duration,
+					MaxAgeSeconds:    maxAge,
 					Description:      "",
 					Source:           source,
 					CreatedAt:        time.Now(),
@@ -229,23 +229,35 @@ func bestSource(patterns []*coredata.CookiePattern) coredata.CookieSource {
 	return coredata.CookieSourcePreExisting
 }
 
-func mostCommonDuration(patterns []*coredata.CookiePattern) string {
-	counts := make(map[string]int)
+func mostCommonMaxAge(patterns []*coredata.CookiePattern) *int {
+	type key struct {
+		valid bool
+		val   int
+	}
+	counts := make(map[key]int)
 	for _, p := range patterns {
-		counts[p.Duration]++
+		k := key{}
+		if p.MaxAgeSeconds != nil {
+			k = key{valid: true, val: *p.MaxAgeSeconds}
+		}
+		counts[k]++
 	}
 
 	type entry struct {
-		duration string
-		count    int
+		k     key
+		count int
 	}
 	entries := make([]entry, 0, len(counts))
-	for d, c := range counts {
-		entries = append(entries, entry{d, c})
+	for k, c := range counts {
+		entries = append(entries, entry{k, c})
 	}
 	sort.Slice(entries, func(i, j int) bool {
 		return entries[i].count > entries[j].count
 	})
 
-	return entries[0].duration
+	if !entries[0].k.valid {
+		return nil
+	}
+	v := entries[0].k.val
+	return &v
 }
