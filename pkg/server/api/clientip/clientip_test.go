@@ -48,9 +48,15 @@ func TestExtract(t *testing.T) {
 			want:       "203.0.113.50",
 		},
 		{
-			name:       "x-forwarded-for chain",
+			name:       "x-forwarded-for chain takes rightmost",
 			remoteAddr: "10.0.0.1:1234",
 			headers:    map[string]string{"X-Forwarded-For": "203.0.113.50, 70.41.3.18, 150.172.238.178"},
+			want:       "150.172.238.178",
+		},
+		{
+			name:       "x-forwarded-for spoofed prefix",
+			remoteAddr: "10.0.0.1:1234",
+			headers:    map[string]string{"X-Forwarded-For": "1.2.3.4, 203.0.113.50"},
 			want:       "203.0.113.50",
 		},
 		{
@@ -84,10 +90,10 @@ func TestExtract(t *testing.T) {
 			want:       "198.51.100.17",
 		},
 		{
-			name:       "forwarded header chain",
+			name:       "forwarded header chain takes rightmost",
 			remoteAddr: "10.0.0.1:1234",
 			headers:    map[string]string{"Forwarded": "for=198.51.100.17, for=70.41.3.18"},
-			want:       "198.51.100.17",
+			want:       "70.41.3.18",
 		},
 		{
 			name:       "forwarded takes precedence over x-forwarded-for",

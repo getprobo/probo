@@ -22,7 +22,9 @@ import (
 
 // Extract resolves the client IP address from standard proxy headers
 // in priority order: RFC 7239 Forwarded, then X-Forwarded-For, then
-// the connection's remote address.
+// the connection's remote address. It takes the rightmost (last)
+// entry from multi-value headers — the one appended by the trusted
+// load balancer closest to us.
 func Extract(r *http.Request) string {
 	if fwd := r.Header.Get("Forwarded"); fwd != "" {
 		if ip := parseForwardedFor(fwd); ip != "" {
@@ -31,8 +33,8 @@ func Extract(r *http.Request) string {
 	}
 
 	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
-		if i := strings.IndexByte(xff, ','); i != -1 {
-			xff = xff[:i]
+		if i := strings.LastIndexByte(xff, ','); i != -1 {
+			xff = xff[i+1:]
 		}
 		xff = strings.TrimSpace(xff)
 
@@ -50,11 +52,11 @@ func Extract(r *http.Request) string {
 	return ip
 }
 
-// parseForwardedFor extracts the client IP from the first "for=" directive
+// parseForwardedFor extracts the client IP from the last "for=" directive
 // of an RFC 7239 Forwarded header value.
 func parseForwardedFor(header string) string {
-	if i := strings.IndexByte(header, ','); i != -1 {
-		header = header[:i]
+	if i := strings.LastIndexByte(header, ','); i != -1 {
+		header = header[i+1:]
 	}
 
 	for part := range strings.SplitSeq(header, ";") {
