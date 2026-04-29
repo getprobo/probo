@@ -30,15 +30,16 @@ import (
 
 type (
 	Cookie struct {
-		ID               gid.GID   `db:"id"`
-		OrganizationID   gid.GID   `db:"organization_id"`
-		CookieBannerID   gid.GID   `db:"cookie_banner_id"`
-		CookieCategoryID gid.GID   `db:"cookie_category_id"`
-		Name             string    `db:"name"`
-		Duration         string    `db:"duration"`
-		Description      string    `db:"description"`
-		CreatedAt        time.Time `db:"created_at"`
-		UpdatedAt        time.Time `db:"updated_at"`
+		ID               gid.GID      `db:"id"`
+		OrganizationID   gid.GID      `db:"organization_id"`
+		CookieBannerID   gid.GID      `db:"cookie_banner_id"`
+		CookieCategoryID gid.GID      `db:"cookie_category_id"`
+		Name             string       `db:"name"`
+		Duration         string       `db:"duration"`
+		Description      string       `db:"description"`
+		Source           CookieSource `db:"source"`
+		CreatedAt        time.Time    `db:"created_at"`
+		UpdatedAt        time.Time    `db:"updated_at"`
 	}
 
 	Cookies []*Cookie
@@ -83,6 +84,7 @@ SELECT
 	name,
 	duration,
 	description,
+	source,
 	created_at,
 	updated_at
 FROM
@@ -132,6 +134,7 @@ SELECT
 	name,
 	duration,
 	description,
+	source,
 	created_at,
 	updated_at
 FROM
@@ -209,6 +212,7 @@ SELECT
 	name,
 	duration,
 	description,
+	source,
 	created_at,
 	updated_at
 FROM
@@ -255,6 +259,7 @@ INSERT INTO cookies (
 	name,
 	duration,
 	description,
+	source,
 	created_at,
 	updated_at
 ) VALUES (
@@ -266,6 +271,7 @@ INSERT INTO cookies (
 	@name,
 	@duration,
 	@description,
+	@source,
 	@created_at,
 	@updated_at
 )
@@ -280,6 +286,7 @@ INSERT INTO cookies (
 		"name":               c.Name,
 		"duration":           c.Duration,
 		"description":        c.Description,
+		"source":             c.Source,
 		"created_at":         c.CreatedAt,
 		"updated_at":         c.UpdatedAt,
 	}
@@ -312,6 +319,7 @@ INSERT INTO cookies (
 	name,
 	duration,
 	description,
+	source,
 	created_at,
 	updated_at
 ) VALUES (
@@ -323,10 +331,13 @@ INSERT INTO cookies (
 	@name,
 	@duration,
 	@description,
+	@source,
 	@created_at,
 	@updated_at
 )
-ON CONFLICT (cookie_banner_id, name) DO NOTHING
+ON CONFLICT (cookie_banner_id, name) DO UPDATE
+	SET source = EXCLUDED.source, updated_at = EXCLUDED.updated_at
+	WHERE cookies.source != @source_script AND EXCLUDED.source = @source_script
 `
 
 	args := pgx.StrictNamedArgs{
@@ -338,6 +349,8 @@ ON CONFLICT (cookie_banner_id, name) DO NOTHING
 		"name":               c.Name,
 		"duration":           c.Duration,
 		"description":        c.Description,
+		"source":             c.Source,
+		"source_script":      CookieSourceScript,
 		"created_at":         c.CreatedAt,
 		"updated_at":         c.UpdatedAt,
 	}

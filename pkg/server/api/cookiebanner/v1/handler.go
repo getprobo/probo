@@ -189,6 +189,7 @@ func (h *Handler) handlePostConsent(w http.ResponseWriter, r *http.Request) {
 type detectedCookieEntry struct {
 	Name     string `json:"name"`
 	Duration string `json:"duration"`
+	Source   string `json:"source"`
 }
 
 type reportDetectedCookiesBody struct {
@@ -227,11 +228,20 @@ func (h *Handler) handleReportDetectedCookies(w http.ResponseWriter, r *http.Req
 			continue
 		}
 
+		var source coredata.CookieSource
+		switch strings.TrimSpace(c.Source) {
+		case "pre-existing":
+			source = coredata.CookieSourcePreExisting
+		default:
+			source = coredata.CookieSourceScript
+		}
+
 		detected = append(
 			detected,
 			cookiebanner.DetectedCookie{
 				Name:     name,
 				Duration: strings.TrimSpace(c.Duration),
+				Source:   source,
 			},
 		)
 	}

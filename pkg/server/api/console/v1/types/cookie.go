@@ -72,6 +72,7 @@ func NewCookie(c *coredata.Cookie) *Cookie {
 		Name:        c.Name,
 		Duration:    c.Duration,
 		Description: c.Description,
+		Source:      c.Source,
 		CreatedAt:   c.CreatedAt,
 		UpdatedAt:   c.UpdatedAt,
 	}

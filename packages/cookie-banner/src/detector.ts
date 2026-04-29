@@ -18,10 +18,17 @@ import { fetchJSON } from "./http";
 interface DetectedCookieEntry {
   name: string;
   duration: string;
+  source: "script" | "pre-existing";
 }
 
 const DEBOUNCE_MS = 2_000;
 const MAX_COOKIES_PER_REQUEST = 100;
+const EXTENSION_URL_RE = /(?:chrome|moz|safari-web)-extension:\/\//;
+
+function isExtensionCaller(): boolean {
+  const stack = new Error().stack ?? "";
+  return EXTENSION_URL_RE.test(stack);
+}
 
 export class CookieDetector {
   private readonly reportUrl: URL;
@@ -81,6 +88,7 @@ export class CookieDetector {
 
   private onCookieSet(raw: string): void {
     if (isDeletion(raw)) return;
+    if (isExtensionCaller()) return;
 
     const name = parseCookieName(raw);
     if (!name || this.knownNames.has(name) || this.reported.has(name)) return;
@@ -88,7 +96,7 @@ export class CookieDetector {
     const duration = parseDuration(raw);
 
     this.reported.add(name);
-    this.pending.set(name, { name, duration });
+    this.pending.set(name, { name, duration, source: "script" });
     this.scheduleFlush();
   }
 
@@ -102,7 +110,7 @@ export class CookieDetector {
         continue;
       }
       this.reported.add(name);
-      this.pending.set(name, { name, duration: "session" });
+      this.pending.set(name, { name, duration: "session", source: "pre-existing" });
     }
 
     if (this.pending.size > 0) {

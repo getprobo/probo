@@ -22,6 +22,18 @@ enum CookieConsentMode
         )
 }
 
+enum CookieSource
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.CookieSource") {
+    SCRIPT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CookieSourceScript"
+        )
+    PRE_EXISTING
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CookieSourcePreExisting"
+        )
+}
+
 enum CookieBannerOrderField
     @goModel(
         model: "go.probo.inc/probo/pkg/coredata.CookieBannerOrderField"
@@ -174,6 +186,7 @@ type Cookie implements Node {
     name: String!
     duration: String!
     description: String!
+    source: CookieSource!
     createdAt: Datetime!
     updatedAt: Datetime!
 

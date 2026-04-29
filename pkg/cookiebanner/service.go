@@ -126,6 +126,7 @@ type (
 	DetectedCookie struct {
 		Name     string
 		Duration string
+		Source   coredata.CookieSource
 	}
 
 	ReportDetectedCookiesRequest struct {
@@ -601,6 +602,7 @@ func (s *Service) CreateCookieBanner(
 						Name:             "probo_consent",
 						Duration:         fmt.Sprintf("%d days", req.ConsentExpiryDays),
 						Description:      "Stores your cookie consent preferences for this website.",
+						Source:           coredata.CookieSourceScript,
 						CreatedAt:        now,
 						UpdatedAt:        now,
 					}
@@ -1205,6 +1207,7 @@ func (s *Service) CreateCookie(
 				Name:             req.Name,
 				Duration:         req.Duration,
 				Description:      req.Description,
+				Source:           coredata.CookieSourceScript,
 				CreatedAt:        now,
 				UpdatedAt:        now,
 			}
@@ -2209,6 +2212,7 @@ func (s *Service) ReportDetectedCookies(
 					Name:             dc.Name,
 					Duration:         dc.Duration,
 					Description:      "",
+					Source:           dc.Source,
 					CreatedAt:        now,
 					UpdatedAt:        now,
 				}
