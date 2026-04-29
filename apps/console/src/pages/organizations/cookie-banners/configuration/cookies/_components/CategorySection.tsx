@@ -35,12 +35,12 @@ import { useState } from "react";
 import { useFragment, useMutation } from "react-relay";
 import { ConnectionHandler, graphql } from "relay-runtime";
 
-import type { CategorySectionCreateCookieMutation } from "#/__generated__/core/CategorySectionCreateCookieMutation.graphql";
-import type { CategorySectionDeleteCookieMutation } from "#/__generated__/core/CategorySectionDeleteCookieMutation.graphql";
+import type { CategorySectionCreatePatternMutation } from "#/__generated__/core/CategorySectionCreatePatternMutation.graphql";
+import type { CategorySectionDeletePatternMutation } from "#/__generated__/core/CategorySectionDeletePatternMutation.graphql";
 import type { CategorySectionFragment$key } from "#/__generated__/core/CategorySectionFragment.graphql";
-import type { CategorySectionMoveCookieMutation } from "#/__generated__/core/CategorySectionMoveCookieMutation.graphql";
-import type { CategorySectionUpdateCookieMutation } from "#/__generated__/core/CategorySectionUpdateCookieMutation.graphql";
+import type { CategorySectionMovePatternMutation } from "#/__generated__/core/CategorySectionMovePatternMutation.graphql";
 import type { CategorySectionUpdateMutation } from "#/__generated__/core/CategorySectionUpdateMutation.graphql";
+import type { CategorySectionUpdatePatternMutation } from "#/__generated__/core/CategorySectionUpdatePatternMutation.graphql";
 
 import { AddCookieRow } from "./AddCookieRow";
 import { EditCategoryForm } from "./EditCategoryForm";
@@ -61,14 +61,14 @@ export const categorySectionFragment = graphql`
     kind
     gcmConsentTypes
     posthogConsent
-    cookies(first: 100, orderBy: { field: CREATED_AT, direction: ASC })
-      @connection(key: "CategorySection_cookies", filters: [])
+    cookiePatterns(first: 100, orderBy: { field: CREATED_AT, direction: ASC })
+      @connection(key: "CategorySection_cookiePatterns", filters: [])
       @required(action: THROW) {
       __id
       edges {
         node {
           id
-          name
+          displayName
           duration
           description
           ...EditCookieRowFragment
@@ -115,16 +115,16 @@ const updateCategoryMutation = graphql`
   }
 `;
 
-const createCookieMutation = graphql`
-  mutation CategorySectionCreateCookieMutation(
-    $input: CreateCookieInput!
+const createPatternMutation = graphql`
+  mutation CategorySectionCreatePatternMutation(
+    $input: CreateCookiePatternInput!
     $connections: [ID!]!
   ) {
-    createCookie(input: $input) {
-      cookieEdge @appendEdge(connections: $connections) {
+    createCookiePattern(input: $input) {
+      cookiePatternEdge @appendEdge(connections: $connections) {
         node {
           id
-          name
+          displayName
           duration
           description
           ...EditCookieRowFragment
@@ -142,14 +142,14 @@ const createCookieMutation = graphql`
   }
 `;
 
-const updateCookieMutation = graphql`
-  mutation CategorySectionUpdateCookieMutation(
-    $input: UpdateCookieInput!
+const updatePatternMutation = graphql`
+  mutation CategorySectionUpdatePatternMutation(
+    $input: UpdateCookiePatternInput!
   ) {
-    updateCookie(input: $input) {
-      cookie {
+    updateCookiePattern(input: $input) {
+      cookiePattern {
         id
-        name
+        displayName
         duration
         description
         updatedAt
@@ -166,13 +166,13 @@ const updateCookieMutation = graphql`
   }
 `;
 
-const deleteCookieMutation = graphql`
-  mutation CategorySectionDeleteCookieMutation(
-    $input: DeleteCookieInput!
+const deletePatternMutation = graphql`
+  mutation CategorySectionDeletePatternMutation(
+    $input: DeleteCookiePatternInput!
     $connections: [ID!]!
   ) {
-    deleteCookie(input: $input) {
-      deletedCookieId @deleteEdge(connections: $connections)
+    deleteCookiePattern(input: $input) {
+      deletedCookiePatternId @deleteEdge(connections: $connections)
       cookieBanner {
         id
         latestVersion {
@@ -185,14 +185,14 @@ const deleteCookieMutation = graphql`
   }
 `;
 
-const moveCookieMutation = graphql`
-  mutation CategorySectionMoveCookieMutation(
-    $input: MoveCookieToCategoryInput!
+const movePatternMutation = graphql`
+  mutation CategorySectionMovePatternMutation(
+    $input: MoveCookiePatternToCategoryInput!
   ) {
-    moveCookieToCategory(input: $input) {
-      cookie {
+    moveCookiePatternToCategory(input: $input) {
+      cookiePattern {
         id
-        name
+        displayName
         duration
         description
         cookieCategory {
@@ -224,22 +224,22 @@ export function CategorySection({ categoryKey, onDelete }: CategorySectionProps)
 
   const [updateCategory, isUpdating]
     = useMutation<CategorySectionUpdateMutation>(updateCategoryMutation);
-  const [createCookie, isCreating]
-    = useMutation<CategorySectionCreateCookieMutation>(createCookieMutation);
-  const [updateCookie, isUpdatingCookie]
-    = useMutation<CategorySectionUpdateCookieMutation>(updateCookieMutation);
-  const [deleteCookie]
-    = useMutation<CategorySectionDeleteCookieMutation>(deleteCookieMutation);
-  const [moveCookie]
-    = useMutation<CategorySectionMoveCookieMutation>(moveCookieMutation);
+  const [createPattern, isCreating]
+    = useMutation<CategorySectionCreatePatternMutation>(createPatternMutation);
+  const [updatePattern, isUpdatingPattern]
+    = useMutation<CategorySectionUpdatePatternMutation>(updatePatternMutation);
+  const [deletePattern]
+    = useMutation<CategorySectionDeletePatternMutation>(deletePatternMutation);
+  const [movePattern]
+    = useMutation<CategorySectionMovePatternMutation>(movePatternMutation);
 
   const [isEditingCategory, setIsEditingCategory] = useState(false);
   const [editingCookieId, setEditingCookieId] = useState<string | null>(null);
   const [isAddingCookie, setIsAddingCookie] = useState(false);
 
-  const cookiesConnectionId = category.cookies.__id;
-  const cookies = category.cookies.edges.map(e => e.node);
-  const isMutating = isUpdating || isCreating || isUpdatingCookie;
+  const patternsConnectionId = category.cookiePatterns.__id;
+  const patterns = category.cookiePatterns.edges.map(e => e.node);
+  const isMutating = isUpdating || isCreating || isUpdatingPattern;
 
   const handleSaveCategory = (
     name: string, slug: string, description: string,
@@ -287,15 +287,17 @@ export function CategorySection({ categoryKey, onDelete }: CategorySectionProps)
 
   const handleSaveNewCookie = (cookie: CookieEntry) => {
     if (!cookie.name.trim()) return;
-    createCookie({
+    createPattern({
       variables: {
         input: {
           cookieCategoryId: category.id,
-          name: cookie.name,
+          pattern: cookie.name,
+          matchType: "EXACT",
+          displayName: cookie.name,
           duration: cookie.duration,
           description: cookie.description,
         },
-        connections: [cookiesConnectionId],
+        connections: [patternsConnectionId],
       },
       onCompleted(_response, errors) {
         if (errors?.length) {
@@ -331,13 +333,13 @@ export function CategorySection({ categoryKey, onDelete }: CategorySectionProps)
     });
   };
 
-  const handleSaveEditCookie = (cookieId: string, cookie: CookieEntry) => {
+  const handleSaveEditCookie = (patternId: string, cookie: CookieEntry) => {
     if (!cookie.name.trim()) return;
-    updateCookie({
+    updatePattern({
       variables: {
         input: {
-          cookieId,
-          name: cookie.name,
+          cookiePatternId: patternId,
+          displayName: cookie.name,
           duration: cookie.duration,
           description: cookie.description,
         },
@@ -376,11 +378,11 @@ export function CategorySection({ categoryKey, onDelete }: CategorySectionProps)
     });
   };
 
-  const handleDeleteCookie = (cookieId: string) => {
-    deleteCookie({
+  const handleDeleteCookie = (patternId: string) => {
+    deletePattern({
       variables: {
-        input: { cookieId },
-        connections: [cookiesConnectionId],
+        input: { cookiePatternId: patternId },
+        connections: [patternsConnectionId],
       },
       onCompleted(_response, errors) {
         if (errors?.length) {
@@ -413,11 +415,11 @@ export function CategorySection({ categoryKey, onDelete }: CategorySectionProps)
   const allCategories = category.cookieBanner.categories.edges.map(e => e.node) ?? [];
   const siblingCategories = allCategories.filter(c => c.id !== category.id);
 
-  const handleMoveCookie = (cookieId: string, targetCategoryId: string) => {
-    moveCookie({
+  const handleMoveCookie = (patternId: string, targetCategoryId: string) => {
+    movePattern({
       variables: {
         input: {
-          cookieId,
+          cookiePatternId: patternId,
           targetCookieCategoryId: targetCategoryId,
         },
       },
@@ -426,10 +428,10 @@ export function CategorySection({ categoryKey, onDelete }: CategorySectionProps)
         if (sourceCategory) {
           const sourceConn = ConnectionHandler.getConnection(
             sourceCategory,
-            "CategorySection_cookies",
+            "CategorySection_cookiePatterns",
           );
           if (sourceConn) {
-            ConnectionHandler.deleteNode(sourceConn, cookieId);
+            ConnectionHandler.deleteNode(sourceConn, patternId);
           }
         }
 
@@ -437,16 +439,16 @@ export function CategorySection({ categoryKey, onDelete }: CategorySectionProps)
         if (targetCategory) {
           const targetConn = ConnectionHandler.getConnection(
             targetCategory,
-            "CategorySection_cookies",
+            "CategorySection_cookiePatterns",
           );
           if (targetConn) {
-            const cookieRecord = store.get(cookieId);
-            if (cookieRecord) {
+            const patternRecord = store.get(patternId);
+            if (patternRecord) {
               const newEdge = ConnectionHandler.createEdge(
                 store,
                 targetConn,
-                cookieRecord,
-                "CookieEdge",
+                patternRecord,
+                "CookiePatternEdge",
               );
               ConnectionHandler.insertEdgeAfter(targetConn, newEdge);
             }
@@ -573,34 +575,34 @@ export function CategorySection({ categoryKey, onDelete }: CategorySectionProps)
           </Tr>
         </Thead>
         <Tbody>
-          {cookies.map(cookie =>
-            editingCookieId === cookie.id
+          {patterns.map(pattern =>
+            editingCookieId === pattern.id
               ? (
                   <EditCookieRow
-                    key={cookie.id}
-                    cookieKey={cookie}
+                    key={pattern.id}
+                    cookieKey={pattern}
                     isUpdating={isMutating}
-                    onSave={updated => handleSaveEditCookie(cookie.id, updated)}
+                    onSave={updated => handleSaveEditCookie(pattern.id, updated)}
                     onCancel={() => setEditingCookieId(null)}
                   />
                 )
               : (
-                  <Tr key={cookie.id}>
+                  <Tr key={pattern.id}>
                     <Td>
-                      <code className="text-sm font-mono">{cookie.name}</code>
+                      <code className="text-sm font-mono">{pattern.displayName}</code>
                     </Td>
                     <Td className="text-sm text-muted-foreground">
-                      {cookie.duration}
+                      {pattern.duration}
                     </Td>
                     <Td className="text-sm text-muted-foreground">
-                      {cookie.description}
+                      {pattern.description}
                     </Td>
                     <Td>
                       <div className="flex items-center gap-1">
                         <button
                           type="button"
                           onClick={() => {
-                            setEditingCookieId(cookie.id);
+                            setEditingCookieId(pattern.id);
                             setIsAddingCookie(false);
                           }}
                           className="p-1 rounded cursor-pointer"
@@ -622,7 +624,7 @@ export function CategorySection({ categoryKey, onDelete }: CategorySectionProps)
                               <DropdownItem
                                 className="text-sm"
                                 key={cat.id}
-                                onSelect={() => handleMoveCookie(cookie.id, cat.id)}
+                                onSelect={() => handleMoveCookie(pattern.id, cat.id)}
                               >
                                 {cat.name}
                               </DropdownItem>
@@ -631,7 +633,7 @@ export function CategorySection({ categoryKey, onDelete }: CategorySectionProps)
                         )}
                         <button
                           type="button"
-                          onClick={() => handleDeleteCookie(cookie.id)}
+                          onClick={() => handleDeleteCookie(pattern.id)}
                           className="p-1 rounded cursor-pointer text-danger-dark"
                         >
                           <IconTrashCan size={14} />

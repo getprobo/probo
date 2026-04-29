@@ -23,8 +23,8 @@ import type { EditCookieRowFragment$key } from "#/__generated__/core/EditCookieR
 import type { CookieEntry } from "./CategorySection";
 
 export const editCookieRowFragment = graphql`
-  fragment EditCookieRowFragment on Cookie {
-    name
+  fragment EditCookieRowFragment on CookiePattern {
+    displayName
     duration
     description
   }
@@ -46,7 +46,7 @@ export function EditCookieRow({
   const { __ } = useTranslate();
   const cookie = useFragment(editCookieRowFragment, cookieKey);
   const [form, setForm] = useState<CookieEntry>({
-    name: cookie.name,
+    name: cookie.displayName,
     duration: cookie.duration,
     description: cookie.description,
   });
