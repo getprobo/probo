@@ -19,7 +19,6 @@ import (
 	"errors"
 	"fmt"
 	"sort"
-	"strings"
 	"time"
 
 	"go.gearno.de/kit/log"
@@ -90,13 +89,10 @@ func (h *patternAnalysisHandler) Process(ctx context.Context, task coredata.Cook
 				return fmt.Errorf("cannot load patterns: %w", err)
 			}
 
-			prefixGroups := groupByPrefix(patterns)
+			mergeGroups := findMergeGroups(patterns, patternMergeThreshold)
 
 			merged := false
-			for prefix, group := range prefixGroups {
-				if len(group) < patternMergeThreshold {
-					continue
-				}
+			for prefix, group := range mergeGroups {
 
 				duration := mostCommonDuration(group)
 				source := bestSource(group)
@@ -156,34 +152,72 @@ func (h *patternAnalysisHandler) Process(ctx context.Context, task coredata.Cook
 	)
 }
 
-func groupByPrefix(patterns coredata.CookiePatterns) map[string][]*coredata.CookiePattern {
+func findMergeGroups(
+	patterns coredata.CookiePatterns,
+	threshold int,
+) map[string][]*coredata.CookiePattern {
+	var exact []*coredata.CookiePattern
+	for _, p := range patterns {
+		if p.MatchType == coredata.CookiePatternMatchTypeExact {
+			exact = append(exact, p)
+		}
+	}
+
+	prefixCounts := make(map[string][]*coredata.CookiePattern)
+	for _, p := range exact {
+		for _, pfx := range separatorPrefixes(p.Pattern) {
+			prefixCounts[pfx] = append(prefixCounts[pfx], p)
+		}
+	}
+
+	type candidate struct {
+		prefix   string
+		patterns []*coredata.CookiePattern
+	}
+
+	var candidates []candidate
+	for pfx, pats := range prefixCounts {
+		if len(pats) >= threshold {
+			candidates = append(candidates, candidate{pfx, pats})
+		}
+	}
+
+	sort.Slice(candidates, func(i, j int) bool {
+		return len(candidates[i].prefix) > len(candidates[j].prefix)
+	})
+
+	assigned := make(map[*coredata.CookiePattern]bool)
 	groups := make(map[string][]*coredata.CookiePattern)
 
-	for _, p := range patterns {
-		if p.MatchType != coredata.CookiePatternMatchTypeExact {
+	for _, c := range candidates {
+		var unassigned []*coredata.CookiePattern
+		for _, p := range c.patterns {
+			if !assigned[p] {
+				unassigned = append(unassigned, p)
+			}
+		}
+
+		if len(unassigned) < threshold {
 			continue
 		}
 
-		prefix := extractPrefix(p.Pattern)
-		if prefix == "" {
-			continue
+		groups[c.prefix] = unassigned
+		for _, p := range unassigned {
+			assigned[p] = true
 		}
-
-		groups[prefix] = append(groups[prefix], p)
 	}
 
 	return groups
 }
 
-func extractPrefix(name string) string {
-	for _, sep := range []byte{'_', '-'} {
-		idx := strings.IndexByte(name, sep)
-		if idx > 0 {
-			return name[:idx+1]
+func separatorPrefixes(name string) []string {
+	var prefixes []string
+	for i, ch := range name {
+		if ch == '_' || ch == '-' {
+			prefixes = append(prefixes, name[:i+1])
 		}
 	}
-
-	return ""
+	return prefixes
 }
 
 func bestSource(patterns []*coredata.CookiePattern) coredata.CookieSource {
