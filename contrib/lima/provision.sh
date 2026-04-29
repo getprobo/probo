@@ -30,8 +30,7 @@ apt-get install -y -qq \
     ca-certificates \
     gnupg \
     lsb-release \
-    postgresql-client \
-    unzip
+    postgresql-client
 
 if ! command -v docker &>/dev/null; then
     install -m 0755 -d /etc/apt/keyrings
