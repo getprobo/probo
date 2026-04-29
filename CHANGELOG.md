@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.175.0] - 2026-04-29
+
+### Added
+
+- Add processing activity, DPIA and TIA publish to document system, replacing snapshot mode
+
+### Changed
+
+- Introspect OAuth2 refresh tokens per RFC 7662, honoring `token_type_hint`
+- Invalidate other sessions on password change and all sessions on password reset
+- Use forwarded headers for SCIM event client IP when running behind a load balancer
+- Extract client IP from rightmost entry of `X-Forwarded-For` and `Forwarded` headers
+- Update avatar initials colors
+
 ## [0.174.0] - 2026-04-28
 
 ### Added
