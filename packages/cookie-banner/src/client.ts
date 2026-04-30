@@ -13,8 +13,6 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 import {
-  activateElements,
-  addPlaceholders,
   deactivateElements,
   observeAndActivate,
 } from "./activation";
@@ -180,6 +178,8 @@ export class CookieBannerClient {
     if (!this.consent && this.gpcDetected) {
       this.gpc();
       this._gpcApplied = true;
+    } else if (!this.consent) {
+      this.activate(this.buildDefaultConsentData());
     }
 
     void flush(this.bannerId);
@@ -294,6 +294,16 @@ export class CookieBannerClient {
       .catch(() => enqueue(this.bannerId, url.href, body));
   }
 
+  private buildDefaultConsentData(): Record<string, boolean> {
+    const cfg = this.config;
+    const consentData: Record<string, boolean> = {};
+    for (const cat of cfg.categories) {
+      consentData[cat.slug] =
+        cfg.consent_mode === "OPT_OUT" || cat.kind === "NECESSARY";
+    }
+    return consentData;
+  }
+
   private activate(consentData: Record<string, boolean>): void {
     for (const integration of this.integrations) {
       integration.update(this.config.categories, consentData);
@@ -308,8 +318,6 @@ export class CookieBannerClient {
 
     const texts = this.config.texts;
     deactivateElements(consentData, categoryCookies, categoryLabels, texts);
-    activateElements(consentData);
-    addPlaceholders(consentData, categoryLabels, texts);
     if (this.observer) {
       this.observer.disconnect();
     }

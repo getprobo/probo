@@ -383,29 +383,6 @@ export function deactivateElements(
   }
 }
 
-export function activateElements(
-  consentData: Record<string, boolean>,
-): void {
-  const elements = document.querySelectorAll(`[${ATTR_CATEGORY}]`);
-  for (const el of elements) {
-    tryActivate(el, consentData);
-  }
-}
-
-export function addPlaceholders(
-  consentData: Record<string, boolean>,
-  categoryLabels: Record<string, string>,
-  texts?: BannerTexts,
-): void {
-  const elements = document.querySelectorAll(`[${ATTR_CATEGORY}]`);
-  for (const el of elements) {
-    const category = el.getAttribute(ATTR_CATEGORY);
-    if (!category || consentData[category]) continue;
-    if (!VISUAL_TAGS.has(el.tagName)) continue;
-    createPlaceholder(el, category, categoryLabels[category], texts);
-  }
-}
-
 function tryPlaceholder(
   el: Element,
   consentData: Record<string, boolean>,
@@ -423,6 +400,12 @@ export function observeAndActivate(
   categoryLabels: Record<string, string>,
   texts?: BannerTexts,
 ): MutationObserver {
+  const existing = document.querySelectorAll(`[${ATTR_CATEGORY}]`);
+  for (const el of existing) {
+    tryActivate(el, consentData);
+    tryPlaceholder(el, consentData, categoryLabels, texts);
+  }
+
   const observer = new MutationObserver((mutations) => {
     for (const mutation of mutations) {
       for (const node of mutation.addedNodes) {
