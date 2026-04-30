@@ -78,28 +78,9 @@ type (
 		PostHogConsent   *bool
 	}
 
-	CreateCookieRequest struct {
-		CookieCategoryID gid.GID
-		Name             string
-		MaxAgeSeconds    *int
-		Description      string
-	}
-
-	UpdateCookieRequest struct {
-		CookieID      gid.GID
-		Name          *string
-		MaxAgeSeconds **int
-		Description   *string
-	}
-
 	ReorderCookieCategoryRequest struct {
 		CookieCategoryID gid.GID
 		Rank             int
-	}
-
-	MoveCookieToCategoryRequest struct {
-		CookieID               gid.GID
-		TargetCookieCategoryID gid.GID
 	}
 
 	CreateCookiePatternRequest struct {
@@ -239,26 +220,6 @@ func (r *UpdateCookieCategoryRequest) Validate() error {
 	return v.Error()
 }
 
-func (r *CreateCookieRequest) Validate() error {
-	v := validator.New()
-
-	v.Check(r.CookieCategoryID, "cookie_category_id", validator.Required(), validator.GID(coredata.CookieCategoryEntityType))
-	v.Check(r.Name, "name", validator.Required(), validator.SafeTextNoNewLine(255))
-	v.Check(r.Description, "description", validator.SafeText(1000))
-
-	return v.Error()
-}
-
-func (r *UpdateCookieRequest) Validate() error {
-	v := validator.New()
-
-	v.Check(r.CookieID, "cookie_id", validator.Required(), validator.GID(coredata.CookieEntityType))
-	v.Check(r.Name, "name", validator.SafeTextNoNewLine(255))
-	v.Check(r.Description, "description", validator.SafeText(1000))
-
-	return v.Error()
-}
-
 func (r *ReorderCookieCategoryRequest) Validate() error {
 	v := validator.New()
 
@@ -303,15 +264,6 @@ func (r *MoveCookiePatternToCategoryRequest) Validate() error {
 	v := validator.New()
 
 	v.Check(r.CookiePatternID, "cookie_pattern_id", validator.Required(), validator.GID(coredata.CookiePatternEntityType))
-	v.Check(r.TargetCookieCategoryID, "target_cookie_category_id", validator.Required(), validator.GID(coredata.CookieCategoryEntityType))
-
-	return v.Error()
-}
-
-func (r *MoveCookieToCategoryRequest) Validate() error {
-	v := validator.New()
-
-	v.Check(r.CookieID, "cookie_id", validator.Required(), validator.GID(coredata.CookieEntityType))
 	v.Check(r.TargetCookieCategoryID, "target_cookie_category_id", validator.Required(), validator.GID(coredata.CookieCategoryEntityType))
 
 	return v.Error()
@@ -1257,112 +1209,6 @@ func (s *Service) CountCookieCategoriesForBanner(
 	return count, nil
 }
 
-func (s *Service) CreateCookie(
-	ctx context.Context,
-	scope coredata.Scoper,
-	req CreateCookieRequest,
-) (*coredata.Cookie, error) {
-	if err := req.Validate(); err != nil {
-		return nil, fmt.Errorf("invalid request: %w", err)
-	}
-
-	var cookie *coredata.Cookie
-
-	err := s.pg.WithTx(
-		ctx,
-		func(ctx context.Context, tx pg.Tx) error {
-			var category coredata.CookieCategory
-			if err := category.LoadByID(ctx, tx, scope, req.CookieCategoryID); err != nil {
-				if errors.Is(err, coredata.ErrResourceNotFound) {
-					return ErrCategoryNotFound
-				}
-				return fmt.Errorf("cannot load cookie category: %w", err)
-			}
-
-			now := time.Now()
-
-			pattern := &coredata.CookiePattern{
-				ID:               gid.New(scope.GetTenantID(), coredata.CookiePatternEntityType),
-				OrganizationID:   category.OrganizationID,
-				CookieBannerID:   category.CookieBannerID,
-				CookieCategoryID: category.ID,
-				Pattern:          req.Name,
-				MatchType:        coredata.CookiePatternMatchTypeExact,
-				DisplayName:      req.Name,
-				MaxAgeSeconds:    req.MaxAgeSeconds,
-				Description:      req.Description,
-				Source:           coredata.CookieSourceScript,
-				CreatedAt:        now,
-				UpdatedAt:        now,
-			}
-
-			if err := pattern.Insert(ctx, tx, scope); err != nil {
-				if errors.Is(err, coredata.ErrResourceAlreadyExists) {
-					return ErrCookieNameAlreadyExists
-				}
-				return fmt.Errorf("cannot insert cookie pattern: %w", err)
-			}
-
-			cookie = &coredata.Cookie{
-				ID:              gid.New(scope.GetTenantID(), coredata.CookieEntityType),
-				OrganizationID:  category.OrganizationID,
-				CookieBannerID:  category.CookieBannerID,
-				CookiePatternID: pattern.ID,
-				Name:            req.Name,
-				MaxAgeSeconds:   req.MaxAgeSeconds,
-				Source:          coredata.CookieSourceScript,
-				CreatedAt:       now,
-				UpdatedAt:       now,
-			}
-
-			if err := cookie.Insert(ctx, tx, scope); err != nil {
-				if errors.Is(err, coredata.ErrResourceAlreadyExists) {
-					return ErrCookieNameAlreadyExists
-				}
-				return fmt.Errorf("cannot insert cookie: %w", err)
-			}
-
-			if _, err := s.ensureDraftVersionForBanner(ctx, tx, scope, category.CookieBannerID); err != nil {
-				return fmt.Errorf("cannot ensure draft version: %w", err)
-			}
-
-			return nil
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	return cookie, nil
-}
-
-func (s *Service) GetCookie(
-	ctx context.Context,
-	scope coredata.Scoper,
-	cookieID gid.GID,
-) (*coredata.Cookie, error) {
-	var cookie coredata.Cookie
-
-	err := s.pg.WithConn(
-		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
-			if err := cookie.LoadByID(ctx, conn, scope, cookieID); err != nil {
-				if errors.Is(err, coredata.ErrResourceNotFound) {
-					return ErrCookieNotFound
-				}
-				return fmt.Errorf("cannot load cookie: %w", err)
-			}
-
-			return nil
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	return &cookie, nil
-}
-
 func (s *Service) GetCookiePattern(
 	ctx context.Context,
 	scope coredata.Scoper,
@@ -1678,133 +1524,6 @@ func (s *Service) CountCookiesForPattern(
 	return count, nil
 }
 
-func (s *Service) UpdateCookie(
-	ctx context.Context,
-	scope coredata.Scoper,
-	req UpdateCookieRequest,
-) (*coredata.Cookie, error) {
-	if err := req.Validate(); err != nil {
-		return nil, fmt.Errorf("invalid request: %w", err)
-	}
-
-	var cookie coredata.Cookie
-
-	err := s.pg.WithTx(
-		ctx,
-		func(ctx context.Context, tx pg.Tx) error {
-			if err := cookie.LoadByID(ctx, tx, scope, req.CookieID); err != nil {
-				if errors.Is(err, coredata.ErrResourceNotFound) {
-					return ErrCookieNotFound
-				}
-				return fmt.Errorf("cannot load cookie: %w", err)
-			}
-
-			if req.MaxAgeSeconds != nil {
-				cookie.MaxAgeSeconds = *req.MaxAgeSeconds
-			}
-
-			cookie.UpdatedAt = time.Now()
-
-			if err := cookie.Update(ctx, tx, scope); err != nil {
-				return fmt.Errorf("cannot update cookie: %w", err)
-			}
-
-			if _, err := s.ensureDraftVersionForBanner(ctx, tx, scope, cookie.CookieBannerID); err != nil {
-				return fmt.Errorf("cannot ensure draft version: %w", err)
-			}
-
-			return nil
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	return &cookie, nil
-}
-
-func (s *Service) DeleteCookie(
-	ctx context.Context,
-	scope coredata.Scoper,
-	cookieID gid.GID,
-) error {
-	return s.pg.WithTx(
-		ctx,
-		func(ctx context.Context, tx pg.Tx) error {
-			var cookie coredata.Cookie
-			if err := cookie.LoadByID(ctx, tx, scope, cookieID); err != nil {
-				if errors.Is(err, coredata.ErrResourceNotFound) {
-					return ErrCookieNotFound
-				}
-				return fmt.Errorf("cannot load cookie: %w", err)
-			}
-
-			if err := cookie.Delete(ctx, tx, scope); err != nil {
-				return fmt.Errorf("cannot delete cookie: %w", err)
-			}
-
-			if _, err := s.ensureDraftVersionForBanner(ctx, tx, scope, cookie.CookieBannerID); err != nil {
-				return fmt.Errorf("cannot ensure draft version: %w", err)
-			}
-
-			return nil
-		},
-	)
-}
-
-func (s *Service) ListCookiesForCategory(
-	ctx context.Context,
-	scope coredata.Scoper,
-	categoryID gid.GID,
-	cursor *page.Cursor[coredata.CookieOrderField],
-) (coredata.Cookies, error) {
-	var cookies coredata.Cookies
-
-	err := s.pg.WithConn(
-		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
-			if err := cookies.LoadByCookieCategoryIDViaPattern(ctx, conn, scope, categoryID, cursor); err != nil {
-				return fmt.Errorf("cannot list cookies: %w", err)
-			}
-
-			return nil
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	return cookies, nil
-}
-
-func (s *Service) CountCookiesForCategory(
-	ctx context.Context,
-	scope coredata.Scoper,
-	categoryID gid.GID,
-) (int, error) {
-	var count int
-
-	err := s.pg.WithConn(
-		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
-			var cookies coredata.Cookies
-			var err error
-
-			count, err = cookies.CountByCookieCategoryIDViaPattern(ctx, conn, scope, categoryID)
-			if err != nil {
-				return fmt.Errorf("cannot count cookies: %w", err)
-			}
-
-			return nil
-		},
-	)
-	if err != nil {
-		return 0, err
-	}
-
-	return count, nil
-}
-
 func (s *Service) UpdateCookieCategory(
 	ctx context.Context,
 	scope coredata.Scoper,
@@ -1872,83 +1591,6 @@ func (s *Service) UpdateCookieCategory(
 	}
 
 	return &category, nil
-}
-
-type MoveCookieToCategoryResult struct {
-	Cookie *coredata.Cookie
-	Banner *coredata.CookieBanner
-}
-
-func (s *Service) MoveCookieToCategory(
-	ctx context.Context,
-	scope coredata.Scoper,
-	req MoveCookieToCategoryRequest,
-) (*MoveCookieToCategoryResult, error) {
-	if err := req.Validate(); err != nil {
-		return nil, fmt.Errorf("invalid request: %w", err)
-	}
-
-	var result MoveCookieToCategoryResult
-
-	err := s.pg.WithTx(
-		ctx,
-		func(ctx context.Context, tx pg.Tx) error {
-			var cookie coredata.Cookie
-			if err := cookie.LoadByID(ctx, tx, scope, req.CookieID); err != nil {
-				if errors.Is(err, coredata.ErrResourceNotFound) {
-					return ErrCookieNotFound
-				}
-				return fmt.Errorf("cannot load cookie: %w", err)
-			}
-
-			var target coredata.CookieCategory
-			if err := target.LoadByID(ctx, tx, scope, req.TargetCookieCategoryID); err != nil {
-				if errors.Is(err, coredata.ErrResourceNotFound) {
-					return ErrCategoryNotFound
-				}
-				return fmt.Errorf("cannot load target cookie category: %w", err)
-			}
-
-			var pattern coredata.CookiePattern
-			if err := pattern.LoadByID(ctx, tx, scope, cookie.CookiePatternID); err != nil {
-				return fmt.Errorf("cannot load cookie pattern: %w", err)
-			}
-
-			if pattern.CookieCategoryID == target.ID {
-				return ErrSameCategoryMove
-			}
-
-			if cookie.CookieBannerID != target.CookieBannerID {
-				return ErrCategoriesBannerMismatch
-			}
-
-			pattern.CookieCategoryID = target.ID
-			pattern.UpdatedAt = time.Now()
-
-			if err := pattern.Update(ctx, tx, scope); err != nil {
-				return fmt.Errorf("cannot update cookie pattern: %w", err)
-			}
-
-			var banner coredata.CookieBanner
-			if err := banner.LoadByID(ctx, tx, scope, cookie.CookieBannerID); err != nil {
-				return fmt.Errorf("cannot load cookie banner: %w", err)
-			}
-
-			if _, err := s.ensureDraftVersionForBanner(ctx, tx, scope, cookie.CookieBannerID); err != nil {
-				return fmt.Errorf("cannot ensure draft version: %w", err)
-			}
-
-			result.Cookie = &cookie
-			result.Banner = &banner
-
-			return nil
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	return &result, nil
 }
 
 func (s *Service) ReorderCookieCategory(
