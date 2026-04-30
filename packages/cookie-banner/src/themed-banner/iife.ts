@@ -12,9 +12,9 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { registerThemedBanner } from "./index";
+import { registerCookieBanner } from "./index";
 
-registerThemedBanner();
+registerCookieBanner();
 
 const script = document.currentScript as HTMLScriptElement | null;
 

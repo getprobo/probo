@@ -28,4 +28,4 @@ export { ProboCookie, ProboCookieList } from "./cookie-list";
 export { ProboPreferencePanel, ProboSaveButton } from "./preference-panel";
 export { ProboSettingsButton } from "./settings-button";
 export { ProboSettingsLink } from "./settings-link";
-export { registerComponents } from "./register";
+export { registerHeadlessComponents } from "./register";

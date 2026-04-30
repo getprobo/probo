@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { registerComponents } from "../components";
+import { registerHeadlessComponents } from "../components";
 import type { ProboCookieBannerRoot } from "../components/cookie-banner-root";
 import type { BannerConfig } from "../client";
 import { getGpcLabel, interpolate } from "../i18n";
@@ -32,7 +32,7 @@ export class ProboThemedBanner extends HTMLElement {
   }
 
   connectedCallback(): void {
-    registerComponents();
+    registerHeadlessComponents();
 
     const bannerId = this.getAttribute("banner-id");
     const baseUrl = this.getAttribute("base-url");

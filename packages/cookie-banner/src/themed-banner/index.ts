@@ -14,9 +14,7 @@
 
 import { ProboThemedBanner } from "./themed-banner";
 
-export { ProboThemedBanner };
-
-export function registerThemedBanner(): void {
+export function registerCookieBanner(): void {
   if (!customElements.get("probo-cookie-banner")) {
     customElements.define("probo-cookie-banner", ProboThemedBanner);
   }

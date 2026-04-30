@@ -44,7 +44,7 @@ const elements: [string, CustomElementConstructor][] = [
   ["probo-settings-link", ProboSettingsLink],
 ];
 
-export function registerComponents(): void {
+export function registerHeadlessComponents(): void {
   for (const [name, ctor] of elements) {
     if (!customElements.get(name)) {
       customElements.define(name, ctor);
