@@ -43,8 +43,10 @@ export function humanizeSeconds(seconds: number | null): string {
 }
 
 export function toMaxAgeSeconds(value: string, unit: string): number | null {
-  const num = parseFloat(value);
-  if (isNaN(num) || num <= 0) return null;
+  const trimmed = value.trim();
+  if (trimmed === "" || !/^\d+(\.\d+)?$/.test(trimmed)) return null;
+  const num = Number(trimmed);
+  if (!Number.isFinite(num) || num <= 0) return null;
   const u = DURATION_UNITS.find(u => u.value === unit);
   if (!u) return null;
   const rounded = Math.round(num * u.seconds);

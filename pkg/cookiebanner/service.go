@@ -2286,11 +2286,16 @@ func (s *Service) ReportDetectedCookies(
 					if err != nil {
 						return fmt.Errorf("cannot insert cookie pattern: %w", err)
 					}
-					if !wasInserted {
-						continue
+					if wasInserted {
+						patternID = newPattern.ID
+						inserted++
+					} else {
+						var existingPattern coredata.CookiePattern
+						if err := existingPattern.LoadByBannerIDAndPattern(ctx, tx, scope, banner.ID, dc.Name); err != nil {
+							return fmt.Errorf("cannot load existing cookie pattern: %w", err)
+						}
+						patternID = existingPattern.ID
 					}
-					patternID = newPattern.ID
-					inserted++
 				}
 
 				cookie := &coredata.Cookie{
