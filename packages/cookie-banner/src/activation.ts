@@ -146,11 +146,32 @@ function createPlaceholder(
     "margin-right",
     "margin-bottom",
     "margin-left",
+    "padding",
+    "padding-top",
+    "padding-right",
+    "padding-bottom",
+    "padding-left",
+    "box-sizing",
+    "position",
+    "top",
+    "right",
+    "bottom",
+    "left",
+    "inset",
   ];
   if (htmlEl.style) {
     for (const prop of DIMENSIONAL_PROPS) {
       const val = htmlEl.style.getPropertyValue(prop);
       if (val) placeholder.style.setProperty(prop, val);
+    }
+  }
+
+  const hasExplicitHeight =
+    placeholder.style.height || placeholder.style.minHeight;
+  if (!hasExplicitHeight) {
+    const computed = window.getComputedStyle(htmlEl);
+    if (computed.height && computed.height !== "auto" && computed.height !== "0px") {
+      placeholder.style.height = computed.height;
     }
   }
 
