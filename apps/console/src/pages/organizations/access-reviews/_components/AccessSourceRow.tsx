@@ -106,6 +106,8 @@ function sourceLabel(connectorProvider: string | null | undefined): string {
   switch (connectorProvider) {
     case "GOOGLE_WORKSPACE":
       return "Google Workspace";
+    case "MICROSOFT_365":
+      return "Microsoft 365";
     case "LINEAR":
       return "Linear";
     case "SLACK":

@@ -80,6 +80,13 @@ var (
 			},
 			SupportsIncrementalAuth: true,
 		},
+		"MICROSOFT_365": {
+			AuthURL:  "https://login.microsoftonline.com/common/oauth2/v2.0/authorize",
+			TokenURL: "https://login.microsoftonline.com/common/oauth2/v2.0/token",
+			ExtraAuthParams: map[string]string{
+				"prompt": "consent",
+			},
+		},
 		"LINEAR": {
 			AuthURL:  "https://linear.app/oauth/authorize",
 			TokenURL: "https://api.linear.app/oauth/token",

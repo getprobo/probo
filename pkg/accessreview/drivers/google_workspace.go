@@ -15,8 +15,10 @@
 package drivers
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"net/http"
 	"time"
 
@@ -67,7 +69,11 @@ func (rt *retryRoundTripper) RoundTrip(req *http.Request) (*http.Response, error
 			return resp, nil
 		}
 
+		// Buffer and re-attach the body so the caller can still read it
+		// if this turns out to be the final (retry-exhausted) response.
+		body, _ := io.ReadAll(resp.Body)
 		_ = resp.Body.Close()
+		resp.Body = io.NopCloser(bytes.NewReader(body))
 		lastResp = resp
 
 		backoff := time.Duration(250*(1<<attempt)) * time.Millisecond

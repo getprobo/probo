@@ -2111,6 +2111,8 @@ func (s OrganizationService) CreateSCIMBridge(
 			switch existingConnector.Provider {
 			case coredata.ConnectorProviderGoogleWorkspace:
 				bridgeType = coredata.SCIMBridgeTypeGoogleWorkspace
+			case coredata.ConnectorProviderMicrosoft365:
+				bridgeType = coredata.SCIMBridgeTypeMicrosoft365
 			default:
 				return fmt.Errorf("connector provider %s is not supported for SCIM bridge", existingConnector.Provider)
 			}

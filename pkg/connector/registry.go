@@ -136,6 +136,7 @@ var (
 		"TALLY":            "https://api.tally.so/me",
 		"RESEND":           "https://api.resend.com/domains",
 		"ONE_PASSWORD":     "https://events.1password.com/api/v1/auditevents",
+		"MICROSOFT_365":    "https://graph.microsoft.com/v1.0/organization?$top=1",
 	}
 )
 

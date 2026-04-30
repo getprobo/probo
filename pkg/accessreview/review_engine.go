@@ -372,6 +372,8 @@ func (e *ReviewEngine) resolveDriver(
 		return drivers.NewIntercomDriver(httpClient), nil
 	case coredata.ConnectorProviderResend:
 		return drivers.NewResendDriver(httpClient), nil
+	case coredata.ConnectorProviderMicrosoft365:
+		return drivers.NewMicrosoft365Driver(httpClient), nil
 	default:
 		return nil, fmt.Errorf("unsupported connector provider %q for access source driver", dbConnector.Provider)
 	}

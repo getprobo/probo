@@ -21,22 +21,22 @@ import {
   Dialog,
   DialogContent,
   DialogFooter,
-  Google,
   IconSettingsGear2,
   Input,
+  Microsoft,
   useDialogRef,
   useToast,
 } from "@probo/ui";
 import { useState } from "react";
 import { graphql, useFragment, useMutation } from "react-relay";
 
-import type { GoogleWorkspaceConnectorDeleteMutation } from "#/__generated__/iam/GoogleWorkspaceConnectorDeleteMutation.graphql";
-import type { GoogleWorkspaceConnectorFragment$key } from "#/__generated__/iam/GoogleWorkspaceConnectorFragment.graphql";
-import type { GoogleWorkspaceConnectorUpdateSCIMBridgeMutation } from "#/__generated__/iam/GoogleWorkspaceConnectorUpdateSCIMBridgeMutation.graphql";
+import type { Microsoft365ConnectorDeleteMutation } from "#/__generated__/iam/Microsoft365ConnectorDeleteMutation.graphql";
+import type { Microsoft365ConnectorFragment$key } from "#/__generated__/iam/Microsoft365ConnectorFragment.graphql";
+import type { Microsoft365ConnectorUpdateSCIMBridgeMutation } from "#/__generated__/iam/Microsoft365ConnectorUpdateSCIMBridgeMutation.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
-const googleWorkspaceConnectorFragment = graphql`
-  fragment GoogleWorkspaceConnectorFragment on SCIMConfiguration {
+const microsoft365ConnectorFragment = graphql`
+  fragment Microsoft365ConnectorFragment on SCIMConfiguration {
     id
     bridge {
       id
@@ -50,7 +50,7 @@ const googleWorkspaceConnectorFragment = graphql`
 `;
 
 const deleteSCIMConfigurationMutation = graphql`
-  mutation GoogleWorkspaceConnectorDeleteMutation(
+  mutation Microsoft365ConnectorDeleteMutation(
     $input: DeleteSCIMConfigurationInput!
   ) {
     deleteSCIMConfiguration(input: $input) {
@@ -60,7 +60,7 @@ const deleteSCIMConfigurationMutation = graphql`
 `;
 
 const updateSCIMBridgeMutation = graphql`
-  mutation GoogleWorkspaceConnectorUpdateSCIMBridgeMutation(
+  mutation Microsoft365ConnectorUpdateSCIMBridgeMutation(
     $input: UpdateSCIMBridgeInput!
   ) {
     updateSCIMBridge(input: $input) {
@@ -72,12 +72,12 @@ const updateSCIMBridgeMutation = graphql`
   }
 `;
 
-export function GoogleWorkspaceConnector(props: {
-  fKey: GoogleWorkspaceConnectorFragment$key | null;
+export function Microsoft365Connector(props: {
+  fKey: Microsoft365ConnectorFragment$key | null;
   oauth2Scopes: readonly string[];
 }) {
   const { fKey, oauth2Scopes } = props;
-  const data = useFragment<GoogleWorkspaceConnectorFragment$key>(googleWorkspaceConnectorFragment, fKey);
+  const data = useFragment<Microsoft365ConnectorFragment$key>(microsoft365ConnectorFragment, fKey);
   const bridge = data?.bridge;
   const connector = bridge?.connector;
   const scimConfigurationId = data?.id;
@@ -92,12 +92,12 @@ export function GoogleWorkspaceConnector(props: {
   const [newUser, setNewUser] = useState("");
 
   const [deleteSCIMConfiguration, isDeleting]
-    = useMutation<GoogleWorkspaceConnectorDeleteMutation>(
+    = useMutation<Microsoft365ConnectorDeleteMutation>(
       deleteSCIMConfigurationMutation,
     );
 
   const [updateSCIMBridge, isUpdating]
-    = useMutation<GoogleWorkspaceConnectorUpdateSCIMBridgeMutation>(
+    = useMutation<Microsoft365ConnectorUpdateSCIMBridgeMutation>(
       updateSCIMBridgeMutation,
     );
 
@@ -105,7 +105,7 @@ export function GoogleWorkspaceConnector(props: {
     const baseUrl = import.meta.env.VITE_API_URL || window.location.origin;
     const url = new URL("/api/console/v1/connectors/initiate", baseUrl);
     url.searchParams.append("organization_id", organizationId);
-    url.searchParams.append("provider", "GOOGLE_WORKSPACE");
+    url.searchParams.append("provider", "MICROSOFT_365");
     for (const scope of oauth2Scopes) {
       url.searchParams.append("scope", scope);
     }
@@ -135,7 +135,7 @@ export function GoogleWorkspaceConnector(props: {
         }
         toast({
           title: __("Success"),
-          description: __("Google Workspace disconnected successfully"),
+          description: __("Microsoft 365 disconnected successfully"),
           variant: "success",
         });
         dialogRef.current?.close();
@@ -200,18 +200,17 @@ export function GoogleWorkspaceConnector(props: {
     saveExcludedUserNames(currentExcludedUserNames.filter(e => e !== user));
   };
 
-  // Not connected state
   if (!connector) {
     return (
       <Card padded className="flex items-center gap-3">
         <div className="w-10 h-10 flex items-center justify-center bg-subtle rounded">
-          <Google className="w-6 h-6" />
+          <Microsoft className="w-6 h-6" />
         </div>
         <div className="mr-auto">
-          <h3 className="font-medium">{__("Google Workspace")}</h3>
+          <h3 className="font-medium">{__("Microsoft 365")}</h3>
           <p className="text-sm text-txt-secondary">
             {__(
-              "Connect Google Workspace to automatically sync users via SCIM.",
+              "Connect Microsoft 365 to automatically sync users via SCIM.",
             )}
           </p>
         </div>
@@ -222,14 +221,13 @@ export function GoogleWorkspaceConnector(props: {
     );
   }
 
-  // Connected state
   return (
     <Card padded className="flex items-center gap-3">
       <div className="w-10 h-10 flex items-center justify-center bg-subtle rounded">
-        <Google className="w-6 h-6" />
+        <Microsoft className="w-6 h-6" />
       </div>
       <div className="mr-auto">
-        <h3 className="font-medium">{__("Google Workspace")}</h3>
+        <h3 className="font-medium">{__("Microsoft 365")}</h3>
         <p className="text-sm text-txt-secondary">
           {sprintf(__("Connected on %s"), dateTimeFormat(connector.createdAt))}
         </p>
@@ -245,7 +243,7 @@ export function GoogleWorkspaceConnector(props: {
             {__("Settings")}
           </Button>
         )}
-        title={__("Google Workspace Settings")}
+        title={__("Microsoft 365 Settings")}
         className="max-w-lg"
       >
         <DialogContent padded className="space-y-6">
@@ -253,7 +251,7 @@ export function GoogleWorkspaceConnector(props: {
             <div>
               <h4 className="text-sm font-medium">{__("Excluded user names")}</h4>
               <p className="text-sm text-txt-secondary mt-1">
-                {__("Users with these user names will not be synced from Google Workspace.")}
+                {__("Users with these user names will not be synced from Microsoft 365.")}
               </p>
             </div>
             <div className="flex gap-2">
@@ -298,7 +296,7 @@ export function GoogleWorkspaceConnector(props: {
 
             {currentExcludedUserNames.length === 0 && (
               <p className="text-sm text-txt-secondary text-center py-4">
-                {__("No excluded user names. All Google Workspace users will be synced.")}
+                {__("No excluded user names. All Microsoft 365 users will be synced.")}
               </p>
             )}
           </div>
@@ -311,13 +309,13 @@ export function GoogleWorkspaceConnector(props: {
             {__("Disconnect")}
           </Button>
         )}
-        title={__("Disconnect Google Workspace")}
+        title={__("Disconnect Microsoft 365")}
         className="max-w-lg"
       >
         <DialogContent padded className="space-y-4">
           <p className="text-txt-secondary text-sm">
             {__(
-              "This will disconnect your Google Workspace integration. Users will no longer be automatically synced via SCIM.",
+              "This will disconnect your Microsoft 365 integration. Users will no longer be automatically synced via SCIM.",
             )}
           </p>
           <p className="text-red-600 text-sm font-medium">

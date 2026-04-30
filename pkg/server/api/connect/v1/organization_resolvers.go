@@ -15,6 +15,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/iam/scim/bridge/provider/googleworkspace"
+	"go.probo.inc/probo/pkg/iam/scim/bridge/provider/microsoft365"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/authz"
@@ -278,6 +279,10 @@ func (r *organizationResolver) ScimBridgeTypes(ctx context.Context, obj *types.O
 		{
 			Type:         coredata.SCIMBridgeTypeGoogleWorkspace,
 			Oauth2Scopes: googleworkspace.OAuth2Scopes,
+		},
+		{
+			Type:         coredata.SCIMBridgeTypeMicrosoft365,
+			Oauth2Scopes: microsoft365.OAuth2Scopes,
 		},
 	}, nil
 }

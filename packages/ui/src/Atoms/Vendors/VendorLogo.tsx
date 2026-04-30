@@ -45,6 +45,7 @@ const vendors: Record<string, FC<ComponentProps<"svg">>> = {
   INTERCOM: Intercom,
   LINEAR: Linear,
   MICROSOFT: Microsoft,
+  MICROSOFT_365: Microsoft,
   NOTION: Notion,
   ONE_PASSWORD: OnePassword,
   ONEPASSWORD: OnePassword,

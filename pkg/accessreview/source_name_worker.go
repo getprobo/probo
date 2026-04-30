@@ -281,6 +281,8 @@ func (h *sourceNameHandler) buildResolver(
 		return drivers.NewNotionNameResolver(httpClient)
 	case coredata.ConnectorProviderResend:
 		return drivers.NewResendNameResolver()
+	case coredata.ConnectorProviderMicrosoft365:
+		return drivers.NewMicrosoft365NameResolver(httpClient)
 	default:
 		return nil
 	}

@@ -95,6 +95,16 @@ func TestBuilder_Build_MissingRequiredEnvVars(t *testing.T) {
 			},
 			wantMissing: []string{"CONNECTOR_GOOGLE_WORKSPACE_CLIENT_SECRET"},
 		},
+		{
+			name: "microsoft 365 connector missing required fields",
+			env: map[string]string{
+				"PROBOD_ENCRYPTION_KEY":             "key",
+				"AUTH_COOKIE_SECRET":                "secret",
+				"AUTH_PASSWORD_PEPPER":              "pepper",
+				"CONNECTOR_MICROSOFT_365_CLIENT_ID": "client-id",
+			},
+			wantMissing: []string{"CONNECTOR_MICROSOFT_365_CLIENT_SECRET"},
+		},
 	}
 
 	for _, tt := range tests {
@@ -396,6 +406,27 @@ func TestBuilder_Build_GoogleWorkspaceConnector(t *testing.T) {
 	rawConfig := connector.RawConfig.(probodconfig.ConnectorConfigOAuth2)
 	assert.Equal(t, "gw-client-id", rawConfig.ClientID)
 	assert.Equal(t, "gw-client-secret", rawConfig.ClientSecret)
+}
+
+func TestBuilder_Build_Microsoft365Connector(t *testing.T) {
+	env := requiredEnv()
+	env["CONNECTOR_MICROSOFT_365_CLIENT_ID"] = "ms365-client-id"
+	env["CONNECTOR_MICROSOFT_365_CLIENT_SECRET"] = "ms365-client-secret"
+
+	b := NewBuilder(mockEnv(env))
+	b.samlCertificate = "test-cert"
+	b.samlPrivateKey = "test-key"
+
+	cfg, err := b.Build()
+	require.NoError(t, err)
+
+	require.Len(t, cfg.Probod.Connectors, 1)
+	connector := cfg.Probod.Connectors[0]
+	assert.Equal(t, "MICROSOFT_365", connector.Provider)
+	assert.Equal(t, "oauth2", string(connector.Protocol))
+	rawConfig := connector.RawConfig.(probodconfig.ConnectorConfigOAuth2)
+	assert.Equal(t, "ms365-client-id", rawConfig.ClientID)
+	assert.Equal(t, "ms365-client-secret", rawConfig.ClientSecret)
 }
 
 func TestBuilder_Build_SlackConnector(t *testing.T) {

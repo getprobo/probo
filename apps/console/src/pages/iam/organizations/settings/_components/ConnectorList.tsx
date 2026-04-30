@@ -18,6 +18,7 @@ import { graphql, useFragment } from "react-relay";
 import type { ConnectorListFragment$key } from "#/__generated__/iam/ConnectorListFragment.graphql";
 
 import { GoogleWorkspaceConnector } from "./GoogleWorkspaceConnector";
+import { Microsoft365Connector } from "./Microsoft365Connector";
 
 const connectorListFragment = graphql`
   fragment ConnectorListFragment on Organization {
@@ -27,6 +28,7 @@ const connectorListFragment = graphql`
     }
     scimConfiguration {
       ...GoogleWorkspaceConnectorFragment
+      ...Microsoft365ConnectorFragment
     }
   }
 `;
@@ -38,6 +40,8 @@ export function ConnectorList(props: { fKey: ConnectorListFragment$key }) {
 
   const googleWorkspaceScopes
     = data.scimBridgeTypes.find(info => info.type === "GOOGLE_WORKSPACE")?.oauth2Scopes ?? [];
+  const microsoft365Scopes
+    = data.scimBridgeTypes.find(info => info.type === "MICROSOFT_365")?.oauth2Scopes ?? [];
 
   return (
     <div className="space-y-4">
@@ -50,6 +54,10 @@ export function ConnectorList(props: { fKey: ConnectorListFragment$key }) {
       <GoogleWorkspaceConnector
         fKey={data.scimConfiguration ?? null}
         oauth2Scopes={googleWorkspaceScopes}
+      />
+      <Microsoft365Connector
+        fKey={data.scimConfiguration ?? null}
+        oauth2Scopes={microsoft365Scopes}
       />
     </div>
   );

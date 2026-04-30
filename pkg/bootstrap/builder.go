@@ -336,6 +336,17 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 		})
 	}
 
+	if microsoft365ClientID := b.getEnv("CONNECTOR_MICROSOFT_365_CLIENT_ID"); microsoft365ClientID != "" {
+		cfg.Probod.Connectors = append(cfg.Probod.Connectors, probodconfig.ConnectorConfig{
+			Provider: "MICROSOFT_365",
+			Protocol: "oauth2",
+			RawConfig: probodconfig.ConnectorConfigOAuth2{
+				ClientID:     microsoft365ClientID,
+				ClientSecret: b.getEnv("CONNECTOR_MICROSOFT_365_CLIENT_SECRET"),
+			},
+		})
+	}
+
 	return cfg, nil
 }
 
@@ -382,6 +393,7 @@ func (b *Builder) validateRequired() error {
 		{"CONNECTOR_INTERCOM", []string{"CLIENT_SECRET"}},
 		{"CONNECTOR_BREX", []string{"CLIENT_SECRET"}},
 		{"CONNECTOR_GOOGLE_WORKSPACE", []string{"CLIENT_SECRET"}},
+		{"CONNECTOR_MICROSOFT_365", []string{"CLIENT_SECRET"}},
 	}
 
 	for _, p := range oauthProviders {

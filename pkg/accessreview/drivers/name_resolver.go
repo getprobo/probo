@@ -50,6 +50,7 @@ var providerDisplayNames = map[coredata.ConnectorProvider]string{
 	coredata.ConnectorProviderGitHub:          "GitHub",
 	coredata.ConnectorProviderIntercom:        "Intercom",
 	coredata.ConnectorProviderResend:          "Resend",
+	coredata.ConnectorProviderMicrosoft365:    "Microsoft 365",
 }
 
 // ProviderDisplayName returns the human-readable label for a connector provider.
@@ -626,4 +627,68 @@ func (r *notionNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 	}
 
 	return resp.Bot.WorkspaceName, nil
+}
+
+// microsoft365NameResolver resolves the Microsoft 365 tenant display name
+// via the Microsoft Graph organization endpoint.
+type microsoft365NameResolver struct {
+	httpClient *http.Client
+}
+
+func NewMicrosoft365NameResolver(httpClient *http.Client) NameResolver {
+	return &microsoft365NameResolver{httpClient: httpClient}
+}
+
+func (r *microsoft365NameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodGet,
+		"https://graph.microsoft.com/v1.0/organization?$select=displayName,verifiedDomains",
+		nil,
+	)
+	if err != nil {
+		return "", fmt.Errorf("cannot create microsoft 365 organization request: %w", err)
+	}
+	req.Header.Set("Accept", "application/json")
+
+	httpResp, err := r.httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("cannot execute microsoft 365 organization request: %w", err)
+	}
+	defer func() { _ = httpResp.Body.Close() }()
+
+	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
+		return "", fmt.Errorf("cannot fetch microsoft 365 organization: unexpected status %d", httpResp.StatusCode)
+	}
+
+	var resp struct {
+		Value []struct {
+			DisplayName     string `json:"displayName"`
+			VerifiedDomains []struct {
+				Name      string `json:"name"`
+				IsDefault bool   `json:"isDefault"`
+			} `json:"verifiedDomains"`
+		} `json:"value"`
+	}
+	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
+		return "", fmt.Errorf("cannot decode microsoft 365 organization response: %w", err)
+	}
+
+	if len(resp.Value) == 0 {
+		return "", nil
+	}
+
+	org := resp.Value[0]
+	if org.DisplayName != "" {
+		return org.DisplayName, nil
+	}
+	for _, d := range org.VerifiedDomains {
+		if d.IsDefault {
+			return d.Name, nil
+		}
+	}
+	if len(org.VerifiedDomains) > 0 {
+		return org.VerifiedDomains[0].Name, nil
+	}
+	return "", nil
 }

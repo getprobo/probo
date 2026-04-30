@@ -26,19 +26,20 @@ const (
 	ConnectorProviderGoogleWorkspace ConnectorProvider = "GOOGLE_WORKSPACE"
 	ConnectorProviderLinear          ConnectorProvider = "LINEAR"
 	// _ ConnectorProvider = "FIGMA" — formerly Figma; removed (no driver, no OAuth config, no usage)
-	ConnectorProviderOnePassword ConnectorProvider = "ONE_PASSWORD"
-	ConnectorProviderHubSpot     ConnectorProvider = "HUBSPOT"
-	ConnectorProviderDocuSign    ConnectorProvider = "DOCUSIGN"
-	ConnectorProviderNotion      ConnectorProvider = "NOTION"
-	ConnectorProviderBrex        ConnectorProvider = "BREX"
-	ConnectorProviderTally       ConnectorProvider = "TALLY"
-	ConnectorProviderCloudflare  ConnectorProvider = "CLOUDFLARE"
-	ConnectorProviderOpenAI      ConnectorProvider = "OPENAI"
-	ConnectorProviderSentry      ConnectorProvider = "SENTRY"
-	ConnectorProviderSupabase    ConnectorProvider = "SUPABASE"
-	ConnectorProviderGitHub      ConnectorProvider = "GITHUB"
-	ConnectorProviderIntercom    ConnectorProvider = "INTERCOM"
-	ConnectorProviderResend      ConnectorProvider = "RESEND"
+	ConnectorProviderOnePassword  ConnectorProvider = "ONE_PASSWORD"
+	ConnectorProviderHubSpot      ConnectorProvider = "HUBSPOT"
+	ConnectorProviderDocuSign     ConnectorProvider = "DOCUSIGN"
+	ConnectorProviderNotion       ConnectorProvider = "NOTION"
+	ConnectorProviderBrex         ConnectorProvider = "BREX"
+	ConnectorProviderTally        ConnectorProvider = "TALLY"
+	ConnectorProviderCloudflare   ConnectorProvider = "CLOUDFLARE"
+	ConnectorProviderOpenAI       ConnectorProvider = "OPENAI"
+	ConnectorProviderSentry       ConnectorProvider = "SENTRY"
+	ConnectorProviderSupabase     ConnectorProvider = "SUPABASE"
+	ConnectorProviderGitHub       ConnectorProvider = "GITHUB"
+	ConnectorProviderIntercom     ConnectorProvider = "INTERCOM"
+	ConnectorProviderResend       ConnectorProvider = "RESEND"
+	ConnectorProviderMicrosoft365 ConnectorProvider = "MICROSOFT_365"
 )
 
 func ConnectorProviders() []ConnectorProvider {
@@ -59,6 +60,7 @@ func ConnectorProviders() []ConnectorProvider {
 		ConnectorProviderGitHub,
 		ConnectorProviderIntercom,
 		ConnectorProviderResend,
+		ConnectorProviderMicrosoft365,
 	}
 }
 
@@ -110,6 +112,8 @@ func (cp *ConnectorProvider) Scan(value any) error {
 		*cp = ConnectorProviderIntercom
 	case "RESEND":
 		*cp = ConnectorProviderResend
+	case "MICROSOFT_365":
+		*cp = ConnectorProviderMicrosoft365
 	default:
 		return fmt.Errorf("invalid ConnectorProvider value: %q", s)
 	}

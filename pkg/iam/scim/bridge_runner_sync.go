@@ -17,6 +17,7 @@ package scim
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"time"
 
 	"go.gearno.de/kit/httpclient"
@@ -28,6 +29,7 @@ import (
 	scimclient "go.probo.inc/probo/pkg/iam/scim/bridge/client"
 	"go.probo.inc/probo/pkg/iam/scim/bridge/provider"
 	"go.probo.inc/probo/pkg/iam/scim/bridge/provider/googleworkspace"
+	"go.probo.inc/probo/pkg/iam/scim/bridge/provider/microsoft365"
 )
 
 func (r *BridgeRunner) executeSync(
@@ -152,17 +154,27 @@ func (r *BridgeRunner) createProvider(
 ) (provider.Provider, error) {
 	switch bridgeType {
 	case coredata.SCIMBridgeTypeGoogleWorkspace:
-		return r.createGoogleWorkspaceProvider(ctx, logger, dbConnector, excludedUserNames)
+		return r.createOAuth2BridgeProvider(ctx, logger, dbConnector, func(c *http.Client) provider.Provider {
+			return googleworkspace.New(c, excludedUserNames)
+		})
+	case coredata.SCIMBridgeTypeMicrosoft365:
+		return r.createOAuth2BridgeProvider(ctx, logger, dbConnector, func(c *http.Client) provider.Provider {
+			return microsoft365.New(c, excludedUserNames)
+		})
 	default:
 		return nil, fmt.Errorf("unsupported bridge type: %s", bridgeType)
 	}
 }
 
-func (r *BridgeRunner) createGoogleWorkspaceProvider(
+// createOAuth2BridgeProvider builds an HTTP client (refreshable when
+// supported) for an OAuth2-backed connector and hands it to the
+// caller-supplied factory. All bridge providers share this scaffolding;
+// only the directory API consumed differs.
+func (r *BridgeRunner) createOAuth2BridgeProvider(
 	ctx context.Context,
 	logger *log.Logger,
 	dbConnector *coredata.Connector,
-	excludedUserNames []string,
+	factory func(*http.Client) provider.Provider,
 ) (provider.Provider, error) {
 	if dbConnector.Connection == nil {
 		return nil, fmt.Errorf("connector has no connection configured")
@@ -192,7 +204,7 @@ func (r *BridgeRunner) createGoogleWorkspaceProvider(
 		if err != nil {
 			return nil, fmt.Errorf("cannot create HTTP client: %w", err)
 		}
-		return googleworkspace.New(httpClient, excludedUserNames), nil
+		return factory(httpClient), nil
 	}
 
 	httpClient, err := oauth2Conn.RefreshableClient(ctx, *refreshCfg, httpClientOpts...)
@@ -200,5 +212,5 @@ func (r *BridgeRunner) createGoogleWorkspaceProvider(
 		return nil, fmt.Errorf("cannot create refreshable HTTP client: %w", err)
 	}
 
-	return googleworkspace.New(httpClient, excludedUserNames), nil
+	return factory(httpClient), nil
 }

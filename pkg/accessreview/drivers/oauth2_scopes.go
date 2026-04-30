@@ -33,6 +33,14 @@ var providerOAuth2Scopes = map[coredata.ConnectorProvider][]string{
 		"https://www.googleapis.com/auth/admin.directory.group.member.readonly",
 		"https://www.googleapis.com/auth/admin.directory.customer.readonly",
 	},
+	coredata.ConnectorProviderMicrosoft365: {
+		"openid",
+		"profile",
+		"offline_access",
+		"https://graph.microsoft.com/User.Read.All",
+		"https://graph.microsoft.com/Directory.Read.All",
+		"https://graph.microsoft.com/RoleManagement.Read.Directory",
+	},
 	// Notion and Intercom have no scopes here: Notion authorizes via
 	// extra-auth-params (owner=user), Intercom configures scopes at the app
 	// level.

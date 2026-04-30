@@ -27,6 +27,10 @@ enum ConnectorProvider
     INTERCOM
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderIntercom")
     RESEND @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderResend")
+    MICROSOFT_365
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderMicrosoft365"
+        )
 }
 
 type ConnectorProviderInfo {
