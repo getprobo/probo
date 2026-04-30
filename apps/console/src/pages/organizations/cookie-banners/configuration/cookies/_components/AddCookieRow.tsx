@@ -12,12 +12,12 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+import { toMaxAgeSeconds } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
-import { Button, Input, Td, Tr } from "@probo/ui";
+import { Button, DurationInput, Input, Td, Tr } from "@probo/ui";
 import { useState } from "react";
 
 import type { CookieEntry } from "./CategorySection";
-import { DurationInput, toMaxAgeSeconds } from "./DurationInput";
 
 interface AddCookieRowProps {
   isUpdating: boolean;

@@ -12,35 +12,9 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { Input } from "@probo/ui";
+import { DURATION_UNITS } from "@probo/helpers";
 
-const UNITS: { value: string; label: string; seconds: number }[] = [
-  { value: "seconds", label: "seconds", seconds: 1 },
-  { value: "minutes", label: "minutes", seconds: 60 },
-  { value: "hours", label: "hours", seconds: 3600 },
-  { value: "days", label: "days", seconds: 86400 },
-  { value: "weeks", label: "weeks", seconds: 604800 },
-  { value: "months", label: "months", seconds: 2592000 },
-  { value: "years", label: "years", seconds: 31536000 },
-];
-
-export function toMaxAgeSeconds(value: string, unit: string): number | null {
-  const num = parseFloat(value);
-  if (isNaN(num) || num <= 0) return null;
-  const u = UNITS.find(u => u.value === unit);
-  if (!u) return null;
-  return Math.round(num * u.seconds);
-}
-
-export function fromMaxAgeSeconds(seconds: number | null): { value: string; unit: string } {
-  if (seconds === null || seconds <= 0) return { value: "", unit: "days" };
-  for (const u of [...UNITS].reverse()) {
-    if (seconds >= u.seconds && seconds % u.seconds === 0) {
-      return { value: String(seconds / u.seconds), unit: u.value };
-    }
-  }
-  return { value: String(seconds), unit: "seconds" };
-}
+import { Input } from "./Input";
 
 interface DurationInputProps {
   value: string;
@@ -65,7 +39,7 @@ export function DurationInput({ value, unit, onValueChange, onUnitChange }: Dura
         onChange={e => onUnitChange(e.target.value)}
         className="rounded border border-border bg-background px-2 py-1 text-sm"
       >
-        {UNITS.map(u => (
+        {DURATION_UNITS.map(u => (
           <option key={u.value} value={u.value}>{u.label}</option>
         ))}
       </select>

@@ -12,8 +12,9 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+import { fromMaxAgeSeconds, toMaxAgeSeconds } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
-import { Button, Input, Td, Tr } from "@probo/ui";
+import { Button, DurationInput, Input, Td, Tr } from "@probo/ui";
 import { useState } from "react";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
@@ -21,7 +22,6 @@ import { graphql } from "relay-runtime";
 import type { EditCookieRowFragment$key } from "#/__generated__/core/EditCookieRowFragment.graphql";
 
 import type { CookieEntry } from "./CategorySection";
-import { DurationInput, fromMaxAgeSeconds, toMaxAgeSeconds } from "./DurationInput";
 
 export const editCookieRowFragment = graphql`
   fragment EditCookieRowFragment on CookiePattern {

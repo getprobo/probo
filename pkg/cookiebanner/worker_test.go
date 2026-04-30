@@ -20,6 +20,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
 )
 
 func TestSeparatorPrefixes(t *testing.T) {
@@ -108,7 +109,7 @@ func TestFindMergeGroups(t *testing.T) {
 			groups := findMergeGroups(patterns, 3)
 			require.Len(t, groups, 1)
 
-			group, ok := groups["ph_phc_"]
+			group, ok := groups[mergeGroupKey{categoryID: gid.Nil, prefix: "ph_phc_"}]
 			require.True(t, ok)
 			assert.Len(t, group, 3)
 		},
@@ -128,7 +129,7 @@ func TestFindMergeGroups(t *testing.T) {
 			groups := findMergeGroups(patterns, 3)
 			require.Len(t, groups, 1)
 
-			group, ok := groups["_ga_"]
+			group, ok := groups[mergeGroupKey{categoryID: gid.Nil, prefix: "_ga_"}]
 			require.True(t, ok)
 			assert.Len(t, group, 3)
 		},
@@ -148,7 +149,7 @@ func TestFindMergeGroups(t *testing.T) {
 			groups := findMergeGroups(patterns, 3)
 			require.Len(t, groups, 1)
 
-			group, ok := groups["auth0_session_"]
+			group, ok := groups[mergeGroupKey{categoryID: gid.Nil, prefix: "auth0_session_"}]
 			require.True(t, ok)
 			assert.Len(t, group, 3)
 		},
@@ -186,11 +187,11 @@ func TestFindMergeGroups(t *testing.T) {
 			groups := findMergeGroups(patterns, 3)
 			require.Len(t, groups, 2)
 
-			barGroup, ok := groups["foo_bar_"]
+			barGroup, ok := groups[mergeGroupKey{categoryID: gid.Nil, prefix: "foo_bar_"}]
 			require.True(t, ok)
 			assert.Len(t, barGroup, 3)
 
-			bazGroup, ok := groups["foo_baz_"]
+			bazGroup, ok := groups[mergeGroupKey{categoryID: gid.Nil, prefix: "foo_baz_"}]
 			require.True(t, ok)
 			assert.Len(t, bazGroup, 3)
 		},
@@ -211,7 +212,7 @@ func TestFindMergeGroups(t *testing.T) {
 			groups := findMergeGroups(patterns, 3)
 			require.Len(t, groups, 1)
 
-			group, ok := groups["ph_phc_"]
+			group, ok := groups[mergeGroupKey{categoryID: gid.Nil, prefix: "ph_phc_"}]
 			require.True(t, ok)
 			assert.Len(t, group, 3)
 		},
@@ -235,7 +236,7 @@ func TestFindMergeGroups(t *testing.T) {
 			groups := findMergeGroups(patterns, 3)
 			require.Len(t, groups, 1)
 
-			group := groups["ph_phc_"]
+			group := groups[mergeGroupKey{categoryID: gid.Nil, prefix: "ph_phc_"}]
 			assert.Len(t, group, 3)
 		},
 	)
@@ -257,11 +258,11 @@ func TestFindMergeGroups(t *testing.T) {
 			groups := findMergeGroups(patterns, 3)
 			require.Len(t, groups, 2)
 
-			phcGroup, ok := groups["ph_phc_"]
+			phcGroup, ok := groups[mergeGroupKey{categoryID: gid.Nil, prefix: "ph_phc_"}]
 			require.True(t, ok)
 			assert.Len(t, phcGroup, 3)
 
-			sessionGroup, ok := groups["ph_session_"]
+			sessionGroup, ok := groups[mergeGroupKey{categoryID: gid.Nil, prefix: "ph_session_"}]
 			require.True(t, ok)
 			assert.Len(t, sessionGroup, 3)
 		},

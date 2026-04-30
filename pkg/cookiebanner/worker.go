@@ -120,6 +120,10 @@ func (h *patternAnalysisHandler) Process(ctx context.Context, task coredata.Cook
 					if err := prefixPattern.LoadByBannerIDAndPattern(ctx, tx, scope, task.BannerID, key.prefix); err != nil {
 						return fmt.Errorf("cannot load existing prefix pattern %q: %w", key.prefix, err)
 					}
+
+					if prefixPattern.CookieCategoryID != key.categoryID || prefixPattern.MatchType != coredata.CookiePatternMatchTypePrefix {
+						continue
+					}
 				}
 
 				for _, exactPattern := range group {

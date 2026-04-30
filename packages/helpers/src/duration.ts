@@ -21,6 +21,16 @@ const UNITS: [number, string, string][] = [
   [60, "minute", "minutes"],
 ];
 
+export const DURATION_UNITS: { value: string; label: string; seconds: number }[] = [
+  { value: "seconds", label: "seconds", seconds: 1 },
+  { value: "minutes", label: "minutes", seconds: 60 },
+  { value: "hours", label: "hours", seconds: 3600 },
+  { value: "days", label: "days", seconds: 86400 },
+  { value: "weeks", label: "weeks", seconds: 604800 },
+  { value: "months", label: "months", seconds: 2592000 },
+  { value: "years", label: "years", seconds: 31536000 },
+];
+
 export function humanizeSeconds(seconds: number | null): string {
   if (seconds === null || seconds <= 0) return "session";
   for (const [unit, singular, plural] of UNITS) {
@@ -30,4 +40,24 @@ export function humanizeSeconds(seconds: number | null): string {
     }
   }
   return `${seconds} ${seconds === 1 ? "second" : "seconds"}`;
+}
+
+export function toMaxAgeSeconds(value: string, unit: string): number | null {
+  const num = parseFloat(value);
+  if (isNaN(num) || num <= 0) return null;
+  const u = DURATION_UNITS.find(u => u.value === unit);
+  if (!u) return null;
+  const rounded = Math.round(num * u.seconds);
+  if (rounded <= 0) return null;
+  return rounded;
+}
+
+export function fromMaxAgeSeconds(seconds: number | null): { value: string; unit: string } {
+  if (seconds === null || seconds <= 0) return { value: "", unit: "days" };
+  for (const u of [...DURATION_UNITS].reverse()) {
+    if (seconds >= u.seconds && seconds % u.seconds === 0) {
+      return { value: String(seconds / u.seconds), unit: u.value };
+    }
+  }
+  return { value: String(seconds), unit: "seconds" };
 }

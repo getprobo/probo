@@ -39,6 +39,7 @@ export {
 export { Avatar } from "./Atoms/Avatar/Avatar";
 export { Field } from "./Molecules/Field/Field";
 export { Input } from "./Atoms/Input/Input";
+export { DurationInput } from "./Atoms/Input/DurationInput";
 export { Textarea } from "./Atoms/Textarea/Textarea";
 export { Option, Select, SelectGroup, SelectLabel } from "./Atoms/Select/Select";
 export { Label } from "./Atoms/Label/Label";
