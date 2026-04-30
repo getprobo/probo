@@ -40,13 +40,10 @@ const createMutation = graphql`
       cookieCategoryEdge @appendEdge(connections: $connections) {
         node {
           id
-          name
-          slug
-          description
-          kind
           rank
-          createdAt
-          updatedAt
+          name
+          kind
+          ...CategorySectionFragment
         }
       }
       cookieBanner {
