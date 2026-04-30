@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.177.1] - 2026-04-30
+
+### Fixed
+
+- Reveal cookie banner sidebar entry in IAM organizations
+- Render cookie-consent placeholders when no prior consent exists
+- Fix cookie-consent placeholder sizing for absolutely or sticky positioned elements
+- Allow OIDC and magic-link sessions to assume password-only organizations
+
 ## [0.177.0] - 2026-04-30
 
 ### Added
