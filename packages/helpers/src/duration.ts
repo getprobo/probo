@@ -29,5 +29,5 @@ export function humanizeSeconds(seconds: number | null): string {
       return `${count} ${count === 1 ? singular : plural}`;
     }
   }
-  return `${seconds} seconds`;
+  return `${seconds} ${seconds === 1 ? "second" : "seconds"}`;
 }

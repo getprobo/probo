@@ -1375,7 +1375,7 @@ func (s *Service) GetCookiePattern(
 		func(ctx context.Context, conn pg.Querier) error {
 			if err := pattern.LoadByID(ctx, conn, scope, cookiePatternID); err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
-					return ErrCookieNotFound
+					return ErrCookiePatternNotFound
 				}
 				return fmt.Errorf("cannot load cookie pattern: %w", err)
 			}

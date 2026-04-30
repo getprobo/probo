@@ -15,6 +15,7 @@
 import { Input } from "@probo/ui";
 
 const UNITS: { value: string; label: string; seconds: number }[] = [
+  { value: "seconds", label: "seconds", seconds: 1 },
   { value: "minutes", label: "minutes", seconds: 60 },
   { value: "hours", label: "hours", seconds: 3600 },
   { value: "days", label: "days", seconds: 86400 },
@@ -24,11 +25,11 @@ const UNITS: { value: string; label: string; seconds: number }[] = [
 ];
 
 export function toMaxAgeSeconds(value: string, unit: string): number | null {
-  const num = parseInt(value, 10);
+  const num = parseFloat(value);
   if (isNaN(num) || num <= 0) return null;
   const u = UNITS.find(u => u.value === unit);
   if (!u) return null;
-  return num * u.seconds;
+  return Math.round(num * u.seconds);
 }
 
 export function fromMaxAgeSeconds(seconds: number | null): { value: string; unit: string } {
@@ -38,7 +39,7 @@ export function fromMaxAgeSeconds(seconds: number | null): { value: string; unit
       return { value: String(seconds / u.seconds), unit: u.value };
     }
   }
-  return { value: String(seconds), unit: "minutes" };
+  return { value: String(seconds), unit: "seconds" };
 }
 
 interface DurationInputProps {

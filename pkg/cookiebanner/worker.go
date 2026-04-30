@@ -92,7 +92,7 @@ func (h *patternAnalysisHandler) Process(ctx context.Context, task coredata.Cook
 			mergeGroups := findMergeGroups(patterns, patternMergeThreshold)
 
 			merged := false
-			for prefix, group := range mergeGroups {
+			for key, group := range mergeGroups {
 
 				maxAge := mostCommonMaxAge(group)
 				source := bestSource(group)
@@ -101,10 +101,10 @@ func (h *patternAnalysisHandler) Process(ctx context.Context, task coredata.Cook
 					ID:               gid.New(task.TenantID, coredata.CookiePatternEntityType),
 					OrganizationID:   group[0].OrganizationID,
 					CookieBannerID:   task.BannerID,
-					CookieCategoryID: group[0].CookieCategoryID,
-					Pattern:          prefix,
+					CookieCategoryID: key.categoryID,
+					Pattern:          key.prefix,
 					MatchType:        coredata.CookiePatternMatchTypePrefix,
-					DisplayName:      prefix + "*",
+					DisplayName:      key.prefix + "*",
 					MaxAgeSeconds:    maxAge,
 					Description:      "",
 					Source:           source,
@@ -114,10 +114,12 @@ func (h *patternAnalysisHandler) Process(ctx context.Context, task coredata.Cook
 
 				inserted, err := prefixPattern.InsertIfNotExists(ctx, tx, scope)
 				if err != nil {
-					return fmt.Errorf("cannot insert prefix pattern %q: %w", prefix, err)
+					return fmt.Errorf("cannot insert prefix pattern %q: %w", key.prefix, err)
 				}
 				if !inserted {
-					continue
+					if err := prefixPattern.LoadByBannerIDAndPattern(ctx, tx, scope, task.BannerID, key.prefix); err != nil {
+						return fmt.Errorf("cannot load existing prefix pattern %q: %w", key.prefix, err)
+					}
 				}
 
 				for _, exactPattern := range group {
@@ -135,7 +137,7 @@ func (h *patternAnalysisHandler) Process(ctx context.Context, task coredata.Cook
 				h.logger.InfoCtx(
 					ctx,
 					"merged exact patterns into prefix pattern",
-					log.String("prefix", prefix),
+					log.String("prefix", key.prefix),
 					log.Int("count", len(group)),
 					log.String("banner_id", task.BannerID.String()),
 				)
@@ -152,10 +154,15 @@ func (h *patternAnalysisHandler) Process(ctx context.Context, task coredata.Cook
 	)
 }
 
+type mergeGroupKey struct {
+	categoryID gid.GID
+	prefix     string
+}
+
 func findMergeGroups(
 	patterns coredata.CookiePatterns,
 	threshold int,
-) map[string][]*coredata.CookiePattern {
+) map[mergeGroupKey][]*coredata.CookiePattern {
 	var exact []*coredata.CookiePattern
 	for _, p := range patterns {
 		if p.MatchType == coredata.CookiePatternMatchTypeExact {
@@ -163,31 +170,32 @@ func findMergeGroups(
 		}
 	}
 
-	prefixCounts := make(map[string][]*coredata.CookiePattern)
+	prefixCounts := make(map[mergeGroupKey][]*coredata.CookiePattern)
 	for _, p := range exact {
 		for _, pfx := range separatorPrefixes(p.Pattern) {
-			prefixCounts[pfx] = append(prefixCounts[pfx], p)
+			key := mergeGroupKey{categoryID: p.CookieCategoryID, prefix: pfx}
+			prefixCounts[key] = append(prefixCounts[key], p)
 		}
 	}
 
 	type candidate struct {
-		prefix   string
+		key      mergeGroupKey
 		patterns []*coredata.CookiePattern
 	}
 
 	var candidates []candidate
-	for pfx, pats := range prefixCounts {
+	for key, pats := range prefixCounts {
 		if len(pats) >= threshold {
-			candidates = append(candidates, candidate{pfx, pats})
+			candidates = append(candidates, candidate{key, pats})
 		}
 	}
 
 	sort.Slice(candidates, func(i, j int) bool {
-		return len(candidates[i].prefix) > len(candidates[j].prefix)
+		return len(candidates[i].key.prefix) > len(candidates[j].key.prefix)
 	})
 
 	assigned := make(map[*coredata.CookiePattern]bool)
-	groups := make(map[string][]*coredata.CookiePattern)
+	groups := make(map[mergeGroupKey][]*coredata.CookiePattern)
 
 	for _, c := range candidates {
 		var unassigned []*coredata.CookiePattern
@@ -201,7 +209,7 @@ func findMergeGroups(
 			continue
 		}
 
-		groups[c.prefix] = unassigned
+		groups[c.key] = unassigned
 		for _, p := range unassigned {
 			assigned[p] = true
 		}

@@ -122,6 +122,62 @@ LIMIT 1;
 	return nil
 }
 
+func (cp *CookiePattern) LoadByBannerIDAndPattern(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	cookieBannerID gid.GID,
+	pattern string,
+) error {
+	q := `
+SELECT
+	id,
+	organization_id,
+	cookie_banner_id,
+	cookie_category_id,
+	pattern,
+	match_type,
+	display_name,
+	max_age_seconds,
+	description,
+	source,
+	created_at,
+	updated_at
+FROM
+	cookie_patterns
+WHERE
+	%s
+	AND cookie_banner_id = @cookie_banner_id
+	AND pattern = @pattern
+LIMIT 1;
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"cookie_banner_id": cookieBannerID,
+		"pattern":          pattern,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query cookie patterns: %w", err)
+	}
+
+	p, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[CookiePattern])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+		return fmt.Errorf("cannot collect cookie pattern: %w", err)
+	}
+
+	*cp = p
+
+	return nil
+}
+
 func (cp *CookiePattern) FindMatchingPattern(
 	ctx context.Context,
 	conn pg.Querier,
@@ -153,7 +209,11 @@ WHERE
 		OR (match_type = @match_type_exact AND pattern = @cookie_name)
 	)
 ORDER BY
-	CASE WHEN match_type = @match_type_prefix THEN 0 ELSE 1 END
+	CASE WHEN match_type = @match_type_exact AND pattern = @cookie_name THEN 0
+	     WHEN match_type = @match_type_prefix THEN 1
+	     ELSE 2
+	END,
+	LENGTH(pattern) DESC
 LIMIT 1;
 `
 
