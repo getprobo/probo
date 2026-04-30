@@ -46,11 +46,6 @@ type (
 		UpdatedAt                  time.Time         `db:"updated_at"`
 	}
 
-	CookieBannerPatternAnalysisTask struct {
-		BannerID gid.GID
-		TenantID gid.TenantID
-	}
-
 	CookieBanners []*CookieBanner
 )
 
@@ -572,14 +567,26 @@ WHERE
 	return nil
 }
 
-func (t *CookieBannerPatternAnalysisTask) ClaimNextForUpdateSkipLocked(
+func (b *CookieBanner) LoadNextForPatternAnalysisForUpdateSkipLocked(
 	ctx context.Context,
 	tx pg.Tx,
 ) error {
 	q := `
 SELECT
 	id,
-	tenant_id
+	organization_id,
+	name,
+	origin,
+	state,
+	privacy_policy_url,
+	cookie_policy_url,
+	consent_expiry_days,
+	consent_mode,
+	show_branding,
+	default_language,
+	pattern_analysis_requested_at,
+	created_at,
+	updated_at
 FROM
 	cookie_banners
 WHERE
@@ -590,22 +597,25 @@ FOR UPDATE SKIP LOCKED
 LIMIT 1;
 `
 
-	var tenantIDStr string
-	if err := tx.QueryRow(ctx, q).Scan(&t.BannerID, &tenantIDStr); err != nil {
+	rows, err := tx.Query(ctx, q)
+	if err != nil {
+		return fmt.Errorf("cannot query cookie banners for pattern analysis: %w", err)
+	}
+
+	banner, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[CookieBanner])
+	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
-		return fmt.Errorf("cannot claim banner for pattern analysis: %w", err)
+		return fmt.Errorf("cannot collect cookie banner: %w", err)
 	}
 
-	if err := t.TenantID.UnmarshalText([]byte(tenantIDStr)); err != nil {
-		return fmt.Errorf("cannot parse tenant ID: %w", err)
-	}
+	*b = banner
 
 	return nil
 }
 
-func (t *CookieBannerPatternAnalysisTask) ClearPatternAnalysisFlag(
+func (b *CookieBanner) ClearPatternAnalysisRequestedAt(
 	ctx context.Context,
 	tx pg.Tx,
 ) error {
@@ -615,12 +625,14 @@ SET pattern_analysis_requested_at = NULL
 WHERE id = @id
 `
 
-	args := pgx.StrictNamedArgs{"id": t.BannerID}
+	args := pgx.StrictNamedArgs{"id": b.ID}
 
 	_, err := tx.Exec(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot clear pattern analysis flag: %w", err)
+		return fmt.Errorf("cannot clear pattern analysis requested at: %w", err)
 	}
+
+	b.PatternAnalysisRequestedAt = nil
 
 	return nil
 }

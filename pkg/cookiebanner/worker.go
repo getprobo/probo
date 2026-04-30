@@ -41,7 +41,7 @@ func NewPatternAnalysisWorker(
 	pgClient *pg.Client,
 	logger *log.Logger,
 	opts ...worker.Option,
-) *worker.Worker[coredata.CookieBannerPatternAnalysisTask] {
+) *worker.Worker[coredata.CookieBanner] {
 	h := &patternAnalysisHandler{
 		svc:    svc,
 		pg:     pgClient,
@@ -56,36 +56,36 @@ func NewPatternAnalysisWorker(
 	)
 }
 
-func (h *patternAnalysisHandler) Claim(ctx context.Context) (coredata.CookieBannerPatternAnalysisTask, error) {
-	var task coredata.CookieBannerPatternAnalysisTask
+func (h *patternAnalysisHandler) Claim(ctx context.Context) (coredata.CookieBanner, error) {
+	var banner coredata.CookieBanner
 
 	if err := h.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			if err := task.ClaimNextForUpdateSkipLocked(ctx, tx); err != nil {
+			if err := banner.LoadNextForPatternAnalysisForUpdateSkipLocked(ctx, tx); err != nil {
 				return err
 			}
 
-			return task.ClearPatternAnalysisFlag(ctx, tx)
+			return banner.ClearPatternAnalysisRequestedAt(ctx, tx)
 		},
 	); err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return coredata.CookieBannerPatternAnalysisTask{}, worker.ErrNoTask
+			return coredata.CookieBanner{}, worker.ErrNoTask
 		}
-		return coredata.CookieBannerPatternAnalysisTask{}, fmt.Errorf("cannot claim pattern analysis task: %w", err)
+		return coredata.CookieBanner{}, fmt.Errorf("cannot claim pattern analysis task: %w", err)
 	}
 
-	return task, nil
+	return banner, nil
 }
 
-func (h *patternAnalysisHandler) Process(ctx context.Context, task coredata.CookieBannerPatternAnalysisTask) error {
+func (h *patternAnalysisHandler) Process(ctx context.Context, banner coredata.CookieBanner) error {
 	return h.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			scope := coredata.NewScope(task.TenantID)
+			scope := coredata.NewScopeFromObjectID(banner.ID)
 
 			var patterns coredata.CookiePatterns
-			if err := patterns.LoadAllByCookieBannerID(ctx, tx, scope, task.BannerID); err != nil {
+			if err := patterns.LoadAllByCookieBannerID(ctx, tx, scope, banner.ID); err != nil {
 				return fmt.Errorf("cannot load patterns: %w", err)
 			}
 
@@ -98,9 +98,9 @@ func (h *patternAnalysisHandler) Process(ctx context.Context, task coredata.Cook
 				source := bestSource(group)
 
 				prefixPattern := &coredata.CookiePattern{
-					ID:               gid.New(task.TenantID, coredata.CookiePatternEntityType),
+					ID:               gid.New(banner.ID.TenantID(), coredata.CookiePatternEntityType),
 					OrganizationID:   group[0].OrganizationID,
-					CookieBannerID:   task.BannerID,
+					CookieBannerID:   banner.ID,
 					CookieCategoryID: key.categoryID,
 					Pattern:          key.prefix,
 					MatchType:        coredata.CookiePatternMatchTypePrefix,
@@ -117,7 +117,7 @@ func (h *patternAnalysisHandler) Process(ctx context.Context, task coredata.Cook
 					return fmt.Errorf("cannot insert prefix pattern %q: %w", key.prefix, err)
 				}
 				if !inserted {
-					if err := prefixPattern.LoadByBannerIDAndPattern(ctx, tx, scope, task.BannerID, key.prefix); err != nil {
+					if err := prefixPattern.LoadByBannerIDAndPattern(ctx, tx, scope, banner.ID, key.prefix); err != nil {
 						return fmt.Errorf("cannot load existing prefix pattern %q: %w", key.prefix, err)
 					}
 
@@ -143,12 +143,12 @@ func (h *patternAnalysisHandler) Process(ctx context.Context, task coredata.Cook
 					"merged exact patterns into prefix pattern",
 					log.String("prefix", key.prefix),
 					log.Int("count", len(group)),
-					log.String("banner_id", task.BannerID.String()),
+					log.String("banner_id", banner.ID.String()),
 				)
 			}
 
 			if merged {
-				if _, err := h.svc.ensureDraftVersionForBanner(ctx, tx, scope, task.BannerID); err != nil {
+				if _, err := h.svc.ensureDraftVersionForBanner(ctx, tx, scope, banner.ID); err != nil {
 					return fmt.Errorf("cannot ensure draft version: %w", err)
 				}
 			}
