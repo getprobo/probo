@@ -14,7 +14,7 @@
 
 import { useTranslate } from "@probo/i18n";
 import { Button, Input, Textarea } from "@probo/ui";
-import { useState } from "react";
+import { Controller, useForm } from "react-hook-form";
 
 const GCM_CONSENT_TYPES = [
   "analytics_storage",
@@ -25,6 +25,14 @@ const GCM_CONSENT_TYPES = [
   "personalization_storage",
   "security_storage",
 ] as const;
+
+interface CategoryFormValues {
+  name: string;
+  slug: string;
+  description: string;
+  gcmConsentTypes: string[];
+  posthogConsent: boolean;
+}
 
 interface EditCategoryFormProps {
   name: string;
@@ -50,36 +58,35 @@ export function EditCategoryForm({
   onCancel,
 }: EditCategoryFormProps) {
   const { __ } = useTranslate();
-  const [editName, setEditName] = useState(name);
-  const [editSlug, setEditSlug] = useState(slug);
-  const [editDescription, setEditDescription] = useState(description);
-  const [editGcmTypes, setEditGcmTypes] = useState<string[]>(gcmConsentTypes);
-  const [editPosthogConsent, setEditPosthogConsent] = useState(posthogConsent);
 
-  const toggleGcmType = (type: string) => {
-    setEditGcmTypes(prev =>
-      prev.includes(type)
-        ? prev.filter(t => t !== type)
-        : [...prev, type],
-    );
+  const { register, handleSubmit, control } = useForm<CategoryFormValues>({
+    defaultValues: {
+      name,
+      slug,
+      description,
+      gcmConsentTypes,
+      posthogConsent,
+    },
+  });
+
+  const onSubmit = (data: CategoryFormValues) => {
+    onSave(data.name, data.slug, data.description, data.gcmConsentTypes, data.posthogConsent);
   };
 
   return (
     <div className="space-y-3">
       <Input
-        value={editName}
-        onChange={e => setEditName(e.target.value)}
+        {...register("name")}
         placeholder={__("Category name")}
       />
       <Input
-        value={editSlug}
-        onChange={e => setEditSlug(e.target.value)}
+        {...register("slug", {
+          pattern: /^[a-z0-9]+(-[a-z0-9]+)*$/,
+        })}
         placeholder={__("Category slug")}
-        pattern="[a-z0-9]+(-[a-z0-9]+)*"
       />
       <Textarea
-        value={editDescription}
-        onChange={e => setEditDescription(e.target.value)}
+        {...register("description")}
         placeholder={__("Category description")}
         rows={2}
       />
@@ -91,20 +98,33 @@ export function EditCategoryForm({
           {__("Select the Google Consent Mode signals this category controls.")}
         </p>
         <div className="flex flex-wrap gap-2">
-          {GCM_CONSENT_TYPES.map(type => (
-            <label
-              key={type}
-              className="flex items-center gap-1.5 text-xs cursor-pointer"
-            >
-              <input
-                type="checkbox"
-                checked={editGcmTypes.includes(type)}
-                onChange={() => toggleGcmType(type)}
-                className="rounded"
-              />
-              <code className="font-mono">{type}</code>
-            </label>
-          ))}
+          <Controller
+            name="gcmConsentTypes"
+            control={control}
+            render={({ field }) => (
+              <>
+                {GCM_CONSENT_TYPES.map(type => (
+                  <label
+                    key={type}
+                    className="flex items-center gap-1.5 text-xs cursor-pointer"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={field.value.includes(type)}
+                      onChange={() => {
+                        const next = field.value.includes(type)
+                          ? field.value.filter(t => t !== type)
+                          : [...field.value, type];
+                        field.onChange(next);
+                      }}
+                      className="rounded"
+                    />
+                    <code className="font-mono">{type}</code>
+                  </label>
+                ))}
+              </>
+            )}
+          />
         </div>
       </div>
       {kind === "NORMAL" && (
@@ -118,8 +138,7 @@ export function EditCategoryForm({
           <label className="flex items-center gap-1.5 text-xs cursor-pointer">
             <input
               type="checkbox"
-              checked={editPosthogConsent}
-              onChange={() => setEditPosthogConsent(prev => !prev)}
+              {...register("posthogConsent")}
               className="rounded"
             />
             <span>{__("Opt in/out of PostHog tracking")}</span>
@@ -128,10 +147,7 @@ export function EditCategoryForm({
       )}
       <div className="flex items-center gap-2">
         <Button
-          onClick={() => {
-            if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(editSlug)) return;
-            onSave(editName, editSlug, editDescription, editGcmTypes, editPosthogConsent);
-          }}
+          onClick={() => void handleSubmit(onSubmit)()}
           disabled={isUpdating}
         >
           {isUpdating ? __("Saving...") : __("Save")}

@@ -12,31 +12,22 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-const UNITS: [number, string, string][] = [
-  [365 * 24 * 3600, "year", "years"],
-  [30 * 24 * 3600, "month", "months"],
-  [7 * 24 * 3600, "week", "weeks"],
-  [24 * 3600, "day", "days"],
-  [3600, "hour", "hours"],
-  [60, "minute", "minutes"],
-];
-
-export const DURATION_UNITS: { value: string; label: string; seconds: number }[] = [
-  { value: "seconds", label: "seconds", seconds: 1 },
-  { value: "minutes", label: "minutes", seconds: 60 },
-  { value: "hours", label: "hours", seconds: 3600 },
-  { value: "days", label: "days", seconds: 86400 },
-  { value: "weeks", label: "weeks", seconds: 604800 },
-  { value: "months", label: "months", seconds: 2592000 },
-  { value: "years", label: "years", seconds: 31536000 },
+export const DURATION_UNITS: { value: string; label: string; singular: string; seconds: number }[] = [
+  { value: "seconds", label: "seconds", singular: "second", seconds: 1 },
+  { value: "minutes", label: "minutes", singular: "minute", seconds: 60 },
+  { value: "hours", label: "hours", singular: "hour", seconds: 3600 },
+  { value: "days", label: "days", singular: "day", seconds: 86400 },
+  { value: "weeks", label: "weeks", singular: "week", seconds: 604800 },
+  { value: "months", label: "months", singular: "month", seconds: 2592000 },
+  { value: "years", label: "years", singular: "year", seconds: 31536000 },
 ];
 
 export function humanizeSeconds(seconds: number | null): string {
   if (seconds === null || seconds <= 0) return "session";
-  for (const [unit, singular, plural] of UNITS) {
-    if (seconds >= unit && seconds % unit === 0) {
-      const count = seconds / unit;
-      return `${count} ${count === 1 ? singular : plural}`;
+  for (const u of [...DURATION_UNITS].reverse()) {
+    if (seconds >= u.seconds && seconds % u.seconds === 0) {
+      const count = seconds / u.seconds;
+      return `${count} ${count === 1 ? u.singular : u.label}`;
     }
   }
   return `${seconds} ${seconds === 1 ? "second" : "seconds"}`;

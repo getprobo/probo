@@ -15,7 +15,7 @@
 import { fromMaxAgeSeconds, toMaxAgeSeconds } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import { Button, DurationInput, Input, Td, Tr } from "@probo/ui";
-import { useState } from "react";
+import { Controller, useForm } from "react-hook-form";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -30,6 +30,12 @@ export const editCookieRowFragment = graphql`
     description
   }
 `;
+
+interface CookieFormValues {
+  name: string;
+  duration: { value: string; unit: string };
+  description: string;
+}
 
 interface EditCookieRowProps {
   cookieKey: EditCookieRowFragment$key;
@@ -47,16 +53,20 @@ export function EditCookieRow({
   const { __ } = useTranslate();
   const cookie = useFragment(editCookieRowFragment, cookieKey);
   const initial = fromMaxAgeSeconds(cookie.maxAgeSeconds ?? null);
-  const [name, setName] = useState(cookie.displayName);
-  const [durationValue, setDurationValue] = useState(initial.value);
-  const [durationUnit, setDurationUnit] = useState(initial.unit);
-  const [description, setDescription] = useState(cookie.description);
 
-  const handleSave = () => {
+  const { register, handleSubmit, control } = useForm<CookieFormValues>({
+    defaultValues: {
+      name: cookie.displayName,
+      duration: initial,
+      description: cookie.description,
+    },
+  });
+
+  const onSubmit = (data: CookieFormValues) => {
     onSave({
-      name,
-      maxAgeSeconds: toMaxAgeSeconds(durationValue, durationUnit),
-      description,
+      name: data.name,
+      maxAgeSeconds: toMaxAgeSeconds(data.duration.value, data.duration.unit),
+      description: data.description,
     });
   };
 
@@ -64,30 +74,34 @@ export function EditCookieRow({
     <Tr>
       <Td className="pr-3">
         <Input
-          value={name}
-          onChange={e => setName(e.target.value)}
+          {...register("name")}
           placeholder={__("Cookie name")}
         />
       </Td>
       <Td className="pr-3">
-        <DurationInput
-          value={durationValue}
-          unit={durationUnit}
-          onValueChange={setDurationValue}
-          onUnitChange={setDurationUnit}
+        <Controller
+          name="duration"
+          control={control}
+          render={({ field }) => (
+            <DurationInput
+              value={field.value.value}
+              unit={field.value.unit}
+              onValueChange={v => field.onChange({ ...field.value, value: v })}
+              onUnitChange={u => field.onChange({ ...field.value, unit: u })}
+            />
+          )}
         />
       </Td>
       <Td className="pr-3">
         <Input
-          value={description}
-          onChange={e => setDescription(e.target.value)}
+          {...register("description")}
           placeholder={__("Description")}
         />
       </Td>
       <Td>
         <div className="flex items-center gap-1">
           <Button
-            onClick={handleSave}
+            onClick={() => void handleSubmit(onSubmit)()}
             disabled={isUpdating}
           >
             {__("Save")}

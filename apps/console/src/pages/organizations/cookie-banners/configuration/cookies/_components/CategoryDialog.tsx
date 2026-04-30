@@ -24,7 +24,8 @@ import {
   Textarea,
   useToast,
 } from "@probo/ui";
-import { useState } from "react";
+import { useEffect } from "react";
+import { useForm, useWatch } from "react-hook-form";
 import { useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -60,6 +61,12 @@ const createMutation = graphql`
   }
 `;
 
+interface CategoryFormValues {
+  name: string;
+  slug: string;
+  description: string;
+}
+
 interface CategoryDialogProps {
   cookieBannerId: string;
   connectionId: string;
@@ -78,38 +85,33 @@ export function CategoryDialog({
 
   const [create, isCreating] = useMutation<CategoryDialogCreateMutation>(createMutation);
 
-  const [name, setName] = useState("");
-  const [slug, setSlug] = useState("");
-  const [slugTouched, setSlugTouched] = useState(false);
-  const [description, setDescription] = useState("");
+  const { register, handleSubmit, setValue, control, formState } = useForm<CategoryFormValues>({
+    defaultValues: { name: "", slug: "", description: "" },
+  });
 
-  const handleNameChange = (value: string) => {
-    setName(value);
-    if (!slugTouched) {
-      setSlug(
-        value
+  const nameValue = useWatch({ control, name: "name" });
+
+  useEffect(() => {
+    if (!formState.dirtyFields.slug) {
+      setValue(
+        "slug",
+        nameValue
           .toLowerCase()
           .replace(/[^a-z0-9]+/g, "-")
           .replace(/^-|-$/g, ""),
+        { shouldDirty: false },
       );
     }
-  };
+  }, [nameValue, formState.dirtyFields.slug, setValue]);
 
-  const handleSlugChange = (value: string) => {
-    setSlugTouched(true);
-    setSlug(value);
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
+  const onSubmit = (data: CategoryFormValues) => {
     create({
       variables: {
         input: {
           cookieBannerId,
-          name,
-          slug,
-          description,
+          name: data.name,
+          slug: data.slug,
+          description: data.description,
           rank: nextRank,
         },
         connections: [connectionId],
@@ -131,18 +133,23 @@ export function CategoryDialog({
       title={__("Add Category")}
       className="max-w-lg"
     >
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
         <DialogContent padded className="space-y-4">
           <Field label={__("Name")}>
-            <Input value={name} onChange={e => handleNameChange(e.target.value)} required />
+            <Input {...register("name")} required />
           </Field>
 
           <Field label={__("Slug")} help={__("Used as the data-cookie-consent attribute value")}>
-            <Input value={slug} onChange={e => handleSlugChange(e.target.value)} required pattern="[a-z0-9]+(-[a-z0-9]+)*" />
+            <Input
+              {...register("slug", {
+                pattern: /^[a-z0-9]+(-[a-z0-9]+)*$/,
+              })}
+              required
+            />
           </Field>
 
           <Field label={__("Description")}>
-            <Textarea value={description} onChange={e => setDescription(e.target.value)} required rows={2} />
+            <Textarea {...register("description")} required rows={2} />
           </Field>
 
         </DialogContent>

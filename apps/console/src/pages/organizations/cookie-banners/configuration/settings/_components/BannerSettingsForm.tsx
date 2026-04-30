@@ -15,7 +15,7 @@
 import { formatError, type GraphQLError } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import { Button, Card, Field, Input, Label, Option, Select, useToast } from "@probo/ui";
-import { useState } from "react";
+import { Controller, useForm } from "react-hook-form";
 import { useFragment, useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -56,6 +56,15 @@ const updateBannerMutation = graphql`
   }
 `;
 
+interface BannerSettingsFormValues {
+  name: string;
+  cookiePolicyUrl: string;
+  privacyPolicyUrl: string;
+  consentExpiryDays: string;
+  consentMode: "OPT_IN" | "OPT_OUT";
+  defaultLanguage: string;
+}
+
 interface BannerSettingsFormProps {
   cookieBannerKey: BannerSettingsForm_cookieBanner$key;
 }
@@ -68,26 +77,28 @@ export function BannerSettingsForm({ cookieBannerKey }: BannerSettingsFormProps)
 
   const [updateBanner, isUpdating] = useMutation<BannerSettingsFormMutation>(updateBannerMutation);
 
-  const [name, setName] = useState(banner.name);
-  const [cookiePolicyUrl, setCookiePolicyUrl] = useState(banner.cookiePolicyUrl);
-  const [privacyPolicyUrl, setPrivacyPolicyUrl] = useState(banner.privacyPolicyUrl ?? "");
-  const [consentExpiryDays, setConsentExpiryDays] = useState(String(banner.consentExpiryDays));
-  const [consentMode, setConsentMode] = useState(banner.consentMode);
-  const [defaultLanguage, setDefaultLanguage] = useState(banner.defaultLanguage);
+  const { register, handleSubmit, control } = useForm<BannerSettingsFormValues>({
+    defaultValues: {
+      name: banner.name,
+      cookiePolicyUrl: banner.cookiePolicyUrl,
+      privacyPolicyUrl: banner.privacyPolicyUrl ?? "",
+      consentExpiryDays: String(banner.consentExpiryDays),
+      consentMode: banner.consentMode,
+      defaultLanguage: banner.defaultLanguage,
+    },
+  });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
+  const onSubmit = (data: BannerSettingsFormValues) => {
     updateBanner({
       variables: {
         input: {
           cookieBannerId: banner.id,
-          name,
-          cookiePolicyUrl,
-          privacyPolicyUrl: privacyPolicyUrl || undefined,
-          consentExpiryDays: parseInt(consentExpiryDays, 10),
-          consentMode: consentMode,
-          defaultLanguage,
+          name: data.name,
+          cookiePolicyUrl: data.cookiePolicyUrl,
+          privacyPolicyUrl: data.privacyPolicyUrl || undefined,
+          consentExpiryDays: parseInt(data.consentExpiryDays, 10),
+          consentMode: data.consentMode,
+          defaultLanguage: data.defaultLanguage,
         },
       },
       onCompleted() {
@@ -103,9 +114,9 @@ export function BannerSettingsForm({ cookieBannerKey }: BannerSettingsFormProps)
     <div className="space-y-4">
       <h3 className="font-medium">{__("Settings")}</h3>
       <Card className="border p-4">
-        <form className="space-y-4" onSubmit={handleSubmit}>
+        <form className="space-y-4" onSubmit={e => void handleSubmit(onSubmit)(e)}>
           <Field label={__("Name")}>
-            <Input value={name} onChange={e => setName(e.target.value)} required />
+            <Input {...register("name")} required />
           </Field>
 
           <Field label={__("Origin URL")}>
@@ -113,11 +124,11 @@ export function BannerSettingsForm({ cookieBannerKey }: BannerSettingsFormProps)
           </Field>
 
           <Field label={__("Cookie Policy URL")}>
-            <Input value={cookiePolicyUrl} onChange={e => setCookiePolicyUrl(e.target.value)} required />
+            <Input {...register("cookiePolicyUrl")} required />
           </Field>
 
           <Field label={__("Privacy Policy URL")}>
-            <Input value={privacyPolicyUrl} onChange={e => setPrivacyPolicyUrl(e.target.value)} />
+            <Input {...register("privacyPolicyUrl")} />
           </Field>
 
           <div className="grid grid-cols-3 gap-4">
@@ -125,27 +136,38 @@ export function BannerSettingsForm({ cookieBannerKey }: BannerSettingsFormProps)
               <Label>{__("Consent Expiry (days)")}</Label>
               <Input
                 type="number"
-                value={consentExpiryDays}
-                onChange={e => setConsentExpiryDays(e.target.value)}
+                {...register("consentExpiryDays")}
                 min="1"
                 required
               />
             </div>
             <div className="space-y-2">
               <Label>{__("Consent Mode")}</Label>
-              <Select value={consentMode} onValueChange={v => setConsentMode(v as "OPT_IN" | "OPT_OUT")}>
-                <Option value="OPT_IN">{__("Opt-in")}</Option>
-                <Option value="OPT_OUT">{__("Opt-out")}</Option>
-              </Select>
+              <Controller
+                name="consentMode"
+                control={control}
+                render={({ field }) => (
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <Option value="OPT_IN">{__("Opt-in")}</Option>
+                    <Option value="OPT_OUT">{__("Opt-out")}</Option>
+                  </Select>
+                )}
+              />
             </div>
             <div className="space-y-2">
               <Label>{__("Default Language")}</Label>
-              <Select value={defaultLanguage} onValueChange={setDefaultLanguage}>
-                <Option value="en">{__("English")}</Option>
-                <Option value="fr">{__("French")}</Option>
-                <Option value="de">{__("German")}</Option>
-                <Option value="es">{__("Spanish")}</Option>
-              </Select>
+              <Controller
+                name="defaultLanguage"
+                control={control}
+                render={({ field }) => (
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <Option value="en">{__("English")}</Option>
+                    <Option value="fr">{__("French")}</Option>
+                    <Option value="de">{__("German")}</Option>
+                    <Option value="es">{__("Spanish")}</Option>
+                  </Select>
+                )}
+              />
             </div>
           </div>
 

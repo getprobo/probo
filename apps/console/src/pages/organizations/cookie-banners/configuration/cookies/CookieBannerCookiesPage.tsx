@@ -22,8 +22,7 @@ import { graphql } from "relay-runtime";
 import type { CookieBannerCookiesPageDeleteMutation } from "#/__generated__/core/CookieBannerCookiesPageDeleteMutation.graphql";
 import type { CookieBannerCookiesPageQuery } from "#/__generated__/core/CookieBannerCookiesPageQuery.graphql";
 
-import { CategoryDialog } from "../_components/CategoryDialog";
-
+import { CategoryDialog } from "./_components/CategoryDialog";
 import { CategorySection } from "./_components/CategorySection";
 
 export const cookieBannerCookiesPageQuery = graphql`

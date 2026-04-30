@@ -17,8 +17,7 @@ import { graphql } from "relay-runtime";
 
 import type { CookieBannerSettingsPageQuery } from "#/__generated__/core/CookieBannerSettingsPageQuery.graphql";
 
-import { BannerSettingsForm } from "../_components/BannerSettingsForm";
-
+import { BannerSettingsForm } from "./_components/BannerSettingsForm";
 import { CodeSnippets } from "./_components/CodeSnippets";
 
 export const cookieBannerSettingsPageQuery = graphql`
