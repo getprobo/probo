@@ -2640,11 +2640,12 @@ func (s *Service) ReportDetectedCookies(
 						CreatedAt:        now,
 						UpdatedAt:        now,
 					}
-					if err := newPattern.Insert(ctx, tx, scope); err != nil {
-						if errors.Is(err, coredata.ErrResourceAlreadyExists) {
-							continue
-						}
+					wasInserted, err := newPattern.InsertIfNotExists(ctx, tx, scope)
+					if err != nil {
 						return fmt.Errorf("cannot insert cookie pattern: %w", err)
+					}
+					if !wasInserted {
+						continue
 					}
 					patternID = newPattern.ID
 					inserted++
