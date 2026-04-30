@@ -331,6 +331,7 @@ func (cps *CookiePatterns) LoadAllByCookieBannerID(
 	conn pg.Querier,
 	scope Scoper,
 	cookieBannerID gid.GID,
+	filter *CookiePatternFilter,
 ) error {
 	q := `
 SELECT
@@ -351,14 +352,16 @@ FROM
 WHERE
 	%s
 	AND cookie_banner_id = @cookie_banner_id
+	AND %s
 ORDER BY
 	created_at ASC, id ASC;
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"cookie_banner_id": cookieBannerID}
 	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {

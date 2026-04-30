@@ -19,6 +19,7 @@ import (
 	"errors"
 	"fmt"
 	"sort"
+	"strings"
 	"time"
 
 	"go.gearno.de/kit/log"
@@ -85,7 +86,7 @@ func (h *patternAnalysisHandler) Process(ctx context.Context, banner coredata.Co
 			scope := coredata.NewScopeFromObjectID(banner.ID)
 
 			var patterns coredata.CookiePatterns
-			if err := patterns.LoadAllByCookieBannerID(ctx, tx, scope, banner.ID); err != nil {
+			if err := patterns.LoadAllByCookieBannerID(ctx, tx, scope, banner.ID, nil); err != nil {
 				return fmt.Errorf("cannot load patterns: %w", err)
 			}
 
@@ -145,6 +146,14 @@ func (h *patternAnalysisHandler) Process(ctx context.Context, banner coredata.Co
 					log.Int("count", len(group)),
 					log.String("banner_id", banner.ID.String()),
 				)
+			}
+
+			adopted, err := h.adoptUncategorisedPatterns(ctx, tx, scope, banner)
+			if err != nil {
+				return fmt.Errorf("cannot adopt uncategorised patterns: %w", err)
+			}
+			if adopted {
+				merged = true
 			}
 
 			if merged {
@@ -272,4 +281,86 @@ func mostCommonMaxAge(patterns []*coredata.CookiePattern) *int {
 	}
 	v := entries[0].k.val
 	return &v
+}
+
+func (h *patternAnalysisHandler) adoptUncategorisedPatterns(
+	ctx context.Context,
+	tx pg.Tx,
+	scope coredata.Scoper,
+	banner coredata.CookieBanner,
+) (bool, error) {
+	var uncategorised coredata.CookieCategory
+	if err := uncategorised.LoadUncategorisedByCookieBannerID(ctx, tx, scope, banner.ID); err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return false, nil
+		}
+		return false, fmt.Errorf("cannot load uncategorised category: %w", err)
+	}
+
+	prefixMatchType := coredata.CookiePatternMatchTypePrefix
+	var prefixPatterns coredata.CookiePatterns
+	if err := prefixPatterns.LoadAllByCookieBannerID(
+		ctx,
+		tx,
+		scope,
+		banner.ID,
+		coredata.NewCookiePatternFilter(&prefixMatchType, nil),
+	); err != nil {
+		return false, fmt.Errorf("cannot load prefix patterns: %w", err)
+	}
+
+	if len(prefixPatterns) == 0 {
+		return false, nil
+	}
+
+	sort.Slice(prefixPatterns, func(i, j int) bool {
+		return len(prefixPatterns[i].Pattern) > len(prefixPatterns[j].Pattern)
+	})
+
+	exactMatchType := coredata.CookiePatternMatchTypeExact
+	var uncategorisedExact coredata.CookiePatterns
+	if err := uncategorisedExact.LoadAllByCookieBannerID(
+		ctx,
+		tx,
+		scope,
+		banner.ID,
+		coredata.NewCookiePatternFilter(&exactMatchType, &uncategorised.ID),
+	); err != nil {
+		return false, fmt.Errorf("cannot load uncategorised exact patterns: %w", err)
+	}
+
+	adopted := false
+	for _, ep := range uncategorisedExact {
+		var match *coredata.CookiePattern
+		for _, pp := range prefixPatterns {
+			if strings.HasPrefix(ep.Pattern, pp.Pattern) {
+				match = pp
+				break
+			}
+		}
+
+		if match == nil {
+			continue
+		}
+
+		var cookies coredata.Cookies
+		if err := cookies.RelinkByCookiePatternID(ctx, tx, scope, ep.ID, match.ID); err != nil {
+			return false, fmt.Errorf("cannot relink cookies from pattern %q: %w", ep.Pattern, err)
+		}
+
+		if err := ep.Delete(ctx, tx, scope); err != nil {
+			return false, fmt.Errorf("cannot delete adopted exact pattern %q: %w", ep.Pattern, err)
+		}
+
+		adopted = true
+		h.logger.InfoCtx(
+			ctx,
+			"adopted uncategorised exact pattern into prefix pattern",
+			log.String("exact_pattern", ep.Pattern),
+			log.String("prefix_pattern", match.Pattern),
+			log.String("banner_id", banner.ID.String()),
+		)
+	}
+
+	return adopted, nil
 }

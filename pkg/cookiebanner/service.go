@@ -531,7 +531,7 @@ func (s *Service) ensureDraftVersionForBanner(
 	}
 
 	var allPatterns coredata.CookiePatterns
-	if err := allPatterns.LoadAllByCookieBannerID(ctx, tx, scope, bannerID); err != nil {
+	if err := allPatterns.LoadAllByCookieBannerID(ctx, tx, scope, bannerID, nil); err != nil {
 		return nil, fmt.Errorf("cannot load cookie patterns: %w", err)
 	}
 
