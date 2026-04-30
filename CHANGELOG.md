@@ -4,6 +4,23 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.177.0] - 2026-04-30
+
+### Added
+
+- Add cookie patterns to group detected cookies by URL prefix, with auto-detection worker and console management
+- Add `DurationInput` component to `@probo/ui`
+
+### Changed
+
+- Refactor cookie banner forms to react-hook-form
+- Store cookie durations as `max_age_seconds`
+- Update `@probo/cookie-banner` public exports and bump to 0.1.0
+
+### Fixed
+
+- Filter browser-extension cookies from detection
+
 ## [0.176.1] - 2026-04-29
 
 ### Fixed
