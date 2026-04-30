@@ -566,14 +566,25 @@ func (s SessionService) AssumeOrganizationSession(
 						return NewSAMLAuthenticationRequiredError("policy_requirement")
 					}
 				case coredata.SAMLEnforcementPolicyOptional:
-					// SAML is optional: both PASSWORD and SAML root sessions are allowed.
+					// SAML is optional: any password-equivalent (PASSWORD, OIDC,
+					// MAGIC_LINK) or SAML root session is allowed.
 				}
 			} else {
 				switch rootSession.AuthMethod {
-				case coredata.AuthMethodPassword:
+				case coredata.AuthMethodPassword,
+					coredata.AuthMethodOIDC,
+					coredata.AuthMethodMagicLink:
+					// No SAML configuration for this org+domain: any
+					// password-equivalent root session is allowed. OIDC
+					// (Google / Microsoft) and magic-link logins are treated
+					// as password logins because the user has authenticated
+					// against the platform itself rather than a third-party
+					// IdP federated with this organization.
 				case coredata.AuthMethodSAML:
-					// No (or non-required) SAML configuration: require a password-authenticated or magic-link root session
-					// (eg. when switching into a password-based org from a SAML login)
+					// SAML root sessions are bound to a different organization's
+					// IdP, so they cannot be used to access an organization that
+					// does not federate with that IdP. Force re-authentication
+					// with a password-equivalent method.
 					return NewPasswordAuthenticationRequiredError("password_authentication_required")
 				}
 			}
