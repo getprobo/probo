@@ -18,6 +18,10 @@ import * as asset from './asset';
 import * as audit from './audit';
 import * as auditLog from './auditLog';
 import * as control from './control';
+import * as cookieBanner from './cookieBanner';
+import * as cookieCategory from './cookieCategory';
+import * as cookieConsentRecord from './cookieConsentRecord';
+import * as cookiePattern from './cookiePattern';
 import * as datum from './datum';
 import * as document from './document';
 import * as dpia from './dpia';
@@ -57,6 +61,10 @@ export const resources: Record<string, ResourceModule> = {
 	audit: audit as ResourceModule,
 	auditLog: auditLog as ResourceModule,
 	control: control as ResourceModule,
+	cookieBanner: cookieBanner as ResourceModule,
+	cookieCategory: cookieCategory as ResourceModule,
+	cookieConsentRecord: cookieConsentRecord as ResourceModule,
+	cookiePattern: cookiePattern as ResourceModule,
 	datum: datum as ResourceModule,
 	document: document as ResourceModule,
 	dpia: dpia as ResourceModule,

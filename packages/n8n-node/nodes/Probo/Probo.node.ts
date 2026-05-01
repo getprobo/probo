@@ -102,6 +102,26 @@ export class Probo implements INodeType {
 						description: 'Manage controls',
 					},
 					{
+						name: 'Cookie Banner',
+						value: 'cookieBanner',
+						description: 'Manage cookie banners',
+					},
+					{
+						name: 'Cookie Category',
+						value: 'cookieCategory',
+						description: 'Manage cookie categories',
+					},
+					{
+						name: 'Cookie Consent Record',
+						value: 'cookieConsentRecord',
+						description: 'View cookie consent records',
+					},
+					{
+						name: 'Cookie Pattern',
+						value: 'cookiePattern',
+						description: 'Manage cookie patterns',
+					},
+					{
 						name: 'Data',
 						value: 'datum',
 						description: 'Manage data',
