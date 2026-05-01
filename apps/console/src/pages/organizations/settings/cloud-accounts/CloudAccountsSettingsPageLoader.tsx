@@ -32,10 +32,8 @@ function CloudAccountsSettingsPageQueryLoader() {
   );
 
   useEffect(() => {
-    if (!queryRef) {
-      loadQuery({ organizationId });
-    }
-  });
+    loadQuery({ organizationId });
+  }, [organizationId, loadQuery]);
 
   if (!queryRef) return <PageSkeleton />;
 
