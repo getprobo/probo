@@ -148,12 +148,13 @@ func stringFromInt(i int) string {
 
 func awsUser(name, id string) iamtypes.User {
 	return iamtypes.User{
-		UserName: stringPtr(name),
-		UserId:   stringPtr(id),
+		UserName: new(name),
+		UserId:   new(id),
 	}
 }
 
-func stringPtr(s string) *string { return &s }
+//go:fix inline
+func stringPtr(s string) *string { return new(s) }
 
 // TestCloudAWSDriver_EmptyAccount asserts an empty IAM tenant
 // returns an empty record slice with no error -- this is a

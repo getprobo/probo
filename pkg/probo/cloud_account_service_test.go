@@ -407,7 +407,6 @@ func TestMarshalCredentialsForCreate_ProviderKindMatching(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -546,7 +545,6 @@ func TestMarshalCredentialsForRotate_PreservesScopeFromRow(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -648,7 +646,6 @@ func TestExtractGCPProjectIDFromAccount(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -687,7 +684,6 @@ func TestExtractGCPOrganizationIDFromAccount(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -728,7 +724,6 @@ func TestExtractAzureSubscriptionIDFromAccount(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -776,7 +771,6 @@ func TestExtractAzureManagementGroupFromAccount(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 

@@ -18,6 +18,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -143,7 +144,6 @@ func TestCloudAccountMCP_SecretFieldsAbsentFromInputSchemas(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		tc := tc
 		t.Run(tc.schema, func(t *testing.T) {
 			t.Parallel()
 
@@ -213,7 +213,6 @@ func TestCloudAccountMCP_ResolverActionWiring(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		tc := tc
 		t.Run(tc.method, func(t *testing.T) {
 			t.Parallel()
 
@@ -246,10 +245,8 @@ func statementGrants(p *policy.Policy, action string) bool {
 		if s.Effect != policy.EffectAllow {
 			continue
 		}
-		for _, a := range s.Actions {
-			if a == action {
-				return true
-			}
+		if slices.Contains(s.Actions, action) {
+			return true
 		}
 	}
 	return false
@@ -271,7 +268,6 @@ func TestCloudAccountMCP_AuditorPolicyMatrix(t *testing.T) {
 	}
 
 	for _, a := range allowed {
-		a := a
 		t.Run("auditor allowed: "+a, func(t *testing.T) {
 			t.Parallel()
 			assert.True(t,
@@ -283,7 +279,6 @@ func TestCloudAccountMCP_AuditorPolicyMatrix(t *testing.T) {
 	}
 
 	for _, a := range forbidden {
-		a := a
 		t.Run("auditor forbidden: "+a, func(t *testing.T) {
 			t.Parallel()
 			assert.False(t,
@@ -309,7 +304,6 @@ func TestCloudAccountMCP_EmployeePolicyMatrix(t *testing.T) {
 	}
 
 	for _, a := range all {
-		a := a
 		t.Run("employee forbidden: "+a, func(t *testing.T) {
 			t.Parallel()
 			assert.False(t,

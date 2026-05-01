@@ -665,7 +665,6 @@ func TestCloudAccount_RBAC(t *testing.T) {
 	}
 
 	for _, tt := range cases {
-		tt := tt // explicit capture per project convention (Go 1.22+ loop scoping makes this redundant but the codebase keeps it for clarity).
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 

@@ -65,7 +65,7 @@ func (d *CloudAWSDriver) ListAccounts(ctx context.Context) ([]AccountRecord, err
 		marker  *string
 	)
 
-	for page := 0; page < maxPaginationPages; page++ {
+	for range maxPaginationPages {
 		out, err := d.iam.ListUsers(ctx, &iam.ListUsersInput{Marker: marker})
 		if err != nil {
 			return nil, fmt.Errorf("cannot list aws iam users: %w", err)

@@ -208,7 +208,6 @@ func TestAWSProvider_Probe_MapsSDKErrors(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -309,7 +308,7 @@ func TestAWSProvider_RoleSessionNamePrefix(t *testing.T) {
 	// observable contract.)
 	_, err := p.STS().AssumeRole(context.Background(), &sts.AssumeRoleInput{
 		RoleArn:         &creds.RoleARN,
-		RoleSessionName: stringPtr("probo-cloud-account-" + rec.ID),
+		RoleSessionName: new("probo-cloud-account-" + rec.ID),
 		ExternalId:      &creds.ExternalID,
 	})
 	require.NoError(t, err)
@@ -328,4 +327,6 @@ func TestAWSProvider_RoleSessionNamePrefix(t *testing.T) {
 // stringPtr is a tiny helper used by the AssumeRole-input construction
 // above. Local to this test file -- the production newAWSProvider
 // builds a different instance.
-func stringPtr(s string) *string { return &s }
+//
+//go:fix inline
+func stringPtr(s string) *string { return new(s) }

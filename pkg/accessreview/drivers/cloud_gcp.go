@@ -150,11 +150,11 @@ func (d *CloudGCPDriver) ListAccounts(ctx context.Context) ([]AccountRecord, err
 // types Probo doesn't model are returned with kind="" and
 // preserved as-is.
 func splitGCPMember(member string) (string, string) {
-	idx := strings.Index(member, ":")
-	if idx == -1 {
+	before, after, ok := strings.Cut(member, ":")
+	if !ok {
 		return "", ""
 	}
-	return member[:idx], member[idx+1:]
+	return before, after
 }
 
 func gcpAccountTypeForKind(kind string) coredata.AccessEntryAccountType {

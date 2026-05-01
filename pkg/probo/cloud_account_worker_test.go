@@ -234,7 +234,6 @@ func TestComputeCloudAccountTransition_PendingVerificationStays(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -287,7 +286,7 @@ func TestComputeCloudAccountTransition_StateMatrix(t *testing.T) {
 			name:           "errored -> errored on second failure under time gate",
 			current:        coredata.CloudAccountStatusErrored,
 			failures:       1,
-			firstAt:        ptrTime(now.Add(-15 * time.Minute)),
+			firstAt:        new(now.Add(-15 * time.Minute)),
 			probeErr:       probeErr,
 			expectStatus:   coredata.CloudAccountStatusErrored,
 			expectFailures: 2,
@@ -346,7 +345,6 @@ func TestComputeCloudAccountTransition_StateMatrix(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -406,4 +404,5 @@ func TestApplyCloudAccountTransition(t *testing.T) {
 	assert.Equal(t, now, account.UpdatedAt)
 }
 
-func ptrTime(t time.Time) *time.Time { return &t }
+//go:fix inline
+func ptrTime(t time.Time) *time.Time { return new(t) }

@@ -99,7 +99,6 @@ func TestCloudAccountOrderField_Column(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.wantText, func(t *testing.T) {
 			t.Parallel()
 
@@ -288,7 +287,6 @@ func TestCloudAccountStatus_Scan(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -323,7 +321,6 @@ func TestCloudAccountProvider_Scan(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -362,7 +359,6 @@ func TestCloudAccountScopeKind_Scan(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -399,7 +395,6 @@ func TestCloudAccountCredentialKind_Scan(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 

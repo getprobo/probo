@@ -248,7 +248,7 @@ func TestAuthorizeCached_ConcurrentReadsAreSafe(t *testing.T) {
 	var wg sync.WaitGroup
 	wg.Add(goroutines)
 	results := make([]bool, goroutines)
-	for i := 0; i < goroutines; i++ {
+	for i := range goroutines {
 		i := i
 		go func() {
 			defer wg.Done()
