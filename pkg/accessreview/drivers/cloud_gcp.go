@@ -152,7 +152,11 @@ func (d *CloudGCPDriver) ListAccounts(ctx context.Context) ([]AccountRecord, err
 func splitGCPMember(member string) (string, string) {
 	before, after, ok := strings.Cut(member, ":")
 	if !ok {
-		return "", ""
+		// Bare members (`allUsers`, `allAuthenticatedUsers`) carry no
+		// kind prefix. Preserve the subject so public bindings show
+		// up in access-review output instead of being silently
+		// dropped.
+		return "", member
 	}
 	return before, after
 }
