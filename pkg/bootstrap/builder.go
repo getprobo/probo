@@ -154,9 +154,16 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 				UsePathStyle:    b.getEnvBoolOrDefault("AWS_USE_PATH_STYLE", false),
 			},
 			CloudAccount: probodconfig.CloudAccountConfig{
-				AWSAssumerARN:       b.getEnvOrDefault("CLOUD_ACCOUNT_AWS_ASSUMER_ARN", "arn:aws:iam::000000000000:role/probo-cloud-account-assumer"),
-				AWSTemplateURL:      b.getEnvOrDefault("CLOUD_ACCOUNT_AWS_TEMPLATE_URL", "https://probo-public-cfn.s3.amazonaws.com/cloud-account/access-review.yml"),
-				AWSTemplateSHA256:   b.getEnvOrDefault("CLOUD_ACCOUNT_AWS_TEMPLATE_SHA256", "0000000000000000000000000000000000000000000000000000000000000000"),
+				// AWSAssumerARN / AWSTemplateURL / AWSTemplateSHA256
+				// have no defaults: install-assets must return
+				// UNAVAILABLE when a deployment has not yet
+				// published a CloudFormation template, instead of
+				// emitting a Quick-Create URL pointing at a
+				// non-existent object. Operators set the values via
+				// environment when AWS support is rolled out.
+				AWSAssumerARN:       b.getEnv("CLOUD_ACCOUNT_AWS_ASSUMER_ARN"),
+				AWSTemplateURL:      b.getEnv("CLOUD_ACCOUNT_AWS_TEMPLATE_URL"),
+				AWSTemplateSHA256:   b.getEnv("CLOUD_ACCOUNT_AWS_TEMPLATE_SHA256"),
 				AWSEnabled:          b.getEnvBoolOrDefault("CLOUD_ACCOUNT_AWS_ENABLED", true),
 				GCPEnabled:          b.getEnvBoolOrDefault("CLOUD_ACCOUNT_GCP_ENABLED", true),
 				AzureEnabled:        b.getEnvBoolOrDefault("CLOUD_ACCOUNT_AZURE_ENABLED", true),
