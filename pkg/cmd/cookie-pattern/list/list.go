@@ -112,6 +112,9 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 					if resp.Node == nil {
 						return nil, fmt.Errorf("cookie category %s not found", flagCategoryID)
 					}
+					if resp.Node.Typename != "CookieCategory" {
+						return nil, fmt.Errorf("expected CookieCategory node, got %s", resp.Node.Typename)
+					}
 					return &resp.Node.CookiePatterns, nil
 				},
 			)

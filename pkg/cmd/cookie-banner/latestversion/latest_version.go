@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package versions
+package latestversion
 
 import (
 	"encoding/json"
@@ -48,13 +48,12 @@ type versionInfo struct {
 	UpdatedAt string `json:"updatedAt"`
 }
 
-func NewCmdVersions(f *cmdutil.Factory) *cobra.Command {
+func NewCmdLatestVersion(f *cmdutil.Factory) *cobra.Command {
 	var flagOutput *string
 
 	cmd := &cobra.Command{
-		Use:     "versions <id>",
-		Short:   "List versions for a cookie banner",
-		Aliases: []string{"ver"},
+		Use:   "latest-version <id>",
+		Short: "Show the latest version of a cookie banner",
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := cmdutil.ValidateOutputFlag(flagOutput); err != nil {

@@ -129,6 +129,9 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 					if resp.Node == nil {
 						return nil, fmt.Errorf("cookie banner %s not found", flagBannerID)
 					}
+					if resp.Node.Typename != "CookieBanner" {
+						return nil, fmt.Errorf("expected CookieBanner node, got %s", resp.Node.Typename)
+					}
 					return &resp.Node.ConsentRecords, nil
 				},
 			)

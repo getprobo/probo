@@ -25,7 +25,7 @@ import (
 	"go.probo.inc/probo/pkg/cmd/cookie-banner/publish"
 	"go.probo.inc/probo/pkg/cmd/cookie-banner/translate"
 	"go.probo.inc/probo/pkg/cmd/cookie-banner/update"
-	"go.probo.inc/probo/pkg/cmd/cookie-banner/versions"
+	"go.probo.inc/probo/pkg/cmd/cookie-banner/latestversion"
 	"go.probo.inc/probo/pkg/cmd/cookie-banner/view"
 )
 
@@ -44,7 +44,7 @@ func NewCmdCookieBanner(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(deactivate.NewCmdDeactivate(f))
 	cmd.AddCommand(publish.NewCmdPublish(f))
 	cmd.AddCommand(translate.NewCmdTranslate(f))
-	cmd.AddCommand(versions.NewCmdVersions(f))
+	cmd.AddCommand(latestversion.NewCmdLatestVersion(f))
 
 	return cmd
 }

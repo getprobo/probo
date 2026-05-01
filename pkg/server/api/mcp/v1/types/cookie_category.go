@@ -20,11 +20,7 @@ import (
 )
 
 func NewCookieCategory(c *coredata.CookieCategory) *CookieCategory {
-	var posthogConsent *bool
-	if c.PostHogConsent {
-		v := true
-		posthogConsent = &v
-	}
+	posthogConsent := &c.PostHogConsent
 
 	return &CookieCategory{
 		ID:              c.ID,

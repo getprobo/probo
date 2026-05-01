@@ -119,6 +119,9 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 					if resp.Node == nil {
 						return nil, fmt.Errorf("organization %s not found", flagOrg)
 					}
+					if resp.Node.Typename != "Organization" {
+						return nil, fmt.Errorf("expected Organization node, got %s", resp.Node.Typename)
+					}
 					return &resp.Node.CookieBanners, nil
 				},
 			)
