@@ -304,7 +304,7 @@ func (h *patternAnalysisHandler) adoptUncategorisedPatterns(
 		tx,
 		scope,
 		banner.ID,
-		coredata.NewCookiePatternFilter(&prefixMatchType, nil),
+		coredata.NewCookiePatternFilter(&prefixMatchType, nil, nil),
 	); err != nil {
 		return false, fmt.Errorf("cannot load prefix patterns: %w", err)
 	}
@@ -324,7 +324,7 @@ func (h *patternAnalysisHandler) adoptUncategorisedPatterns(
 		tx,
 		scope,
 		banner.ID,
-		coredata.NewCookiePatternFilter(&exactMatchType, &uncategorised.ID),
+		coredata.NewCookiePatternFilter(&exactMatchType, &uncategorised.ID, nil),
 	); err != nil {
 		return false, fmt.Errorf("cannot load uncategorised exact patterns: %w", err)
 	}

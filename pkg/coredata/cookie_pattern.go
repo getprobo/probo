@@ -40,6 +40,7 @@ type (
 		MaxAgeSeconds    *int                   `db:"max_age_seconds"`
 		Description      string                 `db:"description"`
 		Source           CookieSource           `db:"source"`
+		Excluded         bool                   `db:"excluded"`
 		CreatedAt        time.Time              `db:"created_at"`
 		UpdatedAt        time.Time              `db:"updated_at"`
 	}
@@ -89,6 +90,7 @@ SELECT
 	max_age_seconds,
 	description,
 	source,
+	excluded,
 	created_at,
 	updated_at
 FROM
@@ -141,6 +143,7 @@ SELECT
 	max_age_seconds,
 	description,
 	source,
+	excluded,
 	created_at,
 	updated_at
 FROM
@@ -197,6 +200,7 @@ SELECT
 	max_age_seconds,
 	description,
 	source,
+	excluded,
 	created_at,
 	updated_at
 FROM
@@ -264,6 +268,7 @@ SELECT
 	max_age_seconds,
 	description,
 	source,
+	excluded,
 	created_at,
 	updated_at
 FROM
@@ -345,6 +350,7 @@ SELECT
 	max_age_seconds,
 	description,
 	source,
+	excluded,
 	created_at,
 	updated_at
 FROM
@@ -396,6 +402,7 @@ INSERT INTO cookie_patterns (
 	max_age_seconds,
 	description,
 	source,
+	excluded,
 	created_at,
 	updated_at
 ) VALUES (
@@ -410,6 +417,7 @@ INSERT INTO cookie_patterns (
 	@max_age_seconds,
 	@description,
 	@source,
+	@excluded,
 	@created_at,
 	@updated_at
 )
@@ -427,6 +435,7 @@ INSERT INTO cookie_patterns (
 		"max_age_seconds":    cp.MaxAgeSeconds,
 		"description":        cp.Description,
 		"source":             cp.Source,
+		"excluded":           cp.Excluded,
 		"created_at":         cp.CreatedAt,
 		"updated_at":         cp.UpdatedAt,
 	}
@@ -462,6 +471,7 @@ INSERT INTO cookie_patterns (
 	max_age_seconds,
 	description,
 	source,
+	excluded,
 	created_at,
 	updated_at
 ) VALUES (
@@ -476,6 +486,7 @@ INSERT INTO cookie_patterns (
 	@max_age_seconds,
 	@description,
 	@source,
+	@excluded,
 	@created_at,
 	@updated_at
 )
@@ -494,6 +505,7 @@ ON CONFLICT (cookie_banner_id, pattern) DO NOTHING
 		"max_age_seconds":    cp.MaxAgeSeconds,
 		"description":        cp.Description,
 		"source":             cp.Source,
+		"excluded":           cp.Excluded,
 		"created_at":         cp.CreatedAt,
 		"updated_at":         cp.UpdatedAt,
 	}
@@ -518,6 +530,7 @@ SET
 	display_name = @display_name,
 	max_age_seconds = @max_age_seconds,
 	description = @description,
+	excluded = @excluded,
 	updated_at = @updated_at
 WHERE
 	%s
@@ -532,6 +545,7 @@ WHERE
 		"display_name":       cp.DisplayName,
 		"max_age_seconds":    cp.MaxAgeSeconds,
 		"description":        cp.Description,
+		"excluded":           cp.Excluded,
 		"updated_at":         cp.UpdatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())

@@ -22,15 +22,18 @@ import (
 type CookiePatternFilter struct {
 	matchType        *CookiePatternMatchType
 	cookieCategoryID *gid.GID
+	excluded         *bool
 }
 
 func NewCookiePatternFilter(
 	matchType *CookiePatternMatchType,
 	cookieCategoryID *gid.GID,
+	excluded *bool,
 ) *CookiePatternFilter {
 	return &CookiePatternFilter{
 		matchType:        matchType,
 		cookieCategoryID: cookieCategoryID,
+		excluded:         excluded,
 	}
 }
 
@@ -54,6 +57,13 @@ func (f *CookiePatternFilter) SQLFragment() string {
 			cookie_category_id = @filter_cookie_category_id::text
 		ELSE TRUE
 	END
+	AND
+	CASE
+		WHEN @has_excluded_filter::boolean = false THEN TRUE
+		WHEN @has_excluded_filter::boolean = true THEN
+			excluded = @filter_excluded
+		ELSE TRUE
+	END
 )`
 }
 
@@ -67,6 +77,8 @@ func (f *CookiePatternFilter) SQLArguments() pgx.StrictNamedArgs {
 		"filter_match_type":             nil,
 		"has_cookie_category_id_filter": false,
 		"filter_cookie_category_id":     nil,
+		"has_excluded_filter":           false,
+		"filter_excluded":               nil,
 	}
 
 	if f.matchType != nil {
@@ -77,6 +89,11 @@ func (f *CookiePatternFilter) SQLArguments() pgx.StrictNamedArgs {
 	if f.cookieCategoryID != nil {
 		args["has_cookie_category_id_filter"] = true
 		args["filter_cookie_category_id"] = *f.cookieCategoryID
+	}
+
+	if f.excluded != nil {
+		args["has_excluded_filter"] = true
+		args["filter_excluded"] = *f.excluded
 	}
 
 	return args
