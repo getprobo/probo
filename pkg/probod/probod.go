@@ -850,7 +850,7 @@ func (impl *Implm) Run(
 	}
 	evidenceAssessor, err := evidenceassessor.New(evidenceAssessorCfg)
 	if err != nil {
-		return fmt.Errorf("cannot build evidence describer: %w", err)
+		return fmt.Errorf("cannot build evidence assessor: %w", err)
 	}
 	evidenceAssessmentWorker := probo.NewEvidenceAssessmentWorker(
 		pgClient,
