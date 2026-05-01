@@ -72,10 +72,11 @@ func (r *CreateAccessSourceRequest) Validate() error {
 	v.Check(r.Name, "name", validator.SafeTextNoNewLine(NameMaxLength))
 	v.Check(r.Category, "category", validator.OneOfSlice(coredata.AccessSourceCategories()))
 
-	// Exactly one of {ConnectorID, CloudAccountID, CsvData} must
-	// be present. Field-level shape only -- tenant consistency
-	// (e.g. connector / cloud-account belongs to OrganizationID)
-	// lives in the service method body.
+	// At most one of {ConnectorID, CloudAccountID, CsvData} may be
+	// set on a given access source. Legacy rows allow zero targets
+	// (a source can be configured later via Update). Field-level
+	// shape only -- tenant consistency (the connector / cloud-account
+	// belongs to OrganizationID) lives in the service method body.
 	targets := 0
 	if r.ConnectorID != nil {
 		targets++
@@ -86,8 +87,8 @@ func (r *CreateAccessSourceRequest) Validate() error {
 	if r.CsvData != nil {
 		targets++
 	}
-	if targets != 1 {
-		return fmt.Errorf("cannot validate access source: exactly one of {connector_id, cloud_account_id, csv_data} must be set")
+	if targets > 1 {
+		return fmt.Errorf("cannot validate access source: at most one of {connector_id, cloud_account_id, csv_data} may be set")
 	}
 
 	return v.Error()

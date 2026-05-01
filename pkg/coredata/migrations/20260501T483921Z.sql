@@ -12,10 +12,10 @@
 -- OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 -- PERFORMANCE OF THIS SOFTWARE.
 
--- Validate the access_sources_target_exactly_one CHECK constraint
+-- Validate the access_sources_target_at_most_one CHECK constraint
 -- in a separate migration (separate transaction) so the validation
 -- scan runs concurrently with normal traffic. If any pre-existing
 -- row violates the invariant, this migration fails loudly with a
 -- row reference; an operator inspects, fixes, and re-runs.
 ALTER TABLE access_sources
-    VALIDATE CONSTRAINT access_sources_target_exactly_one;
+    VALIDATE CONSTRAINT access_sources_target_at_most_one;

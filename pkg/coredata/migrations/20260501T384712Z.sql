@@ -19,12 +19,14 @@
 ALTER TABLE access_sources
     ADD COLUMN cloud_account_id TEXT NULL REFERENCES cloud_accounts(id) ON DELETE RESTRICT;
 
--- The CHECK constraint defends the "exactly one of {connector_id,
--- cloud_account_id, csv_data}" invariant at the DB level. NOT VALID
--- acquires only ShareUpdateExclusiveLock and takes effect for new
--- writes immediately; existing rows are validated in the next
--- migration once the column is in place across replicas.
+-- The CHECK constraint defends the "at most one of {connector_id,
+-- cloud_account_id, csv_data}" invariant at the DB level: a source
+-- may carry zero targets (configured later via Update) but never
+-- two simultaneous ones. NOT VALID acquires only
+-- ShareUpdateExclusiveLock and takes effect for new writes
+-- immediately; existing rows are validated in the next migration
+-- once the column is in place across replicas.
 ALTER TABLE access_sources
-    ADD CONSTRAINT access_sources_target_exactly_one
-    CHECK (num_nonnulls(connector_id, cloud_account_id, csv_data) = 1)
+    ADD CONSTRAINT access_sources_target_at_most_one
+    CHECK (num_nonnulls(connector_id, cloud_account_id, csv_data) <= 1)
     NOT VALID;
