@@ -153,6 +153,16 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 				Endpoint:        b.getEnv("AWS_ENDPOINT"),
 				UsePathStyle:    b.getEnvBoolOrDefault("AWS_USE_PATH_STYLE", false),
 			},
+			CloudAccount: probodconfig.CloudAccountConfig{
+				AWSAssumerARN:       b.getEnvOrDefault("CLOUD_ACCOUNT_AWS_ASSUMER_ARN", "arn:aws:iam::000000000000:role/probo-cloud-account-assumer"),
+				AWSTemplateURL:      b.getEnvOrDefault("CLOUD_ACCOUNT_AWS_TEMPLATE_URL", "https://probo-public-cfn.s3.amazonaws.com/cloud-account/access-review.yml"),
+				AWSTemplateSHA256:   b.getEnvOrDefault("CLOUD_ACCOUNT_AWS_TEMPLATE_SHA256", "0000000000000000000000000000000000000000000000000000000000000000"),
+				AWSEnabled:          b.getEnvBoolOrDefault("CLOUD_ACCOUNT_AWS_ENABLED", true),
+				GCPEnabled:          b.getEnvBoolOrDefault("CLOUD_ACCOUNT_GCP_ENABLED", true),
+				AzureEnabled:        b.getEnvBoolOrDefault("CLOUD_ACCOUNT_AZURE_ENABLED", true),
+				ProbeInterval:       b.getEnvIntOrDefault("CLOUD_ACCOUNT_PROBE_INTERVAL_SECONDS", 900),
+				ProbeMaxConcurrency: b.getEnvIntOrDefault("CLOUD_ACCOUNT_PROBE_MAX_CONCURRENCY", 4),
+			},
 			Notifications: probodconfig.NotificationsConfig{
 				Mailer: probodconfig.MailerConfig{
 					SenderName:     b.getEnvOrDefault("MAILER_SENDER_NAME", "Probo"),
