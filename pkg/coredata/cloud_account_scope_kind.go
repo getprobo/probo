@@ -81,5 +81,16 @@ func (s *CloudAccountScopeKind) Scan(value any) error {
 }
 
 func (s CloudAccountScopeKind) Value() (driver.Value, error) {
-	return s.String(), nil
+	switch s {
+	case CloudAccountScopeKindAWSAccount,
+		CloudAccountScopeKindAWSOrganization,
+		CloudAccountScopeKindGCPProject,
+		CloudAccountScopeKindGCPOrganization,
+		CloudAccountScopeKindAzureSubscription,
+		CloudAccountScopeKindAzureManagementGroup,
+		CloudAccountScopeKindAzureTenant:
+		return s.String(), nil
+	default:
+		return nil, fmt.Errorf("cannot serialise CloudAccountScopeKind: invalid value %q", string(s))
+	}
 }

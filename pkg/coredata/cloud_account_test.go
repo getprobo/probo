@@ -90,19 +90,20 @@ func TestCloudAccountOrderField_Column(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		field    CloudAccountOrderField
-		wantText string
+		field      CloudAccountOrderField
+		wantText   string
+		wantColumn string
 	}{
-		{field: CloudAccountOrderFieldCreatedAt, wantText: "CREATED_AT"},
-		{field: CloudAccountOrderFieldStatus, wantText: "STATUS"},
-		{field: CloudAccountOrderFieldProvider, wantText: "PROVIDER"},
+		{field: CloudAccountOrderFieldCreatedAt, wantText: "CREATED_AT", wantColumn: "created_at"},
+		{field: CloudAccountOrderFieldStatus, wantText: "STATUS", wantColumn: "status"},
+		{field: CloudAccountOrderFieldProvider, wantText: "PROVIDER", wantColumn: "provider"},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.wantText, func(t *testing.T) {
 			t.Parallel()
 
-			assert.Equal(t, tt.wantText, tt.field.Column())
+			assert.Equal(t, tt.wantColumn, tt.field.Column())
 			assert.Equal(t, tt.wantText, tt.field.String())
 
 			marshalled, err := tt.field.MarshalText()
@@ -114,6 +115,13 @@ func TestCloudAccountOrderField_Column(t *testing.T) {
 			assert.Equal(t, tt.field, roundtrip)
 		})
 	}
+
+	t.Run("UnmarshalText rejects unknown enum value", func(t *testing.T) {
+		t.Parallel()
+
+		var f CloudAccountOrderField
+		require.Error(t, f.UnmarshalText([]byte("INVALID")))
+	})
 }
 
 // TestCloudAccountFilter_NilFragment asserts the nil-receiver path

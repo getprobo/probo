@@ -14,6 +14,8 @@
 
 package coredata
 
+import "fmt"
+
 type (
 	CloudAccountOrderField string
 )
@@ -24,8 +26,21 @@ const (
 	CloudAccountOrderFieldProvider  CloudAccountOrderField = "PROVIDER"
 )
 
+// Column maps an order-field value to its physical column name.
+// Unknown values panic so an order-field that escaped enum
+// validation cannot leak directly into an ORDER BY / WHERE
+// fragment.
 func (f CloudAccountOrderField) Column() string {
-	return string(f)
+	switch f {
+	case CloudAccountOrderFieldCreatedAt:
+		return "created_at"
+	case CloudAccountOrderFieldStatus:
+		return "status"
+	case CloudAccountOrderFieldProvider:
+		return "provider"
+	default:
+		panic(fmt.Sprintf("unsupported CloudAccountOrderField: %q", string(f)))
+	}
 }
 
 func (f CloudAccountOrderField) String() string {
@@ -36,7 +51,18 @@ func (f CloudAccountOrderField) MarshalText() ([]byte, error) {
 	return []byte(f.String()), nil
 }
 
+// UnmarshalText rejects unknown enum values so a malformed input
+// cannot drive Column() into its panic path or persist arbitrary
+// strings.
 func (f *CloudAccountOrderField) UnmarshalText(text []byte) error {
-	*f = CloudAccountOrderField(text)
-	return nil
+	candidate := CloudAccountOrderField(text)
+	switch candidate {
+	case CloudAccountOrderFieldCreatedAt,
+		CloudAccountOrderFieldStatus,
+		CloudAccountOrderFieldProvider:
+		*f = candidate
+		return nil
+	default:
+		return fmt.Errorf("cannot parse CloudAccountOrderField: invalid value %q", string(text))
+	}
 }

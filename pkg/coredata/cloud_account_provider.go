@@ -65,5 +65,12 @@ func (p *CloudAccountProvider) Scan(value any) error {
 }
 
 func (p CloudAccountProvider) Value() (driver.Value, error) {
-	return p.String(), nil
+	switch p {
+	case CloudAccountProviderAWS,
+		CloudAccountProviderGCP,
+		CloudAccountProviderAzure:
+		return p.String(), nil
+	default:
+		return nil, fmt.Errorf("cannot serialise CloudAccountProvider: invalid value %q", string(p))
+	}
 }

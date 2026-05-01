@@ -69,5 +69,13 @@ func (s *CloudAccountStatus) Scan(value any) error {
 }
 
 func (s CloudAccountStatus) Value() (driver.Value, error) {
-	return s.String(), nil
+	switch s {
+	case CloudAccountStatusPendingVerification,
+		CloudAccountStatusVerified,
+		CloudAccountStatusErrored,
+		CloudAccountStatusDisconnected:
+		return s.String(), nil
+	default:
+		return nil, fmt.Errorf("cannot serialise CloudAccountStatus: invalid value %q", string(s))
+	}
 }

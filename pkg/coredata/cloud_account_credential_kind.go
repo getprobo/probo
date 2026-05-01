@@ -73,5 +73,14 @@ func (k *CloudAccountCredentialKind) Scan(value any) error {
 }
 
 func (k CloudAccountCredentialKind) Value() (driver.Value, error) {
-	return k.String(), nil
+	switch k {
+	case CloudAccountCredentialKindAWSAssumeRole,
+		CloudAccountCredentialKindGCPServiceAccountKey,
+		CloudAccountCredentialKindAzureClientSecret,
+		CloudAccountCredentialKindGCPWorkloadIdentityFederation,
+		CloudAccountCredentialKindAzureFederatedCredential:
+		return k.String(), nil
+	default:
+		return nil, fmt.Errorf("cannot serialise CloudAccountCredentialKind: invalid value %q", string(k))
+	}
 }

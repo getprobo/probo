@@ -72,5 +72,12 @@ func (m *CloudAccountAuditModule) Scan(value any) error {
 }
 
 func (m CloudAccountAuditModule) Value() (driver.Value, error) {
-	return m.String(), nil
+	switch m {
+	case CloudAccountAuditModuleAccessReview,
+		CloudAccountAuditModuleCSPMS3Public,
+		CloudAccountAuditModuleCSPMIAMAudit:
+		return m.String(), nil
+	default:
+		return nil, fmt.Errorf("cannot serialise CloudAccountAuditModule: invalid value %q", string(m))
+	}
 }
