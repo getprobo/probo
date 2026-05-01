@@ -566,6 +566,61 @@ func (r *organizationResolver) ConnectorProviderInfos(ctx context.Context, obj *
 	return infos, nil
 }
 
+// CloudAccounts is the resolver for Organization.cloudAccounts.
+func (r *organizationResolver) CloudAccounts(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.CloudAccountOrder, filter *types.CloudAccountFilter) (*types.CloudAccountConnection, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionCloudAccountList); err != nil {
+		return nil, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.CloudAccountOrderField]{
+		Field:     coredata.CloudAccountOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.CloudAccountOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	dbFilter := coredata.NewCloudAccountFilter()
+	if filter != nil {
+		if filter.Provider != nil {
+			dbFilter = dbFilter.WithProvider(*filter.Provider)
+		}
+		if filter.Status != nil {
+			dbFilter = dbFilter.WithStatus(*filter.Status)
+		}
+		if filter.ScopeKind != nil {
+			dbFilter = dbFilter.WithScopeKind(*filter.ScopeKind)
+		}
+	}
+
+	p, err := r.ProboService(ctx, obj.ID.TenantID()).
+		CloudAccounts.List(ctx, obj.ID, cursor, dbFilter)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list cloud accounts", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	allowedIdentifier := r.authorizeCached(ctx, obj.ID, probo.ActionCloudAccountRotateCredentials)
+
+	edges := make([]*types.CloudAccountEdge, len(p.Data))
+	for i, account := range p.Data {
+		edges[i] = &types.CloudAccountEdge{
+			Cursor: account.CursorKey(pageOrderBy.Field),
+			Node:   newCloudAccountForList(account, allowedIdentifier),
+		}
+	}
+
+	return &types.CloudAccountConnection{
+		Edges:    edges,
+		PageInfo: types.NewPageInfo(p),
+	}, nil
+}
+
 // Controls is the resolver for the controls field.
 func (r *organizationResolver) Controls(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) (*types.ControlConnection, error) {
 	if err := r.authorize(ctx, obj.ID, probo.ActionControlList); err != nil {

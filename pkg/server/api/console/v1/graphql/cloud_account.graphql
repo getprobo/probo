@@ -1,0 +1,283 @@
+enum CloudAccountProvider
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.CloudAccountProvider") {
+    AWS
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CloudAccountProviderAWS"
+        )
+    GCP
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CloudAccountProviderGCP"
+        )
+    AZURE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CloudAccountProviderAzure"
+        )
+}
+
+enum CloudAccountStatus
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.CloudAccountStatus") {
+    PENDING_VERIFICATION
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CloudAccountStatusPendingVerification"
+        )
+    VERIFIED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CloudAccountStatusVerified"
+        )
+    ERRORED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CloudAccountStatusErrored"
+        )
+    DISCONNECTED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CloudAccountStatusDisconnected"
+        )
+}
+
+enum CloudAccountScopeKind
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.CloudAccountScopeKind") {
+    AWS_ACCOUNT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CloudAccountScopeKindAWSAccount"
+        )
+    GCP_PROJECT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CloudAccountScopeKindGCPProject"
+        )
+    GCP_ORGANIZATION
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CloudAccountScopeKindGCPOrganization"
+        )
+    AZURE_SUBSCRIPTION
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CloudAccountScopeKindAzureSubscription"
+        )
+    AZURE_MANAGEMENT_GROUP
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CloudAccountScopeKindAzureManagementGroup"
+        )
+    AZURE_TENANT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CloudAccountScopeKindAzureTenant"
+        )
+}
+
+enum CloudAccountCredentialKind
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.CloudAccountCredentialKind"
+    ) {
+    AWS_ASSUME_ROLE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CloudAccountCredentialKindAWSAssumeRole"
+        )
+    GCP_SERVICE_ACCOUNT_KEY
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CloudAccountCredentialKindGCPServiceAccountKey"
+        )
+    AZURE_CLIENT_SECRET
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CloudAccountCredentialKindAzureClientSecret"
+        )
+}
+
+enum CloudAccountAuditModule
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.CloudAccountAuditModule") {
+    ACCESS_REVIEW
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CloudAccountAuditModuleAccessReview"
+        )
+}
+
+enum CloudAccountOrderField
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.CloudAccountOrderField") {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CloudAccountOrderFieldCreatedAt"
+        )
+    STATUS
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CloudAccountOrderFieldStatus"
+        )
+    PROVIDER
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CloudAccountOrderFieldProvider"
+        )
+}
+
+input CloudAccountOrder {
+    direction: OrderDirection!
+    field: CloudAccountOrderField!
+}
+
+input CloudAccountFilter {
+    provider: CloudAccountProvider
+    status: CloudAccountStatus
+    scopeKind: CloudAccountScopeKind
+}
+
+type CloudAccountScope {
+    kind: CloudAccountScopeKind!
+    # CloudAccountScope.identifier is the AWS account id / GCP project
+    # or org id / Azure subscription or MG id -- infrastructure
+    # topology with reconnaissance value. Restricted to OWNER/ADMIN;
+    # AUDITOR/VIEWER see null.
+    identifier: String @goField(forceResolver: true)
+}
+
+type CloudAccount implements Node {
+    id: ID!
+    provider: CloudAccountProvider!
+    label: String!
+    status: CloudAccountStatus!
+    scope: CloudAccountScope!
+    credentialKind: CloudAccountCredentialKind!
+    enabledAuditModules: [CloudAccountAuditModule!]!
+    lastProbeAt: Datetime
+    # lastProbeError carries raw SDK error strings that frequently
+    # embed role ARNs, GCP SA emails, Azure tenant/client IDs, AWS
+    # account IDs. Restricted to OWNER/ADMIN -- the resolver
+    # authorize-checks core:cloud-account:rotate-credentials before
+    # returning the value; non-admins get null.
+    lastProbeError: String @goField(forceResolver: true)
+    lastVerifiedAt: Datetime
+    createdAt: Datetime!
+    updatedAt: Datetime!
+    # Action-button gating; resolver delegates to AuthorizeFunc.
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type CloudAccountConnection {
+    edges: [CloudAccountEdge!]!
+    pageInfo: PageInfo!
+}
+
+type CloudAccountEdge {
+    cursor: CursorKey!
+    node: CloudAccount!
+}
+
+type AWSInstallAssets {
+    quickCreateURL: String!
+    externalId: String!
+    principalArn: String!
+    requiredActions: [String!]!
+}
+
+type GCPInstallAssets {
+    setupScript: String!
+    requiredRoles: [String!]!
+    requiredApis: [String!]!
+}
+
+type AzureInstallStep {
+    title: String!
+    body: String!
+    code: String
+}
+
+type AzureInstallAssets {
+    steps: [AzureInstallStep!]!
+    requiredRbacRoles: [String!]!
+    requiredGraphPermissions: [String!]!
+}
+
+union CloudAccountInstallAssets =
+      AWSInstallAssets
+    | GCPInstallAssets
+    | AzureInstallAssets
+
+input GenerateCloudAccountInstallAssetsInput {
+    organizationId: ID!
+    provider: CloudAccountProvider!
+    scopeKind: CloudAccountScopeKind!
+    scopeIdentifier: String!
+    modules: [CloudAccountAuditModule!]!
+    awsRegion: String
+}
+
+type GenerateCloudAccountInstallAssetsPayload {
+    assets: CloudAccountInstallAssets!
+}
+
+input CreateCloudAccountInput {
+    organizationId: ID!
+    label: String!
+    provider: CloudAccountProvider!
+    credentialKind: CloudAccountCredentialKind!
+    scopeKind: CloudAccountScopeKind!
+    scopeIdentifier: String!
+    enabledAuditModules: [CloudAccountAuditModule!]!
+
+    # AWS inputs (required when provider = AWS).
+    awsRoleArn: String
+    awsExternalId: String
+
+    # GCP / Azure non-secret inputs. Credentials (GCP service-account
+    # JSON, Azure client_secret) are uploaded via the dedicated
+    # /api/v1/cloud-accounts/credentials/upload endpoint.
+    gcpProjectId: String
+    gcpOrganizationId: String
+
+    azureTenantId: String
+    azureClientId: String
+    azureSubscriptionId: String
+    azureManagementGroupId: String
+}
+
+type CreateCloudAccountPayload {
+    cloudAccount: CloudAccount!
+    verifyStatus: CloudAccountStatus!
+    lastProbeError: String
+}
+
+input VerifyCloudAccountInput {
+    cloudAccountId: ID!
+}
+
+type VerifyCloudAccountPayload {
+    cloudAccount: CloudAccount!
+    status: CloudAccountStatus!
+    lastProbeError: String
+}
+
+input RotateCloudAccountCredentialsInput {
+    cloudAccountId: ID!
+    provider: CloudAccountProvider!
+    credentialKind: CloudAccountCredentialKind!
+    awsRoleArn: String
+    awsExternalId: String
+    azureTenantId: String
+    azureClientId: String
+}
+
+type RotateCloudAccountCredentialsPayload {
+    cloudAccount: CloudAccount!
+    verifyStatus: CloudAccountStatus!
+    lastProbeError: String
+}
+
+input DeleteCloudAccountInput {
+    cloudAccountId: ID!
+}
+
+type DeleteCloudAccountPayload {
+    deletedCloudAccountId: ID!
+}
+
+extend type Mutation {
+    generateCloudAccountInstallAssets(
+        input: GenerateCloudAccountInstallAssetsInput!
+    ): GenerateCloudAccountInstallAssetsPayload!
+    createCloudAccount(
+        input: CreateCloudAccountInput!
+    ): CreateCloudAccountPayload!
+    verifyCloudAccount(
+        input: VerifyCloudAccountInput!
+    ): VerifyCloudAccountPayload!
+    rotateCloudAccountCredentials(
+        input: RotateCloudAccountCredentialsInput!
+    ): RotateCloudAccountCredentialsPayload!
+    deleteCloudAccount(
+        input: DeleteCloudAccountInput!
+    ): DeleteCloudAccountPayload!
+}
