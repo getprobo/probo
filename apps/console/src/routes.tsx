@@ -272,6 +272,13 @@ const routes = [
                 ),
               },
               {
+                path: "cloud-accounts",
+                Component: lazy(
+                  () =>
+                    import("./pages/organizations/settings/cloud-accounts/CloudAccountsSettingsPageLoader"),
+                ),
+              },
+              {
                 path: "webhooks",
                 Component: lazy(
                   () =>
