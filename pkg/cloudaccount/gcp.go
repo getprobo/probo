@@ -162,16 +162,19 @@ func (p *GCPProvider) GoogleCredentials(ctx context.Context) (*google.Credential
 // CRM builds a *cloudresourcemanager.Service pinned to the record's
 // credentials. Returns the raw SDK service so callers can use
 // project/org/folder helpers directly.
+//
+// WithHTTPClient is deliberately NOT used: it would override the
+// credentials option above and the resulting service would issue
+// unauthenticated requests. SSRF protection on the outgoing
+// transport must be supplied by the SDK's default transport stack
+// (which honours HTTP_PROXY / GOOGLE_APPLICATION_CREDENTIALS) or by
+// a future option.WithTransport seam.
 func (p *GCPProvider) CRM(ctx context.Context) (*cloudresourcemanager.Service, error) {
-	opts := []option.ClientOption{
+	svc, err := cloudresourcemanager.NewService(
+		ctx,
 		option.WithCredentialsJSON(p.credentials.ServiceAccountJSON),
 		option.WithScopes(gcpCloudPlatformReadOnlyScope),
-	}
-	if p.httpClient != nil {
-		opts = append(opts, option.WithHTTPClient(p.httpClient))
-	}
-
-	svc, err := cloudresourcemanager.NewService(ctx, opts...)
+	)
 	if err != nil {
 		return nil, fmt.Errorf("cannot build gcp cloudresourcemanager service: %w", err)
 	}
@@ -181,17 +184,14 @@ func (p *GCPProvider) CRM(ctx context.Context) (*cloudresourcemanager.Service, e
 
 // CloudAsset builds a *cloudasset.Service pinned to the record's
 // credentials. Used by org-scope drivers for transitive IAM-binding
-// enumeration via SearchAllIamPolicies.
+// enumeration via SearchAllIamPolicies. See CRM for the WithHTTPClient
+// note.
 func (p *GCPProvider) CloudAsset(ctx context.Context) (*cloudasset.Service, error) {
-	opts := []option.ClientOption{
+	svc, err := cloudasset.NewService(
+		ctx,
 		option.WithCredentialsJSON(p.credentials.ServiceAccountJSON),
 		option.WithScopes(gcpCloudPlatformReadOnlyScope),
-	}
-	if p.httpClient != nil {
-		opts = append(opts, option.WithHTTPClient(p.httpClient))
-	}
-
-	svc, err := cloudasset.NewService(ctx, opts...)
+	)
 	if err != nil {
 		return nil, fmt.Errorf("cannot build gcp cloudasset service: %w", err)
 	}
