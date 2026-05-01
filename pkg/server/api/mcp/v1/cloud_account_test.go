@@ -77,9 +77,9 @@ func mockAzureGuide() *cloudaccount.AzureInstallGuide {
 type specComponentsSchemas struct {
 	Components struct {
 		Schemas map[string]struct {
-			Type       string                       `yaml:"type"`
-			Required   []string                     `yaml:"required"`
-			Properties map[string]map[string]any    `yaml:"properties"`
+			Type       string                    `yaml:"type"`
+			Required   []string                  `yaml:"required"`
+			Properties map[string]map[string]any `yaml:"properties"`
 		} `yaml:"schemas"`
 	} `yaml:"components"`
 }

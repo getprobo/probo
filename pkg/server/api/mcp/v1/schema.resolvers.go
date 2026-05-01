@@ -5185,23 +5185,187 @@ func (r *Resolver) PublishDocumentTool(ctx context.Context, req *mcp.CallToolReq
 }
 
 func (r *Resolver) CloudAccountListTool(ctx context.Context, req *mcp.CallToolRequest, input *types.CloudAccountListInput) (*mcp.CallToolResult, types.CloudAccountListOutput, error) {
-	return nil, types.CloudAccountListOutput{}, fmt.Errorf("cloud_account_list not implemented")
+	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionCloudAccountList)
+
+	prb := r.ProboService(ctx, input.OrganizationID)
+
+	pageOrderBy := page.OrderBy[coredata.CloudAccountOrderField]{
+		Field:     coredata.CloudAccountOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.CloudAccountOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	filter := coredata.NewCloudAccountFilter()
+	if input.Filter != nil {
+		if input.Filter.Provider != nil {
+			filter = filter.WithProvider(*input.Filter.Provider)
+		}
+		if input.Filter.Status != nil {
+			filter = filter.WithStatus(*input.Filter.Status)
+		}
+		if input.Filter.ScopeKind != nil {
+			filter = filter.WithScopeKind(*input.Filter.ScopeKind)
+		}
+	}
+
+	p, err := prb.CloudAccounts.List(ctx, input.OrganizationID, cursor, filter)
+	if err != nil {
+		return nil, types.CloudAccountListOutput{}, fmt.Errorf("cannot list cloud accounts: %w", err)
+	}
+
+	out := make([]*types.CloudAccount, 0, len(p.Data))
+	for _, account := range p.Data {
+		out = append(out, newMCPCloudAccount(account))
+	}
+
+	output := types.CloudAccountListOutput{CloudAccounts: out}
+	if len(p.Data) > 0 && p.Cursor != nil {
+		next := p.Data[len(p.Data)-1].CursorKey(p.Cursor.OrderBy.Field)
+		output.NextCursor = &next
+	}
+
+	return nil, output, nil
 }
 func (r *Resolver) CloudAccountGetTool(ctx context.Context, req *mcp.CallToolRequest, input *types.CloudAccountGetInput) (*mcp.CallToolResult, types.CloudAccountGetOutput, error) {
-	return nil, types.CloudAccountGetOutput{}, fmt.Errorf("cloud_account_get not implemented")
+	r.MustAuthorize(ctx, input.ID, probo.ActionCloudAccountGet)
+
+	prb := r.ProboService(ctx, input.ID)
+
+	account, err := prb.CloudAccounts.GetMetadata(ctx, input.ID)
+	if err != nil {
+		return nil, types.CloudAccountGetOutput{}, fmt.Errorf("cannot get cloud account: %w", err)
+	}
+
+	return nil, types.CloudAccountGetOutput{CloudAccount: newMCPCloudAccount(account)}, nil
 }
 func (r *Resolver) CloudAccountInstallAssetsGenerateTool(ctx context.Context, req *mcp.CallToolRequest, input *types.CloudAccountInstallAssetsGenerateInput) (*mcp.CallToolResult, types.CloudAccountInstallAssetsGenerateOutput, error) {
-	return nil, types.CloudAccountInstallAssetsGenerateOutput{}, fmt.Errorf("cloud_account_install_assets_generate not implemented")
+	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionCloudAccountGenerateInstallAssets)
+
+	prb := r.ProboService(ctx, input.OrganizationID)
+
+	region := ""
+	if input.AwsRegion != nil {
+		region = *input.AwsRegion
+	}
+
+	assets, err := prb.CloudAccounts.GenerateInstallAssets(ctx, probo.GenerateInstallAssetsRequest{
+		OrganizationID:  input.OrganizationID,
+		Provider:        input.Provider,
+		ScopeKind:       input.ScopeKind,
+		ScopeIdentifier: input.ScopeIdentifier,
+		Modules:         input.Modules,
+		AWSRegion:       region,
+	})
+	if err != nil {
+		return nil, types.CloudAccountInstallAssetsGenerateOutput{}, fmt.Errorf("cannot generate cloud account install assets: %w", err)
+	}
+
+	out := types.CloudAccountInstallAssetsGenerateOutput{}
+	switch {
+	case assets.AWS != nil:
+		out.Aws = newMCPAWSInstallAssets(assets.AWS)
+	case assets.GCP != nil:
+		out.Gcp = newMCPGCPInstallAssets(assets.GCP)
+	case assets.Azure != nil:
+		out.Azure = newMCPAzureInstallAssets(assets.Azure)
+	}
+
+	return nil, out, nil
 }
 func (r *Resolver) CloudAccountCreateTool(ctx context.Context, req *mcp.CallToolRequest, input *types.CloudAccountCreateInput) (*mcp.CallToolResult, types.CloudAccountCreateOutput, error) {
-	return nil, types.CloudAccountCreateOutput{}, fmt.Errorf("cloud_account_create not implemented")
+	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionCloudAccountCreate)
+
+	prb := r.ProboService(ctx, input.OrganizationID)
+
+	createReq := probo.CreateCloudAccountRequest{
+		OrganizationID:      input.OrganizationID,
+		Label:               input.Label,
+		Provider:            input.Provider,
+		CredentialKind:      input.CredentialKind,
+		ScopeKind:           input.ScopeKind,
+		ScopeIdentifier:     input.ScopeIdentifier,
+		EnabledAuditModules: input.EnabledAuditModules,
+	}
+	if input.AwsRoleArn != nil {
+		createReq.AWSRoleARN = *input.AwsRoleArn
+	}
+	if input.AwsExternalID != nil {
+		createReq.AWSExternalID = *input.AwsExternalID
+	}
+
+	account, err := prb.CloudAccounts.Create(ctx, createReq)
+	if err != nil {
+		return nil, types.CloudAccountCreateOutput{}, fmt.Errorf("cannot create cloud account: %w", err)
+	}
+
+	return nil, types.CloudAccountCreateOutput{CloudAccount: newMCPCloudAccount(account)}, nil
 }
 func (r *Resolver) CloudAccountVerifyTool(ctx context.Context, req *mcp.CallToolRequest, input *types.CloudAccountVerifyInput) (*mcp.CallToolResult, types.CloudAccountVerifyOutput, error) {
-	return nil, types.CloudAccountVerifyOutput{}, fmt.Errorf("cloud_account_verify not implemented")
+	r.MustAuthorize(ctx, input.CloudAccountID, probo.ActionCloudAccountVerify)
+
+	prb := r.ProboService(ctx, input.CloudAccountID)
+
+	result, err := prb.CloudAccounts.Verify(ctx, input.CloudAccountID)
+	if err != nil {
+		return nil, types.CloudAccountVerifyOutput{}, fmt.Errorf("cannot verify cloud account: %w", err)
+	}
+
+	account, err := prb.CloudAccounts.GetMetadata(ctx, input.CloudAccountID)
+	if err != nil {
+		return nil, types.CloudAccountVerifyOutput{}, fmt.Errorf("cannot reload cloud account after verify: %w", err)
+	}
+
+	return nil, types.CloudAccountVerifyOutput{
+		CloudAccount:   newMCPCloudAccount(account),
+		Status:         result.Status,
+		LastProbeError: result.LastProbeError,
+	}, nil
 }
 func (r *Resolver) CloudAccountRotateCredentialsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.CloudAccountRotateCredentialsInput) (*mcp.CallToolResult, types.CloudAccountRotateCredentialsOutput, error) {
-	return nil, types.CloudAccountRotateCredentialsOutput{}, fmt.Errorf("cloud_account_rotate_credentials not implemented")
+	r.MustAuthorize(ctx, input.CloudAccountID, probo.ActionCloudAccountRotateCredentials)
+
+	prb := r.ProboService(ctx, input.CloudAccountID)
+
+	rotateReq := probo.RotateCloudAccountCredentialsRequest{
+		CloudAccountID: input.CloudAccountID,
+		Provider:       input.Provider,
+		CredentialKind: input.CredentialKind,
+	}
+	if input.AwsRoleArn != nil {
+		rotateReq.AWSRoleARN = *input.AwsRoleArn
+	}
+	if input.AwsExternalID != nil {
+		rotateReq.AWSExternalID = *input.AwsExternalID
+	}
+	if input.AzureTenantID != nil {
+		rotateReq.AzureTenantID = *input.AzureTenantID
+	}
+	if input.AzureClientID != nil {
+		rotateReq.AzureClientID = *input.AzureClientID
+	}
+
+	account, err := prb.CloudAccounts.RotateCredentials(ctx, rotateReq)
+	if err != nil {
+		return nil, types.CloudAccountRotateCredentialsOutput{}, fmt.Errorf("cannot rotate cloud account credentials: %w", err)
+	}
+
+	return nil, types.CloudAccountRotateCredentialsOutput{CloudAccount: newMCPCloudAccount(account)}, nil
 }
 func (r *Resolver) CloudAccountDeleteTool(ctx context.Context, req *mcp.CallToolRequest, input *types.CloudAccountDeleteInput) (*mcp.CallToolResult, types.CloudAccountDeleteOutput, error) {
-	return nil, types.CloudAccountDeleteOutput{}, fmt.Errorf("cloud_account_delete not implemented")
+	r.MustAuthorize(ctx, input.CloudAccountID, probo.ActionCloudAccountDelete)
+
+	prb := r.ProboService(ctx, input.CloudAccountID)
+
+	if err := prb.CloudAccounts.Delete(ctx, input.CloudAccountID); err != nil {
+		return nil, types.CloudAccountDeleteOutput{}, fmt.Errorf("cannot delete cloud account: %w", err)
+	}
+
+	return nil, types.CloudAccountDeleteOutput{DeletedCloudAccountID: input.CloudAccountID}, nil
 }
