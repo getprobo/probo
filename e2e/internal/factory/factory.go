@@ -1369,9 +1369,7 @@ func CreateCookiePattern(c *testutil.Client, categoryID string, attrs ...Attrs) 
 		"description":      a.getString("description", "Test cookie pattern"),
 	}
 	if _, ok := a["maxAgeSeconds"]; ok {
-		if v, ok := a["maxAgeSeconds"].(int); ok {
-			input["maxAgeSeconds"] = v
-		}
+		input["maxAgeSeconds"] = a.getInt("maxAgeSeconds", 0)
 	}
 
 	var result struct {
