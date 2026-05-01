@@ -150,7 +150,7 @@ var AuditorPolicy = policy.NewPolicy(
 		ActionFindingGet, ActionFindingList,
 		ActionObligationGet, ActionObligationList,
 		ActionProcessingActivityGet, ActionProcessingActivityList,
-		ActionDataProtectionImpactAssessmentGet,
+		ActionDataProtectionImpactAssessmentGet, ActionDataProtectionImpactAssessmentList,
 		ActionTransferImpactAssessmentGet, ActionTransferImpactAssessmentList,
 		ActionSnapshotGet, ActionSnapshotList,
 		ActionFileGet, ActionFileDownloadUrl,
