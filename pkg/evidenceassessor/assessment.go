@@ -28,11 +28,11 @@ import (
 //go:embed prompt.txt
 var systemPrompt string
 
-// assessmentConfidenceEnum is the canonical set of allowed values for
+// confidenceEnum is the canonical set of allowed values for
 // EvidenceAssessment.Confidence. Injected into the generated JSON
 // schema via agent.OutputType.DecorateEnum because jsonschema struct
 // tags cannot encode enum constraints directly.
-var assessmentConfidenceEnum = []string{"HIGH", "MEDIUM", "LOW"}
+var confidenceEnum = []string{"HIGH", "MEDIUM", "LOW"}
 
 type (
 	// EvidenceAssessment is the structured output produced by the
@@ -72,12 +72,15 @@ type (
 // New builds an Assessor. The structured output type is decorated once
 // (enum on confidence) and cached so every call reuses the same schema.
 func New(cfg Config) (*Assessor, error) {
-	ot, err := assessmentOutputType()
+	outputType, err := agent.NewOutputType[EvidenceAssessment]("evidence_assessment")
 	if err != nil {
-		return nil, fmt.Errorf("cannot build evidence assessment output type: %w", err)
+		return nil, fmt.Errorf("cannot create evidence assessment output type: %w", err)
+	}
+	if err := outputType.DecorateEnum("confidence", confidenceEnum); err != nil {
+		return nil, fmt.Errorf("cannot decorate evidence assessment schema: %w", err)
 	}
 
-	return &Assessor{cfg: cfg, outputType: ot}, nil
+	return &Assessor{cfg: cfg, outputType: outputType}, nil
 }
 
 // Assess runs the evidence assessor agent against a single uploaded
@@ -131,20 +134,4 @@ func (a *Assessor) Assess(
 	}
 
 	return &out, nil
-}
-
-// assessmentOutputType builds the EvidenceAssessment structured output
-// type and decorates its JSON Schema with an explicit enum on the
-// confidence field.
-func assessmentOutputType() (*agent.OutputType, error) {
-	ot, err := agent.NewOutputType[EvidenceAssessment]("evidence_assessment")
-	if err != nil {
-		return nil, fmt.Errorf("cannot create evidence assessment output type: %w", err)
-	}
-	if err := ot.DecorateEnum(map[string][]string{
-		"confidence": assessmentConfidenceEnum,
-	}); err != nil {
-		return nil, fmt.Errorf("cannot decorate evidence assessment schema: %w", err)
-	}
-	return ot, nil
 }

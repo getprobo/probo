@@ -314,10 +314,11 @@ func thirdPartyInfoOutputType() (*agent.OutputType, error) {
 		return nil, fmt.Errorf("cannot create thirdParty info output type: %w", err)
 	}
 
-	if err := outputType.DecorateEnum(map[string][]string{
-		"category":         thirdPartyCategoryEnum,
-		"third_party_type": thirdPartyTypeEnum,
-	}); err != nil {
+	if err := outputType.DecorateEnum("category", thirdPartyCategoryEnum); err != nil {
+		return nil, fmt.Errorf("cannot decorate thirdParty info schema: %w", err)
+	}
+
+	if err := outputType.DecorateEnum("third_party_type", thirdPartyTypeEnum); err != nil {
 		return nil, fmt.Errorf("cannot decorate thirdParty info schema: %w", err)
 	}
 	strict, err := enforceStrictJSONSchema(outputType.Schema)

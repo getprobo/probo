@@ -51,16 +51,11 @@ func (o *OutputType) responseFormat() *llm.ResponseFormat {
 	}
 }
 
-// DecorateEnum injects explicit `enum` constraints on top-level
-// properties of the schema. jsonschema-go only reads struct tags as
-// free-form descriptions, so enums cannot be encoded on the tag itself;
-// callers use this helper after NewOutputType to lock down string
-// fields whose allowed values live in a package-level slice.
-func (o *OutputType) DecorateEnum(enums map[string][]string) error {
-	if len(enums) == 0 {
-		return nil
-	}
-
+// DecorateEnum injects an explicit `enum` constraint on a single
+// top-level property of the schema. jsonschema-go reads struct tags as
+// free-form descriptions only, so enums cannot be encoded on the tag
+// itself; callers chain one call per enum field after NewOutputType.
+func (o *OutputType) DecorateEnum(field string, values []string) error {
 	var schema map[string]any
 	if err := json.Unmarshal(o.Schema, &schema); err != nil {
 		return fmt.Errorf("cannot unmarshal output type schema: %w", err)
@@ -71,13 +66,11 @@ func (o *OutputType) DecorateEnum(enums map[string][]string) error {
 		return fmt.Errorf("output type schema has no properties")
 	}
 
-	for field, values := range enums {
-		prop, ok := properties[field].(map[string]any)
-		if !ok {
-			return fmt.Errorf("output type schema has no %q property", field)
-		}
-		prop["enum"] = values
+	prop, ok := properties[field].(map[string]any)
+	if !ok {
+		return fmt.Errorf("output type schema has no %q property", field)
 	}
+	prop["enum"] = values
 
 	decorated, err := json.Marshal(schema)
 	if err != nil {

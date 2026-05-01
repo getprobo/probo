@@ -12,9 +12,6 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// White-box test (package evidenceassessor, not _test) so it can reach
-// the unexported assessmentOutputType helper.
-
 package evidenceassessor
 
 import (
@@ -25,20 +22,20 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// TestAssessmentOutputType_DecoratesConfidenceEnum guards the
-// schema-mutation trick used to inject an enum into the generated JSON
-// schema. If jsonschema-go ever reshapes the "properties" block or
-// stops preserving the confidence field path, this test will fail
-// loudly instead of silently shipping an un-constrained schema.
-func TestAssessmentOutputType_DecoratesConfidenceEnum(t *testing.T) {
+// TestNew_DecoratesConfidenceEnum guards the schema-mutation trick used
+// to inject an enum into the generated JSON schema. If jsonschema-go
+// ever reshapes the "properties" block or stops preserving the
+// confidence field path, this test will fail loudly instead of silently
+// shipping an un-constrained schema.
+func TestNew_DecoratesConfidenceEnum(t *testing.T) {
 	t.Parallel()
 
-	outputType, err := assessmentOutputType()
+	assessor, err := New(Config{})
 	require.NoError(t, err)
-	require.NotNil(t, outputType)
+	require.NotNil(t, assessor.outputType)
 
 	var schema map[string]any
-	require.NoError(t, json.Unmarshal(outputType.Schema, &schema))
+	require.NoError(t, json.Unmarshal(assessor.outputType.Schema, &schema))
 
 	properties, ok := schema["properties"].(map[string]any)
 	require.True(t, ok, "schema has no properties block")
@@ -53,5 +50,5 @@ func TestAssessmentOutputType_DecoratesConfidenceEnum(t *testing.T) {
 	for i, v := range enumRaw {
 		actual[i] = v.(string)
 	}
-	assert.Equal(t, assessmentConfidenceEnum, actual)
+	assert.Equal(t, confidenceEnum, actual)
 }
