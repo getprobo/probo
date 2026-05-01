@@ -543,6 +543,7 @@ extend type Mutation {
 input CreateAccessSourceInput {
     organizationId: ID!
     connectorId: ID
+    cloudAccountId: ID
     name: String!
     csvData: String
 }
@@ -555,6 +556,7 @@ input UpdateAccessSourceInput {
     accessSourceId: ID!
     name: String @goField(omittable: true)
     connectorId: ID @goField(omittable: true)
+    cloudAccountId: ID @goField(omittable: true)
     csvData: String @goField(omittable: true)
 }
 

@@ -46,10 +46,11 @@ type updateResponse struct {
 
 func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 	var (
-		flagName        string
-		flagCSVFile     string
-		flagConnectorID string
-		flagOutput      *string
+		flagName           string
+		flagCSVFile        string
+		flagConnectorID    string
+		flagCloudAccountID string
+		flagOutput         *string
 	)
 
 	cmd := &cobra.Command{
@@ -99,6 +100,10 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 				input["connectorId"] = flagConnectorID
 			}
 
+			if cmd.Flags().Changed("cloud-account-id") {
+				input["cloudAccountId"] = flagCloudAccountID
+			}
+
 			data, err := client.Do(
 				updateMutation,
 				map[string]any{"input": input},
@@ -128,6 +133,7 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagName, "name", "", "Access source name")
 	cmd.Flags().StringVar(&flagCSVFile, "csv-file", "", "Path to CSV file with access data")
 	cmd.Flags().StringVar(&flagConnectorID, "connector-id", "", "Connector ID to use as data source")
+	cmd.Flags().StringVar(&flagCloudAccountID, "cloud-account-id", "", "Cloud account ID to use as data source")
 	flagOutput = cmdutil.AddOutputFlag(cmd)
 
 	return cmd
