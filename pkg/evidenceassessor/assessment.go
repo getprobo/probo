@@ -103,21 +103,24 @@ func (a *Assessor) Assess(
 		opts = append(opts, agent.WithLogger(a.cfg.Logger))
 	}
 
-	ag := agent.New("evidence_assessor", a.cfg.Client, opts...)
+	assessmentAgent := agent.New("evidence_assessor", a.cfg.Client, opts...)
 
-	result, err := ag.Run(ctx, []llm.Message{
-		{
-			Role: llm.RoleUser,
-			Parts: []llm.Part{
-				llm.TextPart{Text: fmt.Sprintf("Filename: %s", filename)},
-				llm.FilePart{
-					Data:     fileBase64,
-					MimeType: mimeType,
-					Filename: filename,
+	result, err := assessmentAgent.Run(
+		ctx,
+		[]llm.Message{
+			{
+				Role: llm.RoleUser,
+				Parts: []llm.Part{
+					llm.TextPart{Text: fmt.Sprintf("Filename: %s", filename)},
+					llm.FilePart{
+						Data:     fileBase64,
+						MimeType: mimeType,
+						Filename: filename,
+					},
 				},
 			},
 		},
-	})
+	)
 	if err != nil {
 		return nil, fmt.Errorf("cannot assess evidence: %w", err)
 	}
