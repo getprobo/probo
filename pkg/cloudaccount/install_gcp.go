@@ -41,11 +41,11 @@ const (
 # (project scope) permissions.
 set -euo pipefail
 
-SCANNER_PROJECT_ID="{{.ScannerProjectID}}"
+SCANNER_PROJECT_ID='{{.ScannerProjectID}}'
 SA_NAME="probo-cloud-scanner"
 ROLE_ID="ProboCloudScanner"
-SCOPE_KIND="{{.ScopeKind}}"
-SCOPE_IDENTIFIER="{{.ScopeIdentifier}}"
+SCOPE_KIND='{{.ScopeKind}}'
+SCOPE_IDENTIFIER='{{.ScopeIdentifier}}'
 
 # 1. Create the dedicated scanner project owned by Probo's SA.
 gcloud projects create "${SCANNER_PROJECT_ID}" --name="Probo Cloud Scanner"

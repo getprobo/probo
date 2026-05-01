@@ -64,7 +64,7 @@ func TestBuildGCPInstallScript_ProjectScope(t *testing.T) {
 			"scanner project id %q must carry the probo-scanner- prefix",
 			got.ScannerProjectID,
 		)
-		assert.Contains(t, got.SetupScript, "SCANNER_PROJECT_ID=\""+got.ScannerProjectID+"\"")
+		assert.Contains(t, got.SetupScript, "SCANNER_PROJECT_ID='"+got.ScannerProjectID+"'")
 		assert.Contains(t, got.SetupScript, "gcloud projects create")
 		assert.Contains(t, got.SetupScript, "probo-target-project", "scope identifier must be referenced in the script")
 	})
