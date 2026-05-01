@@ -44,6 +44,7 @@ type (
 	CreateAccessSourceRequest struct {
 		OrganizationID gid.GID
 		ConnectorID    *gid.GID
+		CloudAccountID *gid.GID
 		Name           string
 		Category       coredata.AccessSourceCategory
 		CsvData        *string
@@ -54,6 +55,7 @@ type (
 		Name           *string
 		Category       *coredata.AccessSourceCategory
 		ConnectorID    **gid.GID
+		CloudAccountID **gid.GID
 		CsvData        **string
 	}
 
@@ -69,6 +71,24 @@ func (r *CreateAccessSourceRequest) Validate() error {
 	v.Check(r.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
 	v.Check(r.Name, "name", validator.SafeTextNoNewLine(NameMaxLength))
 	v.Check(r.Category, "category", validator.OneOfSlice(coredata.AccessSourceCategories()))
+
+	// Exactly one of {ConnectorID, CloudAccountID, CsvData} must
+	// be present. Field-level shape only -- tenant consistency
+	// (e.g. connector / cloud-account belongs to OrganizationID)
+	// lives in the service method body.
+	targets := 0
+	if r.ConnectorID != nil {
+		targets++
+	}
+	if r.CloudAccountID != nil {
+		targets++
+	}
+	if r.CsvData != nil {
+		targets++
+	}
+	if targets != 1 {
+		return fmt.Errorf("cannot validate access source: exactly one of {connector_id, cloud_account_id, csv_data} must be set")
+	}
 
 	return v.Error()
 }
@@ -105,6 +125,7 @@ func (s AccessSourceService) Create(
 		ID:             gid.New(s.scope.GetTenantID(), coredata.AccessSourceEntityType),
 		OrganizationID: req.OrganizationID,
 		ConnectorID:    req.ConnectorID,
+		CloudAccountID: req.CloudAccountID,
 		Name:           req.Name,
 		Category:       req.Category,
 		CsvData:        req.CsvData,
@@ -120,6 +141,20 @@ func (s AccessSourceService) Create(
 				connector := &coredata.Connector{}
 				if err := connector.LoadMetadataByID(ctx, conn, s.scope, *req.ConnectorID); err != nil {
 					return fmt.Errorf("cannot load connector: %w", err)
+				}
+			}
+
+			// Validate cloud account exists in scope. The Scoper
+			// guarantees a row from another tenant cannot be loaded
+			// even if the GID is guessed -- tenant consistency is
+			// the FK + Scoper combo.
+			if req.CloudAccountID != nil {
+				cloudAccount := &coredata.CloudAccount{}
+				if err := cloudAccount.LoadMetadataByID(ctx, conn, s.scope, *req.CloudAccountID); err != nil {
+					return fmt.Errorf("cannot load cloud account: %w", err)
+				}
+				if cloudAccount.OrganizationID != req.OrganizationID {
+					return fmt.Errorf("cannot create access source: cloud account organization mismatch")
 				}
 			}
 
@@ -189,6 +224,16 @@ func (s AccessSourceService) Update(
 					}
 				}
 				source.ConnectorID = *req.ConnectorID
+			}
+
+			if req.CloudAccountID != nil {
+				if *req.CloudAccountID != nil {
+					cloudAccount := &coredata.CloudAccount{}
+					if err := cloudAccount.LoadMetadataByID(ctx, conn, s.scope, **req.CloudAccountID); err != nil {
+						return fmt.Errorf("cannot load cloud account: %w", err)
+					}
+				}
+				source.CloudAccountID = *req.CloudAccountID
 			}
 
 			if req.CsvData != nil {

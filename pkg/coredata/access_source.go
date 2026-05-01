@@ -32,6 +32,7 @@ type (
 		ID             gid.GID              `db:"id"`
 		OrganizationID gid.GID              `db:"organization_id"`
 		ConnectorID    *gid.GID             `db:"connector_id"`
+		CloudAccountID *gid.GID             `db:"cloud_account_id"`
 		Name           string               `db:"name"`
 		Category       AccessSourceCategory `db:"category"`
 		CsvData        *string              `db:"csv_data"`
@@ -77,6 +78,7 @@ SELECT
     id,
     organization_id,
     connector_id,
+    cloud_account_id,
     name,
     category,
     csv_data,
@@ -125,6 +127,7 @@ INSERT INTO
         tenant_id,
         organization_id,
         connector_id,
+        cloud_account_id,
         name,
         category,
         csv_data,
@@ -137,6 +140,7 @@ VALUES (
     @tenant_id,
     @organization_id,
     @connector_id,
+    @cloud_account_id,
     @name,
     @category,
     @csv_data,
@@ -147,16 +151,17 @@ VALUES (
 `
 
 	args := pgx.StrictNamedArgs{
-		"id":              as.ID,
-		"tenant_id":       scope.GetTenantID(),
-		"organization_id": as.OrganizationID,
-		"connector_id":    as.ConnectorID,
-		"name":            as.Name,
-		"category":        as.Category,
-		"csv_data":        as.CsvData,
-		"name_synced_at":  as.NameSyncedAt,
-		"created_at":      as.CreatedAt,
-		"updated_at":      as.UpdatedAt,
+		"id":               as.ID,
+		"tenant_id":        scope.GetTenantID(),
+		"organization_id":  as.OrganizationID,
+		"connector_id":     as.ConnectorID,
+		"cloud_account_id": as.CloudAccountID,
+		"name":             as.Name,
+		"category":         as.Category,
+		"csv_data":         as.CsvData,
+		"name_synced_at":   as.NameSyncedAt,
+		"created_at":       as.CreatedAt,
+		"updated_at":       as.UpdatedAt,
 	}
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
@@ -177,6 +182,7 @@ SET
     name = @name,
     category = @category,
     connector_id = @connector_id,
+    cloud_account_id = @cloud_account_id,
     csv_data = @csv_data,
     name_synced_at = @name_synced_at,
     updated_at = @updated_at
@@ -187,13 +193,14 @@ WHERE
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"id":             as.ID,
-		"name":           as.Name,
-		"category":       as.Category,
-		"connector_id":   as.ConnectorID,
-		"csv_data":       as.CsvData,
-		"name_synced_at": as.NameSyncedAt,
-		"updated_at":     as.UpdatedAt,
+		"id":               as.ID,
+		"name":             as.Name,
+		"category":         as.Category,
+		"connector_id":     as.ConnectorID,
+		"cloud_account_id": as.CloudAccountID,
+		"csv_data":         as.CsvData,
+		"name_synced_at":   as.NameSyncedAt,
+		"updated_at":       as.UpdatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -247,6 +254,7 @@ SELECT
     id,
     organization_id,
     connector_id,
+    cloud_account_id,
     name,
     category,
     csv_data,
@@ -346,6 +354,7 @@ SELECT
     id,
     organization_id,
     connector_id,
+    cloud_account_id,
     name,
     category,
     csv_data,
@@ -399,6 +408,7 @@ SELECT
     id,
     organization_id,
     connector_id,
+    cloud_account_id,
     name,
     category,
     csv_data,

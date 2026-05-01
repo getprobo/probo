@@ -30,11 +30,20 @@ import (
 )
 
 type (
+	// CloudAccountDriverFactoryProvider returns a driver factory for
+	// the supplied tenant scope. The resulting CloudAccountDriverFactory
+	// closure resolves a cloud-account ID to an access-review Driver
+	// without exposing pkg/cloudaccount or any cloud SDK to the
+	// accessreview package. Set via SetCloudAccountDriverFactoryProvider
+	// after the Service and the probo.Service are both constructed.
+	CloudAccountDriverFactoryProvider func(scope coredata.Scoper) CloudAccountDriverFactory
+
 	Service struct {
-		pg                *pg.Client
-		encryptionKey     cipher.EncryptionKey
-		connectorRegistry *connector.ConnectorRegistry
-		logger            *log.Logger
+		pg                                *pg.Client
+		encryptionKey                     cipher.EncryptionKey
+		connectorRegistry                 *connector.ConnectorRegistry
+		cloudAccountDriverFactoryProvider CloudAccountDriverFactoryProvider
+		logger                            *log.Logger
 
 		fetchWorker      *worker.Worker[coredata.AccessReviewCampaignSourceFetch]
 		sourceNameWorker *worker.Worker[coredata.AccessSource]
@@ -116,13 +125,29 @@ func (s *Service) Entries(scope coredata.Scoper) *AccessEntryService {
 	return &AccessEntryService{pg: s.pg, scope: scope}
 }
 
+// SetCloudAccountDriverFactoryProvider wires the closure that the
+// engine uses to dispatch a cloud-account-backed access source to a
+// driver. Called once at probod wiring time after both the accessreview
+// service and the probo service are constructed; nil is allowed and
+// disables cloud-account dispatch (engines fall back to the
+// connector / CSV branches).
+func (s *Service) SetCloudAccountDriverFactoryProvider(p CloudAccountDriverFactoryProvider) {
+	s.cloudAccountDriverFactoryProvider = p
+}
+
 // Engine returns a tenant-scoped ReviewEngine.
 func (s *Service) Engine(scope coredata.Scoper) *ReviewEngine {
+	var factory CloudAccountDriverFactory
+	if s.cloudAccountDriverFactoryProvider != nil {
+		factory = s.cloudAccountDriverFactoryProvider(scope)
+	}
+
 	return NewReviewEngine(
 		s.pg,
 		scope,
 		s.encryptionKey,
 		s.connectorRegistry,
+		factory,
 		s.logger.Named("review_engine"),
 	)
 }

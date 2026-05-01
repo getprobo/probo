@@ -31,14 +31,26 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 )
 
+// CloudAccountDriverFactory is the closure pkg/probo injects so the
+// engine can dispatch a cloud-account-backed access source without
+// importing pkg/cloudaccount or any cloud SDK. The closure handles
+// the coredata read, the registry lookup, and the typed provider
+// build; the engine just calls it and gets back a fully built
+// Driver.
+type CloudAccountDriverFactory func(
+	ctx context.Context,
+	cloudAccountID gid.GID,
+) (drivers.Driver, error)
+
 // ReviewEngine contains the stateless core logic for access review campaigns:
 // snapshot and source data collection.
 type ReviewEngine struct {
-	pg                *pg.Client
-	scope             coredata.Scoper
-	encryptionKey     cipher.EncryptionKey
-	connectorRegistry *connector.ConnectorRegistry
-	logger            *log.Logger
+	pg                        *pg.Client
+	scope                     coredata.Scoper
+	encryptionKey             cipher.EncryptionKey
+	connectorRegistry         *connector.ConnectorRegistry
+	cloudAccountDriverFactory CloudAccountDriverFactory
+	logger                    *log.Logger
 }
 
 func NewReviewEngine(
@@ -46,14 +58,16 @@ func NewReviewEngine(
 	scope coredata.Scoper,
 	encryptionKey cipher.EncryptionKey,
 	connectorRegistry *connector.ConnectorRegistry,
+	cloudAccountDriverFactory CloudAccountDriverFactory,
 	logger *log.Logger,
 ) *ReviewEngine {
 	return &ReviewEngine{
-		pg:                pgClient,
-		scope:             scope,
-		encryptionKey:     encryptionKey,
-		connectorRegistry: connectorRegistry,
-		logger:            logger,
+		pg:                        pgClient,
+		scope:                     scope,
+		encryptionKey:             encryptionKey,
+		connectorRegistry:         connectorRegistry,
+		cloudAccountDriverFactory: cloudAccountDriverFactory,
+		logger:                    logger,
 	}
 }
 
@@ -249,12 +263,24 @@ func (e *ReviewEngine) connectorHTTPClient(
 }
 
 // resolveDriver creates a Driver for the given AccessSource based on
-// connector_id (null = built-in, set = connector-backed).
+// the access-source target column: cloud_account_id, connector_id,
+// csv_data, or none (built-in ProboMemberships driver).
 func (e *ReviewEngine) resolveDriver(
 	ctx context.Context,
 	tx pg.Tx,
 	source *coredata.AccessSource,
 ) (drivers.Driver, error) {
+	if source.CloudAccountID != nil {
+		if e.cloudAccountDriverFactory == nil {
+			return nil, fmt.Errorf("cannot build cloud account driver: factory not configured")
+		}
+		driver, err := e.cloudAccountDriverFactory(ctx, *source.CloudAccountID)
+		if err != nil {
+			return nil, fmt.Errorf("cannot build cloud account driver: %w", err)
+		}
+		return driver, nil
+	}
+
 	if source.ConnectorID == nil {
 		// CSV-backed source: use CSVDriver when csv_data is present
 		if source.CsvData != nil && *source.CsvData != "" {
