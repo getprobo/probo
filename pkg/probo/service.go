@@ -23,6 +23,7 @@ import (
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/certmanager"
+	"go.probo.inc/probo/pkg/cloudaccount"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
@@ -69,6 +70,8 @@ type (
 		connectorRegistry       *connector.ConnectorRegistry
 		invitationTokenValidity time.Duration
 		vendorAssessor          VendorAssessor
+		cloudAccountRegistry    *cloudaccount.Registry
+		cloudAccountAWSConfig   cloudaccount.AWSInstallTemplateConfig
 	}
 
 	TenantService struct {
@@ -102,6 +105,7 @@ type (
 		VendorDataPrivacyAgreements       *VendorDataPrivacyAgreementService
 		VendorServices                    *VendorServiceService
 		Connectors                        *ConnectorService
+		CloudAccounts                     *CloudAccountService
 		Assets                            *AssetService
 		Data                              *DatumService
 		Audits                            *AuditService
@@ -149,6 +153,8 @@ func NewService(
 	connectorRegistry *connector.ConnectorRegistry,
 	invitationTokenValidity time.Duration,
 	vendorAssessor VendorAssessor,
+	cloudAccountRegistry *cloudaccount.Registry,
+	cloudAccountAWSConfig cloudaccount.AWSInstallTemplateConfig,
 ) (*Service, error) {
 	if bucket == "" {
 		return nil, fmt.Errorf("bucket is required")
@@ -176,6 +182,8 @@ func NewService(
 		connectorRegistry:       connectorRegistry,
 		invitationTokenValidity: invitationTokenValidity,
 		vendorAssessor:          vendorAssessor,
+		cloudAccountRegistry:    cloudAccountRegistry,
+		cloudAccountAWSConfig:   cloudAccountAWSConfig,
 	}
 
 	return svc, nil
@@ -251,6 +259,11 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 	tenantService.VendorDataPrivacyAgreements = &VendorDataPrivacyAgreementService{svc: tenantService}
 	tenantService.VendorServices = &VendorServiceService{svc: tenantService}
 	tenantService.Connectors = &ConnectorService{svc: tenantService}
+	tenantService.CloudAccounts = &CloudAccountService{
+		svc:      tenantService,
+		registry: s.cloudAccountRegistry,
+		awsCfg:   s.cloudAccountAWSConfig,
+	}
 	tenantService.Assets = &AssetService{svc: tenantService}
 	tenantService.Data = &DatumService{svc: tenantService}
 	tenantService.Audits = &AuditService{svc: tenantService}
