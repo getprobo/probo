@@ -15,6 +15,9 @@
 package factory
 
 import (
+	"crypto/rand"
+	"encoding/hex"
+
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/e2e/internal/testutil"
 )
@@ -29,7 +32,6 @@ import (
 // not here.
 const (
 	mockAWSRoleARN     = "arn:aws:iam::123456789012:role/ProboCloudScannerE2E"
-	mockAWSExternalID  = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcd"
 	mockAWSAccountID   = "123456789012"
 	mockGCPProjectID   = "probo-e2e-mock-project"
 	mockGCPOrgID       = "987654321098"
@@ -38,6 +40,18 @@ const (
 	mockAzureMG        = "00000000-0000-0000-0000-000000000003"
 	mockAzureSubscript = "00000000-0000-0000-0000-000000000004"
 )
+
+// randomExternalID mints a fresh AWS external_id per factory call.
+// Cross-org reuse defeat means a hard-coded constant would only let
+// the first test in the suite create an AWS row; subsequent calls
+// would fail the second-org guard. 32 bytes of crypto/rand → 64 hex
+// chars matches the production format set by
+// pkg/cloudaccount.GenerateAWSExternalID.
+func randomExternalID() string {
+	buf := make([]byte, 32)
+	_, _ = rand.Read(buf)
+	return hex.EncodeToString(buf)
+}
 
 // CreateCloudAccount creates a cloud-account row through the public
 // GraphQL API (`createCloudAccount`). The factory defaults to AWS
@@ -53,7 +67,7 @@ const (
 //	"scopeKind"       string  // derived from provider when omitted
 //	"scopeIdentifier" string  // mock id matching scopeKind
 //	"awsRoleArn"      string  // mockAWSRoleARN
-//	"awsExternalId"   string  // mockAWSExternalID
+//	"awsExternalId"   string  // generated per call by randomExternalID()
 //	"azureTenantId"   string  // mockAzureTenant
 //	"azureClientId"   string  // mockAzureClient
 //	"gcpProjectId"    string  // mockGCPProjectID
@@ -117,7 +131,7 @@ func buildCreateCloudAccountInput(c *testutil.Client, a Attrs, provider string) 
 		input["scopeKind"] = a.getString("scopeKind", "AWS_ACCOUNT")
 		input["scopeIdentifier"] = a.getString("scopeIdentifier", mockAWSAccountID)
 		input["awsRoleArn"] = a.getString("awsRoleArn", mockAWSRoleARN)
-		input["awsExternalId"] = a.getString("awsExternalId", mockAWSExternalID)
+		input["awsExternalId"] = a.getString("awsExternalId", randomExternalID())
 
 	case "GCP":
 		input["credentialKind"] = a.getString("credentialKind", "GCP_SERVICE_ACCOUNT_KEY")
