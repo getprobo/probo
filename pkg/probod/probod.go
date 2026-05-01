@@ -47,6 +47,7 @@ import (
 	"go.probo.inc/probo/pkg/awsconfig"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/certmanager"
+	"go.probo.inc/probo/pkg/cloudaccount"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/coredata"
@@ -466,6 +467,23 @@ func (impl *Implm) Run(
 
 	cookieBannerService := cookiebanner.NewService(pgClient, impl.cfg.Branding)
 
+	cloudAccountRegistry := cloudaccount.NewRegistry(cloudaccount.Config{
+		BaseAWSConfig: awsConfig,
+		HTTPClient: httpclient.DefaultPooledClient(
+			httpclient.WithLogger(l),
+			httpclient.WithTracerProvider(tp),
+			httpclient.WithRegisterer(r),
+		),
+		Logger: l.Named("cloud-account"),
+	})
+
+	cloudAccountAWSInstallTemplate := cloudaccount.AWSInstallTemplateConfig{
+		TemplateURL:    impl.cfg.CloudAccount.AWSTemplateURL,
+		TemplateSHA256: impl.cfg.CloudAccount.AWSTemplateSHA256,
+		PrincipalARN:   impl.cfg.CloudAccount.AWSAssumerARN,
+		AssumerARN:     impl.cfg.CloudAccount.AWSAssumerARN,
+	}
+
 	proboService, err := probo.NewService(
 		ctx,
 		encryptionKey,
@@ -488,6 +506,8 @@ func (impl *Implm) Run(
 		defaultConnectorRegistry,
 		time.Duration(impl.cfg.Auth.InvitationConfirmationTokenValidity)*time.Second,
 		vendorAssessor,
+		cloudAccountRegistry,
+		cloudAccountAWSInstallTemplate,
 	)
 	if err != nil {
 		return fmt.Errorf("cannot create probo service: %w", err)
@@ -514,6 +534,14 @@ func (impl *Implm) Run(
 		encryptionKey,
 		defaultConnectorRegistry,
 		l.Named("access-review"),
+	)
+
+	// Wire the cloud-account driver factory into the access-review
+	// engine so cloud-account-backed sources resolve to a driver
+	// without leaking pkg/cloudaccount or any cloud SDK into
+	// pkg/accessreview's compile graph.
+	accessReviewService.SetCloudAccountDriverFactoryProvider(
+		proboService.CloudAccountDriverFactoryProvider(),
 	)
 
 	serverHandler, err := server.NewServer(
@@ -714,6 +742,36 @@ func (impl *Implm) Run(
 		},
 	)
 
+	cloudAccountWorkerOpts := []worker.Option{}
+	if impl.cfg.CloudAccount.ProbeInterval > 0 {
+		cloudAccountWorkerOpts = append(
+			cloudAccountWorkerOpts,
+			worker.WithInterval(time.Duration(impl.cfg.CloudAccount.ProbeInterval)*time.Second),
+		)
+	}
+	if impl.cfg.CloudAccount.ProbeMaxConcurrency > 0 {
+		cloudAccountWorkerOpts = append(
+			cloudAccountWorkerOpts,
+			worker.WithMaxConcurrency(impl.cfg.CloudAccount.ProbeMaxConcurrency),
+		)
+	}
+	cloudAccountWorker := probo.NewCloudAccountWorker(
+		pgClient,
+		cloudAccountRegistry,
+		encryptionKey,
+		l.Named("cloud-account-worker"),
+		probo.CloudAccountWorkerConfig{},
+		cloudAccountWorkerOpts...,
+	)
+	cloudAccountWorkerCtx, stopCloudAccountWorker := context.WithCancel(context.Background())
+	wg.Go(
+		func() {
+			if err := cloudAccountWorker.Run(cloudAccountWorkerCtx); err != nil {
+				cancel(fmt.Errorf("cloud account worker crashed: %w", err))
+			}
+		},
+	)
+
 	trustCenterServerCtx, stopTrustCenterServer := context.WithCancel(context.Background())
 	defer stopTrustCenterServer()
 	wg.Go(
@@ -743,6 +801,7 @@ func (impl *Implm) Run(
 	stopTrackerPatternAnalysisWorker()
 	stopMailingListWorker()
 	stopEvidenceDescriptionWorker()
+	stopCloudAccountWorker()
 	stopDocumentPDFWorker()
 	stopExportJobExporter()
 	stopAccessReviewWorker()
