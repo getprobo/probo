@@ -249,7 +249,6 @@ func TestAuthorizeCached_ConcurrentReadsAreSafe(t *testing.T) {
 	wg.Add(goroutines)
 	results := make([]bool, goroutines)
 	for i := range goroutines {
-		i := i
 		go func() {
 			defer wg.Done()
 			results[i] = r.authorizeCached(ctx, resource, action)
