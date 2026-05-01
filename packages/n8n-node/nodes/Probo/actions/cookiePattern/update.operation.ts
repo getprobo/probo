@@ -57,6 +57,33 @@ export const description: INodeProperties[] = [
 		description: 'The maximum age of the cookie in seconds (0 to clear)',
 	},
 	{
+		displayName: 'Excluded',
+		name: 'excluded',
+		type: 'options',
+		displayOptions: {
+			show: {
+				resource: ['cookiePattern'],
+				operation: ['update'],
+			},
+		},
+		options: [
+			{
+				name: '(Unchanged)',
+				value: '',
+			},
+			{
+				name: 'False',
+				value: 'false',
+			},
+			{
+				name: 'True',
+				value: 'true',
+			},
+		],
+		default: '',
+		description: 'Whether the cookie pattern is excluded from the banner',
+	},
+	{
 		displayName: 'Description',
 		name: 'patternDescription',
 		type: 'string',
@@ -78,6 +105,7 @@ export async function execute(
 	const cookiePatternId = this.getNodeParameter('cookiePatternId', itemIndex) as string;
 	const displayName = this.getNodeParameter('displayName', itemIndex, '') as string;
 	const maxAgeSeconds = this.getNodeParameter('maxAgeSeconds', itemIndex, 0) as number;
+	const excluded = this.getNodeParameter('excluded', itemIndex, '') as string;
 	const patternDescription = this.getNodeParameter('patternDescription', itemIndex, '') as string;
 
 	const query = `
@@ -91,6 +119,7 @@ export async function execute(
 					maxAgeSeconds
 					description
 					source
+					excluded
 					createdAt
 					updatedAt
 				}
@@ -107,6 +136,7 @@ export async function execute(
 	if (maxAgeSeconds !== undefined) {
 		input.maxAgeSeconds = maxAgeSeconds === 0 ? null : maxAgeSeconds;
 	}
+	if (excluded) input.excluded = excluded === 'true';
 	if (patternDescription) input.description = patternDescription;
 
 	const responseData = await proboApiRequest.call(this, query, { input });

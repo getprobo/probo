@@ -134,6 +134,7 @@ export async function execute(
 						maxAgeSeconds
 						description
 						source
+						excluded
 						createdAt
 						updatedAt
 					}
