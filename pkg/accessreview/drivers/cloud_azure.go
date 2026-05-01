@@ -103,6 +103,18 @@ func (d *CloudAzureDriver) ListAccounts(ctx context.Context) ([]AccountRecord, e
 			}
 			byPrincipal[key] = agg
 		}
+
+		// Late-arriving role assignments may carry a real
+		// PrincipalEmail / PrincipalName when the first one didn't.
+		// Promote them so the aggregate is order-independent: a
+		// later good email wins over the PrincipalID fallback, and a
+		// later non-empty FullName wins over an empty one.
+		if assignment.PrincipalEmail != "" && agg.record.Email == agg.record.ExternalID {
+			agg.record.Email = assignment.PrincipalEmail
+		}
+		if assignment.PrincipalName != "" && agg.record.FullName == "" {
+			agg.record.FullName = assignment.PrincipalName
+		}
 		if assignment.RoleName != "" {
 			agg.roles = append(agg.roles, assignment.RoleName)
 		}
