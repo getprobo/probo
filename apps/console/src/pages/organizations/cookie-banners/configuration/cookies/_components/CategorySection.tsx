@@ -28,6 +28,7 @@ import {
   Td,
   Th,
   Thead,
+  Toggle,
   Tr,
   useToast,
 } from "@probo/ui";
@@ -50,6 +51,7 @@ export interface CookieEntry {
   name: string;
   maxAgeSeconds: number | null;
   description: string;
+  excluded: boolean;
 }
 
 export const categorySectionFragment = graphql`
@@ -71,6 +73,8 @@ export const categorySectionFragment = graphql`
           displayName
           maxAgeSeconds
           description
+          excluded
+          source
           ...EditCookieRowFragment
         }
       }
@@ -127,6 +131,8 @@ const createPatternMutation = graphql`
           displayName
           maxAgeSeconds
           description
+          excluded
+          source
           ...EditCookieRowFragment
         }
       }
@@ -152,6 +158,7 @@ const updatePatternMutation = graphql`
         displayName
         maxAgeSeconds
         description
+        excluded
         updatedAt
       }
       cookieBanner {
@@ -342,6 +349,7 @@ export function CategorySection({ categoryKey, onDelete }: CategorySectionProps)
           displayName: cookie.name,
           maxAgeSeconds: cookie.maxAgeSeconds,
           description: cookie.description,
+          excluded: cookie.excluded,
         },
       },
       onCompleted(_response, errors) {
@@ -364,6 +372,37 @@ export function CategorySection({ categoryKey, onDelete }: CategorySectionProps)
           variant: "success",
         });
         setEditingCookieId(null);
+      },
+      onError(error) {
+        toast({
+          title: __("Error"),
+          description: formatError(
+            __("Failed to update cookie"),
+            error as GraphQLError,
+          ),
+          variant: "error",
+        });
+      },
+    });
+  };
+
+  const handleToggleExcluded = (patternId: string, excluded: boolean) => {
+    updatePattern({
+      variables: {
+        input: {
+          cookiePatternId: patternId,
+          excluded,
+        },
+      },
+      onCompleted(_response, errors) {
+        if (errors?.length) {
+          toast({
+            title: __("Error"),
+            description: errors[0].message,
+            variant: "error",
+          });
+          return;
+        }
       },
       onError(error) {
         toast({
@@ -568,7 +607,8 @@ export function CategorySection({ categoryKey, onDelete }: CategorySectionProps)
       <table className="w-full text-left">
         <Thead>
           <Tr>
-            <Th>{__("Name")}</Th>
+            <Th><span className="pl-10">{__("Name")}</span></Th>
+            <Th>{__("Source")}</Th>
             <Th>{__("Duration")}</Th>
             <Th>{__("Description")}</Th>
             <Th className="w-20" />
@@ -587,9 +627,30 @@ export function CategorySection({ categoryKey, onDelete }: CategorySectionProps)
                   />
                 )
               : (
-                  <Tr key={pattern.id}>
+                  <Tr key={pattern.id} className={pattern.excluded ? "opacity-50" : undefined}>
                     <Td>
-                      <code className="text-sm font-mono">{pattern.displayName}</code>
+                      <div className="flex items-center gap-2">
+                        <Toggle
+                          size="sm"
+                          checked={!pattern.excluded}
+                          onChange={() => handleToggleExcluded(pattern.id, !pattern.excluded)}
+                          disabled={isUpdatingPattern}
+                          title={__("Include this cookie in the banner")}
+                        />
+                        <code className="text-sm font-mono">{pattern.displayName}</code>
+                      </div>
+                    </Td>
+                    <Td>
+                      <Badge
+                        variant={pattern.source === "SCRIPT" ? "info" : "neutral"}
+                        title={
+                          pattern.source === "SCRIPT"
+                            ? __("Set by a script at runtime")
+                            : __("Already present when the page was loaded")
+                        }
+                      >
+                        {pattern.source === "SCRIPT" ? __("Script") : __("Pre-existing")}
+                      </Badge>
                     </Td>
                     <Td className="text-sm text-muted-foreground">
                       {humanizeSeconds(pattern.maxAgeSeconds ?? null)}

@@ -12,28 +12,39 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+const sizes = {
+  default: { track: { width: 44, height: 24, padding: 2 }, thumb: 20 },
+  sm: { track: { width: 32, height: 18, padding: 2 }, thumb: 14 },
+} as const;
+
 type Props = {
   checked: boolean;
   onChange: (checked: boolean) => void;
   disabled?: boolean;
+  size?: keyof typeof sizes;
+  title?: string;
 };
 
-export function Toggle({ checked, onChange, disabled = false }: Props) {
+export function Toggle({ checked, onChange, disabled = false, size = "default", title }: Props) {
+  const { track, thumb } = sizes[size];
+  const travel = track.width - thumb - track.padding * 2;
+
   return (
     <button
       type="button"
       role="switch"
       aria-checked={checked}
       disabled={disabled}
+      title={title}
       onClick={() => !disabled && onChange(!checked)}
       style={{
         position: "relative",
         display: "inline-flex",
         alignItems: "center",
         flexShrink: 0,
-        width: 44,
-        height: 24,
-        padding: 2,
+        width: track.width,
+        height: track.height,
+        padding: track.padding,
         borderRadius: 9999,
         border: "none",
         cursor: disabled ? "not-allowed" : "pointer",
@@ -47,13 +58,13 @@ export function Toggle({ checked, onChange, disabled = false }: Props) {
       <span
         style={{
           display: "block",
-          width: 20,
-          height: 20,
+          width: thumb,
+          height: thumb,
           borderRadius: 9999,
           backgroundColor: "white",
           boxShadow: "0 1px 2px rgba(0,0,0,0.1)",
           transition: "transform 200ms ease-in-out",
-          transform: checked ? "translateX(20px)" : "translateX(0)",
+          transform: checked ? `translateX(${travel}px)` : "translateX(0)",
         }}
       />
     </button>

@@ -14,7 +14,7 @@
 
 import { fromMaxAgeSeconds, toMaxAgeSeconds } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
-import { Button, DurationInput, Input, Td, Tr } from "@probo/ui";
+import { Button, DurationInput, Input, Td, Toggle, Tr } from "@probo/ui";
 import { Controller, useForm } from "react-hook-form";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
@@ -28,6 +28,7 @@ export const editCookieRowFragment = graphql`
     displayName
     maxAgeSeconds
     description
+    excluded
   }
 `;
 
@@ -35,6 +36,7 @@ interface CookieFormValues {
   name: string;
   duration: { value: string; unit: string };
   description: string;
+  excluded: boolean;
 }
 
 interface EditCookieRowProps {
@@ -59,6 +61,7 @@ export function EditCookieRow({
       name: cookie.displayName,
       duration: initial,
       description: cookie.description,
+      excluded: cookie.excluded,
     },
   });
 
@@ -67,17 +70,33 @@ export function EditCookieRow({
       name: data.name,
       maxAgeSeconds: toMaxAgeSeconds(data.duration.value, data.duration.unit),
       description: data.description,
+      excluded: data.excluded,
     });
   };
 
   return (
     <Tr>
       <Td className="pr-3">
-        <Input
-          {...register("name")}
-          placeholder={__("Cookie name")}
-        />
+        <div className="flex items-center gap-2">
+          <Controller
+            name="excluded"
+            control={control}
+            render={({ field }) => (
+              <Toggle
+                size="sm"
+                checked={!field.value}
+                onChange={checked => field.onChange(!checked)}
+                title={__("Include this cookie in the banner")}
+              />
+            )}
+          />
+          <Input
+            {...register("name")}
+            placeholder={__("Cookie name")}
+          />
+        </div>
       </Td>
+      <Td />
       <Td className="pr-3">
         <Controller
           name="duration"
@@ -99,7 +118,7 @@ export function EditCookieRow({
         />
       </Td>
       <Td>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-2">
           <Button
             onClick={() => void handleSubmit(onSubmit)()}
             disabled={isUpdating}

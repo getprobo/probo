@@ -51,6 +51,7 @@ export function AddCookieRow({
       name: data.name,
       maxAgeSeconds: toMaxAgeSeconds(data.duration.value, data.duration.unit),
       description: data.description,
+      excluded: false,
     });
   };
 
@@ -62,6 +63,7 @@ export function AddCookieRow({
           placeholder={__("Cookie name")}
         />
       </Td>
+      <Td />
       <Td className="pr-3">
         <Controller
           name="duration"
