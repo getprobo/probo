@@ -286,6 +286,141 @@ func TestCookiePattern_Update(t *testing.T) {
 	})
 }
 
+func TestCookiePattern_Excluded(t *testing.T) {
+	t.Parallel()
+
+	t.Run("defaults to false on create", func(t *testing.T) {
+		t.Parallel()
+		owner := testutil.NewClient(t, testutil.RoleOwner)
+
+		bannerID := factory.CreateCookieBanner(owner)
+		categoryID := factory.CreateCookieCategory(owner, bannerID)
+
+		const query = `
+			mutation CreateCookiePattern($input: CreateCookiePatternInput!) {
+				createCookiePattern(input: $input) {
+					cookiePatternEdge {
+						node {
+							id
+							excluded
+						}
+					}
+				}
+			}
+		`
+
+		var result struct {
+			CreateCookiePattern struct {
+				CookiePatternEdge struct {
+					Node struct {
+						ID       string `json:"id"`
+						Excluded bool   `json:"excluded"`
+					} `json:"node"`
+				} `json:"cookiePatternEdge"`
+			} `json:"createCookiePattern"`
+		}
+
+		err := owner.Execute(query, map[string]any{
+			"input": map[string]any{
+				"cookieCategoryId": categoryID,
+				"pattern":          "test_excluded_default",
+				"matchType":        "EXACT",
+				"displayName":      "Test Excluded Default",
+				"description":      "Should default to not excluded",
+			},
+		}, &result)
+
+		require.NoError(t, err)
+		assert.False(t, result.CreateCookiePattern.CookiePatternEdge.Node.Excluded)
+	})
+
+	t.Run("can be set to true via update", func(t *testing.T) {
+		t.Parallel()
+		owner := testutil.NewClient(t, testutil.RoleOwner)
+
+		bannerID := factory.CreateCookieBanner(owner)
+		categoryID := factory.CreateCookieCategory(owner, bannerID)
+		patternID := factory.CreateCookiePattern(owner, categoryID)
+
+		const query = `
+			mutation UpdateCookiePattern($input: UpdateCookiePatternInput!) {
+				updateCookiePattern(input: $input) {
+					cookiePattern {
+						id
+						excluded
+					}
+				}
+			}
+		`
+
+		var result struct {
+			UpdateCookiePattern struct {
+				CookiePattern struct {
+					ID       string `json:"id"`
+					Excluded bool   `json:"excluded"`
+				} `json:"cookiePattern"`
+			} `json:"updateCookiePattern"`
+		}
+
+		err := owner.Execute(query, map[string]any{
+			"input": map[string]any{
+				"cookiePatternId": patternID,
+				"excluded":        true,
+			},
+		}, &result)
+
+		require.NoError(t, err)
+		assert.True(t, result.UpdateCookiePattern.CookiePattern.Excluded)
+	})
+
+	t.Run("can be toggled back to false", func(t *testing.T) {
+		t.Parallel()
+		owner := testutil.NewClient(t, testutil.RoleOwner)
+
+		bannerID := factory.CreateCookieBanner(owner)
+		categoryID := factory.CreateCookieCategory(owner, bannerID)
+		patternID := factory.CreateCookiePattern(owner, categoryID)
+
+		const updateQuery = `
+			mutation UpdateCookiePattern($input: UpdateCookiePatternInput!) {
+				updateCookiePattern(input: $input) {
+					cookiePattern {
+						id
+						excluded
+					}
+				}
+			}
+		`
+
+		var result struct {
+			UpdateCookiePattern struct {
+				CookiePattern struct {
+					ID       string `json:"id"`
+					Excluded bool   `json:"excluded"`
+				} `json:"cookiePattern"`
+			} `json:"updateCookiePattern"`
+		}
+
+		err := owner.Execute(updateQuery, map[string]any{
+			"input": map[string]any{
+				"cookiePatternId": patternID,
+				"excluded":        true,
+			},
+		}, &result)
+		require.NoError(t, err)
+		assert.True(t, result.UpdateCookiePattern.CookiePattern.Excluded)
+
+		err = owner.Execute(updateQuery, map[string]any{
+			"input": map[string]any{
+				"cookiePatternId": patternID,
+				"excluded":        false,
+			},
+		}, &result)
+		require.NoError(t, err)
+		assert.False(t, result.UpdateCookiePattern.CookiePattern.Excluded)
+	})
+}
+
 func TestCookiePattern_Delete(t *testing.T) {
 	t.Parallel()
 
