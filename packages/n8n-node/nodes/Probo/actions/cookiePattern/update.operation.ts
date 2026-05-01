@@ -54,7 +54,7 @@ export const description: INodeProperties[] = [
 			},
 		},
 		default: 0,
-		description: 'The maximum age of the cookie in seconds (0 to clear)',
+		description: 'The maximum age of the cookie in seconds (leave at 0 to keep unchanged)',
 	},
 	{
 		displayName: 'Excluded',
@@ -133,9 +133,7 @@ export async function execute(
 
 	const input: Record<string, unknown> = { cookiePatternId };
 	if (displayName) input.displayName = displayName;
-	if (maxAgeSeconds !== undefined) {
-		input.maxAgeSeconds = maxAgeSeconds === 0 ? null : maxAgeSeconds;
-	}
+	if (maxAgeSeconds > 0) input.maxAgeSeconds = maxAgeSeconds;
 	if (excluded) input.excluded = excluded === 'true';
 	if (patternDescription) input.description = patternDescription;
 

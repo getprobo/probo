@@ -159,9 +159,7 @@ export async function execute(
 
 	const input: Record<string, unknown> = { cookieBannerId };
 	if (name) input.name = name;
-	if (privacyPolicyUrl !== undefined) {
-		input.privacyPolicyUrl = privacyPolicyUrl === '' ? null : privacyPolicyUrl;
-	}
+	if (privacyPolicyUrl) input.privacyPolicyUrl = privacyPolicyUrl;
 	if (cookiePolicyUrl) input.cookiePolicyUrl = cookiePolicyUrl;
 	if (consentExpiryDays) input.consentExpiryDays = consentExpiryDays;
 	if (consentMode) input.consentMode = consentMode;

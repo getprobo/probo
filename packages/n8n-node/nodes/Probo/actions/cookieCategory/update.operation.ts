@@ -150,7 +150,10 @@ export async function execute(
 	if (slug) input.slug = slug;
 	if (categoryDescription) input.description = categoryDescription;
 	if (gcmConsentTypes) {
-		input.gcmConsentTypes = gcmConsentTypes.split(',').map((s) => s.trim());
+		input.gcmConsentTypes = gcmConsentTypes
+			.split(',')
+			.map((s) => s.trim())
+			.filter((s) => s.length > 0);
 	}
 	if (posthogConsent) input.posthogConsent = posthogConsent === 'true';
 

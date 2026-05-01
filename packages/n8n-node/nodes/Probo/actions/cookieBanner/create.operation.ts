@@ -82,6 +82,9 @@ export const description: INodeProperties[] = [
 				operation: ['create'],
 			},
 		},
+		typeOptions: {
+			minValue: 1,
+		},
 		default: 365,
 		description: 'Number of days before consent expires',
 		required: true,
