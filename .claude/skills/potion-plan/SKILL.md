@@ -2,178 +2,187 @@
 name: potion-plan
 description: >
   Plans feature implementations, refactors, and architectural changes in
-  Probo across both Go backend and TypeScript frontend stacks. Identifies
-  which stacks are involved, determines execution order based on data flow,
-  and creates stack-labeled implementation sections. Use when someone asks
-  to "plan", "design", "break down", "spec out", "architect", or "how
-  should I implement" something. Also triggers for tickets, user stories,
-  feature requests, or specs that need an implementation approach. Even
-  "what files would I need to change for X" or "what is the best approach
-  for X" should activate this skill.
+  Probo across its Go backend and TypeScript frontend stacks. Identifies
+  which stacks are involved, determines execution order based on data
+  flow, and produces a stack-labeled, step-by-step plan with exact file
+  paths, canonical pattern references, codegen commands, and the
+  four-surface API checklist. Use when someone asks to "plan", "design",
+  "break down", "spec out", "architect", or "how should I implement"
+  something. Triggers on tickets, user stories, feature requests, or
+  questions like "what files would I need to change for X" or "what's the
+  best approach for X". Always runs BEFORE `/potion-implement` for
+  non-trivial work.
 allowed-tools: Read, Write, Glob, Grep, AskUserQuestion, Agent, TodoWrite
 model: opus
 effort: high
 ---
 
-# Probo -- Multi-Stack Implementation Planning
+# Probo — Multi-Stack Implementation Planning
 
-Before planning, load shared conventions and each stack's architecture:
-- `.claude/guidelines/shared.md` for cross-cutting conventions
-- `.claude/guidelines/go-backend/index.md` for Go Backend architecture
-- `.claude/guidelines/typescript-frontend/index.md` for TypeScript Frontend architecture
+Before planning, load:
+- `.claude/guidelines/shared.md` — cross-cutting rules
+- `.claude/guidelines/go-backend/index.md` — Go architecture
+- `.claude/guidelines/typescript-frontend/index.md` — TS architecture
 
 ## When to use this skill
 
-- Planning a new feature that may span stacks
-- Designing an architecture change
-- Breaking down a large task into stack-aware steps
+- Planning a new feature that may span the Go backend and TS frontend
+- Designing an architectural change (e.g. new domain entity, new IAM action)
+- Breaking down a four-surface change (GraphQL ↔ MCP ↔ CLI ↔ n8n)
+- Planning a config field addition (which touches 11 files — `shared.md` § 4)
+- Planning a database migration that will be consumed by code
 
 Use this BEFORE the implement skill. Planning catches architectural mistakes
-when they are cheapest to fix -- before any code is written.
+when they are cheapest to fix — before any code is written.
 
 ---
 
-## Phase 0: Pre-planning -- Gather context
-
-Before designing anything, understand the requirement deeply. Skipping this
-phase is the number one cause of plans that miss the mark.
+## Phase 0 — Pre-planning gate
 
 ### 1. Classify the task type
 
-Determine which kind of change this is -- it shapes the entire planning approach:
-
 | Type | Signals | Planning focus |
-|------|---------|---------------|
-| **New feature** | "add", "create", "build", "new" | Entry point, data flow, stacks involved, API contracts |
-| **Refactor** | "refactor", "extract", "move", "rename", "split" | Migration path, backward compat, cross-stack contracts |
-| **Bug fix** | "fix", "broken", "does not work", "regression" | Root cause vs. symptoms, which stack owns the bug |
-| **Migration** | "upgrade", "migrate", "replace", "switch to" | Rollback strategy, incremental steps, feature parity |
+| --- | --- | --- |
+| **New feature** | "add", "create", "build", "new" | Entry point per stack, data flow, four-surface coverage |
+| **Refactor** | "refactor", "extract", "move", "rename", "split" | Migration path, contract compat across stacks |
+| **Bug fix** | "fix", "broken", "doesn't work", "regression" | Which stack owns the root cause; minimal fix |
+| **Migration** | "upgrade", "migrate", "replace", "switch to" | Rollback strategy, incremental steps, parity |
 
-### 2. Explore the codebase
+### 2. Explore before designing
 
-Before asking questions, do your homework:
+Do your homework:
 
-- **Read relevant code** in each potentially affected stack. Grep for related
-  functionality. Understand what exists before proposing what to build.
-- **Check cross-stack contracts.** The GraphQL schema files are the primary
-  contract between Go backend and TypeScript frontend. Read the relevant
-  `.graphql` file in `pkg/server/api/*/v1/`.
-- **Check recent changes.** Look at recent commits in the affected areas.
-- **Identify unknowns.** Note what you could not determine from the code alone.
+- **Grep the affected modules** in each stack. Read the canonical example
+  for each module before proposing changes.
+- **Check cross-stack contracts.** Read the relevant `*.graphql` schema
+  and the Relay fragment that consumes it.
+- **Check `pkg/server/api/mcp/v1/specification.yaml`** if the task touches
+  a backend operation — MCP is easy to forget.
+- **Check `packages/n8n-node/nodes/Probo/actions/`** for the n8n surface.
+- **Check recent commits** in the affected paths. The PR-mining sample in
+  `shared.md` § 13 lists 19 review-enforced rules.
 
 ### 3. Ask targeted clarifying questions
 
-Use `AskUserQuestion` to surface ambiguity. Only ask questions whose answers
-you could NOT determine from the code. Focus on:
+Use `AskUserQuestion` only for ambiguity you can't resolve from code:
 
-- **Acceptance criteria** -- What does "done" look like? What behaviors are expected?
-- **Scope boundaries** -- What is explicitly out of scope?
-- **Constraints** -- Performance requirements? Backward compatibility? Deadlines?
-- **Edge cases** -- How should the system behave in non-happy-path scenarios?
-- **Prior decisions** -- Has this been attempted before? Any rejected approaches?
-- **Stack preferences** -- Should both stacks change, or should one adapt to the other?
+- **Scope of surfaces** — does this change need all four surfaces or only
+  some? (e.g. a connect API change may not need n8n)
+- **Acceptance criteria** — what does "done" look like?
+- **Migration strategy** — for refactors, can we change all surfaces in
+  one PR, or do we need a deprecated phase?
+- **Cross-stack ownership** — should both Console and Trust apps consume
+  this, or only Console?
 
-**Skip this step** if the requirement is already clear and specific (e.g., a
-well-written ticket with acceptance criteria, or a trivial change).
+Skip questions when the requirement is already specific.
 
 ---
 
-## Phase 1: Design the plan
+## Phase 1 — Design the plan
 
 ### 1. Restate the requirement
 
-Write a clear, specific summary. This is your contract:
-- What is being built or changed?
-- What is the expected user-facing behavior?
-- What are the acceptance criteria (explicit or gathered in Phase 0)?
+Write a clear summary with explicit acceptance criteria.
 
-### 2. Identify stacks involved
+### 2. Identify stacks and modules
 
-Which stacks are affected by this change? Read each stack's module map and
-guidelines to determine whether it participates:
-
-- **Go Backend** (Go 1.26) -- modules: cmd, pkg/server, pkg/probo, pkg/iam, pkg/trust, pkg/coredata, pkg/validator, pkg/gid, pkg/agent, pkg/llm, pkg/cmd, e2e
-- **TypeScript Frontend** (React 19 + Relay 19) -- modules: apps/console, apps/trust, packages/ui, packages/relay, packages/helpers, packages/hooks
+| Stack | Modules likely affected |
+| --- | --- |
+| Go backend | which of `pkg-coredata`, `pkg-probo`, `pkg-iam`, `pkg-server/api/{console,trust,connect,mcp,cookiebanner}/v1`, `pkg-cmd`, `pkg-validator`, `pkg-webhook`, `pkg-mailer`, `e2e` |
+| TS frontend | which of `apps-console`, `apps-trust`, `packages-ui`, `packages-relay`, `packages-helpers`, `packages-hooks`, `packages-n8n-node`, `packages-emails` |
 
 ### 3. Determine execution order
 
-Which stack is upstream (provides data/API) vs downstream (consumes)?
-Order implementation so dependencies are built before consumers.
-
 | Task type | Order | Reasoning |
-|-----------|-------|-----------|
-| New API + frontend page | Go Backend -> TypeScript Frontend | Frontend consumes the GraphQL API |
-| Frontend form + backend validation | Go Backend -> TypeScript Frontend | Validation defines constraints |
-| Independent changes | Parallel | No dependency |
-| Shared type change | Schema -> Go Backend -> TypeScript Frontend | Types flow downstream |
-| Database migration + API update | Go Backend -> TypeScript Frontend | Schema change flows up |
+| --- | --- | --- |
+| New backend operation + console page | Go backend → TS frontend | Frontend consumes the API |
+| Form + backend validator | Go backend → TS frontend | Validators define constraints |
+| New email | TS (`packages/emails`) → Go (`pkg/mailer` consumes via `go:embed`) | Templates must be built first |
+| Schema migration + code change | Go backend (migration step before code step) | DB invariant before consumer |
+| Independent | Parallel | No dependency |
+| Trust portal feature | Go (`pkg/trust` + `pkg/server/api/trust/v1`) → `apps/trust` | Same direction |
 
 ### 4. Reference stack-specific patterns
 
-For each affected stack, consult its patterns and conventions:
+For **Go backend** work:
+- `.claude/guidelines/go-backend/patterns.md` — Service/TenantService, Request+Validate, worker pattern, authorization, SQL composition, GraphQL/MCP/CLI shapes, outbox
+- Canonical: `pkg/probo/vendor_service.go`, `pkg/server/api/console/v1/vendor_resolvers.go`, `pkg/coredata/cookie_banner.go`
 
-For Go Backend work: see `.claude/guidelines/go-backend/patterns.md`
-For TypeScript Frontend work: see `.claude/guidelines/typescript-frontend/patterns.md`
+For **TS frontend** work:
+- `.claude/guidelines/typescript-frontend/patterns.md` — `*PageLoader` shape, Relay data flow, `@probo/ui` compound components, forms, n8n feature slices
+- Canonical: `apps/console/src/pages/organizations/findings/FindingsPage.tsx`, `FindingsPageLoader.tsx`, `apps/console/src/environments.ts`
 
 ### 5. Identify cross-stack integration points
 
-- The GraphQL schema file is the contract (e.g., `pkg/server/api/console/v1/schema.graphql`)
-- Custom scalars must agree: GID (string), Datetime (string), CursorKey (string)
-- GraphQL error codes map to typed exceptions in `@probo/relay`
-- Relay compiler reads Go-side `.graphql` files directly via relative path
+For every cross-stack change, document:
+
+- **GraphQL contract** — operation name, variables, response shape, error
+  codes. Remember: fields whose resolvers can fail **must NOT be `!`** —
+  use Relay `@required` on the consumer side (PR #720).
+- **GID flow** — entity types crossing the boundary use base64url; new
+  entity types require `pkg/coredata/entity_type_reg.go` updates.
+- **n8n action shape** — exported action name MUST equal the operation
+  value string.
 
 ### 6. Design the approach (by task type)
 
-#### For new features
+#### New feature
 1. Identify the entry point in each stack
-2. Trace the data flow across stack boundaries via the GraphQL schema
-3. Define the API contract (new types, mutations, queries in `.graphql`)
-4. For Go: plan coredata entity + service + resolver + MCP tool + CLI command + e2e test
-5. For TypeScript: plan Relay queries/fragments, page component, Loader, route
-6. Plan integration tests that verify cross-stack behavior
+2. Trace the data flow: GraphQL/MCP/CLI/n8n entry → resolver/handler →
+   `pkg/probo` service → `pkg/coredata` → Postgres; for the frontend,
+   `*PageLoader` → query → fragment → mutation
+3. Define the four-surface API contract (GraphQL + MCP + CLI + n8n)
+4. Plan e2e tests in `e2e/console/` and `e2e/mcp/`
+5. Plan Storybook stories for new `@probo/ui` components
 
-#### For refactors
-1. Identify all files affected across stacks (Grep for usage)
-2. Design the migration path -- can stacks be migrated independently?
-3. Define backward compatibility strategy for cross-stack contracts
-4. Plan: update schema first, then Go resolvers, then regenerate Relay types, then update TS
+#### Refactor
+1. Grep all usages across both stacks
+2. Plan the migration path — can the contract coexist with the old one?
+3. For GraphQL renames: plan a deprecated alias before removal
+4. Update plan: contract → consumers → remove old contract
 
-#### For bug fixes
-1. Determine which stack owns the root cause (not just where the symptom appears)
+#### Bug fix
+1. Determine which stack owns the root cause (not just where the symptom
+   appears — a frontend symptom may have a backend root cause)
 2. Plan the minimal fix in the owning stack
-3. If the fix changes a contract, plan downstream stack updates
-4. Plan regression tests (e2e for Go, Storybook for UI components)
+3. Plan a regression test (e2e for cross-stack issues, unit for in-stack)
 
-#### For migrations
-1. Define feature parity across all affected stacks
-2. Plan rollback strategy for each stack independently
-3. Design incremental migration: one stack at a time when possible
-4. Plan for contract coexistence (old and new API versions)
+#### Migration
+1. Define feature parity across stacks
+2. Plan rollback for each stack
+3. Plan SQL migration with random-time portion (Probo migrations use
+   date + random 6-digit time, not wall clock — see project memory)
+4. Plan coexistence period (old + new schema column or GraphQL alias)
 
 ### 7. Check pitfalls per stack
 
-These are real issues found in this codebase -- check each one against your plan:
+Cross-stack pitfalls (always check):
+- **All SQL in `pkg/coredata`** (`shared.md` § 13 #1) — never inline raw SQL in `pkg/probo`, workers, or handlers
+- **Wrap errors with `cannot <verb> <noun>: %w`** (`shared.md` § 13 #2)
+- **GraphQL fields whose resolvers can fail must NOT be `!`** (`shared.md` § 13 #4)
+- **Frontend uses Relay-generated types** — never declare local TS types (`shared.md` § 13 #6)
+- **Use `pkg/baseurl` for URL construction in Go**; use `new URL(...)` in TS (`shared.md` § 12)
+- **`http.DefaultClient` is forbidden** — always `kit/httpclient.WithSSRFProtection()`
+- **Never log PII** — entity GIDs only
+- **OAuth/PKCE codes must be cleaned up on failure** (PR #957)
+- **API keys / signing keys configured as arrays** to support rotation (PR #957)
+- **Mutations should update the Relay store**, not refetch (PR #1000)
 
-**Go Backend pitfalls:**
-- Using `pgx.NamedArgs` instead of `pgx.StrictNamedArgs` (approval blocker)
-- Conditional string building in `SQLFragment()` (approval blocker)
-- Error messages starting with "failed to" instead of "cannot" (approval blocker)
-- Missing `t.Parallel()` in e2e subtests (approval blocker)
-- Using `panic` in GraphQL resolvers (approval blocker -- MCP is the exception)
-- Missing node resolver for types implementing Node
-- Forgetting to register new entity type in `NewEntityFromID` switch
+Go-specific pitfalls — see `.claude/guidelines/go-backend/pitfalls.md`:
+- `pkg/coredata/agent_run.go:472` hardcoded SQL `'PENDING'` (drift)
+- `pkg/iam/policy` — `In()`/`NotIn()` builders documented but missing
+- `pkg/iam/oidc` — provider `error_description` logged verbatim (drift)
+- `pkg/agent/tools/search` — bare `http.Client` (SSRF gap)
 
-**TypeScript Frontend pitfalls:**
-- Using `withQueryRef` in route definitions (approval blocker -- use Loader component)
-- Using `useMutationWithToasts` (deprecated -- use `useMutation` + `useToast`)
-- Wrong Relay environment for page area (IAM pages use `iamEnvironment`)
-- Forgetting `@appendEdge`/`@deleteEdge` on mutations
-- Hardcoding paths without `getPathPrefix()` in apps/trust
-- Hand-writing TypeScript interfaces that mirror GraphQL types
+TS-specific pitfalls — see `.claude/guidelines/typescript-frontend/pitfalls.md`:
+- Forgetting `*PageLoader` provider (`CoreRelayProvider` / `IAMRelayProvider`)
+- Crossing the core/iam Relay environment boundary silently fails codegen
+- Inline SVGs forbidden — extract as React component or use Phosphor icons
+- `commit*` is not a good name for a mutation handler — use the action verb
 
 ---
 
-## Phase 2: Produce the plan
+## Phase 2 — Produce the plan
 
 ### File structure mapping
 
@@ -181,10 +190,10 @@ Before defining steps, map every file that will be created or modified.
 This locks in decomposition decisions before writing steps.
 
 For each file:
-- **Path** -- verified with Glob (never guessed)
-- **Action** -- create, modify, or delete
-- **Responsibility** -- one clear purpose
-- **Based on** -- canonical example it follows
+- **Path** — verified with Glob (never guessed)
+- **Action** — create, modify, or delete
+- **Responsibility** — one clear purpose
+- **Based on** — canonical example it follows
 
 Follow codebase conventions for file organization. Files that change
 together should live together. Split by responsibility, not by layer.
@@ -194,18 +203,20 @@ together should live together. Split by responsibility, not by layer.
 Each step must be a **single, concrete action** completable in 2-5 minutes.
 
 **Bad step:** "Implement the service layer"
-**Good step:** "Create `pkg/probo/widget_service.go` with the
-`CreateWidget` method following the pattern in
-`pkg/probo/vendor_service.go:45-80`"
+**Good step:** "Create `pkg/probo/finding_service.go` with `Create` method
+following the Request+Validate pattern at
+`pkg/probo/vendor_service.go:83-145`. Include `pg.WithTx` block that calls
+`webhook.InsertData` for the `finding.created` event."
 
 Each step must include:
-- **Exact file path** (verified with Glob/Grep -- never guessed)
+- **Exact file path** (verified with Glob/Grep)
 - **What to do** (create, modify specific lines, delete, wire up)
-- **Code** -- actual code or detailed pseudo-code for the change. If the
-  step creates a file, show the file contents. If it modifies a file, show
-  the before/after or the new code to insert. Never write "follow pattern X"
-  without also showing what the resulting code looks like.
-- **Verification** (exact command to run and expected output)
+- **Code** — actual code or detailed pseudo-code. Show file contents for
+  new files, before/after for modifications. Never write "follow pattern X"
+  without showing the resulting code.
+- **Verification** (exact command and expected output, e.g.
+  `go build ./...`, `make lint`, `make test MODULE=./pkg/probo`,
+  `npx relay-compiler`, `npx n8n-node lint`)
 
 ### Plan output format
 
@@ -216,23 +227,31 @@ Each step must include:
 
 **Goal:** {one sentence: what this achieves}
 **Type:** {Feature | Refactor | Bug fix | Migration}
-**Tech:** {key technologies, libraries, or frameworks involved}
+**Tech:** {key libraries/frameworks: gqlgen, Relay, pgx, etc.}
 
 ### Summary
-{2-3 sentences: what this plan achieves and why this approach}
+{2-3 sentences: what and why}
 
 ### Acceptance criteria
-- [ ] {Criterion 1 -- specific, testable}
+- [ ] {Criterion 1 — specific, testable}
 - [ ] {Criterion 2}
 
 ### Stacks involved
 | Stack | Role | Why needed |
 |-------|------|-----------|
+| Go backend | upstream / downstream / sole | … |
+| TS frontend | upstream / downstream / sole | … |
+
+### Four-surface coverage (for backend operations)
+- [ ] GraphQL — schema + resolver + `go generate ./pkg/server/api/<api>/v1`
+- [ ] MCP — `specification.yaml` + `go generate ./pkg/server/api/mcp/v1` + resolver body + `pkg/server/api/mcp/v1/types/<entity>.go`
+- [ ] CLI — `pkg/cmd/<resource>/<verb>.go`
+- [ ] n8n — `packages/n8n-node/nodes/Probo/actions/<resource>/<op>.ts` + register in `actions/index.ts` + `Probo.node.ts`
 
 ### Execution order
-{Which stack goes first and why -- justified by data flow direction}
+{Stack A first because data flow direction: …}
 
-## Go Backend (Go 1.26)
+## Go backend (Go 1.26)
 
 ### File structure
 | File | Action | Responsibility | Based on |
@@ -240,32 +259,30 @@ Each step must include:
 
 ### Delivery stages
 
-Group steps into stages. Each stage delivers working, testable software.
-Small changes within this stack may use a single stage.
-
 #### Foundation
-{Minimum viable slice for this stack.}
+{Minimum viable slice for this stack — usually: migration + coredata entity + service skeleton}
 
 1. **{Step name}**
    - File: `{exact path}`
-   - Action: {create | modify lines N-M | wire up in X}
+   - Action: {create | modify lines N-M}
    - Code:
      ```go
      {actual code or detailed pseudo-code}
      ```
-   - Verify: `{command}` -> expect `{output}`
+   - Verify: `go build ./pkg/...` → expect no errors
 
 #### Core
-{Complete happy path for this stack.}
+{Complete happy path — resolvers, MCP tool, CLI command, validation, IAM action}
 
-#### Hardening (if needed)
-{Edge cases, error handling, validation.}
+#### Hardening
+{Edge cases, error switch defaults, e2e tests, RBAC matrix tests}
 
 ### Testing
-- {Exact test file and test names}
-- Run: `make test MODULE=./pkg/foo`
+- Go unit tests: `make test MODULE=./pkg/probo` (testify + parallel + black-box `*_test` package)
+- E2E: `e2e/console/<resource>_test.go`, `e2e/mcp/<resource>_test.go` — factory builders + RBAC matrix + tenant isolation
+- Run: `make test` (or `make test-e2e` for full e2e)
 
-## TypeScript Frontend (React 19 + Relay 19)
+## TypeScript frontend (TS, Node 24+, npm 11+)
 
 ### File structure
 | File | Action | Responsibility | Based on |
@@ -274,60 +291,57 @@ Small changes within this stack may use a single stage.
 ### Delivery stages
 
 #### Foundation
-{Minimum viable slice for this stack.}
+{Minimum viable slice — usually: GraphQL fragment + page skeleton + page loader}
 
 1. **{Step name}**
    - File: `{exact path}`
-   - Action: {create | modify | wire up}
+   - Action: {create | modify}
    - Code:
      ```tsx
      {actual code or detailed pseudo-code}
      ```
-   - Verify: `{command}` -> expect `{output}`
+   - Verify: `make relay && npm run -w apps/console lint`
 
 #### Core
-{Complete happy path for this stack.}
+{Page implementation, mutations, forms, list filtering}
+
+#### Hardening
+{Loading skeletons, error boundaries, Storybook stories for new `@probo/ui`}
 
 ### Testing
-- {Storybook story file and name, or vitest file}
-- Run: `cd packages/ui && npm run storybook` or `cd packages/helpers && npx vitest run`
+- Vitest: `npm run -w apps/console test` (or `-w packages/ui`, etc.)
+- Storybook stories for new `@probo/ui` components
+- Manual: `npm run -w apps/console dev`
 
 ### Cross-stack integration points
 | Contract | Upstream | Downstream | Shape |
 |----------|----------|------------|-------|
-| {Endpoint/type} | {Stack} | {Stack} | {Request/response/type definition} |
+| {GraphQL operation name} | Go backend | apps/console | {variables + response} |
+| {MCP tool name} | Go backend | (n8n + AI agents) | {input + output schema} |
 
 ### Dependency graph
-- {Go Backend} Step 1 -> {Go Backend} Step 2
-- {Go Backend} completes -> {TypeScript Frontend} begins (needs GraphQL schema from Go)
-- {TypeScript Frontend} Step 2 || {TypeScript Frontend} Step 3 (parallel-safe)
+- Go Step 1 → Go Step 2
+- Go (all) → TS Step 1
+- TS Step 2 ∥ TS Step 3 (parallel-safe — no shared file)
 
 ### Risks and mitigations
 | Risk | Stack | Impact | Mitigation |
 |------|-------|--------|------------|
-| {Specific risk} | {Which stack} | {What goes wrong} | {How to prevent/recover} |
+| {Specific risk, not generic} | {Stack} | {What goes wrong} | {How to prevent} |
 ```
 
 ---
 
-## Phase 3: Verify the plan
-
-Save the plan as a draft, then verify it -- tools first for mechanical
-checks, then judgment for what tools cannot catch. Non-trivial plans get
-parallel review agents for fresh eyes.
+## Phase 3 — Verify the plan
 
 ### 1. Save as draft
 
 Save to `docs/plans/{YYYY-MM-DD}-{feature-name}.md` (referred to as
-`{plan-file}` below). This makes the plan available for tool-assisted
-verification in the next steps.
+`{plan-file}` below).
 
 ### 2. Mechanical checks
 
-Run these tool-assisted checks on the saved draft. Fix any failures
-before proceeding to cognitive review.
-
-**Placeholder scan** -- Grep the plan for banned phrases:
+**Placeholder scan** — Grep the plan for banned phrases:
 ```
 Grep({
   pattern: "TBD|TODO|fill in later|add appropriate|add validation|write tests|similar to step|see docs|handle edge cases|as needed|if applicable",
@@ -340,164 +354,173 @@ Any matches are plan failures. Replace each with concrete content:
 
 | Banned phrase | What to write instead |
 |--------------|----------------------|
-| "TBD", "TODO", "fill in later" | The actual content, or add to Risks as an open question |
-| "Add appropriate error handling" | Which error type, how to catch it, what to return |
-| "Add validation" | Which fields, what constraints, what error messages |
-| "Write tests for the above" | Exact test file, test names, and key assertions |
-| "Similar to step N" | Repeat the full details -- steps may be read out of order |
-| "Handle edge cases" | List each edge case and its expected behavior |
+| "TBD", "TODO", "fill in later" | Actual content, or move to Risks as open question |
+| "Add appropriate error handling" | Which error type, how to catch it, what to return — for Go: `cannot <verb>: %w` wrapping; for resolvers: switch with mandatory `default:` → `gqlutils.Internal(ctx)` |
+| "Add validation" | Which fields, what `validator.*` calls, what error messages |
+| "Write tests for the above" | Exact test file (`e2e/console/<x>_test.go`), test names, key assertions |
+| "Similar to step N" | Repeat full details — steps may be read out of order |
+| "Handle edge cases" | List each edge case + expected behavior |
 
-**File path verification** -- for every file path mentioned in the plan,
-verify it exists:
-```
-Glob({ pattern: "{exact_path}" })
-```
-Remove or correct any path that does not resolve.
+**File path verification** — for every file path mentioned in the plan,
+verify it exists with Glob. Remove or correct any unresolved path.
 
-**Criteria coverage** -- read the acceptance criteria and verify each one
-maps to at least one implementation step. List any uncovered criteria and
-add steps for them.
+**Criteria coverage** — every acceptance criterion must map to ≥ 1
+implementation step. Every backend operation in the plan must have all
+four surfaces covered (GraphQL + MCP + CLI + n8n).
 
 ### 3. Cognitive review
 
-These checks require judgment -- re-read the plan and verify:
-
-- [ ] **Type consistency** -- function names, type names, and method
-      signatures used in later steps match earlier definitions (e.g.,
-      `createWidget` in step 3 is not called `buildWidget` in step 7).
-      Import paths reference files actually created in prior steps.
-- [ ] **Dependencies** -- steps are ordered so each step's inputs exist
-      when it runs. Parallel-safe steps are explicitly identified.
-      No circular dependencies.
-- [ ] **Scope** -- plan solves the stated requirement, no more, no less.
-      No speculative features or "while we are at it" additions.
-      If > 5 modules touched, splitting has been considered and justified.
-- [ ] **Step completeness** -- every step has: file path, action, code
-      block, verification command. File structure table accounts for every
-      file mentioned in steps. Testing plan covers all new behavior.
-
-### Cross-stack coherence
-- [ ] API contracts match between upstream and downstream steps
-- [ ] GraphQL types are defined before any stack references them
-- [ ] Execution order is justified by data flow direction
-- [ ] No orphaned references (e.g., frontend calling an API not in the plan)
-- [ ] Three-interface rule: if adding a feature, GraphQL + MCP + CLI all planned
+- [ ] **Type consistency** — function names, type names, signatures in
+      later steps match earlier definitions. Import paths reference files
+      created in prior steps. GraphQL operation names in the TS section
+      match the schema names in the Go section.
+- [ ] **Dependencies** — steps ordered so inputs exist when needed.
+      Codegen run between schema edits and consumer code. Migrations
+      committed before code that depends on them.
+- [ ] **Scope** — plan solves the requirement, no more, no less. No
+      "while we're at it" additions.
+- [ ] **Step completeness** — every step has file path, action, code
+      block, verification command. File structure table accounts for
+      every file mentioned in steps.
+- [ ] **Cross-stack coherence** — frontend operation names match GraphQL
+      schema names, MCP tool input shapes match resolver expectations,
+      n8n action exports match operation strings.
+- [ ] **Four-surface check** — for any backend operation change, all four
+      surfaces have steps.
+- [ ] **No drift introduced** — plan does not add to known active drift
+      (e.g. don't add new hardcoded SQL outside `pkg/coredata`).
 
 ### 4. Parallel review agents (non-trivial plans only)
 
-Dispatch parallel review agents if the plan meets **any** of these:
+Dispatch parallel review agents if the plan meets ANY of these:
 - Touches 3+ modules
 - Has 10+ implementation steps
-- Involves cross-cutting architectural changes
+- Crosses both stacks
+- Adds a new entity type (registry update + 4-surface impact)
+- Touches IAM (security-critical)
 
-Launch 3 agents in parallel, each reading the saved plan file. Each agent
-rates findings on a 0-100 confidence scale and reports only issues >= 80.
+Launch 3 agents in parallel, each reading the saved plan file. Each rates
+findings 0-100 confidence and reports only ≥ 80.
 
-**Agent 1 -- Completeness:**
+**Agent 1 — Completeness:**
 > Review the plan at `{plan-file}` for gaps.
-> Check: does every acceptance criterion have matching steps? Are there
-> untested behaviors? Missing error handling paths? Edge cases not
-> addressed? Read the project guidelines at `.claude/guidelines/` for
-> context on what patterns are expected.
-> Rate each finding 0-100 confidence. Report only >= 80.
+> Check: every acceptance criterion has matching steps; four-surface
+> coverage is complete for any backend operation; e2e tests exist for
+> new GraphQL/MCP endpoints; new `@probo/ui` components have Storybook
+> stories. Read the project guidelines at `.claude/guidelines/shared.md`
+> and the relevant stack guidelines for context.
+> Rate each finding 0-100 confidence. Report only ≥ 80.
 
-**Agent 2 -- Consistency:**
+**Agent 2 — Consistency:**
 > Review the plan at `{plan-file}` for internal consistency.
-> Check: do names, types, and signatures match across steps? Are
-> dependencies ordered correctly? Do import paths reference files created
-> in prior steps? Does the dependency graph have gaps?
-> Rate each finding 0-100 confidence. Report only >= 80.
+> Check: GraphQL operation names match between Go and TS sections; MCP
+> tool input shapes match resolver code; n8n exported action names
+> match operation strings; codegen commands run between schema edits and
+> consumer steps; migration steps come before code steps that depend on
+> them.
+> Rate each finding 0-100 confidence. Report only ≥ 80.
 
-**Agent 3 -- Feasibility:**
+**Agent 3 — Feasibility:**
 > Review the plan at `{plan-file}` against the actual codebase.
-> Check: do the referenced canonical examples exist and support the plan?
-> Are verification commands realistic? Is step granularity appropriate?
-> Read the cited files and verify the patterns match.
-> Rate each finding 0-100 confidence. Report only >= 80.
+> Check: referenced canonical examples exist and support the plan
+> (`pkg/probo/vendor_service.go`, `apps/console/src/pages/.../FindingsPage.tsx`,
+> etc.). Verification commands are realistic. Step granularity is
+> appropriate (no 30-minute mega-steps). The plan respects known active
+> drift listed in `shared.md` § 14.
+> Rate each finding 0-100 confidence. Report only ≥ 80.
 
-Skip this step for trivial plans (< 3 modules, < 10 steps, no
-architectural changes).
+Skip this step for trivial plans (< 3 modules, < 10 steps, single stack,
+no IAM, no new entity type).
 
 ### 5. Fix and re-save
 
-Fix all issues found in steps 2-4. Re-save the plan to
-`{plan-file}`.
+Fix all issues found. Re-save the plan.
 
 ---
 
-## Phase 4: Present and hand off
+## Phase 4 — Present and hand off
 
-1. **Track** -- call the TodoWrite tool with one entry per implementation
-   step so progress is visible in Claude Code's native task list:
+1. **Track** — call TodoWrite with one entry per step:
    ```json
    {
      "todos": [
-       { "id": "{feature-name}-1", "task": "Foundation -- Step 1: {description}", "status": "pending" },
-       { "id": "{feature-name}-2", "task": "Foundation -- Step 2: {description}", "status": "pending" }
+       { "id": "{feature-name}-1", "task": "Foundation — Step 1: {description}", "status": "pending" },
+       { "id": "{feature-name}-2", "task": "Foundation — Step 2: {description}", "status": "pending" }
      ]
    }
    ```
-2. **Present** a summary highlighting key design decisions and any
-   remaining open questions from the Risks section.
-3. **Hand off** -- offer to start implementation:
-
+2. **Present** summary highlighting key design decisions and any open
+   questions from the Risks section.
+3. **Hand off** — offer implementation:
    > Plan saved to `{plan-file}` with {N} steps tracked.
    >
    > Ready to implement? Use `/potion-implement` to start execution.
 
+---
+
 ## Key patterns quick reference
 
-**Go Backend:**
-- Two-level service tree: `Service` -> `TenantService` with sub-services
-- Request struct + `Validate()` with fluent validator
-- All SQL in `pkg/coredata` only (no SQL in service or resolver packages)
-- `pgx.StrictNamedArgs` always (never `NamedArgs`)
-- Error wrapping: `fmt.Errorf("cannot <action>: %w", err)`
-- ABAC policies in `pkg/probo/policies.go` and `pkg/iam/iam_policies.go`
+### Go backend
+- **Service / TenantService** — `Service.WithTenant(tenantID) → *TenantService → *FooService`. Sub-services hold `svc *TenantService` only — never construct a Scoper. Service methods are authorization-free; IAM checks happen in the resolver.
+- **Request + Validate** — every mutating method takes a `Request` struct with a `Validate() error` method. `Validate()` is the first line, uses `validator.New() + v.Check(...) + v.Error()`. Update requests use double pointers (`**string`) to distinguish "no change" from "set NULL".
+- **Authorization** — resolver first line: `if err := r.authorize(ctx, id, action); err != nil { return nil, err }`. MCP uses `MustAuthorize` (panics on internal error).
+- **Worker** — `Claim` (FOR UPDATE SKIP LOCKED, returns `worker.ErrNoTask`), `Process`, `RecoverStale` (5-min default).
+- **SQL composition** — `fmt.Sprintf` template + `pgx.StrictNamedArgs` + `maps.Copy` to merge args.
+- **Outbox** — `webhook.InsertData(ctx, tx, ...)` inside the same `pg.WithTx` as the entity write.
+- **Error switch** — every resolver error path has a mandatory `default:` returning `gqlutils.Internal(ctx)`.
+- **Composition root** — `pkg/probod/probod.go` is the only place dependencies are wired.
 
-**TypeScript Frontend:**
-- Relay colocated operations (queries/fragments in component files)
-- Loader component pattern (`useQueryLoader` + `useEffect`)
-- `tv()` from tailwind-variants for component variants
-- `useMutation` + `useToast` for mutations
-- Permission fragments: `canX: permission(action: "core:entity:verb")`
+### TypeScript frontend
+- **`*PageLoader` shape** — `CoreRelayProvider` (or `IAMRelayProvider`) wraps; `useQueryLoader` in `useEffect`; show `*PageSkeleton` while `queryRef` is null; `Suspense` wraps `*Page`.
+- **Relay data flow** — preloaded query → `usePreloadedQuery` → `useFragment` per row → `useMutation` with `@deleteEdge`/`@appendEdge`/`@prependEdge`. Update the store; do NOT refetch (PR #1000).
+- **Two-environment split** — `apps/console/src/pages/iam/**` compiles against `__generated__/iam/`; everything else against `__generated__/core/`. Crossing this boundary silently fails Relay codegen.
+- **`@probo/ui` compound components** — flat exports (`*Root`, `*Shell`, `*Skeleton`), `tailwind-variants` in `variants.ts`, skeleton co-located, custom `Slot` for `asChild`.
+- **Forms** — `react-hook-form` + Zod resolver; translator-injected helpers from `@probo/helpers`.
+- **n8n action** — exported action name MUST equal operation value string; IAM ops use `proboConnectApiRequest`.
 
 ## Stack reference
 
-### Go Backend (Go 1.26)
-- Modules: cmd, pkg/server, pkg/probo, pkg/iam, pkg/trust, pkg/coredata, pkg/validator, pkg/gid, pkg/cmd, e2e
+### Go backend
+- Modules: `pkg-coredata`, `pkg-gid`, `pkg-iam`, `pkg-probo`, `pkg-server`, `pkg-agent`, `pkg-llm`, `pkg-validator`, `pkg-{accessreview,connector,esign,docgen,cookiebanner,trust,filemanager,filevalidation,bootstrap,probod,probodconfig,cmd,cli,page,certmanager,crypto}`, `cmd`, `e2e`, `internal`, `pkg-net-infra`, `pkg-{mail,mailer,mailman,slack,webhook}`
 - Patterns: `.claude/guidelines/go-backend/patterns.md`
 - Testing: `.claude/guidelines/go-backend/testing.md`
 - Canonical example: `pkg/probo/vendor_service.go`
 
-### TypeScript Frontend (React 19 + Relay 19)
-- Modules: apps/console, apps/trust, packages/ui, packages/relay, packages/helpers, packages/hooks
+### TS frontend
+- Modules: `apps-console`, `apps-trust`, `packages-ui`, `packages-relay`, `packages-routes`, `packages-helpers`, `packages-hooks`, `packages-i18n`, `packages-emails`, `packages-n8n-node`, `packages-cookie-banner`, `packages-prosemirror`, `packages-coredata`, `packages-vendors`, `packages-react-lazy`
 - Patterns: `.claude/guidelines/typescript-frontend/patterns.md`
 - Testing: `.claude/guidelines/typescript-frontend/testing.md`
-- Canonical example: `apps/console/src/pages/organizations/documents/DocumentsPageLoader.tsx`
+- Canonical example: `apps/console/src/pages/organizations/findings/FindingsPage.tsx`
 
-## Canonical examples
+## Canonical examples (cite these in plans)
 
-When suggesting patterns, point to these real files:
-
-- `pkg/coredata/asset.go` -- Complete coredata entity with all standard methods
-- `pkg/probo/vendor_service.go` -- Service layer: Request, Validate, WithTx, webhook
-- `pkg/server/api/console/v1/v1_resolver.go` -- GraphQL resolver pattern
-- `e2e/console/vendor_test.go` -- E2E test with RBAC and tenant isolation
-- `apps/console/src/pages/organizations/documents/DocumentsPageLoader.tsx` -- Canonical Loader component
-- `packages/ui/src/Atoms/Badge/Badge.tsx` -- UI atom with tv() variants
+- `pkg/coredata/cookie_banner.go` — full coredata entity pattern
+- `pkg/probo/vendor_service.go` — Request+Validate + tx + outbox
+- `pkg/probo/evidence_description_worker.go` — worker pattern
+- `pkg/server/api/console/v1/vendor_resolvers.go` — resolver shape
+- `pkg/server/api/mcp/v1/specification.yaml` — MCP source of truth
+- `pkg/connector/oauth2.go` — OAuth2 with HMAC stateless state token
+- `pkg/probod/probod.go` — composition root
+- `apps/console/src/pages/organizations/findings/FindingsPage.tsx` — current-pattern page
+- `apps/console/src/pages/organizations/findings/FindingsPageLoader.tsx` — `*PageLoader` shape
+- `apps/console/src/environments.ts` — Relay environments
+- `packages/ui/src/atoms/Button/` — `@probo/ui` shape
+- `e2e/console/<entity>_test.go` — e2e pattern with factory builders + RBAC matrix
 
 ## Rules
 
 - Never guess file paths. Glob/Grep to verify they exist.
-- Each stack section references that stack's actual patterns from the guidelines.
-- Cross-stack integration points must be explicit (GraphQL schema shape).
+- Each stack section references that stack's actual patterns from the
+  guidelines.
+- Cross-stack integration points must be explicit (GraphQL operation
+  shape, MCP tool schema, n8n action export name).
 - Execution order must be justified by data flow direction.
-- If the requirement is ambiguous after Phase 0, list what still needs clarification.
-- For complex plans touching 3+ modules within a single stack, consider
-  delegating to the planner agent for a focused planning session.
-- Plans should be implementable by someone who only reads the plan
-  and the guidelines -- no assumed tribal knowledge.
-- Every risk must have a mitigation. "API might be slow" is not a risk --
-  "Query may exceed 500ms for tables > 1M rows; mitigate with index on
-  `tenant_id`" is.
+- For complex plans (3+ modules in a single stack OR cross-stack), consider
+  delegating to the `potion-planner` agent for a focused planning session.
+- Plans should be implementable by someone who only reads the plan and
+  the guidelines — no assumed tribal knowledge.
+- Every risk must have a mitigation. "Query may be slow" is not a risk —
+  "Query against `findings` may exceed 500ms when org has > 100k rows;
+  mitigate by adding the index in the migration step" is.
+- For backend operations, the four-surface checklist is mandatory.
+- For config field changes, the 11-file checklist is mandatory.

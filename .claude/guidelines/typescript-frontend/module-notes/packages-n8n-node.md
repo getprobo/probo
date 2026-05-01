@@ -1,69 +1,47 @@
-# Probo -- TypeScript Frontend -- packages/n8n-node
+# Probo — TypeScript Frontend — @probo/n8n-node
 
-> Module-specific notes for `packages/n8n-node` (`@probo/n8n-nodes-probo`)
-> For stack-wide patterns, see [patterns.md](../patterns.md) and [conventions.md](../conventions.md)
+The **community n8n node** for Probo. **236 files**, organised as resource × operation feature
+slices. Published to npm as `@probo/n8n-nodes-probo` from the release pipeline.
 
-## Purpose
+> Authoritative source: [`contrib/claude/n8n.md`](../../../contrib/claude/n8n.md).
 
-An n8n community node package that exposes the Probo API as n8n workflow actions. It provides a single `INodeType` (Probo) with approximately 80 operation files covering CRUD for all major resources, plus a raw GraphQL execute escape hatch.
-
-## Architecture
+## Layout
 
 ```
-nodes/Probo/
-  Probo.node.ts              # INodeType entry point
-  Probo.node.json            # Node metadata
-  GenericFunctions.ts        # HTTP transport layer (GraphQL requests, pagination)
+packages/n8n-node/nodes/Probo/
+  Probo.node.ts                         ← node manifest, properties array (resource selector)
   actions/
-    index.ts                 # Resource registry, dynamic dispatch
+    index.ts                            ← resources map
     <resource>/
-      index.ts               # Operation dropdown + re-exports
-      create.operation.ts    # INodeProperties + execute function
-      get.operation.ts
-      getAll.operation.ts
-      update.operation.ts
-      delete.operation.ts
-credentials/
-  ProboApi.credentials.ts    # Server URL + API key
+      <operation>.operation.ts          ← one file per operation
+      index.ts                          ← exports a resource module
+  helpers/
+    proboApiRequest.ts                  ← Console / Trust API helper
+    proboConnectApiRequest.ts           ← IAM (Connect) API helper
+  graphql/                              ← generated GraphQL operations
 ```
 
-## Adding a New Operation
+The build generates GraphQL query strings into `graphql/` from `.graphql` files; **esbuild**
+bundles the node for n8n consumption.
 
-1. Create `<verb>.operation.ts` in `actions/<resource>/` with exported `description` (INodeProperties[]) and `execute` function
-2. Add the operation value to the resource's `index.ts` operation dropdown
-3. Re-export the operation module from `index.ts` under a camelCase alias matching the operation value
-4. If new resource: register it in `actions/index.ts` resource array
+## How to add a new operation
 
-## Key Conventions
+1. Create `actions/<resource>/<operation>.operation.ts` exporting `description`, `properties`,
+   and an `execute` function.
+2. Add the export to `actions/<resource>/index.ts` — **the export name MUST match the operation's
+   `value` string** referenced in the `Probo.node.ts` properties array. A mismatch makes the
+   operation invisible at runtime with no error.
+3. Pick the right API helper:
+   - `proboApiRequest` for Console / Trust (`/api/console/v1/graphql`, `/api/trust/v1/graphql`).
+   - **`proboConnectApiRequest`** for **IAM** (`/api/connect/v1/graphql`).
+4. Run `npx n8n-node lint` — required by CI.
 
-- **GraphQL queries are inline template literals** inside `execute()` -- never separate files
-- **`displayOptions.show`** must be set on every `INodeProperty` to scope fields to their resource + operation
-- **`additionalFields`** collection pattern for optional create/update fields
-- **Options collection** for optional response shaping (toggling GraphQL fragment inclusion)
-- **Cursor pagination**: `proboApiRequestAllItems` loops with page size 100 until `hasNextPage` is false
+The four-surface API rule (see [shared.md § 3](../shared.md#3-the-four-surface-api-rule)) means
+this update happens in lockstep with GraphQL schema, MCP tool, and CLI command additions.
 
-## Transport Layer
+## Top pitfalls
 
-All HTTP calls funnel through `GenericFunctions.ts`:
-
-| Function | API | Purpose |
-|----------|-----|---------|
-| `proboApiRequest` | Console | Single GraphQL request |
-| `proboConnectApiRequest` | Connect/IAM | Single GraphQL request |
-| `proboApiRequestAllItems` | Console | Cursor-paginated list |
-| `proboConnectApiRequestAllItems` | Connect/IAM | Cursor-paginated list |
-| `proboApiMultipartRequest` | Console | File upload (multipart/form-data) |
-
-GraphQL-level errors (HTTP 200 with `response.errors`) are detected and converted to `NodeApiError` with `httpCode: '200'`.
-
-## Known Inconsistency: User Resource
-
-The `user` resource uses non-standard operation values: `createUser`, `getUser`, `listUsers`, `inviteUser`, `updateUser`, `updateMembership`, `removeUser` instead of the standard `create`, `get`, `getAll` pattern used by all other resources. The dispatch logic in `actions/index.ts` relies on exact key matching, so these longer names must match the export aliases in `user/index.ts`.
-
-## Publishing
-
-This package is published to npmjs.org as `@probo/n8n-nodes-probo` on tag push via CI. The version in `package.json` is currently `0.0.1`.
-
-## No Tests
-
-There are no test files in this package. Operations, GenericFunctions pagination, and error handling have zero automated coverage.
+1. **Resource export-name mismatch** — see
+   [pitfalls.md § 19](../pitfalls.md#19-packagesn8n-node-resource-export-name-mismatch).
+2. **Wrong API helper for IAM operations** — see
+   [pitfalls.md § 20](../pitfalls.md#20-packagesn8n-node-iam-operations-using-proboapirequest).

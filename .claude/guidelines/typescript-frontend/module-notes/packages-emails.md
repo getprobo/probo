@@ -1,90 +1,51 @@
-# Probo -- TypeScript Frontend -- packages/emails
+# Probo — TypeScript Frontend — @probo/emails
 
-> Module-specific notes for `packages/emails` (`@probo/emails`)
-> For stack-wide patterns, see [patterns.md](../patterns.md) and [conventions.md](../conventions.md)
-
-## Purpose
-
-React Email templates for all transactional emails sent by Probo. Templates are authored in TSX using `@react-email/components`, compiled to Go-template HTML files by a build script, and consumed by the Go mailer via `//go:embed dist` and `html/template` rendering.
-
-## Hybrid Architecture
-
-This package spans both stacks -- TSX templates on the TypeScript side, Go `Presenter` on the Go side:
+**14 React Email templates** authored as TSX, pre-rendered at build time into Go template files
+that the backend embeds via `//go:embed`. The package straddles the TS/Go boundary: TS produces
+the artifacts, Go consumes them.
 
 ```
-Developer writes .tsx template
-    |
-npm run build (scripts/build.ts)
-    |
-    v
-dist/<name>.html.tmpl + dist/<name>.txt.tmpl
-    |
-go:embed dist (emails.go)
-    |
-    v
-Go Presenter.Render*() executes templates at send time
+packages/emails/
+  src/
+    EmailLayout.tsx           ← branding tokens (colors, header logo)
+    <Template>.tsx            ← React Email JSX with Go template placeholders
+  scripts/
+    build.ts                  ← tsx + render() → dist/<Template>.html.tmpl
+                                                 dist/<Template>.txt.tmpl
+  dist/                       ← generated; consumed by pkg/mailer via //go:embed
 ```
 
-## Adding a New Email Template
-
-Changes required in **four places**:
-
-1. **New `.tsx` file** in `packages/emails/src/` -- wrap content in `<EmailLayout>`, embed Go template variables as JSX string literals
-2. **New `.txt` file** in `packages/emails/templates/` -- plain-text fallback with the same Go template variables
-3. **Entry in `scripts/build.ts`** `TemplateConfig` array -- maps slug to component
-4. **New `Render*` method** in `packages/emails/emails.go` -- builds template data, executes both templates
-
-Missing any step causes a build failure or runtime panic.
-
-## Go Template Variables in JSX
-
-The fundamental encoding trick: Go template syntax is embedded as JSX string literals so it passes through React rendering unchanged.
+**Placeholders are Go template strings inside JSX literals**:
 
 ```tsx
-// From packages/emails/src/Invitation.tsx
-<Text style={bodyText}>
-  {"{{.RecipientFullName}}"}, you have been invited to join {"{{.OrganizationName}}"}.
-</Text>
-<Button href={"{{.InvitationURL}}"} style={button}>
-  Accept Invitation
-</Button>
+<p>Hello {`{{ .UserFullName }}`},</p>
+<p>Click <a href={`{{ .ActionURL }}`}>this link</a> to continue.</p>
 ```
 
-Go range loops:
+There is **no TS-side type-check** of placeholder names — typos surface only at Go runtime when
+`text/template` complains. Cross-check placeholder names against the data struct in `pkg/mailer`.
 
-```tsx
-{"{{range .FileNames}}"}
-<Text>{"{{.}}"}</Text>
-{"{{end}}"}
-```
+## Key files
 
-**Pitfall**: Writing `{{.Foo}}` bare in JSX will be treated as JSX expression syntax and cause a TypeScript parse error. Always wrap in `{'{{.Foo}}'}` or `` {`{{.Foo}}`} ``.
+- `packages/emails/src/EmailLayout.tsx` — single source of truth for email branding (colors,
+  fonts, header logo). Update both this file **and** the app Tailwind theme when brand colors
+  change.
+- `packages/emails/scripts/build.ts` — the build entry; runs via `tsx`.
 
-## EmailLayout
+## How to extend
 
-`packages/emails/src/components/EmailLayout.tsx` is the shared wrapper providing:
-- Consistent container and header logo
-- Greeting line (`Hi {{.RecipientFullName}},`)
-- Footer with company address
-- "Powered By Probo" branding
-- Exported CSS-in-JS style constants (`button`, `bodyText`, `footerText`)
+1. Add `packages/emails/src/<NewTemplate>.tsx` using `EmailLayout` and React Email primitives.
+2. Use `{`{{ .FieldName }}`}` placeholders matching the Go data struct in `pkg/mailer`.
+3. Run the package build (`tsx scripts/build.ts`, or `make build WITH_APPS=1`) — verify
+   `dist/<NewTemplate>.html.tmpl` and `dist/<NewTemplate>.txt.tmpl` are generated.
+4. Wire the new template into `pkg/mailer` (Go side) — add it to `//go:embed` and the dispatch
+   map.
+5. The four-surface API rule applies if the email is triggered by a new public operation — see
+   [shared.md § 3](../shared.md#3-the-four-surface-api-rule).
 
-All email templates compose inside `<EmailLayout>`.
+## Top pitfalls
 
-## Template Components Have No Props
-
-Templates accept no props. The build script renders each as a zero-argument function: `render(() => ConfirmEmail())`. All dynamic values are Go template placeholders embedded as literal strings.
-
-## Build Dependency
-
-The `dist/` directory must be built before the Go binary is compiled. `go:embed dist` is evaluated at Go compile time. `make build` orchestrates this, but running `go build` directly will fail if `dist/` is missing.
-
-## Key Files
-
-| File | Purpose |
-|------|---------|
-| `packages/emails/src/Invitation.tsx` | Canonical short template example |
-| `packages/emails/src/components/EmailLayout.tsx` | Shared layout + style constants |
-| `packages/emails/scripts/build.ts` | Build pipeline: TSX to `.html.tmpl` |
-| `packages/emails/emails.go` | Go Presenter: template execution, asset URL resolution |
-| `packages/emails/templates/invitation.txt` | Plain-text fallback example |
+1. **Stale `dist/` at `go build` time** — see
+   [pitfalls.md § 15](../pitfalls.md#15-packagesemails-dist-stale-at-go-build-time).
+2. **Placeholder typo only fails at Go runtime** — see
+   [pitfalls.md § 16](../pitfalls.md#16-email-template-placeholders-typo-only-surfaces-at-go-runtime).

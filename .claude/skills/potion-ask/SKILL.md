@@ -1,144 +1,193 @@
 ---
 name: potion-ask
 description: >
-  Answers questions about the Probo codebase across both Go backend and
-  TypeScript frontend stacks. Use when someone asks "where is...", "how does
-  X work", "why is Y done this way", "what pattern does Z use", "explain the
-  architecture", "find the code that handles...", "what does this module do",
-  or any question about understanding this project. Also triggers for
-  onboarding questions like "how do I get started", "what should I know",
-  "walk me through the codebase", or "how are the stacks connected".
-allowed-tools: Read, Glob, Grep
+  Answers questions about the Probo codebase — a polyglot Go + TypeScript
+  monorepo for an open-source compliance platform. Use this skill when
+  someone asks "where is...", "how does X work", "why is Y done this way",
+  "what pattern does Probo use for Z", "explain the architecture", "find
+  the code that handles...", "what does this module do", or any onboarding
+  question ("how do I get started", "walk me through the codebase"). Loads
+  guidelines lazily — shared first, then the relevant stack — and delegates
+  deep searches to the `potion-explorer` agent. Triggers for both Go
+  backend questions (gqlgen, pgx, chi, Service/TenantService, IAM, MCP,
+  CLI, workers) and TypeScript frontend questions (React, Relay, Vite,
+  tailwind-variants, *PageLoader, n8n node).
+allowed-tools: Read, Glob, Grep, Agent
 model: sonnet
-effort: medium
+effort: high
 ---
 
-# Probo -- Codebase Q&A
+# Probo — Codebase Q&A
 
-Before answering, read the guidelines at `.claude/guidelines/` -- start with
-`shared.md` for cross-stack conventions, then check the relevant stack's
-`index.md` for architecture overview and topic files (`patterns.md`,
-`conventions.md`, `pitfalls.md`, `testing.md`).
+Probo is an **open-source compliance platform** living in a polyglot
+monorepo: a single Go daemon (`probod`) serves four GraphQL APIs (console,
+trust, connect) plus an MCP API to two React 19 + Relay 19 SPAs
+(`apps/console`, `apps/trust`), a CLI (`prb`), and an n8n community node.
 
-## Stack routing
+## Load guidelines lazily
 
-Determine which stack the question targets before exploring:
+Don't read everything up front. Pick the right files for the question:
 
-| Signal | Stack | Guidelines path |
-|--------|-------|----------------|
-| Go, `pkg/`, `cmd/`, `e2e/`, coredata, GraphQL resolvers, MCP, CLI, service layer, IAM, SCIM, SAML | Go Backend | `.claude/guidelines/go-backend/` |
-| TypeScript, React, Relay, `apps/`, `packages/`, frontend, UI, components, hooks, Vite | TypeScript Frontend | `.claude/guidelines/typescript-frontend/` |
-| GraphQL schema, GID, cross-stack, API contract, deployment, CI/CD, license | Shared | `.claude/guidelines/shared.md` |
+1. **Always start with** `.claude/guidelines/shared.md` — cross-cutting rules
+   (four-surface API rule, GIDs, tenant isolation, error handling, security,
+   logging, review-enforced standards).
+2. **For Go backend questions** (anything in `pkg/`, `cmd/`, `e2e/`):
+   read `.claude/guidelines/go-backend/index.md` first, then drill into
+   `patterns.md`, `conventions.md`, `pitfalls.md`, or
+   `module-notes/{module}.md` for the specific topic.
+3. **For TypeScript frontend questions** (anything in `apps/` or
+   `packages/`): read `.claude/guidelines/typescript-frontend/index.md`,
+   then drill into `patterns.md`, `conventions.md`, `pitfalls.md`, or
+   `module-notes/{module}.md`.
+4. **For cross-stack questions** (e.g. "how does GIDs work end-to-end",
+   "where is the API contract for vendors"): read `shared.md` plus both
+   stack `index.md` files.
 
-## Answering strategy
+## Stack routing — figure out which stack first
 
-1. **Check guidelines first.** Most architecture and pattern questions are
-   already answered there. Do not explore what is already documented.
-2. **Locate the module.** Use the module map below to narrow scope.
-3. **Explore with precision.** Grep and Glob to find specific code. Read
-   files to confirm. Never say "it is probably in..." -- find it.
-4. **Cite your sources.** Reference specific files and line numbers.
+Use this table to decide which stack(s) own the question. If the question
+is ambiguous, load `shared.md` first and ask the user to clarify.
 
-## Module map -- Go Backend
+| Signal | Route to |
+| --- | --- |
+| `pkg/`, `cmd/`, `e2e/`, `internal/` paths | Go backend |
+| `apps/console`, `apps/trust`, `packages/*` (TS) | TypeScript frontend |
+| Keywords: gqlgen, pgx, chi, cobra, huh, kit/worker, IAM policy, MCP, mcpgen, Scoper, GID, validator, llm, agent | Go backend |
+| Keywords: React, Relay, Vite, Vitest, tailwind-variants, Radix, Ariakit, Tiptap, Storybook, *PageLoader, useFragment, useQueryLoader, n8n | TypeScript frontend |
+| Module names: `pkg-coredata`, `pkg-iam`, `pkg-probo`, `pkg-server`, `pkg-agent`, `pkg-llm`, etc. | Go backend |
+| Module names: `apps-console`, `apps-trust`, `packages-ui`, `packages-relay`, `packages-routes`, `packages-helpers`, `packages-n8n-node`, etc. | TypeScript frontend |
+| Four-surface API rule (GraphQL ↔ MCP ↔ CLI ↔ n8n) | Both — backend defines, n8n consumes |
+| Config propagation (11 files), GIDs, tenant isolation, license headers, commits | shared.md |
 
-| Module | Path | Purpose |
-|--------|------|---------|
-| cmd | `cmd/` | Binary entrypoints: `probod`, `prb`, `probod-bootstrap`, `acme-keygen` |
-| pkg/server | `pkg/server/` | HTTP server, chi router, middleware stack, all API surface handlers |
-| pkg/server/api/console/v1 | `pkg/server/api/console/v1/` | Console GraphQL API (gqlgen) -- 80+ type mapping files |
-| pkg/server/api/trust/v1 | `pkg/server/api/trust/v1/` | Trust center GraphQL API -- NDA directive, read-only |
-| pkg/server/api/connect/v1 | `pkg/server/api/connect/v1/` | IAM GraphQL API + SAML/OIDC/SCIM handlers |
-| pkg/server/api/mcp/v1 | `pkg/server/api/mcp/v1/` | MCP API (mcpgen) -- AI-agent access to domain objects |
-| pkg/probo | `pkg/probo/` | Core business logic -- 40+ domain sub-services |
-| pkg/iam | `pkg/iam/` | Identity and access management, ABAC policy evaluation |
-| pkg/iam/policy | `pkg/iam/policy/` | Pure in-memory IAM policy evaluator |
-| pkg/iam/scim | `pkg/iam/scim/` | SCIM 2.0 provisioning bridge |
-| pkg/trust | `pkg/trust/` | Public trust center service layer |
-| pkg/coredata | `pkg/coredata/` | All raw SQL, entity types, filters, migrations |
-| pkg/validator | `pkg/validator/` | Fluent validation framework |
-| pkg/gid | `pkg/gid/` | 192-bit tenant-scoped entity identifiers |
-| pkg/agent | `pkg/agent/` | LLM agent orchestration framework |
-| pkg/llm | `pkg/llm/` | Provider-agnostic LLM abstraction |
-| pkg/cmd | `pkg/cmd/` | CLI commands for `prb` tool (cobra) |
-| e2e | `e2e/` | End-to-end integration tests |
-
-## Module map -- TypeScript Frontend
+## Module map — Go backend
 
 | Module | Path | Purpose |
-|--------|------|---------|
-| apps/console | `apps/console/` | Admin dashboard SPA (React + Relay, port 5173) |
-| apps/trust | `apps/trust/` | Public trust center SPA (React + Relay, port 5174) |
-| packages/ui | `packages/ui/` | Shared design system (Tailwind Variants, Radix primitives) |
-| packages/relay | `packages/relay/` | Relay FetchFunction factory + typed error classes |
-| packages/helpers | `packages/helpers/` | Domain formatters, enum labels/variants, utility functions |
-| packages/hooks | `packages/hooks/` | Shared React hooks |
-| packages/emails | `packages/emails/` | React Email templates for transactional emails |
-| packages/n8n-node | `packages/n8n-node/` | n8n community node for Probo API |
+| --- | --- | --- |
+| pkg-coredata | `pkg/coredata` | Sole owner of SQL — entity files, `Scoper`, filters, 364 migrations |
+| pkg-gid | `pkg/gid` | 24-byte tenant-scoped global IDs; `entity_type_reg.go` registry |
+| pkg-iam | `pkg/iam` | Policy-as-Go-code authorization; OIDC, SAML, SCIM subdirs |
+| pkg-probo | `pkg/probo` | Domain services (`Service` → `TenantService` → `*FooService`); workers |
+| pkg-server | `pkg/server` | chi router; `api/{console,trust,connect}/v1` (gqlgen) + `api/mcp/v1` (mcpgen) + `api/cookiebanner` |
+| pkg-agent | `pkg/agent` | LLM agent orchestration framework (FunctionTool, Handoff, Checkpointer) |
+| pkg-llm | `pkg/llm` | Provider-agnostic LLM client (Anthropic, OpenAI, Bedrock); OTel tracing |
+| pkg-validator | `pkg/validator` | Fluent validation (`v.Check(...)`, `v.Error()`) |
+| pkg-accessreview | `pkg/accessreview` | Access-review campaigns; pluggable drivers |
+| pkg-connector | `pkg/connector` | OAuth2/API-key 3rd-party connector framework |
+| pkg-esign | `pkg/esign` | E-signature certificate workers |
+| pkg-docgen | `pkg/docgen` | HTML→PDF rendering (chromedp + Mermaid) |
+| pkg-cookiebanner | `pkg/cookiebanner` | Cookie banner domain logic |
+| pkg-trust | `pkg/trust` | Trust center service layer (public, unauthenticated) |
+| pkg-{mail,mailer,mailman} | `pkg/mail*` | Outbound email outbox |
+| pkg-slack, pkg-webhook | `pkg/slack`, `pkg/webhook` | Outbound Slack + webhook delivery |
+| pkg-filemanager, pkg-filevalidation | `pkg/filemanager`, `pkg/filevalidation` | S3/SeaweedFS storage |
+| pkg-cli, pkg-cmd | `pkg/cli`, `pkg/cmd` | `prb` CLI (cobra + huh prompts) |
+| pkg-probod | `pkg/probod` | Composition root; `Run()` + graceful shutdown |
+| pkg-probodconfig | `pkg/probodconfig` | Daemon config struct (one file per subsystem) |
+| pkg-bootstrap | `pkg/bootstrap` | Env-vars → `probodconfig.FullConfig` YAML generator |
+| pkg-certmanager | `pkg/certmanager` | ACME custom-domain TLS |
+| pkg-crypto | `pkg/crypto` | AES-256-GCM, PBKDF2, SHA-256 primitives |
+| pkg-page | `pkg/page` | Cursor pagination types |
+| e2e | `e2e/` | E2E suite — `e2e/console/` (43 files), `e2e/mcp/` (22 files), factory builders |
 
-## Canonical examples
+## Module map — TypeScript frontend
 
-These files represent "the right way" in this project:
+| Module | Path | Purpose |
+| --- | --- | --- |
+| apps-console | `apps/console` | Compliance SPA (437 TS/TSX) — two Relay envs (core/iam), `*PageLoader` pattern |
+| apps-trust | `apps/trust` | Public trust portal (50 files) — magic-link / OIDC / NDA |
+| packages-ui (`@probo/ui`) | `packages/ui` | Component library (285 files); `tailwind-variants`, compound exports |
+| packages-relay (`@probo/relay`) | `packages/relay` | `makeFetchQuery` + 6 typed error classes |
+| packages-routes (`@probo/routes`) | `packages/routes` | `AppRoute` type; legacy `loaderFromQueryLoader` (deprecated) |
+| packages-helpers (`@probo/helpers`) | `packages/helpers` | `formatDate`, `formatError`, `sprintf`, `faviconUrl` — translator-injected |
+| packages-hooks (`@probo/hooks`) | `packages/hooks` | 9 hooks: `usePageTitle`, `useFavicon`, `useToggle`, … |
+| packages-i18n (`@probo/i18n`) | `packages/i18n` | Custom zero-dep i18n — currently dormant (`"en"` hardcoded) |
+| packages-emails (`@probo/emails`) | `packages/emails` | 14 React Email templates → `dist/*.html.tmpl` (consumed by `pkg/mailer` via `go:embed`) |
+| packages-n8n-node (`@probo/n8n-nodes-probo`) | `packages/n8n-node` | n8n community node (236 files); resource × operation feature slices |
+| packages-cookie-banner | `packages/cookie-banner` | Vanilla web component; dual ESM + IIFE |
+| packages-prosemirror | `packages/prosemirror` | Markdown ↔ ProseMirror node trees |
+| packages-coredata | `packages/coredata` | Shared `TrustCenterDocumentAccessStatus` enum |
+| packages-vendors, packages-react-lazy | `packages/{vendors,react-lazy}` | Static vendor data; lazy-load helper |
+
+## Canonical examples (cite these)
 
 | File | Demonstrates |
-|------|-------------|
-| `pkg/coredata/asset.go` | Complete coredata entity: LoadByID, Insert, Update, Delete, CursorKey, AuthorizationAttributes, Snapshot |
-| `pkg/probo/vendor_service.go` | Service layer pattern: Request struct, Validate(), pg.WithTx, webhook in same tx |
-| `pkg/server/api/console/v1/v1_resolver.go` | GraphQL resolver: authorize, ProboService, service call, type mapping |
-| `pkg/iam/policy/example_test.go` | Policy DSL: Allow/Deny helpers, ABAC conditions, Go example tests |
-| `e2e/console/vendor_test.go` | E2E test: factory builders, RBAC, tenant isolation, timestamp assertions |
-| `apps/console/src/routes/documentsRoutes.ts` | New-style route definitions using Loader components (no withQueryRef) |
-| `apps/console/src/pages/organizations/documents/DocumentsPageLoader.tsx` | Canonical Loader component: useQueryLoader + useEffect + Suspense |
-| `apps/trust/src/pages/DocumentPage.tsx` | Full page with colocated queries/mutations, typed error handling |
-| `packages/ui/src/Atoms/Badge/Badge.tsx` | Canonical UI atom: tv() variant factory, asChild/Slot, typed props |
-| `packages/helpers/src/audits.ts` | Domain helper: as const enum array, getXLabel with Translator, getXVariant |
+| --- | --- |
+| `pkg/coredata/cookie_banner.go` | Full entity pattern: struct, `CursorKey`, `AuthorizationAttributes`, scope+filter+cursor query, `Insert` with `scope.GetTenantID()`, FOR UPDATE SKIP LOCKED |
+| `pkg/probo/vendor_service.go` | Request + Validate, `pg.WithTx` with `webhook.InsertData` inside the same tx, double-pointer optional fields |
+| `pkg/probo/evidence_description_worker.go` | Worker pattern: `Claim` (FOR UPDATE SKIP LOCKED), `Process`, `RecoverStale` |
+| `pkg/server/api/console/v1/vendor_resolvers.go` | Resolver shape: `r.authorize(ctx, id, action)` first, error switch with mandatory `default:` → `gqlutils.Internal(ctx)` |
+| `pkg/server/api/mcp/v1/specification.yaml` | Single source of truth for MCP tools (mcpgen) |
+| `pkg/probod/probod.go` | Composition root: `wg.Go`, `cancel(fmt.Errorf(...))`, ordered `stop*()`, `pgClient.Close()` last |
+| `pkg/connector/oauth2.go` | OAuth2 with HMAC-signed stateless `state`, three `TokenEndpointAuth` modes, SSRF-protected transport |
+| `apps/console/src/pages/organizations/findings/FindingsPage.tsx` | The full current-pattern page: preloaded query, `usePaginationFragment` with `@connection(filters: [])`, `useFragment` rows, `useMutation` with `@deleteEdge`, `useTransition`, `useToast`, `useTranslate` |
+| `apps/console/src/pages/organizations/findings/FindingsPageLoader.tsx` | `*PageLoader` shape: `CoreRelayProvider` → `useQueryLoader` in `useEffect` → `*PageSkeleton` → `Suspense` |
+| `apps/console/src/environments.ts` | Two Relay envs (coreEnvironment + iamEnvironment), 1-min query cache, `makeFetchQuery` |
+| `packages/ui/src/atoms/Button/` | Modern `@probo/ui` shape: flat exports, `tailwind-variants` in `variants.ts`, co-located skeleton |
+| `e2e/console/vendor_test.go` | E2E factory builders + RBAC matrix tests + tenant isolation assertions |
 
-## How to handle different question types
+## Answering strategy by question type
 
-**"Where is X?"** -- Grep, check module map, return exact file + lines.
+**"Where is X?"** → Grep, narrow with the module map, return exact
+file:line. Don't say "probably" — find it.
 
-**"How does X work?"** -- Find entry point, trace data flow through layers,
-explain each step with file references.
+**"How does X work?"** → Identify the entry point (CLI command? GraphQL
+query? React route?), trace the data flow through layers, cite each step.
+For GraphQL → resolver → service → coredata → Postgres. For Relay →
+`*PageLoader` → query → useFragment → server.
 
-**"Why is X done this way?"** -- Check guidelines for rationale, then
-`contrib/claude/` reference docs, then code comments. If no rationale exists,
-say so -- do not invent.
+**"Why is X done this way?"** → Check `shared.md` § 13 (review-enforced
+standards) and the relevant stack's `pitfalls.md` for rationale. Also
+look at the doc under `contrib/claude/` (the authoritative source). If no
+rationale documented, say so; don't invent one.
 
-**"What pattern for X?"** -- Reference the relevant stack's patterns in
-guidelines. Point to the canonical example that best matches.
+**"What pattern for X?"** → Reference the canonical example table above
+plus the `patterns.md` section in the right stack. Always cite a file.
 
-**"How do I get started?"** -- Walk through: structure (shared.md) ->
-architecture (stack index.md) -> patterns -> canonical examples ->
-`make build` / `make test`.
+**"How do I add a new feature on the backend?"** → Walk through the
+four-surface rule (`shared.md` § 3): GraphQL → MCP → CLI → n8n must all
+be updated. Reference `pkg/probo/vendor_service.go` for the service shape.
 
-**"How are the stacks connected?"** -- Explain the GraphQL schema contract
-from shared.md. The Go backend authors `.graphql` schema files, gqlgen
-generates Go resolvers, and the Relay compiler generates TypeScript types
-from the same `.graphql` files.
+**"How do I get started?"** → Walk: top-level layout → stack summary →
+canonical examples → `make stack-up` + `make dev-config`.
 
-## Key patterns quick reference -- Go Backend
+## Key cross-cutting rules to surface
 
-- **Two-level service tree**: `Service` (global) -> `WithTenant(tenantID)` -> `TenantService` with sub-services
-- **Request struct + Validate()**: every mutating method takes a `*Request` with fluent validation
-- **All SQL in pkg/coredata only**: no other package may contain SQL queries
-- **pgx.StrictNamedArgs**: never NamedArgs (approval blocker)
-- **Error wrapping**: `fmt.Errorf("cannot <action>: %w", err)` (never "failed to")
-- **Scoper for tenant isolation**: entity structs have no TenantID field
-- **Three interfaces**: every feature must have GraphQL + MCP + CLI endpoints
+When the question even tangentially touches one of these, mention them:
 
-## Key patterns quick reference -- TypeScript Frontend
+- **Four-surface API rule** (`shared.md` § 3): every backend operation lives on GraphQL + MCP + CLI + n8n. PR #1132 explicitly blocked surfaces lagging behind GraphQL.
+- **All SQL in `pkg/coredata`** (`shared.md` § 13 #1): inline SQL outside `pkg/coredata` is a review blocker.
+- **Wrap errors with `cannot ...: %w`** (`shared.md` § 13 #2; `pkg/...` Go style).
+- **GraphQL fields whose resolvers can fail must NOT be `!` non-null** — use Relay `@required` (`shared.md` § 13 #4).
+- **Frontend uses Relay-generated types** — never declare local TS types that duplicate GraphQL output (`shared.md` § 13 #6).
+- **Tenant isolation** is enforced at the data layer via `coredata.Scoper`, never on the frontend (`shared.md` § 9).
+- **License headers** (ISC) on every source file (`shared.md` § 6).
+- **Commits**: free-form, NOT Conventional Commits, signed with `-s -S`, no `Co-Authored-By` for AI (`shared.md` § 5).
 
-- **Relay colocated operations**: all GraphQL in component files, not `hooks/graph/`
-- **Loader component pattern**: `useQueryLoader` + `useEffect` (not deprecated `withQueryRef`)
-- **tv() for variants**: tailwind-variants, not cn()
-- **useMutation + useToast**: not deprecated `useMutationWithToasts`
-- **Permission fragments**: `canCreate: permission(action: "core:asset:create")`
-- **Dual Relay environments** (console): `coreEnvironment` + `iamEnvironment`
+## Delegating deep exploration
+
+For complex tasks (tracing data through 5+ files, mapping all uses of a
+pattern across both stacks, full module audits), spawn the
+`potion-explorer` agent rather than doing it yourself:
+
+```
+Agent: potion-explorer
+Prompt: |
+  Trace how a vendor record flows from creation in the Console UI
+  through to webhook delivery. Cite every file and line.
+```
+
+The explorer is read-only and returns a structured report with file
+references.
 
 ## Rules
 
-- Never guess. If you cannot find it, say so and suggest where to look.
+- Never guess. If you can't find something, say so and suggest where to
+  look (the right `contrib/claude/` doc or stack guideline).
+- Cite specific files and line numbers in every answer.
 - Prefer code snippets from the actual codebase over abstract descriptions.
-- Note migrations or inconsistencies when relevant (e.g., "module X uses the
-  old pattern, the rest of the codebase uses the new one").
+- Note migrations or active drift when relevant — e.g.
+  `apps/console/src/routes/` is mid-migration to colocated `routes.ts`;
+  legacy `loaderFromQueryLoader` is deprecated; `pkg/coredata/agent_run.go:472`
+  has hardcoded SQL pending refactor.
 - Keep answers focused. Answer the question, then offer to go deeper.
-- For complex exploration, delegate to the explorer agent.
+- For complex exploration, delegate to `potion-explorer`.
