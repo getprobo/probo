@@ -96,10 +96,10 @@ type Props = {
   onBack: () => void;
 };
 
-const ADMIN_CONSENT_NOTE =
-  "Grant admin consent for Directory.Read.All. " +
-  "Without admin consent, authentication will succeed but the first Microsoft Graph " +
-  "call will fail with an authorization error — a non-obvious failure mode.";
+const ADMIN_CONSENT_NOTE
+  = "Grant admin consent for Directory.Read.All. "
+    + "Without admin consent, authentication will succeed but the first Microsoft Graph "
+    + "call will fail with an authorization error — a non-obvious failure mode.";
 
 export function AzureConnectWizard(props: Props) {
   const { connectionId, onComplete, onBack } = props;
@@ -116,12 +116,12 @@ export function AzureConnectWizard(props: Props) {
   const credentialRef = useRef<string>("");
   const credentialNodeRef = useRef<HTMLInputElement | null>(null);
 
-  const [generateAssets, isGenerating] =
-    useMutation<AzureConnectWizardGenerateAssetsMutation>(
+  const [generateAssets, isGenerating]
+    = useMutation<AzureConnectWizardGenerateAssetsMutation>(
       generateAssetsMutation,
     );
-  const [createCloudAccount] =
-    useMutation<AzureConnectWizardCreateMutation>(createMutation);
+  const [createCloudAccount]
+    = useMutation<AzureConnectWizardCreateMutation>(createMutation);
 
   const clearCredential = () => {
     credentialRef.current = "";
@@ -146,7 +146,7 @@ export function AzureConnectWizard(props: Props) {
         if (errors?.length) {
           dispatch({
             type: "install-assets-error",
-            message: errors.map((e) => e.message).join(", "),
+            message: errors.map(e => e.message).join(", "),
           });
           return;
         }
@@ -160,7 +160,7 @@ export function AzureConnectWizard(props: Props) {
         }
         dispatch({
           type: "install-assets-success",
-          steps: assets.steps.map((s) => ({
+          steps: assets.steps.map(s => ({
             title: s.title,
             body: s.body,
             code: s.code ?? null,
@@ -199,10 +199,10 @@ export function AzureConnectWizard(props: Props) {
     }
     dispatch({ type: "submitting" });
 
-    const azureSubscriptionId =
-      state.scopeKind === "AZURE_SUBSCRIPTION" ? state.scopeIdentifier : null;
-    const azureManagementGroupId =
-      state.scopeKind === "AZURE_MANAGEMENT_GROUP"
+    const azureSubscriptionId
+      = state.scopeKind === "AZURE_SUBSCRIPTION" ? state.scopeIdentifier : null;
+    const azureManagementGroupId
+      = state.scopeKind === "AZURE_MANAGEMENT_GROUP"
         ? state.scopeIdentifier
         : null;
 
@@ -227,7 +227,7 @@ export function AzureConnectWizard(props: Props) {
         if (errors?.length) {
           dispatch({
             type: "submit-error",
-            message: errors.map((e) => e.message).join(", "),
+            message: errors.map(e => e.message).join(", "),
           });
           return;
         }
@@ -323,8 +323,7 @@ export function AzureConnectWizard(props: Props) {
             placeholder={__("e.g. Production Azure")}
             value={state.label}
             onValueChange={(value: string) =>
-              dispatch({ type: "set-label", value })
-            }
+              dispatch({ type: "set-label", value })}
           />
           <div className="flex flex-col gap-1">
             <label className="text-sm font-medium" htmlFor="azure-scope-kind">
@@ -333,8 +332,7 @@ export function AzureConnectWizard(props: Props) {
             <Select
               value={state.scopeKind}
               onValueChange={(value: AzureWizardScopeKind) =>
-                dispatch({ type: "set-scope-kind", value })
-              }
+                dispatch({ type: "set-scope-kind", value })}
             >
               <Option value="AZURE_SUBSCRIPTION">
                 {__("Azure subscription")}
@@ -353,8 +351,7 @@ export function AzureConnectWizard(props: Props) {
             )}
             value={state.scopeIdentifier}
             onValueChange={(value: string) =>
-              dispatch({ type: "set-scope-identifier", value })
-            }
+              dispatch({ type: "set-scope-identifier", value })}
           />
         </div>
       )}
@@ -377,7 +374,9 @@ export function AzureConnectWizard(props: Props) {
                 className="rounded-md border border-border-low p-3 space-y-2"
               >
                 <h4 className="text-sm font-medium">
-                  {idx + 1}. {step.title}
+                  {idx + 1}
+                  .
+                  {step.title}
                 </h4>
                 <div className="text-sm text-txt-secondary">
                   <Markdown content={step.body} />
@@ -392,13 +391,21 @@ export function AzureConnectWizard(props: Props) {
           </ol>
           {state.requiredRbacRoles.length > 0 && (
             <div className="text-xs text-txt-tertiary">
-              <strong>{__("RBAC roles")}:</strong>{" "}
+              <strong>
+                {__("RBAC roles")}
+                :
+              </strong>
+              {" "}
               {state.requiredRbacRoles.join(", ")}
             </div>
           )}
           {state.requiredGraphPermissions.length > 0 && (
             <div className="text-xs text-txt-tertiary">
-              <strong>{__("Graph permissions")}:</strong>{" "}
+              <strong>
+                {__("Graph permissions")}
+                :
+              </strong>
+              {" "}
               {state.requiredGraphPermissions.join(", ")}
             </div>
           )}
@@ -412,8 +419,7 @@ export function AzureConnectWizard(props: Props) {
             placeholder="00000000-0000-0000-0000-000000000000"
             value={state.tenantId}
             onValueChange={(value: string) =>
-              dispatch({ type: "set-tenant-id", value })
-            }
+              dispatch({ type: "set-tenant-id", value })}
             autoComplete="off"
             spellCheck={false}
           />
@@ -422,8 +428,7 @@ export function AzureConnectWizard(props: Props) {
             placeholder="00000000-0000-0000-0000-000000000000"
             value={state.clientId}
             onValueChange={(value: string) =>
-              dispatch({ type: "set-client-id", value })
-            }
+              dispatch({ type: "set-client-id", value })}
             autoComplete="off"
             spellCheck={false}
           />

@@ -93,10 +93,10 @@ export function AwsConnectWizard(props: Props) {
   const organizationId = useOrganizationId();
   const [state, dispatch] = useReducer(reduceAwsWizard, awsWizardInitialState);
 
-  const [generateAssets, isGenerating] =
-    useMutation<AwsConnectWizardGenerateAssetsMutation>(generateAssetsMutation);
-  const [createCloudAccount] =
-    useMutation<AwsConnectWizardCreateMutation>(createMutation);
+  const [generateAssets, isGenerating]
+    = useMutation<AwsConnectWizardGenerateAssetsMutation>(generateAssetsMutation);
+  const [createCloudAccount]
+    = useMutation<AwsConnectWizardCreateMutation>(createMutation);
 
   const handleGenerateAssets = () => {
     generateAssets({
@@ -114,7 +114,7 @@ export function AwsConnectWizard(props: Props) {
         if (errors?.length) {
           dispatch({
             type: "install-assets-error",
-            message: errors.map((e) => e.message).join(", "),
+            message: errors.map(e => e.message).join(", "),
           });
           return;
         }
@@ -176,7 +176,7 @@ export function AwsConnectWizard(props: Props) {
         if (errors?.length) {
           dispatch({
             type: "submit-error",
-            message: errors.map((e) => e.message).join(", "),
+            message: errors.map(e => e.message).join(", "),
           });
           return;
         }
@@ -191,8 +191,8 @@ export function AwsConnectWizard(props: Props) {
           toast({
             title: __("Connected, verification pending"),
             description:
-              probeError ??
-              __(
+              probeError
+              ?? __(
                 "AWS verification did not complete; you can retry from the row actions.",
               ),
             variant: "warning",
@@ -247,24 +247,21 @@ export function AwsConnectWizard(props: Props) {
             placeholder={__("e.g. Production AWS")}
             value={state.label}
             onValueChange={(value: string) =>
-              dispatch({ type: "set-label", value })
-            }
+              dispatch({ type: "set-label", value })}
           />
           <Field
             label={__("Region")}
             help={__("AWS region where the read-only role will be assumed.")}
             value={state.region}
             onValueChange={(value: string) =>
-              dispatch({ type: "set-region", value })
-            }
+              dispatch({ type: "set-region", value })}
           />
           <Field
             label={__("AWS account ID")}
             placeholder="111122223333"
             value={state.scopeIdentifier}
             onValueChange={(value: string) =>
-              dispatch({ type: "set-scope-identifier", value })
-            }
+              dispatch({ type: "set-scope-identifier", value })}
           />
         </div>
       )}
@@ -309,7 +306,7 @@ export function AwsConnectWizard(props: Props) {
                 {__("Read-only IAM actions used")}
               </h4>
               <ul className="text-xs font-mono space-y-1">
-                {state.requiredActions.map((action) => (
+                {state.requiredActions.map(action => (
                   <li key={action}>{action}</li>
                 ))}
               </ul>
@@ -330,8 +327,7 @@ export function AwsConnectWizard(props: Props) {
             placeholder="arn:aws:iam::111122223333:role/probo-readonly"
             value={state.roleArn}
             onValueChange={(value: string) =>
-              dispatch({ type: "set-role-arn", value })
-            }
+              dispatch({ type: "set-role-arn", value })}
             autoComplete="off"
             spellCheck={false}
           />

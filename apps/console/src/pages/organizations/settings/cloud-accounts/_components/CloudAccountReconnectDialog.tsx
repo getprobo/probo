@@ -75,8 +75,8 @@ export function CloudAccountReconnectDialog(props: Props) {
   const { __ } = useTranslate();
   const { toast } = useToast();
 
-  const [rotate, isRotating] =
-    useMutation<CloudAccountReconnectDialogMutation>(rotateMutation);
+  const [rotate, isRotating]
+    = useMutation<CloudAccountReconnectDialogMutation>(rotateMutation);
 
   // AWS: only a Role ARN; non-secret, lives in state.
   const [roleArn, setRoleArn] = useState("");
@@ -120,7 +120,7 @@ export function CloudAccountReconnectDialog(props: Props) {
       },
       onCompleted(_, errors) {
         if (errors?.length) {
-          setErrorMessage(errors.map((e) => e.message).join(", "));
+          setErrorMessage(errors.map(e => e.message).join(", "));
           return;
         }
         toast({
@@ -170,7 +170,7 @@ export function CloudAccountReconnectDialog(props: Props) {
       },
       onCompleted(_, errors) {
         if (errors?.length) {
-          setErrorMessage(errors.map((e) => e.message).join(", "));
+          setErrorMessage(errors.map(e => e.message).join(", "));
           return;
         }
         // Step 2: upload secret via dedicated multipart endpoint.

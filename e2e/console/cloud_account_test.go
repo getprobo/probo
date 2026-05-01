@@ -256,10 +256,10 @@ func TestCloudAccount_AWS_Lifecycle(t *testing.T) {
 		var assets struct {
 			GenerateCloudAccountInstallAssets struct {
 				Assets struct {
-					Typename       string   `json:"__typename"`
-					QuickCreateURL string   `json:"quickCreateURL"`
-					ExternalID     string   `json:"externalId"`
-					PrincipalArn   string   `json:"principalArn"`
+					Typename        string   `json:"__typename"`
+					QuickCreateURL  string   `json:"quickCreateURL"`
+					ExternalID      string   `json:"externalId"`
+					PrincipalArn    string   `json:"principalArn"`
 					RequiredActions []string `json:"requiredActions"`
 				} `json:"assets"`
 			} `json:"generateCloudAccountInstallAssets"`

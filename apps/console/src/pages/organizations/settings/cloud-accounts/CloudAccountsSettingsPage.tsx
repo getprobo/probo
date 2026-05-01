@@ -24,7 +24,6 @@ export const cloudAccountsSettingsPageQuery = graphql`
     organization: node(id: $organizationId) @required(action: THROW) {
       __typename
       ... on Organization {
-        id
         ...CloudAccountListFragment
       }
     }

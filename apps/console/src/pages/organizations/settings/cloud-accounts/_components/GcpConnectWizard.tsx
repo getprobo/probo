@@ -109,10 +109,10 @@ export function GcpConnectWizard(props: Props) {
   const credentialRef = useRef<string>("");
   const credentialNodeRef = useRef<HTMLTextAreaElement | null>(null);
 
-  const [generateAssets, isGenerating] =
-    useMutation<GcpConnectWizardGenerateAssetsMutation>(generateAssetsMutation);
-  const [createCloudAccount] =
-    useMutation<GcpConnectWizardCreateMutation>(createMutation);
+  const [generateAssets, isGenerating]
+    = useMutation<GcpConnectWizardGenerateAssetsMutation>(generateAssetsMutation);
+  const [createCloudAccount]
+    = useMutation<GcpConnectWizardCreateMutation>(createMutation);
 
   const clearCredential = () => {
     credentialRef.current = "";
@@ -137,7 +137,7 @@ export function GcpConnectWizard(props: Props) {
         if (errors?.length) {
           dispatch({
             type: "install-assets-error",
-            message: errors.map((e) => e.message).join(", "),
+            message: errors.map(e => e.message).join(", "),
           });
           return;
         }
@@ -197,7 +197,7 @@ export function GcpConnectWizard(props: Props) {
     }
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = () => {
     if (!canAdvanceGcpStep(state)) return;
     const payload = credentialRef.current;
     if (!validateJson(payload)) {
@@ -209,10 +209,10 @@ export function GcpConnectWizard(props: Props) {
     }
     dispatch({ type: "submitting" });
 
-    const gcpProjectId =
-      state.scopeKind === "GCP_PROJECT" ? state.scopeIdentifier : null;
-    const gcpOrganizationId =
-      state.scopeKind === "GCP_ORGANIZATION" ? state.scopeIdentifier : null;
+    const gcpProjectId
+      = state.scopeKind === "GCP_PROJECT" ? state.scopeIdentifier : null;
+    const gcpOrganizationId
+      = state.scopeKind === "GCP_ORGANIZATION" ? state.scopeIdentifier : null;
 
     createCloudAccount({
       variables: {
@@ -233,7 +233,7 @@ export function GcpConnectWizard(props: Props) {
         if (errors?.length) {
           dispatch({
             type: "submit-error",
-            message: errors.map((e) => e.message).join(", "),
+            message: errors.map(e => e.message).join(", "),
           });
           return;
         }
@@ -327,8 +327,7 @@ export function GcpConnectWizard(props: Props) {
             placeholder={__("e.g. Production GCP")}
             value={state.label}
             onValueChange={(value: string) =>
-              dispatch({ type: "set-label", value })
-            }
+              dispatch({ type: "set-label", value })}
           />
           <div className="flex flex-col gap-1">
             <label className="text-sm font-medium" htmlFor="gcp-scope-kind">
@@ -337,8 +336,7 @@ export function GcpConnectWizard(props: Props) {
             <Select
               value={state.scopeKind}
               onValueChange={(value: GcpWizardScopeKind) =>
-                dispatch({ type: "set-scope-kind", value })
-              }
+                dispatch({ type: "set-scope-kind", value })}
             >
               <Option value="GCP_PROJECT">{__("GCP project")}</Option>
               <Option value="GCP_ORGANIZATION">{__("GCP organization")}</Option>
@@ -357,8 +355,7 @@ export function GcpConnectWizard(props: Props) {
             }
             value={state.scopeIdentifier}
             onValueChange={(value: string) =>
-              dispatch({ type: "set-scope-identifier", value })
-            }
+              dispatch({ type: "set-scope-identifier", value })}
           />
         </div>
       )}
@@ -404,14 +401,16 @@ export function GcpConnectWizard(props: Props) {
                     variant="secondary"
                     onClick={() => copy(state.setupScript ?? "")}
                   >
-                    {isCopied ? (
-                      <>
-                        <IconCheckmark1 size={14} />
-                        {__("Copied")}
-                      </>
-                    ) : (
-                      __("Copy")
-                    )}
+                    {isCopied
+                      ? (
+                          <>
+                            <IconCheckmark1 size={14} />
+                            {__("Copied")}
+                          </>
+                        )
+                      : (
+                          __("Copy")
+                        )}
                   </Button>
                   <Button variant="secondary" onClick={handleDownloadScript}>
                     {__("Download as setup.sh")}
@@ -420,7 +419,11 @@ export function GcpConnectWizard(props: Props) {
               </div>
               {state.requiredRoles.length > 0 && (
                 <div className="text-xs text-txt-tertiary">
-                  <strong>{__("Roles granted")}:</strong>{" "}
+                  <strong>
+                    {__("Roles granted")}
+                    :
+                  </strong>
+                  {" "}
                   {state.requiredRoles.join(", ")}
                 </div>
               )}

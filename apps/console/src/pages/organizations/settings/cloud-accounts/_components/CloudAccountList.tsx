@@ -115,8 +115,8 @@ type Props = {
   fKey: CloudAccountListFragment$key;
 };
 
-type CloudAccountNode =
-  CloudAccountListFragment$data["cloudAccounts"]["edges"][number]["node"];
+type CloudAccountNode
+  = CloudAccountListFragment$data["cloudAccounts"]["edges"][number]["node"];
 
 const SCOPE_IDENTIFIER_MAX = 24;
 
@@ -133,25 +133,25 @@ export function CloudAccountList(props: Props) {
   const confirm = useConfirm();
   const connectDialogRef = useDialogRef();
   const reconnectDialogRef = useDialogRef();
-  const [reconnectTarget, setReconnectTarget] =
-    useState<CloudAccountNode | null>(null);
+  const [reconnectTarget, setReconnectTarget]
+    = useState<CloudAccountNode | null>(null);
 
   const { data, hasNext, isLoadingNext, loadNext } = usePaginationFragment<
     CloudAccountListPaginationQuery,
     CloudAccountListFragment$key
   >(fragment, fKey);
 
-  const cloudAccounts = data.cloudAccounts.edges.map((edge) => edge.node);
+  const cloudAccounts = data.cloudAccounts.edges.map(edge => edge.node);
   const canCreate = data.canCreate;
   const connectionId = data.cloudAccounts.__id;
   const hasAnyAction = cloudAccounts.some(
-    (account) => account.canRotate || account.canVerify || account.canDelete,
+    account => account.canRotate || account.canVerify || account.canDelete,
   );
 
-  const [verifyCloudAccount, isVerifying] =
-    useMutation<CloudAccountListVerifyMutation>(verifyMutation);
-  const [deleteCloudAccount] =
-    useMutation<CloudAccountListDeleteMutation>(deleteMutation);
+  const [verifyCloudAccount, isVerifying]
+    = useMutation<CloudAccountListVerifyMutation>(verifyMutation);
+  const [deleteCloudAccount]
+    = useMutation<CloudAccountListDeleteMutation>(deleteMutation);
 
   const handleConnectCloud = () => {
     connectDialogRef.current?.open();
@@ -164,7 +164,7 @@ export function CloudAccountList(props: Props) {
         if (errors?.length) {
           toast({
             title: __("Error"),
-            description: errors.map((e) => e.message).join(", "),
+            description: errors.map(e => e.message).join(", "),
             variant: "error",
           });
           return;
@@ -180,8 +180,8 @@ export function CloudAccountList(props: Props) {
           toast({
             title: __("Verification failed"),
             description:
-              response.verifyCloudAccount.lastProbeError ??
-              __("The probe did not succeed."),
+              response.verifyCloudAccount.lastProbeError
+              ?? __("The probe did not succeed."),
             variant: "error",
           });
         }
@@ -212,7 +212,7 @@ export function CloudAccountList(props: Props) {
               if (errors?.length) {
                 toast({
                   title: __("Error"),
-                  description: errors.map((e) => e.message).join(", "),
+                  description: errors.map(e => e.message).join(", "),
                   variant: "error",
                 });
               } else {
@@ -260,106 +260,108 @@ export function CloudAccountList(props: Props) {
           </Button>
         )}
       </div>
-      {cloudAccounts.length === 0 ? (
-        <Card padded>
-          <div className="text-center py-12">
-            <h3 className="text-lg font-semibold mb-2">
-              {__("No cloud accounts yet")}
-            </h3>
-            {canCreate && (
-              <p className="text-txt-tertiary">
-                {__(
-                  "Connect AWS, GCP, or Azure to begin running cloud-aware audits.",
+      {cloudAccounts.length === 0
+        ? (
+            <Card padded>
+              <div className="text-center py-12">
+                <h3 className="text-lg font-semibold mb-2">
+                  {__("No cloud accounts yet")}
+                </h3>
+                {canCreate && (
+                  <p className="text-txt-tertiary">
+                    {__(
+                      "Connect AWS, GCP, or Azure to begin running cloud-aware audits.",
+                    )}
+                  </p>
                 )}
-              </p>
-            )}
-          </div>
-        </Card>
-      ) : (
-        <Table>
-          <Thead>
-            <Tr>
-              <Th>{__("Provider")}</Th>
-              <Th>{__("Label")}</Th>
-              <Th>{__("Scope")}</Th>
-              <Th>{__("Status")}</Th>
-              <Th>{__("Last verified")}</Th>
-              {hasAnyAction && <Th className="w-18" />}
-            </Tr>
-          </Thead>
-          <Tbody>
-            {cloudAccounts.map((account) => {
-              const rowHasAction =
-                account.canRotate || account.canVerify || account.canDelete;
-              return (
-                <Tr key={account.id}>
-                  <Td>
-                    <Badge variant="neutral">
-                      {getCloudAccountProviderLabel(__, account.provider)}
-                    </Badge>
-                  </Td>
-                  <Td>{account.label}</Td>
-                  <Td>
-                    <div className="flex flex-col gap-0.5">
-                      <span className="text-xs text-txt-tertiary">
-                        {account.scope.kind}
-                      </span>
-                      <span
-                        className="text-sm font-mono"
-                        title={account.scope.identifier ?? undefined}
-                      >
-                        {truncateIdentifier(account.scope.identifier)}
-                      </span>
-                    </div>
-                  </Td>
-                  <Td>
-                    <CloudAccountStatusBadge status={account.status} />
-                  </Td>
-                  <Td>
-                    {account.lastVerifiedAt
-                      ? formatDate(account.lastVerifiedAt)
-                      : "—"}
-                  </Td>
-                  {hasAnyAction && (
-                    <Td noLink width={50} className="text-end w-18">
-                      {rowHasAction && (
-                        <ActionDropdown>
-                          {account.canVerify && (
-                            <DropdownItem
-                              icon={IconRotateCw}
-                              disabled={isVerifying}
-                              onClick={() => handleVerify(account)}
-                            >
-                              {__("Verify now")}
-                            </DropdownItem>
-                          )}
-                          {account.canRotate && (
-                            <DropdownItem
-                              icon={IconRotateCw}
-                              onClick={() => handleRotate(account)}
-                            >
-                              {__("Reconnect")}
-                            </DropdownItem>
-                          )}
-                          {account.canDelete && (
-                            <DropdownItem
-                              variant="danger"
-                              icon={IconTrashCan}
-                              onClick={() => handleDelete(account)}
-                            >
-                              {__("Delete")}
-                            </DropdownItem>
-                          )}
-                        </ActionDropdown>
-                      )}
-                    </Td>
-                  )}
+              </div>
+            </Card>
+          )
+        : (
+            <Table>
+              <Thead>
+                <Tr>
+                  <Th>{__("Provider")}</Th>
+                  <Th>{__("Label")}</Th>
+                  <Th>{__("Scope")}</Th>
+                  <Th>{__("Status")}</Th>
+                  <Th>{__("Last verified")}</Th>
+                  {hasAnyAction && <Th className="w-18" />}
                 </Tr>
-              );
-            })}
-          </Tbody>
-        </Table>
-      )}
+              </Thead>
+              <Tbody>
+                {cloudAccounts.map((account) => {
+                  const rowHasAction
+                    = account.canRotate || account.canVerify || account.canDelete;
+                  return (
+                    <Tr key={account.id}>
+                      <Td>
+                        <Badge variant="neutral">
+                          {getCloudAccountProviderLabel(__, account.provider)}
+                        </Badge>
+                      </Td>
+                      <Td>{account.label}</Td>
+                      <Td>
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-xs text-txt-tertiary">
+                            {account.scope.kind}
+                          </span>
+                          <span
+                            className="text-sm font-mono"
+                            title={account.scope.identifier ?? undefined}
+                          >
+                            {truncateIdentifier(account.scope.identifier)}
+                          </span>
+                        </div>
+                      </Td>
+                      <Td>
+                        <CloudAccountStatusBadge status={account.status} />
+                      </Td>
+                      <Td>
+                        {account.lastVerifiedAt
+                          ? formatDate(account.lastVerifiedAt)
+                          : "—"}
+                      </Td>
+                      {hasAnyAction && (
+                        <Td noLink width={50} className="text-end w-18">
+                          {rowHasAction && (
+                            <ActionDropdown>
+                              {account.canVerify && (
+                                <DropdownItem
+                                  icon={IconRotateCw}
+                                  disabled={isVerifying}
+                                  onClick={() => handleVerify(account)}
+                                >
+                                  {__("Verify now")}
+                                </DropdownItem>
+                              )}
+                              {account.canRotate && (
+                                <DropdownItem
+                                  icon={IconRotateCw}
+                                  onClick={() => handleRotate(account)}
+                                >
+                                  {__("Reconnect")}
+                                </DropdownItem>
+                              )}
+                              {account.canDelete && (
+                                <DropdownItem
+                                  variant="danger"
+                                  icon={IconTrashCan}
+                                  onClick={() => handleDelete(account)}
+                                >
+                                  {__("Delete")}
+                                </DropdownItem>
+                              )}
+                            </ActionDropdown>
+                          )}
+                        </Td>
+                      )}
+                    </Tr>
+                  );
+                })}
+              </Tbody>
+            </Table>
+          )}
       {hasNext && (
         <Button
           variant="tertiary"
