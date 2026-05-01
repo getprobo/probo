@@ -219,29 +219,6 @@ func TestFindMergeGroups(t *testing.T) {
 	)
 
 	t.Run(
-		"skips non-exact patterns",
-		func(t *testing.T) {
-			t.Parallel()
-
-			patterns := coredata.CookiePatterns{
-				makePattern("ph_phc_abc123"),
-				makePattern("ph_phc_def456"),
-				makePattern("ph_phc_ghi789"),
-				{
-					Pattern:   "ph_phc_",
-					MatchType: coredata.CookiePatternMatchTypePrefix,
-				},
-			}
-
-			groups := findMergeGroups(patterns, 3)
-			require.Len(t, groups, 1)
-
-			group := groups[mergeGroupKey{categoryID: gid.Nil, prefix: "ph_phc_"}]
-			assert.Len(t, group, 3)
-		},
-	)
-
-	t.Run(
 		"leftover patterns form group under shorter prefix",
 		func(t *testing.T) {
 			t.Parallel()
