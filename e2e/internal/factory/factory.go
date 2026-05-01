@@ -1207,3 +1207,185 @@ func CreatePublicOAuth2Client(c *testutil.Client, attrs Attrs) OAuth2ClientResul
 		ClientSecret: resp.ClientSecret,
 	}
 }
+
+func SafeOrigin() string {
+	return fmt.Sprintf("https://%s.example.com", strings.ToLower(gofakeit.LetterN(10)))
+}
+
+func CreateCookieBanner(c *testutil.Client, attrs ...Attrs) string {
+	c.T.Helper()
+
+	var a Attrs
+	if len(attrs) > 0 {
+		a = attrs[0]
+	}
+
+	const query = `
+		mutation($input: CreateCookieBannerInput!) {
+			createCookieBanner(input: $input) {
+				cookieBannerEdge {
+					node { id }
+				}
+			}
+		}
+	`
+
+	input := map[string]any{
+		"organizationId":    c.GetOrganizationID().String(),
+		"name":              a.getString("name", SafeName("CookieBanner")),
+		"origin":            a.getString("origin", SafeOrigin()),
+		"cookiePolicyUrl":   a.getString("cookiePolicyUrl", "https://example.com/cookies"),
+		"consentExpiryDays": a.getInt("consentExpiryDays", 365),
+		"consentMode":       a.getString("consentMode", "OPT_IN"),
+	}
+	if ppURL := a.getStringPtr("privacyPolicyUrl"); ppURL != nil {
+		input["privacyPolicyUrl"] = *ppURL
+	}
+
+	var result struct {
+		CreateCookieBanner struct {
+			CookieBannerEdge struct {
+				Node struct {
+					ID string `json:"id"`
+				} `json:"node"`
+			} `json:"cookieBannerEdge"`
+		} `json:"createCookieBanner"`
+	}
+
+	err := c.Execute(query, map[string]any{"input": input}, &result)
+	require.NoError(c.T, err, "createCookieBanner mutation failed")
+
+	return result.CreateCookieBanner.CookieBannerEdge.Node.ID
+}
+
+type CookieBannerBuilder struct {
+	client *testutil.Client
+	attrs  Attrs
+}
+
+func NewCookieBanner(c *testutil.Client) *CookieBannerBuilder {
+	return &CookieBannerBuilder{client: c, attrs: Attrs{}}
+}
+
+func (b *CookieBannerBuilder) WithName(name string) *CookieBannerBuilder {
+	b.attrs["name"] = name
+	return b
+}
+
+func (b *CookieBannerBuilder) WithOrigin(origin string) *CookieBannerBuilder {
+	b.attrs["origin"] = origin
+	return b
+}
+
+func (b *CookieBannerBuilder) WithCookiePolicyUrl(url string) *CookieBannerBuilder {
+	b.attrs["cookiePolicyUrl"] = url
+	return b
+}
+
+func (b *CookieBannerBuilder) WithPrivacyPolicyUrl(url string) *CookieBannerBuilder {
+	b.attrs["privacyPolicyUrl"] = url
+	return b
+}
+
+func (b *CookieBannerBuilder) WithConsentExpiryDays(days int) *CookieBannerBuilder {
+	b.attrs["consentExpiryDays"] = days
+	return b
+}
+
+func (b *CookieBannerBuilder) WithConsentMode(mode string) *CookieBannerBuilder {
+	b.attrs["consentMode"] = mode
+	return b
+}
+
+func (b *CookieBannerBuilder) Create() string {
+	return CreateCookieBanner(b.client, b.attrs)
+}
+
+func CreateCookieCategory(c *testutil.Client, bannerID string, attrs ...Attrs) string {
+	c.T.Helper()
+
+	var a Attrs
+	if len(attrs) > 0 {
+		a = attrs[0]
+	}
+
+	const query = `
+		mutation($input: CreateCookieCategoryInput!) {
+			createCookieCategory(input: $input) {
+				cookieCategoryEdge {
+					node { id }
+				}
+			}
+		}
+	`
+
+	input := map[string]any{
+		"cookieBannerId": bannerID,
+		"name":           a.getString("name", SafeName("Category")),
+		"slug":           a.getString("slug", strings.ToLower(gofakeit.LetterN(8))),
+		"description":    a.getString("description", "Test cookie category"),
+		"rank":           a.getInt("rank", 10),
+	}
+
+	var result struct {
+		CreateCookieCategory struct {
+			CookieCategoryEdge struct {
+				Node struct {
+					ID string `json:"id"`
+				} `json:"node"`
+			} `json:"cookieCategoryEdge"`
+		} `json:"createCookieCategory"`
+	}
+
+	err := c.Execute(query, map[string]any{"input": input}, &result)
+	require.NoError(c.T, err, "createCookieCategory mutation failed")
+
+	return result.CreateCookieCategory.CookieCategoryEdge.Node.ID
+}
+
+func CreateCookiePattern(c *testutil.Client, categoryID string, attrs ...Attrs) string {
+	c.T.Helper()
+
+	var a Attrs
+	if len(attrs) > 0 {
+		a = attrs[0]
+	}
+
+	const query = `
+		mutation($input: CreateCookiePatternInput!) {
+			createCookiePattern(input: $input) {
+				cookiePatternEdge {
+					node { id }
+				}
+			}
+		}
+	`
+
+	input := map[string]any{
+		"cookieCategoryId": categoryID,
+		"pattern":          a.getString("pattern", gofakeit.LetterN(8)+"_cookie"),
+		"matchType":        a.getString("matchType", "EXACT"),
+		"displayName":      a.getString("displayName", SafeName("Pattern")),
+		"description":      a.getString("description", "Test cookie pattern"),
+	}
+	if maxAge := a.getStringPtr("maxAgeSeconds"); maxAge != nil {
+		input["maxAgeSeconds"] = a.getInt("maxAgeSeconds", 0)
+	} else if _, ok := a["maxAgeSeconds"]; ok {
+		input["maxAgeSeconds"] = a.getInt("maxAgeSeconds", 0)
+	}
+
+	var result struct {
+		CreateCookiePattern struct {
+			CookiePatternEdge struct {
+				Node struct {
+					ID string `json:"id"`
+				} `json:"node"`
+			} `json:"cookiePatternEdge"`
+		} `json:"createCookiePattern"`
+	}
+
+	err := c.Execute(query, map[string]any{"input": input}, &result)
+	require.NoError(c.T, err, "createCookiePattern mutation failed")
+
+	return result.CreateCookiePattern.CookiePatternEdge.Node.ID
+}
