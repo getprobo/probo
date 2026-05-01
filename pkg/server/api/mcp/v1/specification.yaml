@@ -9190,6 +9190,862 @@ components:
         deleted_custom_domain:
           $ref: "#/components/schemas/CustomDomain"
 
+    CookieBanner:
+      type: object
+      required:
+        - id
+        - organization_id
+        - name
+        - origin
+        - state
+        - cookie_policy_url
+        - consent_expiry_days
+        - consent_mode
+        - show_branding
+        - default_language
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Cookie banner ID
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        name:
+          type: string
+          description: Banner name
+        origin:
+          type: string
+          description: Website origin (scheme + host)
+        state:
+          type: string
+          enum: [ACTIVE, INACTIVE]
+          description: Banner state
+        privacy_policy_url:
+          type:
+            - string
+            - "null"
+          description: Privacy policy URL
+        cookie_policy_url:
+          type: string
+          description: Cookie policy URL
+        consent_expiry_days:
+          type: integer
+          description: Days until consent expires
+        consent_mode:
+          type: string
+          enum: [OPT_IN, OPT_OUT]
+          description: Consent mode
+        show_branding:
+          type: boolean
+          description: Whether to show Probo branding
+        default_language:
+          type: string
+          description: Default language code
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+
+    CookieCategory:
+      type: object
+      required:
+        - id
+        - organization_id
+        - cookie_banner_id
+        - name
+        - slug
+        - description
+        - kind
+        - rank
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Cookie category ID
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        cookie_banner_id:
+          $ref: "#/components/schemas/GID"
+          description: Cookie banner ID
+        name:
+          type: string
+          description: Category name
+        slug:
+          type: string
+          description: Category slug
+        description:
+          type: string
+          description: Category description
+        kind:
+          type: string
+          enum: [NORMAL, NECESSARY, UNCATEGORISED]
+          description: Category kind
+        rank:
+          type: integer
+          description: Display order rank
+        gcm_consent_types:
+          type: array
+          items:
+            type: string
+          description: Google Consent Mode types
+        posthog_consent:
+          type: boolean
+          description: Whether this category controls PostHog consent
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+
+    CookiePattern:
+      type: object
+      required:
+        - id
+        - organization_id
+        - cookie_banner_id
+        - cookie_category_id
+        - pattern
+        - match_type
+        - display_name
+        - description
+        - source
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Cookie pattern ID
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        cookie_banner_id:
+          $ref: "#/components/schemas/GID"
+          description: Cookie banner ID
+        cookie_category_id:
+          $ref: "#/components/schemas/GID"
+          description: Cookie category ID
+        pattern:
+          type: string
+          description: Cookie name pattern
+        match_type:
+          type: string
+          enum: [EXACT, PREFIX]
+          description: Pattern match type
+        display_name:
+          type: string
+          description: Human-friendly display name
+        max_age_seconds:
+          type:
+            - integer
+            - "null"
+          description: Cookie max age in seconds
+        description:
+          type: string
+          description: Pattern description
+        source:
+          type: string
+          enum: [SCRIPT, PRE_EXISTING]
+          description: How the pattern was discovered
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+
+    CookieBannerVersion:
+      type: object
+      required:
+        - id
+        - cookie_banner_id
+        - version
+        - state
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Version ID
+        cookie_banner_id:
+          $ref: "#/components/schemas/GID"
+          description: Cookie banner ID
+        version:
+          type: integer
+          description: Version number
+        state:
+          type: string
+          enum: [DRAFT, PUBLISHED]
+          description: Version state
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+
+    CookieBannerTranslation:
+      type: object
+      required:
+        - id
+        - cookie_banner_id
+        - language
+        - translations
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Translation ID
+        cookie_banner_id:
+          $ref: "#/components/schemas/GID"
+          description: Cookie banner ID
+        language:
+          type: string
+          description: Language code
+        translations:
+          type: string
+          description: Translation JSON string
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+
+    CookieConsentRecord:
+      type: object
+      required:
+        - id
+        - cookie_banner_id
+        - cookie_banner_version_id
+        - visitor_id
+        - consent_data
+        - action
+        - sdk_version
+        - created_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Consent record ID
+        cookie_banner_id:
+          $ref: "#/components/schemas/GID"
+          description: Cookie banner ID
+        cookie_banner_version_id:
+          $ref: "#/components/schemas/GID"
+          description: Banner version ID
+        visitor_id:
+          type: string
+          description: Visitor identifier
+        ip_address:
+          type:
+            - string
+            - "null"
+          description: Anonymized IP address
+        user_agent:
+          type:
+            - string
+            - "null"
+          description: User agent string
+        consent_data:
+          type: string
+          description: Consent data JSON
+        action:
+          type: string
+          enum: [ACCEPT_ALL, REJECT_ALL, CUSTOMIZE, GPC]
+          description: Consent action taken
+        sdk_version:
+          type: string
+          description: SDK version
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+
+    ListCookieBannersInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        size:
+          type: integer
+          description: Page size (default 100)
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Pagination cursor
+
+    ListCookieBannersOutput:
+      type: object
+      required:
+        - cookie_banners
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+        cookie_banners:
+          type: array
+          items:
+            $ref: "#/components/schemas/CookieBanner"
+
+    GetCookieBannerInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Cookie banner ID
+
+    GetCookieBannerOutput:
+      type: object
+      required:
+        - cookie_banner
+      properties:
+        cookie_banner:
+          $ref: "#/components/schemas/CookieBanner"
+
+    AddCookieBannerInput:
+      type: object
+      required:
+        - organization_id
+        - name
+        - origin
+        - cookie_policy_url
+        - consent_expiry_days
+        - consent_mode
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        name:
+          type: string
+          description: Banner name
+        origin:
+          type: string
+          description: Website origin
+        privacy_policy_url:
+          type: string
+          description: Privacy policy URL
+        cookie_policy_url:
+          type: string
+          description: Cookie policy URL
+        consent_expiry_days:
+          type: integer
+          description: Days until consent expires
+        consent_mode:
+          type: string
+          enum: [OPT_IN, OPT_OUT]
+          description: Consent mode
+
+    AddCookieBannerOutput:
+      type: object
+      required:
+        - cookie_banner
+      properties:
+        cookie_banner:
+          $ref: "#/components/schemas/CookieBanner"
+
+    UpdateCookieBannerInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Cookie banner ID
+        name:
+          type:
+            - string
+            - "null"
+          go.probo.inc/mcpgen/omittable: true
+        privacy_policy_url:
+          type:
+            - string
+            - "null"
+          go.probo.inc/mcpgen/omittable: true
+        cookie_policy_url:
+          type:
+            - string
+            - "null"
+          go.probo.inc/mcpgen/omittable: true
+        consent_expiry_days:
+          type:
+            - integer
+            - "null"
+          go.probo.inc/mcpgen/omittable: true
+        consent_mode:
+          type:
+            - string
+            - "null"
+          go.probo.inc/mcpgen/omittable: true
+        default_language:
+          type:
+            - string
+            - "null"
+          go.probo.inc/mcpgen/omittable: true
+
+    UpdateCookieBannerOutput:
+      type: object
+      required:
+        - cookie_banner
+      properties:
+        cookie_banner:
+          $ref: "#/components/schemas/CookieBanner"
+
+    DeleteCookieBannerInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Cookie banner ID
+
+    DeleteCookieBannerOutput:
+      type: object
+      required:
+        - deleted_id
+      properties:
+        deleted_id:
+          $ref: "#/components/schemas/GID"
+
+    ActivateCookieBannerInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Cookie banner ID
+
+    ActivateCookieBannerOutput:
+      type: object
+      required:
+        - cookie_banner
+      properties:
+        cookie_banner:
+          $ref: "#/components/schemas/CookieBanner"
+
+    DeactivateCookieBannerInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Cookie banner ID
+
+    DeactivateCookieBannerOutput:
+      type: object
+      required:
+        - cookie_banner
+      properties:
+        cookie_banner:
+          $ref: "#/components/schemas/CookieBanner"
+
+    ListCookieCategoriesInput:
+      type: object
+      required:
+        - cookie_banner_id
+      properties:
+        cookie_banner_id:
+          $ref: "#/components/schemas/GID"
+          description: Cookie banner ID
+        size:
+          type: integer
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+
+    ListCookieCategoriesOutput:
+      type: object
+      required:
+        - cookie_categories
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+        cookie_categories:
+          type: array
+          items:
+            $ref: "#/components/schemas/CookieCategory"
+
+    GetCookieCategoryInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+
+    GetCookieCategoryOutput:
+      type: object
+      required:
+        - cookie_category
+      properties:
+        cookie_category:
+          $ref: "#/components/schemas/CookieCategory"
+
+    AddCookieCategoryInput:
+      type: object
+      required:
+        - cookie_banner_id
+        - name
+        - slug
+        - description
+        - rank
+      properties:
+        cookie_banner_id:
+          $ref: "#/components/schemas/GID"
+        name:
+          type: string
+        slug:
+          type: string
+        description:
+          type: string
+        rank:
+          type: integer
+
+    AddCookieCategoryOutput:
+      type: object
+      required:
+        - cookie_category
+      properties:
+        cookie_category:
+          $ref: "#/components/schemas/CookieCategory"
+
+    UpdateCookieCategoryInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+        name:
+          type:
+            - string
+            - "null"
+          go.probo.inc/mcpgen/omittable: true
+        slug:
+          type:
+            - string
+            - "null"
+          go.probo.inc/mcpgen/omittable: true
+        description:
+          type:
+            - string
+            - "null"
+          go.probo.inc/mcpgen/omittable: true
+
+    UpdateCookieCategoryOutput:
+      type: object
+      required:
+        - cookie_category
+      properties:
+        cookie_category:
+          $ref: "#/components/schemas/CookieCategory"
+
+    DeleteCookieCategoryInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+
+    DeleteCookieCategoryOutput:
+      type: object
+      required:
+        - deleted_id
+      properties:
+        deleted_id:
+          $ref: "#/components/schemas/GID"
+
+    ReorderCookieCategoryInput:
+      type: object
+      required:
+        - id
+        - rank
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+        rank:
+          type: integer
+
+    ReorderCookieCategoryOutput:
+      type: object
+      required:
+        - cookie_category
+      properties:
+        cookie_category:
+          $ref: "#/components/schemas/CookieCategory"
+
+    ListCookiePatternsInput:
+      type: object
+      required:
+        - cookie_category_id
+      properties:
+        cookie_category_id:
+          $ref: "#/components/schemas/GID"
+        size:
+          type: integer
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+
+    ListCookiePatternsOutput:
+      type: object
+      required:
+        - cookie_patterns
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+        cookie_patterns:
+          type: array
+          items:
+            $ref: "#/components/schemas/CookiePattern"
+
+    GetCookiePatternInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+
+    GetCookiePatternOutput:
+      type: object
+      required:
+        - cookie_pattern
+      properties:
+        cookie_pattern:
+          $ref: "#/components/schemas/CookiePattern"
+
+    AddCookiePatternInput:
+      type: object
+      required:
+        - cookie_category_id
+        - pattern
+        - match_type
+        - display_name
+        - description
+      properties:
+        cookie_category_id:
+          $ref: "#/components/schemas/GID"
+        pattern:
+          type: string
+        match_type:
+          type: string
+          enum: [EXACT, PREFIX]
+        display_name:
+          type: string
+        max_age_seconds:
+          type: integer
+        description:
+          type: string
+
+    AddCookiePatternOutput:
+      type: object
+      required:
+        - cookie_pattern
+      properties:
+        cookie_pattern:
+          $ref: "#/components/schemas/CookiePattern"
+
+    UpdateCookiePatternInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+        display_name:
+          type:
+            - string
+            - "null"
+          go.probo.inc/mcpgen/omittable: true
+        max_age_seconds:
+          type:
+            - integer
+            - "null"
+          go.probo.inc/mcpgen/omittable: true
+        description:
+          type:
+            - string
+            - "null"
+          go.probo.inc/mcpgen/omittable: true
+
+    UpdateCookiePatternOutput:
+      type: object
+      required:
+        - cookie_pattern
+      properties:
+        cookie_pattern:
+          $ref: "#/components/schemas/CookiePattern"
+
+    DeleteCookiePatternInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+
+    DeleteCookiePatternOutput:
+      type: object
+      required:
+        - deleted_id
+      properties:
+        deleted_id:
+          $ref: "#/components/schemas/GID"
+
+    MoveCookiePatternToCategoryInput:
+      type: object
+      required:
+        - cookie_pattern_id
+        - target_cookie_category_id
+      properties:
+        cookie_pattern_id:
+          $ref: "#/components/schemas/GID"
+        target_cookie_category_id:
+          $ref: "#/components/schemas/GID"
+
+    MoveCookiePatternToCategoryOutput:
+      type: object
+      required:
+        - cookie_pattern
+      properties:
+        cookie_pattern:
+          $ref: "#/components/schemas/CookiePattern"
+
+    PublishCookieBannerVersionInput:
+      type: object
+      required:
+        - cookie_banner_id
+      properties:
+        cookie_banner_id:
+          $ref: "#/components/schemas/GID"
+
+    PublishCookieBannerVersionOutput:
+      type: object
+      required:
+        - cookie_banner_version
+      properties:
+        cookie_banner_version:
+          $ref: "#/components/schemas/CookieBannerVersion"
+
+    ListCookieBannerVersionsInput:
+      type: object
+      required:
+        - cookie_banner_id
+      properties:
+        cookie_banner_id:
+          $ref: "#/components/schemas/GID"
+        size:
+          type: integer
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+
+    ListCookieBannerVersionsOutput:
+      type: object
+      required:
+        - cookie_banner_versions
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+        cookie_banner_versions:
+          type: array
+          items:
+            $ref: "#/components/schemas/CookieBannerVersion"
+
+    UpsertCookieBannerTranslationInput:
+      type: object
+      required:
+        - cookie_banner_id
+        - language
+        - translations
+      properties:
+        cookie_banner_id:
+          $ref: "#/components/schemas/GID"
+        language:
+          type: string
+        translations:
+          type: string
+          description: Translation JSON string
+
+    UpsertCookieBannerTranslationOutput:
+      type: object
+      required:
+        - cookie_banner_translation
+      properties:
+        cookie_banner_translation:
+          $ref: "#/components/schemas/CookieBannerTranslation"
+
+    ListCookieConsentRecordsInput:
+      type: object
+      required:
+        - cookie_banner_id
+      properties:
+        cookie_banner_id:
+          $ref: "#/components/schemas/GID"
+        size:
+          type: integer
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+        action:
+          type: string
+          enum: [ACCEPT_ALL, REJECT_ALL, CUSTOMIZE, GPC]
+          description: Filter by consent action
+        visitor_id:
+          type: string
+          description: Filter by visitor ID
+        version:
+          type: integer
+          description: Filter by banner version number
+
+    ListCookieConsentRecordsOutput:
+      type: object
+      required:
+        - cookie_consent_records
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+        cookie_consent_records:
+          type: array
+          items:
+            $ref: "#/components/schemas/CookieConsentRecord"
+
+    GetCookieConsentRecordInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+
+    GetCookieConsentRecordOutput:
+      type: object
+      required:
+        - cookie_consent_record
+      properties:
+        cookie_consent_record:
+          $ref: "#/components/schemas/CookieConsentRecord"
+
 tools:
   - name: listOrganizations
     description: List all organizations the user has access to
@@ -10903,3 +11759,207 @@ tools:
       $ref: "#/components/schemas/DeleteCustomDomainInput"
     outputSchema:
       $ref: "#/components/schemas/DeleteCustomDomainOutput"
+  - name: listCookieBanners
+    description: List all cookie banners for the organization
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/ListCookieBannersInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListCookieBannersOutput"
+  - name: getCookieBanner
+    description: Get a cookie banner by ID
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/GetCookieBannerInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetCookieBannerOutput"
+  - name: addCookieBanner
+    description: Create a new cookie banner for an organization
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/AddCookieBannerInput"
+    outputSchema:
+      $ref: "#/components/schemas/AddCookieBannerOutput"
+  - name: updateCookieBanner
+    description: Update an existing cookie banner
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/UpdateCookieBannerInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateCookieBannerOutput"
+  - name: deleteCookieBanner
+    description: Delete a cookie banner
+    hints:
+      readonly: false
+      destructive: true
+    inputSchema:
+      $ref: "#/components/schemas/DeleteCookieBannerInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteCookieBannerOutput"
+  - name: activateCookieBanner
+    description: Activate a cookie banner
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/ActivateCookieBannerInput"
+    outputSchema:
+      $ref: "#/components/schemas/ActivateCookieBannerOutput"
+  - name: deactivateCookieBanner
+    description: Deactivate a cookie banner
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/DeactivateCookieBannerInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeactivateCookieBannerOutput"
+  - name: listCookieCategories
+    description: List all cookie categories for a banner
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/ListCookieCategoriesInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListCookieCategoriesOutput"
+  - name: getCookieCategory
+    description: Get a cookie category by ID
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/GetCookieCategoryInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetCookieCategoryOutput"
+  - name: addCookieCategory
+    description: Create a new cookie category for a banner
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/AddCookieCategoryInput"
+    outputSchema:
+      $ref: "#/components/schemas/AddCookieCategoryOutput"
+  - name: updateCookieCategory
+    description: Update an existing cookie category
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/UpdateCookieCategoryInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateCookieCategoryOutput"
+  - name: deleteCookieCategory
+    description: Delete a cookie category
+    hints:
+      readonly: false
+      destructive: true
+    inputSchema:
+      $ref: "#/components/schemas/DeleteCookieCategoryInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteCookieCategoryOutput"
+  - name: reorderCookieCategory
+    description: Change the display order rank of a cookie category
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/ReorderCookieCategoryInput"
+    outputSchema:
+      $ref: "#/components/schemas/ReorderCookieCategoryOutput"
+  - name: listCookiePatterns
+    description: List all cookie patterns for a category
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/ListCookiePatternsInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListCookiePatternsOutput"
+  - name: getCookiePattern
+    description: Get a cookie pattern by ID
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/GetCookiePatternInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetCookiePatternOutput"
+  - name: addCookiePattern
+    description: Create a new cookie pattern for a category
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/AddCookiePatternInput"
+    outputSchema:
+      $ref: "#/components/schemas/AddCookiePatternOutput"
+  - name: updateCookiePattern
+    description: Update an existing cookie pattern
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/UpdateCookiePatternInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateCookiePatternOutput"
+  - name: deleteCookiePattern
+    description: Delete a cookie pattern
+    hints:
+      readonly: false
+      destructive: true
+    inputSchema:
+      $ref: "#/components/schemas/DeleteCookiePatternInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteCookiePatternOutput"
+  - name: moveCookiePatternToCategory
+    description: Move a cookie pattern to a different category
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/MoveCookiePatternToCategoryInput"
+    outputSchema:
+      $ref: "#/components/schemas/MoveCookiePatternToCategoryOutput"
+  - name: publishCookieBannerVersion
+    description: Publish the current draft version of a cookie banner
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/PublishCookieBannerVersionInput"
+    outputSchema:
+      $ref: "#/components/schemas/PublishCookieBannerVersionOutput"
+  - name: listCookieBannerVersions
+    description: List all versions for a cookie banner
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/ListCookieBannerVersionsInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListCookieBannerVersionsOutput"
+  - name: upsertCookieBannerTranslation
+    description: Insert or update a cookie banner translation for a language
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/UpsertCookieBannerTranslationInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpsertCookieBannerTranslationOutput"
+  - name: listCookieConsentRecords
+    description: List consent records for a cookie banner
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/ListCookieConsentRecordsInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListCookieConsentRecordsOutput"
+  - name: getCookieConsentRecord
+    description: Get a consent record by ID
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/GetCookieConsentRecordInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetCookieConsentRecordOutput"

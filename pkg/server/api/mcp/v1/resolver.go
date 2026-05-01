@@ -23,6 +23,7 @@ import (
 
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/accessreview"
+	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/probo"
@@ -34,6 +35,7 @@ type Resolver struct {
 	proboSvc     *probo.Service
 	iamSvc       *iam.Service
 	accessReview *accessreview.Service
+	cookieBanner *cookiebanner.Service
 	logger       *log.Logger
 }
 

@@ -202,6 +202,7 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.Probo,
 			cfg.IAM,
 			cfg.AccessReview,
+			cfg.CookieBanner,
 			cfg.TokenSecret,
 		),
 		slackHandler: slack_v1.NewMux(

@@ -23,6 +23,7 @@ import (
 	"go.gearno.de/kit/log"
 	mcpgenmcp "go.probo.inc/mcpgen/mcp"
 	"go.probo.inc/probo/pkg/accessreview"
+	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/probo"
@@ -35,7 +36,7 @@ func (r *Resolver) ProboService(ctx context.Context, objectID gid.GID) *probo.Te
 	return r.proboSvc.WithTenant(objectID.TenantID())
 }
 
-func NewMux(logger *log.Logger, proboSvc *probo.Service, iamSvc *iam.Service, accessReviewSvc *accessreview.Service, tokenSecret string) *chi.Mux {
+func NewMux(logger *log.Logger, proboSvc *probo.Service, iamSvc *iam.Service, accessReviewSvc *accessreview.Service, cookieBannerSvc *cookiebanner.Service, tokenSecret string) *chi.Mux {
 	logger = logger.Named("mcp.v1")
 
 	logger.Info("initializing MCP server")
@@ -45,6 +46,7 @@ func NewMux(logger *log.Logger, proboSvc *probo.Service, iamSvc *iam.Service, ac
 		proboSvc:     proboSvc,
 		iamSvc:       iamSvc,
 		accessReview: accessReviewSvc,
+		cookieBanner: cookieBannerSvc,
 		logger:       logger,
 	}
 
