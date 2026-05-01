@@ -54,7 +54,7 @@ func NewCmdLatestVersion(f *cmdutil.Factory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "latest-version <id>",
 		Short: "Show the latest version of a cookie banner",
-		Args:    cobra.ExactArgs(1),
+		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := cmdutil.ValidateOutputFlag(flagOutput); err != nil {
 				return err

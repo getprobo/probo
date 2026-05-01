@@ -21,11 +21,11 @@ import (
 	"go.probo.inc/probo/pkg/cmd/cookie-banner/create"
 	"go.probo.inc/probo/pkg/cmd/cookie-banner/deactivate"
 	"go.probo.inc/probo/pkg/cmd/cookie-banner/delete"
+	"go.probo.inc/probo/pkg/cmd/cookie-banner/latestversion"
 	"go.probo.inc/probo/pkg/cmd/cookie-banner/list"
 	"go.probo.inc/probo/pkg/cmd/cookie-banner/publish"
 	"go.probo.inc/probo/pkg/cmd/cookie-banner/translate"
 	"go.probo.inc/probo/pkg/cmd/cookie-banner/update"
-	"go.probo.inc/probo/pkg/cmd/cookie-banner/latestversion"
 	"go.probo.inc/probo/pkg/cmd/cookie-banner/view"
 )
 
