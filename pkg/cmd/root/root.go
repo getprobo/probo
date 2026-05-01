@@ -23,6 +23,7 @@ import (
 	"go.probo.inc/probo/pkg/cmd/auditlog"
 	"go.probo.inc/probo/pkg/cmd/auth"
 	"go.probo.inc/probo/pkg/cmd/browse"
+	cloudaccount "go.probo.inc/probo/pkg/cmd/cloud-account"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
 	"go.probo.inc/probo/pkg/cmd/completion"
 	cmdconfig "go.probo.inc/probo/pkg/cmd/config"
@@ -90,6 +91,7 @@ func NewCmdRoot(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(asset.NewCmdAsset(f))
 	cmd.AddCommand(audit.NewCmdAudit(f))
 	cmd.AddCommand(auditlog.NewCmdAuditLog(f))
+	cmd.AddCommand(cloudaccount.NewCmdCloudAccount(f))
 	cmd.AddCommand(auth.NewCmdAuth(f))
 	cmd.AddCommand(browse.NewCmdBrowse(f))
 	cmd.AddCommand(completion.NewCmdCompletion(f))
