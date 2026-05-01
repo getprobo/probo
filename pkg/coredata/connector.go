@@ -16,6 +16,7 @@ package coredata
 
 import (
 	"context"
+	"database/sql/driver"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -59,14 +60,14 @@ func (j *jsonRawMessageOrNull) Scan(src any) error {
 	}
 }
 
-// Arg returns the value to bind for a JSONB named argument. pgx rejects
-// empty byte slices as invalid JSON, so an empty/nil value is sent as
-// SQL NULL.
-func (j jsonRawMessageOrNull) Arg() any {
+// Value implements database/sql/driver.Valuer so pgx binds the column
+// without an explicit helper at every call site. pgx rejects empty byte
+// slices as invalid JSON, so an empty/nil value is sent as SQL NULL.
+func (j jsonRawMessageOrNull) Value() (driver.Value, error) {
 	if len(j) == 0 {
-		return nil
+		return nil, nil
 	}
-	return []byte(j)
+	return []byte(j), nil
 }
 
 type (
@@ -405,7 +406,7 @@ INSERT INTO connectors (
 		"organization_id":      c.OrganizationID,
 		"provider":             c.Provider,
 		"protocol":             c.Protocol,
-		"settings":             c.RawSettings.Arg(),
+		"settings":             c.RawSettings,
 		"encrypted_connection": encryptedConnection,
 		"created_at":           c.CreatedAt,
 		"updated_at":           c.UpdatedAt,
@@ -620,7 +621,7 @@ WHERE
 
 	args := pgx.StrictNamedArgs{
 		"id":                   c.ID,
-		"settings":             c.RawSettings.Arg(),
+		"settings":             c.RawSettings,
 		"encrypted_connection": encryptedConnection,
 		"updated_at":           c.UpdatedAt,
 	}
