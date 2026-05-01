@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.178.0] - 2026-05-01
+
+### Added
+
+- Add MCP tools for cookie banner, category, pattern, version, and consent records
+- Add CLI commands for cookie banner, category, pattern, and consent records
+
+### Fixed
+
+- Fix auditor access to processing activities
+- Fix contract end date field cut off in Add Person dialog
+
 ## [0.177.1] - 2026-04-30
 
 ### Fixed
