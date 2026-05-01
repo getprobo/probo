@@ -203,6 +203,7 @@ type CookiePattern implements Node {
     maxAgeSeconds: Int
     description: String!
     source: CookieSource!
+    excluded: Boolean!
     cookieCount: Int! @goField(forceResolver: true)
     createdAt: Datetime!
     updatedAt: Datetime!
@@ -443,6 +444,7 @@ input UpdateCookiePatternInput {
     displayName: String
     maxAgeSeconds: Int @goField(omittable: true)
     description: String
+    excluded: Boolean
 }
 
 input DeleteCookiePatternInput {

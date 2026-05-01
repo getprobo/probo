@@ -801,6 +801,7 @@ func (r *mutationResolver) UpdateCookiePattern(ctx context.Context, input types.
 			DisplayName:     input.DisplayName,
 			MaxAgeSeconds:   gqlutils.UnwrapOmittable(input.MaxAgeSeconds),
 			Description:     input.Description,
+			Excluded:        input.Excluded,
 		},
 	)
 	if err != nil {
