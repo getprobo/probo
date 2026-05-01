@@ -97,6 +97,7 @@ type (
 		DisplayName     *string
 		MaxAgeSeconds   **int
 		Description     *string
+		Excluded        *bool
 	}
 
 	MoveCookiePatternToCategoryRequest struct {
@@ -531,7 +532,13 @@ func (s *Service) ensureDraftVersionForBanner(
 	}
 
 	var allPatterns coredata.CookiePatterns
-	if err := allPatterns.LoadAllByCookieBannerID(ctx, tx, scope, bannerID, nil); err != nil {
+	if err := allPatterns.LoadAllByCookieBannerID(
+		ctx,
+		tx,
+		scope,
+		bannerID,
+		coredata.NewCookiePatternFilter(nil, nil, new(false)),
+	); err != nil {
 		return nil, fmt.Errorf("cannot load cookie patterns: %w", err)
 	}
 
@@ -1325,6 +1332,9 @@ func (s *Service) UpdateCookiePattern(
 			}
 			if req.Description != nil {
 				pattern.Description = *req.Description
+			}
+			if req.Excluded != nil {
+				pattern.Excluded = *req.Excluded
 			}
 
 			pattern.UpdatedAt = time.Now()
@@ -2264,6 +2274,10 @@ func (s *Service) ReportDetectedCookies(
 				err := matchedPattern.FindMatchingPattern(ctx, tx, scope, banner.ID, dc.Name)
 				if err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
 					return fmt.Errorf("cannot find matching pattern: %w", err)
+				}
+
+				if err == nil && matchedPattern.Excluded {
+					continue
 				}
 
 				patternID := matchedPattern.ID
