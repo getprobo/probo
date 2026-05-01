@@ -51,6 +51,7 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 		flagDisplayName string
 		flagDescription string
 		flagMaxAge      int
+		flagExcluded    bool
 	)
 
 	cmd := &cobra.Command{
@@ -87,6 +88,9 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 			if cmd.Flags().Changed("max-age-seconds") {
 				input["maxAgeSeconds"] = flagMaxAge
 			}
+			if cmd.Flags().Changed("excluded") {
+				input["excluded"] = flagExcluded
+			}
 
 			if len(input) == 1 {
 				return fmt.Errorf("at least one field must be specified for update")
@@ -112,6 +116,7 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagDisplayName, "display-name", "", "Display name")
 	cmd.Flags().StringVar(&flagDescription, "description", "", "Description")
 	cmd.Flags().IntVar(&flagMaxAge, "max-age-seconds", 0, "Maximum age in seconds")
+	cmd.Flags().BoolVar(&flagExcluded, "excluded", false, "Exclude pattern from consent banner")
 
 	return cmd
 }

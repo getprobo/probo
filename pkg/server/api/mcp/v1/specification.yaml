@@ -9320,6 +9320,7 @@ components:
         - display_name
         - description
         - source
+        - excluded
         - created_at
         - updated_at
       properties:
@@ -9357,6 +9358,9 @@ components:
           type: string
           enum: [SCRIPT, PRE_EXISTING]
           description: How the pattern was discovered
+        excluded:
+          type: boolean
+          description: Whether this pattern is excluded from the consent banner
         created_at:
           type: string
           format: date-time
@@ -9887,6 +9891,11 @@ components:
         description:
           type:
             - string
+            - "null"
+          go.probo.inc/mcpgen/omittable: true
+        excluded:
+          type:
+            - boolean
             - "null"
           go.probo.inc/mcpgen/omittable: true
 

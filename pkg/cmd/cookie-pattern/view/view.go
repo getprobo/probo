@@ -36,6 +36,7 @@ query($id: ID!) {
       maxAgeSeconds
       description
       source
+      excluded
       createdAt
       updatedAt
     }
@@ -53,6 +54,7 @@ type viewResponse struct {
 		MaxAgeSeconds *int    `json:"maxAgeSeconds"`
 		Description   *string `json:"description"`
 		Source        string  `json:"source"`
+		Excluded      bool    `json:"excluded"`
 		CreatedAt     string  `json:"createdAt"`
 		UpdatedAt     string  `json:"updatedAt"`
 	} `json:"node"`
@@ -117,6 +119,7 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Pattern:"), v.Pattern)
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Match Type:"), v.MatchType)
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Source:"), v.Source)
+			_, _ = fmt.Fprintf(out, "%s%v\n", label.Render("Excluded:"), v.Excluded)
 			if v.MaxAgeSeconds != nil {
 				_, _ = fmt.Fprintf(out, "%s%d\n", label.Render("Max Age (seconds):"), *v.MaxAgeSeconds)
 			}

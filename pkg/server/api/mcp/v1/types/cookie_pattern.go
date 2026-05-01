@@ -31,6 +31,7 @@ func NewCookiePattern(p *coredata.CookiePattern) *CookiePattern {
 		MaxAgeSeconds:    p.MaxAgeSeconds,
 		Description:      p.Description,
 		Source:           CookiePatternSource(p.Source),
+		Excluded:         p.Excluded,
 		CreatedAt:        p.CreatedAt,
 		UpdatedAt:        p.UpdatedAt,
 	}

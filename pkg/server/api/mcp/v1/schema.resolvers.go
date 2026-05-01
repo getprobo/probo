@@ -5093,6 +5093,9 @@ func (r *Resolver) UpdateCookiePatternTool(ctx context.Context, req *mcp.CallToo
 	if v := UnwrapOmittable(input.Description); v != nil && *v != nil {
 		updateReq.Description = *v
 	}
+	if v := UnwrapOmittable(input.Excluded); v != nil && *v != nil {
+		updateReq.Excluded = *v
+	}
 	pattern, err := r.cookieBanner.UpdateCookiePattern(ctx, scope, updateReq)
 	if err != nil {
 		return nil, types.UpdateCookiePatternOutput{}, fmt.Errorf("cannot update cookie pattern: %w", err)
