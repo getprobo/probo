@@ -8069,6 +8069,9 @@ components:
         connector_id:
           $ref: "#/components/schemas/GID"
           description: Connector ID (optional)
+        cloud_account_id:
+          $ref: "#/components/schemas/GID"
+          description: Cloud account ID (optional)
         name:
           type: string
           description: Access source name
@@ -8101,6 +8104,12 @@ components:
             - "null"
           go.probo.inc/mcpgen/omittable: true
           description: Connector ID (set to null to remove)
+        cloud_account_id:
+          type:
+            - string
+            - "null"
+          go.probo.inc/mcpgen/omittable: true
+          description: Cloud account ID (set to null to remove)
         csv_data:
           type:
             - string
@@ -10527,6 +10536,494 @@ components:
           items:
             $ref: "#/components/schemas/SCIMEvent"
 
+    CloudAccountProvider:
+      type: string
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.CloudAccountProvider
+      enum:
+        - AWS
+        - GCP
+        - AZURE
+
+    CloudAccountStatus:
+      type: string
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.CloudAccountStatus
+      enum:
+        - PENDING_VERIFICATION
+        - VERIFIED
+        - ERRORED
+        - DISCONNECTED
+
+    CloudAccountScopeKind:
+      type: string
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.CloudAccountScopeKind
+      enum:
+        - AWS_ACCOUNT
+        - GCP_PROJECT
+        - GCP_ORGANIZATION
+        - AZURE_SUBSCRIPTION
+        - AZURE_MANAGEMENT_GROUP
+        - AZURE_TENANT
+
+    CloudAccountCredentialKind:
+      type: string
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.CloudAccountCredentialKind
+      enum:
+        - AWS_ASSUME_ROLE
+        - GCP_SERVICE_ACCOUNT_KEY
+        - AZURE_CLIENT_SECRET
+
+    CloudAccountAuditModule:
+      type: string
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.CloudAccountAuditModule
+      enum:
+        - ACCESS_REVIEW
+
+    CloudAccountOrderField:
+      type: string
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.CloudAccountOrderField
+      enum:
+        - CREATED_AT
+        - STATUS
+        - PROVIDER
+
+    CloudAccountOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/CloudAccountOrderField"
+          description: Cloud account order field
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+          description: Cloud account order direction
+
+    CloudAccountFilter:
+      type: object
+      properties:
+        provider:
+          $ref: "#/components/schemas/CloudAccountProvider"
+          description: Filter by provider
+        status:
+          $ref: "#/components/schemas/CloudAccountStatus"
+          description: Filter by status
+        scope_kind:
+          $ref: "#/components/schemas/CloudAccountScopeKind"
+          description: Filter by scope kind
+
+    CloudAccount:
+      type: object
+      required:
+        - id
+        - organization_id
+        - label
+        - provider
+        - credential_kind
+        - scope_kind
+        - scope_identifier
+        - status
+        - enabled_audit_modules
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Cloud account ID
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        label:
+          type: string
+          description: Customer-supplied label
+        provider:
+          $ref: "#/components/schemas/CloudAccountProvider"
+          description: Cloud provider
+        credential_kind:
+          $ref: "#/components/schemas/CloudAccountCredentialKind"
+          description: Credential kind
+        scope_kind:
+          $ref: "#/components/schemas/CloudAccountScopeKind"
+          description: Scope kind
+        scope_identifier:
+          type: string
+          description: |
+            AWS account id / GCP project or org id / Azure subscription
+            or management group id. Treat as credential-adjacent
+            infrastructure topology.
+        status:
+          $ref: "#/components/schemas/CloudAccountStatus"
+          description: Verification status
+        enabled_audit_modules:
+          type: array
+          items:
+            $ref: "#/components/schemas/CloudAccountAuditModule"
+          description: Enabled audit modules
+        external_id:
+          type:
+            - string
+            - "null"
+          description: |
+            Persisted external_id (AWS only). Operators recover this
+            value via this tool when they lose the install-assets
+            response between phases.
+        last_probe_at:
+          type:
+            - string
+            - "null"
+          format: date-time
+          description: Timestamp of the most recent probe attempt
+        last_probe_error:
+          type:
+            - string
+            - "null"
+          description: |
+            Latest probe error string. May embed sensitive identifiers
+            (role ARNs, SA emails, tenant ids); only callers with
+            rotate-credentials permission see a non-null value via
+            GraphQL, MCP returns it as-is for the same role gate.
+        last_verified_at:
+          type:
+            - string
+            - "null"
+          format: date-time
+          description: Timestamp of the most recent successful probe
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Update timestamp
+
+    AWSInstallAssets:
+      type: object
+      required:
+        - quick_create_url
+        - external_id
+        - principal_arn
+        - required_actions
+      properties:
+        quick_create_url:
+          type: string
+          description: CloudFormation Quick-Create URL
+        external_id:
+          type: string
+          description: Persisted external_id the operator must paste into the CFN stack
+        principal_arn:
+          type: string
+          description: Probo principal ARN that will assume the role
+        required_actions:
+          type: array
+          items:
+            type: string
+          description: IAM actions the operator must grant
+
+    GCPInstallAssets:
+      type: object
+      required:
+        - setup_script
+        - required_roles
+        - required_apis
+      properties:
+        setup_script:
+          type: string
+          description: gcloud setup script
+        required_roles:
+          type: array
+          items:
+            type: string
+          description: GCP IAM roles the service account needs
+        required_apis:
+          type: array
+          items:
+            type: string
+          description: GCP APIs that must be enabled
+
+    AzureInstallStep:
+      type: object
+      required:
+        - title
+        - body
+      properties:
+        title:
+          type: string
+          description: Step title
+        body:
+          type: string
+          description: Step body (markdown)
+        code:
+          type:
+            - string
+            - "null"
+          description: Inline code snippet, if applicable
+
+    AzureInstallAssets:
+      type: object
+      required:
+        - steps
+        - required_rbac_roles
+        - required_graph_permissions
+      properties:
+        steps:
+          type: array
+          items:
+            $ref: "#/components/schemas/AzureInstallStep"
+          description: Ordered install steps
+        required_rbac_roles:
+          type: array
+          items:
+            type: string
+          description: Azure RBAC roles the principal needs
+        required_graph_permissions:
+          type: array
+          items:
+            type: string
+          description: Microsoft Graph application permissions
+
+    ListCloudAccountsInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        order_by:
+          $ref: "#/components/schemas/CloudAccountOrderBy"
+          description: Order by
+        filter:
+          $ref: "#/components/schemas/CloudAccountFilter"
+          description: Filter
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+
+    ListCloudAccountsOutput:
+      type: object
+      required:
+        - cloud_accounts
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        cloud_accounts:
+          type: array
+          items:
+            $ref: "#/components/schemas/CloudAccount"
+
+    GetCloudAccountInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Cloud account ID
+
+    GetCloudAccountOutput:
+      type: object
+      required:
+        - cloud_account
+      properties:
+        cloud_account:
+          $ref: "#/components/schemas/CloudAccount"
+
+    GenerateCloudAccountInstallAssetsMCPInput:
+      type: object
+      required:
+        - organization_id
+        - provider
+        - scope_kind
+        - scope_identifier
+        - modules
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        provider:
+          $ref: "#/components/schemas/CloudAccountProvider"
+          description: Cloud provider
+        scope_kind:
+          $ref: "#/components/schemas/CloudAccountScopeKind"
+          description: Scope kind
+        scope_identifier:
+          type: string
+          description: Scope identifier (AWS account id / GCP project or org id / Azure id)
+        modules:
+          type: array
+          items:
+            $ref: "#/components/schemas/CloudAccountAuditModule"
+          description: Audit modules to enable
+        aws_region:
+          type: string
+          description: |
+            AWS region for the CloudFormation Quick-Create URL.
+            Required for provider=AWS, ignored otherwise.
+
+    GenerateCloudAccountInstallAssetsMCPOutput:
+      type: object
+      properties:
+        aws:
+          anyOf:
+            - $ref: "#/components/schemas/AWSInstallAssets"
+            - type: "null"
+          description: AWS install assets, set when provider=AWS
+        gcp:
+          anyOf:
+            - $ref: "#/components/schemas/GCPInstallAssets"
+            - type: "null"
+          description: GCP install assets, set when provider=GCP
+        azure:
+          anyOf:
+            - $ref: "#/components/schemas/AzureInstallAssets"
+            - type: "null"
+          description: Azure install assets, set when provider=AZURE
+
+    CreateCloudAccountMCPInput:
+      type: object
+      required:
+        - organization_id
+        - label
+        - provider
+        - credential_kind
+        - scope_kind
+        - scope_identifier
+        - enabled_audit_modules
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        label:
+          type: string
+          description: Customer-supplied label
+        provider:
+          $ref: "#/components/schemas/CloudAccountProvider"
+          description: Cloud provider
+        credential_kind:
+          $ref: "#/components/schemas/CloudAccountCredentialKind"
+          description: Credential kind
+        scope_kind:
+          $ref: "#/components/schemas/CloudAccountScopeKind"
+          description: Scope kind
+        scope_identifier:
+          type: string
+          description: Scope identifier
+        enabled_audit_modules:
+          type: array
+          items:
+            $ref: "#/components/schemas/CloudAccountAuditModule"
+          description: Enabled audit modules
+        aws_role_arn:
+          type: string
+          description: |
+            AWS role ARN to assume. Required when provider=AWS.
+            Run cloud_account_install_assets_generate first to obtain
+            the install template the operator must apply before
+            calling this tool.
+        aws_external_id:
+          type: string
+          description: |
+            AWS external_id. Required when provider=AWS. Must match
+            the external_id returned by
+            cloud_account_install_assets_generate (or by
+            cloud_account_get if recovering from a lost client state).
+
+    CreateCloudAccountMCPOutput:
+      type: object
+      required:
+        - cloud_account
+      properties:
+        cloud_account:
+          $ref: "#/components/schemas/CloudAccount"
+
+    VerifyCloudAccountMCPInput:
+      type: object
+      required:
+        - cloud_account_id
+      properties:
+        cloud_account_id:
+          $ref: "#/components/schemas/GID"
+          description: Cloud account ID
+
+    VerifyCloudAccountMCPOutput:
+      type: object
+      required:
+        - cloud_account
+        - status
+      properties:
+        cloud_account:
+          $ref: "#/components/schemas/CloudAccount"
+        status:
+          $ref: "#/components/schemas/CloudAccountStatus"
+          description: Verification status after the probe
+        last_probe_error:
+          type:
+            - string
+            - "null"
+          description: Probe error string when status != VERIFIED
+
+    RotateCloudAccountCredentialsMCPInput:
+      type: object
+      required:
+        - cloud_account_id
+        - provider
+        - credential_kind
+      properties:
+        cloud_account_id:
+          $ref: "#/components/schemas/GID"
+          description: Cloud account ID
+        provider:
+          $ref: "#/components/schemas/CloudAccountProvider"
+          description: Cloud provider (must match the existing row)
+        credential_kind:
+          $ref: "#/components/schemas/CloudAccountCredentialKind"
+          description: Credential kind (must match the existing row)
+        aws_role_arn:
+          type: string
+          description: |
+            New AWS role ARN. AWS callers may rotate the role ARN
+            here; the AWS external_id may also be supplied.
+        aws_external_id:
+          type: string
+          description: New AWS external_id (AWS callers only)
+        azure_tenant_id:
+          type: string
+          description: New Azure tenant id (Azure callers only)
+        azure_client_id:
+          type: string
+          description: New Azure client id (Azure callers only)
+
+    RotateCloudAccountCredentialsMCPOutput:
+      type: object
+      required:
+        - cloud_account
+      properties:
+        cloud_account:
+          $ref: "#/components/schemas/CloudAccount"
+
+    DeleteCloudAccountMCPInput:
+      type: object
+      required:
+        - cloud_account_id
+      properties:
+        cloud_account_id:
+          $ref: "#/components/schemas/GID"
+          description: Cloud account ID
+
+    DeleteCloudAccountMCPOutput:
+      type: object
+      required:
+        - deleted_cloud_account_id
+      properties:
+        deleted_cloud_account_id:
+          $ref: "#/components/schemas/GID"
+          description: Deleted cloud account ID
+
 tools:
   - name: listOrganizations
     description: List all organizations the user has access to
@@ -12461,3 +12958,61 @@ tools:
       $ref: "#/components/schemas/ListSCIMEventsInput"
     outputSchema:
       $ref: "#/components/schemas/ListSCIMEventsOutput"
+  - name: cloud_account_list
+    description: List cloud accounts for an organization
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/ListCloudAccountsInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListCloudAccountsOutput"
+  - name: cloud_account_get
+    description: Get a cloud account by id, including the persisted external_id when present
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/GetCloudAccountInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetCloudAccountOutput"
+  - name: cloud_account_install_assets_generate
+    description: Generate per-provider install assets (CFN URL, gcloud script, Azure walkthrough). Persists external_id on AWS rows
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/GenerateCloudAccountInstallAssetsMCPInput"
+    outputSchema:
+      $ref: "#/components/schemas/GenerateCloudAccountInstallAssetsMCPOutput"
+  - name: cloud_account_create
+    description: Create a cloud account row (PENDING_VERIFICATION). Secret credential bytes must follow via the credential upload endpoint
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/CreateCloudAccountMCPInput"
+    outputSchema:
+      $ref: "#/components/schemas/CreateCloudAccountMCPOutput"
+  - name: cloud_account_verify
+    description: Synchronously probe a cloud account and write the resulting status transition
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/VerifyCloudAccountMCPInput"
+    outputSchema:
+      $ref: "#/components/schemas/VerifyCloudAccountMCPOutput"
+  - name: cloud_account_rotate_credentials
+    description: Rotate cloud-account non-secret metadata. Secret credential bytes must follow via the credential upload endpoint
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/RotateCloudAccountCredentialsMCPInput"
+    outputSchema:
+      $ref: "#/components/schemas/RotateCloudAccountCredentialsMCPOutput"
+  - name: cloud_account_delete
+    description: Delete a cloud account. Fails with a Conflict if any access source still references it
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/DeleteCloudAccountMCPInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteCloudAccountMCPOutput"

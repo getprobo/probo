@@ -5183,3 +5183,25 @@ func (r *Resolver) PublishDocumentTool(ctx context.Context, req *mcp.CallToolReq
 	}
 	return nil, output, nil
 }
+
+func (r *Resolver) CloudAccountListTool(ctx context.Context, req *mcp.CallToolRequest, input *types.CloudAccountListInput) (*mcp.CallToolResult, types.CloudAccountListOutput, error) {
+	return nil, types.CloudAccountListOutput{}, fmt.Errorf("cloud_account_list not implemented")
+}
+func (r *Resolver) CloudAccountGetTool(ctx context.Context, req *mcp.CallToolRequest, input *types.CloudAccountGetInput) (*mcp.CallToolResult, types.CloudAccountGetOutput, error) {
+	return nil, types.CloudAccountGetOutput{}, fmt.Errorf("cloud_account_get not implemented")
+}
+func (r *Resolver) CloudAccountInstallAssetsGenerateTool(ctx context.Context, req *mcp.CallToolRequest, input *types.CloudAccountInstallAssetsGenerateInput) (*mcp.CallToolResult, types.CloudAccountInstallAssetsGenerateOutput, error) {
+	return nil, types.CloudAccountInstallAssetsGenerateOutput{}, fmt.Errorf("cloud_account_install_assets_generate not implemented")
+}
+func (r *Resolver) CloudAccountCreateTool(ctx context.Context, req *mcp.CallToolRequest, input *types.CloudAccountCreateInput) (*mcp.CallToolResult, types.CloudAccountCreateOutput, error) {
+	return nil, types.CloudAccountCreateOutput{}, fmt.Errorf("cloud_account_create not implemented")
+}
+func (r *Resolver) CloudAccountVerifyTool(ctx context.Context, req *mcp.CallToolRequest, input *types.CloudAccountVerifyInput) (*mcp.CallToolResult, types.CloudAccountVerifyOutput, error) {
+	return nil, types.CloudAccountVerifyOutput{}, fmt.Errorf("cloud_account_verify not implemented")
+}
+func (r *Resolver) CloudAccountRotateCredentialsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.CloudAccountRotateCredentialsInput) (*mcp.CallToolResult, types.CloudAccountRotateCredentialsOutput, error) {
+	return nil, types.CloudAccountRotateCredentialsOutput{}, fmt.Errorf("cloud_account_rotate_credentials not implemented")
+}
+func (r *Resolver) CloudAccountDeleteTool(ctx context.Context, req *mcp.CallToolRequest, input *types.CloudAccountDeleteInput) (*mcp.CallToolResult, types.CloudAccountDeleteOutput, error) {
+	return nil, types.CloudAccountDeleteOutput{}, fmt.Errorf("cloud_account_delete not implemented")
+}
