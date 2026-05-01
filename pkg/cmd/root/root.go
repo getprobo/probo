@@ -26,8 +26,12 @@ import (
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
 	"go.probo.inc/probo/pkg/cmd/completion"
 	cmdconfig "go.probo.inc/probo/pkg/cmd/config"
+	consentrecord "go.probo.inc/probo/pkg/cmd/consent-record"
 	cmdcontext "go.probo.inc/probo/pkg/cmd/context"
 	"go.probo.inc/probo/pkg/cmd/control"
+	cookiebanner "go.probo.inc/probo/pkg/cmd/cookie-banner"
+	cookiecategory "go.probo.inc/probo/pkg/cmd/cookie-category"
+	cookiepattern "go.probo.inc/probo/pkg/cmd/cookie-pattern"
 	"go.probo.inc/probo/pkg/cmd/datum"
 	"go.probo.inc/probo/pkg/cmd/document"
 	"go.probo.inc/probo/pkg/cmd/dpia"
@@ -90,8 +94,12 @@ func NewCmdRoot(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(browse.NewCmdBrowse(f))
 	cmd.AddCommand(completion.NewCmdCompletion(f))
 	cmd.AddCommand(cmdconfig.NewCmdConfig(f))
+	cmd.AddCommand(consentrecord.NewCmdConsentRecord(f))
 	cmd.AddCommand(cmdcontext.NewCmdContext(f))
 	cmd.AddCommand(control.NewCmdControl(f))
+	cmd.AddCommand(cookiebanner.NewCmdCookieBanner(f))
+	cmd.AddCommand(cookiecategory.NewCmdCookieCategory(f))
+	cmd.AddCommand(cookiepattern.NewCmdCookiePattern(f))
 	cmd.AddCommand(datum.NewCmdDatum(f))
 	cmd.AddCommand(document.NewCmdDocument(f))
 	cmd.AddCommand(dpia.NewCmdDPIA(f))
