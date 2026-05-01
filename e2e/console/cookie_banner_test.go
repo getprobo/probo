@@ -642,7 +642,7 @@ func TestCookieBanner_PublishVersion(t *testing.T) {
 
 		require.NoError(t, err)
 		assert.Equal(t, 1, publishResult.PublishCookieBannerVersion.CookieBannerVersion.Version)
-		assert.Equal(t, "published", publishResult.PublishCookieBannerVersion.CookieBannerVersion.State)
+		assert.Equal(t, "PUBLISHED", publishResult.PublishCookieBannerVersion.CookieBannerVersion.State)
 		assert.Equal(t, bannerID, publishResult.PublishCookieBannerVersion.CookieBanner.ID)
 	})
 
@@ -679,7 +679,7 @@ func TestCookieBanner_PublishVersion(t *testing.T) {
 		err := owner.Execute(query, map[string]any{"id": bannerID}, &result)
 		require.NoError(t, err)
 		require.NotNil(t, result.Node.LatestVersion)
-		assert.Equal(t, "draft", result.Node.LatestVersion.State)
+		assert.Equal(t, "DRAFT", result.Node.LatestVersion.State)
 		assert.Equal(t, 1, result.Node.LatestVersion.Version)
 	})
 }

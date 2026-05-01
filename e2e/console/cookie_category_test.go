@@ -106,7 +106,7 @@ func TestCookieCategory_Create(t *testing.T) {
 		owner := testutil.NewClient(t, testutil.RoleOwner)
 
 		bannerID := factory.CreateCookieBanner(owner)
-		factory.CreateCookieCategory(owner, bannerID, factory.Attrs{"slug": "analytics"})
+		factory.CreateCookieCategory(owner, bannerID, factory.Attrs{"slug": "custom-slug-dup"})
 
 		_, err := owner.Do(`
 			mutation CreateCookieCategory($input: CreateCookieCategoryInput!) {
@@ -118,8 +118,8 @@ func TestCookieCategory_Create(t *testing.T) {
 		`, map[string]any{
 			"input": map[string]any{
 				"cookieBannerId": bannerID,
-				"name":           "Another Analytics",
-				"slug":           "analytics",
+				"name":           "Duplicate Category",
+				"slug":           "custom-slug-dup",
 				"description":    "Duplicate slug",
 				"rank":           10,
 			},
