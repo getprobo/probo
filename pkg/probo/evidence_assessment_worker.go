@@ -194,18 +194,11 @@ func (h *evidenceAssessmentHandler) assessAndCommit(
 	)
 }
 
-// failEvidence transitions the row to FAILED via Evidence.Update.
-// evidence is taken by value; assessAndCommit also takes a value copy,
-// so this struct still reflects the row as Claim left it (PROCESSING).
 func (h *evidenceAssessmentHandler) failEvidence(ctx context.Context, evidence coredata.Evidence) error {
-	evidence.AssessmentStatus = coredata.EvidenceAssessmentStatusFailed
-	evidence.AssessmentProcessingStartedAt = nil
-	evidence.UpdatedAt = time.Now()
-
 	return h.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			return evidence.Update(ctx, tx, coredata.NewScopeFromObjectID(evidence.ID))
+			return evidence.SetAssessmentFailed(ctx, tx, coredata.NewScopeFromObjectID(evidence.ID))
 		},
 	)
 }

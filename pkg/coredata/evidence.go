@@ -521,6 +521,42 @@ WHERE
 	return nil
 }
 
+// SetAssessmentFailed transitions the row to FAILED, touching only
+// the three status columns. Avoids clobbering concurrent edits to
+// description/assessment/url/etc. with a snapshot held across the
+// preceding LLM call.
+func (e Evidence) SetAssessmentFailed(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+) error {
+	q := `
+UPDATE
+    evidences
+SET
+    assessment_status = @assessment_status,
+    assessment_processing_started_at = NULL,
+    updated_at = @updated_at
+WHERE
+    %s
+    AND id = @evidence_id
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"evidence_id":       e.ID,
+		"assessment_status": EvidenceAssessmentStatusFailed,
+		"updated_at":        time.Now(),
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	if _, err := conn.Exec(ctx, q, args); err != nil {
+		return fmt.Errorf("cannot mark evidence assessment failed: %w", err)
+	}
+	return nil
+}
+
 func (e Evidence) Delete(
 	ctx context.Context,
 	conn pg.Tx,
