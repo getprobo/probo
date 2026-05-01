@@ -598,44 +598,6 @@ FOR UPDATE SKIP LOCKED;
 	return nil
 }
 
-// MarkEvidenceAssessmentFailed transitions the evidence row to FAILED
-// without touching description, assessment, or any other column. It
-// only needs the evidence ID, so it is a top-level func rather than a
-// method on Evidence — callers should not need to load the row first
-// when all they have is the ID.
-func MarkEvidenceAssessmentFailed(
-	ctx context.Context,
-	conn pg.Tx,
-	scope Scoper,
-	evidenceID gid.GID,
-) error {
-	q := `
-UPDATE
-    evidences
-SET
-    assessment_status = @assessment_status,
-    assessment_processing_started_at = NULL,
-    updated_at = @updated_at
-WHERE
-    %s
-    AND id = @evidence_id
-`
-
-	q = fmt.Sprintf(q, scope.SQLFragment())
-
-	args := pgx.StrictNamedArgs{
-		"evidence_id":       evidenceID,
-		"assessment_status": EvidenceAssessmentStatusFailed,
-		"updated_at":        time.Now(),
-	}
-	maps.Copy(args, scope.SQLArguments())
-
-	if _, err := conn.Exec(ctx, q, args); err != nil {
-		return fmt.Errorf("cannot mark evidence assessment failed: %w", err)
-	}
-	return nil
-}
-
 func ResetStaleAssessmentProcessing(
 	ctx context.Context,
 	conn pg.Querier,

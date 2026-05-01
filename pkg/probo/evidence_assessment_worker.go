@@ -26,7 +26,6 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/evidenceassessor"
 	"go.probo.inc/probo/pkg/filemanager"
-	"go.probo.inc/probo/pkg/gid"
 )
 
 type (
@@ -113,7 +112,7 @@ func (h *evidenceAssessmentHandler) Process(ctx context.Context, evidence coreda
 			log.String("evidence_id", evidence.ID.String()),
 		)
 
-		if err := h.failEvidence(ctx, evidence.ID); err != nil {
+		if err := h.failEvidence(ctx, evidence); err != nil {
 			h.logger.ErrorCtx(ctx, "cannot mark evidence assessment as failed", log.Error(err))
 		}
 
@@ -195,13 +194,18 @@ func (h *evidenceAssessmentHandler) assessAndCommit(
 	)
 }
 
-func (h *evidenceAssessmentHandler) failEvidence(ctx context.Context, evidenceID gid.GID) error {
-	scope := coredata.NewScopeFromObjectID(evidenceID)
+// failEvidence transitions the row to FAILED via Evidence.Update.
+// evidence is taken by value; assessAndCommit also takes a value copy,
+// so this struct still reflects the row as Claim left it (PROCESSING).
+func (h *evidenceAssessmentHandler) failEvidence(ctx context.Context, evidence coredata.Evidence) error {
+	evidence.AssessmentStatus = coredata.EvidenceAssessmentStatusFailed
+	evidence.AssessmentProcessingStartedAt = nil
+	evidence.UpdatedAt = time.Now()
 
 	return h.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			return coredata.MarkEvidenceAssessmentFailed(ctx, tx, scope, evidenceID)
+			return evidence.Update(ctx, tx, coredata.NewScopeFromObjectID(evidence.ID))
 		},
 	)
 }
