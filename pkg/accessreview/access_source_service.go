@@ -155,7 +155,10 @@ func (s AccessSourceService) Create(
 					return fmt.Errorf("cannot load cloud account: %w", err)
 				}
 				if cloudAccount.OrganizationID != req.OrganizationID {
-					return fmt.Errorf("cannot create access source: cloud account organization mismatch")
+					// Use a non-revealing error: a caller from org-B
+					// must not be able to distinguish "exists in
+					// org-A" from "does not exist".
+					return fmt.Errorf("cannot load cloud account: not found")
 				}
 			}
 
@@ -217,12 +220,20 @@ func (s AccessSourceService) Update(
 				source.Category = *req.Category
 			}
 
+			// A target update on any of {connector_id,
+			// cloud_account_id, csv_data} clears the other two so the
+			// at-most-one DB CHECK constraint stays satisfied. A
+			// caller that wants to detach all targets sets one of
+			// them to null explicitly; the other two are cleared as a
+			// side effect.
 			if req.ConnectorID != nil {
 				if *req.ConnectorID != nil {
 					connector := &coredata.Connector{}
 					if err := connector.LoadMetadataByID(ctx, conn, s.scope, **req.ConnectorID); err != nil {
 						return fmt.Errorf("cannot load connector: %w", err)
 					}
+					source.CloudAccountID = nil
+					source.CsvData = nil
 				}
 				source.ConnectorID = *req.ConnectorID
 			}
@@ -233,11 +244,25 @@ func (s AccessSourceService) Update(
 					if err := cloudAccount.LoadMetadataByID(ctx, conn, s.scope, **req.CloudAccountID); err != nil {
 						return fmt.Errorf("cannot load cloud account: %w", err)
 					}
+					if cloudAccount.OrganizationID != source.OrganizationID {
+						// Match the Create-side cross-org check;
+						// emit a non-revealing error so a caller
+						// scanning org-A's GIDs from org-B cannot
+						// distinguish "exists in another org" from
+						// "does not exist".
+						return fmt.Errorf("cannot load cloud account: not found")
+					}
+					source.ConnectorID = nil
+					source.CsvData = nil
 				}
 				source.CloudAccountID = *req.CloudAccountID
 			}
 
 			if req.CsvData != nil {
+				if *req.CsvData != nil {
+					source.ConnectorID = nil
+					source.CloudAccountID = nil
+				}
 				source.CsvData = *req.CsvData
 			}
 
