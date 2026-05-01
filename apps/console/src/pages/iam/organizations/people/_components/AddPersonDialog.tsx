@@ -13,7 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 import { useTranslate } from "@probo/i18n";
-import { Dialog, useDialogRef } from "@probo/ui";
+import { Dialog, DialogContent, useDialogRef } from "@probo/ui";
 import { type PropsWithChildren } from "react";
 import type { DataID } from "relay-runtime";
 
@@ -33,9 +33,9 @@ export function AddPersonDialog(props: PropsWithChildren<{
       className="max-w-xl"
       ref={dialogRef}
     >
-      <div className="p-4">
+      <DialogContent padded>
         <PersonForm connectionId={connectionId} onSubmit={() => dialogRef.current?.close()} />
-      </div>
+      </DialogContent>
     </Dialog>
   );
 }
