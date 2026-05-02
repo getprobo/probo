@@ -15,6 +15,10 @@
 package console_test
 
 import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -522,6 +526,66 @@ func TestCookieBannerVersioning_TranslationChangesNeverBump(t *testing.T) {
 
 		got := latestVersion(t, owner, bannerID)
 		assert.Equal(t, baseline, got.Version, "adding a new language should not bump the version")
+		assert.Equal(t, "PUBLISHED", got.State)
+	})
+}
+
+func activateBanner(t *testing.T, c *testutil.Client, bannerID string) {
+	t.Helper()
+
+	const query = `
+		mutation ActivateCookieBanner($input: ActivateCookieBannerInput!) {
+			activateCookieBanner(input: $input) {
+				cookieBanner { id state }
+			}
+		}
+	`
+
+	var result struct{}
+	require.NoError(t, c.Execute(query, map[string]any{
+		"input": map[string]any{"cookieBannerId": bannerID},
+	}, &result), "activateCookieBanner mutation failed")
+}
+
+func reportDetectedCookies(t *testing.T, c *testutil.Client, bannerID string, names ...string) {
+	t.Helper()
+
+	type entry struct {
+		Name   string  `json:"name"`
+		Source string  `json:"source"`
+	}
+	cookies := make([]entry, len(names))
+	for i, n := range names {
+		cookies[i] = entry{Name: n, Source: "script"}
+	}
+
+	body, err := json.Marshal(map[string]any{"cookies": cookies})
+	require.NoError(t, err)
+
+	url := fmt.Sprintf("%s/cookie-banner/v1/%s/detected-cookies", c.BaseURL(), bannerID)
+	resp, err := c.HTTPClient().Post(url, "application/json", bytes.NewReader(body))
+	require.NoError(t, err)
+	defer resp.Body.Close()
+	require.Equal(t, http.StatusNoContent, resp.StatusCode,
+		"detected-cookies endpoint should return 204")
+}
+
+func TestCookieBannerVersioning_DetectedCookiesNeverBump(t *testing.T) {
+	t.Parallel()
+
+	t.Run("reporting detected cookies does not bump version", func(t *testing.T) {
+		t.Parallel()
+		owner := testutil.NewClient(t, testutil.RoleOwner)
+
+		bannerID := factory.CreateCookieBanner(owner)
+		published := publishBanner(t, owner, bannerID)
+		activateBanner(t, owner, bannerID)
+		baseline := published.Version
+
+		reportDetectedCookies(t, owner, bannerID, "_unknown_cookie", "_another")
+
+		got := latestVersion(t, owner, bannerID)
+		assert.Equal(t, baseline, got.Version, "detected cookies should not bump the version")
 		assert.Equal(t, "PUBLISHED", got.State)
 	})
 }
