@@ -15,17 +15,21 @@
 package cookiebanner
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"maps"
 	"net/url"
+	"reflect"
+	"slices"
 	"strings"
 	"time"
 
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/equal"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/validator"
@@ -349,12 +353,53 @@ func CanonicalizeOrigin(raw string) string {
 	return u.Scheme + "://" + host
 }
 
+// snapshotsEqual reports whether two version snapshots are visitor-identical.
+// buildSnapshot already normalises empty slices and nil maps, so reflect.DeepEqual
+// is sufficient and is the single chokepoint we'd extend if we ever wanted to
+// ignore particular fields.
+func snapshotsEqual(a, b coredata.CookieBannerVersionSnapshot) bool {
+	return reflect.DeepEqual(a, b)
+}
+
+// snapshotCategoryKindOrder returns a stable weight per Kind so the snapshot
+// keeps the visitor-facing layout invariants (NECESSARY first, UNCATEGORISED
+// last) without depending on the admin-controlled rank.
+func snapshotCategoryKindOrder(k coredata.CookieCategoryKind) int {
+	switch k {
+	case coredata.CookieCategoryKindNecessary:
+		return 0
+	case coredata.CookieCategoryKindNormal:
+		return 1
+	case coredata.CookieCategoryKindUncategorised:
+		return 2
+	default:
+		return 3
+	}
+}
+
+// sortCategoriesForSnapshot returns the categories ordered for snapshot
+// rendering. The order is (Kind weight, ID byte order); rank is intentionally
+// ignored so reordering is admin-only metadata and does not bump the version.
+func sortCategoriesForSnapshot(categories coredata.CookieCategories) coredata.CookieCategories {
+	sorted := make(coredata.CookieCategories, len(categories))
+	copy(sorted, categories)
+	slices.SortStableFunc(sorted, func(a, b *coredata.CookieCategory) int {
+		if d := snapshotCategoryKindOrder(a.Kind) - snapshotCategoryKindOrder(b.Kind); d != 0 {
+			return d
+		}
+		return bytes.Compare(a.ID[:], b.ID[:])
+	})
+	return sorted
+}
+
 func buildSnapshot(
 	banner *coredata.CookieBanner,
 	categories coredata.CookieCategories,
 	allPatterns coredata.CookiePatterns,
 	translations coredata.CookieBannerTranslations,
 ) coredata.CookieBannerVersionSnapshot {
+	categories = sortCategoriesForSnapshot(categories)
+
 	cookiesByCategory := make(map[gid.GID]coredata.CookieItems)
 	for _, p := range allPatterns {
 		cookiesByCategory[p.CookieCategoryID] = append(
@@ -473,15 +518,21 @@ func (s *Service) ensureDraftVersion(
 	var latest coredata.CookieBannerVersion
 	err := latest.LoadLatestByCookieBannerID(ctx, tx, scope, banner.ID)
 
-	if err == nil && latest.State == coredata.CookieBannerVersionStateDraft {
-		if err := latest.SetSnapshot(snapshot); err != nil {
-			return nil, fmt.Errorf("cannot set snapshot: %w", err)
+	if err == nil {
+		if latestSnapshot, snapErr := latest.GetSnapshot(); snapErr == nil && snapshotsEqual(snapshot, latestSnapshot) {
+			return &latest, nil
 		}
-		latest.UpdatedAt = time.Now()
-		if err := latest.Update(ctx, tx, scope); err != nil {
-			return nil, fmt.Errorf("cannot update draft version: %w", err)
+
+		if latest.State == coredata.CookieBannerVersionStateDraft {
+			if err := latest.SetSnapshot(snapshot); err != nil {
+				return nil, fmt.Errorf("cannot set snapshot: %w", err)
+			}
+			latest.UpdatedAt = time.Now()
+			if err := latest.Update(ctx, tx, scope); err != nil {
+				return nil, fmt.Errorf("cannot update draft version: %w", err)
+			}
+			return &latest, nil
 		}
-		return &latest, nil
 	}
 
 	if err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
@@ -861,11 +912,18 @@ func (s *Service) UpdateCookieBanner(
 				return fmt.Errorf("cannot load cookie banner: %w", err)
 			}
 
-			consentChanged := req.PrivacyPolicyURL != nil ||
-				req.CookiePolicyURL != nil ||
-				req.ConsentExpiryDays != nil ||
-				req.ConsentMode != nil ||
-				req.DefaultLanguage != nil
+			nameChanged := req.Name != nil && *req.Name != banner.Name
+			privacyChanged := req.PrivacyPolicyURL != nil && !equal.Ptr(req.PrivacyPolicyURL, banner.PrivacyPolicyURL)
+			cookiePolicyChanged := req.CookiePolicyURL != nil && *req.CookiePolicyURL != banner.CookiePolicyURL
+			expiryChanged := req.ConsentExpiryDays != nil && *req.ConsentExpiryDays != banner.ConsentExpiryDays
+			consentModeChanged := req.ConsentMode != nil && *req.ConsentMode != banner.ConsentMode
+			defaultLangChanged := req.DefaultLanguage != nil && *req.DefaultLanguage != banner.DefaultLanguage
+
+			snapshotChanged := privacyChanged || cookiePolicyChanged || expiryChanged || consentModeChanged || defaultLangChanged
+
+			if !nameChanged && !snapshotChanged {
+				return nil
+			}
 
 			if req.Name != nil {
 				banner.Name = *req.Name
@@ -895,7 +953,7 @@ func (s *Service) UpdateCookieBanner(
 				return fmt.Errorf("cannot update cookie banner: %w", err)
 			}
 
-			if consentChanged {
+			if snapshotChanged {
 				if _, err := s.ensureDraftVersionForBanner(ctx, tx, scope, banner.ID); err != nil {
 					return fmt.Errorf("cannot ensure draft version: %w", err)
 				}
@@ -1324,6 +1382,20 @@ func (s *Service) UpdateCookiePattern(
 				return fmt.Errorf("cannot load cookie pattern: %w", err)
 			}
 
+			displayNameChanged := req.DisplayName != nil && *req.DisplayName != pattern.DisplayName
+			maxAgeChanged := req.MaxAgeSeconds != nil && !equal.Ptr(*req.MaxAgeSeconds, pattern.MaxAgeSeconds)
+			descChanged := req.Description != nil && *req.Description != pattern.Description
+			excludedChanged := req.Excluded != nil && *req.Excluded != pattern.Excluded
+
+			if !displayNameChanged && !maxAgeChanged && !descChanged && !excludedChanged {
+				return nil
+			}
+
+			// A pattern that was excluded and stays excluded is invisible to visitors,
+			// so any field updates do not affect the published snapshot. We persist
+			// the row but skip the version bump.
+			staysExcluded := pattern.Excluded && (req.Excluded == nil || *req.Excluded)
+
 			if req.DisplayName != nil {
 				pattern.DisplayName = *req.DisplayName
 			}
@@ -1343,8 +1415,10 @@ func (s *Service) UpdateCookiePattern(
 				return fmt.Errorf("cannot update cookie pattern: %w", err)
 			}
 
-			if _, err := s.ensureDraftVersionForBanner(ctx, tx, scope, pattern.CookieBannerID); err != nil {
-				return fmt.Errorf("cannot ensure draft version: %w", err)
+			if !staysExcluded {
+				if _, err := s.ensureDraftVersionForBanner(ctx, tx, scope, pattern.CookieBannerID); err != nil {
+					return fmt.Errorf("cannot ensure draft version: %w", err)
+				}
 			}
 
 			return nil
@@ -1373,12 +1447,16 @@ func (s *Service) DeleteCookiePattern(
 				return fmt.Errorf("cannot load cookie pattern: %w", err)
 			}
 
+			wasExcluded := pattern.Excluded
+
 			if err := pattern.Delete(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot delete cookie pattern: %w", err)
 			}
 
-			if _, err := s.ensureDraftVersionForBanner(ctx, tx, scope, pattern.CookieBannerID); err != nil {
-				return fmt.Errorf("cannot ensure draft version: %w", err)
+			if !wasExcluded {
+				if _, err := s.ensureDraftVersionForBanner(ctx, tx, scope, pattern.CookieBannerID); err != nil {
+					return fmt.Errorf("cannot ensure draft version: %w", err)
+				}
 			}
 
 			return nil
@@ -1424,6 +1502,8 @@ func (s *Service) MoveCookiePatternToCategory(
 				return ErrCategoriesBannerMismatch
 			}
 
+			wasExcluded := pattern.Excluded
+
 			pattern.CookieCategoryID = target.ID
 			pattern.UpdatedAt = time.Now()
 
@@ -1436,8 +1516,10 @@ func (s *Service) MoveCookiePatternToCategory(
 				return fmt.Errorf("cannot load cookie banner: %w", err)
 			}
 
-			if _, err := s.ensureDraftVersionForBanner(ctx, tx, scope, pattern.CookieBannerID); err != nil {
-				return fmt.Errorf("cannot ensure draft version: %w", err)
+			if !wasExcluded {
+				if _, err := s.ensureDraftVersionForBanner(ctx, tx, scope, pattern.CookieBannerID); err != nil {
+					return fmt.Errorf("cannot ensure draft version: %w", err)
+				}
 			}
 
 			result.CookiePattern = &pattern
@@ -1555,6 +1637,16 @@ func (s *Service) UpdateCookieCategory(
 				return fmt.Errorf("cannot load cookie category: %w", err)
 			}
 
+			nameChanged := req.Name != nil && *req.Name != category.Name
+			slugChanged := req.Slug != nil && *req.Slug != category.Slug
+			descChanged := req.Description != nil && *req.Description != category.Description
+			gcmChanged := req.GCMConsentTypes != nil && !slices.Equal(*req.GCMConsentTypes, category.GCMConsentTypes)
+			posthogChanged := req.PostHogConsent != nil && *req.PostHogConsent != category.PostHogConsent
+
+			if !nameChanged && !slugChanged && !descChanged && !gcmChanged && !posthogChanged {
+				return nil
+			}
+
 			if req.Name != nil {
 				category.Name = *req.Name
 			}
@@ -1567,7 +1659,7 @@ func (s *Service) UpdateCookieCategory(
 			if req.GCMConsentTypes != nil {
 				category.GCMConsentTypes = *req.GCMConsentTypes
 			}
-			if req.PostHogConsent != nil {
+			if posthogChanged {
 				if *req.PostHogConsent && category.Kind != coredata.CookieCategoryKindNormal {
 					return ErrPostHogConsentKindInvalid
 				}
@@ -1625,6 +1717,14 @@ func (s *Service) ReorderCookieCategory(
 				return fmt.Errorf("cannot load cookie category: %w", err)
 			}
 
+			if err := banner.LoadByID(ctx, tx, scope, category.CookieBannerID); err != nil {
+				return fmt.Errorf("cannot load cookie banner: %w", err)
+			}
+
+			if category.Rank == req.Rank {
+				return nil
+			}
+
 			category.Rank = req.Rank
 			category.UpdatedAt = time.Now()
 
@@ -1632,13 +1732,9 @@ func (s *Service) ReorderCookieCategory(
 				return fmt.Errorf("cannot reorder cookie category: %w", err)
 			}
 
-			if err := banner.LoadByID(ctx, tx, scope, category.CookieBannerID); err != nil {
-				return fmt.Errorf("cannot load cookie banner: %w", err)
-			}
-
-			if _, err := s.ensureDraftVersionForBanner(ctx, tx, scope, category.CookieBannerID); err != nil {
-				return fmt.Errorf("cannot ensure draft version: %w", err)
-			}
+			// Rank is admin-only metadata; the snapshot is sorted by
+			// (Kind weight, ID) in buildSnapshot, so reordering does not
+			// affect visitor view and must not bump the version.
 
 			return nil
 		},
@@ -2065,6 +2161,12 @@ func (s *Service) UpsertCookieBannerTranslation(
 			err := existing.LoadByCookieBannerIDAndLanguage(ctx, tx, scope, req.CookieBannerID, req.Language)
 
 			if err == nil {
+				same, eqErr := equal.JSON(existing.Translations, req.Translations)
+				if eqErr == nil && same {
+					result = &existing
+					return nil
+				}
+
 				existing.Translations = req.Translations
 				existing.UpdatedAt = now
 				if err := existing.Update(ctx, tx, scope); err != nil {

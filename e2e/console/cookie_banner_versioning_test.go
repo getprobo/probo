@@ -1,0 +1,584 @@
+// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
+package console_test
+
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"go.probo.inc/probo/e2e/internal/factory"
+	"go.probo.inc/probo/e2e/internal/testutil"
+)
+
+// versionInfo is the (version, state) tuple returned by the latestVersion field.
+type versionInfo struct {
+	Version int
+	State   string
+}
+
+func latestVersion(t *testing.T, c *testutil.Client, bannerID string) versionInfo {
+	t.Helper()
+
+	const query = `
+		query($id: ID!) {
+			node(id: $id) {
+				... on CookieBanner {
+					latestVersion {
+						version
+						state
+					}
+				}
+			}
+		}
+	`
+
+	var result struct {
+		Node struct {
+			LatestVersion *struct {
+				Version int    `json:"version"`
+				State   string `json:"state"`
+			} `json:"latestVersion"`
+		} `json:"node"`
+	}
+
+	require.NoError(t, c.Execute(query, map[string]any{"id": bannerID}, &result), "latestVersion query failed")
+	require.NotNil(t, result.Node.LatestVersion, "expected latestVersion to be present")
+
+	return versionInfo{
+		Version: result.Node.LatestVersion.Version,
+		State:   result.Node.LatestVersion.State,
+	}
+}
+
+func publishBanner(t *testing.T, c *testutil.Client, bannerID string) versionInfo {
+	t.Helper()
+
+	const query = `
+		mutation PublishCookieBannerVersion($input: PublishCookieBannerVersionInput!) {
+			publishCookieBannerVersion(input: $input) {
+				cookieBannerVersion {
+					version
+					state
+				}
+			}
+		}
+	`
+
+	var result struct {
+		PublishCookieBannerVersion struct {
+			CookieBannerVersion struct {
+				Version int    `json:"version"`
+				State   string `json:"state"`
+			} `json:"cookieBannerVersion"`
+		} `json:"publishCookieBannerVersion"`
+	}
+
+	require.NoError(t, c.Execute(query, map[string]any{
+		"input": map[string]any{"cookieBannerId": bannerID},
+	}, &result), "publishCookieBannerVersion mutation failed")
+
+	return versionInfo{
+		Version: result.PublishCookieBannerVersion.CookieBannerVersion.Version,
+		State:   result.PublishCookieBannerVersion.CookieBannerVersion.State,
+	}
+}
+
+func setPatternExcluded(t *testing.T, c *testutil.Client, patternID string, excluded bool) {
+	t.Helper()
+
+	const query = `
+		mutation UpdateCookiePattern($input: UpdateCookiePatternInput!) {
+			updateCookiePattern(input: $input) {
+				cookiePattern { id excluded }
+			}
+		}
+	`
+
+	var result struct{}
+	require.NoError(t, c.Execute(query, map[string]any{
+		"input": map[string]any{
+			"cookiePatternId": patternID,
+			"excluded":        excluded,
+		},
+	}, &result), "updateCookiePattern excluded mutation failed")
+}
+
+// upsertTranslation upserts a translation for a banner+language pair and
+// returns nothing (we read the version separately).
+func upsertTranslation(t *testing.T, c *testutil.Client, bannerID, language, translations string) {
+	t.Helper()
+
+	const query = `
+		mutation UpsertCookieBannerTranslation($input: UpsertCookieBannerTranslationInput!) {
+			upsertCookieBannerTranslation(input: $input) {
+				cookieBannerTranslation { id }
+			}
+		}
+	`
+
+	var result struct{}
+	require.NoError(t, c.Execute(query, map[string]any{
+		"input": map[string]any{
+			"cookieBannerId": bannerID,
+			"language":       language,
+			"translations":   translations,
+		},
+	}, &result), "upsertCookieBannerTranslation mutation failed")
+}
+
+func TestCookieBannerVersioning_NoOpUpdates(t *testing.T) {
+	t.Parallel()
+
+	t.Run("UpdateCookieBanner with all original values does not bump version", func(t *testing.T) {
+		t.Parallel()
+		owner := testutil.NewClient(t, testutil.RoleOwner)
+
+		bannerID := factory.CreateCookieBanner(owner, factory.Attrs{
+			"cookiePolicyUrl":   "https://example.com/cookies",
+			"consentExpiryDays": 365,
+			"consentMode":       "OPT_IN",
+		})
+
+		published := publishBanner(t, owner, bannerID)
+		require.Equal(t, "PUBLISHED", published.State)
+		baseline := published.Version
+
+		const query = `
+			mutation UpdateCookieBanner($input: UpdateCookieBannerInput!) {
+				updateCookieBanner(input: $input) { cookieBanner { id } }
+			}
+		`
+
+		var result struct{}
+		err := owner.Execute(query, map[string]any{
+			"input": map[string]any{
+				"cookieBannerId":    bannerID,
+				"cookiePolicyUrl":   "https://example.com/cookies",
+				"consentExpiryDays": 365,
+				"consentMode":       "OPT_IN",
+			},
+		}, &result)
+		require.NoError(t, err)
+
+		got := latestVersion(t, owner, bannerID)
+		assert.Equal(t, baseline, got.Version, "version should not change for no-op banner update")
+		assert.Equal(t, "PUBLISHED", got.State, "no draft should be created")
+	})
+
+	t.Run("UpdateCookieBanner with only name change does not bump version", func(t *testing.T) {
+		t.Parallel()
+		owner := testutil.NewClient(t, testutil.RoleOwner)
+
+		bannerID := factory.CreateCookieBanner(owner)
+		published := publishBanner(t, owner, bannerID)
+		baseline := published.Version
+
+		const query = `
+			mutation UpdateCookieBanner($input: UpdateCookieBannerInput!) {
+				updateCookieBanner(input: $input) { cookieBanner { id name } }
+			}
+		`
+
+		var result struct {
+			UpdateCookieBanner struct {
+				CookieBanner struct {
+					Name string `json:"name"`
+				} `json:"cookieBanner"`
+			} `json:"updateCookieBanner"`
+		}
+
+		err := owner.Execute(query, map[string]any{
+			"input": map[string]any{
+				"cookieBannerId": bannerID,
+				"name":           factory.SafeName("Renamed"),
+			},
+		}, &result)
+		require.NoError(t, err)
+		assert.NotEmpty(t, result.UpdateCookieBanner.CookieBanner.Name)
+
+		got := latestVersion(t, owner, bannerID)
+		assert.Equal(t, baseline, got.Version, "renaming should not affect the visitor-facing snapshot")
+		assert.Equal(t, "PUBLISHED", got.State)
+	})
+
+	t.Run("UpdateCookieCategory with all original values does not bump version", func(t *testing.T) {
+		t.Parallel()
+		owner := testutil.NewClient(t, testutil.RoleOwner)
+
+		bannerID := factory.CreateCookieBanner(owner)
+		categoryID := factory.CreateCookieCategory(owner, bannerID, factory.Attrs{
+			"name":        "Marketing",
+			"slug":        "marketing-noop",
+			"description": "Marketing cookies",
+			"rank":        12,
+		})
+
+		published := publishBanner(t, owner, bannerID)
+		baseline := published.Version
+
+		const query = `
+			mutation UpdateCookieCategory($input: UpdateCookieCategoryInput!) {
+				updateCookieCategory(input: $input) { cookieCategory { id } }
+			}
+		`
+
+		var result struct{}
+		err := owner.Execute(query, map[string]any{
+			"input": map[string]any{
+				"cookieCategoryId": categoryID,
+				"name":             "Marketing",
+				"slug":             "marketing-noop",
+				"description":      "Marketing cookies",
+			},
+		}, &result)
+		require.NoError(t, err)
+
+		got := latestVersion(t, owner, bannerID)
+		assert.Equal(t, baseline, got.Version)
+		assert.Equal(t, "PUBLISHED", got.State)
+	})
+
+	t.Run("ReorderCookieCategory with current rank does not bump version", func(t *testing.T) {
+		t.Parallel()
+		owner := testutil.NewClient(t, testutil.RoleOwner)
+
+		bannerID := factory.CreateCookieBanner(owner)
+		categoryID := factory.CreateCookieCategory(owner, bannerID, factory.Attrs{
+			"slug": "reorder-noop",
+			"rank": 7,
+		})
+
+		published := publishBanner(t, owner, bannerID)
+		baseline := published.Version
+
+		const query = `
+			mutation ReorderCookieCategory($input: ReorderCookieCategoryInput!) {
+				reorderCookieCategory(input: $input) { cookieBanner { id } }
+			}
+		`
+
+		var result struct{}
+		err := owner.Execute(query, map[string]any{
+			"input": map[string]any{
+				"cookieCategoryId": categoryID,
+				"rank":             7,
+			},
+		}, &result)
+		require.NoError(t, err)
+
+		got := latestVersion(t, owner, bannerID)
+		assert.Equal(t, baseline, got.Version)
+		assert.Equal(t, "PUBLISHED", got.State)
+	})
+
+	t.Run("ReorderCookieCategory with new rank does not bump version", func(t *testing.T) {
+		// Rank is admin-only metadata; the snapshot is sorted by
+		// (Kind weight, ID), so a rank change is invisible to visitors.
+		t.Parallel()
+		owner := testutil.NewClient(t, testutil.RoleOwner)
+
+		bannerID := factory.CreateCookieBanner(owner)
+		categoryID := factory.CreateCookieCategory(owner, bannerID, factory.Attrs{
+			"slug": "reorder-real",
+			"rank": 10,
+		})
+
+		published := publishBanner(t, owner, bannerID)
+		baseline := published.Version
+
+		const query = `
+			mutation ReorderCookieCategory($input: ReorderCookieCategoryInput!) {
+				reorderCookieCategory(input: $input) { cookieBanner { id } }
+			}
+		`
+
+		var result struct{}
+		err := owner.Execute(query, map[string]any{
+			"input": map[string]any{
+				"cookieCategoryId": categoryID,
+				"rank":             42,
+			},
+		}, &result)
+		require.NoError(t, err)
+
+		got := latestVersion(t, owner, bannerID)
+		assert.Equal(t, baseline, got.Version, "real rank change must not bump the version")
+		assert.Equal(t, "PUBLISHED", got.State)
+	})
+
+	t.Run("UpdateCookiePattern on visible pattern with same value does not bump version", func(t *testing.T) {
+		t.Parallel()
+		owner := testutil.NewClient(t, testutil.RoleOwner)
+
+		bannerID := factory.CreateCookieBanner(owner)
+		categoryID := factory.CreateCookieCategory(owner, bannerID, factory.Attrs{"slug": "visible-noop"})
+		patternID := factory.CreateCookiePattern(owner, categoryID, factory.Attrs{
+			"displayName": "GA Tracker",
+			"description": "Original description",
+		})
+
+		published := publishBanner(t, owner, bannerID)
+		baseline := published.Version
+
+		const query = `
+			mutation UpdateCookiePattern($input: UpdateCookiePatternInput!) {
+				updateCookiePattern(input: $input) { cookiePattern { id } }
+			}
+		`
+
+		var result struct{}
+		err := owner.Execute(query, map[string]any{
+			"input": map[string]any{
+				"cookiePatternId": patternID,
+				"displayName":     "GA Tracker",
+				"description":     "Original description",
+			},
+		}, &result)
+		require.NoError(t, err)
+
+		got := latestVersion(t, owner, bannerID)
+		assert.Equal(t, baseline, got.Version)
+		assert.Equal(t, "PUBLISHED", got.State)
+	})
+}
+
+func TestCookieBannerVersioning_ExcludedPattern(t *testing.T) {
+	t.Parallel()
+
+	t.Run("Update on excluded pattern does not bump version", func(t *testing.T) {
+		t.Parallel()
+		owner := testutil.NewClient(t, testutil.RoleOwner)
+
+		bannerID := factory.CreateCookieBanner(owner)
+		categoryID := factory.CreateCookieCategory(owner, bannerID, factory.Attrs{"slug": "excl-update"})
+		patternID := factory.CreateCookiePattern(owner, categoryID, factory.Attrs{
+			"displayName": "Original",
+		})
+
+		setPatternExcluded(t, owner, patternID, true)
+		published := publishBanner(t, owner, bannerID)
+		baseline := published.Version
+
+		const query = `
+			mutation UpdateCookiePattern($input: UpdateCookiePatternInput!) {
+				updateCookiePattern(input: $input) {
+					cookiePattern { id displayName description }
+				}
+			}
+		`
+
+		var result struct {
+			UpdateCookiePattern struct {
+				CookiePattern struct {
+					DisplayName string `json:"displayName"`
+					Description string `json:"description"`
+				} `json:"cookiePattern"`
+			} `json:"updateCookiePattern"`
+		}
+
+		err := owner.Execute(query, map[string]any{
+			"input": map[string]any{
+				"cookiePatternId": patternID,
+				"displayName":     "Renamed Excluded",
+				"description":     "Now with notes",
+			},
+		}, &result)
+		require.NoError(t, err)
+		assert.Equal(t, "Renamed Excluded", result.UpdateCookiePattern.CookiePattern.DisplayName)
+		assert.Equal(t, "Now with notes", result.UpdateCookiePattern.CookiePattern.Description)
+
+		got := latestVersion(t, owner, bannerID)
+		assert.Equal(t, baseline, got.Version, "excluded pattern fields are invisible to visitors")
+		assert.Equal(t, "PUBLISHED", got.State)
+	})
+
+	t.Run("Delete of excluded pattern does not bump version", func(t *testing.T) {
+		t.Parallel()
+		owner := testutil.NewClient(t, testutil.RoleOwner)
+
+		bannerID := factory.CreateCookieBanner(owner)
+		categoryID := factory.CreateCookieCategory(owner, bannerID, factory.Attrs{"slug": "excl-delete"})
+		patternID := factory.CreateCookiePattern(owner, categoryID)
+
+		setPatternExcluded(t, owner, patternID, true)
+		published := publishBanner(t, owner, bannerID)
+		baseline := published.Version
+
+		const query = `
+			mutation DeleteCookiePattern($input: DeleteCookiePatternInput!) {
+				deleteCookiePattern(input: $input) {
+					deletedCookiePatternId
+				}
+			}
+		`
+
+		var result struct{}
+		err := owner.Execute(query, map[string]any{
+			"input": map[string]any{"cookiePatternId": patternID},
+		}, &result)
+		require.NoError(t, err)
+
+		got := latestVersion(t, owner, bannerID)
+		assert.Equal(t, baseline, got.Version)
+		assert.Equal(t, "PUBLISHED", got.State)
+	})
+
+	t.Run("Move of excluded pattern does not bump version", func(t *testing.T) {
+		t.Parallel()
+		owner := testutil.NewClient(t, testutil.RoleOwner)
+
+		bannerID := factory.CreateCookieBanner(owner)
+		categoryA := factory.CreateCookieCategory(owner, bannerID, factory.Attrs{"slug": "excl-move-a"})
+		categoryB := factory.CreateCookieCategory(owner, bannerID, factory.Attrs{"slug": "excl-move-b"})
+		patternID := factory.CreateCookiePattern(owner, categoryA)
+
+		setPatternExcluded(t, owner, patternID, true)
+		published := publishBanner(t, owner, bannerID)
+		baseline := published.Version
+
+		const query = `
+			mutation MoveCookiePatternToCategory($input: MoveCookiePatternToCategoryInput!) {
+				moveCookiePatternToCategory(input: $input) {
+					cookiePattern { id }
+				}
+			}
+		`
+
+		var result struct{}
+		err := owner.Execute(query, map[string]any{
+			"input": map[string]any{
+				"cookiePatternId":        patternID,
+				"targetCookieCategoryId": categoryB,
+			},
+		}, &result)
+		require.NoError(t, err)
+
+		got := latestVersion(t, owner, bannerID)
+		assert.Equal(t, baseline, got.Version)
+		assert.Equal(t, "PUBLISHED", got.State)
+	})
+}
+
+func TestCookieBannerVersioning_NoOpTranslation(t *testing.T) {
+	t.Parallel()
+
+	t.Run("re-upserting identical JSON does not bump version", func(t *testing.T) {
+		t.Parallel()
+		owner := testutil.NewClient(t, testutil.RoleOwner)
+
+		bannerID := factory.CreateCookieBanner(owner)
+
+		// Insert a custom translation, then publish.
+		const customJSON = `{"banner_title":"Cookie Bar","button_accept_all":"Accept"}`
+		upsertTranslation(t, owner, bannerID, "it", customJSON)
+		published := publishBanner(t, owner, bannerID)
+		baseline := published.Version
+
+		// Re-upsert the same JSON.
+		upsertTranslation(t, owner, bannerID, "it", customJSON)
+
+		got := latestVersion(t, owner, bannerID)
+		assert.Equal(t, baseline, got.Version, "re-upserting identical JSON should not bump the version")
+		assert.Equal(t, "PUBLISHED", got.State)
+	})
+
+	t.Run("whitespace-only and key-order differences do not bump version", func(t *testing.T) {
+		t.Parallel()
+		owner := testutil.NewClient(t, testutil.RoleOwner)
+
+		bannerID := factory.CreateCookieBanner(owner)
+
+		const compact = `{"banner_title":"Cookie Bar","button_accept_all":"Accept"}`
+		const reformatted = `{
+  "button_accept_all": "Accept",
+  "banner_title":     "Cookie Bar"
+}`
+		upsertTranslation(t, owner, bannerID, "it", compact)
+		published := publishBanner(t, owner, bannerID)
+		baseline := published.Version
+
+		upsertTranslation(t, owner, bannerID, "it", reformatted)
+
+		got := latestVersion(t, owner, bannerID)
+		assert.Equal(t, baseline, got.Version, "JSON formatting differences should be canonicalised")
+		assert.Equal(t, "PUBLISHED", got.State)
+	})
+}
+
+func TestCookieBannerVersioning_RealChangesStillBumpVersion(t *testing.T) {
+	t.Parallel()
+
+	t.Run("UpdateCookieBanner consent change creates a new draft", func(t *testing.T) {
+		t.Parallel()
+		owner := testutil.NewClient(t, testutil.RoleOwner)
+
+		bannerID := factory.CreateCookieBanner(owner, factory.Attrs{
+			"consentExpiryDays": 365,
+		})
+		published := publishBanner(t, owner, bannerID)
+		baseline := published.Version
+
+		const query = `
+			mutation UpdateCookieBanner($input: UpdateCookieBannerInput!) {
+				updateCookieBanner(input: $input) { cookieBanner { id } }
+			}
+		`
+		var result struct{}
+		err := owner.Execute(query, map[string]any{
+			"input": map[string]any{
+				"cookieBannerId":    bannerID,
+				"consentExpiryDays": 90,
+			},
+		}, &result)
+		require.NoError(t, err)
+
+		got := latestVersion(t, owner, bannerID)
+		assert.Greater(t, got.Version, baseline, "real consent change should bump the version")
+		assert.Equal(t, "DRAFT", got.State)
+	})
+
+	t.Run("UpdateCookiePattern displayName change on visible pattern creates a new draft", func(t *testing.T) {
+		t.Parallel()
+		owner := testutil.NewClient(t, testutil.RoleOwner)
+
+		bannerID := factory.CreateCookieBanner(owner)
+		categoryID := factory.CreateCookieCategory(owner, bannerID, factory.Attrs{"slug": "real-change"})
+		patternID := factory.CreateCookiePattern(owner, categoryID, factory.Attrs{
+			"displayName": "Original",
+		})
+
+		published := publishBanner(t, owner, bannerID)
+		baseline := published.Version
+
+		const query = `
+			mutation UpdateCookiePattern($input: UpdateCookiePatternInput!) {
+				updateCookiePattern(input: $input) { cookiePattern { id } }
+			}
+		`
+		var result struct{}
+		err := owner.Execute(query, map[string]any{
+			"input": map[string]any{
+				"cookiePatternId": patternID,
+				"displayName":     "Renamed",
+			},
+		}, &result)
+		require.NoError(t, err)
+
+		got := latestVersion(t, owner, bannerID)
+		assert.Greater(t, got.Version, baseline)
+		assert.Equal(t, "DRAFT", got.State)
+	})
+}
