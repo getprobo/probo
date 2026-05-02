@@ -328,7 +328,12 @@ func (r *UpsertCookieBannerTranslationRequest) Validate() error {
 		if json.Unmarshal(raw, &s) != nil {
 			continue
 		}
-		v.Check(s, "translations."+key, validator.NoHTML(), validator.MaxLen(2000))
+
+		validators := []validator.ValidatorFunc{validator.NoHTML(), validator.MaxLen(2000)}
+		if key == "banner_description" {
+			validators = append(validators, validator.ContainsSubstring("{{cookie_policy_link}}"))
+		}
+		v.Check(s, "translations."+key, validators...)
 	}
 
 	return v.Error()

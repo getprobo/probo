@@ -126,6 +126,68 @@ func TestSnapshotsEqual(t *testing.T) {
 	})
 }
 
+func TestUpsertCookieBannerTranslationRequest_Validate(t *testing.T) {
+	t.Parallel()
+
+	bannerID := gid.New(gid.NewTenantID(), coredata.CookieBannerEntityType)
+
+	t.Run("banner_description with cookie_policy_link passes", func(t *testing.T) {
+		t.Parallel()
+
+		translations, err := json.Marshal(map[string]string{
+			"banner_title":       "Cookie Preferences",
+			"banner_description": "We use cookies. {{cookie_policy_link}}",
+		})
+		require.NoError(t, err)
+
+		req := UpsertCookieBannerTranslationRequest{
+			CookieBannerID: bannerID,
+			Language:       "en",
+			Translations:   translations,
+		}
+
+		assert.NoError(t, req.Validate())
+	})
+
+	t.Run("banner_description without cookie_policy_link fails", func(t *testing.T) {
+		t.Parallel()
+
+		translations, err := json.Marshal(map[string]string{
+			"banner_title":       "Cookie Preferences",
+			"banner_description": "We use cookies to improve your experience.",
+		})
+		require.NoError(t, err)
+
+		req := UpsertCookieBannerTranslationRequest{
+			CookieBannerID: bannerID,
+			Language:       "en",
+			Translations:   translations,
+		}
+
+		err = req.Validate()
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "translations.banner_description")
+	})
+
+	t.Run("translations without banner_description passes", func(t *testing.T) {
+		t.Parallel()
+
+		translations, err := json.Marshal(map[string]string{
+			"banner_title": "Cookie Preferences",
+			"button_save":  "Save",
+		})
+		require.NoError(t, err)
+
+		req := UpsertCookieBannerTranslationRequest{
+			CookieBannerID: bannerID,
+			Language:       "en",
+			Translations:   translations,
+		}
+
+		assert.NoError(t, req.Validate())
+	})
+}
+
 func TestBuildSnapshot_RankInvariant(t *testing.T) {
 	t.Parallel()
 
