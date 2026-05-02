@@ -165,9 +165,9 @@ export async function execute(
 		}
 	`;
 
-	const variables: Record<string, unknown> = { cookieBannerId };
+	const variables: IDataObject = { cookieBannerId };
 	if (hasFilter) {
-		const filter: Record<string, unknown> = {};
+		const filter: IDataObject = {};
 		if (filterAction) filter.action = filterAction;
 		if (filterVisitorId) filter.visitorId = filterVisitorId;
 		if (filterVersion) filter.version = filterVersion;
