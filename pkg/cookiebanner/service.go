@@ -27,7 +27,6 @@ import (
 
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/equal"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/validator"
@@ -759,7 +758,7 @@ func (s *Service) UpdateCookieBanner(
 			}
 
 			nameChanged := req.Name != nil && *req.Name != banner.Name
-			privacyChanged := req.PrivacyPolicyURL != nil && !equal.Ptr(req.PrivacyPolicyURL, banner.PrivacyPolicyURL)
+			privacyChanged := req.PrivacyPolicyURL != nil && !ptrEqual(req.PrivacyPolicyURL, banner.PrivacyPolicyURL)
 			cookiePolicyChanged := req.CookiePolicyURL != nil && *req.CookiePolicyURL != banner.CookiePolicyURL
 			expiryChanged := req.ConsentExpiryDays != nil && *req.ConsentExpiryDays != banner.ConsentExpiryDays
 			consentModeChanged := req.ConsentMode != nil && *req.ConsentMode != banner.ConsentMode
@@ -1229,7 +1228,7 @@ func (s *Service) UpdateCookiePattern(
 			}
 
 			displayNameChanged := req.DisplayName != nil && *req.DisplayName != pattern.DisplayName
-			maxAgeChanged := req.MaxAgeSeconds != nil && !equal.Ptr(*req.MaxAgeSeconds, pattern.MaxAgeSeconds)
+			maxAgeChanged := req.MaxAgeSeconds != nil && !ptrEqual(*req.MaxAgeSeconds, pattern.MaxAgeSeconds)
 			descChanged := req.Description != nil && *req.Description != pattern.Description
 			excludedChanged := req.Excluded != nil && *req.Excluded != pattern.Excluded
 
@@ -2019,7 +2018,7 @@ func (s *Service) UpsertCookieBannerTranslation(
 			err := existing.LoadByCookieBannerIDAndLanguage(ctx, tx, scope, req.CookieBannerID, req.Language)
 
 			if err == nil {
-				same, eqErr := equal.JSON(existing.Translations, req.Translations)
+				same, eqErr := jsonEqual(existing.Translations, req.Translations)
 				if eqErr == nil && same {
 					result = &existing
 					return nil
