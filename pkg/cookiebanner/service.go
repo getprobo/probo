@@ -358,9 +358,8 @@ func (s *Service) ensureDraftVersion(
 	banner *coredata.CookieBanner,
 	categories coredata.CookieCategories,
 	allPatterns coredata.CookiePatterns,
-	translations coredata.CookieBannerTranslations,
 ) (*coredata.CookieBannerVersion, error) {
-	snapshot := buildSnapshot(banner, categories, allPatterns, translations)
+	snapshot := buildSnapshot(banner, categories, allPatterns)
 
 	var latest coredata.CookieBannerVersion
 	err := latest.LoadLatestByCookieBannerID(ctx, tx, scope, banner.ID)
@@ -440,12 +439,7 @@ func (s *Service) ensureDraftVersionForBanner(
 		return nil, fmt.Errorf("cannot load cookie patterns: %w", err)
 	}
 
-	var translations coredata.CookieBannerTranslations
-	if err := translations.LoadAllByCookieBannerID(ctx, tx, scope, bannerID); err != nil {
-		return nil, fmt.Errorf("cannot load cookie banner translations: %w", err)
-	}
-
-	return s.ensureDraftVersion(ctx, tx, scope, &banner, categories, allPatterns, translations)
+	return s.ensureDraftVersion(ctx, tx, scope, &banner, categories, allPatterns)
 }
 
 func (s *Service) CreateCookieBanner(
@@ -1888,7 +1882,18 @@ func (s *Service) GetActiveBannerConfig(
 				return fmt.Errorf("cannot get version snapshot: %w", err)
 			}
 
-			config = buildBannerConfig(&banner, &version, &snapshot, lang)
+			var categories coredata.CookieCategories
+			if err := categories.LoadAllByCookieBannerID(ctx, conn, scope, banner.ID); err != nil {
+				return fmt.Errorf("cannot load cookie categories: %w", err)
+			}
+
+			var translations coredata.CookieBannerTranslations
+			if err := translations.LoadAllByCookieBannerID(ctx, conn, scope, banner.ID); err != nil {
+				return fmt.Errorf("cannot load cookie banner translations: %w", err)
+			}
+
+			resolved := resolveTranslations(translations, categories)
+			config = buildBannerConfig(&banner, &version, &snapshot, resolved, lang)
 
 			return nil
 		},
@@ -1904,6 +1909,7 @@ func buildBannerConfig(
 	banner *coredata.CookieBanner,
 	version *coredata.CookieBannerVersion,
 	snapshot *coredata.CookieBannerVersionSnapshot,
+	translations map[string]coredata.CookieBannerVersionSnapshotTranslation,
 	lang string,
 ) *BannerConfig {
 	defaultLang := snapshot.DefaultLanguage
@@ -1913,7 +1919,7 @@ func buildBannerConfig(
 
 	resolvedLang := defaultLang
 	if lang != "" {
-		if _, ok := snapshot.Translations[lang]; ok {
+		if _, ok := translations[lang]; ok {
 			resolvedLang = lang
 		}
 	}
@@ -1921,7 +1927,7 @@ func buildBannerConfig(
 	categories := snapshot.Categories
 	texts := make(map[string]string)
 
-	if t, ok := snapshot.Translations[resolvedLang]; ok {
+	if t, ok := translations[resolvedLang]; ok {
 		maps.Copy(texts, t.UI)
 
 		if len(t.Categories) == len(categories) {
@@ -2036,10 +2042,6 @@ func (s *Service) UpsertCookieBannerTranslation(
 				result = t
 			} else {
 				return fmt.Errorf("cannot load cookie banner translation: %w", err)
-			}
-
-			if _, err := s.ensureDraftVersionForBanner(ctx, tx, scope, req.CookieBannerID); err != nil {
-				return fmt.Errorf("cannot ensure draft version: %w", err)
 			}
 
 			return nil

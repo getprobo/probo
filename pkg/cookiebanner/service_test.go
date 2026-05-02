@@ -49,14 +49,6 @@ func TestSnapshotsEqual(t *testing.T) {
 					PostHogConsent:  false,
 				},
 			},
-			Translations: map[string]coredata.CookieBannerVersionSnapshotTranslation{
-				"fr": {
-					UI: map[string]string{"title": "Cookies"},
-					Categories: []coredata.CookieBannerVersionSnapshotCategoryTranslation{
-						{Name: "Analyse", Description: "Cookies d'analyse"},
-					},
-				},
-			},
 		}
 	}
 
@@ -99,19 +91,6 @@ func TestSnapshotsEqual(t *testing.T) {
 		a := baseSnapshot()
 		b := baseSnapshot()
 		b.Categories[0].Name = "Tracking"
-
-		assert.False(t, snapshotsEqual(a, b))
-	})
-
-	t.Run("differing translation UI is not equal", func(t *testing.T) {
-		t.Parallel()
-
-		a := baseSnapshot()
-		b := baseSnapshot()
-		b.Translations["fr"] = coredata.CookieBannerVersionSnapshotTranslation{
-			UI:         map[string]string{"title": "Cookies updated"},
-			Categories: a.Translations["fr"].Categories,
-		}
 
 		assert.False(t, snapshotsEqual(a, b))
 	})
@@ -214,8 +193,8 @@ func TestBuildSnapshot_RankInvariant(t *testing.T) {
 	t.Run("snapshot is identical regardless of rank values", func(t *testing.T) {
 		t.Parallel()
 
-		original := buildSnapshot(banner, mkCategories(0, 1, 2, 3), nil, nil)
-		shuffled := buildSnapshot(banner, mkCategories(99, 50, 25, 10), nil, nil)
+		original := buildSnapshot(banner, mkCategories(0, 1, 2, 3), nil)
+		shuffled := buildSnapshot(banner, mkCategories(99, 50, 25, 10), nil)
 
 		assert.True(t, snapshotsEqual(original, shuffled), "rank changes must not affect the snapshot")
 	})
@@ -226,8 +205,8 @@ func TestBuildSnapshot_RankInvariant(t *testing.T) {
 		ordered := mkCategories(0, 1, 2, 3)
 		reversed := coredata.CookieCategories{ordered[3], ordered[2], ordered[1], ordered[0]}
 
-		a := buildSnapshot(banner, ordered, nil, nil)
-		b := buildSnapshot(banner, reversed, nil, nil)
+		a := buildSnapshot(banner, ordered, nil)
+		b := buildSnapshot(banner, reversed, nil)
 
 		assert.True(t, snapshotsEqual(a, b))
 	})
@@ -235,7 +214,7 @@ func TestBuildSnapshot_RankInvariant(t *testing.T) {
 	t.Run("Necessary comes first and Uncategorised comes last", func(t *testing.T) {
 		t.Parallel()
 
-		snap := buildSnapshot(banner, mkCategories(0, 1, 2, 3), nil, nil)
+		snap := buildSnapshot(banner, mkCategories(0, 1, 2, 3), nil)
 
 		require.Len(t, snap.Categories, 4)
 		assert.Equal(t, coredata.CookieCategoryKindNecessary, snap.Categories[0].Kind)

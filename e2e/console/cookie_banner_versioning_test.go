@@ -472,7 +472,7 @@ func TestCookieBannerVersioning_ExcludedPattern(t *testing.T) {
 	})
 }
 
-func TestCookieBannerVersioning_NoOpTranslation(t *testing.T) {
+func TestCookieBannerVersioning_TranslationChangesNeverBump(t *testing.T) {
 	t.Parallel()
 
 	t.Run("re-upserting identical JSON does not bump version", func(t *testing.T) {
@@ -481,13 +481,11 @@ func TestCookieBannerVersioning_NoOpTranslation(t *testing.T) {
 
 		bannerID := factory.CreateCookieBanner(owner)
 
-		// Insert a custom translation, then publish.
 		const customJSON = `{"banner_title":"Cookie Bar","button_accept_all":"Accept"}`
 		upsertTranslation(t, owner, bannerID, "it", customJSON)
 		published := publishBanner(t, owner, bannerID)
 		baseline := published.Version
 
-		// Re-upsert the same JSON.
 		upsertTranslation(t, owner, bannerID, "it", customJSON)
 
 		got := latestVersion(t, owner, bannerID)
@@ -495,25 +493,35 @@ func TestCookieBannerVersioning_NoOpTranslation(t *testing.T) {
 		assert.Equal(t, "PUBLISHED", got.State)
 	})
 
-	t.Run("whitespace-only and key-order differences do not bump version", func(t *testing.T) {
+	t.Run("changing translation content does not bump version", func(t *testing.T) {
 		t.Parallel()
 		owner := testutil.NewClient(t, testutil.RoleOwner)
 
 		bannerID := factory.CreateCookieBanner(owner)
 
-		const compact = `{"banner_title":"Cookie Bar","button_accept_all":"Accept"}`
-		const reformatted = `{
-  "button_accept_all": "Accept",
-  "banner_title":     "Cookie Bar"
-}`
-		upsertTranslation(t, owner, bannerID, "it", compact)
+		upsertTranslation(t, owner, bannerID, "it", `{"banner_title":"Cookie Bar"}`)
 		published := publishBanner(t, owner, bannerID)
 		baseline := published.Version
 
-		upsertTranslation(t, owner, bannerID, "it", reformatted)
+		upsertTranslation(t, owner, bannerID, "it", `{"banner_title":"Barra dei Cookie"}`)
 
 		got := latestVersion(t, owner, bannerID)
-		assert.Equal(t, baseline, got.Version, "JSON formatting differences should be canonicalised")
+		assert.Equal(t, baseline, got.Version, "translation content changes should not bump the version")
+		assert.Equal(t, "PUBLISHED", got.State)
+	})
+
+	t.Run("adding a new language does not bump version", func(t *testing.T) {
+		t.Parallel()
+		owner := testutil.NewClient(t, testutil.RoleOwner)
+
+		bannerID := factory.CreateCookieBanner(owner)
+		published := publishBanner(t, owner, bannerID)
+		baseline := published.Version
+
+		upsertTranslation(t, owner, bannerID, "fr", `{"banner_title":"Bandeau cookies"}`)
+
+		got := latestVersion(t, owner, bannerID)
+		assert.Equal(t, baseline, got.Version, "adding a new language should not bump the version")
 		assert.Equal(t, "PUBLISHED", got.State)
 	})
 }

@@ -24,6 +24,16 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 )
 
+// resolveTranslations converts raw DB translations into the resolved map
+// used by buildBannerConfig at serve time. Categories must be sorted in
+// snapshot order so the positional category translations align.
+func resolveTranslations(
+	translations coredata.CookieBannerTranslations,
+	categories coredata.CookieCategories,
+) map[string]coredata.CookieBannerVersionSnapshotTranslation {
+	return buildSnapshotTranslations(translations, sortCategoriesForSnapshot(categories))
+}
+
 // snapshotsEqual reports whether two version snapshots are visitor-identical.
 // buildSnapshot already normalises empty slices and nil maps, so reflect.DeepEqual
 // is sufficient and is the single chokepoint we'd extend if we ever wanted to
@@ -67,7 +77,6 @@ func buildSnapshot(
 	banner *coredata.CookieBanner,
 	categories coredata.CookieCategories,
 	allPatterns coredata.CookiePatterns,
-	translations coredata.CookieBannerTranslations,
 ) coredata.CookieBannerVersionSnapshot {
 	categories = sortCategoriesForSnapshot(categories)
 
@@ -104,8 +113,6 @@ func buildSnapshot(
 		}
 	}
 
-	snapshotTranslations := buildSnapshotTranslations(translations, categories)
-
 	return coredata.CookieBannerVersionSnapshot{
 		PrivacyPolicyURL:  banner.PrivacyPolicyURL,
 		CookiePolicyURL:   banner.CookiePolicyURL,
@@ -113,7 +120,6 @@ func buildSnapshot(
 		ConsentMode:       string(banner.ConsentMode),
 		DefaultLanguage:   banner.DefaultLanguage,
 		Categories:        snapshotCategories,
-		Translations:      snapshotTranslations,
 	}
 }
 
