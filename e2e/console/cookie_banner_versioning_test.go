@@ -548,7 +548,7 @@ func reportDetectedCookies(t *testing.T, c *testutil.Client, bannerID string, na
 	endpoint := fmt.Sprintf("%s/api/cookie-banner/v1/%s/detected-cookies", c.BaseURL(), bannerID)
 	resp, err := c.HTTPClient().Post(endpoint, "application/json", bytes.NewReader(body))
 	require.NoError(t, err)
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	require.Equal(t, http.StatusNoContent, resp.StatusCode,
 		"detected-cookies endpoint should return 204")
 }
