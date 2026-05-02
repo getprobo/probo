@@ -143,6 +143,7 @@ export class CookieDetector {
       body: { cookies: entries },
     }).catch((err) => {
       if (err instanceof NotFoundError) {
+        this.pending.clear();
         this.stop();
       }
     });
