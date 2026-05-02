@@ -15,14 +15,12 @@
 package cookiebanner
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"maps"
 	"net/url"
-	"reflect"
 	"slices"
 	"strings"
 	"time"
@@ -351,157 +349,6 @@ func CanonicalizeOrigin(raw string) string {
 	}
 
 	return u.Scheme + "://" + host
-}
-
-// snapshotsEqual reports whether two version snapshots are visitor-identical.
-// buildSnapshot already normalises empty slices and nil maps, so reflect.DeepEqual
-// is sufficient and is the single chokepoint we'd extend if we ever wanted to
-// ignore particular fields.
-func snapshotsEqual(a, b coredata.CookieBannerVersionSnapshot) bool {
-	return reflect.DeepEqual(a, b)
-}
-
-// snapshotCategoryKindOrder returns a stable weight per Kind so the snapshot
-// keeps the visitor-facing layout invariants (NECESSARY first, UNCATEGORISED
-// last) without depending on the admin-controlled rank.
-func snapshotCategoryKindOrder(k coredata.CookieCategoryKind) int {
-	switch k {
-	case coredata.CookieCategoryKindNecessary:
-		return 0
-	case coredata.CookieCategoryKindNormal:
-		return 1
-	case coredata.CookieCategoryKindUncategorised:
-		return 2
-	default:
-		return 3
-	}
-}
-
-// sortCategoriesForSnapshot returns the categories ordered for snapshot
-// rendering. The order is (Kind weight, ID byte order); rank is intentionally
-// ignored so reordering is admin-only metadata and does not bump the version.
-func sortCategoriesForSnapshot(categories coredata.CookieCategories) coredata.CookieCategories {
-	sorted := make(coredata.CookieCategories, len(categories))
-	copy(sorted, categories)
-	slices.SortStableFunc(sorted, func(a, b *coredata.CookieCategory) int {
-		if d := snapshotCategoryKindOrder(a.Kind) - snapshotCategoryKindOrder(b.Kind); d != 0 {
-			return d
-		}
-		return bytes.Compare(a.ID[:], b.ID[:])
-	})
-	return sorted
-}
-
-func buildSnapshot(
-	banner *coredata.CookieBanner,
-	categories coredata.CookieCategories,
-	allPatterns coredata.CookiePatterns,
-	translations coredata.CookieBannerTranslations,
-) coredata.CookieBannerVersionSnapshot {
-	categories = sortCategoriesForSnapshot(categories)
-
-	cookiesByCategory := make(map[gid.GID]coredata.CookieItems)
-	for _, p := range allPatterns {
-		cookiesByCategory[p.CookieCategoryID] = append(
-			cookiesByCategory[p.CookieCategoryID],
-			coredata.CookieItem{
-				Name:          p.DisplayName,
-				MaxAgeSeconds: p.MaxAgeSeconds,
-				Description:   p.Description,
-			},
-		)
-	}
-
-	snapshotCategories := make([]coredata.CookieBannerVersionSnapshotCategory, len(categories))
-	for i, c := range categories {
-		cookies := cookiesByCategory[c.ID]
-		if cookies == nil {
-			cookies = coredata.CookieItems{}
-		}
-		gcmConsentTypes := c.GCMConsentTypes
-		if gcmConsentTypes == nil {
-			gcmConsentTypes = []string{}
-		}
-		snapshotCategories[i] = coredata.CookieBannerVersionSnapshotCategory{
-			Name:            c.Name,
-			Slug:            c.Slug,
-			Description:     c.Description,
-			Kind:            c.Kind,
-			Cookies:         cookies,
-			GCMConsentTypes: gcmConsentTypes,
-			PostHogConsent:  c.PostHogConsent,
-		}
-	}
-
-	snapshotTranslations := buildSnapshotTranslations(translations, categories)
-
-	return coredata.CookieBannerVersionSnapshot{
-		PrivacyPolicyURL:  banner.PrivacyPolicyURL,
-		CookiePolicyURL:   banner.CookiePolicyURL,
-		ConsentExpiryDays: banner.ConsentExpiryDays,
-		ConsentMode:       string(banner.ConsentMode),
-		DefaultLanguage:   banner.DefaultLanguage,
-		Categories:        snapshotCategories,
-		Translations:      snapshotTranslations,
-	}
-}
-
-func buildSnapshotTranslations(
-	translations coredata.CookieBannerTranslations,
-	categories coredata.CookieCategories,
-) map[string]coredata.CookieBannerVersionSnapshotTranslation {
-	if len(translations) == 0 {
-		return nil
-	}
-
-	result := make(map[string]coredata.CookieBannerVersionSnapshotTranslation, len(translations))
-
-	for _, t := range translations {
-		var raw struct {
-			Categories map[string]struct {
-				Name        string `json:"name"`
-				Description string `json:"description"`
-			} `json:"categories"`
-		}
-		_ = json.Unmarshal(t.Translations, &raw)
-
-		ui := make(map[string]string)
-		var flat map[string]json.RawMessage
-		_ = json.Unmarshal(t.Translations, &flat)
-		for k, v := range flat {
-			if k == "categories" || k == "cookies" {
-				continue
-			}
-			var s string
-			if json.Unmarshal(v, &s) == nil {
-				ui[k] = s
-			}
-		}
-
-		catTranslations := make([]coredata.CookieBannerVersionSnapshotCategoryTranslation, len(categories))
-		for i, c := range categories {
-			if raw.Categories != nil {
-				if ct, ok := raw.Categories[c.ID.String()]; ok {
-					catTranslations[i] = coredata.CookieBannerVersionSnapshotCategoryTranslation{
-						Name:        ct.Name,
-						Description: ct.Description,
-					}
-					continue
-				}
-			}
-			catTranslations[i] = coredata.CookieBannerVersionSnapshotCategoryTranslation{
-				Name:        c.Name,
-				Description: c.Description,
-			}
-		}
-
-		result[t.Language] = coredata.CookieBannerVersionSnapshotTranslation{
-			UI:         ui,
-			Categories: catTranslations,
-		}
-	}
-
-	return result
 }
 
 func (s *Service) ensureDraftVersion(
