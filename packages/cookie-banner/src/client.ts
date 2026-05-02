@@ -120,6 +120,7 @@ export class CookieBannerClient {
     try {
       config = await fetchJSON<BannerConfig>(configUrl);
     } catch {
+      this.startDetector();
       return;
     }
     this.bannerConfig = config;
@@ -324,12 +325,14 @@ export class CookieBannerClient {
     this.observer = observeAndActivate(consentData, categoryLabels, texts);
   }
 
-  private startDetector(config: BannerConfig): void {
+  private startDetector(config?: BannerConfig): void {
     const knownNames = new Set<string>();
     knownNames.add(COOKIE_NAME);
-    for (const cat of config.categories) {
-      for (const cookie of cat.cookies) {
-        knownNames.add(cookie.name);
+    if (config) {
+      for (const cat of config.categories) {
+        for (const cookie of cat.cookies) {
+          knownNames.add(cookie.name);
+        }
       }
     }
 

@@ -2202,15 +2202,15 @@ func (s *Service) ReportDetectedCookies(
 	return s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
+			scope := coredata.NewScopeFromObjectID(bannerID)
+
 			var banner coredata.CookieBanner
-			if err := banner.LoadActiveByID(ctx, tx, bannerID); err != nil {
+			if err := banner.LoadByID(ctx, tx, scope, bannerID); err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrBannerNotFound
 				}
-				return fmt.Errorf("cannot load active cookie banner: %w", err)
+				return fmt.Errorf("cannot load cookie banner: %w", err)
 			}
-
-			scope := coredata.NewScopeFromObjectID(banner.ID)
 
 			var uncategorised coredata.CookieCategory
 			if err := uncategorised.LoadUncategorisedByCookieBannerID(ctx, tx, scope, banner.ID); err != nil {

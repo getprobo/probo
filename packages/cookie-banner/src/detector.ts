@@ -13,6 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 import { isDeletion, parseCookieName, parseMaxAgeSeconds } from "./cookie-utils";
+import { NotFoundError } from "./errors";
 import { fetchJSON } from "./http";
 
 interface DetectedCookieEntry {
@@ -140,7 +141,11 @@ export class CookieDetector {
     void fetchJSON(this.reportUrl, {
       method: "POST",
       body: { cookies: entries },
-    }).catch(() => {});
+    }).catch((err) => {
+      if (err instanceof NotFoundError) {
+        this.stop();
+      }
+    });
 
     if (this.pending.size > 0) {
       this.scheduleFlush();
