@@ -530,23 +530,6 @@ func TestCookieBannerVersioning_TranslationChangesNeverBump(t *testing.T) {
 	})
 }
 
-func activateBanner(t *testing.T, c *testutil.Client, bannerID string) {
-	t.Helper()
-
-	const query = `
-		mutation ActivateCookieBanner($input: ActivateCookieBannerInput!) {
-			activateCookieBanner(input: $input) {
-				cookieBanner { id state }
-			}
-		}
-	`
-
-	var result struct{}
-	require.NoError(t, c.Execute(query, map[string]any{
-		"input": map[string]any{"cookieBannerId": bannerID},
-	}, &result), "activateCookieBanner mutation failed")
-}
-
 func reportDetectedCookies(t *testing.T, c *testutil.Client, bannerID string, names ...string) {
 	t.Helper()
 
@@ -579,7 +562,6 @@ func TestCookieBannerVersioning_DetectedCookiesNeverBump(t *testing.T) {
 
 		bannerID := factory.CreateCookieBanner(owner)
 		published := publishBanner(t, owner, bannerID)
-		activateBanner(t, owner, bannerID)
 		baseline := published.Version
 
 		reportDetectedCookies(t, owner, bannerID, "_unknown_cookie", "_another")
