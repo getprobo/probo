@@ -551,8 +551,8 @@ func reportDetectedCookies(t *testing.T, c *testutil.Client, bannerID string, na
 	t.Helper()
 
 	type entry struct {
-		Name   string  `json:"name"`
-		Source string  `json:"source"`
+		Name   string `json:"name"`
+		Source string `json:"source"`
 	}
 	cookies := make([]entry, len(names))
 	for i, n := range names {
