@@ -44,19 +44,6 @@ export const description: INodeProperties[] = [
 		description: 'The name of the cookie banner',
 	},
 	{
-		displayName: 'Privacy Policy URL',
-		name: 'privacyPolicyUrl',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['cookieBanner'],
-				operation: ['update'],
-			},
-		},
-		default: '',
-		description: 'The URL to the privacy policy',
-	},
-	{
 		displayName: 'Cookie Policy URL',
 		name: 'cookiePolicyUrl',
 		type: 'string',
@@ -122,6 +109,28 @@ export const description: INodeProperties[] = [
 		default: '',
 		description: 'The default language for the cookie banner',
 	},
+	{
+		displayName: 'Additional Fields',
+		name: 'additionalFields',
+		type: 'collection',
+		placeholder: 'Add Field',
+		default: {},
+		displayOptions: {
+			show: {
+				resource: ['cookieBanner'],
+				operation: ['update'],
+			},
+		},
+		options: [
+			{
+				displayName: 'Privacy Policy URL',
+				name: 'privacyPolicyUrl',
+				type: 'string',
+				default: '',
+				description: 'The URL to the privacy policy. Leave empty to clear the existing value.',
+			},
+		],
+	},
 ];
 
 export async function execute(
@@ -130,11 +139,13 @@ export async function execute(
 ): Promise<INodeExecutionData> {
 	const cookieBannerId = this.getNodeParameter('cookieBannerId', itemIndex) as string;
 	const name = this.getNodeParameter('name', itemIndex, '') as string;
-	const privacyPolicyUrl = this.getNodeParameter('privacyPolicyUrl', itemIndex, '') as string;
 	const cookiePolicyUrl = this.getNodeParameter('cookiePolicyUrl', itemIndex, '') as string;
 	const consentExpiryDays = this.getNodeParameter('consentExpiryDays', itemIndex, 0) as number;
 	const consentMode = this.getNodeParameter('consentMode', itemIndex, '') as string;
 	const defaultLanguage = this.getNodeParameter('defaultLanguage', itemIndex, '') as string;
+	const additionalFields = this.getNodeParameter('additionalFields', itemIndex, {}) as {
+		privacyPolicyUrl?: string;
+	};
 
 	const query = `
 		mutation UpdateCookieBanner($input: UpdateCookieBannerInput!) {
@@ -159,11 +170,13 @@ export async function execute(
 
 	const input: Record<string, unknown> = { cookieBannerId };
 	if (name) input.name = name;
-	if (privacyPolicyUrl) input.privacyPolicyUrl = privacyPolicyUrl;
 	if (cookiePolicyUrl) input.cookiePolicyUrl = cookiePolicyUrl;
 	if (consentExpiryDays) input.consentExpiryDays = consentExpiryDays;
 	if (consentMode) input.consentMode = consentMode;
 	if (defaultLanguage) input.defaultLanguage = defaultLanguage;
+	if (additionalFields.privacyPolicyUrl !== undefined) {
+		input.privacyPolicyUrl = additionalFields.privacyPolicyUrl === '' ? null : additionalFields.privacyPolicyUrl;
+	}
 
 	const responseData = await proboApiRequest.call(this, query, { input });
 

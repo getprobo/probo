@@ -44,19 +44,6 @@ export const description: INodeProperties[] = [
 		description: 'The display name for the cookie pattern',
 	},
 	{
-		displayName: 'Max Age Seconds',
-		name: 'maxAgeSeconds',
-		type: 'number',
-		displayOptions: {
-			show: {
-				resource: ['cookiePattern'],
-				operation: ['update'],
-			},
-		},
-		default: 0,
-		description: 'The maximum age of the cookie in seconds (leave at 0 to keep unchanged)',
-	},
-	{
 		displayName: 'Excluded',
 		name: 'excluded',
 		type: 'options',
@@ -96,6 +83,31 @@ export const description: INodeProperties[] = [
 		default: '',
 		description: 'The description of the cookie pattern',
 	},
+	{
+		displayName: 'Additional Fields',
+		name: 'additionalFields',
+		type: 'collection',
+		placeholder: 'Add Field',
+		default: {},
+		displayOptions: {
+			show: {
+				resource: ['cookiePattern'],
+				operation: ['update'],
+			},
+		},
+		options: [
+			{
+				displayName: 'Max Age Seconds',
+				name: 'maxAgeSeconds',
+				type: 'number',
+				typeOptions: {
+					minValue: 0,
+				},
+				default: 0,
+				description: 'The maximum age of the cookie in seconds. Set to 0 to clear the existing value.',
+			},
+		],
+	},
 ];
 
 export async function execute(
@@ -104,9 +116,11 @@ export async function execute(
 ): Promise<INodeExecutionData> {
 	const cookiePatternId = this.getNodeParameter('cookiePatternId', itemIndex) as string;
 	const displayName = this.getNodeParameter('displayName', itemIndex, '') as string;
-	const maxAgeSeconds = this.getNodeParameter('maxAgeSeconds', itemIndex, 0) as number;
 	const excluded = this.getNodeParameter('excluded', itemIndex, '') as string;
 	const patternDescription = this.getNodeParameter('patternDescription', itemIndex, '') as string;
+	const additionalFields = this.getNodeParameter('additionalFields', itemIndex, {}) as {
+		maxAgeSeconds?: number;
+	};
 
 	const query = `
 		mutation UpdateCookiePattern($input: UpdateCookiePatternInput!) {
@@ -133,9 +147,11 @@ export async function execute(
 
 	const input: Record<string, unknown> = { cookiePatternId };
 	if (displayName) input.displayName = displayName;
-	if (maxAgeSeconds > 0) input.maxAgeSeconds = maxAgeSeconds;
 	if (excluded) input.excluded = excluded === 'true';
 	if (patternDescription) input.description = patternDescription;
+	if (additionalFields.maxAgeSeconds !== undefined) {
+		input.maxAgeSeconds = additionalFields.maxAgeSeconds === 0 ? null : additionalFields.maxAgeSeconds;
+	}
 
 	const responseData = await proboApiRequest.call(this, query, { input });
 
