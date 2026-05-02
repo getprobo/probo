@@ -545,8 +545,8 @@ func reportDetectedCookies(t *testing.T, c *testutil.Client, bannerID string, na
 	body, err := json.Marshal(map[string]any{"cookies": cookies})
 	require.NoError(t, err)
 
-	url := fmt.Sprintf("%s/cookie-banner/v1/%s/detected-cookies", c.BaseURL(), bannerID)
-	resp, err := c.HTTPClient().Post(url, "application/json", bytes.NewReader(body))
+	endpoint := fmt.Sprintf("%s/api/cookie-banner/v1/%s/detected-cookies", c.BaseURL(), bannerID)
+	resp, err := c.HTTPClient().Post(endpoint, "application/json", bytes.NewReader(body))
 	require.NoError(t, err)
 	defer resp.Body.Close()
 	require.Equal(t, http.StatusNoContent, resp.StatusCode,
