@@ -4,6 +4,28 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.179.0] - 2026-05-02
+
+### Added
+
+- Add cookie banner operations to n8n node
+- Add `excluded` flag to cookie patterns (GraphQL/MCP/CLI/n8n) with source badge in category table
+- Validate cookie policy link in banner description
+
+### Changed
+
+- Skip draft cookie banner version for uncategorised-only merges
+- Exclude uncategorised category from consent contract
+- Run cookie detection regardless of banner state
+- Stop bumping cookie banner version on no-op updates
+- Exclude translations from cookie banner version snapshots
+- Allow clearing optional fields in n8n cookie updates
+- Bump `@probo/cookie-banner` to 0.2.0
+
+### Fixed
+
+- Clear pending cookie-consent queue before stopping on 404
+
 ## [0.178.0] - 2026-05-01
 
 ### Added
