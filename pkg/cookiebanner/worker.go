@@ -85,6 +85,15 @@ func (h *patternAnalysisHandler) Process(ctx context.Context, banner coredata.Co
 		func(ctx context.Context, tx pg.Tx) error {
 			scope := coredata.NewScopeFromObjectID(banner.ID)
 
+			var uncategorised coredata.CookieCategory
+			hasUncategorised := true
+			if err := uncategorised.LoadUncategorisedByCookieBannerID(ctx, tx, scope, banner.ID); err != nil {
+				if !errors.Is(err, coredata.ErrResourceNotFound) {
+					return fmt.Errorf("cannot load uncategorised category: %w", err)
+				}
+				hasUncategorised = false
+			}
+
 			var exactPatterns coredata.CookiePatterns
 			if err := exactPatterns.LoadAllByCookieBannerID(
 				ctx,
@@ -98,7 +107,7 @@ func (h *patternAnalysisHandler) Process(ctx context.Context, banner coredata.Co
 
 			mergeGroups := findMergeGroups(exactPatterns, patternMergeThreshold)
 
-			merged := false
+			consentChanged := false
 			for key, group := range mergeGroups {
 
 				maxAge := mostCommonMaxAge(group)
@@ -144,7 +153,10 @@ func (h *patternAnalysisHandler) Process(ctx context.Context, banner coredata.Co
 					}
 				}
 
-				merged = true
+				if !hasUncategorised || key.categoryID != uncategorised.ID {
+					consentChanged = true
+				}
+
 				h.logger.InfoCtx(
 					ctx,
 					"merged exact patterns into prefix pattern",
@@ -154,15 +166,11 @@ func (h *patternAnalysisHandler) Process(ctx context.Context, banner coredata.Co
 				)
 			}
 
-			adopted, err := h.adoptUncategorisedPatterns(ctx, tx, scope, banner)
-			if err != nil {
+			if _, err := h.adoptUncategorisedPatterns(ctx, tx, scope, banner); err != nil {
 				return fmt.Errorf("cannot adopt uncategorised patterns: %w", err)
 			}
-			if adopted {
-				merged = true
-			}
 
-			if merged {
+			if consentChanged {
 				if _, err := h.svc.ensureDraftVersionForBanner(ctx, tx, scope, banner.ID); err != nil {
 					return fmt.Errorf("cannot ensure draft version: %w", err)
 				}
