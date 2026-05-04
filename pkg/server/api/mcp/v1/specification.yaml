@@ -9879,6 +9879,344 @@ components:
         cookie_consent_record:
           $ref: "#/components/schemas/CookieConsentRecord"
 
+    SCIMBridgeType:
+      type: string
+      enum:
+        - GOOGLE_WORKSPACE
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.SCIMBridgeType
+
+    SCIMBridgeState:
+      type: string
+      enum:
+        - PENDING
+        - ACTIVE
+        - SYNCING
+        - FAILED
+        - DISABLED
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.SCIMBridgeState
+
+    SCIMEventOrderField:
+      type: string
+      enum:
+        - CREATED_AT
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.SCIMEventOrderField
+
+    SCIMEventOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/SCIMEventOrderField"
+          description: SCIM event order field
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+          description: SCIM event order direction
+
+    SCIMConfiguration:
+      type: object
+      required:
+        - id
+        - organization_id
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: SCIM configuration ID
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        bridge_id:
+          type:
+            - string
+            - "null"
+          description: Associated SCIM bridge ID, if any
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+
+    SCIMBridge:
+      type: object
+      required:
+        - id
+        - organization_id
+        - scim_configuration_id
+        - type
+        - state
+        - excluded_user_names
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: SCIM bridge ID
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        scim_configuration_id:
+          $ref: "#/components/schemas/GID"
+          description: SCIM configuration ID
+        connector_id:
+          type:
+            - string
+            - "null"
+          description: Connector ID, if any
+        type:
+          $ref: "#/components/schemas/SCIMBridgeType"
+          description: Bridge type
+        state:
+          $ref: "#/components/schemas/SCIMBridgeState"
+          description: Bridge state
+        excluded_user_names:
+          type: array
+          items:
+            type: string
+          description: User names excluded from SCIM sync
+        last_synced_at:
+          type:
+            - string
+            - "null"
+          format: date-time
+          description: Last successful sync timestamp
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+
+    SCIMEvent:
+      type: object
+      required:
+        - id
+        - organization_id
+        - scim_configuration_id
+        - method
+        - path
+        - status_code
+        - user_name
+        - ip_address
+        - created_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: SCIM event ID
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        scim_configuration_id:
+          $ref: "#/components/schemas/GID"
+          description: SCIM configuration ID
+        method:
+          type: string
+          description: HTTP method
+        path:
+          type: string
+          description: Request path
+        status_code:
+          type: integer
+          description: HTTP status code
+        request_body:
+          type:
+            - string
+            - "null"
+          description: Request body
+        response_body:
+          type:
+            - string
+            - "null"
+          description: Response body
+        error_message:
+          type:
+            - string
+            - "null"
+          description: Error message, if any
+        user_name:
+          type: string
+          description: SCIM user name
+        ip_address:
+          type: string
+          description: Client IP address
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+
+    GetSCIMConfigurationInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+
+    GetSCIMConfigurationOutput:
+      type: object
+      required:
+        - scim_configuration
+      properties:
+        scim_configuration:
+          $ref: "#/components/schemas/SCIMConfiguration"
+
+    CreateSCIMConfigurationInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        connector_id:
+          $ref: "#/components/schemas/GID"
+          description: Optional connector ID to create a SCIM bridge
+
+    CreateSCIMConfigurationOutput:
+      type: object
+      required:
+        - scim_configuration
+        - token
+      properties:
+        scim_configuration:
+          $ref: "#/components/schemas/SCIMConfiguration"
+        scim_bridge:
+          $ref: "#/components/schemas/SCIMBridge"
+          description: SCIM bridge, if a connector ID was provided
+        token:
+          type: string
+          description: Plaintext SCIM bearer token (only returned at creation time)
+
+    DeleteSCIMConfigurationInput:
+      type: object
+      required:
+        - organization_id
+        - scim_configuration_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        scim_configuration_id:
+          $ref: "#/components/schemas/GID"
+          description: SCIM configuration ID to delete
+
+    DeleteSCIMConfigurationOutput:
+      type: object
+      required:
+        - deleted_scim_configuration_id
+      properties:
+        deleted_scim_configuration_id:
+          $ref: "#/components/schemas/GID"
+          description: Deleted SCIM configuration ID
+
+    RegenerateSCIMTokenInput:
+      type: object
+      required:
+        - organization_id
+        - scim_configuration_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        scim_configuration_id:
+          $ref: "#/components/schemas/GID"
+          description: SCIM configuration ID
+
+    RegenerateSCIMTokenOutput:
+      type: object
+      required:
+        - scim_configuration
+        - token
+      properties:
+        scim_configuration:
+          $ref: "#/components/schemas/SCIMConfiguration"
+        token:
+          type: string
+          description: New plaintext SCIM bearer token
+
+    GetSCIMBridgeInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: SCIM bridge ID
+
+    GetSCIMBridgeOutput:
+      type: object
+      required:
+        - scim_bridge
+      properties:
+        scim_bridge:
+          $ref: "#/components/schemas/SCIMBridge"
+
+    UpdateSCIMBridgeInput:
+      type: object
+      required:
+        - organization_id
+        - scim_bridge_id
+        - excluded_user_names
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        scim_bridge_id:
+          $ref: "#/components/schemas/GID"
+          description: SCIM bridge ID
+        excluded_user_names:
+          type: array
+          items:
+            type: string
+          description: User names to exclude from SCIM sync
+
+    UpdateSCIMBridgeOutput:
+      type: object
+      required:
+        - scim_bridge
+      properties:
+        scim_bridge:
+          $ref: "#/components/schemas/SCIMBridge"
+
+    ListSCIMEventsInput:
+      type: object
+      required:
+        - scim_configuration_id
+      properties:
+        scim_configuration_id:
+          $ref: "#/components/schemas/GID"
+          description: SCIM configuration ID
+        order_by:
+          $ref: "#/components/schemas/SCIMEventOrderBy"
+          description: SCIM event order by
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+
+    ListSCIMEventsOutput:
+      type: object
+      required:
+        - scim_events
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        scim_events:
+          type: array
+          items:
+            $ref: "#/components/schemas/SCIMEvent"
+
 tools:
   - name: listOrganizations
     description: List all organizations the user has access to
@@ -11769,3 +12107,63 @@ tools:
       $ref: "#/components/schemas/GetCookieConsentRecordInput"
     outputSchema:
       $ref: "#/components/schemas/GetCookieConsentRecordOutput"
+  - name: getSCIMConfiguration
+    description: Get the SCIM configuration for an organization
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/GetSCIMConfigurationInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetSCIMConfigurationOutput"
+  - name: createSCIMConfiguration
+    description: Create a SCIM configuration for an organization. Optionally provide a connector ID to also create a SCIM bridge.
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/CreateSCIMConfigurationInput"
+    outputSchema:
+      $ref: "#/components/schemas/CreateSCIMConfigurationOutput"
+  - name: deleteSCIMConfiguration
+    description: Delete a SCIM configuration and its associated bridge
+    hints:
+      readonly: false
+      destructive: true
+    inputSchema:
+      $ref: "#/components/schemas/DeleteSCIMConfigurationInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteSCIMConfigurationOutput"
+  - name: regenerateSCIMToken
+    description: Regenerate the bearer token for a SCIM configuration
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/RegenerateSCIMTokenInput"
+    outputSchema:
+      $ref: "#/components/schemas/RegenerateSCIMTokenOutput"
+  - name: getSCIMBridge
+    description: Get a SCIM bridge by ID
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/GetSCIMBridgeInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetSCIMBridgeOutput"
+  - name: updateSCIMBridge
+    description: Update a SCIM bridge's excluded user names
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/UpdateSCIMBridgeInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateSCIMBridgeOutput"
+  - name: listSCIMEvents
+    description: List SCIM events for a configuration
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/ListSCIMEventsInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListSCIMEventsOutput"

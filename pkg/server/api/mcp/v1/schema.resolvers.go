@@ -5107,3 +5107,117 @@ func (r *Resolver) PublishRiskListTool(ctx context.Context, req *mcp.CallToolReq
 		DocumentVersionID: documentVersion.ID,
 	}, nil
 }
+
+func (r *Resolver) GetSCIMConfigurationTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetSCIMConfigurationInput) (*mcp.CallToolResult, types.GetSCIMConfigurationOutput, error) {
+	r.MustAuthorize(ctx, input.OrganizationID, iam.ActionSCIMConfigurationGet)
+
+	config, err := r.iamSvc.OrganizationService.GetSCIMConfiguration(ctx, input.OrganizationID)
+	if err != nil {
+		var errNotFound *iam.ErrNoSCIMConfigurationFound
+		if errors.As(err, &errNotFound) {
+			return nil, types.GetSCIMConfigurationOutput{}, fmt.Errorf("SCIM configuration not found for organization %s", input.OrganizationID)
+		}
+		panic(fmt.Errorf("cannot get SCIM configuration: %w", err))
+	}
+
+	return nil, types.GetSCIMConfigurationOutput{ScimConfiguration: types.NewSCIMConfiguration(config)}, nil
+}
+
+func (r *Resolver) CreateSCIMConfigurationTool(ctx context.Context, req *mcp.CallToolRequest, input *types.CreateSCIMConfigurationInput) (*mcp.CallToolResult, types.CreateSCIMConfigurationOutput, error) {
+	r.MustAuthorize(ctx, input.OrganizationID, iam.ActionSCIMConfigurationCreate)
+
+	config, token, err := r.iamSvc.OrganizationService.CreateSCIMConfiguration(ctx, input.OrganizationID)
+	if err != nil {
+		return nil, types.CreateSCIMConfigurationOutput{}, fmt.Errorf("cannot create SCIM configuration: %w", err)
+	}
+
+	output := types.CreateSCIMConfigurationOutput{
+		ScimConfiguration: types.NewSCIMConfiguration(config),
+		Token:             token,
+	}
+
+	if input.ConnectorID != nil {
+		bridge, err := r.iamSvc.OrganizationService.CreateSCIMBridge(ctx, input.OrganizationID, config.ID, *input.ConnectorID)
+		if err != nil {
+			return nil, types.CreateSCIMConfigurationOutput{}, fmt.Errorf("cannot create SCIM bridge: %w", err)
+		}
+		output.ScimBridge = types.NewSCIMBridge(bridge)
+	}
+
+	return nil, output, nil
+}
+
+func (r *Resolver) DeleteSCIMConfigurationTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteSCIMConfigurationInput) (*mcp.CallToolResult, types.DeleteSCIMConfigurationOutput, error) {
+	r.MustAuthorize(ctx, input.OrganizationID, iam.ActionSCIMConfigurationDelete)
+
+	err := r.iamSvc.OrganizationService.DeleteSCIMConfiguration(ctx, input.OrganizationID, input.ScimConfigurationID)
+	if err != nil {
+		return nil, types.DeleteSCIMConfigurationOutput{}, fmt.Errorf("cannot delete SCIM configuration: %w", err)
+	}
+
+	return nil, types.DeleteSCIMConfigurationOutput{DeletedScimConfigurationID: input.ScimConfigurationID}, nil
+}
+
+func (r *Resolver) RegenerateSCIMTokenTool(ctx context.Context, req *mcp.CallToolRequest, input *types.RegenerateSCIMTokenInput) (*mcp.CallToolResult, types.RegenerateSCIMTokenOutput, error) {
+	r.MustAuthorize(ctx, input.ScimConfigurationID, iam.ActionSCIMConfigurationUpdate)
+
+	config, token, err := r.iamSvc.OrganizationService.RegenerateSCIMToken(ctx, input.OrganizationID, input.ScimConfigurationID)
+	if err != nil {
+		return nil, types.RegenerateSCIMTokenOutput{}, fmt.Errorf("cannot regenerate SCIM token: %w", err)
+	}
+
+	return nil, types.RegenerateSCIMTokenOutput{
+		ScimConfiguration: types.NewSCIMConfiguration(config),
+		Token:             token,
+	}, nil
+}
+
+func (r *Resolver) GetSCIMBridgeTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetSCIMBridgeInput) (*mcp.CallToolResult, types.GetSCIMBridgeOutput, error) {
+	r.MustAuthorize(ctx, input.ID, iam.ActionSCIMBridgeGet)
+
+	bridge, err := r.iamSvc.OrganizationService.GetSCIMBridgeByID(ctx, input.ID)
+	if err != nil {
+		var errNotFound *iam.ErrSCIMBridgeNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, types.GetSCIMBridgeOutput{}, fmt.Errorf("SCIM bridge %s not found", input.ID)
+		}
+		panic(fmt.Errorf("cannot get SCIM bridge: %w", err))
+	}
+
+	return nil, types.GetSCIMBridgeOutput{ScimBridge: types.NewSCIMBridge(bridge)}, nil
+}
+
+func (r *Resolver) UpdateSCIMBridgeTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateSCIMBridgeInput) (*mcp.CallToolResult, types.UpdateSCIMBridgeOutput, error) {
+	r.MustAuthorize(ctx, input.ScimBridgeID, iam.ActionSCIMBridgeUpdate)
+
+	bridge, err := r.iamSvc.OrganizationService.UpdateSCIMBridge(ctx, input.OrganizationID, input.ScimBridgeID, input.ExcludedUserNames)
+	if err != nil {
+		return nil, types.UpdateSCIMBridgeOutput{}, fmt.Errorf("cannot update SCIM bridge: %w", err)
+	}
+
+	return nil, types.UpdateSCIMBridgeOutput{ScimBridge: types.NewSCIMBridge(bridge)}, nil
+}
+
+func (r *Resolver) ListSCIMEventsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListSCIMEventsInput) (*mcp.CallToolResult, types.ListSCIMEventsOutput, error) {
+	r.MustAuthorize(ctx, input.ScimConfigurationID, iam.ActionSCIMEventList)
+
+	pageOrderBy := page.OrderBy[coredata.SCIMEventOrderField]{
+		Field:     coredata.SCIMEventOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.SCIMEventOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	p, err := r.iamSvc.OrganizationService.ListSCIMEventsByConfigID(ctx, input.ScimConfigurationID, cursor)
+	if err != nil {
+		panic(fmt.Errorf("cannot list SCIM events: %w", err))
+	}
+
+	return nil, types.NewListSCIMEventsOutput(p), nil
+}
