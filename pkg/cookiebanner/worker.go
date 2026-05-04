@@ -170,6 +170,11 @@ func (h *patternAnalysisHandler) Process(ctx context.Context, banner coredata.Co
 				return fmt.Errorf("cannot adopt uncategorised patterns: %w", err)
 			}
 
+			var patterns coredata.CookiePatterns
+			if err := patterns.RefreshLastMatchedAtByCookieBannerID(ctx, tx, scope, banner.ID); err != nil {
+				return fmt.Errorf("cannot refresh last_matched_at: %w", err)
+			}
+
 			if consentChanged {
 				if _, err := h.svc.ensureDraftVersionForBanner(ctx, tx, scope, banner.ID); err != nil {
 					return fmt.Errorf("cannot ensure draft version: %w", err)

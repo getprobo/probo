@@ -41,6 +41,7 @@ type (
 		Description      string                 `db:"description"`
 		Source           CookieSource           `db:"source"`
 		Excluded         bool                   `db:"excluded"`
+		LastMatchedAt    *time.Time             `db:"last_matched_at"`
 		CreatedAt        time.Time              `db:"created_at"`
 		UpdatedAt        time.Time              `db:"updated_at"`
 	}
@@ -91,6 +92,7 @@ SELECT
 	description,
 	source,
 	excluded,
+	last_matched_at,
 	created_at,
 	updated_at
 FROM
@@ -144,6 +146,7 @@ SELECT
 	description,
 	source,
 	excluded,
+	last_matched_at,
 	created_at,
 	updated_at
 FROM
@@ -201,6 +204,7 @@ SELECT
 	description,
 	source,
 	excluded,
+	last_matched_at,
 	created_at,
 	updated_at
 FROM
@@ -269,6 +273,7 @@ SELECT
 	description,
 	source,
 	excluded,
+	last_matched_at,
 	created_at,
 	updated_at
 FROM
@@ -351,6 +356,7 @@ SELECT
 	description,
 	source,
 	excluded,
+	last_matched_at,
 	created_at,
 	updated_at
 FROM
@@ -403,6 +409,7 @@ INSERT INTO cookie_patterns (
 	description,
 	source,
 	excluded,
+	last_matched_at,
 	created_at,
 	updated_at
 ) VALUES (
@@ -418,6 +425,7 @@ INSERT INTO cookie_patterns (
 	@description,
 	@source,
 	@excluded,
+	@last_matched_at,
 	@created_at,
 	@updated_at
 )
@@ -436,6 +444,7 @@ INSERT INTO cookie_patterns (
 		"description":        cp.Description,
 		"source":             cp.Source,
 		"excluded":           cp.Excluded,
+		"last_matched_at":    cp.LastMatchedAt,
 		"created_at":         cp.CreatedAt,
 		"updated_at":         cp.UpdatedAt,
 	}
@@ -472,6 +481,7 @@ INSERT INTO cookie_patterns (
 	description,
 	source,
 	excluded,
+	last_matched_at,
 	created_at,
 	updated_at
 ) VALUES (
@@ -487,6 +497,7 @@ INSERT INTO cookie_patterns (
 	@description,
 	@source,
 	@excluded,
+	@last_matched_at,
 	@created_at,
 	@updated_at
 )
@@ -506,6 +517,7 @@ ON CONFLICT (cookie_banner_id, pattern) DO NOTHING
 		"description":        cp.Description,
 		"source":             cp.Source,
 		"excluded":           cp.Excluded,
+		"last_matched_at":    cp.LastMatchedAt,
 		"created_at":         cp.CreatedAt,
 		"updated_at":         cp.UpdatedAt,
 	}
@@ -587,6 +599,41 @@ WHERE
 	_, err := tx.Exec(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot delete cookie pattern: %w", err)
+	}
+
+	return nil
+}
+
+func (cps *CookiePatterns) RefreshLastMatchedAtByCookieBannerID(
+	ctx context.Context,
+	tx pg.Tx,
+	scope Scoper,
+	cookieBannerID gid.GID,
+) error {
+	q := `
+UPDATE cookie_patterns
+SET
+	last_matched_at = sub.max_detected
+FROM (
+	SELECT cookie_pattern_id, MAX(last_detected_at) AS max_detected
+	FROM cookies
+	WHERE %[1]s AND cookie_banner_id = @cookie_banner_id
+	GROUP BY cookie_pattern_id
+) sub
+WHERE
+	cookie_patterns.id = sub.cookie_pattern_id
+	AND %[1]s
+	AND cookie_patterns.cookie_banner_id = @cookie_banner_id
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"cookie_banner_id": cookieBannerID}
+	maps.Copy(args, scope.SQLArguments())
+
+	_, err := tx.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot refresh last_matched_at for banner patterns: %w", err)
 	}
 
 	return nil

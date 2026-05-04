@@ -540,6 +540,7 @@ func (s *Service) CreateCookieBanner(
 						Name:            "probo_consent",
 						MaxAgeSeconds:   &consentMaxAge,
 						Source:          coredata.CookieSourceScript,
+						LastDetectedAt:  now,
 						CreatedAt:       now,
 						UpdatedAt:       now,
 					}
@@ -2280,6 +2281,7 @@ func (s *Service) ReportDetectedCookies(
 					Name:            dc.Name,
 					MaxAgeSeconds:   dc.MaxAgeSeconds,
 					Source:          dc.Source,
+					LastDetectedAt:  now,
 					CreatedAt:       now,
 					UpdatedAt:       now,
 				}

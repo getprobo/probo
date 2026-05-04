@@ -36,6 +36,7 @@ type (
 		Name            string       `db:"name"`
 		MaxAgeSeconds   *int         `db:"max_age_seconds"`
 		Source          CookieSource `db:"source"`
+		LastDetectedAt  time.Time    `db:"last_detected_at"`
 		CreatedAt       time.Time    `db:"created_at"`
 		UpdatedAt       time.Time    `db:"updated_at"`
 	}
@@ -89,6 +90,7 @@ INSERT INTO cookies (
 	name,
 	max_age_seconds,
 	source,
+	last_detected_at,
 	created_at,
 	updated_at
 ) VALUES (
@@ -100,6 +102,7 @@ INSERT INTO cookies (
 	@name,
 	@max_age_seconds,
 	@source,
+	@last_detected_at,
 	@created_at,
 	@updated_at
 )
@@ -114,6 +117,7 @@ INSERT INTO cookies (
 		"name":              c.Name,
 		"max_age_seconds":   c.MaxAgeSeconds,
 		"source":            c.Source,
+		"last_detected_at":  c.LastDetectedAt,
 		"created_at":        c.CreatedAt,
 		"updated_at":        c.UpdatedAt,
 	}
@@ -146,6 +150,7 @@ INSERT INTO cookies (
 	name,
 	max_age_seconds,
 	source,
+	last_detected_at,
 	created_at,
 	updated_at
 ) VALUES (
@@ -157,12 +162,14 @@ INSERT INTO cookies (
 	@name,
 	@max_age_seconds,
 	@source,
+	@last_detected_at,
 	@created_at,
 	@updated_at
 )
 ON CONFLICT (cookie_banner_id, name) DO UPDATE
-	SET source = EXCLUDED.source, updated_at = EXCLUDED.updated_at
-	WHERE cookies.source != @source_script AND EXCLUDED.source = @source_script
+	SET last_detected_at = EXCLUDED.last_detected_at,
+		source = CASE WHEN cookies.source != @source_script AND EXCLUDED.source = @source_script THEN EXCLUDED.source ELSE cookies.source END,
+		updated_at = EXCLUDED.updated_at
 `
 
 	args := pgx.StrictNamedArgs{
@@ -175,6 +182,7 @@ ON CONFLICT (cookie_banner_id, name) DO UPDATE
 		"max_age_seconds":   c.MaxAgeSeconds,
 		"source":            c.Source,
 		"source_script":     CookieSourceScript,
+		"last_detected_at":  c.LastDetectedAt,
 		"created_at":        c.CreatedAt,
 		"updated_at":        c.UpdatedAt,
 	}
