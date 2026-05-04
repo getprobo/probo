@@ -428,7 +428,7 @@ func (s *Service) ensureDraftVersionForBanner(
 	}
 
 	var categories coredata.CookieCategories
-	if err := categories.LoadAllByCookieBannerID(ctx, tx, scope, bannerID); err != nil {
+	if err := categories.LoadConsentCategoriesByCookieBannerID(ctx, tx, scope, bannerID); err != nil {
 		return nil, fmt.Errorf("cannot load cookie categories: %w", err)
 	}
 
@@ -1887,7 +1887,7 @@ func (s *Service) GetActiveBannerConfig(
 			}
 
 			var categories coredata.CookieCategories
-			if err := categories.LoadAllByCookieBannerID(ctx, conn, scope, banner.ID); err != nil {
+			if err := categories.LoadConsentCategoriesByCookieBannerID(ctx, conn, scope, banner.ID); err != nil {
 				return fmt.Errorf("cannot load cookie categories: %w", err)
 			}
 

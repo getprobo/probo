@@ -31,7 +31,8 @@ func resolveTranslations(
 	translations coredata.CookieBannerTranslations,
 	categories coredata.CookieCategories,
 ) map[string]coredata.CookieBannerVersionSnapshotTranslation {
-	return buildSnapshotTranslations(translations, consentCategories(categories))
+	sortConsentCategories(categories)
+	return buildSnapshotTranslations(translations, categories)
 }
 
 // snapshotsEqual reports whether two version snapshots are visitor-identical.
@@ -56,23 +57,16 @@ func snapshotCategoryKindOrder(k coredata.CookieCategoryKind) int {
 	}
 }
 
-// consentCategories returns the categories that are part of the consent
-// contract (everything except UNCATEGORISED), sorted in snapshot order.
-// UNCATEGORISED is an admin-side inbox and never shown to visitors.
-func consentCategories(categories coredata.CookieCategories) coredata.CookieCategories {
-	filtered := make(coredata.CookieCategories, 0, len(categories))
-	for _, c := range categories {
-		if c.Kind != coredata.CookieCategoryKindUncategorised {
-			filtered = append(filtered, c)
-		}
-	}
-	slices.SortStableFunc(filtered, func(a, b *coredata.CookieCategory) int {
+// sortConsentCategories sorts categories in snapshot order: NECESSARY first,
+// then NORMAL sorted by ID. The caller is expected to have already excluded
+// UNCATEGORISED at load time.
+func sortConsentCategories(categories coredata.CookieCategories) {
+	slices.SortStableFunc(categories, func(a, b *coredata.CookieCategory) int {
 		if d := snapshotCategoryKindOrder(a.Kind) - snapshotCategoryKindOrder(b.Kind); d != 0 {
 			return d
 		}
 		return bytes.Compare(a.ID[:], b.ID[:])
 	})
-	return filtered
 }
 
 func buildSnapshot(
@@ -80,7 +74,7 @@ func buildSnapshot(
 	categories coredata.CookieCategories,
 	allPatterns coredata.CookiePatterns,
 ) coredata.CookieBannerVersionSnapshot {
-	categories = consentCategories(categories)
+	sortConsentCategories(categories)
 
 	cookiesByCategory := make(map[gid.GID]coredata.CookieItems)
 	for _, p := range allPatterns {
