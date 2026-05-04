@@ -1928,7 +1928,12 @@ func buildBannerConfig(
 		}
 	}
 
-	categories := snapshot.Categories
+	categories := make([]coredata.CookieBannerVersionSnapshotCategory, 0, len(snapshot.Categories))
+	for _, c := range snapshot.Categories {
+		if c.Kind != coredata.CookieCategoryKindUncategorised {
+			categories = append(categories, c)
+		}
+	}
 	texts := make(map[string]string)
 
 	if t, ok := translations[resolvedLang]; ok {
