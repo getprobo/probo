@@ -31,8 +31,8 @@ export const cookieBannerCookiesPageQuery = graphql`
       __typename
       ... on CookieBanner {
         id
-        categories(first: 50, orderBy: { field: RANK, direction: ASC })
-          @connection(key: "CookieBannerCookiesPage_categories")
+        consentCategories(first: 50, orderBy: { field: RANK, direction: ASC })
+          @connection(key: "CookieBannerCookiesPage_consentCategories")
           @required(action: THROW) {
           __id
           edges {
@@ -86,8 +86,8 @@ export default function CookieBannerCookiesPage({
   }
 
   const banner = data.node;
-  const connectionId = banner.categories.__id;
-  const categories = banner.categories.edges.map(e => e.node);
+  const connectionId = banner.consentCategories.__id;
+  const categories = banner.consentCategories.edges.map(e => e.node);
   const sorted = [...categories].sort((a, b) => a.rank - b.rank);
 
   const [deleteCategory]

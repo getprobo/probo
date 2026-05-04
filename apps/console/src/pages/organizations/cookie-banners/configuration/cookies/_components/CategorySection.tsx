@@ -80,7 +80,7 @@ export const categorySectionFragment = graphql`
       }
     }
     cookieBanner @required(action: THROW) {
-      categories(first: 50, orderBy: { field: RANK, direction: ASC }) @required(action: THROW) {
+      consentCategories(first: 50, orderBy: { field: RANK, direction: ASC }) @required(action: THROW) {
         edges {
           node {
             id
@@ -451,7 +451,7 @@ export function CategorySection({ categoryKey, onDelete }: CategorySectionProps)
     });
   };
 
-  const allCategories = category.cookieBanner.categories.edges.map(e => e.node) ?? [];
+  const allCategories = category.cookieBanner.consentCategories.edges.map(e => e.node) ?? [];
   const siblingCategories = allCategories.filter(c => c.id !== category.id);
 
   const handleMoveCookie = (patternId: string, targetCategoryId: string) => {

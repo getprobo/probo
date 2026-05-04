@@ -102,7 +102,7 @@ type CookieBanner implements Node {
 
     organization: Organization @goField(forceResolver: true)
 
-    categories(
+    consentCategories(
         first: Int
         after: CursorKey
         last: Int

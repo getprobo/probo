@@ -428,7 +428,7 @@ func (s *Service) ensureDraftVersionForBanner(
 	}
 
 	var categories coredata.CookieCategories
-	if err := categories.LoadConsentCategoriesByCookieBannerID(ctx, tx, scope, bannerID); err != nil {
+	if err := categories.LoadAllConsentCategoriesByCookieBannerID(ctx, tx, scope, bannerID); err != nil {
 		return nil, fmt.Errorf("cannot load cookie categories: %w", err)
 	}
 
@@ -1078,7 +1078,7 @@ func (s *Service) ListCookieCategoriesForBanner(
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := categories.LoadByCookieBannerID(ctx, conn, scope, bannerID, cursor); err != nil {
+			if err := categories.LoadConsentCategoriesByCookieBannerID(ctx, conn, scope, bannerID, cursor); err != nil {
 				return fmt.Errorf("cannot list cookie categories: %w", err)
 			}
 
@@ -1105,7 +1105,7 @@ func (s *Service) CountCookieCategoriesForBanner(
 			var categories coredata.CookieCategories
 			var err error
 
-			count, err = categories.CountByCookieBannerID(ctx, conn, scope, bannerID)
+			count, err = categories.CountConsentCategoriesByCookieBannerID(ctx, conn, scope, bannerID)
 			if err != nil {
 				return fmt.Errorf("cannot count cookie categories: %w", err)
 			}
@@ -1943,7 +1943,7 @@ func (s *Service) GetActiveBannerConfig(
 			}
 
 			var categories coredata.CookieCategories
-			if err := categories.LoadConsentCategoriesByCookieBannerID(ctx, conn, scope, banner.ID); err != nil {
+			if err := categories.LoadAllConsentCategoriesByCookieBannerID(ctx, conn, scope, banner.ID); err != nil {
 				return fmt.Errorf("cannot load cookie categories: %w", err)
 			}
 

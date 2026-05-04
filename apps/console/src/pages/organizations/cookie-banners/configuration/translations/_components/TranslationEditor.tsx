@@ -99,7 +99,6 @@ export function TranslationEditor({
 
     const catDefaults: CategoryTranslations = {};
     for (const cat of categories) {
-      if (cat.kind === "UNCATEGORISED") continue;
       const existing = existingCategoryTranslations?.[cat.id];
       catDefaults[cat.id] = {
         name: existing?.name ?? "",

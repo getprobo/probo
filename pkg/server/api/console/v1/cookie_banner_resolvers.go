@@ -43,8 +43,8 @@ func (r *cookieBannerResolver) Organization(ctx context.Context, obj *types.Cook
 	return types.NewOrganization(organization), nil
 }
 
-// Categories is the resolver for the categories field.
-func (r *cookieBannerResolver) Categories(ctx context.Context, obj *types.CookieBanner, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.CookieCategoryOrderBy) (*types.CookieCategoryConnection, error) {
+// ConsentCategories is the resolver for the consentCategories field.
+func (r *cookieBannerResolver) ConsentCategories(ctx context.Context, obj *types.CookieBanner, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.CookieCategoryOrderBy) (*types.CookieCategoryConnection, error) {
 	if err := r.authorize(ctx, obj.ID, probo.ActionCookieCategoryList); err != nil {
 		return nil, err
 	}

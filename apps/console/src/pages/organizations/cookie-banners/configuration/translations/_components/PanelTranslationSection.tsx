@@ -42,8 +42,6 @@ export function PanelTranslationSection({
   const buttonSave = useWatch({ control, name: "button_save" });
   const categoryTranslations = useWatch({ control, name: "categories" });
 
-  const visibleCategories = categories.filter(c => c.kind !== "UNCATEGORISED");
-
   const translatedNecessaryName = (() => {
     const necessaryCat = categories.find(c => c.kind === "NECESSARY");
     if (!necessaryCat) return necessaryCategoryName;
@@ -157,13 +155,13 @@ export function PanelTranslationSection({
         </div>
       </div>
 
-      {visibleCategories.length > 0 && (
+      {categories.length > 0 && (
         <div className="space-y-4">
           <h4 className="text-sm font-medium text-txt-secondary">
             {__("Category names")}
           </h4>
           <div className="grid grid-cols-2 gap-4">
-            {visibleCategories.map(cat => (
+            {categories.map(cat => (
               <Card key={cat.id} className="border p-4 space-y-3">
                 <div className="text-sm text-txt-secondary">
                   {cat.name}

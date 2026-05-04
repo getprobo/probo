@@ -25,8 +25,8 @@ import type { CategoryListReorderMutation } from "#/__generated__/core/CategoryL
 const categoryListFragment = graphql`
   fragment CategoryList_cookieBanner on CookieBanner {
     id
-    categories(first: 50, orderBy: { field: RANK, direction: ASC })
-      @connection(key: "CategoryList_categories")
+    consentCategories(first: 50, orderBy: { field: RANK, direction: ASC })
+      @connection(key: "CategoryList_consentCategories")
       @required(action: THROW) {
       __id
       edges {
@@ -87,8 +87,8 @@ export function CategoryList({ cookieBannerKey }: CategoryListProps) {
   const confirm = useConfirm();
 
   const banner = useFragment(categoryListFragment, cookieBannerKey);
-  const connectionId = banner.categories.__id;
-  const categories = banner.categories.edges.map(e => e.node);
+  const connectionId = banner.consentCategories.__id;
+  const categories = banner.consentCategories.edges.map(e => e.node);
 
   const [deleteCategory] = useMutation<CategoryListDeleteMutation>(deleteCategoryMutation);
   const [reorderCategory] = useMutation<CategoryListReorderMutation>(reorderCategoryMutation);
