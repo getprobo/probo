@@ -493,7 +493,7 @@ WHERE
     a.%s
     AND a.statement_of_applicability_id = @statement_of_applicability_id
 ORDER BY
-    section_title ASC;
+    section_title_sort_key(f.name || ' - ' || c.section_title) ASC;
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
