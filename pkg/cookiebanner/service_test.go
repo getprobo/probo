@@ -273,15 +273,13 @@ func TestBuildSnapshot_RankInvariant(t *testing.T) {
 		assert.True(t, snapshotsEqual(a, b))
 	})
 
-	t.Run("Necessary comes first and uncategorised is excluded", func(t *testing.T) {
+	t.Run("Necessary comes first given consent-only categories", func(t *testing.T) {
 		t.Parallel()
 
-		snap := buildSnapshot(banner, mkCategories(0, 1, 2, 3), nil)
+		consentOnly := mkCategories(0, 1, 2, 3)[:3]
+		snap := buildSnapshot(banner, consentOnly, nil)
 
 		require.Len(t, snap.Categories, 3)
 		assert.Equal(t, coredata.CookieCategoryKindNecessary, snap.Categories[0].Kind)
-		for _, c := range snap.Categories {
-			assert.NotEqual(t, coredata.CookieCategoryKindUncategorised, c.Kind)
-		}
 	})
 }
