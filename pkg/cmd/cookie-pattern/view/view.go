@@ -37,6 +37,7 @@ query($id: ID!) {
       description
       source
       excluded
+      lastMatchedAt
       createdAt
       updatedAt
     }
@@ -55,6 +56,7 @@ type viewResponse struct {
 		Description   *string `json:"description"`
 		Source        string  `json:"source"`
 		Excluded      bool    `json:"excluded"`
+		LastMatchedAt *string `json:"lastMatchedAt"`
 		CreatedAt     string  `json:"createdAt"`
 		UpdatedAt     string  `json:"updatedAt"`
 	} `json:"node"`
@@ -125,6 +127,9 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 			}
 			if v.Description != nil && *v.Description != "" {
 				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Description:"), *v.Description)
+			}
+			if v.LastMatchedAt != nil {
+				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Last Matched:"), cmdutil.FormatTime(*v.LastMatchedAt))
 			}
 			_, _ = fmt.Fprintln(out)
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Created:"), cmdutil.FormatTime(v.CreatedAt))

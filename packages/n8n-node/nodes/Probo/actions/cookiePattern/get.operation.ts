@@ -50,6 +50,7 @@ export async function execute(
 					description
 					source
 					excluded
+					lastMatchedAt
 					createdAt
 					updatedAt
 				}

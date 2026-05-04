@@ -76,6 +76,7 @@ func NewCookiePattern(cp *coredata.CookiePattern) *CookiePattern {
 		Description:   cp.Description,
 		Source:        cp.Source,
 		Excluded:      cp.Excluded,
+		LastMatchedAt: cp.LastMatchedAt,
 		CreatedAt:     cp.CreatedAt,
 		UpdatedAt:     cp.UpdatedAt,
 	}

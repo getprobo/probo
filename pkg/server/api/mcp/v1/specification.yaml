@@ -9185,6 +9185,12 @@ components:
         excluded:
           type: boolean
           description: Whether this pattern is excluded from the consent banner
+        last_matched_at:
+          type:
+            - string
+            - "null"
+          format: date-time
+          description: Timestamp when a cookie last matched this pattern
         created_at:
           type: string
           format: date-time

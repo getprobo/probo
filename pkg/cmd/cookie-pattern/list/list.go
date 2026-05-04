@@ -38,6 +38,7 @@ query($id: ID!, $first: Int, $after: CursorKey) {
             displayName
             source
             excluded
+            lastMatchedAt
           }
         }
         pageInfo {
@@ -51,12 +52,13 @@ query($id: ID!, $first: Int, $after: CursorKey) {
 `
 
 type cookiePattern struct {
-	ID          string `json:"id"`
-	Pattern     string `json:"pattern"`
-	MatchType   string `json:"matchType"`
-	DisplayName string `json:"displayName"`
-	Source      string `json:"source"`
-	Excluded    bool   `json:"excluded"`
+	ID            string  `json:"id"`
+	Pattern       string  `json:"pattern"`
+	MatchType     string  `json:"matchType"`
+	DisplayName   string  `json:"displayName"`
+	Source        string  `json:"source"`
+	Excluded      bool    `json:"excluded"`
+	LastMatchedAt *string `json:"lastMatchedAt"`
 }
 
 func NewCmdList(f *cmdutil.Factory) *cobra.Command {
@@ -139,10 +141,14 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				if p.Excluded {
 					excluded = "yes"
 				}
-				rows = append(rows, []string{p.ID, p.Pattern, p.MatchType, p.DisplayName, p.Source, excluded})
+				lastMatched := ""
+				if p.LastMatchedAt != nil {
+					lastMatched = cmdutil.FormatTime(*p.LastMatchedAt)
+				}
+				rows = append(rows, []string{p.ID, p.Pattern, p.MatchType, p.DisplayName, p.Source, excluded, lastMatched})
 			}
 
-			t := cmdutil.NewTable("ID", "PATTERN", "MATCH TYPE", "DISPLAY NAME", "SOURCE", "EXCLUDED").Rows(rows...)
+			t := cmdutil.NewTable("ID", "PATTERN", "MATCH TYPE", "DISPLAY NAME", "SOURCE", "EXCLUDED", "LAST MATCHED").Rows(rows...)
 			_, _ = fmt.Fprintln(f.IOStreams.Out, t)
 
 			if totalCount > len(patterns) {
