@@ -33,7 +33,7 @@ jobs:
         run: |
           npm --workspace @probo/trust run check
           NODE_ENV=production npm --workspace @probo/trust run build
-      - uses: "actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f" # v7
+      - uses: "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a" # v7
         with:
           name: "frontend-apps"
           path: |
@@ -136,12 +136,12 @@ jobs:
           else
             tar -czf "archives/${PRB_DIR}.tar.gz" -C staging "${PRB_DIR}"
           fi
-      - uses: "actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f" # v7
+      - uses: "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a" # v7
         with:
           name: "binary-${{ matrix.goos }}-${{ matrix.goarch }}"
           path: "dist/"
           retention-days: 1
-      - uses: "actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f" # v7
+      - uses: "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a" # v7
         with:
           name: "archive-${{ matrix.goos }}-${{ matrix.goarch }}"
           path: "archives/"
@@ -169,11 +169,11 @@ jobs:
       - uses: "actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd" # v6
       - uses: "runs-on/action@742bf56072eb4845a0f94b3394673e4903c90ff0" # v2
       - uses: "docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd" # v4.0.0
-      - uses: "docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2" # v4.0.0
+      - uses: "docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121" # v4.1.0
         with:
           username: "gearnode"
           password: ${{ secrets.DOCKER_HUB_TOKEN }}
-      - uses: "docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2" # v4.0.0
+      - uses: "docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121" # v4.1.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -212,12 +212,12 @@ jobs:
     steps:
       - uses: "runs-on/action@742bf56072eb4845a0f94b3394673e4903c90ff0" # v2
       - uses: "docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd" # v4.0.0
-      - uses: "docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2" # v4.0.0
+      - uses: "docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121" # v4.1.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - uses: "sigstore/cosign-installer@faadad0cce49287aee09b3a48701e75088a2c6ad" # v4.0.0
+      - uses: "sigstore/cosign-installer@cad07c2e89fa2edd6e2d7bab4c1aa38e53f76003" # v4.1.1
       - name: "Create and push manifest"
         run: |
           docker buildx imagetools create \
@@ -246,7 +246,7 @@ jobs:
         with:
           fetch-depth: 0
       - uses: "runs-on/action@742bf56072eb4845a0f94b3394673e4903c90ff0" # v2
-      - uses: "sigstore/cosign-installer@faadad0cce49287aee09b3a48701e75088a2c6ad" # v4.0.0
+      - uses: "sigstore/cosign-installer@cad07c2e89fa2edd6e2d7bab4c1aa38e53f76003" # v4.1.1
       - uses: "actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c" # v8
         with:
           pattern: "archive-*"
@@ -304,7 +304,7 @@ jobs:
         with:
           submodules: recursive
       - uses: "runs-on/action@742bf56072eb4845a0f94b3394673e4903c90ff0" # v2
-      - uses: "docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2" # v4.0.0
+      - uses: "docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121" # v4.1.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -360,7 +360,7 @@ jobs:
           subject-name: "ghcr.io/getprobo/probo"
           subject-digest: ${{ needs.docker-manifest.outputs.digest }}
           sbom-path: "sbom.json"
-      - uses: "actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f" # v7
+      - uses: "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a" # v7
         with:
           name: "sbom"
           path: "sbom.json"
@@ -477,7 +477,7 @@ jobs:
         with:
           fetch-depth: 0
           submodules: recursive
-      - uses: "actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f" # v6
+      - uses: "actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e" # v6
         with:
           node-version-file: ".nvmrc"
           cache: "npm"
@@ -517,7 +517,7 @@ jobs:
       - uses: "actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32" # v4
         with:
           subject-path: "packages/n8n-node/dist/**"
-      - uses: "actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f" # v7
+      - uses: "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a" # v7
         with:
           name: "npm-sbom"
           path: |
@@ -539,7 +539,7 @@ jobs:
         with:
           fetch-depth: 0
           submodules: recursive
-      - uses: "actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f" # v6
+      - uses: "actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e" # v6
         with:
           node-version-file: ".nvmrc"
           cache: "npm"
@@ -592,7 +592,7 @@ jobs:
         if: steps.check.outputs.skip != 'true'
         with:
           subject-path: "packages/cookie-banner/dist/**"
-      - uses: "actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f" # v7
+      - uses: "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a" # v7
         if: steps.check.outputs.skip != 'true'
         with:
           name: "cookie-banner-sbom"
