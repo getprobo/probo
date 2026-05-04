@@ -20,33 +20,21 @@ import (
 )
 
 func NewSCIMConfiguration(c *coredata.SCIMConfiguration) *SCIMConfiguration {
-	var bridgeID *string
-	if c.BridgeID != nil {
-		s := c.BridgeID.String()
-		bridgeID = &s
-	}
-
 	return &SCIMConfiguration{
 		ID:             c.ID,
 		OrganizationID: c.OrganizationID,
-		BridgeID:       bridgeID,
+		BridgeID:       c.BridgeID,
 		CreatedAt:      c.CreatedAt,
 		UpdatedAt:      c.UpdatedAt,
 	}
 }
 
 func NewSCIMBridge(b *coredata.SCIMBridge) *SCIMBridge {
-	var connectorID *string
-	if b.ConnectorID != nil {
-		s := b.ConnectorID.String()
-		connectorID = &s
-	}
-
 	return &SCIMBridge{
 		ID:                  b.ID,
 		OrganizationID:      b.OrganizationID,
 		ScimConfigurationID: b.ScimConfigurationID,
-		ConnectorID:         connectorID,
+		ConnectorID:         b.ConnectorID,
 		Type:                b.Type,
 		State:               b.State,
 		ExcludedUserNames:   b.ExcludedUserNames,

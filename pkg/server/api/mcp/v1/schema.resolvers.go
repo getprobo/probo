@@ -5115,7 +5115,7 @@ func (r *Resolver) GetSCIMConfigurationTool(ctx context.Context, req *mcp.CallTo
 	if err != nil {
 		var errNotFound *iam.ErrNoSCIMConfigurationFound
 		if errors.As(err, &errNotFound) {
-			return nil, types.GetSCIMConfigurationOutput{}, fmt.Errorf("SCIM configuration not found for organization %s", input.OrganizationID)
+			return nil, types.GetSCIMConfigurationOutput{}, fmt.Errorf("SCIM configuration not found")
 		}
 		panic(fmt.Errorf("cannot get SCIM configuration: %w", err))
 	}

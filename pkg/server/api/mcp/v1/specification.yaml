@@ -9929,9 +9929,9 @@ components:
           $ref: "#/components/schemas/GID"
           description: Organization ID
         bridge_id:
-          type:
-            - string
-            - "null"
+          anyOf:
+            - $ref: "#/components/schemas/GID"
+            - type: "null"
           description: Associated SCIM bridge ID, if any
         created_at:
           type: string
@@ -9964,9 +9964,9 @@ components:
           $ref: "#/components/schemas/GID"
           description: SCIM configuration ID
         connector_id:
-          type:
-            - string
-            - "null"
+          anyOf:
+            - $ref: "#/components/schemas/GID"
+            - type: "null"
           description: Connector ID, if any
         type:
           $ref: "#/components/schemas/SCIMBridgeType"
