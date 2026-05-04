@@ -69,6 +69,11 @@ export const cookieBannerRoutes = [
         Fallback: LinkCardSkeleton,
         Component: lazy(() => import("#/pages/organizations/cookie-banners/configuration/consent-records/CookieBannerConsentRecordsPageLoader")),
       },
+      {
+        path: "detection",
+        Fallback: LinkCardSkeleton,
+        Component: lazy(() => import("#/pages/organizations/cookie-banners/configuration/detection/CookieBannerDetectionPageLoader")),
+      },
     ],
   },
   {
