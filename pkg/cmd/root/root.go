@@ -44,6 +44,7 @@ import (
 	processingactivity "go.probo.inc/probo/pkg/cmd/processing-activity"
 	rightsrequest "go.probo.inc/probo/pkg/cmd/rights-request"
 	"go.probo.inc/probo/pkg/cmd/risk"
+	"go.probo.inc/probo/pkg/cmd/scim"
 	"go.probo.inc/probo/pkg/cmd/soa"
 	"go.probo.inc/probo/pkg/cmd/task"
 	"go.probo.inc/probo/pkg/cmd/tia"
@@ -111,6 +112,7 @@ func NewCmdRoot(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(processingactivity.NewCmdProcessingActivity(f))
 	cmd.AddCommand(rightsrequest.NewCmdRightsRequest(f))
 	cmd.AddCommand(risk.NewCmdRisk(f))
+	cmd.AddCommand(scim.NewCmdScim(f))
 	cmd.AddCommand(soa.NewCmdSoa(f))
 	cmd.AddCommand(task.NewCmdTask(f))
 	cmd.AddCommand(tia.NewCmdTIA(f))
