@@ -19,20 +19,36 @@ import "fmt"
 type CookiePatternOrderField string
 
 const (
-	CookiePatternOrderFieldCreatedAt CookiePatternOrderField = "CREATED_AT"
+	CookiePatternOrderFieldCreatedAt     CookiePatternOrderField = "CREATED_AT"
+	CookiePatternOrderFieldName          CookiePatternOrderField = "NAME"
+	CookiePatternOrderFieldLastMatchedAt CookiePatternOrderField = "LAST_MATCHED_AT"
+	CookiePatternOrderFieldUpdatedAt     CookiePatternOrderField = "UPDATED_AT"
+	CookiePatternOrderFieldSource        CookiePatternOrderField = "SOURCE"
 )
 
 func (p CookiePatternOrderField) Column() string {
 	switch p {
 	case CookiePatternOrderFieldCreatedAt:
 		return "created_at"
+	case CookiePatternOrderFieldName:
+		return "display_name"
+	case CookiePatternOrderFieldLastMatchedAt:
+		return "COALESCE(last_matched_at, '0001-01-01T00:00:00Z'::timestamptz)"
+	case CookiePatternOrderFieldUpdatedAt:
+		return "updated_at"
+	case CookiePatternOrderFieldSource:
+		return "source"
 	}
 	panic(fmt.Sprintf("unsupported order by: %s", p))
 }
 
 func (p CookiePatternOrderField) IsValid() bool {
 	switch p {
-	case CookiePatternOrderFieldCreatedAt:
+	case CookiePatternOrderFieldCreatedAt,
+		CookiePatternOrderFieldName,
+		CookiePatternOrderFieldLastMatchedAt,
+		CookiePatternOrderFieldUpdatedAt,
+		CookiePatternOrderFieldSource:
 		return true
 	}
 	return false

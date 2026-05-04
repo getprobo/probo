@@ -177,6 +177,42 @@ func (r *cookieBannerResolver) ConsentRecords(ctx context.Context, obj *types.Co
 	return types.NewCookieConsentRecordConnection(p, r, obj.ID, coredataFilter), nil
 }
 
+// UncategorisedPatterns is the resolver for the uncategorisedPatterns field.
+func (r *cookieBannerResolver) UncategorisedPatterns(ctx context.Context, obj *types.CookieBanner, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.CookiePatternOrderBy, filter *types.CookiePatternFilter) (*types.CookiePatternConnection, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionCookiePatternList); err != nil {
+		return nil, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.CookiePatternOrderField]{
+		Field:     coredata.CookiePatternOrderFieldName,
+		Direction: page.OrderDirectionAsc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.CookiePatternOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+	scope := coredata.NewScopeFromObjectID(obj.ID)
+
+	coredataFilter := coredata.NewCookiePatternFilter(nil, nil, nil)
+	if filter != nil {
+		coredataFilter = coredataFilter.WithQuery(filter.Query).WithSource(filter.Source)
+	}
+
+	patterns, err := r.cookieBanner.ListUncategorisedCookiePatterns(ctx, scope, obj.ID, cursor, coredataFilter)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list uncategorised cookie patterns", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	p := page.NewPage(patterns, cursor)
+
+	return types.NewCookiePatternConnectionWithFilter(p, r, obj.ID, coredataFilter), nil
+}
+
 // Permission is the resolver for the permission field.
 func (r *cookieBannerResolver) Permission(ctx context.Context, obj *types.CookieBanner, action string) (bool, error) {
 	return r.Resolver.Permission(ctx, obj, action)
@@ -369,13 +405,22 @@ func (r *cookiePatternConnectionResolver) TotalCount(ctx context.Context, obj *t
 
 	scope := coredata.NewScopeFromObjectID(obj.ParentID)
 
-	count, err := r.cookieBanner.CountCookiePatternsForCategory(ctx, scope, obj.ParentID)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot count cookie patterns", log.Error(err))
-		return 0, gqlutils.Internal(ctx)
+	switch obj.Resolver.(type) {
+	case *cookieBannerResolver:
+		count, err := r.cookieBanner.CountUncategorisedCookiePatterns(ctx, scope, obj.ParentID, obj.Filter)
+		if err != nil {
+			r.logger.ErrorCtx(ctx, "cannot count uncategorised cookie patterns", log.Error(err))
+			return 0, gqlutils.Internal(ctx)
+		}
+		return count, nil
+	default:
+		count, err := r.cookieBanner.CountCookiePatternsForCategory(ctx, scope, obj.ParentID)
+		if err != nil {
+			r.logger.ErrorCtx(ctx, "cannot count cookie patterns", log.Error(err))
+			return 0, gqlutils.Internal(ctx)
+		}
+		return count, nil
 	}
-
-	return count, nil
 }
 
 // CreateCookieBanner is the resolver for the createCookieBanner field.

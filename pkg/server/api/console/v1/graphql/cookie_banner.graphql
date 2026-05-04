@@ -123,6 +123,15 @@ type CookieBanner implements Node {
         filter: CookieConsentRecordFilter
     ): CookieConsentRecordConnection @goField(forceResolver: true)
 
+    uncategorisedPatterns(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: CookiePatternOrder
+        filter: CookiePatternFilter
+    ): CookiePatternConnection @goField(forceResolver: true)
+
     createdAt: Datetime!
     updatedAt: Datetime!
 
@@ -184,6 +193,22 @@ enum CookiePatternOrderField
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.CookiePatternOrderFieldCreatedAt"
         )
+    NAME
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CookiePatternOrderFieldName"
+        )
+    LAST_MATCHED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CookiePatternOrderFieldLastMatchedAt"
+        )
+    UPDATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CookiePatternOrderFieldUpdatedAt"
+        )
+    SOURCE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CookiePatternOrderFieldSource"
+        )
 }
 
 input CookiePatternOrder
@@ -192,6 +217,11 @@ input CookiePatternOrder
     ) {
     direction: OrderDirection!
     field: CookiePatternOrderField!
+}
+
+input CookiePatternFilter {
+    query: String
+    source: CookieSource
 }
 
 type CookiePattern implements Node {

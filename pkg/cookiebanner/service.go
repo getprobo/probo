@@ -1434,6 +1434,61 @@ func (s *Service) CountCookiePatternsForCategory(
 	return count, nil
 }
 
+func (s *Service) ListUncategorisedCookiePatterns(
+	ctx context.Context,
+	scope coredata.Scoper,
+	bannerID gid.GID,
+	cursor *page.Cursor[coredata.CookiePatternOrderField],
+	filter *coredata.CookiePatternFilter,
+) (coredata.CookiePatterns, error) {
+	var patterns coredata.CookiePatterns
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := patterns.LoadUncategorisedByCookieBannerID(ctx, conn, scope, bannerID, cursor, filter); err != nil {
+				return fmt.Errorf("cannot list uncategorised cookie patterns: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return patterns, nil
+}
+
+func (s *Service) CountUncategorisedCookiePatterns(
+	ctx context.Context,
+	scope coredata.Scoper,
+	bannerID gid.GID,
+	filter *coredata.CookiePatternFilter,
+) (int, error) {
+	var count int
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			var patterns coredata.CookiePatterns
+			var err error
+
+			count, err = patterns.CountUncategorisedByCookieBannerID(ctx, conn, scope, bannerID, filter)
+			if err != nil {
+				return fmt.Errorf("cannot count uncategorised cookie patterns: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
 func (s *Service) CountCookiesForPattern(
 	ctx context.Context,
 	scope coredata.Scoper,

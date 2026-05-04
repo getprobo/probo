@@ -30,6 +30,7 @@ type (
 
 		Resolver any
 		ParentID gid.GID
+		Filter   *coredata.CookiePatternFilter
 	}
 )
 
@@ -51,6 +52,17 @@ func NewCookiePatternConnection(
 		Resolver: parentType,
 		ParentID: parentID,
 	}
+}
+
+func NewCookiePatternConnectionWithFilter(
+	p *page.Page[*coredata.CookiePattern, coredata.CookiePatternOrderField],
+	parentType any,
+	parentID gid.GID,
+	filter *coredata.CookiePatternFilter,
+) *CookiePatternConnection {
+	conn := NewCookiePatternConnection(p, parentType, parentID)
+	conn.Filter = filter
+	return conn
 }
 
 func NewCookiePatternEdge(cp *coredata.CookiePattern, orderBy coredata.CookiePatternOrderField) *CookiePatternEdge {
