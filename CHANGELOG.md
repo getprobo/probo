@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.180.0] - 2026-05-04
+
+### Fixed
+
+- Use natural sort for SOA document export rows
+
+### Added
+
+- Add risk publish to document system
+
 ## [0.179.1] - 2026-05-02
 
 ### Fixed
