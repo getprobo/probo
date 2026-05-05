@@ -142,6 +142,23 @@ type (
 		Cookies []DetectedCookie
 	}
 
+	DetectedStorageItem struct {
+		Key         string
+		StorageType coredata.TrackerType
+		ValueSize   *int
+	}
+
+	DetectedResourceItem struct {
+		Origin       string
+		ResourceType coredata.TrackerType
+	}
+
+	ReportDetectedTrackersRequest struct {
+		Cookies   []DetectedCookie
+		Storage   []DetectedStorageItem
+		Resources []DetectedResourceItem
+	}
+
 	BannerConfig struct {
 		BannerID          gid.GID                                        `json:"banner_id"`
 		Version           int                                            `json:"version"`
@@ -361,7 +378,7 @@ func (s *Service) ensureDraftVersion(
 	scope coredata.Scoper,
 	banner *coredata.CookieBanner,
 	categories coredata.CookieCategories,
-	allPatterns coredata.CookiePatterns,
+	allPatterns coredata.TrackerPatterns,
 ) (*coredata.CookieBannerVersion, error) {
 	snapshot := buildSnapshot(banner, categories, allPatterns)
 
@@ -432,15 +449,16 @@ func (s *Service) ensureDraftVersionForBanner(
 		return nil, fmt.Errorf("cannot load cookie categories: %w", err)
 	}
 
-	var allPatterns coredata.CookiePatterns
+	var allPatterns coredata.TrackerPatterns
 	if err := allPatterns.LoadAllByCookieBannerID(
 		ctx,
 		tx,
 		scope,
 		bannerID,
 		coredata.NewCookiePatternFilter(nil, nil, new(false)),
+		nil,
 	); err != nil {
-		return nil, fmt.Errorf("cannot load cookie patterns: %w", err)
+		return nil, fmt.Errorf("cannot load tracker patterns: %w", err)
 	}
 
 	return s.ensureDraftVersion(ctx, tx, scope, &banner, categories, allPatterns)
@@ -2355,4 +2373,156 @@ func (s *Service) ReportDetectedCookies(
 			return nil
 		},
 	)
+}
+
+func (s *Service) ReportDetectedTrackers(
+	ctx context.Context,
+	bannerID gid.GID,
+	req ReportDetectedTrackersRequest,
+) error {
+	return s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			scope := coredata.NewScopeFromObjectID(bannerID)
+
+			var banner coredata.CookieBanner
+			if err := banner.LoadByID(ctx, tx, scope, bannerID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return ErrBannerNotFound
+				}
+				return fmt.Errorf("cannot load cookie banner: %w", err)
+			}
+
+			var uncategorised coredata.CookieCategory
+			if err := uncategorised.LoadUncategorisedByCookieBannerID(ctx, tx, scope, banner.ID); err != nil {
+				return fmt.Errorf("cannot load uncategorised category: %w", err)
+			}
+
+			inserted := 0
+			now := time.Now()
+
+			for _, dc := range req.Cookies {
+				if err := s.reportDetectedTracker(
+					ctx, tx, scope, &banner, uncategorised.ID, now,
+					coredata.TrackerTypeCookie, dc.Name, dc.MaxAgeSeconds, &dc.Source, nil,
+					&inserted,
+				); err != nil {
+					return err
+				}
+			}
+
+			for _, ds := range req.Storage {
+				if err := s.reportDetectedTracker(
+					ctx, tx, scope, &banner, uncategorised.ID, now,
+					ds.StorageType, ds.Key, nil, nil, ds.ValueSize,
+					&inserted,
+				); err != nil {
+					return err
+				}
+			}
+
+			for _, dr := range req.Resources {
+				if err := s.reportDetectedTracker(
+					ctx, tx, scope, &banner, uncategorised.ID, now,
+					dr.ResourceType, dr.Origin, nil, nil, nil,
+					&inserted,
+				); err != nil {
+					return err
+				}
+			}
+
+			if inserted > 0 {
+				if err := banner.SetPatternAnalysisRequested(ctx, tx); err != nil {
+					return fmt.Errorf("cannot request pattern analysis: %w", err)
+				}
+			}
+
+			return nil
+		},
+	)
+}
+
+func (s *Service) reportDetectedTracker(
+	ctx context.Context,
+	tx pg.Tx,
+	scope coredata.Scoper,
+	banner *coredata.CookieBanner,
+	uncategorisedID gid.GID,
+	now time.Time,
+	trackerType coredata.TrackerType,
+	identifier string,
+	maxAgeSeconds *int,
+	source *coredata.CookieSource,
+	valueSize *int,
+	inserted *int,
+) error {
+	var matchedPattern coredata.TrackerPattern
+	err := matchedPattern.FindMatchingPattern(ctx, tx, scope, banner.ID, trackerType, identifier)
+	if err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
+		return fmt.Errorf("cannot find matching tracker pattern: %w", err)
+	}
+
+	if err == nil && matchedPattern.Excluded {
+		return nil
+	}
+
+	var patternID *gid.GID
+	if err == nil {
+		patternID = &matchedPattern.ID
+		matchedPattern.LastMatchedAt = &now
+		matchedPattern.UpdatedAt = now
+		if updateErr := matchedPattern.Update(ctx, tx, scope); updateErr != nil {
+			return fmt.Errorf("cannot update tracker pattern last_matched_at: %w", updateErr)
+		}
+	} else {
+		newPattern := &coredata.TrackerPattern{
+			ID:               gid.New(scope.GetTenantID(), coredata.TrackerPatternEntityType),
+			OrganizationID:   banner.OrganizationID,
+			CookieBannerID:   banner.ID,
+			CookieCategoryID: uncategorisedID,
+			TrackerType:      trackerType,
+			Pattern:          identifier,
+			MatchType:        coredata.CookiePatternMatchTypeExact,
+			DisplayName:      identifier,
+			Description:      "",
+			MaxAgeSeconds:    maxAgeSeconds,
+			Source:           source,
+			CreatedAt:        now,
+			UpdatedAt:        now,
+		}
+		wasInserted, err := newPattern.InsertIfNotExists(ctx, tx, scope)
+		if err != nil {
+			return fmt.Errorf("cannot insert tracker pattern: %w", err)
+		}
+		if wasInserted {
+			patternID = &newPattern.ID
+			*inserted++
+		} else {
+			var existingPattern coredata.TrackerPattern
+			if err := existingPattern.FindMatchingPattern(ctx, tx, scope, banner.ID, trackerType, identifier); err != nil {
+				return fmt.Errorf("cannot load existing tracker pattern: %w", err)
+			}
+			patternID = &existingPattern.ID
+		}
+	}
+
+	tracker := &coredata.DetectedTracker{
+		ID:               gid.New(scope.GetTenantID(), coredata.DetectedTrackerEntityType),
+		CookieBannerID:   banner.ID,
+		TrackerPatternID: patternID,
+		TrackerType:      trackerType,
+		Identifier:       identifier,
+		MaxAgeSeconds:    maxAgeSeconds,
+		Source:           source,
+		ValueSize:        valueSize,
+		LastDetectedAt:   now,
+		CreatedAt:        now,
+		UpdatedAt:        now,
+	}
+
+	if _, err := tracker.InsertIfNotExists(ctx, tx, scope); err != nil {
+		return fmt.Errorf("cannot insert detected tracker: %w", err)
+	}
+
+	return nil
 }

@@ -53,6 +53,7 @@ func NewMux(
 		r.Get("/consents/{visitorID}", h.handleGetConsent)
 		r.Post("/consents", h.handlePostConsent)
 		r.Post("/detected-cookies", h.handleReportDetectedCookies)
+		r.Post("/detected-trackers", h.handleReportDetectedTrackers)
 	})
 
 	return r
@@ -262,6 +263,138 @@ func (h *Handler) handleReportDetectedCookies(w http.ResponseWriter, r *http.Req
 		}
 
 		h.logger.ErrorCtx(r.Context(), "cannot report detected cookies", log.Error(err))
+		jsonutil.RenderInternalServerError(w)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+type detectedStorageEntry struct {
+	Key         string `json:"key"`
+	StorageType string `json:"storage_type"`
+	ValueSize   *int   `json:"value_size"`
+}
+
+type detectedResourceEntry struct {
+	Origin       string `json:"origin"`
+	ResourceType string `json:"resource_type"`
+}
+
+type reportDetectedTrackersBody struct {
+	Cookies   []detectedCookieEntry   `json:"cookies"`
+	Storage   []detectedStorageEntry  `json:"storage"`
+	Resources []detectedResourceEntry `json:"resources"`
+}
+
+const maxDetectedTrackersPerRequest = 100
+
+func (h *Handler) handleReportDetectedTrackers(w http.ResponseWriter, r *http.Request) {
+	bannerID, err := gid.ParseGID(chi.URLParam(r, "bannerID"))
+	if err != nil {
+		jsonutil.RenderBadRequest(w, fmt.Errorf("invalid banner id"))
+		return
+	}
+
+	var body reportDetectedTrackersBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		jsonutil.RenderBadRequest(w, fmt.Errorf("invalid request body"))
+		return
+	}
+
+	total := len(body.Cookies) + len(body.Storage) + len(body.Resources)
+	if total == 0 {
+		jsonutil.RenderBadRequest(w, fmt.Errorf("no items provided"))
+		return
+	}
+
+	if total > maxDetectedTrackersPerRequest {
+		jsonutil.RenderBadRequest(w, fmt.Errorf("too many items, maximum is %d", maxDetectedTrackersPerRequest))
+		return
+	}
+
+	var req cookiebanner.ReportDetectedTrackersRequest
+
+	for _, c := range body.Cookies {
+		name := strings.TrimSpace(c.Name)
+		if name == "" {
+			continue
+		}
+
+		var source coredata.CookieSource
+		switch strings.TrimSpace(c.Source) {
+		case "pre-existing":
+			source = coredata.CookieSourcePreExisting
+		default:
+			source = coredata.CookieSourceScript
+		}
+
+		req.Cookies = append(req.Cookies, cookiebanner.DetectedCookie{
+			Name:          name,
+			MaxAgeSeconds: c.MaxAgeSeconds,
+			Source:        source,
+		})
+	}
+
+	for _, s := range body.Storage {
+		key := strings.TrimSpace(s.Key)
+		if key == "" {
+			continue
+		}
+
+		var storageType coredata.TrackerType
+		switch strings.TrimSpace(s.StorageType) {
+		case "local_storage":
+			storageType = coredata.TrackerTypeLocalStorage
+		case "session_storage":
+			storageType = coredata.TrackerTypeSessionStorage
+		case "indexed_db":
+			storageType = coredata.TrackerTypeIndexedDB
+		default:
+			continue
+		}
+
+		req.Storage = append(req.Storage, cookiebanner.DetectedStorageItem{
+			Key:         key,
+			StorageType: storageType,
+			ValueSize:   s.ValueSize,
+		})
+	}
+
+	for _, res := range body.Resources {
+		origin := strings.TrimSpace(res.Origin)
+		if origin == "" {
+			continue
+		}
+
+		var resourceType coredata.TrackerType
+		switch strings.TrimSpace(res.ResourceType) {
+		case "script":
+			resourceType = coredata.TrackerTypeScript
+		case "iframe":
+			resourceType = coredata.TrackerTypeIframe
+		default:
+			continue
+		}
+
+		req.Resources = append(req.Resources, cookiebanner.DetectedResourceItem{
+			Origin:       origin,
+			ResourceType: resourceType,
+		})
+	}
+
+	if len(req.Cookies)+len(req.Storage)+len(req.Resources) == 0 {
+		jsonutil.RenderBadRequest(w, fmt.Errorf("no valid items provided"))
+		return
+	}
+
+	if err := h.cookieBannerSvc.ReportDetectedTrackers(r.Context(), bannerID, req); err != nil {
+		if errors.Is(err, cookiebanner.ErrBannerNotFound) {
+			jsonutil.RenderNotFound(w, fmt.Errorf("banner not found"))
+			return
+		}
+
+		h.logger.ErrorCtx(r.Context(), "cannot report detected trackers", log.Error(err))
 		jsonutil.RenderInternalServerError(w)
 		return
 	}

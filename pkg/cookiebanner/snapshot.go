@@ -72,12 +72,15 @@ func sortConsentCategories(categories coredata.CookieCategories) {
 func buildSnapshot(
 	banner *coredata.CookieBanner,
 	categories coredata.CookieCategories,
-	allPatterns coredata.CookiePatterns,
+	allPatterns coredata.TrackerPatterns,
 ) coredata.CookieBannerVersionSnapshot {
 	sortConsentCategories(categories)
 
 	cookiesByCategory := make(map[gid.GID]coredata.CookieItems)
 	for _, p := range allPatterns {
+		if p.TrackerType != coredata.TrackerTypeCookie {
+			continue
+		}
 		cookiesByCategory[p.CookieCategoryID] = append(
 			cookiesByCategory[p.CookieCategoryID],
 			coredata.CookieItem{
