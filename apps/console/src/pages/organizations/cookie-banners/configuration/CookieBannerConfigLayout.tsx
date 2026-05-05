@@ -20,7 +20,6 @@ import {
   Breadcrumb,
   Button,
   IconGlobe,
-  IconListStack,
   IconPageTextLine,
   IconSettingsGear2,
   IconSquareBehindSquare2,
@@ -247,10 +246,6 @@ export default function CookieBannerConfigLayout({ queryRef }: CookieBannerConfi
         <TabLink to={`/organizations/${organizationId}/cookie-banners/${cookieBannerId}/translations`}>
           <IconGlobe size={20} />
           {__("Translations")}
-        </TabLink>
-        <TabLink to={`/organizations/${organizationId}/cookie-banners/${cookieBannerId}/cookies`}>
-          <IconListStack size={20} />
-          {__("Cookies")}
         </TabLink>
         <TabLink to={`/organizations/${organizationId}/cookie-banners/${cookieBannerId}/detection`}>
           <MagnifyingGlassIcon size={20} />

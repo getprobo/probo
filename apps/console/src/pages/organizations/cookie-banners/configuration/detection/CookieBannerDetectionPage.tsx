@@ -19,6 +19,7 @@ import {
   Option,
   Select,
   Tbody,
+  Th,
   Thead,
   Tr,
 } from "@probo/ui";
@@ -77,6 +78,7 @@ const detectionFragment = graphql`
         filters: ["filter", "orderBy"]
       )
       @required(action: THROW) {
+      __id
       edges {
         node {
           id
@@ -110,6 +112,7 @@ export default function CookieBannerDetectionPage({
     CookieBannerDetectionPageFragment$key
   >(detectionFragment, data.node);
 
+  const connectionId = fragmentData.uncategorisedPatterns.__id;
   const patterns = fragmentData.uncategorisedPatterns.edges.map(edge => edge.node) ?? [];
 
   const refetchFilters = (overrides: Record<string, unknown> = {}) => {
@@ -178,11 +181,16 @@ export default function CookieBannerDetectionPage({
                     <SortableTh field="SOURCE">{__("Source")}</SortableTh>
                     <SortableTh field="LAST_MATCHED_AT">{__("Last Matched")}</SortableTh>
                     <SortableTh field="UPDATED_AT">{__("Updated")}</SortableTh>
+                    <Th className="w-28" />
                   </Tr>
                 </Thead>
                 <Tbody>
                   {patterns.map(pattern => (
-                    <DetectionPatternRow key={pattern.id} patternKey={pattern} />
+                    <DetectionPatternRow
+                      key={pattern.id}
+                      patternKey={pattern}
+                      connectionId={connectionId}
+                    />
                   ))}
                 </Tbody>
               </SortableTable>

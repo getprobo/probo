@@ -333,4 +333,70 @@ export function PageSection({ className, title, icon, children }: PageSectionPro
 }
 ```
 
+## Interaction-triggered data
+
+Data that is only needed after a user interaction (opening a dropdown, clicking a button, hovering) must **not** be fetched at page load. Instead, the parent component owns the query lifecycle with `useQueryLoader`, triggers `loadQuery` in the interaction event handler, and passes `queryRef` to a child component that reads data with `usePreloadedQuery`.
+
+This applies to any data displayed after interaction, not at page load: dropdown menus with server-sourced options, hover cards, expandable panels, dialogs, etc.
+
+### Pattern
+
+1. The **parent** component calls `useQueryLoader` and triggers `loadQuery` on the interaction event (e.g. `onOpenChange` for a dropdown).
+2. A **child** component exports its query, receives `queryRef` as a prop, and reads data with `usePreloadedQuery`.
+3. The parent wraps the child in a `Suspense` boundary and only renders it when `queryRef` is available.
+4. IDs needed for the query come from `useParams` in the parent — they are **not** passed as data props from a grandparent.
+
+### Do / don't: dropdown with server-sourced options
+
+```tsx
+// Bad — page fetches categories at load and drills them as a data prop
+function DetectionPage() {
+  const data = usePreloadedQuery(/* query that includes consentCategories */);
+  const categories = data.consentCategories.edges.map(e => e.node);
+  return <PatternRow categories={categories} />;
+}
+```
+
+```tsx
+// Good — parent owns useQueryLoader, child reads with usePreloadedQuery
+
+// PatternRow.tsx (parent — owns query lifecycle)
+import { moveToCategoryQuery, MoveToCategoryMenu } from "./MoveToCategoryMenu";
+
+function PatternRow() {
+  const { cookieBannerId } = useParams<{ cookieBannerId: string }>();
+  const [queryRef, loadQuery] = useQueryLoader<Query>(moveToCategoryQuery);
+
+  const handleOpenChange = useCallback((open: boolean) => {
+    if (open && cookieBannerId) {
+      loadQuery({ cookieBannerId });
+    }
+  }, [loadQuery, cookieBannerId]);
+
+  return (
+    <Dropdown onOpenChange={handleOpenChange} toggle={/* … */}>
+      {queryRef && (
+        <Suspense>
+          <MoveToCategoryMenu queryRef={queryRef} onMove={handleMove} />
+        </Suspense>
+      )}
+    </Dropdown>
+  );
+}
+```
+
+```tsx
+// MoveToCategoryMenu.tsx (child — reads data)
+export const moveToCategoryQuery = graphql`
+  query MoveToCategoryMenuQuery($cookieBannerId: ID!) { /* … */ }
+`;
+
+export function MoveToCategoryMenu({ queryRef, onMove }: Props) {
+  const data = usePreloadedQuery(moveToCategoryQuery, queryRef);
+  return /* render DropdownItems */;
+}
+```
+
+See also the "Interaction-triggered queries" section in [`contrib/claude/relay.md`](relay.md).
+
 (Snippet names and GraphQL types are illustrative; align with real schema and fragment names in the app.)

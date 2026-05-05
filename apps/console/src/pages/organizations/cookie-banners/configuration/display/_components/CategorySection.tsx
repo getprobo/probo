@@ -12,6 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+import { EyeIcon, EyeSlashIcon } from "@phosphor-icons/react";
 import { formatError, type GraphQLError, humanizeSeconds } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import {
@@ -21,6 +22,8 @@ import {
   Dropdown,
   DropdownItem,
   IconArrowBoxLeft,
+  IconArrowDown,
+  IconArrowUp,
   IconPencil,
   IconPlusSmall,
   IconTrashCan,
@@ -28,8 +31,8 @@ import {
   Td,
   Th,
   Thead,
-  Toggle,
   Tr,
+  useConfirm,
   useToast,
 } from "@probo/ui";
 import { useState } from "react";
@@ -37,9 +40,11 @@ import { useFragment, useMutation } from "react-relay";
 import { ConnectionHandler, graphql } from "relay-runtime";
 
 import type { CategorySectionCreatePatternMutation } from "#/__generated__/core/CategorySectionCreatePatternMutation.graphql";
+import type { CategorySectionDeleteCategoryMutation } from "#/__generated__/core/CategorySectionDeleteCategoryMutation.graphql";
 import type { CategorySectionDeletePatternMutation } from "#/__generated__/core/CategorySectionDeletePatternMutation.graphql";
 import type { CategorySectionFragment$key } from "#/__generated__/core/CategorySectionFragment.graphql";
 import type { CategorySectionMovePatternMutation } from "#/__generated__/core/CategorySectionMovePatternMutation.graphql";
+import type { CategorySectionReorderMutation } from "#/__generated__/core/CategorySectionReorderMutation.graphql";
 import type { CategorySectionUpdateMutation } from "#/__generated__/core/CategorySectionUpdateMutation.graphql";
 import type { CategorySectionUpdatePatternMutation } from "#/__generated__/core/CategorySectionUpdatePatternMutation.graphql";
 
@@ -85,6 +90,8 @@ export const categorySectionFragment = graphql`
           node {
             id
             name
+            rank
+            kind
           }
         }
       }
@@ -219,15 +226,60 @@ const movePatternMutation = graphql`
   }
 `;
 
+const deleteCategoryMutation = graphql`
+  mutation CategorySectionDeleteCategoryMutation(
+    $input: DeleteCookieCategoryInput!
+    $connections: [ID!]!
+  ) {
+    deleteCookieCategory(input: $input) {
+      deletedCookieCategoryId @deleteEdge(connections: $connections)
+      cookieBanner {
+        id
+        latestVersion {
+          id
+          version
+          state
+        }
+      }
+    }
+  }
+`;
+
+const reorderCategoryMutation = graphql`
+  mutation CategorySectionReorderMutation(
+    $input: ReorderCookieCategoryInput!
+  ) {
+    reorderCookieCategory(input: $input) {
+      cookieBanner {
+        id
+        consentCategories(first: 50, orderBy: { field: RANK, direction: ASC }) {
+          edges {
+            node {
+              id
+              rank
+            }
+          }
+        }
+        latestVersion {
+          id
+          version
+          state
+        }
+      }
+    }
+  }
+`;
+
 interface CategorySectionProps {
   categoryKey: CategorySectionFragment$key;
-  onDelete?: () => void;
+  connectionId: string;
 }
 
-export function CategorySection({ categoryKey, onDelete }: CategorySectionProps) {
+export function CategorySection({ categoryKey, connectionId }: CategorySectionProps) {
   const category = useFragment(categorySectionFragment, categoryKey);
   const { __ } = useTranslate();
   const { toast } = useToast();
+  const confirm = useConfirm();
 
   const [updateCategory, isUpdating]
     = useMutation<CategorySectionUpdateMutation>(updateCategoryMutation);
@@ -239,6 +291,10 @@ export function CategorySection({ categoryKey, onDelete }: CategorySectionProps)
     = useMutation<CategorySectionDeletePatternMutation>(deletePatternMutation);
   const [movePattern]
     = useMutation<CategorySectionMovePatternMutation>(movePatternMutation);
+  const [deleteCategory]
+    = useMutation<CategorySectionDeleteCategoryMutation>(deleteCategoryMutation);
+  const [reorderCategory]
+    = useMutation<CategorySectionReorderMutation>(reorderCategoryMutation);
 
   const [isEditingCategory, setIsEditingCategory] = useState(false);
   const [editingCookieId, setEditingCookieId] = useState<string | null>(null);
@@ -417,42 +473,111 @@ export function CategorySection({ categoryKey, onDelete }: CategorySectionProps)
     });
   };
 
-  const handleDeleteCookie = (patternId: string) => {
-    deletePattern({
-      variables: {
-        input: { cookiePatternId: patternId },
-        connections: [patternsConnectionId],
-      },
-      onCompleted(_response, errors) {
-        if (errors?.length) {
-          toast({
-            title: __("Error"),
-            description: errors[0].message,
-            variant: "error",
+  const handleDeleteCookie = (patternId: string, patternName: string) => {
+    confirm(
+      () =>
+        new Promise<void>((resolve) => {
+          deletePattern({
+            variables: {
+              input: { cookiePatternId: patternId },
+              connections: [patternsConnectionId],
+            },
+            onCompleted(_response, errors) {
+              if (errors?.length) {
+                toast({
+                  title: __("Error"),
+                  description: errors[0].message,
+                  variant: "error",
+                });
+              } else {
+                toast({
+                  title: __("Success"),
+                  description: __("Cookie deleted"),
+                  variant: "success",
+                });
+              }
+              resolve();
+            },
+            onError(error) {
+              toast({
+                title: __("Error"),
+                description: formatError(
+                  __("Failed to delete cookie"),
+                  error as GraphQLError,
+                ),
+                variant: "error",
+              });
+              resolve();
+            },
           });
-          return;
-        }
-        toast({
-          title: __("Success"),
-          description: __("Cookie deleted"),
-          variant: "success",
-        });
+        }),
+      {
+        message: __("Are you sure you want to delete \"%s\"?").replace("%s", patternName),
+        variant: "danger",
+        label: __("Delete"),
       },
-      onError(error) {
-        toast({
-          title: __("Error"),
-          description: formatError(
-            __("Failed to delete cookie"),
-            error as GraphQLError,
-          ),
-          variant: "error",
-        });
-      },
-    });
+    );
   };
 
   const allCategories = category.cookieBanner.consentCategories.edges.map(e => e.node) ?? [];
   const siblingCategories = allCategories.filter(c => c.id !== category.id);
+  const selfIndex = allCategories.findIndex(c => c.id === category.id);
+  const isFirst = selfIndex === 0;
+  const isLast = selfIndex === allCategories.length - 1;
+  const canDelete = category.kind === "NORMAL";
+
+  const handleDeleteCategory = () => {
+    confirm(
+      () =>
+        new Promise<void>((resolve) => {
+          deleteCategory({
+            variables: {
+              input: { cookieCategoryId: category.id },
+              connections: [connectionId],
+            },
+            onCompleted(_, errors) {
+              if (errors?.length) {
+                toast({ title: __("Error"), description: errors[0].message, variant: "error" });
+              } else {
+                toast({ title: __("Success"), description: __("Category deleted"), variant: "success" });
+              }
+              resolve();
+            },
+            onError(error) {
+              toast({ title: __("Error"), description: formatError(__("Failed to delete category"), error as GraphQLError), variant: "error" });
+              resolve();
+            },
+          });
+        }),
+      {
+        message: __("Are you sure you want to delete the category \"%s\"? Any cookies in this category will be moved to Uncategorised.").replace("%s", category.name),
+        variant: "danger",
+        label: __("Delete"),
+      },
+    );
+  };
+
+  const handleMoveUp = () => {
+    if (isFirst) return;
+    const above = allCategories[selfIndex - 1];
+    reorderCategory({
+      variables: { input: { cookieCategoryId: category.id, rank: above.rank } },
+      onError(error) {
+        toast({ title: __("Error"), description: formatError(__("Failed to reorder"), error as GraphQLError), variant: "error" });
+      },
+    });
+  };
+
+  const handleMoveDown = () => {
+    if (isLast) return;
+    const below = allCategories[selfIndex + 1];
+    reorderCategory({
+      variables: { input: { cookieCategoryId: category.id, rank: below.rank } },
+      onError(error) {
+        toast({ title: __("Error"), description: formatError(__("Failed to reorder"), error as GraphQLError), variant: "error" });
+      },
+    });
+  };
 
   const handleMoveCookie = (patternId: string, targetCategoryId: string) => {
     movePattern({
@@ -548,6 +673,24 @@ export function CategorySection({ categoryKey, onDelete }: CategorySectionProps)
                   )}
                 </div>
                 <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={handleMoveUp}
+                      disabled={isFirst}
+                      className="p-0.5 rounded cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+                    >
+                      <IconArrowUp size={14} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleMoveDown}
+                      disabled={isLast}
+                      className="p-0.5 rounded cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+                    >
+                      <IconArrowDown size={14} />
+                    </button>
+                  </div>
                   <Button
                     variant="secondary"
                     onClick={() => setIsEditingCategory(true)}
@@ -555,8 +698,8 @@ export function CategorySection({ categoryKey, onDelete }: CategorySectionProps)
                     <IconPencil size={14} />
                     {__("Edit")}
                   </Button>
-                  {onDelete && (
-                    <Button variant="danger" onClick={onDelete}>
+                  {canDelete && (
+                    <Button variant="danger" onClick={handleDeleteCategory}>
                       <IconTrashCan size={14} />
                       {__("Delete")}
                     </Button>
@@ -607,7 +750,7 @@ export function CategorySection({ categoryKey, onDelete }: CategorySectionProps)
       <table className="w-full text-left">
         <Thead>
           <Tr>
-            <Th><span className="pl-10">{__("Name")}</span></Th>
+            <Th>{__("Name")}</Th>
             <Th>{__("Source")}</Th>
             <Th>{__("Duration")}</Th>
             <Th>{__("Description")}</Th>
@@ -627,18 +770,9 @@ export function CategorySection({ categoryKey, onDelete }: CategorySectionProps)
                   />
                 )
               : (
-                  <Tr key={pattern.id} className={pattern.excluded ? "opacity-50" : undefined}>
+                  <Tr key={pattern.id} className={pattern.excluded ? "opacity-80" : undefined}>
                     <Td>
-                      <div className="flex items-center gap-2">
-                        <Toggle
-                          size="sm"
-                          checked={!pattern.excluded}
-                          onChange={() => handleToggleExcluded(pattern.id, !pattern.excluded)}
-                          disabled={isUpdatingPattern}
-                          title={__("Include this cookie in the banner")}
-                        />
-                        <code className="text-sm font-mono">{pattern.displayName}</code>
-                      </div>
+                      <code className="text-sm font-mono">{pattern.displayName}</code>
                     </Td>
                     <Td>
                       <Badge
@@ -660,6 +794,14 @@ export function CategorySection({ categoryKey, onDelete }: CategorySectionProps)
                     </Td>
                     <Td>
                       <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => handleToggleExcluded(pattern.id, !pattern.excluded)}
+                          className="p-1 rounded cursor-pointer"
+                          title={pattern.excluded ? __("Include") : __("Exclude")}
+                        >
+                          {pattern.excluded ? <EyeIcon size={14} /> : <EyeSlashIcon size={14} />}
+                        </button>
                         <button
                           type="button"
                           onClick={() => {
@@ -694,7 +836,7 @@ export function CategorySection({ categoryKey, onDelete }: CategorySectionProps)
                         )}
                         <button
                           type="button"
-                          onClick={() => handleDeleteCookie(pattern.id)}
+                          onClick={() => handleDeleteCookie(pattern.id, pattern.displayName)}
                           className="p-1 rounded cursor-pointer text-danger-dark"
                         >
                           <IconTrashCan size={14} />
