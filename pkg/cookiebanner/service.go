@@ -1300,7 +1300,11 @@ func (s *Service) UpdateCookiePattern(
 			}
 
 			var tp coredata.TrackerPattern
-			if err := tp.LoadByBannerIDTypeAndPattern(ctx, tx, scope, pattern.CookieBannerID, coredata.TrackerTypeCookie, pattern.Pattern); err == nil {
+			if err := tp.LoadByBannerIDTypeAndPattern(ctx, tx, scope, pattern.CookieBannerID, coredata.TrackerTypeCookie, pattern.Pattern); err != nil {
+				if !errors.Is(err, coredata.ErrResourceNotFound) {
+					return fmt.Errorf("cannot load tracker pattern: %w", err)
+				}
+			} else {
 				if req.DisplayName != nil {
 					tp.DisplayName = *req.DisplayName
 				}
@@ -1358,7 +1362,11 @@ func (s *Service) DeleteCookiePattern(
 			}
 
 			var tp coredata.TrackerPattern
-			if err := tp.LoadByBannerIDTypeAndPattern(ctx, tx, scope, pattern.CookieBannerID, coredata.TrackerTypeCookie, pattern.Pattern); err == nil {
+			if err := tp.LoadByBannerIDTypeAndPattern(ctx, tx, scope, pattern.CookieBannerID, coredata.TrackerTypeCookie, pattern.Pattern); err != nil {
+				if !errors.Is(err, coredata.ErrResourceNotFound) {
+					return fmt.Errorf("cannot load tracker pattern: %w", err)
+				}
+			} else {
 				if err := tp.Delete(ctx, tx, scope); err != nil {
 					return fmt.Errorf("cannot delete tracker pattern: %w", err)
 				}
@@ -1423,7 +1431,11 @@ func (s *Service) MoveCookiePatternToCategory(
 			}
 
 			var tp coredata.TrackerPattern
-			if err := tp.LoadByBannerIDTypeAndPattern(ctx, tx, scope, pattern.CookieBannerID, coredata.TrackerTypeCookie, pattern.Pattern); err == nil {
+			if err := tp.LoadByBannerIDTypeAndPattern(ctx, tx, scope, pattern.CookieBannerID, coredata.TrackerTypeCookie, pattern.Pattern); err != nil {
+				if !errors.Is(err, coredata.ErrResourceNotFound) {
+					return fmt.Errorf("cannot load tracker pattern: %w", err)
+				}
+			} else {
 				tp.CookieCategoryID = target.ID
 				tp.UpdatedAt = time.Now()
 				if err := tp.Update(ctx, tx, scope); err != nil {
