@@ -328,14 +328,14 @@ func TestCookieCategory_Delete(t *testing.T) {
 
 		var listResult struct {
 			Node struct {
-			ConsentCategories struct {
-				Edges []struct {
-					Node struct {
-						ID   string `json:"id"`
-						Kind string `json:"kind"`
-					} `json:"node"`
-				} `json:"edges"`
-			} `json:"consentCategories"`
+				ConsentCategories struct {
+					Edges []struct {
+						Node struct {
+							ID   string `json:"id"`
+							Kind string `json:"kind"`
+						} `json:"node"`
+					} `json:"edges"`
+				} `json:"consentCategories"`
 			} `json:"node"`
 		}
 
@@ -440,19 +440,19 @@ func TestCookieCategory_List(t *testing.T) {
 
 		var result struct {
 			Node struct {
-			ConsentCategories struct {
-				TotalCount int `json:"totalCount"`
-				Edges      []struct {
-					Node struct {
-						ID   string `json:"id"`
-						Rank int    `json:"rank"`
-					} `json:"node"`
-				} `json:"edges"`
-				PageInfo struct {
-					HasNextPage     bool `json:"hasNextPage"`
-					HasPreviousPage bool `json:"hasPreviousPage"`
-				} `json:"pageInfo"`
-			} `json:"consentCategories"`
+				ConsentCategories struct {
+					TotalCount int `json:"totalCount"`
+					Edges      []struct {
+						Node struct {
+							ID   string `json:"id"`
+							Rank int    `json:"rank"`
+						} `json:"node"`
+					} `json:"edges"`
+					PageInfo struct {
+						HasNextPage     bool `json:"hasNextPage"`
+						HasPreviousPage bool `json:"hasPreviousPage"`
+					} `json:"pageInfo"`
+				} `json:"consentCategories"`
 			} `json:"node"`
 		}
 
