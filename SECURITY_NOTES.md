@@ -3,16 +3,19 @@
 User-facing notes on security-relevant changes to Probo. For the
 vulnerability reporting process, see [SECURITY.md](SECURITY.md).
 
-## Safer Password Changes
+## Password changes invalidate existing sessions
 
-_2026-04-29 — **IAM**_
+_2026-04-29, IAM_
 
-> Changing or resetting a password now revokes old sessions automatically.
+Password changes and resets now revoke existing sessions for the identity.
 
-Changing a password should close the door behind it. Probo now revokes existing sessions when credentials change.
+Previously, rotating a password did not touch `iam_sessions` rows: a stolen session stayed valid until its idle TTL elapsed, so a user whose account was compromised on another device could not evict that device by changing the password.
 
-If you change your password while signed in, every other active session is expired and your current session stays open. If your password is reset, all sessions are expired.
+Inside the same transaction as the password update:
 
-It is a small security detail, but an important one. A password update now does what people expect: it cuts off old access immediately.
+- A signed-in password change revokes every other active session for the identity and keeps the caller's current session.
+- A forgot-password reset revokes all active sessions for the identity. The caller is anonymous (authenticated only by the reset token), so there is no current session to preserve.
 
-Thanks to [emimoir](https://github.com/emimoir) for reporting the security issue behind this fix.
+The session middleware already rejects rows with `expire_reason` set, so revoked sessions are kicked out on the next request without any middleware change.
+
+Reported by [emimoir](https://github.com/emimoir).
