@@ -31,9 +31,7 @@ import { graphql } from "relay-runtime";
 import { z } from "zod";
 
 import type { PublishDialog_documentFragment$key } from "#/__generated__/core/PublishDialog_documentFragment.graphql";
-import type { PublishDialog_publishMajorMutation } from "#/__generated__/core/PublishDialog_publishMajorMutation.graphql";
-import type { PublishDialog_publishMinorMutation } from "#/__generated__/core/PublishDialog_publishMinorMutation.graphql";
-import type { PublishDialog_requestApprovalMutation } from "#/__generated__/core/PublishDialog_requestApprovalMutation.graphql";
+import type { PublishDialog_publishMutation } from "#/__generated__/core/PublishDialog_publishMutation.graphql";
 import { PeopleMultiSelectField } from "#/components/form/PeopleMultiSelectField";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
@@ -57,9 +55,9 @@ const documentFragment = graphql`
   }
 `;
 
-const publishMajorMutation = graphql`
-  mutation PublishDialog_publishMajorMutation($input: PublishMajorDocumentVersionInput!) {
-    publishMajorDocumentVersion(input: $input) {
+const publishMutation = graphql`
+  mutation PublishDialog_publishMutation($input: PublishDocumentInput!) {
+    publishDocument(input: $input) {
       document {
         id
         status
@@ -68,30 +66,6 @@ const publishMajorMutation = graphql`
         id
         status
       }
-    }
-  }
-`;
-
-const publishMinorMutation = graphql`
-  mutation PublishDialog_publishMinorMutation($input: PublishMinorDocumentVersionInput!) {
-    publishMinorDocumentVersion(input: $input) {
-      document {
-        id
-        status
-      }
-      documentVersion {
-        id
-        status
-      }
-    }
-  }
-`;
-
-const requestApprovalMutation = graphql`
-  mutation PublishDialog_requestApprovalMutation(
-    $input: RequestDocumentVersionApprovalInput!
-  ) {
-    requestDocumentVersionApproval(input: $input) {
       approvalQuorum {
         id
         status
@@ -166,62 +140,20 @@ export function PublishDialog({
     },
   }));
 
-  const [publishMajor, isPublishingMajor]
-    = useMutation<PublishDialog_publishMajorMutation>(publishMajorMutation);
-  const [publishMinor, isPublishingMinor]
-    = useMutation<PublishDialog_publishMinorMutation>(publishMinorMutation);
-  const [requestApproval, isRequesting]
-    = useMutation<PublishDialog_requestApprovalMutation>(requestApprovalMutation);
+  const [publish, isPublishing]
+    = useMutation<PublishDialog_publishMutation>(publishMutation);
 
-  const isBusy = isPublishingMajor || isPublishingMinor || isRequesting;
   const approverIds = watch("approverIds");
   const hasApprovers = approverIds.length > 0;
-  const actionRef = useRef<"publish" | "publish-minor" | "request-approval">("publish");
+  const minorRef = useRef(false);
 
-  const onPublishCompleted = (_: unknown, errors: ReadonlyArray<{ message: string }> | null) => {
-    if (errors?.length) {
-      toast({
-        title: __("Error"),
-        description: formatError(__("Failed to publish document"), [...errors]),
-        variant: "error",
-      });
-    } else {
-      toast({
-        title: __("Success"),
-        description: __("Document published successfully."),
-        variant: "success",
-      });
-      dialogRef.current?.close();
-      onSuccess();
-    }
-  };
-
-  const onPublishError = (error: Error) => {
-    toast({ title: __("Error"), description: error.message, variant: "error" });
-  };
-
-  const handlePublishMajor = (data: z.infer<typeof publishSchema>) => {
-    publishMajor({
-      variables: { input: { documentId, changelog: data.changelog } },
-      onCompleted: onPublishCompleted,
-      onError: onPublishError,
-    });
-  };
-
-  const handlePublishMinor = (data: z.infer<typeof publishSchema>) => {
-    publishMinor({
-      variables: { input: { documentId, changelog: data.changelog } },
-      onCompleted: onPublishCompleted,
-      onError: onPublishError,
-    });
-  };
-
-  const onRequestApproval = (data: z.infer<typeof publishSchema>) => {
-    requestApproval({
+  const submit = (data: z.infer<typeof publishSchema>, minor: boolean) => {
+    publish({
       variables: {
         input: {
           documentId,
-          approverIds: data.approverIds,
+          minor,
+          approverIds: minor ? [] : data.approverIds,
           changelog: data.changelog,
         },
       },
@@ -229,19 +161,21 @@ export function PublishDialog({
         if (errors?.length) {
           toast({
             title: __("Error"),
-            description: formatError(__("Failed to request approval"), errors),
+            description: formatError(__("Failed to publish document"), errors),
             variant: "error",
           });
-        } else {
-          toast({
-            title: __("Success"),
-            description: __("Approval requested successfully."),
-            variant: "success",
-          });
-          dialogRef.current?.close();
-          reset();
-          onSuccess();
+          return;
         }
+        toast({
+          title: __("Success"),
+          description: !minor && data.approverIds.length > 0
+            ? __("Approval requested successfully.")
+            : __("Document published successfully."),
+          variant: "success",
+        });
+        dialogRef.current?.close();
+        reset();
+        onSuccess();
       },
       onError(error) {
         toast({ title: __("Error"), description: error.message, variant: "error" });
@@ -253,17 +187,9 @@ export function PublishDialog({
     <Dialog className="max-w-xl" ref={dialogRef} title={__("Publish document")}>
       <form
         onSubmit={e => void handleSubmit((data) => {
-          const action = actionRef.current;
-          actionRef.current = "publish";
-          if (action === "publish-minor") {
-            handlePublishMinor(data);
-          } else if (action === "request-approval") {
-            onRequestApproval(data);
-          } else if (data.approverIds.length > 0) {
-            onRequestApproval(data);
-          } else {
-            handlePublishMajor(data);
-          }
+          const minor = minorRef.current;
+          minorRef.current = false;
+          submit(data, minor);
         })(e)}
       >
         <DialogContent padded>
@@ -299,49 +225,23 @@ export function PublishDialog({
           </div>
         </DialogContent>
         <DialogFooter>
-          {hasApprovers
-            ? (
-                <>
-                  <Button
-                    type="submit"
-                    variant="secondary"
-                    icon={IconUpload}
-                    onClick={() => { actionRef.current = "publish-minor"; }}
-                    disabled={isBusy}
-                  >
-                    {__("Publish as minor")}
-                  </Button>
-                  <Button
-                    type="submit"
-                    icon={IconSend}
-                    onClick={() => { actionRef.current = "request-approval"; }}
-                    disabled={isBusy}
-                  >
-                    {__("Request approval")}
-                  </Button>
-                </>
-              )
-            : (
-                <>
-                  <Button
-                    type="submit"
-                    variant="secondary"
-                    icon={IconUpload}
-                    onClick={() => { actionRef.current = "publish-minor"; }}
-                    disabled={isBusy}
-                  >
-                    {__("Publish as minor")}
-                  </Button>
-                  <Button
-                    type="submit"
-                    icon={IconUpload}
-                    onClick={() => { actionRef.current = "publish"; }}
-                    disabled={isBusy}
-                  >
-                    {__("Publish as major")}
-                  </Button>
-                </>
-              )}
+          <Button
+            type="submit"
+            variant="secondary"
+            icon={IconUpload}
+            onClick={() => { minorRef.current = true; }}
+            disabled={isPublishing}
+          >
+            {__("Publish as minor")}
+          </Button>
+          <Button
+            type="submit"
+            icon={hasApprovers ? IconSend : IconUpload}
+            onClick={() => { minorRef.current = false; }}
+            disabled={isPublishing}
+          >
+            {hasApprovers ? __("Request approval") : __("Publish as major")}
+          </Button>
         </DialogFooter>
       </form>
     </Dialog>

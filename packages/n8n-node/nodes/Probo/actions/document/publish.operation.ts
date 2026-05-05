@@ -23,12 +23,39 @@ export const description: INodeProperties[] = [
 		displayOptions: {
 			show: {
 				resource: ['document'],
-				operation: ['publishMinorVersion'],
+				operation: ['publish'],
 			},
 		},
 		default: '',
 		description: 'The ID of the document',
 		required: true,
+	},
+	{
+		displayName: 'Minor',
+		name: 'minor',
+		type: 'boolean',
+		displayOptions: {
+			show: {
+				resource: ['document'],
+				operation: ['publish'],
+			},
+		},
+		default: false,
+		description: 'Whether to publish as a minor version. Approvers are ignored when set. The document must already have a published major version.',
+	},
+	{
+		displayName: 'Approver IDs',
+		name: 'approverIds',
+		type: 'string',
+		displayOptions: {
+			show: {
+				resource: ['document'],
+				operation: ['publish'],
+				minor: [false],
+			},
+		},
+		default: '',
+		description: 'Comma-separated list of approver profile IDs. When provided, an approval is requested instead of publishing immediately.',
 	},
 	{
 		displayName: 'Changelog',
@@ -40,11 +67,12 @@ export const description: INodeProperties[] = [
 		displayOptions: {
 			show: {
 				resource: ['document'],
-				operation: ['publishMinorVersion'],
+				operation: ['publish'],
 			},
 		},
 		default: '',
 		description: 'The changelog for this version',
+		required: true,
 	},
 ];
 
@@ -53,11 +81,13 @@ export async function execute(
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
 	const documentId = this.getNodeParameter('documentId', itemIndex) as string;
-	const changelog = this.getNodeParameter('changelog', itemIndex, '') as string;
+	const minor = this.getNodeParameter('minor', itemIndex, false) as boolean;
+	const approverIdsRaw = this.getNodeParameter('approverIds', itemIndex, '') as string;
+	const changelog = this.getNodeParameter('changelog', itemIndex) as string;
 
 	const query = `
-		mutation PublishMinorDocumentVersion($input: PublishMinorDocumentVersionInput!) {
-			publishMinorDocumentVersion(input: $input) {
+		mutation PublishDocument($input: PublishDocumentInput!) {
+			publishDocument(input: $input) {
 				document {
 					id
 					status
@@ -81,12 +111,24 @@ export async function execute(
 					createdAt
 					updatedAt
 				}
+				approvalQuorum {
+					id
+					status
+					createdAt
+					updatedAt
+				}
 			}
 		}
 	`;
 
-	const input: Record<string, unknown> = { documentId };
-	if (changelog) input.changelog = changelog;
+	const input: Record<string, unknown> = { documentId, minor, changelog };
+	if (!minor && approverIdsRaw) {
+		const approverIds = approverIdsRaw
+			.split(',')
+			.map(id => id.trim())
+			.filter(Boolean);
+		if (approverIds.length > 0) input.approverIds = approverIds;
+	}
 
 	const responseData = await proboApiRequest.call(this, query, { input });
 

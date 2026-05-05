@@ -375,6 +375,7 @@ input DeleteStatementOfApplicabilityInput {
 input PublishStatementOfApplicabilityInput {
     statementOfApplicabilityId: ID!
     approverIds: [ID!]
+    minor: Boolean!
 }
 
 type CreateControlPayload {

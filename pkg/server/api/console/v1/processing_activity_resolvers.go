@@ -132,10 +132,13 @@ func (r *mutationResolver) PublishProcessingActivityList(ctx context.Context, in
 
 	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
 
-	document, documentVersion, err := prb.GeneratedDocuments.PublishProcessingActivityList(ctx, input.OrganizationID, input.ApproverIds)
+	document, documentVersion, err := prb.GeneratedDocuments.PublishProcessingActivityList(ctx, input.OrganizationID, input.ApproverIds, input.Minor)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 			return nil, gqlutils.Conflict(ctx, err)
+		}
+		if errMinor, ok := errors.AsType[*probo.ErrCannotPublishMinorWithoutMajor](err); ok {
+			return nil, gqlutils.Invalid(ctx, errMinor)
 		}
 		r.logger.ErrorCtx(ctx, "cannot publish processing activity list", log.Error(err))
 		return nil, gqlutils.Internal(ctx)

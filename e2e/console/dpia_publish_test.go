@@ -90,6 +90,7 @@ func TestDataProtectionImpactAssessment_PublishList(t *testing.T) {
 				query,
 				map[string]any{
 					"input": map[string]any{
+						"minor":          false,
 						"organizationId": owner.GetOrganizationID(),
 					},
 				},
@@ -150,6 +151,7 @@ func TestDataProtectionImpactAssessment_PublishList(t *testing.T) {
 				query,
 				map[string]any{
 					"input": map[string]any{
+						"minor":          false,
 						"organizationId": owner.GetOrganizationID(),
 						"approverIds":    []string{owner.GetProfileID().String()},
 					},
@@ -199,6 +201,7 @@ func TestDataProtectionImpactAssessment_PublishList(t *testing.T) {
 				publishQuery,
 				map[string]any{
 					"input": map[string]any{
+						"minor":          false,
 						"organizationId": owner.GetOrganizationID(),
 					},
 				},
@@ -265,6 +268,7 @@ func TestDataProtectionImpactAssessment_PublishList_RBAC(t *testing.T) {
 			query,
 			map[string]any{
 				"input": map[string]any{
+					"minor":          false,
 					"organizationId": owner.GetOrganizationID(),
 				},
 			},

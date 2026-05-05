@@ -25,7 +25,7 @@ import {
   useToast,
 } from "@probo/ui";
 import type { ReactNode } from "react";
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 import { useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 import { z } from "zod";
@@ -83,6 +83,8 @@ export function PublishAssetListDialog({
   const [publish, isPublishing]
     = useMutation<PublishAssetListDialogMutation>(publishMutation);
 
+  const minorRef = useRef(false);
+
   const approverIds = watch("approverIds");
   const hasApprovers = approverIds.length > 0;
 
@@ -90,8 +92,9 @@ export function PublishAssetListDialog({
     publish({
       variables: {
         input: {
+          minor: minorRef.current,
           organizationId,
-          approverIds: data.approverIds.length > 0 ? data.approverIds : undefined,
+          approverIds: !minorRef.current && data.approverIds.length > 0 ? data.approverIds : undefined,
         },
       },
       onCompleted(response) {
@@ -147,7 +150,17 @@ export function PublishAssetListDialog({
         <DialogFooter>
           <Button
             type="submit"
+            variant="secondary"
+            icon={IconUpload}
+            onClick={() => { minorRef.current = true; }}
+            disabled={isPublishing}
+          >
+            {__("Publish as minor")}
+          </Button>
+          <Button
+            type="submit"
             icon={hasApprovers ? IconSend : IconUpload}
+            onClick={() => { minorRef.current = false; }}
             disabled={isPublishing}
           >
             {hasApprovers ? __("Request approval") : __("Publish")}

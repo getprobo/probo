@@ -43,6 +43,19 @@ export const description: INodeProperties[] = [
 		default: '',
 		description: 'Comma-separated list of approver profile IDs',
 	},
+	{
+		displayName: 'Minor',
+		name: 'minor',
+		type: 'boolean',
+		displayOptions: {
+			show: {
+				resource: ['vendor'],
+				operation: ['publish'],
+			},
+		},
+		default: false,
+		description: 'Whether to publish as a minor version. Approvers are ignored when set. The list must already have a published major version.',
+	},
 ];
 
 export async function execute(
@@ -51,6 +64,7 @@ export async function execute(
 ): Promise<INodeExecutionData> {
 	const organizationId = this.getNodeParameter('organizationId', itemIndex) as string;
 	const approverIds = this.getNodeParameter('approverIds', itemIndex, '') as string;
+	const minor = this.getNodeParameter('minor', itemIndex, false) as boolean;
 
 	const query = `
 		mutation PublishVendorList($input: PublishVendorListInput!) {
@@ -83,7 +97,7 @@ export async function execute(
 		}
 	`;
 
-	const input: Record<string, unknown> = { organizationId };
+	const input: Record<string, unknown> = { organizationId, minor };
 
 	if (approverIds) {
 		input.approverIds = approverIds

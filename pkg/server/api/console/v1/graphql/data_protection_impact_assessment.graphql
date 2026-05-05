@@ -184,11 +184,13 @@ input DeleteTransferImpactAssessmentInput {
 input PublishDataProtectionImpactAssessmentListInput {
     organizationId: ID!
     approverIds: [ID!]
+    minor: Boolean!
 }
 
 input PublishTransferImpactAssessmentListInput {
     organizationId: ID!
     approverIds: [ID!]
+    minor: Boolean!
 }
 
 type CreateDataProtectionImpactAssessmentPayload {

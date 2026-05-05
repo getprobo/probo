@@ -38,6 +38,7 @@ func (s *GeneratedDocumentService) PublishStatementOfApplicability(
 	ctx context.Context,
 	statementOfApplicabilityID gid.GID,
 	approverIDs []gid.GID,
+	minor bool,
 ) (*coredata.Document, *coredata.DocumentVersion, error) {
 	var (
 		document        *coredata.Document
@@ -109,35 +110,21 @@ func (s *GeneratedDocumentService) PublishStatementOfApplicability(
 				document = existingDoc
 			}
 
-			newMajor := nextDocumentMajor(document)
-
-			versionStatus := coredata.DocumentVersionStatusPublished
-			var publishedAt *time.Time
-			if len(approverIDs) > 0 {
-				versionStatus = coredata.DocumentVersionStatusDraft
-			} else {
-				publishedAt = &now
-			}
-
 			documentVersionID := gid.New(s.svc.scope.GetTenantID(), coredata.DocumentVersionEntityType)
 			documentVersion = &coredata.DocumentVersion{
 				ID:             documentVersionID,
 				OrganizationID: soa.OrganizationID,
 				DocumentID:     document.ID,
 				Title:          soa.Name,
-				Major:          newMajor,
-				Minor:          0,
 				Content:        prosemirrorJSON,
-				Status:         versionStatus,
 				Classification: coredata.DocumentClassificationConfidential,
 				DocumentType:   coredata.DocumentTypeStatementOfApplicability,
 				Orientation:    coredata.DocumentVersionOrientationLandscape,
-				PublishedAt:    publishedAt,
 				CreatedAt:      now,
 				UpdatedAt:      now,
 			}
 
-			return s.publishOrRequestApproval(ctx, tx, document, documentVersion, soa.OrganizationID, approverIDs, newMajor, now)
+			return s.publishOrRequestApproval(ctx, tx, document, documentVersion, soa.OrganizationID, approverIDs, minor, now)
 		},
 	)
 
@@ -299,6 +286,7 @@ func (s *GeneratedDocumentService) PublishDataList(
 	ctx context.Context,
 	organizationID gid.GID,
 	approverIDs []gid.GID,
+	minor bool,
 ) (*coredata.Document, *coredata.DocumentVersion, error) {
 	var (
 		document        *coredata.Document
@@ -348,8 +336,6 @@ func (s *GeneratedDocumentService) PublishDataList(
 				}
 			}
 
-			hasApprovers := len(approverIDs) > 0
-
 			if existingDoc == nil {
 				documentID := gid.New(s.svc.scope.GetTenantID(), coredata.DocumentEntityType)
 
@@ -374,35 +360,21 @@ func (s *GeneratedDocumentService) PublishDataList(
 				document = existingDoc
 			}
 
-			newMajor := nextDocumentMajor(document)
-
-			versionStatus := coredata.DocumentVersionStatusPublished
-			var publishedAt *time.Time
-			if hasApprovers {
-				versionStatus = coredata.DocumentVersionStatusDraft
-			} else {
-				publishedAt = &now
-			}
-
 			documentVersionID := gid.New(s.svc.scope.GetTenantID(), coredata.DocumentVersionEntityType)
 			documentVersion = &coredata.DocumentVersion{
 				ID:             documentVersionID,
 				OrganizationID: organizationID,
 				DocumentID:     document.ID,
 				Title:          "Data",
-				Major:          newMajor,
-				Minor:          0,
 				Content:        prosemirrorJSON,
-				Status:         versionStatus,
 				Classification: coredata.DocumentClassificationConfidential,
 				DocumentType:   coredata.DocumentTypeRegister,
 				Orientation:    coredata.DocumentVersionOrientationPortrait,
-				PublishedAt:    publishedAt,
 				CreatedAt:      now,
 				UpdatedAt:      now,
 			}
 
-			return s.publishOrRequestApproval(ctx, tx, document, documentVersion, organizationID, approverIDs, newMajor, now)
+			return s.publishOrRequestApproval(ctx, tx, document, documentVersion, organizationID, approverIDs, minor, now)
 		},
 	)
 
@@ -550,6 +522,7 @@ func (s *GeneratedDocumentService) PublishAssetList(
 	ctx context.Context,
 	organizationID gid.GID,
 	approverIDs []gid.GID,
+	minor bool,
 ) (*coredata.Document, *coredata.DocumentVersion, error) {
 	var (
 		document        *coredata.Document
@@ -599,8 +572,6 @@ func (s *GeneratedDocumentService) PublishAssetList(
 				}
 			}
 
-			hasApprovers := len(approverIDs) > 0
-
 			if existingDoc == nil {
 				documentID := gid.New(s.svc.scope.GetTenantID(), coredata.DocumentEntityType)
 
@@ -625,35 +596,21 @@ func (s *GeneratedDocumentService) PublishAssetList(
 				document = existingDoc
 			}
 
-			newMajor := nextDocumentMajor(document)
-
-			versionStatus := coredata.DocumentVersionStatusPublished
-			var publishedAt *time.Time
-			if hasApprovers {
-				versionStatus = coredata.DocumentVersionStatusDraft
-			} else {
-				publishedAt = &now
-			}
-
 			documentVersionID := gid.New(s.svc.scope.GetTenantID(), coredata.DocumentVersionEntityType)
 			documentVersion = &coredata.DocumentVersion{
 				ID:             documentVersionID,
 				OrganizationID: organizationID,
 				DocumentID:     document.ID,
 				Title:          "Assets",
-				Major:          newMajor,
-				Minor:          0,
 				Content:        prosemirrorJSON,
-				Status:         versionStatus,
 				Classification: coredata.DocumentClassificationConfidential,
 				DocumentType:   coredata.DocumentTypeRegister,
 				Orientation:    coredata.DocumentVersionOrientationPortrait,
-				PublishedAt:    publishedAt,
 				CreatedAt:      now,
 				UpdatedAt:      now,
 			}
 
-			return s.publishOrRequestApproval(ctx, tx, document, documentVersion, organizationID, approverIDs, newMajor, now)
+			return s.publishOrRequestApproval(ctx, tx, document, documentVersion, organizationID, approverIDs, minor, now)
 		},
 	)
 
@@ -822,6 +779,7 @@ func (s *GeneratedDocumentService) PublishFindingList(
 	ctx context.Context,
 	organizationID gid.GID,
 	approverIDs []gid.GID,
+	minor bool,
 ) (*coredata.Document, *coredata.DocumentVersion, error) {
 	var (
 		document        *coredata.Document
@@ -871,8 +829,6 @@ func (s *GeneratedDocumentService) PublishFindingList(
 				}
 			}
 
-			hasApprovers := len(approverIDs) > 0
-
 			if existingDoc == nil {
 				documentID := gid.New(s.svc.scope.GetTenantID(), coredata.DocumentEntityType)
 
@@ -897,35 +853,21 @@ func (s *GeneratedDocumentService) PublishFindingList(
 				document = existingDoc
 			}
 
-			newMajor := nextDocumentMajor(document)
-
-			versionStatus := coredata.DocumentVersionStatusPublished
-			var publishedAt *time.Time
-			if hasApprovers {
-				versionStatus = coredata.DocumentVersionStatusDraft
-			} else {
-				publishedAt = &now
-			}
-
 			documentVersionID := gid.New(s.svc.scope.GetTenantID(), coredata.DocumentVersionEntityType)
 			documentVersion = &coredata.DocumentVersion{
 				ID:             documentVersionID,
 				OrganizationID: organizationID,
 				DocumentID:     document.ID,
 				Title:          "Findings",
-				Major:          newMajor,
-				Minor:          0,
 				Content:        prosemirrorJSON,
-				Status:         versionStatus,
 				Classification: coredata.DocumentClassificationConfidential,
 				DocumentType:   coredata.DocumentTypeRegister,
 				Orientation:    coredata.DocumentVersionOrientationLandscape,
-				PublishedAt:    publishedAt,
 				CreatedAt:      now,
 				UpdatedAt:      now,
 			}
 
-			return s.publishOrRequestApproval(ctx, tx, document, documentVersion, organizationID, approverIDs, newMajor, now)
+			return s.publishOrRequestApproval(ctx, tx, document, documentVersion, organizationID, approverIDs, minor, now)
 		},
 	)
 
@@ -1139,6 +1081,7 @@ func (s *GeneratedDocumentService) PublishObligationList(
 	ctx context.Context,
 	organizationID gid.GID,
 	approverIDs []gid.GID,
+	minor bool,
 ) (*coredata.Document, *coredata.DocumentVersion, error) {
 	var (
 		document        *coredata.Document
@@ -1188,8 +1131,6 @@ func (s *GeneratedDocumentService) PublishObligationList(
 				}
 			}
 
-			hasApprovers := len(approverIDs) > 0
-
 			if existingDoc == nil {
 				documentID := gid.New(s.svc.scope.GetTenantID(), coredata.DocumentEntityType)
 
@@ -1214,35 +1155,21 @@ func (s *GeneratedDocumentService) PublishObligationList(
 				document = existingDoc
 			}
 
-			newMajor := nextDocumentMajor(document)
-
-			versionStatus := coredata.DocumentVersionStatusPublished
-			var publishedAt *time.Time
-			if hasApprovers {
-				versionStatus = coredata.DocumentVersionStatusDraft
-			} else {
-				publishedAt = &now
-			}
-
 			documentVersionID := gid.New(s.svc.scope.GetTenantID(), coredata.DocumentVersionEntityType)
 			documentVersion = &coredata.DocumentVersion{
 				ID:             documentVersionID,
 				OrganizationID: organizationID,
 				DocumentID:     document.ID,
 				Title:          "Obligations",
-				Major:          newMajor,
-				Minor:          0,
 				Content:        prosemirrorJSON,
-				Status:         versionStatus,
 				Classification: coredata.DocumentClassificationConfidential,
 				DocumentType:   coredata.DocumentTypeRegister,
 				Orientation:    coredata.DocumentVersionOrientationLandscape,
-				PublishedAt:    publishedAt,
 				CreatedAt:      now,
 				UpdatedAt:      now,
 			}
 
-			return s.publishOrRequestApproval(ctx, tx, document, documentVersion, organizationID, approverIDs, newMajor, now)
+			return s.publishOrRequestApproval(ctx, tx, document, documentVersion, organizationID, approverIDs, minor, now)
 		},
 	)
 
@@ -1424,6 +1351,7 @@ func (s *GeneratedDocumentService) PublishProcessingActivityList(
 	ctx context.Context,
 	organizationID gid.GID,
 	approverIDs []gid.GID,
+	minor bool,
 ) (*coredata.Document, *coredata.DocumentVersion, error) {
 	var (
 		document        *coredata.Document
@@ -1473,8 +1401,6 @@ func (s *GeneratedDocumentService) PublishProcessingActivityList(
 				}
 			}
 
-			hasApprovers := len(approverIDs) > 0
-
 			if existingDoc == nil {
 				documentID := gid.New(s.svc.scope.GetTenantID(), coredata.DocumentEntityType)
 
@@ -1499,35 +1425,21 @@ func (s *GeneratedDocumentService) PublishProcessingActivityList(
 				document = existingDoc
 			}
 
-			newMajor := nextDocumentMajor(document)
-
-			versionStatus := coredata.DocumentVersionStatusPublished
-			var publishedAt *time.Time
-			if hasApprovers {
-				versionStatus = coredata.DocumentVersionStatusDraft
-			} else {
-				publishedAt = &now
-			}
-
 			documentVersionID := gid.New(s.svc.scope.GetTenantID(), coredata.DocumentVersionEntityType)
 			documentVersion = &coredata.DocumentVersion{
 				ID:             documentVersionID,
 				OrganizationID: organizationID,
 				DocumentID:     document.ID,
 				Title:          "Processing Activities",
-				Major:          newMajor,
-				Minor:          0,
 				Content:        prosemirrorJSON,
-				Status:         versionStatus,
 				Classification: coredata.DocumentClassificationConfidential,
 				DocumentType:   coredata.DocumentTypeRegister,
 				Orientation:    coredata.DocumentVersionOrientationPortrait,
-				PublishedAt:    publishedAt,
 				CreatedAt:      now,
 				UpdatedAt:      now,
 			}
 
-			return s.publishOrRequestApproval(ctx, tx, document, documentVersion, organizationID, approverIDs, newMajor, now)
+			return s.publishOrRequestApproval(ctx, tx, document, documentVersion, organizationID, approverIDs, minor, now)
 		},
 	)
 
@@ -1804,6 +1716,7 @@ func (s *GeneratedDocumentService) PublishDataProtectionImpactAssessmentList(
 	ctx context.Context,
 	organizationID gid.GID,
 	approverIDs []gid.GID,
+	minor bool,
 ) (*coredata.Document, *coredata.DocumentVersion, error) {
 	var (
 		document        *coredata.Document
@@ -1853,8 +1766,6 @@ func (s *GeneratedDocumentService) PublishDataProtectionImpactAssessmentList(
 				}
 			}
 
-			hasApprovers := len(approverIDs) > 0
-
 			if existingDoc == nil {
 				documentID := gid.New(s.svc.scope.GetTenantID(), coredata.DocumentEntityType)
 
@@ -1879,35 +1790,21 @@ func (s *GeneratedDocumentService) PublishDataProtectionImpactAssessmentList(
 				document = existingDoc
 			}
 
-			newMajor := nextDocumentMajor(document)
-
-			versionStatus := coredata.DocumentVersionStatusPublished
-			var publishedAt *time.Time
-			if hasApprovers {
-				versionStatus = coredata.DocumentVersionStatusDraft
-			} else {
-				publishedAt = &now
-			}
-
 			documentVersionID := gid.New(s.svc.scope.GetTenantID(), coredata.DocumentVersionEntityType)
 			documentVersion = &coredata.DocumentVersion{
 				ID:             documentVersionID,
 				OrganizationID: organizationID,
 				DocumentID:     document.ID,
 				Title:          "Data Protection Impact Assessments",
-				Major:          newMajor,
-				Minor:          0,
 				Content:        prosemirrorJSON,
-				Status:         versionStatus,
 				Classification: coredata.DocumentClassificationConfidential,
 				DocumentType:   coredata.DocumentTypeRegister,
 				Orientation:    coredata.DocumentVersionOrientationPortrait,
-				PublishedAt:    publishedAt,
 				CreatedAt:      now,
 				UpdatedAt:      now,
 			}
 
-			return s.publishOrRequestApproval(ctx, tx, document, documentVersion, organizationID, approverIDs, newMajor, now)
+			return s.publishOrRequestApproval(ctx, tx, document, documentVersion, organizationID, approverIDs, minor, now)
 		},
 	)
 
@@ -2029,6 +1926,7 @@ func (s *GeneratedDocumentService) PublishTransferImpactAssessmentList(
 	ctx context.Context,
 	organizationID gid.GID,
 	approverIDs []gid.GID,
+	minor bool,
 ) (*coredata.Document, *coredata.DocumentVersion, error) {
 	var (
 		document        *coredata.Document
@@ -2078,8 +1976,6 @@ func (s *GeneratedDocumentService) PublishTransferImpactAssessmentList(
 				}
 			}
 
-			hasApprovers := len(approverIDs) > 0
-
 			if existingDoc == nil {
 				documentID := gid.New(s.svc.scope.GetTenantID(), coredata.DocumentEntityType)
 
@@ -2104,35 +2000,21 @@ func (s *GeneratedDocumentService) PublishTransferImpactAssessmentList(
 				document = existingDoc
 			}
 
-			newMajor := nextDocumentMajor(document)
-
-			versionStatus := coredata.DocumentVersionStatusPublished
-			var publishedAt *time.Time
-			if hasApprovers {
-				versionStatus = coredata.DocumentVersionStatusDraft
-			} else {
-				publishedAt = &now
-			}
-
 			documentVersionID := gid.New(s.svc.scope.GetTenantID(), coredata.DocumentVersionEntityType)
 			documentVersion = &coredata.DocumentVersion{
 				ID:             documentVersionID,
 				OrganizationID: organizationID,
 				DocumentID:     document.ID,
 				Title:          "Transfer Impact Assessments",
-				Major:          newMajor,
-				Minor:          0,
 				Content:        prosemirrorJSON,
-				Status:         versionStatus,
 				Classification: coredata.DocumentClassificationConfidential,
 				DocumentType:   coredata.DocumentTypeRegister,
 				Orientation:    coredata.DocumentVersionOrientationPortrait,
-				PublishedAt:    publishedAt,
 				CreatedAt:      now,
 				UpdatedAt:      now,
 			}
 
-			return s.publishOrRequestApproval(ctx, tx, document, documentVersion, organizationID, approverIDs, newMajor, now)
+			return s.publishOrRequestApproval(ctx, tx, document, documentVersion, organizationID, approverIDs, minor, now)
 		},
 	)
 
@@ -2254,6 +2136,7 @@ func (s *GeneratedDocumentService) PublishVendorList(
 	ctx context.Context,
 	organizationID gid.GID,
 	approverIDs []gid.GID,
+	minor bool,
 ) (*coredata.Document, *coredata.DocumentVersion, error) {
 	// Phase 1: collect data and render the prosemirror document outside any
 	// write transaction. Both the bulk reads of vendors + sub-entities and the
@@ -2316,8 +2199,6 @@ func (s *GeneratedDocumentService) PublishVendorList(
 				}
 			}
 
-			hasApprovers := len(approverIDs) > 0
-
 			if existingDoc == nil {
 				documentID := gid.New(s.svc.scope.GetTenantID(), coredata.DocumentEntityType)
 
@@ -2342,35 +2223,21 @@ func (s *GeneratedDocumentService) PublishVendorList(
 				document = existingDoc
 			}
 
-			newMajor := nextDocumentMajor(document)
-
-			versionStatus := coredata.DocumentVersionStatusPublished
-			var publishedAt *time.Time
-			if hasApprovers {
-				versionStatus = coredata.DocumentVersionStatusDraft
-			} else {
-				publishedAt = &now
-			}
-
 			documentVersionID := gid.New(s.svc.scope.GetTenantID(), coredata.DocumentVersionEntityType)
 			documentVersion = &coredata.DocumentVersion{
 				ID:             documentVersionID,
 				OrganizationID: organizationID,
 				DocumentID:     document.ID,
 				Title:          "Vendors",
-				Major:          newMajor,
-				Minor:          0,
 				Content:        prosemirrorJSON,
-				Status:         versionStatus,
 				Classification: coredata.DocumentClassificationConfidential,
 				DocumentType:   coredata.DocumentTypeRegister,
 				Orientation:    coredata.DocumentVersionOrientationPortrait,
-				PublishedAt:    publishedAt,
 				CreatedAt:      now,
 				UpdatedAt:      now,
 			}
 
-			return s.publishOrRequestApproval(ctx, tx, document, documentVersion, organizationID, approverIDs, newMajor, now)
+			return s.publishOrRequestApproval(ctx, tx, document, documentVersion, organizationID, approverIDs, minor, now)
 		},
 	)
 
@@ -2771,6 +2638,7 @@ func (s *GeneratedDocumentService) PublishRiskList(
 	ctx context.Context,
 	organizationID gid.GID,
 	approverIDs []gid.GID,
+	minor bool,
 ) (*coredata.Document, *coredata.DocumentVersion, error) {
 	var (
 		document        *coredata.Document
@@ -2820,8 +2688,6 @@ func (s *GeneratedDocumentService) PublishRiskList(
 				}
 			}
 
-			hasApprovers := len(approverIDs) > 0
-
 			if existingDoc == nil {
 				documentID := gid.New(s.svc.scope.GetTenantID(), coredata.DocumentEntityType)
 
@@ -2846,35 +2712,21 @@ func (s *GeneratedDocumentService) PublishRiskList(
 				document = existingDoc
 			}
 
-			newMajor := nextDocumentMajor(document)
-
-			versionStatus := coredata.DocumentVersionStatusPublished
-			var publishedAt *time.Time
-			if hasApprovers {
-				versionStatus = coredata.DocumentVersionStatusDraft
-			} else {
-				publishedAt = &now
-			}
-
 			documentVersionID := gid.New(s.svc.scope.GetTenantID(), coredata.DocumentVersionEntityType)
 			documentVersion = &coredata.DocumentVersion{
 				ID:             documentVersionID,
 				OrganizationID: organizationID,
 				DocumentID:     document.ID,
 				Title:          "Risks",
-				Major:          newMajor,
-				Minor:          0,
 				Content:        prosemirrorJSON,
-				Status:         versionStatus,
 				Classification: coredata.DocumentClassificationConfidential,
 				DocumentType:   coredata.DocumentTypeRegister,
 				Orientation:    coredata.DocumentVersionOrientationPortrait,
-				PublishedAt:    publishedAt,
 				CreatedAt:      now,
 				UpdatedAt:      now,
 			}
 
-			return s.publishOrRequestApproval(ctx, tx, document, documentVersion, organizationID, approverIDs, newMajor, now)
+			return s.publishOrRequestApproval(ctx, tx, document, documentVersion, organizationID, approverIDs, minor, now)
 		},
 	)
 
@@ -3039,19 +2891,14 @@ func formatRiskTreatment(t coredata.RiskTreatment) string {
 	}
 }
 
-// nextDocumentMajor returns the major version to use for a new published
-// version of a generated document.
-func nextDocumentMajor(doc *coredata.Document) int {
-	if doc.CurrentPublishedMajor != nil {
-		return *doc.CurrentPublishedMajor + 1
-	}
-	return 1
-}
-
-// publishOrRequestApproval inserts a freshly built generated document version
-// and either requests approval (if approverIDs is non-empty) or marks the
-// document as currently published at newMajor.0. The pending-approval insert
-// conflict is mapped to a friendlier error.
+// publishOrRequestApproval finalises a freshly built generated document
+// version. The version's Major, Minor, Status and PublishedAt fields are
+// computed here based on the document's current published state, the minor
+// flag, and whether approvers were provided. When minor is true the version
+// is always published at currentMajor.(currentMinor+1) and approvers are
+// ignored. When minor is false a non-empty approverIDs triggers an approval
+// request at (currentMajor+1).0; otherwise the version is published at
+// (currentMajor+1).0.
 func (s *GeneratedDocumentService) publishOrRequestApproval(
 	ctx context.Context,
 	tx pg.Tx,
@@ -3059,9 +2906,34 @@ func (s *GeneratedDocumentService) publishOrRequestApproval(
 	version *coredata.DocumentVersion,
 	organizationID gid.GID,
 	approverIDs []gid.GID,
-	newMajor int,
+	minor bool,
 	now time.Time,
 ) error {
+	if minor {
+		if document.CurrentPublishedMajor == nil || document.CurrentPublishedMinor == nil {
+			return &ErrCannotPublishMinorWithoutMajor{}
+		}
+		version.Major = *document.CurrentPublishedMajor
+		version.Minor = *document.CurrentPublishedMinor + 1
+		version.Status = coredata.DocumentVersionStatusPublished
+		version.PublishedAt = &now
+		approverIDs = nil
+	} else {
+		if document.CurrentPublishedMajor != nil {
+			version.Major = *document.CurrentPublishedMajor + 1
+		} else {
+			version.Major = 1
+		}
+		version.Minor = 0
+		if len(approverIDs) > 0 {
+			version.Status = coredata.DocumentVersionStatusDraft
+			version.PublishedAt = nil
+		} else {
+			version.Status = coredata.DocumentVersionStatusPublished
+			version.PublishedAt = &now
+		}
+	}
+
 	if err := version.Insert(ctx, tx, s.svc.scope); err != nil {
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 			return fmt.Errorf("a version is pending approval, approve or reject it before publishing a new one: %w", err)
@@ -3080,8 +2952,8 @@ func (s *GeneratedDocumentService) publishOrRequestApproval(
 		return nil
 	}
 
-	document.CurrentPublishedMajor = &newMajor
-	document.CurrentPublishedMinor = new(0)
+	document.CurrentPublishedMajor = &version.Major
+	document.CurrentPublishedMinor = &version.Minor
 	document.UpdatedAt = now
 
 	if err := document.Update(ctx, tx, s.svc.scope); err != nil {

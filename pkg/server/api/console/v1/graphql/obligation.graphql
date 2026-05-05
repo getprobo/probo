@@ -96,6 +96,7 @@ extend type Mutation {
 input PublishObligationListInput {
     organizationId: ID!
     approverIds: [ID!]
+    minor: Boolean!
 }
 
 type PublishObligationListPayload {

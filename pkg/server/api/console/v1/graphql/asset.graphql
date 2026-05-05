@@ -219,6 +219,7 @@ type DeleteDatumPayload {
 input PublishDataListInput {
     organizationId: ID!
     approverIds: [ID!]
+    minor: Boolean!
 }
 
 type PublishDataListPayload {
@@ -229,6 +230,7 @@ type PublishDataListPayload {
 input PublishAssetListInput {
     organizationId: ID!
     approverIds: [ID!]
+    minor: Boolean!
 }
 
 type PublishAssetListPayload {

@@ -75,6 +75,9 @@ type (
 	ErrDocumentArchived struct {
 	}
 
+	ErrCannotPublishMinorWithoutMajor struct {
+	}
+
 	ErrDocumentDraftNotDeletable struct {
 	}
 
@@ -126,7 +129,21 @@ type (
 
 	BulkPublishVersionsRequest struct {
 		DocumentIDs []gid.GID
+		Minor       bool
 		Changelog   string
+	}
+
+	PublishDocumentRequest struct {
+		DocumentID  gid.GID
+		Minor       bool
+		ApproverIDs []gid.GID
+		Changelog   string
+	}
+
+	PublishDocumentResult struct {
+		Document *coredata.Document
+		Version  *coredata.DocumentVersion
+		Quorum   *coredata.DocumentVersionApprovalQuorum
 	}
 )
 
@@ -155,6 +172,20 @@ func (cdr *CreateDocumentRequest) Validate() error {
 	v.CheckEach(cdr.DefaultApproverIDs, "default_approver_ids", func(_ int, item any) {
 		v.Check(item, "default_approver_ids", validator.GID(coredata.MembershipProfileEntityType))
 	})
+
+	return v.Error()
+}
+
+func (req *PublishDocumentRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(req.DocumentID, "document_id", validator.Required(), validator.GID(coredata.DocumentEntityType))
+	v.Check(len(req.ApproverIDs), "approver_ids", validator.Max(100))
+	v.Check(req.ApproverIDs, "approver_ids", validator.NoDuplicates())
+	v.CheckEach(req.ApproverIDs, "approver_ids", func(index int, item any) {
+		v.Check(item, fmt.Sprintf("approver_ids[%d]", index), validator.GID(coredata.MembershipProfileEntityType))
+	})
+	v.Check(req.Changelog, "changelog", validator.Required(), validator.SafeText(5000))
 
 	return v.Error()
 }
@@ -217,6 +248,10 @@ func (e ErrDocumentVersionPendingApproval) Error() string {
 
 func (e ErrDocumentArchived) Error() string {
 	return "cannot modify an archived document"
+}
+
+func (e ErrCannotPublishMinorWithoutMajor) Error() string {
+	return "cannot publish a minor version before a major version exists"
 }
 
 func (e ErrDocumentDraftNotDeletable) Error() string {
@@ -506,123 +541,105 @@ func (s DocumentService) generateChangelog(
 	return &text, nil
 }
 
-func (s *DocumentService) BulkPublishMinorVersions(
+// PublishVersion is the single entry point for publishing a document
+// version. The behaviour depends on req.Minor and req.ApproverIDs:
+//   - Minor=true: publish the existing draft as a minor bump (currentMajor.
+//     currentMinor+1). ApproverIDs are ignored. Errors with
+//     ErrCannotPublishMinorWithoutMajor when the document has never been
+//     published.
+//   - Minor=false with ApproverIDs: open an approval quorum on the draft as
+//     a pending major bump (currentMajor+1.0). Result.Quorum is set.
+//   - Minor=false without ApproverIDs: publish the draft immediately as a
+//     major bump (currentMajor+1.0).
+func (s *DocumentService) PublishVersion(
 	ctx context.Context,
-	req BulkPublishVersionsRequest,
-) ([]*coredata.DocumentVersion, []*coredata.Document, error) {
-	var publishedVersions []*coredata.DocumentVersion
-	var updatedDocuments []*coredata.Document
+	req PublishDocumentRequest,
+) (*PublishDocumentResult, error) {
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+
+	result := &PublishDocumentResult{}
 
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			for _, documentID := range req.DocumentIDs {
-				dv := &coredata.DocumentVersion{}
-				if err := dv.LoadLatestVersion(ctx, tx, s.svc.scope, documentID); err != nil {
-					return fmt.Errorf("cannot load latest version for %q: %w", documentID, err)
-				}
+			dv := &coredata.DocumentVersion{}
+			if err := dv.LoadLatestVersion(ctx, tx, s.svc.scope, req.DocumentID); err != nil {
+				return fmt.Errorf("cannot load latest version: %w", err)
+			}
 
-				// Skip documents already pending approval.
-				if dv.Status == coredata.DocumentVersionStatusPendingApproval {
-					continue
-				}
+			if dv.Status == coredata.DocumentVersionStatusPendingApproval {
+				return &ErrDocumentVersionPendingApproval{}
+			}
 
-				document, version, err := s.publishMinorVersionInTx(ctx, tx, documentID, &req.Changelog, true)
+			if req.Minor {
+				document, version, err := s.publishMinorVersionInTx(ctx, tx, req.DocumentID, &req.Changelog, false)
 				if err != nil {
-					return fmt.Errorf("cannot publish document %q: %w", documentID, err)
+					return fmt.Errorf("cannot publish minor version: %w", err)
 				}
-
-				publishedVersions = append(publishedVersions, version)
-				updatedDocuments = append(updatedDocuments, document)
+				result.Document = document
+				result.Version = version
+				return nil
 			}
 
-			return nil
-		},
-	)
-
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return publishedVersions, updatedDocuments, nil
-}
-
-func (s *DocumentService) PublishMajorVersion(
-	ctx context.Context,
-	documentID gid.GID,
-	publishedBy gid.GID,
-	changelog *string,
-) (*coredata.Document, *coredata.DocumentVersion, error) {
-	var document *coredata.Document
-	var documentVersion *coredata.DocumentVersion
-
-	err := s.svc.pg.WithTx(
-		ctx,
-		func(ctx context.Context, tx pg.Tx) error {
-			dv := &coredata.DocumentVersion{}
-			if err := dv.LoadLatestVersion(ctx, tx, s.svc.scope, documentID); err != nil {
-				return fmt.Errorf("cannot load latest version: %w", err)
+			if len(req.ApproverIDs) == 0 {
+				document, version, err := s.publishMajorVersionInTx(ctx, tx, req.DocumentID, &req.Changelog, false)
+				if err != nil {
+					return fmt.Errorf("cannot publish major version: %w", err)
+				}
+				result.Document = document
+				result.Version = version
+				return nil
 			}
 
-			if dv.Status == coredata.DocumentVersionStatusPendingApproval {
-				return &ErrDocumentVersionPendingApproval{}
+			profiles := &coredata.MembershipProfiles{}
+			if err := profiles.LoadByIDs(ctx, tx, s.svc.scope, req.ApproverIDs); err != nil {
+				return fmt.Errorf("cannot load approver profiles: %w", err)
 			}
 
-			var err error
+			now := time.Now()
+			for _, p := range *profiles {
+				if p.ContractEndDate != nil && p.ContractEndDate.Before(now) {
+					return &ErrProfileContractEnded{ProfileID: p.ID}
+				}
+			}
 
-			document, documentVersion, err = s.publishMajorVersionInTx(ctx, tx, documentID, changelog, false)
+			document := &coredata.Document{}
+			if err := document.LoadByID(ctx, tx, s.svc.scope, req.DocumentID); err != nil {
+				return fmt.Errorf("cannot load document: %w", err)
+			}
+
+			if document.ArchivedAt != nil {
+				return &ErrDocumentArchived{}
+			}
+
+			if dv.Status != coredata.DocumentVersionStatusDraft {
+				return &ErrDocumentVersionNotDraft{}
+			}
+
+			quorum, err := s.svc.DocumentApprovals.RequestApprovalInTx(ctx, tx, document, dv, req.ApproverIDs, &req.Changelog)
 			if err != nil {
-				return fmt.Errorf("cannot publish major version: %w", err)
+				return fmt.Errorf("cannot request approval: %w", err)
 			}
 
+			defaultApprovers := &coredata.DocumentDefaultApprovers{}
+			if err := defaultApprovers.MergeByDocumentID(ctx, tx, s.svc.scope, req.DocumentID, document.OrganizationID, req.ApproverIDs); err != nil {
+				return fmt.Errorf("cannot update default approvers: %w", err)
+			}
+
+			result.Document = document
+			result.Version = dv
+			result.Quorum = quorum
 			return nil
 		},
 	)
 
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	return document, documentVersion, nil
-}
-
-func (s *DocumentService) PublishMinorVersion(
-	ctx context.Context,
-	documentID gid.GID,
-	publishedBy gid.GID,
-	changelog *string,
-) (*coredata.Document, *coredata.DocumentVersion, error) {
-	var document *coredata.Document
-	var documentVersion *coredata.DocumentVersion
-
-	err := s.svc.pg.WithTx(
-		ctx,
-		func(ctx context.Context, tx pg.Tx) error {
-			dv := &coredata.DocumentVersion{}
-			if err := dv.LoadLatestVersion(ctx, tx, s.svc.scope, documentID); err != nil {
-				return fmt.Errorf("cannot load latest version: %w", err)
-			}
-
-			if dv.Status == coredata.DocumentVersionStatusPendingApproval {
-				return &ErrDocumentVersionPendingApproval{}
-			}
-
-			var err error
-
-			document, documentVersion, err = s.publishMinorVersionInTx(ctx, tx, documentID, changelog, false)
-			if err != nil {
-				return fmt.Errorf("cannot publish minor version: %w", err)
-			}
-
-			return nil
-		},
-	)
-
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return document, documentVersion, nil
+	return result, nil
 }
 
 func (s *DocumentService) Create(
@@ -2786,6 +2803,10 @@ func (s *DocumentService) publishMinorVersionInTx(
 
 	if ignoreExisting && documentVersion.Status == coredata.DocumentVersionStatusPublished {
 		return document, documentVersion, nil
+	}
+
+	if document.CurrentPublishedMajor == nil || document.CurrentPublishedMinor == nil {
+		return nil, nil, &ErrCannotPublishMinorWithoutMajor{}
 	}
 
 	document.CurrentPublishedMajor = &documentVersion.Major

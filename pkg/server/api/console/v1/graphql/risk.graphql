@@ -157,6 +157,7 @@ extend type Mutation {
 input PublishRiskListInput {
     organizationId: ID!
     approverIds: [ID!]
+    minor: Boolean!
 }
 
 type PublishRiskListPayload {

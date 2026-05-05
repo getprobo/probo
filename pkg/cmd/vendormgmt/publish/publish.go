@@ -71,6 +71,7 @@ func NewCmdPublish(f *cmdutil.Factory) *cobra.Command {
 	var (
 		flagOrg      string
 		flagApprover []string
+		flagMinor    bool
 	)
 
 	cmd := &cobra.Command{
@@ -109,6 +110,7 @@ func NewCmdPublish(f *cmdutil.Factory) *cobra.Command {
 
 			input := map[string]any{
 				"organizationId": flagOrg,
+				"minor":          flagMinor,
 			}
 
 			if len(flagApprover) > 0 {
@@ -142,7 +144,8 @@ func NewCmdPublish(f *cmdutil.Factory) *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&flagOrg, "org", "", "Organization ID")
-	cmd.Flags().StringArrayVar(&flagApprover, "approver", nil, "Approver profile ID (can be repeated)")
+	cmd.Flags().StringArrayVar(&flagApprover, "approver", nil, "Approver profile ID (can be repeated; ignored with --minor)")
+	cmd.Flags().BoolVar(&flagMinor, "minor", false, "Publish as a minor version (no approval flow)")
 
 	return cmd
 }

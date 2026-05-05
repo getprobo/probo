@@ -262,6 +262,7 @@ input DeleteProcessingActivityInput {
 input PublishProcessingActivityListInput {
     organizationId: ID!
     approverIds: [ID!]
+    minor: Boolean!
 }
 
 type CreateProcessingActivityPayload {

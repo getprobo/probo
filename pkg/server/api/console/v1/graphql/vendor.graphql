@@ -465,6 +465,7 @@ extend type Mutation {
 input PublishVendorListInput {
     organizationId: ID!
     approverIds: [ID!]
+    minor: Boolean!
 }
 
 type PublishVendorListPayload {

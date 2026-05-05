@@ -92,8 +92,8 @@ func approveTestDocument(t *testing.T, owner *testutil.Client, docID string) {
 	t.Helper()
 
 	requestQuery := `
-		mutation RequestApproval($input: RequestDocumentVersionApprovalInput!) {
-			requestDocumentVersionApproval(input: $input) {
+		mutation RequestApproval($input: PublishDocumentInput!) {
+			publishDocument(input: $input) {
 				approvalQuorum {
 					id
 				}
@@ -106,6 +106,7 @@ func approveTestDocument(t *testing.T, owner *testutil.Client, docID string) {
 
 	_, err := owner.Do(requestQuery, map[string]any{
 		"input": map[string]any{
+			"minor":       false,
 			"documentId":  docID,
 			"approverIds": []string{approverID},
 			"changelog":   "Test changelog",
@@ -472,8 +473,8 @@ func TestDocumentVersion_BulkPublish(t *testing.T) {
 	docID2, _ := createTestDocument(t, owner)
 
 	query := `
-		mutation BulkPublishMajorDocumentVersions($input: BulkPublishDocumentVersionsInput!) {
-			bulkPublishMajorDocumentVersions(input: $input) {
+		mutation BulkPublishDocuments($input: BulkPublishDocumentsInput!) {
+			bulkPublishDocuments(input: $input) {
 				documentVersions {
 					id
 					status
@@ -483,24 +484,25 @@ func TestDocumentVersion_BulkPublish(t *testing.T) {
 	`
 
 	var result struct {
-		BulkPublishMajorDocumentVersions struct {
+		BulkPublishDocuments struct {
 			DocumentVersions []struct {
 				ID     string `json:"id"`
 				Status string `json:"status"`
 			} `json:"documentVersions"`
-		} `json:"bulkPublishMajorDocumentVersions"`
+		} `json:"bulkPublishDocuments"`
 	}
 
 	err := owner.Execute(query, map[string]any{
 		"input": map[string]any{
+			"minor":       false,
 			"documentIds": []string{docID1, docID2},
 			"changelog":   "Bulk publish release",
 		},
 	}, &result)
 	require.NoError(t, err)
 
-	assert.Equal(t, 2, len(result.BulkPublishMajorDocumentVersions.DocumentVersions))
-	for _, dv := range result.BulkPublishMajorDocumentVersions.DocumentVersions {
+	assert.Equal(t, 2, len(result.BulkPublishDocuments.DocumentVersions))
+	for _, dv := range result.BulkPublishDocuments.DocumentVersions {
 		assert.Equal(t, "PUBLISHED", dv.Status)
 	}
 }
@@ -515,8 +517,8 @@ func TestDocumentVersion_BulkPublishRequestsApproval(t *testing.T) {
 	docID := createTestDocumentWithApprovers(t, owner, []string{approverID})
 
 	query := `
-		mutation BulkPublishMajorDocumentVersions($input: BulkPublishDocumentVersionsInput!) {
-			bulkPublishMajorDocumentVersions(input: $input) {
+		mutation BulkPublishDocuments($input: BulkPublishDocumentsInput!) {
+			bulkPublishDocuments(input: $input) {
 				documentVersions {
 					id
 					status
@@ -528,26 +530,27 @@ func TestDocumentVersion_BulkPublishRequestsApproval(t *testing.T) {
 	`
 
 	var result struct {
-		BulkPublishMajorDocumentVersions struct {
+		BulkPublishDocuments struct {
 			DocumentVersions []struct {
 				ID     string `json:"id"`
 				Status string `json:"status"`
 				Major  int    `json:"major"`
 				Minor  int    `json:"minor"`
 			} `json:"documentVersions"`
-		} `json:"bulkPublishMajorDocumentVersions"`
+		} `json:"bulkPublishDocuments"`
 	}
 
 	err := owner.Execute(query, map[string]any{
 		"input": map[string]any{
+			"minor":       false,
 			"documentIds": []string{docID},
 			"changelog":   "Needs approval",
 		},
 	}, &result)
 	require.NoError(t, err)
 
-	require.Len(t, result.BulkPublishMajorDocumentVersions.DocumentVersions, 1)
-	dv := result.BulkPublishMajorDocumentVersions.DocumentVersions[0]
+	require.Len(t, result.BulkPublishDocuments.DocumentVersions, 1)
+	dv := result.BulkPublishDocuments.DocumentVersions[0]
 	assert.Equal(t, "PENDING_APPROVAL", dv.Status)
 	assert.Equal(t, 1, dv.Major)
 	assert.Equal(t, 0, dv.Minor)
@@ -563,13 +566,14 @@ func TestDocumentVersion_BulkPublishSkipsPendingApproval(t *testing.T) {
 	docID := createTestDocumentWithApprovers(t, owner, []string{approverID})
 
 	_, err := owner.Do(`
-		mutation($input: BulkPublishDocumentVersionsInput!) {
-			bulkPublishMajorDocumentVersions(input: $input) {
+		mutation($input: BulkPublishDocumentsInput!) {
+			bulkPublishDocuments(input: $input) {
 				documentVersions { id }
 			}
 		}
 	`, map[string]any{
 		"input": map[string]any{
+			"minor":       false,
 			"documentIds": []string{docID},
 			"changelog":   "First approval request",
 		},
@@ -578,28 +582,29 @@ func TestDocumentVersion_BulkPublishSkipsPendingApproval(t *testing.T) {
 
 	// Bulk publish again — should skip the pending document and return empty
 	var result struct {
-		BulkPublishMajorDocumentVersions struct {
+		BulkPublishDocuments struct {
 			DocumentVersions []struct {
 				ID string `json:"id"`
 			} `json:"documentVersions"`
-		} `json:"bulkPublishMajorDocumentVersions"`
+		} `json:"bulkPublishDocuments"`
 	}
 
 	err = owner.Execute(`
-		mutation($input: BulkPublishDocumentVersionsInput!) {
-			bulkPublishMajorDocumentVersions(input: $input) {
+		mutation($input: BulkPublishDocumentsInput!) {
+			bulkPublishDocuments(input: $input) {
 				documentVersions { id }
 			}
 		}
 	`, map[string]any{
 		"input": map[string]any{
+			"minor":       false,
 			"documentIds": []string{docID},
 			"changelog":   "Second attempt",
 		},
 	}, &result)
 	require.NoError(t, err)
 
-	assert.Empty(t, result.BulkPublishMajorDocumentVersions.DocumentVersions)
+	assert.Empty(t, result.BulkPublishDocuments.DocumentVersions)
 }
 
 func TestDocumentVersion_BulkPublishMinorSkipsPendingApproval(t *testing.T) {
@@ -628,13 +633,14 @@ func TestDocumentVersion_BulkPublishMinorSkipsPendingApproval(t *testing.T) {
 	// Request approval to put it in PENDING_APPROVAL
 	approverID := getOwnerProfileID(t, owner)
 	_, err = owner.Do(`
-		mutation($input: RequestDocumentVersionApprovalInput!) {
-			requestDocumentVersionApproval(input: $input) {
+		mutation($input: PublishDocumentInput!) {
+			publishDocument(input: $input) {
 				approvalQuorum { id }
 			}
 		}
 	`, map[string]any{
 		"input": map[string]any{
+			"minor":       false,
 			"documentId":  docID,
 			"approverIds": []string{approverID},
 			"changelog":   "Approval request",
@@ -644,28 +650,29 @@ func TestDocumentVersion_BulkPublishMinorSkipsPendingApproval(t *testing.T) {
 
 	// Bulk publish minor — should skip the pending document
 	var result struct {
-		BulkPublishMinorDocumentVersions struct {
+		BulkPublishDocuments struct {
 			DocumentVersions []struct {
 				ID string `json:"id"`
 			} `json:"documentVersions"`
-		} `json:"bulkPublishMinorDocumentVersions"`
+		} `json:"bulkPublishDocuments"`
 	}
 
 	err = owner.Execute(`
-		mutation($input: BulkPublishDocumentVersionsInput!) {
-			bulkPublishMinorDocumentVersions(input: $input) {
+		mutation($input: BulkPublishDocumentsInput!) {
+			bulkPublishDocuments(input: $input) {
 				documentVersions { id }
 			}
 		}
 	`, map[string]any{
 		"input": map[string]any{
+			"minor":       true,
 			"documentIds": []string{docID},
 			"changelog":   "Minor publish attempt",
 		},
 	}, &result)
 	require.NoError(t, err)
 
-	assert.Empty(t, result.BulkPublishMinorDocumentVersions.DocumentVersions)
+	assert.Empty(t, result.BulkPublishDocuments.DocumentVersions)
 }
 
 func TestDocumentVersion_BulkRequestSignatures(t *testing.T) {
@@ -883,13 +890,14 @@ func TestDocumentVersion_VoidApproval(t *testing.T) {
 
 	// Request approval
 	_, err := owner.Do(`
-		mutation($input: RequestDocumentVersionApprovalInput!) {
-			requestDocumentVersionApproval(input: $input) {
+		mutation($input: PublishDocumentInput!) {
+			publishDocument(input: $input) {
 				approvalQuorum { id }
 			}
 		}
 	`, map[string]any{
 		"input": map[string]any{
+			"minor":       false,
 			"documentId":  docID,
 			"approverIds": []string{approverID},
 			"changelog":   "Test changelog",
@@ -1034,13 +1042,14 @@ func TestDocumentVersion_RejectApproval(t *testing.T) {
 
 	// Request approval — version should bump to 1.0
 	_, err := owner.Do(`
-		mutation($input: RequestDocumentVersionApprovalInput!) {
-			requestDocumentVersionApproval(input: $input) {
+		mutation($input: PublishDocumentInput!) {
+			publishDocument(input: $input) {
 				approvalQuorum { id }
 			}
 		}
 	`, map[string]any{
 		"input": map[string]any{
+			"minor":       false,
 			"documentId":  docID,
 			"approverIds": []string{approverID},
 			"changelog":   "Test changelog",
@@ -1181,13 +1190,14 @@ func TestDocumentVersion_PublishBlockedWhenPendingApproval(t *testing.T) {
 
 	// Request approval (puts version in PENDING_APPROVAL)
 	_, err := owner.Do(`
-		mutation($input: RequestDocumentVersionApprovalInput!) {
-			requestDocumentVersionApproval(input: $input) {
+		mutation($input: PublishDocumentInput!) {
+			publishDocument(input: $input) {
 				approvalQuorum { id }
 			}
 		}
 	`, map[string]any{
 		"input": map[string]any{
+			"minor":       false,
 			"documentId":  docID,
 			"approverIds": []string{approverID},
 			"changelog":   "Test changelog",
@@ -1199,13 +1209,14 @@ func TestDocumentVersion_PublishBlockedWhenPendingApproval(t *testing.T) {
 		t.Parallel()
 
 		_, err := owner.Do(`
-			mutation($input: PublishMajorDocumentVersionInput!) {
-				publishMajorDocumentVersion(input: $input) {
+			mutation($input: PublishDocumentInput!) {
+				publishDocument(input: $input) {
 					documentVersion { id }
 				}
 			}
 		`, map[string]any{
 			"input": map[string]any{
+				"minor":      false,
 				"documentId": docID,
 				"changelog":  "Major release",
 			},
@@ -1217,13 +1228,14 @@ func TestDocumentVersion_PublishBlockedWhenPendingApproval(t *testing.T) {
 		t.Parallel()
 
 		_, err := owner.Do(`
-			mutation($input: PublishMinorDocumentVersionInput!) {
-				publishMinorDocumentVersion(input: $input) {
+			mutation($input: PublishDocumentInput!) {
+				publishDocument(input: $input) {
 					documentVersion { id }
 				}
 			}
 		`, map[string]any{
 			"input": map[string]any{
+				"minor":      true,
 				"documentId": docID,
 				"changelog":  "Minor release",
 			},

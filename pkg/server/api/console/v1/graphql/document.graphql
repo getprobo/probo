@@ -536,21 +536,12 @@ extend type Mutation {
     archiveDocument(input: ArchiveDocumentInput!): ArchiveDocumentPayload!
     unarchiveDocument(input: UnarchiveDocumentInput!): UnarchiveDocumentPayload!
     deleteDocument(input: DeleteDocumentInput!): DeleteDocumentPayload!
-    publishMajorDocumentVersion(
-        input: PublishMajorDocumentVersionInput!
-    ): PublishDocumentVersionPayload!
-    publishMinorDocumentVersion(
-        input: PublishMinorDocumentVersionInput!
-    ): PublishDocumentVersionPayload!
-    bulkPublishMajorDocumentVersions(
-        input: BulkPublishDocumentVersionsInput!
-    ): BulkPublishDocumentVersionsPayload!
-    bulkPublishMinorDocumentVersions(
-        input: BulkPublishDocumentVersionsInput!
-    ): BulkPublishDocumentVersionsPayload!
-    requestDocumentVersionApproval(
-        input: RequestDocumentVersionApprovalInput!
-    ): RequestDocumentVersionApprovalPayload!
+    publishDocument(
+        input: PublishDocumentInput!
+    ): PublishDocumentPayload!
+    bulkPublishDocuments(
+        input: BulkPublishDocumentsInput!
+    ): BulkPublishDocumentsPayload!
     voidDocumentVersionApproval(
         input: VoidDocumentVersionApprovalInput!
     ): VoidDocumentVersionApprovalPayload!
@@ -641,25 +632,17 @@ input ExportEmployeeDocumentVersionPDFInput {
     documentVersionId: ID!
 }
 
-input PublishMajorDocumentVersionInput {
+input PublishDocumentInput {
     documentId: ID!
-    changelog: String
-}
-
-input PublishMinorDocumentVersionInput {
-    documentId: ID!
-    changelog: String
-}
-
-input BulkPublishDocumentVersionsInput {
-    documentIds: [ID!]!
+    minor: Boolean!
+    approverIds: [ID!]
     changelog: String!
 }
 
-input RequestDocumentVersionApprovalInput {
-    documentId: ID!
-    approverIds: [ID!]!
-    changelog: String
+input BulkPublishDocumentsInput {
+    documentIds: [ID!]!
+    minor: Boolean!
+    changelog: String!
 }
 
 input VoidDocumentVersionApprovalInput {
@@ -756,18 +739,15 @@ type ExportEmployeeDocumentVersionPDFPayload {
     data: String!
 }
 
-type PublishDocumentVersionPayload {
+type PublishDocumentPayload {
     document: Document!
     documentVersion: DocumentVersion!
+    approvalQuorum: DocumentVersionApprovalQuorum
 }
 
-type BulkPublishDocumentVersionsPayload {
+type BulkPublishDocumentsPayload {
     documentVersions: [DocumentVersion!]!
     documents: [Document!]!
-}
-
-type RequestDocumentVersionApprovalPayload {
-    approvalQuorum: DocumentVersionApprovalQuorum!
 }
 
 type VoidDocumentVersionApprovalPayload {

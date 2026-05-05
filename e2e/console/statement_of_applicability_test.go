@@ -153,6 +153,7 @@ func TestStatementOfApplicability_CreateDocument(t *testing.T) {
 				query,
 				map[string]any{
 					"input": map[string]any{
+						"minor":                      false,
 						"statementOfApplicabilityId": soaID,
 					},
 				},
@@ -230,6 +231,7 @@ func TestStatementOfApplicability_CreateDocument(t *testing.T) {
 				query,
 				map[string]any{
 					"input": map[string]any{
+						"minor":                      false,
 						"statementOfApplicabilityId": soaID,
 						"approverIds":                []string{owner.GetProfileID().String()},
 					},
@@ -291,6 +293,7 @@ func TestStatementOfApplicability_CreateDocument(t *testing.T) {
 
 			input := map[string]any{
 				"input": map[string]any{
+					"minor":                      false,
 					"statementOfApplicabilityId": soaID,
 				},
 			}
@@ -355,6 +358,7 @@ func TestStatementOfApplicability_CreateDocument(t *testing.T) {
 				createQuery,
 				map[string]any{
 					"input": map[string]any{
+						"minor":                      false,
 						"statementOfApplicabilityId": soaID,
 					},
 				},
@@ -426,6 +430,7 @@ func TestStatementOfApplicability_CreateDocument_RBAC(t *testing.T) {
 				query,
 				map[string]any{
 					"input": map[string]any{
+						"minor":                      false,
 						"statementOfApplicabilityId": soaID,
 					},
 				},
@@ -465,6 +470,7 @@ func TestStatementOfApplicability_TenantIsolation(t *testing.T) {
 				query,
 				map[string]any{
 					"input": map[string]any{
+						"minor":                      false,
 						"statementOfApplicabilityId": soaID,
 					},
 				},

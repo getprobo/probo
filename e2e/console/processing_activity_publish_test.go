@@ -92,6 +92,7 @@ func TestProcessingActivity_PublishProcessingActivityList(t *testing.T) {
 				query,
 				map[string]any{
 					"input": map[string]any{
+						"minor":          false,
 						"organizationId": owner.GetOrganizationID(),
 					},
 				},
@@ -153,6 +154,7 @@ func TestProcessingActivity_PublishProcessingActivityList(t *testing.T) {
 				query,
 				map[string]any{
 					"input": map[string]any{
+						"minor":          false,
 						"organizationId": owner.GetOrganizationID(),
 						"approverIds":    []string{owner.GetProfileID().String()},
 					},
@@ -210,6 +212,7 @@ func TestProcessingActivity_PublishProcessingActivityList(t *testing.T) {
 
 			input := map[string]any{
 				"input": map[string]any{
+					"minor":          false,
 					"organizationId": secondOwner.GetOrganizationID(),
 				},
 			}
@@ -267,6 +270,7 @@ func TestProcessingActivity_PublishProcessingActivityList(t *testing.T) {
 				publishQuery,
 				map[string]any{
 					"input": map[string]any{
+						"minor":          false,
 						"organizationId": thirdOwner.GetOrganizationID(),
 					},
 				},
@@ -338,6 +342,7 @@ func TestProcessingActivity_PublishProcessingActivityList_RBAC(t *testing.T) {
 				query,
 				map[string]any{
 					"input": map[string]any{
+						"minor":          false,
 						"organizationId": owner.GetOrganizationID(),
 					},
 				},

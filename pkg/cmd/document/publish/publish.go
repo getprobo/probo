@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package publishminor
+package publish
 
 import (
 	"encoding/json"
@@ -23,9 +23,9 @@ import (
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
 )
 
-const publishMinorMutation = `
-mutation($input: PublishMinorDocumentVersionInput!) {
-  publishMinorDocumentVersion(input: $input) {
+const publishMutation = `
+mutation($input: PublishDocumentInput!) {
+  publishDocument(input: $input) {
     documentVersion {
       id
       title
@@ -33,12 +33,16 @@ mutation($input: PublishMinorDocumentVersionInput!) {
       minor
       status
     }
+    approvalQuorum {
+      id
+      status
+    }
   }
 }
 `
 
 type publishResponse struct {
-	PublishMinorDocumentVersion struct {
+	PublishDocument struct {
 		DocumentVersion struct {
 			ID     string `json:"id"`
 			Title  string `json:"title"`
@@ -46,17 +50,35 @@ type publishResponse struct {
 			Minor  int    `json:"minor"`
 			Status string `json:"status"`
 		} `json:"documentVersion"`
-	} `json:"publishMinorDocumentVersion"`
+		ApprovalQuorum *struct {
+			ID     string `json:"id"`
+			Status string `json:"status"`
+		} `json:"approvalQuorum"`
+	} `json:"publishDocument"`
 }
 
-func NewCmdPublishMinor(f *cmdutil.Factory) *cobra.Command {
-	var flagChangelog string
+func NewCmdPublish(f *cmdutil.Factory) *cobra.Command {
+	var (
+		flagMinor     bool
+		flagApprover  []string
+		flagChangelog string
+	)
 
 	cmd := &cobra.Command{
-		Use:   "publish-minor <document-id>",
-		Short: "Publish a minor version of a document",
-		Args:  cobra.ExactArgs(1),
+		Use:   "publish <document-id>",
+		Short: "Publish a document",
+		Long: `Publish the latest draft of a document.
+
+By default, the draft is published as a new major version. Pass --minor to
+publish as a minor version (the document must already have a major version).
+When --approver is set (one or more profile IDs), an approval is requested
+instead of publishing immediately. Approvers are ignored with --minor.`,
+		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if flagChangelog == "" {
+				return fmt.Errorf("--changelog is required")
+			}
+
 			cfg, err := f.Config()
 			if err != nil {
 				return err
@@ -76,14 +98,16 @@ func NewCmdPublishMinor(f *cmdutil.Factory) *cobra.Command {
 
 			input := map[string]any{
 				"documentId": args[0],
+				"minor":      flagMinor,
+				"changelog":  flagChangelog,
 			}
 
-			if flagChangelog != "" {
-				input["changelog"] = flagChangelog
+			if len(flagApprover) > 0 {
+				input["approverIds"] = flagApprover
 			}
 
 			data, err := client.Do(
-				publishMinorMutation,
+				publishMutation,
 				map[string]any{"input": input},
 			)
 			if err != nil {
@@ -95,10 +119,23 @@ func NewCmdPublishMinor(f *cmdutil.Factory) *cobra.Command {
 				return fmt.Errorf("cannot parse response: %w", err)
 			}
 
-			v := resp.PublishMinorDocumentVersion.DocumentVersion
+			v := resp.PublishDocument.DocumentVersion
+			if resp.PublishDocument.ApprovalQuorum != nil {
+				_, _ = fmt.Fprintf(
+					f.IOStreams.Out,
+					"Requested approval for %s (%s v%d.%d, status %s)\n",
+					v.ID,
+					v.Title,
+					v.Major,
+					v.Minor,
+					v.Status,
+				)
+				return nil
+			}
+
 			_, _ = fmt.Fprintf(
 				f.IOStreams.Out,
-				"Published minor version %s (%s v%d.%d)\n",
+				"Published %s (%s v%d.%d)\n",
 				v.ID,
 				v.Title,
 				v.Major,
@@ -109,7 +146,9 @@ func NewCmdPublishMinor(f *cmdutil.Factory) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&flagChangelog, "changelog", "", "Changelog for this version")
+	cmd.Flags().BoolVar(&flagMinor, "minor", false, "Publish as a minor version (no approval flow)")
+	cmd.Flags().StringArrayVar(&flagApprover, "approver", nil, "Approver profile ID (can be repeated; ignored with --minor)")
+	cmd.Flags().StringVar(&flagChangelog, "changelog", "", "Changelog for this version (required)")
 
 	return cmd
 }

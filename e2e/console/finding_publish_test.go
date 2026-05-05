@@ -88,6 +88,7 @@ func TestFinding_PublishFindingList(t *testing.T) {
 				query,
 				map[string]any{
 					"input": map[string]any{
+						"minor":          false,
 						"organizationId": owner.GetOrganizationID(),
 					},
 				},
@@ -159,6 +160,7 @@ func TestFinding_PublishFindingList(t *testing.T) {
 				query,
 				map[string]any{
 					"input": map[string]any{
+						"minor":          false,
 						"organizationId": owner.GetOrganizationID(),
 						"approverIds":    []string{owner.GetProfileID().String()},
 					},
@@ -218,6 +220,7 @@ func TestFinding_PublishFindingList(t *testing.T) {
 
 			input := map[string]any{
 				"input": map[string]any{
+					"minor":          false,
 					"organizationId": secondOwner.GetOrganizationID(),
 				},
 			}
@@ -280,6 +283,7 @@ func TestFinding_PublishFindingList(t *testing.T) {
 				publishQuery,
 				map[string]any{
 					"input": map[string]any{
+						"minor":          false,
 						"organizationId": thirdOwner.GetOrganizationID(),
 					},
 				},
@@ -351,6 +355,7 @@ func TestFinding_PublishFindingList_RBAC(t *testing.T) {
 				query,
 				map[string]any{
 					"input": map[string]any{
+						"minor":          false,
 						"organizationId": owner.GetOrganizationID(),
 					},
 				},

@@ -34,7 +34,6 @@ import (
 	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/statelesstoken"
-	"go.probo.inc/probo/pkg/validator"
 )
 
 type (
@@ -48,12 +47,6 @@ type (
 	ErrDocumentVersionNotPendingApproval struct{}
 
 	ErrApprovalDecisionAlreadyMade struct{}
-
-	RequestApprovalRequest struct {
-		DocumentID  gid.GID
-		ApproverIDs []gid.GID
-		Changelog   *string
-	}
 
 	ApproveDocumentVersionRequest struct {
 		DocumentVersionID gid.GID
@@ -77,85 +70,6 @@ func (e ErrDocumentVersionNotPendingApproval) Error() string {
 }
 func (e ErrApprovalDecisionAlreadyMade) Error() string {
 	return "approval decision has already been made"
-}
-
-func (req *RequestApprovalRequest) Validate() error {
-	v := validator.New()
-
-	v.Check(req.DocumentID, "document_id", validator.Required(), validator.GID(coredata.DocumentEntityType))
-	v.Check(len(req.ApproverIDs), "approver_ids", validator.Min(1), validator.Max(100))
-	v.Check(req.ApproverIDs, "approver_ids", validator.NoDuplicates())
-	v.CheckEach(req.ApproverIDs, "approver_ids", func(index int, item any) {
-		v.Check(item, fmt.Sprintf("approver_ids[%d]", index), validator.GID(coredata.MembershipProfileEntityType))
-	})
-	v.Check(req.Changelog, "changelog", validator.Required(), validator.SafeText(5000))
-
-	return v.Error()
-}
-
-func (s *DocumentApprovalService) RequestApproval(
-	ctx context.Context,
-	req RequestApprovalRequest,
-) (*coredata.DocumentVersionApprovalQuorum, error) {
-	if err := req.Validate(); err != nil {
-		return nil, err
-	}
-
-	var quorum *coredata.DocumentVersionApprovalQuorum
-
-	err := s.svc.pg.WithTx(
-		ctx,
-		func(ctx context.Context, tx pg.Tx) error {
-			profiles := &coredata.MembershipProfiles{}
-			if err := profiles.LoadByIDs(ctx, tx, s.svc.scope, req.ApproverIDs); err != nil {
-				return fmt.Errorf("cannot load approver profiles: %w", err)
-			}
-
-			now := time.Now()
-			for _, p := range *profiles {
-				if p.ContractEndDate != nil && p.ContractEndDate.Before(now) {
-					return &ErrProfileContractEnded{ProfileID: p.ID}
-				}
-			}
-
-			document := &coredata.Document{}
-			if err := document.LoadByID(ctx, tx, s.svc.scope, req.DocumentID); err != nil {
-				return fmt.Errorf("cannot load document: %w", err)
-			}
-
-			if document.ArchivedAt != nil {
-				return &ErrDocumentArchived{}
-			}
-
-			documentVersion, err := s.loadLatestVersion(ctx, tx, req.DocumentID)
-			if err != nil {
-				return fmt.Errorf("cannot load latest version: %w", err)
-			}
-
-			if documentVersion.Status != coredata.DocumentVersionStatusDraft {
-				return &ErrDocumentVersionNotDraft{}
-			}
-
-			q, err := s.RequestApprovalInTx(ctx, tx, document, documentVersion, req.ApproverIDs, req.Changelog)
-			if err != nil {
-				return err
-			}
-			quorum = q
-
-			defaultApprovers := &coredata.DocumentDefaultApprovers{}
-			if err := defaultApprovers.MergeByDocumentID(ctx, tx, s.svc.scope, req.DocumentID, document.OrganizationID, req.ApproverIDs); err != nil {
-				return fmt.Errorf("cannot update default approvers: %w", err)
-			}
-
-			return nil
-		},
-	)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return quorum, nil
 }
 
 func (s *DocumentApprovalService) RequestApprovalInTx(
@@ -219,7 +133,13 @@ func (s *DocumentApprovalService) RequestApprovalInTx(
 	return quorum, nil
 }
 
-func (s *DocumentApprovalService) BulkPublishMajorVersions(
+// BulkPublishVersions publishes (or requests approval for) the latest draft of
+// each document. When req.Minor is true each draft is published as a minor
+// bump and approvers are not consulted. When req.Minor is false, each
+// document's saved default approvers are honoured: if the document has any,
+// an approval is requested for it; otherwise it is published as a major
+// bump. Documents with no draft (or already pending approval) are skipped.
+func (s *DocumentApprovalService) BulkPublishVersions(
 	ctx context.Context,
 	req BulkPublishVersionsRequest,
 ) ([]*coredata.DocumentVersion, []*coredata.Document, error) {
@@ -235,7 +155,6 @@ func (s *DocumentApprovalService) BulkPublishMajorVersions(
 					return fmt.Errorf("cannot load latest version for %q: %w", documentID, err)
 				}
 
-				// Skip documents already pending approval.
 				if dv.Status == coredata.DocumentVersionStatusPendingApproval {
 					continue
 				}
@@ -249,29 +168,46 @@ func (s *DocumentApprovalService) BulkPublishMajorVersions(
 					return &ErrDocumentArchived{}
 				}
 
-				defaultApprovers := &coredata.DocumentDefaultApprovers{}
-				if err := defaultApprovers.LoadByDocumentID(ctx, tx, s.svc.scope, documentID); err != nil {
-					return fmt.Errorf("cannot load default approvers for %q: %w", documentID, err)
+				// Treat minor on an already-published version as a no-op so the
+				// operation is idempotent: the doc is included in the result
+				// without modification.
+				if req.Minor && dv.Status == coredata.DocumentVersionStatusPublished {
+					publishedVersions = append(publishedVersions, dv)
+					updatedDocuments = append(updatedDocuments, document)
+					continue
 				}
 
 				if dv.Status != coredata.DocumentVersionStatusDraft {
 					continue
 				}
 
-				if len(*defaultApprovers) > 0 {
-					approverIDs := make([]gid.GID, len(*defaultApprovers))
-					for i, a := range *defaultApprovers {
-						approverIDs[i] = a.ApproverProfileID
-					}
-
-					if _, err := s.RequestApprovalInTx(ctx, tx, document, dv, approverIDs, &req.Changelog); err != nil {
-						return fmt.Errorf("cannot request approval for %q: %w", documentID, err)
-					}
-				} else {
+				if req.Minor {
 					var err error
-					document, dv, err = s.svc.Documents.publishMajorVersionInTx(ctx, tx, documentID, &req.Changelog, true)
+					document, dv, err = s.svc.Documents.publishMinorVersionInTx(ctx, tx, documentID, &req.Changelog, true)
 					if err != nil {
 						return fmt.Errorf("cannot publish document %q: %w", documentID, err)
+					}
+				} else {
+					defaultApprovers := &coredata.DocumentDefaultApprovers{}
+					if err := defaultApprovers.LoadByDocumentID(ctx, tx, s.svc.scope, documentID); err != nil {
+						return fmt.Errorf("cannot load default approvers for %q: %w", documentID, err)
+					}
+
+					if len(*defaultApprovers) > 0 {
+						approverIDs := make([]gid.GID, len(*defaultApprovers))
+						for i, a := range *defaultApprovers {
+							approverIDs[i] = a.ApproverProfileID
+						}
+
+						if _, err := s.RequestApprovalInTx(ctx, tx, document, dv, approverIDs, &req.Changelog); err != nil {
+							return fmt.Errorf("cannot request approval for %q: %w", documentID, err)
+						}
+					} else {
+						var err error
+						document, dv, err = s.svc.Documents.publishMajorVersionInTx(ctx, tx, documentID, &req.Changelog, true)
+						if err != nil {
+							return fmt.Errorf("cannot publish document %q: %w", documentID, err)
+						}
 					}
 				}
 

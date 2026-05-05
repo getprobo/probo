@@ -317,13 +317,14 @@ func TestEmployeeDocument_SignableDocuments(t *testing.T) {
 		ownerProfileID := owner.GetProfileID().String()
 
 		_, err := owner.Do(`
-			mutation($input: RequestDocumentVersionApprovalInput!) {
-				requestDocumentVersionApproval(input: $input) {
+			mutation($input: PublishDocumentInput!) {
+				publishDocument(input: $input) {
 					approvalQuorum { id }
 				}
 			}
 		`, map[string]any{
 			"input": map[string]any{
+				"minor":       false,
 				"documentId":  docID,
 				"approverIds": []string{ownerProfileID},
 				"changelog":   "Test changelog",
@@ -373,13 +374,14 @@ func TestEmployeeDocument_FilterModeIsolation(t *testing.T) {
 	adminProfileID := admin.GetProfileID().String()
 
 	_, err := owner.Do(`
-		mutation($input: RequestDocumentVersionApprovalInput!) {
-			requestDocumentVersionApproval(input: $input) {
+		mutation($input: PublishDocumentInput!) {
+			publishDocument(input: $input) {
 				approvalQuorum { id }
 			}
 		}
 	`, map[string]any{
 		"input": map[string]any{
+			"minor":       false,
 			"documentId":  docID,
 			"approverIds": []string{adminProfileID},
 			"changelog":   "Test changelog",
@@ -569,13 +571,14 @@ func TestEmployeeDocument_ApproverFilterModeIsolation(t *testing.T) {
 	ownerProfileID := owner.GetProfileID().String()
 
 	_, err := owner.Do(`
-		mutation($input: RequestDocumentVersionApprovalInput!) {
-			requestDocumentVersionApproval(input: $input) {
+		mutation($input: PublishDocumentInput!) {
+			publishDocument(input: $input) {
 				approvalQuorum { id }
 			}
 		}
 	`, map[string]any{
 		"input": map[string]any{
+			"minor":       false,
 			"documentId":  docID,
 			"approverIds": []string{ownerProfileID},
 			"changelog":   "Test changelog",
@@ -791,13 +794,14 @@ func TestEmployeeDocument_UnapprovedDocument(t *testing.T) {
 	ownerProfileID := owner.GetProfileID().String()
 
 	_, err := owner.Do(`
-		mutation($input: RequestDocumentVersionApprovalInput!) {
-			requestDocumentVersionApproval(input: $input) {
+		mutation($input: PublishDocumentInput!) {
+			publishDocument(input: $input) {
 				approvalQuorum { id }
 			}
 		}
 	`, map[string]any{
 		"input": map[string]any{
+			"minor":       false,
 			"documentId":  docID,
 			"approverIds": []string{ownerProfileID},
 			"changelog":   "Test changelog",
@@ -1032,13 +1036,14 @@ func TestEmployeeDocument_ApprovableDocumentNestedFields(t *testing.T) {
 	ownerProfileID := owner.GetProfileID().String()
 
 	_, err := owner.Do(`
-		mutation($input: RequestDocumentVersionApprovalInput!) {
-			requestDocumentVersionApproval(input: $input) {
+		mutation($input: PublishDocumentInput!) {
+			publishDocument(input: $input) {
 				approvalQuorum { id }
 			}
 		}
 	`, map[string]any{
 		"input": map[string]any{
+			"minor":       false,
 			"documentId":  docID,
 			"approverIds": []string{ownerProfileID},
 			"changelog":   "Test changelog",

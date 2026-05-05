@@ -403,10 +403,13 @@ func (r *mutationResolver) PublishDataList(ctx context.Context, input types.Publ
 
 	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
 
-	document, documentVersion, err := prb.GeneratedDocuments.PublishDataList(ctx, input.OrganizationID, input.ApproverIds)
+	document, documentVersion, err := prb.GeneratedDocuments.PublishDataList(ctx, input.OrganizationID, input.ApproverIds, input.Minor)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 			return nil, gqlutils.Conflict(ctx, err)
+		}
+		if errMinor, ok := errors.AsType[*probo.ErrCannotPublishMinorWithoutMajor](err); ok {
+			return nil, gqlutils.Invalid(ctx, errMinor)
 		}
 		r.logger.ErrorCtx(ctx, "cannot publish data list", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -426,10 +429,13 @@ func (r *mutationResolver) PublishAssetList(ctx context.Context, input types.Pub
 
 	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
 
-	document, documentVersion, err := prb.GeneratedDocuments.PublishAssetList(ctx, input.OrganizationID, input.ApproverIds)
+	document, documentVersion, err := prb.GeneratedDocuments.PublishAssetList(ctx, input.OrganizationID, input.ApproverIds, input.Minor)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 			return nil, gqlutils.Conflict(ctx, err)
+		}
+		if errMinor, ok := errors.AsType[*probo.ErrCannotPublishMinorWithoutMajor](err); ok {
+			return nil, gqlutils.Invalid(ctx, errMinor)
 		}
 		r.logger.ErrorCtx(ctx, "cannot publish asset list", log.Error(err))
 		return nil, gqlutils.Internal(ctx)

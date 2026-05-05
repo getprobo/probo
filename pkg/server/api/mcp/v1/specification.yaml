@@ -5965,31 +5965,29 @@ components:
         document_version:
           $ref: "#/components/schemas/DocumentVersion"
 
-    PublishMajorDocumentVersionInput:
+    PublishDocumentInput:
       type: object
       required:
         - document_id
+        - minor
+        - changelog
       properties:
         document_id:
           $ref: "#/components/schemas/GID"
           description: Document ID
+        minor:
+          type: boolean
+          description: When true, publish the draft as a minor version (currentMajor.currentMinor+1) and ignore approver_ids; the document must already have a published major version. When false, publish as a new major version; if approver_ids are provided, an approval is requested instead.
+        approver_ids:
+          type: array
+          items:
+            $ref: "#/components/schemas/GID"
+          description: Approver profile IDs (ignored when minor is true)
         changelog:
           type: string
           description: Changelog for this version
 
-    PublishMinorDocumentVersionInput:
-      type: object
-      required:
-        - document_id
-      properties:
-        document_id:
-          $ref: "#/components/schemas/GID"
-          description: Document ID
-        changelog:
-          type: string
-          description: Changelog for this version
-
-    PublishDocumentVersionOutput:
+    PublishDocumentOutput:
       type: object
       description: document_version.content is markdown
       required:
@@ -6000,33 +5998,9 @@ components:
           $ref: "#/components/schemas/Document"
         document_version:
           $ref: "#/components/schemas/DocumentVersion"
-
-    RequestDocumentVersionApprovalInput:
-      type: object
-      required:
-        - document_id
-        - approver_ids
-      properties:
-        document_id:
-          $ref: "#/components/schemas/GID"
-          description: Document ID
-        approver_ids:
-          type: array
-          items:
-            $ref: "#/components/schemas/GID"
-          description: Approver profile IDs
-        changelog:
-          type: string
-          description: Changelog for this version
-
-    RequestDocumentVersionApprovalOutput:
-      type: object
-      description: document_version.content is markdown
-      required:
-        - document_version
-      properties:
-        document_version:
-          $ref: "#/components/schemas/DocumentVersion"
+        approval_quorum:
+          $ref: "#/components/schemas/DocumentVersionApprovalQuorum"
+          description: Set when an approval was requested instead of publishing.
 
     DeleteDocumentInput:
       type: object
@@ -6721,6 +6695,7 @@ components:
       type: object
       required:
         - organization_id
+        - minor
       properties:
         organization_id:
           $ref: "#/components/schemas/GID"
@@ -6729,7 +6704,10 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/GID"
-          description: Optional approver profile IDs. If provided, creates a draft pending approval instead of publishing immediately.
+          description: Optional approver profile IDs. When minor is false and at least one ID is provided, an approval is requested as a major version. Ignored when minor is true.
+        minor:
+          type: boolean
+          description: When true, publish as a minor version (currentMajor.currentMinor+1) and ignore approver_ids; the document must already have a published major version. When false, publish as a new major version; if approver_ids are provided, an approval is requested instead.
 
     PublishDataListOutput:
       type: object
@@ -6748,6 +6726,7 @@ components:
       type: object
       required:
         - organization_id
+        - minor
       properties:
         organization_id:
           $ref: "#/components/schemas/GID"
@@ -6756,7 +6735,10 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/GID"
-          description: Optional approver profile IDs. If provided, creates a draft pending approval instead of publishing immediately.
+          description: Optional approver profile IDs. When minor is false and at least one ID is provided, an approval is requested as a major version. Ignored when minor is true.
+        minor:
+          type: boolean
+          description: When true, publish as a minor version (currentMajor.currentMinor+1) and ignore approver_ids; the document must already have a published major version. When false, publish as a new major version; if approver_ids are provided, an approval is requested instead.
 
     PublishAssetListOutput:
       type: object
@@ -6775,6 +6757,7 @@ components:
       type: object
       required:
         - organization_id
+        - minor
       properties:
         organization_id:
           $ref: "#/components/schemas/GID"
@@ -6783,7 +6766,10 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/GID"
-          description: Optional approver profile IDs. If provided, creates a draft pending approval instead of publishing immediately.
+          description: Optional approver profile IDs. When minor is false and at least one ID is provided, an approval is requested as a major version. Ignored when minor is true.
+        minor:
+          type: boolean
+          description: When true, publish as a minor version (currentMajor.currentMinor+1) and ignore approver_ids; the document must already have a published major version. When false, publish as a new major version; if approver_ids are provided, an approval is requested instead.
 
     PublishFindingListOutput:
       type: object
@@ -6802,6 +6788,7 @@ components:
       type: object
       required:
         - organization_id
+        - minor
       properties:
         organization_id:
           $ref: "#/components/schemas/GID"
@@ -6810,7 +6797,10 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/GID"
-          description: Optional approver profile IDs. If provided, creates a draft pending approval instead of publishing immediately.
+          description: Optional approver profile IDs. When minor is false and at least one ID is provided, an approval is requested as a major version. Ignored when minor is true.
+        minor:
+          type: boolean
+          description: When true, publish as a minor version (currentMajor.currentMinor+1) and ignore approver_ids; the document must already have a published major version. When false, publish as a new major version; if approver_ids are provided, an approval is requested instead.
 
     PublishObligationListOutput:
       type: object
@@ -6829,6 +6819,7 @@ components:
       type: object
       required:
         - organization_id
+        - minor
       properties:
         organization_id:
           $ref: "#/components/schemas/GID"
@@ -6837,7 +6828,10 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/GID"
-          description: Optional approver profile IDs. If provided, creates a draft pending approval instead of publishing immediately.
+          description: Optional approver profile IDs. When minor is false and at least one ID is provided, an approval is requested as a major version. Ignored when minor is true.
+        minor:
+          type: boolean
+          description: When true, publish as a minor version (currentMajor.currentMinor+1) and ignore approver_ids; the document must already have a published major version. When false, publish as a new major version; if approver_ids are provided, an approval is requested instead.
 
     PublishProcessingActivityListOutput:
       type: object
@@ -6856,6 +6850,7 @@ components:
       type: object
       required:
         - organization_id
+        - minor
       properties:
         organization_id:
           $ref: "#/components/schemas/GID"
@@ -6864,7 +6859,10 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/GID"
-          description: Optional approver profile IDs. If provided, creates a draft pending approval instead of publishing immediately.
+          description: Optional approver profile IDs. When minor is false and at least one ID is provided, an approval is requested as a major version. Ignored when minor is true.
+        minor:
+          type: boolean
+          description: When true, publish as a minor version (currentMajor.currentMinor+1) and ignore approver_ids; the document must already have a published major version. When false, publish as a new major version; if approver_ids are provided, an approval is requested instead.
 
     PublishDataProtectionImpactAssessmentListOutput:
       type: object
@@ -6883,6 +6881,7 @@ components:
       type: object
       required:
         - organization_id
+        - minor
       properties:
         organization_id:
           $ref: "#/components/schemas/GID"
@@ -6891,7 +6890,10 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/GID"
-          description: Optional approver profile IDs. If provided, creates a draft pending approval instead of publishing immediately.
+          description: Optional approver profile IDs. When minor is false and at least one ID is provided, an approval is requested as a major version. Ignored when minor is true.
+        minor:
+          type: boolean
+          description: When true, publish as a minor version (currentMajor.currentMinor+1) and ignore approver_ids; the document must already have a published major version. When false, publish as a new major version; if approver_ids are provided, an approval is requested instead.
 
     PublishTransferImpactAssessmentListOutput:
       type: object
@@ -6910,6 +6912,7 @@ components:
       type: object
       required:
         - organization_id
+        - minor
       properties:
         organization_id:
           $ref: "#/components/schemas/GID"
@@ -6918,7 +6921,10 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/GID"
-          description: Optional approver profile IDs. If provided, creates a draft pending approval instead of publishing immediately.
+          description: Optional approver profile IDs. When minor is false and at least one ID is provided, an approval is requested as a major version. Ignored when minor is true.
+        minor:
+          type: boolean
+          description: When true, publish as a minor version (currentMajor.currentMinor+1) and ignore approver_ids; the document must already have a published major version. When false, publish as a new major version; if approver_ids are provided, an approval is requested instead.
 
     PublishVendorListOutput:
       type: object
@@ -6937,6 +6943,7 @@ components:
       type: object
       required:
         - organization_id
+        - minor
       properties:
         organization_id:
           $ref: "#/components/schemas/GID"
@@ -6945,7 +6952,10 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/GID"
-          description: Optional approver profile IDs. If provided, creates a draft pending approval instead of publishing immediately.
+          description: Optional approver profile IDs. When minor is false and at least one ID is provided, an approval is requested as a major version. Ignored when minor is true.
+        minor:
+          type: boolean
+          description: When true, publish as a minor version (currentMajor.currentMinor+1) and ignore approver_ids; the document must already have a published major version. When false, publish as a new major version; if approver_ids are provided, an approval is requested instead.
 
     PublishRiskListOutput:
       type: object
@@ -6964,6 +6974,7 @@ components:
       type: object
       required:
         - id
+        - minor
       properties:
         id:
           $ref: "#/components/schemas/GID"
@@ -6972,7 +6983,10 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/GID"
-          description: Optional approver profile IDs. If provided, creates a draft pending approval instead of publishing immediately.
+          description: Optional approver profile IDs. When minor is false and at least one ID is provided, an approval is requested as a major version. Ignored when minor is true.
+        minor:
+          type: boolean
+          description: When true, publish as a minor version (currentMajor.currentMinor+1) and ignore approver_ids; the document must already have a published major version. When false, publish as a new major version; if approver_ids are provided, an approval is requested instead.
 
     PublishStatementOfApplicabilityOutput:
       type: object
@@ -11231,30 +11245,14 @@ tools:
       $ref: "#/components/schemas/GetDocumentVersionInput"
     outputSchema:
       $ref: "#/components/schemas/GetDocumentVersionOutput"
-  - name: publishMajorDocumentVersion
-    description: Publish a draft document version as a new major version
+  - name: publishDocument
+    description: Publish the latest draft of a document. Set minor=true to publish a minor version (no approval flow). When minor=false, providing approver_ids triggers an approval request as a new major version; otherwise the draft is published immediately as a new major version.
     hints:
       readonly: false
     inputSchema:
-      $ref: "#/components/schemas/PublishMajorDocumentVersionInput"
+      $ref: "#/components/schemas/PublishDocumentInput"
     outputSchema:
-      $ref: "#/components/schemas/PublishDocumentVersionOutput"
-  - name: publishMinorDocumentVersion
-    description: Publish a draft document version as a minor version
-    hints:
-      readonly: false
-    inputSchema:
-      $ref: "#/components/schemas/PublishMinorDocumentVersionInput"
-    outputSchema:
-      $ref: "#/components/schemas/PublishDocumentVersionOutput"
-  - name: requestDocumentVersionApproval
-    description: Request approval for a document version
-    hints:
-      readonly: false
-    inputSchema:
-      $ref: "#/components/schemas/RequestDocumentVersionApprovalInput"
-    outputSchema:
-      $ref: "#/components/schemas/RequestDocumentVersionApprovalOutput"
+      $ref: "#/components/schemas/PublishDocumentOutput"
   - name: deleteDocument
     description: Delete a document
     hints:

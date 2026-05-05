@@ -25,9 +25,7 @@ import * as getAllVersionsOp from './getAllVersions.operation';
 import * as createDraftVersionOp from './createDraftVersion.operation';
 import * as updateVersionOp from './updateVersion.operation';
 import * as deleteDraftVersionOp from './deleteDraftVersion.operation';
-import * as publishMajorVersionOp from './publishMajorVersion.operation';
-import * as publishMinorVersionOp from './publishMinorVersion.operation';
-import * as requestApprovalOp from './requestApproval.operation';
+import * as publishOp from './publish.operation';
 import * as voidApprovalOp from './voidApproval.operation';
 import * as getSignatureOp from './getSignature.operation';
 import * as getAllSignaturesOp from './getAllSignatures.operation';
@@ -148,22 +146,10 @@ export const description: INodeProperties[] = [
 				action: 'Get a document version',
 			},
 			{
-				name: 'Publish Major Version',
-				value: 'publishMajorVersion',
-				description: 'Publish a draft as a new major version',
-				action: 'Publish a major document version',
-			},
-			{
-				name: 'Publish Minor Version',
-				value: 'publishMinorVersion',
-				description: 'Publish a draft as a minor version',
-				action: 'Publish a minor document version',
-			},
-			{
-				name: 'Request Approval',
-				value: 'requestApproval',
-				description: 'Request approval for a document version',
-				action: 'Request document version approval',
+				name: 'Publish',
+				value: 'publish',
+				description: 'Publish a draft document, request approval, or publish as minor',
+				action: 'Publish a document',
 			},
 			{
 				name: 'Request Signature',
@@ -216,9 +202,7 @@ export const description: INodeProperties[] = [
 	...createDraftVersionOp.description,
 	...updateVersionOp.description,
 	...deleteDraftVersionOp.description,
-	...publishMajorVersionOp.description,
-	...publishMinorVersionOp.description,
-	...requestApprovalOp.description,
+	...publishOp.description,
 	...voidApprovalOp.description,
 	...getSignatureOp.description,
 	...getAllSignaturesOp.description,
@@ -244,9 +228,7 @@ export {
 	createDraftVersionOp as createDraftVersion,
 	updateVersionOp as updateVersion,
 	deleteDraftVersionOp as deleteDraftVersion,
-	publishMajorVersionOp as publishMajorVersion,
-	publishMinorVersionOp as publishMinorVersion,
-	requestApprovalOp as requestApproval,
+	publishOp as publish,
 	voidApprovalOp as voidApproval,
 	getSignatureOp as getSignature,
 	getAllSignaturesOp as getAllSignatures,

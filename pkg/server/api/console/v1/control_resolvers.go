@@ -771,10 +771,13 @@ func (r *mutationResolver) PublishStatementOfApplicability(ctx context.Context, 
 
 	prb := r.ProboService(ctx, input.StatementOfApplicabilityID.TenantID())
 
-	document, documentVersion, err := prb.GeneratedDocuments.PublishStatementOfApplicability(ctx, input.StatementOfApplicabilityID, input.ApproverIds)
+	document, documentVersion, err := prb.GeneratedDocuments.PublishStatementOfApplicability(ctx, input.StatementOfApplicabilityID, input.ApproverIds, input.Minor)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 			return nil, gqlutils.Conflict(ctx, err)
+		}
+		if errMinor, ok := errors.AsType[*probo.ErrCannotPublishMinorWithoutMajor](err); ok {
+			return nil, gqlutils.Invalid(ctx, errMinor)
 		}
 		r.logger.ErrorCtx(ctx, "cannot publish statement of applicability", log.Error(err))
 		return nil, gqlutils.Internal(ctx)

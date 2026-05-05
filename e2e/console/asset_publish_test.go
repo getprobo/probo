@@ -90,6 +90,7 @@ func TestAsset_PublishAssetList(t *testing.T) {
 				query,
 				map[string]any{
 					"input": map[string]any{
+						"minor":          false,
 						"organizationId": owner.GetOrganizationID(),
 					},
 				},
@@ -161,6 +162,7 @@ func TestAsset_PublishAssetList(t *testing.T) {
 				query,
 				map[string]any{
 					"input": map[string]any{
+						"minor":          false,
 						"organizationId": owner.GetOrganizationID(),
 						"approverIds":    []string{owner.GetProfileID().String()},
 					},
@@ -221,6 +223,7 @@ func TestAsset_PublishAssetList(t *testing.T) {
 
 			input := map[string]any{
 				"input": map[string]any{
+					"minor":          false,
 					"organizationId": secondOwner.GetOrganizationID(),
 				},
 			}
@@ -284,6 +287,7 @@ func TestAsset_PublishAssetList(t *testing.T) {
 				publishQuery,
 				map[string]any{
 					"input": map[string]any{
+						"minor":          false,
 						"organizationId": thirdOwner.GetOrganizationID(),
 					},
 				},
@@ -356,6 +360,7 @@ func TestAsset_PublishAssetList_RBAC(t *testing.T) {
 				query,
 				map[string]any{
 					"input": map[string]any{
+						"minor":          false,
 						"organizationId": owner.GetOrganizationID(),
 					},
 				},
