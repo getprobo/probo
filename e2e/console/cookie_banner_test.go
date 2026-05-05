@@ -159,7 +159,7 @@ func TestCookieBanner_Create(t *testing.T) {
 			query($id: ID!) {
 				node(id: $id) {
 					... on CookieBanner {
-						categories(first: 10) {
+						consentCategories(first: 10) {
 							totalCount
 							edges {
 								node {
@@ -176,7 +176,7 @@ func TestCookieBanner_Create(t *testing.T) {
 
 		var result struct {
 			Node struct {
-				Categories struct {
+				ConsentCategories struct {
 					TotalCount int `json:"totalCount"`
 					Edges      []struct {
 						Node struct {
@@ -185,16 +185,16 @@ func TestCookieBanner_Create(t *testing.T) {
 							Kind string `json:"kind"`
 						} `json:"node"`
 					} `json:"edges"`
-				} `json:"categories"`
+				} `json:"consentCategories"`
 			} `json:"node"`
 		}
 
 		err := owner.Execute(query, map[string]any{"id": bannerID}, &result)
 		require.NoError(t, err)
-		assert.Greater(t, result.Node.Categories.TotalCount, 0)
+		assert.Greater(t, result.Node.ConsentCategories.TotalCount, 0)
 
 		kinds := make(map[string]bool)
-		for _, e := range result.Node.Categories.Edges {
+		for _, e := range result.Node.ConsentCategories.Edges {
 			kinds[e.Node.Kind] = true
 		}
 		assert.True(t, kinds["NECESSARY"], "should have a NECESSARY category")

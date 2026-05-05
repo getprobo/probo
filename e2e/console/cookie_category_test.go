@@ -313,7 +313,7 @@ func TestCookieCategory_Delete(t *testing.T) {
 			query($id: ID!) {
 				node(id: $id) {
 					... on CookieBanner {
-						categories(first: 20) {
+						consentCategories(first: 20) {
 							edges {
 								node {
 									id
@@ -328,14 +328,14 @@ func TestCookieCategory_Delete(t *testing.T) {
 
 		var listResult struct {
 			Node struct {
-				Categories struct {
-					Edges []struct {
-						Node struct {
-							ID   string `json:"id"`
-							Kind string `json:"kind"`
-						} `json:"node"`
-					} `json:"edges"`
-				} `json:"categories"`
+			ConsentCategories struct {
+				Edges []struct {
+					Node struct {
+						ID   string `json:"id"`
+						Kind string `json:"kind"`
+					} `json:"node"`
+				} `json:"edges"`
+			} `json:"consentCategories"`
 			} `json:"node"`
 		}
 
@@ -343,7 +343,7 @@ func TestCookieCategory_Delete(t *testing.T) {
 		require.NoError(t, err)
 
 		var necessaryCategoryID string
-		for _, e := range listResult.Node.Categories.Edges {
+		for _, e := range listResult.Node.ConsentCategories.Edges {
 			if e.Node.Kind == "NECESSARY" {
 				necessaryCategoryID = e.Node.ID
 				break
@@ -420,7 +420,7 @@ func TestCookieCategory_List(t *testing.T) {
 			query($id: ID!) {
 				node(id: $id) {
 					... on CookieBanner {
-						categories(first: 20, orderBy: {field: RANK, direction: ASC}) {
+						consentCategories(first: 20, orderBy: {field: RANK, direction: ASC}) {
 							totalCount
 							edges {
 								node {
@@ -440,19 +440,19 @@ func TestCookieCategory_List(t *testing.T) {
 
 		var result struct {
 			Node struct {
-				Categories struct {
-					TotalCount int `json:"totalCount"`
-					Edges      []struct {
-						Node struct {
-							ID   string `json:"id"`
-							Rank int    `json:"rank"`
-						} `json:"node"`
-					} `json:"edges"`
-					PageInfo struct {
-						HasNextPage     bool `json:"hasNextPage"`
-						HasPreviousPage bool `json:"hasPreviousPage"`
-					} `json:"pageInfo"`
-				} `json:"categories"`
+			ConsentCategories struct {
+				TotalCount int `json:"totalCount"`
+				Edges      []struct {
+					Node struct {
+						ID   string `json:"id"`
+						Rank int    `json:"rank"`
+					} `json:"node"`
+				} `json:"edges"`
+				PageInfo struct {
+					HasNextPage     bool `json:"hasNextPage"`
+					HasPreviousPage bool `json:"hasPreviousPage"`
+				} `json:"pageInfo"`
+			} `json:"consentCategories"`
 			} `json:"node"`
 		}
 
@@ -460,13 +460,13 @@ func TestCookieCategory_List(t *testing.T) {
 		require.NoError(t, err)
 
 		// Default categories + 2 custom ones
-		assert.GreaterOrEqual(t, result.Node.Categories.TotalCount, 4)
+		assert.GreaterOrEqual(t, result.Node.ConsentCategories.TotalCount, 4)
 
 		// Verify ordering (ranks should be ascending)
-		for i := 1; i < len(result.Node.Categories.Edges); i++ {
+		for i := 1; i < len(result.Node.ConsentCategories.Edges); i++ {
 			assert.GreaterOrEqual(t,
-				result.Node.Categories.Edges[i].Node.Rank,
-				result.Node.Categories.Edges[i-1].Node.Rank,
+				result.Node.ConsentCategories.Edges[i].Node.Rank,
+				result.Node.ConsentCategories.Edges[i-1].Node.Rank,
 			)
 		}
 	})
