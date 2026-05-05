@@ -50,7 +50,7 @@ func NewPatternAnalysisWorker(
 	}
 
 	return worker.New(
-		"cookie-pattern-analysis-worker",
+		"tracker-pattern-analysis-worker",
 		h,
 		logger,
 		opts...,
@@ -94,13 +94,14 @@ func (h *patternAnalysisHandler) Process(ctx context.Context, banner coredata.Co
 				hasUncategorised = false
 			}
 
-			var exactPatterns coredata.CookiePatterns
+			var exactPatterns coredata.TrackerPatterns
 			if err := exactPatterns.LoadAllByCookieBannerID(
 				ctx,
 				tx,
 				scope,
 				banner.ID,
 				coredata.NewCookiePatternFilter(new(coredata.CookiePatternMatchTypeExact), nil, new(false)),
+				nil,
 			); err != nil {
 				return fmt.Errorf("cannot load exact patterns: %w", err)
 			}
@@ -113,11 +114,12 @@ func (h *patternAnalysisHandler) Process(ctx context.Context, banner coredata.Co
 				maxAge := mostCommonMaxAge(group)
 				source := bestSource(group)
 
-				prefixPattern := &coredata.CookiePattern{
-					ID:               gid.New(banner.ID.TenantID(), coredata.CookiePatternEntityType),
+				prefixPattern := &coredata.TrackerPattern{
+					ID:               gid.New(banner.ID.TenantID(), coredata.TrackerPatternEntityType),
 					OrganizationID:   group[0].OrganizationID,
 					CookieBannerID:   banner.ID,
 					CookieCategoryID: key.categoryID,
+					TrackerType:      key.trackerType,
 					Pattern:          key.prefix,
 					MatchType:        coredata.CookiePatternMatchTypePrefix,
 					DisplayName:      key.prefix + "*",
@@ -133,7 +135,7 @@ func (h *patternAnalysisHandler) Process(ctx context.Context, banner coredata.Co
 					return fmt.Errorf("cannot insert prefix pattern %q: %w", key.prefix, err)
 				}
 				if !inserted {
-					if err := prefixPattern.LoadByBannerIDAndPattern(ctx, tx, scope, banner.ID, key.prefix); err != nil {
+					if err := prefixPattern.LoadByBannerIDTypeAndPattern(ctx, tx, scope, banner.ID, key.trackerType, key.prefix); err != nil {
 						return fmt.Errorf("cannot load existing prefix pattern %q: %w", key.prefix, err)
 					}
 
@@ -143,9 +145,9 @@ func (h *patternAnalysisHandler) Process(ctx context.Context, banner coredata.Co
 				}
 
 				for _, exactPattern := range group {
-					var cookies coredata.Cookies
-					if err := cookies.RelinkByCookiePatternID(ctx, tx, scope, exactPattern.ID, prefixPattern.ID); err != nil {
-						return fmt.Errorf("cannot relink cookies from pattern %q: %w", exactPattern.Pattern, err)
+					var trackers coredata.DetectedTrackers
+					if err := trackers.RelinkByTrackerPatternID(ctx, tx, scope, exactPattern.ID, prefixPattern.ID); err != nil {
+						return fmt.Errorf("cannot relink detected trackers from pattern %q: %w", exactPattern.Pattern, err)
 					}
 
 					if err := exactPattern.Delete(ctx, tx, scope); err != nil {
@@ -170,7 +172,7 @@ func (h *patternAnalysisHandler) Process(ctx context.Context, banner coredata.Co
 				return fmt.Errorf("cannot adopt uncategorised patterns: %w", err)
 			}
 
-			var patterns coredata.CookiePatterns
+			var patterns coredata.TrackerPatterns
 			if err := patterns.RefreshLastMatchedAtByCookieBannerID(ctx, tx, scope, banner.ID); err != nil {
 				return fmt.Errorf("cannot refresh last_matched_at: %w", err)
 			}
@@ -187,25 +189,26 @@ func (h *patternAnalysisHandler) Process(ctx context.Context, banner coredata.Co
 }
 
 type mergeGroupKey struct {
-	categoryID gid.GID
-	prefix     string
+	categoryID  gid.GID
+	trackerType coredata.TrackerType
+	prefix      string
 }
 
 func findMergeGroups(
-	patterns coredata.CookiePatterns,
+	patterns coredata.TrackerPatterns,
 	threshold int,
-) map[mergeGroupKey][]*coredata.CookiePattern {
-	prefixCounts := make(map[mergeGroupKey][]*coredata.CookiePattern)
+) map[mergeGroupKey][]*coredata.TrackerPattern {
+	prefixCounts := make(map[mergeGroupKey][]*coredata.TrackerPattern)
 	for _, p := range patterns {
 		for _, pfx := range separatorPrefixes(p.Pattern) {
-			key := mergeGroupKey{categoryID: p.CookieCategoryID, prefix: pfx}
+			key := mergeGroupKey{categoryID: p.CookieCategoryID, trackerType: p.TrackerType, prefix: pfx}
 			prefixCounts[key] = append(prefixCounts[key], p)
 		}
 	}
 
 	type candidate struct {
 		key      mergeGroupKey
-		patterns []*coredata.CookiePattern
+		patterns []*coredata.TrackerPattern
 	}
 
 	var candidates []candidate
@@ -219,11 +222,11 @@ func findMergeGroups(
 		return len(candidates[i].key.prefix) > len(candidates[j].key.prefix)
 	})
 
-	assigned := make(map[*coredata.CookiePattern]bool)
-	groups := make(map[mergeGroupKey][]*coredata.CookiePattern)
+	assigned := make(map[*coredata.TrackerPattern]bool)
+	groups := make(map[mergeGroupKey][]*coredata.TrackerPattern)
 
 	for _, c := range candidates {
-		var unassigned []*coredata.CookiePattern
+		var unassigned []*coredata.TrackerPattern
 		for _, p := range c.patterns {
 			if !assigned[p] {
 				unassigned = append(unassigned, p)
@@ -253,16 +256,17 @@ func separatorPrefixes(name string) []string {
 	return prefixes
 }
 
-func bestSource(patterns []*coredata.CookiePattern) coredata.CookieSource {
+func bestSource(patterns []*coredata.TrackerPattern) *coredata.CookieSource {
 	for _, p := range patterns {
-		if p.Source == coredata.CookieSourceScript {
-			return coredata.CookieSourceScript
+		if p.Source != nil && *p.Source == coredata.CookieSourceScript {
+			return p.Source
 		}
 	}
-	return coredata.CookieSourcePreExisting
+	src := coredata.CookieSourcePreExisting
+	return &src
 }
 
-func mostCommonMaxAge(patterns []*coredata.CookiePattern) *int {
+func mostCommonMaxAge(patterns []*coredata.TrackerPattern) *int {
 	type key struct {
 		valid bool
 		val   int
@@ -309,13 +313,14 @@ func (h *patternAnalysisHandler) adoptUncategorisedPatterns(
 		return false, fmt.Errorf("cannot load uncategorised category: %w", err)
 	}
 
-	var prefixPatterns coredata.CookiePatterns
+	var prefixPatterns coredata.TrackerPatterns
 	if err := prefixPatterns.LoadAllByCookieBannerID(
 		ctx,
 		tx,
 		scope,
 		banner.ID,
 		coredata.NewCookiePatternFilter(new(coredata.CookiePatternMatchTypePrefix), nil, new(false)),
+		nil,
 	); err != nil {
 		return false, fmt.Errorf("cannot load prefix patterns: %w", err)
 	}
@@ -329,22 +334,23 @@ func (h *patternAnalysisHandler) adoptUncategorisedPatterns(
 	})
 
 	exactMatchType := coredata.CookiePatternMatchTypeExact
-	var uncategorisedExact coredata.CookiePatterns
+	var uncategorisedExact coredata.TrackerPatterns
 	if err := uncategorisedExact.LoadAllByCookieBannerID(
 		ctx,
 		tx,
 		scope,
 		banner.ID,
 		coredata.NewCookiePatternFilter(&exactMatchType, &uncategorised.ID, new(false)),
+		nil,
 	); err != nil {
 		return false, fmt.Errorf("cannot load uncategorised exact patterns: %w", err)
 	}
 
 	adopted := false
 	for _, ep := range uncategorisedExact {
-		var match *coredata.CookiePattern
+		var match *coredata.TrackerPattern
 		for _, pp := range prefixPatterns {
-			if strings.HasPrefix(ep.Pattern, pp.Pattern) {
+			if ep.TrackerType == pp.TrackerType && strings.HasPrefix(ep.Pattern, pp.Pattern) {
 				match = pp
 				break
 			}
@@ -354,9 +360,9 @@ func (h *patternAnalysisHandler) adoptUncategorisedPatterns(
 			continue
 		}
 
-		var cookies coredata.Cookies
-		if err := cookies.RelinkByCookiePatternID(ctx, tx, scope, ep.ID, match.ID); err != nil {
-			return false, fmt.Errorf("cannot relink cookies from pattern %q: %w", ep.Pattern, err)
+		var trackers coredata.DetectedTrackers
+		if err := trackers.RelinkByTrackerPatternID(ctx, tx, scope, ep.ID, match.ID); err != nil {
+			return false, fmt.Errorf("cannot relink detected trackers from pattern %q: %w", ep.Pattern, err)
 		}
 
 		if err := ep.Delete(ctx, tx, scope); err != nil {

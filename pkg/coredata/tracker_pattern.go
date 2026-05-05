@@ -118,6 +118,68 @@ LIMIT 1;
 	return nil
 }
 
+func (tp *TrackerPattern) LoadByBannerIDTypeAndPattern(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	cookieBannerID gid.GID,
+	trackerType TrackerType,
+	pattern string,
+) error {
+	q := `
+SELECT
+	id,
+	organization_id,
+	cookie_banner_id,
+	cookie_category_id,
+	tracker_type,
+	pattern,
+	match_type,
+	display_name,
+	description,
+	excluded,
+	max_age_seconds,
+	source,
+	last_matched_at,
+	created_at,
+	updated_at
+FROM
+	tracker_patterns
+WHERE
+	%s
+	AND cookie_banner_id = @cookie_banner_id
+	AND tracker_type = @tracker_type
+	AND pattern = @pattern
+LIMIT 1;
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"cookie_banner_id": cookieBannerID,
+		"tracker_type":     trackerType,
+		"pattern":          pattern,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query tracker patterns: %w", err)
+	}
+
+	p, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[TrackerPattern])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+		return fmt.Errorf("cannot collect tracker pattern: %w", err)
+	}
+
+	*tp = p
+
+	return nil
+}
+
 func (tp *TrackerPattern) FindMatchingPattern(
 	ctx context.Context,
 	conn pg.Querier,
@@ -475,6 +537,41 @@ ORDER BY
 	}
 
 	*tps = patterns
+
+	return nil
+}
+
+func (tps *TrackerPatterns) RefreshLastMatchedAtByCookieBannerID(
+	ctx context.Context,
+	tx pg.Tx,
+	scope Scoper,
+	cookieBannerID gid.GID,
+) error {
+	q := `
+UPDATE tracker_patterns
+SET
+	last_matched_at = sub.max_detected
+FROM (
+	SELECT tracker_pattern_id, MAX(last_detected_at) AS max_detected
+	FROM detected_trackers
+	WHERE %[1]s AND cookie_banner_id = @cookie_banner_id
+	GROUP BY tracker_pattern_id
+) sub
+WHERE
+	tracker_patterns.id = sub.tracker_pattern_id
+	AND %[1]s
+	AND tracker_patterns.cookie_banner_id = @cookie_banner_id
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"cookie_banner_id": cookieBannerID}
+	maps.Copy(args, scope.SQLArguments())
+
+	_, err := tx.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot refresh last_matched_at for banner tracker patterns: %w", err)
+	}
 
 	return nil
 }
