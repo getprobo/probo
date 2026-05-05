@@ -53,7 +53,7 @@ func NewMux(
 		r.Get("/consents/{visitorID}", h.handleGetConsent)
 		r.Post("/consents", h.handlePostConsent)
 		r.Post("/detected-cookies", h.handleReportDetectedCookies)
-		r.Post("/detected-trackers", h.handleReportDetectedTrackers)
+		r.Post("/report", h.handleReportDetectedTrackers)
 	})
 
 	return r
