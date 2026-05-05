@@ -778,8 +778,12 @@ func (impl *Implm) runApiServer(
 	ctx, span := tracer.Start(ctx, "probod.runApiServer")
 	defer span.End()
 
-	trustedProxies := parseIPs(impl.cfg.Api.ProxyProtocol.TrustedProxies)
-	handler = trustedproxy.NewMiddleware(trustedProxies)(handler)
+	trustedProxyMiddleware, err := trustedproxy.NewMiddleware(impl.cfg.Api.ProxyProtocol.TrustedProxies)
+	if err != nil {
+		span.RecordError(err)
+		return fmt.Errorf("cannot build trusted proxy middleware: %w", err)
+	}
+	handler = trustedProxyMiddleware(handler)
 
 	apiServer := httpserver.NewServer(
 		impl.cfg.Api.Addr,
@@ -799,7 +803,11 @@ func (impl *Implm) runApiServer(
 	}
 
 	if len(impl.cfg.Api.ProxyProtocol.TrustedProxies) > 0 {
-		policy := proxyproto.TrustProxyHeaderFrom(parseIPs(impl.cfg.Api.ProxyProtocol.TrustedProxies)...)
+		policy, err := proxyproto.ConnStrictWhiteListPolicy(impl.cfg.Api.ProxyProtocol.TrustedProxies)
+		if err != nil {
+			span.RecordError(err)
+			return fmt.Errorf("cannot build proxy protocol policy: %w", err)
+		}
 
 		listener = &proxyproto.Listener{
 			Listener:          listener,
@@ -972,7 +980,10 @@ func (impl *Implm) runTrustCenterServer(
 			defer func() { _ = listener.Close() }()
 
 			if len(impl.cfg.TrustCenter.ProxyProtocol.TrustedProxies) > 0 {
-				policy := proxyproto.TrustProxyHeaderFrom(parseIPs(impl.cfg.TrustCenter.ProxyProtocol.TrustedProxies)...)
+				policy, err := proxyproto.ConnStrictWhiteListPolicy(impl.cfg.TrustCenter.ProxyProtocol.TrustedProxies)
+				if err != nil {
+					return fmt.Errorf("cannot build proxy protocol policy: %w", err)
+				}
 
 				listener = &proxyproto.Listener{
 					Listener:          listener,
@@ -1057,7 +1068,10 @@ func (impl *Implm) runTrustCenterServer(
 			defer func() { _ = listener.Close() }()
 
 			if len(impl.cfg.TrustCenter.ProxyProtocol.TrustedProxies) > 0 {
-				policy := proxyproto.TrustProxyHeaderFrom(parseIPs(impl.cfg.TrustCenter.ProxyProtocol.TrustedProxies)...)
+				policy, err := proxyproto.ConnStrictWhiteListPolicy(impl.cfg.TrustCenter.ProxyProtocol.TrustedProxies)
+				if err != nil {
+					return fmt.Errorf("cannot build proxy protocol policy: %w", err)
+				}
 
 				listener = &proxyproto.Listener{
 					Listener:          listener,
@@ -1107,18 +1121,6 @@ func (impl *Implm) runTrustCenterServer(
 	}
 
 	return ctx.Err()
-}
-
-// parseIPs converts a slice of string IP addresses to net.IP.
-// Invalid IPs are skipped.
-func parseIPs(strs []string) []net.IP {
-	ips := make([]net.IP, 0, len(strs))
-	for _, s := range strs {
-		if ip := net.ParseIP(s); ip != nil {
-			ips = append(ips, ip)
-		}
-	}
-	return ips
 }
 
 func oauth2ServerOptions(cfg OAuth2ServerConfig) []oauth2server.Option {
