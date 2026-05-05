@@ -46,6 +46,7 @@ import {
 const detectionPatternFragment = graphql`
   fragment DetectionPatternRowFragment on CookiePattern {
     id
+    trackerType
     displayName
     source
     description
@@ -122,6 +123,18 @@ const updatePatternMutation = graphql`
     }
   }
 `;
+
+function trackerTypeLabel(type: string, __: (s: string) => string): string {
+  switch (type) {
+    case "COOKIE": return __("Cookie");
+    case "LOCAL_STORAGE": return __("localStorage");
+    case "SESSION_STORAGE": return __("sessionStorage");
+    case "INDEXED_DB": return __("IndexedDB");
+    case "SCRIPT": return __("Script");
+    case "IFRAME": return __("Iframe");
+    default: return type;
+  }
+}
 
 interface DetectionPatternRowProps {
   patternKey: DetectionPatternRowFragment$key;
@@ -288,9 +301,18 @@ export function DetectionPatternRow({ patternKey, connectionId }: DetectionPatte
         </div>
       </Td>
       <Td>
-        <Badge variant={pattern.source === "SCRIPT" ? "info" : "neutral"}>
-          {pattern.source === "SCRIPT" ? __("Script") : __("Pre-existing")}
+        <Badge variant="neutral">
+          {trackerTypeLabel(pattern.trackerType, __)}
         </Badge>
+      </Td>
+      <Td>
+        {pattern.source
+          ? (
+              <Badge variant={pattern.source === "SCRIPT" ? "info" : "neutral"}>
+                {pattern.source === "SCRIPT" ? __("Script") : __("Pre-existing")}
+              </Badge>
+            )
+          : <span className="text-txt-tertiary">-</span>}
       </Td>
       <Td>
         {pattern.lastMatchedAt

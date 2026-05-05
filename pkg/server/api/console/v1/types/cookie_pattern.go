@@ -81,15 +81,39 @@ func NewCookiePattern(cp *coredata.CookiePattern) *CookiePattern {
 				ID: cp.CookieBannerID,
 			},
 		},
+		TrackerType:   coredata.TrackerTypeCookie,
 		Pattern:       cp.Pattern,
 		MatchType:     cp.MatchType,
 		DisplayName:   cp.DisplayName,
 		MaxAgeSeconds: cp.MaxAgeSeconds,
 		Description:   cp.Description,
-		Source:        cp.Source,
+		Source:        &cp.Source,
 		Excluded:      cp.Excluded,
 		LastMatchedAt: cp.LastMatchedAt,
 		CreatedAt:     cp.CreatedAt,
 		UpdatedAt:     cp.UpdatedAt,
+	}
+}
+
+func NewTrackerPattern(tp *coredata.TrackerPattern) *CookiePattern {
+	return &CookiePattern{
+		ID: tp.ID,
+		CookieCategory: &CookieCategory{
+			ID: tp.CookieCategoryID,
+			CookieBanner: &CookieBanner{
+				ID: tp.CookieBannerID,
+			},
+		},
+		TrackerType:   tp.TrackerType,
+		Pattern:       tp.Pattern,
+		MatchType:     tp.MatchType,
+		DisplayName:   tp.DisplayName,
+		MaxAgeSeconds: tp.MaxAgeSeconds,
+		Description:   tp.Description,
+		Source:        tp.Source,
+		Excluded:      tp.Excluded,
+		LastMatchedAt: tp.LastMatchedAt,
+		CreatedAt:     tp.CreatedAt,
+		UpdatedAt:     tp.UpdatedAt,
 	}
 }

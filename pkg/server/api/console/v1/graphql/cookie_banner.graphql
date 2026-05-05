@@ -34,6 +34,34 @@ enum CookieSource
         )
 }
 
+enum TrackerType
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.TrackerType") {
+    COOKIE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TrackerTypeCookie"
+        )
+    LOCAL_STORAGE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TrackerTypeLocalStorage"
+        )
+    SESSION_STORAGE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TrackerTypeSessionStorage"
+        )
+    INDEXED_DB
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TrackerTypeIndexedDB"
+        )
+    SCRIPT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TrackerTypeScript"
+        )
+    IFRAME
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TrackerTypeIframe"
+        )
+}
+
 enum CookieBannerOrderField
     @goModel(
         model: "go.probo.inc/probo/pkg/coredata.CookieBannerOrderField"
@@ -227,12 +255,13 @@ input CookiePatternFilter {
 type CookiePattern implements Node {
     id: ID!
     cookieCategory: CookieCategory @goField(forceResolver: true)
+    trackerType: TrackerType!
     pattern: String!
     matchType: CookiePatternMatchType!
     displayName: String!
     maxAgeSeconds: Int
     description: String!
-    source: CookieSource!
+    source: CookieSource
     excluded: Boolean!
     cookieCount: Int! @goField(forceResolver: true)
     lastMatchedAt: Datetime
@@ -463,6 +492,7 @@ type ReorderCookieCategoryPayload {
 
 input CreateCookiePatternInput {
     cookieCategoryId: ID!
+    trackerType: TrackerType
     pattern: String!
     matchType: CookiePatternMatchType!
     displayName: String!

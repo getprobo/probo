@@ -178,6 +178,7 @@ export default function CookieBannerDetectionPage({
                 <Thead>
                   <Tr>
                     <SortableTh field="NAME">{__("Name")}</SortableTh>
+                    <Th>{__("Type")}</Th>
                     <SortableTh field="SOURCE">{__("Source")}</SortableTh>
                     <SortableTh field="LAST_MATCHED_AT">{__("Last Matched")}</SortableTh>
                     <SortableTh field="UPDATED_AT">{__("Updated")}</SortableTh>
