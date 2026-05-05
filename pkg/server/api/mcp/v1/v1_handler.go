@@ -68,10 +68,11 @@ func NewMux(logger *log.Logger, proboSvc *probo.Service, iamSvc *iam.Service, ac
 			Logger:     nil, // TODO put logger here
 		},
 	)
+	protectedHandler := http.NewCrossOriginProtection().Handler(handler)
 
 	r := chi.NewMux()
 	r.Use(authn.NewAPIKeyMiddleware(iamSvc, tokenSecret))
-	r.Handle("/", RequireAPIKeyHandler(logger, handler))
+	r.Handle("/", RequireAPIKeyHandler(logger, protectedHandler))
 
 	logger.Info("MCP server initialized successfully")
 
