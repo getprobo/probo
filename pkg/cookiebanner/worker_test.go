@@ -88,10 +88,11 @@ func TestSeparatorPrefixes(t *testing.T) {
 func TestFindMergeGroups(t *testing.T) {
 	t.Parallel()
 
-	makePattern := func(name string) *coredata.CookiePattern {
-		return &coredata.CookiePattern{
-			Pattern:   name,
-			MatchType: coredata.CookiePatternMatchTypeExact,
+	makePattern := func(name string) *coredata.TrackerPattern {
+		return &coredata.TrackerPattern{
+			Pattern:     name,
+			TrackerType: coredata.TrackerTypeCookie,
+			MatchType:   coredata.CookiePatternMatchTypeExact,
 		}
 	}
 
@@ -100,7 +101,7 @@ func TestFindMergeGroups(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-			patterns := coredata.CookiePatterns{
+			patterns := coredata.TrackerPatterns{
 				makePattern("ph_phc_abc123"),
 				makePattern("ph_phc_def456"),
 				makePattern("ph_phc_ghi789"),
@@ -109,7 +110,7 @@ func TestFindMergeGroups(t *testing.T) {
 			groups := findMergeGroups(patterns, 3)
 			require.Len(t, groups, 1)
 
-			group, ok := groups[mergeGroupKey{categoryID: gid.Nil, prefix: "ph_phc_"}]
+			group, ok := groups[mergeGroupKey{categoryID: gid.Nil, trackerType: coredata.TrackerTypeCookie, prefix: "ph_phc_"}]
 			require.True(t, ok)
 			assert.Len(t, group, 3)
 		},
@@ -120,7 +121,7 @@ func TestFindMergeGroups(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-			patterns := coredata.CookiePatterns{
+			patterns := coredata.TrackerPatterns{
 				makePattern("_ga_ABC123"),
 				makePattern("_ga_DEF456"),
 				makePattern("_ga_GHI789"),
@@ -129,7 +130,7 @@ func TestFindMergeGroups(t *testing.T) {
 			groups := findMergeGroups(patterns, 3)
 			require.Len(t, groups, 1)
 
-			group, ok := groups[mergeGroupKey{categoryID: gid.Nil, prefix: "_ga_"}]
+			group, ok := groups[mergeGroupKey{categoryID: gid.Nil, trackerType: coredata.TrackerTypeCookie, prefix: "_ga_"}]
 			require.True(t, ok)
 			assert.Len(t, group, 3)
 		},
@@ -140,7 +141,7 @@ func TestFindMergeGroups(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-			patterns := coredata.CookiePatterns{
+			patterns := coredata.TrackerPatterns{
 				makePattern("auth0_session_abc123"),
 				makePattern("auth0_session_def456"),
 				makePattern("auth0_session_ghi789"),
@@ -149,7 +150,7 @@ func TestFindMergeGroups(t *testing.T) {
 			groups := findMergeGroups(patterns, 3)
 			require.Len(t, groups, 1)
 
-			group, ok := groups[mergeGroupKey{categoryID: gid.Nil, prefix: "auth0_session_"}]
+			group, ok := groups[mergeGroupKey{categoryID: gid.Nil, trackerType: coredata.TrackerTypeCookie, prefix: "auth0_session_"}]
 			require.True(t, ok)
 			assert.Len(t, group, 3)
 		},
@@ -160,7 +161,7 @@ func TestFindMergeGroups(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-			patterns := coredata.CookiePatterns{
+			patterns := coredata.TrackerPatterns{
 				makePattern("deadbeef_setting"),
 				makePattern("something_else"),
 			}
@@ -175,7 +176,7 @@ func TestFindMergeGroups(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-			patterns := coredata.CookiePatterns{
+			patterns := coredata.TrackerPatterns{
 				makePattern("foo_bar_aaa"),
 				makePattern("foo_bar_bbb"),
 				makePattern("foo_bar_ccc"),
@@ -187,11 +188,11 @@ func TestFindMergeGroups(t *testing.T) {
 			groups := findMergeGroups(patterns, 3)
 			require.Len(t, groups, 2)
 
-			barGroup, ok := groups[mergeGroupKey{categoryID: gid.Nil, prefix: "foo_bar_"}]
+			barGroup, ok := groups[mergeGroupKey{categoryID: gid.Nil, trackerType: coredata.TrackerTypeCookie, prefix: "foo_bar_"}]
 			require.True(t, ok)
 			assert.Len(t, barGroup, 3)
 
-			bazGroup, ok := groups[mergeGroupKey{categoryID: gid.Nil, prefix: "foo_baz_"}]
+			bazGroup, ok := groups[mergeGroupKey{categoryID: gid.Nil, trackerType: coredata.TrackerTypeCookie, prefix: "foo_baz_"}]
 			require.True(t, ok)
 			assert.Len(t, bazGroup, 3)
 		},
@@ -202,7 +203,7 @@ func TestFindMergeGroups(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-			patterns := coredata.CookiePatterns{
+			patterns := coredata.TrackerPatterns{
 				makePattern("ph_phc_abc123"),
 				makePattern("ph_phc_def456"),
 				makePattern("ph_phc_ghi789"),
@@ -212,7 +213,7 @@ func TestFindMergeGroups(t *testing.T) {
 			groups := findMergeGroups(patterns, 3)
 			require.Len(t, groups, 1)
 
-			group, ok := groups[mergeGroupKey{categoryID: gid.Nil, prefix: "ph_phc_"}]
+			group, ok := groups[mergeGroupKey{categoryID: gid.Nil, trackerType: coredata.TrackerTypeCookie, prefix: "ph_phc_"}]
 			require.True(t, ok)
 			assert.Len(t, group, 3)
 		},
@@ -223,7 +224,7 @@ func TestFindMergeGroups(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-			patterns := coredata.CookiePatterns{
+			patterns := coredata.TrackerPatterns{
 				makePattern("ph_phc_abc123"),
 				makePattern("ph_phc_def456"),
 				makePattern("ph_phc_ghi789"),
@@ -235,11 +236,11 @@ func TestFindMergeGroups(t *testing.T) {
 			groups := findMergeGroups(patterns, 3)
 			require.Len(t, groups, 2)
 
-			phcGroup, ok := groups[mergeGroupKey{categoryID: gid.Nil, prefix: "ph_phc_"}]
+			phcGroup, ok := groups[mergeGroupKey{categoryID: gid.Nil, trackerType: coredata.TrackerTypeCookie, prefix: "ph_phc_"}]
 			require.True(t, ok)
 			assert.Len(t, phcGroup, 3)
 
-			sessionGroup, ok := groups[mergeGroupKey{categoryID: gid.Nil, prefix: "ph_session_"}]
+			sessionGroup, ok := groups[mergeGroupKey{categoryID: gid.Nil, trackerType: coredata.TrackerTypeCookie, prefix: "ph_session_"}]
 			require.True(t, ok)
 			assert.Len(t, sessionGroup, 3)
 		},
@@ -250,7 +251,7 @@ func TestFindMergeGroups(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-			patterns := coredata.CookiePatterns{
+			patterns := coredata.TrackerPatterns{
 				makePattern("PHPSESSID"),
 				makePattern("JSESSIONID"),
 				makePattern("ASPSESSIONID"),
