@@ -4,6 +4,23 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.181.0] - 2026-05-05
+
+### Added
+
+- Add SCIM tools to MCP API
+- Add SCIM commands to CLI
+- Add cookie banner detection page for uncategorised patterns
+- Add `last_detected_at` and `last_matched_at` tracking on cookie patterns
+- Add `uncategorisedPatterns` GraphQL connection on `CookieBanner`
+
+### Changed
+
+- Accept CIDR ranges in proxy `trusted-proxies` configuration
+- Rename `categories` to `consentCategories` on cookie banner API surfaces
+- Move cookie management from separate Cookies tab into the Display page
+- Filter uncategorised category from cookie banner config and version snapshots
+
 ## [0.180.0] - 2026-05-04
 
 ### Fixed
