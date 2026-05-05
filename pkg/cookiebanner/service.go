@@ -1211,6 +1211,26 @@ func (s *Service) CreateCookiePattern(
 				return fmt.Errorf("cannot insert cookie pattern: %w", err)
 			}
 
+			src := coredata.CookieSourceScript
+			tp := &coredata.TrackerPattern{
+				ID:               gid.New(scope.GetTenantID(), coredata.TrackerPatternEntityType),
+				OrganizationID:   category.OrganizationID,
+				CookieBannerID:   category.CookieBannerID,
+				CookieCategoryID: category.ID,
+				TrackerType:      coredata.TrackerTypeCookie,
+				Pattern:          req.Pattern,
+				MatchType:        req.MatchType,
+				DisplayName:      req.DisplayName,
+				MaxAgeSeconds:    req.MaxAgeSeconds,
+				Description:      req.Description,
+				Source:           &src,
+				CreatedAt:        now,
+				UpdatedAt:        now,
+			}
+			if _, err := tp.InsertIfNotExists(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot insert tracker pattern: %w", err)
+			}
+
 			if _, err := s.ensureDraftVersionForBanner(ctx, tx, scope, category.CookieBannerID); err != nil {
 				return fmt.Errorf("cannot ensure draft version: %w", err)
 			}
@@ -1279,6 +1299,26 @@ func (s *Service) UpdateCookiePattern(
 				return fmt.Errorf("cannot update cookie pattern: %w", err)
 			}
 
+			var tp coredata.TrackerPattern
+			if err := tp.LoadByBannerIDTypeAndPattern(ctx, tx, scope, pattern.CookieBannerID, coredata.TrackerTypeCookie, pattern.Pattern); err == nil {
+				if req.DisplayName != nil {
+					tp.DisplayName = *req.DisplayName
+				}
+				if req.MaxAgeSeconds != nil {
+					tp.MaxAgeSeconds = *req.MaxAgeSeconds
+				}
+				if req.Description != nil {
+					tp.Description = *req.Description
+				}
+				if req.Excluded != nil {
+					tp.Excluded = *req.Excluded
+				}
+				tp.UpdatedAt = time.Now()
+				if err := tp.Update(ctx, tx, scope); err != nil {
+					return fmt.Errorf("cannot update tracker pattern: %w", err)
+				}
+			}
+
 			if !staysExcluded {
 				if _, err := s.ensureDraftVersionForBanner(ctx, tx, scope, pattern.CookieBannerID); err != nil {
 					return fmt.Errorf("cannot ensure draft version: %w", err)
@@ -1315,6 +1355,13 @@ func (s *Service) DeleteCookiePattern(
 
 			if err := pattern.Delete(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot delete cookie pattern: %w", err)
+			}
+
+			var tp coredata.TrackerPattern
+			if err := tp.LoadByBannerIDTypeAndPattern(ctx, tx, scope, pattern.CookieBannerID, coredata.TrackerTypeCookie, pattern.Pattern); err == nil {
+				if err := tp.Delete(ctx, tx, scope); err != nil {
+					return fmt.Errorf("cannot delete tracker pattern: %w", err)
+				}
 			}
 
 			if !wasExcluded {
@@ -1373,6 +1420,15 @@ func (s *Service) MoveCookiePatternToCategory(
 
 			if err := pattern.Update(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot update cookie pattern: %w", err)
+			}
+
+			var tp coredata.TrackerPattern
+			if err := tp.LoadByBannerIDTypeAndPattern(ctx, tx, scope, pattern.CookieBannerID, coredata.TrackerTypeCookie, pattern.Pattern); err == nil {
+				tp.CookieCategoryID = target.ID
+				tp.UpdatedAt = time.Now()
+				if err := tp.Update(ctx, tx, scope); err != nil {
+					return fmt.Errorf("cannot update tracker pattern: %w", err)
+				}
 			}
 
 			var banner coredata.CookieBanner
