@@ -15,7 +15,6 @@
 package trustedproxy_test
 
 import (
-	"net"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -25,113 +24,159 @@ import (
 	"go.probo.inc/probo/pkg/server/trustedproxy"
 )
 
-func newRequest(remoteAddr string, headers map[string]string) *http.Request {
-	r := httptest.NewRequest(http.MethodGet, "/", nil)
-	r.RemoteAddr = remoteAddr
+func runMiddleware(t *testing.T, trusted []string, remoteAddr string, headers map[string]string) *http.Request {
+	t.Helper()
+
+	middleware, err := trustedproxy.NewMiddleware(trusted)
+	require.NoError(t, err)
+
+	var captured *http.Request
+	handler := middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		captured = r
+	}))
+
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req.RemoteAddr = remoteAddr
 	for k, v := range headers {
-		r.Header.Set(k, v)
+		req.Header.Set(k, v)
 	}
-	return r
+	handler.ServeHTTP(httptest.NewRecorder(), req)
+
+	require.NotNil(t, captured)
+	return captured
 }
 
-func TestNewMiddleware(t *testing.T) {
+func TestNewMiddleware_HeaderHandling(t *testing.T) {
 	t.Parallel()
 
-	t.Run(
-		"strips forwarded headers from untrusted proxy",
-		func(t *testing.T) {
-			t.Parallel()
-
-			trusted := []net.IP{net.ParseIP("10.0.0.1")}
-			middleware := trustedproxy.NewMiddleware(trusted)
-
-			var captured *http.Request
-			handler := middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				captured = r
-			}))
-
-			r := newRequest("192.168.1.1:1234", map[string]string{
-				"X-Forwarded-For": "203.0.113.50",
-				"Forwarded":       "for=198.51.100.17",
-			})
-			handler.ServeHTTP(httptest.NewRecorder(), r)
-
-			require.NotNil(t, captured)
-			assert.Empty(t, captured.Header.Get("X-Forwarded-For"))
-			assert.Empty(t, captured.Header.Get("Forwarded"))
+	tests := []struct {
+		name             string
+		trusted          []string
+		remoteAddr       string
+		expectPreserved  bool
+		forwardedHeaders map[string]string
+	}{
+		{
+			name:            "untrusted proxy strips forwarded headers",
+			trusted:         []string{"10.0.0.1"},
+			remoteAddr:      "192.168.1.1:1234",
+			expectPreserved: false,
 		},
+		{
+			name:            "trusted proxy preserves forwarded headers",
+			trusted:         []string{"10.0.0.1"},
+			remoteAddr:      "10.0.0.1:1234",
+			expectPreserved: true,
+		},
+		{
+			name:            "empty trusted list strips all forwarded headers",
+			trusted:         nil,
+			remoteAddr:      "10.0.0.1:1234",
+			expectPreserved: false,
+		},
+		{
+			name:            "multiple trusted IPs",
+			trusted:         []string{"10.0.0.1", "10.0.0.2"},
+			remoteAddr:      "10.0.0.2:5678",
+			expectPreserved: true,
+		},
+		{
+			name:            "CIDR range trusts addresses within the range",
+			trusted:         []string{"10.0.0.0/24"},
+			remoteAddr:      "10.0.0.50:1234",
+			expectPreserved: true,
+		},
+		{
+			name:            "CIDR range strips addresses outside the range",
+			trusted:         []string{"10.0.0.0/24"},
+			remoteAddr:      "10.0.1.50:1234",
+			expectPreserved: false,
+		},
+		{
+			name:            "mixed IP and CIDR list trusts plain IP",
+			trusted:         []string{"192.168.1.1", "10.0.0.0/24"},
+			remoteAddr:      "192.168.1.1:1234",
+			expectPreserved: true,
+		},
+		{
+			name:            "mixed IP and CIDR list trusts address in CIDR",
+			trusted:         []string{"192.168.1.1", "10.0.0.0/24"},
+			remoteAddr:      "10.0.0.99:1234",
+			expectPreserved: true,
+		},
+		{
+			name:            "IPv6 CIDR range trusts addresses within the range",
+			trusted:         []string{"fd00::/8"},
+			remoteAddr:      "[fd12:3456::1]:1234",
+			expectPreserved: true,
+		},
+		{
+			name:            "IPv6 CIDR range strips addresses outside the range",
+			trusted:         []string{"fd00::/8"},
+			remoteAddr:      "[2001:db8::1]:1234",
+			expectPreserved: false,
+		},
+	}
+
+	const (
+		xff = "203.0.113.50"
+		fwd = "for=198.51.100.17"
 	)
 
-	t.Run(
-		"preserves forwarded headers from trusted proxy",
-		func(t *testing.T) {
-			t.Parallel()
+	for _, tc := range tests {
+		t.Run(
+			tc.name,
+			func(t *testing.T) {
+				t.Parallel()
 
-			trusted := []net.IP{net.ParseIP("10.0.0.1")}
-			middleware := trustedproxy.NewMiddleware(trusted)
+				captured := runMiddleware(
+					t,
+					tc.trusted,
+					tc.remoteAddr,
+					map[string]string{
+						"X-Forwarded-For": xff,
+						"Forwarded":       fwd,
+					},
+				)
 
-			var captured *http.Request
-			handler := middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				captured = r
-			}))
+				if tc.expectPreserved {
+					assert.Equal(t, xff, captured.Header.Get("X-Forwarded-For"))
+					assert.Equal(t, fwd, captured.Header.Get("Forwarded"))
+				} else {
+					assert.Empty(t, captured.Header.Get("X-Forwarded-For"))
+					assert.Empty(t, captured.Header.Get("Forwarded"))
+				}
+			},
+		)
+	}
+}
 
-			r := newRequest("10.0.0.1:1234", map[string]string{
-				"X-Forwarded-For": "203.0.113.50",
-				"Forwarded":       "for=198.51.100.17",
-			})
-			handler.ServeHTTP(httptest.NewRecorder(), r)
+func TestNewMiddleware_InvalidInput(t *testing.T) {
+	t.Parallel()
 
-			require.NotNil(t, captured)
-			assert.Equal(t, "203.0.113.50", captured.Header.Get("X-Forwarded-For"))
-			assert.Equal(t, "for=198.51.100.17", captured.Header.Get("Forwarded"))
+	tests := []struct {
+		name    string
+		trusted []string
+	}{
+		{
+			name:    "invalid IP",
+			trusted: []string{"not-an-ip"},
 		},
-	)
-
-	t.Run(
-		"empty trusted list strips all forwarded headers",
-		func(t *testing.T) {
-			t.Parallel()
-
-			middleware := trustedproxy.NewMiddleware(nil)
-
-			var captured *http.Request
-			handler := middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				captured = r
-			}))
-
-			r := newRequest("10.0.0.1:1234", map[string]string{
-				"X-Forwarded-For": "203.0.113.50",
-			})
-			handler.ServeHTTP(httptest.NewRecorder(), r)
-
-			require.NotNil(t, captured)
-			assert.Empty(t, captured.Header.Get("X-Forwarded-For"))
+		{
+			name:    "invalid CIDR mask",
+			trusted: []string{"10.0.0.0/99"},
 		},
-	)
+	}
 
-	t.Run(
-		"multiple trusted proxies",
-		func(t *testing.T) {
-			t.Parallel()
+	for _, tc := range tests {
+		t.Run(
+			tc.name,
+			func(t *testing.T) {
+				t.Parallel()
 
-			trusted := []net.IP{
-				net.ParseIP("10.0.0.1"),
-				net.ParseIP("10.0.0.2"),
-			}
-			middleware := trustedproxy.NewMiddleware(trusted)
-
-			var captured *http.Request
-			handler := middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				captured = r
-			}))
-
-			r := newRequest("10.0.0.2:5678", map[string]string{
-				"X-Forwarded-For": "203.0.113.50",
-			})
-			handler.ServeHTTP(httptest.NewRecorder(), r)
-
-			require.NotNil(t, captured)
-			assert.Equal(t, "203.0.113.50", captured.Header.Get("X-Forwarded-For"))
-		},
-	)
+				_, err := trustedproxy.NewMiddleware(tc.trusted)
+				require.Error(t, err)
+			},
+		)
+	}
 }
