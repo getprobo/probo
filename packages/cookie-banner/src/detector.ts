@@ -13,6 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 import { isDeletion, parseCookieName, parseMaxAgeSeconds } from "./cookie-utils";
+import type { Detector } from "./detector-interface";
 import { NotFoundError } from "./errors";
 import { fetchJSON } from "./http";
 
@@ -31,7 +32,7 @@ function isExtensionCaller(): boolean {
   return EXTENSION_URL_RE.test(stack);
 }
 
-export class CookieDetector {
+export class CookieDetector implements Detector {
   private readonly reportUrl: URL;
   private readonly knownNames: Set<string>;
   private readonly reported: Set<string> = new Set();

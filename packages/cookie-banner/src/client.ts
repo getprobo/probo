@@ -18,7 +18,10 @@ import {
 } from "./activation";
 import { COOKIE_NAME, getConsentCookie, setConsentCookie } from "./cookie";
 import { CookieDetector } from "./detector";
+import type { Detector } from "./detector-interface";
 import { NotFoundError } from "./errors";
+import { StorageDetector } from "./storage-detector";
+import { ThirdPartyDetector } from "./third-party-detector";
 import { fetchJSON } from "./http";
 import { detectLanguage } from "./i18n";
 import type { ConsentIntegration } from "./integrations";
@@ -56,7 +59,7 @@ export class CookieBannerClient {
   private bannerConfig: BannerConfig | null = null;
   private consent: VisitorConsent | null = null;
   private observer: MutationObserver | null = null;
-  private detector: CookieDetector | null = null;
+  private detectors: Detector[] = [];
   private _gpcApplied = false;
 
   constructor(config: CookieBannerClientOptions) {
@@ -295,6 +298,8 @@ export class CookieBannerClient {
   }
 
   private startDetector(config?: BannerConfig): void {
+    this.stopDetectors();
+
     const knownNames = new Set<string>();
     knownNames.add(COOKIE_NAME);
     if (config) {
@@ -305,18 +310,26 @@ export class CookieBannerClient {
       }
     }
 
-    if (this.detector) {
-      this.detector.stop();
+    this.detectors = [
+      new CookieDetector(this.baseUrl, this.bannerId, knownNames),
+      new StorageDetector(this.baseUrl, this.bannerId),
+      new ThirdPartyDetector(this.baseUrl, this.bannerId),
+    ];
+
+    for (const d of this.detectors) {
+      d.start();
     }
-    this.detector = new CookieDetector(this.baseUrl, this.bannerId, knownNames);
-    this.detector.start();
+  }
+
+  private stopDetectors(): void {
+    for (const d of this.detectors) {
+      d.stop();
+    }
+    this.detectors = [];
   }
 
   destroy(): void {
-    if (this.detector) {
-      this.detector.stop();
-      this.detector = null;
-    }
+    this.stopDetectors();
     if (this.observer) {
       this.observer.disconnect();
       this.observer = null;
