@@ -44,7 +44,7 @@ import {
 } from "./MoveToCategoryDropdown";
 
 const detectionPatternFragment = graphql`
-  fragment DetectionPatternRowFragment on CookiePattern {
+  fragment DetectionPatternRowFragment on TrackerPattern {
     id
     trackerType
     displayName
@@ -59,11 +59,11 @@ const detectionPatternFragment = graphql`
 
 const deletePatternMutation = graphql`
   mutation DetectionPatternRowDeleteMutation(
-    $input: DeleteCookiePatternInput!
+    $input: DeleteTrackerPatternInput!
     $connections: [ID!]!
   ) {
-    deleteCookiePattern(input: $input) {
-      deletedCookiePatternId @deleteEdge(connections: $connections)
+    deleteTrackerPattern(input: $input) {
+      deletedTrackerPatternId @deleteEdge(connections: $connections)
       cookieBanner {
         id
         latestVersion {
@@ -78,10 +78,10 @@ const deletePatternMutation = graphql`
 
 const movePatternMutation = graphql`
   mutation DetectionPatternRowMoveMutation(
-    $input: MoveCookiePatternToCategoryInput!
+    $input: MoveTrackerPatternToCategoryInput!
   ) {
-    moveCookiePatternToCategory(input: $input) {
-      cookiePattern {
+    moveTrackerPatternToCategory(input: $input) {
+      trackerPattern {
         id
         cookieCategory {
           id
@@ -101,10 +101,10 @@ const movePatternMutation = graphql`
 
 const updatePatternMutation = graphql`
   mutation DetectionPatternRowUpdateMutation(
-    $input: UpdateCookiePatternInput!
+    $input: UpdateTrackerPatternInput!
   ) {
-    updateCookiePattern(input: $input) {
-      cookiePattern {
+    updateTrackerPattern(input: $input) {
+      trackerPattern {
         id
         displayName
         maxAgeSeconds
@@ -174,7 +174,7 @@ export function DetectionPatternRow({ patternKey, connectionId }: DetectionPatte
         new Promise<void>((resolve) => {
           deletePattern({
             variables: {
-              input: { cookiePatternId: pattern.id },
+              input: { trackerPatternId: pattern.id },
               connections: [connectionId],
             },
             onCompleted(_, errors) {
@@ -203,13 +203,13 @@ export function DetectionPatternRow({ patternKey, connectionId }: DetectionPatte
     movePattern({
       variables: {
         input: {
-          cookiePatternId: pattern.id,
+          trackerPatternId: pattern.id,
           targetCookieCategoryId: targetCategoryId,
         },
       },
       updater(store) {
-        const payload = store.getRootField("moveCookiePatternToCategory");
-        if (!payload?.getLinkedRecord("cookiePattern")) {
+        const payload = store.getRootField("moveTrackerPatternToCategory");
+        if (!payload?.getLinkedRecord("trackerPattern")) {
           return;
         }
 
@@ -235,7 +235,7 @@ export function DetectionPatternRow({ patternKey, connectionId }: DetectionPatte
     updatePattern({
       variables: {
         input: {
-          cookiePatternId: pattern.id,
+          trackerPatternId: pattern.id,
           excluded: !pattern.excluded,
         },
       },
@@ -255,7 +255,7 @@ export function DetectionPatternRow({ patternKey, connectionId }: DetectionPatte
     updatePattern({
       variables: {
         input: {
-          cookiePatternId: pattern.id,
+          trackerPatternId: pattern.id,
           displayName: data.displayName,
           description: data.description,
           maxAgeSeconds: data.maxAgeSeconds,

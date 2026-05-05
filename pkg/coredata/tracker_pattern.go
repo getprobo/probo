@@ -25,6 +25,7 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/page"
 )
 
 type (
@@ -48,6 +49,29 @@ type (
 
 	TrackerPatterns []*TrackerPattern
 )
+
+func (tp *TrackerPattern) CursorKey(field CookiePatternOrderField) page.CursorKey {
+	switch field {
+	case CookiePatternOrderFieldCreatedAt:
+		return page.NewCursorKey(tp.ID, tp.CreatedAt)
+	case CookiePatternOrderFieldName:
+		return page.NewCursorKey(tp.ID, tp.DisplayName)
+	case CookiePatternOrderFieldLastMatchedAt:
+		if tp.LastMatchedAt == nil {
+			return page.NewCursorKey(tp.ID, time.Time{})
+		}
+		return page.NewCursorKey(tp.ID, *tp.LastMatchedAt)
+	case CookiePatternOrderFieldUpdatedAt:
+		return page.NewCursorKey(tp.ID, tp.UpdatedAt)
+	case CookiePatternOrderFieldSource:
+		if tp.Source == nil {
+			return page.NewCursorKey(tp.ID, "")
+		}
+		return page.NewCursorKey(tp.ID, string(*tp.Source))
+	}
+
+	panic(fmt.Sprintf("unsupported order by: %s", field))
+}
 
 func (tp *TrackerPattern) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	q := `SELECT organization_id FROM tracker_patterns WHERE id = $1 LIMIT 1;`
@@ -574,4 +598,114 @@ WHERE
 	}
 
 	return nil
+}
+
+func (tps *TrackerPatterns) LoadUncategorisedByCookieBannerID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	cookieBannerID gid.GID,
+	cursor *page.Cursor[CookiePatternOrderField],
+	filter *CookiePatternFilter,
+) error {
+	q := `
+SELECT
+	id,
+	organization_id,
+	cookie_banner_id,
+	cookie_category_id,
+	tracker_type,
+	pattern,
+	match_type,
+	display_name,
+	description,
+	excluded,
+	max_age_seconds,
+	source,
+	last_matched_at,
+	created_at,
+	updated_at
+FROM
+	tracker_patterns
+WHERE
+	%s
+	AND cookie_banner_id = @cookie_banner_id
+	AND cookie_category_id = (
+		SELECT id FROM cookie_categories
+		WHERE cookie_banner_id = @cookie_banner_id
+			AND kind = @category_kind
+			AND %s
+		LIMIT 1
+	)
+	AND %s
+	AND %s
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment(), scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"cookie_banner_id": cookieBannerID,
+		"category_kind":    CookieCategoryKindUncategorised,
+	}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
+	maps.Copy(args, cursor.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query uncategorised tracker patterns: %w", err)
+	}
+
+	patterns, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[TrackerPattern])
+	if err != nil {
+		return fmt.Errorf("cannot collect uncategorised tracker patterns: %w", err)
+	}
+
+	*tps = patterns
+
+	return nil
+}
+
+func (tps *TrackerPatterns) CountUncategorisedByCookieBannerID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	cookieBannerID gid.GID,
+	filter *CookiePatternFilter,
+) (int, error) {
+	q := `
+SELECT
+	COUNT(id)
+FROM
+	tracker_patterns
+WHERE
+	%s
+	AND cookie_banner_id = @cookie_banner_id
+	AND cookie_category_id = (
+		SELECT id FROM cookie_categories
+		WHERE cookie_banner_id = @cookie_banner_id
+			AND kind = @category_kind
+			AND %s
+		LIMIT 1
+	)
+	AND %s
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment(), scope.SQLFragment(), filter.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"cookie_banner_id": cookieBannerID,
+		"category_kind":    CookieCategoryKindUncategorised,
+	}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
+
+	row := conn.QueryRow(ctx, q, args)
+
+	var count int
+	if err := row.Scan(&count); err != nil {
+		return 0, fmt.Errorf("cannot scan count: %w", err)
+	}
+
+	return count, nil
 }

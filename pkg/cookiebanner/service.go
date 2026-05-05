@@ -159,6 +159,24 @@ type (
 		Resources []DetectedResourceItem
 	}
 
+	UpdateTrackerPatternRequest struct {
+		TrackerPatternID gid.GID
+		DisplayName      *string
+		MaxAgeSeconds    **int
+		Description      *string
+		Excluded         *bool
+	}
+
+	MoveTrackerPatternToCategoryRequest struct {
+		TrackerPatternID       gid.GID
+		TargetCookieCategoryID gid.GID
+	}
+
+	MoveTrackerPatternToCategoryResult struct {
+		TrackerPattern *coredata.TrackerPattern
+		Banner         *coredata.CookieBanner
+	}
+
 	BannerConfig struct {
 		BannerID          gid.GID                                        `json:"banner_id"`
 		Version           int                                            `json:"version"`
@@ -2538,4 +2556,277 @@ func (s *Service) reportDetectedTracker(
 	}
 
 	return nil
+}
+
+func (s *Service) GetTrackerPattern(
+	ctx context.Context,
+	scope coredata.Scoper,
+	trackerPatternID gid.GID,
+) (*coredata.TrackerPattern, error) {
+	var pattern coredata.TrackerPattern
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := pattern.LoadByID(ctx, conn, scope, trackerPatternID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return ErrCookiePatternNotFound
+				}
+				return fmt.Errorf("cannot load tracker pattern: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pattern, nil
+}
+
+func (s *Service) UpdateTrackerPattern(
+	ctx context.Context,
+	scope coredata.Scoper,
+	req UpdateTrackerPatternRequest,
+) (*coredata.TrackerPattern, error) {
+	var pattern coredata.TrackerPattern
+
+	err := s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			if err := pattern.LoadByID(ctx, tx, scope, req.TrackerPatternID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return ErrCookiePatternNotFound
+				}
+				return fmt.Errorf("cannot load tracker pattern: %w", err)
+			}
+
+			displayNameChanged := req.DisplayName != nil && *req.DisplayName != pattern.DisplayName
+			maxAgeChanged := req.MaxAgeSeconds != nil && !ptrEqual(*req.MaxAgeSeconds, pattern.MaxAgeSeconds)
+			descChanged := req.Description != nil && *req.Description != pattern.Description
+			excludedChanged := req.Excluded != nil && *req.Excluded != pattern.Excluded
+
+			if !displayNameChanged && !maxAgeChanged && !descChanged && !excludedChanged {
+				return nil
+			}
+
+			staysExcluded := pattern.Excluded && (req.Excluded == nil || *req.Excluded)
+
+			if req.DisplayName != nil {
+				pattern.DisplayName = *req.DisplayName
+			}
+			if req.MaxAgeSeconds != nil {
+				pattern.MaxAgeSeconds = *req.MaxAgeSeconds
+			}
+			if req.Description != nil {
+				pattern.Description = *req.Description
+			}
+			if req.Excluded != nil {
+				pattern.Excluded = *req.Excluded
+			}
+
+			pattern.UpdatedAt = time.Now()
+
+			if err := pattern.Update(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot update tracker pattern: %w", err)
+			}
+
+			if !staysExcluded && pattern.TrackerType == coredata.TrackerTypeCookie {
+				if _, err := s.ensureDraftVersionForBanner(ctx, tx, scope, pattern.CookieBannerID); err != nil {
+					return fmt.Errorf("cannot ensure draft version: %w", err)
+				}
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pattern, nil
+}
+
+func (s *Service) DeleteTrackerPattern(
+	ctx context.Context,
+	scope coredata.Scoper,
+	trackerPatternID gid.GID,
+) error {
+	return s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			var pattern coredata.TrackerPattern
+			if err := pattern.LoadByID(ctx, tx, scope, trackerPatternID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return ErrCookiePatternNotFound
+				}
+				return fmt.Errorf("cannot load tracker pattern: %w", err)
+			}
+
+			wasExcluded := pattern.Excluded
+
+			if err := pattern.Delete(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot delete tracker pattern: %w", err)
+			}
+
+			if !wasExcluded && pattern.TrackerType == coredata.TrackerTypeCookie {
+				if _, err := s.ensureDraftVersionForBanner(ctx, tx, scope, pattern.CookieBannerID); err != nil {
+					return fmt.Errorf("cannot ensure draft version: %w", err)
+				}
+			}
+
+			return nil
+		},
+	)
+}
+
+func (s *Service) MoveTrackerPatternToCategory(
+	ctx context.Context,
+	scope coredata.Scoper,
+	req MoveTrackerPatternToCategoryRequest,
+) (*MoveTrackerPatternToCategoryResult, error) {
+	var result MoveTrackerPatternToCategoryResult
+
+	err := s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			var pattern coredata.TrackerPattern
+			if err := pattern.LoadByID(ctx, tx, scope, req.TrackerPatternID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return ErrCookiePatternNotFound
+				}
+				return fmt.Errorf("cannot load tracker pattern: %w", err)
+			}
+
+			var target coredata.CookieCategory
+			if err := target.LoadByID(ctx, tx, scope, req.TargetCookieCategoryID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return ErrCategoryNotFound
+				}
+				return fmt.Errorf("cannot load target cookie category: %w", err)
+			}
+
+			if pattern.CookieCategoryID == target.ID {
+				return ErrSamePatternCategoryMove
+			}
+
+			if pattern.CookieBannerID != target.CookieBannerID {
+				return ErrCategoriesBannerMismatch
+			}
+
+			wasExcluded := pattern.Excluded
+
+			pattern.CookieCategoryID = target.ID
+			pattern.UpdatedAt = time.Now()
+
+			if err := pattern.Update(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot update tracker pattern: %w", err)
+			}
+
+			var banner coredata.CookieBanner
+			if err := banner.LoadByID(ctx, tx, scope, pattern.CookieBannerID); err != nil {
+				return fmt.Errorf("cannot load cookie banner: %w", err)
+			}
+
+			if !wasExcluded && pattern.TrackerType == coredata.TrackerTypeCookie {
+				if _, err := s.ensureDraftVersionForBanner(ctx, tx, scope, pattern.CookieBannerID); err != nil {
+					return fmt.Errorf("cannot ensure draft version: %w", err)
+				}
+			}
+
+			result.TrackerPattern = &pattern
+			result.Banner = &banner
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &result, nil
+}
+
+func (s *Service) ListUncategorisedTrackerPatterns(
+	ctx context.Context,
+	scope coredata.Scoper,
+	bannerID gid.GID,
+	cursor *page.Cursor[coredata.CookiePatternOrderField],
+	filter *coredata.CookiePatternFilter,
+) (coredata.TrackerPatterns, error) {
+	var patterns coredata.TrackerPatterns
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := patterns.LoadUncategorisedByCookieBannerID(ctx, conn, scope, bannerID, cursor, filter); err != nil {
+				return fmt.Errorf("cannot list uncategorised tracker patterns: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return patterns, nil
+}
+
+func (s *Service) CountUncategorisedTrackerPatterns(
+	ctx context.Context,
+	scope coredata.Scoper,
+	bannerID gid.GID,
+	filter *coredata.CookiePatternFilter,
+) (int, error) {
+	var count int
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			var patterns coredata.TrackerPatterns
+			var err error
+
+			count, err = patterns.CountUncategorisedByCookieBannerID(ctx, conn, scope, bannerID, filter)
+			if err != nil {
+				return fmt.Errorf("cannot count uncategorised tracker patterns: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
+func (s *Service) CountDetectedTrackersByPatternID(
+	ctx context.Context,
+	scope coredata.Scoper,
+	trackerPatternID gid.GID,
+) (int, error) {
+	var count int
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			var trackers coredata.DetectedTrackers
+			var err error
+
+			count, err = trackers.CountByTrackerPatternID(ctx, conn, scope, trackerPatternID)
+			if err != nil {
+				return fmt.Errorf("cannot count detected trackers: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
 }

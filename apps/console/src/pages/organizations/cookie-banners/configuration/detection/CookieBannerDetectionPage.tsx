@@ -58,14 +58,14 @@ const detectionFragment = graphql`
   @refetchable(queryName: "CookieBannerDetectionPageRefetchQuery")
   @argumentDefinitions(
     first: { type: "Int", defaultValue: 50 }
-    order: { type: "CookiePatternOrder", defaultValue: { field: NAME, direction: ASC } }
+    order: { type: "TrackerPatternOrder", defaultValue: { field: NAME, direction: ASC } }
     after: { type: "CursorKey", defaultValue: null }
     before: { type: "CursorKey", defaultValue: null }
     last: { type: "Int", defaultValue: null }
     query: { type: "String", defaultValue: null }
     source: { type: "CookieSource", defaultValue: null }
   ) {
-    uncategorisedPatterns(
+    uncategorisedTrackerPatterns(
       first: $first
       after: $after
       last: $last
@@ -74,7 +74,7 @@ const detectionFragment = graphql`
       filter: { query: $query, source: $source }
     )
       @connection(
-        key: "CookieBannerDetectionPage_uncategorisedPatterns"
+        key: "CookieBannerDetectionPage_uncategorisedTrackerPatterns"
         filters: ["filter", "orderBy"]
       )
       @required(action: THROW) {
@@ -112,8 +112,8 @@ export default function CookieBannerDetectionPage({
     CookieBannerDetectionPageFragment$key
   >(detectionFragment, data.node);
 
-  const connectionId = fragmentData.uncategorisedPatterns.__id;
-  const patterns = fragmentData.uncategorisedPatterns.edges.map(edge => edge.node) ?? [];
+  const connectionId = fragmentData.uncategorisedTrackerPatterns.__id;
+  const patterns = fragmentData.uncategorisedTrackerPatterns.edges.map(edge => edge.node) ?? [];
 
   const refetchFilters = (overrides: Record<string, unknown> = {}) => {
     startTransition(() => {

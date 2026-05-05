@@ -160,6 +160,15 @@ type CookieBanner implements Node {
         filter: CookiePatternFilter
     ): CookiePatternConnection @goField(forceResolver: true)
 
+    uncategorisedTrackerPatterns(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: TrackerPatternOrder
+        filter: TrackerPatternFilter
+    ): TrackerPatternConnection @goField(forceResolver: true)
+
     createdAt: Datetime!
     updatedAt: Datetime!
 
@@ -285,6 +294,56 @@ type CookiePatternEdge {
     node: CookiePattern!
 }
 
+type TrackerPattern implements Node {
+    id: ID!
+    cookieCategory: CookieCategory @goField(forceResolver: true)
+    trackerType: TrackerType!
+    pattern: String!
+    matchType: CookiePatternMatchType!
+    displayName: String!
+    maxAgeSeconds: Int
+    description: String!
+    source: CookieSource
+    excluded: Boolean!
+    detectedCount: Int! @goField(forceResolver: true)
+    lastMatchedAt: Datetime
+    createdAt: Datetime!
+    updatedAt: Datetime!
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type TrackerPatternConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.TrackerPatternConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [TrackerPatternEdge!]!
+    pageInfo: PageInfo!
+}
+
+type TrackerPatternEdge {
+    cursor: CursorKey!
+    node: TrackerPattern!
+}
+
+input TrackerPatternOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.TrackerPatternOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: CookiePatternOrderField!
+}
+
+input TrackerPatternFilter
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.TrackerPatternFilter"
+    ) {
+    query: String
+    source: CookieSource
+    trackerType: TrackerType
+}
+
 type CookieBannerVersion implements Node {
     id: ID!
     version: Int!
@@ -382,6 +441,15 @@ extend type Mutation {
     upsertCookieBannerTranslation(
         input: UpsertCookieBannerTranslationInput!
     ): UpsertCookieBannerTranslationPayload!
+    updateTrackerPattern(
+        input: UpdateTrackerPatternInput!
+    ): UpdateTrackerPatternPayload!
+    deleteTrackerPattern(
+        input: DeleteTrackerPatternInput!
+    ): DeleteTrackerPatternPayload!
+    moveTrackerPatternToCategory(
+        input: MoveTrackerPatternToCategoryInput!
+    ): MoveTrackerPatternToCategoryPayload!
 }
 
 input CreateCookieBannerInput {
@@ -545,5 +613,37 @@ input UpsertCookieBannerTranslationInput {
 
 type UpsertCookieBannerTranslationPayload {
     cookieBannerTranslation: CookieBannerTranslation!
+    cookieBanner: CookieBanner!
+}
+
+input UpdateTrackerPatternInput {
+    trackerPatternId: ID!
+    displayName: String
+    maxAgeSeconds: Int @goField(omittable: true)
+    description: String
+    excluded: Boolean
+}
+
+input DeleteTrackerPatternInput {
+    trackerPatternId: ID!
+}
+
+input MoveTrackerPatternToCategoryInput {
+    trackerPatternId: ID!
+    targetCookieCategoryId: ID!
+}
+
+type UpdateTrackerPatternPayload {
+    trackerPattern: TrackerPattern!
+    cookieBanner: CookieBanner!
+}
+
+type DeleteTrackerPatternPayload {
+    deletedTrackerPatternId: ID!
+    cookieBanner: CookieBanner!
+}
+
+type MoveTrackerPatternToCategoryPayload {
+    trackerPattern: TrackerPattern!
     cookieBanner: CookieBanner!
 }
