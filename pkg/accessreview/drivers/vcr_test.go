@@ -23,6 +23,11 @@ import (
 	"gopkg.in/dnaeon/go-vcr.v4/pkg/recorder"
 )
 
+// versionedClientHeaders are HTTP headers that encode SDK or client library
+// versions. They are ignored by the matcher so cassettes keep replaying after
+// dependency bumps.
+var versionedClientHeaders = []string{"User-Agent", "X-Goog-Api-Client"}
+
 // newRecorder creates a go-vcr recorder for the given cassette path. When
 // the env var is non-empty the recorder runs in record mode, otherwise
 // it replays from the committed cassette. A BeforeSave hook strips the
@@ -39,6 +44,10 @@ func newRecorder(t *testing.T, cassettePath string, envVar string) *recorder.Rec
 		cassettePath,
 		recorder.WithMode(mode),
 		recorder.WithSkipRequestLatency(true),
+		recorder.WithMatcher(cassette.NewDefaultMatcher(
+			cassette.WithIgnoreAuthorization(),
+			cassette.WithIgnoreHeaders(versionedClientHeaders...),
+		)),
 		recorder.WithHook(func(i *cassette.Interaction) error {
 			i.Request.Headers.Del("Authorization")
 			return nil
