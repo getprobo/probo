@@ -195,6 +195,11 @@ export function DetectionPatternRow({ patternKey, connectionId }: DetectionPatte
         },
       },
       updater(store) {
+        const payload = store.getRootField("moveCookiePatternToCategory");
+        if (!payload?.getLinkedRecord("cookiePattern")) {
+          return;
+        }
+
         const conn = store.get(connectionId);
         if (conn) {
           ConnectionHandler.deleteNode(conn, pattern.id);

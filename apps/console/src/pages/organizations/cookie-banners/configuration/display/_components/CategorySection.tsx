@@ -562,6 +562,11 @@ export function CategorySection({ categoryKey, connectionId }: CategorySectionPr
     const above = allCategories[selfIndex - 1];
     reorderCategory({
       variables: { input: { cookieCategoryId: category.id, rank: above.rank } },
+      onCompleted(_, errors) {
+        if (errors?.length) {
+          toast({ title: __("Error"), description: errors[0].message, variant: "error" });
+        }
+      },
       onError(error) {
         toast({ title: __("Error"), description: formatError(__("Failed to reorder"), error as GraphQLError), variant: "error" });
       },
@@ -573,6 +578,11 @@ export function CategorySection({ categoryKey, connectionId }: CategorySectionPr
     const below = allCategories[selfIndex + 1];
     reorderCategory({
       variables: { input: { cookieCategoryId: category.id, rank: below.rank } },
+      onCompleted(_, errors) {
+        if (errors?.length) {
+          toast({ title: __("Error"), description: errors[0].message, variant: "error" });
+        }
+      },
       onError(error) {
         toast({ title: __("Error"), description: formatError(__("Failed to reorder"), error as GraphQLError), variant: "error" });
       },
