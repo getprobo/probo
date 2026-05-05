@@ -12,9 +12,9 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import type { Detector } from "./detector-interface";
-import { NotFoundError } from "./errors";
-import { fetchJSON } from "./http";
+import type { Detector } from "./detector";
+import { NotFoundError } from "../errors";
+import { fetchJSON } from "../http";
 
 interface DetectedResourceEntry {
   origin: string;

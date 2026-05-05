@@ -12,10 +12,10 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { isDeletion, parseCookieName, parseMaxAgeSeconds } from "./cookie-utils";
-import type { Detector } from "./detector-interface";
-import { NotFoundError } from "./errors";
-import { fetchJSON } from "./http";
+import { isDeletion, parseCookieName, parseMaxAgeSeconds } from "../cookie-utils";
+import type { Detector } from "./detector";
+import { NotFoundError } from "../errors";
+import { fetchJSON } from "../http";
 
 interface DetectedCookieEntry {
   name: string;

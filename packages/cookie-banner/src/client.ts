@@ -17,11 +17,9 @@ import {
   observeAndActivate,
 } from "./activation";
 import { COOKIE_NAME, getConsentCookie, setConsentCookie } from "./cookie";
-import { CookieDetector } from "./detector";
-import type { Detector } from "./detector-interface";
+import type { Detector } from "./detectors";
+import { CookieDetector, StorageDetector, ThirdPartyDetector } from "./detectors";
 import { NotFoundError } from "./errors";
-import { StorageDetector } from "./storage-detector";
-import { ThirdPartyDetector } from "./third-party-detector";
 import { fetchJSON } from "./http";
 import { detectLanguage } from "./i18n";
 import type { ConsentIntegration } from "./integrations";
