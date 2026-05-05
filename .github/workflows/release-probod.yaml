@@ -1,0 +1,340 @@
+name: "Release probod"
+
+on:
+  push:
+    tags:
+      - "probod/v*"
+
+permissions:
+  contents: "read"
+
+jobs:
+  build-apps:
+    name: "build-apps"
+    runs-on: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache"
+    permissions:
+      contents: "read"
+    steps:
+      - uses: "actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd" # v6
+        with:
+          submodules: recursive
+      - uses: "runs-on/action@742bf56072eb4845a0f94b3394673e4903c90ff0" # v2
+      - uses: "./.github/actions/setup"
+        with:
+          go: "false"
+      - run: "npm --workspace @probo/emails run build"
+      - run: "make relay"
+      - name: "Build console"
+        run: |
+          npm --workspace @probo/console run check
+          NODE_ENV=production npm --workspace @probo/console run build
+      - name: "Build trust"
+        run: |
+          npm --workspace @probo/trust run check
+          NODE_ENV=production npm --workspace @probo/trust run build
+      - uses: "actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f" # v7
+        with:
+          name: "frontend-apps"
+          path: |
+            apps/console/dist/
+            apps/trust/dist/
+            packages/emails/dist/
+          retention-days: 1
+
+  build-binary:
+    name: "binary (${{ matrix.goos }}/${{ matrix.goarch }})"
+    needs: [build-apps]
+    runs-on: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache"
+    permissions:
+      contents: "read"
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { goos: linux, goarch: amd64 }
+          - { goos: linux, goarch: arm64 }
+          - { goos: darwin, goarch: amd64 }
+          - { goos: darwin, goarch: arm64 }
+          - { goos: windows, goarch: amd64 }
+          - { goos: freebsd, goarch: amd64 }
+          - { goos: freebsd, goarch: arm64 }
+          - { goos: openbsd, goarch: amd64 }
+          - { goos: openbsd, goarch: arm64 }
+    steps:
+      - uses: "actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd" # v6
+        with:
+          submodules: recursive
+      - uses: "runs-on/action@742bf56072eb4845a0f94b3394673e4903c90ff0" # v2
+      - uses: "./.github/actions/setup"
+        with:
+          node: "false"
+      - uses: "actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c" # v8
+        with:
+          name: "frontend-apps"
+      - name: "Generate Go code"
+        run: |
+          go generate ./pkg/server/api/connect/v1
+          go generate ./pkg/server/api/console/v1
+          go generate ./pkg/server/api/trust/v1
+          go generate ./pkg/server/api/mcp/v1
+      - name: "Build binaries"
+        env:
+          CGO_ENABLED: "0"
+          GOOS: "${{ matrix.goos }}"
+          GOARCH: "${{ matrix.goarch }}"
+        run: |
+          VERSION="${GITHUB_REF_NAME##*/v}"
+          BOOTSTRAP_VERSION="$(cat cmd/probod-bootstrap/VERSION)"
+          EXT=""
+          if [ "$GOOS" = "windows" ]; then EXT=".exe"; fi
+
+          go build -ldflags "-s -w -X 'main.version=${VERSION}' -X 'main.env=prod'" \
+            -gcflags="-e" -o "dist/probod${EXT}" ./cmd/probod/main.go
+
+          go build -ldflags "-s -w -X 'main.version=${BOOTSTRAP_VERSION}'" \
+            -gcflags="-e" -o "dist/probod-bootstrap${EXT}" ./cmd/probod-bootstrap/main.go
+      - name: "Create archive"
+        env:
+          GOOS: "${{ matrix.goos }}"
+          GOARCH: "${{ matrix.goarch }}"
+        run: |
+          case "$GOOS" in
+            linux)   OS="Linux" ;;
+            darwin)  OS="Darwin" ;;
+            windows) OS="Windows" ;;
+            freebsd) OS="Freebsd" ;;
+            openbsd) OS="Openbsd" ;;
+          esac
+          case "$GOARCH" in
+            amd64) ARCH="x86_64" ;;
+            *)     ARCH="$GOARCH" ;;
+          esac
+          EXT=""
+          if [ "$GOOS" = "windows" ]; then EXT=".exe"; fi
+
+          mkdir -p archives
+          PROBOD_DIR="probod_${OS}_${ARCH}"
+          mkdir -p "staging/${PROBOD_DIR}"
+          cp "dist/probod${EXT}" "dist/probod-bootstrap${EXT}" \
+            README.md LICENSE cmd/probod/CHANGELOG.md "staging/${PROBOD_DIR}/"
+          if [ "$GOOS" = "windows" ]; then
+            (cd staging && zip -r "../archives/${PROBOD_DIR}.zip" "${PROBOD_DIR}")
+          else
+            tar -czf "archives/${PROBOD_DIR}.tar.gz" -C staging "${PROBOD_DIR}"
+          fi
+      - uses: "actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f" # v7
+        with:
+          name: "binary-${{ matrix.goos }}-${{ matrix.goarch }}"
+          path: "dist/"
+          retention-days: 1
+      - uses: "actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f" # v7
+        with:
+          name: "archive-${{ matrix.goos }}-${{ matrix.goarch }}"
+          path: "archives/"
+          retention-days: 1
+
+  build-docker:
+    name: "docker (${{ matrix.arch }})"
+    needs: [build-binary]
+    runs-on: "runs-on=${{ github.run_id }}/runner=${{ matrix.runner }}/extras=s3-cache"
+    permissions:
+      contents: "read"
+      packages: "write"
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            platform: "linux/amd64"
+            runner: "4cpu-linux-x64"
+          - arch: arm64
+            platform: "linux/arm64"
+            runner: "4cpu-linux-arm64"
+    steps:
+      - uses: "actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd" # v6
+      - uses: "runs-on/action@742bf56072eb4845a0f94b3394673e4903c90ff0" # v2
+      - uses: "docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd" # v4.0.0
+      - uses: "docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2" # v4.0.0
+        with:
+          username: "gearnode"
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+      - uses: "docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2" # v4.0.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: "actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c" # v8
+        with:
+          name: "binary-linux-${{ matrix.arch }}"
+          path: "linux/${{ matrix.arch }}"
+      - name: "Prepare binaries"
+        run: "chmod +x linux/${{ matrix.arch }}/*"
+      - name: "Compute image tag"
+        id: tag
+        run: |
+          VERSION="${GITHUB_REF_NAME##*/v}"
+          echo "image_tag=probod-v${VERSION}" >> "$GITHUB_OUTPUT"
+      - name: "Build and push Docker image"
+        env:
+          PLATFORM: ${{ matrix.platform }}
+          ARCH: ${{ matrix.arch }}
+          IMAGE_TAG: ${{ steps.tag.outputs.image_tag }}
+        run: |
+          docker buildx build \
+            --platform "${PLATFORM}" \
+            --label "org.opencontainers.image.title=probod" \
+            --label "org.opencontainers.image.description=Probo compliance management platform" \
+            --label "org.opencontainers.image.url=https://github.com/getprobo/probo" \
+            --label "org.opencontainers.image.source=https://github.com/getprobo/probo" \
+            --label "org.opencontainers.image.version=${GITHUB_REF_NAME}" \
+            --label "org.opencontainers.image.revision=${GITHUB_SHA}" \
+            --label "org.opencontainers.image.licenses=MIT" \
+            --tag "ghcr.io/getprobo/probo:${IMAGE_TAG}-${ARCH}" \
+            --push \
+            .
+
+  docker-manifest:
+    name: "docker-manifest"
+    needs: [build-docker]
+    runs-on: "runs-on=${{ github.run_id }}/runner=2cpu-linux-x64/extras=s3-cache"
+    permissions:
+      packages: "write"
+      id-token: "write"
+    outputs:
+      digest: ${{ steps.digest.outputs.digest }}
+      image_tag: ${{ steps.tag.outputs.image_tag }}
+    steps:
+      - uses: "runs-on/action@742bf56072eb4845a0f94b3394673e4903c90ff0" # v2
+      - uses: "docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd" # v4.0.0
+      - uses: "docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2" # v4.0.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: "sigstore/cosign-installer@faadad0cce49287aee09b3a48701e75088a2c6ad" # v4.0.0
+      - name: "Compute image tag"
+        id: tag
+        run: |
+          VERSION="${GITHUB_REF_NAME##*/v}"
+          echo "image_tag=probod-v${VERSION}" >> "$GITHUB_OUTPUT"
+      - name: "Create and push manifest"
+        env:
+          IMAGE_TAG: ${{ steps.tag.outputs.image_tag }}
+        run: |
+          docker buildx imagetools create \
+            --tag "ghcr.io/getprobo/probo:${IMAGE_TAG}" \
+            --tag "ghcr.io/getprobo/probo:latest" \
+            "ghcr.io/getprobo/probo:${IMAGE_TAG}-amd64" \
+            "ghcr.io/getprobo/probo:${IMAGE_TAG}-arm64"
+      - name: "Get manifest digest"
+        id: digest
+        env:
+          IMAGE_TAG: ${{ steps.tag.outputs.image_tag }}
+        run: |
+          DIGEST=$(docker buildx imagetools inspect "ghcr.io/getprobo/probo:${IMAGE_TAG}" --format '{{json .Manifest.Digest}}' | jq -r)
+          echo "digest=$DIGEST" >> "$GITHUB_OUTPUT"
+      - name: "Sign Docker manifest"
+        env:
+          DIGEST: ${{ steps.digest.outputs.digest }}
+        run: cosign sign "ghcr.io/getprobo/probo@${DIGEST}" --yes
+
+  github-release:
+    name: "github-release"
+    needs: [build-binary, docker-manifest]
+    runs-on: "runs-on=${{ github.run_id }}/runner=2cpu-linux-x64/extras=s3-cache"
+    permissions:
+      contents: "write"
+      id-token: "write"
+      attestations: "write"
+      security-events: "write"
+    steps:
+      - uses: "actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd" # v6
+        with:
+          fetch-depth: 0
+          submodules: recursive
+      - uses: "runs-on/action@742bf56072eb4845a0f94b3394673e4903c90ff0" # v2
+      - uses: "sigstore/cosign-installer@faadad0cce49287aee09b3a48701e75088a2c6ad" # v4.0.0
+      - uses: "actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c" # v8
+        with:
+          pattern: "archive-*"
+          path: "archives"
+          merge-multiple: true
+      - name: "Generate checksums and sign"
+        run: |
+          cd archives
+          sha256sum *.tar.gz *.zip > checksums.txt
+          cosign sign-blob --bundle="checksums.txt.bundle" checksums.txt --yes
+      - name: "Generate SBOM"
+        uses: "anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610" # v0.24.0
+        with:
+          path: ./
+          format: cyclonedx-json
+          output-file: sbom.json
+      - name: "Run vulnerability scan"
+        uses: "anchore/scan-action@e1165082ffb1fe366ebaf02d8526e7c4989ea9d2" # v7.4.0
+        with:
+          sbom: "sbom.json"
+          fail-build: true
+          severity-cutoff: critical
+      - name: "Attest SBOM for archives"
+        uses: "actions/attest-sbom@c604332985a26aa8cf1bdc465b92731239ec6b9e" # v4
+        with:
+          subject-path: "archives/*.tar.gz, archives/*.zip"
+          sbom-path: "sbom.json"
+      - name: "Attest build provenance for archives"
+        uses: "actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32" # v4
+        with:
+          subject-path: "archives/*.tar.gz, archives/*.zip"
+      - name: "Attest Docker image SBOM"
+        uses: "actions/attest-sbom@c604332985a26aa8cf1bdc465b92731239ec6b9e" # v4
+        with:
+          subject-name: "ghcr.io/getprobo/probo"
+          subject-digest: ${{ needs.docker-manifest.outputs.digest }}
+          sbom-path: "sbom.json"
+      - name: "Trivy scan Docker image"
+        uses: "aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1" # 0.35.0
+        with:
+          image-ref: "ghcr.io/getprobo/probo:${{ needs.docker-manifest.outputs.image_tag }}"
+          format: "sarif"
+          output: "trivy-results.sarif"
+          exit-code: 1
+          ignore-unfixed: true
+          vuln-type: "os,library"
+          severity: "CRITICAL,HIGH"
+      - name: "Upload Trivy scan results"
+        uses: "github/codeql-action/upload-sarif@6bc82e05fd0ea64601dd4b465378bbcf57de0314" # v4.32.1
+        if: always()
+        with:
+          sarif_file: "trivy-results.sarif"
+      - name: "Compose release notes"
+        env:
+          IMAGE_TAG: ${{ needs.docker-manifest.outputs.image_tag }}
+        run: |
+          cp cmd/probod/CHANGELOG.md release-notes.md
+          cat >> release-notes.md << EOF
+
+          ## Docker Images
+          - \`ghcr.io/getprobo/probo:${IMAGE_TAG}\` (multi-arch: linux/amd64, linux/arm64)
+          - \`ghcr.io/getprobo/probo:latest\` (multi-arch: linux/amd64, linux/arm64)
+          EOF
+      - name: "Create GitHub release"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PRERELEASE_FLAG=""
+          if echo "${GITHUB_REF_NAME}" | grep -qE '(alpha|beta|rc)'; then
+            PRERELEASE_FLAG="--prerelease"
+          fi
+
+          gh release delete "${GITHUB_REF_NAME}" --yes 2>/dev/null || true
+
+          gh release create "${GITHUB_REF_NAME}" \
+            --title "${GITHUB_REF_NAME}" \
+            --notes-file release-notes.md \
+            $PRERELEASE_FLAG \
+            archives/* sbom.json
+      - uses: "actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f" # v7
+        with:
+          name: "sbom"
+          path: "sbom.json"
+          retention-days: 30

@@ -22,15 +22,21 @@ DOCKER_BUILD=	DOCKER_BUILDKIT=1 $(DOCKER) build $(DOCKER_BUILD_FLAGS)
 
 DOCKER_COMPOSE=	$(DOCKER) compose -f compose.yaml $(DOCKER_COMPOSE_FLAGS)
 
-VERSION=	0.181.0
-LDFLAGS=	-ldflags "-X 'main.version=$(VERSION)' -X 'main.env=prod'"
+PRB_VERSION=             $(shell cat cmd/prb/VERSION)
+PROBOD_VERSION=          $(shell cat cmd/probod/VERSION)
+PROBOD_BOOTSTRAP_VERSION=$(shell cat cmd/probod-bootstrap/VERSION)
+
+PRB_LDFLAGS=             -ldflags "-X 'main.version=$(PRB_VERSION)'"
+PROBOD_LDFLAGS=          -ldflags "-X 'main.version=$(PROBOD_VERSION)' -X 'main.env=prod'"
+PROBOD_BOOTSTRAP_LDFLAGS=-ldflags "-X 'main.version=$(PROBOD_BOOTSTRAP_VERSION)'"
+
 GCFLAGS=	-gcflags="-e"
 
 CGO_ENABLED?=	0
 GOOS?=
 
 GO_BASE=	CGO_ENABLED=$(CGO_ENABLED) GOOS=$(GOOS) go
-GO_BUILD=	$(GO_BASE) build $(LDFLAGS) $(GCFLAGS)
+GO_BUILD=	$(GO_BASE) build $(GCFLAGS)
 GO_GENERATE=	$(GO_BASE) generate
 GO_TEST=	$(GO_BASE) tool gotestsum -- $(TEST_FLAGS)
 GO_VET=	$(GO_BASE) vet
@@ -44,7 +50,7 @@ E2E_COVER_DIR ?= $(CURDIR)/coverage/e2e
 DOCKER_IMAGE_NAME=	ghcr.io/getprobo/probo
 DOCKER_TAG_NAME?=	latest
 
-GENERATED= pkg/server/api/connect/v1/schema/schema.go \
+PROBOD_BIN_DEPS= pkg/server/api/connect/v1/schema/schema.go \
 	pkg/server/api/connect/v1/types/types.go \
 	pkg/server/api/console/v1/schema/schema.go \
 	pkg/server/api/console/v1/types/types.go \
@@ -52,8 +58,7 @@ GENERATED= pkg/server/api/connect/v1/schema/schema.go \
 	pkg/server/api/trust/v1/types/types.go \
 	pkg/server/api/mcp/v1/server/server.go \
 	pkg/server/api/mcp/v1/types/types.go \
-
-EMBEDDED= apps/console/dist/index.html \
+	apps/console/dist/index.html \
 	apps/trust/dist/index.html \
 	@probo/emails
 
@@ -67,9 +72,8 @@ PRB_SRC=	cmd/prb/main.go
 PROBOD_BOOTSTRAP_BIN=	bin/probod-bootstrap
 PROBOD_BOOTSTRAP_SRC=	cmd/probod-bootstrap/main.go
 
-ifdef WITH_APPS
-GENERATED += relay
-EMBEDDED += \
+ifndef SKIP_APPS
+PROBOD_BIN_EXTRA_DEPS += \
 	@probo/console \
 	@probo/trust
 endif
@@ -87,7 +91,7 @@ lint-go: vet go-fmt go-fix go-lint
 lint-js: npm-lint
 
 .PHONY: vet
-vet: generate embed
+vet: generate apps/console/dist/index.html apps/trust/dist/index.html @probo/emails
 	$(GO_VET) ./...
 
 .PHONY: npm-lint
@@ -104,7 +108,7 @@ go-fmt:
 	fi
 
 .PHONY: go-fix
-go-fix: generate embed
+go-fix: generate apps/console/dist/index.html apps/trust/dist/index.html @probo/emails
 	@output="$$($(GO_BASE) fix -diff -omitzero=false ./apps/... ./cmd/... ./packages/... ./pkg/... ./e2e/...)"; \
 	if [ -n "$$output" ]; then \
 		echo "error: 'go fix' suggests changes; please apply them"; \
@@ -147,7 +151,7 @@ test-e2e: $(PROBOD_BIN) ## Run console e2e tests
 	GOTESTSUM_FORMAT=testname $(GO_TEST) -count=1 ./e2e/console/...
 
 bin/probod-coverage:
-	CGO_ENABLED=0 $(GO_BUILD) -cover -o $@ $(PROBOD_SRC)
+	CGO_ENABLED=0 $(GO_BUILD) $(PROBOD_LDFLAGS) -cover -o $@ $(PROBOD_SRC)
 
 .PHONY: test-e2e-coverage
 test-e2e-coverage: bin/probod-coverage ## Run e2e tests with coverage
@@ -208,7 +212,7 @@ sbom-docker: docker-build
 sbom:
 	$(SYFT) dir:. -o cyclonedx-json \
 		--source-name "probo" \
-		--source-version "$(VERSION)" \
+		--source-version "$(PROBOD_VERSION)" \
 		> sbom.json
 
 .PHONY: scan-sbom
@@ -235,16 +239,16 @@ docker-build:
 	$(DOCKER_BUILD) --tag $(DOCKER_IMAGE_NAME):$(DOCKER_TAG_NAME) --file Dockerfile .
 
 .PHONY: $(PROBOD_BIN)
-$(PROBOD_BIN): generate embed
-	$(GO_BUILD) -o $(PROBOD_BIN) $(PROBOD_SRC)
+$(PROBOD_BIN): $(PROBOD_BIN_DEPS) $(PROBOD_BIN_EXTRA_DEPS)
+	$(GO_BUILD) $(PROBOD_LDFLAGS) -o $(PROBOD_BIN) $(PROBOD_SRC)
 
 .PHONY: bin/prb
 bin/prb:
-	$(GO_BUILD) -o $(PRB_BIN) $(PRB_SRC)
+	$(GO_BUILD) $(PRB_LDFLAGS) -o $(PRB_BIN) $(PRB_SRC)
 
-.PHONY: $(PROBOD_BOOTSTRAP_BIN)
-$(PROBOD_BOOTSTRAP_BIN):
-	$(GO_BUILD) -o $(PROBOD_BOOTSTRAP_BIN) $(PROBOD_BOOTSTRAP_SRC)
+.PHONY: bin/probod-bootstrap
+bin/probod-bootstrap:
+	$(GO_BUILD) $(PROBOD_BOOTSTRAP_LDFLAGS) -o $(PROBOD_BOOTSTRAP_BIN) $(PROBOD_BOOTSTRAP_SRC)
 
 .PHONY: @probo/emails
 @probo/emails:
@@ -287,10 +291,14 @@ pkg/server/api/trust/v1/schema.graphql: pkg/server/api/trust/v1/graphql $(TRUST_
 	$(NPM) --workspace $@ run build
 
 .PHONY: generate
-generate: $(GENERATED)
-
-.PHONY: embed
-embed: $(EMBEDDED)
+generate: pkg/server/api/connect/v1/schema/schema.go \
+	pkg/server/api/connect/v1/types/types.go \
+	pkg/server/api/console/v1/schema/schema.go \
+	pkg/server/api/console/v1/types/types.go \
+	pkg/server/api/trust/v1/schema/schema.go \
+	pkg/server/api/trust/v1/types/types.go \
+	pkg/server/api/mcp/v1/server/server.go \
+	pkg/server/api/mcp/v1/types/types.go
 
 pkg/server/api/connect/v1/schema/schema.go \
 pkg/server/api/connect/v1/types/types.go: pkg/server/api/connect/v1/gqlgen.yaml pkg/server/api/connect/v1/graphql $(CONNECT_GQL)
@@ -389,10 +397,6 @@ sandbox-create: ## Create a Lima sandbox VM for this worktree
 .PHONY: sandbox-start
 sandbox-start: ## Start the Lima sandbox VM
 	./contrib/lima/sandbox.sh start
-
-.PHONY: sandbox-boot-logs
-sandbox-boot-logs: ## Show the Lima sandbox VM boot logs
-	./contrib/lima/sandbox.sh boot-logs
 
 .PHONY: sandbox-stop
 sandbox-stop: ## Stop (hibernate) the Lima sandbox VM
