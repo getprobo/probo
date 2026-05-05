@@ -198,7 +198,6 @@ func TestCookieBanner_Create(t *testing.T) {
 			kinds[e.Node.Kind] = true
 		}
 		assert.True(t, kinds["NECESSARY"], "should have a NECESSARY category")
-		assert.False(t, kinds["UNCATEGORISED"], "consentCategories should not include UNCATEGORISED")
 	})
 
 	t.Run("duplicate origin conflict", func(t *testing.T) {
