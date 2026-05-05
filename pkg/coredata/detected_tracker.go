@@ -78,7 +78,11 @@ INSERT INTO detected_trackers (
 )
 ON CONFLICT (cookie_banner_id, tracker_type, identifier) DO UPDATE
 	SET last_detected_at = EXCLUDED.last_detected_at,
-		source = CASE WHEN detected_trackers.source IS NULL OR (detected_trackers.source != @source_script AND EXCLUDED.source = @source_script) THEN EXCLUDED.source ELSE detected_trackers.source END,
+		source = CASE WHEN detected_trackers.source IS NULL OR (
+				detected_trackers.source != @source_script AND EXCLUDED.source = @source_script
+			) THEN EXCLUDED.source
+			ELSE detected_trackers.source
+		END,
 		updated_at = EXCLUDED.updated_at
 `
 

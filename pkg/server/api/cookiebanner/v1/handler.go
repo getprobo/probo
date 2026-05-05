@@ -329,11 +329,14 @@ func (h *Handler) handleReportDetectedTrackers(w http.ResponseWriter, r *http.Re
 			source = coredata.CookieSourceScript
 		}
 
-		req.Cookies = append(req.Cookies, cookiebanner.DetectedCookie{
-			Name:          name,
-			MaxAgeSeconds: c.MaxAgeSeconds,
-			Source:        source,
-		})
+		req.Cookies = append(
+			req.Cookies,
+			cookiebanner.DetectedCookie{
+				Name:          name,
+				MaxAgeSeconds: c.MaxAgeSeconds,
+				Source:        source,
+			},
+		)
 	}
 
 	for _, s := range body.Storage {
@@ -354,11 +357,14 @@ func (h *Handler) handleReportDetectedTrackers(w http.ResponseWriter, r *http.Re
 			continue
 		}
 
-		req.Storage = append(req.Storage, cookiebanner.DetectedStorageItem{
-			Key:         key,
-			StorageType: storageType,
-			ValueSize:   s.ValueSize,
-		})
+		req.Storage = append(
+			req.Storage,
+			cookiebanner.DetectedStorageItem{
+				Key:         key,
+				StorageType: storageType,
+				ValueSize:   s.ValueSize,
+			},
+		)
 	}
 
 	for _, res := range body.Resources {
@@ -377,10 +383,13 @@ func (h *Handler) handleReportDetectedTrackers(w http.ResponseWriter, r *http.Re
 			continue
 		}
 
-		req.Resources = append(req.Resources, cookiebanner.DetectedResourceItem{
-			Origin:       origin,
-			ResourceType: resourceType,
-		})
+		req.Resources = append(
+			req.Resources,
+			cookiebanner.DetectedResourceItem{
+				Origin:       origin,
+				ResourceType: resourceType,
+			},
+		)
 	}
 
 	if len(req.Cookies)+len(req.Storage)+len(req.Resources) == 0 {

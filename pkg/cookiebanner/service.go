@@ -1211,7 +1211,6 @@ func (s *Service) CreateCookiePattern(
 				return fmt.Errorf("cannot insert cookie pattern: %w", err)
 			}
 
-			src := coredata.CookieSourceScript
 			tp := &coredata.TrackerPattern{
 				ID:               gid.New(scope.GetTenantID(), coredata.TrackerPatternEntityType),
 				OrganizationID:   category.OrganizationID,
@@ -1223,7 +1222,7 @@ func (s *Service) CreateCookiePattern(
 				DisplayName:      req.DisplayName,
 				MaxAgeSeconds:    req.MaxAgeSeconds,
 				Description:      req.Description,
-				Source:           &src,
+				Source:           new(coredata.CookieSourceScript),
 				CreatedAt:        now,
 				UpdatedAt:        now,
 			}
@@ -2350,9 +2349,12 @@ func (s *Service) ReportDetectedCookies(
 	bannerID gid.GID,
 	req ReportDetectedCookiesRequest,
 ) error {
-	return s.ReportDetectedTrackers(ctx, bannerID, ReportDetectedTrackersRequest{
-		Cookies: req.Cookies,
-	})
+	return s.ReportDetectedTrackers(ctx,
+		bannerID,
+		ReportDetectedTrackersRequest{
+			Cookies: req.Cookies,
+		},
+	)
 }
 
 func (s *Service) ReportDetectedTrackers(
@@ -2383,8 +2385,18 @@ func (s *Service) ReportDetectedTrackers(
 
 			for _, dc := range req.Cookies {
 				if err := s.reportDetectedTracker(
-					ctx, tx, scope, &banner, uncategorised.ID, now,
-					coredata.TrackerTypeCookie, dc.Name, dc.MaxAgeSeconds, &dc.Source, nil,
+					ctx,
+					tx,
+					scope,
+					&banner,
+					uncategorised.ID,
+					now,
+					detectedTrackerInfo{
+						TrackerType:   coredata.TrackerTypeCookie,
+						Identifier:    dc.Name,
+						MaxAgeSeconds: dc.MaxAgeSeconds,
+						Source:        &dc.Source,
+					},
 					&inserted,
 				); err != nil {
 					return err
@@ -2393,8 +2405,17 @@ func (s *Service) ReportDetectedTrackers(
 
 			for _, ds := range req.Storage {
 				if err := s.reportDetectedTracker(
-					ctx, tx, scope, &banner, uncategorised.ID, now,
-					ds.StorageType, ds.Key, nil, nil, ds.ValueSize,
+					ctx,
+					tx,
+					scope,
+					&banner,
+					uncategorised.ID,
+					now,
+					detectedTrackerInfo{
+						TrackerType: ds.StorageType,
+						Identifier:  ds.Key,
+						ValueSize:   ds.ValueSize,
+					},
 					&inserted,
 				); err != nil {
 					return err
@@ -2403,8 +2424,16 @@ func (s *Service) ReportDetectedTrackers(
 
 			for _, dr := range req.Resources {
 				if err := s.reportDetectedTracker(
-					ctx, tx, scope, &banner, uncategorised.ID, now,
-					dr.ResourceType, dr.Origin, nil, nil, nil,
+					ctx,
+					tx,
+					scope,
+					&banner,
+					uncategorised.ID,
+					now,
+					detectedTrackerInfo{
+						TrackerType: dr.ResourceType,
+						Identifier:  dr.Origin,
+					},
 					&inserted,
 				); err != nil {
 					return err
@@ -2422,6 +2451,14 @@ func (s *Service) ReportDetectedTrackers(
 	)
 }
 
+type detectedTrackerInfo struct {
+	TrackerType   coredata.TrackerType
+	Identifier    string
+	MaxAgeSeconds *int
+	Source        *coredata.CookieSource
+	ValueSize     *int
+}
+
 func (s *Service) reportDetectedTracker(
 	ctx context.Context,
 	tx pg.Tx,
@@ -2429,15 +2466,11 @@ func (s *Service) reportDetectedTracker(
 	banner *coredata.CookieBanner,
 	uncategorisedID gid.GID,
 	now time.Time,
-	trackerType coredata.TrackerType,
-	identifier string,
-	maxAgeSeconds *int,
-	source *coredata.CookieSource,
-	valueSize *int,
+	info detectedTrackerInfo,
 	inserted *int,
 ) error {
 	var matchedPattern coredata.TrackerPattern
-	err := matchedPattern.FindMatchingPattern(ctx, tx, scope, banner.ID, trackerType, identifier)
+	err := matchedPattern.FindMatchingPattern(ctx, tx, scope, banner.ID, info.TrackerType, info.Identifier)
 	if err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
 		return fmt.Errorf("cannot find matching tracker pattern: %w", err)
 	}
@@ -2460,13 +2493,13 @@ func (s *Service) reportDetectedTracker(
 			OrganizationID:   banner.OrganizationID,
 			CookieBannerID:   banner.ID,
 			CookieCategoryID: uncategorisedID,
-			TrackerType:      trackerType,
-			Pattern:          identifier,
+			TrackerType:      info.TrackerType,
+			Pattern:          info.Identifier,
 			MatchType:        coredata.CookiePatternMatchTypeExact,
-			DisplayName:      identifier,
+			DisplayName:      info.Identifier,
 			Description:      "",
-			MaxAgeSeconds:    maxAgeSeconds,
-			Source:           source,
+			MaxAgeSeconds:    info.MaxAgeSeconds,
+			Source:           info.Source,
 			CreatedAt:        now,
 			UpdatedAt:        now,
 		}
@@ -2479,7 +2512,7 @@ func (s *Service) reportDetectedTracker(
 			*inserted++
 		} else {
 			var existingPattern coredata.TrackerPattern
-			if err := existingPattern.FindMatchingPattern(ctx, tx, scope, banner.ID, trackerType, identifier); err != nil {
+			if err := existingPattern.FindMatchingPattern(ctx, tx, scope, banner.ID, info.TrackerType, info.Identifier); err != nil {
 				return fmt.Errorf("cannot load existing tracker pattern: %w", err)
 			}
 			patternID = &existingPattern.ID
@@ -2490,11 +2523,11 @@ func (s *Service) reportDetectedTracker(
 		ID:               gid.New(scope.GetTenantID(), coredata.DetectedTrackerEntityType),
 		CookieBannerID:   banner.ID,
 		TrackerPatternID: patternID,
-		TrackerType:      trackerType,
-		Identifier:       identifier,
-		MaxAgeSeconds:    maxAgeSeconds,
-		Source:           source,
-		ValueSize:        valueSize,
+		TrackerType:      info.TrackerType,
+		Identifier:       info.Identifier,
+		MaxAgeSeconds:    info.MaxAgeSeconds,
+		Source:           info.Source,
+		ValueSize:        info.ValueSize,
 		LastDetectedAt:   now,
 		CreatedAt:        now,
 		UpdatedAt:        now,
