@@ -23,7 +23,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 )
@@ -44,12 +43,7 @@ func (s *Service) ImportFromDir(ctx context.Context, dataDir string) error {
 		return fmt.Errorf("cannot read country directory: %w", err)
 	}
 
-	type row struct {
-		cidr        string
-		countryCode coredata.CountryCode
-	}
-
-	var rows []row
+	var blocks []coredata.IPCountryBlock
 
 	for _, entry := range entries {
 		if !entry.IsDir() {
@@ -71,7 +65,10 @@ func (s *Service) ImportFromDir(ctx context.Context, dataDir string) error {
 			}
 
 			for _, cidr := range cidrs {
-				rows = append(rows, row{cidr: cidr, countryCode: cc})
+				blocks = append(blocks, coredata.IPCountryBlock{
+					CIDR:        cidr,
+					CountryCode: cc,
+				})
 			}
 		}
 	}
@@ -79,24 +76,12 @@ func (s *Service) ImportFromDir(ctx context.Context, dataDir string) error {
 	return s.pgClient.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			_, err := tx.Exec(ctx, "TRUNCATE common_ip_country_blocks")
-			if err != nil {
-				return fmt.Errorf("cannot truncate common_ip_country_blocks: %w", err)
+			if err := coredata.TruncateIPCountryBlocks(ctx, tx); err != nil {
+				return err
 			}
 
-			pgxRows := make([][]any, len(rows))
-			for i, r := range rows {
-				pgxRows[i] = []any{r.cidr, r.countryCode.String()}
-			}
-
-			_, err = tx.CopyFrom(
-				ctx,
-				pgx.Identifier{"common_ip_country_blocks"},
-				[]string{"cidr", "country_code"},
-				pgx.CopyFromRows(pgxRows),
-			)
-			if err != nil {
-				return fmt.Errorf("cannot copy rows into common_ip_country_blocks: %w", err)
+			if err := coredata.CopyIPCountryBlocks(ctx, tx, blocks); err != nil {
+				return err
 			}
 
 			return nil
@@ -110,46 +95,11 @@ func (s *Service) LookupCountry(ctx context.Context, conn pg.Querier, ip string)
 		return "", fmt.Errorf("cannot parse IP address: %q", ip)
 	}
 
-	q := `
-SELECT country_code
-FROM common_ip_country_blocks
-WHERE cidr >>= @ip::inet
-ORDER BY masklen(cidr) DESC
-LIMIT 1;
-`
-
-	args := pgx.StrictNamedArgs{"ip": ip}
-
-	rows, err := conn.Query(ctx, q, args)
-	if err != nil {
-		return "", fmt.Errorf("cannot query ip country blocks: %w", err)
-	}
-
-	cc, err := pgx.CollectExactlyOneRow(rows, pgx.RowTo[coredata.CountryCode])
-	if err != nil {
-		if err == pgx.ErrNoRows {
-			return "", nil
-		}
-		return "", fmt.Errorf("cannot collect ip country block row: %w", err)
-	}
-
-	return cc, nil
+	return coredata.LookupCountryByIP(ctx, conn, ip)
 }
 
 func (s *Service) IsPopulated(ctx context.Context, conn pg.Querier) (bool, error) {
-	q := `SELECT EXISTS (SELECT 1 FROM common_ip_country_blocks);`
-
-	rows, err := conn.Query(ctx, q)
-	if err != nil {
-		return false, fmt.Errorf("cannot check if ip country blocks is populated: %w", err)
-	}
-
-	populated, err := pgx.CollectExactlyOneRow(rows, pgx.RowTo[bool])
-	if err != nil {
-		return false, fmt.Errorf("cannot collect populated check: %w", err)
-	}
-
-	return populated, nil
+	return coredata.IsIPCountryBlocksPopulated(ctx, conn)
 }
 
 func parseCIDRFile(path string) ([]string, error) {
