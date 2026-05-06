@@ -31,6 +31,53 @@ import (
 
 const patternMergeThreshold = 3
 
+// durationUnits mirrors the snap table from cookie-utils.ts. The same
+// tracker observed across different clients can have jitter in its
+// max-age (e.g. an "Expires" header computed from Date.now() yields
+// slightly different seconds each time). Snapping to the nearest
+// human-meaningful unit absorbs that jitter so the patterns still
+// merge. This is compliant because the resulting bucket matches the
+// duration shown to end users in the cookie banner — two cookies that
+// display the same human-readable lifetime will merge, two that
+// display differently will not.
+var durationUnits = [...]struct {
+	seconds int
+	snap    int
+}{
+	{365 * 24 * 3600, 21 * 24 * 3600}, // years, snap +-21 days
+	{30 * 24 * 3600, 2 * 24 * 3600},   // months, snap +-2 days
+	{7 * 24 * 3600, 12 * 3600},        // weeks, snap +-12 hours
+	{24 * 3600, 2 * 3600},             // days, snap +-2 hours
+	{3600, 5 * 60},                    // hours, snap +-5 minutes
+	{60, 5},                           // minutes, snap +-5 seconds
+	{1, 0},                            // seconds, no snap
+}
+
+func durationBucket(maxAge *int) int {
+	if maxAge == nil || *maxAge <= 0 {
+		return -1
+	}
+
+	remaining := *maxAge
+	total := 0
+	for _, u := range durationUnits {
+		if remaining >= u.seconds-u.snap {
+			count := remaining / u.seconds
+			leftover := remaining - count*u.seconds
+			if leftover >= u.seconds-u.snap {
+				count++
+				remaining = 0
+			} else if leftover <= u.snap {
+				remaining = 0
+			} else {
+				remaining = leftover
+			}
+			total += count * u.seconds
+		}
+	}
+	return total
+}
+
 type patternAnalysisHandler struct {
 	svc    *Service
 	pg     *pg.Client
@@ -110,8 +157,12 @@ func (h *patternAnalysisHandler) Process(ctx context.Context, banner coredata.Co
 
 			consentChanged := false
 			for key, group := range mergeGroups {
+				var maxAge *int
+				if key.durationBucket >= 0 {
+					v := key.durationBucket
+					maxAge = &v
+				}
 
-				maxAge := mostCommonMaxAge(group)
 				source := bestSource(group)
 
 				prefixPattern := &coredata.TrackerPattern{
@@ -135,7 +186,7 @@ func (h *patternAnalysisHandler) Process(ctx context.Context, banner coredata.Co
 					return fmt.Errorf("cannot insert prefix pattern %q: %w", key.prefix, err)
 				}
 				if !inserted {
-					if err := prefixPattern.LoadByBannerIDTypeAndPattern(ctx, tx, scope, banner.ID, key.trackerType, key.prefix); err != nil {
+					if err := prefixPattern.LoadByBannerIDTypeAndPattern(ctx, tx, scope, banner.ID, key.trackerType, key.prefix, maxAge); err != nil {
 						return fmt.Errorf("cannot load existing prefix pattern %q: %w", key.prefix, err)
 					}
 
@@ -189,9 +240,10 @@ func (h *patternAnalysisHandler) Process(ctx context.Context, banner coredata.Co
 }
 
 type mergeGroupKey struct {
-	categoryID  gid.GID
-	trackerType coredata.TrackerType
-	prefix      string
+	categoryID     gid.GID
+	trackerType    coredata.TrackerType
+	prefix         string
+	durationBucket int
 }
 
 func findMergeGroups(
@@ -200,8 +252,9 @@ func findMergeGroups(
 ) map[mergeGroupKey][]*coredata.TrackerPattern {
 	prefixCounts := make(map[mergeGroupKey][]*coredata.TrackerPattern)
 	for _, p := range patterns {
+		bucket := durationBucket(p.MaxAgeSeconds)
 		for _, pfx := range separatorPrefixes(p.Pattern) {
-			key := mergeGroupKey{categoryID: p.CookieCategoryID, trackerType: p.TrackerType, prefix: pfx}
+			key := mergeGroupKey{categoryID: p.CookieCategoryID, trackerType: p.TrackerType, prefix: pfx, durationBucket: bucket}
 			prefixCounts[key] = append(prefixCounts[key], p)
 		}
 	}
@@ -266,39 +319,6 @@ func bestSource(patterns []*coredata.TrackerPattern) *coredata.CookieSource {
 	return &src
 }
 
-func mostCommonMaxAge(patterns []*coredata.TrackerPattern) *int {
-	type key struct {
-		valid bool
-		val   int
-	}
-	counts := make(map[key]int)
-	for _, p := range patterns {
-		k := key{}
-		if p.MaxAgeSeconds != nil {
-			k = key{valid: true, val: *p.MaxAgeSeconds}
-		}
-		counts[k]++
-	}
-
-	type entry struct {
-		k     key
-		count int
-	}
-	entries := make([]entry, 0, len(counts))
-	for k, c := range counts {
-		entries = append(entries, entry{k, c})
-	}
-	sort.Slice(entries, func(i, j int) bool {
-		return entries[i].count > entries[j].count
-	})
-
-	if !entries[0].k.valid {
-		return nil
-	}
-	v := entries[0].k.val
-	return &v
-}
-
 func (h *patternAnalysisHandler) adoptUncategorisedPatterns(
 	ctx context.Context,
 	tx pg.Tx,
@@ -349,8 +369,9 @@ func (h *patternAnalysisHandler) adoptUncategorisedPatterns(
 	adopted := false
 	for _, ep := range uncategorisedExact {
 		var match *coredata.TrackerPattern
+		epBucket := durationBucket(ep.MaxAgeSeconds)
 		for _, pp := range prefixPatterns {
-			if ep.TrackerType == pp.TrackerType && strings.HasPrefix(ep.Pattern, pp.Pattern) {
+			if ep.TrackerType == pp.TrackerType && strings.HasPrefix(ep.Pattern, pp.Pattern) && durationBucket(pp.MaxAgeSeconds) == epBucket {
 				match = pp
 				break
 			}

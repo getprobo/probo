@@ -88,11 +88,14 @@ func TestSeparatorPrefixes(t *testing.T) {
 func TestFindMergeGroups(t *testing.T) {
 	t.Parallel()
 
-	makePattern := func(name string) *coredata.TrackerPattern {
+	oneYear := 365 * 24 * 3600
+
+	makePattern := func(name string, maxAge *int) *coredata.TrackerPattern {
 		return &coredata.TrackerPattern{
-			Pattern:     name,
-			TrackerType: coredata.TrackerTypeCookie,
-			MatchType:   coredata.TrackerPatternMatchTypeExact,
+			Pattern:       name,
+			TrackerType:   coredata.TrackerTypeCookie,
+			MatchType:     coredata.TrackerPatternMatchTypeExact,
+			MaxAgeSeconds: maxAge,
 		}
 	}
 
@@ -102,15 +105,15 @@ func TestFindMergeGroups(t *testing.T) {
 			t.Parallel()
 
 			patterns := coredata.TrackerPatterns{
-				makePattern("ph_phc_abc123"),
-				makePattern("ph_phc_def456"),
-				makePattern("ph_phc_ghi789"),
+				makePattern("ph_phc_abc123", &oneYear),
+				makePattern("ph_phc_def456", &oneYear),
+				makePattern("ph_phc_ghi789", &oneYear),
 			}
 
 			groups := findMergeGroups(patterns, 3)
 			require.Len(t, groups, 1)
 
-			group, ok := groups[mergeGroupKey{categoryID: gid.Nil, trackerType: coredata.TrackerTypeCookie, prefix: "ph_phc_"}]
+			group, ok := groups[mergeGroupKey{categoryID: gid.Nil, trackerType: coredata.TrackerTypeCookie, prefix: "ph_phc_", durationBucket: durationBucket(&oneYear)}]
 			require.True(t, ok)
 			assert.Len(t, group, 3)
 		},
@@ -122,15 +125,15 @@ func TestFindMergeGroups(t *testing.T) {
 			t.Parallel()
 
 			patterns := coredata.TrackerPatterns{
-				makePattern("_ga_ABC123"),
-				makePattern("_ga_DEF456"),
-				makePattern("_ga_GHI789"),
+				makePattern("_ga_ABC123", &oneYear),
+				makePattern("_ga_DEF456", &oneYear),
+				makePattern("_ga_GHI789", &oneYear),
 			}
 
 			groups := findMergeGroups(patterns, 3)
 			require.Len(t, groups, 1)
 
-			group, ok := groups[mergeGroupKey{categoryID: gid.Nil, trackerType: coredata.TrackerTypeCookie, prefix: "_ga_"}]
+			group, ok := groups[mergeGroupKey{categoryID: gid.Nil, trackerType: coredata.TrackerTypeCookie, prefix: "_ga_", durationBucket: durationBucket(&oneYear)}]
 			require.True(t, ok)
 			assert.Len(t, group, 3)
 		},
@@ -142,15 +145,15 @@ func TestFindMergeGroups(t *testing.T) {
 			t.Parallel()
 
 			patterns := coredata.TrackerPatterns{
-				makePattern("auth0_session_abc123"),
-				makePattern("auth0_session_def456"),
-				makePattern("auth0_session_ghi789"),
+				makePattern("auth0_session_abc123", &oneYear),
+				makePattern("auth0_session_def456", &oneYear),
+				makePattern("auth0_session_ghi789", &oneYear),
 			}
 
 			groups := findMergeGroups(patterns, 3)
 			require.Len(t, groups, 1)
 
-			group, ok := groups[mergeGroupKey{categoryID: gid.Nil, trackerType: coredata.TrackerTypeCookie, prefix: "auth0_session_"}]
+			group, ok := groups[mergeGroupKey{categoryID: gid.Nil, trackerType: coredata.TrackerTypeCookie, prefix: "auth0_session_", durationBucket: durationBucket(&oneYear)}]
 			require.True(t, ok)
 			assert.Len(t, group, 3)
 		},
@@ -162,8 +165,8 @@ func TestFindMergeGroups(t *testing.T) {
 			t.Parallel()
 
 			patterns := coredata.TrackerPatterns{
-				makePattern("deadbeef_setting"),
-				makePattern("something_else"),
+				makePattern("deadbeef_setting", &oneYear),
+				makePattern("something_else", &oneYear),
 			}
 
 			groups := findMergeGroups(patterns, 3)
@@ -177,22 +180,22 @@ func TestFindMergeGroups(t *testing.T) {
 			t.Parallel()
 
 			patterns := coredata.TrackerPatterns{
-				makePattern("foo_bar_aaa"),
-				makePattern("foo_bar_bbb"),
-				makePattern("foo_bar_ccc"),
-				makePattern("foo_baz_xxx"),
-				makePattern("foo_baz_yyy"),
-				makePattern("foo_baz_zzz"),
+				makePattern("foo_bar_aaa", &oneYear),
+				makePattern("foo_bar_bbb", &oneYear),
+				makePattern("foo_bar_ccc", &oneYear),
+				makePattern("foo_baz_xxx", &oneYear),
+				makePattern("foo_baz_yyy", &oneYear),
+				makePattern("foo_baz_zzz", &oneYear),
 			}
 
 			groups := findMergeGroups(patterns, 3)
 			require.Len(t, groups, 2)
 
-			barGroup, ok := groups[mergeGroupKey{categoryID: gid.Nil, trackerType: coredata.TrackerTypeCookie, prefix: "foo_bar_"}]
+			barGroup, ok := groups[mergeGroupKey{categoryID: gid.Nil, trackerType: coredata.TrackerTypeCookie, prefix: "foo_bar_", durationBucket: durationBucket(&oneYear)}]
 			require.True(t, ok)
 			assert.Len(t, barGroup, 3)
 
-			bazGroup, ok := groups[mergeGroupKey{categoryID: gid.Nil, trackerType: coredata.TrackerTypeCookie, prefix: "foo_baz_"}]
+			bazGroup, ok := groups[mergeGroupKey{categoryID: gid.Nil, trackerType: coredata.TrackerTypeCookie, prefix: "foo_baz_", durationBucket: durationBucket(&oneYear)}]
 			require.True(t, ok)
 			assert.Len(t, bazGroup, 3)
 		},
@@ -204,16 +207,16 @@ func TestFindMergeGroups(t *testing.T) {
 			t.Parallel()
 
 			patterns := coredata.TrackerPatterns{
-				makePattern("ph_phc_abc123"),
-				makePattern("ph_phc_def456"),
-				makePattern("ph_phc_ghi789"),
-				makePattern("ph_session_xyz"),
+				makePattern("ph_phc_abc123", &oneYear),
+				makePattern("ph_phc_def456", &oneYear),
+				makePattern("ph_phc_ghi789", &oneYear),
+				makePattern("ph_session_xyz", &oneYear),
 			}
 
 			groups := findMergeGroups(patterns, 3)
 			require.Len(t, groups, 1)
 
-			group, ok := groups[mergeGroupKey{categoryID: gid.Nil, trackerType: coredata.TrackerTypeCookie, prefix: "ph_phc_"}]
+			group, ok := groups[mergeGroupKey{categoryID: gid.Nil, trackerType: coredata.TrackerTypeCookie, prefix: "ph_phc_", durationBucket: durationBucket(&oneYear)}]
 			require.True(t, ok)
 			assert.Len(t, group, 3)
 		},
@@ -225,22 +228,22 @@ func TestFindMergeGroups(t *testing.T) {
 			t.Parallel()
 
 			patterns := coredata.TrackerPatterns{
-				makePattern("ph_phc_abc123"),
-				makePattern("ph_phc_def456"),
-				makePattern("ph_phc_ghi789"),
-				makePattern("ph_session_aaa"),
-				makePattern("ph_session_bbb"),
-				makePattern("ph_session_ccc"),
+				makePattern("ph_phc_abc123", &oneYear),
+				makePattern("ph_phc_def456", &oneYear),
+				makePattern("ph_phc_ghi789", &oneYear),
+				makePattern("ph_session_aaa", &oneYear),
+				makePattern("ph_session_bbb", &oneYear),
+				makePattern("ph_session_ccc", &oneYear),
 			}
 
 			groups := findMergeGroups(patterns, 3)
 			require.Len(t, groups, 2)
 
-			phcGroup, ok := groups[mergeGroupKey{categoryID: gid.Nil, trackerType: coredata.TrackerTypeCookie, prefix: "ph_phc_"}]
+			phcGroup, ok := groups[mergeGroupKey{categoryID: gid.Nil, trackerType: coredata.TrackerTypeCookie, prefix: "ph_phc_", durationBucket: durationBucket(&oneYear)}]
 			require.True(t, ok)
 			assert.Len(t, phcGroup, 3)
 
-			sessionGroup, ok := groups[mergeGroupKey{categoryID: gid.Nil, trackerType: coredata.TrackerTypeCookie, prefix: "ph_session_"}]
+			sessionGroup, ok := groups[mergeGroupKey{categoryID: gid.Nil, trackerType: coredata.TrackerTypeCookie, prefix: "ph_session_", durationBucket: durationBucket(&oneYear)}]
 			require.True(t, ok)
 			assert.Len(t, sessionGroup, 3)
 		},
@@ -252,13 +255,171 @@ func TestFindMergeGroups(t *testing.T) {
 			t.Parallel()
 
 			patterns := coredata.TrackerPatterns{
-				makePattern("PHPSESSID"),
-				makePattern("JSESSIONID"),
-				makePattern("ASPSESSIONID"),
+				makePattern("PHPSESSID", nil),
+				makePattern("JSESSIONID", nil),
+				makePattern("ASPSESSIONID", nil),
 			}
 
 			groups := findMergeGroups(patterns, 3)
 			assert.Empty(t, groups)
 		},
 	)
+
+	t.Run(
+		"session and persistent cookies do not merge",
+		func(t *testing.T) {
+			t.Parallel()
+
+			patterns := coredata.TrackerPatterns{
+				makePattern("_ga_ABC123", nil),
+				makePattern("_ga_DEF456", nil),
+				makePattern("_ga_GHI789", nil),
+				makePattern("_ga_JKL012", &oneYear),
+				makePattern("_ga_MNO345", &oneYear),
+				makePattern("_ga_PQR678", &oneYear),
+			}
+
+			groups := findMergeGroups(patterns, 3)
+			require.Len(t, groups, 2)
+
+			sessionGroup, ok := groups[mergeGroupKey{categoryID: gid.Nil, trackerType: coredata.TrackerTypeCookie, prefix: "_ga_", durationBucket: -1}]
+			require.True(t, ok)
+			assert.Len(t, sessionGroup, 3)
+
+			persistentGroup, ok := groups[mergeGroupKey{categoryID: gid.Nil, trackerType: coredata.TrackerTypeCookie, prefix: "_ga_", durationBucket: durationBucket(&oneYear)}]
+			require.True(t, ok)
+			assert.Len(t, persistentGroup, 3)
+		},
+	)
+
+	t.Run(
+		"close durations snap to same bucket and merge",
+		func(t *testing.T) {
+			t.Parallel()
+
+			exactYear := 365 * 24 * 3600
+			almostYear := 364 * 24 * 3600
+
+			patterns := coredata.TrackerPatterns{
+				makePattern("_ga_ABC123", &exactYear),
+				makePattern("_ga_DEF456", &almostYear),
+				makePattern("_ga_GHI789", &exactYear),
+			}
+
+			groups := findMergeGroups(patterns, 3)
+			require.Len(t, groups, 1)
+		},
+	)
+
+	t.Run(
+		"different durations do not merge",
+		func(t *testing.T) {
+			t.Parallel()
+
+			oneDay := 24 * 3600
+			thirtyDays := 30 * 24 * 3600
+
+			patterns := coredata.TrackerPatterns{
+				makePattern("_ga_ABC123", &oneDay),
+				makePattern("_ga_DEF456", &oneDay),
+				makePattern("_ga_GHI789", &oneDay),
+				makePattern("_ga_JKL012", &thirtyDays),
+				makePattern("_ga_MNO345", &thirtyDays),
+				makePattern("_ga_PQR678", &thirtyDays),
+			}
+
+			groups := findMergeGroups(patterns, 3)
+			require.Len(t, groups, 2)
+
+			dayGroup, ok := groups[mergeGroupKey{categoryID: gid.Nil, trackerType: coredata.TrackerTypeCookie, prefix: "_ga_", durationBucket: durationBucket(&oneDay)}]
+			require.True(t, ok)
+			assert.Len(t, dayGroup, 3)
+
+			monthGroup, ok := groups[mergeGroupKey{categoryID: gid.Nil, trackerType: coredata.TrackerTypeCookie, prefix: "_ga_", durationBucket: durationBucket(&thirtyDays)}]
+			require.True(t, ok)
+			assert.Len(t, monthGroup, 3)
+		},
+	)
+}
+
+func TestDurationBucket(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name     string
+		maxAge   *int
+		expected int
+	}{
+		{
+			name:     "nil is session",
+			maxAge:   nil,
+			expected: -1,
+		},
+		{
+			name:     "zero is session",
+			maxAge:   new(0),
+			expected: -1,
+		},
+		{
+			name:     "negative is session",
+			maxAge:   new(-1),
+			expected: -1,
+		},
+		{
+			name:     "exact 1 year",
+			maxAge:   new(365 * 24 * 3600),
+			expected: 365 * 24 * 3600,
+		},
+		{
+			name:     "364 days snaps to 1 year",
+			maxAge:   new(364 * 24 * 3600),
+			expected: 365 * 24 * 3600,
+		},
+		{
+			name:     "exact 30 days",
+			maxAge:   new(30 * 24 * 3600),
+			expected: 30 * 24 * 3600,
+		},
+		{
+			name:     "exact 1 day",
+			maxAge:   new(24 * 3600),
+			expected: 24 * 3600,
+		},
+		{
+			name:     "23h snaps to 1 day",
+			maxAge:   new(23 * 3600),
+			expected: 24 * 3600,
+		},
+		{
+			name:     "exact 1 hour",
+			maxAge:   new(3600),
+			expected: 3600,
+		},
+		{
+			name:     "58 minutes snaps to 1 hour",
+			maxAge:   new(58 * 60),
+			expected: 3600,
+		},
+		{
+			name:     "exact 5 minutes",
+			maxAge:   new(5 * 60),
+			expected: 5 * 60,
+		},
+		{
+			name:     "1 day and 30 days are different buckets",
+			maxAge:   new(24 * 3600),
+			expected: 24 * 3600,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				t.Parallel()
+				result := durationBucket(tt.maxAge)
+				assert.Equal(t, tt.expected, result)
+			},
+		)
+	}
 }

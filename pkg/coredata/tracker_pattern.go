@@ -149,6 +149,7 @@ func (tp *TrackerPattern) LoadByBannerIDTypeAndPattern(
 	cookieBannerID gid.GID,
 	trackerType TrackerType,
 	pattern string,
+	maxAgeSeconds *int,
 ) error {
 	q := `
 SELECT
@@ -174,6 +175,7 @@ WHERE
 	AND cookie_banner_id = @cookie_banner_id
 	AND tracker_type = @tracker_type
 	AND pattern = @pattern
+	AND COALESCE(max_age_seconds, -1) = COALESCE(@max_age_seconds, -1)
 LIMIT 1;
 `
 
@@ -183,6 +185,7 @@ LIMIT 1;
 		"cookie_banner_id": cookieBannerID,
 		"tracker_type":     trackerType,
 		"pattern":          pattern,
+		"max_age_seconds":  maxAgeSeconds,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -393,7 +396,7 @@ INSERT INTO tracker_patterns (
 	@created_at,
 	@updated_at
 )
-ON CONFLICT (cookie_banner_id, tracker_type, pattern) DO NOTHING
+ON CONFLICT (cookie_banner_id, tracker_type, pattern, COALESCE(max_age_seconds, -1)) DO NOTHING
 `
 
 	args := pgx.StrictNamedArgs{
