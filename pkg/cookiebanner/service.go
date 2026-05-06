@@ -103,6 +103,7 @@ type (
 		ConsentData json.RawMessage
 		Action      coredata.CookieConsentAction
 		SdkVersion  string
+		Regulation  Regulation
 	}
 
 	DetectedCookie struct {
@@ -1855,6 +1856,7 @@ func (s *Service) RecordConsent(
 				ConsentData:           req.ConsentData,
 				Action:                req.Action,
 				SdkVersion:            req.SdkVersion,
+				Regulation:            string(req.Regulation),
 				CreatedAt:             time.Now(),
 			}
 

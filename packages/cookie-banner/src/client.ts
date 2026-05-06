@@ -43,6 +43,22 @@ export interface Category {
   posthog_consent: boolean;
 }
 
+export type Regulation =
+  | "GDPR"
+  | "UK_GDPR"
+  | "FADP"
+  | "CCPA"
+  | "PIPEDA"
+  | "LGPD"
+  | "LFPDPPP"
+  | "POPIA"
+  | "PDPA"
+  | "PIPL"
+  | "PIPA"
+  | "APPI"
+  | "DPDP"
+  | "PDPL";
+
 export interface BannerConfig {
   banner_id: string;
   version: number;
@@ -52,6 +68,7 @@ export interface BannerConfig {
   cookie_policy_url: string;
   consent_expiry_days: number;
   consent_mode: "OPT_IN" | "OPT_OUT";
+  regulation: Regulation | null;
   show_branding: boolean;
   categories: Category[];
   texts: BannerTexts;
@@ -208,6 +225,10 @@ export class CookieBannerClient {
 
   get gpcApplied(): boolean {
     return this._gpcApplied;
+  }
+
+  get regulation(): Regulation | null {
+    return this.bannerConfig?.regulation ?? null;
   }
 
   gpc(): void {

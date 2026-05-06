@@ -156,7 +156,7 @@ export class ProboCookieBannerRoot extends ProboElement implements ProboRootElem
       new CustomEvent("probo-ready", {
         bubbles: true,
         composed: true,
-        detail: { config: this._config, gpcApplied: this.gpcApplied },
+        detail: { config: this._config, gpcApplied: this.gpcApplied, regulation: this._client.regulation },
       }),
     );
 

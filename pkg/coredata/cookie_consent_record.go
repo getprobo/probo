@@ -40,6 +40,7 @@ type (
 		ConsentData           json.RawMessage     `db:"consent_data"`
 		Action                CookieConsentAction `db:"action"`
 		SdkVersion            string              `db:"sdk_version"`
+		Regulation            string              `db:"regulation"`
 		CreatedAt             time.Time           `db:"created_at"`
 	}
 
@@ -90,6 +91,7 @@ SELECT
 	consent_data,
 	action,
 	sdk_version,
+	regulation,
 	created_at
 FROM
 	cookie_consent_records
@@ -174,6 +176,7 @@ INSERT INTO cookie_consent_records (
 	consent_data,
 	action,
 	sdk_version,
+	regulation,
 	created_at
 ) VALUES (
 	@id,
@@ -187,6 +190,7 @@ INSERT INTO cookie_consent_records (
 	@consent_data,
 	@action,
 	@sdk_version,
+	@regulation,
 	@created_at
 )
 `
@@ -203,6 +207,7 @@ INSERT INTO cookie_consent_records (
 		"consent_data":             r.ConsentData,
 		"action":                   r.Action,
 		"sdk_version":              r.SdkVersion,
+		"regulation":               r.Regulation,
 		"created_at":               r.CreatedAt,
 	}
 
@@ -232,6 +237,7 @@ SELECT
 	consent_data,
 	action,
 	sdk_version,
+	regulation,
 	created_at
 FROM
 	cookie_consent_records
@@ -283,6 +289,7 @@ SELECT
 	consent_data,
 	action,
 	sdk_version,
+	regulation,
 	created_at
 FROM
 	cookie_consent_records

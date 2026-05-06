@@ -191,6 +191,7 @@ func (h *Handler) handlePostConsent(w http.ResponseWriter, r *http.Request) {
 		ConsentData: body.ConsentData,
 		Action:      body.Action,
 		SdkVersion:  sdkVersion,
+		Regulation:  h.resolveRegulation(r),
 	}
 
 	record, err := h.cookieBannerSvc.RecordConsent(r.Context(), bannerID, req)
