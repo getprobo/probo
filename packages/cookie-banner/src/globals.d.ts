@@ -13,3 +13,25 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 declare const __SDK_VERSION__: string;
+
+interface CookieListItem {
+  name: string;
+  value: string;
+  domain: string | null;
+  path: string;
+  expires: number | null;
+  secure: boolean;
+  sameSite: "strict" | "lax" | "none";
+}
+
+interface CookieChangeEvent extends Event {
+  changed: readonly CookieListItem[];
+  deleted: readonly CookieListItem[];
+}
+
+interface CookieStoreEventTarget extends EventTarget {
+  addEventListener(type: "change", listener: (event: CookieChangeEvent) => void): void;
+  removeEventListener(type: "change", listener: (event: CookieChangeEvent) => void): void;
+}
+
+declare const cookieStore: CookieStoreEventTarget | undefined;

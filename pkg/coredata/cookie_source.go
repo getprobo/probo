@@ -24,12 +24,14 @@ type CookieSource string
 const (
 	CookieSourceScript      CookieSource = "SCRIPT"
 	CookieSourcePreExisting CookieSource = "PRE_EXISTING"
+	CookieSourceHTTP        CookieSource = "HTTP"
 )
 
 func CookieSources() []CookieSource {
 	return []CookieSource{
 		CookieSourceScript,
 		CookieSourcePreExisting,
+		CookieSourceHTTP,
 	}
 }
 
@@ -53,6 +55,8 @@ func (s *CookieSource) Scan(value any) error {
 		*s = CookieSourceScript
 	case CookieSourcePreExisting:
 		*s = CookieSourcePreExisting
+	case CookieSourceHTTP:
+		*s = CookieSourceHTTP
 	default:
 		return fmt.Errorf("invalid CookieSource value: %q", v)
 	}
@@ -62,7 +66,8 @@ func (s *CookieSource) Scan(value any) error {
 func (s CookieSource) Value() (driver.Value, error) {
 	switch s {
 	case CookieSourceScript,
-		CookieSourcePreExisting:
+		CookieSourcePreExisting,
+		CookieSourceHTTP:
 		return string(s), nil
 	default:
 		return nil, fmt.Errorf("invalid CookieSource: %s", s)

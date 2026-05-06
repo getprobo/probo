@@ -20,7 +20,7 @@ import { fetchJSON } from "../http";
 interface DetectedCookieEntry {
   name: string;
   max_age_seconds: number | null;
-  source: "script" | "pre-existing";
+  source: "script" | "pre-existing" | "http";
 }
 
 const DEBOUNCE_MS = 2_000;
@@ -39,6 +39,7 @@ export class CookieDetector implements Detector {
   private readonly pending: Map<string, DetectedCookieEntry> = new Map();
   private timer: ReturnType<typeof setTimeout> | null = null;
   private originalDescriptor: PropertyDescriptor | null = null;
+  private cookieStoreHandler: ((event: CookieChangeEvent) => void) | null = null;
 
   constructor(baseUrl: URL, bannerId: string, knownNames: Set<string>) {
     this.reportUrl = new URL(`${bannerId}/report`, baseUrl);
@@ -70,6 +71,7 @@ export class CookieDetector implements Detector {
     });
 
     this.scanExisting();
+    this.observeCookieStore();
   }
 
   stop(): void {
@@ -80,6 +82,11 @@ export class CookieDetector implements Detector {
 
     if (this.pending.size > 0) {
       this.flush();
+    }
+
+    if (this.cookieStoreHandler && typeof cookieStore !== "undefined") {
+      cookieStore.removeEventListener("change", this.cookieStoreHandler);
+      this.cookieStoreHandler = null;
     }
 
     if (this.originalDescriptor) {
@@ -118,6 +125,32 @@ export class CookieDetector implements Detector {
     if (this.pending.size > 0) {
       this.scheduleFlush();
     }
+  }
+
+  private observeCookieStore(): void {
+    if (typeof cookieStore === "undefined" || typeof cookieStore.addEventListener !== "function") {
+      return;
+    }
+
+    this.cookieStoreHandler = (event: CookieChangeEvent) => {
+      for (const cookie of event.changed) {
+        if (this.knownNames.has(cookie.name) || this.reported.has(cookie.name)) continue;
+
+        const maxAge = cookie.expires
+          ? Math.round((cookie.expires - Date.now()) / 1000)
+          : null;
+
+        this.reported.add(cookie.name);
+        this.pending.set(cookie.name, {
+          name: cookie.name,
+          max_age_seconds: maxAge && maxAge > 0 ? maxAge : null,
+          source: "http",
+        });
+      }
+      if (this.pending.size > 0) this.scheduleFlush();
+    };
+
+    cookieStore.addEventListener("change", this.cookieStoreHandler);
   }
 
   private scheduleFlush(): void {
