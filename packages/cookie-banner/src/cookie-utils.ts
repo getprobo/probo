@@ -32,6 +32,8 @@ const durationTextsByLanguage: Record<string, DurationTexts> = {
     duration_hour_other: "{{count}} hours",
     duration_minute_one: "{{count}} minute",
     duration_minute_other: "{{count}} minutes",
+    duration_second_one: "{{count}} second",
+    duration_second_other: "{{count}} seconds",
     duration_session: "session",
   },
   fr: {
@@ -47,6 +49,8 @@ const durationTextsByLanguage: Record<string, DurationTexts> = {
     duration_hour_other: "{{count}} heures",
     duration_minute_one: "{{count}} minute",
     duration_minute_other: "{{count}} minutes",
+    duration_second_one: "{{count}} seconde",
+    duration_second_other: "{{count}} secondes",
     duration_session: "session",
   },
   de: {
@@ -62,6 +66,8 @@ const durationTextsByLanguage: Record<string, DurationTexts> = {
     duration_hour_other: "{{count}} Stunden",
     duration_minute_one: "{{count}} Minute",
     duration_minute_other: "{{count}} Minuten",
+    duration_second_one: "{{count}} Sekunde",
+    duration_second_other: "{{count}} Sekunden",
     duration_session: "Sitzung",
   },
   es: {
@@ -77,6 +83,8 @@ const durationTextsByLanguage: Record<string, DurationTexts> = {
     duration_hour_other: "{{count}} horas",
     duration_minute_one: "{{count}} minuto",
     duration_minute_other: "{{count}} minutos",
+    duration_second_one: "{{count}} segundo",
+    duration_second_other: "{{count}} segundos",
     duration_session: "sesión",
   },
 };
@@ -93,9 +101,10 @@ const DURATION_UNITS: [number, string, number][] = [
   [365 * 24 * 3600, "duration_year", 21 * 24 * 3600],
   [30 * 24 * 3600, "duration_month", 2 * 24 * 3600],
   [7 * 24 * 3600, "duration_week", 12 * 3600],
-  [24 * 3600, "duration_day", 0],
+  [24 * 3600, "duration_day", 2 * 3600],
   [3600, "duration_hour", 5 * 60],
-  [60, "duration_minute", 15],
+  [60, "duration_minute", 5],
+  [1, "duration_second", 0],
 ];
 
 export function humanizeDuration(seconds: number, lang?: string): string {
@@ -106,7 +115,7 @@ export function humanizeDuration(seconds: number, lang?: string): string {
   const parts: string[] = [];
 
   for (const [unit, key, snap] of DURATION_UNITS) {
-    if (remaining >= unit) {
+    if (remaining >= unit - snap) {
       let count = Math.floor(remaining / unit);
       const leftover = remaining - count * unit;
 

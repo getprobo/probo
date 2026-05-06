@@ -12,25 +12,41 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-export const DURATION_UNITS: { value: string; label: string; singular: string; seconds: number }[] = [
-  { value: "seconds", label: "seconds", singular: "second", seconds: 1 },
-  { value: "minutes", label: "minutes", singular: "minute", seconds: 60 },
-  { value: "hours", label: "hours", singular: "hour", seconds: 3600 },
-  { value: "days", label: "days", singular: "day", seconds: 86400 },
-  { value: "weeks", label: "weeks", singular: "week", seconds: 604800 },
-  { value: "months", label: "months", singular: "month", seconds: 2592000 },
-  { value: "years", label: "years", singular: "year", seconds: 31536000 },
-];
+export const DURATION_UNITS: { value: string; label: string; singular: string; seconds: number, snap: number }[] = [
+  { value: "seconds", label: "seconds", singular: "second", seconds: 1, snap: 0 },
+  { value: "minutes", label: "minutes", singular: "minute", seconds: 60, snap: 5 },
+  { value: "hours", label: "hours", singular: "hour", seconds: 3600, snap: 5 * 60 },
+  { value: "days", label: "days", singular: "day", seconds: 86400, snap: 2 * 3600 },
+  { value: "weeks", label: "weeks", singular: "week", seconds: 604800, snap: 12 * 3600 },
+  { value: "months", label: "months", singular: "month", seconds: 2592000, snap: 2 * 24 *  3600 },
+  { value: "years", label: "years", singular: "year", seconds: 31536000, snap: 21 * 24 *  3600 },
+] as const;
 
 export function humanizeSeconds(seconds: number | null): string {
   if (seconds === null || seconds <= 0) return "session";
-  for (const u of [...DURATION_UNITS].reverse()) {
-    if (seconds >= u.seconds && seconds % u.seconds === 0) {
-      const count = seconds / u.seconds;
-      return `${count} ${count === 1 ? u.singular : u.label}`;
+
+  let remaining = seconds;
+  const parts: string[] = [];
+
+  for (const {label, singular, seconds: durationInSeconds, snap} of [...DURATION_UNITS].reverse()) {
+    if (remaining >= durationInSeconds - snap) {
+      let count = Math.floor(remaining / durationInSeconds);
+      const leftover = remaining - count * durationInSeconds;
+
+      if (leftover >= durationInSeconds - snap) {
+        count++;
+        remaining = 0;
+      } else if (leftover <= snap) {
+        remaining = 0;
+      } else {
+        remaining = leftover;
+      }
+
+      parts.push(`${count} ${count === 1 ? singular : label}`);
     }
   }
-  return `${seconds} ${seconds === 1 ? "second" : "seconds"}`;
+
+  return parts.length > 0 ? parts.join(", ") : "session";
 }
 
 export function toMaxAgeSeconds(value: string, unit: string): number | null {
