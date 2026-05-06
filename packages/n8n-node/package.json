@@ -1,6 +1,6 @@
 {
   "name": "@probo/n8n-nodes-probo",
-  "version": "0.0.1",
+  "version": "0.182.0",
   "main": "index.js",
   "scripts": {
     "build": "n8n-node build",
