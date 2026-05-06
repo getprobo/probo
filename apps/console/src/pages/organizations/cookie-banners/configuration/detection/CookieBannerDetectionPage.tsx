@@ -35,8 +35,8 @@ import type { CookieBannerDetectionPageFragment$key } from "#/__generated__/core
 import type { CookieBannerDetectionPageQuery } from "#/__generated__/core/CookieBannerDetectionPageQuery.graphql";
 import type {
   CookieBannerDetectionPageRefetchQuery,
-  CookiePatternOrderField,
   CookieSource,
+  TrackerPatternOrderField,
 } from "#/__generated__/core/CookieBannerDetectionPageRefetchQuery.graphql";
 import { SortableTable, SortableTh } from "#/components/SortableTable";
 
@@ -140,7 +140,7 @@ export default function CookieBannerDetectionPage({
 
   const refetchWithFilters: ComponentProps<typeof SortableTable>["refetch"] = ({ order }) => {
     pagination.refetch({
-      order: { direction: order.direction, field: order.field as CookiePatternOrderField },
+      order: { direction: order.direction, field: order.field as TrackerPatternOrderField },
       query: queryFilter || null,
       source: sourceFilter,
     });
