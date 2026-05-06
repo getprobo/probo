@@ -446,7 +446,6 @@ FROM
 WHERE
     %s
     AND organization_id = @organization_id
-    AND snapshot_id IS NULL
     AND %s
 `
 
@@ -505,7 +504,6 @@ FROM
 WHERE
 	%s
 	AND organization_id = @organization_id
-	AND snapshot_id IS NULL
 ORDER BY name ASC
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -568,7 +566,6 @@ FROM
 WHERE
 	%s
 	AND organization_id = @organization_id
-	AND snapshot_id IS NULL
 	AND %s
 	AND %s
 `
@@ -1160,7 +1157,6 @@ WITH filtered_processing_activities AS (
 	WHERE
 		pa.tenant_id = @tenant_id
 		AND pa.organization_id = @organization_id
-		AND pa.snapshot_id IS NULL
 ),
 filtered_third_parties AS (
 	SELECT
@@ -1170,7 +1166,6 @@ filtered_third_parties AS (
 		third_parties v
 	WHERE
 		v.tenant_id = @tenant_id
-		AND v.snapshot_id IS NULL
 )
 SELECT
 	pav.processing_activity_id,

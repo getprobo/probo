@@ -34,7 +34,6 @@ type (
 		StatementOfApplicabilityID gid.GID   `db:"statement_of_applicability_id"`
 		ControlID                  gid.GID   `db:"control_id"`
 		OrganizationID             gid.GID   `db:"organization_id"`
-		SnapshotID                 *gid.GID  `db:"snapshot_id"`
 		Applicability              bool      `db:"applicability"`
 		Justification              *string   `db:"justification"`
 		CreatedAt                  time.Time `db:"created_at"`
@@ -85,7 +84,6 @@ WITH stmt AS (
         a.statement_of_applicability_id,
         a.control_id,
         a.organization_id,
-        a.snapshot_id,
         a.applicability,
         a.justification,
         a.created_at,
@@ -107,7 +105,6 @@ SELECT
     statement_of_applicability_id,
     control_id,
     organization_id,
-    snapshot_id,
     applicability,
     justification,
     created_at,
@@ -162,7 +159,6 @@ SELECT
     soac.statement_of_applicability_id,
     soac.control_id,
     soac.organization_id,
-    soac.snapshot_id,
     soac.applicability,
     soac.justification,
     soac.created_at,
@@ -218,7 +214,6 @@ INSERT INTO
         control_id,
         organization_id,
         tenant_id,
-        snapshot_id,
         applicability,
         justification,
         created_at,
@@ -230,7 +225,6 @@ VALUES (
     @control_id,
     @organization_id,
     @tenant_id,
-    @snapshot_id,
     @applicability,
     @justification,
     @created_at,
@@ -244,7 +238,6 @@ VALUES (
 		"control_id":                    sac.ControlID,
 		"organization_id":               sac.OrganizationID,
 		"tenant_id":                     scope.GetTenantID(),
-		"snapshot_id":                   sac.SnapshotID,
 		"applicability":                 sac.Applicability,
 		"justification":                 sac.Justification,
 		"created_at":                    sac.CreatedAt,
@@ -410,7 +403,6 @@ WITH stmt AS (
         a.statement_of_applicability_id,
         a.control_id,
         a.organization_id,
-        a.snapshot_id,
         a.applicability,
         a.justification,
         a.created_at,
@@ -432,7 +424,6 @@ SELECT
     statement_of_applicability_id,
     control_id,
     organization_id,
-    snapshot_id,
     applicability,
     justification,
     created_at,
@@ -477,7 +468,6 @@ SELECT
     a.statement_of_applicability_id,
     a.control_id,
     a.organization_id,
-    a.snapshot_id,
     a.applicability,
     a.justification,
     a.created_at,
@@ -558,7 +548,6 @@ WITH soac_ctrl AS (
         soac.statement_of_applicability_id,
         soac.control_id,
         soac.organization_id,
-        soac.snapshot_id,
         soac.applicability,
         soac.justification,
         soac.created_at,
@@ -576,14 +565,12 @@ WITH soac_ctrl AS (
     WHERE
         soac.%[1]s
         AND soac.control_id = @control_id
-        AND soa.snapshot_id IS NULL
 )
 SELECT
     id,
     statement_of_applicability_id,
     control_id,
     organization_id,
-    snapshot_id,
     applicability,
     justification,
     created_at,

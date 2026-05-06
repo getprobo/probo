@@ -85,7 +85,6 @@ FROM
 WHERE
     %s
     AND id = @statement_of_applicability_id
-    AND snapshot_id IS NULL
 LIMIT 1;
 `
 
@@ -132,7 +131,6 @@ FROM
 WHERE
     %s
     AND organization_id = @organization_id
-    AND snapshot_id IS NULL
     AND %s
 `
 	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
@@ -169,7 +167,6 @@ FROM
 WHERE
     %s
     AND organization_id = @organization_id
-    AND snapshot_id IS NULL
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
@@ -252,7 +249,6 @@ SET
 WHERE
     %s
     AND id = @statement_of_applicability_id
-    AND snapshot_id IS NULL
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -293,7 +289,6 @@ DELETE FROM statements_of_applicability
 WHERE
     %s
     AND id = @statement_of_applicability_id
-    AND snapshot_id IS NULL
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())
 

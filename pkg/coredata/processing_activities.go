@@ -137,8 +137,6 @@ WHERE
 type (
 	ProcessingActivity struct {
 		ID                                   gid.GID                                          `db:"id"`
-		SnapshotID                           *gid.GID                                         `db:"snapshot_id"`
-		SourceID                             *gid.GID                                         `db:"source_id"`
 		OrganizationID                       gid.GID                                          `db:"organization_id"`
 		Name                                 string                                           `db:"name"`
 		Purpose                              *string                                          `db:"purpose"`
@@ -200,8 +198,6 @@ func (p *ProcessingActivity) LoadByID(
 	q := `
 SELECT
 	id,
-	snapshot_id,
-	source_id,
 	organization_id,
 	name,
 	purpose,
@@ -266,7 +262,6 @@ FROM
 WHERE
 	%s
 	AND organization_id = @organization_id
-	AND snapshot_id IS NULL
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -299,8 +294,6 @@ func (p *ProcessingActivities) LoadByIDs(
 	q := `
 SELECT
 	id,
-	snapshot_id,
-	source_id,
 	organization_id,
 	name,
 	purpose,
@@ -365,8 +358,6 @@ func (p *ProcessingActivities) LoadByOrganizationID(
 	q := `
 SELECT
 	id,
-	snapshot_id,
-	source_id,
 	organization_id,
 	name,
 	purpose,
@@ -394,7 +385,6 @@ FROM
 WHERE
 	%s
 	AND organization_id = @organization_id
-	AND snapshot_id IS NULL
 	AND %s
 `
 
@@ -428,8 +418,6 @@ func (p *ProcessingActivities) LoadAllByOrganizationID(
 	q := `
 SELECT
 	id,
-	snapshot_id,
-	source_id,
 	organization_id,
 	name,
 	purpose,
@@ -457,7 +445,6 @@ FROM
 WHERE
 	%s
 	AND organization_id = @organization_id
-	AND snapshot_id IS NULL
 ORDER BY created_at DESC
 `
 
@@ -490,8 +477,6 @@ func (p *ProcessingActivity) Insert(
 INSERT INTO processing_activities (
 	id,
 	tenant_id,
-	snapshot_id,
-	source_id,
 	organization_id,
 	name,
 	purpose,
@@ -517,8 +502,6 @@ INSERT INTO processing_activities (
 ) VALUES (
 	@id,
 	@tenant_id,
-	@snapshot_id,
-	@source_id,
 	@organization_id,
 	@name,
 	@purpose,
@@ -547,8 +530,6 @@ INSERT INTO processing_activities (
 	args := pgx.StrictNamedArgs{
 		"id":                       p.ID,
 		"tenant_id":                scope.GetTenantID(),
-		"snapshot_id":              p.SnapshotID,
-		"source_id":                p.SourceID,
 		"organization_id":          p.OrganizationID,
 		"name":                     p.Name,
 		"purpose":                  p.Purpose,
@@ -612,7 +593,6 @@ SET
 WHERE
 	%s
 	AND id = @id
-	AND snapshot_id IS NULL
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -660,7 +640,6 @@ DELETE FROM processing_activities
 WHERE
 	%s
 	AND id = @id
-	AND snapshot_id IS NULL
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())

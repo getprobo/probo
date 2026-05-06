@@ -29,7 +29,6 @@ type (
 		ProcessingActivityID gid.GID      `db:"processing_activity_id"`
 		ThirdPartyID         gid.GID      `db:"third_party_id"`
 		TenantID             gid.TenantID `db:"tenant_id"`
-		SnapshotID           *gid.GID     `db:"snapshot_id"`
 		CreatedAt            time.Time    `db:"created_at"`
 	}
 

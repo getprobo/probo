@@ -13,7 +13,6 @@ Every entity uses `gid.GID` for its ID, `db` tags for pgx mapping, and `CreatedA
 type (
 	Asset struct {
 		ID             gid.GID   `db:"id"`
-		SnapshotID     *gid.GID  `db:"snapshot_id"`
 		Name           string    `db:"name"`
 		OrganizationID gid.GID   `db:"organization_id"`
 		AssetType      AssetType `db:"asset_type"`

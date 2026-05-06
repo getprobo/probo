@@ -138,8 +138,6 @@ WHERE
 type (
 	DataProtectionImpactAssessment struct {
 		ID                          gid.GID                                     `db:"id"`
-		SnapshotID                  *gid.GID                                    `db:"snapshot_id"`
-		SourceID                    *gid.GID                                    `db:"source_id"`
 		OrganizationID              gid.GID                                     `db:"organization_id"`
 		ProcessingActivityID        gid.GID                                     `db:"processing_activity_id"`
 		Description                 *string                                     `db:"description"`
@@ -192,7 +190,6 @@ FROM
 WHERE
 	%s
 	AND organization_id = @organization_id
-	AND snapshot_id IS NULL
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -221,8 +218,6 @@ func (dpias *DataProtectionImpactAssessments) LoadByOrganizationID(
 	q := `
 SELECT
 	id,
-	snapshot_id,
-	source_id,
 	organization_id,
 	processing_activity_id,
 	description,
@@ -237,7 +232,6 @@ FROM
 WHERE
 	%s
 	AND organization_id = @organization_id
-	AND snapshot_id IS NULL
 	AND %s
 `
 
@@ -271,8 +265,6 @@ func (dpias *DataProtectionImpactAssessments) LoadAllByOrganizationID(
 	q := `
 SELECT
 	id,
-	snapshot_id,
-	source_id,
 	organization_id,
 	processing_activity_id,
 	description,
@@ -287,7 +279,6 @@ FROM
 WHERE
 	%s
 	AND organization_id = @organization_id
-	AND snapshot_id IS NULL
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -319,8 +310,6 @@ func (dpia *DataProtectionImpactAssessment) LoadByID(
 	q := `
 SELECT
 	id,
-	snapshot_id,
-	source_id,
 	organization_id,
 	processing_activity_id,
 	description,
@@ -371,8 +360,6 @@ func (dpia *DataProtectionImpactAssessment) LoadByProcessingActivityID(
 	q := `
 SELECT
 	id,
-	snapshot_id,
-	source_id,
 	organization_id,
 	processing_activity_id,
 	description,

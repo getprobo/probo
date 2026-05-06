@@ -91,7 +91,6 @@ FROM
 WHERE
 	%s
 	AND third_party_id = @third_party_id
-	AND snapshot_id IS NULL
 	AND %s
 `
 
@@ -143,7 +142,6 @@ FROM
 WHERE
 	%s
 	AND third_party_id = ANY(@third_party_ids)
-	AND snapshot_id IS NULL
 ORDER BY
 	third_party_id, report_date DESC
 `
@@ -279,7 +277,6 @@ FROM
 WHERE
 	%s
 	AND id = @id
-	AND snapshot_id IS NULL
 RETURNING report_file_id
 `
 

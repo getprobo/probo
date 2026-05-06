@@ -31,8 +31,6 @@ type (
 	Finding struct {
 		ID                 gid.GID         `db:"id"`
 		OrganizationID     gid.GID         `db:"organization_id"`
-		SnapshotID         *gid.GID        `db:"snapshot_id"`
-		SourceID           *gid.GID        `db:"source_id"`
 		Kind               FindingKind     `db:"kind"`
 		ReferenceID        string          `db:"reference_id"`
 		Description        *string         `db:"description"`
@@ -98,8 +96,6 @@ func (f *Finding) LoadByID(
 SELECT
 	id,
 	organization_id,
-	snapshot_id,
-	source_id,
 	kind,
 	reference_id,
 	description,
@@ -120,7 +116,6 @@ FROM
 WHERE
 	%s
 	AND id = @finding_id
-	AND snapshot_id IS NULL
 LIMIT 1;
 `
 
@@ -159,7 +154,6 @@ FROM
 WHERE
 	%s
 	AND organization_id = @organization_id
-	AND snapshot_id IS NULL
 	AND %s
 `
 
@@ -192,8 +186,6 @@ func (fs *Findings) LoadByOrganizationID(
 SELECT
 	id,
 	organization_id,
-	snapshot_id,
-	source_id,
 	kind,
 	reference_id,
 	description,
@@ -214,7 +206,6 @@ FROM
 WHERE
 	%s
 	AND organization_id = @organization_id
-	AND snapshot_id IS NULL
 	AND %s
 	AND %s
 `
@@ -264,7 +255,7 @@ WITH next_ref AS (
 			0
 		) + 1 AS next_num
 	FROM findings
-	WHERE organization_id = @organization_id AND snapshot_id IS NULL
+	WHERE organization_id = @organization_id
 )
 INSERT INTO findings (
 	id,
@@ -360,7 +351,6 @@ SET
 WHERE
 	%s
 	AND id = @id
-	AND snapshot_id IS NULL
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -399,7 +389,7 @@ func (f *Finding) Delete(
 DELETE FROM findings
 WHERE
 	%s
-	AND id = @id AND snapshot_id IS NULL
+	AND id = @id
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -429,8 +419,6 @@ WITH f AS (
 		fi.id,
 		fi.tenant_id,
 		fi.organization_id,
-		fi.snapshot_id,
-		fi.source_id,
 		fi.kind,
 		fi.reference_id,
 		fi.description,
@@ -452,13 +440,10 @@ WITH f AS (
 		findings_audits fa ON fi.id = fa.finding_id
 	WHERE
 		fa.audit_id = @audit_id
-		AND fi.snapshot_id IS NULL
 )
 SELECT
 	id,
 	organization_id,
-	snapshot_id,
-	source_id,
 	kind,
 	reference_id,
 	description,
@@ -520,7 +505,6 @@ WITH f AS (
 		findings_audits fa ON fi.id = fa.finding_id
 	WHERE
 		fa.audit_id = @audit_id
-		AND fi.snapshot_id IS NULL
 )
 SELECT
 	COUNT(id)
@@ -558,8 +542,6 @@ func (fs *Findings) LoadAllByOrganizationID(
 SELECT
 	id,
 	organization_id,
-	snapshot_id,
-	source_id,
 	kind,
 	reference_id,
 	description,
@@ -580,7 +562,6 @@ FROM
 WHERE
 	%s
 	AND organization_id = @organization_id
-	AND snapshot_id IS NULL
 ORDER BY
 	reference_id ASC
 `

@@ -214,7 +214,6 @@ WITH rsks AS (
 		risks_measures rm ON r.id = rm.risk_id
 	WHERE
 		rm.measure_id = @measure_id
-		AND r.snapshot_id IS NULL
 )
 SELECT
 	COUNT(id)
@@ -277,7 +276,6 @@ WITH rsks AS (
 		iam_membership_profiles p ON r.owner_profile_id = p.id
 	WHERE
 		rm.measure_id = @measure_id
-		AND r.snapshot_id IS NULL
 )
 SELECT
 	id,
@@ -338,7 +336,6 @@ SELECT
 FROM risks
 WHERE %s
 	AND organization_id = @organization_id
-	AND snapshot_id IS NULL
 	AND %s
 `
 	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
@@ -393,7 +390,6 @@ WITH rsks AS (
 		iam_membership_profiles p ON r.owner_profile_id = p.id
 	WHERE
 		r.organization_id = @organization_id
-		AND r.snapshot_id IS NULL
 )
 SELECT
 	id,
@@ -470,7 +466,6 @@ FROM
 	risks r
 WHERE %s
 	AND r.organization_id = @organization_id
-	AND r.snapshot_id IS NULL
 ORDER BY r.name ASC, r.id ASC
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -649,7 +644,6 @@ SET
 	updated_at = @updated_at
 WHERE %s
 	AND id = @risk_id
-	AND snapshot_id IS NULL
 RETURNING inherent_risk_score, residual_risk_score
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -688,7 +682,7 @@ func (r *Risk) Delete(
 	riskID gid.GID,
 ) error {
 	q := `
-DELETE FROM risks WHERE %s AND id = @id AND snapshot_id IS NULL
+DELETE FROM risks WHERE %s AND id = @id
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
@@ -718,7 +712,6 @@ WITH rsks AS (
 		risks_documents rd ON r.id = rd.risk_id
 	WHERE
 		rd.document_id = @document_id
-		AND r.snapshot_id IS NULL
 )
 SELECT
 	COUNT(id)

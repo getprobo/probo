@@ -91,7 +91,6 @@ FROM
 WHERE
 	%s
 	AND id = @asset_id
-	AND snapshot_id IS NULL
 LIMIT 1;
 `
 
@@ -140,7 +139,6 @@ FROM
 WHERE
 	%s
 	AND owner_profile_id = @owner_profile_id
-	AND snapshot_id IS NULL
 LIMIT 1;
 `
 
@@ -182,7 +180,6 @@ FROM
 WHERE
 	%s
 	AND organization_id = @organization_id
-	AND snapshot_id IS NULL
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -223,7 +220,6 @@ FROM
 WHERE
 	%s
 	AND organization_id = @organization_id
-	AND snapshot_id IS NULL
 	AND %s
 `
 
@@ -270,7 +266,6 @@ FROM
 WHERE
 	%s
 	AND organization_id = @organization_id
-	AND snapshot_id IS NULL
 ORDER BY
 	name ASC
 `
@@ -364,7 +359,6 @@ SET
 WHERE
 	%s
 	AND id = @id
-	AND snapshot_id IS NULL
 RETURNING
 	id,
 	name,
@@ -415,7 +409,6 @@ DELETE FROM assets
 WHERE
 	%s
 	AND id = @id
-	AND snapshot_id IS NULL
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())

@@ -189,7 +189,6 @@ FROM
 WHERE
     %s
     AND third_party_id = @third_party_id
-    AND snapshot_id IS NULL
 ORDER BY
     created_at DESC
 LIMIT 1;
@@ -240,7 +239,6 @@ FROM
 WHERE
     %s
     AND third_party_id = @third_party_id
-    AND snapshot_id IS NULL
 	AND %s
 `
 
@@ -292,7 +290,6 @@ FROM
 WHERE
     %s
     AND third_party_id = ANY(@third_party_ids)
-    AND snapshot_id IS NULL
 ORDER BY
     third_party_id, created_at DESC
 `

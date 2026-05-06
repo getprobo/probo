@@ -135,7 +135,6 @@ FROM
 WHERE
 	%s
 	AND third_party_id = @third_party_id
-	AND snapshot_id IS NULL
 	AND %s
 `
 	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
@@ -187,7 +186,6 @@ FROM
 WHERE
 	%s
 	AND third_party_id = ANY(@third_party_ids)
-	AND snapshot_id IS NULL
 ORDER BY
 	third_party_id, name ASC
 `
@@ -280,7 +278,6 @@ SET
 WHERE
 	%s
 	AND id = @third_party_service_id
-	AND snapshot_id IS NULL
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -312,7 +309,6 @@ DELETE FROM
 WHERE
 	%s
 	AND id = @third_party_service_id
-	AND snapshot_id IS NULL
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())

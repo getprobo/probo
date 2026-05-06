@@ -41,8 +41,6 @@ type (
 		DueDate                *time.Time       `db:"due_date"`
 		Status                 ObligationStatus `db:"status"`
 		Type                   ObligationType   `db:"type"`
-		SnapshotID             *gid.GID         `db:"snapshot_id"`
-		SourceID               *gid.GID         `db:"source_id"`
 		CreatedAt              time.Time        `db:"created_at"`
 		UpdatedAt              time.Time        `db:"updated_at"`
 	}
@@ -89,8 +87,6 @@ func (o *Obligation) LoadByID(
 SELECT
 	id,
 	organization_id,
-	snapshot_id,
-	source_id,
 	area,
 	source,
 	requirement,
@@ -108,7 +104,6 @@ FROM
 WHERE
 	%s
 	AND id = @obligation_id
-	AND snapshot_id IS NULL
 LIMIT 1;
 `
 
@@ -146,7 +141,6 @@ FROM
 WHERE
 	%s
 	AND organization_id = @organization_id
-	AND snapshot_id IS NULL
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -176,7 +170,6 @@ WITH obls AS (
 	SELECT
 		o.id,
 		o.tenant_id,
-		o.snapshot_id,
 		o.search_vector
 	FROM
 		obligations o
@@ -184,7 +177,6 @@ WITH obls AS (
 		risks_obligations ro ON o.id = ro.obligation_id
 	WHERE
 		ro.risk_id = @risk_id
-		AND o.snapshot_id IS NULL
 )
 SELECT
 	COUNT(id)
@@ -230,8 +222,6 @@ SELECT
 	due_date,
 	status,
 	type,
-	snapshot_id,
-	source_id,
 	created_at,
 	updated_at
 FROM
@@ -239,7 +229,6 @@ FROM
 WHERE
 	%s
 	AND organization_id = @organization_id
-	AND snapshot_id IS NULL
 	AND %s
 `
 
@@ -286,8 +275,6 @@ WITH obls AS (
 		o.due_date,
 		o.status,
 		o.type,
-		o.snapshot_id,
-		o.source_id,
 		o.created_at,
 		o.updated_at,
 		o.tenant_id,
@@ -298,7 +285,6 @@ WITH obls AS (
 		risks_obligations ro ON o.id = ro.obligation_id
 	WHERE
 		ro.risk_id = @risk_id
-		AND o.snapshot_id IS NULL
 )
 SELECT
 	id,
@@ -313,8 +299,6 @@ SELECT
 	due_date,
 	status,
 	type,
-	snapshot_id,
-	source_id,
 	created_at,
 	updated_at
 FROM
@@ -354,15 +338,13 @@ func (os *Obligations) CountByControlID(
 WITH obls AS (
 	SELECT
 		o.id,
-		o.tenant_id,
-		o.snapshot_id
+		o.tenant_id
 	FROM
 		obligations o
 	INNER JOIN
 		controls_obligations co ON o.id = co.obligation_id
 	WHERE
 		co.control_id = @control_id
-		AND o.snapshot_id IS NULL
 )
 SELECT
 	COUNT(id)
@@ -409,8 +391,6 @@ WITH obls AS (
 		o.due_date,
 		o.status,
 		o.type,
-		o.snapshot_id,
-		o.source_id,
 		o.created_at,
 		o.updated_at,
 		o.tenant_id
@@ -420,7 +400,6 @@ WITH obls AS (
 		controls_obligations co ON o.id = co.obligation_id
 	WHERE
 		co.control_id = @control_id
-		AND o.snapshot_id IS NULL
 )
 SELECT
 	id,
@@ -435,8 +414,6 @@ SELECT
 	due_date,
 	status,
 	type,
-	snapshot_id,
-	source_id,
 	created_at,
 	updated_at
 FROM
@@ -485,8 +462,6 @@ INSERT INTO obligations (
 	due_date,
 	status,
 	type,
-	snapshot_id,
-	source_id,
 	created_at,
 	updated_at
 ) VALUES (
@@ -503,8 +478,6 @@ INSERT INTO obligations (
 	@due_date,
 	@status,
 	@type,
-	@snapshot_id,
-	@source_id,
 	@created_at,
 	@updated_at
 )
@@ -524,8 +497,6 @@ INSERT INTO obligations (
 		"due_date":                  o.DueDate,
 		"status":                    o.Status,
 		"type":                      o.Type,
-		"snapshot_id":               o.SnapshotID,
-		"source_id":                 o.SourceID,
 		"created_at":                o.CreatedAt,
 		"updated_at":                o.UpdatedAt,
 	}
@@ -559,7 +530,6 @@ UPDATE obligations SET
 WHERE
 	%s
 	AND id = @id
-	AND snapshot_id IS NULL
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -598,7 +568,6 @@ DELETE FROM obligations
 WHERE
 	%s
 	AND id = @id
-	AND snapshot_id IS NULL
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -634,8 +603,6 @@ SELECT
 	due_date,
 	status,
 	type,
-	snapshot_id,
-	source_id,
 	created_at,
 	updated_at
 FROM
@@ -643,7 +610,6 @@ FROM
 WHERE
 	%s
 	AND organization_id = @organization_id
-	AND snapshot_id IS NULL
 ORDER BY
 	created_at ASC
 `
