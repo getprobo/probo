@@ -68,8 +68,8 @@ export const categorySectionFragment = graphql`
     kind
     gcmConsentTypes
     posthogConsent
-    cookiePatterns(first: 100, orderBy: { field: CREATED_AT, direction: ASC })
-      @connection(key: "CategorySection_cookiePatterns", filters: [])
+    trackerPatterns(first: 100, orderBy: { field: CREATED_AT, direction: ASC })
+      @connection(key: "CategorySection_trackerPatterns", filters: [])
       @required(action: THROW) {
       __id
       edges {
@@ -128,11 +128,11 @@ const updateCategoryMutation = graphql`
 
 const createPatternMutation = graphql`
   mutation CategorySectionCreatePatternMutation(
-    $input: CreateCookiePatternInput!
+    $input: CreateTrackerPatternInput!
     $connections: [ID!]!
   ) {
-    createCookiePattern(input: $input) {
-      cookiePatternEdge @appendEdge(connections: $connections) {
+    createTrackerPattern(input: $input) {
+      trackerPatternEdge @appendEdge(connections: $connections) {
         node {
           id
           displayName
@@ -157,10 +157,10 @@ const createPatternMutation = graphql`
 
 const updatePatternMutation = graphql`
   mutation CategorySectionUpdatePatternMutation(
-    $input: UpdateCookiePatternInput!
+    $input: UpdateTrackerPatternInput!
   ) {
-    updateCookiePattern(input: $input) {
-      cookiePattern {
+    updateTrackerPattern(input: $input) {
+      trackerPattern {
         id
         displayName
         maxAgeSeconds
@@ -182,11 +182,11 @@ const updatePatternMutation = graphql`
 
 const deletePatternMutation = graphql`
   mutation CategorySectionDeletePatternMutation(
-    $input: DeleteCookiePatternInput!
+    $input: DeleteTrackerPatternInput!
     $connections: [ID!]!
   ) {
-    deleteCookiePattern(input: $input) {
-      deletedCookiePatternId @deleteEdge(connections: $connections)
+    deleteTrackerPattern(input: $input) {
+      deletedTrackerPatternId @deleteEdge(connections: $connections)
       cookieBanner {
         id
         latestVersion {
@@ -201,10 +201,10 @@ const deletePatternMutation = graphql`
 
 const movePatternMutation = graphql`
   mutation CategorySectionMovePatternMutation(
-    $input: MoveCookiePatternToCategoryInput!
+    $input: MoveTrackerPatternToCategoryInput!
   ) {
-    moveCookiePatternToCategory(input: $input) {
-      cookiePattern {
+    moveTrackerPatternToCategory(input: $input) {
+      trackerPattern {
         id
         displayName
         maxAgeSeconds
@@ -300,8 +300,8 @@ export function CategorySection({ categoryKey, connectionId }: CategorySectionPr
   const [editingCookieId, setEditingCookieId] = useState<string | null>(null);
   const [isAddingCookie, setIsAddingCookie] = useState(false);
 
-  const patternsConnectionId = category.cookiePatterns.__id;
-  const patterns = category.cookiePatterns.edges.map(e => e.node);
+  const patternsConnectionId = category.trackerPatterns.__id;
+  const patterns = category.trackerPatterns.edges.map(e => e.node);
   const isMutating = isUpdating || isCreating || isUpdatingPattern;
 
   const handleSaveCategory = (
@@ -401,7 +401,7 @@ export function CategorySection({ categoryKey, connectionId }: CategorySectionPr
     updatePattern({
       variables: {
         input: {
-          cookiePatternId: patternId,
+          trackerPatternId: patternId,
           displayName: cookie.name,
           maxAgeSeconds: cookie.maxAgeSeconds,
           description: cookie.description,
@@ -446,7 +446,7 @@ export function CategorySection({ categoryKey, connectionId }: CategorySectionPr
     updatePattern({
       variables: {
         input: {
-          cookiePatternId: patternId,
+          trackerPatternId: patternId,
           excluded,
         },
       },
@@ -479,7 +479,7 @@ export function CategorySection({ categoryKey, connectionId }: CategorySectionPr
         new Promise<void>((resolve) => {
           deletePattern({
             variables: {
-              input: { cookiePatternId: patternId },
+              input: { trackerPatternId: patternId },
               connections: [patternsConnectionId],
             },
             onCompleted(_response, errors) {
@@ -593,7 +593,7 @@ export function CategorySection({ categoryKey, connectionId }: CategorySectionPr
     movePattern({
       variables: {
         input: {
-          cookiePatternId: patternId,
+          trackerPatternId: patternId,
           targetCookieCategoryId: targetCategoryId,
         },
       },
@@ -602,7 +602,7 @@ export function CategorySection({ categoryKey, connectionId }: CategorySectionPr
         if (sourceCategory) {
           const sourceConn = ConnectionHandler.getConnection(
             sourceCategory,
-            "CategorySection_cookiePatterns",
+            "CategorySection_trackerPatterns",
           );
           if (sourceConn) {
             ConnectionHandler.deleteNode(sourceConn, patternId);
@@ -613,7 +613,7 @@ export function CategorySection({ categoryKey, connectionId }: CategorySectionPr
         if (targetCategory) {
           const targetConn = ConnectionHandler.getConnection(
             targetCategory,
-            "CategorySection_cookiePatterns",
+            "CategorySection_trackerPatterns",
           );
           if (targetConn) {
             const patternRecord = store.get(patternId);
@@ -622,7 +622,7 @@ export function CategorySection({ categoryKey, connectionId }: CategorySectionPr
                 store,
                 targetConn,
                 patternRecord,
-                "CookiePatternEdge",
+                "TrackerPatternEdge",
               );
               ConnectionHandler.insertEdgeAfter(targetConn, newEdge);
             }

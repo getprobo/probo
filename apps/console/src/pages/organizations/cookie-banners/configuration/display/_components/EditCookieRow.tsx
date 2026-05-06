@@ -24,7 +24,7 @@ import type { EditCookieRowFragment$key } from "#/__generated__/core/EditCookieR
 import type { CookieEntry } from "./CategorySection";
 
 export const editCookieRowFragment = graphql`
-  fragment EditCookieRowFragment on CookiePattern {
+  fragment EditCookieRowFragment on TrackerPattern {
     displayName
     maxAgeSeconds
     description
