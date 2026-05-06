@@ -15,13 +15,16 @@
 package googleworkspace
 
 var (
-	// OAuth2Scopes are the Google Workspace OAuth2 scopes required by the
-	// SCIM provisioning bridge. The bridge reads users, user schemas, group
-	// members, and customer info from the Admin Directory API.
+	// OAuth2Scopes are the OAuth2 scopes required by the SCIM provisioning
+	// bridge to read users from the Admin Directory API. The scopes are
+	// intentionally limited to what the bridge actually consumes so the
+	// integration also works for Google Cloud Identity (Free or Premium)
+	// customers, not only Google Workspace customers. In particular,
+	// admin.directory.userschema is a Workspace-only entitlement (custom
+	// user fields are not available on Cloud Identity) and must not be
+	// requested here, otherwise Cloud Identity-only admins cannot complete
+	// the OAuth consent flow.
 	OAuth2Scopes = []string{
 		"https://www.googleapis.com/auth/admin.directory.user.readonly",
-		"https://www.googleapis.com/auth/admin.directory.userschema.readonly",
-		"https://www.googleapis.com/auth/admin.directory.group.member.readonly",
-		"https://www.googleapis.com/auth/admin.directory.customer.readonly",
 	}
 )

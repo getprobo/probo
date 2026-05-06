@@ -68,7 +68,11 @@ func (p *Provider) ListUsers(ctx context.Context) (scimclient.Users, error) {
 	pageToken := ""
 
 	for {
-		call := adminService.Users.List().Customer("my_customer").MaxResults(500).Context(ctx)
+		call := adminService.Users.List().
+			Customer("my_customer").
+			MaxResults(500).
+			Projection("full").
+			Context(ctx)
 		if pageToken != "" {
 			call = call.PageToken(pageToken)
 		}

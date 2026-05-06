@@ -135,7 +135,7 @@ export function GoogleWorkspaceConnector(props: {
         }
         toast({
           title: __("Success"),
-          description: __("Google Workspace disconnected successfully"),
+          description: __("Google Workspace / Cloud Identity disconnected successfully"),
           variant: "success",
         });
         dialogRef.current?.close();
@@ -208,10 +208,10 @@ export function GoogleWorkspaceConnector(props: {
           <Google className="w-6 h-6" />
         </div>
         <div className="mr-auto">
-          <h3 className="font-medium">{__("Google Workspace")}</h3>
+          <h3 className="font-medium">{__("Google Workspace / Cloud Identity")}</h3>
           <p className="text-sm text-txt-secondary">
             {__(
-              "Connect Google Workspace to automatically sync users via SCIM.",
+              "Connect Google Workspace or Google Cloud Identity to automatically sync users via SCIM.",
             )}
           </p>
         </div>
@@ -229,7 +229,7 @@ export function GoogleWorkspaceConnector(props: {
         <Google className="w-6 h-6" />
       </div>
       <div className="mr-auto">
-        <h3 className="font-medium">{__("Google Workspace")}</h3>
+        <h3 className="font-medium">{__("Google Workspace / Cloud Identity")}</h3>
         <p className="text-sm text-txt-secondary">
           {sprintf(__("Connected on %s"), dateTimeFormat(connector.createdAt))}
         </p>
@@ -245,7 +245,7 @@ export function GoogleWorkspaceConnector(props: {
             {__("Settings")}
           </Button>
         )}
-        title={__("Google Workspace Settings")}
+        title={__("Google Workspace / Cloud Identity Settings")}
         className="max-w-lg"
       >
         <DialogContent padded className="space-y-6">
@@ -253,7 +253,7 @@ export function GoogleWorkspaceConnector(props: {
             <div>
               <h4 className="text-sm font-medium">{__("Excluded user names")}</h4>
               <p className="text-sm text-txt-secondary mt-1">
-                {__("Users with these user names will not be synced from Google Workspace.")}
+                {__("Users with these user names will not be synced from Google Workspace / Cloud Identity.")}
               </p>
             </div>
             <div className="flex gap-2">
@@ -297,7 +297,7 @@ export function GoogleWorkspaceConnector(props: {
 
             {currentExcludedUserNames.length === 0 && (
               <p className="text-sm text-txt-secondary text-center py-4">
-                {__("No excluded user names. All Google Workspace users will be synced.")}
+                {__("No excluded user names. All Google Workspace / Cloud Identity users will be synced.")}
               </p>
             )}
           </div>
@@ -310,13 +310,13 @@ export function GoogleWorkspaceConnector(props: {
             {__("Disconnect")}
           </Button>
         )}
-        title={__("Disconnect Google Workspace")}
+        title={__("Disconnect Google Workspace / Cloud Identity")}
         className="max-w-lg"
       >
         <DialogContent padded className="space-y-4">
           <p className="text-txt-secondary text-sm">
             {__(
-              "This will disconnect your Google Workspace integration. Users will no longer be automatically synced via SCIM.",
+              "This will disconnect your Google Workspace / Cloud Identity integration. Users will no longer be automatically synced via SCIM.",
             )}
           </p>
           <p className="text-red-600 text-sm font-medium">
