@@ -347,7 +347,6 @@ func TestCookieBannerVersioning_NoOpUpdates(t *testing.T) {
 		err := owner.Execute(query, map[string]any{
 			"input": map[string]any{
 				"trackerPatternId": patternID,
-				"displayName":      "GA Tracker",
 				"description":      "Original description",
 			},
 		}, &result)
@@ -379,7 +378,7 @@ func TestCookieBannerVersioning_ExcludedPattern(t *testing.T) {
 		const query = `
 			mutation UpdateTrackerPattern($input: UpdateTrackerPatternInput!) {
 				updateTrackerPattern(input: $input) {
-					trackerPattern { id displayName description }
+					trackerPattern { id description }
 				}
 			}
 		`
@@ -387,7 +386,6 @@ func TestCookieBannerVersioning_ExcludedPattern(t *testing.T) {
 		var result struct {
 			UpdateTrackerPattern struct {
 				TrackerPattern struct {
-					DisplayName string `json:"displayName"`
 					Description string `json:"description"`
 				} `json:"trackerPattern"`
 			} `json:"updateTrackerPattern"`
@@ -396,12 +394,10 @@ func TestCookieBannerVersioning_ExcludedPattern(t *testing.T) {
 		err := owner.Execute(query, map[string]any{
 			"input": map[string]any{
 				"trackerPatternId": patternID,
-				"displayName":      "Renamed Excluded",
 				"description":      "Now with notes",
 			},
 		}, &result)
 		require.NoError(t, err)
-		assert.Equal(t, "Renamed Excluded", result.UpdateTrackerPattern.TrackerPattern.DisplayName)
 		assert.Equal(t, "Now with notes", result.UpdateTrackerPattern.TrackerPattern.Description)
 
 		got := latestVersion(t, owner, bannerID)
@@ -604,7 +600,7 @@ func TestCookieBannerVersioning_RealChangesStillBumpVersion(t *testing.T) {
 		assert.Equal(t, "DRAFT", got.State)
 	})
 
-	t.Run("UpdateTrackerPattern displayName change on visible pattern creates a new draft", func(t *testing.T) {
+	t.Run("UpdateTrackerPattern description change on visible pattern creates a new draft", func(t *testing.T) {
 		t.Parallel()
 		owner := testutil.NewClient(t, testutil.RoleOwner)
 
@@ -612,6 +608,7 @@ func TestCookieBannerVersioning_RealChangesStillBumpVersion(t *testing.T) {
 		categoryID := factory.CreateCookieCategory(owner, bannerID, factory.Attrs{"slug": "real-change"})
 		patternID := factory.CreateTrackerPattern(owner, categoryID, factory.Attrs{
 			"displayName": "Original",
+			"description": "Original desc",
 		})
 
 		published := publishBanner(t, owner, bannerID)
@@ -626,7 +623,7 @@ func TestCookieBannerVersioning_RealChangesStillBumpVersion(t *testing.T) {
 		err := owner.Execute(query, map[string]any{
 			"input": map[string]any{
 				"trackerPatternId": patternID,
-				"displayName":      "Renamed",
+				"description":      "Updated desc",
 			},
 		}, &result)
 		require.NoError(t, err)

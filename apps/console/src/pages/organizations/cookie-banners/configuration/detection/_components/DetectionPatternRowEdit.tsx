@@ -18,22 +18,21 @@ import { Button, DurationInput, Input, Td, Tr } from "@probo/ui";
 import { Controller, useForm } from "react-hook-form";
 
 interface FormValues {
-  displayName: string;
   duration: { value: string; unit: string };
   description: string;
 }
 
 interface DetectionPatternRowEditProps {
-  displayName: string;
+  pattern: string;
   description: string;
   maxAgeSeconds: number | null;
   isUpdating: boolean;
-  onSave: (data: { displayName: string; description: string; maxAgeSeconds: number | null }) => void;
+  onSave: (data: { description: string; maxAgeSeconds: number | null }) => void;
   onCancel: () => void;
 }
 
 export function DetectionPatternRowEdit({
-  displayName,
+  pattern,
   description,
   maxAgeSeconds,
   isUpdating,
@@ -45,7 +44,6 @@ export function DetectionPatternRowEdit({
 
   const { register, handleSubmit, control } = useForm<FormValues>({
     defaultValues: {
-      displayName,
       duration: initial,
       description,
     },
@@ -53,7 +51,6 @@ export function DetectionPatternRowEdit({
 
   const onSubmit = (data: FormValues) => {
     onSave({
-      displayName: data.displayName,
       description: data.description,
       maxAgeSeconds: toMaxAgeSeconds(data.duration.value, data.duration.unit),
     });
@@ -62,10 +59,7 @@ export function DetectionPatternRowEdit({
   return (
     <Tr>
       <Td className="pr-3">
-        <Input
-          {...register("displayName")}
-          placeholder={__("Cookie name")}
-        />
+        <span className="font-medium">{pattern}</span>
       </Td>
       <Td />
       <Td className="pr-3">

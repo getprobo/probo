@@ -149,7 +149,6 @@ type (
 
 	UpdateTrackerPatternRequest struct {
 		TrackerPatternID gid.GID
-		DisplayName      *string
 		MaxAgeSeconds    **int
 		Description      *string
 		Excluded         *bool
@@ -357,9 +356,6 @@ func (r *UpdateTrackerPatternRequest) Validate() error {
 	v := validator.New()
 
 	v.Check(r.TrackerPatternID, "tracker_pattern_id", validator.Required(), validator.GID(coredata.TrackerPatternEntityType))
-	if r.DisplayName != nil {
-		v.Check(*r.DisplayName, "display_name", validator.Required(), validator.SafeTextNoNewLine(255))
-	}
 	if r.Description != nil {
 		v.Check(*r.Description, "description", validator.SafeText(1000))
 	}
@@ -2258,20 +2254,16 @@ func (s *Service) UpdateTrackerPattern(
 				return fmt.Errorf("cannot load tracker pattern: %w", err)
 			}
 
-			displayNameChanged := req.DisplayName != nil && *req.DisplayName != pattern.DisplayName
 			maxAgeChanged := req.MaxAgeSeconds != nil && !ptrEqual(*req.MaxAgeSeconds, pattern.MaxAgeSeconds)
 			descChanged := req.Description != nil && *req.Description != pattern.Description
 			excludedChanged := req.Excluded != nil && *req.Excluded != pattern.Excluded
 
-			if !displayNameChanged && !maxAgeChanged && !descChanged && !excludedChanged {
+			if !maxAgeChanged && !descChanged && !excludedChanged {
 				return nil
 			}
 
 			staysExcluded := pattern.Excluded && (req.Excluded == nil || *req.Excluded)
 
-			if req.DisplayName != nil {
-				pattern.DisplayName = *req.DisplayName
-			}
 			if req.MaxAgeSeconds != nil {
 				pattern.MaxAgeSeconds = *req.MaxAgeSeconds
 			}

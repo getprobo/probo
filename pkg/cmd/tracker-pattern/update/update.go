@@ -48,7 +48,6 @@ type updateResponse struct {
 
 func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 	var (
-		flagDisplayName string
 		flagDescription string
 		flagMaxAge      int
 		flagExcluded    bool
@@ -79,9 +78,6 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 
 			input := map[string]any{"trackerPatternId": args[0]}
 
-			if cmd.Flags().Changed("display-name") {
-				input["displayName"] = flagDisplayName
-			}
 			if cmd.Flags().Changed("description") {
 				input["description"] = flagDescription
 			}
@@ -113,7 +109,6 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&flagDisplayName, "display-name", "", "Display name")
 	cmd.Flags().StringVar(&flagDescription, "description", "", "Description")
 	cmd.Flags().IntVar(&flagMaxAge, "max-age-seconds", 0, "Maximum age in seconds")
 	cmd.Flags().BoolVar(&flagExcluded, "excluded", false, "Exclude pattern from consent banner")

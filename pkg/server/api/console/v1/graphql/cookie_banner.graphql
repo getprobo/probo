@@ -517,7 +517,6 @@ input CreateTrackerPatternInput {
 
 input UpdateTrackerPatternInput {
     trackerPatternId: ID!
-    displayName: String
     maxAgeSeconds: Int @goField(omittable: true)
     description: String
     excluded: Boolean

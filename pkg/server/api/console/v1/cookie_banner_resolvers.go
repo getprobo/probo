@@ -823,7 +823,6 @@ func (r *mutationResolver) UpdateTrackerPattern(ctx context.Context, input types
 		scope,
 		cookiebanner.UpdateTrackerPatternRequest{
 			TrackerPatternID: input.TrackerPatternID,
-			DisplayName:      input.DisplayName,
 			MaxAgeSeconds:    gqlutils.UnwrapOmittable(input.MaxAgeSeconds),
 			Description:      input.Description,
 			Excluded:         input.Excluded,

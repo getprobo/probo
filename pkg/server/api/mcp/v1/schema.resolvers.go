@@ -4917,9 +4917,6 @@ func (r *Resolver) UpdateTrackerPatternTool(ctx context.Context, req *mcp.CallTo
 	r.MustAuthorize(ctx, input.ID, probo.ActionTrackerPatternUpdate)
 	scope := coredata.NewScopeFromObjectID(input.ID)
 	updateReq := cookiebanner.UpdateTrackerPatternRequest{TrackerPatternID: input.ID}
-	if v := UnwrapOmittable(input.DisplayName); v != nil && *v != nil {
-		updateReq.DisplayName = *v
-	}
 	if input.MaxAgeSeconds.IsSet() {
 		val, _ := input.MaxAgeSeconds.Value()
 		updateReq.MaxAgeSeconds = &val

@@ -33,7 +33,6 @@ export const editCookieRowFragment = graphql`
 `;
 
 interface CookieFormValues {
-  name: string;
   duration: { value: string; unit: string };
   description: string;
   excluded: boolean;
@@ -58,7 +57,6 @@ export function EditCookieRow({
 
   const { register, handleSubmit, control } = useForm<CookieFormValues>({
     defaultValues: {
-      name: cookie.displayName,
       duration: initial,
       description: cookie.description,
       excluded: cookie.excluded,
@@ -67,7 +65,7 @@ export function EditCookieRow({
 
   const onSubmit = (data: CookieFormValues) => {
     onSave({
-      name: data.name,
+      name: cookie.displayName,
       maxAgeSeconds: toMaxAgeSeconds(data.duration.value, data.duration.unit),
       description: data.description,
       excluded: data.excluded,
@@ -90,10 +88,7 @@ export function EditCookieRow({
               />
             )}
           />
-          <Input
-            {...register("name")}
-            placeholder={__("Cookie name")}
-          />
+          <code className="text-sm font-mono">{cookie.displayName}</code>
         </div>
       </Td>
       <Td />

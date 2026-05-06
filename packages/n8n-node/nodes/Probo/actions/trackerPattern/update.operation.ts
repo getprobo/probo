@@ -31,19 +31,6 @@ export const description: INodeProperties[] = [
 		required: true,
 	},
 	{
-		displayName: 'Display Name',
-		name: 'displayName',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['trackerPattern'],
-				operation: ['update'],
-			},
-		},
-		default: '',
-		description: 'The display name for the tracker pattern',
-	},
-	{
 		displayName: 'Excluded',
 		name: 'excluded',
 		type: 'options',
@@ -115,7 +102,6 @@ export async function execute(
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
 	const trackerPatternId = this.getNodeParameter('trackerPatternId', itemIndex) as string;
-	const displayName = this.getNodeParameter('displayName', itemIndex, '') as string;
 	const excluded = this.getNodeParameter('excluded', itemIndex, '') as string;
 	const patternDescription = this.getNodeParameter('patternDescription', itemIndex, '') as string;
 	const additionalFields = this.getNodeParameter('additionalFields', itemIndex, {}) as {
@@ -146,7 +132,6 @@ export async function execute(
 	`;
 
 	const input: Record<string, unknown> = { trackerPatternId };
-	if (displayName) input.displayName = displayName;
 	if (excluded) input.excluded = excluded === 'true';
 	if (patternDescription) input.description = patternDescription;
 	if (additionalFields.maxAgeSeconds !== undefined) {

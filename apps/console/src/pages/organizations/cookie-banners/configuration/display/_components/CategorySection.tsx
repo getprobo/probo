@@ -397,12 +397,10 @@ export function CategorySection({ categoryKey, connectionId }: CategorySectionPr
   };
 
   const handleSaveEditCookie = (patternId: string, cookie: CookieEntry) => {
-    if (!cookie.name.trim()) return;
     updatePattern({
       variables: {
         input: {
           trackerPatternId: patternId,
-          displayName: cookie.name,
           maxAgeSeconds: cookie.maxAgeSeconds,
           description: cookie.description,
           excluded: cookie.excluded,

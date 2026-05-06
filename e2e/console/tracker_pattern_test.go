@@ -192,7 +192,7 @@ func TestTrackerPattern_Create(t *testing.T) {
 func TestTrackerPattern_Update(t *testing.T) {
 	t.Parallel()
 
-	t.Run("update displayName and description", func(t *testing.T) {
+	t.Run("update description", func(t *testing.T) {
 		t.Parallel()
 		owner := testutil.NewClient(t, testutil.RoleOwner)
 
@@ -234,14 +234,13 @@ func TestTrackerPattern_Update(t *testing.T) {
 		err := owner.Execute(query, map[string]any{
 			"input": map[string]any{
 				"trackerPatternId": patternID,
-				"displayName":      "Updated Name",
 				"description":      "Updated description",
 			},
 		}, &result)
 
 		require.NoError(t, err)
 		assert.Equal(t, patternID, result.UpdateTrackerPattern.TrackerPattern.ID)
-		assert.Equal(t, "Updated Name", result.UpdateTrackerPattern.TrackerPattern.DisplayName)
+		assert.Equal(t, "Original Name", result.UpdateTrackerPattern.TrackerPattern.DisplayName)
 		assert.Equal(t, "Updated description", result.UpdateTrackerPattern.TrackerPattern.Description)
 		assert.Equal(t, bannerID, result.UpdateTrackerPattern.CookieBanner.ID)
 	})
@@ -655,7 +654,7 @@ func TestTrackerPattern_RBAC(t *testing.T) {
 		`, map[string]any{
 			"input": map[string]any{
 				"trackerPatternId": patternID,
-				"displayName":      "Updated by Viewer",
+				"description":      "Updated by Viewer",
 			},
 		})
 		testutil.RequireForbiddenError(t, err, "viewer should not be able to update tracker pattern")

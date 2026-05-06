@@ -10012,11 +10012,6 @@ components:
       properties:
         id:
           $ref: "#/components/schemas/GID"
-        display_name:
-          type:
-            - string
-            - "null"
-          go.probo.inc/mcpgen/omittable: true
         max_age_seconds:
           type:
             - integer

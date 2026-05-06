@@ -251,12 +251,11 @@ export function DetectionPatternRow({ patternKey, connectionId }: DetectionPatte
     });
   };
 
-  const handleSaveEdit = (data: { displayName: string; description: string; maxAgeSeconds: number | null }) => {
+  const handleSaveEdit = (data: { description: string; maxAgeSeconds: number | null }) => {
     updatePattern({
       variables: {
         input: {
           trackerPatternId: pattern.id,
-          displayName: data.displayName,
           description: data.description,
           maxAgeSeconds: data.maxAgeSeconds,
         },
@@ -278,7 +277,7 @@ export function DetectionPatternRow({ patternKey, connectionId }: DetectionPatte
   if (isEditing) {
     return (
       <DetectionPatternRowEdit
-        displayName={pattern.displayName}
+        pattern={pattern.displayName}
         description={pattern.description}
         maxAgeSeconds={pattern.maxAgeSeconds ?? null}
         isUpdating={isUpdating}
