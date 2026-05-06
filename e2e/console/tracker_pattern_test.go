@@ -103,7 +103,7 @@ func TestTrackerPattern_Create(t *testing.T) {
 		assert.Equal(t, bannerID, result.CreateTrackerPattern.CookieBanner.ID)
 	})
 
-	t.Run("with PREFIX match type", func(t *testing.T) {
+	t.Run("with GLOB match type", func(t *testing.T) {
 		t.Parallel()
 		owner := testutil.NewClient(t, testutil.RoleOwner)
 
@@ -143,8 +143,8 @@ func TestTrackerPattern_Create(t *testing.T) {
 		err := owner.Execute(query, map[string]any{
 			"input": map[string]any{
 				"cookieCategoryId": categoryID,
-				"pattern":          "_gat_",
-				"matchType":        "PREFIX",
+				"pattern":          "_gat_*",
+				"matchType":        "GLOB",
 				"displayName":      "GA Throttle",
 				"description":      "Google Analytics rate limiting",
 			},
@@ -152,8 +152,8 @@ func TestTrackerPattern_Create(t *testing.T) {
 
 		require.NoError(t, err)
 		node := result.CreateTrackerPattern.TrackerPatternEdge.Node
-		assert.Equal(t, "_gat_", node.Pattern)
-		assert.Equal(t, "PREFIX", node.MatchType)
+		assert.Equal(t, "_gat_*", node.Pattern)
+		assert.Equal(t, "GLOB", node.MatchType)
 		assert.Nil(t, node.MaxAgeSeconds)
 	})
 

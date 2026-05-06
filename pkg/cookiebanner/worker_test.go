@@ -23,7 +23,7 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 )
 
-func TestSeparatorPrefixes(t *testing.T) {
+func TestTemplateCandidates(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -32,29 +32,49 @@ func TestSeparatorPrefixes(t *testing.T) {
 		expected []string
 	}{
 		{
-			name:     "single underscore",
-			input:    "ph_abc123",
-			expected: []string{"ph_"},
+			name:  "single underscore produces prefix candidate",
+			input: "ph_abc123",
+			expected: []string{
+				"ph_*",
+			},
 		},
 		{
-			name:     "multiple underscores",
-			input:    "ph_phc_abc123def456",
-			expected: []string{"ph_", "ph_phc_"},
+			name:  "multiple underscores produces prefix and sandwich candidates",
+			input: "ph_phc_abc123",
+			expected: []string{
+				"ph_*",
+				"ph_phc_*",
+				"ph_*_abc123",
+			},
 		},
 		{
-			name:     "leading underscore",
-			input:    "_ga_GB2J3DLBHE",
-			expected: []string{"_", "_ga_"},
+			name:  "four tokens produces multiple sandwich candidates",
+			input: "ph_phc_abc123_posthog",
+			expected: []string{
+				"ph_*",
+				"ph_phc_*",
+				"ph_phc_abc123_*",
+				"ph_*_abc123_posthog",
+				"ph_phc_*_posthog",
+			},
 		},
 		{
-			name:     "dash separator",
-			input:    "c15t-consent-abc123",
-			expected: []string{"c15t-", "c15t-consent-"},
+			name:  "leading underscore",
+			input: "_ga_GB2J3DLBHE",
+			expected: []string{
+				"_*",
+				"_ga_*",
+				"_*_GB2J3DLBHE",
+			},
 		},
 		{
-			name:     "mixed separators",
-			input:    "_gat_UA-12345-1",
-			expected: []string{"_", "_gat_", "_gat_UA-", "_gat_UA-12345-"},
+			name:  "dash separator",
+			input: "c15t-consent-abc123",
+			expected: []string{
+				"c15t-*",
+				"c15t-consent-*",
+				"c15t-*-abc123",
+			},
 		},
 		{
 			name:     "no separators",
@@ -62,14 +82,13 @@ func TestSeparatorPrefixes(t *testing.T) {
 			expected: nil,
 		},
 		{
-			name:     "brand with digits",
-			input:    "auth0_session_abc123",
-			expected: []string{"auth0_", "auth0_session_"},
-		},
-		{
-			name:     "woocommerce session",
-			input:    "wp_woocommerce_session_f919208d949256bc",
-			expected: []string{"wp_", "wp_woocommerce_", "wp_woocommerce_session_"},
+			name:  "brand with digits",
+			input: "auth0_session_abc123",
+			expected: []string{
+				"auth0_*",
+				"auth0_session_*",
+				"auth0_*_abc123",
+			},
 		},
 	}
 
@@ -78,8 +97,150 @@ func TestSeparatorPrefixes(t *testing.T) {
 			tt.name,
 			func(t *testing.T) {
 				t.Parallel()
-				result := separatorPrefixes(tt.input)
+				result := templateCandidates(tt.input)
 				assert.Equal(t, tt.expected, result)
+			},
+		)
+	}
+}
+
+func TestGlobMatch(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name    string
+		pattern string
+		input   string
+		match   bool
+	}{
+		{
+			name:    "prefix glob matches",
+			pattern: "ph_phc_*",
+			input:   "ph_phc_abc123",
+			match:   true,
+		},
+		{
+			name:    "prefix glob does not match different prefix",
+			pattern: "ph_phc_*",
+			input:   "ph_session_abc123",
+			match:   false,
+		},
+		{
+			name:    "suffix glob matches",
+			pattern: "*_posthog",
+			input:   "ph_phc_abc123_posthog",
+			match:   true,
+		},
+		{
+			name:    "suffix glob does not match different suffix",
+			pattern: "*_posthog",
+			input:   "ph_phc_abc123_analytics",
+			match:   false,
+		},
+		{
+			name:    "sandwich glob matches",
+			pattern: "ph_phc_*_posthog",
+			input:   "ph_phc_abc123_posthog",
+			match:   true,
+		},
+		{
+			name:    "sandwich glob does not match wrong prefix",
+			pattern: "ph_phc_*_posthog",
+			input:   "xx_phc_abc123_posthog",
+			match:   false,
+		},
+		{
+			name:    "sandwich glob does not match wrong suffix",
+			pattern: "ph_phc_*_posthog",
+			input:   "ph_phc_abc123_other",
+			match:   false,
+		},
+		{
+			name:    "sandwich glob matches minimal middle",
+			pattern: "ph_phc_*_posthog",
+			input:   "ph_phc_x_posthog",
+			match:   true,
+		},
+		{
+			name:    "sandwich glob matches empty middle",
+			pattern: "ph_*_posthog",
+			input:   "ph__posthog",
+			match:   true,
+		},
+		{
+			name:    "exact match without wildcard",
+			pattern: "probo_consent",
+			input:   "probo_consent",
+			match:   true,
+		},
+		{
+			name:    "no match without wildcard",
+			pattern: "probo_consent",
+			input:   "probo_consent2",
+			match:   false,
+		},
+		{
+			name:    "input shorter than pattern fixed chars does not match",
+			pattern: "ph_phc_*_posthog",
+			input:   "ph_phc_posthog",
+			match:   false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				t.Parallel()
+				assert.Equal(t, tt.match, globMatch(tt.pattern, tt.input))
+			},
+		)
+	}
+}
+
+func TestSplitTokens(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name   string
+		input  string
+		tokens []string
+		sep    byte
+	}{
+		{
+			name:   "underscore separator",
+			input:  "ph_phc_abc",
+			tokens: []string{"ph", "phc", "abc"},
+			sep:    '_',
+		},
+		{
+			name:   "dash separator",
+			input:  "c15t-consent-abc",
+			tokens: []string{"c15t", "consent", "abc"},
+			sep:    '-',
+		},
+		{
+			name:   "no separator",
+			input:  "PHPSESSID",
+			tokens: []string{"PHPSESSID"},
+			sep:    0,
+		},
+		{
+			name:   "underscore takes priority over dash",
+			input:  "foo_bar-baz",
+			tokens: []string{"foo", "bar-baz"},
+			sep:    '_',
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				t.Parallel()
+				tokens, sep := splitTokens(tt.input)
+				assert.Equal(t, tt.tokens, tokens)
+				assert.Equal(t, tt.sep, sep)
 			},
 		)
 	}
@@ -100,7 +261,7 @@ func TestFindMergeGroups(t *testing.T) {
 	}
 
 	t.Run(
-		"multi-separator names pick longest prefix",
+		"multi-separator names pick longest prefix template",
 		func(t *testing.T) {
 			t.Parallel()
 
@@ -113,7 +274,7 @@ func TestFindMergeGroups(t *testing.T) {
 			groups := findMergeGroups(patterns, 3)
 			require.Len(t, groups, 1)
 
-			group, ok := groups[mergeGroupKey{categoryID: gid.Nil, trackerType: coredata.TrackerTypeCookie, prefix: "ph_phc_", durationBucket: durationBucket(&oneYear)}]
+			group, ok := groups[mergeGroupKey{categoryID: gid.Nil, trackerType: coredata.TrackerTypeCookie, template: "ph_phc_*", durationBucket: durationBucket(&oneYear)}]
 			require.True(t, ok)
 			assert.Len(t, group, 3)
 		},
@@ -133,7 +294,7 @@ func TestFindMergeGroups(t *testing.T) {
 			groups := findMergeGroups(patterns, 3)
 			require.Len(t, groups, 1)
 
-			group, ok := groups[mergeGroupKey{categoryID: gid.Nil, trackerType: coredata.TrackerTypeCookie, prefix: "_ga_", durationBucket: durationBucket(&oneYear)}]
+			group, ok := groups[mergeGroupKey{categoryID: gid.Nil, trackerType: coredata.TrackerTypeCookie, template: "_ga_*", durationBucket: durationBucket(&oneYear)}]
 			require.True(t, ok)
 			assert.Len(t, group, 3)
 		},
@@ -153,7 +314,7 @@ func TestFindMergeGroups(t *testing.T) {
 			groups := findMergeGroups(patterns, 3)
 			require.Len(t, groups, 1)
 
-			group, ok := groups[mergeGroupKey{categoryID: gid.Nil, trackerType: coredata.TrackerTypeCookie, prefix: "auth0_session_", durationBucket: durationBucket(&oneYear)}]
+			group, ok := groups[mergeGroupKey{categoryID: gid.Nil, trackerType: coredata.TrackerTypeCookie, template: "auth0_session_*", durationBucket: durationBucket(&oneYear)}]
 			require.True(t, ok)
 			assert.Len(t, group, 3)
 		},
@@ -191,11 +352,11 @@ func TestFindMergeGroups(t *testing.T) {
 			groups := findMergeGroups(patterns, 3)
 			require.Len(t, groups, 2)
 
-			barGroup, ok := groups[mergeGroupKey{categoryID: gid.Nil, trackerType: coredata.TrackerTypeCookie, prefix: "foo_bar_", durationBucket: durationBucket(&oneYear)}]
+			barGroup, ok := groups[mergeGroupKey{categoryID: gid.Nil, trackerType: coredata.TrackerTypeCookie, template: "foo_bar_*", durationBucket: durationBucket(&oneYear)}]
 			require.True(t, ok)
 			assert.Len(t, barGroup, 3)
 
-			bazGroup, ok := groups[mergeGroupKey{categoryID: gid.Nil, trackerType: coredata.TrackerTypeCookie, prefix: "foo_baz_", durationBucket: durationBucket(&oneYear)}]
+			bazGroup, ok := groups[mergeGroupKey{categoryID: gid.Nil, trackerType: coredata.TrackerTypeCookie, template: "foo_baz_*", durationBucket: durationBucket(&oneYear)}]
 			require.True(t, ok)
 			assert.Len(t, bazGroup, 3)
 		},
@@ -216,7 +377,7 @@ func TestFindMergeGroups(t *testing.T) {
 			groups := findMergeGroups(patterns, 3)
 			require.Len(t, groups, 1)
 
-			group, ok := groups[mergeGroupKey{categoryID: gid.Nil, trackerType: coredata.TrackerTypeCookie, prefix: "ph_phc_", durationBucket: durationBucket(&oneYear)}]
+			group, ok := groups[mergeGroupKey{categoryID: gid.Nil, trackerType: coredata.TrackerTypeCookie, template: "ph_phc_*", durationBucket: durationBucket(&oneYear)}]
 			require.True(t, ok)
 			assert.Len(t, group, 3)
 		},
@@ -239,11 +400,11 @@ func TestFindMergeGroups(t *testing.T) {
 			groups := findMergeGroups(patterns, 3)
 			require.Len(t, groups, 2)
 
-			phcGroup, ok := groups[mergeGroupKey{categoryID: gid.Nil, trackerType: coredata.TrackerTypeCookie, prefix: "ph_phc_", durationBucket: durationBucket(&oneYear)}]
+			phcGroup, ok := groups[mergeGroupKey{categoryID: gid.Nil, trackerType: coredata.TrackerTypeCookie, template: "ph_phc_*", durationBucket: durationBucket(&oneYear)}]
 			require.True(t, ok)
 			assert.Len(t, phcGroup, 3)
 
-			sessionGroup, ok := groups[mergeGroupKey{categoryID: gid.Nil, trackerType: coredata.TrackerTypeCookie, prefix: "ph_session_", durationBucket: durationBucket(&oneYear)}]
+			sessionGroup, ok := groups[mergeGroupKey{categoryID: gid.Nil, trackerType: coredata.TrackerTypeCookie, template: "ph_session_*", durationBucket: durationBucket(&oneYear)}]
 			require.True(t, ok)
 			assert.Len(t, sessionGroup, 3)
 		},
@@ -282,11 +443,11 @@ func TestFindMergeGroups(t *testing.T) {
 			groups := findMergeGroups(patterns, 3)
 			require.Len(t, groups, 2)
 
-			sessionGroup, ok := groups[mergeGroupKey{categoryID: gid.Nil, trackerType: coredata.TrackerTypeCookie, prefix: "_ga_", durationBucket: -1}]
+			sessionGroup, ok := groups[mergeGroupKey{categoryID: gid.Nil, trackerType: coredata.TrackerTypeCookie, template: "_ga_*", durationBucket: -1}]
 			require.True(t, ok)
 			assert.Len(t, sessionGroup, 3)
 
-			persistentGroup, ok := groups[mergeGroupKey{categoryID: gid.Nil, trackerType: coredata.TrackerTypeCookie, prefix: "_ga_", durationBucket: durationBucket(&oneYear)}]
+			persistentGroup, ok := groups[mergeGroupKey{categoryID: gid.Nil, trackerType: coredata.TrackerTypeCookie, template: "_ga_*", durationBucket: durationBucket(&oneYear)}]
 			require.True(t, ok)
 			assert.Len(t, persistentGroup, 3)
 		},
@@ -331,13 +492,54 @@ func TestFindMergeGroups(t *testing.T) {
 			groups := findMergeGroups(patterns, 3)
 			require.Len(t, groups, 2)
 
-			dayGroup, ok := groups[mergeGroupKey{categoryID: gid.Nil, trackerType: coredata.TrackerTypeCookie, prefix: "_ga_", durationBucket: durationBucket(&oneDay)}]
+			dayGroup, ok := groups[mergeGroupKey{categoryID: gid.Nil, trackerType: coredata.TrackerTypeCookie, template: "_ga_*", durationBucket: durationBucket(&oneDay)}]
 			require.True(t, ok)
 			assert.Len(t, dayGroup, 3)
 
-			monthGroup, ok := groups[mergeGroupKey{categoryID: gid.Nil, trackerType: coredata.TrackerTypeCookie, prefix: "_ga_", durationBucket: durationBucket(&thirtyDays)}]
+			monthGroup, ok := groups[mergeGroupKey{categoryID: gid.Nil, trackerType: coredata.TrackerTypeCookie, template: "_ga_*", durationBucket: durationBucket(&thirtyDays)}]
 			require.True(t, ok)
 			assert.Len(t, monthGroup, 3)
+		},
+	)
+
+	t.Run(
+		"sandwich pattern discovered from shared prefix and suffix",
+		func(t *testing.T) {
+			t.Parallel()
+
+			patterns := coredata.TrackerPatterns{
+				makePattern("ph_phc_abc123_posthog", &oneYear),
+				makePattern("ph_phc_def456_posthog", &oneYear),
+				makePattern("ph_phc_ghi789_posthog", &oneYear),
+			}
+
+			groups := findMergeGroups(patterns, 3)
+			require.Len(t, groups, 1)
+
+			group, ok := groups[mergeGroupKey{categoryID: gid.Nil, trackerType: coredata.TrackerTypeCookie, template: "ph_phc_*_posthog", durationBucket: durationBucket(&oneYear)}]
+			require.True(t, ok)
+			assert.Len(t, group, 3)
+		},
+	)
+
+	t.Run(
+		"sandwich pattern wins over shorter prefix",
+		func(t *testing.T) {
+			t.Parallel()
+
+			patterns := coredata.TrackerPatterns{
+				makePattern("ph_phc_abc123_posthog", &oneYear),
+				makePattern("ph_phc_def456_posthog", &oneYear),
+				makePattern("ph_phc_ghi789_posthog", &oneYear),
+				makePattern("ph_phc_other", &oneYear),
+			}
+
+			groups := findMergeGroups(patterns, 3)
+			require.Len(t, groups, 1)
+
+			group, ok := groups[mergeGroupKey{categoryID: gid.Nil, trackerType: coredata.TrackerTypeCookie, template: "ph_phc_*_posthog", durationBucket: durationBucket(&oneYear)}]
+			require.True(t, ok)
+			assert.Len(t, group, 3)
 		},
 	)
 }
