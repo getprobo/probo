@@ -41,10 +41,10 @@ func TestTrackerPattern_Create(t *testing.T) {
 							id
 							pattern
 							matchType
+							trackerType
 							displayName
 							maxAgeSeconds
 							description
-							source
 							createdAt
 							updatedAt
 						}
@@ -63,10 +63,10 @@ func TestTrackerPattern_Create(t *testing.T) {
 						ID            string `json:"id"`
 						Pattern       string `json:"pattern"`
 						MatchType     string `json:"matchType"`
+						TrackerType   string `json:"trackerType"`
 						DisplayName   string `json:"displayName"`
 						MaxAgeSeconds *int   `json:"maxAgeSeconds"`
 						Description   string `json:"description"`
-						Source        string `json:"source"`
 						CreatedAt     string `json:"createdAt"`
 						UpdatedAt     string `json:"updatedAt"`
 					} `json:"node"`
@@ -83,6 +83,7 @@ func TestTrackerPattern_Create(t *testing.T) {
 				"cookieCategoryId": categoryID,
 				"pattern":          "_ga",
 				"matchType":        "EXACT",
+				"trackerType":      "SCRIPT",
 				"displayName":      "Google Analytics",
 				"maxAgeSeconds":    maxAge,
 				"description":      "Google Analytics tracking cookie",
@@ -94,11 +95,11 @@ func TestTrackerPattern_Create(t *testing.T) {
 		assert.NotEmpty(t, node.ID)
 		assert.Equal(t, "_ga", node.Pattern)
 		assert.Equal(t, "EXACT", node.MatchType)
+		assert.Equal(t, "SCRIPT", node.TrackerType)
 		assert.Equal(t, "Google Analytics", node.DisplayName)
 		require.NotNil(t, node.MaxAgeSeconds)
 		assert.Equal(t, maxAge, *node.MaxAgeSeconds)
 		assert.Equal(t, "Google Analytics tracking cookie", node.Description)
-		assert.Equal(t, "SCRIPT", node.Source)
 		assert.Equal(t, bannerID, result.CreateTrackerPattern.CookieBanner.ID)
 	})
 
