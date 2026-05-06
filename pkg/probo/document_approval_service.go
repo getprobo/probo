@@ -746,19 +746,6 @@ func (s *DocumentApprovalService) GetViewerDecision(
 	return decision, nil
 }
 
-func (s *DocumentApprovalService) loadLatestVersion(
-	ctx context.Context,
-	conn pg.Querier,
-	documentID gid.GID,
-) (*coredata.DocumentVersion, error) {
-	version := &coredata.DocumentVersion{}
-	if err := version.LoadLatestVersion(ctx, conn, s.svc.scope, documentID); err != nil {
-		return nil, fmt.Errorf("cannot load latest version for document %q: %w", documentID, err)
-	}
-
-	return version, nil
-}
-
 func (s *DocumentApprovalService) loadQuorumAndProfile(
 	ctx context.Context,
 	conn pg.Querier,
