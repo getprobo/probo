@@ -4,6 +4,27 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.182.0] - 2026-05-06
+
+### Added
+
+- Add Microsoft 365 SCIM bridge and access review driver
+- Add unified tracker detection backend with `tracker_patterns` and `detected_trackers` schema
+- Add `trackerType` field on patterns to support tracking technologies beyond cookies
+
+### Changed
+
+- Replace `publishMajor`, `publishMinor`, and `requestDocumentVersionApproval` mutations with a unified `publishDocument` and `bulkPublishDocuments` accepting `minor: Boolean!` and a required `changelog: String!` (breaking)
+- Rename cookie pattern API surfaces to tracker patterns across GraphQL, MCP, CLI, and n8n (breaking)
+
+### Removed
+
+- Remove legacy `cookie_patterns` GraphQL schema, MCP tools, CLI commands, and n8n operations
+
+### Fixed
+
+- Restore MCP cross-origin protection after go-sdk v1.6.0 bump
+
 ## [0.181.0] - 2026-05-05
 
 ### Added
