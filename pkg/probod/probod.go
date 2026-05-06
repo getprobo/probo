@@ -57,6 +57,7 @@ import (
 	"go.probo.inc/probo/pkg/evidencedescriber"
 	"go.probo.inc/probo/pkg/file"
 	"go.probo.inc/probo/pkg/filemanager"
+	"go.probo.inc/probo/pkg/geoloc"
 	"go.probo.inc/probo/pkg/html2pdf"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/iam/oauth2server"
@@ -258,6 +259,24 @@ func (impl *Implm) Run(
 	err = migrator.NewMigrator(pgClient, coredata.Migrations, l.Named("migrations")).Run(ctx, "migrations")
 	if err != nil {
 		return fmt.Errorf("cannot migrate database schema: %w", err)
+	}
+
+	geolocService := geoloc.NewService(pgClient)
+	err = pgClient.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			populated, err := geolocService.IsPopulated(ctx, conn)
+			if err != nil {
+				return err
+			}
+			if !populated {
+				l.Warn("IP geolocation table is empty; run geoloc-import to populate it")
+			}
+			return nil
+		},
+	)
+	if err != nil {
+		l.ErrorCtx(ctx, "cannot check geoloc table", log.Error(err))
 	}
 
 	hp, err := passwdhash.NewProfile(pepper, uint32(impl.cfg.Auth.Password.Iterations))
