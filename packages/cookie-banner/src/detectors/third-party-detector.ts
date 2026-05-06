@@ -35,7 +35,7 @@ export class ThirdPartyDetector implements Detector {
   private observer: MutationObserver | null = null;
 
   constructor(baseUrl: URL, bannerId: string) {
-    this.reportUrl = new URL(`${bannerId}/detected-trackers`, baseUrl);
+    this.reportUrl = new URL(`${bannerId}/report`, baseUrl);
     this.pageOrigin = location.origin;
     this.proboOrigin = baseUrl.origin;
   }

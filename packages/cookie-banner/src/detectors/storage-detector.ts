@@ -42,7 +42,7 @@ export class StorageDetector implements Detector {
   private originalIDBOpen: typeof IDBFactory.prototype.open | null = null;
 
   constructor(baseUrl: URL, bannerId: string) {
-    this.reportUrl = new URL(`${bannerId}/detected-trackers`, baseUrl);
+    this.reportUrl = new URL(`${bannerId}/report`, baseUrl);
   }
 
   start(): void {

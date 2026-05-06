@@ -41,7 +41,7 @@ export class CookieDetector implements Detector {
   private originalDescriptor: PropertyDescriptor | null = null;
 
   constructor(baseUrl: URL, bannerId: string, knownNames: Set<string>) {
-    this.reportUrl = new URL(`${bannerId}/detected-cookies`, baseUrl);
+    this.reportUrl = new URL(`${bannerId}/report`, baseUrl);
     this.knownNames = knownNames;
   }
 
