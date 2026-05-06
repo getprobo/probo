@@ -96,7 +96,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 						Title("Match type").
 						Options(
 							huh.NewOption("Exact", "EXACT"),
-							huh.NewOption("Prefix", "PREFIX"),
+							huh.NewOption("Glob", "GLOB"),
 						).
 						Value(&flagMatchType).Run(); err != nil {
 						return err
@@ -152,7 +152,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagCategoryID, "category-id", "", "Cookie category ID (required)")
 	_ = cmd.MarkFlagRequired("category-id")
 	cmd.Flags().StringVar(&flagPattern, "pattern", "", "Tracker pattern (required)")
-	cmd.Flags().StringVar(&flagMatchType, "match-type", "", "Match type: EXACT or PREFIX (required)")
+	cmd.Flags().StringVar(&flagMatchType, "match-type", "", "Match type: EXACT or GLOB (required)")
 	cmd.Flags().StringVar(&flagDisplayName, "display-name", "", "Display name (required)")
 	cmd.Flags().StringVar(&flagDescription, "description", "", "Description")
 	cmd.Flags().IntVar(&flagMaxAge, "max-age-seconds", 0, "Maximum age in seconds")

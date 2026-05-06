@@ -207,9 +207,9 @@ enum TrackerPatternMatchType
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.TrackerPatternMatchTypeExact"
         )
-    PREFIX
+    GLOB
         @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.TrackerPatternMatchTypePrefix"
+            value: "go.probo.inc/probo/pkg/coredata.TrackerPatternMatchTypeGlob"
         )
 }
 

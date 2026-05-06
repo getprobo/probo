@@ -60,12 +60,12 @@ export const description: INodeProperties[] = [
 				value: 'EXACT',
 			},
 			{
-				name: 'Prefix',
-				value: 'PREFIX',
+				name: 'Glob',
+				value: 'GLOB',
 			},
 		],
 		default: 'EXACT',
-		description: 'How the pattern should be matched against tracker names',
+		description: 'How the pattern should be matched against tracker names. GLOB uses * as wildcard.',
 		required: true,
 	},
 	{

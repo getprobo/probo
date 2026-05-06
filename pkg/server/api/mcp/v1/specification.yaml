@@ -9457,8 +9457,8 @@ components:
           description: Tracker name pattern
         match_type:
           type: string
-          enum: [EXACT, PREFIX]
-          description: Pattern match type
+          enum: [EXACT, GLOB]
+          description: "Pattern match type. GLOB uses * as single wildcard (e.g. ph_phc_*_posthog)"
         display_name:
           type: string
           description: Human-friendly display name
@@ -9989,7 +9989,7 @@ components:
           type: string
         match_type:
           type: string
-          enum: [EXACT, PREFIX]
+          enum: [EXACT, GLOB]
         display_name:
           type: string
         max_age_seconds:
