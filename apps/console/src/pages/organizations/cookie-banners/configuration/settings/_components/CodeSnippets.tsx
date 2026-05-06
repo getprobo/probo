@@ -67,7 +67,7 @@ export function CodeSnippets() {
         {__("Looking for ES module or headless integration?")}
         {" "}
         <a
-          href="https://docs.getprobo.com/docs/product/cookie-banner/javascript-sdk.html"
+          href="https://www.getprobo.com/docs/product/cookie-banner/javascript-sdk.html"
           target="_blank"
           rel="noopener noreferrer"
           className="text-txt-primary underline hover:no-underline"
