@@ -239,26 +239,28 @@ WHERE
 	AND cookie_banner_id = @cookie_banner_id
 	AND tracker_type = @tracker_type
 	AND (
-		(match_type = @match_type_prefix AND starts_with(@identifier, pattern))
+		(match_type = @match_type_glob
+		 AND starts_with(@identifier, split_part(pattern, '*', 1))
+		 AND ends_with(@identifier, split_part(pattern, '*', 2))
+		 AND length(@identifier) >= length(pattern) - 1)
 		OR (match_type = @match_type_exact AND pattern = @identifier)
 	)
 ORDER BY
 	CASE WHEN match_type = @match_type_exact AND pattern = @identifier THEN 0
-	     WHEN match_type = @match_type_prefix THEN 1
-	     ELSE 2
+	     ELSE 1
 	END,
-	LENGTH(pattern) DESC
+	length(pattern) - 1 DESC
 LIMIT 1;
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"cookie_banner_id":  cookieBannerID,
-		"tracker_type":      trackerType,
-		"identifier":        identifier,
-		"match_type_prefix": TrackerPatternMatchTypePrefix,
-		"match_type_exact":  TrackerPatternMatchTypeExact,
+		"cookie_banner_id": cookieBannerID,
+		"tracker_type":     trackerType,
+		"identifier":       identifier,
+		"match_type_glob":  TrackerPatternMatchTypeGlob,
+		"match_type_exact": TrackerPatternMatchTypeExact,
 	}
 	maps.Copy(args, scope.SQLArguments())
 

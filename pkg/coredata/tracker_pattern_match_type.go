@@ -24,12 +24,13 @@ type TrackerPatternMatchType string
 const (
 	TrackerPatternMatchTypeExact  TrackerPatternMatchType = "EXACT"
 	TrackerPatternMatchTypePrefix TrackerPatternMatchType = "PREFIX"
+	TrackerPatternMatchTypeGlob   TrackerPatternMatchType = "GLOB"
 )
 
 func TrackerPatternMatchTypes() []TrackerPatternMatchType {
 	return []TrackerPatternMatchType{
 		TrackerPatternMatchTypeExact,
-		TrackerPatternMatchTypePrefix,
+		TrackerPatternMatchTypeGlob,
 	}
 }
 
@@ -53,6 +54,8 @@ func (m *TrackerPatternMatchType) Scan(value any) error {
 		*m = TrackerPatternMatchTypeExact
 	case TrackerPatternMatchTypePrefix:
 		*m = TrackerPatternMatchTypePrefix
+	case TrackerPatternMatchTypeGlob:
+		*m = TrackerPatternMatchTypeGlob
 	default:
 		return fmt.Errorf("invalid TrackerPatternMatchType value: %q", v)
 	}
@@ -62,7 +65,8 @@ func (m *TrackerPatternMatchType) Scan(value any) error {
 func (m TrackerPatternMatchType) Value() (driver.Value, error) {
 	switch m {
 	case TrackerPatternMatchTypeExact,
-		TrackerPatternMatchTypePrefix:
+		TrackerPatternMatchTypePrefix,
+		TrackerPatternMatchTypeGlob:
 		return string(m), nil
 	default:
 		return nil, fmt.Errorf("invalid TrackerPatternMatchType: %s", m)
