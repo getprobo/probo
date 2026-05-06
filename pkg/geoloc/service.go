@@ -89,17 +89,45 @@ func (s *Service) ImportFromDir(ctx context.Context, dataDir string) error {
 	)
 }
 
-func (s *Service) LookupCountry(ctx context.Context, conn pg.Querier, ip string) (coredata.CountryCode, error) {
+func (s *Service) LookupCountry(ctx context.Context, ip string) (coredata.CountryCode, error) {
 	parsed := net.ParseIP(ip)
 	if parsed == nil {
 		return "", fmt.Errorf("cannot parse IP address: %q", ip)
 	}
 
-	return coredata.LookupCountryByIP(ctx, conn, ip)
+	var cc coredata.CountryCode
+
+	err := s.pgClient.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			var lookupErr error
+			cc, lookupErr = coredata.LookupCountryByIP(ctx, conn, ip)
+			return lookupErr
+		},
+	)
+	if err != nil {
+		return "", err
+	}
+
+	return cc, nil
 }
 
-func (s *Service) IsPopulated(ctx context.Context, conn pg.Querier) (bool, error) {
-	return coredata.IsIPCountryBlocksPopulated(ctx, conn)
+func (s *Service) IsPopulated(ctx context.Context) (bool, error) {
+	var populated bool
+
+	err := s.pgClient.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			var lookupErr error
+			populated, lookupErr = coredata.IsIPCountryBlocksPopulated(ctx, conn)
+			return lookupErr
+		},
+	)
+	if err != nil {
+		return false, err
+	}
+
+	return populated, nil
 }
 
 func parseCIDRFile(path string) ([]string, error) {

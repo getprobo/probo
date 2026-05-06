@@ -31,6 +31,7 @@ import (
 	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/file"
+	"go.probo.inc/probo/pkg/geoloc"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/probo"
@@ -59,6 +60,7 @@ type (
 		Slack             *slack.Service
 		Mailman           *mailman.Service
 		CookieBanner      *cookiebanner.Service
+		Geoloc            *geoloc.Service
 		Cookie            securecookie.Config
 		TokenSecret       string
 		ConnectorRegistry *connector.ConnectorRegistry
@@ -192,6 +194,7 @@ func NewServer(cfg Config) (*Server, error) {
 		cookieBannerHandler: cookiebanner_v1.NewMux(
 			cfg.Logger.Named("cookiebanner.v1"),
 			cfg.CookieBanner,
+			cfg.Geoloc,
 		),
 		filesHandler: files_v1.NewMux(
 			cfg.Logger.Named("files.v1"),

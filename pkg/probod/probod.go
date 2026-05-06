@@ -262,21 +262,11 @@ func (impl *Implm) Run(
 	}
 
 	geolocService := geoloc.NewService(pgClient)
-	err = pgClient.WithConn(
-		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
-			populated, err := geolocService.IsPopulated(ctx, conn)
-			if err != nil {
-				return err
-			}
-			if !populated {
-				l.Warn("IP geolocation table is empty; run geoloc-import to populate it")
-			}
-			return nil
-		},
-	)
+	populated, err := geolocService.IsPopulated(ctx)
 	if err != nil {
 		l.ErrorCtx(ctx, "cannot check geoloc table", log.Error(err))
+	} else if !populated {
+		l.Warn("IP geolocation table is empty; run geoloc-import to populate it")
 	}
 
 	hp, err := passwdhash.NewProfile(pepper, uint32(impl.cfg.Auth.Password.Iterations))
@@ -538,6 +528,7 @@ func (impl *Implm) Run(
 			AccessReview:      accessReviewService,
 			Mailman:           mailmanService,
 			CookieBanner:      cookieBannerService,
+			Geoloc:            geolocService,
 			Slack:             slackService,
 			ConnectorRegistry: defaultConnectorRegistry,
 			BaseURL:           baseURL,

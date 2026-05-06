@@ -27,6 +27,7 @@ import (
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/geoloc"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/server/api/clientip"
 	"go.probo.inc/probo/pkg/server/jsonutil"
@@ -35,15 +36,18 @@ import (
 type Handler struct {
 	logger          *log.Logger
 	cookieBannerSvc *cookiebanner.Service
+	geolocSvc       *geoloc.Service
 }
 
 func NewMux(
 	logger *log.Logger,
 	cookieBannerSvc *cookiebanner.Service,
+	geolocSvc *geoloc.Service,
 ) *chi.Mux {
 	h := &Handler{
 		logger:          logger,
 		cookieBannerSvc: cookieBannerSvc,
+		geolocSvc:       geolocSvc,
 	}
 
 	r := chi.NewMux()
@@ -57,6 +61,11 @@ func NewMux(
 	})
 
 	return r
+}
+
+type configResponse struct {
+	*cookiebanner.BannerConfig
+	Regulation cookiebanner.Regulation `json:"regulation"`
 }
 
 func (h *Handler) handleGetConfig(w http.ResponseWriter, r *http.Request) {
@@ -83,7 +92,31 @@ func (h *Handler) handleGetConfig(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	httpserver.RenderJSON(w, http.StatusOK, config)
+	regulation := h.resolveRegulation(r)
+	if cm := cookiebanner.ConsentModeForRegulation(regulation); cm != "" {
+		config.ConsentMode = cm
+	}
+
+	httpserver.RenderJSON(w, http.StatusOK, configResponse{
+		BannerConfig: config,
+		Regulation:   regulation,
+	})
+}
+
+func (h *Handler) resolveRegulation(r *http.Request) cookiebanner.Regulation {
+	ip := clientip.Extract(r)
+
+	cc, err := h.geolocSvc.LookupCountry(r.Context(), ip)
+	if err != nil {
+		h.logger.ErrorCtx(r.Context(), "cannot resolve country for IP", log.Error(err))
+		return cookiebanner.RegulationNone
+	}
+
+	if cc == "" {
+		return cookiebanner.RegulationNone
+	}
+
+	return cookiebanner.RegulationForCountry(cc)
 }
 
 func (h *Handler) handleGetConsent(w http.ResponseWriter, r *http.Request) {

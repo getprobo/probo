@@ -30,6 +30,7 @@ import (
 	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/file"
+	"go.probo.inc/probo/pkg/geoloc"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/iam/oauth2server"
 	"go.probo.inc/probo/pkg/mailman"
@@ -58,6 +59,7 @@ type Config struct {
 	Slack             *slack.Service
 	Mailman           *mailman.Service
 	CookieBanner      *cookiebanner.Service
+	Geoloc            *geoloc.Service
 	Cookie            securecookie.Config
 	TokenSecret       string
 	ConnectorRegistry *connector.ConnectorRegistry
@@ -92,6 +94,7 @@ func NewServer(cfg Config) (*Server, error) {
 		Slack:             cfg.Slack,
 		Mailman:           cfg.Mailman,
 		CookieBanner:      cfg.CookieBanner,
+		Geoloc:            cfg.Geoloc,
 		Cookie:            cfg.Cookie,
 		TokenSecret:       cfg.TokenSecret,
 		ConnectorRegistry: cfg.ConnectorRegistry,
