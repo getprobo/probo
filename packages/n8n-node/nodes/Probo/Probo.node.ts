@@ -117,11 +117,6 @@ export class Probo implements INodeType {
 						description: 'View cookie consent records',
 					},
 					{
-						name: 'Cookie Pattern',
-						value: 'cookiePattern',
-						description: 'Manage cookie patterns',
-					},
-					{
 						name: 'Data',
 						value: 'datum',
 						description: 'Manage data',
@@ -205,6 +200,11 @@ export class Probo implements INodeType {
 						name: 'TIA',
 						value: 'tia',
 						description: 'Manage transfer impact assessments',
+					},
+					{
+						name: 'Tracker Pattern',
+						value: 'trackerPattern',
+						description: 'Manage tracker patterns',
 					},
 					{
 						name: 'Trust Center',

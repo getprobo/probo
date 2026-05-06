@@ -30,40 +30,40 @@ import (
 
 type (
 	TrackerPattern struct {
-		ID               gid.GID                `db:"id"`
-		OrganizationID   gid.GID                `db:"organization_id"`
-		CookieBannerID   gid.GID                `db:"cookie_banner_id"`
-		CookieCategoryID gid.GID                `db:"cookie_category_id"`
-		TrackerType      TrackerType            `db:"tracker_type"`
-		Pattern          string                 `db:"pattern"`
-		MatchType        CookiePatternMatchType `db:"match_type"`
-		DisplayName      string                 `db:"display_name"`
-		Description      string                 `db:"description"`
-		Excluded         bool                   `db:"excluded"`
-		MaxAgeSeconds    *int                   `db:"max_age_seconds"`
-		Source           *CookieSource          `db:"source"`
-		LastMatchedAt    *time.Time             `db:"last_matched_at"`
-		CreatedAt        time.Time              `db:"created_at"`
-		UpdatedAt        time.Time              `db:"updated_at"`
+		ID               gid.GID                 `db:"id"`
+		OrganizationID   gid.GID                 `db:"organization_id"`
+		CookieBannerID   gid.GID                 `db:"cookie_banner_id"`
+		CookieCategoryID gid.GID                 `db:"cookie_category_id"`
+		TrackerType      TrackerType             `db:"tracker_type"`
+		Pattern          string                  `db:"pattern"`
+		MatchType        TrackerPatternMatchType `db:"match_type"`
+		DisplayName      string                  `db:"display_name"`
+		Description      string                  `db:"description"`
+		Excluded         bool                    `db:"excluded"`
+		MaxAgeSeconds    *int                    `db:"max_age_seconds"`
+		Source           *CookieSource           `db:"source"`
+		LastMatchedAt    *time.Time              `db:"last_matched_at"`
+		CreatedAt        time.Time               `db:"created_at"`
+		UpdatedAt        time.Time               `db:"updated_at"`
 	}
 
 	TrackerPatterns []*TrackerPattern
 )
 
-func (tp *TrackerPattern) CursorKey(field CookiePatternOrderField) page.CursorKey {
+func (tp *TrackerPattern) CursorKey(field TrackerPatternOrderField) page.CursorKey {
 	switch field {
-	case CookiePatternOrderFieldCreatedAt:
+	case TrackerPatternOrderFieldCreatedAt:
 		return page.NewCursorKey(tp.ID, tp.CreatedAt)
-	case CookiePatternOrderFieldName:
+	case TrackerPatternOrderFieldName:
 		return page.NewCursorKey(tp.ID, tp.DisplayName)
-	case CookiePatternOrderFieldLastMatchedAt:
+	case TrackerPatternOrderFieldLastMatchedAt:
 		if tp.LastMatchedAt == nil {
 			return page.NewCursorKey(tp.ID, time.Time{})
 		}
 		return page.NewCursorKey(tp.ID, *tp.LastMatchedAt)
-	case CookiePatternOrderFieldUpdatedAt:
+	case TrackerPatternOrderFieldUpdatedAt:
 		return page.NewCursorKey(tp.ID, tp.UpdatedAt)
-	case CookiePatternOrderFieldSource:
+	case TrackerPatternOrderFieldSource:
 		if tp.Source == nil {
 			return page.NewCursorKey(tp.ID, "")
 		}
@@ -254,8 +254,8 @@ LIMIT 1;
 		"cookie_banner_id":  cookieBannerID,
 		"tracker_type":      trackerType,
 		"identifier":        identifier,
-		"match_type_prefix": CookiePatternMatchTypePrefix,
-		"match_type_exact":  CookiePatternMatchTypeExact,
+		"match_type_prefix": TrackerPatternMatchTypePrefix,
+		"match_type_exact":  TrackerPatternMatchTypeExact,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -504,7 +504,7 @@ func (tps *TrackerPatterns) LoadAllByCookieBannerID(
 	conn pg.Querier,
 	scope Scoper,
 	cookieBannerID gid.GID,
-	filter *CookiePatternFilter,
+	filter *TrackerPatternFilter,
 	trackerType *TrackerType,
 ) error {
 	trackerTypeFragment := "TRUE"
@@ -605,8 +605,8 @@ func (tps *TrackerPatterns) LoadUncategorisedByCookieBannerID(
 	conn pg.Querier,
 	scope Scoper,
 	cookieBannerID gid.GID,
-	cursor *page.Cursor[CookiePatternOrderField],
-	filter *CookiePatternFilter,
+	cursor *page.Cursor[TrackerPatternOrderField],
+	filter *TrackerPatternFilter,
 ) error {
 	q := `
 SELECT
@@ -671,7 +671,7 @@ func (tps *TrackerPatterns) CountUncategorisedByCookieBannerID(
 	conn pg.Querier,
 	scope Scoper,
 	cookieBannerID gid.GID,
-	filter *CookiePatternFilter,
+	filter *TrackerPatternFilter,
 ) (int, error) {
 	q := `
 SELECT
@@ -708,4 +708,121 @@ WHERE
 	}
 
 	return count, nil
+}
+
+func (tps *TrackerPatterns) LoadByCookieCategoryID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	cookieCategoryID gid.GID,
+	cursor *page.Cursor[TrackerPatternOrderField],
+) error {
+	q := `
+SELECT
+	id,
+	organization_id,
+	cookie_banner_id,
+	cookie_category_id,
+	tracker_type,
+	pattern,
+	match_type,
+	display_name,
+	description,
+	excluded,
+	max_age_seconds,
+	source,
+	last_matched_at,
+	created_at,
+	updated_at
+FROM
+	tracker_patterns
+WHERE
+	%s
+	AND cookie_category_id = @cookie_category_id
+	AND %s
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"cookie_category_id": cookieCategoryID}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, cursor.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query tracker patterns: %w", err)
+	}
+
+	patterns, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[TrackerPattern])
+	if err != nil {
+		return fmt.Errorf("cannot collect tracker patterns: %w", err)
+	}
+
+	*tps = patterns
+
+	return nil
+}
+
+func (tps *TrackerPatterns) CountByCookieCategoryID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	cookieCategoryID gid.GID,
+) (int, error) {
+	q := `
+SELECT
+	COUNT(id)
+FROM
+	tracker_patterns
+WHERE
+	%s
+	AND cookie_category_id = @cookie_category_id
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"cookie_category_id": cookieCategoryID}
+	maps.Copy(args, scope.SQLArguments())
+
+	row := conn.QueryRow(ctx, q, args)
+
+	var count int
+	if err := row.Scan(&count); err != nil {
+		return 0, fmt.Errorf("cannot scan count: %w", err)
+	}
+
+	return count, nil
+}
+
+func (tps *TrackerPatterns) MoveToCategoryByCookieCategoryID(
+	ctx context.Context,
+	tx pg.Tx,
+	scope Scoper,
+	sourceCategoryID gid.GID,
+	targetCategoryID gid.GID,
+) error {
+	q := `
+UPDATE tracker_patterns
+SET
+	cookie_category_id = @target_category_id,
+	updated_at = @updated_at
+WHERE
+	%s
+	AND cookie_category_id = @source_category_id
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"source_category_id": sourceCategoryID,
+		"target_category_id": targetCategoryID,
+		"updated_at":         time.Now(),
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	_, err := tx.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot move tracker patterns to category: %w", err)
+	}
+
+	return nil
 }

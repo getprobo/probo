@@ -28,10 +28,11 @@ const viewQuery = `
 query($id: ID!) {
   node(id: $id) {
     __typename
-    ... on CookiePattern {
+    ... on TrackerPattern {
       id
       pattern
       matchType
+      trackerType
       displayName
       maxAgeSeconds
       description
@@ -51,6 +52,7 @@ type viewResponse struct {
 		ID            string  `json:"id"`
 		Pattern       string  `json:"pattern"`
 		MatchType     string  `json:"matchType"`
+		TrackerType   string  `json:"trackerType"`
 		DisplayName   string  `json:"displayName"`
 		MaxAgeSeconds *int    `json:"maxAgeSeconds"`
 		Description   *string `json:"description"`
@@ -67,7 +69,7 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "view <id>",
-		Short: "View a cookie pattern",
+		Short: "View a tracker pattern",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := cmdutil.ValidateOutputFlag(flagOutput); err != nil {
@@ -102,8 +104,8 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 				return fmt.Errorf("cannot parse response: %w", err)
 			}
 
-			if resp.Node == nil || resp.Node.Typename != "CookiePattern" {
-				return fmt.Errorf("cookie pattern %s not found", args[0])
+			if resp.Node == nil || resp.Node.Typename != "TrackerPattern" {
+				return fmt.Errorf("tracker pattern %s not found", args[0])
 			}
 
 			if *flagOutput == cmdutil.OutputJSON {
@@ -120,6 +122,7 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("ID:"), v.ID)
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Pattern:"), v.Pattern)
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Match Type:"), v.MatchType)
+			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Tracker Type:"), v.TrackerType)
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Source:"), v.Source)
 			_, _ = fmt.Fprintf(out, "%s%v\n", label.Render("Excluded:"), v.Excluded)
 			if v.MaxAgeSeconds != nil {

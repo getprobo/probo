@@ -21,7 +21,7 @@ import (
 )
 
 type (
-	TrackerPatternOrderBy OrderBy[coredata.CookiePatternOrderField]
+	TrackerPatternOrderBy OrderBy[coredata.TrackerPatternOrderField]
 
 	TrackerPatternConnection struct {
 		TotalCount int
@@ -41,7 +41,7 @@ type (
 )
 
 func NewTrackerPatternConnection(
-	p *page.Page[*coredata.TrackerPattern, coredata.CookiePatternOrderField],
+	p *page.Page[*coredata.TrackerPattern, coredata.TrackerPatternOrderField],
 	parentType any,
 	parentID gid.GID,
 ) *TrackerPatternConnection {
@@ -61,7 +61,7 @@ func NewTrackerPatternConnection(
 }
 
 func NewTrackerPatternConnectionWithFilter(
-	p *page.Page[*coredata.TrackerPattern, coredata.CookiePatternOrderField],
+	p *page.Page[*coredata.TrackerPattern, coredata.TrackerPatternOrderField],
 	parentType any,
 	parentID gid.GID,
 	filter *TrackerPatternFilter,
@@ -71,7 +71,7 @@ func NewTrackerPatternConnectionWithFilter(
 	return conn
 }
 
-func NewTrackerPatternEdge(tp *coredata.TrackerPattern, orderBy coredata.CookiePatternOrderField) *TrackerPatternEdge {
+func NewTrackerPatternEdge(tp *coredata.TrackerPattern, orderBy coredata.TrackerPatternOrderField) *TrackerPatternEdge {
 	return &TrackerPatternEdge{
 		Cursor: tp.CursorKey(orderBy),
 		Node:   NewTrackerPatternNode(tp),

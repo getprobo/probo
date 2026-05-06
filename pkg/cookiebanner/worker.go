@@ -100,7 +100,7 @@ func (h *patternAnalysisHandler) Process(ctx context.Context, banner coredata.Co
 				tx,
 				scope,
 				banner.ID,
-				coredata.NewCookiePatternFilter(new(coredata.CookiePatternMatchTypeExact), nil, new(false)),
+				coredata.NewTrackerPatternFilter(new(coredata.TrackerPatternMatchTypeExact), nil, new(false)),
 				nil,
 			); err != nil {
 				return fmt.Errorf("cannot load exact patterns: %w", err)
@@ -121,7 +121,7 @@ func (h *patternAnalysisHandler) Process(ctx context.Context, banner coredata.Co
 					CookieCategoryID: key.categoryID,
 					TrackerType:      key.trackerType,
 					Pattern:          key.prefix,
-					MatchType:        coredata.CookiePatternMatchTypePrefix,
+					MatchType:        coredata.TrackerPatternMatchTypePrefix,
 					DisplayName:      key.prefix + "*",
 					MaxAgeSeconds:    maxAge,
 					Description:      "",
@@ -139,7 +139,7 @@ func (h *patternAnalysisHandler) Process(ctx context.Context, banner coredata.Co
 						return fmt.Errorf("cannot load existing prefix pattern %q: %w", key.prefix, err)
 					}
 
-					if prefixPattern.CookieCategoryID != key.categoryID || prefixPattern.MatchType != coredata.CookiePatternMatchTypePrefix {
+					if prefixPattern.CookieCategoryID != key.categoryID || prefixPattern.MatchType != coredata.TrackerPatternMatchTypePrefix {
 						continue
 					}
 				}
@@ -319,7 +319,7 @@ func (h *patternAnalysisHandler) adoptUncategorisedPatterns(
 		tx,
 		scope,
 		banner.ID,
-		coredata.NewCookiePatternFilter(new(coredata.CookiePatternMatchTypePrefix), nil, new(false)),
+		coredata.NewTrackerPatternFilter(new(coredata.TrackerPatternMatchTypePrefix), nil, new(false)),
 		nil,
 	); err != nil {
 		return false, fmt.Errorf("cannot load prefix patterns: %w", err)
@@ -333,14 +333,14 @@ func (h *patternAnalysisHandler) adoptUncategorisedPatterns(
 		return len(prefixPatterns[i].Pattern) > len(prefixPatterns[j].Pattern)
 	})
 
-	exactMatchType := coredata.CookiePatternMatchTypeExact
+	exactMatchType := coredata.TrackerPatternMatchTypeExact
 	var uncategorisedExact coredata.TrackerPatterns
 	if err := uncategorisedExact.LoadAllByCookieBannerID(
 		ctx,
 		tx,
 		scope,
 		banner.ID,
-		coredata.NewCookiePatternFilter(&exactMatchType, &uncategorised.ID, new(false)),
+		coredata.NewTrackerPatternFilter(&exactMatchType, &uncategorised.ID, new(false)),
 		nil,
 	); err != nil {
 		return false, fmt.Errorf("cannot load uncategorised exact patterns: %w", err)

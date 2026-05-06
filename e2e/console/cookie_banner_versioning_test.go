@@ -104,9 +104,9 @@ func setPatternExcluded(t *testing.T, c *testutil.Client, patternID string, excl
 	t.Helper()
 
 	const query = `
-		mutation UpdateCookiePattern($input: UpdateCookiePatternInput!) {
-			updateCookiePattern(input: $input) {
-				cookiePattern { id excluded }
+		mutation UpdateTrackerPattern($input: UpdateTrackerPatternInput!) {
+			updateTrackerPattern(input: $input) {
+				trackerPattern { id excluded }
 			}
 		}
 	`
@@ -114,10 +114,10 @@ func setPatternExcluded(t *testing.T, c *testutil.Client, patternID string, excl
 	var result struct{}
 	require.NoError(t, c.Execute(query, map[string]any{
 		"input": map[string]any{
-			"cookiePatternId": patternID,
-			"excluded":        excluded,
+			"trackerPatternId": patternID,
+			"excluded":         excluded,
 		},
-	}, &result), "updateCookiePattern excluded mutation failed")
+	}, &result), "updateTrackerPattern excluded mutation failed")
 }
 
 // upsertTranslation upserts a translation for a banner+language pair and
@@ -323,13 +323,13 @@ func TestCookieBannerVersioning_NoOpUpdates(t *testing.T) {
 		assert.Equal(t, "PUBLISHED", got.State)
 	})
 
-	t.Run("UpdateCookiePattern on visible pattern with same value does not bump version", func(t *testing.T) {
+	t.Run("UpdateTrackerPattern on visible pattern with same value does not bump version", func(t *testing.T) {
 		t.Parallel()
 		owner := testutil.NewClient(t, testutil.RoleOwner)
 
 		bannerID := factory.CreateCookieBanner(owner)
 		categoryID := factory.CreateCookieCategory(owner, bannerID, factory.Attrs{"slug": "visible-noop"})
-		patternID := factory.CreateCookiePattern(owner, categoryID, factory.Attrs{
+		patternID := factory.CreateTrackerPattern(owner, categoryID, factory.Attrs{
 			"displayName": "GA Tracker",
 			"description": "Original description",
 		})
@@ -338,17 +338,17 @@ func TestCookieBannerVersioning_NoOpUpdates(t *testing.T) {
 		baseline := published.Version
 
 		const query = `
-			mutation UpdateCookiePattern($input: UpdateCookiePatternInput!) {
-				updateCookiePattern(input: $input) { cookiePattern { id } }
+			mutation UpdateTrackerPattern($input: UpdateTrackerPatternInput!) {
+				updateTrackerPattern(input: $input) { trackerPattern { id } }
 			}
 		`
 
 		var result struct{}
 		err := owner.Execute(query, map[string]any{
 			"input": map[string]any{
-				"cookiePatternId": patternID,
-				"displayName":     "GA Tracker",
-				"description":     "Original description",
+				"trackerPatternId": patternID,
+				"displayName":      "GA Tracker",
+				"description":      "Original description",
 			},
 		}, &result)
 		require.NoError(t, err)
@@ -368,7 +368,7 @@ func TestCookieBannerVersioning_ExcludedPattern(t *testing.T) {
 
 		bannerID := factory.CreateCookieBanner(owner)
 		categoryID := factory.CreateCookieCategory(owner, bannerID, factory.Attrs{"slug": "excl-update"})
-		patternID := factory.CreateCookiePattern(owner, categoryID, factory.Attrs{
+		patternID := factory.CreateTrackerPattern(owner, categoryID, factory.Attrs{
 			"displayName": "Original",
 		})
 
@@ -377,32 +377,32 @@ func TestCookieBannerVersioning_ExcludedPattern(t *testing.T) {
 		baseline := published.Version
 
 		const query = `
-			mutation UpdateCookiePattern($input: UpdateCookiePatternInput!) {
-				updateCookiePattern(input: $input) {
-					cookiePattern { id displayName description }
+			mutation UpdateTrackerPattern($input: UpdateTrackerPatternInput!) {
+				updateTrackerPattern(input: $input) {
+					trackerPattern { id displayName description }
 				}
 			}
 		`
 
 		var result struct {
-			UpdateCookiePattern struct {
-				CookiePattern struct {
+			UpdateTrackerPattern struct {
+				TrackerPattern struct {
 					DisplayName string `json:"displayName"`
 					Description string `json:"description"`
-				} `json:"cookiePattern"`
-			} `json:"updateCookiePattern"`
+				} `json:"trackerPattern"`
+			} `json:"updateTrackerPattern"`
 		}
 
 		err := owner.Execute(query, map[string]any{
 			"input": map[string]any{
-				"cookiePatternId": patternID,
-				"displayName":     "Renamed Excluded",
-				"description":     "Now with notes",
+				"trackerPatternId": patternID,
+				"displayName":      "Renamed Excluded",
+				"description":      "Now with notes",
 			},
 		}, &result)
 		require.NoError(t, err)
-		assert.Equal(t, "Renamed Excluded", result.UpdateCookiePattern.CookiePattern.DisplayName)
-		assert.Equal(t, "Now with notes", result.UpdateCookiePattern.CookiePattern.Description)
+		assert.Equal(t, "Renamed Excluded", result.UpdateTrackerPattern.TrackerPattern.DisplayName)
+		assert.Equal(t, "Now with notes", result.UpdateTrackerPattern.TrackerPattern.Description)
 
 		got := latestVersion(t, owner, bannerID)
 		assert.Equal(t, baseline, got.Version, "excluded pattern fields are invisible to visitors")
@@ -415,23 +415,23 @@ func TestCookieBannerVersioning_ExcludedPattern(t *testing.T) {
 
 		bannerID := factory.CreateCookieBanner(owner)
 		categoryID := factory.CreateCookieCategory(owner, bannerID, factory.Attrs{"slug": "excl-delete"})
-		patternID := factory.CreateCookiePattern(owner, categoryID)
+		patternID := factory.CreateTrackerPattern(owner, categoryID)
 
 		setPatternExcluded(t, owner, patternID, true)
 		published := publishBanner(t, owner, bannerID)
 		baseline := published.Version
 
 		const query = `
-			mutation DeleteCookiePattern($input: DeleteCookiePatternInput!) {
-				deleteCookiePattern(input: $input) {
-					deletedCookiePatternId
+			mutation DeleteTrackerPattern($input: DeleteTrackerPatternInput!) {
+				deleteTrackerPattern(input: $input) {
+					deletedTrackerPatternId
 				}
 			}
 		`
 
 		var result struct{}
 		err := owner.Execute(query, map[string]any{
-			"input": map[string]any{"cookiePatternId": patternID},
+			"input": map[string]any{"trackerPatternId": patternID},
 		}, &result)
 		require.NoError(t, err)
 
@@ -447,16 +447,16 @@ func TestCookieBannerVersioning_ExcludedPattern(t *testing.T) {
 		bannerID := factory.CreateCookieBanner(owner)
 		categoryA := factory.CreateCookieCategory(owner, bannerID, factory.Attrs{"slug": "excl-move-a"})
 		categoryB := factory.CreateCookieCategory(owner, bannerID, factory.Attrs{"slug": "excl-move-b"})
-		patternID := factory.CreateCookiePattern(owner, categoryA)
+		patternID := factory.CreateTrackerPattern(owner, categoryA)
 
 		setPatternExcluded(t, owner, patternID, true)
 		published := publishBanner(t, owner, bannerID)
 		baseline := published.Version
 
 		const query = `
-			mutation MoveCookiePatternToCategory($input: MoveCookiePatternToCategoryInput!) {
-				moveCookiePatternToCategory(input: $input) {
-					cookiePattern { id }
+			mutation MoveTrackerPatternToCategory($input: MoveTrackerPatternToCategoryInput!) {
+				moveTrackerPatternToCategory(input: $input) {
+					trackerPattern { id }
 				}
 			}
 		`
@@ -464,7 +464,7 @@ func TestCookieBannerVersioning_ExcludedPattern(t *testing.T) {
 		var result struct{}
 		err := owner.Execute(query, map[string]any{
 			"input": map[string]any{
-				"cookiePatternId":        patternID,
+				"trackerPatternId":       patternID,
 				"targetCookieCategoryId": categoryB,
 			},
 		}, &result)
@@ -604,13 +604,13 @@ func TestCookieBannerVersioning_RealChangesStillBumpVersion(t *testing.T) {
 		assert.Equal(t, "DRAFT", got.State)
 	})
 
-	t.Run("UpdateCookiePattern displayName change on visible pattern creates a new draft", func(t *testing.T) {
+	t.Run("UpdateTrackerPattern displayName change on visible pattern creates a new draft", func(t *testing.T) {
 		t.Parallel()
 		owner := testutil.NewClient(t, testutil.RoleOwner)
 
 		bannerID := factory.CreateCookieBanner(owner)
 		categoryID := factory.CreateCookieCategory(owner, bannerID, factory.Attrs{"slug": "real-change"})
-		patternID := factory.CreateCookiePattern(owner, categoryID, factory.Attrs{
+		patternID := factory.CreateTrackerPattern(owner, categoryID, factory.Attrs{
 			"displayName": "Original",
 		})
 
@@ -618,15 +618,15 @@ func TestCookieBannerVersioning_RealChangesStillBumpVersion(t *testing.T) {
 		baseline := published.Version
 
 		const query = `
-			mutation UpdateCookiePattern($input: UpdateCookiePatternInput!) {
-				updateCookiePattern(input: $input) { cookiePattern { id } }
+			mutation UpdateTrackerPattern($input: UpdateTrackerPatternInput!) {
+				updateTrackerPattern(input: $input) { trackerPattern { id } }
 			}
 		`
 		var result struct{}
 		err := owner.Execute(query, map[string]any{
 			"input": map[string]any{
-				"cookiePatternId": patternID,
-				"displayName":     "Renamed",
+				"trackerPatternId": patternID,
+				"displayName":      "Renamed",
 			},
 		}, &result)
 		require.NoError(t, err)

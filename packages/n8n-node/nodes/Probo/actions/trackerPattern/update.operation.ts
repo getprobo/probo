@@ -17,17 +17,17 @@ import { proboApiRequest } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
 	{
-		displayName: 'Cookie Pattern ID',
-		name: 'cookiePatternId',
+		displayName: 'Tracker Pattern ID',
+		name: 'trackerPatternId',
 		type: 'string',
 		displayOptions: {
 			show: {
-				resource: ['cookiePattern'],
+				resource: ['trackerPattern'],
 				operation: ['update'],
 			},
 		},
 		default: '',
-		description: 'The ID of the cookie pattern to update',
+		description: 'The ID of the tracker pattern to update',
 		required: true,
 	},
 	{
@@ -36,12 +36,12 @@ export const description: INodeProperties[] = [
 		type: 'string',
 		displayOptions: {
 			show: {
-				resource: ['cookiePattern'],
+				resource: ['trackerPattern'],
 				operation: ['update'],
 			},
 		},
 		default: '',
-		description: 'The display name for the cookie pattern',
+		description: 'The display name for the tracker pattern',
 	},
 	{
 		displayName: 'Excluded',
@@ -49,7 +49,7 @@ export const description: INodeProperties[] = [
 		type: 'options',
 		displayOptions: {
 			show: {
-				resource: ['cookiePattern'],
+				resource: ['trackerPattern'],
 				operation: ['update'],
 			},
 		},
@@ -68,7 +68,7 @@ export const description: INodeProperties[] = [
 			},
 		],
 		default: '',
-		description: 'Whether the cookie pattern is excluded from the banner',
+		description: 'Whether the tracker pattern is excluded from the banner',
 	},
 	{
 		displayName: 'Description',
@@ -76,12 +76,12 @@ export const description: INodeProperties[] = [
 		type: 'string',
 		displayOptions: {
 			show: {
-				resource: ['cookiePattern'],
+				resource: ['trackerPattern'],
 				operation: ['update'],
 			},
 		},
 		default: '',
-		description: 'The description of the cookie pattern',
+		description: 'The description of the tracker pattern',
 	},
 	{
 		displayName: 'Additional Fields',
@@ -91,7 +91,7 @@ export const description: INodeProperties[] = [
 		default: {},
 		displayOptions: {
 			show: {
-				resource: ['cookiePattern'],
+				resource: ['trackerPattern'],
 				operation: ['update'],
 			},
 		},
@@ -114,7 +114,7 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const cookiePatternId = this.getNodeParameter('cookiePatternId', itemIndex) as string;
+	const trackerPatternId = this.getNodeParameter('trackerPatternId', itemIndex) as string;
 	const displayName = this.getNodeParameter('displayName', itemIndex, '') as string;
 	const excluded = this.getNodeParameter('excluded', itemIndex, '') as string;
 	const patternDescription = this.getNodeParameter('patternDescription', itemIndex, '') as string;
@@ -123,9 +123,9 @@ export async function execute(
 	};
 
 	const query = `
-		mutation UpdateCookiePattern($input: UpdateCookiePatternInput!) {
-			updateCookiePattern(input: $input) {
-				cookiePattern {
+		mutation UpdateTrackerPattern($input: UpdateTrackerPatternInput!) {
+			updateTrackerPattern(input: $input) {
+				trackerPattern {
 					id
 					pattern
 					matchType
@@ -145,7 +145,7 @@ export async function execute(
 		}
 	`;
 
-	const input: Record<string, unknown> = { cookiePatternId };
+	const input: Record<string, unknown> = { trackerPatternId };
 	if (displayName) input.displayName = displayName;
 	if (excluded) input.excluded = excluded === 'true';
 	if (patternDescription) input.description = patternDescription;

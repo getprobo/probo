@@ -403,12 +403,12 @@ const (
 	ActionCookieUpdate = "core:cookie:update"
 	ActionCookieDelete = "core:cookie:delete"
 
-	// CookiePattern actions
-	ActionCookiePatternGet    = "core:cookie-pattern:get"
-	ActionCookiePatternList   = "core:cookie-pattern:list"
-	ActionCookiePatternCreate = "core:cookie-pattern:create"
-	ActionCookiePatternUpdate = "core:cookie-pattern:update"
-	ActionCookiePatternDelete = "core:cookie-pattern:delete"
+	// TrackerPattern actions
+	ActionTrackerPatternGet    = "core:tracker-pattern:get"
+	ActionTrackerPatternList   = "core:tracker-pattern:list"
+	ActionTrackerPatternCreate = "core:tracker-pattern:create"
+	ActionTrackerPatternUpdate = "core:tracker-pattern:update"
+	ActionTrackerPatternDelete = "core:tracker-pattern:delete"
 
 	// CookieConsentRecord actions
 	ActionCookieConsentRecordList = "core:cookie-consent-record:list"

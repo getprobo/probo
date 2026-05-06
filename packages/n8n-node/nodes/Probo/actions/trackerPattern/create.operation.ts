@@ -22,7 +22,7 @@ export const description: INodeProperties[] = [
 		type: 'string',
 		displayOptions: {
 			show: {
-				resource: ['cookiePattern'],
+				resource: ['trackerPattern'],
 				operation: ['create'],
 			},
 		},
@@ -36,12 +36,12 @@ export const description: INodeProperties[] = [
 		type: 'string',
 		displayOptions: {
 			show: {
-				resource: ['cookiePattern'],
+				resource: ['trackerPattern'],
 				operation: ['create'],
 			},
 		},
 		default: '',
-		description: 'The cookie name pattern to match',
+		description: 'The tracker name pattern to match',
 		required: true,
 	},
 	{
@@ -50,7 +50,7 @@ export const description: INodeProperties[] = [
 		type: 'options',
 		displayOptions: {
 			show: {
-				resource: ['cookiePattern'],
+				resource: ['trackerPattern'],
 				operation: ['create'],
 			},
 		},
@@ -65,7 +65,7 @@ export const description: INodeProperties[] = [
 			},
 		],
 		default: 'EXACT',
-		description: 'How the pattern should be matched against cookie names',
+		description: 'How the pattern should be matched against tracker names',
 		required: true,
 	},
 	{
@@ -74,12 +74,12 @@ export const description: INodeProperties[] = [
 		type: 'string',
 		displayOptions: {
 			show: {
-				resource: ['cookiePattern'],
+				resource: ['trackerPattern'],
 				operation: ['create'],
 			},
 		},
 		default: '',
-		description: 'The display name for the cookie pattern',
+		description: 'The display name for the tracker pattern',
 		required: true,
 	},
 	{
@@ -88,12 +88,12 @@ export const description: INodeProperties[] = [
 		type: 'string',
 		displayOptions: {
 			show: {
-				resource: ['cookiePattern'],
+				resource: ['trackerPattern'],
 				operation: ['create'],
 			},
 		},
 		default: '',
-		description: 'The description of the cookie pattern',
+		description: 'The description of the tracker pattern',
 		required: true,
 	},
 	{
@@ -102,7 +102,7 @@ export const description: INodeProperties[] = [
 		type: 'number',
 		displayOptions: {
 			show: {
-				resource: ['cookiePattern'],
+				resource: ['trackerPattern'],
 				operation: ['create'],
 			},
 		},
@@ -123,9 +123,9 @@ export async function execute(
 	const maxAgeSeconds = this.getNodeParameter('maxAgeSeconds', itemIndex, 0) as number;
 
 	const query = `
-		mutation CreateCookiePattern($input: CreateCookiePatternInput!) {
-			createCookiePattern(input: $input) {
-				cookiePatternEdge {
+		mutation CreateTrackerPattern($input: CreateTrackerPatternInput!) {
+			createTrackerPattern(input: $input) {
+				trackerPatternEdge {
 					node {
 						id
 						pattern

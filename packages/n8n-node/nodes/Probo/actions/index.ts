@@ -21,7 +21,7 @@ import * as control from './control';
 import * as cookieBanner from './cookieBanner';
 import * as cookieCategory from './cookieCategory';
 import * as cookieConsentRecord from './cookieConsentRecord';
-import * as cookiePattern from './cookiePattern';
+import * as trackerPattern from './trackerPattern';
 import * as datum from './datum';
 import * as document from './document';
 import * as dpia from './dpia';
@@ -63,7 +63,7 @@ export const resources: Record<string, ResourceModule> = {
 	cookieBanner: cookieBanner as ResourceModule,
 	cookieCategory: cookieCategory as ResourceModule,
 	cookieConsentRecord: cookieConsentRecord as ResourceModule,
-	cookiePattern: cookiePattern as ResourceModule,
+	trackerPattern: trackerPattern as ResourceModule,
 	datum: datum as ResourceModule,
 	document: document as ResourceModule,
 	dpia: dpia as ResourceModule,

@@ -151,15 +151,6 @@ type CookieBanner implements Node {
         filter: CookieConsentRecordFilter
     ): CookieConsentRecordConnection @goField(forceResolver: true)
 
-    uncategorisedPatterns(
-        first: Int
-        after: CursorKey
-        last: Int
-        before: CursorKey
-        orderBy: CookiePatternOrder
-        filter: CookiePatternFilter
-    ): CookiePatternConnection @goField(forceResolver: true)
-
     uncategorisedTrackerPatterns(
         first: Int
         after: CursorKey
@@ -194,13 +185,13 @@ type CookieCategory implements Node {
     gcmConsentTypes: [String!]!
     posthogConsent: Boolean!
 
-    cookiePatterns(
+    trackerPatterns(
         first: Int
         after: CursorKey
         last: Int
         before: CursorKey
-        orderBy: CookiePatternOrder
-    ): CookiePatternConnection @goField(forceResolver: true)
+        orderBy: TrackerPatternOrder
+    ): TrackerPatternConnection @goField(forceResolver: true)
 
     createdAt: Datetime!
     updatedAt: Datetime!
@@ -208,90 +199,44 @@ type CookieCategory implements Node {
     permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
-enum CookiePatternMatchType
+enum TrackerPatternMatchType
     @goModel(
-        model: "go.probo.inc/probo/pkg/coredata.CookiePatternMatchType"
+        model: "go.probo.inc/probo/pkg/coredata.TrackerPatternMatchType"
     ) {
     EXACT
         @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.CookiePatternMatchTypeExact"
+            value: "go.probo.inc/probo/pkg/coredata.TrackerPatternMatchTypeExact"
         )
     PREFIX
         @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.CookiePatternMatchTypePrefix"
+            value: "go.probo.inc/probo/pkg/coredata.TrackerPatternMatchTypePrefix"
         )
 }
 
-enum CookiePatternOrderField
+enum TrackerPatternOrderField
     @goModel(
-        model: "go.probo.inc/probo/pkg/coredata.CookiePatternOrderField"
+        model: "go.probo.inc/probo/pkg/coredata.TrackerPatternOrderField"
     ) {
     CREATED_AT
         @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.CookiePatternOrderFieldCreatedAt"
+            value: "go.probo.inc/probo/pkg/coredata.TrackerPatternOrderFieldCreatedAt"
         )
     NAME
         @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.CookiePatternOrderFieldName"
+            value: "go.probo.inc/probo/pkg/coredata.TrackerPatternOrderFieldName"
         )
     LAST_MATCHED_AT
         @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.CookiePatternOrderFieldLastMatchedAt"
+            value: "go.probo.inc/probo/pkg/coredata.TrackerPatternOrderFieldLastMatchedAt"
         )
     UPDATED_AT
         @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.CookiePatternOrderFieldUpdatedAt"
+            value: "go.probo.inc/probo/pkg/coredata.TrackerPatternOrderFieldUpdatedAt"
         )
     SOURCE
         @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.CookiePatternOrderFieldSource"
+            value: "go.probo.inc/probo/pkg/coredata.TrackerPatternOrderFieldSource"
         )
-}
-
-input CookiePatternOrder
-    @goModel(
-        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.CookiePatternOrderBy"
-    ) {
-    direction: OrderDirection!
-    field: CookiePatternOrderField!
-}
-
-input CookiePatternFilter {
-    query: String
-    source: CookieSource
-}
-
-type CookiePattern implements Node {
-    id: ID!
-    cookieCategory: CookieCategory @goField(forceResolver: true)
-    trackerType: TrackerType!
-    pattern: String!
-    matchType: CookiePatternMatchType!
-    displayName: String!
-    maxAgeSeconds: Int
-    description: String!
-    source: CookieSource
-    excluded: Boolean!
-    cookieCount: Int! @goField(forceResolver: true)
-    lastMatchedAt: Datetime
-    createdAt: Datetime!
-    updatedAt: Datetime!
-
-    permission(action: String!): Boolean! @goField(forceResolver: true)
-}
-
-type CookiePatternConnection
-    @goModel(
-        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.CookiePatternConnection"
-    ) {
-    totalCount: Int! @goField(forceResolver: true)
-    edges: [CookiePatternEdge!]!
-    pageInfo: PageInfo!
-}
-
-type CookiePatternEdge {
-    cursor: CursorKey!
-    node: CookiePattern!
 }
 
 type TrackerPattern implements Node {
@@ -299,7 +244,7 @@ type TrackerPattern implements Node {
     cookieCategory: CookieCategory @goField(forceResolver: true)
     trackerType: TrackerType!
     pattern: String!
-    matchType: CookiePatternMatchType!
+    matchType: TrackerPatternMatchType!
     displayName: String!
     maxAgeSeconds: Int
     description: String!
@@ -332,7 +277,7 @@ input TrackerPatternOrder
         model: "go.probo.inc/probo/pkg/server/api/console/v1/types.TrackerPatternOrderBy"
     ) {
     direction: OrderDirection!
-    field: CookiePatternOrderField!
+    field: TrackerPatternOrderField!
 }
 
 input TrackerPatternFilter
@@ -426,21 +371,12 @@ extend type Mutation {
     reorderCookieCategory(
         input: ReorderCookieCategoryInput!
     ): ReorderCookieCategoryPayload!
-    createCookiePattern(
-        input: CreateCookiePatternInput!
-    ): CreateCookiePatternPayload!
-    updateCookiePattern(
-        input: UpdateCookiePatternInput!
-    ): UpdateCookiePatternPayload!
-    deleteCookiePattern(
-        input: DeleteCookiePatternInput!
-    ): DeleteCookiePatternPayload!
-    moveCookiePatternToCategory(
-        input: MoveCookiePatternToCategoryInput!
-    ): MoveCookiePatternToCategoryPayload!
     upsertCookieBannerTranslation(
         input: UpsertCookieBannerTranslationInput!
     ): UpsertCookieBannerTranslationPayload!
+    createTrackerPattern(
+        input: CreateTrackerPatternInput!
+    ): CreateTrackerPatternPayload!
     updateTrackerPattern(
         input: UpdateTrackerPatternInput!
     ): UpdateTrackerPatternPayload!
@@ -558,53 +494,6 @@ type ReorderCookieCategoryPayload {
     cookieBanner: CookieBanner!
 }
 
-input CreateCookiePatternInput {
-    cookieCategoryId: ID!
-    trackerType: TrackerType
-    pattern: String!
-    matchType: CookiePatternMatchType!
-    displayName: String!
-    maxAgeSeconds: Int
-    description: String!
-}
-
-input UpdateCookiePatternInput {
-    cookiePatternId: ID!
-    displayName: String
-    maxAgeSeconds: Int @goField(omittable: true)
-    description: String
-    excluded: Boolean
-}
-
-input DeleteCookiePatternInput {
-    cookiePatternId: ID!
-}
-
-input MoveCookiePatternToCategoryInput {
-    cookiePatternId: ID!
-    targetCookieCategoryId: ID!
-}
-
-type CreateCookiePatternPayload {
-    cookiePatternEdge: CookiePatternEdge!
-    cookieBanner: CookieBanner!
-}
-
-type UpdateCookiePatternPayload {
-    cookiePattern: CookiePattern!
-    cookieBanner: CookieBanner!
-}
-
-type DeleteCookiePatternPayload {
-    deletedCookiePatternId: ID!
-    cookieBanner: CookieBanner!
-}
-
-type MoveCookiePatternToCategoryPayload {
-    cookiePattern: CookiePattern!
-    cookieBanner: CookieBanner!
-}
-
 input UpsertCookieBannerTranslationInput {
     cookieBannerId: ID!
     language: String!
@@ -614,6 +503,16 @@ input UpsertCookieBannerTranslationInput {
 type UpsertCookieBannerTranslationPayload {
     cookieBannerTranslation: CookieBannerTranslation!
     cookieBanner: CookieBanner!
+}
+
+input CreateTrackerPatternInput {
+    cookieCategoryId: ID!
+    trackerType: TrackerType
+    pattern: String!
+    matchType: TrackerPatternMatchType!
+    displayName: String!
+    maxAgeSeconds: Int
+    description: String
 }
 
 input UpdateTrackerPatternInput {
@@ -631,6 +530,11 @@ input DeleteTrackerPatternInput {
 input MoveTrackerPatternToCategoryInput {
     trackerPatternId: ID!
     targetCookieCategoryId: ID!
+}
+
+type CreateTrackerPatternPayload {
+    trackerPatternEdge: TrackerPatternEdge!
+    cookieBanner: CookieBanner!
 }
 
 type UpdateTrackerPatternPayload {

@@ -17,17 +17,17 @@ import { proboApiRequest } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
 	{
-		displayName: 'Cookie Pattern ID',
-		name: 'cookiePatternId',
+		displayName: 'Tracker Pattern ID',
+		name: 'trackerPatternId',
 		type: 'string',
 		displayOptions: {
 			show: {
-				resource: ['cookiePattern'],
+				resource: ['trackerPattern'],
 				operation: ['move'],
 			},
 		},
 		default: '',
-		description: 'The ID of the cookie pattern to move',
+		description: 'The ID of the tracker pattern to move',
 		required: true,
 	},
 	{
@@ -36,7 +36,7 @@ export const description: INodeProperties[] = [
 		type: 'string',
 		displayOptions: {
 			show: {
-				resource: ['cookiePattern'],
+				resource: ['trackerPattern'],
 				operation: ['move'],
 			},
 		},
@@ -50,13 +50,13 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const cookiePatternId = this.getNodeParameter('cookiePatternId', itemIndex) as string;
+	const trackerPatternId = this.getNodeParameter('trackerPatternId', itemIndex) as string;
 	const targetCookieCategoryId = this.getNodeParameter('targetCookieCategoryId', itemIndex) as string;
 
 	const query = `
-		mutation MoveCookiePatternToCategory($input: MoveCookiePatternToCategoryInput!) {
-			moveCookiePatternToCategory(input: $input) {
-				cookiePattern {
+		mutation MoveTrackerPatternToCategory($input: MoveTrackerPatternToCategoryInput!) {
+			moveTrackerPatternToCategory(input: $input) {
+				trackerPattern {
 					id
 					pattern
 					matchType
@@ -77,7 +77,7 @@ export async function execute(
 	`;
 
 	const responseData = await proboApiRequest.call(this, query, {
-		input: { cookiePatternId, targetCookieCategoryId },
+		input: { trackerPatternId, targetCookieCategoryId },
 	});
 
 	return {

@@ -28,13 +28,14 @@ query($id: ID!, $first: Int, $after: CursorKey) {
   node(id: $id) {
     __typename
     ... on CookieCategory {
-      cookiePatterns(first: $first, after: $after) {
+      trackerPatterns(first: $first, after: $after) {
         totalCount
         edges {
           node {
             id
             pattern
             matchType
+            trackerType
             displayName
             source
             excluded
@@ -51,10 +52,11 @@ query($id: ID!, $first: Int, $after: CursorKey) {
 }
 `
 
-type cookiePattern struct {
+type trackerPattern struct {
 	ID            string  `json:"id"`
 	Pattern       string  `json:"pattern"`
 	MatchType     string  `json:"matchType"`
+	TrackerType   string  `json:"trackerType"`
 	DisplayName   string  `json:"displayName"`
 	Source        string  `json:"source"`
 	Excluded      bool    `json:"excluded"`
@@ -70,7 +72,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:     "list",
-		Short:   "List cookie patterns in a category",
+		Short:   "List tracker patterns in a category",
 		Aliases: []string{"ls"},
 		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -103,11 +105,11 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				listQuery,
 				variables,
 				flagLimit,
-				func(data json.RawMessage) (*api.Connection[cookiePattern], error) {
+				func(data json.RawMessage) (*api.Connection[trackerPattern], error) {
 					var resp struct {
 						Node *struct {
-							Typename       string                        `json:"__typename"`
-							CookiePatterns api.Connection[cookiePattern] `json:"cookiePatterns"`
+							Typename        string                         `json:"__typename"`
+							TrackerPatterns api.Connection[trackerPattern] `json:"trackerPatterns"`
 						} `json:"node"`
 					}
 					if err := json.Unmarshal(data, &resp); err != nil {
@@ -119,7 +121,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 					if resp.Node.Typename != "CookieCategory" {
 						return nil, fmt.Errorf("expected CookieCategory node, got %s", resp.Node.Typename)
 					}
-					return &resp.Node.CookiePatterns, nil
+					return &resp.Node.TrackerPatterns, nil
 				},
 			)
 			if err != nil {
@@ -131,7 +133,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			if len(patterns) == 0 {
-				_, _ = fmt.Fprintln(f.IOStreams.Out, "No cookie patterns found.")
+				_, _ = fmt.Fprintln(f.IOStreams.Out, "No tracker patterns found.")
 				return nil
 			}
 
@@ -145,14 +147,14 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				if p.LastMatchedAt != nil {
 					lastMatched = cmdutil.FormatTime(*p.LastMatchedAt)
 				}
-				rows = append(rows, []string{p.ID, p.Pattern, p.MatchType, p.DisplayName, p.Source, excluded, lastMatched})
+				rows = append(rows, []string{p.ID, p.Pattern, p.MatchType, p.TrackerType, p.DisplayName, p.Source, excluded, lastMatched})
 			}
 
-			t := cmdutil.NewTable("ID", "PATTERN", "MATCH TYPE", "DISPLAY NAME", "SOURCE", "EXCLUDED", "LAST MATCHED").Rows(rows...)
+			t := cmdutil.NewTable("ID", "PATTERN", "MATCH TYPE", "TRACKER TYPE", "DISPLAY NAME", "SOURCE", "EXCLUDED", "LAST MATCHED").Rows(rows...)
 			_, _ = fmt.Fprintln(f.IOStreams.Out, t)
 
 			if totalCount > len(patterns) {
-				_, _ = fmt.Fprintf(f.IOStreams.ErrOut, "\nShowing %d of %d cookie patterns\n", len(patterns), totalCount)
+				_, _ = fmt.Fprintf(f.IOStreams.ErrOut, "\nShowing %d of %d tracker patterns\n", len(patterns), totalCount)
 			}
 
 			return nil

@@ -92,7 +92,7 @@ func TestFindMergeGroups(t *testing.T) {
 		return &coredata.TrackerPattern{
 			Pattern:     name,
 			TrackerType: coredata.TrackerTypeCookie,
-			MatchType:   coredata.CookiePatternMatchTypeExact,
+			MatchType:   coredata.TrackerPatternMatchTypeExact,
 		}
 	}
 

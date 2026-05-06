@@ -22,7 +22,7 @@ export const description: INodeProperties[] = [
 		type: 'string',
 		displayOptions: {
 			show: {
-				resource: ['cookiePattern'],
+				resource: ['trackerPattern'],
 				operation: ['getAll'],
 			},
 		},
@@ -36,7 +36,7 @@ export const description: INodeProperties[] = [
 		type: 'boolean',
 		displayOptions: {
 			show: {
-				resource: ['cookiePattern'],
+				resource: ['trackerPattern'],
 				operation: ['getAll'],
 			},
 		},
@@ -49,7 +49,7 @@ export const description: INodeProperties[] = [
 		type: 'number',
 		displayOptions: {
 			show: {
-				resource: ['cookiePattern'],
+				resource: ['trackerPattern'],
 				operation: ['getAll'],
 				returnAll: [false],
 			},
@@ -71,10 +71,10 @@ export async function execute(
 	const limit = this.getNodeParameter('limit', itemIndex, 50) as number;
 
 	const query = `
-		query GetCookiePatterns($cookieCategoryId: ID!, $first: Int, $after: CursorKey) {
+		query GetTrackerPatterns($cookieCategoryId: ID!, $first: Int, $after: CursorKey) {
 			node(id: $cookieCategoryId) {
 				... on CookieCategory {
-					cookiePatterns(first: $first, after: $after) {
+					trackerPatterns(first: $first, after: $after) {
 						edges {
 							node {
 								id
@@ -100,21 +100,21 @@ export async function execute(
 		}
 	`;
 
-	const cookiePatterns = await proboApiRequestAllItems.call(
+	const trackerPatterns = await proboApiRequestAllItems.call(
 		this,
 		query,
 		{ cookieCategoryId },
 		(response) => {
 			const data = response?.data as IDataObject | undefined;
 			const node = data?.node as IDataObject | undefined;
-			return node?.cookiePatterns as IDataObject | undefined;
+			return node?.trackerPatterns as IDataObject | undefined;
 		},
 		returnAll,
 		limit,
 	);
 
 	return {
-		json: { cookiePatterns },
+		json: { trackerPatterns },
 		pairedItem: { item: itemIndex },
 	};
 }

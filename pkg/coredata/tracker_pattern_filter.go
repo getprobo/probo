@@ -19,37 +19,37 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 )
 
-type CookiePatternFilter struct {
-	matchType        *CookiePatternMatchType
+type TrackerPatternFilter struct {
+	matchType        *TrackerPatternMatchType
 	cookieCategoryID *gid.GID
 	excluded         *bool
 	query            *string
 	source           *CookieSource
 }
 
-func NewCookiePatternFilter(
-	matchType *CookiePatternMatchType,
+func NewTrackerPatternFilter(
+	matchType *TrackerPatternMatchType,
 	cookieCategoryID *gid.GID,
 	excluded *bool,
-) *CookiePatternFilter {
-	return &CookiePatternFilter{
+) *TrackerPatternFilter {
+	return &TrackerPatternFilter{
 		matchType:        matchType,
 		cookieCategoryID: cookieCategoryID,
 		excluded:         excluded,
 	}
 }
 
-func (f *CookiePatternFilter) WithQuery(query *string) *CookiePatternFilter {
+func (f *TrackerPatternFilter) WithQuery(query *string) *TrackerPatternFilter {
 	f.query = query
 	return f
 }
 
-func (f *CookiePatternFilter) WithSource(source *CookieSource) *CookiePatternFilter {
+func (f *TrackerPatternFilter) WithSource(source *CookieSource) *TrackerPatternFilter {
 	f.source = source
 	return f
 }
 
-func (f *CookiePatternFilter) SQLFragment() string {
+func (f *TrackerPatternFilter) SQLFragment() string {
 	if f == nil {
 		return "TRUE"
 	}
@@ -93,7 +93,7 @@ func (f *CookiePatternFilter) SQLFragment() string {
 )`
 }
 
-func (f *CookiePatternFilter) SQLArguments() pgx.StrictNamedArgs {
+func (f *TrackerPatternFilter) SQLArguments() pgx.StrictNamedArgs {
 	if f == nil {
 		return pgx.StrictNamedArgs{}
 	}

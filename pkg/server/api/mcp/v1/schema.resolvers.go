@@ -4941,49 +4941,50 @@ func (r *Resolver) ReorderCookieCategoryTool(ctx context.Context, req *mcp.CallT
 	return nil, types.ReorderCookieCategoryOutput{CookieCategory: types.NewCookieCategory(category)}, nil
 }
 
-func (r *Resolver) ListCookiePatternsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListCookiePatternsInput) (*mcp.CallToolResult, types.ListCookiePatternsOutput, error) {
-	r.MustAuthorize(ctx, input.CookieCategoryID, probo.ActionCookiePatternList)
+func (r *Resolver) ListTrackerPatternsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListTrackerPatternsInput) (*mcp.CallToolResult, types.ListTrackerPatternsOutput, error) {
+	r.MustAuthorize(ctx, input.CookieCategoryID, probo.ActionTrackerPatternList)
 	scope := coredata.NewScopeFromObjectID(input.CookieCategoryID)
-	cursor := types.NewCursor(input.Size, input.Cursor, page.OrderBy[coredata.CookiePatternOrderField]{Field: coredata.CookiePatternOrderFieldCreatedAt, Direction: page.OrderDirectionAsc})
-	patterns, err := r.cookieBanner.ListCookiePatternsForCategory(ctx, scope, input.CookieCategoryID, cursor)
+	cursor := types.NewCursor(input.Size, input.Cursor, page.OrderBy[coredata.TrackerPatternOrderField]{Field: coredata.TrackerPatternOrderFieldCreatedAt, Direction: page.OrderDirectionAsc})
+	patterns, err := r.cookieBanner.ListTrackerPatternsForCategory(ctx, scope, input.CookieCategoryID, cursor)
 	if err != nil {
-		panic(fmt.Errorf("cannot list cookie patterns: %w", err))
+		panic(fmt.Errorf("cannot list tracker patterns: %w", err))
 	}
 	p := page.NewPage(patterns, cursor)
-	return nil, types.NewListCookiePatternsOutput(p), nil
+	return nil, types.NewListTrackerPatternsOutput(p), nil
 }
 
-func (r *Resolver) GetCookiePatternTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetCookiePatternInput) (*mcp.CallToolResult, types.GetCookiePatternOutput, error) {
-	r.MustAuthorize(ctx, input.ID, probo.ActionCookiePatternGet)
+func (r *Resolver) GetTrackerPatternTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetTrackerPatternInput) (*mcp.CallToolResult, types.GetTrackerPatternOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionTrackerPatternGet)
 	scope := coredata.NewScopeFromObjectID(input.ID)
-	pattern, err := r.cookieBanner.GetCookiePattern(ctx, scope, input.ID)
+	pattern, err := r.cookieBanner.GetTrackerPattern(ctx, scope, input.ID)
 	if err != nil {
-		return nil, types.GetCookiePatternOutput{}, fmt.Errorf("cannot get cookie pattern: %w", err)
+		return nil, types.GetTrackerPatternOutput{}, fmt.Errorf("cannot get tracker pattern: %w", err)
 	}
-	return nil, types.GetCookiePatternOutput{CookiePattern: types.NewCookiePattern(pattern)}, nil
+	return nil, types.GetTrackerPatternOutput{TrackerPattern: types.NewTrackerPattern(pattern)}, nil
 }
 
-func (r *Resolver) AddCookiePatternTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddCookiePatternInput) (*mcp.CallToolResult, types.AddCookiePatternOutput, error) {
-	r.MustAuthorize(ctx, input.CookieCategoryID, probo.ActionCookiePatternCreate)
+func (r *Resolver) AddTrackerPatternTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddTrackerPatternInput) (*mcp.CallToolResult, types.AddTrackerPatternOutput, error) {
+	r.MustAuthorize(ctx, input.CookieCategoryID, probo.ActionTrackerPatternCreate)
 	scope := coredata.NewScopeFromObjectID(input.CookieCategoryID)
-	pattern, err := r.cookieBanner.CreateCookiePattern(ctx, scope, cookiebanner.CreateCookiePatternRequest{
+	pattern, err := r.cookieBanner.CreateTrackerPattern(ctx, scope, cookiebanner.CreateTrackerPatternRequest{
 		CookieCategoryID: input.CookieCategoryID,
+		TrackerType:      coredata.TrackerType(input.TrackerType),
 		Pattern:          input.Pattern,
-		MatchType:        coredata.CookiePatternMatchType(input.MatchType),
+		MatchType:        coredata.TrackerPatternMatchType(input.MatchType),
 		DisplayName:      input.DisplayName,
 		MaxAgeSeconds:    input.MaxAgeSeconds,
 		Description:      input.Description,
 	})
 	if err != nil {
-		return nil, types.AddCookiePatternOutput{}, fmt.Errorf("cannot create cookie pattern: %w", err)
+		return nil, types.AddTrackerPatternOutput{}, fmt.Errorf("cannot create tracker pattern: %w", err)
 	}
-	return nil, types.AddCookiePatternOutput{CookiePattern: types.NewCookiePattern(pattern)}, nil
+	return nil, types.AddTrackerPatternOutput{TrackerPattern: types.NewTrackerPattern(pattern)}, nil
 }
 
-func (r *Resolver) UpdateCookiePatternTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateCookiePatternInput) (*mcp.CallToolResult, types.UpdateCookiePatternOutput, error) {
-	r.MustAuthorize(ctx, input.ID, probo.ActionCookiePatternUpdate)
+func (r *Resolver) UpdateTrackerPatternTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateTrackerPatternInput) (*mcp.CallToolResult, types.UpdateTrackerPatternOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionTrackerPatternUpdate)
 	scope := coredata.NewScopeFromObjectID(input.ID)
-	updateReq := cookiebanner.UpdateCookiePatternRequest{CookiePatternID: input.ID}
+	updateReq := cookiebanner.UpdateTrackerPatternRequest{TrackerPatternID: input.ID}
 	if v := UnwrapOmittable(input.DisplayName); v != nil && *v != nil {
 		updateReq.DisplayName = *v
 	}
@@ -4997,33 +4998,33 @@ func (r *Resolver) UpdateCookiePatternTool(ctx context.Context, req *mcp.CallToo
 	if v := UnwrapOmittable(input.Excluded); v != nil && *v != nil {
 		updateReq.Excluded = *v
 	}
-	pattern, err := r.cookieBanner.UpdateCookiePattern(ctx, scope, updateReq)
+	pattern, err := r.cookieBanner.UpdateTrackerPattern(ctx, scope, updateReq)
 	if err != nil {
-		return nil, types.UpdateCookiePatternOutput{}, fmt.Errorf("cannot update cookie pattern: %w", err)
+		return nil, types.UpdateTrackerPatternOutput{}, fmt.Errorf("cannot update tracker pattern: %w", err)
 	}
-	return nil, types.UpdateCookiePatternOutput{CookiePattern: types.NewCookiePattern(pattern)}, nil
+	return nil, types.UpdateTrackerPatternOutput{TrackerPattern: types.NewTrackerPattern(pattern)}, nil
 }
 
-func (r *Resolver) DeleteCookiePatternTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteCookiePatternInput) (*mcp.CallToolResult, types.DeleteCookiePatternOutput, error) {
-	r.MustAuthorize(ctx, input.ID, probo.ActionCookiePatternDelete)
+func (r *Resolver) DeleteTrackerPatternTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteTrackerPatternInput) (*mcp.CallToolResult, types.DeleteTrackerPatternOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionTrackerPatternDelete)
 	scope := coredata.NewScopeFromObjectID(input.ID)
-	if err := r.cookieBanner.DeleteCookiePattern(ctx, scope, input.ID); err != nil {
-		return nil, types.DeleteCookiePatternOutput{}, fmt.Errorf("cannot delete cookie pattern: %w", err)
+	if err := r.cookieBanner.DeleteTrackerPattern(ctx, scope, input.ID); err != nil {
+		return nil, types.DeleteTrackerPatternOutput{}, fmt.Errorf("cannot delete tracker pattern: %w", err)
 	}
-	return nil, types.DeleteCookiePatternOutput{DeletedID: input.ID}, nil
+	return nil, types.DeleteTrackerPatternOutput{DeletedID: input.ID}, nil
 }
 
-func (r *Resolver) MoveCookiePatternToCategoryTool(ctx context.Context, req *mcp.CallToolRequest, input *types.MoveCookiePatternToCategoryInput) (*mcp.CallToolResult, types.MoveCookiePatternToCategoryOutput, error) {
-	r.MustAuthorize(ctx, input.CookiePatternID, probo.ActionCookiePatternUpdate)
-	scope := coredata.NewScopeFromObjectID(input.CookiePatternID)
-	result, err := r.cookieBanner.MoveCookiePatternToCategory(ctx, scope, cookiebanner.MoveCookiePatternToCategoryRequest{
-		CookiePatternID:        input.CookiePatternID,
+func (r *Resolver) MoveTrackerPatternToCategoryTool(ctx context.Context, req *mcp.CallToolRequest, input *types.MoveTrackerPatternToCategoryInput) (*mcp.CallToolResult, types.MoveTrackerPatternToCategoryOutput, error) {
+	r.MustAuthorize(ctx, input.TrackerPatternID, probo.ActionTrackerPatternUpdate)
+	scope := coredata.NewScopeFromObjectID(input.TrackerPatternID)
+	result, err := r.cookieBanner.MoveTrackerPatternToCategory(ctx, scope, cookiebanner.MoveTrackerPatternToCategoryRequest{
+		TrackerPatternID:       input.TrackerPatternID,
 		TargetCookieCategoryID: input.TargetCookieCategoryID,
 	})
 	if err != nil {
-		return nil, types.MoveCookiePatternToCategoryOutput{}, fmt.Errorf("cannot move cookie pattern: %w", err)
+		return nil, types.MoveTrackerPatternToCategoryOutput{}, fmt.Errorf("cannot move tracker pattern: %w", err)
 	}
-	return nil, types.MoveCookiePatternToCategoryOutput{CookiePattern: types.NewCookiePattern(result.CookiePattern)}, nil
+	return nil, types.MoveTrackerPatternToCategoryOutput{TrackerPattern: types.NewTrackerPattern(result.TrackerPattern)}, nil
 }
 
 func (r *Resolver) PublishCookieBannerVersionTool(ctx context.Context, req *mcp.CallToolRequest, input *types.PublishCookieBannerVersionInput) (*mcp.CallToolResult, types.PublishCookieBannerVersionOutput, error) {

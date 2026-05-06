@@ -12,21 +12,27 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package delete
+package move
 
 import (
+	"encoding/json"
 	"fmt"
 
-	"github.com/charmbracelet/huh"
 	"github.com/spf13/cobra"
 	"go.probo.inc/probo/pkg/cli/api"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
 )
 
-const deleteMutation = `
-mutation($input: DeleteCookiePatternInput!) {
-  deleteCookiePattern(input: $input) {
-    deletedCookiePatternId
+const moveMutation = `
+mutation($input: MoveTrackerPatternToCategoryInput!) {
+  moveTrackerPatternToCategory(input: $input) {
+    trackerPattern {
+      id
+      cookieCategory {
+        id
+        name
+      }
+    }
     cookieBanner {
       id
     }
@@ -34,27 +40,26 @@ mutation($input: DeleteCookiePatternInput!) {
 }
 `
 
-func NewCmdDelete(f *cmdutil.Factory) *cobra.Command {
-	var flagYes bool
+type moveResponse struct {
+	MoveTrackerPatternToCategory struct {
+		TrackerPattern struct {
+			ID             string `json:"id"`
+			CookieCategory struct {
+				ID   string `json:"id"`
+				Name string `json:"name"`
+			} `json:"cookieCategory"`
+		} `json:"trackerPattern"`
+	} `json:"moveTrackerPatternToCategory"`
+}
+
+func NewCmdMove(f *cmdutil.Factory) *cobra.Command {
+	var flagTargetCategoryID string
 
 	cmd := &cobra.Command{
-		Use:   "delete <id>",
-		Short: "Delete a cookie pattern",
+		Use:   "move <id>",
+		Short: "Move a tracker pattern to a different category",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if !flagYes {
-				if !f.IOStreams.IsInteractive() {
-					return fmt.Errorf("cannot delete cookie pattern: confirmation required, use --yes to confirm")
-				}
-				var confirmed bool
-				if err := huh.NewConfirm().Title(fmt.Sprintf("Delete cookie pattern %s?", args[0])).Value(&confirmed).Run(); err != nil {
-					return err
-				}
-				if !confirmed {
-					return nil
-				}
-			}
-
 			cfg, err := f.Config()
 			if err != nil {
 				return err
@@ -73,20 +78,30 @@ func NewCmdDelete(f *cmdutil.Factory) *cobra.Command {
 				cmdutil.TokenRefreshOption(cfg, host, hc),
 			)
 
-			_, err = client.Do(deleteMutation, map[string]any{
-				"input": map[string]any{"cookiePatternId": args[0]},
+			data, err := client.Do(moveMutation, map[string]any{
+				"input": map[string]any{
+					"trackerPatternId":       args[0],
+					"targetCookieCategoryId": flagTargetCategoryID,
+				},
 			})
 			if err != nil {
 				return err
 			}
 
-			_, _ = fmt.Fprintf(f.IOStreams.Out, "Deleted cookie pattern %s\n", args[0])
+			var resp moveResponse
+			if err := json.Unmarshal(data, &resp); err != nil {
+				return fmt.Errorf("cannot parse response: %w", err)
+			}
+
+			p := resp.MoveTrackerPatternToCategory.TrackerPattern
+			_, _ = fmt.Fprintf(f.IOStreams.Out, "Moved tracker pattern %s to category %s\n", p.ID, p.CookieCategory.Name)
 
 			return nil
 		},
 	}
 
-	cmd.Flags().BoolVarP(&flagYes, "yes", "y", false, "Skip confirmation prompt")
+	cmd.Flags().StringVar(&flagTargetCategoryID, "target-category-id", "", "Target cookie category ID (required)")
+	_ = cmd.MarkFlagRequired("target-category-id")
 
 	return cmd
 }

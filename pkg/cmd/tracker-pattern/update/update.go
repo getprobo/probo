@@ -24,9 +24,9 @@ import (
 )
 
 const updateMutation = `
-mutation($input: UpdateCookiePatternInput!) {
-  updateCookiePattern(input: $input) {
-    cookiePattern {
+mutation($input: UpdateTrackerPatternInput!) {
+  updateTrackerPattern(input: $input) {
+    trackerPattern {
       id
       displayName
     }
@@ -38,12 +38,12 @@ mutation($input: UpdateCookiePatternInput!) {
 `
 
 type updateResponse struct {
-	UpdateCookiePattern struct {
-		CookiePattern struct {
+	UpdateTrackerPattern struct {
+		TrackerPattern struct {
 			ID          string `json:"id"`
 			DisplayName string `json:"displayName"`
-		} `json:"cookiePattern"`
-	} `json:"updateCookiePattern"`
+		} `json:"trackerPattern"`
+	} `json:"updateTrackerPattern"`
 }
 
 func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
@@ -56,7 +56,7 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "update <id>",
-		Short: "Update a cookie pattern",
+		Short: "Update a tracker pattern",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := f.Config()
@@ -77,7 +77,7 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 				cmdutil.TokenRefreshOption(cfg, host, hc),
 			)
 
-			input := map[string]any{"cookiePatternId": args[0]}
+			input := map[string]any{"trackerPatternId": args[0]}
 
 			if cmd.Flags().Changed("display-name") {
 				input["displayName"] = flagDisplayName
@@ -106,8 +106,8 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 				return fmt.Errorf("cannot parse response: %w", err)
 			}
 
-			p := resp.UpdateCookiePattern.CookiePattern
-			_, _ = fmt.Fprintf(f.IOStreams.Out, "Updated cookie pattern %s (%s)\n", p.ID, p.DisplayName)
+			p := resp.UpdateTrackerPattern.TrackerPattern
+			_, _ = fmt.Fprintf(f.IOStreams.Out, "Updated tracker pattern %s (%s)\n", p.ID, p.DisplayName)
 
 			return nil
 		},

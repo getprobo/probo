@@ -1343,7 +1343,7 @@ func CreateCookieCategory(c *testutil.Client, bannerID string, attrs ...Attrs) s
 	return result.CreateCookieCategory.CookieCategoryEdge.Node.ID
 }
 
-func CreateCookiePattern(c *testutil.Client, categoryID string, attrs ...Attrs) string {
+func CreateTrackerPattern(c *testutil.Client, categoryID string, attrs ...Attrs) string {
 	c.T.Helper()
 
 	var a Attrs
@@ -1352,9 +1352,9 @@ func CreateCookiePattern(c *testutil.Client, categoryID string, attrs ...Attrs) 
 	}
 
 	const query = `
-		mutation($input: CreateCookiePatternInput!) {
-			createCookiePattern(input: $input) {
-				cookiePatternEdge {
+		mutation($input: CreateTrackerPatternInput!) {
+			createTrackerPattern(input: $input) {
+				trackerPatternEdge {
 					node { id }
 				}
 			}
@@ -1363,27 +1363,28 @@ func CreateCookiePattern(c *testutil.Client, categoryID string, attrs ...Attrs) 
 
 	input := map[string]any{
 		"cookieCategoryId": categoryID,
+		"trackerType":      a.getString("trackerType", "COOKIE"),
 		"pattern":          a.getString("pattern", gofakeit.LetterN(8)+"_cookie"),
 		"matchType":        a.getString("matchType", "EXACT"),
 		"displayName":      a.getString("displayName", SafeName("Pattern")),
-		"description":      a.getString("description", "Test cookie pattern"),
+		"description":      a.getString("description", "Test tracker pattern"),
 	}
 	if _, ok := a["maxAgeSeconds"]; ok {
 		input["maxAgeSeconds"] = a.getInt("maxAgeSeconds", 0)
 	}
 
 	var result struct {
-		CreateCookiePattern struct {
-			CookiePatternEdge struct {
+		CreateTrackerPattern struct {
+			TrackerPatternEdge struct {
 				Node struct {
 					ID string `json:"id"`
 				} `json:"node"`
-			} `json:"cookiePatternEdge"`
-		} `json:"createCookiePattern"`
+			} `json:"trackerPatternEdge"`
+		} `json:"createTrackerPattern"`
 	}
 
 	err := c.Execute(query, map[string]any{"input": input}, &result)
-	require.NoError(c.T, err, "createCookiePattern mutation failed")
+	require.NoError(c.T, err, "createTrackerPattern mutation failed")
 
-	return result.CreateCookiePattern.CookiePatternEdge.Node.ID
+	return result.CreateTrackerPattern.TrackerPatternEdge.Node.ID
 }

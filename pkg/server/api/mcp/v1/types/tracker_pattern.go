@@ -19,18 +19,24 @@ import (
 	"go.probo.inc/probo/pkg/page"
 )
 
-func NewCookiePattern(p *coredata.CookiePattern) *CookiePattern {
-	return &CookiePattern{
+func NewTrackerPattern(p *coredata.TrackerPattern) *TrackerPattern {
+	var source TrackerPatternSource
+	if p.Source != nil {
+		source = TrackerPatternSource(*p.Source)
+	}
+
+	return &TrackerPattern{
 		ID:               p.ID,
 		OrganizationID:   p.OrganizationID,
 		CookieBannerID:   p.CookieBannerID,
 		CookieCategoryID: p.CookieCategoryID,
+		TrackerType:      TrackerPatternTrackerType(p.TrackerType),
 		Pattern:          p.Pattern,
-		MatchType:        CookiePatternMatchType(p.MatchType),
+		MatchType:        TrackerPatternMatchType(p.MatchType),
 		DisplayName:      p.DisplayName,
 		MaxAgeSeconds:    p.MaxAgeSeconds,
 		Description:      p.Description,
-		Source:           CookiePatternSource(p.Source),
+		Source:           source,
 		Excluded:         p.Excluded,
 		LastMatchedAt:    p.LastMatchedAt,
 		CreatedAt:        p.CreatedAt,
@@ -38,10 +44,10 @@ func NewCookiePattern(p *coredata.CookiePattern) *CookiePattern {
 	}
 }
 
-func NewListCookiePatternsOutput(pg *page.Page[*coredata.CookiePattern, coredata.CookiePatternOrderField]) ListCookiePatternsOutput {
-	patterns := make([]*CookiePattern, 0, len(pg.Data))
+func NewListTrackerPatternsOutput(pg *page.Page[*coredata.TrackerPattern, coredata.TrackerPatternOrderField]) ListTrackerPatternsOutput {
+	patterns := make([]*TrackerPattern, 0, len(pg.Data))
 	for _, p := range pg.Data {
-		patterns = append(patterns, NewCookiePattern(p))
+		patterns = append(patterns, NewTrackerPattern(p))
 	}
 
 	var nextCursor *page.CursorKey
@@ -50,8 +56,8 @@ func NewListCookiePatternsOutput(pg *page.Page[*coredata.CookiePattern, coredata
 		nextCursor = &cursorKey
 	}
 
-	return ListCookiePatternsOutput{
-		NextCursor:     nextCursor,
-		CookiePatterns: patterns,
+	return ListTrackerPatternsOutput{
+		NextCursor:      nextCursor,
+		TrackerPatterns: patterns,
 	}
 }

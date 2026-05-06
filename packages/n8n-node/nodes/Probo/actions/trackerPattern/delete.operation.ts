@@ -17,17 +17,17 @@ import { proboApiRequest } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
 	{
-		displayName: 'Cookie Pattern ID',
-		name: 'cookiePatternId',
+		displayName: 'Tracker Pattern ID',
+		name: 'trackerPatternId',
 		type: 'string',
 		displayOptions: {
 			show: {
-				resource: ['cookiePattern'],
+				resource: ['trackerPattern'],
 				operation: ['delete'],
 			},
 		},
 		default: '',
-		description: 'The ID of the cookie pattern to delete',
+		description: 'The ID of the tracker pattern to delete',
 		required: true,
 	},
 ];
@@ -36,12 +36,12 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const cookiePatternId = this.getNodeParameter('cookiePatternId', itemIndex) as string;
+	const trackerPatternId = this.getNodeParameter('trackerPatternId', itemIndex) as string;
 
 	const query = `
-		mutation DeleteCookiePattern($input: DeleteCookiePatternInput!) {
-			deleteCookiePattern(input: $input) {
-				deletedCookiePatternId
+		mutation DeleteTrackerPattern($input: DeleteTrackerPatternInput!) {
+			deleteTrackerPattern(input: $input) {
+				deletedTrackerPatternId
 				cookieBanner {
 					id
 					name
@@ -50,7 +50,7 @@ export async function execute(
 		}
 	`;
 
-	const responseData = await proboApiRequest.call(this, query, { input: { cookiePatternId } });
+	const responseData = await proboApiRequest.call(this, query, { input: { trackerPatternId } });
 
 	return {
 		json: responseData,

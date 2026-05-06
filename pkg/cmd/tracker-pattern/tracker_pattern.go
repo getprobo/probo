@@ -12,23 +12,23 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package cookiepattern
+package trackerpattern
 
 import (
 	"github.com/spf13/cobra"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
-	"go.probo.inc/probo/pkg/cmd/cookie-pattern/create"
-	"go.probo.inc/probo/pkg/cmd/cookie-pattern/delete"
-	"go.probo.inc/probo/pkg/cmd/cookie-pattern/list"
-	"go.probo.inc/probo/pkg/cmd/cookie-pattern/move"
-	"go.probo.inc/probo/pkg/cmd/cookie-pattern/update"
-	"go.probo.inc/probo/pkg/cmd/cookie-pattern/view"
+	"go.probo.inc/probo/pkg/cmd/tracker-pattern/create"
+	"go.probo.inc/probo/pkg/cmd/tracker-pattern/delete"
+	"go.probo.inc/probo/pkg/cmd/tracker-pattern/list"
+	"go.probo.inc/probo/pkg/cmd/tracker-pattern/move"
+	"go.probo.inc/probo/pkg/cmd/tracker-pattern/update"
+	"go.probo.inc/probo/pkg/cmd/tracker-pattern/view"
 )
 
-func NewCmdCookiePattern(f *cmdutil.Factory) *cobra.Command {
+func NewCmdTrackerPattern(f *cmdutil.Factory) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "cookie-pattern <command>",
-		Short: "Manage cookie patterns",
+		Use:   "tracker-pattern <command>",
+		Short: "Manage tracker patterns",
 	}
 
 	cmd.AddCommand(list.NewCmdList(f))

@@ -19,25 +19,25 @@ import (
 	"fmt"
 )
 
-type CookiePatternMatchType string
+type TrackerPatternMatchType string
 
 const (
-	CookiePatternMatchTypeExact  CookiePatternMatchType = "EXACT"
-	CookiePatternMatchTypePrefix CookiePatternMatchType = "PREFIX"
+	TrackerPatternMatchTypeExact  TrackerPatternMatchType = "EXACT"
+	TrackerPatternMatchTypePrefix TrackerPatternMatchType = "PREFIX"
 )
 
-func CookiePatternMatchTypes() []CookiePatternMatchType {
-	return []CookiePatternMatchType{
-		CookiePatternMatchTypeExact,
-		CookiePatternMatchTypePrefix,
+func TrackerPatternMatchTypes() []TrackerPatternMatchType {
+	return []TrackerPatternMatchType{
+		TrackerPatternMatchTypeExact,
+		TrackerPatternMatchTypePrefix,
 	}
 }
 
-func (m CookiePatternMatchType) String() string {
+func (m TrackerPatternMatchType) String() string {
 	return string(m)
 }
 
-func (m *CookiePatternMatchType) Scan(value any) error {
+func (m *TrackerPatternMatchType) Scan(value any) error {
 	var v string
 	switch val := value.(type) {
 	case string:
@@ -45,26 +45,26 @@ func (m *CookiePatternMatchType) Scan(value any) error {
 	case []byte:
 		v = string(val)
 	default:
-		return fmt.Errorf("unsupported type for CookiePatternMatchType: %T", value)
+		return fmt.Errorf("unsupported type for TrackerPatternMatchType: %T", value)
 	}
 
-	switch CookiePatternMatchType(v) {
-	case CookiePatternMatchTypeExact:
-		*m = CookiePatternMatchTypeExact
-	case CookiePatternMatchTypePrefix:
-		*m = CookiePatternMatchTypePrefix
+	switch TrackerPatternMatchType(v) {
+	case TrackerPatternMatchTypeExact:
+		*m = TrackerPatternMatchTypeExact
+	case TrackerPatternMatchTypePrefix:
+		*m = TrackerPatternMatchTypePrefix
 	default:
-		return fmt.Errorf("invalid CookiePatternMatchType value: %q", v)
+		return fmt.Errorf("invalid TrackerPatternMatchType value: %q", v)
 	}
 	return nil
 }
 
-func (m CookiePatternMatchType) Value() (driver.Value, error) {
+func (m TrackerPatternMatchType) Value() (driver.Value, error) {
 	switch m {
-	case CookiePatternMatchTypeExact,
-		CookiePatternMatchTypePrefix:
+	case TrackerPatternMatchTypeExact,
+		TrackerPatternMatchTypePrefix:
 		return string(m), nil
 	default:
-		return nil, fmt.Errorf("invalid CookiePatternMatchType: %s", m)
+		return nil, fmt.Errorf("invalid TrackerPatternMatchType: %s", m)
 	}
 }

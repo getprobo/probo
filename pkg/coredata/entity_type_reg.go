@@ -111,7 +111,7 @@ const (
 	CookieEntityType                           uint16 = 85
 	CookieBannerTranslationEntityType          uint16 = 86
 	AgentRunEntityType                         uint16 = 87
-	CookiePatternEntityType                    uint16 = 88
+	_                                          uint16 = 88 // CookiePatternEntityType - removed
 	TrackerPatternEntityType                   uint16 = 89
 	DetectedTrackerEntityType                  uint16 = 90
 )
@@ -282,8 +282,6 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &CookieBannerTranslation{ID: id}, true
 	case AgentRunEntityType:
 		return &AgentRun{ID: id}, true
-	case CookiePatternEntityType:
-		return &CookiePattern{ID: id}, true
 	case TrackerPatternEntityType:
 		return &TrackerPattern{ID: id}, true
 	case DetectedTrackerEntityType:

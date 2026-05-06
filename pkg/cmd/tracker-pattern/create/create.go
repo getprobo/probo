@@ -25,9 +25,9 @@ import (
 )
 
 const createMutation = `
-mutation($input: CreateCookiePatternInput!) {
-  createCookiePattern(input: $input) {
-    cookiePatternEdge {
+mutation($input: CreateTrackerPatternInput!) {
+  createTrackerPattern(input: $input) {
+    trackerPatternEdge {
       node {
         id
         pattern
@@ -42,15 +42,15 @@ mutation($input: CreateCookiePatternInput!) {
 `
 
 type createResponse struct {
-	CreateCookiePattern struct {
-		CookiePatternEdge struct {
+	CreateTrackerPattern struct {
+		TrackerPatternEdge struct {
 			Node struct {
 				ID          string `json:"id"`
 				Pattern     string `json:"pattern"`
 				DisplayName string `json:"displayName"`
 			} `json:"node"`
-		} `json:"cookiePatternEdge"`
-	} `json:"createCookiePattern"`
+		} `json:"trackerPatternEdge"`
+	} `json:"createTrackerPattern"`
 }
 
 func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
@@ -65,7 +65,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "create",
-		Short: "Create a new cookie pattern",
+		Short: "Create a new tracker pattern",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := f.Config()
 			if err != nil {
@@ -87,7 +87,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 
 			if f.IOStreams.IsInteractive() {
 				if flagPattern == "" {
-					if err := huh.NewInput().Title("Cookie pattern").Value(&flagPattern).Run(); err != nil {
+					if err := huh.NewInput().Title("Tracker pattern").Value(&flagPattern).Run(); err != nil {
 						return err
 					}
 				}
@@ -142,8 +142,8 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				return fmt.Errorf("cannot parse response: %w", err)
 			}
 
-			p := resp.CreateCookiePattern.CookiePatternEdge.Node
-			_, _ = fmt.Fprintf(f.IOStreams.Out, "Created cookie pattern %s (%s)\n", p.ID, p.DisplayName)
+			p := resp.CreateTrackerPattern.TrackerPatternEdge.Node
+			_, _ = fmt.Fprintf(f.IOStreams.Out, "Created tracker pattern %s (%s)\n", p.ID, p.DisplayName)
 
 			return nil
 		},
@@ -151,7 +151,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 
 	cmd.Flags().StringVar(&flagCategoryID, "category-id", "", "Cookie category ID (required)")
 	_ = cmd.MarkFlagRequired("category-id")
-	cmd.Flags().StringVar(&flagPattern, "pattern", "", "Cookie pattern (required)")
+	cmd.Flags().StringVar(&flagPattern, "pattern", "", "Tracker pattern (required)")
 	cmd.Flags().StringVar(&flagMatchType, "match-type", "", "Match type: EXACT or PREFIX (required)")
 	cmd.Flags().StringVar(&flagDisplayName, "display-name", "", "Display name (required)")
 	cmd.Flags().StringVar(&flagDescription, "description", "", "Description")

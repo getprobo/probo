@@ -17,17 +17,17 @@ import { proboApiRequest } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
 	{
-		displayName: 'Cookie Pattern ID',
-		name: 'cookiePatternId',
+		displayName: 'Tracker Pattern ID',
+		name: 'trackerPatternId',
 		type: 'string',
 		displayOptions: {
 			show: {
-				resource: ['cookiePattern'],
+				resource: ['trackerPattern'],
 				operation: ['get'],
 			},
 		},
 		default: '',
-		description: 'The ID of the cookie pattern',
+		description: 'The ID of the tracker pattern',
 		required: true,
 	},
 ];
@@ -36,12 +36,12 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const cookiePatternId = this.getNodeParameter('cookiePatternId', itemIndex) as string;
+	const trackerPatternId = this.getNodeParameter('trackerPatternId', itemIndex) as string;
 
 	const query = `
-		query GetCookiePattern($cookiePatternId: ID!) {
-			node(id: $cookiePatternId) {
-				... on CookiePattern {
+		query GetTrackerPattern($trackerPatternId: ID!) {
+			node(id: $trackerPatternId) {
+				... on TrackerPattern {
 					id
 					pattern
 					matchType
@@ -58,7 +58,7 @@ export async function execute(
 		}
 	`;
 
-	const responseData = await proboApiRequest.call(this, query, { cookiePatternId });
+	const responseData = await proboApiRequest.call(this, query, { trackerPatternId });
 
 	return {
 		json: responseData,

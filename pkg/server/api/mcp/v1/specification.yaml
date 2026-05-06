@@ -9132,13 +9132,14 @@ components:
           format: date-time
           description: Last update timestamp
 
-    CookiePattern:
+    TrackerPattern:
       type: object
       required:
         - id
         - organization_id
         - cookie_banner_id
         - cookie_category_id
+        - tracker_type
         - pattern
         - match_type
         - display_name
@@ -9150,7 +9151,7 @@ components:
       properties:
         id:
           $ref: "#/components/schemas/GID"
-          description: Cookie pattern ID
+          description: Tracker pattern ID
         organization_id:
           $ref: "#/components/schemas/GID"
           description: Organization ID
@@ -9160,9 +9161,13 @@ components:
         cookie_category_id:
           $ref: "#/components/schemas/GID"
           description: Cookie category ID
+        tracker_type:
+          type: string
+          enum: [COOKIE, LOCAL_STORAGE, SESSION_STORAGE, PIXEL]
+          description: Type of tracker
         pattern:
           type: string
-          description: Cookie name pattern
+          description: Tracker name pattern
         match_type:
           type: string
           enum: [EXACT, PREFIX]
@@ -9630,7 +9635,7 @@ components:
         cookie_category:
           $ref: "#/components/schemas/CookieCategory"
 
-    ListCookiePatternsInput:
+    ListTrackerPatternsInput:
       type: object
       required:
         - cookie_category_id
@@ -9642,19 +9647,19 @@ components:
         cursor:
           $ref: "#/components/schemas/CursorKey"
 
-    ListCookiePatternsOutput:
+    ListTrackerPatternsOutput:
       type: object
       required:
-        - cookie_patterns
+        - tracker_patterns
       properties:
         next_cursor:
           $ref: "#/components/schemas/CursorKey"
-        cookie_patterns:
+        tracker_patterns:
           type: array
           items:
-            $ref: "#/components/schemas/CookiePattern"
+            $ref: "#/components/schemas/TrackerPattern"
 
-    GetCookiePatternInput:
+    GetTrackerPatternInput:
       type: object
       required:
         - id
@@ -9662,18 +9667,19 @@ components:
         id:
           $ref: "#/components/schemas/GID"
 
-    GetCookiePatternOutput:
+    GetTrackerPatternOutput:
       type: object
       required:
-        - cookie_pattern
+        - tracker_pattern
       properties:
-        cookie_pattern:
-          $ref: "#/components/schemas/CookiePattern"
+        tracker_pattern:
+          $ref: "#/components/schemas/TrackerPattern"
 
-    AddCookiePatternInput:
+    AddTrackerPatternInput:
       type: object
       required:
         - cookie_category_id
+        - tracker_type
         - pattern
         - match_type
         - display_name
@@ -9681,6 +9687,9 @@ components:
       properties:
         cookie_category_id:
           $ref: "#/components/schemas/GID"
+        tracker_type:
+          type: string
+          enum: [COOKIE, LOCAL_STORAGE, SESSION_STORAGE, PIXEL]
         pattern:
           type: string
         match_type:
@@ -9693,15 +9702,15 @@ components:
         description:
           type: string
 
-    AddCookiePatternOutput:
+    AddTrackerPatternOutput:
       type: object
       required:
-        - cookie_pattern
+        - tracker_pattern
       properties:
-        cookie_pattern:
-          $ref: "#/components/schemas/CookiePattern"
+        tracker_pattern:
+          $ref: "#/components/schemas/TrackerPattern"
 
-    UpdateCookiePatternInput:
+    UpdateTrackerPatternInput:
       type: object
       required:
         - id
@@ -9729,15 +9738,15 @@ components:
             - "null"
           go.probo.inc/mcpgen/omittable: true
 
-    UpdateCookiePatternOutput:
+    UpdateTrackerPatternOutput:
       type: object
       required:
-        - cookie_pattern
+        - tracker_pattern
       properties:
-        cookie_pattern:
-          $ref: "#/components/schemas/CookiePattern"
+        tracker_pattern:
+          $ref: "#/components/schemas/TrackerPattern"
 
-    DeleteCookiePatternInput:
+    DeleteTrackerPatternInput:
       type: object
       required:
         - id
@@ -9745,7 +9754,7 @@ components:
         id:
           $ref: "#/components/schemas/GID"
 
-    DeleteCookiePatternOutput:
+    DeleteTrackerPatternOutput:
       type: object
       required:
         - deleted_id
@@ -9753,24 +9762,24 @@ components:
         deleted_id:
           $ref: "#/components/schemas/GID"
 
-    MoveCookiePatternToCategoryInput:
+    MoveTrackerPatternToCategoryInput:
       type: object
       required:
-        - cookie_pattern_id
+        - tracker_pattern_id
         - target_cookie_category_id
       properties:
-        cookie_pattern_id:
+        tracker_pattern_id:
           $ref: "#/components/schemas/GID"
         target_cookie_category_id:
           $ref: "#/components/schemas/GID"
 
-    MoveCookiePatternToCategoryOutput:
+    MoveTrackerPatternToCategoryOutput:
       type: object
       required:
-        - cookie_pattern
+        - tracker_pattern
       properties:
-        cookie_pattern:
-          $ref: "#/components/schemas/CookiePattern"
+        tracker_pattern:
+          $ref: "#/components/schemas/TrackerPattern"
 
     PublishCookieBannerVersionInput:
       type: object
@@ -12019,57 +12028,57 @@ tools:
       $ref: "#/components/schemas/ReorderCookieCategoryInput"
     outputSchema:
       $ref: "#/components/schemas/ReorderCookieCategoryOutput"
-  - name: listCookiePatterns
-    description: List all cookie patterns for a category
+  - name: listTrackerPatterns
+    description: List all tracker patterns for a category
     hints:
       readonly: true
       idempotent: true
     inputSchema:
-      $ref: "#/components/schemas/ListCookiePatternsInput"
+      $ref: "#/components/schemas/ListTrackerPatternsInput"
     outputSchema:
-      $ref: "#/components/schemas/ListCookiePatternsOutput"
-  - name: getCookiePattern
-    description: Get a cookie pattern by ID
+      $ref: "#/components/schemas/ListTrackerPatternsOutput"
+  - name: getTrackerPattern
+    description: Get a tracker pattern by ID
     hints:
       readonly: true
       idempotent: true
     inputSchema:
-      $ref: "#/components/schemas/GetCookiePatternInput"
+      $ref: "#/components/schemas/GetTrackerPatternInput"
     outputSchema:
-      $ref: "#/components/schemas/GetCookiePatternOutput"
-  - name: addCookiePattern
-    description: Create a new cookie pattern for a category
+      $ref: "#/components/schemas/GetTrackerPatternOutput"
+  - name: addTrackerPattern
+    description: Create a new tracker pattern for a category
     hints:
       readonly: false
     inputSchema:
-      $ref: "#/components/schemas/AddCookiePatternInput"
+      $ref: "#/components/schemas/AddTrackerPatternInput"
     outputSchema:
-      $ref: "#/components/schemas/AddCookiePatternOutput"
-  - name: updateCookiePattern
-    description: Update an existing cookie pattern
+      $ref: "#/components/schemas/AddTrackerPatternOutput"
+  - name: updateTrackerPattern
+    description: Update an existing tracker pattern
     hints:
       readonly: false
     inputSchema:
-      $ref: "#/components/schemas/UpdateCookiePatternInput"
+      $ref: "#/components/schemas/UpdateTrackerPatternInput"
     outputSchema:
-      $ref: "#/components/schemas/UpdateCookiePatternOutput"
-  - name: deleteCookiePattern
-    description: Delete a cookie pattern
+      $ref: "#/components/schemas/UpdateTrackerPatternOutput"
+  - name: deleteTrackerPattern
+    description: Delete a tracker pattern
     hints:
       readonly: false
       destructive: true
     inputSchema:
-      $ref: "#/components/schemas/DeleteCookiePatternInput"
+      $ref: "#/components/schemas/DeleteTrackerPatternInput"
     outputSchema:
-      $ref: "#/components/schemas/DeleteCookiePatternOutput"
-  - name: moveCookiePatternToCategory
-    description: Move a cookie pattern to a different category
+      $ref: "#/components/schemas/DeleteTrackerPatternOutput"
+  - name: moveTrackerPatternToCategory
+    description: Move a tracker pattern to a different category
     hints:
       readonly: false
     inputSchema:
-      $ref: "#/components/schemas/MoveCookiePatternToCategoryInput"
+      $ref: "#/components/schemas/MoveTrackerPatternToCategoryInput"
     outputSchema:
-      $ref: "#/components/schemas/MoveCookiePatternToCategoryOutput"
+      $ref: "#/components/schemas/MoveTrackerPatternToCategoryOutput"
   - name: publishCookieBannerVersion
     description: Publish the current draft version of a cookie banner
     hints:
