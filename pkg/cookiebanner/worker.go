@@ -165,15 +165,15 @@ func (h *patternAnalysisHandler) Process(ctx context.Context, banner coredata.Co
 
 				source := bestSource(group)
 
-				prefixPattern := &coredata.TrackerPattern{
+				globPattern := &coredata.TrackerPattern{
 					ID:               gid.New(banner.ID.TenantID(), coredata.TrackerPatternEntityType),
 					OrganizationID:   group[0].OrganizationID,
 					CookieBannerID:   banner.ID,
 					CookieCategoryID: key.categoryID,
 					TrackerType:      key.trackerType,
-					Pattern:          key.prefix,
-					MatchType:        coredata.TrackerPatternMatchTypePrefix,
-					DisplayName:      key.prefix + "*",
+					Pattern:          key.template,
+					MatchType:        coredata.TrackerPatternMatchTypeGlob,
+					DisplayName:      key.template,
 					MaxAgeSeconds:    maxAge,
 					Description:      "",
 					Source:           source,
@@ -181,23 +181,23 @@ func (h *patternAnalysisHandler) Process(ctx context.Context, banner coredata.Co
 					UpdatedAt:        time.Now(),
 				}
 
-				inserted, err := prefixPattern.InsertIfNotExists(ctx, tx, scope)
+				inserted, err := globPattern.InsertIfNotExists(ctx, tx, scope)
 				if err != nil {
-					return fmt.Errorf("cannot insert prefix pattern %q: %w", key.prefix, err)
+					return fmt.Errorf("cannot insert glob pattern %q: %w", key.template, err)
 				}
 				if !inserted {
-					if err := prefixPattern.LoadByBannerIDTypeAndPattern(ctx, tx, scope, banner.ID, key.trackerType, key.prefix, maxAge); err != nil {
-						return fmt.Errorf("cannot load existing prefix pattern %q: %w", key.prefix, err)
+					if err := globPattern.LoadByBannerIDTypeAndPattern(ctx, tx, scope, banner.ID, key.trackerType, key.template, maxAge); err != nil {
+						return fmt.Errorf("cannot load existing glob pattern %q: %w", key.template, err)
 					}
 
-					if prefixPattern.CookieCategoryID != key.categoryID || prefixPattern.MatchType != coredata.TrackerPatternMatchTypePrefix {
+					if globPattern.CookieCategoryID != key.categoryID || globPattern.MatchType != coredata.TrackerPatternMatchTypeGlob {
 						continue
 					}
 				}
 
 				for _, exactPattern := range group {
 					var trackers coredata.DetectedTrackers
-					if err := trackers.RelinkByTrackerPatternID(ctx, tx, scope, exactPattern.ID, prefixPattern.ID); err != nil {
+					if err := trackers.RelinkByTrackerPatternID(ctx, tx, scope, exactPattern.ID, globPattern.ID); err != nil {
 						return fmt.Errorf("cannot relink detected trackers from pattern %q: %w", exactPattern.Pattern, err)
 					}
 
@@ -212,8 +212,8 @@ func (h *patternAnalysisHandler) Process(ctx context.Context, banner coredata.Co
 
 				h.logger.InfoCtx(
 					ctx,
-					"merged exact patterns into prefix pattern",
-					log.String("prefix", key.prefix),
+					"merged exact patterns into glob pattern",
+					log.String("template", key.template),
 					log.Int("count", len(group)),
 					log.String("banner_id", banner.ID.String()),
 				)
@@ -242,7 +242,7 @@ func (h *patternAnalysisHandler) Process(ctx context.Context, banner coredata.Co
 type mergeGroupKey struct {
 	categoryID     gid.GID
 	trackerType    coredata.TrackerType
-	prefix         string
+	template       string
 	durationBucket int
 }
 
@@ -250,29 +250,30 @@ func findMergeGroups(
 	patterns coredata.TrackerPatterns,
 	threshold int,
 ) map[mergeGroupKey][]*coredata.TrackerPattern {
-	prefixCounts := make(map[mergeGroupKey][]*coredata.TrackerPattern)
+	templateCounts := make(map[mergeGroupKey][]*coredata.TrackerPattern)
 	for _, p := range patterns {
 		bucket := durationBucket(p.MaxAgeSeconds)
-		for _, pfx := range separatorPrefixes(p.Pattern) {
-			key := mergeGroupKey{categoryID: p.CookieCategoryID, trackerType: p.TrackerType, prefix: pfx, durationBucket: bucket}
-			prefixCounts[key] = append(prefixCounts[key], p)
+		for _, tmpl := range templateCandidates(p.Pattern) {
+			key := mergeGroupKey{categoryID: p.CookieCategoryID, trackerType: p.TrackerType, template: tmpl, durationBucket: bucket}
+			templateCounts[key] = append(templateCounts[key], p)
 		}
 	}
 
 	type candidate struct {
-		key      mergeGroupKey
-		patterns []*coredata.TrackerPattern
+		key        mergeGroupKey
+		fixedChars int
+		patterns   []*coredata.TrackerPattern
 	}
 
 	var candidates []candidate
-	for key, pats := range prefixCounts {
+	for key, pats := range templateCounts {
 		if len(pats) >= threshold {
-			candidates = append(candidates, candidate{key, pats})
+			candidates = append(candidates, candidate{key, len(key.template) - 1, pats})
 		}
 	}
 
 	sort.Slice(candidates, func(i, j int) bool {
-		return len(candidates[i].key.prefix) > len(candidates[j].key.prefix)
+		return candidates[i].fixedChars > candidates[j].fixedChars
 	})
 
 	assigned := make(map[*coredata.TrackerPattern]bool)
@@ -299,14 +300,47 @@ func findMergeGroups(
 	return groups
 }
 
-func separatorPrefixes(name string) []string {
-	var prefixes []string
+func templateCandidates(name string) []string {
+	var candidates []string
+
 	for i, ch := range name {
 		if ch == '_' || ch == '-' {
-			prefixes = append(prefixes, name[:i+1])
+			candidates = append(candidates, name[:i+1]+"*")
 		}
 	}
-	return prefixes
+
+	tokens, sep := splitTokens(name)
+	if len(tokens) >= 3 && sep != 0 {
+		s := string(sep)
+		for pos := 1; pos < len(tokens)-1; pos++ {
+			tmpl := strings.Join(tokens[:pos], s) + s + "*" + s + strings.Join(tokens[pos+1:], s)
+			candidates = append(candidates, tmpl)
+		}
+	}
+
+	return candidates
+}
+
+func splitTokens(name string) ([]string, byte) {
+	if idx := strings.IndexByte(name, '_'); idx >= 0 {
+		return strings.Split(name, "_"), '_'
+	}
+	if idx := strings.IndexByte(name, '-'); idx >= 0 {
+		return strings.Split(name, "-"), '-'
+	}
+	return []string{name}, 0
+}
+
+func globMatch(pattern, name string) bool {
+	star := strings.Index(pattern, "*")
+	if star < 0 {
+		return pattern == name
+	}
+	prefix := pattern[:star]
+	suffix := pattern[star+1:]
+	return strings.HasPrefix(name, prefix) &&
+		strings.HasSuffix(name, suffix) &&
+		len(name) >= len(prefix)+len(suffix)
 }
 
 func bestSource(patterns []*coredata.TrackerPattern) *coredata.CookieSource {
@@ -333,24 +367,24 @@ func (h *patternAnalysisHandler) adoptUncategorisedPatterns(
 		return false, fmt.Errorf("cannot load uncategorised category: %w", err)
 	}
 
-	var prefixPatterns coredata.TrackerPatterns
-	if err := prefixPatterns.LoadAllByCookieBannerID(
+	var globPatterns coredata.TrackerPatterns
+	if err := globPatterns.LoadAllByCookieBannerID(
 		ctx,
 		tx,
 		scope,
 		banner.ID,
-		coredata.NewTrackerPatternFilter(new(coredata.TrackerPatternMatchTypePrefix), nil, new(false)),
+		coredata.NewTrackerPatternFilter(new(coredata.TrackerPatternMatchTypeGlob), nil, new(false)),
 		nil,
 	); err != nil {
-		return false, fmt.Errorf("cannot load prefix patterns: %w", err)
+		return false, fmt.Errorf("cannot load glob patterns: %w", err)
 	}
 
-	if len(prefixPatterns) == 0 {
+	if len(globPatterns) == 0 {
 		return false, nil
 	}
 
-	sort.Slice(prefixPatterns, func(i, j int) bool {
-		return len(prefixPatterns[i].Pattern) > len(prefixPatterns[j].Pattern)
+	sort.Slice(globPatterns, func(i, j int) bool {
+		return len(globPatterns[i].Pattern) > len(globPatterns[j].Pattern)
 	})
 
 	exactMatchType := coredata.TrackerPatternMatchTypeExact
@@ -370,9 +404,9 @@ func (h *patternAnalysisHandler) adoptUncategorisedPatterns(
 	for _, ep := range uncategorisedExact {
 		var match *coredata.TrackerPattern
 		epBucket := durationBucket(ep.MaxAgeSeconds)
-		for _, pp := range prefixPatterns {
-			if ep.TrackerType == pp.TrackerType && strings.HasPrefix(ep.Pattern, pp.Pattern) && durationBucket(pp.MaxAgeSeconds) == epBucket {
-				match = pp
+		for _, gp := range globPatterns {
+			if ep.TrackerType == gp.TrackerType && globMatch(gp.Pattern, ep.Pattern) && durationBucket(gp.MaxAgeSeconds) == epBucket {
+				match = gp
 				break
 			}
 		}
@@ -393,9 +427,9 @@ func (h *patternAnalysisHandler) adoptUncategorisedPatterns(
 		adopted = true
 		h.logger.InfoCtx(
 			ctx,
-			"adopted uncategorised exact pattern into prefix pattern",
+			"adopted uncategorised exact pattern into glob pattern",
 			log.String("exact_pattern", ep.Pattern),
-			log.String("prefix_pattern", match.Pattern),
+			log.String("glob_pattern", match.Pattern),
 			log.String("banner_id", banner.ID.String()),
 		)
 	}

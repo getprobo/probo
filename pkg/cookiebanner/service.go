@@ -346,6 +346,26 @@ func (r *CreateTrackerPatternRequest) Validate() error {
 			return s
 		}(),
 	))
+	v.Check(r.Pattern, "pattern", func(value any) *validator.ValidationError {
+		s, _ := value.(string)
+		switch r.MatchType {
+		case coredata.TrackerPatternMatchTypeGlob:
+			if strings.Count(s, "*") != 1 {
+				return &validator.ValidationError{
+					Code:    validator.ErrorCodeInvalidFormat,
+					Message: "glob pattern must contain exactly one *",
+				}
+			}
+		case coredata.TrackerPatternMatchTypeExact:
+			if strings.Contains(s, "*") {
+				return &validator.ValidationError{
+					Code:    validator.ErrorCodeInvalidFormat,
+					Message: "exact pattern must not contain *",
+				}
+			}
+		}
+		return nil
+	})
 	v.Check(r.DisplayName, "display_name", validator.Required(), validator.SafeTextNoNewLine(255))
 	v.Check(r.Description, "description", validator.SafeText(1000))
 
