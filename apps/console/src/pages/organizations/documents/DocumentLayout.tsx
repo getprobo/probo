@@ -225,7 +225,7 @@ export function DocumentLayout(props: { queryRef: PreloadedQuery<DocumentLayoutQ
               fKey={currentVersion}
               documentId={document.id}
               documentStatus={document.status}
-              isEditable={isEditable && !isGenerated}
+              isEditable={isEditable}
               onDocumentUpdated={handleDocumentUpdated}
             />
           )}
@@ -242,7 +242,6 @@ export function DocumentLayout(props: { queryRef: PreloadedQuery<DocumentLayoutQ
           documentFragmentRef={document}
           versionFragmentRef={currentVersion}
           isEditable={isEditable}
-          isGenerated={isGenerated}
           isLatestVersion={isLatestVersion}
           onDocumentUpdated={handleDocumentUpdated}
         />

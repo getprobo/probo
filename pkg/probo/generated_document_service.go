@@ -2909,6 +2909,19 @@ func (s *GeneratedDocumentService) publishOrRequestApproval(
 	minor bool,
 	now time.Time,
 ) error {
+	previousVersion := &coredata.DocumentVersion{}
+	err := previousVersion.LoadLatestVersion(ctx, tx, s.svc.scope, document.ID)
+	switch {
+	case err == nil:
+		version.Title = previousVersion.Title
+		version.Classification = previousVersion.Classification
+		version.DocumentType = previousVersion.DocumentType
+	case errors.Is(err, coredata.ErrResourceNotFound):
+		// First publish: keep the caller-provided defaults.
+	default:
+		return fmt.Errorf("cannot load previous document version: %w", err)
+	}
+
 	if minor {
 		if document.CurrentPublishedMajor == nil || document.CurrentPublishedMinor == nil {
 			return &ErrCannotPublishMinorWithoutMajor{}
@@ -2936,7 +2949,14 @@ func (s *GeneratedDocumentService) publishOrRequestApproval(
 
 	if err := version.Insert(ctx, tx, s.svc.scope); err != nil {
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
-			return fmt.Errorf("a version is pending approval, approve or reject it before publishing a new one: %w", err)
+			switch previousVersion.Status {
+			case coredata.DocumentVersionStatusDraft:
+				return fmt.Errorf("a draft version exists, publish or delete it before publishing a new one: %w", err)
+			case coredata.DocumentVersionStatusPendingApproval:
+				return fmt.Errorf("a version is pending approval, approve or reject it before publishing a new one: %w", err)
+			default:
+				return fmt.Errorf("a version already exists at this number: %w", err)
+			}
 		}
 		return fmt.Errorf("cannot insert document version: %w", err)
 	}

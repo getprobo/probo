@@ -864,6 +864,9 @@ func (r *mutationResolver) UpdateDocument(ctx context.Context, input types.Updat
 		if errArchived, ok := errors.AsType[*probo.ErrDocumentArchived](err); ok {
 			return nil, gqlutils.Conflict(ctx, errArchived)
 		}
+		if errGenerated, ok := errors.AsType[*probo.ErrDocumentVersionGenerated](err); ok {
+			return nil, gqlutils.Conflict(ctx, errGenerated)
+		}
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}

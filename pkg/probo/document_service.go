@@ -267,7 +267,7 @@ func (e ErrDocumentGenerated) Error() string {
 }
 
 func (e ErrDocumentVersionGenerated) Error() string {
-	return "cannot edit a generated document version"
+	return "cannot edit content of a generated document version"
 }
 
 func (e ErrDocumentVersionSignatureAlreadySigned) Error() string {
@@ -1800,7 +1800,7 @@ func (s *DocumentService) Update(
 
 			hasVersionChanges := req.Title != nil || req.Content != nil || req.Classification != nil || req.DocumentType != nil
 
-			if hasVersionChanges && document.WriteMode == coredata.DocumentWriteModeGenerated {
+			if req.Content != nil && document.WriteMode == coredata.DocumentWriteModeGenerated {
 				return &ErrDocumentVersionGenerated{}
 			}
 

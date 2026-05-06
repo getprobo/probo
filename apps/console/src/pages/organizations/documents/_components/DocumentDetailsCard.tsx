@@ -124,7 +124,6 @@ export function DocumentDetailsCard(props: {
   documentFragmentRef: DocumentDetailsCard_documentFragment$key;
   versionFragmentRef: DocumentDetailsCard_versionFragment$key;
   isEditable: boolean;
-  isGenerated?: boolean;
   isLatestVersion?: boolean;
   onDocumentUpdated: () => void;
 }) {
@@ -132,7 +131,6 @@ export function DocumentDetailsCard(props: {
     documentFragmentRef,
     versionFragmentRef,
     isEditable,
-    isGenerated = false,
     isLatestVersion = true,
     onDocumentUpdated,
   } = props;
@@ -149,7 +147,7 @@ export function DocumentDetailsCard(props: {
   const version = useFragment<DocumentDetailsCard_versionFragment$key>(versionFragment, versionFragmentRef);
 
   const canEdit = document.canUpdate && isEditable;
-  const canEditVersionFields = canEdit && !isGenerated;
+  const canEditVersionFields = canEdit;
   const canEditApprovers = document.canUpdate && isLatestVersion;
 
   const { control, handleSubmit, reset } = useFormWithSchema(

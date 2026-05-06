@@ -440,6 +440,275 @@ func TestStatementOfApplicability_CreateDocument_RBAC(t *testing.T) {
 	)
 }
 
+func TestStatementOfApplicability_UpdateDocumentMetadata(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+
+	publishSOADocument := func(t *testing.T) (documentID, documentVersionID string) {
+		t.Helper()
+
+		frameworkID := factory.NewFramework(owner).Create()
+		controlID := factory.NewControl(owner, frameworkID).Create()
+
+		soaID := factory.NewStatementOfApplicability(owner).Create()
+		factory.CreateApplicabilityStatement(owner, soaID, controlID, true, nil)
+
+		const publishQuery = `
+			mutation($input: PublishStatementOfApplicabilityInput!) {
+				publishStatementOfApplicability(input: $input) {
+					documentEdge { node { id } }
+					documentVersionEdge { node { id } }
+				}
+			}
+		`
+
+		var publishResult struct {
+			PublishStatementOfApplicability struct {
+				DocumentEdge struct {
+					Node struct {
+						ID string `json:"id"`
+					} `json:"node"`
+				} `json:"documentEdge"`
+				DocumentVersionEdge struct {
+					Node struct {
+						ID string `json:"id"`
+					} `json:"node"`
+				} `json:"documentVersionEdge"`
+			} `json:"publishStatementOfApplicability"`
+		}
+
+		err := owner.Execute(
+			publishQuery,
+			map[string]any{
+				"input": map[string]any{
+					"minor":                      false,
+					"statementOfApplicabilityId": soaID,
+				},
+			},
+			&publishResult,
+		)
+		require.NoError(t, err)
+
+		return publishResult.PublishStatementOfApplicability.DocumentEdge.Node.ID,
+			publishResult.PublishStatementOfApplicability.DocumentVersionEdge.Node.ID
+	}
+
+	const updateQuery = `
+		mutation($input: UpdateDocumentInput!) {
+			updateDocument(input: $input) {
+				document { id writeMode }
+				documentVersion {
+					id
+					title
+					documentType
+					classification
+					status
+				}
+			}
+		}
+	`
+
+	type updateResult struct {
+		UpdateDocument struct {
+			Document struct {
+				ID        string `json:"id"`
+				WriteMode string `json:"writeMode"`
+			} `json:"document"`
+			DocumentVersion *struct {
+				ID             string `json:"id"`
+				Title          string `json:"title"`
+				DocumentType   string `json:"documentType"`
+				Classification string `json:"classification"`
+				Status         string `json:"status"`
+			} `json:"documentVersion"`
+		} `json:"updateDocument"`
+	}
+
+	t.Run(
+		"editing title, type, and classification on generated document creates a draft",
+		func(t *testing.T) {
+			t.Parallel()
+
+			documentID, publishedVersionID := publishSOADocument(t)
+
+			var result updateResult
+			err := owner.Execute(
+				updateQuery,
+				map[string]any{
+					"input": map[string]any{
+						"id":             documentID,
+						"title":          "Renamed SOA",
+						"documentType":   "POLICY",
+						"classification": "INTERNAL",
+					},
+				},
+				&result,
+			)
+			require.NoError(t, err)
+
+			assert.Equal(t, "GENERATED", result.UpdateDocument.Document.WriteMode)
+			require.NotNil(t, result.UpdateDocument.DocumentVersion)
+			assert.NotEqual(t, publishedVersionID, result.UpdateDocument.DocumentVersion.ID,
+				"should create a new draft, not update the published version")
+			assert.Equal(t, "DRAFT", result.UpdateDocument.DocumentVersion.Status)
+			assert.Equal(t, "Renamed SOA", result.UpdateDocument.DocumentVersion.Title)
+			assert.Equal(t, "POLICY", result.UpdateDocument.DocumentVersion.DocumentType)
+			assert.Equal(t, "INTERNAL", result.UpdateDocument.DocumentVersion.Classification)
+		},
+	)
+
+	t.Run(
+		"cannot edit content of a generated document",
+		func(t *testing.T) {
+			t.Parallel()
+
+			documentID, _ := publishSOADocument(t)
+
+			err := owner.ExecuteShouldFail(
+				updateQuery,
+				map[string]any{
+					"input": map[string]any{
+						"id":      documentID,
+						"content": `{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"hand-edited"}]}]}`,
+					},
+				},
+			)
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), "generated")
+		},
+	)
+
+	t.Run(
+		"re-publish preserves edited title, type, and classification",
+		func(t *testing.T) {
+			t.Parallel()
+
+			frameworkID := factory.NewFramework(owner).Create()
+			controlID := factory.NewControl(owner, frameworkID).Create()
+
+			soaID := factory.NewStatementOfApplicability(owner).Create()
+			factory.CreateApplicabilityStatement(owner, soaID, controlID, true, nil)
+
+			const publishSOAQuery = `
+				mutation($input: PublishStatementOfApplicabilityInput!) {
+					publishStatementOfApplicability(input: $input) {
+						documentEdge { node { id } }
+						documentVersionEdge { node { id title documentType classification major minor } }
+					}
+				}
+			`
+
+			type publishSOAResult struct {
+				PublishStatementOfApplicability struct {
+					DocumentEdge struct {
+						Node struct {
+							ID string `json:"id"`
+						} `json:"node"`
+					} `json:"documentEdge"`
+					DocumentVersionEdge struct {
+						Node struct {
+							ID             string `json:"id"`
+							Title          string `json:"title"`
+							DocumentType   string `json:"documentType"`
+							Classification string `json:"classification"`
+							Major          int    `json:"major"`
+							Minor          int    `json:"minor"`
+						} `json:"node"`
+					} `json:"documentVersionEdge"`
+				} `json:"publishStatementOfApplicability"`
+			}
+
+			var firstPublish publishSOAResult
+			err := owner.Execute(
+				publishSOAQuery,
+				map[string]any{
+					"input": map[string]any{
+						"minor":                      false,
+						"statementOfApplicabilityId": soaID,
+					},
+				},
+				&firstPublish,
+			)
+			require.NoError(t, err)
+			documentID := firstPublish.PublishStatementOfApplicability.DocumentEdge.Node.ID
+			require.Equal(t, "STATEMENT_OF_APPLICABILITY", firstPublish.PublishStatementOfApplicability.DocumentVersionEdge.Node.DocumentType)
+			require.Equal(t, "CONFIDENTIAL", firstPublish.PublishStatementOfApplicability.DocumentVersionEdge.Node.Classification)
+
+			var editResult updateResult
+			err = owner.Execute(
+				updateQuery,
+				map[string]any{
+					"input": map[string]any{
+						"id":             documentID,
+						"title":          "Custom SOA Name",
+						"documentType":   "POLICY",
+						"classification": "INTERNAL",
+					},
+				},
+				&editResult,
+			)
+			require.NoError(t, err)
+			require.NotNil(t, editResult.UpdateDocument.DocumentVersion)
+			require.Equal(t, "DRAFT", editResult.UpdateDocument.DocumentVersion.Status)
+
+			const publishDraftQuery = `
+				mutation($input: PublishDocumentInput!) {
+					publishDocument(input: $input) {
+						documentVersion { id title documentType classification major minor status }
+					}
+				}
+			`
+			var publishDraft struct {
+				PublishDocument struct {
+					DocumentVersion struct {
+						ID             string `json:"id"`
+						Title          string `json:"title"`
+						DocumentType   string `json:"documentType"`
+						Classification string `json:"classification"`
+						Major          int    `json:"major"`
+						Minor          int    `json:"minor"`
+						Status         string `json:"status"`
+					} `json:"documentVersion"`
+				} `json:"publishDocument"`
+			}
+			err = owner.Execute(
+				publishDraftQuery,
+				map[string]any{
+					"input": map[string]any{
+						"documentId": documentID,
+						"minor":      true,
+						"changelog":  "rename",
+					},
+				},
+				&publishDraft,
+			)
+			require.NoError(t, err)
+			require.Equal(t, "PUBLISHED", publishDraft.PublishDocument.DocumentVersion.Status)
+			require.Equal(t, "Custom SOA Name", publishDraft.PublishDocument.DocumentVersion.Title)
+			require.Equal(t, "POLICY", publishDraft.PublishDocument.DocumentVersion.DocumentType)
+			require.Equal(t, "INTERNAL", publishDraft.PublishDocument.DocumentVersion.Classification)
+
+			var rePublish publishSOAResult
+			err = owner.Execute(
+				publishSOAQuery,
+				map[string]any{
+					"input": map[string]any{
+						"minor":                      true,
+						"statementOfApplicabilityId": soaID,
+					},
+				},
+				&rePublish,
+			)
+			require.NoError(t, err)
+			node := rePublish.PublishStatementOfApplicability.DocumentVersionEdge.Node
+			assert.Equal(t, "Custom SOA Name", node.Title, "re-publish should preserve edited title")
+			assert.Equal(t, "POLICY", node.DocumentType, "re-publish should preserve edited type")
+			assert.Equal(t, "INTERNAL", node.Classification, "re-publish should preserve edited classification")
+		},
+	)
+}
+
 func TestStatementOfApplicability_TenantIsolation(t *testing.T) {
 	t.Parallel()
 
