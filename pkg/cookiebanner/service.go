@@ -533,22 +533,6 @@ func (s *Service) CreateCookieBanner(
 					if err := consentPattern.Insert(ctx, tx, scope); err != nil {
 						return fmt.Errorf("cannot insert probo_consent pattern: %w", err)
 					}
-
-					consentCookie := &coredata.Cookie{
-						ID:              gid.New(scope.GetTenantID(), coredata.CookieEntityType),
-						OrganizationID:  banner.OrganizationID,
-						CookieBannerID:  banner.ID,
-						CookiePatternID: consentPattern.ID,
-						Name:            "probo_consent",
-						MaxAgeSeconds:   &consentMaxAge,
-						Source:          coredata.CookieSourceScript,
-						LastDetectedAt:  now,
-						CreatedAt:       now,
-						UpdatedAt:       now,
-					}
-					if err := consentCookie.Insert(ctx, tx, scope); err != nil {
-						return fmt.Errorf("cannot insert probo_consent cookie: %w", err)
-					}
 				}
 			}
 
@@ -1110,34 +1094,6 @@ func (s *Service) CountCookieCategoriesForBanner(
 			count, err = categories.CountConsentCategoriesByCookieBannerID(ctx, conn, scope, bannerID)
 			if err != nil {
 				return fmt.Errorf("cannot count cookie categories: %w", err)
-			}
-
-			return nil
-		},
-	)
-	if err != nil {
-		return 0, err
-	}
-
-	return count, nil
-}
-
-func (s *Service) CountCookiesForPattern(
-	ctx context.Context,
-	scope coredata.Scoper,
-	patternID gid.GID,
-) (int, error) {
-	var count int
-
-	err := s.pg.WithConn(
-		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
-			var cookies coredata.Cookies
-			var err error
-
-			count, err = cookies.CountByCookiePatternID(ctx, conn, scope, patternID)
-			if err != nil {
-				return fmt.Errorf("cannot count cookies for pattern: %w", err)
 			}
 
 			return nil
