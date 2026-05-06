@@ -321,6 +321,16 @@ func (r *CreateTrackerPatternRequest) Validate() error {
 	v := validator.New()
 
 	v.Check(r.CookieCategoryID, "cookie_category_id", validator.Required(), validator.GID(coredata.CookieCategoryEntityType))
+	v.Check(string(r.TrackerType), "tracker_type", validator.Required(), validator.OneOfSlice(
+		func() []string {
+			types := coredata.TrackerTypes()
+			s := make([]string, len(types))
+			for i, t := range types {
+				s[i] = string(t)
+			}
+			return s
+		}(),
+	))
 	v.Check(r.Pattern, "pattern", validator.Required(), validator.SafeTextNoNewLine(255))
 	v.Check(string(r.MatchType), "match_type", validator.Required(), validator.OneOfSlice(
 		func() []string {
@@ -334,6 +344,20 @@ func (r *CreateTrackerPatternRequest) Validate() error {
 	))
 	v.Check(r.DisplayName, "display_name", validator.Required(), validator.SafeTextNoNewLine(255))
 	v.Check(r.Description, "description", validator.SafeText(1000))
+
+	return v.Error()
+}
+
+func (r *UpdateTrackerPatternRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(r.TrackerPatternID, "tracker_pattern_id", validator.Required(), validator.GID(coredata.TrackerPatternEntityType))
+	if r.DisplayName != nil {
+		v.Check(*r.DisplayName, "display_name", validator.Required(), validator.SafeTextNoNewLine(255))
+	}
+	if r.Description != nil {
+		v.Check(*r.Description, "description", validator.SafeText(1000))
+	}
 
 	return v.Error()
 }
@@ -2004,6 +2028,7 @@ func (s *Service) reportDetectedTracker(
 			Description:      "",
 			MaxAgeSeconds:    info.MaxAgeSeconds,
 			Source:           info.Source,
+			LastMatchedAt:    &now,
 			CreatedAt:        now,
 			UpdatedAt:        now,
 		}
@@ -2184,6 +2209,10 @@ func (s *Service) UpdateTrackerPattern(
 	scope coredata.Scoper,
 	req UpdateTrackerPatternRequest,
 ) (*coredata.TrackerPattern, error) {
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+
 	var pattern coredata.TrackerPattern
 
 	err := s.pg.WithTx(

@@ -972,14 +972,22 @@ func (r *trackerPatternResolver) Permission(ctx context.Context, obj *types.Trac
 func (r *trackerPatternConnectionResolver) TotalCount(ctx context.Context, obj *types.TrackerPatternConnection) (int, error) {
 	scope := coredata.NewScopeFromObjectID(obj.ParentID)
 
-	filter := coredata.NewTrackerPatternFilter(nil, nil, nil)
-	if obj.Filter != nil {
-		filter = filter.WithQuery(obj.Filter.Query).WithSource(obj.Filter.Source)
+	var count int
+	var err error
+
+	switch obj.Resolver.(type) {
+	case *cookieCategoryResolver:
+		count, err = r.cookieBanner.CountTrackerPatternsForCategory(ctx, scope, obj.ParentID)
+	default:
+		filter := coredata.NewTrackerPatternFilter(nil, nil, nil)
+		if obj.Filter != nil {
+			filter = filter.WithQuery(obj.Filter.Query).WithSource(obj.Filter.Source)
+		}
+		count, err = r.cookieBanner.CountUncategorisedTrackerPatterns(ctx, scope, obj.ParentID, filter)
 	}
 
-	count, err := r.cookieBanner.CountUncategorisedTrackerPatterns(ctx, scope, obj.ParentID, filter)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot count uncategorised tracker patterns", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot count tracker patterns", log.Error(err))
 		return 0, gqlutils.Internal(ctx)
 	}
 

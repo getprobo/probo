@@ -58,7 +58,7 @@ type trackerPattern struct {
 	MatchType     string  `json:"matchType"`
 	TrackerType   string  `json:"trackerType"`
 	DisplayName   string  `json:"displayName"`
-	Source        string  `json:"source"`
+	Source        *string `json:"source"`
 	Excluded      bool    `json:"excluded"`
 	LastMatchedAt *string `json:"lastMatchedAt"`
 }
@@ -143,11 +143,15 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				if p.Excluded {
 					excluded = "yes"
 				}
+				source := ""
+				if p.Source != nil {
+					source = *p.Source
+				}
 				lastMatched := ""
 				if p.LastMatchedAt != nil {
 					lastMatched = cmdutil.FormatTime(*p.LastMatchedAt)
 				}
-				rows = append(rows, []string{p.ID, p.Pattern, p.MatchType, p.TrackerType, p.DisplayName, p.Source, excluded, lastMatched})
+				rows = append(rows, []string{p.ID, p.Pattern, p.MatchType, p.TrackerType, p.DisplayName, source, excluded, lastMatched})
 			}
 
 			t := cmdutil.NewTable("ID", "PATTERN", "MATCH TYPE", "TRACKER TYPE", "DISPLAY NAME", "SOURCE", "EXCLUDED", "LAST MATCHED").Rows(rows...)

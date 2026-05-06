@@ -37,7 +37,7 @@ func (p TrackerPatternOrderField) Column() string {
 	case TrackerPatternOrderFieldUpdatedAt:
 		return "updated_at"
 	case TrackerPatternOrderFieldSource:
-		return "source"
+		return "COALESCE(source, '')"
 	}
 	panic(fmt.Sprintf("unsupported order by: %s", p))
 }

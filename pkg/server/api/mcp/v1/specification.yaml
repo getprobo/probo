@@ -9163,7 +9163,7 @@ components:
           description: Cookie category ID
         tracker_type:
           type: string
-          enum: [COOKIE, LOCAL_STORAGE, SESSION_STORAGE, PIXEL]
+          enum: [COOKIE, LOCAL_STORAGE, SESSION_STORAGE, INDEXED_DB, SCRIPT, IFRAME]
           description: Type of tracker
         pattern:
           type: string
@@ -9689,7 +9689,7 @@ components:
           $ref: "#/components/schemas/GID"
         tracker_type:
           type: string
-          enum: [COOKIE, LOCAL_STORAGE, SESSION_STORAGE, PIXEL]
+          enum: [COOKIE, LOCAL_STORAGE, SESSION_STORAGE, INDEXED_DB, SCRIPT, IFRAME]
         pattern:
           type: string
         match_type:
