@@ -30,6 +30,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
+	"go.probo.inc/probo/pkg/uri"
 	"go.probo.inc/probo/pkg/validator"
 )
 
@@ -125,7 +126,7 @@ type (
 	}
 
 	DetectedResourceItem struct {
-		Origin       string
+		URL          uri.URI
 		ResourceType coredata.TrackerType
 	}
 
@@ -1992,7 +1993,7 @@ func (s *Service) ReportDetectedTrackers(
 					now,
 					detectedTrackerInfo{
 						TrackerType: dr.ResourceType,
-						Identifier:  dr.Origin,
+						Identifier:  dr.URL.String(),
 					},
 					&inserted,
 				); err != nil {

@@ -17,7 +17,7 @@ import { NotFoundError } from "../errors";
 import { fetchJSON } from "../http";
 
 interface DetectedResourceEntry {
-  origin: string;
+  url: string;
   resource_type: "script" | "iframe";
 }
 
@@ -105,20 +105,21 @@ export class ThirdPartyDetector implements Detector {
   private processElement(src: string, resourceType: "script" | "iframe"): void {
     if (EXTENSION_URL_RE.test(src)) return;
 
-    let origin: string;
+    let parsed: URL;
     try {
-      origin = new URL(src).origin;
+      parsed = new URL(src);
     } catch {
       return;
     }
 
-    if (origin === this.pageOrigin || origin === this.proboOrigin) return;
+    if (parsed.origin === this.pageOrigin || parsed.origin === this.proboOrigin) return;
 
-    const reportKey = `${resourceType}:${origin}`;
+    const identifier = parsed.origin + parsed.pathname;
+    const reportKey = `${resourceType}:${identifier}`;
     if (this.reported.has(reportKey)) return;
 
     this.reported.add(reportKey);
-    this.pending.set(reportKey, { origin, resource_type: resourceType });
+    this.pending.set(reportKey, { url: identifier, resource_type: resourceType });
     this.scheduleFlush();
   }
 

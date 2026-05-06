@@ -31,6 +31,7 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/server/api/clientip"
 	"go.probo.inc/probo/pkg/server/jsonutil"
+	"go.probo.inc/probo/pkg/uri"
 )
 
 type Handler struct {
@@ -309,8 +310,8 @@ type detectedStorageEntry struct {
 }
 
 type detectedResourceEntry struct {
-	Origin       string `json:"origin"`
-	ResourceType string `json:"resource_type"`
+	URL          uri.URI `json:"url"`
+	ResourceType string  `json:"resource_type"`
 }
 
 type reportDetectedTrackersBody struct {
@@ -400,11 +401,6 @@ func (h *Handler) handleReportDetectedTrackers(w http.ResponseWriter, r *http.Re
 	}
 
 	for _, res := range body.Resources {
-		origin := strings.TrimSpace(res.Origin)
-		if origin == "" {
-			continue
-		}
-
 		var resourceType coredata.TrackerType
 		switch strings.TrimSpace(res.ResourceType) {
 		case "script":
@@ -418,7 +414,7 @@ func (h *Handler) handleReportDetectedTrackers(w http.ResponseWriter, r *http.Re
 		req.Resources = append(
 			req.Resources,
 			cookiebanner.DetectedResourceItem{
-				Origin:       origin,
+				URL:          res.URL,
 				ResourceType: resourceType,
 			},
 		)
