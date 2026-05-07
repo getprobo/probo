@@ -162,7 +162,7 @@ func parseCIDRFile(path string) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	var cidrs []string
 	scanner := bufio.NewScanner(f)
