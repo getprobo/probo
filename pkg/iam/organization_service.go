@@ -1054,7 +1054,38 @@ func (s *OrganizationService) UpdateUserState(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			if err := profile.LoadByID(ctx, tx, scope, userID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return NewProfileNotFoundError(userID)
+				}
+
 				return fmt.Errorf("cannot load profile: %w", err)
+			}
+
+			if profile.State == state {
+				return nil
+			}
+
+			if profile.Source == coredata.ProfileSourceSCIM {
+				return NewUserManagedBySCIMError(userID)
+			}
+
+			membership := &coredata.Membership{}
+			if err := membership.LoadByIdentityIDAndOrganizationID(ctx, tx, scope, profile.IdentityID, profile.OrganizationID); err != nil {
+				return fmt.Errorf("cannot load membership: %w", err)
+			}
+
+			if state == coredata.ProfileStateInactive &&
+				membership.Role == coredata.MembershipRoleOwner &&
+				profile.State == coredata.ProfileStateActive {
+				profiles := coredata.MembershipProfiles{}
+				count, err := profiles.CountActiveOwnerByOrganizationID(ctx, tx, scope, profile.OrganizationID)
+				if err != nil {
+					return fmt.Errorf("cannot count active owners: %w", err)
+				}
+
+				if count <= 1 {
+					return NewLastActiveOwnerError(userID)
+				}
 			}
 
 			profile.State = state
@@ -1062,6 +1093,10 @@ func (s *OrganizationService) UpdateUserState(
 
 			if err := profile.Update(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot update profile: %w", err)
+			}
+
+			if err := webhook.InsertData(ctx, tx, scope, profile.OrganizationID, coredata.WebhookEventTypeUserUpdated, webhooktypes.NewUser(profile, membership)); err != nil {
+				return fmt.Errorf("cannot insert webhook event: %w", err)
 			}
 
 			return nil

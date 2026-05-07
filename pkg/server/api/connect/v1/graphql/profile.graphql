@@ -94,7 +94,10 @@ type ProfileEdge {
 extend type Mutation {
   createUser(input: CreateUserInput!): CreateUserPayload
     @session(required: PRESENT)
+  activateUser(input: ActivateUserInput!): ActivateUserPayload
+    @session(required: PRESENT)
   deactivateUser(input: DeactivateUserInput!): DeactivateUserPayload
+    @session(required: PRESENT)
   updateUser(input: UpdateUserInput!): UpdateUserPayload!
   removeUser(input: RemoveUserInput!): RemoveUserPayload
     @session(required: PRESENT)
@@ -141,8 +144,12 @@ type CreateUserPayload {
   profileEdge: ProfileEdge!
 }
 
+type ActivateUserPayload {
+  profile: Profile!
+}
+
 type DeactivateUserPayload {
-  success: Boolean!
+  profile: Profile!
 }
 
 type UpdateUserPayload {
