@@ -91,9 +91,7 @@ const deleteCampaignMutation = graphql`
     $connections: [ID!]!
   ) {
     deleteAccessReviewCampaign(input: $input) {
-      deletedAccessReviewCampaignId
-        @deleteEdge(connections: $connections)
-        @deleteRecord
+      deletedAccessReviewCampaignId @deleteEdge(connections: $connections)
     }
   }
 `;
