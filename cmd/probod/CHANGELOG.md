@@ -4,6 +4,18 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.184.0] - 2026-05-07
+
+### Added
+
+- Allow editing approvers inline on SOA generated documents from the Statement of Applicability detail page (visible after first publish)
+
+### Fixed
+
+- Fix Microsoft 365 SCIM bridge: register the `MICROSOFT_365` connector provider, scope each Identity Provider card to its own bridge type so connecting one provider no longer marks others as connected, and filter Microsoft Graph users to home-tenant members (skip B2B guests)
+- Fix cookie banner REST config endpoint compatibility for SDK versions ≤ 0.2.0
+- Fix geolocation IP-to-country block imports
+
 ## [0.183.0] - 2026-05-07
 
 ### Added
