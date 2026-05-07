@@ -4,9 +4,24 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.183.0] - 2026-05-07
+
+### Added
+
+- Add IP-to-country geolocation service with shadow-table swap import and CIDR-based lookups
+- Detect the visitor's privacy regulation (GDPR, UK GDPR, FADP, CCPA, PIPEDA, LGPD, LFPDPPP, POPIA, PDPA, PIPL, PIPA, APPI, DPDP, PDPL) on the cookie banner config endpoint and adapt the banner UI and texts accordingly (opt-out notice for CCPA, simple notice when no regulation applies)
+- Store regulation and country code on cookie consent records and expose both across GraphQL, MCP, CLI, and n8n
+- Allow deleting access review campaigns from the UI (DRAFT or CANCELLED only, gated on `core:access-review-campaign:delete`)
+- Support Google Cloud Identity in the SCIM bridge (in addition to Google Workspace)
+
 ### Changed
 
 - Access review campaigns no longer transition to `FAILED` when individual sources fail to fetch; the failure stays surfaced on the source fetch (status + last error) and reviewers can proceed on the sources that succeeded (breaking: removed `FAILED` from `AccessReviewCampaignStatus`)
+- Allow editing metadata (title, document type, classification) on generated document versions; only content edits remain rejected
+
+### Fixed
+
+- Fix cookie banner docs link to `www.getprobo.com/docs`
 
 ## [0.182.0] - 2026-05-06
 
