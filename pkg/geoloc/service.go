@@ -77,34 +77,34 @@ func (s *Service) ImportFromDir(ctx context.Context, dataDir string) error {
 		}
 	}
 
-	if err := s.pgClient.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-		if err := coredata.CreateIPCountryBlocksStaging(ctx, conn); err != nil {
-			return fmt.Errorf("cannot create staging table: %w", err)
-		}
+	if err := s.pgClient.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := coredata.CreateIPCountryBlocksStaging(ctx, conn); err != nil {
+				return fmt.Errorf("cannot create staging table: %w", err)
+			}
 
-		if err := coredata.CopyIPCountryBlocksStaging(ctx, conn, blocks); err != nil {
-			return fmt.Errorf("cannot copy IP country blocks to staging: %w", err)
-		}
+			if err := coredata.CopyIPCountryBlocksStaging(ctx, conn, blocks); err != nil {
+				return fmt.Errorf("cannot copy IP country blocks to staging: %w", err)
+			}
 
-		if err := coredata.FinalizeIPCountryBlocksStaging(ctx, conn); err != nil {
-			return fmt.Errorf("cannot finalize staging table: %w", err)
-		}
+			if err := coredata.FinalizeIPCountryBlocksStaging(ctx, conn); err != nil {
+				return fmt.Errorf("cannot finalize staging table: %w", err)
+			}
 
-		return nil
-	}); err != nil {
-		_ = s.pgClient.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-			return coredata.DropIPCountryBlocksStaging(ctx, conn)
-		})
+			return nil
+		},
+	); err != nil {
 		return err
 	}
 
-	if err := s.pgClient.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-		return coredata.SwapIPCountryBlocksStaging(ctx, tx)
-	}); err != nil {
-		_ = s.pgClient.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-			return coredata.DropIPCountryBlocksStaging(ctx, conn)
-		})
-		return fmt.Errorf("cannot swap staging table: %w", err)
+	if err := s.pgClient.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			return fmt.Errorf("cannot swap staging table: %w", err)
+		},
+	); err != nil {
+		return err
 	}
 
 	return nil
