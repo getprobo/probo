@@ -40,7 +40,7 @@ type (
 		ConsentData           json.RawMessage     `db:"consent_data"`
 		Action                CookieConsentAction `db:"action"`
 		SdkVersion            string              `db:"sdk_version"`
-		Regulation            string              `db:"regulation"`
+		Regulation            Regulation          `db:"regulation"`
 		CreatedAt             time.Time           `db:"created_at"`
 	}
 

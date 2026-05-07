@@ -13,7 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 import { CookieBannerClient } from "../client";
-import type { BannerConfig } from "../client";
+import type { BannerConfig } from "../types";
 import { ProboElement } from "./base";
 import type { ProboState, ProboRootElement, ConsentDraft } from "./base";
 

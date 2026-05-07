@@ -35,22 +35,15 @@ func main() {
 }
 
 func run() error {
-	var (
-		pgDSN   string
-		dataDir string
-	)
+	const dataDir = "pkg/geoloc/data/country-ip-blocks"
+
+	var pgDSN string
 
 	flag.StringVar(
 		&pgDSN,
 		"pg-dsn",
 		os.Getenv("DATABASE_URL"),
 		"PostgreSQL connection URL (default: DATABASE_URL env)",
-	)
-	flag.StringVar(
-		&dataDir,
-		"data-dir",
-		"pkg/geoloc/data/country-ip-blocks",
-		"path to ipverse country-ip-blocks checkout",
 	)
 	flag.Parse()
 

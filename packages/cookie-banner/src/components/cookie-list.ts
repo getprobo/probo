@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import type { CookieItem } from "../client";
+import type { CookieItem } from "../types";
 import { humanizeDuration } from "../cookie-utils";
 import { getCookieDetailLabels } from "../i18n";
 import { ProboElement } from "./base";

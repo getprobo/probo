@@ -12,7 +12,8 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import type { CookieBannerClient, BannerConfig } from "../client";
+import type { CookieBannerClient } from "../client";
+import type { BannerConfig } from "../types";
 
 export type ProboState = "loading" | "banner" | "panel" | "hidden";
 

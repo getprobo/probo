@@ -1856,7 +1856,7 @@ func (s *Service) RecordConsent(
 				ConsentData:           req.ConsentData,
 				Action:                req.Action,
 				SdkVersion:            req.SdkVersion,
-				Regulation:            string(req.Regulation),
+				Regulation:            req.Regulation,
 				CreatedAt:             time.Now(),
 			}
 

@@ -14,7 +14,7 @@
 
 import { registerHeadlessComponents } from "../components";
 import type { ProboCookieBannerRoot } from "../components/cookie-banner-root";
-import type { BannerConfig } from "../client";
+import type { BannerConfig } from "../types";
 import { getGpcLabel, interpolate } from "../i18n";
 import { BRANDING, CHEVRON_DOWN, CLOSE_ICON } from "../html";
 import { THEMED_STYLES } from "./styles";

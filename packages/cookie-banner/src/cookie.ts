@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import type { ConsentAction } from "./client";
+import type { ConsentAction } from "./types";
 
 export const COOKIE_NAME = "probo_consent";
 const SECONDS_PER_DAY = 86400;

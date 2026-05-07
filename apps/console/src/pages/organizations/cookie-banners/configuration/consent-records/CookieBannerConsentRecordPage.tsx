@@ -57,6 +57,7 @@ export const cookieBannerConsentRecordPageQuery = graphql`
         ipAddress
         userAgent
         sdkVersion
+        regulation
         consentData
         createdAt
       }
@@ -151,6 +152,11 @@ export default function CookieBannerConsentRecordPage({
         </PropertyRow>
         <PropertyRow label={__("SDK Version")}>
           <span className="font-mono text-sm">{record.sdkVersion}</span>
+        </PropertyRow>
+        <PropertyRow label={__("Regulation")}>
+          <span className="font-mono text-sm">
+            {record.regulation || "-"}
+          </span>
         </PropertyRow>
         <PropertyRow label={__("Date")}>
           <time dateTime={record.createdAt}>

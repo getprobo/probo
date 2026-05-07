@@ -16,24 +16,24 @@ package cookiebanner
 
 import "go.probo.inc/probo/pkg/coredata"
 
-type Regulation string
+type Regulation = coredata.Regulation
 
 const (
-	RegulationNone    Regulation = ""
-	RegulationGDPR    Regulation = "GDPR"
-	RegulationUKGDPR  Regulation = "UK_GDPR"
-	RegulationFADP    Regulation = "FADP"
-	RegulationCCPA    Regulation = "CCPA"
-	RegulationPIPEDA  Regulation = "PIPEDA"
-	RegulationLGPD    Regulation = "LGPD"
-	RegulationLFPDPPP Regulation = "LFPDPPP"
-	RegulationPOPIA   Regulation = "POPIA"
-	RegulationPDPA    Regulation = "PDPA"
-	RegulationPIPL    Regulation = "PIPL"
-	RegulationPIPA    Regulation = "PIPA"
-	RegulationAPPI    Regulation = "APPI"
-	RegulationDPDP    Regulation = "DPDP"
-	RegulationPDPL    Regulation = "PDPL"
+	RegulationNone    = coredata.RegulationNone
+	RegulationGDPR    = coredata.RegulationGDPR
+	RegulationUKGDPR  = coredata.RegulationUKGDPR
+	RegulationFADP    = coredata.RegulationFADP
+	RegulationCCPA    = coredata.RegulationCCPA
+	RegulationPIPEDA  = coredata.RegulationPIPEDA
+	RegulationLGPD    = coredata.RegulationLGPD
+	RegulationLFPDPPP = coredata.RegulationLFPDPPP
+	RegulationPOPIA   = coredata.RegulationPOPIA
+	RegulationPDPA    = coredata.RegulationPDPA
+	RegulationPIPL    = coredata.RegulationPIPL
+	RegulationPIPA    = coredata.RegulationPIPA
+	RegulationAPPI    = coredata.RegulationAPPI
+	RegulationDPDP    = coredata.RegulationDPDP
+	RegulationPDPL    = coredata.RegulationPDPL
 )
 
 const (

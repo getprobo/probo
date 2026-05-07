@@ -100,9 +100,9 @@ func (s *Service) LookupCountry(ctx context.Context, ip string) (coredata.Countr
 	err := s.pgClient.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			var lookupErr error
-			cc, lookupErr = coredata.LookupCountryByIP(ctx, conn, ip)
-			return lookupErr
+			var err error
+			cc, err = coredata.LookupCountryByIP(ctx, conn, ip)
+			return err
 		},
 	)
 	if err != nil {
@@ -118,9 +118,9 @@ func (s *Service) IsPopulated(ctx context.Context) (bool, error) {
 	err := s.pgClient.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			var lookupErr error
-			populated, lookupErr = coredata.IsIPCountryBlocksPopulated(ctx, conn)
-			return lookupErr
+			var err error
+			populated, err = coredata.IsIPCountryBlocksPopulated(ctx, conn)
+			return err
 		},
 	)
 	if err != nil {

@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import type { Category } from "../client";
+import type { Category } from "../types";
 import type { ConsentIntegration } from "./integration";
 
 export class GoogleConsentModeIntegration implements ConsentIntegration {

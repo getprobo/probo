@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import type { Category } from "../client";
+import type { Category } from "../types";
 
 export interface ConsentIntegration {
   /** Called once after config is loaded, before any consent is applied. */

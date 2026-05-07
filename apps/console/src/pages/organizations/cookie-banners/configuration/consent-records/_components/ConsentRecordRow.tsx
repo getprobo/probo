@@ -35,6 +35,7 @@ const consentRecordFragment = graphql`
     }
     ipAddress
     sdkVersion
+    regulation
     createdAt
   }
 `;
@@ -73,6 +74,11 @@ export function ConsentRecordRow({ recordKey }: ConsentRecordRowProps) {
       </Td>
       <Td>
         <span className="font-mono text-sm">{record.sdkVersion}</span>
+      </Td>
+      <Td>
+        <span className="font-mono text-sm">
+          {record.regulation || "-"}
+        </span>
       </Td>
       <Td>
         <time dateTime={record.createdAt}>

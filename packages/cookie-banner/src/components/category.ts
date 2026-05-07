@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import type { CookieItem } from "../client";
+import type { CookieItem } from "../types";
 import { ProboElement } from "./base";
 
 export class ProboCategory extends ProboElement {
