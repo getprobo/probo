@@ -103,7 +103,7 @@ const deleteCampaignMutation = graphql`
     $input: DeleteAccessReviewCampaignInput!
   ) {
     deleteAccessReviewCampaign(input: $input) {
-      deletedAccessReviewCampaignId
+      deletedAccessReviewCampaignId @deleteRecord
     }
   }
 `;
