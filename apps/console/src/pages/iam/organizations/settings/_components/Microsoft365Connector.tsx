@@ -40,6 +40,7 @@ const microsoft365ConnectorFragment = graphql`
     id
     bridge {
       id
+      type
       excludedUserNames
       connector {
         id
@@ -78,7 +79,7 @@ export function Microsoft365Connector(props: {
 }) {
   const { fKey, oauth2Scopes } = props;
   const data = useFragment<Microsoft365ConnectorFragment$key>(microsoft365ConnectorFragment, fKey);
-  const bridge = data?.bridge;
+  const bridge = data?.bridge?.type === "MICROSOFT_365" ? data.bridge : null;
   const connector = bridge?.connector;
   const scimConfigurationId = data?.id;
   const bridgeId = bridge?.id;

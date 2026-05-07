@@ -23,6 +23,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
+	"strconv"
 	"strings"
 
 	scimclient "go.probo.inc/probo/pkg/iam/scim/bridge/client"
@@ -46,6 +48,11 @@ const graphPageSize = 999
 // graphMaxPages bounds pagination to prevent unbounded loops if the
 // API misbehaves.
 const graphMaxPages = 1000
+
+// graphMemberFilter restricts /users to home-tenant members and
+// excludes B2B guest users invited from external tenants — those guests
+// should not be provisioned into the connected organization.
+const graphMemberFilter = "userType eq 'Member'"
 
 var _ provider.Provider = (*Provider)(nil)
 
@@ -102,16 +109,14 @@ type graphUsersResponse struct {
 }
 
 func (p *Provider) ListUsers(ctx context.Context) (scimclient.Users, error) {
-	url := fmt.Sprintf(
-		"%s/users?$select=%s&$top=%d",
-		graphBaseURL,
-		graphUserSelect,
-		graphPageSize,
-	)
+	endpoint, err := buildListUsersURL()
+	if err != nil {
+		return nil, fmt.Errorf("cannot build list users URL: %w", err)
+	}
 
 	var allUsers scimclient.Users
 	for range graphMaxPages {
-		users, next, err := p.fetchPage(ctx, url)
+		users, next, err := p.fetchPage(ctx, endpoint)
 		if err != nil {
 			return nil, err
 		}
@@ -146,14 +151,29 @@ func (p *Provider) ListUsers(ctx context.Context) (scimclient.Users, error) {
 		if next == "" {
 			return allUsers, nil
 		}
-		url = next
+		endpoint = next
 	}
 
 	return nil, fmt.Errorf("microsoft 365: pagination limit of %d pages reached", graphMaxPages)
 }
 
-func (p *Provider) fetchPage(ctx context.Context, url string) ([]graphUser, string, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+func buildListUsersURL() (string, error) {
+	u, err := url.Parse(graphBaseURL + "/users")
+	if err != nil {
+		return "", fmt.Errorf("cannot parse graph base URL: %w", err)
+	}
+
+	q := u.Query()
+	q.Set("$select", graphUserSelect)
+	q.Set("$top", strconv.Itoa(graphPageSize))
+	q.Set("$filter", graphMemberFilter)
+	u.RawQuery = q.Encode()
+
+	return u.String(), nil
+}
+
+func (p *Provider) fetchPage(ctx context.Context, endpoint string) ([]graphUser, string, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return nil, "", fmt.Errorf("cannot create graph users request: %w", err)
 	}

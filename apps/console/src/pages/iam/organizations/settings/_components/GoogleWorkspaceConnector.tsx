@@ -40,6 +40,7 @@ const googleWorkspaceConnectorFragment = graphql`
     id
     bridge {
       id
+      type
       excludedUserNames
       connector {
         id
@@ -78,7 +79,7 @@ export function GoogleWorkspaceConnector(props: {
 }) {
   const { fKey, oauth2Scopes } = props;
   const data = useFragment<GoogleWorkspaceConnectorFragment$key>(googleWorkspaceConnectorFragment, fKey);
-  const bridge = data?.bridge;
+  const bridge = data?.bridge?.type === "GOOGLE_WORKSPACE" ? data.bridge : null;
   const connector = bridge?.connector;
   const scimConfigurationId = data?.id;
   const bridgeId = bridge?.id;
