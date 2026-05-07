@@ -27,6 +27,9 @@ const connectorListFragment = graphql`
       oauth2Scopes
     }
     scimConfiguration {
+      bridge {
+        type
+      }
       ...GoogleWorkspaceConnectorFragment
       ...Microsoft365ConnectorFragment
     }
@@ -43,6 +46,10 @@ export function ConnectorList(props: { fKey: ConnectorListFragment$key }) {
   const microsoft365Scopes
     = data.scimBridgeTypes.find(info => info.type === "MICROSOFT_365")?.oauth2Scopes ?? [];
 
+  const bridgeType = data.scimConfiguration?.bridge?.type ?? null;
+  const showGoogleWorkspace = bridgeType === null || bridgeType === "GOOGLE_WORKSPACE";
+  const showMicrosoft365 = bridgeType === null || bridgeType === "MICROSOFT_365";
+
   return (
     <div className="space-y-4">
       <h2 className="text-base font-medium">{__("Identity Provider")}</h2>
@@ -51,14 +58,18 @@ export function ConnectorList(props: { fKey: ConnectorListFragment$key }) {
           "Connect your identity provider to automatically sync users to your organization. Once connected, you don't need to configure SCIM manually.",
         )}
       </p>
-      <GoogleWorkspaceConnector
-        fKey={data.scimConfiguration ?? null}
-        oauth2Scopes={googleWorkspaceScopes}
-      />
-      <Microsoft365Connector
-        fKey={data.scimConfiguration ?? null}
-        oauth2Scopes={microsoft365Scopes}
-      />
+      {showGoogleWorkspace && (
+        <GoogleWorkspaceConnector
+          fKey={data.scimConfiguration ?? null}
+          oauth2Scopes={googleWorkspaceScopes}
+        />
+      )}
+      {showMicrosoft365 && (
+        <Microsoft365Connector
+          fKey={data.scimConfiguration ?? null}
+          oauth2Scopes={microsoft365Scopes}
+        />
+      )}
     </div>
   );
 }
