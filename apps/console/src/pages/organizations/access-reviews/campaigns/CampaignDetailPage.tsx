@@ -309,7 +309,7 @@ export default function CampaignDetailPage({ queryRef }: Props) {
                 variant: "success",
               });
               resolve();
-              navigate(`/organizations/${organizationId}/access-reviews`);
+              void navigate(`/organizations/${organizationId}/access-reviews`);
             },
             onError(error) {
               toast({
