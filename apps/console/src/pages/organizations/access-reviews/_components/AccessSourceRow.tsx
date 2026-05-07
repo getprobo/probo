@@ -19,6 +19,7 @@ import {
   Badge,
   Button,
   DropdownItem,
+  IconPageTextLine,
   IconTrashCan,
   Input,
   Option,
@@ -36,6 +37,8 @@ import type { AccessSourceRowConfigureMutation } from "#/__generated__/core/Acce
 import type { AccessSourceRowDeleteMutation } from "#/__generated__/core/AccessSourceRowDeleteMutation.graphql";
 import type { AccessSourceRowFragment$key } from "#/__generated__/core/AccessSourceRowFragment.graphql";
 import type { AccessSourceRowOrgsQuery } from "#/__generated__/core/AccessSourceRowOrgsQuery.graphql";
+
+import { ViewCsvAccessSourceDialog } from "./ViewCsvAccessSourceDialog";
 
 const fragment = graphql`
   fragment AccessSourceRowFragment on AccessSource {
@@ -123,6 +126,8 @@ export function AccessSourceRow({ fKey, connectionId, organizationId }: Props) {
   const { toast } = useToast();
 
   const accessSource = useFragment(fragment, fKey);
+  const isCsvSource = !accessSource.connector;
+  const [isViewCsvOpen, setIsViewCsvOpen] = useState(false);
 
   const [deleteAccessSource] = useMutation<AccessSourceRowDeleteMutation>(deleteAccessSourceMutation);
   const [configure] = useMutation<AccessSourceRowConfigureMutation>(configureMutation);
@@ -269,22 +274,43 @@ export function AccessSourceRow({ fKey, connectionId, organizationId }: Props) {
           {formatDate(accessSource.createdAt)}
         </time>
       </Td>
-      {accessSource.canDelete && (
+      {(accessSource.canDelete || isCsvSource) && (
         <Td noLink width={50} className="text-end">
           <ActionDropdown>
-            <DropdownItem
-              icon={IconTrashCan}
-              variant="danger"
-              onSelect={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                handleDelete();
-              }}
-            >
-              {__("Delete")}
-            </DropdownItem>
+            {isCsvSource && (
+              <DropdownItem
+                icon={IconPageTextLine}
+                onSelect={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setIsViewCsvOpen(true);
+                }}
+              >
+                {__("View CSV")}
+              </DropdownItem>
+            )}
+            {accessSource.canDelete && (
+              <DropdownItem
+                icon={IconTrashCan}
+                variant="danger"
+                onSelect={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleDelete();
+                }}
+              >
+                {__("Delete")}
+              </DropdownItem>
+            )}
           </ActionDropdown>
         </Td>
+      )}
+      {isViewCsvOpen && (
+        <ViewCsvAccessSourceDialog
+          accessSourceId={accessSource.id}
+          name={accessSource.name}
+          onClose={() => setIsViewCsvOpen(false)}
+        />
       )}
     </Tr>
   );
