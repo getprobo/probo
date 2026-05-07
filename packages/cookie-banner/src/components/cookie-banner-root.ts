@@ -13,7 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 import { CookieBannerClient } from "../client";
-import type { BannerConfig } from "../types";
+import type { BannerConfig, Regulation } from "../types";
 import { ProboElement } from "./base";
 import type { ProboState, ProboRootElement, ConsentDraft } from "./base";
 
@@ -55,6 +55,16 @@ export class ProboCookieBannerRoot extends ProboElement implements ProboRootElem
 
   get gpcApplied(): boolean {
     return this._client?.gpcApplied ?? false;
+  }
+
+  get regulation(): Regulation | null {
+    return this._client?.regulation ?? null;
+  }
+
+  get consentMode(): "OPT_IN" | "OPT_OUT" | null {
+    const mode = this._config?.consent_mode;
+    if (mode === "OPT_IN" || mode === "OPT_OUT") return mode;
+    return null;
   }
 
   attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null): void {

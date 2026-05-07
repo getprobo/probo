@@ -171,6 +171,7 @@ type (
 		CookiePolicyURL   string                                         `json:"cookie_policy_url"`
 		ConsentExpiryDays int                                            `json:"consent_expiry_days"`
 		ConsentMode       string                                         `json:"consent_mode"`
+		Regulation        Regulation                                     `json:"regulation"`
 		ShowBranding      bool                                           `json:"show_branding"`
 		Categories        []coredata.CookieBannerVersionSnapshotCategory `json:"categories"`
 		Texts             map[string]string                              `json:"texts"`
@@ -1527,6 +1528,7 @@ func (s *Service) GetActiveBannerConfig(
 	ctx context.Context,
 	bannerID gid.GID,
 	lang string,
+	regulation Regulation,
 ) (*BannerConfig, error) {
 	var config *BannerConfig
 
@@ -1575,6 +1577,12 @@ func (s *Service) GetActiveBannerConfig(
 	if err != nil {
 		return nil, err
 	}
+
+	config.Regulation = regulation
+	if cm := ConsentModeForRegulation(regulation); cm != "" {
+		config.ConsentMode = cm
+	}
+	remapTextsForConsentMode(config.Texts, config.ConsentMode, regulation)
 
 	return config, nil
 }
@@ -1641,6 +1649,37 @@ func buildBannerConfig(
 		ShowBranding:      banner.ShowBranding,
 		Categories:        categories,
 		Texts:             texts,
+	}
+}
+
+// remapTextsForConsentMode overrides the generic banner text keys with
+// mode-specific variants so the client renders the appropriate copy
+// without needing consent-mode awareness itself.
+func remapTextsForConsentMode(texts map[string]string, consentMode string, regulation Regulation) {
+	if texts == nil {
+		return
+	}
+
+	switch {
+	case consentMode == ConsentModeOptOut:
+		remapTextKey(texts, "banner_title_opt_out", "banner_title")
+		remapTextKey(texts, "banner_description_opt_out", "banner_description")
+		remapTextKey(texts, "button_acknowledge", "button_accept_all")
+		remapTextKey(texts, "button_opt_out", "button_customize")
+		texts["button_reject_all"] = ""
+
+	case regulation == RegulationNone:
+		remapTextKey(texts, "banner_title_notice", "banner_title")
+		remapTextKey(texts, "banner_description_notice", "banner_description")
+		remapTextKey(texts, "button_dismiss", "button_accept_all")
+		texts["button_reject_all"] = ""
+		texts["button_customize"] = ""
+	}
+}
+
+func remapTextKey(texts map[string]string, src, dst string) {
+	if v, ok := texts[src]; ok && v != "" {
+		texts[dst] = v
 	}
 }
 

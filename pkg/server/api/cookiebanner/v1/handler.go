@@ -63,11 +63,6 @@ func NewMux(
 	return r
 }
 
-type configResponse struct {
-	*cookiebanner.BannerConfig
-	Regulation cookiebanner.Regulation `json:"regulation"`
-}
-
 func (h *Handler) handleGetConfig(w http.ResponseWriter, r *http.Request) {
 	bannerID, err := gid.ParseGID(chi.URLParam(r, "bannerID"))
 	if err != nil {
@@ -76,8 +71,9 @@ func (h *Handler) handleGetConfig(w http.ResponseWriter, r *http.Request) {
 	}
 
 	lang := r.URL.Query().Get("lang")
+	regulation := h.resolveRegulation(r)
 
-	config, err := h.cookieBannerSvc.GetActiveBannerConfig(r.Context(), bannerID, lang)
+	config, err := h.cookieBannerSvc.GetActiveBannerConfig(r.Context(), bannerID, lang, regulation)
 	if err != nil {
 		if errors.Is(err, cookiebanner.ErrBannerNotFound) {
 			jsonutil.RenderNotFound(w, fmt.Errorf("banner not found"))
@@ -92,15 +88,7 @@ func (h *Handler) handleGetConfig(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	regulation := h.resolveRegulation(r)
-	if cm := cookiebanner.ConsentModeForRegulation(regulation); cm != "" {
-		config.ConsentMode = cm
-	}
-
-	httpserver.RenderJSON(w, http.StatusOK, configResponse{
-		BannerConfig: config,
-		Regulation:   regulation,
-	})
+	httpserver.RenderJSON(w, http.StatusOK, config)
 }
 
 func (h *Handler) resolveRegulation(r *http.Request) cookiebanner.Regulation {
