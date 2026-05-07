@@ -17,6 +17,7 @@ package geoloc
 import (
 	"bufio"
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"os"
@@ -60,6 +61,9 @@ func (s *Service) ImportFromDir(ctx context.Context, dataDir string) error {
 			path := filepath.Join(countryDir, entry.Name(), filename)
 
 			cidrs, err := parseCIDRFile(path)
+			if errors.Is(err, os.ErrNotExist) {
+				continue
+			}
 			if err != nil {
 				return fmt.Errorf("cannot parse CIDR file %s: %w", path, err)
 			}
