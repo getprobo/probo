@@ -541,12 +541,12 @@ func reportDetectedCookies(t *testing.T, c *testutil.Client, bannerID string, na
 	body, err := json.Marshal(map[string]any{"cookies": cookies})
 	require.NoError(t, err)
 
-	endpoint := fmt.Sprintf("%s/api/cookie-banner/v1/%s/detected-cookies", c.BaseURL(), bannerID)
+	endpoint := fmt.Sprintf("%s/api/cookie-banner/v1/%s/report", c.BaseURL(), bannerID)
 	resp, err := c.HTTPClient().Post(endpoint, "application/json", bytes.NewReader(body))
 	require.NoError(t, err)
 	defer func() { _ = resp.Body.Close() }()
 	require.Equal(t, http.StatusNoContent, resp.StatusCode,
-		"detected-cookies endpoint should return 204")
+		"report endpoint should return 204")
 }
 
 func TestCookieBannerVersioning_DetectedCookiesNeverBump(t *testing.T) {

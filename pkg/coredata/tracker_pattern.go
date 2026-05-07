@@ -241,7 +241,7 @@ WHERE
 	AND (
 		(match_type = @match_type_glob
 		 AND starts_with(@identifier, split_part(pattern, '*', 1))
-		 AND ends_with(@identifier, split_part(pattern, '*', 2))
+		 AND right(@identifier, length(split_part(pattern, '*', 2))) = split_part(pattern, '*', 2)
 		 AND length(@identifier) >= length(pattern) - 1)
 		OR (match_type = @match_type_exact AND pattern = @identifier)
 	)
