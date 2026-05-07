@@ -62,6 +62,13 @@ jobs:
       - uses: "actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32" # v4
         with:
           subject-path: "packages/cookie-banner/dist/**"
+      - name: "Extract release notes"
+        run: |
+          VERSION="${GITHUB_REF_NAME##*/v}"
+          awk -v ver="$VERSION" '
+            /^## \[/ { if (found) exit; if ($0 ~ "\\[" ver "\\]") found=1 }
+            found
+          ' packages/cookie-banner/CHANGELOG.md > release-notes.md
       - name: "Create GitHub release"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -75,7 +82,7 @@ jobs:
 
           gh release create "${GITHUB_REF_NAME}" \
             --title "${GITHUB_REF_NAME}" \
-            --notes-file packages/cookie-banner/CHANGELOG.md \
+            --notes-file release-notes.md \
             $PRERELEASE_FLAG \
             packages/cookie-banner/sbom.json packages/cookie-banner/checksums.txt
       - uses: "actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f" # v7

@@ -310,7 +310,11 @@ jobs:
         env:
           IMAGE_TAG: ${{ needs.docker-manifest.outputs.image_tag }}
         run: |
-          cp cmd/probod/CHANGELOG.md release-notes.md
+          VERSION="${GITHUB_REF_NAME##*/v}"
+          awk -v ver="$VERSION" '
+            /^## \[/ { if (found) exit; if ($0 ~ "\\[" ver "\\]") found=1 }
+            found
+          ' cmd/probod/CHANGELOG.md > release-notes.md
           cat >> release-notes.md << EOF
 
           ## Docker Images
