@@ -96,32 +96,39 @@ Format: `## [X.Y.Z] - YYYY-MM-DD` (today's date). Always keep an
 
 ## 3. Common steps (every track)
 
-After choosing the track and reviewing its commits:
+Open the per-track entrypoint and run its **Detect commits** command.
+If the track has no user-facing commits, stop. Otherwise:
 
-1. Bump the version in the track's source of truth (see the per-track
-   entrypoint).
-2. Write the changelog entry in the track's `CHANGELOG.md`.
-3. For npm tracks, run the workspace `build` script after the version
-   bump (see the per-track entrypoint for why).
-4. Show the user the proposed `CHANGELOG.md` diff and the new version.
-   Wait for confirmation.
-5. Commit only the files modified by the version bump and changelog
-   edit. Subject: `Release <pkg>/v<version>`. No body.
-6. Annotated tag: `git tag -a <pkg>/v<version> -m "<pkg>/v<version>"`.
-7. Push: `git push origin main --follow-tags`.
+1. Decide the version bump (PATCH for fixes, MINOR for features).
+2. Bump the version using the track's **Version bump** method.
+3. If the track lists a **Build** command, run it now to catch compile
+   errors before tagging.
+4. Write the changelog entry in the track's **Changelog** file following
+   the rules in [section 2](#2-writing-a-changelog-entry).
+5. Show the user the proposed changelog diff and the new version. Wait
+   for confirmation.
+6. Stage only the files listed in the track's **Files to stage**.
+   Commit subject: `Release <pkg>/v<version>`. No body.
+7. Annotated tag: `git tag -a <pkg>/v<version> -m "<pkg>/v<version>"`.
+8. Push the commit: `git push origin main`.
+9. Push the tag **separately**: `git push origin <pkg>/v<version>`.
 
-CI handles the rest: binary builds, npm publish, Docker image, Homebrew
-formula, SBOMs, attestations, GitHub Release.
+Each tag must be pushed in its own `git push` command so the
+corresponding GitHub Actions workflow fires reliably. Pushing multiple
+tags at once (e.g. `--follow-tags`) can silently skip workflow triggers.
+
+When releasing multiple tracks in one session, push each track's tag
+immediately after creating it, before moving on to the next track.
 
 ## Checklist (every track)
 
 1. [ ] Pulled latest `main`
-2. [ ] Confirmed the track has user-facing commits since its last tag
-3. [ ] Reviewed track-specific commits
-4. [ ] Track CHANGELOG entry written, categorized, summarized
-5. [ ] Version bumped in the track's source of truth
-6. [ ] (npm tracks) Workspace `build` script run successfully after bump
-7. [ ] User confirmed changelog and version
-8. [ ] Commit message is `Release <pkg>/v<version>`
-9. [ ] Annotated tag `<pkg>/v<version>` on the release commit
-10. [ ] Pushed commit and tag
+2. [ ] Track has user-facing commits since its last tag
+3. [ ] Version bumped per track's **Version bump** method
+4. [ ] (npm tracks) **Build** command succeeded
+5. [ ] Changelog entry written, categorized, summarized
+6. [ ] User confirmed changelog and version
+7. [ ] Commit: `Release <pkg>/v<version>`
+8. [ ] Annotated tag `<pkg>/v<version>`
+9. [ ] Pushed commit to `main`
+10. [ ] Pushed tag independently
