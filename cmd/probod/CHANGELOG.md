@@ -4,6 +4,10 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+### Changed
+
+- Microsoft 365 access review driver now fetches only internal members from Microsoft Graph (`$filter=userType eq 'Member'`), so guest (B2B) accounts are no longer pulled into access review
+
 ## [0.184.0] - 2026-05-07
 
 ### Added

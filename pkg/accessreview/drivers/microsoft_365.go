@@ -20,6 +20,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
+	"strconv"
 	"time"
 
 	"go.probo.inc/probo/pkg/coredata"
@@ -35,10 +37,13 @@ type Microsoft365Driver struct {
 var _ Driver = (*Microsoft365Driver)(nil)
 
 const (
-	microsoft365GraphBaseURL    = "https://graph.microsoft.com/v1.0"
-	microsoft365UsersSelect     = "id,userPrincipalName,mail,displayName,givenName,surname,accountEnabled,jobTitle,department,createdDateTime"
-	microsoft365UsersPageSize   = 999
-	microsoft365MaxPaginationOK = maxPaginationPages
+	microsoft365GraphBaseURL = "https://graph.microsoft.com/v1.0"
+	microsoft365UsersSelect  = "id,userPrincipalName,mail,displayName,givenName,surname,accountEnabled,jobTitle,department,createdDateTime"
+	// microsoft365UserTypeMemberFilter restricts /users to internal members
+	// so guest (B2B) accounts are not pulled into access review.
+	microsoft365UserTypeMemberFilter = "userType eq 'Member'"
+	microsoft365UsersPageSize        = 999
+	microsoft365MaxPaginationOK      = maxPaginationPages
 )
 
 // adminRoleDisplayNames lists the directory role display names that the
@@ -213,27 +218,40 @@ func pickHighestRole(roles []string) string {
 }
 
 func (d *Microsoft365Driver) listUsers(ctx context.Context) ([]microsoft365User, error) {
-	url := fmt.Sprintf(
-		"%s/users?$select=%s&$top=%d",
-		microsoft365GraphBaseURL,
-		microsoft365UsersSelect,
-		microsoft365UsersPageSize,
-	)
+	pageURL, err := buildMicrosoft365UsersURL()
+	if err != nil {
+		return nil, err
+	}
 
 	var all []microsoft365User
 	for range microsoft365MaxPaginationOK {
 		var page microsoft365UsersPage
-		if err := d.fetchJSON(ctx, url, &page); err != nil {
+		if err := d.fetchJSON(ctx, pageURL, &page); err != nil {
 			return nil, err
 		}
 		all = append(all, page.Value...)
 		if page.NextLink == "" {
 			return all, nil
 		}
-		url = page.NextLink
+		pageURL = page.NextLink
 	}
 
 	return nil, fmt.Errorf("cannot list all microsoft 365 users: %w", ErrPaginationLimitReached)
+}
+
+func buildMicrosoft365UsersURL() (string, error) {
+	u, err := url.Parse(microsoft365GraphBaseURL + "/users")
+	if err != nil {
+		return "", fmt.Errorf("cannot parse graph users URL: %w", err)
+	}
+
+	q := u.Query()
+	q.Set("$select", microsoft365UsersSelect)
+	q.Set("$filter", microsoft365UserTypeMemberFilter)
+	q.Set("$top", strconv.Itoa(microsoft365UsersPageSize))
+	u.RawQuery = q.Encode()
+
+	return u.String(), nil
 }
 
 func (d *Microsoft365Driver) listDirectoryRoles(ctx context.Context) ([]microsoft365DirectoryRole, error) {
