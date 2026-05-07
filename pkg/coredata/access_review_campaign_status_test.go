@@ -28,7 +28,6 @@ func TestAccessReviewCampaignStatusScan(t *testing.T) {
 		{name: "draft string", input: "DRAFT", want: AccessReviewCampaignStatusDraft},
 		{name: "in_progress string", input: "IN_PROGRESS", want: AccessReviewCampaignStatusInProgress},
 		{name: "pending_actions string", input: "PENDING_ACTIONS", want: AccessReviewCampaignStatusPendingActions},
-		{name: "failed string", input: "FAILED", want: AccessReviewCampaignStatusFailed},
 		{name: "completed string", input: "COMPLETED", want: AccessReviewCampaignStatusCompleted},
 		{name: "cancelled bytes", input: []byte("CANCELLED"), want: AccessReviewCampaignStatusCancelled},
 		{name: "invalid value", input: "BOGUS", wantErr: true},

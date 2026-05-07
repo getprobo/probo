@@ -25,7 +25,6 @@ const (
 	AccessReviewCampaignStatusDraft          AccessReviewCampaignStatus = "DRAFT"
 	AccessReviewCampaignStatusInProgress     AccessReviewCampaignStatus = "IN_PROGRESS"
 	AccessReviewCampaignStatusPendingActions AccessReviewCampaignStatus = "PENDING_ACTIONS"
-	AccessReviewCampaignStatusFailed         AccessReviewCampaignStatus = "FAILED"
 	AccessReviewCampaignStatusCompleted      AccessReviewCampaignStatus = "COMPLETED"
 	AccessReviewCampaignStatusCancelled      AccessReviewCampaignStatus = "CANCELLED"
 )
@@ -52,8 +51,6 @@ func (s *AccessReviewCampaignStatus) Scan(value any) error {
 		*s = AccessReviewCampaignStatusInProgress
 	case "PENDING_ACTIONS":
 		*s = AccessReviewCampaignStatusPendingActions
-	case "FAILED":
-		*s = AccessReviewCampaignStatusFailed
 	case "COMPLETED":
 		*s = AccessReviewCampaignStatusCompleted
 	case "CANCELLED":
