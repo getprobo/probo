@@ -289,10 +289,10 @@ export function DetectionPatternRow({ patternKey, connectionId }: DetectionPatte
   }
 
   return (
-    <Tr className={pattern.excluded ? "opacity-80" : undefined}>
+    <Tr className={pattern.excluded ? "bg-txt-quaternary opacity-80  line-through" : undefined}>
       <Td>
         <div className="flex flex-col min-w-0">
-          <span className="font-medium">{pattern.displayName}</span>
+          <span className={pattern.excluded ? undefined : "font-medium"}>{pattern.displayName}</span>
           {pattern.description && (
             <span className="text-xs text-txt-tertiary wrap-break-word line-clamp-1">
               {pattern.description}
@@ -318,7 +318,7 @@ export function DetectionPatternRow({ patternKey, connectionId }: DetectionPatte
         {pattern.lastMatchedAt
           ? (
               <time dateTime={pattern.lastMatchedAt}>
-                {formatDate(pattern.lastMatchedAt)}
+                {new Date(pattern.lastMatchedAt).toLocaleString()}
               </time>
             )
           : <span className="text-txt-tertiary">-</span>}
