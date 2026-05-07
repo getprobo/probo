@@ -34,7 +34,6 @@ CREATE TYPE access_review_campaign_status AS ENUM (
 ALTER TABLE access_review_campaigns
     ALTER COLUMN status DROP DEFAULT,
     ALTER COLUMN status TYPE access_review_campaign_status
-        USING status::text::access_review_campaign_status,
-    ALTER COLUMN status SET DEFAULT 'DRAFT';
+        USING status::text::access_review_campaign_status;
 
 DROP TYPE access_review_campaign_status_old;
