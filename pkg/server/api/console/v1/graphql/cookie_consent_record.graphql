@@ -32,6 +32,70 @@ enum CookieConsentAction
         )
 }
 
+enum Regulation
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.Regulation") {
+    NONE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RegulationNone"
+        )
+    GDPR
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RegulationGDPR"
+        )
+    UK_GDPR
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RegulationUKGDPR"
+        )
+    FADP
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RegulationFADP"
+        )
+    CCPA
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RegulationCCPA"
+        )
+    PIPEDA
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RegulationPIPEDA"
+        )
+    LGPD
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RegulationLGPD"
+        )
+    LFPDPPP
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RegulationLFPDPPP"
+        )
+    POPIA
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RegulationPOPIA"
+        )
+    PDPA
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RegulationPDPA"
+        )
+    PIPL
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RegulationPIPL"
+        )
+    PIPA
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RegulationPIPA"
+        )
+    APPI
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RegulationAPPI"
+        )
+    DPDP
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RegulationDPDP"
+        )
+    PDPL
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RegulationPDPL"
+        )
+}
+
 enum CookieConsentRecordOrderField
     @goModel(
         model: "go.probo.inc/probo/pkg/coredata.CookieConsentRecordOrderField"
@@ -66,7 +130,8 @@ type CookieConsentRecord implements Node {
     consentData: String!
     action: CookieConsentAction!
     sdkVersion: String!
-    regulation: String!
+    regulation: Regulation!
+    countryCode: CountryCode!
     createdAt: Datetime!
 }
 

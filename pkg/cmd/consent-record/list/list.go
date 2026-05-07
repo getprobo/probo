@@ -36,6 +36,8 @@ query($id: ID!, $first: Int, $after: CursorKey, $filter: CookieConsentRecordFilt
             visitorId
             action
             sdkVersion
+            regulation
+            countryCode
             createdAt
           }
         }
@@ -50,11 +52,13 @@ query($id: ID!, $first: Int, $after: CursorKey, $filter: CookieConsentRecordFilt
 `
 
 type consentRecord struct {
-	ID         string `json:"id"`
-	VisitorID  string `json:"visitorId"`
-	Action     string `json:"action"`
-	SDKVersion string `json:"sdkVersion"`
-	CreatedAt  string `json:"createdAt"`
+	ID          string `json:"id"`
+	VisitorID   string `json:"visitorId"`
+	Action      string `json:"action"`
+	SDKVersion  string `json:"sdkVersion"`
+	Regulation  string `json:"regulation"`
+	CountryCode string `json:"countryCode"`
+	CreatedAt   string `json:"createdAt"`
 }
 
 func NewCmdList(f *cmdutil.Factory) *cobra.Command {
@@ -150,10 +154,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 
 			rows := make([][]string, 0, len(records))
 			for _, r := range records {
-				rows = append(rows, []string{r.ID, r.VisitorID, r.Action, r.SDKVersion, r.CreatedAt})
+				rows = append(rows, []string{r.ID, r.VisitorID, r.Action, r.SDKVersion, r.Regulation, r.CountryCode, r.CreatedAt})
 			}
 
-			t := cmdutil.NewTable("ID", "VISITOR ID", "ACTION", "SDK VERSION", "CREATED AT").Rows(rows...)
+			t := cmdutil.NewTable("ID", "VISITOR ID", "ACTION", "SDK VERSION", "REGULATION", "COUNTRY", "CREATED AT").Rows(rows...)
 			_, _ = fmt.Fprintln(f.IOStreams.Out, t)
 
 			if totalCount > len(records) {

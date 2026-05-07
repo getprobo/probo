@@ -152,6 +152,8 @@ export async function execute(
 								consentData
 								action
 								sdkVersion
+								regulation
+								countryCode
 								createdAt
 							}
 						}
