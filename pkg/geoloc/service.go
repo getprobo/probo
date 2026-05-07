@@ -61,7 +61,7 @@ func (s *Service) ImportFromDir(ctx context.Context, dataDir string) error {
 
 			cidrs, err := parseCIDRFile(path)
 			if err != nil {
-				continue
+				return fmt.Errorf("cannot parse CIDR file %s: %w", path, err)
 			}
 
 			for _, cidr := range cidrs {
@@ -73,20 +73,37 @@ func (s *Service) ImportFromDir(ctx context.Context, dataDir string) error {
 		}
 	}
 
-	return s.pgClient.WithTx(
-		ctx,
-		func(ctx context.Context, tx pg.Tx) error {
-			if err := coredata.TruncateIPCountryBlocks(ctx, tx); err != nil {
-				return err
-			}
+	if err := s.pgClient.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		if err := coredata.CreateIPCountryBlocksStaging(ctx, conn); err != nil {
+			return fmt.Errorf("cannot create staging table: %w", err)
+		}
 
-			if err := coredata.CopyIPCountryBlocks(ctx, tx, blocks); err != nil {
-				return err
-			}
+		if err := coredata.CopyIPCountryBlocksStaging(ctx, conn, blocks); err != nil {
+			return fmt.Errorf("cannot copy IP country blocks to staging: %w", err)
+		}
 
-			return nil
-		},
-	)
+		if err := coredata.FinalizeIPCountryBlocksStaging(ctx, conn); err != nil {
+			return fmt.Errorf("cannot finalize staging table: %w", err)
+		}
+
+		return nil
+	}); err != nil {
+		_ = s.pgClient.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+			return coredata.DropIPCountryBlocksStaging(ctx, conn)
+		})
+		return err
+	}
+
+	if err := s.pgClient.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		return coredata.SwapIPCountryBlocksStaging(ctx, tx)
+	}); err != nil {
+		_ = s.pgClient.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+			return coredata.DropIPCountryBlocksStaging(ctx, conn)
+		})
+		return fmt.Errorf("cannot swap staging table: %w", err)
+	}
+
+	return nil
 }
 
 func (s *Service) LookupCountry(ctx context.Context, ip string) (coredata.CountryCode, error) {
@@ -101,8 +118,11 @@ func (s *Service) LookupCountry(ctx context.Context, ip string) (coredata.Countr
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			var err error
-			cc, err = coredata.LookupCountryByIP(ctx, conn, ip)
-			return err
+			if cc, err = coredata.LookupCountryByIP(ctx, conn, ip); err != nil {
+				return fmt.Errorf("cannot lookup country by IP: %w", err)
+			}
+
+			return nil
 		},
 	)
 	if err != nil {
@@ -119,8 +139,11 @@ func (s *Service) IsPopulated(ctx context.Context) (bool, error) {
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			var err error
-			populated, err = coredata.IsIPCountryBlocksPopulated(ctx, conn)
-			return err
+			if populated, err = coredata.IsIPCountryBlocksPopulated(ctx, conn); err != nil {
+				return fmt.Errorf("cannot check if IP country blocks are populated: %w", err)
+			}
+
+			return nil
 		},
 	)
 	if err != nil {
@@ -148,7 +171,7 @@ func parseCIDRFile(path string) ([]string, error) {
 
 		_, _, err := net.ParseCIDR(line)
 		if err != nil {
-			continue
+			return nil, fmt.Errorf("cannot parse file: %w", err)
 		}
 
 		cidrs = append(cidrs, line)

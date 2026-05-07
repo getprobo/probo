@@ -70,28 +70,67 @@ func IsIPCountryBlocksPopulated(ctx context.Context, conn pg.Querier) (bool, err
 	return populated, nil
 }
 
-func TruncateIPCountryBlocks(ctx context.Context, conn pg.Querier) error {
-	_, err := conn.Exec(ctx, "TRUNCATE common_ip_country_blocks")
-	if err != nil {
-		return fmt.Errorf("cannot truncate common_ip_country_blocks: %w", err)
+const ipCountryBlocksStagingTable = "common_ip_country_blocks_staging"
+
+func CreateIPCountryBlocksStaging(ctx context.Context, conn pg.Querier) error {
+	q := `
+DROP TABLE IF EXISTS common_ip_country_blocks_staging;
+CREATE TABLE common_ip_country_blocks_staging (LIKE common_ip_country_blocks INCLUDING DEFAULTS);
+`
+
+	if _, err := conn.Exec(ctx, q); err != nil {
+		return fmt.Errorf("cannot create staging table: %w", err)
 	}
+
 	return nil
 }
 
-func CopyIPCountryBlocks(ctx context.Context, conn pg.Querier, blocks []IPCountryBlock) error {
-	rows := make([][]any, len(blocks))
-	for i, b := range blocks {
-		rows[i] = []any{b.CIDR, b.CountryCode.String()}
-	}
-
+func CopyIPCountryBlocksStaging(ctx context.Context, conn pg.Querier, blocks []IPCountryBlock) error {
 	_, err := conn.CopyFrom(
 		ctx,
-		pgx.Identifier{"common_ip_country_blocks"},
+		pgx.Identifier{ipCountryBlocksStagingTable},
 		[]string{"cidr", "country_code"},
-		pgx.CopyFromRows(rows),
+		pgx.CopyFromSlice(len(blocks), func(i int) ([]any, error) {
+			return []any{blocks[i].CIDR, blocks[i].CountryCode.String()}, nil
+		}),
 	)
 	if err != nil {
-		return fmt.Errorf("cannot copy rows into common_ip_country_blocks: %w", err)
+		return fmt.Errorf("cannot copy rows into staging table: %w", err)
+	}
+
+	return nil
+}
+
+func FinalizeIPCountryBlocksStaging(ctx context.Context, conn pg.Querier) error {
+	q := `
+CREATE INDEX idx_common_ip_country_blocks_staging_cidr
+    ON common_ip_country_blocks_staging USING gist (cidr inet_ops);
+ANALYZE common_ip_country_blocks_staging;
+`
+
+	if _, err := conn.Exec(ctx, q); err != nil {
+		return fmt.Errorf("cannot finalize staging table: %w", err)
+	}
+
+	return nil
+}
+
+func SwapIPCountryBlocksStaging(ctx context.Context, conn pg.Querier) error {
+	q := `
+DROP TABLE common_ip_country_blocks;
+ALTER TABLE common_ip_country_blocks_staging RENAME TO common_ip_country_blocks;
+`
+
+	if _, err := conn.Exec(ctx, q); err != nil {
+		return fmt.Errorf("cannot swap staging table: %w", err)
+	}
+
+	return nil
+}
+
+func DropIPCountryBlocksStaging(ctx context.Context, conn pg.Querier) error {
+	if _, err := conn.Exec(ctx, "DROP TABLE IF EXISTS common_ip_country_blocks_staging"); err != nil {
+		return fmt.Errorf("cannot drop staging table: %w", err)
 	}
 
 	return nil
