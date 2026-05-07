@@ -71,6 +71,7 @@ func (h *Handler) handleGetConfig(w http.ResponseWriter, r *http.Request) {
 	}
 
 	lang := r.URL.Query().Get("lang")
+	sdkVersion := r.Header.Get("X-SDK-Version")
 	cc := h.resolveCountryCode(r)
 
 	var regulation cookiebanner.Regulation
@@ -78,7 +79,7 @@ func (h *Handler) handleGetConfig(w http.ResponseWriter, r *http.Request) {
 		regulation = cookiebanner.RegulationForCountry(*cc)
 	}
 
-	config, err := h.cookieBannerSvc.GetActiveBannerConfig(r.Context(), bannerID, lang, regulation)
+	config, err := h.cookieBannerSvc.GetActiveBannerConfig(r.Context(), bannerID, lang, regulation, sdkVersion)
 	if err != nil {
 		if errors.Is(err, cookiebanner.ErrBannerNotFound) {
 			jsonutil.RenderNotFound(w, fmt.Errorf("banner not found"))

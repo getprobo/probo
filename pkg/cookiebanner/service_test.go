@@ -283,3 +283,63 @@ func TestBuildSnapshot_RankInvariant(t *testing.T) {
 		assert.Equal(t, coredata.CookieCategoryKindNecessary, snap.Categories[0].Kind)
 	})
 }
+
+func TestRemapTextsForConsentMode(t *testing.T) {
+	t.Parallel()
+
+	baseTexts := func() map[string]string {
+		return map[string]string{
+			"banner_title":       "We use cookies",
+			"banner_description": "This site uses cookies.",
+			"button_accept_all":  "Accept All",
+			"button_reject_all":  "Reject All",
+			"button_customize":   "Customize",
+			"button_dismiss":     "Dismiss",
+		}
+	}
+
+	t.Run("no regulation clears reject and customize", func(t *testing.T) {
+		t.Parallel()
+
+		texts := baseTexts()
+		remapTextsForConsentMode(texts, ConsentModeOptIn, RegulationNone)
+
+		assert.Empty(t, texts["button_reject_all"])
+		assert.Empty(t, texts["button_customize"])
+	})
+
+	t.Run("opt out mode clears reject", func(t *testing.T) {
+		t.Parallel()
+
+		texts := baseTexts()
+		remapTextsForConsentMode(texts, ConsentModeOptOut, RegulationCCPA)
+
+		assert.Empty(t, texts["button_reject_all"])
+	})
+}
+
+func TestIsLegacySDK(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		version string
+		want    bool
+	}{
+		{"0.1.0", true},
+		{"0.2.0", true},
+		{"0.2.5", true},
+		{"0.3.0", false},
+		{"1.0.0", false},
+		{"", false},
+		{"invalid", false},
+		{"v0.2.0", true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.version, func(t *testing.T) {
+			t.Parallel()
+
+			assert.Equal(t, tt.want, isLegacySDK(tt.version))
+		})
+	}
+}

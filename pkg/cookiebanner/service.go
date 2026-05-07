@@ -22,6 +22,7 @@ import (
 	"maps"
 	"net/url"
 	"slices"
+	"strconv"
 	"strings"
 	"time"
 
@@ -1476,6 +1477,7 @@ func (s *Service) GetActiveBannerConfig(
 	bannerID gid.GID,
 	lang string,
 	regulation Regulation,
+	sdkVersion string,
 ) (*BannerConfig, error) {
 	var config *BannerConfig
 
@@ -1529,7 +1531,9 @@ func (s *Service) GetActiveBannerConfig(
 	if cm := ConsentModeForRegulation(regulation); cm != "" {
 		config.ConsentMode = cm
 	}
-	remapTextsForConsentMode(config.Texts, config.ConsentMode, regulation)
+	if !isLegacySDK(sdkVersion) {
+		remapTextsForConsentMode(config.Texts, config.ConsentMode, regulation)
+	}
 
 	return config, nil
 }
@@ -1622,6 +1626,41 @@ func remapTextsForConsentMode(texts map[string]string, consentMode string, regul
 		texts["button_reject_all"] = ""
 		texts["button_customize"] = ""
 	}
+}
+
+// isLegacySDK returns true when the SDK version is <= 0.2.x.
+// Empty or unparseable versions are treated as current.
+func isLegacySDK(version string) bool {
+	if version == "" {
+		return false
+	}
+
+	major, minor, ok := parseMajorMinor(version)
+	if !ok {
+		return false
+	}
+
+	return major == 0 && minor <= 2
+}
+
+func parseMajorMinor(version string) (major, minor int, ok bool) {
+	v := strings.TrimPrefix(version, "v")
+	parts := strings.SplitN(v, ".", 3)
+	if len(parts) < 2 {
+		return 0, 0, false
+	}
+
+	maj, err := strconv.Atoi(parts[0])
+	if err != nil {
+		return 0, 0, false
+	}
+
+	min, err := strconv.Atoi(parts[1])
+	if err != nil {
+		return 0, 0, false
+	}
+
+	return maj, min, true
 }
 
 func remapTextKey(texts map[string]string, src, dst string) {
