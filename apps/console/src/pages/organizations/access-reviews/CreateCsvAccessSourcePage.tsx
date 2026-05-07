@@ -239,7 +239,7 @@ export default function CreateCsvAccessSourcePage({
                   variant="quaternary"
                   icon={IconCrossLargeX}
                   onClick={handleClearFile}
-                  disabled={isCreating}
+                  disabled={isCreating || isReadingFile}
                 >
                   {__("Remove")}
                 </Button>
