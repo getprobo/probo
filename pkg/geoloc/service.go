@@ -101,7 +101,11 @@ func (s *Service) ImportFromDir(ctx context.Context, dataDir string) error {
 	if err := s.pgClient.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			return fmt.Errorf("cannot swap staging table: %w", err)
+			if err := coredata.SwapIPCountryBlocksStaging(ctx, tx); err != nil {
+				return fmt.Errorf("cannot swap staging table: %w", err)
+			}
+
+			return nil
 		},
 	); err != nil {
 		return err
