@@ -4,6 +4,12 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.183.0] - 2026-05-07
+
+### Added
+
+- Add `regulation` and `countryCode` fields on cookie consent record operations
+
 ## [0.182.0] - 2026-05-06
 
 ### Changed
