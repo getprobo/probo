@@ -103,8 +103,8 @@ type (
 		ConsentData json.RawMessage
 		Action      coredata.CookieConsentAction
 		SdkVersion  string
-		Regulation  Regulation
-		CountryCode coredata.CountryCode
+		Regulation  *Regulation
+		CountryCode *coredata.CountryCode
 	}
 
 	DetectedCookie struct {
@@ -1845,6 +1845,10 @@ func (s *Service) RecordConsent(
 				Regulation:            req.Regulation,
 				CountryCode:           req.CountryCode,
 				CreatedAt:             time.Now(),
+			}
+
+			if record.Regulation != nil && *record.Regulation == coredata.RegulationNone {
+				record.Regulation = nil
 			}
 
 			if err := record.Insert(ctx, tx, scope); err != nil {

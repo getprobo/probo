@@ -147,7 +147,7 @@ export default function CookieBannerConsentRecordPage({
           </span>
         </PropertyRow>
         <PropertyRow label={__("User Agent")}>
-          <span className="font-mono text-sm truncate max-w-md" title={record.userAgent ?? undefined}>
+          <span className="font-mono text-sm break-all">
             {record.userAgent ?? "-"}
           </span>
         </PropertyRow>

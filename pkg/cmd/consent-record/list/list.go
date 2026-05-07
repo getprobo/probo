@@ -52,13 +52,13 @@ query($id: ID!, $first: Int, $after: CursorKey, $filter: CookieConsentRecordFilt
 `
 
 type consentRecord struct {
-	ID          string `json:"id"`
-	VisitorID   string `json:"visitorId"`
-	Action      string `json:"action"`
-	SDKVersion  string `json:"sdkVersion"`
-	Regulation  string `json:"regulation"`
-	CountryCode string `json:"countryCode"`
-	CreatedAt   string `json:"createdAt"`
+	ID          string  `json:"id"`
+	VisitorID   string  `json:"visitorId"`
+	Action      string  `json:"action"`
+	SDKVersion  string  `json:"sdkVersion"`
+	Regulation  *string `json:"regulation"`
+	CountryCode *string `json:"countryCode"`
+	CreatedAt   string  `json:"createdAt"`
 }
 
 func NewCmdList(f *cmdutil.Factory) *cobra.Command {
@@ -154,7 +154,15 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 
 			rows := make([][]string, 0, len(records))
 			for _, r := range records {
-				rows = append(rows, []string{r.ID, r.VisitorID, r.Action, r.SDKVersion, r.Regulation, r.CountryCode, r.CreatedAt})
+				regulation := "-"
+				if r.Regulation != nil {
+					regulation = *r.Regulation
+				}
+				countryCode := "-"
+				if r.CountryCode != nil {
+					countryCode = *r.CountryCode
+				}
+				rows = append(rows, []string{r.ID, r.VisitorID, r.Action, r.SDKVersion, regulation, countryCode, r.CreatedAt})
 			}
 
 			t := cmdutil.NewTable("ID", "VISITOR ID", "ACTION", "SDK VERSION", "REGULATION", "COUNTRY", "CREATED AT").Rows(rows...)

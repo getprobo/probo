@@ -130,8 +130,8 @@ type CookieConsentRecord implements Node {
     consentData: String!
     action: CookieConsentAction!
     sdkVersion: String!
-    regulation: Regulation!
-    countryCode: CountryCode!
+    regulation: Regulation
+    countryCode: CountryCode
     createdAt: Datetime!
 }
 

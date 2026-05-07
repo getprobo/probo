@@ -40,8 +40,8 @@ type (
 		ConsentData           json.RawMessage     `db:"consent_data"`
 		Action                CookieConsentAction `db:"action"`
 		SdkVersion            string              `db:"sdk_version"`
-		Regulation            Regulation          `db:"regulation"`
-		CountryCode           CountryCode         `db:"country_code"`
+		Regulation            *Regulation         `db:"regulation"`
+		CountryCode           *CountryCode        `db:"country_code"`
 		CreatedAt             time.Time           `db:"created_at"`
 	}
 

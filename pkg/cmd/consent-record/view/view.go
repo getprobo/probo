@@ -54,8 +54,8 @@ type viewResponse struct {
 		ConsentData string  `json:"consentData"`
 		Action      string  `json:"action"`
 		SdkVersion  string  `json:"sdkVersion"`
-		Regulation  string  `json:"regulation"`
-		CountryCode string  `json:"countryCode"`
+		Regulation  *string `json:"regulation"`
+		CountryCode *string `json:"countryCode"`
 		CreatedAt   string  `json:"createdAt"`
 	} `json:"node"`
 }
@@ -119,8 +119,12 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Visitor ID:"), v.VisitorID)
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Action:"), v.Action)
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("SDK Version:"), v.SdkVersion)
-			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Regulation:"), v.Regulation)
-			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Country Code:"), v.CountryCode)
+			if v.Regulation != nil {
+				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Regulation:"), *v.Regulation)
+			}
+			if v.CountryCode != nil {
+				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Country Code:"), *v.CountryCode)
+			}
 			if v.IPAddress != nil && *v.IPAddress != "" {
 				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("IP Address:"), *v.IPAddress)
 			}

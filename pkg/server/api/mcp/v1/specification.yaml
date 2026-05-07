@@ -9565,8 +9565,6 @@ components:
         - consent_data
         - action
         - sdk_version
-        - regulation
-        - country_code
         - created_at
       properties:
         id:
@@ -9604,9 +9602,11 @@ components:
         regulation:
           $ref: "#/components/schemas/Regulation"
           description: Applicable regulation
+          nullable: true
         country_code:
           $ref: "#/components/schemas/CountryCode"
           description: Visitor country code (ISO 3166-1 alpha-2)
+          nullable: true
         created_at:
           type: string
           format: date-time
