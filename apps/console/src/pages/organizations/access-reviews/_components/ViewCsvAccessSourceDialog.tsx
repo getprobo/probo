@@ -30,8 +30,6 @@ const viewCsvAccessSourceDialogQuery = graphql`
   query ViewCsvAccessSourceDialogQuery($accessSourceId: ID!) {
     node(id: $accessSourceId) @required(action: THROW) {
       ... on AccessSource {
-        id
-        name
         csvData
       }
     }
@@ -62,11 +60,11 @@ export function ViewCsvAccessSourceDialog({
     >
       <DialogContent padded>
         <Suspense
-          fallback={
+          fallback={(
             <div className="flex items-center justify-center py-8">
               <Spinner />
             </div>
-          }
+          )}
         >
           <ViewCsvAccessSourceContent accessSourceId={accessSourceId} />
         </Suspense>
