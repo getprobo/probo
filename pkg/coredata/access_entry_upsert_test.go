@@ -16,6 +16,7 @@ package coredata_test
 
 import (
 	"context"
+	"net"
 	"net/url"
 	"os"
 	"testing"
@@ -52,7 +53,11 @@ func newTestPgClient(t *testing.T) *pg.Client {
 	// run in parallel.
 	opts := []pg.Option{pg.WithRegisterer(prometheus.NewRegistry())}
 	if u.Host != "" {
-		opts = append(opts, pg.WithAddr(u.Host))
+		host := u.Host
+		if u.Port() == "" {
+			host = net.JoinHostPort(u.Hostname(), "5432")
+		}
+		opts = append(opts, pg.WithAddr(host))
 	}
 	if u.User != nil {
 		opts = append(opts, pg.WithUser(u.User.Username()))

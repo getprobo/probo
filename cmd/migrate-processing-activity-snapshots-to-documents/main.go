@@ -24,6 +24,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"net"
 	"net/url"
 	"os"
 	"strings"
@@ -740,7 +741,11 @@ func newPgClientFromDSN(dsn string) (*pg.Client, error) {
 	var opts []pg.Option
 
 	if u.Host != "" {
-		opts = append(opts, pg.WithAddr(u.Host))
+		host := u.Host
+		if u.Port() == "" {
+			host = net.JoinHostPort(u.Hostname(), "5432")
+		}
+		opts = append(opts, pg.WithAddr(host))
 	}
 
 	if u.User != nil {

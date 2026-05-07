@@ -38,7 +38,11 @@ export class ProboBanner extends ProboElement {
 
     if (this.root) {
       this.root.addEventListener("probo-state", this.onStateChange);
-      this.root.addEventListener("probo-ready", this.onReady, { once: true });
+      try {
+        this.validate(this.root.bannerConfig);
+      } catch {
+        this.root.addEventListener("probo-ready", this.onReady, { once: true });
+      }
       if (this.root.state === "banner") {
         this.hidden = false;
       }
