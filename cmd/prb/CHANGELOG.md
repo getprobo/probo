@@ -4,6 +4,16 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.183.0] - 2026-05-07
+
+### Added
+
+- Add `regulation` and `country code` fields on cookie consent records, plus the `STATEMENT_OF_APPLICABILITY` document type on `prb document update`
+
+### Fixed
+
+- Allow editing metadata (title, document type, classification) on generated document versions
+
 ## [0.182.0] - 2026-05-06
 
 ### Added
