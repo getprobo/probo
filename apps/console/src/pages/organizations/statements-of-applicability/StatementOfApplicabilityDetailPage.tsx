@@ -45,7 +45,9 @@ import { z } from "zod";
 
 import type { StatementOfApplicabilityDetailPageDeleteMutation } from "#/__generated__/core/StatementOfApplicabilityDetailPageDeleteMutation.graphql";
 import type { StatementOfApplicabilityDetailPageQuery } from "#/__generated__/core/StatementOfApplicabilityDetailPageQuery.graphql";
+import type { StatementOfApplicabilityDetailPageUpdateApproversMutation } from "#/__generated__/core/StatementOfApplicabilityDetailPageUpdateApproversMutation.graphql";
 import type { StatementOfApplicabilityDetailPageUpdateMutation } from "#/__generated__/core/StatementOfApplicabilityDetailPageUpdateMutation.graphql";
+import { PeopleMultiSelectField } from "#/components/form/PeopleMultiSelectField";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
@@ -62,8 +64,11 @@ export const statementOfApplicabilityDetailPageQuery = graphql`
                 updatedAt
                 document {
                     id
+                    canUpdateDocument: permission(action: "core:document:update")
                     defaultApprovers {
                         id
+                        fullName
+                        emailAddress
                     }
                 }
                 canUpdate: permission(action: "core:statement-of-applicability:update")
@@ -100,6 +105,27 @@ const deleteMutation = graphql`
         }
     }
 `;
+
+const updateApproversMutation = graphql`
+    mutation StatementOfApplicabilityDetailPageUpdateApproversMutation(
+        $input: UpdateDocumentInput!
+    ) {
+        updateDocument(input: $input) {
+            document {
+                id
+                defaultApprovers {
+                    id
+                    fullName
+                    emailAddress
+                }
+            }
+        }
+    }
+`;
+
+const approversSchema = z.object({
+  approverIds: z.array(z.string()),
+});
 
 const StatementOfApplicabilityConnectionKey = "StatementsOfApplicabilityPage_statementsOfApplicability";
 
@@ -233,7 +259,59 @@ export default function StatementOfApplicabilityDetailPage(props: Props) {
     });
   };
 
-  const defaultApproverIds = (statementOfApplicability.document?.defaultApprovers ?? []).map(a => a.id);
+  const defaultApprovers = statementOfApplicability.document?.defaultApprovers ?? [];
+  const defaultApproverIds = defaultApprovers.map(a => a.id);
+  const documentId = statementOfApplicability.document?.id;
+  const canUpdateDocument = statementOfApplicability.document?.canUpdateDocument ?? false;
+
+  const [isEditingApprovers, setIsEditingApprovers] = useState(false);
+  const {
+    control: approversControl,
+    handleSubmit: handleApproversSubmit,
+    reset: resetApprovers,
+  } = useFormWithSchema(approversSchema, {
+    values: {
+      approverIds: defaultApproverIds,
+    },
+  });
+
+  const [updateApprovers, isUpdatingApprovers]
+    = useMutation<StatementOfApplicabilityDetailPageUpdateApproversMutation>(updateApproversMutation);
+
+  const handleUpdateApprovers = handleApproversSubmit((data) => {
+    if (!documentId) return;
+    updateApprovers({
+      variables: {
+        input: {
+          id: documentId,
+          defaultApproverIds: data.approverIds,
+        },
+      },
+      onCompleted() {
+        toast({
+          title: __("Success"),
+          description: __("Approvers updated successfully."),
+          variant: "success",
+        });
+        setIsEditingApprovers(false);
+      },
+      onError(error) {
+        toast({
+          title: __("Error"),
+          description: formatError(
+            __("Failed to update approvers"),
+            error as GraphQLError,
+          ),
+          variant: "error",
+        });
+      },
+    });
+  });
+
+  const handleCancelApproversEdit = () => {
+    setIsEditingApprovers(false);
+    resetApprovers({ approverIds: defaultApproverIds });
+  };
 
   const listUrl = `/organizations/${organizationId}/statements-of-applicability`;
 
@@ -343,7 +421,7 @@ export default function StatementOfApplicabilityDetailPage(props: Props) {
         <div className="space-y-4">
           <h2 className="text-base font-medium">{__("Details")}</h2>
           <Card className="space-y-4" padded>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-4">
               <div>
                 <div className="text-xs text-txt-tertiary font-semibold mb-1">
                   {__("Created at")}
@@ -360,6 +438,58 @@ export default function StatementOfApplicabilityDetailPage(props: Props) {
                   {formatDate(statementOfApplicability.updatedAt)}
                 </div>
               </div>
+              {documentId && (
+                <div>
+                  <div className="text-xs text-txt-tertiary font-semibold mb-1">
+                    {__("Approvers")}
+                  </div>
+                  {isEditingApprovers
+                    ? (
+                        <div className="flex items-center gap-2">
+                          <div className="flex-1">
+                            <PeopleMultiSelectField
+                              name="approverIds"
+                              control={approversControl}
+                              organizationId={organizationId}
+                              selectedPeople={defaultApprovers.map(a => ({
+                                id: a.id,
+                                fullName: a.fullName,
+                                emailAddress: a.emailAddress,
+                              }))}
+                              placeholder={__("Add approvers...")}
+                            />
+                          </div>
+                          <Button
+                            variant="quaternary"
+                            icon={IconCheckmark1}
+                            onClick={() => void handleUpdateApprovers()}
+                            disabled={isUpdatingApprovers}
+                          />
+                          <Button
+                            variant="quaternary"
+                            icon={IconCrossLargeX}
+                            onClick={handleCancelApproversEdit}
+                          />
+                        </div>
+                      )
+                    : (
+                        <div className="flex items-center gap-2">
+                          <div className="text-sm text-txt-primary">
+                            {defaultApprovers.length > 0
+                              ? defaultApprovers.map(a => a.fullName).join(", ")
+                              : __("None")}
+                          </div>
+                          {canUpdateDocument && (
+                            <Button
+                              variant="quaternary"
+                              icon={IconPencil}
+                              onClick={() => setIsEditingApprovers(true)}
+                            />
+                          )}
+                        </div>
+                      )}
+                </div>
+              )}
             </div>
           </Card>
         </div>
