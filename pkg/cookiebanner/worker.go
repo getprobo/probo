@@ -322,22 +322,22 @@ func templateCandidates(name string) []string {
 }
 
 func splitTokens(name string) ([]string, byte) {
-	if idx := strings.IndexByte(name, '_'); idx >= 0 {
+	if found := strings.Contains(name, "_"); found {
 		return strings.Split(name, "_"), '_'
 	}
-	if idx := strings.IndexByte(name, '-'); idx >= 0 {
+	if found := strings.Contains(name, "-"); found {
 		return strings.Split(name, "-"), '-'
 	}
 	return []string{name}, 0
 }
 
 func globMatch(pattern, name string) bool {
-	star := strings.Index(pattern, "*")
-	if star < 0 {
+	before, after, ok := strings.Cut(pattern, "*")
+	if !ok {
 		return pattern == name
 	}
-	prefix := pattern[:star]
-	suffix := pattern[star+1:]
+	prefix := before
+	suffix := after
 	return strings.HasPrefix(name, prefix) &&
 		strings.HasSuffix(name, suffix) &&
 		len(name) >= len(prefix)+len(suffix)
