@@ -14,10 +14,6 @@ enum AccessReviewCampaignStatus
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.AccessReviewCampaignStatusPendingActions"
         )
-    FAILED
-        @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.AccessReviewCampaignStatusFailed"
-        )
     COMPLETED
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.AccessReviewCampaignStatusCompleted"

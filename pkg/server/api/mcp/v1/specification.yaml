@@ -7189,7 +7189,6 @@ components:
         - DRAFT
         - IN_PROGRESS
         - PENDING_ACTIONS
-        - FAILED
         - COMPLETED
         - CANCELLED
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.AccessReviewCampaignStatus

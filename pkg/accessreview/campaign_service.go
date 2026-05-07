@@ -301,9 +301,8 @@ func (s *CampaignService) Start(
 				return fmt.Errorf("cannot load campaign: %w", err)
 			}
 
-			if campaign.Status != coredata.AccessReviewCampaignStatusDraft &&
-				campaign.Status != coredata.AccessReviewCampaignStatusFailed {
-				return fmt.Errorf("cannot start campaign: status is %s, expected %s or %s", campaign.Status, coredata.AccessReviewCampaignStatusDraft, coredata.AccessReviewCampaignStatusFailed)
+			if campaign.Status != coredata.AccessReviewCampaignStatusDraft {
+				return fmt.Errorf("cannot start campaign: status is %s, expected %s", campaign.Status, coredata.AccessReviewCampaignStatusDraft)
 			}
 
 			var sources coredata.AccessSources

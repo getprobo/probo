@@ -242,22 +242,13 @@ func (h *sourceFetchHandler) finalizeCampaignFetchLifecycle(
 				return nil
 			}
 
-			hasFailure := false
 			for _, fetch := range fetches {
 				if !fetch.Status.IsTerminal() {
 					return nil
 				}
-				if fetch.Status == coredata.AccessReviewCampaignSourceFetchStatusFailed {
-					hasFailure = true
-				}
 			}
 
-			if hasFailure {
-				campaign.Status = coredata.AccessReviewCampaignStatusFailed
-			} else {
-				campaign.Status = coredata.AccessReviewCampaignStatusPendingActions
-			}
-
+			campaign.Status = coredata.AccessReviewCampaignStatusPendingActions
 			campaign.UpdatedAt = time.Now()
 			return campaign.Update(ctx, tx, scope)
 		},

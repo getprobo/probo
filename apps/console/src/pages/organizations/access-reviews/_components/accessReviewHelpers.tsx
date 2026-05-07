@@ -24,7 +24,6 @@ export function statusBadgeVariant(status: string): BadgeVariant {
       return "warning";
     case "COMPLETED":
       return "success";
-    case "FAILED":
     case "CANCELLED":
       return "danger";
     default:
@@ -45,8 +44,6 @@ export function statusLabel(
       return __("Pending actions");
     case "COMPLETED":
       return __("Completed");
-    case "FAILED":
-      return __("Failed");
     case "CANCELLED":
       return __("Cancelled");
     default:

@@ -4,6 +4,10 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+### Changed
+
+- Access review campaigns no longer transition to `FAILED` when individual sources fail to fetch; the failure stays surfaced on the source fetch (status + last error) and reviewers can proceed on the sources that succeeded (breaking: removed `FAILED` from `AccessReviewCampaignStatus`)
+
 ## [0.182.0] - 2026-05-06
 
 ### Added
