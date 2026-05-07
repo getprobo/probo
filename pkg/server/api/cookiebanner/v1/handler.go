@@ -71,7 +71,8 @@ func (h *Handler) handleGetConfig(w http.ResponseWriter, r *http.Request) {
 	}
 
 	lang := r.URL.Query().Get("lang")
-	regulation := h.resolveRegulation(r)
+	cc := h.resolveCountryCode(r)
+	regulation := cookiebanner.RegulationForCountry(cc)
 
 	config, err := h.cookieBannerSvc.GetActiveBannerConfig(r.Context(), bannerID, lang, regulation)
 	if err != nil {
@@ -91,20 +92,16 @@ func (h *Handler) handleGetConfig(w http.ResponseWriter, r *http.Request) {
 	httpserver.RenderJSON(w, http.StatusOK, config)
 }
 
-func (h *Handler) resolveRegulation(r *http.Request) cookiebanner.Regulation {
+func (h *Handler) resolveCountryCode(r *http.Request) coredata.CountryCode {
 	ip := clientip.Extract(r)
 
 	cc, err := h.geolocSvc.LookupCountry(r.Context(), ip)
 	if err != nil {
 		h.logger.ErrorCtx(r.Context(), "cannot resolve country for IP", log.Error(err))
-		return cookiebanner.RegulationNone
+		return ""
 	}
 
-	if cc == "" {
-		return cookiebanner.RegulationNone
-	}
-
-	return cookiebanner.RegulationForCountry(cc)
+	return cc
 }
 
 func (h *Handler) handleGetConsent(w http.ResponseWriter, r *http.Request) {
@@ -170,6 +167,7 @@ func (h *Handler) handlePostConsent(w http.ResponseWriter, r *http.Request) {
 	ip := clientip.Extract(r)
 	ua := r.UserAgent()
 	sdkVersion := r.Header.Get("X-SDK-Version")
+	cc := h.resolveCountryCode(r)
 
 	req := cookiebanner.RecordConsentRequest{
 		Version:     body.Version,
@@ -179,7 +177,8 @@ func (h *Handler) handlePostConsent(w http.ResponseWriter, r *http.Request) {
 		ConsentData: body.ConsentData,
 		Action:      body.Action,
 		SdkVersion:  sdkVersion,
-		Regulation:  h.resolveRegulation(r),
+		Regulation:  cookiebanner.RegulationForCountry(cc),
+		CountryCode: cc,
 	}
 
 	record, err := h.cookieBannerSvc.RecordConsent(r.Context(), bannerID, req)

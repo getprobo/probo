@@ -104,6 +104,7 @@ type (
 		Action      coredata.CookieConsentAction
 		SdkVersion  string
 		Regulation  Regulation
+		CountryCode coredata.CountryCode
 	}
 
 	DetectedCookie struct {
@@ -1842,6 +1843,7 @@ func (s *Service) RecordConsent(
 				Action:                req.Action,
 				SdkVersion:            req.SdkVersion,
 				Regulation:            req.Regulation,
+				CountryCode:           req.CountryCode,
 				CreatedAt:             time.Now(),
 			}
 

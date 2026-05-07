@@ -41,6 +41,7 @@ type (
 		Action                CookieConsentAction `db:"action"`
 		SdkVersion            string              `db:"sdk_version"`
 		Regulation            Regulation          `db:"regulation"`
+		CountryCode           CountryCode         `db:"country_code"`
 		CreatedAt             time.Time           `db:"created_at"`
 	}
 
@@ -92,6 +93,7 @@ SELECT
 	action,
 	sdk_version,
 	regulation,
+	country_code,
 	created_at
 FROM
 	cookie_consent_records
@@ -177,6 +179,7 @@ INSERT INTO cookie_consent_records (
 	action,
 	sdk_version,
 	regulation,
+	country_code,
 	created_at
 ) VALUES (
 	@id,
@@ -191,6 +194,7 @@ INSERT INTO cookie_consent_records (
 	@action,
 	@sdk_version,
 	@regulation,
+	@country_code,
 	@created_at
 )
 `
@@ -208,6 +212,7 @@ INSERT INTO cookie_consent_records (
 		"action":                   r.Action,
 		"sdk_version":              r.SdkVersion,
 		"regulation":               r.Regulation,
+		"country_code":             r.CountryCode,
 		"created_at":               r.CreatedAt,
 	}
 
@@ -238,6 +243,7 @@ SELECT
 	action,
 	sdk_version,
 	regulation,
+	country_code,
 	created_at
 FROM
 	cookie_consent_records
@@ -290,6 +296,7 @@ SELECT
 	action,
 	sdk_version,
 	regulation,
+	country_code,
 	created_at
 FROM
 	cookie_consent_records
