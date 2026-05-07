@@ -29,6 +29,7 @@ import {
   IconChevronRight,
   IconPlusLarge,
   IconRobot,
+  IconTrashCan,
   Option,
   Select,
   Tbody,
@@ -43,11 +44,13 @@ import {
 import * as Popover from "@radix-ui/react-popover";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { type PreloadedQuery, useMutation, usePreloadedQuery, useRelayEnvironment } from "react-relay";
+import { useNavigate } from "react-router";
 import { fetchQuery, graphql } from "relay-runtime";
 
 import type { AccessEntryDecision, CampaignDetailPageBulkDecisionMutation } from "#/__generated__/core/CampaignDetailPageBulkDecisionMutation.graphql";
 import type { AccessEntryFlag, CampaignDetailPageBulkFlagMutation } from "#/__generated__/core/CampaignDetailPageBulkFlagMutation.graphql";
 import type { CampaignDetailPageCloseMutation } from "#/__generated__/core/CampaignDetailPageCloseMutation.graphql";
+import type { CampaignDetailPageDeleteMutation } from "#/__generated__/core/CampaignDetailPageDeleteMutation.graphql";
 import type { CampaignDetailPageQuery } from "#/__generated__/core/CampaignDetailPageQuery.graphql";
 import type { CampaignDetailPageStartMutation } from "#/__generated__/core/CampaignDetailPageStartMutation.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
@@ -95,6 +98,16 @@ const closeCampaignMutation = graphql`
   }
 `;
 
+const deleteCampaignMutation = graphql`
+  mutation CampaignDetailPageDeleteMutation(
+    $input: DeleteAccessReviewCampaignInput!
+  ) {
+    deleteAccessReviewCampaign(input: $input) {
+      deletedAccessReviewCampaignId
+    }
+  }
+`;
+
 const bulkDecisionMutation = graphql`
   mutation CampaignDetailPageBulkDecisionMutation(
     $input: RecordAccessEntryDecisionsInput!
@@ -131,6 +144,7 @@ export const campaignDetailPageQuery = graphql`
         id
         name
         status
+        canDelete: permission(action: "core:access-review-campaign:delete")
         scopeSources {
           id
           source {
@@ -171,6 +185,7 @@ type Props = {
 export default function CampaignDetailPage({ queryRef }: Props) {
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
+  const navigate = useNavigate();
   const environment = useRelayEnvironment();
   const data = usePreloadedQuery(campaignDetailPageQuery, queryRef);
 
@@ -183,6 +198,8 @@ export default function CampaignDetailPage({ queryRef }: Props) {
   const isInProgress = campaign.status === "IN_PROGRESS";
   const isDraft = campaign.status === "DRAFT";
   const isPendingActions = campaign.status === "PENDING_ACTIONS";
+  const isCancelled = campaign.status === "CANCELLED";
+  const canDelete = campaign.canDelete && (isDraft || isCancelled);
 
   const campaignIdRef = useRef(campaign.id);
 
@@ -215,6 +232,9 @@ export default function CampaignDetailPage({ queryRef }: Props) {
 
   const [closeCampaign, isClosing]
     = useMutation<CampaignDetailPageCloseMutation>(closeCampaignMutation);
+
+  const [deleteCampaign, isDeleting]
+    = useMutation<CampaignDetailPageDeleteMutation>(deleteCampaignMutation);
 
   const allDecided = campaign.scopeSources.length > 0
     && campaign.scopeSources.every(source =>
@@ -260,6 +280,59 @@ export default function CampaignDetailPage({ queryRef }: Props) {
         });
       },
     });
+  };
+
+  const handleDelete = () => {
+    confirm(
+      () =>
+        new Promise<void>((resolve) => {
+          deleteCampaign({
+            variables: {
+              input: { accessReviewCampaignId: campaign.id },
+            },
+            onCompleted(_, errors) {
+              if (errors?.length) {
+                toast({
+                  title: __("Error"),
+                  description: formatError(
+                    __("Failed to delete campaign"),
+                    errors as GraphQLError[],
+                  ),
+                  variant: "error",
+                });
+                resolve();
+                return;
+              }
+              toast({
+                title: __("Success"),
+                description: __("Campaign deleted successfully."),
+                variant: "success",
+              });
+              resolve();
+              navigate(`/organizations/${organizationId}/access-reviews`);
+            },
+            onError(error) {
+              toast({
+                title: __("Error"),
+                description: formatError(
+                  __("Failed to delete campaign"),
+                  error as GraphQLError,
+                ),
+                variant: "error",
+              });
+              resolve();
+            },
+          });
+        }),
+      {
+        message: sprintf(
+          __("This will permanently delete \"%s\". This action cannot be undone."),
+          campaign.name,
+        ),
+        label: __("Delete"),
+        variant: "danger",
+      },
+    );
   };
 
   const handleComplete = () => {
@@ -336,6 +409,17 @@ export default function CampaignDetailPage({ queryRef }: Props) {
             disabled={!allDecided || isClosing}
           >
             {isClosing ? __("Completing...") : __("Complete campaign")}
+          </Button>
+        )}
+        {canDelete && (
+          <Button
+            icon={IconTrashCan}
+            variant="danger"
+            onClick={handleDelete}
+            disabled={isDeleting}
+            className="ml-auto"
+          >
+            {isDeleting ? __("Deleting...") : __("Delete")}
           </Button>
         )}
       </div>

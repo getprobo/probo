@@ -12,22 +12,29 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+import { formatError, type GraphQLError, sprintf } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import {
+  ActionDropdown,
   Badge,
   Button,
   Card,
+  DropdownItem,
   IconPlusLarge,
+  IconTrashCan,
   Table,
   Tbody,
   Td,
   Th,
   Thead,
   Tr,
+  useConfirm,
+  useToast,
 } from "@probo/ui";
 import type { PreloadedQuery } from "react-relay";
-import { graphql, usePaginationFragment, usePreloadedQuery } from "react-relay";
+import { graphql, useMutation, usePaginationFragment, usePreloadedQuery } from "react-relay";
 
+import type { AccessReviewCampaignsTabDeleteMutation } from "#/__generated__/core/AccessReviewCampaignsTabDeleteMutation.graphql";
 import type { AccessReviewCampaignsTabFragment$key } from "#/__generated__/core/AccessReviewCampaignsTabFragment.graphql";
 import type { AccessReviewCampaignsTabPaginationQuery } from "#/__generated__/core/AccessReviewCampaignsTabPaginationQuery.graphql";
 import type { AccessReviewCampaignsTabQuery } from "#/__generated__/core/AccessReviewCampaignsTabQuery.graphql";
@@ -71,8 +78,20 @@ const campaignsFragment = graphql`
           name
           status
           createdAt
+          canDelete: permission(action: "core:access-review-campaign:delete")
         }
       }
+    }
+  }
+`;
+
+const deleteCampaignMutation = graphql`
+  mutation AccessReviewCampaignsTabDeleteMutation(
+    $input: DeleteAccessReviewCampaignInput!
+    $connections: [ID!]!
+  ) {
+    deleteAccessReviewCampaign(input: $input) {
+      deletedAccessReviewCampaignId @deleteEdge(connections: $connections)
     }
   }
 `;
@@ -84,6 +103,8 @@ type Props = {
 export default function AccessReviewCampaignsTab({ queryRef }: Props) {
   const { __, dateFormat } = useTranslate();
   const organizationId = useOrganizationId();
+  const confirm = useConfirm();
+  const { toast } = useToast();
 
   const { organization } = usePreloadedQuery(accessReviewCampaignsTabQuery, queryRef);
   if (organization.__typename !== "Organization") {
@@ -99,6 +120,65 @@ export default function AccessReviewCampaignsTab({ queryRef }: Props) {
     AccessReviewCampaignsTabPaginationQuery,
     AccessReviewCampaignsTabFragment$key
   >(campaignsFragment, organization);
+
+  const [deleteCampaign] = useMutation<AccessReviewCampaignsTabDeleteMutation>(
+    deleteCampaignMutation,
+  );
+
+  // Only DRAFT and CANCELLED campaigns can be deleted (enforced by the backend).
+  const isDeletableStatus = (status: string) =>
+    status === "DRAFT" || status === "CANCELLED";
+
+  const handleDelete = (campaignId: string, campaignName: string) => {
+    confirm(
+      () => {
+        deleteCampaign({
+          variables: {
+            input: { accessReviewCampaignId: campaignId },
+            connections: [accessReviewCampaigns.__id],
+          },
+          onCompleted(_, errors) {
+            if (errors?.length) {
+              toast({
+                title: __("Error"),
+                description: formatError(
+                  __("Failed to delete campaign"),
+                  errors as GraphQLError[],
+                ),
+                variant: "error",
+              });
+              return;
+            }
+            toast({
+              title: __("Success"),
+              description: __("Campaign deleted successfully."),
+              variant: "success",
+            });
+          },
+          onError(error) {
+            toast({
+              title: __("Error"),
+              description: formatError(
+                __("Failed to delete campaign"),
+                error as GraphQLError,
+              ),
+              variant: "error",
+            });
+          },
+        });
+      },
+      {
+        message: sprintf(
+          __("This will permanently delete \"%s\". This action cannot be undone."),
+          campaignName,
+        ),
+      },
+    );
+  };
+
+  const hasActions = accessReviewCampaigns.edges.some(
+    edge => edge.node.canDelete && isDeletableStatus(edge.node.status),
+  );
 
   return (
     <div className="space-y-4">
@@ -124,25 +204,49 @@ export default function AccessReviewCampaignsTab({ queryRef }: Props) {
                     <Th>{__("Name")}</Th>
                     <Th>{__("Status")}</Th>
                     <Th>{__("Created at")}</Th>
+                    {hasActions && <Th className="w-12"></Th>}
                   </Tr>
                 </Thead>
                 <Tbody>
-                  {accessReviewCampaigns.edges.map(edge => (
-                    <Tr
-                      key={edge.node.id}
-                      to={`/organizations/${organizationId}/access-reviews/campaigns/${edge.node.id}`}
-                    >
-                      <Td>{edge.node.name}</Td>
-                      <Td>
-                        <Badge variant={statusBadgeVariant(edge.node.status)}>
-                          {statusLabel(__, edge.node.status)}
-                        </Badge>
-                      </Td>
-                      <Td>
-                        {dateFormat(edge.node.createdAt)}
-                      </Td>
-                    </Tr>
-                  ))}
+                  {accessReviewCampaigns.edges.map((edge) => {
+                    const canDeleteRow
+                      = edge.node.canDelete && isDeletableStatus(edge.node.status);
+                    return (
+                      <Tr
+                        key={edge.node.id}
+                        to={`/organizations/${organizationId}/access-reviews/campaigns/${edge.node.id}`}
+                      >
+                        <Td>{edge.node.name}</Td>
+                        <Td>
+                          <Badge variant={statusBadgeVariant(edge.node.status)}>
+                            {statusLabel(__, edge.node.status)}
+                          </Badge>
+                        </Td>
+                        <Td>
+                          {dateFormat(edge.node.createdAt)}
+                        </Td>
+                        {hasActions && (
+                          <Td noLink width={50} className="text-end">
+                            {canDeleteRow && (
+                              <ActionDropdown>
+                                <DropdownItem
+                                  icon={IconTrashCan}
+                                  variant="danger"
+                                  onSelect={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    handleDelete(edge.node.id, edge.node.name);
+                                  }}
+                                >
+                                  {__("Delete")}
+                                </DropdownItem>
+                              </ActionDropdown>
+                            )}
+                          </Td>
+                        )}
+                      </Tr>
+                    );
+                  })}
                 </Tbody>
               </Table>
 
