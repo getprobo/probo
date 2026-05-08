@@ -4,6 +4,8 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.184.2] - 2026-05-08
+
 ### Security
 
 - Upgrade go to 1.26.3
