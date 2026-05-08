@@ -46,10 +46,11 @@ type updateResponse struct {
 
 func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 	var (
-		flagName        string
-		flagCSVFile     string
-		flagConnectorID string
-		flagOutput      *string
+		flagName           string
+		flagCSVFile        string
+		flagConnectorID    string
+		flagCloudAccountID string
+		flagOutput         *string
 	)
 
 	cmd := &cobra.Command{
@@ -87,6 +88,25 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 				input["name"] = flagName
 			}
 
+			// Mutual exclusivity: at most one source target may be
+			// updated per call. A caller that wants to swap targets
+			// detaches the old one with --connector-id="" /
+			// --cloud-account-id="" / --csv-file="" first, then
+			// runs a second update to attach the new target.
+			targetFlags := 0
+			if cmd.Flags().Changed("csv-file") {
+				targetFlags++
+			}
+			if cmd.Flags().Changed("connector-id") {
+				targetFlags++
+			}
+			if cmd.Flags().Changed("cloud-account-id") {
+				targetFlags++
+			}
+			if targetFlags > 1 {
+				return fmt.Errorf("at most one of --csv-file, --connector-id, --cloud-account-id may be set per update")
+			}
+
 			if cmd.Flags().Changed("csv-file") {
 				csvData, err := os.ReadFile(flagCSVFile)
 				if err != nil {
@@ -97,6 +117,10 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 
 			if cmd.Flags().Changed("connector-id") {
 				input["connectorId"] = flagConnectorID
+			}
+
+			if cmd.Flags().Changed("cloud-account-id") {
+				input["cloudAccountId"] = flagCloudAccountID
 			}
 
 			data, err := client.Do(
@@ -128,6 +152,7 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagName, "name", "", "Access source name")
 	cmd.Flags().StringVar(&flagCSVFile, "csv-file", "", "Path to CSV file with access data")
 	cmd.Flags().StringVar(&flagConnectorID, "connector-id", "", "Connector ID to use as data source")
+	cmd.Flags().StringVar(&flagCloudAccountID, "cloud-account-id", "", "Cloud account ID to use as data source")
 	flagOutput = cmdutil.AddOutputFlag(cmd)
 
 	return cmd

@@ -179,6 +179,14 @@ type Organization implements Node {
     slackOAuth2Scopes: [String!]! @goField(forceResolver: true)
     connectors(filter: ConnectorFilter): [Connector!]! @goField(forceResolver: true)
     connectorProviderInfos: [ConnectorProviderInfo!]! @goField(forceResolver: true)
+    cloudAccounts(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: CloudAccountOrder
+        filter: CloudAccountFilter
+    ): CloudAccountConnection! @goField(forceResolver: true)
 
     controls(
         first: Int

@@ -114,6 +114,7 @@ const (
 	_                                          uint16 = 88 // CookiePatternEntityType - removed
 	TrackerPatternEntityType                   uint16 = 89
 	DetectedTrackerEntityType                  uint16 = 90
+	CloudAccountEntityType                     uint16 = 91
 )
 
 func NewEntityFromID(id gid.GID) (any, bool) {
@@ -284,6 +285,8 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &TrackerPattern{ID: id}, true
 	case DetectedTrackerEntityType:
 		return &DetectedTracker{ID: id}, true
+	case CloudAccountEntityType:
+		return &CloudAccount{ID: id}, true
 	default:
 		return nil, false
 	}

@@ -539,6 +539,7 @@ func (r *mutationResolver) CreateAccessSource(ctx context.Context, input types.C
 	source, err := r.accessReview.Sources(scope).Create(ctx, accessreview.CreateAccessSourceRequest{
 		OrganizationID: input.OrganizationID,
 		ConnectorID:    input.ConnectorID,
+		CloudAccountID: input.CloudAccountID,
 		Name:           input.Name,
 		Category:       coredata.AccessSourceCategorySaaS,
 		CsvData:        input.CSVData,
@@ -568,6 +569,9 @@ func (r *mutationResolver) UpdateAccessSource(ctx context.Context, input types.U
 	}
 	if input.ConnectorID.IsSet() {
 		req.ConnectorID = gqlutils.UnwrapOmittable(input.ConnectorID)
+	}
+	if input.CloudAccountID.IsSet() {
+		req.CloudAccountID = gqlutils.UnwrapOmittable(input.CloudAccountID)
 	}
 	if input.CSVData.IsSet() {
 		req.CsvData = gqlutils.UnwrapOmittable(input.CSVData)

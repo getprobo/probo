@@ -32,6 +32,10 @@ const (
 	WebhookEventTypeObligationCreated WebhookEventType = "obligation:created"
 	WebhookEventTypeObligationUpdated WebhookEventType = "obligation:updated"
 	WebhookEventTypeObligationDeleted WebhookEventType = "obligation:deleted"
+
+	WebhookEventTypeCloudAccountCreated      WebhookEventType = "cloud_account:created"
+	WebhookEventTypeCloudAccountVerified     WebhookEventType = "cloud_account:verified"
+	WebhookEventTypeCloudAccountDisconnected WebhookEventType = "cloud_account:disconnected"
 )
 
 func (w WebhookEventType) String() string {
@@ -42,7 +46,8 @@ func (w WebhookEventType) IsValid() bool {
 	switch w {
 	case WebhookEventTypeVendorCreated, WebhookEventTypeVendorUpdated, WebhookEventTypeVendorDeleted,
 		WebhookEventTypeUserCreated, WebhookEventTypeUserUpdated, WebhookEventTypeUserDeleted,
-		WebhookEventTypeObligationCreated, WebhookEventTypeObligationUpdated, WebhookEventTypeObligationDeleted:
+		WebhookEventTypeObligationCreated, WebhookEventTypeObligationUpdated, WebhookEventTypeObligationDeleted,
+		WebhookEventTypeCloudAccountCreated, WebhookEventTypeCloudAccountVerified, WebhookEventTypeCloudAccountDisconnected:
 		return true
 	}
 	return false

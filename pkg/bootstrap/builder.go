@@ -153,6 +153,23 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 				Endpoint:        b.getEnv("AWS_ENDPOINT"),
 				UsePathStyle:    b.getEnvBoolOrDefault("AWS_USE_PATH_STYLE", false),
 			},
+			CloudAccount: probodconfig.CloudAccountConfig{
+				// AWSAssumerARN / AWSTemplateURL / AWSTemplateSHA256
+				// have no defaults: install-assets must return
+				// UNAVAILABLE when a deployment has not yet
+				// published a CloudFormation template, instead of
+				// emitting a Quick-Create URL pointing at a
+				// non-existent object. Operators set the values via
+				// environment when AWS support is rolled out.
+				AWSAssumerARN:       b.getEnv("CLOUD_ACCOUNT_AWS_ASSUMER_ARN"),
+				AWSTemplateURL:      b.getEnv("CLOUD_ACCOUNT_AWS_TEMPLATE_URL"),
+				AWSTemplateSHA256:   b.getEnv("CLOUD_ACCOUNT_AWS_TEMPLATE_SHA256"),
+				AWSEnabled:          b.getEnvBoolOrDefault("CLOUD_ACCOUNT_AWS_ENABLED", true),
+				GCPEnabled:          b.getEnvBoolOrDefault("CLOUD_ACCOUNT_GCP_ENABLED", true),
+				AzureEnabled:        b.getEnvBoolOrDefault("CLOUD_ACCOUNT_AZURE_ENABLED", true),
+				ProbeInterval:       b.getEnvIntOrDefault("CLOUD_ACCOUNT_PROBE_INTERVAL_SECONDS", 900),
+				ProbeMaxConcurrency: b.getEnvIntOrDefault("CLOUD_ACCOUNT_PROBE_MAX_CONCURRENCY", 4),
+			},
 			Notifications: probodconfig.NotificationsConfig{
 				Mailer: probodconfig.MailerConfig{
 					SenderName:     b.getEnvOrDefault("MAILER_SENDER_NAME", "Probo"),

@@ -88,6 +88,7 @@ var ViewerPolicy = policy.NewPolicy(
 		ActionCookieCategoryGet, ActionCookieCategoryList,
 		ActionCookieGet, ActionCookieList,
 		ActionCookieConsentRecordList,
+		ActionCloudAccountList, ActionCloudAccountGet,
 	).WithSID("entity-read-access").When(organizationCondition),
 
 	policy.Allow(
@@ -154,6 +155,7 @@ var AuditorPolicy = policy.NewPolicy(
 		ActionFileGet, ActionFileDownloadUrl,
 		ActionStatementOfApplicabilityGet, ActionStatementOfApplicabilityList,
 		ActionApplicabilityStatementGet, ActionApplicabilityStatementList,
+		ActionCloudAccountList, ActionCloudAccountGet,
 	).WithSID("entity-read-access").When(organizationCondition),
 
 	policy.Allow(

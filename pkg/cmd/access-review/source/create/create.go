@@ -50,10 +50,11 @@ type createResponse struct {
 
 func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	var (
-		flagOrg         string
-		flagName        string
-		flagCSVFile     string
-		flagConnectorID string
+		flagOrg            string
+		flagName           string
+		flagCSVFile        string
+		flagConnectorID    string
+		flagCloudAccountID string
 	)
 
 	cmd := &cobra.Command{
@@ -63,7 +64,10 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
   prb access-review source create --name "Okta Users" --csv-file users.csv
 
   # Create an access source with a connector
-  prb access-review source create --name "GitHub" --connector-id <connector-id>`,
+  prb access-review source create --name "GitHub" --connector-id <connector-id>
+
+  # Create an access source backed by a cloud account
+  prb access-review source create --name "AWS Prod" --cloud-account-id <cloud-account-id>`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := f.Config()
@@ -92,8 +96,18 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				return fmt.Errorf("cannot determine organization, use --org or 'prb auth login'")
 			}
 
-			if flagCSVFile != "" && flagConnectorID != "" {
-				return fmt.Errorf("cannot specify both --csv-file and --connector-id")
+			targets := 0
+			if flagCSVFile != "" {
+				targets++
+			}
+			if flagConnectorID != "" {
+				targets++
+			}
+			if flagCloudAccountID != "" {
+				targets++
+			}
+			if targets > 1 {
+				return fmt.Errorf("cannot specify more than one of --csv-file, --connector-id, --cloud-account-id")
 			}
 
 			input := map[string]any{
@@ -111,6 +125,10 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 
 			if flagConnectorID != "" {
 				input["connectorId"] = flagConnectorID
+			}
+
+			if flagCloudAccountID != "" {
+				input["cloudAccountId"] = flagCloudAccountID
 			}
 
 			data, err := client.Do(
@@ -139,6 +157,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagName, "name", "", "Access source name (required)")
 	cmd.Flags().StringVar(&flagCSVFile, "csv-file", "", "Path to CSV file with access data")
 	cmd.Flags().StringVar(&flagConnectorID, "connector-id", "", "Connector ID to use as data source")
+	cmd.Flags().StringVar(&flagCloudAccountID, "cloud-account-id", "", "Cloud account ID to use as data source (AWS / GCP / Azure)")
 
 	_ = cmd.MarkFlagRequired("name")
 

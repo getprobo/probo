@@ -44,6 +44,7 @@ type (
 	CreateAccessSourceRequest struct {
 		OrganizationID gid.GID
 		ConnectorID    *gid.GID
+		CloudAccountID *gid.GID
 		Name           string
 		Category       coredata.AccessSourceCategory
 		CsvData        *string
@@ -54,6 +55,7 @@ type (
 		Name           *string
 		Category       *coredata.AccessSourceCategory
 		ConnectorID    **gid.GID
+		CloudAccountID **gid.GID
 		CsvData        **string
 	}
 
@@ -69,6 +71,25 @@ func (r *CreateAccessSourceRequest) Validate() error {
 	v.Check(r.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
 	v.Check(r.Name, "name", validator.SafeTextNoNewLine(NameMaxLength))
 	v.Check(r.Category, "category", validator.OneOfSlice(coredata.AccessSourceCategories()))
+
+	// At most one of {ConnectorID, CloudAccountID, CsvData} may be
+	// set on a given access source. Legacy rows allow zero targets
+	// (a source can be configured later via Update). Field-level
+	// shape only -- tenant consistency (the connector / cloud-account
+	// belongs to OrganizationID) lives in the service method body.
+	targets := 0
+	if r.ConnectorID != nil {
+		targets++
+	}
+	if r.CloudAccountID != nil {
+		targets++
+	}
+	if r.CsvData != nil {
+		targets++
+	}
+	if targets > 1 {
+		return fmt.Errorf("cannot validate access source: at most one of {connector_id, cloud_account_id, csv_data} may be set")
+	}
 
 	return v.Error()
 }
@@ -105,6 +126,7 @@ func (s AccessSourceService) Create(
 		ID:             gid.New(s.scope.GetTenantID(), coredata.AccessSourceEntityType),
 		OrganizationID: req.OrganizationID,
 		ConnectorID:    req.ConnectorID,
+		CloudAccountID: req.CloudAccountID,
 		Name:           req.Name,
 		Category:       req.Category,
 		CsvData:        req.CsvData,
@@ -120,6 +142,23 @@ func (s AccessSourceService) Create(
 				connector := &coredata.Connector{}
 				if err := connector.LoadMetadataByID(ctx, conn, s.scope, *req.ConnectorID); err != nil {
 					return fmt.Errorf("cannot load connector: %w", err)
+				}
+			}
+
+			// Validate cloud account exists in scope. The Scoper
+			// guarantees a row from another tenant cannot be loaded
+			// even if the GID is guessed -- tenant consistency is
+			// the FK + Scoper combo.
+			if req.CloudAccountID != nil {
+				cloudAccount := &coredata.CloudAccount{}
+				if err := cloudAccount.LoadMetadataByID(ctx, conn, s.scope, *req.CloudAccountID); err != nil {
+					return fmt.Errorf("cannot load cloud account: %w", err)
+				}
+				if cloudAccount.OrganizationID != req.OrganizationID {
+					// Use a non-revealing error: a caller from org-B
+					// must not be able to distinguish "exists in
+					// org-A" from "does not exist".
+					return fmt.Errorf("cannot load cloud account: not found")
 				}
 			}
 
@@ -181,17 +220,49 @@ func (s AccessSourceService) Update(
 				source.Category = *req.Category
 			}
 
+			// A target update on any of {connector_id,
+			// cloud_account_id, csv_data} clears the other two so the
+			// at-most-one DB CHECK constraint stays satisfied. A
+			// caller that wants to detach all targets sets one of
+			// them to null explicitly; the other two are cleared as a
+			// side effect.
 			if req.ConnectorID != nil {
 				if *req.ConnectorID != nil {
 					connector := &coredata.Connector{}
 					if err := connector.LoadMetadataByID(ctx, conn, s.scope, **req.ConnectorID); err != nil {
 						return fmt.Errorf("cannot load connector: %w", err)
 					}
+					source.CloudAccountID = nil
+					source.CsvData = nil
 				}
 				source.ConnectorID = *req.ConnectorID
 			}
 
+			if req.CloudAccountID != nil {
+				if *req.CloudAccountID != nil {
+					cloudAccount := &coredata.CloudAccount{}
+					if err := cloudAccount.LoadMetadataByID(ctx, conn, s.scope, **req.CloudAccountID); err != nil {
+						return fmt.Errorf("cannot load cloud account: %w", err)
+					}
+					if cloudAccount.OrganizationID != source.OrganizationID {
+						// Match the Create-side cross-org check;
+						// emit a non-revealing error so a caller
+						// scanning org-A's GIDs from org-B cannot
+						// distinguish "exists in another org" from
+						// "does not exist".
+						return fmt.Errorf("cannot load cloud account: not found")
+					}
+					source.ConnectorID = nil
+					source.CsvData = nil
+				}
+				source.CloudAccountID = *req.CloudAccountID
+			}
+
 			if req.CsvData != nil {
+				if *req.CsvData != nil {
+					source.ConnectorID = nil
+					source.CloudAccountID = nil
+				}
 				source.CsvData = *req.CsvData
 			}
 

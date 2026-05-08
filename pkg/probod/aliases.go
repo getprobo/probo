@@ -40,6 +40,7 @@ type (
 	LLMProviderConfig       = probodconfig.LLMProviderConfig
 	LLMAgentConfig          = probodconfig.LLMAgentConfig
 	EvidenceDescriberConfig = probodconfig.EvidenceDescriberConfig
+	CloudAccountConfig      = probodconfig.CloudAccountConfig
 	AgentsConfig            = probodconfig.AgentsConfig
 	MailerConfig            = probodconfig.MailerConfig
 	SMTPConfig              = probodconfig.SMTPConfig

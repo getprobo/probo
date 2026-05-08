@@ -60,6 +60,7 @@ type (
 		Connectors        []ConnectorConfig       `json:"connectors"`
 		Agents            AgentsConfig            `json:"llm"`
 		EvidenceDescriber EvidenceDescriberConfig `json:"evidence-describer"`
+		CloudAccount      CloudAccountConfig      `json:"cloud-account"`
 		ChromeDPAddr      string                  `json:"chrome-dp-addr"`
 		SearchEndpoint    string                  `json:"search-endpoint"`
 		CustomDomains     CustomDomainsConfig     `json:"custom-domains"`

@@ -412,4 +412,13 @@ const (
 
 	// CookieConsentRecord actions
 	ActionCookieConsentRecordList = "core:cookie-consent-record:list"
+
+	// CloudAccount actions
+	ActionCloudAccountList                  = "core:cloud-account:list"
+	ActionCloudAccountGet                   = "core:cloud-account:get"
+	ActionCloudAccountCreate                = "core:cloud-account:create"
+	ActionCloudAccountVerify                = "core:cloud-account:verify"
+	ActionCloudAccountRotateCredentials     = "core:cloud-account:rotate-credentials"
+	ActionCloudAccountDelete                = "core:cloud-account:delete"
+	ActionCloudAccountGenerateInstallAssets = "core:cloud-account:generate-install-assets"
 )

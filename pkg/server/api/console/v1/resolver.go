@@ -94,8 +94,23 @@ func NewMux(
 		r.Use(authn.NewOAuth2AccessTokenMiddleware(iamSvc))
 		r.Use(authn.NewIdentityPresenceMiddleware())
 		r.Use(dataloader.NewMiddleware(proboSvc, iamSvc, cookieBannerSvc))
+		r.Use(AuthzCacheMiddleware())
 
 		r.Handle("/graphql", graphqlHandler)
+
+		// Cloud-account credential upload: secret bytes are POSTed
+		// as multipart/form-data, encrypted server-side, persisted
+		// onto the cloud-account row, and probed in-line. The
+		// multipart body never lands in any access log
+		// (kit/httpserver logs only request metadata).
+		r.Post(
+			"/cloud-accounts/credentials/upload",
+			handleCloudAccountCredentialUpload(
+				logger,
+				proboSvc,
+				authz.NewAuthorizeFunc(iamSvc, logger),
+			),
+		)
 
 		r.Get(
 			"/connectors/initiate",
