@@ -130,7 +130,6 @@ export class ProboThemedBanner extends HTMLElement {
       const detail = (e as CustomEvent).detail;
       const config = detail.config as BannerConfig;
       this.applyTexts(config);
-      this.applyLayout(config);
       if (!config.show_branding) {
         this.shadow.querySelectorAll("[data-branding]").forEach(el => {
           (el as HTMLElement).setAttribute("hidden", "");
@@ -223,20 +222,6 @@ export class ProboThemedBanner extends HTMLElement {
         settingsBtn.setAttribute("aria-settings-label", ariaText);
       }
     }
-  }
-
-  private applyLayout(config: BannerConfig): void {
-    const texts = config.texts ?? {};
-
-    const hideIfEmpty = (selector: string, textKey: string): void => {
-      if (texts[textKey]) return;
-      this.shadow.querySelectorAll(selector).forEach(el => {
-        (el as HTMLElement).hidden = true;
-      });
-    };
-
-    hideIfEmpty("probo-banner probo-reject-button", "button_reject_all");
-    hideIfEmpty("probo-banner probo-customize-button", "button_customize");
   }
 
   private esc(str: string): string {

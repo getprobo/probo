@@ -15,6 +15,7 @@
 import { ProboElement } from "./base";
 import type { ProboRootElement } from "./base";
 import type { ProboCookieBannerRoot } from "./cookie-banner-root";
+import type { BannerConfig } from "../types";
 
 class ProboActionButton extends ProboElement {
   protected root: ProboRootElement | null = null;
@@ -29,6 +30,40 @@ class ProboActionButton extends ProboElement {
   }
 
   protected handleClick = (_e: Event): void => {};
+}
+
+class ProboHideableButton extends ProboActionButton {
+  protected textKey: string = "";
+
+  private onReady = (e: Event): void => {
+    const config = (e as CustomEvent).detail.config as BannerConfig;
+    this.applyVisibility(config);
+  };
+
+  connectedCallback(): void {
+    super.connectedCallback();
+    if (this.root) {
+      try {
+        this.applyVisibility(this.root.bannerConfig);
+      } catch {
+        this.root.addEventListener("probo-ready", this.onReady, { once: true });
+      }
+    }
+  }
+
+  disconnectedCallback(): void {
+    super.disconnectedCallback();
+    if (this.root) {
+      this.root.removeEventListener("probo-ready", this.onReady);
+    }
+  }
+
+  private applyVisibility(config: BannerConfig): void {
+    const texts = config.texts ?? {};
+    if (!texts[this.textKey]) {
+      this.hidden = true;
+    }
+  }
 }
 
 export class ProboAcceptButton extends ProboActionButton {
@@ -46,7 +81,9 @@ export class ProboAcceptButton extends ProboActionButton {
   };
 }
 
-export class ProboRejectButton extends ProboActionButton {
+export class ProboRejectButton extends ProboHideableButton {
+  protected textKey = "button_reject_all";
+
   protected handleClick = (): void => {
     if (!this.root) return;
     this.root.client.rejectAll();
@@ -61,7 +98,9 @@ export class ProboRejectButton extends ProboActionButton {
   };
 }
 
-export class ProboCustomizeButton extends ProboActionButton {
+export class ProboCustomizeButton extends ProboHideableButton {
+  protected textKey = "button_customize";
+
   protected handleClick = (): void => {
     if (!this.root) return;
     this.root.setState("panel");
