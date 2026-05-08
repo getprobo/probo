@@ -4,6 +4,10 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+### Security
+
+- Upgrade go to 1.26.3
+
 ## [0.183.0] - 2026-05-07
 
 ### Added
