@@ -277,22 +277,22 @@ jobs:
           fail-build: true
           severity-cutoff: critical
       - name: "Attest SBOM for archives"
-        uses: "actions/attest-sbom@c604332985a26aa8cf1bdc465b92731239ec6b9e" # v4
+        uses: "actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26" # v4.1.0
         with:
           subject-path: "archives/*.tar.gz, archives/*.zip"
           sbom-path: "sbom.json"
       - name: "Attest build provenance for archives"
-        uses: "actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32" # v4
+        uses: "actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26" # v4.1.0
         with:
           subject-path: "archives/*.tar.gz, archives/*.zip"
       - name: "Attest Docker image SBOM"
-        uses: "actions/attest-sbom@c604332985a26aa8cf1bdc465b92731239ec6b9e" # v4
+        uses: "actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26" # v4.1.0
         with:
           subject-name: "ghcr.io/getprobo/probo"
           subject-digest: ${{ needs.docker-manifest.outputs.digest }}
           sbom-path: "sbom.json"
       - name: "Trivy scan Docker image"
-        uses: "aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1" # 0.35.0
+        uses: "aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25" # 0.36.0
         with:
           image-ref: "ghcr.io/getprobo/probo:${{ needs.docker-manifest.outputs.image_tag }}"
           format: "sarif"
