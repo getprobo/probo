@@ -31,20 +31,20 @@ import { graphql, useFragment, useMutation, useQueryLoader } from "react-relay";
 import { useParams } from "react-router";
 import { ConnectionHandler } from "relay-runtime";
 
-import type { DetectionPatternRowDeleteMutation } from "#/__generated__/core/DetectionPatternRowDeleteMutation.graphql";
-import type { DetectionPatternRowFragment$key } from "#/__generated__/core/DetectionPatternRowFragment.graphql";
-import type { DetectionPatternRowMoveMutation } from "#/__generated__/core/DetectionPatternRowMoveMutation.graphql";
-import type { DetectionPatternRowUpdateMutation } from "#/__generated__/core/DetectionPatternRowUpdateMutation.graphql";
+import type { TrackerPatternRowDeleteMutation } from "#/__generated__/core/TrackerPatternRowDeleteMutation.graphql";
+import type { TrackerPatternRowFragment$key } from "#/__generated__/core/TrackerPatternRowFragment.graphql";
+import type { TrackerPatternRowMoveMutation } from "#/__generated__/core/TrackerPatternRowMoveMutation.graphql";
+import type { TrackerPatternRowUpdateMutation } from "#/__generated__/core/TrackerPatternRowUpdateMutation.graphql";
 import type { MoveToCategoryDropdownQuery } from "#/__generated__/core/MoveToCategoryDropdownQuery.graphql";
 
-import { DetectionPatternRowEdit } from "./DetectionPatternRowEdit";
+import { TrackerPatternRowEdit } from "./TrackerPatternRowEdit";
 import {
   MoveToCategoryDropdown,
   moveToCategoryDropdownQuery,
 } from "./MoveToCategoryDropdown";
 
-const detectionPatternFragment = graphql`
-  fragment DetectionPatternRowFragment on TrackerPattern {
+const trackerPatternFragment = graphql`
+  fragment TrackerPatternRowFragment on TrackerPattern {
     id
     trackerType
     displayName
@@ -58,7 +58,7 @@ const detectionPatternFragment = graphql`
 `;
 
 const deletePatternMutation = graphql`
-  mutation DetectionPatternRowDeleteMutation(
+  mutation TrackerPatternRowDeleteMutation(
     $input: DeleteTrackerPatternInput!
     $connections: [ID!]!
   ) {
@@ -77,7 +77,7 @@ const deletePatternMutation = graphql`
 `;
 
 const movePatternMutation = graphql`
-  mutation DetectionPatternRowMoveMutation(
+  mutation TrackerPatternRowMoveMutation(
     $input: MoveTrackerPatternToCategoryInput!
   ) {
     moveTrackerPatternToCategory(input: $input) {
@@ -100,7 +100,7 @@ const movePatternMutation = graphql`
 `;
 
 const updatePatternMutation = graphql`
-  mutation DetectionPatternRowUpdateMutation(
+  mutation TrackerPatternRowUpdateMutation(
     $input: UpdateTrackerPatternInput!
   ) {
     updateTrackerPattern(input: $input) {
@@ -130,23 +130,21 @@ function trackerTypeLabel(type: string, __: (s: string) => string): string {
     case "LOCAL_STORAGE": return __("localStorage");
     case "SESSION_STORAGE": return __("sessionStorage");
     case "INDEXED_DB": return __("IndexedDB");
-    case "SCRIPT": return __("Script");
-    case "IFRAME": return __("Iframe");
     default: return type;
   }
 }
 
-interface DetectionPatternRowProps {
-  patternKey: DetectionPatternRowFragment$key;
+interface TrackerPatternRowProps {
+  patternKey: TrackerPatternRowFragment$key;
   connectionId: string;
 }
 
-export function DetectionPatternRow({ patternKey, connectionId }: DetectionPatternRowProps) {
+export function TrackerPatternRow({ patternKey, connectionId }: TrackerPatternRowProps) {
   const { __ } = useTranslate();
   const { toast } = useToast();
   const confirm = useConfirm();
   const { cookieBannerId } = useParams<{ cookieBannerId: string }>();
-  const pattern = useFragment(detectionPatternFragment, patternKey);
+  const pattern = useFragment(trackerPatternFragment, patternKey);
 
   const [isEditing, setIsEditing] = useState(false);
   const [categoryQueryRef, loadCategoryQuery]
@@ -162,11 +160,11 @@ export function DetectionPatternRow({ patternKey, connectionId }: DetectionPatte
   );
 
   const [deletePattern]
-    = useMutation<DetectionPatternRowDeleteMutation>(deletePatternMutation);
+    = useMutation<TrackerPatternRowDeleteMutation>(deletePatternMutation);
   const [movePattern]
-    = useMutation<DetectionPatternRowMoveMutation>(movePatternMutation);
+    = useMutation<TrackerPatternRowMoveMutation>(movePatternMutation);
   const [updatePattern, isUpdating]
-    = useMutation<DetectionPatternRowUpdateMutation>(updatePatternMutation);
+    = useMutation<TrackerPatternRowUpdateMutation>(updatePatternMutation);
 
   const handleDelete = () => {
     confirm(
@@ -276,7 +274,7 @@ export function DetectionPatternRow({ patternKey, connectionId }: DetectionPatte
 
   if (isEditing) {
     return (
-      <DetectionPatternRowEdit
+      <TrackerPatternRowEdit
         pattern={pattern.displayName}
         description={pattern.description}
         maxAgeSeconds={pattern.maxAgeSeconds ?? null}

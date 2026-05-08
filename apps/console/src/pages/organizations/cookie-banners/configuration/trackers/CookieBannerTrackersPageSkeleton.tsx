@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-export function CookieBannerDetectionPageSkeleton() {
+export function CookieBannerTrackersPageSkeleton() {
   return (
     <div className="space-y-4 animate-pulse">
       <div className="flex items-center gap-4">

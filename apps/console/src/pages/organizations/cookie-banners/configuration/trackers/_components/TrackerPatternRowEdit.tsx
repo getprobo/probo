@@ -22,7 +22,7 @@ interface FormValues {
   description: string;
 }
 
-interface DetectionPatternRowEditProps {
+interface TrackerPatternRowEditProps {
   pattern: string;
   description: string;
   maxAgeSeconds: number | null;
@@ -31,14 +31,14 @@ interface DetectionPatternRowEditProps {
   onCancel: () => void;
 }
 
-export function DetectionPatternRowEdit({
+export function TrackerPatternRowEdit({
   pattern,
   description,
   maxAgeSeconds,
   isUpdating,
   onSave,
   onCancel,
-}: DetectionPatternRowEditProps) {
+}: TrackerPatternRowEditProps) {
   const { __ } = useTranslate();
   const initial = fromMaxAgeSeconds(maxAgeSeconds);
 

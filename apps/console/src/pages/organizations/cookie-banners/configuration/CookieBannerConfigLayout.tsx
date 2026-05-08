@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { ClipboardTextIcon, MagnifyingGlassIcon } from "@phosphor-icons/react";
+import { ClipboardTextIcon, CodeIcon, MagnifyingGlassIcon } from "@phosphor-icons/react";
 import { formatError, type GraphQLError } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import {
@@ -247,9 +247,13 @@ export default function CookieBannerConfigLayout({ queryRef }: CookieBannerConfi
           <IconGlobe size={20} />
           {__("Translations")}
         </TabLink>
-        <TabLink to={`/organizations/${organizationId}/cookie-banners/${cookieBannerId}/detection`}>
+        <TabLink to={`/organizations/${organizationId}/cookie-banners/${cookieBannerId}/trackers`}>
           <MagnifyingGlassIcon size={20} />
-          {__("Detection")}
+          {__("Trackers")}
+        </TabLink>
+        <TabLink to={`/organizations/${organizationId}/cookie-banners/${cookieBannerId}/resources`}>
+          <CodeIcon size={20} />
+          {__("Resources")}
         </TabLink>
         <TabLink to={`/organizations/${organizationId}/cookie-banners/${cookieBannerId}/consent-records`}>
           <ClipboardTextIcon size={20} />

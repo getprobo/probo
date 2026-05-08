@@ -31,31 +31,31 @@ import {
   usePreloadedQuery,
 } from "react-relay";
 
-import type { CookieBannerDetectionPageFragment$key } from "#/__generated__/core/CookieBannerDetectionPageFragment.graphql";
-import type { CookieBannerDetectionPageQuery } from "#/__generated__/core/CookieBannerDetectionPageQuery.graphql";
+import type { CookieBannerTrackersPageFragment$key } from "#/__generated__/core/CookieBannerTrackersPageFragment.graphql";
+import type { CookieBannerTrackersPageQuery } from "#/__generated__/core/CookieBannerTrackersPageQuery.graphql";
 import type {
-  CookieBannerDetectionPageRefetchQuery,
+  CookieBannerTrackersPageRefetchQuery,
   CookieSource,
   TrackerPatternOrderField,
-} from "#/__generated__/core/CookieBannerDetectionPageRefetchQuery.graphql";
+} from "#/__generated__/core/CookieBannerTrackersPageRefetchQuery.graphql";
 import { SortableTable, SortableTh } from "#/components/SortableTable";
 
-import { DetectionPatternRow } from "./_components/DetectionPatternRow";
+import { TrackerPatternRow } from "./_components/TrackerPatternRow";
 
-export const cookieBannerDetectionPageQuery = graphql`
-  query CookieBannerDetectionPageQuery($cookieBannerId: ID!) {
+export const cookieBannerTrackersPageQuery = graphql`
+  query CookieBannerTrackersPageQuery($cookieBannerId: ID!) {
     node(id: $cookieBannerId) @required(action: THROW) {
       __typename
       ... on CookieBanner {
-        ...CookieBannerDetectionPageFragment
+        ...CookieBannerTrackersPageFragment
       }
     }
   }
 `;
 
-const detectionFragment = graphql`
-  fragment CookieBannerDetectionPageFragment on CookieBanner
-  @refetchable(queryName: "CookieBannerDetectionPageRefetchQuery")
+const trackersFragment = graphql`
+  fragment CookieBannerTrackersPageFragment on CookieBanner
+  @refetchable(queryName: "CookieBannerTrackersPageRefetchQuery")
   @argumentDefinitions(
     first: { type: "Int", defaultValue: 50 }
     order: { type: "TrackerPatternOrder", defaultValue: { field: NAME, direction: ASC } }
@@ -74,7 +74,7 @@ const detectionFragment = graphql`
       filter: { query: $query, source: $source }
     )
       @connection(
-        key: "CookieBannerDetectionPage_uncategorisedTrackerPatterns"
+        key: "CookieBannerTrackersPage_uncategorisedTrackerPatterns"
         filters: ["filter", "orderBy"]
       )
       @required(action: THROW) {
@@ -82,22 +82,22 @@ const detectionFragment = graphql`
       edges {
         node {
           id
-          ...DetectionPatternRowFragment
+          ...TrackerPatternRowFragment
         }
       }
     }
   }
 `;
 
-interface CookieBannerDetectionPageProps {
-  queryRef: PreloadedQuery<CookieBannerDetectionPageQuery>;
+interface CookieBannerTrackersPageProps {
+  queryRef: PreloadedQuery<CookieBannerTrackersPageQuery>;
 }
 
-export default function CookieBannerDetectionPage({
+export default function CookieBannerTrackersPage({
   queryRef,
-}: CookieBannerDetectionPageProps) {
+}: CookieBannerTrackersPageProps) {
   const { __ } = useTranslate();
-  const data = usePreloadedQuery(cookieBannerDetectionPageQuery, queryRef);
+  const data = usePreloadedQuery(cookieBannerTrackersPageQuery, queryRef);
 
   if (data.node.__typename !== "CookieBanner") {
     throw new Error("invalid type for node");
@@ -108,9 +108,9 @@ export default function CookieBannerDetectionPage({
   const [sourceFilter, setSourceFilter] = useState<CookieSource | null>(null);
 
   const { data: fragmentData, ...pagination } = usePaginationFragment<
-    CookieBannerDetectionPageRefetchQuery,
-    CookieBannerDetectionPageFragment$key
-  >(detectionFragment, data.node);
+    CookieBannerTrackersPageRefetchQuery,
+    CookieBannerTrackersPageFragment$key
+  >(trackersFragment, data.node);
 
   const connectionId = fragmentData.uncategorisedTrackerPatterns.__id;
   const patterns = fragmentData.uncategorisedTrackerPatterns.edges.map(edge => edge.node) ?? [];
@@ -187,7 +187,7 @@ export default function CookieBannerDetectionPage({
                 </Thead>
                 <Tbody>
                   {patterns.map(pattern => (
-                    <DetectionPatternRow
+                    <TrackerPatternRow
                       key={pattern.id}
                       patternKey={pattern}
                       connectionId={connectionId}
