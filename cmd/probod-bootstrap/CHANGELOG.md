@@ -4,6 +4,12 @@ All notable changes to `probod-bootstrap` will be documented in this file.
 
 ## Unreleased
 
+## [0.1.1] - 2026-05-08
+
+### Fixed
+
+- Fix builder tracing address default port
+
 ### Security
 
 - Upgrade go to 1.26.3
