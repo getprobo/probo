@@ -48,6 +48,7 @@ import (
 	"go.probo.inc/probo/pkg/cmd/task"
 	"go.probo.inc/probo/pkg/cmd/tia"
 	trackerpattern "go.probo.inc/probo/pkg/cmd/tracker-pattern"
+	trackerresource "go.probo.inc/probo/pkg/cmd/tracker-resource"
 	trustcenter "go.probo.inc/probo/pkg/cmd/trust-center"
 	"go.probo.inc/probo/pkg/cmd/user"
 	"go.probo.inc/probo/pkg/cmd/vendormgmt"
@@ -100,6 +101,7 @@ func NewCmdRoot(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(cookiebanner.NewCmdCookieBanner(f))
 	cmd.AddCommand(cookiecategory.NewCmdCookieCategory(f))
 	cmd.AddCommand(trackerpattern.NewCmdTrackerPattern(f))
+	cmd.AddCommand(trackerresource.NewCmdTrackerResource(f))
 	cmd.AddCommand(datum.NewCmdDatum(f))
 	cmd.AddCommand(document.NewCmdDocument(f))
 	cmd.AddCommand(dpia.NewCmdDPIA(f))
