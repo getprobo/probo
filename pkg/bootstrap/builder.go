@@ -59,7 +59,7 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 				Addr: b.getEnvOrDefault("METRICS_ADDR", "localhost:8081"),
 			},
 			Tracing: probodconfig.TracingConfig{
-				Addr:          b.getEnvOrDefault("TRACING_ADDR", "localhost:4317"),
+				Addr:          b.getEnvOrDefault("TRACING_ADDR", "localhost:4318"),
 				MaxBatchSize:  b.getEnvIntOrDefault("TRACING_MAX_BATCH_SIZE", 512),
 				BatchTimeout:  b.getEnvIntOrDefault("TRACING_BATCH_TIMEOUT", 5),
 				ExportTimeout: b.getEnvIntOrDefault("TRACING_EXPORT_TIMEOUT", 30),
