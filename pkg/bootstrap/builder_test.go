@@ -130,7 +130,7 @@ func TestBuilder_Build_Defaults(t *testing.T) {
 
 	// Unit config
 	assert.Equal(t, "localhost:8081", cfg.Unit.Metrics.Addr)
-	assert.Equal(t, "localhost:4317", cfg.Unit.Tracing.Addr)
+	assert.Equal(t, "localhost:4318", cfg.Unit.Tracing.Addr)
 	assert.Equal(t, 512, cfg.Unit.Tracing.MaxBatchSize)
 	assert.Equal(t, 5, cfg.Unit.Tracing.BatchTimeout)
 	assert.Equal(t, 30, cfg.Unit.Tracing.ExportTimeout)
