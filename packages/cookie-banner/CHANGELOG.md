@@ -4,6 +4,13 @@ All notable changes to the `@probo/cookie-banner` SDK will be documented in this
 
 ## Unreleased
 
+## [0.3.1] - 2026-05-08
+
+### Fixed
+
+- Reopen the banner instead of the preference panel for OPT_OUT regulations (e.g. CCPA) when clicking the settings widget, since users only need Accept/Reject choices
+- `ProboRejectButton` and `ProboCustomizeButton` now auto-hide when their corresponding text key is empty in the server config, so headless SDK consumers no longer need regulation-aware layout logic
+
 ## [0.3.0] - 2026-05-07
 
 ### Added
