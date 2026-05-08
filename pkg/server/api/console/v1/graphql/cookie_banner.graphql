@@ -152,6 +152,15 @@ type CookieBanner implements Node {
         filter: TrackerPatternFilter
     ): TrackerPatternConnection @goField(forceResolver: true)
 
+    uncategorisedTrackerResources(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: TrackerResourceOrder
+        filter: TrackerResourceFilter
+    ): TrackerResourceConnection @goField(forceResolver: true)
+
     createdAt: Datetime!
     updatedAt: Datetime!
 
@@ -184,6 +193,14 @@ type CookieCategory implements Node {
         before: CursorKey
         orderBy: TrackerPatternOrder
     ): TrackerPatternConnection @goField(forceResolver: true)
+
+    trackerResources(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: TrackerResourceOrder
+    ): TrackerResourceConnection @goField(forceResolver: true)
 
     createdAt: Datetime!
     updatedAt: Datetime!
@@ -279,6 +296,86 @@ input TrackerPatternFilter
     query: String
     source: CookieSource
     trackerType: TrackerType
+}
+
+enum TrackerResourceType
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.TrackerResourceType") {
+    SCRIPT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TrackerResourceTypeScript"
+        )
+    IFRAME
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TrackerResourceTypeIframe"
+        )
+}
+
+enum TrackerResourceOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.TrackerResourceOrderField"
+    ) {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TrackerResourceOrderFieldCreatedAt"
+        )
+    LAST_DETECTED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TrackerResourceOrderFieldLastDetectedAt"
+        )
+    ORIGIN
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TrackerResourceOrderFieldOrigin"
+        )
+    UPDATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TrackerResourceOrderFieldUpdatedAt"
+        )
+}
+
+type TrackerResource implements Node {
+    id: ID!
+    cookieCategory: CookieCategory @goField(forceResolver: true)
+    type: TrackerResourceType!
+    origin: String!
+    path: String!
+    displayName: String!
+    description: String!
+    excluded: Boolean!
+    lastDetectedAt: Datetime
+    createdAt: Datetime!
+    updatedAt: Datetime!
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type TrackerResourceConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.TrackerResourceConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [TrackerResourceEdge!]!
+    pageInfo: PageInfo!
+}
+
+type TrackerResourceEdge {
+    cursor: CursorKey!
+    node: TrackerResource!
+}
+
+input TrackerResourceOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.TrackerResourceOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: TrackerResourceOrderField!
+}
+
+input TrackerResourceFilter
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.TrackerResourceFilter"
+    ) {
+    query: String
+    type: TrackerResourceType
 }
 
 type CookieBannerVersion implements Node {
@@ -378,6 +475,18 @@ extend type Mutation {
     moveTrackerPatternToCategory(
         input: MoveTrackerPatternToCategoryInput!
     ): MoveTrackerPatternToCategoryPayload!
+    createTrackerResource(
+        input: CreateTrackerResourceInput!
+    ): CreateTrackerResourcePayload!
+    updateTrackerResource(
+        input: UpdateTrackerResourceInput!
+    ): UpdateTrackerResourcePayload!
+    deleteTrackerResource(
+        input: DeleteTrackerResourceInput!
+    ): DeleteTrackerResourcePayload!
+    moveTrackerResourceToCategory(
+        input: MoveTrackerResourceToCategoryInput!
+    ): MoveTrackerResourceToCategoryPayload!
 }
 
 input CreateCookieBannerInput {
@@ -540,5 +649,50 @@ type DeleteTrackerPatternPayload {
 
 type MoveTrackerPatternToCategoryPayload {
     trackerPattern: TrackerPattern!
+    cookieBanner: CookieBanner!
+}
+
+input CreateTrackerResourceInput {
+    cookieCategoryId: ID!
+    type: TrackerResourceType!
+    origin: String!
+    path: String!
+    displayName: String!
+    description: String
+}
+
+input UpdateTrackerResourceInput {
+    trackerResourceId: ID!
+    displayName: String
+    description: String
+    excluded: Boolean
+}
+
+input DeleteTrackerResourceInput {
+    trackerResourceId: ID!
+}
+
+input MoveTrackerResourceToCategoryInput {
+    trackerResourceId: ID!
+    targetCookieCategoryId: ID!
+}
+
+type CreateTrackerResourcePayload {
+    trackerResourceEdge: TrackerResourceEdge!
+    cookieBanner: CookieBanner!
+}
+
+type UpdateTrackerResourcePayload {
+    trackerResource: TrackerResource!
+    cookieBanner: CookieBanner!
+}
+
+type DeleteTrackerResourcePayload {
+    deletedTrackerResourceId: ID!
+    cookieBanner: CookieBanner!
+}
+
+type MoveTrackerResourceToCategoryPayload {
+    trackerResource: TrackerResource!
     cookieBanner: CookieBanner!
 }

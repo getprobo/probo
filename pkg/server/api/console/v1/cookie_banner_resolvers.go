@@ -213,6 +213,42 @@ func (r *cookieBannerResolver) UncategorisedTrackerPatterns(ctx context.Context,
 	return types.NewTrackerPatternConnectionWithFilter(p, r, obj.ID, filter), nil
 }
 
+// UncategorisedTrackerResources is the resolver for the uncategorisedTrackerResources field.
+func (r *cookieBannerResolver) UncategorisedTrackerResources(ctx context.Context, obj *types.CookieBanner, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TrackerResourceOrderBy, filter *types.TrackerResourceFilter) (*types.TrackerResourceConnection, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionTrackerResourceList); err != nil {
+		return nil, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.TrackerResourceOrderField]{
+		Field:     coredata.TrackerResourceOrderFieldLastDetectedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.TrackerResourceOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+	scope := coredata.NewScopeFromObjectID(obj.ID)
+
+	coredataFilter := coredata.NewTrackerResourceFilter(nil, nil)
+	if filter != nil {
+		coredataFilter = coredataFilter.WithQuery(filter.Query).WithResourceType(filter.Type)
+	}
+
+	resources, err := r.cookieBanner.ListUncategorisedTrackerResources(ctx, scope, obj.ID, cursor, coredataFilter)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list uncategorised tracker resources", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	p := page.NewPage(resources, cursor)
+
+	return types.NewTrackerResourceConnectionWithFilter(p, r, obj.ID, filter), nil
+}
+
 // Permission is the resolver for the permission field.
 func (r *cookieBannerResolver) Permission(ctx context.Context, obj *types.CookieBanner, action string) (bool, error) {
 	return r.Resolver.Permission(ctx, obj, action)
@@ -331,6 +367,37 @@ func (r *cookieCategoryResolver) TrackerPatterns(ctx context.Context, obj *types
 	p := page.NewPage(patterns, cursor)
 
 	return types.NewTrackerPatternConnection(p, r, obj.ID), nil
+}
+
+// TrackerResources is the resolver for the trackerResources field.
+func (r *cookieCategoryResolver) TrackerResources(ctx context.Context, obj *types.CookieCategory, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TrackerResourceOrderBy) (*types.TrackerResourceConnection, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionTrackerResourceList); err != nil {
+		return nil, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.TrackerResourceOrderField]{
+		Field:     coredata.TrackerResourceOrderFieldCreatedAt,
+		Direction: page.OrderDirectionAsc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.TrackerResourceOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+	scope := coredata.NewScopeFromObjectID(obj.ID)
+
+	resources, err := r.cookieBanner.ListTrackerResourcesForCategory(ctx, scope, obj.ID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list tracker resources", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	p := page.NewPage(resources, cursor)
+
+	return types.NewTrackerResourceConnection(p, r, obj.ID), nil
 }
 
 // Permission is the resolver for the permission field.
@@ -929,6 +996,177 @@ func (r *mutationResolver) MoveTrackerPatternToCategory(ctx context.Context, inp
 	}, nil
 }
 
+// CreateTrackerResource is the resolver for the createTrackerResource field.
+func (r *mutationResolver) CreateTrackerResource(ctx context.Context, input types.CreateTrackerResourceInput) (*types.CreateTrackerResourcePayload, error) {
+	if err := r.authorize(ctx, input.CookieCategoryID, probo.ActionTrackerResourceCreate); err != nil {
+		return nil, err
+	}
+
+	scope := coredata.NewScopeFromObjectID(input.CookieCategoryID)
+
+	var description string
+	if input.Description != nil {
+		description = *input.Description
+	}
+
+	resource, err := r.cookieBanner.CreateTrackerResource(
+		ctx,
+		scope,
+		cookiebanner.CreateTrackerResourceRequest{
+			CookieCategoryID: input.CookieCategoryID,
+			ResourceType:     input.Type,
+			Origin:           input.Origin,
+			Path:             input.Path,
+			DisplayName:      input.DisplayName,
+			Description:      description,
+		},
+	)
+	if err != nil {
+		if errors.Is(err, cookiebanner.ErrResourceAlreadyExists) {
+			return nil, gqlutils.Conflictf(ctx, "a resource with this origin and path already exists in this banner")
+		}
+		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+		}
+		r.logger.ErrorCtx(ctx, "cannot create tracker resource", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	bannerScope := coredata.NewScopeFromObjectID(resource.CookieBannerID)
+	banner, err := r.cookieBanner.GetCookieBanner(ctx, bannerScope, resource.CookieBannerID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot get cookie banner", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.CreateTrackerResourcePayload{
+		TrackerResourceEdge: types.NewTrackerResourceEdge(resource, coredata.TrackerResourceOrderFieldCreatedAt),
+		CookieBanner:        types.NewCookieBanner(banner),
+	}, nil
+}
+
+// UpdateTrackerResource is the resolver for the updateTrackerResource field.
+func (r *mutationResolver) UpdateTrackerResource(ctx context.Context, input types.UpdateTrackerResourceInput) (*types.UpdateTrackerResourcePayload, error) {
+	if err := r.authorize(ctx, input.TrackerResourceID, probo.ActionTrackerResourceUpdate); err != nil {
+		return nil, err
+	}
+
+	scope := coredata.NewScopeFromObjectID(input.TrackerResourceID)
+
+	resource, err := r.cookieBanner.UpdateTrackerResource(
+		ctx,
+		scope,
+		cookiebanner.UpdateTrackerResourceRequest{
+			TrackerResourceID: input.TrackerResourceID,
+			DisplayName:       input.DisplayName,
+			Description:       input.Description,
+			Excluded:          input.Excluded,
+		},
+	)
+	if err != nil {
+		if errors.Is(err, cookiebanner.ErrTrackerResourceNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+		}
+		r.logger.ErrorCtx(ctx, "cannot update tracker resource", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	bannerScope := coredata.NewScopeFromObjectID(resource.CookieBannerID)
+	banner, err := r.cookieBanner.GetCookieBanner(ctx, bannerScope, resource.CookieBannerID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot get cookie banner", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.UpdateTrackerResourcePayload{
+		TrackerResource: types.NewTrackerResourceNode(resource),
+		CookieBanner:    types.NewCookieBanner(banner),
+	}, nil
+}
+
+// DeleteTrackerResource is the resolver for the deleteTrackerResource field.
+func (r *mutationResolver) DeleteTrackerResource(ctx context.Context, input types.DeleteTrackerResourceInput) (*types.DeleteTrackerResourcePayload, error) {
+	if err := r.authorize(ctx, input.TrackerResourceID, probo.ActionTrackerResourceDelete); err != nil {
+		return nil, err
+	}
+
+	scope := coredata.NewScopeFromObjectID(input.TrackerResourceID)
+
+	resource, err := r.cookieBanner.GetTrackerResource(ctx, scope, input.TrackerResourceID)
+	if err != nil {
+		if errors.Is(err, cookiebanner.ErrTrackerResourceNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+		r.logger.ErrorCtx(ctx, "cannot get tracker resource", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	bannerID := resource.CookieBannerID
+
+	if err := r.cookieBanner.DeleteTrackerResource(ctx, scope, input.TrackerResourceID); err != nil {
+		if errors.Is(err, cookiebanner.ErrTrackerResourceNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+		r.logger.ErrorCtx(ctx, "cannot delete tracker resource", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	bannerScope := coredata.NewScopeFromObjectID(bannerID)
+	banner, err := r.cookieBanner.GetCookieBanner(ctx, bannerScope, bannerID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot get cookie banner", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.DeleteTrackerResourcePayload{
+		DeletedTrackerResourceID: input.TrackerResourceID,
+		CookieBanner:             types.NewCookieBanner(banner),
+	}, nil
+}
+
+// MoveTrackerResourceToCategory is the resolver for the moveTrackerResourceToCategory field.
+func (r *mutationResolver) MoveTrackerResourceToCategory(ctx context.Context, input types.MoveTrackerResourceToCategoryInput) (*types.MoveTrackerResourceToCategoryPayload, error) {
+	if err := r.authorize(ctx, input.TrackerResourceID, probo.ActionTrackerResourceUpdate); err != nil {
+		return nil, err
+	}
+
+	if err := r.authorize(ctx, input.TargetCookieCategoryID, probo.ActionCookieCategoryUpdate); err != nil {
+		return nil, err
+	}
+
+	scope := coredata.NewScopeFromObjectID(input.TrackerResourceID)
+
+	result, err := r.cookieBanner.MoveTrackerResourceToCategory(
+		ctx,
+		scope,
+		cookiebanner.MoveTrackerResourceToCategoryRequest{
+			TrackerResourceID:      input.TrackerResourceID,
+			TargetCookieCategoryID: input.TargetCookieCategoryID,
+		},
+	)
+	if err != nil {
+		switch {
+		case errors.Is(err, cookiebanner.ErrCategoryNotFound):
+			return nil, gqlutils.NotFound(ctx, err)
+		case errors.Is(err, cookiebanner.ErrTrackerResourceNotFound):
+			return nil, gqlutils.NotFound(ctx, err)
+		case errors.Is(err, cookiebanner.ErrCategoriesBannerMismatch):
+			return nil, gqlutils.NotFoundf(ctx, "tracker resource or target category not found")
+		default:
+			r.logger.ErrorCtx(ctx, "cannot move tracker resource to category", log.Error(err))
+			return nil, gqlutils.Internal(ctx)
+		}
+	}
+
+	return &types.MoveTrackerResourceToCategoryPayload{
+		TrackerResource: types.NewTrackerResourceNode(result.TrackerResource),
+		CookieBanner:    types.NewCookieBanner(result.Banner),
+	}, nil
+}
+
 // CookieCategory is the resolver for the cookieCategory field.
 func (r *trackerPatternResolver) CookieCategory(ctx context.Context, obj *types.TrackerPattern) (*types.CookieCategory, error) {
 	if err := r.authorize(ctx, obj.CookieCategory.ID, probo.ActionCookieCategoryGet); err != nil {
@@ -993,6 +1231,57 @@ func (r *trackerPatternConnectionResolver) TotalCount(ctx context.Context, obj *
 	return count, nil
 }
 
+// CookieCategory is the resolver for the cookieCategory field.
+func (r *trackerResourceResolver) CookieCategory(ctx context.Context, obj *types.TrackerResource) (*types.CookieCategory, error) {
+	if err := r.authorize(ctx, obj.CookieCategory.ID, probo.ActionCookieCategoryGet); err != nil {
+		return nil, err
+	}
+
+	loaders := dataloader.FromContext(ctx)
+
+	category, err := loaders.CookieCategory.Load(ctx, obj.CookieCategory.ID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
+			return nil, nil
+		}
+		r.logger.ErrorCtx(ctx, "cannot get cookie category", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewCookieCategory(category), nil
+}
+
+// Permission is the resolver for the permission field.
+func (r *trackerResourceResolver) Permission(ctx context.Context, obj *types.TrackerResource, action string) (bool, error) {
+	return r.Resolver.Permission(ctx, obj, action)
+}
+
+// TotalCount is the resolver for the totalCount field.
+func (r *trackerResourceConnectionResolver) TotalCount(ctx context.Context, obj *types.TrackerResourceConnection) (int, error) {
+	scope := coredata.NewScopeFromObjectID(obj.ParentID)
+
+	var count int
+	var err error
+
+	switch obj.Resolver.(type) {
+	case *cookieCategoryResolver:
+		count, err = r.cookieBanner.CountTrackerResourcesForCategory(ctx, scope, obj.ParentID)
+	default:
+		filter := coredata.NewTrackerResourceFilter(nil, nil)
+		if obj.Filter != nil {
+			filter = filter.WithQuery(obj.Filter.Query).WithResourceType(obj.Filter.Type)
+		}
+		count, err = r.cookieBanner.CountUncategorisedTrackerResources(ctx, scope, obj.ParentID, filter)
+	}
+
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot count tracker resources", log.Error(err))
+		return 0, gqlutils.Internal(ctx)
+	}
+
+	return count, nil
+}
+
 // CookieBanner returns schema.CookieBannerResolver implementation.
 func (r *Resolver) CookieBanner() schema.CookieBannerResolver { return &cookieBannerResolver{r} }
 
@@ -1022,6 +1311,16 @@ func (r *Resolver) TrackerPatternConnection() schema.TrackerPatternConnectionRes
 	return &trackerPatternConnectionResolver{r}
 }
 
+// TrackerResource returns schema.TrackerResourceResolver implementation.
+func (r *Resolver) TrackerResource() schema.TrackerResourceResolver {
+	return &trackerResourceResolver{r}
+}
+
+// TrackerResourceConnection returns schema.TrackerResourceConnectionResolver implementation.
+func (r *Resolver) TrackerResourceConnection() schema.TrackerResourceConnectionResolver {
+	return &trackerResourceConnectionResolver{r}
+}
+
 type cookieBannerResolver struct{ *Resolver }
 type cookieBannerConnectionResolver struct{ *Resolver }
 type cookieBannerVersionResolver struct{ *Resolver }
@@ -1029,3 +1328,5 @@ type cookieCategoryResolver struct{ *Resolver }
 type cookieCategoryConnectionResolver struct{ *Resolver }
 type trackerPatternResolver struct{ *Resolver }
 type trackerPatternConnectionResolver struct{ *Resolver }
+type trackerResourceResolver struct{ *Resolver }
+type trackerResourceConnectionResolver struct{ *Resolver }

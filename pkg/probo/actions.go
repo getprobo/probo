@@ -410,6 +410,13 @@ const (
 	ActionTrackerPatternUpdate = "core:tracker-pattern:update"
 	ActionTrackerPatternDelete = "core:tracker-pattern:delete"
 
+	// TrackerResource actions
+	ActionTrackerResourceGet    = "core:tracker-resource:get"
+	ActionTrackerResourceList   = "core:tracker-resource:list"
+	ActionTrackerResourceCreate = "core:tracker-resource:create"
+	ActionTrackerResourceUpdate = "core:tracker-resource:update"
+	ActionTrackerResourceDelete = "core:tracker-resource:delete"
+
 	// CookieConsentRecord actions
 	ActionCookieConsentRecordList = "core:cookie-consent-record:list"
 )
