@@ -127,7 +127,7 @@ type (
 
 	DetectedResourceItem struct {
 		URL          uri.URI
-		ResourceType coredata.TrackerType
+		ResourceType coredata.TrackerResourceType
 	}
 
 	ReportDetectedTrackersRequest struct {
@@ -1999,23 +1999,10 @@ func (s *Service) ReportDetectedTrackers(
 				}
 			}
 
-			for _, dr := range req.Resources {
-				if err := s.reportDetectedTracker(
-					ctx,
-					tx,
-					scope,
-					&banner,
-					uncategorised.ID,
-					now,
-					detectedTrackerInfo{
-						TrackerType: dr.ResourceType,
-						Identifier:  dr.URL.String(),
-					},
-					&inserted,
-				); err != nil {
-					return err
-				}
-			}
+			// Resources (SCRIPT/IFRAME) are now stored in their own
+			// tracker_resources table; ingestion will be wired in a
+			// follow-up commit alongside the new service surface.
+			_ = req.Resources
 
 			if inserted > 0 {
 				if err := banner.SetPatternAnalysisRequested(ctx, tx); err != nil {

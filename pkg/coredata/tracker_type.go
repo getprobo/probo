@@ -26,8 +26,6 @@ const (
 	TrackerTypeLocalStorage   TrackerType = "LOCAL_STORAGE"
 	TrackerTypeSessionStorage TrackerType = "SESSION_STORAGE"
 	TrackerTypeIndexedDB      TrackerType = "INDEXED_DB"
-	TrackerTypeScript         TrackerType = "SCRIPT"
-	TrackerTypeIframe         TrackerType = "IFRAME"
 )
 
 func TrackerTypes() []TrackerType {
@@ -36,8 +34,6 @@ func TrackerTypes() []TrackerType {
 		TrackerTypeLocalStorage,
 		TrackerTypeSessionStorage,
 		TrackerTypeIndexedDB,
-		TrackerTypeScript,
-		TrackerTypeIframe,
 	}
 }
 
@@ -65,10 +61,6 @@ func (s *TrackerType) Scan(value any) error {
 		*s = TrackerTypeSessionStorage
 	case TrackerTypeIndexedDB:
 		*s = TrackerTypeIndexedDB
-	case TrackerTypeScript:
-		*s = TrackerTypeScript
-	case TrackerTypeIframe:
-		*s = TrackerTypeIframe
 	default:
 		return fmt.Errorf("invalid TrackerType value: %q", v)
 	}
@@ -80,9 +72,7 @@ func (s TrackerType) Value() (driver.Value, error) {
 	case TrackerTypeCookie,
 		TrackerTypeLocalStorage,
 		TrackerTypeSessionStorage,
-		TrackerTypeIndexedDB,
-		TrackerTypeScript,
-		TrackerTypeIframe:
+		TrackerTypeIndexedDB:
 		return string(s), nil
 	default:
 		return nil, fmt.Errorf("invalid TrackerType: %s", s)

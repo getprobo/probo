@@ -52,14 +52,6 @@ enum TrackerType
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.TrackerTypeIndexedDB"
         )
-    SCRIPT
-        @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.TrackerTypeScript"
-        )
-    IFRAME
-        @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.TrackerTypeIframe"
-        )
 }
 
 enum CookieBannerOrderField

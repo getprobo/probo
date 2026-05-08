@@ -405,12 +405,12 @@ func (h *Handler) handleReportDetectedTrackers(w http.ResponseWriter, r *http.Re
 	}
 
 	for _, res := range body.Resources {
-		var resourceType coredata.TrackerType
+		var resourceType coredata.TrackerResourceType
 		switch strings.TrimSpace(res.ResourceType) {
 		case "script":
-			resourceType = coredata.TrackerTypeScript
+			resourceType = coredata.TrackerResourceTypeScript
 		case "iframe":
-			resourceType = coredata.TrackerTypeIframe
+			resourceType = coredata.TrackerResourceTypeIframe
 		default:
 			continue
 		}
