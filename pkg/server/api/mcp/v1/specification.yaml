@@ -9450,7 +9450,7 @@ components:
           description: Cookie category ID
         tracker_type:
           type: string
-          enum: [COOKIE, LOCAL_STORAGE, SESSION_STORAGE, INDEXED_DB, SCRIPT, IFRAME]
+          enum: [COOKIE, LOCAL_STORAGE, SESSION_STORAGE, INDEXED_DB]
           description: Type of tracker
         pattern:
           type: string
@@ -9483,6 +9483,68 @@ components:
             - "null"
           format: date-time
           description: Timestamp when a cookie last matched this pattern
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+
+    TrackerResource:
+      type: object
+      required:
+        - id
+        - organization_id
+        - cookie_banner_id
+        - cookie_category_id
+        - resource_type
+        - origin
+        - path
+        - display_name
+        - description
+        - excluded
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Tracker resource ID
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        cookie_banner_id:
+          $ref: "#/components/schemas/GID"
+          description: Cookie banner ID
+        cookie_category_id:
+          $ref: "#/components/schemas/GID"
+          description: Cookie category ID
+        resource_type:
+          type: string
+          enum: [SCRIPT, IFRAME]
+          description: Type of tracked resource
+        origin:
+          type: string
+          description: Resource origin (scheme://host[:port])
+        path:
+          type: string
+          description: Resource path
+        display_name:
+          type: string
+          description: Human-friendly display name
+        description:
+          type: string
+          description: Resource description
+        excluded:
+          type: boolean
+          description: Whether this resource is excluded from the consent banner
+        last_detected_at:
+          type:
+            - string
+            - "null"
+          format: date-time
+          description: Timestamp when this resource was last detected
         created_at:
           type: string
           format: date-time
@@ -9984,7 +10046,7 @@ components:
           $ref: "#/components/schemas/GID"
         tracker_type:
           type: string
-          enum: [COOKIE, LOCAL_STORAGE, SESSION_STORAGE, INDEXED_DB, SCRIPT, IFRAME]
+          enum: [COOKIE, LOCAL_STORAGE, SESSION_STORAGE, INDEXED_DB]
         pattern:
           type: string
         match_type:
@@ -10070,6 +10132,143 @@ components:
       properties:
         tracker_pattern:
           $ref: "#/components/schemas/TrackerPattern"
+
+    ListTrackerResourcesInput:
+      type: object
+      required:
+        - cookie_category_id
+      properties:
+        cookie_category_id:
+          $ref: "#/components/schemas/GID"
+        size:
+          type: integer
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+
+    ListTrackerResourcesOutput:
+      type: object
+      required:
+        - tracker_resources
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+        tracker_resources:
+          type: array
+          items:
+            $ref: "#/components/schemas/TrackerResource"
+
+    GetTrackerResourceInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+
+    GetTrackerResourceOutput:
+      type: object
+      required:
+        - tracker_resource
+      properties:
+        tracker_resource:
+          $ref: "#/components/schemas/TrackerResource"
+
+    AddTrackerResourceInput:
+      type: object
+      required:
+        - cookie_category_id
+        - resource_type
+        - origin
+        - path
+        - display_name
+      properties:
+        cookie_category_id:
+          $ref: "#/components/schemas/GID"
+        resource_type:
+          type: string
+          enum: [SCRIPT, IFRAME]
+        origin:
+          type: string
+        path:
+          type: string
+        display_name:
+          type: string
+        description:
+          type: string
+
+    AddTrackerResourceOutput:
+      type: object
+      required:
+        - tracker_resource
+      properties:
+        tracker_resource:
+          $ref: "#/components/schemas/TrackerResource"
+
+    UpdateTrackerResourceInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+        display_name:
+          type:
+            - string
+            - "null"
+          go.probo.inc/mcpgen/omittable: true
+        description:
+          type:
+            - string
+            - "null"
+          go.probo.inc/mcpgen/omittable: true
+        excluded:
+          type:
+            - boolean
+            - "null"
+          go.probo.inc/mcpgen/omittable: true
+
+    UpdateTrackerResourceOutput:
+      type: object
+      required:
+        - tracker_resource
+      properties:
+        tracker_resource:
+          $ref: "#/components/schemas/TrackerResource"
+
+    DeleteTrackerResourceInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+
+    DeleteTrackerResourceOutput:
+      type: object
+      required:
+        - deleted_id
+      properties:
+        deleted_id:
+          $ref: "#/components/schemas/GID"
+
+    MoveTrackerResourceToCategoryInput:
+      type: object
+      required:
+        - tracker_resource_id
+        - target_cookie_category_id
+      properties:
+        tracker_resource_id:
+          $ref: "#/components/schemas/GID"
+        target_cookie_category_id:
+          $ref: "#/components/schemas/GID"
+
+    MoveTrackerResourceToCategoryOutput:
+      type: object
+      required:
+        - tracker_resource
+      properties:
+        tracker_resource:
+          $ref: "#/components/schemas/TrackerResource"
 
     PublishCookieBannerVersionInput:
       type: object
@@ -12353,6 +12552,57 @@ tools:
       $ref: "#/components/schemas/MoveTrackerPatternToCategoryInput"
     outputSchema:
       $ref: "#/components/schemas/MoveTrackerPatternToCategoryOutput"
+  - name: listTrackerResources
+    description: List all tracker resources for a category
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/ListTrackerResourcesInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListTrackerResourcesOutput"
+  - name: getTrackerResource
+    description: Get a tracker resource by ID
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/GetTrackerResourceInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetTrackerResourceOutput"
+  - name: addTrackerResource
+    description: Create a new tracker resource for a category
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/AddTrackerResourceInput"
+    outputSchema:
+      $ref: "#/components/schemas/AddTrackerResourceOutput"
+  - name: updateTrackerResource
+    description: Update an existing tracker resource
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/UpdateTrackerResourceInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateTrackerResourceOutput"
+  - name: deleteTrackerResource
+    description: Delete a tracker resource
+    hints:
+      readonly: false
+      destructive: true
+    inputSchema:
+      $ref: "#/components/schemas/DeleteTrackerResourceInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteTrackerResourceOutput"
+  - name: moveTrackerResourceToCategory
+    description: Move a tracker resource to a different category
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/MoveTrackerResourceToCategoryInput"
+    outputSchema:
+      $ref: "#/components/schemas/MoveTrackerResourceToCategoryOutput"
   - name: publishCookieBannerVersion
     description: Publish the current draft version of a cookie banner
     hints:

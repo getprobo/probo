@@ -5180,3 +5180,88 @@ func (r *Resolver) PublishDocumentTool(ctx context.Context, req *mcp.CallToolReq
 	}
 	return nil, output, nil
 }
+
+func (r *Resolver) ListTrackerResourcesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListTrackerResourcesInput) (*mcp.CallToolResult, types.ListTrackerResourcesOutput, error) {
+	r.MustAuthorize(ctx, input.CookieCategoryID, probo.ActionTrackerResourceList)
+	scope := coredata.NewScopeFromObjectID(input.CookieCategoryID)
+	cursor := types.NewCursor(input.Size, input.Cursor, page.OrderBy[coredata.TrackerResourceOrderField]{Field: coredata.TrackerResourceOrderFieldCreatedAt, Direction: page.OrderDirectionAsc})
+	resources, err := r.cookieBanner.ListTrackerResourcesForCategory(ctx, scope, input.CookieCategoryID, cursor)
+	if err != nil {
+		panic(fmt.Errorf("cannot list tracker resources: %w", err))
+	}
+	p := page.NewPage(resources, cursor)
+	return nil, types.NewListTrackerResourcesOutput(p), nil
+}
+
+func (r *Resolver) GetTrackerResourceTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetTrackerResourceInput) (*mcp.CallToolResult, types.GetTrackerResourceOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionTrackerResourceGet)
+	scope := coredata.NewScopeFromObjectID(input.ID)
+	resource, err := r.cookieBanner.GetTrackerResource(ctx, scope, input.ID)
+	if err != nil {
+		return nil, types.GetTrackerResourceOutput{}, fmt.Errorf("cannot get tracker resource: %w", err)
+	}
+	return nil, types.GetTrackerResourceOutput{TrackerResource: types.NewTrackerResource(resource)}, nil
+}
+
+func (r *Resolver) AddTrackerResourceTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddTrackerResourceInput) (*mcp.CallToolResult, types.AddTrackerResourceOutput, error) {
+	r.MustAuthorize(ctx, input.CookieCategoryID, probo.ActionTrackerResourceCreate)
+	scope := coredata.NewScopeFromObjectID(input.CookieCategoryID)
+	description := ""
+	if input.Description != nil {
+		description = *input.Description
+	}
+	resource, err := r.cookieBanner.CreateTrackerResource(ctx, scope, cookiebanner.CreateTrackerResourceRequest{
+		CookieCategoryID: input.CookieCategoryID,
+		ResourceType:     coredata.TrackerResourceType(input.ResourceType),
+		Origin:           input.Origin,
+		Path:             input.Path,
+		DisplayName:      input.DisplayName,
+		Description:      description,
+	})
+	if err != nil {
+		return nil, types.AddTrackerResourceOutput{}, fmt.Errorf("cannot create tracker resource: %w", err)
+	}
+	return nil, types.AddTrackerResourceOutput{TrackerResource: types.NewTrackerResource(resource)}, nil
+}
+
+func (r *Resolver) UpdateTrackerResourceTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateTrackerResourceInput) (*mcp.CallToolResult, types.UpdateTrackerResourceOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionTrackerResourceUpdate)
+	scope := coredata.NewScopeFromObjectID(input.ID)
+	updateReq := cookiebanner.UpdateTrackerResourceRequest{TrackerResourceID: input.ID}
+	if v := UnwrapOmittable(input.DisplayName); v != nil && *v != nil {
+		updateReq.DisplayName = *v
+	}
+	if v := UnwrapOmittable(input.Description); v != nil && *v != nil {
+		updateReq.Description = *v
+	}
+	if v := UnwrapOmittable(input.Excluded); v != nil && *v != nil {
+		updateReq.Excluded = *v
+	}
+	resource, err := r.cookieBanner.UpdateTrackerResource(ctx, scope, updateReq)
+	if err != nil {
+		return nil, types.UpdateTrackerResourceOutput{}, fmt.Errorf("cannot update tracker resource: %w", err)
+	}
+	return nil, types.UpdateTrackerResourceOutput{TrackerResource: types.NewTrackerResource(resource)}, nil
+}
+
+func (r *Resolver) DeleteTrackerResourceTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteTrackerResourceInput) (*mcp.CallToolResult, types.DeleteTrackerResourceOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionTrackerResourceDelete)
+	scope := coredata.NewScopeFromObjectID(input.ID)
+	if err := r.cookieBanner.DeleteTrackerResource(ctx, scope, input.ID); err != nil {
+		return nil, types.DeleteTrackerResourceOutput{}, fmt.Errorf("cannot delete tracker resource: %w", err)
+	}
+	return nil, types.DeleteTrackerResourceOutput{DeletedID: input.ID}, nil
+}
+
+func (r *Resolver) MoveTrackerResourceToCategoryTool(ctx context.Context, req *mcp.CallToolRequest, input *types.MoveTrackerResourceToCategoryInput) (*mcp.CallToolResult, types.MoveTrackerResourceToCategoryOutput, error) {
+	r.MustAuthorize(ctx, input.TrackerResourceID, probo.ActionTrackerResourceUpdate)
+	scope := coredata.NewScopeFromObjectID(input.TrackerResourceID)
+	result, err := r.cookieBanner.MoveTrackerResourceToCategory(ctx, scope, cookiebanner.MoveTrackerResourceToCategoryRequest{
+		TrackerResourceID:      input.TrackerResourceID,
+		TargetCookieCategoryID: input.TargetCookieCategoryID,
+	})
+	if err != nil {
+		return nil, types.MoveTrackerResourceToCategoryOutput{}, fmt.Errorf("cannot move tracker resource: %w", err)
+	}
+	return nil, types.MoveTrackerResourceToCategoryOutput{TrackerResource: types.NewTrackerResource(result.TrackerResource)}, nil
+}
