@@ -164,6 +164,32 @@ type (
 		Banner         *coredata.CookieBanner
 	}
 
+	CreateTrackerResourceRequest struct {
+		CookieCategoryID gid.GID
+		ResourceType     coredata.TrackerResourceType
+		Origin           string
+		Path             string
+		DisplayName      string
+		Description      string
+	}
+
+	UpdateTrackerResourceRequest struct {
+		TrackerResourceID gid.GID
+		DisplayName       *string
+		Description       *string
+		Excluded          *bool
+	}
+
+	MoveTrackerResourceToCategoryRequest struct {
+		TrackerResourceID      gid.GID
+		TargetCookieCategoryID gid.GID
+	}
+
+	MoveTrackerResourceToCategoryResult struct {
+		TrackerResource *coredata.TrackerResource
+		Banner          *coredata.CookieBanner
+	}
+
 	BannerConfig struct {
 		BannerID          gid.GID                                        `json:"banner_id"`
 		Version           int                                            `json:"version"`
@@ -376,6 +402,42 @@ func (r *UpdateTrackerPatternRequest) Validate() error {
 	v := validator.New()
 
 	v.Check(r.TrackerPatternID, "tracker_pattern_id", validator.Required(), validator.GID(coredata.TrackerPatternEntityType))
+	if r.Description != nil {
+		v.Check(*r.Description, "description", validator.SafeText(1000))
+	}
+
+	return v.Error()
+}
+
+func (r *CreateTrackerResourceRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(r.CookieCategoryID, "cookie_category_id", validator.Required(), validator.GID(coredata.CookieCategoryEntityType))
+	v.Check(string(r.ResourceType), "resource_type", validator.Required(), validator.OneOfSlice(
+		func() []string {
+			types := coredata.TrackerResourceTypes()
+			s := make([]string, len(types))
+			for i, t := range types {
+				s[i] = string(t)
+			}
+			return s
+		}(),
+	))
+	v.Check(r.Origin, "origin", validator.Required(), validator.Origin())
+	v.Check(r.Path, "path", validator.Required(), validator.SafeTextNoNewLine(2048))
+	v.Check(r.DisplayName, "display_name", validator.Required(), validator.SafeTextNoNewLine(255))
+	v.Check(r.Description, "description", validator.SafeText(1000))
+
+	return v.Error()
+}
+
+func (r *UpdateTrackerResourceRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(r.TrackerResourceID, "tracker_resource_id", validator.Required(), validator.GID(coredata.TrackerResourceEntityType))
+	if r.DisplayName != nil {
+		v.Check(*r.DisplayName, "display_name", validator.SafeTextNoNewLine(255))
+	}
 	if r.Description != nil {
 		v.Check(*r.Description, "description", validator.SafeText(1000))
 	}
@@ -1999,10 +2061,23 @@ func (s *Service) ReportDetectedTrackers(
 				}
 			}
 
-			// Resources (SCRIPT/IFRAME) are now stored in their own
-			// tracker_resources table; ingestion will be wired in a
-			// follow-up commit alongside the new service surface.
-			_ = req.Resources
+			for _, dr := range req.Resources {
+				wasInserted, err := s.reportDetectedResource(
+					ctx,
+					tx,
+					scope,
+					&banner,
+					uncategorised.ID,
+					now,
+					dr,
+				)
+				if err != nil {
+					return err
+				}
+				if wasInserted {
+					inserted++
+				}
+			}
 
 			if inserted > 0 {
 				if err := banner.SetPatternAnalysisRequested(ctx, tx); err != nil {
@@ -2103,6 +2178,49 @@ func (s *Service) reportDetectedTracker(
 	}
 
 	return nil
+}
+
+func (s *Service) reportDetectedResource(
+	ctx context.Context,
+	tx pg.Tx,
+	scope coredata.Scoper,
+	banner *coredata.CookieBanner,
+	uncategorisedID gid.GID,
+	now time.Time,
+	item DetectedResourceItem,
+) (bool, error) {
+	u, err := url.Parse(item.URL.String())
+	if err != nil {
+		return false, fmt.Errorf("cannot parse resource URL: %w", err)
+	}
+
+	origin := u.Scheme + "://" + u.Host
+	path := u.Path
+	if path == "" {
+		path = "/"
+	}
+
+	resource := &coredata.TrackerResource{
+		ID:               gid.New(scope.GetTenantID(), coredata.TrackerResourceEntityType),
+		OrganizationID:   banner.OrganizationID,
+		CookieBannerID:   banner.ID,
+		CookieCategoryID: uncategorisedID,
+		ResourceType:     item.ResourceType,
+		Origin:           origin,
+		Path:             path,
+		DisplayName:      u.Host + path,
+		Description:      "",
+		LastDetectedAt:   &now,
+		CreatedAt:        now,
+		UpdatedAt:        now,
+	}
+
+	inserted, err := resource.Upsert(ctx, tx, scope)
+	if err != nil {
+		return false, fmt.Errorf("cannot upsert tracker resource: %w", err)
+	}
+
+	return inserted, nil
 }
 
 func (s *Service) CreateTrackerPattern(
@@ -2474,6 +2592,327 @@ func (s *Service) CountDetectedTrackersByPatternID(
 			count, err = trackers.CountByTrackerPatternID(ctx, conn, scope, trackerPatternID)
 			if err != nil {
 				return fmt.Errorf("cannot count detected trackers: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
+func (s *Service) CreateTrackerResource(
+	ctx context.Context,
+	scope coredata.Scoper,
+	req CreateTrackerResourceRequest,
+) (*coredata.TrackerResource, error) {
+	if err := req.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid request: %w", err)
+	}
+
+	var resource *coredata.TrackerResource
+
+	err := s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			var category coredata.CookieCategory
+			if err := category.LoadByID(ctx, tx, scope, req.CookieCategoryID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return ErrCategoryNotFound
+				}
+				return fmt.Errorf("cannot load cookie category: %w", err)
+			}
+
+			now := time.Now()
+
+			resource = &coredata.TrackerResource{
+				ID:               gid.New(scope.GetTenantID(), coredata.TrackerResourceEntityType),
+				OrganizationID:   category.OrganizationID,
+				CookieBannerID:   category.CookieBannerID,
+				CookieCategoryID: category.ID,
+				ResourceType:     req.ResourceType,
+				Origin:           req.Origin,
+				Path:             req.Path,
+				DisplayName:      req.DisplayName,
+				Description:      req.Description,
+				CreatedAt:        now,
+				UpdatedAt:        now,
+			}
+
+			if err := resource.Insert(ctx, tx, scope); err != nil {
+				if errors.Is(err, coredata.ErrResourceAlreadyExists) {
+					return ErrResourceAlreadyExists
+				}
+				return fmt.Errorf("cannot insert tracker resource: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return resource, nil
+}
+
+func (s *Service) GetTrackerResource(
+	ctx context.Context,
+	scope coredata.Scoper,
+	trackerResourceID gid.GID,
+) (*coredata.TrackerResource, error) {
+	var resource coredata.TrackerResource
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := resource.LoadByID(ctx, conn, scope, trackerResourceID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return ErrTrackerResourceNotFound
+				}
+				return fmt.Errorf("cannot load tracker resource: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &resource, nil
+}
+
+func (s *Service) UpdateTrackerResource(
+	ctx context.Context,
+	scope coredata.Scoper,
+	req UpdateTrackerResourceRequest,
+) (*coredata.TrackerResource, error) {
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+
+	var resource coredata.TrackerResource
+
+	err := s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			if err := resource.LoadByID(ctx, tx, scope, req.TrackerResourceID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return ErrTrackerResourceNotFound
+				}
+				return fmt.Errorf("cannot load tracker resource: %w", err)
+			}
+
+			displayNameChanged := req.DisplayName != nil && *req.DisplayName != resource.DisplayName
+			descChanged := req.Description != nil && *req.Description != resource.Description
+			excludedChanged := req.Excluded != nil && *req.Excluded != resource.Excluded
+
+			if !displayNameChanged && !descChanged && !excludedChanged {
+				return nil
+			}
+
+			if req.DisplayName != nil {
+				resource.DisplayName = *req.DisplayName
+			}
+			if req.Description != nil {
+				resource.Description = *req.Description
+			}
+			if req.Excluded != nil {
+				resource.Excluded = *req.Excluded
+			}
+
+			resource.UpdatedAt = time.Now()
+
+			if err := resource.Update(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot update tracker resource: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &resource, nil
+}
+
+func (s *Service) DeleteTrackerResource(
+	ctx context.Context,
+	scope coredata.Scoper,
+	trackerResourceID gid.GID,
+) error {
+	return s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			var resource coredata.TrackerResource
+			if err := resource.LoadByID(ctx, tx, scope, trackerResourceID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return ErrTrackerResourceNotFound
+				}
+				return fmt.Errorf("cannot load tracker resource: %w", err)
+			}
+
+			if err := resource.Delete(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot delete tracker resource: %w", err)
+			}
+
+			return nil
+		},
+	)
+}
+
+func (s *Service) MoveTrackerResourceToCategory(
+	ctx context.Context,
+	scope coredata.Scoper,
+	req MoveTrackerResourceToCategoryRequest,
+) (*MoveTrackerResourceToCategoryResult, error) {
+	var result MoveTrackerResourceToCategoryResult
+
+	err := s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			var resource coredata.TrackerResource
+			if err := resource.LoadByID(ctx, tx, scope, req.TrackerResourceID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return ErrTrackerResourceNotFound
+				}
+				return fmt.Errorf("cannot load tracker resource: %w", err)
+			}
+
+			var target coredata.CookieCategory
+			if err := target.LoadByID(ctx, tx, scope, req.TargetCookieCategoryID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return ErrCategoryNotFound
+				}
+				return fmt.Errorf("cannot load target cookie category: %w", err)
+			}
+
+			if resource.CookieCategoryID == target.ID {
+				return ErrSameResourceCategoryMove
+			}
+
+			if resource.CookieBannerID != target.CookieBannerID {
+				return ErrCategoriesBannerMismatch
+			}
+
+			resource.CookieCategoryID = target.ID
+			resource.UpdatedAt = time.Now()
+
+			if err := resource.Update(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot update tracker resource: %w", err)
+			}
+
+			var banner coredata.CookieBanner
+			if err := banner.LoadByID(ctx, tx, scope, resource.CookieBannerID); err != nil {
+				return fmt.Errorf("cannot load cookie banner: %w", err)
+			}
+
+			result.TrackerResource = &resource
+			result.Banner = &banner
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &result, nil
+}
+
+func (s *Service) ListTrackerResourcesForCategory(
+	ctx context.Context,
+	scope coredata.Scoper,
+	categoryID gid.GID,
+	cursor *page.Cursor[coredata.TrackerResourceOrderField],
+) (coredata.TrackerResources, error) {
+	var resources coredata.TrackerResources
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			return resources.LoadByCookieCategoryID(ctx, conn, scope, categoryID, cursor)
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot list tracker resources for category: %w", err)
+	}
+
+	return resources, nil
+}
+
+func (s *Service) CountTrackerResourcesForCategory(
+	ctx context.Context,
+	scope coredata.Scoper,
+	categoryID gid.GID,
+) (int, error) {
+	var count int
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			var resources coredata.TrackerResources
+			var err error
+
+			count, err = resources.CountByCookieCategoryID(ctx, conn, scope, categoryID)
+			return err
+		},
+	)
+	if err != nil {
+		return 0, fmt.Errorf("cannot count tracker resources for category: %w", err)
+	}
+
+	return count, nil
+}
+
+func (s *Service) ListUncategorisedTrackerResources(
+	ctx context.Context,
+	scope coredata.Scoper,
+	bannerID gid.GID,
+	cursor *page.Cursor[coredata.TrackerResourceOrderField],
+	filter *coredata.TrackerResourceFilter,
+) (coredata.TrackerResources, error) {
+	var resources coredata.TrackerResources
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := resources.LoadUncategorisedByCookieBannerID(ctx, conn, scope, bannerID, cursor, filter); err != nil {
+				return fmt.Errorf("cannot list uncategorised tracker resources: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return resources, nil
+}
+
+func (s *Service) CountUncategorisedTrackerResources(
+	ctx context.Context,
+	scope coredata.Scoper,
+	bannerID gid.GID,
+	filter *coredata.TrackerResourceFilter,
+) (int, error) {
+	var count int
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			var resources coredata.TrackerResources
+			var err error
+
+			count, err = resources.CountUncategorisedByCookieBannerID(ctx, conn, scope, bannerID, filter)
+			if err != nil {
+				return fmt.Errorf("cannot count uncategorised tracker resources: %w", err)
 			}
 
 			return nil

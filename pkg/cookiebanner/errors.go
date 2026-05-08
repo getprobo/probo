@@ -35,4 +35,7 @@ var (
 	ErrTrackerPatternNotFound     = errors.New("tracker pattern not found")
 	ErrPatternAlreadyExists       = errors.New("a pattern with this name already exists in this banner")
 	ErrSamePatternCategoryMove    = errors.New("source and target cookie categories must be different")
+	ErrTrackerResourceNotFound    = errors.New("tracker resource not found")
+	ErrResourceAlreadyExists      = errors.New("a resource with this origin and path already exists in this banner")
+	ErrSameResourceCategoryMove   = errors.New("source and target cookie categories must be different")
 )
