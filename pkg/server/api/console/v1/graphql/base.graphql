@@ -25,6 +25,7 @@ interface Node {
 type Query {
     node(id: ID!): Node!
     viewer: Viewer!
+    commonThirdParties(name: String!): [CommonThirdParty!]!
 }
 
 type Mutation

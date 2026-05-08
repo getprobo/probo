@@ -18,6 +18,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -378,6 +379,7 @@ func (t CommonThirdParty) Delete(
 func (t *CommonThirdParties) LoadAll(
 	ctx context.Context,
 	conn pg.Querier,
+	filter *CommonThirdPartyFilter,
 ) error {
 	q := `
 SELECT
@@ -403,10 +405,18 @@ SELECT
     updated_at
 FROM
     common_third_parties
+WHERE
+    %s
 ORDER BY name ASC
+LIMIT 20
 `
 
-	rows, err := conn.Query(ctx, q)
+	q = fmt.Sprintf(q, filter.SQLFragment())
+
+	args := pgx.StrictNamedArgs{}
+	maps.Copy(args, filter.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot query common third parties: %w", err)
 	}

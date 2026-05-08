@@ -12,10 +12,8 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { faviconUrl } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import {
-  Avatar,
   Combobox,
   ComboboxItem,
   Dialog,
@@ -24,11 +22,38 @@ import {
   IconPlusLarge,
   useDialogRef,
 } from "@probo/ui";
-import type { Vendor } from "@probo/vendors";
-import { type ReactNode } from "react";
+import { type ReactNode, Suspense, useState } from "react";
+import { useQueryLoader } from "react-relay";
+import { graphql, readInlineData } from "relay-runtime";
 
+import type { CommonThirdPartyComboboxQuery } from "#/__generated__/core/CommonThirdPartyComboboxQuery.graphql";
+import type { CreateVendorDialog_commonThirdParty$key } from "#/__generated__/core/CreateVendorDialog_commonThirdParty.graphql";
 import { useCreateVendorMutation } from "#/hooks/graph/VendorGraph";
-import { useVendorSearch } from "#/hooks/useVendorSearch";
+
+import {
+  commonThirdPartiesQuery,
+  CommonThirdPartyCombobox,
+  type CommonThirdPartyRef,
+} from "./CommonThirdPartyCombobox";
+
+const commonThirdPartyFragment = graphql`
+  fragment CreateVendorDialog_commonThirdParty on CommonThirdParty @inline {
+    name
+    description
+    category
+    websiteUrl
+    headquarterAddress
+    legalName
+    privacyPolicyUrl
+    serviceLevelAgreementUrl
+    dataProcessingAgreementUrl
+    certifications
+    securityPageUrl
+    trustPageUrl
+    statusPageUrl
+    termsOfServiceUrl
+  }
+`;
 
 type Props = {
   children: ReactNode;
@@ -42,35 +67,45 @@ export function CreateVendorDialog({
   connection,
 }: Props) {
   const { __ } = useTranslate();
-  const { search, vendors, query } = useVendorSearch();
   const [createVendor] = useCreateVendorMutation();
+  const dialogRef = useDialogRef();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [queryRef, loadQuery]
+    = useQueryLoader<CommonThirdPartyComboboxQuery>(commonThirdPartiesQuery);
 
-  const onSelect = async (vendor: Vendor | string) => {
+  const onSelect = async (thirdPartyRef: CommonThirdPartyRef | string) => {
     const input
-      = typeof vendor === "string"
+      = typeof thirdPartyRef === "string"
         ? {
             organizationId,
-            name: vendor,
+            name: thirdPartyRef,
             category: null,
           }
-        : {
-            organizationId,
-            name: vendor.name,
-            description: vendor.description || null,
-            headquarterAddress: vendor.headquarterAddress || null,
-            legalName: vendor.legalName || null,
-            websiteUrl: vendor.websiteUrl || null,
-            category: vendor.category || null,
-            privacyPolicyUrl: vendor.privacyPolicyUrl || null,
-            serviceLevelAgreementUrl: vendor.serviceLevelAgreementUrl || null,
-            dataProcessingAgreementUrl: vendor.dataProcessingAgreementUrl || null,
-            certifications: vendor.certifications,
-            countries: vendor.countries,
-            securityPageUrl: vendor.securityPageUrl || null,
-            trustPageUrl: vendor.trustPageUrl || null,
-            statusPageUrl: vendor.statusPageUrl || null,
-            termsOfServiceUrl: vendor.termsOfServiceUrl || null,
-          };
+        : (() => {
+            const tp = readInlineData<CreateVendorDialog_commonThirdParty$key>(
+              commonThirdPartyFragment,
+              thirdPartyRef,
+            );
+            return {
+              organizationId,
+              name: tp.name,
+              description: tp.description || null,
+              headquarterAddress: tp.headquarterAddress || null,
+              legalName: tp.legalName || null,
+              websiteUrl: tp.websiteUrl || null,
+              category: tp.category || null,
+              privacyPolicyUrl: tp.privacyPolicyUrl || null,
+              serviceLevelAgreementUrl:
+                tp.serviceLevelAgreementUrl || null,
+              dataProcessingAgreementUrl:
+                tp.dataProcessingAgreementUrl || null,
+              certifications: tp.certifications,
+              securityPageUrl: tp.securityPageUrl || null,
+              trustPageUrl: tp.trustPageUrl || null,
+              statusPageUrl: tp.statusPageUrl || null,
+              termsOfServiceUrl: tp.termsOfServiceUrl || null,
+            };
+          })();
     await createVendor({
       variables: {
         input,
@@ -82,25 +117,32 @@ export function CreateVendorDialog({
     });
   };
 
-  const dialogRef = useDialogRef();
+  const handleSearch = (name: string) => {
+    setSearchQuery(name);
+    if (name.trim().length >= 2) {
+      loadQuery({ name: name.trim() });
+    }
+  };
 
   return (
     <Dialog ref={dialogRef} trigger={children} title={__("Add a vendor")}>
       <DialogContent className="p-6">
-        <Combobox onSearch={search} placeholder={__("Type vendor's name")}>
-          {vendors.map(vendor => (
-            <ComboboxItem key={vendor.name} onClick={() => void onSelect(vendor)}>
-              <Avatar name={vendor.name} src={faviconUrl(vendor.websiteUrl)} />
-              {vendor.name}
-            </ComboboxItem>
-          ))}
-          {query.trim().length >= 2 && (
-            <ComboboxItem onClick={() => void onSelect(query.trim())}>
+        <Combobox onSearch={handleSearch} placeholder={__("Type vendor's name")}>
+          {queryRef && (
+            <Suspense>
+              <CommonThirdPartyCombobox
+                queryRef={queryRef}
+                onSelect={thirdPartyRef => void onSelect(thirdPartyRef)}
+              />
+            </Suspense>
+          )}
+          {searchQuery.trim().length >= 2 && (
+            <ComboboxItem onClick={() => void onSelect(searchQuery.trim())}>
               <IconPlusLarge size={20} />
               {__("Create a new vendor")}
               {" "}
               :
-              {query}
+              {searchQuery}
             </ComboboxItem>
           )}
         </Combobox>

@@ -44,6 +44,7 @@ import (
 	slack_v1 "go.probo.inc/probo/pkg/server/api/slack/v1"
 	trust_v1 "go.probo.inc/probo/pkg/server/api/trust/v1"
 	"go.probo.inc/probo/pkg/slack"
+	"go.probo.inc/probo/pkg/thirdparty"
 	"go.probo.inc/probo/pkg/trust"
 )
 
@@ -61,6 +62,7 @@ type (
 		Mailman           *mailman.Service
 		CookieBanner      *cookiebanner.Service
 		Geoloc            *geoloc.Service
+		ThirdParty        *thirdparty.Service
 		Cookie            securecookie.Config
 		TokenSecret       string
 		ConnectorRegistry *connector.ConnectorRegistry
@@ -190,6 +192,7 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.ConnectorRegistry,
 			cfg.BaseURL,
 			cfg.CustomDomainCname,
+			cfg.ThirdParty,
 		),
 		cookieBannerHandler: cookiebanner_v1.NewMux(
 			cfg.Logger.Named("cookiebanner.v1"),

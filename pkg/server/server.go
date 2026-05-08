@@ -42,6 +42,7 @@ import (
 	trust_web "go.probo.inc/probo/pkg/server/trust"
 	console_web "go.probo.inc/probo/pkg/server/web"
 	"go.probo.inc/probo/pkg/slack"
+	"go.probo.inc/probo/pkg/thirdparty"
 	"go.probo.inc/probo/pkg/trust"
 	"go.probo.inc/probo/pkg/uri"
 )
@@ -60,6 +61,7 @@ type Config struct {
 	Mailman           *mailman.Service
 	CookieBanner      *cookiebanner.Service
 	Geoloc            *geoloc.Service
+	ThirdParty        *thirdparty.Service
 	Cookie            securecookie.Config
 	TokenSecret       string
 	ConnectorRegistry *connector.ConnectorRegistry
@@ -95,6 +97,7 @@ func NewServer(cfg Config) (*Server, error) {
 		Mailman:           cfg.Mailman,
 		CookieBanner:      cfg.CookieBanner,
 		Geoloc:            cfg.Geoloc,
+		ThirdParty:        cfg.ThirdParty,
 		Cookie:            cfg.Cookie,
 		TokenSecret:       cfg.TokenSecret,
 		ConnectorRegistry: cfg.ConnectorRegistry,

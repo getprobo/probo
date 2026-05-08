@@ -69,6 +69,7 @@ import (
 	"go.probo.inc/probo/pkg/server"
 	"go.probo.inc/probo/pkg/server/trustedproxy"
 	"go.probo.inc/probo/pkg/slack"
+	"go.probo.inc/probo/pkg/thirdparty"
 	"go.probo.inc/probo/pkg/trust"
 	"go.probo.inc/probo/pkg/webhook"
 	"golang.org/x/sync/errgroup"
@@ -519,6 +520,8 @@ func (impl *Implm) Run(
 		l.Named("access-review"),
 	)
 
+	thirdPartyService := thirdparty.NewService(pgClient)
+
 	serverHandler, err := server.NewServer(
 		server.Config{
 			AllowedOrigins:    impl.cfg.Api.Cors.AllowedOrigins,
@@ -532,6 +535,7 @@ func (impl *Implm) Run(
 			Mailman:           mailmanService,
 			CookieBanner:      cookieBannerService,
 			Geoloc:            geolocService,
+			ThirdParty:        thirdPartyService,
 			Slack:             slackService,
 			ConnectorRegistry: defaultConnectorRegistry,
 			BaseURL:           baseURL,

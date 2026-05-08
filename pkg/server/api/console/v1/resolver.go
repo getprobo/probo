@@ -41,6 +41,7 @@ import (
 	"go.probo.inc/probo/pkg/server/api/authz"
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
+	"go.probo.inc/probo/pkg/thirdparty"
 )
 
 type (
@@ -53,6 +54,7 @@ type (
 		mailman           *mailman.Service
 		cookieBanner      *cookiebanner.Service
 		connectorRegistry *connector.ConnectorRegistry
+		thirdParty        *thirdparty.Service
 		logger            *log.Logger
 		customDomainCname string
 	}
@@ -71,6 +73,7 @@ func NewMux(
 	connectorRegistry *connector.ConnectorRegistry,
 	baseURL *baseurl.BaseURL,
 	customDomainCname string,
+	thirdPartySvc *thirdparty.Service,
 ) *chi.Mux {
 	r := chi.NewMux()
 
@@ -86,6 +89,7 @@ func NewMux(
 		connectorRegistry,
 		customDomainCname,
 		logger,
+		thirdPartySvc,
 	)
 
 	r.Group(func(r chi.Router) {

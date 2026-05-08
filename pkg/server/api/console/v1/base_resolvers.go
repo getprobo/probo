@@ -408,6 +408,22 @@ func (r *queryResolver) Viewer(ctx context.Context) (*types.Viewer, error) {
 	return &types.Viewer{ID: viewerID}, nil
 }
 
+// CommonThirdParties is the resolver for the commonThirdParties field.
+func (r *queryResolver) CommonThirdParties(ctx context.Context, name string) ([]*types.CommonThirdParty, error) {
+	parties, err := r.thirdParty.Search(ctx, name)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot search common third parties", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	result := make([]*types.CommonThirdParty, len(parties))
+	for i, p := range parties {
+		result[i] = types.NewCommonThirdParty(p)
+	}
+
+	return result, nil
+}
+
 // Mutation returns schema.MutationResolver implementation.
 func (r *Resolver) Mutation() schema.MutationResolver { return &mutationResolver{r} }
 

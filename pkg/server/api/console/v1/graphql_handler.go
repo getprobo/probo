@@ -28,9 +28,21 @@ import (
 	"go.probo.inc/probo/pkg/server/api/authz"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/thirdparty"
 )
 
-func NewGraphQLHandler(iamSvc *iam.Service, proboSvc *probo.Service, esignSvc *esign.Service, accessReviewSvc *accessreview.Service, mailmanSvc *mailman.Service, cookieBannerSvc *cookiebanner.Service, connectorRegistry *connector.ConnectorRegistry, customDomainCname string, logger *log.Logger) http.Handler {
+func NewGraphQLHandler(
+	iamSvc *iam.Service,
+	proboSvc *probo.Service,
+	esignSvc *esign.Service,
+	accessReviewSvc *accessreview.Service,
+	mailmanSvc *mailman.Service,
+	cookieBannerSvc *cookiebanner.Service,
+	connectorRegistry *connector.ConnectorRegistry,
+	customDomainCname string,
+	logger *log.Logger,
+	thirdPartySvc *thirdparty.Service,
+) http.Handler {
 	config := schema.Config{
 		Resolvers: &Resolver{
 			authorize:         authz.NewAuthorizeFunc(iamSvc, logger),
@@ -41,6 +53,7 @@ func NewGraphQLHandler(iamSvc *iam.Service, proboSvc *probo.Service, esignSvc *e
 			mailman:           mailmanSvc,
 			cookieBanner:      cookieBannerSvc,
 			connectorRegistry: connectorRegistry,
+			thirdParty:        thirdPartySvc,
 			customDomainCname: customDomainCname,
 			logger:            logger,
 		},
