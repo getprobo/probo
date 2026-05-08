@@ -1616,8 +1616,8 @@ func remapTextsForConsentMode(texts map[string]string, consentMode string, regul
 		remapTextKey(texts, "banner_title_opt_out", "banner_title")
 		remapTextKey(texts, "banner_description_opt_out", "banner_description")
 		remapTextKey(texts, "button_acknowledge", "button_accept_all")
-		remapTextKey(texts, "button_opt_out", "button_customize")
-		texts["button_reject_all"] = ""
+		remapTextKey(texts, "button_opt_out", "button_reject_all")
+		texts["button_customize"] = ""
 
 	case regulation == RegulationNone:
 		remapTextKey(texts, "banner_title_notice", "banner_title")

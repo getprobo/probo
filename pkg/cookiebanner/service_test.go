@@ -308,13 +308,15 @@ func TestRemapTextsForConsentMode(t *testing.T) {
 		assert.Empty(t, texts["button_customize"])
 	})
 
-	t.Run("opt out mode clears reject", func(t *testing.T) {
+	t.Run("opt out mode maps opt out to reject and clears customize", func(t *testing.T) {
 		t.Parallel()
 
 		texts := baseTexts()
+		texts["button_opt_out"] = "Do Not Sell"
 		remapTextsForConsentMode(texts, ConsentModeOptOut, RegulationCCPA)
 
-		assert.Empty(t, texts["button_reject_all"])
+		assert.Equal(t, "Do Not Sell", texts["button_reject_all"])
+		assert.Empty(t, texts["button_customize"])
 	})
 }
 
