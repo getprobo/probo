@@ -70,6 +70,7 @@ export interface ProboRootElement extends ProboElement {
   readonly gpcApplied: boolean;
   readonly regulation: Regulation | null;
   readonly consentMode: "OPT_IN" | "OPT_OUT" | null;
+  readonly reopenState: ProboState;
   setState(state: ProboState): void;
   updateDraft(category: string, value: boolean): void;
 }

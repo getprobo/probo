@@ -151,7 +151,7 @@ export class ProboSettingsButton extends HTMLElement {
 
   private handleClick = (): void => {
     if (!this.root) return;
-    this.root.setState("panel");
+    this.root.setState(this.root.reopenState);
   };
 
   private updateGpcBadge(label: string | null): void {

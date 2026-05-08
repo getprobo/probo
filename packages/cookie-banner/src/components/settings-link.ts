@@ -68,6 +68,6 @@ export class ProboSettingsLink extends HTMLElement {
   private handleClick = (e: Event): void => {
     if (!this.root) return;
     e.preventDefault();
-    this.root.setState("panel");
+    this.root.setState(this.root.reopenState);
   };
 }

@@ -67,6 +67,10 @@ export class ProboCookieBannerRoot extends ProboElement implements ProboRootElem
     return null;
   }
 
+  get reopenState(): ProboState {
+    return this.consentMode === "OPT_OUT" ? "banner" : "panel";
+  }
+
   attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null): void {
     if (name === "reopen-widget" && oldValue !== newValue) {
       this.dispatchEvent(
@@ -93,7 +97,7 @@ export class ProboCookieBannerRoot extends ProboElement implements ProboRootElem
   }
 
   private onOpenPreferences = (): void => {
-    this.setState("panel");
+    this.setState(this.reopenState);
   };
 
   setState(state: ProboState): void {
