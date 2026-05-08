@@ -189,7 +189,7 @@ func newPgClientFromDSN(dsn string) (*pg.Client, error) {
 		return nil, fmt.Errorf("cannot parse DSN: %w", err)
 	}
 
-	var opts []pg.Option
+	opts := []pg.Option{pg.WithUnsecureTLS()}
 
 	if u.Host != "" {
 		host := u.Host
