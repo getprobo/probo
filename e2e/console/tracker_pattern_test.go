@@ -83,7 +83,7 @@ func TestTrackerPattern_Create(t *testing.T) {
 				"cookieCategoryId": categoryID,
 				"pattern":          "_ga",
 				"matchType":        "EXACT",
-				"trackerType":      "SCRIPT",
+				"trackerType":      "LOCAL_STORAGE",
 				"displayName":      "Google Analytics",
 				"maxAgeSeconds":    maxAge,
 				"description":      "Google Analytics tracking cookie",
@@ -95,7 +95,7 @@ func TestTrackerPattern_Create(t *testing.T) {
 		assert.NotEmpty(t, node.ID)
 		assert.Equal(t, "_ga", node.Pattern)
 		assert.Equal(t, "EXACT", node.MatchType)
-		assert.Equal(t, "SCRIPT", node.TrackerType)
+		assert.Equal(t, "LOCAL_STORAGE", node.TrackerType)
 		assert.Equal(t, "Google Analytics", node.DisplayName)
 		require.NotNil(t, node.MaxAgeSeconds)
 		assert.Equal(t, maxAge, *node.MaxAgeSeconds)

@@ -1388,3 +1388,46 @@ func CreateTrackerPattern(c *testutil.Client, categoryID string, attrs ...Attrs)
 
 	return result.CreateTrackerPattern.TrackerPatternEdge.Node.ID
 }
+
+func CreateTrackerResource(c *testutil.Client, categoryID string, attrs ...Attrs) string {
+	c.T.Helper()
+
+	var a Attrs
+	if len(attrs) > 0 {
+		a = attrs[0]
+	}
+
+	const query = `
+		mutation($input: CreateTrackerResourceInput!) {
+			createTrackerResource(input: $input) {
+				trackerResourceEdge {
+					node { id }
+				}
+			}
+		}
+	`
+
+	input := map[string]any{
+		"cookieCategoryId": categoryID,
+		"type":             a.getString("type", "SCRIPT"),
+		"origin":           a.getString("origin", SafeOrigin()),
+		"path":             a.getString("path", "/"+gofakeit.LetterN(8)+".js"),
+		"displayName":      a.getString("displayName", SafeName("Resource")),
+		"description":      a.getString("description", "Test tracker resource"),
+	}
+
+	var result struct {
+		CreateTrackerResource struct {
+			TrackerResourceEdge struct {
+				Node struct {
+					ID string `json:"id"`
+				} `json:"node"`
+			} `json:"trackerResourceEdge"`
+		} `json:"createTrackerResource"`
+	}
+
+	err := c.Execute(query, map[string]any{"input": input}, &result)
+	require.NoError(c.T, err, "createTrackerResource mutation failed")
+
+	return result.CreateTrackerResource.TrackerResourceEdge.Node.ID
+}
