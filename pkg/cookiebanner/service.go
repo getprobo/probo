@@ -113,6 +113,7 @@ type (
 		Name          string
 		MaxAgeSeconds *int
 		Source        coredata.CookieSource
+		InitiatorURL  *string
 	}
 
 	ReportDetectedCookiesRequest struct {
@@ -120,9 +121,10 @@ type (
 	}
 
 	DetectedStorageItem struct {
-		Key         string
-		StorageType coredata.TrackerType
-		ValueSize   *int
+		Key          string
+		StorageType  coredata.TrackerType
+		ValueSize    *int
+		InitiatorURL *string
 	}
 
 	DetectedResourceItem struct {
@@ -2035,6 +2037,7 @@ func (s *Service) ReportDetectedTrackers(
 						Identifier:    dc.Name,
 						MaxAgeSeconds: dc.MaxAgeSeconds,
 						Source:        &dc.Source,
+						InitiatorURL:  dc.InitiatorURL,
 					},
 					&inserted,
 				); err != nil {
@@ -2051,9 +2054,10 @@ func (s *Service) ReportDetectedTrackers(
 					uncategorised.ID,
 					now,
 					detectedTrackerInfo{
-						TrackerType: ds.StorageType,
-						Identifier:  ds.Key,
-						ValueSize:   ds.ValueSize,
+						TrackerType:  ds.StorageType,
+						Identifier:   ds.Key,
+						ValueSize:    ds.ValueSize,
+						InitiatorURL: ds.InitiatorURL,
 					},
 					&inserted,
 				); err != nil {
@@ -2096,6 +2100,7 @@ type detectedTrackerInfo struct {
 	MaxAgeSeconds *int
 	Source        *coredata.CookieSource
 	ValueSize     *int
+	InitiatorURL  *string
 }
 
 func (s *Service) reportDetectedTracker(
@@ -2168,6 +2173,7 @@ func (s *Service) reportDetectedTracker(
 		MaxAgeSeconds:    info.MaxAgeSeconds,
 		Source:           info.Source,
 		ValueSize:        info.ValueSize,
+		InitiatorURL:     info.InitiatorURL,
 		LastDetectedAt:   now,
 		CreatedAt:        now,
 		UpdatedAt:        now,

@@ -15,11 +15,13 @@
 import type { Detector } from "./detector";
 import { NotFoundError } from "../errors";
 import { fetchJSON } from "../http";
+import { getInitiatorURL } from "./initiator";
 
 interface DetectedStorageEntry {
   key: string;
   storage_type: "local_storage" | "session_storage" | "indexed_db";
   value_size: number | null;
+  initiator_url?: string;
 }
 
 const DEBOUNCE_MS = 2_000;
@@ -34,6 +36,7 @@ function isExtensionCaller(): boolean {
 
 export class StorageDetector implements Detector {
   private readonly reportUrl: URL;
+  private readonly proboOrigin: string;
   private readonly reported: Set<string> = new Set();
   private readonly pending: Map<string, DetectedStorageEntry> = new Map();
   private timer: ReturnType<typeof setTimeout> | null = null;
@@ -42,6 +45,7 @@ export class StorageDetector implements Detector {
 
   constructor(baseUrl: URL, bannerId: string) {
     this.reportUrl = new URL(`${bannerId}/report`, baseUrl);
+    this.proboOrigin = baseUrl.origin;
   }
 
   start(): void {
@@ -113,12 +117,16 @@ export class StorageDetector implements Detector {
     const reportKey = `${storageType}:${key}`;
     if (this.reported.has(reportKey)) return;
 
+    const initiatorUrl = getInitiatorURL(this.proboOrigin);
+
     this.reported.add(reportKey);
-    this.pending.set(reportKey, {
+    const entry: DetectedStorageEntry = {
       key,
       storage_type: storageType,
       value_size: value.length * 2,
-    });
+    };
+    if (initiatorUrl) entry.initiator_url = initiatorUrl;
+    this.pending.set(reportKey, entry);
     this.scheduleFlush();
   }
 

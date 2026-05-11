@@ -16,11 +16,13 @@ import { isDeletion, parseCookieName, parseMaxAgeSeconds } from "../cookie-utils
 import type { Detector } from "./detector";
 import { NotFoundError } from "../errors";
 import { fetchJSON } from "../http";
+import { getInitiatorURL } from "./initiator";
 
 interface DetectedCookieEntry {
   name: string;
   max_age_seconds: number | null;
   source: "script" | "pre-existing" | "http";
+  initiator_url?: string;
 }
 
 const DEBOUNCE_MS = 2_000;
@@ -34,6 +36,7 @@ function isExtensionCaller(): boolean {
 
 export class CookieDetector implements Detector {
   private readonly reportUrl: URL;
+  private readonly proboOrigin: string;
   private readonly knownNames: Set<string>;
   private readonly reported: Set<string> = new Set();
   private readonly pending: Map<string, DetectedCookieEntry> = new Map();
@@ -43,6 +46,7 @@ export class CookieDetector implements Detector {
 
   constructor(baseUrl: URL, bannerId: string, knownNames: Set<string>) {
     this.reportUrl = new URL(`${bannerId}/report`, baseUrl);
+    this.proboOrigin = baseUrl.origin;
     this.knownNames = knownNames;
   }
 
@@ -103,9 +107,16 @@ export class CookieDetector implements Detector {
     if (!name || this.knownNames.has(name) || this.reported.has(name)) return;
 
     const maxAgeSeconds = parseMaxAgeSeconds(raw);
+    const initiatorUrl = getInitiatorURL(this.proboOrigin);
 
     this.reported.add(name);
-    this.pending.set(name, { name, max_age_seconds: maxAgeSeconds, source: "script" });
+    const entry: DetectedCookieEntry = {
+      name,
+      max_age_seconds: maxAgeSeconds,
+      source: "script",
+    };
+    if (initiatorUrl) entry.initiator_url = initiatorUrl;
+    this.pending.set(name, entry);
     this.scheduleFlush();
   }
 

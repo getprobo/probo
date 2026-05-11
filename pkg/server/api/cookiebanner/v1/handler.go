@@ -19,6 +19,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -221,16 +222,45 @@ func (h *Handler) handlePostConsent(w http.ResponseWriter, r *http.Request) {
 }
 
 type detectedCookieEntry struct {
-	Name          string `json:"name"`
-	MaxAgeSeconds *int   `json:"max_age_seconds"`
-	Source        string `json:"source"`
+	Name          string  `json:"name"`
+	MaxAgeSeconds *int    `json:"max_age_seconds"`
+	Source        string  `json:"source"`
+	InitiatorURL  *string `json:"initiator_url,omitempty"`
 }
 
 type reportDetectedCookiesBody struct {
 	Cookies []detectedCookieEntry `json:"cookies"`
 }
 
-const maxDetectedCookiesPerRequest = 100
+const (
+	maxDetectedCookiesPerRequest = 100
+	maxInitiatorURLLength        = 1024
+)
+
+// sanitizeInitiatorURL validates and normalises a script URL captured
+// in the customer page's stack trace. It drops the value when it does
+// not parse as an http(s) URL with a host, or when it exceeds the
+// length cap. Returns nil for missing or invalid input.
+func sanitizeInitiatorURL(raw *string) *string {
+	if raw == nil {
+		return nil
+	}
+	s := strings.TrimSpace(*raw)
+	if s == "" || len(s) > maxInitiatorURLLength {
+		return nil
+	}
+	u, err := url.Parse(s)
+	if err != nil {
+		return nil
+	}
+	if u.Scheme != "http" && u.Scheme != "https" {
+		return nil
+	}
+	if u.Host == "" {
+		return nil
+	}
+	return &s
+}
 
 func (h *Handler) handleReportDetectedCookies(w http.ResponseWriter, r *http.Request) {
 	bannerID, err := gid.ParseGID(chi.URLParam(r, "bannerID"))
@@ -278,6 +308,7 @@ func (h *Handler) handleReportDetectedCookies(w http.ResponseWriter, r *http.Req
 				Name:          name,
 				MaxAgeSeconds: c.MaxAgeSeconds,
 				Source:        source,
+				InitiatorURL:  sanitizeInitiatorURL(c.InitiatorURL),
 			},
 		)
 	}
@@ -306,9 +337,10 @@ func (h *Handler) handleReportDetectedCookies(w http.ResponseWriter, r *http.Req
 }
 
 type detectedStorageEntry struct {
-	Key         string `json:"key"`
-	StorageType string `json:"storage_type"`
-	ValueSize   *int   `json:"value_size"`
+	Key          string  `json:"key"`
+	StorageType  string  `json:"storage_type"`
+	ValueSize    *int    `json:"value_size"`
+	InitiatorURL *string `json:"initiator_url,omitempty"`
 }
 
 type detectedResourceEntry struct {
@@ -372,6 +404,7 @@ func (h *Handler) handleReportDetectedTrackers(w http.ResponseWriter, r *http.Re
 				Name:          name,
 				MaxAgeSeconds: c.MaxAgeSeconds,
 				Source:        source,
+				InitiatorURL:  sanitizeInitiatorURL(c.InitiatorURL),
 			},
 		)
 	}
@@ -397,9 +430,10 @@ func (h *Handler) handleReportDetectedTrackers(w http.ResponseWriter, r *http.Re
 		req.Storage = append(
 			req.Storage,
 			cookiebanner.DetectedStorageItem{
-				Key:         key,
-				StorageType: storageType,
-				ValueSize:   s.ValueSize,
+				Key:          key,
+				StorageType:  storageType,
+				ValueSize:    s.ValueSize,
+				InitiatorURL: sanitizeInitiatorURL(s.InitiatorURL),
 			},
 		)
 	}
