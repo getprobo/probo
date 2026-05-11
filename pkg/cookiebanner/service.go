@@ -2179,8 +2179,8 @@ func (s *Service) reportDetectedTracker(
 		UpdatedAt:        now,
 	}
 
-	if _, err := tracker.InsertIfNotExists(ctx, tx, scope); err != nil {
-		return fmt.Errorf("cannot insert detected tracker: %w", err)
+	if _, err := tracker.Upsert(ctx, tx, scope); err != nil {
+		return fmt.Errorf("cannot upsert detected tracker: %w", err)
 	}
 
 	return nil

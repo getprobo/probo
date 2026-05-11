@@ -44,7 +44,7 @@ type (
 	DetectedTrackers []*DetectedTracker
 )
 
-func (dt *DetectedTracker) InsertIfNotExists(
+func (dt *DetectedTracker) Upsert(
 	ctx context.Context,
 	tx pg.Tx,
 	scope Scoper,
@@ -109,7 +109,7 @@ ON CONFLICT (cookie_banner_id, tracker_type, identifier) DO UPDATE
 
 	result, err := tx.Exec(ctx, q, args)
 	if err != nil {
-		return false, fmt.Errorf("cannot insert detected tracker: %w", err)
+		return false, fmt.Errorf("cannot upsert detected tracker: %w", err)
 	}
 
 	return result.RowsAffected() > 0, nil
