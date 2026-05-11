@@ -13,7 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 import { EyeIcon, EyeSlashIcon } from "@phosphor-icons/react";
-import { formatDate, formatError, type GraphQLError } from "@probo/helpers";
+import { formatError, type GraphQLError } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import {
   Badge,
@@ -53,7 +53,6 @@ const trackerPatternFragment = graphql`
     maxAgeSeconds
     excluded
     lastMatchedAt
-    updatedAt
   }
 `;
 
@@ -327,11 +326,6 @@ export function TrackerPatternRow({ patternKey, connectionId }: TrackerPatternRo
               </time>
             )
           : <span className="text-txt-tertiary">-</span>}
-      </Td>
-      <Td>
-        <time dateTime={pattern.updatedAt}>
-          {formatDate(pattern.updatedAt)}
-        </time>
       </Td>
       <Td>
         <div className="flex items-center gap-1">
