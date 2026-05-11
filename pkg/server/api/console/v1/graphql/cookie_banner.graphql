@@ -52,6 +52,10 @@ enum TrackerType
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.TrackerTypeIndexedDB"
         )
+    CACHE_STORAGE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TrackerTypeCacheStorage"
+        )
 }
 
 enum CookieBannerOrderField
@@ -331,6 +335,10 @@ enum TrackerResourceType
     MEDIA
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.TrackerResourceTypeMedia"
+        )
+    SERVICE_WORKER
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TrackerResourceTypeServiceWorker"
         )
 }
 

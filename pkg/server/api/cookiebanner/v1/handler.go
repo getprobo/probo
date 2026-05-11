@@ -423,6 +423,8 @@ func (h *Handler) handleReportDetectedTrackers(w http.ResponseWriter, r *http.Re
 			storageType = coredata.TrackerTypeSessionStorage
 		case "indexed_db":
 			storageType = coredata.TrackerTypeIndexedDB
+		case "cache_storage":
+			storageType = coredata.TrackerTypeCacheStorage
 		default:
 			continue
 		}
@@ -457,6 +459,8 @@ func (h *Handler) handleReportDetectedTrackers(w http.ResponseWriter, r *http.Re
 			resourceType = coredata.TrackerResourceTypeFetch
 		case "media":
 			resourceType = coredata.TrackerResourceTypeMedia
+		case "service_worker":
+			resourceType = coredata.TrackerResourceTypeServiceWorker
 		default:
 			continue
 		}

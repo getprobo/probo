@@ -24,7 +24,8 @@ type ResourceType =
   | "font"
   | "beacon"
   | "fetch"
-  | "media";
+  | "media"
+  | "service_worker";
 
 interface DetectedResourceEntry {
   url: string;
@@ -80,6 +81,7 @@ export class ThirdPartyDetector implements Detector {
   private timer: ReturnType<typeof setTimeout> | null = null;
   private observer: MutationObserver | null = null;
   private perfObserver: PerformanceObserver | null = null;
+  private originalSWRegister: typeof ServiceWorkerContainer.prototype.register | null = null;
 
   constructor(baseUrl: URL, bannerId: string) {
     this.reportUrl = new URL(`${bannerId}/report`, baseUrl);
@@ -91,6 +93,8 @@ export class ThirdPartyDetector implements Detector {
     this.scanExisting();
     this.observeMutations();
     this.observePerformance();
+    this.wrapServiceWorker();
+    this.scanServiceWorkers();
   }
 
   stop(): void {
@@ -111,6 +115,15 @@ export class ThirdPartyDetector implements Detector {
     if (this.perfObserver) {
       this.perfObserver.disconnect();
       this.perfObserver = null;
+    }
+
+    if (
+      this.originalSWRegister
+      && typeof navigator !== "undefined"
+      && navigator.serviceWorker
+    ) {
+      navigator.serviceWorker.register = this.originalSWRegister;
+      this.originalSWRegister = null;
     }
   }
 
@@ -177,6 +190,50 @@ export class ThirdPartyDetector implements Detector {
       // coverage only.
       this.perfObserver = null;
     }
+  }
+
+  // wrapServiceWorker intercepts navigator.serviceWorker.register so
+  // each registration -- even ones initiated by third-party SDKs --
+  // surfaces as a tracker_resource entry keyed on the worker script
+  // origin+path.
+  private wrapServiceWorker(): void {
+    if (typeof navigator === "undefined" || !navigator.serviceWorker) return;
+
+    const sw = navigator.serviceWorker;
+    const originalRegister = sw.register.bind(sw);
+    this.originalSWRegister = originalRegister;
+
+    const self = this;
+
+    sw.register = function (
+      scriptURL: string | URL,
+      options?: RegistrationOptions,
+    ): Promise<ServiceWorkerRegistration> {
+      const url = typeof scriptURL === "string" ? scriptURL : scriptURL.toString();
+      self.processResource(url, "service_worker");
+      return originalRegister(scriptURL, options);
+    };
+  }
+
+  // scanServiceWorkers enumerates registrations that pre-date the SDK
+  // (e.g. installed on a previous visit, restored from cache).
+  private scanServiceWorkers(): void {
+    if (typeof navigator === "undefined" || !navigator.serviceWorker) return;
+
+    navigator.serviceWorker
+      .getRegistrations()
+      .then((registrations) => {
+        for (const r of registrations) {
+          const url
+            = r.active?.scriptURL
+              ?? r.installing?.scriptURL
+              ?? r.waiting?.scriptURL;
+          if (url) this.processResource(url, "service_worker");
+        }
+      })
+      .catch(() => {
+        // Some browsers throw NotSupportedError in insecure contexts.
+      });
   }
 
   private processResource(src: string, resourceType: ResourceType): void {

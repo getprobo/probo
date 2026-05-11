@@ -170,6 +170,7 @@ export default function CookieBannerResourcesPage({
           <Option value="BEACON">{__("Beacon")}</Option>
           <Option value="FETCH">{__("Fetch")}</Option>
           <Option value="MEDIA">{__("Media")}</Option>
+          <Option value="SERVICE_WORKER">{__("Service Worker")}</Option>
         </Select>
       </div>
 

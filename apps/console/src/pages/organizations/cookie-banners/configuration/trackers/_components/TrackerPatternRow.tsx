@@ -130,6 +130,7 @@ function trackerTypeLabel(type: string, __: (s: string) => string): string {
     case "LOCAL_STORAGE": return __("localStorage");
     case "SESSION_STORAGE": return __("sessionStorage");
     case "INDEXED_DB": return __("IndexedDB");
+    case "CACHE_STORAGE": return __("Cache Storage");
     default: return type;
   }
 }

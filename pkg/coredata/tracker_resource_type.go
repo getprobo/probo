@@ -22,14 +22,15 @@ import (
 type TrackerResourceType string
 
 const (
-	TrackerResourceTypeScript     TrackerResourceType = "SCRIPT"
-	TrackerResourceTypeIframe     TrackerResourceType = "IFRAME"
-	TrackerResourceTypeImage      TrackerResourceType = "IMAGE"
-	TrackerResourceTypeStylesheet TrackerResourceType = "STYLESHEET"
-	TrackerResourceTypeFont       TrackerResourceType = "FONT"
-	TrackerResourceTypeBeacon     TrackerResourceType = "BEACON"
-	TrackerResourceTypeFetch      TrackerResourceType = "FETCH"
-	TrackerResourceTypeMedia      TrackerResourceType = "MEDIA"
+	TrackerResourceTypeScript        TrackerResourceType = "SCRIPT"
+	TrackerResourceTypeIframe        TrackerResourceType = "IFRAME"
+	TrackerResourceTypeImage         TrackerResourceType = "IMAGE"
+	TrackerResourceTypeStylesheet    TrackerResourceType = "STYLESHEET"
+	TrackerResourceTypeFont          TrackerResourceType = "FONT"
+	TrackerResourceTypeBeacon        TrackerResourceType = "BEACON"
+	TrackerResourceTypeFetch         TrackerResourceType = "FETCH"
+	TrackerResourceTypeMedia         TrackerResourceType = "MEDIA"
+	TrackerResourceTypeServiceWorker TrackerResourceType = "SERVICE_WORKER"
 )
 
 func TrackerResourceTypes() []TrackerResourceType {
@@ -42,6 +43,7 @@ func TrackerResourceTypes() []TrackerResourceType {
 		TrackerResourceTypeBeacon,
 		TrackerResourceTypeFetch,
 		TrackerResourceTypeMedia,
+		TrackerResourceTypeServiceWorker,
 	}
 }
 
@@ -77,6 +79,8 @@ func (s *TrackerResourceType) Scan(value any) error {
 		*s = TrackerResourceTypeFetch
 	case TrackerResourceTypeMedia:
 		*s = TrackerResourceTypeMedia
+	case TrackerResourceTypeServiceWorker:
+		*s = TrackerResourceTypeServiceWorker
 	default:
 		return fmt.Errorf("invalid TrackerResourceType value: %q", v)
 	}
@@ -92,7 +96,8 @@ func (s TrackerResourceType) Value() (driver.Value, error) {
 		TrackerResourceTypeFont,
 		TrackerResourceTypeBeacon,
 		TrackerResourceTypeFetch,
-		TrackerResourceTypeMedia:
+		TrackerResourceTypeMedia,
+		TrackerResourceTypeServiceWorker:
 		return string(s), nil
 	default:
 		return nil, fmt.Errorf("invalid TrackerResourceType: %s", s)

@@ -19,7 +19,11 @@ import { getInitiatorURL } from "./initiator";
 
 interface DetectedStorageEntry {
   key: string;
-  storage_type: "local_storage" | "session_storage" | "indexed_db";
+  storage_type:
+    | "local_storage"
+    | "session_storage"
+    | "indexed_db"
+    | "cache_storage";
   value_size: number | null;
   initiator_url?: string;
 }
@@ -42,6 +46,7 @@ export class StorageDetector implements Detector {
   private timer: ReturnType<typeof setTimeout> | null = null;
   private originalSetItem: typeof Storage.prototype.setItem | null = null;
   private originalIDBOpen: typeof IDBFactory.prototype.open | null = null;
+  private originalCachesOpen: typeof CacheStorage.prototype.open | null = null;
 
   constructor(baseUrl: URL, bannerId: string) {
     this.reportUrl = new URL(`${bannerId}/report`, baseUrl);
@@ -51,7 +56,9 @@ export class StorageDetector implements Detector {
   start(): void {
     this.wrapStorage();
     this.wrapIndexedDB();
+    this.wrapCacheStorage();
     this.scanExisting();
+    this.scanCacheStorage();
   }
 
   stop(): void {
@@ -71,6 +78,10 @@ export class StorageDetector implements Detector {
     if (this.originalIDBOpen) {
       IDBFactory.prototype.open = this.originalIDBOpen;
       this.originalIDBOpen = null;
+    }
+    if (this.originalCachesOpen && typeof caches !== "undefined") {
+      caches.open = this.originalCachesOpen;
+      this.originalCachesOpen = null;
     }
   }
 
@@ -104,6 +115,20 @@ export class StorageDetector implements Detector {
       const request = originalOpen.call(this, name, version);
       self.onIndexedDBOpen(name);
       return request;
+    };
+  }
+
+  private wrapCacheStorage(): void {
+    if (typeof caches === "undefined") return;
+
+    const originalOpen = caches.open.bind(caches);
+    this.originalCachesOpen = originalOpen;
+
+    const self = this;
+
+    caches.open = function (name: string): Promise<Cache> {
+      self.onCacheStorageOpen(name);
+      return originalOpen(name);
     };
   }
 
@@ -141,6 +166,37 @@ export class StorageDetector implements Detector {
       value_size: null,
     });
     this.scheduleFlush();
+  }
+
+  private onCacheStorageOpen(name: string): void {
+    const reportKey = `cache_storage:${name}`;
+    if (this.reported.has(reportKey)) return;
+
+    this.reported.add(reportKey);
+    this.pending.set(reportKey, {
+      key: name,
+      storage_type: "cache_storage",
+      value_size: null,
+    });
+    this.scheduleFlush();
+  }
+
+  // scanCacheStorage enumerates pre-existing cache buckets created
+  // before the SDK loaded. Service workers commonly create their
+  // caches eagerly on `install`, so without this scan we would miss
+  // any cache bucket whose creation predates the banner script.
+  private scanCacheStorage(): void {
+    if (typeof caches === "undefined") return;
+    caches
+      .keys()
+      .then((names) => {
+        for (const name of names) {
+          this.onCacheStorageOpen(name);
+        }
+      })
+      .catch(() => {
+        // Insecure context or storage partition errors -- ignore.
+      });
   }
 
   private scanExisting(): void {

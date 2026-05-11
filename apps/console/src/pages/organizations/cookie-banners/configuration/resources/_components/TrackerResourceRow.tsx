@@ -133,6 +133,7 @@ function resourceTypeLabel(type: string, __: (s: string) => string): string {
     case "BEACON": return __("Beacon");
     case "FETCH": return __("Fetch");
     case "MEDIA": return __("Media");
+    case "SERVICE_WORKER": return __("Service Worker");
     default: return type;
   }
 }
