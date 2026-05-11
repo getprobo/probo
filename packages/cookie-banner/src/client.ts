@@ -18,7 +18,7 @@ import {
 } from "./activation";
 import { COOKIE_NAME, getConsentCookie, setConsentCookie } from "./cookie";
 import type { Detector } from "./detectors";
-import { CookieDetector, StorageDetector, ThirdPartyDetector } from "./detectors";
+import { CookieDetector, ReportQueue, StorageDetector, ThirdPartyDetector } from "./detectors";
 import { NotFoundError } from "./errors";
 import { fetchJSON } from "./http";
 import { detectLanguage } from "./i18n";
@@ -58,6 +58,7 @@ export class CookieBannerClient {
   private consent: VisitorConsent | null = null;
   private observer: MutationObserver | null = null;
   private detectors: Detector[] = [];
+  private reportQueue: ReportQueue | null = null;
   private _gpcApplied = false;
 
   constructor(config: CookieBannerClientOptions) {
@@ -308,10 +309,14 @@ export class CookieBannerClient {
       }
     }
 
+    const reportUrl = new URL(`${this.bannerId}/report`, this.baseUrl);
+    this.reportQueue = new ReportQueue(reportUrl);
+
+    const apiOrigin = this.baseUrl.origin;
     this.detectors = [
-      new CookieDetector(this.baseUrl, this.bannerId, knownNames),
-      new StorageDetector(this.baseUrl, this.bannerId),
-      new ThirdPartyDetector(this.baseUrl, this.bannerId),
+      new CookieDetector(this.reportQueue, apiOrigin, knownNames),
+      new StorageDetector(this.reportQueue, apiOrigin),
+      new ThirdPartyDetector(this.reportQueue, apiOrigin),
     ];
 
     for (const d of this.detectors) {
@@ -324,6 +329,10 @@ export class CookieBannerClient {
       d.stop();
     }
     this.detectors = [];
+    if (this.reportQueue) {
+      this.reportQueue.stop();
+      this.reportQueue = null;
+    }
   }
 
   destroy(): void {

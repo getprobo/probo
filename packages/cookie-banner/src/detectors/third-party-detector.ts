@@ -13,27 +13,9 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 import type { Detector } from "./detector";
-import { NotFoundError } from "../errors";
-import { fetchJSON } from "../http";
+import type { ReportQueue } from "./report-queue";
+import type { ResourceType } from "./types";
 
-type ResourceType =
-  | "script"
-  | "iframe"
-  | "image"
-  | "stylesheet"
-  | "font"
-  | "beacon"
-  | "fetch"
-  | "media"
-  | "service_worker";
-
-interface DetectedResourceEntry {
-  url: string;
-  resource_type: ResourceType;
-}
-
-const DEBOUNCE_MS = 2_000;
-const MAX_ITEMS_PER_REQUEST = 100;
 const EXTENSION_URL_RE = /(?:chrome|moz|safari-web)-extension:\/\//;
 
 // Map browser-reported PerformanceResourceTiming.initiatorType to the
@@ -73,24 +55,22 @@ function mapInitiatorType(it: string): ResourceType | null {
 }
 
 export class ThirdPartyDetector implements Detector {
-  private readonly reportUrl: URL;
+  private readonly queue: ReportQueue;
   private readonly pageOrigin: string;
-  private readonly proboOrigin: string;
-  private readonly reported: Set<string> = new Set();
-  private readonly pending: Map<string, DetectedResourceEntry> = new Map();
-  private timer: ReturnType<typeof setTimeout> | null = null;
-  private flushing = false;
+  private readonly apiOrigin: string;
   private observer: MutationObserver | null = null;
   private perfObserver: PerformanceObserver | null = null;
   private originalSWRegister: typeof ServiceWorkerContainer.prototype.register | null = null;
 
-  constructor(baseUrl: URL, bannerId: string) {
-    this.reportUrl = new URL(`${bannerId}/report`, baseUrl);
+  constructor(queue: ReportQueue, apiOrigin: string) {
+    this.queue = queue;
     this.pageOrigin = location.origin;
-    this.proboOrigin = baseUrl.origin;
+    this.apiOrigin = apiOrigin;
   }
 
   start(): void {
+    this.queue.onNotFound(() => this.stop());
+
     this.scanExisting();
     this.observeMutations();
     this.observePerformance();
@@ -99,15 +79,6 @@ export class ThirdPartyDetector implements Detector {
   }
 
   stop(): void {
-    if (this.timer) {
-      clearTimeout(this.timer);
-      this.timer = null;
-    }
-
-    if (this.pending.size > 0) {
-      this.flush();
-    }
-
     if (this.observer) {
       this.observer.disconnect();
       this.observer = null;
@@ -134,10 +105,6 @@ export class ThirdPartyDetector implements Detector {
     }
     for (const iframe of document.querySelectorAll<HTMLIFrameElement>("iframe[src]")) {
       this.processResource(iframe.src, "iframe");
-    }
-
-    if (this.pending.size > 0) {
-      this.scheduleFlush();
     }
   }
 
@@ -250,61 +217,12 @@ export class ThirdPartyDetector implements Detector {
     if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return;
     // Service workers are always same-origin per browser security rules,
     // so we never drop them based on the page origin -- they are tracked
-    // regardless of where the script lives. The proboOrigin guard still
+    // regardless of where the script lives. The apiOrigin guard still
     // applies so we never report our own SDK assets.
-    if (parsed.origin === this.proboOrigin) return;
+    if (parsed.origin === this.apiOrigin) return;
     if (resourceType !== "service_worker" && parsed.origin === this.pageOrigin) return;
 
     const identifier = parsed.origin + parsed.pathname;
-    const reportKey = `${resourceType}:${identifier}`;
-    if (this.reported.has(reportKey)) return;
-
-    this.reported.add(reportKey);
-    this.pending.set(reportKey, { url: identifier, resource_type: resourceType });
-    this.scheduleFlush();
-  }
-
-  private scheduleFlush(): void {
-    if (this.timer || this.flushing) return;
-    this.timer = setTimeout(() => {
-      this.timer = null;
-      this.flush();
-    }, DEBOUNCE_MS);
-  }
-
-  // flush sends one batch from `pending` and only removes entries on
-  // success. Transient failures leave entries in `pending` so they are
-  // retried on the next flush. `flushing` guards against re-sending an
-  // in-flight batch when new entries arrive mid-request.
-  private flush(): void {
-    if (this.flushing) return;
-    if (this.pending.size === 0) return;
-
-    const batchKeys: string[] = [];
-    const entries: DetectedResourceEntry[] = [];
-    for (const [key, entry] of this.pending) {
-      batchKeys.push(key);
-      entries.push(entry);
-      if (entries.length >= MAX_ITEMS_PER_REQUEST) break;
-    }
-
-    this.flushing = true;
-    void fetchJSON(this.reportUrl, {
-      method: "POST",
-      body: { resources: entries },
-    })
-      .then(() => {
-        for (const key of batchKeys) this.pending.delete(key);
-      })
-      .catch((err) => {
-        if (err instanceof NotFoundError) {
-          this.pending.clear();
-          this.stop();
-        }
-      })
-      .finally(() => {
-        this.flushing = false;
-        if (this.pending.size > 0) this.scheduleFlush();
-      });
+    this.queue.reportResource({ url: identifier, resource_type: resourceType });
   }
 }

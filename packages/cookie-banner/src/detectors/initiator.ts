@@ -20,12 +20,12 @@ const MAX_INITIATOR_URL_LENGTH = 1024;
 // getInitiatorURL walks the current call stack and returns the first
 // third-party script URL (as origin+pathname). It deliberately skips:
 //   - browser extension URLs (chrome/moz/safari-web-extension://)
-//   - the Probo SDK's own origin (instrumentation frames)
+//   - the SDK's API origin (instrumentation frames)
 //   - the page's own origin (we want the third-party loader, not first-party code)
 //
 // Returns null when no third-party frame is found (anonymous/eval/inline
 // scripts, or writes originating from the page itself).
-export function getInitiatorURL(proboOrigin: string): string | null {
+export function getInitiatorURL(apiOrigin: string): string | null {
   const stack = new Error().stack;
   if (!stack) return null;
 
@@ -44,7 +44,7 @@ export function getInitiatorURL(proboOrigin: string): string | null {
       continue;
     }
 
-    if (parsed.origin === proboOrigin) continue;
+    if (parsed.origin === apiOrigin) continue;
     if (parsed.origin === location.origin) continue;
 
     const result = parsed.origin + parsed.pathname;

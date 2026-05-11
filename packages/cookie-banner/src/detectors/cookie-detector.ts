@@ -14,19 +14,10 @@
 
 import { isDeletion, parseCookieName, parseMaxAgeSeconds } from "../cookie-utils";
 import type { Detector } from "./detector";
-import { NotFoundError } from "../errors";
-import { fetchJSON } from "../http";
 import { getInitiatorURL } from "./initiator";
+import type { ReportQueue } from "./report-queue";
+import type { DetectedCookieEntry } from "./types";
 
-interface DetectedCookieEntry {
-  name: string;
-  max_age_seconds: number | null;
-  source: "script" | "pre-existing" | "http";
-  initiator_url?: string;
-}
-
-const DEBOUNCE_MS = 2_000;
-const MAX_COOKIES_PER_REQUEST = 100;
 const EXTENSION_URL_RE = /(?:chrome|moz|safari-web)-extension:\/\//;
 
 function isExtensionCaller(): boolean {
@@ -35,23 +26,21 @@ function isExtensionCaller(): boolean {
 }
 
 export class CookieDetector implements Detector {
-  private readonly reportUrl: URL;
-  private readonly proboOrigin: string;
+  private readonly queue: ReportQueue;
+  private readonly apiOrigin: string;
   private readonly knownNames: Set<string>;
-  private readonly reported: Set<string> = new Set();
-  private readonly pending: Map<string, DetectedCookieEntry> = new Map();
-  private timer: ReturnType<typeof setTimeout> | null = null;
-  private flushing = false;
   private originalDescriptor: PropertyDescriptor | null = null;
   private cookieStoreHandler: ((event: CookieChangeEvent) => void) | null = null;
 
-  constructor(baseUrl: URL, bannerId: string, knownNames: Set<string>) {
-    this.reportUrl = new URL(`${bannerId}/report`, baseUrl);
-    this.proboOrigin = baseUrl.origin;
+  constructor(queue: ReportQueue, apiOrigin: string, knownNames: Set<string>) {
+    this.queue = queue;
+    this.apiOrigin = apiOrigin;
     this.knownNames = knownNames;
   }
 
   start(): void {
+    this.queue.onNotFound(() => this.stop());
+
     const desc =
       Object.getOwnPropertyDescriptor(Document.prototype, "cookie") ??
       Object.getOwnPropertyDescriptor(HTMLDocument.prototype, "cookie");
@@ -80,15 +69,6 @@ export class CookieDetector implements Detector {
   }
 
   stop(): void {
-    if (this.timer) {
-      clearTimeout(this.timer);
-      this.timer = null;
-    }
-
-    if (this.pending.size > 0) {
-      this.flush();
-    }
-
     if (this.cookieStoreHandler && typeof cookieStore !== "undefined") {
       cookieStore.removeEventListener("change", this.cookieStoreHandler);
       this.cookieStoreHandler = null;
@@ -105,20 +85,18 @@ export class CookieDetector implements Detector {
     if (isExtensionCaller()) return;
 
     const name = parseCookieName(raw);
-    if (!name || this.knownNames.has(name) || this.reported.has(name)) return;
+    if (!name || this.knownNames.has(name)) return;
 
     const maxAgeSeconds = parseMaxAgeSeconds(raw);
-    const initiatorUrl = getInitiatorURL(this.proboOrigin);
+    const initiatorUrl = getInitiatorURL(this.apiOrigin);
 
-    this.reported.add(name);
     const entry: DetectedCookieEntry = {
       name,
       max_age_seconds: maxAgeSeconds,
       source: "script",
     };
     if (initiatorUrl) entry.initiator_url = initiatorUrl;
-    this.pending.set(name, entry);
-    this.scheduleFlush();
+    this.queue.reportCookie(entry);
   }
 
   private scanExisting(): void {
@@ -127,15 +105,9 @@ export class CookieDetector implements Detector {
 
     for (const pair of cookieStr.split(";")) {
       const name = pair.split("=")[0]?.trim();
-      if (!name || this.knownNames.has(name) || this.reported.has(name)) {
-        continue;
-      }
-      this.reported.add(name);
-      this.pending.set(name, { name, max_age_seconds: null, source: "pre-existing" });
-    }
+      if (!name || this.knownNames.has(name)) continue;
 
-    if (this.pending.size > 0) {
-      this.scheduleFlush();
+      this.queue.reportCookie({ name, max_age_seconds: null, source: "pre-existing" });
     }
   }
 
@@ -146,66 +118,20 @@ export class CookieDetector implements Detector {
 
     this.cookieStoreHandler = (event: CookieChangeEvent) => {
       for (const cookie of event.changed) {
-        if (this.knownNames.has(cookie.name) || this.reported.has(cookie.name)) continue;
+        if (this.knownNames.has(cookie.name)) continue;
 
         const maxAge = cookie.expires
           ? Math.round((cookie.expires - Date.now()) / 1000)
           : null;
 
-        this.reported.add(cookie.name);
-        this.pending.set(cookie.name, {
+        this.queue.reportCookie({
           name: cookie.name,
           max_age_seconds: maxAge && maxAge > 0 ? maxAge : null,
           source: "http",
         });
       }
-      if (this.pending.size > 0) this.scheduleFlush();
     };
 
     cookieStore.addEventListener("change", this.cookieStoreHandler);
-  }
-
-  private scheduleFlush(): void {
-    if (this.timer || this.flushing) return;
-    this.timer = setTimeout(() => {
-      this.timer = null;
-      this.flush();
-    }, DEBOUNCE_MS);
-  }
-
-  // flush sends one batch from `pending` and only removes entries on
-  // success. Transient failures leave entries in `pending` so they are
-  // retried on the next flush. `flushing` guards against re-sending an
-  // in-flight batch when new entries arrive mid-request.
-  private flush(): void {
-    if (this.flushing) return;
-    if (this.pending.size === 0) return;
-
-    const batchKeys: string[] = [];
-    const entries: DetectedCookieEntry[] = [];
-    for (const [key, entry] of this.pending) {
-      batchKeys.push(key);
-      entries.push(entry);
-      if (entries.length >= MAX_COOKIES_PER_REQUEST) break;
-    }
-
-    this.flushing = true;
-    void fetchJSON(this.reportUrl, {
-      method: "POST",
-      body: { cookies: entries },
-    })
-      .then(() => {
-        for (const key of batchKeys) this.pending.delete(key);
-      })
-      .catch((err) => {
-        if (err instanceof NotFoundError) {
-          this.pending.clear();
-          this.stop();
-        }
-      })
-      .finally(() => {
-        this.flushing = false;
-        if (this.pending.size > 0) this.scheduleFlush();
-      });
   }
 }
