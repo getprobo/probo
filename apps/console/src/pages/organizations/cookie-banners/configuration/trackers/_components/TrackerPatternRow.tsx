@@ -31,17 +31,17 @@ import { graphql, useFragment, useMutation, useQueryLoader } from "react-relay";
 import { useParams } from "react-router";
 import { ConnectionHandler } from "relay-runtime";
 
+import type { MoveToCategoryDropdownQuery } from "#/__generated__/core/MoveToCategoryDropdownQuery.graphql";
 import type { TrackerPatternRowDeleteMutation } from "#/__generated__/core/TrackerPatternRowDeleteMutation.graphql";
 import type { TrackerPatternRowFragment$key } from "#/__generated__/core/TrackerPatternRowFragment.graphql";
 import type { TrackerPatternRowMoveMutation } from "#/__generated__/core/TrackerPatternRowMoveMutation.graphql";
 import type { TrackerPatternRowUpdateMutation } from "#/__generated__/core/TrackerPatternRowUpdateMutation.graphql";
-import type { MoveToCategoryDropdownQuery } from "#/__generated__/core/MoveToCategoryDropdownQuery.graphql";
 
-import { TrackerPatternRowEdit } from "./TrackerPatternRowEdit";
 import {
   MoveToCategoryDropdown,
   moveToCategoryDropdownQuery,
 } from "./MoveToCategoryDropdown";
+import { TrackerPatternRowEdit } from "./TrackerPatternRowEdit";
 
 const trackerPatternFragment = graphql`
   fragment TrackerPatternRowFragment on TrackerPattern {
