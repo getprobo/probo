@@ -37,8 +37,7 @@ export class StorageDetector implements Detector {
   private readonly reported: Set<string> = new Set();
   private readonly pending: Map<string, DetectedStorageEntry> = new Map();
   private timer: ReturnType<typeof setTimeout> | null = null;
-  private originalLocalSetItem: typeof Storage.prototype.setItem | null = null;
-  private originalSessionSetItem: typeof Storage.prototype.setItem | null = null;
+  private originalSetItem: typeof Storage.prototype.setItem | null = null;
   private originalIDBOpen: typeof IDBFactory.prototype.open | null = null;
 
   constructor(baseUrl: URL, bannerId: string) {
@@ -61,13 +60,9 @@ export class StorageDetector implements Detector {
       this.flush();
     }
 
-    if (this.originalLocalSetItem) {
-      Storage.prototype.setItem = this.originalLocalSetItem;
-      this.originalLocalSetItem = null;
-    }
-    if (this.originalSessionSetItem) {
-      Storage.prototype.setItem = this.originalLocalSetItem ?? this.originalSessionSetItem!;
-      this.originalSessionSetItem = null;
+    if (this.originalSetItem) {
+      Storage.prototype.setItem = this.originalSetItem;
+      this.originalSetItem = null;
     }
     if (this.originalIDBOpen) {
       IDBFactory.prototype.open = this.originalIDBOpen;
@@ -77,7 +72,7 @@ export class StorageDetector implements Detector {
 
   private wrapStorage(): void {
     const originalSetItem = Storage.prototype.setItem;
-    this.originalLocalSetItem = originalSetItem;
+    this.originalSetItem = originalSetItem;
 
     const self = this;
 
