@@ -16,14 +16,60 @@ import type { Detector } from "./detector";
 import { NotFoundError } from "../errors";
 import { fetchJSON } from "../http";
 
+type ResourceType =
+  | "script"
+  | "iframe"
+  | "image"
+  | "stylesheet"
+  | "font"
+  | "beacon"
+  | "fetch"
+  | "media";
+
 interface DetectedResourceEntry {
   url: string;
-  resource_type: "script" | "iframe";
+  resource_type: ResourceType;
 }
 
 const DEBOUNCE_MS = 2_000;
 const MAX_ITEMS_PER_REQUEST = 100;
 const EXTENSION_URL_RE = /(?:chrome|moz|safari-web)-extension:\/\//;
+
+// Map browser-reported PerformanceResourceTiming.initiatorType to the
+// server-side tracker_resource_type. Anything we cannot classify is
+// dropped rather than reported as "other" to keep the table tidy.
+function mapInitiatorType(it: string): ResourceType | null {
+  switch (it) {
+    case "script":
+      return "script";
+    case "iframe":
+      return "iframe";
+    case "img":
+    case "image":
+    case "imageset":
+    case "input":
+      return "image";
+    case "css":
+    case "link":
+      return "stylesheet";
+    case "font":
+      return "font";
+    case "beacon":
+    case "ping":
+      return "beacon";
+    case "fetch":
+    case "xmlhttprequest":
+      return "fetch";
+    case "video":
+    case "audio":
+    case "track":
+    case "embed":
+    case "object":
+      return "media";
+    default:
+      return null;
+  }
+}
 
 export class ThirdPartyDetector implements Detector {
   private readonly reportUrl: URL;
@@ -33,6 +79,7 @@ export class ThirdPartyDetector implements Detector {
   private readonly pending: Map<string, DetectedResourceEntry> = new Map();
   private timer: ReturnType<typeof setTimeout> | null = null;
   private observer: MutationObserver | null = null;
+  private perfObserver: PerformanceObserver | null = null;
 
   constructor(baseUrl: URL, bannerId: string) {
     this.reportUrl = new URL(`${bannerId}/report`, baseUrl);
@@ -43,6 +90,7 @@ export class ThirdPartyDetector implements Detector {
   start(): void {
     this.scanExisting();
     this.observeMutations();
+    this.observePerformance();
   }
 
   stop(): void {
@@ -59,14 +107,19 @@ export class ThirdPartyDetector implements Detector {
       this.observer.disconnect();
       this.observer = null;
     }
+
+    if (this.perfObserver) {
+      this.perfObserver.disconnect();
+      this.perfObserver = null;
+    }
   }
 
   private scanExisting(): void {
     for (const script of document.querySelectorAll<HTMLScriptElement>("script[src]")) {
-      this.processElement(script.src, "script");
+      this.processResource(script.src, "script");
     }
     for (const iframe of document.querySelectorAll<HTMLIFrameElement>("iframe[src]")) {
-      this.processElement(iframe.src, "iframe");
+      this.processResource(iframe.src, "iframe");
     }
 
     if (this.pending.size > 0) {
@@ -81,16 +134,16 @@ export class ThirdPartyDetector implements Detector {
           if (!(node instanceof HTMLElement)) continue;
 
           if (node instanceof HTMLScriptElement && node.src) {
-            this.processElement(node.src, "script");
+            this.processResource(node.src, "script");
           } else if (node instanceof HTMLIFrameElement && node.src) {
-            this.processElement(node.src, "iframe");
+            this.processResource(node.src, "iframe");
           }
 
           for (const script of node.querySelectorAll<HTMLScriptElement>("script[src]")) {
-            this.processElement(script.src, "script");
+            this.processResource(script.src, "script");
           }
           for (const iframe of node.querySelectorAll<HTMLIFrameElement>("iframe[src]")) {
-            this.processElement(iframe.src, "iframe");
+            this.processResource(iframe.src, "iframe");
           }
         }
       }
@@ -102,7 +155,31 @@ export class ThirdPartyDetector implements Detector {
     });
   }
 
-  private processElement(src: string, resourceType: "script" | "iframe"): void {
+  // observePerformance picks up resources the DOM scan misses: tracking
+  // pixels (<img>), beacons, fetch/XHR call-homes, CSS-loaded fonts and
+  // sub-stylesheets, video/audio embeds. `buffered: true` replays any
+  // entries that fired before the observer was attached, so we catch
+  // bootstrap resources too.
+  private observePerformance(): void {
+    if (typeof PerformanceObserver === "undefined") return;
+
+    try {
+      this.perfObserver = new PerformanceObserver((list) => {
+        for (const entry of list.getEntries() as PerformanceResourceTiming[]) {
+          const rt = mapInitiatorType(entry.initiatorType);
+          if (rt) this.processResource(entry.name, rt);
+        }
+      });
+      this.perfObserver.observe({ type: "resource", buffered: true });
+    } catch {
+      // Older browsers may not support the `type` option or the
+      // `'resource'` entry type. Silently degrade to MutationObserver
+      // coverage only.
+      this.perfObserver = null;
+    }
+  }
+
+  private processResource(src: string, resourceType: ResourceType): void {
     if (EXTENSION_URL_RE.test(src)) return;
 
     let parsed: URL;
@@ -112,6 +189,7 @@ export class ThirdPartyDetector implements Detector {
       return;
     }
 
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return;
     if (parsed.origin === this.pageOrigin || parsed.origin === this.proboOrigin) return;
 
     const identifier = parsed.origin + parsed.pathname;

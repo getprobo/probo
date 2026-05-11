@@ -308,6 +308,30 @@ enum TrackerResourceType
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.TrackerResourceTypeIframe"
         )
+    IMAGE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TrackerResourceTypeImage"
+        )
+    STYLESHEET
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TrackerResourceTypeStylesheet"
+        )
+    FONT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TrackerResourceTypeFont"
+        )
+    BEACON
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TrackerResourceTypeBeacon"
+        )
+    FETCH
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TrackerResourceTypeFetch"
+        )
+    MEDIA
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TrackerResourceTypeMedia"
+        )
 }
 
 enum TrackerResourceOrderField

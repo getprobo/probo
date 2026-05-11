@@ -164,6 +164,12 @@ export default function CookieBannerResourcesPage({
           <Option value="ALL">{__("All types")}</Option>
           <Option value="SCRIPT">{__("Script")}</Option>
           <Option value="IFRAME">{__("Iframe")}</Option>
+          <Option value="IMAGE">{__("Image")}</Option>
+          <Option value="STYLESHEET">{__("Stylesheet")}</Option>
+          <Option value="FONT">{__("Font")}</Option>
+          <Option value="BEACON">{__("Beacon")}</Option>
+          <Option value="FETCH">{__("Fetch")}</Option>
+          <Option value="MEDIA">{__("Media")}</Option>
         </Select>
       </div>
 
@@ -202,7 +208,7 @@ export default function CookieBannerResourcesPage({
                     {__("No uncategorised resources")}
                   </h3>
                   <p className="text-txt-tertiary">
-                    {__("All detected scripts and iframes have been categorised. New resources will appear here when detected.")}
+                    {__("All detected resources have been categorised. New resources will appear here when detected.")}
                   </p>
                 </div>
               </Card>

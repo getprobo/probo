@@ -90,6 +90,12 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 						Options(
 							huh.NewOption("Script", "SCRIPT"),
 							huh.NewOption("Iframe", "IFRAME"),
+							huh.NewOption("Image", "IMAGE"),
+							huh.NewOption("Stylesheet", "STYLESHEET"),
+							huh.NewOption("Font", "FONT"),
+							huh.NewOption("Beacon", "BEACON"),
+							huh.NewOption("Fetch / XHR", "FETCH"),
+							huh.NewOption("Media", "MEDIA"),
 						).
 						Value(&flagResourceType).Run(); err != nil {
 						return err
@@ -155,7 +161,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 
 	cmd.Flags().StringVar(&flagCategoryID, "category-id", "", "Cookie category ID (required)")
 	_ = cmd.MarkFlagRequired("category-id")
-	cmd.Flags().StringVar(&flagResourceType, "resource-type", "", "Resource type: SCRIPT or IFRAME (required)")
+	cmd.Flags().StringVar(&flagResourceType, "resource-type", "", "Resource type: SCRIPT, IFRAME, IMAGE, STYLESHEET, FONT, BEACON, FETCH or MEDIA (required)")
 	cmd.Flags().StringVar(&flagOrigin, "origin", "", "Origin URL (required)")
 	cmd.Flags().StringVar(&flagPath, "path", "", "Resource path (required)")
 	cmd.Flags().StringVar(&flagDisplayName, "display-name", "", "Display name (required)")

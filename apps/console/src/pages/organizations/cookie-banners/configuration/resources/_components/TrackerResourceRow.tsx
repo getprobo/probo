@@ -127,6 +127,12 @@ function resourceTypeLabel(type: string, __: (s: string) => string): string {
   switch (type) {
     case "SCRIPT": return __("Script");
     case "IFRAME": return __("Iframe");
+    case "IMAGE": return __("Image");
+    case "STYLESHEET": return __("Stylesheet");
+    case "FONT": return __("Font");
+    case "BEACON": return __("Beacon");
+    case "FETCH": return __("Fetch");
+    case "MEDIA": return __("Media");
     default: return type;
   }
 }

@@ -445,6 +445,18 @@ func (h *Handler) handleReportDetectedTrackers(w http.ResponseWriter, r *http.Re
 			resourceType = coredata.TrackerResourceTypeScript
 		case "iframe":
 			resourceType = coredata.TrackerResourceTypeIframe
+		case "image":
+			resourceType = coredata.TrackerResourceTypeImage
+		case "stylesheet":
+			resourceType = coredata.TrackerResourceTypeStylesheet
+		case "font":
+			resourceType = coredata.TrackerResourceTypeFont
+		case "beacon":
+			resourceType = coredata.TrackerResourceTypeBeacon
+		case "fetch":
+			resourceType = coredata.TrackerResourceTypeFetch
+		case "media":
+			resourceType = coredata.TrackerResourceTypeMedia
 		default:
 			continue
 		}

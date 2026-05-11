@@ -22,14 +22,26 @@ import (
 type TrackerResourceType string
 
 const (
-	TrackerResourceTypeScript TrackerResourceType = "SCRIPT"
-	TrackerResourceTypeIframe TrackerResourceType = "IFRAME"
+	TrackerResourceTypeScript     TrackerResourceType = "SCRIPT"
+	TrackerResourceTypeIframe     TrackerResourceType = "IFRAME"
+	TrackerResourceTypeImage      TrackerResourceType = "IMAGE"
+	TrackerResourceTypeStylesheet TrackerResourceType = "STYLESHEET"
+	TrackerResourceTypeFont       TrackerResourceType = "FONT"
+	TrackerResourceTypeBeacon     TrackerResourceType = "BEACON"
+	TrackerResourceTypeFetch      TrackerResourceType = "FETCH"
+	TrackerResourceTypeMedia      TrackerResourceType = "MEDIA"
 )
 
 func TrackerResourceTypes() []TrackerResourceType {
 	return []TrackerResourceType{
 		TrackerResourceTypeScript,
 		TrackerResourceTypeIframe,
+		TrackerResourceTypeImage,
+		TrackerResourceTypeStylesheet,
+		TrackerResourceTypeFont,
+		TrackerResourceTypeBeacon,
+		TrackerResourceTypeFetch,
+		TrackerResourceTypeMedia,
 	}
 }
 
@@ -53,6 +65,18 @@ func (s *TrackerResourceType) Scan(value any) error {
 		*s = TrackerResourceTypeScript
 	case TrackerResourceTypeIframe:
 		*s = TrackerResourceTypeIframe
+	case TrackerResourceTypeImage:
+		*s = TrackerResourceTypeImage
+	case TrackerResourceTypeStylesheet:
+		*s = TrackerResourceTypeStylesheet
+	case TrackerResourceTypeFont:
+		*s = TrackerResourceTypeFont
+	case TrackerResourceTypeBeacon:
+		*s = TrackerResourceTypeBeacon
+	case TrackerResourceTypeFetch:
+		*s = TrackerResourceTypeFetch
+	case TrackerResourceTypeMedia:
+		*s = TrackerResourceTypeMedia
 	default:
 		return fmt.Errorf("invalid TrackerResourceType value: %q", v)
 	}
@@ -62,7 +86,13 @@ func (s *TrackerResourceType) Scan(value any) error {
 func (s TrackerResourceType) Value() (driver.Value, error) {
 	switch s {
 	case TrackerResourceTypeScript,
-		TrackerResourceTypeIframe:
+		TrackerResourceTypeIframe,
+		TrackerResourceTypeImage,
+		TrackerResourceTypeStylesheet,
+		TrackerResourceTypeFont,
+		TrackerResourceTypeBeacon,
+		TrackerResourceTypeFetch,
+		TrackerResourceTypeMedia:
 		return string(s), nil
 	default:
 		return nil, fmt.Errorf("invalid TrackerResourceType: %s", s)

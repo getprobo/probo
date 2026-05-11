@@ -9522,7 +9522,7 @@ components:
           description: Cookie category ID
         resource_type:
           type: string
-          enum: [SCRIPT, IFRAME]
+          enum: [SCRIPT, IFRAME, IMAGE, STYLESHEET, FONT, BEACON, FETCH, MEDIA]
           description: Type of tracked resource
         origin:
           type: string
@@ -10186,7 +10186,7 @@ components:
           $ref: "#/components/schemas/GID"
         resource_type:
           type: string
-          enum: [SCRIPT, IFRAME]
+          enum: [SCRIPT, IFRAME, IMAGE, STYLESHEET, FONT, BEACON, FETCH, MEDIA]
         origin:
           type: string
         path:
