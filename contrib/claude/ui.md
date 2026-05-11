@@ -98,6 +98,18 @@ Icons come from two sources, in this order of preference:
 
 **Never use emoji characters (🍪, ✅, ⚠️, …) as icons in UI.** Emojis render inconsistently across platforms, don't inherit `currentColor`, and can't be sized or styled like an SVG. If neither `@phosphor-icons/react` nor `@probo/ui` has what you need, add the missing icon to `@probo/ui` rather than falling back to emoji.
 
+### Phosphor import style
+
+Always import phosphor icons by their **`Icon`-suffixed name** (e.g. `EyeIcon`, `EyeSlashIcon`, `CookieIcon`). **Never** import the bare name and alias it with an `Icon` prefix — the library already exports the suffixed variant.
+
+```tsx
+// Bad — bare name aliased to add an Icon prefix
+import { Eye as IconEye, EyeSlash as IconEyeSlash } from "@phosphor-icons/react";
+
+// Good — use the Icon-suffixed export directly
+import { EyeIcon, EyeSlashIcon } from "@phosphor-icons/react";
+```
+
 ### Do / don't: icon source
 
 ```tsx

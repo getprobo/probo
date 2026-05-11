@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { Eye as IconEye, EyeSlash as IconEyeSlash } from "@phosphor-icons/react";
+import { EyeIcon, EyeSlashIcon } from "@phosphor-icons/react";
 import { formatError, type GraphQLError } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import {
@@ -54,7 +54,6 @@ const trackerResourceFragment = graphql`
     description
     excluded
     lastDetectedAt
-    updatedAt
   }
 `;
 
@@ -352,7 +351,7 @@ export function TrackerResourceRow({ resourceKey, connectionId }: TrackerResourc
             className="p-1 rounded cursor-pointer"
             title={resource.excluded ? __("Include") : __("Exclude")}
           >
-            {resource.excluded ? <IconEye size={14} /> : <IconEyeSlash size={14} />}
+            {resource.excluded ? <EyeIcon size={14} /> : <EyeSlashIcon size={14} />}
           </button>
           <button
             type="button"
