@@ -105,9 +105,7 @@ func TestTrackerResource_List(t *testing.T) {
 		owner := testutil.NewClient(t, testutil.RoleOwner)
 
 		bannerID := factory.CreateCookieBanner(owner)
-		categoryID := factory.CreateCookieCategory(owner, bannerID)
-		factory.CreateTrackerResource(owner, categoryID)
-		factory.CreateTrackerResource(owner, categoryID)
+		factory.ReportDetectedResources(owner, bannerID, 2)
 
 		const query = `
 			query($id: ID!) {

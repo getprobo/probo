@@ -16,8 +16,11 @@
 package factory
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"maps"
+	"net/http"
 	"strings"
 
 	"github.com/brianvoe/gofakeit/v7"
@@ -1430,4 +1433,25 @@ func CreateTrackerResource(c *testutil.Client, categoryID string, attrs ...Attrs
 	require.NoError(c.T, err, "createTrackerResource mutation failed")
 
 	return result.CreateTrackerResource.TrackerResourceEdge.Node.ID
+}
+
+func ReportDetectedResources(c *testutil.Client, bannerID string, count int) {
+	c.T.Helper()
+
+	resources := make([]map[string]string, 0, count)
+	for range count {
+		resources = append(resources, map[string]string{
+			"url":           fmt.Sprintf("https://%s.example.com/%s.js", strings.ToLower(gofakeit.LetterN(8)), gofakeit.LetterN(6)),
+			"resource_type": "script",
+		})
+	}
+
+	body, err := json.Marshal(map[string]any{"resources": resources})
+	require.NoError(c.T, err, "cannot marshal report body")
+
+	url := fmt.Sprintf("%s/api/cookie-banner/v1/%s/report", c.BaseURL(), bannerID)
+	resp, err := http.Post(url, "application/json", bytes.NewReader(body))
+	require.NoError(c.T, err, "report detected resources request failed")
+	defer func() { _ = resp.Body.Close() }()
+	require.Equal(c.T, http.StatusNoContent, resp.StatusCode, "report detected resources unexpected status")
 }
