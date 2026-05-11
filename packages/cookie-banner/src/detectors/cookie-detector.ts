@@ -41,6 +41,7 @@ export class CookieDetector implements Detector {
   private readonly reported: Set<string> = new Set();
   private readonly pending: Map<string, DetectedCookieEntry> = new Map();
   private timer: ReturnType<typeof setTimeout> | null = null;
+  private flushing = false;
   private originalDescriptor: PropertyDescriptor | null = null;
   private cookieStoreHandler: ((event: CookieChangeEvent) => void) | null = null;
 
@@ -165,36 +166,46 @@ export class CookieDetector implements Detector {
   }
 
   private scheduleFlush(): void {
-    if (this.timer) return;
+    if (this.timer || this.flushing) return;
     this.timer = setTimeout(() => {
       this.timer = null;
       this.flush();
     }, DEBOUNCE_MS);
   }
 
+  // flush sends one batch from `pending` and only removes entries on
+  // success. Transient failures leave entries in `pending` so they are
+  // retried on the next flush. `flushing` guards against re-sending an
+  // in-flight batch when new entries arrive mid-request.
   private flush(): void {
+    if (this.flushing) return;
     if (this.pending.size === 0) return;
 
-    const iter = this.pending.entries();
+    const batchKeys: string[] = [];
     const entries: DetectedCookieEntry[] = [];
-    for (const [key, entry] of iter) {
+    for (const [key, entry] of this.pending) {
+      batchKeys.push(key);
       entries.push(entry);
-      this.pending.delete(key);
       if (entries.length >= MAX_COOKIES_PER_REQUEST) break;
     }
 
+    this.flushing = true;
     void fetchJSON(this.reportUrl, {
       method: "POST",
       body: { cookies: entries },
-    }).catch((err) => {
-      if (err instanceof NotFoundError) {
-        this.pending.clear();
-        this.stop();
-      }
-    });
-
-    if (this.pending.size > 0) {
-      this.scheduleFlush();
-    }
+    })
+      .then(() => {
+        for (const key of batchKeys) this.pending.delete(key);
+      })
+      .catch((err) => {
+        if (err instanceof NotFoundError) {
+          this.pending.clear();
+          this.stop();
+        }
+      })
+      .finally(() => {
+        this.flushing = false;
+        if (this.pending.size > 0) this.scheduleFlush();
+      });
   }
 }

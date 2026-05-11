@@ -1155,6 +1155,8 @@ func (r *mutationResolver) MoveTrackerResourceToCategory(ctx context.Context, in
 			return nil, gqlutils.NotFound(ctx, err)
 		case errors.Is(err, cookiebanner.ErrCategoriesBannerMismatch):
 			return nil, gqlutils.NotFoundf(ctx, "tracker resource or target category not found")
+		case errors.Is(err, cookiebanner.ErrSameResourceCategoryMove):
+			return nil, gqlutils.Invalidf(ctx, "tracker resource is already in the target category")
 		default:
 			r.logger.ErrorCtx(ctx, "cannot move tracker resource to category", log.Error(err))
 			return nil, gqlutils.Internal(ctx)

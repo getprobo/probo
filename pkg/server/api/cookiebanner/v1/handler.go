@@ -441,6 +441,14 @@ func (h *Handler) handleReportDetectedTrackers(w http.ResponseWriter, r *http.Re
 	}
 
 	for _, res := range body.Resources {
+		// The URI type validates scheme+host on UnmarshalText, so a
+		// non-empty value here is guaranteed to be a valid URL. We
+		// still need to reject the zero value, which occurs when the
+		// `url` JSON field is missing.
+		if res.URL == "" {
+			continue
+		}
+
 		var resourceType coredata.TrackerResourceType
 		switch strings.TrimSpace(res.ResourceType) {
 		case "script":

@@ -79,6 +79,7 @@ export class ThirdPartyDetector implements Detector {
   private readonly reported: Set<string> = new Set();
   private readonly pending: Map<string, DetectedResourceEntry> = new Map();
   private timer: ReturnType<typeof setTimeout> | null = null;
+  private flushing = false;
   private observer: MutationObserver | null = null;
   private perfObserver: PerformanceObserver | null = null;
   private originalSWRegister: typeof ServiceWorkerContainer.prototype.register | null = null;
@@ -247,7 +248,12 @@ export class ThirdPartyDetector implements Detector {
     }
 
     if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return;
-    if (parsed.origin === this.pageOrigin || parsed.origin === this.proboOrigin) return;
+    // Service workers are always same-origin per browser security rules,
+    // so we never drop them based on the page origin -- they are tracked
+    // regardless of where the script lives. The proboOrigin guard still
+    // applies so we never report our own SDK assets.
+    if (parsed.origin === this.proboOrigin) return;
+    if (resourceType !== "service_worker" && parsed.origin === this.pageOrigin) return;
 
     const identifier = parsed.origin + parsed.pathname;
     const reportKey = `${resourceType}:${identifier}`;
@@ -259,35 +265,46 @@ export class ThirdPartyDetector implements Detector {
   }
 
   private scheduleFlush(): void {
-    if (this.timer) return;
+    if (this.timer || this.flushing) return;
     this.timer = setTimeout(() => {
       this.timer = null;
       this.flush();
     }, DEBOUNCE_MS);
   }
 
+  // flush sends one batch from `pending` and only removes entries on
+  // success. Transient failures leave entries in `pending` so they are
+  // retried on the next flush. `flushing` guards against re-sending an
+  // in-flight batch when new entries arrive mid-request.
   private flush(): void {
+    if (this.flushing) return;
     if (this.pending.size === 0) return;
 
+    const batchKeys: string[] = [];
     const entries: DetectedResourceEntry[] = [];
     for (const [key, entry] of this.pending) {
+      batchKeys.push(key);
       entries.push(entry);
-      this.pending.delete(key);
       if (entries.length >= MAX_ITEMS_PER_REQUEST) break;
     }
 
+    this.flushing = true;
     void fetchJSON(this.reportUrl, {
       method: "POST",
       body: { resources: entries },
-    }).catch((err) => {
-      if (err instanceof NotFoundError) {
-        this.pending.clear();
-        this.stop();
-      }
-    });
-
-    if (this.pending.size > 0) {
-      this.scheduleFlush();
-    }
+    })
+      .then(() => {
+        for (const key of batchKeys) this.pending.delete(key);
+      })
+      .catch((err) => {
+        if (err instanceof NotFoundError) {
+          this.pending.clear();
+          this.stop();
+        }
+      })
+      .finally(() => {
+        this.flushing = false;
+        if (this.pending.size > 0) this.scheduleFlush();
+      });
   }
 }

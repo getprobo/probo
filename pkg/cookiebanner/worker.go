@@ -272,8 +272,20 @@ func findMergeGroups(
 		}
 	}
 
+	// Sort by descending specificity (more fixed characters first), then
+	// descending coverage (more patterns matched first), then template
+	// name for a fully deterministic order. Without these tie-breakers
+	// the greedy assignment below depends on Go's randomised map
+	// iteration and the same input can produce different merge groups
+	// across runs.
 	sort.Slice(candidates, func(i, j int) bool {
-		return candidates[i].fixedChars > candidates[j].fixedChars
+		if candidates[i].fixedChars != candidates[j].fixedChars {
+			return candidates[i].fixedChars > candidates[j].fixedChars
+		}
+		if len(candidates[i].patterns) != len(candidates[j].patterns) {
+			return len(candidates[i].patterns) > len(candidates[j].patterns)
+		}
+		return candidates[i].key.template < candidates[j].key.template
 	})
 
 	assigned := make(map[*coredata.TrackerPattern]bool)
