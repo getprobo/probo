@@ -79,6 +79,15 @@ func newPgClientFromDSN(dsn string) (*pg.Client, error) {
 
 	var opts []pg.Option
 
+	switch u.Query().Get("sslmode") {
+	case "", "disable":
+		// plain connection, no TLS
+	case "require", "prefer":
+		opts = append(opts, pg.WithUnsecureTLS())
+	default:
+		return nil, fmt.Errorf("unsupported sslmode %q (only disable, require, prefer are supported)", u.Query().Get("sslmode"))
+	}
+
 	if u.Host != "" {
 		host := u.Host
 		if u.Port() == "" {

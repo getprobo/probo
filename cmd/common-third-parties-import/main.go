@@ -25,6 +25,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -39,10 +40,12 @@ import (
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"go.gearno.de/crypto/uuid"
+	"go.gearno.de/kit/httpclient"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/version"
 	"go.probo.inc/probo/pkg/webinspect"
 )
 
@@ -231,7 +234,28 @@ func fetchAndStoreLogos(
 ) error {
 	s3Client := newS3Client(endpoint, region, accessKey, secretKey, usePathStyle)
 	fileMgr := filemanager.NewService(s3Client)
-	httpClient := &http.Client{Timeout: 10 * time.Second}
+	tlsConfig := &tls.Config{
+		CipherSuites: []uint16{
+			tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+			tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+			tls.TLS_AES_128_GCM_SHA256,
+			tls.VersionTLS13,
+			tls.VersionTLS10,
+		},
+	}
+	httpClient := httpclient.DefaultPooledClient(httpclient.WithSSRFProtection())
+	httpClient.Transport = &userAgentTransport{
+		next: &http.Transport{
+			TLSHandshakeTimeout: 30 * time.Second,
+			DisableKeepAlives:   false,
+			TLSClientConfig:     tlsConfig,
+			DialTLS: func(network, addr string) (net.Conn, error) {
+				return tls.Dial(network, addr, tlsConfig)
+			},
+		},
+		ua: version.UserAgent("common-third-parties-import"),
+	}
 	scope := coredata.NewScope(gid.NilTenant)
 
 	var fetched, skipped, failed int
@@ -256,37 +280,63 @@ func fetchAndStoreLogos(
 			continue
 		}
 
+		var logoURL string
 		pageInfo, err := webinspect.Parse(ctx, httpClient, *tp.WebsiteURL)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "warning: cannot inspect page for %q, skipping logo: %v\n", tp.Name, err)
-			failed++
-			continue
+			fmt.Fprintf(os.Stderr, "warning: cannot inspect page for %q, trying default apple-touch-icon: %v\n", tp.Name, err)
+		} else {
+			logoURL, err = webinspect.FindLogoURL(pageInfo)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "warning: cannot find logo for %q, trying default apple-touch-icon: %v\n", tp.Name, err)
+			}
 		}
 
-		logoURL, err := webinspect.FindLogoURL(pageInfo)
+		parsed, err := url.Parse(*tp.WebsiteURL)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "warning: cannot find logo for %q: %v\n", tp.Name, err)
+			fmt.Fprintf(os.Stderr, "warning: cannot parse URL for %q, skipping logo: %v\n", tp.Name, err)
 			failed++
 			continue
 		}
 
-		resp, err := httpClient.Get(logoURL)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "warning: cannot fetch logo for %q: %v\n", tp.Name, err)
+		var candidateURLs []string
+		if logoURL != "" {
+			candidateURLs = append(candidateURLs, logoURL)
+		}
+		base := fmt.Sprintf("%s://%s", parsed.Scheme, parsed.Host)
+		candidateURLs = append(candidateURLs,
+			base+"/apple-touch-icon.png",
+			base+"/apple-touch-icon-precomposed.png",
+			"https://logo.debounce.com/"+parsed.Host,
+		)
+
+		var (
+			body        []byte
+			contentType string
+		)
+		for _, candidate := range candidateURLs {
+			resp, err := httpClient.Get(candidate)
+			if err != nil {
+				continue
+			}
+
+			b, err := io.ReadAll(resp.Body)
+			_ = resp.Body.Close()
+
+			if err != nil || resp.StatusCode != http.StatusOK || len(b) == 0 {
+				continue
+			}
+
+			body = b
+			contentType = resp.Header.Get("Content-Type")
+			break
+		}
+
+		if len(body) == 0 {
+			fmt.Fprintf(os.Stderr, "warning: cannot fetch logo for %q from any candidate URL\n", tp.Name)
 			failed++
 			continue
 		}
 
-		body, err := io.ReadAll(resp.Body)
-		_ = resp.Body.Close()
-
-		if err != nil || resp.StatusCode != http.StatusOK || len(body) == 0 {
-			fmt.Fprintf(os.Stderr, "warning: bad logo response for %q (status %d)\n", tp.Name, resp.StatusCode)
-			failed++
-			continue
-		}
-
-		contentType := resp.Header.Get("Content-Type")
 		if contentType == "" {
 			contentType = "image/png"
 		}
@@ -407,7 +457,16 @@ func newPgClientFromDSN(dsn string) (*pg.Client, error) {
 		return nil, fmt.Errorf("cannot parse DSN: %w", err)
 	}
 
-	opts := []pg.Option{pg.WithUnsecureTLS()}
+	var opts []pg.Option
+
+	switch u.Query().Get("sslmode") {
+	case "", "disable":
+		// plain connection, no TLS
+	case "require", "prefer":
+		opts = append(opts, pg.WithUnsecureTLS())
+	default:
+		return nil, fmt.Errorf("unsupported sslmode %q (only disable, require, prefer are supported)", u.Query().Get("sslmode"))
+	}
 
 	if u.Host != "" {
 		host := u.Host
@@ -429,4 +488,17 @@ func newPgClientFromDSN(dsn string) (*pg.Client, error) {
 	}
 
 	return pg.NewClient(opts...)
+}
+
+type userAgentTransport struct {
+	next http.RoundTripper
+	ua   string
+}
+
+func (t *userAgentTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	req = req.Clone(req.Context())
+	req.Header.Set("User-Agent", t.ua)
+	req.Header.Set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8")
+	req.Header.Set("Accept-Language", "en-US,en;q=0.5")
+	return t.next.RoundTrip(req)
 }
