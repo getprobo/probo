@@ -19,6 +19,7 @@ import (
 	"errors"
 	"fmt"
 	"maps"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -254,7 +255,7 @@ ORDER BY
 LIMIT 1;
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = strings.Replace(q, "%s", scope.SQLFragment(), 1)
 
 	args := pgx.StrictNamedArgs{
 		"cookie_banner_id": cookieBannerID,

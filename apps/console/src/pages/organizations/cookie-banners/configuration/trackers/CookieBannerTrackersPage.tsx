@@ -169,14 +169,6 @@ export default function CookieBannerTrackersPage({
           className="w-72"
         />
         <Select
-          value={sourceFilter ?? "ALL"}
-          onValueChange={handleSourceFilterChange}
-        >
-          <Option value="ALL">{__("All sources")}</Option>
-          <Option value="SCRIPT">{__("Script")}</Option>
-          <Option value="PRE_EXISTING">{__("Pre-existing")}</Option>
-        </Select>
-        <Select
           value={trackerTypeFilter ?? "ALL"}
           onValueChange={handleTrackerTypeFilterChange}
         >
@@ -186,6 +178,14 @@ export default function CookieBannerTrackersPage({
           <Option value="SESSION_STORAGE">{__("sessionStorage")}</Option>
           <Option value="INDEXED_DB">{__("IndexedDB")}</Option>
           <Option value="CACHE_STORAGE">{__("Cache Storage")}</Option>
+        </Select>
+        <Select
+          value={sourceFilter ?? "ALL"}
+          onValueChange={handleSourceFilterChange}
+        >
+          <Option value="ALL">{__("All sources")}</Option>
+          <Option value="SCRIPT">{__("Script")}</Option>
+          <Option value="PRE_EXISTING">{__("Pre-existing")}</Option>
         </Select>
       </div>
 
