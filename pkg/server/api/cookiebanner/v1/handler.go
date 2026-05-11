@@ -108,6 +108,10 @@ func (h *Handler) resolveCountryCode(r *http.Request) *coredata.CountryCode {
 		return nil
 	}
 
+	if cc == "" {
+		return nil
+	}
+
 	return &cc
 }
 
