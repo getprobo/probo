@@ -54,7 +54,7 @@ function mapInitiatorType(it: string): ResourceType | null {
   }
 }
 
-export class ThirdPartyDetector implements Detector {
+export class ResourceDetector implements Detector {
   private readonly queue: ReportQueue;
   private readonly pageOrigin: string;
   private readonly apiOrigin: string;

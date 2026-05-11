@@ -15,7 +15,7 @@
 export type { Detector } from "./detector";
 export { CookieDetector } from "./cookie-detector";
 export { StorageDetector } from "./storage-detector";
-export { ThirdPartyDetector } from "./third-party-detector";
+export { ResourceDetector } from "./resource-detector";
 export { ReportQueue } from "./report-queue";
 export type {
   CookieSource,

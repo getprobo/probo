@@ -18,7 +18,7 @@ import {
 } from "./activation";
 import { COOKIE_NAME, getConsentCookie, setConsentCookie } from "./cookie";
 import type { Detector } from "./detectors";
-import { CookieDetector, ReportQueue, StorageDetector, ThirdPartyDetector } from "./detectors";
+import { CookieDetector, ReportQueue, ResourceDetector, StorageDetector } from "./detectors";
 import { NotFoundError } from "./errors";
 import { fetchJSON } from "./http";
 import { detectLanguage } from "./i18n";
@@ -316,7 +316,7 @@ export class CookieBannerClient {
     this.detectors = [
       new CookieDetector(this.reportQueue, apiOrigin, knownNames),
       new StorageDetector(this.reportQueue, apiOrigin),
-      new ThirdPartyDetector(this.reportQueue, apiOrigin),
+      new ResourceDetector(this.reportQueue, apiOrigin),
     ];
 
     for (const d of this.detectors) {
