@@ -15,30 +15,51 @@
 import { Avatar, ComboboxItem } from "@probo/ui";
 import type { PreloadedQuery } from "react-relay";
 import { graphql, usePreloadedQuery } from "react-relay";
+import { readInlineData } from "relay-runtime";
 
 import type {
-  CommonThirdPartyComboboxQuery$data,
-  CommonThirdPartyComboboxQuery,
-} from "#/__generated__/core/CommonThirdPartyComboboxQuery.graphql";
+  CommonThirdPartyCombobox_commonThirdParty$data,
+  CommonThirdPartyCombobox_commonThirdParty$key,
+} from "#/__generated__/core/CommonThirdPartyCombobox_commonThirdParty.graphql";
+import type { CommonThirdPartyComboboxQuery } from "#/__generated__/core/CommonThirdPartyComboboxQuery.graphql";
+import type { CreateVendorInput } from "#/__generated__/core/VendorGraphCreateMutation.graphql";
 
 export type CommonThirdPartyRef
-  = CommonThirdPartyComboboxQuery$data["commonThirdParties"][number];
+  = CommonThirdPartyCombobox_commonThirdParty$data;
+
+const commonThirdPartyFragment = graphql`
+  fragment CommonThirdPartyCombobox_commonThirdParty on CommonThirdParty @inline {
+    name
+    logoUrl
+    category
+    websiteUrl
+    headquarterAddress
+    legalName
+    privacyPolicyUrl
+    serviceLevelAgreementUrl
+    dataProcessingAgreementUrl
+    certifications
+    securityPageUrl
+    trustPageUrl
+    statusPageUrl
+    termsOfServiceUrl
+  }
+`;
 
 export const commonThirdPartiesQuery = graphql`
   query CommonThirdPartyComboboxQuery($name: String!) {
     commonThirdParties(name: $name) {
       id
       name
-      websiteUrl
       logoUrl
-      ...CreateVendorDialog_commonThirdParty
+      ...CommonThirdPartyCombobox_commonThirdParty
     }
   }
 `;
 
 interface CommonThirdPartyComboboxProps {
   queryRef: PreloadedQuery<CommonThirdPartyComboboxQuery>;
-  onSelect: (thirdPartyRef: CommonThirdPartyRef) => void;
+  onSelect: (thridParty: Omit<CreateVendorInput, "organizationId">) => void;
 }
 
 export function CommonThirdPartyCombobox({
@@ -52,7 +73,27 @@ export function CommonThirdPartyCombobox({
       {data.commonThirdParties.map(thirdParty => (
         <ComboboxItem
           key={thirdParty.id}
-          onClick={() => onSelect(thirdParty)}
+          onClick={() => {
+            const tp = readInlineData<CommonThirdPartyCombobox_commonThirdParty$key>(
+              commonThirdPartyFragment,
+              thirdParty,
+            );
+            onSelect({
+              name: tp.name,
+              headquarterAddress: tp.headquarterAddress,
+              legalName: tp.legalName,
+              websiteUrl: tp.websiteUrl,
+              category: tp.category,
+              privacyPolicyUrl: tp.privacyPolicyUrl,
+              serviceLevelAgreementUrl: tp.serviceLevelAgreementUrl,
+              dataProcessingAgreementUrl: tp.dataProcessingAgreementUrl,
+              certifications: tp.certifications,
+              securityPageUrl: tp.securityPageUrl,
+              trustPageUrl: tp.trustPageUrl,
+              statusPageUrl: tp.statusPageUrl,
+              termsOfServiceUrl: tp.termsOfServiceUrl,
+            });
+          }}
         >
           <Avatar
             name={thirdParty.name}

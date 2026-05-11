@@ -22,38 +22,18 @@ import {
   IconPlusLarge,
   useDialogRef,
 } from "@probo/ui";
-import { type ReactNode, Suspense, useEffect, useRef, useState, useCallback } from "react";
+import { type ReactNode, Suspense, useCallback, useState } from "react";
 import { useQueryLoader } from "react-relay";
-import { graphql, readInlineData } from "relay-runtime";
 import { useDebounceCallback } from "usehooks-ts";
 
 import type { CommonThirdPartyComboboxQuery } from "#/__generated__/core/CommonThirdPartyComboboxQuery.graphql";
-import type { CreateVendorDialog_commonThirdParty$key } from "#/__generated__/core/CreateVendorDialog_commonThirdParty.graphql";
+import type { CreateVendorInput } from "#/__generated__/core/VendorGraphCreateMutation.graphql";
 import { useCreateVendorMutation } from "#/hooks/graph/VendorGraph";
 
 import {
   commonThirdPartiesQuery,
   CommonThirdPartyCombobox,
-  type CommonThirdPartyRef,
 } from "./CommonThirdPartyCombobox";
-
-const commonThirdPartyFragment = graphql`
-  fragment CreateVendorDialog_commonThirdParty on CommonThirdParty @inline {
-    name
-    category
-    websiteUrl
-    headquarterAddress
-    legalName
-    privacyPolicyUrl
-    serviceLevelAgreementUrl
-    dataProcessingAgreementUrl
-    certifications
-    securityPageUrl
-    trustPageUrl
-    statusPageUrl
-    termsOfServiceUrl
-  }
-`;
 
 type Props = {
   children: ReactNode;
@@ -73,38 +53,18 @@ export function CreateVendorDialog({
   const [queryRef, loadQuery]
     = useQueryLoader<CommonThirdPartyComboboxQuery>(commonThirdPartiesQuery);
 
-  const onSelect = async (thirdPartyRef: CommonThirdPartyRef | string) => {
+  const onSelect = async (thirdParty: Omit<CreateVendorInput, "organizationId"> | string) => {
     const input
-      = typeof thirdPartyRef === "string"
+      = typeof thirdParty === "string"
         ? {
             organizationId,
-            name: thirdPartyRef,
+            name: thirdParty,
             category: null,
           }
-        : (() => {
-            const tp = readInlineData<CreateVendorDialog_commonThirdParty$key>(
-              commonThirdPartyFragment,
-              thirdPartyRef,
-            );
-            return {
-              organizationId,
-              name: tp.name,
-              headquarterAddress: tp.headquarterAddress || null,
-              legalName: tp.legalName || null,
-              websiteUrl: tp.websiteUrl || null,
-              category: tp.category || null,
-              privacyPolicyUrl: tp.privacyPolicyUrl || null,
-              serviceLevelAgreementUrl:
-                tp.serviceLevelAgreementUrl || null,
-              dataProcessingAgreementUrl:
-                tp.dataProcessingAgreementUrl || null,
-              certifications: tp.certifications,
-              securityPageUrl: tp.securityPageUrl || null,
-              trustPageUrl: tp.trustPageUrl || null,
-              statusPageUrl: tp.statusPageUrl || null,
-              termsOfServiceUrl: tp.termsOfServiceUrl || null,
-            };
-          })();
+        : {
+            ...thirdParty,
+            organizationId,
+          };
     await createVendor({
       variables: {
         input,
