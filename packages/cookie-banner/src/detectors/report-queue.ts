@@ -238,23 +238,38 @@ export class ReportQueue {
   // and accept losing the tail on pages with > 100 pending items at
   // unload time -- still strictly better than the previous behaviour,
   // which lost the entire last debounce window.
+  //
+  // Items are only removed from `pending` once the transport
+  // confirms delivery: sendBeacon synchronously returns true when
+  // the browser has accepted ownership of the request, and the
+  // keepalive fetch removes items in its `.then` on an `ok`
+  // response. On async fetch failure we leave the entries queued so
+  // they can be retried by the next flush -- this matters when
+  // `visibilitychange:hidden` fires but the page is restored from
+  // bfcache rather than truly unloading.
   private flushSync(): void {
+    if (this.flushing) return;
     if (this.pending.size === 0) return;
 
     const { keys, body } = this.takeBatch();
     const payload = JSON.stringify(body);
 
-    let sent = false;
     if (typeof navigator !== "undefined" && typeof navigator.sendBeacon === "function") {
       const blob = new Blob([payload], { type: "application/json" });
+      let queued = false;
       try {
-        sent = navigator.sendBeacon(this.reportUrl.toString(), blob);
+        queued = navigator.sendBeacon(this.reportUrl.toString(), blob);
       } catch {
-        sent = false;
+        queued = false;
+      }
+      if (queued) {
+        for (const key of keys) this.pending.delete(key);
+        return;
       }
     }
 
-    if (!sent && typeof fetch === "function") {
+    if (typeof fetch === "function") {
+      this.flushing = true;
       try {
         void fetch(this.reportUrl.toString(), {
           method: "POST",
@@ -267,17 +282,27 @@ export class ReportQueue {
             "X-SDK-Version": __SDK_VERSION__,
           },
           body: payload,
-        }).catch(() => {
-          // fire-and-forget: the page is unloading, no retry possible.
-        });
-        sent = true;
+        })
+          .then((res) => {
+            if (res.ok) {
+              for (const key of keys) this.pending.delete(key);
+            }
+          })
+          .catch(() => {
+            // Leave entries in `pending`; if the page is restored
+            // from bfcache the next flush retries them, and on a
+            // true unload the queue itself is discarded with the
+            // page.
+          })
+          .finally(() => {
+            this.flushing = false;
+            if (!this.stopped && this.pending.size > 0) {
+              this.scheduleFlush();
+            }
+          });
       } catch {
-        sent = false;
+        this.flushing = false;
       }
-    }
-
-    if (sent) {
-      for (const key of keys) this.pending.delete(key);
     }
   }
 }
