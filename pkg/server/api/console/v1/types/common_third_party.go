@@ -22,7 +22,6 @@ import (
 type CommonThirdParty struct {
 	ID                         gid.GID                 `json:"id"`
 	Name                       string                  `json:"name"`
-	Description                *string                 `json:"description,omitempty"`
 	Category                   coredata.VendorCategory `json:"category"`
 	WebsiteURL                 *string                 `json:"websiteUrl,omitempty"`
 	HeadquarterAddress         *string                 `json:"headquarterAddress,omitempty"`
@@ -42,7 +41,6 @@ func NewCommonThirdParty(c *coredata.CommonThirdParty) *CommonThirdParty {
 	return &CommonThirdParty{
 		ID:                         c.ID,
 		Name:                       c.Name,
-		Description:                c.Description,
 		Category:                   c.Category,
 		WebsiteURL:                 c.WebsiteURL,
 		HeadquarterAddress:         c.HeadquarterAddress,

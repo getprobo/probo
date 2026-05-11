@@ -39,7 +39,6 @@ import {
 const commonThirdPartyFragment = graphql`
   fragment CreateVendorDialog_commonThirdParty on CommonThirdParty @inline {
     name
-    description
     category
     websiteUrl
     headquarterAddress
@@ -89,7 +88,6 @@ export function CreateVendorDialog({
             return {
               organizationId,
               name: tp.name,
-              description: tp.description || null,
               headquarterAddress: tp.headquarterAddress || null,
               legalName: tp.legalName || null,
               websiteUrl: tp.websiteUrl || null,

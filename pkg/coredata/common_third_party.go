@@ -30,7 +30,6 @@ type (
 	CommonThirdParty struct {
 		ID                            gid.GID        `db:"id"`
 		Name                          string         `db:"name"`
-		Description                   *string        `db:"description"`
 		Category                      VendorCategory `db:"category"`
 		HeadquarterAddress            *string        `db:"headquarter_address"`
 		LegalName                     *string        `db:"legal_name"`
@@ -63,7 +62,6 @@ func (t *CommonThirdParty) LoadByID(
 SELECT
     id,
     name,
-    description,
     category,
     headquarter_address,
     legal_name,
@@ -119,7 +117,6 @@ func (t *CommonThirdParty) LoadByName(
 SELECT
     id,
     name,
-    description,
     category,
     headquarter_address,
     legal_name,
@@ -174,7 +171,6 @@ func (t CommonThirdParty) Insert(
 INSERT INTO common_third_parties (
     id,
     name,
-    description,
     category,
     headquarter_address,
     legal_name,
@@ -196,7 +192,6 @@ INSERT INTO common_third_parties (
 ) VALUES (
     @id,
     @name,
-    @description,
     @category,
     @headquarter_address,
     @legal_name,
@@ -221,7 +216,6 @@ INSERT INTO common_third_parties (
 	args := pgx.StrictNamedArgs{
 		"id":                               t.ID,
 		"name":                             t.Name,
-		"description":                      t.Description,
 		"category":                         t.Category,
 		"headquarter_address":              t.HeadquarterAddress,
 		"legal_name":                       t.LegalName,
@@ -261,7 +255,6 @@ func (t CommonThirdParty) Upsert(
 INSERT INTO common_third_parties (
     id,
     name,
-    description,
     category,
     headquarter_address,
     legal_name,
@@ -283,7 +276,6 @@ INSERT INTO common_third_parties (
 ) VALUES (
     @id,
     @name,
-    @description,
     @category,
     @headquarter_address,
     @legal_name,
@@ -306,7 +298,6 @@ INSERT INTO common_third_parties (
 ON CONFLICT (lower(name)) DO UPDATE
 SET
     name                             = EXCLUDED.name,
-    description                      = EXCLUDED.description,
     category                         = EXCLUDED.category,
     headquarter_address              = EXCLUDED.headquarter_address,
     legal_name                       = EXCLUDED.legal_name,
@@ -329,7 +320,6 @@ RETURNING (xmax = 0) AS inserted
 	args := pgx.StrictNamedArgs{
 		"id":                               t.ID,
 		"name":                             t.Name,
-		"description":                      t.Description,
 		"category":                         t.Category,
 		"headquarter_address":              t.HeadquarterAddress,
 		"legal_name":                       t.LegalName,
@@ -394,7 +384,6 @@ func (t *CommonThirdParties) LoadAll(
 SELECT
     id,
     name,
-    description,
     category,
     headquarter_address,
     legal_name,

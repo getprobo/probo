@@ -6,7 +6,6 @@
     "websiteUrl": "https://slack.com",
     "privacyPolicyUrl": "https://slack.com/intl/en-gb/trust/privacy/privacy-policy",
     "serviceLevelAgreementUrl": "https://slack.com/intl/en-gb/terms/service-level-agreement",
-    "description": "Slack is a team communication platform that allows users to send messages, files, and images to each other.",
     "statusPageUrl": "https://slack-status.com/",
     "termsOfServiceUrl": "https://slack.com/intl/en-gb/main-services-agreement",
     "category": "COLLABORATION",
@@ -27,7 +26,6 @@
     "websiteUrl": "https://zoom.us",
     "privacyPolicyUrl": "https://zoom.us/privacy",
     "serviceLevelAgreementUrl": "https://explore.zoom.us/en/premier-support-terms/",
-    "description": "Zoom is a video communication platform that allows users to send messages, files, and images to each other.",
     "category": "COLLABORATION",
     "certifications": [
       "ISO/IEC 27001:2022",
@@ -61,7 +59,6 @@
     "privacyPolicyUrl": "https://github.com/site/privacy",
     "serviceLevelAgreementUrl": "https://github.com/site/terms",
     "subprocessorsListUrl": "https://docs.github.com/en/site-policy/privacy-policies/github-subprocessors",
-    "description": "Github is a code hosting platform for version control and collaboration.",
     "category": "VERSION_CONTROL",
     "certifications": [
       "SOC 1 Type 2",
@@ -82,7 +79,6 @@
     "privacyPolicyUrl": "https://stripe.com/privacy",
     "serviceLevelAgreementUrl": "https://stripe.com/legal/ssa",
     "dataProcessingAgreementUrl": "https://stripe.com/legal/dpa",
-    "description": "Online payment processing platform that enables businesses to accept and manage digital payments, supporting various payment methods and currencies with integrated fraud protection and compliance features",
     "category": "FINANCE",
     "certifications": [
       "PCI DSS v4.0",
@@ -107,7 +103,6 @@
     "websiteUrl": "https://cloudflare.com",
     "privacyPolicyUrl": "https://cloudflare.com/privacy",
     "serviceLevelAgreementUrl": "https://www.cloudflare.com/en-gb/business-sla",
-    "description": "Cloudflare is a cloud computing company that provides a range of services, including web hosting, domain name registration, and cloud storage.",
     "category": "CLOUD_PROVIDER",
     "certifications": [
       "ISO/IEC 27001:2013",
@@ -144,7 +139,6 @@
     "websiteUrl": "https://sentry.io",
     "privacyPolicyUrl": "https://sentry.io/privacy",
     "serviceLevelAgreementUrl": "",
-    "description": "Sentry is a cloud-based platform for monitoring and analyzing application performance and user behavior.",
     "category": "ENGINEERING",
     "certifications": [
       "ISO/IEC 27001:2013",
@@ -160,7 +154,6 @@
     "websiteUrl": "https://datadog.com",
     "privacyPolicyUrl": "https://datadog.com/privacy",
     "serviceLevelAgreementUrl": "https://datadog.com/terms",
-    "description": "Datadog is a cloud-based platform for monitoring and analyzing application performance and user behavior.",
     "category": "CLOUD_MONITORING",
     "certifications": [
       "CCPA",
@@ -186,7 +179,6 @@
     "privacyPolicyUrl": "https://vercel.com/legal/privacy-policy",
     "serviceLevelAgreementUrl": "https://vercel.com/legal/sla",
     "dataProcessingAgreementUrl": "https://vercel.com/legal/dpa",
-    "description": "Vercel is a cloud-based platform for monitoring and analyzing application performance and user behavior.",
     "category": "CLOUD_PROVIDER",
     "certifications": [
       "ISO/IEC 27001:2013",
@@ -210,7 +202,6 @@
     "privacyPolicyUrl": "https://www.twilio.com/en-us/legal/privacy",
     "serviceLevelAgreementUrl": "https://sendgrid.com/terms",
     "dataProcessingAgreementUrl": "https://sendgrid.com/dpa",
-    "description": "Cloud-based email delivery platform that provides transactional and marketing email services, offering reliable message delivery, analytics, and automation features for business communications.",
     "category": "COLLABORATION",
     "certifications": [
       "CCPA",
@@ -234,7 +225,6 @@
     "websiteUrl": "https://figma.com",
     "privacyPolicyUrl": "https://www.figma.com/legal/privacy/",
     "serviceSoftwareAgreementUrl": "https://www.figma.com/ssa/",
-    "description": "Cloud-based design and prototyping platform that enables collaborative interface design, wireframing, and mockup creation with real-time editing capabilities for teams.",
     "category": "PRODUCT_AND_DESIGN",
     "certifications": [
       "SOC 2 Type 2",
@@ -264,7 +254,6 @@
     "serviceLevelAgreementUrl": "https://www.notion.so/notion/Service-Level-Terms-6f805fa1d4ca4463b805e2832ae8ff0d",
     "subprocessorsListUrl": "https://www.notion.so/notion/Notion-s-List-of-Subprocessors-268fa5bcfa0f46b6bc29436b21676734",
     "businessAssociateAgreementUrl": "https://www.notion.so/notion/Business-Associate-Agreement-909d9f4ccca041b1a23d0fe6e56fa111",
-    "description": "Cloud-based workspace and collaboration platform that offers document management, project management, and team communication features, allowing users to create, edit, and share content in a centralized environment.",
     "category": "DOCUMENT_MANAGEMENT",
     "certifications": [
       "SOC 2 Type 2",
@@ -286,7 +275,6 @@
     "websiteUrl": "https://mintlify.com",
     "privacyPolicyUrl": "https://app.termly.io/policy-viewer/policy.html?policyUUID=95d79e73-9d6f-4e0a-8abd-2a608e8f5242",
     "termsOfServiceUrl": "https://mintlify.com/legal/terms",
-    "description": "Mintlify is a cloud-based documentation platform that enables teams to create, manage, and share documentation for their projects.",
     "category": "ENGINEERING",
     "certifications": [
       "SOC 2 Type 1"
@@ -302,7 +290,6 @@
     "websiteUrl": "https://supabase.com",
     "privacyPolicyUrl": "https://supabase.com/privacy",
     "termsOfServiceUrl": "https://supabase.com/terms",
-    "description": "Open-source Firebase alternative providing a backend-as-a-service platform with PostgreSQL database, authentication, storage, and API functionality for application development.",
     "category": "DATA_STORAGE_AND_PROCESSING",
     "certifications": [
       "SOC2 Type 2",
@@ -323,7 +310,6 @@
     "privacyPolicyUrl": "https://www.twilio.com/en-us/legal/privacy",
     "termsOfServiceUrl": "https://www.twilio.com/en-us/legal/tos",
     "serviceLevelAgreementUrl": "https://www.twilio.com/en-us/legal/service-level-agreement/segment-data-ingestion-api",
-    "description": "Segment is a cloud-based customer data platform that enables businesses to collect, clean, and analyze customer data from across their systems.",
     "category": "ANALYTICS",
     "certifications": [
       "SOC 2 Type 2",
@@ -347,7 +333,6 @@
     "websiteUrl": "https://auth0.com",
     "privacyPolicyUrl": "https://www.okta.com/privacy-policy/",
     "termsOfServiceUrl": "https://www.okta.com/terms-of-service/",
-    "description": "Auth0 is a cloud-based identity and access management platform that enables businesses to secure their applications and data.",
     "category": "IDENTITY_PROVIDER",
     "certifications": [
       "SOC 2 Type 2",
@@ -378,7 +363,6 @@
     "subprocessorsListUrl": "https://www.salesforce.com/en-us/wp-content/uploads/sites/4/documents/legal/misc/salesforce-infrastructure-and-subprocessors.pdf",
     "securityPageUrl": "https://www.heroku.com/policy/security",
     "serviceLevelAgreementUrl": "https://www.salesforce.com/en-us/wp-content/uploads/sites/4/documents/legal/Salesforce_MSA.pdf",
-    "description": "Heroku is a cloud-based platform for building, deploying, and scaling applications.",
     "category": "CLOUD_PROVIDER",
     "certifications": [
       "PCI-DSS",
@@ -400,7 +384,6 @@
     "websiteUrl": "https://linear.app",
     "privacyPolicyUrl": "https://linear.app/privacy",
     "termsOfServiceUrl": "https://linear.app/terms",
-    "description": "Linear is a cloud-based project management platform that enables teams to manage their projects and tasks.",
     "category": "ENGINEERING",
     "statusPageUrl": "https://linearstatus.com/",
     "dataProcessingAgreementUrl": "https://linear.app/dpa",
@@ -422,7 +405,6 @@
     "securityPageUrl": "https://legal.hubspot.com/security/",
     "dataProcessingAgreementUrl": "https://legal.hubspot.com/dpa",
     "termsOfServiceUrl": "https://legal.hubspot.com/terms-of-service",
-    "description": "Hubspot is a cloud-based marketing and sales platform that enables businesses to manage their marketing and sales activities.",
     "category": "MARKETING",
     "subprocessorsListUrl": "https://legal.hubspot.com/sub-processors-page",
     "certifications": [
@@ -441,7 +423,6 @@
     "termsOfServiceUrl": "https://langfuse.com/terms",
     "statusPageUrl": "https://status.langfuse.com/",
     "securityPageUrl": "https://langfuse.com/docs/data-security-privacy",
-    "description": "Langfuse is a cloud-based language model platform that enables businesses to build, test, and deploy language models.",
     "dataProcessingAgreementUrl": "https://static.langfuse.com/legal/2025-02-17-Public-Langfuse%20DPA.docx.pdf",
     "category": "ENGINEERING",
     "certifications": [
@@ -458,7 +439,6 @@
     "websiteUrl": "https://workspace.google.com",
     "privacyPolicyUrl": "https://policies.google.com/privacy",
     "termsOfServiceUrl": "https://policies.google.com/terms",
-    "description": "Google Workspace is a cloud-based productivity suite that enables businesses to manage their email, calendar, and documents.",
     "subprocessorsListUrl": "https://workspace.google.com/terms/subprocessors/",
     "dataProcessingAgreementUrl": "https://workspace.google.com/terms/09242021/dpa_terms/",
     "statusPageUrl": "https://www.google.com/appsstatus/dashboard/",
@@ -484,7 +464,6 @@
     "legalName": "Algolia Inc.",
     "headquarterAddress": "301 Howard St Suite 300, San Francisco, CA 94105",
     "websiteUrl": "https://www.algolia.com",
-    "description": "Algolia is a search-as-a-service platform that enables businesses to deliver fast and relevant search and discovery experiences across websites and applications.",
     "category": "ENGINEERING",
     "certifications": [
       "ISO/IEC 27001:2022",
@@ -511,7 +490,6 @@
     "legalName": "PostHog, Inc.",
     "headquarterAddress": "2261 Market St #4008, San Francisco HQ",
     "websiteUrl": "https://posthog.com",
-    "description": "Open-source product analytics platform that enables teams to understand user behavior and optimize product performance.",
     "category": "ANALYTICS",
     "certifications": [
       "SOC 2 Type 2",
@@ -538,7 +516,6 @@
     "statusPageUrl": "https://status.airtable.com/",
     "securityPageUrl": "https://assets.ctfassets.net/wl95ljfippl8/1j9UbmmoSaoMNusVps3ib3/9e00936f3891c84c75ccd6a87cdb992c/Security_Whitepaper_Final_20210927.pdf",
     "trustPageUrl": "https://www.airtable.com/company/trust-and-security",
-    "description": "Airtable is a no-code platform that combines the simplicity of a spreadsheet with the complexity of a database, enabling users to build custom applications without writing code.",
     "category": "DATA_STORAGE_AND_PROCESSING",
     "certifications": [
       "SOC 2 Type 2",
@@ -556,7 +533,6 @@
     "legalName": "OpenAI, L.L.C.",
     "headquarterAddress": "3180 18th St, San Francisco, CA 94110",
     "websiteUrl": "https://openai.com",
-    "description": "OpenAI is an AI research and deployment company dedicated to ensuring that artificial general intelligence benefits all of humanity.",
     "category": "ENGINEERING",
     "certifications": [
       "SOC 2 Type 2",
@@ -580,7 +556,6 @@
     "legalName": "Anthropic PBC",
     "headquarterAddress": "548 Market St, San Francisco, CA 94104",
     "websiteUrl": "https://www.anthropic.com",
-    "description": "Anthropic is an AI safety and research company developing reliable, interpretable, and steerable AI systems, including the Claude family of large language models.",
     "category": "ENGINEERING",
     "certifications": [
       "SOC 2 Type 1",
@@ -602,7 +577,6 @@
     "privacyPolicyUrl": "https://gusto.com/about/privacy",
     "termsOfServiceUrl": "https://gusto.com/about/terms",
     "businessAssociateAgreementUrl": "https://support.gusto.com/article/152166121100000/The-Health-Insurance-Portability-and-Accountability-Act-of-1996-HIPAA",
-    "description": "Gusto is a cloud-based platform that provides payroll, benefits, and human resource management software for businesses. It handles payments to employees and contractors and manages compliance with tax, labor, and immigration laws.",
     "category": "EMPLOYEE_MANAGEMENT",
     "certifications": [
       "SOC 1 Type 2",
@@ -624,7 +598,6 @@
     "dataProcessingAgreementUrl": "https://docs.aws.amazon.com/whitepapers/latest/navigating-gdpr-compliance/aws-data-processing-addendum-dpa.html",
     "subprocessorsListUrl": "https://aws.amazon.com/compliance/sub-processors/",
     "businessAssociateAgreementUrl": "https://aws.amazon.com/compliance/hipaa-compliance/",
-    "description": "Amazon Web Services (AWS) is the world's most comprehensive and broadly adopted cloud platform, offering over 200 fully featured services from data centers globally. Millions of customers—including startups, enterprises, and government agencies—use AWS to lower costs, become more agile, and innovate faster.",
     "category": "CLOUD_PROVIDER",
     "certifications": [
       "CSA",
@@ -705,7 +678,6 @@
     "legalName": "Calendly, LLC",
     "headquarterAddress": "271 17th St NW. 10th Floor. Atlanta, Georgia 30363, US",
     "websiteUrl": "https://calendly.com",
-    "description": "Online scheduling platform that automates appointment booking and meeting management for businesses and individuals.",
     "category": "COLLABORATION",
     "certifications": [
       "SOC 2 Type 2",
@@ -728,7 +700,6 @@
     "legalName": "Volentio JSD Limited",
     "headquarterAddress": "Suite 2a1, Northside House, Mount Pleasant, Barnet, England, EN4 9EB",
     "websiteUrl": "https://www.jsdelivr.com",
-    "description": "jsDelivr is a free, open-source Content Delivery Network (CDN) for open-source files, providing fast and reliable delivery of JavaScript libraries and other web assets.",
     "category": "ENGINEERING",
     "certifications": [
       "GDPR",
@@ -746,7 +717,6 @@
     "legalName": "npm, Inc.",
     "headquarterAddress": "1999 Harrison St, Suite 1150, Oakland, CA 94612, United States",
     "websiteUrl": "https://www.npmjs.com",
-    "description": "npm is the world's largest software registry, providing a platform for JavaScript developers to share and manage packages for Node.js and frontend projects.",
     "category": "ENGINEERING",
     "certifications": [
       "GDPR",
@@ -762,7 +732,6 @@
     "legalName": "Clerk, Inc.",
     "headquarterAddress": "660 King Street, Unit 345, San Francisco, CA 94107, United States",
     "websiteUrl": "https://clerk.com",
-    "description": "Clerk provides a comprehensive suite of embeddable UIs, flexible APIs, and admin dashboards to authenticate and manage users.",
     "category": "IDENTITY_PROVIDER",
     "certifications": [
       "SOC 2 Type 2",
@@ -782,7 +751,6 @@
     "legalName": "Plausible Insights OÜ",
     "headquarterAddress": "Västriku tn 2, 50403, Tartu, Estonia",
     "websiteUrl": "https://plausible.io/",
-    "description": "Open-source, privacy-focused web analytics platform that provides simple and lightweight tracking without cookies.",
     "category": "ANALYTICS",
     "certifications": [
       "GDPR",
@@ -801,7 +769,6 @@
     "legalName": "Latitude.sh Ltda",
     "headquarterAddress": "Rua Cubatão, 929, São Paulo, 04013-043, Brazil",
     "websiteUrl": "https://www.latitude.sh",
-    "description": "Latitude.sh provides global bare metal cloud infrastructure, enabling developers to deploy and manage physical servers with low latency and high automation.",
     "category": "CLOUD_PROVIDER",
     "certifications": [
       "CCPA"
@@ -817,7 +784,6 @@
     "legalName": "Together Computer, Inc.",
     "headquarterAddress": "251 Rhode Island Street, Suite 205, San Francisco, CA 94103, United States",
     "websiteUrl": "https://www.together.ai",
-    "description": "Together AI provides a full-stack cloud platform for developers to train, fine-tune, and deploy open-source generative AI models with high-performance infrastructure.",
     "category": "ENGINEERING",
     "certifications": [
       "SOC 2 Type 1",
@@ -835,7 +801,6 @@
     "legalName": "Mercury Technologies Inc.",
     "headquarterAddress": "660 Mission Street, San Francisco, CA 94103, United States",
     "websiteUrl": "https://www.mercury.com",
-    "description": "Fintech company that provides banking services to early stage start-up companies. The company is not a bank, but works with banking service providers to provide bank accounts and other financial services.",
     "category": "FINANCE",
     "certifications": [
       "SOC 2 Type 1",
@@ -853,7 +818,6 @@
     "legalName": "Signal Messenger LLC",
     "headquarterAddress": "650 Castro St 120 223Mountain View, CA 94041, United States",
     "websiteUrl": "https://signal.org",
-    "description": "Signal is a secure messaging app that provides end-to-end encryption for text, voice, and video communications.",
     "category": "COLLABORATION",
     "securityPageUrl": "https://signal.org/security",
     "privacyPolicyUrl": "https://signal.org/legal/#privacy-policy",
@@ -865,7 +829,6 @@
     "legalName": "Monday.com Ltd.",
     "headquarterAddress": "Tel Aviv, Israel",
     "websiteUrl": "https://monday.com",
-    "description": "monday.com is a work management platform that helps teams plan, track, and manage work.",
     "category": "COLLABORATION",
     "certifications": [
       "ISO/IEC 27001:2022",
@@ -896,7 +859,6 @@
     "legalName": "eShares, Inc.",
     "headquarterAddress": "333 Bush Street, San Francisco, California 94104, United States",
     "websiteUrl": "https://carta.com",
-    "description": "Carta is a financial technology company that provides a platform for managing employee equity compensation.",
     "category": "FINANCE",
     "certifications": [
       "SOC 1 Type 2",
@@ -917,7 +879,6 @@
     "legalName": "ZenLeads Inc.",
     "headquarterAddress": "440 N Barranca Ave #4750, Covina, CA 91723-1722, United States",
     "websiteUrl": "https://www.apollo.io/",
-    "description": "Apollo.io is an AI-powered sales intelligence and engagement platform that helps B2B teams find, contact, and close ideal buyers through a comprehensive database and automation tools.",
     "category": "SALES",
     "certifications": [
       "ISO 27001",
@@ -941,7 +902,6 @@
     "legalName": "Atlassian Corporation Plc",
     "headquarterAddress": "Level 6, 341 George Street, Sydney, NSW 2000, Australia",
     "websiteUrl": "https://www.atlassian.com",
-    "description": "Atlassian provides collaboration and productivity software for teams, including products like Jira, Confluence, and Trello.",
     "category": "ENGINEERING",
     "certifications": [
       "HIPAA",
@@ -986,7 +946,6 @@
     "legalName": "Webflow, Inc.",
     "headquarterAddress": "398 11th Street, 2nd Floor, San Francisco, CA 94103, United States",
     "websiteUrl": "https://webflow.com",
-    "description": "Webflow is a no-code visual development platform that allows users to design, build, and launch responsive websites without writing code.",
     "category": "PRODUCT_AND_DESIGN",
     "certifications": [
       "PCI DSS v4.0 SAQ-D",
@@ -1007,7 +966,6 @@
     "legalName": "AgileBits Inc.",
     "headquarterAddress": "4711 Yonge Street, 10th Floor, Toronto, Ontario, M2N 6K8, Canada",
     "websiteUrl": "https://1password.com",
-    "description": "1Password is a secure password manager that helps individuals and businesses store and manage passwords, credentials, and sensitive information across devices.",
     "category": "PASSWORD_MANAGEMENT",
     "certifications": [
       "SOC 2 Type 2",
@@ -1031,7 +989,6 @@
     "legalName": "Checkr, Inc.",
     "headquarterAddress": "1 Montgomery St, Suite 2400, San Francisco, CA 94104, United States",
     "websiteUrl": "https://checkr.com",
-    "description": "Checkr provides AI-powered background check and screening services to help businesses make informed hiring decisions quickly and fairly.",
     "category": "EMPLOYEE_MANAGEMENT",
     "certifications": [
       "SOC 2 Type 2",
@@ -1056,7 +1013,6 @@
     "legalName": "Rippling People Center, Inc.",
     "headquarterAddress": "430 California Street, 11th Floor, San Francisco, CA 94104, United States",
     "websiteUrl": "https://www.rippling.com",
-    "description": "Rippling is an all-in-one workforce management platform that unifies HR, IT, payroll, and finance operations into a single system.",
     "category": "EMPLOYEE_MANAGEMENT",
     "certifications": [
       "SOC 1 Type 1",
@@ -1076,7 +1032,6 @@
     "legalName": "Vouch, Inc.",
     "headquarterAddress": "250 Montgomery St, San Francisco, CA 94104",
     "websiteUrl": "https://www.vouch.us",
-    "description": "Vouch is a digital-first insurance platform providing tailored coverage solutions for startups and high-growth companies.",
     "category": "FINANCE",
     "certifications": [
       "CPRA"
@@ -1090,7 +1045,6 @@
     "legalName": "Twilio, Inc.",
     "headquarterAddress": "101 Spear Street, Fifth Floor, San Francisco, CA 94105",
     "websiteUrl": "https://www.twilio.com/",
-    "description": "Twilio is a cloud communications platform that provides APIs for developers to add messaging, voice, video, and email capabilities to applications.",
     "category": "COLLABORATION",
     "certifications": [
       "SOC 2 Type 2",
@@ -1117,7 +1071,6 @@
     "legalName": "Olinda SAS",
     "headquarterAddress": "18 rue de Navarin, 75009 Paris, France",
     "websiteUrl": "https://qonto.com",
-    "description": "Qonto is a European business finance solution offering online banking, invoicing, expense management, and financial tools for SMEs and freelancers.",
     "category": "FINANCE",
     "certifications": [
       "ISO 27001",
@@ -1136,7 +1089,6 @@
     "legalName": "Anysphere Inc.",
     "headquarterAddress": "403 Francisco Street, San Francisco",
     "websiteUrl": "https://www.cursor.com",
-    "description": "AI-powered integrated development environment enhancing developer productivity with advanced AI features.",
     "category": "ENGINEERING",
     "certifications": [
       "SOC 2 Type 2",
@@ -1154,7 +1106,6 @@
     "legalName": "PROLIFIC LABS Incorporated",
     "headquarterAddress": "6114 La Salle Ave, Suite 459, Oakland, CA 94611, United States",
     "websiteUrl": "https://pulley.com",
-    "description": "Pulley is an equity management platform that helps startups manage cap tables, issue equity, and ensure compliance with tools for fundraising modeling, 409A valuations, and more.",
     "category": "FINANCE",
     "certifications": [
       "SOC 2 Type 2",
@@ -1171,7 +1122,6 @@
     "legalName": "Microsoft Corporation",
     "headquarterAddress": "One Microsoft Way, Redmond, WA 98052-6399, United States",
     "websiteUrl": "https://azure.microsoft.com",
-    "description": "Microsoft Azure is a comprehensive cloud computing platform offering a wide range of services including computing, analytics, storage, and networking.",
     "category": "CLOUD_PROVIDER",
     "certifications": [
       "CIS Benchmark",
@@ -1289,7 +1239,6 @@
     "legalName": "Microsoft Corporation",
     "headquarterAddress": "One Microsoft Way, Redmond, WA 98052-6399, United States",
     "websiteUrl": "https://www.microsoft.com/microsoft-365",
-    "description": "Microsoft 365 is a cloud-based productivity suite offering applications like Word, Excel, Teams, and OneDrive, integrated with AI-powered features and enterprise-grade security.",
     "category": "COLLABORATION",
     "certifications": [
       "CIS Benchmark",
@@ -1407,7 +1356,6 @@
     "legalName": "Google LLC",
     "headquarterAddress": "1600 Amphitheatre Parkway, Mountain View, CA 94043, US",
     "websiteUrl": "https://google.com",
-    "description": "Google is a multinational technology company specializing in internet-related services and products, including search, advertising, cloud computing, software, and hardware.",
     "category": "CLOUD_PROVIDER",
     "certifications": [
       "ISO 27001",
@@ -1431,7 +1379,6 @@
     "legalName": "Namecheap, Inc.",
     "headquarterAddress": "4600 East Washington Street, Suite 305, Phoenix, AZ 85034, United States",
     "websiteUrl": "https://www.namecheap.com",
-    "description": "Namecheap is an ICANN-accredited domain registrar and web hosting company offering domain registration, hosting, VPN, and other web services.",
     "category": "IT",
     "certifications": [
       "CCPA",
@@ -1447,7 +1394,6 @@
     "legalName": "Porter Technologies Inc.",
     "headquarterAddress": "New York City, NY, United States",
     "websiteUrl": "https://www.porter.run",
-    "description": "Porter is a platform-as-a-service (PaaS) that enables developers to deploy and manage applications in their own AWS, GCP, or Azure cloud accounts with minimal DevOps overhead.",
     "category": "CLOUD_PROVIDER",
     "certifications": [
       "SOC 2 Type 2",
@@ -1464,7 +1410,6 @@
     "legalName": "Bitwarden, Inc.",
     "headquarterAddress": "1 North Calle Cesar Chavez, Suite 102, Santa Barbara, CA 93103",
     "websiteUrl": "https://bitwarden.com",
-    "description": "Bitwarden is a secure, open-source password manager that enables individuals and organizations to store, manage, and share sensitive data across devices.",
     "category": "PASSWORD_MANAGEMENT",
     "certifications": [
       "ISO/IEC 27001:2022",
@@ -1488,7 +1433,6 @@
     "legalName": "Framer B.V.",
     "headquarterAddress": "Rozengracht 207B, 1016 LZ Amsterdam, Netherlands",
     "websiteUrl": "https://www.framer.com",
-    "description": "Framer is a no-code website builder that enables designers and teams to create and publish professional, responsive websites with built-in CMS, animations, and real-time collaboration tools.",
     "category": "PRODUCT_AND_DESIGN",
     "certifications": [
       "SOC 2 Type 2",
@@ -1509,7 +1453,6 @@
     "legalName": "Cal.com, Inc.",
     "headquarterAddress": "2261 Market Street #4382, San Francisco, CA 94114, USA",
     "websiteUrl": "https://cal.com",
-    "description": "Cal.com is an open-source scheduling platform that lets individuals and organizations create customizable booking experiences and integrate scheduling into their products.",
     "category": "COLLABORATION",
     "certifications": [
       "SOC 2 Type 2",
@@ -1532,7 +1475,6 @@
     "legalName": "The Rocket Science Group LLC",
     "headquarterAddress": "2 Sun Court Suite 400 Peachtree Corners, GA 30092",
     "websiteUrl": "https://mailchimp.com",
-    "description": "All-in-one marketing automation platform that lets organizations create, send, and analyze email campaigns and other customer-engagement content.",
     "category": "MARKETING",
     "certifications": [
       "SOC 2 Type 2",
@@ -1556,7 +1498,6 @@
     "legalName": "Otter.ai, Inc.",
     "headquarterAddress": "800 W El Camino Real, Suite 170, Mountain View, CA 94040",
     "websiteUrl": "https://otter.ai",
-    "description": "AI-powered meeting assistant that captures, transcribes, and summarizes conversations in real time to make information from meetings searchable and shareable.",
     "category": "COLLABORATION",
     "certifications": [
       "SOC 2 Type 2",
@@ -1578,7 +1519,6 @@
     "legalName": "Plus Five Five, Inc.",
     "headquarterAddress": "2261 Market Street #5039, San Francisco, CA 94114, United States",
     "websiteUrl": "https://resend.com",
-    "description": "Developer-focused email delivery platform offering a modern API and tooling to build, test and send transactional and marketing emails at scale.",
     "category": "MARKETING",
     "certifications": [
       "SOC 2 Type 2",
@@ -1601,7 +1541,6 @@
     "legalName": "OVH Groupe SAS",
     "headquarterAddress": "2 Rue Kellermann, 59100 Roubaix, France",
     "websiteUrl": "https://www.ovhcloud.com",
-    "description": "OVHcloud is a French cloud computing company offering public and private cloud products, shared hosting, and dedicated server solutions in 140 countries worldwide.",
     "category": "CLOUD_PROVIDER",
     "certifications": [
       "ISO/IEC 27001",
@@ -1634,7 +1573,6 @@
     "legalName": "OVH US LLC",
     "headquarterAddress": "11950 Democracy Drive, Suite 300, Reston, VA 20190, USA",
     "websiteUrl": "https://us.ovhcloud.com",
-    "description": "Global cloud-infrastructure provider delivering bare-metal servers, public and private cloud, and web-hosting services at scale.",
     "category": "CLOUD_PROVIDER",
     "certifications": [
       "ISO/IEC 27001",
@@ -1665,7 +1603,6 @@
     "legalName": "Pipedrive Inc.",
     "headquarterAddress": "530 Fifth Avenue, 8th Floor, Suite 802, New York, NY 10036, United States",
     "websiteUrl": "https://www.pipedrive.com",
-    "description": "Pipedrive is a sales-focused CRM platform designed to help small businesses manage leads, track deals, and automate sales processes.",
     "category": "SALES",
     "certifications": [
       "SOC 2 Type 2",
@@ -1688,7 +1625,6 @@
     "legalName": "WebPros International GmbH (formerly Plesk International GmbH)",
     "headquarterAddress": "Vordergasse 59, 8200 Schaffhausen, Switzerland",
     "websiteUrl": "https://www.plesk.com",
-    "description": "Web-hosting control-panel software for building, securing and running websites and cloud applications.",
     "category": "IT",
     "certifications": [
       "GDPR"
@@ -1703,7 +1639,6 @@
     "legalName": "Sendinblue SAS",
     "headquarterAddress": "106 boulevard Haussmann, 75008 Paris, France",
     "websiteUrl": "https://www.brevo.com",
-    "description": "Cloud-based CRM and multichannel marketing platform that lets businesses run email, SMS, WhatsApp and automated campaigns while managing customer relationships from one suite.",
     "category": "MARKETING",
     "certifications": [
       "ISO/IES 27001:2013",
@@ -1723,7 +1658,6 @@
     "name": "Better Stack",
     "legalName": "Better Stack, Inc.",
     "websiteUrl": "https://betterstack.com",
-    "description": "Developer-first observability platform that unifies log management, uptime monitoring, incident response, and public status pages.",
     "category": "CLOUD_MONITORING",
     "certifications": [
       "SOC 2 Type 2",
@@ -1742,7 +1676,6 @@
     "legalName": "PlanetScale, Inc.",
     "headquarterAddress": "535 Mission Street, 14th Floor, San Francisco, CA 94105, United States",
     "websiteUrl": "https://planetscale.com",
-    "description": "PlanetScale provides a serverless, MySQL-compatible database-as-a-service built on Vitess that lets developers scale relational workloads without managing infrastructure.",
     "category": "DATA_STORAGE_AND_PROCESSING",
     "certifications": [
       "SOC 2 Type 2",
@@ -1766,7 +1699,6 @@
     "legalName": "Docker, Inc.",
     "headquarterAddress": "3790 El Camino Real #1052, Palo Alto, CA 94306, USA",
     "websiteUrl": "https://www.docker.com",
-    "description": "Developer platform for building, sharing, and running containerized applications.",
     "category": "ENGINEERING",
     "certifications": [
       "SOC 2 Type 2",
@@ -1795,7 +1727,6 @@
     "legalName": "Brex Inc.",
     "headquarterAddress": "650 S 500W Suite 300, Salt Lake City, UT 84101, United States",
     "websiteUrl": "https://www.brex.com",
-    "description": "AI-powered global spend platform offering corporate cards, expense management, business accounts and travel in one place.",
     "category": "FINANCE",
     "certifications": [
       "SOC 1 Type 2",
@@ -1817,7 +1748,6 @@
     "legalName": "Ramp Business Corporation",
     "headquarterAddress": "28 West 23rd Street, Floor 2, New York, NY 10010 USA",
     "websiteUrl": "https://ramp.com",
-    "description": "Corporate spend-management platform offering corporate cards, expense automation, bill pay, and vendor management for finance teams.",
     "category": "FINANCE",
     "certifications": [
       "SOC 2 Type 2",
@@ -1840,7 +1770,6 @@
     "legalName": "ClickHouse, Inc.",
     "headquarterAddress": "650 Castro St., Suite 120 #92426, Mountain View, CA 94041, USA",
     "websiteUrl": "https://clickhouse.com",
-    "description": "Open-source column-oriented database and managed cloud service for ultra-fast, real-time analytics on large-volume data.",
     "category": "DATA_STORAGE_AND_PROCESSING",
     "certifications": [
       "SOC 2 Type 2",
@@ -1868,7 +1797,6 @@
     "legalName": "Tailscale Inc.",
     "headquarterAddress": "401-50 Lynn Williams Street, Toronto, ON M6K 3R9, Canada",
     "websiteUrl": "https://tailscale.com",
-    "description": "Tailscale provides a zero-config mesh VPN and zero-trust networking platform that securely connects devices and services across any network.",
     "category": "SECURITY",
     "certifications": [
       "SOC 2 Type II",
@@ -1889,7 +1817,6 @@
     "legalName": "Puzzle Financial Inc.",
     "headquarterAddress": "575 Market Street, Floor 5, San Francisco, CA 94105, USA",
     "websiteUrl": "https://puzzle.io",
-    "description": "Puzzle provides modern, real-time accounting software that gives startups automated bookkeeping and instant finance metrics such as cash, burn and runway.",
     "category": "FINANCE",
     "certifications": [
       "SOC 2 Type 2",
@@ -1907,7 +1834,6 @@
     "legalName": "Probo Inc.",
     "headquarterAddress": "490 Post St, Suite 640,San Francisco, CA 94102, United States",
     "websiteUrl": "https://www.getprobo.com/",
-    "description": "Probo is an open-source compliance platform that helps startups achieve SOC 2 and ISO 27001 certifications quickly and affordably, with expert guidance and no vendor lock-in.",
     "category": "SECURITY",
     "privacyPolicyUrl": "https://www.getprobo.com/privacy",
     "termsOfServiceUrl": "https://www.getprobo.com/terms",
@@ -1918,7 +1844,6 @@
     "legalName": "FOLK SAS",
     "headquarterAddress": "31 Rue des Vinaigriers, 75010 Paris, France",
     "websiteUrl": "https://www.folk.app",
-    "description": "Lightweight, collaborative CRM that automates contact and relationship management for modern teams.",
     "category": "SALES",
     "certifications": [
       "SOC 2 Type 1",
@@ -1934,7 +1859,6 @@
   {
     "name": "Claap",
     "websiteUrl": "https://www.claap.io",
-    "description": "AI-powered meeting recorder and video workspace that automates post-meeting tasks and CRM enrichment.",
     "category": "COLLABORATION",
     "certifications": [
       "SOC 2 Type 2",
@@ -1951,7 +1875,6 @@
     "legalName": "Pitch Software GmbH",
     "headquarterAddress": "Joachimstraße 7, 10119 Berlin, Germany",
     "websiteUrl": "https://pitch.com",
-    "description": "Cloud-based presentation platform that lets teams collaboratively create, design, and share visually engaging slide decks in real time.",
     "category": "PRODUCT_AND_DESIGN",
     "certifications": [
       "GDPR"
@@ -1969,7 +1892,6 @@
     "legalName": "Spendesk SAS",
     "headquarterAddress": "51 Rue de Londres, 75008 Paris, France",
     "websiteUrl": "https://www.spendesk.com",
-    "description": "Spendesk is a comprehensive spend management platform offering solutions like virtual and physical cards, invoice processing, and expense reimbursements to streamline company spending.",
     "category": "FINANCE",
     "certifications": [
       "GDPR",
@@ -1989,7 +1911,6 @@
     "legalName": "Lever, Inc.",
     "headquarterAddress": "1125 Mission Street, San Francisco, CA 94103, United States",
     "websiteUrl": "https://www.lever.co",
-    "description": "Cloud-based talent-acquisition suite that combines applicant-tracking and candidate-relationship-management tools so organisations can source, engage and hire talent in one place.",
     "category": "RECRUITING",
     "certifications": [
       "SOC 2 Type 2",
@@ -2012,7 +1933,6 @@
     "legalName": "Google LLC",
     "headquarterAddress": "1600 Amphitheatre Parkway, Mountain View, CA 94043, USA",
     "websiteUrl": "https://cloud.google.com",
-    "description": "Comprehensive public cloud computing platform offering infrastructure, data analytics, AI, security, and developer tools",
     "category": "CLOUD_PROVIDER",
     "certifications": [
       "Cloud Computing Compliance Controls Catalog (C5)",
@@ -2176,7 +2096,6 @@
     "legalName": "Fly.io, Inc.",
     "headquarterAddress": "2045 W Grand Ave, Chicago, IL 60612, United States",
     "websiteUrl": "https://fly.io",
-    "description": "Developer-focused public cloud platform offering hardware-virtualized containers (Fly Machines) with KVM isolation, automatic scaling to zero, and integrated tools for deploying and managing applications globally",
     "category": "CLOUD_PROVIDER",
     "certifications": [
       "SOC 2 Type 2",
@@ -2202,7 +2121,6 @@
     "legalName": "Upstash, Inc.",
     "headquarterAddress": "6202 Via De Adrianna, San Jose, CA 95120, United States",
     "websiteUrl": "https://upstash.com",
-    "description": "Serverless data platform providing HTTP-based Redis, Vector, and QStash services with global low-latency, automatic scaling, and durable storage",
     "category": "DATA_STORAGE_AND_PROCESSING",
     "certifications": [
       "SOC 2 Type 2",
@@ -2223,7 +2141,6 @@
     "legalName": "BunnyWay d.o.o.",
     "headquarterAddress": "Dunajska cesta 165, 1000 Ljubljana, Slovenia",
     "websiteUrl": "https://bunny.net",
-    "description": "Cloud-based content-delivery, edge-storage and optimization platform that accelerates and secures web content worldwide.",
     "category": "CLOUD_PROVIDER",
     "certifications": [
       "ISO 27001",
@@ -2241,7 +2158,6 @@
     "legalName": "Mango Technologies, Inc.",
     "headquarterAddress": "350 Tenth Ave, 5th Floor, San Diego, CA 92101, United States",
     "websiteUrl": "https://clickup.com",
-    "description": "All-in-one productivity platform for project management, document collaboration, and goal tracking.",
     "category": "COLLABORATION",
     "certifications": [
       "SOC 2 Type 2",
@@ -2268,7 +2184,6 @@
     "legalName": "Danami International Inc.",
     "headquarterAddress": "5314 56 St, Camrose, Alberta T4V 2E5, Canada",
     "websiteUrl": "https://www.danami.com",
-    "description": "Developer of security, firewall and anti-spam extensions for the Plesk hosting control panel.",
     "category": "ENGINEERING",
     "privacyPolicyUrl": "https://www.danami.com/legal/privacy-policy",
     "termsOfServiceUrl": "https://www.danami.com/legal/terms-of-service"
@@ -2278,7 +2193,6 @@
     "legalName": "New Relic, Inc.",
     "headquarterAddress": "188 Spear St., Suite 1000, San Francisco, CA 94105, USA",
     "websiteUrl": "https://newrelic.com",
-    "description": "New Relic provides a full-stack observability platform that lets engineering teams monitor, analyze, and improve application, infrastructure, and digital-experience performance in real time.",
     "category": "CLOUD_MONITORING",
     "certifications": [
       "SOC 2 Type 2",
@@ -2307,7 +2221,6 @@
     "legalName": "Pylon Labs, Inc.",
     "headquarterAddress": "188 King Street, Unit 502, San Francisco, CA 94107, USA",
     "websiteUrl": "https://usepylon.com",
-    "description": "Pylon provides a modern unified customer-support platform for B2B companies, combining ticketing, chat, knowledge base, AI assistance, customer portal and workflows in one tool.",
     "category": "CUSTOMER_SUPPORT",
     "certifications": [
       "SOC 2 Type 2",
@@ -2327,7 +2240,6 @@
     "name": "Loops",
     "legalName": "Astrodon Inc.",
     "websiteUrl": "https://loops.so",
-    "description": "Email platform for SaaS companies that lets teams create, send and track product, marketing, and transactional emails from a single interface",
     "category": "MARKETING",
     "certifications": [
       "GDPR",
@@ -2344,7 +2256,6 @@
     "legalName": "Perplexity AI, Inc.",
     "headquarterAddress": "115 Sansome St, San Francisco, CA 94104-3601, United States",
     "websiteUrl": "https://www.perplexity.ai",
-    "description": "Generative AI answer engine that delivers real-time, source-cited answers to user questions.",
     "category": "MARKETING",
     "certifications": [
       "SOC 2 Type 2",
@@ -2368,7 +2279,6 @@
     "websiteUrl": "https://okta.com",
     "privacyPolicyUrl": "https://www.okta.com/privacy-policy/",
     "termsOfServiceUrl": "https://www.okta.com/terms-of-service/",
-    "description": "Okta is a cloud-based identity and access management platform that enables businesses to secure their applications and data.",
     "category": "IDENTITY_PROVIDER",
     "certifications": [
       "SOC 2 Type 2",
@@ -2396,7 +2306,6 @@
     "privacyPolicyUrl": "https://about.gitlab.com/privacy/",
     "serviceLevelAgreementUrl": "https://about.gitlab.com/terms/",
     "subprocessorsListUrl": "https://about.gitlab.com/privacy/subprocessors/",
-    "description": "Gitlab is most comprehensive DevSecOps platform.",
     "category": "VERSION_CONTROL",
     "certifications": [
       "CCPA",
@@ -2422,7 +2331,6 @@
     "privacyPolicyUrl": "https://www.scaleway.com/en/privacy-policy/",
     "serviceLevelAgreementUrl": "https://www.scaleway.com/en/contracts/",
     "subprocessorsListUrl": "https://www.scaleway.com/en/subprocessorlist/",
-    "description": "Scaleway is a French Cloud computing and web hosting company. The company provides physical dedicated servers and cloud computing architectures.",
     "category": "CLOUD_PROVIDER",
     "certifications": [
       "ISO/IEC 27001:2022",

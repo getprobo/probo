@@ -46,7 +46,6 @@ import (
 
 type thirdPartyData struct {
 	Name                          string   `json:"name"`
-	Description                   *string  `json:"description,omitempty"`
 	Category                      *string  `json:"category,omitempty"`
 	HeadquarterAddress            *string  `json:"headquarterAddress,omitempty"`
 	LegalName                     *string  `json:"legalName,omitempty"`
@@ -173,7 +172,6 @@ func run() error {
 				party := coredata.CommonThirdParty{
 					ID:                            gid.New(gid.NilTenant, coredata.CommonThirdPartyEntityType),
 					Name:                          tp.Name,
-					Description:                   tp.Description,
 					Category:                      parseCategory(tp),
 					HeadquarterAddress:            tp.HeadquarterAddress,
 					LegalName:                     tp.LegalName,

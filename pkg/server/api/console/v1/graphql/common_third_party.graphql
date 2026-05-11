@@ -18,7 +18,6 @@ type CommonThirdParty
     ) {
     id: ID!
     name: String!
-    description: String
     category: VendorCategory!
     websiteUrl: String
     headquarterAddress: String
