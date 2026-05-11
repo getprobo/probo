@@ -240,16 +240,17 @@ WHERE
 	AND tracker_type = @tracker_type
 	AND (
 		(match_type = @match_type_glob
-		 AND starts_with(@identifier, split_part(pattern, '*', 1))
-		 AND right(@identifier, length(split_part(pattern, '*', 2))) = split_part(pattern, '*', 2)
-		 AND length(@identifier) >= length(pattern) - 1)
+		 AND @identifier LIKE
+		     replace(replace(replace(replace(
+		         pattern, E'\\', E'\\\\'), '%', E'\\%'), '_', E'\\_'), '*', '%')
+		     ESCAPE E'\\')
 		OR (match_type = @match_type_exact AND pattern = @identifier)
 	)
 ORDER BY
 	CASE WHEN match_type = @match_type_exact AND pattern = @identifier THEN 0
 	     ELSE 1
 	END,
-	length(pattern) - 1 DESC
+	length(replace(pattern, '*', '')) DESC
 LIMIT 1;
 `
 

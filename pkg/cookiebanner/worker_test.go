@@ -23,6 +23,233 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 )
 
+func TestLooksVariable(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name     string
+		token    string
+		expected bool
+	}{
+		{
+			name:     "long mixed alphanumeric",
+			token:    "XBwJ2pHAf0MoYgh3TNZK32Qk7zLlTldhk4p9llGtZMN",
+			expected: true,
+		},
+		{
+			name:     "short mixed alphanumeric below threshold",
+			token:    "abc123",
+			expected: false,
+		},
+		{
+			name:     "exactly 8 chars mixed",
+			token:    "a1b2c3d4",
+			expected: true,
+		},
+		{
+			name:     "long hex string 16 chars",
+			token:    "a1b2c3d4e5f60718",
+			expected: true,
+		},
+		{
+			name:     "short hex string below threshold",
+			token:    "abcdef12",
+			expected: true,
+		},
+		{
+			name:     "pure letters not variable",
+			token:    "posthog",
+			expected: false,
+		},
+		{
+			name:     "long pure letters not variable",
+			token:    "authentication",
+			expected: false,
+		},
+		{
+			name:     "brand name with digit",
+			token:    "auth0",
+			expected: false,
+		},
+		{
+			name:     "UUID shape",
+			token:    "550e8400-e29b-41d4-a716-446655440000",
+			expected: true,
+		},
+		{
+			name:     "8 digit number",
+			token:    "12345678",
+			expected: true,
+		},
+		{
+			name:     "short digit number",
+			token:    "12345",
+			expected: false,
+		},
+		{
+			name:     "empty string",
+			token:    "",
+			expected: false,
+		},
+		{
+			name:     "single char",
+			token:    "x",
+			expected: false,
+		},
+		{
+			name:     "all uppercase letters",
+			token:    "MEASUREMENT",
+			expected: false,
+		},
+		{
+			name:     "short brand c15t",
+			token:    "c15t",
+			expected: false,
+		},
+		{
+			name:     "GA measurement ID style",
+			token:    "G-1234ABCDEF",
+			expected: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				t.Parallel()
+				assert.Equal(t, tt.expected, looksVariable(tt.token))
+			},
+		)
+	}
+}
+
+func TestIsUUIDShape(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name     string
+		input    string
+		expected bool
+	}{
+		{
+			name:     "valid UUID lowercase",
+			input:    "550e8400-e29b-41d4-a716-446655440000",
+			expected: true,
+		},
+		{
+			name:     "valid UUID uppercase",
+			input:    "550E8400-E29B-41D4-A716-446655440000",
+			expected: true,
+		},
+		{
+			name:     "wrong length",
+			input:    "550e8400-e29b-41d4-a716",
+			expected: false,
+		},
+		{
+			name:     "no dashes",
+			input:    "550e8400e29b41d4a716446655440000xxxx",
+			expected: false,
+		},
+		{
+			name:     "dashes in wrong positions",
+			input:    "550e840-0e29b-41d4-a716-446655440000",
+			expected: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				t.Parallel()
+				assert.Equal(t, tt.expected, isUUIDShape(tt.input))
+			},
+		)
+	}
+}
+
+func TestHeuristicTemplate(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name     string
+		input    string
+		template string
+		changed  bool
+	}{
+		{
+			name:     "posthog hash in middle",
+			input:    "ph_phc_XBwJ2pHAf0MoYgh3TNZK32Qk7zLlTldhk4p9llGtZMN_window_id",
+			template: "ph_phc_*_window_id",
+			changed:  true,
+		},
+		{
+			name:     "no variable tokens",
+			input:    "probo_consent_given",
+			template: "",
+			changed:  false,
+		},
+		{
+			name:     "trailing hash",
+			input:    "auth0_session_a1b2c3d4e5f6",
+			template: "auth0_session_*",
+			changed:  true,
+		},
+		{
+			name:     "no separator with variable token",
+			input:    "a1b2c3d4e5f6g7h8",
+			template: "*",
+			changed:  true,
+		},
+		{
+			name:     "no separator without variable token",
+			input:    "PHPSESSID",
+			template: "",
+			changed:  false,
+		},
+		{
+			name:     "consecutive variable tokens collapse to single star",
+			input:    "ph_a1b2c3d4_e5f6g7h8_window",
+			template: "ph_*_window",
+			changed:  true,
+		},
+		{
+			name:     "UUID token replaced",
+			input:    "session_550e8400-e29b-41d4-a716-446655440000_data",
+			template: "session_*_data",
+			changed:  true,
+		},
+		{
+			name:     "leading underscore with hash",
+			input:    "_ga_G1234ABCDEF",
+			template: "_ga_*",
+			changed:  true,
+		},
+		{
+			name:     "dash separator with hash",
+			input:    "c15t-consent-a1b2c3d4e5f6",
+			template: "c15t-consent-*",
+			changed:  true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				t.Parallel()
+				tmpl, changed := heuristicTemplate(tt.input)
+				assert.Equal(t, tt.changed, changed)
+				if changed {
+					assert.Equal(t, tt.template, tmpl)
+				}
+			},
+		)
+	}
+}
+
 func TestTemplateCandidates(t *testing.T) {
 	t.Parallel()
 
@@ -184,6 +411,30 @@ func TestGlobMatch(t *testing.T) {
 			pattern: "ph_phc_*_posthog",
 			input:   "ph_phc_posthog",
 			match:   false,
+		},
+		{
+			name:    "multi-star matches",
+			pattern: "ph_*_something_*_end",
+			input:   "ph_hash1_something_hash2_end",
+			match:   true,
+		},
+		{
+			name:    "multi-star wrong middle segment",
+			pattern: "ph_*_something_*_end",
+			input:   "ph_hash1_other_hash2_end",
+			match:   false,
+		},
+		{
+			name:    "multi-star wrong suffix",
+			pattern: "ph_*_something_*_end",
+			input:   "ph_hash1_something_hash2_nope",
+			match:   false,
+		},
+		{
+			name:    "multi-star with underscore-heavy middle",
+			pattern: "a_*_b_*_c",
+			input:   "a_x_y_z_b_q_r_c",
+			match:   true,
 		},
 	}
 
@@ -540,6 +791,92 @@ func TestFindMergeGroups(t *testing.T) {
 			group, ok := groups[mergeGroupKey{categoryID: gid.Nil, trackerType: coredata.TrackerTypeCookie, template: "ph_phc_*_posthog", durationBucket: durationBucket(&oneYear)}]
 			require.True(t, ok)
 			assert.Len(t, group, 3)
+		},
+	)
+
+	t.Run(
+		"single pattern with hash normalized via heuristic",
+		func(t *testing.T) {
+			t.Parallel()
+
+			patterns := coredata.TrackerPatterns{
+				makePattern("ph_phc_XBwJ2pHAf0MoYgh3TNZK32Qk7zLlTldhk4p9llGtZMN_window_id", nil),
+			}
+
+			groups := findMergeGroups(patterns, 3)
+			require.Len(t, groups, 1)
+
+			group, ok := groups[mergeGroupKey{categoryID: gid.Nil, trackerType: coredata.TrackerTypeCookie, template: "ph_phc_*_window_id", durationBucket: -1}]
+			require.True(t, ok)
+			assert.Len(t, group, 1)
+		},
+	)
+
+	t.Run(
+		"same hash different suffixes produce separate heuristic globs",
+		func(t *testing.T) {
+			t.Parallel()
+
+			patterns := coredata.TrackerPatterns{
+				makePattern("ph_phc_XBwJ2pHAf0MoYgh3TNZK32Qk7zLlTldhk4p9llGtZMN_window_id", nil),
+				makePattern("ph_phc_XBwJ2pHAf0MoYgh3TNZK32Qk7zLlTldhk4p9llGtZMN_posthog", nil),
+				makePattern("ph_phc_XBwJ2pHAf0MoYgh3TNZK32Qk7zLlTldhk4p9llGtZMN_primary_window_exists", nil),
+			}
+
+			groups := findMergeGroups(patterns, 3)
+			require.Len(t, groups, 3)
+
+			windowGroup, ok := groups[mergeGroupKey{categoryID: gid.Nil, trackerType: coredata.TrackerTypeCookie, template: "ph_phc_*_window_id", durationBucket: -1}]
+			require.True(t, ok)
+			assert.Len(t, windowGroup, 1)
+
+			posthogGroup, ok := groups[mergeGroupKey{categoryID: gid.Nil, trackerType: coredata.TrackerTypeCookie, template: "ph_phc_*_posthog", durationBucket: -1}]
+			require.True(t, ok)
+			assert.Len(t, posthogGroup, 1)
+
+			primaryGroup, ok := groups[mergeGroupKey{categoryID: gid.Nil, trackerType: coredata.TrackerTypeCookie, template: "ph_phc_*_primary_window_exists", durationBucket: -1}]
+			require.True(t, ok)
+			assert.Len(t, primaryGroup, 1)
+		},
+	)
+
+	t.Run(
+		"patterns without variable tokens still require statistical threshold",
+		func(t *testing.T) {
+			t.Parallel()
+
+			patterns := coredata.TrackerPatterns{
+				makePattern("foo_bar_aaa", &oneYear),
+				makePattern("foo_bar_bbb", &oneYear),
+			}
+
+			groups := findMergeGroups(patterns, 3)
+			assert.Empty(t, groups)
+		},
+	)
+
+	t.Run(
+		"heuristic and statistical patterns coexist",
+		func(t *testing.T) {
+			t.Parallel()
+
+			patterns := coredata.TrackerPatterns{
+				makePattern("ph_phc_XBwJ2pHAf0MoYgh3TNZK32Qk7zLlTldhk4p9llGtZMN_window_id", &oneYear),
+				makePattern("foo_bar_aaa", &oneYear),
+				makePattern("foo_bar_bbb", &oneYear),
+				makePattern("foo_bar_ccc", &oneYear),
+			}
+
+			groups := findMergeGroups(patterns, 3)
+			require.Len(t, groups, 2)
+
+			heuristicGroup, ok := groups[mergeGroupKey{categoryID: gid.Nil, trackerType: coredata.TrackerTypeCookie, template: "ph_phc_*_window_id", durationBucket: durationBucket(&oneYear)}]
+			require.True(t, ok)
+			assert.Len(t, heuristicGroup, 1)
+
+			statGroup, ok := groups[mergeGroupKey{categoryID: gid.Nil, trackerType: coredata.TrackerTypeCookie, template: "foo_bar_*", durationBucket: durationBucket(&oneYear)}]
+			require.True(t, ok)
+			assert.Len(t, statGroup, 3)
 		},
 	)
 }

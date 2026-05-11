@@ -250,35 +250,64 @@ func findMergeGroups(
 	patterns coredata.TrackerPatterns,
 	threshold int,
 ) map[mergeGroupKey][]*coredata.TrackerPattern {
+	type memberKey struct {
+		groupKey mergeGroupKey
+		pattern  *coredata.TrackerPattern
+	}
+
 	templateCounts := make(map[mergeGroupKey][]*coredata.TrackerPattern)
+	heuristicKeys := make(map[mergeGroupKey]bool)
+	seen := make(map[memberKey]bool)
+
 	for _, p := range patterns {
 		bucket := durationBucket(p.MaxAgeSeconds)
+
+		if tmpl, ok := heuristicTemplate(p.Pattern); ok {
+			key := mergeGroupKey{categoryID: p.CookieCategoryID, trackerType: p.TrackerType, template: tmpl, durationBucket: bucket}
+			mk := memberKey{key, p}
+			if !seen[mk] {
+				seen[mk] = true
+				templateCounts[key] = append(templateCounts[key], p)
+			}
+			heuristicKeys[key] = true
+		}
+
 		for _, tmpl := range templateCandidates(p.Pattern) {
 			key := mergeGroupKey{categoryID: p.CookieCategoryID, trackerType: p.TrackerType, template: tmpl, durationBucket: bucket}
-			templateCounts[key] = append(templateCounts[key], p)
+			mk := memberKey{key, p}
+			if !seen[mk] {
+				seen[mk] = true
+				templateCounts[key] = append(templateCounts[key], p)
+			}
 		}
 	}
 
 	type candidate struct {
-		key        mergeGroupKey
-		fixedChars int
-		patterns   []*coredata.TrackerPattern
+		key         mergeGroupKey
+		fixedChars  int
+		isHeuristic bool
+		patterns    []*coredata.TrackerPattern
 	}
 
 	var candidates []candidate
 	for key, pats := range templateCounts {
-		if len(pats) >= threshold {
-			candidates = append(candidates, candidate{key, len(key.template) - 1, pats})
+		isH := heuristicKeys[key]
+		effectiveThreshold := threshold
+		if isH {
+			effectiveThreshold = 1
+		}
+		if len(pats) >= effectiveThreshold {
+			candidates = append(candidates, candidate{key, len(strings.ReplaceAll(key.template, "*", "")), isH, pats})
 		}
 	}
 
-	// Sort by descending specificity (more fixed characters first), then
-	// descending coverage (more patterns matched first), then template
-	// name for a fully deterministic order. Without these tie-breakers
-	// the greedy assignment below depends on Go's randomised map
-	// iteration and the same input can produce different merge groups
-	// across runs.
+	// Sort: heuristic first, then descending specificity (more fixed
+	// characters), then descending coverage, then template name for a
+	// fully deterministic order.
 	sort.Slice(candidates, func(i, j int) bool {
+		if candidates[i].isHeuristic != candidates[j].isHeuristic {
+			return candidates[i].isHeuristic
+		}
 		if candidates[i].fixedChars != candidates[j].fixedChars {
 			return candidates[i].fixedChars > candidates[j].fixedChars
 		}
@@ -292,6 +321,11 @@ func findMergeGroups(
 	groups := make(map[mergeGroupKey][]*coredata.TrackerPattern)
 
 	for _, c := range candidates {
+		effectiveThreshold := threshold
+		if c.isHeuristic {
+			effectiveThreshold = 1
+		}
+
 		var unassigned []*coredata.TrackerPattern
 		for _, p := range c.patterns {
 			if !assigned[p] {
@@ -299,7 +333,7 @@ func findMergeGroups(
 			}
 		}
 
-		if len(unassigned) < threshold {
+		if len(unassigned) < effectiveThreshold {
 			continue
 		}
 
@@ -310,6 +344,36 @@ func findMergeGroups(
 	}
 
 	return groups
+}
+
+func heuristicTemplate(name string) (string, bool) {
+	tokens, sep := splitTokens(name)
+	if sep == 0 {
+		if looksVariable(name) {
+			return "*", true
+		}
+		return "", false
+	}
+
+	s := string(sep)
+	changed := false
+	var result []string
+	for _, t := range tokens {
+		if looksVariable(t) {
+			changed = true
+			if len(result) == 0 || result[len(result)-1] != "*" {
+				result = append(result, "*")
+			}
+		} else {
+			result = append(result, t)
+		}
+	}
+
+	if !changed {
+		return "", false
+	}
+
+	return strings.Join(result, s), true
 }
 
 func templateCandidates(name string) []string {
@@ -333,6 +397,72 @@ func templateCandidates(name string) []string {
 	return candidates
 }
 
+func looksVariable(token string) bool {
+	if len(token) == 0 {
+		return false
+	}
+
+	hasDigit := false
+	hasLetter := false
+	allHex := true
+	allDigits := true
+	for _, ch := range token {
+		switch {
+		case ch >= '0' && ch <= '9':
+			hasDigit = true
+		case ch >= 'a' && ch <= 'f', ch >= 'A' && ch <= 'F':
+			hasLetter = true
+			allDigits = false
+		case ch >= 'g' && ch <= 'z', ch >= 'G' && ch <= 'Z':
+			hasLetter = true
+			allHex = false
+			allDigits = false
+		case ch == '-':
+			allHex = false
+			allDigits = false
+		default:
+			allHex = false
+			allDigits = false
+		}
+	}
+
+	if len(token) >= 8 && hasDigit && hasLetter {
+		return true
+	}
+
+	if len(token) >= 16 && allHex && hasDigit {
+		return true
+	}
+
+	if isUUIDShape(token) {
+		return true
+	}
+
+	if len(token) >= 8 && allDigits {
+		return true
+	}
+
+	return false
+}
+
+func isUUIDShape(s string) bool {
+	if len(s) != 36 {
+		return false
+	}
+	for i, ch := range s {
+		if i == 8 || i == 13 || i == 18 || i == 23 {
+			if ch != '-' {
+				return false
+			}
+			continue
+		}
+		if !((ch >= '0' && ch <= '9') || (ch >= 'a' && ch <= 'f') || (ch >= 'A' && ch <= 'F')) {
+			return false
+		}
+	}
+	return true
+}
+
 func splitTokens(name string) ([]string, byte) {
 	if found := strings.Contains(name, "_"); found {
 		return strings.Split(name, "_"), '_'
@@ -344,15 +474,31 @@ func splitTokens(name string) ([]string, byte) {
 }
 
 func globMatch(pattern, name string) bool {
-	before, after, ok := strings.Cut(pattern, "*")
-	if !ok {
+	parts := strings.Split(pattern, "*")
+	if len(parts) == 1 {
 		return pattern == name
 	}
-	prefix := before
-	suffix := after
-	return strings.HasPrefix(name, prefix) &&
-		strings.HasSuffix(name, suffix) &&
-		len(name) >= len(prefix)+len(suffix)
+
+	if !strings.HasPrefix(name, parts[0]) {
+		return false
+	}
+	name = name[len(parts[0]):]
+
+	last := parts[len(parts)-1]
+	if !strings.HasSuffix(name, last) {
+		return false
+	}
+	name = name[:len(name)-len(last)]
+
+	for _, part := range parts[1 : len(parts)-1] {
+		idx := strings.Index(name, part)
+		if idx == -1 {
+			return false
+		}
+		name = name[idx+len(part):]
+	}
+
+	return true
 }
 
 func bestSource(patterns []*coredata.TrackerPattern) *coredata.CookieSource {
