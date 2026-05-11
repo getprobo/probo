@@ -466,6 +466,103 @@ func TestAccessReviewCampaign_Delete(t *testing.T) {
 	assert.Equal(t, campaignID, result.DeleteAccessReviewCampaign.DeletedAccessReviewCampaignID)
 }
 
+// TestAccessReviewCampaign_DeleteRemovesFromListAndNode guards the contract
+// the console frontend relies on after deleting a campaign: the campaign must
+// disappear from the organization's `accessReviewCampaigns` connection, and a
+// `node(id:)` lookup on the deleted GID must surface a NOT_FOUND error rather
+// than partial data. Without this contract the cached Relay query in the
+// access-reviews tab would render edges pointing to a vanished record and
+// crash with "Unexpected error :(".
+func TestAccessReviewCampaign_DeleteRemovesFromListAndNode(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	orgID := owner.GetOrganizationID().String()
+
+	sourceID := factory.NewAccessSource(owner, orgID).
+		WithName("Source for Delete").
+		WithCsvData(testCsvData).
+		Create()
+	campaignID := factory.NewAccessReviewCampaign(owner, orgID).
+		WithName("Campaign to Cascade Delete").
+		WithAccessSourceIDs([]string{sourceID}).
+		Create()
+
+	const deleteMutation = `
+		mutation($input: DeleteAccessReviewCampaignInput!) {
+			deleteAccessReviewCampaign(input: $input) {
+				deletedAccessReviewCampaignId
+			}
+		}
+	`
+
+	var deleteResult struct {
+		DeleteAccessReviewCampaign struct {
+			DeletedAccessReviewCampaignID string `json:"deletedAccessReviewCampaignId"`
+		} `json:"deleteAccessReviewCampaign"`
+	}
+
+	err := owner.Execute(deleteMutation, map[string]any{
+		"input": map[string]any{
+			"accessReviewCampaignId": campaignID,
+		},
+	}, &deleteResult)
+	require.NoError(t, err)
+	assert.Equal(t, campaignID, deleteResult.DeleteAccessReviewCampaign.DeletedAccessReviewCampaignID)
+
+	// The campaign must no longer appear in the organization's campaign
+	// connection -- mirrors the AccessReviewCampaignsTabQuery the FE fires
+	// when the user navigates back to the access-reviews tab.
+	const listQuery = `
+		query($id: ID!) {
+			node(id: $id) {
+				... on Organization {
+					accessReviewCampaigns(first: 50) {
+						edges {
+							node { id }
+						}
+					}
+				}
+			}
+		}
+	`
+
+	var listResult struct {
+		Node struct {
+			AccessReviewCampaigns struct {
+				Edges []struct {
+					Node struct {
+						ID string `json:"id"`
+					} `json:"node"`
+				} `json:"edges"`
+			} `json:"accessReviewCampaigns"`
+		} `json:"node"`
+	}
+
+	err = owner.Execute(listQuery, map[string]any{"id": orgID}, &listResult)
+	require.NoError(t, err)
+	for _, edge := range listResult.Node.AccessReviewCampaigns.Edges {
+		assert.NotEqual(t, campaignID, edge.Node.ID, "deleted campaign must not appear in the connection")
+	}
+
+	// Resolving the deleted GID via `node(id:)` must error with NOT_FOUND so
+	// the cached Relay store can't keep serving a tombstoned record.
+	const nodeQuery = `
+		query($id: ID!) {
+			node(id: $id) {
+				... on AccessReviewCampaign {
+					id
+				}
+			}
+		}
+	`
+
+	_, err = owner.Do(nodeQuery, map[string]any{"id": campaignID})
+	var gqlErrors testutil.GraphQLErrors
+	require.ErrorAs(t, err, &gqlErrors)
+	require.Len(t, gqlErrors, 1)
+	assert.Equal(t, "NOT_FOUND", gqlErrors[0].Code())
+}
+
 func TestAccessReviewCampaign_List(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
