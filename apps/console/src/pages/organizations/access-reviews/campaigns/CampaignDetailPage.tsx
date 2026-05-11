@@ -45,7 +45,7 @@ import * as Popover from "@radix-ui/react-popover";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { type PreloadedQuery, useMutation, usePreloadedQuery, useRelayEnvironment } from "react-relay";
 import { useNavigate } from "react-router";
-import { fetchQuery, graphql } from "relay-runtime";
+import { ConnectionHandler, fetchQuery, graphql } from "relay-runtime";
 
 import type { AccessEntryDecision, CampaignDetailPageBulkDecisionMutation } from "#/__generated__/core/CampaignDetailPageBulkDecisionMutation.graphql";
 import type { AccessEntryFlag, CampaignDetailPageBulkFlagMutation } from "#/__generated__/core/CampaignDetailPageBulkFlagMutation.graphql";
@@ -101,9 +101,10 @@ const closeCampaignMutation = graphql`
 const deleteCampaignMutation = graphql`
   mutation CampaignDetailPageDeleteMutation(
     $input: DeleteAccessReviewCampaignInput!
+    $connections: [ID!]!
   ) {
     deleteAccessReviewCampaign(input: $input) {
-      deletedAccessReviewCampaignId @deleteRecord
+      deletedAccessReviewCampaignId @deleteEdge(connections: $connections)
     }
   }
 `;
@@ -283,12 +284,19 @@ export default function CampaignDetailPage({ queryRef }: Props) {
   };
 
   const handleDelete = () => {
+    const connections = [
+      ConnectionHandler.getConnectionID(
+        organizationId,
+        "AccessReviewCampaignsTab_accessReviewCampaigns",
+      ),
+    ];
     confirm(
       () =>
         new Promise<void>((resolve) => {
           deleteCampaign({
             variables: {
               input: { accessReviewCampaignId: campaign.id },
+              connections,
             },
             onCompleted(_, errors) {
               if (errors?.length) {
