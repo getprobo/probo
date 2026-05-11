@@ -25,6 +25,7 @@ type TrackerPatternFilter struct {
 	excluded         *bool
 	query            *string
 	source           *CookieSource
+	trackerType      *TrackerType
 }
 
 func NewTrackerPatternFilter(
@@ -46,6 +47,11 @@ func (f *TrackerPatternFilter) WithQuery(query *string) *TrackerPatternFilter {
 
 func (f *TrackerPatternFilter) WithSource(source *CookieSource) *TrackerPatternFilter {
 	f.source = source
+	return f
+}
+
+func (f *TrackerPatternFilter) WithTrackerType(trackerType *TrackerType) *TrackerPatternFilter {
+	f.trackerType = trackerType
 	return f
 }
 
@@ -90,6 +96,13 @@ func (f *TrackerPatternFilter) SQLFragment() string {
 			source = @filter_source::cookie_source
 		ELSE TRUE
 	END
+	AND
+	CASE
+		WHEN @has_tracker_type_filter::boolean = false THEN TRUE
+		WHEN @has_tracker_type_filter::boolean = true THEN
+			tracker_type = @filter_tracker_type::tracker_type
+		ELSE TRUE
+	END
 )`
 }
 
@@ -108,6 +121,8 @@ func (f *TrackerPatternFilter) SQLArguments() pgx.StrictNamedArgs {
 		"filter_query":                  nil,
 		"has_source_filter":             false,
 		"filter_source":                 nil,
+		"has_tracker_type_filter":       false,
+		"filter_tracker_type":           nil,
 	}
 
 	if f.matchType != nil {
@@ -132,6 +147,11 @@ func (f *TrackerPatternFilter) SQLArguments() pgx.StrictNamedArgs {
 	if f.source != nil {
 		args["has_source_filter"] = true
 		args["filter_source"] = string(*f.source)
+	}
+
+	if f.trackerType != nil {
+		args["has_tracker_type_filter"] = true
+		args["filter_tracker_type"] = string(*f.trackerType)
 	}
 
 	return args

@@ -199,7 +199,7 @@ func (r *cookieBannerResolver) UncategorisedTrackerPatterns(ctx context.Context,
 
 	coredataFilter := coredata.NewTrackerPatternFilter(nil, nil, nil)
 	if filter != nil {
-		coredataFilter = coredataFilter.WithQuery(filter.Query).WithSource(filter.Source)
+		coredataFilter = coredataFilter.WithQuery(filter.Query).WithSource(filter.Source).WithTrackerType(filter.TrackerType)
 	}
 
 	patterns, err := r.cookieBanner.ListUncategorisedTrackerPatterns(ctx, scope, obj.ID, cursor, coredataFilter)
@@ -1220,7 +1220,7 @@ func (r *trackerPatternConnectionResolver) TotalCount(ctx context.Context, obj *
 	default:
 		filter := coredata.NewTrackerPatternFilter(nil, nil, nil)
 		if obj.Filter != nil {
-			filter = filter.WithQuery(obj.Filter.Query).WithSource(obj.Filter.Source)
+			filter = filter.WithQuery(obj.Filter.Query).WithSource(obj.Filter.Source).WithTrackerType(obj.Filter.TrackerType)
 		}
 		count, err = r.cookieBanner.CountUncategorisedTrackerPatterns(ctx, scope, obj.ParentID, filter)
 	}

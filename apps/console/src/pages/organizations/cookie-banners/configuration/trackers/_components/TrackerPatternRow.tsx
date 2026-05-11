@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { Eye as IconEye, EyeSlash as IconEyeSlash } from "@phosphor-icons/react";
+import { EyeIcon, EyeSlashIcon } from "@phosphor-icons/react";
 import { formatDate, formatError, type GraphQLError } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import {
@@ -124,14 +124,24 @@ const updatePatternMutation = graphql`
   }
 `;
 
-function trackerTypeLabel(type: string, __: (s: string) => string): string {
+type BadgeVariant = "success" | "warning" | "danger" | "info" | "neutral" | "outline" | "highlight";
+
+function trackerTypeBadge(type: string, __: (s: string) => string): { label: string; variant: BadgeVariant } {
   switch (type) {
-    case "COOKIE": return __("Cookie");
-    case "LOCAL_STORAGE": return __("localStorage");
-    case "SESSION_STORAGE": return __("sessionStorage");
-    case "INDEXED_DB": return __("IndexedDB");
-    case "CACHE_STORAGE": return __("Cache Storage");
-    default: return type;
+    case "COOKIE": return { label: __("Cookie"), variant: "warning" };
+    case "LOCAL_STORAGE": return { label: __("localStorage"), variant: "info" };
+    case "SESSION_STORAGE": return { label: __("sessionStorage"), variant: "highlight" };
+    case "INDEXED_DB": return { label: __("IndexedDB"), variant: "success" };
+    case "CACHE_STORAGE": return { label: __("Cache Storage"), variant: "outline" };
+    default: return { label: type, variant: "neutral" };
+  }
+}
+
+function sourceBadge(source: string, __: (s: string) => string): { label: string; variant: BadgeVariant } {
+  switch (source) {
+    case "SCRIPT": return { label: __("Script"), variant: "info" };
+    case "PRE_EXISTING": return { label: __("Pre-existing"), variant: "outline" };
+    default: return { label: source, variant: "neutral" };
   }
 }
 
@@ -286,6 +296,9 @@ export function TrackerPatternRow({ patternKey, connectionId }: TrackerPatternRo
     );
   }
 
+  const typeBadge = trackerTypeBadge(pattern.trackerType, __);
+  const srcBadge = pattern.source ? sourceBadge(pattern.source, __) : null;
+
   return (
     <Tr className={pattern.excluded ? "bg-txt-quaternary opacity-80  line-through" : undefined}>
       <Td>
@@ -299,17 +312,11 @@ export function TrackerPatternRow({ patternKey, connectionId }: TrackerPatternRo
         </div>
       </Td>
       <Td>
-        <Badge variant="neutral">
-          {trackerTypeLabel(pattern.trackerType, __)}
-        </Badge>
+        <Badge variant={typeBadge.variant}>{typeBadge.label}</Badge>
       </Td>
       <Td>
-        {pattern.source
-          ? (
-              <Badge variant={pattern.source === "SCRIPT" ? "info" : "neutral"}>
-                {pattern.source === "SCRIPT" ? __("Script") : __("Pre-existing")}
-              </Badge>
-            )
+        {srcBadge
+          ? <Badge variant={srcBadge.variant}>{srcBadge.label}</Badge>
           : <span className="text-txt-tertiary">-</span>}
       </Td>
       <Td>
@@ -360,7 +367,7 @@ export function TrackerPatternRow({ patternKey, connectionId }: TrackerPatternRo
             className="p-1 rounded cursor-pointer"
             title={pattern.excluded ? __("Include") : __("Exclude")}
           >
-            {pattern.excluded ? <IconEye size={14} /> : <IconEyeSlash size={14} />}
+            {pattern.excluded ? <EyeIcon size={14} /> : <EyeSlashIcon size={14} />}
           </button>
           <button
             type="button"

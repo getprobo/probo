@@ -37,6 +37,7 @@ import type {
   CookieBannerTrackersPageRefetchQuery,
   CookieSource,
   TrackerPatternOrderField,
+  TrackerType,
 } from "#/__generated__/core/CookieBannerTrackersPageRefetchQuery.graphql";
 import { SortableTable, SortableTh } from "#/components/SortableTable";
 
@@ -64,6 +65,7 @@ const trackersFragment = graphql`
     last: { type: "Int", defaultValue: null }
     query: { type: "String", defaultValue: null }
     source: { type: "CookieSource", defaultValue: null }
+    trackerType: { type: "TrackerType", defaultValue: null }
   ) {
     uncategorisedTrackerPatterns(
       first: $first
@@ -71,7 +73,7 @@ const trackersFragment = graphql`
       last: $last
       before: $before
       orderBy: $order
-      filter: { query: $query, source: $source }
+      filter: { query: $query, source: $source, trackerType: $trackerType }
     )
       @connection(
         key: "CookieBannerTrackersPage_uncategorisedTrackerPatterns"
@@ -106,6 +108,7 @@ export default function CookieBannerTrackersPage({
   const [isPending, startTransition] = useTransition();
   const [queryFilter, setQueryFilter] = useState("");
   const [sourceFilter, setSourceFilter] = useState<CookieSource | null>(null);
+  const [trackerTypeFilter, setTrackerTypeFilter] = useState<TrackerType | null>(null);
 
   const { data: fragmentData, ...pagination } = usePaginationFragment<
     CookieBannerTrackersPageRefetchQuery,
@@ -121,6 +124,7 @@ export default function CookieBannerTrackersPage({
         {
           query: queryFilter || null,
           source: sourceFilter,
+          trackerType: trackerTypeFilter,
           ...overrides,
         },
         { fetchPolicy: "network-only" },
@@ -138,11 +142,18 @@ export default function CookieBannerTrackersPage({
     refetchFilters({ source: newSource });
   };
 
+  const handleTrackerTypeFilterChange = (value: string) => {
+    const newType = value === "ALL" ? null : (value as TrackerType);
+    setTrackerTypeFilter(newType);
+    refetchFilters({ trackerType: newType });
+  };
+
   const refetchWithFilters: ComponentProps<typeof SortableTable>["refetch"] = ({ order }) => {
     pagination.refetch({
       order: { direction: order.direction, field: order.field as TrackerPatternOrderField },
       query: queryFilter || null,
       source: sourceFilter,
+      trackerType: trackerTypeFilter,
     });
   };
 
@@ -164,6 +175,17 @@ export default function CookieBannerTrackersPage({
           <Option value="ALL">{__("All sources")}</Option>
           <Option value="SCRIPT">{__("Script")}</Option>
           <Option value="PRE_EXISTING">{__("Pre-existing")}</Option>
+        </Select>
+        <Select
+          value={trackerTypeFilter ?? "ALL"}
+          onValueChange={handleTrackerTypeFilterChange}
+        >
+          <Option value="ALL">{__("All types")}</Option>
+          <Option value="COOKIE">{__("Cookie")}</Option>
+          <Option value="LOCAL_STORAGE">{__("localStorage")}</Option>
+          <Option value="SESSION_STORAGE">{__("sessionStorage")}</Option>
+          <Option value="INDEXED_DB">{__("IndexedDB")}</Option>
+          <Option value="CACHE_STORAGE">{__("Cache Storage")}</Option>
         </Select>
       </div>
 
