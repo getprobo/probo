@@ -46,6 +46,7 @@ type (
 		TermsOfServiceURL             *string        `db:"terms_of_service_url"`
 		SecurityPageURL               *string        `db:"security_page_url"`
 		TrustPageURL                  *string        `db:"trust_page_url"`
+		LogoFileID                    *gid.GID       `db:"logo_file_id"`
 		CreatedAt                     time.Time      `db:"created_at"`
 		UpdatedAt                     time.Time      `db:"updated_at"`
 	}
@@ -78,6 +79,7 @@ SELECT
     terms_of_service_url,
     security_page_url,
     trust_page_url,
+    logo_file_id,
     created_at,
     updated_at
 FROM
@@ -133,6 +135,7 @@ SELECT
     terms_of_service_url,
     security_page_url,
     trust_page_url,
+    logo_file_id,
     created_at,
     updated_at
 FROM
@@ -187,6 +190,7 @@ INSERT INTO common_third_parties (
     terms_of_service_url,
     security_page_url,
     trust_page_url,
+    logo_file_id,
     created_at,
     updated_at
 ) VALUES (
@@ -208,6 +212,7 @@ INSERT INTO common_third_parties (
     @terms_of_service_url,
     @security_page_url,
     @trust_page_url,
+    @logo_file_id,
     @created_at,
     @updated_at
 )
@@ -232,6 +237,7 @@ INSERT INTO common_third_parties (
 		"terms_of_service_url":             t.TermsOfServiceURL,
 		"security_page_url":                t.SecurityPageURL,
 		"trust_page_url":                   t.TrustPageURL,
+		"logo_file_id":                     t.LogoFileID,
 		"created_at":                       t.CreatedAt,
 		"updated_at":                       t.UpdatedAt,
 	}
@@ -271,6 +277,7 @@ INSERT INTO common_third_parties (
     terms_of_service_url,
     security_page_url,
     trust_page_url,
+    logo_file_id,
     created_at,
     updated_at
 ) VALUES (
@@ -292,6 +299,7 @@ INSERT INTO common_third_parties (
     @terms_of_service_url,
     @security_page_url,
     @trust_page_url,
+    @logo_file_id,
     @created_at,
     @updated_at
 )
@@ -337,6 +345,7 @@ RETURNING (xmax = 0) AS inserted
 		"terms_of_service_url":             t.TermsOfServiceURL,
 		"security_page_url":                t.SecurityPageURL,
 		"trust_page_url":                   t.TrustPageURL,
+		"logo_file_id":                     t.LogoFileID,
 		"created_at":                       t.CreatedAt,
 		"updated_at":                       t.UpdatedAt,
 	}
@@ -401,6 +410,7 @@ SELECT
     terms_of_service_url,
     security_page_url,
     trust_page_url,
+    logo_file_id,
     created_at,
     updated_at
 FROM
@@ -427,6 +437,37 @@ LIMIT 20
 	}
 
 	*t = parties
+
+	return nil
+}
+
+func (t CommonThirdParty) UpdateLogoFileID(
+	ctx context.Context,
+	conn pg.Tx,
+) error {
+	q := `
+UPDATE common_third_parties
+SET
+    logo_file_id = @logo_file_id,
+    updated_at   = @updated_at
+WHERE
+    id = @id
+`
+
+	args := pgx.StrictNamedArgs{
+		"id":           t.ID,
+		"logo_file_id": t.LogoFileID,
+		"updated_at":   t.UpdatedAt,
+	}
+
+	result, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot update common third party logo: %w", err)
+	}
+
+	if result.RowsAffected() == 0 {
+		return ErrResourceNotFound
+	}
 
 	return nil
 }

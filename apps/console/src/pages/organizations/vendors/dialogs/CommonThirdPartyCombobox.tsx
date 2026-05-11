@@ -12,7 +12,6 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { faviconUrl } from "@probo/helpers";
 import { Avatar, ComboboxItem } from "@probo/ui";
 import type { PreloadedQuery } from "react-relay";
 import { graphql, usePreloadedQuery } from "react-relay";
@@ -31,6 +30,7 @@ export const commonThirdPartiesQuery = graphql`
       id
       name
       websiteUrl
+      logoUrl
       ...CreateVendorDialog_commonThirdParty
     }
   }
@@ -56,7 +56,7 @@ export function CommonThirdPartyCombobox({
         >
           <Avatar
             name={thirdParty.name}
-            src={faviconUrl(thirdParty.websiteUrl)}
+            src={thirdParty.logoUrl}
           />
           {thirdParty.name}
         </ComboboxItem>

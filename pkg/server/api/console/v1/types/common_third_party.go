@@ -35,6 +35,7 @@ type CommonThirdParty struct {
 	TrustPageURL               *string                 `json:"trustPageUrl,omitempty"`
 	StatusPageURL              *string                 `json:"statusPageUrl,omitempty"`
 	TermsOfServiceURL          *string                 `json:"termsOfServiceUrl,omitempty"`
+	LogoFileID                 *gid.GID                `json:"logoFileId,omitempty"`
 }
 
 func NewCommonThirdParty(c *coredata.CommonThirdParty) *CommonThirdParty {
@@ -54,5 +55,6 @@ func NewCommonThirdParty(c *coredata.CommonThirdParty) *CommonThirdParty {
 		TrustPageURL:               c.TrustPageURL,
 		StatusPageURL:              c.StatusPageURL,
 		TermsOfServiceURL:          c.TermsOfServiceURL,
+		LogoFileID:                 c.LogoFileID,
 	}
 }

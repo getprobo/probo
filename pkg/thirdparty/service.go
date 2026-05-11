@@ -17,17 +17,37 @@ package thirdparty
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/file"
+	"go.probo.inc/probo/pkg/gid"
 )
 
 type Service struct {
-	pg *pg.Client
+	pg   *pg.Client
+	file *file.Service
 }
 
-func NewService(pgClient *pg.Client) *Service {
-	return &Service{pg: pgClient}
+func NewService(pgClient *pg.Client, fileSvc *file.Service) *Service {
+	return &Service{
+		pg:   pgClient,
+		file: fileSvc,
+	}
+}
+
+func (s *Service) GenerateLogoURL(
+	ctx context.Context,
+	logoFileID gid.GID,
+	expiresIn time.Duration,
+) (*string, error) {
+	url, err := s.file.GetPublicFileURL(ctx, logoFileID, expiresIn)
+	if err != nil {
+		return nil, fmt.Errorf("cannot generate logo URL: %w", err)
+	}
+
+	return &url, nil
 }
 
 func (s *Service) Search(ctx context.Context, name string) ([]*coredata.CommonThirdParty, error) {

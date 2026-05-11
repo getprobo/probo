@@ -520,7 +520,7 @@ func (impl *Implm) Run(
 		l.Named("access-review"),
 	)
 
-	thirdPartyService := thirdparty.NewService(pgClient)
+	thirdPartyService := thirdparty.NewService(pgClient, fileService)
 
 	serverHandler, err := server.NewServer(
 		server.Config{

@@ -15,20 +15,32 @@
 // Command common-third-parties-import seeds the common_third_parties table from
 // packages/vendors/data.json. It is idempotent: re-running upserts on conflict
 // (lower(name)) so existing rows keep their id and created_at.
+//
+// When -fetch-logos is set, the tool also fetches favicons from Google's
+// favicon service and stores them in S3 as public files, linking them to each
+// common third party via logo_file_id.
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
 	"net"
+	"net/http"
 	"net/url"
 	"os"
 	"time"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/credentials"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"go.gearno.de/crypto/uuid"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/gid"
 )
 
@@ -61,8 +73,15 @@ func main() {
 
 func run() error {
 	var (
-		pgDSN    string
-		dataPath string
+		pgDSN          string
+		dataPath       string
+		fetchLogos     bool
+		s3Bucket       string
+		s3Endpoint     string
+		s3Region       string
+		s3AccessKey    string
+		s3SecretKey    string
+		s3UsePathStyle bool
 	)
 
 	flag.StringVar(
@@ -77,10 +96,56 @@ func run() error {
 		"",
 		"Path to the third-party data.json file",
 	)
+	flag.BoolVar(
+		&fetchLogos,
+		"fetch-logos",
+		false,
+		"Fetch favicons from Google and store them in S3",
+	)
+	flag.StringVar(
+		&s3Bucket,
+		"s3-bucket",
+		os.Getenv("AWS_S3_BUCKET"),
+		"S3 bucket name (default: AWS_S3_BUCKET env)",
+	)
+	flag.StringVar(
+		&s3Endpoint,
+		"s3-endpoint",
+		os.Getenv("AWS_ENDPOINT_URL"),
+		"S3 endpoint URL (default: AWS_ENDPOINT_URL env)",
+	)
+	flag.StringVar(
+		&s3Region,
+		"s3-region",
+		os.Getenv("AWS_REGION"),
+		"S3 region (default: AWS_REGION env)",
+	)
+	flag.StringVar(
+		&s3AccessKey,
+		"s3-access-key",
+		os.Getenv("AWS_ACCESS_KEY_ID"),
+		"S3 access key ID (default: AWS_ACCESS_KEY_ID env)",
+	)
+	flag.StringVar(
+		&s3SecretKey,
+		"s3-secret-key",
+		os.Getenv("AWS_SECRET_ACCESS_KEY"),
+		"S3 secret access key (default: AWS_SECRET_ACCESS_KEY env)",
+	)
+	flag.BoolVar(
+		&s3UsePathStyle,
+		"s3-path-style",
+		false,
+		"Use S3 path-style addressing",
+	)
 	flag.Parse()
 
 	if pgDSN == "" {
 		return fmt.Errorf("set -pg-dsn or DATABASE_URL")
+	}
+
+	if fetchLogos && s3Bucket == "" {
+		return fmt.Errorf("set -s3-bucket or AWS_S3_BUCKET when using -fetch-logos")
 	}
 
 	ctx := context.Background()
@@ -148,7 +213,155 @@ func run() error {
 
 	fmt.Printf("imported %d rows (%d inserted, %d updated)\n", len(thirdParties), inserted, updated)
 
+	if fetchLogos {
+		if err := fetchAndStoreLogos(ctx, pgClient, thirdParties, s3Bucket, s3Endpoint, s3Region, s3AccessKey, s3SecretKey, s3UsePathStyle); err != nil {
+			return fmt.Errorf("cannot fetch logos: %w", err)
+		}
+	}
+
 	return nil
+}
+
+func fetchAndStoreLogos(
+	ctx context.Context,
+	pgClient *pg.Client,
+	thirdParties []thirdPartyData,
+	bucket, endpoint, region, accessKey, secretKey string,
+	usePathStyle bool,
+) error {
+	s3Client := newS3Client(endpoint, region, accessKey, secretKey, usePathStyle)
+	fileMgr := filemanager.NewService(s3Client)
+	httpClient := &http.Client{Timeout: 10 * time.Second}
+	scope := coredata.NewScope(gid.NilTenant)
+
+	var fetched, skipped, failed int
+
+	for _, tp := range thirdParties {
+		if tp.WebsiteURL == nil || *tp.WebsiteURL == "" {
+			skipped++
+			continue
+		}
+
+		var party coredata.CommonThirdParty
+		if err := pgClient.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+			return party.LoadByName(ctx, conn, tp.Name)
+		}); err != nil {
+			fmt.Fprintf(os.Stderr, "warning: cannot load %q, skipping logo: %v\n", tp.Name, err)
+			failed++
+			continue
+		}
+
+		if party.LogoFileID != nil {
+			skipped++
+			continue
+		}
+
+		parsedURL, err := url.Parse(*tp.WebsiteURL)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "warning: cannot parse URL for %q, skipping logo: %v\n", tp.Name, err)
+			failed++
+			continue
+		}
+
+		faviconURL := fmt.Sprintf("https://www.google.com/s2/favicons?domain=%s&sz=64", parsedURL.Hostname())
+
+		resp, err := httpClient.Get(faviconURL)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "warning: cannot fetch favicon for %q: %v\n", tp.Name, err)
+			failed++
+			continue
+		}
+
+		body, err := io.ReadAll(resp.Body)
+		_ = resp.Body.Close()
+
+		if err != nil || resp.StatusCode != http.StatusOK || len(body) == 0 {
+			fmt.Fprintf(os.Stderr, "warning: bad favicon response for %q (status %d)\n", tp.Name, resp.StatusCode)
+			failed++
+			continue
+		}
+
+		contentType := resp.Header.Get("Content-Type")
+		if contentType == "" {
+			contentType = "image/png"
+		}
+
+		objectKey, err := uuid.NewV7()
+		if err != nil {
+			return fmt.Errorf("cannot generate object key: %w", err)
+		}
+
+		now := time.Now()
+		fileID := gid.New(gid.NilTenant, coredata.FileEntityType)
+
+		fileRecord := &coredata.File{
+			ID:             fileID,
+			OrganizationID: gid.Nil,
+			BucketName:     bucket,
+			MimeType:       contentType,
+			FileName:       parsedURL.Hostname() + "-favicon.png",
+			FileKey:        objectKey.String(),
+			FileSize:       int64(len(body)),
+			Visibility:     coredata.FileVisibilityPublic,
+			CreatedAt:      now,
+			UpdatedAt:      now,
+		}
+
+		if _, err := fileMgr.PutFile(ctx, fileRecord, bytes.NewReader(body), map[string]string{
+			"type":                  "common-third-party-logo",
+			"common-third-party-id": party.ID.String(),
+		}); err != nil {
+			fmt.Fprintf(os.Stderr, "warning: cannot upload logo for %q to S3: %v\n", tp.Name, err)
+			failed++
+			continue
+		}
+
+		if err := pgClient.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+			if err := fileRecord.Insert(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot insert file record: %w", err)
+			}
+
+			party.LogoFileID = &fileID
+			party.UpdatedAt = now
+			if err := party.UpdateLogoFileID(ctx, tx); err != nil {
+				return fmt.Errorf("cannot update logo_file_id: %w", err)
+			}
+
+			return nil
+		}); err != nil {
+			fmt.Fprintf(os.Stderr, "warning: cannot store logo for %q: %v\n", tp.Name, err)
+			failed++
+			continue
+		}
+
+		fetched++
+		fmt.Printf("  fetched logo for %q\n", tp.Name)
+	}
+
+	fmt.Printf("logos: %d fetched, %d skipped, %d failed\n", fetched, skipped, failed)
+	return nil
+}
+
+func newS3Client(endpoint, region, accessKey, secretKey string, usePathStyle bool) *s3.Client {
+	if region == "" {
+		region = "us-east-2"
+	}
+
+	cfg := aws.Config{
+		Region: region,
+	}
+
+	if accessKey != "" && secretKey != "" {
+		cfg.Credentials = credentials.NewStaticCredentialsProvider(accessKey, secretKey, "")
+	}
+
+	if endpoint != "" {
+		cfg.BaseEndpoint = &endpoint
+	}
+
+	return s3.NewFromConfig(cfg, func(o *s3.Options) {
+		o.UsePathStyle = usePathStyle
+	})
 }
 
 func loadThirdParties(path string) ([]thirdPartyData, error) {
