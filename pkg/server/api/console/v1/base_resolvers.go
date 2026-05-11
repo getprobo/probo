@@ -111,6 +111,66 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			}
 			return types.NewRisk(risk), nil
 		}
+	case coredata.RiskAssessmentEntityType:
+		action = probo.ActionRiskAssessmentGet
+		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
+			scope := coredata.NewScopeFromObjectID(id)
+			ra, err := r.riskManagement.Get(ctx, scope, id)
+			if err != nil {
+				return nil, err
+			}
+			return types.NewRiskAssessment(ra), nil
+		}
+	case coredata.RiskAssessmentNodeEntityType:
+		action = probo.ActionRiskAssessmentNodeGet
+		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
+			scope := coredata.NewScopeFromObjectID(id)
+			n, err := r.riskManagement.GetNode(ctx, scope, id)
+			if err != nil {
+				return nil, err
+			}
+			return types.NewRiskAssessmentNode(n), nil
+		}
+	case coredata.RiskAssessmentProcessEntityType:
+		action = probo.ActionRiskAssessmentProcessGet
+		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
+			scope := coredata.NewScopeFromObjectID(id)
+			p, err := r.riskManagement.GetProcess(ctx, scope, id)
+			if err != nil {
+				return nil, err
+			}
+			return types.NewRiskAssessmentProcess(p), nil
+		}
+	case coredata.RiskAssessmentThreatEntityType:
+		action = probo.ActionRiskAssessmentThreatGet
+		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
+			scope := coredata.NewScopeFromObjectID(id)
+			t, err := r.riskManagement.GetThreat(ctx, scope, id)
+			if err != nil {
+				return nil, err
+			}
+			return types.NewRiskAssessmentThreat(t), nil
+		}
+	case coredata.RiskAssessmentScopeEntityType:
+		action = probo.ActionRiskAssessmentScopeGet
+		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
+			scope := coredata.NewScopeFromObjectID(id)
+			s, err := r.riskManagement.GetScope(ctx, scope, id)
+			if err != nil {
+				return nil, err
+			}
+			return types.NewRiskAssessmentScope(s), nil
+		}
+	case coredata.RiskAssessmentScenarioEntityType:
+		action = probo.ActionRiskAssessmentScenarioGet
+		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
+			scope := coredata.NewScopeFromObjectID(id)
+			s, err := r.riskManagement.GetScenario(ctx, scope, id)
+			if err != nil {
+				return nil, err
+			}
+			return types.NewRiskAssessmentScenario(s), nil
+		}
 	case coredata.ThirdPartyComplianceReportEntityType:
 		action = probo.ActionThirdPartyComplianceReportGet
 		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {

@@ -88,6 +88,12 @@ var ViewerPolicy = policy.NewPolicy(
 		ActionCookieCategoryGet, ActionCookieCategoryList,
 		ActionCookieGet, ActionCookieList,
 		ActionCookieConsentRecordList,
+		ActionRiskAssessmentGet, ActionRiskAssessmentList,
+		ActionRiskAssessmentScopeGet, ActionRiskAssessmentScopeList,
+		ActionRiskAssessmentNodeGet, ActionRiskAssessmentNodeList,
+		ActionRiskAssessmentProcessGet, ActionRiskAssessmentProcessList,
+		ActionRiskAssessmentThreatGet, ActionRiskAssessmentThreatList,
+		ActionRiskAssessmentScenarioGet, ActionRiskAssessmentScenarioList,
 	).WithSID("entity-read-access").When(organizationCondition),
 
 	policy.Allow(
@@ -154,6 +160,12 @@ var AuditorPolicy = policy.NewPolicy(
 		ActionFileGet, ActionFileDownloadUrl,
 		ActionStatementOfApplicabilityGet, ActionStatementOfApplicabilityList,
 		ActionApplicabilityStatementGet, ActionApplicabilityStatementList,
+		ActionRiskAssessmentGet, ActionRiskAssessmentList,
+		ActionRiskAssessmentScopeGet, ActionRiskAssessmentScopeList,
+		ActionRiskAssessmentNodeGet, ActionRiskAssessmentNodeList,
+		ActionRiskAssessmentProcessGet, ActionRiskAssessmentProcessList,
+		ActionRiskAssessmentThreatGet, ActionRiskAssessmentThreatList,
+		ActionRiskAssessmentScenarioGet, ActionRiskAssessmentScenarioList,
 	).WithSID("entity-read-access").When(organizationCondition),
 
 	policy.Allow(

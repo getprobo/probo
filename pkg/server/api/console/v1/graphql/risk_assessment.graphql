@@ -1,0 +1,663 @@
+# Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+#
+# Permission to use, copy, modify, and/or distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+# REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+# AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+# LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+# OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+# PERFORMANCE OF THIS SOFTWARE.
+
+# Enums
+
+enum RiskAssessmentOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.RiskAssessmentOrderField"
+    ) {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RiskAssessmentOrderFieldCreatedAt"
+        )
+    NAME
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RiskAssessmentOrderFieldName"
+        )
+}
+
+enum RiskAssessmentScopeOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.RiskAssessmentScopeOrderField"
+    ) {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RiskAssessmentScopeOrderFieldCreatedAt"
+        )
+    NAME
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RiskAssessmentScopeOrderFieldName"
+        )
+}
+
+enum RiskAssessmentNodeType
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.RiskAssessmentNodeType"
+    ) {
+    ENTITY
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RiskAssessmentNodeTypeEntity"
+        )
+    BOUNDARY
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RiskAssessmentNodeTypeBoundary"
+        )
+    ASSET
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RiskAssessmentNodeTypeAsset"
+        )
+    DATA
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RiskAssessmentNodeTypeData"
+        )
+}
+
+enum RiskAssessmentNodeOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.RiskAssessmentNodeOrderField"
+    ) {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RiskAssessmentNodeOrderFieldCreatedAt"
+        )
+    NAME
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RiskAssessmentNodeOrderFieldName"
+        )
+}
+
+enum RiskAssessmentProcessOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.RiskAssessmentProcessOrderField"
+    ) {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RiskAssessmentProcessOrderFieldCreatedAt"
+        )
+    NAME
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RiskAssessmentProcessOrderFieldName"
+        )
+}
+
+enum RiskAssessmentThreatOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.RiskAssessmentThreatOrderField"
+    ) {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RiskAssessmentThreatOrderFieldCreatedAt"
+        )
+    NAME
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RiskAssessmentThreatOrderFieldName"
+        )
+}
+
+enum RiskAssessmentScenarioOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.RiskAssessmentScenarioOrderField"
+    ) {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RiskAssessmentScenarioOrderFieldCreatedAt"
+        )
+    NAME
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RiskAssessmentScenarioOrderFieldName"
+        )
+}
+
+# Input types
+
+input RiskAssessmentOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.RiskAssessmentOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: RiskAssessmentOrderField!
+}
+
+input RiskAssessmentScopeOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.RiskAssessmentScopeOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: RiskAssessmentScopeOrderField!
+}
+
+input RiskAssessmentNodeOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.RiskAssessmentNodeOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: RiskAssessmentNodeOrderField!
+}
+
+input RiskAssessmentProcessOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.RiskAssessmentProcessOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: RiskAssessmentProcessOrderField!
+}
+
+input RiskAssessmentThreatOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.RiskAssessmentThreatOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: RiskAssessmentThreatOrderField!
+}
+
+input RiskAssessmentScenarioOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.RiskAssessmentScenarioOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: RiskAssessmentScenarioOrderField!
+}
+
+# Types
+
+type RiskAssessment implements Node {
+    id: ID!
+    name: String!
+    description: String
+    organization: Organization @goField(forceResolver: true)
+
+    scopes(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: RiskAssessmentScopeOrder
+    ): RiskAssessmentScopeConnection @goField(forceResolver: true)
+
+    createdAt: Datetime!
+    updatedAt: Datetime!
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type RiskAssessmentScope implements Node {
+    id: ID!
+    riskAssessmentId: ID!
+    name: String!
+
+    nodes(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: RiskAssessmentNodeOrder
+    ): RiskAssessmentNodeConnection @goField(forceResolver: true)
+
+    processes(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: RiskAssessmentProcessOrder
+    ): RiskAssessmentProcessConnection @goField(forceResolver: true)
+
+    threats(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: RiskAssessmentThreatOrder
+    ): RiskAssessmentThreatConnection @goField(forceResolver: true)
+
+    scenarios(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: RiskAssessmentScenarioOrder
+    ): RiskAssessmentScenarioConnection @goField(forceResolver: true)
+
+    createdAt: Datetime!
+    updatedAt: Datetime!
+}
+
+type RiskAssessmentNode implements Node {
+    id: ID!
+    riskAssessmentScopeId: ID!
+    nodeType: RiskAssessmentNodeType!
+    name: String!
+    createdAt: Datetime!
+    updatedAt: Datetime!
+}
+
+type RiskAssessmentProcess implements Node {
+    id: ID!
+    riskAssessmentScopeId: ID!
+    sourceNodeId: ID!
+    targetNodeId: ID!
+    name: String!
+    createdAt: Datetime!
+    updatedAt: Datetime!
+}
+
+type RiskAssessmentThreat implements Node {
+    id: ID!
+    riskAssessmentScopeId: ID!
+    processId: ID!
+    name: String!
+    category: String!
+    createdAt: Datetime!
+    updatedAt: Datetime!
+}
+
+type RiskAssessmentScenario implements Node {
+    id: ID!
+    riskAssessmentScopeId: ID!
+    scope: RiskAssessmentScope @goField(forceResolver: true)
+    name: String!
+    description: String
+
+    threats(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: RiskAssessmentThreatOrder
+    ): RiskAssessmentThreatConnection @goField(forceResolver: true)
+
+    risks(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: RiskOrder
+    ): RiskConnection @goField(forceResolver: true)
+
+    createdAt: Datetime!
+    updatedAt: Datetime!
+}
+
+# Connections
+
+type RiskAssessmentConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.RiskAssessmentConnection"
+    ) {
+    totalCount: Int @goField(forceResolver: true)
+    edges: [RiskAssessmentConnectionEdge!]!
+    pageInfo: PageInfo!
+}
+
+type RiskAssessmentConnectionEdge {
+    cursor: CursorKey!
+    node: RiskAssessment!
+}
+
+type RiskAssessmentScopeConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.RiskAssessmentScopeConnection"
+    ) {
+    totalCount: Int @goField(forceResolver: true)
+    edges: [RiskAssessmentScopeConnectionEdge!]!
+    pageInfo: PageInfo!
+}
+
+type RiskAssessmentScopeConnectionEdge {
+    cursor: CursorKey!
+    node: RiskAssessmentScope!
+}
+
+type RiskAssessmentNodeConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.RiskAssessmentNodeConnection"
+    ) {
+    totalCount: Int @goField(forceResolver: true)
+    edges: [RiskAssessmentNodeConnectionEdge!]!
+    pageInfo: PageInfo!
+}
+
+type RiskAssessmentNodeConnectionEdge {
+    cursor: CursorKey!
+    node: RiskAssessmentNode!
+}
+
+type RiskAssessmentProcessConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.RiskAssessmentProcessConnection"
+    ) {
+    totalCount: Int @goField(forceResolver: true)
+    edges: [RiskAssessmentProcessConnectionEdge!]!
+    pageInfo: PageInfo!
+}
+
+type RiskAssessmentProcessConnectionEdge {
+    cursor: CursorKey!
+    node: RiskAssessmentProcess!
+}
+
+type RiskAssessmentThreatConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.RiskAssessmentThreatConnection"
+    ) {
+    totalCount: Int @goField(forceResolver: true)
+    edges: [RiskAssessmentThreatConnectionEdge!]!
+    pageInfo: PageInfo!
+}
+
+type RiskAssessmentThreatConnectionEdge {
+    cursor: CursorKey!
+    node: RiskAssessmentThreat!
+}
+
+type RiskAssessmentScenarioConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.RiskAssessmentScenarioConnection"
+    ) {
+    totalCount: Int @goField(forceResolver: true)
+    edges: [RiskAssessmentScenarioConnectionEdge!]!
+    pageInfo: PageInfo!
+}
+
+type RiskAssessmentScenarioConnectionEdge {
+    cursor: CursorKey!
+    node: RiskAssessmentScenario!
+}
+
+# Mutations
+
+extend type Mutation {
+    createRiskAssessment(
+        input: CreateRiskAssessmentInput!
+    ): CreateRiskAssessmentPayload!
+    updateRiskAssessment(
+        input: UpdateRiskAssessmentInput!
+    ): UpdateRiskAssessmentPayload!
+    deleteRiskAssessment(
+        input: DeleteRiskAssessmentInput!
+    ): DeleteRiskAssessmentPayload!
+
+    createRiskAssessmentScope(
+        input: CreateRiskAssessmentScopeInput!
+    ): CreateRiskAssessmentScopePayload!
+    updateRiskAssessmentScope(
+        input: UpdateRiskAssessmentScopeInput!
+    ): UpdateRiskAssessmentScopePayload!
+    deleteRiskAssessmentScope(
+        input: DeleteRiskAssessmentScopeInput!
+    ): DeleteRiskAssessmentScopePayload!
+
+    createRiskAssessmentNode(
+        input: CreateRiskAssessmentNodeInput!
+    ): CreateRiskAssessmentNodePayload!
+    updateRiskAssessmentNode(
+        input: UpdateRiskAssessmentNodeInput!
+    ): UpdateRiskAssessmentNodePayload!
+    deleteRiskAssessmentNode(
+        input: DeleteRiskAssessmentNodeInput!
+    ): DeleteRiskAssessmentNodePayload!
+
+    createRiskAssessmentProcess(
+        input: CreateRiskAssessmentProcessInput!
+    ): CreateRiskAssessmentProcessPayload!
+    updateRiskAssessmentProcess(
+        input: UpdateRiskAssessmentProcessInput!
+    ): UpdateRiskAssessmentProcessPayload!
+    deleteRiskAssessmentProcess(
+        input: DeleteRiskAssessmentProcessInput!
+    ): DeleteRiskAssessmentProcessPayload!
+
+    createRiskAssessmentThreat(
+        input: CreateRiskAssessmentThreatInput!
+    ): CreateRiskAssessmentThreatPayload!
+    updateRiskAssessmentThreat(
+        input: UpdateRiskAssessmentThreatInput!
+    ): UpdateRiskAssessmentThreatPayload!
+    deleteRiskAssessmentThreat(
+        input: DeleteRiskAssessmentThreatInput!
+    ): DeleteRiskAssessmentThreatPayload!
+
+    createRiskAssessmentScenario(
+        input: CreateRiskAssessmentScenarioInput!
+    ): CreateRiskAssessmentScenarioPayload!
+    updateRiskAssessmentScenario(
+        input: UpdateRiskAssessmentScenarioInput!
+    ): UpdateRiskAssessmentScenarioPayload!
+    deleteRiskAssessmentScenario(
+        input: DeleteRiskAssessmentScenarioInput!
+    ): DeleteRiskAssessmentScenarioPayload!
+
+    linkRiskAssessmentScenarioThreat(
+        input: LinkRiskAssessmentScenarioThreatInput!
+    ): LinkRiskAssessmentScenarioThreatPayload!
+    unlinkRiskAssessmentScenarioThreat(
+        input: UnlinkRiskAssessmentScenarioThreatInput!
+    ): UnlinkRiskAssessmentScenarioThreatPayload!
+
+    linkRiskAssessmentScenarioRisk(
+        input: LinkRiskAssessmentScenarioRiskInput!
+    ): LinkRiskAssessmentScenarioRiskPayload!
+    unlinkRiskAssessmentScenarioRisk(
+        input: UnlinkRiskAssessmentScenarioRiskInput!
+    ): UnlinkRiskAssessmentScenarioRiskPayload!
+}
+
+# Mutation inputs & payloads
+
+input CreateRiskAssessmentInput {
+    organizationId: ID!
+    name: String!
+    description: String
+}
+
+input UpdateRiskAssessmentInput {
+    id: ID!
+    name: String
+    description: String @goField(omittable: true)
+}
+
+input DeleteRiskAssessmentInput {
+    riskAssessmentId: ID!
+}
+
+type CreateRiskAssessmentPayload {
+    riskAssessmentEdge: RiskAssessmentConnectionEdge!
+}
+
+type UpdateRiskAssessmentPayload {
+    riskAssessment: RiskAssessment!
+}
+
+type DeleteRiskAssessmentPayload {
+    deletedRiskAssessmentId: ID!
+}
+
+input CreateRiskAssessmentScopeInput {
+    riskAssessmentId: ID!
+    name: String!
+}
+
+input UpdateRiskAssessmentScopeInput {
+    id: ID!
+    name: String
+}
+
+input DeleteRiskAssessmentScopeInput {
+    riskAssessmentScopeId: ID!
+}
+
+type CreateRiskAssessmentScopePayload {
+    riskAssessmentScopeEdge: RiskAssessmentScopeConnectionEdge!
+}
+
+type UpdateRiskAssessmentScopePayload {
+    riskAssessmentScope: RiskAssessmentScope!
+}
+
+type DeleteRiskAssessmentScopePayload {
+    deletedRiskAssessmentScopeId: ID!
+}
+
+input CreateRiskAssessmentNodeInput {
+    riskAssessmentScopeId: ID!
+    nodeType: RiskAssessmentNodeType!
+    name: String!
+}
+
+input UpdateRiskAssessmentNodeInput {
+    id: ID!
+    nodeType: RiskAssessmentNodeType
+    name: String
+}
+
+input DeleteRiskAssessmentNodeInput {
+    riskAssessmentNodeId: ID!
+}
+
+type CreateRiskAssessmentNodePayload {
+    riskAssessmentNodeEdge: RiskAssessmentNodeConnectionEdge!
+}
+
+type UpdateRiskAssessmentNodePayload {
+    riskAssessmentNode: RiskAssessmentNode!
+}
+
+type DeleteRiskAssessmentNodePayload {
+    deletedRiskAssessmentNodeId: ID!
+}
+
+input CreateRiskAssessmentProcessInput {
+    riskAssessmentScopeId: ID!
+    sourceNodeId: ID!
+    targetNodeId: ID!
+    name: String!
+}
+
+input UpdateRiskAssessmentProcessInput {
+    id: ID!
+    sourceNodeId: ID
+    targetNodeId: ID
+    name: String
+}
+
+input DeleteRiskAssessmentProcessInput {
+    riskAssessmentProcessId: ID!
+}
+
+type CreateRiskAssessmentProcessPayload {
+    riskAssessmentProcessEdge: RiskAssessmentProcessConnectionEdge!
+}
+
+type UpdateRiskAssessmentProcessPayload {
+    riskAssessmentProcess: RiskAssessmentProcess!
+}
+
+type DeleteRiskAssessmentProcessPayload {
+    deletedRiskAssessmentProcessId: ID!
+}
+
+input CreateRiskAssessmentThreatInput {
+    riskAssessmentScopeId: ID!
+    processId: ID!
+    name: String!
+    category: String!
+}
+
+input UpdateRiskAssessmentThreatInput {
+    id: ID!
+    processId: ID
+    name: String
+    category: String
+}
+
+input DeleteRiskAssessmentThreatInput {
+    riskAssessmentThreatId: ID!
+}
+
+type CreateRiskAssessmentThreatPayload {
+    riskAssessmentThreatEdge: RiskAssessmentThreatConnectionEdge!
+}
+
+type UpdateRiskAssessmentThreatPayload {
+    riskAssessmentThreat: RiskAssessmentThreat!
+}
+
+type DeleteRiskAssessmentThreatPayload {
+    deletedRiskAssessmentThreatId: ID!
+}
+
+input CreateRiskAssessmentScenarioInput {
+    riskAssessmentScopeId: ID!
+    name: String!
+    description: String
+}
+
+input UpdateRiskAssessmentScenarioInput {
+    id: ID!
+    name: String
+    description: String @goField(omittable: true)
+}
+
+input DeleteRiskAssessmentScenarioInput {
+    riskAssessmentScenarioId: ID!
+}
+
+type CreateRiskAssessmentScenarioPayload {
+    riskAssessmentScenarioEdge: RiskAssessmentScenarioConnectionEdge!
+}
+
+type UpdateRiskAssessmentScenarioPayload {
+    riskAssessmentScenario: RiskAssessmentScenario!
+}
+
+type DeleteRiskAssessmentScenarioPayload {
+    deletedRiskAssessmentScenarioId: ID!
+}
+
+input LinkRiskAssessmentScenarioThreatInput {
+    riskAssessmentScenarioId: ID!
+    threatId: ID!
+}
+
+type LinkRiskAssessmentScenarioThreatPayload {
+    riskAssessmentScenario: RiskAssessmentScenario!
+}
+
+input UnlinkRiskAssessmentScenarioThreatInput {
+    riskAssessmentScenarioId: ID!
+    threatId: ID!
+}
+
+type UnlinkRiskAssessmentScenarioThreatPayload {
+    riskAssessmentScenario: RiskAssessmentScenario!
+}
+
+input LinkRiskAssessmentScenarioRiskInput {
+    riskAssessmentScenarioId: ID!
+    riskId: ID!
+}
+
+type LinkRiskAssessmentScenarioRiskPayload {
+    riskAssessmentScenario: RiskAssessmentScenario!
+    riskAssessmentScenarioEdge: RiskAssessmentScenarioConnectionEdge!
+}
+
+input UnlinkRiskAssessmentScenarioRiskInput {
+    riskAssessmentScenarioId: ID!
+    riskId: ID!
+}
+
+type UnlinkRiskAssessmentScenarioRiskPayload {
+    riskAssessmentScenario: RiskAssessmentScenario!
+    deletedRiskAssessmentScenarioId: ID!
+}

@@ -35,21 +35,108 @@ import {
   useConfirm,
   useDialogRef,
 } from "@probo/ui";
-import type { PreloadedQuery } from "react-relay";
+import {
+  graphql,
+  type PreloadedQuery,
+  useMutation,
+  usePaginationFragment,
+  usePreloadedQuery,
+} from "react-relay";
 import { useNavigate } from "react-router";
 
-import type { RiskGraphFragment$data } from "#/__generated__/core/RiskGraphFragment.graphql";
-import type { RiskGraphListQuery } from "#/__generated__/core/RiskGraphListQuery.graphql";
+import type { RisksPageDeleteMutation } from "#/__generated__/core/RisksPageDeleteMutation.graphql";
+import type { RisksPageFragment$data, RisksPageFragment$key } from "#/__generated__/core/RisksPageFragment.graphql";
+import type { RisksPageQuery } from "#/__generated__/core/RisksPageQuery.graphql";
+import type { RisksPageRefetchQuery } from "#/__generated__/core/RisksPageRefetchQuery.graphql";
 import { SortableTable, SortableTh } from "#/components/SortableTable";
-import { useDeleteRiskMutation, useRisksQuery } from "#/hooks/graph/RiskGraph";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import type { NodeOf } from "#/types";
 
 import { PublishRiskListDialog } from "./dialogs/PublishRiskListDialog";
 import FormRiskDialog from "./FormRiskDialog";
 
+/* eslint-disable relay/unused-fields, relay/must-colocate-fragment-spreads */
+
+export const risksPageQuery = graphql`
+  query RisksPageQuery($organizationId: ID!) {
+    organization: node(id: $organizationId) {
+      id
+      ...RisksPageFragment
+    }
+  }
+`;
+
+const risksFragment = graphql`
+  fragment RisksPageFragment on Organization
+  @refetchable(queryName: "RisksPageRefetchQuery")
+  @argumentDefinitions(
+    first: { type: "Int", defaultValue: 50 }
+    order: {
+      type: "RiskOrder"
+      defaultValue: { direction: DESC, field: CREATED_AT }
+    }
+    after: { type: "CursorKey", defaultValue: null }
+    before: { type: "CursorKey", defaultValue: null }
+    last: { type: "Int", defaultValue: null }
+  ) {
+    canCreateRisk: permission(action: "core:risk:create")
+    canPublishRisk: permission(action: "core:risk:publish")
+    risksDocument {
+      id
+      currentPublishedMajor
+      currentPublishedMinor
+      defaultApprovers {
+        id
+      }
+    }
+    risks(
+      first: $first
+      after: $after
+      last: $last
+      before: $before
+      orderBy: $order
+    ) @connection(key: "RisksPage_risks", filters: []) {
+      __id
+      edges {
+        node {
+          id
+          name
+          category
+          treatment
+          owner {
+            id
+            fullName
+          }
+          inherentLikelihood
+          inherentImpact
+          residualLikelihood
+          residualImpact
+          inherentRiskScore
+          residualRiskScore
+          canUpdate: permission(action: "core:risk:update")
+          canDelete: permission(action: "core:risk:delete")
+          ...useRiskFormFragment
+        }
+      }
+    }
+  }
+`;
+
+const deleteRiskMutation = graphql`
+  mutation RisksPageDeleteMutation(
+    $input: DeleteRiskInput!
+    $connections: [ID!]!
+  ) {
+    deleteRisk(input: $input) {
+      deletedRiskId @deleteEdge(connections: $connections)
+    }
+  }
+`;
+
+export const RisksConnectionKey = "RisksPage_risks";
+
 type Props = {
-  queryRef: PreloadedQuery<RiskGraphListQuery>;
+  queryRef: PreloadedQuery<RisksPageQuery>;
 };
 
 export default function RisksPage(props: Props) {
@@ -57,12 +144,17 @@ export default function RisksPage(props: Props) {
   const organizationId = useOrganizationId();
   const navigate = useNavigate();
 
-  const {
-    data: { canCreateRisk, canPublishRisk, risksDocument },
-    connectionId,
-    risks,
-    ...pagination
-  } = useRisksQuery(props.queryRef);
+  const queryData = usePreloadedQuery(risksPageQuery, props.queryRef);
+  const { data: fragmentData, ...pagination } = usePaginationFragment<
+    RisksPageRefetchQuery,
+    RisksPageFragment$key
+  >(risksFragment, queryData.organization);
+
+  const canCreateRisk = fragmentData.canCreateRisk;
+  const canPublishRisk = fragmentData.canPublishRisk;
+  const risksDocument = fragmentData.risksDocument;
+  const risks = fragmentData.risks?.edges.map(edge => edge.node) ?? [];
+  const connectionId = fragmentData.risks.__id;
 
   const refetch = ({
     order,
@@ -185,7 +277,7 @@ export default function RisksPage(props: Props) {
 }
 
 type RowProps = {
-  risk: NodeOf<RiskGraphFragment$data["risks"]>;
+  risk: NodeOf<RisksPageFragment$data["risks"]>;
   connectionId: string;
   organizationId: string;
   hasAnyAction: boolean;
@@ -194,7 +286,7 @@ type RowProps = {
 function RiskRow(props: RowProps) {
   const { __ } = useTranslate();
   const { risk, connectionId, organizationId } = props;
-  const [deleteRisk] = useDeleteRiskMutation();
+  const [deleteRisk] = useMutation<RisksPageDeleteMutation>(deleteRiskMutation);
   const confirm = useConfirm();
   const onDelete = () => {
     confirm(

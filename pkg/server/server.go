@@ -35,6 +35,7 @@ import (
 	"go.probo.inc/probo/pkg/iam/oauth2server"
 	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/probo"
+	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/securecookie"
 	"go.probo.inc/probo/pkg/server/api"
 	"go.probo.inc/probo/pkg/server/api/compliancepage"
@@ -62,6 +63,7 @@ type Config struct {
 	CookieBanner      *cookiebanner.Service
 	Geoloc            *geoloc.Service
 	ThirdParty        *thirdparty.Service
+	RiskManagement    *riskmanagement.Service
 	Cookie            securecookie.Config
 	TokenSecret       string
 	ConnectorRegistry *connector.ConnectorRegistry
@@ -98,6 +100,7 @@ func NewServer(cfg Config) (*Server, error) {
 		CookieBanner:      cfg.CookieBanner,
 		Geoloc:            cfg.Geoloc,
 		ThirdParty:        cfg.ThirdParty,
+		RiskManagement:    cfg.RiskManagement,
 		Cookie:            cfg.Cookie,
 		TokenSecret:       cfg.TokenSecret,
 		ConnectorRegistry: cfg.ConnectorRegistry,

@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -13,47 +13,24 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 import { lazy } from "@probo/react-lazy";
-import {
-  type AppRoute,
-  loaderFromQueryLoader,
-  withQueryRef,
-} from "@probo/routes";
+import type { AppRoute } from "@probo/routes";
 import { Fragment } from "react";
-import { loadQuery } from "react-relay";
 import { redirect } from "react-router";
 
-import type { RiskGraphListQuery } from "#/__generated__/core/RiskGraphListQuery.graphql";
-import type { RiskGraphNodeQuery } from "#/__generated__/core/RiskGraphNodeQuery.graphql";
 import { LinkCardSkeleton } from "#/components/skeletons/LinkCardSkeleton";
 import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
 import { RisksPageSkeleton } from "#/components/skeletons/RisksPageSkeleton";
-import { coreEnvironment } from "#/environments";
-import { riskNodeQuery, risksQuery } from "#/hooks/graph/RiskGraph";
 
 export const riskRoutes = [
   {
     path: "risks",
     Fallback: RisksPageSkeleton,
-    loader: loaderFromQueryLoader(({ organizationId }) =>
-      loadQuery<RiskGraphListQuery>(coreEnvironment, risksQuery, {
-        organizationId: organizationId,
-      }),
-    ),
-    Component: withQueryRef(
-      lazy(() => import("#/pages/organizations/risks/RisksPage")),
-    ),
+    Component: lazy(() => import("./RisksPageLoader")),
   },
   {
     path: "risks/:riskId",
     Fallback: PageSkeleton,
-    loader: loaderFromQueryLoader(({ riskId }) =>
-      loadQuery<RiskGraphNodeQuery>(coreEnvironment, riskNodeQuery, {
-        riskId: riskId,
-      }),
-    ),
-    Component: withQueryRef(
-      lazy(() => import("#/pages/organizations/risks/RiskDetailPage")),
-    ),
+    Component: lazy(() => import("./RiskDetailLayoutLoader")),
     children: [
       {
         path: "",
@@ -67,36 +44,42 @@ export const riskRoutes = [
         path: "overview",
         Fallback: LinkCardSkeleton,
         Component: lazy(
-          () => import("#/pages/organizations/risks/tabs/RiskOverviewTab"),
+          () => import("./tabs/RiskOverviewTab"),
         ),
       },
       {
         path: "measures",
         Fallback: LinkCardSkeleton,
         Component: lazy(
-          () => import("#/pages/organizations/risks/tabs/RiskMeasuresTab"),
+          () => import("./tabs/RiskMeasuresTab"),
         ),
       },
       {
         path: "documents",
         Fallback: LinkCardSkeleton,
         Component: lazy(
-          () => import("#/pages/organizations/risks/tabs/RiskDocumentsTab"),
+          () => import("./tabs/RiskDocumentsTab"),
         ),
       },
       {
         path: "controls",
         Fallback: LinkCardSkeleton,
         Component: lazy(
-          () => import("#/pages/organizations/risks/tabs/RiskControlsTab"),
+          () => import("./tabs/RiskControlsTab"),
         ),
       },
       {
         path: "obligations",
         Fallback: LinkCardSkeleton,
         Component: lazy(
-          () =>
-            import("#/pages/organizations/risks/tabs/RiskObligationsTab"),
+          () => import("./tabs/RiskObligationsTab"),
+        ),
+      },
+      {
+        path: "scenarios",
+        Fallback: LinkCardSkeleton,
+        Component: lazy(
+          () => import("./scenarios/RiskScenariosPage"),
         ),
       },
     ],

@@ -15,8 +15,8 @@
 import { graphql, useFragment } from "react-relay";
 import { useOutletContext } from "react-router";
 
+import type { RiskDetailLayoutQuery$data } from "#/__generated__/core/RiskDetailLayoutQuery.graphql";
 import type { RiskDocumentsTabFragment$key } from "#/__generated__/core/RiskDocumentsTabFragment.graphql";
-import type { RiskGraphNodeQuery$data } from "#/__generated__/core/RiskGraphNodeQuery.graphql";
 import { LinkedDocumentsCard } from "#/components/documents/LinkedDocumentsCard";
 import { useMutationWithIncrement } from "#/hooks/useMutationWithIncrement";
 
@@ -64,7 +64,7 @@ export const detachDocumentMutation = graphql`
 
 export default function RiskDocumentsTab() {
   const { risk } = useOutletContext<{
-    risk: RiskGraphNodeQuery$data["node"];
+    risk: RiskDetailLayoutQuery$data["node"];
   }>();
   const data = useFragment<RiskDocumentsTabFragment$key>(
     documentsFragment,

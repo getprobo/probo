@@ -65,6 +65,7 @@ import (
 	"go.probo.inc/probo/pkg/mailer"
 	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/probo"
+	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/securecookie"
 	"go.probo.inc/probo/pkg/server"
 	"go.probo.inc/probo/pkg/server/trustedproxy"
@@ -526,6 +527,7 @@ func (impl *Implm) Run(
 	)
 
 	thirdPartyService := thirdparty.NewService(pgClient, fileService)
+	riskManagementService := riskmanagement.NewService(pgClient)
 
 	serverHandler, err := server.NewServer(
 		server.Config{
@@ -541,6 +543,7 @@ func (impl *Implm) Run(
 			CookieBanner:      cookieBannerService,
 			Geoloc:            geolocService,
 			ThirdParty:        thirdPartyService,
+			RiskManagement:    riskManagementService,
 			Slack:             slackService,
 			ConnectorRegistry: defaultConnectorRegistry,
 			BaseURL:           baseURL,

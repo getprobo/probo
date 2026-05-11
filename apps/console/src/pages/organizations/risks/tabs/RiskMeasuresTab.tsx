@@ -15,7 +15,7 @@
 import { graphql, useFragment } from "react-relay";
 import { useOutletContext } from "react-router";
 
-import type { RiskGraphNodeQuery$data } from "#/__generated__/core/RiskGraphNodeQuery.graphql";
+import type { RiskDetailLayoutQuery$data } from "#/__generated__/core/RiskDetailLayoutQuery.graphql";
 import type { RiskMeasuresTabFragment$key } from "#/__generated__/core/RiskMeasuresTabFragment.graphql";
 import { LinkedMeasuresCard } from "#/components/measures/LinkedMeasuresCard";
 import { useMutationWithIncrement } from "#/hooks/useMutationWithIncrement";
@@ -64,7 +64,7 @@ export const detachMeasureMutation = graphql`
 
 export default function RiskMeasuresTab() {
   const { risk } = useOutletContext<{
-    risk: RiskGraphNodeQuery$data["node"];
+    risk: RiskDetailLayoutQuery$data["node"];
   }>();
   const data = useFragment<RiskMeasuresTabFragment$key>(measuresFragment, risk);
   const connectionId = data.measures.__id;

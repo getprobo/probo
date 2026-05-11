@@ -1070,6 +1070,66 @@ func (r *organizationResolver) RisksDocument(ctx context.Context, obj *types.Org
 	return types.NewDocument(document), nil
 }
 
+// RiskAssessments is the resolver for the riskAssessments field.
+func (r *organizationResolver) RiskAssessments(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskAssessmentOrderBy) (*types.RiskAssessmentConnection, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionRiskAssessmentList); err != nil {
+		return nil, err
+	}
+
+	scope := coredata.NewScopeFromObjectID(obj.ID)
+
+	pageOrderBy := page.OrderBy[coredata.RiskAssessmentOrderField]{
+		Field:     coredata.RiskAssessmentOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.RiskAssessmentOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	p, err := r.riskManagement.ListForOrganizationID(ctx, scope, obj.ID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list risk assessments", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewRiskAssessmentConnection(p, r, obj.ID), nil
+}
+
+// RiskAssessmentScenarios is the resolver for the riskAssessmentScenarios field.
+func (r *organizationResolver) RiskAssessmentScenarios(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskAssessmentScenarioOrderBy) (*types.RiskAssessmentScenarioConnection, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionRiskAssessmentScenarioList); err != nil {
+		return nil, err
+	}
+
+	scope := coredata.NewScopeFromObjectID(obj.ID)
+
+	pageOrderBy := page.OrderBy[coredata.RiskAssessmentScenarioOrderField]{
+		Field:     coredata.RiskAssessmentScenarioOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.RiskAssessmentScenarioOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	p, err := r.riskManagement.ListScenariosForOrganizationID(ctx, scope, obj.ID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list risk scenarios", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewRiskAssessmentScenarioConnection(p, r, obj.ID), nil
+}
+
 // Tasks is the resolver for the tasks field.
 func (r *organizationResolver) Tasks(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TaskOrderBy) (*types.TaskConnection, error) {
 	if err := r.authorize(ctx, obj.ID, probo.ActionTaskList); err != nil {

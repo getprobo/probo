@@ -291,6 +291,22 @@ type Organization implements Node {
 
     risksDocument: Document @goField(forceResolver: true)
 
+    riskAssessments(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: RiskAssessmentOrder
+    ): RiskAssessmentConnection! @goField(forceResolver: true)
+
+    riskAssessmentScenarios(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: RiskAssessmentScenarioOrder
+    ): RiskAssessmentScenarioConnection @goField(forceResolver: true)
+
     tasks(
         first: Int
         after: CursorKey

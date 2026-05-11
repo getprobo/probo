@@ -32,25 +32,97 @@ import {
   Tabs,
   useConfirm,
 } from "@probo/ui";
-import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
+import { graphql, type PreloadedQuery, useMutation, usePreloadedQuery } from "react-relay";
 import { Outlet, useNavigate, useParams } from "react-router";
 import { ConnectionHandler } from "relay-runtime";
 
-import type { RiskGraphNodeQuery } from "#/__generated__/core/RiskGraphNodeQuery.graphql";
-import {
-  riskNodeQuery,
-  RisksConnectionKey,
-  useDeleteRiskMutation,
-} from "#/hooks/graph/RiskGraph";
+import type { RiskDetailLayoutDeleteMutation } from "#/__generated__/core/RiskDetailLayoutDeleteMutation.graphql";
+import type { RiskDetailLayoutQuery } from "#/__generated__/core/RiskDetailLayoutQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
+import { RisksConnectionKey } from "#/pages/organizations/risks/RisksPage";
 
 import FormRiskDialog from "./FormRiskDialog";
 
+/* eslint-disable relay/unused-fields, relay/must-colocate-fragment-spreads */
+
+export const riskDetailLayoutQuery = graphql`
+  query RiskDetailLayoutQuery($riskId: ID!) {
+    node(id: $riskId) {
+      ... on Risk {
+        id
+        name
+        description
+        treatment
+        owner {
+          id
+          fullName
+        }
+        note
+        inherentRiskScore
+        residualRiskScore
+        measuresInfo: measures(first: 0) {
+          totalCount
+        }
+        documentsInfo: documents(first: 0) {
+          totalCount
+        }
+        controlsInfo: controls(first: 0) {
+          totalCount
+        }
+        obligationsInfo: obligations(first: 0) {
+          totalCount
+        }
+        scenariosInfo: scenarios(first: 0) {
+          totalCount
+        }
+        canUpdate: permission(action: "core:risk:update")
+        canDelete: permission(action: "core:risk:delete")
+        canCreateDocumentMapping: permission(
+          action: "core:risk:create-document-mapping"
+        )
+        canDeleteDocumentMapping: permission(
+          action: "core:risk:delete-document-mapping"
+        )
+        canCreateMeasureMapping: permission(
+          action: "core:risk:create-measure-mapping"
+        )
+        canDeleteMeasureMapping: permission(
+          action: "core:risk:delete-measure-mapping"
+        )
+        canCreateObligationMapping: permission(
+          action: "core:risk:create-obligation-mapping"
+        )
+        canDeleteObligationMapping: permission(
+          action: "core:risk:delete-obligation-mapping"
+        )
+        ...useRiskFormFragment
+        ...RiskOverviewTabFragment
+        ...RiskMeasuresTabFragment
+        ...RiskDocumentsTabFragment
+        ...RiskControlsTabFragment
+        ...RiskObligationsTabFragment
+        ...RiskScenariosPageFragment
+      }
+    }
+  }
+`;
+
+const deleteRiskMutation = graphql`
+  mutation RiskDetailLayoutDeleteMutation(
+    $input: DeleteRiskInput!
+    $connections: [ID!]!
+  ) {
+    deleteRisk(input: $input) {
+      deletedRiskId @deleteEdge(connections: $connections)
+    }
+  }
+`;
+
 type Props = {
-  queryRef: PreloadedQuery<RiskGraphNodeQuery>;
+  queryRef: PreloadedQuery<RiskDetailLayoutQuery>;
 };
 
-export default function RiskDetailPage(props: Props) {
+export default function RiskDetailLayout(props: Props) {
   const { riskId } = useParams<{
     riskId: string;
   }>();
@@ -62,12 +134,12 @@ export default function RiskDetailPage(props: Props) {
   }
 
   const { __ } = useTranslate();
-  const { node: risk } = usePreloadedQuery<RiskGraphNodeQuery>(
-    riskNodeQuery,
+  const { node: risk } = usePreloadedQuery(
+    riskDetailLayoutQuery,
     props.queryRef,
   );
 
-  const [deleteRisk] = useDeleteRiskMutation();
+  const [deleteRisk] = useMutation<RiskDetailLayoutDeleteMutation>(deleteRiskMutation);
 
   usePageTitle(risk.name ?? "Risk detail");
   const confirm = useConfirm();
@@ -79,15 +151,18 @@ export default function RiskDetailPage(props: Props) {
     );
     confirm(
       () =>
-        new Promise<void>((resolve) => {
+        new Promise<void>((resolve, reject) => {
           void deleteRisk({
             variables: {
               input: { riskId },
               connections: [connectionId],
             },
-            onSuccess() {
+            onCompleted() {
               void navigate(`/organizations/${organizationId}/risks`);
               resolve();
+            },
+            onError(error) {
+              reject(error);
             },
           });
         }),
@@ -106,6 +181,7 @@ export default function RiskDetailPage(props: Props) {
   const measuresCount = risk.measuresInfo?.totalCount ?? 0;
   const controlsCount = risk.controlsInfo?.totalCount ?? 0;
   const obligationsCount = risk.obligationsInfo?.totalCount ?? 0;
+  const scenariosCount = risk.scenariosInfo?.totalCount ?? 0;
 
   const risksUrl = `/organizations/${organizationId}/risks`;
   const baseTabUrl = `/organizations/${organizationId}/risks/${riskId}`;
@@ -168,6 +244,10 @@ export default function RiskDetailPage(props: Props) {
         <TabLink to={`${baseTabUrl}/obligations`}>
           {__("Obligations")}
           <TabBadge>{obligationsCount}</TabBadge>
+        </TabLink>
+        <TabLink to={`${baseTabUrl}/scenarios`}>
+          {__("Scenarios")}
+          <TabBadge>{scenariosCount}</TabBadge>
         </TabLink>
       </Tabs>
 

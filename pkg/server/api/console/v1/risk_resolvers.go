@@ -448,6 +448,28 @@ func (r *riskResolver) Obligations(ctx context.Context, obj *types.Risk, first *
 	return types.NewObligationConnection(page, r, obj.ID), nil
 }
 
+// Scenarios is the resolver for the scenarios field.
+func (r *riskResolver) Scenarios(ctx context.Context, obj *types.Risk, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskAssessmentScenarioOrderBy) (*types.RiskAssessmentScenarioConnection, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionRiskAssessmentScenarioList); err != nil {
+		return nil, err
+	}
+	scope := coredata.NewScopeFromObjectID(obj.ID)
+	pageOrderBy := page.OrderBy[coredata.RiskAssessmentScenarioOrderField]{
+		Field:     coredata.RiskAssessmentScenarioOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.RiskAssessmentScenarioOrderField]{Field: orderBy.Field, Direction: orderBy.Direction}
+	}
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+	p, err := r.riskManagement.ListScenariosForRiskID(ctx, scope, obj.ID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list risk scenarios", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+	return types.NewRiskAssessmentScenarioConnection(p, r, obj.ID), nil
+}
+
 // Permission is the resolver for the permission field.
 func (r *riskResolver) Permission(ctx context.Context, obj *types.Risk, action string) (bool, error) {
 	return r.Resolver.Permission(ctx, obj, action)
@@ -473,6 +495,14 @@ func (r *riskConnectionResolver) TotalCount(ctx context.Context, obj *types.Risk
 		count, err := prb.Risks.CountForOrganizationID(ctx, obj.ParentID, obj.Filters)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count risks", log.Error(err))
+			return 0, gqlutils.Internal(ctx)
+		}
+		return count, nil
+	case *riskAssessmentScenarioResolver:
+		scope := coredata.NewScopeFromObjectID(obj.ParentID)
+		count, err := r.riskManagement.CountRisksForScenarioID(ctx, scope, obj.ParentID)
+		if err != nil {
+			r.logger.ErrorCtx(ctx, "cannot count scenario risks", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
 		}
 		return count, nil

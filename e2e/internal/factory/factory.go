@@ -1449,3 +1449,236 @@ func ReportDetectedResources(c *testutil.Client, bannerID string, count int) {
 	defer func() { _ = resp.Body.Close() }()
 	require.Equal(c.T, http.StatusNoContent, resp.StatusCode, "report detected resources unexpected status")
 }
+
+func CreateRiskAssessment(c *testutil.Client, attrs ...Attrs) string {
+	c.T.Helper()
+	var a Attrs
+	if len(attrs) > 0 {
+		a = attrs[0]
+	}
+	const query = `
+		mutation($input: CreateRiskAssessmentInput!) {
+			createRiskAssessment(input: $input) {
+				riskAssessmentEdge { node { id } }
+			}
+		}
+	`
+	input := map[string]any{
+		"organizationId": c.GetOrganizationID().String(),
+		"name":           a.getString("name", SafeName("Risk Assessment")),
+	}
+	if desc := a.getStringPtr("description"); desc != nil {
+		input["description"] = *desc
+	}
+	var result struct {
+		CreateRiskAssessment struct {
+			RiskAssessmentEdge struct {
+				Node struct {
+					ID string `json:"id"`
+				} `json:"node"`
+			} `json:"riskAssessmentEdge"`
+		} `json:"createRiskAssessment"`
+	}
+	err := c.Execute(query, map[string]any{"input": input}, &result)
+	require.NoError(c.T, err, "createRiskAssessment mutation failed")
+	return result.CreateRiskAssessment.RiskAssessmentEdge.Node.ID
+}
+
+func CreateRiskAssessmentScope(c *testutil.Client, riskAssessmentID string, attrs ...Attrs) string {
+	c.T.Helper()
+	var a Attrs
+	if len(attrs) > 0 {
+		a = attrs[0]
+	}
+	const query = `
+		mutation($input: CreateRiskAssessmentScopeInput!) {
+			createRiskAssessmentScope(input: $input) {
+				riskAssessmentScopeEdge { node { id } }
+			}
+		}
+	`
+	input := map[string]any{
+		"riskAssessmentId": riskAssessmentID,
+		"name":             a.getString("name", SafeName("Scope")),
+	}
+	var result struct {
+		CreateRiskAssessmentScope struct {
+			RiskAssessmentScopeEdge struct {
+				Node struct {
+					ID string `json:"id"`
+				} `json:"node"`
+			} `json:"riskAssessmentScopeEdge"`
+		} `json:"createRiskAssessmentScope"`
+	}
+	err := c.Execute(query, map[string]any{"input": input}, &result)
+	require.NoError(c.T, err, "createRiskAssessmentScope mutation failed")
+	return result.CreateRiskAssessmentScope.RiskAssessmentScopeEdge.Node.ID
+}
+
+func CreateRiskAssessmentNode(c *testutil.Client, scopeID string, attrs ...Attrs) string {
+	c.T.Helper()
+	var a Attrs
+	if len(attrs) > 0 {
+		a = attrs[0]
+	}
+	const query = `
+		mutation($input: CreateRiskAssessmentNodeInput!) {
+			createRiskAssessmentNode(input: $input) {
+				riskAssessmentNodeEdge { node { id } }
+			}
+		}
+	`
+	input := map[string]any{
+		"riskAssessmentScopeId": scopeID,
+		"nodeType":              a.getString("nodeType", "ASSET"),
+		"name":                  a.getString("name", SafeName("Node")),
+	}
+	var result struct {
+		CreateRiskAssessmentNode struct {
+			RiskAssessmentNodeEdge struct {
+				Node struct {
+					ID string `json:"id"`
+				} `json:"node"`
+			} `json:"riskAssessmentNodeEdge"`
+		} `json:"createRiskAssessmentNode"`
+	}
+	err := c.Execute(query, map[string]any{"input": input}, &result)
+	require.NoError(c.T, err, "createRiskAssessmentNode mutation failed")
+	return result.CreateRiskAssessmentNode.RiskAssessmentNodeEdge.Node.ID
+}
+
+func CreateRiskAssessmentProcess(c *testutil.Client, scopeID, sourceNodeID, targetNodeID string, attrs ...Attrs) string {
+	c.T.Helper()
+	var a Attrs
+	if len(attrs) > 0 {
+		a = attrs[0]
+	}
+	const query = `
+		mutation($input: CreateRiskAssessmentProcessInput!) {
+			createRiskAssessmentProcess(input: $input) {
+				riskAssessmentProcessEdge { node { id } }
+			}
+		}
+	`
+	input := map[string]any{
+		"riskAssessmentScopeId": scopeID,
+		"sourceNodeId":          sourceNodeID,
+		"targetNodeId":          targetNodeID,
+		"name":                  a.getString("name", SafeName("Process")),
+	}
+	var result struct {
+		CreateRiskAssessmentProcess struct {
+			RiskAssessmentProcessEdge struct {
+				Node struct {
+					ID string `json:"id"`
+				} `json:"node"`
+			} `json:"riskAssessmentProcessEdge"`
+		} `json:"createRiskAssessmentProcess"`
+	}
+	err := c.Execute(query, map[string]any{"input": input}, &result)
+	require.NoError(c.T, err, "createRiskAssessmentProcess mutation failed")
+	return result.CreateRiskAssessmentProcess.RiskAssessmentProcessEdge.Node.ID
+}
+
+func CreateRiskAssessmentThreat(c *testutil.Client, scopeID, processID string, attrs ...Attrs) string {
+	c.T.Helper()
+	var a Attrs
+	if len(attrs) > 0 {
+		a = attrs[0]
+	}
+	const query = `
+		mutation($input: CreateRiskAssessmentThreatInput!) {
+			createRiskAssessmentThreat(input: $input) {
+				riskAssessmentThreatEdge { node { id } }
+			}
+		}
+	`
+	input := map[string]any{
+		"riskAssessmentScopeId": scopeID,
+		"processId":             processID,
+		"name":                  a.getString("name", SafeName("Threat")),
+		"category":              a.getString("category", "Confidentiality"),
+	}
+	var result struct {
+		CreateRiskAssessmentThreat struct {
+			RiskAssessmentThreatEdge struct {
+				Node struct {
+					ID string `json:"id"`
+				} `json:"node"`
+			} `json:"riskAssessmentThreatEdge"`
+		} `json:"createRiskAssessmentThreat"`
+	}
+	err := c.Execute(query, map[string]any{"input": input}, &result)
+	require.NoError(c.T, err, "createRiskAssessmentThreat mutation failed")
+	return result.CreateRiskAssessmentThreat.RiskAssessmentThreatEdge.Node.ID
+}
+
+func CreateRiskAssessmentScenario(c *testutil.Client, scopeID string, attrs ...Attrs) string {
+	c.T.Helper()
+	var a Attrs
+	if len(attrs) > 0 {
+		a = attrs[0]
+	}
+	const query = `
+		mutation($input: CreateRiskAssessmentScenarioInput!) {
+			createRiskAssessmentScenario(input: $input) {
+				riskAssessmentScenarioEdge { node { id } }
+			}
+		}
+	`
+	input := map[string]any{
+		"riskAssessmentScopeId": scopeID,
+		"name":                  a.getString("name", SafeName("Scenario")),
+	}
+	if desc := a.getStringPtr("description"); desc != nil {
+		input["description"] = *desc
+	}
+	var result struct {
+		CreateRiskAssessmentScenario struct {
+			RiskAssessmentScenarioEdge struct {
+				Node struct {
+					ID string `json:"id"`
+				} `json:"node"`
+			} `json:"riskAssessmentScenarioEdge"`
+		} `json:"createRiskAssessmentScenario"`
+	}
+	err := c.Execute(query, map[string]any{"input": input}, &result)
+	require.NoError(c.T, err, "createRiskAssessmentScenario mutation failed")
+	return result.CreateRiskAssessmentScenario.RiskAssessmentScenarioEdge.Node.ID
+}
+
+func LinkRiskAssessmentScenarioThreat(c *testutil.Client, scenarioID, threatID string) {
+	c.T.Helper()
+	const query = `
+		mutation($input: LinkRiskAssessmentScenarioThreatInput!) {
+			linkRiskAssessmentScenarioThreat(input: $input) {
+				riskAssessmentScenario { id }
+			}
+		}
+	`
+	_, err := c.Do(query, map[string]any{
+		"input": map[string]any{
+			"riskAssessmentScenarioId": scenarioID,
+			"threatId":                 threatID,
+		},
+	})
+	require.NoError(c.T, err, "linkRiskAssessmentScenarioThreat mutation failed")
+}
+
+func LinkRiskAssessmentScenarioRisk(c *testutil.Client, scenarioID, riskID string) {
+	c.T.Helper()
+	const query = `
+		mutation($input: LinkRiskAssessmentScenarioRiskInput!) {
+			linkRiskAssessmentScenarioRisk(input: $input) {
+				riskAssessmentScenario { id }
+			}
+		}
+	`
+	_, err := c.Do(query, map[string]any{
+		"input": map[string]any{
+			"riskAssessmentScenarioId": scenarioID,
+			"riskId":                   riskID,
+		},
+	})
+	require.NoError(c.T, err, "linkRiskAssessmentScenarioRisk mutation failed")
+}

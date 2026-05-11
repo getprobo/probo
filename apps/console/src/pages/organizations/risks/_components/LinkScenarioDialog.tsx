@@ -1,0 +1,202 @@
+// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
+import { useTranslate } from "@probo/i18n";
+import {
+  Button,
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  IconMagnifyingGlass,
+  IconPlusLarge,
+  IconTrashCan,
+  InfiniteScrollTrigger,
+  Input,
+  Spinner,
+} from "@probo/ui";
+import { type ReactNode, Suspense, useMemo, useState } from "react";
+import { useLazyLoadQuery, usePaginationFragment } from "react-relay";
+import { graphql } from "relay-runtime";
+
+import type {
+  LinkScenarioDialogFragment$data,
+  LinkScenarioDialogFragment$key,
+} from "#/__generated__/core/LinkScenarioDialogFragment.graphql";
+import type { LinkScenarioDialogQuery } from "#/__generated__/core/LinkScenarioDialogQuery.graphql";
+import type { LinkScenarioDialogQuery_fragment } from "#/__generated__/core/LinkScenarioDialogQuery_fragment.graphql";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
+import type { NodeOf } from "#/types";
+
+const scenariosQuery = graphql`
+  query LinkScenarioDialogQuery($organizationId: ID!) {
+    organization: node(id: $organizationId) {
+      id
+      ... on Organization {
+        ...LinkScenarioDialogFragment
+      }
+    }
+  }
+`;
+
+const scenariosFragment = graphql`
+  fragment LinkScenarioDialogFragment on Organization
+  @refetchable(queryName: "LinkScenarioDialogQuery_fragment")
+  @argumentDefinitions(
+    first: { type: "Int", defaultValue: 20 }
+    after: { type: "CursorKey", defaultValue: null }
+    before: { type: "CursorKey", defaultValue: null }
+    last: { type: "Int", defaultValue: null }
+  ) {
+    riskAssessmentScenarios(first: $first, after: $after, last: $last, before: $before)
+      @connection(key: "LinkScenarioDialogQuery_riskAssessmentScenarios") {
+      edges {
+        node {
+          id
+          name
+          description
+        }
+      }
+    }
+  }
+`;
+
+type Props = {
+  children: ReactNode;
+  connectionId: string;
+  disabled?: boolean;
+  linkedScenarios?: { id: string }[];
+  onLink: (scenarioId: string) => void;
+  onUnlink: (scenarioId: string) => void;
+};
+
+export function LinkScenarioDialog({ children, ...props }: Props) {
+  const { __ } = useTranslate();
+
+  return (
+    <Dialog trigger={children} title={__("Link scenarios")}>
+      <DialogContent>
+        <Suspense fallback={<Spinner centered />}>
+          <LinkScenarioDialogContent {...props} />
+        </Suspense>
+      </DialogContent>
+      <DialogFooter exitLabel={__("Close")} />
+    </Dialog>
+  );
+}
+
+function LinkScenarioDialogContent(props: Omit<Props, "children">) {
+  const organizationId = useOrganizationId();
+  const query = useLazyLoadQuery<LinkScenarioDialogQuery>(
+    scenariosQuery,
+    {
+      organizationId,
+    },
+    { fetchPolicy: "network-only" },
+  );
+  const { data, loadNext, hasNext, isLoadingNext }
+    = usePaginationFragment<LinkScenarioDialogQuery_fragment, LinkScenarioDialogFragment$key>(
+      scenariosFragment,
+      query.organization as LinkScenarioDialogFragment$key,
+    );
+  const { __ } = useTranslate();
+  const [search, setSearch] = useState("");
+  const scenarios = useMemo(
+    () => data.riskAssessmentScenarios?.edges?.map(edge => edge.node) ?? [],
+    [data.riskAssessmentScenarios],
+  );
+  const linkedIds = useMemo(() => {
+    return new Set(props.linkedScenarios?.map(s => s.id) ?? []);
+  }, [props.linkedScenarios]);
+
+  const filteredScenarios = useMemo(() => {
+    return scenarios.filter(
+      scenario =>
+        scenario.name?.toLowerCase().includes(search.toLowerCase())
+        || scenario.description?.toLowerCase().includes(search.toLowerCase()),
+    );
+  }, [scenarios, search]);
+
+  return (
+    <>
+      <div className="flex items-center gap-2 sticky top-0 relative py-4 bg-linear-to-b from-50% from-level-2 to-level-2/0 px-6">
+        <Input
+          icon={IconMagnifyingGlass}
+          placeholder={__("Search scenarios...")}
+          onValueChange={setSearch}
+        />
+      </div>
+      <div className="divide-y divide-border-low">
+        {filteredScenarios.map(scenario => (
+          <ScenarioRow
+            key={scenario.id}
+            scenario={scenario}
+            linkedScenarios={linkedIds}
+            onLink={props.onLink}
+            onUnlink={props.onUnlink}
+            disabled={props.disabled}
+          />
+        ))}
+        {hasNext && (
+          <InfiniteScrollTrigger
+            loading={isLoadingNext}
+            onView={() => loadNext(20)}
+          />
+        )}
+      </div>
+    </>
+  );
+}
+
+type Scenario = NodeOf<LinkScenarioDialogFragment$data["riskAssessmentScenarios"]>;
+
+function ScenarioRow(props: {
+  scenario: Scenario;
+  linkedScenarios: Set<string>;
+  onLink: (scenarioId: string) => void;
+  onUnlink: (scenarioId: string) => void;
+  disabled?: boolean;
+}) {
+  const { __ } = useTranslate();
+  const isLinked = props.linkedScenarios.has(props.scenario.id);
+
+  const onToggle = () => {
+    if (isLinked) {
+      props.onUnlink(props.scenario.id);
+    } else {
+      props.onLink(props.scenario.id);
+    }
+  };
+
+  return (
+    <div className="flex items-center justify-between p-4 hover:bg-level-1">
+      <div className="flex-1 min-w-0">
+        <div className="text-sm font-medium text-txt-primary truncate">
+          {props.scenario.name}
+        </div>
+        <div className="text-xs text-txt-secondary truncate">
+          {props.scenario.description || __("No description")}
+        </div>
+      </div>
+      <Button
+        variant={isLinked ? "secondary" : "primary"}
+        icon={isLinked ? IconTrashCan : IconPlusLarge}
+        onClick={onToggle}
+        disabled={props.disabled}
+        className="ml-6"
+      >
+        {isLinked ? __("Unlink") : __("Link")}
+      </Button>
+    </div>
+  );
+}

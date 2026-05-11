@@ -35,6 +35,7 @@ import (
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/probo"
+	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/securecookie"
 	connect_v1 "go.probo.inc/probo/pkg/server/api/connect/v1"
 	console_v1 "go.probo.inc/probo/pkg/server/api/console/v1"
@@ -63,6 +64,7 @@ type (
 		CookieBanner      *cookiebanner.Service
 		Geoloc            *geoloc.Service
 		ThirdParty        *thirdparty.Service
+		RiskManagement    *riskmanagement.Service
 		Cookie            securecookie.Config
 		TokenSecret       string
 		ConnectorRegistry *connector.ConnectorRegistry
@@ -193,6 +195,7 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.BaseURL,
 			cfg.CustomDomainCname,
 			cfg.ThirdParty,
+			cfg.RiskManagement,
 		),
 		cookieBannerHandler: cookiebanner_v1.NewMux(
 			cfg.Logger.Named("cookiebanner.v1"),

@@ -118,6 +118,12 @@ const (
 	CommonThirdPartyEntityType                     uint16 = 92
 	CommonThirdPartyDomainEntityType               uint16 = 93
 	CommonTrackerPatternEntityType                 uint16 = 94
+	RiskAssessmentEntityType                       uint16 = 95
+	RiskAssessmentNodeEntityType                   uint16 = 96
+	RiskAssessmentProcessEntityType                uint16 = 97
+	RiskAssessmentThreatEntityType                 uint16 = 98
+	RiskAssessmentScopeEntityType                  uint16 = 99
+	RiskAssessmentScenarioEntityType               uint16 = 100
 )
 
 func NewEntityFromID(id gid.GID) (any, bool) {
@@ -296,6 +302,18 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &CommonThirdPartyDomain{ID: id}, true
 	case CommonTrackerPatternEntityType:
 		return &CommonTrackerPattern{ID: id}, true
+	case RiskAssessmentEntityType:
+		return &RiskAssessment{ID: id}, true
+	case RiskAssessmentNodeEntityType:
+		return &RiskAssessmentNode{ID: id}, true
+	case RiskAssessmentProcessEntityType:
+		return &RiskAssessmentProcess{ID: id}, true
+	case RiskAssessmentThreatEntityType:
+		return &RiskAssessmentThreat{ID: id}, true
+	case RiskAssessmentScopeEntityType:
+		return &RiskAssessmentScope{ID: id}, true
+	case RiskAssessmentScenarioEntityType:
+		return &RiskAssessmentScenario{ID: id}, true
 	default:
 		return nil, false
 	}

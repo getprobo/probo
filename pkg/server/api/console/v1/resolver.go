@@ -35,6 +35,7 @@ import (
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/probo"
+	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/saferedirect"
 	"go.probo.inc/probo/pkg/securecookie"
 	"go.probo.inc/probo/pkg/server/api/authn"
@@ -54,6 +55,7 @@ type (
 		mailman           *mailman.Service
 		cookieBanner      *cookiebanner.Service
 		connectorRegistry *connector.ConnectorRegistry
+		riskManagement    *riskmanagement.Service
 		thirdParty        *thirdparty.Service
 		logger            *log.Logger
 		customDomainCname string
@@ -74,6 +76,7 @@ func NewMux(
 	baseURL *baseurl.BaseURL,
 	customDomainCname string,
 	thirdPartySvc *thirdparty.Service,
+	riskManagementSvc *riskmanagement.Service,
 ) *chi.Mux {
 	r := chi.NewMux()
 
@@ -90,6 +93,7 @@ func NewMux(
 		customDomainCname,
 		logger,
 		thirdPartySvc,
+		riskManagementSvc,
 	)
 
 	r.Group(func(r chi.Router) {
