@@ -239,6 +239,12 @@ export class ReportQueue {
   // unload time -- still strictly better than the previous behaviour,
   // which lost the entire last debounce window.
   //
+  // sendBeacon is always attempted even when an async `flush()` is
+  // in-flight (`this.flushing === true`). The server handles
+  // duplicates idempotently. The keepalive-fetch fallback is only
+  // used when the async flush mutex is free to avoid concurrent
+  // fetch lifecycles conflicting over the `flushing` flag.
+  //
   // Items are only removed from `pending` once the transport
   // confirms delivery: sendBeacon synchronously returns true when
   // the browser has accepted ownership of the request, and the
@@ -248,7 +254,6 @@ export class ReportQueue {
   // `visibilitychange:hidden` fires but the page is restored from
   // bfcache rather than truly unloading.
   private flushSync(): void {
-    if (this.flushing) return;
     if (this.pending.size === 0) return;
 
     const { keys, body } = this.takeBatch();
@@ -267,6 +272,10 @@ export class ReportQueue {
         return;
       }
     }
+
+    // Fall back to keepalive fetch only when no async flush owns the
+    // mutex — sendBeacon above is the primary unload-safe path.
+    if (this.flushing) return;
 
     if (typeof fetch === "function") {
       this.flushing = true;
