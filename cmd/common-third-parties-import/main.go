@@ -16,9 +16,10 @@
 // packages/vendors/data.json. It is idempotent: re-running upserts on conflict
 // (lower(name)) so existing rows keep their id and created_at.
 //
-// When -fetch-logos is set, the tool also fetches favicons from Google's
-// favicon service and stores them in S3 as public files, linking them to each
-// common third party via logo_file_id.
+// When -fetch-logos is set, the tool inspects each third party's website to
+// find the best available logo (SVG icon, apple-touch-icon, etc.) and stores
+// it in S3 as a public file, linking it to each common third party via
+// logo_file_id.
 package main
 
 import (
@@ -42,6 +43,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/webinspect"
 )
 
 type thirdPartyData struct {
@@ -254,18 +256,23 @@ func fetchAndStoreLogos(
 			continue
 		}
 
-		parsedURL, err := url.Parse(*tp.WebsiteURL)
+		pageInfo, err := webinspect.Parse(ctx, httpClient, *tp.WebsiteURL)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "warning: cannot parse URL for %q, skipping logo: %v\n", tp.Name, err)
+			fmt.Fprintf(os.Stderr, "warning: cannot inspect page for %q, skipping logo: %v\n", tp.Name, err)
 			failed++
 			continue
 		}
 
-		faviconURL := fmt.Sprintf("https://www.google.com/s2/favicons?domain=%s&sz=64", parsedURL.Hostname())
-
-		resp, err := httpClient.Get(faviconURL)
+		logoURL, err := webinspect.FindLogoURL(pageInfo)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "warning: cannot fetch favicon for %q: %v\n", tp.Name, err)
+			fmt.Fprintf(os.Stderr, "warning: cannot find logo for %q: %v\n", tp.Name, err)
+			failed++
+			continue
+		}
+
+		resp, err := httpClient.Get(logoURL)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "warning: cannot fetch logo for %q: %v\n", tp.Name, err)
 			failed++
 			continue
 		}
@@ -274,7 +281,7 @@ func fetchAndStoreLogos(
 		_ = resp.Body.Close()
 
 		if err != nil || resp.StatusCode != http.StatusOK || len(body) == 0 {
-			fmt.Fprintf(os.Stderr, "warning: bad favicon response for %q (status %d)\n", tp.Name, resp.StatusCode)
+			fmt.Fprintf(os.Stderr, "warning: bad logo response for %q (status %d)\n", tp.Name, resp.StatusCode)
 			failed++
 			continue
 		}
@@ -297,7 +304,7 @@ func fetchAndStoreLogos(
 			OrganizationID: gid.Nil,
 			BucketName:     bucket,
 			MimeType:       contentType,
-			FileName:       parsedURL.Hostname() + "-favicon.png",
+			FileName:       tp.Name + "-logo" + webinspect.ExtensionForMIME(contentType),
 			FileKey:        objectKey.String(),
 			FileSize:       int64(len(body)),
 			Visibility:     coredata.FileVisibilityPublic,
