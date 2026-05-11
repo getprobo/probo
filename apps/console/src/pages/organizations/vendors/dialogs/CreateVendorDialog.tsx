@@ -22,9 +22,10 @@ import {
   IconPlusLarge,
   useDialogRef,
 } from "@probo/ui";
-import { type ReactNode, Suspense, useState } from "react";
+import { type ReactNode, Suspense, useEffect, useRef, useState, useCallback } from "react";
 import { useQueryLoader } from "react-relay";
 import { graphql, readInlineData } from "relay-runtime";
+import { useDebounceCallback } from "usehooks-ts";
 
 import type { CommonThirdPartyComboboxQuery } from "#/__generated__/core/CommonThirdPartyComboboxQuery.graphql";
 import type { CreateVendorDialog_commonThirdParty$key } from "#/__generated__/core/CreateVendorDialog_commonThirdParty.graphql";
@@ -115,10 +116,21 @@ export function CreateVendorDialog({
     });
   };
 
+  const debouncedLoadQuery = useDebounceCallback(
+    useCallback(
+      (name: string) => {
+        loadQuery({ name });
+      },
+      [loadQuery],
+    ),
+    500,
+  );
+
   const handleSearch = (name: string) => {
     setSearchQuery(name);
-    if (name.trim().length >= 2) {
-      loadQuery({ name: name.trim() });
+    const trimmed = name.trim();
+    if (trimmed.length >= 2) {
+      debouncedLoadQuery(trimmed);
     }
   };
 
