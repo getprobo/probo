@@ -4,6 +4,22 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.187.0] - 2026-05-12
+
+### Added
+
+- Add a shared `common_third_parties` reference catalog, seeded from `packages/vendors/data.json` via a one-shot `common-third-parties-import` CLI, and back the `CreateVendorDialog` autocomplete with a new `commonThirdParties(name)` GraphQL query (server-side `ILIKE` search) instead of shipping the full vendor JSON bundle to the browser
+- Self-host vendor logos in S3: at import time, fetch each site's HTML and pick the best icon (SVG, `apple-touch-icon`, large PNG, `msapplication-TileImage`) via the new `pkg/webinspect` package, then serve through the existing `/api/files/v1/{id}` endpoint instead of calling Google's favicon service per page load
+
+### Changed
+
+- Sanitize MCP error responses so internal details (stack traces, wrapped errors) are no longer leaked to clients
+
+### Fixed
+
+- Return a clean not-found error instead of a 500 when a membership lookup misses
+- Upgrade `mermaid` to 11.15.0 to address GHSA-6m6c-36f7-fhxh (Gantt infinite-loop DoS), GHSA-xcj9-5m2h-648r and GHSA-87f9-hvmw-gh4p (CSS injection via `classDef`/configuration), and GHSA-ghcm-xqfw-q4vr (HTML injection via `classDef` in state diagrams)
+
 ## [0.186.1] - 2026-05-12
 
 ### Fixed
