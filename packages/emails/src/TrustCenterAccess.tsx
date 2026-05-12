@@ -18,7 +18,6 @@ import EmailLayout, {
   bodyText,
   button,
   buttonContainer,
-  footerText,
 } from "./components/EmailLayout";
 
 export const TrustCenterAccess = () => {

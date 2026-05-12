@@ -108,7 +108,7 @@ export const makeFetchQuery = (endpoint: string): FetchFunction => {
 
             const assumptionRequiredError = errors.find(hasAssumptionRequiredError);
             if (assumptionRequiredError) {
-                throw new AssumptionRequiredError(assumptionRequiredError.message)
+                throw new AssumptionRequiredError(assumptionRequiredError.message);
             }
 
             const ndaSignatureRequiredError = errors.find(hasNDASignatureRequiredError);

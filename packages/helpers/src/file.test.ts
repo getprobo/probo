@@ -13,7 +13,6 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 import { describe, it, expect } from "vitest";
-import { isEmpty } from "./array";
 import { fileSize } from "./file";
 
 describe("file", () => {

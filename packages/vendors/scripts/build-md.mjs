@@ -1,11 +1,11 @@
-import { readFile, writeFile } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import { createWriteStream } from "node:fs";
 import path from "node:path";
 
 const data = await readFile(path.join(import.meta.dirname, '../data.json'), 'utf8');
 const vendors = JSON.parse(data);
 
-const output = path.join(import.meta.dirname, '../VENDORS.md')
+const output = path.join(import.meta.dirname, '../VENDORS.md');
 const file = createWriteStream(output);
 
 const formatAsList = (array) => {

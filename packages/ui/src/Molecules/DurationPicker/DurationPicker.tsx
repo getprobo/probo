@@ -42,7 +42,7 @@ const stringify = (value: number | null, unit: string): string | null => {
   }
 };
 
-const parse = (value: string): { amount: number; unit: string } | null => {
+const parse = (value: string): { amount: number; unit: string } => {
   const match = value.match(/PT?(\d+)([MDWH])/);
   if (!match) return { amount: 0, unit: "D" };
   const amount = parseInt(match[1], 10) || 0;
@@ -67,7 +67,7 @@ export function DurationPicker({ value, onValueChange, ...props }: Props) {
     );
   }
 
-  const { amount, unit } = parse(value || "") || { amount: 0, unit: "D" };
+  const { amount, unit } = parse(value);
 
   return (
     <div className="flex gap-2 w-max">
