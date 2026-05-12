@@ -44,6 +44,54 @@ export const description: INodeProperties[] = [
 		},
 		options: [
 			{
+				displayName: 'Title',
+				name: 'title',
+				type: 'string',
+				default: '',
+				description: 'The title of the document. Edits to a published document auto-create a draft.',
+			},
+			{
+				displayName: 'Content',
+				name: 'content',
+				type: 'string',
+				typeOptions: {
+					rows: 6,
+				},
+				default: '',
+				description: 'The content of the document in markdown format. Edits to a published document auto-create a draft.',
+			},
+			{
+				displayName: 'Classification',
+				name: 'classification',
+				type: 'options',
+				options: [
+					{ name: 'Confidential', value: 'CONFIDENTIAL' },
+					{ name: 'Internal', value: 'INTERNAL' },
+					{ name: 'Public', value: 'PUBLIC' },
+					{ name: 'Secret', value: 'SECRET' },
+				],
+				default: 'INTERNAL',
+				description: 'The classification of the document',
+			},
+			{
+				displayName: 'Document Type',
+				name: 'documentType',
+				type: 'options',
+				options: [
+					{ name: 'Governance', value: 'GOVERNANCE' },
+					{ name: 'Other', value: 'OTHER' },
+					{ name: 'Plan', value: 'PLAN' },
+					{ name: 'Policy', value: 'POLICY' },
+					{ name: 'Procedure', value: 'PROCEDURE' },
+					{ name: 'Record', value: 'RECORD' },
+					{ name: 'Register', value: 'REGISTER' },
+					{ name: 'Report', value: 'REPORT' },
+					{ name: 'Template', value: 'TEMPLATE' },
+				],
+				default: 'POLICY',
+				description: 'The type of the document',
+			},
+			{
 				displayName: 'Trust Center Visibility',
 				name: 'trustCenterVisibility',
 				type: 'options',
@@ -72,6 +120,10 @@ export async function execute(
 ): Promise<INodeExecutionData> {
 	const documentId = this.getNodeParameter('documentId', itemIndex) as string;
 	const updateFields = this.getNodeParameter('updateFields', itemIndex, {}) as {
+		title?: string;
+		content?: string;
+		classification?: string;
+		documentType?: string;
 		trustCenterVisibility?: string;
 		defaultApproverIds?: string;
 	};
@@ -89,11 +141,26 @@ export async function execute(
 					createdAt
 					updatedAt
 				}
+				documentVersion {
+					id
+					status
+					major
+					minor
+					title
+					content
+					classification
+					documentType
+					updatedAt
+				}
 			}
 		}
 	`;
 
 	const input: Record<string, unknown> = { id: documentId };
+	if (updateFields.title !== undefined) input.title = updateFields.title;
+	if (updateFields.content !== undefined) input.content = updateFields.content;
+	if (updateFields.classification !== undefined) input.classification = updateFields.classification;
+	if (updateFields.documentType !== undefined) input.documentType = updateFields.documentType;
 	if (updateFields.trustCenterVisibility !== undefined) input.trustCenterVisibility = updateFields.trustCenterVisibility;
 	if (updateFields.defaultApproverIds !== undefined && updateFields.defaultApproverIds !== '') {
 		input.defaultApproverIds = updateFields.defaultApproverIds.split(',').map(id => id.trim()).filter(Boolean);

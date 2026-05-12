@@ -17,17 +17,17 @@ import { proboApiRequest } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
 	{
-		displayName: 'Document Version ID',
-		name: 'documentVersionId',
+		displayName: 'Document ID',
+		name: 'documentId',
 		type: 'string',
 		displayOptions: {
 			show: {
 				resource: ['document'],
-				operation: ['deleteDraftVersion'],
+				operation: ['deleteDraft'],
 			},
 		},
 		default: '',
-		description: 'The ID of the draft document version to delete',
+		description: 'The ID of the document whose draft should be deleted',
 		required: true,
 	},
 ];
@@ -36,17 +36,23 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const documentVersionId = this.getNodeParameter('documentVersionId', itemIndex) as string;
+	const documentId = this.getNodeParameter('documentId', itemIndex) as string;
 
 	const query = `
-		mutation DeleteDraftDocumentVersion($input: DeleteDraftDocumentVersionInput!) {
-			deleteDraftDocumentVersion(input: $input) {
-				deletedDocumentVersionId
+		mutation DeleteDocumentDraft($input: DeleteDocumentDraftInput!) {
+			deleteDocumentDraft(input: $input) {
+				document {
+					id
+					status
+					currentPublishedMajor
+					currentPublishedMinor
+					updatedAt
+				}
 			}
 		}
 	`;
 
-	const responseData = await proboApiRequest.call(this, query, { input: { documentVersionId } });
+	const responseData = await proboApiRequest.call(this, query, { input: { documentId } });
 
 	return {
 		json: responseData,

@@ -22,9 +22,7 @@ import * as archiveOp from './archive.operation';
 import * as unarchiveOp from './unarchive.operation';
 import * as getVersionOp from './getVersion.operation';
 import * as getAllVersionsOp from './getAllVersions.operation';
-import * as createDraftVersionOp from './createDraftVersion.operation';
-import * as updateVersionOp from './updateVersion.operation';
-import * as deleteDraftVersionOp from './deleteDraftVersion.operation';
+import * as deleteDraftOp from './deleteDraft.operation';
 import * as publishOp from './publish.operation';
 import * as voidApprovalOp from './voidApproval.operation';
 import * as getSignatureOp from './getSignature.operation';
@@ -68,22 +66,16 @@ export const description: INodeProperties[] = [
 				action: 'Create a document',
 			},
 			{
-				name: 'Create Draft Version',
-				value: 'createDraftVersion',
-				description: 'Create a new draft version from the latest published version',
-				action: 'Create a draft document version',
-			},
-			{
 				name: 'Delete',
 				value: 'delete',
 				description: 'Delete a document',
 				action: 'Delete a document',
 			},
 			{
-				name: 'Delete Draft Version',
-				value: 'deleteDraftVersion',
-				description: 'Delete a draft document version',
-				action: 'Delete a draft document version',
+				name: 'Delete Draft',
+				value: 'deleteDraft',
+				description: 'Delete the current draft of a document',
+				action: 'Delete a document draft',
 			},
 			{
 				name: 'Get',
@@ -172,14 +164,8 @@ export const description: INodeProperties[] = [
 			{
 				name: 'Update',
 				value: 'update',
-				description: 'Update an existing document',
+				description: 'Update a document (edits auto-create a draft on published documents)',
 				action: 'Update a document',
-			},
-			{
-				name: 'Update Version',
-				value: 'updateVersion',
-				description: 'Update a draft document version',
-				action: 'Update a document version',
 			},
 			{
 				name: 'Void Approval',
@@ -199,9 +185,7 @@ export const description: INodeProperties[] = [
 	...unarchiveOp.description,
 	...getVersionOp.description,
 	...getAllVersionsOp.description,
-	...createDraftVersionOp.description,
-	...updateVersionOp.description,
-	...deleteDraftVersionOp.description,
+	...deleteDraftOp.description,
 	...publishOp.description,
 	...voidApprovalOp.description,
 	...getSignatureOp.description,
@@ -225,9 +209,7 @@ export {
 	unarchiveOp as unarchive,
 	getVersionOp as getVersion,
 	getAllVersionsOp as getAllVersions,
-	createDraftVersionOp as createDraftVersion,
-	updateVersionOp as updateVersion,
-	deleteDraftVersionOp as deleteDraftVersion,
+	deleteDraftOp as deleteDraft,
 	publishOp as publish,
 	voidApprovalOp as voidApproval,
 	getSignatureOp as getSignature,
