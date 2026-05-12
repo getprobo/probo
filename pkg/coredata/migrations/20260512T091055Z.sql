@@ -12,4 +12,8 @@
 -- OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 -- PERFORMANCE OF THIS SOFTWARE.
 
-ALTER TABLE common_third_parties DROP COLUMN description;
+ALTER TABLE
+    common_third_parties
+ADD
+    COLUMN logo_file_id TEXT REFERENCES files(id),
+    DROP COLUMN description;
