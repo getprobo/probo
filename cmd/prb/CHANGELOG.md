@@ -4,6 +4,17 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.184.0] - 2026-05-12
+
+### Added
+
+- Add `prb tracker-resource` command group (`list`, `view`, `create`, `update`, `delete`, `move`) for managing detected scripts, iframes, and other tracker resources
+
+### Changed
+
+- Replace `PREFIX` match type with `GLOB` in `prb tracker-pattern` interactive prompts (breaking)
+- Drop `--display-name` from `prb tracker-pattern update` — display names are now derived from pattern + match type (breaking)
+
 ## [0.183.1] - 2026-05-08
 
 ### Security
