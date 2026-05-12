@@ -92,7 +92,7 @@ func parseSizeAttr(sizes string) int {
 	}
 
 	best := 0
-	for _, token := range strings.Fields(sizes) {
+	for token := range strings.FieldsSeq(sizes) {
 		token = strings.ToLower(token)
 		parts := strings.SplitN(token, "x", 2)
 		if len(parts) != 2 {
