@@ -2494,7 +2494,7 @@ func (r *Resolver) UpdateMembershipTool(ctx context.Context, req *mcp.CallToolRe
 		r.MustAuthorize(ctx, input.MembershipID, iam.ActionMembershipRoleSetOwner)
 	}
 
-	membership, err := r.iamSvc.OrganizationService.UpdateMempership(ctx, input.OrganizationID, input.MembershipID, input.Role)
+	membership, err := r.iamSvc.OrganizationService.UpdateMembership(ctx, input.OrganizationID, input.MembershipID, input.Role)
 	if err != nil {
 		return nil, types.UpdateMembershipOutput{}, fmt.Errorf("update membership: %w", err)
 	}

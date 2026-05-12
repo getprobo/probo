@@ -241,7 +241,7 @@ func NewOrganizationService(svc *Service) *OrganizationService {
 	return &OrganizationService{Service: svc}
 }
 
-func (s *OrganizationService) UpdateMempership(
+func (s *OrganizationService) UpdateMembership(
 	ctx context.Context,
 	organizationID gid.GID,
 	membershipID gid.GID,
@@ -792,10 +792,6 @@ func (s *OrganizationService) UpdateOrganization(ctx context.Context, organizati
 			}
 
 			organization.UpdatedAt = now
-
-			if req.Name != nil {
-				organization.Name = *req.Name
-			}
 
 			if req.Name != nil {
 				organization.Name = *req.Name

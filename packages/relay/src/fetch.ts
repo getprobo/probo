@@ -24,19 +24,19 @@ import {
 import { GraphQLError } from "graphql";
 
 const hasUnauthenticatedError = (error: GraphQLError) =>
-    error.extensions?.code == "UNAUTHENTICATED";
+    error.extensions?.code === "UNAUTHENTICATED";
 
 const hasFullNameRequiredError = (error: GraphQLError) =>
-    error.extensions?.code == "FULL_NAME_REQUIRED";
+    error.extensions?.code === "FULL_NAME_REQUIRED";
 
 const hasAssumptionRequiredError = (error: GraphQLError) =>
-    error.extensions?.code == "ASSUMPTION_REQUIRED";
+    error.extensions?.code === "ASSUMPTION_REQUIRED";
 
 const hasNDASignatureRequiredError = (error: GraphQLError) =>
-    error.extensions?.code == "NDA_SIGNATURE_REQUIRED";
+    error.extensions?.code === "NDA_SIGNATURE_REQUIRED";
 
 const hasForbiddenError = (error: GraphQLError) =>
-    error.extensions?.code == "FORBIDDEN";
+    error.extensions?.code === "FORBIDDEN";
 
 export const makeFetchQuery = (endpoint: string): FetchFunction => {
     return async (request, variables, _, uploadables) => {

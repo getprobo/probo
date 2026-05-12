@@ -61,7 +61,7 @@ func (r *mutationResolver) UpdateMembership(ctx context.Context, input types.Upd
 		}
 	}
 
-	membership, err := r.iam.OrganizationService.UpdateMempership(ctx, input.OrganizationID, input.MembershipID, input.Role)
+	membership, err := r.iam.OrganizationService.UpdateMembership(ctx, input.OrganizationID, input.MembershipID, input.Role)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot update membership", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
