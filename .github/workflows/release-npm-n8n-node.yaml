@@ -1,0 +1,94 @@
+name: "Release n8n node"
+
+on:
+  push:
+    tags:
+      - "@probo/n8n-nodes-probo/v*"
+
+permissions:
+  contents: "read"
+
+jobs:
+  publish:
+    name: "publish"
+    runs-on: "ubuntu-latest"
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    steps:
+      - uses: "actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd" # v6
+        with:
+          fetch-depth: 0
+          submodules: recursive
+      - uses: "actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f" # v6
+        with:
+          node-version-file: ".nvmrc"
+          cache: "npm"
+          registry-url: "https://registry.npmjs.org"
+          scope: "@probo"
+      - run: "npm ci"
+      - name: "Verify package.json version matches tag"
+        run: |
+          TAG_VERSION="${GITHUB_REF_NAME##*/v}"
+          PKG_VERSION="$(node -p "require('./packages/n8n-node/package.json').version")"
+          if [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
+            echo "tag version ($TAG_VERSION) does not match package.json version ($PKG_VERSION)" >&2
+            exit 1
+          fi
+      - run: "npm --workspace @probo/n8n-nodes-probo run build"
+      - uses: "anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610" # v0.24.0
+        with:
+          path: ./packages/n8n-node
+          format: cyclonedx-json
+          output-file: packages/n8n-node/sbom.json
+      - uses: "anchore/scan-action@e1165082ffb1fe366ebaf02d8526e7c4989ea9d2" # v7.4.0
+        with:
+          path: ./packages/n8n-node
+          fail-build: true
+          severity-cutoff: critical
+      - name: "Generate checksums for dist files"
+        run: |
+          cd packages/n8n-node/dist
+          find . -type f | while read file; do
+            echo "$(sha256sum "$file" | head -c 64)  $file"
+          done > ../checksums.txt
+      - run: "npm --workspace @probo/n8n-nodes-probo publish --access public --dry-run"
+      - run: "npm --workspace @probo/n8n-nodes-probo publish --access public"
+      - uses: "actions/attest-sbom@c604332985a26aa8cf1bdc465b92731239ec6b9e" # v4
+        with:
+          subject-path: "packages/n8n-node/dist/**"
+          sbom-path: "packages/n8n-node/sbom.json"
+      - uses: "actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32" # v4
+        with:
+          subject-path: "packages/n8n-node/dist/**"
+      - name: "Extract release notes"
+        run: |
+          VERSION="${GITHUB_REF_NAME##*/v}"
+          awk -v ver="$VERSION" '
+            /^## \[/ { if (found) exit; if ($0 ~ "\\[" ver "\\]") found=1 }
+            found
+          ' packages/n8n-node/CHANGELOG.md > release-notes.md
+      - name: "Create GitHub release"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PRERELEASE_FLAG=""
+          if echo "${GITHUB_REF_NAME}" | grep -qE '(alpha|beta|rc)'; then
+            PRERELEASE_FLAG="--prerelease"
+          fi
+
+          gh release delete "${GITHUB_REF_NAME}" --yes 2>/dev/null || true
+
+          gh release create "${GITHUB_REF_NAME}" \
+            --title "${GITHUB_REF_NAME}" \
+            --notes-file release-notes.md \
+            $PRERELEASE_FLAG \
+            packages/n8n-node/sbom.json packages/n8n-node/checksums.txt
+      - uses: "actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f" # v7
+        with:
+          name: "npm-sbom"
+          path: |
+            packages/n8n-node/sbom.json
+            packages/n8n-node/checksums.txt
+          retention-days: 30

@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -19,56 +19,43 @@ import (
 	"fmt"
 )
 
-type (
-	DocumentStatus uint8
-)
+type DocumentStatus string
 
 const (
-	DocumentStatusDraft DocumentStatus = iota
-	DocumentStatusPublished
+	DocumentStatusActive   DocumentStatus = "ACTIVE"
+	DocumentStatusArchived DocumentStatus = "ARCHIVED"
 )
 
-func (ps DocumentStatus) MarshalText() ([]byte, error) {
-	return []byte(ps.String()), nil
+func (s DocumentStatus) IsValid() bool {
+	switch s {
+	case DocumentStatusActive, DocumentStatusArchived:
+		return true
+	}
+	return false
 }
 
-func (ps *DocumentStatus) UnmarshalText(data []byte) error {
-	val := string(data)
+func (s DocumentStatus) String() string { return string(s) }
 
-	switch val {
-	case DocumentStatusDraft.String():
-		*ps = DocumentStatusDraft
-	case DocumentStatusPublished.String():
-		*ps = DocumentStatusPublished
-	default:
-		return fmt.Errorf("invalid DocumentStatus value: %q", val)
+func (s *DocumentStatus) UnmarshalText(text []byte) error {
+	*s = DocumentStatus(text)
+	if !s.IsValid() {
+		return fmt.Errorf("%s is not a valid DocumentStatus", string(text))
 	}
-
 	return nil
 }
 
-func (ps DocumentStatus) String() string {
-	var val string
-
-	switch ps {
-	case DocumentStatusDraft:
-		val = "DRAFT"
-	case DocumentStatusPublished:
-		val = "PUBLISHED"
-	}
-
-	return val
+func (s DocumentStatus) MarshalText() ([]byte, error) {
+	return []byte(s.String()), nil
 }
 
-func (ps *DocumentStatus) Scan(value any) error {
+func (s *DocumentStatus) Scan(value any) error {
 	val, ok := value.(string)
 	if !ok {
 		return fmt.Errorf("invalid scan source for DocumentStatus, expected string got %T", value)
 	}
-
-	return ps.UnmarshalText([]byte(val))
+	return s.UnmarshalText([]byte(val))
 }
 
-func (ps DocumentStatus) Value() (driver.Value, error) {
-	return ps.String(), nil
+func (s DocumentStatus) Value() (driver.Value, error) {
+	return s.String(), nil
 }

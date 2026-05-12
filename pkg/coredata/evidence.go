@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -30,18 +30,20 @@ import (
 
 type (
 	Evidence struct {
-		ID             gid.GID       `db:"id"`
-		OrganizationID gid.GID       `db:"organization_id"`
-		MeasureID      gid.GID       `db:"measure_id"`
-		TaskID         *gid.GID      `db:"task_id"`
-		State          EvidenceState `db:"state"`
-		ReferenceID    string        `db:"reference_id"`
-		Type           EvidenceType  `db:"type"`
-		URL            string        `db:"url"`
-		EvidenceFileId *gid.GID      `db:"evidence_file_id"`
-		Description    *string       `db:"description"`
-		CreatedAt      time.Time     `db:"created_at"`
-		UpdatedAt      time.Time     `db:"updated_at"`
+		ID                             gid.GID                   `db:"id"`
+		OrganizationID                 gid.GID                   `db:"organization_id"`
+		MeasureID                      gid.GID                   `db:"measure_id"`
+		TaskID                         *gid.GID                  `db:"task_id"`
+		State                          EvidenceState             `db:"state"`
+		ReferenceID                    string                    `db:"reference_id"`
+		Type                           EvidenceType              `db:"type"`
+		URL                            string                    `db:"url"`
+		EvidenceFileId                 *gid.GID                  `db:"evidence_file_id"`
+		Description                    *string                   `db:"description"`
+		DescriptionStatus              EvidenceDescriptionStatus `db:"description_status"`
+		DescriptionProcessingStartedAt *time.Time                `db:"description_processing_started_at"`
+		CreatedAt                      time.Time                 `db:"created_at"`
+		UpdatedAt                      time.Time                 `db:"updated_at"`
 	}
 
 	Evidences []*Evidence
@@ -57,7 +59,7 @@ func (e Evidence) CursorKey(orderBy EvidenceOrderField) page.CursorKey {
 }
 
 // AuthorizationAttributes returns the authorization attributes for policy evaluation.
-func (e *Evidence) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+func (e *Evidence) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	q := `SELECT organization_id FROM evidences WHERE id = $1 LIMIT 1;`
 
 	var organizationID gid.GID
@@ -73,7 +75,7 @@ func (e *Evidence) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (m
 
 func (e Evidence) Upsert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 ) error {
 	q := `
@@ -89,6 +91,8 @@ INSERT INTO
         url,
         evidence_file_id,
         description,
+        description_status,
+        description_processing_started_at,
         created_at,
         updated_at
     )
@@ -103,6 +107,8 @@ VALUES (
     @url,
     @evidence_file_id,
     @description,
+    @description_status,
+    @description_processing_started_at,
     @created_at,
     @updated_at
 )
@@ -114,18 +120,20 @@ WHERE evidences.state = 'REQUESTED';
 `
 
 	args := pgx.StrictNamedArgs{
-		"tenant_id":        scope.GetTenantID(),
-		"evidence_id":      e.ID,
-		"measure_id":       e.MeasureID,
-		"task_id":          e.TaskID,
-		"reference_id":     e.ReferenceID,
-		"evidence_file_id": e.EvidenceFileId,
-		"created_at":       e.CreatedAt,
-		"updated_at":       e.UpdatedAt,
-		"state":            e.State,
-		"type":             e.Type,
-		"url":              e.URL,
-		"description":      e.Description,
+		"tenant_id":                         scope.GetTenantID(),
+		"evidence_id":                       e.ID,
+		"measure_id":                        e.MeasureID,
+		"task_id":                           e.TaskID,
+		"reference_id":                      e.ReferenceID,
+		"evidence_file_id":                  e.EvidenceFileId,
+		"created_at":                        e.CreatedAt,
+		"updated_at":                        e.UpdatedAt,
+		"state":                             e.State,
+		"type":                              e.Type,
+		"url":                               e.URL,
+		"description":                       e.Description,
+		"description_status":                e.DescriptionStatus,
+		"description_processing_started_at": e.DescriptionProcessingStartedAt,
 	}
 	_, err := conn.Exec(ctx, q, args)
 	return err
@@ -133,7 +141,7 @@ WHERE evidences.state = 'REQUESTED';
 
 func (e Evidence) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -150,6 +158,8 @@ INSERT INTO
         url,
         evidence_file_id,
         description,
+        description_status,
+        description_processing_started_at,
         created_at,
         updated_at
     )
@@ -165,25 +175,29 @@ VALUES (
     @url,
     @evidence_file_id,
     @description,
+    @description_status,
+    @description_processing_started_at,
     @created_at,
     @updated_at
 )
 `
 
 	args := pgx.StrictNamedArgs{
-		"tenant_id":        scope.GetTenantID(),
-		"evidence_id":      e.ID,
-		"organization_id":  e.OrganizationID,
-		"measure_id":       e.MeasureID,
-		"task_id":          e.TaskID,
-		"reference_id":     e.ReferenceID,
-		"evidence_file_id": e.EvidenceFileId,
-		"created_at":       e.CreatedAt,
-		"updated_at":       e.UpdatedAt,
-		"state":            e.State,
-		"type":             e.Type,
-		"url":              e.URL,
-		"description":      e.Description,
+		"tenant_id":                         scope.GetTenantID(),
+		"evidence_id":                       e.ID,
+		"organization_id":                   e.OrganizationID,
+		"measure_id":                        e.MeasureID,
+		"task_id":                           e.TaskID,
+		"reference_id":                      e.ReferenceID,
+		"evidence_file_id":                  e.EvidenceFileId,
+		"created_at":                        e.CreatedAt,
+		"updated_at":                        e.UpdatedAt,
+		"state":                             e.State,
+		"type":                              e.Type,
+		"url":                               e.URL,
+		"description":                       e.Description,
+		"description_status":                e.DescriptionStatus,
+		"description_processing_started_at": e.DescriptionProcessingStartedAt,
 	}
 	_, err := conn.Exec(ctx, q, args)
 
@@ -202,7 +216,7 @@ VALUES (
 
 func (e *Evidence) LoadByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	evidenceID gid.GID,
 ) error {
@@ -218,6 +232,8 @@ SELECT
     url,
     evidence_file_id,
     description,
+    description_status,
+    description_processing_started_at,
     created_at,
     updated_at
 FROM
@@ -250,7 +266,7 @@ LIMIT 1;
 
 func (e *Evidences) CountByMeasureID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	measureID gid.GID,
 ) (int, error) {
@@ -282,7 +298,7 @@ WHERE
 
 func (e *Evidences) LoadByMeasureID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	measureID gid.GID,
 	cursor *page.Cursor[EvidenceOrderField],
@@ -299,6 +315,8 @@ SELECT
 	url,
 	evidence_file_id,
 	description,
+	description_status,
+	description_processing_started_at,
 	created_at,
 	updated_at
 FROM
@@ -332,7 +350,7 @@ WHERE
 
 func (e *Evidences) CountByTaskID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	taskID gid.GID,
 ) (int, error) {
@@ -364,7 +382,7 @@ WHERE
 
 func (e *Evidences) LoadByTaskID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	taskID gid.GID,
 	cursor *page.Cursor[EvidenceOrderField],
@@ -381,6 +399,8 @@ SELECT
     url,
     evidence_file_id,
     description,
+    description_status,
+    description_processing_started_at,
     created_at,
     updated_at
 FROM
@@ -414,7 +434,7 @@ WHERE
 
 func (e Evidence) Update(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -426,6 +446,8 @@ SET
 	evidence_file_id = @evidence_file_id,
 	url = @url,
 	description = @description,
+	description_status = @description_status,
+	description_processing_started_at = @description_processing_started_at,
 	updated_at = @updated_at
 WHERE
     %s
@@ -435,13 +457,15 @@ WHERE
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"evidence_id":      e.ID,
-		"type":             e.Type,
-		"state":            e.State,
-		"evidence_file_id": e.EvidenceFileId,
-		"url":              e.URL,
-		"description":      e.Description,
-		"updated_at":       e.UpdatedAt,
+		"evidence_id":                       e.ID,
+		"type":                              e.Type,
+		"state":                             e.State,
+		"evidence_file_id":                  e.EvidenceFileId,
+		"url":                               e.URL,
+		"description":                       e.Description,
+		"description_status":                e.DescriptionStatus,
+		"description_processing_started_at": e.DescriptionProcessingStartedAt,
+		"updated_at":                        e.UpdatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -451,7 +475,7 @@ WHERE
 
 func (e Evidence) Delete(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -473,4 +497,72 @@ WHERE
 	}
 
 	return nil
+}
+
+func (e *Evidence) LoadNextPendingDescriptionForUpdateSkipLocked(
+	ctx context.Context,
+	conn pg.Tx,
+) error {
+	q := `
+SELECT
+    id,
+    organization_id,
+    task_id,
+    measure_id,
+    reference_id,
+    state,
+    type,
+    url,
+    evidence_file_id,
+    description,
+    description_status,
+    description_processing_started_at,
+    created_at,
+    updated_at
+FROM
+    evidences
+WHERE
+    description_status = 'PENDING'
+    AND evidence_file_id IS NOT NULL
+ORDER BY
+    created_at ASC
+LIMIT 1
+FOR UPDATE SKIP LOCKED;
+`
+
+	rows, err := conn.Query(ctx, q)
+	if err != nil {
+		return fmt.Errorf("cannot query evidence: %w", err)
+	}
+
+	evidence, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Evidence])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+		return fmt.Errorf("cannot collect evidence: %w", err)
+	}
+
+	*e = evidence
+
+	return nil
+}
+
+func ResetStaleDescriptionProcessing(
+	ctx context.Context,
+	conn pg.Querier,
+	staleAfter time.Duration,
+) error {
+	q := `
+UPDATE evidences
+SET
+    description_status = 'PENDING',
+    description_processing_started_at = NULL
+WHERE
+    description_status = 'PROCESSING'
+    AND description_processing_started_at < $1;
+`
+
+	_, err := conn.Exec(ctx, q, time.Now().Add(-staleAfter))
+	return err
 }

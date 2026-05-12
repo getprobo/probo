@@ -1,0 +1,730 @@
+enum CookieBannerState
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.CookieBannerState") {
+    ACTIVE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CookieBannerStateActive"
+        )
+    INACTIVE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CookieBannerStateInactive"
+        )
+}
+
+enum CookieConsentMode
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.CookieConsentMode") {
+    OPT_IN
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CookieConsentModeOptIn"
+        )
+    OPT_OUT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CookieConsentModeOptOut"
+        )
+}
+
+enum CookieSource
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.CookieSource") {
+    SCRIPT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CookieSourceScript"
+        )
+    PRE_EXISTING
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CookieSourcePreExisting"
+        )
+}
+
+enum TrackerType
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.TrackerType") {
+    COOKIE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TrackerTypeCookie"
+        )
+    LOCAL_STORAGE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TrackerTypeLocalStorage"
+        )
+    SESSION_STORAGE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TrackerTypeSessionStorage"
+        )
+    INDEXED_DB
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TrackerTypeIndexedDB"
+        )
+    CACHE_STORAGE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TrackerTypeCacheStorage"
+        )
+}
+
+enum CookieBannerOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.CookieBannerOrderField"
+    ) {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CookieBannerOrderFieldCreatedAt"
+        )
+}
+
+enum CookieCategoryOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.CookieCategoryOrderField"
+    ) {
+    RANK
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CookieCategoryOrderFieldRank"
+        )
+}
+
+enum CookieCategoryKind
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.CookieCategoryKind"
+    ) {
+    NORMAL
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CookieCategoryKindNormal"
+        )
+    NECESSARY
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CookieCategoryKindNecessary"
+        )
+    UNCATEGORISED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CookieCategoryKindUncategorised"
+        )
+}
+
+input CookieBannerOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.CookieBannerOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: CookieBannerOrderField!
+}
+
+input CookieCategoryOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.CookieCategoryOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: CookieCategoryOrderField!
+}
+
+type CookieBanner implements Node {
+    id: ID!
+    name: String!
+    origin: String!
+    state: CookieBannerState!
+    privacyPolicyUrl: String
+    cookiePolicyUrl: String!
+    consentExpiryDays: Int!
+    consentMode: CookieConsentMode!
+    showBranding: Boolean!
+    defaultLanguage: String!
+
+    organization: Organization @goField(forceResolver: true)
+
+    consentCategories(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: CookieCategoryOrder
+    ): CookieCategoryConnection @goField(forceResolver: true)
+
+    translations: [CookieBannerTranslation!]! @goField(forceResolver: true)
+
+    latestVersion: CookieBannerVersion @goField(forceResolver: true)
+
+    consentRecords(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: CookieConsentRecordOrder
+        filter: CookieConsentRecordFilter
+    ): CookieConsentRecordConnection @goField(forceResolver: true)
+
+    uncategorisedTrackerPatterns(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: TrackerPatternOrder
+        filter: TrackerPatternFilter
+    ): TrackerPatternConnection @goField(forceResolver: true)
+
+    uncategorisedTrackerResources(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: TrackerResourceOrder
+        filter: TrackerResourceFilter
+    ): TrackerResourceConnection @goField(forceResolver: true)
+
+    createdAt: Datetime!
+    updatedAt: Datetime!
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type CookieBannerTranslation implements Node {
+    id: ID!
+    language: String!
+    translations: String!
+    createdAt: Datetime!
+    updatedAt: Datetime!
+}
+
+type CookieCategory implements Node {
+    id: ID!
+    cookieBanner: CookieBanner @goField(forceResolver: true)
+    name: String!
+    slug: String!
+    description: String!
+    kind: CookieCategoryKind!
+    rank: Int!
+    gcmConsentTypes: [String!]!
+    posthogConsent: Boolean!
+
+    trackerPatterns(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: TrackerPatternOrder
+    ): TrackerPatternConnection @goField(forceResolver: true)
+
+    trackerResources(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: TrackerResourceOrder
+    ): TrackerResourceConnection @goField(forceResolver: true)
+
+    createdAt: Datetime!
+    updatedAt: Datetime!
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+enum TrackerPatternMatchType
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.TrackerPatternMatchType"
+    ) {
+    EXACT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TrackerPatternMatchTypeExact"
+        )
+    GLOB
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TrackerPatternMatchTypeGlob"
+        )
+}
+
+enum TrackerPatternOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.TrackerPatternOrderField"
+    ) {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TrackerPatternOrderFieldCreatedAt"
+        )
+    NAME
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TrackerPatternOrderFieldName"
+        )
+    LAST_MATCHED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TrackerPatternOrderFieldLastMatchedAt"
+        )
+    UPDATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TrackerPatternOrderFieldUpdatedAt"
+        )
+    SOURCE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TrackerPatternOrderFieldSource"
+        )
+}
+
+type TrackerPattern implements Node {
+    id: ID!
+    cookieCategory: CookieCategory @goField(forceResolver: true)
+    trackerType: TrackerType!
+    pattern: String!
+    matchType: TrackerPatternMatchType!
+    displayName: String!
+    maxAgeSeconds: Int
+    description: String!
+    source: CookieSource
+    excluded: Boolean!
+    detectedCount: Int! @goField(forceResolver: true)
+    lastMatchedAt: Datetime
+    createdAt: Datetime!
+    updatedAt: Datetime!
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type TrackerPatternConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.TrackerPatternConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [TrackerPatternEdge!]!
+    pageInfo: PageInfo!
+}
+
+type TrackerPatternEdge {
+    cursor: CursorKey!
+    node: TrackerPattern!
+}
+
+input TrackerPatternOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.TrackerPatternOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: TrackerPatternOrderField!
+}
+
+input TrackerPatternFilter
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.TrackerPatternFilter"
+    ) {
+    query: String
+    source: CookieSource
+    trackerType: TrackerType
+}
+
+enum TrackerResourceType
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.TrackerResourceType") {
+    SCRIPT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TrackerResourceTypeScript"
+        )
+    IFRAME
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TrackerResourceTypeIframe"
+        )
+    IMAGE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TrackerResourceTypeImage"
+        )
+    STYLESHEET
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TrackerResourceTypeStylesheet"
+        )
+    FONT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TrackerResourceTypeFont"
+        )
+    BEACON
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TrackerResourceTypeBeacon"
+        )
+    FETCH
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TrackerResourceTypeFetch"
+        )
+    MEDIA
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TrackerResourceTypeMedia"
+        )
+    SERVICE_WORKER
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TrackerResourceTypeServiceWorker"
+        )
+}
+
+enum TrackerResourceOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.TrackerResourceOrderField"
+    ) {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TrackerResourceOrderFieldCreatedAt"
+        )
+    LAST_DETECTED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TrackerResourceOrderFieldLastDetectedAt"
+        )
+    ORIGIN
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TrackerResourceOrderFieldOrigin"
+        )
+    UPDATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TrackerResourceOrderFieldUpdatedAt"
+        )
+}
+
+type TrackerResource implements Node {
+    id: ID!
+    cookieCategory: CookieCategory @goField(forceResolver: true)
+    type: TrackerResourceType!
+    origin: String!
+    path: String!
+    displayName: String!
+    description: String!
+    excluded: Boolean!
+    lastDetectedAt: Datetime
+    createdAt: Datetime!
+    updatedAt: Datetime!
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type TrackerResourceConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.TrackerResourceConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [TrackerResourceEdge!]!
+    pageInfo: PageInfo!
+}
+
+type TrackerResourceEdge {
+    cursor: CursorKey!
+    node: TrackerResource!
+}
+
+input TrackerResourceOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.TrackerResourceOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: TrackerResourceOrderField!
+}
+
+input TrackerResourceFilter
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.TrackerResourceFilter"
+    ) {
+    query: String
+    type: TrackerResourceType
+}
+
+type CookieBannerVersion implements Node {
+    id: ID!
+    version: Int!
+    state: String!
+    categories: [CookieBannerVersionCategory!]! @goField(forceResolver: true)
+    createdAt: Datetime!
+    updatedAt: Datetime!
+}
+
+type CookieBannerVersionCategory {
+    name: String!
+    slug: String!
+    description: String!
+    kind: CookieCategoryKind!
+    cookies: [CookieBannerVersionCookie!]!
+}
+
+type CookieBannerVersionCookie {
+    name: String!
+    maxAgeSeconds: Int
+    description: String!
+}
+
+type CookieBannerConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.CookieBannerConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [CookieBannerEdge!]!
+    pageInfo: PageInfo!
+}
+
+type CookieBannerEdge {
+    cursor: CursorKey!
+    node: CookieBanner!
+}
+
+type CookieCategoryConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.CookieCategoryConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [CookieCategoryEdge!]!
+    pageInfo: PageInfo!
+}
+
+type CookieCategoryEdge {
+    cursor: CursorKey!
+    node: CookieCategory!
+}
+
+extend type Mutation {
+    createCookieBanner(
+        input: CreateCookieBannerInput!
+    ): CreateCookieBannerPayload!
+    updateCookieBanner(
+        input: UpdateCookieBannerInput!
+    ): UpdateCookieBannerPayload!
+    deleteCookieBanner(
+        input: DeleteCookieBannerInput!
+    ): DeleteCookieBannerPayload!
+    activateCookieBanner(
+        input: ActivateCookieBannerInput!
+    ): ActivateCookieBannerPayload!
+    deactivateCookieBanner(
+        input: DeactivateCookieBannerInput!
+    ): DeactivateCookieBannerPayload!
+    publishCookieBannerVersion(
+        input: PublishCookieBannerVersionInput!
+    ): PublishCookieBannerVersionPayload!
+    createCookieCategory(
+        input: CreateCookieCategoryInput!
+    ): CreateCookieCategoryPayload!
+    updateCookieCategory(
+        input: UpdateCookieCategoryInput!
+    ): UpdateCookieCategoryPayload!
+    deleteCookieCategory(
+        input: DeleteCookieCategoryInput!
+    ): DeleteCookieCategoryPayload!
+    reorderCookieCategory(
+        input: ReorderCookieCategoryInput!
+    ): ReorderCookieCategoryPayload!
+    upsertCookieBannerTranslation(
+        input: UpsertCookieBannerTranslationInput!
+    ): UpsertCookieBannerTranslationPayload!
+    createTrackerPattern(
+        input: CreateTrackerPatternInput!
+    ): CreateTrackerPatternPayload!
+    updateTrackerPattern(
+        input: UpdateTrackerPatternInput!
+    ): UpdateTrackerPatternPayload!
+    deleteTrackerPattern(
+        input: DeleteTrackerPatternInput!
+    ): DeleteTrackerPatternPayload!
+    moveTrackerPatternToCategory(
+        input: MoveTrackerPatternToCategoryInput!
+    ): MoveTrackerPatternToCategoryPayload!
+    createTrackerResource(
+        input: CreateTrackerResourceInput!
+    ): CreateTrackerResourcePayload!
+    updateTrackerResource(
+        input: UpdateTrackerResourceInput!
+    ): UpdateTrackerResourcePayload!
+    deleteTrackerResource(
+        input: DeleteTrackerResourceInput!
+    ): DeleteTrackerResourcePayload!
+    moveTrackerResourceToCategory(
+        input: MoveTrackerResourceToCategoryInput!
+    ): MoveTrackerResourceToCategoryPayload!
+}
+
+input CreateCookieBannerInput {
+    organizationId: ID!
+    name: String!
+    origin: String!
+    privacyPolicyUrl: String
+    cookiePolicyUrl: String!
+    consentExpiryDays: Int!
+    consentMode: CookieConsentMode!
+}
+
+input UpdateCookieBannerInput {
+    cookieBannerId: ID!
+    name: String
+    privacyPolicyUrl: String
+    cookiePolicyUrl: String
+    consentExpiryDays: Int
+    consentMode: CookieConsentMode
+    defaultLanguage: String
+}
+
+input DeleteCookieBannerInput {
+    cookieBannerId: ID!
+}
+
+input ActivateCookieBannerInput {
+    cookieBannerId: ID!
+}
+
+input DeactivateCookieBannerInput {
+    cookieBannerId: ID!
+}
+
+input PublishCookieBannerVersionInput {
+    cookieBannerId: ID!
+}
+
+input CreateCookieCategoryInput {
+    cookieBannerId: ID!
+    name: String!
+    slug: String!
+    description: String!
+    rank: Int!
+}
+
+input UpdateCookieCategoryInput {
+    cookieCategoryId: ID!
+    name: String
+    slug: String
+    description: String
+    gcmConsentTypes: [String!]
+    posthogConsent: Boolean
+}
+
+input DeleteCookieCategoryInput {
+    cookieCategoryId: ID!
+}
+
+input ReorderCookieCategoryInput {
+    cookieCategoryId: ID!
+    rank: Int!
+}
+
+type CreateCookieBannerPayload {
+    cookieBannerEdge: CookieBannerEdge!
+}
+
+type UpdateCookieBannerPayload {
+    cookieBanner: CookieBanner!
+}
+
+type DeleteCookieBannerPayload {
+    deletedCookieBannerId: ID!
+}
+
+type ActivateCookieBannerPayload {
+    cookieBanner: CookieBanner!
+}
+
+type DeactivateCookieBannerPayload {
+    cookieBanner: CookieBanner!
+}
+
+type PublishCookieBannerVersionPayload {
+    cookieBannerVersion: CookieBannerVersion!
+    cookieBanner: CookieBanner!
+}
+
+type CreateCookieCategoryPayload {
+    cookieCategoryEdge: CookieCategoryEdge!
+    cookieBanner: CookieBanner!
+}
+
+type UpdateCookieCategoryPayload {
+    cookieCategory: CookieCategory!
+    cookieBanner: CookieBanner!
+}
+
+type DeleteCookieCategoryPayload {
+    deletedCookieCategoryId: ID!
+    cookieBanner: CookieBanner!
+}
+
+type ReorderCookieCategoryPayload {
+    cookieBanner: CookieBanner!
+}
+
+input UpsertCookieBannerTranslationInput {
+    cookieBannerId: ID!
+    language: String!
+    translations: String!
+}
+
+type UpsertCookieBannerTranslationPayload {
+    cookieBannerTranslation: CookieBannerTranslation!
+    cookieBanner: CookieBanner!
+}
+
+input CreateTrackerPatternInput {
+    cookieCategoryId: ID!
+    trackerType: TrackerType
+    pattern: String!
+    matchType: TrackerPatternMatchType!
+    displayName: String!
+    maxAgeSeconds: Int
+    description: String
+}
+
+input UpdateTrackerPatternInput {
+    trackerPatternId: ID!
+    maxAgeSeconds: Int @goField(omittable: true)
+    description: String
+    excluded: Boolean
+}
+
+input DeleteTrackerPatternInput {
+    trackerPatternId: ID!
+}
+
+input MoveTrackerPatternToCategoryInput {
+    trackerPatternId: ID!
+    targetCookieCategoryId: ID!
+}
+
+type CreateTrackerPatternPayload {
+    trackerPatternEdge: TrackerPatternEdge!
+    cookieBanner: CookieBanner!
+}
+
+type UpdateTrackerPatternPayload {
+    trackerPattern: TrackerPattern!
+    cookieBanner: CookieBanner!
+}
+
+type DeleteTrackerPatternPayload {
+    deletedTrackerPatternId: ID!
+    cookieBanner: CookieBanner!
+}
+
+type MoveTrackerPatternToCategoryPayload {
+    trackerPattern: TrackerPattern!
+    cookieBanner: CookieBanner!
+}
+
+input CreateTrackerResourceInput {
+    cookieCategoryId: ID!
+    type: TrackerResourceType!
+    origin: String!
+    path: String!
+    displayName: String!
+    description: String
+}
+
+input UpdateTrackerResourceInput {
+    trackerResourceId: ID!
+    displayName: String
+    description: String
+    excluded: Boolean
+}
+
+input DeleteTrackerResourceInput {
+    trackerResourceId: ID!
+}
+
+input MoveTrackerResourceToCategoryInput {
+    trackerResourceId: ID!
+    targetCookieCategoryId: ID!
+}
+
+type CreateTrackerResourcePayload {
+    trackerResourceEdge: TrackerResourceEdge!
+    cookieBanner: CookieBanner!
+}
+
+type UpdateTrackerResourcePayload {
+    trackerResource: TrackerResource!
+    cookieBanner: CookieBanner!
+}
+
+type DeleteTrackerResourcePayload {
+    deletedTrackerResourceId: ID!
+    cookieBanner: CookieBanner!
+}
+
+type MoveTrackerResourceToCategoryPayload {
+    trackerResource: TrackerResource!
+    cookieBanner: CookieBanner!
+}

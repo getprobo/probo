@@ -1,0 +1,141 @@
+.ProseMirror-focused {
+    outline-width: 0 !important;
+    outline-color: transparent !important;
+    outline-style: none !important;
+}
+
+.tiptap {
+    p {
+        @apply my-2 min-w-0.5 font-light text-sm;
+        code { @apply py-0.5 px-1; }
+    }
+
+    strong { @apply font-semibold; }
+
+    h1 { @apply text-4xl font-semibold mt-4; }
+    h2 { @apply text-3xl font-semibold mt-3; }
+    h3 { @apply text-2xl font-semibold mt-2; }
+    h4 { @apply text-xl font-semibold mt-2; }
+    h5 { @apply text-lg font-semibold mt-2; }
+    h6 { @apply text-base font-semibold mt-2; }
+
+    ul {
+        @apply list-disc list-outside my-2 pl-4;
+    }
+
+    ol {
+        @apply list-decimal list-outside my-2 pl-4;
+    }
+
+    a { @apply text-txt-info underline font-normal; }
+
+    &.pointer-on-hovered-link {
+        a:hover { cursor: pointer; }
+    }
+
+    blockquote {
+        @apply my-2 pl-4 border-l-4 border-l-border-solid;
+        p { @apply my-0; }
+    }
+
+    hr { @apply my-4 border-t-border-solid border-t; }
+
+    pre { @apply my-4 px-6 py-4 bg-border-solid rounded-lg text-sm; }
+
+    code { @apply text-inherit font-mono bg-border-solid rounded-md; }
+
+    p.is-empty-focused::before {
+        content: attr(data-placeholder);
+        @apply text-txt-tertiary pointer-events-none float-left h-0;
+    }
+
+    .slash-search {
+        @apply bg-subtle rounded px-1.5 py-0.5;
+    }
+
+    .slash-search[data-empty="true"]::after {
+        content: attr(data-placeholder);
+        @apply text-txt-tertiary;
+    }
+
+    table {
+        @apply border border-border-mid border-collapse w-max;
+        tbody {
+            @apply border border-border-mid border-collapse;
+        }
+        tr {
+            @apply border border-border-mid border-collapse;
+        }
+        th {
+            @apply px-2 py-1.5 border border-border-mid border-collapse bg-subtle text-left font-semibold relative;
+            p { @apply m-0 font-medium; }
+        }
+        td {
+            @apply px-2 py-1.5 border border-border-mid border-collapse bg-level-0 text-left relative;
+            p { @apply m-0; }
+        }
+    }
+
+    .column-resize-handle {
+        @apply absolute top-0 -right-px bottom-0 w-0.5 bg-border-info pointer-events-none z-20;
+    }
+
+    &.resize-cursor {
+        cursor: col-resize;
+    }
+
+    .tableWrapper {
+        @apply relative overflow-auto my-4 max-h-[70vh];
+    }
+
+    .mermaid-block {
+        @apply my-4 rounded-lg relative
+               border border-transparent transition-colors;
+
+        &:hover, &.editing {
+            @apply border-border-mid;
+        }
+
+        &:not(.editing) {
+            caret-color: transparent;
+        }
+
+        pre {
+            @apply my-0 rounded-lg border-none;
+        }
+    }
+
+    .mermaid-toolbar {
+        @apply flex gap-1 p-1.5 absolute top-0 right-0 z-10 opacity-0 pointer-events-none transition-opacity;
+
+        .mermaid-block:hover &, .mermaid-block.editing & {
+            @apply opacity-100 pointer-events-auto;
+        }
+    }
+
+    .mermaid-toolbar-btn {
+        @apply flex items-center gap-1 px-2 py-1 text-xs font-medium rounded
+               text-txt-secondary cursor-pointer
+               hover:bg-border-solid transition-colors;
+
+        &.active {
+            @apply bg-border-solid text-txt-primary;
+        }
+    }
+
+    .mermaid-preview {
+        @apply flex justify-center p-6 min-h-24;
+
+        svg {
+            @apply max-w-full h-auto;
+        }
+    }
+
+    .mermaid-error {
+        @apply p-4 text-sm font-mono text-txt-danger;
+    }
+
+    .mermaid-empty {
+        @apply p-4 text-sm text-txt-tertiary text-center;
+    }
+}

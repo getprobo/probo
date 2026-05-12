@@ -1,5 +1,7 @@
 # Go Testing
 
+Test library: `github.com/stretchr/testify` (`require` for fatal, `assert` for non-fatal).
+
 ## Package naming
 
 Black-box test packages (`package foo_test`). White-box (`package foo`) only when testing unexported functions.

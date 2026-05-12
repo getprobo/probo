@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -68,7 +68,11 @@ func (p *Provider) ListUsers(ctx context.Context) (scimclient.Users, error) {
 	pageToken := ""
 
 	for {
-		call := adminService.Users.List().Customer("my_customer").MaxResults(500).Context(ctx)
+		call := adminService.Users.List().
+			Customer("my_customer").
+			MaxResults(500).
+			Projection("full").
+			Context(ctx)
 		if pageToken != "" {
 			call = call.PageToken(pageToken)
 		}

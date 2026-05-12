@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -35,7 +35,7 @@ type SAMLAssertion struct {
 
 func (s *SAMLAssertion) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 ) error {
 	query := `
 INSERT INTO iam_saml_assertions (id, organization_id, used_at, expires_at)
@@ -62,7 +62,7 @@ VALUES (@id, @organization_id, @used_at, @expires_at)
 	return nil
 }
 
-func DeleteExpiredSAMLAssertions(ctx context.Context, conn pg.Conn, now time.Time) (int64, error) {
+func DeleteExpiredSAMLAssertions(ctx context.Context, conn pg.Tx, now time.Time) (int64, error) {
 	query := `
 DELETE FROM iam_saml_assertions
 WHERE expires_at < @now

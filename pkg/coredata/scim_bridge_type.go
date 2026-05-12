@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -23,6 +23,7 @@ type SCIMBridgeType string
 
 const (
 	SCIMBridgeTypeGoogleWorkspace SCIMBridgeType = "GOOGLE_WORKSPACE"
+	SCIMBridgeTypeMicrosoft365    SCIMBridgeType = "MICROSOFT_365"
 )
 
 func (t SCIMBridgeType) String() string {
@@ -43,6 +44,8 @@ func (t *SCIMBridgeType) Scan(value any) error {
 	switch str {
 	case "GOOGLE_WORKSPACE":
 		*t = SCIMBridgeTypeGoogleWorkspace
+	case "MICROSOFT_365":
+		*t = SCIMBridgeTypeMicrosoft365
 	default:
 		return fmt.Errorf("invalid SCIMBridgeType value: %q", str)
 	}

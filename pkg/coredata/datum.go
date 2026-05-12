@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -34,17 +34,11 @@ type (
 		OrganizationID     gid.GID            `db:"organization_id"`
 		OwnerID            gid.GID            `db:"owner_profile_id"`
 		DataClassification DataClassification `db:"data_classification"`
-		SnapshotID         *gid.GID           `db:"snapshot_id"`
-		SourceID           *gid.GID           `db:"source_id"`
 		CreatedAt          time.Time          `db:"created_at"`
 		UpdatedAt          time.Time          `db:"updated_at"`
 	}
 
 	Data []*Datum
-
-	DataSnapshotter interface {
-		InsertDataSnapshots(ctx context.Context, conn pg.Conn, scope Scoper, organizationID, snapshotID gid.GID) error
-	}
 )
 
 func (d *Datum) CursorKey(field DatumOrderField) page.CursorKey {
@@ -61,7 +55,7 @@ func (d *Datum) CursorKey(field DatumOrderField) page.CursorKey {
 }
 
 // AuthorizationAttributes returns the authorization attributes for policy evaluation.
-func (d *Datum) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+func (d *Datum) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	q := `SELECT organization_id FROM data WHERE id = $1 LIMIT 1;`
 
 	var organizationID gid.GID
@@ -77,7 +71,7 @@ func (d *Datum) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[
 
 func (d *Datum) LoadByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	dataID gid.GID,
 ) error {
@@ -88,8 +82,6 @@ SELECT
 	owner_profile_id,
 	organization_id,
 	data_classification,
-	snapshot_id,
-	source_id,
 	created_at,
 	updated_at
 FROM
@@ -97,6 +89,7 @@ FROM
 WHERE
 	%s
 	AND id = @data_id
+	AND snapshot_id IS NULL
 LIMIT 1;
 `
 
@@ -122,7 +115,7 @@ LIMIT 1;
 
 func (d *Datum) LoadByOwnerID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 ) error {
 	q := `
@@ -132,8 +125,6 @@ SELECT
 	owner_profile_id,
 	organization_id,
 	data_classification,
-	snapshot_id,
-	source_id,
 	created_at,
 	updated_at
 FROM
@@ -141,6 +132,7 @@ FROM
 WHERE
 	%s
 	AND owner_profile_id = @owner_profile_id
+	AND snapshot_id IS NULL
 LIMIT 1;
 `
 
@@ -166,10 +158,9 @@ LIMIT 1;
 
 func (d *Data) CountByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
-	filter *DatumFilter,
 ) (int, error) {
 	q := `
 SELECT
@@ -179,14 +170,13 @@ FROM
 WHERE
 	%s
 	AND organization_id = @organization_id
-	AND %s
+	AND snapshot_id IS NULL
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"organization_id": organizationID}
 	maps.Copy(args, scope.SQLArguments())
-	maps.Copy(args, filter.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)
 
@@ -201,11 +191,10 @@ WHERE
 
 func (d *Data) LoadByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 	cursor *page.Cursor[DatumOrderField],
-	filter *DatumFilter,
 ) error {
 	q := `
 SELECT
@@ -214,8 +203,6 @@ SELECT
 	organization_id,
 	owner_profile_id,
 	data_classification,
-	snapshot_id,
-	source_id,
 	created_at,
 	updated_at
 FROM
@@ -223,16 +210,60 @@ FROM
 WHERE
 	%s
 	AND organization_id = @organization_id
-	AND %s
+	AND snapshot_id IS NULL
 	AND %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"organization_id": organizationID}
 	maps.Copy(args, scope.SQLArguments())
-	maps.Copy(args, filter.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query data: %w", err)
+	}
+
+	data, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Datum])
+	if err != nil {
+		return fmt.Errorf("cannot collect data: %w", err)
+	}
+
+	*d = data
+
+	return nil
+}
+
+func (d *Data) LoadAllByOrganizationID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	organizationID gid.GID,
+) error {
+	q := `
+SELECT
+	id,
+	name,
+	organization_id,
+	owner_profile_id,
+	data_classification,
+	created_at,
+	updated_at
+FROM
+	data
+WHERE
+	%s
+	AND organization_id = @organization_id
+	AND snapshot_id IS NULL
+ORDER BY
+	name ASC
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"organization_id": organizationID}
+	maps.Copy(args, scope.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -251,7 +282,7 @@ WHERE
 
 func (d *Datum) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -262,8 +293,6 @@ INSERT INTO data (
 	owner_profile_id,
 	organization_id,
 	data_classification,
-	snapshot_id,
-	source_id,
 	created_at,
 	updated_at
 ) VALUES (
@@ -273,8 +302,6 @@ INSERT INTO data (
 	@owner_profile_id,
 	@organization_id,
 	@data_classification,
-	@snapshot_id,
-	@source_id,
 	@created_at,
 	@updated_at
 )
@@ -287,8 +314,6 @@ INSERT INTO data (
 		"owner_profile_id":    d.OwnerID,
 		"organization_id":     d.OrganizationID,
 		"data_classification": d.DataClassification,
-		"snapshot_id":         d.SnapshotID,
-		"source_id":           d.SourceID,
 		"created_at":          d.CreatedAt,
 		"updated_at":          d.UpdatedAt,
 	}
@@ -303,7 +328,7 @@ INSERT INTO data (
 
 func (d *Datum) Update(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -323,8 +348,6 @@ RETURNING
 	owner_profile_id,
 	organization_id,
 	data_classification,
-	snapshot_id,
-	source_id,
 	created_at,
 	updated_at
 `
@@ -357,7 +380,7 @@ RETURNING
 
 func (d *Datum) Delete(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -381,71 +404,108 @@ WHERE
 	return nil
 }
 
-func (d Data) Snapshot(ctx context.Context, conn pg.Conn, scope Scoper, organizationID, snapshotID gid.GID) error {
-	snapshotters := []DataSnapshotter{Data{}, Vendors{}, DatumVendors{}}
+func (d Datum) GetGeneratedDocumentID(
+	ctx context.Context,
+	conn pg.Querier,
+	organizationID gid.GID,
+) (*gid.GID, error) {
+	var documentID *gid.GID
 
-	for _, snapshotter := range snapshotters {
-		if err := snapshotter.InsertDataSnapshots(ctx, conn, scope, organizationID, snapshotID); err != nil {
-			return fmt.Errorf("cannot create data snapshots: (%T) %w", snapshotter, err)
-		}
+	err := conn.QueryRow(
+		ctx,
+		`
+SELECT
+	data_document_id
+FROM
+	generated_documents
+WHERE
+	organization_id = @organization_id
+`,
+		pgx.NamedArgs{"organization_id": organizationID},
+	).Scan(&documentID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("cannot get data document ID: %w", err)
+	}
+
+	return documentID, nil
+}
+
+func (d Datum) UpsertGeneratedDocumentID(
+	ctx context.Context,
+	conn pg.Tx,
+	organizationID gid.GID,
+	tenantID gid.TenantID,
+	documentID gid.GID,
+) error {
+	now := time.Now()
+
+	_, err := conn.Exec(
+		ctx,
+		`
+INSERT INTO generated_documents (
+	organization_id,
+	tenant_id,
+	data_document_id,
+	created_at,
+	updated_at
+) VALUES (
+	@organization_id,
+	@tenant_id,
+	@data_document_id,
+	@created_at,
+	@updated_at
+)
+ON CONFLICT (organization_id) DO UPDATE
+SET
+	data_document_id = @data_document_id,
+	updated_at = @updated_at
+`,
+		pgx.NamedArgs{
+			"organization_id":  organizationID,
+			"tenant_id":        tenantID,
+			"data_document_id": documentID,
+			"created_at":       now,
+			"updated_at":       now,
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("cannot upsert data document ID: %w", err)
 	}
 
 	return nil
 }
 
-func (d Data) InsertDataSnapshots(
+func (d Datum) ClearGeneratedDocumentID(
 	ctx context.Context,
-	conn pg.Conn,
-	scope Scoper,
-	organizationID gid.GID,
-	snapshotID gid.GID,
+	conn pg.Tx,
+	documentIDs []gid.GID,
 ) error {
-	query := `
-WITH
-	source_data AS (
-		SELECT *
-		FROM data
-		WHERE %s AND organization_id = @organization_id AND snapshot_id IS NULL
-	)
-INSERT INTO data (
-	tenant_id,
-	id,
-	snapshot_id,
-	source_id,
-	name,
-	organization_id,
-	owner_profile_id,
-	data_classification,
-	created_at,
-	updated_at
-)
-SELECT
-	@tenant_id,
-	generate_gid(decode_base64_unpadded(@tenant_id), @datum_entity_type),
-	@snapshot_id,
-	d.id,
-	d.name,
-	d.organization_id,
-	d.owner_profile_id,
-	d.data_classification,
-	d.created_at,
-	d.updated_at
-FROM source_data d
-	`
-
-	query = fmt.Sprintf(query, scope.SQLFragment())
-
-	args := pgx.StrictNamedArgs{
-		"tenant_id":         scope.GetTenantID(),
-		"snapshot_id":       snapshotID,
-		"organization_id":   organizationID,
-		"datum_entity_type": DatumEntityType,
+	ids := make([]string, len(documentIDs))
+	for i, id := range documentIDs {
+		ids[i] = id.String()
 	}
-	maps.Copy(args, scope.SQLArguments())
 
-	_, err := conn.Exec(ctx, query, args)
+	_, err := conn.Exec(
+		ctx,
+		`
+UPDATE
+	generated_documents
+SET
+	data_document_id = NULL,
+	updated_at = @now
+WHERE
+	data_document_id = ANY(@ids)
+`,
+		pgx.NamedArgs{
+			"ids": ids,
+			"now": time.Now(),
+		},
+	)
 	if err != nil {
-		return fmt.Errorf("cannot insert data snapshots: %w", err)
+		return fmt.Errorf("cannot clear data document references: %w", err)
 	}
 
 	return nil

@@ -1,3 +1,17 @@
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
 import { usePageTitle } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
 import {
@@ -5,6 +19,8 @@ import {
   IconBell2,
   IconPlusLarge,
   PageHeader,
+  TabItem,
+  Tabs,
 } from "@probo/ui";
 import { useState } from "react";
 import {
@@ -29,15 +45,6 @@ export const documentsPageQuery = graphql`
       ... on Organization {
         canCreateDocument: permission(action: "core:document:create")
         ...DocumentListFragment @arguments(first: 50, order: { field: TITLE, direction: ASC })
-        documents(first: 50, orderBy: { field: TITLE, direction: ASC }) {
-          edges {
-            node {
-              canSendSigningNotifications: permission(
-                action: "core:document:send-signing-notifications"
-              )
-            }
-          }
-        }
       }
     }
   }
@@ -63,10 +70,8 @@ export default function DocumentsPage(props: {
 
   usePageTitle(__("Documents"));
 
-  const canSendAnySignatureNotifications = organization.documents.edges.some(
-    ({ node: { canSendSigningNotifications } }) => canSendSigningNotifications,
-  );
-
+  const [canSendAnySignatureNotifications, setCanSendAnySignatureNotifications] = useState(false);
+  const [tab, setTab] = useState<"ACTIVE" | "ARCHIVED">("ACTIVE");
   const [documentListConnectionId, setDocumentListConnectionId] = useState(
     ConnectionHandler.getConnectionID(
       organizationId,
@@ -99,7 +104,7 @@ export default function DocumentsPage(props: {
               {__("Send signing notifications")}
             </Button>
           )}
-          {organization.canCreateDocument && (
+          {organization.canCreateDocument && tab === "ACTIVE" && (
             <CreateDocumentDialog
               connection={documentListConnectionId}
               trigger={
@@ -109,9 +114,19 @@ export default function DocumentsPage(props: {
           )}
         </div>
       </PageHeader>
+      <Tabs>
+        <TabItem active={tab === "ACTIVE"} onClick={() => setTab("ACTIVE")}>
+          {__("Active")}
+        </TabItem>
+        <TabItem active={tab === "ARCHIVED"} onClick={() => setTab("ARCHIVED")}>
+          {__("Archived")}
+        </TabItem>
+      </Tabs>
       <DocumentList
         fKey={organization}
         onConnectionIdChange={setDocumentListConnectionId}
+        onCanSendNotificationsChange={setCanSendAnySignatureNotifications}
+        tab={tab}
       />
     </div>
   );

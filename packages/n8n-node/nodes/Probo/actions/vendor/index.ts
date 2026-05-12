@@ -1,3 +1,17 @@
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
 import type { INodeProperties } from 'n8n-workflow';
 import * as createOp from './create.operation';
 import * as updateOp from './update.operation';
@@ -17,6 +31,15 @@ import * as getAllServicesOp from './getAllServices.operation';
 import * as createRiskAssessmentOp from './createRiskAssessment.operation';
 import * as getRiskAssessmentOp from './getRiskAssessment.operation';
 import * as getAllRiskAssessmentsOp from './getAllRiskAssessments.operation';
+import * as getAllComplianceReportsOp from './getAllComplianceReports.operation';
+import * as deleteComplianceReportOp from './deleteComplianceReport.operation';
+import * as getBusinessAssociateAgreementOp from './getBusinessAssociateAgreement.operation';
+import * as deleteBusinessAssociateAgreementOp from './deleteBusinessAssociateAgreement.operation';
+import * as updateBusinessAssociateAgreementOp from './updateBusinessAssociateAgreement.operation';
+import * as getDataPrivacyAgreementOp from './getDataPrivacyAgreement.operation';
+import * as deleteDataPrivacyAgreementOp from './deleteDataPrivacyAgreement.operation';
+import * as updateDataPrivacyAgreementOp from './updateDataPrivacyAgreement.operation';
+import * as publishOp from './publish.operation';
 
 export const description: INodeProperties[] = [
 	{
@@ -61,10 +84,28 @@ export const description: INodeProperties[] = [
 				action: 'Delete a vendor',
 			},
 			{
+				name: 'Delete Business Associate Agreement',
+				value: 'deleteBusinessAssociateAgreement',
+				description: 'Delete a vendor business associate agreement',
+				action: 'Delete a vendor business associate agreement',
+			},
+			{
+				name: 'Delete Compliance Report',
+				value: 'deleteComplianceReport',
+				description: 'Delete a vendor compliance report',
+				action: 'Delete a vendor compliance report',
+			},
+			{
 				name: 'Delete Contact',
 				value: 'deleteContact',
 				description: 'Delete a vendor contact',
 				action: 'Delete a vendor contact',
+			},
+			{
+				name: 'Delete Data Privacy Agreement',
+				value: 'deleteDataPrivacyAgreement',
+				description: 'Delete a vendor data privacy agreement',
+				action: 'Delete a vendor data privacy agreement',
 			},
 			{
 				name: 'Delete Service',
@@ -79,16 +120,34 @@ export const description: INodeProperties[] = [
 				action: 'Get a vendor',
 			},
 			{
+				name: 'Get Business Associate Agreement',
+				value: 'getBusinessAssociateAgreement',
+				description: 'Get a vendor business associate agreement',
+				action: 'Get a vendor business associate agreement',
+			},
+			{
 				name: 'Get Contact',
 				value: 'getContact',
 				description: 'Get a vendor contact',
 				action: 'Get a vendor contact',
 			},
 			{
+				name: 'Get Data Privacy Agreement',
+				value: 'getDataPrivacyAgreement',
+				description: 'Get a vendor data privacy agreement',
+				action: 'Get a vendor data privacy agreement',
+			},
+			{
 				name: 'Get Many',
 				value: 'getAll',
 				description: 'Get many vendors',
 				action: 'Get many vendors',
+			},
+			{
+				name: 'Get Many Compliance Reports',
+				value: 'getAllComplianceReports',
+				description: 'Get many vendor compliance reports',
+				action: 'Get many vendor compliance reports',
 			},
 			{
 				name: 'Get Many Contacts',
@@ -121,16 +180,34 @@ export const description: INodeProperties[] = [
 				action: 'Get a vendor service',
 			},
 			{
+				name: 'Publish List',
+				value: 'publish',
+				description: 'Publish the vendor register as a document version',
+				action: 'Publish the vendor register',
+			},
+			{
 				name: 'Update',
 				value: 'update',
 				description: 'Update an existing vendor',
 				action: 'Update a vendor',
 			},
 			{
+				name: 'Update Business Associate Agreement',
+				value: 'updateBusinessAssociateAgreement',
+				description: 'Update a vendor business associate agreement validity',
+				action: 'Update a vendor business associate agreement',
+			},
+			{
 				name: 'Update Contact',
 				value: 'updateContact',
 				description: 'Update an existing vendor contact',
 				action: 'Update a vendor contact',
+			},
+			{
+				name: 'Update Data Privacy Agreement',
+				value: 'updateDataPrivacyAgreement',
+				description: 'Update a vendor data privacy agreement validity',
+				action: 'Update a vendor data privacy agreement',
 			},
 			{
 				name: 'Update Service',
@@ -159,6 +236,15 @@ export const description: INodeProperties[] = [
 	...createRiskAssessmentOp.description,
 	...getRiskAssessmentOp.description,
 	...getAllRiskAssessmentsOp.description,
+	...getAllComplianceReportsOp.description,
+	...deleteComplianceReportOp.description,
+	...getBusinessAssociateAgreementOp.description,
+	...deleteBusinessAssociateAgreementOp.description,
+	...updateBusinessAssociateAgreementOp.description,
+	...getDataPrivacyAgreementOp.description,
+	...deleteDataPrivacyAgreementOp.description,
+	...updateDataPrivacyAgreementOp.description,
+	...publishOp.description,
 ];
 
 export {
@@ -180,4 +266,13 @@ export {
 	createRiskAssessmentOp as createRiskAssessment,
 	getRiskAssessmentOp as getRiskAssessment,
 	getAllRiskAssessmentsOp as getAllRiskAssessments,
+	getAllComplianceReportsOp as getAllComplianceReports,
+	deleteComplianceReportOp as deleteComplianceReport,
+	getBusinessAssociateAgreementOp as getBusinessAssociateAgreement,
+	deleteBusinessAssociateAgreementOp as deleteBusinessAssociateAgreement,
+	updateBusinessAssociateAgreementOp as updateBusinessAssociateAgreement,
+	getDataPrivacyAgreementOp as getDataPrivacyAgreement,
+	deleteDataPrivacyAgreementOp as deleteDataPrivacyAgreement,
+	updateDataPrivacyAgreementOp as updateDataPrivacyAgreement,
+	publishOp as publish,
 };

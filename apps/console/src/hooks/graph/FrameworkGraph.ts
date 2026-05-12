@@ -1,3 +1,17 @@
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
 import { sprintf } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import { useConfirm } from "@probo/ui";
@@ -104,8 +118,8 @@ export const frameworkControlNodeQuery = graphql`
         sectionTitle
         description
         bestPractice
-        implemented
         notImplementedJustification
+        maturityLevel
         canUpdate: permission(action: "core:control:update")
         canDelete: permission(action: "core:control:delete")
         canCreateMeasureMapping: permission(
@@ -125,12 +139,6 @@ export const frameworkControlNodeQuery = graphql`
         )
         canDeleteAuditMapping: permission(
           action: "core:control:delete-audit-mapping"
-        )
-        canCreateSnapshotMapping: permission(
-          action: "core:control:create-snapshot-mapping"
-        )
-        canDeleteSnapshotMapping: permission(
-          action: "core:control:delete-snapshot-mapping"
         )
         canCreateObligationMapping: permission(
           action: "core:control:create-obligation-mapping"
@@ -175,16 +183,6 @@ export const frameworkControlNodeQuery = graphql`
             node {
               id
               ...LinkedObligationsCardFragment
-            }
-          }
-        }
-        snapshots(first: 100)
-          @connection(key: "FrameworkGraphControl_snapshots") {
-          __id
-          edges {
-            node {
-              id
-              ...LinkedSnapshotsCardFragment
             }
           }
         }

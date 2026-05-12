@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -72,8 +72,8 @@ type (
 				Name                        string  `json:"name"`
 				Description                 string  `json:"description"`
 				BestPractice                *bool   `json:"best_practice,omitempty"`
-				Implemented                 string  `json:"implemented,omitempty"`
 				NotImplementedJustification *string `json:"not_implemented_justification,omitempty"`
+				MaturityLevel               *string `json:"maturity_level,omitempty"`
 			} `json:"controls"`
 		}
 	}
@@ -108,7 +108,7 @@ func (s FrameworkService) RequestExport(
 	var exportJobID gid.GID
 	exportJob := &coredata.ExportJob{}
 
-	err := s.svc.pg.WithTx(ctx, func(conn pg.Conn) error {
+	err := s.svc.pg.WithTx(ctx, func(ctx context.Context, conn pg.Tx) error {
 		framework := &coredata.Framework{}
 		if err := framework.LoadByID(ctx, conn, s.svc.scope, frameworkID); err != nil {
 			return fmt.Errorf("cannot load framework: %w", err)
@@ -160,7 +160,7 @@ func (s FrameworkService) Export(
 
 	return s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Tx) error {
 			framework := &coredata.Framework{}
 			if err := framework.LoadByID(ctx, conn, s.svc.scope, frameworkID); err != nil {
 				return fmt.Errorf("cannot load framework: %w", err)
@@ -208,7 +208,7 @@ func (s FrameworkService) Export(
 							Direction: page.OrderDirectionAsc,
 						},
 					),
-					coredata.NewMeasureFilter(nil, nil),
+					coredata.NewMeasureFilter(nil, nil, nil),
 				)
 				if err != nil {
 					return fmt.Errorf("cannot load measures: %w", err)
@@ -353,7 +353,7 @@ func (s FrameworkService) Create(
 		UpdatedAt:   now,
 	}
 
-	err := s.svc.pg.WithTx(ctx, func(conn pg.Conn) error {
+	err := s.svc.pg.WithTx(ctx, func(ctx context.Context, conn pg.Tx) error {
 		if err := organization.LoadByID(ctx, conn, s.svc.scope, req.OrganizationID); err != nil {
 			return fmt.Errorf("cannot load organization: %w", err)
 		}
@@ -380,7 +380,7 @@ func (s FrameworkService) CountForOrganizationID(
 ) (int, error) {
 	var count int
 
-	err := s.svc.pg.WithConn(ctx, func(conn pg.Conn) (err error) {
+	err := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) (err error) {
 		frameworks := &coredata.Frameworks{}
 		count, err = frameworks.CountByOrganizationID(ctx, conn, s.svc.scope, organizationID)
 		if err != nil {
@@ -404,7 +404,7 @@ func (s FrameworkService) ListForOrganizationID(
 	var frameworks coredata.Frameworks
 	organization := &coredata.Organization{}
 
-	err := s.svc.pg.WithConn(ctx, func(conn pg.Conn) error {
+	err := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		if err := organization.LoadByID(ctx, conn, s.svc.scope, organizationID); err != nil {
 			return fmt.Errorf("cannot load organization: %w", err)
 		}
@@ -436,7 +436,7 @@ func (s FrameworkService) Get(
 ) (*coredata.Framework, error) {
 	framework := &coredata.Framework{}
 
-	err := s.svc.pg.WithConn(ctx, func(conn pg.Conn) error {
+	err := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		return framework.LoadByID(ctx, conn, s.svc.scope, frameworkID)
 	})
 
@@ -445,6 +445,34 @@ func (s FrameworkService) Get(
 	}
 
 	return framework, nil
+}
+
+func (s FrameworkService) GetByIDs(
+	ctx context.Context,
+	frameworkIDs ...gid.GID,
+) (coredata.Frameworks, error) {
+	var frameworks coredata.Frameworks
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := frameworks.LoadByIDs(
+				ctx,
+				conn,
+				s.svc.scope,
+				frameworkIDs,
+			); err != nil {
+				return fmt.Errorf("cannot load frameworks by ids: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return frameworks, nil
 }
 
 func (s FrameworkService) Update(
@@ -457,7 +485,7 @@ func (s FrameworkService) Update(
 
 	framework := &coredata.Framework{ID: req.ID}
 
-	err := s.svc.pg.WithTx(ctx, func(conn pg.Conn) error {
+	err := s.svc.pg.WithTx(ctx, func(ctx context.Context, conn pg.Tx) error {
 		if err := framework.LoadByID(ctx, conn, s.svc.scope, req.ID); err != nil {
 			return fmt.Errorf("cannot load framework: %w", err)
 		}
@@ -485,8 +513,8 @@ func (s FrameworkService) Delete(
 ) error {
 	framework := &coredata.Framework{}
 
-	return s.svc.pg.WithConn(ctx, func(conn pg.Conn) error {
-		return framework.Delete(ctx, conn, s.svc.scope, frameworkID)
+	return s.svc.pg.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		return framework.Delete(ctx, tx, s.svc.scope, frameworkID)
 	})
 }
 
@@ -499,7 +527,7 @@ func (s FrameworkService) Import(
 	frameworkID := gid.New(organizationID.TenantID(), coredata.FrameworkEntityType)
 	now := time.Now()
 
-	err := s.svc.pg.WithTx(ctx, func(tx pg.Conn) error {
+	err := s.svc.pg.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		organization := &coredata.Organization{}
 		if err := organization.LoadByID(ctx, tx, s.svc.scope, organizationID); err != nil {
 			return fmt.Errorf("cannot load organization: %w", err)
@@ -534,6 +562,7 @@ func (s FrameworkService) Import(
 					MimeType:   contentType,
 					FileName:   filename,
 					FileKey:    objectKey.String(),
+					Visibility: coredata.FileVisibilityPublic,
 					CreatedAt:  now,
 					UpdatedAt:  now,
 				}
@@ -575,12 +604,15 @@ func (s FrameworkService) Import(
 			if control.BestPractice != nil {
 				bestPractice = *control.BestPractice
 			}
-			implemented := coredata.ControlImplementationState(control.Implemented)
-			if !implemented.IsValid() {
-				implemented = coredata.ControlImplementationStateImplemented
+			maturityLevel := coredata.ControlMaturityLevelInitial
+			if control.MaturityLevel != nil {
+				ml := coredata.ControlMaturityLevel(*control.MaturityLevel)
+				if ml.IsValid() {
+					maturityLevel = ml
+				}
 			}
 			var notImplementedJustification *string
-			if implemented == coredata.ControlImplementationStateNotImplemented {
+			if maturityLevel == coredata.ControlMaturityLevelNone {
 				notImplementedJustification = control.NotImplementedJustification
 			}
 			control := &coredata.Control{
@@ -591,7 +623,7 @@ func (s FrameworkService) Import(
 				Name:                        control.Name,
 				Description:                 &description,
 				BestPractice:                bestPractice,
-				Implemented:                 implemented,
+				MaturityLevel:               maturityLevel,
 				NotImplementedJustification: notImplementedJustification,
 				CreatedAt:                   now,
 				UpdatedAt:                   now,
@@ -620,7 +652,7 @@ func (s FrameworkService) SendExportEmail(
 ) error {
 	return s.svc.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			file := &coredata.File{}
 			if err := file.LoadByID(ctx, tx, s.svc.scope, fileID); err != nil {
 				return fmt.Errorf("cannot load file: %w", err)
@@ -690,7 +722,7 @@ func (s *FrameworkService) BuildAndUploadExport(ctx context.Context, exportJobID
 	exportJob := &coredata.ExportJob{}
 	err := s.svc.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			if err := exportJob.LoadByID(ctx, tx, s.svc.scope, exportJobID); err != nil {
 				return fmt.Errorf("cannot load export job: %w", err)
 			}
@@ -761,6 +793,7 @@ func (s *FrameworkService) BuildAndUploadExport(ctx context.Context, exportJobID
 				FileName:   fmt.Sprintf("Framework Export %s.zip", now.Format("2006-01-02")),
 				FileKey:    uuid.String(),
 				FileSize:   fileInfo.Size(),
+				Visibility: coredata.FileVisibilityPrivate,
 				CreatedAt:  now,
 				UpdatedAt:  now,
 			}
@@ -793,7 +826,7 @@ func (s FrameworkService) GenerateLightLogoURL(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			framework := &coredata.Framework{}
 			if err := framework.LoadByID(ctx, conn, s.svc.scope, frameworkID); err != nil {
 				return fmt.Errorf("cannot load framework: %w", err)
@@ -835,7 +868,7 @@ func (s FrameworkService) GenerateDarkLogoURL(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			framework := &coredata.Framework{}
 			if err := framework.LoadByID(ctx, conn, s.svc.scope, frameworkID); err != nil {
 				return fmt.Errorf("cannot load framework: %w", err)

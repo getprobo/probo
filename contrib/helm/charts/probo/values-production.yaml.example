@@ -210,6 +210,11 @@ postgresql:
   username: "probod"
   password: "CHANGE_ME_DB_PASSWORD"
   poolSize: 200
+  # Keep 20 connections warm to absorb bursts without paying the
+  # TLS + PostgreSQL startup handshake on each acquire.
+  minPoolSize: 20
+  maxConnIdleTimeSeconds: 1800
+  maxConnLifetimeSeconds: 3600
   # Uncomment if using TLS with custom CA
   # caCertBundle: |
   #   -----BEGIN CERTIFICATE-----

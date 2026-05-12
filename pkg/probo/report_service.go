@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -37,7 +37,7 @@ func (s ReportService) Get(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			err := report.LoadByID(ctx, conn, s.svc.scope, reportID)
 			if err != nil {
 				return fmt.Errorf("cannot load report: %w", err)
@@ -54,11 +54,39 @@ func (s ReportService) Get(
 	return report, nil
 }
 
+func (s ReportService) GetByIDs(
+	ctx context.Context,
+	reportIDs ...gid.GID,
+) (coredata.Reports, error) {
+	var reports coredata.Reports
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := reports.LoadByIDs(
+				ctx,
+				conn,
+				s.svc.scope,
+				reportIDs,
+			); err != nil {
+				return fmt.Errorf("cannot load reports by ids: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return reports, nil
+}
+
 func (s ReportService) Delete(
 	ctx context.Context,
 	reportID gid.GID,
 ) error {
-	return s.svc.pg.WithTx(ctx, func(conn pg.Conn) error {
+	return s.svc.pg.WithTx(ctx, func(ctx context.Context, conn pg.Tx) error {
 		report := &coredata.Report{}
 		err := report.LoadByID(ctx, conn, s.svc.scope, reportID)
 		if err != nil {

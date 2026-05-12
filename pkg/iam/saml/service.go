@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -24,6 +24,7 @@ import (
 	"fmt"
 	"net/url"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/crewjam/saml"
@@ -70,29 +71,25 @@ func NewService(
 }
 
 func (s *Service) Run(ctx context.Context) error {
-	gc := NewGarbageCollector(s.pg, DefaultGarbageCollectionInterval, s.logger)
+	wg := sync.WaitGroup{}
+	ctx, cancel := context.WithCancelCause(ctx)
+	defer cancel(context.Canceled)
 
-	gcCtx, stopGC := context.WithCancel(ctx)
-	defer stopGC()
-
-	errCh := make(chan error, 1)
-	go func() {
-		errCh <- gc.Run(gcCtx)
-	}()
-
-	select {
-	case <-ctx.Done():
-		stopGC()
-		<-errCh
-		return ctx.Err()
-	case err := <-errCh:
-		if err != nil {
-			s.logger.ErrorCtx(ctx, "saml garbage collector failed", log.Error(err))
-			return err
+	gcCtx, stopGC := context.WithCancel(context.WithoutCancel(ctx))
+	gc := NewGarbageCollector(s.pg, s.logger)
+	wg.Go(func() {
+		if err := gc.Run(gcCtx); err != nil {
+			cancel(fmt.Errorf("saml garbage collector crashed: %w", err))
 		}
+	})
 
-		return nil
-	}
+	<-ctx.Done()
+
+	stopGC()
+
+	wg.Wait()
+
+	return context.Cause(ctx)
 }
 
 func (s *Service) GenerateSpMetadata() ([]byte, error) {
@@ -113,7 +110,7 @@ func (s *Service) InitiateLogin(
 
 	err := s.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			config := &coredata.SAMLConfiguration{}
 			err := config.LoadByID(ctx, tx, coredata.NewNoScope(), configID)
 			if err != nil {
@@ -180,7 +177,7 @@ func (s *Service) HandleAssertion(
 
 	err := s.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			config := &coredata.SAMLConfiguration{}
 
 			err := config.LoadByID(ctx, tx, coredata.NewNoScope(), configID)

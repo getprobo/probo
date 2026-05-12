@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -25,7 +25,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/mail"
-	"go.probo.inc/probo/pkg/watermarkpdf"
+	"go.probo.inc/probo/pkg/pdfutils"
 )
 
 type ReportService struct {
@@ -57,7 +57,7 @@ func (s ReportService) loadByID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			err := report.LoadByID(ctx, conn, s.svc.scope, reportID)
 			if err != nil {
 				return fmt.Errorf("cannot load report: %w", err)
@@ -112,7 +112,7 @@ func (s ReportService) ExportPDF(
 		return nil, fmt.Errorf("cannot export report PDF: %w", err)
 	}
 
-	watermarkedPDF, err := watermarkpdf.AddConfidentialWithTimestamp(pdfData, email)
+	watermarkedPDF, err := pdfutils.AddConfidentialWithTimestamp(pdfData, email)
 	if err != nil {
 		return nil, fmt.Errorf("cannot add watermark to PDF: %w", err)
 	}

@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -126,6 +126,85 @@ func TestHTTPSUrl(t *testing.T) {
 			t.Errorf("expected no error for nil, got: %v", err)
 		}
 	})
+}
+
+func TestOrigin(t *testing.T) {
+	tests := []struct {
+		name      string
+		value     any
+		wantError bool
+	}{
+		{"valid https origin", "https://example.com", false},
+		{"valid http origin", "http://example.com", false},
+		{"valid with port", "http://localhost:3000", false},
+		{"valid https with port", "https://example.com:8443", false},
+		{"valid with trailing slash", "https://example.com/", false},
+		{"invalid - has path", "https://example.com/path", true},
+		{"invalid - has query", "https://example.com?q=1", true},
+		{"invalid - has fragment", "https://example.com#section", true},
+		{"invalid - has userinfo", "https://user:pass@example.com", true},
+		{"invalid - no scheme", "example.com", true},
+		{"invalid - ftp scheme", "ftp://example.com", true},
+		{"invalid - no host", "https://", true},
+		{"empty string", "", false},
+		{"nil pointer", (*string)(nil), false},
+		{"non-string", 123, true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := Origin()(tt.value)
+			if (err != nil) != tt.wantError {
+				t.Errorf("Origin() error = %v, wantError %v", err, tt.wantError)
+			}
+			if err != nil && err.Code != ErrorCodeInvalidFormat {
+				t.Errorf("Expected error code %s, got %s", ErrorCodeInvalidFormat, err.Code)
+			}
+		})
+	}
+}
+
+func TestSlug(t *testing.T) {
+	tests := []struct {
+		name      string
+		value     any
+		maxLen    int
+		wantError bool
+		wantCode  ErrorCode
+	}{
+		{"valid simple slug", "analytics", 100, false, ""},
+		{"valid with hyphens", "my-category", 100, false, ""},
+		{"valid multi-segment", "my-cool-category", 100, false, ""},
+		{"valid single char", "a", 100, false, ""},
+		{"valid digits only", "123", 100, false, ""},
+		{"valid mixed", "cat2", 100, false, ""},
+		{"valid digit-hyphen-alpha", "1-a", 100, false, ""},
+		{"invalid - uppercase", "Analytics", 100, true, ErrorCodeInvalidFormat},
+		{"invalid - leading hyphen", "-analytics", 100, true, ErrorCodeInvalidFormat},
+		{"invalid - trailing hyphen", "analytics-", 100, true, ErrorCodeInvalidFormat},
+		{"invalid - consecutive hyphens", "my--category", 100, true, ErrorCodeInvalidFormat},
+		{"invalid - underscore", "my_category", 100, true, ErrorCodeInvalidFormat},
+		{"invalid - spaces", "my category", 100, true, ErrorCodeInvalidFormat},
+		{"invalid - special chars", "my@category", 100, true, ErrorCodeInvalidFormat},
+		{"invalid - dot", "my.category", 100, true, ErrorCodeInvalidFormat},
+		{"too long", "abcdefghijk", 10, true, ErrorCodeTooLong},
+		{"exactly max length", "abcdefghij", 10, false, ""},
+		{"empty string", "", 100, false, ""},
+		{"nil pointer", (*string)(nil), 100, false, ""},
+		{"non-string", 123, 100, true, ErrorCodeInvalidFormat},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := Slug(tt.maxLen)(tt.value)
+			if (err != nil) != tt.wantError {
+				t.Errorf("Slug(%d) error = %v, wantError %v", tt.maxLen, err, tt.wantError)
+			}
+			if err != nil && tt.wantCode != "" && err.Code != tt.wantCode {
+				t.Errorf("Expected error code %s, got %s", tt.wantCode, err.Code)
+			}
+		})
+	}
 }
 
 func TestDomain(t *testing.T) {

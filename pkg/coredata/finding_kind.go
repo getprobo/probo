@@ -22,14 +22,16 @@ import (
 type FindingKind string
 
 const (
-	FindingKindNonconformity FindingKind = "NONCONFORMITY"
-	FindingKindObservation   FindingKind = "OBSERVATION"
-	FindingKindException     FindingKind = "EXCEPTION"
+	FindingKindMinorNonconformity FindingKind = "MINOR_NONCONFORMITY"
+	FindingKindMajorNonconformity FindingKind = "MAJOR_NONCONFORMITY"
+	FindingKindObservation        FindingKind = "OBSERVATION"
+	FindingKindException          FindingKind = "EXCEPTION"
 )
 
 func FindingKinds() []FindingKind {
 	return []FindingKind{
-		FindingKindNonconformity,
+		FindingKindMinorNonconformity,
+		FindingKindMajorNonconformity,
 		FindingKindObservation,
 		FindingKindException,
 	}
@@ -51,8 +53,10 @@ func (fk *FindingKind) Scan(value any) error {
 	}
 
 	switch s {
-	case "NONCONFORMITY":
-		*fk = FindingKindNonconformity
+	case "MINOR_NONCONFORMITY":
+		*fk = FindingKindMinorNonconformity
+	case "MAJOR_NONCONFORMITY":
+		*fk = FindingKindMajorNonconformity
 	case "OBSERVATION":
 		*fk = FindingKindObservation
 	case "EXCEPTION":

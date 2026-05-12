@@ -1,3 +1,17 @@
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
 import { promisifyMutation, sprintf } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import { useConfirm } from "@probo/ui";
@@ -15,27 +29,42 @@ export type ProcessingActivityDPIAResidualRisk = "LOW" | "MEDIUM" | "HIGH";
 export const processingActivitiesQuery = graphql`
   query ProcessingActivityGraphListQuery(
     $organizationId: ID!
-    $snapshotId: ID
   ) {
     node(id: $organizationId) {
       ... on Organization {
         canCreateProcessingActivity: permission(
           action: "core:processing-activity:create"
         )
-        canExportProcessingActivities: permission(
-          action: "core:processing-activity:export"
+        canPublishProcessingActivities: permission(
+          action: "core:processing-activity:publish"
         )
-        canExportDataProtectionImpactAssessments: permission(
-          action: "core:data-protection-impact-assessment:export"
+        canPublishDataProtectionImpactAssessments: permission(
+          action: "core:data-protection-impact-assessment:publish"
         )
-        canExportTransferImpactAssessments: permission(
-          action: "core:transfer-impact-assessment:export"
+        canPublishTransferImpactAssessments: permission(
+          action: "core:transfer-impact-assessment:publish"
         )
-        ...ProcessingActivitiesPageFragment @arguments(snapshotId: $snapshotId)
+        processingActivitiesDocument {
+          id
+          defaultApprovers {
+            id
+          }
+        }
+        dataProtectionImpactAssessmentsDocument {
+          id
+          defaultApprovers {
+            id
+          }
+        }
+        transferImpactAssessmentsDocument {
+          id
+          defaultApprovers {
+            id
+          }
+        }
+        ...ProcessingActivitiesPageFragment
         ...ProcessingActivitiesPageDPIAFragment
-          @arguments(snapshotId: $snapshotId)
         ...ProcessingActivitiesPageTIAFragment
-          @arguments(snapshotId: $snapshotId)
       }
     }
   }
@@ -46,7 +75,6 @@ export const processingActivityNodeQuery = graphql`
     node(id: $processingActivityId) {
       ... on ProcessingActivity {
         id
-        snapshotId
         name
         purpose
         dataSubjectCategory

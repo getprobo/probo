@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -76,11 +76,14 @@ func NewDocumentVersion(documentVersion *coredata.DocumentVersion) *DocumentVers
 		Document: &Document{
 			ID: documentVersion.DocumentID,
 		},
-		Version:        documentVersion.VersionNumber,
+		Major:          documentVersion.Major,
+		Minor:          documentVersion.Minor,
 		Title:          documentVersion.Title,
 		Content:        documentVersion.Content,
 		Status:         documentVersion.Status,
 		Classification: documentVersion.Classification,
+		DocumentType:   documentVersion.DocumentType,
+		Orientation:    documentVersion.Orientation,
 		PublishedAt:    documentVersion.PublishedAt,
 		Changelog:      documentVersion.Changelog,
 		CreatedAt:      documentVersion.CreatedAt,

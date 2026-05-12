@@ -19,7 +19,9 @@ import (
 	"go.probo.inc/probo/pkg/iam/policy"
 )
 
-var organizationCondition = policy.Equals("principal.organization_id", "resource.organization_id")
+var (
+	organizationCondition = policy.Equals("principal.organization_id", "resource.organization_id")
+)
 
 // OwnerPolicy defines permissions for organization owners.
 var OwnerPolicy = policy.NewPolicy(
@@ -61,6 +63,7 @@ var ViewerPolicy = policy.NewPolicy(
 		ActionDocumentGet, ActionDocumentList,
 		ActionDocumentVersionGet, ActionDocumentVersionList,
 		ActionDocumentVersionSignatureGet, ActionDocumentVersionSignatureList,
+		ActionDocumentVersionApprovalList,
 		ActionRiskGet, ActionRiskList,
 		ActionAssetGet, ActionAssetList,
 		ActionDatumGet, ActionDatumList,
@@ -71,14 +74,20 @@ var ViewerPolicy = policy.NewPolicy(
 		ActionProcessingActivityGet, ActionProcessingActivityList,
 		ActionDataProtectionImpactAssessmentGet, ActionDataProtectionImpactAssessmentList,
 		ActionTransferImpactAssessmentGet, ActionTransferImpactAssessmentList,
-		ActionSnapshotGet, ActionSnapshotList,
-		ActionMeetingGet, ActionMeetingList,
 		ActionFileGet, ActionFileDownloadUrl,
 		ActionSlackConnectionList, ActionConnectorList,
 		ActionRightsRequestGet, ActionRightsRequestList,
-		ActionStateOfApplicabilityGet, ActionStateOfApplicabilityList,
+		ActionStatementOfApplicabilityGet, ActionStatementOfApplicabilityList,
 		ActionApplicabilityStatementGet, ActionApplicabilityStatementList,
 		ActionWebhookSubscriptionGet, ActionWebhookSubscriptionList,
+		ActionAccessReviewCampaignGet, ActionAccessReviewCampaignList,
+		ActionAccessEntryGet, ActionAccessEntryList,
+		ActionAccessSourceGet, ActionAccessSourceList,
+		ActionCookieBannerGet, ActionCookieBannerList,
+		ActionCookieBannerVersionGet, ActionCookieBannerVersionList,
+		ActionCookieCategoryGet, ActionCookieCategoryList,
+		ActionCookieGet, ActionCookieList,
+		ActionCookieConsentRecordList,
 	).WithSID("entity-read-access").When(organizationCondition),
 
 	policy.Allow(
@@ -93,14 +102,17 @@ var ViewerPolicy = policy.NewPolicy(
 	policy.Allow(ActionCustomDomainGet).WithSID("custom-domain-read").When(organizationCondition),
 	policy.Allow(ActionOrganizationContextGet).WithSID("organization-context-read").When(organizationCondition),
 	policy.Allow(
-		ActionDocumentVersionExportPDF, ActionDocumentVersionExportSignable, ActionDocumentVersionSign,
+		ActionDocumentVersionExportPDF, ActionDocumentVersionSign,
 	).WithSID("document-signing").When(organizationCondition),
 
 	policy.Allow(
-		ActionProcessingActivityExport,
-		ActionDataProtectionImpactAssessmentExport,
-		ActionTransferImpactAssessmentExport,
-	).WithSID("processing-activity-export").When(organizationCondition),
+		ActionDocumentVersionApprove, ActionDocumentVersionReject,
+	).WithSID("document-approval").When(organizationCondition),
+
+	policy.Allow(
+		ActionEmployeeDocumentGet, ActionEmployeeDocumentList,
+		ActionEmployeeDocumentVersionExportPDF,
+	).WithSID("employee-document-access").When(organizationCondition),
 ).WithDescription("Read-only probo access for organization viewers")
 
 // AuditorPolicy defines permissions for auditor role.
@@ -128,6 +140,7 @@ var AuditorPolicy = policy.NewPolicy(
 		ActionDocumentGet, ActionDocumentList,
 		ActionDocumentVersionGet, ActionDocumentVersionList,
 		ActionDocumentVersionSignatureGet, ActionDocumentVersionSignatureList,
+		ActionDocumentVersionApprovalList,
 		ActionRiskGet, ActionRiskList,
 		ActionAssetGet, ActionAssetList,
 		ActionDatumGet, ActionDatumList,
@@ -136,21 +149,21 @@ var AuditorPolicy = policy.NewPolicy(
 		ActionFindingGet, ActionFindingList,
 		ActionObligationGet, ActionObligationList,
 		ActionProcessingActivityGet, ActionProcessingActivityList,
-		ActionDataProtectionImpactAssessmentGet,
+		ActionDataProtectionImpactAssessmentGet, ActionDataProtectionImpactAssessmentList,
 		ActionTransferImpactAssessmentGet, ActionTransferImpactAssessmentList,
-		ActionSnapshotGet, ActionSnapshotList,
 		ActionFileGet, ActionFileDownloadUrl,
-		ActionStateOfApplicabilityGet, ActionStateOfApplicabilityList,
+		ActionStatementOfApplicabilityGet, ActionStatementOfApplicabilityList,
 		ActionApplicabilityStatementGet, ActionApplicabilityStatementList,
 	).WithSID("entity-read-access").When(organizationCondition),
 
 	policy.Allow(
-		ActionDocumentVersionExportPDF, ActionDocumentVersionExportSignable, ActionDocumentVersionSign,
+		ActionDocumentVersionExportPDF, ActionDocumentVersionSign,
 	).WithSID("document-signing").When(organizationCondition),
 
 	policy.Allow(
-		ActionStateOfApplicabilityExport,
-	).WithSID("soa-export").When(organizationCondition),
+		ActionEmployeeDocumentGet, ActionEmployeeDocumentList,
+		ActionEmployeeDocumentVersionExportPDF,
+	).WithSID("employee-document-access").When(organizationCondition),
 ).WithDescription("Read-only probo access for auditors (excludes internal/employee content)")
 
 // EmployeePolicy defines permissions for employee role.
@@ -163,15 +176,20 @@ var EmployeePolicy = policy.NewPolicy(
 	).WithSID("org-basic-access").When(organizationCondition),
 
 	policy.Allow(
-		ActionDocumentGet, ActionDocumentList,
-	).WithSID("document-signing-access").When(organizationCondition),
+		ActionEmployeeDocumentGet, ActionEmployeeDocumentList,
+	).WithSID("employee-document-access").When(organizationCondition),
 
 	policy.Allow(
-		ActionDocumentVersionGet, ActionDocumentVersionList,
 		ActionDocumentVersionSign,
-		ActionDocumentVersionExportSignable,
+		ActionEmployeeDocumentVersionExportPDF,
 	).WithSID("document-version-signing").When(organizationCondition),
-).WithDescription("Employee access - can sign documents and view internal content")
+
+	policy.Allow(
+		ActionDocumentVersionApprovalList,
+		ActionDocumentVersionApprove,
+		ActionDocumentVersionReject,
+	).WithSID("document-version-approval").When(organizationCondition),
+).WithDescription("Employee access - can sign documents, approve documents, and view internal content")
 
 // ProboPolicySet returns the PolicySet for the probo service.
 func ProboPolicySet() *iam.PolicySet {

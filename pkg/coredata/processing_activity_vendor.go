@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -17,7 +17,6 @@ package coredata
 import (
 	"context"
 	"fmt"
-	"maps"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -35,15 +34,11 @@ type (
 	}
 
 	ProcessingActivityVendors []*ProcessingActivityVendor
-
-	ProcessingActivitySnapshotter interface {
-		InsertProcessingActivitySnapshots(ctx context.Context, conn pg.Conn, scope Scoper, organizationID, snapshotID gid.GID) error
-	}
 )
 
 func (pav ProcessingActivityVendors) Merge(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	processingActivityID gid.GID,
 	organizationID gid.GID,
@@ -89,7 +84,7 @@ WHEN NOT MATCHED
 
 func (pav ProcessingActivityVendors) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 	processingActivityID gid.GID,
 	organizationID gid.GID,
@@ -120,64 +115,6 @@ FROM vendor_ids
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot insert processing activity vendors: %w", err)
-	}
-
-	return nil
-}
-
-func (pav ProcessingActivityVendors) InsertProcessingActivitySnapshots(
-	ctx context.Context,
-	conn pg.Conn,
-	scope Scoper,
-	organizationID gid.GID,
-	snapshotID gid.GID,
-) error {
-	query := `
-WITH
-	source_processing_activities AS (
-		SELECT id
-		FROM processing_activities
-		WHERE organization_id = @organization_id AND snapshot_id IS NULL
-	),
-	snapshot_processing_activities AS (
-		SELECT id, source_id
-		FROM processing_activities
-		WHERE organization_id = @organization_id AND snapshot_id = @snapshot_id
-	),
-	snapshot_vendors AS (
-		SELECT id, source_id
-		FROM vendors
-		WHERE organization_id = @organization_id AND snapshot_id = @snapshot_id
-	),
-	source_processing_activity_vendors AS (
-		SELECT processing_activity_id, vendor_id, snapshot_id, created_at
-		FROM processing_activity_vendors
-		WHERE %s AND processing_activity_id = ANY(SELECT id FROM source_processing_activities) AND snapshot_id IS NULL
-	)
-INSERT INTO processing_activity_vendors (tenant_id, processing_activity_id, vendor_id, organization_id, snapshot_id, created_at)
-SELECT
-	@tenant_id,
-	spa.id,
-	sv.id,
-	@organization_id,
-	@snapshot_id,
-	pav.created_at
-FROM source_processing_activity_vendors pav
-JOIN snapshot_processing_activities spa ON spa.source_id = pav.processing_activity_id
-JOIN snapshot_vendors sv ON sv.source_id = pav.vendor_id
-`
-
-	query = fmt.Sprintf(query, scope.SQLFragment())
-
-	args := pgx.StrictNamedArgs{
-		"snapshot_id":     snapshotID,
-		"organization_id": organizationID,
-	}
-	maps.Copy(args, scope.SQLArguments())
-
-	_, err := conn.Exec(ctx, query, args)
-	if err != nil {
-		return fmt.Errorf("cannot insert processing activity vendor snapshots: %w", err)
 	}
 
 	return nil

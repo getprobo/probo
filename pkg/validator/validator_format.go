@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -15,15 +15,18 @@
 package validator
 
 import (
+	"fmt"
 	"net/url"
 	"regexp"
 	"slices"
+	"strings"
 
 	"go.probo.inc/probo/pkg/gid"
 )
 
 var (
 	domainRegex = regexp.MustCompile(`^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)*[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$`)
+	slugRegex   = regexp.MustCompile(`^[a-z0-9]+(-[a-z0-9]+)*$`)
 )
 
 // URL validates that a string is a valid URL with http or https scheme.
@@ -127,6 +130,79 @@ func GID(entityTypes ...uint16) ValidatorFunc {
 			if !valid {
 				return newValidationError(ErrorCodeInvalidGID, "GID has invalid entity type")
 			}
+		}
+
+		return nil
+	}
+}
+
+// Origin validates that a string is a valid web origin (scheme + host + optional port).
+// No path, query, fragment, or userinfo is allowed.
+func Origin() ValidatorFunc {
+	return func(value any) *ValidationError {
+		actualValue, isNil := dereferenceValue(value)
+		if isNil {
+			return nil
+		}
+
+		str, ok := actualValue.(string)
+		if !ok {
+			return newValidationError(ErrorCodeInvalidFormat, "value must be a string")
+		}
+
+		if str == "" {
+			return nil
+		}
+
+		parsedURL, err := url.Parse(str)
+		if err != nil {
+			return newValidationError(ErrorCodeInvalidFormat, "must be a valid origin (e.g. https://example.com)")
+		}
+
+		if parsedURL.Scheme != "http" && parsedURL.Scheme != "https" {
+			return newValidationError(ErrorCodeInvalidFormat, "must be a valid origin (e.g. https://example.com)")
+		}
+
+		if parsedURL.Host == "" || parsedURL.Hostname() == "" || strings.HasSuffix(parsedURL.Host, ":") {
+			return newValidationError(ErrorCodeInvalidFormat, "must be a valid origin (e.g. https://example.com)")
+		}
+
+		if parsedURL.Path != "" && parsedURL.Path != "/" {
+			return newValidationError(ErrorCodeInvalidFormat, "must be a valid origin (e.g. https://example.com)")
+		}
+
+		if parsedURL.RawQuery != "" || parsedURL.Fragment != "" || parsedURL.User != nil {
+			return newValidationError(ErrorCodeInvalidFormat, "must be a valid origin (e.g. https://example.com)")
+		}
+
+		return nil
+	}
+}
+
+// Slug validates that a string is a lowercase alphanumeric slug (with hyphens, no
+// leading/trailing hyphens, no consecutive hyphens) and does not exceed maxLen.
+func Slug(maxLen int) ValidatorFunc {
+	return func(value any) *ValidationError {
+		actualValue, isNil := dereferenceValue(value)
+		if isNil {
+			return nil
+		}
+
+		str, ok := actualValue.(string)
+		if !ok {
+			return newValidationError(ErrorCodeInvalidFormat, "value must be a string")
+		}
+
+		if str == "" {
+			return nil
+		}
+
+		if len(str) > maxLen {
+			return newValidationError(ErrorCodeTooLong, fmt.Sprintf("slug must be at most %d characters", maxLen))
+		}
+
+		if !slugRegex.MatchString(str) {
+			return newValidationError(ErrorCodeInvalidFormat, "slug must contain only lowercase letters, numbers, and hyphens")
 		}
 
 		return nil

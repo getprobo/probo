@@ -1,3 +1,17 @@
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
 import { useCopy } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
 import {
@@ -11,6 +25,7 @@ import {
   Tr,
   useConfirm,
 } from "@probo/ui";
+import { useCallback, useRef, useState } from "react";
 import { useFragment } from "react-relay";
 import { ConnectionHandler, graphql } from "relay-runtime";
 
@@ -66,6 +81,14 @@ export function SAMLConfigurationList(props: {
   const { __ } = useTranslate();
 
   const confirm = useConfirm();
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const copiedIdTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const copyId = useCallback((id: string) => {
+    void navigator.clipboard.writeText(id);
+    setCopiedId(id);
+    clearTimeout(copiedIdTimer.current);
+    copiedIdTimer.current = setTimeout(() => setCopiedId(null), 2000);
+  }, []);
   const [isCopied, copy] = useCopy();
 
   const {
@@ -135,6 +158,7 @@ export function SAMLConfigurationList(props: {
     <Table>
       <Thead>
         <Tr>
+          <Th>{__("Configuration ID")}</Th>
           <Th>{__("Email Domain")}</Th>
           <Th>{__("Domain Status")}</Th>
           <Th>{__("SAML Status")}</Th>
@@ -146,6 +170,15 @@ export function SAMLConfigurationList(props: {
       <Tbody>
         {samlConfigurations.map(({ node: config }) => (
           <Tr key={config.id}>
+            <Td>
+              <button
+                onClick={() => copyId(config.id)}
+                className="font-mono text-xs text-gray-600 hover:text-gray-900"
+                title={__("Click to copy")}
+              >
+                {copiedId === config.id ? __("Copied!") : config.id}
+              </button>
+            </Td>
             <Td>
               <button
                 onClick={() => onEdit(config.id)}

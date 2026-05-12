@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -146,7 +146,7 @@ func (s *Service) Get(
 
 	err := s.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			err := trustCenter.LoadByID(ctx, conn, coredata.NewNoScope(), id)
 			if err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
@@ -174,7 +174,7 @@ func (s *Service) GetBySlug(
 
 	err := s.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			err := trustCenter.LoadBySlug(ctx, conn, slug)
 			if err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
@@ -199,7 +199,7 @@ func (s *Service) GetByDomainName(ctx context.Context, domain string) (*coredata
 
 	err := s.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			var customDomain coredata.CustomDomain
 			if err := customDomain.LoadByDomain(ctx, conn, coredata.NewNoScope(), domain); err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
@@ -243,7 +243,7 @@ func (s *Service) GetCustomDomainByOrganizationID(ctx context.Context, organizat
 
 	err := s.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			return customDomain.LoadByOrganizationID(ctx, conn, coredata.NewNoScope(), organizationID)
 		},
 	)
@@ -264,7 +264,7 @@ func (s *Service) GetCustomDomainByOrganizationID(ctx context.Context, organizat
 func (s *Service) EmailPresenterConfigByOrganizationID(ctx context.Context, orgID gid.GID) (emails.PresenterConfig, error) {
 	var trustCenter coredata.TrustCenter
 	scope := coredata.NewScopeFromObjectID(orgID)
-	err := s.pg.WithConn(ctx, func(conn pg.Conn) error {
+	err := s.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		return trustCenter.LoadByOrganizationID(ctx, conn, scope, orgID)
 	})
 	if err != nil {
@@ -273,12 +273,36 @@ func (s *Service) EmailPresenterConfigByOrganizationID(ctx context.Context, orgI
 	return s.WithTenant(orgID.TenantID()).TrustCenters.EmailPresenterConfig(ctx, trustCenter.ID)
 }
 
+func (s *Service) GetOrganizationByTrustCenterID(
+	ctx context.Context,
+	trustCenterID gid.GID,
+) (*coredata.Organization, error) {
+	trustCenter, err := s.Get(ctx, trustCenterID)
+	if err != nil {
+		return nil, fmt.Errorf("cannot load trust center: %w", err)
+	}
+
+	org := &coredata.Organization{}
+
+	err = s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			return org.LoadByID(ctx, conn, coredata.NewNoScope(), trustCenter.OrganizationID)
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot load organization: %w", err)
+	}
+
+	return org, nil
+}
+
 func (s *Service) GetMembershipByCompliancePageIDAndIdentityID(ctx context.Context, compliancePageID gid.GID, identityID gid.GID) (*coredata.TrustCenterAccess, error) {
 	membership := &coredata.TrustCenterAccess{}
 
 	err := s.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			return membership.LoadByTrustCenterIDAndIdentityID(
 				ctx,
 				conn,
@@ -310,7 +334,7 @@ func (s *Service) GetNDAFile(
 
 	err := s.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			trustCenter := &coredata.TrustCenter{}
 			if err := trustCenter.LoadByID(ctx, conn, scope, compliancePageID); err != nil {
 				return fmt.Errorf("cannot load trust center: %w", err)
@@ -352,7 +376,7 @@ func (s *Service) ProvisionMember(
 
 	err := s.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			compliancePage := &coredata.TrustCenter{}
 			if err := compliancePage.LoadByID(ctx, tx, scope, compliancePageID); err != nil {
 				return fmt.Errorf("cannot load trust center: %w", err)

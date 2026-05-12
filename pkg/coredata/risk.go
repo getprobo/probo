@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -27,6 +27,113 @@ import (
 	"go.probo.inc/probo/pkg/page"
 )
 
+func (r Risk) GetGeneratedDocumentID(
+	ctx context.Context,
+	conn pg.Querier,
+	organizationID gid.GID,
+) (*gid.GID, error) {
+	var documentID *gid.GID
+
+	err := conn.QueryRow(
+		ctx,
+		`
+SELECT
+	risks_document_id
+FROM
+	generated_documents
+WHERE
+	organization_id = @organization_id
+`,
+		pgx.NamedArgs{"organization_id": organizationID},
+	).Scan(&documentID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("cannot get risk list document ID: %w", err)
+	}
+
+	return documentID, nil
+}
+
+func (r Risk) UpsertGeneratedDocumentID(
+	ctx context.Context,
+	conn pg.Tx,
+	organizationID gid.GID,
+	tenantID gid.TenantID,
+	documentID gid.GID,
+) error {
+	now := time.Now()
+
+	_, err := conn.Exec(
+		ctx,
+		`
+INSERT INTO generated_documents (
+	organization_id,
+	tenant_id,
+	risks_document_id,
+	created_at,
+	updated_at
+) VALUES (
+	@organization_id,
+	@tenant_id,
+	@risks_document_id,
+	@created_at,
+	@updated_at
+)
+ON CONFLICT (organization_id) DO UPDATE
+SET
+	risks_document_id = @risks_document_id,
+	updated_at = @updated_at
+`,
+		pgx.NamedArgs{
+			"organization_id":   organizationID,
+			"tenant_id":         tenantID,
+			"risks_document_id": documentID,
+			"created_at":        now,
+			"updated_at":        now,
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("cannot upsert risk list document ID: %w", err)
+	}
+
+	return nil
+}
+
+func (r Risk) ClearGeneratedDocumentID(
+	ctx context.Context,
+	conn pg.Tx,
+	documentIDs []gid.GID,
+) error {
+	ids := make([]string, len(documentIDs))
+	for i, id := range documentIDs {
+		ids[i] = id.String()
+	}
+
+	_, err := conn.Exec(
+		ctx,
+		`
+UPDATE
+	generated_documents
+SET
+	risks_document_id = NULL,
+	updated_at = @now
+WHERE
+	risks_document_id = ANY(@ids)
+`,
+		pgx.NamedArgs{
+			"ids": ids,
+			"now": time.Now(),
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("cannot clear risk list document references: %w", err)
+	}
+
+	return nil
+}
+
 type (
 	Risk struct {
 		ID                 gid.GID       `db:"id"`
@@ -43,8 +150,6 @@ type (
 		ResidualLikelihood int           `db:"residual_likelihood"`
 		ResidualImpact     int           `db:"residual_impact"`
 		ResidualRiskScore  int           `db:"residual_risk_score"`
-		SnapshotID         *gid.GID      `db:"snapshot_id"`
-		SourceID           *gid.GID      `db:"source_id"`
 		CreatedAt          time.Time     `db:"created_at"`
 		UpdatedAt          time.Time     `db:"updated_at"`
 
@@ -53,10 +158,6 @@ type (
 	}
 
 	Risks []*Risk
-
-	RiskSnapshotter interface {
-		InsertRiskSnapshots(ctx context.Context, conn pg.Conn, scope Scoper, organizationID, snapshotID gid.GID) error
-	}
 )
 
 func (r *Risk) CursorKey(orderBy RiskOrderField) page.CursorKey {
@@ -80,7 +181,7 @@ func (r *Risk) CursorKey(orderBy RiskOrderField) page.CursorKey {
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (r *Risk) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+func (r *Risk) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	q := `SELECT organization_id FROM risks WHERE id = $1 LIMIT 1;`
 
 	var organizationID gid.GID
@@ -96,7 +197,7 @@ func (r *Risk) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[s
 
 func (r *Risks) CountByMeasureID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	measureID gid.GID,
 	filter *RiskFilter,
@@ -106,14 +207,14 @@ WITH rsks AS (
 	SELECT
 		r.id,
 		r.tenant_id,
-		r.search_vector,
-		r.snapshot_id
+		r.search_vector
 	FROM
 		risks r
 	INNER JOIN
 		risks_measures rm ON r.id = rm.risk_id
 	WHERE
 		rm.measure_id = @measure_id
+		AND r.snapshot_id IS NULL
 )
 SELECT
 	COUNT(id)
@@ -140,7 +241,7 @@ WHERE %s
 
 func (r *Risks) LoadByMeasureID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	measureID gid.GID,
 	cursor *page.Cursor[RiskOrderField],
@@ -165,8 +266,6 @@ WITH rsks AS (
 		r.residual_likelihood,
 		r.residual_impact,
 		r.residual_risk_score,
-		r.snapshot_id,
-		r.source_id,
 		r.search_vector,
 		r.created_at,
 		r.updated_at
@@ -178,6 +277,7 @@ WITH rsks AS (
 		iam_membership_profiles p ON r.owner_profile_id = p.id
 	WHERE
 		rm.measure_id = @measure_id
+		AND r.snapshot_id IS NULL
 )
 SELECT
 	id,
@@ -195,8 +295,6 @@ SELECT
 	residual_likelihood,
 	residual_impact,
 	residual_risk_score,
-	snapshot_id,
-	source_id,
 	created_at,
 	updated_at
 FROM
@@ -229,7 +327,7 @@ WHERE %s
 
 func (r *Risks) CountByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 	filter *RiskFilter,
@@ -240,6 +338,7 @@ SELECT
 FROM risks
 WHERE %s
 	AND organization_id = @organization_id
+	AND snapshot_id IS NULL
 	AND %s
 `
 	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
@@ -260,7 +359,7 @@ WHERE %s
 
 func (r *Risks) LoadByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 	cursor *page.Cursor[RiskOrderField],
@@ -285,8 +384,6 @@ WITH rsks AS (
 		r.residual_impact,
 		r.residual_risk_score,
 		r.category,
-		r.snapshot_id,
-		r.source_id,
 		r.search_vector,
 		r.created_at,
 		r.updated_at
@@ -296,6 +393,7 @@ WITH rsks AS (
 		iam_membership_profiles p ON r.owner_profile_id = p.id
 	WHERE
 		r.organization_id = @organization_id
+		AND r.snapshot_id IS NULL
 )
 SELECT
 	id,
@@ -313,8 +411,6 @@ SELECT
 	residual_impact,
 	residual_risk_score,
 	category,
-	snapshot_id,
-	source_id,
 	created_at,
 	updated_at
 FROM
@@ -345,9 +441,61 @@ WHERE %s
 	return nil
 }
 
+func (r *Risks) LoadAllByOrganizationID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	organizationID gid.GID,
+) error {
+	q := `
+SELECT
+	r.id,
+	r.organization_id,
+	r.name,
+	r.description,
+	r.category,
+	r.owner_profile_id,
+	NULL as owner_full_name,
+	r.treatment,
+	r.note,
+	r.inherent_likelihood,
+	r.inherent_impact,
+	r.inherent_risk_score,
+	r.residual_likelihood,
+	r.residual_impact,
+	r.residual_risk_score,
+	r.created_at,
+	r.updated_at
+FROM
+	risks r
+WHERE %s
+	AND r.organization_id = @organization_id
+	AND r.snapshot_id IS NULL
+ORDER BY r.name ASC, r.id ASC
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"organization_id": organizationID}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query risks: %w", err)
+	}
+
+	risks, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Risk])
+	if err != nil {
+		return fmt.Errorf("cannot collect risks: %w", err)
+	}
+
+	*r = risks
+
+	return nil
+}
+
 func (r *Risk) LoadByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	riskID gid.GID,
 ) error {
@@ -368,8 +516,6 @@ SELECT
 	residual_likelihood,
 	residual_impact,
 	residual_risk_score,
-	snapshot_id,
-	source_id,
 	created_at,
 	updated_at
 FROM risks
@@ -401,9 +547,58 @@ LIMIT 1;
 	return nil
 }
 
+func (r *Risks) LoadByIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	riskIDs []gid.GID,
+) error {
+	q := `
+SELECT
+	id,
+	organization_id,
+	name,
+	description,
+	category,
+	owner_profile_id,
+	NULL as owner_full_name,
+	treatment,
+	note,
+	inherent_likelihood,
+	inherent_impact,
+	inherent_risk_score,
+	residual_likelihood,
+	residual_impact,
+	residual_risk_score,
+	created_at,
+	updated_at
+FROM risks
+WHERE %s
+	AND id = ANY(@risk_ids)
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"risk_ids": riskIDs}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query risks: %w", err)
+	}
+
+	risks, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Risk])
+	if err != nil {
+		return fmt.Errorf("cannot collect risks: %w", err)
+	}
+
+	*r = risks
+
+	return nil
+}
+
 func (r *Risk) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -435,7 +630,7 @@ VALUES (@id, @tenant_id, @organization_id, @name, @description, @category, @owne
 
 func (r *Risk) Update(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -455,6 +650,7 @@ SET
 WHERE %s
 	AND id = @risk_id
 	AND snapshot_id IS NULL
+RETURNING inherent_risk_score, residual_risk_score
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
@@ -474,13 +670,20 @@ WHERE %s
 	}
 	maps.Copy(args, scope.SQLArguments())
 
-	_, err := conn.Exec(ctx, q, args)
-	return err
+	err := conn.QueryRow(ctx, q, args).Scan(
+		&r.InherentRiskScore,
+		&r.ResidualRiskScore,
+	)
+	if err != nil {
+		return fmt.Errorf("cannot update risk: %w", err)
+	}
+
+	return nil
 }
 
 func (r *Risk) Delete(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 	riskID gid.GID,
 ) error {
@@ -498,7 +701,7 @@ DELETE FROM risks WHERE %s AND id = @id AND snapshot_id IS NULL
 
 func (r *Risks) CountByDocumentID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	documentID gid.GID,
 	filter *RiskFilter,
@@ -508,14 +711,14 @@ WITH rsks AS (
 	SELECT
 		r.id,
 		r.tenant_id,
-		r.search_vector,
-		r.snapshot_id
+		r.search_vector
 	FROM
 		risks r
 	INNER JOIN
 		risks_documents rd ON r.id = rd.risk_id
 	WHERE
 		rd.document_id = @document_id
+		AND r.snapshot_id IS NULL
 )
 SELECT
 	COUNT(id)
@@ -538,79 +741,4 @@ WHERE %s
 	}
 
 	return count, nil
-}
-
-func (r Risks) Snapshot(ctx context.Context, conn pg.Conn, scope Scoper, organizationID, snapshotID gid.GID) error {
-	if err := r.InsertRiskSnapshots(ctx, conn, scope, organizationID, snapshotID); err != nil {
-		return fmt.Errorf("cannot create risk snapshots: %w", err)
-	}
-
-	return nil
-}
-
-func (r Risks) InsertRiskSnapshots(
-	ctx context.Context,
-	conn pg.Conn,
-	scope Scoper,
-	organizationID gid.GID,
-	snapshotID gid.GID,
-) error {
-	query := `
-INSERT INTO risks (
-	tenant_id,
-	id,
-	snapshot_id,
-	source_id,
-	organization_id,
-	name,
-	description,
-	category,
-	treatment,
-	note,
-	owner_profile_id,
-	inherent_likelihood,
-	inherent_impact,
-	residual_likelihood,
-	residual_impact,
-	created_at,
-	updated_at
-)
-SELECT
-	@tenant_id,
-	generate_gid(decode_base64_unpadded(@tenant_id), @risk_entity_type),
-	@snapshot_id,
-	r.id,
-	r.organization_id,
-	r.name,
-	r.description,
-	r.category,
-	r.treatment,
-	r.note,
-	r.owner_profile_id,
-	r.inherent_likelihood,
-	r.inherent_impact,
-	r.residual_likelihood,
-	r.residual_impact,
-	r.created_at,
-	r.updated_at
-FROM risks r
-WHERE %s AND organization_id = @organization_id AND snapshot_id IS NULL
-	`
-
-	query = fmt.Sprintf(query, scope.SQLFragment())
-
-	args := pgx.StrictNamedArgs{
-		"tenant_id":        scope.GetTenantID(),
-		"snapshot_id":      snapshotID,
-		"organization_id":  organizationID,
-		"risk_entity_type": RiskEntityType,
-	}
-	maps.Copy(args, scope.SQLArguments())
-
-	_, err := conn.Exec(ctx, query, args)
-	if err != nil {
-		return fmt.Errorf("cannot insert risk snapshots: %w", err)
-	}
-
-	return nil
 }

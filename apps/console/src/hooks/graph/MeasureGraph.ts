@@ -1,3 +1,17 @@
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
 import { useTranslate } from "@probo/i18n";
 import { graphql } from "relay-runtime";
 
@@ -5,20 +19,7 @@ import type { MeasureGraphDeleteMutation } from "#/__generated__/core/MeasureGra
 
 import { useMutationWithToasts } from "../useMutationWithToasts";
 
-/* eslint-disable relay/unused-fields, relay/must-colocate-fragment-spreads */
-
-export const measuresQuery = graphql`
-  query MeasureGraphListQuery($organizationId: ID!) {
-    organization: node(id: $organizationId) @required(action: THROW) {
-      __typename
-      ... on Organization {
-        id
-        canCreateMeasure: permission(action: "core:measure:create")
-        ...MeasuresPageFragment
-      }
-    }
-  }
-`;
+export const MeasureConnectionKey = "MeasuresPage_measures";
 
 const deleteMeasureMutation = graphql`
   mutation MeasureGraphDeleteMutation(
@@ -31,8 +32,6 @@ const deleteMeasureMutation = graphql`
   }
 `;
 
-export const MeasureConnectionKey = "MeasuresGraphListQuery__measures";
-
 export function useDeleteMeasureMutation() {
   const { __ } = useTranslate();
 
@@ -44,36 +43,6 @@ export function useDeleteMeasureMutation() {
     },
   );
 }
-
-export const measureNodeQuery = graphql`
-  query MeasureGraphNodeQuery($measureId: ID!) {
-    node(id: $measureId) {
-      ... on Measure {
-        id
-        name
-        description
-        state
-        category
-        canUpdate: permission(action: "core:measure:update")
-        canDelete: permission(action: "core:measure:delete")
-        canListTasks: permission(action: "core:task:list")
-        evidencesInfos: evidences(first: 0) {
-          totalCount
-        }
-        risksInfos: risks(first: 0) {
-          totalCount
-        }
-        controlsInfos: controls(first: 0) {
-          totalCount
-        }
-        ...MeasureRisksTabFragment
-        ...MeasureControlsTabFragment
-        ...MeasureFormDialogMeasureFragment
-        ...MeasureEvidencesTabFragment
-      }
-    }
-  }
-`;
 
 const measureUpdateMutation = graphql`
   mutation MeasureGraphUpdateMutation($input: UpdateMeasureInput!) {

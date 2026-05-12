@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -23,11 +23,13 @@ type ConnectorProtocol string
 
 const (
 	ConnectorProtocolOAuth2 ConnectorProtocol = "OAUTH2"
+	ConnectorProtocolAPIKey ConnectorProtocol = "API_KEY"
 )
 
 func ConnectorProtocols() []ConnectorProtocol {
 	return []ConnectorProtocol{
 		ConnectorProtocolOAuth2,
+		ConnectorProtocolAPIKey,
 	}
 }
 
@@ -49,6 +51,8 @@ func (cp *ConnectorProtocol) Scan(value any) error {
 	switch s {
 	case "OAUTH2":
 		*cp = ConnectorProtocolOAuth2
+	case "API_KEY":
+		*cp = ConnectorProtocolAPIKey
 	default:
 		return fmt.Errorf("invalid ConnectorProtocol value: %q", s)
 	}

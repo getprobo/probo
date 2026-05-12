@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -35,6 +35,7 @@ type ElectronicSignature struct {
 	OrganizationID                 gid.GID                         `db:"organization_id"`
 	Status                         ElectronicSignatureStatus       `db:"status"`
 	DocumentType                   ElectronicSignatureDocumentType `db:"document_type"`
+	DocumentName                   *string                         `db:"document_name"`
 	FileID                         gid.GID                         `db:"file_id"`
 	SignerEmail                    string                          `db:"signer_email"`
 	ConsentText                    string                          `db:"consent_text"`
@@ -78,16 +79,16 @@ func (es *ElectronicSignature) NewEvent(
 
 func (es *ElectronicSignature) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
 INSERT INTO electronic_signatures (
-	id, tenant_id, organization_id, status, document_type, file_id,
+	id, tenant_id, organization_id, status, document_type, document_name, file_id,
 	signer_email, consent_text, seal_version, attempt_count, max_attempts,
 	created_at, updated_at
 ) VALUES (
-	@id, @tenant_id, @organization_id, @status, @document_type, @file_id,
+	@id, @tenant_id, @organization_id, @status, @document_type, @document_name, @file_id,
 	@signer_email, @consent_text, @seal_version, @attempt_count, @max_attempts,
 	@created_at, @updated_at
 )
@@ -98,6 +99,7 @@ INSERT INTO electronic_signatures (
 		"organization_id": es.OrganizationID,
 		"status":          es.Status,
 		"document_type":   es.DocumentType,
+		"document_name":   es.DocumentName,
 		"file_id":         es.FileID,
 		"signer_email":    es.SignerEmail,
 		"consent_text":    es.ConsentText,
@@ -118,7 +120,7 @@ INSERT INTO electronic_signatures (
 
 func (es *ElectronicSignature) Update(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -178,13 +180,13 @@ WHERE
 
 func (es *ElectronicSignature) LoadByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	id gid.GID,
 ) error {
 	q := `
 SELECT
-	id, tenant_id, organization_id, status, document_type, file_id,
+	id, tenant_id, organization_id, status, document_type, document_name, file_id,
 	signer_email, consent_text, signer_full_name, signer_ip_address,
 	signer_user_agent, file_hash, seal, seal_version, tsa_token, signed_at,
 	certificate_file_id, certificate_processing_started_at,
@@ -218,11 +220,11 @@ LIMIT 1
 
 func (es *ElectronicSignature) LoadNextAcceptedForUpdateSkipLocked(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 ) error {
 	q := `
 SELECT
-	id, tenant_id, organization_id, status, document_type, file_id,
+	id, tenant_id, organization_id, status, document_type, document_name, file_id,
 	signer_email, consent_text, signer_full_name, signer_ip_address,
 	signer_user_agent, file_hash, seal, seal_version, tsa_token, signed_at,
 	certificate_file_id, certificate_processing_started_at,
@@ -254,11 +256,11 @@ FOR UPDATE SKIP LOCKED
 
 func (es *ElectronicSignature) LoadNextCompletedWithoutCertificateForUpdate(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 ) error {
 	q := `
 SELECT
-	id, tenant_id, organization_id, status, document_type, file_id,
+	id, tenant_id, organization_id, status, document_type, document_name, file_id,
 	signer_email, consent_text, signer_full_name, signer_ip_address,
 	signer_user_agent, file_hash, seal, seal_version, tsa_token, signed_at,
 	certificate_file_id, certificate_processing_started_at,
@@ -293,7 +295,7 @@ FOR UPDATE SKIP LOCKED
 
 func ResetStaleProcessingSignatures(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	staleAfter time.Duration,
 ) error {
 	q := `
@@ -348,12 +350,12 @@ func (es *ElectronicSignature) computeSealV1() (string, error) {
 	}
 
 	input := strings.Join(fields, "\n")
-	return hash.SHA256Hex([]byte(input)), nil
+	return hash.SHA256HexString(input), nil
 }
 
 func ResetStaleCertificateProcessing(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	staleAfter time.Duration,
 ) error {
 	q := `

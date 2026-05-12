@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -24,14 +24,23 @@ type (
 )
 
 const (
-	ElectronicSignatureDocumentTypeNDA           ElectronicSignatureDocumentType = "NDA"
-	ElectronicSignatureDocumentTypeDPA           ElectronicSignatureDocumentType = "DPA"
-	ElectronicSignatureDocumentTypeMSA           ElectronicSignatureDocumentType = "MSA"
-	ElectronicSignatureDocumentTypeSOW           ElectronicSignatureDocumentType = "SOW"
-	ElectronicSignatureDocumentTypeSLA           ElectronicSignatureDocumentType = "SLA"
-	ElectronicSignatureDocumentTypeTOS           ElectronicSignatureDocumentType = "TOS"
-	ElectronicSignatureDocumentTypePrivacyPolicy ElectronicSignatureDocumentType = "PRIVACY_POLICY"
-	ElectronicSignatureDocumentTypeOther         ElectronicSignatureDocumentType = "OTHER"
+	ElectronicSignatureDocumentTypeNDA                      ElectronicSignatureDocumentType = "NDA"
+	ElectronicSignatureDocumentTypeDPA                      ElectronicSignatureDocumentType = "DPA"
+	ElectronicSignatureDocumentTypeMSA                      ElectronicSignatureDocumentType = "MSA"
+	ElectronicSignatureDocumentTypeSOW                      ElectronicSignatureDocumentType = "SOW"
+	ElectronicSignatureDocumentTypeSLA                      ElectronicSignatureDocumentType = "SLA"
+	ElectronicSignatureDocumentTypeTOS                      ElectronicSignatureDocumentType = "TOS"
+	ElectronicSignatureDocumentTypePrivacyPolicy            ElectronicSignatureDocumentType = "PRIVACY_POLICY"
+	ElectronicSignatureDocumentTypeGovernance               ElectronicSignatureDocumentType = "GOVERNANCE"
+	ElectronicSignatureDocumentTypePolicy                   ElectronicSignatureDocumentType = "POLICY"
+	ElectronicSignatureDocumentTypeProcedure                ElectronicSignatureDocumentType = "PROCEDURE"
+	ElectronicSignatureDocumentTypePlan                     ElectronicSignatureDocumentType = "PLAN"
+	ElectronicSignatureDocumentTypeRegister                 ElectronicSignatureDocumentType = "REGISTER"
+	ElectronicSignatureDocumentTypeRecord                   ElectronicSignatureDocumentType = "RECORD"
+	ElectronicSignatureDocumentTypeReport                   ElectronicSignatureDocumentType = "REPORT"
+	ElectronicSignatureDocumentTypeTemplate                 ElectronicSignatureDocumentType = "TEMPLATE"
+	ElectronicSignatureDocumentTypeStatementOfApplicability ElectronicSignatureDocumentType = "STATEMENT_OF_APPLICABILITY"
+	ElectronicSignatureDocumentTypeOther                    ElectronicSignatureDocumentType = "OTHER"
 
 	ESignProcessConsentText = "By typing my full name and clicking Accept, I consent to sign this document electronically and agree that my electronic signature has the same legal validity as a handwritten signature."
 )
@@ -45,6 +54,15 @@ func ElectronicSignatureDocumentTypes() []ElectronicSignatureDocumentType {
 		ElectronicSignatureDocumentTypeSLA,
 		ElectronicSignatureDocumentTypeTOS,
 		ElectronicSignatureDocumentTypePrivacyPolicy,
+		ElectronicSignatureDocumentTypeGovernance,
+		ElectronicSignatureDocumentTypePolicy,
+		ElectronicSignatureDocumentTypeProcedure,
+		ElectronicSignatureDocumentTypePlan,
+		ElectronicSignatureDocumentTypeRegister,
+		ElectronicSignatureDocumentTypeRecord,
+		ElectronicSignatureDocumentTypeReport,
+		ElectronicSignatureDocumentTypeTemplate,
+		ElectronicSignatureDocumentTypeStatementOfApplicability,
 		ElectronicSignatureDocumentTypeOther,
 	}
 }
@@ -71,10 +89,28 @@ func (dt *ElectronicSignatureDocumentType) UnmarshalText(data []byte) error {
 		*dt = ElectronicSignatureDocumentTypeTOS
 	case ElectronicSignatureDocumentTypePrivacyPolicy.String():
 		*dt = ElectronicSignatureDocumentTypePrivacyPolicy
+	case ElectronicSignatureDocumentTypeGovernance.String():
+		*dt = ElectronicSignatureDocumentTypeGovernance
+	case ElectronicSignatureDocumentTypePolicy.String():
+		*dt = ElectronicSignatureDocumentTypePolicy
+	case ElectronicSignatureDocumentTypeProcedure.String():
+		*dt = ElectronicSignatureDocumentTypeProcedure
+	case ElectronicSignatureDocumentTypePlan.String():
+		*dt = ElectronicSignatureDocumentTypePlan
+	case ElectronicSignatureDocumentTypeRegister.String():
+		*dt = ElectronicSignatureDocumentTypeRegister
+	case ElectronicSignatureDocumentTypeRecord.String():
+		*dt = ElectronicSignatureDocumentTypeRecord
+	case ElectronicSignatureDocumentTypeReport.String():
+		*dt = ElectronicSignatureDocumentTypeReport
+	case ElectronicSignatureDocumentTypeTemplate.String():
+		*dt = ElectronicSignatureDocumentTypeTemplate
+	case ElectronicSignatureDocumentTypeStatementOfApplicability.String():
+		*dt = ElectronicSignatureDocumentTypeStatementOfApplicability
 	case ElectronicSignatureDocumentTypeOther.String():
 		*dt = ElectronicSignatureDocumentTypeOther
 	default:
-		return fmt.Errorf("invalid ElectronicSignatureDocumentType value: %q", val)
+		return fmt.Errorf("cannot unmarshal ElectronicSignatureDocumentType: invalid value %q", val)
 	}
 
 	return nil
@@ -87,7 +123,7 @@ func (dt ElectronicSignatureDocumentType) String() string {
 func (dt *ElectronicSignatureDocumentType) Scan(value any) error {
 	val, ok := value.(string)
 	if !ok {
-		return fmt.Errorf("invalid scan source for ElectronicSignatureDocumentType, expected string got %T", value)
+		return fmt.Errorf("cannot scan ElectronicSignatureDocumentType: expected string, got %T", value)
 	}
 
 	return dt.UnmarshalText([]byte(val))
@@ -113,6 +149,24 @@ func (dt ElectronicSignatureDocumentType) DisplayName() string {
 		return "Terms of Service"
 	case ElectronicSignatureDocumentTypePrivacyPolicy:
 		return "Privacy Policy"
+	case ElectronicSignatureDocumentTypeGovernance:
+		return "Governance Document"
+	case ElectronicSignatureDocumentTypePolicy:
+		return "Policy"
+	case ElectronicSignatureDocumentTypeProcedure:
+		return "Procedure"
+	case ElectronicSignatureDocumentTypePlan:
+		return "Plan"
+	case ElectronicSignatureDocumentTypeRegister:
+		return "Register"
+	case ElectronicSignatureDocumentTypeRecord:
+		return "Record"
+	case ElectronicSignatureDocumentTypeReport:
+		return "Report"
+	case ElectronicSignatureDocumentTypeTemplate:
+		return "Template"
+	case ElectronicSignatureDocumentTypeStatementOfApplicability:
+		return "Statement of Applicability"
 	default:
 		return string(dt)
 	}
@@ -135,11 +189,54 @@ func (dt ElectronicSignatureDocumentType) ConsentText() (string, error) {
 		docAgreement = "I agree to these Terms of Service."
 	case ElectronicSignatureDocumentTypePrivacyPolicy:
 		docAgreement = "I agree to this Privacy Policy."
+	case ElectronicSignatureDocumentTypeGovernance:
+		docAgreement = "I acknowledge and agree to this Governance Document."
+	case ElectronicSignatureDocumentTypePolicy:
+		docAgreement = "I acknowledge and agree to this Policy."
+	case ElectronicSignatureDocumentTypeProcedure:
+		docAgreement = "I acknowledge and agree to this Procedure."
+	case ElectronicSignatureDocumentTypePlan:
+		docAgreement = "I acknowledge and agree to this Plan."
+	case ElectronicSignatureDocumentTypeRegister:
+		docAgreement = "I acknowledge and agree to this Register."
+	case ElectronicSignatureDocumentTypeRecord:
+		docAgreement = "I acknowledge and agree to this Record."
+	case ElectronicSignatureDocumentTypeReport:
+		docAgreement = "I acknowledge and agree to this Report."
+	case ElectronicSignatureDocumentTypeTemplate:
+		docAgreement = "I acknowledge and agree to this Template."
+	case ElectronicSignatureDocumentTypeStatementOfApplicability:
+		docAgreement = "I acknowledge and agree to this Statement of Applicability."
 	case ElectronicSignatureDocumentTypeOther:
-		return "", fmt.Errorf("document type OTHER requires explicit consent text")
+		return "", fmt.Errorf("cannot get consent text: document type OTHER requires explicit consent text")
 	default:
-		return "", fmt.Errorf("unknown document type %q", dt)
+		return "", fmt.Errorf("cannot get consent text: unknown document type %q", dt)
 	}
 
 	return docAgreement + " " + ESignProcessConsentText, nil
+}
+
+func ElectronicSignatureDocumentTypeFromDocumentType(dt DocumentType) ElectronicSignatureDocumentType {
+	switch dt {
+	case DocumentTypeGovernance:
+		return ElectronicSignatureDocumentTypeGovernance
+	case DocumentTypePolicy:
+		return ElectronicSignatureDocumentTypePolicy
+	case DocumentTypeProcedure:
+		return ElectronicSignatureDocumentTypeProcedure
+	case DocumentTypePlan:
+		return ElectronicSignatureDocumentTypePlan
+	case DocumentTypeRegister:
+		return ElectronicSignatureDocumentTypeRegister
+	case DocumentTypeRecord:
+		return ElectronicSignatureDocumentTypeRecord
+	case DocumentTypeReport:
+		return ElectronicSignatureDocumentTypeReport
+	case DocumentTypeTemplate:
+		return ElectronicSignatureDocumentTypeTemplate
+	case DocumentTypeStatementOfApplicability:
+		return ElectronicSignatureDocumentTypeStatementOfApplicability
+	default:
+		return ElectronicSignatureDocumentTypeOther
+	}
 }

@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -16,6 +16,8 @@ package trust
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 
@@ -26,7 +28,7 @@ import (
 	"go.probo.inc/probo/pkg/html2pdf"
 	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
-	"go.probo.inc/probo/pkg/watermarkpdf"
+	"go.probo.inc/probo/pkg/pdfutils"
 )
 
 type (
@@ -34,7 +36,13 @@ type (
 		svc               *TenantService
 		html2pdfConverter *html2pdf.Converter
 	}
+
+	ErrDocumentArchived struct{}
 )
+
+func (e ErrDocumentArchived) Error() string {
+	return "cannot access an archived document"
+}
 
 func (s *DocumentService) ListForOrganizationId(
 	ctx context.Context,
@@ -45,7 +53,7 @@ func (s *DocumentService) ListForOrganizationId(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			filter := coredata.NewDocumentTrustCenterFilter()
 
 			if err := documents.LoadPublishedByOrganizationID(ctx, conn, s.svc.scope, organizationID, cursor, filter); err != nil {
@@ -73,7 +81,7 @@ func (s *DocumentService) ExportPDF(
 		return nil, fmt.Errorf("cannot export document PDF: %w", err)
 	}
 
-	watermarkedPDF, err := watermarkpdf.AddConfidentialWithTimestamp(pdfData, email)
+	watermarkedPDF, err := pdfutils.AddConfidentialWithTimestamp(pdfData, email)
 	if err != nil {
 		return nil, fmt.Errorf("cannot add watermark to PDF: %w", err)
 	}
@@ -97,10 +105,14 @@ func (s DocumentService) Get(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			err := document.LoadByID(ctx, conn, s.svc.scope, documentID)
 			if err != nil {
 				return fmt.Errorf("cannot load document: %w", err)
+			}
+
+			if document.ArchivedAt != nil {
+				return &ErrDocumentArchived{}
 			}
 
 			return nil
@@ -128,14 +140,17 @@ func (s *DocumentService) exportPDFData(
 ) ([]byte, error) {
 	document := &coredata.Document{}
 	version := &coredata.DocumentVersion{}
-	organization := &coredata.Organization{}
-	var approverNames []string
+	fileRecord := &coredata.File{}
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			if err := document.LoadByID(ctx, conn, s.svc.scope, documentID); err != nil {
 				return fmt.Errorf("cannot load document: %w", err)
+			}
+
+			if document.ArchivedAt != nil {
+				return &ErrDocumentArchived{}
 			}
 
 			if document.TrustCenterVisibility == coredata.TrustCenterVisibilityNone {
@@ -146,19 +161,98 @@ func (s *DocumentService) exportPDFData(
 				return fmt.Errorf("cannot load latest published document version: %w", err)
 			}
 
-			// Load approvers
-			docApprovers := &coredata.DocumentApprovers{}
-			if err := docApprovers.LoadByDocumentID(ctx, conn, s.svc.scope, documentID); err != nil {
-				return fmt.Errorf("cannot load document approvers: %w", err)
+			if version.FileID == nil {
+				return nil
 			}
 
-			profiles := coredata.MembershipProfiles{}
-			if err := profiles.LoadByIDs(ctx, conn, s.svc.scope, docApprovers.ApproverProfileIDs()); err != nil {
-				return fmt.Errorf("cannot load document approver profiles: %w", err)
+			if err := fileRecord.LoadByID(ctx, conn, s.svc.scope, *version.FileID); err != nil {
+				return fmt.Errorf("cannot load document version file: %w", err)
 			}
 
-			for _, p := range profiles {
-				approverNames = append(approverNames, p.FullName)
+			return nil
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if version.FileID != nil {
+		pdfData, err := s.svc.fileManager.GetFileBytes(ctx, fileRecord)
+		if err != nil {
+			return nil, fmt.Errorf("cannot fetch document PDF file: %w", err)
+		}
+
+		return pdfData, nil
+	}
+
+	// TODO: remove on-the-fly fallback once all published versions have a stored PDF.
+	pdfData, err := s.generatePDFOnTheFly(ctx, document, version)
+	if err != nil {
+		return nil, fmt.Errorf("cannot generate PDF on the fly: %w", err)
+	}
+
+	return pdfData, nil
+}
+
+// generatePDFOnTheFly generates a PDF from scratch for versions that don't have
+// a stored file yet. Can be removed once all published versions have been
+// processed by the document PDF worker.
+func (s *DocumentService) generatePDFOnTheFly(
+	ctx context.Context,
+	document *coredata.Document,
+	version *coredata.DocumentVersion,
+) ([]byte, error) {
+	organization := &coredata.Organization{}
+	var approverNames []string
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			lastQuorum := &coredata.DocumentVersionApprovalQuorum{}
+			if err := lastQuorum.LoadLastByDocumentVersionID(ctx, conn, s.svc.scope, version.ID); err != nil {
+				if !errors.Is(err, coredata.ErrResourceNotFound) {
+					return fmt.Errorf("cannot load last approval quorum: %w", err)
+				}
+			} else if lastQuorum.Status == coredata.DocumentVersionApprovalQuorumStatusApproved {
+				approvedDecisions := &coredata.DocumentVersionApprovalDecisions{}
+				approvedFilter := coredata.NewDocumentVersionApprovalDecisionFilter(
+					coredata.DocumentVersionApprovalDecisionStates{coredata.DocumentVersionApprovalDecisionStateApproved},
+				)
+				if err := approvedDecisions.LoadByQuorumID(
+					ctx,
+					conn,
+					s.svc.scope,
+					lastQuorum.ID,
+					page.NewCursor(
+						100,
+						nil,
+						page.Head,
+						page.OrderBy[coredata.DocumentVersionApprovalDecisionOrderField]{
+							Field:     coredata.DocumentVersionApprovalDecisionOrderFieldCreatedAt,
+							Direction: page.OrderDirectionAsc,
+						},
+					),
+					approvedFilter,
+				); err != nil {
+					return fmt.Errorf("cannot load approved decisions: %w", err)
+				}
+
+				approverProfileIDs := make([]gid.GID, 0, len(*approvedDecisions))
+				for _, d := range *approvedDecisions {
+					approverProfileIDs = append(approverProfileIDs, d.ApproverID)
+				}
+
+				if len(approverProfileIDs) > 0 {
+					profiles := coredata.MembershipProfiles{}
+					if err := profiles.LoadByIDs(ctx, conn, s.svc.scope, approverProfileIDs); err != nil {
+						return fmt.Errorf("cannot load approver profiles: %w", err)
+					}
+
+					for _, p := range profiles {
+						approverNames = append(approverNames, p.FullName)
+					}
+				}
 			}
 
 			if err := organization.LoadByID(ctx, conn, s.svc.scope, document.OrganizationID); err != nil {
@@ -173,18 +267,20 @@ func (s *DocumentService) exportPDFData(
 		return nil, err
 	}
 
-	classification := docgen.ClassificationInternal
-	switch document.DocumentType {
-	case coredata.DocumentTypePolicy:
+	classification := docgen.ClassificationSecret
+	switch version.Classification {
+	case coredata.DocumentClassificationPublic:
+		classification = docgen.ClassificationPublic
+	case coredata.DocumentClassificationInternal:
+		classification = docgen.ClassificationInternal
+	case coredata.DocumentClassificationConfidential:
 		classification = docgen.ClassificationConfidential
-	case coredata.DocumentTypeISMS:
-		classification = docgen.ClassificationSecret
 	}
 
 	horizontalLogoBase64 := ""
 	if organization.HorizontalLogoFileID != nil {
 		fileRecord := &coredata.File{}
-		fileErr := s.svc.pg.WithConn(ctx, func(conn pg.Conn) error {
+		fileErr := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 			return fileRecord.LoadByID(ctx, conn, s.svc.scope, *organization.HorizontalLogoFileID)
 		})
 		if fileErr == nil {
@@ -197,8 +293,9 @@ func (s *DocumentService) exportPDFData(
 
 	docData := docgen.DocumentData{
 		Title:                       version.Title,
-		Content:                     version.Content,
-		Version:                     version.VersionNumber,
+		Content:                     json.RawMessage([]byte(version.Content)),
+		Major:                       version.Major,
+		Minor:                       version.Minor,
 		Classification:              classification,
 		Approvers:                   approverNames,
 		PublishedAt:                 version.PublishedAt,

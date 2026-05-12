@@ -1,3 +1,17 @@
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
 import type {
 	IExecuteFunctions,
 	IHookFunctions,
@@ -23,16 +37,11 @@ async function proboGraphqlRequest(
 ): Promise<IDataObject> {
 	const credentials = await this.getCredentials('proboApi');
 
-	if (!credentials?.apiKey) {
-		throw new NodeApiError(this.getNode(), { message: 'API Key is required' } as JsonObject);
-	}
-
 	const options: IHttpRequestOptions = {
 		method: 'POST',
 		baseURL: `${credentials.server}`,
 		url: apiPath,
 		headers: {
-			Authorization: `Bearer ${credentials.apiKey}`,
 			'Content-Type': 'application/json',
 			'User-Agent': `probo-n8n-node/${version}`,
 		},
@@ -44,7 +53,11 @@ async function proboGraphqlRequest(
 	};
 
 	try {
-		const response = await this.helpers.httpRequest(options);
+		const response = await this.helpers.httpRequestWithAuthentication.call(
+			this,
+			'proboApi',
+			options,
+		);
 
 		if (response.errors && Array.isArray(response.errors) && response.errors.length > 0) {
 			const errorMessages = response.errors.map((err: IDataObject) =>
@@ -180,10 +193,6 @@ export async function proboApiMultipartRequest(
 ): Promise<IDataObject> {
 	const credentials = await this.getCredentials('proboApi');
 
-	if (!credentials?.apiKey) {
-		throw new NodeApiError(this.getNode(), { message: 'API Key is required' } as JsonObject);
-	}
-
 	const boundary = `----n8nFormBoundary${Date.now().toString(16)}`;
 
 	const safeFileName = fileName
@@ -218,7 +227,6 @@ export async function proboApiMultipartRequest(
 		baseURL: `${credentials.server}`,
 		url: '/api/console/v1/graphql',
 		headers: {
-			Authorization: `Bearer ${credentials.apiKey}`,
 			'Content-Type': `multipart/form-data; boundary=${boundary}`,
 			'User-Agent': `probo-n8n-node/${version}`,
 		},
@@ -226,7 +234,11 @@ export async function proboApiMultipartRequest(
 	};
 
 	try {
-		const response = await this.helpers.httpRequest(options);
+		const response = await this.helpers.httpRequestWithAuthentication.call(
+			this,
+			'proboApi',
+			options,
+		);
 
 		if (response.errors && Array.isArray(response.errors) && response.errors.length > 0) {
 			const errorMessages = response.errors.map((err: IDataObject) =>

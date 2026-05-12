@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -23,12 +23,11 @@ func NewFinding(f *coredata.Finding) *Finding {
 	finding := &Finding{
 		ID:                 f.ID,
 		OrganizationID:     f.OrganizationID,
-		SnapshotID:         f.SnapshotID,
 		Kind:               f.Kind,
 		ReferenceID:        f.ReferenceID,
 		Description:        f.Description,
 		Source:             f.Source,
-		IdentifiedOn:     f.IdentifiedOn,
+		IdentifiedOn:       f.IdentifiedOn,
 		RootCause:          f.RootCause,
 		CorrectiveAction:   f.CorrectiveAction,
 		OwnerID:            f.OwnerID,
@@ -39,11 +38,6 @@ func NewFinding(f *coredata.Finding) *Finding {
 		EffectivenessCheck: f.EffectivenessCheck,
 		CreatedAt:          f.CreatedAt,
 		UpdatedAt:          f.UpdatedAt,
-	}
-
-	if f.SourceID != nil {
-		s := f.SourceID.String()
-		finding.SourceID = &s
 	}
 
 	return finding

@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -20,10 +20,9 @@ import (
 )
 
 func NewObligation(o *coredata.Obligation) *Obligation {
-	return &Obligation{
+	obligation := &Obligation{
 		ID:                     o.ID,
 		OrganizationID:         o.OrganizationID,
-		SnapshotID:             o.SnapshotID,
 		Area:                   o.Area,
 		Source:                 o.Source,
 		Requirement:            o.Requirement,
@@ -37,6 +36,8 @@ func NewObligation(o *coredata.Obligation) *Obligation {
 		CreatedAt:              o.CreatedAt,
 		UpdatedAt:              o.UpdatedAt,
 	}
+
+	return obligation
 }
 
 func NewListObligationsOutput(obligationPage *page.Page[*coredata.Obligation, coredata.ObligationOrderField]) ListObligationsOutput {

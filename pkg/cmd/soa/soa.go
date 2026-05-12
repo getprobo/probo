@@ -20,6 +20,7 @@ import (
 	"go.probo.inc/probo/pkg/cmd/soa/create"
 	"go.probo.inc/probo/pkg/cmd/soa/delete"
 	"go.probo.inc/probo/pkg/cmd/soa/list"
+	"go.probo.inc/probo/pkg/cmd/soa/publish"
 	"go.probo.inc/probo/pkg/cmd/soa/statement"
 	"go.probo.inc/probo/pkg/cmd/soa/update"
 	"go.probo.inc/probo/pkg/cmd/soa/view"
@@ -36,6 +37,7 @@ func NewCmdSoa(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(view.NewCmdView(f))
 	cmd.AddCommand(update.NewCmdUpdate(f))
 	cmd.AddCommand(delete.NewCmdDelete(f))
+	cmd.AddCommand(publish.NewCmdPublish(f))
 	cmd.AddCommand(statement.NewCmdStatement(f))
 
 	return cmd

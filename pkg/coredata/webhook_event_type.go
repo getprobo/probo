@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -23,9 +23,6 @@ import (
 type WebhookEventType string
 
 const (
-	WebhookEventTypeMeetingCreated    WebhookEventType = "meeting:created"
-	WebhookEventTypeMeetingUpdated    WebhookEventType = "meeting:updated"
-	WebhookEventTypeMeetingDeleted    WebhookEventType = "meeting:deleted"
 	WebhookEventTypeVendorCreated     WebhookEventType = "vendor:created"
 	WebhookEventTypeVendorUpdated     WebhookEventType = "vendor:updated"
 	WebhookEventTypeVendorDeleted     WebhookEventType = "vendor:deleted"
@@ -43,8 +40,7 @@ func (w WebhookEventType) String() string {
 
 func (w WebhookEventType) IsValid() bool {
 	switch w {
-	case WebhookEventTypeMeetingCreated, WebhookEventTypeMeetingUpdated, WebhookEventTypeMeetingDeleted,
-		WebhookEventTypeVendorCreated, WebhookEventTypeVendorUpdated, WebhookEventTypeVendorDeleted,
+	case WebhookEventTypeVendorCreated, WebhookEventTypeVendorUpdated, WebhookEventTypeVendorDeleted,
 		WebhookEventTypeUserCreated, WebhookEventTypeUserUpdated, WebhookEventTypeUserDeleted,
 		WebhookEventTypeObligationCreated, WebhookEventTypeObligationUpdated, WebhookEventTypeObligationDeleted:
 		return true

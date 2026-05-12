@@ -1,0 +1,20 @@
+Probo
+
+Hi {{.RecipientFullName}},
+
+You're receiving this message because {{.OrganizationName}} has requested your approval on the document {{.DocumentName}}.
+
+Please take a moment to review the document and approve or reject it by clicking the link below:
+
+{{.ApprovalUrl}}
+
+If you have any questions, please contact your security team.
+
+This process is managed securely by Probo, acting as the compliance partner on behalf of {{.OrganizationName}}.
+
+Thank you for your prompt attention to this matter.
+
+Best regards,
+
+{{.SenderCompanyHeadquarterAddress}}
+Powered By Probo

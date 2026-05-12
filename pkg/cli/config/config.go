@@ -17,15 +17,23 @@ package config
 import (
 	"fmt"
 	"maps"
+	"net/url"
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 	"time"
 
 	"gopkg.in/yaml.v3"
 )
 
-const DefaultHTTPTimeout = 30 * time.Second
+const (
+	DefaultHTTPTimeout = 30 * time.Second
+
+	// CLIClientID is the well-known OAuth2 client ID for the Probo CLI,
+	// pre-provisioned in every Probo database via migration.
+	CLIClientID = "AAAAAAAAAAAASwAAAAAAAAAAcHJiY2xp"
+)
 
 type (
 	Config struct {
@@ -39,8 +47,10 @@ type (
 	}
 
 	HostConfig struct {
-		Token        string `yaml:"token"`
-		Organization string `yaml:"organization"`
+		Token         string `yaml:"token"`
+		RefreshToken  string `yaml:"refresh_token,omitempty"`
+		TokenEndpoint string `yaml:"token_endpoint,omitempty"`
+		Organization  string `yaml:"organization"`
 	}
 )
 
@@ -147,6 +157,16 @@ func Load() (*Config, error) {
 		cfg.Hosts = make(map[string]*HostConfig)
 	}
 
+	normalized := make(map[string]*HostConfig, len(cfg.Hosts))
+	for host, hc := range cfg.Hosts {
+		normalized[normalizeHost(host)] = hc
+	}
+	cfg.Hosts = normalized
+
+	if cfg.ActiveHost != "" {
+		cfg.ActiveHost = normalizeHost(cfg.ActiveHost)
+	}
+
 	return &cfg, nil
 }
 
@@ -172,8 +192,20 @@ func (c *Config) Save() error {
 	return nil
 }
 
+func normalizeHost(host string) string {
+	lower := strings.ToLower(host)
+	if strings.HasPrefix(lower, "http://") || strings.HasPrefix(lower, "https://") {
+		if u, err := url.Parse(host); err == nil {
+			return strings.TrimRight(u.Scheme+"://"+u.Host, "/")
+		}
+	}
+
+	return strings.TrimRight(host, "/")
+}
+
 func (c *Config) DefaultHost() (string, *HostConfig, error) {
 	if host := os.Getenv("PROBO_HOST"); host != "" {
+		host = normalizeHost(host)
 		hc := &HostConfig{}
 		if saved, ok := c.Hosts[host]; ok {
 			*hc = *saved

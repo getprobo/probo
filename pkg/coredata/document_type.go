@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -24,18 +24,30 @@ type (
 )
 
 const (
-	DocumentTypeOther     DocumentType = "OTHER"
-	DocumentTypeISMS      DocumentType = "ISMS"
-	DocumentTypePolicy    DocumentType = "POLICY"
-	DocumentTypeProcedure DocumentType = "PROCEDURE"
+	DocumentTypeOther                    DocumentType = "OTHER"
+	DocumentTypeGovernance               DocumentType = "GOVERNANCE"
+	DocumentTypePolicy                   DocumentType = "POLICY"
+	DocumentTypeProcedure                DocumentType = "PROCEDURE"
+	DocumentTypePlan                     DocumentType = "PLAN"
+	DocumentTypeRegister                 DocumentType = "REGISTER"
+	DocumentTypeRecord                   DocumentType = "RECORD"
+	DocumentTypeReport                   DocumentType = "REPORT"
+	DocumentTypeTemplate                 DocumentType = "TEMPLATE"
+	DocumentTypeStatementOfApplicability DocumentType = "STATEMENT_OF_APPLICABILITY"
 )
 
 func DocumentTypes() []DocumentType {
 	return []DocumentType{
 		DocumentTypeOther,
-		DocumentTypeISMS,
+		DocumentTypeGovernance,
 		DocumentTypePolicy,
 		DocumentTypeProcedure,
+		DocumentTypePlan,
+		DocumentTypeRegister,
+		DocumentTypeRecord,
+		DocumentTypeReport,
+		DocumentTypeTemplate,
+		DocumentTypeStatementOfApplicability,
 	}
 }
 
@@ -49,12 +61,24 @@ func (dt *DocumentType) UnmarshalText(data []byte) error {
 	switch val {
 	case DocumentTypeOther.String():
 		*dt = DocumentTypeOther
-	case DocumentTypeISMS.String():
-		*dt = DocumentTypeISMS
+	case DocumentTypeGovernance.String():
+		*dt = DocumentTypeGovernance
 	case DocumentTypePolicy.String():
 		*dt = DocumentTypePolicy
 	case DocumentTypeProcedure.String():
 		*dt = DocumentTypeProcedure
+	case DocumentTypePlan.String():
+		*dt = DocumentTypePlan
+	case DocumentTypeRegister.String():
+		*dt = DocumentTypeRegister
+	case DocumentTypeRecord.String():
+		*dt = DocumentTypeRecord
+	case DocumentTypeReport.String():
+		*dt = DocumentTypeReport
+	case DocumentTypeTemplate.String():
+		*dt = DocumentTypeTemplate
+	case DocumentTypeStatementOfApplicability.String():
+		*dt = DocumentTypeStatementOfApplicability
 	default:
 		return fmt.Errorf("invalid DocumentType value: %q", val)
 	}

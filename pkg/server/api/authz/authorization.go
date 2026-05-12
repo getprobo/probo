@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -41,7 +41,13 @@ func WithAttr(key, value string) AuthorizeFuncOption {
 // Example: on the viewer memberships page, we're accessing several organization names, but the viewer isn't assuming one yet.
 func WithSkipAssumptionCheck() AuthorizeFuncOption {
 	return func(params *iam.AuthorizeParams) {
-		params.Session = nil
+		params.SkipAssumptionCheck = true
+	}
+}
+
+func WithDryRun() AuthorizeFuncOption {
+	return func(params *iam.AuthorizeParams) {
+		params.DryRun = true
 	}
 }
 

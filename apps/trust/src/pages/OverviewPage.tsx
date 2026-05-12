@@ -1,3 +1,17 @@
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
 import {
   getTrustCenterUrl,
   groupBy,
@@ -15,8 +29,8 @@ import { AuditRow } from "#/components/AuditRow";
 import { DocumentRow } from "#/components/DocumentRow";
 import { RowHeader } from "#/components/RowHeader";
 import { Rows } from "#/components/Rows";
+import { SubprocessorRow } from "#/components/SubprocessorRow";
 import { TrustCenterFileRow } from "#/components/TrustCenterFileRow";
-import { VendorRow } from "#/components/VendorRow";
 import { documentTypeLabel } from "#/helpers/documents";
 import type { TrustGraphCurrentQuery$data } from "#/queries/__generated__/TrustGraphCurrentQuery.graphql";
 
@@ -37,12 +51,12 @@ const overviewFragment = graphql`
         }
       }
     }
-    vendors(first: 3) {
+    subprocessors(first: 3) {
       edges {
         node {
           id
           countries
-          ...VendorRowFragment
+          ...SubprocessorRowFragment
         }
       }
     }
@@ -50,8 +64,8 @@ const overviewFragment = graphql`
       edges {
         node {
           id
-          ...DocumentRowFragment
           documentType
+          ...DocumentRowFragment
         }
       }
     }
@@ -86,7 +100,7 @@ export function OverviewPage() {
       />
       <Subprocessors
         organizationName={trustCenter.organization.name}
-        vendors={fragment.vendors.edges}
+        subprocessors={fragment.subprocessors.edges}
         url={getTrustCenterUrl("subprocessors")}
       />
     </div>
@@ -163,22 +177,22 @@ function Documents({
 }
 
 function Subprocessors({
-  vendors,
+  subprocessors,
   url,
   organizationName,
 }: {
-  vendors: OverviewPageFragment$data["vendors"]["edges"];
+  subprocessors: OverviewPageFragment$data["subprocessors"]["edges"];
   url: string;
   organizationName: string;
 }) {
   const { __ } = useTranslate();
-  if (vendors.length === 0) {
+  if (subprocessors.length === 0) {
     return null;
   }
 
-  const hasAnyCountries = vendors.some((vendor) => {
-    const vendorData = vendor.node;
-    return vendorData.countries && vendorData.countries.length > 0;
+  const hasAnyCountries = subprocessors.some((subprocessor) => {
+    const subprocessorData = subprocessor.node;
+    return subprocessorData.countries && subprocessorData.countries.length > 0;
   });
 
   return (
@@ -191,10 +205,10 @@ function Subprocessors({
         )}
       </p>
       <Rows className="mb-8 *:py-5">
-        {vendors.map(vendor => (
-          <VendorRow
-            key={vendor.node.id}
-            vendor={vendor.node}
+        {subprocessors.map(subprocessor => (
+          <SubprocessorRow
+            key={subprocessor.node.id}
+            subprocessor={subprocessor.node}
             hasAnyCountries={hasAnyCountries}
           />
         ))}
@@ -238,7 +252,7 @@ function References({ references }: { references: Reference[] }) {
               alt={reference.name}
               className="rounded-2xl size-12 block"
             />
-            <span className="text-xs text-txt-secondary">{reference.name}</span>
+            <span className="text-xs text-txt-secondary text-center">{reference.name}</span>
           </a>
         ))}
       </Card>

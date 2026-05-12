@@ -1,3 +1,17 @@
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
 import {
   formatDate,
   getAuditStateLabel,
@@ -12,13 +26,18 @@ import {
   DropdownItem,
   IconPlusLarge,
   IconTrashCan,
+  IconUpload,
   PageHeader,
   Tbody,
   Td,
   Th,
   Thead,
   Tr,
+  useDialogRef,
+  useToast,
 } from "@probo/ui";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useDropzone } from "react-dropzone";
 import {
   graphql,
   type PreloadedQuery,
@@ -87,6 +106,7 @@ type Props = {
 
 export default function AuditsPage(props: Props) {
   const { __ } = useTranslate();
+  const { toast } = useToast();
   const organizationId = useOrganizationId();
 
   const data = usePreloadedQuery(auditsQuery, props.queryRef);
@@ -104,15 +124,106 @@ export default function AuditsPage(props: Props) {
     audit => audit.canDelete || audit.canUpdate,
   );
 
+  const canCreateAudit = data.node.canCreateAudit;
+  const [droppedFile, setDroppedFile] = useState<File | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const dropDialogRef = useDialogRef();
+  const dragCounterRef = useRef(0);
+
+  const onDrop = useCallback(
+    (acceptedFiles: File[], fileRejections: { file: File }[]) => {
+      setIsDragging(false);
+      dragCounterRef.current = 0;
+      if (fileRejections.length > 0) {
+        toast({
+          title: __("Unsupported file type"),
+          description: __("Only PDF files are supported."),
+          variant: "error",
+        });
+        return;
+      }
+      if (!canCreateAudit || acceptedFiles.length === 0) return;
+      setDroppedFile(acceptedFiles[0]);
+      dropDialogRef.current?.open();
+    },
+    [canCreateAudit, dropDialogRef, toast, __],
+  );
+
+  useEffect(() => {
+    if (!canCreateAudit) return;
+
+    const handleDragEnter = (e: DragEvent) => {
+      e.preventDefault();
+      dragCounterRef.current++;
+      if (e.dataTransfer?.types.includes("Files")) {
+        setIsDragging(true);
+      }
+    };
+
+    const handleDragLeave = (e: DragEvent) => {
+      e.preventDefault();
+      dragCounterRef.current = Math.max(0, dragCounterRef.current - 1);
+      if (dragCounterRef.current <= 0) {
+        setIsDragging(false);
+      }
+    };
+
+    const handleDragOver = (e: DragEvent) => {
+      e.preventDefault();
+    };
+
+    const handleDrop = () => {
+      setIsDragging(false);
+      dragCounterRef.current = 0;
+    };
+
+    window.addEventListener("dragenter", handleDragEnter);
+    window.addEventListener("dragleave", handleDragLeave);
+    window.addEventListener("dragover", handleDragOver);
+    window.addEventListener("drop", handleDrop);
+
+    return () => {
+      window.removeEventListener("dragenter", handleDragEnter);
+      window.removeEventListener("dragleave", handleDragLeave);
+      window.removeEventListener("dragover", handleDragOver);
+      window.removeEventListener("drop", handleDrop);
+    };
+  }, [canCreateAudit]);
+
+  const { getRootProps, getInputProps } = useDropzone({
+    noClick: true,
+    noKeyboard: true,
+    accept: { "application/pdf": [".pdf"] },
+    multiple: false,
+    onDrop,
+    disabled: !canCreateAudit,
+  });
+
+  const handleDropDialogClose = () => {
+    setDroppedFile(null);
+  };
+
   return (
     <div className="space-y-6">
+      {isDragging && canCreateAudit && (
+        <div
+          {...getRootProps()}
+          className="border-primary bg-primary/5 pointer-events-auto fixed inset-0 top-12 z-40 flex flex-col items-center justify-center border-2 border-dashed"
+        >
+          <input {...getInputProps()} />
+          <IconUpload className="text-primary mb-2 size-8" />
+          <p className="text-primary text-sm font-medium">
+            {__("Drop a PDF to create an audit with a report")}
+          </p>
+        </div>
+      )}
       <PageHeader
         title={__("Audits")}
         description={__(
           "Manage your organization's compliance audits and their progress.",
         )}
       >
-        {data.node.canCreateAudit && (
+        {canCreateAudit && (
           <CreateAuditDialog
             connection={connectionId}
             organizationId={organizationId}
@@ -144,6 +255,15 @@ export default function AuditsPage(props: Props) {
           ))}
         </Tbody>
       </SortableTable>
+      {canCreateAudit && (
+        <CreateAuditDialog
+          ref={dropDialogRef}
+          connection={connectionId}
+          organizationId={organizationId}
+          file={droppedFile}
+          onClose={handleDropDialogClose}
+        />
+      )}
     </div>
   );
 }

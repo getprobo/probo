@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -24,12 +24,43 @@ type ConnectorProvider string
 const (
 	ConnectorProviderSlack           ConnectorProvider = "SLACK"
 	ConnectorProviderGoogleWorkspace ConnectorProvider = "GOOGLE_WORKSPACE"
+	ConnectorProviderLinear          ConnectorProvider = "LINEAR"
+	// _ ConnectorProvider = "FIGMA" — formerly Figma; removed (no driver, no OAuth config, no usage)
+	ConnectorProviderOnePassword  ConnectorProvider = "ONE_PASSWORD"
+	ConnectorProviderHubSpot      ConnectorProvider = "HUBSPOT"
+	ConnectorProviderDocuSign     ConnectorProvider = "DOCUSIGN"
+	ConnectorProviderNotion       ConnectorProvider = "NOTION"
+	ConnectorProviderBrex         ConnectorProvider = "BREX"
+	ConnectorProviderTally        ConnectorProvider = "TALLY"
+	ConnectorProviderCloudflare   ConnectorProvider = "CLOUDFLARE"
+	ConnectorProviderOpenAI       ConnectorProvider = "OPENAI"
+	ConnectorProviderSentry       ConnectorProvider = "SENTRY"
+	ConnectorProviderSupabase     ConnectorProvider = "SUPABASE"
+	ConnectorProviderGitHub       ConnectorProvider = "GITHUB"
+	ConnectorProviderIntercom     ConnectorProvider = "INTERCOM"
+	ConnectorProviderResend       ConnectorProvider = "RESEND"
+	ConnectorProviderMicrosoft365 ConnectorProvider = "MICROSOFT_365"
 )
 
 func ConnectorProviders() []ConnectorProvider {
 	return []ConnectorProvider{
 		ConnectorProviderSlack,
 		ConnectorProviderGoogleWorkspace,
+		ConnectorProviderLinear,
+		ConnectorProviderOnePassword,
+		ConnectorProviderHubSpot,
+		ConnectorProviderDocuSign,
+		ConnectorProviderNotion,
+		ConnectorProviderBrex,
+		ConnectorProviderTally,
+		ConnectorProviderCloudflare,
+		ConnectorProviderOpenAI,
+		ConnectorProviderSentry,
+		ConnectorProviderSupabase,
+		ConnectorProviderGitHub,
+		ConnectorProviderIntercom,
+		ConnectorProviderResend,
+		ConnectorProviderMicrosoft365,
 	}
 }
 
@@ -53,6 +84,36 @@ func (cp *ConnectorProvider) Scan(value any) error {
 		*cp = ConnectorProviderSlack
 	case "GOOGLE_WORKSPACE":
 		*cp = ConnectorProviderGoogleWorkspace
+	case "LINEAR":
+		*cp = ConnectorProviderLinear
+	case "ONE_PASSWORD":
+		*cp = ConnectorProviderOnePassword
+	case "HUBSPOT":
+		*cp = ConnectorProviderHubSpot
+	case "DOCUSIGN":
+		*cp = ConnectorProviderDocuSign
+	case "NOTION":
+		*cp = ConnectorProviderNotion
+	case "BREX":
+		*cp = ConnectorProviderBrex
+	case "TALLY":
+		*cp = ConnectorProviderTally
+	case "CLOUDFLARE":
+		*cp = ConnectorProviderCloudflare
+	case "OPENAI":
+		*cp = ConnectorProviderOpenAI
+	case "SENTRY":
+		*cp = ConnectorProviderSentry
+	case "SUPABASE":
+		*cp = ConnectorProviderSupabase
+	case "GITHUB":
+		*cp = ConnectorProviderGitHub
+	case "INTERCOM":
+		*cp = ConnectorProviderIntercom
+	case "RESEND":
+		*cp = ConnectorProviderResend
+	case "MICROSOFT_365":
+		*cp = ConnectorProviderMicrosoft365
 	default:
 		return fmt.Errorf("invalid ConnectorProvider value: %q", s)
 	}

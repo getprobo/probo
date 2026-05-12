@@ -1,0 +1,80 @@
+{
+  "type": "doc",
+  "content": [
+    {
+      "type": "heading",
+      "attrs": { "level": 1 },
+      "content": [{ "type": "text", "text": "1. Purpose" }]
+    },
+    {
+      "type": "paragraph",
+      "content": [{ "type": "text", "text": "This document contains Data Protection Impact Assessments (DPIAs) conducted for processing activities that present a high risk to individuals' rights and freedoms. DPIAs are systematic assessments that evaluate the necessity, proportionality, and risks associated with data processing operations, along with the measures implemented to mitigate identified risks." }]
+    },
+    { "type": "horizontalRule" },
+    {
+      "type": "heading",
+      "attrs": { "level": 1 },
+      "content": [{ "type": "text", "text": "2. Records" }]
+    }{{range $i, $r := .Rows}},
+    {{if $i}}{ "type": "horizontalRule" },{{end}}
+    {
+      "type": "heading",
+      "attrs": { "level": 2 },
+      "content": [{ "type": "text", "text": {{json (printf "2.%d %s" (add $i 1) $r.ProcessingActivityName)}} }]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        { "type": "text", "text": "Description: ", "marks": [{ "type": "bold" }] },
+        { "type": "text", "text": {{json $r.Description}} }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        { "type": "text", "text": "Necessity and Proportionality: ", "marks": [{ "type": "bold" }] },
+        { "type": "text", "text": {{json $r.NecessityAndProportionality}} }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        { "type": "text", "text": "Potential Risk: ", "marks": [{ "type": "bold" }] },
+        { "type": "text", "text": {{json $r.PotentialRisk}} }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        { "type": "text", "text": "Mitigations: ", "marks": [{ "type": "bold" }] },
+        { "type": "text", "text": {{json $r.Mitigations}} }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        { "type": "text", "text": "Residual Risk: ", "marks": [{ "type": "bold" }] },
+        { "type": "text", "text": {{json $r.ResidualRisk}} }
+      ]
+    }{{end}},
+    { "type": "horizontalRule" },
+    {
+      "type": "heading",
+      "attrs": { "level": 1 },
+      "content": [{ "type": "text", "text": "3. Definitions" }]
+    },
+    {
+      "type": "heading",
+      "attrs": { "level": 3 },
+      "content": [{ "type": "text", "text": "Residual Risk" }]
+    },
+    {
+      "type": "bulletList",
+      "content": [
+        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Low: ", "marks": [{ "type": "bold" }] }, { "type": "text", "text": "The residual risk after implementing mitigation measures is considered low. The processing activity poses minimal risk to individuals' rights and freedoms." }] }] },
+        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Medium: ", "marks": [{ "type": "bold" }] }, { "type": "text", "text": "The residual risk after implementing mitigation measures is considered medium. The processing activity poses a moderate risk to individuals' rights and freedoms, requiring ongoing monitoring." }] }] },
+        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "High: ", "marks": [{ "type": "bold" }] }, { "type": "text", "text": "The residual risk after implementing mitigation measures is considered high. The processing activity poses significant risk to individuals' rights and freedoms, requiring enhanced safeguards and regular review." }] }] }
+      ]
+    }
+  ]
+}

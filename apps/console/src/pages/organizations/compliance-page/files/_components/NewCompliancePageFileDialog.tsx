@@ -1,4 +1,26 @@
-import { getTrustCenterVisibilityOptions } from "@probo/helpers";
+// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
+import {
+  acceptData,
+  acceptDocument,
+  acceptImage,
+  acceptPresentation,
+  acceptSpreadsheet,
+  acceptText,
+  getTrustCenterVisibilityOptions,
+} from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import { Badge, Button, Dialog, DialogContent, DialogFooter, type DialogRef, Dropzone, Field, Option, Spinner } from "@probo/ui";
 import { useCallback, useState } from "react";
@@ -11,38 +33,12 @@ import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 const acceptedFileTypes = {
-  "application/csv": [".csv"],
-  "application/json": [".json"],
-  "application/msword": [".doc"],
-  "application/pdf": [".pdf"],
-  "application/vnd.ms-excel": [".xls"],
-  "application/vnd.ms-powerpoint": [".ppt"],
-  "application/vnd.oasis.opendocument.presentation": [".odp"],
-  "application/vnd.oasis.opendocument.spreadsheet": [".ods"],
-  "application/vnd.oasis.opendocument.text": [".odt"],
-  "application/vnd.openxmlformats-officedocument.presentationml.presentation": [
-    ".pptx",
-  ],
-  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [
-    ".xlsx",
-  ],
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [
-    ".docx",
-  ],
-  "application/yaml": [".yaml", ".yml"],
-  "image/gif": [".gif"],
-  "image/jpeg": [".jpeg", ".jpg"],
-  "image/png": [".png"],
-  "image/svg+xml": [".svg"],
-  "image/webp": [".webp"],
-  "text/csv": [".csv"],
-  "text/json": [".json"],
-  "text/markdown": [".md"],
-  "text/plain": [".txt"],
-  "text/uri-list; charset=utf-8": [".uri"],
-  "text/uri-list": [".uri"],
-  "text/x-log": [".log"],
-  "text/yaml": [".yaml", ".yml"],
+  ...acceptDocument,
+  ...acceptSpreadsheet,
+  ...acceptPresentation,
+  ...acceptText,
+  ...acceptImage,
+  ...acceptData,
 };
 
 const createCompliancePageFileMutation = graphql`

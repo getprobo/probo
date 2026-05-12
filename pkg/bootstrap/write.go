@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -15,29 +15,23 @@
 package bootstrap
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
 
-	"go.probo.inc/probo/pkg/probod"
+	"go.probo.inc/probo/pkg/probodconfig"
 	"sigs.k8s.io/yaml"
 )
 
-func WriteConfig(cfg *probod.FullConfig, path string) error {
+func WriteConfig(cfg *probodconfig.FullConfig, path string) error {
 	dir := filepath.Dir(path)
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return fmt.Errorf("create directory %s: %w", dir, err)
 	}
 
-	jsonData, err := json.Marshal(cfg)
+	data, err := yaml.Marshal(cfg)
 	if err != nil {
 		return fmt.Errorf("marshal config: %w", err)
-	}
-
-	data, err := yaml.JSONToYAML(jsonData)
-	if err != nil {
-		return fmt.Errorf("convert to yaml: %w", err)
 	}
 
 	if err := os.WriteFile(path, data, 0600); err != nil {

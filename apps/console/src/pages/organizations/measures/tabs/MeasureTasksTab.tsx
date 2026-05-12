@@ -1,7 +1,21 @@
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
 import { useTranslate } from "@probo/i18n";
 import { Button, IconPlusLarge } from "@probo/ui";
 import { useLazyLoadQuery } from "react-relay";
-import { useOutletContext } from "react-router";
+import { useParams } from "react-router";
 import { graphql } from "relay-runtime";
 
 import type { MeasureTasksTabQuery } from "#/__generated__/core/MeasureTasksTabQuery.graphql";
@@ -13,17 +27,14 @@ const tasksQuery = graphql`
     node(id: $measureId) @required(action: THROW) {
       __typename
       ... on Measure {
-        id
         canCreateTask: permission(action: "core:task:create")
-        tasks(first: 100)
+        tasks(first: 100, orderBy: { field: PRIORITY_RANK, direction: ASC })
           @connection(key: "Measure__tasks")
           @required(action: THROW) {
           __id
           edges @required(action: THROW) {
             node {
-              id
-              # eslint-disable-next-line relay/unused-fields
-              state
+              ...TasksCard_task
               ...TaskFormDialogFragment
               ...TasksCard_TaskRowFragment
             }
@@ -36,12 +47,11 @@ const tasksQuery = graphql`
 
 export default function MeasureTasksTab() {
   const { __ } = useTranslate();
-  const { measure } = useOutletContext<{
-    measure: { id: string };
-  }>();
-  const { node } = useLazyLoadQuery<MeasureTasksTabQuery>(tasksQuery, {
-    measureId: measure.id,
-  });
+  const { measureId } = useParams<{ measureId: string }>();
+  if (!measureId) {
+    throw new Error("Missing :measureId param in route");
+  }
+  const { node } = useLazyLoadQuery<MeasureTasksTabQuery>(tasksQuery, { measureId });
   if (node.__typename !== "Measure") {
     throw new Error("invalid node type");
   }
@@ -51,7 +61,7 @@ export default function MeasureTasksTab() {
     <div className="relative">
       <TasksCard connectionId={connectionId} tasks={node.tasks.edges} />
       {node.canCreateTask && (
-        <TaskFormDialog connection={connectionId} measureId={measure.id}>
+        <TaskFormDialog connection={connectionId} measureId={measureId}>
           <Button
             variant="secondary"
             icon={IconPlusLarge}

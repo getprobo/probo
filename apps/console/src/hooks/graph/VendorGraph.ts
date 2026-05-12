@@ -1,3 +1,17 @@
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
 import { promisifyMutation, sprintf } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import { useConfirm } from "@probo/ui";
@@ -95,12 +109,21 @@ export const useDeleteVendor = (
 export const vendorConnectionKey = "VendorsPage_vendors";
 
 export const vendorsQuery = graphql`
-  query VendorGraphListQuery($organizationId: ID!, $snapshotId: ID) {
+  query VendorGraphListQuery($organizationId: ID!) {
     node(id: $organizationId) {
       ... on Organization {
         id
         canCreateVendor: permission(action: "core:vendor:create")
-        ...VendorGraphPaginatedFragment @arguments(snapshotId: $snapshotId)
+        canPublishVendor: permission(action: "core:vendor:publish")
+        vendorsDocument {
+          id
+          currentPublishedMajor
+          currentPublishedMinor
+          defaultApprovers {
+            id
+          }
+        }
+        ...VendorGraphPaginatedFragment
       }
     }
   }
@@ -115,7 +138,6 @@ export const paginatedVendorsFragment = graphql`
     after: { type: "CursorKey", defaultValue: null }
     before: { type: "CursorKey", defaultValue: null }
     last: { type: "Int", defaultValue: null }
-    snapshotId: { type: "ID", defaultValue: null }
   ) {
     vendors(
       first: $first
@@ -123,13 +145,11 @@ export const paginatedVendorsFragment = graphql`
       last: $last
       before: $before
       orderBy: $order
-      filter: { snapshotId: $snapshotId }
-    ) @connection(key: "VendorsListQuery_vendors", filters: ["filter"]) {
+    ) @connection(key: "VendorsListQuery_vendors") {
       __id
       edges {
         node {
           id
-          snapshotId
           name
           websiteUrl
           updatedAt
@@ -160,7 +180,6 @@ export const vendorNodeQuery = graphql`
     node(id: $vendorId) {
       id
       ... on Vendor {
-        snapshotId
         name
         websiteUrl
         canAssess: permission(action: "core:vendor:assess")

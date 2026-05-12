@@ -1,3 +1,17 @@
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
 package mcp_v1
 
 import (
@@ -8,6 +22,8 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"go.gearno.de/kit/log"
 	mcpgenmcp "go.probo.inc/mcpgen/mcp"
+	"go.probo.inc/probo/pkg/accessreview"
+	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/probo"
@@ -20,16 +36,18 @@ func (r *Resolver) ProboService(ctx context.Context, objectID gid.GID) *probo.Te
 	return r.proboSvc.WithTenant(objectID.TenantID())
 }
 
-func NewMux(logger *log.Logger, proboSvc *probo.Service, iamSvc *iam.Service, tokenSecret string) *chi.Mux {
+func NewMux(logger *log.Logger, proboSvc *probo.Service, iamSvc *iam.Service, accessReviewSvc *accessreview.Service, cookieBannerSvc *cookiebanner.Service, tokenSecret string) *chi.Mux {
 	logger = logger.Named("mcp.v1")
 
 	logger.Info("initializing MCP server")
 	// server.AddReceivingMiddleware(mcputils.LoggingMiddleware(logger))
 
 	resolver := &Resolver{
-		proboSvc: proboSvc,
-		iamSvc:   iamSvc,
-		logger:   logger,
+		proboSvc:     proboSvc,
+		iamSvc:       iamSvc,
+		accessReview: accessReviewSvc,
+		cookieBanner: cookieBannerSvc,
+		logger:       logger,
 	}
 
 	mcpServer := server.New(resolver)
@@ -50,10 +68,11 @@ func NewMux(logger *log.Logger, proboSvc *probo.Service, iamSvc *iam.Service, to
 			Logger:     nil, // TODO put logger here
 		},
 	)
+	protectedHandler := http.NewCrossOriginProtection().Handler(handler)
 
 	r := chi.NewMux()
 	r.Use(authn.NewAPIKeyMiddleware(iamSvc, tokenSecret))
-	r.Handle("/", RequireAPIKeyHandler(logger, handler))
+	r.Handle("/", RequireAPIKeyHandler(logger, protectedHandler))
 
 	logger.Info("MCP server initialized successfully")
 

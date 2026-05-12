@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -27,8 +27,8 @@ func NewControl(c *coredata.Control) *Control {
 		Name:                        c.Name,
 		Description:                 c.Description,
 		BestPractice:                c.BestPractice,
-		Implemented:                 ControlImplemented(c.Implemented),
 		NotImplementedJustification: c.NotImplementedJustification,
+		MaturityLevel:               ControlMaturityLevel(c.MaturityLevel),
 		CreatedAt:                   c.CreatedAt,
 		UpdatedAt:                   c.UpdatedAt,
 	}

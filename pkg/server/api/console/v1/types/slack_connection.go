@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -46,14 +46,13 @@ func NewSlackConnection(c *coredata.Connector) *SlackConnection {
 		UpdatedAt: c.UpdatedAt,
 	}
 
-	// Extract channel information from settings
-	if len(c.Settings) > 0 {
-		if channel, ok := c.Settings["channel"].(string); ok && channel != "" {
-			conn.Channel = &channel
-		}
-		if channelID, ok := c.Settings["channel_id"].(string); ok && channelID != "" {
-			conn.ChannelID = &channelID
-		}
+	// Extract channel information from typed settings
+	settings, _ := c.SlackSettings()
+	if settings.Channel != "" {
+		conn.Channel = &settings.Channel
+	}
+	if settings.ChannelID != "" {
+		conn.ChannelID = &settings.ChannelID
 	}
 
 	return conn

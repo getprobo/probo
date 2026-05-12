@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -261,6 +261,68 @@ func TestRequired(t *testing.T) {
 		err := Required()(slice)
 		if err != nil {
 			t.Errorf("expected no error for non-empty []*string, got: %v", err)
+		}
+	})
+}
+
+func TestNoDuplicates(t *testing.T) {
+	t.Run("nil slice", func(t *testing.T) {
+		var slice []string
+		err := NoDuplicates()(slice)
+		if err != nil {
+			t.Errorf("expected no error for nil slice, got: %v", err)
+		}
+	})
+
+	t.Run("empty slice", func(t *testing.T) {
+		slice := []string{}
+		err := NoDuplicates()(slice)
+		if err != nil {
+			t.Errorf("expected no error for empty slice, got: %v", err)
+		}
+	})
+
+	t.Run("unique strings", func(t *testing.T) {
+		slice := []string{"a", "b", "c"}
+		err := NoDuplicates()(slice)
+		if err != nil {
+			t.Errorf("expected no error, got: %v", err)
+		}
+	})
+
+	t.Run("duplicate strings", func(t *testing.T) {
+		slice := []string{"a", "b", "a"}
+		err := NoDuplicates()(slice)
+		if err == nil {
+			t.Fatal("expected validation error for duplicates")
+		} else if err.Code != ErrorCodeInvalidFormat {
+			t.Errorf("expected error code %s, got %s", ErrorCodeInvalidFormat, err.Code)
+		}
+	})
+
+	t.Run("unique ints", func(t *testing.T) {
+		slice := []int{1, 2, 3}
+		err := NoDuplicates()(slice)
+		if err != nil {
+			t.Errorf("expected no error, got: %v", err)
+		}
+	})
+
+	t.Run("duplicate ints", func(t *testing.T) {
+		slice := []int{1, 2, 1}
+		err := NoDuplicates()(slice)
+		if err == nil {
+			t.Fatal("expected validation error for duplicates")
+		}
+	})
+
+	t.Run("non-comparable elements", func(t *testing.T) {
+		slice := []map[string]string{{"a": "b"}}
+		err := NoDuplicates()(slice)
+		if err == nil {
+			t.Fatal("expected validation error for non-comparable elements")
+		} else if err.Code != ErrorCodeInvalidFormat {
+			t.Errorf("expected error code %s, got %s", ErrorCodeInvalidFormat, err.Code)
 		}
 	})
 }

@@ -1,3 +1,18 @@
+// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
+import { formatError } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import {
   Badge,
@@ -9,23 +24,23 @@ import {
   Input,
   Label,
   PropertyRow,
-  Textarea,
   useDialogRef,
+  useToast,
 } from "@probo/ui";
 import { type ReactNode } from "react";
+import { useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
-import type { z } from "zod";
+import { z } from "zod";
 
 import type { CreateDocumentDialogMutation } from "#/__generated__/core/CreateDocumentDialogMutation.graphql";
 import { ControlledField } from "#/components/form/ControlledField";
 import { DocumentClassificationOptions } from "#/components/form/DocumentClassificationOptions";
 import { DocumentTypeOptions } from "#/components/form/DocumentTypeOptions";
 import { PeopleMultiSelectField } from "#/components/form/PeopleMultiSelectField";
-import { documentSchema, useDocumentForm } from "#/hooks/forms/useDocumentForm";
-import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
+import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
-type Props = {
+type CreateDocumentDialogProps = {
   trigger?: ReactNode;
   connection: string;
 };
@@ -39,6 +54,12 @@ const createDocumentMutation = graphql`
       documentEdge @prependEdge(connections: $connections) {
         node {
           id
+          canUpdate: permission(action: "core:document:update")
+          canDelete: permission(action: "core:document:delete")
+          canRequestSignatures: permission(action: "core:document-version:request-signature")
+          canArchive: permission(action: "core:document:archive")
+          canUnarchive: permission(action: "core:document:unarchive")
+          canSendSigningNotifications: permission(action: "core:document:send-signing-notifications")
           ...DocumentListItemFragment
         }
       }
@@ -46,21 +67,37 @@ const createDocumentMutation = graphql`
   }
 `;
 
+const documentSchema = z.object({
+  title: z.string().min(1, "Title is required"),
+  documentType: z.enum(["OTHER", "GOVERNANCE", "POLICY", "PROCEDURE", "PLAN", "REGISTER", "RECORD", "REPORT", "TEMPLATE"]),
+  classification: z.enum(["PUBLIC", "INTERNAL", "CONFIDENTIAL", "SECRET"]),
+  defaultApproverIds: z.array(z.string()),
+});
+
 /**
  * Dialog to create or update a document
  */
-export function CreateDocumentDialog({ trigger, connection }: Props) {
+export function CreateDocumentDialog({ trigger, connection }: CreateDocumentDialogProps) {
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
+  const { toast } = useToast();
 
-  const { control, handleSubmit, register, formState, reset }
-    = useDocumentForm();
+  const { control, handleSubmit, register, formState, reset } = useFormWithSchema(
+    documentSchema,
+    {
+      defaultValues: {
+        documentType: "POLICY",
+        classification: "INTERNAL",
+        defaultApproverIds: [],
+      },
+    },
+  );
   const errors = formState.errors ?? {};
   const [createDocument, isLoading]
-    = useMutationWithToasts<CreateDocumentDialogMutation>(createDocumentMutation);
+    = useMutation<CreateDocumentDialogMutation>(createDocumentMutation);
 
-  const onSubmit = async (data: z.infer<typeof documentSchema>) => {
-    await createDocument({
+  const onSubmit = (data: z.infer<typeof documentSchema>) => {
+    createDocument({
       variables: {
         input: {
           ...data,
@@ -68,11 +105,17 @@ export function CreateDocumentDialog({ trigger, connection }: Props) {
         },
         connections: [connection],
       },
-      successMessage: __("Document created successfully."),
-      errorMessage: __("Failed to create document"),
-      onSuccess: () => {
+      onCompleted(_, errors) {
+        if (errors?.length) {
+          toast({ title: __("Error"), description: formatError(__("Failed to create document"), errors), variant: "error" });
+          return;
+        }
+        toast({ title: __("Success"), description: __("Document created successfully."), variant: "success" });
         dialogRef.current?.close();
         reset();
+      },
+      onError(error) {
+        toast({ title: __("Error"), description: error.message, variant: "error" });
       },
     });
   };
@@ -95,14 +138,6 @@ export function CreateDocumentDialog({ trigger, connection }: Props) {
               variant="title"
               placeholder={__("Document title")}
               {...register("title")}
-            />
-            <Textarea
-              id="content"
-              variant="ghost"
-              autogrow
-              placeholder={__("Add content")}
-              aria-label={__("Content")}
-              {...register("content")}
             />
           </div>
           {/* Properties form */}
@@ -142,18 +177,15 @@ export function CreateDocumentDialog({ trigger, connection }: Props) {
               </ControlledField>
             </PropertyRow>
 
-            <PropertyRow
-              id="approverIds"
-              label={__("Approvers")}
-              error={errors.approverIds?.message}
-            >
+            <PropertyRow label={__("Approvers")}>
               <PeopleMultiSelectField
-                name="approverIds"
+                name="defaultApproverIds"
                 control={control}
                 organizationId={organizationId}
                 placeholder={__("Add approvers...")}
               />
             </PropertyRow>
+
           </div>
         </DialogContent>
         <DialogFooter>

@@ -1,3 +1,17 @@
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
 package coredata
 
 import (
@@ -49,7 +63,7 @@ var (
 )
 
 // AuthorizationAttributes returns the authorization attributes for policy evaluation.
-func (ej *ExportJob) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+func (ej *ExportJob) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	q := `SELECT organization_id FROM export_jobs WHERE id = $1 LIMIT 1;`
 
 	var organizationID gid.GID
@@ -65,7 +79,7 @@ func (ej *ExportJob) AuthorizationAttributes(ctx context.Context, conn pg.Conn) 
 
 func (ej *ExportJob) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -107,7 +121,7 @@ INSERT INTO export_jobs (
 
 func (ej *ExportJob) Update(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -139,7 +153,7 @@ WHERE
 
 func (ej *ExportJob) LoadByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	id gid.GID,
 ) error {
@@ -183,7 +197,7 @@ WHERE
 
 func (ej *ExportJob) LoadNextPendingForUpdateSkipLocked(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 ) error {
 	q := `
 SELECT

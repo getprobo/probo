@@ -1,23 +1,37 @@
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
 import { sprintf } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 
 import { Rows } from "#/components/Rows";
-import { VendorRow } from "#/components/VendorRow";
-import type { TrustGraphCurrentVendorsQuery } from "#/queries/__generated__/TrustGraphCurrentVendorsQuery.graphql";
-import { currentTrustVendorsQuery } from "#/queries/TrustGraph";
+import { SubprocessorRow } from "#/components/SubprocessorRow";
+import type { TrustGraphCurrentSubprocessorsQuery } from "#/queries/__generated__/TrustGraphCurrentSubprocessorsQuery.graphql";
+import { currentTrustSubprocessorsQuery } from "#/queries/TrustGraph";
 
 type Props = {
-  queryRef: PreloadedQuery<TrustGraphCurrentVendorsQuery>;
+  queryRef: PreloadedQuery<TrustGraphCurrentSubprocessorsQuery>;
 };
 
 export function SubprocessorsPage({ queryRef }: Props) {
   const { __ } = useTranslate();
-  const data = usePreloadedQuery(currentTrustVendorsQuery, queryRef);
-  const vendors
-    = data.currentTrustCenter?.vendors.edges.map(edge => edge.node) ?? [];
+  const data = usePreloadedQuery(currentTrustSubprocessorsQuery, queryRef);
+  const subprocessors
+    = data.currentTrustCenter?.subprocessors.edges.map(edge => edge.node) ?? [];
 
-  const hasAnyCountries = vendors.some(vendor => vendor.countries.length > 0);
+  const hasAnyCountries = subprocessors.some(subprocessor => subprocessor.countries.length > 0);
 
   return (
     <div>
@@ -29,8 +43,8 @@ export function SubprocessorsPage({ queryRef }: Props) {
         )}
       </p>
       <Rows>
-        {vendors.map(vendor => (
-          <VendorRow key={vendor.id} vendor={vendor} hasAnyCountries={hasAnyCountries} />
+        {subprocessors.map(subprocessor => (
+          <SubprocessorRow key={subprocessor.id} subprocessor={subprocessor} hasAnyCountries={hasAnyCountries} />
         ))}
       </Rows>
     </div>

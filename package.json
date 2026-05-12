@@ -2,8 +2,8 @@
   "name": "probo",
   "description": "Probo monorepo containing applications and shared packages",
   "engines": {
-    "node": "v24.11.1",
-    "npm": "11.8.0"
+    "node": "^24.0.0",
+    "npm": "^11.8.0"
   },
   "workspaces": [
     "apps/*",
@@ -14,26 +14,33 @@
     "dev": "turbo run dev",
     "lint": "turbo run lint",
     "check": "turbo run check",
-    "relay": "turbo run relay"
+    "relay-clean": "find apps -type d -name __generated__ -exec rm -rf {} +",
+    "relay-compile": "npx relay-compiler",
+    "relay": "npm run relay-clean && npm run relay-compile"
   },
   "devDependencies": {
+    "relay-compiler": "^20.1.1",
     "turbo": "^2.5.3"
   },
   "graphql": {
-    "schema": "./pkg/server/api/console/v1/schema.graphql"
+    "schema": "./pkg/server/api/console/v1/graphql/"
   },
   "overrides": {
-    "form-data": "^4.0.4",
-    "minimatch": "^9.0.9",
-    "@typescript-eslint/typescript-estree": {
-      "minimatch": "^9.0.9"
-    }
+    "brace-expansion": "^5.0.5",
+    "minimatch@3": {
+      "brace-expansion": "^1.1.11"
+    },
+    "minimatch@9": "^9.0.9",
+    "@langchain/classic": "^1.0.27",
+    "langsmith": "^0.5.19",
+    "handlebars": "4.7.9",
+    "@langchain/community": "^1.1.25",
+    "lodash": "^4.18.1",
+    "lodash-es": "^4.18.1",
+    "axios": "^1.16.0"
   },
   "license": "MIT",
   "packageManager": "npm@11.8.0",
-  "volta": {
-    "node": "24.4.0"
-  },
   "dependencies": {
     "react-dom": "^19.2.1"
   }

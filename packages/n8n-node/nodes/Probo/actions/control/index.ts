@@ -1,9 +1,31 @@
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
 import type { INodeProperties } from 'n8n-workflow';
 import * as createOp from './create.operation';
 import * as updateOp from './update.operation';
 import * as deleteOp from './delete.operation';
 import * as getOp from './get.operation';
 import * as getAllOp from './getAll.operation';
+import * as linkMeasureOp from './linkMeasure.operation';
+import * as unlinkMeasureOp from './unlinkMeasure.operation';
+import * as linkDocumentOp from './linkDocument.operation';
+import * as unlinkDocumentOp from './unlinkDocument.operation';
+import * as linkAuditOp from './linkAudit.operation';
+import * as unlinkAuditOp from './unlinkAudit.operation';
+import * as linkObligationOp from './linkObligation.operation';
+import * as unlinkObligationOp from './unlinkObligation.operation';
 
 export const description: INodeProperties[] = [
 	{
@@ -42,6 +64,54 @@ export const description: INodeProperties[] = [
 				action: 'Get many controls',
 			},
 			{
+				name: 'Link Audit',
+				value: 'linkAudit',
+				description: 'Link an audit to a control',
+				action: 'Link an audit to a control',
+			},
+			{
+				name: 'Link Document',
+				value: 'linkDocument',
+				description: 'Link a document to a control',
+				action: 'Link a document to a control',
+			},
+			{
+				name: 'Link Measure',
+				value: 'linkMeasure',
+				description: 'Link a measure to a control',
+				action: 'Link a measure to a control',
+			},
+			{
+				name: 'Link Obligation',
+				value: 'linkObligation',
+				description: 'Link an obligation to a control',
+				action: 'Link an obligation to a control',
+			},
+			{
+				name: 'Unlink Audit',
+				value: 'unlinkAudit',
+				description: 'Unlink an audit from a control',
+				action: 'Unlink an audit from a control',
+			},
+			{
+				name: 'Unlink Document',
+				value: 'unlinkDocument',
+				description: 'Unlink a document from a control',
+				action: 'Unlink a document from a control',
+			},
+			{
+				name: 'Unlink Measure',
+				value: 'unlinkMeasure',
+				description: 'Unlink a measure from a control',
+				action: 'Unlink a measure from a control',
+			},
+			{
+				name: 'Unlink Obligation',
+				value: 'unlinkObligation',
+				description: 'Unlink an obligation from a control',
+				action: 'Unlink an obligation from a control',
+			},
+			{
 				name: 'Update',
 				value: 'update',
 				description: 'Update an existing control',
@@ -55,7 +125,28 @@ export const description: INodeProperties[] = [
 	...deleteOp.description,
 	...getOp.description,
 	...getAllOp.description,
+	...linkMeasureOp.description,
+	...unlinkMeasureOp.description,
+	...linkDocumentOp.description,
+	...unlinkDocumentOp.description,
+	...linkAuditOp.description,
+	...unlinkAuditOp.description,
+	...linkObligationOp.description,
+	...unlinkObligationOp.description,
 ];
 
-export { createOp as create, updateOp as update, deleteOp as delete, getOp as get, getAllOp as getAll };
-
+export {
+	createOp as create,
+	updateOp as update,
+	deleteOp as delete,
+	getOp as get,
+	getAllOp as getAll,
+	linkMeasureOp as linkMeasure,
+	unlinkMeasureOp as unlinkMeasure,
+	linkDocumentOp as linkDocument,
+	unlinkDocumentOp as unlinkDocument,
+	linkAuditOp as linkAudit,
+	unlinkAuditOp as unlinkAudit,
+	linkObligationOp as linkObligation,
+	unlinkObligationOp as unlinkObligation,
+};

@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -30,7 +30,6 @@ type (
 
 		Resolver any
 		ParentID gid.GID
-		Filter   *coredata.TransferImpactAssessmentFilter
 	}
 )
 
@@ -38,7 +37,6 @@ func NewTransferImpactAssessmentConnection(
 	p *page.Page[*coredata.TransferImpactAssessment, coredata.TransferImpactAssessmentOrderField],
 	parentType any,
 	parentID gid.GID,
-	filter *coredata.TransferImpactAssessmentFilter,
 ) *TransferImpactAssessmentConnection {
 	edges := make([]*TransferImpactAssessmentEdge, len(p.Data))
 	for i, tia := range p.Data {
@@ -51,7 +49,6 @@ func NewTransferImpactAssessmentConnection(
 
 		Resolver: parentType,
 		ParentID: parentID,
-		Filter:   filter,
 	}
 }
 

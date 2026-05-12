@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -48,6 +48,7 @@ type (
 	CreateSignatureRequest struct {
 		OrganizationID gid.GID
 		DocumentType   coredata.ElectronicSignatureDocumentType
+		DocumentName   *string
 		FileID         gid.GID
 		SignerEmail    mail.Addr
 		ConsentText    string // optional; required when DocumentType == OTHER
@@ -59,6 +60,18 @@ type (
 		SignerEmail    mail.Addr
 		SignerIPAddr   string
 		SignerUA       string
+	}
+
+	CreateAndAcceptSignatureRequest struct {
+		OrganizationID gid.GID
+		DocumentType   coredata.ElectronicSignatureDocumentType
+		DocumentName   *string
+		FileID         gid.GID
+		SignerEmail    mail.Addr
+		SignerFullName string
+		SignerIPAddr   string
+		SignerUA       string
+		ConsentText    string
 	}
 
 	RecordEventRequest struct {
@@ -98,18 +111,17 @@ func NewService(
 func (s *Service) Run(ctx context.Context, presenterConfigFunc EmailPresenterConfigFunc) error {
 	g, gctx := errgroup.WithContext(ctx)
 
-	nonCancelableCtx := context.WithoutCancel(ctx)
-
-	sealingWorkerCtx, stopSealingWorker := context.WithCancel(nonCancelableCtx)
+	sealingWorkerCtx, stopSealingWorker := context.WithCancel(ctx)
 	sealingWorker := NewSealingWorker(
 		s.pg,
 		s.fileManager,
 		s.tsaClient,
 		s.logger.Named("sealing-worker"),
+		nil,
 	)
 	g.Go(func() error { return sealingWorker.Run(sealingWorkerCtx) })
 
-	certWorkerCtx, stopCertWorker := context.WithCancel(nonCancelableCtx)
+	certWorkerCtx, stopCertWorker := context.WithCancel(ctx)
 	certWorker := NewCompletionCertificateWorker(
 		s.pg,
 		s.fileManager,
@@ -130,7 +142,7 @@ func (s *Service) Run(ctx context.Context, presenterConfigFunc EmailPresenterCon
 
 func (s *Service) CreateSignature(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	req *CreateSignatureRequest,
 ) (*coredata.ElectronicSignature, error) {
 	consentText := req.ConsentText
@@ -161,6 +173,7 @@ func (s *Service) CreateSignature(
 		OrganizationID: req.OrganizationID,
 		Status:         coredata.ElectronicSignatureStatusPending,
 		DocumentType:   req.DocumentType,
+		DocumentName:   req.DocumentName,
 		FileID:         stampedFileID,
 		SignerEmail:    req.SignerEmail.String(),
 		ConsentText:    consentText,
@@ -178,9 +191,62 @@ func (s *Service) CreateSignature(
 	return sig, nil
 }
 
+func (s *Service) CreateAndAcceptSignature(
+	ctx context.Context,
+	conn pg.Tx,
+	req *CreateAndAcceptSignatureRequest,
+) (*coredata.ElectronicSignature, error) {
+	sig, err := s.CreateSignature(
+		ctx,
+		conn,
+		&CreateSignatureRequest{
+			OrganizationID: req.OrganizationID,
+			DocumentType:   req.DocumentType,
+			DocumentName:   req.DocumentName,
+			FileID:         req.FileID,
+			SignerEmail:    req.SignerEmail,
+			ConsentText:    req.ConsentText,
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create signature: %w", err)
+	}
+
+	now := time.Now()
+	scope := coredata.NewScopeFromObjectID(req.OrganizationID)
+
+	sig.SignerFullName = &req.SignerFullName
+	sig.SignerIPAddress = &req.SignerIPAddr
+	sig.SignerUserAgent = &req.SignerUA
+	sig.SignedAt = &now
+	sig.Status = coredata.ElectronicSignatureStatusAccepted
+	sig.UpdatedAt = now
+
+	if err := sig.Update(ctx, conn, scope); err != nil {
+		return nil, fmt.Errorf("cannot accept signature: %w", err)
+	}
+
+	if err := s.recordEvent(
+		ctx,
+		conn,
+		&RecordEventRequest{
+			SignatureID: sig.ID,
+			EventType:   coredata.ElectronicSignatureEventTypeSignatureAccepted,
+			EventSource: coredata.ElectronicSignatureEventSourceServer,
+			ActorEmail:  req.SignerEmail,
+			ActorIPAddr: req.SignerIPAddr,
+			ActorUA:     req.SignerUA,
+		},
+	); err != nil {
+		return nil, fmt.Errorf("cannot record signature event: %w", err)
+	}
+
+	return sig, nil
+}
+
 func (s *Service) createStampedDocument(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope coredata.Scoper,
 	organizationID gid.GID,
 	originalFileID gid.GID,
@@ -209,6 +275,7 @@ func (s *Service) createStampedDocument(
 		MimeType:       "application/pdf",
 		FileName:       originalFile.FileName,
 		FileKey:        uuid.MustNewV4().String(),
+		Visibility:     coredata.FileVisibilityPrivate,
 		CreatedAt:      now,
 		UpdatedAt:      now,
 	}
@@ -244,7 +311,7 @@ func (s *Service) AcceptSignature(ctx context.Context, req *AcceptSignatureReque
 
 	err := s.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			if err := signature.LoadByID(ctx, tx, scope, req.SignatureID); err != nil {
 				return fmt.Errorf("cannot load electronic signature: %w", err)
 			}
@@ -298,13 +365,13 @@ func (s *Service) AcceptSignature(ctx context.Context, req *AcceptSignatureReque
 func (s *Service) RecordEvent(ctx context.Context, req *RecordEventRequest) error {
 	return s.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			return s.recordEvent(ctx, tx, req)
 		},
 	)
 }
 
-func (s *Service) recordEvent(ctx context.Context, tx pg.Conn, req *RecordEventRequest) error {
+func (s *Service) recordEvent(ctx context.Context, tx pg.Tx, req *RecordEventRequest) error {
 	var (
 		now   = time.Now()
 		scope = coredata.NewScopeFromObjectID(req.SignatureID)
@@ -337,7 +404,7 @@ func (s *Service) GetSignatureByID(ctx context.Context, id gid.GID) (*coredata.E
 
 	err := s.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			if err := signature.LoadByID(ctx, conn, scope, id); err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrElectronicSignatureNotFound
@@ -368,7 +435,7 @@ func (s *Service) GenerateCertificateFileURL(
 
 	err := s.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			if err := file.LoadByID(ctx, conn, scope, certificateFileID); err != nil {
 				return fmt.Errorf("cannot load certificate file: %w", err)
 			}
@@ -401,7 +468,7 @@ func (s *Service) GenerateSignatureFileURL(
 
 	err := s.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			if err := signature.LoadByID(ctx, conn, scope, signatureID); err != nil {
 				return fmt.Errorf("cannot load electronic signature: %w", err)
 			}
@@ -435,7 +502,7 @@ func (s *Service) GetEventsBySignatureID(
 	)
 	err := s.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			if err := events.LoadBySignatureID(ctx, conn, scope, signatureID); err != nil {
 				return fmt.Errorf("cannot load events: %w", err)
 			}

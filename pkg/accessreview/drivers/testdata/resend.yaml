@@ -1,0 +1,58 @@
+---
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.resend.com
+        headers:
+            Accept:
+                - application/json
+        url: https://api.resend.com/api-keys
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"object":"list","has_more":false,"data":[{"id":"00000001-0000-0000-0000-000000000001","name":"test_key","created_at":"2026-03-26 12:18:58.314592+00","last_used_at":null},{"id":"00000001-0000-0000-0000-000000000002","name":"production","created_at":"2025-11-03 12:33:51.313755+00","last_used_at":"2026-03-05 18:57:57.73093+00"}]}'
+        headers:
+            Cf-Cache-Status:
+                - DYNAMIC
+            Cf-Ray:
+                - 9e264e7a8c8a024f-CDG
+            Content-Security-Policy:
+                - default-src 'none'; frame-ancestors 'none'
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Thu, 26 Mar 2026 12:54:53 GMT
+            Etag:
+                - W/"146-DfTVyEh9Ui32i8/Mql/EiL8sQdI"
+            Permissions-Policy:
+                - camera=(), microphone=(), geolocation=(), payment=()
+            Ratelimit-Limit:
+                - "5"
+            Ratelimit-Policy:
+                - 5;w=1
+            Ratelimit-Remaining:
+                - "4"
+            Ratelimit-Reset:
+                - "1"
+            Referrer-Policy:
+                - strict-origin-when-cross-origin
+            Server:
+                - cloudflare
+            Strict-Transport-Security:
+                - max-age=63072000; includeSubDomains
+            X-Content-Type-Options:
+                - nosniff
+            X-Frame-Options:
+                - DENY
+        status: 200 OK
+        code: 200
+        duration: 192.141167ms

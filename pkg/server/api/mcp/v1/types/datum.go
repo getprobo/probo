@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -23,8 +23,8 @@ func NewDatum(d *coredata.Datum) *Datum {
 	return &Datum{
 		ID:                 d.ID,
 		Name:               d.Name,
+		OwnerID:            d.OwnerID,
 		OrganizationID:     d.OrganizationID,
-		SnapshotID:         d.SnapshotID,
 		DataClassification: d.DataClassification,
 		CreatedAt:          d.CreatedAt,
 		UpdatedAt:          d.UpdatedAt,

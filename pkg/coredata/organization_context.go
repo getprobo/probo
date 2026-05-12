@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -29,7 +29,11 @@ import (
 type (
 	OrganizationContext struct {
 		OrganizationID gid.GID   `db:"organization_id"`
-		Summary        *string   `db:"summary"`
+		Product        *string   `db:"product"`
+		Architecture   *string   `db:"architecture"`
+		Team           *string   `db:"team"`
+		Processes      *string   `db:"processes"`
+		Customers      *string   `db:"customers"`
 		CreatedAt      time.Time `db:"created_at"`
 		UpdatedAt      time.Time `db:"updated_at"`
 	}
@@ -37,14 +41,18 @@ type (
 
 func (oc *OrganizationContext) LoadByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 ) error {
 	q := `
 SELECT
     organization_id,
-    summary,
+    product,
+    architecture,
+    team,
+    processes,
+    customers,
     created_at,
     updated_at
 FROM
@@ -81,20 +89,28 @@ LIMIT 1;
 
 func (oc *OrganizationContext) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
 INSERT INTO organization_contexts (
     organization_id,
     tenant_id,
-    summary,
+    product,
+    architecture,
+    team,
+    processes,
+    customers,
     created_at,
     updated_at
 ) VALUES (
     @organization_id,
     @tenant_id,
-    @summary,
+    @product,
+    @architecture,
+    @team,
+    @processes,
+    @customers,
     @created_at,
     @updated_at
 )
@@ -103,7 +119,11 @@ INSERT INTO organization_contexts (
 	args := pgx.StrictNamedArgs{
 		"organization_id": oc.OrganizationID,
 		"tenant_id":       scope.GetTenantID(),
-		"summary":         oc.Summary,
+		"product":         oc.Product,
+		"architecture":    oc.Architecture,
+		"team":            oc.Team,
+		"processes":       oc.Processes,
+		"customers":       oc.Customers,
 		"created_at":      oc.CreatedAt,
 		"updated_at":      oc.UpdatedAt,
 	}
@@ -118,13 +138,17 @@ INSERT INTO organization_contexts (
 
 func (oc *OrganizationContext) Update(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
 UPDATE organization_contexts
 SET
-    summary = @summary,
+    product = @product,
+    architecture = @architecture,
+    team = @team,
+    processes = @processes,
+    customers = @customers,
     updated_at = @updated_at
 WHERE
     %s
@@ -135,7 +159,11 @@ WHERE
 
 	args := pgx.StrictNamedArgs{
 		"organization_id": oc.OrganizationID,
-		"summary":         oc.Summary,
+		"product":         oc.Product,
+		"architecture":    oc.Architecture,
+		"team":            oc.Team,
+		"processes":       oc.Processes,
+		"customers":       oc.Customers,
 		"updated_at":      oc.UpdatedAt,
 	}
 

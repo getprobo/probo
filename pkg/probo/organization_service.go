@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -49,7 +49,11 @@ type (
 
 	UpdateOrganizationContextRequest struct {
 		OrganizationID gid.GID
-		Summary        **string
+		Product        **string
+		Architecture   **string
+		Team           **string
+		Processes      **string
+		Customers      **string
 	}
 )
 
@@ -72,7 +76,11 @@ func (uocr *UpdateOrganizationContextRequest) Validate() error {
 	v := validator.New()
 
 	v.Check(uocr.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
-	v.Check(uocr.Summary, "summary", validator.SafeText(30_000))
+	v.Check(uocr.Product, "product", validator.SafeText(30_000))
+	v.Check(uocr.Architecture, "architecture", validator.SafeText(30_000))
+	v.Check(uocr.Team, "team", validator.SafeText(30_000))
+	v.Check(uocr.Processes, "processes", validator.SafeText(30_000))
+	v.Check(uocr.Customers, "customers", validator.SafeText(30_000))
 
 	return v.Error()
 }
@@ -85,7 +93,7 @@ func (s OrganizationService) Get(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			return organization.LoadByID(
 				ctx,
 				conn,
@@ -102,7 +110,35 @@ func (s OrganizationService) Get(
 	return organization, nil
 }
 
-func (s OrganizationService) GetContextSummary(
+func (s OrganizationService) GetByIDs(
+	ctx context.Context,
+	organizationIDs ...gid.GID,
+) (coredata.Organizations, error) {
+	var organizations coredata.Organizations
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := organizations.LoadByIDs(
+				ctx,
+				conn,
+				s.svc.scope,
+				organizationIDs,
+			); err != nil {
+				return fmt.Errorf("cannot load organizations by ids: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return organizations, nil
+}
+
+func (s OrganizationService) GetContext(
 	ctx context.Context,
 	organizationID gid.GID,
 ) (*coredata.OrganizationContext, error) {
@@ -110,7 +146,7 @@ func (s OrganizationService) GetContextSummary(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			err := organizationContext.LoadByOrganizationID(
 				ctx,
 				conn,
@@ -145,7 +181,7 @@ func (s OrganizationService) UpdateContext(
 
 	err := s.svc.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			if err := organization.LoadByID(ctx, tx, s.svc.scope, req.OrganizationID); err != nil {
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
@@ -154,13 +190,30 @@ func (s OrganizationService) UpdateContext(
 				return fmt.Errorf("cannot load organization context: %w", err)
 			}
 
-			if req.Summary != nil {
-				organizationContext.Summary = *req.Summary
-				organizationContext.UpdatedAt = time.Now()
+			if req.Product != nil {
+				organizationContext.Product = *req.Product
+			}
 
-				if err := organizationContext.Update(ctx, tx, s.svc.scope); err != nil {
-					return fmt.Errorf("cannot update organization context: %w", err)
-				}
+			if req.Architecture != nil {
+				organizationContext.Architecture = *req.Architecture
+			}
+
+			if req.Team != nil {
+				organizationContext.Team = *req.Team
+			}
+
+			if req.Processes != nil {
+				organizationContext.Processes = *req.Processes
+			}
+
+			if req.Customers != nil {
+				organizationContext.Customers = *req.Customers
+			}
+
+			organizationContext.UpdatedAt = time.Now()
+
+			if err := organizationContext.Update(ctx, tx, s.svc.scope); err != nil {
+				return fmt.Errorf("cannot update organization context: %w", err)
 			}
 
 			return nil
@@ -186,7 +239,7 @@ func (s OrganizationService) Update(
 
 	err := s.svc.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			if err := organization.LoadByID(ctx, tx, s.svc.scope, req.ID); err != nil {
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
@@ -257,6 +310,7 @@ func (s OrganizationService) Update(
 					MimeType:   contentType,
 					FileName:   filename,
 					FileKey:    objectKey.String(),
+					Visibility: coredata.FileVisibilityPublic,
 					CreatedAt:  now,
 					UpdatedAt:  now,
 				}
@@ -317,6 +371,7 @@ func (s OrganizationService) Update(
 					MimeType:   contentType,
 					FileName:   filename,
 					FileKey:    objectKey.String(),
+					Visibility: coredata.FileVisibilityPublic,
 					CreatedAt:  now,
 					UpdatedAt:  now,
 				}
@@ -367,7 +422,7 @@ func (s OrganizationService) GenerateLogoURL(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			organization := &coredata.Organization{}
 			if err := organization.LoadByID(ctx, conn, s.svc.scope, organizationID); err != nil {
 				return fmt.Errorf("cannot load organization: %w", err)
@@ -409,7 +464,7 @@ func (s OrganizationService) GenerateHorizontalLogoURL(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			organization := &coredata.Organization{}
 			if err := organization.LoadByID(ctx, conn, s.svc.scope, organizationID); err != nil {
 				return fmt.Errorf("cannot load organization: %w", err)
@@ -450,7 +505,7 @@ func (s OrganizationService) DeleteHorizontalLogo(
 
 	err := s.svc.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			if err := organization.LoadByID(ctx, tx, s.svc.scope, organizationID); err != nil {
 				return fmt.Errorf("cannot load organization: %w", err)
 			}

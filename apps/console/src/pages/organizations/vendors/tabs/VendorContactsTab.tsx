@@ -1,3 +1,17 @@
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
 import { sprintf } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
@@ -18,7 +32,7 @@ import {
 } from "@probo/ui";
 import { type ComponentProps, useState } from "react";
 import { useFragment, useRefetchableFragment } from "react-relay";
-import { useOutletContext, useParams } from "react-router";
+import { useOutletContext } from "react-router";
 import { graphql } from "relay-runtime";
 
 import type { VendorContactsListQuery } from "#/__generated__/core/VendorContactsListQuery.graphql";
@@ -98,8 +112,6 @@ export default function VendorContactsTab() {
   const connectionId = data.contacts.__id;
   const contacts = data.contacts.edges.map(edge => edge.node);
   const { __ } = useTranslate();
-  const { snapshotId } = useParams<{ snapshotId?: string }>();
-  const isSnapshotMode = Boolean(snapshotId);
   const [editingContact, setEditingContact]
     = useState<VendorContactsTabFragment_contact$data | null>(null);
   const hasAnyAction = contacts.some(
@@ -114,7 +126,7 @@ export default function VendorContactsTab() {
         title={__("Contacts")}
         description={__("Manage vendor contacts and their information.")}
       >
-        {!isSnapshotMode && vendor.canCreateContact && (
+        {vendor.canCreateContact && (
           <CreateContactDialog vendorId={vendor.id} connectionId={connectionId}>
             <Button icon={IconPlusLarge}>{__("Add contact")}</Button>
           </CreateContactDialog>
@@ -130,7 +142,7 @@ export default function VendorContactsTab() {
             <SortableTh field="EMAIL">{__("Email")}</SortableTh>
             <Th>{__("Phone")}</Th>
             <Th>{__("Role")}</Th>
-            {!isSnapshotMode && hasAnyAction && <Th>{__("Actions")}</Th>}
+            {hasAnyAction && <Th>{__("Actions")}</Th>}
           </Tr>
         </Thead>
         <Tbody>
@@ -140,13 +152,12 @@ export default function VendorContactsTab() {
               contactKey={contact}
               connectionId={connectionId}
               onEdit={setEditingContact}
-              isSnapshotMode={isSnapshotMode}
             />
           ))}
         </Tbody>
       </SortableTable>
 
-      {editingContact && !isSnapshotMode && editingContact.canUpdate && (
+      {editingContact && editingContact.canUpdate && (
         <EditContactDialog
           contactId={editingContact.id}
           contact={editingContact}
@@ -161,7 +172,6 @@ type ContactRowProps = {
   contactKey: VendorContactsTabFragment_contact$key;
   connectionId: string;
   onEdit: (contact: VendorContactsTabFragment_contact$data) => void;
-  isSnapshotMode: boolean;
 };
 
 function ContactRow(props: ContactRowProps) {
@@ -231,7 +241,7 @@ function ContactRow(props: ContactRowProps) {
             )}
       </Td>
       <Td>{contact.role || __("—")}</Td>
-      {!props.isSnapshotMode && hasAnyAction && (
+      {hasAnyAction && (
         <Td width={50} className="text-end">
           <ActionDropdown>
             {contact.canUpdate && (

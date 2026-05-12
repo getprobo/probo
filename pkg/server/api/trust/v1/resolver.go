@@ -1,3 +1,17 @@
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
 //go:generate go tool github.com/99designs/gqlgen generate
 
 // Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
@@ -18,6 +32,7 @@ package trust_v1
 
 import (
 	"context"
+	"net/http"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -69,11 +84,26 @@ func NewMux(
 	r := chi.NewMux()
 
 	r.Use(compliancepage.NewCompliancePagePresenceMiddleware())
-	r.Use(authn.NewSessionMiddleware(iamSvc, cookieConfig))
-	r.Use(compliancepage.NewMemberProvisioningMiddleware(trustSvc, logger))
+
+	sessionTransferHandler := NewSessionTransferHandler(
+		iamSvc,
+		cookieConfig,
+		func(ctx context.Context, host string) bool {
+			_, err := trustSvc.GetByDomainName(ctx, host)
+			return err == nil
+		},
+		logger,
+	)
+	r.Method(http.MethodGet, "/session-transfer", sessionTransferHandler)
 
 	graphqlHandler := NewGraphQLHandler(iamSvc, trustSvc, esignSvc, mailmanSvc, logger, baseURL, cookieConfig, tokenSecret)
-	r.Handle("/graphql", graphqlHandler)
+	r.Group(
+		func(r chi.Router) {
+			r.Use(authn.NewSessionMiddleware(iamSvc, cookieConfig))
+			r.Use(compliancepage.NewMemberProvisioningMiddleware(trustSvc, logger))
+			r.Handle("/graphql", graphqlHandler)
+		},
+	)
 
 	return r
 }

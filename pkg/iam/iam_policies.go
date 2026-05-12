@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -123,6 +123,23 @@ var IAMSelfManagePersonalAPIKeyPolicy = policy.NewPolicy(
 ).
 	WithDescription("Allows users to manage their own personal API keys")
 
+// IAMSelfManageOAuth2ConsentPolicy allows users to manage their own OAuth2 consents.
+var IAMSelfManageOAuth2ConsentPolicy = policy.NewPolicy(
+	"iam:self-manage-oauth2-consent",
+	"Self-Manage OAuth2 Consents",
+
+	policy.Allow(
+		ActionOAuth2ConsentGet,
+		ActionOAuth2ConsentApprove,
+	).
+		WithSID("manage-own-consents").
+		When(
+			policy.Equals("principal.id", "resource.identity_id"),
+			policy.Equals("principal.session_id", "resource.session_id"),
+		),
+).
+	WithDescription("Allows users to view and approve their own OAuth2 consents")
+
 // IAMOwnerPolicy defines permissions for organization owners.
 var IAMOwnerPolicy = policy.NewPolicy(
 	"iam:owner",
@@ -202,6 +219,14 @@ var IAMOwnerPolicy = policy.NewPolicy(
 	// Allow updating SCIM bridge settings (scoped to own organization)
 	policy.Allow(ActionSCIMBridgeUpdate).
 		WithSID("scim-bridge-update-access").
+		When(policy.Equals("principal.organization_id", "resource.organization_id")),
+
+	// Full access to audit log entries (scoped to own organization)
+	policy.Allow(
+		ActionAuditLogEntryGet,
+		ActionAuditLogEntryList,
+	).
+		WithSID("audit-log-entry-access").
 		When(policy.Equals("principal.organization_id", "resource.organization_id")),
 ).
 	WithDescription("Full IAM access for organization owners")
@@ -301,6 +326,16 @@ var IAMAdminPolicy = policy.NewPolicy(
 		ActionSCIMConfigurationDelete,
 	).
 		WithSID("deny-scim-management"),
+
+	// Can view audit log entries (scoped to own organization)
+	policy.Allow(
+		ActionAuditLogEntryGet,
+		ActionAuditLogEntryList,
+	).
+		WithSID("audit-log-entry-admin-access").
+		When(
+			policy.Equals("principal.organization_id", "resource.organization_id"),
+		),
 ).
 	WithDescription("IAM admin access - can manage members but cannot delete organization or manage SAML/SCIM")
 
@@ -335,5 +370,15 @@ var IAMViewerPolicy = policy.NewPolicy(
 	policy.Allow(ActionIdentityGet).
 		WithSID("view-member-identity").
 		When(policy.Equals("principal.organization_id", "resource.organization_id")),
+
+	// Can view audit log entries (scoped to own organization)
+	policy.Allow(
+		ActionAuditLogEntryGet,
+		ActionAuditLogEntryList,
+	).
+		WithSID("audit-log-entry-viewer-access").
+		When(
+			policy.Equals("principal.organization_id", "resource.organization_id"),
+		),
 ).
 	WithDescription("Read-only IAM access for organization viewers")

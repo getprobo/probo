@@ -54,7 +54,7 @@ const (
 	_                                          uint16 = 28 // NonconformityEntityType - removed
 	ObligationEntityType                       uint16 = 29
 	VendorServiceEntityType                    uint16 = 30
-	SnapshotEntityType                         uint16 = 31
+	_                                          uint16 = 31 // SnapshotEntityType - removed
 	_                                          uint16 = 32 // ContinualImprovementEntityType - removed
 	ProcessingActivityEntityType               uint16 = 33
 	ExportJobEntityType                        uint16 = 34
@@ -68,11 +68,11 @@ const (
 	SAMLConfigurationEntityType                uint16 = 42
 	PersonalAPIKeyEntityType                   uint16 = 43
 	_                                          uint16 = 44 // PersonalAPIKeyMembershipEntityType - removed
-	MeetingEntityType                          uint16 = 45
+	_                                          uint16 = 45 // MeetingEntityType - removed
 	DataProtectionImpactAssessmentEntityType   uint16 = 46
 	TransferImpactAssessmentEntityType         uint16 = 47
 	RightsRequestEntityType                    uint16 = 48
-	StateOfApplicabilityEntityType             uint16 = 49
+	StatementOfApplicabilityEntityType         uint16 = 49
 	ApplicabilityStatementEntityType           uint16 = 50
 	MembershipProfileEntityType                uint16 = 51
 	SCIMConfigurationEntityType                uint16 = 52
@@ -91,6 +91,30 @@ const (
 	MailingListSubscriberEntityType            uint16 = 65
 	MailingListUpdateEntityType                uint16 = 66
 	FindingEntityType                          uint16 = 67
+	AuditLogEntryEntityType                    uint16 = 68
+	DocumentVersionApprovalQuorumEntityType    uint16 = 69
+	DocumentVersionApprovalDecisionEntityType  uint16 = 70
+	AccessSourceEntityType                     uint16 = 71
+	AccessReviewCampaignEntityType             uint16 = 72
+	AccessEntryEntityType                      uint16 = 73
+	AccessEntryDecisionHistoryEntityType       uint16 = 74
+	CookieBannerEntityType                     uint16 = 75
+	CookieCategoryEntityType                   uint16 = 76
+	CookieConsentRecordEntityType              uint16 = 77
+	CookieBannerVersionEntityType              uint16 = 78
+	OAuth2ClientEntityType                     uint16 = 79
+	OAuth2ConsentEntityType                    uint16 = 80
+	OAuth2AccessTokenEntityType                uint16 = 81
+	OAuth2RefreshTokenEntityType               uint16 = 82
+	OAuth2AuthorizationCodeEntityType          uint16 = 83
+	OAuth2DeviceCodeEntityType                 uint16 = 84
+	_                                          uint16 = 85 // CookieEntityType - removed
+	CookieBannerTranslationEntityType          uint16 = 86
+	AgentRunEntityType                         uint16 = 87
+	_                                          uint16 = 88 // CookiePatternEntityType - removed
+	TrackerPatternEntityType                   uint16 = 89
+	DetectedTrackerEntityType                  uint16 = 90
+	TrackerResourceEntityType                  uint16 = 91
 )
 
 func NewEntityFromID(id gid.GID) (any, bool) {
@@ -155,8 +179,6 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &Obligation{ID: id}, true
 	case VendorServiceEntityType:
 		return &VendorService{ID: id}, true
-	case SnapshotEntityType:
-		return &Snapshot{ID: id}, true
 	case ProcessingActivityEntityType:
 		return &ProcessingActivity{ID: id}, true
 	case ExportJobEntityType:
@@ -179,16 +201,14 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &SAMLConfiguration{ID: id}, true
 	case PersonalAPIKeyEntityType:
 		return &PersonalAPIKey{ID: id}, true
-	case MeetingEntityType:
-		return &Meeting{ID: id}, true
 	case DataProtectionImpactAssessmentEntityType:
 		return &DataProtectionImpactAssessment{ID: id}, true
 	case TransferImpactAssessmentEntityType:
 		return &TransferImpactAssessment{ID: id}, true
 	case RightsRequestEntityType:
 		return &RightsRequest{ID: id}, true
-	case StateOfApplicabilityEntityType:
-		return &StateOfApplicability{ID: id}, true
+	case StatementOfApplicabilityEntityType:
+		return &StatementOfApplicability{ID: id}, true
 	case ApplicabilityStatementEntityType:
 		return &ApplicabilityStatement{ID: id}, true
 	case MembershipProfileEntityType:
@@ -223,6 +243,50 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &MailingListSubscriber{ID: id}, true
 	case MailingListUpdateEntityType:
 		return &MailingListUpdate{ID: id}, true
+	case AuditLogEntryEntityType:
+		return &AuditLogEntry{ID: id}, true
+	case DocumentVersionApprovalDecisionEntityType:
+		return &DocumentVersionApprovalDecision{ID: id}, true
+	case DocumentVersionApprovalQuorumEntityType:
+		return &DocumentVersionApprovalQuorum{ID: id}, true
+	case AccessSourceEntityType:
+		return &AccessSource{ID: id}, true
+	case AccessReviewCampaignEntityType:
+		return &AccessReviewCampaign{ID: id}, true
+	case AccessEntryEntityType:
+		return &AccessEntry{ID: id}, true
+	case AccessEntryDecisionHistoryEntityType:
+		return &AccessEntryDecisionHistory{ID: id}, true
+	case CookieBannerEntityType:
+		return &CookieBanner{ID: id}, true
+	case CookieCategoryEntityType:
+		return &CookieCategory{ID: id}, true
+	case CookieConsentRecordEntityType:
+		return &CookieConsentRecord{ID: id}, true
+	case CookieBannerVersionEntityType:
+		return &CookieBannerVersion{ID: id}, true
+	case OAuth2ClientEntityType:
+		return &OAuth2Client{ID: id}, true
+	case OAuth2ConsentEntityType:
+		return &OAuth2Consent{ID: id}, true
+	case OAuth2AccessTokenEntityType:
+		return &OAuth2AccessToken{ID: id}, true
+	case OAuth2RefreshTokenEntityType:
+		return &OAuth2RefreshToken{ID: id}, true
+	case OAuth2AuthorizationCodeEntityType:
+		return &OAuth2AuthorizationCode{ID: id}, true
+	case OAuth2DeviceCodeEntityType:
+		return &OAuth2DeviceCode{ID: id}, true
+	case CookieBannerTranslationEntityType:
+		return &CookieBannerTranslation{ID: id}, true
+	case AgentRunEntityType:
+		return &AgentRun{ID: id}, true
+	case TrackerPatternEntityType:
+		return &TrackerPattern{ID: id}, true
+	case DetectedTrackerEntityType:
+		return &DetectedTracker{ID: id}, true
+	case TrackerResourceEntityType:
+		return &TrackerResource{ID: id}, true
 	default:
 		return nil, false
 	}

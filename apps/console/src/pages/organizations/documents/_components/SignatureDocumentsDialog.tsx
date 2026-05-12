@@ -1,3 +1,17 @@
+// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
 import { sprintf } from "@probo/helpers";
 import { useList } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
@@ -22,14 +36,10 @@ import { useLazyLoadQuery, usePaginationFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 import { z } from "zod";
 
-import type { PeopleGraphPaginatedFragment$key } from "#/__generated__/core/PeopleGraphPaginatedFragment.graphql";
-import type { PeopleGraphPaginatedQuery } from "#/__generated__/core/PeopleGraphPaginatedQuery.graphql";
-import type { PeopleListQuery } from "#/__generated__/core/PeopleListQuery.graphql";
 import type { SignatureDocumentsDialogMutation } from "#/__generated__/core/SignatureDocumentsDialogMutation.graphql";
-import {
-  paginatedPeopleFragment,
-  paginatedPeopleQuery,
-} from "#/hooks/graph/PeopleGraph";
+import type { SignatureDocumentsDialogPeopleFragment$key } from "#/__generated__/core/SignatureDocumentsDialogPeopleFragment.graphql";
+import type { SignatureDocumentsDialogPeopleQuery } from "#/__generated__/core/SignatureDocumentsDialogPeopleQuery.graphql";
+import type { SignatureDocumentsDialogPeopleRefetchQuery } from "#/__generated__/core/SignatureDocumentsDialogPeopleRefetchQuery.graphql";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
@@ -39,6 +49,54 @@ type Props = {
   children: ReactNode;
   onSave: () => void;
 };
+
+const signatureDocumentsDialogPeopleQuery = graphql`
+  query SignatureDocumentsDialogPeopleQuery(
+    $organizationId: ID!
+    $filter: ProfileFilter
+  ) {
+    organization: node(id: $organizationId) {
+      id
+      ... on Organization {
+        ...SignatureDocumentsDialogPeopleFragment
+          @arguments(filter: $filter)
+      }
+    }
+  }
+`;
+
+const signatureDocumentsDialogPeopleFragment = graphql`
+  fragment SignatureDocumentsDialogPeopleFragment on Organization
+  @refetchable(queryName: "SignatureDocumentsDialogPeopleRefetchQuery")
+  @argumentDefinitions(
+    first: { type: "Int", defaultValue: 50 }
+    order: {
+      type: "ProfileOrder"
+      defaultValue: { direction: ASC, field: FULL_NAME }
+    }
+    filter: { type: "ProfileFilter", defaultValue: null }
+    after: { type: "CursorKey", defaultValue: null }
+    before: { type: "CursorKey", defaultValue: null }
+    last: { type: "Int", defaultValue: null }
+  ) {
+    profiles(
+      first: $first
+      after: $after
+      last: $last
+      before: $before
+      orderBy: $order
+      filter: $filter
+    ) @connection(key: "SignatureDocumentsDialog_profiles") {
+      edges {
+        node {
+          id
+          fullName
+          emailAddress
+        }
+      }
+    }
+  }
+`;
 
 const documentsSignatureMutation = graphql`
   mutation SignatureDocumentsDialogMutation(
@@ -73,9 +131,9 @@ export function SignatureDocumentsDialog({
         successMessage: (response) => {
           const actualRequestsCount
             = response.bulkRequestSignatures.documentVersionSignatureEdges.length;
-          return sprintf(__("%s signature requests sent"), actualRequestsCount);
+          return sprintf(__("%s signature requests created"), actualRequestsCount);
         },
-        errorMessage: __("Failed to send signature requests"),
+        errorMessage: __("Failed to create signature requests"),
       },
     );
 
@@ -117,7 +175,7 @@ export function SignatureDocumentsDialog({
             type="submit"
             disabled={selectedPeople.length === 0 || isSubmitting}
           >
-            {__("Send signature requests")}
+            {__("Request signatures")}
           </Button>
         </DialogFooter>
       </form>
@@ -134,10 +192,11 @@ function PeopleList({
 }) {
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
-  const data = useLazyLoadQuery<PeopleGraphPaginatedQuery>(
-    paginatedPeopleQuery,
+  const data = useLazyLoadQuery<SignatureDocumentsDialogPeopleQuery>(
+    signatureDocumentsDialogPeopleQuery,
     {
       organizationId,
+      filter: { contractEnded: false },
     },
   );
   const {
@@ -145,9 +204,12 @@ function PeopleList({
     hasNext,
     loadNext,
     isLoadingNext,
-  } = usePaginationFragment<PeopleListQuery, PeopleGraphPaginatedFragment$key>(
-    paginatedPeopleFragment,
-    data.organization as PeopleGraphPaginatedFragment$key,
+  } = usePaginationFragment<
+    SignatureDocumentsDialogPeopleRefetchQuery,
+    SignatureDocumentsDialogPeopleFragment$key
+  >(
+    signatureDocumentsDialogPeopleFragment,
+    data.organization,
   );
   const profiles = page.profiles.edges.map(edge => edge.node);
   return (

@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -185,26 +185,18 @@ func (c *Client) UpdateUser(ctx context.Context, userID string, user *User) erro
 }
 
 func buildUserPayload(user *User) map[string]any {
-	schemas := []string{"urn:ietf:params:scim:schemas:core:2.0:User"}
+	schemas := []string{
+		"urn:ietf:params:scim:schemas:core:2.0:User",
+		"urn:ietf:params:scim:schemas:extension:enterprise:2.0:User",
+	}
 
-	enterprise := map[string]any{}
-	if user.EmployeeNumber != "" {
-		enterprise["employeeNumber"] = user.EmployeeNumber
-	}
-	if user.Department != "" {
-		enterprise["department"] = user.Department
-	}
-	if user.CostCenter != "" {
-		enterprise["costCenter"] = user.CostCenter
-	}
-	if user.EnterpriseOrganization != "" {
-		enterprise["organization"] = user.EnterpriseOrganization
-	}
-	if user.Division != "" {
-		enterprise["division"] = user.Division
-	}
-	if user.ManagerValue != "" {
-		enterprise["manager"] = map[string]string{"value": user.ManagerValue}
+	enterprise := map[string]any{
+		"employeeNumber": user.EmployeeNumber,
+		"department":     user.Department,
+		"costCenter":     user.CostCenter,
+		"organization":   user.EnterpriseOrganization,
+		"division":       user.Division,
+		"manager":        map[string]string{"value": user.ManagerValue},
 	}
 
 	payload := map[string]any{
@@ -215,8 +207,12 @@ func buildUserPayload(user *User) map[string]any {
 			"familyName": user.FamilyName,
 			"formatted":  user.DisplayName,
 		},
-		"displayName": user.DisplayName,
-		"active":      user.Active,
+		"displayName":       user.DisplayName,
+		"active":            user.Active,
+		"title":             user.Title,
+		"externalId":        user.ExternalID,
+		"userType":          user.UserType,
+		"preferredLanguage": user.PreferredLanguage,
 		"emails": []map[string]any{
 			{
 				"value":   user.UserName,
@@ -224,23 +220,7 @@ func buildUserPayload(user *User) map[string]any {
 				"primary": true,
 			},
 		},
-		"title": user.Title,
-	}
-
-	if user.ExternalID != "" {
-		payload["externalId"] = user.ExternalID
-	}
-	if user.UserType != "" {
-		payload["userType"] = user.UserType
-	}
-	if user.PreferredLanguage != "" {
-		payload["preferredLanguage"] = user.PreferredLanguage
-	}
-
-	if len(enterprise) > 0 {
-		schemas = append(schemas, "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User")
-		payload["schemas"] = schemas
-		payload["urn:ietf:params:scim:schemas:extension:enterprise:2.0:User"] = enterprise
+		"urn:ietf:params:scim:schemas:extension:enterprise:2.0:User": enterprise,
 	}
 
 	return payload
@@ -305,6 +285,56 @@ func (c *Client) DeleteUser(ctx context.Context, userID string) error {
 		respBody, _ := io.ReadAll(resp.Body)
 		return fmt.Errorf("SCIM API error: status %d, body: %s", resp.StatusCode, string(respBody))
 	}
+
+	return nil
+}
+
+func (u *User) UnmarshalJSON(data []byte) error {
+	var raw struct {
+		ID                string `json:"id"`
+		UserName          string `json:"userName"`
+		DisplayName       string `json:"displayName"`
+		Active            bool   `json:"active"`
+		Title             string `json:"title"`
+		ExternalID        string `json:"externalId"`
+		UserType          string `json:"userType"`
+		PreferredLanguage string `json:"preferredLanguage"`
+		Name              struct {
+			GivenName  string `json:"givenName"`
+			FamilyName string `json:"familyName"`
+		} `json:"name"`
+		Enterprise struct {
+			EmployeeNumber string `json:"employeeNumber"`
+			Department     string `json:"department"`
+			CostCenter     string `json:"costCenter"`
+			Organization   string `json:"organization"`
+			Division       string `json:"division"`
+			Manager        struct {
+				Value string `json:"value"`
+			} `json:"manager"`
+		} `json:"urn:ietf:params:scim:schemas:extension:enterprise:2.0:User"`
+	}
+
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+
+	u.ID = raw.ID
+	u.UserName = raw.UserName
+	u.DisplayName = raw.DisplayName
+	u.Active = raw.Active
+	u.Title = raw.Title
+	u.ExternalID = raw.ExternalID
+	u.UserType = raw.UserType
+	u.PreferredLanguage = raw.PreferredLanguage
+	u.GivenName = raw.Name.GivenName
+	u.FamilyName = raw.Name.FamilyName
+	u.EmployeeNumber = raw.Enterprise.EmployeeNumber
+	u.Department = raw.Enterprise.Department
+	u.CostCenter = raw.Enterprise.CostCenter
+	u.EnterpriseOrganization = raw.Enterprise.Organization
+	u.Division = raw.Enterprise.Division
+	u.ManagerValue = raw.Enterprise.Manager.Value
 
 	return nil
 }

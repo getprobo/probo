@@ -1,0 +1,348 @@
+type OrganizationContext {
+    organizationId: ID!
+    product: String
+    architecture: String
+    team: String
+    processes: String
+    customers: String
+}
+
+enum ProfileState
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.ProfileState") {
+  ACTIVE @goEnum(value: "go.probo.inc/probo/pkg/coredata.ProfileStateActive")
+  INACTIVE
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.ProfileStateInactive")
+}
+
+type Profile implements Node {
+    id: ID!
+    fullName: String!
+    emailAddress: EmailAddr!
+    state: ProfileState!
+    additionalEmailAddresses: [EmailAddr!]!
+    kind: String
+    position: String
+    contractStartDate: Datetime
+    contractEndDate: Datetime
+    createdAt: Datetime!
+    updatedAt: Datetime!
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+enum ProfileOrderField
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.MembershipProfileOrderField") {
+    FULL_NAME
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.MembershipProfileOrderFieldFullName"
+        )
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.MembershipProfileOrderFieldCreatedAt"
+        )
+    KIND @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipProfileOrderFieldKind")
+}
+
+input ProfileOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ProfileOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: ProfileOrderField!
+}
+
+input ProfileFilter {
+    contractEnded: Boolean
+    state: ProfileState
+}
+
+type ProfileConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ProfileConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [ProfileEdge!]!
+    pageInfo: PageInfo!
+}
+
+type ProfileEdge {
+    cursor: CursorKey!
+    node: Profile!
+}
+
+input UpdateOrganizationContextInput {
+    organizationId: ID!
+    product: String @goField(omittable: true)
+    architecture: String @goField(omittable: true)
+    team: String @goField(omittable: true)
+    processes: String @goField(omittable: true)
+    customers: String @goField(omittable: true)
+}
+
+type UpdateOrganizationContextPayload {
+    context: OrganizationContext!
+}
+
+type Organization implements Node {
+    id: ID!
+    name: String!
+    logoUrl: String @goField(forceResolver: true)
+    horizontalLogoUrl: String @goField(forceResolver: true)
+
+    description: String
+    websiteUrl: String
+    email: String
+    headquarterAddress: String
+    context: OrganizationContext @goField(forceResolver: true)
+
+    profiles(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: ProfileOrder
+        filter: ProfileFilter
+    ): ProfileConnection! @goField(forceResolver: true)
+
+    measureCategories: [String!]! @goField(forceResolver: true)
+
+    accessSources(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: AccessSourceOrder
+    ): AccessSourceConnection! @goField(forceResolver: true)
+
+    accessReviewCampaigns(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: AccessReviewCampaignOrder
+    ): AccessReviewCampaignConnection! @goField(forceResolver: true)
+
+    assetListDocument: Document @goField(forceResolver: true)
+
+    assets(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: AssetOrder
+    ): AssetConnection! @goField(forceResolver: true)
+
+    dataListDocument: Document @goField(forceResolver: true)
+
+    data(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: DatumOrder
+    ): DatumConnection! @goField(forceResolver: true)
+
+    audits(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: AuditOrder
+    ): AuditConnection! @goField(forceResolver: true)
+
+    findingsDocument: Document @goField(forceResolver: true)
+
+    findings(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: FindingOrder
+        filter: FindingFilter
+    ): FindingConnection @goField(forceResolver: true)
+
+    auditLogEntries(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: AuditLogEntryOrder
+        filter: AuditLogEntryFilter
+    ): AuditLogEntryConnection! @goField(forceResolver: true)
+
+    slackConnections(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+    ): SlackConnectionConnection! @goField(forceResolver: true)
+    slackOAuth2Scopes: [String!]! @goField(forceResolver: true)
+    connectors(filter: ConnectorFilter): [Connector!]! @goField(forceResolver: true)
+    connectorProviderInfos: [ConnectorProviderInfo!]! @goField(forceResolver: true)
+
+    controls(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: ControlOrder
+        filter: ControlFilter
+    ): ControlConnection! @goField(forceResolver: true)
+
+    statementsOfApplicability(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: StatementOfApplicabilityOrder
+    ): StatementOfApplicabilityConnection! @goField(forceResolver: true)
+
+    dataProtectionImpactAssessments(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: DataProtectionImpactAssessmentOrder
+    ): DataProtectionImpactAssessmentConnection! @goField(forceResolver: true)
+
+    dataProtectionImpactAssessmentsDocument: Document
+        @goField(forceResolver: true)
+
+    transferImpactAssessments(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: TransferImpactAssessmentOrder
+    ): TransferImpactAssessmentConnection! @goField(forceResolver: true)
+
+    transferImpactAssessmentsDocument: Document @goField(forceResolver: true)
+
+    documents(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: DocumentOrder
+        filter: DocumentFilter
+    ): DocumentConnection! @goField(forceResolver: true)
+
+    evidences(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: EvidenceOrder
+    ): EvidenceConnection! @goField(forceResolver: true)
+
+    frameworks(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: FrameworkOrder
+    ): FrameworkConnection! @goField(forceResolver: true)
+
+    measures(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: MeasureOrder
+        filter: MeasureFilter
+    ): MeasureConnection! @goField(forceResolver: true)
+
+    obligationsDocument: Document @goField(forceResolver: true)
+
+    obligations(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: ObligationOrder
+    ): ObligationConnection! @goField(forceResolver: true)
+
+    processingActivities(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: ProcessingActivityOrder
+    ): ProcessingActivityConnection! @goField(forceResolver: true)
+
+    processingActivitiesDocument: Document @goField(forceResolver: true)
+
+    rightsRequests(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: RightsRequestOrder
+    ): RightsRequestConnection! @goField(forceResolver: true)
+
+    risks(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: RiskOrder
+        filter: RiskFilter
+    ): RiskConnection! @goField(forceResolver: true)
+
+    risksDocument: Document @goField(forceResolver: true)
+
+    tasks(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: TaskOrder
+    ): TaskConnection! @goField(forceResolver: true)
+
+    trustCenter: TrustCenter @goField(forceResolver: true)
+    customDomain: CustomDomain @goField(forceResolver: true)
+    trustCenterFiles(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: TrustCenterFileOrder
+    ): TrustCenterFileConnection! @goField(forceResolver: true)
+
+    cookieBanners(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: CookieBannerOrder
+    ): CookieBannerConnection @goField(forceResolver: true)
+
+    vendors(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: VendorOrder
+    ): VendorConnection! @goField(forceResolver: true)
+
+    vendorsDocument: Document @goField(forceResolver: true)
+
+    webhookSubscriptions(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: WebhookSubscriptionOrder
+    ): WebhookSubscriptionConnection! @goField(forceResolver: true)
+
+    createdAt: Datetime!
+    updatedAt: Datetime!
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+extend type Mutation {
+    updateOrganizationContext(
+        input: UpdateOrganizationContextInput!
+    ): UpdateOrganizationContextPayload!
+}

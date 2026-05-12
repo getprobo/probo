@@ -1,3 +1,17 @@
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
 import { downloadFile, formatDate } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
@@ -14,7 +28,7 @@ import {
 import type { VendorCategory } from "@probo/vendors";
 import { useMemo } from "react";
 import { graphql, useFragment } from "react-relay";
-import { useOutletContext, useParams } from "react-router";
+import { useOutletContext } from "react-router";
 
 import type { VendorGraphNodeQuery$data } from "#/__generated__/core/VendorGraphNodeQuery.graphql";
 import type { VendorOverviewTabBusinessAssociateAgreementFragment$key } from "#/__generated__/core/VendorOverviewTabBusinessAssociateAgreementFragment.graphql";
@@ -98,8 +112,6 @@ export default function VendorOverviewTab() {
     { value: "VERSION_CONTROL", label: __("Version Control") },
   ];
   const organizationId = useOrganizationId();
-  const { snapshotId } = useParams<{ snapshotId?: string }>();
-  const isSnapshotMode = Boolean(snapshotId);
 
   const {
     control,
@@ -144,11 +156,11 @@ export default function VendorOverviewTab() {
 
   usePageTitle(vendor.name + " - " + __("Overview"));
 
-  const isFormDisabled = isSubmitting || isSnapshotMode || !vendor.canUpdate;
+  const isFormDisabled = isSubmitting || !vendor.canUpdate;
 
   return (
     <form
-      onSubmit={isSnapshotMode || !vendor.canUpdate
+      onSubmit={!vendor.canUpdate
         ? undefined
         : e => void handleSubmit(e)}
       className="space-y-12"
@@ -316,7 +328,7 @@ export default function VendorOverviewTab() {
                       >
                         {__("Download PDF")}
                       </Button>
-                      {!isSnapshotMode && businessAssociateAgreement.canUpdate && (
+                      {businessAssociateAgreement.canUpdate && (
                         <EditBusinessAssociateAgreementDialog
                           vendorId={vendor.id}
                           agreement={{
@@ -328,7 +340,7 @@ export default function VendorOverviewTab() {
                           <Button variant="quaternary" icon={IconPencil} />
                         </EditBusinessAssociateAgreementDialog>
                       )}
-                      {!isSnapshotMode && businessAssociateAgreement.canDelete && (
+                      {businessAssociateAgreement.canDelete && (
                         <DeleteBusinessAssociateAgreementDialog
                           vendorId={vendor.id}
                           fileName={businessAssociateAgreement.fileName}
@@ -340,8 +352,7 @@ export default function VendorOverviewTab() {
                     </>
                   )
                 : (
-                    !isSnapshotMode
-                    && vendor.canUploadBAA && (
+                    vendor.canUploadBAA && (
                       <UploadBusinessAssociateAgreementDialog
                         vendorId={vendor.id}
                         onSuccess={() => window.location.reload()}
@@ -391,7 +402,7 @@ export default function VendorOverviewTab() {
                       >
                         {__("Download PDF")}
                       </Button>
-                      {!isSnapshotMode && dataPrivacyAgreement.canUpdate && (
+                      {dataPrivacyAgreement.canUpdate && (
                         <EditDataPrivacyAgreementDialog
                           vendorId={vendor.id}
                           agreement={{
@@ -403,7 +414,7 @@ export default function VendorOverviewTab() {
                           <Button variant="quaternary" icon={IconPencil} />
                         </EditDataPrivacyAgreementDialog>
                       )}
-                      {!isSnapshotMode && dataPrivacyAgreement.canDelete && (
+                      {dataPrivacyAgreement.canDelete && (
                         <DeleteDataPrivacyAgreementDialog
                           vendorId={vendor.id}
                           fileName={dataPrivacyAgreement.fileName}
@@ -415,8 +426,7 @@ export default function VendorOverviewTab() {
                     </>
                   )
                 : (
-                    !isSnapshotMode
-                    && vendor.canUploadDPA && (
+                    vendor.canUploadDPA && (
                       <UploadDataPrivacyAgreementDialog
                         vendorId={vendor.id}
                         onSuccess={() => window.location.reload()}
@@ -433,15 +443,13 @@ export default function VendorOverviewTab() {
       </div>
 
       {/* Submit */}
-      {!isSnapshotMode && (
-        <div className="flex justify-end">
-          {vendor.canUpdate && (
-            <Button type="submit" disabled={isSubmitting}>
-              {__("Update vendor")}
-            </Button>
-          )}
-        </div>
-      )}
+      <div className="flex justify-end">
+        {vendor.canUpdate && (
+          <Button type="submit" disabled={isSubmitting}>
+            {__("Update vendor")}
+          </Button>
+        )}
+      </div>
     </form>
   );
 }

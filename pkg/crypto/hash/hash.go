@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -19,7 +19,19 @@ import (
 	"encoding/hex"
 )
 
-func SHA256Hex(data []byte) string {
+func SHA256(data []byte) []byte {
 	h := sha256.Sum256(data)
-	return hex.EncodeToString(h[:])
+	return h[:]
+}
+
+func SHA256String(s string) []byte {
+	return SHA256([]byte(s))
+}
+
+func SHA256Hex(data []byte) string {
+	return hex.EncodeToString(SHA256(data))
+}
+
+func SHA256HexString(s string) string {
+	return SHA256Hex([]byte(s))
 }

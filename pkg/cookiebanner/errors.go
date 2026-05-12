@@ -1,0 +1,41 @@
+// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
+package cookiebanner
+
+import "errors"
+
+var (
+	ErrBannerNotFound             = errors.New("cookie banner not found")
+	ErrCategoryNotFound           = errors.New("cookie category not found")
+	ErrVersionNotFound            = errors.New("cookie banner version not found")
+	ErrBannerAlreadyActive        = errors.New("cookie banner is already active")
+	ErrBannerAlreadyInactive      = errors.New("cookie banner is already inactive")
+	ErrVersionNotPublished        = errors.New("cookie banner version is not published")
+	ErrNoPublishedVersion         = errors.New("no published cookie banner version")
+	ErrNoDraftVersion             = errors.New("no draft cookie banner version to publish")
+	ErrCannotDeleteSystemCategory = errors.New("cannot delete system cookie category")
+	ErrCategorySlugAlreadyExists  = errors.New("a category with this slug already exists in this banner")
+	ErrOriginAlreadyInUse         = errors.New("origin is already used by another active cookie banner")
+	ErrConsentNotFound            = errors.New("consent record not found")
+	ErrCookieNotFound             = errors.New("cookie not found")
+	ErrCategoriesBannerMismatch   = errors.New("source and target categories belong to different banners")
+	ErrPostHogConsentKindInvalid  = errors.New("PostHog consent can only be enabled on normal categories")
+	ErrTrackerPatternNotFound     = errors.New("tracker pattern not found")
+	ErrPatternAlreadyExists       = errors.New("a pattern with this name already exists in this banner")
+	ErrSamePatternCategoryMove    = errors.New("source and target cookie categories must be different")
+	ErrTrackerResourceNotFound    = errors.New("tracker resource not found")
+	ErrResourceAlreadyExists      = errors.New("a resource with this origin and path already exists in this banner")
+	ErrSameResourceCategoryMove   = errors.New("source and target cookie categories must be different")
+)

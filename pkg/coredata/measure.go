@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -57,7 +57,7 @@ func (m Measure) CursorKey(orderBy MeasureOrderField) page.CursorKey {
 }
 
 // AuthorizationAttributes returns the authorization attributes for policy evaluation.
-func (m *Measure) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+func (m *Measure) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	q := `SELECT organization_id FROM measures WHERE id = $1 LIMIT 1;`
 
 	var organizationID gid.GID
@@ -73,7 +73,7 @@ func (m *Measure) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (ma
 
 func (m *Measures) CountByRiskID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	riskID gid.GID,
 	filter *MeasureFilter,
@@ -84,7 +84,8 @@ WITH msrs AS (
 		m.id,
 		m.tenant_id,
 		m.search_vector,
-		m.state
+		m.state,
+		m.category
 	FROM
 		measures m
 	INNER JOIN
@@ -117,7 +118,7 @@ WHERE %s
 
 func (m *Measures) LoadByRiskID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	riskID gid.GID,
 	cursor *page.Cursor[MeasureOrderField],
@@ -184,7 +185,7 @@ WHERE %s
 
 func (m *Measures) CountByControlID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	controlID gid.GID,
 	filter *MeasureFilter,
@@ -195,7 +196,8 @@ WITH mtgtns AS (
 			m.id,
 			m.tenant_id,
 			m.search_vector,
-			m.state
+			m.state,
+			m.category
 		FROM
 			measures m
 		INNER JOIN
@@ -228,7 +230,7 @@ WITH mtgtns AS (
 
 func (m *Measures) LoadByControlID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	controlID gid.GID,
 	cursor *page.Cursor[MeasureOrderField],
@@ -295,7 +297,7 @@ WHERE %s
 
 func (m *Measures) CountByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 	filter *MeasureFilter,
@@ -326,9 +328,44 @@ WHERE
 	return count, nil
 }
 
+func (m *Measures) LoadDistinctCategoriesByOrganizationID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	organizationID gid.GID,
+) ([]string, error) {
+	q := `
+SELECT DISTINCT
+    category
+FROM
+    measures
+WHERE
+    %s
+    AND organization_id = @organization_id
+ORDER BY
+    category ASC
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.NamedArgs{"organization_id": organizationID}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query measure categories: %w", err)
+	}
+
+	categories, err := pgx.CollectRows(rows, pgx.RowTo[string])
+	if err != nil {
+		return nil, fmt.Errorf("cannot collect measure categories: %w", err)
+	}
+
+	return categories, nil
+}
+
 func (m *Measures) LoadByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 	cursor *page.Cursor[MeasureOrderField],
@@ -377,7 +414,7 @@ WHERE
 
 func (m *Measure) LoadByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	measureID gid.GID,
 ) error {
@@ -424,9 +461,53 @@ LIMIT 1;
 	return nil
 }
 
+func (m *Measures) LoadByIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	measureIDs []gid.GID,
+) error {
+	q := `
+SELECT
+    id,
+    organization_id,
+    category,
+    name,
+    description,
+    state,
+    reference_id,
+    created_at,
+    updated_at
+FROM
+    measures
+WHERE
+    %s
+    AND id = ANY(@measure_ids)
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"measure_ids": measureIDs}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query measures: %w", err)
+	}
+
+	measures, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Measure])
+	if err != nil {
+		return fmt.Errorf("cannot collect measures: %w", err)
+	}
+
+	*m = measures
+
+	return nil
+}
+
 func (m *Measure) Upsert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 ) error {
 	q := `
@@ -502,7 +583,7 @@ RETURNING
 
 func (m Measure) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -562,7 +643,7 @@ VALUES (
 
 func (m *Measure) Update(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -595,7 +676,7 @@ WHERE %s
 
 func (m *Measure) Delete(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 	measureID gid.GID,
 ) error {

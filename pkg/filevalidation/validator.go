@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -63,6 +63,7 @@ var FileTypes = []FileType{
 	{MimeType: "application/vnd.oasis.opendocument.presentation", Extensions: []string{".odp"}, Category: CategoryPresentation},
 
 	// Text types
+	{MimeType: "text/markdown", Extensions: []string{".md"}, Category: CategoryText},
 	{MimeType: "text/plain", Extensions: []string{".txt"}, Category: CategoryText},
 	{MimeType: "text/x-log", Extensions: []string{".log"}, Category: CategoryText},
 	{MimeType: "text/uri-list", Extensions: []string{".uri"}, Category: CategoryText},
@@ -71,7 +72,6 @@ var FileTypes = []FileType{
 	// Image types
 	{MimeType: "image/jpeg", Extensions: []string{".jpg", ".jpeg"}, Category: CategoryImage},
 	{MimeType: "image/png", Extensions: []string{".png"}, Category: CategoryImage},
-	{MimeType: "image/gif", Extensions: []string{".gif"}, Category: CategoryImage},
 	{MimeType: "image/svg+xml", Extensions: []string{".svg"}, Category: CategoryImage},
 	{MimeType: "image/webp", Extensions: []string{".webp"}, Category: CategoryImage},
 

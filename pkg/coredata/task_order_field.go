@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -14,16 +14,33 @@
 
 package coredata
 
+import "fmt"
+
 type (
 	TaskOrderField string
 )
 
 const (
-	TaskOrderFieldCreatedAt TaskOrderField = "CREATED_AT"
+	TaskOrderFieldPriorityRank TaskOrderField = "PRIORITY_RANK" // ordering only
+	TaskOrderFieldCreatedAt    TaskOrderField = "CREATED_AT"
 )
 
 func (p TaskOrderField) Column() string {
-	return string(p)
+	switch p {
+	case TaskOrderFieldPriorityRank:
+		return "priority_rank"
+	case TaskOrderFieldCreatedAt:
+		return "created_at"
+	}
+	panic(fmt.Sprintf("unsupported order by: %s", p))
+}
+
+func (p TaskOrderField) IsValid() bool {
+	switch p {
+	case TaskOrderFieldPriorityRank, TaskOrderFieldCreatedAt:
+		return true
+	}
+	return false
 }
 
 func (p TaskOrderField) String() string {
@@ -36,5 +53,8 @@ func (p TaskOrderField) MarshalText() ([]byte, error) {
 
 func (p *TaskOrderField) UnmarshalText(text []byte) error {
 	*p = TaskOrderField(text)
+	if !p.IsValid() {
+		return fmt.Errorf("%s is not a valid TaskOrderField", string(text))
+	}
 	return nil
 }

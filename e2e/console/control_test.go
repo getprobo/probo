@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -59,12 +59,12 @@ func TestControl_Create(t *testing.T) {
 
 		err := owner.Execute(query, map[string]any{
 			"input": map[string]any{
-				"frameworkId":  frameworkID,
-				"sectionTitle": "A.5",
-				"name":         "Information Security Policies",
-				"description":  "Policies for information security",
-				"bestPractice": true,
-				"implemented":  "IMPLEMENTED",
+				"frameworkId":   frameworkID,
+				"sectionTitle":  "A.5",
+				"name":          "Information Security Policies",
+				"description":   "Policies for information security",
+				"bestPractice":  true,
+				"maturityLevel": "INITIAL",
 			},
 		}, &result)
 		require.NoError(t, err)
@@ -266,11 +266,11 @@ func TestControl_RequiredFields(t *testing.T) {
 			name: "Missing frameworkId should fail",
 			variables: map[string]any{
 				"input": map[string]any{
-					"name":         "Test Control",
-					"description":  "Test",
-					"sectionTitle": "Section 1",
-					"bestPractice": true,
-					"implemented":  "IMPLEMENTED",
+					"name":          "Test Control",
+					"description":   "Test",
+					"sectionTitle":  "Section 1",
+					"bestPractice":  true,
+					"maturityLevel": "INITIAL",
 				},
 			},
 			wantError: true,
@@ -279,11 +279,11 @@ func TestControl_RequiredFields(t *testing.T) {
 			name: "Missing name should fail",
 			variables: map[string]any{
 				"input": map[string]any{
-					"frameworkId":  frameworkID,
-					"description":  "Test",
-					"sectionTitle": "Section 1",
-					"bestPractice": true,
-					"implemented":  "IMPLEMENTED",
+					"frameworkId":   frameworkID,
+					"description":   "Test",
+					"sectionTitle":  "Section 1",
+					"bestPractice":  true,
+					"maturityLevel": "INITIAL",
 				},
 			},
 			wantError: true,
@@ -292,11 +292,11 @@ func TestControl_RequiredFields(t *testing.T) {
 			name: "Missing sectionTitle should fail",
 			variables: map[string]any{
 				"input": map[string]any{
-					"frameworkId":  frameworkID,
-					"name":         "Test Control",
-					"description":  "Test",
-					"bestPractice": true,
-					"implemented":  "IMPLEMENTED",
+					"frameworkId":   frameworkID,
+					"name":          "Test Control",
+					"description":   "Test",
+					"bestPractice":  true,
+					"maturityLevel": "INITIAL",
 				},
 			},
 			wantError: true,
@@ -305,11 +305,11 @@ func TestControl_RequiredFields(t *testing.T) {
 			name: "Missing description should fail (required field)",
 			variables: map[string]any{
 				"input": map[string]any{
-					"frameworkId":  frameworkID,
-					"name":         "Test Control",
-					"sectionTitle": "Section 1",
-					"bestPractice": true,
-					"implemented":  "IMPLEMENTED",
+					"frameworkId":   frameworkID,
+					"name":          "Test Control",
+					"sectionTitle":  "Section 1",
+					"bestPractice":  true,
+					"maturityLevel": "INITIAL",
 				},
 			},
 			wantError: true,
@@ -318,17 +318,17 @@ func TestControl_RequiredFields(t *testing.T) {
 			name: "Missing bestPractice should fail",
 			variables: map[string]any{
 				"input": map[string]any{
-					"frameworkId":  frameworkID,
-					"name":         "Test Control",
-					"description":  "Test",
-					"sectionTitle": "Section 1",
-					"implemented":  "IMPLEMENTED",
+					"frameworkId":   frameworkID,
+					"name":          "Test Control",
+					"description":   "Test",
+					"sectionTitle":  "Section 1",
+					"maturityLevel": "INITIAL",
 				},
 			},
 			wantError: true,
 		},
 		{
-			name: "Missing implemented should fail",
+			name: "Missing maturityLevel should fail",
 			variables: map[string]any{
 				"input": map[string]any{
 					"frameworkId":  frameworkID,
@@ -418,12 +418,12 @@ func TestControl_OmittableDescription(t *testing.T) {
 
 	err = owner.Execute(createControlQuery, map[string]any{
 		"input": map[string]any{
-			"frameworkId":  frameworkID,
-			"name":         "Omittable Test Control",
-			"description":  "Initial description",
-			"sectionTitle": "Section 1",
-			"bestPractice": true,
-			"implemented":  "IMPLEMENTED",
+			"frameworkId":   frameworkID,
+			"name":          "Omittable Test Control",
+			"description":   "Initial description",
+			"sectionTitle":  "Section 1",
+			"bestPractice":  true,
+			"maturityLevel": "INITIAL",
 		},
 	}, &createResult)
 	require.NoError(t, err)
@@ -522,6 +522,152 @@ func TestControl_OmittableDescription(t *testing.T) {
 	})
 }
 
+func TestControl_MaturityLevel(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	frameworkID := factory.CreateFramework(owner, factory.Attrs{"name": "Framework for Maturity Tests"})
+
+	createControlQuery := `
+		mutation CreateControl($input: CreateControlInput!) {
+			createControl(input: $input) {
+				controlEdge {
+					node {
+						id
+						maturityLevel
+					}
+				}
+			}
+		}
+	`
+
+	updateControlQuery := `
+		mutation UpdateControl($input: UpdateControlInput!) {
+			updateControl(input: $input) {
+				control {
+					id
+					maturityLevel
+				}
+			}
+		}
+	`
+
+	type createResult struct {
+		CreateControl struct {
+			ControlEdge struct {
+				Node struct {
+					ID            string `json:"id"`
+					MaturityLevel string `json:"maturityLevel"`
+				} `json:"node"`
+			} `json:"controlEdge"`
+		} `json:"createControl"`
+	}
+
+	type updateResult struct {
+		UpdateControl struct {
+			Control struct {
+				ID            string `json:"id"`
+				MaturityLevel string `json:"maturityLevel"`
+			} `json:"control"`
+		} `json:"updateControl"`
+	}
+
+	t.Run("create with INITIAL maturityLevel", func(t *testing.T) {
+		var res createResult
+		err := owner.Execute(createControlQuery, map[string]any{
+			"input": map[string]any{
+				"frameworkId":   frameworkID,
+				"sectionTitle":  "M.1",
+				"name":          "Control with initial maturity",
+				"description":   "control with initial maturity description",
+				"bestPractice":  true,
+				"maturityLevel": "INITIAL",
+			},
+		}, &res)
+		require.NoError(t, err)
+		assert.Equal(t, "INITIAL", res.CreateControl.ControlEdge.Node.MaturityLevel)
+	})
+
+	t.Run("create with maturityLevel persists value", func(t *testing.T) {
+		var res createResult
+		err := owner.Execute(createControlQuery, map[string]any{
+			"input": map[string]any{
+				"frameworkId":   frameworkID,
+				"sectionTitle":  "M.2",
+				"name":          "Control with maturity",
+				"description":   "control with maturity description",
+				"bestPractice":  true,
+				"maturityLevel": "DEFINED",
+			},
+		}, &res)
+		require.NoError(t, err)
+		assert.Equal(t, "DEFINED", res.CreateControl.ControlEdge.Node.MaturityLevel)
+	})
+
+	t.Run("update lifecycle: set, change, omit", func(t *testing.T) {
+		var created createResult
+		err := owner.Execute(createControlQuery, map[string]any{
+			"input": map[string]any{
+				"frameworkId":   frameworkID,
+				"sectionTitle":  "M.3",
+				"name":          "Lifecycle control",
+				"description":   "lifecycle control description",
+				"bestPractice":  true,
+				"maturityLevel": "INITIAL",
+			},
+		}, &created)
+		require.NoError(t, err)
+		controlID := created.CreateControl.ControlEdge.Node.ID
+
+		// set
+		var setRes updateResult
+		err = owner.Execute(updateControlQuery, map[string]any{
+			"input": map[string]any{
+				"id":            controlID,
+				"maturityLevel": "INITIAL",
+			},
+		}, &setRes)
+		require.NoError(t, err)
+		assert.Equal(t, "INITIAL", setRes.UpdateControl.Control.MaturityLevel)
+
+		// change
+		var changeRes updateResult
+		err = owner.Execute(updateControlQuery, map[string]any{
+			"input": map[string]any{
+				"id":            controlID,
+				"maturityLevel": "OPTIMIZING",
+			},
+		}, &changeRes)
+		require.NoError(t, err)
+		assert.Equal(t, "OPTIMIZING", changeRes.UpdateControl.Control.MaturityLevel)
+
+		// omit field on next update -> stays unchanged
+		var omitRes updateResult
+		err = owner.Execute(updateControlQuery, map[string]any{
+			"input": map[string]any{
+				"id":   controlID,
+				"name": "Renamed without touching maturity",
+			},
+		}, &omitRes)
+		require.NoError(t, err)
+		assert.Equal(t, "OPTIMIZING", omitRes.UpdateControl.Control.MaturityLevel)
+	})
+
+	t.Run("invalid maturityLevel is rejected", func(t *testing.T) {
+		var res createResult
+		err := owner.Execute(createControlQuery, map[string]any{
+			"input": map[string]any{
+				"frameworkId":   frameworkID,
+				"sectionTitle":  "M.4",
+				"name":          "Bad maturity",
+				"description":   "bad maturity description",
+				"bestPractice":  true,
+				"maturityLevel": "BOGUS",
+			},
+		}, &res)
+		assert.Error(t, err)
+	})
+}
+
 func TestControl_SubResolvers(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
@@ -583,12 +729,12 @@ func TestControl_SubResolvers(t *testing.T) {
 
 	err = owner.Execute(createControlQuery, map[string]any{
 		"input": map[string]any{
-			"frameworkId":  frameworkID,
-			"name":         "SubResolver Test Control",
-			"description":  "Test description",
-			"sectionTitle": "Section 1",
-			"bestPractice": true,
-			"implemented":  "IMPLEMENTED",
+			"frameworkId":   frameworkID,
+			"name":          "SubResolver Test Control",
+			"description":   "Test description",
+			"sectionTitle":  "Section 1",
+			"bestPractice":  true,
+			"maturityLevel": "INITIAL",
 		},
 	}, &controlResult)
 	require.NoError(t, err)

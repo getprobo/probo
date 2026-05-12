@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -76,7 +76,7 @@ func (h *ACMEChallengeHandler) getKeyAuthForToken(ctx context.Context, token str
 
 	err := h.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			domain := &coredata.CustomDomain{}
 			if err := domain.LoadByHTTPChallengeToken(ctx, conn, coredata.NewNoScope(), token); err != nil {
 				return err

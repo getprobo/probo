@@ -71,10 +71,10 @@ type viewResponse struct {
 			ID       string `json:"id"`
 			FullName string `json:"fullName"`
 		} `json:"owner"`
-		DueDate            *string `json:"dueDate"`
-		Status             string  `json:"status"`
-		Priority           string  `json:"priority"`
-		Risk               *struct {
+		DueDate  *string `json:"dueDate"`
+		Status   string  `json:"status"`
+		Priority string  `json:"priority"`
+		Risk     *struct {
 			ID   string `json:"id"`
 			Name string `json:"name"`
 		} `json:"risk"`
@@ -111,6 +111,7 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 				hc.Token,
 				"/api/console/v1/graphql",
 				cfg.HTTPTimeoutDuration(),
+				cmdutil.TokenRefreshOption(cfg, host, hc),
 			)
 
 			data, err := client.Do(

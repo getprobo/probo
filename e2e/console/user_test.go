@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -194,6 +194,94 @@ func TestUser_RemoveUser(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, userID, mutationResult.RemoveUser.DeletedProfileID)
+}
+
+func TestUser_RemoveOwner(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+
+	// Create another owner to remove
+	_ = testutil.NewClientInOrg(t, testutil.RoleOwner, owner)
+
+	// Get the profiles
+	query := `
+		query($id: ID!) {
+			node(id: $id) {
+				... on Organization {
+					profiles(first: 50) {
+						edges {
+							node {
+								id
+								identity {
+									id
+								}
+								membership {
+									role
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	`
+
+	var result struct {
+		Node struct {
+			Profiles struct {
+				Edges []struct {
+					Node struct {
+						ID       string `json:"id"`
+						Identity struct {
+							ID string `json:"id"`
+						} `json:"identity"`
+						Membership struct {
+							Role string `json:"role"`
+						} `json:"membership"`
+					} `json:"node"`
+				} `json:"edges"`
+			} `json:"profiles"`
+		} `json:"node"`
+	}
+
+	err := owner.ExecuteConnect(query, map[string]any{
+		"id": owner.GetOrganizationID().String(),
+	}, &result)
+	require.NoError(t, err)
+
+	// Find the other owner (not the calling owner)
+	var targetProfileID string
+	for _, edge := range result.Node.Profiles.Edges {
+		if edge.Node.Membership.Role == "OWNER" && edge.Node.Identity.ID != owner.GetUserID().String() {
+			targetProfileID = edge.Node.ID
+			break
+		}
+	}
+	require.NotEmpty(t, targetProfileID, "Should find another owner to remove")
+
+	mutation := `
+		mutation($input: RemoveUserInput!) {
+			removeUser(input: $input) {
+				deletedProfileId
+			}
+		}
+	`
+
+	var mutationResult struct {
+		RemoveUser struct {
+			DeletedProfileID string `json:"deletedProfileId"`
+		} `json:"removeUser"`
+	}
+
+	err = owner.ExecuteConnect(mutation, map[string]any{
+		"input": map[string]any{
+			"organizationId": owner.GetOrganizationID().String(),
+			"profileId":      targetProfileID,
+		},
+	}, &mutationResult)
+	require.NoError(t, err)
+
+	assert.Equal(t, targetProfileID, mutationResult.RemoveUser.DeletedProfileID)
 }
 
 func TestUser_List(t *testing.T) {

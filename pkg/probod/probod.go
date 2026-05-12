@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -41,92 +41,42 @@ import (
 	"go.gearno.de/kit/migrator"
 	"go.gearno.de/kit/pg"
 	"go.gearno.de/kit/unit"
+	"go.gearno.de/kit/worker"
 	"go.opentelemetry.io/otel/trace"
+	"go.probo.inc/probo/pkg/accessreview"
 	"go.probo.inc/probo/pkg/awsconfig"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/certmanager"
 	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/crypto/keys"
 	"go.probo.inc/probo/pkg/crypto/passwdhash"
 	"go.probo.inc/probo/pkg/esign"
+	"go.probo.inc/probo/pkg/evidencedescriber"
+	"go.probo.inc/probo/pkg/file"
 	"go.probo.inc/probo/pkg/filemanager"
+	"go.probo.inc/probo/pkg/geoloc"
 	"go.probo.inc/probo/pkg/html2pdf"
 	"go.probo.inc/probo/pkg/iam"
+	"go.probo.inc/probo/pkg/iam/oauth2server"
+	"go.probo.inc/probo/pkg/iam/oidc"
 	"go.probo.inc/probo/pkg/mailer"
 	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/securecookie"
 	"go.probo.inc/probo/pkg/server"
+	"go.probo.inc/probo/pkg/server/trustedproxy"
 	"go.probo.inc/probo/pkg/slack"
 	"go.probo.inc/probo/pkg/trust"
 	"go.probo.inc/probo/pkg/webhook"
 	"golang.org/x/sync/errgroup"
 )
 
-type (
-	Implm struct {
-		cfg Config
-	}
-
-	// FullConfig represents the complete configuration file structure.
-	// This is used by bootstrap to generate the YAML config file.
-	FullConfig struct {
-		Unit   UnitConfig `json:"unit"`
-		Probod Config     `json:"probod"`
-	}
-
-	// UnitConfig contains unit framework configuration.
-	UnitConfig struct {
-		Metrics MetricsConfig `json:"metrics"`
-		Tracing TracingConfig `json:"tracing"`
-	}
-
-	// MetricsConfig contains metrics server configuration.
-	MetricsConfig struct {
-		Addr string `json:"addr"`
-	}
-
-	// TracingConfig contains tracing configuration.
-	TracingConfig struct {
-		Addr          string `json:"addr"`
-		MaxBatchSize  int    `json:"max-batch-size"`
-		BatchTimeout  int    `json:"batch-timeout"`
-		ExportTimeout int    `json:"export-timeout"`
-		MaxQueueSize  int    `json:"max-queue-size"`
-	}
-
-	// ESignConfig contains electronic signature configuration.
-	ESignConfig struct {
-		TSAURL string `json:"tsa-url"`
-	}
-
-	// Config represents the probod application configuration.
-	Config struct {
-		BaseURL       string              `json:"base-url"`
-		EncryptionKey string              `json:"encryption-key"`
-		Pg            PgConfig            `json:"pg"`
-		Api           APIConfig           `json:"api"`
-		Auth          AuthConfig          `json:"auth"`
-		TrustCenter   TrustCenterConfig   `json:"trust-center"`
-		AWS           AWSConfig           `json:"aws"`
-		Notifications NotificationsConfig `json:"notifications"`
-		Connectors    []ConnectorConfig   `json:"connectors"`
-		OpenAI        OpenAIConfig        `json:"openai"`
-		ChromeDPAddr  string              `json:"chrome-dp-addr"`
-		CustomDomains CustomDomainsConfig `json:"custom-domains"`
-		SCIMBridge    SCIMBridgeConfig    `json:"scim-bridge"`
-		ESign         ESignConfig         `json:"esign"`
-	}
-
-	// TrustCenterConfig contains trust center server configuration.
-	TrustCenterConfig struct {
-		HTTPAddr      string              `json:"http-addr"`
-		HTTPSAddr     string              `json:"https-addr"`
-		ProxyProtocol ProxyProtocolConfig `json:"proxy-protocol"`
-	}
-)
+type Implm struct {
+	cfg Config
+}
 
 var (
 	_ unit.Configurable = (*Implm)(nil)
@@ -141,11 +91,16 @@ func New() *Implm {
 				Addr: "localhost:8080",
 			},
 			Pg: PgConfig{
-				Addr:     "localhost:5432",
-				Username: "postgres",
-				Password: "postgres",
-				Database: "probod",
-				PoolSize: 100,
+				Addr:                         "localhost:5432",
+				Username:                     "probod",
+				Password:                     "probod",
+				Database:                     "probod",
+				PoolSize:                     100,
+				MinPoolSize:                  10,
+				MaxConnIdleTimeSeconds:       1800,
+				MaxConnLifetimeSeconds:       3600,
+				MaxConnLifetimeJitterSeconds: 300,
+				HealthCheckPeriodSeconds:     60,
 			},
 			ChromeDPAddr: "localhost:9222",
 			Auth: AuthConfig{
@@ -213,6 +168,12 @@ func New() *Implm {
 			ESign: ESignConfig{
 				TSAURL: "http://timestamp.digicert.com",
 			},
+			Branding: true,
+			EvidenceDescriber: EvidenceDescriberConfig{
+				Interval:       10,
+				StaleAfter:     300,
+				MaxConcurrency: 10,
+			},
 		},
 	}
 }
@@ -250,6 +211,7 @@ func (impl *Implm) Run(
 
 	pgClient, err := pg.NewClient(
 		impl.cfg.Pg.Options(
+			pg.WithApplicationName("probod"),
 			pg.WithLogger(l),
 			pg.WithRegisterer(r),
 			pg.WithTracerProvider(tp),
@@ -302,21 +264,43 @@ func (impl *Implm) Run(
 		return fmt.Errorf("cannot migrate database schema: %w", err)
 	}
 
+	geolocService := geoloc.NewService(pgClient)
+	populated, err := geolocService.IsPopulated(ctx)
+	if err != nil {
+		l.ErrorCtx(ctx, "cannot check geoloc table", log.Error(err))
+	} else if !populated {
+		l.Warn("IP geolocation table is empty; run geoloc-import to populate it")
+	}
+
 	hp, err := passwdhash.NewProfile(pepper, uint32(impl.cfg.Auth.Password.Iterations))
 	if err != nil {
 		return fmt.Errorf("cannot create hashing profile: %w", err)
 	}
 
+	redirectURI := baseURL.WithPath(connector.CallbackPath).MustString()
 	defaultConnectorRegistry := connector.NewConnectorRegistry()
-	for _, connector := range impl.cfg.Connectors {
-		if err := defaultConnectorRegistry.Register(connector.Provider, connector.Config); err != nil {
+	for _, connectorCfg := range impl.cfg.Connectors {
+		if oauth2c, ok := connectorCfg.Config.(*connector.OAuth2Connector); ok {
+			connector.ApplyProviderDefaults(connectorCfg.Provider, redirectURI, oauth2c)
+		}
+		if err := defaultConnectorRegistry.Register(connectorCfg.Provider, connectorCfg.Config); err != nil {
 			return fmt.Errorf("cannot register connector: %w", err)
 		}
 	}
 
-	llmClient, err := buildLLMClient(impl.cfg.OpenAI, l.Named("llm"), tp, r)
+	proboAgentCfg, proboLLMClient, err := impl.resolveAgentClient("probo", impl.cfg.Agents.Probo, l, tp, r)
 	if err != nil {
-		return fmt.Errorf("cannot create LLM client: %w", err)
+		return err
+	}
+
+	evidenceDescriberAgentCfg, evidenceDescriberLLMClient, err := impl.resolveAgentClient("evidence-describer", impl.cfg.Agents.EvidenceDescriber, l, tp, r)
+	if err != nil {
+		return err
+	}
+
+	vendorAssessor, err := impl.buildVendorAssessor(l, tp, r)
+	if err != nil {
+		return err
 	}
 
 	fileManagerService := filemanager.NewService(s3Client)
@@ -345,6 +329,43 @@ func (impl *Implm) Run(
 		if !ok {
 			return fmt.Errorf("SAML private key is not an RSA key")
 		}
+	}
+
+	if len(impl.cfg.Auth.OAuth2Server.SigningKeys) == 0 {
+		return fmt.Errorf("cannot configure OAuth2 server: at least one signing key is required")
+	}
+
+	var oauth2SigningKeys oauth2server.SigningKeys
+	var hasActive bool
+	for _, keyCfg := range impl.cfg.Auth.OAuth2Server.SigningKeys {
+		signer, err := pemutil.DecodePrivateKey([]byte(keyCfg.PrivateKey))
+		if err != nil {
+			return fmt.Errorf("cannot decode OAuth2 server signing key: %w", err)
+		}
+
+		rsaKey, ok := signer.(*rsa.PrivateKey)
+		if !ok {
+			return fmt.Errorf("OAuth2 server signing key is not an RSA key")
+		}
+
+		kid := keyCfg.KID
+		if kid == "" {
+			kid = "default"
+		}
+
+		if keyCfg.Active {
+			hasActive = true
+		}
+
+		oauth2SigningKeys = append(oauth2SigningKeys, oauth2server.SigningKey{
+			PrivateKey: rsaKey,
+			KID:        kid,
+			Active:     keyCfg.Active,
+		})
+	}
+
+	if !hasActive {
+		return fmt.Errorf("cannot configure OAuth2 server: at least one signing key must be active")
 	}
 
 	if err := emails.UploadStaticAssets(
@@ -380,6 +401,18 @@ func (impl *Implm) Run(
 			DomainVerificationResolverAddr: impl.cfg.Auth.SAML.DomainVerificationResolverAddr,
 			SCIMBridgeSyncInterval:         time.Duration(impl.cfg.SCIMBridge.SyncInterval) * time.Second,
 			SCIMBridgePollInterval:         time.Duration(impl.cfg.SCIMBridge.PollInterval) * time.Second,
+			GoogleOIDC: oidc.ProviderConfig{
+				ClientID:     impl.cfg.Auth.Google.ClientID,
+				ClientSecret: impl.cfg.Auth.Google.ClientSecret,
+				Enabled:      impl.cfg.Auth.Google.Enabled,
+			},
+			MicrosoftOIDC: oidc.ProviderConfig{
+				ClientID:     impl.cfg.Auth.Microsoft.ClientID,
+				ClientSecret: impl.cfg.Auth.Microsoft.ClientSecret,
+				Enabled:      impl.cfg.Auth.Microsoft.Enabled,
+			},
+			OAuth2ServerSigningKeys: oauth2SigningKeys,
+			OAuth2ServerOptions:     oauth2ServerOptions(impl.cfg.Auth.OAuth2Server),
 		},
 	)
 	if err != nil {
@@ -434,6 +467,8 @@ func (impl *Implm) Run(
 
 	mailmanService := mailman.NewService(pgClient, fileManagerService, impl.cfg.Auth.Cookie.Secret, baseURL, impl.cfg.AWS.Bucket, encryptionKey, l)
 
+	cookieBannerService := cookiebanner.NewService(pgClient, impl.cfg.Branding)
+
 	proboService, err := probo.NewService(
 		ctx,
 		encryptionKey,
@@ -442,10 +477,10 @@ func (impl *Implm) Run(
 		impl.cfg.AWS.Bucket,
 		baseURL.String(),
 		impl.cfg.Auth.Cookie.Secret,
-		llmClient,
-		impl.cfg.OpenAI.ModelName,
-		impl.cfg.OpenAI.Temperature,
-		impl.cfg.OpenAI.MaxTokens,
+		proboLLMClient,
+		proboAgentCfg.ModelName,
+		*proboAgentCfg.Temperature,
+		*proboAgentCfg.MaxTokens,
 		html2pdfConverter,
 		acmeService,
 		fileManagerService,
@@ -453,7 +488,9 @@ func (impl *Implm) Run(
 		slackService,
 		iamService,
 		esignService,
+		defaultConnectorRegistry,
 		time.Duration(impl.cfg.Auth.InvitationConfirmationTokenValidity)*time.Second,
+		vendorAssessor,
 	)
 	if err != nil {
 		return fmt.Errorf("cannot create probo service: %w", err)
@@ -473,15 +510,28 @@ func (impl *Implm) Run(
 		slackService,
 	)
 
+	fileService := file.NewService(pgClient, fileManagerService)
+
+	accessReviewService := accessreview.NewService(
+		pgClient,
+		encryptionKey,
+		defaultConnectorRegistry,
+		l.Named("access-review"),
+	)
+
 	serverHandler, err := server.NewServer(
 		server.Config{
 			AllowedOrigins:    impl.cfg.Api.Cors.AllowedOrigins,
 			ExtraHeaderFields: impl.cfg.Api.ExtraHeaderFields,
 			Probo:             proboService,
+			File:              fileService,
 			IAM:               iamService,
 			Trust:             trustService,
 			ESign:             esignService,
+			AccessReview:      accessReviewService,
 			Mailman:           mailmanService,
+			CookieBanner:      cookieBannerService,
+			Geoloc:            geolocService,
 			Slack:             slackService,
 			ConnectorRegistry: defaultConnectorRegistry,
 			BaseURL:           baseURL,
@@ -528,8 +578,11 @@ func (impl *Implm) Run(
 			TLSRequired: impl.cfg.Notifications.Mailer.SMTP.TLSRequired,
 		},
 		l.Named("sending-worker"),
-		mailer.WithSendingWorkerSMTPTimeout(time.Second*10),
-		mailer.WithSendingWorkerInterval(time.Duration(impl.cfg.Notifications.Mailer.MailerInterval)*time.Second),
+		[]mailer.SendingWorkerOption{
+			mailer.WithSendingWorkerSMTPTimeout(time.Second * 10),
+		},
+		worker.WithInterval(time.Duration(impl.cfg.Notifications.Mailer.MailerInterval)*time.Second),
+		worker.WithMaxConcurrency(20),
 	)
 	wg.Go(
 		func() {
@@ -556,6 +609,7 @@ func (impl *Implm) Run(
 		Interval:      time.Duration(impl.cfg.Notifications.Webhook.SenderInterval) * time.Second,
 		CacheTTL:      time.Duration(impl.cfg.Notifications.Webhook.CacheTTL) * time.Second,
 		EncryptionKey: encryptionKey,
+		Host:          baseURL.String(),
 	})
 	wg.Go(
 		func() {
@@ -570,6 +624,29 @@ func (impl *Implm) Run(
 		func() {
 			if err := impl.runExportJob(exportJobExporterCtx, proboService, l.Named("export-job-exporter")); err != nil {
 				cancel(fmt.Errorf("export job exporter crashed: %w", err))
+			}
+		},
+	)
+
+	documentPDFWorker := probo.NewDocumentPDFWorker(
+		proboService,
+		l.Named("document-pdf-worker"),
+		worker.WithInterval(30*time.Second),
+	)
+	documentPDFWorkerCtx, stopDocumentPDFWorker := context.WithCancel(context.Background())
+	wg.Go(
+		func() {
+			if err := documentPDFWorker.Run(documentPDFWorkerCtx); err != nil {
+				cancel(fmt.Errorf("document pdf worker crashed: %w", err))
+			}
+		},
+	)
+
+	accessReviewWorkerCtx, stopAccessReviewWorker := context.WithCancel(context.Background())
+	wg.Go(
+		func() {
+			if err := accessReviewService.Run(accessReviewWorkerCtx); err != nil {
+				cancel(fmt.Errorf("access review source fetcher crashed: %w", err))
 			}
 		},
 	)
@@ -592,12 +669,50 @@ func (impl *Implm) Run(
 		},
 	)
 
+	trackerPatternAnalysisWorker := cookiebanner.NewPatternAnalysisWorker(cookieBannerService, pgClient, l.Named("tracker-pattern-analysis-worker"))
+	trackerPatternAnalysisWorkerCtx, stopTrackerPatternAnalysisWorker := context.WithCancel(context.Background())
+	wg.Go(
+		func() {
+			if err := trackerPatternAnalysisWorker.Run(trackerPatternAnalysisWorkerCtx); err != nil {
+				cancel(fmt.Errorf("tracker pattern analysis worker crashed: %w", err))
+			}
+		},
+	)
+
 	mailingListWorker := mailman.NewMailingListWorker(mailmanService, pgClient, l.Named("mailing-list-worker"))
 	mailingListWorkerCtx, stopMailingListWorker := context.WithCancel(context.Background())
 	wg.Go(
 		func() {
 			if err := mailingListWorker.Run(mailingListWorkerCtx); err != nil {
 				cancel(fmt.Errorf("mailing list worker crashed: %w", err))
+			}
+		},
+	)
+
+	evidenceDescriber := evidencedescriber.New(
+		evidenceDescriberLLMClient,
+		evidencedescriber.Config{
+			Model:     evidenceDescriberAgentCfg.ModelName,
+			Temp:      *evidenceDescriberAgentCfg.Temperature,
+			MaxTokens: *evidenceDescriberAgentCfg.MaxTokens,
+		},
+	)
+	evidenceDescriptionWorker := probo.NewEvidenceDescriptionWorker(
+		pgClient,
+		fileManagerService,
+		evidenceDescriber,
+		l.Named("evidence-description-worker"),
+		probo.EvidenceDescriptionWorkerConfig{
+			StaleAfter: time.Duration(impl.cfg.EvidenceDescriber.StaleAfter) * time.Second,
+		},
+		worker.WithInterval(time.Duration(impl.cfg.EvidenceDescriber.Interval)*time.Second),
+		worker.WithMaxConcurrency(impl.cfg.EvidenceDescriber.MaxConcurrency),
+	)
+	evidenceDescriptionWorkerCtx, stopEvidenceDescriptionWorker := context.WithCancel(context.Background())
+	wg.Go(
+		func() {
+			if err := evidenceDescriptionWorker.Run(evidenceDescriptionWorkerCtx); err != nil {
+				cancel(fmt.Errorf("evidence description worker crashed: %w", err))
 			}
 		},
 	)
@@ -628,8 +743,12 @@ func (impl *Implm) Run(
 	stopTrustCenterServer()
 	stopWebhookSender()
 	stopESignService()
+	stopTrackerPatternAnalysisWorker()
 	stopMailingListWorker()
+	stopEvidenceDescriptionWorker()
+	stopDocumentPDFWorker()
 	stopExportJobExporter()
+	stopAccessReviewWorker()
 	stopIAMService()
 	stopMailer()
 	stopSlackSender()
@@ -672,6 +791,13 @@ func (impl *Implm) runApiServer(
 	ctx, span := tracer.Start(ctx, "probod.runApiServer")
 	defer span.End()
 
+	trustedProxyMiddleware, err := trustedproxy.NewMiddleware(impl.cfg.Api.ProxyProtocol.TrustedProxies)
+	if err != nil {
+		span.RecordError(err)
+		return fmt.Errorf("cannot build trusted proxy middleware: %w", err)
+	}
+	handler = trustedProxyMiddleware(handler)
+
 	apiServer := httpserver.NewServer(
 		impl.cfg.Api.Addr,
 		handler,
@@ -690,7 +816,11 @@ func (impl *Implm) runApiServer(
 	}
 
 	if len(impl.cfg.Api.ProxyProtocol.TrustedProxies) > 0 {
-		policy := proxyproto.TrustProxyHeaderFrom(parseIPs(impl.cfg.Api.ProxyProtocol.TrustedProxies)...)
+		policy, err := proxyproto.ConnStrictWhiteListPolicy(impl.cfg.Api.ProxyProtocol.TrustedProxies)
+		if err != nil {
+			span.RecordError(err)
+			return fmt.Errorf("cannot build proxy protocol policy: %w", err)
+		}
 
 		listener = &proxyproto.Listener{
 			Listener:          listener,
@@ -763,7 +893,13 @@ func newTrustCenterHTTPRedirectHandler(proboService *probo.Service, l *log.Logge
 		}
 
 		// This is a trust center domain, redirect to HTTPS
-		httpsURL := "https://" + r.Host + r.URL.RequestURI()
+		base, err := baseurl.Parse("https://" + domain)
+		if err != nil {
+			httpserver.RenderError(w, http.StatusNotFound, errors.New("not found"))
+			return
+		}
+
+		httpsURL := base.WithPath(r.URL.Path).WithQueryValues(r.URL.Query()).MustString()
 		l.InfoCtx(
 			ctx,
 			"HTTP request to trust center custom domain, redirecting to HTTPS",
@@ -809,7 +945,7 @@ func (impl *Implm) runTrustCenterServer(
 	if certProvisioningInterval == 0 {
 		certProvisioningInterval = 30 * time.Second
 	}
-	certProvisioner := certmanager.NewProvisioner(pgClient, acmeService, encryptionKey, impl.cfg.CustomDomains.CnameTarget, certProvisioningInterval, impl.cfg.CustomDomains.ResolverAddr, l)
+	certProvisioner := certmanager.NewProvisioner(pgClient, acmeService, encryptionKey, impl.cfg.CustomDomains.CnameTarget, impl.cfg.CustomDomains.CAAIssuerDomain, certProvisioningInterval, impl.cfg.CustomDomains.ResolverAddr, l)
 
 	g, ctx := errgroup.WithContext(ctx)
 
@@ -857,7 +993,10 @@ func (impl *Implm) runTrustCenterServer(
 			defer func() { _ = listener.Close() }()
 
 			if len(impl.cfg.TrustCenter.ProxyProtocol.TrustedProxies) > 0 {
-				policy := proxyproto.TrustProxyHeaderFrom(parseIPs(impl.cfg.TrustCenter.ProxyProtocol.TrustedProxies)...)
+				policy, err := proxyproto.ConnStrictWhiteListPolicy(impl.cfg.TrustCenter.ProxyProtocol.TrustedProxies)
+				if err != nil {
+					return fmt.Errorf("cannot build proxy protocol policy: %w", err)
+				}
 
 				listener = &proxyproto.Listener{
 					Listener:          listener,
@@ -942,7 +1081,10 @@ func (impl *Implm) runTrustCenterServer(
 			defer func() { _ = listener.Close() }()
 
 			if len(impl.cfg.TrustCenter.ProxyProtocol.TrustedProxies) > 0 {
-				policy := proxyproto.TrustProxyHeaderFrom(parseIPs(impl.cfg.TrustCenter.ProxyProtocol.TrustedProxies)...)
+				policy, err := proxyproto.ConnStrictWhiteListPolicy(impl.cfg.TrustCenter.ProxyProtocol.TrustedProxies)
+				if err != nil {
+					return fmt.Errorf("cannot build proxy protocol policy: %w", err)
+				}
 
 				listener = &proxyproto.Listener{
 					Listener:          listener,
@@ -994,14 +1136,24 @@ func (impl *Implm) runTrustCenterServer(
 	return ctx.Err()
 }
 
-// parseIPs converts a slice of string IP addresses to net.IP.
-// Invalid IPs are skipped.
-func parseIPs(strs []string) []net.IP {
-	ips := make([]net.IP, 0, len(strs))
-	for _, s := range strs {
-		if ip := net.ParseIP(s); ip != nil {
-			ips = append(ips, ip)
-		}
+func oauth2ServerOptions(cfg OAuth2ServerConfig) []oauth2server.Option {
+	var opts []oauth2server.Option
+
+	if cfg.AccessTokenDuration > 0 {
+		opts = append(opts, oauth2server.WithAccessTokenDuration(time.Duration(cfg.AccessTokenDuration)*time.Second))
 	}
-	return ips
+
+	if cfg.RefreshTokenDuration > 0 {
+		opts = append(opts, oauth2server.WithRefreshTokenDuration(time.Duration(cfg.RefreshTokenDuration)*time.Second))
+	}
+
+	if cfg.AuthorizationCodeDuration > 0 {
+		opts = append(opts, oauth2server.WithAuthorizationCodeDuration(time.Duration(cfg.AuthorizationCodeDuration)*time.Second))
+	}
+
+	if cfg.DeviceCodeDuration > 0 {
+		opts = append(opts, oauth2server.WithDeviceCodeDuration(time.Duration(cfg.DeviceCodeDuration)*time.Second))
+	}
+
+	return opts
 }

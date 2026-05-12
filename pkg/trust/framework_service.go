@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -35,7 +35,7 @@ func (s FrameworkService) Get(
 ) (*coredata.Framework, error) {
 	framework := &coredata.Framework{}
 
-	err := s.svc.pg.WithConn(ctx, func(conn pg.Conn) error {
+	err := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		err := framework.LoadByID(ctx, conn, s.svc.scope, frameworkID)
 		if err != nil {
 			return fmt.Errorf("cannot load framework: %w", err)
@@ -60,7 +60,7 @@ func (s FrameworkService) GenerateLightLogoURL(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			framework := &coredata.Framework{}
 			if err := framework.LoadByID(ctx, conn, s.svc.scope, frameworkID); err != nil {
 				return fmt.Errorf("cannot load framework: %w", err)
@@ -102,7 +102,7 @@ func (s FrameworkService) GenerateDarkLogoURL(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			framework := &coredata.Framework{}
 			if err := framework.LoadByID(ctx, conn, s.svc.scope, frameworkID); err != nil {
 				return fmt.Errorf("cannot load framework: %w", err)

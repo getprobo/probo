@@ -1,3 +1,17 @@
+// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
 import { formatDatetime, getAssignableRoles, getRoles } from "@probo/helpers";
 import { roles } from "@probo/helpers/src/roles";
 import { useTranslate } from "@probo/i18n";
@@ -77,6 +91,7 @@ export function PersonForm(props: {
   id?: string;
   connectionId?: DataID;
   disabled?: boolean;
+  scimManaged?: boolean;
   defaultValues?: z.infer<typeof schema>;
   onSubmit?: () => void;
 }) {
@@ -84,6 +99,7 @@ export function PersonForm(props: {
     id,
     connectionId = "",
     disabled = false,
+    scimManaged = false,
     defaultValues = {
       fullName: "",
       emailAddress: "",
@@ -162,7 +178,7 @@ export function PersonForm(props: {
 
   return (
     <form onSubmit={e => void handleSubmit(e)} className="space-y-4">
-      <Field label={__("Full name *")} {...register("fullName")} type="text" disabled={disabled} />
+      <Field label={__("Full name *")} {...register("fullName")} type="text" disabled={disabled || scimManaged} />
       {id
         ? (
             <>
@@ -209,7 +225,7 @@ export function PersonForm(props: {
                 {watchedRole === "VIEWER" && <p>{__("Read-only access")}</p>}
                 {watchedRole === "AUDITOR" && (
                   <p>
-                    {__("Read-only access without settings, tasks and meetings")}
+                    {__("Read-only access without settings and tasks")}
                   </p>
                 )}
                 {watchedRole === "EMPLOYEE" && (
@@ -223,7 +239,7 @@ export function PersonForm(props: {
         name="kind"
         type="select"
         label={__("Type")}
-        disabled={disabled}
+        disabled={disabled || scimManaged}
       >
         {getRoles(__).map(role => (
           <Option key={role.value} value={role.value}>
@@ -236,9 +252,9 @@ export function PersonForm(props: {
         {...register("position")}
         type="text"
         placeholder={__("e.g. CEO, CFO, etc.")}
-        disabled={disabled}
+        disabled={disabled || scimManaged}
       />
-      <EmailsField control={control} register={register} disabled={disabled} />
+      <EmailsField control={control} register={register} disabled={disabled || scimManaged} />
       <Field label={__("Contract start date")}>
         <Input
           {...register("contractStartDate")}
@@ -272,7 +288,8 @@ export function PersonFormLoader(props: { fragmentRef: PersonFormFragment$key })
   return (
     <PersonForm
       id={person.id}
-      disabled={!person.canUpdate || person.source === "SCIM"}
+      disabled={!person.canUpdate}
+      scimManaged={person.source === "SCIM"}
       defaultValues={
         {
           kind: person.kind,

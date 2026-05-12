@@ -24,9 +24,9 @@ import (
 )
 
 const createMutation = `
-mutation($input: CreateStateOfApplicabilityInput!) {
-  createStateOfApplicability(input: $input) {
-    stateOfApplicabilityEdge {
+mutation($input: CreateStatementOfApplicabilityInput!) {
+  createStatementOfApplicability(input: $input) {
+    statementOfApplicabilityEdge {
       node {
         id
         name
@@ -38,15 +38,15 @@ mutation($input: CreateStateOfApplicabilityInput!) {
 `
 
 type createResponse struct {
-	CreateStateOfApplicability struct {
-		StateOfApplicabilityEdge struct {
+	CreateStatementOfApplicability struct {
+		StatementOfApplicabilityEdge struct {
 			Node struct {
 				ID        string `json:"id"`
 				Name      string `json:"name"`
 				CreatedAt string `json:"createdAt"`
 			} `json:"node"`
-		} `json:"stateOfApplicabilityEdge"`
-	} `json:"createStateOfApplicability"`
+		} `json:"statementOfApplicabilityEdge"`
+	} `json:"createStatementOfApplicability"`
 }
 
 func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
@@ -78,6 +78,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				hc.Token,
 				"/api/console/v1/graphql",
 				cfg.HTTPTimeoutDuration(),
+				cmdutil.TokenRefreshOption(cfg, host, hc),
 			)
 
 			if flagOrg == "" {
@@ -107,7 +108,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				return fmt.Errorf("cannot parse response: %w", err)
 			}
 
-			s := resp.CreateStateOfApplicability.StateOfApplicabilityEdge.Node
+			s := resp.CreateStatementOfApplicability.StatementOfApplicabilityEdge.Node
 			_, _ = fmt.Fprintf(
 				f.IOStreams.Out,
 				"Created statement of applicability %s (%s)\n",

@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -23,9 +23,19 @@ import (
 	"go.probo.inc/probo/pkg/bootstrap"
 )
 
+var (
+	version string = "unknown"
+)
+
 func main() {
 	outputPath := flag.String("output", "/etc/probod/config.yml", "output path for the generated config file")
+	showVersion := flag.Bool("version", false, "print version and exit")
 	flag.Parse()
+
+	if *showVersion {
+		fmt.Println(version)
+		return
+	}
 
 	builder := bootstrap.NewBuilder(nil)
 

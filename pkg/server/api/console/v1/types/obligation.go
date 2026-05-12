@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -30,7 +30,6 @@ type (
 
 		Resolver any
 		ParentID gid.GID
-		Filter   *ObligationFilter
 	}
 )
 
@@ -38,7 +37,6 @@ func NewObligationConnection(
 	p *page.Page[*coredata.Obligation, coredata.ObligationOrderField],
 	parentType any,
 	parentID gid.GID,
-	filter *ObligationFilter,
 ) *ObligationConnection {
 	edges := make([]*ObligationEdge, len(p.Data))
 	for i, obligation := range p.Data {
@@ -51,15 +49,12 @@ func NewObligationConnection(
 
 		Resolver: parentType,
 		ParentID: parentID,
-		Filter:   filter,
 	}
 }
 
 func NewObligation(cr *coredata.Obligation) *Obligation {
 	return &Obligation{
-		ID:         cr.ID,
-		SnapshotID: cr.SnapshotID,
-		SourceID:   cr.SourceID,
+		ID: cr.ID,
 		Organization: &Organization{
 			ID: cr.OrganizationID,
 		},

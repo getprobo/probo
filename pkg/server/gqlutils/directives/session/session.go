@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -92,7 +92,7 @@ func Directive(ctx context.Context, obj any, next graphql.Resolver, required Ses
 		if identity == nil {
 			return nil, gqlutils.Unauthenticatedf(
 				ctx,
-				"authentication is required to access this resouce",
+				"authentication is required to access this resource",
 			)
 		}
 	case SessionRequirementNone:

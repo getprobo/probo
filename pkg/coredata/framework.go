@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -54,7 +54,7 @@ func (f *Framework) CursorKey(orderBy FrameworkOrderField) page.CursorKey {
 }
 
 // AuthorizationAttributes returns the authorization attributes for policy evaluation.
-func (f *Framework) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+func (f *Framework) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	q := `SELECT organization_id FROM frameworks WHERE id = $1 LIMIT 1;`
 
 	var organizationID gid.GID
@@ -70,7 +70,7 @@ func (f *Framework) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (
 
 func (f *Frameworks) CountByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 ) (int, error) {
@@ -101,7 +101,7 @@ WHERE
 
 func (f *Frameworks) LoadByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 	cursor *page.Cursor[FrameworkOrderField],
@@ -147,7 +147,7 @@ WHERE
 
 func (f *Framework) LoadByReferenceID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	referenceID string,
 ) error {
@@ -195,7 +195,7 @@ LIMIT 1;
 
 func (f *Framework) LoadByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	frameworkID gid.GID,
 ) error {
@@ -241,9 +241,53 @@ LIMIT 1;
 	return nil
 }
 
+func (f *Frameworks) LoadByIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	frameworkIDs []gid.GID,
+) error {
+	q := `
+SELECT
+    id,
+    organization_id,
+    reference_id,
+    name,
+    description,
+    light_logo_file_id,
+    dark_logo_file_id,
+    created_at,
+    updated_at
+FROM
+    frameworks
+WHERE
+    %s
+    AND id = ANY(@framework_ids)
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"framework_ids": frameworkIDs}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query frameworks: %w", err)
+	}
+
+	frameworks, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Framework])
+	if err != nil {
+		return fmt.Errorf("cannot collect frameworks: %w", err)
+	}
+
+	*f = frameworks
+
+	return nil
+}
+
 func (f Framework) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -304,7 +348,7 @@ VALUES (
 
 func (f Framework) Delete(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 	frameworkID gid.GID,
 ) error {
@@ -327,7 +371,7 @@ WHERE
 
 func (f *Framework) Update(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `

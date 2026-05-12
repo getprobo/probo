@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -43,7 +43,7 @@ func (s SessionService) GetSession(ctx context.Context, sessionID gid.GID) (*cor
 
 	err := s.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			if err := session.LoadByID(ctx, tx, sessionID); err != nil {
 				if err == coredata.ErrResourceNotFound {
 					return NewSessionNotFoundError(sessionID)
@@ -79,7 +79,7 @@ func (s SessionService) GetSession(ctx context.Context, sessionID gid.GID) (*cor
 func (s SessionService) CloseSession(ctx context.Context, sessionID gid.GID) error {
 	return s.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Tx) error {
 			session := &coredata.Session{}
 			if err := session.LoadByID(ctx, conn, sessionID); err != nil {
 				if err == coredata.ErrResourceNotFound {
@@ -114,7 +114,7 @@ func (s SessionService) RevokeSession(ctx context.Context, identityID gid.GID, s
 
 	return s.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			identity := &coredata.Identity{}
 			err := identity.LoadByID(ctx, tx, identityID)
 			if err != nil {
@@ -166,7 +166,7 @@ func (s SessionService) RevokeAllSessions(ctx context.Context, currentSessionID 
 
 	err := s.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			session := coredata.Session{}
 			err := session.LoadByID(ctx, tx, currentSessionID)
 			if err != nil {
@@ -193,7 +193,7 @@ func (s SessionService) RevokeAllSessions(ctx context.Context, currentSessionID 
 func (s SessionService) UpdateSessionInfo(ctx context.Context, sessionID gid.GID, userAgent string, ipAddress net.IP) error {
 	return s.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			session := &coredata.Session{}
 			err := session.LoadByID(ctx, tx, sessionID)
 			if err != nil {
@@ -224,7 +224,7 @@ func (s SessionService) UpdateSessionInfo(ctx context.Context, sessionID gid.GID
 func (s SessionService) UpdateSessionData(ctx context.Context, sessionID gid.GID, data coredata.SessionData) error {
 	return s.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			session := &coredata.Session{}
 			err := session.LoadByID(ctx, tx, sessionID)
 			if err != nil {
@@ -256,7 +256,7 @@ func (s SessionService) GetActiveSessionForMembership(ctx context.Context, rootS
 
 	err := s.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			rootSession := &coredata.Session{}
 			err := rootSession.LoadByID(ctx, tx, rootSessionID)
 			if err != nil {
@@ -318,7 +318,7 @@ func (s SessionService) OpenPasswordChildSessionForOrganization(
 
 	err := s.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			err := rootSession.LoadByID(ctx, tx, rootSessionID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
@@ -420,7 +420,7 @@ func (s SessionService) OpenSAMLChildSessionForOrganization(
 
 	err := s.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			err := rootSession.LoadByID(ctx, tx, rootSessionID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
@@ -509,7 +509,7 @@ func (s SessionService) AssumeOrganizationSession(
 
 	err := s.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			if err := rootSession.LoadByID(ctx, tx, sessionID); err != nil {
 				if err == coredata.ErrResourceNotFound {
 					return NewSessionNotFoundError(sessionID)
@@ -566,14 +566,25 @@ func (s SessionService) AssumeOrganizationSession(
 						return NewSAMLAuthenticationRequiredError("policy_requirement")
 					}
 				case coredata.SAMLEnforcementPolicyOptional:
-					// SAML is optional: both PASSWORD and SAML root sessions are allowed.
+					// SAML is optional: any password-equivalent (PASSWORD, OIDC,
+					// MAGIC_LINK) or SAML root session is allowed.
 				}
 			} else {
 				switch rootSession.AuthMethod {
-				case coredata.AuthMethodPassword:
+				case coredata.AuthMethodPassword,
+					coredata.AuthMethodOIDC,
+					coredata.AuthMethodMagicLink:
+					// No SAML configuration for this org+domain: any
+					// password-equivalent root session is allowed. OIDC
+					// (Google / Microsoft) and magic-link logins are treated
+					// as password logins because the user has authenticated
+					// against the platform itself rather than a third-party
+					// IdP federated with this organization.
 				case coredata.AuthMethodSAML:
-					// No (or non-required) SAML configuration: require a password-authenticated or magic-link root session
-					// (eg. when switching into a password-based org from a SAML login)
+					// SAML root sessions are bound to a different organization's
+					// IdP, so they cannot be used to access an organization that
+					// does not federate with that IdP. Force re-authentication
+					// with a password-equivalent method.
 					return NewPasswordAuthenticationRequiredError("password_authentication_required")
 				}
 			}

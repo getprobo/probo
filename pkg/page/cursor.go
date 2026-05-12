@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -36,14 +36,17 @@ type (
 
 const (
 	DefaultCursorSize = 25
+	MaxCursorSize     = 500
 
 	Tail Position = "TAIL"
 	Head Position = "HEAD"
 )
 
 func NewCursor[T OrderField](size int, from *CursorKey, pos Position, orderBy OrderBy[T]) *Cursor[T] {
-	if size == 0 {
+	if size <= 0 {
 		size = DefaultCursorSize
+	} else if size > MaxCursorSize {
+		size = MaxCursorSize
 	}
 
 	return &Cursor[T]{

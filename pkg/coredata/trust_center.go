@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -30,17 +30,18 @@ import (
 
 type (
 	TrustCenter struct {
-		ID                           gid.GID      `db:"id"`
-		OrganizationID               gid.GID      `db:"organization_id"`
-		TenantID                     gid.TenantID `db:"tenant_id"`
-		Active                       bool         `db:"active"`
-		Slug                         string       `db:"slug"`
-		MailingListID                *gid.GID     `db:"mailing_list_id"`
-		LogoFileID                   *gid.GID     `db:"logo_file_id"`
-		DarkLogoFileID               *gid.GID     `db:"dark_logo_file_id"`
-		NonDisclosureAgreementFileID *gid.GID     `db:"non_disclosure_agreement_file_id"`
-		CreatedAt                    time.Time    `db:"created_at"`
-		UpdatedAt                    time.Time    `db:"updated_at"`
+		ID                           gid.GID              `db:"id"`
+		OrganizationID               gid.GID              `db:"organization_id"`
+		TenantID                     gid.TenantID         `db:"tenant_id"`
+		Active                       bool                 `db:"active"`
+		Slug                         string               `db:"slug"`
+		SearchEngineIndexing         SearchEngineIndexing `db:"search_engine_indexing"`
+		MailingListID                *gid.GID             `db:"mailing_list_id"`
+		LogoFileID                   *gid.GID             `db:"logo_file_id"`
+		DarkLogoFileID               *gid.GID             `db:"dark_logo_file_id"`
+		NonDisclosureAgreementFileID *gid.GID             `db:"non_disclosure_agreement_file_id"`
+		CreatedAt                    time.Time            `db:"created_at"`
+		UpdatedAt                    time.Time            `db:"updated_at"`
 	}
 
 	TrustCenters []*TrustCenter
@@ -55,7 +56,7 @@ func (tc *TrustCenter) CursorKey(orderBy TrustCenterOrderField) page.CursorKey {
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (tc *TrustCenter) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+func (tc *TrustCenter) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	q := `SELECT organization_id FROM trust_centers WHERE id = $1 LIMIT 1;`
 
 	var organizationID gid.GID
@@ -71,7 +72,7 @@ func (tc *TrustCenter) AuthorizationAttributes(ctx context.Context, conn pg.Conn
 
 func (tc *TrustCenter) LoadByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	trustCenterID gid.GID,
 ) error {
@@ -85,6 +86,7 @@ SELECT
 	dark_logo_file_id,
 	active,
 	slug,
+	search_engine_indexing,
 	non_disclosure_agreement_file_id,
 	created_at,
 	updated_at
@@ -122,7 +124,7 @@ LIMIT 1;
 
 func (tc *TrustCenter) LoadByMailingListID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	mailingListID gid.GID,
 ) error {
@@ -136,6 +138,7 @@ SELECT
 	dark_logo_file_id,
 	active,
 	slug,
+	search_engine_indexing,
 	non_disclosure_agreement_file_id,
 	created_at,
 	updated_at
@@ -173,7 +176,7 @@ LIMIT 1;
 
 func (tc *TrustCenter) LoadByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 ) error {
@@ -187,6 +190,7 @@ SELECT
 	dark_logo_file_id,
 	active,
 	slug,
+	search_engine_indexing,
 	non_disclosure_agreement_file_id,
 	created_at,
 	updated_at
@@ -225,7 +229,7 @@ LIMIT 1;
 // Tenant id scope is not applied because we want to access trust centers by slug across all tenants for public access.
 func (tc *TrustCenter) LoadBySlug(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	slug string,
 ) error {
 	q := `
@@ -238,6 +242,7 @@ SELECT
 	dark_logo_file_id,
 	active,
 	slug,
+	search_engine_indexing,
 	non_disclosure_agreement_file_id,
 	created_at,
 	updated_at
@@ -271,7 +276,7 @@ LIMIT 1;
 
 func (tc *TrustCenter) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -284,6 +289,7 @@ INSERT INTO trust_centers (
 	dark_logo_file_id,
 	active,
 	slug,
+	search_engine_indexing,
 	non_disclosure_agreement_file_id,
 	created_at,
 	updated_at
@@ -296,6 +302,7 @@ INSERT INTO trust_centers (
 	@dark_logo_file_id,
 	@active,
 	@slug,
+	@search_engine_indexing,
 	@non_disclosure_agreement_file_id,
 	@created_at,
 	@updated_at
@@ -311,6 +318,7 @@ INSERT INTO trust_centers (
 		"dark_logo_file_id":                tc.DarkLogoFileID,
 		"active":                           tc.Active,
 		"slug":                             tc.Slug,
+		"search_engine_indexing":           tc.SearchEngineIndexing,
 		"non_disclosure_agreement_file_id": tc.NonDisclosureAgreementFileID,
 		"created_at":                       tc.CreatedAt,
 		"updated_at":                       tc.UpdatedAt,
@@ -332,7 +340,7 @@ INSERT INTO trust_centers (
 
 func (tc *TrustCenter) Update(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -340,6 +348,7 @@ UPDATE trust_centers
 SET
 	active = @active,
 	slug = @slug,
+	search_engine_indexing = @search_engine_indexing,
 	logo_file_id = @logo_file_id,
 	dark_logo_file_id = @dark_logo_file_id,
 	non_disclosure_agreement_file_id = @non_disclosure_agreement_file_id,
@@ -357,6 +366,7 @@ WHERE
 		"dark_logo_file_id":                tc.DarkLogoFileID,
 		"active":                           tc.Active,
 		"slug":                             tc.Slug,
+		"search_engine_indexing":           tc.SearchEngineIndexing,
 		"non_disclosure_agreement_file_id": tc.NonDisclosureAgreementFileID,
 		"updated_at":                       tc.UpdatedAt,
 	}

@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -16,10 +16,13 @@ package openai
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/openai/openai-go"
@@ -163,6 +166,16 @@ func buildParams(req *llm.ChatCompletionRequest) openai.ChatCompletionNewParams 
 	if req.ResponseFormat != nil {
 		params.ResponseFormat = buildResponseFormat(req.ResponseFormat)
 	}
+	if req.Thinking != nil && req.Thinking.Enabled && isReasoningModel(req.Model) {
+		switch {
+		case req.Thinking.BudgetTokens <= 1024:
+			params.ReasoningEffort = shared.ReasoningEffortLow
+		case req.Thinking.BudgetTokens <= 8192:
+			params.ReasoningEffort = shared.ReasoningEffortMedium
+		default:
+			params.ReasoningEffort = shared.ReasoningEffortHigh
+		}
+	}
 
 	return params
 }
@@ -188,6 +201,8 @@ func buildMessages(messages []llm.Message) []openai.ChatCompletionMessageParamUn
 						},
 						),
 					)
+				case llm.FilePart:
+					parts = append(parts, buildFilePart(p))
 				}
 			}
 			out = append(out, openai.UserMessage(parts))
@@ -449,4 +464,35 @@ func mapChunkToEvent(chunk *openai.ChatCompletionChunk) llm.ChatCompletionStream
 	}
 
 	return event
+}
+
+// isReasoningModel returns true for OpenAI models that support
+// reasoning_effort (o1, o3-mini, o3, and their dated variants).
+func isReasoningModel(model string) bool {
+	for _, prefix := range []string{"o1", "o3"} {
+		if model == prefix || strings.HasPrefix(model, prefix+"-") {
+			return true
+		}
+	}
+	return false
+}
+
+func buildFilePart(p llm.FilePart) openai.ChatCompletionContentPartUnionParam {
+	switch {
+	case strings.HasPrefix(p.MimeType, "image/"):
+		return openai.ImageContentPart(openai.ChatCompletionContentPartImageImageURLParam{
+			URL: fmt.Sprintf("data:%s;base64,%s", p.MimeType, p.Data),
+		})
+	case strings.HasPrefix(p.MimeType, "text/"):
+		decoded, err := base64.StdEncoding.DecodeString(p.Data)
+		if err != nil {
+			return openai.TextContentPart(fmt.Sprintf("[file: %s, type: %s, error decoding content]", p.Filename, p.MimeType))
+		}
+		return openai.TextContentPart(fmt.Sprintf("File: %s\n\n%s", p.Filename, string(decoded)))
+	default:
+		return openai.FileContentPart(openai.ChatCompletionContentPartFileFileParam{
+			FileData: param.NewOpt(fmt.Sprintf("data:%s;base64,%s", p.MimeType, p.Data)),
+			Filename: param.NewOpt(p.Filename),
+		})
+	}
 }

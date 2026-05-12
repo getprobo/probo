@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -708,7 +708,8 @@ func TestAudit_Timestamps(t *testing.T) {
 		initialCreatedAt := getResult.Node.CreatedAt
 		initialUpdatedAt := getResult.Node.UpdatedAt
 
-		time.Sleep(10 * time.Millisecond)
+		// Wait long enough for timestamp to change (database may have second precision)
+		time.Sleep(1100 * time.Millisecond)
 
 		updateQuery := `
 			mutation UpdateAudit($input: UpdateAuditInput!) {

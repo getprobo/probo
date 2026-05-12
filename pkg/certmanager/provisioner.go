@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -32,13 +32,14 @@ import (
 
 type (
 	Provisioner struct {
-		pg            *pg.Client
-		acmeService   *ACMEService
-		encryptionKey cipher.EncryptionKey
-		cnameTarget   string
-		interval      time.Duration
-		resolverAddr  string
-		logger        *log.Logger
+		pg              *pg.Client
+		acmeService     *ACMEService
+		encryptionKey   cipher.EncryptionKey
+		cnameTarget     string
+		caaIssuerDomain string
+		interval        time.Duration
+		resolverAddr    string
+		logger          *log.Logger
 	}
 )
 
@@ -51,18 +52,20 @@ func NewProvisioner(
 	acmeService *ACMEService,
 	encryptionKey cipher.EncryptionKey,
 	cnameTarget string,
+	caaIssuerDomain string,
 	interval time.Duration,
 	resolverAddr string,
 	logger *log.Logger,
 ) *Provisioner {
 	return &Provisioner{
-		pg:            pg,
-		acmeService:   acmeService,
-		encryptionKey: encryptionKey,
-		cnameTarget:   cnameTarget,
-		interval:      interval,
-		resolverAddr:  resolverAddr,
-		logger:        logger.Named("certmanager.provisioner"),
+		pg:              pg,
+		acmeService:     acmeService,
+		encryptionKey:   encryptionKey,
+		cnameTarget:     cnameTarget,
+		caaIssuerDomain: caaIssuerDomain,
+		interval:        interval,
+		resolverAddr:    resolverAddr,
+		logger:          logger.Named("certmanager.provisioner"),
 	}
 }
 
@@ -135,10 +138,58 @@ func (p *Provisioner) checkDNSConfiguration(domain string) error {
 	return nil
 }
 
+func (p *Provisioner) checkCAARecords(domain string) error {
+	fqdn := domain
+	if !strings.HasSuffix(fqdn, ".") {
+		fqdn = fqdn + "."
+	}
+
+	msg := &dns.Msg{MsgHeader: dns.MsgHeader{ID: dns.ID(), RecursionDesired: true}}
+	msg.Question = []dns.RR{&dns.CAA{Hdr: dns.Header{Name: fqdn, Class: dns.ClassINET}}}
+
+	client := dns.NewClient()
+
+	resp, _, err := client.Exchange(
+		context.Background(),
+		msg,
+		"udp",
+		p.resolverAddr,
+	)
+	if err != nil {
+		return fmt.Errorf("cannot exchange dns message for caa records: %w", err)
+	}
+
+	var caaRecords []*dns.CAA
+	for _, rr := range resp.Answer {
+		if caa, ok := rr.(*dns.CAA); ok {
+			caaRecords = append(caaRecords, caa)
+		}
+	}
+
+	if len(caaRecords) == 0 {
+		return nil
+	}
+
+	for _, caa := range caaRecords {
+		if caa.Tag == "issue" {
+			issuer, _, _ := strings.Cut(caa.Value, ";")
+			if strings.EqualFold(strings.TrimSpace(issuer), p.caaIssuerDomain) {
+				return nil
+			}
+		}
+	}
+
+	return fmt.Errorf(
+		"caa records for domain %q do not permit issuance by %q",
+		domain,
+		p.caaIssuerDomain,
+	)
+}
+
 func (p *Provisioner) checkPendingDomains(ctx context.Context) error {
 	err := p.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			if err := p.handleStaleProvisioningAttempts(ctx, tx); err != nil {
 				return fmt.Errorf("cannot handle stale provisioning attempts: %w", err)
 			}
@@ -152,7 +203,7 @@ func (p *Provisioner) checkPendingDomains(ctx context.Context) error {
 
 	err = p.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			var domains coredata.CustomDomains
 			if err := domains.ListDomainsWithPendingHTTPChallenges(ctx, tx, coredata.NewNoScope()); err != nil {
 				return fmt.Errorf("cannot load domains with pending challenges: %w", err)
@@ -192,7 +243,7 @@ func (p *Provisioner) checkPendingDomains(ctx context.Context) error {
 	return nil
 }
 
-func (p *Provisioner) handleStaleProvisioningAttempts(ctx context.Context, tx pg.Conn) error {
+func (p *Provisioner) handleStaleProvisioningAttempts(ctx context.Context, tx pg.Tx) error {
 	var domains coredata.CustomDomains
 	if err := domains.ListStaleProvisioningDomains(ctx, tx, coredata.NewNoScope()); err != nil {
 		return fmt.Errorf("cannot load stale provisioning domains: %w", err)
@@ -220,7 +271,7 @@ func (p *Provisioner) handleStaleProvisioningAttempts(ctx context.Context, tx pg
 
 func (p *Provisioner) resetStaleDomain(
 	ctx context.Context,
-	tx pg.Conn,
+	tx pg.Tx,
 	domain *coredata.CustomDomain,
 ) error {
 	fullDomain := &coredata.CustomDomain{}
@@ -247,6 +298,7 @@ func (p *Provisioner) resetStaleDomain(
 	fullDomain.HTTPChallengeKeyAuth = nil
 	fullDomain.HTTPChallengeURL = nil
 	fullDomain.HTTPOrderURL = nil
+	fullDomain.ProvisioningError = nil
 	fullDomain.SSLStatus = coredata.CustomDomainSSLStatusPending
 
 	if fullDomain.SSLLastAttemptAt != nil && time.Since(*fullDomain.SSLLastAttemptAt) > 24*time.Hour {
@@ -269,7 +321,7 @@ func (p *Provisioner) resetStaleDomain(
 
 func (p *Provisioner) provisionDomainCertificate(
 	ctx context.Context,
-	tx pg.Conn,
+	tx pg.Tx,
 	domainID gid.GID,
 ) error {
 	domain := &coredata.CustomDomain{}
@@ -290,7 +342,35 @@ func (p *Provisioner) provisionDomainCertificate(
 				log.Error(err),
 			)
 
-			return err
+			errMsg := err.Error()
+			domain.ProvisioningError = &errMsg
+			if err := domain.Update(ctx, tx, coredata.NewNoScope()); err != nil {
+				return fmt.Errorf("cannot update domain with provisioning error: %w", err)
+			}
+
+			return nil
+		}
+
+		if err := p.checkCAARecords(domain.Domain); err != nil {
+			p.logger.WarnCtx(
+				ctx,
+				"caa record check failed",
+				log.String("domain", domain.Domain),
+				log.Error(err),
+			)
+
+			errMsg := err.Error()
+			domain.ProvisioningError = &errMsg
+			if err := domain.Update(ctx, tx, coredata.NewNoScope()); err != nil {
+				return fmt.Errorf("cannot update domain with provisioning error: %w", err)
+			}
+
+			return nil
+		}
+
+		domain.ProvisioningError = nil
+		if err := domain.Update(ctx, tx, coredata.NewNoScope()); err != nil {
+			return fmt.Errorf("cannot clear provisioning error: %w", err)
 		}
 
 		p.logger.InfoCtx(ctx, "DNS configuration verified, initiating HTTP challenge for domain", log.String("domain", domain.Domain))
@@ -344,8 +424,19 @@ func (p *Provisioner) provisionDomainCertificate(
 			log.Error(err),
 		)
 
+		errMsg := err.Error()
+		domain.ProvisioningError = &errMsg
 		domain.SSLRetryCount = domain.SSLRetryCount + 1
 		domain.SSLLastAttemptAt = new(time.Now())
+
+		// Clear challenge data and reset to pending so the next attempt
+		// creates a fresh ACME order. Once a challenge fails validation,
+		// Let's Encrypt marks it as invalid and retrying the same
+		// challenge always fails with "authorization must be pending".
+		domain.HTTPChallengeToken = nil
+		domain.HTTPChallengeKeyAuth = nil
+		domain.HTTPChallengeURL = nil
+		domain.HTTPOrderURL = nil
 
 		if domain.SSLRetryCount >= maxRetries {
 			p.logger.ErrorCtx(
@@ -356,10 +447,8 @@ func (p *Provisioner) provisionDomainCertificate(
 			)
 
 			domain.SSLStatus = coredata.CustomDomainSSLStatusFailed
-			domain.HTTPChallengeToken = nil
-			domain.HTTPChallengeKeyAuth = nil
-			domain.HTTPChallengeURL = nil
-			domain.HTTPOrderURL = nil
+		} else {
+			domain.SSLStatus = coredata.CustomDomainSSLStatusPending
 		}
 
 		if err := domain.Update(ctx, tx, coredata.NewNoScope()); err != nil {
@@ -376,6 +465,7 @@ func (p *Provisioner) provisionDomainCertificate(
 		log.Time("expires_at", cert.ExpiresAt),
 	)
 
+	domain.ProvisioningError = nil
 	domain.SSLCertificatePEM = cert.CertPEM
 	if err := domain.EncryptPrivateKey(cert.KeyPEM, p.encryptionKey); err != nil {
 		return fmt.Errorf("cannot encrypt private key: %w", err)

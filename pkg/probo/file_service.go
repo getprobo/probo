@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -57,7 +57,7 @@ func (s FileService) Get(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			if err := file.LoadByID(ctx, conn, s.svc.scope, fileID); err != nil {
 				return fmt.Errorf("cannot load file %w", err)
 			}
@@ -71,6 +71,34 @@ func (s FileService) Get(
 	}
 
 	return file, nil
+}
+
+func (s FileService) GetByIDs(
+	ctx context.Context,
+	fileIDs ...gid.GID,
+) (coredata.Files, error) {
+	var files coredata.Files
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := files.LoadByIDs(
+				ctx,
+				conn,
+				s.svc.scope,
+				fileIDs,
+			); err != nil {
+				return fmt.Errorf("cannot load files by ids: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return files, nil
 }
 
 func (s FileService) UploadAndSaveFile(
@@ -133,7 +161,7 @@ func (s FileService) UploadAndSaveFile(
 
 	err = s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Tx) error {
 			file = &coredata.File{
 				ID:             fileID,
 				OrganizationID: organizationID,
@@ -142,6 +170,7 @@ func (s FileService) UploadAndSaveFile(
 				FileName:       req.Filename,
 				FileKey:        objectKey.String(),
 				FileSize:       *headOutput.ContentLength,
+				Visibility:     coredata.FileVisibilityPrivate,
 				CreatedAt:      now,
 				UpdatedAt:      now,
 			}

@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -75,16 +75,17 @@ func NewDocumentEdge(document *coredata.Document, orderBy coredata.DocumentOrder
 
 func NewDocument(document *coredata.Document) *Document {
 	return &Document{
-		ID:    document.ID,
-		Title: document.Title,
+		ID: document.ID,
 		Organization: &Organization{
 			ID: document.OrganizationID,
 		},
-		DocumentType:            document.DocumentType,
-		Classification:          document.Classification,
-		CurrentPublishedVersion: document.CurrentPublishedVersion,
-		TrustCenterVisibility:   document.TrustCenterVisibility,
-		CreatedAt:               document.CreatedAt,
-		UpdatedAt:               document.UpdatedAt,
+		CurrentPublishedMajor: document.CurrentPublishedMajor,
+		CurrentPublishedMinor: document.CurrentPublishedMinor,
+		WriteMode:             document.WriteMode,
+		TrustCenterVisibility: document.TrustCenterVisibility,
+		Status:                document.Status,
+		ArchivedAt:            document.ArchivedAt,
+		CreatedAt:             document.CreatedAt,
+		UpdatedAt:             document.UpdatedAt,
 	}
 }

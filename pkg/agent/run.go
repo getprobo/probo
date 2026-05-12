@@ -28,10 +28,19 @@ import (
 	"go.probo.inc/probo/pkg/llm"
 )
 
-const tracerName = "go.probo.inc/probo/pkg/agent"
+const (
+	tracerName = "go.probo.inc/probo/pkg/agent"
+
+	// synthesisNudge is the static user message appended after tool
+	// exploration completes, asking the model to produce the final
+	// structured output on the next (synthesis) turn.
+	synthesisNudge = "Based on everything you have gathered, produce the final structured output now."
+)
 
 type (
 	CallLLMFunc func(ctx context.Context, agent *Agent, req *llm.ChatCompletionRequest) (*llm.ChatCompletionResponse, error)
+
+	RunOption func(*runOpts)
 
 	runOpts struct {
 		callLLM             CallLLMFunc
@@ -40,6 +49,9 @@ type (
 		skipSessionLoad     bool
 		initialUsage        llm.Usage
 		initialTurns        int
+		checkpointer        Checkpointer
+		runID               string
+		toolUsedInRun       bool
 	}
 
 	loopState struct {
@@ -65,22 +77,57 @@ type (
 	}
 )
 
+func WithCheckpointer(cp Checkpointer, runID string) RunOption {
+	return func(o *runOpts) {
+		o.checkpointer = cp
+		o.runID = runID
+	}
+}
+
 func noopEvent(_ context.Context, _ StreamEvent) {}
 
 func blockingCallLLM(ctx context.Context, agent *Agent, req *llm.ChatCompletionRequest) (*llm.ChatCompletionResponse, error) {
-	return agent.client.ChatCompletion(ctx, req)
+	resp, err := agent.client.ChatCompletion(ctx, req)
+	if err == nil {
+		return resp, nil
+	}
+
+	// Some providers (e.g. Anthropic) require streaming for large
+	// max_tokens or when thinking is enabled. Fall back to streaming
+	// transparently when the blocking call returns ErrStreamingRequired.
+	var streamRequired *llm.ErrStreamingRequired
+	if !errors.As(err, &streamRequired) {
+		return nil, err
+	}
+
+	stream, sErr := agent.client.ChatCompletionStream(ctx, req)
+	if sErr != nil {
+		return nil, err // return the original error
+	}
+	defer func() { _ = stream.Close() }()
+
+	acc := llm.NewStreamAccumulator(stream)
+	for acc.Next() {
+	}
+	if sErr := acc.Err(); sErr != nil {
+		return nil, sErr
+	}
+	return acc.Response(), nil
 }
 
-func (a *Agent) Run(ctx context.Context, messages []llm.Message) (*Result, error) {
-	return coreLoop(
-		ctx,
-		a,
-		messages,
-		runOpts{
-			callLLM: blockingCallLLM,
-			onEvent: noopEvent,
-		},
-	)
+// Run executes the agent loop. Cancelling ctx triggers a graceful
+// suspend: the loop checkpoints at the next safe boundary and returns
+// *SuspendedError. There is no in-process hard-abort path.
+func (a *Agent) Run(ctx context.Context, messages []llm.Message, opts ...RunOption) (*Result, error) {
+	ro := runOpts{
+		callLLM: blockingCallLLM,
+		onEvent: noopEvent,
+	}
+	for _, opt := range opts {
+		opt(&ro)
+	}
+
+	return coreLoop(ctx, a, messages, ro)
 }
 
 func (s *loopState) resolveAgentTools(ctx context.Context) error {
@@ -106,6 +153,20 @@ func (s *loopState) finishRun(ctx context.Context, result *Result, err error) (*
 	}()
 
 	if err != nil {
+		if _, ok := errors.AsType[*SuspendedError](err); ok {
+			s.runSpan.SetAttributes(attribute.Bool("agent.suspended", true))
+			s.opts.onEvent(ctx, StreamEvent{Type: StreamEventSuspended, Agent: s.agent})
+
+			s.logger.InfoCtx(
+				ctx,
+				"agent run suspended",
+				log.String("agent", s.agent.name),
+				log.Int("turns", s.turns),
+			)
+
+			return result, err
+		}
+
 		s.runSpan.RecordError(err)
 		s.runSpan.SetStatus(codes.Error, err.Error())
 		s.opts.onEvent(ctx, StreamEvent{Type: StreamEventError, Agent: s.agent, Err: err})
@@ -160,6 +221,23 @@ func (s *loopState) finishRun(ctx context.Context, result *Result, err error) (*
 	return result, err
 }
 
+func (s *loopState) buildCheckpoint(status AgentStatus) *Checkpoint {
+	msgsCopy := make([]llm.Message, len(s.messages))
+	copy(msgsCopy, s.messages)
+
+	return &Checkpoint{
+		Status:    status,
+		AgentName: s.agent.name,
+		Config: AgentConfig{
+			MaxTurns: s.agent.maxTurns,
+		},
+		Messages:      msgsCopy,
+		Usage:         s.totalUsage,
+		Turns:         s.turns,
+		ToolUsedInRun: s.toolUsedInRun,
+	}
+}
+
 func (s *loopState) applyHandoff(ctx context.Context, handoffTarget *Handoff) error {
 	emitHook(s.agent, func(h RunHooks) { h.OnHandoff(ctx, s.agent, handoffTarget.Agent) })
 	emitAgentHook(handoffTarget.Agent, func(h AgentHooks) { h.OnHandoff(ctx, handoffTarget.Agent, s.agent) })
@@ -200,12 +278,19 @@ func (s *loopState) applyHandoff(ctx context.Context, handoffTarget *Handoff) er
 }
 
 func coreLoop(ctx context.Context, startAgent *Agent, inputMessages []llm.Message, opts runOpts) (*Result, error) {
+	// outerCtx keeps the cancel signal for turn-boundary checkpointing;
+	// ctx survives cancellation so every downstream call (LLM, tools,
+	// hooks, save) carries through to completion once a checkpoint is
+	// requested.
+	outerCtx, ctx := ctx, context.WithoutCancel(ctx)
+
 	s := &loopState{
 		agent:         startAgent,
 		inputMessages: inputMessages,
 		systemPrompt:  startAgent.buildSystemPrompt(ctx),
 		totalUsage:    opts.initialUsage,
 		turns:         opts.initialTurns,
+		toolUsedInRun: opts.toolUsedInRun,
 		tracer:        otel.GetTracerProvider().Tracer(tracerName),
 		opts:          opts,
 		logger:        startAgent.logger,
@@ -273,9 +358,43 @@ func coreLoop(ctx context.Context, startAgent *Agent, inputMessages []llm.Messag
 		log.Int("tool_count", len(s.toolDefs)),
 	)
 
+	emptyOutputRetries := 0
+
+	structuredFormat := resolveStructuredFormat(s.agent)
+
+	// When the agent has both tools and a structured output request,
+	// we delay structured output enforcement until a dedicated
+	// synthesis turn. Enforcing the schema during tool exploration
+	// causes models with extended thinking to stuff planning prose
+	// into the first text field of the schema as a scratchpad,
+	// burning the entire max_tokens budget on thinking-inside-JSON
+	// before ever producing a valid object. Instead, we let the
+	// model freely call tools without a schema, then force one final
+	// synthesis turn with ToolChoice=none + schema enforced once the
+	// model signals it has enough information (finish_reason=stop).
+	// Agents without tools or without a structured output request
+	// do not need this dance and enforce the schema immediately.
+	exploring := structuredFormat != nil && len(s.toolDefs) > 0
+
 	for {
-		if err := ctx.Err(); err != nil {
-			return s.finishRun(ctx, nil, fmt.Errorf("cannot complete: %w", err))
+		select {
+		case <-outerCtx.Done():
+			cp := s.buildCheckpoint(AgentStatusSuspended)
+			se := &SuspendedError{RunID: s.opts.runID}
+
+			if s.opts.checkpointer != nil {
+				if saveErr := s.opts.checkpointer.Save(ctx, s.opts.runID, cp); saveErr != nil {
+					s.logger.ErrorCtx(ctx, "cannot save suspension checkpoint", log.Error(saveErr))
+					se.Checkpoint = cp
+				} else {
+					emitHook(s.agent, func(h RunHooks) { h.OnRunSnapshot(ctx, s.agent, cp) })
+				}
+			} else {
+				se.Checkpoint = cp
+			}
+
+			return s.finishRun(ctx, nil, se)
+		default:
 		}
 
 		if s.turns >= s.agent.maxTurns {
@@ -284,14 +403,20 @@ func coreLoop(ctx context.Context, startAgent *Agent, inputMessages []llm.Messag
 
 		fullMessages := buildFullMessages(s.systemPrompt, s.messages)
 
-		responseFormat := s.agent.responseFormat
-		if responseFormat == nil && s.agent.outputType != nil {
-			responseFormat = s.agent.outputType.responseFormat()
+		var responseFormat *llm.ResponseFormat
+		if !exploring {
+			responseFormat = structuredFormat
 		}
 
 		toolChoice := s.agent.modelSettings.ToolChoice
 		if s.toolUsedInRun && s.agent.resetToolChoice && toolChoice != nil {
 			toolChoice = nil
+		}
+		if !exploring && structuredFormat != nil && len(s.toolDefs) > 0 {
+			// On the synthesis turn, forbid further tool calls so the
+			// model is forced to convert what it has into JSON.
+			none := llm.ToolChoice{Type: llm.ToolChoiceNone}
+			toolChoice = &none
 		}
 
 		req := &llm.ChatCompletionRequest{
@@ -306,6 +431,7 @@ func coreLoop(ctx context.Context, startAgent *Agent, inputMessages []llm.Messag
 			ToolChoice:        toolChoice,
 			ParallelToolCalls: s.agent.modelSettings.ParallelToolCalls,
 			ResponseFormat:    responseFormat,
+			Thinking:          s.agent.modelSettings.Thinking,
 		}
 
 		s.logger.InfoCtx(
@@ -336,6 +462,60 @@ func coreLoop(ctx context.Context, startAgent *Agent, inputMessages []llm.Messag
 
 		switch resp.FinishReason {
 		case llm.FinishReasonStop, llm.FinishReasonLength:
+			// Model signalled it has nothing more to do with tools.
+			// If we have a structured output request but haven't
+			// enforced the schema yet, promote this turn to the
+			// synthesis turn: the next iteration runs with
+			// ToolChoice=none and the schema enforced, so the model
+			// converts what it has gathered into JSON in one shot.
+			//
+			// Anthropic requires the last message in the conversation
+			// to be a user message, so we cannot simply continue after
+			// an assistant stop turn. Drop empty (thinking-only) turns
+			// from history and append a user nudge that asks for the
+			// final structured output. Non-empty assistant turns stay
+			// in history so the model can reference its own
+			// conclusions during synthesis.
+			if exploring && s.turns < s.agent.maxTurns {
+				exploring = false
+				if resp.Message.Text() == "" {
+					s.messages = s.messages[:len(s.messages)-1]
+				}
+				s.messages = append(
+					s.messages,
+					llm.Message{
+						Role:  llm.RoleUser,
+						Parts: []llm.Part{llm.TextPart{Text: synthesisNudge}},
+					},
+				)
+				s.logger.WarnCtx(
+					ctx,
+					"entering synthesis turn: forcing structured output with tool_choice=none",
+					log.Int("turn", s.turns),
+					log.Int("output_tokens", resp.Usage.OutputTokens),
+				)
+				continue
+			}
+
+			// Anthropic extended-thinking models can return a synthesis turn
+			// that contains only thinking blocks and no text part, leaving us
+			// with no structured output to validate. Retry the same turn a
+			// bounded number of times so the model gets another chance to
+			// emit the required JSON output. The empty assistant turn must be
+			// dropped from history because Anthropic rejects requests where
+			// the last message is a thinking-only assistant turn.
+			if structuredFormat != nil && resp.Message.Text() == "" && emptyOutputRetries < s.agent.maxEmptyOutputRetries && s.turns < s.agent.maxTurns {
+				emptyOutputRetries++
+				s.messages = s.messages[:len(s.messages)-1]
+				s.logger.WarnCtx(
+					ctx,
+					"retrying turn: structured output expected but got empty text",
+					log.Int("turn", s.turns),
+					log.Int("retry", emptyOutputRetries),
+					log.Int("output_tokens", resp.Usage.OutputTokens),
+				)
+				continue
+			}
 			if err := runOutputGuardrails(ctx, s.agent, resp.Message); err != nil {
 				return s.finishRun(ctx, nil, err)
 			}
@@ -354,6 +534,7 @@ func coreLoop(ctx context.Context, startAgent *Agent, inputMessages []llm.Messag
 
 		case llm.FinishReasonToolCalls:
 			s.toolUsedInRun = true
+			emptyOutputRetries = 0
 
 			s.logger.InfoCtx(
 				ctx,
@@ -373,6 +554,23 @@ func coreLoop(ctx context.Context, startAgent *Agent, inputMessages []llm.Messag
 			s.messages = append(s.messages, toolMsgs...)
 
 			if err != nil {
+				if se, ok := errors.AsType[*SuspendedError](err); ok {
+					outerCP := s.buildCheckpoint(AgentStatusSuspended)
+					if se.Checkpoint != nil {
+						outerCP.AllToolCalls = se.Checkpoint.AllToolCalls
+						outerCP.InnerCheckpoints = se.Checkpoint.InnerCheckpoints
+						outerCP.CompletedCalls = se.Checkpoint.CompletedCalls
+					}
+					if s.opts.checkpointer != nil {
+						if saveErr := s.opts.checkpointer.Save(ctx, s.opts.runID, outerCP); saveErr != nil {
+							s.logger.ErrorCtx(ctx, "cannot save checkpoint", log.Error(saveErr))
+						} else {
+							emitHook(s.agent, func(h RunHooks) { h.OnRunSnapshot(ctx, s.agent, outerCP) })
+						}
+					}
+					return s.finishRun(ctx, nil, &SuspendedError{RunID: s.opts.runID, Checkpoint: outerCP})
+				}
+
 				if nae, ok := errors.AsType[*needsApprovalError](err); ok {
 					s.logger.InfoCtx(
 						ctx,
@@ -382,6 +580,17 @@ func coreLoop(ctx context.Context, startAgent *Agent, inputMessages []llm.Messag
 
 					msgsCopy := make([]llm.Message, len(s.messages))
 					copy(msgsCopy, s.messages)
+
+					if s.opts.checkpointer != nil {
+						cp := s.buildCheckpoint(AgentStatusAwaitingApproval)
+						cp.PendingToolCalls = nae.allToolCalls
+						cp.PendingApprovals = nae.pendingApprovals
+						if saveErr := s.opts.checkpointer.Save(ctx, s.opts.runID, cp); saveErr != nil {
+							s.logger.ErrorCtx(ctx, "cannot save approval checkpoint", log.Error(saveErr))
+						} else {
+							emitHook(s.agent, func(h RunHooks) { h.OnRunSnapshot(ctx, s.agent, cp) })
+						}
+					}
 
 					return s.finishRun(
 						ctx,
@@ -407,6 +616,30 @@ func coreLoop(ctx context.Context, startAgent *Agent, inputMessages []llm.Messag
 
 					msgsCopy := make([]llm.Message, len(s.messages))
 					copy(msgsCopy, s.messages)
+
+					if s.opts.checkpointer != nil {
+						cp := s.buildCheckpoint(AgentStatusAwaitingApproval)
+						cp.PendingToolCalls = nie.inner.ToolCalls
+						cp.PendingApprovals = nie.inner.PendingApprovals
+						cp.AllToolCalls = nie.allToolCalls
+						cp.CompletedCalls = nie.completedCalls
+						cp.InnerCheckpoints = map[string]*Checkpoint{
+							nie.toolCallID: {
+								Status:           AgentStatusAwaitingApproval,
+								AgentName:        nie.inner.Agent.name,
+								Messages:         nie.inner.Messages,
+								Usage:            nie.inner.Usage,
+								Turns:            nie.inner.Turns,
+								PendingToolCalls: nie.inner.ToolCalls,
+								PendingApprovals: nie.inner.PendingApprovals,
+							},
+						}
+						if saveErr := s.opts.checkpointer.Save(ctx, s.opts.runID, cp); saveErr != nil {
+							s.logger.ErrorCtx(ctx, "cannot save nested approval checkpoint", log.Error(saveErr))
+						} else {
+							emitHook(s.agent, func(h RunHooks) { h.OnRunSnapshot(ctx, s.agent, cp) })
+						}
+					}
 
 					return s.finishRun(
 						ctx,
@@ -442,7 +675,8 @@ func coreLoop(ctx context.Context, startAgent *Agent, inputMessages []llm.Messag
 
 			if isFinal {
 				s.messages = append(
-					s.messages, llm.Message{
+					s.messages,
+					llm.Message{
 						Role:  llm.RoleAssistant,
 						Parts: []llm.Part{llm.TextPart{Text: finalOutput}},
 					},
@@ -464,6 +698,16 @@ func coreLoop(ctx context.Context, startAgent *Agent, inputMessages []llm.Messag
 			if handoffTarget != nil {
 				if handoffErr := s.applyHandoff(ctx, handoffTarget); handoffErr != nil {
 					return s.finishRun(ctx, nil, handoffErr)
+				}
+			}
+
+			// Save incremental checkpoint after completed tool-call turn.
+			if s.opts.checkpointer != nil {
+				cp := s.buildCheckpoint(AgentStatusSuspended)
+				if saveErr := s.opts.checkpointer.Save(ctx, s.opts.runID, cp); saveErr != nil {
+					s.logger.ErrorCtx(ctx, "cannot save checkpoint", log.Error(saveErr))
+				} else {
+					emitHook(s.agent, func(h RunHooks) { h.OnRunSnapshot(ctx, s.agent, cp) })
 				}
 			}
 
@@ -590,13 +834,13 @@ func executeWithHandoff(
 		tr, err := executeSingleTool(ctx, tracer, agent, toolCalls[i], descriptors[i].(Tool), onEvent, logger)
 		if err != nil {
 			if ie, ok := errors.AsType[*InterruptedError](err); ok {
-				var completed []completedCall
+				var completed []CompletedCall
 				for j := range results {
 					completed = append(
 						completed,
-						completedCall{
-							toolCallID: toolCalls[j].ID,
-							result:     results[j].Result,
+						CompletedCall{
+							ToolCallID: toolCalls[j].ID,
+							Result:     results[j].Result,
 						},
 					)
 				}
@@ -690,40 +934,97 @@ func executeParallel(
 	wg.Wait()
 
 	for i, entry := range entries {
-		var ie *InterruptedError
-		if entry.err != nil && errors.As(entry.err, &ie) {
-			var completed []completedCall
+		ie, ok := errors.AsType[*InterruptedError](entry.err)
+		if !ok {
+			continue
+		}
+
+		var completed []CompletedCall
+		for j, other := range entries {
+			if j == i {
+				continue
+			}
+			if other.err != nil {
+				completed = append(
+					completed,
+					CompletedCall{
+						ToolCallID: toolCalls[j].ID,
+						Result: ToolResult{
+							Content: fmt.Sprintf("Error: %s", other.err.Error()),
+							IsError: true,
+						},
+					},
+				)
+				continue
+			}
+			completed = append(
+				completed,
+				CompletedCall{
+					ToolCallID: toolCalls[j].ID,
+					Result:     other.result,
+				},
+			)
+		}
+		return nil, nil, &nestedInterruptionError{
+			inner:          ie,
+			toolCallID:     toolCalls[i].ID,
+			allToolCalls:   toolCalls,
+			completedCalls: completed,
+		}
+	}
+
+	// Check for suspended inner agents (stop signal propagated).
+	for i, entry := range entries {
+		if entry.err == nil {
+			continue
+		}
+		se, ok := errors.AsType[*SuspendedError](entry.err)
+		if ok && se.Checkpoint != nil {
+			innerCheckpoints := make(map[string]*Checkpoint)
+			var completed []CompletedCall
+
 			for j, other := range entries {
 				if j == i {
 					continue
 				}
-				if other.err != nil {
+				if other.err == nil {
 					completed = append(
 						completed,
-						completedCall{
-							toolCallID: toolCalls[j].ID,
-							result: ToolResult{
+						CompletedCall{
+							ToolCallID: toolCalls[j].ID,
+							Result:     other.result,
+						},
+					)
+					continue
+				}
+				otherSE, ok := errors.AsType[*SuspendedError](other.err)
+				if ok && otherSE.Checkpoint != nil {
+					innerCheckpoints[toolCalls[j].ID] = otherSE.Checkpoint
+				} else {
+					completed = append(
+						completed,
+						CompletedCall{
+							ToolCallID: toolCalls[j].ID,
+							Result: ToolResult{
 								Content: fmt.Sprintf("Error: %s", other.err.Error()),
 								IsError: true,
 							},
 						},
 					)
-					continue
 				}
-				completed = append(
-					completed,
-					completedCall{
-						toolCallID: toolCalls[j].ID,
-						result:     other.result,
-					},
-				)
 			}
-			return nil, nil, &nestedInterruptionError{
-				inner:          ie,
-				toolCallID:     toolCalls[i].ID,
-				allToolCalls:   toolCalls,
-				completedCalls: completed,
+
+			innerCheckpoints[toolCalls[i].ID] = se.Checkpoint
+
+			outerSE := &SuspendedError{
+				Checkpoint: &Checkpoint{
+					Status:           AgentStatusSuspended,
+					AllToolCalls:     toolCalls,
+					InnerCheckpoints: innerCheckpoints,
+					CompletedCalls:   completed,
+				},
 			}
+			return nil, nil, outerSE
 		}
 	}
 
@@ -826,6 +1127,17 @@ func executeSingleTool(
 			return ToolResult{}, err
 		}
 
+		if _, ok := errors.AsType[*SuspendedError](err); ok {
+			toolSpan.SetAttributes(attribute.Bool("tool.suspended", true))
+			toolSpan.End()
+
+			onEvent(ctx, StreamEvent{Type: StreamEventToolEnd, Agent: agent, Tool: tool, Err: err})
+			emitHook(agent, func(h RunHooks) { h.OnToolEnd(ctx, agent, tool, ToolResult{}, err) })
+			emitAgentHook(agent, func(h AgentHooks) { h.OnToolEnd(ctx, agent, tool, ToolResult{}) })
+
+			return ToolResult{}, err
+		}
+
 		toolSpan.RecordError(err)
 		toolSpan.SetStatus(codes.Error, err.Error())
 		toolSpan.End()
@@ -852,12 +1164,24 @@ func executeSingleTool(
 	emitHook(agent, func(h RunHooks) { h.OnToolEnd(ctx, agent, tool, result, nil) })
 	emitAgentHook(agent, func(h AgentHooks) { h.OnToolEnd(ctx, agent, tool, result) })
 
-	logger.InfoCtx(
-		ctx,
-		"tool execution completed",
-		log.String("tool", tool.Name()),
-		log.Bool("is_error", result.IsError),
-	)
+	if result.IsError {
+		content := result.Content
+		if len(content) > 200 {
+			content = content[:200] + "... (truncated)"
+		}
+		logger.WarnCtx(
+			ctx,
+			"tool returned error",
+			log.String("tool", tool.Name()),
+			log.String("content", content),
+		)
+	} else {
+		logger.InfoCtx(
+			ctx,
+			"tool execution completed",
+			log.String("tool", tool.Name()),
+		)
+	}
 
 	return result, nil
 }
@@ -928,10 +1252,24 @@ func runOutputGuardrails(ctx context.Context, agent *Agent, message llm.Message)
 // been collected. It executes or denies each pending tool call according to
 // the provided ResumeInput, then re-enters the agent loop. Input guardrails
 // are not re-evaluated because the messages were already validated in the
-// original Run call.
-func Resume(ctx context.Context, interrupted *InterruptedError, input ResumeInput) (*Result, error) {
+// original Run call. ctx follows Run's graceful-suspend contract.
+func Resume(ctx context.Context, interrupted *InterruptedError, input ResumeInput, opts ...RunOption) (*Result, error) {
+	ro := runOpts{
+		callLLM: blockingCallLLM,
+		onEvent: noopEvent,
+	}
+	for _, opt := range opts {
+		opt(&ro)
+	}
+
+	return resumeWithOpts(ctx, interrupted, input, ro)
+}
+
+func resumeWithOpts(ctx context.Context, interrupted *InterruptedError, input ResumeInput, ro runOpts) (*Result, error) {
+	outerCtx, ctx := ctx, context.WithoutCancel(ctx)
+
 	if interrupted.outerState != nil {
-		return resumeNested(ctx, interrupted, input)
+		return resumeNested(outerCtx, interrupted, input, ro)
 	}
 
 	tracer := otel.GetTracerProvider().Tracer(tracerName)
@@ -1001,7 +1339,7 @@ func Resume(ctx context.Context, interrupted *InterruptedError, input ResumeInpu
 
 		desc, toolOK := toolMap[tc.Function.Name]
 		if !toolOK {
-			return nil, fmt.Errorf("unknown tool %q", tc.Function.Name)
+			return nil, fmt.Errorf("cannot dispatch unknown tool %q", tc.Function.Name)
 		}
 
 		if ht, ok := desc.(*handoffToolAdapter); ok {
@@ -1028,7 +1366,7 @@ func Resume(ctx context.Context, interrupted *InterruptedError, input ResumeInpu
 			break
 		}
 
-		tr, execErr := executeSingleTool(ctx, tracer, agent, tc, desc.(Tool), noopEvent, logger)
+		tr, execErr := executeSingleTool(ctx, tracer, agent, tc, desc.(Tool), ro.onEvent, logger)
 		if execErr != nil {
 			return nil, execErr
 		}
@@ -1073,21 +1411,26 @@ func Resume(ctx context.Context, interrupted *InterruptedError, input ResumeInpu
 	}
 
 	return coreLoop(
-		ctx,
+		outerCtx,
 		resumeAgent,
 		messages,
 		runOpts{
-			callLLM:             blockingCallLLM,
-			onEvent:             noopEvent,
+			callLLM:             ro.callLLM,
+			onEvent:             ro.onEvent,
 			skipInputGuardrails: true,
 			skipSessionLoad:     true,
 			initialUsage:        interrupted.Usage,
 			initialTurns:        interrupted.Turns,
+			checkpointer:        ro.checkpointer,
+			runID:               ro.runID,
+			toolUsedInRun:       ro.toolUsedInRun,
 		},
 	)
 }
 
-func resumeNested(ctx context.Context, interrupted *InterruptedError, input ResumeInput) (*Result, error) {
+func resumeNested(ctx context.Context, interrupted *InterruptedError, input ResumeInput, ro runOpts) (*Result, error) {
+	outerCtx, ctx := ctx, context.WithoutCancel(ctx)
+
 	outer := interrupted.outerState
 	logger := outer.agent.logger
 
@@ -1098,10 +1441,10 @@ func resumeNested(ctx context.Context, interrupted *InterruptedError, input Resu
 		log.String("inner_agent", interrupted.Agent.name),
 	)
 
-	innerResult, err := Resume(ctx, outer.innerInterrupt, input)
+	innerResult, err := resumeWithOpts(outerCtx, outer.innerInterrupt, input, ro)
 	if err != nil {
-		var innerIE *InterruptedError
-		if errors.As(err, &innerIE) {
+		innerIE, ok := errors.AsType[*InterruptedError](err)
+		if ok {
 			return nil, &InterruptedError{
 				ToolCalls:        innerIE.ToolCalls,
 				PendingApprovals: innerIE.PendingApprovals,
@@ -1126,7 +1469,7 @@ func resumeNested(ctx context.Context, interrupted *InterruptedError, input Resu
 
 	completedMap := make(map[string]ToolResult, len(outer.completedCalls))
 	for _, cc := range outer.completedCalls {
-		completedMap[cc.toolCallID] = cc.result
+		completedMap[cc.ToolCallID] = cc.Result
 	}
 
 	messages := make([]llm.Message, len(outer.messages))
@@ -1153,16 +1496,19 @@ func resumeNested(ctx context.Context, interrupted *InterruptedError, input Resu
 	}
 
 	return coreLoop(
-		ctx,
+		outerCtx,
 		outer.agent,
 		messages,
 		runOpts{
-			callLLM:             blockingCallLLM,
-			onEvent:             noopEvent,
+			callLLM:             ro.callLLM,
+			onEvent:             ro.onEvent,
 			skipInputGuardrails: true,
 			skipSessionLoad:     true,
 			initialUsage:        outer.usage,
 			initialTurns:        outer.turns,
+			checkpointer:        ro.checkpointer,
+			runID:               ro.runID,
+			toolUsedInRun:       ro.toolUsedInRun,
 		},
 	)
 }
@@ -1177,4 +1523,19 @@ func emitAgentHook(agent *Agent, fn func(AgentHooks)) {
 	if agent.agentHooks != nil {
 		fn(agent.agentHooks)
 	}
+}
+
+// resolveStructuredFormat returns the structured output request the
+// agent wants enforced on its final turn, or nil if none. An agent can
+// declare structured output through either WithOutputType (typed
+// sub-agents) or a directly-set responseFormat (the RunTyped
+// convenience wrapper).
+func resolveStructuredFormat(a *Agent) *llm.ResponseFormat {
+	if a.responseFormat != nil {
+		return a.responseFormat
+	}
+	if a.outputType != nil {
+		return a.outputType.responseFormat()
+	}
+	return nil
 }

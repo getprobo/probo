@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -38,7 +38,7 @@ func (s OrganizationService) Get(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			err := organization.LoadByID(
 				ctx,
 				conn,
@@ -68,7 +68,7 @@ func (s OrganizationService) GetOrganizationCustomDomain(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			var org coredata.Organization
 			if err := org.LoadByID(ctx, conn, s.svc.scope, organizationID); err != nil {
 				return fmt.Errorf("cannot load organization: %w", err)
@@ -111,7 +111,7 @@ func (s OrganizationService) GenerateLogoURL(
 	file := &coredata.File{}
 	err = s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			return file.LoadByID(ctx, conn, s.svc.scope, *organization.LogoFileID)
 		},
 	)

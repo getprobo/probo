@@ -22,8 +22,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
-	"go.probo.inc/probo/pkg/agents"
 	"go.probo.inc/probo/pkg/certmanager"
+	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/esign"
@@ -66,7 +66,9 @@ type (
 		logger                  *log.Logger
 		slack                   *slack.Service
 		esign                   *esign.Service
+		connectorRegistry       *connector.ConnectorRegistry
 		invitationTokenValidity time.Duration
+		vendorAssessor          VendorAssessor
 	}
 
 	TenantService struct {
@@ -77,7 +79,11 @@ type (
 		scope                             coredata.Scoper
 		baseURL                           string
 		tokenSecret                       string
-		agent                             *agents.Agent
+		llmClient                         *llm.Client
+		llmModel                          string
+		llmTemperature                    float64
+		llmMaxTokens                      int
+		vendorAssessor                    VendorAssessor
 		fileManager                       *filemanager.Service
 		esign                             *esign.Service
 		Frameworks                        *FrameworkService
@@ -87,6 +93,7 @@ type (
 		Organizations                     *OrganizationService
 		Vendors                           *VendorService
 		Documents                         *DocumentService
+		DocumentApprovals                 *DocumentApprovalService
 		Controls                          *ControlService
 		Risks                             *RiskService
 		VendorComplianceReports           *VendorComplianceReportService
@@ -98,7 +105,6 @@ type (
 		Assets                            *AssetService
 		Data                              *DatumService
 		Audits                            *AuditService
-		Meetings                          *MeetingService
 		WebhookSubscriptions              *WebhookSubscriptionService
 		Reports                           *ReportService
 		TrustCenters                      *TrustCenterService
@@ -109,12 +115,12 @@ type (
 		ComplianceExternalURLs            *ComplianceExternalURLService
 		Findings                          *FindingService
 		Obligations                       *ObligationService
-		Snapshots                         *SnapshotService
 		RightsRequests                    *RightsRequestService
 		ProcessingActivities              *ProcessingActivityService
 		DataProtectionImpactAssessments   *DataProtectionImpactAssessmentService
 		TransferImpactAssessments         *TransferImpactAssessmentService
-		StatesOfApplicability             *StateOfApplicabilityService
+		StatementsOfApplicability         *StatementOfApplicabilityService
+		GeneratedDocuments                *GeneratedDocumentService
 		Files                             *FileService
 		CustomDomains                     *CustomDomainService
 		SlackMessages                     *slack.SlackMessageService
@@ -140,7 +146,9 @@ func NewService(
 	slackService *slack.Service,
 	iamService *iam.Service,
 	esignService *esign.Service,
+	connectorRegistry *connector.ConnectorRegistry,
 	invitationTokenValidity time.Duration,
+	vendorAssessor VendorAssessor,
 ) (*Service, error) {
 	if bucket == "" {
 		return nil, fmt.Errorf("bucket is required")
@@ -165,7 +173,9 @@ func NewService(
 		logger:                  logger,
 		slack:                   slackService,
 		esign:                   esignService,
+		connectorRegistry:       connectorRegistry,
 		invitationTokenValidity: invitationTokenValidity,
+		vendorAssessor:          vendorAssessor,
 	}
 
 	return svc, nil
@@ -173,16 +183,20 @@ func NewService(
 
 func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 	tenantService := &TenantService{
-		pg:            s.pg,
-		s3:            s.s3,
-		bucket:        s.bucket,
-		encryptionKey: s.encryptionKey,
-		baseURL:       s.baseURL,
-		scope:         coredata.NewScope(tenantID),
-		tokenSecret:   s.tokenSecret,
-		agent:         agents.NewAgent(nil, s.llmClient, s.llmModel, s.llmTemperature, s.llmMaxTokens),
-		fileManager:   s.fileManager,
-		esign:         s.esign,
+		pg:             s.pg,
+		s3:             s.s3,
+		bucket:         s.bucket,
+		encryptionKey:  s.encryptionKey,
+		baseURL:        s.baseURL,
+		scope:          coredata.NewScope(tenantID),
+		tokenSecret:    s.tokenSecret,
+		llmClient:      s.llmClient,
+		llmModel:       s.llmModel,
+		llmTemperature: s.llmTemperature,
+		llmMaxTokens:   s.llmMaxTokens,
+		vendorAssessor: s.vendorAssessor,
+		fileManager:    s.fileManager,
+		esign:          s.esign,
 	}
 
 	tenantService.Frameworks = &FrameworkService{
@@ -212,6 +226,12 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 		invitationTokenValidity: s.invitationTokenValidity,
 		tokenSecret:             s.tokenSecret,
 	}
+	tenantService.DocumentApprovals = &DocumentApprovalService{
+		svc:                     tenantService,
+		html2pdfConverter:       s.html2pdfConverter,
+		invitationTokenValidity: s.invitationTokenValidity,
+		tokenSecret:             s.tokenSecret,
+	}
 	tenantService.Organizations = &OrganizationService{
 		svc: tenantService,
 		fileValidator: filevalidation.NewValidator(
@@ -234,7 +254,6 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 	tenantService.Assets = &AssetService{svc: tenantService}
 	tenantService.Data = &DatumService{svc: tenantService}
 	tenantService.Audits = &AuditService{svc: tenantService}
-	tenantService.Meetings = &MeetingService{svc: tenantService}
 	tenantService.WebhookSubscriptions = &WebhookSubscriptionService{svc: tenantService}
 	tenantService.Reports = &ReportService{svc: tenantService}
 	tenantService.TrustCenters = &TrustCenterService{svc: tenantService}
@@ -258,23 +277,21 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 	}
 	tenantService.Findings = &FindingService{svc: tenantService}
 	tenantService.Obligations = &ObligationService{svc: tenantService}
-	tenantService.Snapshots = &SnapshotService{svc: tenantService}
 	tenantService.RightsRequests = &RightsRequestService{svc: tenantService}
 	tenantService.ProcessingActivities = &ProcessingActivityService{
-		svc:               tenantService,
-		html2pdfConverter: s.html2pdfConverter,
+		svc: tenantService,
 	}
 	tenantService.DataProtectionImpactAssessments = &DataProtectionImpactAssessmentService{
-		svc:               tenantService,
-		html2pdfConverter: s.html2pdfConverter,
+		svc: tenantService,
 	}
 	tenantService.TransferImpactAssessments = &TransferImpactAssessmentService{
-		svc:               tenantService,
-		html2pdfConverter: s.html2pdfConverter,
+		svc: tenantService,
 	}
-	tenantService.StatesOfApplicability = &StateOfApplicabilityService{
-		svc:               tenantService,
-		html2pdfConverter: s.html2pdfConverter,
+	tenantService.StatementsOfApplicability = &StatementOfApplicabilityService{
+		svc: tenantService,
+	}
+	tenantService.GeneratedDocuments = &GeneratedDocumentService{
+		svc: tenantService,
 	}
 	tenantService.Files = &FileService{svc: tenantService}
 	tenantService.CustomDomains = &CustomDomainService{
@@ -349,7 +366,7 @@ func (s *Service) lockExportJob(ctx context.Context) (*coredata.ExportJob, error
 
 	err := s.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			if err := exportJob.LoadNextPendingForUpdateSkipLocked(ctx, tx); err != nil {
 				return fmt.Errorf("cannot load next pending export job: %w", err)
 			}
@@ -378,11 +395,11 @@ func (s *Service) commitFailedExport(ctx context.Context, exportJob *coredata.Ex
 	errorMsg := failureErr.Error()
 	exportJob.Error = &errorMsg
 
-	return s.pg.WithConn(
+	return s.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			scope := coredata.NewScope(exportJob.ID.TenantID())
-			if err := exportJob.Update(ctx, conn, scope); err != nil {
+			if err := exportJob.Update(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot update %s export job: %w", exportJob.Type, err)
 			}
 
@@ -395,11 +412,11 @@ func (s *Service) commitSuccessfulExport(ctx context.Context, exportJob *coredat
 	exportJob.CompletedAt = new(time.Now())
 	exportJob.Status = coredata.ExportJobStatusCompleted
 
-	return s.pg.WithConn(
+	return s.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			scope := coredata.NewScope(exportJob.ID.TenantID())
-			if err := exportJob.Update(ctx, conn, scope); err != nil {
+			if err := exportJob.Update(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot update %s export job: %w", exportJob.Type, err)
 			}
 
@@ -413,7 +430,7 @@ func (s *Service) LoadOrganizationByDomain(ctx context.Context, domain string) (
 
 	err := s.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			var customDomain coredata.CustomDomain
 			if err := customDomain.LoadByDomain(ctx, conn, coredata.NewNoScope(), domain); err != nil {
 				return fmt.Errorf("cannot load custom domain: %w", err)

@@ -127,12 +127,13 @@ func NewCmdAdd(f *cmdutil.Factory) *cobra.Command {
 				hc.Token,
 				"/api/console/v1/graphql",
 				cfg.HTTPTimeoutDuration(),
+				cmdutil.TokenRefreshOption(cfg, host, hc),
 			)
 
 			input := map[string]any{
-				"stateOfApplicabilityId": flagSoA,
-				"controlId":              flagControl,
-				"applicability":          flagApplicable,
+				"statementOfApplicabilityId": flagSoA,
+				"controlId":                  flagControl,
+				"applicability":              flagApplicable,
 			}
 
 			if flagJustification != "" {

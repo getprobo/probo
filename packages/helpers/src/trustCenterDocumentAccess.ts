@@ -1,4 +1,18 @@
-import type { TrustCenterDocumentAccess, TrustCenterDocumentAccessStatus } from "@probo/coredata";
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
+import type { TrustCenterDocumentAccessStatus } from "@probo/coredata";
 
 export function getTrustCenterDocumentAccessStatusBadgeVariant(status: TrustCenterDocumentAccessStatus) {
   switch (status) {
@@ -49,46 +63,3 @@ export type TrustCenterDocumentAccessInfo = ITrustCenterDocumentAccessInfo & (
   }
 )
 
-export function getTrustCenterDocumentAccessInfo(
-  docAccess: TrustCenterDocumentAccess,
-  __: (key: string) => string
-): TrustCenterDocumentAccessInfo {
-  if (docAccess.document) {
-    return {
-      persisted: docAccess.id !== docAccess.document.id,
-      variant: "info" as const,
-      name: docAccess.document.title,
-      type: "document",
-      typeLabel: __("Document"),
-      category: docAccess.document.documentType,
-      id: docAccess.document.id,
-      status: docAccess.status,
-    };
-  }
-  if (docAccess.report) {
-    return {
-      persisted: docAccess.id !== docAccess.report.id,
-      variant: "success" as const,
-      name: docAccess.report.filename,
-      type: "report",
-      typeLabel: __("Report"),
-      category: docAccess.report.audit?.framework?.name ?? "",
-      id: docAccess.report.id,
-      status: docAccess.status,
-    };
-  }
-  if (docAccess.trustCenterFile) {
-    return {
-      persisted: docAccess.id !== docAccess.trustCenterFile.id,
-      variant: "highlight" as const,
-      name: docAccess.trustCenterFile.name,
-      type: "file",
-      typeLabel: __("File"),
-      category: docAccess.trustCenterFile.category,
-      id: docAccess.trustCenterFile.id,
-      status: docAccess.status,
-    };
-  }
-
-  throw new Error("Unknown trust center access document type");
-}

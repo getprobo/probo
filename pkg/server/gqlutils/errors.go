@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -186,4 +186,18 @@ func Internal(ctx context.Context) *gqlerror.Error {
 			"code": "INTERNAL",
 		},
 	}
+}
+
+func Unavailable(ctx context.Context, err error) *gqlerror.Error {
+	return &gqlerror.Error{
+		Message: err.Error(),
+		Path:    graphql.GetPath(ctx),
+		Extensions: map[string]any{
+			"code": "UNAVAILABLE",
+		},
+	}
+}
+
+func Unavailablef(ctx context.Context, format string, a ...any) *gqlerror.Error {
+	return Unavailable(ctx, fmt.Errorf(format, a...))
 }

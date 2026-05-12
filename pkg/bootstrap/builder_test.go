@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -21,7 +21,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.probo.inc/probo/pkg/probod"
+	"go.probo.inc/probo/pkg/probodconfig"
 )
 
 func mockEnv(env map[string]string) EnvGetter {
@@ -32,9 +32,10 @@ func mockEnv(env map[string]string) EnvGetter {
 
 func requiredEnv() map[string]string {
 	return map[string]string{
-		"PROBOD_ENCRYPTION_KEY": "test-encryption-key-32-bytes-long",
-		"AUTH_COOKIE_SECRET":    "test-cookie-secret-32-bytes-long!",
-		"AUTH_PASSWORD_PEPPER":  "test-password-pepper-32-bytes-lo",
+		"PROBOD_ENCRYPTION_KEY":     "test-encryption-key-32-bytes-long",
+		"AUTH_COOKIE_SECRET":        "test-cookie-secret-32-bytes-long!",
+		"AUTH_PASSWORD_PEPPER":      "test-password-pepper-32-bytes-lo",
+		"OAUTH2_SERVER_SIGNING_KEY": "test-oauth2-signing-key",
 	}
 }
 
@@ -47,7 +48,16 @@ func TestBuilder_Build_MissingRequiredEnvVars(t *testing.T) {
 		{
 			name:        "all missing",
 			env:         map[string]string{},
-			wantMissing: []string{"PROBOD_ENCRYPTION_KEY", "AUTH_COOKIE_SECRET", "AUTH_PASSWORD_PEPPER"},
+			wantMissing: []string{"PROBOD_ENCRYPTION_KEY", "AUTH_COOKIE_SECRET", "AUTH_PASSWORD_PEPPER", "OAUTH2_SERVER_SIGNING_KEY"},
+		},
+		{
+			name: "missing oauth2 signing key",
+			env: map[string]string{
+				"PROBOD_ENCRYPTION_KEY": "key",
+				"AUTH_COOKIE_SECRET":    "secret",
+				"AUTH_PASSWORD_PEPPER":  "pepper",
+			},
+			wantMissing: []string{"OAUTH2_SERVER_SIGNING_KEY"},
 		},
 		{
 			name: "missing encryption key",
@@ -73,7 +83,27 @@ func TestBuilder_Build_MissingRequiredEnvVars(t *testing.T) {
 				"AUTH_PASSWORD_PEPPER":      "pepper",
 				"CONNECTOR_SLACK_CLIENT_ID": "client-id",
 			},
-			wantMissing: []string{"CONNECTOR_SLACK_CLIENT_SECRET", "CONNECTOR_SLACK_SIGNING_SECRET", "CONNECTOR_SLACK_REDIRECT_URI"},
+			wantMissing: []string{"CONNECTOR_SLACK_CLIENT_SECRET", "CONNECTOR_SLACK_SIGNING_SECRET"},
+		},
+		{
+			name: "google workspace connector missing required fields",
+			env: map[string]string{
+				"PROBOD_ENCRYPTION_KEY":                "key",
+				"AUTH_COOKIE_SECRET":                   "secret",
+				"AUTH_PASSWORD_PEPPER":                 "pepper",
+				"CONNECTOR_GOOGLE_WORKSPACE_CLIENT_ID": "client-id",
+			},
+			wantMissing: []string{"CONNECTOR_GOOGLE_WORKSPACE_CLIENT_SECRET"},
+		},
+		{
+			name: "microsoft 365 connector missing required fields",
+			env: map[string]string{
+				"PROBOD_ENCRYPTION_KEY":             "key",
+				"AUTH_COOKIE_SECRET":                "secret",
+				"AUTH_PASSWORD_PEPPER":              "pepper",
+				"CONNECTOR_MICROSOFT_365_CLIENT_ID": "client-id",
+			},
+			wantMissing: []string{"CONNECTOR_MICROSOFT_365_CLIENT_SECRET"},
 		},
 	}
 
@@ -100,7 +130,7 @@ func TestBuilder_Build_Defaults(t *testing.T) {
 
 	// Unit config
 	assert.Equal(t, "localhost:8081", cfg.Unit.Metrics.Addr)
-	assert.Equal(t, "localhost:4317", cfg.Unit.Tracing.Addr)
+	assert.Equal(t, "localhost:4318", cfg.Unit.Tracing.Addr)
 	assert.Equal(t, 512, cfg.Unit.Tracing.MaxBatchSize)
 	assert.Equal(t, 5, cfg.Unit.Tracing.BatchTimeout)
 	assert.Equal(t, 30, cfg.Unit.Tracing.ExportTimeout)
@@ -117,10 +147,15 @@ func TestBuilder_Build_Defaults(t *testing.T) {
 
 	// PG config
 	assert.Equal(t, "localhost:5432", cfg.Probod.Pg.Addr)
-	assert.Equal(t, "postgres", cfg.Probod.Pg.Username)
-	assert.Equal(t, "postgres", cfg.Probod.Pg.Password)
+	assert.Equal(t, "probod", cfg.Probod.Pg.Username)
+	assert.Equal(t, "probod", cfg.Probod.Pg.Password)
 	assert.Equal(t, "probod", cfg.Probod.Pg.Database)
 	assert.Equal(t, int32(100), cfg.Probod.Pg.PoolSize)
+	assert.Equal(t, int32(10), cfg.Probod.Pg.MinPoolSize)
+	assert.Equal(t, 1800, cfg.Probod.Pg.MaxConnIdleTimeSeconds)
+	assert.Equal(t, 3600, cfg.Probod.Pg.MaxConnLifetimeSeconds)
+	assert.Equal(t, 300, cfg.Probod.Pg.MaxConnLifetimeJitterSeconds)
+	assert.Equal(t, 60, cfg.Probod.Pg.HealthCheckPeriodSeconds)
 	assert.False(t, cfg.Probod.Pg.Debug)
 
 	// Auth config
@@ -161,10 +196,20 @@ func TestBuilder_Build_Defaults(t *testing.T) {
 	assert.Equal(t, 5, cfg.Probod.Notifications.Webhook.SenderInterval)
 	assert.Equal(t, 86400, cfg.Probod.Notifications.Webhook.CacheTTL)
 
-	// OpenAI config
-	assert.Equal(t, 0.1, cfg.Probod.OpenAI.Temperature)
-	assert.Equal(t, "gpt-4o", cfg.Probod.OpenAI.ModelName)
-	assert.Equal(t, 4096, cfg.Probod.OpenAI.MaxTokens)
+	// Agents config — default
+	assert.Equal(t, "openai", cfg.Probod.Agents.Default.Provider)
+	assert.Equal(t, "gpt-4o", cfg.Probod.Agents.Default.ModelName)
+	assert.Equal(t, new(0.1), cfg.Probod.Agents.Default.Temperature)
+	assert.Equal(t, new(4096), cfg.Probod.Agents.Default.MaxTokens)
+	// Agents config — per-agent overrides are empty (inherit from default)
+	assert.Empty(t, cfg.Probod.Agents.Probo.Provider)
+	assert.Empty(t, cfg.Probod.Agents.Probo.ModelName)
+	assert.Nil(t, cfg.Probod.Agents.Probo.Temperature)
+	assert.Nil(t, cfg.Probod.Agents.Probo.MaxTokens)
+	assert.Empty(t, cfg.Probod.Agents.EvidenceDescriber.Provider)
+	assert.Empty(t, cfg.Probod.Agents.EvidenceDescriber.ModelName)
+	assert.Nil(t, cfg.Probod.Agents.EvidenceDescriber.Temperature)
+	assert.Nil(t, cfg.Probod.Agents.EvidenceDescriber.MaxTokens)
 
 	// Custom domains config
 	assert.Equal(t, 3600, cfg.Probod.CustomDomains.RenewalInterval)
@@ -181,6 +226,9 @@ func TestBuilder_Build_Defaults(t *testing.T) {
 
 	// ESign config
 	assert.Equal(t, "http://timestamp.digicert.com", cfg.Probod.ESign.TSAURL)
+
+	// Branding
+	assert.True(t, cfg.Probod.Branding)
 
 	// No connectors by default
 	assert.Empty(t, cfg.Probod.Connectors)
@@ -205,6 +253,11 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	env["PG_PASSWORD"] = "secret123"
 	env["PG_DATABASE"] = "probo_prod"
 	env["PG_POOL_SIZE"] = "200"
+	env["PG_MIN_POOL_SIZE"] = "25"
+	env["PG_MAX_CONN_IDLE_TIME_SECONDS"] = "900"
+	env["PG_MAX_CONN_LIFETIME_SECONDS"] = "7200"
+	env["PG_MAX_CONN_LIFETIME_JITTER_SECONDS"] = "600"
+	env["PG_HEALTH_CHECK_PERIOD_SECONDS"] = "30"
 	env["PG_DEBUG"] = "true"
 	// Auth
 	env["AUTH_DISABLE_SIGNUP"] = "true"
@@ -231,11 +284,19 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	env["WEBHOOK_SENDER_INTERVAL"] = "10"
 	env["WEBHOOK_CACHE_TTL"] = "3600"
 	env["CONNECTOR_SLACK_SIGNING_SECRET"] = "slack-signing-secret"
-	// OpenAI
+	// Agents — providers
 	env["OPENAI_API_KEY"] = "sk-test-key"
-	env["OPENAI_TEMPERATURE"] = "0.5"
-	env["OPENAI_MODEL_NAME"] = "gpt-4-turbo"
-	env["OPENAI_MAX_TOKENS"] = "8192"
+	env["ANTHROPIC_API_KEY"] = "sk-ant-test-key"
+	// Agents — default
+	env["AGENT_DEFAULT_PROVIDER"] = "openai"
+	env["AGENT_DEFAULT_MODEL_NAME"] = "gpt-4-turbo"
+	env["AGENT_DEFAULT_TEMPERATURE"] = "0.5"
+	env["AGENT_DEFAULT_MAX_TOKENS"] = "8192"
+	// Agents — evidence-describer override
+	env["AGENT_EVIDENCE_DESCRIBER_PROVIDER"] = "anthropic"
+	env["AGENT_EVIDENCE_DESCRIBER_MODEL_NAME"] = "claude-sonnet-4-20250514"
+	env["AGENT_EVIDENCE_DESCRIBER_TEMPERATURE"] = "0.2"
+	env["AGENT_EVIDENCE_DESCRIBER_MAX_TOKENS"] = "4096"
 	// Custom domains
 	env["CUSTOM_DOMAINS_RESOLVER_ADDR"] = "1.1.1.1:53"
 	env["ACME_ACCOUNT_KEY"] = "-----BEGIN EC PRIVATE KEY-----\ntest\n-----END EC PRIVATE KEY-----"
@@ -244,6 +305,8 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	env["SCIM_BRIDGE_POLL_INTERVAL"] = "60"
 	// ESign
 	env["ESIGN_TSA_URL"] = "http://custom.tsa.example.com"
+	// Branding
+	env["BRANDING"] = "false"
 
 	b := NewBuilder(mockEnv(env))
 	b.samlCertificate = "test-cert"
@@ -269,6 +332,11 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	assert.Equal(t, "secret123", cfg.Probod.Pg.Password)
 	assert.Equal(t, "probo_prod", cfg.Probod.Pg.Database)
 	assert.Equal(t, int32(200), cfg.Probod.Pg.PoolSize)
+	assert.Equal(t, int32(25), cfg.Probod.Pg.MinPoolSize)
+	assert.Equal(t, 900, cfg.Probod.Pg.MaxConnIdleTimeSeconds)
+	assert.Equal(t, 7200, cfg.Probod.Pg.MaxConnLifetimeSeconds)
+	assert.Equal(t, 600, cfg.Probod.Pg.MaxConnLifetimeJitterSeconds)
+	assert.Equal(t, 30, cfg.Probod.Pg.HealthCheckPeriodSeconds)
 	assert.True(t, cfg.Probod.Pg.Debug)
 	// Auth
 	assert.True(t, cfg.Probod.Auth.DisableSignup)
@@ -295,11 +363,24 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	assert.Equal(t, "slack-signing-secret", cfg.Probod.Notifications.Slack.SigningSecret)
 	assert.Equal(t, 10, cfg.Probod.Notifications.Webhook.SenderInterval)
 	assert.Equal(t, 3600, cfg.Probod.Notifications.Webhook.CacheTTL)
-	// OpenAI
-	assert.Equal(t, "sk-test-key", cfg.Probod.OpenAI.APIKey)
-	assert.Equal(t, 0.5, cfg.Probod.OpenAI.Temperature)
-	assert.Equal(t, "gpt-4-turbo", cfg.Probod.OpenAI.ModelName)
-	assert.Equal(t, 8192, cfg.Probod.OpenAI.MaxTokens)
+	// Agents — providers
+	assert.Equal(t, "openai", cfg.Probod.Agents.Providers["openai"].Type)
+	assert.Equal(t, "sk-test-key", cfg.Probod.Agents.Providers["openai"].APIKey)
+	assert.Equal(t, "anthropic", cfg.Probod.Agents.Providers["anthropic"].Type)
+	assert.Equal(t, "sk-ant-test-key", cfg.Probod.Agents.Providers["anthropic"].APIKey)
+	// Agents — default
+	assert.Equal(t, "openai", cfg.Probod.Agents.Default.Provider)
+	assert.Equal(t, "gpt-4-turbo", cfg.Probod.Agents.Default.ModelName)
+	assert.Equal(t, new(0.5), cfg.Probod.Agents.Default.Temperature)
+	assert.Equal(t, new(8192), cfg.Probod.Agents.Default.MaxTokens)
+	// Agents — probo inherits default (no overrides set)
+	assert.Empty(t, cfg.Probod.Agents.Probo.Provider)
+	assert.Empty(t, cfg.Probod.Agents.Probo.ModelName)
+	// Agents — evidence-describer overrides
+	assert.Equal(t, "anthropic", cfg.Probod.Agents.EvidenceDescriber.Provider)
+	assert.Equal(t, "claude-sonnet-4-20250514", cfg.Probod.Agents.EvidenceDescriber.ModelName)
+	assert.Equal(t, new(0.2), cfg.Probod.Agents.EvidenceDescriber.Temperature)
+	assert.Equal(t, new(4096), cfg.Probod.Agents.EvidenceDescriber.MaxTokens)
 	// Custom domains
 	assert.Equal(t, "1.1.1.1:53", cfg.Probod.CustomDomains.ResolverAddr)
 	assert.Equal(t, "-----BEGIN EC PRIVATE KEY-----\ntest\n-----END EC PRIVATE KEY-----", cfg.Probod.CustomDomains.ACME.AccountKey)
@@ -308,6 +389,50 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	assert.Equal(t, 60, cfg.Probod.SCIMBridge.PollInterval)
 	// ESign
 	assert.Equal(t, "http://custom.tsa.example.com", cfg.Probod.ESign.TSAURL)
+	// Branding
+	assert.False(t, cfg.Probod.Branding)
+}
+
+func TestBuilder_Build_GoogleWorkspaceConnector(t *testing.T) {
+	env := requiredEnv()
+	env["CONNECTOR_GOOGLE_WORKSPACE_CLIENT_ID"] = "gw-client-id"
+	env["CONNECTOR_GOOGLE_WORKSPACE_CLIENT_SECRET"] = "gw-client-secret"
+
+	b := NewBuilder(mockEnv(env))
+	b.samlCertificate = "test-cert"
+	b.samlPrivateKey = "test-key"
+
+	cfg, err := b.Build()
+	require.NoError(t, err)
+
+	require.Len(t, cfg.Probod.Connectors, 1)
+	connector := cfg.Probod.Connectors[0]
+	assert.Equal(t, "GOOGLE_WORKSPACE", connector.Provider)
+	assert.Equal(t, "oauth2", string(connector.Protocol))
+	rawConfig := connector.RawConfig.(probodconfig.ConnectorConfigOAuth2)
+	assert.Equal(t, "gw-client-id", rawConfig.ClientID)
+	assert.Equal(t, "gw-client-secret", rawConfig.ClientSecret)
+}
+
+func TestBuilder_Build_Microsoft365Connector(t *testing.T) {
+	env := requiredEnv()
+	env["CONNECTOR_MICROSOFT_365_CLIENT_ID"] = "ms365-client-id"
+	env["CONNECTOR_MICROSOFT_365_CLIENT_SECRET"] = "ms365-client-secret"
+
+	b := NewBuilder(mockEnv(env))
+	b.samlCertificate = "test-cert"
+	b.samlPrivateKey = "test-key"
+
+	cfg, err := b.Build()
+	require.NoError(t, err)
+
+	require.Len(t, cfg.Probod.Connectors, 1)
+	connector := cfg.Probod.Connectors[0]
+	assert.Equal(t, "MICROSOFT_365", connector.Provider)
+	assert.Equal(t, "oauth2", string(connector.Protocol))
+	rawConfig := connector.RawConfig.(probodconfig.ConnectorConfigOAuth2)
+	assert.Equal(t, "ms365-client-id", rawConfig.ClientID)
+	assert.Equal(t, "ms365-client-secret", rawConfig.ClientSecret)
 }
 
 func TestBuilder_Build_SlackConnector(t *testing.T) {
@@ -315,7 +440,6 @@ func TestBuilder_Build_SlackConnector(t *testing.T) {
 	env["CONNECTOR_SLACK_CLIENT_ID"] = "slack-client-id"
 	env["CONNECTOR_SLACK_CLIENT_SECRET"] = "slack-client-secret"
 	env["CONNECTOR_SLACK_SIGNING_SECRET"] = "slack-signing-secret"
-	env["CONNECTOR_SLACK_REDIRECT_URI"] = "https://app.example.com/api/console/v1/connectors/complete"
 
 	b := NewBuilder(mockEnv(env))
 	b.samlCertificate = "test-cert"
@@ -328,37 +452,11 @@ func TestBuilder_Build_SlackConnector(t *testing.T) {
 	connector := cfg.Probod.Connectors[0]
 	assert.Equal(t, "SLACK", connector.Provider)
 	assert.Equal(t, "oauth2", string(connector.Protocol))
-	rawConfig := connector.RawConfig.(probod.ConnectorConfigOAuth2)
+	rawConfig := connector.RawConfig.(probodconfig.ConnectorConfigOAuth2)
 	assert.Equal(t, "slack-client-id", rawConfig.ClientID)
 	assert.Equal(t, "slack-client-secret", rawConfig.ClientSecret)
-	assert.Equal(t, "https://app.example.com/api/console/v1/connectors/complete", rawConfig.RedirectURI)
-	assert.Equal(t, "https://slack.com/oauth/v2/authorize", rawConfig.AuthURL)
-	assert.Equal(t, "https://slack.com/api/oauth.v2.access", rawConfig.TokenURL)
-	assert.Equal(t, []string{"chat:write", "channels:join", "incoming-webhook"}, rawConfig.Scopes)
 	rawSettings := connector.RawSettings.(map[string]any)
 	assert.Equal(t, "slack-signing-secret", rawSettings["signing-secret"])
-}
-
-func TestBuilder_Build_SlackConnector_CustomURLs(t *testing.T) {
-	env := requiredEnv()
-	env["CONNECTOR_SLACK_CLIENT_ID"] = "slack-client-id"
-	env["CONNECTOR_SLACK_CLIENT_SECRET"] = "slack-client-secret"
-	env["CONNECTOR_SLACK_SIGNING_SECRET"] = "slack-signing-secret"
-	env["CONNECTOR_SLACK_REDIRECT_URI"] = "https://app.example.com/callback"
-	env["CONNECTOR_SLACK_AUTH_URL"] = "https://custom.slack.com/oauth/authorize"
-	env["CONNECTOR_SLACK_TOKEN_URL"] = "https://custom.slack.com/oauth/token"
-
-	b := NewBuilder(mockEnv(env))
-	b.samlCertificate = "test-cert"
-	b.samlPrivateKey = "test-key"
-
-	cfg, err := b.Build()
-	require.NoError(t, err)
-
-	connector := cfg.Probod.Connectors[0]
-	rawConfig := connector.RawConfig.(probod.ConnectorConfigOAuth2)
-	assert.Equal(t, "https://custom.slack.com/oauth/authorize", rawConfig.AuthURL)
-	assert.Equal(t, "https://custom.slack.com/oauth/token", rawConfig.TokenURL)
 }
 
 func TestBuilder_Build_SAMLAutoGeneration(t *testing.T) {
@@ -397,6 +495,64 @@ func TestBuilder_Build_SAMLPreset(t *testing.T) {
 
 	assert.Equal(t, "preset-cert", cfg.Probod.Auth.SAML.Certificate)
 	assert.Equal(t, "preset-key", cfg.Probod.Auth.SAML.PrivateKey)
+}
+
+func TestBuilder_Build_OAuth2Defaults(t *testing.T) {
+	b := NewBuilder(mockEnv(requiredEnv()))
+
+	cfg, err := b.Build()
+	require.NoError(t, err)
+
+	require.Len(t, cfg.Probod.Auth.OAuth2Server.SigningKeys, 1)
+	sk := cfg.Probod.Auth.OAuth2Server.SigningKeys[0]
+	assert.Equal(t, "test-oauth2-signing-key", sk.PrivateKey)
+	assert.Equal(t, "default", sk.KID)
+	assert.True(t, sk.Active)
+
+	assert.Equal(t, 3600, cfg.Probod.Auth.OAuth2Server.AccessTokenDuration)
+	assert.Equal(t, 2592000, cfg.Probod.Auth.OAuth2Server.RefreshTokenDuration)
+	assert.Equal(t, 600, cfg.Probod.Auth.OAuth2Server.AuthorizationCodeDuration)
+	assert.Equal(t, 600, cfg.Probod.Auth.OAuth2Server.DeviceCodeDuration)
+}
+
+func TestBuilder_Build_OAuth2FromEnv(t *testing.T) {
+	env := requiredEnv()
+	env["OAUTH2_SERVER_SIGNING_KEY"] = "env-signing-key"
+	env["OAUTH2_SERVER_SIGNING_KEY_KID"] = "env-kid"
+	env["OAUTH2_SERVER_ACCESS_TOKEN_DURATION"] = "10"
+	env["OAUTH2_SERVER_REFRESH_TOKEN_DURATION"] = "20"
+	env["OAUTH2_SERVER_AUTHORIZATION_CODE_DURATION"] = "30"
+	env["OAUTH2_SERVER_DEVICE_CODE_DURATION"] = "40"
+
+	b := NewBuilder(mockEnv(env))
+
+	cfg, err := b.Build()
+	require.NoError(t, err)
+
+	require.Len(t, cfg.Probod.Auth.OAuth2Server.SigningKeys, 1)
+	sk := cfg.Probod.Auth.OAuth2Server.SigningKeys[0]
+	assert.Equal(t, "env-signing-key", sk.PrivateKey)
+	assert.Equal(t, "env-kid", sk.KID)
+	assert.True(t, sk.Active)
+
+	assert.Equal(t, 10, cfg.Probod.Auth.OAuth2Server.AccessTokenDuration)
+	assert.Equal(t, 20, cfg.Probod.Auth.OAuth2Server.RefreshTokenDuration)
+	assert.Equal(t, 30, cfg.Probod.Auth.OAuth2Server.AuthorizationCodeDuration)
+	assert.Equal(t, 40, cfg.Probod.Auth.OAuth2Server.DeviceCodeDuration)
+}
+
+func TestBuilder_Build_OAuth2Preset(t *testing.T) {
+	env := requiredEnv()
+	delete(env, "OAUTH2_SERVER_SIGNING_KEY")
+
+	b := NewBuilder(mockEnv(env))
+	b.oauth2SigningKey = "preset-signing-key"
+
+	cfg, err := b.Build()
+	require.NoError(t, err)
+
+	require.Len(t, cfg.Probod.Auth.OAuth2Server.SigningKeys, 1)
+	assert.Equal(t, "preset-signing-key", cfg.Probod.Auth.OAuth2Server.SigningKeys[0].PrivateKey)
 }
 
 func TestBuilder_Build_PgCABundleFromEnv(t *testing.T) {

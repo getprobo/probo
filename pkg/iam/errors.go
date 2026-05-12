@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -28,6 +28,16 @@ func NewInvalidTokenError() error {
 }
 
 func (e ErrInvalidToken) Error() string {
+	return e.message
+}
+
+type ErrExpiredToken struct{ message string }
+
+func NewExpiredTokenError() error {
+	return &ErrExpiredToken{"token has expired"}
+}
+
+func (e ErrExpiredToken) Error() string {
 	return e.message
 }
 

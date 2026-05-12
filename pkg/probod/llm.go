@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -22,13 +22,36 @@ import (
 	"go.gearno.de/kit/log"
 	"go.opentelemetry.io/otel/trace"
 	"go.probo.inc/probo/pkg/llm"
+	llmanthropic "go.probo.inc/probo/pkg/llm/anthropic"
 	llmopenai "go.probo.inc/probo/pkg/llm/openai"
 )
 
-func buildLLMClient(cfg LLMConfig, l *log.Logger, tp trace.TracerProvider, r prometheus.Registerer) (*llm.Client, error) {
-	provider := cfg.Provider
-	if provider == "" {
-		provider = "openai"
+// resolveAgentClient resolves the agent's effective config from defaults and
+// builds an LLM client for it. The name parameter is used in the logger and
+// in error messages.
+func (impl *Implm) resolveAgentClient(
+	name string,
+	agent LLMAgentConfig,
+	l *log.Logger,
+	tp trace.TracerProvider,
+	r prometheus.Registerer,
+) (LLMAgentConfig, *llm.Client, error) {
+	resolved := impl.cfg.Agents.ResolveAgent(agent)
+	providerCfg, ok := impl.cfg.Agents.Providers[resolved.Provider]
+	if !ok {
+		return LLMAgentConfig{}, nil, fmt.Errorf("unknown LLM provider %q for %s agent", resolved.Provider, name)
+	}
+	client, err := buildLLMClient(providerCfg, l.Named("llm."+name), tp, r)
+	if err != nil {
+		return LLMAgentConfig{}, nil, fmt.Errorf("cannot create %s LLM client: %w", name, err)
+	}
+	return resolved, client, nil
+}
+
+func buildLLMClient(cfg LLMProviderConfig, l *log.Logger, tp trace.TracerProvider, r prometheus.Registerer) (*llm.Client, error) {
+	providerType := cfg.Type
+	if providerType == "" {
+		providerType = "openai"
 	}
 
 	httpClient := httpclient.DefaultPooledClient(
@@ -37,7 +60,7 @@ func buildLLMClient(cfg LLMConfig, l *log.Logger, tp trace.TracerProvider, r pro
 		httpclient.WithRegisterer(r),
 	)
 
-	switch provider {
+	switch providerType {
 	case "openai":
 		p := llmopenai.NewProvider(
 			cfg.APIKey,
@@ -50,10 +73,19 @@ func buildLLMClient(cfg LLMConfig, l *log.Logger, tp trace.TracerProvider, r pro
 			llm.WithTracerProvider(tp),
 		), nil
 	case "anthropic":
-		return nil, fmt.Errorf("anthropic provider not yet wired; add import and construct here")
+		p := llmanthropic.NewProvider(
+			cfg.APIKey,
+			llmanthropic.WithHTTPClient(httpClient),
+		)
+		return llm.NewClient(
+			p,
+			"anthropic",
+			llm.WithLogger(l),
+			llm.WithTracerProvider(tp),
+		), nil
 	case "bedrock":
 		return nil, fmt.Errorf("bedrock provider not yet wired; requires aws.Config")
 	default:
-		return nil, fmt.Errorf("unsupported LLM provider: %q", provider)
+		return nil, fmt.Errorf("unsupported LLM provider type: %q", providerType)
 	}
 }

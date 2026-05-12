@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -16,9 +16,6 @@ package scim
 
 import (
 	"context"
-	"crypto/rand"
-	"crypto/sha256"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"net"
@@ -37,9 +34,10 @@ import (
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
+	"go.probo.inc/probo/pkg/crypto/hash"
+	"go.probo.inc/probo/pkg/crypto/rand"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/mail"
-	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/webhook"
 	webhooktypes "go.probo.inc/probo/pkg/webhook/types"
 )
@@ -88,16 +86,11 @@ func (s *Service) Run(ctx context.Context) error {
 }
 
 func HashToken(token string) []byte {
-	hash := sha256.Sum256([]byte(token))
-	return hash[:]
+	return hash.SHA256String(token)
 }
 
 func GenerateToken() (string, error) {
-	bytes := make([]byte, 32)
-	if _, err := rand.Read(bytes); err != nil {
-		return "", fmt.Errorf("cannot generate random token: %w", err)
-	}
-	return hex.EncodeToString(bytes), nil
+	return rand.HexString(32)
 }
 
 // ValidateToken validates a bearer token and returns the SCIM configuration
@@ -107,7 +100,7 @@ func (s *Service) ValidateToken(ctx context.Context, token string) (*coredata.SC
 
 	err := s.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			err := config.LoadByHashedToken(ctx, conn, hashedToken)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
@@ -160,7 +153,7 @@ func (s *Service) CreateUser(
 
 	scope := coredata.NewScopeFromObjectID(config.OrganizationID)
 
-	err = s.pg.WithTx(ctx, func(tx pg.Conn) error {
+	err = s.pg.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		identity := &coredata.Identity{}
 		if err := identity.LoadByEmail(ctx, tx, emailAddr); err != nil {
 			if errors.Is(err, coredata.ErrResourceNotFound) {
@@ -184,6 +177,7 @@ func (s *Service) CreateUser(
 
 		eventType := coredata.WebhookEventTypeUserUpdated
 		profile = &coredata.MembershipProfile{}
+
 		if err := profile.LoadByIdentityIDAndOrganizationID(
 			ctx,
 			tx,
@@ -191,42 +185,63 @@ func (s *Service) CreateUser(
 			identity.ID,
 			config.OrganizationID,
 		); err != nil {
-			if errors.Is(err, coredata.ErrResourceNotFound) {
+			if !errors.Is(err, coredata.ErrResourceNotFound) {
+				return fmt.Errorf("cannot load profile: %w", err)
+			}
+
+			// Profile not found by identity. Try by external ID to
+			// handle email renames in identity providers (e.g. Google
+			// Workspace) where the external ID stays the same but the
+			// email changes. If found, update it to point to the new
+			// identity.
+			if externalIdPtr != nil {
+				if err := profile.LoadByExternalIDAndOrganizationID(
+					ctx,
+					tx,
+					scope,
+					*externalIdPtr,
+					config.OrganizationID,
+				); err == nil {
+					// Migrate the existing membership to the new identity
+					// so the user's role is preserved.
+					oldIdentityID := profile.IdentityID
+					existingMembership := &coredata.Membership{}
+					if err := existingMembership.LoadByIdentityIDAndOrganizationID(
+						ctx,
+						tx,
+						scope,
+						oldIdentityID,
+						config.OrganizationID,
+					); err == nil {
+						existingMembership.IdentityID = identity.ID
+						existingMembership.UpdatedAt = now
+						if err := existingMembership.Update(ctx, tx, scope); err != nil {
+							return fmt.Errorf("cannot update membership identity: %w", err)
+						}
+					} else if !errors.Is(err, coredata.ErrResourceNotFound) {
+						return fmt.Errorf("cannot load membership for identity migration: %w", err)
+					}
+
+					profile.IdentityID = identity.ID
+					profile.EmailAddress = emailAddr
+					applyUserAttributes(profile, attrs, externalIdPtr, profileState, now)
+					if err := profile.Update(ctx, tx, scope); err != nil {
+						return fmt.Errorf("cannot update profile: %w", err)
+					}
+				} else if !errors.Is(err, coredata.ErrResourceNotFound) {
+					return fmt.Errorf("cannot load profile by external id: %w", err)
+				}
+			}
+
+			if profile.ID == (gid.GID{}) {
 				profile = &coredata.MembershipProfile{
-					ID:                     gid.New(config.OrganizationID.TenantID(), coredata.MembershipProfileEntityType),
-					IdentityID:             identity.ID,
-					OrganizationID:         config.OrganizationID,
-					EmailAddress:           emailAddr,
-					Source:                 coredata.ProfileSourceSCIM,
-					State:                  profileState,
-					FullName:               attrs.FullName,
-					Position:               &attrs.Title,
-					UserName:               &attrs.UserName,
-					ExternalID:             externalIdPtr,
-					Nickname:               ref.RefOrNil(attrs.Nickname),
-					Locale:                 ref.RefOrNil(attrs.Locale),
-					Timezone:               ref.RefOrNil(attrs.Timezone),
-					ProfileUrl:             ref.RefOrNil(attrs.ProfileUrl),
-					PreferredLanguage:      ref.RefOrNil(attrs.PreferredLanguage),
-					GivenName:              ref.RefOrNil(attrs.GivenName),
-					FamilyName:             ref.RefOrNil(attrs.FamilyName),
-					FormattedName:          ref.RefOrNil(attrs.FormattedName),
-					MiddleName:             ref.RefOrNil(attrs.MiddleName),
-					HonorificPrefix:        ref.RefOrNil(attrs.HonorificPrefix),
-					HonorificSuffix:        ref.RefOrNil(attrs.HonorificSuffix),
-					EmployeeNumber:         ref.RefOrNil(attrs.EmployeeNumber),
-					Department:             ref.RefOrNil(attrs.Department),
-					CostCenter:             ref.RefOrNil(attrs.CostCenter),
-					EnterpriseOrganization: ref.RefOrNil(attrs.EnterpriseOrganization),
-					Division:               ref.RefOrNil(attrs.Division),
-					ManagerValue:           ref.RefOrNil(attrs.ManagerValue),
-					CreatedAt:              now,
-					UpdatedAt:              now,
+					ID:             gid.New(config.OrganizationID.TenantID(), coredata.MembershipProfileEntityType),
+					IdentityID:     identity.ID,
+					OrganizationID: config.OrganizationID,
+					EmailAddress:   emailAddr,
+					CreatedAt:      now,
 				}
-				if attrs.UserType != "" {
-					kind := attrs.UserType
-					profile.Kind = &kind
-				}
+				applyUserAttributes(profile, attrs, externalIdPtr, profileState, now)
 
 				err = profile.Insert(ctx, tx)
 				if err != nil {
@@ -236,8 +251,6 @@ func (s *Service) CreateUser(
 					return fmt.Errorf("cannot insert profile: %w", err)
 				}
 				eventType = coredata.WebhookEventTypeUserCreated
-			} else {
-				return fmt.Errorf("cannot load profile: %w", err)
 			}
 		} else {
 			if profile.Source == coredata.ProfileSourceSCIM {
@@ -256,34 +269,7 @@ func (s *Service) CreateUser(
 				}
 			}
 
-			profile.Source = coredata.ProfileSourceSCIM
-			profile.State = profileState
-			profile.FullName = attrs.FullName
-			profile.Position = &attrs.Title
-			profile.UserName = &attrs.UserName
-			profile.ExternalID = externalIdPtr
-			profile.Nickname = ref.RefOrNil(attrs.Nickname)
-			profile.Locale = ref.RefOrNil(attrs.Locale)
-			profile.Timezone = ref.RefOrNil(attrs.Timezone)
-			profile.ProfileUrl = ref.RefOrNil(attrs.ProfileUrl)
-			profile.PreferredLanguage = ref.RefOrNil(attrs.PreferredLanguage)
-			profile.GivenName = ref.RefOrNil(attrs.GivenName)
-			profile.FamilyName = ref.RefOrNil(attrs.FamilyName)
-			profile.FormattedName = ref.RefOrNil(attrs.FormattedName)
-			profile.MiddleName = ref.RefOrNil(attrs.MiddleName)
-			profile.HonorificPrefix = ref.RefOrNil(attrs.HonorificPrefix)
-			profile.HonorificSuffix = ref.RefOrNil(attrs.HonorificSuffix)
-			profile.EmployeeNumber = ref.RefOrNil(attrs.EmployeeNumber)
-			profile.Department = ref.RefOrNil(attrs.Department)
-			profile.CostCenter = ref.RefOrNil(attrs.CostCenter)
-			profile.EnterpriseOrganization = ref.RefOrNil(attrs.EnterpriseOrganization)
-			profile.Division = ref.RefOrNil(attrs.Division)
-			profile.ManagerValue = ref.RefOrNil(attrs.ManagerValue)
-			profile.UpdatedAt = now
-			if attrs.UserType != "" {
-				kind := attrs.UserType
-				profile.Kind = &kind
-			}
+			applyUserAttributes(profile, attrs, externalIdPtr, profileState, now)
 			if err := profile.Update(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot update profile: %w", err)
 			}
@@ -330,7 +316,7 @@ func (s *Service) CreateUser(
 			}
 		}
 
-		if err := webhook.InsertData(ctx, tx, scope, config.OrganizationID, eventType, webhooktypes.NewUser(profile)); err != nil {
+		if err := webhook.InsertData(ctx, tx, scope, config.OrganizationID, eventType, webhooktypes.NewUser(profile, membership)); err != nil {
 			return fmt.Errorf("cannot insert webhook event: %w", err)
 		}
 
@@ -355,7 +341,7 @@ func (s *Service) GetUser(
 
 	err := s.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			profile = &coredata.MembershipProfile{}
 			if err := profile.LoadByID(ctx, conn, scope, profileID); err != nil {
 				if err == coredata.ErrResourceNotFound {
@@ -401,25 +387,11 @@ func (s *Service) ListUsers(
 	scope := coredata.NewScopeFromObjectID(config.OrganizationID)
 
 	var profiles coredata.MembershipProfiles
-	var totalCount int
 
 	err = s.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
-			var err error
-			totalCount, err = profiles.CountByOrganizationID(ctx, conn, scope, config.OrganizationID, filter)
-			if err != nil {
-				return fmt.Errorf("cannot count profiles: %w", err)
-			}
-
-			orderBy := page.OrderBy[coredata.MembershipProfileOrderField]{
-				Field:     coredata.MembershipProfileOrderFieldCreatedAt,
-				Direction: page.OrderDirectionDesc,
-			}
-			cursor := page.NewCursor(count, nil, page.Head, orderBy)
-
-			err = profiles.LoadByOrganizationID(ctx, conn, scope, config.OrganizationID, cursor, filter)
-			if err != nil {
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := profiles.LoadAllByOrganizationID(ctx, conn, scope, config.OrganizationID, filter); err != nil {
 				return fmt.Errorf("cannot load profiles: %w", err)
 			}
 
@@ -436,7 +408,7 @@ func (s *Service) ListUsers(
 		resources = append(resources, userToResource(p))
 	}
 
-	return resources, totalCount, nil
+	return resources, len(resources), nil
 }
 
 func (s *Service) ReplaceUser(
@@ -486,7 +458,7 @@ func (s *Service) updateUser(
 
 	err := s.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			profile = &coredata.MembershipProfile{}
 			if err := profile.LoadByID(ctx, tx, scope, profileID); err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
@@ -748,7 +720,7 @@ func (s *Service) updateUser(
 				}
 			}
 
-			if err := webhook.InsertData(ctx, tx, scope, config.OrganizationID, coredata.WebhookEventTypeUserUpdated, webhooktypes.NewUser(profile)); err != nil {
+			if err := webhook.InsertData(ctx, tx, scope, config.OrganizationID, coredata.WebhookEventTypeUserUpdated, webhooktypes.NewUser(profile, membership)); err != nil {
 				return fmt.Errorf("cannot insert webhook event: %w", err)
 			}
 
@@ -763,6 +735,44 @@ func (s *Service) updateUser(
 	return profile, nil
 }
 
+func applyUserAttributes(
+	profile *coredata.MembershipProfile,
+	attrs scimUserAttributes,
+	externalID *string,
+	state coredata.ProfileState,
+	now time.Time,
+) {
+	profile.Source = coredata.ProfileSourceSCIM
+	profile.State = state
+	profile.FullName = attrs.FullName
+	profile.Position = &attrs.Title
+	profile.UserName = &attrs.UserName
+	profile.ExternalID = externalID
+	profile.Nickname = ref.RefOrNil(attrs.Nickname)
+	profile.Locale = ref.RefOrNil(attrs.Locale)
+	profile.Timezone = ref.RefOrNil(attrs.Timezone)
+	profile.ProfileUrl = ref.RefOrNil(attrs.ProfileUrl)
+	profile.PreferredLanguage = ref.RefOrNil(attrs.PreferredLanguage)
+	profile.GivenName = ref.RefOrNil(attrs.GivenName)
+	profile.FamilyName = ref.RefOrNil(attrs.FamilyName)
+	profile.FormattedName = ref.RefOrNil(attrs.FormattedName)
+	profile.MiddleName = ref.RefOrNil(attrs.MiddleName)
+	profile.HonorificPrefix = ref.RefOrNil(attrs.HonorificPrefix)
+	profile.HonorificSuffix = ref.RefOrNil(attrs.HonorificSuffix)
+	profile.EmployeeNumber = ref.RefOrNil(attrs.EmployeeNumber)
+	profile.Department = ref.RefOrNil(attrs.Department)
+	profile.CostCenter = ref.RefOrNil(attrs.CostCenter)
+	profile.EnterpriseOrganization = ref.RefOrNil(attrs.EnterpriseOrganization)
+	profile.Division = ref.RefOrNil(attrs.Division)
+	profile.ManagerValue = ref.RefOrNil(attrs.ManagerValue)
+	profile.UpdatedAt = now
+
+	if attrs.UserType != "" {
+		kind := attrs.UserType
+		profile.Kind = &kind
+	}
+}
+
 func (s *Service) DeleteUser(
 	ctx context.Context,
 	config *coredata.SCIMConfiguration,
@@ -772,7 +782,7 @@ func (s *Service) DeleteUser(
 
 	return s.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			profile := &coredata.MembershipProfile{}
 			if err := profile.LoadByID(ctx, tx, scope, profileID); err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
@@ -797,25 +807,30 @@ func (s *Service) DeleteUser(
 				return fmt.Errorf("cannot expire pending invitations: %w", err)
 			}
 
-			membership := &coredata.Membership{}
-			if err := membership.LoadByIdentityIDAndOrganizationID(
+			var membership *coredata.Membership
+			m := &coredata.Membership{}
+			if err := m.LoadByIdentityIDAndOrganizationID(
 				ctx, tx, scope, profile.IdentityID, config.OrganizationID,
 			); err != nil {
 				if !errors.Is(err, coredata.ErrResourceNotFound) {
 					return fmt.Errorf("cannot load membership: %w", err)
 				}
 			} else {
-				if err := membership.Delete(ctx, tx, scope, membership.ID); err != nil {
-					return fmt.Errorf("cannot delete membership: %w", err)
-				}
+				membership = m
+			}
+
+			if err := webhook.InsertData(ctx, tx, scope, config.OrganizationID, coredata.WebhookEventTypeUserDeleted, webhooktypes.NewUser(profile, membership)); err != nil {
+				return fmt.Errorf("cannot insert webhook event: %w", err)
 			}
 
 			if err := profile.Delete(ctx, tx, scope, profile.ID); err != nil {
 				return fmt.Errorf("cannot delete profile: %w", err)
 			}
 
-			if err := webhook.InsertData(ctx, tx, scope, config.OrganizationID, coredata.WebhookEventTypeUserDeleted, webhooktypes.NewUser(profile)); err != nil {
-				return fmt.Errorf("cannot insert webhook event: %w", err)
+			if membership != nil {
+				if err := membership.Delete(ctx, tx, scope, membership.ID); err != nil {
+					return fmt.Errorf("cannot delete membership: %w", err)
+				}
 			}
 
 			return nil
@@ -837,10 +852,10 @@ func (s *Service) LogEvent(
 
 	event := s.createEvent(config, method, path, userName, ipAddress, statusCode, errorMessage)
 
-	err := s.pg.WithConn(
+	err := s.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
-			err := event.Insert(ctx, conn, scope)
+		func(ctx context.Context, tx pg.Tx) error {
+			err := event.Insert(ctx, tx, scope)
 			if err != nil {
 				return fmt.Errorf("cannot insert SCIM event: %w", err)
 			}

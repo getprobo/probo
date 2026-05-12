@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -15,17 +15,20 @@
 package testutil
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"sync"
 	"syscall"
 	"time"
 
 	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/bootstrap"
 )
 
 var (
@@ -38,21 +41,35 @@ type TestEnv struct {
 	BaseURL        string
 	cmd            *exec.Cmd
 	done           chan error
+	outputBuf      *bytes.Buffer
+	outputWriter   *switchableWriter
+}
+
+type switchableWriter struct {
+	mu sync.Mutex
+	w  io.Writer
+}
+
+func (s *switchableWriter) Write(p []byte) (int, error) {
+	s.mu.Lock()
+	w := s.w
+	s.mu.Unlock()
+	return w.Write(p)
+}
+
+func (s *switchableWriter) switchTo(w io.Writer) {
+	s.mu.Lock()
+	s.w = w
+	s.mu.Unlock()
 }
 
 func Setup() {
 	setupOnce.Do(func() {
 		binaryPath := os.Getenv("PROBO_E2E_BINARY")
-		configPath := os.Getenv("PROBO_E2E_CONFIG")
 		coverDir := os.Getenv("PROBO_E2E_COVERDIR")
 
 		if binaryPath == "" {
 			fmt.Fprintf(os.Stderr, "e2etest: PROBO_E2E_BINARY is required\n")
-			os.Exit(1)
-		}
-
-		if configPath == "" {
-			fmt.Fprintf(os.Stderr, "e2etest: PROBO_E2E_CONFIG is required\n")
 			os.Exit(1)
 		}
 
@@ -62,6 +79,12 @@ func Setup() {
 				fmt.Fprintf(os.Stderr, "e2etest: cannot create coverage directory: %v\n", err)
 				os.Exit(1)
 			}
+		}
+
+		configPath, err := generateConfig()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "e2etest: cannot generate config: %v\n", err)
+			os.Exit(1)
 		}
 
 		testEnv = &TestEnv{
@@ -74,12 +97,18 @@ func Setup() {
 		} else {
 			cmd.Env = os.Environ()
 		}
-		if os.Getenv("PROBO_E2E_VERBOSE") != "" {
+
+		verbose := os.Getenv("PROBO_E2E_VERBOSE") != ""
+		if verbose {
 			cmd.Stdout = os.Stdout
 			cmd.Stderr = os.Stderr
 		} else {
-			cmd.Stdout = io.Discard
-			cmd.Stderr = io.Discard
+			var buf bytes.Buffer
+			testEnv.outputBuf = &buf
+			sw := &switchableWriter{w: &buf}
+			testEnv.outputWriter = sw
+			cmd.Stdout = sw
+			cmd.Stderr = sw
 		}
 
 		testEnv.cmd = cmd
@@ -100,16 +129,47 @@ func Setup() {
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
 		if err := waitForServer(ctx, testEnv.BaseURL+"/api/console/v1/graphql", 30*time.Second); err != nil {
-			fmt.Fprintf(os.Stderr, "e2etest: API server failed to start: %v\n", err)
+			testEnv.dumpOutputOnFailure("API server failed to start", err)
 			_ = testEnv.cmd.Process.Kill()
 			os.Exit(1)
 		}
 		if err := waitForServer(ctx, testEnv.MailpitBaseURL+"/api/v1/messages", 30*time.Second); err != nil {
-			fmt.Fprintf(os.Stderr, "e2etest: MailPit server failed to start: %v\n", err)
+			testEnv.dumpOutputOnFailure("MailPit server failed to start", err)
 			_ = testEnv.cmd.Process.Kill()
 			os.Exit(1)
 		}
+
+		if !verbose {
+			testEnv.outputWriter.switchTo(io.Discard)
+		}
 	})
+}
+
+func (e *TestEnv) dumpOutputOnFailure(context string, err error) {
+	fmt.Fprintf(os.Stderr, "\n=== e2etest: %s: %v ===\n", context, err)
+
+	select {
+	case waitErr := <-e.done:
+		if waitErr != nil {
+			fmt.Fprintf(os.Stderr, "e2etest: process exited with error: %v\n", waitErr)
+		} else {
+			fmt.Fprintf(os.Stderr, "e2etest: process exited cleanly (unexpected)\n")
+		}
+	default:
+		fmt.Fprintf(os.Stderr, "e2etest: process is still running\n")
+	}
+
+	if e.outputBuf != nil && e.outputBuf.Len() > 0 {
+		output := e.outputBuf.Bytes()
+		const maxTail = 10_000
+		if len(output) > maxTail {
+			fmt.Fprintf(os.Stderr, "e2etest: (showing last %d bytes of output)\n", maxTail)
+			output = output[len(output)-maxTail:]
+		}
+		fmt.Fprintf(os.Stderr, "--- probod output start ---\n%s\n--- probod output end ---\n", output)
+	} else {
+		fmt.Fprintf(os.Stderr, "e2etest: no captured output available\n")
+	}
 }
 
 func waitForServer(ctx context.Context, url string, timeout time.Duration) error {
@@ -120,6 +180,9 @@ func waitForServer(ctx context.Context, url string, timeout time.Duration) error
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
+		case err := <-testEnv.done:
+			testEnv.done <- err
+			return fmt.Errorf("process exited before becoming ready: %v", err)
 		default:
 		}
 
@@ -131,14 +194,13 @@ func waitForServer(ctx context.Context, url string, timeout time.Duration) error
 		resp, err := client.Do(req)
 		if err == nil {
 			_ = resp.Body.Close()
-			// Any response means server is up
 			return nil
 		}
 
 		time.Sleep(100 * time.Millisecond)
 	}
 
-	return fmt.Errorf("server did not become ready within %v", timeout)
+	return fmt.Errorf("server at %s did not become ready within %v", url, timeout)
 }
 
 func Teardown() {
@@ -170,4 +232,96 @@ func GetMailpitBaseURL() string {
 		return "http://localhost:8025"
 	}
 	return testEnv.MailpitBaseURL
+}
+
+// generateConfig builds a probod config for the e2e suite via the
+// bootstrap package (which auto-generates SAML credentials) and
+// writes it to a temp file. A fresh OAuth2 signing key is minted
+// here and injected via env. Returns the path.
+func generateConfig() (string, error) {
+	oauth2SigningKey, err := bootstrap.GenerateOAuth2SigningKey()
+	if err != nil {
+		return "", fmt.Errorf("generate oauth2 signing key: %w", err)
+	}
+
+	env := map[string]string{
+		// Required.
+		"PROBOD_ENCRYPTION_KEY":     "thisisnotasecretAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+		"AUTH_COOKIE_SECRET":        "this-is-a-secure-secret-for-cookie-signing-at-least-32-bytes",
+		"AUTH_PASSWORD_PEPPER":      "this-is-a-secure-pepper-for-password-hashing-at-least-32-bytes",
+		"OAUTH2_SERVER_SIGNING_KEY": oauth2SigningKey,
+
+		// Unit.
+		"METRICS_ADDR": "localhost:19081",
+		"TRACING_ADDR": "localhost:14317",
+
+		// Probod base.
+		"PROBOD_BASE_URL": "http://localhost:18080",
+
+		// API.
+		"API_ADDR":                 "localhost:18080",
+		"API_CORS_ALLOWED_ORIGINS": "http://localhost:18080",
+
+		// PG.
+		"PG_DATABASE":      "probod_test",
+		"PG_POOL_SIZE":     "10",
+		"PG_MIN_POOL_SIZE": "1",
+
+		// Auth.
+		"AUTH_COOKIE_SECURE":       "false",
+		"AUTH_PASSWORD_ITERATIONS": "600000",
+
+		// OAuth2 server durations kept small for faster e2e flows.
+		"OAUTH2_SERVER_ACCESS_TOKEN_DURATION":       "10",
+		"OAUTH2_SERVER_REFRESH_TOKEN_DURATION":      "10",
+		"OAUTH2_SERVER_AUTHORIZATION_CODE_DURATION": "5",
+		"OAUTH2_SERVER_DEVICE_CODE_DURATION":        "15",
+
+		// Trust center.
+		"TRUST_CENTER_HTTP_ADDR":  ":10080",
+		"TRUST_CENTER_HTTPS_ADDR": ":10443",
+
+		// AWS / S3 (SeaweedFS).
+		"AWS_BUCKET":            "probod-test",
+		"AWS_ACCESS_KEY_ID":     "probod",
+		"AWS_SECRET_ACCESS_KEY": "thisisnotasecret",
+		"AWS_ENDPOINT":          "http://127.0.0.1:8333",
+
+		// Mailer.
+		"MAILER_SENDER_NAME":  "Probo Test",
+		"MAILER_SENDER_EMAIL": "no-reply@test.getprobo.com",
+		"MAILER_INTERVAL":     "1",
+
+		// LLM.
+		"OPENAI_API_KEY": "thisisnotasecret",
+
+		// Custom domains.
+		"CUSTOM_DOMAINS_CNAME_TARGET": "custom.test.getprobo.com",
+		"ACME_DIRECTORY":              "https://localhost:14000/dir",
+		"ACME_EMAIL":                  "admin@test.getprobo.com",
+	}
+
+	builder := bootstrap.NewBuilder(func(key string) string {
+		if v, ok := env[key]; ok {
+			return v
+		}
+		return os.Getenv(key)
+	})
+
+	cfg, err := builder.Build()
+	if err != nil {
+		return "", fmt.Errorf("build config: %w", err)
+	}
+
+	tmpDir, err := os.MkdirTemp("", "probo-e2e-")
+	if err != nil {
+		return "", fmt.Errorf("create temp dir: %w", err)
+	}
+	path := filepath.Join(tmpDir, "probod.yml")
+
+	if err := bootstrap.WriteConfig(cfg, path); err != nil {
+		return "", fmt.Errorf("write config: %w", err)
+	}
+
+	return path, nil
 }

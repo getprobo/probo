@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -36,7 +36,7 @@ func (s AuditService) Get(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			err := audit.LoadByID(ctx, conn, s.svc.scope, auditID)
 			if err != nil {
 				return fmt.Errorf("cannot load audit: %w", err)
@@ -61,7 +61,7 @@ func (s AuditService) GetByReportID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			err := audit.LoadByReportID(ctx, conn, s.svc.scope, reportID)
 			if err != nil {
 				return fmt.Errorf("cannot load audit: %w", err)
@@ -87,7 +87,7 @@ func (s AuditService) ListForOrganizationId(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			filter := coredata.NewAuditTrustCenterFilter()
 			err := audits.LoadByOrganizationID(ctx, conn, s.svc.scope, organizationID, cursor, filter)
 			if err != nil {

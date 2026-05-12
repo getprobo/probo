@@ -1,20 +1,35 @@
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
+import { CookieIcon } from "@phosphor-icons/react";
 import { useTranslate } from "@probo/i18n";
 import {
   IconBank,
   IconBook,
   IconBox,
-  IconCalendar1,
   IconCircleProgress,
-  IconClock,
   IconFire3,
   IconGroup1,
   IconInboxEmpty,
+  IconKey,
   IconListStack,
   IconLock,
   IconMagnifyingGlass,
   IconMedal,
   IconPageCheck,
   IconPageTextLine,
+  IconPageTextSolid,
   IconSettingsGear2,
   IconShield,
   IconStore,
@@ -29,7 +44,7 @@ import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 const fragment = graphql`
     fragment SidebarFragment on Organization {
-        canListMeetings: permission(action: "core:meeting:list")
+        canGetContext: permission(action: "core:organization-context:get")
         canListTasks: permission(action: "core:task:list")
         canListMeasures: permission(action: "core:measure:list")
         canListRisks: permission(action: "core:risk:list")
@@ -46,11 +61,14 @@ const fragment = graphql`
             action: "core:processing-activity:list"
         )
         canListRightsRequests: permission(action: "core:rights-request:list")
-        canListSnapshots: permission(action: "core:snapshot:list")
         canGetTrustCenter: permission(action: "core:trust-center:get")
+        canListCookieBanners: permission(action: "core:cookie-banner:list")
         canUpdateOrganization: permission(action: "iam:organization:update")
-        canListStatesOfApplicability: permission(
-            action: "core:state-of-applicability:list"
+        canListStatementsOfApplicability: permission(
+            action: "core:statement-of-applicability:list"
+        )
+        canListAccessReviewCampaigns: permission(
+            action: "core:access-review-campaign:list"
         )
     }
 `;
@@ -67,11 +85,11 @@ export function Sidebar(props: { fKey: SidebarFragment$key }) {
 
   return (
     <ul className="space-y-[2px]">
-      {organization.canListMeetings && (
+      {organization.canGetContext && (
         <SidebarItem
-          label={__("Meetings")}
-          icon={IconCalendar1}
-          to={`${prefix}/meetings`}
+          label={__("Context")}
+          icon={IconPageTextSolid}
+          to={`${prefix}/context`}
         />
       )}
       {organization.canListTasks && (
@@ -165,11 +183,11 @@ export function Sidebar(props: { fKey: SidebarFragment$key }) {
           to={`${prefix}/processing-activities`}
         />
       )}
-      {organization.canListStatesOfApplicability && (
+      {organization.canListStatementsOfApplicability && (
         <SidebarItem
-          label={__("States of Applicability")}
+          label={__("Statements of Applicability")}
           icon={IconPageCheck}
-          to={`${prefix}/states-of-applicability`}
+          to={`${prefix}/statements-of-applicability`}
         />
       )}
       {organization.canListRightsRequests && (
@@ -179,11 +197,11 @@ export function Sidebar(props: { fKey: SidebarFragment$key }) {
           to={`${prefix}/rights-requests`}
         />
       )}
-      {organization.canListSnapshots && (
+      {organization.canListAccessReviewCampaigns && (
         <SidebarItem
-          label={__("Snapshots")}
-          icon={IconClock}
-          to={`${prefix}/snapshots`}
+          label={__("Access Reviews")}
+          icon={IconKey}
+          to={`${prefix}/access-reviews`}
         />
       )}
       {organization.canGetTrustCenter && (
@@ -191,6 +209,13 @@ export function Sidebar(props: { fKey: SidebarFragment$key }) {
           label={__("Compliance Page")}
           icon={IconShield}
           to={`${prefix}/compliance-page`}
+        />
+      )}
+      {organization.canListCookieBanners && (
+        <SidebarItem
+          label={__("Cookie Banners")}
+          icon={CookieIcon}
+          to={`${prefix}/cookie-banners`}
         />
       )}
       {organization.canUpdateOrganization && (

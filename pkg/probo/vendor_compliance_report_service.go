@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -58,7 +58,7 @@ func (s VendorComplianceReportService) ListForVendorID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			return vendorComplianceReports.LoadForVendorID(ctx, conn, s.svc.scope, vendorID, cursor)
 		},
 	)
@@ -114,10 +114,10 @@ func (s VendorComplianceReportService) Upload(
 		UpdatedAt:      now,
 	}
 
-	err = s.svc.pg.WithConn(
+	err = s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
-			return vendorComplianceReport.Insert(ctx, conn, s.svc.scope)
+		func(ctx context.Context, tx pg.Tx) error {
+			return vendorComplianceReport.Insert(ctx, tx, s.svc.scope)
 		},
 	)
 
@@ -136,7 +136,7 @@ func (s VendorComplianceReportService) Get(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			return vendorComplianceReport.LoadByID(ctx, conn, s.svc.scope, vendorComplianceReportID)
 		},
 	)
@@ -154,10 +154,10 @@ func (s VendorComplianceReportService) Delete(
 ) error {
 	vendorComplianceReport := &coredata.VendorComplianceReport{ID: vendorComplianceReportID}
 
-	err := s.svc.pg.WithConn(
+	err := s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
-			if err := vendorComplianceReport.Delete(ctx, conn, s.svc.scope); err != nil {
+		func(ctx context.Context, tx pg.Tx) error {
+			if err := vendorComplianceReport.Delete(ctx, tx, s.svc.scope); err != nil {
 				return err
 			}
 

@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -83,7 +83,7 @@ func (s *SlackMessageService) GetSlackMessageDocumentIDs(
 ) (documentIDs []gid.GID, reportIDs []gid.GID, fileIDs []gid.GID, err error) {
 	var slackMessage coredata.SlackMessage
 
-	err = s.svc.pg.WithConn(ctx, func(conn pg.Conn) error {
+	err = s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		if err := slackMessage.LoadById(ctx, conn, s.svc.scope, slackMessageID); err != nil {
 			return fmt.Errorf("cannot load slack message: %w", err)
 		}
@@ -108,7 +108,7 @@ func (s *SlackMessageService) UpdateSlackAccessMessage(
 	responseURL string,
 	requesterEmail mail.Addr,
 ) error {
-	return s.svc.pg.WithTx(ctx, func(tx pg.Conn) error {
+	return s.svc.pg.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		var slackMessage coredata.SlackMessage
 		if err := slackMessage.LoadById(ctx, tx, s.svc.scope, slackMessageID); err != nil {
 			return fmt.Errorf("cannot load slack message: %w", err)
@@ -187,7 +187,7 @@ func (s *SlackMessageService) QueueSlackNotification(
 	identityID gid.GID,
 	trustCenterID gid.GID,
 ) error {
-	return s.svc.pg.WithTx(ctx, func(tx pg.Conn) error {
+	return s.svc.pg.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		var (
 			identity          = &coredata.Identity{}
 			trustCenterAccess *coredata.TrustCenterAccess
@@ -306,7 +306,7 @@ func (s *SlackMessageService) QueueSlackNotification(
 
 func (s *SlackMessageService) loadDocumentsReportsAndFilesFromAccesses(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	trustCenterAccessID gid.GID,
 ) (
 	documents []SlackMessageDocument,

@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -70,6 +70,8 @@ func NewTask(t *coredata.Task) *Task {
 		Name:         t.Name,
 		Description:  t.Description,
 		State:        t.State,
+		Priority:     t.Priority,
+		Rank:         t.Rank,
 		TimeEstimate: t.TimeEstimate,
 		Deadline:     t.Deadline,
 		CreatedAt:    t.CreatedAt,

@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -67,7 +67,6 @@ func NewRisk(r *coredata.Risk) *Risk {
 	risk := &Risk{
 		ID:                 r.ID,
 		Name:               r.Name,
-		SnapshotID:         r.SnapshotID,
 		Description:        r.Description,
 		Treatment:          r.Treatment,
 		InherentLikelihood: r.InherentLikelihood,

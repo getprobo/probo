@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -67,14 +67,22 @@ func NewSAMLDomainVerifier(
 func (v *SAMLDomainVerifier) Run(ctx context.Context) error {
 	v.logger.InfoCtx(ctx, "starting", log.Duration("interval", v.interval))
 
-	for {
-		v.runOnce(ctx)
+	v.runOnce(ctx)
 
+	if v.interval <= 0 {
+		return fmt.Errorf("cannot run SAML domain verifier: interval must be greater than zero")
+	}
+
+	ticker := time.NewTicker(v.interval)
+	defer ticker.Stop()
+
+	for {
 		select {
 		case <-ctx.Done():
 			v.logger.InfoCtx(ctx, "shutting down")
 			return ctx.Err()
-		case <-time.After(v.interval):
+		case <-ticker.C:
+			v.runOnce(ctx)
 		}
 	}
 }
@@ -93,7 +101,7 @@ func (v *SAMLDomainVerifier) checkUnverifiedDomains(ctx context.Context) error {
 
 	err := v.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			err := configs.LoadUnverified(ctx, conn)
 			if err != nil {
 				return fmt.Errorf("cannot load unverified SAML configurations: %w", err)
@@ -140,7 +148,7 @@ func (v *SAMLDomainVerifier) checkUnverifiedDomains(ctx context.Context) error {
 func (v *SAMLDomainVerifier) tryVerifyDomain(ctx context.Context, configID gid.GID) error {
 	return v.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			config := &coredata.SAMLConfiguration{}
 			if err := config.LoadByIDForUpdateSkipLocked(ctx, tx, configID); err != nil {
 				if err == coredata.ErrResourceNotFound {

@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -51,7 +51,7 @@ func (w WebhookEvent) CursorKey(orderBy WebhookEventOrderField) page.CursorKey {
 
 func (w *WebhookEvents) LoadBySubscriptionID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	webhookSubscriptionID gid.GID,
 	cursor *page.Cursor[WebhookEventOrderField],
@@ -93,7 +93,7 @@ WHERE
 
 func (w *WebhookEvents) CountBySubscriptionID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	webhookSubscriptionID gid.GID,
 ) (int, error) {
@@ -118,7 +118,7 @@ WHERE %s
 
 func (w *WebhookEvent) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -162,7 +162,7 @@ VALUES (
 
 func (w *WebhookEvent) UpdateStatus(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `

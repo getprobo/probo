@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -62,6 +62,31 @@ func TestMaxLen(t *testing.T) {
 			err := MaxLen(tt.maxLen)(tt.value)
 			if (err != nil) != tt.wantError {
 				t.Errorf("MaxLen() error = %v, wantError %v", err, tt.wantError)
+			}
+		})
+	}
+}
+
+func TestContainsSubstring(t *testing.T) {
+	tests := []struct {
+		name      string
+		value     any
+		substr    string
+		wantError bool
+	}{
+		{"contains substring", "hello {{cookie_policy_link}} world", "{{cookie_policy_link}}", false},
+		{"missing substring", "hello world", "{{cookie_policy_link}}", true},
+		{"exact match", "{{cookie_policy_link}}", "{{cookie_policy_link}}", false},
+		{"empty string", "", "{{cookie_policy_link}}", true},
+		{"nil pointer", (*string)(nil), "{{cookie_policy_link}}", false},
+		{"non-string", 123, "foo", true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := ContainsSubstring(tt.substr)(tt.value)
+			if (err != nil) != tt.wantError {
+				t.Errorf("ContainsSubstring() error = %v, wantError %v", err, tt.wantError)
 			}
 		})
 	}

@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -41,7 +41,7 @@ type (
 
 func (cp ControlDocument) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -87,7 +87,7 @@ VALUES (
 
 func (cp ControlDocument) Delete(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 	controlID gid.GID,
 	documentID gid.GID,
@@ -112,4 +112,33 @@ WHERE
 
 	_, err := conn.Exec(ctx, q, args)
 	return err
+}
+
+func (cp ControlDocument) DeleteByDocumentIDs(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+	documentIDs []gid.GID,
+) error {
+	q := `
+DELETE
+FROM
+    controls_documents
+WHERE
+    %s
+    AND document_id = ANY(@document_ids);
+`
+
+	args := pgx.StrictNamedArgs{
+		"document_ids": documentIDs,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	if _, err := conn.Exec(ctx, q, args); err != nil {
+		return fmt.Errorf("cannot delete control document mappings by document ids: %w", err)
+	}
+
+	return nil
 }

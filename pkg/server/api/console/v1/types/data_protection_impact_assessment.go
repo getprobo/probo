@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -30,7 +30,6 @@ type (
 
 		Resolver any
 		ParentID gid.GID
-		Filter   *coredata.DataProtectionImpactAssessmentFilter
 	}
 )
 
@@ -38,7 +37,6 @@ func NewDataProtectionImpactAssessmentConnection(
 	p *page.Page[*coredata.DataProtectionImpactAssessment, coredata.DataProtectionImpactAssessmentOrderField],
 	parentType any,
 	parentID gid.GID,
-	filter *coredata.DataProtectionImpactAssessmentFilter,
 ) *DataProtectionImpactAssessmentConnection {
 	edges := make([]*DataProtectionImpactAssessmentEdge, len(p.Data))
 	for i, dpia := range p.Data {
@@ -51,7 +49,6 @@ func NewDataProtectionImpactAssessmentConnection(
 
 		Resolver: parentType,
 		ParentID: parentID,
-		Filter:   filter,
 	}
 }
 

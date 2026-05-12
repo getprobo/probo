@@ -77,6 +77,7 @@ func NewCmdAPI(f *cmdutil.Factory) *cobra.Command {
 				hc.Token,
 				endpoint,
 				cfg.HTTPTimeoutDuration(),
+				cmdutil.TokenRefreshOption(cfg, host, hc),
 			)
 
 			var query string

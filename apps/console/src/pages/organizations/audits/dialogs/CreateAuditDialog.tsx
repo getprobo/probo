@@ -1,3 +1,17 @@
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
 import {
   auditStates,
   formatDatetime,
@@ -12,7 +26,9 @@ import {
   Dialog,
   DialogContent,
   DialogFooter,
+  type DialogRef,
   Field,
+  IconUpload,
   Input,
   Option,
   Select,
@@ -62,15 +78,21 @@ const schema = z.object({
 });
 
 type Props = {
-  children: React.ReactNode;
+  children?: React.ReactNode;
   connection: string;
   organizationId: string;
+  file?: File | null;
+  ref?: DialogRef;
+  onClose?: () => void;
 };
 
 export function CreateAuditDialog({
   children,
   connection,
   organizationId,
+  file,
+  ref: externalRef,
+  onClose,
 }: Props) {
   const { __ } = useTranslate();
   const { toast } = useToast();
@@ -84,7 +106,8 @@ export function CreateAuditDialog({
         state: "NOT_STARTED",
       },
     });
-  const ref = useDialogRef();
+  const internalRef = useDialogRef();
+  const ref = externalRef ?? internalRef;
   const createAudit = useCreateAudit(connection);
 
   const onSubmit = async (data: z.infer<typeof schema>) => {
@@ -96,12 +119,17 @@ export function CreateAuditDialog({
         validFrom: formatDatetime(data.validFrom),
         validUntil: formatDatetime(data.validUntil),
         state: data.state,
+        file: file ?? null,
       });
+
       ref.current?.close();
       reset();
+      onClose?.();
       toast({
         title: __("Success"),
-        description: __("Audit created successfully"),
+        description: file
+          ? __("Audit created and report uploaded successfully")
+          : __("Audit created successfully"),
         variant: "success",
       });
     } catch (error) {
@@ -116,14 +144,34 @@ export function CreateAuditDialog({
     }
   };
 
+  const handleClose = () => {
+    onClose?.();
+  };
+
   return (
     <Dialog
       ref={ref}
       trigger={children}
       title={<Breadcrumb items={[__("Audits"), __("New Audit")]} />}
+      onClose={handleClose}
     >
       <form onSubmit={e => void handleSubmit(onSubmit)(e)} className="space-y-4">
         <DialogContent padded className="space-y-4">
+          {file && (
+            <div className="flex items-center gap-3 rounded-lg border border-border-low bg-level-1 p-3">
+              <IconUpload className="text-txt-secondary size-5 shrink-0" />
+              <div className="min-w-0">
+                <p className="text-txt-primary truncate text-sm font-medium">
+                  {file.name}
+                </p>
+                <p className="text-txt-tertiary text-xs">
+                  {(file.size / 1024 / 1024).toFixed(2)}
+                  {" MB"}
+                </p>
+              </div>
+            </div>
+          )}
+
           <Field label={__("Framework")}>
             <Suspense
               fallback={

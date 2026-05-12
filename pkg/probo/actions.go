@@ -19,6 +19,7 @@ package probo
 const (
 	// Organization actions
 	ActionOrganizationGet                  = "core:organization:get"
+	ActionOrganizationUpdate               = "core:organization:update"
 	ActionOrganizationGetLogoUrl           = "core:organization:get-logo-url"
 	ActionOrganizationGetHorizontalLogoUrl = "core:organization:get-horizontal-logo-url"
 
@@ -83,12 +84,13 @@ const (
 	ActionTrustCenterFileCreate     = "core:trust-center-file:create"
 
 	// Vendor actions
-	ActionVendorList   = "core:vendor:list"
-	ActionVendorGet    = "core:vendor:get"
-	ActionVendorCreate = "core:vendor:create"
-	ActionVendorUpdate = "core:vendor:update"
-	ActionVendorDelete = "core:vendor:delete"
-	ActionVendorAssess = "core:vendor:assess"
+	ActionVendorList    = "core:vendor:list"
+	ActionVendorGet     = "core:vendor:get"
+	ActionVendorCreate  = "core:vendor:create"
+	ActionVendorUpdate  = "core:vendor:update"
+	ActionVendorDelete  = "core:vendor:delete"
+	ActionVendorAssess  = "core:vendor:assess"
+	ActionVendorPublish = "core:vendor:publish"
 
 	// VendorContact actions
 	ActionVendorContactGet    = "core:vendor-contact:get"
@@ -147,19 +149,19 @@ const (
 	ActionControlDocumentMappingDelete   = "core:control:delete-document-mapping"
 	ActionControlAuditMappingCreate      = "core:control:create-audit-mapping"
 	ActionControlAuditMappingDelete      = "core:control:delete-audit-mapping"
-	ActionControlSnapshotMappingCreate   = "core:control:create-snapshot-mapping"
-	ActionControlSnapshotMappingDelete   = "core:control:delete-snapshot-mapping"
 	ActionControlObligationMappingCreate = "core:control:create-obligation-mapping"
 	ActionControlObligationMappingDelete = "core:control:delete-obligation-mapping"
 
 	// Measure actions
-	ActionMeasureGet            = "core:measure:get"
-	ActionMeasureList           = "core:measure:list"
-	ActionMeasureCreate         = "core:measure:create"
-	ActionMeasureUpdate         = "core:measure:update"
-	ActionMeasureDelete         = "core:measure:delete"
-	ActionMeasureEvidenceUpload = "core:measure:upload-evidence"
-	ActionMeasureImport         = "core:measure:import"
+	ActionMeasureGet                   = "core:measure:get"
+	ActionMeasureList                  = "core:measure:list"
+	ActionMeasureCreate                = "core:measure:create"
+	ActionMeasureUpdate                = "core:measure:update"
+	ActionMeasureDelete                = "core:measure:delete"
+	ActionMeasureEvidenceUpload        = "core:measure:upload-evidence"
+	ActionMeasureImport                = "core:measure:import"
+	ActionMeasureDocumentMappingCreate = "core:measure:create-document-mapping"
+	ActionMeasureDocumentMappingDelete = "core:measure:delete-document-mapping"
 
 	// Task actions
 	ActionTaskGet      = "core:task:get"
@@ -181,19 +183,28 @@ const (
 	ActionDocumentUpdate                   = "core:document:update"
 	ActionDocumentDelete                   = "core:document:delete"
 	ActionDocumentChangelogGenerate        = "core:document:generate-changelog"
-	ActionDocumentDraftVersionCreate       = "core:document:create-draft-version"
+	ActionDocumentArchive                  = "core:document:archive"
+	ActionDocumentUnarchive                = "core:document:unarchive"
+	ActionDocumentDeleteDraft              = "core:document:delete-draft"
 	ActionDocumentSendSigningNotifications = "core:document:send-signing-notifications"
 
 	// DocumentVersion actions
-	ActionDocumentVersionGet            = "core:document-version:get"
-	ActionDocumentVersionList           = "core:document-version:list"
-	ActionDocumentVersionExportPDF      = "core:document-version:export-pdf"
-	ActionDocumentVersionExportSignable = "core:document-version:export-signable-pdf"
-	ActionDocumentVersionSign           = "core:document-version:sign"
-	ActionDocumentVersionUpdate         = "core:document-version:update"
-	ActionDocumentVersionDeleteDraft    = "core:document-version:delete-draft"
-	ActionDocumentVersionPublish        = "core:document-version:publish"
-	ActionDocumentVersionExport         = "core:document-version:export"
+	ActionDocumentVersionGet             = "core:document-version:get"
+	ActionDocumentVersionList            = "core:document-version:list"
+	ActionDocumentVersionExportPDF       = "core:document-version:export-pdf"
+	ActionDocumentVersionSign            = "core:document-version:sign"
+	ActionDocumentVersionRequestApproval = "core:document-version:request-approval"
+	ActionDocumentVersionVoidApproval    = "core:document-version:void-approval"
+	ActionDocumentVersionApprove         = "core:document-version:approve"
+	ActionDocumentVersionReject          = "core:document-version:reject"
+	ActionDocumentVersionApprovalList    = "core:document-version:approval-list"
+	ActionDocumentVersionPublish         = "core:document-version:publish"
+	ActionDocumentVersionExport          = "core:document-version:export"
+
+	// EmployeeDocument actions
+	ActionEmployeeDocumentGet              = "core:employee-document:get"
+	ActionEmployeeDocumentList             = "core:employee-document:list"
+	ActionEmployeeDocumentVersionExportPDF = "core:employee-document-version:export-pdf"
 
 	// DocumentVersionSignature actions
 	ActionDocumentVersionSignatureRequest = "core:document-version-signature:request"
@@ -213,20 +224,23 @@ const (
 	ActionRiskDocumentMappingDelete   = "core:risk:delete-document-mapping"
 	ActionRiskObligationMappingCreate = "core:risk:create-obligation-mapping"
 	ActionRiskObligationMappingDelete = "core:risk:delete-obligation-mapping"
+	ActionRiskPublish                 = "core:risk:publish"
 
 	// Asset actions
-	ActionAssetGet    = "core:asset:get"
-	ActionAssetList   = "core:asset:list"
-	ActionAssetCreate = "core:asset:create"
-	ActionAssetUpdate = "core:asset:update"
-	ActionAssetDelete = "core:asset:delete"
+	ActionAssetGet     = "core:asset:get"
+	ActionAssetList    = "core:asset:list"
+	ActionAssetCreate  = "core:asset:create"
+	ActionAssetUpdate  = "core:asset:update"
+	ActionAssetDelete  = "core:asset:delete"
+	ActionAssetPublish = "core:asset:publish"
 
 	// Datum actions
-	ActionDatumGet    = "core:datum:get"
-	ActionDatumList   = "core:datum:list"
-	ActionDatumCreate = "core:datum:create"
-	ActionDatumUpdate = "core:datum:update"
-	ActionDatumDelete = "core:datum:delete"
+	ActionDatumGet     = "core:datum:get"
+	ActionDatumList    = "core:datum:list"
+	ActionDatumCreate  = "core:datum:create"
+	ActionDatumUpdate  = "core:datum:update"
+	ActionDatumDelete  = "core:datum:delete"
+	ActionDatumPublish = "core:datum:publish"
 
 	// Audit actions
 	ActionAuditGet          = "core:audit:get"
@@ -250,27 +264,23 @@ const (
 	ActionFindingDelete             = "core:finding:delete"
 	ActionFindingAuditMappingCreate = "core:finding:create-audit-mapping"
 	ActionFindingAuditMappingDelete = "core:finding:delete-audit-mapping"
+	ActionFindingPublish            = "core:finding:publish"
 
 	// Obligation actions
-	ActionObligationGet    = "core:obligation:get"
-	ActionObligationList   = "core:obligation:list"
-	ActionObligationCreate = "core:obligation:create"
-	ActionObligationUpdate = "core:obligation:update"
-	ActionObligationDelete = "core:obligation:delete"
+	ActionObligationGet     = "core:obligation:get"
+	ActionObligationList    = "core:obligation:list"
+	ActionObligationCreate  = "core:obligation:create"
+	ActionObligationUpdate  = "core:obligation:update"
+	ActionObligationDelete  = "core:obligation:delete"
+	ActionObligationPublish = "core:obligation:publish"
 
 	// ProcessingActivity actions
-	ActionProcessingActivityList   = "core:processing-activity:list"
-	ActionProcessingActivityGet    = "core:processing-activity:get"
-	ActionProcessingActivityCreate = "core:processing-activity:create"
-	ActionProcessingActivityUpdate = "core:processing-activity:update"
-	ActionProcessingActivityDelete = "core:processing-activity:delete"
-	ActionProcessingActivityExport = "core:processing-activity:export"
-
-	// Snapshot actions
-	ActionSnapshotGet    = "core:snapshot:get"
-	ActionSnapshotList   = "core:snapshot:list"
-	ActionSnapshotCreate = "core:snapshot:create"
-	ActionSnapshotDelete = "core:snapshot:delete"
+	ActionProcessingActivityList    = "core:processing-activity:list"
+	ActionProcessingActivityGet     = "core:processing-activity:get"
+	ActionProcessingActivityCreate  = "core:processing-activity:create"
+	ActionProcessingActivityUpdate  = "core:processing-activity:update"
+	ActionProcessingActivityDelete  = "core:processing-activity:delete"
+	ActionProcessingActivityPublish = "core:processing-activity:publish"
 
 	// CustomDomain actions
 	ActionCustomDomainGet    = "core:custom-domain:get"
@@ -281,13 +291,6 @@ const (
 	ActionFileGet         = "core:file:get"
 	ActionFileDownloadUrl = "core:file:download-url"
 
-	// Meeting actions
-	ActionMeetingList   = "core:meeting:list"
-	ActionMeetingGet    = "core:meeting:get"
-	ActionMeetingCreate = "core:meeting:create"
-	ActionMeetingUpdate = "core:meeting:update"
-	ActionMeetingDelete = "core:meeting:delete"
-
 	// Connector actions
 	ActionConnectorInitiate = "core:connector:initiate"
 
@@ -295,24 +298,25 @@ const (
 	ActionSlackConnectionList = "core:slack-connection:list"
 
 	// Connector actions (generic)
+	ActionConnectorCreate = "core:connector:create"
 	ActionConnectorList   = "core:connector:list"
 	ActionConnectorDelete = "core:connector:delete"
 
 	// DataProtectionImpactAssessment actions
-	ActionDataProtectionImpactAssessmentList   = "core:data-protection-impact-assessment:list"
-	ActionDataProtectionImpactAssessmentGet    = "core:data-protection-impact-assessment:get"
-	ActionDataProtectionImpactAssessmentCreate = "core:data-protection-impact-assessment:create"
-	ActionDataProtectionImpactAssessmentUpdate = "core:data-protection-impact-assessment:update"
-	ActionDataProtectionImpactAssessmentDelete = "core:data-protection-impact-assessment:delete"
-	ActionDataProtectionImpactAssessmentExport = "core:data-protection-impact-assessment:export"
+	ActionDataProtectionImpactAssessmentList    = "core:data-protection-impact-assessment:list"
+	ActionDataProtectionImpactAssessmentGet     = "core:data-protection-impact-assessment:get"
+	ActionDataProtectionImpactAssessmentCreate  = "core:data-protection-impact-assessment:create"
+	ActionDataProtectionImpactAssessmentUpdate  = "core:data-protection-impact-assessment:update"
+	ActionDataProtectionImpactAssessmentDelete  = "core:data-protection-impact-assessment:delete"
+	ActionDataProtectionImpactAssessmentPublish = "core:data-protection-impact-assessment:publish"
 
 	// TransferImpactAssessment actions
-	ActionTransferImpactAssessmentList   = "core:transfer-impact-assessment:list"
-	ActionTransferImpactAssessmentGet    = "core:transfer-impact-assessment:get"
-	ActionTransferImpactAssessmentCreate = "core:transfer-impact-assessment:create"
-	ActionTransferImpactAssessmentUpdate = "core:transfer-impact-assessment:update"
-	ActionTransferImpactAssessmentDelete = "core:transfer-impact-assessment:delete"
-	ActionTransferImpactAssessmentExport = "core:transfer-impact-assessment:export"
+	ActionTransferImpactAssessmentList    = "core:transfer-impact-assessment:list"
+	ActionTransferImpactAssessmentGet     = "core:transfer-impact-assessment:get"
+	ActionTransferImpactAssessmentCreate  = "core:transfer-impact-assessment:create"
+	ActionTransferImpactAssessmentUpdate  = "core:transfer-impact-assessment:update"
+	ActionTransferImpactAssessmentDelete  = "core:transfer-impact-assessment:delete"
+	ActionTransferImpactAssessmentPublish = "core:transfer-impact-assessment:publish"
 
 	// TrustCenterDocumentAccess actions
 	ActionTrustCenterDocumentAccessList = "core:trust-center-document-access:list"
@@ -324,13 +328,13 @@ const (
 	ActionRightsRequestUpdate = "core:rights-request:update"
 	ActionRightsRequestDelete = "core:rights-request:delete"
 
-	// StateOfApplicability actions
-	ActionStateOfApplicabilityList   = "core:state-of-applicability:list"
-	ActionStateOfApplicabilityGet    = "core:state-of-applicability:get"
-	ActionStateOfApplicabilityCreate = "core:state-of-applicability:create"
-	ActionStateOfApplicabilityUpdate = "core:state-of-applicability:update"
-	ActionStateOfApplicabilityDelete = "core:state-of-applicability:delete"
-	ActionStateOfApplicabilityExport = "core:state-of-applicability:export"
+	// StatementOfApplicability actions
+	ActionStatementOfApplicabilityList    = "core:statement-of-applicability:list"
+	ActionStatementOfApplicabilityGet     = "core:statement-of-applicability:get"
+	ActionStatementOfApplicabilityCreate  = "core:statement-of-applicability:create"
+	ActionStatementOfApplicabilityUpdate  = "core:statement-of-applicability:update"
+	ActionStatementOfApplicabilityDelete  = "core:statement-of-applicability:delete"
+	ActionStatementOfApplicabilityPublish = "core:statement-of-applicability:publish"
 
 	ActionApplicabilityStatementGet    = "core:applicability-statement:get"
 	ActionApplicabilityStatementList   = "core:applicability-statement:list"
@@ -344,4 +348,75 @@ const (
 	ActionWebhookSubscriptionCreate = "core:webhook-subscription:create"
 	ActionWebhookSubscriptionUpdate = "core:webhook-subscription:update"
 	ActionWebhookSubscriptionDelete = "core:webhook-subscription:delete"
+
+	// AccessReviewCampaign actions
+	ActionAccessReviewCampaignGet               = "core:access-review-campaign:get"
+	ActionAccessReviewCampaignList              = "core:access-review-campaign:list"
+	ActionAccessReviewCampaignCreate            = "core:access-review-campaign:create"
+	ActionAccessReviewCampaignUpdate            = "core:access-review-campaign:update"
+	ActionAccessReviewCampaignDelete            = "core:access-review-campaign:delete"
+	ActionAccessReviewCampaignStart             = "core:access-review-campaign:start"
+	ActionAccessReviewCampaignClose             = "core:access-review-campaign:close"
+	ActionAccessReviewCampaignCancel            = "core:access-review-campaign:cancel"
+	ActionAccessReviewCampaignAddScopeSource    = "core:access-review-campaign:add-scope-source"
+	ActionAccessReviewCampaignRemoveScopeSource = "core:access-review-campaign:remove-scope-source"
+
+	// AccessEntry actions
+	ActionAccessEntryGet    = "core:access-entry:get"
+	ActionAccessEntryList   = "core:access-entry:list"
+	ActionAccessEntryDecide = "core:access-entry:decide"
+	ActionAccessEntryFlag   = "core:access-entry:flag"
+
+	// AccessSource actions
+	ActionAccessSourceGet    = "core:access-source:get"
+	ActionAccessSourceList   = "core:access-source:list"
+	ActionAccessSourceCreate = "core:access-source:create"
+	ActionAccessSourceUpdate = "core:access-source:update"
+	ActionAccessSourceDelete = "core:access-source:delete"
+	ActionAccessSourceSync   = "core:access-source:sync"
+
+	// CookieBanner actions
+	ActionCookieBannerGet        = "core:cookie-banner:get"
+	ActionCookieBannerList       = "core:cookie-banner:list"
+	ActionCookieBannerCreate     = "core:cookie-banner:create"
+	ActionCookieBannerUpdate     = "core:cookie-banner:update"
+	ActionCookieBannerDelete     = "core:cookie-banner:delete"
+	ActionCookieBannerActivate   = "core:cookie-banner:activate"
+	ActionCookieBannerDeactivate = "core:cookie-banner:deactivate"
+
+	// CookieBannerVersion actions
+	ActionCookieBannerVersionGet     = "core:cookie-banner-version:get"
+	ActionCookieBannerVersionList    = "core:cookie-banner-version:list"
+	ActionCookieBannerVersionPublish = "core:cookie-banner-version:publish"
+
+	// CookieCategory actions
+	ActionCookieCategoryGet    = "core:cookie-category:get"
+	ActionCookieCategoryList   = "core:cookie-category:list"
+	ActionCookieCategoryCreate = "core:cookie-category:create"
+	ActionCookieCategoryUpdate = "core:cookie-category:update"
+	ActionCookieCategoryDelete = "core:cookie-category:delete"
+
+	// Cookie actions
+	ActionCookieGet    = "core:cookie:get"
+	ActionCookieList   = "core:cookie:list"
+	ActionCookieCreate = "core:cookie:create"
+	ActionCookieUpdate = "core:cookie:update"
+	ActionCookieDelete = "core:cookie:delete"
+
+	// TrackerPattern actions
+	ActionTrackerPatternGet    = "core:tracker-pattern:get"
+	ActionTrackerPatternList   = "core:tracker-pattern:list"
+	ActionTrackerPatternCreate = "core:tracker-pattern:create"
+	ActionTrackerPatternUpdate = "core:tracker-pattern:update"
+	ActionTrackerPatternDelete = "core:tracker-pattern:delete"
+
+	// TrackerResource actions
+	ActionTrackerResourceGet    = "core:tracker-resource:get"
+	ActionTrackerResourceList   = "core:tracker-resource:list"
+	ActionTrackerResourceCreate = "core:tracker-resource:create"
+	ActionTrackerResourceUpdate = "core:tracker-resource:update"
+	ActionTrackerResourceDelete = "core:tracker-resource:delete"
+
+	// CookieConsentRecord actions
+	ActionCookieConsentRecordList = "core:cookie-consent-record:list"
 )

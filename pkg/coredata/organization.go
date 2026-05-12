@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -46,7 +46,7 @@ type (
 	Organizations []*Organization
 )
 
-func (o *Organization) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+func (o *Organization) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	q := `SELECT id FROM organizations WHERE id = $1 LIMIT 1;`
 
 	var id gid.GID
@@ -75,7 +75,7 @@ func (o Organization) CursorKey(orderBy OrganizationOrderField) page.CursorKey {
 
 func (o *Organization) LoadByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 ) error {
@@ -125,9 +125,56 @@ LIMIT 1;
 	return nil
 }
 
+func (o *Organizations) LoadByIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	organizationIDs []gid.GID,
+) error {
+	q := `
+SELECT
+    tenant_id,
+    id,
+    name,
+    logo_file_id,
+    horizontal_logo_file_id,
+    description,
+    website_url,
+    email,
+    headquarter_address,
+    custom_domain_id,
+    created_at,
+    updated_at
+FROM
+    organizations
+WHERE
+    %s
+    AND id = ANY(@organization_ids)
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"organization_ids": organizationIDs}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query organizations: %w", err)
+	}
+
+	organizations, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Organization])
+	if err != nil {
+		return fmt.Errorf("cannot collect organizations: %w", err)
+	}
+
+	*o = organizations
+
+	return nil
+}
+
 func (o *Organizations) LoadByIdentityID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	identityID gid.GID,
 	cursor *page.Cursor[OrganizationOrderField],
@@ -185,7 +232,7 @@ WHERE
 
 func (o *Organization) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 ) error {
 	q := `
 INSERT INTO organizations (
@@ -230,7 +277,7 @@ INSERT INTO organizations (
 func (o *Organization) Update(
 	ctx context.Context,
 	scope Scoper,
-	conn pg.Conn,
+	conn pg.Tx,
 ) error {
 	q := `
 UPDATE organizations
@@ -276,7 +323,7 @@ WHERE
 
 func (o *Organization) Delete(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	organizationID gid.GID,
 ) error {
 	q := `
@@ -296,7 +343,7 @@ WHERE id = @id
 
 func (o *Organization) LoadByCustomDomainID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	customDomainID gid.GID,
 ) error {

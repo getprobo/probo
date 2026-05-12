@@ -1,66 +1,86 @@
+// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
 import { useTranslate } from "@probo/i18n";
 import { Button } from "@probo/ui";
+import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { Link, useLocation } from "react-router";
+import { graphql } from "relay-runtime";
 
-export default function SignInPage() {
+import type { SignInPageQuery } from "#/__generated__/iam/SignInPageQuery.graphql";
+
+import { Divider } from "./_components/Divider";
+import { OIDCButton } from "./_components/OIDCButton";
+
+export const signInPageQuery = graphql`
+  query SignInPageQuery {
+    oidcProviders {
+      ...OIDCButtonFragment
+    }
+  }
+`;
+
+type Props = {
+  queryRef: PreloadedQuery<SignInPageQuery>;
+};
+
+export default function SignInPage(props: Props) {
   const { __ } = useTranslate();
-
   const location = useLocation();
 
+  const data = usePreloadedQuery<SignInPageQuery>(signInPageQuery, props.queryRef);
+
   return (
-    <div className="space-y-6 w-full max-w-md mx-auto pt-8">
-      <h1 className="text-center text-2xl font-bold">
-        {__("Login to your account")}
+    <div className="w-full max-w-sm mx-auto pt-8">
+      <h1 className="text-2xl font-bold">
+        {__("Sign in to your account")}
       </h1>
-      <p className="text-center text-txt-tertiary mt-1 mb-6">
-        {__("Choose your login method")}
-      </p>
 
-      <Button
-        className="w-xs h-10 mx-auto"
-        to={{ pathname: "/auth/password-login", search: location.search }}
-      >
-        {__("Login with Email")}
-      </Button>
+      <div className="mt-6 space-y-4">
+        {data.oidcProviders.map((providerRef, index) => (
+          <OIDCButton key={index} providerRef={providerRef} />
+        ))}
 
-      <div className="relative my-6 w-full">
-        <div className="w-xs border-t border-border-mid mx-auto" />
-        <span
-          className="px-4 text-xs uppercase text-txt-secondary bg-level-0 absolute top-0 left-1/2 -translate-1/2"
+        <Button
+          variant="secondary"
+          className="w-full h-10"
+          to={{ pathname: "/auth/sso-login", search: location.search }}
         >
-          {__("Or")}
-        </span>
+          {__("Sign in with SSO")}
+        </Button>
+
+        <Divider>{__("Or")}</Divider>
+
+        <Button
+          variant="secondary"
+          className="w-full h-10"
+          to={{ pathname: "/auth/password-login", search: location.search }}
+        >
+          {__("Sign in with email")}
+        </Button>
       </div>
 
-      <Button
-        variant="secondary"
-        className="w-xs h-10 mx-auto"
-        to={{ pathname: "/auth/sso-login", search: location.search }}
-      >
-        {__("Login with SSO")}
-      </Button>
-
-      <div className="text-center mt-6 text-sm text-txt-secondary">
-        {__("Don't have an account ?")}
+      <p className="mt-8 text-center text-sm text-txt-secondary">
+        {__("New to Probo?")}
         {" "}
         <Link
           to={{ pathname: "/auth/register", search: location.search }}
           className="underline hover:text-txt-primary"
         >
-          {__("Register")}
+          {__("Create account")}
         </Link>
-      </div>
-
-      <div className="text-center text-sm text-txt-secondary">
-        {__("Forgot password?")}
-        {" "}
-        <Link
-          to="/auth/forgot-password"
-          className="underline hover:text-txt-primary"
-        >
-          {__("Reset password")}
-        </Link>
-      </div>
+      </p>
     </div>
   );
 }

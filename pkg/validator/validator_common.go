@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -41,6 +41,36 @@ func Required() ValidatorFunc {
 			if rv.Kind() == reflect.Slice && rv.Len() == 0 {
 				return newValidationError(ErrorCodeRequired, "field is required")
 			}
+		}
+
+		return nil
+	}
+}
+
+// NoDuplicates validates that a slice contains no duplicate elements.
+func NoDuplicates() ValidatorFunc {
+	return func(value any) *ValidationError {
+		actualValue, isNil := dereferenceValue(value)
+		if isNil {
+			return nil
+		}
+
+		rv := reflect.ValueOf(actualValue)
+		if rv.Kind() != reflect.Slice {
+			return newValidationError(ErrorCodeInvalidFormat, "value must be a slice")
+		}
+
+		if !rv.Type().Elem().Comparable() {
+			return newValidationError(ErrorCodeInvalidFormat, "slice elements must be comparable")
+		}
+
+		seen := make(map[any]struct{}, rv.Len())
+		for i := range rv.Len() {
+			elem := rv.Index(i).Interface()
+			if _, ok := seen[elem]; ok {
+				return newValidationError(ErrorCodeInvalidFormat, "must not contain duplicates")
+			}
+			seen[elem] = struct{}{}
 		}
 
 		return nil

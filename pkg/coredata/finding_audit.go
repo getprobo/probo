@@ -39,7 +39,7 @@ type (
 
 func (fa FindingAudit) Upsert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 ) error {
 	q := `
@@ -81,7 +81,7 @@ ON CONFLICT (finding_id, audit_id) DO NOTHING;
 
 func (fa FindingAudit) Delete(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 	findingID gid.GID,
 	auditID gid.GID,

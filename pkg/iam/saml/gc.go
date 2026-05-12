@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -34,18 +34,34 @@ type (
 		interval time.Duration
 		logger   *log.Logger
 	}
+
+	GarbageCollectorOption func(*GarbageCollector)
 )
 
-func NewGarbageCollector(
-	pg *pg.Client,
-	interval time.Duration,
-	logger *log.Logger,
-) *GarbageCollector {
-	return &GarbageCollector{
-		pg:       pg,
-		interval: interval,
-		logger:   logger.Named("saml.garbage_collector").With(log.Duration("interval", interval)),
+func WithGarbageCollectionInterval(interval time.Duration) GarbageCollectorOption {
+	return func(gc *GarbageCollector) {
+		gc.interval = interval
 	}
+}
+
+func NewGarbageCollector(
+	pgClient *pg.Client,
+	logger *log.Logger,
+	opts ...GarbageCollectorOption,
+) *GarbageCollector {
+	gc := &GarbageCollector{
+		pg:       pgClient,
+		interval: DefaultGarbageCollectionInterval,
+		logger:   logger.Named("saml.garbage_collector"),
+	}
+
+	for _, opt := range opts {
+		opt(gc)
+	}
+
+	gc.logger = gc.logger.With(log.Duration("interval", gc.interval))
+
+	return gc
 }
 
 func (gc *GarbageCollector) Run(ctx context.Context) error {
@@ -55,12 +71,19 @@ func (gc *GarbageCollector) Run(ctx context.Context) error {
 		gc.logger.ErrorCtx(ctx, "cannot run initial cleanup", log.Error(err))
 	}
 
+	if gc.interval <= 0 {
+		return fmt.Errorf("cannot run SAML garbage collector: interval must be greater than zero")
+	}
+
+	ticker := time.NewTicker(gc.interval)
+	defer ticker.Stop()
+
 	for {
 		select {
 		case <-ctx.Done():
 			gc.logger.InfoCtx(ctx, "saml garbage collector shutting down")
 			return ctx.Err()
-		case <-time.After(gc.interval):
+		case <-ticker.C:
 			if err := gc.cleanup(ctx); err != nil {
 				gc.logger.ErrorCtx(ctx, "cannot run periodic cleanup", log.Error(err))
 			}
@@ -73,7 +96,7 @@ func (gc *GarbageCollector) cleanup(ctx context.Context) error {
 
 	return gc.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			assertionsDeleted, err := coredata.DeleteExpiredSAMLAssertions(ctx, tx, now)
 			if err != nil {
 				return fmt.Errorf("cannot delete expired saml assertions: %w", err)

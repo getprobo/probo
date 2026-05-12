@@ -1,0 +1,188 @@
+enum MailingListSubscriberStatus
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.MailingListSubscriberStatus"
+    ) {
+    PENDING
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.MailingListSubscriberStatusPending"
+        )
+    CONFIRMED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.MailingListSubscriberStatusConfirmed"
+        )
+}
+
+enum MailingListUpdateStatus
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.MailingListUpdateStatus"
+    ) {
+    DRAFT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.MailingListUpdateStatusDraft"
+        )
+    ENQUEUED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.MailingListUpdateStatusEnqueued"
+        )
+    PROCESSING
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.MailingListUpdateStatusProcessing"
+        )
+    SENT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.MailingListUpdateStatusSent"
+        )
+}
+
+type MailingList implements Node {
+    id: ID!
+    replyTo: EmailAddr
+
+    subscribers(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+    ): MailingListSubscriberConnection! @goField(forceResolver: true)
+
+    updates(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+    ): MailingListUpdateConnection! @goField(forceResolver: true)
+}
+
+type MailingListSubscriber implements Node {
+    id: ID!
+    fullName: String!
+    email: EmailAddr!
+    status: MailingListSubscriberStatus!
+    createdAt: Datetime!
+    updatedAt: Datetime!
+}
+
+type MailingListSubscriberConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.MailingListSubscriberConnection"
+    ) {
+    edges: [MailingListSubscriberEdge!]!
+    pageInfo: PageInfo!
+    totalCount: Int! @goField(forceResolver: true)
+}
+
+type MailingListSubscriberEdge {
+    cursor: CursorKey!
+    node: MailingListSubscriber!
+}
+
+type MailingListUpdate implements Node {
+    id: ID!
+    title: String!
+    body: String!
+    status: MailingListUpdateStatus!
+    createdAt: Datetime!
+    updatedAt: Datetime!
+}
+
+type MailingListUpdateConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.MailingListUpdateConnection"
+    ) {
+    edges: [MailingListUpdateEdge!]!
+    pageInfo: PageInfo!
+    totalCount: Int! @goField(forceResolver: true)
+}
+
+type MailingListUpdateEdge {
+    cursor: CursorKey!
+    node: MailingListUpdate!
+}
+
+extend type Mutation {
+    createMailingListUpdate(
+        input: CreateMailingListUpdateInput!
+    ): CreateMailingListUpdatePayload!
+    updateMailingListUpdate(
+        input: UpdateMailingListUpdateInput!
+    ): UpdateMailingListUpdatePayload!
+    sendMailingListUpdate(
+        input: SendMailingListUpdateInput!
+    ): SendMailingListUpdatePayload!
+    deleteMailingListUpdate(
+        input: DeleteMailingListUpdateInput!
+    ): DeleteMailingListUpdatePayload!
+    updateMailingList(
+        input: UpdateMailingListInput!
+    ): UpdateMailingListPayload!
+    createMailingListSubscriber(
+        input: CreateMailingListSubscriberInput!
+    ): CreateMailingListSubscriberPayload!
+    deleteMailingListSubscriber(
+        input: DeleteMailingListSubscriberInput!
+    ): DeleteMailingListSubscriberPayload!
+}
+
+input UpdateMailingListInput {
+    id: ID!
+    replyTo: EmailAddr
+}
+
+type UpdateMailingListPayload {
+    mailingList: MailingList!
+}
+
+input CreateMailingListUpdateInput {
+    mailingListId: ID!
+    title: String!
+    body: String!
+}
+
+input UpdateMailingListUpdateInput {
+    id: ID!
+    title: String
+    body: String
+}
+
+input SendMailingListUpdateInput {
+    id: ID!
+}
+
+input DeleteMailingListUpdateInput {
+    id: ID!
+}
+
+input CreateMailingListSubscriberInput {
+    mailingListId: ID!
+    fullName: String!
+    email: EmailAddr!
+    confirmed: Boolean
+}
+
+input DeleteMailingListSubscriberInput {
+    id: ID!
+}
+
+type CreateMailingListUpdatePayload {
+    mailingListUpdate: MailingListUpdate!
+}
+
+type UpdateMailingListUpdatePayload {
+    mailingListUpdate: MailingListUpdate!
+}
+
+type SendMailingListUpdatePayload {
+    mailingListUpdate: MailingListUpdate!
+}
+
+type DeleteMailingListUpdatePayload {
+    deletedMailingListUpdateId: ID!
+}
+
+type CreateMailingListSubscriberPayload {
+    mailingListSubscriberEdge: MailingListSubscriberEdge!
+}
+
+type DeleteMailingListSubscriberPayload {
+    deletedMailingListSubscriberId: ID!
+}

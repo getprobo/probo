@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -78,12 +78,12 @@ func TestControlMeasureMapping_CreateDelete(t *testing.T) {
 		}
 	`, map[string]any{
 		"input": map[string]any{
-			"frameworkId":  frameworkID,
-			"name":         "Control for Mapping",
-			"description":  "Test control for mapping",
-			"sectionTitle": "Section 1",
-			"bestPractice": true,
-			"implemented":  "IMPLEMENTED",
+			"frameworkId":   frameworkID,
+			"name":          "Control for Mapping",
+			"description":   "Test control for mapping",
+			"sectionTitle":  "Section 1",
+			"bestPractice":  true,
+			"maturityLevel": "INITIAL",
 		},
 	}, &createControlResult)
 	require.NoError(t, err)
@@ -358,19 +358,18 @@ func TestControlDocumentMapping_CreateDelete(t *testing.T) {
 		}
 	`, map[string]any{
 		"input": map[string]any{
-			"frameworkId":  frameworkID,
-			"name":         "Control for Document Mapping",
-			"description":  "Test control",
-			"sectionTitle": "Section 1",
-			"bestPractice": true,
-			"implemented":  "IMPLEMENTED",
+			"frameworkId":   frameworkID,
+			"name":          "Control for Document Mapping",
+			"description":   "Test control",
+			"sectionTitle":  "Section 1",
+			"bestPractice":  true,
+			"maturityLevel": "INITIAL",
 		},
 	}, &createControlResult)
 	require.NoError(t, err)
 	controlID := createControlResult.CreateControl.ControlEdge.Node.ID
 
 	// Create a document
-	profileID := factory.CreateUser(owner)
 	var createDocumentResult struct {
 		CreateDocument struct {
 			DocumentEdge struct {
@@ -394,8 +393,7 @@ func TestControlDocumentMapping_CreateDelete(t *testing.T) {
 		"input": map[string]any{
 			"organizationId": owner.GetOrganizationID().String(),
 			"title":          "Document for Control Mapping",
-			"content":        "Document content",
-			"approverIds":    []string{profileID},
+			"content":        testutil.ProseMirrorTextDoc("Document content"),
 			"documentType":   "POLICY",
 			"classification": "INTERNAL",
 		},
@@ -500,12 +498,12 @@ func TestControlAuditMapping_CreateDelete(t *testing.T) {
 		}
 	`, map[string]any{
 		"input": map[string]any{
-			"frameworkId":  frameworkID,
-			"name":         "Control for Audit Mapping",
-			"description":  "Test control",
-			"sectionTitle": "Section 1",
-			"bestPractice": true,
-			"implemented":  "IMPLEMENTED",
+			"frameworkId":   frameworkID,
+			"name":          "Control for Audit Mapping",
+			"description":   "Test control",
+			"sectionTitle":  "Section 1",
+			"bestPractice":  true,
+			"maturityLevel": "INITIAL",
 		},
 	}, &createControlResult)
 	require.NoError(t, err)
@@ -584,144 +582,6 @@ func TestControlAuditMapping_CreateDelete(t *testing.T) {
 	})
 }
 
-func TestControlSnapshotMapping_CreateDelete(t *testing.T) {
-	t.Parallel()
-	owner := testutil.NewClient(t, testutil.RoleOwner)
-
-	// Create a framework and control
-	var createFrameworkResult struct {
-		CreateFramework struct {
-			FrameworkEdge struct {
-				Node struct {
-					ID string `json:"id"`
-				} `json:"node"`
-			} `json:"frameworkEdge"`
-		} `json:"createFramework"`
-	}
-	err := owner.Execute(`
-		mutation($input: CreateFrameworkInput!) {
-			createFramework(input: $input) {
-				frameworkEdge {
-					node {
-						id
-					}
-				}
-			}
-		}
-	`, map[string]any{
-		"input": map[string]any{
-			"organizationId": owner.GetOrganizationID().String(),
-			"name":           "Framework for ControlSnapshot Mapping",
-		},
-	}, &createFrameworkResult)
-	require.NoError(t, err)
-	frameworkID := createFrameworkResult.CreateFramework.FrameworkEdge.Node.ID
-
-	var createControlResult struct {
-		CreateControl struct {
-			ControlEdge struct {
-				Node struct {
-					ID string `json:"id"`
-				} `json:"node"`
-			} `json:"controlEdge"`
-		} `json:"createControl"`
-	}
-	err = owner.Execute(`
-		mutation($input: CreateControlInput!) {
-			createControl(input: $input) {
-				controlEdge {
-					node {
-						id
-					}
-				}
-			}
-		}
-	`, map[string]any{
-		"input": map[string]any{
-			"frameworkId":  frameworkID,
-			"name":         "Control for Snapshot Mapping",
-			"description":  "Test control",
-			"sectionTitle": "Section 1",
-			"bestPractice": true,
-			"implemented":  "IMPLEMENTED",
-		},
-	}, &createControlResult)
-	require.NoError(t, err)
-	controlID := createControlResult.CreateControl.ControlEdge.Node.ID
-
-	// Create a snapshot
-	var createSnapshotResult struct {
-		CreateSnapshot struct {
-			SnapshotEdge struct {
-				Node struct {
-					ID string `json:"id"`
-				} `json:"node"`
-			} `json:"snapshotEdge"`
-		} `json:"createSnapshot"`
-	}
-	err = owner.Execute(`
-		mutation($input: CreateSnapshotInput!) {
-			createSnapshot(input: $input) {
-				snapshotEdge {
-					node {
-						id
-					}
-				}
-			}
-		}
-	`, map[string]any{
-		"input": map[string]any{
-			"organizationId": owner.GetOrganizationID().String(),
-			"name":           "Snapshot for Control Mapping",
-			"type":           "RISKS",
-		},
-	}, &createSnapshotResult)
-	require.NoError(t, err)
-	snapshotID := createSnapshotResult.CreateSnapshot.SnapshotEdge.Node.ID
-
-	t.Run("create mapping", func(t *testing.T) {
-		_, err := owner.Do(`
-			mutation($input: CreateControlSnapshotMappingInput!) {
-				createControlSnapshotMapping(input: $input) {
-					controlEdge {
-						node {
-							id
-						}
-					}
-					snapshotEdge {
-						node {
-							id
-						}
-					}
-				}
-			}
-		`, map[string]any{
-			"input": map[string]any{
-				"controlId":  controlID,
-				"snapshotId": snapshotID,
-			},
-		})
-		require.NoError(t, err)
-	})
-
-	t.Run("delete mapping", func(t *testing.T) {
-		_, err := owner.Do(`
-			mutation($input: DeleteControlSnapshotMappingInput!) {
-				deleteControlSnapshotMapping(input: $input) {
-					deletedControlId
-					deletedSnapshotId
-				}
-			}
-		`, map[string]any{
-			"input": map[string]any{
-				"controlId":  controlID,
-				"snapshotId": snapshotID,
-			},
-		})
-		require.NoError(t, err)
-	})
-}
-
 func TestRiskDocumentMapping_CreateDelete(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
@@ -760,7 +620,6 @@ func TestRiskDocumentMapping_CreateDelete(t *testing.T) {
 	riskID := createRiskResult.CreateRisk.RiskEdge.Node.ID
 
 	// Create a document
-	profileID := factory.CreateUser(owner)
 	var createDocumentResult struct {
 		CreateDocument struct {
 			DocumentEdge struct {
@@ -784,8 +643,7 @@ func TestRiskDocumentMapping_CreateDelete(t *testing.T) {
 		"input": map[string]any{
 			"organizationId": owner.GetOrganizationID().String(),
 			"title":          "Document for Risk Mapping",
-			"content":        "Document content",
-			"approverIds":    []string{profileID},
+			"content":        testutil.ProseMirrorTextDoc("Document content"),
 			"documentType":   "POLICY",
 			"classification": "INTERNAL",
 		},
@@ -944,6 +802,96 @@ func TestRiskObligationMapping_CreateDelete(t *testing.T) {
 			"input": map[string]any{
 				"riskId":       riskID,
 				"obligationId": obligationID,
+			},
+		})
+		require.NoError(t, err)
+	})
+}
+
+func TestMeasureDocumentMapping_CreateDelete(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	measureID := factory.NewMeasure(owner).Create()
+
+	t.Run("create mapping", func(t *testing.T) {
+		t.Parallel()
+		documentID := factory.NewDocument(owner).Create()
+
+		var result struct {
+			CreateMeasureDocumentMapping struct {
+				MeasureEdge struct {
+					Node struct {
+						ID string `json:"id"`
+					} `json:"node"`
+				} `json:"measureEdge"`
+				DocumentEdge struct {
+					Node struct {
+						ID string `json:"id"`
+					} `json:"node"`
+				} `json:"documentEdge"`
+			} `json:"createMeasureDocumentMapping"`
+		}
+		err := owner.Execute(`
+			mutation($input: CreateMeasureDocumentMappingInput!) {
+				createMeasureDocumentMapping(input: $input) {
+					measureEdge {
+						node {
+							id
+						}
+					}
+					documentEdge {
+						node {
+							id
+						}
+					}
+				}
+			}
+		`, map[string]any{
+			"input": map[string]any{
+				"measureId":  measureID,
+				"documentId": documentID,
+			},
+		}, &result)
+		require.NoError(t, err)
+		assert.Equal(t, measureID, result.CreateMeasureDocumentMapping.MeasureEdge.Node.ID)
+		assert.Equal(t, documentID, result.CreateMeasureDocumentMapping.DocumentEdge.Node.ID)
+	})
+
+	t.Run("delete mapping", func(t *testing.T) {
+		t.Parallel()
+		documentID := factory.NewDocument(owner).Create()
+
+		// Create the mapping first
+		_, err := owner.Do(`
+			mutation($input: CreateMeasureDocumentMappingInput!) {
+				createMeasureDocumentMapping(input: $input) {
+					documentEdge {
+						node {
+							id
+						}
+					}
+				}
+			}
+		`, map[string]any{
+			"input": map[string]any{
+				"measureId":  measureID,
+				"documentId": documentID,
+			},
+		})
+		require.NoError(t, err)
+
+		// Delete it
+		_, err = owner.Do(`
+			mutation($input: DeleteMeasureDocumentMappingInput!) {
+				deleteMeasureDocumentMapping(input: $input) {
+					deletedMeasureId
+					deletedDocumentId
+				}
+			}
+		`, map[string]any{
+			"input": map[string]any{
+				"measureId":  measureID,
+				"documentId": documentID,
 			},
 		})
 		require.NoError(t, err)

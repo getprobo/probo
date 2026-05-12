@@ -1,3 +1,17 @@
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
 import { sprintf } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
@@ -18,7 +32,7 @@ import {
 } from "@probo/ui";
 import { type ComponentProps, useState } from "react";
 import { useFragment, useRefetchableFragment } from "react-relay";
-import { useOutletContext, useParams } from "react-router";
+import { useOutletContext } from "react-router";
 import { graphql } from "relay-runtime";
 
 import type { VendorGraphNodeQuery$data } from "#/__generated__/core/VendorGraphNodeQuery.graphql";
@@ -96,8 +110,6 @@ export default function VendorServicesTab() {
   const connectionId = data.services.__id;
   const services = data.services.edges.map(edge => edge.node);
   const { __ } = useTranslate();
-  const { snapshotId } = useParams<{ snapshotId?: string }>();
-  const isSnapshotMode = Boolean(snapshotId);
   const [editingService, setEditingService]
     = useState<VendorServicesTabFragment_service$data | null>(null);
   const hasAnyAction = services.some(
@@ -112,7 +124,7 @@ export default function VendorServicesTab() {
         title={__("Services")}
         description={__("Manage services provided by this vendor.")}
       >
-        {!isSnapshotMode && vendor.canCreateService && (
+        {vendor.canCreateService && (
           <CreateServiceDialog vendorId={vendor.id} connectionId={connectionId}>
             <Button icon={IconPlusLarge}>{__("Add service")}</Button>
           </CreateServiceDialog>
@@ -126,7 +138,7 @@ export default function VendorServicesTab() {
           <Tr>
             <SortableTh field="NAME">{__("Name")}</SortableTh>
             <Th>{__("Description")}</Th>
-            {!isSnapshotMode && hasAnyAction && <Th>{__("Actions")}</Th>}
+            {hasAnyAction && <Th>{__("Actions")}</Th>}
           </Tr>
         </Thead>
         <Tbody>
@@ -136,13 +148,12 @@ export default function VendorServicesTab() {
               serviceKey={service}
               connectionId={connectionId}
               onEdit={setEditingService}
-              isSnapshotMode={isSnapshotMode}
             />
           ))}
         </Tbody>
       </SortableTable>
 
-      {editingService && !isSnapshotMode && editingService.canUpdate && (
+      {editingService && editingService.canUpdate && (
         <EditServiceDialog
           serviceId={editingService.id}
           service={editingService}
@@ -157,7 +168,6 @@ type ServiceRowProps = {
   serviceKey: VendorServicesTabFragment_service$key;
   connectionId: string;
   onEdit: (service: VendorServicesTabFragment_service$data) => void;
-  isSnapshotMode: boolean;
 };
 
 function ServiceRow(props: ServiceRowProps) {
@@ -199,7 +209,7 @@ function ServiceRow(props: ServiceRowProps) {
     <Tr>
       <Td>{service.name}</Td>
       <Td>{service.description || __("—")}</Td>
-      {!props.isSnapshotMode && hasAnyAction && (
+      {hasAnyAction && (
         <Td width={50} className="text-end">
           <ActionDropdown>
             {service.canUpdate && (

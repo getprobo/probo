@@ -1,3 +1,17 @@
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
 import { getTreatment, sprintf } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
@@ -5,9 +19,11 @@ import {
   ActionDropdown,
   Button,
   DropdownItem,
+  IconPageTextLine,
   IconPencil,
   IconPlusLarge,
   IconTrashCan,
+  IconUpload,
   PageHeader,
   RisksChart,
   SeverityBadge,
@@ -20,16 +36,16 @@ import {
   useDialogRef,
 } from "@probo/ui";
 import type { PreloadedQuery } from "react-relay";
-import { useParams } from "react-router";
+import { useNavigate } from "react-router";
 
 import type { RiskGraphFragment$data } from "#/__generated__/core/RiskGraphFragment.graphql";
 import type { RiskGraphListQuery } from "#/__generated__/core/RiskGraphListQuery.graphql";
-import { SnapshotBanner } from "#/components/SnapshotBanner";
 import { SortableTable, SortableTh } from "#/components/SortableTable";
 import { useDeleteRiskMutation, useRisksQuery } from "#/hooks/graph/RiskGraph";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import type { NodeOf } from "#/types";
 
+import { PublishRiskListDialog } from "./dialogs/PublishRiskListDialog";
 import FormRiskDialog from "./FormRiskDialog";
 
 type Props = {
@@ -39,11 +55,10 @@ type Props = {
 export default function RisksPage(props: Props) {
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
-  const { snapshotId } = useParams<{ snapshotId?: string }>();
-  const isSnapshotMode = Boolean(snapshotId);
+  const navigate = useNavigate();
 
   const {
-    data: { canCreateRisk },
+    data: { canCreateRisk, canPublishRisk, risksDocument },
     connectionId,
     risks,
     ...pagination
@@ -56,7 +71,6 @@ export default function RisksPage(props: Props) {
   }) => {
     pagination.refetch(
       {
-        snapshotId,
         order: {
           direction: order.direction as "ASC" | "DESC",
           field: order.field as
@@ -76,27 +90,54 @@ export default function RisksPage(props: Props) {
   usePageTitle(__("Risks"));
 
   const hasAnyAction
-    = !isSnapshotMode
-      && risks.some(({ canDelete, canUpdate }) => canUpdate || canDelete);
+    = risks.some(({ canDelete, canUpdate }) => canUpdate || canDelete);
+
+  const defaultApproverIds
+    = risksDocument?.defaultApprovers?.map(a => a.id) ?? [];
 
   return (
     <div className="space-y-6">
-      {snapshotId && <SnapshotBanner snapshotId={snapshotId} />}
       <PageHeader
         title={__("Risks")}
         description={__(
           "Risks are potential threats to your organization. Manage them by identifying, assessing, and implementing mitigation measures.",
         )}
       >
-        {!isSnapshotMode && canCreateRisk && (
-          <FormRiskDialog
-            connection={connectionId}
-            onSuccess={() => {
-              pagination.refetch({ snapshotId });
-            }}
-            trigger={<Button icon={IconPlusLarge}>{__("New Risk")}</Button>}
-          />
-        )}
+        <div className="flex gap-2">
+          {risksDocument && (
+            <Button
+              variant="secondary"
+              icon={IconPageTextLine}
+              onClick={() => void navigate(
+                `/organizations/${organizationId}/documents/${risksDocument.id}`,
+              )}
+            >
+              {__("Document")}
+            </Button>
+          )}
+          {canPublishRisk && (
+            <PublishRiskListDialog
+              organizationId={organizationId}
+              defaultApproverIds={defaultApproverIds}
+              onPublished={documentId => void navigate(
+                `/organizations/${organizationId}/documents/${documentId}`,
+              )}
+            >
+              <Button variant="secondary" icon={IconUpload}>
+                {__("Publish")}
+              </Button>
+            </PublishRiskListDialog>
+          )}
+          {canCreateRisk && (
+            <FormRiskDialog
+              connection={connectionId}
+              onSuccess={() => {
+                pagination.refetch({});
+              }}
+              trigger={<Button icon={IconPlusLarge}>{__("New Risk")}</Button>}
+            />
+          )}
+        </div>
       </PageHeader>
 
       <div className="grid grid-cols-2 gap-4">
@@ -153,8 +194,6 @@ type RowProps = {
 function RiskRow(props: RowProps) {
   const { __ } = useTranslate();
   const { risk, connectionId, organizationId } = props;
-  const { snapshotId } = useParams<{ snapshotId?: string }>();
-  const isSnapshotMode = Boolean(snapshotId);
   const [deleteRisk] = useDeleteRiskMutation();
   const confirm = useConfirm();
   const onDelete = () => {
@@ -181,20 +220,15 @@ function RiskRow(props: RowProps) {
   };
   const formDialogRef = useDialogRef();
 
-  const riskUrl
-    = isSnapshotMode && snapshotId
-      ? `/organizations/${organizationId}/snapshots/${snapshotId}/risks/${risk.id}/overview`
-      : `/organizations/${organizationId}/risks/${risk.id}/overview`;
+  const riskUrl = `/organizations/${organizationId}/risks/${risk.id}/overview`;
 
   return (
     <>
-      {!isSnapshotMode && (
-        <FormRiskDialog
-          ref={formDialogRef}
-          risk={risk}
-          connection={connectionId}
-        />
-      )}
+      <FormRiskDialog
+        ref={formDialogRef}
+        risk={risk}
+        connection={connectionId}
+      />
       <Tr to={riskUrl}>
         <Td>{risk.name}</Td>
         <Td>{risk.category}</Td>

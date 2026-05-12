@@ -1,22 +1,34 @@
+// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
 import type { GraphQLError } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
 import { Button, Field, useToast } from "@probo/ui";
 import { useEffect, useRef, useState } from "react";
-import {
-  type PreloadedQuery,
-  useMutation,
-  usePreloadedQuery,
-} from "react-relay";
-import { useSearchParams } from "react-router";
+import { type PreloadedQuery, useMutation, usePreloadedQuery } from "react-relay";
 import { graphql } from "relay-runtime";
 import { z } from "zod";
 
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
+import { useSafeContinueUrl } from "#/hooks/useSafeContinueUrl";
 import { getPathPrefix } from "#/utils/pathPrefix";
 
 import type { ConnectPageMutation, SendMagicLinkInput } from "./__generated__/ConnectPageMutation.graphql";
 import type { ConnectPageQuery } from "./__generated__/ConnectPageQuery.graphql";
+import { Divider } from "./_components/Divider";
+import { OIDCButton } from "./_components/OIDCButton";
 
 export const connectPageQuery = graphql`
   query ConnectPageQuery {
@@ -24,6 +36,9 @@ export const connectPageQuery = graphql`
       organization @required(action: THROW) {
         name
       }
+    }
+    oidcProviders {
+      ...OIDCButtonFragment
     }
   }
 `;
@@ -54,28 +69,12 @@ export function ConnectPage(props: {
   const [magicLinkSent, setMagicLinkSent] = useState<boolean>(false);
   const interval = useRef<NodeJS.Timeout>(undefined);
   const [timer, setTimer] = useState<number>(timerDurationSeconds);
-  const [searchParams] = useSearchParams();
+  const safeContinueUrl = useSafeContinueUrl();
 
   const {
     currentTrustCenter: { organization },
+    oidcProviders,
   } = usePreloadedQuery<ConnectPageQuery>(connectPageQuery, queryRef);
-
-  const continueUrlParam = searchParams.get("continue");
-  let safeContinueUrl: string;
-  if (continueUrlParam) {
-    try {
-      const continueUrl = new URL(continueUrlParam, window.location.origin);
-      if (continueUrl.origin === window.location.origin && continueUrl.pathname.startsWith(`${getPathPrefix()}/`)) {
-        safeContinueUrl = window.location.origin + continueUrl.pathname + continueUrl.search;
-      } else {
-        safeContinueUrl = window.location.origin + getPathPrefix();
-      }
-    } catch {
-      safeContinueUrl = window.location.origin + getPathPrefix();
-    }
-  } else {
-    safeContinueUrl = window.location.origin + getPathPrefix();
-  }
 
   useEffect(() => {
     if (!magicLinkSent && interval.current) {
@@ -113,13 +112,13 @@ export function ConnectPage(props: {
   const handleSubmit = handleSubmitWrapper(({ email }: FormData) => {
     const input: SendMagicLinkInput = { email };
     if (safeContinueUrl) {
-      input.continue = safeContinueUrl;
+      input.continue = safeContinueUrl.toString();
     }
     sendMagicLink({
       variables: {
         input: {
           email,
-          continue: safeContinueUrl,
+          continue: safeContinueUrl.toString(),
         },
       },
       onCompleted: (_, errors: GraphQLError[] | null) => {
@@ -164,10 +163,19 @@ export function ConnectPage(props: {
         </h1>
         <p className="text-txt-tertiary">
           {__(
-            "Enter your email address to connect with a magic link and start requesting access to documents",
+            "Sign in to start requesting access to documents",
           )}
         </p>
       </div>
+
+      {oidcProviders.length > 0 && (
+        <div className="space-y-4">
+          {oidcProviders.map((providerRef, index) => (
+            <OIDCButton key={index} providerRef={providerRef} />
+          ))}
+          <Divider>{__("Or")}</Divider>
+        </div>
+      )}
 
       <form onSubmit={e => void handleSubmit(e)} className="space-y-6">
         <Field

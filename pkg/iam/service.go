@@ -1,3 +1,17 @@
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
 package iam
 
 import (
@@ -5,6 +19,7 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -18,9 +33,11 @@ import (
 	"go.probo.inc/probo/pkg/crypto/passwdhash"
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/iam/oauth2server"
+	"go.probo.inc/probo/pkg/iam/oidc"
 	"go.probo.inc/probo/pkg/iam/saml"
 	"go.probo.inc/probo/pkg/iam/scim"
-	"golang.org/x/sync/errgroup"
+	"go.probo.inc/probo/pkg/uri"
 )
 
 type (
@@ -46,8 +63,10 @@ type (
 		SessionService        *SessionService
 		AuthService           *AuthService
 		SAMLService           *saml.Service
+		OIDCService           *oidc.Service
 		SCIMService           *scim.Service
 		APIKeyService         *APIKeyService
+		OAuth2ServerService   *oauth2server.Service
 		Authorizer            *Authorizer
 
 		samlDomainVerifier *SAMLDomainVerifier
@@ -73,6 +92,10 @@ type (
 		DomainVerificationResolverAddr string
 		SCIMBridgeSyncInterval         time.Duration
 		SCIMBridgePollInterval         time.Duration
+		GoogleOIDC                     oidc.ProviderConfig
+		MicrosoftOIDC                  oidc.ProviderConfig
+		OAuth2ServerSigningKeys        oauth2server.SigningKeys
+		OAuth2ServerOptions            []oauth2server.Option
 	}
 )
 
@@ -123,7 +146,10 @@ func NewService(
 	svc.AuthService = NewAuthService(svc)
 	svc.APIKeyService = NewAPIKeyService(svc)
 
-	svc.Authorizer = NewAuthorizer(pgClient)
+	svc.Authorizer = NewAuthorizer(
+		pgClient,
+		cfg.Logger.Named("authorizer"),
+	)
 	svc.Authorizer.RegisterPolicySet(IAMPolicySet())
 
 	samlService, err := saml.NewService(svc.pg, svc.baseURL, svc.certificate, svc.privateKey, cfg.Logger)
@@ -131,6 +157,14 @@ func NewService(
 		return nil, fmt.Errorf("cannot create SAML service: %w", err)
 	}
 	svc.SAMLService = samlService
+
+	svc.OIDCService = oidc.NewService(
+		svc.pg,
+		svc.baseURL,
+		cfg.GoogleOIDC,
+		cfg.MicrosoftOIDC,
+		cfg.Logger,
+	)
 
 	svc.SCIMService = scim.NewService(
 		svc.pg,
@@ -148,6 +182,14 @@ func NewService(
 		},
 	)
 
+	svc.OAuth2ServerService = oauth2server.NewService(
+		pgClient,
+		cfg.OAuth2ServerSigningKeys,
+		uri.URI(cfg.BaseURL.String()),
+		cfg.Logger.Named("oauth2server"),
+		cfg.OAuth2ServerOptions...,
+	)
+
 	svc.samlDomainVerifier = NewSAMLDomainVerifier(
 		pgClient,
 		cfg.Logger,
@@ -159,14 +201,71 @@ func NewService(
 	return svc, nil
 }
 
+func (s *Service) IsSignUpEnabled() bool {
+	return !s.disableSignup
+}
+
 func (s *Service) Run(ctx context.Context) error {
-	g, ctx := errgroup.WithContext(ctx)
+	wg := sync.WaitGroup{}
+	ctx, cancel := context.WithCancelCause(ctx)
+	defer cancel(context.Canceled)
 
-	g.Go(func() error { return s.SAMLService.Run(ctx) })
-	g.Go(func() error { return s.samlDomainVerifier.Run(ctx) })
-	g.Go(func() error { return s.SCIMService.Run(ctx) })
+	samlCtx, stopSAML := context.WithCancel(context.WithoutCancel(ctx))
+	wg.Go(
+		func() {
+			if err := s.SAMLService.Run(samlCtx); err != nil {
+				cancel(fmt.Errorf("saml service crashed: %w", err))
+			}
+		},
+	)
 
-	return g.Wait()
+	oidcCtx, stopOIDC := context.WithCancel(context.WithoutCancel(ctx))
+	wg.Go(
+		func() {
+			if err := s.OIDCService.Run(oidcCtx); err != nil {
+				cancel(fmt.Errorf("oidc service crashed: %w", err))
+			}
+		},
+	)
+
+	domainVerifierCtx, stopDomainVerifier := context.WithCancel(context.WithoutCancel(ctx))
+	wg.Go(
+		func() {
+			if err := s.samlDomainVerifier.Run(domainVerifierCtx); err != nil {
+				cancel(fmt.Errorf("saml domain verifier crashed: %w", err))
+			}
+		},
+	)
+
+	scimCtx, stopSCIM := context.WithCancel(context.WithoutCancel(ctx))
+	wg.Go(
+		func() {
+			if err := s.SCIMService.Run(scimCtx); err != nil {
+				cancel(fmt.Errorf("scim service crashed: %w", err))
+			}
+		},
+	)
+
+	oauth2Ctx, stopOAuth2Server := context.WithCancel(context.WithoutCancel(ctx))
+	wg.Go(
+		func() {
+			if err := s.OAuth2ServerService.Run(oauth2Ctx); err != nil {
+				cancel(fmt.Errorf("oauth2 server service crashed: %w", err))
+			}
+		},
+	)
+
+	<-ctx.Done()
+
+	stopSAML()
+	stopOIDC()
+	stopDomainVerifier()
+	stopSCIM()
+	stopOAuth2Server()
+
+	wg.Wait()
+
+	return context.Cause(ctx)
 }
 
 func (s *Service) GetMembership(ctx context.Context, membershipID gid.GID) (*coredata.Membership, error) {
@@ -177,7 +276,7 @@ func (s *Service) GetMembership(ctx context.Context, membershipID gid.GID) (*cor
 
 	err := s.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			err := membership.LoadByID(ctx, conn, scope, membershipID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
@@ -205,7 +304,7 @@ func (s *Service) GetInvitation(ctx context.Context, invitationID gid.GID) (*cor
 
 	err := s.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			err := invitation.LoadByID(ctx, conn, scope, invitationID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
@@ -230,7 +329,7 @@ func (s *Service) GetSession(ctx context.Context, sessionID gid.GID) (*coredata.
 
 	err := s.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			err := session.LoadByID(ctx, conn, sessionID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
@@ -258,7 +357,7 @@ func (s *Service) GetSAMLconfiguration(ctx context.Context, samlConfigurationID 
 
 	err := s.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			err := samlConfiguration.LoadByID(ctx, conn, scope, samlConfigurationID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
@@ -283,7 +382,7 @@ func (s *Service) GetPersonalAPIKey(ctx context.Context, personalAPIKeyID gid.GI
 
 	err := s.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			err := personalAPIKey.LoadByID(ctx, conn, personalAPIKeyID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
@@ -311,7 +410,7 @@ func (s *Service) GetSCIMConfiguration(ctx context.Context, scimConfigurationID 
 
 	err := s.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			err := scimConfiguration.LoadByID(ctx, conn, scope, scimConfigurationID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
@@ -339,7 +438,7 @@ func (s *Service) GetSCIMEvent(ctx context.Context, scimEventID gid.GID) (*cored
 
 	err := s.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			err := scimEvent.LoadByID(ctx, conn, scope, scimEventID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {

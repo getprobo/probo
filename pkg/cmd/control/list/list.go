@@ -21,6 +21,8 @@ import (
 	"github.com/spf13/cobra"
 	"go.probo.inc/probo/pkg/cli/api"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
+	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/docgen"
 )
 
 const listQuery = `
@@ -37,6 +39,7 @@ query($id: ID!, $first: Int, $after: CursorKey, $orderBy: ControlOrder, $filter:
             name
             description
             bestPractice
+            maturityLevel
           }
         }
         pageInfo {
@@ -50,11 +53,12 @@ query($id: ID!, $first: Int, $after: CursorKey, $orderBy: ControlOrder, $filter:
 `
 
 type control struct {
-	ID           string  `json:"id"`
-	SectionTitle string  `json:"sectionTitle"`
-	Name         string  `json:"name"`
-	Description  *string `json:"description"`
-	BestPractice bool    `json:"bestPractice"`
+	ID            string  `json:"id"`
+	SectionTitle  string  `json:"sectionTitle"`
+	Name          string  `json:"name"`
+	Description   *string `json:"description"`
+	BestPractice  bool    `json:"bestPractice"`
+	MaturityLevel string  `json:"maturityLevel"`
 }
 
 func NewCmdList(f *cmdutil.Factory) *cobra.Command {
@@ -97,6 +101,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				hc.Token,
 				"/api/console/v1/graphql",
 				cfg.HTTPTimeoutDuration(),
+				cmdutil.TokenRefreshOption(cfg, host, hc),
 			)
 
 			variables := map[string]any{
@@ -167,10 +172,11 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 					c.SectionTitle,
 					c.Name,
 					bp,
+					docgen.MaturityLabel(coredata.ControlMaturityLevel(c.MaturityLevel)),
 				})
 			}
 
-			t := cmdutil.NewTable("ID", "SECTION", "NAME", "BEST PRACTICE").Rows(rows...)
+			t := cmdutil.NewTable("ID", "SECTION", "NAME", "BEST PRACTICE", "MATURITY").Rows(rows...)
 
 			_, _ = fmt.Fprintln(f.IOStreams.Out, t)
 

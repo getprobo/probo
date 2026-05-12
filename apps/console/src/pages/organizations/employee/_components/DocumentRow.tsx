@@ -1,3 +1,17 @@
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
 import {
   formatDate,
   getDocumentClassificationLabel,
@@ -10,13 +24,19 @@ import { graphql, useFragment } from "react-relay";
 import type { DocumentRowFragment$key } from "#/__generated__/core/DocumentRowFragment.graphql";
 
 const fragment = graphql`
-  fragment DocumentRowFragment on SignableDocument {
+  fragment DocumentRowFragment on EmployeeDocument {
     id
     title
-    documentType
-    classification
     signed
     updatedAt
+    lastVersion: versions(first: 1 orderBy: { field: CREATED_AT direction: DESC }) {
+      edges {
+        node {
+          documentType
+          classification
+        }
+      }
+    }
   }
 `;
 
@@ -28,17 +48,18 @@ export function DocumentRow({
   organizationId: string;
 }) {
   const document = useFragment<DocumentRowFragment$key>(fragment, fKey);
+  const lastVersion = document.lastVersion.edges[0].node;
   const { __ } = useTranslate();
 
   return (
-    <Tr to={`/organizations/${organizationId}/employee/${document.id}`}>
-      <Td className="min-w-0 pr-12">{document.title}</Td>
+    <Tr to={`/organizations/${organizationId}/employee/signatures/${document.id}`}>
+      <Td>{document.title}</Td>
       <Td className="w-48">
-        {getDocumentTypeLabel(__, document.documentType)}
+        {getDocumentTypeLabel(__, lastVersion.documentType)}
       </Td>
       <Td className="w-36">
         <Badge variant="neutral">
-          {getDocumentClassificationLabel(__, document.classification)}
+          {getDocumentClassificationLabel(__, lastVersion.classification)}
         </Badge>
       </Td>
       <Td className="w-40">{formatDate(document.updatedAt)}</Td>

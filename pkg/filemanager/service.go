@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -65,12 +65,8 @@ func (s *Service) GetFileBase64(
 		return "", "", fmt.Errorf("cannot read file data: %w", err)
 	}
 
-	if result.ContentType == nil || *result.ContentType == "" {
-		return "", "", fmt.Errorf("no MIME type available for file %s", file.GetObjectKey())
-	}
-
 	base64Data = base64.StdEncoding.EncodeToString(fileData)
-	mimeType = *result.ContentType
+	mimeType = file.GetMimeType()
 
 	return base64Data, mimeType, nil
 }

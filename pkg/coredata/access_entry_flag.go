@@ -1,0 +1,96 @@
+// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
+package coredata
+
+import (
+	"database/sql/driver"
+	"fmt"
+)
+
+type AccessEntryFlag string
+
+const (
+	AccessEntryFlagNone                    AccessEntryFlag = "NONE"
+	AccessEntryFlagOrphaned                AccessEntryFlag = "ORPHANED"
+	AccessEntryFlagInactive                AccessEntryFlag = "INACTIVE"
+	AccessEntryFlagExcessive               AccessEntryFlag = "EXCESSIVE"
+	AccessEntryFlagRoleMismatch            AccessEntryFlag = "ROLE_MISMATCH"
+	AccessEntryFlagNew                     AccessEntryFlag = "NEW"
+	AccessEntryFlagDormant                 AccessEntryFlag = "DORMANT"
+	AccessEntryFlagTerminatedUser          AccessEntryFlag = "TERMINATED_USER"
+	AccessEntryFlagContractorExpired       AccessEntryFlag = "CONTRACTOR_EXPIRED"
+	AccessEntryFlagSoDConflict             AccessEntryFlag = "SOD_CONFLICT"
+	AccessEntryFlagPrivilegedAccess        AccessEntryFlag = "PRIVILEGED_ACCESS"
+	AccessEntryFlagRoleCreep               AccessEntryFlag = "ROLE_CREEP"
+	AccessEntryFlagNoBusinessJustification AccessEntryFlag = "NO_BUSINESS_JUSTIFICATION"
+	AccessEntryFlagOutOfDepartment         AccessEntryFlag = "OUT_OF_DEPARTMENT"
+	AccessEntryFlagSharedAccount           AccessEntryFlag = "SHARED_ACCOUNT"
+)
+
+func (f AccessEntryFlag) String() string {
+	return string(f)
+}
+
+func (f *AccessEntryFlag) Scan(value any) error {
+	var str string
+	switch v := value.(type) {
+	case string:
+		str = v
+	case []byte:
+		str = string(v)
+	default:
+		return fmt.Errorf("cannot scan AccessEntryFlag: unsupported type %T", value)
+	}
+
+	switch str {
+	case "NONE":
+		*f = AccessEntryFlagNone
+	case "ORPHANED":
+		*f = AccessEntryFlagOrphaned
+	case "INACTIVE":
+		*f = AccessEntryFlagInactive
+	case "EXCESSIVE":
+		*f = AccessEntryFlagExcessive
+	case "ROLE_MISMATCH":
+		*f = AccessEntryFlagRoleMismatch
+	case "NEW":
+		*f = AccessEntryFlagNew
+	case "DORMANT":
+		*f = AccessEntryFlagDormant
+	case "TERMINATED_USER":
+		*f = AccessEntryFlagTerminatedUser
+	case "CONTRACTOR_EXPIRED":
+		*f = AccessEntryFlagContractorExpired
+	case "SOD_CONFLICT":
+		*f = AccessEntryFlagSoDConflict
+	case "PRIVILEGED_ACCESS":
+		*f = AccessEntryFlagPrivilegedAccess
+	case "ROLE_CREEP":
+		*f = AccessEntryFlagRoleCreep
+	case "NO_BUSINESS_JUSTIFICATION":
+		*f = AccessEntryFlagNoBusinessJustification
+	case "OUT_OF_DEPARTMENT":
+		*f = AccessEntryFlagOutOfDepartment
+	case "SHARED_ACCOUNT":
+		*f = AccessEntryFlagSharedAccount
+	default:
+		return fmt.Errorf("cannot parse AccessEntryFlag: invalid value %q", str)
+	}
+	return nil
+}
+
+func (f AccessEntryFlag) Value() (driver.Value, error) {
+	return f.String(), nil
+}

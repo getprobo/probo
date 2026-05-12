@@ -1,3 +1,17 @@
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
 import { useTranslate } from "@probo/i18n";
 import {
   Breadcrumb,
@@ -125,39 +139,48 @@ function EvidencePreviewContent({
     );
   }
 
+  let preview;
+
   if (evidence.file.mimeType?.startsWith("image/")) {
-    return (
+    preview = (
       <img
         src={evidence.file.downloadUrl}
         alt={evidence.file.fileName}
         className="max-h-[70vh] object-contain"
       />
     );
-  }
-
-  if (evidence.file.mimeType?.includes("pdf")) {
-    return (
+  } else if (evidence.file.mimeType?.includes("pdf")) {
+    preview = (
       <iframe
         src={evidence.file.downloadUrl}
         className="w-full h-[70vh]"
         title={evidence.file.fileName}
       />
     );
+  } else {
+    preview = (
+      <div className="flex flex-col items-center gap-2 justify-center">
+        <IconWarning size={20} />
+        <p className="text-txt-secondary text-center">
+          {__("Preview not available for this file type")
+            + " "
+            + evidence.file.mimeType}
+        </p>
+        <Button asChild variant="secondary" icon={IconArrowInbox}>
+          <a href={evidence.file.downloadUrl} target="_blank" rel="noreferrer">
+            {__("Download File")}
+          </a>
+        </Button>
+      </div>
+    );
   }
 
   return (
-    <div className="flex flex-col items-center gap-2 justify-center">
-      <IconWarning size={20} />
-      <p className="text-txt-secondary text-center">
-        {__("Preview not available for this file type")
-          + " "
-          + evidence.file.mimeType}
-      </p>
-      <Button asChild variant="secondary" icon={IconArrowInbox}>
-        <a href={evidence.file.downloadUrl} target="_blank" rel="noreferrer">
-          {__("Download File")}
-        </a>
-      </Button>
+    <div className="space-y-4">
+      {preview}
+      {evidence.description && (
+        <p className="text-txt-secondary text-sm">{evidence.description}</p>
+      )}
     </div>
   );
 }

@@ -1,3 +1,17 @@
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
 package probo
 
 import (
@@ -76,7 +90,7 @@ func (s AssetService) Get(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			return asset.LoadByID(ctx, conn, s.svc.scope, assetID)
 		},
 	)
@@ -96,7 +110,7 @@ func (s AssetService) GetByOwnerID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			return asset.LoadByOwnerID(ctx, conn, s.svc.scope)
 		},
 	)
@@ -111,15 +125,14 @@ func (s AssetService) GetByOwnerID(
 func (s AssetService) CountForOrganizationID(
 	ctx context.Context,
 	organizationID gid.GID,
-	filter *coredata.AssetFilter,
 ) (int, error) {
 	var count int
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) (err error) {
+		func(ctx context.Context, conn pg.Querier) (err error) {
 			assets := coredata.Assets{}
-			count, err = assets.CountByOrganizationID(ctx, conn, s.svc.scope, organizationID, filter)
+			count, err = assets.CountByOrganizationID(ctx, conn, s.svc.scope, organizationID)
 			if err != nil {
 				return fmt.Errorf("cannot count assets: %w", err)
 			}
@@ -139,20 +152,18 @@ func (s AssetService) ListForOrganizationID(
 	ctx context.Context,
 	organizationID gid.GID,
 	cursor *page.Cursor[coredata.AssetOrderField],
-	filter *coredata.AssetFilter,
 ) (*page.Page[*coredata.Asset, coredata.AssetOrderField], error) {
 	var assets coredata.Assets
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			return assets.LoadByOrganizationID(
 				ctx,
 				conn,
 				s.svc.scope,
 				organizationID,
 				cursor,
-				filter,
 			)
 		},
 	)
@@ -176,7 +187,7 @@ func (s AssetService) Update(
 	asset := &coredata.Asset{ID: req.ID}
 	assetVendors := &coredata.AssetVendors{}
 
-	err := s.svc.pg.WithTx(ctx, func(conn pg.Conn) error {
+	err := s.svc.pg.WithTx(ctx, func(ctx context.Context, conn pg.Tx) error {
 		if err := asset.LoadByID(ctx, conn, s.svc.scope, req.ID); err != nil {
 			return fmt.Errorf("cannot load asset: %w", err)
 		}
@@ -246,7 +257,7 @@ func (s AssetService) Create(
 		UpdatedAt:       now,
 	}
 
-	err := s.svc.pg.WithTx(ctx, func(conn pg.Conn) error {
+	err := s.svc.pg.WithTx(ctx, func(ctx context.Context, conn pg.Tx) error {
 		profile := &coredata.MembershipProfile{}
 		if err := profile.LoadByID(ctx, conn, s.svc.scope, req.OwnerID); err != nil {
 			return fmt.Errorf("cannot load owner profile: %w", err)
@@ -278,10 +289,10 @@ func (s AssetService) Delete(
 ) error {
 	asset := &coredata.Asset{ID: assetID}
 
-	return s.svc.pg.WithConn(
+	return s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
-			return asset.Delete(ctx, conn, s.svc.scope)
+		func(ctx context.Context, tx pg.Tx) error {
+			return asset.Delete(ctx, tx, s.svc.scope)
 		},
 	)
 }

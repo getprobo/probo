@@ -1,0 +1,56 @@
+---
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.supabase.com
+        headers:
+            Accept:
+                - application/json
+        url: https://api.supabase.com/v1/organizations/acme-corp/members
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '[{"user_id":"a1b2c3d4-e5f6-7890-abcd-ef1234567890","user_name":"jdoe","email":"jdoe@example.com","role_name":"Owner","mfa_enabled":false}]'
+        headers:
+            Access-Control-Allow-Credentials:
+                - "true"
+            Access-Control-Expose-Headers:
+                - x-connection-encrypted,x-forwarded-for,user-agent,CF-Connecting-IP,Retry-After
+            Cf-Cache-Status:
+                - DYNAMIC
+            Cf-Ray:
+                - 000000000000000000-XXX
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Thu, 26 Mar 2026 13:18:24 GMT
+            Etag:
+                - W/"94-2d3haQkIE5319yeX5GL6PU8Mh2o"
+            Server:
+                - cloudflare
+            Set-Cookie:
+                - __cf_bm=REDACTED; HttpOnly; Secure; Path=/; Domain=supabase.com; Expires=Thu, 26 Mar 2026 13:48:24 GMT
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains; preload
+            Vary:
+                - Origin
+            X-Powered-By:
+                - Express
+            X-Ratelimit-Limit:
+                - "120"
+            X-Ratelimit-Remaining:
+                - "119"
+            X-Ratelimit-Reset:
+                - "60"
+        status: 200 OK
+        code: 200
+        duration: 156.602041ms

@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -39,7 +39,7 @@ type (
 
 func (rp RiskDocument) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -73,7 +73,7 @@ VALUES (
 
 func (rp RiskDocument) Delete(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 	riskID gid.GID,
 	documentID gid.GID,
@@ -98,4 +98,33 @@ WHERE
 
 	_, err := conn.Exec(ctx, q, args)
 	return err
+}
+
+func (rp RiskDocument) DeleteByDocumentIDs(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+	documentIDs []gid.GID,
+) error {
+	q := `
+DELETE
+FROM
+    risks_documents
+WHERE
+    %s
+    AND document_id = ANY(@document_ids);
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"document_ids": documentIDs,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	if _, err := conn.Exec(ctx, q, args); err != nil {
+		return fmt.Errorf("cannot delete risk document mappings by document ids: %w", err)
+	}
+
+	return nil
 }

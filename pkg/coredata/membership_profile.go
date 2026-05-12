@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -87,7 +87,7 @@ func (p MembershipProfile) CursorKey(orderBy MembershipProfileOrderField) page.C
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (p *MembershipProfile) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+func (p *MembershipProfile) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	q := `SELECT organization_id, identity_id FROM iam_membership_profiles WHERE id = $1 LIMIT 1;`
 
 	var organizationID gid.GID
@@ -107,7 +107,7 @@ func (p *MembershipProfile) AuthorizationAttributes(ctx context.Context, conn pg
 
 func (p *MembershipProfile) LoadByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	profileID gid.GID,
 ) error {
@@ -183,7 +183,7 @@ LIMIT 1;
 
 func (p *MembershipProfile) LoadByIdentityIDAndOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	identityID gid.GID,
 	organizationID gid.GID,
@@ -262,9 +262,90 @@ LIMIT 1;
 	return nil
 }
 
+func (p *MembershipProfile) LoadByExternalIDAndOrganizationID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	externalID string,
+	organizationID gid.GID,
+) error {
+	q := `
+SELECT
+    p.id,
+    p.identity_id,
+    p.organization_id,
+    i.email_address,
+    p.source,
+    p.state,
+    p.full_name,
+    p.kind,
+    p.additional_email_addresses,
+    p.position,
+    p.contract_start_date,
+    p.contract_end_date,
+    '' AS organization_name,
+    p.user_name,
+    p.external_id,
+    p.nickname,
+    p.locale,
+    p.timezone,
+    p.profile_url,
+    p.preferred_language,
+    p.given_name,
+    p.family_name,
+    p.formatted_name,
+    p.middle_name,
+    p.honorific_prefix,
+    p.honorific_suffix,
+    p.employee_number,
+    p.department,
+    p.cost_center,
+    p.enterprise_organization,
+    p.division,
+    p.manager_value,
+    p.created_at,
+    p.updated_at
+FROM
+    iam_membership_profiles p
+INNER JOIN identities i
+    ON i.id = p.identity_id
+WHERE
+    p.%s
+    AND p.external_id = @external_id
+    AND p.organization_id = @organization_id
+LIMIT 1;
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"external_id":     externalID,
+		"organization_id": organizationID,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query profile: %w", err)
+	}
+
+	profile, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[MembershipProfile])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect profile: %w", err)
+	}
+
+	*p = profile
+
+	return nil
+}
+
 func (p *MembershipProfiles) LoadByIDs(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	profileIDs []gid.GID,
 ) error {
@@ -335,7 +416,7 @@ WHERE
 
 func (p *MembershipProfiles) LoadByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 	cursor *page.Cursor[MembershipProfileOrderField],
@@ -447,9 +528,121 @@ WHERE
 	return nil
 }
 
+func (p *MembershipProfiles) LoadAllByOrganizationID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	organizationID gid.GID,
+	filter *MembershipProfileFilter,
+) error {
+	q := `
+WITH profiles AS (
+    SELECT
+        p.id,
+        p.identity_id,
+        p.organization_id,
+        i.email_address,
+        p.source,
+        p.state,
+        p.full_name,
+        p.kind,
+        p.additional_email_addresses,
+        p.position,
+        p.contract_start_date,
+        p.contract_end_date,
+        p.user_name,
+        p.external_id,
+        p.nickname,
+        p.locale,
+        p.timezone,
+        p.profile_url,
+        p.preferred_language,
+        p.given_name,
+        p.family_name,
+        p.formatted_name,
+        p.middle_name,
+        p.honorific_prefix,
+        p.honorific_suffix,
+        p.employee_number,
+        p.department,
+        p.cost_center,
+        p.enterprise_organization,
+        p.division,
+        p.manager_value,
+        p.created_at,
+        p.updated_at
+    FROM
+        iam_membership_profiles p
+    INNER JOIN identities i ON i.id = p.identity_id
+    WHERE
+        p.%s
+        AND p.organization_id = @organization_id
+        AND %s
+)
+SELECT
+    id,
+    identity_id,
+    organization_id,
+    email_address,
+    source,
+    state,
+    full_name,
+    kind,
+    additional_email_addresses,
+    position,
+    contract_start_date,
+    contract_end_date,
+    '' AS organization_name,
+    user_name,
+    external_id,
+    nickname,
+    locale,
+    timezone,
+    profile_url,
+    preferred_language,
+    given_name,
+    family_name,
+    formatted_name,
+    middle_name,
+    honorific_prefix,
+    honorific_suffix,
+    employee_number,
+    department,
+    cost_center,
+    enterprise_organization,
+    division,
+    manager_value,
+    created_at,
+    updated_at
+FROM profiles
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
+
+	args := pgx.NamedArgs{
+		"organization_id": organizationID,
+	}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query profiles: %w", err)
+	}
+
+	profiles, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[MembershipProfile])
+	if err != nil {
+		return fmt.Errorf("cannot collect profiles: %w", err)
+	}
+
+	*p = profiles
+
+	return nil
+}
+
 func (p *MembershipProfiles) LoadByIdentityID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	identityID gid.GID,
 	cursor *page.Cursor[MembershipProfileOrderField],
 	filter *MembershipProfileFilter,
@@ -559,159 +752,27 @@ WHERE
 	return nil
 }
 
-func (p *MembershipProfiles) LoadByDocumentID(
-	ctx context.Context,
-	conn pg.Conn,
-	scope Scoper,
-	documentID gid.GID,
-	cursor *page.Cursor[MembershipProfileOrderField],
-) error {
-	q := `
-WITH profiles AS (
-    SELECT
-        mp.id,
-        mp.identity_id,
-        mp.organization_id,
-        mp.source,
-        mp.state,
-        mp.full_name,
-        mp.kind,
-        mp.additional_email_addresses,
-        mp.position,
-        mp.contract_start_date,
-        mp.contract_end_date,
-        mp.user_name,
-        mp.external_id,
-        mp.nickname,
-        mp.locale,
-        mp.timezone,
-        mp.profile_url,
-        mp.preferred_language,
-        mp.given_name,
-        mp.family_name,
-        mp.formatted_name,
-        mp.middle_name,
-        mp.honorific_prefix,
-        mp.honorific_suffix,
-        mp.employee_number,
-        mp.department,
-        mp.cost_center,
-        mp.enterprise_organization,
-        mp.division,
-        mp.manager_value,
-        mp.created_at,
-        mp.updated_at
-    FROM
-        iam_membership_profiles mp
-    WHERE
-        mp.%s
-        AND mp.id IN (
-            SELECT approver_profile_id
-            FROM document_approvers
-            WHERE document_id = @document_id
-        )
-        AND %s
-)
-SELECT
-    p.id,
-    p.identity_id,
-    p.organization_id,
-    i.email_address,
-    p.source,
-    p.state,
-    p.full_name,
-    p.kind,
-    p.additional_email_addresses,
-    p.position,
-    p.contract_start_date,
-    p.contract_end_date,
-    '' AS organization_name,
-    p.user_name,
-    p.external_id,
-    p.nickname,
-    p.locale,
-    p.timezone,
-    p.profile_url,
-    p.preferred_language,
-    p.given_name,
-    p.family_name,
-    p.formatted_name,
-    p.middle_name,
-    p.honorific_prefix,
-    p.honorific_suffix,
-    p.employee_number,
-    p.department,
-    p.cost_center,
-    p.enterprise_organization,
-    p.division,
-    p.manager_value,
-    p.created_at,
-    p.updated_at
-FROM profiles p
-INNER JOIN identities i ON i.id = p.identity_id
-`
-
-	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
-
-	args := pgx.NamedArgs{"document_id": documentID}
-	maps.Copy(args, scope.SQLArguments())
-	maps.Copy(args, cursor.SQLArguments())
-
-	rows, err := conn.Query(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot query document approver profiles: %w", err)
-	}
-
-	profiles, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[MembershipProfile])
-	if err != nil {
-		return fmt.Errorf("cannot collect document approver profiles: %w", err)
-	}
-
-	*p = profiles
-
-	return nil
-}
-
-func (p *MembershipProfiles) CountByDocumentID(
-	ctx context.Context,
-	conn pg.Conn,
-	scope Scoper,
-	documentID gid.GID,
-) (int, error) {
-	q := `
-SELECT
-    COUNT(*)
-FROM
-    iam_membership_profiles mp
-INNER JOIN document_approvers da ON mp.id = da.approver_profile_id
-WHERE
-    mp.%s
-    AND da.document_id = @document_id
-`
-
-	q = fmt.Sprintf(q, scope.SQLFragment())
-
-	args := pgx.StrictNamedArgs{"document_id": documentID}
-	maps.Copy(args, scope.SQLArguments())
-
-	var count int
-	err := conn.QueryRow(ctx, q, args).Scan(&count)
-	if err != nil {
-		return 0, fmt.Errorf("cannot query document approver profiles count: %w", err)
-	}
-
-	return count, nil
-}
-
 func (p *MembershipProfiles) LoadByDocumentVersionID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	documentVersionID gid.GID,
 	cursor *page.Cursor[MembershipProfileOrderField],
 ) error {
 	q := `
-WITH profiles AS (
+WITH latest_quorum AS (
+    SELECT id
+    FROM document_version_approval_quorums
+    WHERE version_id = @version_id
+    ORDER BY created_at DESC
+    LIMIT 1
+),
+version_approvers AS (
+    SELECT d.approver_id
+    FROM document_version_approval_decisions d
+    WHERE d.quorum_id = (SELECT id FROM latest_quorum)
+),
+profiles AS (
     SELECT
         mp.id,
         mp.identity_id,
@@ -747,13 +808,9 @@ WITH profiles AS (
         mp.updated_at
     FROM
         iam_membership_profiles mp
+    INNER JOIN version_approvers va ON va.approver_id = mp.id
     WHERE
         mp.%s
-        AND mp.id IN (
-            SELECT approver_profile_id
-            FROM document_version_approvers
-            WHERE document_version_id = @document_version_id
-        )
         AND %s
 )
 SELECT
@@ -797,7 +854,7 @@ INNER JOIN identities i ON i.id = p.identity_id
 
 	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
 
-	args := pgx.NamedArgs{"document_version_id": documentVersionID}
+	args := pgx.NamedArgs{"version_id": documentVersionID}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
@@ -818,24 +875,31 @@ INNER JOIN identities i ON i.id = p.identity_id
 
 func (p *MembershipProfiles) CountByDocumentVersionID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	documentVersionID gid.GID,
 ) (int, error) {
 	q := `
+WITH latest_quorum AS (
+    SELECT id
+    FROM document_version_approval_quorums
+    WHERE version_id = @version_id
+    ORDER BY created_at DESC
+    LIMIT 1
+)
 SELECT
-    COUNT(*)
+    COUNT(DISTINCT mp.id)
 FROM
     iam_membership_profiles mp
-INNER JOIN document_version_approvers dva ON mp.id = dva.approver_profile_id
+INNER JOIN document_version_approval_decisions dvad ON mp.id = dvad.approver_id
+INNER JOIN latest_quorum lq ON lq.id = dvad.quorum_id
 WHERE
     mp.%s
-    AND dva.document_version_id = @document_version_id
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
-	args := pgx.StrictNamedArgs{"document_version_id": documentVersionID}
+	args := pgx.StrictNamedArgs{"version_id": documentVersionID}
 	maps.Copy(args, scope.SQLArguments())
 
 	var count int
@@ -847,125 +911,9 @@ WHERE
 	return count, nil
 }
 
-func (p *MembershipProfiles) LoadByMeetingID(
-	ctx context.Context,
-	conn pg.Conn,
-	scope Scoper,
-	meetingID gid.GID,
-) error {
-	q := `
-WITH attendees AS (
-    SELECT
-        p.id,
-        p.tenant_id,
-        p.identity_id,
-        p.organization_id,
-        i.email_address,
-        p.source,
-        p.state,
-        p.full_name,
-        p.kind,
-        p.additional_email_addresses,
-        p.position,
-        p.contract_start_date,
-        p.contract_end_date,
-        p.user_name,
-        p.external_id,
-        p.nickname,
-        p.locale,
-        p.timezone,
-        p.profile_url,
-        p.preferred_language,
-        p.given_name,
-        p.family_name,
-        p.formatted_name,
-        p.middle_name,
-        p.honorific_prefix,
-        p.honorific_suffix,
-        p.employee_number,
-        p.department,
-        p.cost_center,
-        p.enterprise_organization,
-        p.division,
-        p.manager_value,
-        p.created_at,
-        p.updated_at,
-        ma.created_at AS attendee_created_at
-    FROM
-        iam_membership_profiles p
-    INNER JOIN identities i
-        ON i.id = p.identity_id
-    INNER JOIN
-        meeting_attendees ma ON p.id = ma.attendee_profile_id
-    WHERE
-        ma.meeting_id = @meeting_id
-)
-SELECT
-    id,
-    identity_id,
-    organization_id,
-    kind,
-    email_address,
-    source,
-    state,
-    full_name,
-    additional_email_addresses,
-    position,
-    contract_start_date,
-    contract_end_date,
-    '' AS organization_name,
-    user_name,
-    external_id,
-    nickname,
-    locale,
-    timezone,
-    profile_url,
-    preferred_language,
-    given_name,
-    family_name,
-    formatted_name,
-    middle_name,
-    honorific_prefix,
-    honorific_suffix,
-    employee_number,
-    department,
-    cost_center,
-    enterprise_organization,
-    division,
-    manager_value,
-    created_at,
-    updated_at
-FROM
-    attendees
-WHERE
-    %s
-ORDER BY
-    attendee_created_at ASC
-`
-
-	q = fmt.Sprintf(q, scope.SQLFragment())
-
-	args := pgx.NamedArgs{"meeting_id": meetingID}
-	maps.Copy(args, scope.SQLArguments())
-
-	rows, err := conn.Query(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot query profiles: %w", err)
-	}
-
-	profiles, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[MembershipProfile])
-	if err != nil {
-		return fmt.Errorf("cannot collect profiles: %w", err)
-	}
-
-	*p = profiles
-
-	return nil
-}
-
 func (p *MembershipProfiles) LoadAwaitingSigning(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 ) error {
 	q := `
@@ -1041,7 +989,7 @@ INNER JOIN signatories ON p.id = signatories.signed_by_profile_id
 
 func (p *MembershipProfiles) CountByIdentityID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	identityID gid.GID,
 	filter *MembershipProfileFilter,
 ) (int, error) {
@@ -1074,7 +1022,7 @@ WHERE
 
 func (p *MembershipProfiles) CountByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 	filter *MembershipProfileFilter,
@@ -1110,7 +1058,7 @@ WHERE
 
 func (p *MembershipProfiles) CountActiveOwnerByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 ) (int, error) {
@@ -1121,7 +1069,7 @@ FROM
     iam_membership_profiles p
 INNER JOIN iam_memberships m ON m.identity_id = p.identity_id AND m.organization_id = p.organization_id
 WHERE
-    %s
+    p.%s
     AND p.organization_id = @organization_id
     AND p.state = @state
     AND m.role = @role
@@ -1149,7 +1097,7 @@ WHERE
 
 func (p *MembershipProfile) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 ) error {
 	q := `
 INSERT INTO
@@ -1275,13 +1223,14 @@ VALUES (
 
 func (p *MembershipProfile) Update(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
 UPDATE
     iam_membership_profiles
 SET
+    identity_id = @identity_id,
     source = @source,
     state = @state,
     full_name = @full_name,
@@ -1319,6 +1268,7 @@ WHERE
 
 	args := pgx.StrictNamedArgs{
 		"id":                         p.ID,
+		"identity_id":                p.IdentityID,
 		"source":                     p.Source,
 		"state":                      p.State,
 		"full_name":                  p.FullName,
@@ -1364,7 +1314,7 @@ WHERE
 
 func (p *MembershipProfiles) ResetSCIMSources(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 ) error {
@@ -1398,7 +1348,7 @@ WHERE
 
 func (p *MembershipProfile) ClearExternalID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	externalID string,
 	organizationID gid.GID,
@@ -1434,7 +1384,7 @@ WHERE
 
 func (p *MembershipProfile) Delete(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 	profileID gid.GID,
 ) error {

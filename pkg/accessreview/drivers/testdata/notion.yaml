@@ -1,0 +1,69 @@
+---
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.notion.com
+        form:
+            page_size:
+                - "100"
+        headers:
+            Accept:
+                - application/json
+            Notion-Version:
+                - "2022-06-28"
+        url: https://api.notion.com/v1/users?page_size=100
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"object":"list","results":[{"object":"user","id":"00000001-0000-0000-0000-000000000001","name":"Alice Martin","avatar_url":null,"type":"person","person":{"email":"alice@example.com"}},{"object":"user","id":"00000001-0000-0000-0000-000000000002","name":"Carol Davis","avatar_url":null,"type":"person","person":{"email":"carol@example.com"}},{"object":"user","id":"00000001-0000-0000-0000-000000000003","name":"John Smith","avatar_url":"","type":"person","person":{"email":"john@example.com"}},{"object":"user","id":"00000001-0000-0000-0000-000000000004","name":"Jane Doe","avatar_url":"","type":"person","person":{"email":"jane@example.com"}},{"object":"user","id":"00000001-0000-0000-0000-000000000005","name":"Acme-integration","avatar_url":"","type":"bot","bot":{}},{"object":"user","id":"00000001-0000-0000-0000-000000000006","name":"n8n","avatar_url":null,"type":"bot","bot":{"owner":{"type":"workspace","workspace":true},"workspace_name":"Acme Corp","workspace_id":"00000001-0000-0000-0000-000000000007","workspace_limits":{"max_file_upload_size_in_bytes":5368709120}}},{"object":"user","id":"00000001-0000-0000-0000-000000000008","name":"Notion MCP","avatar_url":"","type":"bot","bot":{}}],"next_cursor":null,"has_more":false,"type":"user","user":{},"request_id":"d5d5c5a0-f878-4ef7-bd30-adb4487ffc7c"}'
+        headers:
+            Alt-Svc:
+                - h3=":443"; ma=86400
+            Cf-Cache-Status:
+                - DYNAMIC
+            Cf-Ray:
+                - 9e266c0798647a6e-CDG
+            Content-Security-Policy:
+                - default-src 'none'
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Thu, 26 Mar 2026 13:15:04 GMT
+            Etag:
+                - W/"6f0-og1hHr9nu7Wa4h56JWNgxaLRfmE"
+            Referrer-Policy:
+                - strict-origin-when-cross-origin
+            Server:
+                - cloudflare
+            Set-Cookie:
+                - __cf_bm=PVMwsYfB62uKcpEsG3V1HzbE.xOqBPReNn8aOFie8AA-1774530904.25279-1.0.1.1-ldfHtUZ4_QqMrAC2dGUWQqZHhJw0IAYehliPDKVCxokJqrAyLXX5WrKl3MSte2nb2RU3gmcBIWbzehtXpQtGl6O3sZDuu8kxj8HULQxfyoaF9ObyS_ak5KdaxQw60WQf; HttpOnly; Secure; Path=/; Domain=notion.com; Expires=Thu, 26 Mar 2026 13:45:04 GMT
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains; preload
+            Vary:
+                - Accept-Encoding
+            X-Content-Type-Options:
+                - nosniff
+            X-Dns-Prefetch-Control:
+                - "off"
+            X-Download-Options:
+                - noopen
+            X-Frame-Options:
+                - SAMEORIGIN
+            X-Notion-Request-Id:
+                - d5d5c5a0-f878-4ef7-bd30-adb4487ffc7c
+            X-Permitted-Cross-Domain-Policies:
+                - none
+            X-Xss-Protection:
+                - "0"
+        status: 200 OK
+        code: 200
+        duration: 401.460042ms

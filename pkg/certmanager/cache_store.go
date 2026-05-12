@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -51,7 +51,7 @@ func (w *CacheStore) WarmCache(ctx context.Context) error {
 
 	err := w.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			domains := coredata.CustomDomains{}
 			if err := domains.LoadActiveCertificates(ctx, conn, coredata.NewNoScope()); err != nil {
 				return fmt.Errorf("cannot load active certificates: %w", err)
@@ -93,7 +93,7 @@ func (w *CacheStore) WarmCache(ctx context.Context) error {
 	return nil
 }
 
-func (w *CacheStore) warmDomain(ctx context.Context, conn pg.Conn, domain *coredata.CustomDomain) error {
+func (w *CacheStore) warmDomain(ctx context.Context, conn pg.Querier, domain *coredata.CustomDomain) error {
 	var loadedDomain coredata.CustomDomain
 	if err := loadedDomain.LoadByID(ctx, conn, coredata.NewNoScope(), domain.ID); err != nil {
 		return fmt.Errorf("cannot load domain with decrypted values: %w", err)

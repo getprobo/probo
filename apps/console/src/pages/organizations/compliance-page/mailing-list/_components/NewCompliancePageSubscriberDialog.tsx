@@ -1,5 +1,19 @@
+// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
 import { useTranslate } from "@probo/i18n";
-import { Button, Dialog, DialogContent, DialogFooter, type DialogRef, Field, Spinner } from "@probo/ui";
+import { Button, Checkbox, Dialog, DialogContent, DialogFooter, type DialogRef, Field, Spinner } from "@probo/ui";
 import { type DataID, graphql } from "relay-runtime";
 import { z } from "zod";
 
@@ -42,10 +56,11 @@ export function NewCompliancePageSubscriberDialog(props: {
       .min(1, __("Email is required"))
       .trim()
       .email(__("Please enter a valid email address")),
+    confirmed: z.boolean(),
   });
 
   const form = useFormWithSchema(schema, {
-    defaultValues: { fullName: "", email: "" },
+    defaultValues: { fullName: "", email: "", confirmed: false },
   });
 
   const [createSubscriber, isCreating] = useMutationWithToasts<NewCompliancePageSubscriberDialogMutation>(
@@ -63,6 +78,7 @@ export function NewCompliancePageSubscriberDialog(props: {
           mailingListId,
           fullName: data.fullName.trim(),
           email: data.email.trim(),
+          confirmed: data.confirmed || undefined,
         },
         connections: connectionId ? [connectionId] : [],
       },
@@ -102,6 +118,22 @@ export function NewCompliancePageSubscriberDialog(props: {
             {...form.register("email")}
             placeholder={__("john@example.com")}
           />
+          <div className="space-y-2">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <Checkbox
+                checked={form.watch("confirmed")}
+                onChange={checked => form.setValue("confirmed", checked)}
+              />
+              <span className="text-sm font-medium">
+                {__("Skip confirmation email")}
+              </span>
+            </label>
+            {form.watch("confirmed") && (
+              <p className="text-txt-secondary text-xs pl-6">
+                {__("By checking this box, you certify that you have obtained verifiable prior consent from this individual to receive these communications, in compliance with applicable data protection regulations (e.g. GDPR, CAN-SPAM). You accept full responsibility for demonstrating proof of consent if required.")}
+              </p>
+            )}
+          </div>
         </DialogContent>
         <DialogFooter>
           <Button type="submit" disabled={isCreating}>

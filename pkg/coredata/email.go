@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -31,6 +31,7 @@ type (
 		ID                  gid.GID     `db:"id"`
 		RecipientEmail      string      `db:"recipient_email"`
 		RecipientName       string      `db:"recipient_name"`
+		SenderName          *string     `db:"sender_name"`
 		ReplyTo             *mail.Addr  `db:"reply_to"`
 		UnsubscribeURL      *string     `db:"unsubscribe_url"`
 		MailingListUpdateID *gid.GID    `db:"mailing_list_update_id"`
@@ -51,6 +52,7 @@ type (
 	Emails []*Email
 
 	EmailOptions struct {
+		SenderName          *string
 		ReplyTo             *mail.Addr
 		UnsubscribeURL      *string
 		MailingListUpdateID *gid.GID
@@ -63,7 +65,7 @@ var (
 
 // AuthorizationAttributes returns the authorization attributes for policy evaluation.
 // Email is identity-scoped (not org-scoped), so it returns an empty map.
-func (e *Email) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+func (e *Email) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	return map[string]string{}, nil
 }
 
@@ -91,6 +93,7 @@ func NewEmail(
 	}
 
 	if opts != nil {
+		e.SenderName = opts.SenderName
 		e.ReplyTo = opts.ReplyTo
 		e.UnsubscribeURL = opts.UnsubscribeURL
 		e.MailingListUpdateID = opts.MailingListUpdateID
@@ -101,14 +104,16 @@ func NewEmail(
 
 func (e *Email) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 ) error {
 	q := `
 INSERT INTO emails (
 	id,
 	recipient_email,
 	recipient_name,
-	reply_to, unsubscribe_url,
+	sender_name,
+	reply_to,
+	unsubscribe_url,
 	mailing_list_update_id,
 	subject,
 	text_body,
@@ -123,6 +128,7 @@ VALUES (
 	@id,
 	@recipient_email,
 	@recipient_name,
+	@sender_name,
 	@reply_to,
 	@unsubscribe_url,
 	@mailing_list_update_id,
@@ -141,6 +147,7 @@ VALUES (
 		"id":                     e.ID,
 		"recipient_email":        e.RecipientEmail,
 		"recipient_name":         e.RecipientName,
+		"sender_name":            e.SenderName,
 		"reply_to":               e.ReplyTo,
 		"unsubscribe_url":        e.UnsubscribeURL,
 		"mailing_list_update_id": e.MailingListUpdateID,
@@ -160,7 +167,7 @@ VALUES (
 
 func (emails Emails) BulkInsert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 ) error {
 	if len(emails) == 0 {
 		return nil
@@ -172,6 +179,7 @@ func (emails Emails) BulkInsert(
 			e.ID,
 			e.RecipientEmail,
 			e.RecipientName,
+			e.SenderName,
 			e.ReplyTo,
 			e.UnsubscribeURL,
 			e.MailingListUpdateID,
@@ -186,7 +194,7 @@ func (emails Emails) BulkInsert(
 	_, err := conn.CopyFrom(
 		ctx,
 		pgx.Identifier{"emails"},
-		[]string{"id", "recipient_email", "recipient_name", "reply_to", "unsubscribe_url", "mailing_list_update_id", "subject", "text_body", "html_body", "created_at", "updated_at"},
+		[]string{"id", "recipient_email", "recipient_name", "sender_name", "reply_to", "unsubscribe_url", "mailing_list_update_id", "subject", "text_body", "html_body", "created_at", "updated_at"},
 		pgx.CopyFromRows(rows),
 	)
 	return err
@@ -194,11 +202,11 @@ func (emails Emails) BulkInsert(
 
 func (e *Email) LoadNextPendingForUpdateSkipLocked(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 ) error {
 	q := `
 SELECT
-	id, recipient_email, recipient_name, reply_to, unsubscribe_url, mailing_list_update_id, subject, text_body, html_body,
+	id, recipient_email, recipient_name, sender_name, reply_to, unsubscribe_url, mailing_list_update_id, subject, text_body, html_body,
 	status, processing_started_at, attempt_count, max_attempts,
 	last_attempted_at, last_error, created_at, updated_at, sent_at
 FROM emails
@@ -229,7 +237,7 @@ FOR UPDATE SKIP LOCKED
 
 func (e *Email) Update(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 ) error {
 	q := `
 UPDATE emails
@@ -261,7 +269,7 @@ WHERE id = @id
 
 func ResetStaleProcessingEmails(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	staleAfter time.Duration,
 ) error {
 	q := `

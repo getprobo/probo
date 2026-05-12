@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -18,6 +18,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
+	"go.probo.inc/probo/pkg/probo"
 )
 
 type (
@@ -83,7 +84,6 @@ func NewVendor(v *coredata.Vendor) *Vendor {
 		WebsiteURL:                    v.WebsiteURL,
 		Category:                      v.Category,
 		ShowOnTrustCenter:             v.ShowOnTrustCenter,
-		SnapshotID:                    v.SnapshotID,
 		Countries:                     v.Countries,
 		UpdatedAt:                     v.UpdatedAt,
 		CreatedAt:                     v.CreatedAt,
@@ -102,4 +102,16 @@ func NewVendor(v *coredata.Vendor) *Vendor {
 	}
 
 	return object
+}
+
+func NewVendorSubprocessors(sps []probo.Subprocessor) []*VendorSubprocessor {
+	result := make([]*VendorSubprocessor, len(sps))
+	for i, sp := range sps {
+		result[i] = &VendorSubprocessor{
+			Name:    sp.Name,
+			Country: sp.Country,
+			Purpose: sp.Purpose,
+		}
+	}
+	return result
 }

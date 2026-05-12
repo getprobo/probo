@@ -1,4 +1,18 @@
-import { fileSize, fileType, formatDate, sprintf } from "@probo/helpers";
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
+import { fileSize, formatDate, sprintf } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
 import {
@@ -46,7 +60,7 @@ export const evidencesFragment = graphql`
     before: { type: "CursorKey", defaultValue: null }
     last: { type: "Int", defaultValue: null }
   ) {
-    id
+    name
     canUploadEvidence: permission(action: "core:measure:upload-evidence")
     evidences(
       first: $first
@@ -79,7 +93,7 @@ export const evidenceFragment = graphql`
       mimeType
       size
     }
-    type
+    description
     createdAt
     canDelete: permission(action: "core:evidence:delete")
   }
@@ -98,12 +112,15 @@ const deleteEvidenceMutation = graphql`
 
 export default function MeasureEvidencesTab() {
   const { measure } = useOutletContext<{
-    measure: MeasureEvidencesTabFragment$key & { id: string; name: string };
+    measure: MeasureEvidencesTabFragment$key;
   }>();
-  const { evidenceId, snapshotId } = useParams<{
+  const { measureId, evidenceId } = useParams<{
+    measureId: string;
     evidenceId: string;
-    snapshotId?: string;
   }>();
+  if (!measureId) {
+    throw new Error("Missing :measureId param in route");
+  }
   // eslint-disable-next-line relay/generated-typescript-types
   const pagination = usePaginationFragment(evidencesFragment, measure);
   const connectionId = pagination.data.evidences.__id;
@@ -114,17 +131,16 @@ export default function MeasureEvidencesTab() {
   const evidence = evidences.find(e => e.id === evidenceId);
   const organizationId = useOrganizationId();
   const dialogRef = useDialogRef();
-  const isSnapshotMode = Boolean(snapshotId);
 
-  usePageTitle(measure.name + " - " + __("Evidences"));
+  usePageTitle(pagination.data.name + " - " + __("Evidences"));
 
   return (
     <div className="space-y-6">
       <SortableTable {...pagination}>
         <Thead>
           <Tr>
-            <Th>{__("Evidence name")}</Th>
-            <Th>{__("Type")}</Th>
+            <Th>{__("Description")}</Th>
+            <Th>{__("File type")}</Th>
             <Th>{__("File size")}</Th>
             <Th>{__("Created at")}</Th>
             <Th width={50}></Th>
@@ -135,14 +151,12 @@ export default function MeasureEvidencesTab() {
             <EvidenceRow
               key={evidence.id}
               evidenceKey={evidence}
-              measureId={measure.id}
+              measureId={measureId}
               organizationId={organizationId}
               connectionId={connectionId}
-              hideActions={isSnapshotMode}
-              snapshotId={snapshotId}
             />
           ))}
-          {!isSnapshotMode && pagination.data.canUploadEvidence && (
+          {pagination.data.canUploadEvidence && (
             <TrButton
               colspan={5}
               onClick={() => dialogRef.current?.open()}
@@ -155,21 +169,18 @@ export default function MeasureEvidencesTab() {
       </SortableTable>
       {evidence && (
         <EvidencePreviewDialog
-          key={evidence?.id}
+          key={evidence.id}
           onClose={() => {
-            const baseUrl = isSnapshotMode
-              ? `/organizations/${organizationId}/snapshots/${snapshotId}/risks/measures/${measure.id}/evidences`
-              : `/organizations/${organizationId}/measures/${measure.id}/evidences`;
-            void navigate(baseUrl);
+            void navigate(`/organizations/${organizationId}/measures/${measureId}/evidences`);
           }}
           evidenceId={evidence.id}
           filename={evidence.file?.fileName || ""}
         />
       )}
-      {!isSnapshotMode && pagination.data.canUploadEvidence && (
+      {pagination.data.canUploadEvidence && (
         <CreateEvidenceDialog
           ref={dialogRef}
-          measureId={measure.id}
+          measureId={measureId}
           connectionId={connectionId}
         />
       )}
@@ -182,8 +193,6 @@ function EvidenceRow(props: {
   measureId: string;
   organizationId: string;
   connectionId: string;
-  hideActions?: boolean;
-  snapshotId?: string;
 }) {
   const evidence = useFragment(evidenceFragment, props.evidenceKey);
   const { __ } = useTranslate();
@@ -235,9 +244,7 @@ function EvidenceRow(props: {
     );
   };
 
-  const evidenceUrl = props.snapshotId
-    ? `/organizations/${props.organizationId}/snapshots/${props.snapshotId}/risks/measures/${props.measureId}/evidences/${evidence.id}`
-    : `/organizations/${props.organizationId}/measures/${props.measureId}/evidences/${evidence.id}`;
+  const evidenceUrl = `/organizations/${props.organizationId}/measures/${props.measureId}/evidences/${evidence.id}`;
 
   return (
     <>
@@ -248,36 +255,33 @@ function EvidenceRow(props: {
         />
       )}
       <Tr to={evidenceUrl}>
-        <Td>{evidence.file?.fileName}</Td>
         <Td>
-          {fileType(__, {
-            type: evidence.type,
-            mimeType: evidence.file?.mimeType || "",
-          })}
+          <span className="text-txt-secondary text-sm line-clamp-2">
+            {evidence.description || "—"}
+          </span>
         </Td>
+        <Td>{evidence.file?.mimeType || "—"}</Td>
         <Td>{fileSize(__, evidence.file?.size || 0)}</Td>
         <Td>{formatDate(evidence.createdAt)}</Td>
         <Td noLink>
-          {!props.hideActions && (
-            <div className="flex gap-2">
-              <ActionDropdown>
-                <DropdownItem onClick={() => setIsDownloading(true)}>
-                  <IconArrowInbox size={16} />
-                  {__("Download")}
+          <div className="flex gap-2">
+            <ActionDropdown>
+              <DropdownItem onClick={() => setIsDownloading(true)}>
+                <IconArrowInbox size={16} />
+                {__("Download")}
+              </DropdownItem>
+              {evidence.canDelete && (
+                <DropdownItem
+                  variant="danger"
+                  icon={IconTrashCan}
+                  onClick={handleDelete}
+                  disabled={isDeleting}
+                >
+                  {__("Delete")}
                 </DropdownItem>
-                {evidence.canDelete && (
-                  <DropdownItem
-                    variant="danger"
-                    icon={IconTrashCan}
-                    onClick={handleDelete}
-                    disabled={isDeleting}
-                  >
-                    {__("Delete")}
-                  </DropdownItem>
-                )}
-              </ActionDropdown>
-            </div>
-          )}
+              )}
+            </ActionDropdown>
+          </div>
         </Td>
       </Tr>
     </>

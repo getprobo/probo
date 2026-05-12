@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -61,6 +61,30 @@ func MaxLen(maxLength int) ValidatorFunc {
 			return newValidationError(
 				ErrorCodeTooLong,
 				fmt.Sprintf("must be at most %d characters", maxLength),
+			)
+		}
+
+		return nil
+	}
+}
+
+// ContainsSubstring validates that a string contains the specified substring.
+func ContainsSubstring(substr string) ValidatorFunc {
+	return func(value any) *ValidationError {
+		actualValue, isNil := dereferenceValue(value)
+		if isNil {
+			return nil
+		}
+
+		str, ok := actualValue.(string)
+		if !ok {
+			return newValidationError(ErrorCodeInvalidFormat, "value must be a string")
+		}
+
+		if !strings.Contains(str, substr) {
+			return newValidationError(
+				ErrorCodeInvalidFormat,
+				fmt.Sprintf("must contain %q", substr),
 			)
 		}
 

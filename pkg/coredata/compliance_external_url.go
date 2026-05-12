@@ -1,3 +1,17 @@
+// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
 package coredata
 
 import (
@@ -38,7 +52,7 @@ func (c ComplianceExternalURL) CursorKey(orderBy ComplianceExternalURLOrderField
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (c *ComplianceExternalURL) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+func (c *ComplianceExternalURL) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	q := `SELECT organization_id FROM compliance_external_urls WHERE id = $1 LIMIT 1;`
 
 	var organizationID gid.GID
@@ -54,7 +68,7 @@ func (c *ComplianceExternalURL) AuthorizationAttributes(ctx context.Context, con
 
 func (c *ComplianceExternalURL) LoadByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	id gid.GID,
 ) error {
@@ -100,7 +114,7 @@ LIMIT 1;
 
 func (c *ComplianceExternalURL) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -150,7 +164,7 @@ RETURNING rank;
 
 func (c *ComplianceExternalURL) Update(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -183,7 +197,7 @@ WHERE
 
 func (c *ComplianceExternalURL) UpdateRank(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -234,7 +248,7 @@ WHERE %s
 
 func (c *ComplianceExternalURL) Delete(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -259,7 +273,7 @@ WHERE
 
 func (c *ComplianceExternalURLs) LoadByTrustCenterID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	trustCenterID gid.GID,
 	cursor *page.Cursor[ComplianceExternalURLOrderField],
