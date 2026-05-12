@@ -182,7 +182,7 @@ export function SAMLConfigurationList(props: {
             <Td>
               <button
                 onClick={() => onEdit(config.id)}
-                className="font-semibold text-blue-600 hover:text-blue-800"
+                className="font-semibold text-orange-600 hover:text-orange-800"
               >
                 {config.emailDomain}
               </button>
@@ -219,7 +219,7 @@ export function SAMLConfigurationList(props: {
                 ? (
                     <button
                       onClick={() => copy(config.testLoginUrl)}
-                      className="text-blue-600 hover:text-blue-800"
+                      className="text-orange-600 hover:text-orange-800"
                     >
                       {isCopied ? __("Copied!") : __("Copy URL")}
                     </button>

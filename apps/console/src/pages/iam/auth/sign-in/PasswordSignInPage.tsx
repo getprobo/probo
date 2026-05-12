@@ -130,13 +130,13 @@ export default function PasswordSignInPage() {
         {isSigningIn ? __("Logging in...") : __("Login")}
       </Button>
 
-      <div className="text-center mt-6 text-sm text-txt-secondary">
+      {/* <div className="text-center mt-6 text-sm text-txt-secondary">
         {__("Don't have an account ?")}
         {" "}
         <Link to={{ pathname: "/auth/register", search: location.search }} className="underline hover:text-txt-primary">
           {__("Register")}
         </Link>
-      </div>
+      </div> */}
 
       <div className="text-center text-sm text-txt-secondary">
         {__("Forgot password?")}

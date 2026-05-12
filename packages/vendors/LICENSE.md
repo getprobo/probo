@@ -6,7 +6,7 @@ The [vendors.json](vendors.json) file and derived files contains data about vari
 
 When using this data, you must:
 
-1. **Give appropriate credit** - Provide attribution to Probo Inc. and include a link to this license
+1. **Give appropriate credit** - Provide attribution to Govrly Inc. and include a link to this license
 2. **Indicate if changes were made** - If you modify the data, you must indicate that changes were made
 3. **Share under the same license** - If you remix, transform, or build upon the material, you must distribute your contributions under the same license as the original
 
@@ -15,7 +15,7 @@ When using this data, you must:
 When using this data, please include the following attribution:
 
 ```
-Data sourced from Probo Inc. (https://www.getprobo.com) under CC BY-SA 4.0 license
+Data sourced from Govrly Inc. (https://app.govrly.sa/) under CC BY-SA 4.0 license
 ```
 
 ## More Information

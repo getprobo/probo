@@ -48,7 +48,7 @@ func TestUserAgent(t *testing.T) {
 			name:      "ACME client user agent",
 			component: "acme-client",
 			checks: []string{
-				"Probo/",
+				"Govrly/",
 				"acme-client",
 				"Go/go",
 			},
@@ -57,7 +57,7 @@ func TestUserAgent(t *testing.T) {
 			name:      "Probod user agent",
 			component: "probod",
 			checks: []string{
-				"Probo/",
+				"Govrly/",
 				"probod",
 				"Go/go",
 			},
@@ -66,7 +66,7 @@ func TestUserAgent(t *testing.T) {
 			name:      "Custom component",
 			component: "test-component",
 			checks: []string{
-				"Probo/",
+				"Govrly/",
 				"test-component",
 				"Go/go",
 			},
@@ -83,8 +83,8 @@ func TestUserAgent(t *testing.T) {
 			}
 
 			// Check format structure
-			// Should be like: Probo/version (component; ...) Go/version
-			assert.True(t, strings.HasPrefix(ua, "Probo/"), "User agent should start with Probo/")
+			// Should be like: Govrly/version (component; ...) Go/version
+			assert.True(t, strings.HasPrefix(ua, "Govrly/"), "User agent should start with Govrly/")
 			assert.Contains(t, ua, "(", "User agent should have opening parenthesis")
 			assert.Contains(t, ua, ")", "User agent should have closing parenthesis")
 		})

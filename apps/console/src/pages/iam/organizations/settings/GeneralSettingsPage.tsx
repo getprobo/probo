@@ -13,7 +13,18 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 import { useTranslate } from "@probo/i18n";
-import { Button, Card, IconTrashCan } from "@probo/ui";
+import {
+  Button,
+  Card,
+  IconMonitor,
+  IconMoon,
+  IconSun,
+  IconTrashCan,
+  Label,
+  Option,
+  Select,
+  useTheme,
+} from "@probo/ui";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { useNavigate } from "react-router";
 import { graphql } from "relay-runtime";
@@ -92,6 +103,26 @@ export function GeneralSettingsPage(props: {
     <div className="space-y-6">
       <OrganizationForm fKey={organization} />
 
+      <div>
+        <h2 className="text-base font-medium">{__("Appearance")}</h2>
+      </div>
+      <Card padded className="space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center justify-center size-10 rounded-lg bg-subtle text-txt-secondary">
+            <IconSun size={20} />
+          </div>
+          <div>
+            <Label>{__("Theme")}</Label>
+            <p className="text-sm text-txt-tertiary">
+              {__("Select how the interface looks to you.")}
+            </p>
+          </div>
+          <div className="ml-auto w-40">
+            <ThemePicker />
+          </div>
+        </div>
+      </Card>
+
       {organization.canDelete && (
         <div className="space-y-4 mt-12">
           <h2 className="text-base font-medium text-red-600">
@@ -127,5 +158,36 @@ export function GeneralSettingsPage(props: {
         </div>
       )}
     </div>
+  );
+}
+
+function ThemePicker() {
+  const { theme, setTheme } = useTheme();
+  const { __ } = useTranslate();
+
+  return (
+    <Select
+      value={theme}
+      onValueChange={(value: "light" | "dark" | "system") => setTheme(value)}
+    >
+      <Option value="light">
+        <span className="flex items-center gap-2">
+          <IconSun size={16} />
+          {__("Light")}
+        </span>
+      </Option>
+      <Option value="dark">
+        <span className="flex items-center gap-2">
+          <IconMoon size={16} />
+          {__("Dark")}
+        </span>
+      </Option>
+      <Option value="system">
+        <span className="flex items-center gap-2">
+          <IconMonitor size={16} />
+          {__("System")}
+        </span>
+      </Option>
+    </Select>
   );
 }

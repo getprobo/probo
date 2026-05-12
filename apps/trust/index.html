@@ -45,6 +45,16 @@
 </head>
 
 <body class="text-txt-primary bg-level-0">
+  <script>
+    // Apply saved theme before first paint to prevent flash of wrong theme.
+    (function () {
+      var theme = localStorage.getItem("theme-preference") || "system";
+      var resolved = theme === "system"
+        ? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
+        : theme;
+      document.documentElement.setAttribute("data-theme", resolved);
+    })();
+  </script>
   <div id="root"></div>
   <script type="module" src="/src/main.tsx"></script>
 </body>

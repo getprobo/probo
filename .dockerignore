@@ -15,4 +15,17 @@ contrib
 e2e
 docs
 sbom.json
+sbom-docker.jsoncoverage
+*.md
+.env
+.env.*
+.DS_Store
+.idea
+.vscode
+compose.yaml
+compose.prod.yaml
+contrib
+e2e
+docs
+sbom.json
 sbom-docker.json

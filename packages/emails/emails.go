@@ -62,7 +62,6 @@ type (
 
 	PresenterConfig struct {
 		BaseURL                         string
-		PoweredByLogo                   Asset
 		SenderCompanyName               string
 		SenderCompanyWebsiteURL         string
 		SenderCompanyLogo               Asset
@@ -72,7 +71,6 @@ type (
 	CommonVariables struct {
 		// Static variables
 		BaseURL                         string
-		PoweredByLogoURL                string
 		SenderCompanyName               string
 		SenderCompanyWebsiteURL         string
 		SenderCompanyLogoURL            string
@@ -110,21 +108,15 @@ var _ filemanager.File = (*Asset)(nil)
 func DefaultPresenterConfig(staticAssetsBucket string, baseURL string) PresenterConfig {
 	return PresenterConfig{
 		BaseURL: baseURL,
-		PoweredByLogo: Asset{
-			Name:       "probo-gray-small.png",
-			ObjectKey:  "probo-gray-small.png",
-			BucketName: staticAssetsBucket,
-			MimeType:   "image/png",
-		},
-		SenderCompanyName:       "Probo",
-		SenderCompanyWebsiteURL: "https://www.getprobo.com",
+		SenderCompanyName:       "Govrly",
+		SenderCompanyWebsiteURL: "https://app.govrly.sa",
 		SenderCompanyLogo: Asset{
-			Name:       "probo.png",
-			ObjectKey:  "probo.png",
+			Name:       "GOVRLY.png",
+			ObjectKey:  "GOVRLY.png",
 			BucketName: staticAssetsBucket,
 			MimeType:   "image/png",
 		},
-		SenderCompanyHeadquarterAddress: "Probo Inc, 490 Post St, STE 640, San Francisco, CA, 94102, US",
+		SenderCompanyHeadquarterAddress: "",
 	}
 }
 
@@ -211,7 +203,7 @@ func UploadStaticAssets(ctx context.Context, s3Client *s3.Client, staticAssetsBu
 const (
 	subjectConfirmEmail                      = "Confirm your email address"
 	subjectPasswordReset                     = "Reset your password"
-	subjectInvitation                        = "Invitation to join %s on Probo"
+	subjectInvitation                        = "Invitation to join %s on Govrly"
 	subjectDocumentApproval                  = "Action Required – Please review and approve %s"
 	subjectDocumentSigning                   = "Action Required – Please review and sign %s compliance documents"
 	subjectDocumentExport                    = "Your document export is ready"
@@ -257,10 +249,6 @@ var (
 )
 
 func (p *Presenter) getCommonVariables(ctx context.Context) (*CommonVariables, error) {
-	poweredByLogoURL, err := p.fm.GenerateFileUrl(ctx, &p.config.PoweredByLogo, staticAssetsDuration)
-	if err != nil {
-		return nil, fmt.Errorf("cannot generate probo logo URL: %w", err)
-	}
 	senderCompanyLogoURL, err := p.fm.GenerateFileUrl(ctx, &p.config.SenderCompanyLogo, staticAssetsDuration)
 	if err != nil {
 		return nil, fmt.Errorf("cannot generate sender logo URL: %w", err)
@@ -268,7 +256,6 @@ func (p *Presenter) getCommonVariables(ctx context.Context) (*CommonVariables, e
 
 	return &CommonVariables{
 		BaseURL:                         p.config.BaseURL,
-		PoweredByLogoURL:                poweredByLogoURL,
 		SenderCompanyName:               p.config.SenderCompanyName,
 		SenderCompanyWebsiteURL:         p.config.SenderCompanyWebsiteURL,
 		SenderCompanyLogoURL:            senderCompanyLogoURL,

@@ -77,12 +77,12 @@ func UserAgent(component string) string {
 
 	if info.Version == "dev" && info.Commit == "unknown" {
 		// Simple format for development builds without VCS info
-		return fmt.Sprintf("Probo/dev (%s) Go/%s", component, info.GoVersion)
+		return fmt.Sprintf("Govrly/dev (%s) Go/%s", component, info.GoVersion)
 	}
 
 	// Full format with all available information
 	parts := []string{
-		fmt.Sprintf("Probo/%s", info.Version),
+		fmt.Sprintf("Govrly/%s", info.Version),
 	}
 
 	// Add component and metadata

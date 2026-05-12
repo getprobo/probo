@@ -20,7 +20,7 @@ export const PasswordReset = () => {
   return (
     <EmailLayout subject="Reset your password">
       <Text style={bodyText}>
-        You have requested a password reset for your Probo account. Click the button below to reset your password:
+        You have requested a password reset for your Govrly account. Click the button below to reset your password:
       </Text>
 
       <Section style={buttonContainer}>

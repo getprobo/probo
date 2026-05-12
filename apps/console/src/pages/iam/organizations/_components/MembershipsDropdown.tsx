@@ -16,16 +16,12 @@ import { useTranslate } from "@probo/i18n";
 import {
   Button,
   Dropdown,
-  DropdownItem,
-  DropdownSeparator,
   IconChevronGrabberVertical,
   IconMagnifyingGlass,
-  IconPlusLarge,
   Input,
 } from "@probo/ui";
 import { Suspense, useCallback, useState } from "react";
 import { useFragment, useQueryLoader } from "react-relay";
-import { Link, useLocation } from "react-router";
 import { graphql } from "relay-runtime";
 
 import type { MembershipsDropdown_organizationFragment$key } from "#/__generated__/iam/MembershipsDropdown_organizationFragment.graphql";
@@ -47,7 +43,6 @@ export function MembershipsDropdown(props: {
 }) {
   const { organizationFKey } = props;
 
-  const location = useLocation();
   const { __ } = useTranslate();
   const [search, setSearch] = useState("");
 
@@ -106,13 +101,13 @@ export function MembershipsDropdown(props: {
             </Suspense>
           )}
         </div>
-        <DropdownSeparator />
+        {/* <DropdownSeparator />
         <DropdownItem asChild>
           <Link to="/organizations/new" state={{ from: location.pathname }}>
             <IconPlusLarge size={16} />
             {__("Add organization")}
           </Link>
-        </DropdownItem>
+        </DropdownItem> */}
       </Dropdown>
     </div>
   );

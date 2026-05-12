@@ -109,7 +109,7 @@ export function ViewerMembershipDropdown(props: {
         label={__("My Signatures")}
       />
       <UserDropdownItem
-        to="mailto:support@getprobo.com"
+        to="mailto:support@govrly.com"
         icon={IconCircleQuestionmark}
         label={__("Help")}
       />

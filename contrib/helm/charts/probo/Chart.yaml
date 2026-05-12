@@ -1,6 +1,6 @@
 apiVersion: v2
 name: probo
-description: A Helm chart for deploying Probo - Open Source Compliance Platform
+description: A Helm chart for deploying Govrly - Open Source Compliance Platform
 type: application
 version: 0.1.0
 appVersion: "0.74.7"
@@ -13,7 +13,7 @@ home: https://getprobo.com
 sources:
   - https://github.com/getprobo/probo
 maintainers:
-  - name: Probo Team
+  - name: Govrly Team
     email: hello@getprobo.com
 icon: https://github.com/getprobo/probo/blob/main/.github/cover_v3.png
 

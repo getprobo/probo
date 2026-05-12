@@ -3,7 +3,7 @@ FROM ubuntu:24.04@sha256:c4a8d5503dfb2a3eb8ab5f807da5bc69a85730fb49b5cfca2330194
 
 LABEL org.opencontainers.image.source="https://github.com/getprobo/probo"
 LABEL org.opencontainers.image.licenses="MIT"
-LABEL org.opencontainers.image.vendor="Probo Inc"
+LABEL org.opencontainers.image.vendor="Govrly Inc"
 
 RUN useradd -m probo && \
     apt-get update && \

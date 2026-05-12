@@ -8,5 +8,4 @@ The certificate contains a complete record of the signing event, including the i
 
 If you have any questions, please contact support.
 
-{{.SenderCompanyHeadquarterAddress}}
-Powered By Probo
+app.govrly.sa

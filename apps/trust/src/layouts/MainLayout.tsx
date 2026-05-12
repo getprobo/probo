@@ -60,7 +60,7 @@ export function MainLayout(props: Props) {
       </div>
 
       <a
-        href="https://www.getprobo.com/"
+        href="https://app.govrly.sa//"
         className="flex gap-2 text-sm font-medium text-txt-tertiary items-center w-max mx-auto my-10"
       >
         {__("Powered by")}

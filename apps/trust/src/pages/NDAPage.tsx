@@ -226,7 +226,7 @@ export function NDAPage(props: {
   const consentText = ndaSignature?.consentText
     ? ndaSignature.consentText
     : __(
-        "By clicking Review & Sign, you agree to the terms of this NDA. If you have questions about the NDA, please contact security@probo.com.",
+        "By clicking Review & Sign, you agree to the terms of this NDA. If you have questions about the NDA, please contact security@govrly.com.",
       );
 
   return (
@@ -303,7 +303,7 @@ export function NDAPage(props: {
             </div>
           </div>
           <a
-            href="https://www.getprobo.com/"
+            href="https://app.govrly.sa//"
             className="flex gap-1 text-sm font-medium text-txt-tertiary items-center py-6"
           >
             Powered by

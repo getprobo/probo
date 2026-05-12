@@ -1,0 +1,137 @@
+unit:
+  metrics:
+    addr: "localhost:8081"
+  tracing:
+    addr: "localhost:4317"
+    max-batch-size: 512
+    batch-timeout: 5
+    export-timeout: 30
+    max-queue-size: 2048
+
+probod:
+  base-url: "http://localhost:8080"
+  encryption-key: "thisisnotasecretAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+  chrome-dp-addr: "localhost:9222"
+
+  identity-and-access-management:
+    signup:
+      enabled: true
+      invitation-token-validity: 3600
+    password:
+      pepper: "this-is-a-secure-pepper-for-password-hashing-at-least-32-bytes"
+    session:
+      duration: 7d
+      cookie:
+        name: "SSID"
+        domain: "localhost"
+        secret: "this-is-a-secure-secret-for-cookie-signing-at-least-32-bytes"
+        duration: 24
+        secure: true
+
+  trust-center:
+    http-addr: ":8085"
+    https-addr: ":8443"
+
+  api:
+    addr: "localhost:8080"
+
+    default:
+      cors:
+        allowed-origins:
+          - "http://localhost:8080"
+          - "http://localhost:5173"
+          - "http://localhost:5174"
+      extra-header-fields: {}
+    console:
+    complaince-page:
+    connect:
+    mcp:
+
+  pg:
+    addr: "localhost:5432"
+    username: "postgres"
+    password: "postgres"
+    database: "probod"
+    pool-size: 100
+
+  auth:
+    disable-signup: false
+    invitation-confirmation-token-validity: 3600
+    cookie:
+      name: "SSID"
+      domain: "localhost"
+      secret: "this-is-a-secure-secret-for-cookie-signing-at-least-32-bytes"
+      duration: 24
+      secure: true
+    password:
+      pepper: "this-is-a-secure-pepper-for-password-hashing-at-least-32-bytes"
+      iterations: 1000000
+
+  aws:
+    region: "us-east-1"
+    bucket: "probod"
+    access-key-id: "probod"
+    secret-access-key: "thisisnotasecret"
+    endpoint: "http://127.0.0.1:8333"
+
+  notifications:
+    mailer:
+      sender-name: "Govrly"
+      sender-email: "no-reply@notification.getprobo.com"
+      smtp:
+        addr: "localhost:1025"
+        tls-required: false
+      mailer-interval: 60
+    slack:
+      sender-interval: 60
+
+  agents:
+    providers:
+      openai:
+        type: "openai"
+        api-key: "thisisnotasecret"
+    default:
+      provider: "openai"
+      model-name: "gpt-4o"
+      temperature: 0.1
+      max-tokens: 4096
+
+  custom-domains:
+    renewal-interval: 3600
+    provision-interval: 30
+    cname-target: "custom.getprobo.com"
+    acme:
+      directory: "https://localhost:14000/dir"
+      email: "admin@getprobo.com"
+      key-type: "EC256"
+
+  connectors:
+    - provider: "SLACK"
+      protocol: "oauth2"
+      config:
+        client-id: "slack-client-id"
+        client-secret: "thisisnotasecret"
+        redirect-uri: "https://localhost:8080/api/console/v1/connectors/complete"
+        auth-url: "https://slack.com/oauth/v2/authorize"
+        token-url: "https://slack.com/api/oauth.v2.access"
+        scopes:
+          - "chat:write"
+          - "channels:join"
+          - "incoming-webhook"
+      settings:
+        signing-secret: "this-is-not-a-secret-for-slack-signing"
+    - provider: "GOOGLE_WORKSPACE"
+      protocol: "oauth2"
+      config:
+        client-id: "google-workspace-client-id"
+        client-secret: "thisisnotasecret"
+        redirect-uri: "http://localhost:8080/api/console/v1/connectors/complete"
+        auth-url: "https://accounts.google.com/o/oauth2/v2/auth"
+        token-url: "https://oauth2.googleapis.com/token"
+        scopes:
+          - "https://www.googleapis.com/auth/admin.directory.user.readonly"
+          - "https://www.googleapis.com/auth/admin.directory.userschema.readonly"
+          - "https://www.googleapis.com/auth/admin.directory.group.member.readonly"
+        extra-auth-params:
+          access_type: "offline"
+          prompt: "consent"

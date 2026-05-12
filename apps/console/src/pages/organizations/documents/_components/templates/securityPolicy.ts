@@ -1,0 +1,122 @@
+import { IconShield } from "@probo/ui";
+
+import type { DocumentTemplate } from "./types";
+
+export const securityPolicyTemplate: DocumentTemplate = {
+  id: "info-security-policy",
+  icon: IconShield,
+  name: "Security Policy",
+  documentType: "POLICY",
+  classification: "INTERNAL",
+  title: "Information Security Policy",
+  content: [
+    "<h1>🛡️ Information Security Policy</h1>",
+    "<p></p>",
+
+    "<table><thead><tr><th>Property</th><th>Details</th></tr></thead><tbody>",
+    "<tr><td>📋 <strong>Document Owner</strong></td><td>Chief Information Security Officer (CISO)</td></tr>",
+    "<tr><td>🏷️ <strong>Classification</strong></td><td>Internal</td></tr>",
+    "<tr><td>📅 <strong>Effective Date</strong></td><td><em>[Enter date]</em></td></tr>",
+    "<tr><td>🔄 <strong>Next Review</strong></td><td><em>[Enter date + 12 months]</em></td></tr>",
+    "<tr><td>📌 <strong>Version</strong></td><td>1.0</td></tr>",
+    "<tr><td>✅ <strong>Approved By</strong></td><td><em>[Name, Title]</em></td></tr>",
+    "</tbody></table>",
+    "<p></p>",
+    "<hr>",
+    "<p></p>",
+
+    // 1 · Purpose
+    "<h2>1 · Purpose</h2>",
+    "<p>This policy establishes the information security framework for <strong>[Organization Name]</strong> to ensure the protection of all information assets. The three pillars of this policy are:</p>",
+    "<ol>",
+    "<li><strong>Confidentiality</strong> — Ensuring information is accessible only to authorized individuals</li>",
+    "<li><strong>Integrity</strong> — Safeguarding the accuracy and completeness of information</li>",
+    "<li><strong>Availability</strong> — Ensuring authorized users have timely access when needed</li>",
+    "</ol>",
+    "<p></p>",
+    "<blockquote><p>💡 This policy aligns with <strong>ISO 27001</strong>, <strong>SOC 2</strong>, and <strong>NIST CSF</strong> frameworks. It should be read in conjunction with the Acceptable Use Policy and Incident Response Plan.</p></blockquote>",
+    "<p></p>",
+
+    // 2 · Scope
+    "<h2>2 · Scope</h2>",
+    "<p>This policy applies to <strong>all personnel and systems</strong> across the organization:</p>",
+    "<p></p>",
+    "<table><thead><tr><th>Category</th><th>In Scope</th></tr></thead><tbody>",
+    "<tr><td>👥 <strong>People</strong></td><td>Employees, contractors, interns, third-party vendors</td></tr>",
+    "<tr><td>💻 <strong>Systems</strong></td><td>Servers, endpoints, cloud infrastructure, SaaS applications</td></tr>",
+    "<tr><td>📊 <strong>Data</strong></td><td>Customer data, employee records, financial information, IP</td></tr>",
+    "<tr><td>🏢 <strong>Facilities</strong></td><td>Offices, data centers, remote work environments</td></tr>",
+    "</tbody></table>",
+    "<p></p>",
+
+    // 3 · Policy Statements
+    "<h2>3 · Policy Statements</h2>",
+    "<p></p>",
+    "<h3>3.1 — Access Control</h3>",
+    "<p>Access to information systems shall follow the <strong>principle of least privilege</strong>. Requirements:</p>",
+    "<ul>",
+    "<li>All access must be <strong>formally requested</strong> and approved by the resource owner</li>",
+    "<li>Multi-factor authentication (<strong>MFA</strong>) is mandatory for all remote access and privileged accounts</li>",
+    "<li>Access reviews must be conducted <strong>quarterly</strong> — stale accounts are deactivated after 90 days</li>",
+    "<li>Shared accounts and generic credentials are <strong>prohibited</strong></li>",
+    "</ul>",
+    "<p></p>",
+
+    "<h3>3.2 — Data Protection Standards</h3>",
+    "<p></p>",
+    "<table><thead><tr><th>Control</th><th>Standard</th><th>Applies To</th><th>Compliance</th></tr></thead><tbody>",
+    "<tr><td>🔐 Encryption at rest</td><td>AES-256</td><td>Confidential &amp; Secret data</td><td>Mandatory</td></tr>",
+    "<tr><td>🔒 Encryption in transit</td><td>TLS 1.2+</td><td>All network data transfers</td><td>Mandatory</td></tr>",
+    "<tr><td>🗝️ Key management</td><td>HSM or cloud KMS</td><td>All encryption keys</td><td>Mandatory</td></tr>",
+    "<tr><td>💾 Backup frequency</td><td>Daily incremental, weekly full</td><td>All critical systems</td><td>Mandatory</td></tr>",
+    "<tr><td>🗄️ Backup retention</td><td>90 days minimum</td><td>All backups</td><td>Mandatory</td></tr>",
+    "<tr><td>🧪 Backup testing</td><td>Monthly restore test</td><td>Critical systems</td><td>Required</td></tr>",
+    "</tbody></table>",
+    "<p></p>",
+
+    "<h3>3.3 — Network Security</h3>",
+    "<ul>",
+    "<li>All external-facing systems must be protected by a <strong>web application firewall</strong> (WAF)</li>",
+    "<li>Network segmentation must isolate <strong>production</strong>, <strong>staging</strong>, and <strong>development</strong> environments</li>",
+    "<li>Intrusion detection / prevention systems (<strong>IDS/IPS</strong>) must be active on all network boundaries</li>",
+    "<li>VPN or zero-trust access is required for all <strong>remote connections</strong></li>",
+    "</ul>",
+    "<p></p>",
+
+    "<h3>3.4 — Incident Response</h3>",
+    "<blockquote><p>⚠️ <strong>All security incidents must be reported within 1 hour of detection.</strong> Refer to the Incident Response Plan for the complete response procedure.</p></blockquote>",
+    "<p></p>",
+
+    // 4 · Roles & Responsibilities
+    "<h2>4 · Roles &amp; Responsibilities</h2>",
+    "<p></p>",
+    "<table><thead><tr><th>Role</th><th>Key Responsibilities</th><th>Reporting To</th></tr></thead><tbody>",
+    "<tr><td>🎯 <strong>CISO</strong></td><td>Overall policy ownership · Risk oversight · Board reporting · Compliance</td><td>CEO / Board</td></tr>",
+    "<tr><td>🔧 <strong>Security Team</strong></td><td>Technical controls · SIEM monitoring · Vulnerability management · IR</td><td>CISO</td></tr>",
+    "<tr><td>👔 <strong>Department Heads</strong></td><td>Team compliance · Access approvals · Incident escalation</td><td>CISO</td></tr>",
+    "<tr><td>🧑‍💻 <strong>All Employees</strong></td><td>Policy adherence · Security training · Incident reporting</td><td>Department Head</td></tr>",
+    "<tr><td>🤝 <strong>Third Parties</strong></td><td>Contractual compliance · Data handling per SLA</td><td>Vendor Manager</td></tr>",
+    "</tbody></table>",
+    "<p></p>",
+
+    // 5 · Training & Awareness
+    "<h2>5 · Training &amp; Awareness</h2>",
+    "<ul data-type=\"taskList\">",
+    "<li data-type=\"taskItem\" data-checked=\"false\">Annual security awareness training for all employees</li>",
+    "<li data-type=\"taskItem\" data-checked=\"false\">Quarterly phishing simulation exercises</li>",
+    "<li data-type=\"taskItem\" data-checked=\"false\">Role-based training for privileged access users</li>",
+    "<li data-type=\"taskItem\" data-checked=\"false\">New hire security onboarding within first week</li>",
+    "<li data-type=\"taskItem\" data-checked=\"false\">Annual policy acknowledgment and sign-off</li>",
+    "</ul>",
+    "<p></p>",
+
+    // 6 · Compliance & Enforcement
+    "<h2>6 · Compliance &amp; Enforcement</h2>",
+    "<p>Violations of this policy may result in <strong>disciplinary action</strong> up to and including termination. The CISO will conduct <strong>annual audits</strong> to verify compliance.</p>",
+    "<p></p>",
+    "<blockquote><p>📎 <strong>Related Documents:</strong> Acceptable Use Policy · Incident Response Plan · Data Classification Procedure · Risk Management Framework · Business Continuity Plan</p></blockquote>",
+    "<p></p>",
+    "<hr>",
+    "<p><em>This is a controlled document. Verify you have the latest version from the document management system before use.</em></p>",
+  ].join(""),
+};

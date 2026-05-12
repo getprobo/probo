@@ -15,7 +15,8 @@
 import { useTranslate } from "@probo/i18n";
 import { Button } from "@probo/ui";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
-import { Link, useLocation } from "react-router";
+// import { Link, useLocation } from "react-router";
+import { useLocation } from "react-router";
 import { graphql } from "relay-runtime";
 
 import type { SignInPageQuery } from "#/__generated__/iam/SignInPageQuery.graphql";
@@ -71,8 +72,8 @@ export default function SignInPage(props: Props) {
         </Button>
       </div>
 
-      <p className="mt-8 text-center text-sm text-txt-secondary">
-        {__("New to Probo?")}
+      {/* <p className="mt-8 text-center text-sm text-txt-secondary">
+        {__("New to Govrly?")}
         {" "}
         <Link
           to={{ pathname: "/auth/register", search: location.search }}
@@ -80,7 +81,7 @@ export default function SignInPage(props: Props) {
         >
           {__("Create account")}
         </Link>
-      </p>
+      </p> */}
     </div>
   );
 }

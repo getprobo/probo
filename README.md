@@ -1,136 +1,141 @@
-<div align="center">
-<h1>Probo - Open Source Compliance</h1>
+# Govrly - Cybersecurity Governance & Compliance Platform
 
-[![Discord](https://img.shields.io/discord/1326589224811757568?color=7289da&label=Discord&logo=discord&logoColor=ffffff)](https://discord.gg/8qfdJYfvpY)
-[![GitHub License](https://img.shields.io/github/license/getprobo/probo)](LICENSE)
-![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/getprobo/probo/make.yaml)
+Govrly is a cybersecurity Governance, Risk, and Compliance (GRC) platform designed to help organizations manage regulatory requirements, monitor security posture, and maintain continuous compliance.
 
-</div>
+The platform centralizes governance processes, risk tracking, compliance frameworks, and audit evidence in a single system.
 
-Probo is an open-source compliance platform built for startups that helps you
-achieve SOC-2 compliance quickly and efficiently. Unlike traditional solutions,
-Probo is designed to be accessible, transparent, and community-driven.
+---
 
-## 🚀 Getting Started
-📖 [Official Documentation](https://www.getprobo.com/docs)
-### Prerequisites
+# Platform Capabilities
+
+## Governance
+- Policy and procedure management
+- Control libraries and security baselines
+- Compliance framework mapping
+- Governance workflow automation
+- Audit readiness management
+
+## Risk Management
+- Risk identification and classification
+- Risk register management
+- Risk treatment planning
+- Residual risk tracking
+- Continuous risk monitoring
+
+## Compliance Management
+- Compliance framework implementation tracking
+- Evidence collection workflows
+- Compliance dashboards and reporting
+- Control maturity tracking
+- Compliance gap identification
+
+## Audit Management
+- Internal audit preparation
+- Evidence repository
+- Control testing documentation
+- Audit findings tracking
+- Audit reporting
+
+---
+
+# Supported Compliance Frameworks
+
+- ISO 27001
+- NCA ECC
+- SAMA Cybersecurity Framework
+- PDPL
+- SOC 2
+- Custom frameworks
+
+---
+
+# Architecture Overview
+
+## Backend
+- Go
+- GraphQL
+- PostgreSQL
+
+## Frontend
+- React
+- TypeScript
+- Relay
+- TailwindCSS
+
+## Infrastructure
+- Docker
+- OpenTelemetry
+- CI/CD
+
+## Observability
+- Prometheus
+- Grafana
+- Loki
+- Tempo
+
+---
+
+# 🚀 Getting Started
+
+## Prerequisites
 
 - Go 1.21+
 - Node.js 22+
 - Docker
 - mkcert
 
-### Quick Start
+---
 
-1. Clone the repository:
+# ⚡ Quick Start
 
-   ```bash
-   git clone --recurse-submodules https://github.com/getprobo/probo.git
-   cd probo
-   ```
+## Clone the repository
 
-2. Install dependencies:
+git clone --recurse-submodules https://github.com/govrly/govrly.git
+cd govrly
 
-   ```bash
-   # Install Go dependencies
-   go mod download
+## Install dependencies
 
-   # Install Node.js dependencies
-   npm ci
-   ```
+# Install Go dependencies
+go mod download
 
-3. Start the development environment:
+# Install Node.js dependencies
+npm ci
 
-   ```bash
-   # Start infrastructure services
-   make stack-up
+## Start the development environment
 
-   # Build the project
-   make build
+# Start infrastructure services
+make stack-up
 
-   # Generate the local dev config (writes cfg/dev.yaml)
-   make dev-config
+# Build the project
+make build
 
-   # Start the application using development settings
-   bin/probod -cfg-file cfg/dev.yaml
-   ```
+# Start the application using development settings
+bin/govrlyd -cfg-file cfg/dev.yaml
 
 The application will be available at:
 
-- Application: http://localhost:8080
+http://localhost:8080
 
-### Testing Custom Domains
+---
 
-To test the custom domains feature locally, add the CNAME target to your hosts file:
+# Testing Custom Domains
 
-```bash
-# Add this line to /etc/hosts (macOS/Linux) or C:\Windows\System32\drivers\etc\hosts (Windows)
-127.0.0.1 custom.getprobo.com
-```
+Add to hosts file:
 
-This allows you to test custom trust center domains on your local machine. The generated `cfg/dev.yaml` sets the CNAME target via `custom-domains.cname-target`; change `CUSTOM_DOMAINS_CNAME_TARGET` before running `make dev-config` to override it.
+127.0.0.1 custom.govrly.local
 
-For detailed setup instructions, see our [Contributing Guide](CONTRIBUTING.md).
+---
 
-## 🏗️ Current Status
+# Security
 
-Probo is in early development, focusing on building a solid foundation for
-compliance management.
+- RBAC
+- Secure authentication
+- Audit logging
+- Encryption support
 
-## 🛠️ Tech Stack
+---
 
-### Backend
+# License
 
-- [Go](https://go.dev/) - API server
-- [PostgreSQL](https://www.postgresql.org/) - Data storage
-- [GraphQL](https://graphql.org/) - API layer
-
-### Frontend
-
-- [React](https://react.dev/) with [TypeScript](https://www.typescriptlang.org/)
-- [Relay](https://relay.dev/) - Data fetching
-- [TailwindCSS](https://tailwindcss.com/) - Styling
-
-### Infrastructure
-
-- [Docker](https://www.docker.com/) - Containerization
-- [OpenTelemetry](https://opentelemetry.io/) - Observability
-- [GitHub Actions](https://github.com/features/actions) - CI/CD
-
-### Observability
-
-- Grafana - Metrics visualization
-- Prometheus - Metrics collection
-- Loki - Log aggregation
-- Tempo - Distributed tracing
-
-## 🤝 Contributing
-
-We love contributions from our community! There are many ways to contribute:
-
-- 🌟 Star the repository to show your support
-- 🐛 [Report bugs](https://github.com/getprobo/probo/issues/new)
-- 💡 [Request features](https://github.com/getprobo/probo/issues/new)
-- 🔧 Submit pull requests
-- 📖 Improve documentation
-
-Please read our [Contributing Guide](CONTRIBUTING.md) before making a pull
-request.
-
-
-## 📚 Documentation
-
-- 📖 [Official Documentation](https://www.getprobo.com/docs)
-- 💬 [Discord Community](https://discord.gg/8qfdJYfvpY)
-- 📝 [Blog](https://www.getprobo.com/blog)
-
-## 🌐 Community & Support
-
-- Join our [Discord community](https://discord.gg/8qfdJYfvpY)
-- Follow us on [Twitter](https://twitter.com/getprobo)
-- Connect on [LinkedIn](https://www.linkedin.com/company/getprobo)
-- Visit our [website](https://www.getprobo.com)
-
-## 📄 License
-
-Probo is [MIT licensed](LICENSE).
+Proprietary software developed for Govrly.
+All rights reserved.

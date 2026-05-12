@@ -1,1 +1,1 @@
-Move to [getprobo.com/docs](https://www.getprobo.com/docs)
+Move to [govrly.com/docs](https://app.govrly.sa//docs)

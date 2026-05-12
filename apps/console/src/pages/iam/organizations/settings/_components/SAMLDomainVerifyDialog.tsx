@@ -74,8 +74,8 @@ export function SAMLDomainVerifyDialog(props: {
               </div>
             </div>
           </div>
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <p className="text-sm text-blue-800">
+          <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+            <p className="text-sm text-orange-800">
               <strong>{__("Note:")}</strong>
               {" "}
               {__(

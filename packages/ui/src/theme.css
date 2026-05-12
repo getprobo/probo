@@ -1,5 +1,3 @@
-@import "./rich-editor.css";
-
 @plugin "@tailwindcss/typography";
 @config "../tailwind.config.js";
 
@@ -7,77 +5,78 @@
     --font-sans: "Geist", "sans-serif";
     --color-*: initial;
 
-    --color-black: #000000;
+    --color-black: #0F172A;
 
-    --color-level-0: #fffffb;
-    --color-level-1: #ffffff;
-    --color-level-2: #ffffff;
-    --color-level-3: #141e12;
+    /* Surface layers — clean white base with subtle warm depth */
+    --color-level-0: #ffffff;
+    --color-level-1: #F8FAFC;
+    --color-level-2: #F1F5F9;
+    --color-level-3: #0F172A;
 
-    /* Text colors */
-    --color-txt-primary: #141e12;
-    --color-invert: #fcfdfc;
-    --color-txt-invert: var(--color-invert);
-    --color-txt-secondary: #6b716a;
-    --color-txt-tertiary: #818780;
-    --color-txt-quaternary: #c3c8c2;
-    --color-txt-disabled: #000000;
-    --color-txt-accent: #93c926;
-    --color-txt-danger: #cd2b31;
-    --color-txt-success: #5d770d;
-    --color-txt-info: #006adc;
-    --color-txt-warning: #ad5700;
+    /* Text — navy #0F172A anchors hierarchy, slate tones step down */
+    --color-txt-primary: #0F172A;
+    --color-invert: #ffffff;
+    --color-txt-invert: #ffffff;
+    --color-txt-secondary: #334155;
+    --color-txt-tertiary: #64748B;
+    --color-txt-quaternary: #94A3B8;
+    --color-txt-disabled: #CBD5E1;
+    --color-txt-accent: #F54900;
+    --color-txt-danger: #DC2626;
+    --color-txt-success: #15803D;
+    --color-txt-info: #0369A1;
+    --color-txt-warning: #B45309;
 
-    /* Backgrounds */
-    --color-primary: #141e12;
+    /* Backgrounds — #F54900 brand orange woven through warm tints */
+    --color-primary: #F54900;
     --color-invert: #ffffff;
     --color-secondary: #ffffff;
-    --color-tertiary: #ffffff;
-    --color-subtle: #054d0507;
-    --color-highlight: #0027000d;
-    --color-active: #e4f7c7;
-    --color-accent: #141e12;
-    --color-danger: #ffefef;
-    --color-danger-plain: #dc3d43;
-    --color-danger-dark: #dc3d43;
-    --color-success: #eefadc;
-    --color-info: #edf6ff;
-    --color-warning: #fff4d5;
-    --color-dialog: #141e12;
+    --color-tertiary: transparent;
+    --color-subtle: rgba(15, 23, 42, 0.03);
+    --color-highlight: rgba(245, 73, 0, 0.06);
+    --color-active: #FFF7ED;
+    --color-accent: #F54900;
+    --color-danger: #FEF2F2;
+    --color-danger-plain: #DC2626;
+    --color-danger-dark: #B91C1C;
+    --color-success: #F0FDF4;
+    --color-info: #EFF6FF;
+    --color-warning: #FFFBEB;
+    --color-dialog: #0F172A;
 
-    /* Borders */
-    --color-border-solid: #ecefec;
-    --color-border-low: #022a0213;
-    --color-border-mid: #001a0027;
-    --color-border-strong: #051a013d;
-    --color-border-active: #141e12;
-    --color-border-accent: #93c926;
-    --color-border-danger: #dc3d43;
-    --color-border-success: #93c926;
-    --color-border-warning: #ffa01c;
-    --color-border-info: #0081f1;
+    /* Borders — slate edges, accent orange, clean semantics */
+    --color-border-solid: #E2E8F0;
+    --color-border-low: rgba(15, 23, 42, 0.06);
+    --color-border-mid: rgba(15, 23, 42, 0.12);
+    --color-border-strong: rgba(15, 23, 42, 0.22);
+    --color-border-active: #0F172A;
+    --color-border-accent: #F54900;
+    --color-border-danger: #DC2626;
+    --color-border-success: #16A34A;
+    --color-border-warning: #F59E0B;
+    --color-border-info: #0284C7;
 
-    /* Hover */
-    --color-primary-hover: #273025;
-    --color-invert-hover: #f8faf8;
-    --color-secondary-hover: #f8faf8;
-    --color-tertiary-hover: #054d0507;
-    --color-subtle-hover: #0027000d;
-    --color-highlight-hover: #022a0213;
-    --color-accent-hover: #1e2c1c;
-    --color-active-hover: #d7f2b0;
-    --color-danger-hover: #cf393f;
+    /* Hover — subtle lifts with orange warmth */
+    --color-primary-hover: #E04200;
+    --color-invert-hover: #F8FAFC;
+    --color-secondary-hover: #F8FAFC;
+    --color-tertiary-hover: rgba(15, 23, 42, 0.04);
+    --color-subtle-hover: rgba(15, 23, 42, 0.05);
+    --color-highlight-hover: rgba(245, 73, 0, 0.10);
+    --color-accent-hover: #E04200;
+    --color-active-hover: #FFEDD5;
+    --color-danger-hover: #B91C1C;
 
-    /* Pressed */
-    --color-primary-pressed: #30392e;
-    --color-invert-pressed: #f2f4f2;
-    --color-secondary-pressed: #f2f4f2;
-    --color-tertiary-pressed: #0027000d;
-    --color-subtle-pressed: #022a0213;
-    --color-highlight-pressed: #02210219;
-    --color-accent-pressed: #293a25;
-    --color-active-pressed: #c9e894;
-    --color-danger-pressed: #c6373c;
+    /* Pressed — deeper engagement states */
+    --color-primary-pressed: #CC3C00;
+    --color-invert-pressed: #F1F5F9;
+    --color-secondary-pressed: #F1F5F9;
+    --color-tertiary-pressed: rgba(15, 23, 42, 0.06);
+    --color-subtle-pressed: rgba(15, 23, 42, 0.08);
+    --color-highlight-pressed: rgba(245, 73, 0, 0.14);
+    --color-accent-pressed: #CC3C00;
+    --color-active-pressed: #FED7AA;
+    --color-danger-pressed: #991B1B;
 
     /* text-5xl */
     --text-5xl: 3rem;
@@ -157,127 +156,130 @@
     --text-xxs--letter-spacing: 0px;
     --text-xxs--font-weight: 400;
 
-    /* Shadows */
+    /* Shadows — navy-tinted depth, orange focus ring */
     --shadow-*: initial;
     --shadow-base:
-        0px 1px 3px 0px rgba(11, 19, 36, 0.1),
-        0px -1px 0px 0px rgba(0, 0, 0, 0.1) inset;
+        0px 0px 0px 1px rgba(15, 23, 42, 0.04),
+        0px 1px 2px 0px rgba(15, 23, 42, 0.05),
+        0px 1px 3px 0px rgba(15, 23, 42, 0.08);
     --shadow-hover:
-        0px 2px 6px 0px rgba(11, 19, 36, 0.1),
-        0px -1px 0px 0px rgba(0, 0, 0, 0.1) inset;
-    --shadow-focus: 0px 0px 0px 4px rgba(135, 190, 34, 0.5);
+        0px 0px 0px 1px rgba(15, 23, 42, 0.04),
+        0px 3px 6px 0px rgba(15, 23, 42, 0.06),
+        0px 6px 12px 0px rgba(15, 23, 42, 0.06);
+    --shadow-focus: 0px 0px 0px 3px rgba(245, 73, 0, 0.18);
     --shadow-mid:
-        0px 2px 4px 0px rgba(0, 0, 0, 0.08),
-        0px 2px 12px 0px rgba(0, 0, 0, 0.06);
+        0px 0px 0px 1px rgba(15, 23, 42, 0.03),
+        0px 4px 8px -2px rgba(15, 23, 42, 0.05),
+        0px 8px 16px -4px rgba(15, 23, 42, 0.06);
+
+    /* Sidebar — clean white, orange accent active, warm hover */
+    --color-sidebar-bg: #ffffff;
+    --color-sidebar-border: #F1F5F9;
+    --color-sidebar-text: #64748B;
+    --color-sidebar-text-hover: #0F172A;
+    --color-sidebar-text-active: #F54900;
+    --color-sidebar-hover-bg: #F8FAFC;
+    --color-sidebar-active-bg: rgba(245, 73, 0, 0.06);
+    --color-sidebar-active-hover-bg: rgba(245, 73, 0, 0.10);
+    --color-sidebar-active-pressed-bg: rgba(245, 73, 0, 0.14);
 }
 
-@custom-variant document (&:where([data-theme=document] *));
+/* Dark theme — govrly brand: #24262d base, orange #F54900 accent */
+:root[data-theme="dark"] {
+    --color-level-0: #24262d;
+    --color-level-1: #1e2027;
+    --color-level-2: #2c2e35;
+    --color-level-3: #34363d;
 
-@layer theme {
-    :root, :host {
-        @variant dark {
-            --color-level-0: #151715;
-            --color-level-1: #1a1d19;
-            --color-level-2: #20241f;
-            --color-level-3: #3b3f3a;
+    --color-black: #F1F5F9;
 
-            --color-black: #ffffff;
+    /* Text colors — slate tones for readability on navy */
+    --color-txt-primary: #F1F5F9;
+    --color-invert: #ffffff;
+    --color-txt-invert: #F1F5F9;
+    --color-txt-secondary: #94A3B8;
+    --color-txt-tertiary: #64748B;
+    --color-txt-quaternary: #475569;
+    --color-txt-disabled: #334155;
+    --color-txt-accent: #F54900;
+    --color-txt-danger: #EF4444;
+    --color-txt-success: #22C55E;
+    --color-txt-info: #3B82F6;
+    --color-txt-warning: #F59E0B;
 
-            /* Text colors */
-            --color-txt-primary: #eceeec;
-            --color-invert: #151715;
-            --color-txt-invert: #fcfdfc;
-            --color-txt-secondary: #9aa299;
-            --color-txt-tertiary: #778175;
-            --color-txt-quaternary: #4c514b;
-            --color-txt-disabled: #3b3f3a;
-            --color-txt-accent: #c4f042;
-            --color-txt-danger: #ff6369;
-            --color-txt-success: rgba(181, 255, 44, 0.72);
-            --color-txt-info: #52a9ff;
-            --color-txt-warning: #f1a10d;
+    /* Backgrounds — warm orange tints over navy */
+    --color-primary: #F54900;
+    --color-invert: #ffffff;
+    --color-secondary: #ffffff0f;
+    --color-tertiary: transparent;
+    --color-subtle: rgba(241, 245, 249, 0.03);
+    --color-highlight: rgba(245, 73, 0, 0.08);
+    --color-active: rgba(245, 73, 0, 0.10);
+    --color-accent: #F54900;
+    --color-danger: rgba(239, 68, 68, 0.13);
+    --color-danger-plain: rgba(239, 68, 68, 0.13);
+    --color-danger-dark: #DC2626;
+    --color-success: rgba(34, 197, 94, 0.12);
+    --color-info: rgba(59, 130, 246, 0.14);
+    --color-warning: rgba(245, 158, 11, 0.12);
+    --color-dialog: #24262d;
 
-            /* Backgrounds */
-            --color-primary: #c4f042;
-            --color-invert: #151715;
-            --color-secondary: rgba(214, 251, 196, 0.06);
-            --color-tertiary: rgba(255, 255, 255, 0);
-            --color-subtle: rgba(213, 254, 175, 0.03);
-            --color-highlight: rgba(214, 251, 196, 0.06);
-            --color-active: rgba(239, 254, 226, 0.08);
-            --color-accent: #c4f042;
-            --color-danger: rgba(254, 58, 61, 0.13);
-            --color-danger-plain: rgba(254, 58, 61, 0.13);
-            --color-danger-dark: rgba(255, 89, 95, 0.94);
-            --color-success: rgba(184, 253, 106, 0.06);
-            --color-info: rgba(22, 119, 254, 0.14);
-            --color-warning: rgba(254, 115, 0, 0.09);
-            --color-dialog: #151715;
+    /* Borders — slate-based edges on navy */
+    --color-border-solid: rgba(241, 245, 249, 0.08);
+    --color-border-low: rgba(241, 245, 249, 0.06);
+    --color-border-mid: rgba(241, 245, 249, 0.12);
+    --color-border-strong: rgba(241, 245, 249, 0.22);
+    --color-border-active: rgba(241, 245, 249, 0.85);
+    --color-border-accent: #F54900;
+    --color-border-danger: #EF4444;
+    --color-border-success: #22C55E;
+    --color-border-warning: #F59E0B;
+    --color-border-info: #3B82F6;
 
-            /* Borders */
-            --color-border-solid: rgba(239, 254, 226, 0.08);
-            --color-border-low: rgba(239, 254, 226, 0.08);
-            --color-border-mid: rgba(233, 254, 223, 0.1);
-            --color-border-strong: rgba(241, 255, 237, 0.25);
-            --color-border-active: rgba(253, 255, 253, 0.93);
-            --color-border-accent: #c4f042;
-            --color-border-danger: #f2555a;
-            --color-border-success: #c4f042;
-            --color-border-warning: #ffcb47;
-            --color-border-info: #369eff;
+    /* Hover — brightened with subtle warmth */
+    --color-primary-hover: #E04200;
+    --color-invert-hover: #F8FAFC;
+    --color-secondary-hover: rgba(245, 73, 0, 0.10);
+    --color-tertiary-hover: rgba(241, 245, 249, 0.04);
+    --color-subtle-hover: rgba(241, 245, 249, 0.05);
+    --color-highlight-hover: rgba(245, 73, 0, 0.12);
+    --color-accent-hover: #E04200;
+    --color-active-hover: rgba(245, 73, 0, 0.14);
+    --color-danger-hover: rgba(239, 68, 68, 0.65);
 
-            /* Hover */
-            --color-primary-hover: rgba(196, 240, 66, 0.88);
-            --color-invert-hover: #1a1d19;
-            --color-secondary-hover: rgba(214, 251, 196, 0.06);
-            --color-tertiary-hover: rgba(213, 254, 175, 0.03);
-            --color-subtle-hover: rgba(214, 251, 196, 0.06);
-            --color-highlight-hover: rgba(233, 254, 223, 0.1);
-            --color-accent-hover: rgba(183, 255, 50, 0.82);
-            --color-active-hover: rgba(233, 254, 223, 0.1);
-            --color-danger-hover: rgba(254, 58, 61, 0.7);
+    /* Pressed — deeper into the orange warmth */
+    --color-primary-pressed: #CC3C00;
+    --color-invert-pressed: #F1F5F9;
+    --color-secondary-pressed: rgba(245, 73, 0, 0.14);
+    --color-tertiary-pressed: rgba(241, 245, 249, 0.06);
+    --color-subtle-pressed: rgba(241, 245, 249, 0.08);
+    --color-highlight-pressed: rgba(245, 73, 0, 0.16);
+    --color-accent-pressed: #CC3C00;
+    --color-active-pressed: rgba(245, 73, 0, 0.18);
+    --color-danger-pressed: rgba(239, 68, 68, 0.50);
 
-            /* Pressed */
-            --color-primary-pressed: rgba(196, 240, 66, 0.84);
-            --color-invert-pressed: #20241f;
-            --color-secondary-pressed: rgba(239, 254, 226, 0.08);
-            --color-tertiary-pressed: rgba(214, 251, 196, 0.06);
-            --color-subtle-pressed: rgba(239, 254, 226, 0.08);
-            --color-highlight-pressed: rgba(236, 254, 229, 0.13);
-            --color-accent-pressed: rgba(209, 255, 70, 0.94);
-            --color-active-pressed: rgba(236, 254, 229, 0.13);
-            --color-danger-pressed: rgba(254, 58, 61, 0.5);
-        }
-    }
+    /* Shadows — deep navy depth */
+    --shadow-base:
+        0px 1px 3px 0px rgba(0, 0, 0, 0.5),
+        0px -1px 0px 0px rgba(0, 0, 0, 0.35) inset;
+    --shadow-hover:
+        0px 2px 6px 0px rgba(0, 0, 0, 0.5),
+        0px -1px 0px 0px rgba(0, 0, 0, 0.35) inset;
+    --shadow-focus: 0px 0px 0px 3px rgba(245, 73, 0, 0.25);
+    --shadow-mid:
+        0px 2px 4px 0px rgba(0, 0, 0, 0.4),
+        0px 2px 12px 0px rgba(0, 0, 0, 0.25);
 
-    * {
-        @variant document {
-            --text-4xl: 16pt;
-            --text-4xl--line-height: 21pt;
-            --text-4xl--letter-spacing: -0.6px;
-            --text-3xl: 15pt;
-            --text-3xl--line-height: 21pt;
-            --text-3xl--letter-spacing: -0.4px;
-            --text-2xl: 14pt;
-            --text-2xl--line-height: 21pt;
-            --text-2xl--letter-spacing: 0;
-            --text-xl: 13pt;
-            --text-xl--line-height: 18pt;
-            --text-xl--letter-spacing: 0;
-            --text-lg: 12pt;
-            --text-lg--line-height: 18pt;
-            --text-lg--letter-spacing: 0;
-            --text-base: 11pt;
-            --text-base--line-height: 18pt;
-            --text-base--letter-spacing: 0;
-            --text-sm: 10pt;
-            --text-sm--line-height: 15pt;
-            --text-sm--letter-spacing: 0;
-            --text-xs: 9pt;
-            --text-xs--line-height: 15pt;
-            --text-xs--letter-spacing: 0;
-        }
-    }
+    /* Sidebar — dark surface with orange accent */
+    --color-sidebar-bg: #24262d;
+    --color-sidebar-border: rgba(241, 245, 249, 0.08);
+    --color-sidebar-text: #64748B;
+    --color-sidebar-text-hover: #F1F5F9;
+    --color-sidebar-text-active: #F54900;
+    --color-sidebar-hover-bg: rgba(241, 245, 249, 0.04);
+    --color-sidebar-active-bg: rgba(245, 73, 0, 0.08);
+    --color-sidebar-active-hover-bg: rgba(245, 73, 0, 0.12);
+    --color-sidebar-active-pressed-bg: rgba(245, 73, 0, 0.16);
 }
 
 a:focus-visible,
@@ -290,7 +292,7 @@ button:focus-visible {
 
 button[data-cell]:focus-visible {
     box-shadow: none;
-    outline: solid 2px rgba(135, 190, 34, 0.5);
+    outline: solid 2px rgba(245, 73, 0, 0.24);
 }
 
 /* Allow interpolation : https://developer.chrome.com/docs/css-ui/animate-to-height-auto */
@@ -312,4 +314,3 @@ button[data-cell]:focus-visible {
     background: var(--color-txt-tertiary);
     border-radius: 4px;
 }
-

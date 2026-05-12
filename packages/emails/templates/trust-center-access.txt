@@ -1,4 +1,4 @@
-Probo
+Govrly
 
 Hi {{.RecipientFullName}},
 
@@ -6,5 +6,4 @@ You have been granted access to {{.OrganizationName}}'s compliance page! Click t
 
 {{.BaseURL}}
 
-{{.SenderCompanyHeadquarterAddress}}
-Powered By Probo
+app.govrly.sa

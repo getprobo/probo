@@ -173,7 +173,7 @@ echo "VITE_API_URL=http://${VM_IP}:8080" > /workspace/apps/trust/.env
 # Install systemd services for the sandbox
 cat > /etc/systemd/system/probo-stack.service << EOF
 [Unit]
-Description=Probo Docker Compose Stack
+Description=Govrly Docker Compose Stack
 Requires=docker.service
 After=docker.service
 
@@ -193,7 +193,7 @@ EOF
 
 cat > /etc/systemd/system/probod.service << EOF
 [Unit]
-Description=Probo API Server
+Description=Govrly API Server
 Requires=probo-stack.service
 After=probo-stack.service
 
@@ -213,7 +213,7 @@ EOF
 
 cat > /etc/systemd/system/probo-console.service << EOF
 [Unit]
-Description=Probo Console Dev Server
+Description=Govrly Console Dev Server
 Requires=probo-node-modules.service
 After=probo-node-modules.service probod.service
 

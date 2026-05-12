@@ -162,9 +162,9 @@ metrics:
     labels: {}
     relabelings: []
 
-# Probo application configuration
+# Govrly application configuration
 probo:
-  # Public hostname where Probo will be accessible
+  # Public hostname where Govrly will be accessible
   # This should match your ingress host
   baseUrl: probo.example.com
 
@@ -237,7 +237,7 @@ probo:
 
   # Email configuration
   mailer:
-    senderName: "Probo"
+    senderName: "Govrly"
     senderEmail: "no-reply@notification.getprobo.com"
     smtp:
       addr: ""

@@ -1,6 +1,6 @@
-# Probo Helm Chart
+# Govrly Helm Chart
 
-This Helm chart deploys Probo - an open-source SOC-2 compliance platform - on Kubernetes.
+This Helm chart deploys Govrly - an open-source SOC-2 compliance platform - on Kubernetes.
 
 ## Prerequisites
 
@@ -26,7 +26,7 @@ TEMP_KEY=$(mktemp)
 TEMP_CERT=$(mktemp)
 
 openssl req -x509 -newkey rsa:2048 -keyout "$TEMP_KEY" -out "$TEMP_CERT" \
-  -days 3650 -nodes -subj "/CN=probo-saml/O=Probo/C=US" 2>/dev/null
+  -days 3650 -nodes -subj "/CN=probo-saml/O=Govrly/C=US" 2>/dev/null
 
 # Read generated files and export as environment variables
 export SAML_PRIVATE_KEY=$(cat "$TEMP_KEY")
@@ -147,9 +147,9 @@ The following parameters **must** be configured:
 
 | Parameter              | Description                     | Default |
 |------------------------|---------------------------------|---------|
-| `image.repository`     | Probo image repository          | `ghcr.io/getprobo/probo` |
-| `image.tag`            | Probo image tag                 | Chart appVersion |
-| `replicaCount`         | Number of Probo replicas        | `1` |
+| `image.repository`     | Govrly image repository         | `ghcr.io/getprobo/probo` |
+| `image.tag`            | Govrly image tag                | Chart appVersion |
+| `replicaCount`         | Number of Govrly replicas       | `1` |
 | `probo.baseUrl`        | Public baseUrl                  | `probo.example.com` |
 | `postgresql.host`      | PostgreSQL host                 | `""` (required) |
 | `postgresql.port`      | PostgreSQL port                 | `5432` |
@@ -171,7 +171,7 @@ See [values.yaml](values.yaml) for all available options.
 
 The chart deploys the following:
 
-- **Probo Application**: Main Go binary serving GraphQL APIs and SPAs
+- **Govrly Application**: Main Go binary serving GraphQL APIs and SPAs
 - **Chrome Headless**: For PDF generation (optional, can use external)
 - **Ingress**: For external access with TLS (optional)
 
@@ -184,7 +184,7 @@ The chart deploys the following:
 
 ### Migrations
 
-Database migrations run automatically when Probo starts. No manual intervention is required.
+Database migrations run automatically when Govrly starts. No manual intervention is required.
 
 ### TLS/SSL Configuration
 
@@ -253,11 +253,11 @@ kubectl get secret probo -o yaml
 
 ### Test Database Connection
 
-Check the Probo logs for database connection errors. The application will fail to start if it cannot connect to PostgreSQL.
+Check the Govrly logs for database connection errors. The application will fail to start if it cannot connect to PostgreSQL.
 
 ### Test S3 Connection
 
-Check the Probo logs for S3 connection errors when uploading files.
+Check the Govrly logs for S3 connection errors when uploading files.
 
 ## Examples
 

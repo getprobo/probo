@@ -1,6 +1,6 @@
 {
   "name": "probo",
-  "description": "Probo monorepo containing applications and shared packages",
+  "description": "Govrly monorepo containing applications and shared packages",
   "engines": {
     "node": "^24.0.0",
     "npm": "^11.8.0"

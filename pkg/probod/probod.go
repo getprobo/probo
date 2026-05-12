@@ -138,7 +138,7 @@ func New() *Implm {
 				Mailer: MailerConfig{
 					MailerInterval: 60,
 					SenderEmail:    "no-reply@notification.getprobo.com",
-					SenderName:     "Probo",
+					SenderName:     "Govrly",
 					SMTP: SMTPConfig{
 						Addr: "localhost:1025",
 					},

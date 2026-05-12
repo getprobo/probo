@@ -27,15 +27,15 @@ import {
 
 export class Probo implements INodeType {
 	description: INodeTypeDescription = {
-		displayName: 'Probo',
+		displayName: 'Govrly',
 		name: 'probo',
 		icon: { light: 'file:../../icons/probo-light.svg', dark: 'file:../../icons/probo.svg' },
 		group: ['input'],
 		version: 1,
 		subtitle: '={{$parameter["resource"]}} / {{$parameter["operation"]}}',
-		description: 'Consume data from the Probo API',
+		description: 'Consume data from the Govrly API',
 		defaults: {
-			name: 'Probo',
+			name: 'Govrly',
 		},
 		usableAsTool: true,
 		inputs: [NodeConnectionTypes.Main],

@@ -15,10 +15,7 @@
 import { usePageTitle } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
 import {
-  Button,
-  Card,
   IconMagnifyingGlass,
-  IconPlusLarge,
   Input,
 } from "@probo/ui";
 import { useMemo, useState } from "react";
@@ -114,7 +111,7 @@ export function MembershipsPage(props: {
                   )}
             </div>
           )}
-          <Card padded>
+          {/* <Card padded>
             <h2 className="text-xl font-semibold mb-1">
               {__("Create an organization")}
             </h2>
@@ -129,7 +126,7 @@ export function MembershipsPage(props: {
             >
               {__("Create organization")}
             </Button>
-          </Card>
+          </Card> */}
         </div>
       </div>
     </>

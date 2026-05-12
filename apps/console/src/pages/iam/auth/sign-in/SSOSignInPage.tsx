@@ -81,7 +81,7 @@ export default function SSOSignInPage() {
           {checking ? __("Checking...") : __("Continue with SSO")}
         </Button>
 
-        <div className="text-center mt-6 text-sm text-txt-secondary">
+        {/* <div className="text-center mt-6 text-sm text-txt-secondary">
           {__("Don't have an account ?")}
           {" "}
           <Link
@@ -90,7 +90,7 @@ export default function SSOSignInPage() {
           >
             {__("Register")}
           </Link>
-        </div>
+        </div> */}
       </form>
 
       {queryRef && (

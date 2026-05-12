@@ -23,15 +23,15 @@ import {
 export class ProboApi implements ICredentialType {
 	name = 'proboApi';
 
-	displayName = 'Probo API';
+	displayName = 'Govrly API';
 
 	icon: Icon = { light: 'file:../icons/probo-light.svg', dark: 'file:../icons/probo.svg' };
 
-	documentationUrl = 'https://www.getprobo.com/docs';
+	documentationUrl = 'https://app.govrly.sa//docs';
 
 	properties: INodeProperties[] = [
 		{
-			displayName: 'Probo Server',
+			displayName: 'Govrly Server',
 			name: 'server',
 			type: 'string',
 			default: 'https://us.console.getprobo.com',

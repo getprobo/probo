@@ -1,4 +1,4 @@
-Probo
+Govrly
 
 Hi {{.RecipientFullName}},
 
@@ -8,5 +8,4 @@ Your document export has been completed successfully. Click the link below to do
 
 This link will expire in 24 hours.
 
-{{.SenderCompanyHeadquarterAddress}}
-Powered By Probo
+app.govrly.sa

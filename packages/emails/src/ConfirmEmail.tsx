@@ -20,7 +20,7 @@ export const ConfirmEmail = () => {
   return (
     <EmailLayout subject="Confirm your email address">
       <Text style={bodyText}>
-        Thanks for joining Probo! Please confirm your email address by clicking the button below:
+        Thanks for joining Govrly! Please confirm your email address by clicking the button below:
       </Text>
 
       <Section style={buttonContainer}>
@@ -30,7 +30,7 @@ export const ConfirmEmail = () => {
       </Section>
 
       <Text style={footerText}>
-        If you did not sign up for Probo, please ignore this email.
+        If you did not sign up for Govrly, please ignore this email.
       </Text>
     </EmailLayout>
   );

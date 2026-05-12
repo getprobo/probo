@@ -187,7 +187,7 @@ func TestBuilder_Build_Defaults(t *testing.T) {
 	assert.False(t, cfg.Probod.AWS.UsePathStyle)
 
 	// Notifications config
-	assert.Equal(t, "Probo", cfg.Probod.Notifications.Mailer.SenderName)
+	assert.Equal(t, "Govrly", cfg.Probod.Notifications.Mailer.SenderName)
 	assert.Equal(t, "no-reply@notification.getprobo.com", cfg.Probod.Notifications.Mailer.SenderEmail)
 	assert.Equal(t, "localhost:1025", cfg.Probod.Notifications.Mailer.SMTP.Addr)
 	assert.False(t, cfg.Probod.Notifications.Mailer.SMTP.TLSRequired)

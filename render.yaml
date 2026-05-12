@@ -1,0 +1,67 @@
+services:
+  - type: web
+    name: probo
+    runtime: docker
+    dockerfilePath: ./Dockerfile.render
+    plan: standard
+    envVars:
+      - key: PROBOD_BASE_URL
+        value: https://Advance-Datasec.onrender.com
+      - key: API_ADDR
+        value: ":8080"
+      - key: API_CORS_ALLOWED_ORIGINS
+        value: "https://Advance-Datasec.onrender.com"
+      - key: AUTH_COOKIE_DOMAIN
+        value: "Advance-Datasec.onrender.com"
+      - key: AUTH_COOKIE_SECURE
+        value: "true"
+      - key: PG_ADDR
+        sync: false
+      - key: PG_USERNAME
+        sync: false
+      - key: PG_PASSWORD
+        sync: false
+      - key: PG_DATABASE
+        sync: false
+      - key: PG_POOL_SIZE
+        value: "20"
+      - key: CHROME_DP_ADDR
+        fromService:
+          name: chrome-headless
+          type: pserv
+          property: hostport
+      - key: PROBOD_ENCRYPTION_KEY
+        generateValue: true
+      - key: AUTH_COOKIE_SECRET
+        generateValue: true
+      - key: AUTH_PASSWORD_PEPPER
+        generateValue: true
+      - key: TRUST_AUTH_TOKEN_SECRET
+        generateValue: true
+      - key: AWS_REGION
+        sync: false
+      - key: AWS_BUCKET
+        sync: false
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+      - key: AWS_ENDPOINT
+        sync: false
+      - key: AWS_USE_PATH_STYLE
+        value: "true"
+      - key: METRICS_ADDR
+        value: ""
+      - key: TRACING_ADDR
+        value: ""
+      - key: SMTP_ADDR
+        sync: false
+      - key: SMTP_TLS_REQUIRED
+        value: "true"
+
+  - type: pserv
+    name: chrome-headless
+    runtime: image
+    image:
+      url: chromedp/headless-shell:140.0.7259.2
+    plan: starter

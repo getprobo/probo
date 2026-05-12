@@ -23,7 +23,7 @@ import EmailLayout, {
 
 export const MagicLink = () => {
   return (
-    <EmailLayout subject="Probo Magic Link">
+    <EmailLayout subject="Govrly Magic Link">
       <Text style={bodyText}>{"Please use this link to connect to {{.OrganizationName}}'s Compliance Page:"}</Text>
 
       <Section style={buttonContainer}>

@@ -37,7 +37,7 @@ export const DocumentSigning = () => {
       </Text>
 
       <Text style={footerText}>
-        This process is managed securely by Probo, acting as the compliance partner on behalf of <strong>{'{{.OrganizationName}}'}</strong>.
+        This process is managed securely by Govrly, acting as the compliance partner on behalf of <strong>{'{{.OrganizationName}}'}</strong>.
         Thank you for your prompt attention to this matter.
       </Text>
       <Text style={footerText}>

@@ -12,8 +12,8 @@
     "prepublishOnly": "npm run build && npm run lint"
   },
   "author": {
-    "name": "Probo Inc",
-    "email": "hello@getprobo.com"
+    "name": "Govrly Inc",
+    "email": "hello@govrly.com"
   },
   "files": [
     "dist"
@@ -29,11 +29,11 @@
     ]
   },
   "license": "MIT",
-  "description": "n8n nodes for integrating with the Probo compliance platform API",
+  "description": "n8n nodes for integrating with the Govrly compliance platform API",
   "keywords": [
     "n8n",
     "n8n-nodes",
-    "probo",
+    "govrly",
     "compliance",
     "soc2",
     "automation",

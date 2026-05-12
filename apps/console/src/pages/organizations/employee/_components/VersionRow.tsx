@@ -49,7 +49,7 @@ export function VersionRow({
       className={clsx(
         "flex items-center gap-3 py-3 px-4 transition-colors cursor-pointer",
         isSelected
-          ? "bg-blue-50 border-l-4 border-blue-500"
+          ? "bg-orange-50 border-l-4 border-orange-500"
           : "bg-transparent hover:bg-level-1",
       )}
     >
@@ -87,7 +87,7 @@ export function VersionRow({
             isVersionSigned
               ? "bg-green-100 text-green-800"
               : isSelected
-                ? "bg-blue-100 text-blue-800"
+                ? "bg-orange-100 text-orange-800"
                 : "bg-gray-100 text-gray-700",
           )}
         >
