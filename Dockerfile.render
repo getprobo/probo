@@ -2,7 +2,7 @@
 FROM node:24-alpine AS frontend
 RUN apk add --no-cache findutils
 WORKDIR /app
-COPY package.json package-lock.json turbo.json ./
+COPY package.json package-lock.json turbo.json relay.config.json ./
 COPY apps/ apps/
 COPY packages/ packages/
 # Relay compiler needs GraphQL schemas from the Go API.
