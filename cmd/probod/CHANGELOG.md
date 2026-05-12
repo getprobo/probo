@@ -4,6 +4,12 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.186.1] - 2026-05-12
+
+### Fixed
+
+- Fix wrong entity types in `tracker_patterns` and `detected_trackers` GIDs: rows carried entity types of removed `CookiePatternEntityType` / `CookieEntityType` instead of `TrackerPatternEntityType` / `DetectedTrackerEntityType`
+
 ## [0.186.0] - 2026-05-12
 
 ### Changed
