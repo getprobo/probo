@@ -200,8 +200,8 @@ func TestHeuristicTemplate(t *testing.T) {
 		{
 			name:     "no separator with variable token",
 			input:    "a1b2c3d4e5f6g7h8",
-			template: "*",
-			changed:  true,
+			template: "",
+			changed:  false,
 		},
 		{
 			name:     "no separator without variable token",

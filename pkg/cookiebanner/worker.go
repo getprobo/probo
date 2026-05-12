@@ -349,9 +349,6 @@ func findMergeGroups(
 func heuristicTemplate(name string) (string, bool) {
 	tokens, sep := splitTokens(name)
 	if sep == 0 {
-		if looksVariable(name) {
-			return "*", true
-		}
 		return "", false
 	}
 
