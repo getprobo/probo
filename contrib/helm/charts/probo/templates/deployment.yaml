@@ -93,6 +93,10 @@ spec:
               value: {{ .Values.postgresql.maxConnIdleTimeSeconds | default "1800" | quote }}
             - name: PG_MAX_CONN_LIFETIME_SECONDS
               value: {{ .Values.postgresql.maxConnLifetimeSeconds | default "3600" | quote }}
+            - name: PG_MAX_CONN_LIFETIME_JITTER_SECONDS
+              value: {{ .Values.postgresql.maxConnLifetimeJitterSeconds | default "300" | quote }}
+            - name: PG_HEALTH_CHECK_PERIOD_SECONDS
+              value: {{ .Values.postgresql.healthCheckPeriodSeconds | default "60" | quote }}
             {{- if .Values.postgresql.caBundle }}
             - name: PG_CA_BUNDLE
               valueFrom:

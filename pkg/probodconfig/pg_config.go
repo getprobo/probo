@@ -23,16 +23,18 @@ import (
 )
 
 type PgConfig struct {
-	Addr                   string `json:"addr"`
-	Username               string `json:"username"`
-	Password               string `json:"password"`
-	Database               string `json:"database"`
-	PoolSize               int32  `json:"pool-size"`
-	MinPoolSize            int32  `json:"min-pool-size"`
-	MaxConnIdleTimeSeconds int    `json:"max-conn-idle-time-seconds"`
-	MaxConnLifetimeSeconds int    `json:"max-conn-lifetime-seconds"`
-	CACertBundle           string `json:"ca-cert-bundle"`
-	Debug                  bool   `json:"debug"`
+	Addr                         string `json:"addr"`
+	Username                     string `json:"username"`
+	Password                     string `json:"password"`
+	Database                     string `json:"database"`
+	PoolSize                     int32  `json:"pool-size"`
+	MinPoolSize                  int32  `json:"min-pool-size"`
+	MaxConnIdleTimeSeconds       int    `json:"max-conn-idle-time-seconds"`
+	MaxConnLifetimeSeconds       int    `json:"max-conn-lifetime-seconds"`
+	MaxConnLifetimeJitterSeconds int    `json:"max-conn-lifetime-jitter-seconds"`
+	HealthCheckPeriodSeconds     int    `json:"health-check-period-seconds"`
+	CACertBundle                 string `json:"ca-cert-bundle"`
+	Debug                        bool   `json:"debug"`
 }
 
 func (cfg PgConfig) Options(options ...pg.Option) []pg.Option {
@@ -62,6 +64,24 @@ func (cfg PgConfig) Options(options ...pg.Option) []pg.Option {
 			opts,
 			pg.WithMaxConnLifetime(
 				time.Duration(cfg.MaxConnLifetimeSeconds)*time.Second,
+			),
+		)
+	}
+
+	if cfg.MaxConnLifetimeJitterSeconds > 0 {
+		opts = append(
+			opts,
+			pg.WithMaxConnLifetimeJitter(
+				time.Duration(cfg.MaxConnLifetimeJitterSeconds)*time.Second,
+			),
+		)
+	}
+
+	if cfg.HealthCheckPeriodSeconds > 0 {
+		opts = append(
+			opts,
+			pg.WithHealthCheckPeriod(
+				time.Duration(cfg.HealthCheckPeriodSeconds)*time.Second,
 			),
 		)
 	}

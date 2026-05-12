@@ -91,14 +91,16 @@ func New() *Implm {
 				Addr: "localhost:8080",
 			},
 			Pg: PgConfig{
-				Addr:                   "localhost:5432",
-				Username:               "probod",
-				Password:               "probod",
-				Database:               "probod",
-				PoolSize:               100,
-				MinPoolSize:            10,
-				MaxConnIdleTimeSeconds: 1800,
-				MaxConnLifetimeSeconds: 3600,
+				Addr:                         "localhost:5432",
+				Username:                     "probod",
+				Password:                     "probod",
+				Database:                     "probod",
+				PoolSize:                     100,
+				MinPoolSize:                  10,
+				MaxConnIdleTimeSeconds:       1800,
+				MaxConnLifetimeSeconds:       3600,
+				MaxConnLifetimeJitterSeconds: 300,
+				HealthCheckPeriodSeconds:     60,
 			},
 			ChromeDPAddr: "localhost:9222",
 			Auth: AuthConfig{
@@ -209,6 +211,7 @@ func (impl *Implm) Run(
 
 	pgClient, err := pg.NewClient(
 		impl.cfg.Pg.Options(
+			pg.WithApplicationName("probod"),
 			pg.WithLogger(l),
 			pg.WithRegisterer(r),
 			pg.WithTracerProvider(tp),

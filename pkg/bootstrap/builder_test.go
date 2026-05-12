@@ -154,6 +154,8 @@ func TestBuilder_Build_Defaults(t *testing.T) {
 	assert.Equal(t, int32(10), cfg.Probod.Pg.MinPoolSize)
 	assert.Equal(t, 1800, cfg.Probod.Pg.MaxConnIdleTimeSeconds)
 	assert.Equal(t, 3600, cfg.Probod.Pg.MaxConnLifetimeSeconds)
+	assert.Equal(t, 300, cfg.Probod.Pg.MaxConnLifetimeJitterSeconds)
+	assert.Equal(t, 60, cfg.Probod.Pg.HealthCheckPeriodSeconds)
 	assert.False(t, cfg.Probod.Pg.Debug)
 
 	// Auth config
@@ -254,6 +256,8 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	env["PG_MIN_POOL_SIZE"] = "25"
 	env["PG_MAX_CONN_IDLE_TIME_SECONDS"] = "900"
 	env["PG_MAX_CONN_LIFETIME_SECONDS"] = "7200"
+	env["PG_MAX_CONN_LIFETIME_JITTER_SECONDS"] = "600"
+	env["PG_HEALTH_CHECK_PERIOD_SECONDS"] = "30"
 	env["PG_DEBUG"] = "true"
 	// Auth
 	env["AUTH_DISABLE_SIGNUP"] = "true"
@@ -331,6 +335,8 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	assert.Equal(t, int32(25), cfg.Probod.Pg.MinPoolSize)
 	assert.Equal(t, 900, cfg.Probod.Pg.MaxConnIdleTimeSeconds)
 	assert.Equal(t, 7200, cfg.Probod.Pg.MaxConnLifetimeSeconds)
+	assert.Equal(t, 600, cfg.Probod.Pg.MaxConnLifetimeJitterSeconds)
+	assert.Equal(t, 30, cfg.Probod.Pg.HealthCheckPeriodSeconds)
 	assert.True(t, cfg.Probod.Pg.Debug)
 	// Auth
 	assert.True(t, cfg.Probod.Auth.DisableSignup)
