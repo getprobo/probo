@@ -16,7 +16,11 @@
 package factory
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"maps"
+	"net/http"
 	"strings"
 
 	"github.com/brianvoe/gofakeit/v7"
@@ -247,12 +251,12 @@ func CreateControl(c *testutil.Client, frameworkID string, attrs ...Attrs) strin
 	`
 
 	input := map[string]any{
-		"frameworkId":  frameworkID,
-		"name":         a.getString("name", SafeName("Control")),
-		"description":  a.getString("description", "Test control description"),
-		"sectionTitle": a.getString("sectionTitle", fmt.Sprintf("Section %s", gofakeit.LetterN(3))),
-		"bestPractice": a.getBool("bestPractice", true),
-		"implemented":  a.getString("implemented", "IMPLEMENTED"),
+		"frameworkId":   frameworkID,
+		"name":          a.getString("name", SafeName("Control")),
+		"description":   a.getString("description", "Test control description"),
+		"sectionTitle":  a.getString("sectionTitle", fmt.Sprintf("Section %s", gofakeit.LetterN(3))),
+		"bestPractice":  a.getBool("bestPractice", true),
+		"maturityLevel": a.getString("maturityLevel", "INITIAL"),
 	}
 
 	if justification := a.getStringPtr("notImplementedJustification"); justification != nil {
@@ -339,6 +343,7 @@ func CreateTask(c *testutil.Client, measureID *string, attrs ...Attrs) string {
 	input := map[string]any{
 		"organizationId": c.GetOrganizationID().String(),
 		"name":           a.getString("name", SafeName("Task")),
+		"priority":       a.getString("priority", "MEDIUM"),
 	}
 	if measureID != nil {
 		input["measureId"] = *measureID
@@ -500,8 +505,8 @@ func (b *ControlBuilder) WithBestPractice(bestPractice bool) *ControlBuilder {
 	return b
 }
 
-func (b *ControlBuilder) WithImplemented(implemented string) *ControlBuilder {
-	b.attrs["implemented"] = implemented
+func (b *ControlBuilder) WithMaturityLevel(maturityLevel string) *ControlBuilder {
+	b.attrs["maturityLevel"] = maturityLevel
 	return b
 }
 
@@ -753,122 +758,10 @@ func (b *DatumBuilder) Create() string {
 	return CreateDatum(b.client, b.ownerID, b.attrs)
 }
 
-func CreateMeeting(c *testutil.Client, attrs ...Attrs) string {
-	c.T.Helper()
-
-	var a Attrs
-	if len(attrs) > 0 {
-		a = attrs[0]
-	}
-
-	const query = `
-		mutation($input: CreateMeetingInput!) {
-			createMeeting(input: $input) {
-				meetingEdge {
-					node { id }
-				}
-			}
-		}
-	`
-
-	input := map[string]any{
-		"organizationId": c.GetOrganizationID().String(),
-		"name":           a.getString("name", SafeName("Meeting")),
-		"date":           a.getString("date", "2025-01-15T10:00:00Z"),
-	}
-	if minutes := a.getStringPtr("minutes"); minutes != nil {
-		input["minutes"] = *minutes
-	}
-
-	var result struct {
-		CreateMeeting struct {
-			MeetingEdge struct {
-				Node struct {
-					ID string `json:"id"`
-				} `json:"node"`
-			} `json:"meetingEdge"`
-		} `json:"createMeeting"`
-	}
-
-	err := c.Execute(query, map[string]any{"input": input}, &result)
-	require.NoError(c.T, err, "createMeeting mutation failed")
-
-	return result.CreateMeeting.MeetingEdge.Node.ID
-}
-
-type MeetingBuilder struct {
-	client *testutil.Client
-	attrs  Attrs
-}
-
-func NewMeeting(c *testutil.Client) *MeetingBuilder {
-	return &MeetingBuilder{client: c, attrs: Attrs{}}
-}
-
-func (b *MeetingBuilder) WithName(name string) *MeetingBuilder {
-	b.attrs["name"] = name
-	return b
-}
-
-func (b *MeetingBuilder) WithDate(date string) *MeetingBuilder {
-	b.attrs["date"] = date
-	return b
-}
-
-func (b *MeetingBuilder) WithMinutes(minutes string) *MeetingBuilder {
-	b.attrs["minutes"] = minutes
-	return b
-}
-
-func (b *MeetingBuilder) Create() string {
-	return CreateMeeting(b.client, b.attrs)
-}
-
-func CreateDocument(c *testutil.Client, attrs ...Attrs) string {
-	c.T.Helper()
-
-	var a Attrs
-	if len(attrs) > 0 {
-		a = attrs[0]
-	}
-
-	const query = `
-		mutation($input: CreateDocumentInput!) {
-			createDocument(input: $input) {
-				documentEdge {
-					node { id }
-				}
-			}
-		}
-	`
-
-	input := map[string]any{
-		"organizationId": c.GetOrganizationID().String(),
-		"title":          a.getString("title", SafeName("Document")),
-		"content":        a.getString("content", "Document content"),
-		"documentType":   a.getString("documentType", "POLICY"),
-		"classification": a.getString("classification", "INTERNAL"),
-	}
-
-	var result struct {
-		CreateDocument struct {
-			DocumentEdge struct {
-				Node struct {
-					ID string `json:"id"`
-				} `json:"node"`
-			} `json:"documentEdge"`
-		} `json:"createDocument"`
-	}
-
-	err := c.Execute(query, map[string]any{"input": input}, &result)
-	require.NoError(c.T, err, "createDocument mutation failed")
-
-	return result.CreateDocument.DocumentEdge.Node.ID
-}
-
 type DocumentBuilder struct {
-	client *testutil.Client
-	attrs  Attrs
+	client    *testutil.Client
+	attrs     Attrs
+	versionID string
 }
 
 func NewDocument(c *testutil.Client) *DocumentBuilder {
@@ -895,8 +788,56 @@ func (b *DocumentBuilder) WithClassification(classification string) *DocumentBui
 	return b
 }
 
+func (b *DocumentBuilder) VersionID() string {
+	return b.versionID
+}
+
 func (b *DocumentBuilder) Create() string {
-	return CreateDocument(b.client, b.attrs)
+	b.client.T.Helper()
+
+	a := b.attrs
+
+	const query = `
+		mutation($input: CreateDocumentInput!) {
+			createDocument(input: $input) {
+				documentEdge {
+					node { id }
+				}
+				documentVersionEdge {
+					node { id }
+				}
+			}
+		}
+	`
+
+	input := map[string]any{
+		"organizationId": b.client.GetOrganizationID().String(),
+		"title":          a.getString("title", SafeName("Document")),
+		"documentType":   a.getString("documentType", "POLICY"),
+		"classification": a.getString("classification", "INTERNAL"),
+	}
+
+	var result struct {
+		CreateDocument struct {
+			DocumentEdge struct {
+				Node struct {
+					ID string `json:"id"`
+				} `json:"node"`
+			} `json:"documentEdge"`
+			DocumentVersionEdge struct {
+				Node struct {
+					ID string `json:"id"`
+				} `json:"node"`
+			} `json:"documentVersionEdge"`
+		} `json:"createDocument"`
+	}
+
+	err := b.client.Execute(query, map[string]any{"input": input}, &result)
+	require.NoError(b.client.T, err, "createDocument mutation failed")
+
+	b.versionID = result.CreateDocument.DocumentVersionEdge.Node.ID
+
+	return result.CreateDocument.DocumentEdge.Node.ID
 }
 
 func CreateProcessingActivity(c *testutil.Client, attrs ...Attrs) string {
@@ -983,4 +924,534 @@ func (b *ProcessingActivityBuilder) WithSpecialOrCriminalData(value string) *Pro
 
 func (b *ProcessingActivityBuilder) Create() string {
 	return CreateProcessingActivity(b.client, b.attrs)
+}
+
+func CreateAccessSource(c *testutil.Client, organizationID string, attrs ...Attrs) string {
+	c.T.Helper()
+
+	var a Attrs
+	if len(attrs) > 0 {
+		a = attrs[0]
+	}
+
+	const query = `
+		mutation($input: CreateAccessSourceInput!) {
+			createAccessSource(input: $input) {
+				accessSourceEdge {
+					node { id }
+				}
+			}
+		}
+	`
+
+	input := map[string]any{
+		"organizationId": organizationID,
+		"name":           a.getString("name", SafeName("AccessSource")),
+	}
+	if csvData := a.getStringPtr("csvData"); csvData != nil {
+		input["csvData"] = *csvData
+	}
+	if connectorID := a.getStringPtr("connectorId"); connectorID != nil {
+		input["connectorId"] = *connectorID
+	}
+
+	var result struct {
+		CreateAccessSource struct {
+			AccessSourceEdge struct {
+				Node struct {
+					ID string `json:"id"`
+				} `json:"node"`
+			} `json:"accessSourceEdge"`
+		} `json:"createAccessSource"`
+	}
+
+	err := c.Execute(query, map[string]any{"input": input}, &result)
+	require.NoError(c.T, err, "createAccessSource mutation failed")
+
+	return result.CreateAccessSource.AccessSourceEdge.Node.ID
+}
+
+type AccessSourceBuilder struct {
+	client         *testutil.Client
+	organizationID string
+	attrs          Attrs
+}
+
+func NewAccessSource(c *testutil.Client, organizationID string) *AccessSourceBuilder {
+	return &AccessSourceBuilder{client: c, organizationID: organizationID, attrs: Attrs{}}
+}
+
+func (b *AccessSourceBuilder) WithName(name string) *AccessSourceBuilder {
+	b.attrs["name"] = name
+	return b
+}
+
+func (b *AccessSourceBuilder) WithCsvData(csvData string) *AccessSourceBuilder {
+	b.attrs["csvData"] = csvData
+	return b
+}
+
+func (b *AccessSourceBuilder) Create() string {
+	return CreateAccessSource(b.client, b.organizationID, b.attrs)
+}
+
+func CreateAccessReviewCampaign(c *testutil.Client, organizationID string, attrs ...Attrs) string {
+	c.T.Helper()
+
+	var a Attrs
+	if len(attrs) > 0 {
+		a = attrs[0]
+	}
+
+	const query = `
+		mutation($input: CreateAccessReviewCampaignInput!) {
+			createAccessReviewCampaign(input: $input) {
+				accessReviewCampaignEdge {
+					node { id }
+				}
+			}
+		}
+	`
+
+	input := map[string]any{
+		"organizationId": organizationID,
+		"name":           a.getString("name", SafeName("Campaign")),
+	}
+
+	if v, ok := a["accessSourceIds"]; ok {
+		input["accessSourceIds"] = v
+	}
+
+	var result struct {
+		CreateAccessReviewCampaign struct {
+			AccessReviewCampaignEdge struct {
+				Node struct {
+					ID string `json:"id"`
+				} `json:"node"`
+			} `json:"accessReviewCampaignEdge"`
+		} `json:"createAccessReviewCampaign"`
+	}
+
+	err := c.Execute(query, map[string]any{"input": input}, &result)
+	require.NoError(c.T, err, "createAccessReviewCampaign mutation failed")
+
+	return result.CreateAccessReviewCampaign.AccessReviewCampaignEdge.Node.ID
+}
+
+type AccessReviewCampaignBuilder struct {
+	client         *testutil.Client
+	organizationID string
+	attrs          Attrs
+}
+
+func NewAccessReviewCampaign(c *testutil.Client, organizationID string) *AccessReviewCampaignBuilder {
+	return &AccessReviewCampaignBuilder{client: c, organizationID: organizationID, attrs: Attrs{}}
+}
+
+func (b *AccessReviewCampaignBuilder) WithName(name string) *AccessReviewCampaignBuilder {
+	b.attrs["name"] = name
+	return b
+}
+
+func (b *AccessReviewCampaignBuilder) WithAccessSourceIDs(ids []string) *AccessReviewCampaignBuilder {
+	b.attrs["accessSourceIds"] = ids
+	return b
+}
+
+func (b *AccessReviewCampaignBuilder) Create() string {
+	return CreateAccessReviewCampaign(b.client, b.organizationID, b.attrs)
+}
+
+type StatementOfApplicabilityBuilder struct {
+	client *testutil.Client
+	attrs  Attrs
+}
+
+func NewStatementOfApplicability(c *testutil.Client) *StatementOfApplicabilityBuilder {
+	return &StatementOfApplicabilityBuilder{client: c, attrs: Attrs{}}
+}
+
+func (b *StatementOfApplicabilityBuilder) WithName(name string) *StatementOfApplicabilityBuilder {
+	b.attrs["name"] = name
+	return b
+}
+
+func (b *StatementOfApplicabilityBuilder) Create() string {
+	b.client.T.Helper()
+
+	a := b.attrs
+
+	const query = `
+		mutation($input: CreateStatementOfApplicabilityInput!) {
+			createStatementOfApplicability(input: $input) {
+				statementOfApplicabilityEdge {
+					node { id }
+				}
+			}
+		}
+	`
+
+	input := map[string]any{
+		"organizationId": b.client.GetOrganizationID().String(),
+		"name":           a.getString("name", SafeName("SOA")),
+	}
+
+	var result struct {
+		CreateStatementOfApplicability struct {
+			StatementOfApplicabilityEdge struct {
+				Node struct {
+					ID string `json:"id"`
+				} `json:"node"`
+			} `json:"statementOfApplicabilityEdge"`
+		} `json:"createStatementOfApplicability"`
+	}
+
+	err := b.client.Execute(query, map[string]any{"input": input}, &result)
+	require.NoError(b.client.T, err, "createStatementOfApplicability mutation failed")
+
+	return result.CreateStatementOfApplicability.StatementOfApplicabilityEdge.Node.ID
+}
+
+func CreateApplicabilityStatement(c *testutil.Client, soaID, controlID string, applicability bool, justification *string) string {
+	c.T.Helper()
+
+	const query = `
+		mutation($input: CreateApplicabilityStatementInput!) {
+			createApplicabilityStatement(input: $input) {
+				applicabilityStatementEdge {
+					node { id }
+				}
+			}
+		}
+	`
+
+	input := map[string]any{
+		"statementOfApplicabilityId": soaID,
+		"controlId":                  controlID,
+		"applicability":              applicability,
+	}
+
+	if justification != nil {
+		input["justification"] = *justification
+	}
+
+	var result struct {
+		CreateApplicabilityStatement struct {
+			ApplicabilityStatementEdge struct {
+				Node struct {
+					ID string `json:"id"`
+				} `json:"node"`
+			} `json:"applicabilityStatementEdge"`
+		} `json:"createApplicabilityStatement"`
+	}
+
+	err := c.Execute(query, map[string]any{"input": input}, &result)
+	require.NoError(c.T, err, "createApplicabilityStatement mutation failed")
+
+	return result.CreateApplicabilityStatement.ApplicabilityStatementEdge.Node.ID
+}
+
+type OAuth2ClientResult struct {
+	ClientID     string
+	ClientSecret string
+}
+
+func CreateOAuth2Client(c *testutil.Client, attrs Attrs) OAuth2ClientResult {
+	input := map[string]any{
+		"organization_id": c.GetOrganizationID().String(),
+		"client_name":     SafeName("OAuth2 Client"),
+		"visibility":      "private",
+		"redirect_uris":   []string{"http://localhost:9999/callback"},
+		"grant_types": []string{
+			"authorization_code",
+			"refresh_token",
+		},
+		"response_types":             []string{"code"},
+		"token_endpoint_auth_method": "client_secret_basic",
+		"scopes":                     "openid email profile offline_access",
+	}
+
+	maps.Copy(input, attrs)
+
+	resp, raw, err := testutil.OAuth2RegisterClient(c, input)
+	require.NoError(c.T, err, "OAuth2 client registration failed")
+	require.NotNil(c.T, resp, "OAuth2 client registration returned nil (status=%d body=%s)", raw.StatusCode, string(raw.Body))
+
+	return OAuth2ClientResult{
+		ClientID:     resp.ClientID,
+		ClientSecret: resp.ClientSecret,
+	}
+}
+
+func CreatePublicOAuth2Client(c *testutil.Client, attrs Attrs) OAuth2ClientResult {
+	input := map[string]any{
+		"organization_id": c.GetOrganizationID().String(),
+		"client_name":     SafeName("Public OAuth2 Client"),
+		"visibility":      "private",
+		"redirect_uris":   []string{"http://localhost:9999/callback"},
+		"grant_types": []string{
+			"authorization_code",
+			"refresh_token",
+			"urn:ietf:params:oauth:grant-type:device_code",
+		},
+		"response_types":             []string{"code"},
+		"token_endpoint_auth_method": "none",
+		"scopes":                     "openid email profile offline_access",
+	}
+
+	maps.Copy(input, attrs)
+
+	resp, raw, err := testutil.OAuth2RegisterClient(c, input)
+	require.NoError(c.T, err, "public OAuth2 client registration failed")
+	require.NotNil(c.T, resp, "public OAuth2 client registration returned nil (status=%d body=%s)", raw.StatusCode, string(raw.Body))
+
+	return OAuth2ClientResult{
+		ClientID:     resp.ClientID,
+		ClientSecret: resp.ClientSecret,
+	}
+}
+
+func SafeOrigin() string {
+	return fmt.Sprintf("https://%s.example.com", strings.ToLower(gofakeit.LetterN(10)))
+}
+
+func CreateCookieBanner(c *testutil.Client, attrs ...Attrs) string {
+	c.T.Helper()
+
+	var a Attrs
+	if len(attrs) > 0 {
+		a = attrs[0]
+	}
+
+	const query = `
+		mutation($input: CreateCookieBannerInput!) {
+			createCookieBanner(input: $input) {
+				cookieBannerEdge {
+					node { id }
+				}
+			}
+		}
+	`
+
+	input := map[string]any{
+		"organizationId":    c.GetOrganizationID().String(),
+		"name":              a.getString("name", SafeName("CookieBanner")),
+		"origin":            a.getString("origin", SafeOrigin()),
+		"cookiePolicyUrl":   a.getString("cookiePolicyUrl", "https://example.com/cookies"),
+		"consentExpiryDays": a.getInt("consentExpiryDays", 365),
+		"consentMode":       a.getString("consentMode", "OPT_IN"),
+	}
+	if ppURL := a.getStringPtr("privacyPolicyUrl"); ppURL != nil {
+		input["privacyPolicyUrl"] = *ppURL
+	}
+
+	var result struct {
+		CreateCookieBanner struct {
+			CookieBannerEdge struct {
+				Node struct {
+					ID string `json:"id"`
+				} `json:"node"`
+			} `json:"cookieBannerEdge"`
+		} `json:"createCookieBanner"`
+	}
+
+	err := c.Execute(query, map[string]any{"input": input}, &result)
+	require.NoError(c.T, err, "createCookieBanner mutation failed")
+
+	return result.CreateCookieBanner.CookieBannerEdge.Node.ID
+}
+
+type CookieBannerBuilder struct {
+	client *testutil.Client
+	attrs  Attrs
+}
+
+func NewCookieBanner(c *testutil.Client) *CookieBannerBuilder {
+	return &CookieBannerBuilder{client: c, attrs: Attrs{}}
+}
+
+func (b *CookieBannerBuilder) WithName(name string) *CookieBannerBuilder {
+	b.attrs["name"] = name
+	return b
+}
+
+func (b *CookieBannerBuilder) WithOrigin(origin string) *CookieBannerBuilder {
+	b.attrs["origin"] = origin
+	return b
+}
+
+func (b *CookieBannerBuilder) WithCookiePolicyUrl(url string) *CookieBannerBuilder {
+	b.attrs["cookiePolicyUrl"] = url
+	return b
+}
+
+func (b *CookieBannerBuilder) WithPrivacyPolicyUrl(url string) *CookieBannerBuilder {
+	b.attrs["privacyPolicyUrl"] = url
+	return b
+}
+
+func (b *CookieBannerBuilder) WithConsentExpiryDays(days int) *CookieBannerBuilder {
+	b.attrs["consentExpiryDays"] = days
+	return b
+}
+
+func (b *CookieBannerBuilder) WithConsentMode(mode string) *CookieBannerBuilder {
+	b.attrs["consentMode"] = mode
+	return b
+}
+
+func (b *CookieBannerBuilder) Create() string {
+	return CreateCookieBanner(b.client, b.attrs)
+}
+
+func CreateCookieCategory(c *testutil.Client, bannerID string, attrs ...Attrs) string {
+	c.T.Helper()
+
+	var a Attrs
+	if len(attrs) > 0 {
+		a = attrs[0]
+	}
+
+	const query = `
+		mutation($input: CreateCookieCategoryInput!) {
+			createCookieCategory(input: $input) {
+				cookieCategoryEdge {
+					node { id }
+				}
+			}
+		}
+	`
+
+	input := map[string]any{
+		"cookieBannerId": bannerID,
+		"name":           a.getString("name", SafeName("Category")),
+		"slug":           a.getString("slug", strings.ToLower(gofakeit.LetterN(8))),
+		"description":    a.getString("description", "Test cookie category"),
+		"rank":           a.getInt("rank", 10),
+	}
+
+	var result struct {
+		CreateCookieCategory struct {
+			CookieCategoryEdge struct {
+				Node struct {
+					ID string `json:"id"`
+				} `json:"node"`
+			} `json:"cookieCategoryEdge"`
+		} `json:"createCookieCategory"`
+	}
+
+	err := c.Execute(query, map[string]any{"input": input}, &result)
+	require.NoError(c.T, err, "createCookieCategory mutation failed")
+
+	return result.CreateCookieCategory.CookieCategoryEdge.Node.ID
+}
+
+func CreateTrackerPattern(c *testutil.Client, categoryID string, attrs ...Attrs) string {
+	c.T.Helper()
+
+	var a Attrs
+	if len(attrs) > 0 {
+		a = attrs[0]
+	}
+
+	const query = `
+		mutation($input: CreateTrackerPatternInput!) {
+			createTrackerPattern(input: $input) {
+				trackerPatternEdge {
+					node { id }
+				}
+			}
+		}
+	`
+
+	input := map[string]any{
+		"cookieCategoryId": categoryID,
+		"trackerType":      a.getString("trackerType", "COOKIE"),
+		"pattern":          a.getString("pattern", gofakeit.LetterN(8)+"_cookie"),
+		"matchType":        a.getString("matchType", "EXACT"),
+		"displayName":      a.getString("displayName", SafeName("Pattern")),
+		"description":      a.getString("description", "Test tracker pattern"),
+	}
+	if _, ok := a["maxAgeSeconds"]; ok {
+		input["maxAgeSeconds"] = a.getInt("maxAgeSeconds", 0)
+	}
+
+	var result struct {
+		CreateTrackerPattern struct {
+			TrackerPatternEdge struct {
+				Node struct {
+					ID string `json:"id"`
+				} `json:"node"`
+			} `json:"trackerPatternEdge"`
+		} `json:"createTrackerPattern"`
+	}
+
+	err := c.Execute(query, map[string]any{"input": input}, &result)
+	require.NoError(c.T, err, "createTrackerPattern mutation failed")
+
+	return result.CreateTrackerPattern.TrackerPatternEdge.Node.ID
+}
+
+func CreateTrackerResource(c *testutil.Client, categoryID string, attrs ...Attrs) string {
+	c.T.Helper()
+
+	var a Attrs
+	if len(attrs) > 0 {
+		a = attrs[0]
+	}
+
+	const query = `
+		mutation($input: CreateTrackerResourceInput!) {
+			createTrackerResource(input: $input) {
+				trackerResourceEdge {
+					node { id }
+				}
+			}
+		}
+	`
+
+	input := map[string]any{
+		"cookieCategoryId": categoryID,
+		"type":             a.getString("type", "SCRIPT"),
+		"origin":           a.getString("origin", SafeOrigin()),
+		"path":             a.getString("path", "/"+gofakeit.LetterN(8)+".js"),
+		"displayName":      a.getString("displayName", SafeName("Resource")),
+		"description":      a.getString("description", "Test tracker resource"),
+	}
+
+	var result struct {
+		CreateTrackerResource struct {
+			TrackerResourceEdge struct {
+				Node struct {
+					ID string `json:"id"`
+				} `json:"node"`
+			} `json:"trackerResourceEdge"`
+		} `json:"createTrackerResource"`
+	}
+
+	err := c.Execute(query, map[string]any{"input": input}, &result)
+	require.NoError(c.T, err, "createTrackerResource mutation failed")
+
+	return result.CreateTrackerResource.TrackerResourceEdge.Node.ID
+}
+
+func ReportDetectedResources(c *testutil.Client, bannerID string, count int) {
+	c.T.Helper()
+
+	resources := make([]map[string]string, 0, count)
+	for range count {
+		resources = append(resources, map[string]string{
+			"url":           fmt.Sprintf("https://%s.example.com/%s.js", strings.ToLower(gofakeit.LetterN(8)), gofakeit.LetterN(6)),
+			"resource_type": "script",
+		})
+	}
+
+	body, err := json.Marshal(map[string]any{"resources": resources})
+	require.NoError(c.T, err, "cannot marshal report body")
+
+	url := fmt.Sprintf("%s/api/cookie-banner/v1/%s/report", c.BaseURL(), bannerID)
+	resp, err := http.Post(url, "application/json", bytes.NewReader(body))
+	require.NoError(c.T, err, "report detected resources request failed")
+	defer func() { _ = resp.Body.Close() }()
+	require.Equal(c.T, http.StatusNoContent, resp.StatusCode, "report detected resources unexpected status")
 }

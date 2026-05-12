@@ -1,3 +1,17 @@
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
 import { formatError, type GraphQLError } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
@@ -14,7 +28,7 @@ import { useNavigate } from "react-router";
 import { useWindowSize } from "usehooks-ts";
 
 import type { EmployeeDocumentSignaturePageDocumentFragment$key } from "#/__generated__/core/EmployeeDocumentSignaturePageDocumentFragment.graphql";
-import type { EmployeeDocumentSignaturePageExportSignablePDFMutation } from "#/__generated__/core/EmployeeDocumentSignaturePageExportSignablePDFMutation.graphql";
+import type { EmployeeDocumentSignaturePageExportEmployeePDFMutation } from "#/__generated__/core/EmployeeDocumentSignaturePageExportEmployeePDFMutation.graphql";
 import type { EmployeeDocumentSignaturePageQuery } from "#/__generated__/core/EmployeeDocumentSignaturePageQuery.graphql";
 import type { EmployeeDocumentSignaturePageSignMutation } from "#/__generated__/core/EmployeeDocumentSignaturePageSignMutation.graphql";
 import { PDFPreview } from "#/components/documents/PDFPreview";
@@ -66,11 +80,11 @@ const signDocumentMutation = graphql`
   }
 `;
 
-const exportSignableVersionDocumentPDFMutation = graphql`
-  mutation EmployeeDocumentSignaturePageExportSignablePDFMutation(
-    $input: ExportSignableDocumentVersionPDFInput!
+const exportEmployeeDocumentVersionPDFMutation = graphql`
+  mutation EmployeeDocumentSignaturePageExportEmployeePDFMutation(
+    $input: ExportEmployeeDocumentVersionPDFInput!
   ) {
-    exportSignableVersionDocumentPDF(input: $input) {
+    exportEmployeeDocumentVersionPDF(input: $input) {
       data
     }
   }
@@ -131,9 +145,9 @@ function DocumentSignatureContent({
       signDocumentMutation,
     );
 
-  const [exportSignableVersionDocumentPDF]
-    = useMutation<EmployeeDocumentSignaturePageExportSignablePDFMutation>(
-      exportSignableVersionDocumentPDFMutation,
+  const [exportEmployeeDocumentVersionPDF]
+    = useMutation<EmployeeDocumentSignaturePageExportEmployeePDFMutation>(
+      exportEmployeeDocumentVersionPDFMutation,
     );
 
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
@@ -177,7 +191,7 @@ function DocumentSignatureContent({
   useEffect(() => {
     if (!selectedVersion?.id) return;
 
-    exportSignableVersionDocumentPDF({
+    exportEmployeeDocumentVersionPDF({
       variables: {
         input: {
           documentVersionId: selectedVersion.id,
@@ -195,8 +209,8 @@ function DocumentSignatureContent({
           });
           return;
         }
-        if (data.exportSignableVersionDocumentPDF?.data) {
-          const dataUrl = data.exportSignableVersionDocumentPDF.data;
+        if (data.exportEmployeeDocumentVersionPDF?.data) {
+          const dataUrl = data.exportEmployeeDocumentVersionPDF.data;
           pdfUrlRef.current = dataUrl;
           setPdfUrl(dataUrl);
         }
@@ -216,7 +230,7 @@ function DocumentSignatureContent({
     return () => {
       pdfUrlRef.current = null;
     };
-  }, [selectedVersion?.id, exportSignableVersionDocumentPDF, toast, __]);
+  }, [selectedVersion?.id, exportEmployeeDocumentVersionPDF, toast, __]);
 
   return (
     <div

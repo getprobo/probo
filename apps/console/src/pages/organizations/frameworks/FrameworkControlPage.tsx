@@ -1,4 +1,22 @@
-import { formatError, type GraphQLError } from "@probo/helpers";
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
+import {
+  formatError,
+  getControlMaturityLevelLabel,
+  type GraphQLError,
+} from "@probo/helpers";
 import { promisifyMutation } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import {
@@ -27,7 +45,6 @@ import { LinkedAuditsCard } from "#/components/audits/LinkedAuditsCard";
 import { LinkedDocumentsCard } from "#/components/documents/LinkedDocumentsCard";
 import { LinkedMeasuresCard } from "#/components/measures/LinkedMeasuresCard";
 import { LinkedObligationsCard } from "#/components/obligations/LinkedObligationsCard";
-import { LinkedSnapshotsCard } from "#/components/snapshots/LinkedSnapshotsCard";
 import { frameworkControlNodeQuery } from "#/hooks/graph/FrameworkGraph";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
@@ -141,33 +158,6 @@ const detachObligationMutation = graphql`
   }
 `;
 
-const attachSnapshotMutation = graphql`
-  mutation FrameworkControlPageAttachSnapshotMutation(
-      $input: CreateControlSnapshotMappingInput!
-      $connections: [ID!]!
-  ) {
-      createControlSnapshotMapping(input: $input) {
-          snapshotEdge @prependEdge(connections: $connections) {
-              node {
-                  id
-                  ...LinkedSnapshotsCardFragment
-              }
-          }
-      }
-  }
-`;
-
-const detachSnapshotMutation = graphql`
-  mutation FrameworkControlPageDetachSnapshotMutation(
-      $input: DeleteControlSnapshotMappingInput!
-      $connections: [ID!]!
-  ) {
-      deleteControlSnapshotMapping(input: $input) {
-          deletedSnapshotId @deleteEdge(connections: $connections)
-      }
-  }
-`;
-
 const deleteControlMutation = graphql`
   mutation FrameworkControlPageDeleteControlMutation(
       $input: DeleteControlInput!
@@ -218,14 +208,6 @@ export default function FrameworkControlPage({ queryRef }: Props) {
   // eslint-disable-next-line relay/generated-typescript-types
   const [attachAudit, isAttachingAudit] = useMutation(attachAuditMutation);
   // eslint-disable-next-line relay/generated-typescript-types
-  const [detachSnapshot, isDetachingSnapshot] = useMutation(
-    detachSnapshotMutation,
-  );
-  // eslint-disable-next-line relay/generated-typescript-types
-  const [attachSnapshot, isAttachingSnapshot] = useMutation(
-    attachSnapshotMutation,
-  );
-  // eslint-disable-next-line relay/generated-typescript-types
   const [deleteControl] = useMutation(deleteControlMutation);
 
   // eslint-disable-next-line relay/generated-typescript-types
@@ -248,10 +230,6 @@ export default function FrameworkControlPage({ queryRef }: Props) {
   const canLinkAudit = control.canCreateAuditMapping;
   const canUnlinkAudit = control.canDeleteAuditMapping;
   const auditsReadOnly = !canLinkAudit && !canUnlinkAudit;
-
-  const canLinkSnapshot = control.canCreateSnapshotMapping;
-  const canUnlinkSnapshot = control.canDeleteSnapshotMapping;
-  const snapshotsReadOnly = !canLinkSnapshot && !canUnlinkSnapshot;
 
   const canLinkObligation = control.canCreateObligationMapping;
   const canUnlinkObligation = control.canDeleteObligationMapping;
@@ -365,12 +343,12 @@ export default function FrameworkControlPage({ queryRef }: Props) {
               </Badge>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-sm text-txt-secondary">{__("Implemented")}</span>
-              <Badge variant={control.implemented === "IMPLEMENTED" ? "success" : "warning"} size="sm">
-                {control.implemented === "IMPLEMENTED" ? __("Implemented") : __("Not Implemented")}
+              <span className="text-sm text-txt-secondary">{__("Maturity level")}</span>
+              <Badge variant="neutral" size="sm">
+                {getControlMaturityLevelLabel(__, control.maturityLevel ?? "NONE")}
               </Badge>
             </div>
-            {control.implemented === "NOT_IMPLEMENTED" && control.notImplementedJustification && (
+            {control.maturityLevel === "NONE" && control.notImplementedJustification && (
               <div>
                 <span className="text-xs text-txt-secondary">{__("Justification for non-implementation")}</span>
                 <div className="text-sm mt-0.5 whitespace-pre-wrap">{control.notImplementedJustification}</div>
@@ -462,27 +440,6 @@ export default function FrameworkControlPage({ queryRef }: Props) {
               isAttachingObligation || isDetachingObligation
             }
             readOnly={obligationsReadOnly}
-          />
-        </div>
-        <div className="mb-4">
-          <LinkedSnapshotsCard
-            variant="card"
-            snapshots={
-              control.snapshots?.edges.map(edge => edge.node)
-              ?? []
-            }
-            params={{ controlId: control.id }}
-            connectionId={control.snapshots?.__id ?? ""}
-            onAttach={withErrorHandling(
-              attachSnapshot,
-              __("Failed to link snapshot"),
-            )}
-            onDetach={withErrorHandling(
-              detachSnapshot,
-              __("Failed to unlink snapshot"),
-            )}
-            disabled={isAttachingSnapshot || isDetachingSnapshot}
-            readOnly={snapshotsReadOnly}
           />
         </div>
       </div>

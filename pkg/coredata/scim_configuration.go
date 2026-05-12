@@ -50,7 +50,7 @@ func (s *SCIMConfiguration) CursorKey(orderBy SCIMConfigurationOrderField) page.
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (s *SCIMConfiguration) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+func (s *SCIMConfiguration) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	q := `SELECT organization_id FROM iam_scim_configurations WHERE id = $1 LIMIT 1;`
 
 	var organizationID gid.GID
@@ -66,7 +66,7 @@ func (s *SCIMConfiguration) AuthorizationAttributes(ctx context.Context, conn pg
 
 func (s *SCIMConfiguration) LoadByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	configID gid.GID,
 ) error {
@@ -124,7 +124,7 @@ LEFT JOIN
 
 func (s *SCIMConfiguration) LoadByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 ) error {
@@ -182,7 +182,7 @@ LEFT JOIN
 
 func (s *SCIMConfiguration) LoadByHashedToken(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	hashedToken []byte,
 ) error {
 	q := `
@@ -235,7 +235,7 @@ LEFT JOIN
 
 func (s *SCIMConfiguration) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -282,7 +282,7 @@ INSERT INTO iam_scim_configurations (
 
 func (s *SCIMConfiguration) Update(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -315,7 +315,7 @@ WHERE
 
 func (s *SCIMConfiguration) Delete(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `

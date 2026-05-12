@@ -23,11 +23,13 @@ type ConnectorProtocol string
 
 const (
 	ConnectorProtocolOAuth2 ConnectorProtocol = "OAUTH2"
+	ConnectorProtocolAPIKey ConnectorProtocol = "API_KEY"
 )
 
 func ConnectorProtocols() []ConnectorProtocol {
 	return []ConnectorProtocol{
 		ConnectorProtocolOAuth2,
+		ConnectorProtocolAPIKey,
 	}
 }
 
@@ -49,6 +51,8 @@ func (cp *ConnectorProtocol) Scan(value any) error {
 	switch s {
 	case "OAUTH2":
 		*cp = ConnectorProtocolOAuth2
+	case "API_KEY":
+		*cp = ConnectorProtocolAPIKey
 	default:
 		return fmt.Errorf("invalid ConnectorProtocol value: %q", s)
 	}

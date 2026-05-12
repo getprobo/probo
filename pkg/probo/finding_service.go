@@ -110,7 +110,7 @@ func (s FindingService) Get(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			return finding.LoadByID(ctx, conn, s.svc.scope, findingID)
 		},
 	)
@@ -161,7 +161,7 @@ func (s *FindingService) Create(
 
 	err := s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Tx) error {
 			organization := &coredata.Organization{}
 			if err := organization.LoadByID(ctx, conn, s.svc.scope, req.OrganizationID); err != nil {
 				return fmt.Errorf("cannot load organization: %w", err)
@@ -201,7 +201,7 @@ func (s *FindingService) Update(
 
 	err := s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Tx) error {
 			if err := finding.LoadByID(ctx, conn, s.svc.scope, req.ID); err != nil {
 				return fmt.Errorf("cannot load finding: %w", err)
 			}
@@ -270,10 +270,10 @@ func (s FindingService) Delete(
 	findingID gid.GID,
 ) error {
 	finding := coredata.Finding{ID: findingID}
-	return s.svc.pg.WithConn(
+	return s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
-			err := finding.Delete(ctx, conn, s.svc.scope)
+		func(ctx context.Context, tx pg.Tx) error {
+			err := finding.Delete(ctx, tx, s.svc.scope)
 			if err != nil {
 				return fmt.Errorf("cannot delete finding: %w", err)
 			}
@@ -292,7 +292,7 @@ func (s FindingService) ListForOrganizationID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			err := findings.LoadByOrganizationID(ctx, conn, s.svc.scope, organizationID, cursor, filter)
 			if err != nil {
 				return fmt.Errorf("cannot load findings: %w", err)
@@ -318,7 +318,7 @@ func (s FindingService) CountForOrganizationID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) (err error) {
+		func(ctx context.Context, conn pg.Querier) (err error) {
 			findings := coredata.Findings{}
 			count, err = findings.CountByOrganizationID(ctx, conn, s.svc.scope, organizationID, filter)
 			if err != nil {
@@ -347,7 +347,7 @@ func (s FindingService) CreateAuditMapping(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			if err := finding.LoadByID(ctx, conn, s.svc.scope, findingID); err != nil {
 				return fmt.Errorf("cannot load finding: %w", err)
 			}
@@ -391,19 +391,19 @@ func (s FindingService) DeleteAuditMapping(
 	finding := &coredata.Finding{}
 	audit := &coredata.Audit{}
 
-	err := s.svc.pg.WithConn(
+	err := s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
-			if err := finding.LoadByID(ctx, conn, s.svc.scope, findingID); err != nil {
+		func(ctx context.Context, tx pg.Tx) error {
+			if err := finding.LoadByID(ctx, tx, s.svc.scope, findingID); err != nil {
 				return fmt.Errorf("cannot load finding: %w", err)
 			}
 
-			if err := audit.LoadByID(ctx, conn, s.svc.scope, auditID); err != nil {
+			if err := audit.LoadByID(ctx, tx, s.svc.scope, auditID); err != nil {
 				return fmt.Errorf("cannot load audit: %w", err)
 			}
 
 			findingAudit := &coredata.FindingAudit{}
-			if err := findingAudit.Delete(ctx, conn, s.svc.scope, finding.ID, audit.ID); err != nil {
+			if err := findingAudit.Delete(ctx, tx, s.svc.scope, finding.ID, audit.ID); err != nil {
 				return fmt.Errorf("cannot delete finding audit mapping: %w", err)
 			}
 
@@ -429,7 +429,7 @@ func (s FindingService) ListForAuditID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			if err := audit.LoadByID(ctx, conn, s.svc.scope, auditID); err != nil {
 				return fmt.Errorf("cannot load audit: %w", err)
 			}
@@ -457,7 +457,7 @@ func (s FindingService) CountForAuditID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) (err error) {
+		func(ctx context.Context, conn pg.Querier) (err error) {
 			findings := coredata.Findings{}
 			count, err = findings.CountByAuditID(ctx, conn, s.svc.scope, auditID, filter)
 			if err != nil {

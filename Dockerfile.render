@@ -16,6 +16,7 @@ RUN npx turbo run build
 # Stage 2: Build Go binary
 FROM golang:1.26-alpine AS backend
 RUN apk add --no-cache git
+ENV GOPRIVATE=go.probo.inc
 WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download

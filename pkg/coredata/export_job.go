@@ -63,7 +63,7 @@ var (
 )
 
 // AuthorizationAttributes returns the authorization attributes for policy evaluation.
-func (ej *ExportJob) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+func (ej *ExportJob) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	q := `SELECT organization_id FROM export_jobs WHERE id = $1 LIMIT 1;`
 
 	var organizationID gid.GID
@@ -79,7 +79,7 @@ func (ej *ExportJob) AuthorizationAttributes(ctx context.Context, conn pg.Conn) 
 
 func (ej *ExportJob) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -121,7 +121,7 @@ INSERT INTO export_jobs (
 
 func (ej *ExportJob) Update(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -153,7 +153,7 @@ WHERE
 
 func (ej *ExportJob) LoadByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	id gid.GID,
 ) error {
@@ -197,7 +197,7 @@ WHERE
 
 func (ej *ExportJob) LoadNextPendingForUpdateSkipLocked(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 ) error {
 	q := `
 SELECT

@@ -11,7 +11,7 @@ export LIMA_CIDATA_USER
 
 export DEBIAN_FRONTEND=noninteractive
 
-GO_VERSION="1.26.1"
+GO_VERSION="1.26.3"
 NODE_MAJOR=24
 NPM_VERSION="11.8.0"
 
@@ -30,7 +30,7 @@ apt-get install -y -qq \
     ca-certificates \
     gnupg \
     lsb-release \
-    unzip
+    postgresql-client
 
 if ! command -v docker &>/dev/null; then
     install -m 0755 -d /etc/apt/keyrings
@@ -71,8 +71,6 @@ chmod +x /etc/profile.d/go.sh
 export PATH="/usr/local/go/bin:$PATH"
 export HOME="${HOME:-/root}"
 
-GOBIN=/usr/local/bin /usr/local/go/bin/go install "gotest.tools/gotestsum@${GOTESTSUM_VERSION}"
-GOBIN=/usr/local/bin /usr/local/go/bin/go install "github.com/golangci/golangci-lint/v2/cmd/golangci-lint@${GOLANGCI_LINT_VERSION}"
 GOBIN=/usr/local/bin /usr/local/go/bin/go install "github.com/mitranim/gow@${GOW_VERSION}"
 
 if ! command -v node &>/dev/null || ! node --version | grep -q "v${NODE_MAJOR}"; then
@@ -98,7 +96,15 @@ VM_IP=$(ip -4 -j addr show dev lima0 | jq -r '.[0].addr_info[0].local')
 
 su - "${LIMA_USER}" -c "export PATH=/usr/local/go/bin:\$HOME/go/bin:\$PATH && cd /workspace && make bin/probod-bootstrap"
 
+make -C /workspace compose/pebble/certs/rootCA.pem compose/keycloak/probo-realm.json
+
 mkdir -p /etc/probod
+
+OAUTH2_SIGNING_KEY_PATH=/etc/probod/oauth2-signing-key.pem
+if [ ! -f "${OAUTH2_SIGNING_KEY_PATH}" ]; then
+    openssl genrsa -out "${OAUTH2_SIGNING_KEY_PATH}" 2048
+    chmod 600 "${OAUTH2_SIGNING_KEY_PATH}"
+fi
 
 # Load developer-specific overrides (not committed to repo).
 if [ -f /workspace/.sandbox.env ]; then
@@ -113,15 +119,21 @@ AUTH_COOKIE_SECURE=false \
 AUTH_COOKIE_SECRET="this-is-a-secure-secret-for-cookie-signing-at-least-32-bytes" \
 AUTH_PASSWORD_PEPPER="this-is-a-secure-pepper-for-password-hashing-at-least-32-bytes" \
 PROBOD_ENCRYPTION_KEY="thisisnotasecretAAAAAAAAAAAAAAAAAAAAAAAAAAA=" \
+OAUTH2_SERVER_SIGNING_KEY="$(cat "${OAUTH2_SIGNING_KEY_PATH}")" \
 API_CORS_ALLOWED_ORIGINS="http://${VM_IP}:8080,http://${VM_IP}:5173,http://${VM_IP}:5174" \
 AWS_ENDPOINT="http://127.0.0.1:8333" \
 AWS_ACCESS_KEY_ID="probod" \
 AWS_SECRET_ACCESS_KEY="thisisnotasecret" \
 AWS_USE_PATH_STYLE=true \
+ACME_DIRECTORY="https://127.0.0.1:14000/dir" \
+ACME_EMAIL="admin@getprobo.com" \
+ACME_KEY_TYPE="EC256" \
+ACME_ROOT_CA="$(cat /workspace/compose/pebble/certs/rootCA.pem)" \
     /workspace/bin/probod-bootstrap -output /etc/probod/config.yml
 
-echo "VITE_API_URL=http://${VM_IP}:8080" > /workspace/apps/console/.env
-echo "VITE_API_URL=http://${VM_IP}:8080" > /workspace/apps/trust/.env
+# probod runs as ${LIMA_USER} but bootstrap writes config.yml as root with 0600
+# because it contains secrets. Transfer ownership so probod can read it.
+chown "${LIMA_USER}:${LIMA_USER}" /etc/probod/config.yml "${OAUTH2_SIGNING_KEY_PATH}"
 
 # Bind-mount VM-local node_modules over the shared workspace to avoid
 # platform conflicts between macOS host and Linux VM native binaries.
@@ -129,7 +141,7 @@ cat > /etc/systemd/system/probo-node-modules.service << EOF
 [Unit]
 Description=Bind-mount VM-local node_modules over workspace
 DefaultDependencies=no
-Before=probo-console.service
+Before=probo-console.service probo-trust.service
 
 [Service]
 Type=oneshot
@@ -142,18 +154,35 @@ ExecStartPost=/bin/chown ${LIMA_USER}:${LIMA_USER} /var/lib/probo/node_modules
 WantedBy=multi-user.target
 EOF
 
+systemctl daemon-reload
+systemctl enable --now probo-node-modules.service
+
+# Populate VM-local node_modules with Linux-native binaries (esbuild, etc.).
+# The host's node_modules is macOS; `probo-node-modules.service` bind-mounts an
+# empty tree over /workspace/node_modules, and we install into it once here so
+# the dev servers can run without cross-platform mismatches.
+su - "${LIMA_USER}" -c "cd /workspace && npm ci"
+
+# Generate go and ts files for probod and apps, and create embedded files for probod
+make -C /workspace generate WITH_APPS=1
+make -C /workspace embed
+
+echo "VITE_API_URL=http://${VM_IP}:8080" > /workspace/apps/console/.env
+echo "VITE_API_URL=http://${VM_IP}:8080" > /workspace/apps/trust/.env
+
 # Install systemd services for the sandbox
-cat > /etc/systemd/system/probo-stack.service << 'EOF'
+cat > /etc/systemd/system/probo-stack.service << EOF
 [Unit]
 Description=Govrly Docker Compose Stack
 Requires=docker.service
 After=docker.service
 
 [Service]
-Type=simple
+Type=oneshot
+RemainAfterExit=yes
 User=root
 WorkingDirectory=/workspace
-ExecStart=/usr/bin/docker compose -f compose.yaml up
+ExecStart=/usr/bin/docker compose -f compose.yaml up -d --wait
 ExecStop=/usr/bin/docker compose -f compose.yaml down
 Restart=on-failure
 RestartSec=5s
@@ -172,7 +201,8 @@ After=probo-stack.service
 Type=simple
 User=${LIMA_USER}
 WorkingDirectory=/workspace
-ExecStart=/usr/local/bin/gow -r=false run ./cmd/probod -cfg-file /etc/probod/config.yml
+ExecStartPre=/bin/bash -c 'for i in \$(seq 1 10); do pg_isready -h localhost -p 5432 -U probod -d probod -q && exit 0; sleep 1; done; echo "PostgreSQL not ready after 10s"; exit 1'
+ExecStart=/usr/local/bin/gow -r=false run ./cmd/probod -cfg-file /etc/probod/config.yml -format pretty
 Restart=on-failure
 RestartSec=3s
 Environment=PATH=/usr/local/go/bin:/usr/local/bin:/usr/bin:/bin
@@ -185,7 +215,7 @@ cat > /etc/systemd/system/probo-console.service << EOF
 [Unit]
 Description=Govrly Console Dev Server
 Requires=probo-node-modules.service
-After=probod.service probo-node-modules.service
+After=probo-node-modules.service probod.service
 
 [Service]
 Type=simple
@@ -199,6 +229,24 @@ RestartSec=3s
 WantedBy=multi-user.target
 EOF
 
+cat > /etc/systemd/system/probo-trust.service << EOF
+[Unit]
+Description=Probo Trust Dev Server
+Requires=probo-node-modules.service
+After=probo-node-modules.service probod.service
+
+[Service]
+Type=simple
+User=${LIMA_USER}
+WorkingDirectory=/workspace
+ExecStart=/usr/bin/npm --workspace @probo/trust run dev -- --host 0.0.0.0
+Restart=on-failure
+RestartSec=3s
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
 systemctl daemon-reload
 systemctl enable --now probo-stack.service
-systemctl enable probo-node-modules.service probod.service probo-console.service
+systemctl enable --now probod.service probo-console.service probo-trust.service

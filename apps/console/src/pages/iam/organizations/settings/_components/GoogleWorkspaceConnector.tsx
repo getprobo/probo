@@ -1,3 +1,17 @@
+// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
 import { sprintf } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import {
@@ -11,14 +25,14 @@ import {
   IconSettingsGear2,
   Input,
   useDialogRef,
+  useToast,
 } from "@probo/ui";
 import { useState } from "react";
-import { graphql, useFragment } from "react-relay";
+import { graphql, useFragment, useMutation } from "react-relay";
 
 import type { GoogleWorkspaceConnectorDeleteMutation } from "#/__generated__/iam/GoogleWorkspaceConnectorDeleteMutation.graphql";
 import type { GoogleWorkspaceConnectorFragment$key } from "#/__generated__/iam/GoogleWorkspaceConnectorFragment.graphql";
 import type { GoogleWorkspaceConnectorUpdateSCIMBridgeMutation } from "#/__generated__/iam/GoogleWorkspaceConnectorUpdateSCIMBridgeMutation.graphql";
-import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 const googleWorkspaceConnectorFragment = graphql`
@@ -26,6 +40,7 @@ const googleWorkspaceConnectorFragment = graphql`
     id
     bridge {
       id
+      type
       excludedUserNames
       connector {
         id
@@ -40,7 +55,7 @@ const deleteSCIMConfigurationMutation = graphql`
     $input: DeleteSCIMConfigurationInput!
   ) {
     deleteSCIMConfiguration(input: $input) {
-      deletedScimConfigurationId
+      deletedScimConfigurationId @deleteRecord
     }
   }
 `;
@@ -60,37 +75,31 @@ const updateSCIMBridgeMutation = graphql`
 
 export function GoogleWorkspaceConnector(props: {
   fKey: GoogleWorkspaceConnectorFragment$key | null;
+  oauth2Scopes: readonly string[];
 }) {
-  const { fKey } = props;
+  const { fKey, oauth2Scopes } = props;
   const data = useFragment<GoogleWorkspaceConnectorFragment$key>(googleWorkspaceConnectorFragment, fKey);
-  const bridge = data?.bridge;
+  const bridge = data?.bridge?.type === "GOOGLE_WORKSPACE" ? data.bridge : null;
   const connector = bridge?.connector;
   const scimConfigurationId = data?.id;
   const bridgeId = bridge?.id;
 
   const organizationId = useOrganizationId();
   const { __, dateTimeFormat } = useTranslate();
+  const { toast } = useToast();
   const dialogRef = useDialogRef();
   const excludedUserNamesDialogRef = useDialogRef();
 
   const [newUser, setNewUser] = useState("");
 
   const [deleteSCIMConfiguration, isDeleting]
-    = useMutationWithToasts<GoogleWorkspaceConnectorDeleteMutation>(
+    = useMutation<GoogleWorkspaceConnectorDeleteMutation>(
       deleteSCIMConfigurationMutation,
-      {
-        successMessage: __("Google Workspace disconnected successfully"),
-        errorMessage: __("Failed to disconnect Google Workspace"),
-      },
     );
 
   const [updateSCIMBridge, isUpdating]
-    = useMutationWithToasts<GoogleWorkspaceConnectorUpdateSCIMBridgeMutation>(
+    = useMutation<GoogleWorkspaceConnectorUpdateSCIMBridgeMutation>(
       updateSCIMBridgeMutation,
-      {
-        successMessage: __("Excluded user names updated successfully"),
-        errorMessage: __("Failed to update excluded user names"),
-      },
     );
 
   const handleConnect = () => {
@@ -98,6 +107,9 @@ export function GoogleWorkspaceConnector(props: {
     const url = new URL("/api/console/v1/connectors/initiate", baseUrl);
     url.searchParams.append("organization_id", organizationId);
     url.searchParams.append("provider", "GOOGLE_WORKSPACE");
+    for (const scope of oauth2Scopes) {
+      url.searchParams.append("scope", scope);
+    }
     const continueUrl = `/organizations/${organizationId}/settings/scim`;
     url.searchParams.append("continue", continueUrl);
     window.location.href = url.toString();
@@ -113,14 +125,28 @@ export function GoogleWorkspaceConnector(props: {
           scimConfigurationId: scimConfigurationId,
         },
       },
-      onCompleted: () => {
+      onCompleted(_, errors) {
+        if (errors?.length) {
+          toast({
+            title: __("Error"),
+            description: errors.map(e => e.message).join(", "),
+            variant: "error",
+          });
+          return;
+        }
+        toast({
+          title: __("Success"),
+          description: __("Google Workspace / Cloud Identity disconnected successfully"),
+          variant: "success",
+        });
         dialogRef.current?.close();
       },
-      updater: (store) => {
-        const organizationRecord = store.get(organizationId);
-        if (organizationRecord) {
-          organizationRecord.setValue(null, "scimConfiguration");
-        }
+      onError(error) {
+        toast({
+          title: __("Error"),
+          description: error.message,
+          variant: "error",
+        });
       },
     });
   };
@@ -137,6 +163,28 @@ export function GoogleWorkspaceConnector(props: {
           scimBridgeId: bridgeId,
           excludedUserNames: newList,
         },
+      },
+      onCompleted(_, errors) {
+        if (errors?.length) {
+          toast({
+            title: __("Error"),
+            description: errors.map(e => e.message).join(", "),
+            variant: "error",
+          });
+          return;
+        }
+        toast({
+          title: __("Success"),
+          description: __("Excluded user names updated successfully"),
+          variant: "success",
+        });
+      },
+      onError(error) {
+        toast({
+          title: __("Error"),
+          description: error.message,
+          variant: "error",
+        });
       },
     });
   };
@@ -161,10 +209,10 @@ export function GoogleWorkspaceConnector(props: {
           <Google className="w-6 h-6" />
         </div>
         <div className="mr-auto">
-          <h3 className="font-medium">{__("Google Workspace")}</h3>
+          <h3 className="font-medium">{__("Google Workspace / Cloud Identity")}</h3>
           <p className="text-sm text-txt-secondary">
             {__(
-              "Connect Google Workspace to automatically sync users via SCIM.",
+              "Connect Google Workspace or Google Cloud Identity to automatically sync users via SCIM.",
             )}
           </p>
         </div>
@@ -182,7 +230,7 @@ export function GoogleWorkspaceConnector(props: {
         <Google className="w-6 h-6" />
       </div>
       <div className="mr-auto">
-        <h3 className="font-medium">{__("Google Workspace")}</h3>
+        <h3 className="font-medium">{__("Google Workspace / Cloud Identity")}</h3>
         <p className="text-sm text-txt-secondary">
           {sprintf(__("Connected on %s"), dateTimeFormat(connector.createdAt))}
         </p>
@@ -198,7 +246,7 @@ export function GoogleWorkspaceConnector(props: {
             {__("Settings")}
           </Button>
         )}
-        title={__("Google Workspace Settings")}
+        title={__("Google Workspace / Cloud Identity Settings")}
         className="max-w-lg"
       >
         <DialogContent padded className="space-y-6">
@@ -206,7 +254,7 @@ export function GoogleWorkspaceConnector(props: {
             <div>
               <h4 className="text-sm font-medium">{__("Excluded user names")}</h4>
               <p className="text-sm text-txt-secondary mt-1">
-                {__("Users with these user names will not be synced from Google Workspace.")}
+                {__("Users with these user names will not be synced from Google Workspace / Cloud Identity.")}
               </p>
             </div>
             <div className="flex gap-2">
@@ -217,6 +265,7 @@ export function GoogleWorkspaceConnector(props: {
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     e.preventDefault();
+                    if (isUpdating) return;
                     handleAddUser();
                   }
                 }}
@@ -250,7 +299,7 @@ export function GoogleWorkspaceConnector(props: {
 
             {currentExcludedUserNames.length === 0 && (
               <p className="text-sm text-txt-secondary text-center py-4">
-                {__("No excluded user names. All Google Workspace users will be synced.")}
+                {__("No excluded user names. All Google Workspace / Cloud Identity users will be synced.")}
               </p>
             )}
           </div>
@@ -263,13 +312,13 @@ export function GoogleWorkspaceConnector(props: {
             {__("Disconnect")}
           </Button>
         )}
-        title={__("Disconnect Google Workspace")}
+        title={__("Disconnect Google Workspace / Cloud Identity")}
         className="max-w-lg"
       >
         <DialogContent padded className="space-y-4">
           <p className="text-txt-secondary text-sm">
             {__(
-              "This will disconnect your Google Workspace integration. Users will no longer be automatically synced via SCIM.",
+              "This will disconnect your Google Workspace / Cloud Identity integration. Users will no longer be automatically synced via SCIM.",
             )}
           </p>
           <p className="text-red-600 text-sm font-medium">

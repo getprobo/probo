@@ -24,9 +24,9 @@ import (
 )
 
 const updateMutation = `
-mutation($input: UpdateStateOfApplicabilityInput!) {
-  updateStateOfApplicability(input: $input) {
-    stateOfApplicability {
+mutation($input: UpdateStatementOfApplicabilityInput!) {
+  updateStatementOfApplicability(input: $input) {
+    statementOfApplicability {
       id
       name
     }
@@ -35,12 +35,12 @@ mutation($input: UpdateStateOfApplicabilityInput!) {
 `
 
 type updateResponse struct {
-	UpdateStateOfApplicability struct {
-		StateOfApplicability struct {
+	UpdateStatementOfApplicability struct {
+		StatementOfApplicability struct {
 			ID   string `json:"id"`
 			Name string `json:"name"`
-		} `json:"stateOfApplicability"`
-	} `json:"updateStateOfApplicability"`
+		} `json:"statementOfApplicability"`
+	} `json:"updateStatementOfApplicability"`
 }
 
 func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
@@ -69,6 +69,7 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 				hc.Token,
 				"/api/console/v1/graphql",
 				cfg.HTTPTimeoutDuration(),
+				cmdutil.TokenRefreshOption(cfg, host, hc),
 			)
 
 			input := map[string]any{
@@ -103,7 +104,7 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 				return fmt.Errorf("cannot parse response: %w", err)
 			}
 
-			s := resp.UpdateStateOfApplicability.StateOfApplicability
+			s := resp.UpdateStatementOfApplicability.StatementOfApplicability
 			_, _ = fmt.Fprintf(
 				f.IOStreams.Out,
 				"Updated statement of applicability %s (%s)\n",

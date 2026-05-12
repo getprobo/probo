@@ -53,7 +53,7 @@ func (tcda *TrustCenterDocumentAccess) CursorKey(orderBy TrustCenterDocumentAcce
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (tcda *TrustCenterDocumentAccess) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+func (tcda *TrustCenterDocumentAccess) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	q := `SELECT organization_id FROM trust_center_document_accesses WHERE id = $1 LIMIT 1;`
 
 	var organizationID gid.GID
@@ -69,7 +69,7 @@ func (tcda *TrustCenterDocumentAccess) AuthorizationAttributes(ctx context.Conte
 
 func (tcda *TrustCenterDocumentAccess) LoadByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	accessID gid.GID,
 ) error {
@@ -117,7 +117,7 @@ LIMIT 1;
 
 func (tcda *TrustCenterDocumentAccess) LoadByTrustCenterAccessIDAndDocumentID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	trustCenterAccessID gid.GID,
 	documentID gid.GID,
@@ -171,7 +171,7 @@ LIMIT 1;
 
 func (tcda *TrustCenterDocumentAccess) LoadByTrustCenterAccessIDAndReportID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	trustCenterAccessID gid.GID,
 	reportID gid.GID,
@@ -225,7 +225,7 @@ LIMIT 1;
 
 func (tcda *TrustCenterDocumentAccess) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -288,7 +288,7 @@ INSERT INTO trust_center_document_accesses (
 
 func (tcda *TrustCenterDocumentAccess) Update(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -319,7 +319,7 @@ WHERE
 
 func (tcda *TrustCenterDocumentAccess) Delete(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -346,7 +346,7 @@ WHERE
 
 func (tcdas *TrustCenterDocumentAccesses) CountByTrustCenterAccessID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	trustCenterAccessID gid.GID,
 ) (int, error) {
@@ -379,7 +379,7 @@ WHERE
 
 func (tcdas *TrustCenterDocumentAccesses) CountPendingRequestByTrustCenterAccessID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	trustCenterAccessID gid.GID,
 ) (int, error) {
@@ -413,7 +413,7 @@ WHERE
 
 func (tcdas *TrustCenterDocumentAccesses) CountActiveByTrustCenterAccessID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	trustCenterAccessID gid.GID,
 ) (int, error) {
@@ -447,7 +447,7 @@ WHERE
 
 func (tcdas *TrustCenterDocumentAccesses) LoadAvailableByTrustCenterAccessID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	trustCenterAccessID gid.GID,
 	cursor *page.Cursor[TrustCenterDocumentAccessOrderField],
@@ -569,7 +569,7 @@ WHERE %s
 
 func (tcdas *TrustCenterDocumentAccesses) LoadAllByTrustCenterAccessID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	trustCenterAccessID gid.GID,
 ) error {
@@ -616,7 +616,7 @@ ORDER BY id ASC
 
 func GrantByDocumentIDs(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	trustCenterAccessID gid.GID,
 	documentIDs []gid.GID,
@@ -650,7 +650,7 @@ WHERE
 
 func RejectOrRevokeByDocumentIDs(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	trustCenterAccessID gid.GID,
 	documentIDs []gid.GID,
@@ -689,7 +689,7 @@ WHERE
 
 func GrantByReportIDs(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	trustCenterAccessID gid.GID,
 	reportIDs []gid.GID,
@@ -723,7 +723,7 @@ WHERE
 
 func RejectOrRevokeByReportIDs(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	trustCenterAccessID gid.GID,
 	reportIDs []gid.GID,
@@ -767,7 +767,7 @@ type MergeTrustCenterDocumentAccessesData struct {
 
 func (tcdas TrustCenterDocumentAccesses) MergeDocumentAccesses(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 	trustCenterAccessID gid.GID,
@@ -840,7 +840,7 @@ WHEN NOT MATCHED
 
 func (tcdas TrustCenterDocumentAccesses) BulkInsertDocumentAccesses(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	trustCenterAccessID gid.GID,
 	organizationID gid.GID,
@@ -902,7 +902,7 @@ ON CONFLICT DO NOTHING
 
 func (tcdas TrustCenterDocumentAccesses) MergeReportAccesses(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 	trustCenterAccessID gid.GID,
@@ -975,7 +975,7 @@ WHEN NOT MATCHED
 
 func (tcdas TrustCenterDocumentAccesses) BulkInsertReportAccesses(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	trustCenterAccessID gid.GID,
 	organizationID gid.GID,
@@ -1037,7 +1037,7 @@ ON CONFLICT DO NOTHING
 
 func (tcda *TrustCenterDocumentAccess) LoadByTrustCenterAccessIDAndTrustCenterFileID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	trustCenterAccessID gid.GID,
 	trustCenterFileID gid.GID,
@@ -1091,7 +1091,7 @@ LIMIT 1;
 
 func GrantByTrustCenterFileIDs(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	trustCenterAccessID gid.GID,
 	trustCenterFileIDs []gid.GID,
@@ -1125,7 +1125,7 @@ WHERE
 
 func RejectOrRevokeByTrustCenterFileIDs(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	trustCenterAccessID gid.GID,
 	trustCenterFileIDs []gid.GID,
@@ -1164,7 +1164,7 @@ WHERE
 
 func (tcdas TrustCenterDocumentAccesses) MergeTrustCenterFileAccesses(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 	trustCenterAccessID gid.GID,
@@ -1237,7 +1237,7 @@ WHEN NOT MATCHED
 
 func (tcdas TrustCenterDocumentAccesses) BulkInsertTrustCenterFileAccesses(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	trustCenterAccessID gid.GID,
 	organizationID gid.GID,

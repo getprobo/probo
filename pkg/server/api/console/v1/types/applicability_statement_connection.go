@@ -70,8 +70,8 @@ func NewApplicabilityStatement(as *coredata.ApplicabilityStatement) *Applicabili
 
 	return &ApplicabilityStatement{
 		ID: as.ID,
-		StateOfApplicability: &StateOfApplicability{
-			ID: as.StateOfApplicabilityID,
+		StatementOfApplicability: &StatementOfApplicability{
+			ID: as.StatementOfApplicabilityID,
 		},
 		Control: &Control{
 			ID: as.ControlID,

@@ -17,6 +17,7 @@ package securecookie
 import (
 	"crypto/hmac"
 	"crypto/sha256"
+	"crypto/subtle"
 	"encoding/base64"
 	"errors"
 	"fmt"
@@ -143,7 +144,7 @@ func Verify(signedValue, secret string) (string, error) {
 		return "", fmt.Errorf("cannot sign value: %w", err)
 	}
 
-	if signedValue != expectedSignedValue {
+	if subtle.ConstantTimeCompare([]byte(signedValue), []byte(expectedSignedValue)) != 1 {
 		return "", ErrInvalidSignature
 	}
 

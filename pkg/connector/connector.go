@@ -26,14 +26,30 @@ import (
 type (
 	ProtocolType string
 
+	// InitiateOptions holds per-call options passed by the caller initiating
+	// a connector flow. Different callers may need different configurations
+	// for the same provider — for OAuth2, the most common case is requesting
+	// a different set of scopes (e.g. SCIM bridge vs access review).
+	InitiateOptions struct {
+		Scopes []string
+		// IncludeGrantedScopes is honored only when the provider has
+		// SupportsIncrementalAuth=true.
+		IncludeGrantedScopes bool
+		// ConnectorID, when set, marks this flow as a reconnect of an
+		// existing connector: the callback updates the row in place
+		// instead of creating a new one.
+		ConnectorID string
+	}
+
 	Connector interface {
-		Initiate(ctx context.Context, provider string, organizationID gid.GID, r *http.Request) (string, error)
+		Initiate(ctx context.Context, provider string, organizationID gid.GID, opts InitiateOptions, r *http.Request) (string, error)
 		Complete(ctx context.Context, r *http.Request) (Connection, *gid.GID, string, error) // returns: connection, organizationID, continueURL, error
 	}
 
 	Connection interface {
 		Type() ProtocolType
 		Client(ctx context.Context) (*http.Client, error)
+		Scopes() []string
 
 		json.Unmarshaler
 		json.Marshaler
@@ -42,6 +58,7 @@ type (
 
 const (
 	ProtocolOAuth2 ProtocolType = "OAUTH2"
+	ProtocolAPIKey ProtocolType = "API_KEY"
 )
 
 func UnmarshalConnection(protocol string, provider string, data []byte) (Connection, error) {
@@ -62,6 +79,13 @@ func UnmarshalConnection(protocol string, provider string, data []byte) (Connect
 			}
 			return &conn, nil
 		}
+
+	case string(ProtocolAPIKey):
+		var conn APIKeyConnection
+		if err := json.Unmarshal(data, &conn); err != nil {
+			return nil, fmt.Errorf("cannot unmarshal api key connection: %w", err)
+		}
+		return &conn, nil
 	}
 
 	return nil, fmt.Errorf("unknown connection protocol: %s", protocol)

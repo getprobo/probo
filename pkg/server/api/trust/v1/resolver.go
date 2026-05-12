@@ -32,6 +32,7 @@ package trust_v1
 
 import (
 	"context"
+	"net/http"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -83,11 +84,26 @@ func NewMux(
 	r := chi.NewMux()
 
 	r.Use(compliancepage.NewCompliancePagePresenceMiddleware())
-	r.Use(authn.NewSessionMiddleware(iamSvc, cookieConfig))
-	r.Use(compliancepage.NewMemberProvisioningMiddleware(trustSvc, logger))
+
+	sessionTransferHandler := NewSessionTransferHandler(
+		iamSvc,
+		cookieConfig,
+		func(ctx context.Context, host string) bool {
+			_, err := trustSvc.GetByDomainName(ctx, host)
+			return err == nil
+		},
+		logger,
+	)
+	r.Method(http.MethodGet, "/session-transfer", sessionTransferHandler)
 
 	graphqlHandler := NewGraphQLHandler(iamSvc, trustSvc, esignSvc, mailmanSvc, logger, baseURL, cookieConfig, tokenSecret)
-	r.Handle("/graphql", graphqlHandler)
+	r.Group(
+		func(r chi.Router) {
+			r.Use(authn.NewSessionMiddleware(iamSvc, cookieConfig))
+			r.Use(compliancepage.NewMemberProvisioningMiddleware(trustSvc, logger))
+			r.Handle("/graphql", graphqlHandler)
+		},
+	)
 
 	return r
 }

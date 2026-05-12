@@ -1,3 +1,17 @@
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
 import { Role } from "@probo/helpers";
 import { lazy } from "@probo/react-lazy";
 import { type AppRoute, routeFromAppRoute } from "@probo/routes";
@@ -16,7 +30,9 @@ import { PageSkeleton } from "./components/skeletons/PageSkeleton";
 import { ViewerLayoutLoading } from "./pages/iam/memberships/ViewerLayoutLoading";
 import { peopleRoutes } from "./pages/iam/organizations/people/routes";
 import { compliancePageRoutes } from "./pages/organizations/compliance-page/routes";
+import { cookieBannerRoutes } from "./pages/organizations/cookie-banners/routes";
 import { CurrentUser } from "./providers/CurrentUser";
+import { accessReviewRoutes } from "./routes/accessReviewRoutes";
 import { assetRoutes } from "./routes/assetRoutes";
 import { auditRoutes } from "./routes/auditRoutes";
 import { contextRoutes } from "./routes/contextRoutes";
@@ -29,8 +45,7 @@ import { obligationRoutes } from "./routes/obligationRoutes";
 import { processingActivityRoutes } from "./routes/processingActivityRoutes";
 import { rightsRequestRoutes } from "./routes/rightsRequestRoutes";
 import { riskRoutes } from "./routes/riskRoutes";
-import { snapshotsRoutes } from "./routes/snapshotsRoutes";
-import { statesOfApplicabilityRoutes } from "./routes/statesOfApplicabilityRoutes";
+import { statementsOfApplicabilityRoutes } from "./routes/statementsOfApplicabilityRoutes";
 import { taskRoutes } from "./routes/taskRoutes";
 import { vendorRoutes } from "./routes/vendorRoutes";
 
@@ -82,6 +97,20 @@ const routes = [
       {
         path: "reset-password",
         Component: lazy(() => import("./pages/iam/auth/ResetPasswordPage")),
+      },
+      {
+        path: "device",
+        ErrorBoundary: RootErrorBoundary,
+        Component: lazy(
+          () => import("./pages/iam/auth/DeviceActivationPageLoader"),
+        ),
+      },
+      {
+        path: "consent",
+        ErrorBoundary: RootErrorBoundary,
+        Component: lazy(
+          () => import("./pages/iam/auth/ConsentPageLoader"),
+        ),
       },
     ],
   },
@@ -273,9 +302,10 @@ const routes = [
           ...obligationRoutes,
           ...rightsRequestRoutes,
           ...processingActivityRoutes,
-          ...statesOfApplicabilityRoutes,
+          ...statementsOfApplicabilityRoutes,
+          ...accessReviewRoutes,
           ...compliancePageRoutes,
-          ...snapshotsRoutes,
+          ...cookieBannerRoutes,
           {
             path: "*",
             Component: PageError,

@@ -36,7 +36,7 @@ func (s VendorService) Get(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			err := vendor.LoadByID(ctx, conn, s.svc.scope, vendorID)
 			if err != nil {
 				return fmt.Errorf("cannot load vendor: %w", err)
@@ -62,10 +62,9 @@ func (s VendorService) ListForOrganizationId(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			showOnTrustCenter := true
-			var nilSnapshotID *gid.GID = nil
-			filter := coredata.NewVendorFilter(&nilSnapshotID, &showOnTrustCenter)
+			filter := coredata.NewVendorFilter(&showOnTrustCenter)
 
 			err := vendors.LoadByOrganizationID(ctx, conn, s.svc.scope, organizationID, cursor, filter)
 			if err != nil {
@@ -91,7 +90,7 @@ func (s VendorService) CountForTrustCenterId(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) (err error) {
+		func(ctx context.Context, conn pg.Querier) (err error) {
 			trustCenter, err := s.svc.TrustCenters.Get(ctx, trustCenterID)
 			if err != nil {
 				return fmt.Errorf("cannot load trust center: %w", err)
@@ -99,8 +98,7 @@ func (s VendorService) CountForTrustCenterId(
 
 			vendors := &coredata.Vendors{}
 			showOnTrustCenter := true
-			var nilSnapshotID *gid.GID = nil
-			filter := coredata.NewVendorFilter(&nilSnapshotID, &showOnTrustCenter)
+			filter := coredata.NewVendorFilter(&showOnTrustCenter)
 			count, err = vendors.CountByOrganizationID(ctx, conn, s.svc.scope, trustCenter.OrganizationID, filter)
 			if err != nil {
 				return fmt.Errorf("cannot count vendors: %w", err)

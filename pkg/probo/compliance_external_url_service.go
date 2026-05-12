@@ -79,7 +79,7 @@ func (s ComplianceExternalURLService) List(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			if err := items.LoadByTrustCenterID(ctx, conn, s.svc.scope, trustCenterID, cursor); err != nil {
 				return fmt.Errorf("cannot load compliance external URLs: %w", err)
 			}
@@ -108,7 +108,7 @@ func (s ComplianceExternalURLService) Create(
 
 	err := s.svc.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			trustCenter := &coredata.TrustCenter{}
 			if err := trustCenter.LoadByID(ctx, tx, s.svc.scope, req.TrustCenterID); err != nil {
 				return fmt.Errorf("cannot load trust center: %w", err)
@@ -150,7 +150,7 @@ func (s ComplianceExternalURLService) Update(
 
 	err := s.svc.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			item = &coredata.ComplianceExternalURL{}
 
 			if err := item.LoadByID(ctx, tx, s.svc.scope, req.ID); err != nil {
@@ -192,7 +192,7 @@ func (s ComplianceExternalURLService) Delete(
 
 	return s.svc.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			item := &coredata.ComplianceExternalURL{}
 
 			if err := item.LoadByID(ctx, tx, s.svc.scope, req.ID); err != nil {

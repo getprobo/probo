@@ -20,71 +20,13 @@ import (
 )
 
 var (
-	organizationCondition   = policy.Equals("principal.organization_id", "resource.organization_id")
-	documentWriteActiveOnly = policy.Deny(
-		ActionDocumentUpdate,
-		ActionDocumentArchive,
-		ActionDocumentDraftVersionCreate,
-		ActionDocumentChangelogGenerate,
-		ActionDocumentSendSigningNotifications,
-		ActionDocumentVersionUpdate,
-		ActionDocumentVersionPublish,
-		ActionDocumentVersionRequestApproval,
-		ActionDocumentVersionApprove,
-		ActionDocumentVersionReject,
-		ActionDocumentVersionAddApprover,
-		ActionDocumentVersionRemoveApprover,
-		ActionDocumentVersionDeleteDraft,
-		ActionDocumentVersionSignatureRequest,
-		ActionDocumentVersionCancelSignature,
-	).WithSID("document-write-active-only").When(
-		organizationCondition,
-		policy.Equals("resource.document_status", "ARCHIVED"),
-	)
-	documentUnarchiveArchivedOnly = policy.Deny(
-		ActionDocumentUnarchive,
-	).WithSID("document-unarchive-archived-only").When(
-		organizationCondition,
-		policy.Equals("resource.document_status", "ACTIVE"),
-	)
-
-	// Deny requesting approval when a pending quorum exists
-	documentRequestApprovalNoPendingQuorum = policy.Deny(
-		ActionDocumentVersionRequestApproval,
-	).WithSID("document-request-approval-no-pending-quorum").When(
-		organizationCondition,
-		policy.Equals("resource.last_quorum_status", "PENDING"),
-	)
-
-	// Deny requesting approval when the version is already published
-	documentRequestApprovalNotPublished = policy.Deny(
-		ActionDocumentVersionRequestApproval,
-	).WithSID("document-request-approval-not-published").When(
-		organizationCondition,
-		policy.Equals("resource.version_status", "PUBLISHED"),
-	)
-
-	// Deny adding/removing approvers when there is no pending quorum
-	documentApproverRequiresPendingQuorum = policy.Deny(
-		ActionDocumentVersionAddApprover,
-		ActionDocumentVersionRemoveApprover,
-	).WithSID("document-approver-requires-pending-quorum").When(
-		organizationCondition,
-		policy.NotEquals("resource.last_quorum_status", "PENDING"),
-	)
+	organizationCondition = policy.Equals("principal.organization_id", "resource.organization_id")
 )
 
 // OwnerPolicy defines permissions for organization owners.
 var OwnerPolicy = policy.NewPolicy(
 	"probo:owner",
 	"Probo Owner",
-	documentWriteActiveOnly,
-	documentUnarchiveArchivedOnly,
-
-	documentRequestApprovalNoPendingQuorum,
-	documentRequestApprovalNotPublished,
-
-	documentApproverRequiresPendingQuorum,
 	policy.Allow("core:*").WithSID("full-core-access").When(organizationCondition),
 ).WithDescription("Full probo access for organization owners")
 
@@ -92,13 +34,6 @@ var OwnerPolicy = policy.NewPolicy(
 var AdminPolicy = policy.NewPolicy(
 	"probo:admin",
 	"Probo Admin",
-	documentWriteActiveOnly,
-	documentUnarchiveArchivedOnly,
-
-	documentRequestApprovalNoPendingQuorum,
-	documentRequestApprovalNotPublished,
-
-	documentApproverRequiresPendingQuorum,
 	policy.Allow("core:*").WithSID("full-core-access").When(organizationCondition),
 ).WithDescription("Probo admin access - can manage core entities")
 
@@ -106,7 +41,6 @@ var AdminPolicy = policy.NewPolicy(
 var ViewerPolicy = policy.NewPolicy(
 	"probo:viewer",
 	"Probo Viewer",
-	documentWriteActiveOnly,
 	policy.Allow(
 		ActionOrganizationGet,
 		ActionOrganizationGetLogoUrl,
@@ -140,14 +74,20 @@ var ViewerPolicy = policy.NewPolicy(
 		ActionProcessingActivityGet, ActionProcessingActivityList,
 		ActionDataProtectionImpactAssessmentGet, ActionDataProtectionImpactAssessmentList,
 		ActionTransferImpactAssessmentGet, ActionTransferImpactAssessmentList,
-		ActionSnapshotGet, ActionSnapshotList,
-		ActionMeetingGet, ActionMeetingList,
 		ActionFileGet, ActionFileDownloadUrl,
 		ActionSlackConnectionList, ActionConnectorList,
 		ActionRightsRequestGet, ActionRightsRequestList,
-		ActionStateOfApplicabilityGet, ActionStateOfApplicabilityList,
+		ActionStatementOfApplicabilityGet, ActionStatementOfApplicabilityList,
 		ActionApplicabilityStatementGet, ActionApplicabilityStatementList,
 		ActionWebhookSubscriptionGet, ActionWebhookSubscriptionList,
+		ActionAccessReviewCampaignGet, ActionAccessReviewCampaignList,
+		ActionAccessEntryGet, ActionAccessEntryList,
+		ActionAccessSourceGet, ActionAccessSourceList,
+		ActionCookieBannerGet, ActionCookieBannerList,
+		ActionCookieBannerVersionGet, ActionCookieBannerVersionList,
+		ActionCookieCategoryGet, ActionCookieCategoryList,
+		ActionCookieGet, ActionCookieList,
+		ActionCookieConsentRecordList,
 	).WithSID("entity-read-access").When(organizationCondition),
 
 	policy.Allow(
@@ -162,7 +102,7 @@ var ViewerPolicy = policy.NewPolicy(
 	policy.Allow(ActionCustomDomainGet).WithSID("custom-domain-read").When(organizationCondition),
 	policy.Allow(ActionOrganizationContextGet).WithSID("organization-context-read").When(organizationCondition),
 	policy.Allow(
-		ActionDocumentVersionExportPDF, ActionDocumentVersionExportSignable, ActionDocumentVersionSign,
+		ActionDocumentVersionExportPDF, ActionDocumentVersionSign,
 	).WithSID("document-signing").When(organizationCondition),
 
 	policy.Allow(
@@ -170,10 +110,9 @@ var ViewerPolicy = policy.NewPolicy(
 	).WithSID("document-approval").When(organizationCondition),
 
 	policy.Allow(
-		ActionProcessingActivityExport,
-		ActionDataProtectionImpactAssessmentExport,
-		ActionTransferImpactAssessmentExport,
-	).WithSID("processing-activity-export").When(organizationCondition),
+		ActionEmployeeDocumentGet, ActionEmployeeDocumentList,
+		ActionEmployeeDocumentVersionExportPDF,
+	).WithSID("employee-document-access").When(organizationCondition),
 ).WithDescription("Read-only probo access for organization viewers")
 
 // AuditorPolicy defines permissions for auditor role.
@@ -210,48 +149,45 @@ var AuditorPolicy = policy.NewPolicy(
 		ActionFindingGet, ActionFindingList,
 		ActionObligationGet, ActionObligationList,
 		ActionProcessingActivityGet, ActionProcessingActivityList,
-		ActionDataProtectionImpactAssessmentGet,
+		ActionDataProtectionImpactAssessmentGet, ActionDataProtectionImpactAssessmentList,
 		ActionTransferImpactAssessmentGet, ActionTransferImpactAssessmentList,
-		ActionSnapshotGet, ActionSnapshotList,
 		ActionFileGet, ActionFileDownloadUrl,
-		ActionStateOfApplicabilityGet, ActionStateOfApplicabilityList,
+		ActionStatementOfApplicabilityGet, ActionStatementOfApplicabilityList,
 		ActionApplicabilityStatementGet, ActionApplicabilityStatementList,
 	).WithSID("entity-read-access").When(organizationCondition),
 
 	policy.Allow(
-		ActionDocumentVersionExportPDF, ActionDocumentVersionExportSignable, ActionDocumentVersionSign,
+		ActionDocumentVersionExportPDF, ActionDocumentVersionSign,
 	).WithSID("document-signing").When(organizationCondition),
 
 	policy.Allow(
-		ActionStateOfApplicabilityExport,
-	).WithSID("soa-export").When(organizationCondition),
+		ActionEmployeeDocumentGet, ActionEmployeeDocumentList,
+		ActionEmployeeDocumentVersionExportPDF,
+	).WithSID("employee-document-access").When(organizationCondition),
 ).WithDescription("Read-only probo access for auditors (excludes internal/employee content)")
 
 // EmployeePolicy defines permissions for employee role.
 var EmployeePolicy = policy.NewPolicy(
 	"probo:employee",
 	"Probo Employee",
-	documentWriteActiveOnly,
 	policy.Allow(
 		ActionOrganizationGet,
 		ActionOrganizationGetLogoUrl,
 	).WithSID("org-basic-access").When(organizationCondition),
 
 	policy.Allow(
-		ActionDocumentGet, ActionDocumentList,
-	).WithSID("document-signing-access").When(organizationCondition),
+		ActionEmployeeDocumentGet, ActionEmployeeDocumentList,
+	).WithSID("employee-document-access").When(organizationCondition),
 
 	policy.Allow(
-		ActionDocumentVersionGet, ActionDocumentVersionList,
 		ActionDocumentVersionSign,
-		ActionDocumentVersionExportSignable,
+		ActionEmployeeDocumentVersionExportPDF,
 	).WithSID("document-version-signing").When(organizationCondition),
 
 	policy.Allow(
 		ActionDocumentVersionApprovalList,
 		ActionDocumentVersionApprove,
 		ActionDocumentVersionReject,
-		ActionDocumentVersionExportPDF,
 	).WithSID("document-version-approval").When(organizationCondition),
 ).WithDescription("Employee access - can sign documents, approve documents, and view internal content")
 

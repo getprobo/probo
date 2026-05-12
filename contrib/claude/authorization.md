@@ -2,6 +2,8 @@
 
 Policy-based authorization in `pkg/iam/` using an evaluation model similar to AWS IAM. Explicit deny > explicit allow > implicit deny.
 
+**Policies are Go code, not database rows.** All policy logic is assembled from Go structs at startup (`pkg/probo/policies.go`, `pkg/iam/iam_policies.go`). The database only stores the `authz_role` enum and membership rows — there is no `policies` or `permissions` table. Never create migrations for policy storage.
+
 ## Core concepts
 
 **Policy** — a named collection of statements:
@@ -134,6 +136,19 @@ if err := authorize(ctx, vendorID, probo.ActionVendorGet); err != nil {
 r.MustAuthorize(ctx, input.ID, probo.ActionVendorGet)
 ```
 
+## File locations
+
+| What | File |
+|------|------|
+| Product action constants (`core:*`) | `pkg/probo/actions.go` |
+| IAM action constants (`iam:*`) | `pkg/iam/iam_actions.go` |
+| Product role policies (`ProboPolicySet`) | `pkg/probo/policies.go` |
+| IAM role policies (`IAMPolicySet`) | `pkg/iam/iam_policies.go` |
+| Authorizer + `AuthorizationAttributer` | `pkg/iam/authorizer.go` |
+| PolicySet registration | `pkg/iam/policy_set.go` |
+| GraphQL authz helper | `pkg/server/api/authz/authorization.go` |
+| MCP authz + recovery | `pkg/server/api/mcp/v1/resolver.go`, `mcputils/recovery.go` |
+
 ## Action constants
 
 IAM actions live in `pkg/iam/iam_actions.go`, probo actions in `pkg/probo/actions.go`. Follow the naming pattern:
@@ -157,6 +172,16 @@ const (
 | `VIEWER` | Read-only access to most entities |
 | `AUDITOR` | Read-only, excludes internal/employee content |
 | `EMPLOYEE` | Can sign documents and view internal content |
+
+## New entity IAM wiring
+
+When adding a new entity that needs authorization:
+
+1. **Action constants** — add `core:<entity>:<verb>` constants in `pkg/probo/actions.go` (get, list, create, update, delete)
+2. **Role policies** — wire actions into the appropriate role policies in `pkg/probo/policies.go` (`OwnerPolicy`, `AdminPolicy`, `ViewerPolicy`, etc.) with `organization_id` condition
+3. **`AuthorizationAttributes`** — implement on the `coredata` entity struct, returning at minimum `{"organization_id": ...}` (use the denormalized `OrganizationID` field — see coredata doc)
+4. **Entity type registry** — register in `pkg/coredata/entity_type_reg.go` and `NewEntityFromID` so the authorizer can construct the entity from its GID
+5. **Resolver calls** — add `r.authorize(ctx, id, probo.ActionEntityGet)` in GraphQL resolvers and `r.MustAuthorize(ctx, id, probo.ActionEntityGet)` in MCP resolvers
 
 ## Key patterns
 

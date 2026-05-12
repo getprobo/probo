@@ -1,0 +1,156 @@
+name: "Release probod-bootstrap"
+
+on:
+  push:
+    tags:
+      - "probod-bootstrap/v*"
+
+permissions:
+  contents: "read"
+
+jobs:
+  build-binary:
+    name: "binary (${{ matrix.goos }}/${{ matrix.goarch }})"
+    runs-on: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache"
+    permissions:
+      contents: "read"
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { goos: linux, goarch: amd64 }
+          - { goos: linux, goarch: arm64 }
+          - { goos: darwin, goarch: amd64 }
+          - { goos: darwin, goarch: arm64 }
+          - { goos: windows, goarch: amd64 }
+          - { goos: freebsd, goarch: amd64 }
+          - { goos: freebsd, goarch: arm64 }
+          - { goos: openbsd, goarch: amd64 }
+          - { goos: openbsd, goarch: arm64 }
+    steps:
+      - uses: "actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd" # v6
+        with:
+          submodules: recursive
+      - uses: "runs-on/action@742bf56072eb4845a0f94b3394673e4903c90ff0" # v2
+      - uses: "./.github/actions/setup"
+        with:
+          node: "false"
+      - name: "Build binary"
+        env:
+          CGO_ENABLED: "0"
+          GOOS: "${{ matrix.goos }}"
+          GOARCH: "${{ matrix.goarch }}"
+        run: |
+          VERSION="${GITHUB_REF_NAME##*/v}"
+          EXT=""
+          if [ "$GOOS" = "windows" ]; then EXT=".exe"; fi
+
+          go build -ldflags "-s -w -X 'main.version=${VERSION}'" \
+            -gcflags="-e" -o "dist/probod-bootstrap${EXT}" ./cmd/probod-bootstrap/main.go
+      - name: "Create archive"
+        env:
+          GOOS: "${{ matrix.goos }}"
+          GOARCH: "${{ matrix.goarch }}"
+        run: |
+          case "$GOOS" in
+            linux)   OS="Linux" ;;
+            darwin)  OS="Darwin" ;;
+            windows) OS="Windows" ;;
+            freebsd) OS="Freebsd" ;;
+            openbsd) OS="Openbsd" ;;
+          esac
+          case "$GOARCH" in
+            amd64) ARCH="x86_64" ;;
+            *)     ARCH="$GOARCH" ;;
+          esac
+          EXT=""
+          if [ "$GOOS" = "windows" ]; then EXT=".exe"; fi
+
+          mkdir -p archives
+          DIR="probod-bootstrap_${OS}_${ARCH}"
+          mkdir -p "staging/${DIR}"
+          cp "dist/probod-bootstrap${EXT}" README.md LICENSE cmd/probod-bootstrap/CHANGELOG.md "staging/${DIR}/"
+          if [ "$GOOS" = "windows" ]; then
+            (cd staging && zip -r "../archives/${DIR}.zip" "${DIR}")
+          else
+            tar -czf "archives/${DIR}.tar.gz" -C staging "${DIR}"
+          fi
+      - uses: "actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f" # v7
+        with:
+          name: "archive-${{ matrix.goos }}-${{ matrix.goarch }}"
+          path: "archives/"
+          retention-days: 1
+
+  github-release:
+    name: "github-release"
+    needs: [build-binary]
+    runs-on: "runs-on=${{ github.run_id }}/runner=2cpu-linux-x64/extras=s3-cache"
+    permissions:
+      contents: "write"
+      id-token: "write"
+      attestations: "write"
+    steps:
+      - uses: "actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd" # v6
+        with:
+          fetch-depth: 0
+      - uses: "runs-on/action@742bf56072eb4845a0f94b3394673e4903c90ff0" # v2
+      - uses: "sigstore/cosign-installer@faadad0cce49287aee09b3a48701e75088a2c6ad" # v4.0.0
+      - uses: "actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c" # v8
+        with:
+          pattern: "archive-*"
+          path: "archives"
+          merge-multiple: true
+      - name: "Generate checksums and sign"
+        run: |
+          cd archives
+          sha256sum *.tar.gz *.zip > checksums.txt
+          cosign sign-blob --bundle="checksums.txt.bundle" checksums.txt --yes
+      - name: "Generate SBOM"
+        uses: "anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610" # v0.24.0
+        with:
+          path: ./cmd/probod-bootstrap
+          format: cyclonedx-json
+          output-file: sbom.json
+      - name: "Run vulnerability scan"
+        uses: "anchore/scan-action@e1165082ffb1fe366ebaf02d8526e7c4989ea9d2" # v7.4.0
+        with:
+          sbom: "sbom.json"
+          fail-build: true
+          severity-cutoff: critical
+      - name: "Attest SBOM for archives"
+        uses: "actions/attest-sbom@c604332985a26aa8cf1bdc465b92731239ec6b9e" # v4
+        with:
+          subject-path: "archives/*.tar.gz, archives/*.zip"
+          sbom-path: "sbom.json"
+      - name: "Attest build provenance for archives"
+        uses: "actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32" # v4
+        with:
+          subject-path: "archives/*.tar.gz, archives/*.zip"
+      - name: "Extract release notes"
+        run: |
+          VERSION="${GITHUB_REF_NAME##*/v}"
+          awk -v ver="$VERSION" '
+            /^## \[/ { if (found) exit; if ($0 ~ "\\[" ver "\\]") found=1 }
+            found
+          ' cmd/probod-bootstrap/CHANGELOG.md > release-notes.md
+      - name: "Create GitHub release"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PRERELEASE_FLAG=""
+          if echo "${GITHUB_REF_NAME}" | grep -qE '(alpha|beta|rc)'; then
+            PRERELEASE_FLAG="--prerelease"
+          fi
+
+          gh release delete "${GITHUB_REF_NAME}" --yes 2>/dev/null || true
+
+          gh release create "${GITHUB_REF_NAME}" \
+            --title "${GITHUB_REF_NAME}" \
+            --notes-file release-notes.md \
+            $PRERELEASE_FLAG \
+            archives/* sbom.json
+      - uses: "actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f" # v7
+        with:
+          name: "sbom"
+          path: "sbom.json"
+          retention-days: 30

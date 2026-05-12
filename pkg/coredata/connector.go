@@ -20,6 +20,7 @@ import (
 	"errors"
 	"fmt"
 	"maps"
+	"sort"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -30,13 +31,37 @@ import (
 	"go.probo.inc/probo/pkg/page"
 )
 
+// jsonRawMessageOrNull is a json.RawMessage that scans NULL as an empty
+// slice and serialises an empty/nil value as SQL NULL.  This avoids the
+// need for *json.RawMessage and keeps the zero-value useful.
+type jsonRawMessageOrNull json.RawMessage
+
+func (j *jsonRawMessageOrNull) Scan(src any) error {
+	if src == nil {
+		*j = nil
+		return nil
+	}
+	switch v := src.(type) {
+	case []byte:
+		cp := make(jsonRawMessageOrNull, len(v))
+		copy(cp, v)
+		*j = cp
+		return nil
+	case string:
+		*j = jsonRawMessageOrNull(v)
+		return nil
+	default:
+		return fmt.Errorf("unsupported type for jsonRawMessageOrNull: %T", src)
+	}
+}
+
 type (
 	Connector struct {
 		ID                  gid.GID              `db:"id"`
 		OrganizationID      gid.GID              `db:"organization_id"`
 		Provider            ConnectorProvider    `db:"provider"`
 		Protocol            ConnectorProtocol    `db:"protocol"`
-		Settings            map[string]any       `db:"settings"`
+		RawSettings         jsonRawMessageOrNull `db:"settings"`
 		Connection          connector.Connection `db:"-"`
 		EncryptedConnection []byte               `db:"encrypted_connection"`
 		CreatedAt           time.Time            `db:"created_at"`
@@ -58,7 +83,7 @@ func (c *Connector) CursorKey(orderBy ConnectorOrderField) page.CursorKey {
 }
 
 // AuthorizationAttributes returns the authorization attributes for policy evaluation.
-func (c *Connector) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+func (c *Connector) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	q := `SELECT organization_id FROM connectors WHERE id = $1 LIMIT 1;`
 
 	var organizationID gid.GID
@@ -74,7 +99,7 @@ func (c *Connector) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (
 
 func (c *Connectors) LoadAllByOrganizationIDProtocolAndProvider(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 	protocol ConnectorProtocol,
@@ -92,9 +117,61 @@ func (c *Connectors) LoadAllByOrganizationIDProtocolAndProvider(
 	return nil
 }
 
+// LoadOneByOrganizationIDAndProvider loads the effective OAuth2
+// connector for an (organization, provider) pair, picking the row with
+// the widest stored scope set. Ties are broken by most recent
+// updated_at. Returns ErrResourceNotFound if no OAuth2 row exists.
+func (c *Connector) LoadOneByOrganizationIDAndProvider(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	encryptionKey cipher.EncryptionKey,
+	organizationID gid.GID,
+	provider ConnectorProvider,
+) error {
+	var connectors Connectors
+	if err := connectors.LoadAllByOrganizationIDProtocolAndProvider(
+		ctx,
+		conn,
+		scope,
+		organizationID,
+		ConnectorProtocolOAuth2,
+		provider,
+		encryptionKey,
+	); err != nil {
+		return fmt.Errorf("cannot load connectors: %w", err)
+	}
+
+	if len(connectors) == 0 {
+		return ErrResourceNotFound
+	}
+
+	// Widest-scope-wins, tiebreak by most recent updated_at.
+	sort.Slice(connectors, func(i, j int) bool {
+		ci, cj := connectorScopeCount(connectors[i]), connectorScopeCount(connectors[j])
+		if ci != cj {
+			return ci > cj
+		}
+		return connectors[i].UpdatedAt.After(connectors[j].UpdatedAt)
+	})
+
+	*c = *connectors[0]
+	return nil
+}
+
+// connectorScopeCount returns the number of scopes granted on a
+// decrypted connector's connection. Returns 0 if the connection is nil.
+// Used by the widest-scope selector.
+func connectorScopeCount(c *Connector) int {
+	if c == nil || c.Connection == nil {
+		return 0
+	}
+	return len(c.Connection.Scopes())
+}
+
 func (c *Connectors) LoadByOrganizationIDWithoutDecryptedConnection(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 	cursor *page.Cursor[ConnectorOrderField],
@@ -105,7 +182,7 @@ func (c *Connectors) LoadByOrganizationIDWithoutDecryptedConnection(
 
 func (c *Connectors) LoadAllByOrganizationIDWithoutDecryptedConnection(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 ) error {
@@ -114,7 +191,7 @@ func (c *Connectors) LoadAllByOrganizationIDWithoutDecryptedConnection(
 
 func (c *Connector) LoadByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	connectorID gid.GID,
 	encryptionKey cipher.EncryptionKey,
@@ -135,7 +212,13 @@ func (c *Connector) LoadByID(
 			return fmt.Errorf("cannot unmarshal connection: %w", err)
 		}
 
-		c.populateSlackSettings()
+		if c.Provider == ConnectorProviderSlack {
+			if slackConn, ok := c.Connection.(*connector.SlackConnection); ok {
+				settings, _ := c.SlackSettings()
+				slackConn.Settings.Channel = settings.Channel
+				slackConn.Settings.ChannelID = settings.ChannelID
+			}
+		}
 	}
 
 	return nil
@@ -145,7 +228,7 @@ func (c *Connector) LoadByID(
 // Use this when you only need provider, organization, or other metadata.
 func (c *Connector) LoadMetadataByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	connectorID gid.GID,
 ) error {
@@ -192,7 +275,7 @@ LIMIT 1;
 
 func (c *Connector) Delete(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -218,7 +301,7 @@ WHERE %s AND id = @id
 
 func (c *Connector) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 	encryptionKey cipher.EncryptionKey,
 ) error {
@@ -250,7 +333,14 @@ INSERT INTO connectors (
 		return fmt.Errorf("connection is nil")
 	}
 
-	c.extractSlackSettings()
+	if c.Provider == ConnectorProviderSlack {
+		if slackConn, ok := c.Connection.(*connector.SlackConnection); ok {
+			_ = c.SetSettings(&SlackConnectorSettings{
+				Channel:   slackConn.Settings.Channel,
+				ChannelID: slackConn.Settings.ChannelID,
+			})
+		}
+	}
 
 	connection, err := json.Marshal(c.Connection)
 	if err != nil {
@@ -262,13 +352,18 @@ INSERT INTO connectors (
 		return fmt.Errorf("cannot encrypt connection: %w", err)
 	}
 
+	var settingsArg any
+	if len(c.RawSettings) > 0 {
+		settingsArg = []byte(c.RawSettings)
+	}
+
 	args := pgx.StrictNamedArgs{
 		"id":                   c.ID,
 		"tenant_id":            scope.GetTenantID(),
 		"organization_id":      c.OrganizationID,
 		"provider":             c.Provider,
 		"protocol":             c.Protocol,
-		"settings":             c.Settings,
+		"settings":             settingsArg,
 		"encrypted_connection": encryptedConnection,
 		"created_at":           c.CreatedAt,
 		"updated_at":           c.UpdatedAt,
@@ -280,51 +375,13 @@ INSERT INTO connectors (
 	}
 
 	c.EncryptedConnection = encryptedConnection
-	c.populateSlackSettings()
 
 	return nil
 }
 
-func (c *Connector) populateSlackSettings() {
-	if c.Provider != ConnectorProviderSlack {
-		return
-	}
-
-	slackConn, ok := c.Connection.(*connector.SlackConnection)
-	if !ok {
-		return
-	}
-
-	if channel, ok := c.Settings["channel"].(string); ok {
-		slackConn.Settings.Channel = channel
-	}
-	if channelID, ok := c.Settings["channel_id"].(string); ok {
-		slackConn.Settings.ChannelID = channelID
-	}
-}
-
-func (c *Connector) extractSlackSettings() {
-	if c.Provider != ConnectorProviderSlack {
-		return
-	}
-
-	slackConn, ok := c.Connection.(*connector.SlackConnection)
-	if !ok {
-		return
-	}
-
-	c.Settings = make(map[string]any)
-	if slackConn.Settings.Channel != "" {
-		c.Settings["channel"] = slackConn.Settings.Channel
-	}
-	if slackConn.Settings.ChannelID != "" {
-		c.Settings["channel_id"] = slackConn.Settings.ChannelID
-	}
-}
-
 func (c *Connectors) loadByOrganizationIDWithPagination(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 	cursor *page.Cursor[ConnectorOrderField],
@@ -373,7 +430,7 @@ WHERE
 
 func (c *Connectors) loadAllByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 ) error {
@@ -418,7 +475,7 @@ ORDER BY
 
 func (c *Connectors) loadAllByOrganizationIDProtocolAndProvider(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 	protocol ConnectorProtocol,
@@ -471,7 +528,7 @@ ORDER BY
 
 func (c *Connector) Update(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 	encryptionKey cipher.EncryptionKey,
 ) error {
@@ -492,7 +549,14 @@ WHERE
 		return fmt.Errorf("connection is nil")
 	}
 
-	c.extractSlackSettings()
+	if c.Provider == ConnectorProviderSlack {
+		if slackConn, ok := c.Connection.(*connector.SlackConnection); ok {
+			_ = c.SetSettings(&SlackConnectorSettings{
+				Channel:   slackConn.Settings.Channel,
+				ChannelID: slackConn.Settings.ChannelID,
+			})
+		}
+	}
 
 	connection, err := json.Marshal(c.Connection)
 	if err != nil {
@@ -504,9 +568,14 @@ WHERE
 		return fmt.Errorf("cannot encrypt connection: %w", err)
 	}
 
+	var settingsArg any
+	if len(c.RawSettings) > 0 {
+		settingsArg = []byte(c.RawSettings)
+	}
+
 	args := pgx.StrictNamedArgs{
 		"id":                   c.ID,
-		"settings":             c.Settings,
+		"settings":             settingsArg,
 		"encrypted_connection": encryptedConnection,
 		"updated_at":           c.UpdatedAt,
 	}
@@ -522,7 +591,6 @@ WHERE
 	}
 
 	c.EncryptedConnection = encryptedConnection
-	c.populateSlackSettings()
 
 	return nil
 }
@@ -543,7 +611,13 @@ func (c *Connectors) decryptConnections(encryptionKey cipher.EncryptionKey) erro
 			return fmt.Errorf("cannot unmarshal connection for %s: %w", cnnctr.Provider, err)
 		}
 
-		cnnctr.populateSlackSettings()
+		if cnnctr.Provider == ConnectorProviderSlack {
+			if slackConn, ok := cnnctr.Connection.(*connector.SlackConnection); ok {
+				settings, _ := cnnctr.SlackSettings()
+				slackConn.Settings.Channel = settings.Channel
+				slackConn.Settings.ChannelID = settings.ChannelID
+			}
+		}
 	}
 
 	return nil

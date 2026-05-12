@@ -21,11 +21,12 @@ import (
 
 func NewFramework(f *coredata.Framework) *Framework {
 	return &Framework{
-		ID:          f.ID,
-		Name:        f.Name,
-		Description: f.Description,
-		CreatedAt:   f.CreatedAt,
-		UpdatedAt:   f.UpdatedAt,
+		ID:             f.ID,
+		OrganizationID: f.OrganizationID,
+		Name:           f.Name,
+		Description:    f.Description,
+		CreatedAt:      f.CreatedAt,
+		UpdatedAt:      f.UpdatedAt,
 	}
 }
 

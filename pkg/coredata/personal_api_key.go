@@ -52,7 +52,7 @@ func (a *PersonalAPIKey) CursorKey(orderBy PersonalAPIKeyOrderField) page.Cursor
 
 func (a *PersonalAPIKey) LoadByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	apiKeyID gid.GID,
 ) error {
 	q := `
@@ -93,7 +93,7 @@ LIMIT 1;
 	return nil
 }
 
-func (a *PersonalAPIKey) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+func (a *PersonalAPIKey) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	q := "SELECT identity_id FROM iam_personal_api_keys WHERE id = $1 LIMIT 1;"
 
 	var identityID gid.GID
@@ -109,7 +109,7 @@ func (a *PersonalAPIKey) AuthorizationAttributes(ctx context.Context, conn pg.Co
 
 func (a *PersonalAPIKeys) LoadByIdentityID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	identityID gid.GID,
 ) error {
 	q := `
@@ -146,7 +146,7 @@ ORDER BY created_at DESC;
 	return nil
 }
 
-func (a *PersonalAPIKeys) CountByIdentityID(ctx context.Context, conn pg.Conn, identityID gid.GID) (int, error) {
+func (a *PersonalAPIKeys) CountByIdentityID(ctx context.Context, conn pg.Querier, identityID gid.GID) (int, error) {
 	q := `
 SELECT
     COUNT(*)
@@ -169,7 +169,7 @@ ORDER BY created_at DESC;
 
 func (a *PersonalAPIKey) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 ) error {
 	q := `
 INSERT INTO
@@ -207,7 +207,7 @@ VALUES (
 
 func (a *PersonalAPIKey) Update(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 ) error {
 	q := `
 UPDATE
@@ -241,7 +241,7 @@ WHERE
 
 func (a *PersonalAPIKey) Delete(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 ) error {
 	q := `
 DELETE FROM

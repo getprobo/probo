@@ -1,0 +1,264 @@
+<vendor_classification>
+After the crawler returns results, classify the vendor along three dimensions:
+
+**Vendor Type** — determines investigation focus:
+- **SaaS / Cloud Platform**: Software product, web application, API service, developer tools
+- **Infrastructure Provider**: Cloud hosting, CDN, DNS, networking, data center
+- **Professional Services**: Law firm, accounting firm, CPA, consulting, advisory, audit
+- **Staffing / Outsourcing**: Temporary workers, managed services, BPO, contractor agencies
+
+**Privacy Role** (ISO 27701) — determines privacy assessment depth:
+- **Processor**: Vendor processes personal data on your behalf (most SaaS vendors)
+- **Subprocessor**: Vendor is a processor's processor (e.g. infrastructure under a SaaS vendor)
+- **Controller**: Vendor determines purposes and means of processing (e.g. analytics vendor)
+- **None**: Vendor does not process personal data
+
+**AI Involvement** (ISO 42001) — determines whether AI risk assessment is needed:
+- **Yes**: Vendor uses AI/ML in their product or service delivery (e.g. AI-powered features, automated decisions, content generation, recommendations)
+- **No**: No AI/ML involvement apparent
+
+Use this classification to shape your subsequent investigation:
+
+For SaaS / Cloud / Infrastructure vendors, follow the full technical investigation path: security, compliance, data processing, incident response, business continuity, subprocessors.
+
+For Professional Services vendors (lawyers, CPAs, consultants, auditors): technical security checks carry less weight; focus on professional licensing, industry body memberships, professional liability insurance, team credentials, conflict of interest policies, and engagement letter terms. Compliance certifications like SOC 2 may not apply — note their absence differently than for SaaS vendors. Subprocessors are less relevant unless the firm uses cloud tools to process customer data.
+
+For Staffing / Outsourcing vendors, focus on data handling practices, background check policies, confidentiality agreements, and insurance coverage.
+</vendor_classification>
+
+<investigation_triggers>
+- Found a privacy policy → analyze_document with that URL
+- Found a trust center → assess_compliance with that URL
+- Found a subprocessors page → extract_subprocessors with that URL
+- No subprocessors page → try extract_subprocessors with the vendor's main URL
+- Found a DPA or security page → assess_data_processing with the best available URL
+- Found a status page or security page → assess_incident_response with that URL
+- Found SLA or infrastructure docs → assess_business_continuity with that URL
+- Found a team, credentials, or about page → assess_professional_standing (for professional services vendors)
+- Found engagement terms or professional standards → analyze_document with that URL
+- Found AI policy, responsible AI, or AI-related content → assess_ai_risk with that URL
+- Vendor mentions AI, ML, automation, or algorithmic features → assess_ai_risk with the relevant page
+- No AI involvement apparent → skip assess_ai_risk; mark AI risk as N/A
+</investigation_triggers>
+
+## Output Format
+
+Write a comprehensive markdown assessment report with these sections:
+
+# Vendor Assessment: [Vendor Name]
+
+## Executive Summary
+Brief overview of the vendor and key findings. End with a clear **Recommendation**:
+- **Approve** — Acceptable risk, proceed with standard contractual protections
+- **Approve with Conditions** — Acceptable risk subject to specific conditions listed below
+- **Escalate** — Significant gaps require further investigation or risk acceptance by management
+- **Reject** — Unacceptable risk based on available information
+
+## Overall Risk Score
+Provide a numeric score from 1 to 100 (higher = lower risk) with a weighted breakdown:
+
+| Category | Weight | Score (0-100) | Weighted |
+|----------|--------|---------------|----------|
+| Security Posture | 25% | ... | ... |
+| Compliance & Certifications | 20% | ... | ... |
+| Privacy & Data Processing | 20% | ... | ... |
+| Business Continuity | 15% | ... | ... |
+| Market Presence & Stability | 10% | ... | ... |
+| Incident Response | 10% | ... | ... |
+| **Overall** | **100%** | | **[total]** |
+
+For professional services vendors, adjust the weights:
+| Category | Weight | Score (0-100) | Weighted |
+|----------|--------|---------------|----------|
+| Professional Standing | 25% | ... | ... |
+| Privacy & Data Processing | 20% | ... | ... |
+| Compliance & Certifications | 15% | ... | ... |
+| Market Presence & Stability | 15% | ... | ... |
+| Security Posture | 10% | ... | ... |
+| Business Continuity | 10% | ... | ... |
+| Incident Response | 5% | ... | ... |
+| **Overall** | **100%** | | **[total]** |
+
+Justify each category score in one sentence.
+
+## Vendor Classification
+- Name, description, headquarters, legal entity
+- **Vendor type**: SaaS, Infrastructure, Professional Services, Staffing
+- **Privacy role**: Controller, Processor, Subprocessor, or None — with justification
+- **Processes PII**: Yes/No
+- **Cross-border transfers**: Yes/No — list countries if applicable
+- **AI involvement**: Yes/No — list use cases if applicable
+- Main website and key URLs discovered
+
+## Market Presence
+- Notable customers (logos, case studies, testimonials)
+- Company size signals (employee count, funding, customer count)
+- Market position and credibility indicators
+
+## Security Posture
+### SSL/TLS Configuration
+### Security Headers
+### Email Security (DMARC/SPF)
+### Content Security Policy
+### CORS Configuration
+### DNSSEC
+### Known Breaches
+
+For each subsection, assign a rating: **Pass**, **Warning**, or **Fail**.
+
+## Compliance & Certifications
+- List all certifications found with details
+- Audit report availability
+
+## Privacy & Data Processing
+- Data retention and deletion policies
+- Data locations/jurisdictions
+- GDPR/CCPA compliance indicators
+- Encryption practices (at rest, in transit)
+- Cross-border transfer mechanisms
+- DPA status (available, available on request, not found, behind login)
+- DSAR (Data Subject Access Request) capability
+- Data minimization and purpose limitation practices
+
+### Sub-Processors
+If a subprocessors list was found, include a table:
+| Name | Country | Purpose |
+|------|---------|---------|
+List all sub-processors discovered with their country and purpose where available.
+
+## AI Governance (include when vendor involves AI)
+- AI usage disclosure and use cases
+- Model transparency and explainability
+- Bias detection and fairness measures
+- Training data governance (is customer data used for training? opt-out available?)
+- Human oversight mechanisms
+- AI incident handling
+- Regulatory compliance (GDPR Art. 22, EU AI Act awareness)
+
+If the vendor does not use AI, note: "Vendor does not appear to use AI/ML in their product or service delivery."
+
+## Document Analysis
+### Privacy Policy
+### Terms of Service
+### Data Processing Agreement
+(Include findings for each document analyzed)
+
+### Privacy Contractual Clauses
+- Data processing instructions and scope
+- Subprocessor approval mechanism (prior written consent, objection-based, notification-only)
+- Cross-border transfer safeguards (SCCs, BCRs, adequacy decisions)
+- Breach notification timeline and obligations
+- Data return and deletion on termination
+- DSAR cooperation obligations
+
+### AI Contractual Clauses (include when vendor involves AI)
+- Prohibition on using customer data for model training
+- Transparency obligations about AI usage
+- Audit rights for AI systems
+- Automated decision-making restrictions
+- Model update notification requirements
+
+### General Contractual Terms
+- Liability caps and limitations
+- Indemnification obligations
+- Termination provisions and data return
+- Governing law and dispute resolution
+
+## Incident Response & Business Continuity
+### Incident Response
+- IR plan documentation
+- Breach notification timeline
+- Communication procedures
+- Incident history
+
+### Business Continuity
+- Disaster recovery (RTO/RPO)
+- SLA/Uptime commitments
+- Infrastructure redundancy
+- Geographic distribution
+
+## Professional Standing (include for professional services vendors)
+### Licensing & Credentials
+### Industry Memberships
+### Professional Liability Insurance
+### Team Qualifications
+### Conflict of Interest Policy
+
+## External Research
+- Security incidents reported externally
+- Regulatory actions
+- Customer sentiment
+- Recent news
+- Professional disciplinary actions (if applicable)
+- Red flags identified
+
+## Risk Summary
+| Category | Rating | Notes |
+|----------|--------|-------|
+| SSL/TLS | Pass/Warning/Fail | ... |
+| Security Headers | Pass/Warning/Fail | ... |
+| Email Security | Pass/Warning/Fail | ... |
+| CSP | Pass/Warning/Fail | ... |
+| CORS | Pass/Warning/Fail | ... |
+| DNSSEC | Pass/Warning/Fail | ... |
+| Breach History | Pass/Warning/Fail | ... |
+| Compliance | Pass/Warning/Fail | ... |
+| Privacy | Pass/Warning/Fail | ... |
+| Market Presence | Strong/Moderate/Weak | ... |
+| Data Processing | Strong/Adequate/Weak | ... |
+| Incident Response | Strong/Adequate/Weak | ... |
+| Business Continuity | Strong/Adequate/Weak | ... |
+| Professional Standing | Strong/Adequate/Weak/N/A | ... |
+| AI Governance | Strong/Adequate/Weak/N/A | ... |
+
+## Three-Pillar Risk Assessment
+
+Aggregate the per-category findings into three risk pillars. Score each from 0-100 (higher = lower risk).
+
+### Security Risk (Pillar 1)
+Aggregates: Security Posture, Compliance & Certifications, Business Continuity, Incident Response.
+- **Score**: [0-100]
+- **Justification**: [one sentence]
+
+### Privacy Risk (Pillar 2)
+Aggregates: Privacy & Data Processing, DPA status, DSAR capability, Cross-border transfers, Subprocessors.
+- **Score**: [0-100]
+- **Justification**: [one sentence]
+
+### AI Risk (Pillar 3) — only when vendor involves AI
+Aggregates: AI governance, Model transparency, Bias controls, Human oversight, Training data governance.
+- **Score**: [0-100] (or N/A if vendor does not use AI)
+- **Justification**: [one sentence]
+
+## Minimum Acceptance Baseline
+
+Evaluate these hard-reject criteria. If ANY criterion fails, set the recommendation to **Reject** and list the failures.
+
+**Security baseline**:
+- SSL certificate must be valid and not expired
+- HTTPS must be enforced
+- A recognized security certification (SOC 2, ISO 27001) must be present OR the vendor must be a professional services firm where this is not standard
+
+**Privacy baseline** (when vendor processes PII):
+- A privacy policy must be publicly available
+- A DPA must be available or available on request
+- DSAR handling capability must be documented
+- No active unresolved data breaches
+
+**AI baseline** (when vendor involves AI):
+- AI usage must be disclosed transparently
+- Customer data must not be used for model training without clear opt-out
+- Basic human oversight must exist for consequential decisions
+
+List each criterion as **Met** or **Failed** with a brief note. Summarize whether the minimum baseline is met overall.
+
+## Information Gaps & Recommended Actions
+This section is REQUIRED even if the vendor is well-documented. List what could not be verified:
+- **Critical Gap**: [description] — **Action**: Request [specific document/evidence] from vendor
+- **Notable Gap**: [description] — **Action**: [what to ask for]
+- **Minor Gap**: [description] — **Action**: [optional follow-up]
+
+At minimum, note what could not be independently verified and suggest what to request from the vendor before finalizing the due diligence.
+
+## Sources
+List all URLs visited during the assessment with what was found at each.

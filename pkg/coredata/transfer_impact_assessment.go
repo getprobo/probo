@@ -28,6 +28,113 @@ import (
 	"go.probo.inc/probo/pkg/page"
 )
 
+func (t TransferImpactAssessment) GetGeneratedDocumentID(
+	ctx context.Context,
+	conn pg.Querier,
+	organizationID gid.GID,
+) (*gid.GID, error) {
+	var documentID *gid.GID
+
+	err := conn.QueryRow(
+		ctx,
+		`
+SELECT
+	transfer_impact_assessments_document_id
+FROM
+	generated_documents
+WHERE
+	organization_id = @organization_id
+`,
+		pgx.NamedArgs{"organization_id": organizationID},
+	).Scan(&documentID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("cannot get TIA list document ID: %w", err)
+	}
+
+	return documentID, nil
+}
+
+func (t TransferImpactAssessment) UpsertGeneratedDocumentID(
+	ctx context.Context,
+	conn pg.Tx,
+	organizationID gid.GID,
+	tenantID gid.TenantID,
+	documentID gid.GID,
+) error {
+	now := time.Now()
+
+	_, err := conn.Exec(
+		ctx,
+		`
+INSERT INTO generated_documents (
+	organization_id,
+	tenant_id,
+	transfer_impact_assessments_document_id,
+	created_at,
+	updated_at
+) VALUES (
+	@organization_id,
+	@tenant_id,
+	@transfer_impact_assessments_document_id,
+	@created_at,
+	@updated_at
+)
+ON CONFLICT (organization_id) DO UPDATE
+SET
+	transfer_impact_assessments_document_id = @transfer_impact_assessments_document_id,
+	updated_at = @updated_at
+`,
+		pgx.NamedArgs{
+			"organization_id": organizationID,
+			"tenant_id":       tenantID,
+			"transfer_impact_assessments_document_id": documentID,
+			"created_at": now,
+			"updated_at": now,
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("cannot upsert TIA list document ID: %w", err)
+	}
+
+	return nil
+}
+
+func (t TransferImpactAssessment) ClearGeneratedDocumentID(
+	ctx context.Context,
+	conn pg.Tx,
+	documentIDs []gid.GID,
+) error {
+	ids := make([]string, len(documentIDs))
+	for i, id := range documentIDs {
+		ids[i] = id.String()
+	}
+
+	_, err := conn.Exec(
+		ctx,
+		`
+UPDATE
+	generated_documents
+SET
+	transfer_impact_assessments_document_id = NULL,
+	updated_at = @now
+WHERE
+	transfer_impact_assessments_document_id = ANY(@ids)
+`,
+		pgx.NamedArgs{
+			"ids": ids,
+			"now": time.Now(),
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("cannot clear TIA list document references: %w", err)
+	}
+
+	return nil
+}
+
 type (
 	TransferImpactAssessment struct {
 		ID                    gid.GID   `db:"id"`
@@ -56,7 +163,7 @@ func (tia *TransferImpactAssessment) CursorKey(field TransferImpactAssessmentOrd
 	panic(fmt.Sprintf("unsupported order by: %s", field))
 }
 
-func (tia *TransferImpactAssessment) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+func (tia *TransferImpactAssessment) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	q := `SELECT organization_id FROM processing_activity_transfer_impact_assessments WHERE id = $1 LIMIT 1;`
 
 	var organizationID gid.GID
@@ -73,10 +180,9 @@ func (tia *TransferImpactAssessment) AuthorizationAttributes(ctx context.Context
 
 func (tias *TransferImpactAssessments) CountByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
-	filter *TransferImpactAssessmentFilter,
 ) (int, error) {
 	q := `
 SELECT
@@ -86,14 +192,13 @@ FROM
 WHERE
 	%s
 	AND organization_id = @organization_id
-	AND %s
+	AND snapshot_id IS NULL
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"organization_id": organizationID}
 	maps.Copy(args, scope.SQLArguments())
-	maps.Copy(args, filter.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)
 
@@ -108,11 +213,10 @@ WHERE
 
 func (tias *TransferImpactAssessments) LoadByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 	cursor *page.Cursor[TransferImpactAssessmentOrderField],
-	filter *TransferImpactAssessmentFilter,
 ) error {
 	q := `
 SELECT
@@ -133,15 +237,14 @@ FROM
 WHERE
 	%s
 	AND organization_id = @organization_id
-	AND %s
+	AND snapshot_id IS NULL
 	AND %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"organization_id": organizationID}
 	maps.Copy(args, scope.SQLArguments())
-	maps.Copy(args, filter.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
@@ -161,10 +264,9 @@ WHERE
 
 func (tias *TransferImpactAssessments) LoadAllByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
-	filter *TransferImpactAssessmentFilter,
 ) error {
 	q := `
 SELECT
@@ -185,14 +287,13 @@ FROM
 WHERE
 	%s
 	AND organization_id = @organization_id
-	AND %s
+	AND snapshot_id IS NULL
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"organization_id": organizationID}
 	maps.Copy(args, scope.SQLArguments())
-	maps.Copy(args, filter.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -211,7 +312,7 @@ WHERE
 
 func (tia *TransferImpactAssessment) LoadByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	tiaID gid.GID,
 ) error {
@@ -262,7 +363,7 @@ LIMIT 1;
 
 func (tia *TransferImpactAssessment) LoadByProcessingActivityID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	processingActivityID gid.GID,
 ) error {
@@ -313,7 +414,7 @@ LIMIT 1;
 
 func (tia *TransferImpactAssessment) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -375,7 +476,7 @@ INSERT INTO processing_activity_transfer_impact_assessments (
 
 func (tia *TransferImpactAssessment) Update(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -414,7 +515,7 @@ WHERE
 
 func (tia *TransferImpactAssessment) Delete(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -432,64 +533,6 @@ WHERE
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot delete transfer impact assessment: %w", err)
-	}
-
-	return nil
-}
-
-func (tias TransferImpactAssessments) InsertProcessingActivitySnapshots(
-	ctx context.Context,
-	conn pg.Conn,
-	scope Scoper,
-	organizationID gid.GID,
-	snapshotID gid.GID,
-) error {
-	query := `
-INSERT INTO processing_activity_transfer_impact_assessments (
-	id,
-	tenant_id,
-	snapshot_id,
-	source_id,
-	organization_id,
-	processing_activity_id,
-	data_subjects,
-	legal_mechanism,
-	transfer,
-	local_law_risk,
-	supplementary_measures,
-	created_at,
-	updated_at
-)
-SELECT
-	generate_gid(decode_base64_unpadded(@tenant_id), @tia_entity_type),
-	@tenant_id,
-	@snapshot_id,
-	tia.id,
-	tia.organization_id,
-	pa_snapshot.id,
-	tia.data_subjects,
-	tia.legal_mechanism,
-	tia.transfer,
-	tia.local_law_risk,
-	tia.supplementary_measures,
-	tia.created_at,
-	tia.updated_at
-FROM processing_activity_transfer_impact_assessments tia
-INNER JOIN processing_activities pa_source ON tia.processing_activity_id = pa_source.id AND pa_source.snapshot_id IS NULL
-INNER JOIN processing_activities pa_snapshot ON pa_source.id = pa_snapshot.source_id AND pa_snapshot.snapshot_id = @snapshot_id
-WHERE tia.tenant_id = @tenant_id AND tia.organization_id = @organization_id AND tia.snapshot_id IS NULL
-	`
-
-	args := pgx.StrictNamedArgs{
-		"tenant_id":       scope.GetTenantID(),
-		"snapshot_id":     snapshotID,
-		"organization_id": organizationID,
-		"tia_entity_type": TransferImpactAssessmentEntityType,
-	}
-
-	_, err := conn.Exec(ctx, query, args)
-	if err != nil {
-		return fmt.Errorf("cannot insert transfer impact assessment snapshots: %w", err)
 	}
 
 	return nil

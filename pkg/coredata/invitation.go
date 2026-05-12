@@ -50,7 +50,7 @@ func (i Invitation) CursorKey(orderBy InvitationOrderField) page.CursorKey {
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (i *Invitation) Insert(ctx context.Context, conn pg.Conn, scope Scoper) error {
+func (i *Invitation) Insert(ctx context.Context, conn pg.Tx, scope Scoper) error {
 	query := `
 INSERT INTO
     iam_invitations (
@@ -90,7 +90,7 @@ VALUES (
 
 func (i *Invitation) LoadByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	id gid.GID,
 ) error {
@@ -141,7 +141,7 @@ WHERE
 
 // AuthorizationAttributes loads the minimal authorization attributes for policy condition evaluation.
 // It is intentionally lightweight and does not populate the Invitation struct.
-func (i *Invitation) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+func (i *Invitation) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	q := `
 SELECT
     email, organization_id
@@ -167,7 +167,7 @@ LIMIT 1;
 	}, nil
 }
 
-func (i *Invitation) Update(ctx context.Context, conn pg.Conn, scope Scoper) error {
+func (i *Invitation) Update(ctx context.Context, conn pg.Tx, scope Scoper) error {
 	query := `
 UPDATE
     iam_invitations
@@ -198,7 +198,7 @@ WHERE
 	return nil
 }
 
-func (i *Invitation) Delete(ctx context.Context, conn pg.Conn, scope Scoper, invitationID gid.GID) error {
+func (i *Invitation) Delete(ctx context.Context, conn pg.Tx, scope Scoper, invitationID gid.GID) error {
 	query := `
 DELETE FROM
     iam_invitations
@@ -228,7 +228,7 @@ WHERE
 
 func (i *Invitations) LoadByUserID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	userID gid.GID,
 	cursor *page.Cursor[InvitationOrderField],
@@ -281,7 +281,7 @@ WHERE
 
 func (i *Invitations) ExpireByUserID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	userID gid.GID,
 	filter *InvitationFilter,

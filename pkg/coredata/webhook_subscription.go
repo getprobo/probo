@@ -16,8 +16,6 @@ package coredata
 
 import (
 	"context"
-	"crypto/rand"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"maps"
@@ -26,6 +24,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/crypto/cipher"
+	"go.probo.inc/probo/pkg/crypto/rand"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
 )
@@ -45,12 +44,12 @@ type (
 )
 
 func (w *WebhookSubscription) GenerateSigningSecret(encryptionKey cipher.EncryptionKey) (string, error) {
-	secret := make([]byte, 32)
-	if _, err := rand.Read(secret); err != nil {
+	hexSecret, err := rand.HexString(32)
+	if err != nil {
 		return "", fmt.Errorf("cannot generate signing secret: %w", err)
 	}
 
-	signingSecret := "whsec_" + hex.EncodeToString(secret)
+	signingSecret := "whsec_" + hexSecret
 
 	encrypted, err := cipher.Encrypt([]byte(signingSecret), encryptionKey)
 	if err != nil {
@@ -85,7 +84,7 @@ func (w WebhookSubscription) CursorKey(orderBy WebhookSubscriptionOrderField) pa
 }
 
 // AuthorizationAttributes returns the authorization attributes for policy evaluation.
-func (w *WebhookSubscription) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+func (w *WebhookSubscription) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	q := `SELECT organization_id FROM webhook_subscriptions WHERE id = $1 LIMIT 1;`
 
 	var organizationID gid.GID
@@ -101,7 +100,7 @@ func (w *WebhookSubscription) AuthorizationAttributes(ctx context.Context, conn 
 
 func (w *WebhookSubscription) LoadByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	webhookSubscriptionID gid.GID,
 ) error {
@@ -147,7 +146,7 @@ LIMIT 1;
 
 func (w *WebhookSubscriptions) LoadByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 	cursor *page.Cursor[WebhookSubscriptionOrderField],
@@ -190,7 +189,7 @@ WHERE
 
 func (w *WebhookSubscriptions) CountByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 ) (int, error) {
@@ -221,7 +220,7 @@ WHERE
 
 func (w *WebhookSubscriptions) ExistsByOrganizationIDAndEventType(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 	eventType WebhookEventType,
@@ -253,7 +252,7 @@ SELECT EXISTS (
 
 func (w *WebhookSubscription) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -301,7 +300,7 @@ VALUES (
 
 func (w *WebhookSubscription) Update(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -338,7 +337,7 @@ WHERE %s
 
 func (w *WebhookSubscriptions) LoadMatchingByOrganizationIDAndEventType(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 	eventType WebhookEventType,
@@ -383,7 +382,7 @@ WHERE
 
 func (w *WebhookSubscription) Delete(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `

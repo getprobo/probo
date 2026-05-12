@@ -33,9 +33,11 @@ import (
 	"go.probo.inc/probo/pkg/crypto/passwdhash"
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/iam/oauth2server"
 	"go.probo.inc/probo/pkg/iam/oidc"
 	"go.probo.inc/probo/pkg/iam/saml"
 	"go.probo.inc/probo/pkg/iam/scim"
+	"go.probo.inc/probo/pkg/uri"
 )
 
 type (
@@ -64,6 +66,7 @@ type (
 		OIDCService           *oidc.Service
 		SCIMService           *scim.Service
 		APIKeyService         *APIKeyService
+		OAuth2ServerService   *oauth2server.Service
 		Authorizer            *Authorizer
 
 		samlDomainVerifier *SAMLDomainVerifier
@@ -91,6 +94,8 @@ type (
 		SCIMBridgePollInterval         time.Duration
 		GoogleOIDC                     oidc.ProviderConfig
 		MicrosoftOIDC                  oidc.ProviderConfig
+		OAuth2ServerSigningKeys        oauth2server.SigningKeys
+		OAuth2ServerOptions            []oauth2server.Option
 	}
 )
 
@@ -177,6 +182,14 @@ func NewService(
 		},
 	)
 
+	svc.OAuth2ServerService = oauth2server.NewService(
+		pgClient,
+		cfg.OAuth2ServerSigningKeys,
+		uri.URI(cfg.BaseURL.String()),
+		cfg.Logger.Named("oauth2server"),
+		cfg.OAuth2ServerOptions...,
+	)
+
 	svc.samlDomainVerifier = NewSAMLDomainVerifier(
 		pgClient,
 		cfg.Logger,
@@ -186,6 +199,10 @@ func NewService(
 	)
 
 	return svc, nil
+}
+
+func (s *Service) IsSignUpEnabled() bool {
+	return !s.disableSignup
 }
 
 func (s *Service) Run(ctx context.Context) error {
@@ -229,12 +246,22 @@ func (s *Service) Run(ctx context.Context) error {
 		},
 	)
 
+	oauth2Ctx, stopOAuth2Server := context.WithCancel(context.WithoutCancel(ctx))
+	wg.Go(
+		func() {
+			if err := s.OAuth2ServerService.Run(oauth2Ctx); err != nil {
+				cancel(fmt.Errorf("oauth2 server service crashed: %w", err))
+			}
+		},
+	)
+
 	<-ctx.Done()
 
 	stopSAML()
 	stopOIDC()
 	stopDomainVerifier()
 	stopSCIM()
+	stopOAuth2Server()
 
 	wg.Wait()
 
@@ -249,7 +276,7 @@ func (s *Service) GetMembership(ctx context.Context, membershipID gid.GID) (*cor
 
 	err := s.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			err := membership.LoadByID(ctx, conn, scope, membershipID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
@@ -277,7 +304,7 @@ func (s *Service) GetInvitation(ctx context.Context, invitationID gid.GID) (*cor
 
 	err := s.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			err := invitation.LoadByID(ctx, conn, scope, invitationID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
@@ -302,7 +329,7 @@ func (s *Service) GetSession(ctx context.Context, sessionID gid.GID) (*coredata.
 
 	err := s.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			err := session.LoadByID(ctx, conn, sessionID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
@@ -330,7 +357,7 @@ func (s *Service) GetSAMLconfiguration(ctx context.Context, samlConfigurationID 
 
 	err := s.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			err := samlConfiguration.LoadByID(ctx, conn, scope, samlConfigurationID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
@@ -355,7 +382,7 @@ func (s *Service) GetPersonalAPIKey(ctx context.Context, personalAPIKeyID gid.GI
 
 	err := s.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			err := personalAPIKey.LoadByID(ctx, conn, personalAPIKeyID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
@@ -383,7 +410,7 @@ func (s *Service) GetSCIMConfiguration(ctx context.Context, scimConfigurationID 
 
 	err := s.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			err := scimConfiguration.LoadByID(ctx, conn, scope, scimConfigurationID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
@@ -411,7 +438,7 @@ func (s *Service) GetSCIMEvent(ctx context.Context, scimEventID gid.GID) (*cored
 
 	err := s.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			err := scimEvent.LoadByID(ctx, conn, scope, scimEventID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {

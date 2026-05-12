@@ -185,26 +185,18 @@ func (c *Client) UpdateUser(ctx context.Context, userID string, user *User) erro
 }
 
 func buildUserPayload(user *User) map[string]any {
-	schemas := []string{"urn:ietf:params:scim:schemas:core:2.0:User"}
+	schemas := []string{
+		"urn:ietf:params:scim:schemas:core:2.0:User",
+		"urn:ietf:params:scim:schemas:extension:enterprise:2.0:User",
+	}
 
-	enterprise := map[string]any{}
-	if user.EmployeeNumber != "" {
-		enterprise["employeeNumber"] = user.EmployeeNumber
-	}
-	if user.Department != "" {
-		enterprise["department"] = user.Department
-	}
-	if user.CostCenter != "" {
-		enterprise["costCenter"] = user.CostCenter
-	}
-	if user.EnterpriseOrganization != "" {
-		enterprise["organization"] = user.EnterpriseOrganization
-	}
-	if user.Division != "" {
-		enterprise["division"] = user.Division
-	}
-	if user.ManagerValue != "" {
-		enterprise["manager"] = map[string]string{"value": user.ManagerValue}
+	enterprise := map[string]any{
+		"employeeNumber": user.EmployeeNumber,
+		"department":     user.Department,
+		"costCenter":     user.CostCenter,
+		"organization":   user.EnterpriseOrganization,
+		"division":       user.Division,
+		"manager":        map[string]string{"value": user.ManagerValue},
 	}
 
 	payload := map[string]any{
@@ -215,8 +207,12 @@ func buildUserPayload(user *User) map[string]any {
 			"familyName": user.FamilyName,
 			"formatted":  user.DisplayName,
 		},
-		"displayName": user.DisplayName,
-		"active":      user.Active,
+		"displayName":       user.DisplayName,
+		"active":            user.Active,
+		"title":             user.Title,
+		"externalId":        user.ExternalID,
+		"userType":          user.UserType,
+		"preferredLanguage": user.PreferredLanguage,
 		"emails": []map[string]any{
 			{
 				"value":   user.UserName,
@@ -224,23 +220,7 @@ func buildUserPayload(user *User) map[string]any {
 				"primary": true,
 			},
 		},
-		"title": user.Title,
-	}
-
-	if user.ExternalID != "" {
-		payload["externalId"] = user.ExternalID
-	}
-	if user.UserType != "" {
-		payload["userType"] = user.UserType
-	}
-	if user.PreferredLanguage != "" {
-		payload["preferredLanguage"] = user.PreferredLanguage
-	}
-
-	if len(enterprise) > 0 {
-		schemas = append(schemas, "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User")
-		payload["schemas"] = schemas
-		payload["urn:ietf:params:scim:schemas:extension:enterprise:2.0:User"] = enterprise
+		"urn:ietf:params:scim:schemas:extension:enterprise:2.0:User": enterprise,
 	}
 
 	return payload

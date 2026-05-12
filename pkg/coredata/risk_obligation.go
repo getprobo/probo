@@ -38,7 +38,7 @@ type (
 
 func (ro RiskObligation) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -75,7 +75,7 @@ INSERT INTO risks_obligations (
 
 func (ro RiskObligation) Delete(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `

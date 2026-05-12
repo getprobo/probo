@@ -56,7 +56,7 @@ func (s *SCIMEvent) CursorKey(orderBy SCIMEventOrderField) page.CursorKey {
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (s *SCIMEvent) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+func (s *SCIMEvent) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	q := `SELECT organization_id FROM iam_scim_events WHERE id = $1 LIMIT 1;`
 
 	var organizationID gid.GID
@@ -72,7 +72,7 @@ func (s *SCIMEvent) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (
 
 func (s *SCIMEvent) LoadByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	eventID gid.GID,
 ) error {
@@ -124,7 +124,7 @@ LIMIT 1;
 
 func (s *SCIMEvent) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -185,7 +185,7 @@ INSERT INTO iam_scim_events (
 
 func (s *SCIMEvents) LoadByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 	cursor *page.Cursor[SCIMEventOrderField],
@@ -235,7 +235,7 @@ WHERE
 
 func (s *SCIMEvents) CountByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 ) (int, error) {
@@ -265,7 +265,7 @@ WHERE
 
 func (s *SCIMEvents) LoadBySCIMConfigurationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	scimConfigurationID gid.GID,
 	cursor *page.Cursor[SCIMEventOrderField],
@@ -315,7 +315,7 @@ WHERE
 
 func (s *SCIMEvents) CountBySCIMConfigurationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	scimConfigurationID gid.GID,
 ) (int, error) {

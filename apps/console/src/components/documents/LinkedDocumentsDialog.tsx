@@ -1,3 +1,17 @@
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
 import { useTranslate } from "@probo/i18n";
 import {
   Button,
@@ -57,8 +71,14 @@ const documentsFragment = graphql`
       edges {
         node {
           id
-          title
-          documentType
+          versions(first: 1, orderBy: { field: CREATED_AT, direction: DESC }) {
+            edges {
+              node {
+                title
+                documentType
+              }
+            }
+          }
         }
       }
     }
@@ -115,7 +135,7 @@ function LinkedDocumentsDialogContent(props: Omit<Props, "children">) {
 
   const filteredDocuments = useMemo(() => {
     return documents.filter(document =>
-      document.title.toLowerCase().includes(search.toLowerCase()),
+      document.versions.edges[0].node.title.toLowerCase().includes(search.toLowerCase()),
     );
   }, [documents, search]);
 
@@ -172,8 +192,8 @@ function DocumentRow(props: RowProps) {
       className="py-4 flex items-center gap-4 hover:bg-subtle cursor-pointer px-6 w-full h-[100px]"
       onClick={() => onClick(props.document.id)}
     >
-      {props.document.title}
-      <DocumentTypeBadge type={props.document.documentType} />
+      {props.document.versions.edges[0].node.title}
+      <DocumentTypeBadge type={props.document.versions.edges[0].node.documentType} />
       <Button
         disabled={props.disabled}
         className="ml-auto"

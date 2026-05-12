@@ -72,7 +72,7 @@ func (s *Sender) batchSendMessages(ctx context.Context) error {
 	for {
 		err := s.pg.WithTx(
 			ctx,
-			func(tx pg.Conn) (err error) {
+			func(ctx context.Context, tx pg.Tx) (err error) {
 				message := &coredata.SlackMessage{}
 
 				defer func() {
@@ -144,43 +144,40 @@ func (s *Sender) batchSendMessages(ctx context.Context) error {
 	}
 }
 
-func (s *Sender) sendMessage(ctx context.Context, tx pg.Conn, message *coredata.SlackMessage) (*string, *string, error) {
+func (s *Sender) sendMessage(ctx context.Context, tx pg.Querier, message *coredata.SlackMessage) (*string, *string, error) {
 	tenantID := message.ID.TenantID()
 	scope := coredata.NewScope(tenantID)
 
-	var connectors coredata.Connectors
-	if err := connectors.LoadAllByOrganizationIDProtocolAndProvider(
+	var c coredata.Connector
+	if err := c.LoadOneByOrganizationIDAndProvider(
 		ctx,
 		tx,
 		scope,
-		message.OrganizationID,
-		coredata.ConnectorProtocolOAuth2,
-		coredata.ConnectorProviderSlack,
 		s.encryptionKey,
+		message.OrganizationID,
+		coredata.ConnectorProviderSlack,
 	); err != nil {
-		return nil, nil, fmt.Errorf("cannot load slack connectors: %w", err)
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, nil, fmt.Errorf("cannot send slack message: no connector configured for organization")
+		}
+		return nil, nil, fmt.Errorf("cannot send slack message: %w", err)
 	}
 
-	if len(connectors) == 0 {
-		return nil, nil, fmt.Errorf("no slack connectors configured for organization")
-	}
-
-	c := connectors[0]
 	if c.Connection == nil {
-		return nil, nil, fmt.Errorf("slack connector has nil connection")
+		return nil, nil, fmt.Errorf("cannot send slack message: connector has nil connection")
 	}
 
 	slackConn, ok := c.Connection.(*connector.SlackConnection)
 	if !ok {
-		return nil, nil, fmt.Errorf("slack connector must have SlackConnection type, got %T", c.Connection)
+		return nil, nil, fmt.Errorf("cannot send slack message: unexpected connection type %T", c.Connection)
 	}
 
 	if slackConn.Settings.ChannelID == "" {
-		return nil, nil, fmt.Errorf("slack connector %s has no channel ID", c.ID)
+		return nil, nil, fmt.Errorf("cannot send slack message: connector %s has no channel ID", c.ID)
 	}
 
 	if slackConn.AccessToken == "" {
-		return nil, nil, fmt.Errorf("slack connector %s has no access token", c.ID)
+		return nil, nil, fmt.Errorf("cannot send slack message: connector %s has no access token", c.ID)
 	}
 
 	client := NewClient(s.logger)
@@ -204,7 +201,7 @@ func (s *Sender) batchUpdateMessages(ctx context.Context) error {
 	for {
 		err := s.pg.WithTx(
 			ctx,
-			func(tx pg.Conn) (err error) {
+			func(ctx context.Context, tx pg.Tx) (err error) {
 				updateMessage := &coredata.SlackMessage{}
 
 				defer func() {
@@ -267,43 +264,40 @@ func (s *Sender) batchUpdateMessages(ctx context.Context) error {
 	}
 }
 
-func (s *Sender) updateMessage(ctx context.Context, tx pg.Conn, updateMessage *coredata.SlackMessage) error {
+func (s *Sender) updateMessage(ctx context.Context, tx pg.Querier, updateMessage *coredata.SlackMessage) error {
 	if updateMessage.ChannelID == nil || updateMessage.MessageTS == nil {
-		return fmt.Errorf("slack message has no channel ID or message TS")
+		return fmt.Errorf("cannot update slack message: missing channel ID or message TS")
 	}
 
 	tenantID := updateMessage.ID.TenantID()
 	scope := coredata.NewScope(tenantID)
 
-	var connectors coredata.Connectors
-	if err := connectors.LoadAllByOrganizationIDProtocolAndProvider(
+	var c coredata.Connector
+	if err := c.LoadOneByOrganizationIDAndProvider(
 		ctx,
 		tx,
 		scope,
-		updateMessage.OrganizationID,
-		coredata.ConnectorProtocolOAuth2,
-		coredata.ConnectorProviderSlack,
 		s.encryptionKey,
+		updateMessage.OrganizationID,
+		coredata.ConnectorProviderSlack,
 	); err != nil {
-		return fmt.Errorf("cannot load slack connectors: %w", err)
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return fmt.Errorf("cannot update slack message: no connector configured for organization")
+		}
+		return fmt.Errorf("cannot update slack message: %w", err)
 	}
 
-	if len(connectors) == 0 {
-		return fmt.Errorf("no slack connectors configured for organization")
-	}
-
-	c := connectors[0]
 	if c.Connection == nil {
-		return fmt.Errorf("slack connector has nil connection")
+		return fmt.Errorf("cannot update slack message: connector has nil connection")
 	}
 
 	slackConn, ok := c.Connection.(*connector.SlackConnection)
 	if !ok {
-		return fmt.Errorf("slack connector must have SlackConnection type, got %T", c.Connection)
+		return fmt.Errorf("cannot update slack message: unexpected connection type %T", c.Connection)
 	}
 
 	if slackConn.AccessToken == "" {
-		return fmt.Errorf("slack connector %s has no access token", c.ID)
+		return fmt.Errorf("cannot update slack message: connector %s has no access token", c.ID)
 	}
 
 	client := NewClient(s.logger)

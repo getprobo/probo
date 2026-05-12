@@ -1,3 +1,17 @@
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
 import "react-pdf/dist/Page/TextLayer.css";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 
@@ -10,7 +24,7 @@ import {
   Spinner,
 } from "@probo/ui";
 import { IconMinusLarge } from "@probo/ui/src/Atoms/Icons/IconMinusLarge";
-import { type ComponentProps, useRef, useState } from "react";
+import { type ComponentProps, useCallback, useEffect, useRef, useState } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 
 // Worker for PDF.js
@@ -37,11 +51,17 @@ export function PDFPreview({ src, name }: { src: string; name?: string }) {
     setScale(scale * factor);
   };
 
-  const movePage = (direction: 1 | -1) => () => {
-    if (currentPage === 1 && direction === -1) {
+  const currentPageRef = useRef(currentPage);
+  useEffect(() => {
+    currentPageRef.current = currentPage;
+  }, [currentPage]);
+
+  const movePage = useCallback((direction: 1 | -1) => {
+    const prev = currentPageRef.current;
+    if (prev === 1 && direction === -1) {
       return;
     }
-    const newPage = currentPage + direction;
+    const newPage = prev + direction;
     const page = documentRef.current?.pages.current[newPage - 1];
     if (!page) {
       return;
@@ -52,9 +72,9 @@ export function PDFPreview({ src, name }: { src: string; name?: string }) {
       inline: "center",
     });
     setCurrentPage(newPage);
-  };
+  }, []);
 
-  const resolveCurrentPage = () => {
+  const resolveCurrentPage = useCallback(() => {
     if (!wrapperRef.current) {
       return;
     }
@@ -67,10 +87,11 @@ export function PDFPreview({ src, name }: { src: string; name?: string }) {
     for (let i = 0; i < pages.length; i++) {
       const childRect = pages[i].getBoundingClientRect();
       if (childRect.top <= parentMiddleY && childRect.bottom >= parentMiddleY) {
-        return setCurrentPage(i + 1);
+        setCurrentPage(i + 1);
+        return;
       }
     }
-  };
+  }, []);
 
   const handleDownload = () => {
     const link = document.createElement("a");
@@ -86,7 +107,7 @@ export function PDFPreview({ src, name }: { src: string; name?: string }) {
         <div>{name}</div>
         <div className="mx-auto flex gap-1 items-center">
           <button
-            onClick={movePage(-1)}
+            onClick={() => movePage(-1)}
             className={btnClass}
             disabled={currentPage === 1}
           >
@@ -98,7 +119,7 @@ export function PDFPreview({ src, name }: { src: string; name?: string }) {
             /
             {numPages}
           </div>
-          <button onClick={movePage(1)} className={btnClass}>
+          <button onClick={() => movePage(1)} className={btnClass}>
             <IconChevronRight size={16} />
           </button>
         </div>

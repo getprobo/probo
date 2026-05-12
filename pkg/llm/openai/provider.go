@@ -166,6 +166,16 @@ func buildParams(req *llm.ChatCompletionRequest) openai.ChatCompletionNewParams 
 	if req.ResponseFormat != nil {
 		params.ResponseFormat = buildResponseFormat(req.ResponseFormat)
 	}
+	if req.Thinking != nil && req.Thinking.Enabled && isReasoningModel(req.Model) {
+		switch {
+		case req.Thinking.BudgetTokens <= 1024:
+			params.ReasoningEffort = shared.ReasoningEffortLow
+		case req.Thinking.BudgetTokens <= 8192:
+			params.ReasoningEffort = shared.ReasoningEffortMedium
+		default:
+			params.ReasoningEffort = shared.ReasoningEffortHigh
+		}
+	}
 
 	return params
 }
@@ -454,6 +464,17 @@ func mapChunkToEvent(chunk *openai.ChatCompletionChunk) llm.ChatCompletionStream
 	}
 
 	return event
+}
+
+// isReasoningModel returns true for OpenAI models that support
+// reasoning_effort (o1, o3-mini, o3, and their dated variants).
+func isReasoningModel(model string) bool {
+	for _, prefix := range []string{"o1", "o3"} {
+		if model == prefix || strings.HasPrefix(model, prefix+"-") {
+			return true
+		}
+	}
+	return false
 }
 
 func buildFilePart(p llm.FilePart) openai.ChatCompletionContentPartUnionParam {

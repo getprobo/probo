@@ -27,7 +27,13 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-const DefaultHTTPTimeout = 30 * time.Second
+const (
+	DefaultHTTPTimeout = 30 * time.Second
+
+	// CLIClientID is the well-known OAuth2 client ID for the Probo CLI,
+	// pre-provisioned in every Probo database via migration.
+	CLIClientID = "AAAAAAAAAAAASwAAAAAAAAAAcHJiY2xp"
+)
 
 type (
 	Config struct {
@@ -41,8 +47,10 @@ type (
 	}
 
 	HostConfig struct {
-		Token        string `yaml:"token"`
-		Organization string `yaml:"organization"`
+		Token         string `yaml:"token"`
+		RefreshToken  string `yaml:"refresh_token,omitempty"`
+		TokenEndpoint string `yaml:"token_endpoint,omitempty"`
+		Organization  string `yaml:"organization"`
 	}
 )
 
@@ -188,7 +196,7 @@ func normalizeHost(host string) string {
 	lower := strings.ToLower(host)
 	if strings.HasPrefix(lower, "http://") || strings.HasPrefix(lower, "https://") {
 		if u, err := url.Parse(host); err == nil {
-			return u.Host
+			return strings.TrimRight(u.Scheme+"://"+u.Host, "/")
 		}
 	}
 

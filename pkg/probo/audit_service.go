@@ -111,7 +111,7 @@ func (s AuditService) Get(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			return audit.LoadByID(ctx, conn, s.svc.scope, auditID)
 		},
 	)
@@ -131,7 +131,7 @@ func (s AuditService) GetByReportID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			return audit.LoadByReportID(ctx, conn, s.svc.scope, reportID)
 		},
 	)
@@ -175,7 +175,7 @@ func (s *AuditService) Create(
 
 	err := s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Tx) error {
 			organization := &coredata.Organization{}
 			if err := organization.LoadByID(ctx, conn, s.svc.scope, req.OrganizationID); err != nil {
 				return fmt.Errorf("cannot load organization: %w", err)
@@ -212,7 +212,7 @@ func (s *AuditService) Update(
 	audit := &coredata.Audit{}
 	err := s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Tx) error {
 			if err := audit.LoadByID(ctx, conn, s.svc.scope, req.ID); err != nil {
 				return fmt.Errorf("cannot load audit: %w", err)
 			}
@@ -255,10 +255,10 @@ func (s AuditService) Delete(
 	auditID gid.GID,
 ) error {
 	audit := coredata.Audit{ID: auditID}
-	return s.svc.pg.WithConn(
+	return s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
-			err := audit.Delete(ctx, conn, s.svc.scope)
+		func(ctx context.Context, tx pg.Tx) error {
+			err := audit.Delete(ctx, tx, s.svc.scope)
 			if err != nil {
 				return fmt.Errorf("cannot delete audit: %w", err)
 			}
@@ -276,7 +276,7 @@ func (s AuditService) ListForOrganizationID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			filter := coredata.NewAuditFilter()
 			err := audits.LoadByOrganizationID(ctx, conn, s.svc.scope, organizationID, cursor, filter)
 			if err != nil {
@@ -302,7 +302,7 @@ func (s AuditService) CountForOrganizationID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) (err error) {
+		func(ctx context.Context, conn pg.Querier) (err error) {
 			audits := coredata.Audits{}
 			count, err = audits.CountByOrganizationID(ctx, conn, s.svc.scope, organizationID)
 			if err != nil {
@@ -332,7 +332,7 @@ func (s AuditService) UploadReport(
 
 	err := s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Tx) error {
 			if err := audit.LoadByID(ctx, conn, s.svc.scope, req.AuditID); err != nil {
 				return fmt.Errorf("cannot load audit: %w", err)
 			}
@@ -424,7 +424,7 @@ func (s AuditService) DeleteReport(
 
 	err := s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Tx) error {
 			if err := audit.LoadByID(ctx, conn, s.svc.scope, auditID); err != nil {
 				return fmt.Errorf("cannot load audit: %w", err)
 			}
@@ -465,7 +465,7 @@ func (s AuditService) ListForControlID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			if err := control.LoadByID(ctx, conn, s.svc.scope, controlID); err != nil {
 				return fmt.Errorf("cannot load control: %w", err)
 			}
@@ -494,7 +494,7 @@ func (s AuditService) CountForControlID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) (err error) {
+		func(ctx context.Context, conn pg.Querier) (err error) {
 			audits := coredata.Audits{}
 			count, err = audits.CountByControlID(ctx, conn, s.svc.scope, controlID)
 			if err != nil {
@@ -520,7 +520,7 @@ func (s AuditService) CountForFindingID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) (err error) {
+		func(ctx context.Context, conn pg.Querier) (err error) {
 			audits := coredata.Audits{}
 			count, err = audits.CountByFindingID(ctx, conn, s.svc.scope, findingID)
 			if err != nil {
@@ -548,7 +548,7 @@ func (s AuditService) ListForFindingID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			if err := finding.LoadByID(ctx, conn, s.svc.scope, findingID); err != nil {
 				return fmt.Errorf("cannot load finding: %w", err)
 			}

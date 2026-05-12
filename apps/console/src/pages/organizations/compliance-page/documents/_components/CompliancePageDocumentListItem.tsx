@@ -1,3 +1,17 @@
+// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
 import { getTrustCenterVisibilityOptions } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import { Badge, DocumentTypeBadge, Field, Option, Td, Tr } from "@probo/ui";
@@ -19,7 +33,6 @@ const compliancePageFragment = graphql`
 const documentFragment = graphql`
   fragment CompliancePageDocumentListItem_documentFragment on Document {
     id
-    documentType
     trustCenterVisibility
     latestPublishedVersion: versions(
       first: 1
@@ -29,6 +42,7 @@ const documentFragment = graphql`
       edges {
         node {
           title
+          documentType
         }
       }
     }
@@ -88,7 +102,8 @@ export function CompliancePageDocumentListItem(props: {
     [document.id, updateDocumentVisibility],
   );
 
-  const versionTitle = document.latestPublishedVersion.edges[0]?.node.title;
+  const latestVersion = document.latestPublishedVersion.edges[0]?.node;
+  const versionTitle = latestVersion?.title;
 
   return (
     <Tr to={`/organizations/${organizationId}/documents/${document.id}`}>
@@ -96,7 +111,7 @@ export function CompliancePageDocumentListItem(props: {
         <div className="flex gap-4 items-center">{versionTitle}</div>
       </Td>
       <Td>
-        <DocumentTypeBadge type={document.documentType} />
+        {latestVersion && <DocumentTypeBadge type={latestVersion.documentType} />}
       </Td>
       <Td noLink width={130} className="pr-0">
         <Field

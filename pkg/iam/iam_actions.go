@@ -90,6 +90,10 @@ const (
 	ActionSCIMBridgeUpdate = "iam:scim-bridge:update"
 	ActionSCIMBridgeDelete = "iam:scim-bridge:delete"
 
+	// OAuth2 Consent actions
+	ActionOAuth2ConsentGet     = "iam:oauth2-consent:get"
+	ActionOAuth2ConsentApprove = "iam:oauth2-consent:approve"
+
 	// Connector actions
 	ActionConnectorGet = "iam:connector:get"
 

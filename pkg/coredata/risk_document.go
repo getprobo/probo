@@ -39,7 +39,7 @@ type (
 
 func (rp RiskDocument) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -73,7 +73,7 @@ VALUES (
 
 func (rp RiskDocument) Delete(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 	riskID gid.GID,
 	documentID gid.GID,
@@ -102,7 +102,7 @@ WHERE
 
 func (rp RiskDocument) DeleteByDocumentIDs(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 	documentIDs []gid.GID,
 ) error {

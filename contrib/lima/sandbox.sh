@@ -18,6 +18,7 @@ Usage: $(basename "$0") <command> [options]
 Commands:
   create [--cpus C] [--memory M] [--disk D]   Create a new sandbox VM
   start                                        Start a stopped sandbox
+  boot-logs                                    Show boot logs
   stop                                         Stop the sandbox
   restart                                      Stop + start the sandbox
   delete                                       Delete the sandbox entirely
@@ -61,7 +62,7 @@ cmd_create() {
     local -a create_args=(
         --name "${VM_NAME}"
         --tty=false
-        --set ".mounts = [{\"location\": \"${REPO_ROOT}\", \"mountPoint\": \"/workspace\", \"writable\": true}]"
+        --set ".mounts = [{\"location\": \"${REPO_ROOT}\", \"mountPoint\": \"/workspace\", \"writable\": true},{\"location\": \"${HOME}/go\", \"mountPoint\": \"/home/${USER}.guest/go\", \"writable\": true}]"
         --mount-type virtiofs
     )
 
@@ -76,10 +77,6 @@ cmd_create() {
     fi
 
     limactl create "${create_args[@]}" "${TEMPLATE}"
-    limactl start "${VM_NAME}"
-
-    echo ""
-    cmd_status
 }
 
 cmd_start() {
@@ -87,6 +84,10 @@ cmd_start() {
     limactl start "${VM_NAME}"
     echo ""
     cmd_status
+}
+
+cmd_boot_logs() {
+    limactl shell "${VM_NAME}" -- sudo tail -f /var/log/cloud-init-output.log
 }
 
 cmd_stop() {
@@ -128,6 +129,7 @@ cmd_status() {
         echo ""
         echo "Services (use VM IP to access from host):"
         echo "  Console:    http://${ip}:5173"
+        echo "  Trust:      http://${ip}:5174"
         echo "  API:        http://${ip}:8080"
         echo "  Grafana:    http://${ip}:3001"
         echo "  Mailpit:    http://${ip}:8025"
@@ -160,12 +162,13 @@ command="$1"
 shift
 
 case "${command}" in
-    create)  cmd_create "$@" ;;
-    start)   cmd_start ;;
-    stop)    cmd_stop ;;
-    restart) cmd_restart ;;
-    delete)  cmd_delete ;;
-    ssh)     cmd_ssh ;;
+    create)     cmd_create "$@" ;;
+    start)      cmd_start ;;
+    boot-logs)  cmd_boot_logs ;;
+    stop)       cmd_stop ;;
+    restart)    cmd_restart ;;
+    delete)     cmd_delete ;;
+    ssh)        cmd_ssh ;;
     exec)
         if [[ "${1:-}" == "--" ]]; then shift; fi
         cmd_exec "$@"

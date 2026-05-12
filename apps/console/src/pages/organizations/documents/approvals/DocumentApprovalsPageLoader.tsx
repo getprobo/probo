@@ -1,3 +1,17 @@
+// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
 import { Suspense, useCallback, useEffect } from "react";
 import { useQueryLoader } from "react-relay";
 import { useOutletContext, useParams } from "react-router";
@@ -13,9 +27,8 @@ function DocumentApprovalsPageQueryLoader() {
     throw new Error(":documentId missing in route params");
   }
 
-  const { onRefetch: parentRefetch, approvalRequestedAt }
+  const { approvalRequestedAt }
     = useOutletContext<{
-      onRefetch: () => void;
       approvalRequestedAt?: number;
     }>();
 
@@ -34,16 +47,9 @@ function DocumentApprovalsPageQueryLoader() {
 
   useEffect(() => {
     if (!queryRef) {
-      loadQuery(
-        {
-          documentId: documentId,
-          versionId: versionId ?? "",
-          versionSpecified: !!versionId,
-        },
-        { fetchPolicy: "network-only" },
-      );
+      loadQueryParams();
     }
-  }, [queryRef, documentId, versionId, loadQuery]);
+  }, [queryRef, loadQueryParams]);
 
   // Reload approvals data whenever a new approval round is requested from the layout
   useEffect(() => {
@@ -52,16 +58,11 @@ function DocumentApprovalsPageQueryLoader() {
     }
   }, [approvalRequestedAt, loadQueryParams]);
 
-  const onRefetch = useCallback(() => {
-    parentRefetch();
-    loadQueryParams();
-  }, [parentRefetch, loadQueryParams]);
-
   if (!queryRef) {
     return <LinkCardSkeleton />;
   }
 
-  return <DocumentApprovalsPage queryRef={queryRef} onRefetch={onRefetch} />;
+  return <DocumentApprovalsPage queryRef={queryRef} />;
 }
 
 export default function DocumentApprovalsPageLoader() {

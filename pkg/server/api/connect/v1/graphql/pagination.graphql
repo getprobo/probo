@@ -1,0 +1,12 @@
+type PageInfo {
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  startCursor: CursorKey
+  endCursor: CursorKey
+}
+
+enum OrderDirection
+  @goModel(model: "go.probo.inc/probo/pkg/page.OrderDirection") {
+  ASC @goEnum(value: "go.probo.inc/probo/pkg/page.OrderDirectionAsc")
+  DESC @goEnum(value: "go.probo.inc/probo/pkg/page.OrderDirectionDesc")
+}

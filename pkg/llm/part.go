@@ -20,20 +20,26 @@ type (
 	}
 
 	TextPart struct {
-		Text string
+		Text string `json:"text"`
 	}
 
 	ImagePart struct {
-		URL string
+		URL string `json:"url"`
 	}
 
 	FilePart struct {
-		Data     string // base64-encoded content
-		MimeType string // e.g. "application/pdf", "text/csv", "image/png"
-		Filename string
+		Data     string `json:"data"`      // base64-encoded content
+		MimeType string `json:"mime_type"` // e.g. "application/pdf", "text/csv", "image/png"
+		Filename string `json:"filename"`
+	}
+
+	ThinkingPart struct {
+		Text      string
+		Signature string // Anthropic thinking signature for multi-turn continuity
 	}
 )
 
-func (TextPart) part()  {}
-func (ImagePart) part() {}
-func (FilePart) part()  {}
+func (TextPart) part()     {}
+func (ImagePart) part()    {}
+func (FilePart) part()     {}
+func (ThinkingPart) part() {}

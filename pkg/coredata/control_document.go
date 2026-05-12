@@ -41,7 +41,7 @@ type (
 
 func (cp ControlDocument) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -87,7 +87,7 @@ VALUES (
 
 func (cp ControlDocument) Delete(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 	controlID gid.GID,
 	documentID gid.GID,
@@ -116,7 +116,7 @@ WHERE
 
 func (cp ControlDocument) DeleteByDocumentIDs(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 	documentIDs []gid.GID,
 ) error {

@@ -117,10 +117,10 @@ func (s *Service) UpdateMailingList(
 	var ml coredata.MailingList
 	scope := coredata.NewScopeFromObjectID(id)
 
-	err := s.pg.WithConn(
+	err := s.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
-			if err := ml.LoadByID(ctx, conn, scope, id); err != nil {
+		func(ctx context.Context, tx pg.Tx) error {
+			if err := ml.LoadByID(ctx, tx, scope, id); err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrMailingListNotFound
 				}
@@ -130,7 +130,7 @@ func (s *Service) UpdateMailingList(
 			ml.ReplyTo = replyTo
 			ml.UpdatedAt = time.Now()
 
-			if err := ml.Update(ctx, conn, scope); err != nil {
+			if err := ml.Update(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot update mailing list: %w", err)
 			}
 
@@ -154,7 +154,7 @@ func (s *Service) GetSubscriber(
 
 	err := s.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			if err := subscriber.LoadByMailingListIDAndEmail(ctx, conn, scope, mailingListID, email); err != nil {
 				return fmt.Errorf("cannot load mailing list subscriber: %w", err)
 			}
@@ -210,7 +210,7 @@ func (s *Service) CreateSubscriber(
 
 	if err := s.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			var ml coredata.MailingList
 			if err := ml.LoadByID(ctx, tx, scope, mailingListID); err != nil {
 				return fmt.Errorf("cannot load mailing list: %w", err)
@@ -247,7 +247,7 @@ func (s *Service) UnsubscribeByEmail(
 	scope := coredata.NewScopeFromObjectID(mailingListID)
 	return s.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			var subscriber coredata.MailingListSubscriber
 			if err := subscriber.LoadByMailingListIDAndEmail(ctx, tx, scope, mailingListID, email); err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
@@ -288,11 +288,11 @@ func (s *Service) ConfirmSubscriberByEmail(
 ) error {
 	scope := coredata.NewScopeFromObjectID(mailingListID)
 
-	return s.pg.WithConn(
+	return s.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			var subscriber coredata.MailingListSubscriber
-			if err := subscriber.LoadByMailingListIDAndEmail(ctx, conn, scope, mailingListID, email); err != nil {
+			if err := subscriber.LoadByMailingListIDAndEmail(ctx, tx, scope, mailingListID, email); err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrSubscriberNotFound
 				}
@@ -302,7 +302,7 @@ func (s *Service) ConfirmSubscriberByEmail(
 			subscriber.Status = coredata.MailingListSubscriberStatusConfirmed
 			subscriber.UpdatedAt = time.Now()
 
-			if err := subscriber.Update(ctx, conn, scope); err != nil {
+			if err := subscriber.Update(ctx, tx, scope); err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrSubscriberNotFound
 				}
@@ -322,7 +322,7 @@ func (s *Service) DeleteSubscriber(
 
 	return s.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			var subscriber coredata.MailingListSubscriber
 			if err := subscriber.LoadByID(ctx, tx, scope, id); err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
@@ -365,7 +365,7 @@ func (s *Service) CountSubscribers(
 
 	err := s.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) (err error) {
+		func(ctx context.Context, conn pg.Querier) (err error) {
 			subscribers := coredata.MailingListSubscribers{}
 			count, err = subscribers.CountByMailingListID(ctx, conn, scope, mailingListID)
 			if err != nil {
@@ -391,7 +391,7 @@ func (s *Service) ListSubscribers(
 
 	err := s.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			if err := subscribers.LoadByMailingListID(ctx, conn, scope, mailingListID, cursor); err != nil {
 				return fmt.Errorf("cannot load mailing list subscribers: %w", err)
 			}
@@ -427,11 +427,11 @@ func (s *Service) CreateMailingListUpdate(
 		UpdatedAt:     now,
 	}
 
-	err := s.pg.WithConn(
+	err := s.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			var ml coredata.MailingList
-			if err := ml.LoadByID(ctx, conn, scope, mailingListID); err != nil {
+			if err := ml.LoadByID(ctx, tx, scope, mailingListID); err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrMailingListNotFound
 				}
@@ -440,7 +440,7 @@ func (s *Service) CreateMailingListUpdate(
 
 			mlu.OrganizationID = ml.OrganizationID
 
-			if err := mlu.Insert(ctx, conn, scope); err != nil {
+			if err := mlu.Insert(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot insert mailing list update: %w", err)
 			}
 
@@ -463,7 +463,7 @@ func (s *Service) GetMailingListUpdate(
 
 	err := s.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			if err := mlu.LoadByID(ctx, conn, scope, id); err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrMailingListUpdateNotFound
@@ -491,10 +491,10 @@ func (s *Service) UpdateMailingListUpdate(
 	scope := coredata.NewScopeFromObjectID(req.ID)
 	var mlu coredata.MailingListUpdate
 
-	err := s.pg.WithConn(
+	err := s.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
-			if err := mlu.LoadByID(ctx, conn, scope, req.ID); err != nil {
+		func(ctx context.Context, tx pg.Tx) error {
+			if err := mlu.LoadByID(ctx, tx, scope, req.ID); err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrMailingListUpdateNotFound
 				}
@@ -513,7 +513,7 @@ func (s *Service) UpdateMailingListUpdate(
 			}
 			mlu.UpdatedAt = time.Now()
 
-			if err := mlu.Update(ctx, conn, scope); err != nil {
+			if err := mlu.Update(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot update mailing list update: %w", err)
 			}
 
@@ -534,10 +534,10 @@ func (s *Service) SendMailingListUpdate(
 	scope := coredata.NewScopeFromObjectID(id)
 	var mlu coredata.MailingListUpdate
 
-	err := s.pg.WithConn(
+	err := s.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
-			if err := mlu.LoadByID(ctx, conn, scope, id); err != nil {
+		func(ctx context.Context, tx pg.Tx) error {
+			if err := mlu.LoadByID(ctx, tx, scope, id); err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrMailingListUpdateNotFound
 				}
@@ -551,7 +551,7 @@ func (s *Service) SendMailingListUpdate(
 			mlu.Status = coredata.MailingListUpdateStatusEnqueued
 			mlu.UpdatedAt = time.Now()
 
-			if err := mlu.Update(ctx, conn, scope); err != nil {
+			if err := mlu.Update(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot queue mailing list update for sending: %w", err)
 			}
 
@@ -571,11 +571,11 @@ func (s *Service) DeleteMailingListUpdate(
 ) error {
 	scope := coredata.NewScopeFromObjectID(id)
 
-	return s.pg.WithConn(
+	return s.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			mlu := coredata.MailingListUpdate{ID: id}
-			if err := mlu.Delete(ctx, conn, scope); err != nil {
+			if err := mlu.Delete(ctx, tx, scope); err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrMailingListUpdateNotFound
 				}
@@ -596,7 +596,7 @@ func (s *Service) ListMailingListUpdates(
 
 	err := s.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			if err := items.LoadByMailingListID(ctx, conn, scope, mailingListID, cursor); err != nil {
 				return fmt.Errorf("cannot load mailing list updates: %w", err)
 			}
@@ -620,7 +620,7 @@ func (s *Service) ListSentMailingListUpdates(
 
 	err := s.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			if err := items.LoadSentByMailingListID(ctx, conn, scope, mailingListID, cursor); err != nil {
 				return fmt.Errorf("cannot load sent mailing list updates: %w", err)
 			}
@@ -643,7 +643,7 @@ func (s *Service) CountMailingListUpdates(
 
 	err := s.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			var items coredata.MailingListUpdateItems
 			var err error
 			count, err = items.CountByMailingListID(ctx, conn, scope, mailingListID)
@@ -676,7 +676,7 @@ func (s *Service) CreateUpdateEmails(
 
 	return s.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			var subscribers coredata.MailingListSubscribers
 			if err := subscribers.LoadAllConfirmedByMailingListID(ctx, tx, scope, mailingListID); err != nil {
 				return fmt.Errorf("cannot load confirmed subscribers: %w", err)

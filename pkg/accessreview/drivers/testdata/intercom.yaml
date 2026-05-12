@@ -1,0 +1,65 @@
+---
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.intercom.io
+        headers:
+            Accept:
+                - application/json
+            Intercom-Version:
+                - "2.11"
+        url: https://api.intercom.io/admins
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"type":"admin.list","admins":[{"type":"admin","email":"john@example.com","id":"1000001","name":"John Smith","away_mode_enabled":false,"away_mode_reassign":false,"has_inbox_seat":true,"team_ids":[],"team_priority_level":{}},{"type":"admin","email":"operator+abc12345@intercom.io","id":"1000002","name":"Fin","away_mode_enabled":false,"away_mode_reassign":false,"has_inbox_seat":false,"team_ids":[],"team_priority_level":{}},{"type":"admin","email":"jane@example.com","id":"1000003","name":"Jane Doe","away_mode_enabled":false,"away_mode_reassign":false,"has_inbox_seat":false,"team_ids":[],"team_priority_level":{}},{"type":"admin","email":"alice@example.com","id":"1000004","name":"Alice Martin","away_mode_enabled":false,"away_mode_reassign":false,"has_inbox_seat":true,"team_ids":[],"team_priority_level":{}},{"type":"admin","email":"bob@example.com","id":"1000005","name":"Bob Wilson","away_mode_enabled":false,"away_mode_reassign":false,"has_inbox_seat":true,"team_ids":[],"team_priority_level":{}}]}'
+        headers:
+            Cache-Control:
+                - max-age=0, private, must-revalidate
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Thu, 26 Mar 2026 12:54:52 GMT
+            Etag:
+                - W/"30ffa246aba4cabfe8d217fabf428f69"
+            Intercom-Version:
+                - "2.11"
+            Referrer-Policy:
+                - strict-origin-when-cross-origin
+            Server:
+                - nginx
+            Status:
+                - 200 OK
+            Strict-Transport-Security:
+                - max-age=31556952; includeSubDomains; preload
+            Vary:
+                - Accept-Encoding
+                - Accept
+            X-Ami-Version:
+                - ami-050d1869df3666e48
+            X-Content-Type-Options:
+                - nosniff
+            X-Frame-Options:
+                - SAMEORIGIN
+            X-Intercom-Version:
+                - 84c7300b1acdba8bde4ff55a5b497e18b5f93395
+            X-Request-Id:
+                - 003s581hrq58akdvapk0
+            X-Request-Queueing:
+                - "0"
+            X-Runtime:
+                - "0.150437"
+            X-Xss-Protection:
+                - 1; mode=block
+        status: 200 OK
+        code: 200
+        duration: 430.684583ms

@@ -75,6 +75,7 @@ Signed-off-by: John Doe <john.doe@example.org>
 4. Build the project:
 
    ```bash
+   make generate WITH_APPS=1
    make build
    ```
 
@@ -84,7 +85,18 @@ Signed-off-by: John Doe <john.doe@example.org>
    make stack-up
    ```
 
-6. Start the development servers:
+6. Generate the local dev config (writes `cfg/dev.yaml`):
+
+   ```bash
+   # Optional: override any dev default (secrets, OAuth clients, LLM keys).
+   # cp .env.example .env && $EDITOR .env
+
+   make dev-config
+   ```
+
+   The target stashes a dev-only RSA signing key under `cfg/.dev-oauth2-signing-key.pem` so tokens survive probod restarts, and sources `.env` if present so you can override defaults without editing the Makefile. `cfg/dev.yaml`, `.env`, and the signing key are all gitignored. Re-run the target to regenerate.
+
+7. Start the development servers:
 
    ```bash
    # In one terminal - start the API server
@@ -94,7 +106,7 @@ Signed-off-by: John Doe <john.doe@example.org>
    npm -w @probo/console run dev
    ```
 
-The application should now be running at `http://localhost:3000`
+The application should now be running at `http://localhost:5173`
 
 For detailed information about all Docker services in the development stack, see [Docker Services Documentation](docs/DOCKER_SERVICES.md).
 

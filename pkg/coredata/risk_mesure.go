@@ -39,7 +39,7 @@ type (
 
 func (rm RiskMeasure) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -73,7 +73,7 @@ VALUES (
 
 func (rm RiskMeasure) Delete(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 	riskID gid.GID,
 	measureID gid.GID,

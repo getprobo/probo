@@ -22,6 +22,8 @@ import (
 	"github.com/spf13/cobra"
 	"go.probo.inc/probo/pkg/cli/api"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
+	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/docgen"
 )
 
 const viewQuery = `
@@ -34,6 +36,8 @@ query($id: ID!) {
       name
       description
       bestPractice
+      notImplementedJustification
+      maturityLevel
       framework {
         id
         name
@@ -47,13 +51,15 @@ query($id: ID!) {
 
 type viewResponse struct {
 	Node *struct {
-		Typename     string  `json:"__typename"`
-		ID           string  `json:"id"`
-		SectionTitle string  `json:"sectionTitle"`
-		Name         string  `json:"name"`
-		Description  *string `json:"description"`
-		BestPractice bool    `json:"bestPractice"`
-		Framework    struct {
+		Typename                    string  `json:"__typename"`
+		ID                          string  `json:"id"`
+		SectionTitle                string  `json:"sectionTitle"`
+		Name                        string  `json:"name"`
+		Description                 *string `json:"description"`
+		BestPractice                bool    `json:"bestPractice"`
+		NotImplementedJustification *string `json:"notImplementedJustification"`
+		MaturityLevel               string  `json:"maturityLevel"`
+		Framework                   struct {
 			ID   string `json:"id"`
 			Name string `json:"name"`
 		} `json:"framework"`
@@ -89,6 +95,7 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 				hc.Token,
 				"/api/console/v1/graphql",
 				cfg.HTTPTimeoutDuration(),
+				cmdutil.TokenRefreshOption(cfg, host, hc),
 			)
 
 			data, err := client.Do(
@@ -137,6 +144,10 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 				bp = "Yes"
 			}
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Best Practice:"), bp)
+			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Maturity:"), docgen.MaturityLabel(coredata.ControlMaturityLevel(c.MaturityLevel)))
+			if c.MaturityLevel == "NONE" && c.NotImplementedJustification != nil && *c.NotImplementedJustification != "" {
+				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Justification:"), *c.NotImplementedJustification)
+			}
 
 			_, _ = fmt.Fprintln(out)
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Created:"), cmdutil.FormatTime(c.CreatedAt))

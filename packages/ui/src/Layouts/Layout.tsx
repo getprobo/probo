@@ -1,3 +1,17 @@
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
 import { clsx } from "clsx";
 import {
   createContext,
@@ -41,8 +55,8 @@ export function Layout({
   );
   return (
     <LayoutContext value={layoutContext}>
-      <div className="text-txt-primary bg-level-0">
-        <header className="absolute z-2 left-0 right-0 px-4 flex items-center border-b border-border-solid h-12 bg-level-0">
+      <div className="text-txt-primary bg-level-0 min-h-screen">
+        <header className="fixed top-0 z-2 left-0 right-0 px-4 flex items-center border-b border-border-solid h-12 bg-level-0">
           <Link to="/">
             <Logo className="w-12 h-5" />
           </Link>
@@ -63,15 +77,15 @@ export function Layout({
           )}
           <div className="ml-auto">{headerTrailing}</div>
         </header>
-        <div className="flex h-screen" id="main">
+        <div className="flex min-h-screen" id="main">
           {sidebar && <Sidebar>{sidebar}</Sidebar>}
           <main
             className={clsx(
-              "overflow-y-auto w-full mt-12 transition-all duration-300",
+              "w-full mt-12 transition-all duration-300",
               hasDrawer && "pr-105",
             )}
           >
-            <div className="py-12 px-8 max-w-[1200px] w-full mx-auto">
+            <div className="py-12 px-8 max-w-[1200px] w-full mx-auto min-h-[calc(100vh-48px)]">
               {children}
             </div>
           </main>
@@ -97,7 +111,7 @@ export function Drawer({
   return createPortal(
     <aside
       className={clsx(
-        "absolute pt-20 top-0 right-0 w-105 px-6 pb-8 border-border-solid border-l h-screen",
+        "fixed pt-20 top-0 right-0 w-105 px-6 pb-8 border-border-solid border-l h-screen bg-level-0",
         className,
       )}
     >

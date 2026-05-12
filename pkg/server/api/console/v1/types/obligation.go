@@ -30,7 +30,6 @@ type (
 
 		Resolver any
 		ParentID gid.GID
-		Filter   *ObligationFilter
 	}
 )
 
@@ -38,7 +37,6 @@ func NewObligationConnection(
 	p *page.Page[*coredata.Obligation, coredata.ObligationOrderField],
 	parentType any,
 	parentID gid.GID,
-	filter *ObligationFilter,
 ) *ObligationConnection {
 	edges := make([]*ObligationEdge, len(p.Data))
 	for i, obligation := range p.Data {
@@ -51,15 +49,12 @@ func NewObligationConnection(
 
 		Resolver: parentType,
 		ParentID: parentID,
-		Filter:   filter,
 	}
 }
 
 func NewObligation(cr *coredata.Obligation) *Obligation {
 	return &Obligation{
-		ID:         cr.ID,
-		SnapshotID: cr.SnapshotID,
-		SourceID:   cr.SourceID,
+		ID: cr.ID,
 		Organization: &Organization{
 			ID: cr.OrganizationID,
 		},

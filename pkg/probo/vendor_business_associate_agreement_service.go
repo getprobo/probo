@@ -75,7 +75,7 @@ func (s VendorBusinessAssociateAgreementService) GetByVendorID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			vendorBusinessAssociateAgreement = &coredata.VendorBusinessAssociateAgreement{}
 			if err := vendorBusinessAssociateAgreement.LoadByVendorID(ctx, conn, s.svc.scope, vendorID); err != nil {
 				return fmt.Errorf("cannot load vendor business associate agreement: %w", err)
@@ -116,7 +116,7 @@ func (s VendorBusinessAssociateAgreementService) Upload(
 
 	err = s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Tx) error {
 			vendor := &coredata.Vendor{}
 			if err := vendor.LoadByID(ctx, conn, s.svc.scope, vendorID); err != nil {
 				return fmt.Errorf("cannot load vendor: %w", err)
@@ -203,7 +203,7 @@ func (s VendorBusinessAssociateAgreementService) Get(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			vendorBusinessAssociateAgreement = &coredata.VendorBusinessAssociateAgreement{}
 			if err := vendorBusinessAssociateAgreement.LoadByID(ctx, conn, s.svc.scope, vendorBusinessAssociateAgreementID); err != nil {
 				return fmt.Errorf("cannot load vendor business associate agreement: %w", err)
@@ -234,7 +234,7 @@ func (s VendorBusinessAssociateAgreementService) GenerateFileURL(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			vendorBusinessAssociateAgreement := &coredata.VendorBusinessAssociateAgreement{}
 			if err := vendorBusinessAssociateAgreement.LoadByID(ctx, conn, s.svc.scope, vendorBusinessAssociateAgreementID); err != nil {
 				return fmt.Errorf("cannot load vendor business associate agreement: %w", err)
@@ -287,7 +287,7 @@ func (s VendorBusinessAssociateAgreementService) Update(
 
 	err := s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Tx) error {
 			if err := existingAgreement.LoadByVendorID(ctx, conn, s.svc.scope, vendorID); err != nil {
 				return fmt.Errorf("cannot load existing vendor business associate agreement: %w", err)
 			}
@@ -327,7 +327,7 @@ func (s VendorBusinessAssociateAgreementService) Delete(
 ) error {
 	return s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Tx) error {
 			vendorBusinessAssociateAgreement := &coredata.VendorBusinessAssociateAgreement{}
 			if err := vendorBusinessAssociateAgreement.LoadByID(ctx, conn, s.svc.scope, vendorBusinessAssociateAgreementID); err != nil {
 				return fmt.Errorf("cannot load vendor business associate agreement: %w", err)
@@ -348,7 +348,7 @@ func (s VendorBusinessAssociateAgreementService) DeleteByVendorID(
 ) error {
 	return s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Tx) error {
 			vendorBusinessAssociateAgreement := &coredata.VendorBusinessAssociateAgreement{}
 			if err := vendorBusinessAssociateAgreement.LoadByVendorID(ctx, conn, s.svc.scope, vendorID); err != nil {
 				return fmt.Errorf("cannot load vendor business associate agreement: %w", err)

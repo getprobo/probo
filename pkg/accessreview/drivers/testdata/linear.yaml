@@ -1,0 +1,66 @@
+---
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 323
+        host: api.linear.app
+        body: '{"query":"\nquery AccessReviewLinearUsers($after: String) {\n  users(first: 100, after: $after) {\n    nodes {\n      id\n      email\n      name\n      active\n      admin\n      guest\n      lastSeen\n      createdAt\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n","variables":{"after":null}}'
+        headers:
+            Accept:
+                - application/json
+            Content-Type:
+                - application/json
+        url: https://api.linear.app/graphql
+        method: POST
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: |
+            {"data":{"users":{"nodes":[{"id":"00000001-0000-0000-0000-000000000001","email":"bot-integration@linear.linear.app","name":"Linear","active":true,"admin":false,"guest":false,"lastSeen":"2026-03-24T17:27:44.095Z","createdAt":"2026-03-24T17:27:43.979Z"},{"id":"00000001-0000-0000-0000-000000000002","email":"bot-cursor@oauthapp.linear.app","name":"Cursor","active":true,"admin":false,"guest":false,"lastSeen":"2026-03-17T14:02:50.975Z","createdAt":"2026-03-17T14:02:50.855Z"},{"id":"00000001-0000-0000-0000-000000000003","email":"jane@example.com","name":"Jane Doe","active":true,"admin":false,"guest":false,"lastSeen":"2026-03-09T12:49:53.331Z","createdAt":"2025-01-20T09:12:11.959Z"},{"id":"00000001-0000-0000-0000-000000000004","email":"john@example.com","name":"John Smith","active":true,"admin":true,"guest":false,"lastSeen":"2026-03-26T12:33:50.957Z","createdAt":"2024-07-01T13:19:57.427Z"}],"pageInfo":{"hasNextPage":false,"endCursor":"00000001-0000-0000-0000-000000000004"}}}}
+        headers:
+            Alt-Svc:
+                - h3=":443"; ma=86400
+            Cache-Control:
+                - no-store
+            Cf-Cache-Status:
+                - DYNAMIC
+            Cf-Ray:
+                - 9e264c7e18b111f4-CDG
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Thu, 26 Mar 2026 12:53:32 GMT
+            Etag:
+                - W/"41d-Oqy6gPJu1qx5Quzm0QLcNk/BcEY"
+            Server:
+                - cloudflare
+            Vary:
+                - Accept-Encoding
+            Via:
+                - 1.1 google
+            X-Complexity:
+                - "300"
+            X-Ratelimit-Complexity-Limit:
+                - "3000000"
+            X-Ratelimit-Complexity-Remaining:
+                - "2999700"
+            X-Ratelimit-Complexity-Reset:
+                - "1774533212671"
+            X-Ratelimit-Requests-Limit:
+                - "5000"
+            X-Ratelimit-Requests-Remaining:
+                - "4999"
+            X-Ratelimit-Requests-Reset:
+                - "1774533212671"
+            X-Request-Id:
+                - 9e264c7f056511f4-CDG
+        status: 200 OK
+        code: 200
+        duration: 240.856ms

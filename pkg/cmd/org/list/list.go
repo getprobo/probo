@@ -104,6 +104,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				hc.Token,
 				"/api/connect/v1/graphql",
 				cfg.HTTPTimeoutDuration(),
+				cmdutil.TokenRefreshOption(cfg, host, hc),
 			)
 
 			variables := map[string]any{

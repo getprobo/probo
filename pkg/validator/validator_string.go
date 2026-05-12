@@ -68,6 +68,30 @@ func MaxLen(maxLength int) ValidatorFunc {
 	}
 }
 
+// ContainsSubstring validates that a string contains the specified substring.
+func ContainsSubstring(substr string) ValidatorFunc {
+	return func(value any) *ValidationError {
+		actualValue, isNil := dereferenceValue(value)
+		if isNil {
+			return nil
+		}
+
+		str, ok := actualValue.(string)
+		if !ok {
+			return newValidationError(ErrorCodeInvalidFormat, "value must be a string")
+		}
+
+		if !strings.Contains(str, substr) {
+			return newValidationError(
+				ErrorCodeInvalidFormat,
+				fmt.Sprintf("must contain %q", substr),
+			)
+		}
+
+		return nil
+	}
+}
+
 // OneOfSlice validates that a value is one of the allowed values in the slice.
 // Accepts a slice of any type. Compares by value first, then by string representation.
 func OneOfSlice[T any](allowed []T) ValidatorFunc {

@@ -61,7 +61,7 @@ func (rr *RightsRequest) CursorKey(field RightsRequestOrderField) page.CursorKey
 }
 
 // AuthorizationAttributes returns the authorization attributes for policy evaluation.
-func (rr *RightsRequest) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+func (rr *RightsRequest) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	q := `SELECT organization_id FROM rights_requests WHERE id = $1 LIMIT 1;`
 
 	var organizationID gid.GID
@@ -77,7 +77,7 @@ func (rr *RightsRequest) AuthorizationAttributes(ctx context.Context, conn pg.Co
 
 func (rr *RightsRequest) LoadByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	rightsRequestID gid.GID,
 ) error {
@@ -128,7 +128,7 @@ LIMIT 1;
 
 func (rrs *RightsRequests) CountByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 ) (int, error) {
@@ -160,7 +160,7 @@ WHERE
 
 func (rrs *RightsRequests) LoadByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 	cursor *page.Cursor[RightsRequestOrderField],
@@ -209,7 +209,7 @@ WHERE
 
 func (rr *RightsRequest) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -267,7 +267,7 @@ INSERT INTO rights_requests (
 
 func (rr *RightsRequest) Update(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -310,7 +310,7 @@ WHERE
 
 func (rr *RightsRequest) Delete(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `

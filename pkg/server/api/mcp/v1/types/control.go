@@ -27,8 +27,8 @@ func NewControl(c *coredata.Control) *Control {
 		Name:                        c.Name,
 		Description:                 c.Description,
 		BestPractice:                c.BestPractice,
-		Implemented:                 ControlImplemented(c.Implemented),
 		NotImplementedJustification: c.NotImplementedJustification,
+		MaturityLevel:               ControlMaturityLevel(c.MaturityLevel),
 		CreatedAt:                   c.CreatedAt,
 		UpdatedAt:                   c.UpdatedAt,
 	}

@@ -30,65 +30,40 @@ import (
 
 type (
 	DocumentVersion struct {
-		ID             gid.GID                `db:"id"`
-		OrganizationID gid.GID                `db:"organization_id"`
-		DocumentID     gid.GID                `db:"document_id"`
-		Title          string                 `db:"title"`
-		Major          int                    `db:"major"`
-		Minor          int                    `db:"minor"`
-		Classification DocumentClassification `db:"classification"`
-		Content        string                 `db:"content"`
-		Changelog      string                 `db:"changelog"`
-		Status         DocumentVersionStatus  `db:"status"`
-		PublishedAt    *time.Time             `db:"published_at"`
-		CreatedAt      time.Time              `db:"created_at"`
-		UpdatedAt      time.Time              `db:"updated_at"`
+		ID              gid.GID                    `db:"id"`
+		OrganizationID  gid.GID                    `db:"organization_id"`
+		DocumentID      gid.GID                    `db:"document_id"`
+		Title           string                     `db:"title"`
+		Major           int                        `db:"major"`
+		Minor           int                        `db:"minor"`
+		Classification  DocumentClassification     `db:"classification"`
+		DocumentType    DocumentType               `db:"document_type"`
+		Content         string                     `db:"content"`
+		Changelog       string                     `db:"changelog"`
+		Status          DocumentVersionStatus      `db:"status"`
+		Orientation     DocumentVersionOrientation `db:"orientation"`
+		FileID          *gid.GID                   `db:"file_id"`
+		PdfAttemptCount int                        `db:"pdf_attempt_count"`
+		PublishedAt     *time.Time                 `db:"published_at"`
+		CreatedAt       time.Time                  `db:"created_at"`
+		UpdatedAt       time.Time                  `db:"updated_at"`
 	}
 
 	DocumentVersions []*DocumentVersion
 )
 
 // AuthorizationAttributes returns the authorization attributes for policy evaluation.
-func (dv *DocumentVersion) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+func (dv *DocumentVersion) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	q := `
-WITH document_version AS (
-	SELECT id, document_id, organization_id, status AS version_status
-	FROM document_versions
-	WHERE id = $1
-	LIMIT 1
-),
-document AS (
-	SELECT d.id, d.status
-	FROM documents d
-	INNER JOIN document_version ON d.id = document_version.document_id
-),
-last_quorum AS (
-	SELECT
-		q.version_id,
-		q.status::text AS status
-	FROM document_version_approval_quorums q
-	INNER JOIN document_version ON q.version_id = document_version.id
-	ORDER BY q.created_at DESC
-	LIMIT 1
-)
-SELECT
-	document_version.organization_id,
-	document.status,
-	document_version.version_status,
-	COALESCE(lq.status, '')
-FROM document_version
-INNER JOIN document ON document.id = document_version.document_id
-LEFT JOIN last_quorum lq ON lq.version_id = document_version.id;
+SELECT organization_id
+FROM document_versions
+WHERE id = $1
+LIMIT 1;
 `
 
-	var (
-		organizationID        gid.GID
-		documentStatus        DocumentStatus
-		documentVersionStatus DocumentVersionStatus
-		lastQuorumStatus      string
-	)
+	var organizationID gid.GID
 
-	if err := conn.QueryRow(ctx, q, dv.ID).Scan(&organizationID, &documentStatus, &documentVersionStatus, &lastQuorumStatus); err != nil {
+	if err := conn.QueryRow(ctx, q, dv.ID).Scan(&organizationID); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrResourceNotFound
 		}
@@ -96,16 +71,13 @@ LEFT JOIN last_quorum lq ON lq.version_id = document_version.id;
 	}
 
 	return map[string]string{
-		"organization_id":    organizationID.String(),
-		"document_status":    documentStatus.String(),
-		"version_status":     documentVersionStatus.String(),
-		"last_quorum_status": lastQuorumStatus,
+		"organization_id": organizationID.String(),
 	}, nil
 }
 
 func (dv *DocumentVersions) LoadByDocumentID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	documentID gid.GID,
 	cursor *page.Cursor[DocumentVersionOrderField],
@@ -120,9 +92,13 @@ SELECT
 	major,
 	minor,
 	classification,
+	document_type,
 	content,
 	changelog,
 	status,
+	orientation,
+	file_id,
+	pdf_attempt_count,
 	published_at,
 	created_at,
 	updated_at
@@ -169,7 +145,7 @@ func (dv DocumentVersion) CursorKey(orderBy DocumentVersionOrderField) page.Curs
 
 func (dv *DocumentVersion) LoadByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	documentVersionID gid.GID,
 ) error {
@@ -182,9 +158,13 @@ SELECT
 	major,
 	minor,
 	classification,
+	document_type,
 	content,
 	changelog,
 	status,
+	orientation,
+	file_id,
+	pdf_attempt_count,
 	published_at,
 	created_at,
 	updated_at
@@ -210,6 +190,9 @@ LIMIT 1;
 
 	documentVersion, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[DocumentVersion])
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
 		return fmt.Errorf("cannot collect document version: %w", err)
 	}
 
@@ -220,7 +203,7 @@ LIMIT 1;
 
 func (dv DocumentVersion) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -233,9 +216,14 @@ INSERT INTO document_versions (
 	major,
 	minor,
 	classification,
+	document_type,
 	content,
 	changelog,
 	status,
+	orientation,
+	file_id,
+	pdf_attempt_count,
+	published_at,
 	created_at,
 	updated_at
 )
@@ -248,27 +236,37 @@ VALUES (
 	@major,
 	@minor,
 	@classification,
+	@document_type,
 	@content,
 	@changelog,
 	@status,
+	@orientation,
+	@file_id,
+	@pdf_attempt_count,
+	@published_at,
 	@created_at,
 	@updated_at
 )
 `
 	args := pgx.StrictNamedArgs{
-		"tenant_id":       scope.GetTenantID(),
-		"id":              dv.ID,
-		"organization_id": dv.OrganizationID,
-		"document_id":     dv.DocumentID,
-		"title":           dv.Title,
-		"major":           dv.Major,
-		"minor":           dv.Minor,
-		"classification":  dv.Classification,
-		"content":         dv.Content,
-		"changelog":       dv.Changelog,
-		"status":          dv.Status,
-		"created_at":      dv.CreatedAt,
-		"updated_at":      dv.UpdatedAt,
+		"tenant_id":         scope.GetTenantID(),
+		"id":                dv.ID,
+		"organization_id":   dv.OrganizationID,
+		"document_id":       dv.DocumentID,
+		"title":             dv.Title,
+		"major":             dv.Major,
+		"minor":             dv.Minor,
+		"classification":    dv.Classification,
+		"document_type":     dv.DocumentType,
+		"content":           dv.Content,
+		"changelog":         dv.Changelog,
+		"status":            dv.Status,
+		"orientation":       dv.Orientation,
+		"file_id":           dv.FileID,
+		"pdf_attempt_count": dv.PdfAttemptCount,
+		"published_at":      dv.PublishedAt,
+		"created_at":        dv.CreatedAt,
+		"updated_at":        dv.UpdatedAt,
 	}
 
 	_, err := conn.Exec(ctx, q, args)
@@ -276,7 +274,7 @@ VALUES (
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
 			if pgErr.Code == "23505" {
-				if pgErr.ConstraintName == "document_versions_document_id_major_minor_key" || pgErr.ConstraintName == "document_one_draft_version_idx" {
+				if pgErr.ConstraintName == "document_versions_document_id_major_minor_key" || pgErr.ConstraintName == "document_one_active_version_idx" {
 					return ErrResourceAlreadyExists
 				}
 			}
@@ -289,7 +287,7 @@ VALUES (
 
 func (dv *DocumentVersion) LoadByDocumentIDAndVersion(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	documentID gid.GID,
 	major int,
@@ -304,9 +302,13 @@ SELECT
 	major,
 	minor,
 	classification,
+	document_type,
 	content,
 	changelog,
 	status,
+	orientation,
+	file_id,
+	pdf_attempt_count,
 	published_at,
 	created_at,
 	updated_at
@@ -336,6 +338,9 @@ LIMIT 1;
 
 	documentVersion, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[DocumentVersion])
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
 		return fmt.Errorf("cannot collect document version: %w", err)
 	}
 
@@ -346,7 +351,7 @@ LIMIT 1;
 
 func (dv *DocumentVersion) LoadLatestVersion(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	documentID gid.GID,
 ) error {
@@ -359,9 +364,13 @@ SELECT
 	major,
 	minor,
 	classification,
+	document_type,
 	content,
 	changelog,
 	status,
+	orientation,
+	file_id,
+	pdf_attempt_count,
 	published_at,
 	created_at,
 	updated_at
@@ -387,6 +396,9 @@ LIMIT 1;
 
 	documentVersion, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[DocumentVersion])
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
 		return fmt.Errorf("cannot collect document version: %w", err)
 	}
 
@@ -397,7 +409,7 @@ LIMIT 1;
 
 func (dv *DocumentVersion) LoadLatestPublishedVersion(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	documentID gid.GID,
 ) error {
@@ -410,9 +422,13 @@ SELECT
 	major,
 	minor,
 	classification,
+	document_type,
 	content,
 	changelog,
 	status,
+	orientation,
+	file_id,
+	pdf_attempt_count,
 	published_at,
 	created_at,
 	updated_at
@@ -440,6 +456,9 @@ LIMIT 1;
 
 	documentVersion, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[DocumentVersion])
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
 		return fmt.Errorf("cannot collect document version: %w", err)
 	}
 
@@ -450,7 +469,7 @@ LIMIT 1;
 
 func (dv DocumentVersion) Update(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -463,6 +482,10 @@ UPDATE document_versions SET
 	content = @content,
 	published_at = @published_at,
 	classification = @classification,
+	document_type = @document_type,
+	orientation = @orientation,
+	file_id = @file_id,
+	pdf_attempt_count = @pdf_attempt_count,
 	updated_at = @updated_at
 WHERE %s
 	AND id = @document_version_id
@@ -480,6 +503,10 @@ WHERE %s
 		"content":             dv.Content,
 		"published_at":        dv.PublishedAt,
 		"classification":      dv.Classification,
+		"document_type":       dv.DocumentType,
+		"orientation":         dv.Orientation,
+		"file_id":             dv.FileID,
+		"pdf_attempt_count":   dv.PdfAttemptCount,
 		"updated_at":          dv.UpdatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
@@ -494,7 +521,7 @@ WHERE %s
 
 func (dv DocumentVersion) Delete(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -518,9 +545,90 @@ WHERE %s
 	return nil
 }
 
+func (dv *DocumentVersion) ClaimNextPublishedWithoutFileForUpdate(
+	ctx context.Context,
+	conn pg.Tx,
+	maxAttempts int,
+) error {
+	q := `
+SELECT
+	dv.id,
+	dv.organization_id,
+	dv.document_id,
+	dv.title,
+	dv.major,
+	dv.minor,
+	dv.classification,
+	dv.document_type,
+	dv.content,
+	dv.changelog,
+	dv.status,
+	dv.orientation,
+	dv.file_id,
+	dv.pdf_attempt_count,
+	dv.published_at,
+	dv.created_at,
+	dv.updated_at
+FROM
+	document_versions dv
+INNER JOIN
+	documents d ON d.id = dv.document_id AND d.tenant_id = dv.tenant_id
+WHERE
+	dv.status = 'PUBLISHED'
+	AND dv.file_id IS NULL
+	AND dv.pdf_attempt_count < @max_pdf_attempts
+	AND d.deleted_at IS NULL
+ORDER BY dv.created_at ASC
+LIMIT 1
+FOR UPDATE OF dv SKIP LOCKED;
+`
+
+	rows, err := conn.Query(ctx, q, pgx.StrictNamedArgs{
+		"max_pdf_attempts": maxAttempts,
+	})
+	if err != nil {
+		return fmt.Errorf("cannot query document versions: %w", err)
+	}
+
+	result, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[DocumentVersion])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrNoDocumentPDFJobAvailable
+		}
+		return fmt.Errorf("cannot collect document version: %w", err)
+	}
+
+	now := time.Now()
+	result.PdfAttemptCount++
+	result.UpdatedAt = now
+
+	uq := `
+UPDATE document_versions SET
+	pdf_attempt_count = @pdf_attempt_count,
+	updated_at = @updated_at
+WHERE
+	tenant_id = @tenant_id
+	AND id = @id
+`
+	uargs := pgx.StrictNamedArgs{
+		"id":                result.ID,
+		"tenant_id":         result.ID.TenantID(),
+		"pdf_attempt_count": result.PdfAttemptCount,
+		"updated_at":        result.UpdatedAt,
+	}
+
+	if _, err := conn.Exec(ctx, uq, uargs); err != nil {
+		return fmt.Errorf("cannot mark document version as generating PDF: %w", err)
+	}
+
+	*dv = result
+
+	return nil
+}
+
 func (dv *DocumentVersions) CountByDocumentID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	documentID gid.GID,
 	filter *DocumentVersionFilter,

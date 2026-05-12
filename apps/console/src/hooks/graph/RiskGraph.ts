@@ -1,3 +1,17 @@
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
 import { useTranslate } from "@probo/i18n";
 import {
   type PreloadedQuery,
@@ -36,10 +50,10 @@ export function useDeleteRiskMutation() {
 }
 
 export const risksQuery = graphql`
-  query RiskGraphListQuery($organizationId: ID!, $snapshotId: ID) {
+  query RiskGraphListQuery($organizationId: ID!) {
     organization: node(id: $organizationId) {
       id
-      ...RiskGraphFragment @arguments(snapshotId: $snapshotId)
+      ...RiskGraphFragment
     }
   }
 `;
@@ -56,22 +70,28 @@ const risksFragment = graphql`
     after: { type: "CursorKey", defaultValue: null }
     before: { type: "CursorKey", defaultValue: null }
     last: { type: "Int", defaultValue: null }
-    snapshotId: { type: "ID", defaultValue: null }
   ) {
     canCreateRisk: permission(action: "core:risk:create")
+    canPublishRisk: permission(action: "core:risk:publish")
+    risksDocument {
+      id
+      currentPublishedMajor
+      currentPublishedMinor
+      defaultApprovers {
+        id
+      }
+    }
     risks(
       first: $first
       after: $after
       last: $last
       before: $before
       orderBy: $order
-      filter: { snapshotId: $snapshotId }
-    ) @connection(key: "RisksListQuery_risks", filters: ["filter"]) {
+    ) @connection(key: "RisksListQuery_risks", filters: []) {
       __id
       edges {
         node {
           id
-          snapshotId
           name
           category
           treatment
@@ -116,7 +136,6 @@ export const riskNodeQuery = graphql`
     node(id: $riskId) {
       ... on Risk {
         id
-        snapshotId
         name
         description
         treatment

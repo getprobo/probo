@@ -27,6 +27,113 @@ import (
 	"go.probo.inc/probo/pkg/page"
 )
 
+func (v Vendor) GetGeneratedDocumentID(
+	ctx context.Context,
+	conn pg.Querier,
+	organizationID gid.GID,
+) (*gid.GID, error) {
+	var documentID *gid.GID
+
+	err := conn.QueryRow(
+		ctx,
+		`
+SELECT
+	vendors_document_id
+FROM
+	generated_documents
+WHERE
+	organization_id = @organization_id
+`,
+		pgx.NamedArgs{"organization_id": organizationID},
+	).Scan(&documentID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("cannot get vendor list document ID: %w", err)
+	}
+
+	return documentID, nil
+}
+
+func (v Vendor) UpsertGeneratedDocumentID(
+	ctx context.Context,
+	conn pg.Tx,
+	organizationID gid.GID,
+	tenantID gid.TenantID,
+	documentID gid.GID,
+) error {
+	now := time.Now()
+
+	_, err := conn.Exec(
+		ctx,
+		`
+INSERT INTO generated_documents (
+	organization_id,
+	tenant_id,
+	vendors_document_id,
+	created_at,
+	updated_at
+) VALUES (
+	@organization_id,
+	@tenant_id,
+	@vendors_document_id,
+	@created_at,
+	@updated_at
+)
+ON CONFLICT (organization_id) DO UPDATE
+SET
+	vendors_document_id = @vendors_document_id,
+	updated_at = @updated_at
+`,
+		pgx.NamedArgs{
+			"organization_id":     organizationID,
+			"tenant_id":           tenantID,
+			"vendors_document_id": documentID,
+			"created_at":          now,
+			"updated_at":          now,
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("cannot upsert vendor list document ID: %w", err)
+	}
+
+	return nil
+}
+
+func (v Vendor) ClearGeneratedDocumentID(
+	ctx context.Context,
+	conn pg.Tx,
+	documentIDs []gid.GID,
+) error {
+	ids := make([]string, len(documentIDs))
+	for i, id := range documentIDs {
+		ids[i] = id.String()
+	}
+
+	_, err := conn.Exec(
+		ctx,
+		`
+UPDATE
+	generated_documents
+SET
+	vendors_document_id = NULL,
+	updated_at = @now
+WHERE
+	vendors_document_id = ANY(@ids)
+`,
+		pgx.NamedArgs{
+			"ids": ids,
+			"now": time.Now(),
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("cannot clear vendor list document references: %w", err)
+	}
+
+	return nil
+}
+
 type (
 	Vendor struct {
 		ID                            gid.GID        `db:"id"`
@@ -52,17 +159,11 @@ type (
 		SecurityPageURL               *string        `db:"security_page_url"`
 		TrustPageURL                  *string        `db:"trust_page_url"`
 		ShowOnTrustCenter             bool           `db:"show_on_trust_center"`
-		SnapshotID                    *gid.GID       `db:"snapshot_id"`
-		SourceID                      *gid.GID       `db:"source_id"`
 		CreatedAt                     time.Time      `db:"created_at"`
 		UpdatedAt                     time.Time      `db:"updated_at"`
 	}
 
 	Vendors []*Vendor
-
-	VendorSnapshotter interface {
-		InsertVendorSnapshots(ctx context.Context, conn pg.Conn, scope Scoper, organizationID, snapshotID gid.GID) error
-	}
 )
 
 func (v Vendor) CursorKey(orderBy VendorOrderField) page.CursorKey {
@@ -78,7 +179,7 @@ func (v Vendor) CursorKey(orderBy VendorOrderField) page.CursorKey {
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (v *Vendor) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+func (v *Vendor) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	q := `SELECT organization_id FROM vendors WHERE id = $1 LIMIT 1;`
 
 	var organizationID gid.GID
@@ -94,7 +195,7 @@ func (v *Vendor) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map
 
 func (v *Vendor) LoadByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	vendorID gid.GID,
 ) error {
@@ -123,8 +224,6 @@ SELECT
     security_page_url,
     trust_page_url,
     show_on_trust_center,
-    snapshot_id,
-    source_id,
     created_at,
     updated_at
 FROM
@@ -162,7 +261,7 @@ LIMIT 1;
 
 func (v *Vendors) LoadByIDs(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	vendorIDs []gid.GID,
 ) error {
@@ -191,8 +290,6 @@ SELECT
     security_page_url,
     trust_page_url,
     show_on_trust_center,
-    snapshot_id,
-    source_id,
     created_at,
     updated_at
 FROM
@@ -224,7 +321,7 @@ WHERE
 
 func (v Vendor) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -253,8 +350,6 @@ INSERT INTO
         security_page_url,
         trust_page_url,
         show_on_trust_center,
-        snapshot_id,
-        source_id,
         created_at,
         updated_at
     )
@@ -282,8 +377,6 @@ VALUES (
     @security_page_url,
     @trust_page_url,
     @show_on_trust_center,
-    @snapshot_id,
-    @source_id,
     @created_at,
     @updated_at
 )
@@ -313,8 +406,6 @@ VALUES (
 		"security_page_url":                v.SecurityPageURL,
 		"trust_page_url":                   v.TrustPageURL,
 		"show_on_trust_center":             v.ShowOnTrustCenter,
-		"snapshot_id":                      v.SnapshotID,
-		"source_id":                        v.SourceID,
 		"created_at":                       v.CreatedAt,
 		"updated_at":                       v.UpdatedAt,
 	}
@@ -324,7 +415,7 @@ VALUES (
 
 func (v Vendor) Delete(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -342,7 +433,7 @@ DELETE FROM vendors WHERE %s AND id = @vendor_id
 
 func (v *Vendors) CountByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 	filter *VendorFilter,
@@ -355,7 +446,8 @@ FROM
 WHERE
     %s
     AND organization_id = @organization_id
-	AND %s
+    AND snapshot_id IS NULL
+    AND %s
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
@@ -375,9 +467,70 @@ WHERE
 	return count, nil
 }
 
+func (v *Vendors) LoadAllByOrganizationID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	organizationID gid.GID,
+) error {
+	q := `
+SELECT
+	id,
+	tenant_id,
+	organization_id,
+	name,
+	description,
+	category,
+	headquarter_address,
+	legal_name,
+	website_url,
+	privacy_policy_url,
+	service_level_agreement_url,
+	data_processing_agreement_url,
+	business_associate_agreement_url,
+	subprocessors_list_url,
+	certifications,
+	countries,
+	business_owner_profile_id,
+	security_owner_profile_id,
+	status_page_url,
+	terms_of_service_url,
+	security_page_url,
+	trust_page_url,
+	show_on_trust_center,
+	created_at,
+	updated_at
+FROM
+	vendors
+WHERE
+	%s
+	AND organization_id = @organization_id
+	AND snapshot_id IS NULL
+ORDER BY name ASC
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"organization_id": organizationID}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query vendors: %w", err)
+	}
+
+	vendors, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Vendor])
+	if err != nil {
+		return fmt.Errorf("cannot collect vendors: %w", err)
+	}
+
+	*v = vendors
+
+	return nil
+}
+
 func (v *Vendors) LoadByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 	cursor *page.Cursor[VendorOrderField],
@@ -408,8 +561,6 @@ SELECT
 	security_page_url,
 	trust_page_url,
 	show_on_trust_center,
-	snapshot_id,
-	source_id,
 	created_at,
 	updated_at
 FROM
@@ -417,6 +568,7 @@ FROM
 WHERE
 	%s
 	AND organization_id = @organization_id
+	AND snapshot_id IS NULL
 	AND %s
 	AND %s
 `
@@ -444,7 +596,7 @@ WHERE
 
 func (v *Vendor) Update(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -509,7 +661,7 @@ WHERE %s
 
 func (v Vendor) ExpireNonExpiredRiskAssessments(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 ) error {
 	now := time.Now()
@@ -543,7 +695,7 @@ func (v Vendor) ExpireNonExpiredRiskAssessments(
 
 func (v *Vendors) CountByAssetID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	assetID gid.GID,
 ) (int, error) {
@@ -582,7 +734,7 @@ WHERE %s
 
 func (v *Vendors) LoadByAssetID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	assetID gid.GID,
 	cursor *page.Cursor[VendorOrderField],
@@ -613,8 +765,6 @@ WITH vend AS (
 		v.security_page_url,
 		v.trust_page_url,
 		v.show_on_trust_center,
-		v.snapshot_id,
-		v.source_id,
 		v.created_at,
 		v.updated_at
 	FROM
@@ -648,8 +798,6 @@ SELECT
 	security_page_url,
 	trust_page_url,
 	show_on_trust_center,
-	snapshot_id,
-	source_id,
 	created_at,
 	updated_at
 FROM
@@ -680,7 +828,7 @@ WHERE %s
 
 func (v *Vendors) CountByDatumID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	datumID gid.GID,
 ) (int, error) {
@@ -717,12 +865,11 @@ WHERE %s
 	return count, nil
 }
 
-func (vs *Vendors) LoadByDatumID(
+func (vs *Vendors) LoadAllByDatumID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	datumID gid.GID,
-	cursor *page.Cursor[VendorOrderField],
 ) error {
 	q := `
 WITH vend AS (
@@ -750,8 +897,6 @@ WITH vend AS (
 		v.security_page_url,
 		v.trust_page_url,
 		v.show_on_trust_center,
-		v.snapshot_id,
-		v.source_id,
 		v.created_at,
 		v.updated_at
 	FROM
@@ -785,8 +930,99 @@ SELECT
 	security_page_url,
 	trust_page_url,
 	show_on_trust_center,
-	snapshot_id,
-	source_id,
+	created_at,
+	updated_at
+FROM
+	vend
+WHERE %s
+ORDER BY name ASC
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"datum_id": datumID}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query vendors: %w", err)
+	}
+
+	vendors, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Vendor])
+	if err != nil {
+		return fmt.Errorf("cannot collect vendors: %w", err)
+	}
+
+	*vs = vendors
+
+	return nil
+}
+
+func (vs *Vendors) LoadByDatumID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	datumID gid.GID,
+	cursor *page.Cursor[VendorOrderField],
+) error {
+	q := `
+WITH vend AS (
+	SELECT
+		v.id,
+		v.tenant_id,
+		v.organization_id,
+		v.name,
+		v.description,
+		v.category,
+		v.headquarter_address,
+		v.legal_name,
+		v.website_url,
+		v.privacy_policy_url,
+		v.service_level_agreement_url,
+		v.data_processing_agreement_url,
+		v.business_associate_agreement_url,
+		v.subprocessors_list_url,
+		v.certifications,
+		v.countries,
+		v.business_owner_profile_id,
+		v.security_owner_profile_id,
+		v.status_page_url,
+		v.terms_of_service_url,
+		v.security_page_url,
+		v.trust_page_url,
+		v.show_on_trust_center,
+		v.created_at,
+		v.updated_at
+	FROM
+		vendors v
+	INNER JOIN
+		data_vendors dv ON v.id = dv.vendor_id
+	WHERE
+		dv.datum_id = @datum_id
+)
+SELECT
+	id,
+	tenant_id,
+	organization_id,
+	name,
+	description,
+	category,
+	headquarter_address,
+	legal_name,
+	website_url,
+	privacy_policy_url,
+	service_level_agreement_url,
+	data_processing_agreement_url,
+	business_associate_agreement_url,
+	subprocessors_list_url,
+	certifications,
+	countries,
+	business_owner_profile_id,
+	security_owner_profile_id,
+	status_page_url,
+	terms_of_service_url,
+	security_page_url,
+	trust_page_url,
+	show_on_trust_center,
 	created_at,
 	updated_at
 FROM
@@ -817,7 +1053,7 @@ WHERE %s
 
 func (v *Vendors) LoadByProcessingActivityID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	processingActivityID gid.GID,
 	cursor *page.Cursor[VendorOrderField],
@@ -848,8 +1084,6 @@ WITH vend AS (
 		v.security_page_url,
 		v.trust_page_url,
 		v.show_on_trust_center,
-		v.snapshot_id,
-		v.source_id,
 		v.created_at,
 		v.updated_at
 	FROM
@@ -883,8 +1117,6 @@ SELECT
 	security_page_url,
 	trust_page_url,
 	show_on_trust_center,
-	snapshot_id,
-	source_id,
 	created_at,
 	updated_at
 FROM
@@ -915,10 +1147,9 @@ WHERE %s
 
 func (v *Vendors) LoadAllByProcessingActivities(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
-	filter *ProcessingActivityFilter,
 ) (map[gid.GID][]string, error) {
 	q := `
 WITH filtered_processing_activities AS (
@@ -929,7 +1160,7 @@ WITH filtered_processing_activities AS (
 	WHERE
 		pa.tenant_id = @tenant_id
 		AND pa.organization_id = @organization_id
-		AND %s
+		AND pa.snapshot_id IS NULL
 ),
 filtered_vendors AS (
 	SELECT
@@ -939,6 +1170,7 @@ filtered_vendors AS (
 		vendors v
 	WHERE
 		v.tenant_id = @tenant_id
+		AND v.snapshot_id IS NULL
 )
 SELECT
 	pav.processing_activity_id,
@@ -954,13 +1186,11 @@ WHERE
 ORDER BY
 	pav.processing_activity_id, fv.name
 	`
-	q = fmt.Sprintf(q, filter.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"organization_id": organizationID,
 	}
 	maps.Copy(args, scope.SQLArguments())
-	maps.Copy(args, filter.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -981,35 +1211,50 @@ ORDER BY
 	return vendorMap, nil
 }
 
-func (d Vendors) InsertDataSnapshots(
+func (vs *Vendors) LoadAllByAssetID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
-	organizationID gid.GID,
-	snapshotID gid.GID,
+	assetID gid.GID,
 ) error {
-	query := `
-WITH
-	source_data AS (
-		SELECT id
-		FROM data
-		WHERE organization_id = @organization_id AND snapshot_id IS NULL
-	),
-	source_data_vendors AS (
-		SELECT datum_id, vendor_id, snapshot_id, created_at
-		FROM data_vendors
-		WHERE datum_id = ANY(SELECT id FROM source_data)
-	),
-	source_vendors AS (
-		SELECT *
-		FROM vendors
-		WHERE %s AND id = ANY(SELECT vendor_id FROM source_data_vendors)
-	)
-INSERT INTO vendors (
-	tenant_id,
+	q := `
+WITH vend AS (
+	SELECT
+		v.id,
+		v.tenant_id,
+		v.organization_id,
+		v.name,
+		v.description,
+		v.category,
+		v.headquarter_address,
+		v.legal_name,
+		v.website_url,
+		v.privacy_policy_url,
+		v.service_level_agreement_url,
+		v.data_processing_agreement_url,
+		v.business_associate_agreement_url,
+		v.subprocessors_list_url,
+		v.certifications,
+		v.countries,
+		v.business_owner_profile_id,
+		v.security_owner_profile_id,
+		v.status_page_url,
+		v.terms_of_service_url,
+		v.security_page_url,
+		v.trust_page_url,
+		v.show_on_trust_center,
+		v.created_at,
+		v.updated_at
+	FROM
+		vendors v
+	INNER JOIN
+		asset_vendors av ON v.id = av.vendor_id
+	WHERE
+		av.asset_id = @asset_id
+)
+SELECT
 	id,
-	snapshot_id,
-	source_id,
+	tenant_id,
 	organization_id,
 	name,
 	description,
@@ -1033,361 +1278,27 @@ INSERT INTO vendors (
 	show_on_trust_center,
 	created_at,
 	updated_at
-)
-SELECT
-	@tenant_id,
-	generate_gid(decode_base64_unpadded(@tenant_id), @vendor_entity_type),
-	@snapshot_id,
-	v.id,
-	v.organization_id,
-	v.name,
-	v.description,
-	v.category,
-	v.headquarter_address,
-	v.legal_name,
-	v.website_url,
-	v.privacy_policy_url,
-	v.service_level_agreement_url,
-	v.data_processing_agreement_url,
-	v.business_associate_agreement_url,
-	v.subprocessors_list_url,
-	v.certifications,
-	v.countries,
-	v.business_owner_profile_id,
-	v.security_owner_profile_id,
-	v.status_page_url,
-	v.terms_of_service_url,
-	v.security_page_url,
-	v.trust_page_url,
-	v.show_on_trust_center,
-	v.created_at,
-	v.updated_at
-FROM source_vendors v
-	`
+FROM
+	vend
+WHERE %s
+ORDER BY name ASC
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
 
-	query = fmt.Sprintf(query, scope.SQLFragment())
-
-	args := pgx.StrictNamedArgs{
-		"tenant_id":          scope.GetTenantID(),
-		"snapshot_id":        snapshotID,
-		"organization_id":    organizationID,
-		"vendor_entity_type": VendorEntityType,
-	}
+	args := pgx.StrictNamedArgs{"asset_id": assetID}
 	maps.Copy(args, scope.SQLArguments())
 
-	_, err := conn.Exec(ctx, query, args)
+	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot insert vendor snapshots: %w", err)
+		return fmt.Errorf("cannot query vendors: %w", err)
 	}
 
-	return nil
-}
-
-func (vs Vendors) InsertAssetSnapshots(
-	ctx context.Context,
-	conn pg.Conn,
-	scope Scoper,
-	organizationID gid.GID,
-	snapshotID gid.GID,
-) error {
-	query := `
-WITH
-	source_assets AS (
-		SELECT id
-		FROM assets
-		WHERE organization_id = @organization_id AND snapshot_id IS NULL
-	),
-	source_asset_vendors AS (
-		SELECT asset_id, vendor_id, snapshot_id, created_at
-		FROM asset_vendors
-		WHERE asset_id = ANY(SELECT id FROM source_assets)
-	),
-	source_vendors AS (
-		SELECT *
-		FROM vendors
-		WHERE %s AND id = ANY(SELECT vendor_id FROM source_asset_vendors)
-	)
-INSERT INTO vendors (
-	tenant_id,
-	id,
-	snapshot_id,
-	source_id,
-	organization_id,
-	name,
-	description,
-	category,
-	headquarter_address,
-	legal_name,
-	website_url,
-	privacy_policy_url,
-	service_level_agreement_url,
-	data_processing_agreement_url,
-	business_associate_agreement_url,
-	subprocessors_list_url,
-	certifications,
-	countries,
-	business_owner_profile_id,
-	security_owner_profile_id,
-	status_page_url,
-	terms_of_service_url,
-	security_page_url,
-	trust_page_url,
-	show_on_trust_center,
-	created_at,
-	updated_at
-)
-SELECT
-	@tenant_id,
-	generate_gid(decode_base64_unpadded(@tenant_id), @vendor_entity_type),
-	@snapshot_id,
-	v.id,
-	v.organization_id,
-	v.name,
-	v.description,
-	v.category,
-	v.headquarter_address,
-	v.legal_name,
-	v.website_url,
-	v.privacy_policy_url,
-	v.service_level_agreement_url,
-	v.data_processing_agreement_url,
-	v.business_associate_agreement_url,
-	v.subprocessors_list_url,
-	v.certifications,
-	v.countries,
-	v.business_owner_profile_id,
-	v.security_owner_profile_id,
-	v.status_page_url,
-	v.terms_of_service_url,
-	v.security_page_url,
-	v.trust_page_url,
-	v.show_on_trust_center,
-	v.created_at,
-	v.updated_at
-FROM source_vendors v
-	`
-
-	query = fmt.Sprintf(query, scope.SQLFragment())
-
-	args := pgx.StrictNamedArgs{
-		"tenant_id":          scope.GetTenantID(),
-		"snapshot_id":        snapshotID,
-		"organization_id":    organizationID,
-		"vendor_entity_type": VendorEntityType,
-	}
-	maps.Copy(args, scope.SQLArguments())
-
-	_, err := conn.Exec(ctx, query, args)
+	vendors, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Vendor])
 	if err != nil {
-		return fmt.Errorf("cannot insert vendor snapshots for assets: %w", err)
+		return fmt.Errorf("cannot collect vendors: %w", err)
 	}
 
-	return nil
-}
-
-func (vs Vendors) InsertProcessingActivitySnapshots(
-	ctx context.Context,
-	conn pg.Conn,
-	scope Scoper,
-	organizationID gid.GID,
-	snapshotID gid.GID,
-) error {
-	query := `
-WITH
-	source_processing_activities AS (
-		SELECT id
-		FROM processing_activities
-		WHERE organization_id = @organization_id AND snapshot_id IS NULL
-	),
-	source_processing_activity_vendors AS (
-		SELECT processing_activity_id, vendor_id, snapshot_id, created_at
-		FROM processing_activity_vendors
-		WHERE processing_activity_id = ANY(SELECT id FROM source_processing_activities)
-	),
-	source_vendors AS (
-		SELECT *
-		FROM vendors
-		WHERE %s AND id = ANY(SELECT vendor_id FROM source_processing_activity_vendors)
-	)
-INSERT INTO vendors (
-	tenant_id,
-	id,
-	snapshot_id,
-	source_id,
-	organization_id,
-	name,
-	description,
-	category,
-	headquarter_address,
-	legal_name,
-	website_url,
-	privacy_policy_url,
-	service_level_agreement_url,
-	data_processing_agreement_url,
-	business_associate_agreement_url,
-	subprocessors_list_url,
-	certifications,
-	countries,
-	business_owner_profile_id,
-	security_owner_profile_id,
-	status_page_url,
-	terms_of_service_url,
-	security_page_url,
-	trust_page_url,
-	show_on_trust_center,
-	created_at,
-	updated_at
-)
-SELECT
-	@tenant_id,
-	generate_gid(decode_base64_unpadded(@tenant_id), @vendor_entity_type),
-	@snapshot_id,
-	v.id,
-	v.organization_id,
-	v.name,
-	v.description,
-	v.category,
-	v.headquarter_address,
-	v.legal_name,
-	v.website_url,
-	v.privacy_policy_url,
-	v.service_level_agreement_url,
-	v.data_processing_agreement_url,
-	v.business_associate_agreement_url,
-	v.subprocessors_list_url,
-	v.certifications,
-	v.countries,
-	v.business_owner_profile_id,
-	v.security_owner_profile_id,
-	v.status_page_url,
-	v.terms_of_service_url,
-	v.security_page_url,
-	v.trust_page_url,
-	v.show_on_trust_center,
-	v.created_at,
-	v.updated_at
-FROM source_vendors v
-	`
-
-	query = fmt.Sprintf(query, scope.SQLFragment())
-
-	args := pgx.StrictNamedArgs{
-		"tenant_id":          scope.GetTenantID(),
-		"snapshot_id":        snapshotID,
-		"organization_id":    organizationID,
-		"vendor_entity_type": VendorEntityType,
-	}
-	maps.Copy(args, scope.SQLArguments())
-
-	_, err := conn.Exec(ctx, query, args)
-	if err != nil {
-		return fmt.Errorf("cannot insert vendor snapshots for processing activities: %w", err)
-	}
-
-	return nil
-}
-
-func (v Vendors) Snapshot(ctx context.Context, conn pg.Conn, scope Scoper, organizationID, snapshotID gid.GID) error {
-	for _, snapshotter := range []VendorSnapshotter{
-		Vendors{},
-		VendorServices{},
-		VendorContacts{},
-		VendorRiskAssessments{},
-		VendorComplianceReports{},
-		VendorBusinessAssociateAgreements{},
-		VendorDataPrivacyAgreements{},
-	} {
-		if err := snapshotter.InsertVendorSnapshots(ctx, conn, scope, organizationID, snapshotID); err != nil {
-			return fmt.Errorf("cannot create vendor snapshots: (%T) %w", snapshotter, err)
-		}
-	}
-
-	return nil
-}
-
-func (v Vendors) InsertVendorSnapshots(
-	ctx context.Context,
-	conn pg.Conn,
-	scope Scoper,
-	organizationID gid.GID,
-	snapshotID gid.GID,
-) error {
-	query := `
-INSERT INTO vendors (
-	tenant_id,
-	id,
-	snapshot_id,
-	source_id,
-	organization_id,
-	name,
-	description,
-	category,
-	headquarter_address,
-	legal_name,
-	website_url,
-	privacy_policy_url,
-	service_level_agreement_url,
-	data_processing_agreement_url,
-	business_associate_agreement_url,
-	subprocessors_list_url,
-	certifications,
-	countries,
-	business_owner_profile_id,
-	security_owner_profile_id,
-	status_page_url,
-	terms_of_service_url,
-	security_page_url,
-	trust_page_url,
-	show_on_trust_center,
-	created_at,
-	updated_at
-)
-SELECT
-	@tenant_id,
-	generate_gid(decode_base64_unpadded(@tenant_id), @vendor_entity_type),
-	@snapshot_id,
-	v.id,
-	v.organization_id,
-	v.name,
-	v.description,
-	v.category,
-	v.headquarter_address,
-	v.legal_name,
-	v.website_url,
-	v.privacy_policy_url,
-	v.service_level_agreement_url,
-	v.data_processing_agreement_url,
-	v.business_associate_agreement_url,
-	v.subprocessors_list_url,
-	v.certifications,
-	v.countries,
-	v.business_owner_profile_id,
-	v.security_owner_profile_id,
-	v.status_page_url,
-	v.terms_of_service_url,
-	v.security_page_url,
-	v.trust_page_url,
-	v.show_on_trust_center,
-	v.created_at,
-	v.updated_at
-FROM vendors v
-WHERE %s AND organization_id = @organization_id AND snapshot_id IS NULL
-	`
-
-	query = fmt.Sprintf(query, scope.SQLFragment())
-
-	args := pgx.StrictNamedArgs{
-		"tenant_id":          scope.GetTenantID(),
-		"snapshot_id":        snapshotID,
-		"organization_id":    organizationID,
-		"vendor_entity_type": VendorEntityType,
-	}
-	maps.Copy(args, scope.SQLArguments())
-
-	_, err := conn.Exec(ctx, query, args)
-	if err != nil {
-		return fmt.Errorf("cannot insert vendor snapshots: %w", err)
-	}
+	*vs = vendors
 
 	return nil
 }

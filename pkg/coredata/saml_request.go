@@ -33,7 +33,7 @@ type SAMLRequest struct {
 
 func (s *SAMLRequest) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 ) error {
 	query := `
 INSERT INTO iam_saml_requests (id, organization_id, created_at, expires_at)
@@ -57,7 +57,7 @@ VALUES (@id, @organization_id, @created_at, @expires_at)
 
 func LoadValidRequestIDsForOrganization(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	organizationID gid.GID,
 	now time.Time,
 ) ([]string, error) {
@@ -89,7 +89,7 @@ WHERE organization_id = @organization_id AND expires_at > @now
 	return requestIDs, nil
 }
 
-func DeleteExpiredSAMLRequests(ctx context.Context, conn pg.Conn, now time.Time) (int64, error) {
+func DeleteExpiredSAMLRequests(ctx context.Context, conn pg.Tx, now time.Time) (int64, error) {
 	query := `
 DELETE FROM iam_saml_requests
 WHERE expires_at < @now

@@ -59,7 +59,7 @@ func (s EvidenceService) Get(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			if err := evidence.LoadByID(ctx, conn, s.svc.scope, evidenceID); err != nil {
 				return fmt.Errorf("cannot load evidence %w", err)
 			}
@@ -104,7 +104,7 @@ func (s EvidenceService) UploadMeasureEvidence(
 
 	err = s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Tx) error {
 			measure := &coredata.Measure{}
 			var file *coredata.File
 			var err error
@@ -155,7 +155,7 @@ func (s EvidenceService) CountForMeasureID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) (err error) {
+		func(ctx context.Context, conn pg.Querier) (err error) {
 			evidences := coredata.Evidences{}
 			count, err = evidences.CountByMeasureID(ctx, conn, s.svc.scope, measureID)
 			if err != nil {
@@ -182,7 +182,7 @@ func (s EvidenceService) ListForMeasureID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			return evidences.LoadByMeasureID(
 				ctx,
 				conn,
@@ -208,7 +208,7 @@ func (s EvidenceService) CountForTaskID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) (err error) {
+		func(ctx context.Context, conn pg.Querier) (err error) {
 			evidences := coredata.Evidences{}
 			count, err = evidences.CountByTaskID(ctx, conn, s.svc.scope, taskID)
 			if err != nil {
@@ -235,7 +235,7 @@ func (s EvidenceService) ListForTaskID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			return evidences.LoadByTaskID(
 				ctx,
 				conn,
@@ -259,10 +259,10 @@ func (s *EvidenceService) Delete(
 ) error {
 	evidence := &coredata.Evidence{ID: evidenceID}
 
-	return s.svc.pg.WithConn(
+	return s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
-			err := evidence.Delete(ctx, conn, s.svc.scope)
+		func(ctx context.Context, tx pg.Tx) error {
+			err := evidence.Delete(ctx, tx, s.svc.scope)
 			if err != nil {
 				return fmt.Errorf("cannot delete evidence: %w", err)
 			}

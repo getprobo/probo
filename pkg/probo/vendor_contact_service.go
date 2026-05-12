@@ -79,7 +79,7 @@ func (s VendorContactService) Get(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			err := vendorContact.LoadByID(ctx, conn, s.svc.scope, vendorContactID)
 			if err != nil {
 				return fmt.Errorf("cannot load vendor contact: %w", err)
@@ -105,7 +105,7 @@ func (s VendorContactService) List(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			err := vendorContacts.LoadByVendorID(ctx, conn, s.svc.scope, vendorID, cursor)
 			if err != nil {
 				return fmt.Errorf("cannot load vendor contacts: %w", err)
@@ -144,7 +144,7 @@ func (s VendorContactService) Create(
 
 	err := s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Tx) error {
 			vendor := &coredata.Vendor{}
 			if err := vendor.LoadByID(ctx, conn, s.svc.scope, req.VendorID); err != nil {
 				return fmt.Errorf("cannot load vendor: %w", err)
@@ -179,7 +179,7 @@ func (s VendorContactService) Update(
 
 	err := s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Tx) error {
 			err := vendorContact.LoadByID(ctx, conn, s.svc.scope, req.ID)
 			if err != nil {
 				return fmt.Errorf("cannot load vendor contact: %w", err)
@@ -217,7 +217,7 @@ func (s VendorContactService) Delete(
 	vendorContact := coredata.VendorContact{ID: vendorContactID}
 	return s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Tx) error {
 			if err := vendorContact.LoadByID(ctx, conn, s.svc.scope, vendorContactID); err != nil {
 				return fmt.Errorf("cannot load vendor contact: %w", err)
 			}

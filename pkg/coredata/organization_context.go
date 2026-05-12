@@ -41,7 +41,7 @@ type (
 
 func (oc *OrganizationContext) LoadByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 ) error {
@@ -89,7 +89,7 @@ LIMIT 1;
 
 func (oc *OrganizationContext) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -138,7 +138,7 @@ INSERT INTO organization_contexts (
 
 func (oc *OrganizationContext) Update(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `

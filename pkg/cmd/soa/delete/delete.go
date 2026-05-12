@@ -24,9 +24,9 @@ import (
 )
 
 const deleteMutation = `
-mutation($input: DeleteStateOfApplicabilityInput!) {
-  deleteStateOfApplicability(input: $input) {
-    deletedStateOfApplicabilityId
+mutation($input: DeleteStatementOfApplicabilityInput!) {
+  deleteStatementOfApplicability(input: $input) {
+    deletedStatementOfApplicabilityId
   }
 }
 `
@@ -72,13 +72,14 @@ func NewCmdDelete(f *cmdutil.Factory) *cobra.Command {
 				hc.Token,
 				"/api/console/v1/graphql",
 				cfg.HTTPTimeoutDuration(),
+				cmdutil.TokenRefreshOption(cfg, host, hc),
 			)
 
 			_, err = client.Do(
 				deleteMutation,
 				map[string]any{
 					"input": map[string]any{
-						"stateOfApplicabilityId": args[0],
+						"statementOfApplicabilityId": args[0],
 					},
 				},
 			)

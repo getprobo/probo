@@ -30,17 +30,17 @@ import (
 
 type (
 	Control struct {
-		ID                          gid.GID                    `db:"id"`
-		OrganizationID              gid.GID                    `db:"organization_id"`
-		SectionTitle                string                     `db:"section_title"`
-		FrameworkID                 gid.GID                    `db:"framework_id"`
-		Name                        string                     `db:"name"`
-		Description                 *string                    `db:"description"`
-		BestPractice                bool                       `db:"best_practice"`
-		Implemented                 ControlImplementationState `db:"implemented"`
-		NotImplementedJustification *string                    `db:"not_implemented_justification"`
-		CreatedAt                   time.Time                  `db:"created_at"`
-		UpdatedAt                   time.Time                  `db:"updated_at"`
+		ID                          gid.GID              `db:"id"`
+		OrganizationID              gid.GID              `db:"organization_id"`
+		SectionTitle                string               `db:"section_title"`
+		FrameworkID                 gid.GID              `db:"framework_id"`
+		Name                        string               `db:"name"`
+		Description                 *string              `db:"description"`
+		BestPractice                bool                 `db:"best_practice"`
+		NotImplementedJustification *string              `db:"not_implemented_justification"`
+		MaturityLevel               ControlMaturityLevel `db:"maturity_level"`
+		CreatedAt                   time.Time            `db:"created_at"`
+		UpdatedAt                   time.Time            `db:"updated_at"`
 	}
 
 	Controls []*Control
@@ -58,7 +58,7 @@ func (c Control) CursorKey(orderBy ControlOrderField) page.CursorKey {
 }
 
 // AuthorizationAttributes returns the authorization attributes for policy evaluation.
-func (c *Control) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+func (c *Control) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	q := `SELECT organization_id FROM controls WHERE id = $1 LIMIT 1;`
 
 	var organizationID gid.GID
@@ -74,7 +74,7 @@ func (c *Control) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (ma
 
 func (c *Controls) CountByDocumentID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	documentID gid.GID,
 	filter *ControlFilter,
@@ -116,7 +116,7 @@ WHERE %s
 
 func (c *Controls) LoadByDocumentID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	documentID gid.GID,
 	cursor *page.Cursor[ControlOrderField],
@@ -133,8 +133,8 @@ WITH ctrl AS (
 		c.name,
 		c.description,
 		c.best_practice,
-		c.implemented,
 		c.not_implemented_justification,
+		c.maturity_level,
 		c.created_at,
 		c.updated_at,
 		c.search_vector
@@ -153,8 +153,8 @@ SELECT
 	name,
 	description,
 	best_practice,
-	implemented,
 	not_implemented_justification,
+	maturity_level,
 	created_at,
 	updated_at
 FROM
@@ -187,7 +187,7 @@ WHERE %s
 
 func (c *Controls) CountByMeasureID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	measureID gid.GID,
 	filter *ControlFilter,
@@ -229,7 +229,7 @@ WHERE %s
 
 func (c *Controls) LoadByMeasureID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	measureID gid.GID,
 	cursor *page.Cursor[ControlOrderField],
@@ -246,8 +246,8 @@ WITH ctrl AS (
 		c.name,
 		c.description,
 		c.best_practice,
-		c.implemented,
 		c.not_implemented_justification,
+		c.maturity_level,
 		c.created_at,
 		c.updated_at,
 		c.search_vector
@@ -266,8 +266,8 @@ SELECT
 	name,
 	description,
 	best_practice,
-	implemented,
 	not_implemented_justification,
+	maturity_level,
 	created_at,
 	updated_at
 FROM
@@ -300,7 +300,7 @@ WHERE %s
 
 func (c *Controls) CountByRiskID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	riskID gid.GID,
 	filter *ControlFilter,
@@ -348,7 +348,7 @@ WHERE %s
 
 func (c *Controls) LoadByRiskID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	riskID gid.GID,
 	cursor *page.Cursor[ControlOrderField],
@@ -365,8 +365,8 @@ WITH ctrl AS (
 		c.name,
 		c.description,
 		c.best_practice,
-		c.implemented,
 		c.not_implemented_justification,
+		c.maturity_level,
 		c.created_at,
 		c.updated_at,
 		c.search_vector
@@ -391,8 +391,8 @@ SELECT
 	name,
 	description,
 	best_practice,
-	implemented,
 	not_implemented_justification,
+	maturity_level,
 	created_at,
 	updated_at
 FROM
@@ -425,7 +425,7 @@ WHERE %s
 
 func (c *Controls) CountByFrameworkID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	frameworkID gid.GID,
 	filter *ControlFilter,
@@ -457,7 +457,7 @@ WHERE %s
 
 func (c *Controls) LoadByFrameworkID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	frameworkID gid.GID,
 	cursor *page.Cursor[ControlOrderField],
@@ -472,8 +472,8 @@ SELECT
     name,
     description,
 	best_practice,
-	implemented,
 	not_implemented_justification,
+	maturity_level,
     created_at,
     updated_at
 FROM
@@ -508,7 +508,7 @@ WHERE
 
 func (c *Controls) CountByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 	filter *ControlFilter,
@@ -551,7 +551,7 @@ WHERE %s
 
 func (c *Controls) LoadByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 	cursor *page.Cursor[ControlOrderField],
@@ -568,8 +568,8 @@ WITH ctrl AS (
 		c.name,
 		c.description,
 		c.best_practice,
-		c.implemented,
 		c.not_implemented_justification,
+		c.maturity_level,
 		c.created_at,
 		c.updated_at,
 		c.search_vector
@@ -588,8 +588,8 @@ SELECT
 	name,
 	description,
 	best_practice,
-	implemented,
 	not_implemented_justification,
+	maturity_level,
 	created_at,
 	updated_at
 FROM
@@ -622,7 +622,7 @@ WHERE %s
 
 func (c *Control) LoadByFrameworkIDAndSectionTitle(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	frameworkID gid.GID,
 	sectionTitle string,
@@ -636,8 +636,8 @@ SELECT
     name,
     description,
     best_practice,
-    implemented,
     not_implemented_justification,
+    maturity_level,
     created_at,
     updated_at
 FROM
@@ -673,7 +673,7 @@ LIMIT 1;
 
 func (c *Control) LoadByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	controlID gid.GID,
 ) error {
@@ -686,8 +686,8 @@ SELECT
     name,
     description,
     best_practice,
-    implemented,
     not_implemented_justification,
+    maturity_level,
     created_at,
     updated_at
 FROM
@@ -722,7 +722,7 @@ LIMIT 1;
 
 func (c *Controls) LoadByIDs(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	controlIDs []gid.GID,
 ) error {
@@ -735,8 +735,8 @@ SELECT
     name,
     description,
     best_practice,
-    implemented,
     not_implemented_justification,
+    maturity_level,
     created_at,
     updated_at
 FROM
@@ -767,7 +767,7 @@ WHERE
 
 func (c Control) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -781,8 +781,8 @@ INSERT INTO
         name,
         description,
         best_practice,
-        implemented,
         not_implemented_justification,
+        maturity_level,
         created_at,
         updated_at
     )
@@ -795,8 +795,8 @@ VALUES (
     @name,
     @description,
 	@best_practice,
-	@implemented,
 	@not_implemented_justification,
+	@maturity_level,
     @created_at,
     @updated_at
 );
@@ -811,8 +811,8 @@ VALUES (
 		"name":                          c.Name,
 		"description":                   c.Description,
 		"best_practice":                 c.BestPractice,
-		"implemented":                   c.Implemented,
 		"not_implemented_justification": c.NotImplementedJustification,
+		"maturity_level":                c.MaturityLevel,
 		"created_at":                    c.CreatedAt,
 		"updated_at":                    c.UpdatedAt,
 	}
@@ -833,7 +833,7 @@ VALUES (
 
 func (c Control) Delete(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -855,7 +855,7 @@ WHERE
 
 func (c *Control) Update(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -864,8 +864,8 @@ UPDATE controls SET
     description = @description,
     section_title = @section_title,
 	best_practice = @best_practice,
-	implemented = @implemented,
 	not_implemented_justification = @not_implemented_justification,
+	maturity_level = @maturity_level,
     updated_at = @updated_at
 WHERE %s
     AND id = @control_id
@@ -878,8 +878,8 @@ WHERE %s
 		"description":                   c.Description,
 		"section_title":                 c.SectionTitle,
 		"best_practice":                 c.BestPractice,
-		"implemented":                   c.Implemented,
 		"not_implemented_justification": c.NotImplementedJustification,
+		"maturity_level":                c.MaturityLevel,
 		"updated_at":                    c.UpdatedAt,
 	}
 
@@ -901,7 +901,7 @@ WHERE %s
 
 func (c *Controls) LoadByAuditID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	auditID gid.GID,
 	cursor *page.Cursor[ControlOrderField],
@@ -918,8 +918,8 @@ WITH ctrl AS (
 		c.name,
 		c.description,
 		c.best_practice,
-		c.implemented,
 		c.not_implemented_justification,
+		c.maturity_level,
 		c.created_at,
 		c.updated_at,
 		c.search_vector
@@ -938,8 +938,8 @@ SELECT
 	name,
 	description,
 	best_practice,
-	implemented,
 	not_implemented_justification,
+	maturity_level,
 	created_at,
 	updated_at
 FROM
@@ -970,82 +970,11 @@ WHERE %s
 	return nil
 }
 
-func (c *Controls) LoadBySnapshotID(
+func (c *Controls) CountByStatementOfApplicabilityID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
-	snapshotID gid.GID,
-	cursor *page.Cursor[ControlOrderField],
-	filter *ControlFilter,
-) error {
-	q := `
-WITH ctrl AS (
-	SELECT
-		c.id,
-		c.section_title,
-		c.framework_id,
-		c.organization_id,
-		c.tenant_id,
-		c.name,
-		c.description,
-		c.best_practice,
-		c.implemented,
-		c.not_implemented_justification,
-		c.created_at,
-		c.updated_at,
-		c.search_vector
-	FROM
-		controls c
-	INNER JOIN
-		controls_snapshots cs ON c.id = cs.control_id
-	WHERE
-		cs.snapshot_id = @snapshot_id
-)
-SELECT
-	id,
-	section_title,
-	framework_id,
-	organization_id,
-	name,
-	description,
-	best_practice,
-	implemented,
-	not_implemented_justification,
-	created_at,
-	updated_at
-FROM
-	ctrl
-WHERE %s
-	AND %s
-	AND %s
-`
-	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
-
-	args := pgx.NamedArgs{"snapshot_id": snapshotID}
-	maps.Copy(args, scope.SQLArguments())
-	maps.Copy(args, filter.SQLArguments())
-	maps.Copy(args, cursor.SQLArguments())
-
-	rows, err := conn.Query(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot query controls: %w", err)
-	}
-
-	controls, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Control])
-	if err != nil {
-		return fmt.Errorf("cannot collect controls: %w", err)
-	}
-
-	*c = controls
-
-	return nil
-}
-
-func (c *Controls) CountByStateOfApplicabilityID(
-	ctx context.Context,
-	conn pg.Conn,
-	scope Scoper,
-	stateOfApplicabilityID gid.GID,
+	statementOfApplicabilityID gid.GID,
 	filter *ControlFilter,
 ) (int, error) {
 	q := `
@@ -1059,7 +988,7 @@ WITH ctrl AS (
 	INNER JOIN
 		applicability_statements soac ON c.id = soac.control_id
 	WHERE
-		soac.state_of_applicability_id = @state_of_applicability_id
+		soac.statement_of_applicability_id = @statement_of_applicability_id
 )
 SELECT
 	COUNT(id)
@@ -1070,7 +999,7 @@ WHERE %s
 `
 	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
 
-	args := pgx.NamedArgs{"state_of_applicability_id": stateOfApplicabilityID}
+	args := pgx.NamedArgs{"statement_of_applicability_id": statementOfApplicabilityID}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
 

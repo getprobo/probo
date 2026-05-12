@@ -1,3 +1,6 @@
 [submodule "pkg/validator/data/disposable-email-domains"]
 	path = pkg/validator/data/disposable-email-domains
 	url = https://github.com/disposable-email-domains/disposable-email-domains.git
+[submodule "pkg/geoloc/data/country-ip-blocks"]
+	path = pkg/geoloc/data/country-ip-blocks
+	url = https://github.com/ipverse/country-ip-blocks.git

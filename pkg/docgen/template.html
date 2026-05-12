@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,8 +8,9 @@
     <style>
         /* A4 Page Setup for printing */
         @page {
-            size: A4;
+            size: A4{{if .Landscape}} landscape{{end}};
             margin: 2.5cm;
+
             @bottom-right {
                 content: "Page " counter(page) " of " counter(pages);
                 font-family: Arial, sans-serif;
@@ -32,14 +34,15 @@
             width: 21cm;
             margin: 0 auto;
             background: white;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
 
         /* Individual page sections */
         .page-section {
             padding: 2.5cm;
             position: relative;
-            min-height: 24.7cm; /* A4 height minus padding */
+            min-height: 24.7cm;
+            /* A4 height minus padding */
             border-bottom: 2px dashed #ddd;
             page-break-after: always;
         }
@@ -62,8 +65,9 @@
 
         .company-logo {
             max-height: 50px;
-            max-width: 250px;
-            object-fit: contain;
+            max-width: 100%;
+            height: auto;
+            width: auto;
             display: block;
         }
 
@@ -75,7 +79,7 @@
             text-align: left;
         }
 
-        .company-header + .document-title {
+        .company-header+.document-title {
             margin-top: 30px;
         }
 
@@ -114,8 +118,16 @@
             widows: 3;
         }
 
+        .document-content hr {
+            border: none;
+            margin: 0;
+            padding: 0;
+            height: 0;
+            page-break-after: always;
+        }
+
         .document-content h1 {
-            font-size: 14pt;
+            font-size: 18pt;
             font-weight: bold;
             color: #000;
             margin: 20px 0 12px 0;
@@ -176,14 +188,6 @@
 
         .document-content em {
             font-style: italic;
-        }
-
-        /* Force page breaks at strategic points */
-        .document-content h2:nth-of-type(3),
-        .document-content h2:nth-of-type(5),
-        .document-content h2:nth-of-type(7),
-        .document-content h2:nth-of-type(9) {
-            page-break-before: always;
         }
 
         /* Signatures section */
@@ -248,16 +252,23 @@
         }
 
         /* Prevent bad page breaks */
-        h1, h2, h3, h4, h5, h6 {
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6 {
             page-break-after: avoid;
             page-break-inside: avoid;
         }
 
-        p, li {
+        p,
+        li {
             page-break-inside: avoid;
         }
 
-        table, .signatures-section {
+        table,
+        .signatures-section {
             page-break-inside: avoid;
         }
 
@@ -353,6 +364,12 @@
             max-width: 100%;
             height: auto;
         }
+
+        .document-content blockquote {
+            border-left: 4px solid #ccc;
+            padding-left: 16px;
+            margin: 12px 0;
+        }
     </style>
     <script>{{.MermaidJS}}</script>
     <script>
@@ -367,6 +384,7 @@
         });
     </script>
 </head>
+
 <body>
     <div class="document-container">
         <div class="page-section">
@@ -394,9 +412,9 @@
                                 {{index .Approvers 0}}
                                 {{- else}}
                                 <ul style="margin: 0; padding-left: 18px;">
-                                {{- range .Approvers}}
+                                    {{- range .Approvers}}
                                     <li>{{.}}</li>
-                                {{- end}}
+                                    {{- end}}
                                 </ul>
                                 {{- end}}
                             </td>
@@ -417,7 +435,7 @@
             </div>
 
             <div class="document-content">
-                {{.Content | formatContent}}
+                {{.BodyHTML}}
             </div>
 
             {{- if .Signatures}}
@@ -460,4 +478,5 @@
         </div>
     </div>
 </body>
+
 </html>

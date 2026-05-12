@@ -44,6 +44,8 @@ type (
 	}
 
 	SlackTokenResponse struct {
+		Ok              bool             `json:"ok"`
+		Error           string           `json:"error,omitempty"`
 		IncomingWebhook *IncomingWebhook `json:"incoming_webhook,omitempty"`
 	}
 )
@@ -111,20 +113,25 @@ func (c *SlackConnection) UnmarshalJSON(data []byte) error {
 
 func ParseSlackTokenResponse(body []byte, oauth2Conn OAuth2Connection, organizationID gid.GID) (*SlackConnection, *gid.GID, error) {
 	var slackResponse SlackTokenResponse
-	var buf bytes.Buffer
-	buf.Write(body)
-	if err := json.NewDecoder(&buf).Decode(&slackResponse); err != nil {
+	if err := json.NewDecoder(bytes.NewReader(body)).Decode(&slackResponse); err != nil {
 		return nil, nil, fmt.Errorf("cannot decode Slack token response: %w", err)
 	}
 
-	if slackResponse.IncomingWebhook == nil {
-		return nil, nil, fmt.Errorf("incoming webhook is required for Slack")
+	if slackResponse.Error != "" {
+		return nil, nil, fmt.Errorf("cannot complete Slack OAuth2 flow: %s", slackResponse.Error)
+	}
+	if !slackResponse.Ok {
+		return nil, nil, fmt.Errorf("cannot complete Slack OAuth2 flow: ok=false")
+	}
+	if oauth2Conn.AccessToken == "" {
+		return nil, nil, fmt.Errorf("cannot complete Slack OAuth2 flow: missing access token")
 	}
 
-	settings := SlackSettings{
-		WebhookURL: slackResponse.IncomingWebhook.URL,
-		Channel:    slackResponse.IncomingWebhook.Channel,
-		ChannelID:  slackResponse.IncomingWebhook.ChannelID,
+	settings := SlackSettings{}
+	if slackResponse.IncomingWebhook != nil {
+		settings.WebhookURL = slackResponse.IncomingWebhook.URL
+		settings.Channel = slackResponse.IncomingWebhook.Channel
+		settings.ChannelID = slackResponse.IncomingWebhook.ChannelID
 	}
 
 	return &SlackConnection{

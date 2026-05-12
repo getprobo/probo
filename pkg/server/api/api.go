@@ -25,16 +25,20 @@ import (
 	"github.com/go-chi/cors"
 	"go.gearno.de/kit/httpserver"
 	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/accessreview"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/file"
+	"go.probo.inc/probo/pkg/geoloc"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/securecookie"
 	connect_v1 "go.probo.inc/probo/pkg/server/api/connect/v1"
 	console_v1 "go.probo.inc/probo/pkg/server/api/console/v1"
+	cookiebanner_v1 "go.probo.inc/probo/pkg/server/api/cookiebanner/v1"
 	files_v1 "go.probo.inc/probo/pkg/server/api/files/v1"
 	mcp_v1 "go.probo.inc/probo/pkg/server/api/mcp/v1"
 	slack_v1 "go.probo.inc/probo/pkg/server/api/slack/v1"
@@ -52,8 +56,11 @@ type (
 		IAM               *iam.Service
 		Trust             *trust.Service
 		ESign             *esign.Service
+		AccessReview      *accessreview.Service
 		Slack             *slack.Service
 		Mailman           *mailman.Service
+		CookieBanner      *cookiebanner.Service
+		Geoloc            *geoloc.Service
 		Cookie            securecookie.Config
 		TokenSecret       string
 		ConnectorRegistry *connector.ConnectorRegistry
@@ -72,6 +79,7 @@ type (
 		csrf                  *http.CrossOriginProtection
 		compliancePageHandler http.Handler
 		consoleHandler        http.Handler
+		cookieBannerHandler   http.Handler
 		filesHandler          http.Handler
 		mcpHandler            http.Handler
 		slackHandler          http.Handler
@@ -133,6 +141,19 @@ func NewServer(cfg Config) (*Server, error) {
 	// POSTs from external identity providers by design.
 	csrf.AddInsecureBypassPattern("POST /connect/v1/saml/2.0/consume")
 
+	// The cookie banner API is called cross-origin from customer websites
+	// by the JS SDK. CORS is handled by the cookie banner middleware.
+	// GET and OPTIONS are safe methods (always allowed), but we bypass
+	// POST explicitly since it comes from customer origins.
+	csrf.AddInsecureBypassPattern("POST /cookie-banner/v1/{rest...}")
+
+	// OAuth2 token, introspection, revocation, and device authorization
+	// endpoints receive cross-origin POSTs from external clients.
+	csrf.AddInsecureBypassPattern("POST /connect/v1/oauth2/token")
+	csrf.AddInsecureBypassPattern("POST /connect/v1/oauth2/introspect")
+	csrf.AddInsecureBypassPattern("POST /connect/v1/oauth2/revoke")
+	csrf.AddInsecureBypassPattern("POST /connect/v1/oauth2/device")
+
 	csrf.SetDenyHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		httpserver.RenderJSON(
 			w,
@@ -161,12 +182,19 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.Probo,
 			cfg.IAM,
 			cfg.ESign,
+			cfg.AccessReview,
 			cfg.Mailman,
+			cfg.CookieBanner,
 			cfg.Cookie,
 			cfg.TokenSecret,
 			cfg.ConnectorRegistry,
 			cfg.BaseURL,
 			cfg.CustomDomainCname,
+		),
+		cookieBannerHandler: cookiebanner_v1.NewMux(
+			cfg.Logger.Named("cookiebanner.v1"),
+			cfg.CookieBanner,
+			cfg.Geoloc,
 		),
 		filesHandler: files_v1.NewMux(
 			cfg.Logger.Named("files.v1"),
@@ -176,6 +204,8 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.Logger.Named("mcp.v1"),
 			cfg.Probo,
 			cfg.IAM,
+			cfg.AccessReview,
+			cfg.CookieBanner,
 			cfg.TokenSecret,
 		),
 		slackHandler: slack_v1.NewMux(
@@ -194,6 +224,10 @@ func NewServer(cfg Config) (*Server, error) {
 					return true
 				}
 
+				_, err := cfg.Trust.GetByDomainName(ctx, host)
+				return err == nil
+			},
+			func(ctx context.Context, host string) bool {
 				_, err := cfg.Trust.GetByDomainName(ctx, host)
 				return err == nil
 			},
@@ -228,14 +262,21 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	router.MethodNotAllowed(methodNotAllowed)
 	router.NotFound(notFound)
 
-	router.Use(cors.Handler(corsOpts))
+	// Cookie banner has its own per-banner CORS middleware; mount it
+	// outside the global CORS handler so OPTIONS preflights from
+	// customer websites are not swallowed by the stricter AllowedOrigins
+	// list that applies to console/connect routes.
+	router.Mount("/cookie-banner/v1", http.StripPrefix("/cookie-banner/v1", s.cookieBannerHandler))
 
-	router.Mount("/console/v1", http.StripPrefix("/console/v1", s.consoleHandler))
-	router.Mount("/connect/v1", http.StripPrefix("/connect/v1", s.connectHandler))
-	router.Mount("/files/v1", http.StripPrefix("/files/v1", s.filesHandler))
-	router.Mount("/trust/v1", http.StripPrefix("/trust/v1", s.compliancePageHandler))
-	router.Mount("/mcp/v1", http.StripPrefix("/mcp/v1", s.mcpHandler))
-	router.Mount("/slack/v1", http.StripPrefix("/slack/v1", s.slackHandler))
+	router.Group(func(r chi.Router) {
+		r.Use(cors.Handler(corsOpts))
+		r.Mount("/console/v1", http.StripPrefix("/console/v1", s.consoleHandler))
+		r.Mount("/connect/v1", http.StripPrefix("/connect/v1", s.connectHandler))
+		r.Mount("/files/v1", http.StripPrefix("/files/v1", s.filesHandler))
+		r.Mount("/trust/v1", http.StripPrefix("/trust/v1", s.compliancePageHandler))
+		r.Mount("/mcp/v1", http.StripPrefix("/mcp/v1", s.mcpHandler))
+		r.Mount("/slack/v1", http.StripPrefix("/slack/v1", s.slackHandler))
+	})
 
 	s.csrf.Handler(router).ServeHTTP(w, r)
 }

@@ -84,7 +84,7 @@ func (s TrustCenterAccessService) ListForTrustCenterID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			return accesses.LoadByTrustCenterID(ctx, conn, s.svc.scope, trustCenterID, cursor)
 		},
 	)
@@ -105,7 +105,7 @@ func (s TrustCenterAccessService) ListAvailableDocumentAccesses(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			return documentAccesses.LoadAvailableByTrustCenterAccessID(ctx, conn, s.svc.scope, trustCenterAccessID, cursor)
 		},
 	)
@@ -125,7 +125,7 @@ func (s TrustCenterAccessService) Get(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			return access.LoadByID(ctx, conn, s.svc.scope, accessID)
 		},
 	)
@@ -144,7 +144,7 @@ func (s TrustCenterAccessService) CountDocumentAccesses(
 	var count int
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			var documentAccesses coredata.TrustCenterDocumentAccesses
 			var err error
 			count, err = documentAccesses.CountByTrustCenterAccessID(ctx, conn, s.svc.scope, trustCenterAccessID)
@@ -166,7 +166,7 @@ func (s TrustCenterAccessService) CountPendingRequestDocumentAccesses(
 	var count int
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			var documentAccesses coredata.TrustCenterDocumentAccesses
 			var err error
 			count, err = documentAccesses.CountPendingRequestByTrustCenterAccessID(ctx, conn, s.svc.scope, trustCenterAccessID)
@@ -188,7 +188,7 @@ func (s TrustCenterAccessService) CountActiveDocumentAccesses(
 	var count int
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			var documentAccesses coredata.TrustCenterDocumentAccesses
 			var err error
 			count, err = documentAccesses.CountActiveByTrustCenterAccessID(ctx, conn, s.svc.scope, trustCenterAccessID)
@@ -219,7 +219,7 @@ func (s TrustCenterAccessService) Update(
 
 	err := s.svc.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			access = &coredata.TrustCenterAccess{}
 
 			if err := access.LoadByID(ctx, tx, s.svc.scope, req.ID); err != nil {
@@ -306,7 +306,7 @@ func (s TrustCenterAccessService) Delete(
 ) error {
 	err := s.svc.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			access := &coredata.TrustCenterAccess{}
 
 			if err := access.LoadByID(ctx, tx, s.svc.scope, trustCenterAccessID); err != nil {
@@ -324,7 +324,7 @@ func (s TrustCenterAccessService) Delete(
 	return err
 }
 
-func (s TrustCenterAccessService) sendAccessEmail(ctx context.Context, tx pg.Conn, access *coredata.TrustCenterAccess) error {
+func (s TrustCenterAccessService) sendAccessEmail(ctx context.Context, tx pg.Tx, access *coredata.TrustCenterAccess) error {
 	organization := &coredata.Organization{}
 	if err := organization.LoadByID(ctx, tx, s.svc.scope, access.OrganizationID); err != nil {
 		return fmt.Errorf("cannot load organization: %w", err)

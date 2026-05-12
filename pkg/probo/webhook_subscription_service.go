@@ -72,7 +72,7 @@ func (s WebhookSubscriptionService) ListForOrganizationID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			if err := organization.LoadByID(ctx, conn, s.svc.scope, organizationID); err != nil {
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
@@ -107,7 +107,7 @@ func (s WebhookSubscriptionService) CountForOrganizationID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) (err error) {
+		func(ctx context.Context, conn pg.Querier) (err error) {
 			subscriptions := &coredata.WebhookSubscriptions{}
 			count, err = subscriptions.CountByOrganizationID(ctx, conn, s.svc.scope, organizationID)
 			if err != nil {
@@ -133,7 +133,7 @@ func (s WebhookSubscriptionService) Get(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			if err := wc.LoadByID(ctx, conn, s.svc.scope, webhookSubscriptionID); err != nil {
 				return fmt.Errorf("cannot load webhook subscription: %w", err)
 			}
@@ -163,7 +163,7 @@ func (s WebhookSubscriptionService) Create(
 
 	err := s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Tx) error {
 			if err := organization.LoadByID(ctx, conn, s.svc.scope, req.OrganizationID); err != nil {
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
@@ -208,7 +208,7 @@ func (s WebhookSubscriptionService) Update(
 
 	err := s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Tx) error {
 			if err := wc.LoadByID(ctx, conn, s.svc.scope, req.WebhookSubscriptionID); err != nil {
 				return fmt.Errorf("cannot load webhook subscription: %w", err)
 			}
@@ -245,7 +245,7 @@ func (s WebhookSubscriptionService) GetSigningSecret(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			if err := wc.LoadByID(ctx, conn, s.svc.scope, webhookSubscriptionID); err != nil {
 				return fmt.Errorf("cannot load webhook subscription: %w", err)
 			}
@@ -270,7 +270,7 @@ func (s WebhookSubscriptionService) ListEventsForSubscriptionID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			if err := events.LoadBySubscriptionID(ctx, conn, s.svc.scope, webhookSubscriptionID, cursor); err != nil {
 				return fmt.Errorf("cannot load webhook events: %w", err)
 			}
@@ -294,7 +294,7 @@ func (s WebhookSubscriptionService) CountEventsForSubscriptionID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) (err error) {
+		func(ctx context.Context, conn pg.Querier) (err error) {
 			events := &coredata.WebhookEvents{}
 			count, err = events.CountBySubscriptionID(ctx, conn, s.svc.scope, webhookSubscriptionID)
 
@@ -321,7 +321,7 @@ func (s WebhookSubscriptionService) Delete(
 
 	err := s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Tx) error {
 			if err := wc.LoadByID(ctx, conn, s.svc.scope, webhookSubscriptionID); err != nil {
 				return fmt.Errorf("cannot load webhook subscription: %w", err)
 			}

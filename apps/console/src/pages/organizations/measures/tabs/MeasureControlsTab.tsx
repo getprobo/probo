@@ -1,5 +1,20 @@
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
+import type { ComponentProps } from "react";
 import { graphql, useRefetchableFragment } from "react-relay";
-import { useOutletContext } from "react-router";
+import { useOutletContext, useParams } from "react-router";
 
 import type { MeasureControlsTabFragment$key } from "#/__generated__/core/MeasureControlsTabFragment.graphql";
 import { LinkedControlsCard } from "#/components/controls/LinkedControlsCard";
@@ -16,7 +31,6 @@ export const controlsFragment = graphql`
     filter: { type: "ControlFilter", defaultValue: null }
   )
   @refetchable(queryName: "MeasureControlsTabControlsQuery") {
-    id
     canCreateControlMeasureMapping: permission(
       action: "core:control:create-measure-mapping"
     )
@@ -34,7 +48,6 @@ export const controlsFragment = graphql`
       __id
       edges {
         node {
-          id
           ...LinkedControlsCardFragment
         }
       }
@@ -71,8 +84,12 @@ export const attachControlMutation = graphql`
 
 export default function MeasureControlsTab() {
   const { measure } = useOutletContext<{
-    measure: MeasureControlsTabFragment$key & { id: string };
+    measure: MeasureControlsTabFragment$key;
   }>();
+  const { measureId } = useParams<{ measureId: string }>();
+  if (!measureId) {
+    throw new Error("Missing :measureId param in route");
+  }
   // eslint-disable-next-line relay/generated-typescript-types
   const [data, refetch] = useRefetchableFragment(controlsFragment, measure);
   const connectionId = data.controls.__id;
@@ -83,7 +100,7 @@ export default function MeasureControlsTab() {
   const readOnly = !canLinkControl && !canUnlinkControl;
 
   const incrementOptions = {
-    id: data.id,
+    id: measureId,
     node: "controls(first:0)",
   };
   const [detachControl, isDetaching] = useMutationWithIncrement(
@@ -105,10 +122,10 @@ export default function MeasureControlsTab() {
   return (
     <LinkedControlsCard
       disabled={isLoading}
-      controls={controls}
+      controls={controls as ComponentProps<typeof LinkedControlsCard>["controls"]}
       onDetach={detachControl}
       onAttach={attachControl}
-      params={{ measureId: data.id }}
+      params={{ measureId }}
       connectionId={connectionId}
       refetch={refetch}
       readOnly={readOnly}

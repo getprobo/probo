@@ -12,6 +12,7 @@ sbom-docker.json
 *.out
 *.DS_Store
 *.pem
+!rds-ca-bundle.pem
 *.crt
 *.key
 compose/keycloak/probo-realm.json
@@ -20,3 +21,7 @@ compose/keycloak/probo-realm.json
 # Generated files (codegen)
 __generated__/
 pkg/server/api/*/v1/types/types.go
+pkg/server/api/*/v1/schema.graphql
+cfg/dev_local.yaml
+cfg/dev.yaml
+.env

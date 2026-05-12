@@ -42,7 +42,7 @@ func (s *APIKeyService) GetAPIKey(ctx context.Context, keyID gid.GID) (*coredata
 
 	err := s.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			if err := apiKey.LoadByID(ctx, tx, keyID); err != nil {
 				if err == coredata.ErrResourceNotFound {
 					return NewPersonalAPIKeyNotFoundError(keyID)

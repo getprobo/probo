@@ -20,17 +20,19 @@ import (
 )
 
 type (
-	TaskState uint8
+	TaskState string
 )
 
 const (
-	TaskStateTodo TaskState = iota
-	TaskStateDone
+	TaskStateTodo       TaskState = "TODO"
+	TaskStateInProgress TaskState = "IN_PROGRESS"
+	TaskStateDone       TaskState = "DONE"
 )
 
 func TaskStates() []TaskState {
 	return []TaskState{
 		TaskStateTodo,
+		TaskStateInProgress,
 		TaskStateDone,
 	}
 }
@@ -40,13 +42,11 @@ func (ts TaskState) MarshalText() ([]byte, error) {
 }
 
 func (ts *TaskState) UnmarshalText(data []byte) error {
-	val := string(data)
+	val := TaskState(data)
 
 	switch val {
-	case TaskStateTodo.String():
-		*ts = TaskStateTodo
-	case TaskStateDone.String():
-		*ts = TaskStateDone
+	case TaskStateTodo, TaskStateInProgress, TaskStateDone:
+		*ts = val
 	default:
 		return fmt.Errorf("invalid TaskState value: %q", val)
 	}
@@ -55,16 +55,7 @@ func (ts *TaskState) UnmarshalText(data []byte) error {
 }
 
 func (ts TaskState) String() string {
-	var val string
-
-	switch ts {
-	case TaskStateTodo:
-		val = "TODO"
-	case TaskStateDone:
-		val = "DONE"
-	}
-
-	return val
+	return string(ts)
 }
 
 func (ts *TaskState) Scan(value any) error {

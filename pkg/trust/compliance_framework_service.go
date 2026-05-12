@@ -37,7 +37,7 @@ func (s ComplianceFrameworkService) ListByTrustCenterID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			err := complianceFrameworks.LoadByTrustCenterID(ctx, conn, s.svc.scope, trustCenterID, cursor)
 			if err != nil {
 				return fmt.Errorf("cannot load compliance frameworks: %w", err)

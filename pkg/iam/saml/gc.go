@@ -96,7 +96,7 @@ func (gc *GarbageCollector) cleanup(ctx context.Context) error {
 
 	return gc.pg.WithTx(
 		ctx,
-		func(tx pg.Conn) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			assertionsDeleted, err := coredata.DeleteExpiredSAMLAssertions(ctx, tx, now)
 			if err != nil {
 				return fmt.Errorf("cannot delete expired saml assertions: %w", err)

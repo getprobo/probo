@@ -23,48 +23,53 @@ import (
 	"go.probo.inc/probo/pkg/llm"
 )
 
-const DefaultMaxTurns = 10
+const (
+	DefaultMaxTurns              = 10
+	DefaultMaxEmptyOutputRetries = 2
+)
 
 type (
 	Option func(*Agent)
 
 	Agent struct {
-		name               string
-		handoffDescription string
-		instructions       string
-		instructionsFunc   func(ctx context.Context, a *Agent) string
-		model              string
-		modelSettings      ModelSettings
-		tools              []Tool
-		handoffs           []*Handoff
-		mcpServers         []*MCPServer
-		maxTurns           int
-		maxToolDepth       int
-		client             *llm.Client
-		logger             *log.Logger
-		hooks              []RunHooks
-		agentHooks         AgentHooks
-		inputGuardrails    []InputGuardrail
-		outputGuardrails   []OutputGuardrail
-		session            Session
-		sessionID          string
-		outputType         *OutputType
-		toolUseBehavior    ToolUseBehavior
-		resetToolChoice    bool
-		responseFormat     *llm.ResponseFormat
-		approval           *ApprovalConfig
+		name                  string
+		handoffDescription    string
+		instructions          string
+		instructionsFunc      func(ctx context.Context, a *Agent) string
+		model                 string
+		modelSettings         ModelSettings
+		tools                 []Tool
+		handoffs              []*Handoff
+		mcpServers            []*MCPServer
+		maxTurns              int
+		maxEmptyOutputRetries int
+		maxToolDepth          int
+		client                *llm.Client
+		logger                *log.Logger
+		hooks                 []RunHooks
+		agentHooks            AgentHooks
+		inputGuardrails       []InputGuardrail
+		outputGuardrails      []OutputGuardrail
+		session               Session
+		sessionID             string
+		outputType            *OutputType
+		toolUseBehavior       ToolUseBehavior
+		resetToolChoice       bool
+		responseFormat        *llm.ResponseFormat
+		approval              *ApprovalConfig
 	}
 )
 
 func New(name string, client *llm.Client, opts ...Option) *Agent {
 	a := &Agent{
-		name:            name,
-		client:          client,
-		maxTurns:        DefaultMaxTurns,
-		maxToolDepth:    DefaultMaxToolDepth,
-		toolUseBehavior: RunLLMAgain(),
-		resetToolChoice: true,
-		logger:          log.NewLogger(log.WithOutput(io.Discard)),
+		name:                  name,
+		client:                client,
+		maxTurns:              DefaultMaxTurns,
+		maxEmptyOutputRetries: DefaultMaxEmptyOutputRetries,
+		maxToolDepth:          DefaultMaxToolDepth,
+		toolUseBehavior:       RunLLMAgain(),
+		resetToolChoice:       true,
+		logger:                log.NewLogger(log.WithOutput(io.Discard)),
 	}
 
 	for _, opt := range opts {
@@ -204,6 +209,18 @@ func WithMaxTurns(n int) Option {
 	}
 }
 
+// WithMaxEmptyOutputRetries bounds the number of times the core loop
+// will re-ask the model to produce a structured output after it
+// returned a thinking-only empty response on a synthesis turn.
+func WithMaxEmptyOutputRetries(n int) Option {
+	return func(a *Agent) {
+		if n < 0 {
+			n = 0
+		}
+		a.maxEmptyOutputRetries = n
+	}
+}
+
 func WithMaxToolDepth(n int) Option {
 	return func(a *Agent) {
 		if n < 1 {
@@ -252,6 +269,15 @@ func WithToolChoice(tc llm.ToolChoice) Option {
 func WithParallelToolCalls(enabled bool) Option {
 	return func(a *Agent) {
 		a.modelSettings.ParallelToolCalls = &enabled
+	}
+}
+
+func WithThinking(budgetTokens int) Option {
+	return func(a *Agent) {
+		a.modelSettings.Thinking = &llm.ThinkingConfig{
+			Enabled:      true,
+			BudgetTokens: budgetTokens,
+		}
 	}
 }
 

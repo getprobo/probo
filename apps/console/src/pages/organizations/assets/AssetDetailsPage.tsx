@@ -1,7 +1,18 @@
-import {
-  getAssetTypeVariant,
-  validateSnapshotConsistency,
-} from "@probo/helpers";
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
+import { getAssetTypeVariant } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import {
   ActionDropdown,
@@ -18,14 +29,12 @@ import {
   type PreloadedQuery,
   usePreloadedQuery,
 } from "react-relay";
-import { useParams } from "react-router";
 import { z } from "zod";
 
 import type { AssetGraphNodeQuery } from "#/__generated__/core/AssetGraphNodeQuery.graphql";
 import { ControlledField } from "#/components/form/ControlledField";
 import { PeopleSelectField } from "#/components/form/PeopleSelectField";
 import { VendorsMultiSelectField } from "#/components/form/VendorsMultiSelectField";
-import { SnapshotBanner } from "#/components/SnapshotBanner";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
@@ -56,15 +65,10 @@ export default function AssetDetailsPage(props: Props) {
   const assetEntry = asset.node;
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
-  const { snapshotId } = useParams<{ snapshotId?: string }>();
-  const isSnapshotMode = Boolean(snapshotId);
-
-  validateSnapshotConsistency(assetEntry, snapshotId);
 
   const connectionId = ConnectionHandler.getConnectionID(
     organizationId,
     "AssetsPage_assets",
-    { filter: { snapshotId: snapshotId || null } },
   );
   const deleteAsset = useDeleteAsset(assetEntry, connectionId);
 
@@ -93,25 +97,19 @@ export default function AssetDetailsPage(props: Props) {
     reset(formData);
   });
 
-  const breadcrumbAssetsUrl
-    = isSnapshotMode && snapshotId
-      ? `/organizations/${organizationId}/snapshots/${snapshotId}/assets`
-      : `/organizations/${organizationId}/assets`;
+  const breadcrumbItems = [
+    {
+      label: __("Assets"),
+      to: `/organizations/${organizationId}/assets`,
+    },
+    {
+      label: assetEntry?.name ?? "",
+    },
+  ];
 
   return (
     <div className="space-y-6">
-      {snapshotId && <SnapshotBanner snapshotId={snapshotId} />}
-      <Breadcrumb
-        items={[
-          {
-            label: __("Assets"),
-            to: breadcrumbAssetsUrl,
-          },
-          {
-            label: assetEntry?.name ?? "",
-          },
-        ]}
-      />
+      <Breadcrumb items={breadcrumbItems} />
 
       <div className="flex justify-between items-start">
         <div className="flex items-center gap-4">
@@ -124,7 +122,7 @@ export default function AssetDetailsPage(props: Props) {
               : __("Virtual")}
           </Badge>
         </div>
-        {!isSnapshotMode && asset.node.canDelete && (
+        {asset.node.canDelete && (
           <ActionDropdown variant="secondary">
             <DropdownItem
               variant="danger"
@@ -142,14 +140,14 @@ export default function AssetDetailsPage(props: Props) {
           label={__("Name")}
           {...register("name")}
           type="text"
-          disabled={isSnapshotMode}
+          disabled={!assetEntry.canUpdate}
         />
 
         <Field
           label={__("Amount")}
           {...register("amount", { valueAsNumber: true })}
           type="number"
-          disabled={isSnapshotMode}
+          disabled={!assetEntry.canUpdate}
         />
 
         <ControlledField
@@ -157,7 +155,7 @@ export default function AssetDetailsPage(props: Props) {
           name="assetType"
           type="select"
           label={__("Asset Type")}
-          disabled={isSnapshotMode}
+          disabled={!assetEntry.canUpdate}
         >
           <Option value="VIRTUAL">{__("Virtual")}</Option>
           <Option value="PHYSICAL">{__("Physical")}</Option>
@@ -167,7 +165,7 @@ export default function AssetDetailsPage(props: Props) {
           label={__("Data Types Stored")}
           {...register("dataTypesStored")}
           type="text"
-          disabled={isSnapshotMode}
+          disabled={!assetEntry.canUpdate}
         />
 
         <PeopleSelectField
@@ -175,7 +173,7 @@ export default function AssetDetailsPage(props: Props) {
           control={control}
           name="ownerId"
           label={__("Owner")}
-          disabled={isSnapshotMode}
+          disabled={!assetEntry.canUpdate}
         />
 
         <VendorsMultiSelectField
@@ -184,11 +182,11 @@ export default function AssetDetailsPage(props: Props) {
           name="vendorIds"
           selectedVendors={vendors}
           label={__("Vendors")}
-          disabled={isSnapshotMode}
+          disabled={!assetEntry.canUpdate}
         />
 
         <div className="flex justify-end">
-          {formState.isDirty && !isSnapshotMode && asset.node.canUpdate && (
+          {formState.isDirty && assetEntry.canUpdate && (
             <Button type="submit" disabled={formState.isSubmitting}>
               {formState.isSubmitting ? __("Updating...") : __("Update")}
             </Button>

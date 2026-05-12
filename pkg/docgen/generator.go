@@ -17,17 +17,15 @@ package docgen
 import (
 	"bytes"
 	_ "embed"
+	"encoding/json"
 	"fmt"
 	"html"
 	"html/template"
 	"strings"
 	"time"
 
-	"github.com/yuin/goldmark"
-	"github.com/yuin/goldmark/extension"
-	gmhtml "github.com/yuin/goldmark/renderer/html"
-	"go.abhg.dev/goldmark/mermaid"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/prosemirror"
 )
 
 var (
@@ -37,17 +35,8 @@ var (
 	//go:embed template.html
 	htmlTemplateContent string
 
-	//go:embed processing_activities_template.html
-	processingActivitiesTemplateContent string
-
-	//go:embed data_protection_impact_assessments_template.html
-	dataProtectionImpactAssessmentsTemplateContent string
-
-	//go:embed transfer_impact_assessments_template.html
-	transferImpactAssessmentsTemplateContent string
-
-	//go:embed soa_template.html
-	soaTemplateContent string
+	//go:embed signature_page_template.html
+	signaturePageTemplateContent string
 
 	templateFuncs = template.FuncMap{
 		"now":                  func() time.Time { return time.Now() },
@@ -79,26 +68,6 @@ var (
 				return "Yes"
 			}
 			return "No"
-		},
-		"formatContent": func(content string) template.HTML {
-			md := goldmark.New(
-				goldmark.WithExtensions(
-					extension.Table,
-					&mermaid.Extender{
-						RenderMode: mermaid.RenderModeClient,
-						NoScript:   true,
-					},
-				),
-				goldmark.WithRendererOptions(
-					gmhtml.WithUnsafe(),
-				),
-			)
-
-			var buf bytes.Buffer
-			if err := md.Convert([]byte(content), &buf); err != nil {
-				return template.HTML(fmt.Sprintf("<p>%s</p>", html.EscapeString(content)))
-			}
-			return template.HTML(buf.String())
 		},
 		"imgTag": func(src, alt, class string) template.HTML {
 			return template.HTML(fmt.Sprintf(`<img src="%s" alt="%s" class="%s">`, html.EscapeString(src), html.EscapeString(alt), html.EscapeString(class)))
@@ -203,13 +172,7 @@ var (
 
 	documentTemplate = template.Must(template.New("document").Funcs(templateFuncs).Parse(htmlTemplateContent))
 
-	processingActivitiesTemplate = template.Must(template.New("processingActivities").Funcs(templateFuncs).Parse(processingActivitiesTemplateContent))
-
-	dataProtectionImpactAssessmentsTemplate = template.Must(template.New("dataProtectionImpactAssessments").Funcs(templateFuncs).Parse(dataProtectionImpactAssessmentsTemplateContent))
-
-	transferImpactAssessmentsTemplate = template.Must(template.New("transferImpactAssessments").Funcs(templateFuncs).Parse(transferImpactAssessmentsTemplateContent))
-
-	stateOfApplicabilityTemplate = template.Must(template.New("state-of-applicability").Funcs(templateFuncs).Parse(soaTemplateContent))
+	signaturePageTemplate = template.Must(template.New("signaturePage").Funcs(templateFuncs).Parse(signaturePageTemplateContent))
 )
 
 type (
@@ -217,7 +180,7 @@ type (
 
 	DocumentData struct {
 		Title                       string
-		Content                     string
+		Content                     json.RawMessage // ProseMirror/Tiptap document JSON; use ProseMirrorJSONToHTML for HTML
 		Major                       int
 		Minor                       int
 		Classification              Classification
@@ -227,6 +190,7 @@ type (
 		Signatures                  []SignatureData
 		CompanyHorizontalLogoBase64 string
 		MermaidJS                   template.JS
+		Landscape                   bool
 	}
 
 	SignatureData struct {
@@ -236,102 +200,294 @@ type (
 		RequestedAt time.Time
 	}
 
-	ProcessingActivityTableData struct {
-		CompanyName                 string
-		CompanyHorizontalLogoBase64 string
-		Version                     int
-		PublishedAt                 time.Time
-		Activities                  []ProcessingActivityRowData
+	SignaturePageData struct {
+		Signatures []SignatureData
+		Landscape  bool
 	}
 
-	ProcessingActivityRowData struct {
+	StatementOfApplicabilityData struct {
+		Title            string
+		OrganizationName string
+		CreatedAt        time.Time
+		TotalControls    int
+		Rows             []SOARow
+	}
+
+	SOARow struct {
+		FrameworkName        string
+		ControlSection       string
+		ControlName          string
+		Applicability        string
+		Justification        string
+		MaturityLevel        string
+		NotImplJustification string
+		Regulatory           string
+		Contractual          string
+		BestPractice         string
+		RiskAssessment       string
+	}
+
+	DataListData struct {
+		Title            string
+		OrganizationName string
+		CreatedAt        time.Time
+		TotalData        int
+		Rows             []DataListRow
+	}
+
+	DataListRow struct {
+		Name           string
+		Classification string
+		Owner          string
+		Vendors        string
+	}
+
+	AssetListData struct {
+		Title            string
+		OrganizationName string
+		CreatedAt        time.Time
+		TotalAssets      int
+		Rows             []AssetListRow
+	}
+
+	AssetListRow struct {
+		Name            string
+		AssetType       string
+		Amount          int
+		DataTypesStored string
+		Owner           string
+		Vendors         string
+	}
+
+	RiskListData struct {
+		Title            string
+		OrganizationName string
+		CreatedAt        time.Time
+		TotalRisks       int
+		Rows             []RiskListRow
+	}
+
+	RiskListRow struct {
+		Name                    string
+		Description             string
+		Category                string
+		Treatment               string
+		Owner                   string
+		InherentLikelihood      int
+		InherentLikelihoodLabel string
+		InherentImpact          int
+		InherentImpactLabel     string
+		InherentRiskScore       int
+		InherentSeverity        string
+		ResidualLikelihood      int
+		ResidualLikelihoodLabel string
+		ResidualImpact          int
+		ResidualImpactLabel     string
+		ResidualRiskScore       int
+		ResidualSeverity        string
+		Note                    string
+	}
+
+	FindingListData struct {
+		Title            string
+		OrganizationName string
+		CreatedAt        time.Time
+		TotalFindings    int
+		Rows             []FindingListRow
+	}
+
+	FindingListRow struct {
+		ReferenceID        string
+		Kind               string
+		Description        string
+		Source             string
+		IdentifiedOn       string
+		RootCause          string
+		CorrectiveAction   string
+		EffectivenessCheck string
+		Status             string
+		Priority           string
+		Owner              string
+		DueDate            string
+	}
+
+	ObligationListData struct {
+		Title            string
+		OrganizationName string
+		CreatedAt        time.Time
+		TotalObligations int
+		Rows             []ObligationListRow
+	}
+
+	ObligationListRow struct {
+		Area                   string
+		Source                 string
+		Requirement            string
+		ActionsToBeImplemented string
+		Status                 string
+		Type                   string
+		Regulator              string
+		Owner                  string
+		DueDate                string
+	}
+
+	ProcessingActivityListData struct {
+		Title                     string
+		OrganizationName          string
+		CreatedAt                 time.Time
+		TotalProcessingActivities int
+		Rows                      []ProcessingActivityListRow
+	}
+
+	ProcessingActivityListRow struct {
 		Name                                 string
-		Purpose                              *string
-		DataSubjectCategory                  *string
-		PersonalDataCategory                 *string
-		SpecialOrCriminalData                coredata.ProcessingActivitySpecialOrCriminalDatum
-		ConsentEvidenceLink                  *string
-		LawfulBasis                          coredata.ProcessingActivityLawfulBasis
-		Recipients                           *string
-		Location                             *string
-		InternationalTransfers               bool
-		TransferSafeguards                   *coredata.ProcessingActivityTransferSafeguard
-		RetentionPeriod                      *string
-		SecurityMeasures                     *string
-		DataProtectionImpactAssessmentNeeded coredata.ProcessingActivityDataProtectionImpactAssessment
-		TransferImpactAssessmentNeeded       coredata.ProcessingActivityTransferImpactAssessment
-		LastReviewDate                       *time.Time
-		NextReviewDate                       *time.Time
-		Role                                 coredata.ProcessingActivityRole
-		DataProtectionOfficerFullName        *string
+		Purpose                              string
+		Role                                 string
+		DataSubjectCategory                  string
+		PersonalDataCategory                 string
+		SpecialOrCriminalData                string
+		LawfulBasis                          string
+		ConsentEvidenceLink                  string
+		Recipients                           string
+		Location                             string
+		InternationalTransfers               string
+		TransferSafeguards                   string
+		RetentionPeriod                      string
+		SecurityMeasures                     string
+		DataProtectionImpactAssessmentNeeded string
+		TransferImpactAssessmentNeeded       string
+		LastReviewDate                       string
+		NextReviewDate                       string
+		DataProtectionOfficer                string
 		Vendors                              string
 	}
 
-	DataProtectionImpactAssessmentTableData struct {
-		CompanyName                 string
-		CompanyHorizontalLogoBase64 string
-		Version                     int
-		PublishedAt                 time.Time
-		Assessments                 []DataProtectionImpactAssessmentRowData
+	DataProtectionImpactAssessmentListData struct {
+		Title                                string
+		OrganizationName                     string
+		CreatedAt                            time.Time
+		TotalDataProtectionImpactAssessments int
+		Rows                                 []DataProtectionImpactAssessmentListRow
 	}
 
-	DataProtectionImpactAssessmentRowData struct {
+	DataProtectionImpactAssessmentListRow struct {
 		ProcessingActivityName      string
-		Description                 *string
-		NecessityAndProportionality *string
-		PotentialRisk               *string
-		Mitigations                 *string
-		ResidualRisk                *coredata.DataProtectionImpactAssessmentResidualRisk
+		Description                 string
+		NecessityAndProportionality string
+		PotentialRisk               string
+		Mitigations                 string
+		ResidualRisk                string
 	}
 
-	TransferImpactAssessmentTableData struct {
-		CompanyName                 string
-		CompanyHorizontalLogoBase64 string
-		Version                     int
-		PublishedAt                 time.Time
-		Assessments                 []TransferImpactAssessmentRowData
+	TransferImpactAssessmentListData struct {
+		Title                          string
+		OrganizationName               string
+		CreatedAt                      time.Time
+		TotalTransferImpactAssessments int
+		Rows                           []TransferImpactAssessmentListRow
 	}
 
-	TransferImpactAssessmentRowData struct {
+	TransferImpactAssessmentListRow struct {
 		ProcessingActivityName string
-		DataSubjects           *string
-		LegalMechanism         *string
-		Transfer               *string
-		LocalLawRisk           *string
-		SupplementaryMeasures  *string
+		DataSubjects           string
+		Transfer               string
+		LegalMechanism         string
+		LocalLawRisk           string
+		SupplementaryMeasures  string
 	}
 
-	StateOfApplicabilityData struct {
-		Title                       string
-		OrganizationName            string
-		CreatedAt                   time.Time
-		TotalControls               int
-		FrameworkGroups             []FrameworkControlGroup
-		CompanyHorizontalLogoBase64 string
-		Version                     int
-		PublishedAt                 time.Time
-		Approver                    string
+	VendorListData struct {
+		Title            string
+		OrganizationName string
+		CreatedAt        time.Time
+		TotalVendors     int
+		Rows             []VendorListRow
 	}
 
-	FrameworkControlGroup struct {
-		FrameworkName string
-		Controls      []ControlData
+	VendorListRow struct {
+		Name                          string
+		LegalName                     string
+		Description                   string
+		Category                      string
+		HeadquarterAddress            string
+		WebsiteURL                    string
+		PrivacyPolicyURL              string
+		ServiceLevelAgreementURL      string
+		DataProcessingAgreementURL    string
+		BusinessAssociateAgreementURL string
+		SubprocessorsListURL          string
+		StatusPageURL                 string
+		TermsOfServiceURL             string
+		SecurityPageURL               string
+		TrustPageURL                  string
+		Certifications                string
+		Countries                     string
+		BusinessOwner                 string
+		SecurityOwner                 string
+		Services                      []VendorListService
+		Contacts                      []VendorListContact
+		RiskAssessments               []VendorListRiskAssessment
+		ComplianceReports             []VendorListComplianceReport
+		BusinessAssociateAgreement    *VendorListAgreement
+		DataPrivacyAgreement          *VendorListAgreement
 	}
 
-	ControlData struct {
-		FrameworkName               string
-		SectionTitle                string
-		Name                        string
-		Applicability               *bool
-		Justification               *string
-		BestPractice                *bool
-		Implemented                 *string
-		NotImplementedJustification *string
-		Regulatory                  *bool
-		Contractual                 *bool
-		RiskAssessment              *bool
+	VendorListService struct {
+		Name        string
+		Description string
+	}
+
+	VendorListContact struct {
+		FullName string
+		Email    string
+		Phone    string
+		Role     string
+	}
+
+	VendorListRiskAssessment struct {
+		AssessedAt      string
+		ExpiresAt       string
+		DataSensitivity string
+		BusinessImpact  string
+		Notes           string
+	}
+
+	VendorListComplianceReport struct {
+		ReportName string
+		ReportDate string
+		ValidUntil string
+	}
+
+	VendorListAgreement struct {
+		ValidFrom  string
+		ValidUntil string
 	}
 )
+
+func BoolLabel(v bool) string {
+	if v {
+		return "Yes"
+	}
+	return "No"
+}
+
+func MaturityLabel(l coredata.ControlMaturityLevel) string {
+	switch l {
+	case coredata.ControlMaturityLevelNone:
+		return "0 - None"
+	case coredata.ControlMaturityLevelInitial:
+		return "1 - Initial"
+	case coredata.ControlMaturityLevelManaged:
+		return "2 - Managed"
+	case coredata.ControlMaturityLevelDefined:
+		return "3 - Defined"
+	case coredata.ControlMaturityLevelQuantitativelyManaged:
+		return "4 - Quantitatively Managed"
+	case coredata.ControlMaturityLevelOptimizing:
+		return "5 - Optimizing"
+	}
+	return "Not set"
+}
 
 const (
 	ClassificationPublic       Classification = "PUBLIC"
@@ -340,48 +496,47 @@ const (
 	ClassificationSecret       Classification = "SECRET"
 )
 
+// ProseMirrorJSONToHTML converts ProseMirror/Tiptap document JSON to an HTML fragment.
+// On parse or render failure it returns a single escaped paragraph with the raw input.
+func ProseMirrorJSONToHTML(content json.RawMessage) template.HTML {
+	s := strings.TrimSpace(string(content))
+	if s == "" {
+		return template.HTML("")
+	}
+	node, err := prosemirror.Parse(s)
+	if err != nil {
+		return template.HTML(fmt.Sprintf("<p>%s</p>", html.EscapeString(s)))
+	}
+	htmlStr, err := prosemirror.RenderHTML(node)
+	if err != nil {
+		return template.HTML(fmt.Sprintf("<p>%s</p>", html.EscapeString(s)))
+	}
+	return template.HTML(htmlStr)
+}
+
 func RenderHTML(data DocumentData) ([]byte, error) {
 	data.MermaidJS = template.JS(mermaidJSSource)
 
+	page := struct {
+		DocumentData
+		BodyHTML template.HTML
+	}{
+		DocumentData: data,
+		BodyHTML:     ProseMirrorJSONToHTML(data.Content),
+	}
+
 	var buf bytes.Buffer
-	if err := documentTemplate.Execute(&buf, data); err != nil {
+	if err := documentTemplate.Execute(&buf, page); err != nil {
 		return nil, fmt.Errorf("cannot execute template: %w", err)
 	}
 
 	return buf.Bytes(), nil
 }
 
-func RenderProcessingActivitiesTableHTML(data ProcessingActivityTableData) ([]byte, error) {
+func RenderSignaturePageHTML(data SignaturePageData) ([]byte, error) {
 	var buf bytes.Buffer
-	if err := processingActivitiesTemplate.Execute(&buf, data); err != nil {
-		return nil, fmt.Errorf("cannot execute processing activities template: %w", err)
-	}
-
-	return buf.Bytes(), nil
-}
-
-func RenderDataProtectionImpactAssessmentsTableHTML(data DataProtectionImpactAssessmentTableData) ([]byte, error) {
-	var buf bytes.Buffer
-	if err := dataProtectionImpactAssessmentsTemplate.Execute(&buf, data); err != nil {
-		return nil, fmt.Errorf("cannot execute data protection impact assessments template: %w", err)
-	}
-
-	return buf.Bytes(), nil
-}
-
-func RenderTransferImpactAssessmentsTableHTML(data TransferImpactAssessmentTableData) ([]byte, error) {
-	var buf bytes.Buffer
-	if err := transferImpactAssessmentsTemplate.Execute(&buf, data); err != nil {
-		return nil, fmt.Errorf("cannot execute transfer impact assessments template: %w", err)
-	}
-
-	return buf.Bytes(), nil
-}
-
-func RenderStateOfApplicabilityHTML(data StateOfApplicabilityData) ([]byte, error) {
-	var buf bytes.Buffer
-	if err := stateOfApplicabilityTemplate.Execute(&buf, data); err != nil {
-		return nil, fmt.Errorf("cannot execute SOA template: %w", err)
+	if err := signaturePageTemplate.Execute(&buf, data); err != nil {
+		return nil, fmt.Errorf("cannot execute signature page template: %w", err)
 	}
 
 	return buf.Bytes(), nil

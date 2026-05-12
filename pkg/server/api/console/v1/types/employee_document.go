@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -23,11 +23,11 @@ import (
 	"go.probo.inc/probo/pkg/page"
 )
 
-type EmployeeDocumentFilterMode int
+type EmployeeDocumentFilterMode string
 
 const (
-	EmployeeDocumentFilterModeSignature EmployeeDocumentFilterMode = iota
-	EmployeeDocumentFilterModeApproval
+	EmployeeDocumentFilterModeSignature EmployeeDocumentFilterMode = "SIGNATURE"
+	EmployeeDocumentFilterModeApproval  EmployeeDocumentFilterMode = "APPROVAL"
 )
 
 type (
@@ -42,13 +42,11 @@ type (
 	}
 
 	EmployeeDocument struct {
-		ID             gid.GID
-		Title          string
-		Description    *string
-		DocumentType   coredata.DocumentType
-		Classification coredata.DocumentClassification
-		CreatedAt      time.Time
-		UpdatedAt      time.Time
+		ID           gid.GID
+		Title        string
+		DocumentType coredata.DocumentType
+		CreatedAt    time.Time
+		UpdatedAt    time.Time
 
 		FilterMode EmployeeDocumentFilterMode
 	}
@@ -65,10 +63,13 @@ type (
 
 	EmployeeDocumentVersion struct {
 		ID             gid.GID
+		DocumentID     gid.GID
 		OrganizationID gid.GID
 		Major          int
 		Minor          int
 		Status         coredata.DocumentVersionStatus
+		Classification coredata.DocumentClassification
+		DocumentType   coredata.DocumentType
 		PublishedAt    *time.Time
 		CreatedAt      time.Time
 		UpdatedAt      time.Time
@@ -101,6 +102,8 @@ func (d EmployeeDocument) CursorKey(orderBy coredata.DocumentOrderField) page.Cu
 	switch orderBy {
 	case coredata.DocumentOrderFieldCreatedAt:
 		return page.NewCursorKey(d.ID, d.CreatedAt)
+	case coredata.DocumentOrderFieldUpdatedAt:
+		return page.NewCursorKey(d.ID, d.UpdatedAt)
 	case coredata.DocumentOrderFieldTitle:
 		return page.NewCursorKey(d.ID, d.Title)
 	case coredata.DocumentOrderFieldDocumentType:

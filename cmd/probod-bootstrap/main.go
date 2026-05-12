@@ -23,9 +23,19 @@ import (
 	"go.probo.inc/probo/pkg/bootstrap"
 )
 
+var (
+	version string = "unknown"
+)
+
 func main() {
 	outputPath := flag.String("output", "/etc/probod/config.yml", "output path for the generated config file")
+	showVersion := flag.Bool("version", false, "print version and exit")
 	flag.Parse()
+
+	if *showVersion {
+		fmt.Println(version)
+		return
+	}
 
 	builder := bootstrap.NewBuilder(nil)
 

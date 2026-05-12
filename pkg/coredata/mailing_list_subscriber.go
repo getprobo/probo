@@ -44,7 +44,7 @@ type (
 	MailingListSubscribers []*MailingListSubscriber
 )
 
-func (cns *MailingListSubscriber) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+func (cns *MailingListSubscriber) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	q := `SELECT organization_id FROM mailing_list_subscribers WHERE id = $1 LIMIT 1;`
 
 	var organizationID gid.GID
@@ -69,7 +69,7 @@ func (cns *MailingListSubscriber) CursorKey(orderBy MailingListSubscriberOrderFi
 
 func (cns *MailingListSubscriber) LoadByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	id gid.GID,
 ) error {
@@ -119,7 +119,7 @@ LIMIT 1;
 
 func (cns *MailingListSubscriber) LoadByMailingListIDAndEmail(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	mailingListID gid.GID,
 	email mail.Addr,
@@ -172,7 +172,7 @@ LIMIT 1;
 
 func (cns *MailingListSubscriber) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -225,7 +225,7 @@ VALUES (
 
 func (cns *MailingListSubscriber) Update(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -261,7 +261,7 @@ WHERE
 
 func (cns *MailingListSubscriber) Delete(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -291,7 +291,7 @@ WHERE
 
 func (cnss *MailingListSubscribers) CountByMailingListID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	mailingListID gid.GID,
 ) (int, error) {
@@ -323,7 +323,7 @@ WHERE
 
 func (cnss *MailingListSubscribers) LoadAllConfirmedByMailingListID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	mailingListID gid.GID,
 ) error {
@@ -367,7 +367,7 @@ WHERE
 
 func (cnss *MailingListSubscribers) LoadByMailingListID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	mailingListID gid.GID,
 	cursor *page.Cursor[MailingListSubscriberOrderField],

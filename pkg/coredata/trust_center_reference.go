@@ -59,7 +59,7 @@ func (t TrustCenterReference) CursorKey(orderBy TrustCenterReferenceOrderField) 
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (t *TrustCenterReference) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+func (t *TrustCenterReference) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	q := `SELECT organization_id FROM trust_center_references WHERE id = $1 LIMIT 1;`
 
 	var organizationID gid.GID
@@ -75,7 +75,7 @@ func (t *TrustCenterReference) AuthorizationAttributes(ctx context.Context, conn
 
 func (t *TrustCenterReference) LoadByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	trustCenterReferenceID gid.GID,
 ) error {
@@ -120,7 +120,7 @@ LIMIT 1;
 
 func (t *TrustCenterReference) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -183,7 +183,7 @@ RETURNING rank;
 
 func (t *TrustCenterReference) Update(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -225,7 +225,7 @@ WHERE
 
 func (t *TrustCenterReference) UpdateRank(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -275,7 +275,7 @@ WHERE %s
 
 func (t *TrustCenterReference) Delete(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -301,7 +301,7 @@ WHERE
 
 func (t *TrustCenterReferences) LoadByTrustCenterID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	trustCenterID gid.GID,
 	cursor *page.Cursor[TrustCenterReferenceOrderField],
@@ -349,7 +349,7 @@ WHERE
 
 func (t *TrustCenterReferences) CountByTrustCenterID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	trustCenterID gid.GID,
 ) (int, error) {

@@ -34,8 +34,6 @@ type (
 		VendorID       gid.GID   `db:"vendor_id"`
 		Name           string    `db:"name"`
 		Description    *string   `db:"description"`
-		SnapshotID     *gid.GID  `db:"snapshot_id"`
-		SourceID       *gid.GID  `db:"source_id"`
 		CreatedAt      time.Time `db:"created_at"`
 		UpdatedAt      time.Time `db:"updated_at"`
 	}
@@ -54,7 +52,7 @@ func (vs VendorService) CursorKey(orderBy VendorServiceOrderField) page.CursorKe
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (vs *VendorService) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+func (vs *VendorService) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	q := `SELECT organization_id FROM vendor_services WHERE id = $1 LIMIT 1;`
 
 	var organizationID gid.GID
@@ -70,7 +68,7 @@ func (vs *VendorService) AuthorizationAttributes(ctx context.Context, conn pg.Co
 
 func (vs *VendorService) LoadByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	vendorServiceID gid.GID,
 ) error {
@@ -81,8 +79,6 @@ SELECT
 	vendor_id,
 	name,
 	description,
-	snapshot_id,
-	source_id,
 	created_at,
 	updated_at
 FROM
@@ -120,7 +116,7 @@ LIMIT 1;
 
 func (vs *VendorServices) LoadByVendorID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	vendorID gid.GID,
 	cursor *page.Cursor[VendorServiceOrderField],
@@ -132,8 +128,6 @@ SELECT
 	vendor_id,
 	name,
 	description,
-	snapshot_id,
-	source_id,
 	created_at,
 	updated_at
 FROM
@@ -141,6 +135,7 @@ FROM
 WHERE
 	%s
 	AND vendor_id = @vendor_id
+	AND snapshot_id IS NULL
 	AND %s
 `
 	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
@@ -167,9 +162,64 @@ WHERE
 	return nil
 }
 
+func (vs *VendorServices) LoadByVendorIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	vendorIDs []gid.GID,
+) error {
+	if len(vendorIDs) == 0 {
+		*vs = VendorServices{}
+		return nil
+	}
+
+	q := `
+SELECT
+	id,
+	organization_id,
+	vendor_id,
+	name,
+	description,
+	created_at,
+	updated_at
+FROM
+	vendor_services
+WHERE
+	%s
+	AND vendor_id = ANY(@vendor_ids)
+	AND snapshot_id IS NULL
+ORDER BY
+	vendor_id, name ASC
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	ids := make([]string, len(vendorIDs))
+	for i, id := range vendorIDs {
+		ids[i] = id.String()
+	}
+
+	args := pgx.StrictNamedArgs{"vendor_ids": ids}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query vendor services: %w", err)
+	}
+	defer rows.Close()
+
+	vendorServices, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[VendorService])
+	if err != nil {
+		return fmt.Errorf("cannot collect vendor services: %w", err)
+	}
+
+	*vs = vendorServices
+
+	return nil
+}
+
 func (vs VendorService) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -217,7 +267,7 @@ VALUES (
 
 func (vs VendorService) Update(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -253,7 +303,7 @@ WHERE
 
 func (vs VendorService) Delete(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -273,66 +323,6 @@ WHERE
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot delete vendor service: %w", err)
-	}
-
-	return nil
-}
-
-func (vs VendorServices) InsertVendorSnapshots(
-	ctx context.Context,
-	conn pg.Conn,
-	scope Scoper,
-	organizationID gid.GID,
-	snapshotID gid.GID,
-) error {
-	query := `
-WITH
-	snapshot_vendors AS (
-		SELECT id, source_id
-		FROM vendors
-		WHERE organization_id = @organization_id AND snapshot_id = @snapshot_id
-	)
-INSERT INTO vendor_services (
-	tenant_id,
-	id,
-	organization_id,
-	snapshot_id,
-	source_id,
-	vendor_id,
-	name,
-	description,
-	created_at,
-	updated_at
-)
-SELECT
-	@tenant_id,
-	generate_gid(decode_base64_unpadded(@tenant_id), @vendor_service_entity_type),
-	@organization_id,
-	@snapshot_id,
-	vs.id,
-	sv.id,
-	vs.name,
-	vs.description,
-	vs.created_at,
-	vs.updated_at
-FROM vendor_services vs
-INNER JOIN snapshot_vendors sv ON sv.source_id = vs.vendor_id
-WHERE %s AND vs.snapshot_id IS NULL
-	`
-
-	query = fmt.Sprintf(query, scope.SQLFragment())
-
-	args := pgx.StrictNamedArgs{
-		"tenant_id":                  scope.GetTenantID(),
-		"snapshot_id":                snapshotID,
-		"organization_id":            organizationID,
-		"vendor_service_entity_type": VendorServiceEntityType,
-	}
-	maps.Copy(args, scope.SQLArguments())
-
-	_, err := conn.Exec(ctx, query, args)
-	if err != nil {
-		return fmt.Errorf("cannot insert vendor service snapshots: %w", err)
 	}
 
 	return nil

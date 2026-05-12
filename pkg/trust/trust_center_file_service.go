@@ -25,7 +25,7 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
-	"go.probo.inc/probo/pkg/watermarkpdf"
+	"go.probo.inc/probo/pkg/pdfutils"
 )
 
 type TrustCenterFileService struct {
@@ -41,7 +41,7 @@ func (s *TrustCenterFileService) Get(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			err := trustCenterFile.LoadByID(ctx, conn, s.svc.scope, trustCenterFileID)
 			if err != nil {
 				return fmt.Errorf("cannot load trust center file: %w", err)
@@ -76,7 +76,7 @@ func (s *TrustCenterFileService) ListForOrganizationId(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			err := trustCenterFiles.LoadByOrganizationID(ctx, conn, s.svc.scope, organizationID, cursor, filter)
 			if err != nil {
 				return fmt.Errorf("cannot load trust center files: %w", err)
@@ -104,7 +104,7 @@ func (s *TrustCenterFileService) ExportFile(
 	}
 
 	if mimeType == "application/pdf" {
-		watermarkedPDF, err := watermarkpdf.AddConfidentialWithTimestamp(fileData, email)
+		watermarkedPDF, err := pdfutils.AddConfidentialWithTimestamp(fileData, email)
 		if err != nil {
 			return nil, "", fmt.Errorf("cannot add watermark to PDF: %w", err)
 		}
@@ -128,7 +128,7 @@ func (s *TrustCenterFileService) exportFileData(
 	var trustCenterFile *coredata.TrustCenterFile
 	var file *coredata.File
 
-	err := s.svc.pg.WithConn(ctx, func(conn pg.Conn) error {
+	err := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		trustCenterFile = &coredata.TrustCenterFile{}
 		if err := trustCenterFile.LoadByID(ctx, conn, s.svc.scope, trustCenterFileID); err != nil {
 			return fmt.Errorf("cannot load trust center file: %w", err)

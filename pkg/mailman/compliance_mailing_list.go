@@ -67,7 +67,7 @@ func (s *Service) mailingListEmailConfig(
 
 	err := s.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			if err := mailingList.LoadByID(ctx, conn, scope, mailingListID); err != nil {
 				return fmt.Errorf("cannot load mailing list: %w", err)
 			}

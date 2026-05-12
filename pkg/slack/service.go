@@ -89,7 +89,7 @@ func (s *Service) GetInitialSlackMessageByChannelAndTS(
 ) (*coredata.SlackMessage, error) {
 	var slackMessage coredata.SlackMessage
 
-	err := s.pg.WithConn(ctx, func(conn pg.Conn) error {
+	err := s.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		if err := slackMessage.LoadInitialByChannelAndTS(ctx, conn, coredata.NewNoScope(), channelID, messageTS); err != nil {
 			return fmt.Errorf("cannot load slack message: %w", err)
 		}

@@ -49,6 +49,7 @@ const (
 	StreamEventToolEnd    StreamEventType = "tool_end"
 	StreamEventHandoff    StreamEventType = "handoff"
 	StreamEventComplete   StreamEventType = "complete"
+	StreamEventSuspended  StreamEventType = "suspended"
 	StreamEventError      StreamEventType = "error"
 )
 
@@ -58,7 +59,10 @@ func (sr *StreamedRun) Wait() (*Result, error) {
 	return sr.result, sr.err
 }
 
-func (a *Agent) RunStreamed(ctx context.Context, messages []llm.Message) *StreamedRun {
+// RunStreamed launches the agent loop and returns immediately with a
+// StreamedRun whose Events channel emits incremental progress. ctx
+// follows Run's graceful-suspend contract.
+func (a *Agent) RunStreamed(ctx context.Context, messages []llm.Message, opts ...RunOption) *StreamedRun {
 	events := make(chan StreamEvent, 64)
 	sr := &StreamedRun{
 		Events: events,
@@ -69,17 +73,17 @@ func (a *Agent) RunStreamed(ctx context.Context, messages []llm.Message) *Stream
 		defer close(sr.done)
 		defer close(events)
 
-		result, err := coreLoop(
-			ctx,
-			a,
-			messages,
-			runOpts{
-				callLLM: streamingCallLLM(events),
-				onEvent: func(ctx context.Context, ev StreamEvent) {
-					trySendEvent(ctx, events, ev)
-				},
+		ro := runOpts{
+			callLLM: streamingCallLLM(events),
+			onEvent: func(ctx context.Context, ev StreamEvent) {
+				trySendEvent(ctx, events, ev)
 			},
-		)
+		}
+		for _, opt := range opts {
+			opt(&ro)
+		}
+
+		result, err := coreLoop(ctx, a, messages, ro)
 
 		sr.result = result
 		sr.err = err

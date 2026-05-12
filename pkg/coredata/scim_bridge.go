@@ -60,7 +60,7 @@ func (s *SCIMBridge) CursorKey(orderBy SCIMBridgeOrderField) page.CursorKey {
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (s *SCIMBridge) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+func (s *SCIMBridge) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	q := `SELECT organization_id FROM iam_scim_bridges WHERE id = $1 LIMIT 1;`
 
 	var organizationID gid.GID
@@ -76,7 +76,7 @@ func (s *SCIMBridge) AuthorizationAttributes(ctx context.Context, conn pg.Conn) 
 
 func (s *SCIMBridge) LoadByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	bridgeID gid.GID,
 ) error {
@@ -131,7 +131,7 @@ LIMIT 1;
 
 func (s *SCIMBridge) LoadByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 ) error {
@@ -186,7 +186,7 @@ LIMIT 1;
 
 func (s *SCIMBridge) LoadBySCIMConfigurationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	scimConfigurationID gid.GID,
 ) error {
@@ -241,7 +241,7 @@ LIMIT 1;
 
 func (s *SCIMBridge) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -311,7 +311,7 @@ INSERT INTO iam_scim_bridges (
 
 func (s *SCIMBridge) Update(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -360,7 +360,7 @@ WHERE
 
 func (s *SCIMBridge) LoadNextForSyncSkipLocked(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	staleSyncThreshold time.Duration,
 ) error {
 	staleCutoff := time.Now().Add(-staleSyncThreshold)
@@ -418,7 +418,7 @@ FOR UPDATE SKIP LOCKED
 
 func (s *SCIMBridge) Delete(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `

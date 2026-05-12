@@ -1,123 +1,93 @@
 # Go Worker
 
-Background workers follow a poll-based pattern with bounded concurrency. The struct holds a `*pg.Client`, a `*log.Logger`, and tuning knobs (`interval`, `staleAfter`, `maxConcurrency`). Use functional options (`With*` functions) for the tuning knobs with sensible defaults.
+Background workers use `go.gearno.de/kit/worker`. The kit handles the polling loop, semaphore-based concurrency, graceful shutdown, non-cancellable contexts, Prometheus metrics, and OpenTelemetry tracing. You only implement a **handler**.
 
-## Run loop
+## Handler interface
 
-The `Run(ctx context.Context) error` method uses a `time.Ticker` in a `for`/`select` loop. On each tick it recovers stale rows, then drains available work via `processNext`. Work items are claimed inside a transaction with `FOR UPDATE SKIP LOCKED`, marked as processing, then handled concurrently in goroutines bounded by a semaphore channel. Use `context.WithoutCancel` for work that must complete even after shutdown, and `sync.WaitGroup` with `defer wg.Wait()` to ensure in-flight goroutines finish before `Run` returns.
+Implement `worker.Handler[T]` with `Claim` and `Process`. Optionally implement `worker.StaleRecoverer` for stale row recovery.
 
 ```go
-type (
-	FooWorker struct {
-		pg             *pg.Client
-		logger         *log.Logger
-		interval       time.Duration
-		staleAfter     time.Duration
-		maxConcurrency int
-	}
-
-	FooWorkerOption func(*FooWorker)
-)
-
-func NewFooWorker(
-	pgClient *pg.Client,
-	logger *log.Logger,
-	opts ...FooWorkerOption,
-) *FooWorker {
-	w := &FooWorker{
-		pg:             pgClient,
-		logger:         logger,
-		interval:       10 * time.Second,
-		staleAfter:     5 * time.Minute,
-		maxConcurrency: 5,
-	}
-	for _, opt := range opts {
-		opt(w)
-	}
-	return w
+type fooHandler struct {
+	pg         *pg.Client
+	logger     *log.Logger
+	staleAfter time.Duration
 }
 
-func (w *FooWorker) Run(ctx context.Context) error {
-	var (
-		wg     sync.WaitGroup
-		sem    = make(chan struct{}, w.maxConcurrency)
-		ticker = time.NewTicker(w.interval)
-	)
-	defer ticker.Stop()
-	defer wg.Wait()
+func (h *fooHandler) Claim(ctx context.Context) (coredata.FooItem, error) {
+	var item coredata.FooItem
 
-	for {
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		case <-ticker.C:
-			nonCancelableCtx := context.WithoutCancel(ctx)
-			w.recoverStaleRows(nonCancelableCtx)
-			for {
-				if err := w.processNext(ctx, sem, &wg); err != nil {
-					if !errors.Is(err, coredata.ErrResourceNotFound) {
-						w.logger.ErrorCtx(nonCancelableCtx, "cannot claim item", log.Error(err))
-					}
-					break
-				}
+	if err := h.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			if err := item.LoadNextPendingForUpdateSkipLocked(ctx, tx); err != nil {
+				return err
 			}
+
+			now := time.Now()
+			item.Status = coredata.FooStatusProcessing
+			item.UpdatedAt = now
+			return item.Update(ctx, tx, coredata.NewNoScope())
+		},
+	); err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return coredata.FooItem{}, worker.ErrNoTask
 		}
+		return coredata.FooItem{}, err
 	}
+
+	return item, nil
+}
+
+func (h *fooHandler) Process(ctx context.Context, item coredata.FooItem) error {
+	if err := h.handle(ctx, &item); err != nil {
+		if failErr := h.fail(ctx, &item, err); failErr != nil {
+			h.logger.ErrorCtx(ctx, "cannot fail item", log.Error(failErr))
+		}
+		return err
+	}
+	return nil
+}
+
+func (h *fooHandler) RecoverStale(ctx context.Context) error {
+	return h.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			return coredata.ResetStaleFooItems(ctx, conn, h.staleAfter)
+		},
+	)
 }
 ```
 
-## processNext
+## Constructor
 
-Claims one work item inside a transaction, marks it as processing, then handles it in a bounded goroutine:
+The constructor builds the handler and returns `*worker.Worker[T]`. Use `worker.WithInterval` and `worker.WithMaxConcurrency` for tuning. Keep domain-specific options (e.g. timeouts, staleAfter) on the handler struct.
 
 ```go
-func (w *FooWorker) processNext(ctx context.Context, sem chan struct{}, wg *sync.WaitGroup) error {
-	select {
-	case sem <- struct{}{}:
-	case <-ctx.Done():
-		return ctx.Err()
+func NewFooWorker(
+	pgClient *pg.Client,
+	logger *log.Logger,
+	opts ...worker.Option,
+) *worker.Worker[coredata.FooItem] {
+	h := &fooHandler{
+		pg:         pgClient,
+		logger:     logger,
+		staleAfter: 5 * time.Minute,
 	}
 
-	var (
-		item coredata.FooItem
-		now  = time.Now()
-		nonCancelableCtx = context.WithoutCancel(ctx)
+	return worker.New(
+		"foo-worker",
+		h,
+		logger,
+		opts...,
 	)
-
-	if err := w.pg.WithTx(
-		nonCancelableCtx,
-		func(tx pg.Conn) error {
-			if err := item.LoadNextPendingForUpdateSkipLocked(nonCancelableCtx, tx); err != nil {
-				return err
-			}
-			item.Status = coredata.FooStatusProcessing
-			item.UpdatedAt = now
-			return item.Update(nonCancelableCtx, tx, coredata.NewNoScope())
-		},
-	); err != nil {
-		<-sem
-		return err
-	}
-
-	wg.Add(1)
-	go func(item coredata.FooItem) {
-		defer wg.Done()
-		defer func() { <-sem }()
-
-		if err := w.handle(nonCancelableCtx, &item); err != nil {
-			w.logger.ErrorCtx(nonCancelableCtx, "cannot process item", log.Error(err))
-		}
-	}(item)
-
-	return nil
 }
 ```
 
 ## Key principles
 
 - **Claim with `FOR UPDATE SKIP LOCKED`** — prevents multiple workers from picking the same row
-- **Semaphore channel** — bounds goroutine concurrency to `maxConcurrency`
-- **`context.WithoutCancel`** — in-flight work must complete even after shutdown
-- **`defer wg.Wait()`** — `Run` blocks until all goroutines finish
-- **Stale recovery** — on each tick, reset rows stuck in "processing" for longer than `staleAfter`
-- **Drain loop** — keep calling `processNext` until no more pending items (`ErrResourceNotFound`)
+- **Return `worker.ErrNoTask`** from `Claim` when no work is available (not the coredata sentinel)
+- **Context is non-cancellable** — the kit provides `context.WithoutCancel` to both `Claim` and `Process`
+- **Process handles its own failures** — update DB status on error, the kit only logs and records metrics
+- **Stale recovery is optional** — implement `worker.StaleRecoverer` if the worker marks rows as "processing"
+- **Kit provides observability** — Prometheus metrics (`worker_tasks_total`, `worker_task_duration_seconds`, etc.) and OTel traces are automatic

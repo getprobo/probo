@@ -422,15 +422,18 @@ func TestRunTyped(t *testing.T) {
 				City string `json:"city"`
 			}
 
-			weatherTool, err := FunctionTool[Params](
+			weatherTool := FunctionTool[Params](
 				"get_weather",
 				"Get weather for a city",
 				func(_ context.Context, p Params) (ToolResult, error) {
 					return ToolResult{Content: "Sunny, 22°C in " + p.City}, nil
 				},
 			)
-			require.NoError(t, err)
 
+			// Three responses: (1) tool call, (2) free-text summary
+			// that triggers promotion to the synthesis turn, (3) the
+			// forced structured output produced on the synthesis turn
+			// with ToolChoice=none + schema enforced.
 			provider := &typedMockProvider{
 				responses: []*llm.ChatCompletionResponse{
 					{
@@ -448,6 +451,7 @@ func TestRunTyped(t *testing.T) {
 						Usage:        llm.Usage{InputTokens: 10, OutputTokens: 5},
 						FinishReason: llm.FinishReasonToolCalls,
 					},
+					typedStopResponse("Got the weather, ready to respond."),
 					typedStopResponse(`{"city":"Paris","weather":"Sunny, 22°C"}`),
 				},
 			}
@@ -471,7 +475,7 @@ func TestRunTyped(t *testing.T) {
 			require.NoError(t, err)
 			assert.Equal(t, "Paris", result.Output.City)
 			assert.Equal(t, "Sunny, 22°C", result.Output.Weather)
-			assert.Equal(t, 2, result.Turns)
+			assert.Equal(t, 3, result.Turns)
 		},
 	)
 }

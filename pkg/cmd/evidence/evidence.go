@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -19,6 +19,7 @@ import (
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
 	"go.probo.inc/probo/pkg/cmd/evidence/delete"
 	"go.probo.inc/probo/pkg/cmd/evidence/list"
+	"go.probo.inc/probo/pkg/cmd/evidence/upload"
 	"go.probo.inc/probo/pkg/cmd/evidence/view"
 )
 
@@ -31,6 +32,7 @@ func NewCmdEvidence(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(list.NewCmdList(f))
 	cmd.AddCommand(view.NewCmdView(f))
 	cmd.AddCommand(delete.NewCmdDelete(f))
+	cmd.AddCommand(upload.NewCmdUpload(f))
 
 	return cmd
 }

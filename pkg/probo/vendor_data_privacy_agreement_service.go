@@ -75,7 +75,7 @@ func (s VendorDataPrivacyAgreementService) GetByVendorID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			vendorDataPrivacyAgreement = &coredata.VendorDataPrivacyAgreement{}
 			if err := vendorDataPrivacyAgreement.LoadByVendorID(ctx, conn, s.svc.scope, vendorID); err != nil {
 				return fmt.Errorf("cannot load vendor data privacy agreement: %w", err)
@@ -117,7 +117,7 @@ func (s VendorDataPrivacyAgreementService) Upload(
 
 	err = s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Tx) error {
 			vendor = &coredata.Vendor{}
 			if err := vendor.LoadByID(ctx, conn, s.svc.scope, vendorID); err != nil {
 				return fmt.Errorf("cannot load vendor: %w", err)
@@ -201,7 +201,7 @@ func (s VendorDataPrivacyAgreementService) Get(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			vendorDataPrivacyAgreement = &coredata.VendorDataPrivacyAgreement{}
 			if err := vendorDataPrivacyAgreement.LoadByID(ctx, conn, s.svc.scope, vendorDataPrivacyAgreementID); err != nil {
 				return fmt.Errorf("cannot load vendor data privacy agreement: %w", err)
@@ -232,7 +232,7 @@ func (s VendorDataPrivacyAgreementService) GenerateFileURL(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			vendorDataPrivacyAgreement := &coredata.VendorDataPrivacyAgreement{}
 			if err := vendorDataPrivacyAgreement.LoadByID(ctx, conn, s.svc.scope, vendorDataPrivacyAgreementID); err != nil {
 				return fmt.Errorf("cannot load vendor data privacy agreement: %w", err)
@@ -285,7 +285,7 @@ func (s VendorDataPrivacyAgreementService) Update(
 
 	err := s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Tx) error {
 			if err := existingAgreement.LoadByVendorID(ctx, conn, s.svc.scope, vendorID); err != nil {
 				return fmt.Errorf("cannot load existing vendor data privacy agreement: %w", err)
 			}
@@ -325,7 +325,7 @@ func (s VendorDataPrivacyAgreementService) Delete(
 ) error {
 	return s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Tx) error {
 			vendorDataPrivacyAgreement := &coredata.VendorDataPrivacyAgreement{}
 			if err := vendorDataPrivacyAgreement.LoadByID(ctx, conn, s.svc.scope, vendorDataPrivacyAgreementID); err != nil {
 				return fmt.Errorf("cannot load vendor data privacy agreement: %w", err)
@@ -346,7 +346,7 @@ func (s VendorDataPrivacyAgreementService) DeleteByVendorID(
 ) error {
 	return s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Tx) error {
 			vendorDataPrivacyAgreement := &coredata.VendorDataPrivacyAgreement{}
 			if err := vendorDataPrivacyAgreement.LoadByVendorID(ctx, conn, s.svc.scope, vendorID); err != nil {
 				return fmt.Errorf("cannot load vendor data privacy agreement: %w", err)

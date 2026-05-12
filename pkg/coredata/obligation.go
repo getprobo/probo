@@ -65,7 +65,7 @@ func (o *Obligation) CursorKey(field ObligationOrderField) page.CursorKey {
 	panic(fmt.Sprintf("unsupported order by: %s", field))
 }
 
-func (o *Obligation) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+func (o *Obligation) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	q := `SELECT organization_id FROM obligations WHERE id = $1 LIMIT 1;`
 
 	var organizationID gid.GID
@@ -81,7 +81,7 @@ func (o *Obligation) AuthorizationAttributes(ctx context.Context, conn pg.Conn) 
 
 func (o *Obligation) LoadByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	obligationID gid.GID,
 ) error {
@@ -108,6 +108,7 @@ FROM
 WHERE
 	%s
 	AND id = @obligation_id
+	AND snapshot_id IS NULL
 LIMIT 1;
 `
 
@@ -133,10 +134,9 @@ LIMIT 1;
 
 func (os *Obligations) CountByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
-	filter *ObligationFilter,
 ) (int, error) {
 	q := `
 SELECT
@@ -146,14 +146,13 @@ FROM
 WHERE
 	%s
 	AND organization_id = @organization_id
-	AND %s
+	AND snapshot_id IS NULL
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"organization_id": organizationID}
 	maps.Copy(args, scope.SQLArguments())
-	maps.Copy(args, filter.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)
 
@@ -168,10 +167,9 @@ WHERE
 
 func (os *Obligations) CountByRiskID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	riskID gid.GID,
-	filter *ObligationFilter,
 ) (int, error) {
 	q := `
 WITH obls AS (
@@ -186,20 +184,19 @@ WITH obls AS (
 		risks_obligations ro ON o.id = ro.obligation_id
 	WHERE
 		ro.risk_id = @risk_id
+		AND o.snapshot_id IS NULL
 )
 SELECT
 	COUNT(id)
 FROM
 	obls
 WHERE %s
-	AND %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"risk_id": riskID}
 	maps.Copy(args, scope.SQLArguments())
-	maps.Copy(args, filter.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)
 
@@ -214,11 +211,10 @@ WHERE %s
 
 func (os *Obligations) LoadByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 	cursor *page.Cursor[ObligationOrderField],
-	filter *ObligationFilter,
 ) error {
 	q := `
 SELECT
@@ -243,15 +239,14 @@ FROM
 WHERE
 	%s
 	AND organization_id = @organization_id
-	AND %s
+	AND snapshot_id IS NULL
 	AND %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"organization_id": organizationID}
 	maps.Copy(args, scope.SQLArguments())
-	maps.Copy(args, filter.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
@@ -271,11 +266,10 @@ WHERE
 
 func (os *Obligations) LoadByRiskID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	riskID gid.GID,
 	cursor *page.Cursor[ObligationOrderField],
-	filter *ObligationFilter,
 ) error {
 	q := `
 WITH obls AS (
@@ -304,6 +298,7 @@ WITH obls AS (
 		risks_obligations ro ON o.id = ro.obligation_id
 	WHERE
 		ro.risk_id = @risk_id
+		AND o.snapshot_id IS NULL
 )
 SELECT
 	id,
@@ -326,14 +321,12 @@ FROM
 	obls
 WHERE %s
 	AND %s
-	AND %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"risk_id": riskID}
 	maps.Copy(args, scope.SQLArguments())
-	maps.Copy(args, filter.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
@@ -353,10 +346,9 @@ WHERE %s
 
 func (os *Obligations) CountByControlID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	controlID gid.GID,
-	filter *ObligationFilter,
 ) (int, error) {
 	q := `
 WITH obls AS (
@@ -370,20 +362,19 @@ WITH obls AS (
 		controls_obligations co ON o.id = co.obligation_id
 	WHERE
 		co.control_id = @control_id
+		AND o.snapshot_id IS NULL
 )
 SELECT
 	COUNT(id)
 FROM
 	obls
 WHERE %s
-	AND %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"control_id": controlID}
 	maps.Copy(args, scope.SQLArguments())
-	maps.Copy(args, filter.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)
 
@@ -398,11 +389,10 @@ WHERE %s
 
 func (os *Obligations) LoadByControlID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	controlID gid.GID,
 	cursor *page.Cursor[ObligationOrderField],
-	filter *ObligationFilter,
 ) error {
 	q := `
 WITH obls AS (
@@ -430,6 +420,7 @@ WITH obls AS (
 		controls_obligations co ON o.id = co.obligation_id
 	WHERE
 		co.control_id = @control_id
+		AND o.snapshot_id IS NULL
 )
 SELECT
 	id,
@@ -452,13 +443,11 @@ FROM
 	obls
 WHERE %s
 	AND %s
-	AND %s
 `
-	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.NamedArgs{"control_id": controlID}
 	maps.Copy(args, scope.SQLArguments())
-	maps.Copy(args, filter.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
@@ -478,7 +467,7 @@ WHERE %s
 
 func (o *Obligation) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -551,7 +540,7 @@ INSERT INTO obligations (
 
 func (o *Obligation) Update(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -601,7 +590,7 @@ WHERE
 
 func (o *Obligation) Delete(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -625,13 +614,15 @@ WHERE
 	return nil
 }
 
-func (os Obligations) Snapshot(ctx context.Context, conn pg.Conn, scope Scoper, organizationID, snapshotID gid.GID) error {
-	query := `
-INSERT INTO obligations (
+func (os *Obligations) LoadAllByOrganizationID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	organizationID gid.GID,
+) error {
+	q := `
+SELECT
 	id,
-	tenant_id,
-	snapshot_id,
-	source_id,
 	organization_id,
 	area,
 	source,
@@ -643,44 +634,142 @@ INSERT INTO obligations (
 	due_date,
 	status,
 	type,
+	snapshot_id,
+	source_id,
 	created_at,
 	updated_at
-)
-SELECT
-	generate_gid(decode_base64_unpadded(@tenant_id), @obligation_entity_type),
-	@tenant_id,
-	@snapshot_id,
-	o.id,
-	o.organization_id,
-	o.area,
-	o.source,
-	o.requirement,
-	o.actions_to_be_implemented,
-	o.regulator,
-	o.owner_profile_id,
-	o.last_review_date,
-	o.due_date,
-	o.status,
-	o.type,
-	o.created_at,
-	o.updated_at
-FROM obligations o
-WHERE %s AND o.organization_id = @organization_id AND o.snapshot_id IS NULL
-	`
+FROM
+	obligations
+WHERE
+	%s
+	AND organization_id = @organization_id
+	AND snapshot_id IS NULL
+ORDER BY
+	created_at ASC
+`
 
-	query = fmt.Sprintf(query, scope.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment())
 
-	args := pgx.StrictNamedArgs{
-		"tenant_id":              scope.GetTenantID(),
-		"snapshot_id":            snapshotID,
-		"organization_id":        organizationID,
-		"obligation_entity_type": ObligationEntityType,
-	}
+	args := pgx.StrictNamedArgs{"organization_id": organizationID}
 	maps.Copy(args, scope.SQLArguments())
 
-	_, err := conn.Exec(ctx, query, args)
+	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot insert obligation snapshots: %w", err)
+		return fmt.Errorf("cannot query obligations: %w", err)
+	}
+
+	obligations, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Obligation])
+	if err != nil {
+		return fmt.Errorf("cannot collect obligations: %w", err)
+	}
+
+	*os = obligations
+
+	return nil
+}
+
+func (o Obligation) GetGeneratedDocumentID(
+	ctx context.Context,
+	conn pg.Querier,
+	organizationID gid.GID,
+) (*gid.GID, error) {
+	var documentID *gid.GID
+
+	err := conn.QueryRow(
+		ctx,
+		`
+SELECT
+	obligations_document_id
+FROM
+	generated_documents
+WHERE
+	organization_id = @organization_id
+`,
+		pgx.NamedArgs{"organization_id": organizationID},
+	).Scan(&documentID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("cannot get obligation list document ID: %w", err)
+	}
+
+	return documentID, nil
+}
+
+func (o Obligation) UpsertGeneratedDocumentID(
+	ctx context.Context,
+	conn pg.Tx,
+	organizationID gid.GID,
+	tenantID gid.TenantID,
+	documentID gid.GID,
+) error {
+	now := time.Now()
+
+	_, err := conn.Exec(
+		ctx,
+		`
+INSERT INTO generated_documents (
+	organization_id,
+	tenant_id,
+	obligations_document_id,
+	created_at,
+	updated_at
+) VALUES (
+	@organization_id,
+	@tenant_id,
+	@obligations_document_id,
+	@created_at,
+	@updated_at
+)
+ON CONFLICT (organization_id) DO UPDATE
+SET
+	obligations_document_id = @obligations_document_id,
+	updated_at = @updated_at
+`,
+		pgx.NamedArgs{
+			"organization_id":         organizationID,
+			"tenant_id":               tenantID,
+			"obligations_document_id": documentID,
+			"created_at":              now,
+			"updated_at":              now,
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("cannot upsert obligation list document ID: %w", err)
+	}
+
+	return nil
+}
+
+func (o Obligation) ClearGeneratedDocumentID(
+	ctx context.Context,
+	conn pg.Tx,
+	documentIDs []gid.GID,
+) error {
+	ids := make([]string, len(documentIDs))
+	for i, id := range documentIDs {
+		ids[i] = id.String()
+	}
+
+	_, err := conn.Exec(
+		ctx,
+		`
+UPDATE
+	generated_documents
+SET
+	obligations_document_id = NULL,
+	updated_at = @now
+WHERE
+	obligations_document_id = ANY(@ids)
+`,
+		pgx.NamedArgs{
+			"ids": ids,
+			"now": time.Now(),
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("cannot clear obligation list document references: %w", err)
 	}
 
 	return nil

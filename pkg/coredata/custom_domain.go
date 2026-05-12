@@ -47,6 +47,7 @@ type (
 		SSLExpiresAt           *time.Time            `db:"ssl_expires_at"`
 		SSLRetryCount          int                   `db:"ssl_retry_count"`
 		SSLLastAttemptAt       *time.Time            `db:"ssl_last_attempt_at"`
+		ProvisioningError      *string               `db:"provisioning_error"`
 		CreatedAt              time.Time             `db:"created_at"`
 		UpdatedAt              time.Time             `db:"updated_at"`
 	}
@@ -66,7 +67,7 @@ func NewCustomDomain(tenantID gid.TenantID, domain string) *CustomDomain {
 }
 
 // AuthorizationAttributes returns the authorization attributes for policy evaluation.
-func (cd *CustomDomain) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+func (cd *CustomDomain) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	q := `SELECT organization_id FROM custom_domains WHERE id = $1 LIMIT 1;`
 
 	var organizationID gid.GID
@@ -151,7 +152,7 @@ func (cd *CustomDomain) ParseCertificate(encryptionKey cipher.EncryptionKey) err
 
 func (cd *CustomDomain) LoadByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	domainID gid.GID,
 ) error {
@@ -171,6 +172,7 @@ SELECT
 	ssl_expires_at,
 	ssl_retry_count,
 	ssl_last_attempt_at,
+	provisioning_error,
 	created_at,
 	updated_at
 FROM
@@ -207,7 +209,7 @@ LIMIT 1
 
 func (cd *CustomDomain) LoadByIDForUpdateSkipLocked(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 	domainID gid.GID,
 ) error {
@@ -227,6 +229,7 @@ SELECT
 	ssl_expires_at,
 	ssl_retry_count,
 	ssl_last_attempt_at,
+	provisioning_error,
 	created_at,
 	updated_at
 FROM
@@ -263,7 +266,7 @@ FOR UPDATE SKIP LOCKED
 
 func (cd *CustomDomain) LoadByDomain(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	domain string,
 ) error {
@@ -283,6 +286,7 @@ SELECT
 	ssl_expires_at,
 	ssl_retry_count,
 	ssl_last_attempt_at,
+	provisioning_error,
 	created_at,
 	updated_at
 FROM
@@ -319,7 +323,7 @@ LIMIT 1
 
 func (cd *CustomDomain) LoadByOrganizationID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 ) error {
@@ -339,6 +343,7 @@ SELECT
 	ssl_expires_at,
 	ssl_retry_count,
 	ssl_last_attempt_at,
+	provisioning_error,
 	created_at,
 	updated_at
 FROM
@@ -375,7 +380,7 @@ LIMIT 1
 
 func (cd *CustomDomain) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 	encryptionKey cipher.EncryptionKey,
 ) error {
@@ -401,6 +406,7 @@ INSERT INTO custom_domains (
 	ssl_expires_at,
 	ssl_retry_count,
 	ssl_last_attempt_at,
+	provisioning_error,
 	created_at,
 	updated_at
 ) VALUES (
@@ -419,6 +425,7 @@ INSERT INTO custom_domains (
 	@ssl_expires_at,
 	@ssl_retry_count,
 	@ssl_last_attempt_at,
+	@provisioning_error,
 	@created_at,
 	@updated_at
 )
@@ -440,6 +447,7 @@ INSERT INTO custom_domains (
 		"ssl_expires_at":            cd.SSLExpiresAt,
 		"ssl_retry_count":           cd.SSLRetryCount,
 		"ssl_last_attempt_at":       cd.SSLLastAttemptAt,
+		"provisioning_error":        cd.ProvisioningError,
 		"created_at":                cd.CreatedAt,
 		"updated_at":                cd.UpdatedAt,
 	}
@@ -462,7 +470,7 @@ INSERT INTO custom_domains (
 
 func (cd *CustomDomain) Update(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	var encryptedKey []byte
@@ -485,6 +493,7 @@ SET
 	ssl_expires_at = @ssl_expires_at,
 	ssl_retry_count = @ssl_retry_count,
 	ssl_last_attempt_at = @ssl_last_attempt_at,
+	provisioning_error = @provisioning_error,
 	updated_at = @updated_at
 WHERE
 	%s
@@ -506,6 +515,7 @@ WHERE
 		"ssl_expires_at":            cd.SSLExpiresAt,
 		"ssl_retry_count":           cd.SSLRetryCount,
 		"ssl_last_attempt_at":       cd.SSLLastAttemptAt,
+		"provisioning_error":        cd.ProvisioningError,
 		"updated_at":                time.Now(),
 	}
 	maps.Copy(args, scope.SQLArguments())
@@ -522,7 +532,7 @@ WHERE
 
 func (cd *CustomDomain) Delete(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -547,7 +557,7 @@ WHERE
 
 func (cd *CustomDomain) LoadByHTTPChallengeToken(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	token string,
 ) error {
@@ -567,6 +577,7 @@ SELECT
 	ssl_expires_at,
 	ssl_retry_count,
 	ssl_last_attempt_at,
+	provisioning_error,
 	created_at,
 	updated_at
 FROM
@@ -599,7 +610,7 @@ LIMIT 1
 
 func (domains *CustomDomains) ListDomainsForRenewal(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 ) error {
 	q := `
@@ -618,6 +629,7 @@ SELECT
 	ssl_expires_at,
 	ssl_retry_count,
 	ssl_last_attempt_at,
+	provisioning_error,
 	created_at,
 	updated_at
 FROM
@@ -651,7 +663,7 @@ ORDER BY
 
 func (domains *CustomDomains) ListDomainsWithPendingHTTPChallenges(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 ) error {
 	q := `
@@ -670,6 +682,7 @@ SELECT
 	ssl_expires_at,
 	ssl_retry_count,
 	ssl_last_attempt_at,
+	provisioning_error,
 	created_at,
 	updated_at
 FROM
@@ -706,7 +719,7 @@ WHERE
 
 func (domains *CustomDomains) LoadActiveCertificates(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 ) error {
 	q := `
@@ -725,6 +738,7 @@ SELECT
 	ssl_expires_at,
 	ssl_retry_count,
 	ssl_last_attempt_at,
+	provisioning_error,
 	created_at,
 	updated_at
 FROM
@@ -756,7 +770,7 @@ WHERE
 
 func (domains *CustomDomains) ListStaleProvisioningDomains(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 ) error {
 	q := `
@@ -775,6 +789,7 @@ SELECT
 	ssl_expires_at,
 	ssl_retry_count,
 	ssl_last_attempt_at,
+	provisioning_error,
 	created_at,
 	updated_at
 FROM

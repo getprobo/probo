@@ -16,10 +16,11 @@ package trust
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 
-	"errors"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/docgen"
@@ -27,7 +28,7 @@ import (
 	"go.probo.inc/probo/pkg/html2pdf"
 	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
-	"go.probo.inc/probo/pkg/watermarkpdf"
+	"go.probo.inc/probo/pkg/pdfutils"
 )
 
 type (
@@ -52,7 +53,7 @@ func (s *DocumentService) ListForOrganizationId(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			filter := coredata.NewDocumentTrustCenterFilter()
 
 			if err := documents.LoadPublishedByOrganizationID(ctx, conn, s.svc.scope, organizationID, cursor, filter); err != nil {
@@ -80,7 +81,7 @@ func (s *DocumentService) ExportPDF(
 		return nil, fmt.Errorf("cannot export document PDF: %w", err)
 	}
 
-	watermarkedPDF, err := watermarkpdf.AddConfidentialWithTimestamp(pdfData, email)
+	watermarkedPDF, err := pdfutils.AddConfidentialWithTimestamp(pdfData, email)
 	if err != nil {
 		return nil, fmt.Errorf("cannot add watermark to PDF: %w", err)
 	}
@@ -104,7 +105,7 @@ func (s DocumentService) Get(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			err := document.LoadByID(ctx, conn, s.svc.scope, documentID)
 			if err != nil {
 				return fmt.Errorf("cannot load document: %w", err)
@@ -139,12 +140,11 @@ func (s *DocumentService) exportPDFData(
 ) ([]byte, error) {
 	document := &coredata.Document{}
 	version := &coredata.DocumentVersion{}
-	organization := &coredata.Organization{}
-	var approverNames []string
+	fileRecord := &coredata.File{}
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			if err := document.LoadByID(ctx, conn, s.svc.scope, documentID); err != nil {
 				return fmt.Errorf("cannot load document: %w", err)
 			}
@@ -161,6 +161,54 @@ func (s *DocumentService) exportPDFData(
 				return fmt.Errorf("cannot load latest published document version: %w", err)
 			}
 
+			if version.FileID == nil {
+				return nil
+			}
+
+			if err := fileRecord.LoadByID(ctx, conn, s.svc.scope, *version.FileID); err != nil {
+				return fmt.Errorf("cannot load document version file: %w", err)
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if version.FileID != nil {
+		pdfData, err := s.svc.fileManager.GetFileBytes(ctx, fileRecord)
+		if err != nil {
+			return nil, fmt.Errorf("cannot fetch document PDF file: %w", err)
+		}
+
+		return pdfData, nil
+	}
+
+	// TODO: remove on-the-fly fallback once all published versions have a stored PDF.
+	pdfData, err := s.generatePDFOnTheFly(ctx, document, version)
+	if err != nil {
+		return nil, fmt.Errorf("cannot generate PDF on the fly: %w", err)
+	}
+
+	return pdfData, nil
+}
+
+// generatePDFOnTheFly generates a PDF from scratch for versions that don't have
+// a stored file yet. Can be removed once all published versions have been
+// processed by the document PDF worker.
+func (s *DocumentService) generatePDFOnTheFly(
+	ctx context.Context,
+	document *coredata.Document,
+	version *coredata.DocumentVersion,
+) ([]byte, error) {
+	organization := &coredata.Organization{}
+	var approverNames []string
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
 			lastQuorum := &coredata.DocumentVersionApprovalQuorum{}
 			if err := lastQuorum.LoadLastByDocumentVersionID(ctx, conn, s.svc.scope, version.ID); err != nil {
 				if !errors.Is(err, coredata.ErrResourceNotFound) {
@@ -219,18 +267,20 @@ func (s *DocumentService) exportPDFData(
 		return nil, err
 	}
 
-	classification := docgen.ClassificationInternal
-	switch document.DocumentType {
-	case coredata.DocumentTypePolicy:
+	classification := docgen.ClassificationSecret
+	switch version.Classification {
+	case coredata.DocumentClassificationPublic:
+		classification = docgen.ClassificationPublic
+	case coredata.DocumentClassificationInternal:
+		classification = docgen.ClassificationInternal
+	case coredata.DocumentClassificationConfidential:
 		classification = docgen.ClassificationConfidential
-	case coredata.DocumentTypeGovernance:
-		classification = docgen.ClassificationSecret
 	}
 
 	horizontalLogoBase64 := ""
 	if organization.HorizontalLogoFileID != nil {
 		fileRecord := &coredata.File{}
-		fileErr := s.svc.pg.WithConn(ctx, func(conn pg.Conn) error {
+		fileErr := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 			return fileRecord.LoadByID(ctx, conn, s.svc.scope, *organization.HorizontalLogoFileID)
 		})
 		if fileErr == nil {
@@ -243,7 +293,7 @@ func (s *DocumentService) exportPDFData(
 
 	docData := docgen.DocumentData{
 		Title:                       version.Title,
-		Content:                     version.Content,
+		Content:                     json.RawMessage([]byte(version.Content)),
 		Major:                       version.Major,
 		Minor:                       version.Minor,
 		Classification:              classification,

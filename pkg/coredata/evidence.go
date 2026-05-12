@@ -59,7 +59,7 @@ func (e Evidence) CursorKey(orderBy EvidenceOrderField) page.CursorKey {
 }
 
 // AuthorizationAttributes returns the authorization attributes for policy evaluation.
-func (e *Evidence) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+func (e *Evidence) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	q := `SELECT organization_id FROM evidences WHERE id = $1 LIMIT 1;`
 
 	var organizationID gid.GID
@@ -75,7 +75,7 @@ func (e *Evidence) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (m
 
 func (e Evidence) Upsert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 ) error {
 	q := `
@@ -141,7 +141,7 @@ WHERE evidences.state = 'REQUESTED';
 
 func (e Evidence) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -216,7 +216,7 @@ VALUES (
 
 func (e *Evidence) LoadByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	evidenceID gid.GID,
 ) error {
@@ -266,7 +266,7 @@ LIMIT 1;
 
 func (e *Evidences) CountByMeasureID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	measureID gid.GID,
 ) (int, error) {
@@ -298,7 +298,7 @@ WHERE
 
 func (e *Evidences) LoadByMeasureID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	measureID gid.GID,
 	cursor *page.Cursor[EvidenceOrderField],
@@ -350,7 +350,7 @@ WHERE
 
 func (e *Evidences) CountByTaskID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	taskID gid.GID,
 ) (int, error) {
@@ -382,7 +382,7 @@ WHERE
 
 func (e *Evidences) LoadByTaskID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	taskID gid.GID,
 	cursor *page.Cursor[EvidenceOrderField],
@@ -434,7 +434,7 @@ WHERE
 
 func (e Evidence) Update(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -475,7 +475,7 @@ WHERE
 
 func (e Evidence) Delete(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -501,7 +501,7 @@ WHERE
 
 func (e *Evidence) LoadNextPendingDescriptionForUpdateSkipLocked(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 ) error {
 	q := `
 SELECT
@@ -550,7 +550,7 @@ FOR UPDATE SKIP LOCKED;
 
 func ResetStaleDescriptionProcessing(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	staleAfter time.Duration,
 ) error {
 	q := `

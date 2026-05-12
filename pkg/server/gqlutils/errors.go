@@ -187,3 +187,17 @@ func Internal(ctx context.Context) *gqlerror.Error {
 		},
 	}
 }
+
+func Unavailable(ctx context.Context, err error) *gqlerror.Error {
+	return &gqlerror.Error{
+		Message: err.Error(),
+		Path:    graphql.GetPath(ctx),
+		Extensions: map[string]any{
+			"code": "UNAVAILABLE",
+		},
+	}
+}
+
+func Unavailablef(ctx context.Context, format string, a ...any) *gqlerror.Error {
+	return Unavailable(ctx, fmt.Errorf(format, a...))
+}

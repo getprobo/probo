@@ -30,15 +30,15 @@ import (
 
 type (
 	ApplicabilityStatement struct {
-		ID                     gid.GID   `db:"id"`
-		StateOfApplicabilityID gid.GID   `db:"state_of_applicability_id"`
-		ControlID              gid.GID   `db:"control_id"`
-		OrganizationID         gid.GID   `db:"organization_id"`
-		SnapshotID             *gid.GID  `db:"snapshot_id"`
-		Applicability          bool      `db:"applicability"`
-		Justification          *string   `db:"justification"`
-		CreatedAt              time.Time `db:"created_at"`
-		UpdatedAt              time.Time `db:"updated_at"`
+		ID                         gid.GID   `db:"id"`
+		StatementOfApplicabilityID gid.GID   `db:"statement_of_applicability_id"`
+		ControlID                  gid.GID   `db:"control_id"`
+		OrganizationID             gid.GID   `db:"organization_id"`
+		SnapshotID                 *gid.GID  `db:"snapshot_id"`
+		Applicability              bool      `db:"applicability"`
+		Justification              *string   `db:"justification"`
+		CreatedAt                  time.Time `db:"created_at"`
+		UpdatedAt                  time.Time `db:"updated_at"`
 
 		// Ordering only.
 		SectionTitle string `db:"section_title"`
@@ -58,7 +58,7 @@ func (s ApplicabilityStatement) CursorKey(orderBy ApplicabilityStatementOrderFie
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (s *ApplicabilityStatement) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+func (s *ApplicabilityStatement) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	q := `SELECT organization_id FROM applicability_statements WHERE id = $1 LIMIT 1;`
 
 	var organizationID gid.GID
@@ -74,7 +74,7 @@ func (s *ApplicabilityStatement) AuthorizationAttributes(ctx context.Context, co
 
 func (sac *ApplicabilityStatement) LoadByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	id gid.GID,
 ) error {
@@ -82,7 +82,7 @@ func (sac *ApplicabilityStatement) LoadByID(
 WITH stmt AS (
     SELECT
         a.id,
-        a.state_of_applicability_id,
+        a.statement_of_applicability_id,
         a.control_id,
         a.organization_id,
         a.snapshot_id,
@@ -104,7 +104,7 @@ WITH stmt AS (
 )
 SELECT
     id,
-    state_of_applicability_id,
+    statement_of_applicability_id,
     control_id,
     organization_id,
     snapshot_id,
@@ -142,25 +142,24 @@ LIMIT 1;
 	return nil
 }
 
-func (sac *ApplicabilityStatement) LoadByStateOfApplicabilityIDAndControlID(
+func (sac *ApplicabilityStatement) LoadByStatementOfApplicabilityIDAndControlID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
-	stateOfApplicabilityID gid.GID,
+	statementOfApplicabilityID gid.GID,
 	controlID gid.GID,
 ) error {
 	q := `
 WITH current_soa AS (
     SELECT id
-    FROM states_of_applicability
+    FROM statements_of_applicability
     WHERE
         %s
-        AND id = @state_of_applicability_id
-        AND snapshot_id IS NULL
+        AND id = @statement_of_applicability_id
 )
 SELECT
     soac.id,
-    soac.state_of_applicability_id,
+    soac.statement_of_applicability_id,
     soac.control_id,
     soac.organization_id,
     soac.snapshot_id,
@@ -172,7 +171,7 @@ SELECT
 FROM
     applicability_statements soac
 INNER JOIN
-    current_soa ON soac.state_of_applicability_id = current_soa.id
+    current_soa ON soac.statement_of_applicability_id = current_soa.id
 INNER JOIN
     controls c ON c.id = soac.control_id
 INNER JOIN
@@ -184,8 +183,8 @@ LIMIT 1;
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"state_of_applicability_id": stateOfApplicabilityID,
-		"control_id":                controlID,
+		"statement_of_applicability_id": statementOfApplicabilityID,
+		"control_id":                    controlID,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -208,14 +207,14 @@ LIMIT 1;
 
 func (sac *ApplicabilityStatement) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
 INSERT INTO
     applicability_statements (
         id,
-        state_of_applicability_id,
+        statement_of_applicability_id,
         control_id,
         organization_id,
         tenant_id,
@@ -227,7 +226,7 @@ INSERT INTO
     )
 VALUES (
     @id,
-    @state_of_applicability_id,
+    @statement_of_applicability_id,
     @control_id,
     @organization_id,
     @tenant_id,
@@ -240,16 +239,16 @@ VALUES (
 `
 
 	args := pgx.StrictNamedArgs{
-		"id":                        sac.ID,
-		"state_of_applicability_id": sac.StateOfApplicabilityID,
-		"control_id":                sac.ControlID,
-		"organization_id":           sac.OrganizationID,
-		"tenant_id":                 scope.GetTenantID(),
-		"snapshot_id":               sac.SnapshotID,
-		"applicability":             sac.Applicability,
-		"justification":             sac.Justification,
-		"created_at":                sac.CreatedAt,
-		"updated_at":                sac.UpdatedAt,
+		"id":                            sac.ID,
+		"statement_of_applicability_id": sac.StatementOfApplicabilityID,
+		"control_id":                    sac.ControlID,
+		"organization_id":               sac.OrganizationID,
+		"tenant_id":                     scope.GetTenantID(),
+		"snapshot_id":                   sac.SnapshotID,
+		"applicability":                 sac.Applicability,
+		"justification":                 sac.Justification,
+		"created_at":                    sac.CreatedAt,
+		"updated_at":                    sac.UpdatedAt,
 	}
 	_, err := conn.Exec(ctx, q, args)
 
@@ -269,7 +268,7 @@ VALUES (
 
 func (sac *ApplicabilityStatement) Update(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -280,17 +279,17 @@ SET
     updated_at = @updated_at
 WHERE
     %s
-    AND state_of_applicability_id = @state_of_applicability_id
+    AND statement_of_applicability_id = @statement_of_applicability_id
     AND control_id = @control_id
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"state_of_applicability_id": sac.StateOfApplicabilityID,
-		"control_id":                sac.ControlID,
-		"applicability":             sac.Applicability,
-		"justification":             sac.Justification,
-		"updated_at":                sac.UpdatedAt,
+		"statement_of_applicability_id": sac.StatementOfApplicabilityID,
+		"control_id":                    sac.ControlID,
+		"applicability":                 sac.Applicability,
+		"justification":                 sac.Justification,
+		"updated_at":                    sac.UpdatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -304,7 +303,7 @@ WHERE
 
 func (sac *ApplicabilityStatement) UpdateByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
@@ -341,26 +340,25 @@ WHERE
 
 func (sac *ApplicabilityStatement) Delete(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
 WITH current_soa AS (
     SELECT id
-    FROM states_of_applicability
+    FROM statements_of_applicability
     WHERE
         %s
-        AND id = @state_of_applicability_id
-        AND snapshot_id IS NULL
+        AND id = @statement_of_applicability_id
 )
 DELETE FROM applicability_statements
-WHERE state_of_applicability_id IN (SELECT id FROM current_soa)
+WHERE statement_of_applicability_id IN (SELECT id FROM current_soa)
     AND control_id = @control_id;
 `
 
 	args := pgx.StrictNamedArgs{
-		"state_of_applicability_id": sac.StateOfApplicabilityID,
-		"control_id":                sac.ControlID,
+		"statement_of_applicability_id": sac.StatementOfApplicabilityID,
+		"control_id":                    sac.ControlID,
 	}
 	maps.Copy(args, scope.SQLArguments())
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -371,7 +369,7 @@ WHERE state_of_applicability_id IN (SELECT id FROM current_soa)
 
 func (sac *ApplicabilityStatement) DeleteByID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 	scope Scoper,
 	applicabilityStatementID gid.GID,
 ) error {
@@ -398,18 +396,18 @@ WHERE
 	return nil
 }
 
-func (sacs *ApplicabilityStatements) LoadByStateOfApplicabilityID(
+func (sacs *ApplicabilityStatements) LoadByStatementOfApplicabilityID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
-	stateOfApplicabilityID gid.GID,
+	statementOfApplicabilityID gid.GID,
 	cursor *page.Cursor[ApplicabilityStatementOrderField],
 ) error {
 	q := `
 WITH stmt AS (
     SELECT
         a.id,
-        a.state_of_applicability_id,
+        a.statement_of_applicability_id,
         a.control_id,
         a.organization_id,
         a.snapshot_id,
@@ -427,11 +425,11 @@ WITH stmt AS (
         frameworks f ON f.id = c.framework_id
     WHERE
         a.%[1]s
-        AND a.state_of_applicability_id = @state_of_applicability_id
+        AND a.statement_of_applicability_id = @statement_of_applicability_id
 )
 SELECT
     id,
-    state_of_applicability_id,
+    statement_of_applicability_id,
     control_id,
     organization_id,
     snapshot_id,
@@ -448,7 +446,7 @@ WHERE
 	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.NamedArgs{
-		"state_of_applicability_id": stateOfApplicabilityID,
+		"statement_of_applicability_id": statementOfApplicabilityID,
 	}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
@@ -467,11 +465,62 @@ WHERE
 	return nil
 }
 
-func (sacs *ApplicabilityStatements) CountByStateOfApplicabilityID(
+func (sacs *ApplicabilityStatements) LoadAllByStatementOfApplicabilityID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
-	stateOfApplicabilityID gid.GID,
+	statementOfApplicabilityID gid.GID,
+) error {
+	q := `
+SELECT
+    a.id,
+    a.statement_of_applicability_id,
+    a.control_id,
+    a.organization_id,
+    a.snapshot_id,
+    a.applicability,
+    a.justification,
+    a.created_at,
+    a.updated_at,
+    f.name || ' - ' || c.section_title AS section_title
+FROM
+    applicability_statements a
+INNER JOIN
+    controls c ON c.id = a.control_id
+INNER JOIN
+    frameworks f ON f.id = c.framework_id
+WHERE
+    a.%s
+    AND a.statement_of_applicability_id = @statement_of_applicability_id
+ORDER BY
+    section_title_sort_key(f.name || ' - ' || c.section_title) ASC;
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"statement_of_applicability_id": statementOfApplicabilityID,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query applicability_statements: %w", err)
+	}
+
+	controls, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[ApplicabilityStatement])
+	if err != nil {
+		return fmt.Errorf("cannot collect applicability_statements: %w", err)
+	}
+
+	*sacs = controls
+	return nil
+}
+
+func (sacs *ApplicabilityStatements) CountByStatementOfApplicabilityID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	statementOfApplicabilityID gid.GID,
 ) (int, error) {
 	q := `
 SELECT
@@ -480,11 +529,11 @@ FROM
     applicability_statements
 WHERE
     %s
-    AND state_of_applicability_id = @state_of_applicability_id;
+    AND statement_of_applicability_id = @statement_of_applicability_id;
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
-	args := pgx.NamedArgs{"state_of_applicability_id": stateOfApplicabilityID}
+	args := pgx.StrictNamedArgs{"statement_of_applicability_id": statementOfApplicabilityID}
 	maps.Copy(args, scope.SQLArguments())
 
 	var count int
@@ -497,7 +546,7 @@ WHERE
 
 func (sacs *ApplicabilityStatements) LoadByControlID(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	scope Scoper,
 	controlID gid.GID,
 	cursor *page.Cursor[ApplicabilityStatementOrderField],
@@ -506,7 +555,7 @@ func (sacs *ApplicabilityStatements) LoadByControlID(
 WITH soac_ctrl AS (
     SELECT
         soac.id,
-        soac.state_of_applicability_id,
+        soac.statement_of_applicability_id,
         soac.control_id,
         soac.organization_id,
         soac.snapshot_id,
@@ -519,7 +568,7 @@ WITH soac_ctrl AS (
     FROM
         applicability_statements soac
     INNER JOIN
-        states_of_applicability soa ON soac.state_of_applicability_id = soa.id
+        statements_of_applicability soa ON soac.statement_of_applicability_id = soa.id
     INNER JOIN
         controls c ON c.id = soac.control_id
     INNER JOIN
@@ -531,7 +580,7 @@ WITH soac_ctrl AS (
 )
 SELECT
     id,
-    state_of_applicability_id,
+    statement_of_applicability_id,
     control_id,
     organization_id,
     snapshot_id,

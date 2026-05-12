@@ -1,0 +1,345 @@
+// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
+import {
+  deactivateElements,
+  observeAndActivate,
+} from "./activation";
+import { COOKIE_NAME, getConsentCookie, setConsentCookie } from "./cookie";
+import type { Detector } from "./detectors";
+import { CookieDetector, ReportQueue, ResourceDetector, StorageDetector } from "./detectors";
+import { NotFoundError } from "./errors";
+import { fetchJSON } from "./http";
+import { detectLanguage } from "./i18n";
+import type { ConsentIntegration } from "./integrations";
+import { createDefaultIntegrations } from "./integrations";
+import { enqueue, flush } from "./queue";
+import type {
+  BannerConfig,
+  ConsentAction,
+  ConsentRecord,
+  CookieBannerClientOptions,
+  Regulation,
+  VisitorConsent,
+} from "./types";
+import { getOrCreateVisitorId } from "./visitor";
+
+export type {
+  BannerConfig,
+  Category,
+  ConsentAction,
+  ConsentRecord,
+  CookieBannerClientOptions,
+  CookieItem,
+  Regulation,
+  VisitorConsent,
+} from "./types";
+
+export class CookieBannerClient {
+  private readonly baseUrl: URL;
+  private readonly bannerId: string;
+  private readonly visitorId: string;
+  private readonly lang: string;
+
+  private readonly integrations: ConsentIntegration[];
+
+  private bannerConfig: BannerConfig | null = null;
+  private consent: VisitorConsent | null = null;
+  private observer: MutationObserver | null = null;
+  private detectors: Detector[] = [];
+  private reportQueue: ReportQueue | null = null;
+  private _gpcApplied = false;
+
+  constructor(config: CookieBannerClientOptions) {
+    let base = config.baseUrl;
+    if (!base.endsWith("/")) {
+      base += "/";
+    }
+    this.baseUrl = new URL(base);
+    this.bannerId = config.bannerId;
+    this.visitorId = getOrCreateVisitorId(config.bannerId);
+    this.lang = detectLanguage(config.lang);
+    this.integrations = createDefaultIntegrations();
+  }
+
+  get loaded(): boolean {
+    return this.bannerConfig !== null;
+  }
+
+  async load(): Promise<void> {
+    const configUrl = new URL(`${this.bannerId}/config`, this.baseUrl);
+    if (this.lang) {
+      configUrl.searchParams.set("lang", this.lang);
+    }
+
+    let config: BannerConfig;
+    try {
+      config = await fetchJSON<BannerConfig>(configUrl);
+    } catch {
+      this.startDetector();
+      return;
+    }
+    this.bannerConfig = config;
+
+    for (const integration of this.integrations) {
+      integration.setDefaults(config.categories);
+    }
+    this.startDetector(config);
+
+    const cookie = getConsentCookie();
+    if (cookie && cookie.bid === this.bannerId && cookie.v === config.version && cookie.vid === this.visitorId) {
+      this.consent = {
+        visitor_id: cookie.vid,
+        version: cookie.v,
+        action: cookie.action,
+        consent_data: cookie.data,
+        created_at: "",
+      };
+      this._gpcApplied = cookie.action === "GPC";
+      this.activate(cookie.data);
+      void flush(this.bannerId);
+      return;
+    }
+
+    const consentUrl = new URL(
+      `${this.bannerId}/consents/${this.visitorId}`,
+      this.baseUrl,
+    );
+    const apiConsent = await fetchJSON<VisitorConsent>(consentUrl).catch(
+      (err) => {
+        if (err instanceof NotFoundError) {
+          return null;
+        }
+        throw err;
+      },
+    );
+
+    if (apiConsent && apiConsent.version === config.version) {
+      this.consent = apiConsent;
+      this._gpcApplied = apiConsent.action === "GPC";
+      setConsentCookie(
+        {
+          bid: this.bannerId,
+          v: apiConsent.version,
+          vid: apiConsent.visitor_id,
+          action: apiConsent.action,
+          data: apiConsent.consent_data,
+        },
+        config.consent_expiry_days,
+      );
+      this.activate(apiConsent.consent_data);
+    } else {
+      this.consent = null;
+    }
+
+    if (!this.consent && this.gpcDetected) {
+      this.gpc();
+      this._gpcApplied = true;
+    } else if (!this.consent) {
+      this.activate(this.buildDefaultConsentData());
+    }
+
+    void flush(this.bannerId);
+  }
+
+  get config(): BannerConfig {
+    if (!this.bannerConfig) {
+      throw new Error("CookieBannerClient not loaded: call load() first");
+    }
+    return this.bannerConfig;
+  }
+
+  get visitorConsent(): VisitorConsent | null {
+    return this.consent;
+  }
+
+  get hasConsent(): boolean {
+    return this.consent !== null;
+  }
+
+  get gpcDetected(): boolean {
+    return typeof navigator !== "undefined" &&
+      (navigator as Navigator & { globalPrivacyControl?: boolean }).globalPrivacyControl === true;
+  }
+
+  get gpcApplied(): boolean {
+    return this._gpcApplied;
+  }
+
+  get regulation(): Regulation | null {
+    return this.bannerConfig?.regulation ?? null;
+  }
+
+  gpc(): void {
+    const cfg = this.config;
+
+    const consentData: Record<string, boolean> = {};
+    for (const cat of cfg.categories) {
+      consentData[cat.slug] = cat.kind === "NECESSARY";
+    }
+
+    this.recordConsent("GPC", consentData);
+  }
+
+  acceptAll(): void {
+    const cfg = this.config;
+
+    const consentData: Record<string, boolean> = {};
+    for (const cat of cfg.categories) {
+      consentData[cat.slug] = true;
+    }
+
+    this.recordConsent("ACCEPT_ALL", consentData);
+  }
+
+  rejectAll(): void {
+    const cfg = this.config;
+
+    const consentData: Record<string, boolean> = {};
+    for (const cat of cfg.categories) {
+      consentData[cat.slug] = cat.kind === "NECESSARY";
+    }
+
+    this.recordConsent("REJECT_ALL", consentData);
+  }
+
+  customize(categories: Record<string, boolean>): void {
+    const cfg = this.config;
+
+    const consentData: Record<string, boolean> = {};
+    for (const cat of cfg.categories) {
+      consentData[cat.slug] = cat.kind === "NECESSARY" || !!categories[cat.slug];
+    }
+
+    this.recordConsent("CUSTOMIZE", consentData);
+  }
+
+  private recordConsent(
+    action: ConsentAction,
+    consentData: Record<string, boolean>,
+  ): void {
+    this._gpcApplied = action === "GPC";
+
+    const cfg = this.config;
+
+    this.consent = {
+      visitor_id: this.visitorId,
+      version: cfg.version,
+      action,
+      consent_data: consentData,
+      created_at: "",
+    };
+
+    setConsentCookie(
+      {
+        bid: this.bannerId,
+        v: cfg.version,
+        vid: this.visitorId,
+        action,
+        data: consentData,
+      },
+      cfg.consent_expiry_days,
+    );
+
+    this.activate(consentData);
+
+    const url = new URL(`${this.bannerId}/consents`, this.baseUrl);
+    const body = {
+      visitor_id: this.visitorId,
+      version: cfg.version,
+      action,
+      consent_data: consentData,
+    };
+    void fetchJSON<ConsentRecord>(url, { method: "POST", body })
+      .then(() => void flush(this.bannerId))
+      .catch(() => enqueue(this.bannerId, url.href, body));
+  }
+
+  private buildDefaultConsentData(): Record<string, boolean> {
+    const cfg = this.config;
+    const consentData: Record<string, boolean> = {};
+    for (const cat of cfg.categories) {
+      consentData[cat.slug] =
+        cfg.consent_mode === "OPT_OUT" || cat.kind === "NECESSARY";
+    }
+    return consentData;
+  }
+
+  private activate(consentData: Record<string, boolean>): void {
+    for (const integration of this.integrations) {
+      integration.update(this.config.categories, consentData);
+    }
+
+    const categoryCookies: Record<string, string[]> = {};
+    const categoryLabels: Record<string, string> = {};
+    for (const cat of this.config.categories) {
+      categoryCookies[cat.slug] = cat.cookies.map((c) => c.name);
+      categoryLabels[cat.slug] = cat.name;
+    }
+
+    const texts = this.config.texts;
+    deactivateElements(consentData, categoryCookies, categoryLabels, texts);
+    if (this.observer) {
+      this.observer.disconnect();
+    }
+    this.observer = observeAndActivate(consentData, categoryLabels, texts);
+  }
+
+  private startDetector(config?: BannerConfig): void {
+    this.stopDetectors();
+
+    const knownNames = new Set<string>();
+    knownNames.add(COOKIE_NAME);
+    if (config) {
+      for (const cat of config.categories) {
+        for (const cookie of cat.cookies) {
+          knownNames.add(cookie.name);
+        }
+      }
+    }
+
+    const reportUrl = new URL(`${this.bannerId}/report`, this.baseUrl);
+    this.reportQueue = new ReportQueue(reportUrl);
+
+    const apiOrigin = this.baseUrl.origin;
+    this.detectors = [
+      new CookieDetector(this.reportQueue, apiOrigin, knownNames),
+      new StorageDetector(this.reportQueue, apiOrigin),
+      new ResourceDetector(this.reportQueue, apiOrigin),
+    ];
+
+    for (const d of this.detectors) {
+      d.start();
+    }
+  }
+
+  private stopDetectors(): void {
+    for (const d of this.detectors) {
+      d.stop();
+    }
+    this.detectors = [];
+    if (this.reportQueue) {
+      this.reportQueue.stop();
+      this.reportQueue = null;
+    }
+  }
+
+  destroy(): void {
+    this.stopDetectors();
+    if (this.observer) {
+      this.observer.disconnect();
+      this.observer = null;
+    }
+  }
+}

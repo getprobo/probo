@@ -35,7 +35,6 @@ func NewRisk(r *coredata.Risk) *Risk {
 		ResidualLikelihood: r.ResidualLikelihood,
 		ResidualImpact:     r.ResidualImpact,
 		ResidualRiskScore:  r.ResidualRiskScore,
-		SnapshotID:         r.SnapshotID,
 		CreatedAt:          r.CreatedAt,
 		UpdatedAt:          r.UpdatedAt,
 	}

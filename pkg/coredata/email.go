@@ -65,7 +65,7 @@ var (
 
 // AuthorizationAttributes returns the authorization attributes for policy evaluation.
 // Email is identity-scoped (not org-scoped), so it returns an empty map.
-func (e *Email) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+func (e *Email) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	return map[string]string{}, nil
 }
 
@@ -104,7 +104,7 @@ func NewEmail(
 
 func (e *Email) Insert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 ) error {
 	q := `
 INSERT INTO emails (
@@ -167,7 +167,7 @@ VALUES (
 
 func (emails Emails) BulkInsert(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 ) error {
 	if len(emails) == 0 {
 		return nil
@@ -202,7 +202,7 @@ func (emails Emails) BulkInsert(
 
 func (e *Email) LoadNextPendingForUpdateSkipLocked(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 ) error {
 	q := `
 SELECT
@@ -237,7 +237,7 @@ FOR UPDATE SKIP LOCKED
 
 func (e *Email) Update(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Tx,
 ) error {
 	q := `
 UPDATE emails
@@ -269,7 +269,7 @@ WHERE id = @id
 
 func ResetStaleProcessingEmails(
 	ctx context.Context,
-	conn pg.Conn,
+	conn pg.Querier,
 	staleAfter time.Duration,
 ) error {
 	q := `

@@ -1,3 +1,17 @@
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
 import { formatDate } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
@@ -16,7 +30,7 @@ import {
 import { clsx } from "clsx";
 import { type ComponentProps, useState } from "react";
 import { useFragment, useRefetchableFragment } from "react-relay";
-import { useOutletContext, useParams } from "react-router";
+import { useOutletContext } from "react-router";
 import { graphql } from "relay-runtime";
 
 import type { VendorGraphNodeQuery$data } from "#/__generated__/core/VendorGraphNodeQuery.graphql";
@@ -82,8 +96,6 @@ export default function VendorRiskAssessmentTab() {
   >(riskAssessmentsFragment, vendor);
   const assessments = data.riskAssessments.edges.map(edge => edge.node);
   const { __ } = useTranslate();
-  const { snapshotId } = useParams<{ snapshotId?: string }>();
-  const isSnapshotMode = Boolean(snapshotId);
   const [expanded, setExpanded] = useState<string | null>(null);
 
   usePageTitle(vendor.name + " - " + __("Risk Assessments"));
@@ -92,7 +104,7 @@ export default function VendorRiskAssessmentTab() {
     return (
       <div className="text-center text-sm py-6 text-txt-secondary flex flex-col items-center gap-2">
         {__("No risk assessments found")}
-        {!isSnapshotMode && vendor.canCreateRiskAssessment && (
+        {vendor.canCreateRiskAssessment && (
           <CreateRiskAssessmentDialog
             vendorId={vendor.id}
             connection={data.riskAssessments.__id}
@@ -122,7 +134,7 @@ export default function VendorRiskAssessmentTab() {
             </Tr>
           </Thead>
           <Tbody>
-            {!isSnapshotMode && vendor.canCreateRiskAssessment && (
+            {vendor.canCreateRiskAssessment && (
               <CreateRiskAssessmentDialog
                 vendorId={vendor.id}
                 connection={data.riskAssessments.__id}

@@ -16,19 +16,16 @@ package coredata
 
 import (
 	"github.com/jackc/pgx/v5"
-	"go.probo.inc/probo/pkg/gid"
 )
 
 type (
 	VendorFilter struct {
 		showOnTrustCenter *bool
-		snapshotID        **gid.GID
 	}
 )
 
-func NewVendorFilter(snapshotID **gid.GID, showOnTrustCenter *bool) *VendorFilter {
+func NewVendorFilter(showOnTrustCenter *bool) *VendorFilter {
 	return &VendorFilter{
-		snapshotID:        snapshotID,
 		showOnTrustCenter: showOnTrustCenter,
 	}
 }
@@ -42,17 +39,6 @@ func (f *VendorFilter) SQLArguments() pgx.StrictNamedArgs {
 		args["show_on_trust_center"] = nil
 	}
 
-	if f.snapshotID == nil {
-		args["has_snapshot_filter"] = false
-		args["filter_snapshot_id"] = nil
-	} else if *f.snapshotID == nil {
-		args["has_snapshot_filter"] = true
-		args["filter_snapshot_id"] = nil
-	} else {
-		args["has_snapshot_filter"] = true
-		args["filter_snapshot_id"] = **f.snapshotID
-	}
-
 	return args
 }
 
@@ -62,15 +48,6 @@ func (f *VendorFilter) SQLFragment() string {
 	CASE
 		WHEN @show_on_trust_center::boolean IS NOT NULL THEN
 			show_on_trust_center = @show_on_trust_center::boolean
-		ELSE TRUE
-	END
-	AND
-	CASE
-		WHEN @has_snapshot_filter::boolean = false THEN TRUE
-		WHEN @has_snapshot_filter::boolean = true AND @filter_snapshot_id::text IS NOT NULL THEN
-			snapshot_id = @filter_snapshot_id::text
-		WHEN @has_snapshot_filter::boolean = true AND @filter_snapshot_id::text IS NULL THEN
-			snapshot_id IS NULL
 		ELSE TRUE
 	END
 )`

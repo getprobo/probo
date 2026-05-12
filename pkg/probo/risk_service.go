@@ -105,7 +105,7 @@ func (s RiskService) CountForMeasureID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) (err error) {
+		func(ctx context.Context, conn pg.Querier) (err error) {
 			risks := &coredata.Risks{}
 			count, err = risks.CountByMeasureID(ctx, conn, s.svc.scope, measureID, filter)
 			if err != nil {
@@ -133,7 +133,7 @@ func (s RiskService) ListForMeasureID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			return risks.LoadByMeasureID(ctx, conn, s.svc.scope, measureID, cursor, filter)
 		},
 	)
@@ -154,7 +154,7 @@ func (s RiskService) CountForOrganizationID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) (err error) {
+		func(ctx context.Context, conn pg.Querier) (err error) {
 			risks := &coredata.Risks{}
 			count, err = risks.CountByOrganizationID(ctx, conn, s.svc.scope, organizationID, filter)
 			if err != nil {
@@ -182,7 +182,7 @@ func (s RiskService) ListForOrganizationID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			return risks.LoadByOrganizationID(
 				ctx,
 				conn,
@@ -209,14 +209,14 @@ func (s RiskService) CreateDocumentMapping(
 	risk := &coredata.Risk{}
 	document := &coredata.Document{}
 
-	err := s.svc.pg.WithConn(
+	err := s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
-			if err := risk.LoadByID(ctx, conn, s.svc.scope, riskID); err != nil {
+		func(ctx context.Context, tx pg.Tx) error {
+			if err := risk.LoadByID(ctx, tx, s.svc.scope, riskID); err != nil {
 				return fmt.Errorf("cannot load risk: %w", err)
 			}
 
-			if err := document.LoadByID(ctx, conn, s.svc.scope, documentID); err != nil {
+			if err := document.LoadByID(ctx, tx, s.svc.scope, documentID); err != nil {
 				return fmt.Errorf("cannot load document: %w", err)
 			}
 
@@ -227,7 +227,7 @@ func (s RiskService) CreateDocumentMapping(
 				CreatedAt:      time.Now(),
 			}
 
-			return riskDocument.Insert(ctx, conn, s.svc.scope)
+			return riskDocument.Insert(ctx, tx, s.svc.scope)
 		},
 	)
 
@@ -247,18 +247,18 @@ func (s RiskService) DeleteDocumentMapping(
 	risk := &coredata.Risk{}
 	document := &coredata.Document{}
 
-	err := s.svc.pg.WithConn(
+	err := s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
-			if err := risk.LoadByID(ctx, conn, s.svc.scope, riskID); err != nil {
+		func(ctx context.Context, tx pg.Tx) error {
+			if err := risk.LoadByID(ctx, tx, s.svc.scope, riskID); err != nil {
 				return fmt.Errorf("cannot load risk: %w", err)
 			}
 
-			if err := document.LoadByID(ctx, conn, s.svc.scope, documentID); err != nil {
+			if err := document.LoadByID(ctx, tx, s.svc.scope, documentID); err != nil {
 				return fmt.Errorf("cannot load document: %w", err)
 			}
 
-			return riskDocument.Delete(ctx, conn, s.svc.scope, risk.ID, document.ID)
+			return riskDocument.Delete(ctx, tx, s.svc.scope, risk.ID, document.ID)
 		},
 	)
 
@@ -277,14 +277,14 @@ func (s RiskService) CreateMeasureMapping(
 	measure := &coredata.Measure{}
 	risk := &coredata.Risk{}
 
-	err := s.svc.pg.WithConn(
+	err := s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
-			if err := risk.LoadByID(ctx, conn, s.svc.scope, riskID); err != nil {
+		func(ctx context.Context, tx pg.Tx) error {
+			if err := risk.LoadByID(ctx, tx, s.svc.scope, riskID); err != nil {
 				return fmt.Errorf("cannot load risk: %w", err)
 			}
 
-			if err := measure.LoadByID(ctx, conn, s.svc.scope, measureID); err != nil {
+			if err := measure.LoadByID(ctx, tx, s.svc.scope, measureID); err != nil {
 				return fmt.Errorf("cannot load measure: %w", err)
 			}
 
@@ -295,7 +295,7 @@ func (s RiskService) CreateMeasureMapping(
 				CreatedAt:      time.Now(),
 			}
 
-			return riskMeasure.Insert(ctx, conn, s.svc.scope)
+			return riskMeasure.Insert(ctx, tx, s.svc.scope)
 		},
 	)
 
@@ -314,14 +314,14 @@ func (s RiskService) DeleteMeasureMapping(
 	risk := &coredata.Risk{}
 	measure := &coredata.Measure{}
 
-	err := s.svc.pg.WithConn(
+	err := s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
-			if err := risk.LoadByID(ctx, conn, s.svc.scope, riskID); err != nil {
+		func(ctx context.Context, tx pg.Tx) error {
+			if err := risk.LoadByID(ctx, tx, s.svc.scope, riskID); err != nil {
 				return fmt.Errorf("cannot load risk: %w", err)
 			}
 
-			if err := measure.LoadByID(ctx, conn, s.svc.scope, measureID); err != nil {
+			if err := measure.LoadByID(ctx, tx, s.svc.scope, measureID); err != nil {
 				return fmt.Errorf("cannot load measure: %w", err)
 			}
 
@@ -332,7 +332,7 @@ func (s RiskService) DeleteMeasureMapping(
 				CreatedAt:      time.Now(),
 			}
 
-			return riskMeasure.Delete(ctx, conn, s.svc.scope, risk.ID, measure.ID)
+			return riskMeasure.Delete(ctx, tx, s.svc.scope, risk.ID, measure.ID)
 		},
 	)
 
@@ -351,14 +351,14 @@ func (s RiskService) CreateObligationMapping(
 	risk := &coredata.Risk{}
 	obligation := &coredata.Obligation{}
 
-	err := s.svc.pg.WithConn(
+	err := s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
-			if err := risk.LoadByID(ctx, conn, s.svc.scope, riskID); err != nil {
+		func(ctx context.Context, tx pg.Tx) error {
+			if err := risk.LoadByID(ctx, tx, s.svc.scope, riskID); err != nil {
 				return fmt.Errorf("cannot load risk: %w", err)
 			}
 
-			if err := obligation.LoadByID(ctx, conn, s.svc.scope, obligationID); err != nil {
+			if err := obligation.LoadByID(ctx, tx, s.svc.scope, obligationID); err != nil {
 				return fmt.Errorf("cannot load obligation: %w", err)
 			}
 
@@ -369,7 +369,7 @@ func (s RiskService) CreateObligationMapping(
 				CreatedAt:      time.Now(),
 			}
 
-			return riskObligation.Insert(ctx, conn, s.svc.scope)
+			return riskObligation.Insert(ctx, tx, s.svc.scope)
 		},
 	)
 
@@ -389,21 +389,21 @@ func (s RiskService) DeleteObligationMapping(
 	risk := &coredata.Risk{}
 	obligation := &coredata.Obligation{}
 
-	err := s.svc.pg.WithConn(
+	err := s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
-			if err := risk.LoadByID(ctx, conn, s.svc.scope, riskID); err != nil {
+		func(ctx context.Context, tx pg.Tx) error {
+			if err := risk.LoadByID(ctx, tx, s.svc.scope, riskID); err != nil {
 				return fmt.Errorf("cannot load risk: %w", err)
 			}
 
-			if err := obligation.LoadByID(ctx, conn, s.svc.scope, obligationID); err != nil {
+			if err := obligation.LoadByID(ctx, tx, s.svc.scope, obligationID); err != nil {
 				return fmt.Errorf("cannot load obligation: %w", err)
 			}
 
 			riskObligation.RiskID = risk.ID
 			riskObligation.ObligationID = obligation.ID
 
-			return riskObligation.Delete(ctx, conn, s.svc.scope)
+			return riskObligation.Delete(ctx, tx, s.svc.scope)
 		},
 	)
 
@@ -454,20 +454,20 @@ func (s RiskService) Create(
 		risk.ResidualImpact = *req.ResidualImpact
 	}
 
-	err := s.svc.pg.WithConn(
+	err := s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
-			if err := organization.LoadByID(ctx, conn, s.svc.scope, req.OrganizationID); err != nil {
+		func(ctx context.Context, tx pg.Tx) error {
+			if err := organization.LoadByID(ctx, tx, s.svc.scope, req.OrganizationID); err != nil {
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
 			if req.OwnerID != nil {
-				if err := owner.LoadByID(ctx, conn, s.svc.scope, *req.OwnerID); err != nil {
+				if err := owner.LoadByID(ctx, tx, s.svc.scope, *req.OwnerID); err != nil {
 					return fmt.Errorf("cannot load owner profile: %w", err)
 				}
 			}
 
-			return risk.Insert(ctx, conn, s.svc.scope)
+			return risk.Insert(ctx, tx, s.svc.scope)
 		},
 	)
 
@@ -486,7 +486,7 @@ func (s RiskService) Get(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			return risk.LoadByID(ctx, conn, s.svc.scope, riskID)
 		},
 	)
@@ -506,7 +506,7 @@ func (s RiskService) GetByIDs(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			if err := risks.LoadByIDs(
 				ctx,
 				conn,
@@ -538,7 +538,7 @@ func (s RiskService) Update(
 
 	err := s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Tx) error {
 			if err := risk.LoadByID(ctx, conn, s.svc.scope, req.ID); err != nil {
 				return fmt.Errorf("cannot load risk: %w", err)
 			}
@@ -613,10 +613,10 @@ func (s RiskService) Delete(
 ) error {
 	risk := &coredata.Risk{}
 
-	return s.svc.pg.WithConn(
+	return s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
-			return risk.Delete(ctx, conn, s.svc.scope, riskID)
+		func(ctx context.Context, tx pg.Tx) error {
+			return risk.Delete(ctx, tx, s.svc.scope, riskID)
 		},
 	)
 }

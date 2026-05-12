@@ -1,4 +1,18 @@
-import { documentTypes, getDocumentTypeLabel, sprintf } from "@probo/helpers";
+// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
+import { documentClassifications, documentTypes, documentWriteModes, getDocumentClassificationLabel, getDocumentTypeLabel, getDocumentWriteModeLabel, sprintf } from "@probo/helpers";
 import { useList } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
 import { Button, Card, Checkbox, IconArchive, IconArrowDown, IconCrossLargeX, IconSignature, IconTrashCan, IconUpload, Option, Select, Tbody, Th, Thead, Tr, useConfirm } from "@probo/ui";
@@ -9,7 +23,7 @@ import { ConnectionHandler, graphql } from "relay-runtime";
 import type { DocumentListBulkArchiveMutation } from "#/__generated__/core/DocumentListBulkArchiveMutation.graphql";
 import type { DocumentListBulkUnarchiveMutation } from "#/__generated__/core/DocumentListBulkUnarchiveMutation.graphql";
 import type { DocumentListFragment$key } from "#/__generated__/core/DocumentListFragment.graphql";
-import type { DocumentOrderField, DocumentsListQuery, DocumentType } from "#/__generated__/core/DocumentsListQuery.graphql";
+import type { DocumentClassification, DocumentOrderField, DocumentsListQuery, DocumentType, DocumentWriteMode } from "#/__generated__/core/DocumentsListQuery.graphql";
 import { BulkExportDialog, type BulkExportDialogRef } from "#/components/documents/BulkExportDialog";
 import { type Order, SortableTable, SortableTh } from "#/components/SortableTable";
 import { useBulkDeleteDocumentsMutation, useBulkExportDocumentsMutation } from "#/hooks/graph/DocumentGraph";
@@ -35,6 +49,8 @@ const fragment = graphql`
     last: { type: "Int", defaultValue: null }
     status: { type: "[DocumentStatus!]", defaultValue: [ACTIVE] }
     documentTypes: { type: "[DocumentType!]", defaultValue: null }
+    classifications: { type: "[DocumentClassification!]", defaultValue: null }
+    writeModes: { type: "[DocumentWriteMode!]", defaultValue: null }
   ) {
     documents(
       first: $first
@@ -42,7 +58,7 @@ const fragment = graphql`
       last: $last
       before: $before
       orderBy: $order
-      filter: { status: $status documentTypes: $documentTypes }
+      filter: { status: $status documentTypes: $documentTypes classifications: $classifications writeModes: $writeModes }
     ) @connection(key: "DocumentsListQuery_documents" filters: ["orderBy", "filter"]) {
       __id
       edges {
@@ -114,17 +130,24 @@ export function DocumentList(props: {
   );
 
   const [documentTypeFilter, setDocumentTypeFilter] = useState<DocumentType | null>(null);
+  const [classificationFilter, setClassificationFilter] = useState<DocumentClassification | null>(null);
+  const [writeModeFilter, setWriteModeFilter] = useState<DocumentWriteMode | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const refetch = pagination.refetch;
   useEffect(() => {
     startTransition(() => {
       refetch(
-        { status: [tab], documentTypes: documentTypeFilter ? [documentTypeFilter] : null },
+        {
+          status: [tab],
+          documentTypes: documentTypeFilter ? [documentTypeFilter] : null,
+          classifications: classificationFilter ? [classificationFilter] : null,
+          writeModes: writeModeFilter ? [writeModeFilter] : null,
+        },
         { fetchPolicy: "store-and-network" },
       );
     });
-  }, [tab, refetch, documentTypeFilter]);
+  }, [tab, refetch, documentTypeFilter, classificationFilter, writeModeFilter]);
 
   const documents = pagination.data.documents.edges.map(({ node }) => node);
   const connectionId = pagination.data.documents.__id;
@@ -170,7 +193,54 @@ export function DocumentList(props: {
         "DocumentsListQuery_documents",
         {
           orderBy: { direction: "ASC", field: "TITLE" },
-          filter: { status: [tab], documentTypes: newType ? [newType] : null },
+          filter: {
+            status: [tab],
+            documentTypes: newType ? [newType] : null,
+            classifications: classificationFilter ? [classificationFilter] : null,
+            writeModes: writeModeFilter ? [writeModeFilter] : null,
+          },
+        },
+      ),
+    );
+  };
+
+  const handleClassificationFilterChange = (value: string) => {
+    const newClassification = value === "ALL" ? null : (value as DocumentClassification);
+    clear();
+    setClassificationFilter(newClassification);
+    onConnectionIdChange(
+      ConnectionHandler.getConnectionID(
+        organizationId,
+        "DocumentsListQuery_documents",
+        {
+          orderBy: { direction: "ASC", field: "TITLE" },
+          filter: {
+            status: [tab],
+            documentTypes: documentTypeFilter ? [documentTypeFilter] : null,
+            classifications: newClassification ? [newClassification] : null,
+            writeModes: writeModeFilter ? [writeModeFilter] : null,
+          },
+        },
+      ),
+    );
+  };
+
+  const handleWriteModeFilterChange = (value: string) => {
+    const newWriteMode = value === "ALL" ? null : (value as DocumentWriteMode);
+    clear();
+    setWriteModeFilter(newWriteMode);
+    onConnectionIdChange(
+      ConnectionHandler.getConnectionID(
+        organizationId,
+        "DocumentsListQuery_documents",
+        {
+          orderBy: { direction: "ASC", field: "TITLE" },
+          filter: {
+            status: [tab],
+            documentTypes: documentTypeFilter ? [documentTypeFilter] : null,
+            classifications: classificationFilter ? [classificationFilter] : null,
+            writeModes: newWriteMode ? [newWriteMode] : null,
+          },
         },
       ),
     );
@@ -249,7 +319,12 @@ export function DocumentList(props: {
         "DocumentsListQuery_documents",
         {
           orderBy: order,
-          filter: { status: [tab], documentTypes: documentTypeFilter ? [documentTypeFilter] : null },
+          filter: {
+            status: [tab],
+            documentTypes: documentTypeFilter ? [documentTypeFilter] : null,
+            classifications: classificationFilter ? [classificationFilter] : null,
+            writeModes: writeModeFilter ? [writeModeFilter] : null,
+          },
         },
       ),
     );
@@ -260,12 +335,25 @@ export function DocumentList(props: {
       order: { direction: order.direction, field: order.field as DocumentOrderField },
       status: [tab],
       documentTypes: documentTypeFilter ? [documentTypeFilter] : null,
+      classifications: classificationFilter ? [classificationFilter] : null,
+      writeModes: writeModeFilter ? [writeModeFilter] : null,
     });
   };
 
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-4">
+        <Select
+          value={writeModeFilter ?? "ALL"}
+          onValueChange={handleWriteModeFilterChange}
+        >
+          <Option value="ALL">{__("All sources")}</Option>
+          {documentWriteModes.map(source => (
+            <Option key={source} value={source}>
+              {getDocumentWriteModeLabel(__, source) ?? source}
+            </Option>
+          ))}
+        </Select>
         <Select
           value={documentTypeFilter ?? "ALL"}
           onValueChange={handleDocumentTypeFilterChange}
@@ -274,6 +362,17 @@ export function DocumentList(props: {
           {documentTypes.map(type => (
             <Option key={type} value={type}>
               {getDocumentTypeLabel(__, type) ?? type}
+            </Option>
+          ))}
+        </Select>
+        <Select
+          value={classificationFilter ?? "ALL"}
+          onValueChange={handleClassificationFilterChange}
+        >
+          <Option value="ALL">{__("All classifications")}</Option>
+          {documentClassifications.map(classification => (
+            <Option key={classification} value={classification}>
+              {getDocumentClassificationLabel(__, classification) ?? classification}
             </Option>
           ))}
         </Select>
@@ -305,15 +404,14 @@ export function DocumentList(props: {
                           </SortableTh>
                           <Th className="w-32">{__("Classification")}</Th>
                           <Th className="w-60">{__("Approvers")}</Th>
-                          <Th className="w-60">{__("Last update")}</Th>
-                          <Th className="w-20">{__("Approvals")}</Th>
+                          <Th className="w-40">{__("Last update")}</Th>
                           <Th className="w-20">{__("Signatures")}</Th>
                           {hasAnyAction && <Th className="w-18"></Th>}
                         </Tr>
                       )
                     : (
                         <Tr>
-                          <Th colspan={hasAnyAction ? 11 : 10} compact>
+                          <Th colspan={hasAnyAction ? 10 : 9} compact>
                             <div className="flex justify-between items-center h-8">
                               <div className="flex gap-2 items-center">
                                 {sprintf(__("%s documents selected"), selection.length)}

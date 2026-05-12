@@ -30,7 +30,6 @@ type (
 
 		Resolver any
 		ParentID gid.GID
-		Filter   *ProcessingActivityFilter
 	}
 )
 
@@ -38,7 +37,6 @@ func NewProcessingActivityConnection(
 	p *page.Page[*coredata.ProcessingActivity, coredata.ProcessingActivityOrderField],
 	parentType any,
 	parentID gid.GID,
-	filter *ProcessingActivityFilter,
 ) *ProcessingActivityConnection {
 	edges := make([]*ProcessingActivityEdge, len(p.Data))
 	for i, processingActivity := range p.Data {
@@ -51,7 +49,6 @@ func NewProcessingActivityConnection(
 
 		Resolver: parentType,
 		ParentID: parentID,
-		Filter:   filter,
 	}
 }
 
@@ -68,8 +65,6 @@ func NewProcessingActivity(par *coredata.ProcessingActivity) *ProcessingActivity
 		Organization: &Organization{
 			ID: par.OrganizationID,
 		},
-		SnapshotID:                           par.SnapshotID,
-		SourceID:                             par.SourceID,
 		Name:                                 par.Name,
 		Purpose:                              par.Purpose,
 		DataSubjectCategory:                  par.DataSubjectCategory,

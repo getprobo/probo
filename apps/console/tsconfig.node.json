@@ -23,5 +23,6 @@
     "noUncheckedSideEffectImports": true,
     "types": ["@probo/eslint-plugin-relay-types"]
   },
-  "include": ["vite.config.ts", "eslint.config.mjs"]
+  "include": ["vite.config.ts", "eslint.config.mjs"],
+  "exclude": ["eslint.config.ts"]
 }

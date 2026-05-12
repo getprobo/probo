@@ -41,18 +41,18 @@ func TestDocument_Create(t *testing.T) {
 			name: "with full details",
 			input: map[string]any{
 				"title":          "Security Policy",
-				"content":        "This is the security policy content.",
+				"content":        testutil.ProseMirrorTextDoc("This is the security policy content."),
 				"documentType":   "POLICY",
 				"classification": "INTERNAL",
 			},
-			assertField: "title",
+			assertField: "versionTitle",
 			assertValue: "Security Policy",
 		},
 		{
 			name: "with POLICY type",
 			input: map[string]any{
 				"title":          "Policy Document",
-				"content":        "Policy content",
+				"content":        testutil.ProseMirrorTextDoc("Policy content"),
 				"documentType":   "POLICY",
 				"classification": "INTERNAL",
 			},
@@ -63,7 +63,7 @@ func TestDocument_Create(t *testing.T) {
 			name: "with PROCEDURE type",
 			input: map[string]any{
 				"title":          "Procedure Document",
-				"content":        "Procedure content",
+				"content":        testutil.ProseMirrorTextDoc("Procedure content"),
 				"documentType":   "PROCEDURE",
 				"classification": "INTERNAL",
 			},
@@ -74,7 +74,7 @@ func TestDocument_Create(t *testing.T) {
 			name: "with GOVERNANCE type",
 			input: map[string]any{
 				"title":          "Governance Document",
-				"content":        "Governance content",
+				"content":        testutil.ProseMirrorTextDoc("Governance content"),
 				"documentType":   "GOVERNANCE",
 				"classification": "INTERNAL",
 			},
@@ -85,7 +85,7 @@ func TestDocument_Create(t *testing.T) {
 			name: "with OTHER type",
 			input: map[string]any{
 				"title":          "Other Document",
-				"content":        "Other content",
+				"content":        testutil.ProseMirrorTextDoc("Other content"),
 				"documentType":   "OTHER",
 				"classification": "INTERNAL",
 			},
@@ -102,9 +102,13 @@ func TestDocument_Create(t *testing.T) {
 						documentEdge {
 							node {
 								id
+							}
+						}
+						documentVersionEdge {
+							node {
+								id
 								title
 								documentType
-								classification
 							}
 						}
 					}
@@ -120,12 +124,16 @@ func TestDocument_Create(t *testing.T) {
 				CreateDocument struct {
 					DocumentEdge struct {
 						Node struct {
-							ID             string `json:"id"`
-							Title          string `json:"title"`
-							DocumentType   string `json:"documentType"`
-							Classification string `json:"classification"`
+							ID string `json:"id"`
 						} `json:"node"`
 					} `json:"documentEdge"`
+					DocumentVersionEdge struct {
+						Node struct {
+							ID           string `json:"id"`
+							Title        string `json:"title"`
+							DocumentType string `json:"documentType"`
+						} `json:"node"`
+					} `json:"documentVersionEdge"`
 				} `json:"createDocument"`
 			}
 
@@ -135,11 +143,13 @@ func TestDocument_Create(t *testing.T) {
 			node := result.CreateDocument.DocumentEdge.Node
 			assert.NotEmpty(t, node.ID)
 
+			versionNode := result.CreateDocument.DocumentVersionEdge.Node
+
 			switch tt.assertField {
-			case "title":
-				assert.Equal(t, tt.assertValue, node.Title)
+			case "versionTitle":
+				assert.Equal(t, tt.assertValue, versionNode.Title)
 			case "documentType":
-				assert.Equal(t, tt.assertValue, node.DocumentType)
+				assert.Equal(t, tt.assertValue, versionNode.DocumentType)
 			}
 		})
 	}
@@ -159,7 +169,7 @@ func TestDocument_Create_Validation(t *testing.T) {
 			name: "missing organizationId",
 			input: map[string]any{
 				"title":          "Test Document",
-				"content":        "Test content",
+				"content":        testutil.ProseMirrorTextDoc("Test content"),
 				"documentType":   "POLICY",
 				"classification": "INTERNAL",
 			},
@@ -170,7 +180,7 @@ func TestDocument_Create_Validation(t *testing.T) {
 			name: "title with HTML tags",
 			input: map[string]any{
 				"title":          "<script>alert('xss')</script>",
-				"content":        "Test content",
+				"content":        testutil.ProseMirrorTextDoc("Test content"),
 				"documentType":   "POLICY",
 				"classification": "INTERNAL",
 			},
@@ -180,7 +190,7 @@ func TestDocument_Create_Validation(t *testing.T) {
 			name: "title with newline",
 			input: map[string]any{
 				"title":          "Test\nDocument",
-				"content":        "Test content",
+				"content":        testutil.ProseMirrorTextDoc("Test content"),
 				"documentType":   "POLICY",
 				"classification": "INTERNAL",
 			},
@@ -190,7 +200,7 @@ func TestDocument_Create_Validation(t *testing.T) {
 			name: "title with carriage return",
 			input: map[string]any{
 				"title":          "Test\rDocument",
-				"content":        "Test content",
+				"content":        testutil.ProseMirrorTextDoc("Test content"),
 				"documentType":   "POLICY",
 				"classification": "INTERNAL",
 			},
@@ -200,7 +210,7 @@ func TestDocument_Create_Validation(t *testing.T) {
 			name: "title with null byte",
 			input: map[string]any{
 				"title":          "Test\x00Document",
-				"content":        "Test content",
+				"content":        testutil.ProseMirrorTextDoc("Test content"),
 				"documentType":   "POLICY",
 				"classification": "INTERNAL",
 			},
@@ -210,7 +220,7 @@ func TestDocument_Create_Validation(t *testing.T) {
 			name: "title with tab character",
 			input: map[string]any{
 				"title":          "Test\tDocument",
-				"content":        "Test content",
+				"content":        testutil.ProseMirrorTextDoc("Test content"),
 				"documentType":   "POLICY",
 				"classification": "INTERNAL",
 			},
@@ -220,7 +230,7 @@ func TestDocument_Create_Validation(t *testing.T) {
 			name: "title with zero-width space",
 			input: map[string]any{
 				"title":          "Test\u200BDocument",
-				"content":        "Test content",
+				"content":        testutil.ProseMirrorTextDoc("Test content"),
 				"documentType":   "POLICY",
 				"classification": "INTERNAL",
 			},
@@ -230,7 +240,7 @@ func TestDocument_Create_Validation(t *testing.T) {
 			name: "title with zero-width joiner",
 			input: map[string]any{
 				"title":          "Test\u200DDocument",
-				"content":        "Test content",
+				"content":        testutil.ProseMirrorTextDoc("Test content"),
 				"documentType":   "POLICY",
 				"classification": "INTERNAL",
 			},
@@ -240,7 +250,7 @@ func TestDocument_Create_Validation(t *testing.T) {
 			name: "title with right-to-left override",
 			input: map[string]any{
 				"title":          "Test\u202EDocument",
-				"content":        "Test content",
+				"content":        testutil.ProseMirrorTextDoc("Test content"),
 				"documentType":   "POLICY",
 				"classification": "INTERNAL",
 			},
@@ -279,56 +289,21 @@ func TestDocument_Update(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
-	tests := []struct {
-		name        string
-		setup       func() string
-		input       func(id string) map[string]any
-		assertField string
-		assertValue string
-	}{
-		{
-			name: "update title",
-			setup: func() string {
-				return factory.NewDocument(owner).
-					WithTitle("Document to Update").
-					Create()
-			},
-			input: func(id string) map[string]any {
-				return map[string]any{
-					"id":    id,
-					"title": "Updated Document Title",
-				}
-			},
-			assertField: "title",
-			assertValue: "Updated Document Title",
-		},
-		{
-			name: "update document type",
-			setup: func() string {
-				return factory.NewDocument(owner).
-					WithTitle("Type Test").
-					WithDocumentType("POLICY").
-					Create()
-			},
-			input: func(id string) map[string]any {
-				return map[string]any{"id": id, "documentType": "PROCEDURE"}
-			},
-			assertField: "documentType",
-			assertValue: "PROCEDURE",
-		},
-	}
+	t.Run(
+		"update title via document",
+		func(t *testing.T) {
+			t.Parallel()
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			documentID := tt.setup()
+			doc := factory.NewDocument(owner).
+				WithTitle("Document to Update")
+			documentID := doc.Create()
 
 			query := `
 				mutation UpdateDocument($input: UpdateDocumentInput!) {
 					updateDocument(input: $input) {
-						document {
+						documentVersion {
 							id
 							title
-							documentType
 						}
 					}
 				}
@@ -336,33 +311,31 @@ func TestDocument_Update(t *testing.T) {
 
 			var result struct {
 				UpdateDocument struct {
-					Document struct {
-						ID           string `json:"id"`
-						Title        string `json:"title"`
-						DocumentType string `json:"documentType"`
-					} `json:"document"`
+					DocumentVersion struct {
+						ID    string `json:"id"`
+						Title string `json:"title"`
+					} `json:"documentVersion"`
 				} `json:"updateDocument"`
 			}
 
-			err := owner.Execute(query, map[string]any{"input": tt.input(documentID)}, &result)
+			err := owner.Execute(query, map[string]any{
+				"input": map[string]any{
+					"id":    documentID,
+					"title": "Updated Document Title",
+				},
+			}, &result)
 			require.NoError(t, err)
-
-			doc := result.UpdateDocument.Document
-			switch tt.assertField {
-			case "title":
-				assert.Equal(t, tt.assertValue, doc.Title)
-			case "documentType":
-				assert.Equal(t, tt.assertValue, doc.DocumentType)
-			}
-		})
-	}
+			assert.Equal(t, "Updated Document Title", result.UpdateDocument.DocumentVersion.Title)
+		},
+	)
 }
 
-func TestDocument_Update_Validation(t *testing.T) {
+func TestDocument_Update_TitleValidation(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
-	baseDocumentID := factory.NewDocument(owner).WithTitle("Validation Test Document").Create()
+	doc := factory.NewDocument(owner).WithTitle("Validation Test Document")
+	baseDocumentID := doc.Create()
 
 	tests := []struct {
 		name              string
@@ -370,14 +343,6 @@ func TestDocument_Update_Validation(t *testing.T) {
 		input             func(id string) map[string]any
 		wantErrorContains string
 	}{
-		{
-			name:  "invalid ID format",
-			setup: func() string { return "invalid-id-format" },
-			input: func(id string) map[string]any {
-				return map[string]any{"id": id, "title": "Test"}
-			},
-			wantErrorContains: "base64",
-		},
 		{
 			name:  "title with HTML tags",
 			setup: func() string { return baseDocumentID },
@@ -427,7 +392,7 @@ func TestDocument_Update_Validation(t *testing.T) {
 			query := `
 				mutation UpdateDocument($input: UpdateDocumentInput!) {
 					updateDocument(input: $input) {
-						document {
+						documentVersion {
 							id
 						}
 					}
@@ -522,7 +487,6 @@ func TestDocument_List(t *testing.T) {
 						edges {
 							node {
 								id
-								title
 							}
 						}
 						totalCount
@@ -537,8 +501,7 @@ func TestDocument_List(t *testing.T) {
 			Documents struct {
 				Edges []struct {
 					Node struct {
-						ID    string `json:"id"`
-						Title string `json:"title"`
+						ID string `json:"id"`
 					} `json:"node"`
 				} `json:"edges"`
 				TotalCount int `json:"totalCount"`
@@ -563,7 +526,6 @@ func TestDocument_Query(t *testing.T) {
 				node(id: $id) {
 					... on Document {
 						id
-						title
 					}
 				}
 			}
@@ -613,7 +575,7 @@ func TestDocument_Timestamps(t *testing.T) {
 			"input": map[string]any{
 				"organizationId": owner.GetOrganizationID().String(),
 				"title":          "Timestamp Test Document",
-				"content":        "Test content",
+				"content":        testutil.ProseMirrorTextDoc("Test content"),
 				"documentType":   "POLICY",
 				"classification": "INTERNAL",
 			},
@@ -676,8 +638,8 @@ func TestDocument_Timestamps(t *testing.T) {
 
 		err = owner.Execute(updateQuery, map[string]any{
 			"input": map[string]any{
-				"id":    documentID,
-				"title": "Updated Timestamp Test",
+				"id":                    documentID,
+				"trustCenterVisibility": "PRIVATE",
 			},
 		}, &updateResult)
 		require.NoError(t, err)
@@ -742,7 +704,7 @@ func TestDocument_RBAC(t *testing.T) {
 				"input": map[string]any{
 					"organizationId": owner.GetOrganizationID().String(),
 					"title":          "RBAC Test Document",
-					"content":        "Test content",
+					"content":        testutil.ProseMirrorTextDoc("Test content"),
 					"documentType":   "POLICY",
 					"classification": "INTERNAL",
 				},
@@ -764,7 +726,7 @@ func TestDocument_RBAC(t *testing.T) {
 				"input": map[string]any{
 					"organizationId": admin.GetOrganizationID().String(),
 					"title":          "RBAC Test Document",
-					"content":        "Test content",
+					"content":        testutil.ProseMirrorTextDoc("Test content"),
 					"documentType":   "POLICY",
 					"classification": "INTERNAL",
 				},
@@ -786,7 +748,7 @@ func TestDocument_RBAC(t *testing.T) {
 				"input": map[string]any{
 					"organizationId": viewer.GetOrganizationID().String(),
 					"title":          "RBAC Test Document",
-					"content":        "Test content",
+					"content":        testutil.ProseMirrorTextDoc("Test content"),
 					"documentType":   "POLICY",
 					"classification": "INTERNAL",
 				},
@@ -809,8 +771,8 @@ func TestDocument_RBAC(t *testing.T) {
 				}
 			`, map[string]any{
 				"input": map[string]any{
-					"id":    documentID,
-					"title": "Updated by Owner",
+					"id":                    documentID,
+					"trustCenterVisibility": "PRIVATE",
 				},
 			})
 			require.NoError(t, err, "owner should be able to update document")
@@ -830,8 +792,8 @@ func TestDocument_RBAC(t *testing.T) {
 				}
 			`, map[string]any{
 				"input": map[string]any{
-					"id":    documentID,
-					"title": "Updated by Admin",
+					"id":                    documentID,
+					"trustCenterVisibility": "PRIVATE",
 				},
 			})
 			require.NoError(t, err, "admin should be able to update document")
@@ -851,8 +813,8 @@ func TestDocument_RBAC(t *testing.T) {
 				}
 			`, map[string]any{
 				"input": map[string]any{
-					"id":    documentID,
-					"title": "Updated by Viewer",
+					"id":                    documentID,
+					"trustCenterVisibility": "PRIVATE",
 				},
 			})
 			testutil.RequireForbiddenError(t, err, "viewer should not be able to update document")
@@ -922,15 +884,14 @@ func TestDocument_RBAC(t *testing.T) {
 
 			var result struct {
 				Node *struct {
-					ID    string `json:"id"`
-					Title string `json:"title"`
+					ID string `json:"id"`
 				} `json:"node"`
 			}
 
 			err := owner.Execute(`
 				query($id: ID!) {
 					node(id: $id) {
-						... on Document { id title }
+						... on Document { id }
 					}
 				}
 			`, map[string]any{"id": documentID}, &result)
@@ -946,15 +907,14 @@ func TestDocument_RBAC(t *testing.T) {
 
 			var result struct {
 				Node *struct {
-					ID    string `json:"id"`
-					Title string `json:"title"`
+					ID string `json:"id"`
 				} `json:"node"`
 			}
 
 			err := admin.Execute(`
 				query($id: ID!) {
 					node(id: $id) {
-						... on Document { id title }
+						... on Document { id }
 					}
 				}
 			`, map[string]any{"id": documentID}, &result)
@@ -970,15 +930,14 @@ func TestDocument_RBAC(t *testing.T) {
 
 			var result struct {
 				Node *struct {
-					ID    string `json:"id"`
-					Title string `json:"title"`
+					ID string `json:"id"`
 				} `json:"node"`
 			}
 
 			err := viewer.Execute(`
 				query($id: ID!) {
 					node(id: $id) {
-						... on Document { id title }
+						... on Document { id }
 					}
 				}
 			`, map[string]any{"id": documentID}, &result)
@@ -994,7 +953,7 @@ func TestDocument_MaxLength_Validation(t *testing.T) {
 
 	longTitle := strings.Repeat("a", 1001)
 
-	t.Run("create", func(t *testing.T) {
+	t.Run("create with long title", func(t *testing.T) {
 		query := `
 			mutation CreateDocument($input: CreateDocumentInput!) {
 				createDocument(input: $input) {
@@ -1009,7 +968,7 @@ func TestDocument_MaxLength_Validation(t *testing.T) {
 			"input": map[string]any{
 				"organizationId": owner.GetOrganizationID().String(),
 				"title":          longTitle,
-				"content":        "Test content",
+				"content":        testutil.ProseMirrorTextDoc("Test content"),
 				"documentType":   "POLICY",
 				"classification": "INTERNAL",
 			},
@@ -1018,13 +977,14 @@ func TestDocument_MaxLength_Validation(t *testing.T) {
 		assert.Contains(t, err.Error(), "title")
 	})
 
-	t.Run("update", func(t *testing.T) {
-		documentID := factory.NewDocument(owner).WithTitle("Max Length Test").Create()
+	t.Run("update document with long title", func(t *testing.T) {
+		doc := factory.NewDocument(owner).WithTitle("Max Length Test")
+		documentID := doc.Create()
 
 		query := `
 			mutation UpdateDocument($input: UpdateDocumentInput!) {
 				updateDocument(input: $input) {
-					document { id }
+					documentVersion { id }
 				}
 			}
 		`
@@ -1037,6 +997,56 @@ func TestDocument_MaxLength_Validation(t *testing.T) {
 		})
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "title")
+	})
+
+	t.Run("create with long content", func(t *testing.T) {
+		query := `
+			mutation CreateDocument($input: CreateDocumentInput!) {
+				createDocument(input: $input) {
+					documentEdge {
+						node { id }
+					}
+				}
+			}
+		`
+
+		longContent := testutil.ProseMirrorTextDoc(strings.Repeat("a", 50_001))
+
+		_, err := owner.Do(query, map[string]any{
+			"input": map[string]any{
+				"organizationId": owner.GetOrganizationID().String(),
+				"title":          "Content Length Test",
+				"content":        longContent,
+				"documentType":   "POLICY",
+				"classification": "INTERNAL",
+			},
+		})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "content")
+	})
+
+	t.Run("update document with long content", func(t *testing.T) {
+		docID, _ := createTestDocument(t, owner)
+		require.NotEmpty(t, docID)
+
+		query := `
+			mutation UpdateDocument($input: UpdateDocumentInput!) {
+				updateDocument(input: $input) {
+					document { id }
+				}
+			}
+		`
+
+		longContent := testutil.ProseMirrorTextDoc(strings.Repeat("a", 50_001))
+
+		_, err := owner.Do(query, map[string]any{
+			"input": map[string]any{
+				"id":      docID,
+				"content": longContent,
+			},
+		})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "content")
 	})
 }
 
@@ -1057,7 +1067,7 @@ func TestDocument_Pagination(t *testing.T) {
 					... on Organization {
 						documents(first: 2) {
 							edges {
-								node { id title }
+								node { id }
 								cursor
 							}
 							pageInfo {
@@ -1078,8 +1088,7 @@ func TestDocument_Pagination(t *testing.T) {
 				Documents struct {
 					Edges []struct {
 						Node struct {
-							ID    string `json:"id"`
-							Title string `json:"title"`
+							ID string `json:"id"`
 						} `json:"node"`
 						Cursor string `json:"cursor"`
 					} `json:"edges"`
@@ -1108,7 +1117,7 @@ func TestDocument_Pagination(t *testing.T) {
 					... on Organization {
 						documents(first: 2, after: $after) {
 							edges {
-								node { id title }
+								node { id }
 							}
 							pageInfo {
 								hasNextPage
@@ -1125,8 +1134,7 @@ func TestDocument_Pagination(t *testing.T) {
 				Documents struct {
 					Edges []struct {
 						Node struct {
-							ID    string `json:"id"`
-							Title string `json:"title"`
+							ID string `json:"id"`
 						} `json:"node"`
 					} `json:"edges"`
 					PageInfo testutil.PageInfo `json:"pageInfo"`
@@ -1150,7 +1158,7 @@ func TestDocument_Pagination(t *testing.T) {
 					... on Organization {
 						documents(last: 2) {
 							edges {
-								node { id title }
+								node { id }
 							}
 							pageInfo {
 								hasNextPage
@@ -1167,8 +1175,7 @@ func TestDocument_Pagination(t *testing.T) {
 				Documents struct {
 					Edges []struct {
 						Node struct {
-							ID    string `json:"id"`
-							Title string `json:"title"`
+							ID string `json:"id"`
 						} `json:"node"`
 					} `json:"edges"`
 					PageInfo testutil.PageInfo `json:"pageInfo"`
@@ -1199,7 +1206,6 @@ func TestDocument_TenantIsolation(t *testing.T) {
 				node(id: $id) {
 					... on Document {
 						id
-						title
 					}
 				}
 			}
@@ -1207,8 +1213,7 @@ func TestDocument_TenantIsolation(t *testing.T) {
 
 		var result struct {
 			Node *struct {
-				ID    string `json:"id"`
-				Title string `json:"title"`
+				ID string `json:"id"`
 			} `json:"node"`
 		}
 
@@ -1227,8 +1232,8 @@ func TestDocument_TenantIsolation(t *testing.T) {
 
 		_, err := org2Owner.Do(query, map[string]any{
 			"input": map[string]any{
-				"id":    documentID,
-				"title": "Hijacked Document",
+				"id":                    documentID,
+				"trustCenterVisibility": "PRIVATE",
 			},
 		})
 		require.Error(t, err, "Should not be able to update document from another org")
@@ -1260,7 +1265,6 @@ func TestDocument_TenantIsolation(t *testing.T) {
 							edges {
 								node {
 									id
-									title
 								}
 							}
 						}
@@ -1274,8 +1278,7 @@ func TestDocument_TenantIsolation(t *testing.T) {
 				Documents struct {
 					Edges []struct {
 						Node struct {
-							ID    string `json:"id"`
-							Title string `json:"title"`
+							ID string `json:"id"`
 						} `json:"node"`
 					} `json:"edges"`
 				} `json:"documents"`

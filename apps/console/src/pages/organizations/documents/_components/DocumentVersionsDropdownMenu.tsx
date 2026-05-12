@@ -1,3 +1,17 @@
+// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -10,7 +24,7 @@ export const documentVersionsDropdownMenuQuery = graphql`
     document: node(id: $documentId) {
       __typename
       ... on Document {
-        versions(first: 20) {
+        versions(first: 20) @connection(key: "DocumentversionsDropdownMenu_versions") {
           edges {
             node {
               id
@@ -19,7 +33,9 @@ export const documentVersionsDropdownMenuQuery = graphql`
           }
         }
         # We use this on /documents/:documentId
-        lastVersion: versions(first: 1 orderBy: { field: CREATED_AT, direction: DESC }) @skip(if: $versionSpecified) {
+        lastVersion: versions(first: 1 orderBy: { field: CREATED_AT, direction: DESC })
+        @skip(if: $versionSpecified)
+        @connection(key: "DocumentversionsDropdownMenu_lastVersion" filters: ["orderBy"]) {
           edges {
             node {
               id
@@ -40,8 +56,9 @@ export const documentVersionsDropdownMenuQuery = graphql`
 
 export function DocumentVersionsDropdownMenu(props: {
   queryRef: PreloadedQuery<DocumentVersionsDropdownMenuQuery>;
+  currentTab: string | undefined;
 }) {
-  const { queryRef } = props;
+  const { queryRef, currentTab } = props;
 
   const { document, version } = usePreloadedQuery<DocumentVersionsDropdownMenuQuery>(
     documentVersionsDropdownMenuQuery,
@@ -61,6 +78,7 @@ export function DocumentVersionsDropdownMenu(props: {
           key={version.id}
           fragmentRef={version}
           active={version.id === currentVersion.id}
+          currentTab={currentTab}
         />
       ))}
     </>

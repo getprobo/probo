@@ -1,0 +1,9 @@
+type File {
+    id: ID!
+    mimeType: String!
+    fileName: String!
+    size: BigInt!
+    downloadUrl: String! @goField(forceResolver: true)
+    createdAt: Datetime!
+    updatedAt: Datetime!
+}

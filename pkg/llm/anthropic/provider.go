@@ -152,6 +152,28 @@ func buildParams(req *llm.ChatCompletionRequest) (anthropic.MessageNewParams, er
 	if req.ToolChoice != nil {
 		params.ToolChoice = buildToolChoice(req.ToolChoice)
 	}
+	if req.Thinking != nil && req.Thinking.Enabled {
+		params.Thinking = anthropic.ThinkingConfigParamOfEnabled(int64(req.Thinking.BudgetTokens))
+	}
+	if req.ResponseFormat != nil {
+		switch req.ResponseFormat.Type {
+		case llm.ResponseFormatJSONSchema:
+			if req.ResponseFormat.JSONSchema == nil {
+				return anthropic.MessageNewParams{}, fmt.Errorf("cannot apply JSON schema output format: schema is nil")
+			}
+			var schema map[string]any
+			if err := json.Unmarshal(req.ResponseFormat.JSONSchema.Schema, &schema); err != nil {
+				return anthropic.MessageNewParams{}, fmt.Errorf("cannot unmarshal JSON schema for output format: %w", err)
+			}
+			params.OutputConfig = anthropic.OutputConfigParam{
+				Format: anthropic.JSONOutputFormatParam{Schema: schema},
+			}
+		case llm.ResponseFormatJSONObject:
+			return anthropic.MessageNewParams{}, fmt.Errorf("anthropic does not support json_object response format without a schema; use json_schema instead")
+		case llm.ResponseFormatText:
+			// default behaviour, nothing to set
+		}
+	}
 
 	return params, nil
 }
@@ -194,12 +216,21 @@ func buildMessages(messages []llm.Message) []anthropic.MessageParam {
 			out = append(out, anthropic.NewUserMessage(blocks...))
 		case llm.RoleAssistant:
 			var blocks []anthropic.ContentBlockParamUnion
-			if text := msg.Text(); text != "" {
-				blocks = append(blocks, anthropic.NewTextBlock(text))
+			for _, p := range msg.Parts {
+				switch part := p.(type) {
+				case llm.ThinkingPart:
+					blocks = append(blocks, anthropic.NewThinkingBlock(part.Signature, part.Text))
+				case llm.TextPart:
+					if part.Text != "" {
+						blocks = append(blocks, anthropic.NewTextBlock(part.Text))
+					}
+				}
 			}
 			for _, tc := range msg.ToolCalls {
 				var input any
-				_ = json.Unmarshal([]byte(tc.Function.Arguments), &input)
+				if err := json.Unmarshal([]byte(tc.Function.Arguments), &input); err != nil || input == nil {
+					input = map[string]any{}
+				}
 				blocks = append(blocks, anthropic.NewToolUseBlock(tc.ID, input, tc.Function.Name))
 			}
 			out = append(out, anthropic.NewAssistantMessage(blocks...))
@@ -295,6 +326,12 @@ func mapResponse(msg *anthropic.Message) *llm.ChatCompletionResponse {
 
 	for _, block := range msg.Content {
 		switch block.Type {
+		case "thinking":
+			tb := block.AsThinking()
+			resp.Message.Parts = append(resp.Message.Parts, llm.ThinkingPart{
+				Text:      tb.Thinking,
+				Signature: tb.Signature,
+			})
 		case "text":
 			resp.Message.Parts = append(resp.Message.Parts, llm.TextPart{Text: block.Text})
 		case "tool_use":
@@ -326,6 +363,15 @@ func mapStopReason(reason anthropic.StopReason) llm.FinishReason {
 }
 
 func mapError(err error) error {
+	// The Anthropic SDK refuses non-streaming requests client-side when
+	// the expected response time exceeds 10 minutes (large max_tokens or
+	// model-specific non-streaming token limits). It returns a plain
+	// fmt.Errorf, not an *anthropic.Error, so we must match on the
+	// message before attempting the type assertion.
+	if err != nil && strings.Contains(err.Error(), "streaming is required") {
+		return &llm.ErrStreamingRequired{Err: err}
+	}
+
 	var apiErr *anthropic.Error
 	if !errors.As(err, &apiErr) {
 		return err
@@ -361,7 +407,9 @@ type anthropicStream struct {
 	stream  *ssestream.Stream[anthropic.MessageStreamEventUnion]
 	current llm.ChatCompletionStreamEvent
 	// Track tool call indices for mapping content_block_start events.
-	toolCallIndex int
+	toolCallIndex     int
+	inToolUse         bool
+	thinkingSignature string
 }
 
 func (s *anthropicStream) Next() bool {
@@ -396,7 +444,9 @@ func (s *anthropicStream) mapStreamEvent(event *anthropic.MessageStreamEventUnio
 	switch event.Type {
 	case "content_block_start":
 		cb := event.ContentBlock
-		if cb.Type == "tool_use" {
+		switch cb.Type {
+		case "tool_use":
+			s.inToolUse = true
 			tu := cb.AsToolUse()
 			return llm.ChatCompletionStreamEvent{
 				Delta: llm.MessageDelta{
@@ -407,6 +457,8 @@ func (s *anthropicStream) mapStreamEvent(event *anthropic.MessageStreamEventUnio
 					}},
 				},
 			}, true
+		case "thinking":
+			return llm.ChatCompletionStreamEvent{}, false
 		}
 		return llm.ChatCompletionStreamEvent{}, false
 
@@ -416,6 +468,15 @@ func (s *anthropicStream) mapStreamEvent(event *anthropic.MessageStreamEventUnio
 		case "text_delta":
 			return llm.ChatCompletionStreamEvent{
 				Delta: llm.MessageDelta{Content: delta.Text},
+			}, true
+		case "thinking_delta":
+			return llm.ChatCompletionStreamEvent{
+				Delta: llm.MessageDelta{Thinking: delta.Thinking},
+			}, true
+		case "signature_delta":
+			s.thinkingSignature = delta.Signature
+			return llm.ChatCompletionStreamEvent{
+				Delta: llm.MessageDelta{ThinkingSignature: delta.Signature},
 			}, true
 		case "input_json_delta":
 			return llm.ChatCompletionStreamEvent{
@@ -430,8 +491,9 @@ func (s *anthropicStream) mapStreamEvent(event *anthropic.MessageStreamEventUnio
 		return llm.ChatCompletionStreamEvent{}, false
 
 	case "content_block_stop":
-		if event.ContentBlock.Type == "tool_use" {
+		if s.inToolUse {
 			s.toolCallIndex++
+			s.inToolUse = false
 		}
 		return llm.ChatCompletionStreamEvent{}, false
 

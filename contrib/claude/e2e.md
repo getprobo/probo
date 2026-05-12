@@ -5,8 +5,8 @@ E2E tests live in `e2e/console/` (package `console_test`) and run against a live
 ## Running tests
 
 ```bash
-SKIP_APPS=1 make build   # Build the binary (backend only)
-make test-e2e            # Run all e2e tests
+make build    # Build the binary (backend only)
+make test-e2e # Run all e2e tests
 ```
 
 ## Client setup
@@ -26,16 +26,16 @@ Each call creates a unique identity with a fresh email. Available roles: `RoleOw
 
 ## Client methods
 
-| Method | API | Purpose |
-|--------|-----|---------|
-| `c.Execute(query, vars, &result)` | Console | Execute and unmarshal into result |
-| `c.MustExecute(query, vars, &result)` | Console | Execute, fail test on error |
-| `c.ExecuteShouldFail(query, vars)` | Console | Expect error, fail if succeeds |
-| `c.Do(query, vars)` | Console | Low-level, returns raw response |
-| `c.ExecuteConnect(query, vars, &result)` | Connect | For auth operations |
-| `c.ExecuteWithFile(query, vars, path, file, &result)` | Console | Single file upload |
-| `c.GetOrganizationID()` | — | Current org GID |
-| `c.GetUserID()` | — | Current user GID |
+| Method                                                | API     | Purpose                           |
+| ----------------------------------------------------- | ------- | --------------------------------- |
+| `c.Execute(query, vars, &result)`                     | Console | Execute and unmarshal into result |
+| `c.MustExecute(query, vars, &result)`                 | Console | Execute, fail test on error       |
+| `c.ExecuteShouldFail(query, vars)`                    | Console | Expect error, fail if succeeds    |
+| `c.Do(query, vars)`                                   | Console | Low-level, returns raw response   |
+| `c.ExecuteConnect(query, vars, &result)`              | Connect | For auth operations               |
+| `c.ExecuteWithFile(query, vars, path, file, &result)` | Console | Single file upload                |
+| `c.GetOrganizationID()`                               | —       | Current org GID                   |
+| `c.GetUserID()`                                       | —       | Current user GID                  |
 
 ## Test data factories
 

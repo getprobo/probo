@@ -90,7 +90,7 @@ func (s RightsRequestService) Get(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			if err := request.LoadByID(ctx, conn, s.svc.scope, rightsRequestID); err != nil {
 				return fmt.Errorf("cannot load rights request: %w", err)
 			}
@@ -132,7 +132,7 @@ func (s *RightsRequestService) Create(
 
 	err := s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Tx) error {
 			organization := &coredata.Organization{}
 			if err := organization.LoadByID(ctx, conn, s.svc.scope, req.OrganizationID); err != nil {
 				return fmt.Errorf("cannot load organization: %w", err)
@@ -165,7 +165,7 @@ func (s *RightsRequestService) Update(
 
 	err := s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Tx) error {
 			if err := request.LoadByID(ctx, conn, s.svc.scope, req.ID); err != nil {
 				return fmt.Errorf("cannot load rights request: %w", err)
 			}
@@ -221,7 +221,7 @@ func (s *RightsRequestService) Delete(
 ) error {
 	err := s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Tx) error {
 			request := &coredata.RightsRequest{}
 			if err := request.LoadByID(ctx, conn, s.svc.scope, rightsRequestID); err != nil {
 				return fmt.Errorf("cannot load rights request: %w", err)
@@ -246,7 +246,7 @@ func (s RightsRequestService) CountByOrganizationID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) (err error) {
+		func(ctx context.Context, conn pg.Querier) (err error) {
 			requests := coredata.RightsRequests{}
 			count, err = requests.CountByOrganizationID(ctx, conn, s.svc.scope, organizationID)
 			if err != nil {
@@ -273,7 +273,7 @@ func (s RightsRequestService) ListForOrganizationID(
 
 	err := s.svc.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(ctx context.Context, conn pg.Querier) error {
 			err := requests.LoadByOrganizationID(ctx, conn, s.svc.scope, organizationID, cursor)
 			if err != nil {
 				return fmt.Errorf("cannot load rights requests: %w", err)
