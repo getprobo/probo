@@ -98,7 +98,7 @@ export function CreateVendorDialog({
     <Dialog ref={dialogRef} trigger={children} title={__("Add a vendor")}>
       <DialogContent className="p-6">
         <Combobox onSearch={handleSearch} placeholder={__("Type vendor's name")}>
-          {queryRef && (
+          {searchQuery.trim().length >= 2 && queryRef && (
             <Suspense>
               <CommonThirdPartyCombobox
                 queryRef={queryRef}

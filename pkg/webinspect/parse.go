@@ -50,7 +50,8 @@ func Parse(ctx context.Context, client *http.Client, websiteURL string) (*PageIn
 		return nil, fmt.Errorf("cannot fetch page: status %d", resp.StatusCode)
 	}
 
-	return ParseHTML(parsed, resp.Body)
+	const maxHTMLSize = 10 << 20 // 10 MiB
+	return ParseHTML(parsed, io.LimitReader(resp.Body, maxHTMLSize))
 }
 
 func ParseHTML(baseURL *url.URL, r io.Reader) (*PageInfo, error) {

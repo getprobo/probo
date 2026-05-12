@@ -45,7 +45,7 @@ func FindLogoURL(info *PageInfo) (string, error) {
 		}
 
 		switch {
-		case rel == "icon" && attrVal(n, "type") == "image/svg+xml":
+		case strings.Contains(rel, "icon") && !strings.Contains(rel, "apple-touch-icon") && attrVal(n, "type") == "image/svg+xml":
 			svgIcon = href
 		case strings.Contains(rel, "apple-touch-icon"):
 			size := parseSizeAttr(attrVal(n, "sizes"))
@@ -53,7 +53,7 @@ func FindLogoURL(info *PageInfo) (string, error) {
 				appleTouchIcon = href
 				appleTouchSize = size
 			}
-		case rel == "icon":
+		case strings.Contains(rel, "icon") && !strings.Contains(rel, "apple-touch-icon"):
 			size := parseSizeAttr(attrVal(n, "sizes"))
 			if largestIcon == "" || size > largestSize {
 				largestIcon = href
@@ -87,21 +87,29 @@ func FindLogoURL(info *PageInfo) (string, error) {
 }
 
 func parseSizeAttr(sizes string) int {
-	if sizes == "" || strings.ToLower(sizes) == "any" {
+	if sizes == "" || strings.EqualFold(sizes, "any") {
 		return 0
 	}
 
-	parts := strings.SplitN(sizes, "x", 2)
-	if len(parts) == 0 {
-		return 0
+	best := 0
+	for _, token := range strings.Fields(sizes) {
+		token = strings.ToLower(token)
+		parts := strings.SplitN(token, "x", 2)
+		if len(parts) != 2 {
+			continue
+		}
+
+		w, err := strconv.Atoi(parts[0])
+		if err != nil {
+			continue
+		}
+
+		if w > best {
+			best = w
+		}
 	}
 
-	w, err := strconv.Atoi(parts[0])
-	if err != nil {
-		return 0
-	}
-
-	return w
+	return best
 }
 
 func ExtensionForMIME(contentType string) string {
