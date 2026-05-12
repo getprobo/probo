@@ -123,24 +123,22 @@ const updatePatternMutation = graphql`
   }
 `;
 
-type BadgeVariant = "success" | "warning" | "danger" | "info" | "neutral" | "outline" | "highlight";
-
-function trackerTypeBadge(type: string, __: (s: string) => string): { label: string; variant: BadgeVariant } {
+function trackerTypeBadge(type: string, __: (s: string) => string) {
   switch (type) {
-    case "COOKIE": return { label: __("Cookie"), variant: "warning" };
-    case "LOCAL_STORAGE": return { label: __("localStorage"), variant: "info" };
-    case "SESSION_STORAGE": return { label: __("sessionStorage"), variant: "highlight" };
-    case "INDEXED_DB": return { label: __("IndexedDB"), variant: "success" };
-    case "CACHE_STORAGE": return { label: __("Cache Storage"), variant: "outline" };
-    default: return { label: type, variant: "neutral" };
+    case "COOKIE": return { label: __("Cookie"), variant: "warning" as const };
+    case "LOCAL_STORAGE": return { label: __("localStorage"), variant: "info" as const };
+    case "SESSION_STORAGE": return { label: __("sessionStorage"), variant: "highlight" as const };
+    case "INDEXED_DB": return { label: __("IndexedDB"), variant: "success" as const };
+    case "CACHE_STORAGE": return { label: __("Cache Storage"), variant: "outline" as const };
+    default: return { label: type, variant: "neutral" as const };
   }
 }
 
-function sourceBadge(source: string, __: (s: string) => string): { label: string; variant: BadgeVariant } {
+function sourceBadge(source: string, __: (s: string) => string) {
   switch (source) {
-    case "SCRIPT": return { label: __("Script"), variant: "info" };
-    case "PRE_EXISTING": return { label: __("Pre-existing"), variant: "outline" };
-    default: return { label: source, variant: "neutral" };
+    case "SCRIPT": return { label: __("Script"), variant: "info" as const };
+    case "PRE_EXISTING": return { label: __("Pre-existing"), variant: "outline" as const };
+    default: return { label: source, variant: "neutral" as const };
   }
 }
 

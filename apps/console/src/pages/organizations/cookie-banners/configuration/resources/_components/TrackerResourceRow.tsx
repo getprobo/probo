@@ -123,18 +123,18 @@ const updateResourceMutation = graphql`
   }
 `;
 
-function resourceTypeLabel(type: string, __: (s: string) => string): string {
+function resourceTypeBadge(type: string, __: (s: string) => string) {
   switch (type) {
-    case "SCRIPT": return __("Script");
-    case "IFRAME": return __("Iframe");
-    case "IMAGE": return __("Image");
-    case "STYLESHEET": return __("Stylesheet");
-    case "FONT": return __("Font");
-    case "BEACON": return __("Beacon");
-    case "FETCH": return __("Fetch");
-    case "MEDIA": return __("Media");
-    case "SERVICE_WORKER": return __("Service Worker");
-    default: return type;
+    case "SCRIPT": return { label: __("Script"), variant: "info" as const };
+    case "IFRAME": return { label: __("Iframe"), variant: "warning" as const };
+    case "IMAGE": return { label: __("Image"), variant: "neutral" as const };
+    case "STYLESHEET": return { label: __("Stylesheet"), variant: "highlight" as const };
+    case "FONT": return { label: __("Font"), variant: "outline" as const };
+    case "BEACON": return { label: __("Beacon"), variant: "danger" as const };
+    case "FETCH": return { label: __("Fetch"), variant: "success" as const };
+    case "MEDIA": return { label: __("Media"), variant: "neutral" as const };
+    case "SERVICE_WORKER": return { label: __("Service Worker"), variant: "warning" as const };
+    default: return { label: type, variant: "neutral" as const };
   }
 }
 
@@ -149,6 +149,7 @@ export function TrackerResourceRow({ resourceKey, connectionId }: TrackerResourc
   const confirm = useConfirm();
   const { cookieBannerId } = useParams<{ cookieBannerId: string }>();
   const resource = useFragment(trackerResourceFragment, resourceKey);
+  const typeBadge = resourceTypeBadge(resource.type, __);
 
   const [isEditing, setIsEditing] = useState(false);
   const [categoryQueryRef, loadCategoryQuery]
@@ -291,8 +292,8 @@ export function TrackerResourceRow({ resourceKey, connectionId }: TrackerResourc
   return (
     <Tr className={resource.excluded ? "bg-txt-quaternary opacity-80 line-through" : undefined}>
       <Td>
-        <Badge variant={resource.type === "SCRIPT" ? "info" : "neutral"}>
-          {resourceTypeLabel(resource.type, __)}
+        <Badge variant={typeBadge.variant}>
+          {typeBadge.label}
         </Badge>
       </Td>
       <Td>
