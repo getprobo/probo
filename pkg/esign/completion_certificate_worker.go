@@ -271,7 +271,12 @@ func (h *completionCertificateHandler) generateCertificate(
 		docName = signature.DocumentType.DisplayName()
 	}
 
-	subject, textBody, htmlBody, err := emailPresenter.RenderElectronicSignatureCertificate(ctx, ref.UnrefOrZero(signature.SignerFullName), docName)
+	subject := signature.EmailSubject
+	if subject == "" {
+		subject = fmt.Sprintf("Your signed %s - Certificate of Completion", docName)
+	}
+
+	textBody, htmlBody, err := emailPresenter.RenderElectronicSignatureCertificate(ctx, ref.UnrefOrZero(signature.SignerFullName), docName, subject)
 	if err != nil {
 		return nil, nil, fmt.Errorf("cannot render email: %w", err)
 	}

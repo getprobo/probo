@@ -52,6 +52,7 @@ type (
 		FileID         gid.GID
 		SignerEmail    mail.Addr
 		ConsentText    string // optional; required when DocumentType == OTHER
+		EmailSubject   string
 	}
 
 	AcceptSignatureRequest struct {
@@ -72,6 +73,7 @@ type (
 		SignerIPAddr   string
 		SignerUA       string
 		ConsentText    string
+		EmailSubject   string
 	}
 
 	RecordEventRequest struct {
@@ -161,6 +163,16 @@ func (s *Service) CreateSignature(
 		}
 	}
 
+	emailSubject := req.EmailSubject
+	if emailSubject == "" {
+		docName := req.DocumentType.DisplayName()
+		if req.DocumentName != nil && *req.DocumentName != "" {
+			docName = *req.DocumentName
+		}
+
+		emailSubject = fmt.Sprintf("Your signed %s - Certificate of Completion", docName)
+	}
+
 	now := time.Now()
 	scope := coredata.NewScopeFromObjectID(req.OrganizationID)
 
@@ -180,6 +192,7 @@ func (s *Service) CreateSignature(
 		FileID:         stampedFileID,
 		SignerEmail:    req.SignerEmail.String(),
 		ConsentText:    consentText,
+		EmailSubject:   emailSubject,
 		SealVersion:    1,
 		AttemptCount:   0,
 		MaxAttempts:    10,
@@ -209,6 +222,7 @@ func (s *Service) CreateAndAcceptSignature(
 			FileID:         req.FileID,
 			SignerEmail:    req.SignerEmail,
 			ConsentText:    req.ConsentText,
+			EmailSubject:   req.EmailSubject,
 		},
 	)
 	if err != nil {

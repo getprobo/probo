@@ -365,6 +365,7 @@ func (s *DocumentApprovalService) Approve(
 					SignerIPAddr:   req.SignerIPAddr,
 					SignerUA:       req.SignerUA,
 					ConsentText:    "By clicking Approve, I consent to approve this document electronically and agree that my electronic signature has the same legal validity as a handwritten signature.",
+					EmailSubject:   fmt.Sprintf("Your approved %s - Certificate of Completion", document.Title),
 				},
 			)
 			if err != nil {

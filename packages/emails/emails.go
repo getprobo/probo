@@ -219,7 +219,6 @@ const (
 	subjectTrustCenterAccess                 = "Compliance Page Access Invitation - %s"
 	subjectTrustCenterDocumentAccessRejected = "Compliance Page Document Access Rejected - %s"
 	subjectMagicLink                         = "Connect to %s"
-	subjectElectronicSignatureCertificate    = "Your signed %s - Certificate of Completion"
 	subjectMailingListSubscription           = "%s – Confirm Your Compliance Updates Subscription"
 	subjectMailingListUnsubscription         = "%s – You've been unsubscribed"
 	subjectMailingListUpdates                = "%s – %s"
@@ -525,25 +524,25 @@ func (p *Presenter) RenderMagicLink(ctx context.Context, magicLinkUrlPath string
 	return fmt.Sprintf(subjectMagicLink, organizationName), textBody, htmlBody, err
 }
 
-func (p *Presenter) RenderElectronicSignatureCertificate(ctx context.Context, signerName string, documentName string) (subject string, textBody string, htmlBody *string, err error) {
+func (p *Presenter) RenderElectronicSignatureCertificate(ctx context.Context, signerName string, documentName string, subject string) (textBody string, htmlBody *string, err error) {
 	vars, err := p.getCommonVariables(ctx)
 	if err != nil {
-		return "", "", nil, fmt.Errorf("cannot get common variables: %w", err)
+		return "", nil, fmt.Errorf("cannot get common variables: %w", err)
 	}
 
 	data := struct {
 		*CommonVariables
 		SignerName   string
 		DocumentName string
+		Subject      string
 	}{
 		CommonVariables: vars,
 		SignerName:      signerName,
 		DocumentName:    documentName,
+		Subject:         subject,
 	}
 
-	textBody, htmlBody, err = renderEmail(electronicSignatureCertificateTextTemplate, electronicSignatureCertificateHTMLTemplate, data)
-
-	return fmt.Sprintf(subjectElectronicSignatureCertificate, documentName), textBody, htmlBody, err
+	return renderEmail(electronicSignatureCertificateTextTemplate, electronicSignatureCertificateHTMLTemplate, data)
 }
 
 func (p *Presenter) RenderMailingListSubscription(ctx context.Context, organizationName string, confirmURL string, unsubscribeURL string) (subject string, textBody string, htmlBody *string, err error) {
