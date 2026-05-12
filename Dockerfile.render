@@ -16,7 +16,7 @@ RUN sh contrib/merge-graphql-schema.sh pkg/server/api/connect/v1/schema.graphql 
  && sh contrib/merge-graphql-schema.sh pkg/server/api/console/v1/schema.graphql pkg/server/api/console/v1/graphql \
  && sh contrib/merge-graphql-schema.sh pkg/server/api/trust/v1/schema.graphql   pkg/server/api/trust/v1/graphql
 RUN npm ci
-RUN npx turbo run relay
+RUN npm run relay
 RUN npx turbo run build
 
 # Stage 2: Build Go binary
