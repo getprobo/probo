@@ -1296,10 +1296,6 @@ func (r *mutationResolver) RequestSignature(ctx context.Context, input types.Req
 			return nil, gqlutils.Conflict(ctx, errContractEnded)
 		}
 
-		if errInactive, ok := errors.AsType[*probo.ErrProfileInactive](err); ok {
-			return nil, gqlutils.Conflict(ctx, errInactive)
-		}
-
 		r.logger.ErrorCtx(ctx, "cannot request signature", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
@@ -1343,10 +1339,6 @@ func (r *mutationResolver) BulkRequestSignatures(ctx context.Context, input type
 
 		if errContractEnded, ok := errors.AsType[*probo.ErrProfileContractEnded](err); ok {
 			return nil, gqlutils.Conflict(ctx, errContractEnded)
-		}
-
-		if errInactive, ok := errors.AsType[*probo.ErrProfileInactive](err); ok {
-			return nil, gqlutils.Conflict(ctx, errInactive)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot bulk request signatures", log.Error(err))
