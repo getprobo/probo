@@ -4,6 +4,30 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.185.0] - 2026-05-12
+
+### Added
+
+- Add `TrackerResource` entity for detected scripts, iframes, images, beacons, fonts, fetches, media, and service workers, with full GraphQL, MCP, CLI, and frontend surface (list, view, create, update, delete, move-to-category); new "Resources" page under the cookie banner configuration tab
+- Add `GLOB` match type for tracker patterns supporting prefix, suffix, and sandwich patterns (e.g. `ph_phc_*_posthog`), with duration-aware merging so trackers with materially different lifetimes are no longer collapsed into a single pattern
+- Detect HTTP-header cookies via the Chromium `CookieStore` change event and expose a new `http` cookie source
+- Add tracker-type filter and color-coded badges on the trackers page for quick visual scanning across Cookie / localStorage / sessionStorage / IndexedDB / Cache Storage
+- Capture script initiator URL on detected trackers to enable per-vendor attribution for cookies and storage writes (column captured now, surfaced later)
+
+### Changed
+
+- Replace `PREFIX` tracker pattern match type with `GLOB` across GraphQL, MCP, and the frontend; existing `PREFIX` rows are migrated to `GLOB` with a trailing `*` (breaking)
+- Make tracker pattern `displayName` read-only across GraphQL, MCP, and the frontend — it is now derived from pattern + match type (breaking)
+- Pattern analysis worker now detects UUID-like, hash-like, and long numeric tokens as variable parts even from a single observation, so site-specific identifiers no longer get treated as static text
+- Rename the cookie banner "Detection" page to "Trackers" and drop the `SCRIPT` / `IFRAME` tracker types (replaced by `TrackerResource`) (breaking)
+- Agent runs now treat ctx cancellation as a graceful suspend signal: supervisor shutdown maps to run ctx cancellation, and the previous `WithStopSignal` API is removed (breaking for in-process callers)
+
+### Fixed
+
+- Fix empty country code being persisted on cookie consent records when IP geolocation returns no matching CIDR block
+- Fix SQL corruption (HTTP 500 on `/report`) in `FindMatchingPattern` caused by `fmt.Sprintf` interpreting `%` characters in the LIKE escape clause
+- Use `@deleteEdge` on the access review campaign delete mutation so the cached connection no longer surfaces a missing-data error when reopening the access reviews tab
+
 ## [0.184.2] - 2026-05-08
 
 ### Security
