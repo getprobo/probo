@@ -40,7 +40,6 @@ func NewMux(logger *log.Logger, proboSvc *probo.Service, iamSvc *iam.Service, ac
 	logger = logger.Named("mcp.v1")
 
 	logger.Info("initializing MCP server")
-	// server.AddReceivingMiddleware(mcputils.LoggingMiddleware(logger))
 
 	resolver := &Resolver{
 		proboSvc:     proboSvc,

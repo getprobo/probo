@@ -60,15 +60,16 @@ export const makeFetchQuery = (endpoint: string): FetchFunction => {
             const uploadableMap: {
                 [key: string]: string[];
             } = {};
+            const uploadableKeys = Object.keys(uploadables);
 
-            Object.keys(uploadables).forEach((key, index) => {
-                uploadableMap[index] = [`variables.${key}`];
+            uploadableKeys.forEach((key) => {
+                uploadableMap[key] = [`variables.${key}`];
             });
 
             formData.append("map", JSON.stringify(uploadableMap));
 
-            Object.keys(uploadables).forEach((key, index) => {
-                formData.append(index.toString(), uploadables[key]);
+            uploadableKeys.forEach((key) => {
+                formData.append(key, uploadables[key]);
             });
 
             requestInit.body = formData;
