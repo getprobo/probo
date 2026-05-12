@@ -4,6 +4,13 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.184.0] - 2026-05-12
+
+### Changed
+
+- Replace `PREFIX` with `GLOB` in tracker pattern match type options (breaking)
+- Drop `displayName` from tracker pattern update operations — it is now derived from pattern + match type (breaking)
+
 ## [0.183.0] - 2026-05-07
 
 ### Added
