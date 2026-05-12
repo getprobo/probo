@@ -35,11 +35,12 @@ type (
 
 	// TracingConfig contains tracing configuration.
 	TracingConfig struct {
-		Addr          string `json:"addr"`
-		MaxBatchSize  int    `json:"max-batch-size"`
-		BatchTimeout  int    `json:"batch-timeout"`
-		ExportTimeout int    `json:"export-timeout"`
-		MaxQueueSize  int    `json:"max-queue-size"`
+		Addr          string  `json:"addr"`
+		MaxBatchSize  int     `json:"max-batch-size"`
+		BatchTimeout  int     `json:"batch-timeout"`
+		ExportTimeout int     `json:"export-timeout"`
+		MaxQueueSize  int     `json:"max-queue-size"`
+		SamplingRatio float64 `json:"sampling-ratio"`
 	}
 
 	// ESignConfig contains electronic signature configuration.

@@ -135,6 +135,7 @@ func TestBuilder_Build_Defaults(t *testing.T) {
 	assert.Equal(t, 5, cfg.Unit.Tracing.BatchTimeout)
 	assert.Equal(t, 30, cfg.Unit.Tracing.ExportTimeout)
 	assert.Equal(t, 2048, cfg.Unit.Tracing.MaxQueueSize)
+	assert.Equal(t, float64(0), cfg.Unit.Tracing.SamplingRatio)
 
 	// Probod base config
 	assert.Equal(t, "http://localhost:8080", cfg.Probod.BaseURL)

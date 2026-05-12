@@ -64,6 +64,7 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 				BatchTimeout:  b.getEnvIntOrDefault("TRACING_BATCH_TIMEOUT", 5),
 				ExportTimeout: b.getEnvIntOrDefault("TRACING_EXPORT_TIMEOUT", 30),
 				MaxQueueSize:  b.getEnvIntOrDefault("TRACING_MAX_QUEUE_SIZE", 2048),
+				SamplingRatio: b.getEnvFloatOrDefault("TRACING_SAMPLING_RATIO", 0),
 			},
 		},
 		Probod: probodconfig.Config{
