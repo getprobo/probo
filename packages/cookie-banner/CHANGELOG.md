@@ -4,6 +4,26 @@ All notable changes to the `@probo/cookie-banner` SDK will be documented in this
 
 ## Unreleased
 
+## [0.4.0] - 2026-05-12
+
+### Added
+
+- `ResourceDetector` (renamed from `ThirdPartyDetector`) now picks up everything the browser loads via a single `PerformanceObserver`: tracking pixels, cross-origin stylesheets and web fonts, `fetch` / XHR / `sendBeacon` / `ping` calls, and `<video>` / `<audio>` / `<embed>` / `<object>` media — closing a real gap with headless cookie scanners that previously missed beacons fired after script teardown
+- Detect registered service workers (reported as a `SERVICE_WORKER` tracker resource) and Cache Storage buckets (reported as a `CACHE_STORAGE` tracker)
+- Detect HTTP-header cookies on Chromium browsers via the `CookieStore` change event (new `http` cookie source)
+- Capture the script initiator URL on detected cookies and storage writes by walking the synchronous call stack, enabling per-vendor attribution
+
+### Changed
+
+- Collapse the three detectors (cookies, storage, resources) onto a single shared `ReportQueue`: one debounced POST instead of up to three, type-namespaced dedup keys (`c:` / `s:` / `r:`) that cannot collide across detectors, and a tab-close drain via `sendBeacon` (with keepalive-fetch fallback) so the last debounce window of detections is no longer lost on unload
+- Report full origin+pathname for detected scripts and iframes (query string stripped) so resources served from the same domain but different paths can be distinguished
+- Rename `ThirdPartyDetector` to `ResourceDetector` to match what it actually emits (breaking for SDK consumers importing it by name)
+
+### Fixed
+
+- Always attempt `sendBeacon` on flush so pending reports are no longer dropped during page unload when an async flush is in flight
+- Keep pending entries queued until the transport confirms delivery, so transient network errors and bfcache restores no longer silently drop detection reports
+
 ## [0.3.1] - 2026-05-08
 
 ### Fixed
