@@ -25,7 +25,6 @@ package main
 import (
 	"bytes"
 	"context"
-	"crypto/tls"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -234,27 +233,10 @@ func fetchAndStoreLogos(
 ) error {
 	s3Client := newS3Client(endpoint, region, accessKey, secretKey, usePathStyle)
 	fileMgr := filemanager.NewService(s3Client)
-	tlsConfig := &tls.Config{
-		CipherSuites: []uint16{
-			tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
-			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
-			tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
-			tls.TLS_AES_128_GCM_SHA256,
-			tls.VersionTLS13,
-			tls.VersionTLS10,
-		},
-	}
 	httpClient := httpclient.DefaultPooledClient(httpclient.WithSSRFProtection())
 	httpClient.Transport = &userAgentTransport{
-		next: &http.Transport{
-			TLSHandshakeTimeout: 30 * time.Second,
-			DisableKeepAlives:   false,
-			TLSClientConfig:     tlsConfig,
-			DialTLS: func(network, addr string) (net.Conn, error) {
-				return tls.Dial(network, addr, tlsConfig)
-			},
-		},
-		ua: version.UserAgent("common-third-parties-import"),
+		next: httpClient.Transport,
+		ua:   version.UserAgent("common-third-parties-import"),
 	}
 	scope := coredata.NewScope(gid.NilTenant)
 
