@@ -97,6 +97,10 @@ type (
 		ProfileID gid.GID
 	}
 
+	ErrProfileInactive struct {
+		ProfileID gid.GID
+	}
+
 	CreateDocumentRequest struct {
 		OrganizationID        gid.GID
 		Title                 string
@@ -276,6 +280,10 @@ func (e ErrDocumentVersionSignatureAlreadySigned) Error() string {
 
 func (e ErrProfileContractEnded) Error() string {
 	return fmt.Sprintf("cannot use profile %q: contract has ended", e.ProfileID)
+}
+
+func (e ErrProfileInactive) Error() string {
+	return fmt.Sprintf("cannot use profile %q: profile is inactive", e.ProfileID)
 }
 
 func (s *DocumentService) Get(
@@ -971,6 +979,9 @@ func (s *DocumentService) BulkRequestSignatures(
 
 			now := time.Now()
 			for _, p := range *profiles {
+				if p.State == coredata.ProfileStateInactive {
+					return &ErrProfileInactive{ProfileID: p.ID}
+				}
 				if p.ContractEndDate != nil && p.ContractEndDate.Before(now) {
 					return &ErrProfileContractEnded{ProfileID: p.ID}
 				}
@@ -1080,6 +1091,10 @@ func (s *DocumentService) RequestSignature(
 			profile := &coredata.MembershipProfile{}
 			if err := profile.LoadByID(ctx, tx, s.svc.scope, req.Signatory); err != nil {
 				return fmt.Errorf("cannot load signatory profile: %w", err)
+			}
+
+			if profile.State == coredata.ProfileStateInactive {
+				return &ErrProfileInactive{ProfileID: profile.ID}
 			}
 
 			if profile.ContractEndDate != nil && profile.ContractEndDate.Before(time.Now()) {
