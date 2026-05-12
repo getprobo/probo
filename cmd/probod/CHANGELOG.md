@@ -4,6 +4,12 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.186.0] - 2026-05-12
+
+### Changed
+
+- Update kit package
+
 ## [0.185.0] - 2026-05-12
 
 ### Added
