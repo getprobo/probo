@@ -1021,11 +1021,25 @@ func (s *OrganizationService) UpdateUser(ctx context.Context, req *UpdateUserReq
 			}
 
 			membership := &coredata.Membership{}
+			var webhookPayload *webhooktypes.User
+
 			if err := membership.LoadByIdentityIDAndOrganizationID(ctx, conn, scope, profile.IdentityID, profile.OrganizationID); err != nil {
-				return fmt.Errorf("cannot load membership: %w", err)
+				if !errors.Is(err, coredata.ErrResourceNotFound) {
+					return fmt.Errorf("cannot load membership: %w", err)
+				}
+
+				webhookPayload = webhooktypes.NewUser(profile, nil)
+			} else {
+				webhookPayload = webhooktypes.NewUser(profile, membership)
 			}
 
-			if err := webhook.InsertData(ctx, conn, scope, profile.OrganizationID, coredata.WebhookEventTypeUserUpdated, webhooktypes.NewUser(profile, membership)); err != nil {
+			if err := webhook.InsertData(ctx,
+				conn,
+				scope,
+				profile.OrganizationID,
+				coredata.WebhookEventTypeUserUpdated,
+				webhookPayload,
+			); err != nil {
 				return fmt.Errorf("cannot insert webhook event: %w", err)
 			}
 
