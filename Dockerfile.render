@@ -5,10 +5,16 @@ WORKDIR /app
 COPY package.json package-lock.json turbo.json ./
 COPY apps/ apps/
 COPY packages/ packages/
-# Relay compiler needs GraphQL schemas from the Go API
-COPY pkg/server/api/connect/v1/schema.graphql pkg/server/api/connect/v1/schema.graphql
-COPY pkg/server/api/console/v1/schema.graphql pkg/server/api/console/v1/schema.graphql
-COPY pkg/server/api/trust/v1/schema.graphql pkg/server/api/trust/v1/schema.graphql
+# Relay compiler needs GraphQL schemas from the Go API.
+# Upstream split each API's schema into multiple files under graphql/;
+# the combined schema.graphql files are generated via merge-graphql-schema.sh.
+COPY pkg/server/api/connect/v1/graphql/ pkg/server/api/connect/v1/graphql/
+COPY pkg/server/api/console/v1/graphql/ pkg/server/api/console/v1/graphql/
+COPY pkg/server/api/trust/v1/graphql/   pkg/server/api/trust/v1/graphql/
+COPY contrib/merge-graphql-schema.sh    contrib/merge-graphql-schema.sh
+RUN sh contrib/merge-graphql-schema.sh pkg/server/api/connect/v1/schema.graphql pkg/server/api/connect/v1/graphql \
+ && sh contrib/merge-graphql-schema.sh pkg/server/api/console/v1/schema.graphql pkg/server/api/console/v1/graphql \
+ && sh contrib/merge-graphql-schema.sh pkg/server/api/trust/v1/schema.graphql   pkg/server/api/trust/v1/graphql
 RUN npm ci
 RUN npx turbo run relay
 RUN npx turbo run build
