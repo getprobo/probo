@@ -228,6 +228,8 @@ type RiskAssessmentScope implements Node {
         orderBy: RiskAssessmentScenarioOrder
     ): RiskAssessmentScenarioConnection @goField(forceResolver: true)
 
+    mermaidChart: String! @goField(forceResolver: true)
+
     createdAt: Datetime!
     updatedAt: Datetime!
 }

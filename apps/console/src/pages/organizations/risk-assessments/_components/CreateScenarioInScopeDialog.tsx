@@ -27,12 +27,15 @@ import {
   Select,
   useDialogRef,
 } from "@probo/ui";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useForm } from "react-hook-form";
-import { graphql, useMutation } from "react-relay";
+import { graphql, useLazyLoadQuery, useMutation } from "react-relay";
 
+import type { CreateScenarioInScopeDialogLinkRiskMutation } from "#/__generated__/core/CreateScenarioInScopeDialogLinkRiskMutation.graphql";
 import type { CreateScenarioInScopeDialogLinkThreatMutation } from "#/__generated__/core/CreateScenarioInScopeDialogLinkThreatMutation.graphql";
 import type { CreateScenarioInScopeDialogMutation } from "#/__generated__/core/CreateScenarioInScopeDialogMutation.graphql";
+import type { CreateScenarioInScopeDialogRisksQuery } from "#/__generated__/core/CreateScenarioInScopeDialogRisksQuery.graphql";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 const createScenarioMutation = graphql`
   mutation CreateScenarioInScopeDialogMutation(
@@ -56,10 +59,74 @@ const linkThreatMutation = graphql`
     $input: LinkRiskAssessmentScenarioThreatInput!
   ) {
     linkRiskAssessmentScenarioThreat(input: $input) {
-      riskAssessmentScenario { id }
+      riskAssessmentScenario {
+        id
+        threats(first: 10) { edges { node { id name } } }
+      }
     }
   }
 `;
+
+const linkRiskMutation = graphql`
+  mutation CreateScenarioInScopeDialogLinkRiskMutation(
+    $input: LinkRiskAssessmentScenarioRiskInput!
+  ) {
+    linkRiskAssessmentScenarioRisk(input: $input) {
+      riskAssessmentScenario {
+        id
+        risks(first: 10) { edges { node { id name } } }
+      }
+      riskAssessmentScenarioEdge { node { id } }
+    }
+  }
+`;
+
+const risksQuery = graphql`
+  query CreateScenarioInScopeDialogRisksQuery($organizationId: ID!) {
+    node(id: $organizationId) {
+      ... on Organization {
+        risks(first: 100) {
+          edges { node { id name } }
+        }
+      }
+    }
+  }
+`;
+
+function RiskSelector(props: {
+  selectedRisks: Map<string, string>;
+  onSelect: (id: string, name: string) => void;
+}) {
+  const { __ } = useTranslate();
+  const organizationId = useOrganizationId();
+  const data = useLazyLoadQuery<CreateScenarioInScopeDialogRisksQuery>(
+    risksQuery,
+    { organizationId },
+    { fetchPolicy: "store-or-network" },
+  );
+  const allRisks = data.node?.risks?.edges?.map(e => e.node) ?? [];
+  const available = allRisks.filter(r => !props.selectedRisks.has(r.id));
+
+  if (available.length === 0) {
+    return <p className="text-xs text-txt-tertiary">{__("No more risks available.")}</p>;
+  }
+
+  return (
+    <Select
+      key={props.selectedRisks.size}
+      placeholder={__("Select a risk to link...")}
+      onValueChange={(riskId) => {
+        if (typeof riskId !== "string") return;
+        const risk = allRisks.find(r => r.id === riskId);
+        if (risk) props.onSelect(risk.id, risk.name);
+      }}
+    >
+      {available.map(r => (
+        <Option key={r.id} value={r.id}>{r.name}</Option>
+      ))}
+    </Select>
+  );
+}
 
 export function CreateScenarioInScopeDialog(props: {
   scopeId: string;
@@ -69,8 +136,10 @@ export function CreateScenarioInScopeDialog(props: {
   const { __ } = useTranslate();
   const dialogRef = useDialogRef();
   const [selectedThreats, setSelectedThreats] = useState<Map<string, string>>(new Map());
+  const [selectedRisks, setSelectedRisks] = useState<Map<string, string>>(new Map());
   const [createScenario, isCreating] = useMutation<CreateScenarioInScopeDialogMutation>(createScenarioMutation);
   const [linkThreat] = useMutation<CreateScenarioInScopeDialogLinkThreatMutation>(linkThreatMutation);
+  const [linkRisk] = useMutation<CreateScenarioInScopeDialogLinkRiskMutation>(linkRiskMutation);
   const { register, handleSubmit, reset, formState } = useForm({
     defaultValues: { name: "", description: "" },
   });
@@ -96,8 +165,16 @@ export function CreateScenarioInScopeDialog(props: {
             },
           });
         }
+        for (const riskId of selectedRisks.keys()) {
+          linkRisk({
+            variables: {
+              input: { riskAssessmentScenarioId: scenarioId, riskId },
+            },
+          });
+        }
         reset();
         setSelectedThreats(new Map());
+        setSelectedRisks(new Map());
         dialogRef.current?.close();
       },
     });
@@ -152,6 +229,7 @@ export function CreateScenarioInScopeDialog(props: {
               )}
               {availableThreats.length > 0 && (
                 <Select
+                  key={selectedThreats.size}
                   placeholder={__("Select a threat to link...")}
                   onValueChange={(threatId) => {
                     if (typeof threatId !== "string") return;
@@ -172,6 +250,44 @@ export function CreateScenarioInScopeDialog(props: {
               )}
             </div>
           )}
+
+          <div>
+            <div className="text-sm font-medium mb-2">{__("Risks")}</div>
+            {selectedRisks.size > 0 && (
+              <div className="flex flex-wrap gap-1 mb-2">
+                {[...selectedRisks.entries()].map(([id, name]) => (
+                  <Badge key={id}>
+                    {name}
+                    <button
+                      type="button"
+                      className="ml-1 hover:text-txt-danger"
+                      onClick={() => {
+                        setSelectedRisks((prev) => {
+                          const next = new Map(prev);
+                          next.delete(id);
+                          return next;
+                        });
+                      }}
+                    >
+                      <IconCrossLargeX size={12} />
+                    </button>
+                  </Badge>
+                ))}
+              </div>
+            )}
+            <Suspense fallback={<p className="text-xs text-txt-tertiary">{__("Loading risks...")}</p>}>
+              <RiskSelector
+                selectedRisks={selectedRisks}
+                onSelect={(id, name) => {
+                  setSelectedRisks((prev) => {
+                    const next = new Map(prev);
+                    next.set(id, name);
+                    return next;
+                  });
+                }}
+              />
+            </Suspense>
+          </div>
         </DialogContent>
         <DialogFooter><Button type="submit" disabled={isCreating}>{__("Add")}</Button></DialogFooter>
       </form>

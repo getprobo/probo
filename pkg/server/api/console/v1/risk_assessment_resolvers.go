@@ -854,6 +854,20 @@ func (r *riskAssessmentScopeResolver) Scenarios(ctx context.Context, obj *types.
 	return types.NewRiskAssessmentScenarioConnection(p, r, obj.ID), nil
 }
 
+// MermaidChart is the resolver for the mermaidChart field.
+func (r *riskAssessmentScopeResolver) MermaidChart(ctx context.Context, obj *types.RiskAssessmentScope) (string, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionRiskAssessmentScopeGet); err != nil {
+		return "", err
+	}
+	scope := coredata.NewScopeFromObjectID(obj.ID)
+	chart, err := r.riskManagement.BuildScopeMermaidChart(ctx, scope, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot build risk assessment scope mermaid chart", log.Error(err))
+		return "", gqlutils.Internal(ctx)
+	}
+	return chart, nil
+}
+
 // TotalCount is the resolver for the totalCount field.
 func (r *riskAssessmentScopeConnectionResolver) TotalCount(ctx context.Context, obj *types.RiskAssessmentScopeConnection) (*int, error) {
 	if err := r.authorize(ctx, obj.ParentID, probo.ActionRiskAssessmentScopeList); err != nil {

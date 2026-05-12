@@ -108,6 +108,46 @@ WHERE
 	return nil
 }
 
+func (ts *RiskAssessmentThreats) LoadAllByRiskAssessmentScopeID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	riskAssessmentScopeID gid.GID,
+) error {
+	q := `
+SELECT
+	id,
+	organization_id,
+	risk_assessment_scope_id,
+	process_id,
+	name,
+	category,
+	created_at,
+	updated_at
+FROM
+	risk_assessment_threats
+WHERE
+	%s
+	AND risk_assessment_scope_id = @risk_assessment_scope_id
+ORDER BY
+	created_at ASC, id ASC
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+	args := pgx.NamedArgs{"risk_assessment_scope_id": riskAssessmentScopeID}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query risk threats: %w", err)
+	}
+	results, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[RiskAssessmentThreat])
+	if err != nil {
+		return fmt.Errorf("cannot collect risk threats: %w", err)
+	}
+	*ts = results
+	return nil
+}
+
 func (ts *RiskAssessmentThreats) CountByRiskAssessmentScopeID(
 	ctx context.Context,
 	conn pg.Querier,
