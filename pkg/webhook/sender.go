@@ -131,7 +131,7 @@ func (s *Sender) claimNextWebhookData(ctx context.Context) (*coredata.WebhookDat
 	var webhookData coredata.WebhookData
 	var deliveries []pendingDelivery
 
-	err := s.pg.WithTx(ctx, func(tx pg.Conn) error {
+	err := s.pg.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		if err := webhookData.LoadNextUnprocessedForUpdate(ctx, tx); err != nil {
 			return fmt.Errorf("cannot load next unprocessed webhook data: %w", err)
 		}
@@ -234,8 +234,8 @@ func (s *Sender) updateEventStatus(
 	event.Status = status
 	event.Response = response
 
-	err := s.pg.WithConn(ctx, func(conn pg.Conn) error {
-		return event.UpdateStatus(ctx, conn, scope)
+	err := s.pg.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		return event.UpdateStatus(ctx, tx, scope)
 	})
 	if err != nil {
 		s.logger.ErrorCtx(
