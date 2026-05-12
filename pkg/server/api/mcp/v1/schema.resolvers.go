@@ -5120,7 +5120,14 @@ func (r *Resolver) GetSCIMBridgeTool(ctx context.Context, req *mcp.CallToolReque
 func (r *Resolver) UpdateSCIMBridgeTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateSCIMBridgeInput) (*mcp.CallToolResult, types.UpdateSCIMBridgeOutput, error) {
 	r.MustAuthorize(ctx, input.ScimBridgeID, iam.ActionSCIMBridgeUpdate)
 
-	bridge, err := r.iamSvc.OrganizationService.UpdateSCIMBridge(ctx, input.OrganizationID, input.ScimBridgeID, input.ExcludedUserNames)
+	existing, err := r.iamSvc.OrganizationService.GetSCIMBridgeByID(ctx, input.ScimBridgeID)
+	if err != nil {
+		return nil, types.UpdateSCIMBridgeOutput{}, fmt.Errorf("cannot get SCIM bridge: %w", err)
+	}
+
+	merged := mergeExcludedUserNames(existing.ExcludedUserNames, input.ExcludedUserNames)
+
+	bridge, err := r.iamSvc.OrganizationService.UpdateSCIMBridge(ctx, input.OrganizationID, input.ScimBridgeID, merged)
 	if err != nil {
 		return nil, types.UpdateSCIMBridgeOutput{}, fmt.Errorf("cannot update SCIM bridge: %w", err)
 	}

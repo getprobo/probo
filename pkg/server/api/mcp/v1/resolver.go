@@ -20,6 +20,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"slices"
 
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/accessreview"
@@ -67,4 +68,27 @@ func (r *Resolver) MustAuthorize(ctx context.Context, entityID gid.GID, action i
 	if err != nil {
 		panic(err)
 	}
+}
+
+func mergeExcludedUserNames(existing, incoming []string) []string {
+	seen := make(map[string]struct{}, len(existing))
+	merged := make([]string, 0, len(existing)+len(incoming))
+
+	for _, name := range existing {
+		if _, ok := seen[name]; !ok {
+			seen[name] = struct{}{}
+			merged = append(merged, name)
+		}
+	}
+
+	for _, name := range incoming {
+		if _, ok := seen[name]; !ok {
+			seen[name] = struct{}{}
+			merged = append(merged, name)
+		}
+	}
+
+	slices.Sort(merged)
+
+	return merged
 }

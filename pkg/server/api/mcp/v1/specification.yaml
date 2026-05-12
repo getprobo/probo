@@ -10680,7 +10680,7 @@ components:
           type: array
           items:
             type: string
-          description: User names to exclude from SCIM sync
+          description: User names to add to the exclusion list. These are merged with existing exclusions; previously excluded names are preserved.
 
     UpdateSCIMBridgeOutput:
       type: object
@@ -12690,7 +12690,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/GetSCIMBridgeOutput"
   - name: updateSCIMBridge
-    description: Update a SCIM bridge's excluded user names
+    description: Add user names to a SCIM bridge's exclusion list. The provided names are merged with any existing exclusions; previously excluded names are preserved.
     hints:
       readonly: false
     inputSchema:
