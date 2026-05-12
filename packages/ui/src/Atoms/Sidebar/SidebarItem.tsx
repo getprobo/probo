@@ -36,7 +36,7 @@ const sidebarItem = tv({
 });
 
 type Props = PropsWithChildren<{
-  icon?: FC<{ size: number }>;
+  icon?: FC<{ size: number; className?: string }>;
   label: string;
   to?: string;
 }>;
