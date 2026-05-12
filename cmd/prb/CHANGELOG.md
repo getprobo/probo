@@ -4,6 +4,12 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.185.0] - 2026-05-12
+
+### Changed
+
+- Update kit package
+
 ## [0.184.0] - 2026-05-12
 
 ### Added
