@@ -2023,6 +2023,7 @@ func (s *Service) ReportDetectedTrackers(
 
 			inserted := 0
 			now := time.Now()
+			var matchedPatternIDs []gid.GID
 
 			for _, dc := range req.Cookies {
 				if err := s.reportDetectedTracker(
@@ -2040,6 +2041,7 @@ func (s *Service) ReportDetectedTrackers(
 						InitiatorURL:  dc.InitiatorURL,
 					},
 					&inserted,
+					&matchedPatternIDs,
 				); err != nil {
 					return err
 				}
@@ -2060,6 +2062,7 @@ func (s *Service) ReportDetectedTrackers(
 						InitiatorURL: ds.InitiatorURL,
 					},
 					&inserted,
+					&matchedPatternIDs,
 				); err != nil {
 					return err
 				}
@@ -2080,6 +2083,13 @@ func (s *Service) ReportDetectedTrackers(
 				}
 				if wasInserted {
 					inserted++
+				}
+			}
+
+			if len(matchedPatternIDs) > 0 {
+				var patterns coredata.TrackerPatterns
+				if err := patterns.UpdateLastMatchedAt(ctx, tx, scope, matchedPatternIDs, now); err != nil {
+					return fmt.Errorf("cannot update tracker pattern last_matched_at: %w", err)
 				}
 			}
 
@@ -2112,6 +2122,7 @@ func (s *Service) reportDetectedTracker(
 	now time.Time,
 	info detectedTrackerInfo,
 	inserted *int,
+	matchedPatternIDs *[]gid.GID,
 ) error {
 	var matchedPattern coredata.TrackerPattern
 	err := matchedPattern.FindMatchingPattern(ctx, tx, scope, banner.ID, info.TrackerType, info.Identifier)
@@ -2126,11 +2137,7 @@ func (s *Service) reportDetectedTracker(
 	var patternID *gid.GID
 	if err == nil {
 		patternID = &matchedPattern.ID
-		matchedPattern.LastMatchedAt = &now
-		matchedPattern.UpdatedAt = now
-		if updateErr := matchedPattern.Update(ctx, tx, scope); updateErr != nil {
-			return fmt.Errorf("cannot update tracker pattern last_matched_at: %w", updateErr)
-		}
+		*matchedPatternIDs = append(*matchedPatternIDs, matchedPattern.ID)
 	} else {
 		newPattern := &coredata.TrackerPattern{
 			ID:               gid.New(scope.GetTenantID(), coredata.TrackerPatternEntityType),

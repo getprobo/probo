@@ -801,6 +801,44 @@ WHERE
 	return count, nil
 }
 
+func (tps *TrackerPatterns) UpdateLastMatchedAt(
+	ctx context.Context,
+	tx pg.Tx,
+	scope Scoper,
+	patternIDs []gid.GID,
+	matchedAt time.Time,
+) error {
+	if len(patternIDs) == 0 {
+		return nil
+	}
+
+	q := `
+UPDATE tracker_patterns
+SET
+	last_matched_at = @matched_at,
+	updated_at = @updated_at
+WHERE
+	%s
+	AND id = ANY(@pattern_ids)
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"pattern_ids": patternIDs,
+		"matched_at":  matchedAt,
+		"updated_at":  matchedAt,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	_, err := tx.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot update last_matched_at for tracker patterns: %w", err)
+	}
+
+	return nil
+}
+
 func (tps *TrackerPatterns) MoveToCategoryByCookieCategoryID(
 	ctx context.Context,
 	tx pg.Tx,
