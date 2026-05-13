@@ -18,6 +18,8 @@ import (
 	"fmt"
 	"net/http"
 
+	"go.gearno.de/kit/httpserver"
+	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/bearertoken"
 	"go.probo.inc/probo/pkg/iam"
 )
@@ -51,6 +53,13 @@ func NewOAuth2AccessTokenMiddleware(svc *iam.Service) func(next http.Handler) ht
 				}
 
 				ctx = ContextWithIdentity(ctx, identity)
+
+				httpserver.LoggerFromContext(ctx).InfoCtx(
+					ctx,
+					"access token authenticated",
+					log.String("identity_id", identity.ID.String()),
+					log.String("access_token_id", accessToken.ID.String()),
+				)
 
 				next.ServeHTTP(w, r.WithContext(ctx))
 			},

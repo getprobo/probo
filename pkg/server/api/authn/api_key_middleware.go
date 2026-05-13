@@ -22,6 +22,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"go.gearno.de/kit/httpserver"
+	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/securetoken"
@@ -86,6 +87,13 @@ func NewAPIKeyMiddleware(svc *iam.Service, tokenSecret string) func(next http.Ha
 
 				ctx = ContextWithAPIKey(ctx, apiKey)
 				ctx = ContextWithIdentity(ctx, identity)
+
+				httpserver.LoggerFromContext(ctx).InfoCtx(
+					ctx,
+					"api key authenticated",
+					log.String("identity_id", identity.ID.String()),
+					log.String("api_key_id", apiKey.ID.String()),
+				)
 
 				next.ServeHTTP(w, r.WithContext(ctx))
 			},
