@@ -18,7 +18,7 @@ type Callback = (consent: ConsentData) => void;
 export class ConsentManager {
   private _ready = false;
   private _hasResponse = false;
-  private _consent: ConsentData = {};
+  private _snapshot: ConsentData = {};
   private readonly _readyListeners: Callback[] = [];
   private readonly _changeListeners: Callback[] = [];
 
@@ -31,16 +31,25 @@ export class ConsentManager {
   }
 
   has(category: string): boolean {
-    return !!this._consent[category];
+    return !!this._snapshot[category];
   }
 
   getAll(): ConsentData {
-    return { ...this._consent };
+    return this._snapshot;
+  }
+
+  subscribe(cb: Callback): () => void {
+    if (this._ready) {
+      cb(this._snapshot);
+    }
+    const offReady = this.onReady(cb);
+    const offChange = this.onChange(cb);
+    return () => { offReady(); offChange(); };
   }
 
   onReady(cb: Callback): () => void {
     if (this._ready) {
-      cb({ ...this._consent });
+      cb(this._snapshot);
       return () => {};
     }
     this._readyListeners.push(cb);
@@ -60,23 +69,23 @@ export class ConsentManager {
 
   /** @internal Called by CookieBannerClient when consent state is first resolved. */
   _setReady(consent: ConsentData, hasResponse: boolean): void {
-    this._consent = consent;
+    this._snapshot = { ...consent };
     this._hasResponse = hasResponse;
     this._ready = true;
     for (const cb of this._readyListeners.splice(0)) {
-      cb({ ...this._consent });
+      cb(this._snapshot);
     }
     for (const cb of this._changeListeners) {
-      cb({ ...this._consent });
+      cb(this._snapshot);
     }
   }
 
   /** @internal Called by CookieBannerClient when consent changes after user action. */
   _notify(consent: ConsentData): void {
-    this._consent = consent;
+    this._snapshot = { ...consent };
     this._hasResponse = true;
     for (const cb of this._changeListeners) {
-      cb({ ...this._consent });
+      cb(this._snapshot);
     }
   }
 }
