@@ -18,6 +18,9 @@ import (
 	"database/sql/driver"
 	"fmt"
 	"net/url"
+	"strings"
+
+	"golang.org/x/net/publicsuffix"
 )
 
 // URI is a validated absolute URI (scheme + host required).
@@ -70,4 +73,29 @@ func (u *URI) Scan(value any) error {
 
 func (u URI) Value() (driver.Value, error) {
 	return u.String(), nil
+}
+
+// ExtractDomain returns the eTLD+1 (effective top-level domain plus one
+// label) from a raw URL string. For example:
+//
+//	"https://www.googletagmanager.com/gtag/js" → "googletagmanager.com"
+//	"https://cdn.segment.io/v1/projects"       → "segment.io"
+//
+// Returns an empty string when the URL cannot be parsed or has no valid
+// hostname (e.g. data: URIs, bare IP addresses without a public suffix).
+func ExtractDomain(rawURL string) string {
+	u, err := Parse(rawURL)
+	if err != nil {
+		return ""
+	}
+
+	parsed, _ := url.Parse(string(u))
+	hostname := strings.ToLower(parsed.Hostname())
+
+	domain, err := publicsuffix.EffectiveTLDPlusOne(hostname)
+	if err != nil {
+		return ""
+	}
+
+	return domain
 }

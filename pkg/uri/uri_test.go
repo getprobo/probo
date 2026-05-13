@@ -249,3 +249,39 @@ func TestURIValue(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "https://example.com", v)
 }
+
+func TestExtractDomain(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name   string
+		rawURL string
+		want   string
+	}{
+		{"google tag manager", "https://www.googletagmanager.com/gtag/js?id=G-ABC123", "googletagmanager.com"},
+		{"google analytics", "https://www.google-analytics.com/analytics.js", "google-analytics.com"},
+		{"facebook pixel", "https://connect.facebook.net/en_US/fbevents.js", "facebook.net"},
+		{"segment cdn", "https://cdn.segment.io/v1/projects/abc/settings", "segment.io"},
+		{"hubspot", "https://js.hs-analytics.net/analytics/1234/abc.js", "hs-analytics.net"},
+		{"subdomain stripped", "https://static.ads.example.com/pixel.js", "example.com"},
+		{"co.uk tld", "https://tracker.example.co.uk/script.js", "example.co.uk"},
+		{"bare domain no path", "https://doubleclick.net", "doubleclick.net"},
+		{"case insensitive", "https://WWW.GoogleTagManager.COM/gtag/js", "googletagmanager.com"},
+		{"empty string", "", ""},
+		{"invalid url", "not a url at all", ""},
+		{"data uri", "data:text/html,<h1>Hello</h1>", ""},
+		{"ip address", "https://192.168.1.1/script.js", ""},
+		{"port number", "https://tracker.example.com:8443/pixel.js", "example.com"},
+		{"http scheme", "http://cdn.jsdelivr.net/npm/cookieconsent", "jsdelivr.net"},
+	}
+
+	for _, tt := range tests {
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				t.Parallel()
+				assert.Equal(t, tt.want, ExtractDomain(tt.rawURL))
+			},
+		)
+	}
+}
