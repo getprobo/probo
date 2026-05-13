@@ -36,7 +36,6 @@ query($id: ID!) {
       cookiePolicyUrl
       privacyPolicyUrl
       consentExpiryDays
-      consentMode
       showBranding
       defaultLanguage
       createdAt
@@ -56,7 +55,6 @@ type viewResponse struct {
 		CookiePolicyUrl   string  `json:"cookiePolicyUrl"`
 		PrivacyPolicyUrl  *string `json:"privacyPolicyUrl"`
 		ConsentExpiryDays int     `json:"consentExpiryDays"`
-		ConsentMode       string  `json:"consentMode"`
 		ShowBranding      bool    `json:"showBranding"`
 		DefaultLanguage   string  `json:"defaultLanguage"`
 		CreatedAt         string  `json:"createdAt"`
@@ -122,7 +120,6 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("ID:"), v.ID)
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Origin:"), v.Origin)
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("State:"), v.State)
-			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Consent Mode:"), v.ConsentMode)
 			_, _ = fmt.Fprintf(out, "%s%d days\n", label.Render("Consent Expiry:"), v.ConsentExpiryDays)
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Default Language:"), v.DefaultLanguage)
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Cookie Policy:"), v.CookiePolicyUrl)

@@ -4720,7 +4720,6 @@ func (r *Resolver) AddCookieBannerTool(ctx context.Context, req *mcp.CallToolReq
 		PrivacyPolicyURL:  input.PrivacyPolicyURL,
 		CookiePolicyURL:   input.CookiePolicyURL,
 		ConsentExpiryDays: input.ConsentExpiryDays,
-		ConsentMode:       coredata.CookieConsentMode(input.ConsentMode),
 	})
 	if err != nil {
 		return nil, types.AddCookieBannerOutput{}, fmt.Errorf("cannot create cookie banner: %w", err)
@@ -4744,10 +4743,6 @@ func (r *Resolver) UpdateCookieBannerTool(ctx context.Context, req *mcp.CallTool
 	}
 	if v := UnwrapOmittable(input.ConsentExpiryDays); v != nil && *v != nil {
 		updateReq.ConsentExpiryDays = *v
-	}
-	if v := UnwrapOmittable(input.ConsentMode); v != nil && *v != nil {
-		mode := coredata.CookieConsentMode(**v)
-		updateReq.ConsentMode = &mode
 	}
 	if v := UnwrapOmittable(input.DefaultLanguage); v != nil && *v != nil {
 		updateReq.DefaultLanguage = *v

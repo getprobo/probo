@@ -9311,7 +9311,6 @@ components:
         - state
         - cookie_policy_url
         - consent_expiry_days
-        - consent_mode
         - show_branding
         - default_language
         - created_at
@@ -9344,10 +9343,6 @@ components:
         consent_expiry_days:
           type: integer
           description: Days until consent expires
-        consent_mode:
-          type: string
-          enum: [OPT_IN, OPT_OUT]
-          description: Consent mode
         show_branding:
           type: boolean
           description: Whether to show Probo branding
@@ -9726,7 +9721,6 @@ components:
         - origin
         - cookie_policy_url
         - consent_expiry_days
-        - consent_mode
       properties:
         organization_id:
           $ref: "#/components/schemas/GID"
@@ -9746,10 +9740,6 @@ components:
         consent_expiry_days:
           type: integer
           description: Days until consent expires
-        consent_mode:
-          type: string
-          enum: [OPT_IN, OPT_OUT]
-          description: Consent mode
 
     AddCookieBannerOutput:
       type: object
@@ -9785,11 +9775,6 @@ components:
         consent_expiry_days:
           type:
             - integer
-            - "null"
-          go.probo.inc/mcpgen/omittable: true
-        consent_mode:
-          type:
-            - string
             - "null"
           go.probo.inc/mcpgen/omittable: true
         default_language:

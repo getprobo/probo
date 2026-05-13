@@ -153,7 +153,6 @@ func TestCookieBannerVersioning_NoOpUpdates(t *testing.T) {
 		bannerID := factory.CreateCookieBanner(owner, factory.Attrs{
 			"cookiePolicyUrl":   "https://example.com/cookies",
 			"consentExpiryDays": 365,
-			"consentMode":       "OPT_IN",
 		})
 
 		published := publishBanner(t, owner, bannerID)
@@ -172,7 +171,6 @@ func TestCookieBannerVersioning_NoOpUpdates(t *testing.T) {
 				"cookieBannerId":    bannerID,
 				"cookiePolicyUrl":   "https://example.com/cookies",
 				"consentExpiryDays": 365,
-				"consentMode":       "OPT_IN",
 			},
 		}, &result)
 		require.NoError(t, err)

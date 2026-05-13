@@ -38,7 +38,6 @@ type (
 		PrivacyPolicyURL           *string           `db:"privacy_policy_url"`
 		CookiePolicyURL            string            `db:"cookie_policy_url"`
 		ConsentExpiryDays          int               `db:"consent_expiry_days"`
-		ConsentMode                CookieConsentMode `db:"consent_mode"`
 		ShowBranding               bool              `db:"show_branding"`
 		DefaultLanguage            string            `db:"default_language"`
 		PatternAnalysisRequestedAt *time.Time        `db:"pattern_analysis_requested_at"`
@@ -89,7 +88,6 @@ SELECT
 	privacy_policy_url,
 	cookie_policy_url,
 	consent_expiry_days,
-	consent_mode,
 	show_branding,
 	default_language,
 	pattern_analysis_requested_at,
@@ -142,7 +140,6 @@ SELECT
 	privacy_policy_url,
 	cookie_policy_url,
 	consent_expiry_days,
-	consent_mode,
 	show_branding,
 	default_language,
 	pattern_analysis_requested_at,
@@ -196,7 +193,6 @@ SELECT
 	privacy_policy_url,
 	cookie_policy_url,
 	consent_expiry_days,
-	consent_mode,
 	show_branding,
 	default_language,
 	pattern_analysis_requested_at,
@@ -254,7 +250,6 @@ SELECT
 	privacy_policy_url,
 	cookie_policy_url,
 	consent_expiry_days,
-	consent_mode,
 	show_branding,
 	default_language,
 	pattern_analysis_requested_at,
@@ -305,7 +300,6 @@ SELECT
 	privacy_policy_url,
 	cookie_policy_url,
 	consent_expiry_days,
-	consent_mode,
 	show_branding,
 	default_language,
 	pattern_analysis_requested_at,
@@ -392,7 +386,6 @@ INSERT INTO cookie_banners (
 	privacy_policy_url,
 	cookie_policy_url,
 	consent_expiry_days,
-	consent_mode,
 	show_branding,
 	default_language,
 	pattern_analysis_requested_at,
@@ -408,7 +401,6 @@ INSERT INTO cookie_banners (
 	@privacy_policy_url,
 	@cookie_policy_url,
 	@consent_expiry_days,
-	@consent_mode,
 	@show_branding,
 	@default_language,
 	@pattern_analysis_requested_at,
@@ -427,7 +419,6 @@ INSERT INTO cookie_banners (
 		"privacy_policy_url":            b.PrivacyPolicyURL,
 		"cookie_policy_url":             b.CookiePolicyURL,
 		"consent_expiry_days":           b.ConsentExpiryDays,
-		"consent_mode":                  b.ConsentMode,
 		"show_branding":                 b.ShowBranding,
 		"default_language":              b.DefaultLanguage,
 		"pattern_analysis_requested_at": b.PatternAnalysisRequestedAt,
@@ -461,7 +452,6 @@ SET
 	privacy_policy_url = @privacy_policy_url,
 	cookie_policy_url = @cookie_policy_url,
 	consent_expiry_days = @consent_expiry_days,
-	consent_mode = @consent_mode,
 	show_branding = @show_branding,
 	default_language = @default_language,
 	updated_at = @updated_at
@@ -479,7 +469,6 @@ WHERE
 		"privacy_policy_url":  b.PrivacyPolicyURL,
 		"cookie_policy_url":   b.CookiePolicyURL,
 		"consent_expiry_days": b.ConsentExpiryDays,
-		"consent_mode":        b.ConsentMode,
 		"show_branding":       b.ShowBranding,
 		"default_language":    b.DefaultLanguage,
 		"updated_at":          b.UpdatedAt,
@@ -581,7 +570,6 @@ SELECT
 	privacy_policy_url,
 	cookie_policy_url,
 	consent_expiry_days,
-	consent_mode,
 	show_branding,
 	default_language,
 	pattern_analysis_requested_at,

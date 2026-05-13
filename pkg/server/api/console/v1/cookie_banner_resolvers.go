@@ -440,7 +440,6 @@ func (r *mutationResolver) CreateCookieBanner(ctx context.Context, input types.C
 			PrivacyPolicyURL:  input.PrivacyPolicyURL,
 			CookiePolicyURL:   input.CookiePolicyURL,
 			ConsentExpiryDays: input.ConsentExpiryDays,
-			ConsentMode:       input.ConsentMode,
 		},
 	)
 	if err != nil {
@@ -476,7 +475,6 @@ func (r *mutationResolver) UpdateCookieBanner(ctx context.Context, input types.U
 			PrivacyPolicyURL:  input.PrivacyPolicyURL,
 			CookiePolicyURL:   input.CookiePolicyURL,
 			ConsentExpiryDays: input.ConsentExpiryDays,
-			ConsentMode:       input.ConsentMode,
 			DefaultLanguage:   input.DefaultLanguage,
 		},
 	)

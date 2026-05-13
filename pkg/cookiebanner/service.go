@@ -51,7 +51,6 @@ type (
 		PrivacyPolicyURL  *string
 		CookiePolicyURL   string
 		ConsentExpiryDays int
-		ConsentMode       coredata.CookieConsentMode
 	}
 
 	CreateCookieCategoryRequest struct {
@@ -68,7 +67,6 @@ type (
 		PrivacyPolicyURL  *string
 		CookiePolicyURL   *string
 		ConsentExpiryDays *int
-		ConsentMode       *coredata.CookieConsentMode
 		DefaultLanguage   *string
 	}
 
@@ -107,6 +105,7 @@ type (
 		SdkVersion  string
 		Regulation  *Regulation
 		CountryCode *coredata.CountryCode
+		ConsentMode *coredata.CookieConsentMode
 	}
 
 	DetectedCookie struct {
@@ -231,7 +230,6 @@ func (r *CreateCookieBannerRequest) Validate() error {
 	v.Check(r.PrivacyPolicyURL, "privacy_policy_url", validator.URL())
 	v.Check(r.CookiePolicyURL, "cookie_policy_url", validator.Required(), validator.URL())
 	v.Check(r.ConsentExpiryDays, "consent_expiry_days", validator.Required(), validator.Min(1))
-	v.Check(r.ConsentMode, "consent_mode", validator.Required(), validator.OneOfSlice(coredata.CookieConsentModes()))
 
 	return v.Error()
 }
@@ -244,7 +242,6 @@ func (r *UpdateCookieBannerRequest) Validate() error {
 	v.Check(r.PrivacyPolicyURL, "privacy_policy_url", validator.URL())
 	v.Check(r.CookiePolicyURL, "cookie_policy_url", validator.URL())
 	v.Check(r.ConsentExpiryDays, "consent_expiry_days", validator.Min(1))
-	v.Check(r.ConsentMode, "consent_mode", validator.OneOfSlice(coredata.CookieConsentModes()))
 	v.Check(r.DefaultLanguage, "default_language", validator.OneOfSlice(SupportedLanguages))
 
 	return v.Error()
@@ -581,7 +578,6 @@ func (s *Service) CreateCookieBanner(
 				PrivacyPolicyURL:  req.PrivacyPolicyURL,
 				CookiePolicyURL:   req.CookiePolicyURL,
 				ConsentExpiryDays: req.ConsentExpiryDays,
-				ConsentMode:       req.ConsentMode,
 				ShowBranding:      s.showBranding,
 				DefaultLanguage:   "en",
 				CreatedAt:         now,
@@ -857,10 +853,9 @@ func (s *Service) UpdateCookieBanner(
 			privacyChanged := req.PrivacyPolicyURL != nil && !ptrEqual(req.PrivacyPolicyURL, banner.PrivacyPolicyURL)
 			cookiePolicyChanged := req.CookiePolicyURL != nil && *req.CookiePolicyURL != banner.CookiePolicyURL
 			expiryChanged := req.ConsentExpiryDays != nil && *req.ConsentExpiryDays != banner.ConsentExpiryDays
-			consentModeChanged := req.ConsentMode != nil && *req.ConsentMode != banner.ConsentMode
 			defaultLangChanged := req.DefaultLanguage != nil && *req.DefaultLanguage != banner.DefaultLanguage
 
-			snapshotChanged := privacyChanged || cookiePolicyChanged || expiryChanged || consentModeChanged || defaultLangChanged
+			snapshotChanged := privacyChanged || cookiePolicyChanged || expiryChanged || defaultLangChanged
 
 			if !nameChanged && !snapshotChanged {
 				return nil
@@ -877,9 +872,6 @@ func (s *Service) UpdateCookieBanner(
 			}
 			if req.ConsentExpiryDays != nil {
 				banner.ConsentExpiryDays = *req.ConsentExpiryDays
-			}
-			if req.ConsentMode != nil {
-				banner.ConsentMode = *req.ConsentMode
 			}
 			if req.DefaultLanguage != nil {
 				banner.DefaultLanguage = *req.DefaultLanguage
@@ -1609,11 +1601,9 @@ func (s *Service) GetActiveBannerConfig(
 	}
 
 	config.Regulation = regulation
-	if cm := ConsentModeForRegulation(regulation); cm != "" {
-		config.ConsentMode = cm
-	}
+	config.ConsentMode = ConsentModeForRegulation(regulation)
 	if !isLegacySDK(sdkVersion) {
-		remapTextsForConsentMode(config.Texts, config.ConsentMode, regulation)
+		remapTextsForConsentMode(config.Texts, config.ConsentMode)
 	}
 
 	return config, nil
@@ -1677,7 +1667,6 @@ func buildBannerConfig(
 		PrivacyPolicyURL:  privacyPolicyURL,
 		CookiePolicyURL:   snapshot.CookiePolicyURL,
 		ConsentExpiryDays: snapshot.ConsentExpiryDays,
-		ConsentMode:       snapshot.ConsentMode,
 		ShowBranding:      banner.ShowBranding,
 		Categories:        categories,
 		Texts:             texts,
@@ -1687,24 +1676,16 @@ func buildBannerConfig(
 // remapTextsForConsentMode overrides the generic banner text keys with
 // mode-specific variants so the client renders the appropriate copy
 // without needing consent-mode awareness itself.
-func remapTextsForConsentMode(texts map[string]string, consentMode string, regulation Regulation) {
+func remapTextsForConsentMode(texts map[string]string, consentMode string) {
 	if texts == nil {
 		return
 	}
 
-	switch {
-	case consentMode == ConsentModeOptOut:
+	if consentMode == ConsentModeOptOut {
 		remapTextKey(texts, "banner_title_opt_out", "banner_title")
 		remapTextKey(texts, "banner_description_opt_out", "banner_description")
 		remapTextKey(texts, "button_acknowledge", "button_accept_all")
 		remapTextKey(texts, "button_opt_out", "button_reject_all")
-		texts["button_customize"] = ""
-
-	case regulation == RegulationNone:
-		remapTextKey(texts, "banner_title_notice", "banner_title")
-		remapTextKey(texts, "banner_description_notice", "banner_description")
-		remapTextKey(texts, "button_dismiss", "button_accept_all")
-		texts["button_reject_all"] = ""
 		texts["button_customize"] = ""
 	}
 }
@@ -1964,6 +1945,7 @@ func (s *Service) RecordConsent(
 				SdkVersion:            req.SdkVersion,
 				Regulation:            req.Regulation,
 				CountryCode:           req.CountryCode,
+				ConsentMode:           req.ConsentMode,
 				CreatedAt:             time.Now(),
 			}
 

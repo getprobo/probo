@@ -70,33 +70,6 @@ export const description: INodeProperties[] = [
 		description: 'Number of days before consent expires (0 to leave unchanged)',
 	},
 	{
-		displayName: 'Consent Mode',
-		name: 'consentMode',
-		type: 'options',
-		displayOptions: {
-			show: {
-				resource: ['cookieBanner'],
-				operation: ['update'],
-			},
-		},
-		options: [
-			{
-				name: '(Unchanged)',
-				value: '',
-			},
-			{
-				name: 'Opt In',
-				value: 'OPT_IN',
-			},
-			{
-				name: 'Opt Out',
-				value: 'OPT_OUT',
-			},
-		],
-		default: '',
-		description: 'The consent mode for the cookie banner',
-	},
-	{
 		displayName: 'Default Language',
 		name: 'defaultLanguage',
 		type: 'string',
@@ -141,7 +114,6 @@ export async function execute(
 	const name = this.getNodeParameter('name', itemIndex, '') as string;
 	const cookiePolicyUrl = this.getNodeParameter('cookiePolicyUrl', itemIndex, '') as string;
 	const consentExpiryDays = this.getNodeParameter('consentExpiryDays', itemIndex, 0) as number;
-	const consentMode = this.getNodeParameter('consentMode', itemIndex, '') as string;
 	const defaultLanguage = this.getNodeParameter('defaultLanguage', itemIndex, '') as string;
 	const additionalFields = this.getNodeParameter('additionalFields', itemIndex, {}) as {
 		privacyPolicyUrl?: string;
@@ -158,7 +130,6 @@ export async function execute(
 					privacyPolicyUrl
 					cookiePolicyUrl
 					consentExpiryDays
-					consentMode
 					showBranding
 					defaultLanguage
 					createdAt
@@ -172,7 +143,6 @@ export async function execute(
 	if (name) input.name = name;
 	if (cookiePolicyUrl) input.cookiePolicyUrl = cookiePolicyUrl;
 	if (consentExpiryDays) input.consentExpiryDays = consentExpiryDays;
-	if (consentMode) input.consentMode = consentMode;
 	if (defaultLanguage) input.defaultLanguage = defaultLanguage;
 	if (additionalFields.privacyPolicyUrl !== undefined) {
 		input.privacyPolicyUrl = additionalFields.privacyPolicyUrl === '' ? null : additionalFields.privacyPolicyUrl;

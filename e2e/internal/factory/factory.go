@@ -1239,7 +1239,6 @@ func CreateCookieBanner(c *testutil.Client, attrs ...Attrs) string {
 		"origin":            a.getString("origin", SafeOrigin()),
 		"cookiePolicyUrl":   a.getString("cookiePolicyUrl", "https://example.com/cookies"),
 		"consentExpiryDays": a.getInt("consentExpiryDays", 365),
-		"consentMode":       a.getString("consentMode", "OPT_IN"),
 	}
 	if ppURL := a.getStringPtr("privacyPolicyUrl"); ppURL != nil {
 		input["privacyPolicyUrl"] = *ppURL
@@ -1292,11 +1291,6 @@ func (b *CookieBannerBuilder) WithPrivacyPolicyUrl(url string) *CookieBannerBuil
 
 func (b *CookieBannerBuilder) WithConsentExpiryDays(days int) *CookieBannerBuilder {
 	b.attrs["consentExpiryDays"] = days
-	return b
-}
-
-func (b *CookieBannerBuilder) WithConsentMode(mode string) *CookieBannerBuilder {
-	b.attrs["consentMode"] = mode
 	return b
 }
 

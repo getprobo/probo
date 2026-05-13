@@ -116,7 +116,6 @@ func buildSnapshot(
 		PrivacyPolicyURL:  banner.PrivacyPolicyURL,
 		CookiePolicyURL:   banner.CookiePolicyURL,
 		ConsentExpiryDays: banner.ConsentExpiryDays,
-		ConsentMode:       string(banner.ConsentMode),
 		DefaultLanguage:   banner.DefaultLanguage,
 		Categories:        snapshotCategories,
 	}

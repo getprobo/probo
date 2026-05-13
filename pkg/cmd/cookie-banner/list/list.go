@@ -36,7 +36,6 @@ query($id: ID!, $first: Int, $after: CursorKey) {
             name
             origin
             state
-            consentMode
           }
         }
         pageInfo {
@@ -50,11 +49,10 @@ query($id: ID!, $first: Int, $after: CursorKey) {
 `
 
 type banner struct {
-	ID          string `json:"id"`
-	Name        string `json:"name"`
-	Origin      string `json:"origin"`
-	State       string `json:"state"`
-	ConsentMode string `json:"consentMode"`
+	ID     string `json:"id"`
+	Name   string `json:"name"`
+	Origin string `json:"origin"`
+	State  string `json:"state"`
 }
 
 func NewCmdList(f *cmdutil.Factory) *cobra.Command {
@@ -140,10 +138,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 
 			rows := make([][]string, 0, len(banners))
 			for _, b := range banners {
-				rows = append(rows, []string{b.ID, b.Name, b.Origin, b.State, b.ConsentMode})
+				rows = append(rows, []string{b.ID, b.Name, b.Origin, b.State})
 			}
 
-			t := cmdutil.NewTable("ID", "NAME", "ORIGIN", "STATE", "CONSENT MODE").Rows(rows...)
+			t := cmdutil.NewTable("ID", "NAME", "ORIGIN", "STATE").Rows(rows...)
 			_, _ = fmt.Fprintln(f.IOStreams.Out, t)
 
 			if totalCount > len(banners) {

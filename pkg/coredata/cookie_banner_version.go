@@ -33,7 +33,6 @@ type (
 		PrivacyPolicyURL  *string                               `json:"privacy_policy_url,omitempty"`
 		CookiePolicyURL   string                                `json:"cookie_policy_url"`
 		ConsentExpiryDays int                                   `json:"consent_expiry_days"`
-		ConsentMode       string                                `json:"consent_mode"`
 		DefaultLanguage   string                                `json:"default_language"`
 		Categories        []CookieBannerVersionSnapshotCategory `json:"categories"`
 	}

@@ -180,11 +180,16 @@ func (h *Handler) handlePostConsent(w http.ResponseWriter, r *http.Request) {
 	sdkVersion := r.Header.Get("X-SDK-Version")
 	cc := h.resolveCountryCode(r)
 
-	var regulation *cookiebanner.Regulation
+	var (
+		regulation         *cookiebanner.Regulation
+		resolvedRegulation cookiebanner.Regulation
+	)
 	if cc != nil {
-		r := cookiebanner.RegulationForCountry(*cc)
-		regulation = &r
+		resolvedRegulation = cookiebanner.RegulationForCountry(*cc)
+		regulation = &resolvedRegulation
 	}
+
+	cm := coredata.CookieConsentMode(cookiebanner.ConsentModeForRegulation(resolvedRegulation))
 
 	req := cookiebanner.RecordConsentRequest{
 		Version:     body.Version,
@@ -196,6 +201,7 @@ func (h *Handler) handlePostConsent(w http.ResponseWriter, r *http.Request) {
 		SdkVersion:  sdkVersion,
 		Regulation:  regulation,
 		CountryCode: cc,
+		ConsentMode: &cm,
 	}
 
 	record, err := h.cookieBannerSvc.RecordConsent(r.Context(), bannerID, req)

@@ -29,7 +29,6 @@ func NewCookieBanner(b *coredata.CookieBanner) *CookieBanner {
 		PrivacyPolicyURL:  b.PrivacyPolicyURL,
 		CookiePolicyURL:   b.CookiePolicyURL,
 		ConsentExpiryDays: b.ConsentExpiryDays,
-		ConsentMode:       CookieBannerConsentMode(b.ConsentMode),
 		ShowBranding:      b.ShowBranding,
 		DefaultLanguage:   b.DefaultLanguage,
 		CreatedAt:         b.CreatedAt,

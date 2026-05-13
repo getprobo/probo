@@ -41,7 +41,6 @@ func TestCookieBanner_Create(t *testing.T) {
 							state
 							cookiePolicyUrl
 							consentExpiryDays
-							consentMode
 							showBranding
 							defaultLanguage
 							createdAt
@@ -65,7 +64,6 @@ func TestCookieBanner_Create(t *testing.T) {
 						State             string `json:"state"`
 						CookiePolicyUrl   string `json:"cookiePolicyUrl"`
 						ConsentExpiryDays int    `json:"consentExpiryDays"`
-						ConsentMode       string `json:"consentMode"`
 						ShowBranding      bool   `json:"showBranding"`
 						DefaultLanguage   string `json:"defaultLanguage"`
 						CreatedAt         string `json:"createdAt"`
@@ -82,7 +80,6 @@ func TestCookieBanner_Create(t *testing.T) {
 				"origin":            origin,
 				"cookiePolicyUrl":   "https://example.com/cookies",
 				"consentExpiryDays": 365,
-				"consentMode":       "OPT_IN",
 			},
 		}, &result)
 
@@ -93,7 +90,6 @@ func TestCookieBanner_Create(t *testing.T) {
 		assert.Equal(t, "ACTIVE", node.State)
 		assert.Equal(t, "https://example.com/cookies", node.CookiePolicyUrl)
 		assert.Equal(t, 365, node.ConsentExpiryDays)
-		assert.Equal(t, "OPT_IN", node.ConsentMode)
 		assert.Equal(t, "en", node.DefaultLanguage)
 		assert.NotEmpty(t, node.CreatedAt)
 		assert.NotEmpty(t, node.UpdatedAt)
@@ -110,7 +106,6 @@ func TestCookieBanner_Create(t *testing.T) {
 						node {
 							id
 							privacyPolicyUrl
-							consentMode
 						}
 					}
 				}
@@ -123,7 +118,6 @@ func TestCookieBanner_Create(t *testing.T) {
 					Node struct {
 						ID               string  `json:"id"`
 						PrivacyPolicyUrl *string `json:"privacyPolicyUrl"`
-						ConsentMode      string  `json:"consentMode"`
 					} `json:"node"`
 				} `json:"cookieBannerEdge"`
 			} `json:"createCookieBanner"`
@@ -137,7 +131,6 @@ func TestCookieBanner_Create(t *testing.T) {
 				"cookiePolicyUrl":   "https://example.com/cookies",
 				"privacyPolicyUrl":  "https://example.com/privacy",
 				"consentExpiryDays": 180,
-				"consentMode":       "OPT_OUT",
 			},
 		}, &result)
 
@@ -146,7 +139,6 @@ func TestCookieBanner_Create(t *testing.T) {
 		assert.NotEmpty(t, node.ID)
 		require.NotNil(t, node.PrivacyPolicyUrl)
 		assert.Equal(t, "https://example.com/privacy", *node.PrivacyPolicyUrl)
-		assert.Equal(t, "OPT_OUT", node.ConsentMode)
 	})
 
 	t.Run("creates default categories", func(t *testing.T) {
@@ -220,7 +212,6 @@ func TestCookieBanner_Create(t *testing.T) {
 				"origin":            origin,
 				"cookiePolicyUrl":   "https://example.com/cookies",
 				"consentExpiryDays": 365,
-				"consentMode":       "OPT_IN",
 			},
 		})
 		require.Error(t, err)
@@ -243,7 +234,6 @@ func TestCookieBanner_Create(t *testing.T) {
 				"origin":            factory.SafeOrigin(),
 				"cookiePolicyUrl":   "https://example.com/cookies",
 				"consentExpiryDays": 365,
-				"consentMode":       "OPT_IN",
 			},
 		})
 		require.Error(t, err)
@@ -306,7 +296,6 @@ func TestCookieBanner_Update(t *testing.T) {
 				updateCookieBanner(input: $input) {
 					cookieBanner {
 						consentExpiryDays
-						consentMode
 						defaultLanguage
 					}
 				}
@@ -317,7 +306,6 @@ func TestCookieBanner_Update(t *testing.T) {
 			UpdateCookieBanner struct {
 				CookieBanner struct {
 					ConsentExpiryDays int    `json:"consentExpiryDays"`
-					ConsentMode       string `json:"consentMode"`
 					DefaultLanguage   string `json:"defaultLanguage"`
 				} `json:"cookieBanner"`
 			} `json:"updateCookieBanner"`
@@ -327,14 +315,12 @@ func TestCookieBanner_Update(t *testing.T) {
 			"input": map[string]any{
 				"cookieBannerId":    bannerID,
 				"consentExpiryDays": 90,
-				"consentMode":       "OPT_OUT",
 				"defaultLanguage":   "fr",
 			},
 		}, &result)
 
 		require.NoError(t, err)
 		assert.Equal(t, 90, result.UpdateCookieBanner.CookieBanner.ConsentExpiryDays)
-		assert.Equal(t, "OPT_OUT", result.UpdateCookieBanner.CookieBanner.ConsentMode)
 		assert.Equal(t, "fr", result.UpdateCookieBanner.CookieBanner.DefaultLanguage)
 	})
 }
@@ -574,7 +560,6 @@ func TestCookieBanner_Node(t *testing.T) {
 						name
 						origin
 						state
-						consentMode
 					}
 				}
 			}
@@ -582,11 +567,10 @@ func TestCookieBanner_Node(t *testing.T) {
 
 		var result struct {
 			Node struct {
-				ID          string `json:"id"`
-				Name        string `json:"name"`
-				Origin      string `json:"origin"`
-				State       string `json:"state"`
-				ConsentMode string `json:"consentMode"`
+				ID     string `json:"id"`
+				Name   string `json:"name"`
+				Origin string `json:"origin"`
+				State  string `json:"state"`
 			} `json:"node"`
 		}
 
@@ -842,7 +826,6 @@ func TestCookieBanner_RBAC(t *testing.T) {
 				"origin":            factory.SafeOrigin(),
 				"cookiePolicyUrl":   "https://example.com/cookies",
 				"consentExpiryDays": 365,
-				"consentMode":       "OPT_IN",
 			},
 		})
 		testutil.RequireForbiddenError(t, err, "viewer should not be able to create cookie banner")
