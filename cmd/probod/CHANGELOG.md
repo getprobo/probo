@@ -4,6 +4,23 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.188.0] - 2026-05-13
+
+### Changed
+
+- Derive cookie consent mode dynamically from the visitor's country and applicable regulation at consent-recording time; the `consent_mode` column is dropped from `cookie_banners` and persisted on `cookie_consent_records` instead, defaulting to `OPT_OUT` when no regulation matches (breaking)
+- Capture `X-SDK-Version` via middleware and include it as `sdk_version` on all cookie banner request logs
+- Use distinct badge colors per resource type and tracker type instead of only highlighting scripts
+
+### Fixed
+
+- Eliminate deadlocks when concurrent `ReportDetectedTrackers` calls update `tracker_patterns.last_matched_at` by replacing per-row updates with a single bulk update
+- Stop generating bare `*` tracker patterns from separator-less cookie names; such names are kept as individual exact-match patterns for triage
+
+### Removed
+
+- Drop the legacy `cookies` and `cookie_patterns` tables (superseded by `tracker_patterns` and `detected_trackers`)
+
 ## [0.187.0] - 2026-05-12
 
 ### Added
