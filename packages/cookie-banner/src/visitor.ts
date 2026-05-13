@@ -14,18 +14,23 @@
 
 import { COOKIE_NAME } from "./cookie";
 
-export function getOrCreateVisitorId(bannerId: string): string {
+export function getVisitorId(bannerId: string): string | null {
   const key = `${COOKIE_NAME}:${bannerId}:vid`;
 
   try {
-    const stored = localStorage.getItem(key);
-    if (stored) {
-      return stored;
-    }
+    return localStorage.getItem(key);
   } catch {
-    // localStorage unavailable
+    return null;
+  }
+}
+
+export function getOrCreateVisitorId(bannerId: string): string {
+  const existing = getVisitorId(bannerId);
+  if (existing) {
+    return existing;
   }
 
+  const key = `${COOKIE_NAME}:${bannerId}:vid`;
   const array = new Uint8Array(16);
   crypto.getRandomValues(array);
   const id = Array.from(array, (b) => b.toString(16).padStart(2, "0")).join("");
