@@ -673,12 +673,22 @@ func (impl *Implm) Run(
 		},
 	)
 
-	trackerPatternAnalysisWorker := cookiebanner.NewPatternAnalysisWorker(cookieBannerService, pgClient, l.Named("tracker-pattern-analysis-worker"))
+	trackerPatternAnalysisWorker := cookiebanner.NewPatternAnalysisWorker(cookieBannerService, pgClient, l)
 	trackerPatternAnalysisWorkerCtx, stopTrackerPatternAnalysisWorker := context.WithCancel(context.Background())
 	wg.Go(
 		func() {
 			if err := trackerPatternAnalysisWorker.Run(trackerPatternAnalysisWorkerCtx); err != nil {
 				cancel(fmt.Errorf("tracker pattern analysis worker crashed: %w", err))
+			}
+		},
+	)
+
+	trackerMappingWorker := probo.NewTrackerMappingWorker(pgClient, l)
+	trackerMappingWorkerCtx, stopTrackerMappingWorker := context.WithCancel(context.Background())
+	wg.Go(
+		func() {
+			if err := trackerMappingWorker.Run(trackerMappingWorkerCtx); err != nil {
+				cancel(fmt.Errorf("tracker mapping worker crashed: %w", err))
 			}
 		},
 	)
@@ -748,6 +758,7 @@ func (impl *Implm) Run(
 	stopWebhookSender()
 	stopESignService()
 	stopTrackerPatternAnalysisWorker()
+	stopTrackerMappingWorker()
 	stopMailingListWorker()
 	stopEvidenceDescriptionWorker()
 	stopDocumentPDFWorker()

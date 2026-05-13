@@ -2122,20 +2122,21 @@ func (s *Service) reportDetectedTracker(
 		*matchedPatternIDs = append(*matchedPatternIDs, matchedPattern.ID)
 	} else {
 		newPattern := &coredata.TrackerPattern{
-			ID:               gid.New(scope.GetTenantID(), coredata.TrackerPatternEntityType),
-			OrganizationID:   banner.OrganizationID,
-			CookieBannerID:   banner.ID,
-			CookieCategoryID: uncategorisedID,
-			TrackerType:      info.TrackerType,
-			Pattern:          info.Identifier,
-			MatchType:        coredata.TrackerPatternMatchTypeExact,
-			DisplayName:      info.Identifier,
-			Description:      "",
-			MaxAgeSeconds:    info.MaxAgeSeconds,
-			Source:           info.Source,
-			LastMatchedAt:    &now,
-			CreatedAt:        now,
-			UpdatedAt:        now,
+			ID:                 gid.New(scope.GetTenantID(), coredata.TrackerPatternEntityType),
+			OrganizationID:     banner.OrganizationID,
+			CookieBannerID:     banner.ID,
+			CookieCategoryID:   uncategorisedID,
+			TrackerType:        info.TrackerType,
+			Pattern:            info.Identifier,
+			MatchType:          coredata.TrackerPatternMatchTypeExact,
+			DisplayName:        info.Identifier,
+			Description:        "",
+			MaxAgeSeconds:      info.MaxAgeSeconds,
+			Source:             info.Source,
+			LastMatchedAt:      &now,
+			MappingRequestedAt: &now,
+			CreatedAt:          now,
+			UpdatedAt:          now,
 		}
 		wasInserted, err := newPattern.InsertIfNotExists(ctx, tx, scope)
 		if err != nil {
@@ -2153,6 +2154,13 @@ func (s *Service) reportDetectedTracker(
 		}
 	}
 
+	var initiatorDomain *string
+	if info.InitiatorURL != nil {
+		if domain := uri.ExtractDomain(*info.InitiatorURL); domain != "" {
+			initiatorDomain = &domain
+		}
+	}
+
 	tracker := &coredata.DetectedTracker{
 		ID:               gid.New(scope.GetTenantID(), coredata.DetectedTrackerEntityType),
 		CookieBannerID:   banner.ID,
@@ -2163,6 +2171,7 @@ func (s *Service) reportDetectedTracker(
 		Source:           info.Source,
 		ValueSize:        info.ValueSize,
 		InitiatorURL:     info.InitiatorURL,
+		InitiatorDomain:  initiatorDomain,
 		LastDetectedAt:   now,
 		CreatedAt:        now,
 		UpdatedAt:        now,

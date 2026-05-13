@@ -46,6 +46,7 @@ type (
 		MaxAgeSeconds          *int                    `db:"max_age_seconds"`
 		Source                 *CookieSource           `db:"source"`
 		LastMatchedAt          *time.Time              `db:"last_matched_at"`
+		MappingRequestedAt     *time.Time              `db:"mapping_requested_at"`
 		CreatedAt              time.Time               `db:"created_at"`
 		UpdatedAt              time.Time               `db:"updated_at"`
 	}
@@ -114,6 +115,7 @@ SELECT
 	max_age_seconds,
 	source,
 	last_matched_at,
+	mapping_requested_at,
 	created_at,
 	updated_at
 FROM
@@ -173,6 +175,7 @@ SELECT
 	max_age_seconds,
 	source,
 	last_matched_at,
+	mapping_requested_at,
 	created_at,
 	updated_at
 FROM
@@ -239,6 +242,7 @@ SELECT
 	max_age_seconds,
 	source,
 	last_matched_at,
+	mapping_requested_at,
 	created_at,
 	updated_at
 FROM
@@ -315,6 +319,7 @@ INSERT INTO tracker_patterns (
 	max_age_seconds,
 	source,
 	last_matched_at,
+	mapping_requested_at,
 	created_at,
 	updated_at
 ) VALUES (
@@ -334,6 +339,7 @@ INSERT INTO tracker_patterns (
 	@max_age_seconds,
 	@source,
 	@last_matched_at,
+	@mapping_requested_at,
 	@created_at,
 	@updated_at
 )
@@ -356,6 +362,7 @@ INSERT INTO tracker_patterns (
 		"max_age_seconds":           tp.MaxAgeSeconds,
 		"source":                    tp.Source,
 		"last_matched_at":           tp.LastMatchedAt,
+		"mapping_requested_at":      tp.MappingRequestedAt,
 		"created_at":                tp.CreatedAt,
 		"updated_at":                tp.UpdatedAt,
 	}
@@ -396,6 +403,7 @@ INSERT INTO tracker_patterns (
 	max_age_seconds,
 	source,
 	last_matched_at,
+	mapping_requested_at,
 	created_at,
 	updated_at
 ) VALUES (
@@ -415,6 +423,7 @@ INSERT INTO tracker_patterns (
 	@max_age_seconds,
 	@source,
 	@last_matched_at,
+	@mapping_requested_at,
 	@created_at,
 	@updated_at
 )
@@ -438,6 +447,7 @@ ON CONFLICT (cookie_banner_id, tracker_type, pattern, COALESCE(max_age_seconds, 
 		"max_age_seconds":           tp.MaxAgeSeconds,
 		"source":                    tp.Source,
 		"last_matched_at":           tp.LastMatchedAt,
+		"mapping_requested_at":      tp.MappingRequestedAt,
 		"created_at":                tp.CreatedAt,
 		"updated_at":                tp.UpdatedAt,
 	}
@@ -556,6 +566,7 @@ SELECT
 	max_age_seconds,
 	source,
 	last_matched_at,
+	mapping_requested_at,
 	created_at,
 	updated_at
 FROM
@@ -654,6 +665,7 @@ SELECT
 	max_age_seconds,
 	source,
 	last_matched_at,
+	mapping_requested_at,
 	created_at,
 	updated_at
 FROM
@@ -765,6 +777,7 @@ SELECT
 	max_age_seconds,
 	source,
 	last_matched_at,
+	mapping_requested_at,
 	created_at,
 	updated_at
 FROM
@@ -894,6 +907,138 @@ WHERE
 	if err != nil {
 		return fmt.Errorf("cannot move tracker patterns to category: %w", err)
 	}
+
+	return nil
+}
+
+func (tp *TrackerPattern) LoadNextForMappingForUpdateSkipLocked(
+	ctx context.Context,
+	tx pg.Tx,
+) error {
+	q := `
+SELECT
+	id,
+	organization_id,
+	cookie_banner_id,
+	cookie_category_id,
+	common_tracker_pattern_id,
+	third_party_id,
+	tracker_type,
+	pattern,
+	match_type,
+	display_name,
+	description,
+	excluded,
+	max_age_seconds,
+	source,
+	last_matched_at,
+	mapping_requested_at,
+	created_at,
+	updated_at
+FROM
+	tracker_patterns
+WHERE
+	mapping_requested_at IS NOT NULL
+ORDER BY
+	mapping_requested_at ASC
+FOR UPDATE SKIP LOCKED
+LIMIT 1;
+`
+
+	rows, err := tx.Query(ctx, q)
+	if err != nil {
+		return fmt.Errorf("cannot query tracker patterns for mapping: %w", err)
+	}
+
+	pattern, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[TrackerPattern])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+		return fmt.Errorf("cannot collect tracker pattern for mapping: %w", err)
+	}
+
+	*tp = pattern
+
+	return nil
+}
+
+func (tp *TrackerPattern) ClearMappingRequestedAt(
+	ctx context.Context,
+	tx pg.Tx,
+) error {
+	q := `
+UPDATE tracker_patterns
+SET mapping_requested_at = NULL
+WHERE id = @id
+`
+
+	args := pgx.StrictNamedArgs{"id": tp.ID}
+
+	_, err := tx.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot clear mapping requested at: %w", err)
+	}
+
+	tp.MappingRequestedAt = nil
+
+	return nil
+}
+
+func (tp *TrackerPattern) SetMappingRequested(
+	ctx context.Context,
+	tx pg.Tx,
+) error {
+	q := `
+UPDATE tracker_patterns
+SET mapping_requested_at = NOW()
+WHERE id = @id
+  AND mapping_requested_at IS NULL
+`
+
+	args := pgx.StrictNamedArgs{"id": tp.ID}
+
+	_, err := tx.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot set mapping requested: %w", err)
+	}
+
+	return nil
+}
+
+func (tp *TrackerPattern) UpdateMapping(
+	ctx context.Context,
+	tx pg.Tx,
+	commonTrackerPatternID *gid.GID,
+	thirdPartyID *gid.GID,
+) error {
+	q := `
+UPDATE tracker_patterns
+SET
+	common_tracker_pattern_id = @common_tracker_pattern_id,
+	third_party_id = @third_party_id,
+	mapping_requested_at = NULL,
+	updated_at = @updated_at
+WHERE id = @id
+`
+
+	now := time.Now()
+	args := pgx.StrictNamedArgs{
+		"id":                        tp.ID,
+		"common_tracker_pattern_id": commonTrackerPatternID,
+		"third_party_id":            thirdPartyID,
+		"updated_at":                now,
+	}
+
+	_, err := tx.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot update tracker pattern mapping: %w", err)
+	}
+
+	tp.CommonTrackerPatternID = commonTrackerPatternID
+	tp.ThirdPartyID = thirdPartyID
+	tp.MappingRequestedAt = nil
+	tp.UpdatedAt = now
 
 	return nil
 }
