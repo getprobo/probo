@@ -4,6 +4,12 @@ All notable changes to the `@probo/cookie-banner` SDK will be documented in this
 
 ## Unreleased
 
+## [0.4.1] - 2026-05-13
+
+### Changed
+
+- Skip the `/consents/:id` fetch for first-time visitors (no `visitorId` in localStorage); the visitor ID is now created lazily on the first consent action instead of triggering a guaranteed-404 request on every initial page load
+
 ## [0.4.0] - 2026-05-12
 
 ### Added
