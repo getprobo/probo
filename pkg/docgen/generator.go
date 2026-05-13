@@ -239,7 +239,7 @@ type (
 		Name           string
 		Classification string
 		Owner          string
-		Vendors        string
+		ThirdParties   string
 	}
 
 	AssetListData struct {
@@ -256,7 +256,7 @@ type (
 		Amount          int
 		DataTypesStored string
 		Owner           string
-		Vendors         string
+		ThirdParties    string
 	}
 
 	RiskListData struct {
@@ -359,7 +359,7 @@ type (
 		LastReviewDate                       string
 		NextReviewDate                       string
 		DataProtectionOfficer                string
-		Vendors                              string
+		ThirdParties                         string
 	}
 
 	DataProtectionImpactAssessmentListData struct {
@@ -396,15 +396,15 @@ type (
 		SupplementaryMeasures  string
 	}
 
-	VendorListData struct {
-		Title            string
-		OrganizationName string
-		CreatedAt        time.Time
-		TotalVendors     int
-		Rows             []VendorListRow
+	ThirdPartyListData struct {
+		Title             string
+		OrganizationName  string
+		CreatedAt         time.Time
+		TotalThirdParties int
+		Rows              []ThirdPartyListRow
 	}
 
-	VendorListRow struct {
+	ThirdPartyListRow struct {
 		Name                          string
 		LegalName                     string
 		Description                   string
@@ -424,27 +424,27 @@ type (
 		Countries                     string
 		BusinessOwner                 string
 		SecurityOwner                 string
-		Services                      []VendorListService
-		Contacts                      []VendorListContact
-		RiskAssessments               []VendorListRiskAssessment
-		ComplianceReports             []VendorListComplianceReport
-		BusinessAssociateAgreement    *VendorListAgreement
-		DataPrivacyAgreement          *VendorListAgreement
+		Services                      []ThirdPartyListService
+		Contacts                      []ThirdPartyListContact
+		RiskAssessments               []ThirdPartyListRiskAssessment
+		ComplianceReports             []ThirdPartyListComplianceReport
+		BusinessAssociateAgreement    *ThirdPartyListAgreement
+		DataPrivacyAgreement          *ThirdPartyListAgreement
 	}
 
-	VendorListService struct {
+	ThirdPartyListService struct {
 		Name        string
 		Description string
 	}
 
-	VendorListContact struct {
+	ThirdPartyListContact struct {
 		FullName string
 		Email    string
 		Phone    string
 		Role     string
 	}
 
-	VendorListRiskAssessment struct {
+	ThirdPartyListRiskAssessment struct {
 		AssessedAt      string
 		ExpiresAt       string
 		DataSensitivity string
@@ -452,13 +452,13 @@ type (
 		Notes           string
 	}
 
-	VendorListComplianceReport struct {
+	ThirdPartyListComplianceReport struct {
 		ReportName string
 		ReportDate string
 		ValidUntil string
 	}
 
-	VendorListAgreement struct {
+	ThirdPartyListAgreement struct {
 		ValidFrom  string
 		ValidUntil string
 	}

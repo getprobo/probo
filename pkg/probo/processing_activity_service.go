@@ -52,7 +52,7 @@ type (
 		NextReviewDate                       *time.Time
 		Role                                 coredata.ProcessingActivityRole
 		DataProtectionOfficerID              *gid.GID
-		VendorIDs                            []gid.GID
+		ThirdPartyIDs                        []gid.GID
 	}
 
 	UpdateProcessingActivityRequest struct {
@@ -76,7 +76,7 @@ type (
 		NextReviewDate                       **time.Time
 		Role                                 *coredata.ProcessingActivityRole
 		DataProtectionOfficerID              **gid.GID
-		VendorIDs                            *[]gid.GID
+		ThirdPartyIDs                        *[]gid.GID
 	}
 )
 
@@ -101,8 +101,8 @@ func (cpar *CreateProcessingActivityRequest) Validate() error {
 	v.Check(cpar.TransferImpactAssessmentNeeded, "transfer_impact_assessment_needed", validator.Required(), validator.OneOfSlice(coredata.ProcessingActivityTransferImpactAssessments()))
 	v.Check(cpar.Role, "role", validator.Required(), validator.OneOfSlice(coredata.ProcessingActivityRoles()))
 	v.Check(cpar.DataProtectionOfficerID, "data_protection_officer_id", validator.GID(coredata.MembershipProfileEntityType))
-	v.CheckEach(cpar.VendorIDs, "vendor_ids", func(index int, item any) {
-		v.Check(item, fmt.Sprintf("vendor_ids[%d]", index), validator.Required(), validator.GID(coredata.VendorEntityType))
+	v.CheckEach(cpar.ThirdPartyIDs, "third_party_ids", func(index int, item any) {
+		v.Check(item, fmt.Sprintf("third_party_ids[%d]", index), validator.Required(), validator.GID(coredata.ThirdPartyEntityType))
 	})
 
 	return v.Error()
@@ -128,8 +128,8 @@ func (upar *UpdateProcessingActivityRequest) Validate() error {
 	v.Check(upar.TransferImpactAssessmentNeeded, "transfer_impact_assessment_needed", validator.OneOfSlice(coredata.ProcessingActivityTransferImpactAssessments()))
 	v.Check(upar.Role, "role", validator.OneOfSlice(coredata.ProcessingActivityRoles()))
 	v.Check(upar.DataProtectionOfficerID, "data_protection_officer_id", validator.GID(coredata.MembershipProfileEntityType))
-	v.CheckEach(upar.VendorIDs, "vendor_ids", func(index int, item any) {
-		v.Check(item, fmt.Sprintf("vendor_ids[%d]", index), validator.GID(coredata.VendorEntityType))
+	v.CheckEach(upar.ThirdPartyIDs, "third_party_ids", func(index int, item any) {
+		v.Check(item, fmt.Sprintf("third_party_ids[%d]", index), validator.GID(coredata.ThirdPartyEntityType))
 	})
 
 	return v.Error()
@@ -160,7 +160,7 @@ func (s *ProcessingActivityService) Create(
 	req *CreateProcessingActivityRequest,
 ) (*coredata.ProcessingActivity, error) {
 	now := time.Now()
-	processingActivityVendors := &coredata.ProcessingActivityVendors{}
+	processingActivityThirdParties := &coredata.ProcessingActivityThirdParties{}
 
 	processingActivity := &coredata.ProcessingActivity{
 		ID:                                   gid.New(s.svc.scope.GetTenantID(), coredata.ProcessingActivityEntityType),
@@ -200,9 +200,9 @@ func (s *ProcessingActivityService) Create(
 				return fmt.Errorf("cannot insert processing activity: %w", err)
 			}
 
-			if len(req.VendorIDs) > 0 {
-				if err := processingActivityVendors.Insert(ctx, conn, s.svc.scope, processingActivity.ID, req.OrganizationID, req.VendorIDs); err != nil {
-					return fmt.Errorf("cannot create processing activity vendors: %w", err)
+			if len(req.ThirdPartyIDs) > 0 {
+				if err := processingActivityThirdParties.Insert(ctx, conn, s.svc.scope, processingActivity.ID, req.OrganizationID, req.ThirdPartyIDs); err != nil {
+					return fmt.Errorf("cannot create processing activity thirdParties: %w", err)
 				}
 			}
 
@@ -222,7 +222,7 @@ func (s *ProcessingActivityService) Update(
 	req *UpdateProcessingActivityRequest,
 ) (*coredata.ProcessingActivity, error) {
 	processingActivity := &coredata.ProcessingActivity{}
-	processingActivityVendors := &coredata.ProcessingActivityVendors{}
+	processingActivityThirdParties := &coredata.ProcessingActivityThirdParties{}
 
 	err := s.svc.pg.WithTx(
 		ctx,
@@ -295,9 +295,9 @@ func (s *ProcessingActivityService) Update(
 				return fmt.Errorf("cannot update processing activity: %w", err)
 			}
 
-			if req.VendorIDs != nil {
-				if err := processingActivityVendors.Merge(ctx, conn, s.svc.scope, processingActivity.ID, processingActivity.OrganizationID, *req.VendorIDs); err != nil {
-					return fmt.Errorf("cannot update processing activity vendors: %w", err)
+			if req.ThirdPartyIDs != nil {
+				if err := processingActivityThirdParties.Merge(ctx, conn, s.svc.scope, processingActivity.ID, processingActivity.OrganizationID, *req.ThirdPartyIDs); err != nil {
+					return fmt.Errorf("cannot update processing activity thirdParties: %w", err)
 				}
 			}
 

@@ -1,0 +1,128 @@
+// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
+import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import { proboApiRequest } from '../../GenericFunctions';
+
+export const description: INodeProperties[] = [
+	{
+		displayName: 'ThirdParty ID',
+		name: 'thirdPartyId',
+		type: 'string',
+		displayOptions: {
+			show: {
+				resource: ['thirdParty'],
+				operation: ['createContact'],
+			},
+		},
+		default: '',
+		description: 'The ID of the thirdParty',
+		required: true,
+	},
+	{
+		displayName: 'Full Name',
+		name: 'fullName',
+		type: 'string',
+		displayOptions: {
+			show: {
+				resource: ['thirdParty'],
+				operation: ['createContact'],
+			},
+		},
+		default: '',
+		description: 'The full name of the contact',
+	},
+	{
+		displayName: 'Email',
+		name: 'email',
+		type: 'string',
+		placeholder: 'name@email.com',
+		displayOptions: {
+			show: {
+				resource: ['thirdParty'],
+				operation: ['createContact'],
+			},
+		},
+		default: '',
+		description: 'The email address of the contact',
+	},
+	{
+		displayName: 'Phone',
+		name: 'phone',
+		type: 'string',
+		displayOptions: {
+			show: {
+				resource: ['thirdParty'],
+				operation: ['createContact'],
+			},
+		},
+		default: '',
+		description: 'The phone number of the contact',
+	},
+	{
+		displayName: 'Role',
+		name: 'role',
+		type: 'string',
+		displayOptions: {
+			show: {
+				resource: ['thirdParty'],
+				operation: ['createContact'],
+			},
+		},
+		default: '',
+		description: 'The role of the contact',
+	},
+];
+
+export async function execute(
+	this: IExecuteFunctions,
+	itemIndex: number,
+): Promise<INodeExecutionData> {
+	const thirdPartyId = this.getNodeParameter('thirdPartyId', itemIndex) as string;
+	const fullName = this.getNodeParameter('fullName', itemIndex, '') as string;
+	const email = this.getNodeParameter('email', itemIndex, '') as string;
+	const phone = this.getNodeParameter('phone', itemIndex, '') as string;
+	const role = this.getNodeParameter('role', itemIndex, '') as string;
+
+	const query = `
+		mutation CreateThirdPartyContact($input: CreateThirdPartyContactInput!) {
+			createThirdPartyContact(input: $input) {
+				thirdPartyContactEdge {
+					node {
+						id
+						fullName
+						email
+						phone
+						role
+						createdAt
+						updatedAt
+					}
+				}
+			}
+		}
+	`;
+
+	const input: Record<string, unknown> = { thirdPartyId };
+	if (fullName) input.fullName = fullName;
+	if (email) input.email = email;
+	if (phone) input.phone = phone;
+	if (role) input.role = role;
+
+	const responseData = await proboApiRequest.call(this, query, { input });
+
+	return {
+		json: responseData,
+		pairedItem: { item: itemIndex },
+	};
+}

@@ -8,18 +8,18 @@ Policy-based authorization in `pkg/iam/` using an evaluation model similar to AW
 
 **Policy** — a named collection of statements:
 ```go
-policy.NewPolicy("vendor-crud", "Vendor CRUD",
-	policy.Allow(ActionVendorGet, ActionVendorList).WithSID("read-vendors"),
-	policy.Deny(ActionVendorDelete).WithSID("deny-vendor-delete"),
-).WithDescription("Standard vendor access")
+policy.NewPolicy("thirdParty-crud", "ThirdParty CRUD",
+	policy.Allow(ActionThirdPartyGet, ActionThirdPartyList).WithSID("read-thirdParties"),
+	policy.Deny(ActionThirdPartyDelete).WithSID("deny-thirdParty-delete"),
+).WithDescription("Standard third party access")
 ```
 
 **Statement** — a single permission rule with effect (allow/deny), actions, optional resources, and optional conditions.
 
 **Action format** — `SERVICE:RESOURCE:OPERATION` with wildcard support:
 ```
-core:vendor:create      # specific action
-core:vendor:*           # all vendor actions
+core:thirdParty:create      # specific action
+core:thirdParty:*           # all third party actions
 core:*                  # all core actions
 *                       # everything
 ```
@@ -39,8 +39,8 @@ The evaluator processes all statements against a request:
 ```go
 err := iamService.Authorizer.Authorize(ctx, iam.AuthorizeParams{
 	Principal:          identityID,    // who
-	Resource:           vendorID,      // what
-	Action:             probo.ActionVendorGet,  // which action
+	Resource:           thirdPartyID,      // what
+	Action:             probo.ActionThirdPartyGet,  // which action
 	ResourceAttributes: map[string]string{},    // optional extra attributes
 })
 ```
@@ -78,8 +78,8 @@ Conditions constrain when a statement applies. All conditions must be satisfied.
 // Users can only access resources in their organization
 organizationCondition := policy.Equals("principal.organization_id", "resource.organization_id")
 
-policy.Allow(ActionVendorGet).
-	WithSID("view-vendor").
+policy.Allow(ActionThirdPartyGet).
+	WithSID("view-thirdParty").
 	When(organizationCondition)
 ```
 
@@ -97,14 +97,14 @@ Key paths use `principal.ATTR` or `resource.ATTR` (e.g., `principal.organization
 Resources that support authorization must implement this interface in `pkg/coredata/`:
 
 ```go
-func (v *Vendor) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
-	q := `SELECT organization_id FROM vendors WHERE id = $1 LIMIT 1;`
+func (v *ThirdParty) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+	q := `SELECT organization_id FROM thirdParties WHERE id = $1 LIMIT 1;`
 	var organizationID gid.GID
 	if err := conn.QueryRow(ctx, q, v.ID).Scan(&organizationID); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrResourceNotFound
 		}
-		return nil, fmt.Errorf("cannot query vendor authorization attributes: %w", err)
+		return nil, fmt.Errorf("cannot query third party authorization attributes: %w", err)
 	}
 	return map[string]string{"organization_id": organizationID.String()}, nil
 }
@@ -126,14 +126,14 @@ var (
 
 **GraphQL resolvers** use `AuthorizeFunc` from `pkg/server/api/authz/`:
 ```go
-if err := authorize(ctx, vendorID, probo.ActionVendorGet); err != nil {
+if err := authorize(ctx, thirdPartyID, probo.ActionThirdPartyGet); err != nil {
 	return nil, err
 }
 ```
 
 **MCP resolvers** use `MustAuthorize` which panics (caught by middleware):
 ```go
-r.MustAuthorize(ctx, input.ID, probo.ActionVendorGet)
+r.MustAuthorize(ctx, input.ID, probo.ActionThirdPartyGet)
 ```
 
 ## File locations
@@ -155,11 +155,11 @@ IAM actions live in `pkg/iam/iam_actions.go`, probo actions in `pkg/probo/action
 
 ```go
 const (
-	ActionVendorGet    = "core:vendor:get"
-	ActionVendorList   = "core:vendor:list"
-	ActionVendorCreate = "core:vendor:create"
-	ActionVendorUpdate = "core:vendor:update"
-	ActionVendorDelete = "core:vendor:delete"
+	ActionThirdPartyGet    = "core:thirdParty:get"
+	ActionThirdPartyList   = "core:thirdParty:list"
+	ActionThirdPartyCreate = "core:thirdParty:create"
+	ActionThirdPartyUpdate = "core:thirdParty:update"
+	ActionThirdPartyDelete = "core:thirdParty:delete"
 )
 ```
 

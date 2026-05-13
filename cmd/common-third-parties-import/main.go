@@ -13,7 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 // Command common-third-parties-import seeds the common_third_parties table from
-// packages/vendors/data.json. It is idempotent: re-running upserts on conflict
+// packages/thirdParties/data.json. It is idempotent: re-running upserts on conflict
 // (lower(name)) so existing rows keep their id and created_at.
 //
 // When -fetch-logos is set, the tool inspects each third party's website to
@@ -419,15 +419,15 @@ func loadThirdParties(path string) ([]thirdPartyData, error) {
 	return thirdParties, nil
 }
 
-func parseCategory(tp thirdPartyData) coredata.VendorCategory {
+func parseCategory(tp thirdPartyData) coredata.ThirdPartyCategory {
 	if tp.Category == nil || *tp.Category == "" {
-		return coredata.VendorCategoryOther
+		return coredata.ThirdPartyCategoryOther
 	}
 
-	var c coredata.VendorCategory
+	var c coredata.ThirdPartyCategory
 	if err := c.Scan(*tp.Category); err != nil {
 		fmt.Fprintf(os.Stderr, "warning: third party %q has unknown category %q, falling back to OTHER\n", tp.Name, *tp.Category)
-		return coredata.VendorCategoryOther
+		return coredata.ThirdPartyCategoryOther
 	}
 
 	return c

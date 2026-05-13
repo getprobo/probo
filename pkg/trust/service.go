@@ -65,7 +65,7 @@ type (
 		TrustCenters           *TrustCenterService
 		Documents              *DocumentService
 		Audits                 *AuditService
-		Vendors                *VendorService
+		ThirdParties           *ThirdPartyService
 		Frameworks             *FrameworkService
 		ComplianceFrameworks   *ComplianceFrameworkService
 		TrustCenterAccesses    *TrustCenterAccessService
@@ -124,7 +124,7 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 	tenantService.TrustCenters = &TrustCenterService{svc: tenantService}
 	tenantService.Documents = &DocumentService{svc: tenantService, html2pdfConverter: s.html2pdfConverter}
 	tenantService.Audits = &AuditService{svc: tenantService}
-	tenantService.Vendors = &VendorService{svc: tenantService}
+	tenantService.ThirdParties = &ThirdPartyService{svc: tenantService}
 	tenantService.Frameworks = &FrameworkService{svc: tenantService}
 	tenantService.ComplianceFrameworks = &ComplianceFrameworkService{svc: tenantService}
 	tenantService.TrustCenterAccesses = &TrustCenterAccessService{svc: tenantService, iamSvc: s.iam, logger: s.logger}

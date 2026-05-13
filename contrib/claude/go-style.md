@@ -131,7 +131,7 @@ if errors.As(err, &ve) {
 - Constructors: `New*` (e.g. `NewService`, `NewServer`, `NewBridge`)
 - Config structs: `*Config` suffix (e.g. `APIConfig`, `PgConfig`, `TrustCenterConfig`)
 - Request structs: `*Request` suffix (e.g. `UpdateTrustCenterRequest`)
-- Unexported types for internal data: lowercase (e.g. `vendorInfo`, `ctxKey`)
+- Unexported types for internal data: lowercase (e.g. `thirdPartyInfo`, `ctxKey`)
 
 ## Functional options and Config structs
 

@@ -449,26 +449,26 @@ func (s *GeneratedDocumentService) buildDataListDocumentData(
 			ownerName = p.FullName
 		}
 
-		var vendors coredata.Vendors
-		if err := vendors.LoadAllByDatumID(ctx, conn, s.svc.scope, d.ID); err != nil {
-			return docgen.DataListData{}, fmt.Errorf("cannot load vendors for datum %s: %w", d.ID, err)
+		var thirdParties coredata.ThirdParties
+		if err := thirdParties.LoadAllByDatumID(ctx, conn, s.svc.scope, d.ID); err != nil {
+			return docgen.DataListData{}, fmt.Errorf("cannot load thirdParties for datum %s: %w", d.ID, err)
 		}
 
-		vendorNames := make([]string, 0, len(vendors))
-		for _, v := range vendors {
-			vendorNames = append(vendorNames, v.Name)
+		thirdPartyNames := make([]string, 0, len(thirdParties))
+		for _, v := range thirdParties {
+			thirdPartyNames = append(thirdPartyNames, v.Name)
 		}
 
-		vendorStr := "-"
-		if len(vendorNames) > 0 {
-			vendorStr = strings.Join(vendorNames, ", ")
+		thirdPartyStr := "-"
+		if len(thirdPartyNames) > 0 {
+			thirdPartyStr = strings.Join(thirdPartyNames, ", ")
 		}
 
 		rows = append(rows, docgen.DataListRow{
 			Name:           d.Name,
 			Classification: formatClassification(d.DataClassification),
 			Owner:          ownerName,
-			Vendors:        vendorStr,
+			ThirdParties:   thirdPartyStr,
 		})
 	}
 
@@ -685,19 +685,19 @@ func (s *GeneratedDocumentService) buildAssetListDocumentData(
 			ownerName = p.FullName
 		}
 
-		var vendors coredata.Vendors
-		if err := vendors.LoadAllByAssetID(ctx, conn, s.svc.scope, a.ID); err != nil {
-			return docgen.AssetListData{}, fmt.Errorf("cannot load vendors for asset %s: %w", a.ID, err)
+		var thirdParties coredata.ThirdParties
+		if err := thirdParties.LoadAllByAssetID(ctx, conn, s.svc.scope, a.ID); err != nil {
+			return docgen.AssetListData{}, fmt.Errorf("cannot load thirdParties for asset %s: %w", a.ID, err)
 		}
 
-		vendorNames := make([]string, 0, len(vendors))
-		for _, v := range vendors {
-			vendorNames = append(vendorNames, v.Name)
+		thirdPartyNames := make([]string, 0, len(thirdParties))
+		for _, v := range thirdParties {
+			thirdPartyNames = append(thirdPartyNames, v.Name)
 		}
 
-		vendorStr := "-"
-		if len(vendorNames) > 0 {
-			vendorStr = strings.Join(vendorNames, ", ")
+		thirdPartyStr := "-"
+		if len(thirdPartyNames) > 0 {
+			thirdPartyStr = strings.Join(thirdPartyNames, ", ")
 		}
 
 		rows = append(rows, docgen.AssetListRow{
@@ -706,7 +706,7 @@ func (s *GeneratedDocumentService) buildAssetListDocumentData(
 			Amount:          a.Amount,
 			DataTypesStored: stringOrNotSpecified(a.DataTypesStored),
 			Owner:           ownerName,
-			Vendors:         vendorStr,
+			ThirdParties:    thirdPartyStr,
 		})
 	}
 
@@ -1488,10 +1488,10 @@ func (s *GeneratedDocumentService) buildProcessingActivityListDocumentData(
 		}, nil
 	}
 
-	var vendors coredata.Vendors
-	vendorMap, err := vendors.LoadAllByProcessingActivities(ctx, conn, s.svc.scope, organization.ID)
+	var thirdParties coredata.ThirdParties
+	thirdPartyMap, err := thirdParties.LoadAllByProcessingActivities(ctx, conn, s.svc.scope, organization.ID)
 	if err != nil {
-		return docgen.ProcessingActivityListData{}, fmt.Errorf("cannot load vendors: %w", err)
+		return docgen.ProcessingActivityListData{}, fmt.Errorf("cannot load thirdParties: %w", err)
 	}
 
 	dpoIDs := make([]gid.GID, 0, len(processingActivities))
@@ -1526,9 +1526,9 @@ func (s *GeneratedDocumentService) buildProcessingActivityListDocumentData(
 			}
 		}
 
-		vendorStr := "None"
-		if vendorNames, ok := vendorMap[pa.ID]; ok && len(vendorNames) > 0 {
-			vendorStr = strings.Join(vendorNames, ", ")
+		thirdPartyStr := "None"
+		if thirdPartyNames, ok := thirdPartyMap[pa.ID]; ok && len(thirdPartyNames) > 0 {
+			thirdPartyStr = strings.Join(thirdPartyNames, ", ")
 		}
 
 		rows = append(rows, docgen.ProcessingActivityListRow{
@@ -1551,7 +1551,7 @@ func (s *GeneratedDocumentService) buildProcessingActivityListDocumentData(
 			LastReviewDate:                       formatDateOrNotSpecified(pa.LastReviewDate),
 			NextReviewDate:                       formatDateOrNotSpecified(pa.NextReviewDate),
 			DataProtectionOfficer:                dpoName,
-			Vendors:                              vendorStr,
+			ThirdParties:                         thirdPartyStr,
 		})
 	}
 
@@ -2132,17 +2132,17 @@ func BuildTransferImpactAssessmentListDocument(data docgen.TransferImpactAssessm
 	return buf.String(), nil
 }
 
-func (s *GeneratedDocumentService) PublishVendorList(
+func (s *GeneratedDocumentService) PublishThirdPartyList(
 	ctx context.Context,
 	organizationID gid.GID,
 	approverIDs []gid.GID,
 	minor bool,
 ) (*coredata.Document, *coredata.DocumentVersion, error) {
 	// Phase 1: collect data and render the prosemirror document outside any
-	// write transaction. Both the bulk reads of vendors + sub-entities and the
+	// write transaction. Both the bulk reads of thirdParties + sub-entities and the
 	// JSON template rendering are slow enough that holding write locks across
 	// them would needlessly block other writers.
-	var documentData docgen.VendorListData
+	var documentData docgen.ThirdPartyListData
 	err := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		organization := &coredata.Organization{}
 		if err := organization.LoadByID(ctx, conn, s.svc.scope, organizationID); err != nil {
@@ -2150,7 +2150,7 @@ func (s *GeneratedDocumentService) PublishVendorList(
 		}
 
 		var err error
-		documentData, err = s.buildVendorListDocumentData(ctx, conn, organization)
+		documentData, err = s.buildThirdPartyListDocumentData(ctx, conn, organization)
 		if err != nil {
 			return fmt.Errorf("cannot build document data: %w", err)
 		}
@@ -2160,7 +2160,7 @@ func (s *GeneratedDocumentService) PublishVendorList(
 		return nil, nil, err
 	}
 
-	prosemirrorJSON, err := BuildVendorListDocument(documentData)
+	prosemirrorJSON, err := BuildThirdPartyListDocument(documentData)
 	if err != nil {
 		return nil, nil, fmt.Errorf("cannot build prosemirror document: %w", err)
 	}
@@ -2176,24 +2176,24 @@ func (s *GeneratedDocumentService) PublishVendorList(
 		func(ctx context.Context, tx pg.Tx) error {
 			now := time.Now()
 
-			vendor := coredata.Vendor{}
-			vendorDocumentID, err := vendor.GetGeneratedDocumentID(ctx, tx, organizationID)
+			thirdParty := coredata.ThirdParty{}
+			thirdPartyDocumentID, err := thirdParty.GetGeneratedDocumentID(ctx, tx, organizationID)
 			if err != nil {
 				return fmt.Errorf("cannot query generated documents: %w", err)
 			}
 
 			var existingDoc *coredata.Document
-			if vendorDocumentID != nil {
+			if thirdPartyDocumentID != nil {
 				doc := &coredata.Document{}
-				err = doc.LoadByID(ctx, tx, s.svc.scope, *vendorDocumentID)
+				err = doc.LoadByID(ctx, tx, s.svc.scope, *thirdPartyDocumentID)
 				if err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
-					return fmt.Errorf("cannot load vendor list document: %w", err)
+					return fmt.Errorf("cannot load thirdParty list document: %w", err)
 				}
 
 				if err == nil && doc.ArchivedAt == nil {
 					existingDoc = doc
 				} else {
-					if err := vendor.ClearGeneratedDocumentID(ctx, tx, []gid.GID{*vendorDocumentID}); err != nil {
+					if err := thirdParty.ClearGeneratedDocumentID(ctx, tx, []gid.GID{*thirdPartyDocumentID}); err != nil {
 						return fmt.Errorf("cannot clear document reference: %w", err)
 					}
 				}
@@ -2216,7 +2216,7 @@ func (s *GeneratedDocumentService) PublishVendorList(
 					return fmt.Errorf("cannot insert document: %w", err)
 				}
 
-				if err := vendor.UpsertGeneratedDocumentID(ctx, tx, organizationID, s.svc.scope.GetTenantID(), documentID); err != nil {
+				if err := thirdParty.UpsertGeneratedDocumentID(ctx, tx, organizationID, s.svc.scope.GetTenantID(), documentID); err != nil {
 					return fmt.Errorf("cannot upsert generated documents: %w", err)
 				}
 			} else {
@@ -2228,7 +2228,7 @@ func (s *GeneratedDocumentService) PublishVendorList(
 				ID:             documentVersionID,
 				OrganizationID: organizationID,
 				DocumentID:     document.ID,
-				Title:          "Vendors",
+				Title:          "ThirdParties",
 				Content:        prosemirrorJSON,
 				Classification: coredata.DocumentClassificationConfidential,
 				DocumentType:   coredata.DocumentTypeRegister,
@@ -2248,47 +2248,47 @@ func (s *GeneratedDocumentService) PublishVendorList(
 	return document, documentVersion, nil
 }
 
-func (s *GeneratedDocumentService) GetVendorsDocumentID(
+func (s *GeneratedDocumentService) GetThirdPartiesDocumentID(
 	ctx context.Context,
 	organizationID gid.GID,
 ) (*gid.GID, error) {
 	var documentID *gid.GID
 
 	err := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-		vendor := coredata.Vendor{}
+		thirdParty := coredata.ThirdParty{}
 		var err error
-		documentID, err = vendor.GetGeneratedDocumentID(ctx, conn, organizationID)
+		documentID, err = thirdParty.GetGeneratedDocumentID(ctx, conn, organizationID)
 		return err
 	})
 	if err != nil {
-		return nil, fmt.Errorf("cannot get vendor list document ID: %w", err)
+		return nil, fmt.Errorf("cannot get thirdParty list document ID: %w", err)
 	}
 
 	return documentID, nil
 }
 
-func (s *GeneratedDocumentService) buildVendorListDocumentData(
+func (s *GeneratedDocumentService) buildThirdPartyListDocumentData(
 	ctx context.Context,
 	conn pg.Querier,
 	organization *coredata.Organization,
-) (docgen.VendorListData, error) {
-	var vendors coredata.Vendors
-	if err := vendors.LoadAllByOrganizationID(ctx, conn, s.svc.scope, organization.ID); err != nil {
-		return docgen.VendorListData{}, fmt.Errorf("cannot load vendors: %w", err)
+) (docgen.ThirdPartyListData, error) {
+	var thirdParties coredata.ThirdParties
+	if err := thirdParties.LoadAllByOrganizationID(ctx, conn, s.svc.scope, organization.ID); err != nil {
+		return docgen.ThirdPartyListData{}, fmt.Errorf("cannot load thirdParties: %w", err)
 	}
 
-	if len(vendors) == 0 {
-		return docgen.VendorListData{
-			Title:            "Vendors",
-			OrganizationName: organization.Name,
-			CreatedAt:        time.Now(),
-			TotalVendors:     0,
+	if len(thirdParties) == 0 {
+		return docgen.ThirdPartyListData{
+			Title:             "ThirdParties",
+			OrganizationName:  organization.Name,
+			CreatedAt:         time.Now(),
+			TotalThirdParties: 0,
 		}, nil
 	}
 
 	ownerIDSet := make(map[gid.GID]struct{})
 	ownerIDs := make([]gid.GID, 0)
-	for _, v := range vendors {
+	for _, v := range thirdParties {
 		if v.BusinessOwnerID != nil {
 			if _, ok := ownerIDSet[*v.BusinessOwnerID]; !ok {
 				ownerIDs = append(ownerIDs, *v.BusinessOwnerID)
@@ -2307,79 +2307,79 @@ func (s *GeneratedDocumentService) buildVendorListDocumentData(
 	if len(ownerIDs) > 0 {
 		var profiles coredata.MembershipProfiles
 		if err := profiles.LoadByIDs(ctx, conn, s.svc.scope, ownerIDs); err != nil {
-			return docgen.VendorListData{}, fmt.Errorf("cannot load owner profiles: %w", err)
+			return docgen.ThirdPartyListData{}, fmt.Errorf("cannot load owner profiles: %w", err)
 		}
 		for _, p := range profiles {
 			profileMap[p.ID] = p
 		}
 	}
 
-	vendorIDs := make([]gid.GID, len(vendors))
-	for i, v := range vendors {
-		vendorIDs[i] = v.ID
+	thirdPartyIDs := make([]gid.GID, len(thirdParties))
+	for i, v := range thirdParties {
+		thirdPartyIDs[i] = v.ID
 	}
 
-	var allServices coredata.VendorServices
-	if err := allServices.LoadByVendorIDs(ctx, conn, s.svc.scope, vendorIDs); err != nil {
-		return docgen.VendorListData{}, fmt.Errorf("cannot load vendor services: %w", err)
+	var allServices coredata.ThirdPartyServices
+	if err := allServices.LoadByThirdPartyIDs(ctx, conn, s.svc.scope, thirdPartyIDs); err != nil {
+		return docgen.ThirdPartyListData{}, fmt.Errorf("cannot load thirdParty services: %w", err)
 	}
-	servicesByVendor := make(map[gid.GID]coredata.VendorServices, len(vendors))
+	servicesByThirdParty := make(map[gid.GID]coredata.ThirdPartyServices, len(thirdParties))
 	for _, vs := range allServices {
-		servicesByVendor[vs.VendorID] = append(servicesByVendor[vs.VendorID], vs)
+		servicesByThirdParty[vs.ThirdPartyID] = append(servicesByThirdParty[vs.ThirdPartyID], vs)
 	}
 
-	var allContacts coredata.VendorContacts
-	if err := allContacts.LoadByVendorIDs(ctx, conn, s.svc.scope, vendorIDs); err != nil {
-		return docgen.VendorListData{}, fmt.Errorf("cannot load vendor contacts: %w", err)
+	var allContacts coredata.ThirdPartyContacts
+	if err := allContacts.LoadByThirdPartyIDs(ctx, conn, s.svc.scope, thirdPartyIDs); err != nil {
+		return docgen.ThirdPartyListData{}, fmt.Errorf("cannot load thirdParty contacts: %w", err)
 	}
-	contactsByVendor := make(map[gid.GID]coredata.VendorContacts, len(vendors))
+	contactsByThirdParty := make(map[gid.GID]coredata.ThirdPartyContacts, len(thirdParties))
 	for _, c := range allContacts {
-		contactsByVendor[c.VendorID] = append(contactsByVendor[c.VendorID], c)
+		contactsByThirdParty[c.ThirdPartyID] = append(contactsByThirdParty[c.ThirdPartyID], c)
 	}
 
-	var allAssessments coredata.VendorRiskAssessments
-	if err := allAssessments.LoadByVendorIDs(ctx, conn, s.svc.scope, vendorIDs); err != nil {
-		return docgen.VendorListData{}, fmt.Errorf("cannot load vendor risk assessments: %w", err)
+	var allAssessments coredata.ThirdPartyRiskAssessments
+	if err := allAssessments.LoadByThirdPartyIDs(ctx, conn, s.svc.scope, thirdPartyIDs); err != nil {
+		return docgen.ThirdPartyListData{}, fmt.Errorf("cannot load thirdParty risk assessments: %w", err)
 	}
-	assessmentsByVendor := make(map[gid.GID]coredata.VendorRiskAssessments, len(vendors))
+	assessmentsByThirdParty := make(map[gid.GID]coredata.ThirdPartyRiskAssessments, len(thirdParties))
 	for _, ra := range allAssessments {
-		assessmentsByVendor[ra.VendorID] = append(assessmentsByVendor[ra.VendorID], ra)
+		assessmentsByThirdParty[ra.ThirdPartyID] = append(assessmentsByThirdParty[ra.ThirdPartyID], ra)
 	}
 
-	var allReports coredata.VendorComplianceReports
-	if err := allReports.LoadByVendorIDs(ctx, conn, s.svc.scope, vendorIDs); err != nil {
-		return docgen.VendorListData{}, fmt.Errorf("cannot load vendor compliance reports: %w", err)
+	var allReports coredata.ThirdPartyComplianceReports
+	if err := allReports.LoadByThirdPartyIDs(ctx, conn, s.svc.scope, thirdPartyIDs); err != nil {
+		return docgen.ThirdPartyListData{}, fmt.Errorf("cannot load thirdParty compliance reports: %w", err)
 	}
-	reportsByVendor := make(map[gid.GID]coredata.VendorComplianceReports, len(vendors))
+	reportsByThirdParty := make(map[gid.GID]coredata.ThirdPartyComplianceReports, len(thirdParties))
 	for _, r := range allReports {
-		reportsByVendor[r.VendorID] = append(reportsByVendor[r.VendorID], r)
+		reportsByThirdParty[r.ThirdPartyID] = append(reportsByThirdParty[r.ThirdPartyID], r)
 	}
 
-	var allBAAs coredata.VendorBusinessAssociateAgreements
-	if err := allBAAs.LoadByVendorIDs(ctx, conn, s.svc.scope, vendorIDs); err != nil {
-		return docgen.VendorListData{}, fmt.Errorf("cannot load vendor business associate agreements: %w", err)
+	var allBAAs coredata.ThirdPartyBusinessAssociateAgreements
+	if err := allBAAs.LoadByThirdPartyIDs(ctx, conn, s.svc.scope, thirdPartyIDs); err != nil {
+		return docgen.ThirdPartyListData{}, fmt.Errorf("cannot load thirdParty business associate agreements: %w", err)
 	}
-	baaByVendor := make(map[gid.GID]*coredata.VendorBusinessAssociateAgreement, len(allBAAs))
+	baaByThirdParty := make(map[gid.GID]*coredata.ThirdPartyBusinessAssociateAgreement, len(allBAAs))
 	for _, b := range allBAAs {
-		baaByVendor[b.VendorID] = b
+		baaByThirdParty[b.ThirdPartyID] = b
 	}
 
-	var allDPAs coredata.VendorDataPrivacyAgreements
-	if err := allDPAs.LoadByVendorIDs(ctx, conn, s.svc.scope, vendorIDs); err != nil {
-		return docgen.VendorListData{}, fmt.Errorf("cannot load vendor data privacy agreements: %w", err)
+	var allDPAs coredata.ThirdPartyDataPrivacyAgreements
+	if err := allDPAs.LoadByThirdPartyIDs(ctx, conn, s.svc.scope, thirdPartyIDs); err != nil {
+		return docgen.ThirdPartyListData{}, fmt.Errorf("cannot load thirdParty data privacy agreements: %w", err)
 	}
-	dpaByVendor := make(map[gid.GID]*coredata.VendorDataPrivacyAgreement, len(allDPAs))
+	dpaByThirdParty := make(map[gid.GID]*coredata.ThirdPartyDataPrivacyAgreement, len(allDPAs))
 	for _, d := range allDPAs {
-		dpaByVendor[d.VendorID] = d
+		dpaByThirdParty[d.ThirdPartyID] = d
 	}
 
-	rows := make([]docgen.VendorListRow, 0, len(vendors))
-	for _, v := range vendors {
-		row := docgen.VendorListRow{
+	rows := make([]docgen.ThirdPartyListRow, 0, len(thirdParties))
+	for _, v := range thirdParties {
+		row := docgen.ThirdPartyListRow{
 			Name:                          v.Name,
 			LegalName:                     derefStringOrNotSpecified(v.LegalName),
 			Description:                   derefStringOrNotSpecified(v.Description),
-			Category:                      formatVendorCategory(v.Category),
+			Category:                      formatThirdPartyCategory(v.Category),
 			HeadquarterAddress:            derefStringOrNotSpecified(v.HeadquarterAddress),
 			WebsiteURL:                    derefStringOrNotSpecified(v.WebsiteURL),
 			PrivacyPolicyURL:              derefStringOrNotSpecified(v.PrivacyPolicyURL),
@@ -2397,19 +2397,19 @@ func (s *GeneratedDocumentService) buildVendorListDocumentData(
 			SecurityOwner:                 lookupProfileName(profileMap, v.SecurityOwnerID),
 		}
 
-		for _, vs := range servicesByVendor[v.ID] {
-			row.Services = append(row.Services, docgen.VendorListService{
+		for _, vs := range servicesByThirdParty[v.ID] {
+			row.Services = append(row.Services, docgen.ThirdPartyListService{
 				Name:        vs.Name,
 				Description: derefStringOrNotSpecified(vs.Description),
 			})
 		}
 
-		for _, c := range contactsByVendor[v.ID] {
+		for _, c := range contactsByThirdParty[v.ID] {
 			email := ""
 			if c.Email != nil {
 				email = c.Email.String()
 			}
-			row.Contacts = append(row.Contacts, docgen.VendorListContact{
+			row.Contacts = append(row.Contacts, docgen.ThirdPartyListContact{
 				FullName: derefStringOrNotSpecified(c.FullName),
 				Email:    stringOrNotSpecified(email),
 				Phone:    derefStringOrNotSpecified(c.Phone),
@@ -2417,8 +2417,8 @@ func (s *GeneratedDocumentService) buildVendorListDocumentData(
 			})
 		}
 
-		for _, ra := range assessmentsByVendor[v.ID] {
-			row.RiskAssessments = append(row.RiskAssessments, docgen.VendorListRiskAssessment{
+		for _, ra := range assessmentsByThirdParty[v.ID] {
+			row.RiskAssessments = append(row.RiskAssessments, docgen.ThirdPartyListRiskAssessment{
 				AssessedAt:      ra.CreatedAt.Format("2006-01-02"),
 				ExpiresAt:       ra.ExpiresAt.Format("2006-01-02"),
 				DataSensitivity: formatDataSensitivity(ra.DataSensitivity),
@@ -2427,23 +2427,23 @@ func (s *GeneratedDocumentService) buildVendorListDocumentData(
 			})
 		}
 
-		for _, r := range reportsByVendor[v.ID] {
-			row.ComplianceReports = append(row.ComplianceReports, docgen.VendorListComplianceReport{
+		for _, r := range reportsByThirdParty[v.ID] {
+			row.ComplianceReports = append(row.ComplianceReports, docgen.ThirdPartyListComplianceReport{
 				ReportName: r.ReportName,
 				ReportDate: r.ReportDate.Format("2006-01-02"),
 				ValidUntil: formatTimeOrNotSpecified(r.ValidUntil),
 			})
 		}
 
-		if baa := baaByVendor[v.ID]; baa != nil {
-			row.BusinessAssociateAgreement = &docgen.VendorListAgreement{
+		if baa := baaByThirdParty[v.ID]; baa != nil {
+			row.BusinessAssociateAgreement = &docgen.ThirdPartyListAgreement{
 				ValidFrom:  formatTimeOrNotSpecified(baa.ValidFrom),
 				ValidUntil: formatTimeOrNotSpecified(baa.ValidUntil),
 			}
 		}
 
-		if dpa := dpaByVendor[v.ID]; dpa != nil {
-			row.DataPrivacyAgreement = &docgen.VendorListAgreement{
+		if dpa := dpaByThirdParty[v.ID]; dpa != nil {
+			row.DataPrivacyAgreement = &docgen.ThirdPartyListAgreement{
 				ValidFrom:  formatTimeOrNotSpecified(dpa.ValidFrom),
 				ValidUntil: formatTimeOrNotSpecified(dpa.ValidUntil),
 			}
@@ -2452,12 +2452,12 @@ func (s *GeneratedDocumentService) buildVendorListDocumentData(
 		rows = append(rows, row)
 	}
 
-	return docgen.VendorListData{
-		Title:            "Vendors",
-		OrganizationName: organization.Name,
-		CreatedAt:        time.Now(),
-		TotalVendors:     len(vendors),
-		Rows:             rows,
+	return docgen.ThirdPartyListData{
+		Title:             "ThirdParties",
+		OrganizationName:  organization.Name,
+		CreatedAt:         time.Now(),
+		TotalThirdParties: len(thirdParties),
+		Rows:              rows,
 	}, nil
 }
 
@@ -2535,59 +2535,59 @@ func formatBusinessImpact(b coredata.BusinessImpact) string {
 	}
 }
 
-func formatVendorCategory(c coredata.VendorCategory) string {
+func formatThirdPartyCategory(c coredata.ThirdPartyCategory) string {
 	switch c {
-	case coredata.VendorCategoryAnalytics:
+	case coredata.ThirdPartyCategoryAnalytics:
 		return "Analytics"
-	case coredata.VendorCategoryCloudMonitoring:
+	case coredata.ThirdPartyCategoryCloudMonitoring:
 		return "Cloud Monitoring"
-	case coredata.VendorCategoryCloudProvider:
+	case coredata.ThirdPartyCategoryCloudProvider:
 		return "Cloud Provider"
-	case coredata.VendorCategoryCollaboration:
+	case coredata.ThirdPartyCategoryCollaboration:
 		return "Collaboration"
-	case coredata.VendorCategoryCustomerSupport:
+	case coredata.ThirdPartyCategoryCustomerSupport:
 		return "Customer Support"
-	case coredata.VendorCategoryDataStorageAndProcessing:
+	case coredata.ThirdPartyCategoryDataStorageAndProcessing:
 		return "Data Storage and Processing"
-	case coredata.VendorCategoryDocumentManagement:
+	case coredata.ThirdPartyCategoryDocumentManagement:
 		return "Document Management"
-	case coredata.VendorCategoryEmployeeManagement:
+	case coredata.ThirdPartyCategoryEmployeeManagement:
 		return "Employee Management"
-	case coredata.VendorCategoryEngineering:
+	case coredata.ThirdPartyCategoryEngineering:
 		return "Engineering"
-	case coredata.VendorCategoryFinance:
+	case coredata.ThirdPartyCategoryFinance:
 		return "Finance"
-	case coredata.VendorCategoryIdentityProvider:
+	case coredata.ThirdPartyCategoryIdentityProvider:
 		return "Identity Provider"
-	case coredata.VendorCategoryIT:
+	case coredata.ThirdPartyCategoryIT:
 		return "IT"
-	case coredata.VendorCategoryMarketing:
+	case coredata.ThirdPartyCategoryMarketing:
 		return "Marketing"
-	case coredata.VendorCategoryOfficeOperations:
+	case coredata.ThirdPartyCategoryOfficeOperations:
 		return "Office Operations"
-	case coredata.VendorCategoryOther:
+	case coredata.ThirdPartyCategoryOther:
 		return "Other"
-	case coredata.VendorCategoryPasswordManagement:
+	case coredata.ThirdPartyCategoryPasswordManagement:
 		return "Password Management"
-	case coredata.VendorCategoryProductAndDesign:
+	case coredata.ThirdPartyCategoryProductAndDesign:
 		return "Product and Design"
-	case coredata.VendorCategoryProfessionalServices:
+	case coredata.ThirdPartyCategoryProfessionalServices:
 		return "Professional Services"
-	case coredata.VendorCategoryRecruiting:
+	case coredata.ThirdPartyCategoryRecruiting:
 		return "Recruiting"
-	case coredata.VendorCategorySales:
+	case coredata.ThirdPartyCategorySales:
 		return "Sales"
-	case coredata.VendorCategorySecurity:
+	case coredata.ThirdPartyCategorySecurity:
 		return "Security"
-	case coredata.VendorCategoryVersionControl:
+	case coredata.ThirdPartyCategoryVersionControl:
 		return "Version Control"
 	default:
 		return stringOrNotSpecified(string(c))
 	}
 }
 
-var vendorListTemplate = template.Must(
-	template.New("vendor_list.json.tmpl").
+var thirdPartyListTemplate = template.Must(
+	template.New("third_party_list.json.tmpl").
 		Funcs(template.FuncMap{
 			"json": func(v any) (string, error) {
 				b, err := json.Marshal(v)
@@ -2599,13 +2599,13 @@ var vendorListTemplate = template.Must(
 			"printf": fmt.Sprintf,
 			"add":    func(a, b int) int { return a + b },
 		}).
-		ParseFS(Templates, "templates/vendor_list.json.tmpl"),
+		ParseFS(Templates, "templates/third_party_list.json.tmpl"),
 )
 
-func BuildVendorListDocument(data docgen.VendorListData) (string, error) {
+func BuildThirdPartyListDocument(data docgen.ThirdPartyListData) (string, error) {
 	var buf bytes.Buffer
-	if err := vendorListTemplate.Execute(&buf, data); err != nil {
-		return "", fmt.Errorf("cannot execute vendor list template: %w", err)
+	if err := thirdPartyListTemplate.Execute(&buf, data); err != nil {
+		return "", fmt.Errorf("cannot execute thirdParty list template: %w", err)
 	}
 	return buf.String(), nil
 }

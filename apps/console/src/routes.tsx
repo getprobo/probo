@@ -47,7 +47,7 @@ import { rightsRequestRoutes } from "./routes/rightsRequestRoutes";
 import { riskRoutes } from "./routes/riskRoutes";
 import { statementsOfApplicabilityRoutes } from "./routes/statementsOfApplicabilityRoutes";
 import { taskRoutes } from "./routes/taskRoutes";
-import { vendorRoutes } from "./routes/vendorRoutes";
+import { thirdPartyRoutes } from "./routes/thirdPartyRoutes";
 
 const routes = [
   {
@@ -291,7 +291,7 @@ const routes = [
           ...riskRoutes,
           ...measureRoutes,
           ...documentsRoutes,
-          ...vendorRoutes,
+          ...thirdPartyRoutes,
           ...frameworkRoutes,
           ...taskRoutes,
           ...assetRoutes,

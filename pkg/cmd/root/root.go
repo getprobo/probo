@@ -46,12 +46,12 @@ import (
 	"go.probo.inc/probo/pkg/cmd/scim"
 	"go.probo.inc/probo/pkg/cmd/soa"
 	"go.probo.inc/probo/pkg/cmd/task"
+	"go.probo.inc/probo/pkg/cmd/thirdpartymgmt"
 	"go.probo.inc/probo/pkg/cmd/tia"
 	trackerpattern "go.probo.inc/probo/pkg/cmd/tracker-pattern"
 	trackerresource "go.probo.inc/probo/pkg/cmd/tracker-resource"
 	trustcenter "go.probo.inc/probo/pkg/cmd/trust-center"
 	"go.probo.inc/probo/pkg/cmd/user"
-	"go.probo.inc/probo/pkg/cmd/vendormgmt"
 	"go.probo.inc/probo/pkg/cmd/version"
 	"go.probo.inc/probo/pkg/cmd/webhook"
 )
@@ -120,7 +120,7 @@ func NewCmdRoot(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(tia.NewCmdTIA(f))
 	cmd.AddCommand(trustcenter.NewCmdTrustCenter(f))
 	cmd.AddCommand(user.NewCmdUser(f))
-	cmd.AddCommand(vendormgmt.NewCmdVendor(f))
+	cmd.AddCommand(thirdpartymgmt.NewCmdThirdParty(f))
 	cmd.AddCommand(version.NewCmdVersion(f))
 	cmd.AddCommand(webhook.NewCmdWebhook(f))
 

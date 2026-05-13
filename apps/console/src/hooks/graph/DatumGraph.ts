@@ -49,7 +49,7 @@ export const datumNodeQuery = graphql`
           id
           fullName
         }
-        vendors(first: 50) {
+        thirdParties(first: 50) {
           edges {
             node {
               id
@@ -86,7 +86,7 @@ export const createDatumMutation = graphql`
             id
             fullName
           }
-          vendors(first: 50) {
+          thirdParties(first: 50) {
             edges {
               node {
                 id
@@ -115,7 +115,7 @@ export const updateDatumMutation = graphql`
           id
           fullName
         }
-        vendors(first: 50) {
+        thirdParties(first: 50) {
           edges {
             node {
               id
@@ -186,7 +186,7 @@ export const useCreateDatum = (connectionId: string) => {
     dataClassification: string;
     ownerId: string;
     organizationId: string;
-    vendorIds?: string[];
+    thirdPartyIds?: string[];
   }) => {
     if (!input.name?.trim()) {
       return alert(__("Failed to create data: name is required"));
@@ -217,7 +217,7 @@ export const useUpdateDatum = () => {
     name?: string;
     dataClassification?: string;
     ownerId?: string;
-    vendorIds?: string[];
+    thirdPartyIds?: string[];
   }) => {
     if (!input.id) {
       return alert(__("Failed to update data: missing id"));

@@ -299,7 +299,7 @@ func (impl *Implm) Run(
 		return err
 	}
 
-	vendorAssessor, err := impl.buildVendorAssessor(l, tp, r)
+	thirdPartyAssessor, err := impl.buildThirdPartyAssessor(l, tp, r)
 	if err != nil {
 		return err
 	}
@@ -491,7 +491,7 @@ func (impl *Implm) Run(
 		esignService,
 		defaultConnectorRegistry,
 		time.Duration(impl.cfg.Auth.InvitationConfirmationTokenValidity)*time.Second,
-		vendorAssessor,
+		thirdPartyAssessor,
 	)
 	if err != nil {
 		return fmt.Errorf("cannot create probo service: %w", err)

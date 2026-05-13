@@ -13,18 +13,18 @@ Follow the [seven rules of a great Git commit message](https://cbea.ms/git-commi
 The subject line should complete the sentence: "If applied, this commit will *your subject line here*".
 
 ```
-Add vendor assessment agent for third-party reviews
+Add third-party assessment agent for third-party reviews
 
 The existing changelog generator only covers internal changes.
 This introduces a dedicated agent that evaluates third-party
-vendors against our compliance criteria, producing a structured
+thirdParties against our compliance criteria, producing a structured
 risk report.
 ```
 
 Not every commit needs a body -- a single line is fine when the change is self-explanatory:
 
 ```
-Fix typo in vendor assessment prompt
+Fix typo in third-party assessment prompt
 ```
 
 ## Signing and Authorship

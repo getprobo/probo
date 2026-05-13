@@ -79,10 +79,10 @@ export function UserCard({ name }: UserCardProps) {
 
 ```tsx
 // Good — destructure in body when parameter-level destructuring would exceed the line-length limit
-export function VendorComplianceOverviewPanel(
-  props: VendorComplianceOverviewPanelProps,
+export function ThirdPartyComplianceOverviewPanel(
+  props: ThirdPartyComplianceOverviewPanelProps,
 ) {
-  const { className, vendorKey, onStatusChange } = props;
+  const { className, thirdPartyKey, onStatusChange } = props;
   // …
 }
 ```
@@ -139,11 +139,11 @@ export function Thing({ label }: ThingProps) {
 
 ```tsx
 // Good — rare exception: route entry default export (names still clear in module)
-type VendorsPageProps = {
-  queryRef: PreloadedQuery<VendorsQuery>;
+type ThirdPartiesPageProps = {
+  queryRef: PreloadedQuery<ThirdPartiesQuery>;
 };
 
-export default function VendorsPage({ queryRef }: VendorsPageProps) {
+export default function ThirdPartiesPage({ queryRef }: ThirdPartiesPageProps) {
   // …
 }
 ```
@@ -204,7 +204,7 @@ Use props for:
 ### Hooks for data and URL-derived identity
 
 - **Fetched data:** Colocate Relay fragments and queries per [`contrib/claude/relay.md`](relay.md) (`useFragment`, `useLazyLoadQuery`, `usePreloadedQuery`, etc.) in the component that needs the data.
-- **Route parameters:** Call `useParams()` (or a small `useOrganizationId()`-style hook) **inside** the component that needs the id — avoid drilling `organizationId` / `vendorId` from a parent that only read the URL to pass them down.
+- **Route parameters:** Call `useParams()` (or a small `useOrganizationId()`-style hook) **inside** the component that needs the id — avoid drilling `organizationId` / `thirdPartyId` from a parent that only read the URL to pass them down.
 
 ### Relay: framework wiring is not “business data props”
 
@@ -214,36 +214,36 @@ Relay sometimes requires **opaque handles** on props: e.g. **`queryRef`** for `u
 
 ```tsx
 // Bad — parent only needed the param to pass it down
-function VendorLayout() {
-  const { vendorId } = useParams();
+function ThirdPartyLayout() {
+  const { thirdPartyId } = useParams();
   return (
     <main>
-      <VendorSummary vendorId={vendorId!} />
+      <ThirdPartySummary thirdPartyId={thirdPartyId!} />
     </main>
   );
 }
 
-function VendorSummary({ vendorId }: { vendorId: string }) {
+function ThirdPartySummary({ thirdPartyId }: { thirdPartyId: string }) {
   return <div>{/* … */}</div>;
 }
 ```
 
 ```tsx
 // Good — component that needs the id reads it (or uses a dedicated hook)
-function VendorLayout() {
+function ThirdPartyLayout() {
   return (
     <main>
-      <VendorSummary />
+      <ThirdPartySummary />
     </main>
   );
 }
 
-function VendorSummary() {
-  const { vendorId } = useParams();
-  if (vendorId == null) {
+function ThirdPartySummary() {
+  const { thirdPartyId } = useParams();
+  if (thirdPartyId == null) {
     return null;
   }
-  return <div>{/* use vendorId in a hook / query … */}</div>;
+  return <div>{/* use thirdPartyId in a hook / query … */}</div>;
 }
 ```
 
@@ -251,13 +251,13 @@ function VendorSummary() {
 
 ```tsx
 // Bad — parent loaded data and passes fields as props
-function VendorPage() {
-  const vendor = useLazyLoadQuery(/* … */);
+function ThirdPartyPage() {
+  const thirdParty = useLazyLoadQuery(/* … */);
   return (
-    <VendorHeader
-      name={vendor.name}
-      riskScore={vendor.riskScore}
-      updatedAt={vendor.updatedAt}
+    <ThirdPartyHeader
+      name={thirdParty.name}
+      riskScore={thirdParty.riskScore}
+      updatedAt={thirdParty.updatedAt}
     />
   );
 }
@@ -265,24 +265,24 @@ function VendorPage() {
 
 ```tsx
 // Good — header colocates its fragment and reads via useFragment
-const vendorHeaderFragment = graphql`
-  fragment VendorHeader_vendor on Vendor {
+const thirdPartyHeaderFragment = graphql`
+  fragment ThirdPartyHeader_thirdParty on ThirdParty {
     name
     riskScore
     updatedAt
   }
 `;
 
-interface VendorHeaderProps {
+interface ThirdPartyHeaderProps {
   className?: string;
-  vendorKey: VendorHeader_vendor$key;
+  thirdPartyKey: ThirdPartyHeader_thirdParty$key;
 }
 
-export function VendorHeader({ className, vendorKey }: VendorHeaderProps) {
-  const vendor = useFragment(vendorHeaderFragment, vendorKey);
+export function ThirdPartyHeader({ className, thirdPartyKey }: ThirdPartyHeaderProps) {
+  const thirdParty = useFragment(thirdPartyHeaderFragment, thirdPartyKey);
   return (
     <header className={className}>
-      {/* render from vendor … */}
+      {/* render from thirdParty … */}
     </header>
   );
 }

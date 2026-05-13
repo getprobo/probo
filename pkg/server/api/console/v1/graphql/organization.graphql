@@ -317,15 +317,15 @@ type Organization implements Node {
         orderBy: CookieBannerOrder
     ): CookieBannerConnection @goField(forceResolver: true)
 
-    vendors(
+    thirdParties(
         first: Int
         after: CursorKey
         last: Int
         before: CursorKey
-        orderBy: VendorOrder
-    ): VendorConnection! @goField(forceResolver: true)
+        orderBy: ThirdPartyOrder
+    ): ThirdPartyConnection! @goField(forceResolver: true)
 
-    vendorsDocument: Document @goField(forceResolver: true)
+    thirdPartiesDocument: Document @goField(forceResolver: true)
 
     webhookSubscriptions(
         first: Int

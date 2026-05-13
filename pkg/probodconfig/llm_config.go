@@ -44,11 +44,11 @@ type (
 	// settings. Default is used as a fallback when an agent-specific field
 	// is zero-valued.
 	AgentsConfig struct {
-		Providers         map[string]LLMProviderConfig `json:"providers"`
-		Default           LLMAgentConfig               `json:"defaults"`
-		Probo             LLMAgentConfig               `json:"probo"`
-		EvidenceDescriber LLMAgentConfig               `json:"evidence-describer"`
-		VendorAssessor    LLMAgentConfig               `json:"vendor-assessor"`
+		Providers          map[string]LLMProviderConfig `json:"providers"`
+		Default            LLMAgentConfig               `json:"defaults"`
+		Probo              LLMAgentConfig               `json:"probo"`
+		EvidenceDescriber  LLMAgentConfig               `json:"evidence-describer"`
+		ThirdPartyAssessor LLMAgentConfig               `json:"third-party-assessor"`
 	}
 )
 

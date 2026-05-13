@@ -1,5 +1,5 @@
 <role>
-You are a document analyzer specialized in extracting compliance, privacy, and contractual information from vendor documents.
+You are a document analyzer specialized in extracting compliance, privacy, and contractual information from third party documents.
 </role>
 
 <task>

@@ -403,7 +403,7 @@ ORDER BY pa.name ASC;
 		return "", 0, nil
 	}
 
-	vendorMap, err := loadVendorsForSnapshot(ctx, tx, snapshotID)
+	thirdPartyMap, err := loadThirdPartiesForSnapshot(ctx, tx, snapshotID)
 	if err != nil {
 		return "", 0, err
 	}
@@ -415,9 +415,9 @@ ORDER BY pa.name ASC;
 			dpo = p.dpoName
 		}
 
-		vendors := "None"
-		if v, ok := vendorMap[p.id]; ok && len(v) > 0 {
-			vendors = strings.Join(v, ", ")
+		thirdParties := "None"
+		if v, ok := thirdPartyMap[p.id]; ok && len(v) > 0 {
+			thirdParties = strings.Join(v, ", ")
 		}
 
 		listRows[i] = docgen.ProcessingActivityListRow{
@@ -440,7 +440,7 @@ ORDER BY pa.name ASC;
 			LastReviewDate:                       formatDateOrNotSpecified(p.lastReviewDate),
 			NextReviewDate:                       formatDateOrNotSpecified(p.nextReviewDate),
 			DataProtectionOfficer:                dpo,
-			Vendors:                              vendors,
+			ThirdParties:                         thirdParties,
 		}
 	}
 
@@ -457,20 +457,20 @@ ORDER BY pa.name ASC;
 	return content, len(listRows), nil
 }
 
-func loadVendorsForSnapshot(ctx context.Context, tx pg.Tx, snapshotID string) (map[gid.GID][]string, error) {
+func loadThirdPartiesForSnapshot(ctx context.Context, tx pg.Tx, snapshotID string) (map[gid.GID][]string, error) {
 	rows, err := tx.Query(
 		ctx,
 		`
 SELECT pav.processing_activity_id, v.name
-FROM processing_activity_vendors pav
-INNER JOIN vendors v ON v.id = pav.vendor_id
+FROM processing_activity_third_parties pav
+INNER JOIN third_parties v ON v.id = pav.third_party_id
 WHERE pav.snapshot_id = @snapshot_id
 ORDER BY pav.processing_activity_id, v.name;
 `,
 		pgx.NamedArgs{"snapshot_id": snapshotID},
 	)
 	if err != nil {
-		return nil, fmt.Errorf("cannot load snapshot vendors: %w", err)
+		return nil, fmt.Errorf("cannot load snapshot thirdParties: %w", err)
 	}
 	defer rows.Close()
 
@@ -479,7 +479,7 @@ ORDER BY pav.processing_activity_id, v.name;
 		var paID gid.GID
 		var name string
 		if err := rows.Scan(&paID, &name); err != nil {
-			return nil, fmt.Errorf("cannot scan vendor row: %w", err)
+			return nil, fmt.Errorf("cannot scan thirdParty row: %w", err)
 		}
 		result[paID] = append(result[paID], name)
 	}

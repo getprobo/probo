@@ -7,7 +7,7 @@ Custom fluent validation API in `pkg/validator/`. Used in every service method t
 Create a validator, chain `Check()` calls for each field, then call `Error()` to get accumulated errors:
 
 ```go
-func (req *CreateVendorRequest) Validate() error {
+func (req *CreateThirdPartyRequest) Validate() error {
 	v := validator.New()
 
 	v.Check(req.OrganizationID, "organization_id",
@@ -19,7 +19,7 @@ func (req *CreateVendorRequest) Validate() error {
 		validator.SafeTextNoNewLine(TitleMaxLength),
 	)
 	v.Check(req.Category, "category",
-		validator.OneOfSlice(coredata.VendorCategories()),
+		validator.OneOfSlice(coredata.ThirdPartyCategories()),
 	)
 
 	return v.Error()
@@ -81,7 +81,7 @@ v.CheckEach(ids, "ids", func(index int, item any) {
 	gidValue := item.(gid.GID)
 	v.Check(gidValue, fmt.Sprintf("ids[%d]", index),
 		validator.Required(),
-		validator.GID(coredata.VendorEntityType),
+		validator.GID(coredata.ThirdPartyEntityType),
 	)
 })
 ```
@@ -135,7 +135,7 @@ Validation errors flow naturally through Go's error interface:
 3. GraphQL/HTTP handlers convert `ValidationErrors` to appropriate response format
 
 ```go
-func (s *Service) CreateVendor(ctx context.Context, req CreateVendorRequest) (*coredata.Vendor, error) {
+func (s *Service) CreateThirdParty(ctx context.Context, req CreateThirdPartyRequest) (*coredata.ThirdParty, error) {
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}

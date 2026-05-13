@@ -20,21 +20,21 @@ import (
 )
 
 type CommonThirdParty struct {
-	ID                         gid.GID                 `json:"id"`
-	Name                       string                  `json:"name"`
-	Category                   coredata.VendorCategory `json:"category"`
-	WebsiteURL                 *string                 `json:"websiteUrl,omitempty"`
-	HeadquarterAddress         *string                 `json:"headquarterAddress,omitempty"`
-	LegalName                  *string                 `json:"legalName,omitempty"`
-	PrivacyPolicyURL           *string                 `json:"privacyPolicyUrl,omitempty"`
-	ServiceLevelAgreementURL   *string                 `json:"serviceLevelAgreementUrl,omitempty"`
-	DataProcessingAgreementURL *string                 `json:"dataProcessingAgreementUrl,omitempty"`
-	Certifications             []string                `json:"certifications"`
-	SecurityPageURL            *string                 `json:"securityPageUrl,omitempty"`
-	TrustPageURL               *string                 `json:"trustPageUrl,omitempty"`
-	StatusPageURL              *string                 `json:"statusPageUrl,omitempty"`
-	TermsOfServiceURL          *string                 `json:"termsOfServiceUrl,omitempty"`
-	LogoFileID                 *gid.GID                `json:"logoFileId,omitempty"`
+	ID                         gid.GID                     `json:"id"`
+	Name                       string                      `json:"name"`
+	Category                   coredata.ThirdPartyCategory `json:"category"`
+	WebsiteURL                 *string                     `json:"websiteUrl,omitempty"`
+	HeadquarterAddress         *string                     `json:"headquarterAddress,omitempty"`
+	LegalName                  *string                     `json:"legalName,omitempty"`
+	PrivacyPolicyURL           *string                     `json:"privacyPolicyUrl,omitempty"`
+	ServiceLevelAgreementURL   *string                     `json:"serviceLevelAgreementUrl,omitempty"`
+	DataProcessingAgreementURL *string                     `json:"dataProcessingAgreementUrl,omitempty"`
+	Certifications             []string                    `json:"certifications"`
+	SecurityPageURL            *string                     `json:"securityPageUrl,omitempty"`
+	TrustPageURL               *string                     `json:"trustPageUrl,omitempty"`
+	StatusPageURL              *string                     `json:"statusPageUrl,omitempty"`
+	TermsOfServiceURL          *string                     `json:"termsOfServiceUrl,omitempty"`
+	LogoFileID                 *gid.GID                    `json:"logoFileId,omitempty"`
 }
 
 func NewCommonThirdParty(c *coredata.CommonThirdParty) *CommonThirdParty {

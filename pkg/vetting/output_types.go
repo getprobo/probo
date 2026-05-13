@@ -26,10 +26,10 @@ type (
 	}
 
 	CrawlerOutput struct {
-		VendorName     string          `json:"vendor_name" jsonschema:"The vendor's display name as found on the website"`
-		VendorDomain   string          `json:"vendor_domain" jsonschema:"The vendor's primary domain"`
-		DiscoveredURLs []DiscoveredURL `json:"discovered_urls" jsonschema:"All categorized URLs discovered during crawling"`
-		Notes          string          `json:"notes" jsonschema:"Observations about the site structure or crawl limitations"`
+		ThirdPartyName   string          `json:"third_party_name" jsonschema:"The third_party's display name as found on the website"`
+		ThirdPartyDomain string          `json:"third_party_domain" jsonschema:"The third_party's primary domain"`
+		DiscoveredURLs   []DiscoveredURL `json:"discovered_urls" jsonschema:"All categorized URLs discovered during crawling"`
+		Notes            string          `json:"notes" jsonschema:"Observations about the site structure or crawl limitations"`
 	}
 
 	// --- Security ---
@@ -201,7 +201,7 @@ type (
 	// --- Professional Standing ---
 
 	ProfessionalStandingOutput struct {
-		VendorType      string   `json:"vendor_type" jsonschema:"Type of professional services firm: law_firm, accounting, consulting, audit, staffing, other"`
+		ThirdPartyType  string   `json:"third_party_type" jsonschema:"Type of professional services firm: law_firm, accounting, consulting, audit, staffing, other"`
 		Licensing       string   `json:"licensing" jsonschema:"Professional licensing details (bar admissions, CPA licenses)"`
 		Memberships     []string `json:"memberships" jsonschema:"Industry body memberships (ABA, AICPA, Big Four network, etc.)"`
 		Insurance       string   `json:"insurance" jsonschema:"Professional liability / E&O insurance coverage details"`
@@ -242,7 +242,7 @@ type (
 	}
 
 	RegulatoryFramework struct {
-		Applicable    bool                `json:"applicable" jsonschema:"Whether this framework applies to the vendor"`
+		Applicable    bool                `json:"applicable" jsonschema:"Whether this framework applies to the third_party"`
 		OverallStatus string              `json:"overall_status" jsonschema:"Overall compliance status for this framework"`
 		Articles      []RegulatoryArticle `json:"articles" jsonschema:"Per-article compliance assessment"`
 		Notes         string              `json:"notes" jsonschema:"General notes about framework applicability"`
@@ -310,7 +310,7 @@ type (
 	}
 
 	CodeSecurityOutput struct {
-		HasPublicRepos       bool                    `json:"has_public_repos" jsonschema:"Whether the vendor has public repositories"`
+		HasPublicRepos       bool                    `json:"has_public_repos" jsonschema:"Whether the third_party has public repositories"`
 		GithubOrg            string                  `json:"github_org" jsonschema:"GitHub organization or user name"`
 		MainRepos            []string                `json:"main_repos" jsonschema:"Main public repositories identified"`
 		SecurityAdvisories   SecurityAdvisorySummary `json:"security_advisories" jsonschema:"Security advisory summary"`
@@ -327,11 +327,11 @@ type (
 		Sources              []string                `json:"sources" jsonschema:"URLs visited during research"`
 	}
 
-	// --- Vendor Comparison ---
+	// --- ThirdParty Comparison ---
 
-	AlternativeVendor struct {
-		Name           string   `json:"name" jsonschema:"Alternative vendor name"`
-		Website        string   `json:"website" jsonschema:"Alternative vendor website URL"`
+	AlternativeThirdParty struct {
+		Name           string   `json:"name" jsonschema:"Alternative third_party name"`
+		Website        string   `json:"website" jsonschema:"Alternative third_party website URL"`
 		Certifications []string `json:"certifications" jsonschema:"Visible certifications"`
 		TrustCenter    bool     `json:"trust_center" jsonschema:"Whether a trust center page was found"`
 		PrivacyPolicy  bool     `json:"privacy_policy" jsonschema:"Whether a privacy policy was found"`
@@ -346,14 +346,14 @@ type (
 		Transparency      string `json:"transparency" jsonschema:"Relative transparency vs alternatives"`
 	}
 
-	VendorComparisonOutput struct {
-		VendorCategory    string              `json:"vendor_category" jsonschema:"The vendor's product category"`
-		AssessedVendor    string              `json:"assessed_vendor" jsonschema:"The vendor being assessed"`
-		Alternatives      []AlternativeVendor `json:"alternatives" jsonschema:"Alternative vendors identified and evaluated"`
-		ComparisonSummary ComparisonSummary   `json:"comparison_summary" jsonschema:"Summary comparison across dimensions"`
-		VendorStrengths   []string            `json:"vendor_strengths" jsonschema:"Assessed vendor's strengths vs alternatives"`
-		VendorWeaknesses  []string            `json:"vendor_weaknesses" jsonschema:"Assessed vendor's weaknesses vs alternatives"`
-		OverallPosition   string              `json:"overall_position" jsonschema:"Vendor position: Above_Average, Average, or Below_Average"`
-		Notes             string              `json:"notes" jsonschema:"Additional comparison notes"`
+	ThirdPartyComparisonOutput struct {
+		ThirdPartyCategory   string                  `json:"third_party_category" jsonschema:"The third_party's product category"`
+		AssessedThirdParty   string                  `json:"assessed_thirdParty" jsonschema:"The third_party being assessed"`
+		Alternatives         []AlternativeThirdParty `json:"alternatives" jsonschema:"Alternative third_parties identified and evaluated"`
+		ComparisonSummary    ComparisonSummary       `json:"comparison_summary" jsonschema:"Summary comparison across dimensions"`
+		ThirdPartyStrengths  []string                `json:"third_party_strengths" jsonschema:"Assessed third_party's strengths vs alternatives"`
+		ThirdPartyWeaknesses []string                `json:"third_party_weaknesses" jsonschema:"Assessed third_party's weaknesses vs alternatives"`
+		OverallPosition      string                  `json:"overall_position" jsonschema:"Third party position: Above_Average, Average, or Below_Average"`
+		Notes                string                  `json:"notes" jsonschema:"Additional comparison notes"`
 	}
 )

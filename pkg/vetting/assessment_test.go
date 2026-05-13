@@ -13,7 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 // This test file is white-box (package vetting, not vetting_test) so it
-// can reach the unexported vendorInfoOutputType helper.
+// can reach the unexported thirdPartyInfoOutputType helper.
 
 package vetting
 
@@ -25,10 +25,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestVendorInfoOutputType_DecoratesEnums(t *testing.T) {
+func TestThirdPartyInfoOutputType_DecoratesEnums(t *testing.T) {
 	t.Parallel()
 
-	outputType, err := vendorInfoOutputType()
+	outputType, err := thirdPartyInfoOutputType()
 	require.NoError(t, err)
 	require.NotNil(t, outputType)
 
@@ -42,8 +42,8 @@ func TestVendorInfoOutputType_DecoratesEnums(t *testing.T) {
 		field    string
 		expected []string
 	}{
-		{"category", vendorCategoryEnum},
-		{"vendor_type", vendorTypeEnum},
+		{"category", thirdPartyCategoryEnum},
+		{"third_party_type", thirdPartyTypeEnum},
 	}
 
 	for _, tt := range tests {

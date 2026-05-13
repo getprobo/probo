@@ -43,7 +43,7 @@ Two patterns in `e2e/internal/factory/`:
 
 **Builder pattern (preferred):**
 ```go
-vendorID := factory.NewVendor(owner).
+thirdPartyID := factory.NewThirdParty(owner).
 	WithName("Stripe").
 	WithCategory("CLOUD_PROVIDER").
 	Create()
@@ -59,7 +59,7 @@ controlID := factory.NewControl(owner, frameworkID).
 
 **Simple factory functions:**
 ```go
-vendorID := factory.CreateVendor(c, factory.Attrs{"name": "Acme"})
+thirdPartyID := factory.CreateThirdParty(c, factory.Attrs{"name": "Acme"})
 taskID := factory.CreateTask(c, &measureID, factory.Attrs{"name": "Task 1"})
 ```
 
@@ -70,7 +70,7 @@ Use `factory.SafeName("prefix")` for unique names and `factory.SafeEmail()` for 
 Every test and subtest **must** call `t.Parallel()`. One test file per entity in `e2e/console/`. Function naming: `TestEntity_Operation`.
 
 ```go
-func TestVendor_Create(t *testing.T) {
+func TestThirdParty_Create(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
@@ -78,9 +78,9 @@ func TestVendor_Create(t *testing.T) {
 		t.Parallel()
 
 		const query = `
-			mutation CreateVendor($input: CreateVendorInput!) {
-				createVendor(input: $input) {
-					vendorEdge {
+			mutation CreateThirdParty($input: CreateThirdPartyInput!) {
+				createThirdParty(input: $input) {
+					thirdPartyEdge {
 						node { id name }
 					}
 				}
@@ -88,25 +88,25 @@ func TestVendor_Create(t *testing.T) {
 		`
 
 		var result struct {
-			CreateVendor struct {
-				VendorEdge struct {
+			CreateThirdParty struct {
+				ThirdPartyEdge struct {
 					Node struct {
 						ID   string `json:"id"`
 						Name string `json:"name"`
 					} `json:"node"`
-				} `json:"vendorEdge"`
-			} `json:"createVendor"`
+				} `json:"thirdPartyEdge"`
+			} `json:"createThirdParty"`
 		}
 
 		err := owner.Execute(query, map[string]any{
 			"input": map[string]any{
 				"organizationId": owner.GetOrganizationID().String(),
-				"name":           factory.SafeName("Vendor"),
+				"name":           factory.SafeName("ThirdParty"),
 			},
 		}, &result)
 
 		require.NoError(t, err)
-		assert.NotEmpty(t, result.CreateVendor.VendorEdge.Node.ID)
+		assert.NotEmpty(t, result.CreateThirdParty.ThirdPartyEdge.Node.ID)
 	})
 }
 ```
@@ -139,13 +139,13 @@ t.Run("other org cannot access", func(t *testing.T) {
 	owner1 := testutil.NewClient(t, testutil.RoleOwner)
 	owner2 := testutil.NewClient(t, testutil.RoleOwner)
 
-	vendorID := factory.NewVendor(owner1).WithName("Vendor").Create()
+	thirdPartyID := factory.NewThirdParty(owner1).WithName("ThirdParty").Create()
 
 	var result struct {
 		Node *struct{ ID string } `json:"node"`
 	}
-	err := owner2.Execute(nodeQuery, map[string]any{"id": vendorID}, &result)
-	testutil.AssertNodeNotAccessible(t, err, result.Node == nil, "Vendor")
+	err := owner2.Execute(nodeQuery, map[string]any{"id": thirdPartyID}, &result)
+	testutil.AssertNodeNotAccessible(t, err, result.Node == nil, "ThirdParty")
 })
 ```
 
@@ -214,7 +214,7 @@ for _, tt := range tests {
 ```go
 err := owner.ExecuteWithFile(
 	uploadQuery,
-	map[string]any{"input": map[string]any{"vendorId": vendorID, "file": nil}},
+	map[string]any{"input": map[string]any{"thirdPartyId": thirdPartyID, "file": nil}},
 	"input.file",
 	testutil.UploadFile{
 		Filename:    "report.pdf",

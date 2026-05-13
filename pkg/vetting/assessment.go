@@ -30,7 +30,7 @@ import (
 
 const (
 	// DefaultMaxTokens is the fallback max-tokens budget used when the
-	// vendor-assessor agent config does not specify a value. Sized to
+	// third-party-assessor agent config does not specify a value. Sized to
 	// leave headroom above the orchestrator's thinking budget on
 	// Anthropic models.
 	DefaultMaxTokens = 16384
@@ -40,15 +40,15 @@ const (
 	AssessmentTimeout = 20 * time.Minute
 
 	// extractionTimeout is the dedicated budget for the final
-	// vendor_info_extractor turn. It runs outside the orchestrator's
+	// third_party_info_extractor turn. It runs outside the orchestrator's
 	// budget so a slow orchestrator can't starve the extractor.
 	extractionTimeout = 5 * time.Minute
 )
 
-// vendorCategoryEnum is the canonical list of allowed values for
-// VendorInfo.Category. It is duplicated into the jsonschema struct tag
+// thirdPartyCategoryEnum is the canonical list of allowed values for
+// ThirdPartyInfo.Category. It is duplicated into the jsonschema struct tag
 // because Go struct tags must be compile-time string literals.
-var vendorCategoryEnum = []string{
+var thirdPartyCategoryEnum = []string{
 	"ANALYTICS", "ACCOUNTING", "CLOUD_MONITORING", "CLOUD_PROVIDER",
 	"COLLABORATION", "CONSULTING", "CUSTOMER_SUPPORT",
 	"DATA_STORAGE_AND_PROCESSING", "DOCUMENT_MANAGEMENT",
@@ -58,9 +58,9 @@ var vendorCategoryEnum = []string{
 	"RECRUITING", "SALES", "SECURITY", "STAFFING", "VERSION_CONTROL",
 }
 
-// vendorTypeEnum is the canonical list of allowed values for
-// VendorInfo.VendorType.
-var vendorTypeEnum = []string{
+// thirdPartyTypeEnum is the canonical list of allowed values for
+// ThirdPartyInfo.ThirdPartyType.
+var thirdPartyTypeEnum = []string{
 	"SAAS", "INFRASTRUCTURE", "PROFESSIONAL_SERVICES", "STAFFING", "OTHER",
 }
 
@@ -95,22 +95,22 @@ type (
 		Notes    string `json:"notes"`
 	}
 
-	VendorInfo struct {
-		Name                          string         `json:"name" jsonschema:"Vendor display name as shown on the website"`
-		Description                   string         `json:"description" jsonschema:"One-sentence description of what the vendor does"`
-		Category                      string         `json:"category" jsonschema:"Vendor category; one of vendorCategoryEnum"`
-		VendorType                    string         `json:"vendor_type" jsonschema:"Vendor type; one of vendorTypeEnum"`
-		HeadquarterAddress            string         `json:"headquarter_address" jsonschema:"Vendor headquarters address (city, country) if mentioned"`
+	ThirdPartyInfo struct {
+		Name                          string         `json:"name" jsonschema:"Third party display name as shown on the website"`
+		Description                   string         `json:"description" jsonschema:"One-sentence description of what the third party does"`
+		Category                      string         `json:"category" jsonschema:"Third party category; one of thirdPartyCategoryEnum"`
+		ThirdPartyType                string         `json:"third_party_type" jsonschema:"Third party type; one of thirdPartyTypeEnum"`
+		HeadquarterAddress            string         `json:"headquarter_address" jsonschema:"Third party headquarters address (city, country) if mentioned"`
 		LegalName                     string         `json:"legal_name" jsonschema:"Legal entity name if different from display name (e.g. 'Datadog, Inc.')"`
-		PrivacyPolicyURL              string         `json:"privacy_policy_url" jsonschema:"URL to the vendor's privacy policy page"`
+		PrivacyPolicyURL              string         `json:"privacy_policy_url" jsonschema:"URL to the third_party's privacy policy page"`
 		ServiceLevelAgreementURL      string         `json:"service_level_agreement_url" jsonschema:"URL to the SLA page"`
 		DataProcessingAgreementURL    string         `json:"data_processing_agreement_url" jsonschema:"URL to the DPA page"`
 		BusinessAssociateAgreementURL string         `json:"business_associate_agreement_url" jsonschema:"URL to the BAA page if HIPAA-eligible"`
 		SubprocessorsListURL          string         `json:"subprocessors_list_url" jsonschema:"URL to the public subprocessors list"`
-		SecurityPageURL               string         `json:"security_page_url" jsonschema:"URL to the vendor's security page"`
+		SecurityPageURL               string         `json:"security_page_url" jsonschema:"URL to the third_party's security page"`
 		TrustPageURL                  string         `json:"trust_page_url" jsonschema:"URL to the trust center"`
 		TermsOfServiceURL             string         `json:"terms_of_service_url" jsonschema:"URL to the terms of service"`
-		StatusPageURL                 string         `json:"status_page_url" jsonschema:"URL to the vendor's status / uptime page"`
+		StatusPageURL                 string         `json:"status_page_url" jsonschema:"URL to the third_party's status / uptime page"`
 		BugBountyURL                  string         `json:"bug_bounty_url" jsonschema:"URL to the bug bounty or responsible disclosure program"`
 		IncidentResponseURL           string         `json:"incident_response_url" jsonschema:"URL to incident response or post-mortem documentation"`
 		DataLocations                 []string       `json:"data_locations" jsonschema:"Countries or regions where data is processed or stored (e.g. 'United States', 'EU', 'Germany')"`
@@ -119,19 +119,19 @@ type (
 
 		// Privacy classification (ISO 27701).
 		PrivacyRole         string `json:"privacy_role" jsonschema:"Privacy role under ISO 27701: CONTROLLER, PROCESSOR, SUBPROCESSOR, NONE"`
-		ProcessesPII        bool   `json:"processes_pii" jsonschema:"Whether the vendor processes personal data"`
+		ProcessesPII        bool   `json:"processes_pii" jsonschema:"Whether the third_party processes personal data"`
 		CrossBorderTransfer bool   `json:"cross_border_transfer" jsonschema:"Whether cross-border data transfers occur"`
 
 		// Privacy risk fields.
 		DPAStatus         string `json:"dpa_status" jsonschema:"DPA accessibility: AVAILABLE, AVAILABLE_ON_REQUEST, NOT_FOUND, BEHIND_LOGIN"`
-		DSARCapability    string `json:"dsar_capability" jsonschema:"Brief summary of how the vendor handles Data Subject Access Requests"`
+		DSARCapability    string `json:"dsar_capability" jsonschema:"Brief summary of how the third_party handles Data Subject Access Requests"`
 		DataMinimization  string `json:"data_minimization" jsonschema:"Brief summary of data minimization practices"`
 		PurposeLimitation string `json:"purpose_limitation" jsonschema:"Brief summary of purpose limitation commitments"`
 		RetentionPolicy   string `json:"retention_policy" jsonschema:"Brief summary of data retention policy"`
 		DeletionPolicy    string `json:"deletion_policy" jsonschema:"Brief summary of data deletion policy"`
 
 		// AI classification (ISO 42001).
-		InvolvesAI bool     `json:"involves_ai" jsonschema:"Whether the vendor uses AI/ML in their product or service"`
+		InvolvesAI bool     `json:"involves_ai" jsonschema:"Whether the third_party uses AI/ML in their product or service"`
 		AIUseCases []string `json:"ai_use_cases" jsonschema:"Array of AI use case descriptions (e.g. 'content generation', 'fraud detection')"`
 
 		// AI risk fields.
@@ -165,7 +165,7 @@ type (
 
 	Result struct {
 		Document string
-		Info     VendorInfo
+		Info     ThirdPartyInfo
 	}
 )
 
@@ -191,10 +191,10 @@ func (a *Assessor) Assess(ctx context.Context, websiteURL string, procedure stri
 	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), AssessmentTimeout)
 	defer cancel()
 
-	vendorBrowser := browser.NewBrowser(ctx, a.cfg.ChromeAddr)
-	defer vendorBrowser.Close()
+	thirdPartyBrowser := browser.NewBrowser(ctx, a.cfg.ChromeAddr)
+	defer thirdPartyBrowser.Close()
 
-	vendorBrowser.SetAllowedDomain(u.Hostname())
+	thirdPartyBrowser.SetAllowedDomain(u.Hostname())
 
 	// Create an unrestricted browser for web search agents that need to
 	// follow links to external sites (news, reviews, etc.).
@@ -207,7 +207,7 @@ func (a *Assessor) Assess(ctx context.Context, websiteURL string, procedure stri
 		a.cfg.MaxTokens,
 		procedure,
 		a.cfg.Logger,
-		vendorBrowser,
+		thirdPartyBrowser,
 		researchBrowser,
 		a.cfg.SearchEndpoint,
 		reporter,
@@ -226,20 +226,20 @@ func (a *Assessor) Assess(ctx context.Context, websiteURL string, procedure stri
 		},
 	)
 	if err != nil {
-		return nil, fmt.Errorf("cannot assess vendor: %w", err)
+		return nil, fmt.Errorf("cannot assess thirdParty: %w", err)
 	}
 
 	document := result.FinalMessage().Text()
 
-	reportProgress(ctx, reporter, "extract_vendor_info", agent.ProgressEventStepStarted)
+	reportProgress(ctx, reporter, "extract_third_party_info", agent.ProgressEventStepStarted)
 
-	info, err := a.extractVendorInfo(ctx, document)
+	info, err := a.extractThirdPartyInfo(ctx, document)
 	if err != nil {
-		reportProgress(ctx, reporter, "extract_vendor_info", agent.ProgressEventStepFailed)
-		return nil, fmt.Errorf("cannot extract vendor info: %w", err)
+		reportProgress(ctx, reporter, "extract_third_party_info", agent.ProgressEventStepFailed)
+		return nil, fmt.Errorf("cannot extract thirdParty info: %w", err)
 	}
 
-	reportProgress(ctx, reporter, "extract_vendor_info", agent.ProgressEventStepCompleted)
+	reportProgress(ctx, reporter, "extract_third_party_info", agent.ProgressEventStepCompleted)
 
 	return &Result{
 		Document: document,
@@ -247,10 +247,10 @@ func (a *Assessor) Assess(ctx context.Context, websiteURL string, procedure stri
 	}, nil
 }
 
-func (a *Assessor) extractVendorInfo(ctx context.Context, document string) (*VendorInfo, error) {
-	outputType, err := vendorInfoOutputType()
+func (a *Assessor) extractThirdPartyInfo(ctx context.Context, document string) (*ThirdPartyInfo, error) {
+	outputType, err := thirdPartyInfoOutputType()
 	if err != nil {
-		return nil, fmt.Errorf("cannot build vendor info output type: %w", err)
+		return nil, fmt.Errorf("cannot build thirdParty info output type: %w", err)
 	}
 
 	// Run the extractor on its own timeout so a slow orchestrator
@@ -264,7 +264,7 @@ func (a *Assessor) extractVendorInfo(ctx context.Context, document string) (*Ven
 	defer cancel()
 
 	extractor := agent.New(
-		"vendor_info_extractor",
+		"third_party_info_extractor",
 		a.cfg.Client,
 		agent.WithInstructions(extractionPrompt),
 		agent.WithModel(a.cfg.Model),
@@ -283,53 +283,53 @@ func (a *Assessor) extractVendorInfo(ctx context.Context, document string) (*Ven
 		},
 	)
 	if err != nil {
-		return nil, fmt.Errorf("cannot extract vendor info: %w", err)
+		return nil, fmt.Errorf("cannot extract thirdParty info: %w", err)
 	}
 
-	var info VendorInfo
+	var info ThirdPartyInfo
 	if err := json.Unmarshal([]byte(result.FinalMessage().Text()), &info); err != nil {
-		return nil, fmt.Errorf("cannot parse vendor info output: %w", err)
+		return nil, fmt.Errorf("cannot parse thirdParty info output: %w", err)
 	}
 
 	return &info, nil
 }
 
-// vendorInfoOutputType builds the VendorInfo structured output type and
+// thirdPartyInfoOutputType builds the ThirdPartyInfo structured output type and
 // decorates its JSON Schema with explicit enum constraints on fields
 // whose allowed values live in package-level slices. jsonschema-go only
 // reads struct tags as free-form descriptions, so the enum list cannot
 // be encoded in the tag itself.
-func vendorInfoOutputType() (*agent.OutputType, error) {
-	outputType, err := agent.NewOutputType[VendorInfo]("vendor_info")
+func thirdPartyInfoOutputType() (*agent.OutputType, error) {
+	outputType, err := agent.NewOutputType[ThirdPartyInfo]("third_party_info")
 	if err != nil {
-		return nil, fmt.Errorf("cannot create vendor info output type: %w", err)
+		return nil, fmt.Errorf("cannot create thirdParty info output type: %w", err)
 	}
 
 	var schema map[string]any
 	if err := json.Unmarshal(outputType.Schema, &schema); err != nil {
-		return nil, fmt.Errorf("cannot unmarshal vendor info schema: %w", err)
+		return nil, fmt.Errorf("cannot unmarshal thirdParty info schema: %w", err)
 	}
 
 	properties, ok := schema["properties"].(map[string]any)
 	if !ok {
-		return nil, fmt.Errorf("vendor info schema has no properties")
+		return nil, fmt.Errorf("thirdParty info schema has no properties")
 	}
 
 	enums := map[string][]string{
-		"category":    vendorCategoryEnum,
-		"vendor_type": vendorTypeEnum,
+		"category":         thirdPartyCategoryEnum,
+		"third_party_type": thirdPartyTypeEnum,
 	}
 	for field, values := range enums {
 		prop, ok := properties[field].(map[string]any)
 		if !ok {
-			return nil, fmt.Errorf("vendor info schema has no %q property", field)
+			return nil, fmt.Errorf("thirdParty info schema has no %q property", field)
 		}
 		prop["enum"] = values
 	}
 
 	decorated, err := json.Marshal(schema)
 	if err != nil {
-		return nil, fmt.Errorf("cannot marshal decorated vendor info schema: %w", err)
+		return nil, fmt.Errorf("cannot marshal decorated thirdParty info schema: %w", err)
 	}
 	outputType.Schema = decorated
 

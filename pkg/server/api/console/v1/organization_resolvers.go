@@ -1208,20 +1208,20 @@ func (r *organizationResolver) CookieBanners(ctx context.Context, obj *types.Org
 	return types.NewCookieBannerConnection(p, r, obj.ID), nil
 }
 
-// Vendors is the resolver for the vendors field.
-func (r *organizationResolver) Vendors(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.VendorOrderBy) (*types.VendorConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionVendorList); err != nil {
+// ThirdParties is the resolver for the thirdParties field.
+func (r *organizationResolver) ThirdParties(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ThirdPartyOrderBy) (*types.ThirdPartyConnection, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionThirdPartyList); err != nil {
 		return nil, err
 	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
-	pageOrderBy := page.OrderBy[coredata.VendorOrderField]{
-		Field:     coredata.VendorOrderFieldCreatedAt,
+	pageOrderBy := page.OrderBy[coredata.ThirdPartyOrderField]{
+		Field:     coredata.ThirdPartyOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
 	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.VendorOrderField]{
+		pageOrderBy = page.OrderBy[coredata.ThirdPartyOrderField]{
 			Field:     orderBy.Field,
 			Direction: orderBy.Direction,
 		}
@@ -1229,28 +1229,28 @@ func (r *organizationResolver) Vendors(ctx context.Context, obj *types.Organizat
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	vendorFilter := coredata.NewVendorFilter(nil)
+	thirdPartyFilter := coredata.NewThirdPartyFilter(nil)
 
-	page, err := prb.Vendors.ListForOrganizationID(ctx, obj.ID, cursor, vendorFilter)
+	page, err := prb.ThirdParties.ListForOrganizationID(ctx, obj.ID, cursor, thirdPartyFilter)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list organization vendors", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot list organization thirdParties", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewVendorConnection(page, r, obj.ID), nil
+	return types.NewThirdPartyConnection(page, r, obj.ID), nil
 }
 
-// VendorsDocument is the resolver for the vendorsDocument field.
-func (r *organizationResolver) VendorsDocument(ctx context.Context, obj *types.Organization) (*types.Document, error) {
+// ThirdPartiesDocument is the resolver for the thirdPartiesDocument field.
+func (r *organizationResolver) ThirdPartiesDocument(ctx context.Context, obj *types.Organization) (*types.Document, error) {
 	if err := r.authorize(ctx, obj.ID, probo.ActionDocumentGet); err != nil {
 		return nil, err
 	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
-	documentID, err := prb.GeneratedDocuments.GetVendorsDocumentID(ctx, obj.ID)
+	documentID, err := prb.GeneratedDocuments.GetThirdPartiesDocumentID(ctx, obj.ID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot get vendors document ID", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot get thirdParties document ID", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 	if documentID == nil {
@@ -1262,7 +1262,7 @@ func (r *organizationResolver) VendorsDocument(ctx context.Context, obj *types.O
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, nil
 		}
-		r.logger.ErrorCtx(ctx, "cannot load vendors document", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot load thirdParties document", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 

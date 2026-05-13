@@ -46,7 +46,7 @@ func TestOutputType_SchemaGeneration(t *testing.T) {
 		{"WebSearchOutput", assertSchema[vetting.WebSearchOutput]},
 		{"FinancialStabilityOutput", assertSchema[vetting.FinancialStabilityOutput]},
 		{"CodeSecurityOutput", assertSchema[vetting.CodeSecurityOutput]},
-		{"VendorComparisonOutput", assertSchema[vetting.VendorComparisonOutput]},
+		{"ThirdPartyComparisonOutput", assertSchema[vetting.ThirdPartyComparisonOutput]},
 	}
 
 	for _, tt := range tests {

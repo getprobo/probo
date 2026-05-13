@@ -28,26 +28,26 @@ import (
 
 type (
 	CommonThirdParty struct {
-		ID                            gid.GID        `db:"id"`
-		Name                          string         `db:"name"`
-		Category                      VendorCategory `db:"category"`
-		HeadquarterAddress            *string        `db:"headquarter_address"`
-		LegalName                     *string        `db:"legal_name"`
-		WebsiteURL                    *string        `db:"website_url"`
-		PrivacyPolicyURL              *string        `db:"privacy_policy_url"`
-		ServiceLevelAgreementURL      *string        `db:"service_level_agreement_url"`
-		ServiceSoftwareAgreementURL   *string        `db:"service_software_agreement_url"`
-		DataProcessingAgreementURL    *string        `db:"data_processing_agreement_url"`
-		BusinessAssociateAgreementURL *string        `db:"business_associate_agreement_url"`
-		SubprocessorsListURL          *string        `db:"subprocessors_list_url"`
-		Certifications                []string       `db:"certifications"`
-		StatusPageURL                 *string        `db:"status_page_url"`
-		TermsOfServiceURL             *string        `db:"terms_of_service_url"`
-		SecurityPageURL               *string        `db:"security_page_url"`
-		TrustPageURL                  *string        `db:"trust_page_url"`
-		LogoFileID                    *gid.GID       `db:"logo_file_id"`
-		CreatedAt                     time.Time      `db:"created_at"`
-		UpdatedAt                     time.Time      `db:"updated_at"`
+		ID                            gid.GID            `db:"id"`
+		Name                          string             `db:"name"`
+		Category                      ThirdPartyCategory `db:"category"`
+		HeadquarterAddress            *string            `db:"headquarter_address"`
+		LegalName                     *string            `db:"legal_name"`
+		WebsiteURL                    *string            `db:"website_url"`
+		PrivacyPolicyURL              *string            `db:"privacy_policy_url"`
+		ServiceLevelAgreementURL      *string            `db:"service_level_agreement_url"`
+		ServiceSoftwareAgreementURL   *string            `db:"service_software_agreement_url"`
+		DataProcessingAgreementURL    *string            `db:"data_processing_agreement_url"`
+		BusinessAssociateAgreementURL *string            `db:"business_associate_agreement_url"`
+		SubprocessorsListURL          *string            `db:"subprocessors_list_url"`
+		Certifications                []string           `db:"certifications"`
+		StatusPageURL                 *string            `db:"status_page_url"`
+		TermsOfServiceURL             *string            `db:"terms_of_service_url"`
+		SecurityPageURL               *string            `db:"security_page_url"`
+		TrustPageURL                  *string            `db:"trust_page_url"`
+		LogoFileID                    *gid.GID           `db:"logo_file_id"`
+		CreatedAt                     time.Time          `db:"created_at"`
+		UpdatedAt                     time.Time          `db:"updated_at"`
 	}
 
 	CommonThirdParties []*CommonThirdParty

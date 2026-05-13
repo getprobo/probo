@@ -80,8 +80,8 @@ var (
 	//go:embed prompts/code_security.txt
 	codeSecurityPrompt string
 
-	//go:embed prompts/vendor_comparison.txt
-	vendorComparisonPrompt string
+	//go:embed prompts/third_party_comparison.txt
+	thirdPartyComparisonPrompt string
 )
 
 var (
@@ -202,10 +202,10 @@ var (
 		parallelTools: true,
 	}
 
-	vendorComparisonAgentSpec = subAgentSpec{
-		name:       "vendor_comparison_assessor",
-		outputName: "vendor_comparison_output",
-		prompt:     vendorComparisonPrompt,
+	thirdPartyComparisonAgentSpec = subAgentSpec{
+		name:       "third_party_comparison_assessor",
+		outputName: "third_party_comparison_output",
+		prompt:     thirdPartyComparisonPrompt,
 		maxTurns:   40,
 	}
 )
@@ -229,5 +229,5 @@ var (
 	buildWebsearchAgent            = buildFor[WebSearchOutput](websearchAgentSpec)
 	buildFinancialStabilityAgent   = buildFor[FinancialStabilityOutput](financialStabilityAgentSpec)
 	buildCodeSecurityAgent         = buildFor[CodeSecurityOutput](codeSecurityAgentSpec)
-	buildVendorComparisonAgent     = buildFor[VendorComparisonOutput](vendorComparisonAgentSpec)
+	buildThirdPartyComparisonAgent = buildFor[ThirdPartyComparisonOutput](thirdPartyComparisonAgentSpec)
 )

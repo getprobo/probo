@@ -22,12 +22,12 @@ The `pages/` folder **is** the route tree. Every route segment maps to a folder 
 // Bad — separate routes/ folder duplicates pages/ structure
 src/
   routes/
-    vendorRoutes.ts          # route definitions for vendors
+    thirdPartyRoutes.ts          # route definitions for third parties
     assetRoutes.ts           # route definitions for assets
   pages/
     organizations/
-      vendors/
-        VendorsPage.tsx
+      third-parties/
+        ThirdPartiesPage.tsx
       assets/
         AssetsPage.tsx
 ```
@@ -37,9 +37,9 @@ src/
 src/
   pages/
     organizations/
-      vendors/
-        routes.ts            # route definitions for vendors
-        VendorsPage.tsx
+      third-parties/
+        routes.ts            # route definitions for third parties
+        ThirdPartiesPage.tsx
       assets/
         routes.ts            # route definitions for assets
         AssetsPage.tsx
@@ -77,11 +77,11 @@ Use the correct suffix so the role is clear from the file name alone:
 
 ```text
 // Bad — a layout route named as a "Page"
-VendorDetailPage.tsx          # renders <Outlet />, wraps child routes
+ThirdPartyDetailPage.tsx          # renders <Outlet />, wraps child routes
 CookieBannerConfigPage.tsx    # renders tabs + <Outlet />
 
 // Good — layout routes use the "Layout" suffix
-VendorDetailLayout.tsx
+ThirdPartyDetailLayout.tsx
 CookieBannerConfigLayout.tsx
 ```
 
@@ -142,26 +142,26 @@ export default function CookieBannerLayout() {
 Contains route objects for the current folder's feature, exported as a named array and spread into the parent. Keep imports minimal — only `lazy`, skeleton components, and typing.
 
 ```ts
-// pages/organizations/vendors/routes.ts
+// pages/organizations/third-parties/routes.ts
 import { lazy } from "@probo/react-lazy";
 import type { AppRoute } from "@probo/routes";
 
-import { VendorsPageSkeleton } from "./VendorsPageSkeleton";
+import { ThirdPartiesPageSkeleton } from "./ThirdPartiesPageSkeleton";
 
-export const vendorRoutes = [
+export const thirdPartyRoutes = [
   {
-    path: "vendors",
-    Fallback: VendorsPageSkeleton,
-    Component: lazy(() => import("./VendorsPageLoader")),
+    path: "third-parties",
+    Fallback: ThirdPartiesPageSkeleton,
+    Component: lazy(() => import("./ThirdPartiesPageLoader")),
   },
   {
-    path: "vendors/:vendorId",
-    Fallback: VendorsPageSkeleton,
-    Component: lazy(() => import("./VendorDetailLayoutLoader")),
+    path: "third-parties/:thirdPartyId",
+    Fallback: ThirdPartiesPageSkeleton,
+    Component: lazy(() => import("./ThirdPartyDetailLayoutLoader")),
     children: [
       {
         path: "overview",
-        Component: lazy(() => import("./overview/VendorOverviewPage")),
+        Component: lazy(() => import("./overview/ThirdPartyOverviewPage")),
       },
     ],
   },
@@ -173,35 +173,35 @@ export const vendorRoutes = [
 The loader is the **lazy bundle entry point**. It sets up providers, triggers the Relay query, shows a skeleton until the query resolves, then renders the page.
 
 ```tsx
-// pages/organizations/vendors/VendorsPageLoader.tsx
+// pages/organizations/third-parties/ThirdPartiesPageLoader.tsx
 import { Suspense, useEffect } from "react";
 import { useQueryLoader } from "react-relay";
 
-import type { VendorsPageQuery } from "#/__generated__/core/VendorsPageQuery.graphql";
+import type { ThirdPartiesPageQuery } from "#/__generated__/core/ThirdPartiesPageQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
-import VendorsPage, { vendorsPageQuery } from "./VendorsPage";
-import { VendorsPageSkeleton } from "./VendorsPageSkeleton";
+import ThirdPartiesPage, { thirdPartiesPageQuery } from "./ThirdPartiesPage";
+import { ThirdPartiesPageSkeleton } from "./ThirdPartiesPageSkeleton";
 
-function VendorsPageQueryLoader() {
+function ThirdPartiesPageQueryLoader() {
   const organizationId = useOrganizationId();
-  const [queryRef, loadQuery] = useQueryLoader<VendorsPageQuery>(vendorsPageQuery);
+  const [queryRef, loadQuery] = useQueryLoader<ThirdPartiesPageQuery>(thirdPartiesPageQuery);
 
   useEffect(() => {
     loadQuery({ organizationId });
   }, [loadQuery, organizationId]);
 
   if (!queryRef) {
-    return <VendorsPageSkeleton />;
+    return <ThirdPartiesPageSkeleton />;
   }
 
-  return <VendorsPage queryRef={queryRef} />
+  return <ThirdPartiesPage queryRef={queryRef} />
 }
 
-export default function VendorsPageLoader() {
+export default function ThirdPartiesPageLoader() {
   return (
     <CoreRelayProvider>
-      <VendorsPageQueryLoader />
+      <ThirdPartiesPageQueryLoader />
     </CoreRelayProvider>
   );
 }
@@ -212,9 +212,9 @@ export default function VendorsPageLoader() {
 Receives the `queryRef` from the loader and renders the UI. Default export so `lazy()` can import it.
 
 ```tsx
-// pages/organizations/vendors/VendorsPage.tsx
-export default function VendorsPage({ queryRef }: VendorsPageProps) {
-  const data = usePreloadedQuery(vendorsPageQuery, queryRef);
+// pages/organizations/third-parties/ThirdPartiesPage.tsx
+export default function ThirdPartiesPage({ queryRef }: ThirdPartiesPageProps) {
+  const data = usePreloadedQuery(thirdPartiesPageQuery, queryRef);
   return (/* … */);
 }
 ```
@@ -224,8 +224,8 @@ export default function VendorsPage({ queryRef }: VendorsPageProps) {
 A lightweight loading placeholder. Keep it free of data-fetching logic so it loads instantly.
 
 ```tsx
-// pages/organizations/vendors/VendorsPageSkeleton.tsx
-export function VendorsPageSkeleton() {
+// pages/organizations/third-parties/ThirdPartiesPageSkeleton.tsx
+export function ThirdPartiesPageSkeleton() {
   return (/* pulse / skeleton UI */);
 }
 ```
@@ -235,8 +235,8 @@ export function VendorsPageSkeleton() {
 Rendered by the route error boundary when the page throws.
 
 ```tsx
-// pages/organizations/vendors/VendorsPageError.tsx
-export function VendorsPageError() {
+// pages/organizations/third-parties/ThirdPartiesPageError.tsx
+export function ThirdPartiesPageError() {
   const error = useRouteError();
   return (/* error UI */);
 }
@@ -244,24 +244,24 @@ export function VendorsPageError() {
 
 ## File naming
 
-Component files (`.tsx` that export a React component) use **PascalCase**: `VendorsPage.tsx`, `VendorContactRow.tsx`, `VendorsPageSkeleton.tsx`.
+Component files (`.tsx` that export a React component) use **PascalCase**: `ThirdPartiesPage.tsx`, `ThirdPartyContactRow.tsx`, `ThirdPartiesPageSkeleton.tsx`.
 
-All other helper files (utilities, hooks, constants, configuration) use **camelCase**: `routes.ts`, `useVendorFilters.ts`, `formatCurrency.ts`, `constants.ts`.
+All other helper files (utilities, hooks, constants, configuration) use **camelCase**: `routes.ts`, `useThirdPartyFilters.ts`, `formatCurrency.ts`, `constants.ts`.
 
 ### Do / don't: file naming
 
 ```text
 // Bad — helper file in PascalCase
-pages/organizations/vendors/FormatVendorStatus.ts
-pages/organizations/vendors/UseVendorFilters.ts
-pages/organizations/vendors/Routes.ts
+pages/organizations/third-parties/FormatThirdPartyStatus.ts
+pages/organizations/third-parties/UseThirdPartyFilters.ts
+pages/organizations/third-parties/Routes.ts
 
 // Good — helpers are camelCase, components are PascalCase
-pages/organizations/vendors/formatVendorStatus.ts
-pages/organizations/vendors/useVendorFilters.ts
-pages/organizations/vendors/routes.ts
-pages/organizations/vendors/VendorsPage.tsx
-pages/organizations/vendors/VendorsPageSkeleton.tsx
+pages/organizations/third-parties/formatThirdPartyStatus.ts
+pages/organizations/third-parties/useThirdPartyFilters.ts
+pages/organizations/third-parties/routes.ts
+pages/organizations/third-parties/ThirdPartiesPage.tsx
+pages/organizations/third-parties/ThirdPartiesPageSkeleton.tsx
 ```
 
 ## `_components` folder
@@ -270,7 +270,7 @@ Sub-components that are used **only** by a single page live in a `_components/` 
 
 | Situation                                  | Where the component lives                                                          |
 | ------------------------------------------ | ---------------------------------------------------------------------------------- |
-| Used by one page only                      | `pages/organizations/vendors/_components/`                                         |
+| Used by one page only                      | `pages/organizations/third-parties/_components/`                                         |
 | Used by multiple pages in the same feature | Nearest common ancestor's `_components/` (e.g. `pages/organizations/_components/`) |
 | Reusable UI primitive                      | `@probo/ui` package                                                                |
 
@@ -278,8 +278,8 @@ Sub-components that are used **only** by a single page live in a `_components/` 
 
 ```text
 // Bad — shared component buried in a single page's _components
-pages/organizations/vendors/_components/StatusBadge.tsx    # also used by risks page
-pages/organizations/risks/SomeRiskPage.tsx                 # imports ../../vendors/_components/StatusBadge
+pages/organizations/third-parties/_components/StatusBadge.tsx    # also used by risks page
+pages/organizations/risks/SomeRiskPage.tsx                 # imports ../../third-parties/_components/StatusBadge
 
 // Good — shared component hoisted to common ancestor
 pages/organizations/_components/StatusBadge.tsx
@@ -287,10 +287,10 @@ pages/organizations/_components/StatusBadge.tsx
 
 ```text
 // Bad — page-specific helper placed in a global folder
-src/components/VendorContactRow.tsx     # only used by VendorContactsTab
+src/components/ThirdPartyContactRow.tsx     # only used by ThirdPartyContactsTab
 
 // Good — scoped to the page that uses it
-pages/organizations/vendors/_components/VendorContactRow.tsx
+pages/organizations/third-parties/_components/ThirdPartyContactRow.tsx
 ```
 
 ## Child-route folder naming
@@ -303,40 +303,40 @@ Folders that contain child-route pages are named after the **resource or concept
 // Bad — folder named after a UI element
 configuration/
   tabs/                            # "tabs" is a UI component, not a resource
-    VendorOverviewTab.tsx
-    VendorComplianceTab.tsx
+    ThirdPartyOverviewTab.tsx
+    ThirdPartyComplianceTab.tsx
 
 // Good — folders named after the resource each child route represents
 configuration/
   overview/
-    VendorOverviewPage.tsx
+    ThirdPartyOverviewPage.tsx
   compliance/
-    VendorCompliancePage.tsx
+    ThirdPartyCompliancePage.tsx
 ```
 
 This also means child-route components use the `*Page` suffix (not `*Tab`), because they are pages in their own right — the fact that a tab bar navigates between them is an implementation detail of the parent layout.
 
 ## Full example tree
 
-Target layout for a `vendors` feature under `pages/organizations/`:
+Target layout for a `third-parties` feature under `pages/organizations/`:
 
 ```text
-pages/organizations/vendors/
-  routes.ts                        # route definitions for vendors
-  VendorsPageLoader.tsx            # lazy entry — providers + Suspense + query loader
-  VendorsPage.tsx                  # page component (usePreloadedQuery)
-  VendorsPageSkeleton.tsx          # loading fallback
-  VendorDetailLayoutLoader.tsx     # lazy entry for detail layout
-  VendorDetailLayout.tsx           # layout — breadcrumbs, tabs, <Outlet />
-  VendorDetailLayoutSkeleton.tsx   # detail loading fallback
-  NewVendorPage.tsx                # mutation-only page — default export, wraps itself in the Relay provider
-  _components/                     # sub-components used only by vendor pages
-    VendorContactRow.tsx
-    VendorRiskSummary.tsx
-  overview/                        # child route: /vendors/:vendorId/overview
-    VendorOverviewPage.tsx
-  compliance/                      # child route: /vendors/:vendorId/compliance
-    VendorCompliancePage.tsx
-  contacts/                        # child route: /vendors/:vendorId/contacts
-    VendorContactsPage.tsx
+pages/organizations/third-parties/
+  routes.ts                        # route definitions for third parties
+  ThirdPartiesPageLoader.tsx            # lazy entry — providers + Suspense + query loader
+  ThirdPartiesPage.tsx                  # page component (usePreloadedQuery)
+  ThirdPartiesPageSkeleton.tsx          # loading fallback
+  ThirdPartyDetailLayoutLoader.tsx     # lazy entry for detail layout
+  ThirdPartyDetailLayout.tsx           # layout — breadcrumbs, tabs, <Outlet />
+  ThirdPartyDetailLayoutSkeleton.tsx   # detail loading fallback
+  NewThirdPartyPage.tsx                # mutation-only page — default export, wraps itself in the Relay provider
+  _components/                     # sub-components used only by third party pages
+    ThirdPartyContactRow.tsx
+    ThirdPartyRiskSummary.tsx
+  overview/                        # child route: /third-parties/:thirdPartyId/overview
+    ThirdPartyOverviewPage.tsx
+  compliance/                      # child route: /third-parties/:thirdPartyId/compliance
+    ThirdPartyCompliancePage.tsx
+  contacts/                        # child route: /third-parties/:thirdPartyId/contacts
+    ThirdPartyContactsPage.tsx
 ```

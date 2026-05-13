@@ -23,9 +23,9 @@ import (
 type WebhookEventType string
 
 const (
-	WebhookEventTypeVendorCreated     WebhookEventType = "vendor:created"
-	WebhookEventTypeVendorUpdated     WebhookEventType = "vendor:updated"
-	WebhookEventTypeVendorDeleted     WebhookEventType = "vendor:deleted"
+	WebhookEventTypeThirdPartyCreated WebhookEventType = "third-party:created"
+	WebhookEventTypeThirdPartyUpdated WebhookEventType = "third-party:updated"
+	WebhookEventTypeThirdPartyDeleted WebhookEventType = "third-party:deleted"
 	WebhookEventTypeUserCreated       WebhookEventType = "user:created"
 	WebhookEventTypeUserUpdated       WebhookEventType = "user:updated"
 	WebhookEventTypeUserDeleted       WebhookEventType = "user:deleted"
@@ -40,7 +40,7 @@ func (w WebhookEventType) String() string {
 
 func (w WebhookEventType) IsValid() bool {
 	switch w {
-	case WebhookEventTypeVendorCreated, WebhookEventTypeVendorUpdated, WebhookEventTypeVendorDeleted,
+	case WebhookEventTypeThirdPartyCreated, WebhookEventTypeThirdPartyUpdated, WebhookEventTypeThirdPartyDeleted,
 		WebhookEventTypeUserCreated, WebhookEventTypeUserUpdated, WebhookEventTypeUserDeleted,
 		WebhookEventTypeObligationCreated, WebhookEventTypeObligationUpdated, WebhookEventTypeObligationDeleted:
 		return true

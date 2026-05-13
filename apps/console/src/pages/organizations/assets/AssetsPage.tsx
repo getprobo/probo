@@ -78,7 +78,7 @@ const paginatedAssetsFragment = graphql`
             fullName
           }
           # eslint-disable-next-line relay/unused-fields
-          vendors(first: 50) {
+          thirdParties(first: 50) {
             edges {
               node {
                 # eslint-disable-next-line relay/unused-fields

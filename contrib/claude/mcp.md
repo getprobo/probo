@@ -8,7 +8,7 @@ MCP tools are defined in `pkg/server/api/mcp/v1/specification.yaml` and generate
 - `specification.yaml` — tool definitions, input/output schemas, component schemas
 - `resolver.go` — `Resolver` struct, `MustAuthorize`, service accessors
 - `helpers.go` — pagination helpers, `UnwrapOmittable`
-- `types/*.go` (except `types/types.go`) — type conversion helpers (`NewVendor()`, `NewListVendorsOutput()`, etc.)
+- `types/*.go` (except `types/types.go`) — type conversion helpers (`NewThirdParty()`, `NewListThirdPartiesOutput()`, etc.)
 - `schema.resolvers.go` — tool implementation bodies (stubs generated, you edit the bodies)
 
 **Generated** (do not edit):
@@ -24,16 +24,16 @@ go generate ./pkg/server/api/mcp/v1
 
 ```yaml
 tools:
-  - name: listVendors
-    description: List all vendors for the organization
+  - name: listThirdParties
+    description: List all thirdParties for the organization
     hints:
       readonly: true
       idempotent: true
       destructive: false
     inputSchema:
-      $ref: "#/components/schemas/ListVendorsInput"
+      $ref: "#/components/schemas/ListThirdPartiesInput"
     outputSchema:
-      $ref: "#/components/schemas/ListVendorsOutput"
+      $ref: "#/components/schemas/ListThirdPartiesOutput"
 ```
 
 Input/output schemas reference `components/schemas`. Map custom Go types with the `go.probo.inc/mcpgen/type` extension:
@@ -51,11 +51,11 @@ components:
 Generated stubs follow this pattern:
 
 ```go
-func (r *Resolver) ListVendorsTool(
+func (r *Resolver) ListThirdPartiesTool(
 	ctx context.Context,
 	req *mcp.CallToolRequest,
-	input *types.ListVendorsInput,
-) (*mcp.CallToolResult, types.ListVendorsOutput, error)
+	input *types.ListThirdPartiesInput,
+) (*mcp.CallToolResult, types.ListThirdPartiesOutput, error)
 ```
 
 First return is always `nil`. Errors are either returned (for recoverable) or panicked (for authorization and unexpected failures).
@@ -65,24 +65,24 @@ First return is always `nil`. Errors are either returned (for recoverable) or pa
 Use `MustAuthorize` which panics on failure (caught by middleware):
 
 ```go
-r.MustAuthorize(ctx, input.OrganizationID, probo.ActionVendorList)
+r.MustAuthorize(ctx, input.OrganizationID, probo.ActionThirdPartyList)
 ```
 
 ## Common resolver patterns
 
 **List with pagination:**
 ```go
-func (r *Resolver) ListVendorsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListVendorsInput) (*mcp.CallToolResult, types.ListVendorsOutput, error) {
-	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionVendorList)
+func (r *Resolver) ListThirdPartiesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListThirdPartiesInput) (*mcp.CallToolResult, types.ListThirdPartiesOutput, error) {
+	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionThirdPartyList)
 
 	prb := r.ProboService(ctx, input.OrganizationID)
 
-	pageOrderBy := page.OrderBy[coredata.VendorOrderField]{
-		Field:     coredata.VendorOrderFieldCreatedAt,
+	pageOrderBy := page.OrderBy[coredata.ThirdPartyOrderField]{
+		Field:     coredata.ThirdPartyOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
 	if input.OrderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.VendorOrderField]{
+		pageOrderBy = page.OrderBy[coredata.ThirdPartyOrderField]{
 			Field:     input.OrderBy.Field,
 			Direction: input.OrderBy.Direction,
 		}
@@ -90,12 +90,12 @@ func (r *Resolver) ListVendorsTool(ctx context.Context, req *mcp.CallToolRequest
 
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
-	page, err := prb.Vendors.ListForOrganizationID(ctx, input.OrganizationID, cursor, coredata.NewVendorFilter(nil, nil))
+	page, err := prb.ThirdParties.ListForOrganizationID(ctx, input.OrganizationID, cursor, coredata.NewThirdPartyFilter(nil, nil))
 	if err != nil {
-		panic(fmt.Errorf("cannot list vendors: %w", err))
+		panic(fmt.Errorf("cannot list thirdParties: %w", err))
 	}
 
-	return nil, types.NewListVendorsOutput(page), nil
+	return nil, types.NewListThirdPartiesOutput(page), nil
 }
 ```
 
@@ -156,8 +156,8 @@ Description: UnwrapOmittable(input.Description),
 Live in `types/*.go` (not the generated `types/types.go`). One file per entity:
 
 ```go
-func NewVendor(v *coredata.Vendor) *Vendor {
-	return &Vendor{
+func NewThirdParty(v *coredata.ThirdParty) *ThirdParty {
+	return &ThirdParty{
 		ID:             v.ID,
 		OrganizationID: v.OrganizationID,
 		Name:           v.Name,
@@ -166,21 +166,21 @@ func NewVendor(v *coredata.Vendor) *Vendor {
 	}
 }
 
-func NewListVendorsOutput(vendorPage *page.Page[*coredata.Vendor, coredata.VendorOrderField]) ListVendorsOutput {
-	vendors := make([]*Vendor, 0, len(vendorPage.Data))
-	for _, v := range vendorPage.Data {
-		vendors = append(vendors, NewVendor(v))
+func NewListThirdPartiesOutput(thirdPartyPage *page.Page[*coredata.ThirdParty, coredata.ThirdPartyOrderField]) ListThirdPartiesOutput {
+	thirdParties := make([]*ThirdParty, 0, len(thirdPartyPage.Data))
+	for _, v := range thirdPartyPage.Data {
+		thirdParties = append(thirdParties, NewThirdParty(v))
 	}
 
 	var nextCursor *page.CursorKey
-	if len(vendorPage.Data) > 0 {
-		cursorKey := vendorPage.Data[len(vendorPage.Data)-1].CursorKey(vendorPage.Cursor.OrderBy.Field)
+	if len(thirdPartyPage.Data) > 0 {
+		cursorKey := thirdPartyPage.Data[len(thirdPartyPage.Data)-1].CursorKey(thirdPartyPage.Cursor.OrderBy.Field)
 		nextCursor = &cursorKey
 	}
 
-	return ListVendorsOutput{
+	return ListThirdPartiesOutput{
 		NextCursor: nextCursor,
-		Vendors:    vendors,
+		ThirdParties:    thirdParties,
 	}
 }
 ```

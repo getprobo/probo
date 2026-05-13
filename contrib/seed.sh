@@ -480,7 +480,7 @@ create_risk \
   SECURITY MITIGATED 1 5
 
 create_risk \
-  "Third-party SaaS vendor data breach" \
+  "Third-party SaaS data breach" \
   OPERATIONAL TRANSFERRED 3 4
 create_risk \
   "Cloud region outage causing service disruption" \
@@ -514,7 +514,7 @@ create_risk \
   "Breach notification deadline missed" \
   COMPLIANCE MITIGATED 1 5
 create_risk \
-  "Inadequate data processing agreements with vendors" \
+  "Inadequate data processing agreements with third parties" \
   COMPLIANCE MITIGATED 3 3
 create_risk \
   "Employee data retained beyond legal period" \
@@ -553,17 +553,17 @@ create_risk \
 
 echo "    35 risks created"
 
-echo "  Creating vendors..."
+echo "  Creating third parties..."
 
-create_vendor() {
+create_third_party() {
   local name="$1"
   local description="$2"
 
   local resp
-  resp=$(prb_api "createVendor: $name" '
-    mutation($input: CreateVendorInput!) {
-      createVendor(input: $input) {
-        vendorEdge {
+  resp=$(prb_api "createThirdParty: $name" '
+    mutation($input: CreateThirdPartyInput!) {
+      createThirdParty(input: $input) {
+        thirdPartyEdge {
           node { id }
         }
       }
@@ -574,55 +574,55 @@ create_vendor() {
       description="$description" \
     )")
   local id
-  id=$(echo "$resp" | jq -r '.data.createVendor.vendorEdge.node.id // empty')
+  id=$(echo "$resp" | jq -r '.data.createThirdParty.thirdPartyEdge.node.id // empty')
   if [ -z "$id" ]; then
-    echo "ERROR (createVendor: $name): no vendor id in response" >&2
+    echo "ERROR (createThirdParty: $name): no third party id in response" >&2
     exit 1
   fi
 }
 
-create_vendor "Amazon Web Services" \
+create_third_party "Amazon Web Services" \
   "Cloud infrastructure and compute"
-create_vendor "Google Cloud Platform" \
+create_third_party "Google Cloud Platform" \
   "BigQuery analytics and AI services"
-create_vendor "Google Workspace" \
+create_third_party "Google Workspace" \
   "Email, calendar, and productivity suite"
-create_vendor "Microsoft 365" \
+create_third_party "Microsoft 365" \
   "Office productivity and collaboration"
-create_vendor "Datadog" \
+create_third_party "Datadog" \
   "Application monitoring and observability"
-create_vendor "PagerDuty" \
+create_third_party "PagerDuty" \
   "Incident management and on-call scheduling"
-create_vendor "Slack" \
+create_third_party "Slack" \
   "Team communication and messaging"
-create_vendor "GitHub" \
+create_third_party "GitHub" \
   "Source code management and CI/CD"
-create_vendor "Stripe" \
+create_third_party "Stripe" \
   "Payment processing and billing"
-create_vendor "Salesforce" \
+create_third_party "Salesforce" \
   "Customer relationship management"
-create_vendor "HubSpot" \
+create_third_party "HubSpot" \
   "Marketing automation and CRM"
-create_vendor "Notion" \
+create_third_party "Notion" \
   "Documentation and knowledge management"
-create_vendor "1Password" \
+create_third_party "1Password" \
   "Enterprise password management"
-create_vendor "Okta" \
+create_third_party "Okta" \
   "Identity and access management"
-create_vendor "CrowdStrike" \
+create_third_party "CrowdStrike" \
   "Endpoint protection and threat intelligence"
-create_vendor "Vanta" \
+create_third_party "Vanta" \
   "Compliance automation and monitoring"
-create_vendor "Jira" \
+create_third_party "Jira" \
   "Project management and issue tracking"
-create_vendor "Cloudflare" \
+create_third_party "Cloudflare" \
   "CDN, DNS, and DDoS protection"
-create_vendor "Twilio SendGrid" \
+create_third_party "Twilio SendGrid" \
   "Transactional email delivery"
-create_vendor "Snowflake" \
+create_third_party "Snowflake" \
   "Cloud data warehouse"
 
-echo "    20 vendors created"
+echo "    20 third parties created"
 
 echo "  Creating measures..."
 
@@ -696,7 +696,7 @@ echo ""
 echo "  Created:"
 echo "    3 frameworks, 43 controls"
 echo "    35 risks"
-echo "    20 vendors"
+echo "    20 third parties"
 echo "    15 measures"
 echo "    8 people"
 echo ""
