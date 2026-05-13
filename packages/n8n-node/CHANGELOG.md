@@ -4,6 +4,12 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.185.0] - 2026-05-13
+
+### Changed
+
+- Drop the `consentMode` field from cookie banner create/update operations and remove `consent_mode` from cookie banner outputs — consent mode is now derived from the visitor's geolocation at consent time (breaking)
+
 ## [0.184.0] - 2026-05-12
 
 ### Changed
