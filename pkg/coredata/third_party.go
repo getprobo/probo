@@ -205,7 +205,7 @@ SELECT
     id,
     tenant_id,
     organization_id,
-	common_third_party_id,
+    common_third_party_id,
     name,
     description,
     category,
@@ -272,7 +272,7 @@ SELECT
     id,
     tenant_id,
     organization_id,
-	common_third_party_id,
+    common_third_party_id,
     name,
     description,
     category,
@@ -1316,7 +1316,7 @@ ORDER BY name ASC
 	return nil
 }
 
-func (v *Vendor) LoadByOrganizationIDAndCommonThirdPartyID(
+func (v *ThirdParty) LoadByOrganizationIDAndCommonThirdPartyID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
@@ -1375,7 +1375,7 @@ LIMIT 1;
 	}
 	defer rows.Close()
 
-	vendor, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Vendor])
+	vendor, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[ThirdParty])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
