@@ -36,6 +36,7 @@ type (
 		Source           *CookieSource `db:"source"`
 		ValueSize        *int          `db:"value_size"`
 		InitiatorURL     *string       `db:"initiator_url"`
+		InitiatorDomain  *string       `db:"initiator_domain"`
 		LastDetectedAt   time.Time     `db:"last_detected_at"`
 		CreatedAt        time.Time     `db:"created_at"`
 		UpdatedAt        time.Time     `db:"updated_at"`
@@ -61,6 +62,7 @@ INSERT INTO detected_trackers (
 	source,
 	value_size,
 	initiator_url,
+	initiator_domain,
 	last_detected_at,
 	created_at,
 	updated_at
@@ -75,6 +77,7 @@ INSERT INTO detected_trackers (
 	@source,
 	@value_size,
 	@initiator_url,
+	@initiator_domain,
 	@last_detected_at,
 	@created_at,
 	@updated_at
@@ -87,6 +90,7 @@ ON CONFLICT (cookie_banner_id, tracker_type, identifier) DO UPDATE
 			ELSE detected_trackers.source
 		END,
 		initiator_url = COALESCE(EXCLUDED.initiator_url, detected_trackers.initiator_url),
+		initiator_domain = COALESCE(EXCLUDED.initiator_domain, detected_trackers.initiator_domain),
 		updated_at = EXCLUDED.updated_at
 `
 
@@ -102,6 +106,7 @@ ON CONFLICT (cookie_banner_id, tracker_type, identifier) DO UPDATE
 		"source_script":      CookieSourceScript,
 		"value_size":         dt.ValueSize,
 		"initiator_url":      dt.InitiatorURL,
+		"initiator_domain":   dt.InitiatorDomain,
 		"last_detected_at":   dt.LastDetectedAt,
 		"created_at":         dt.CreatedAt,
 		"updated_at":         dt.UpdatedAt,

@@ -116,6 +116,8 @@ const (
 	DetectedTrackerEntityType                      uint16 = 90
 	TrackerResourceEntityType                      uint16 = 91
 	CommonThirdPartyEntityType                     uint16 = 92
+	CommonThirdPartyDomainEntityType               uint16 = 93
+	CommonTrackerPatternEntityType                 uint16 = 94
 )
 
 func NewEntityFromID(id gid.GID) (any, bool) {
@@ -290,6 +292,10 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &TrackerResource{ID: id}, true
 	case CommonThirdPartyEntityType:
 		return &CommonThirdParty{ID: id}, true
+	case CommonThirdPartyDomainEntityType:
+		return &CommonThirdPartyDomain{ID: id}, true
+	case CommonTrackerPatternEntityType:
+		return &CommonTrackerPattern{ID: id}, true
 	default:
 		return nil, false
 	}

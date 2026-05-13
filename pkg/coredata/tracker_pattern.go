@@ -31,21 +31,23 @@ import (
 
 type (
 	TrackerPattern struct {
-		ID               gid.GID                 `db:"id"`
-		OrganizationID   gid.GID                 `db:"organization_id"`
-		CookieBannerID   gid.GID                 `db:"cookie_banner_id"`
-		CookieCategoryID gid.GID                 `db:"cookie_category_id"`
-		TrackerType      TrackerType             `db:"tracker_type"`
-		Pattern          string                  `db:"pattern"`
-		MatchType        TrackerPatternMatchType `db:"match_type"`
-		DisplayName      string                  `db:"display_name"`
-		Description      string                  `db:"description"`
-		Excluded         bool                    `db:"excluded"`
-		MaxAgeSeconds    *int                    `db:"max_age_seconds"`
-		Source           *CookieSource           `db:"source"`
-		LastMatchedAt    *time.Time              `db:"last_matched_at"`
-		CreatedAt        time.Time               `db:"created_at"`
-		UpdatedAt        time.Time               `db:"updated_at"`
+		ID                     gid.GID                 `db:"id"`
+		OrganizationID         gid.GID                 `db:"organization_id"`
+		CookieBannerID         gid.GID                 `db:"cookie_banner_id"`
+		CookieCategoryID       gid.GID                 `db:"cookie_category_id"`
+		CommonTrackerPatternID *gid.GID                `db:"common_tracker_pattern_id"`
+		ThirdPartyID           *gid.GID                `db:"third_party_id"`
+		TrackerType            TrackerType             `db:"tracker_type"`
+		Pattern                string                  `db:"pattern"`
+		MatchType              TrackerPatternMatchType `db:"match_type"`
+		DisplayName            string                  `db:"display_name"`
+		Description            string                  `db:"description"`
+		Excluded               bool                    `db:"excluded"`
+		MaxAgeSeconds          *int                    `db:"max_age_seconds"`
+		Source                 *CookieSource           `db:"source"`
+		LastMatchedAt          *time.Time              `db:"last_matched_at"`
+		CreatedAt              time.Time               `db:"created_at"`
+		UpdatedAt              time.Time               `db:"updated_at"`
 	}
 
 	TrackerPatterns []*TrackerPattern
@@ -101,6 +103,8 @@ SELECT
 	organization_id,
 	cookie_banner_id,
 	cookie_category_id,
+	common_tracker_pattern_id,
+	third_party_id,
 	tracker_type,
 	pattern,
 	match_type,
@@ -158,6 +162,8 @@ SELECT
 	organization_id,
 	cookie_banner_id,
 	cookie_category_id,
+	common_tracker_pattern_id,
+	third_party_id,
 	tracker_type,
 	pattern,
 	match_type,
@@ -222,6 +228,8 @@ SELECT
 	organization_id,
 	cookie_banner_id,
 	cookie_category_id,
+	common_tracker_pattern_id,
+	third_party_id,
 	tracker_type,
 	pattern,
 	match_type,
@@ -296,6 +304,8 @@ INSERT INTO tracker_patterns (
 	organization_id,
 	cookie_banner_id,
 	cookie_category_id,
+	common_tracker_pattern_id,
+	third_party_id,
 	tracker_type,
 	pattern,
 	match_type,
@@ -313,6 +323,8 @@ INSERT INTO tracker_patterns (
 	@organization_id,
 	@cookie_banner_id,
 	@cookie_category_id,
+	@common_tracker_pattern_id,
+	@third_party_id,
 	@tracker_type,
 	@pattern,
 	@match_type,
@@ -328,22 +340,24 @@ INSERT INTO tracker_patterns (
 `
 
 	args := pgx.StrictNamedArgs{
-		"id":                 tp.ID,
-		"tenant_id":          scope.GetTenantID(),
-		"organization_id":    tp.OrganizationID,
-		"cookie_banner_id":   tp.CookieBannerID,
-		"cookie_category_id": tp.CookieCategoryID,
-		"tracker_type":       tp.TrackerType,
-		"pattern":            tp.Pattern,
-		"match_type":         tp.MatchType,
-		"display_name":       tp.DisplayName,
-		"description":        tp.Description,
-		"excluded":           tp.Excluded,
-		"max_age_seconds":    tp.MaxAgeSeconds,
-		"source":             tp.Source,
-		"last_matched_at":    tp.LastMatchedAt,
-		"created_at":         tp.CreatedAt,
-		"updated_at":         tp.UpdatedAt,
+		"id":                        tp.ID,
+		"tenant_id":                 scope.GetTenantID(),
+		"organization_id":           tp.OrganizationID,
+		"cookie_banner_id":          tp.CookieBannerID,
+		"cookie_category_id":        tp.CookieCategoryID,
+		"common_tracker_pattern_id": tp.CommonTrackerPatternID,
+		"third_party_id":            tp.ThirdPartyID,
+		"tracker_type":              tp.TrackerType,
+		"pattern":                   tp.Pattern,
+		"match_type":                tp.MatchType,
+		"display_name":              tp.DisplayName,
+		"description":               tp.Description,
+		"excluded":                  tp.Excluded,
+		"max_age_seconds":           tp.MaxAgeSeconds,
+		"source":                    tp.Source,
+		"last_matched_at":           tp.LastMatchedAt,
+		"created_at":                tp.CreatedAt,
+		"updated_at":                tp.UpdatedAt,
 	}
 
 	_, err := tx.Exec(ctx, q, args)
@@ -371,6 +385,8 @@ INSERT INTO tracker_patterns (
 	organization_id,
 	cookie_banner_id,
 	cookie_category_id,
+	common_tracker_pattern_id,
+	third_party_id,
 	tracker_type,
 	pattern,
 	match_type,
@@ -388,6 +404,8 @@ INSERT INTO tracker_patterns (
 	@organization_id,
 	@cookie_banner_id,
 	@cookie_category_id,
+	@common_tracker_pattern_id,
+	@third_party_id,
 	@tracker_type,
 	@pattern,
 	@match_type,
@@ -404,22 +422,24 @@ ON CONFLICT (cookie_banner_id, tracker_type, pattern, COALESCE(max_age_seconds, 
 `
 
 	args := pgx.StrictNamedArgs{
-		"id":                 tp.ID,
-		"tenant_id":          scope.GetTenantID(),
-		"organization_id":    tp.OrganizationID,
-		"cookie_banner_id":   tp.CookieBannerID,
-		"cookie_category_id": tp.CookieCategoryID,
-		"tracker_type":       tp.TrackerType,
-		"pattern":            tp.Pattern,
-		"match_type":         tp.MatchType,
-		"display_name":       tp.DisplayName,
-		"description":        tp.Description,
-		"excluded":           tp.Excluded,
-		"max_age_seconds":    tp.MaxAgeSeconds,
-		"source":             tp.Source,
-		"last_matched_at":    tp.LastMatchedAt,
-		"created_at":         tp.CreatedAt,
-		"updated_at":         tp.UpdatedAt,
+		"id":                        tp.ID,
+		"tenant_id":                 scope.GetTenantID(),
+		"organization_id":           tp.OrganizationID,
+		"cookie_banner_id":          tp.CookieBannerID,
+		"cookie_category_id":        tp.CookieCategoryID,
+		"common_tracker_pattern_id": tp.CommonTrackerPatternID,
+		"third_party_id":            tp.ThirdPartyID,
+		"tracker_type":              tp.TrackerType,
+		"pattern":                   tp.Pattern,
+		"match_type":                tp.MatchType,
+		"display_name":              tp.DisplayName,
+		"description":               tp.Description,
+		"excluded":                  tp.Excluded,
+		"max_age_seconds":           tp.MaxAgeSeconds,
+		"source":                    tp.Source,
+		"last_matched_at":           tp.LastMatchedAt,
+		"created_at":                tp.CreatedAt,
+		"updated_at":                tp.UpdatedAt,
 	}
 
 	result, err := tx.Exec(ctx, q, args)
@@ -525,6 +545,8 @@ SELECT
 	organization_id,
 	cookie_banner_id,
 	cookie_category_id,
+	common_tracker_pattern_id,
+	third_party_id,
 	tracker_type,
 	pattern,
 	match_type,
@@ -621,6 +643,8 @@ SELECT
 	organization_id,
 	cookie_banner_id,
 	cookie_category_id,
+	common_tracker_pattern_id,
+	third_party_id,
 	tracker_type,
 	pattern,
 	match_type,
@@ -730,6 +754,8 @@ SELECT
 	organization_id,
 	cookie_banner_id,
 	cookie_category_id,
+	common_tracker_pattern_id,
+	third_party_id,
 	tracker_type,
 	pattern,
 	match_type,
