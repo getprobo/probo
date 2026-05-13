@@ -54,6 +54,7 @@ func NewMux(
 
 	r := chi.NewMux()
 	r.Route("/{bannerID}", func(r chi.Router) {
+		r.Use(newSDKVersionMiddleware())
 		r.Use(newCORSMiddleware(logger, cookieBannerSvc))
 		r.Get("/config", h.handleGetConfig)
 		r.Get("/consents/{visitorID}", h.handleGetConsent)
@@ -73,7 +74,7 @@ func (h *Handler) handleGetConfig(w http.ResponseWriter, r *http.Request) {
 	}
 
 	lang := r.URL.Query().Get("lang")
-	sdkVersion := r.Header.Get("X-SDK-Version")
+	sdkVersion := sdkVersionFromContext(r.Context())
 	cc := h.resolveCountryCode(r)
 
 	var regulation cookiebanner.Regulation
@@ -91,7 +92,7 @@ func (h *Handler) handleGetConfig(w http.ResponseWriter, r *http.Request) {
 			jsonutil.RenderNotFound(w, fmt.Errorf("no published version"))
 			return
 		}
-		h.logger.ErrorCtx(r.Context(), "cannot get banner config", log.Error(err))
+		h.logger.ErrorCtx(r.Context(), "cannot get banner config", log.Error(err), log.String("sdk_version", sdkVersion))
 		jsonutil.RenderInternalServerError(w)
 		return
 	}
@@ -104,7 +105,12 @@ func (h *Handler) resolveCountryCode(r *http.Request) *coredata.CountryCode {
 
 	cc, err := h.geolocSvc.LookupCountry(r.Context(), ip)
 	if err != nil {
-		h.logger.ErrorCtx(r.Context(), "cannot resolve country for IP", log.Error(err))
+		h.logger.ErrorCtx(
+			r.Context(),
+			"cannot resolve country for IP",
+			log.Error(err),
+			log.String("sdk_version", sdkVersionFromContext(r.Context())),
+		)
 		return nil
 	}
 
@@ -138,7 +144,12 @@ func (h *Handler) handleGetConsent(w http.ResponseWriter, r *http.Request) {
 			jsonutil.RenderNotFound(w, fmt.Errorf("consent not found"))
 			return
 		}
-		h.logger.ErrorCtx(r.Context(), "cannot get visitor consent", log.Error(err))
+		h.logger.ErrorCtx(
+			r.Context(),
+			"cannot get visitor consent",
+			log.Error(err),
+			log.String("sdk_version", sdkVersionFromContext(r.Context())),
+		)
 		jsonutil.RenderInternalServerError(w)
 		return
 	}
@@ -177,7 +188,7 @@ func (h *Handler) handlePostConsent(w http.ResponseWriter, r *http.Request) {
 
 	ip := clientip.Extract(r)
 	ua := r.UserAgent()
-	sdkVersion := r.Header.Get("X-SDK-Version")
+	sdkVersion := sdkVersionFromContext(r.Context())
 	cc := h.resolveCountryCode(r)
 
 	var (
@@ -214,7 +225,7 @@ func (h *Handler) handlePostConsent(w http.ResponseWriter, r *http.Request) {
 			jsonutil.RenderBadRequest(w, fmt.Errorf("invalid version"))
 			return
 		}
-		h.logger.ErrorCtx(r.Context(), "cannot record consent", log.Error(err))
+		h.logger.ErrorCtx(r.Context(), "cannot record consent", log.Error(err), log.String("sdk_version", sdkVersion))
 		jsonutil.RenderInternalServerError(w)
 		return
 	}
@@ -338,7 +349,12 @@ func (h *Handler) handleReportDetectedCookies(w http.ResponseWriter, r *http.Req
 			return
 		}
 
-		h.logger.ErrorCtx(r.Context(), "cannot report detected cookies", log.Error(err))
+		h.logger.ErrorCtx(
+			r.Context(),
+			"cannot report detected cookies",
+			log.Error(err),
+			log.String("sdk_version", sdkVersionFromContext(r.Context())),
+		)
 		jsonutil.RenderInternalServerError(w)
 		return
 	}
@@ -503,7 +519,7 @@ func (h *Handler) handleReportDetectedTrackers(w http.ResponseWriter, r *http.Re
 			return
 		}
 
-		h.logger.ErrorCtx(r.Context(), "cannot report detected trackers", log.Error(err))
+		h.logger.ErrorCtx(r.Context(), "cannot report detected trackers", log.Error(err), log.String("sdk_version", sdkVersionFromContext(r.Context())))
 		jsonutil.RenderInternalServerError(w)
 		return
 	}
