@@ -39,9 +39,6 @@ export class ConsentManager {
   }
 
   subscribe(cb: Callback): () => void {
-    if (this._ready) {
-      cb(this._snapshot);
-    }
     const offReady = this.onReady(cb);
     const offChange = this.onChange(cb);
     return () => { offReady(); offChange(); };
