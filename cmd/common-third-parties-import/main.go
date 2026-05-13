@@ -65,6 +65,7 @@ type thirdPartyData struct {
 	TermsOfServiceURL             *string  `json:"termsOfServiceUrl,omitempty"`
 	SecurityPageURL               *string  `json:"securityPageUrl,omitempty"`
 	TrustPageURL                  *string  `json:"trustPageUrl,omitempty"`
+	Domains                       []string `json:"domains,omitempty"`
 }
 
 func main() {
@@ -165,7 +166,7 @@ func run() error {
 
 	fmt.Printf("importing %d common third parties from %s\n", len(thirdParties), dataPath)
 
-	var inserted, updated int
+	var inserted, updated, domainsInserted, domainsUpdated int
 
 	if err := pgClient.WithTx(
 		ctx,
@@ -204,6 +205,30 @@ func run() error {
 					inserted++
 				} else {
 					updated++
+					if err := party.LoadByName(ctx, tx, tp.Name); err != nil {
+						return fmt.Errorf("cannot reload common third party %q: %w", tp.Name, err)
+					}
+				}
+
+				for _, domain := range tp.Domains {
+					d := coredata.CommonThirdPartyDomain{
+						ID:                 gid.New(gid.NilTenant, coredata.CommonThirdPartyDomainEntityType),
+						CommonThirdPartyID: party.ID,
+						Domain:             domain,
+						CreatedAt:          now,
+						UpdatedAt:          now,
+					}
+
+					domainInserted, err := d.Upsert(ctx, tx)
+					if err != nil {
+						return fmt.Errorf("cannot upsert domain %q for %q: %w", domain, tp.Name, err)
+					}
+
+					if domainInserted {
+						domainsInserted++
+					} else {
+						domainsUpdated++
+					}
 				}
 			}
 
@@ -213,7 +238,8 @@ func run() error {
 		return err
 	}
 
-	fmt.Printf("imported %d rows (%d inserted, %d updated)\n", len(thirdParties), inserted, updated)
+	fmt.Printf("imported %d third parties (%d inserted, %d updated)\n", len(thirdParties), inserted, updated)
+	fmt.Printf("imported %d domains (%d inserted, %d updated)\n", domainsInserted+domainsUpdated, domainsInserted, domainsUpdated)
 
 	if fetchLogos {
 		if err := fetchAndStoreLogos(ctx, pgClient, thirdParties, s3Bucket, s3Endpoint, s3Region, s3AccessKey, s3SecretKey, s3UsePathStyle); err != nil {

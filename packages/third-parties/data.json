@@ -17,7 +17,11 @@
       "C5",
       "GDPR"
     ],
-    "securityPageUrl": "https://slack.com/intl/en-gb/trust/security"
+    "securityPageUrl": "https://slack.com/intl/en-gb/trust/security",
+    "domains": [
+      "slack.com",
+      "slack-edge.com"
+    ]
   },
   {
     "name": "Zoom",
@@ -49,7 +53,11 @@
       "GDPR"
     ],
     "securityPageUrl": "https://zoom.us/trust/security",
-    "statusPageUrl": "https://status.zoom.us/"
+    "statusPageUrl": "https://status.zoom.us/",
+    "domains": [
+      "zoom.us",
+      "zoom.com"
+    ]
   },
   {
     "name": "Github",
@@ -69,7 +77,13 @@
       "GDPR"
     ],
     "securityPageUrl": "https://docs.github.com/en/code-security/security-overview/about-security-overview",
-    "statusPageUrl": "https://www.githubstatus.com/"
+    "statusPageUrl": "https://www.githubstatus.com/",
+    "domains": [
+      "github.com",
+      "github.io",
+      "githubusercontent.com",
+      "githubassets.com"
+    ]
   },
   {
     "name": "Stripe",
@@ -94,7 +108,11 @@
       "GDPR"
     ],
     "securityPageUrl": "https://stripe.com/security",
-    "statusPageUrl": "https://status.stripe.com/"
+    "statusPageUrl": "https://status.stripe.com/",
+    "domains": [
+      "stripe.com",
+      "stripe.network"
+    ]
   },
   {
     "name": "Cloudflare",
@@ -130,7 +148,11 @@
       "CPRA"
     ],
     "securityPageUrl": "https://www.cloudflare.com/en-gb/security",
-    "statusPageUrl": "https://www.cloudflarestatus.com/"
+    "statusPageUrl": "https://www.cloudflarestatus.com/",
+    "domains": [
+      "cloudflare.com",
+      "cloudflareinsights.com"
+    ]
   },
   {
     "name": "Sentry",
@@ -145,7 +167,11 @@
       "SOC2 Type 2"
     ],
     "securityPageUrl": "https://sentry.io/security",
-    "statusPageUrl": "https://status.sentry.io/"
+    "statusPageUrl": "https://status.sentry.io/",
+    "domains": [
+      "sentry.io",
+      "sentry-cdn.com"
+    ]
   },
   {
     "name": "Datadog",
@@ -169,7 +195,12 @@
     ],
     "securityPageUrl": "https://datadog.com/security",
     "trustPageUrl": "https://datadog.com/trust",
-    "statusPageUrl": "https://status.datadoghq.com/"
+    "statusPageUrl": "https://status.datadoghq.com/",
+    "domains": [
+      "datadoghq.com",
+      "datadog-agent.com",
+      "ddog-gov.com"
+    ]
   },
   {
     "name": "Vercel",
@@ -192,7 +223,12 @@
     ],
     "securityPageUrl": "https://vercel.com/security",
     "trustPageUrl": "https://security.vercel.com/",
-    "statusPageUrl": "https://status.vercel.com/"
+    "statusPageUrl": "https://status.vercel.com/",
+    "domains": [
+      "vercel.com",
+      "vercel.app",
+      "vercel-analytics.com"
+    ]
   },
   {
     "name": "Sendgrid",
@@ -216,7 +252,11 @@
     ],
     "securityPageUrl": "https://sendgrid.com/en-us/policies/security",
     "trustPageUrl": "https://security.twilio.com/",
-    "statusPageUrl": "https://status.sendgrid.com/"
+    "statusPageUrl": "https://status.sendgrid.com/",
+    "domains": [
+      "sendgrid.com",
+      "sendgrid.net"
+    ]
   },
   {
     "name": "Figma",
@@ -243,7 +283,10 @@
     ],
     "securityPageUrl": "https://www.figma.com/security",
     "trustPageUrl": "https://compliance.figma.com/",
-    "statusPageUrl": "https://status.figma.com/"
+    "statusPageUrl": "https://status.figma.com/",
+    "domains": [
+      "figma.com"
+    ]
   },
   {
     "name": "Notion",
@@ -266,7 +309,11 @@
       "GDPR",
       "CCPA"
     ],
-    "statusPageUrl": "https://status.notion.so"
+    "statusPageUrl": "https://status.notion.so",
+    "domains": [
+      "notion.so",
+      "notion.com"
+    ]
   },
   {
     "name": "Mintlify",
@@ -281,7 +328,10 @@
     ],
     "subprocessorsListUrl": "https://security.mintlify.com",
     "trustPageUrl": "https://security.mintlify.com/",
-    "statusPageUrl": "https://status.mintlify.com/"
+    "statusPageUrl": "https://status.mintlify.com/",
+    "domains": [
+      "mintlify.com"
+    ]
   },
   {
     "name": "Supabase",
@@ -300,7 +350,11 @@
     "serviceLevelAgreementUrl": "https://supabase.com/sla",
     "trustPageUrl": "https://security.supabase.com/",
     "dataProcessingAgreementUrl": "https://supabase.com/legal/dpa",
-    "statusPageUrl": "https://status.supabase.com/"
+    "statusPageUrl": "https://status.supabase.com/",
+    "domains": [
+      "supabase.co",
+      "supabase.com"
+    ]
   },
   {
     "name": "Segment",
@@ -324,7 +378,11 @@
     "securityPageUrl": "https://www.twilio.com/en-us/legal/security",
     "trustPageUrl": "https://security.segment.com/",
     "statusPageUrl": "https://status.segment.com/",
-    "dataProcessingAgreementUrl": "https://www.twilio.com/en-us/legal/data-protection-addendum"
+    "dataProcessingAgreementUrl": "https://www.twilio.com/en-us/legal/data-protection-addendum",
+    "domains": [
+      "segment.com",
+      "segment.io"
+    ]
   },
   {
     "name": "Auth0",
@@ -350,7 +408,10 @@
     "securityPageUrl": "https://www.okta.com/security-center/",
     "trustPageUrl": "https://www.okta.com/trust-center/",
     "statusPageUrl": "https://status.auth0.com/",
-    "dataProcessingAgreementUrl": "https://www.okta.com/trustandcompliance/#data-processing-addendum"
+    "dataProcessingAgreementUrl": "https://www.okta.com/trustandcompliance/#data-processing-addendum",
+    "domains": [
+      "auth0.com"
+    ]
   },
   {
     "name": "Heroku",
@@ -375,7 +436,10 @@
       "HIPAA"
     ],
     "statusPageUrl": "https://status.heroku.com/",
-    "trustPageUrl": "https://www.heroku.com/compliance"
+    "trustPageUrl": "https://www.heroku.com/compliance",
+    "domains": [
+      "heroku.com"
+    ]
   },
   {
     "name": "Linear",
@@ -394,7 +458,10 @@
       "GDPR"
     ],
     "trustPageUrl": "https://trustcenter.linear.app/",
-    "subprocessorsListUrl": "https://linear.app/dpa"
+    "subprocessorsListUrl": "https://linear.app/dpa",
+    "domains": [
+      "linear.app"
+    ]
   },
   {
     "name": "Hubspot",
@@ -412,7 +479,15 @@
       "SOC 3",
       "SOC 2 Type 2"
     ],
-    "statusPageUrl": "https://status.hubspot.com/"
+    "statusPageUrl": "https://status.hubspot.com/",
+    "domains": [
+      "hubspot.com",
+      "hs-analytics.net",
+      "hs-banner.com",
+      "hsforms.net",
+      "hubapi.com",
+      "hsappstatic.net"
+    ]
   },
   {
     "name": "Langfuse",
@@ -430,6 +505,9 @@
       "SOC 2 Type 2",
       "GDPR",
       "HIPAA"
+    ],
+    "domains": [
+      "langfuse.com"
     ]
   },
   {
@@ -457,7 +535,10 @@
       "BSI C5",
       "MTCS"
     ],
-    "trustPageUrl": "https://cloud.google.com/compliance"
+    "trustPageUrl": "https://cloud.google.com/compliance",
+    "domains": [
+      "google.com"
+    ]
   },
   {
     "name": "Algolia",
@@ -483,7 +564,12 @@
     "subprocessorsListUrl": "https://www.algolia.com/policies/infrastructure-and-sub-processors",
     "trustPageUrl": "https://www.algolia.com/trust-center",
     "serviceLevelAgreementUrl": "https://www.algolia.com/policies/sla",
-    "statusPageUrl": "https://status.algolia.com"
+    "statusPageUrl": "https://status.algolia.com",
+    "domains": [
+      "algolia.com",
+      "algolia.net",
+      "algolianet.com"
+    ]
   },
   {
     "name": "PostHog",
@@ -501,7 +587,10 @@
     "serviceLevelAgreementUrl": "https://posthog.com/terms",
     "dataProcessingAgreementUrl": "https://posthog.com/dpa",
     "subprocessorsListUrl": "https://posthog.com/dpa",
-    "statusPageUrl": "https://status.posthog.com/"
+    "statusPageUrl": "https://status.posthog.com/",
+    "domains": [
+      "posthog.com"
+    ]
   },
   {
     "name": "Airtable",
@@ -526,6 +615,9 @@
       "CPRA",
       "CCPA",
       "HIPAA"
+    ],
+    "domains": [
+      "airtable.com"
     ]
   },
   {
@@ -549,7 +641,10 @@
     "subprocessorsListUrl": "https://openai.com/policies/sub-processor-list/",
     "businessAssociateAgreementUrl": "https://openai.com/policies/business-terms/",
     "trustPageUrl": "https://trust.openai.com/",
-    "statusPageUrl": "https://status.openai.com/"
+    "statusPageUrl": "https://status.openai.com/",
+    "domains": [
+      "openai.com"
+    ]
   },
   {
     "name": "Anthropic",
@@ -567,7 +662,10 @@
     "dataProcessingAgreementUrl": "https://assets-global.website-files.com/6548404a216c2e42eb79648b/65680354f8f4425cc8a8110c_Toothless-Anthropic_DPA_Sep-22-2023.pdf",
     "subprocessorsListUrl": "https://trust.anthropic.com/subprocessors",
     "trustPageUrl": "https://trust.anthropic.com",
-    "statusPageUrl": "https://status.anthropic.com"
+    "statusPageUrl": "https://status.anthropic.com",
+    "domains": [
+      "anthropic.com"
+    ]
   },
   {
     "name": "Gusto",
@@ -585,7 +683,10 @@
     ],
     "securityPageUrl": "https://gusto.com/security",
     "trustPageUrl": "https://trust.gusto.com/",
-    "statusPageUrl": "https://status.gusto.com/"
+    "statusPageUrl": "https://status.gusto.com/",
+    "domains": [
+      "gusto.com"
+    ]
   },
   {
     "name": "Amazon Web Services (AWS)",
@@ -671,7 +772,12 @@
     ],
     "securityPageUrl": "https://aws.amazon.com/security/",
     "trustPageUrl": "https://aws.amazon.com/trust-center/",
-    "statusPageUrl": "https://status.aws.amazon.com/"
+    "statusPageUrl": "https://status.aws.amazon.com/",
+    "domains": [
+      "amazonaws.com",
+      "aws.amazon.com",
+      "amazon.com"
+    ]
   },
   {
     "name": "Calendly",
@@ -693,7 +799,10 @@
     "termsOfServiceUrl": "https://calendly.com/legal/customer-terms-conditions",
     "dataProcessingAgreementUrl": "https://calendly.com/legal/data-processing-addendum",
     "subprocessorsListUrl": "https://help.calendly.com/hc/en-us/articles/360047345493-Calendly-sub-processors-GDPR-CCPA",
-    "statusPageUrl": "https://status.calendly.com"
+    "statusPageUrl": "https://status.calendly.com",
+    "domains": [
+      "calendly.com"
+    ]
   },
   {
     "name": "jsDelivr",
@@ -710,7 +819,10 @@
     "termsOfServiceUrl": "https://www.jsdelivr.com/terms",
     "dataProcessingAgreementUrl": "https://www.jsdelivr.com/documents/data-processing-agreement.pdf",
     "subprocessorsListUrl": "https://www.jsdelivr.com/terms/sub-processors",
-    "statusPageUrl": "https://status.jsdelivr.com/"
+    "statusPageUrl": "https://status.jsdelivr.com/",
+    "domains": [
+      "jsdelivr.net"
+    ]
   },
   {
     "name": "npm",
@@ -725,7 +837,10 @@
     "securityPageUrl": "https://docs.npmjs.com/policies/security/",
     "privacyPolicyUrl": "https://www.npmjs.com/policies/privacy",
     "termsOfServiceUrl": "https://www.npmjs.com/policies/terms",
-    "statusPageUrl": "https://status.npmjs.org/"
+    "statusPageUrl": "https://status.npmjs.org/",
+    "domains": [
+      "npmjs.com"
+    ]
   },
   {
     "name": "Clerk",
@@ -744,7 +859,11 @@
     "termsOfServiceUrl": "https://clerk.com/legal/terms",
     "dataProcessingAgreementUrl": "https://clerk.com/legal/dpa",
     "subprocessorsListUrl": "https://clerk.com/legal/subprocessors",
-    "statusPageUrl": "https://status.clerk.com/"
+    "statusPageUrl": "https://status.clerk.com/",
+    "domains": [
+      "clerk.com",
+      "clerk.dev"
+    ]
   },
   {
     "name": "Plausible Analytics",
@@ -762,7 +881,10 @@
     "termsOfServiceUrl": "https://plausible.io/terms",
     "dataProcessingAgreementUrl": "https://plausible.io/dpa",
     "subprocessorsListUrl": "https://plausible.io/privacy",
-    "statusPageUrl": "https://status.plausible.io/"
+    "statusPageUrl": "https://status.plausible.io/",
+    "domains": [
+      "plausible.io"
+    ]
   },
   {
     "name": "Latitude.sh",
@@ -777,7 +899,10 @@
     "privacyPolicyUrl": "https://www.latitude.sh/legal/privacy",
     "termsOfServiceUrl": "https://www.latitude.sh/legal/terms",
     "dataProcessingAgreementUrl": "https://www.latitude.sh/legal/dpa",
-    "statusPageUrl": "https://status.latitude.sh/"
+    "statusPageUrl": "https://status.latitude.sh/",
+    "domains": [
+      "latitude.sh"
+    ]
   },
   {
     "name": "Together AI",
@@ -794,7 +919,10 @@
     "privacyPolicyUrl": "https://www.together.ai/privacy",
     "termsOfServiceUrl": "https://www.together.ai/terms-of-service",
     "trustPageUrl": "https://trust.together.ai",
-    "statusPageUrl": "https://status.together.ai/"
+    "statusPageUrl": "https://status.together.ai/",
+    "domains": [
+      "together.ai"
+    ]
   },
   {
     "name": "Mercury",
@@ -811,7 +939,10 @@
     "privacyPolicyUrl": "https://www.datocms-assets.com/115132/1741892788-v5-mercury-privacy-policy-2025-03-13.pdf",
     "termsOfServiceUrl": "https://www.datocms-assets.com/115132/1741383503-v7-mercury-terms-of-use-2025-03-07.pdf",
     "statusPageUrl": "https://status.mercury.com/",
-    "trustPageUrl": "https://trust.mercury.com/"
+    "trustPageUrl": "https://trust.mercury.com/",
+    "domains": [
+      "mercury.com"
+    ]
   },
   {
     "name": "Signal",
@@ -822,7 +953,10 @@
     "securityPageUrl": "https://signal.org/security",
     "privacyPolicyUrl": "https://signal.org/legal/#privacy-policy",
     "termsOfServiceUrl": "https://signal.org/legal/#terms-of-service",
-    "statusPageUrl": "https://status.signal.org/"
+    "statusPageUrl": "https://status.signal.org/",
+    "domains": [
+      "signal.org"
+    ]
   },
   {
     "name": "monday.com",
@@ -852,7 +986,10 @@
     "subprocessorsListUrl": "https://monday.com/l/privacy/sub-processors-subsidiaries-support",
     "businessAssociateAgreementUrl": "https://monday.com/l/privacy/hipaa-baa",
     "statusPageUrl": "https://status.monday.com",
-    "trustPageUrl": "https://monday.com/trustcenter"
+    "trustPageUrl": "https://monday.com/trustcenter",
+    "domains": [
+      "monday.com"
+    ]
   },
   {
     "name": "Carta",
@@ -872,7 +1009,10 @@
     "termsOfServiceUrl": "https://carta.com/terms-of-service/",
     "dataProcessingAgreementUrl": "https://carta.com/legal/carta-europe/data-processor-agreement/",
     "subprocessorsListUrl": "https://carta.com/legal/carta-europe/data-processor-agreement/",
-    "trustPageUrl": "https://app.conveyor.com/profile/carta"
+    "trustPageUrl": "https://app.conveyor.com/profile/carta",
+    "domains": [
+      "carta.com"
+    ]
   },
   {
     "name": "Apollo.io",
@@ -895,7 +1035,10 @@
     "dataProcessingAgreementUrl": "https://www.apollo.io/dpa",
     "subprocessorsListUrl": "https://trust.apollo.io/",
     "trustPageUrl": "https://trust.apollo.io/",
-    "statusPageUrl": "https://status.apollo.io/"
+    "statusPageUrl": "https://status.apollo.io/",
+    "domains": [
+      "apollo.io"
+    ]
   },
   {
     "name": "Atlassian",
@@ -939,7 +1082,12 @@
     "subprocessorsListUrl": "https://www.atlassian.com/legal/sub-processors",
     "businessAssociateAgreementUrl": "https://www.atlassian.com/legal/business-associate-agreement",
     "trustPageUrl": "https://www.atlassian.com/trust",
-    "statusPageUrl": "https://status.atlassian.com/"
+    "statusPageUrl": "https://status.atlassian.com/",
+    "domains": [
+      "atlassian.com",
+      "atlassian.net",
+      "bitbucket.org"
+    ]
   },
   {
     "name": "Webflow",
@@ -959,7 +1107,11 @@
     "dataProcessingAgreementUrl": "https://webflow.com/legal/dpa",
     "subprocessorsListUrl": "https://uploads-ssl.webflow.com/5d80c03f1edd7bd68fcdb623/657c411c020d1ee5f047f6ab_20231207%20-%20List%20of%20approved%20Sub-processors.pdf",
     "trustPageUrl": "https://trust.webflow.com/",
-    "statusPageUrl": "https://status.webflow.com/"
+    "statusPageUrl": "https://status.webflow.com/",
+    "domains": [
+      "webflow.com",
+      "webflow.io"
+    ]
   },
   {
     "name": "1Password",
@@ -982,7 +1134,10 @@
     "termsOfServiceUrl": "https://1password.com/legal/terms-of-service",
     "dataProcessingAgreementUrl": "https://1passwordstatic.com/files/legal-center/1Password_Online_DPA_v202504.pdf",
     "subprocessorsListUrl": "https://1passwordstatic.com/files/legal-center/notice-of-updates-to-the-1password-subprocessor-list.pdf",
-    "statusPageUrl": "https://status.1password.com/"
+    "statusPageUrl": "https://status.1password.com/",
+    "domains": [
+      "1password.com"
+    ]
   },
   {
     "name": "Checkr",
@@ -1006,7 +1161,10 @@
     "dataProcessingAgreementUrl": "https://checkr.com/legal/dpa",
     "subprocessorsListUrl": "https://checkr.com/sub-processor-list",
     "trustPageUrl": "https://security.checkr.com/",
-    "statusPageUrl": "https://checkrstatus.com/"
+    "statusPageUrl": "https://checkrstatus.com/",
+    "domains": [
+      "checkr.com"
+    ]
   },
   {
     "name": "Rippling",
@@ -1025,7 +1183,10 @@
     "privacyPolicyUrl": "https://app.rippling.com/legal/privacy",
     "termsOfServiceUrl": "https://app.rippling.com/legal",
     "dataProcessingAgreementUrl": "https://app.rippling.com/legal/dpa",
-    "subprocessorsListUrl": "https://app.rippling.com/legal/subprocessors"
+    "subprocessorsListUrl": "https://app.rippling.com/legal/subprocessors",
+    "domains": [
+      "rippling.com"
+    ]
   },
   {
     "name": "Vouch",
@@ -1038,7 +1199,10 @@
     ],
     "privacyPolicyUrl": "https://www.vouch.us/legal/privacy-notice",
     "termsOfServiceUrl": "https://www.vouch.us/legal/terms-of-use",
-    "dataProcessingAgreementUrl": "https://help.vouchfor.com/docs/support/security/data-processing-addendum/"
+    "dataProcessingAgreementUrl": "https://help.vouchfor.com/docs/support/security/data-processing-addendum/",
+    "domains": [
+      "vouch.us"
+    ]
   },
   {
     "name": "Twilio",
@@ -1064,7 +1228,10 @@
     "dataProcessingAgreementUrl": "https://www.twilio.com/en-us/legal/data-protection-addendum",
     "subprocessorsListUrl": "https://www.twilio.com/en-us/legal/sub-processors",
     "trustPageUrl": "https://security.twilio.com/",
-    "statusPageUrl": "https://status.twilio.com/"
+    "statusPageUrl": "https://status.twilio.com/",
+    "domains": [
+      "twilio.com"
+    ]
   },
   {
     "name": "Qonto",
@@ -1082,7 +1249,10 @@
     "securityPageUrl": "https://qonto.com/en/security",
     "privacyPolicyUrl": "https://legal.qonto.com/en?_gl=1*eyxi0u*_gcl_au*NDEzMTYzMTE2LjE3NDQ5OTkzOTA.#template-6uiwuhdde",
     "termsOfServiceUrl": "https://legal.qonto.com/en",
-    "trustPageUrl": "https://qonto.com/en/trust"
+    "trustPageUrl": "https://qonto.com/en/trust",
+    "domains": [
+      "qonto.com"
+    ]
   },
   {
     "name": "Cursor",
@@ -1099,7 +1269,11 @@
     "termsOfServiceUrl": "https://www.cursor.com/terms-of-service",
     "subprocessorsListUrl": "https://trust.cursor.com/subprocessors",
     "trustPageUrl": "https://trust.cursor.com",
-    "statusPageUrl": "https://status.cursor.com/"
+    "statusPageUrl": "https://status.cursor.com/",
+    "domains": [
+      "cursor.com",
+      "cursor.sh"
+    ]
   },
   {
     "name": "Pulley",
@@ -1115,7 +1289,10 @@
     "securityPageUrl": "https://pulley.com/security",
     "privacyPolicyUrl": "https://pulley.com/privacy",
     "termsOfServiceUrl": "https://pulley.com/terms",
-    "subprocessorsListUrl": "https://large-walk-bd5.notion.site/6449d3ecd2854af0a313b6e8679b5795?v=d61abc36355842bb939d49544f18dc95"
+    "subprocessorsListUrl": "https://large-walk-bd5.notion.site/6449d3ecd2854af0a313b6e8679b5795?v=d61abc36355842bb939d49544f18dc95",
+    "domains": [
+      "pulley.com"
+    ]
   },
   {
     "name": "Microsoft Azure",
@@ -1232,7 +1409,13 @@
     "subprocessorsListUrl": "https://www.microsoft.com/en-us/download/details.aspx?id=50426",
     "businessAssociateAgreementUrl": "https://learn.microsoft.com/en-us/compliance/regulatory/offering-hipaa-hitech",
     "trustPageUrl": "https://www.microsoft.com/en-us/trust-center/product-overview",
-    "statusPageUrl": "https://azure.status.microsoft/"
+    "statusPageUrl": "https://azure.status.microsoft/",
+    "domains": [
+      "azure.com",
+      "microsoft.com",
+      "windows.net",
+      "azure.net"
+    ]
   },
   {
     "name": "Microsoft 365",
@@ -1349,7 +1532,15 @@
     "subprocessorsListUrl": "https://www.microsoft.com/en-us/download/details.aspx?id=50426",
     "businessAssociateAgreementUrl": "https://learn.microsoft.com/en-us/compliance/regulatory/offering-hipaa-hitech",
     "trustPageUrl": "https://www.microsoft.com/en-us/trust-center/product-overview",
-    "statusPageUrl": "https://portal.office.com/servicestatus"
+    "statusPageUrl": "https://portal.office.com/servicestatus",
+    "domains": [
+      "microsoft.com",
+      "office.com",
+      "office365.com",
+      "microsoftonline.com",
+      "live.com",
+      "outlook.com"
+    ]
   },
   {
     "name": "Google",
@@ -1372,7 +1563,18 @@
     "privacyPolicyUrl": "https://policies.google.com/privacy",
     "termsOfServiceUrl": "https://policies.google.com/terms",
     "trustPageUrl": "https://business.safety.google/",
-    "statusPageUrl": "https://ads.google.com/status/publisher/"
+    "statusPageUrl": "https://ads.google.com/status/publisher/",
+    "domains": [
+      "google.com",
+      "google-analytics.com",
+      "googletagmanager.com",
+      "googleapis.com",
+      "gstatic.com",
+      "doubleclick.net",
+      "youtube.com",
+      "googlesyndication.com",
+      "googleadservices.com"
+    ]
   },
   {
     "name": "Namecheap",
@@ -1387,7 +1589,10 @@
     "privacyPolicyUrl": "https://www.namecheap.com/legal/general/privacy-policy/",
     "termsOfServiceUrl": "https://www.namecheap.com/legal/",
     "dataProcessingAgreementUrl": "https://www.namecheap.com/legal/universal/data-processing-addendum/",
-    "statusPageUrl": "https://www.namecheap.com/status-updates/"
+    "statusPageUrl": "https://www.namecheap.com/status-updates/",
+    "domains": [
+      "namecheap.com"
+    ]
   },
   {
     "name": "Porter",
@@ -1403,7 +1608,10 @@
     "securityPageUrl": "https://docs.porter.run/security-and-compliance/soc2-hipaa",
     "privacyPolicyUrl": "https://docs.porter.run/terms-and-privacy/privacy-policy",
     "termsOfServiceUrl": "https://docs.porter.run/terms-and-privacy/terms-of-service",
-    "statusPageUrl": "https://status.porter.run/"
+    "statusPageUrl": "https://status.porter.run/",
+    "domains": [
+      "porter.run"
+    ]
   },
   {
     "name": "Bitwarden",
@@ -1426,7 +1634,10 @@
     "termsOfServiceUrl": "https://bitwarden.com/terms/",
     "subprocessorsListUrl": "https://bitwarden.com/help/subprocessors/",
     "trustPageUrl": "https://bitwarden.com/compliance/",
-    "statusPageUrl": "https://status.bitwarden.com/"
+    "statusPageUrl": "https://status.bitwarden.com/",
+    "domains": [
+      "bitwarden.com"
+    ]
   },
   {
     "name": "Framer",
@@ -1446,7 +1657,11 @@
     "termsOfServiceUrl": "https://www.framer.com/legal/terms-of-service/",
     "dataProcessingAgreementUrl": "https://www.framer.com/legal/data-processing-addendum/",
     "subprocessorsListUrl": "https://www.framer.com/legal/sub-processors/",
-    "statusPageUrl": "https://www.framerstatus.com/"
+    "statusPageUrl": "https://www.framerstatus.com/",
+    "domains": [
+      "framer.com",
+      "framerusercontent.com"
+    ]
   },
   {
     "name": "Cal.com",
@@ -1468,7 +1683,10 @@
     "subprocessorsListUrl": "https://security.cal.com/?itemUid=e3fae2ca-94a9-416b-b577-5c90e382df57",
     "businessAssociateAgreementUrl": "https://app.cal.com/apps/baa-for-hipaa",
     "trustPageUrl": "https://security.cal.com",
-    "statusPageUrl": "https://status.cal.com"
+    "statusPageUrl": "https://status.cal.com",
+    "domains": [
+      "cal.com"
+    ]
   },
   {
     "name": "Mailchimp",
@@ -1491,7 +1709,12 @@
     "dataProcessingAgreementUrl": "https://mailchimp.com/legal/data-processing-addendum/",
     "subprocessorsListUrl": "https://mailchimp.com/legal/subprocessors/",
     "trustPageUrl": "https://www.intuit.com/compliance/",
-    "statusPageUrl": "https://status.mailchimp.com/"
+    "statusPageUrl": "https://status.mailchimp.com/",
+    "domains": [
+      "mailchimp.com",
+      "list-manage.com",
+      "mailchimpapp.com"
+    ]
   },
   {
     "name": "Otter.ai",
@@ -1512,7 +1735,10 @@
     "dataProcessingAgreementUrl": "https://otter.ai/terms-of-service#data-processing-agreement",
     "subprocessorsListUrl": "https://otter.ai/subprocessors",
     "trustPageUrl": "https://otter.ai/privacy-security",
-    "statusPageUrl": "https://status.otter.ai/"
+    "statusPageUrl": "https://status.otter.ai/",
+    "domains": [
+      "otter.ai"
+    ]
   },
   {
     "name": "Resend",
@@ -1534,7 +1760,10 @@
     "subprocessorsListUrl": "https://newrelic.com/sub-processors",
     "businessAssociateAgreementUrl": "https://newrelic.com/termsandconditions/hipaabaafaq",
     "trustPageUrl": "https://newrelic.com/security",
-    "statusPageUrl": "https://status.newrelic.com/"
+    "statusPageUrl": "https://status.newrelic.com/",
+    "domains": [
+      "resend.com"
+    ]
   },
   {
     "name": "OVHcloud global",
@@ -1566,7 +1795,10 @@
     "dataProcessingAgreementUrl": "https://storage.gra.cloud.ovh.net/v1/AUTH_325716a587c64897acbef9a4a4726e38/contracts/4683679-OVH_Data_Protection_Agreement-IE-5.1.pdf",
     "subprocessorsListUrl": "https://www.ovh.ie/support/termsofservice/OVH%20IE%20Sub%20processors.pdf",
     "trustPageUrl": "https://corporate.ovhcloud.com/en/trusted-cloud/security-certifications/",
-    "statusPageUrl": "https://www.status-ovhcloud.com/"
+    "statusPageUrl": "https://www.status-ovhcloud.com/",
+    "domains": [
+      "ovhcloud.com"
+    ]
   },
   {
     "name": "OVHcloud US",
@@ -1596,7 +1828,10 @@
     "dataProcessingAgreementUrl": "https://us.ovhcloud.com/legal/data-processing-agreement/",
     "subprocessorsListUrl": "https://storage.gra.cloud.ovh.net/v1/AUTH_325716a587c64897acbef9a4a4726e38/contracts/30c4ab8-OVH_Sub_processors-IE-2.0.pdf",
     "trustPageUrl": "https://us.ovhcloud.com/compliance/",
-    "statusPageUrl": "https://status.us.ovhcloud.com/"
+    "statusPageUrl": "https://status.us.ovhcloud.com/",
+    "domains": [
+      "us.ovhcloud.com"
+    ]
   },
   {
     "name": "Pipedrive",
@@ -1618,7 +1853,10 @@
     "dataProcessingAgreementUrl": "https://www.pipedrive.com/en/privacy/dpa",
     "subprocessorsListUrl": "https://www.pipedrive.com/en/subprocessors",
     "trustPageUrl": "https://www.pipedrive.com/en/trust-center",
-    "statusPageUrl": "https://status.pipedrive.com/"
+    "statusPageUrl": "https://status.pipedrive.com/",
+    "domains": [
+      "pipedrive.com"
+    ]
   },
   {
     "name": "Plesk",
@@ -1632,7 +1870,10 @@
     "securityPageUrl": "https://docs.plesk.com/en-US/obsidian/administrator-guide/plesk-administration/securing-plesk.59464/",
     "privacyPolicyUrl": "https://www.plesk.com/legal/#privacy-policy",
     "termsOfServiceUrl": "https://www.plesk.com/legal/#terms-of-use/",
-    "subprocessorsListUrl": "https://www.plesk.com/wp-content/uploads/legal/gdpr3.pdf"
+    "subprocessorsListUrl": "https://www.plesk.com/wp-content/uploads/legal/gdpr3.pdf",
+    "domains": [
+      "plesk.com"
+    ]
   },
   {
     "name": "Brevo",
@@ -1652,7 +1893,11 @@
     "dataProcessingAgreementUrl": "https://www.brevo.com/legal/termsofuse/#dpa",
     "subprocessorsListUrl": "https://www.brevo.com/legal/termsofuse/#sub-processors",
     "trustPageUrl": "https://www.brevo.com/features/data-security/",
-    "statusPageUrl": "https://status.brevo.com/"
+    "statusPageUrl": "https://status.brevo.com/",
+    "domains": [
+      "brevo.com",
+      "sendinblue.com"
+    ]
   },
   {
     "name": "Better Stack",
@@ -1669,7 +1914,10 @@
     "termsOfServiceUrl": "https://betterstack.com/terms",
     "dataProcessingAgreementUrl": "https://betterstack.com/dpa",
     "subprocessorsListUrl": "https://betterstack.com/dpa/schedules",
-    "statusPageUrl": "https://status.betterstack.com/"
+    "statusPageUrl": "https://status.betterstack.com/",
+    "domains": [
+      "betterstack.com"
+    ]
   },
   {
     "name": "PlanetScale",
@@ -1692,7 +1940,10 @@
     "dataProcessingAgreementUrl": "https://planetscale.com/legal/data-processing-addendum",
     "subprocessorsListUrl": "https://planetscale.com/legal/subprocessors",
     "trustPageUrl": "https://trust.planetscale.com",
-    "statusPageUrl": "https://www.planetscalestatus.com/"
+    "statusPageUrl": "https://www.planetscalestatus.com/",
+    "domains": [
+      "planetscale.com"
+    ]
   },
   {
     "name": "Docker",
@@ -1720,7 +1971,10 @@
     "dataProcessingAgreementUrl": "https://www.docker.com/app/uploads/2022/03/2022-Docker-EU-UK-SCC-Data-Processing-Agreement.pdf",
     "subprocessorsListUrl": "https://www.docker.com/trust/privacy/sub-processors/",
     "trustPageUrl": "https://www.docker.com/trust/",
-    "statusPageUrl": "https://www.dockerstatus.com/"
+    "statusPageUrl": "https://www.dockerstatus.com/",
+    "domains": [
+      "docker.com"
+    ]
   },
   {
     "name": "Brex",
@@ -1741,7 +1995,10 @@
     "dataProcessingAgreementUrl": "https://www.brex.com/legal/dpa",
     "subprocessorsListUrl": "https://trust-portal.brex.com",
     "trustPageUrl": "https://trust-portal.brex.com",
-    "statusPageUrl": "https://status.brex.com/"
+    "statusPageUrl": "https://status.brex.com/",
+    "domains": [
+      "brex.com"
+    ]
   },
   {
     "name": "Ramp",
@@ -1763,7 +2020,10 @@
     "termsOfServiceUrl": "https://ramp.com/legal/platform-agreement",
     "dataProcessingAgreementUrl": "https://ramp.com/legal/dpa",
     "subprocessorsListUrl": "https://trust.ramp.com/",
-    "trustPageUrl": "https://trust.ramp.com/"
+    "trustPageUrl": "https://trust.ramp.com/",
+    "domains": [
+      "ramp.com"
+    ]
   },
   {
     "name": "ClickHouse",
@@ -1790,7 +2050,10 @@
     "dataProcessingAgreementUrl": "https://clickhouse.com/legal/agreements/data-processing-addendum",
     "subprocessorsListUrl": "https://clickhouse.com/legal/agreements/subprocessors",
     "trustPageUrl": "https://trust.clickhouse.com",
-    "statusPageUrl": "https://status.clickhouse.com"
+    "statusPageUrl": "https://status.clickhouse.com",
+    "domains": [
+      "clickhouse.com"
+    ]
   },
   {
     "name": "Tailscale",
@@ -1810,7 +2073,10 @@
     "dataProcessingAgreementUrl": "https://tailscale.com/dpa",
     "subprocessorsListUrl": "https://tailscale.com/dpa-subprocessors",
     "trustPageUrl": "https://tailscale.com/legal",
-    "statusPageUrl": "https://status.tailscale.com/"
+    "statusPageUrl": "https://status.tailscale.com/",
+    "domains": [
+      "tailscale.com"
+    ]
   },
   {
     "name": "Puzzle",
@@ -1827,7 +2093,10 @@
     "privacyPolicyUrl": "https://puzzle.io/legal/privacy",
     "termsOfServiceUrl": "https://puzzle.io/legal/terms-of-service",
     "trustPageUrl": "https://trust.puzzle.io",
-    "statusPageUrl": "https://status.puzzle.io/"
+    "statusPageUrl": "https://status.puzzle.io/",
+    "domains": [
+      "puzzle.io"
+    ]
   },
   {
     "name": "Probo",
@@ -1837,7 +2106,10 @@
     "category": "SECURITY",
     "privacyPolicyUrl": "https://www.probo.com/privacy",
     "termsOfServiceUrl": "https://www.probo.com/terms",
-    "subprocessorsListUrl": "https://www.probo.com/subprocessors"
+    "subprocessorsListUrl": "https://www.probo.com/subprocessors",
+    "domains": [
+      "probo.com"
+    ]
   },
   {
     "name": "folk",
@@ -1854,7 +2126,10 @@
     "privacyPolicyUrl": "https://www.folk.app/privacy-policy",
     "termsOfServiceUrl": "https://www.folk.app/terms-of-use",
     "subprocessorsListUrl": "https://www.folk.app/privacy-policy#3-list-of-sub-processors",
-    "statusPageUrl": "https://status.folk.app/"
+    "statusPageUrl": "https://status.folk.app/",
+    "domains": [
+      "folk.app"
+    ]
   },
   {
     "name": "Claap",
@@ -1868,7 +2143,10 @@
     "privacyPolicyUrl": "https://www.claap.io/legal/privacy-policy",
     "termsOfServiceUrl": "https://www.claap.io/legal/terms-and-conditions",
     "subprocessorsListUrl": "https://www.claap.io/legal/privacy-policy#sub-processors",
-    "statusPageUrl": "https://claap.instatus.com/"
+    "statusPageUrl": "https://claap.instatus.com/",
+    "domains": [
+      "claap.io"
+    ]
   },
   {
     "name": "Pitch",
@@ -1885,7 +2163,10 @@
     "dataProcessingAgreementUrl": "https://pitch.com/dpa",
     "subprocessorsListUrl": "https://pitch.com/dpa#annex-7-2",
     "trustPageUrl": "https://pitch.com/gdpr",
-    "statusPageUrl": "https://status.pitch.com/"
+    "statusPageUrl": "https://status.pitch.com/",
+    "domains": [
+      "pitch.com"
+    ]
   },
   {
     "name": "Spendesk",
@@ -1904,7 +2185,10 @@
     "dataProcessingAgreementUrl": "https://www.spendesk.com/legals/terms/customers/#Annex-three",
     "subprocessorsListUrl": "https://www.spendesk.com/legals/subprocessors/",
     "trustPageUrl": "https://trust.spendesk.com/",
-    "statusPageUrl": "https://status.spendesk.com/"
+    "statusPageUrl": "https://status.spendesk.com/",
+    "domains": [
+      "spendesk.com"
+    ]
   },
   {
     "name": "Lever",
@@ -1926,7 +2210,10 @@
     "serviceLevelAgreementUrl": "https://www.lever.co/agreements/sla/",
     "dataProcessingAgreementUrl": "https://www.lever.co/agreements/dpa/",
     "subprocessorsListUrl": "https://www.lever.co/subprocessors-archive-june-2023/",
-    "statusPageUrl": "https://status.lever.co/"
+    "statusPageUrl": "https://status.lever.co/",
+    "domains": [
+      "lever.co"
+    ]
   },
   {
     "name": "Google Cloud Platform",
@@ -2089,7 +2376,10 @@
     "subprocessorsListUrl": "https://cloud.google.com/terms/subprocessors",
     "businessAssociateAgreementUrl": "https://cloud.google.com/terms/hipaa-baa",
     "trustPageUrl": "https://cloud.google.com/trust-center",
-    "statusPageUrl": "https://status.cloud.google.com/"
+    "statusPageUrl": "https://status.cloud.google.com/",
+    "domains": [
+      "cloud.google.com"
+    ]
   },
   {
     "name": "Fly.io",
@@ -2114,7 +2404,10 @@
     "subprocessorsListUrl": "https://fly.io/legal/sub-processors/",
     "businessAssociateAgreementUrl": "https://fly.io/documents",
     "trustPageUrl": "https://fly.io/compliance",
-    "statusPageUrl": "https://status.fly.io/"
+    "statusPageUrl": "https://status.fly.io/",
+    "domains": [
+      "fly.io"
+    ]
   },
   {
     "name": "Upstash",
@@ -2134,7 +2427,10 @@
     "dataProcessingAgreementUrl": "https://upstash.com/static/trust/dpa.pdf",
     "subprocessorsListUrl": "https://trust.upstash.com/subprocessors",
     "trustPageUrl": "https://trust.upstash.com",
-    "statusPageUrl": "https://status.upstash.com"
+    "statusPageUrl": "https://status.upstash.com",
+    "domains": [
+      "upstash.com"
+    ]
   },
   {
     "name": "bunny.net",
@@ -2151,7 +2447,12 @@
     "termsOfServiceUrl": "https://bunny.net/tos/",
     "serviceLevelAgreementUrl": "https://bunny.net/sla/",
     "subprocessorsListUrl": "https://bunny.net/gdpr/sub-processors/",
-    "statusPageUrl": "https://status.bunny.net/"
+    "statusPageUrl": "https://status.bunny.net/",
+    "domains": [
+      "bunny.net",
+      "b-cdn.net",
+      "bunnycdn.com"
+    ]
   },
   {
     "name": "ClickUp",
@@ -2177,7 +2478,10 @@
     "dataProcessingAgreementUrl": "https://clickup.com/terms/dpa",
     "subprocessorsListUrl": "https://clickup.com/terms/dpa/subprocessors",
     "trustPageUrl": "https://security.clickup.com",
-    "statusPageUrl": "https://status.clickup.com"
+    "statusPageUrl": "https://status.clickup.com",
+    "domains": [
+      "clickup.com"
+    ]
   },
   {
     "name": "Danami",
@@ -2186,7 +2490,10 @@
     "websiteUrl": "https://www.danami.com",
     "category": "ENGINEERING",
     "privacyPolicyUrl": "https://www.danami.com/legal/privacy-policy",
-    "termsOfServiceUrl": "https://www.danami.com/legal/terms-of-service"
+    "termsOfServiceUrl": "https://www.danami.com/legal/terms-of-service",
+    "domains": [
+      "danami.com"
+    ]
   },
   {
     "name": "New Relic",
@@ -2214,7 +2521,12 @@
     "subprocessorsListUrl": "https://newrelic.com/sub-processors",
     "businessAssociateAgreementUrl": "https://newrelic.com/termsandconditions/hipaabaafaq",
     "trustPageUrl": "https://newrelic.com/security",
-    "statusPageUrl": "https://status.newrelic.com/"
+    "statusPageUrl": "https://status.newrelic.com/",
+    "domains": [
+      "newrelic.com",
+      "nr-data.net",
+      "nr-assets.net"
+    ]
   },
   {
     "name": "Pylon",
@@ -2234,7 +2546,10 @@
     "dataProcessingAgreementUrl": "https://www.usepylon.com/data-processing-agreement",
     "subprocessorsListUrl": "https://usepylon.com/subprocessors",
     "trustPageUrl": "https://trust.usepylon.com",
-    "statusPageUrl": "https://status.usepylon.com"
+    "statusPageUrl": "https://status.usepylon.com",
+    "domains": [
+      "usepylon.com"
+    ]
   },
   {
     "name": "Loops",
@@ -2249,7 +2564,10 @@
     "termsOfServiceUrl": "https://loops.so/terms",
     "dataProcessingAgreementUrl": "https://loops.so/dpa",
     "subprocessorsListUrl": "https://loops.so/subprocessors",
-    "statusPageUrl": "https://loops.statuspage.io"
+    "statusPageUrl": "https://loops.statuspage.io",
+    "domains": [
+      "loops.so"
+    ]
   },
   {
     "name": "Perplexity",
@@ -2270,7 +2588,10 @@
     "dataProcessingAgreementUrl": "https://www.perplexity.ai/hub/legal/enterprise-terms-of-service",
     "subprocessorsListUrl": "https://trust.perplexity.ai/",
     "trustPageUrl": "https://trust.perplexity.ai",
-    "statusPageUrl": "https://status.perplexity.ai/"
+    "statusPageUrl": "https://status.perplexity.ai/",
+    "domains": [
+      "perplexity.ai"
+    ]
   },
   {
     "name": "Okta",
@@ -2296,7 +2617,11 @@
     "securityPageUrl": "https://www.okta.com/security-center/",
     "trustPageUrl": "https://www.okta.com/trust-center/",
     "statusPageUrl": "https://status.auth0.com/",
-    "dataProcessingAgreementUrl": "https://www.okta.com/trustandcompliance/#data-processing-addendum"
+    "dataProcessingAgreementUrl": "https://www.okta.com/trustandcompliance/#data-processing-addendum",
+    "domains": [
+      "okta.com",
+      "oktacdn.com"
+    ]
   },
   {
     "name": "Gitlab",
@@ -2321,7 +2646,11 @@
       "Section 508 VPATS"
     ],
     "securityPageUrl": "https://about.gitlab.com/security/",
-    "statusPageUrl": "https://status.gitlab.com/"
+    "statusPageUrl": "https://status.gitlab.com/",
+    "domains": [
+      "gitlab.com",
+      "gitlab.io"
+    ]
   },
   {
     "name": "Scaleway",
@@ -2338,6 +2667,9 @@
       "GDPR"
     ],
     "securityPageUrl": "https://www.scaleway.com/en/security-and-resilience/",
-    "statusPageUrl": "https://status.scaleway.com/"
+    "statusPageUrl": "https://status.scaleway.com/",
+    "domains": [
+      "scaleway.com"
+    ]
   }
 ]
