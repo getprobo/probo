@@ -40,6 +40,12 @@ await Promise.all([
   }),
   esbuild.build({
     ...shared,
+    entryPoints: ["src/consent.ts"],
+    outfile: "dist/cookie-banner-consent.mjs",
+    format: "esm",
+  }),
+  esbuild.build({
+    ...shared,
     entryPoints: ["src/themed-banner/iife.ts"],
     outfile: "dist/cookie-banner.iife.js",
     format: "iife",

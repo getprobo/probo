@@ -16,6 +16,11 @@
       "types": "./dist/headless/index.d.ts",
       "import": "./dist/cookie-banner-headless.mjs",
       "default": "./dist/cookie-banner-headless.mjs"
+    },
+    "./consent": {
+      "types": "./dist/consent.d.ts",
+      "import": "./dist/cookie-banner-consent.mjs",
+      "default": "./dist/cookie-banner-consent.mjs"
     }
   },
   "scripts": {

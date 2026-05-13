@@ -16,6 +16,7 @@ import {
   deactivateElements,
   observeAndActivate,
 } from "./activation";
+import { getConsent } from "./consent";
 import { COOKIE_NAME, getConsentCookie, setConsentCookie } from "./cookie";
 import type { Detector } from "./detectors";
 import { CookieDetector, ReportQueue, ResourceDetector, StorageDetector } from "./detectors";
@@ -109,6 +110,7 @@ export class CookieBannerClient {
         };
         this._gpcApplied = cookie.action === "GPC";
         this.activate(cookie.data);
+        getConsent()._setReady(cookie.data, true);
         void flush(this.bannerId);
         return;
       }
@@ -140,16 +142,24 @@ export class CookieBannerClient {
           config.consent_expiry_days,
         );
         this.activate(apiConsent.consent_data);
+        getConsent()._setReady(apiConsent.consent_data, true);
       } else {
         this.consent = null;
       }
     }
 
     if (!this.consent && this.gpcDetected) {
+      const gpcData: Record<string, boolean> = {};
+      for (const cat of config.categories) {
+        gpcData[cat.slug] = cat.kind === "NECESSARY";
+      }
+      getConsent()._setReady(gpcData, false);
       this.gpc();
       this._gpcApplied = true;
     } else if (!this.consent) {
-      this.activate(this.buildDefaultConsentData());
+      const defaults = this.buildDefaultConsentData();
+      this.activate(defaults);
+      getConsent()._setReady(defaults, false);
     }
 
     void flush(this.bannerId);
@@ -263,6 +273,7 @@ export class CookieBannerClient {
     );
 
     this.activate(consentData);
+    getConsent()._notify(consentData);
 
     const url = new URL(`${this.bannerId}/consents`, this.baseUrl);
     const body = {
