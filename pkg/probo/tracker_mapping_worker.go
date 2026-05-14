@@ -161,7 +161,8 @@ func (h *trackerMappingHandler) matchByDomain(
 		UpdatedAt:          now,
 	}
 
-	if _, err := commonPattern.Upsert(ctx, tx); err != nil {
+	actualID, _, err := commonPattern.Upsert(ctx, tx)
+	if err != nil {
 		h.logger.ErrorCtx(
 			ctx,
 			"cannot upsert common tracker pattern from domain match",
@@ -170,6 +171,7 @@ func (h *trackerMappingHandler) matchByDomain(
 		return nil, nil
 	}
 
+	commonPattern.ID = actualID
 	thirdPartyID := h.resolveThirdParty(ctx, tx, tp, &commonPattern)
 
 	return &commonPattern.ID, thirdPartyID

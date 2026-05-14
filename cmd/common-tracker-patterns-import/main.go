@@ -176,7 +176,7 @@ func run() error {
 					UpdatedAt:          now,
 				}
 
-				wasInserted, err := pattern.Upsert(ctx, tx)
+				_, wasInserted, err := pattern.Upsert(ctx, tx)
 				if err != nil {
 					return fmt.Errorf("cannot upsert common tracker pattern %q: %w", p.Pattern, err)
 				}

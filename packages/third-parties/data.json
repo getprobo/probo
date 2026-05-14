@@ -1752,15 +1752,12 @@
       "CCPA",
       "Data Privacy Framework (DPF)"
     ],
-    "securityPageUrl": "https://newrelic.com/security",
-    "privacyPolicyUrl": "https://newrelic.com/termsandconditions/privacy",
-    "termsOfServiceUrl": "https://newrelic.com/termsandconditions/terms",
-    "serviceLevelAgreementUrl": "https://docs.newrelic.com/docs/licenses/license-information/referenced-policies/service-level-availability-commitment/",
-    "dataProcessingAgreementUrl": "https://newrelic.com/sites/default/files/2023-11/New_Relic_GDPR_DPA_SCCs_Oct_2023_presigned.pdf",
-    "subprocessorsListUrl": "https://newrelic.com/sub-processors",
-    "businessAssociateAgreementUrl": "https://newrelic.com/termsandconditions/hipaabaafaq",
-    "trustPageUrl": "https://newrelic.com/security",
-    "statusPageUrl": "https://status.newrelic.com/",
+    "securityPageUrl": "https://resend.com/security",
+    "privacyPolicyUrl": "https://resend.com/legal/privacy-policy",
+    "termsOfServiceUrl": "https://resend.com/legal/terms-of-service",
+    "dataProcessingAgreementUrl": "https://resend.com/legal/dpa",
+    "subprocessorsListUrl": "https://resend.com/legal/subprocessors",
+    "trustPageUrl": "https://resend.com/security",
     "domains": [
       "resend.com"
     ]
