@@ -13,13 +13,15 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 // Command common-tracker-patterns-import seeds the common_tracker_patterns
-// table from packages/common-tracker-patterns/data.json. It is idempotent:
-// re-running upserts on the unique constraint so existing rows keep their id
-// and created_at.
+// table from the Open Cookie Database (https://github.com/jkwakman/Open-Cookie-Database).
+// It clones the repository into a temporary directory, reads
+// open-cookie-database.json, and upserts each entry. Re-running is safe:
+// existing rows are updated on the unique constraint so ids and created_at
+// are preserved.
 //
-// Entries with a thirdPartyName are linked to the matching common_third_parties
-// row (by case-insensitive name lookup). Entries without one are inserted with
-// a NULL common_third_party_id.
+// Entries are linked to the matching common_third_parties row (by
+// case-insensitive name lookup on the platform key). Entries whose platform
+// cannot be resolved are inserted with a NULL common_third_party_id.
 package main
 
 import (
@@ -30,22 +32,47 @@ import (
 	"net"
 	"net/url"
 	"os"
+	"path/filepath"
+	"regexp"
+	"sort"
+	"strconv"
+	"strings"
 	"time"
 
+	git "github.com/go-git/go-git/v5"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 )
 
-type trackerPatternData struct {
-	Pattern        string  `json:"pattern"`
-	TrackerType    string  `json:"trackerType"`
-	MatchType      string  `json:"matchType"`
-	ThirdPartyName *string `json:"thirdPartyName,omitempty"`
-	Description    string  `json:"description"`
-	MaxAgeSeconds  *int    `json:"maxAgeSeconds,omitempty"`
-	Confidence     float32 `json:"confidence"`
-}
+const (
+	ocdRepoURL  = "https://github.com/jkwakman/Open-Cookie-Database.git"
+	ocdJSONFile = "open-cookie-database.json"
+)
+
+type (
+	ocdEntry struct {
+		ID              string `json:"id"`
+		Category        string `json:"category"`
+		Cookie          string `json:"cookie"`
+		Domain          string `json:"domain"`
+		Description     string `json:"description"`
+		RetentionPeriod string `json:"retentionPeriod"`
+		DataController  string `json:"dataController"`
+		PrivacyLink     string `json:"privacyLink"`
+		WildcardMatch   string `json:"wildcardMatch"`
+	}
+
+	trackerPatternData struct {
+		Pattern        string
+		TrackerType    string
+		MatchType      string
+		ThirdPartyName *string
+		Description    string
+		MaxAgeSeconds  *int
+		Confidence     float32
+	}
+)
 
 func main() {
 	if err := run(); err != nil {
@@ -55,10 +82,7 @@ func main() {
 }
 
 func run() error {
-	var (
-		pgDSN    string
-		dataPath string
-	)
+	var pgDSN string
 
 	flag.StringVar(
 		&pgDSN,
@@ -66,25 +90,23 @@ func run() error {
 		os.Getenv("DATABASE_URL"),
 		"PostgreSQL connection URL (default: DATABASE_URL env)",
 	)
-	flag.StringVar(
-		&dataPath,
-		"data",
-		"",
-		"Path to the tracker-patterns data.json file",
-	)
 	flag.Parse()
 
 	if pgDSN == "" {
 		return fmt.Errorf("set -pg-dsn or DATABASE_URL")
 	}
 
-	if dataPath == "" {
-		return fmt.Errorf("set -data to the path of data.json")
-	}
-
 	ctx := context.Background()
 
-	patterns, err := loadPatterns(dataPath)
+	fmt.Printf("cloning %s\n", ocdRepoURL)
+
+	tmpDir, cleanup, err := cloneRepo()
+	if err != nil {
+		return fmt.Errorf("cannot clone repository: %w", err)
+	}
+	defer cleanup()
+
+	patterns, err := loadPatternsFromOCD(tmpDir)
 	if err != nil {
 		return fmt.Errorf("cannot load tracker pattern data: %w", err)
 	}
@@ -94,7 +116,7 @@ func run() error {
 		return fmt.Errorf("cannot create pg client: %w", err)
 	}
 
-	fmt.Printf("importing %d common tracker patterns from %s\n", len(patterns), dataPath)
+	fmt.Printf("importing %d common tracker patterns from Open Cookie Database\n", len(patterns))
 
 	var inserted, updated, skipped int
 
@@ -183,22 +205,135 @@ func run() error {
 	return nil
 }
 
-func loadPatterns(path string) ([]trackerPatternData, error) {
-	f, err := os.Open(path)
+func cloneRepo() (string, func(), error) {
+	tmpDir, err := os.MkdirTemp("", "ocd-*")
 	if err != nil {
-		return nil, fmt.Errorf("cannot open %s: %w", path, err)
+		return "", nil, fmt.Errorf("cannot create temp dir: %w", err)
+	}
+
+	cleanup := func() { _ = os.RemoveAll(tmpDir) }
+
+	_, err = git.PlainClone(
+		tmpDir,
+		false,
+		&git.CloneOptions{
+			URL:   ocdRepoURL,
+			Depth: 1,
+		},
+	)
+	if err != nil {
+		cleanup()
+		return "", nil, fmt.Errorf("cannot clone %s: %w", ocdRepoURL, err)
+	}
+
+	return tmpDir, cleanup, nil
+}
+
+func loadPatternsFromOCD(dir string) ([]trackerPatternData, error) {
+	f, err := os.Open(filepath.Join(dir, ocdJSONFile))
+	if err != nil {
+		return nil, fmt.Errorf("cannot open %s: %w", ocdJSONFile, err)
 	}
 	defer func() { _ = f.Close() }()
 
-	var patterns []trackerPatternData
-	dec := json.NewDecoder(f)
-	dec.DisallowUnknownFields()
+	var db map[string][]ocdEntry
+	if err := json.NewDecoder(f).Decode(&db); err != nil {
+		return nil, fmt.Errorf("cannot decode %s: %w", ocdJSONFile, err)
+	}
 
-	if err := dec.Decode(&patterns); err != nil {
-		return nil, fmt.Errorf("cannot decode %s: %w", path, err)
+	platforms := make([]string, 0, len(db))
+	for k := range db {
+		platforms = append(platforms, k)
+	}
+	sort.Strings(platforms)
+
+	var patterns []trackerPatternData
+	for _, platform := range platforms {
+		for _, e := range db[platform] {
+			if e.Cookie == "" {
+				continue
+			}
+
+			matchType := "EXACT"
+			if e.WildcardMatch == "1" {
+				matchType = "GLOB"
+			}
+
+			cookiePattern := e.Cookie
+			if matchType == "GLOB" && !strings.ContainsAny(cookiePattern, "*?") {
+				cookiePattern += "*"
+			}
+
+			patterns = append(
+				patterns,
+				trackerPatternData{
+					Pattern:        cookiePattern,
+					TrackerType:    "COOKIE",
+					MatchType:      matchType,
+					ThirdPartyName: new(platform),
+					Description:    e.Description,
+					MaxAgeSeconds:  parseRetentionPeriod(e.RetentionPeriod),
+					Confidence:     1.0,
+				},
+			)
+		}
 	}
 
 	return patterns, nil
+}
+
+var retentionRe = regexp.MustCompile(`(?i)^(\d+)\s+(second|seconds|sec|secs|minute|minutes|mins|min|hour|hours|day|days|week|weeks|month|months|year|years)`)
+
+func parseRetentionPeriod(s string) *int {
+	s = strings.TrimSpace(s)
+	if s == "" {
+		return nil
+	}
+
+	lower := strings.ToLower(s)
+	switch {
+	case lower == "session" || lower == "sessions" || lower == "seesion" ||
+		lower == "session cookie" || strings.HasPrefix(lower, "end of session"):
+		return nil
+	case lower == "varies" || lower == "various" || lower == "unknown" ||
+		lower == "undefined" || lower == "persistent" || lower == "permanent" ||
+		lower == "forever" || lower == "unlimited" || lower == "no expiration" ||
+		lower == "local storage":
+		return nil
+	}
+
+	m := retentionRe.FindStringSubmatch(s)
+	if m == nil {
+		return nil
+	}
+
+	n, err := strconv.Atoi(m[1])
+	if err != nil {
+		return nil
+	}
+
+	var multiplier int
+	switch strings.ToLower(m[2]) {
+	case "second", "seconds", "sec", "secs":
+		multiplier = 1
+	case "minute", "minutes", "mins", "min":
+		multiplier = 60
+	case "hour", "hours":
+		multiplier = 3600
+	case "day", "days":
+		multiplier = 86400
+	case "week", "weeks":
+		multiplier = 604800
+	case "month", "months":
+		multiplier = 2592000
+	case "year", "years":
+		multiplier = 31536000
+	default:
+		return nil
+	}
+
+	result := n * multiplier
+	return &result
 }
 
 func parseTrackerType(s string) (coredata.TrackerType, error) {
