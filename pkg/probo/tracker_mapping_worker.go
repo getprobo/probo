@@ -187,8 +187,8 @@ func (h *trackerMappingHandler) resolveThirdParty(
 
 	scope := coredata.NewScopeFromObjectID(tp.ID)
 
-	var vendor coredata.Vendor
-	if err := vendor.LoadByOrganizationIDAndCommonThirdPartyID(
+	var t coredata.ThirdParty
+	if err := t.LoadByOrganizationIDAndCommonThirdPartyID(
 		ctx,
 		conn,
 		scope,
@@ -198,5 +198,5 @@ func (h *trackerMappingHandler) resolveThirdParty(
 		return nil
 	}
 
-	return &vendor.ID
+	return &t.ID
 }
