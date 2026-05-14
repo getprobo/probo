@@ -19,16 +19,17 @@
 // existing rows are updated on the unique constraint so ids and created_at
 // are preserved.
 //
-// Entries are linked to the matching common_third_parties row (by
-// case-insensitive name lookup on the platform key). Entries whose platform
-// cannot be resolved are inserted with a NULL common_third_party_id.
+// Entries are linked to the matching common_third_parties row via a
+// three-step cascade: slug lookup, domain lookup, then auto-create.
 package main
 
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
+	"math"
 	"net"
 	"net/url"
 	"os"
@@ -43,6 +44,7 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/slug"
 )
 
 const (
@@ -68,6 +70,8 @@ type (
 		TrackerType    string
 		MatchType      string
 		ThirdPartyName *string
+		Domain         string
+		Category       string
 		Description    string
 		MaxAgeSeconds  *int
 		Confidence     float32
@@ -119,6 +123,7 @@ func run() error {
 	fmt.Printf("importing %d common tracker patterns from Open Cookie Database\n", len(patterns))
 
 	var inserted, updated, skipped int
+	var partiesCreated int
 
 	if err := pgClient.WithTx(
 		ctx,
@@ -127,26 +132,9 @@ func run() error {
 			thirdPartyCache := make(map[string]*gid.GID)
 
 			for _, p := range patterns {
-				var thirdPartyID *gid.GID
-
-				if p.ThirdPartyName != nil {
-					if cached, ok := thirdPartyCache[*p.ThirdPartyName]; ok {
-						thirdPartyID = cached
-					} else {
-						var party coredata.CommonThirdParty
-						if err := party.LoadByName(ctx, tx, *p.ThirdPartyName); err != nil {
-							fmt.Fprintf(
-								os.Stderr,
-								"warning: cannot find third party %q for pattern %q, skipping link\n",
-								*p.ThirdPartyName,
-								p.Pattern,
-							)
-							thirdPartyCache[*p.ThirdPartyName] = nil
-						} else {
-							thirdPartyCache[*p.ThirdPartyName] = &party.ID
-							thirdPartyID = &party.ID
-						}
-					}
+				thirdPartyID, err := resolveThirdParty(ctx, tx, p, thirdPartyCache, now, &partiesCreated)
+				if err != nil {
+					return err
 				}
 
 				trackerType, err := parseTrackerType(p.TrackerType)
@@ -195,11 +183,12 @@ func run() error {
 	}
 
 	fmt.Printf(
-		"imported %d patterns (%d inserted, %d updated, %d skipped)\n",
+		"imported %d patterns (%d inserted, %d updated, %d skipped, %d third parties auto-created)\n",
 		len(patterns)-skipped,
 		inserted,
 		updated,
 		skipped,
+		partiesCreated,
 	)
 
 	return nil
@@ -271,6 +260,8 @@ func loadPatternsFromOCD(dir string) ([]trackerPatternData, error) {
 					TrackerType:    "COOKIE",
 					MatchType:      matchType,
 					ThirdPartyName: new(platform),
+					Domain:         e.Domain,
+					Category:       e.Category,
 					Description:    e.Description,
 					MaxAgeSeconds:  parseRetentionPeriod(e.RetentionPeriod),
 					Confidence:     1.0,
@@ -280,6 +271,136 @@ func loadPatternsFromOCD(dir string) ([]trackerPatternData, error) {
 	}
 
 	return patterns, nil
+}
+
+func resolveThirdParty(
+	ctx context.Context,
+	tx pg.Tx,
+	p trackerPatternData,
+	cache map[string]*gid.GID,
+	now time.Time,
+	created *int,
+) (*gid.GID, error) {
+	if p.ThirdPartyName == nil || *p.ThirdPartyName == "" {
+		return nil, nil
+	}
+
+	platformSlug := slug.Make(*p.ThirdPartyName)
+	if platformSlug == "" {
+		return nil, nil
+	}
+	if cached, ok := cache[platformSlug]; ok {
+		return cached, nil
+	}
+
+	var party coredata.CommonThirdParty
+	if err := party.LoadBySlug(ctx, tx, platformSlug); err != nil {
+		if !errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, fmt.Errorf("cannot look up common third party by slug %q: %w", platformSlug, err)
+		}
+	} else {
+		cache[platformSlug] = &party.ID
+		return &party.ID, nil
+	}
+
+	domain := normalizeDomain(p.Domain)
+	if domain != "" {
+		var domainRow coredata.CommonThirdPartyDomain
+		if err := domainRow.LoadByDomain(ctx, tx, domain); err != nil {
+			if !errors.Is(err, coredata.ErrResourceNotFound) {
+				return nil, fmt.Errorf("cannot look up common third party by domain %q: %w", domain, err)
+			}
+		} else if err := party.LoadByID(ctx, tx, domainRow.CommonThirdPartyID); err == nil {
+			cache[platformSlug] = &party.ID
+			return &party.ID, nil
+		}
+	}
+
+	party = coredata.CommonThirdParty{
+		ID:             gid.New(gid.NilTenant, coredata.CommonThirdPartyEntityType),
+		Name:           *p.ThirdPartyName,
+		Slug:           platformSlug,
+		Category:       mapOCDCategory(p.Category),
+		Certifications: []string{},
+		CreatedAt:      now,
+		UpdatedAt:      now,
+	}
+
+	if _, err := party.Upsert(ctx, tx); err != nil {
+		return nil, fmt.Errorf("cannot auto-create common third party %q: %w", *p.ThirdPartyName, err)
+	}
+
+	if err := party.LoadBySlug(ctx, tx, platformSlug); err != nil {
+		return nil, fmt.Errorf("cannot reload auto-created common third party %q: %w", *p.ThirdPartyName, err)
+	}
+
+	if domain != "" {
+		d := coredata.CommonThirdPartyDomain{
+			ID:                 gid.New(gid.NilTenant, coredata.CommonThirdPartyDomainEntityType),
+			CommonThirdPartyID: party.ID,
+			Domain:             domain,
+			CreatedAt:          now,
+			UpdatedAt:          now,
+		}
+		if _, err := d.Upsert(ctx, tx); err != nil {
+			return nil, fmt.Errorf("cannot upsert domain %q for %q: %w", domain, *p.ThirdPartyName, err)
+		}
+	}
+
+	*created++
+	cache[platformSlug] = &party.ID
+	return &party.ID, nil
+}
+
+var domainValidRe = regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9.-]*[a-zA-Z]$`)
+
+func normalizeDomain(s string) string {
+	s = strings.TrimSpace(s)
+
+	// Strip zero-width spaces and other Unicode control characters.
+	s = strings.Map(func(r rune) rune {
+		if r == '\u200b' || r == '\ufeff' {
+			return -1
+		}
+		return r
+	}, s)
+
+	// Take only the first domain when "or" separates multiple values,
+	// e.g. ".bing.com (3rd party) or .microsoft.com (3rd party)".
+	if idx := strings.Index(s, " or "); idx != -1 {
+		s = s[:idx]
+	}
+	// Handle values starting with "or ", e.g. "or demdex.net (3rd party)".
+	s = strings.TrimPrefix(s, "or ")
+
+	if idx := strings.IndexByte(s, '('); idx != -1 {
+		s = strings.TrimSpace(s[:idx])
+	}
+
+	// Strip placeholders like "[account]".
+	if strings.ContainsAny(s, "[]") {
+		return ""
+	}
+
+	s = strings.TrimPrefix(s, ".")
+	s = strings.TrimSuffix(s, ".")
+	s = strings.TrimSpace(s)
+
+	if s == "" || !domainValidRe.MatchString(s) {
+		return ""
+	}
+	return s
+}
+
+func mapOCDCategory(s string) coredata.ThirdPartyCategory {
+	switch strings.ToLower(strings.TrimSpace(s)) {
+	case "analytics":
+		return coredata.ThirdPartyCategoryAnalytics
+	case "marketing":
+		return coredata.ThirdPartyCategoryMarketing
+	default:
+		return coredata.ThirdPartyCategoryOther
+	}
 }
 
 var retentionRe = regexp.MustCompile(`(?i)^(\d+)\s+(second|seconds|sec|secs|minute|minutes|mins|min|hour|hours|day|days|week|weeks|month|months|year|years)`)
@@ -332,7 +453,7 @@ func parseRetentionPeriod(s string) *int {
 		return nil
 	}
 
-	result := n * multiplier
+	result := min(n*multiplier, math.MaxInt32)
 	return &result
 }
 

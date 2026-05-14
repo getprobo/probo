@@ -30,6 +30,7 @@ type (
 	CommonThirdParty struct {
 		ID                            gid.GID            `db:"id"`
 		Name                          string             `db:"name"`
+		Slug                          string             `db:"slug"`
 		Category                      ThirdPartyCategory `db:"category"`
 		HeadquarterAddress            *string            `db:"headquarter_address"`
 		LegalName                     *string            `db:"legal_name"`
@@ -62,6 +63,7 @@ func (t *CommonThirdParty) LoadByID(
 SELECT
     id,
     name,
+    slug,
     category,
     headquarter_address,
     legal_name,
@@ -117,6 +119,7 @@ func (t *CommonThirdParty) LoadByName(
 SELECT
     id,
     name,
+    slug,
     category,
     headquarter_address,
     legal_name,
@@ -163,6 +166,62 @@ LIMIT 1;
 	return nil
 }
 
+func (t *CommonThirdParty) LoadBySlug(
+	ctx context.Context,
+	conn pg.Querier,
+	slug string,
+) error {
+	q := `
+SELECT
+    id,
+    name,
+    slug,
+    category,
+    headquarter_address,
+    legal_name,
+    website_url,
+    privacy_policy_url,
+    service_level_agreement_url,
+    service_software_agreement_url,
+    data_processing_agreement_url,
+    business_associate_agreement_url,
+    subprocessors_list_url,
+    certifications,
+    status_page_url,
+    terms_of_service_url,
+    security_page_url,
+    trust_page_url,
+    logo_file_id,
+    created_at,
+    updated_at
+FROM
+    common_third_parties
+WHERE
+    slug = @slug
+LIMIT 1;
+`
+
+	args := pgx.StrictNamedArgs{"slug": slug}
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query common third party by slug: %w", err)
+	}
+	defer rows.Close()
+
+	row, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[CommonThirdParty])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+		return fmt.Errorf("cannot collect common third party by slug: %w", err)
+	}
+
+	*t = row
+
+	return nil
+}
+
 func (t CommonThirdParty) Insert(
 	ctx context.Context,
 	conn pg.Tx,
@@ -171,6 +230,7 @@ func (t CommonThirdParty) Insert(
 INSERT INTO common_third_parties (
     id,
     name,
+    slug,
     category,
     headquarter_address,
     legal_name,
@@ -192,6 +252,7 @@ INSERT INTO common_third_parties (
 ) VALUES (
     @id,
     @name,
+    @slug,
     @category,
     @headquarter_address,
     @legal_name,
@@ -216,6 +277,7 @@ INSERT INTO common_third_parties (
 	args := pgx.StrictNamedArgs{
 		"id":                               t.ID,
 		"name":                             t.Name,
+		"slug":                             t.Slug,
 		"category":                         t.Category,
 		"headquarter_address":              t.HeadquarterAddress,
 		"legal_name":                       t.LegalName,
@@ -244,7 +306,7 @@ INSERT INTO common_third_parties (
 	return nil
 }
 
-// Upsert inserts a row, or on lower(name) conflict updates every column except
+// Upsert inserts a row, or on slug conflict updates every column except
 // id and created_at. Returns true if a new row was inserted, false if an
 // existing row was updated.
 func (t CommonThirdParty) Upsert(
@@ -255,6 +317,7 @@ func (t CommonThirdParty) Upsert(
 INSERT INTO common_third_parties (
     id,
     name,
+    slug,
     category,
     headquarter_address,
     legal_name,
@@ -276,6 +339,7 @@ INSERT INTO common_third_parties (
 ) VALUES (
     @id,
     @name,
+    @slug,
     @category,
     @headquarter_address,
     @legal_name,
@@ -295,7 +359,7 @@ INSERT INTO common_third_parties (
     @created_at,
     @updated_at
 )
-ON CONFLICT (lower(name)) DO UPDATE
+ON CONFLICT (slug) DO UPDATE
 SET
     name                             = EXCLUDED.name,
     category                         = EXCLUDED.category,
@@ -320,6 +384,7 @@ RETURNING (xmax = 0) AS inserted
 	args := pgx.StrictNamedArgs{
 		"id":                               t.ID,
 		"name":                             t.Name,
+		"slug":                             t.Slug,
 		"category":                         t.Category,
 		"headquarter_address":              t.HeadquarterAddress,
 		"legal_name":                       t.LegalName,
@@ -384,6 +449,7 @@ func (t *CommonThirdParties) LoadAll(
 SELECT
     id,
     name,
+    slug,
     category,
     headquarter_address,
     legal_name,

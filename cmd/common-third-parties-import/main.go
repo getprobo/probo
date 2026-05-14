@@ -14,7 +14,7 @@
 
 // Command common-third-parties-import seeds the common_third_parties table from
 // packages/thirdParties/data.json. It is idempotent: re-running upserts on conflict
-// (lower(name)) so existing rows keep their id and created_at.
+// (slug) so existing rows keep their id and created_at.
 //
 // When -fetch-logos is set, the tool inspects each third party's website to
 // find the best available logo (SVG icon, apple-touch-icon, etc.) and stores
@@ -44,6 +44,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/slug"
 	"go.probo.inc/probo/pkg/version"
 	"go.probo.inc/probo/pkg/webinspect"
 )
@@ -177,6 +178,7 @@ func run() error {
 				party := coredata.CommonThirdParty{
 					ID:                            gid.New(gid.NilTenant, coredata.CommonThirdPartyEntityType),
 					Name:                          tp.Name,
+					Slug:                          slug.Make(tp.Name),
 					Category:                      parseCategory(tp),
 					HeadquarterAddress:            tp.HeadquarterAddress,
 					LegalName:                     tp.LegalName,
