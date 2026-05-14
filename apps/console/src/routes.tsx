@@ -80,6 +80,12 @@ const routes = [
         Component: lazy(() => import("./pages/iam/auth/VerifyEmailPage")),
       },
       {
+        path: "resend-verification-email",
+        Component: lazy(
+          () => import("./pages/iam/auth/ResendVerificationEmailPage"),
+        ),
+      },
+      {
         path: "activate-account",
         Component: lazy(
           () => import("./pages/iam/auth/ActivateAccountPage"),

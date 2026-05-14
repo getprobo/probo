@@ -17,7 +17,7 @@ import { useTranslate } from "@probo/i18n";
 import { Button, Field, IconChevronLeft, useToast } from "@probo/ui";
 import type { FormEventHandler } from "react";
 import { useMutation } from "react-relay";
-import { Link, matchPath, useLocation } from "react-router";
+import { Link, matchPath, useLocation, useNavigate } from "react-router";
 import { graphql } from "relay-runtime";
 
 import type { PasswordSignInPageMutation } from "#/__generated__/iam/PasswordSignInPageMutation.graphql";
@@ -35,6 +35,7 @@ const signInMutation = graphql`
 
 export default function PasswordSignInPage() {
   const location = useLocation();
+  const navigate = useNavigate();
   const safeContinueUrl = useSafeContinueUrl();
 
   const { __ } = useTranslate();
@@ -73,10 +74,10 @@ export default function PasswordSignInPage() {
           );
 
           if (hasEmailNotVerified) {
-            toast({
-              title: __("Email not verified"),
-              description: __("Please verify your email address before signing in. A new verification email has been sent."),
-              variant: "error",
+            const search = new URLSearchParams([["email", emailValue]]);
+            void navigate({
+              pathname: "/auth/resend-verification-email",
+              search: "?" + search.toString(),
             });
             return;
           }

@@ -36,10 +36,6 @@ func (r *mutationResolver) SignIn(ctx context.Context, input types.SignInInput) 
 		}
 
 		if _, ok := errors.AsType[*iam.ErrEmailNotVerified](err); ok {
-			if err := r.iam.AuthService.SendEmailVerification(ctx, identity); err != nil {
-				r.logger.ErrorCtx(ctx, "cannot resend verification email", log.Error(err))
-			}
-
 			return nil, &gqlerror.Error{
 				Message: "email address has not been verified",
 				Extensions: map[string]any{
@@ -320,6 +316,19 @@ func (r *mutationResolver) VerifyEmail(ctx context.Context, input types.VerifyEm
 	}
 
 	return &types.VerifyEmailPayload{
+		Success: true,
+	}, nil
+}
+
+// ResendVerificationEmail is the resolver for the resendVerificationEmail field.
+func (r *mutationResolver) ResendVerificationEmail(ctx context.Context, input types.ResendVerificationEmailInput) (*types.ResendVerificationEmailPayload, error) {
+	err := r.iam.AuthService.SendEmailVerification(ctx, input.Email)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot send verification email", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.ResendVerificationEmailPayload{
 		Success: true,
 	}, nil
 }
