@@ -48,13 +48,13 @@ CREATE TABLE common_tracker_patterns (
 CREATE UNIQUE INDEX idx_common_tracker_patterns_unique
     ON common_tracker_patterns (tracker_type, pattern, COALESCE(max_age_seconds, -1));
 
--- Link tracker_patterns to the common knowledge base and to vendors.
+-- Link tracker_patterns to the common knowledge base and to third_parties.
 ALTER TABLE tracker_patterns
     ADD COLUMN common_tracker_pattern_id  TEXT REFERENCES common_tracker_patterns(id) ON DELETE SET NULL,
-    ADD COLUMN third_party_id             TEXT REFERENCES vendors(id) ON DELETE SET NULL;
+    ADD COLUMN third_party_id             TEXT REFERENCES third_parties(id) ON DELETE SET NULL;
 
--- Link vendors to the common third party they were created from.
-ALTER TABLE vendors
+-- Link third_parties to the common third party they were created from.
+ALTER TABLE third_parties
     ADD COLUMN common_third_party_id TEXT REFERENCES common_third_parties(id) ON DELETE SET NULL;
 
 -- Pre-extracted eTLD+1 for fast domain-based joins in the mapping worker.
