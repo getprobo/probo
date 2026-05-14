@@ -67,6 +67,20 @@ export default function PasswordSignInPage() {
       },
       onCompleted: (_, error) => {
         if (error) {
+          const errors = error as GraphQLError[];
+          const hasEmailNotVerified = errors.some(
+            e => e.extensions?.code === "EMAIL_NOT_VERIFIED",
+          );
+
+          if (hasEmailNotVerified) {
+            toast({
+              title: __("Email not verified"),
+              description: __("Please verify your email address before signing in. A new verification email has been sent."),
+              variant: "error",
+            });
+            return;
+          }
+
           toast({
             title: __("Error"),
             description: formatError(

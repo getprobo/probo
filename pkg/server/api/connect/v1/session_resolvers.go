@@ -35,6 +35,19 @@ func (r *mutationResolver) SignIn(ctx context.Context, input types.SignInInput) 
 			}
 		}
 
+		if _, ok := errors.AsType[*iam.ErrEmailNotVerified](err); ok {
+			if err := r.iam.AuthService.SendEmailVerification(ctx, identity); err != nil {
+				r.logger.ErrorCtx(ctx, "cannot resend verification email", log.Error(err))
+			}
+
+			return nil, &gqlerror.Error{
+				Message: "email address has not been verified",
+				Extensions: map[string]any{
+					"code": "EMAIL_NOT_VERIFIED",
+				},
+			}
+		}
+
 		r.logger.ErrorCtx(ctx, "cannot check credentials", log.Error(err))
 
 		return nil, gqlutils.Internal(ctx)

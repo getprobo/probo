@@ -518,6 +518,10 @@ func (s AuthService) CheckCredentials(
 				return NewInvalidCredentialsError("invalid email or password")
 			}
 
+			if !identity.EmailAddressVerified {
+				return NewEmailNotVerifiedError()
+			}
+
 			return nil
 		},
 	)
@@ -723,6 +727,45 @@ func (s AuthService) OpenSessionWithMagicLink(ctx context.Context, tokenString s
 	}
 
 	return identity, session, payload.Data.Continue, nil
+}
+
+func (s AuthService) SendEmailVerification(ctx context.Context, identity *coredata.Identity) error {
+	confirmationToken, err := statelesstoken.NewToken(
+		s.tokenSecret,
+		TokenTypeEmailConfirmation,
+		24*time.Hour,
+		EmailConfirmationData{IdentityID: identity.ID, Email: identity.EmailAddress},
+	)
+	if err != nil {
+		return fmt.Errorf("cannot generate confirmation token: %w", err)
+	}
+
+	emailPresenter := emails.NewPresenter(s.fm, s.bucket, s.baseURL, identity.FullName)
+
+	subject, textBody, htmlBody, err := emailPresenter.RenderConfirmEmail(ctx, "/auth/verify-email", confirmationToken)
+	if err != nil {
+		return fmt.Errorf("cannot render confirmation email: %w", err)
+	}
+
+	confirmationEmail := coredata.NewEmail(
+		identity.FullName,
+		identity.EmailAddress,
+		subject,
+		textBody,
+		htmlBody,
+		nil,
+	)
+
+	return s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			if err := confirmationEmail.Insert(ctx, tx); err != nil {
+				return fmt.Errorf("cannot insert confirmation email: %w", err)
+			}
+
+			return nil
+		},
+	)
 }
 
 func HashToken(token string) []byte {
