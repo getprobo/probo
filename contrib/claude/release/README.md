@@ -1,6 +1,6 @@
 # Release
 
-The repository ships five independently-versioned tracks. Each has its own
+The repository ships six independently-versioned tracks. Each has its own
 version source, its own `CHANGELOG.md`, its own tag pattern, and its own
 release workflow. Cutting a release means: bump the version, write a
 changelog entry, commit, tag, push.
@@ -10,6 +10,7 @@ changelog entry, commit, tag, push.
 | CLI (`prb`)             | `prb/v*`                       | [prb.md](./prb.md)               |
 | Server (`probod` group) | `probod/v*`                    | [probod.md](./probod.md)         |
 | `probod-bootstrap`      | `probod-bootstrap/v*`          | [probod-bootstrap.md](./probod-bootstrap.md) |
+| `proboctl`              | `proboctl/v*`                  | [proboctl.md](./proboctl.md)     |
 | `@probo/n8n-nodes-probo` | `@probo/n8n-nodes-probo/v*`   | [n8n-nodes-probo.md](./n8n-nodes-probo.md) |
 | `@probo/cookie-banner`  | `@probo/cookie-banner/v*`      | [cookie-banner.md](./cookie-banner.md) |
 
@@ -56,6 +57,10 @@ git log $(git describe --tags --abbrev=0 --match='probod/v*')..HEAD --oneline \
 # probod-bootstrap
 git log $(git describe --tags --abbrev=0 --match='probod-bootstrap/v*')..HEAD --oneline \
   -- cmd/probod-bootstrap
+
+# proboctl
+git log $(git describe --tags --abbrev=0 --match='proboctl/v*')..HEAD --oneline \
+  -- cmd/proboctl pkg/proboctl
 
 # @probo/n8n-nodes-probo
 git log $(git describe --tags --abbrev=0 --match='@probo/n8n-nodes-probo/v*')..HEAD --oneline \
