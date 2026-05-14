@@ -310,7 +310,10 @@ func resolveThirdParty(
 			if !errors.Is(err, coredata.ErrResourceNotFound) {
 				return nil, fmt.Errorf("cannot look up common third party by domain %q: %w", domain, err)
 			}
-		} else if err := party.LoadByID(ctx, tx, domainRow.CommonThirdPartyID); err == nil {
+		} else {
+			if err := party.LoadByID(ctx, tx, domainRow.CommonThirdPartyID); err != nil {
+				return nil, fmt.Errorf("cannot load common third party by ID %s: %w", domainRow.CommonThirdPartyID, err)
+			}
 			cache[platformSlug] = &party.ID
 			return &party.ID, nil
 		}
