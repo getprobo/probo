@@ -12,24 +12,14 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// Command common-third-parties-import seeds the common_third_parties table from
-// packages/thirdParties/data.json. It is idempotent: re-running upserts on conflict
-// (slug) so existing rows keep their id and created_at.
-//
-// When -fetch-logos is set, the tool inspects each third party's website to
-// find the best available logo (SVG icon, apple-touch-icon, etc.) and stores
-// it in S3 as a public file, linking it to each common third party via
-// logo_file_id.
-package main
+package commonthirdparties
 
 import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"flag"
 	"fmt"
 	"io"
-	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -38,12 +28,14 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/spf13/cobra"
 	"go.gearno.de/crypto/uuid"
 	"go.gearno.de/kit/httpclient"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/proboctl/cmdutil"
 	"go.probo.inc/probo/pkg/slug"
 	"go.probo.inc/probo/pkg/version"
 	"go.probo.inc/probo/pkg/webinspect"
@@ -69,191 +61,151 @@ type thirdPartyData struct {
 	Domains                       []string `json:"domains,omitempty"`
 }
 
-func main() {
-	if err := run(); err != nil {
-		fmt.Fprintf(os.Stderr, "error: %v\n", err)
-		os.Exit(1)
-	}
-}
-
-func run() error {
+func NewCmdCommonThirdParties(f *cmdutil.Factory) *cobra.Command {
 	var (
-		pgDSN          string
-		dataPath       string
-		fetchLogos     bool
-		s3Bucket       string
-		s3Endpoint     string
-		s3Region       string
-		s3AccessKey    string
-		s3SecretKey    string
-		s3UsePathStyle bool
+		flagData           string
+		flagFetchLogos     bool
+		flagS3Bucket       string
+		flagS3Endpoint     string
+		flagS3Region       string
+		flagS3AccessKey    string
+		flagS3SecretKey    string
+		flagS3UsePathStyle bool
 	)
 
-	flag.StringVar(
-		&pgDSN,
-		"pg-dsn",
-		os.Getenv("DATABASE_URL"),
-		"PostgreSQL connection URL (default: DATABASE_URL env)",
-	)
-	flag.StringVar(
-		&dataPath,
-		"data",
-		"",
-		"Path to the third-party data.json file",
-	)
-	flag.BoolVar(
-		&fetchLogos,
-		"fetch-logos",
-		false,
-		"Fetch favicons from Google and store them in S3",
-	)
-	flag.StringVar(
-		&s3Bucket,
-		"s3-bucket",
-		os.Getenv("AWS_S3_BUCKET"),
-		"S3 bucket name (default: AWS_S3_BUCKET env)",
-	)
-	flag.StringVar(
-		&s3Endpoint,
-		"s3-endpoint",
-		os.Getenv("AWS_ENDPOINT_URL"),
-		"S3 endpoint URL (default: AWS_ENDPOINT_URL env)",
-	)
-	flag.StringVar(
-		&s3Region,
-		"s3-region",
-		os.Getenv("AWS_REGION"),
-		"S3 region (default: AWS_REGION env)",
-	)
-	flag.StringVar(
-		&s3AccessKey,
-		"s3-access-key",
-		os.Getenv("AWS_ACCESS_KEY_ID"),
-		"S3 access key ID (default: AWS_ACCESS_KEY_ID env)",
-	)
-	flag.StringVar(
-		&s3SecretKey,
-		"s3-secret-key",
-		os.Getenv("AWS_SECRET_ACCESS_KEY"),
-		"S3 secret access key (default: AWS_SECRET_ACCESS_KEY env)",
-	)
-	flag.BoolVar(
-		&s3UsePathStyle,
-		"s3-path-style",
-		false,
-		"Use S3 path-style addressing",
-	)
-	flag.Parse()
+	cmd := &cobra.Command{
+		Use:   "common-third-parties",
+		Short: "Seed common third parties from a data.json file",
+		Long: "Seed the common_third_parties table from a JSON file. " +
+			"Re-running is safe: existing rows are upserted on conflict (slug) " +
+			"so ids and created_at are preserved.",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			out := f.IOStreams.Out
+			errOut := f.IOStreams.ErrOut
 
-	if pgDSN == "" {
-		return fmt.Errorf("set -pg-dsn or DATABASE_URL")
-	}
+			if flagFetchLogos && flagS3Bucket == "" {
+				return fmt.Errorf("set --s3-bucket or AWS_S3_BUCKET when using --fetch-logos")
+			}
 
-	if fetchLogos && s3Bucket == "" {
-		return fmt.Errorf("set -s3-bucket or AWS_S3_BUCKET when using -fetch-logos")
-	}
+			ctx := cmd.Context()
 
-	ctx := context.Background()
+			thirdParties, err := loadThirdParties(flagData)
+			if err != nil {
+				return fmt.Errorf("cannot load third-party data: %w", err)
+			}
 
-	thirdParties, err := loadThirdParties(dataPath)
-	if err != nil {
-		return fmt.Errorf("cannot load third-party data: %w", err)
-	}
+			pgClient, err := f.PgClient()
+			if err != nil {
+				return fmt.Errorf("cannot create pg client: %w", err)
+			}
 
-	pgClient, err := newPgClientFromDSN(pgDSN)
-	if err != nil {
-		return fmt.Errorf("cannot create pg client: %w", err)
-	}
+			_, _ = fmt.Fprintf(out, "seeding %d common third parties from %s\n", len(thirdParties), flagData)
 
-	fmt.Printf("importing %d common third parties from %s\n", len(thirdParties), dataPath)
+			var inserted, updated, domainsInserted, domainsUpdated int
 
-	var inserted, updated, domainsInserted, domainsUpdated int
+			if err := pgClient.WithTx(
+				ctx,
+				func(ctx context.Context, tx pg.Tx) error {
+					now := time.Now()
 
-	if err := pgClient.WithTx(
-		ctx,
-		func(ctx context.Context, tx pg.Tx) error {
-			now := time.Now()
+					for _, tp := range thirdParties {
+						party := coredata.CommonThirdParty{
+							ID:                            gid.New(gid.NilTenant, coredata.CommonThirdPartyEntityType),
+							Name:                          tp.Name,
+							Slug:                          slug.Make(tp.Name),
+							Category:                      parseCategory(errOut, tp),
+							HeadquarterAddress:            tp.HeadquarterAddress,
+							LegalName:                     tp.LegalName,
+							WebsiteURL:                    tp.WebsiteURL,
+							PrivacyPolicyURL:              tp.PrivacyPolicyURL,
+							ServiceLevelAgreementURL:      tp.ServiceLevelAgreementURL,
+							ServiceSoftwareAgreementURL:   tp.ServiceSoftwareAgreementURL,
+							DataProcessingAgreementURL:    tp.DataProcessingAgreementURL,
+							BusinessAssociateAgreementURL: tp.BusinessAssociateAgreementURL,
+							SubprocessorsListURL:          tp.SubprocessorsListURL,
+							Certifications:                tp.Certifications,
+							StatusPageURL:                 tp.StatusPageURL,
+							TermsOfServiceURL:             tp.TermsOfServiceURL,
+							SecurityPageURL:               tp.SecurityPageURL,
+							TrustPageURL:                  tp.TrustPageURL,
+							CreatedAt:                     now,
+							UpdatedAt:                     now,
+						}
 
-			for _, tp := range thirdParties {
-				party := coredata.CommonThirdParty{
-					ID:                            gid.New(gid.NilTenant, coredata.CommonThirdPartyEntityType),
-					Name:                          tp.Name,
-					Slug:                          slug.Make(tp.Name),
-					Category:                      parseCategory(tp),
-					HeadquarterAddress:            tp.HeadquarterAddress,
-					LegalName:                     tp.LegalName,
-					WebsiteURL:                    tp.WebsiteURL,
-					PrivacyPolicyURL:              tp.PrivacyPolicyURL,
-					ServiceLevelAgreementURL:      tp.ServiceLevelAgreementURL,
-					ServiceSoftwareAgreementURL:   tp.ServiceSoftwareAgreementURL,
-					DataProcessingAgreementURL:    tp.DataProcessingAgreementURL,
-					BusinessAssociateAgreementURL: tp.BusinessAssociateAgreementURL,
-					SubprocessorsListURL:          tp.SubprocessorsListURL,
-					Certifications:                tp.Certifications,
-					StatusPageURL:                 tp.StatusPageURL,
-					TermsOfServiceURL:             tp.TermsOfServiceURL,
-					SecurityPageURL:               tp.SecurityPageURL,
-					TrustPageURL:                  tp.TrustPageURL,
-					CreatedAt:                     now,
-					UpdatedAt:                     now,
-				}
+						wasInserted, err := party.Upsert(ctx, tx)
+						if err != nil {
+							return fmt.Errorf("cannot upsert common third party %q: %w", tp.Name, err)
+						}
 
-				wasInserted, err := party.Upsert(ctx, tx)
-				if err != nil {
-					return fmt.Errorf("cannot upsert common third party %q: %w", tp.Name, err)
-				}
+						if wasInserted {
+							inserted++
+						} else {
+							updated++
+							if err := party.LoadByName(ctx, tx, tp.Name); err != nil {
+								return fmt.Errorf("cannot reload common third party %q: %w", tp.Name, err)
+							}
+						}
 
-				if wasInserted {
-					inserted++
-				} else {
-					updated++
-					if err := party.LoadByName(ctx, tx, tp.Name); err != nil {
-						return fmt.Errorf("cannot reload common third party %q: %w", tp.Name, err)
-					}
-				}
+						for _, domain := range tp.Domains {
+							d := coredata.CommonThirdPartyDomain{
+								ID:                 gid.New(gid.NilTenant, coredata.CommonThirdPartyDomainEntityType),
+								CommonThirdPartyID: party.ID,
+								Domain:             domain,
+								CreatedAt:          now,
+								UpdatedAt:          now,
+							}
 
-				for _, domain := range tp.Domains {
-					d := coredata.CommonThirdPartyDomain{
-						ID:                 gid.New(gid.NilTenant, coredata.CommonThirdPartyDomainEntityType),
-						CommonThirdPartyID: party.ID,
-						Domain:             domain,
-						CreatedAt:          now,
-						UpdatedAt:          now,
+							domainInserted, err := d.Upsert(ctx, tx)
+							if err != nil {
+								return fmt.Errorf("cannot upsert domain %q for %q: %w", domain, tp.Name, err)
+							}
+
+							if domainInserted {
+								domainsInserted++
+							} else {
+								domainsUpdated++
+							}
+						}
 					}
 
-					domainInserted, err := d.Upsert(ctx, tx)
-					if err != nil {
-						return fmt.Errorf("cannot upsert domain %q for %q: %w", domain, tp.Name, err)
-					}
+					return nil
+				},
+			); err != nil {
+				return err
+			}
 
-					if domainInserted {
-						domainsInserted++
-					} else {
-						domainsUpdated++
-					}
+			_, _ = fmt.Fprintf(out, "seeded %d third parties (%d inserted, %d updated)\n", len(thirdParties), inserted, updated)
+			_, _ = fmt.Fprintf(out, "seeded %d domains (%d inserted, %d updated)\n", domainsInserted+domainsUpdated, domainsInserted, domainsUpdated)
+
+			if flagFetchLogos {
+				if err := fetchAndStoreLogos(
+					ctx, out, errOut, pgClient, thirdParties,
+					flagS3Bucket, flagS3Endpoint, flagS3Region, flagS3AccessKey, flagS3SecretKey, flagS3UsePathStyle,
+				); err != nil {
+					return fmt.Errorf("cannot fetch logos: %w", err)
 				}
 			}
 
 			return nil
 		},
-	); err != nil {
-		return err
 	}
 
-	fmt.Printf("imported %d third parties (%d inserted, %d updated)\n", len(thirdParties), inserted, updated)
-	fmt.Printf("imported %d domains (%d inserted, %d updated)\n", domainsInserted+domainsUpdated, domainsInserted, domainsUpdated)
+	cmd.Flags().StringVar(&flagData, "data", "", "Path to the third-party data.json file")
+	_ = cmd.MarkFlagRequired("data")
+	cmd.Flags().BoolVar(&flagFetchLogos, "fetch-logos", false, "Fetch favicons and store them in S3")
+	cmd.Flags().StringVar(&flagS3Bucket, "s3-bucket", os.Getenv("AWS_S3_BUCKET"), "S3 bucket name (default: AWS_S3_BUCKET env)")
+	cmd.Flags().StringVar(&flagS3Endpoint, "s3-endpoint", os.Getenv("AWS_ENDPOINT_URL"), "S3 endpoint URL (default: AWS_ENDPOINT_URL env)")
+	cmd.Flags().StringVar(&flagS3Region, "s3-region", os.Getenv("AWS_REGION"), "S3 region (default: AWS_REGION env)")
+	cmd.Flags().StringVar(&flagS3AccessKey, "s3-access-key", os.Getenv("AWS_ACCESS_KEY_ID"), "S3 access key ID (default: AWS_ACCESS_KEY_ID env)")
+	cmd.Flags().StringVar(&flagS3SecretKey, "s3-secret-key", os.Getenv("AWS_SECRET_ACCESS_KEY"), "S3 secret access key (default: AWS_SECRET_ACCESS_KEY env)")
+	cmd.Flags().BoolVar(&flagS3UsePathStyle, "s3-path-style", false, "Use S3 path-style addressing")
 
-	if fetchLogos {
-		if err := fetchAndStoreLogos(ctx, pgClient, thirdParties, s3Bucket, s3Endpoint, s3Region, s3AccessKey, s3SecretKey, s3UsePathStyle); err != nil {
-			return fmt.Errorf("cannot fetch logos: %w", err)
-		}
-	}
-
-	return nil
+	return cmd
 }
 
 func fetchAndStoreLogos(
 	ctx context.Context,
+	out, errOut io.Writer,
 	pgClient *pg.Client,
 	thirdParties []thirdPartyData,
 	bucket, endpoint, region, accessKey, secretKey string,
@@ -264,7 +216,7 @@ func fetchAndStoreLogos(
 	httpClient := httpclient.DefaultPooledClient(httpclient.WithSSRFProtection())
 	httpClient.Transport = &userAgentTransport{
 		next: httpClient.Transport,
-		ua:   version.UserAgent("common-third-parties-import"),
+		ua:   version.UserAgent("proboctl"),
 	}
 	scope := coredata.NewScope(gid.NilTenant)
 
@@ -280,7 +232,7 @@ func fetchAndStoreLogos(
 		if err := pgClient.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 			return party.LoadByName(ctx, conn, tp.Name)
 		}); err != nil {
-			fmt.Fprintf(os.Stderr, "warning: cannot load %q, skipping logo: %v\n", tp.Name, err)
+			_, _ = fmt.Fprintf(errOut, "warning: cannot load %q, skipping logo: %v\n", tp.Name, err)
 			failed++
 			continue
 		}
@@ -293,17 +245,17 @@ func fetchAndStoreLogos(
 		var logoURL string
 		pageInfo, err := webinspect.Parse(ctx, httpClient, *tp.WebsiteURL)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "warning: cannot inspect page for %q, trying default apple-touch-icon: %v\n", tp.Name, err)
+			_, _ = fmt.Fprintf(errOut, "warning: cannot inspect page for %q, trying default apple-touch-icon: %v\n", tp.Name, err)
 		} else {
 			logoURL, err = webinspect.FindLogoURL(pageInfo)
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "warning: cannot find logo for %q, trying default apple-touch-icon: %v\n", tp.Name, err)
+				_, _ = fmt.Fprintf(errOut, "warning: cannot find logo for %q, trying default apple-touch-icon: %v\n", tp.Name, err)
 			}
 		}
 
 		parsed, err := url.Parse(*tp.WebsiteURL)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "warning: cannot parse URL for %q, skipping logo: %v\n", tp.Name, err)
+			_, _ = fmt.Fprintf(errOut, "warning: cannot parse URL for %q, skipping logo: %v\n", tp.Name, err)
 			failed++
 			continue
 		}
@@ -313,7 +265,8 @@ func fetchAndStoreLogos(
 			candidateURLs = append(candidateURLs, logoURL)
 		}
 		base := fmt.Sprintf("%s://%s", parsed.Scheme, parsed.Host)
-		candidateURLs = append(candidateURLs,
+		candidateURLs = append(
+			candidateURLs,
 			base+"/apple-touch-icon.png",
 			base+"/apple-touch-icon-precomposed.png",
 			"https://logo.debounce.com/"+parsed.Host,
@@ -342,7 +295,7 @@ func fetchAndStoreLogos(
 		}
 
 		if len(body) == 0 {
-			fmt.Fprintf(os.Stderr, "warning: cannot fetch logo for %q from any candidate URL\n", tp.Name)
+			_, _ = fmt.Fprintf(errOut, "warning: cannot fetch logo for %q from any candidate URL\n", tp.Name)
 			failed++
 			continue
 		}
@@ -376,7 +329,7 @@ func fetchAndStoreLogos(
 			"type":                  "common-third-party-logo",
 			"common-third-party-id": party.ID.String(),
 		}); err != nil {
-			fmt.Fprintf(os.Stderr, "warning: cannot upload logo for %q to S3: %v\n", tp.Name, err)
+			_, _ = fmt.Fprintf(errOut, "warning: cannot upload logo for %q to S3: %v\n", tp.Name, err)
 			failed++
 			continue
 		}
@@ -394,16 +347,16 @@ func fetchAndStoreLogos(
 
 			return nil
 		}); err != nil {
-			fmt.Fprintf(os.Stderr, "warning: cannot store logo for %q: %v\n", tp.Name, err)
+			_, _ = fmt.Fprintf(errOut, "warning: cannot store logo for %q: %v\n", tp.Name, err)
 			failed++
 			continue
 		}
 
 		fetched++
-		fmt.Printf("  fetched logo for %q\n", tp.Name)
+		_, _ = fmt.Fprintf(out, "  fetched logo for %q\n", tp.Name)
 	}
 
-	fmt.Printf("logos: %d fetched, %d skipped, %d failed\n", fetched, skipped, failed)
+	_, _ = fmt.Fprintf(out, "logos: %d fetched, %d skipped, %d failed\n", fetched, skipped, failed)
 	return nil
 }
 
@@ -447,59 +400,18 @@ func loadThirdParties(path string) ([]thirdPartyData, error) {
 	return thirdParties, nil
 }
 
-func parseCategory(tp thirdPartyData) coredata.ThirdPartyCategory {
+func parseCategory(errOut io.Writer, tp thirdPartyData) coredata.ThirdPartyCategory {
 	if tp.Category == nil || *tp.Category == "" {
 		return coredata.ThirdPartyCategoryOther
 	}
 
 	var c coredata.ThirdPartyCategory
 	if err := c.Scan(*tp.Category); err != nil {
-		fmt.Fprintf(os.Stderr, "warning: third party %q has unknown category %q, falling back to OTHER\n", tp.Name, *tp.Category)
+		_, _ = fmt.Fprintf(errOut, "warning: third party %q has unknown category %q, falling back to OTHER\n", tp.Name, *tp.Category)
 		return coredata.ThirdPartyCategoryOther
 	}
 
 	return c
-}
-
-func newPgClientFromDSN(dsn string) (*pg.Client, error) {
-	u, err := url.Parse(dsn)
-	if err != nil {
-		return nil, fmt.Errorf("cannot parse DSN (check URL format)")
-	}
-
-	var opts []pg.Option
-
-	switch u.Query().Get("sslmode") {
-	case "", "disable":
-		// plain connection, no TLS
-	case "require":
-		opts = append(opts, pg.WithUnsecureTLS())
-	case "prefer":
-		return nil, fmt.Errorf("unsupported sslmode %q (prefer fallback semantics are not supported)", u.Query().Get("sslmode"))
-	default:
-		return nil, fmt.Errorf("unsupported sslmode %q", u.Query().Get("sslmode"))
-	}
-
-	if u.Host != "" {
-		host := u.Host
-		if u.Port() == "" {
-			host = net.JoinHostPort(u.Hostname(), "5432")
-		}
-		opts = append(opts, pg.WithAddr(host))
-	}
-
-	if u.User != nil {
-		opts = append(opts, pg.WithUser(u.User.Username()))
-		if password, ok := u.User.Password(); ok {
-			opts = append(opts, pg.WithPassword(password))
-		}
-	}
-
-	if len(u.Path) > 1 {
-		opts = append(opts, pg.WithDatabase(u.Path[1:]))
-	}
-
-	return pg.NewClient(opts...)
 }
 
 type userAgentTransport struct {

@@ -25,10 +25,12 @@ DOCKER_COMPOSE=	$(DOCKER) compose -f compose.yaml $(DOCKER_COMPOSE_FLAGS)
 PRB_VERSION=             $(shell cat cmd/prb/VERSION)
 PROBOD_VERSION=          $(shell cat cmd/probod/VERSION)
 PROBOD_BOOTSTRAP_VERSION=$(shell cat cmd/probod-bootstrap/VERSION)
+PROBOCTL_VERSION=        $(shell cat cmd/proboctl/VERSION)
 
 PRB_LDFLAGS=             -ldflags "-X 'main.version=$(PRB_VERSION)'"
 PROBOD_LDFLAGS=          -ldflags "-X 'main.version=$(PROBOD_VERSION)' -X 'main.env=prod'"
 PROBOD_BOOTSTRAP_LDFLAGS=-ldflags "-X 'main.version=$(PROBOD_BOOTSTRAP_VERSION)'"
+PROBOCTL_LDFLAGS=        -ldflags "-X 'main.version=$(PROBOCTL_VERSION)'"
 
 GCFLAGS=	-gcflags="-e"
 
@@ -72,6 +74,9 @@ PRB_SRC=	cmd/prb/main.go
 
 PROBOD_BOOTSTRAP_BIN=	bin/probod-bootstrap
 PROBOD_BOOTSTRAP_SRC=	cmd/probod-bootstrap/main.go
+
+PROBOCTL_BIN=	bin/proboctl
+PROBOCTL_SRC=	cmd/proboctl/main.go
 
 ifdef WITH_APPS
 GENERATED += relay
@@ -172,7 +177,7 @@ coverage-combined: coverage-report test-e2e-coverage ## Generate combined covera
 	$(GO) tool cover -html=coverage-combined.out -o=coverage-combined.html
 
 .PHONY: build
-build: $(PROBOD_BIN) bin/prb bin/probod-bootstrap
+build: $(PROBOD_BIN) bin/prb bin/probod-bootstrap bin/proboctl
 
 CFG_DEV_OAUTH2_KEY = cfg/.dev-oauth2-signing-key.pem
 DEV_ENV            = .env
@@ -251,6 +256,10 @@ bin/prb:
 .PHONY: $(PROBOD_BOOTSTRAP_BIN)
 $(PROBOD_BOOTSTRAP_BIN):
 	$(GO_BUILD) $(PROBOD_BOOTSTRAP_LDFLAGS) -o $(PROBOD_BOOTSTRAP_BIN) $(PROBOD_BOOTSTRAP_SRC)
+
+.PHONY: bin/proboctl
+bin/proboctl:
+	$(GO_BUILD) $(PROBOCTL_LDFLAGS) -o $(PROBOCTL_BIN) $(PROBOCTL_SRC)
 
 .PHONY: @probo/emails
 @probo/emails:

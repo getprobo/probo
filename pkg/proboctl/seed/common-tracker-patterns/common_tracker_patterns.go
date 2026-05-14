@@ -12,26 +12,14 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// Command common-tracker-patterns-import seeds the common_tracker_patterns
-// table from the Open Cookie Database (https://github.com/jkwakman/Open-Cookie-Database).
-// It clones the repository into a temporary directory, reads
-// open-cookie-database.json, and upserts each entry. Re-running is safe:
-// existing rows are updated on the unique constraint so ids and created_at
-// are preserved.
-//
-// Entries are linked to the matching common_third_parties row via a
-// three-step cascade: slug lookup, domain lookup, then auto-create.
-package main
+package commontrackerpatterns
 
 import (
 	"context"
 	"encoding/json"
 	"errors"
-	"flag"
 	"fmt"
 	"math"
-	"net"
-	"net/url"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -41,9 +29,11 @@ import (
 	"time"
 
 	git "github.com/go-git/go-git/v5"
+	"github.com/spf13/cobra"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/proboctl/cmdutil"
 	"go.probo.inc/probo/pkg/slug"
 )
 
@@ -78,120 +68,114 @@ type (
 	}
 )
 
-func main() {
-	if err := run(); err != nil {
-		fmt.Fprintf(os.Stderr, "error: %v\n", err)
-		os.Exit(1)
-	}
-}
+func NewCmdCommonTrackerPatterns(f *cmdutil.Factory) *cobra.Command {
+	return &cobra.Command{
+		Use:   "common-tracker-patterns",
+		Short: "Seed common tracker patterns from the Open Cookie Database",
+		Long: "Seed the common_tracker_patterns table from the Open Cookie Database " +
+			"(https://github.com/jkwakman/Open-Cookie-Database). " +
+			"The repository is cloned into a temporary directory. " +
+			"Re-running is safe: existing rows are upserted so ids and created_at are preserved. " +
+			"Entries are linked to matching common_third_parties rows via slug lookup, " +
+			"domain lookup, then auto-create.",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			out := f.IOStreams.Out
+			errOut := f.IOStreams.ErrOut
+			ctx := cmd.Context()
 
-func run() error {
-	var pgDSN string
+			_, _ = fmt.Fprintf(out, "cloning %s\n", ocdRepoURL)
 
-	flag.StringVar(
-		&pgDSN,
-		"pg-dsn",
-		os.Getenv("DATABASE_URL"),
-		"PostgreSQL connection URL (default: DATABASE_URL env)",
-	)
-	flag.Parse()
-
-	if pgDSN == "" {
-		return fmt.Errorf("set -pg-dsn or DATABASE_URL")
-	}
-
-	ctx := context.Background()
-
-	fmt.Printf("cloning %s\n", ocdRepoURL)
-
-	tmpDir, cleanup, err := cloneRepo()
-	if err != nil {
-		return fmt.Errorf("cannot clone repository: %w", err)
-	}
-	defer cleanup()
-
-	patterns, err := loadPatternsFromOCD(tmpDir)
-	if err != nil {
-		return fmt.Errorf("cannot load tracker pattern data: %w", err)
-	}
-
-	pgClient, err := newPgClientFromDSN(pgDSN)
-	if err != nil {
-		return fmt.Errorf("cannot create pg client: %w", err)
-	}
-
-	fmt.Printf("importing %d common tracker patterns from Open Cookie Database\n", len(patterns))
-
-	var inserted, updated, skipped int
-	var partiesCreated int
-
-	if err := pgClient.WithTx(
-		ctx,
-		func(ctx context.Context, tx pg.Tx) error {
-			now := time.Now()
-			thirdPartyCache := make(map[string]*gid.GID)
-
-			for _, p := range patterns {
-				thirdPartyID, err := resolveThirdParty(ctx, tx, p, thirdPartyCache, now, &partiesCreated)
-				if err != nil {
-					return err
-				}
-
-				trackerType, err := parseTrackerType(p.TrackerType)
-				if err != nil {
-					fmt.Fprintf(os.Stderr, "warning: %v, skipping pattern %q\n", err, p.Pattern)
-					skipped++
-					continue
-				}
-
-				matchType, err := parseMatchType(p.MatchType)
-				if err != nil {
-					fmt.Fprintf(os.Stderr, "warning: %v, skipping pattern %q\n", err, p.Pattern)
-					skipped++
-					continue
-				}
-
-				pattern := coredata.CommonTrackerPattern{
-					ID:                 gid.New(gid.NilTenant, coredata.CommonTrackerPatternEntityType),
-					CommonThirdPartyID: thirdPartyID,
-					TrackerType:        trackerType,
-					Pattern:            p.Pattern,
-					MatchType:          matchType,
-					Description:        p.Description,
-					MaxAgeSeconds:      p.MaxAgeSeconds,
-					Confidence:         p.Confidence,
-					CreatedAt:          now,
-					UpdatedAt:          now,
-				}
-
-				_, wasInserted, err := pattern.Upsert(ctx, tx)
-				if err != nil {
-					return fmt.Errorf("cannot upsert common tracker pattern %q: %w", p.Pattern, err)
-				}
-
-				if wasInserted {
-					inserted++
-				} else {
-					updated++
-				}
+			tmpDir, cleanup, err := cloneRepo()
+			if err != nil {
+				return fmt.Errorf("cannot clone repository: %w", err)
 			}
+			defer cleanup()
+
+			patterns, err := loadPatternsFromOCD(tmpDir)
+			if err != nil {
+				return fmt.Errorf("cannot load tracker pattern data: %w", err)
+			}
+
+			pgClient, err := f.PgClient()
+			if err != nil {
+				return fmt.Errorf("cannot create pg client: %w", err)
+			}
+
+			_, _ = fmt.Fprintf(out, "seeding %d common tracker patterns from Open Cookie Database\n", len(patterns))
+
+			var inserted, updated, skipped int
+			var partiesCreated int
+
+			if err := pgClient.WithTx(
+				ctx,
+				func(ctx context.Context, tx pg.Tx) error {
+					now := time.Now()
+					thirdPartyCache := make(map[string]*gid.GID)
+
+					for _, p := range patterns {
+						thirdPartyID, err := resolveThirdParty(ctx, tx, p, thirdPartyCache, now, &partiesCreated)
+						if err != nil {
+							return err
+						}
+
+						trackerType, err := parseTrackerType(p.TrackerType)
+						if err != nil {
+							_, _ = fmt.Fprintf(errOut, "warning: %v, skipping pattern %q\n", err, p.Pattern)
+							skipped++
+							continue
+						}
+
+						matchType, err := parseMatchType(p.MatchType)
+						if err != nil {
+							_, _ = fmt.Fprintf(errOut, "warning: %v, skipping pattern %q\n", err, p.Pattern)
+							skipped++
+							continue
+						}
+
+						pattern := coredata.CommonTrackerPattern{
+							ID:                 gid.New(gid.NilTenant, coredata.CommonTrackerPatternEntityType),
+							CommonThirdPartyID: thirdPartyID,
+							TrackerType:        trackerType,
+							Pattern:            p.Pattern,
+							MatchType:          matchType,
+							Description:        p.Description,
+							MaxAgeSeconds:      p.MaxAgeSeconds,
+							Confidence:         p.Confidence,
+							CreatedAt:          now,
+							UpdatedAt:          now,
+						}
+
+						_, wasInserted, err := pattern.Upsert(ctx, tx)
+						if err != nil {
+							return fmt.Errorf("cannot upsert common tracker pattern %q: %w", p.Pattern, err)
+						}
+
+						if wasInserted {
+							inserted++
+						} else {
+							updated++
+						}
+					}
+
+					return nil
+				},
+			); err != nil {
+				return err
+			}
+
+			_, _ = fmt.Fprintf(
+				out,
+				"seeded %d patterns (%d inserted, %d updated, %d skipped, %d third parties auto-created)\n",
+				len(patterns)-skipped,
+				inserted,
+				updated,
+				skipped,
+				partiesCreated,
+			)
 
 			return nil
 		},
-	); err != nil {
-		return err
 	}
-
-	fmt.Printf(
-		"imported %d patterns (%d inserted, %d updated, %d skipped, %d third parties auto-created)\n",
-		len(patterns)-skipped,
-		inserted,
-		updated,
-		skipped,
-		partiesCreated,
-	)
-
-	return nil
 }
 
 func cloneRepo() (string, func(), error) {
@@ -360,7 +344,6 @@ var domainValidRe = regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9.-]*[a-zA-Z]$`)
 func normalizeDomain(s string) string {
 	s = strings.TrimSpace(s)
 
-	// Strip zero-width spaces and other Unicode control characters.
 	s = strings.Map(func(r rune) rune {
 		if r == '\u200b' || r == '\ufeff' {
 			return -1
@@ -368,19 +351,15 @@ func normalizeDomain(s string) string {
 		return r
 	}, s)
 
-	// Take only the first domain when "or" separates multiple values,
-	// e.g. ".bing.com (3rd party) or .microsoft.com (3rd party)".
 	if idx := strings.Index(s, " or "); idx != -1 {
 		s = s[:idx]
 	}
-	// Handle values starting with "or ", e.g. "or demdex.net (3rd party)".
 	s = strings.TrimPrefix(s, "or ")
 
 	if idx := strings.IndexByte(s, '('); idx != -1 {
 		s = strings.TrimSpace(s[:idx])
 	}
 
-	// Strip placeholders like "[account]".
 	if strings.ContainsAny(s, "[]") {
 		return ""
 	}
@@ -486,44 +465,4 @@ func parseMatchType(s string) (coredata.TrackerPatternMatchType, error) {
 	default:
 		return "", fmt.Errorf("unknown match type %q", s)
 	}
-}
-
-func newPgClientFromDSN(dsn string) (*pg.Client, error) {
-	u, err := url.Parse(dsn)
-	if err != nil {
-		return nil, fmt.Errorf("cannot parse DSN (check URL format)")
-	}
-
-	var opts []pg.Option
-
-	switch u.Query().Get("sslmode") {
-	case "", "disable":
-	case "require":
-		opts = append(opts, pg.WithUnsecureTLS())
-	case "prefer":
-		return nil, fmt.Errorf("unsupported sslmode %q (prefer fallback semantics are not supported)", u.Query().Get("sslmode"))
-	default:
-		return nil, fmt.Errorf("unsupported sslmode %q", u.Query().Get("sslmode"))
-	}
-
-	if u.Host != "" {
-		host := u.Host
-		if u.Port() == "" {
-			host = net.JoinHostPort(u.Hostname(), "5432")
-		}
-		opts = append(opts, pg.WithAddr(host))
-	}
-
-	if u.User != nil {
-		opts = append(opts, pg.WithUser(u.User.Username()))
-		if password, ok := u.User.Password(); ok {
-			opts = append(opts, pg.WithPassword(password))
-		}
-	}
-
-	if len(u.Path) > 1 {
-		opts = append(opts, pg.WithDatabase(u.Path[1:]))
-	}
-
-	return pg.NewClient(opts...)
 }
