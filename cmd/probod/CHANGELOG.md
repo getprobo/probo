@@ -4,6 +4,13 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.189.0] - 2026-05-15
+
+### Changed
+
+- Rename `vendor` to `third party` across the API surface (GraphQL, MCP), database schema (migration), webhook event types (`vendor:*` → `third_party:*`), snapshot type (`VENDORS` → `THIRD_PARTIES`), and console / trust URL paths (breaking)
+- Log `identity_id` on every authenticated request (cookie session, API key, OAuth2 access token) so operators can correlate a request back to its user and credential
+
 ## [0.188.0] - 2026-05-13
 
 ### Changed
