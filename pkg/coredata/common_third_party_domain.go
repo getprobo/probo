@@ -136,10 +136,9 @@ INSERT INTO common_third_party_domains (
     @created_at,
     @updated_at
 )
-ON CONFLICT (domain) DO UPDATE
+ON CONFLICT (common_third_party_id, domain) DO UPDATE
 SET
-    common_third_party_id = EXCLUDED.common_third_party_id,
-    updated_at            = EXCLUDED.updated_at
+    updated_at = EXCLUDED.updated_at
 RETURNING (xmax = 0) AS inserted
 `
 

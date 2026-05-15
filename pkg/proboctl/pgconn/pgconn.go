@@ -25,7 +25,7 @@ import (
 func NewPgClientFromDSN(dsn string) (*pg.Client, error) {
 	u, err := url.Parse(dsn)
 	if err != nil {
-		return nil, fmt.Errorf("cannot parse DSN (check URL format)")
+		return nil, fmt.Errorf("cannot parse DSN: %w", err)
 	}
 
 	var opts []pg.Option

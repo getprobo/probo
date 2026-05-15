@@ -23,8 +23,8 @@ CREATE TABLE common_third_party_domains (
     updated_at            TIMESTAMP WITH TIME ZONE NOT NULL
 );
 
-CREATE UNIQUE INDEX common_third_party_domains_domain_key
-    ON common_third_party_domains (domain);
+CREATE UNIQUE INDEX common_third_party_domains_party_domain_key
+    ON common_third_party_domains (common_third_party_id, domain);
 
 CREATE INDEX idx_common_third_party_domains_third_party
     ON common_third_party_domains (common_third_party_id);
