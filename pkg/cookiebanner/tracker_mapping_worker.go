@@ -85,6 +85,10 @@ func (h *trackerMappingHandler) Process(ctx context.Context, tp coredata.Tracker
 				commonPatternID, thirdPartyID = h.matchByDomain(ctx, tx, tp)
 			}
 
+			if commonPatternID == nil {
+				commonPatternID = h.createUnmatchedPattern(ctx, tx, tp)
+			}
+
 			if commonPatternID != nil || thirdPartyID != nil {
 				if err := tp.UpdateMapping(ctx, tx, commonPatternID, thirdPartyID); err != nil {
 					return fmt.Errorf("cannot update tracker pattern mapping: %w", err)
@@ -177,6 +181,37 @@ func (h *trackerMappingHandler) matchByDomain(
 	}
 
 	return &commonPattern.ID, thirdPartyID
+}
+
+func (h *trackerMappingHandler) createUnmatchedPattern(
+	ctx context.Context,
+	tx pg.Tx,
+	tp coredata.TrackerPattern,
+) *gid.GID {
+	now := time.Now()
+	commonPattern := coredata.CommonTrackerPattern{
+		ID:            gid.New(gid.NilTenant, coredata.CommonTrackerPatternEntityType),
+		TrackerType:   tp.TrackerType,
+		Pattern:       tp.Pattern,
+		MatchType:     tp.MatchType,
+		Description:   tp.Description,
+		MaxAgeSeconds: tp.MaxAgeSeconds,
+		Confidence:    0.5,
+		CreatedAt:     now,
+		UpdatedAt:     now,
+	}
+
+	actualID, _, err := commonPattern.Upsert(ctx, tx)
+	if err != nil {
+		h.logger.ErrorCtx(
+			ctx,
+			"cannot upsert common tracker pattern for unmatched pattern",
+			log.Error(err),
+		)
+		return nil
+	}
+
+	return &actualID
 }
 
 func (h *trackerMappingHandler) resolveThirdParty(
