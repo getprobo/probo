@@ -4,6 +4,12 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.186.0] - 2026-05-15
+
+### Changed
+
+- Rename the `vendor` resource and its operations to `thirdParty` across all node actions (breaking)
+
 ## [0.185.0] - 2026-05-13
 
 ### Changed
