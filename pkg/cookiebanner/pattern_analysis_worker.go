@@ -165,20 +165,22 @@ func (h *patternAnalysisHandler) Process(ctx context.Context, banner coredata.Co
 
 				source := bestSource(group)
 
+				now := time.Now()
 				globPattern := &coredata.TrackerPattern{
-					ID:               gid.New(banner.ID.TenantID(), coredata.TrackerPatternEntityType),
-					OrganizationID:   group[0].OrganizationID,
-					CookieBannerID:   banner.ID,
-					CookieCategoryID: key.categoryID,
-					TrackerType:      key.trackerType,
-					Pattern:          key.template,
-					MatchType:        coredata.TrackerPatternMatchTypeGlob,
-					DisplayName:      key.template,
-					MaxAgeSeconds:    maxAge,
-					Description:      "",
-					Source:           source,
-					CreatedAt:        time.Now(),
-					UpdatedAt:        time.Now(),
+					ID:                 gid.New(banner.ID.TenantID(), coredata.TrackerPatternEntityType),
+					OrganizationID:     group[0].OrganizationID,
+					CookieBannerID:     banner.ID,
+					CookieCategoryID:   key.categoryID,
+					TrackerType:        key.trackerType,
+					Pattern:            key.template,
+					MatchType:          coredata.TrackerPatternMatchTypeGlob,
+					DisplayName:        key.template,
+					MaxAgeSeconds:      maxAge,
+					Description:        "",
+					Source:             source,
+					MappingRequestedAt: &now,
+					CreatedAt:          now,
+					UpdatedAt:          now,
 				}
 
 				inserted, err := globPattern.InsertIfNotExists(ctx, tx, scope)
