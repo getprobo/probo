@@ -683,7 +683,7 @@ func (impl *Implm) Run(
 		},
 	)
 
-	trackerMappingWorker := probo.NewTrackerMappingWorker(pgClient, l)
+	trackerMappingWorker := cookiebanner.NewTrackerMappingWorker(pgClient, l)
 	trackerMappingWorkerCtx, stopTrackerMappingWorker := context.WithCancel(context.Background())
 	wg.Go(
 		func() {
