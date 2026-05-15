@@ -118,7 +118,12 @@ func (h *trackerMappingHandler) matchByPattern(
 
 	var thirdPartyID *gid.GID
 	if commonPattern.CommonThirdPartyID != nil {
-		thirdPartyID = h.resolveThirdParty(ctx, conn, tp, &commonPattern)
+		var err error
+		thirdPartyID, err = h.resolveThirdParty(ctx, conn, tp, &commonPattern)
+		if err != nil {
+			h.logger.ErrorCtx(ctx, "cannot resolve third party from pattern match", log.Error(err))
+			return nil, nil
+		}
 	}
 
 	return &commonPattern.ID, thirdPartyID
@@ -165,7 +170,11 @@ func (h *trackerMappingHandler) matchByDomain(
 	}
 
 	commonPattern.ID = actualID
-	thirdPartyID := h.resolveThirdParty(ctx, tx, tp, &commonPattern)
+	thirdPartyID, err := h.resolveThirdParty(ctx, tx, tp, &commonPattern)
+	if err != nil {
+		h.logger.ErrorCtx(ctx, "cannot resolve third party from domain match", log.Error(err))
+		return &commonPattern.ID, nil
+	}
 
 	return &commonPattern.ID, thirdPartyID
 }
@@ -175,9 +184,9 @@ func (h *trackerMappingHandler) resolveThirdParty(
 	conn pg.Querier,
 	tp coredata.TrackerPattern,
 	commonPattern *coredata.CommonTrackerPattern,
-) *gid.GID {
+) (*gid.GID, error) {
 	if commonPattern.CommonThirdPartyID == nil {
-		return nil
+		return nil, nil
 	}
 
 	scope := coredata.NewScopeFromObjectID(tp.ID)
@@ -190,8 +199,11 @@ func (h *trackerMappingHandler) resolveThirdParty(
 		tp.OrganizationID,
 		*commonPattern.CommonThirdPartyID,
 	); err != nil {
-		return nil
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("cannot resolve third party: %w", err)
 	}
 
-	return &t.ID
+	return &t.ID, nil
 }
