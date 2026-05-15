@@ -85,13 +85,6 @@ func (h *trackerMappingHandler) Process(ctx context.Context, tp coredata.Tracker
 				commonPatternID, thirdPartyID = h.matchByDomain(ctx, tx, tp)
 			}
 
-			if commonPatternID != nil && thirdPartyID == nil {
-				var cp coredata.CommonTrackerPattern
-				if err := cp.LoadByID(ctx, tx, *commonPatternID); err == nil {
-					thirdPartyID = h.resolveThirdParty(ctx, tx, tp, &cp)
-				}
-			}
-
 			if commonPatternID != nil || thirdPartyID != nil {
 				if err := tp.UpdateMapping(ctx, tx, commonPatternID, thirdPartyID); err != nil {
 					return fmt.Errorf("cannot update tracker pattern mapping: %w", err)
@@ -137,7 +130,7 @@ func (h *trackerMappingHandler) matchByDomain(
 	tp coredata.TrackerPattern,
 ) (*gid.GID, *gid.GID) {
 	var trackers coredata.DetectedTrackers
-	commonThirdPartyID, err := trackers.LoadCommonThirdPartyIDByTrackerPatternID(ctx, tx, tp.ID)
+	commonThirdPartyID, err := trackers.LoadCommonThirdPartyIDByDomainMatch(ctx, tx, tp.ID)
 	if err != nil {
 		h.logger.ErrorCtx(ctx, "cannot load common third party ID from domain", log.Error(err))
 		return nil, nil

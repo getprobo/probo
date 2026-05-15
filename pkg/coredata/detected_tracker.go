@@ -152,7 +152,7 @@ WHERE
 	return count, nil
 }
 
-func (dts *DetectedTrackers) LoadCommonThirdPartyIDByTrackerPatternID(
+func (dts *DetectedTrackers) LoadCommonThirdPartyIDByDomainMatch(
 	ctx context.Context,
 	conn pg.Querier,
 	trackerPatternID gid.GID,
