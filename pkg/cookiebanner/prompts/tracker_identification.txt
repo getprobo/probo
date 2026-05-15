@@ -17,7 +17,12 @@ Return a structured JSON response with:
 
 2. If search_tracker_patterns returns results with a third party name, use the search_third_parties tool to confirm the exact name in the database and get its category.
 
-3. Only use web_search as a last resort if the internal tools return nothing useful. Search for "what is cookie [name]" or "[name] cookie tracker".
+3. Only use web_search as a last resort if the internal tools return nothing useful. Try up to 3 different queries, adapting your strategy based on the available signals:
+   - If the tracker has a recognizable prefix or name, start with: "[prefix] cookie tracking" (e.g. "_ce.s cookie tracking").
+   - If observed domains are available and the name is opaque, search by domain instead: "[domain] cookies tracking privacy" (e.g. "clarity.ms cookies tracking privacy").
+   - For localStorage keys, include the type: "[name] localStorage tracking script".
+   - If the first query returns nothing useful, broaden: "[name] web tracker" or "site:[domain] cookie documentation".
+   - Stop searching once you get a confident match; do not exhaust all query slots if the first one succeeds.
 
 4. Common cookie naming conventions to recognize:
    - _ga*, _gid, _gat*: Google Analytics

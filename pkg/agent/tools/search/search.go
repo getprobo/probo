@@ -20,19 +20,52 @@ import (
 
 // Toolset provides web search tools.
 type Toolset struct {
-	endpoint string
+	endpoint          string
+	firecrawlEndpoint string
+	firecrawlAPIKey   string
+}
+
+// Option configures a Toolset.
+type Option func(*Toolset)
+
+// WithFirecrawl configures the Firecrawl search backend. The endpoint
+// should be the base URL of the Firecrawl instance (e.g.
+// "https://api.firecrawl.dev/v2").
+func WithFirecrawl(endpoint, apiKey string) Option {
+	return func(t *Toolset) {
+		t.firecrawlEndpoint = endpoint
+		t.firecrawlAPIKey = apiKey
+	}
 }
 
 // NewToolset creates a search toolset with the given SearXNG endpoint.
-func NewToolset(endpoint string) *Toolset {
-	return &Toolset{endpoint: endpoint}
+func NewToolset(endpoint string, opts ...Option) *Toolset {
+	t := &Toolset{endpoint: endpoint}
+	for _, opt := range opts {
+		opt(t)
+	}
+	return t
 }
 
 func (t *Toolset) Tools() []agent.Tool {
-	return []agent.Tool{
-		WebSearchTool(t.endpoint),
-		CheckGovernmentDBTool(t.endpoint),
+	tools := []agent.Tool{
 		CheckWaybackTool(),
 		DiffDocumentsTool(),
 	}
+
+	if t.firecrawlEndpoint != "" && t.firecrawlAPIKey != "" {
+		tools = append(
+			tools,
+			FirecrawlSearchTool(t.firecrawlEndpoint, t.firecrawlAPIKey),
+			CheckGovernmentDBTool(t.endpoint),
+		)
+	} else if t.endpoint != "" {
+		tools = append(
+			tools,
+			WebSearchTool(t.endpoint),
+			CheckGovernmentDBTool(t.endpoint),
+		)
+	}
+
+	return tools
 }

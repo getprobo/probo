@@ -21,7 +21,8 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"time"
+
+	"go.gearno.de/kit/httpclient"
 
 	"go.probo.inc/probo/pkg/agent"
 )
@@ -49,7 +50,8 @@ type (
 )
 
 func CheckGovernmentDBTool(searchEndpoint string) agent.Tool {
-	client := &http.Client{Timeout: 15 * time.Second}
+	client := httpclient.DefaultPooledClient()
+	client.Transport = &userAgentTransport{next: client.Transport}
 
 	return agent.FunctionTool(
 		"check_government_databases",

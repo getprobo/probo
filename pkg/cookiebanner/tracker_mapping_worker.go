@@ -51,9 +51,11 @@ type trackerMappingHandler struct {
 }
 
 type TrackerMappingConfig struct {
-	LLMClient      *llm.Client
-	Model          string
-	SearchEndpoint string
+	LLMClient         *llm.Client
+	Model             string
+	SearchEndpoint    string
+	FirecrawlEndpoint string
+	FirecrawlAPIKey   string
 }
 
 func NewTrackerMappingWorker(
@@ -68,13 +70,7 @@ func NewTrackerMappingWorker(
 	}
 
 	if cfg.LLMClient != nil {
-		h.agent = buildTrackerMappingAgent(
-			cfg.LLMClient,
-			cfg.Model,
-			cfg.SearchEndpoint,
-			pgClient,
-			logger,
-		)
+		h.agent = buildTrackerMappingAgent(cfg, pgClient, logger)
 	}
 
 	return worker.New(
@@ -86,9 +82,7 @@ func NewTrackerMappingWorker(
 }
 
 func buildTrackerMappingAgent(
-	llmClient *llm.Client,
-	model string,
-	searchEndpoint string,
+	cfg TrackerMappingConfig,
 	pgClient *pg.Client,
 	logger *log.Logger,
 ) *agent.Agent {
@@ -97,8 +91,10 @@ func buildTrackerMappingAgent(
 		searchThirdPartiesTool(pgClient),
 	}
 
-	if searchEndpoint != "" {
-		tools = append(tools, search.WebSearchTool(searchEndpoint))
+	if cfg.FirecrawlEndpoint != "" && cfg.FirecrawlAPIKey != "" {
+		tools = append(tools, search.FirecrawlSearchTool(cfg.FirecrawlEndpoint, cfg.FirecrawlAPIKey))
+	} else if cfg.SearchEndpoint != "" {
+		tools = append(tools, search.WebSearchTool(cfg.SearchEndpoint))
 	}
 
 	outputType, err := agent.NewOutputType[TrackerIdentification]("tracker_identification")
@@ -108,9 +104,9 @@ func buildTrackerMappingAgent(
 
 	return agent.New(
 		"tracker-mapping",
-		llmClient,
+		cfg.LLMClient,
 		agent.WithInstructions(trackerIdentificationPrompt),
-		agent.WithModel(model),
+		agent.WithModel(cfg.Model),
 		agent.WithTools(tools...),
 		agent.WithOutputType(outputType),
 		agent.WithMaxTurns(agentMaxTurns),

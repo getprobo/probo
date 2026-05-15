@@ -62,6 +62,8 @@ type (
 		EvidenceDescriber EvidenceDescriberConfig `json:"evidence-describer"`
 		ChromeDPAddr      string                  `json:"chrome-dp-addr"`
 		SearchEndpoint    string                  `json:"search-endpoint"`
+		FirecrawlEndpoint string                  `json:"firecrawl-endpoint"`
+		FirecrawlAPIKey   string                  `json:"firecrawl-api-key"`
 		CustomDomains     CustomDomainsConfig     `json:"custom-domains"`
 		SCIMBridge        SCIMBridgeConfig        `json:"scim-bridge"`
 		ESign             ESignConfig             `json:"esign"`

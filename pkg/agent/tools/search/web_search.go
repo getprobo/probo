@@ -17,7 +17,8 @@ package search
 import (
 	"context"
 	"net/http"
-	"time"
+
+	"go.gearno.de/kit/httpclient"
 
 	"go.probo.inc/probo/pkg/agent"
 )
@@ -43,13 +44,24 @@ type (
 		URL     string `json:"url"`
 		Content string `json:"content"`
 	}
+
+	userAgentTransport struct {
+		next http.RoundTripper
+	}
 )
+
+func (t *userAgentTransport) RoundTrip(r *http.Request) (*http.Response, error) {
+	r2 := r.Clone(r.Context())
+	r2.Header.Set("User-Agent", "Probo-Agent/1.0")
+	return t.next.RoundTrip(r2)
+}
 
 // WebSearchTool creates a tool that searches the web using a SearXNG instance.
 // The endpoint should be the base URL of the SearXNG instance (e.g.
 // "http://localhost:8888").
 func WebSearchTool(endpoint string) agent.Tool {
-	client := &http.Client{Timeout: 15 * time.Second}
+	client := httpclient.DefaultPooledClient()
+	client.Transport = &userAgentTransport{next: client.Transport}
 
 	return agent.FunctionTool(
 		"web_search",
