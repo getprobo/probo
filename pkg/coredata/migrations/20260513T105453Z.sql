@@ -38,9 +38,9 @@ CREATE TABLE common_tracker_patterns (
     tracker_type          tracker_type NOT NULL,
     pattern               TEXT NOT NULL,
     match_type            cookie_pattern_match_type NOT NULL,
-    description           TEXT NOT NULL DEFAULT '',
+    description           TEXT NOT NULL,
     max_age_seconds       INTEGER,
-    confidence            REAL NOT NULL DEFAULT 0,
+    confidence            REAL NOT NULL,
     created_at            TIMESTAMP WITH TIME ZONE NOT NULL,
     updated_at            TIMESTAMP WITH TIME ZONE NOT NULL
 );
