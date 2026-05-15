@@ -49,6 +49,7 @@ type (
 		Probo              LLMAgentConfig               `json:"probo"`
 		EvidenceDescriber  LLMAgentConfig               `json:"evidence-describer"`
 		ThirdPartyAssessor LLMAgentConfig               `json:"third-party-assessor"`
+		TrackerMapping     LLMAgentConfig               `json:"tracker-mapping"`
 	}
 )
 

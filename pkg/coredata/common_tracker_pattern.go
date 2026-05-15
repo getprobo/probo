@@ -344,6 +344,60 @@ LIMIT 1;
 	return &pattern, nil
 }
 
+type CommonTrackerPatternSearchResult struct {
+	Pattern        string      `db:"pattern"`
+	Description    string      `db:"description"`
+	TrackerType    TrackerType `db:"tracker_type"`
+	ThirdPartyName *string     `db:"third_party_name"`
+	Confidence     float32     `db:"confidence"`
+}
+
+func (ps *CommonTrackerPatterns) FindByKeyword(
+	ctx context.Context,
+	conn pg.Querier,
+	fragment string,
+	limit int,
+) ([]CommonTrackerPatternSearchResult, error) {
+	if limit <= 0 || limit > 20 {
+		limit = 10
+	}
+
+	q := `
+SELECT
+    ctp.pattern,
+    ctp.description,
+    ctp.tracker_type,
+    ct.name AS third_party_name,
+    ctp.confidence
+FROM
+    common_tracker_patterns ctp
+LEFT JOIN common_third_parties ct ON ct.id = ctp.common_third_party_id
+WHERE
+    ctp.pattern ILIKE '%' || @fragment || '%'
+    OR ctp.description ILIKE '%' || @fragment || '%'
+ORDER BY
+    ctp.confidence DESC
+LIMIT @limit;
+`
+
+	args := pgx.StrictNamedArgs{
+		"fragment": fragment,
+		"limit":    limit,
+	}
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot search common tracker patterns: %w", err)
+	}
+
+	results, err := pgx.CollectRows(rows, pgx.RowToStructByName[CommonTrackerPatternSearchResult])
+	if err != nil {
+		return nil, fmt.Errorf("cannot collect common tracker pattern search results: %w", err)
+	}
+
+	return results, nil
+}
+
 func (ps *CommonTrackerPatterns) LoadByCommonThirdPartyID(
 	ctx context.Context,
 	conn pg.Querier,

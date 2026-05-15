@@ -179,6 +179,34 @@ LIMIT 1;
 	return &commonThirdPartyID, nil
 }
 
+func (dts *DetectedTrackers) LoadInitiatorDomainsByTrackerPatternID(
+	ctx context.Context,
+	conn pg.Querier,
+	trackerPatternID gid.GID,
+) ([]string, error) {
+	q := `
+SELECT DISTINCT initiator_domain
+FROM detected_trackers
+WHERE tracker_pattern_id = @tracker_pattern_id
+  AND initiator_domain IS NOT NULL
+LIMIT 5;
+`
+
+	args := pgx.StrictNamedArgs{"tracker_pattern_id": trackerPatternID}
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot load initiator domains: %w", err)
+	}
+
+	domains, err := pgx.CollectRows(rows, pgx.RowTo[string])
+	if err != nil {
+		return nil, fmt.Errorf("cannot collect initiator domains: %w", err)
+	}
+
+	return domains, nil
+}
+
 func (dts *DetectedTrackers) RelinkByTrackerPatternID(
 	ctx context.Context,
 	tx pg.Tx,

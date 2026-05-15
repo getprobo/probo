@@ -304,6 +304,11 @@ func (impl *Implm) Run(
 		return err
 	}
 
+	trackerMappingCfg, err := impl.buildTrackerMappingConfig(l, tp, r)
+	if err != nil {
+		return err
+	}
+
 	fileManagerService := filemanager.NewService(s3Client)
 
 	var samlCert *x509.Certificate
@@ -683,7 +688,7 @@ func (impl *Implm) Run(
 		},
 	)
 
-	trackerMappingWorker := cookiebanner.NewTrackerMappingWorker(pgClient, l)
+	trackerMappingWorker := cookiebanner.NewTrackerMappingWorker(pgClient, l, trackerMappingCfg)
 	trackerMappingWorkerCtx, stopTrackerMappingWorker := context.WithCancel(context.Background())
 	wg.Go(
 		func() {
