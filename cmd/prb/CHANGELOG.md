@@ -4,6 +4,12 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.187.0] - 2026-05-15
+
+### Changed
+
+- Rename `prb vendor*` command group to `prb third-party*` (breaking)
+
 ## [0.186.0] - 2026-05-13
 
 ### Changed
