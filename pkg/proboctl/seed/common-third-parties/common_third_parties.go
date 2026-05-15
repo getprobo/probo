@@ -15,11 +15,12 @@
 package commonthirdparties
 
 import (
+	"bytes"
 	"context"
+	_ "embed"
 	"encoding/json"
 	"fmt"
 	"io"
-	"os"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -29,6 +30,9 @@ import (
 	"go.probo.inc/probo/pkg/proboctl/cmdutil"
 	"go.probo.inc/probo/pkg/slug"
 )
+
+//go:embed data/data.json
+var dataJSON []byte
 
 type thirdPartyData struct {
 	Name                          string   `json:"name"`
@@ -51,12 +55,10 @@ type thirdPartyData struct {
 }
 
 func NewCmdCommonThirdParties(f *cmdutil.Factory) *cobra.Command {
-	var flagData string
-
 	cmd := &cobra.Command{
 		Use:   "common-third-parties",
-		Short: "Seed common third parties from a data.json file",
-		Long: "Seed the common_third_parties table from a JSON file. " +
+		Short: "Seed common third parties",
+		Long: "Seed the common_third_parties table from the embedded dataset. " +
 			"Re-running is safe: existing rows are upserted on conflict (slug) " +
 			"so ids and created_at are preserved.",
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -64,7 +66,7 @@ func NewCmdCommonThirdParties(f *cmdutil.Factory) *cobra.Command {
 			errOut := f.IOStreams.ErrOut
 			ctx := cmd.Context()
 
-			thirdParties, err := loadThirdParties(flagData)
+			thirdParties, err := loadThirdParties()
 			if err != nil {
 				return fmt.Errorf("cannot load third-party data: %w", err)
 			}
@@ -74,7 +76,7 @@ func NewCmdCommonThirdParties(f *cmdutil.Factory) *cobra.Command {
 				return fmt.Errorf("cannot create pg client: %w", err)
 			}
 
-			_, _ = fmt.Fprintf(out, "seeding %d common third parties from %s\n", len(thirdParties), flagData)
+			_, _ = fmt.Fprintf(out, "seeding %d common third parties\n", len(thirdParties))
 
 			var inserted, updated, domainsInserted, domainsUpdated int
 
@@ -156,25 +158,17 @@ func NewCmdCommonThirdParties(f *cmdutil.Factory) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&flagData, "data", "", "Path to the third-party data.json file")
-	_ = cmd.MarkFlagRequired("data")
-
 	return cmd
 }
 
-func loadThirdParties(path string) ([]thirdPartyData, error) {
-	f, err := os.Open(path)
-	if err != nil {
-		return nil, fmt.Errorf("cannot open %s: %w", path, err)
-	}
-	defer func() { _ = f.Close() }()
-
+func loadThirdParties() ([]thirdPartyData, error) {
 	var thirdParties []thirdPartyData
-	dec := json.NewDecoder(f)
+
+	dec := json.NewDecoder(bytes.NewReader(dataJSON))
 	dec.DisallowUnknownFields()
 
 	if err := dec.Decode(&thirdParties); err != nil {
-		return nil, fmt.Errorf("cannot decode %s: %w", path, err)
+		return nil, fmt.Errorf("cannot decode embedded data.json: %w", err)
 	}
 
 	return thirdParties, nil
