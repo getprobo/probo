@@ -15,7 +15,6 @@
 import { downloadFile, formatDate } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
-import type { ThirdPartyCategory } from "@probo/third-parties";
 import {
   Button,
   Card,
@@ -33,6 +32,7 @@ import { useOutletContext } from "react-router";
 import type { ThirdPartyGraphNodeQuery$data } from "#/__generated__/core/ThirdPartyGraphNodeQuery.graphql";
 import type { ThirdPartyOverviewTabBusinessAssociateAgreementFragment$key } from "#/__generated__/core/ThirdPartyOverviewTabBusinessAssociateAgreementFragment.graphql";
 import type { ThirdPartyOverviewTabDataPrivacyAgreementFragment$key } from "#/__generated__/core/ThirdPartyOverviewTabDataPrivacyAgreementFragment.graphql";
+import type { ThirdPartyCategory } from "#/__generated__/core/useThirdPartyFormFragment.graphql";
 import { ControlledField } from "#/components/form/ControlledField";
 import { CountriesField } from "#/components/form/CountriesField";
 import { PeopleSelectField } from "#/components/form/PeopleSelectField";
