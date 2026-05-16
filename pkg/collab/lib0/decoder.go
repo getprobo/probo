@@ -17,9 +17,9 @@ package lib0
 import "errors"
 
 var (
-	ErrUnexpectedEOF   = errors.New("lib0: unexpected end of input")
-	ErrVarUintOverflow = errors.New("lib0: varuint overflow")
-	ErrVarIntOverflow  = errors.New("lib0: varint overflow")
+	ErrUnexpectedEOF   = errors.New("unexpected end of input")
+	ErrVarUintOverflow = errors.New("varuint overflow")
+	ErrVarIntOverflow  = errors.New("varint overflow")
 )
 
 type (

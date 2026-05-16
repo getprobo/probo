@@ -16,10 +16,6 @@
 // `lib0` and `y-protocols` packages: little-endian 7-bit-continuation
 // variable-length unsigned integers, lib0-flavoured signed variable-length
 // integers, length-prefixed UTF-8 strings, and length-prefixed byte arrays.
-//
-// The package is pure: it imports nothing outside of the Go standard library
-// so it can be vendored or copied verbatim into other tools without dragging
-// in the rest of the collaboration stack.
 package lib0
 
 type (
