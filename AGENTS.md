@@ -1,5 +1,19 @@
 # AGENTS.md
 
+## AI assistant skills (Claude Code)
+
+A generated multi-stack skill pack lives under `.claude/`:
+
+- **Skills:** `/potion-ask`, `/potion-plan`, `/potion-implement`, `/potion-review`, `/potion-learn`
+- **Generalist agents:** `potion-explorer`, `potion-planner`, `potion-implementer`, `potion-reviewer`
+- **Stack-specific implementers:** `potion-go-backend-implementer`, `potion-typescript-frontend-implementer`
+- **Specialized reviewers** (`.claude/agents/reviewers/`): architecture, pattern, security, style, test, duplication, **adversarial** (Codex MCP, opt-in)
+- **Curated guidelines:** `.claude/guidelines/shared.md` + `.claude/guidelines/{go-backend,typescript-frontend}/`
+
+The skill pack distills the architecture, conventions, and review-enforced standards of the codebase. The authoritative source-of-truth for every subsystem rule remains `contrib/claude/`; the skill guidelines reference it rather than replace it. Refresh after major codebase changes with `/potion-skill-generator:potion-learn` or by re-running the generator.
+
+## Subsystem guides
+
 Detailed guides for specific subsystems live in `contrib/claude/`:
 
 - [`contrib/claude/make.md`](contrib/claude/make.md) — GNUmakefile targets, codegen, overridable variables
