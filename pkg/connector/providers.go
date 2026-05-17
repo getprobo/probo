@@ -149,6 +149,41 @@ var (
 			AuthURL:  "https://auth.monday.com/oauth2/authorize",
 			TokenURL: "https://auth.monday.com/oauth2/token",
 		},
+		"SNYK": {
+			AuthURL:      "https://app.snyk.io/oauth2/authorize",
+			TokenURL:     "https://api.snyk.io/oauth2/token",
+			RequiresPKCE: true,
+		},
+		"RAMP": {
+			AuthURL:           "https://app.ramp.com/v1/authorize",
+			TokenURL:          "https://api.ramp.com/developer/v1/token",
+			TokenEndpointAuth: "basic-form",
+		},
+		// Lever runs on Auth0: the `audience` parameter is required in
+		// BOTH the authorize URL and the token-exchange POST body. The
+		// trailing slash on the audience value is mandatory.
+		"LEVER": {
+			AuthURL:  "https://auth.lever.co/authorize",
+			TokenURL: "https://auth.lever.co/oauth/token",
+			ExtraAuthParams: map[string]string{
+				"audience": "https://api.lever.co/v1/",
+				"prompt":   "consent",
+			},
+			TokenExtraParams: map[string]string{
+				"audience": "https://api.lever.co/v1/",
+			},
+		},
+		// Deel: the token endpoint path is "/oauth2/tokens" (plural) —
+		// Deel's docs are inconsistent on the singular vs plural form.
+		// The API base host (api.letsdeel.com) differs from the auth host
+		// (app.deel.com). Deel's token endpoint requires HTTP Basic auth
+		// (base64(client_id:client_secret)); credentials placed in the
+		// form body are rejected with 401 invalid basic credentials.
+		"DEEL": {
+			AuthURL:           "https://app.deel.com/oauth2/authorize",
+			TokenURL:          "https://app.deel.com/oauth2/tokens",
+			TokenEndpointAuth: "basic-form",
+		},
 	}
 )
 
