@@ -165,7 +165,9 @@ func (d *MondayDriver) queryUsers(ctx context.Context, page int) ([]mondayUser, 
 	}
 
 	if len(resp.Errors) > 0 {
-		return nil, fmt.Errorf("monday graphql error: %s", resp.Errors[0].Message)
+		// Provider-supplied error messages may carry tenant identifiers
+		// or query fragments — never embed them in the returned error.
+		return nil, fmt.Errorf("cannot fetch monday users: graphql error")
 	}
 
 	return resp.Data.Users, nil

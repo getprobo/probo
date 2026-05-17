@@ -851,3 +851,120 @@ func TestApplyProviderDefaults_AuthURLTemplating(t *testing.T) {
 		assert.Equal(t, "https://example.com/integrations/{integration_slug}/new", c.AuthURL)
 	})
 }
+
+// TestGeneratePKCEVerifier exercises the verifier generator: each call
+// must return a fresh value, encoded as RFC 4648 §5 base64url-without-
+// padding (RFC 7636 §4.1 mandates 43–128 unreserved chars; 32 bytes
+// yields 43 chars). Anything outside that contract weakens PKCE.
+func TestGeneratePKCEVerifier(t *testing.T) {
+	t.Parallel()
+
+	v1, err := generatePKCEVerifier()
+	require.NoError(t, err)
+	v2, err := generatePKCEVerifier()
+	require.NoError(t, err)
+
+	assert.GreaterOrEqual(t, len(v1), 43, "verifier must be at least 43 base64url chars")
+	assert.LessOrEqual(t, len(v1), 128, "verifier must be at most 128 chars per RFC 7636")
+	assert.NotEqual(t, v1, v2, "verifier must be unpredictable across calls")
+
+	// Charset: base64url unreserved (RFC 4648 §5) — A-Z a-z 0-9 - _.
+	for _, c := range v1 {
+		switch {
+		case c >= 'A' && c <= 'Z':
+		case c >= 'a' && c <= 'z':
+		case c >= '0' && c <= '9':
+		case c == '-' || c == '_':
+		default:
+			t.Errorf("verifier contains non-base64url character %q", c)
+		}
+	}
+}
+
+// TestApplyProviderDefaults_PKCEDefaults asserts that the registered
+// PAGERDUTY and SNYK provider defaults flip RequiresPKCE on so the
+// downstream Initiate/Complete flow generates a verifier and replays it.
+func TestApplyProviderDefaults_PKCEDefaults(t *testing.T) {
+	t.Parallel()
+
+	for _, provider := range []string{"PAGERDUTY", "SNYK"} {
+		t.Run(provider, func(t *testing.T) {
+			t.Parallel()
+
+			c := &OAuth2Connector{ClientID: "id", ClientSecret: "secret"}
+			ApplyProviderDefaults(provider, "https://example.com/cb", c)
+			assert.True(t, c.RequiresPKCE,
+				"provider %s must enable PKCE so Initiate generates a verifier", provider)
+		})
+	}
+}
+
+// TestApplyProviderDefaults_TokenExtraParamsDeepCopy guards against the
+// shared-map aliasing bug class. Two connectors using the same provider
+// (LEVER carries a non-empty TokenExtraParams) must not share the
+// underlying map; mutating one must not be observable on the other or
+// in the package-level providerDefinitions.
+func TestApplyProviderDefaults_TokenExtraParamsDeepCopy(t *testing.T) {
+	t.Parallel()
+
+	c1 := &OAuth2Connector{ClientID: "id1", ClientSecret: "s1"}
+	c2 := &OAuth2Connector{ClientID: "id2", ClientSecret: "s2"}
+
+	ApplyProviderDefaults("LEVER", "https://example.com/cb", c1)
+	ApplyProviderDefaults("LEVER", "https://example.com/cb", c2)
+
+	require.NotNil(t, c1.TokenExtraParams)
+	require.NotNil(t, c2.TokenExtraParams)
+	require.Equal(t, "https://api.lever.co/v1/", c1.TokenExtraParams["audience"])
+
+	c1.TokenExtraParams["sentinel"] = "mutated"
+	assert.NotContains(t, c2.TokenExtraParams, "sentinel",
+		"second connector must not see mutations on the first")
+	assert.NotContains(t, providerDefinitions["LEVER"].TokenExtraParams, "sentinel",
+		"shared providerDefinitions map must remain pristine")
+}
+
+// TestCompleteWithState_PKCEMismatch confirms that a token endpoint
+// rejecting a stale or mismatched code_verifier (the standard PKCE
+// failure path) surfaces as an error from CompleteWithState rather
+// than being silently swallowed.
+func TestCompleteWithState_PKCEMismatch(t *testing.T) {
+	t.Parallel()
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// The provider is supposed to validate the verifier; emulate a
+		// reject so we can observe the failure path.
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		_, _ = w.Write([]byte(`{"error":"invalid_grant","error_description":"invalid_grant"}`))
+	}))
+	defer server.Close()
+
+	c := &OAuth2Connector{
+		ClientID:     "id",
+		ClientSecret: "secret",
+		RedirectURI:  "https://example.com/cb",
+		AuthURL:      "https://provider.example.com/authorize",
+		TokenURL:     server.URL,
+		RequiresPKCE: true,
+		HTTPClient:   httpclient.DefaultClient(httpclient.WithSSRFProtection(), httpclient.WithSSRFAllowLoopback()),
+	}
+
+	orgID := gid.New(gid.NewTenantID(), 0)
+	authURL, err := c.InitiateWithState(
+		context.Background(),
+		OAuth2State{OrganizationID: orgID.String(), Provider: "TEST"},
+		InitiateOptions{Scopes: []string{"read"}},
+	)
+	require.NoError(t, err)
+	parsed, err := url.Parse(authURL)
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(
+		http.MethodGet,
+		"https://example.com/cb?code=the-code&state="+parsed.Query().Get("state"),
+		nil,
+	)
+	_, _, err = c.CompleteWithState(context.Background(), req)
+	require.Error(t, err, "PKCE rejection from token endpoint must propagate")
+}

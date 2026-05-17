@@ -176,10 +176,13 @@ var (
 		// Deel: the token endpoint path is "/oauth2/tokens" (plural) —
 		// Deel's docs are inconsistent on the singular vs plural form.
 		// The API base host (api.letsdeel.com) differs from the auth host
-		// (app.deel.com).
+		// (app.deel.com). Deel's token endpoint requires HTTP Basic auth
+		// (base64(client_id:client_secret)); credentials placed in the
+		// form body are rejected with 401 invalid basic credentials.
 		"DEEL": {
-			AuthURL:  "https://app.deel.com/oauth2/authorize",
-			TokenURL: "https://app.deel.com/oauth2/tokens",
+			AuthURL:           "https://app.deel.com/oauth2/authorize",
+			TokenURL:          "https://app.deel.com/oauth2/tokens",
+			TokenEndpointAuth: "basic-form",
 		},
 	}
 )
@@ -195,13 +198,18 @@ func ApplyProviderDefaults(provider string, redirectURI string, c *OAuth2Connect
 	if def, ok := providerDefinitions[provider]; ok {
 		c.AuthURL = def.AuthURL
 		c.TokenURL = def.TokenURL
-		c.ExtraAuthParams = def.ExtraAuthParams
 		c.TokenEndpointAuth = def.TokenEndpointAuth
 		c.SupportsIncrementalAuth = def.SupportsIncrementalAuth
 		c.RequiresPKCE = def.RequiresPKCE
 
-		// Deep copy TokenExtraParams so per-connector mutations cannot
-		// alias back into the shared providerDefinitions map.
+		// Deep copy ExtraAuthParams and TokenExtraParams so per-connector
+		// mutations (e.g. incremental auth, scope overrides) cannot alias
+		// back into the shared providerDefinitions map.
+		if len(def.ExtraAuthParams) > 0 {
+			extra := make(map[string]string, len(def.ExtraAuthParams))
+			maps.Copy(extra, def.ExtraAuthParams)
+			c.ExtraAuthParams = extra
+		}
 		if len(def.TokenExtraParams) > 0 {
 			tokenExtra := make(map[string]string, len(def.TokenExtraParams))
 			maps.Copy(tokenExtra, def.TokenExtraParams)

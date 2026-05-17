@@ -47,6 +47,8 @@ func TestCassettesUseSyntheticEmails(t *testing.T) {
 		".test",
 		".invalid",
 		".localhost",
+		// Google Workspace test domain family (RFC-style synthetic).
+		".test-google-a.com",
 	}
 
 	// allowedExactDomains lists individual domains that pre-date this
@@ -83,7 +85,6 @@ func TestCassettesUseSyntheticEmails(t *testing.T) {
 				seen[email] = true
 
 				domain := email[strings.IndexByte(email, '@')+1:]
-				domain = strings.TrimSuffix(domain, ".test-google-a.com")
 				if allowedExactDomains[domain] {
 					continue
 				}
@@ -96,19 +97,20 @@ func TestCassettesUseSyntheticEmails(t *testing.T) {
 					}
 				}
 
-				// Log the domain (actionable) but never the local-part
-				// — a failed assertion ends up in CI logs, and the whole
-				// point of this guard is to keep PII out of those logs.
-				// Operators can grep the cassette locally to identify the
-				// offending row.
+				// A failed assertion lands in CI logs. Keep both the
+				// local-part AND the domain out of the message — together
+				// they form a complete PII tuple, which is exactly what
+				// this guard exists to prevent. Operators can grep the
+				// cassette locally to identify the offending row.
 				assert.Truef(
 					t,
 					ok,
-					"cassette %s contains an email with non-synthetic domain %q; "+
-						"either replace with a synthetic *.example.com address or "+
-						"add the domain to allowedExactDomains in cassette_safety_test.go "+
+					"cassette %s contains an email with a non-synthetic "+
+						"domain; either replace with a synthetic "+
+						"*.example.com address or add the domain to "+
+						"allowedExactDomains in cassette_safety_test.go "+
 						"with a justification",
-					filepath.Base(cassette), domain,
+					filepath.Base(cassette),
 				)
 			}
 		})
