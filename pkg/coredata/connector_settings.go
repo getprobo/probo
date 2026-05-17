@@ -97,160 +97,6 @@ func (c *Connector) SetSettings(v any) error {
 	return nil
 }
 
-// SlackSettings unmarshals the connector's RawSettings into SlackConnectorSettings.
-func (c *Connector) SlackSettings() (SlackConnectorSettings, error) {
-	var s SlackConnectorSettings
-	if err := c.unmarshalSettings(&s); err != nil {
-		return s, err
-	}
-	return s, nil
-}
-
-// TallySettings unmarshals the connector's RawSettings into TallyConnectorSettings.
-func (c *Connector) TallySettings() (TallyConnectorSettings, error) {
-	var s TallyConnectorSettings
-	if err := c.unmarshalSettings(&s); err != nil {
-		return s, err
-	}
-	return s, nil
-}
-
-// OnePasswordSettings unmarshals the connector's RawSettings into OnePasswordConnectorSettings.
-func (c *Connector) OnePasswordSettings() (OnePasswordConnectorSettings, error) {
-	var s OnePasswordConnectorSettings
-	if err := c.unmarshalSettings(&s); err != nil {
-		return s, err
-	}
-	return s, nil
-}
-
-// SentrySettings unmarshals the connector's RawSettings into SentryConnectorSettings.
-func (c *Connector) SentrySettings() (SentryConnectorSettings, error) {
-	var s SentryConnectorSettings
-	if err := c.unmarshalSettings(&s); err != nil {
-		return s, err
-	}
-	return s, nil
-}
-
-// SupabaseSettings unmarshals the connector's RawSettings into SupabaseConnectorSettings.
-func (c *Connector) SupabaseSettings() (SupabaseConnectorSettings, error) {
-	var s SupabaseConnectorSettings
-	if err := c.unmarshalSettings(&s); err != nil {
-		return s, err
-	}
-	return s, nil
-}
-
-// GitHubSettings unmarshals the connector's RawSettings into GitHubConnectorSettings.
-func (c *Connector) GitHubSettings() (GitHubConnectorSettings, error) {
-	var s GitHubConnectorSettings
-	if err := c.unmarshalSettings(&s); err != nil {
-		return s, err
-	}
-	return s, nil
-}
-
-// OnePasswordUsersAPISettings unmarshals the connector's RawSettings into OnePasswordUsersAPISettings.
-func (c *Connector) OnePasswordUsersAPISettings() (OnePasswordUsersAPISettings, error) {
-	var s OnePasswordUsersAPISettings
-	if err := c.unmarshalSettings(&s); err != nil {
-		return s, err
-	}
-	return s, nil
-}
-
-// GitLabSettings unmarshals the connector's RawSettings into GitLabConnectorSettings.
-func (c *Connector) GitLabSettings() (GitLabConnectorSettings, error) {
-	var s GitLabConnectorSettings
-	if err := c.unmarshalSettings(&s); err != nil {
-		return s, err
-	}
-	return s, nil
-}
-
-// BitbucketSettings unmarshals the connector's RawSettings into BitbucketConnectorSettings.
-func (c *Connector) BitbucketSettings() (BitbucketConnectorSettings, error) {
-	var s BitbucketConnectorSettings
-	if err := c.unmarshalSettings(&s); err != nil {
-		return s, err
-	}
-	return s, nil
-}
-
-// HerokuSettings unmarshals the connector's RawSettings into HerokuConnectorSettings.
-func (c *Connector) HerokuSettings() (HerokuConnectorSettings, error) {
-	var s HerokuConnectorSettings
-	if err := c.unmarshalSettings(&s); err != nil {
-		return s, err
-	}
-	return s, nil
-}
-
-// PagerDutySettings unmarshals the connector's RawSettings into PagerDutyConnectorSettings.
-func (c *Connector) PagerDutySettings() (PagerDutyConnectorSettings, error) {
-	var s PagerDutyConnectorSettings
-	if err := c.unmarshalSettings(&s); err != nil {
-		return s, err
-	}
-	return s, nil
-}
-
-// AsanaSettings unmarshals the connector's RawSettings into AsanaConnectorSettings.
-func (c *Connector) AsanaSettings() (AsanaConnectorSettings, error) {
-	var s AsanaConnectorSettings
-	if err := c.unmarshalSettings(&s); err != nil {
-		return s, err
-	}
-	return s, nil
-}
-
-// SnykSettings unmarshals the connector's RawSettings into SnykConnectorSettings.
-func (c *Connector) SnykSettings() (SnykConnectorSettings, error) {
-	var s SnykConnectorSettings
-	if err := c.unmarshalSettings(&s); err != nil {
-		return s, err
-	}
-	return s, nil
-}
-
-// NetlifySettings unmarshals the connector's RawSettings into NetlifyConnectorSettings.
-func (c *Connector) NetlifySettings() (NetlifyConnectorSettings, error) {
-	var s NetlifyConnectorSettings
-	if err := c.unmarshalSettings(&s); err != nil {
-		return s, err
-	}
-	return s, nil
-}
-
-// ClickUpSettings unmarshals the connector's RawSettings into ClickUpConnectorSettings.
-func (c *Connector) ClickUpSettings() (ClickUpConnectorSettings, error) {
-	var s ClickUpConnectorSettings
-	if err := c.unmarshalSettings(&s); err != nil {
-		return s, err
-	}
-	return s, nil
-}
-
-// VercelSettings unmarshals the connector's RawSettings into VercelConnectorSettings.
-func (c *Connector) VercelSettings() (VercelConnectorSettings, error) {
-	var s VercelConnectorSettings
-	if err := c.unmarshalSettings(&s); err != nil {
-		return s, err
-	}
-	return s, nil
-}
-
-func (c *Connector) unmarshalSettings(v any) error {
-	if len(c.RawSettings) == 0 || string(c.RawSettings) == "null" {
-		return nil
-	}
-	if err := json.Unmarshal(c.RawSettings, v); err != nil {
-		return fmt.Errorf("cannot unmarshal connector settings: %w", err)
-	}
-	return nil
-}
-
 // ConnectorSettings unmarshals the connector's RawSettings into the
 // requested settings struct. Empty or null RawSettings yields the zero
 // value with no error. Use as:
@@ -258,8 +104,11 @@ func (c *Connector) unmarshalSettings(v any) error {
 //	settings, err := coredata.ConnectorSettings[coredata.GitHubConnectorSettings](dbConnector)
 func ConnectorSettings[T any](c *Connector) (T, error) {
 	var s T
-	if err := c.unmarshalSettings(&s); err != nil {
-		return s, err
+	if len(c.RawSettings) == 0 || string(c.RawSettings) == "null" {
+		return s, nil
+	}
+	if err := json.Unmarshal(c.RawSettings, &s); err != nil {
+		return s, fmt.Errorf("cannot unmarshal connector settings: %w", err)
 	}
 	return s, nil
 }

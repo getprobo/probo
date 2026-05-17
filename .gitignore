@@ -22,3 +22,4 @@ pkg/server/api/*/v1/schema.graphql
 cfg/dev_local.yaml
 cfg/dev.yaml
 .env
+.oauth-credentials.txt
