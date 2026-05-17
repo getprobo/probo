@@ -39,10 +39,6 @@ type providerDefinition struct {
 	// request and replays the verifier on the token exchange. Default
 	// false; existing providers are unaffected.
 	RequiresPKCE bool
-	// TokenExtraParams are merged into the token-exchange request body
-	// (form-encoded for "post-form"/"basic-form", JSON for "basic-json").
-	// Used by providers like Lever that require an `audience` parameter.
-	TokenExtraParams map[string]string
 }
 
 // providerDefinitions maps provider names to their static OAuth2 definitions.
@@ -167,18 +163,13 @@ func ApplyProviderDefaults(provider string, redirectURI string, c *OAuth2Connect
 		c.SupportsIncrementalAuth = def.SupportsIncrementalAuth
 		c.RequiresPKCE = def.RequiresPKCE
 
-		// Deep copy ExtraAuthParams and TokenExtraParams so per-connector
-		// mutations (e.g. incremental auth, scope overrides) cannot alias
-		// back into the shared providerDefinitions map.
+		// Deep copy ExtraAuthParams so per-connector mutations (e.g.
+		// incremental auth, scope overrides) cannot alias back into the
+		// shared providerDefinitions map.
 		if len(def.ExtraAuthParams) > 0 {
 			extra := make(map[string]string, len(def.ExtraAuthParams))
 			maps.Copy(extra, def.ExtraAuthParams)
 			c.ExtraAuthParams = extra
-		}
-		if len(def.TokenExtraParams) > 0 {
-			tokenExtra := make(map[string]string, len(def.TokenExtraParams))
-			maps.Copy(tokenExtra, def.TokenExtraParams)
-			c.TokenExtraParams = tokenExtra
 		}
 
 		// Resolve operator-supplied placeholders in the static AuthURL

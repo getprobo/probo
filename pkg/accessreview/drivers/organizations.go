@@ -163,59 +163,67 @@ func ListGitLabOrganizations(ctx context.Context, httpClient *http.Client) ([]Or
 // ListBitbucketOrganizations fetches the workspaces the authenticated
 // Bitbucket user belongs to. The legacy /2.0/workspaces endpoint was
 // sunset by CHANGE-2770 (April 2026); /2.0/user/workspaces is the
-// supported cross-workspace replacement (CHANGE-3022).
+// supported cross-workspace replacement (CHANGE-3022). Bitbucket pages
+// via an absolute `next` URL on each response; follow until exhausted.
 func ListBitbucketOrganizations(ctx context.Context, httpClient *http.Client) ([]Organization, error) {
-	req, err := http.NewRequestWithContext(
-		ctx,
-		http.MethodGet,
-		"https://api.bitbucket.org/2.0/user/workspaces?pagelen=100",
-		nil,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("cannot create bitbucket organizations request: %w", err)
-	}
-	req.Header.Set("Accept", "application/json")
+	pageURL := "https://api.bitbucket.org/2.0/user/workspaces?pagelen=100"
+	result := make([]Organization, 0)
 
-	resp, err := httpClient.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("cannot fetch bitbucket organizations: %w", err)
-	}
-	defer func() { _ = resp.Body.Close() }()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("cannot fetch bitbucket organizations: unexpected status %d", resp.StatusCode)
-	}
-
-	// We tolerate both shapes (flat and nested under `workspace`) since
-	// Atlassian has shipped variants of similar endpoints with both.
-	var body struct {
-		Values []struct {
-			Slug      string `json:"slug"`
-			Name      string `json:"name"`
-			Workspace struct {
-				Slug string `json:"slug"`
-				Name string `json:"name"`
-			} `json:"workspace"`
-		} `json:"values"`
-	}
-	if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
-		return nil, fmt.Errorf("cannot decode bitbucket organizations response: %w", err)
-	}
-
-	result := make([]Organization, 0, len(body.Values))
-	for _, v := range body.Values {
-		slug, name := v.Slug, v.Name
-		if slug == "" {
-			slug = v.Workspace.Slug
-			name = v.Workspace.Name
+	for range maxPaginationPages {
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, pageURL, nil)
+		if err != nil {
+			return nil, fmt.Errorf("cannot create bitbucket organizations request: %w", err)
 		}
-		displayName := name
-		if displayName == "" {
-			displayName = slug
+		req.Header.Set("Accept", "application/json")
+
+		resp, err := httpClient.Do(req)
+		if err != nil {
+			return nil, fmt.Errorf("cannot fetch bitbucket organizations: %w", err)
 		}
-		result = append(result, Organization{Slug: slug, DisplayName: displayName})
+
+		if resp.StatusCode != http.StatusOK {
+			_ = resp.Body.Close()
+			return nil, fmt.Errorf("cannot fetch bitbucket organizations: unexpected status %d", resp.StatusCode)
+		}
+
+		// We tolerate both shapes (flat and nested under `workspace`) since
+		// Atlassian has shipped variants of similar endpoints with both.
+		var body struct {
+			Values []struct {
+				Slug      string `json:"slug"`
+				Name      string `json:"name"`
+				Workspace struct {
+					Slug string `json:"slug"`
+					Name string `json:"name"`
+				} `json:"workspace"`
+			} `json:"values"`
+			Next string `json:"next"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
+			_ = resp.Body.Close()
+			return nil, fmt.Errorf("cannot decode bitbucket organizations response: %w", err)
+		}
+		_ = resp.Body.Close()
+
+		for _, v := range body.Values {
+			slug, name := v.Slug, v.Name
+			if slug == "" {
+				slug = v.Workspace.Slug
+				name = v.Workspace.Name
+			}
+			displayName := name
+			if displayName == "" {
+				displayName = slug
+			}
+			result = append(result, Organization{Slug: slug, DisplayName: displayName})
+		}
+
+		if body.Next == "" {
+			return result, nil
+		}
+		pageURL = body.Next
 	}
-	return result, nil
+	return nil, fmt.Errorf("cannot list all bitbucket organizations: %w", ErrPaginationLimitReached)
 }
 
 // ListHerokuOrganizations fetches the teams the authenticated Heroku

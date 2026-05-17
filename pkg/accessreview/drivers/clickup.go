@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strconv"
 	"time"
 
 	"go.probo.inc/probo/pkg/coredata"
@@ -147,8 +148,10 @@ func parseClickUpTime(raw string) (time.Time, error) {
 		return t, nil
 	}
 
-	var ms int64
-	if _, err := fmt.Sscanf(raw, "%d", &ms); err != nil {
+	// strconv.ParseInt rejects trailing non-digit garbage that fmt.Sscanf
+	// would silently truncate (e.g. "123abc" → 123).
+	ms, err := strconv.ParseInt(raw, 10, 64)
+	if err != nil {
 		return time.Time{}, fmt.Errorf("cannot parse clickup time %q: %w", raw, err)
 	}
 	return time.UnixMilli(ms).UTC(), nil
