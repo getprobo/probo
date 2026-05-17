@@ -20,10 +20,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 
 	admin "google.golang.org/api/admin/directory/v1"
 	"google.golang.org/api/option"
 
+	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
@@ -618,9 +620,9 @@ func (r *gitlabNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 		return "", nil
 	}
 
-	url := fmt.Sprintf("https://gitlab.com/api/v4/groups/%s", r.groupID)
+	endpoint := fmt.Sprintf("https://gitlab.com/api/v4/groups/%s", url.PathEscape(r.groupID))
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return "", fmt.Errorf("cannot create gitlab group request: %w", err)
 	}
@@ -665,9 +667,9 @@ func (r *bitbucketNameResolver) ResolveInstanceName(ctx context.Context) (string
 		return "", nil
 	}
 
-	url := fmt.Sprintf("https://api.bitbucket.org/2.0/workspaces/%s", r.workspace)
+	endpoint := fmt.Sprintf("https://api.bitbucket.org/2.0/workspaces/%s", url.PathEscape(r.workspace))
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return "", fmt.Errorf("cannot create bitbucket workspace request: %w", err)
 	}
@@ -712,9 +714,9 @@ func (r *herokuNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 		return "", nil
 	}
 
-	url := fmt.Sprintf("https://api.heroku.com/teams/%s", r.teamID)
+	endpoint := fmt.Sprintf("https://api.heroku.com/teams/%s", url.PathEscape(r.teamID))
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return "", fmt.Errorf("cannot create heroku team request: %w", err)
 	}
@@ -770,9 +772,9 @@ func (r *asanaNameResolver) ResolveInstanceName(ctx context.Context) (string, er
 		return "", nil
 	}
 
-	url := fmt.Sprintf("https://app.asana.com/api/1.0/workspaces/%s", r.workspaceGID)
+	endpoint := fmt.Sprintf("https://app.asana.com/api/1.0/workspaces/%s", url.PathEscape(r.workspaceGID))
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return "", fmt.Errorf("cannot create asana workspace request: %w", err)
 	}
@@ -815,9 +817,9 @@ func (r *snykNameResolver) ResolveInstanceName(ctx context.Context) (string, err
 		return "", nil
 	}
 
-	url := fmt.Sprintf("https://api.snyk.io/rest/orgs/%s?version=2024-10-15", r.orgID)
+	endpoint := fmt.Sprintf("https://api.snyk.io/rest/orgs/%s?version=2024-10-15", url.PathEscape(r.orgID))
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return "", fmt.Errorf("cannot create snyk org request: %w", err)
 	}
@@ -862,9 +864,9 @@ func (r *netlifyNameResolver) ResolveInstanceName(ctx context.Context) (string, 
 		return "", nil
 	}
 
-	url := fmt.Sprintf("https://api.netlify.com/api/v1/accounts/%s", r.accountSlug)
+	endpoint := fmt.Sprintf("https://api.netlify.com/api/v1/accounts/%s", url.PathEscape(r.accountSlug))
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return "", fmt.Errorf("cannot create netlify account request: %w", err)
 	}
@@ -950,9 +952,9 @@ func (r *clickupNameResolver) ResolveInstanceName(ctx context.Context) (string, 
 		return "", nil
 	}
 
-	url := fmt.Sprintf("https://api.clickup.com/api/v2/team/%s", r.teamID)
+	endpoint := fmt.Sprintf("https://api.clickup.com/api/v2/team/%s", url.PathEscape(r.teamID))
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return "", fmt.Errorf("cannot create clickup team request: %w", err)
 	}
@@ -998,7 +1000,7 @@ func (r *vercelNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 		return "", nil
 	}
 
-	teamURL := fmt.Sprintf("https://api.vercel.com/v2/teams/%s", r.teamID)
+	teamURL := fmt.Sprintf("https://api.vercel.com/v2/teams/%s", url.PathEscape(r.teamID))
 	teamReq, err := http.NewRequestWithContext(ctx, http.MethodGet, teamURL, nil)
 	if err != nil {
 		return "", fmt.Errorf("cannot create vercel team request: %w", err)
@@ -1031,36 +1033,14 @@ func (r *vercelNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 
 	// Personal-account fallback: /v2/teams/<uid> returns 404, but
 	// /v2/user works with the same Bearer token.
-	userReq, err := http.NewRequestWithContext(ctx, http.MethodGet, "https://api.vercel.com/v2/user", nil)
+	user, err := connector.FetchVercelUser(ctx, r.httpClient)
 	if err != nil {
-		return "", fmt.Errorf("cannot create vercel user request: %w", err)
+		return "", err
 	}
-	userReq.Header.Set("Accept", "application/json")
-
-	userResp, err := r.httpClient.Do(userReq)
-	if err != nil {
-		return "", fmt.Errorf("cannot execute vercel user request: %w", err)
+	if user.Username != "" {
+		return user.Username, nil
 	}
-	defer func() { _ = userResp.Body.Close() }()
-
-	if userResp.StatusCode < 200 || userResp.StatusCode >= 300 {
-		return "", fmt.Errorf("cannot fetch vercel user: unexpected status %d", userResp.StatusCode)
-	}
-
-	var userBody struct {
-		User struct {
-			Username string `json:"username"`
-			Name     string `json:"name"`
-		} `json:"user"`
-	}
-	if err := json.NewDecoder(userResp.Body).Decode(&userBody); err != nil {
-		return "", fmt.Errorf("cannot decode vercel user response: %w", err)
-	}
-
-	if userBody.User.Username != "" {
-		return userBody.User.Username, nil
-	}
-	return userBody.User.Name, nil
+	return user.Name, nil
 }
 
 // mondayNameResolver resolves the Monday.com account name via GraphQL.

@@ -74,11 +74,10 @@ type vercelMembersPage struct {
 func (d *VercelDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error) {
 	var records []AccountRecord
 
-	base := fmt.Sprintf("https://api.vercel.com/v3/teams/%s/members", url.PathEscape(d.teamID))
 	cursor := ""
 
 	for range maxPaginationPages {
-		page, err := d.queryMembers(ctx, base, cursor)
+		page, err := d.queryMembers(ctx, cursor)
 		if err != nil {
 			return nil, err
 		}
@@ -114,15 +113,20 @@ func (d *VercelDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 	return nil, fmt.Errorf("cannot list all vercel accounts: %w", ErrPaginationLimitReached)
 }
 
-func (d *VercelDriver) queryMembers(ctx context.Context, base, cursor string) (*vercelMembersPage, error) {
+func (d *VercelDriver) queryMembers(ctx context.Context, cursor string) (*vercelMembersPage, error) {
 	q := url.Values{}
 	q.Set("limit", "100")
 	if cursor != "" {
 		q.Set("until", cursor)
 	}
-	endpoint := base + "?" + q.Encode()
+	u := url.URL{
+		Scheme:   "https",
+		Host:     "api.vercel.com",
+		Path:     "/v3/teams/" + d.teamID + "/members",
+		RawQuery: q.Encode(),
+	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create vercel members request: %w", err)
 	}
