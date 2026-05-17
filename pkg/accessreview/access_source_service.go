@@ -424,6 +424,12 @@ func (s AccessSourceService) ConfigureAccessSource(
 				}); err != nil {
 					return fmt.Errorf("cannot set clickup settings: %w", err)
 				}
+			case coredata.ConnectorProviderSnyk:
+				if err := dbConnector.SetSettings(&coredata.SnykConnectorSettings{
+					OrgID: req.OrganizationSlug,
+				}); err != nil {
+					return fmt.Errorf("cannot set snyk settings: %w", err)
+				}
 			default:
 				return fmt.Errorf("cannot configure access source: provider %s does not support organization configuration", dbConnector.Provider)
 			}
