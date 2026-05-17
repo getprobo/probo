@@ -34,11 +34,9 @@ const mondayGraphQLEndpoint = "https://api.monday.com/v2"
 const mondayUsersListQuery = `query($p: Int!) { users(limit: 200, page: $p) { id email name enabled is_admin is_guest is_pending last_activity created_at title } }`
 
 // MondayDriver fetches users from the Monday.com GraphQL API using a
-// pre-authenticated HTTP client. Note: Monday.com's API historically
-// accepts a bare token in the Authorization header (no "Bearer "
-// prefix), but it also accepts the Bearer-prefixed form produced by
-// Probo's RefreshableClient. If a real recording surfaces a 401, swap
-// the wire transport for one that strips the "Bearer " prefix.
+// pre-authenticated HTTP client. The token flows in the Authorization
+// header as a Bearer credential, which Monday.com accepts alongside the
+// legacy bare-token form.
 type MondayDriver struct {
 	httpClient *http.Client
 }

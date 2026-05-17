@@ -402,17 +402,11 @@ func (e *ReviewEngine) resolveDriver(
 		}
 		return drivers.NewHerokuDriver(httpClient, herokuSettings.TeamID), nil
 	case coredata.ConnectorProviderPagerDuty:
-		// Subdomain is required for the name resolver only; the driver
-		// itself does not need it because PagerDuty's REST API uses the
-		// regional api.pagerduty.com host. We still surface a clear
-		// error if the OAuth callback failed to capture the subdomain.
-		pdSettings, err := coredata.ConnectorSettings[coredata.PagerDutyConnectorSettings](dbConnector)
-		if err != nil {
-			return nil, fmt.Errorf("cannot read pagerduty connector settings: %w", err)
-		}
-		if pdSettings.Subdomain == "" {
-			return nil, fmt.Errorf("pagerduty connector requires subdomain in settings")
-		}
+		// PagerDuty's REST API uses the regional api.pagerduty.com host;
+		// the driver does not consume the per-tenant subdomain. Subdomain
+		// is read only by the name resolver, which returns empty when
+		// missing — that surfaces as a blank source name but does not
+		// block access review.
 		return drivers.NewPagerDutyDriver(httpClient), nil
 	case coredata.ConnectorProviderAsana:
 		asanaSettings, err := coredata.ConnectorSettings[coredata.AsanaConnectorSettings](dbConnector)

@@ -43,8 +43,13 @@ var _ Driver = (*ClickUpDriver)(nil)
 
 func NewClickUpDriver(httpClient *http.Client, teamID string) *ClickUpDriver {
 	return &ClickUpDriver{
-		httpClient: httpClient,
-		teamID:     teamID,
+		httpClient: &http.Client{
+			Transport: &retryRoundTripper{
+				next:       httpClient.Transport,
+				maxRetries: 3,
+			},
+		},
+		teamID: teamID,
 	}
 }
 

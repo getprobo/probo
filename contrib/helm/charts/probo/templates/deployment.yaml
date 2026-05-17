@@ -287,16 +287,20 @@ spec:
             {{- if has .name $accessReviewProviders }}
             {{- $envPrefix := printf "CONNECTOR_%s" (.name | upper) }}
             {{- $secretPrefix := printf "connector-%s" .name }}
+            {{- if .config.clientId }}
             - name: {{ $envPrefix }}_CLIENT_ID
               valueFrom:
                 secretKeyRef:
                   name: {{ include "probo.fullname" $ }}
                   key: {{ $secretPrefix }}-client-id
+            {{- end }}
+            {{- if .config.clientSecret }}
             - name: {{ $envPrefix }}_CLIENT_SECRET
               valueFrom:
                 secretKeyRef:
                   name: {{ include "probo.fullname" $ }}
                   key: {{ $secretPrefix }}-client-secret
+            {{- end }}
             {{- if .config.redirectUri }}
             - name: {{ $envPrefix }}_REDIRECT_URI
               value: {{ .config.redirectUri | quote }}

@@ -79,23 +79,20 @@ func (d *AsanaDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error)
 		}
 
 		for _, u := range page.Data {
-			record := AccountRecord{
+			// Asana's workspace-users endpoint exposes no active flag,
+			// and a missing email can mean deactivated, privacy-protected,
+			// limited-access, or an external collaborator. Inferring
+			// Active=false from any of those would fabricate state, so
+			// leave Active nil (unknown) and let downstream review surface
+			// the gap honestly.
+			records = append(records, AccountRecord{
 				Email:       u.Email,
 				FullName:    u.Name,
 				ExternalID:  u.GID,
 				MFAStatus:   coredata.MFAStatusUnknown,
 				AuthMethod:  coredata.AccessEntryAuthMethodUnknown,
 				AccountType: coredata.AccessEntryAccountTypeUser,
-			}
-
-			// Asana hides email for deactivated / privacy-protected users.
-			// We treat missing email as a defensive Active=false signal.
-			if u.Email == "" {
-				active := false
-				record.Active = &active
-			}
-
-			records = append(records, record)
+			})
 		}
 
 		if page.NextPage == nil || page.NextPage.URI == "" {

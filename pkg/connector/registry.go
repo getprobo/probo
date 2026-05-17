@@ -145,10 +145,10 @@ var (
 		"NETLIFY":          "https://api.netlify.com/api/v1/user",
 		"CLICKUP":          "https://api.clickup.com/api/v2/user",
 		"VERCEL":           "https://api.vercel.com/v2/user",
-		// Monday's primary API is GraphQL POST, but the probe handler
-		// is GET-only. Use the OIDC userinfo endpoint as a GET probe
-		// that returns 200/401 with the same Bearer token.
-		"MONDAY": "https://auth.monday.com/oauth2/userinfo",
+		// Monday's primary API is GraphQL POST, and the auth subdomain
+		// does not expose a Bearer-protected GET userinfo endpoint, so
+		// there is no valid probe URL. The probe handler skips empty
+		// entries; an invalid token surfaces at the next /v2 query.
 	}
 )
 

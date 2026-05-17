@@ -22,7 +22,7 @@ interactions:
         proto_minor: 0
         content_length: -1
         uncompressed: true
-        body: '{"members":[{"uid":"u_jane","email":"jane@example.com","username":"jane","name":"Jane Doe","role":"OWNER","confirmed":true,"isEnterpriseManaged":false,"joinedFrom":{"origin":"manual"}},{"uid":"u_bob","email":"bob@example.com","username":"bob","name":"Bob Smith","role":"MEMBER","confirmed":false,"isEnterpriseManaged":false,"joinedFrom":{"origin":"invite"}}],"pagination":{"next":""}}'
+        body: '{"members":[{"uid":"u_jane","email":"jane@example.com","username":"jane","name":"Jane Doe","role":"OWNER","confirmed":true,"isEnterpriseManaged":false,"createdAt":1714564800000,"joinedFrom":{"origin":"manual"}},{"uid":"u_bob","email":"bob@example.com","username":"bob","name":"Bob Smith","role":"MEMBER","confirmed":false,"isEnterpriseManaged":false,"createdAt":1714651200000,"joinedFrom":{"origin":"invite"}}],"pagination":{"count":2,"next":null,"prev":1714564800000}}'
         headers:
             Content-Type:
                 - application/json

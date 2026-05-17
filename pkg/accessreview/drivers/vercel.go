@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strconv"
 
 	"go.probo.inc/probo/pkg/coredata"
 )
@@ -64,10 +65,13 @@ type vercelMember struct {
 	} `json:"joinedFrom"`
 }
 
+// Vercel's documented pagination shape returns `next` as a Unix-millis
+// cursor (number) or null on the last page; modelling it as `*int64`
+// matches both. Decoding as a string would fail in production.
 type vercelMembersPage struct {
 	Members    []vercelMember `json:"members"`
 	Pagination struct {
-		Next string `json:"next"`
+		Next *int64 `json:"next"`
 	} `json:"pagination"`
 }
 
@@ -104,10 +108,10 @@ func (d *VercelDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 			records = append(records, record)
 		}
 
-		if page.Pagination.Next == "" {
+		if page.Pagination.Next == nil {
 			return records, nil
 		}
-		cursor = page.Pagination.Next
+		cursor = strconv.FormatInt(*page.Pagination.Next, 10)
 	}
 
 	return nil, fmt.Errorf("cannot list all vercel accounts: %w", ErrPaginationLimitReached)

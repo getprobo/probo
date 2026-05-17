@@ -130,8 +130,8 @@ func (d *HerokuDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 	return nil, fmt.Errorf("cannot list all heroku accounts: %w", ErrPaginationLimitReached)
 }
 
-func (d *HerokuDriver) queryMembers(ctx context.Context, url, rangeHeader string) ([]herokuTeamMember, string, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+func (d *HerokuDriver) queryMembers(ctx context.Context, endpoint, rangeHeader string) ([]herokuTeamMember, string, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return nil, "", fmt.Errorf("cannot create heroku members request: %w", err)
 	}

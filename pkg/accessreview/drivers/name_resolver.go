@@ -1000,7 +1000,10 @@ func (r *mondayNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 	}
 
 	if len(resp.Errors) > 0 {
-		return "", fmt.Errorf("monday graphql error: %s", resp.Errors[0].Message)
+		// Provider-supplied messages may carry tenant identifiers or
+		// query fragments — never embed them. Driver scrubs the same
+		// field; keep both call sites aligned.
+		return "", fmt.Errorf("cannot fetch monday account: graphql error")
 	}
 
 	return resp.Data.Account.Name, nil
