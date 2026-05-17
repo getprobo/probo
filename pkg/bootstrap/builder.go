@@ -349,6 +349,48 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 		})
 	}
 
+	for _, provider := range []string{
+		"GITLAB",
+		"BITBUCKET",
+		"HEROKU",
+		"PAGERDUTY",
+		"ASANA",
+		"SNYK",
+		"NETLIFY",
+		"RAMP",
+		"CLICKUP",
+		"MONDAY",
+		"LEVER",
+		"DEEL",
+	} {
+		clientID := b.getEnv("CONNECTOR_" + provider + "_CLIENT_ID")
+		if clientID == "" {
+			continue
+		}
+		cfg.Probod.Connectors = append(cfg.Probod.Connectors, probodconfig.ConnectorConfig{
+			Provider: provider,
+			Protocol: "oauth2",
+			RawConfig: probodconfig.ConnectorConfigOAuth2{
+				ClientID:     clientID,
+				ClientSecret: b.getEnv("CONNECTOR_" + provider + "_CLIENT_SECRET"),
+			},
+		})
+	}
+
+	// Vercel needs the operator-supplied integration slug to resolve the
+	// templated AuthURL ("https://vercel.com/integrations/{integration_slug}/new").
+	if vercelClientID := b.getEnv("CONNECTOR_VERCEL_CLIENT_ID"); vercelClientID != "" {
+		cfg.Probod.Connectors = append(cfg.Probod.Connectors, probodconfig.ConnectorConfig{
+			Provider: "VERCEL",
+			Protocol: "oauth2",
+			RawConfig: probodconfig.ConnectorConfigOAuth2{
+				ClientID:        vercelClientID,
+				ClientSecret:    b.getEnv("CONNECTOR_VERCEL_CLIENT_SECRET"),
+				IntegrationSlug: b.getEnv("CONNECTOR_VERCEL_INTEGRATION_SLUG"),
+			},
+		})
+	}
+
 	return cfg, nil
 }
 

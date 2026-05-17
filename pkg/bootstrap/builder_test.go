@@ -435,6 +435,64 @@ func TestBuilder_Build_Microsoft365Connector(t *testing.T) {
 	assert.Equal(t, "ms365-client-secret", rawConfig.ClientSecret)
 }
 
+func TestBuilder_Build_AccessReviewConnectors(t *testing.T) {
+	env := requiredEnv()
+	env["CONNECTOR_GITLAB_CLIENT_ID"] = "gitlab-id"
+	env["CONNECTOR_GITLAB_CLIENT_SECRET"] = "gitlab-secret"
+	env["CONNECTOR_BITBUCKET_CLIENT_ID"] = "bitbucket-id"
+	env["CONNECTOR_BITBUCKET_CLIENT_SECRET"] = "bitbucket-secret"
+	env["CONNECTOR_PAGERDUTY_CLIENT_ID"] = "pagerduty-id"
+	env["CONNECTOR_PAGERDUTY_CLIENT_SECRET"] = "pagerduty-secret"
+	env["CONNECTOR_DEEL_CLIENT_ID"] = "deel-id"
+	env["CONNECTOR_DEEL_CLIENT_SECRET"] = "deel-secret"
+
+	b := NewBuilder(mockEnv(env))
+	b.samlCertificate = "test-cert"
+	b.samlPrivateKey = "test-key"
+
+	cfg, err := b.Build()
+	require.NoError(t, err)
+
+	require.Len(t, cfg.Probod.Connectors, 4)
+	byProvider := make(map[string]probodconfig.ConnectorConfig, len(cfg.Probod.Connectors))
+	for _, c := range cfg.Probod.Connectors {
+		byProvider[c.Provider] = c
+	}
+
+	for _, provider := range []string{"GITLAB", "BITBUCKET", "PAGERDUTY", "DEEL"} {
+		c, ok := byProvider[provider]
+		require.True(t, ok, "missing %s connector", provider)
+		assert.Equal(t, "oauth2", string(c.Protocol))
+		raw := c.RawConfig.(probodconfig.ConnectorConfigOAuth2)
+		assert.NotEmpty(t, raw.ClientID, "%s client-id", provider)
+		assert.NotEmpty(t, raw.ClientSecret, "%s client-secret", provider)
+		assert.Empty(t, raw.IntegrationSlug, "%s should not carry integration-slug", provider)
+	}
+}
+
+func TestBuilder_Build_VercelConnector(t *testing.T) {
+	env := requiredEnv()
+	env["CONNECTOR_VERCEL_CLIENT_ID"] = "vercel-id"
+	env["CONNECTOR_VERCEL_CLIENT_SECRET"] = "vercel-secret"
+	env["CONNECTOR_VERCEL_INTEGRATION_SLUG"] = "probo-app"
+
+	b := NewBuilder(mockEnv(env))
+	b.samlCertificate = "test-cert"
+	b.samlPrivateKey = "test-key"
+
+	cfg, err := b.Build()
+	require.NoError(t, err)
+
+	require.Len(t, cfg.Probod.Connectors, 1)
+	c := cfg.Probod.Connectors[0]
+	assert.Equal(t, "VERCEL", c.Provider)
+	assert.Equal(t, "oauth2", string(c.Protocol))
+	raw := c.RawConfig.(probodconfig.ConnectorConfigOAuth2)
+	assert.Equal(t, "vercel-id", raw.ClientID)
+	assert.Equal(t, "vercel-secret", raw.ClientSecret)
+	assert.Equal(t, "probo-app", raw.IntegrationSlug)
+}
+
 func TestBuilder_Build_SlackConnector(t *testing.T) {
 	env := requiredEnv()
 	env["CONNECTOR_SLACK_CLIENT_ID"] = "slack-client-id"

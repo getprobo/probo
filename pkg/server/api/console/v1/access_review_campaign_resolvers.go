@@ -411,6 +411,57 @@ func (r *accessSourceResolver) ProviderOrganizations(ctx context.Context, obj *t
 			return nil, fmt.Errorf("cannot fetch sentry organizations: %w", err)
 		}
 		return orgs, nil
+	case coredata.ConnectorProviderGitLab:
+		orgs, err := fetchGitLabOrganizations(ctx, httpClient)
+		if err != nil {
+			return nil, fmt.Errorf("cannot fetch gitlab organizations: %w", err)
+		}
+		return orgs, nil
+	case coredata.ConnectorProviderBitbucket:
+		orgs, err := fetchBitbucketOrganizations(ctx, httpClient)
+		if err != nil {
+			return nil, fmt.Errorf("cannot fetch bitbucket organizations: %w", err)
+		}
+		return orgs, nil
+	case coredata.ConnectorProviderHeroku:
+		orgs, err := fetchHerokuOrganizations(ctx, httpClient)
+		if err != nil {
+			return nil, fmt.Errorf("cannot fetch heroku organizations: %w", err)
+		}
+		return orgs, nil
+	case coredata.ConnectorProviderAsana:
+		orgs, err := fetchAsanaOrganizations(ctx, httpClient)
+		if err != nil {
+			return nil, fmt.Errorf("cannot fetch asana organizations: %w", err)
+		}
+		return orgs, nil
+	case coredata.ConnectorProviderPagerDuty:
+		// PagerDuty uses Pattern 2-auto: the subdomain is captured during
+		// the OAuth callback, no picker UI is required.
+		return []*types.ProviderOrganization{}, nil
+	case coredata.ConnectorProviderSnyk:
+		orgs, err := fetchSnykOrganizations(ctx, httpClient)
+		if err != nil {
+			return nil, fmt.Errorf("cannot fetch snyk organizations: %w", err)
+		}
+		return orgs, nil
+	case coredata.ConnectorProviderNetlify:
+		orgs, err := fetchNetlifyOrganizations(ctx, httpClient)
+		if err != nil {
+			return nil, fmt.Errorf("cannot fetch netlify organizations: %w", err)
+		}
+		return orgs, nil
+	case coredata.ConnectorProviderClickUp:
+		orgs, err := fetchClickUpOrganizations(ctx, httpClient)
+		if err != nil {
+			return nil, fmt.Errorf("cannot fetch clickup organizations: %w", err)
+		}
+		return orgs, nil
+	case coredata.ConnectorProviderVercel:
+		// Vercel uses Pattern 2-auto: the team_id is captured during the
+		// OAuth callback (or synthesized from /v2/user for personal
+		// accounts), no picker UI is required.
+		return []*types.ProviderOrganization{}, nil
 	default:
 		return []*types.ProviderOrganization{}, nil
 	}
@@ -439,6 +490,38 @@ func (r *accessSourceResolver) NeedsConfiguration(ctx context.Context, obj *type
 	case coredata.ConnectorProviderSentry:
 		settings, _ := dbConnector.SentrySettings()
 		return settings.OrganizationSlug == "", nil
+	case coredata.ConnectorProviderGitLab:
+		settings, _ := dbConnector.GitLabSettings()
+		return settings.GroupID == "", nil
+	case coredata.ConnectorProviderBitbucket:
+		settings, _ := dbConnector.BitbucketSettings()
+		return settings.Workspace == "", nil
+	case coredata.ConnectorProviderHeroku:
+		settings, _ := dbConnector.HerokuSettings()
+		return settings.TeamID == "", nil
+	case coredata.ConnectorProviderAsana:
+		settings, _ := dbConnector.AsanaSettings()
+		return settings.WorkspaceGID == "", nil
+	case coredata.ConnectorProviderPagerDuty:
+		// 2-auto: subdomain is set during the OAuth callback. If for any
+		// reason it is missing, we still return false so the configure
+		// mutation does not surface — there is no manual picker.
+		return false, nil
+	case coredata.ConnectorProviderSnyk:
+		settings, _ := dbConnector.SnykSettings()
+		return settings.OrgID == "", nil
+	case coredata.ConnectorProviderNetlify:
+		settings, _ := dbConnector.NetlifySettings()
+		return settings.AccountSlug == "", nil
+	case coredata.ConnectorProviderClickUp:
+		settings, _ := dbConnector.ClickUpSettings()
+		return settings.TeamID == "", nil
+	case coredata.ConnectorProviderVercel:
+		// 2-auto: team_id is set during the OAuth callback (or synthesized
+		// from /v2/user for personal accounts). If for any reason it is
+		// missing, return false so the configure mutation does not surface
+		// — there is no manual picker.
+		return false, nil
 	default:
 		return false, nil
 	}
@@ -501,6 +584,51 @@ func (r *accessSourceResolver) SelectedOrganization(ctx context.Context, obj *ty
 		settings, _ := dbConnector.SentrySettings()
 		if settings.OrganizationSlug != "" {
 			return &settings.OrganizationSlug, nil
+		}
+	case coredata.ConnectorProviderGitLab:
+		settings, _ := dbConnector.GitLabSettings()
+		if settings.GroupID != "" {
+			return &settings.GroupID, nil
+		}
+	case coredata.ConnectorProviderBitbucket:
+		settings, _ := dbConnector.BitbucketSettings()
+		if settings.Workspace != "" {
+			return &settings.Workspace, nil
+		}
+	case coredata.ConnectorProviderHeroku:
+		settings, _ := dbConnector.HerokuSettings()
+		if settings.TeamID != "" {
+			return &settings.TeamID, nil
+		}
+	case coredata.ConnectorProviderPagerDuty:
+		settings, _ := dbConnector.PagerDutySettings()
+		if settings.Subdomain != "" {
+			return &settings.Subdomain, nil
+		}
+	case coredata.ConnectorProviderAsana:
+		settings, _ := dbConnector.AsanaSettings()
+		if settings.WorkspaceGID != "" {
+			return &settings.WorkspaceGID, nil
+		}
+	case coredata.ConnectorProviderSnyk:
+		settings, _ := dbConnector.SnykSettings()
+		if settings.OrgID != "" {
+			return &settings.OrgID, nil
+		}
+	case coredata.ConnectorProviderNetlify:
+		settings, _ := dbConnector.NetlifySettings()
+		if settings.AccountSlug != "" {
+			return &settings.AccountSlug, nil
+		}
+	case coredata.ConnectorProviderClickUp:
+		settings, _ := dbConnector.ClickUpSettings()
+		if settings.TeamID != "" {
+			return &settings.TeamID, nil
+		}
+	case coredata.ConnectorProviderVercel:
+		settings, _ := dbConnector.VercelSettings()
+		if settings.TeamID != "" {
+			return &settings.TeamID, nil
 		}
 	}
 

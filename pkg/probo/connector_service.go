@@ -59,6 +59,8 @@ type (
 		SupabaseSettings            *coredata.SupabaseConnectorSettings
 		GitHubSettings              *coredata.GitHubConnectorSettings
 		OnePasswordUsersAPISettings *coredata.OnePasswordUsersAPISettings
+		PagerDutySettings           *coredata.PagerDutyConnectorSettings
+		VercelSettings              *coredata.VercelConnectorSettings
 	}
 
 	ReconnectConnectorRequest struct {
@@ -269,6 +271,14 @@ func (s *ConnectorService) Create(
 	case req.OnePasswordUsersAPISettings != nil:
 		if err := newConnector.SetSettings(req.OnePasswordUsersAPISettings); err != nil {
 			return nil, fmt.Errorf("cannot set one password users api settings: %w", err)
+		}
+	case req.PagerDutySettings != nil:
+		if err := newConnector.SetSettings(req.PagerDutySettings); err != nil {
+			return nil, fmt.Errorf("cannot set pagerduty settings: %w", err)
+		}
+	case req.VercelSettings != nil:
+		if err := newConnector.SetSettings(req.VercelSettings); err != nil {
+			return nil, fmt.Errorf("cannot set vercel settings: %w", err)
 		}
 	}
 

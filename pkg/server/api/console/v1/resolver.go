@@ -18,11 +18,14 @@ package console_v1
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/go-chi/chi/v5"
+	"go.gearno.de/kit/httpclient"
 	"go.gearno.de/kit/httpserver"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/accessreview"
@@ -195,15 +198,49 @@ func handleConnectorComplete(
 				return
 			}
 		} else {
-			cnnctr, err = svc.Connectors.Create(
-				r.Context(),
-				probo.CreateConnectorRequest{
-					OrganizationID: organizationID,
-					Provider:       connectorProvider,
-					Protocol:       coredata.ConnectorProtocol(connection.Type()),
-					Connection:     connection,
-				},
-			)
+			createReq := probo.CreateConnectorRequest{
+				OrganizationID: organizationID,
+				Provider:       connectorProvider,
+				Protocol:       coredata.ConnectorProtocol(connection.Type()),
+				Connection:     connection,
+			}
+
+			// PagerDuty Scoped OAuth surfaces the customer's subdomain
+			// in the token response body; CompleteWithState parsed it
+			// into state.ProviderMetadata. Persist it on the connector
+			// settings so the driver and name resolver can read it.
+			if connectorProvider == coredata.ConnectorProviderPagerDuty {
+				if subdomain := state.ProviderMetadata["subdomain"]; subdomain != "" {
+					createReq.PagerDutySettings = &coredata.PagerDutyConnectorSettings{
+						Subdomain: subdomain,
+					}
+				}
+			}
+
+			// Vercel surfaces the customer's team_id as an OAuth callback
+			// query parameter (not in the token response body). When the
+			// install targets a personal account no team_id is sent — fall
+			// back to /v2/user.id as a synthetic TeamID; the v3 members
+			// endpoint accepts personal-account UIDs.
+			if connectorProvider == coredata.ConnectorProviderVercel {
+				teamID := query.Get("team_id")
+				if teamID == "" {
+					if oauth2Conn, ok := connection.(*connector.OAuth2Connection); ok && oauth2Conn.AccessToken != "" {
+						if uid, err := fetchVercelUserID(r.Context(), oauth2Conn.AccessToken); err == nil {
+							teamID = uid
+						} else {
+							logger.WarnCtx(r.Context(), "cannot fetch vercel user id for personal-account fallback", log.Error(err))
+						}
+					}
+				}
+				if teamID != "" {
+					createReq.VercelSettings = &coredata.VercelConnectorSettings{
+						TeamID: teamID,
+					}
+				}
+			}
+
+			cnnctr, err = svc.Connectors.Create(r.Context(), createReq)
 			if err != nil {
 				logger.ErrorCtx(r.Context(), "cannot create connector", log.Error(err))
 				httpserver.RenderError(w, http.StatusInternalServerError, fmt.Errorf("internal error"))
@@ -269,6 +306,43 @@ func handleConnectorOAuth2Error(
 	parsedURL.RawQuery = q.Encode()
 
 	safeRedirect.Redirect(w, r, parsedURL.String(), "/", http.StatusSeeOther)
+}
+
+// fetchVercelUserID calls Vercel's /v2/user with the freshly-minted access
+// token to retrieve the user's UID. This is used as a synthetic TeamID
+// when the OAuth callback omits team_id (personal-account installs).
+func fetchVercelUserID(ctx context.Context, accessToken string) (string, error) {
+	reqCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(reqCtx, http.MethodGet, "https://api.vercel.com/v2/user", nil)
+	if err != nil {
+		return "", fmt.Errorf("cannot create vercel user request: %w", err)
+	}
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("Authorization", "Bearer "+accessToken)
+
+	client := httpclient.DefaultClient(httpclient.WithSSRFProtection())
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("cannot execute vercel user request: %w", err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return "", fmt.Errorf("cannot fetch vercel user: unexpected status %d", resp.StatusCode)
+	}
+
+	var body struct {
+		User struct {
+			ID string `json:"id"`
+		} `json:"user"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
+		return "", fmt.Errorf("cannot decode vercel user response: %w", err)
+	}
+
+	return body.User.ID, nil
 }
 
 func (r *Resolver) ProboService(ctx context.Context, tenantID gid.TenantID) *probo.TenantService {

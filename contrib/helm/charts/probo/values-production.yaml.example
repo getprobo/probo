@@ -181,6 +181,15 @@ probo:
       insecureTls: false
 
   # External OAuth2 connectors (optional)
+  #
+  # Supported providers (set name to one of):
+  #   slack, hubspot, docusign, notion, github, sentry, intercom, brex,
+  #   google_workspace, gitlab, bitbucket, heroku, pagerduty, asana,
+  #   snyk, netlify, ramp, clickup, vercel, monday, lever, deel
+  #
+  # Vercel additionally requires "integration-slug" so the templated
+  # AuthURL ("https://vercel.com/integrations/{integration_slug}/new")
+  # resolves to the operator's registered integration.
   connectors:
     - name: "github"
       type: "oauth2"
@@ -190,6 +199,12 @@ probo:
         redirect-uri: "https://probo.example.com/api/console/v1/connectors/complete"
         auth-url: "https://github.com/login/oauth/authorize"
         token-url: "https://github.com/login/oauth/access_token"
+    # - name: "vercel"
+    #   type: "oauth2"
+    #   config:
+    #     client-id: "CHANGE_ME_VERCEL_CLIENT_ID"
+    #     client-secret: "CHANGE_ME_VERCEL_CLIENT_SECRET"
+    #     integration-slug: "CHANGE_ME_VERCEL_INTEGRATION_SLUG"
 
 # PostgreSQL configuration (REQUIRED)
 # For production: Use external managed PostgreSQL (AWS RDS, GCP Cloud SQL, etc.)
