@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 
 	"go.probo.inc/probo/pkg/coredata"
 )
@@ -68,7 +69,7 @@ func (d *BitbucketDriver) ListAccounts(ctx context.Context) ([]AccountRecord, er
 
 	next := fmt.Sprintf(
 		"https://api.bitbucket.org/2.0/workspaces/%s/members?fields=%%2Bvalues.user.email&pagelen=100",
-		d.workspace,
+		url.PathEscape(d.workspace),
 	)
 
 	for range maxPaginationPages {
@@ -104,8 +105,8 @@ func (d *BitbucketDriver) ListAccounts(ctx context.Context) ([]AccountRecord, er
 	return nil, fmt.Errorf("cannot list all bitbucket accounts: %w", ErrPaginationLimitReached)
 }
 
-func (d *BitbucketDriver) queryMembers(ctx context.Context, url string) (*bitbucketMembersPage, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+func (d *BitbucketDriver) queryMembers(ctx context.Context, endpoint string) (*bitbucketMembersPage, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create bitbucket members request: %w", err)
 	}

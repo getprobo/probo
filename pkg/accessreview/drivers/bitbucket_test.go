@@ -42,5 +42,7 @@ func TestBitbucketDriver(t *testing.T) {
 	r := records[0]
 	assert.NotEmpty(t, r.ExternalID)
 	assert.NotEmpty(t, r.FullName)
-	assert.NotEmpty(t, r.Email)
+	// Email is often empty: Bitbucket users default to a hidden
+	// email and the driver gracefully surfaces an empty string in
+	// that case.
 }

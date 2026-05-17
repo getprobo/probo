@@ -108,7 +108,8 @@ func (d *DeelDriver) queryPeople(ctx context.Context, offset, limit int) ([]deel
 	q := url.Values{}
 	q.Set("limit", strconv.Itoa(limit))
 	q.Set("offset", strconv.Itoa(offset))
-	endpoint := "https://api.letsdeel.com/rest/v2/people?" + q.Encode()
+	u := url.URL{Scheme: "https", Host: "api.letsdeel.com", Path: "/rest/v2/people", RawQuery: q.Encode()}
+	endpoint := u.String()
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {

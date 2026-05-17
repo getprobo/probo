@@ -123,7 +123,8 @@ func (d *PagerDutyDriver) queryUsers(ctx context.Context, offset, limit int) (*p
 	q := url.Values{}
 	q.Set("limit", strconv.Itoa(limit))
 	q.Set("offset", strconv.Itoa(offset))
-	endpoint := "https://api.pagerduty.com/users?" + q.Encode()
+	u := url.URL{Scheme: "https", Host: "api.pagerduty.com", Path: "/users", RawQuery: q.Encode()}
+	endpoint := u.String()
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {

@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/rfc5988"
@@ -57,7 +58,7 @@ func (d *NetlifyDriver) ListAccounts(ctx context.Context) ([]AccountRecord, erro
 
 	next := fmt.Sprintf(
 		"https://api.netlify.com/api/v1/%s/members?per_page=100",
-		d.accountSlug,
+		url.PathEscape(d.accountSlug),
 	)
 
 	for range maxPaginationPages {
@@ -88,8 +89,8 @@ func (d *NetlifyDriver) ListAccounts(ctx context.Context) ([]AccountRecord, erro
 	return nil, fmt.Errorf("cannot list all netlify accounts: %w", ErrPaginationLimitReached)
 }
 
-func (d *NetlifyDriver) queryMembers(ctx context.Context, url string) ([]netlifyMember, string, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+func (d *NetlifyDriver) queryMembers(ctx context.Context, endpoint string) ([]netlifyMember, string, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return nil, "", fmt.Errorf("cannot create netlify members request: %w", err)
 	}

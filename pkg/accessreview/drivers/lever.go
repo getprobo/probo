@@ -121,7 +121,8 @@ func (d *LeverDriver) queryUsers(ctx context.Context, cursor string) (*leverUser
 	if cursor != "" {
 		q.Set("offset", cursor)
 	}
-	endpoint := "https://api.lever.co/v1/users?" + q.Encode()
+	u := url.URL{Scheme: "https", Host: "api.lever.co", Path: "/v1/users", RawQuery: q.Encode()}
+	endpoint := u.String()
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {

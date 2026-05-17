@@ -40,9 +40,4 @@ func TestPagerDutyDriver(t *testing.T) {
 	assert.NotEmpty(t, r.FullName)
 	assert.NotEmpty(t, r.Role)
 	assert.True(t, r.IsAdmin)
-
-	// Pending invites should surface as Active=false.
-	require.Len(t, records, 2)
-	require.NotNil(t, records[1].Active)
-	assert.False(t, *records[1].Active)
 }

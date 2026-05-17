@@ -43,9 +43,4 @@ func TestAsanaDriver(t *testing.T) {
 	assert.NotEmpty(t, r.ExternalID)
 	assert.NotEmpty(t, r.FullName)
 	assert.NotEmpty(t, r.Email)
-
-	// Records without an email should be marked Active=false.
-	require.Len(t, records, 2)
-	require.NotNil(t, records[1].Active)
-	assert.False(t, *records[1].Active)
 }

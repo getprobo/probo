@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"time"
 
 	"go.probo.inc/probo/pkg/coredata"
@@ -64,9 +65,9 @@ type clickupTeamResponse struct {
 }
 
 func (d *ClickUpDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error) {
-	url := fmt.Sprintf("https://api.clickup.com/api/v2/team/%s", d.teamID)
+	endpoint := fmt.Sprintf("https://api.clickup.com/api/v2/team/%s", url.PathEscape(d.teamID))
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create clickup team request: %w", err)
 	}

@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"go.probo.inc/probo/pkg/coredata"
@@ -79,7 +80,7 @@ func (d *SnykDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error) 
 
 	next := fmt.Sprintf(
 		"https://api.snyk.io/rest/orgs/%s/memberships?version=2024-10-15&limit=100",
-		d.orgID,
+		url.PathEscape(d.orgID),
 	)
 
 	for range maxPaginationPages {
@@ -118,8 +119,8 @@ func (d *SnykDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error) 
 	return nil, fmt.Errorf("cannot list all snyk accounts: %w", ErrPaginationLimitReached)
 }
 
-func (d *SnykDriver) queryMemberships(ctx context.Context, url string) (*snykMembershipsPage, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+func (d *SnykDriver) queryMemberships(ctx context.Context, endpoint string) (*snykMembershipsPage, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create snyk memberships request: %w", err)
 	}

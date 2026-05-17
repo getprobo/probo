@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"time"
 
 	"go.probo.inc/probo/pkg/coredata"
@@ -71,11 +72,11 @@ type herokuTeamMember struct {
 func (d *HerokuDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error) {
 	var records []AccountRecord
 
-	url := fmt.Sprintf("https://api.heroku.com/teams/%s/members", d.teamID)
+	endpoint := fmt.Sprintf("https://api.heroku.com/teams/%s/members", url.PathEscape(d.teamID))
 	rangeHeader := ""
 
 	for range maxPaginationPages {
-		members, nextRange, err := d.queryMembers(ctx, url, rangeHeader)
+		members, nextRange, err := d.queryMembers(ctx, endpoint, rangeHeader)
 		if err != nil {
 			return nil, err
 		}

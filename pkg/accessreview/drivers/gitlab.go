@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strconv"
 
 	"go.probo.inc/probo/pkg/coredata"
@@ -68,7 +69,7 @@ func (d *GitLabDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 
 	next := fmt.Sprintf(
 		"https://gitlab.com/api/v4/groups/%s/members/all?per_page=100",
-		d.groupID,
+		url.PathEscape(d.groupID),
 	)
 
 	for range maxPaginationPages {
@@ -111,8 +112,8 @@ func (d *GitLabDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 	return nil, fmt.Errorf("cannot list all gitlab accounts: %w", ErrPaginationLimitReached)
 }
 
-func (d *GitLabDriver) queryMembers(ctx context.Context, url string) ([]gitlabMember, string, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+func (d *GitLabDriver) queryMembers(ctx context.Context, endpoint string) ([]gitlabMember, string, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return nil, "", fmt.Errorf("cannot create gitlab members request: %w", err)
 	}

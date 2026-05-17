@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 
 	"go.probo.inc/probo/pkg/coredata"
 )
@@ -68,7 +69,7 @@ func (d *AsanaDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error)
 
 	next := fmt.Sprintf(
 		"https://app.asana.com/api/1.0/workspaces/%s/users?opt_fields=email,name&limit=100",
-		d.workspaceGID,
+		url.PathEscape(d.workspaceGID),
 	)
 
 	for range maxPaginationPages {
@@ -106,8 +107,8 @@ func (d *AsanaDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error)
 	return nil, fmt.Errorf("cannot list all asana accounts: %w", ErrPaginationLimitReached)
 }
 
-func (d *AsanaDriver) queryUsers(ctx context.Context, url string) (*asanaUsersPage, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+func (d *AsanaDriver) queryUsers(ctx context.Context, endpoint string) (*asanaUsersPage, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create asana users request: %w", err)
 	}

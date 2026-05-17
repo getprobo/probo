@@ -111,8 +111,8 @@ func (d *RampDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error) 
 	return nil, fmt.Errorf("cannot list all ramp accounts: %w", ErrPaginationLimitReached)
 }
 
-func (d *RampDriver) queryUsers(ctx context.Context, url string) (*rampUsersPage, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+func (d *RampDriver) queryUsers(ctx context.Context, endpoint string) (*rampUsersPage, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create ramp users request: %w", err)
 	}
