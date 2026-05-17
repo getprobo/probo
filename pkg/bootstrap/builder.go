@@ -358,6 +358,10 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 		"NETLIFY",
 		"CLICKUP",
 		"MONDAY",
+		"SNYK",
+		"RAMP",
+		"LEVER",
+		"DEEL",
 	} {
 		clientID := b.getEnv("CONNECTOR_" + provider + "_CLIENT_ID")
 		if clientID == "" {
@@ -443,6 +447,10 @@ func (b *Builder) validateRequired() error {
 		{"CONNECTOR_CLICKUP", []string{"CLIENT_SECRET"}},
 		{"CONNECTOR_MONDAY", []string{"CLIENT_SECRET"}},
 		{"CONNECTOR_VERCEL", []string{"CLIENT_SECRET", "INTEGRATION_SLUG"}},
+		{"CONNECTOR_SNYK", []string{"CLIENT_SECRET"}},
+		{"CONNECTOR_RAMP", []string{"CLIENT_SECRET"}},
+		{"CONNECTOR_LEVER", []string{"CLIENT_SECRET"}},
+		{"CONNECTOR_DEEL", []string{"CLIENT_SECRET"}},
 	}
 
 	for _, p := range oauthProviders {

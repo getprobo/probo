@@ -181,6 +181,10 @@ probo:
       insecureTls: false
 
   # External OAuth2 connectors (optional)
+  #
+  # Supported providers (set name to one of):
+  #   slack, hubspot, docusign, notion, github, sentry, intercom, brex,
+  #   google_workspace, microsoft_365, snyk, ramp, lever, deel
   connectors:
     - name: "github"
       type: "oauth2"
