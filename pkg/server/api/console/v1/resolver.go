@@ -205,12 +205,28 @@ func handleConnectorComplete(
 				Connection:     connection,
 			}
 
-			// PagerDuty Scoped OAuth surfaces the customer's subdomain
-			// in the token response body; CompleteWithState parsed it
-			// into state.ProviderMetadata. Persist it on the connector
+			// PagerDuty Scoped OAuth surfaces the customer's subdomain as
+			// a `subdomain` query parameter on the redirect URL (not in
+			// the token response body). Persist it on the connector
 			// settings so the driver and name resolver can read it.
 			if connectorProvider == coredata.ConnectorProviderPagerDuty {
-				if subdomain := state.ProviderMetadata["subdomain"]; subdomain != "" {
+				subdomain := query.Get("subdomain")
+				if subdomain == "" {
+					// Fall back to ProviderMetadata for older OAuth flows
+					// that may have surfaced the subdomain through the
+					// token response body.
+					subdomain = state.ProviderMetadata["subdomain"]
+				}
+				// The subdomain comes from an attacker-influenceable
+				// callback parameter; refuse anything that isn't a valid
+				// DNS label so it cannot be smuggled into URLs or logs.
+				if subdomain != "" && !isValidPagerDutySubdomain(subdomain) {
+					logger.WarnCtx(r.Context(), "rejecting invalid pagerduty subdomain",
+						log.String("provider", string(connectorProvider)),
+					)
+					subdomain = ""
+				}
+				if subdomain != "" {
 					createReq.PagerDutySettings = &coredata.PagerDutyConnectorSettings{
 						Subdomain: subdomain,
 					}
@@ -276,7 +292,6 @@ func handleConnectorOAuth2Error(
 	query url.Values,
 ) {
 	oauthErr := query.Get("error")
-	oauthErrDesc := query.Get("error_description")
 
 	provider := "unknown"
 	redirectURL := baseURL.String()
@@ -291,18 +306,17 @@ func handleConnectorOAuth2Error(
 		}
 	}
 
+	// Provider error_description fields routinely carry PII (user emails,
+	// account names) and must never reach logs or the client redirect URL.
+	// Forward only the standardized error code.
 	logger.WarnCtx(r.Context(), "OAuth2 callback returned error",
 		log.String("provider", provider),
 		log.String("error", oauthErr),
-		log.String("error_description", oauthErrDesc),
 	)
 
 	parsedURL, _ := url.Parse(redirectURL)
 	q := parsedURL.Query()
 	q.Set("error", oauthErr)
-	if oauthErrDesc != "" {
-		q.Set("error_description", oauthErrDesc)
-	}
 	parsedURL.RawQuery = q.Encode()
 
 	safeRedirect.Redirect(w, r, parsedURL.String(), "/", http.StatusSeeOther)
@@ -343,6 +357,27 @@ func fetchVercelUserID(ctx context.Context, accessToken string) (string, error) 
 	}
 
 	return body.User.ID, nil
+}
+
+// isValidPagerDutySubdomain reports whether s is a single DNS label
+// (RFC 1035 §2.3.1). PagerDuty subdomains are tenant identifiers that
+// will be embedded in API URLs; the OAuth callback is the only place
+// where a malformed value can enter the system.
+func isValidPagerDutySubdomain(s string) bool {
+	if s == "" || len(s) > 63 {
+		return false
+	}
+	for _, c := range s {
+		switch {
+		case c >= 'a' && c <= 'z':
+		case c >= 'A' && c <= 'Z':
+		case c >= '0' && c <= '9':
+		case c == '-':
+		default:
+			return false
+		}
+	}
+	return true
 }
 
 func (r *Resolver) ProboService(ctx context.Context, tenantID gid.TenantID) *probo.TenantService {

@@ -331,28 +331,10 @@ func (c *OAuth2Connector) CompleteWithState(ctx context.Context, r *http.Request
 		return conn, &payload.Data, err
 	}
 
-	// PagerDuty Scoped OAuth includes the customer's subdomain in the
-	// token response body. We parse it here so the OAuth callback
-	// handler can write it to PagerDutyConnectorSettings without
-	// having to issue a second decode against a now-closed body.
-	if payload.Data.Provider == PagerDutyProvider {
-		var pd struct {
-			Subdomain string `json:"subdomain"`
-		}
-		if err := json.Unmarshal(body, &pd); err == nil && pd.Subdomain != "" {
-			if payload.Data.ProviderMetadata == nil {
-				payload.Data.ProviderMetadata = map[string]string{}
-			}
-			payload.Data.ProviderMetadata["subdomain"] = pd.Subdomain
-		}
-	}
+	AbsorbPagerDutyTokenResponse(&payload.Data, body)
 
 	return &oauth2Conn, &payload.Data, nil
 }
-
-// PagerDutyProvider is the canonical string used by PagerDuty in the
-// state token's `provider` field.
-const PagerDutyProvider = "PAGERDUTY"
 
 func basicAuthHeader(clientID, clientSecret string) string {
 	credentials := clientID + ":" + clientSecret
@@ -425,6 +407,12 @@ func (c *OAuth2Connector) buildTokenRequest(ctx context.Context, code, redirectU
 		req.Header.Set("Accept", "application/json")
 		req.Header.Set("User-Agent", "Probo Connector")
 		req.Header.Set("Authorization", basicAuthHeader(c.ClientID, c.ClientSecret))
+		// Deel rejects token-exchange requests that omit the x-client-id
+		// header even when the credentials are correctly Base64-encoded
+		// in the Authorization header. Sending it for every basic-form
+		// provider is harmless — providers that don't expect it ignore
+		// the header.
+		req.Header.Set("x-client-id", c.ClientID)
 		return req, nil
 
 	default:
