@@ -281,6 +281,32 @@ spec:
             {{- end }}
             {{- end }}
             {{- end }}
+            # Connectors (access-review OAuth2 providers added 2026)
+            {{- range .Values.probo.connectors }}
+            {{- $accessReviewProviders := list "gitlab" "bitbucket" "heroku" "pagerduty" "asana" "snyk" "netlify" "ramp" "clickup" "vercel" "monday" "lever" "deel" }}
+            {{- if has .name $accessReviewProviders }}
+            {{- $envPrefix := printf "CONNECTOR_%s" (.name | upper) }}
+            {{- $secretPrefix := printf "connector-%s" .name }}
+            - name: {{ $envPrefix }}_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "probo.fullname" $ }}
+                  key: {{ $secretPrefix }}-client-id
+            - name: {{ $envPrefix }}_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "probo.fullname" $ }}
+                  key: {{ $secretPrefix }}-client-secret
+            {{- if .config.redirectUri }}
+            - name: {{ $envPrefix }}_REDIRECT_URI
+              value: {{ .config.redirectUri | quote }}
+            {{- end }}
+            {{- if and (eq .name "vercel") .config.integrationSlug }}
+            - name: CONNECTOR_VERCEL_INTEGRATION_SLUG
+              value: {{ .config.integrationSlug | quote }}
+            {{- end }}
+            {{- end }}
+            {{- end }}
           ports:
             - name: http
               containerPort: {{ .Values.service.httpPort }}

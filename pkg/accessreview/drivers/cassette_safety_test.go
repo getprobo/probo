@@ -96,14 +96,19 @@ func TestCassettesUseSyntheticEmails(t *testing.T) {
 					}
 				}
 
+				// Log the domain (actionable) but never the local-part
+				// — a failed assertion ends up in CI logs, and the whole
+				// point of this guard is to keep PII out of those logs.
+				// Operators can grep the cassette locally to identify the
+				// offending row.
 				assert.Truef(
 					t,
 					ok,
-					"cassette %s contains email %q with non-synthetic domain %q; "+
+					"cassette %s contains an email with non-synthetic domain %q; "+
 						"either replace with a synthetic *.example.com address or "+
 						"add the domain to allowedExactDomains in cassette_safety_test.go "+
 						"with a justification",
-					filepath.Base(cassette), email, domain,
+					filepath.Base(cassette), domain,
 				)
 			}
 		})

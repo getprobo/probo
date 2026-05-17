@@ -17,6 +17,7 @@ package bootstrap
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -436,15 +437,20 @@ func TestBuilder_Build_Microsoft365Connector(t *testing.T) {
 }
 
 func TestBuilder_Build_AccessReviewConnectors(t *testing.T) {
+	// All non-Vercel access-review providers added by this PR. Vercel
+	// has its own dedicated test because it carries an additional
+	// CONNECTOR_VERCEL_INTEGRATION_SLUG env var.
+	providers := []string{
+		"GITLAB", "BITBUCKET", "HEROKU", "PAGERDUTY",
+		"ASANA", "SNYK", "NETLIFY", "RAMP", "CLICKUP",
+		"MONDAY", "LEVER", "DEEL",
+	}
+
 	env := requiredEnv()
-	env["CONNECTOR_GITLAB_CLIENT_ID"] = "gitlab-id"
-	env["CONNECTOR_GITLAB_CLIENT_SECRET"] = "gitlab-secret"
-	env["CONNECTOR_BITBUCKET_CLIENT_ID"] = "bitbucket-id"
-	env["CONNECTOR_BITBUCKET_CLIENT_SECRET"] = "bitbucket-secret"
-	env["CONNECTOR_PAGERDUTY_CLIENT_ID"] = "pagerduty-id"
-	env["CONNECTOR_PAGERDUTY_CLIENT_SECRET"] = "pagerduty-secret"
-	env["CONNECTOR_DEEL_CLIENT_ID"] = "deel-id"
-	env["CONNECTOR_DEEL_CLIENT_SECRET"] = "deel-secret"
+	for _, provider := range providers {
+		env["CONNECTOR_"+provider+"_CLIENT_ID"] = strings.ToLower(provider) + "-id"
+		env["CONNECTOR_"+provider+"_CLIENT_SECRET"] = strings.ToLower(provider) + "-secret"
+	}
 
 	b := NewBuilder(mockEnv(env))
 	b.samlCertificate = "test-cert"
@@ -453,13 +459,13 @@ func TestBuilder_Build_AccessReviewConnectors(t *testing.T) {
 	cfg, err := b.Build()
 	require.NoError(t, err)
 
-	require.Len(t, cfg.Probod.Connectors, 4)
+	require.Len(t, cfg.Probod.Connectors, len(providers))
 	byProvider := make(map[string]probodconfig.ConnectorConfig, len(cfg.Probod.Connectors))
 	for _, c := range cfg.Probod.Connectors {
 		byProvider[c.Provider] = c
 	}
 
-	for _, provider := range []string{"GITLAB", "BITBUCKET", "PAGERDUTY", "DEEL"} {
+	for _, provider := range providers {
 		c, ok := byProvider[provider]
 		require.True(t, ok, "missing %s connector", provider)
 		assert.Equal(t, "oauth2", string(c.Protocol))
