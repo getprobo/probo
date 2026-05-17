@@ -62,6 +62,11 @@ type (
 		// (for example Vercel's "{integration_slug}"). Empty for the
 		// vast majority of providers.
 		AuthURLParams map[string]string
+		// TokenExtraParams are merged into the token-exchange request
+		// body (form-encoded for post-form / basic-form, JSON for
+		// basic-json). Used for provider-specific extras such as
+		// Lever's `audience` parameter.
+		TokenExtraParams map[string]string
 
 		// HTTPClient is used for the OAuth2 token-exchange request
 		// issued from CompleteWithState. It must be set by callers;
@@ -338,7 +343,8 @@ func basicAuthHeader(clientID, clientSecret string) string {
 // buildTokenRequest creates the HTTP request for the token exchange, branching
 // on c.TokenEndpointAuth to support different provider requirements. When
 // codeVerifier is non-empty (PKCE-enabled providers), it is replayed as
-// `code_verifier` in the request body.
+// `code_verifier` in the request body. TokenExtraParams are merged into the
+// body in every branch.
 func (c *OAuth2Connector) buildTokenRequest(ctx context.Context, code, redirectURI, codeVerifier string) (*http.Request, error) {
 	switch c.TokenEndpointAuth {
 	case "basic-json":
@@ -350,6 +356,9 @@ func (c *OAuth2Connector) buildTokenRequest(ctx context.Context, code, redirectU
 		}
 		if codeVerifier != "" {
 			body["code_verifier"] = codeVerifier
+		}
+		for k, v := range c.TokenExtraParams {
+			body[k] = v
 		}
 		jsonBody, err := json.Marshal(body)
 		if err != nil {
@@ -373,13 +382,16 @@ func (c *OAuth2Connector) buildTokenRequest(ctx context.Context, code, redirectU
 		return req, nil
 
 	case "basic-form":
-		// Form-encoded body with Basic auth header (DocuSign).
+		// Form-encoded body with Basic auth header (DocuSign, Ramp, Deel).
 		formData := url.Values{}
 		formData.Set("code", code)
 		formData.Set("redirect_uri", redirectURI)
 		formData.Set("grant_type", "authorization_code")
 		if codeVerifier != "" {
 			formData.Set("code_verifier", codeVerifier)
+		}
+		for k, v := range c.TokenExtraParams {
+			formData.Set(k, v)
 		}
 
 		req, err := http.NewRequestWithContext(
@@ -396,6 +408,12 @@ func (c *OAuth2Connector) buildTokenRequest(ctx context.Context, code, redirectU
 		req.Header.Set("Accept", "application/json")
 		req.Header.Set("User-Agent", "Probo Connector")
 		req.Header.Set("Authorization", basicAuthHeader(c.ClientID, c.ClientSecret))
+		// Deel rejects token-exchange requests that omit the x-client-id
+		// header even when the credentials are correctly Base64-encoded
+		// in the Authorization header. Sending it for every basic-form
+		// provider is harmless — providers that don't expect it ignore
+		// the header.
+		req.Header.Set("x-client-id", c.ClientID)
 		return req, nil
 
 	default:
@@ -408,6 +426,9 @@ func (c *OAuth2Connector) buildTokenRequest(ctx context.Context, code, redirectU
 		formData.Set("grant_type", "authorization_code")
 		if codeVerifier != "" {
 			formData.Set("code_verifier", codeVerifier)
+		}
+		for k, v := range c.TokenExtraParams {
+			formData.Set(k, v)
 		}
 
 		req, err := http.NewRequestWithContext(
