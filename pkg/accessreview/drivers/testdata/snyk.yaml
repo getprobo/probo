@@ -1,0 +1,35 @@
+---
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.snyk.io
+        form:
+            limit:
+                - "100"
+            version:
+                - "2024-10-15"
+        headers:
+            Accept:
+                - application/vnd.api+json
+        url: https://api.snyk.io/rest/orgs/org-1234/memberships?version=2024-10-15&limit=100
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"data":[{"id":"membership-1","type":"org_membership","attributes":{"user":{"id":"user-1","email":"jane@example.com","name":"Jane Doe"},"role":{"id":"role-1","name":"Admin"}}},{"id":"membership-2","type":"org_membership","attributes":{"user":{"id":"user-2","email":"bob@example.com","name":"Bob Smith"},"role":{"id":"role-2","name":"Collaborator"}}}],"links":{"self":"/rest/orgs/org-1234/memberships?version=2024-10-15&limit=100"}}'
+        headers:
+            Content-Type:
+                - application/vnd.api+json
+            Date:
+                - Thu, 01 May 2026 12:00:00 GMT
+        status: 200 OK
+        code: 200
+        duration: 100ms

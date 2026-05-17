@@ -1,0 +1,35 @@
+---
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: app.asana.com
+        form:
+            limit:
+                - "100"
+            opt_fields:
+                - "email,name"
+        headers:
+            Accept:
+                - application/json
+        url: https://app.asana.com/api/1.0/workspaces/9999999/users?opt_fields=email,name&limit=100
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"data":[{"gid":"1100000001","name":"Jane Doe","email":"jane@example.com"},{"gid":"1100000002","name":"Bob Smith","email":""}],"next_page":null}'
+        headers:
+            Content-Type:
+                - application/json
+            Date:
+                - Thu, 01 May 2026 12:00:00 GMT
+        status: 200 OK
+        code: 200
+        duration: 100ms

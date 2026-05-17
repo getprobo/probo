@@ -1,0 +1,33 @@
+---
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.ramp.com
+        form:
+            page_size:
+                - "100"
+        headers:
+            Accept:
+                - application/json
+        url: https://api.ramp.com/developer/v1/users?page_size=100
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"data":[{"id":"user-1","email":"jane@example.com","first_name":"Jane","last_name":"Doe","role":"BUSINESS_ADMIN","status":"USER_ACTIVE","last_login_at":"2026-04-15T10:00:00Z","is_manager":true},{"id":"user-2","email":"bob@example.com","first_name":"Bob","last_name":"Smith","role":"BUSINESS_USER","status":"USER_SUSPENDED","last_login_at":"","is_manager":false}],"page":{"next":""}}'
+        headers:
+            Content-Type:
+                - application/json
+            Date:
+                - Thu, 01 May 2026 12:00:00 GMT
+        status: 200 OK
+        code: 200
+        duration: 100ms

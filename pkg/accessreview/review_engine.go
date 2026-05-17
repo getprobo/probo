@@ -374,6 +374,99 @@ func (e *ReviewEngine) resolveDriver(
 		return drivers.NewResendDriver(httpClient), nil
 	case coredata.ConnectorProviderMicrosoft365:
 		return drivers.NewMicrosoft365Driver(httpClient), nil
+	case coredata.ConnectorProviderGitLab:
+		gitlabSettings, err := dbConnector.GitLabSettings()
+		if err != nil {
+			return nil, fmt.Errorf("cannot read gitlab connector settings: %w", err)
+		}
+		if gitlabSettings.GroupID == "" {
+			return nil, fmt.Errorf("gitlab connector requires group_id in settings")
+		}
+		return drivers.NewGitLabDriver(httpClient, gitlabSettings.GroupID), nil
+	case coredata.ConnectorProviderBitbucket:
+		bitbucketSettings, err := dbConnector.BitbucketSettings()
+		if err != nil {
+			return nil, fmt.Errorf("cannot read bitbucket connector settings: %w", err)
+		}
+		if bitbucketSettings.Workspace == "" {
+			return nil, fmt.Errorf("bitbucket connector requires workspace in settings")
+		}
+		return drivers.NewBitbucketDriver(httpClient, bitbucketSettings.Workspace), nil
+	case coredata.ConnectorProviderHeroku:
+		herokuSettings, err := dbConnector.HerokuSettings()
+		if err != nil {
+			return nil, fmt.Errorf("cannot read heroku connector settings: %w", err)
+		}
+		if herokuSettings.TeamID == "" {
+			return nil, fmt.Errorf("heroku connector requires team_id in settings")
+		}
+		return drivers.NewHerokuDriver(httpClient, herokuSettings.TeamID), nil
+	case coredata.ConnectorProviderPagerDuty:
+		// Subdomain is required for the name resolver only; the driver
+		// itself does not need it because PagerDuty's REST API uses the
+		// regional api.pagerduty.com host. We still surface a clear
+		// error if the OAuth callback failed to capture the subdomain.
+		pdSettings, err := dbConnector.PagerDutySettings()
+		if err != nil {
+			return nil, fmt.Errorf("cannot read pagerduty connector settings: %w", err)
+		}
+		if pdSettings.Subdomain == "" {
+			return nil, fmt.Errorf("pagerduty connector requires subdomain in settings")
+		}
+		return drivers.NewPagerDutyDriver(httpClient), nil
+	case coredata.ConnectorProviderAsana:
+		asanaSettings, err := dbConnector.AsanaSettings()
+		if err != nil {
+			return nil, fmt.Errorf("cannot read asana connector settings: %w", err)
+		}
+		if asanaSettings.WorkspaceGID == "" {
+			return nil, fmt.Errorf("asana connector requires workspace_gid in settings")
+		}
+		return drivers.NewAsanaDriver(httpClient, asanaSettings.WorkspaceGID), nil
+	case coredata.ConnectorProviderSnyk:
+		snykSettings, err := dbConnector.SnykSettings()
+		if err != nil {
+			return nil, fmt.Errorf("cannot read snyk connector settings: %w", err)
+		}
+		if snykSettings.OrgID == "" {
+			return nil, fmt.Errorf("snyk connector requires org_id in settings")
+		}
+		return drivers.NewSnykDriver(httpClient, snykSettings.OrgID), nil
+	case coredata.ConnectorProviderNetlify:
+		netlifySettings, err := dbConnector.NetlifySettings()
+		if err != nil {
+			return nil, fmt.Errorf("cannot read netlify connector settings: %w", err)
+		}
+		if netlifySettings.AccountSlug == "" {
+			return nil, fmt.Errorf("netlify connector requires account_slug in settings")
+		}
+		return drivers.NewNetlifyDriver(httpClient, netlifySettings.AccountSlug), nil
+	case coredata.ConnectorProviderRamp:
+		return drivers.NewRampDriver(httpClient), nil
+	case coredata.ConnectorProviderClickUp:
+		clickupSettings, err := dbConnector.ClickUpSettings()
+		if err != nil {
+			return nil, fmt.Errorf("cannot read clickup connector settings: %w", err)
+		}
+		if clickupSettings.TeamID == "" {
+			return nil, fmt.Errorf("clickup connector requires team_id in settings")
+		}
+		return drivers.NewClickUpDriver(httpClient, clickupSettings.TeamID), nil
+	case coredata.ConnectorProviderVercel:
+		vercelSettings, err := dbConnector.VercelSettings()
+		if err != nil {
+			return nil, fmt.Errorf("cannot read vercel connector settings: %w", err)
+		}
+		if vercelSettings.TeamID == "" {
+			return nil, fmt.Errorf("vercel connector requires team_id in settings")
+		}
+		return drivers.NewVercelDriver(httpClient, vercelSettings.TeamID), nil
+	case coredata.ConnectorProviderMonday:
+		return drivers.NewMondayDriver(httpClient), nil
+	case coredata.ConnectorProviderLever:
+		return drivers.NewLeverDriver(httpClient), nil
+	case coredata.ConnectorProviderDeel:
+		return drivers.NewDeelDriver(httpClient), nil
 	default:
 		return nil, fmt.Errorf("unsupported connector provider %q for access source driver", dbConnector.Provider)
 	}

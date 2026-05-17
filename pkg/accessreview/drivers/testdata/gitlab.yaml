@@ -1,0 +1,33 @@
+---
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: gitlab.com
+        form:
+            per_page:
+                - "100"
+        headers:
+            Accept:
+                - application/json
+        url: https://gitlab.com/api/v4/groups/12345/members/all?per_page=100
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '[{"id":1000001,"username":"jane.doe","name":"Jane Doe","email":"jane@example.com","state":"active","access_level":50},{"id":1000002,"username":"bob.smith","name":"Bob Smith","email":"bob@example.com","state":"active","access_level":30},{"id":1000003,"username":"alice","name":"Alice","email":null,"state":"blocked","access_level":10}]'
+        headers:
+            Content-Type:
+                - application/json
+            Date:
+                - Thu, 01 May 2026 12:00:00 GMT
+        status: 200 OK
+        code: 200
+        duration: 100ms

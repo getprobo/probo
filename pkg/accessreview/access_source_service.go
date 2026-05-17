@@ -388,6 +388,48 @@ func (s AccessSourceService) ConfigureAccessSource(
 				}); err != nil {
 					return fmt.Errorf("cannot set sentry settings: %w", err)
 				}
+			case coredata.ConnectorProviderGitLab:
+				if err := dbConnector.SetSettings(&coredata.GitLabConnectorSettings{
+					GroupID: req.OrganizationSlug,
+				}); err != nil {
+					return fmt.Errorf("cannot set gitlab settings: %w", err)
+				}
+			case coredata.ConnectorProviderBitbucket:
+				if err := dbConnector.SetSettings(&coredata.BitbucketConnectorSettings{
+					Workspace: req.OrganizationSlug,
+				}); err != nil {
+					return fmt.Errorf("cannot set bitbucket settings: %w", err)
+				}
+			case coredata.ConnectorProviderHeroku:
+				if err := dbConnector.SetSettings(&coredata.HerokuConnectorSettings{
+					TeamID: req.OrganizationSlug,
+				}); err != nil {
+					return fmt.Errorf("cannot set heroku settings: %w", err)
+				}
+			case coredata.ConnectorProviderAsana:
+				if err := dbConnector.SetSettings(&coredata.AsanaConnectorSettings{
+					WorkspaceGID: req.OrganizationSlug,
+				}); err != nil {
+					return fmt.Errorf("cannot set asana settings: %w", err)
+				}
+			case coredata.ConnectorProviderSnyk:
+				if err := dbConnector.SetSettings(&coredata.SnykConnectorSettings{
+					OrgID: req.OrganizationSlug,
+				}); err != nil {
+					return fmt.Errorf("cannot set snyk settings: %w", err)
+				}
+			case coredata.ConnectorProviderNetlify:
+				if err := dbConnector.SetSettings(&coredata.NetlifyConnectorSettings{
+					AccountSlug: req.OrganizationSlug,
+				}); err != nil {
+					return fmt.Errorf("cannot set netlify settings: %w", err)
+				}
+			case coredata.ConnectorProviderClickUp:
+				if err := dbConnector.SetSettings(&coredata.ClickUpConnectorSettings{
+					TeamID: req.OrganizationSlug,
+				}); err != nil {
+					return fmt.Errorf("cannot set clickup settings: %w", err)
+				}
 			default:
 				return fmt.Errorf("cannot configure access source: provider %s does not support organization configuration", dbConnector.Provider)
 			}
