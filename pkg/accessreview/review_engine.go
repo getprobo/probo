@@ -308,13 +308,13 @@ func (e *ReviewEngine) resolveDriver(
 		// Client credentials grant -> Users API driver (to be created in Phase 5).
 		// Authorization code / SCIM grant -> existing SCIM-based driver.
 		if oauth2Conn, ok := dbConnector.Connection.(*connector.OAuth2Connection); ok && oauth2Conn.GrantType == connector.OAuth2GrantTypeClientCredentials {
-			settings, err := dbConnector.OnePasswordUsersAPISettings()
+			settings, err := coredata.ConnectorSettings[coredata.OnePasswordUsersAPISettings](dbConnector)
 			if err != nil {
 				return nil, fmt.Errorf("cannot read 1password users api settings: %w", err)
 			}
 			return drivers.NewOnePasswordUsersAPIDriver(httpClient, settings.AccountID, settings.Region), nil
 		}
-		onePasswordSettings, err := dbConnector.OnePasswordSettings()
+		onePasswordSettings, err := coredata.ConnectorSettings[coredata.OnePasswordConnectorSettings](dbConnector)
 		if err != nil {
 			return nil, fmt.Errorf("cannot read 1password connector settings: %w", err)
 		}
@@ -331,7 +331,7 @@ func (e *ReviewEngine) resolveDriver(
 	case coredata.ConnectorProviderBrex:
 		return drivers.NewBrexDriver(httpClient), nil
 	case coredata.ConnectorProviderTally:
-		tallySettings, err := dbConnector.TallySettings()
+		tallySettings, err := coredata.ConnectorSettings[coredata.TallyConnectorSettings](dbConnector)
 		if err != nil {
 			return nil, fmt.Errorf("cannot read tally connector settings: %w", err)
 		}
@@ -344,14 +344,14 @@ func (e *ReviewEngine) resolveDriver(
 	case coredata.ConnectorProviderOpenAI:
 		return drivers.NewOpenAIDriver(httpClient), nil
 	case coredata.ConnectorProviderSentry:
-		sentrySettings, err := dbConnector.SentrySettings()
+		sentrySettings, err := coredata.ConnectorSettings[coredata.SentryConnectorSettings](dbConnector)
 		if err != nil {
 			return nil, fmt.Errorf("cannot read sentry connector settings: %w", err)
 		}
 		// OrganizationSlug may be empty for OAuth connections; the driver auto-discovers it.
 		return drivers.NewSentryDriver(httpClient, sentrySettings.OrganizationSlug), nil
 	case coredata.ConnectorProviderSupabase:
-		supabaseSettings, err := dbConnector.SupabaseSettings()
+		supabaseSettings, err := coredata.ConnectorSettings[coredata.SupabaseConnectorSettings](dbConnector)
 		if err != nil {
 			return nil, fmt.Errorf("cannot read supabase connector settings: %w", err)
 		}
@@ -360,7 +360,7 @@ func (e *ReviewEngine) resolveDriver(
 		}
 		return drivers.NewSupabaseDriver(httpClient, supabaseSettings.OrganizationSlug), nil
 	case coredata.ConnectorProviderGitHub:
-		githubSettings, err := dbConnector.GitHubSettings()
+		githubSettings, err := coredata.ConnectorSettings[coredata.GitHubConnectorSettings](dbConnector)
 		if err != nil {
 			return nil, fmt.Errorf("cannot read github connector settings: %w", err)
 		}
@@ -375,7 +375,7 @@ func (e *ReviewEngine) resolveDriver(
 	case coredata.ConnectorProviderMicrosoft365:
 		return drivers.NewMicrosoft365Driver(httpClient), nil
 	case coredata.ConnectorProviderGitLab:
-		gitlabSettings, err := dbConnector.GitLabSettings()
+		gitlabSettings, err := coredata.ConnectorSettings[coredata.GitLabConnectorSettings](dbConnector)
 		if err != nil {
 			return nil, fmt.Errorf("cannot read gitlab connector settings: %w", err)
 		}
@@ -384,7 +384,7 @@ func (e *ReviewEngine) resolveDriver(
 		}
 		return drivers.NewGitLabDriver(httpClient, gitlabSettings.GroupID), nil
 	case coredata.ConnectorProviderBitbucket:
-		bitbucketSettings, err := dbConnector.BitbucketSettings()
+		bitbucketSettings, err := coredata.ConnectorSettings[coredata.BitbucketConnectorSettings](dbConnector)
 		if err != nil {
 			return nil, fmt.Errorf("cannot read bitbucket connector settings: %w", err)
 		}
@@ -393,7 +393,7 @@ func (e *ReviewEngine) resolveDriver(
 		}
 		return drivers.NewBitbucketDriver(httpClient, bitbucketSettings.Workspace), nil
 	case coredata.ConnectorProviderHeroku:
-		herokuSettings, err := dbConnector.HerokuSettings()
+		herokuSettings, err := coredata.ConnectorSettings[coredata.HerokuConnectorSettings](dbConnector)
 		if err != nil {
 			return nil, fmt.Errorf("cannot read heroku connector settings: %w", err)
 		}
@@ -406,7 +406,7 @@ func (e *ReviewEngine) resolveDriver(
 		// itself does not need it because PagerDuty's REST API uses the
 		// regional api.pagerduty.com host. We still surface a clear
 		// error if the OAuth callback failed to capture the subdomain.
-		pdSettings, err := dbConnector.PagerDutySettings()
+		pdSettings, err := coredata.ConnectorSettings[coredata.PagerDutyConnectorSettings](dbConnector)
 		if err != nil {
 			return nil, fmt.Errorf("cannot read pagerduty connector settings: %w", err)
 		}
@@ -415,7 +415,7 @@ func (e *ReviewEngine) resolveDriver(
 		}
 		return drivers.NewPagerDutyDriver(httpClient), nil
 	case coredata.ConnectorProviderAsana:
-		asanaSettings, err := dbConnector.AsanaSettings()
+		asanaSettings, err := coredata.ConnectorSettings[coredata.AsanaConnectorSettings](dbConnector)
 		if err != nil {
 			return nil, fmt.Errorf("cannot read asana connector settings: %w", err)
 		}
@@ -424,7 +424,7 @@ func (e *ReviewEngine) resolveDriver(
 		}
 		return drivers.NewAsanaDriver(httpClient, asanaSettings.WorkspaceGID), nil
 	case coredata.ConnectorProviderSnyk:
-		snykSettings, err := dbConnector.SnykSettings()
+		snykSettings, err := coredata.ConnectorSettings[coredata.SnykConnectorSettings](dbConnector)
 		if err != nil {
 			return nil, fmt.Errorf("cannot read snyk connector settings: %w", err)
 		}
@@ -433,7 +433,7 @@ func (e *ReviewEngine) resolveDriver(
 		}
 		return drivers.NewSnykDriver(httpClient, snykSettings.OrgID), nil
 	case coredata.ConnectorProviderNetlify:
-		netlifySettings, err := dbConnector.NetlifySettings()
+		netlifySettings, err := coredata.ConnectorSettings[coredata.NetlifyConnectorSettings](dbConnector)
 		if err != nil {
 			return nil, fmt.Errorf("cannot read netlify connector settings: %w", err)
 		}
@@ -444,7 +444,7 @@ func (e *ReviewEngine) resolveDriver(
 	case coredata.ConnectorProviderRamp:
 		return drivers.NewRampDriver(httpClient), nil
 	case coredata.ConnectorProviderClickUp:
-		clickupSettings, err := dbConnector.ClickUpSettings()
+		clickupSettings, err := coredata.ConnectorSettings[coredata.ClickUpConnectorSettings](dbConnector)
 		if err != nil {
 			return nil, fmt.Errorf("cannot read clickup connector settings: %w", err)
 		}
@@ -453,7 +453,7 @@ func (e *ReviewEngine) resolveDriver(
 		}
 		return drivers.NewClickUpDriver(httpClient, clickupSettings.TeamID), nil
 	case coredata.ConnectorProviderVercel:
-		vercelSettings, err := dbConnector.VercelSettings()
+		vercelSettings, err := coredata.ConnectorSettings[coredata.VercelConnectorSettings](dbConnector)
 		if err != nil {
 			return nil, fmt.Errorf("cannot read vercel connector settings: %w", err)
 		}

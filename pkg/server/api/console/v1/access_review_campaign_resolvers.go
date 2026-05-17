@@ -469,6 +469,10 @@ func (r *accessSourceResolver) ProviderOrganizations(ctx context.Context, obj *t
 
 // NeedsConfiguration is the resolver for the needsConfiguration field.
 func (r *accessSourceResolver) NeedsConfiguration(ctx context.Context, obj *types.AccessSource) (bool, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionAccessSourceGet); err != nil {
+		return false, err
+	}
+
 	if obj.ConnectorID == nil {
 		return false, nil
 	}
@@ -560,6 +564,10 @@ func (r *accessSourceResolver) ConnectionStatus(ctx context.Context, obj *types.
 
 // SelectedOrganization is the resolver for the selectedOrganization field.
 func (r *accessSourceResolver) SelectedOrganization(ctx context.Context, obj *types.AccessSource) (*string, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionAccessSourceGet); err != nil {
+		return nil, err
+	}
+
 	if obj.ConnectorID == nil {
 		return nil, nil
 	}

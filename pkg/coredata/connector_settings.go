@@ -250,3 +250,16 @@ func (c *Connector) unmarshalSettings(v any) error {
 	}
 	return nil
 }
+
+// ConnectorSettings unmarshals the connector's RawSettings into the
+// requested settings struct. Empty or null RawSettings yields the zero
+// value with no error. Use as:
+//
+//	settings, err := coredata.ConnectorSettings[coredata.GitHubConnectorSettings](dbConnector)
+func ConnectorSettings[T any](c *Connector) (T, error) {
+	var s T
+	if err := c.unmarshalSettings(&s); err != nil {
+		return s, err
+	}
+	return s, nil
+}

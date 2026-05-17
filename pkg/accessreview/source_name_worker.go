@@ -242,7 +242,7 @@ func (h *sourceNameHandler) buildResolver(
 	case coredata.ConnectorProviderBrex:
 		return drivers.NewBrexNameResolver(httpClient)
 	case coredata.ConnectorProviderTally:
-		tallySettings, err := dbConnector.TallySettings()
+		tallySettings, err := coredata.ConnectorSettings[coredata.TallyConnectorSettings](dbConnector)
 		if err != nil {
 			h.logger.Error("cannot read tally connector settings", log.Error(err))
 			return nil
@@ -255,21 +255,21 @@ func (h *sourceNameHandler) buildResolver(
 	case coredata.ConnectorProviderOpenAI:
 		return drivers.NewOpenAINameResolver(httpClient)
 	case coredata.ConnectorProviderSentry:
-		sentrySettings, err := dbConnector.SentrySettings()
+		sentrySettings, err := coredata.ConnectorSettings[coredata.SentryConnectorSettings](dbConnector)
 		if err != nil {
 			h.logger.Error("cannot read sentry connector settings", log.Error(err))
 			return nil
 		}
 		return drivers.NewSentryNameResolver(httpClient, sentrySettings.OrganizationSlug)
 	case coredata.ConnectorProviderGitHub:
-		githubSettings, err := dbConnector.GitHubSettings()
+		githubSettings, err := coredata.ConnectorSettings[coredata.GitHubConnectorSettings](dbConnector)
 		if err != nil {
 			h.logger.Error("cannot read github connector settings", log.Error(err))
 			return nil
 		}
 		return drivers.NewGitHubNameResolver(httpClient, githubSettings.Organization)
 	case coredata.ConnectorProviderSupabase:
-		supabaseSettings, err := dbConnector.SupabaseSettings()
+		supabaseSettings, err := coredata.ConnectorSettings[coredata.SupabaseConnectorSettings](dbConnector)
 		if err != nil {
 			h.logger.Error("cannot read supabase connector settings", log.Error(err))
 			return nil
@@ -284,49 +284,49 @@ func (h *sourceNameHandler) buildResolver(
 	case coredata.ConnectorProviderMicrosoft365:
 		return drivers.NewMicrosoft365NameResolver(httpClient)
 	case coredata.ConnectorProviderGitLab:
-		gitlabSettings, err := dbConnector.GitLabSettings()
+		gitlabSettings, err := coredata.ConnectorSettings[coredata.GitLabConnectorSettings](dbConnector)
 		if err != nil {
 			h.logger.Error("cannot read gitlab connector settings", log.Error(err))
 			return nil
 		}
 		return drivers.NewGitLabNameResolver(httpClient, gitlabSettings.GroupID)
 	case coredata.ConnectorProviderBitbucket:
-		bitbucketSettings, err := dbConnector.BitbucketSettings()
+		bitbucketSettings, err := coredata.ConnectorSettings[coredata.BitbucketConnectorSettings](dbConnector)
 		if err != nil {
 			h.logger.Error("cannot read bitbucket connector settings", log.Error(err))
 			return nil
 		}
 		return drivers.NewBitbucketNameResolver(httpClient, bitbucketSettings.Workspace)
 	case coredata.ConnectorProviderHeroku:
-		herokuSettings, err := dbConnector.HerokuSettings()
+		herokuSettings, err := coredata.ConnectorSettings[coredata.HerokuConnectorSettings](dbConnector)
 		if err != nil {
 			h.logger.Error("cannot read heroku connector settings", log.Error(err))
 			return nil
 		}
 		return drivers.NewHerokuNameResolver(httpClient, herokuSettings.TeamID)
 	case coredata.ConnectorProviderPagerDuty:
-		pdSettings, err := dbConnector.PagerDutySettings()
+		pdSettings, err := coredata.ConnectorSettings[coredata.PagerDutyConnectorSettings](dbConnector)
 		if err != nil {
 			h.logger.Error("cannot read pagerduty connector settings", log.Error(err))
 			return nil
 		}
 		return drivers.NewPagerDutyNameResolver(pdSettings.Subdomain)
 	case coredata.ConnectorProviderAsana:
-		asanaSettings, err := dbConnector.AsanaSettings()
+		asanaSettings, err := coredata.ConnectorSettings[coredata.AsanaConnectorSettings](dbConnector)
 		if err != nil {
 			h.logger.Error("cannot read asana connector settings", log.Error(err))
 			return nil
 		}
 		return drivers.NewAsanaNameResolver(httpClient, asanaSettings.WorkspaceGID)
 	case coredata.ConnectorProviderSnyk:
-		snykSettings, err := dbConnector.SnykSettings()
+		snykSettings, err := coredata.ConnectorSettings[coredata.SnykConnectorSettings](dbConnector)
 		if err != nil {
 			h.logger.Error("cannot read snyk connector settings", log.Error(err))
 			return nil
 		}
 		return drivers.NewSnykNameResolver(httpClient, snykSettings.OrgID)
 	case coredata.ConnectorProviderNetlify:
-		netlifySettings, err := dbConnector.NetlifySettings()
+		netlifySettings, err := coredata.ConnectorSettings[coredata.NetlifyConnectorSettings](dbConnector)
 		if err != nil {
 			h.logger.Error("cannot read netlify connector settings", log.Error(err))
 			return nil
@@ -335,14 +335,14 @@ func (h *sourceNameHandler) buildResolver(
 	case coredata.ConnectorProviderRamp:
 		return drivers.NewRampNameResolver(httpClient)
 	case coredata.ConnectorProviderClickUp:
-		clickupSettings, err := dbConnector.ClickUpSettings()
+		clickupSettings, err := coredata.ConnectorSettings[coredata.ClickUpConnectorSettings](dbConnector)
 		if err != nil {
 			h.logger.Error("cannot read clickup connector settings", log.Error(err))
 			return nil
 		}
 		return drivers.NewClickUpNameResolver(httpClient, clickupSettings.TeamID)
 	case coredata.ConnectorProviderVercel:
-		vercelSettings, err := dbConnector.VercelSettings()
+		vercelSettings, err := coredata.ConnectorSettings[coredata.VercelConnectorSettings](dbConnector)
 		if err != nil {
 			h.logger.Error("cannot read vercel connector settings", log.Error(err))
 			return nil

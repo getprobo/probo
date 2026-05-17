@@ -214,7 +214,7 @@ func (c *Connector) LoadByID(
 
 		if c.Provider == ConnectorProviderSlack {
 			if slackConn, ok := c.Connection.(*connector.SlackConnection); ok {
-				settings, _ := c.SlackSettings()
+				settings, _ := ConnectorSettings[SlackConnectorSettings](c)
 				slackConn.Settings.Channel = settings.Channel
 				slackConn.Settings.ChannelID = settings.ChannelID
 			}
@@ -613,7 +613,7 @@ func (c *Connectors) decryptConnections(encryptionKey cipher.EncryptionKey) erro
 
 		if cnnctr.Provider == ConnectorProviderSlack {
 			if slackConn, ok := cnnctr.Connection.(*connector.SlackConnection); ok {
-				settings, _ := cnnctr.SlackSettings()
+				settings, _ := ConnectorSettings[SlackConnectorSettings](cnnctr)
 				slackConn.Settings.Channel = settings.Channel
 				slackConn.Settings.ChannelID = settings.ChannelID
 			}
