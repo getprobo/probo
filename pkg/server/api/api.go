@@ -39,6 +39,7 @@ import (
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/securecookie"
+	agent_v1 "go.probo.inc/probo/pkg/server/api/agent/v1"
 	connect_v1 "go.probo.inc/probo/pkg/server/api/connect/v1"
 	console_v1 "go.probo.inc/probo/pkg/server/api/console/v1"
 	cookiebanner_v1 "go.probo.inc/probo/pkg/server/api/cookiebanner/v1"
@@ -92,6 +93,7 @@ type (
 		mcpHandler            http.Handler
 		slackHandler          http.Handler
 		connectHandler        http.Handler
+		agentHandler          http.Handler
 	}
 )
 
@@ -161,6 +163,14 @@ func NewServer(cfg Config) (*Server, error) {
 	csrf.AddInsecureBypassPattern("POST /connect/v1/oauth2/introspect")
 	csrf.AddInsecureBypassPattern("POST /connect/v1/oauth2/revoke")
 	csrf.AddInsecureBypassPattern("POST /connect/v1/oauth2/device")
+
+	// The agent API is called from the probo-agent binary running on
+	// employee laptops; it authenticates with Bearer device API keys
+	// (not browser cookies) so cross-origin CSRF protection is moot.
+	csrf.AddInsecureBypassPattern("POST /agent/v1/enroll")
+	csrf.AddInsecureBypassPattern("POST /agent/v1/heartbeat")
+	csrf.AddInsecureBypassPattern("POST /agent/v1/postures")
+	csrf.AddInsecureBypassPattern("POST /agent/v1/unenroll")
 
 	csrf.SetDenyHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		httpserver.RenderJSON(
@@ -247,6 +257,11 @@ func NewServer(cfg Config) (*Server, error) {
 				return err == nil
 			},
 		),
+		agentHandler: agent_v1.NewMux(
+			cfg.Logger.Named("agent.v1"),
+			cfg.Probo,
+			cfg.BaseURL.String(),
+		),
 	}, nil
 }
 
@@ -291,6 +306,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		r.Mount("/trust/v1", http.StripPrefix("/trust/v1", s.compliancePageHandler))
 		r.Mount("/mcp/v1", http.StripPrefix("/mcp/v1", s.mcpHandler))
 		r.Mount("/slack/v1", http.StripPrefix("/slack/v1", s.slackHandler))
+		r.Mount("/agent/v1", http.StripPrefix("/agent/v1", s.agentHandler))
 	})
 
 	s.csrf.Handler(router).ServeHTTP(w, r)

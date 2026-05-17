@@ -28,6 +28,7 @@ var (
 	identityContextKey = &ctxKey{name: "identity"}
 	sessionContextKey  = &ctxKey{name: "session"}
 	apiKeyContextKey   = &ctxKey{name: "api_key"}
+	deviceContextKey   = &ctxKey{name: "device"}
 	TrustCenterKey     = &ctxKey{name: "trust_center"}
 )
 
@@ -56,4 +57,13 @@ func APIKeyFromContext(ctx context.Context) *coredata.PersonalAPIKey {
 
 func ContextWithAPIKey(ctx context.Context, apiKey *coredata.PersonalAPIKey) context.Context {
 	return context.WithValue(ctx, apiKeyContextKey, apiKey)
+}
+
+func DeviceFromContext(ctx context.Context) *coredata.Device {
+	device, _ := ctx.Value(deviceContextKey).(*coredata.Device)
+	return device
+}
+
+func ContextWithDevice(ctx context.Context, device *coredata.Device) context.Context {
+	return context.WithValue(ctx, deviceContextKey, device)
 }

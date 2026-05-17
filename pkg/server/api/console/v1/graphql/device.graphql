@@ -1,0 +1,162 @@
+enum DevicePlatform
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.DevicePlatform") {
+    DARWIN
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.DevicePlatformDarwin")
+    LINUX
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.DevicePlatformLinux")
+    FREEBSD
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.DevicePlatformFreeBSD")
+    WINDOWS
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.DevicePlatformWindows")
+}
+
+enum DevicePostureStatus
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.DevicePostureStatus"
+    ) {
+    PASS
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.DevicePostureStatusPass")
+    FAIL
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.DevicePostureStatusFail")
+    UNKNOWN
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.DevicePostureStatusUnknown")
+    NOT_APPLICABLE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DevicePostureStatusNotApplicable"
+        )
+}
+
+enum DeviceOrderField
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.DeviceOrderField") {
+    CREATED_AT
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.DeviceOrderFieldCreatedAt")
+    UPDATED_AT
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.DeviceOrderFieldUpdatedAt")
+    HOSTNAME
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.DeviceOrderFieldHostname")
+    LAST_SEEN_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DeviceOrderFieldLastSeenAt"
+        )
+}
+
+input DeviceOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.DeviceOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: DeviceOrderField!
+}
+
+type Device implements Node {
+    id: ID!
+    hostname: String!
+    serialNumber: String
+    hardwareUuid: String!
+    platform: DevicePlatform!
+    osVersion: String!
+    agentVersion: String!
+    enrolledAt: Datetime!
+    lastSeenAt: Datetime!
+    revokedAt: Datetime
+    createdAt: Datetime!
+    updatedAt: Datetime!
+
+    latestPostures: [DevicePosture!]! @goField(forceResolver: true)
+}
+
+type DevicePosture implements Node {
+    id: ID!
+    deviceId: ID!
+    checkKey: String!
+    status: DevicePostureStatus!
+    observedAt: Datetime!
+}
+
+type DeviceConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.DeviceConnection"
+    ) {
+    edges: [DeviceEdge!]!
+    pageInfo: PageInfo!
+    totalCount: Int! @goField(forceResolver: true)
+}
+
+type DeviceEdge {
+    cursor: CursorKey!
+    node: Device!
+}
+
+type DeviceEnrollmentToken implements Node {
+    id: ID!
+    name: String!
+    expiresAt: Datetime!
+    revokedAt: Datetime
+    maxUses: Int
+    usedCount: Int!
+    createdAt: Datetime!
+}
+
+type DeviceEnrollmentTokenConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.DeviceEnrollmentTokenConnection"
+    ) {
+    edges: [DeviceEnrollmentTokenEdge!]!
+    pageInfo: PageInfo!
+}
+
+type DeviceEnrollmentTokenEdge {
+    cursor: CursorKey!
+    node: DeviceEnrollmentToken!
+}
+
+type CreateDeviceEnrollmentTokenPayload {
+    enrollmentToken: DeviceEnrollmentToken!
+    # secret is shown ONCE at creation time; the agent installer needs it.
+    secret: String!
+}
+
+type RevokeDeviceEnrollmentTokenPayload {
+    enrollmentToken: DeviceEnrollmentToken!
+}
+
+type RevokeDevicePayload {
+    device: Device!
+}
+
+type AssignDeviceToUserPayload {
+    device: Device!
+}
+
+input CreateDeviceEnrollmentTokenInput {
+    organizationId: ID!
+    name: String!
+    validitySeconds: Int
+    maxUses: Int
+}
+
+input RevokeDeviceEnrollmentTokenInput {
+    enrollmentTokenId: ID!
+}
+
+input RevokeDeviceInput {
+    deviceId: ID!
+}
+
+input AssignDeviceToUserInput {
+    deviceId: ID!
+    userIdentityId: ID
+}
+
+extend type Mutation {
+    createDeviceEnrollmentToken(
+        input: CreateDeviceEnrollmentTokenInput!
+    ): CreateDeviceEnrollmentTokenPayload!
+    revokeDeviceEnrollmentToken(
+        input: RevokeDeviceEnrollmentTokenInput!
+    ): RevokeDeviceEnrollmentTokenPayload!
+    revokeDevice(input: RevokeDeviceInput!): RevokeDevicePayload!
+    assignDeviceToUser(
+        input: AssignDeviceToUserInput!
+    ): AssignDeviceToUserPayload!
+}

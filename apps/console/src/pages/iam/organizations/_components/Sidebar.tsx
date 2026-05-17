@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { CookieIcon } from "@phosphor-icons/react";
+import { CookieIcon, LaptopIcon } from "@phosphor-icons/react";
 import { useTranslate } from "@probo/i18n";
 import {
   IconBank,
@@ -52,6 +52,7 @@ const fragment = graphql`
         canListFrameworks: permission(action: "core:framework:list")
         canListMembers: permission(action: "iam:membership:list")
         canListThirdParties: permission(action: "core:thirdParty:list")
+        canListDevices: permission(action: "core:device:list")
         canListDocuments: permission(action: "core:document:list")
         canListAssets: permission(action: "core:asset:list")
         canListData: permission(action: "core:datum:list")
@@ -134,6 +135,13 @@ export function Sidebar(props: { fKey: SidebarFragment$key }) {
           label={__("Third parties")}
           icon={IconStore}
           to={`${prefix}/third-parties`}
+        />
+      )}
+      {organization.canListDevices && (
+        <SidebarItem
+          label={__("Devices")}
+          icon={LaptopIcon}
+          to={`${prefix}/devices`}
         />
       )}
       {organization.canListDocuments && (
