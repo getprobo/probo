@@ -484,4 +484,17 @@ const (
 	// ElectronicSignature actions (tenant-scoped via the related document
 	// version signature / trust center access).
 	ActionElectronicSignatureGet = "core:electronic-signature:get"
+
+	// Device actions (device posture agent)
+	ActionDeviceList        = "core:device:list"
+	ActionDeviceGet         = "core:device:get"
+	ActionDeviceRevoke      = "core:device:revoke"
+	ActionDeviceAssign      = "core:device:assign"
+	ActionDevicePostureList = "core:device-posture:list"
+
+	// DeviceEnrollmentToken actions
+	ActionDeviceEnrollmentTokenList   = "core:device-enrollment-token:list"
+	ActionDeviceEnrollmentTokenGet    = "core:device-enrollment-token:get"
+	ActionDeviceEnrollmentTokenCreate = "core:device-enrollment-token:create"
+	ActionDeviceEnrollmentTokenRevoke = "core:device-enrollment-token:revoke"
 )

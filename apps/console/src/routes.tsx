@@ -39,6 +39,7 @@ import { assetRoutes } from "./routes/assetRoutes";
 import { auditRoutes } from "./routes/auditRoutes";
 import { contextRoutes } from "./routes/contextRoutes";
 import { dataRoutes } from "./routes/dataRoutes";
+import { deviceRoutes } from "./routes/deviceRoutes";
 import { documentsRoutes } from "./routes/documentsRoutes";
 import { findingRoutes } from "./routes/findingRoutes";
 import { frameworkRoutes } from "./routes/frameworkRoutes";
@@ -294,6 +295,7 @@ const routes = [
           ...measureRoutes,
           ...documentsRoutes,
           ...thirdPartyRoutes,
+          ...deviceRoutes,
           ...frameworkRoutes,
           ...taskRoutes,
           ...assetRoutes,

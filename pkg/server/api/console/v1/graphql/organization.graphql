@@ -340,6 +340,21 @@ type Organization implements Node {
 
     thirdPartiesDocument: Document @goField(forceResolver: true)
 
+    devices(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: DeviceOrder
+    ): DeviceConnection! @goField(forceResolver: true)
+
+    deviceEnrollmentTokens(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+    ): DeviceEnrollmentTokenConnection! @goField(forceResolver: true)
+
     webhookSubscriptions(
         first: Int
         after: CursorKey
