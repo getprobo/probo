@@ -49,6 +49,42 @@ type (
 		AccountID string `json:"account_id"`
 		Region    string `json:"region"`
 	}
+
+	GitLabConnectorSettings struct {
+		GroupID string `json:"group_id"`
+	}
+
+	BitbucketConnectorSettings struct {
+		Workspace string `json:"workspace"`
+	}
+
+	HerokuConnectorSettings struct {
+		TeamID string `json:"team_id"`
+	}
+
+	PagerDutyConnectorSettings struct {
+		Subdomain string `json:"subdomain"`
+	}
+
+	AsanaConnectorSettings struct {
+		WorkspaceGID string `json:"workspace_gid"`
+	}
+
+	SnykConnectorSettings struct {
+		OrgID string `json:"org_id"`
+	}
+
+	NetlifyConnectorSettings struct {
+		AccountSlug string `json:"account_slug"`
+	}
+
+	ClickUpConnectorSettings struct {
+		TeamID string `json:"team_id"`
+	}
+
+	VercelConnectorSettings struct {
+		TeamID string `json:"team_id"`
+	}
 )
 
 // SetSettings marshals a typed settings struct into the connector's RawSettings.
@@ -118,6 +154,87 @@ func (c *Connector) GitHubSettings() (GitHubConnectorSettings, error) {
 // OnePasswordUsersAPISettings unmarshals the connector's RawSettings into OnePasswordUsersAPISettings.
 func (c *Connector) OnePasswordUsersAPISettings() (OnePasswordUsersAPISettings, error) {
 	var s OnePasswordUsersAPISettings
+	if err := c.unmarshalSettings(&s); err != nil {
+		return s, err
+	}
+	return s, nil
+}
+
+// GitLabSettings unmarshals the connector's RawSettings into GitLabConnectorSettings.
+func (c *Connector) GitLabSettings() (GitLabConnectorSettings, error) {
+	var s GitLabConnectorSettings
+	if err := c.unmarshalSettings(&s); err != nil {
+		return s, err
+	}
+	return s, nil
+}
+
+// BitbucketSettings unmarshals the connector's RawSettings into BitbucketConnectorSettings.
+func (c *Connector) BitbucketSettings() (BitbucketConnectorSettings, error) {
+	var s BitbucketConnectorSettings
+	if err := c.unmarshalSettings(&s); err != nil {
+		return s, err
+	}
+	return s, nil
+}
+
+// HerokuSettings unmarshals the connector's RawSettings into HerokuConnectorSettings.
+func (c *Connector) HerokuSettings() (HerokuConnectorSettings, error) {
+	var s HerokuConnectorSettings
+	if err := c.unmarshalSettings(&s); err != nil {
+		return s, err
+	}
+	return s, nil
+}
+
+// PagerDutySettings unmarshals the connector's RawSettings into PagerDutyConnectorSettings.
+func (c *Connector) PagerDutySettings() (PagerDutyConnectorSettings, error) {
+	var s PagerDutyConnectorSettings
+	if err := c.unmarshalSettings(&s); err != nil {
+		return s, err
+	}
+	return s, nil
+}
+
+// AsanaSettings unmarshals the connector's RawSettings into AsanaConnectorSettings.
+func (c *Connector) AsanaSettings() (AsanaConnectorSettings, error) {
+	var s AsanaConnectorSettings
+	if err := c.unmarshalSettings(&s); err != nil {
+		return s, err
+	}
+	return s, nil
+}
+
+// SnykSettings unmarshals the connector's RawSettings into SnykConnectorSettings.
+func (c *Connector) SnykSettings() (SnykConnectorSettings, error) {
+	var s SnykConnectorSettings
+	if err := c.unmarshalSettings(&s); err != nil {
+		return s, err
+	}
+	return s, nil
+}
+
+// NetlifySettings unmarshals the connector's RawSettings into NetlifyConnectorSettings.
+func (c *Connector) NetlifySettings() (NetlifyConnectorSettings, error) {
+	var s NetlifyConnectorSettings
+	if err := c.unmarshalSettings(&s); err != nil {
+		return s, err
+	}
+	return s, nil
+}
+
+// ClickUpSettings unmarshals the connector's RawSettings into ClickUpConnectorSettings.
+func (c *Connector) ClickUpSettings() (ClickUpConnectorSettings, error) {
+	var s ClickUpConnectorSettings
+	if err := c.unmarshalSettings(&s); err != nil {
+		return s, err
+	}
+	return s, nil
+}
+
+// VercelSettings unmarshals the connector's RawSettings into VercelConnectorSettings.
+func (c *Connector) VercelSettings() (VercelConnectorSettings, error) {
+	var s VercelConnectorSettings
 	if err := c.unmarshalSettings(&s); err != nil {
 		return s, err
 	}

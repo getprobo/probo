@@ -41,9 +41,22 @@ var providerOAuth2Scopes = map[coredata.ConnectorProvider][]string{
 		"https://graph.microsoft.com/Directory.Read.All",
 		"https://graph.microsoft.com/RoleManagement.Read.Directory",
 	},
+	coredata.ConnectorProviderGitLab:    {"read_api"},
+	coredata.ConnectorProviderHeroku:    {"read"},
+	coredata.ConnectorProviderPagerDuty: {"users.read"},
+	coredata.ConnectorProviderAsana:     {"users:read"},
+	coredata.ConnectorProviderSnyk:      {"org.read", "offline_access"},
+	coredata.ConnectorProviderRamp:      {"users:read"},
+	coredata.ConnectorProviderMonday:    {"users:read", "account:read"},
+	coredata.ConnectorProviderLever:     {"users:read:admin", "offline_access"},
+	coredata.ConnectorProviderDeel:      {"people:read", "organizations:read"},
 	// Notion and Intercom have no scopes here: Notion authorizes via
 	// extra-auth-params (owner=user), Intercom configures scopes at the app
-	// level.
+	// level. Bitbucket scopes are pinned on the OAuth consumer at
+	// registration time, not passed via the authorize URL. Netlify and
+	// ClickUp OAuth flows have no scope granularity, so they are also
+	// omitted. Vercel pins capabilities on the integration registration
+	// in the Vercel dashboard, so no scopes are passed here.
 }
 
 // ProviderOAuth2Scopes returns the OAuth2 scopes the access review driver

@@ -51,6 +51,19 @@ var providerDisplayNames = map[coredata.ConnectorProvider]string{
 	coredata.ConnectorProviderIntercom:        "Intercom",
 	coredata.ConnectorProviderResend:          "Resend",
 	coredata.ConnectorProviderMicrosoft365:    "Microsoft 365",
+	coredata.ConnectorProviderGitLab:          "GitLab",
+	coredata.ConnectorProviderBitbucket:       "Bitbucket",
+	coredata.ConnectorProviderHeroku:          "Heroku",
+	coredata.ConnectorProviderPagerDuty:       "PagerDuty",
+	coredata.ConnectorProviderAsana:           "Asana",
+	coredata.ConnectorProviderSnyk:            "Snyk",
+	coredata.ConnectorProviderNetlify:         "Netlify",
+	coredata.ConnectorProviderRamp:            "Ramp",
+	coredata.ConnectorProviderClickUp:         "ClickUp",
+	coredata.ConnectorProviderVercel:          "Vercel",
+	coredata.ConnectorProviderMonday:          "Monday.com",
+	coredata.ConnectorProviderLever:           "Lever",
+	coredata.ConnectorProviderDeel:            "Deel",
 }
 
 // ProviderDisplayName returns the human-readable label for a connector provider.
@@ -588,6 +601,586 @@ func NewResendNameResolver() NameResolver {
 
 func (r *resendNameResolver) ResolveInstanceName(_ context.Context) (string, error) {
 	return "Resend", nil
+}
+
+// gitlabNameResolver resolves the GitLab group name.
+type gitlabNameResolver struct {
+	httpClient *http.Client
+	groupID    string
+}
+
+func NewGitLabNameResolver(httpClient *http.Client, groupID string) NameResolver {
+	return &gitlabNameResolver{httpClient: httpClient, groupID: groupID}
+}
+
+func (r *gitlabNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
+	if r.groupID == "" {
+		return "", nil
+	}
+
+	url := fmt.Sprintf("https://gitlab.com/api/v4/groups/%s", r.groupID)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return "", fmt.Errorf("cannot create gitlab group request: %w", err)
+	}
+	req.Header.Set("Accept", "application/json")
+
+	httpResp, err := r.httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("cannot execute gitlab group request: %w", err)
+	}
+	defer func() { _ = httpResp.Body.Close() }()
+
+	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
+		return "", fmt.Errorf("cannot fetch gitlab group: unexpected status %d", httpResp.StatusCode)
+	}
+
+	var resp struct {
+		Name     string `json:"name"`
+		FullPath string `json:"full_path"`
+	}
+	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
+		return "", fmt.Errorf("cannot decode gitlab group response: %w", err)
+	}
+
+	if resp.Name != "" {
+		return resp.Name, nil
+	}
+	return resp.FullPath, nil
+}
+
+// bitbucketNameResolver resolves the Bitbucket workspace name.
+type bitbucketNameResolver struct {
+	httpClient *http.Client
+	workspace  string
+}
+
+func NewBitbucketNameResolver(httpClient *http.Client, workspace string) NameResolver {
+	return &bitbucketNameResolver{httpClient: httpClient, workspace: workspace}
+}
+
+func (r *bitbucketNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
+	if r.workspace == "" {
+		return "", nil
+	}
+
+	url := fmt.Sprintf("https://api.bitbucket.org/2.0/workspaces/%s", r.workspace)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return "", fmt.Errorf("cannot create bitbucket workspace request: %w", err)
+	}
+	req.Header.Set("Accept", "application/json")
+
+	httpResp, err := r.httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("cannot execute bitbucket workspace request: %w", err)
+	}
+	defer func() { _ = httpResp.Body.Close() }()
+
+	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
+		return "", fmt.Errorf("cannot fetch bitbucket workspace: unexpected status %d", httpResp.StatusCode)
+	}
+
+	var resp struct {
+		Name string `json:"name"`
+		Slug string `json:"slug"`
+	}
+	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
+		return "", fmt.Errorf("cannot decode bitbucket workspace response: %w", err)
+	}
+
+	if resp.Name != "" {
+		return resp.Name, nil
+	}
+	return resp.Slug, nil
+}
+
+// herokuNameResolver resolves the Heroku team name.
+type herokuNameResolver struct {
+	httpClient *http.Client
+	teamID     string
+}
+
+func NewHerokuNameResolver(httpClient *http.Client, teamID string) NameResolver {
+	return &herokuNameResolver{httpClient: httpClient, teamID: teamID}
+}
+
+func (r *herokuNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
+	if r.teamID == "" {
+		return "", nil
+	}
+
+	url := fmt.Sprintf("https://api.heroku.com/teams/%s", r.teamID)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return "", fmt.Errorf("cannot create heroku team request: %w", err)
+	}
+	req.Header.Set("Accept", "application/vnd.heroku+json; version=3")
+
+	httpResp, err := r.httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("cannot execute heroku team request: %w", err)
+	}
+	defer func() { _ = httpResp.Body.Close() }()
+
+	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
+		return "", fmt.Errorf("cannot fetch heroku team: unexpected status %d", httpResp.StatusCode)
+	}
+
+	var resp struct {
+		Name string `json:"name"`
+	}
+	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
+		return "", fmt.Errorf("cannot decode heroku team response: %w", err)
+	}
+
+	return resp.Name, nil
+}
+
+// pagerdutyNameResolver returns the PagerDuty subdomain stored in connector
+// settings. The subdomain is captured during the OAuth callback (see
+// handleConnectorComplete) so no HTTP call is required.
+type pagerdutyNameResolver struct {
+	subdomain string
+}
+
+func NewPagerDutyNameResolver(subdomain string) NameResolver {
+	return &pagerdutyNameResolver{subdomain: subdomain}
+}
+
+func (r *pagerdutyNameResolver) ResolveInstanceName(_ context.Context) (string, error) {
+	return r.subdomain, nil
+}
+
+// asanaNameResolver resolves the Asana workspace name.
+type asanaNameResolver struct {
+	httpClient   *http.Client
+	workspaceGID string
+}
+
+func NewAsanaNameResolver(httpClient *http.Client, workspaceGID string) NameResolver {
+	return &asanaNameResolver{httpClient: httpClient, workspaceGID: workspaceGID}
+}
+
+func (r *asanaNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
+	if r.workspaceGID == "" {
+		return "", nil
+	}
+
+	url := fmt.Sprintf("https://app.asana.com/api/1.0/workspaces/%s", r.workspaceGID)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return "", fmt.Errorf("cannot create asana workspace request: %w", err)
+	}
+	req.Header.Set("Accept", "application/json")
+
+	httpResp, err := r.httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("cannot execute asana workspace request: %w", err)
+	}
+	defer func() { _ = httpResp.Body.Close() }()
+
+	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
+		return "", fmt.Errorf("cannot fetch asana workspace: unexpected status %d", httpResp.StatusCode)
+	}
+
+	var resp struct {
+		Data struct {
+			Name string `json:"name"`
+		} `json:"data"`
+	}
+	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
+		return "", fmt.Errorf("cannot decode asana workspace response: %w", err)
+	}
+
+	return resp.Data.Name, nil
+}
+
+// snykNameResolver resolves the Snyk organization name.
+type snykNameResolver struct {
+	httpClient *http.Client
+	orgID      string
+}
+
+func NewSnykNameResolver(httpClient *http.Client, orgID string) NameResolver {
+	return &snykNameResolver{httpClient: httpClient, orgID: orgID}
+}
+
+func (r *snykNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
+	if r.orgID == "" {
+		return "", nil
+	}
+
+	url := fmt.Sprintf("https://api.snyk.io/rest/orgs/%s?version=2024-10-15", r.orgID)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return "", fmt.Errorf("cannot create snyk org request: %w", err)
+	}
+	req.Header.Set("Accept", "application/vnd.api+json")
+
+	httpResp, err := r.httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("cannot execute snyk org request: %w", err)
+	}
+	defer func() { _ = httpResp.Body.Close() }()
+
+	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
+		return "", fmt.Errorf("cannot fetch snyk org: unexpected status %d", httpResp.StatusCode)
+	}
+
+	var resp struct {
+		Data struct {
+			Attributes struct {
+				Name string `json:"name"`
+			} `json:"attributes"`
+		} `json:"data"`
+	}
+	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
+		return "", fmt.Errorf("cannot decode snyk org response: %w", err)
+	}
+
+	return resp.Data.Attributes.Name, nil
+}
+
+// netlifyNameResolver resolves the Netlify account name.
+type netlifyNameResolver struct {
+	httpClient  *http.Client
+	accountSlug string
+}
+
+func NewNetlifyNameResolver(httpClient *http.Client, accountSlug string) NameResolver {
+	return &netlifyNameResolver{httpClient: httpClient, accountSlug: accountSlug}
+}
+
+func (r *netlifyNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
+	if r.accountSlug == "" {
+		return "", nil
+	}
+
+	url := fmt.Sprintf("https://api.netlify.com/api/v1/accounts/%s", r.accountSlug)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return "", fmt.Errorf("cannot create netlify account request: %w", err)
+	}
+	req.Header.Set("Accept", "application/json")
+
+	httpResp, err := r.httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("cannot execute netlify account request: %w", err)
+	}
+	defer func() { _ = httpResp.Body.Close() }()
+
+	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
+		return "", fmt.Errorf("cannot fetch netlify account: unexpected status %d", httpResp.StatusCode)
+	}
+
+	var resp struct {
+		Name string `json:"name"`
+	}
+	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
+		return "", fmt.Errorf("cannot decode netlify account response: %w", err)
+	}
+
+	return resp.Name, nil
+}
+
+// rampNameResolver resolves the Ramp business name.
+type rampNameResolver struct {
+	httpClient *http.Client
+}
+
+func NewRampNameResolver(httpClient *http.Client) NameResolver {
+	return &rampNameResolver{httpClient: httpClient}
+}
+
+func (r *rampNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodGet,
+		"https://api.ramp.com/developer/v1/business",
+		nil,
+	)
+	if err != nil {
+		return "", fmt.Errorf("cannot create ramp business request: %w", err)
+	}
+	req.Header.Set("Accept", "application/json")
+
+	httpResp, err := r.httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("cannot execute ramp business request: %w", err)
+	}
+	defer func() { _ = httpResp.Body.Close() }()
+
+	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
+		return "", fmt.Errorf("cannot fetch ramp business: unexpected status %d", httpResp.StatusCode)
+	}
+
+	var resp struct {
+		BusinessName      string `json:"business_name"`
+		LegalBusinessName string `json:"legal_business_name"`
+	}
+	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
+		return "", fmt.Errorf("cannot decode ramp business response: %w", err)
+	}
+
+	if resp.BusinessName != "" {
+		return resp.BusinessName, nil
+	}
+	return resp.LegalBusinessName, nil
+}
+
+// clickupNameResolver resolves the ClickUp team name.
+type clickupNameResolver struct {
+	httpClient *http.Client
+	teamID     string
+}
+
+func NewClickUpNameResolver(httpClient *http.Client, teamID string) NameResolver {
+	return &clickupNameResolver{httpClient: httpClient, teamID: teamID}
+}
+
+func (r *clickupNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
+	if r.teamID == "" {
+		return "", nil
+	}
+
+	url := fmt.Sprintf("https://api.clickup.com/api/v2/team/%s", r.teamID)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return "", fmt.Errorf("cannot create clickup team request: %w", err)
+	}
+	req.Header.Set("Accept", "application/json")
+
+	httpResp, err := r.httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("cannot execute clickup team request: %w", err)
+	}
+	defer func() { _ = httpResp.Body.Close() }()
+
+	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
+		return "", fmt.Errorf("cannot fetch clickup team: unexpected status %d", httpResp.StatusCode)
+	}
+
+	var resp struct {
+		Team struct {
+			Name string `json:"name"`
+		} `json:"team"`
+	}
+	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
+		return "", fmt.Errorf("cannot decode clickup team response: %w", err)
+	}
+
+	return resp.Team.Name, nil
+}
+
+// vercelNameResolver resolves the Vercel team name. When the captured
+// TeamID is a personal-account UID, the v2 teams endpoint returns 404;
+// the resolver falls back to /v2/user and uses `username` (or `name`)
+// as the display name.
+type vercelNameResolver struct {
+	httpClient *http.Client
+	teamID     string
+}
+
+func NewVercelNameResolver(httpClient *http.Client, teamID string) NameResolver {
+	return &vercelNameResolver{httpClient: httpClient, teamID: teamID}
+}
+
+func (r *vercelNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
+	if r.teamID == "" {
+		return "", nil
+	}
+
+	teamURL := fmt.Sprintf("https://api.vercel.com/v2/teams/%s", r.teamID)
+	teamReq, err := http.NewRequestWithContext(ctx, http.MethodGet, teamURL, nil)
+	if err != nil {
+		return "", fmt.Errorf("cannot create vercel team request: %w", err)
+	}
+	teamReq.Header.Set("Accept", "application/json")
+
+	teamResp, err := r.httpClient.Do(teamReq)
+	if err != nil {
+		return "", fmt.Errorf("cannot execute vercel team request: %w", err)
+	}
+	defer func() { _ = teamResp.Body.Close() }()
+
+	if teamResp.StatusCode == http.StatusOK {
+		var body struct {
+			Name string `json:"name"`
+			Slug string `json:"slug"`
+		}
+		if err := json.NewDecoder(teamResp.Body).Decode(&body); err != nil {
+			return "", fmt.Errorf("cannot decode vercel team response: %w", err)
+		}
+		if body.Name != "" {
+			return body.Name, nil
+		}
+		return body.Slug, nil
+	}
+
+	if teamResp.StatusCode != http.StatusNotFound {
+		return "", fmt.Errorf("cannot fetch vercel team: unexpected status %d", teamResp.StatusCode)
+	}
+
+	// Personal-account fallback: /v2/teams/<uid> returns 404, but
+	// /v2/user works with the same Bearer token.
+	userReq, err := http.NewRequestWithContext(ctx, http.MethodGet, "https://api.vercel.com/v2/user", nil)
+	if err != nil {
+		return "", fmt.Errorf("cannot create vercel user request: %w", err)
+	}
+	userReq.Header.Set("Accept", "application/json")
+
+	userResp, err := r.httpClient.Do(userReq)
+	if err != nil {
+		return "", fmt.Errorf("cannot execute vercel user request: %w", err)
+	}
+	defer func() { _ = userResp.Body.Close() }()
+
+	if userResp.StatusCode < 200 || userResp.StatusCode >= 300 {
+		return "", fmt.Errorf("cannot fetch vercel user: unexpected status %d", userResp.StatusCode)
+	}
+
+	var userBody struct {
+		User struct {
+			Username string `json:"username"`
+			Name     string `json:"name"`
+		} `json:"user"`
+	}
+	if err := json.NewDecoder(userResp.Body).Decode(&userBody); err != nil {
+		return "", fmt.Errorf("cannot decode vercel user response: %w", err)
+	}
+
+	if userBody.User.Username != "" {
+		return userBody.User.Username, nil
+	}
+	return userBody.User.Name, nil
+}
+
+// mondayNameResolver resolves the Monday.com account name via GraphQL.
+type mondayNameResolver struct {
+	httpClient *http.Client
+}
+
+func NewMondayNameResolver(httpClient *http.Client) NameResolver {
+	return &mondayNameResolver{httpClient: httpClient}
+}
+
+func (r *mondayNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
+	body := struct {
+		Query string `json:"query"`
+	}{
+		Query: `query { account { id name slug tier } }`,
+	}
+
+	payload, err := json.Marshal(body)
+	if err != nil {
+		return "", fmt.Errorf("cannot marshal monday account query: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, mondayGraphQLEndpoint, bytes.NewReader(payload))
+	if err != nil {
+		return "", fmt.Errorf("cannot create monday account request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
+
+	httpResp, err := r.httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("cannot execute monday account request: %w", err)
+	}
+	defer func() { _ = httpResp.Body.Close() }()
+
+	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
+		return "", fmt.Errorf("cannot fetch monday account: unexpected status %d", httpResp.StatusCode)
+	}
+
+	var resp struct {
+		Data struct {
+			Account struct {
+				Name string `json:"name"`
+			} `json:"account"`
+		} `json:"data"`
+		Errors []struct {
+			Message string `json:"message"`
+		} `json:"errors"`
+	}
+	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
+		return "", fmt.Errorf("cannot decode monday account response: %w", err)
+	}
+
+	if len(resp.Errors) > 0 {
+		return "", fmt.Errorf("monday graphql error: %s", resp.Errors[0].Message)
+	}
+
+	return resp.Data.Account.Name, nil
+}
+
+// leverNameResolver returns an empty string: Lever does not expose a
+// dedicated org-name endpoint. The worker keeps the generic name and
+// the operator can rename the source manually.
+type leverNameResolver struct{}
+
+func NewLeverNameResolver() NameResolver {
+	return &leverNameResolver{}
+}
+
+func (r *leverNameResolver) ResolveInstanceName(_ context.Context) (string, error) {
+	return "", nil
+}
+
+// deelNameResolver resolves the Deel organization name by reading the
+// first item of /rest/v2/organizations.
+type deelNameResolver struct {
+	httpClient *http.Client
+}
+
+func NewDeelNameResolver(httpClient *http.Client) NameResolver {
+	return &deelNameResolver{httpClient: httpClient}
+}
+
+func (r *deelNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodGet,
+		"https://api.letsdeel.com/rest/v2/organizations",
+		nil,
+	)
+	if err != nil {
+		return "", fmt.Errorf("cannot create deel organizations request: %w", err)
+	}
+	req.Header.Set("Accept", "application/json")
+
+	httpResp, err := r.httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("cannot execute deel organizations request: %w", err)
+	}
+	defer func() { _ = httpResp.Body.Close() }()
+
+	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
+		return "", fmt.Errorf("cannot fetch deel organizations: unexpected status %d", httpResp.StatusCode)
+	}
+
+	var resp struct {
+		Data []struct {
+			Name string `json:"name"`
+		} `json:"data"`
+	}
+	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
+		return "", fmt.Errorf("cannot decode deel organizations response: %w", err)
+	}
+
+	if len(resp.Data) == 0 {
+		return "", nil
+	}
+
+	return resp.Data[0].Name, nil
 }
 
 // notionNameResolver resolves the Notion workspace name via /v1/users/me.

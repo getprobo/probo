@@ -35,6 +35,12 @@ type ConnectorConfig struct {
 type ConnectorConfigOAuth2 struct {
 	ClientID     string `json:"client-id"`
 	ClientSecret string `json:"client-secret"`
+	// IntegrationSlug is an operator-supplied value substituted into
+	// providers whose static AuthURL contains a "{integration_slug}"
+	// placeholder (Vercel-style integrations). It is propagated onto
+	// OAuth2Connector.AuthURLParams and resolved by
+	// connector.ApplyProviderDefaults.
+	IntegrationSlug string `json:"integration-slug,omitempty"`
 }
 
 func (c *Config) GetSlackSigningSecret() string {
@@ -87,6 +93,12 @@ func (c *ConnectorConfig) UnmarshalJSON(data []byte) error {
 		oauth2Connector := connector.OAuth2Connector{
 			ClientID:     config.ClientID,
 			ClientSecret: config.ClientSecret,
+		}
+
+		if config.IntegrationSlug != "" {
+			oauth2Connector.AuthURLParams = map[string]string{
+				"integration_slug": config.IntegrationSlug,
+			}
 		}
 
 		c.Config = &oauth2Connector

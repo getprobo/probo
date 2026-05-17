@@ -49,6 +49,7 @@ func TestBuildTokenRequest_PostForm(t *testing.T) {
 			context.Background(),
 			"test-code",
 			"https://example.com/callback",
+			"",
 		)
 		require.NoError(t, err)
 
@@ -84,6 +85,7 @@ func TestBuildTokenRequest_PostForm(t *testing.T) {
 			context.Background(),
 			"test-code",
 			"https://example.com/callback",
+			"",
 		)
 		require.NoError(t, err)
 
@@ -118,6 +120,7 @@ func TestBuildTokenRequest_BasicForm(t *testing.T) {
 		context.Background(),
 		"test-code",
 		"https://example.com/callback",
+		"",
 	)
 	require.NoError(t, err)
 
@@ -160,6 +163,7 @@ func TestBuildTokenRequest_BasicJSON(t *testing.T) {
 		context.Background(),
 		"test-code",
 		"https://example.com/callback",
+		"",
 	)
 	require.NoError(t, err)
 
@@ -552,4 +556,298 @@ func TestCompleteWithState_ScopeFallback(t *testing.T) {
 	// a space-separated RFC 6749 §3.3 scope string (sorted).
 	assert.Equal(t, "read:user write:user", oauth2Conn.Scope)
 	assert.Equal(t, []string{"read:user", "write:user"}, returnedState.RequestedScopes)
+}
+
+// TestInitiateWithState_PKCE verifies that connectors with RequiresPKCE=true
+// generate a PKCE verifier, embed the S256 challenge in the authorization
+// URL (RFC 7636 §4.3), and persist the verifier in the signed state token
+// so CompleteWithState can replay it on the token exchange.
+func TestInitiateWithState_PKCE(t *testing.T) {
+	t.Parallel()
+
+	t.Run("authorize URL carries S256 code_challenge when PKCE is required", func(t *testing.T) {
+		t.Parallel()
+
+		c := &OAuth2Connector{
+			ClientID:     "id",
+			ClientSecret: "secret",
+			RedirectURI:  "https://example.com/cb",
+			AuthURL:      "https://provider.example.com/authorize",
+			RequiresPKCE: true,
+		}
+
+		orgID := gid.New(gid.NewTenantID(), 0)
+
+		u, err := c.InitiateWithState(
+			context.Background(),
+			OAuth2State{OrganizationID: orgID.String(), Provider: "TEST"},
+			InitiateOptions{Scopes: []string{"read:user"}},
+		)
+		require.NoError(t, err)
+
+		parsed, err := url.Parse(u)
+		require.NoError(t, err)
+
+		challenge := parsed.Query().Get("code_challenge")
+		require.NotEmpty(t, challenge, "code_challenge must be present when RequiresPKCE=true")
+		assert.Equal(t, "S256", parsed.Query().Get("code_challenge_method"))
+
+		// The verifier is persisted in the signed state token. Decode
+		// the payload (without secret-checking — just inspect) and
+		// verify that re-deriving the challenge from the verifier
+		// reproduces the URL value.
+		stateToken := parsed.Query().Get("state")
+		require.NotEmpty(t, stateToken)
+
+		payload, err := DecodeOAuth2StatePayload(stateToken)
+		require.NoError(t, err)
+		require.NotEmpty(t, payload.Data.CodeVerifier, "verifier must be persisted in state token")
+		assert.Equal(t, challenge, pkceChallenge(payload.Data.CodeVerifier),
+			"code_challenge must equal base64url(sha256(verifier))")
+	})
+
+	t.Run("authorize URL omits PKCE params when PKCE is not required", func(t *testing.T) {
+		t.Parallel()
+
+		c := &OAuth2Connector{
+			ClientID:     "id",
+			ClientSecret: "secret",
+			RedirectURI:  "https://example.com/cb",
+			AuthURL:      "https://provider.example.com/authorize",
+			RequiresPKCE: false,
+		}
+
+		orgID := gid.New(gid.NewTenantID(), 0)
+
+		u, err := c.InitiateWithState(
+			context.Background(),
+			OAuth2State{OrganizationID: orgID.String(), Provider: "TEST"},
+			InitiateOptions{Scopes: []string{"read:user"}},
+		)
+		require.NoError(t, err)
+
+		parsed, err := url.Parse(u)
+		require.NoError(t, err)
+		assert.False(t, parsed.Query().Has("code_challenge"))
+		assert.False(t, parsed.Query().Has("code_challenge_method"))
+	})
+
+	t.Run("token POST replays code_verifier from state on PKCE flow", func(t *testing.T) {
+		t.Parallel()
+
+		var capturedVerifier string
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			body, err := io.ReadAll(r.Body)
+			assert.NoError(t, err)
+
+			form, err := url.ParseQuery(string(body))
+			assert.NoError(t, err)
+			capturedVerifier = form.Get("code_verifier")
+
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"access_token":"live-token","token_type":"Bearer","expires_in":3600}`))
+		}))
+		defer server.Close()
+
+		c := &OAuth2Connector{
+			ClientID:     "id",
+			ClientSecret: "secret",
+			RedirectURI:  "https://example.com/cb",
+			AuthURL:      "https://provider.example.com/authorize",
+			TokenURL:     server.URL,
+			RequiresPKCE: true,
+			HTTPClient:   httpclient.DefaultClient(httpclient.WithSSRFProtection(), httpclient.WithSSRFAllowLoopback()),
+		}
+
+		// Initiate to mint a state token that embeds a fresh PKCE verifier.
+		orgID := gid.New(gid.NewTenantID(), 0)
+		authURL, err := c.InitiateWithState(
+			context.Background(),
+			OAuth2State{OrganizationID: orgID.String(), Provider: "TEST"},
+			InitiateOptions{Scopes: []string{"read:user"}},
+		)
+		require.NoError(t, err)
+
+		parsed, err := url.Parse(authURL)
+		require.NoError(t, err)
+
+		stateToken := parsed.Query().Get("state")
+		require.NotEmpty(t, stateToken)
+
+		payload, err := DecodeOAuth2StatePayload(stateToken)
+		require.NoError(t, err)
+		expectedVerifier := payload.Data.CodeVerifier
+		require.NotEmpty(t, expectedVerifier)
+
+		// Drive Complete with that same state token + an arbitrary code.
+		req := httptest.NewRequest(
+			http.MethodGet,
+			"https://example.com/cb?code=the-code&state="+stateToken,
+			nil,
+		)
+
+		_, _, err = c.CompleteWithState(context.Background(), req)
+		require.NoError(t, err)
+
+		assert.Equal(t, expectedVerifier, capturedVerifier,
+			"token POST body must carry the verifier persisted in the state token")
+	})
+}
+
+// TestBuildTokenRequest_TokenExtraParams verifies that TokenExtraParams are
+// merged into the token-exchange body in all three auth branches. This
+// powers Lever's required `audience=https://api.lever.co/v1/` parameter
+// without any per-provider branching in the OAuth2 core.
+func TestBuildTokenRequest_TokenExtraParams(t *testing.T) {
+	t.Parallel()
+
+	t.Run("post-form merges audience into form body", func(t *testing.T) {
+		t.Parallel()
+
+		c := &OAuth2Connector{
+			ClientID:     "lever-client-id",
+			ClientSecret: "lever-client-secret",
+			TokenURL:     "https://auth.lever.co/oauth/token",
+			TokenExtraParams: map[string]string{
+				"audience": "https://api.lever.co/v1/",
+			},
+		}
+
+		req, err := c.buildTokenRequest(
+			context.Background(),
+			"the-code",
+			"https://example.com/cb",
+			"",
+		)
+		require.NoError(t, err)
+
+		body, err := io.ReadAll(req.Body)
+		require.NoError(t, err)
+
+		// Raw body check: the URL-encoded value must be present
+		// verbatim (catches any double-encoding regressions).
+		assert.Contains(t, string(body), "audience=https%3A%2F%2Fapi.lever.co%2Fv1%2F")
+
+		form, err := url.ParseQuery(string(body))
+		require.NoError(t, err)
+		assert.Equal(t, "https://api.lever.co/v1/", form.Get("audience"))
+		assert.Equal(t, "the-code", form.Get("code"))
+		assert.Equal(t, "authorization_code", form.Get("grant_type"))
+	})
+
+	t.Run("basic-form merges extra params into form body", func(t *testing.T) {
+		t.Parallel()
+
+		c := &OAuth2Connector{
+			ClientID:          "id",
+			ClientSecret:      "secret",
+			TokenURL:          "https://provider.example.com/oauth/token",
+			TokenEndpointAuth: "basic-form",
+			TokenExtraParams: map[string]string{
+				"audience": "https://api.lever.co/v1/",
+			},
+		}
+
+		req, err := c.buildTokenRequest(
+			context.Background(),
+			"the-code",
+			"https://example.com/cb",
+			"",
+		)
+		require.NoError(t, err)
+
+		body, err := io.ReadAll(req.Body)
+		require.NoError(t, err)
+
+		form, err := url.ParseQuery(string(body))
+		require.NoError(t, err)
+		assert.Equal(t, "https://api.lever.co/v1/", form.Get("audience"))
+	})
+
+	t.Run("basic-json merges extra params into JSON body", func(t *testing.T) {
+		t.Parallel()
+
+		c := &OAuth2Connector{
+			ClientID:          "id",
+			ClientSecret:      "secret",
+			TokenURL:          "https://provider.example.com/oauth/token",
+			TokenEndpointAuth: "basic-json",
+			TokenExtraParams: map[string]string{
+				"audience": "https://api.lever.co/v1/",
+			},
+		}
+
+		req, err := c.buildTokenRequest(
+			context.Background(),
+			"the-code",
+			"https://example.com/cb",
+			"",
+		)
+		require.NoError(t, err)
+
+		body, err := io.ReadAll(req.Body)
+		require.NoError(t, err)
+
+		var jsonBody map[string]string
+		require.NoError(t, json.Unmarshal(body, &jsonBody))
+		assert.Equal(t, "https://api.lever.co/v1/", jsonBody["audience"])
+	})
+}
+
+// TestApplyProviderDefaults_AuthURLTemplating verifies that operator-supplied
+// AuthURLParams (for example Vercel's "{integration_slug}") are substituted
+// into the static provider AuthURL when the connector is initialized.
+// Providers without placeholders are unaffected.
+func TestApplyProviderDefaults_AuthURLTemplating(t *testing.T) {
+	t.Parallel()
+
+	// Register a fake provider definition for the duration of this
+	// test so we do not have to wait for a real Vercel-style provider
+	// to land. Restore on teardown.
+	const fakeProvider = "TEST_TEMPLATED_AUTH_URL"
+	previous, hadPrevious := providerDefinitions[fakeProvider]
+	providerDefinitions[fakeProvider] = providerDefinition{
+		AuthURL:  "https://example.com/integrations/{integration_slug}/new",
+		TokenURL: "https://example.com/oauth/token",
+	}
+	t.Cleanup(func() {
+		if hadPrevious {
+			providerDefinitions[fakeProvider] = previous
+		} else {
+			delete(providerDefinitions, fakeProvider)
+		}
+	})
+
+	t.Run("placeholder is substituted when AuthURLParams is supplied", func(t *testing.T) {
+		t.Parallel()
+
+		c := &OAuth2Connector{
+			ClientID:     "id",
+			ClientSecret: "secret",
+			AuthURLParams: map[string]string{
+				"integration_slug": "acme",
+			},
+		}
+
+		ApplyProviderDefaults(fakeProvider, "https://example.com/cb", c)
+
+		assert.Equal(t, "https://example.com/integrations/acme/new", c.AuthURL)
+		assert.Equal(t, "https://example.com/oauth/token", c.TokenURL)
+	})
+
+	t.Run("placeholder remains literal when AuthURLParams is empty", func(t *testing.T) {
+		t.Parallel()
+
+		c := &OAuth2Connector{
+			ClientID:     "id",
+			ClientSecret: "secret",
+		}
+
+		ApplyProviderDefaults(fakeProvider, "https://example.com/cb", c)
+
+		// No substitution requested; the placeholder is preserved
+		// verbatim so a misconfiguration is visible at the
+		// authorization step rather than silently masked.
+		assert.Equal(t, "https://example.com/integrations/{integration_slug}/new", c.AuthURL)
+	})
 }
