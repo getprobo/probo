@@ -49,6 +49,10 @@ const (
 	ConnectorProviderClickUp      ConnectorProvider = "CLICKUP"
 	ConnectorProviderVercel       ConnectorProvider = "VERCEL"
 	ConnectorProviderMonday       ConnectorProvider = "MONDAY"
+	ConnectorProviderSnyk         ConnectorProvider = "SNYK"
+	ConnectorProviderRamp         ConnectorProvider = "RAMP"
+	ConnectorProviderLever        ConnectorProvider = "LEVER"
+	ConnectorProviderDeel         ConnectorProvider = "DEEL"
 )
 
 func ConnectorProviders() []ConnectorProvider {
@@ -79,6 +83,10 @@ func ConnectorProviders() []ConnectorProvider {
 		ConnectorProviderClickUp,
 		ConnectorProviderVercel,
 		ConnectorProviderMonday,
+		ConnectorProviderSnyk,
+		ConnectorProviderRamp,
+		ConnectorProviderLever,
+		ConnectorProviderDeel,
 	}
 }
 
@@ -150,6 +158,14 @@ func (cp *ConnectorProvider) Scan(value any) error {
 		*cp = ConnectorProviderVercel
 	case "MONDAY":
 		*cp = ConnectorProviderMonday
+	case "SNYK":
+		*cp = ConnectorProviderSnyk
+	case "RAMP":
+		*cp = ConnectorProviderRamp
+	case "LEVER":
+		*cp = ConnectorProviderLever
+	case "DEEL":
+		*cp = ConnectorProviderDeel
 	default:
 		return fmt.Errorf("invalid ConnectorProvider value: %q", s)
 	}
