@@ -62,6 +62,10 @@ var providerDisplayNames = map[coredata.ConnectorProvider]string{
 	coredata.ConnectorProviderClickUp:         "ClickUp",
 	coredata.ConnectorProviderVercel:          "Vercel",
 	coredata.ConnectorProviderMonday:          "Monday.com",
+	coredata.ConnectorProviderSnyk:            "Snyk",
+	coredata.ConnectorProviderRamp:            "Ramp",
+	coredata.ConnectorProviderLever:           "Lever",
+	coredata.ConnectorProviderDeel:            "Deel",
 }
 
 // ProviderDisplayName returns the human-readable label for a connector provider.
@@ -1110,4 +1114,157 @@ func (r *microsoft365NameResolver) ResolveInstanceName(ctx context.Context) (str
 		return org.VerifiedDomains[0].Name, nil
 	}
 	return "", nil
+}
+
+// snykNameResolver resolves the Snyk organization name.
+type snykNameResolver struct {
+	httpClient *http.Client
+	orgID      string
+}
+
+func NewSnykNameResolver(httpClient *http.Client, orgID string) NameResolver {
+	return &snykNameResolver{httpClient: httpClient, orgID: orgID}
+}
+
+func (r *snykNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
+	if r.orgID == "" {
+		return "", nil
+	}
+
+	endpoint := fmt.Sprintf("https://api.snyk.io/rest/orgs/%s?version=2024-10-15", url.PathEscape(r.orgID))
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
+	if err != nil {
+		return "", fmt.Errorf("cannot create snyk org request: %w", err)
+	}
+	req.Header.Set("Accept", "application/vnd.api+json")
+
+	httpResp, err := r.httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("cannot execute snyk org request: %w", err)
+	}
+	defer func() { _ = httpResp.Body.Close() }()
+
+	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
+		return "", fmt.Errorf("cannot fetch snyk org: unexpected status %d", httpResp.StatusCode)
+	}
+
+	var resp struct {
+		Data struct {
+			Attributes struct {
+				Name string `json:"name"`
+			} `json:"attributes"`
+		} `json:"data"`
+	}
+	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
+		return "", fmt.Errorf("cannot decode snyk org response: %w", err)
+	}
+
+	return resp.Data.Attributes.Name, nil
+}
+
+// rampNameResolver resolves the Ramp business name.
+type rampNameResolver struct {
+	httpClient *http.Client
+}
+
+func NewRampNameResolver(httpClient *http.Client) NameResolver {
+	return &rampNameResolver{httpClient: httpClient}
+}
+
+func (r *rampNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodGet,
+		"https://api.ramp.com/developer/v1/business",
+		nil,
+	)
+	if err != nil {
+		return "", fmt.Errorf("cannot create ramp business request: %w", err)
+	}
+	req.Header.Set("Accept", "application/json")
+
+	httpResp, err := r.httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("cannot execute ramp business request: %w", err)
+	}
+	defer func() { _ = httpResp.Body.Close() }()
+
+	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
+		return "", fmt.Errorf("cannot fetch ramp business: unexpected status %d", httpResp.StatusCode)
+	}
+
+	var resp struct {
+		BusinessName      string `json:"business_name"`
+		LegalBusinessName string `json:"legal_business_name"`
+	}
+	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
+		return "", fmt.Errorf("cannot decode ramp business response: %w", err)
+	}
+
+	if resp.BusinessName != "" {
+		return resp.BusinessName, nil
+	}
+	return resp.LegalBusinessName, nil
+}
+
+// leverNameResolver returns an empty string: Lever does not expose a
+// dedicated org-name endpoint. The worker keeps the generic name and
+// the operator can rename the source manually.
+type leverNameResolver struct{}
+
+func NewLeverNameResolver() NameResolver {
+	return &leverNameResolver{}
+}
+
+func (r *leverNameResolver) ResolveInstanceName(_ context.Context) (string, error) {
+	return "", nil
+}
+
+// deelNameResolver resolves the Deel organization name by reading the
+// first item of /rest/v2/organizations.
+type deelNameResolver struct {
+	httpClient *http.Client
+}
+
+func NewDeelNameResolver(httpClient *http.Client) NameResolver {
+	return &deelNameResolver{httpClient: httpClient}
+}
+
+func (r *deelNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodGet,
+		"https://api.letsdeel.com/rest/v2/organizations",
+		nil,
+	)
+	if err != nil {
+		return "", fmt.Errorf("cannot create deel organizations request: %w", err)
+	}
+	req.Header.Set("Accept", "application/json")
+
+	httpResp, err := r.httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("cannot execute deel organizations request: %w", err)
+	}
+	defer func() { _ = httpResp.Body.Close() }()
+
+	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
+		return "", fmt.Errorf("cannot fetch deel organizations: unexpected status %d", httpResp.StatusCode)
+	}
+
+	var resp struct {
+		Data []struct {
+			Name string `json:"name"`
+		} `json:"data"`
+	}
+	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
+		return "", fmt.Errorf("cannot decode deel organizations response: %w", err)
+	}
+
+	if len(resp.Data) == 0 {
+		return "", nil
+	}
+
+	return resp.Data[0].Name, nil
 }
