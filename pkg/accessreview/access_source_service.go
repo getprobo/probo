@@ -412,12 +412,6 @@ func (s AccessSourceService) ConfigureAccessSource(
 				}); err != nil {
 					return fmt.Errorf("cannot set asana settings: %w", err)
 				}
-			case coredata.ConnectorProviderSnyk:
-				if err := dbConnector.SetSettings(&coredata.SnykConnectorSettings{
-					OrgID: req.OrganizationSlug,
-				}); err != nil {
-					return fmt.Errorf("cannot set snyk settings: %w", err)
-				}
 			case coredata.ConnectorProviderNetlify:
 				if err := dbConnector.SetSettings(&coredata.NetlifyConnectorSettings{
 					AccountSlug: req.OrganizationSlug,

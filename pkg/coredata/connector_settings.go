@@ -70,10 +70,6 @@ type (
 		WorkspaceGID string `json:"workspace_gid"`
 	}
 
-	SnykConnectorSettings struct {
-		OrgID string `json:"org_id"`
-	}
-
 	NetlifyConnectorSettings struct {
 		AccountSlug string `json:"account_slug"`
 	}

@@ -423,15 +423,6 @@ func (e *ReviewEngine) resolveDriver(
 			return nil, fmt.Errorf("asana connector requires workspace_gid in settings")
 		}
 		return drivers.NewAsanaDriver(httpClient, asanaSettings.WorkspaceGID), nil
-	case coredata.ConnectorProviderSnyk:
-		snykSettings, err := coredata.ConnectorSettings[coredata.SnykConnectorSettings](dbConnector)
-		if err != nil {
-			return nil, fmt.Errorf("cannot read snyk connector settings: %w", err)
-		}
-		if snykSettings.OrgID == "" {
-			return nil, fmt.Errorf("snyk connector requires org_id in settings")
-		}
-		return drivers.NewSnykDriver(httpClient, snykSettings.OrgID), nil
 	case coredata.ConnectorProviderNetlify:
 		netlifySettings, err := coredata.ConnectorSettings[coredata.NetlifyConnectorSettings](dbConnector)
 		if err != nil {
@@ -441,8 +432,6 @@ func (e *ReviewEngine) resolveDriver(
 			return nil, fmt.Errorf("netlify connector requires account_slug in settings")
 		}
 		return drivers.NewNetlifyDriver(httpClient, netlifySettings.AccountSlug), nil
-	case coredata.ConnectorProviderRamp:
-		return drivers.NewRampDriver(httpClient), nil
 	case coredata.ConnectorProviderClickUp:
 		clickupSettings, err := coredata.ConnectorSettings[coredata.ClickUpConnectorSettings](dbConnector)
 		if err != nil {
@@ -463,10 +452,6 @@ func (e *ReviewEngine) resolveDriver(
 		return drivers.NewVercelDriver(httpClient, vercelSettings.TeamID), nil
 	case coredata.ConnectorProviderMonday:
 		return drivers.NewMondayDriver(httpClient), nil
-	case coredata.ConnectorProviderLever:
-		return drivers.NewLeverDriver(httpClient), nil
-	case coredata.ConnectorProviderDeel:
-		return drivers.NewDeelDriver(httpClient), nil
 	default:
 		return nil, fmt.Errorf("unsupported connector provider %q for access source driver", dbConnector.Provider)
 	}

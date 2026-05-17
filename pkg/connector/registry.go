@@ -142,17 +142,13 @@ var (
 		"HEROKU":           "https://api.heroku.com/account",
 		"PAGERDUTY":        "https://api.pagerduty.com/users/me",
 		"ASANA":            "https://app.asana.com/api/1.0/users/me",
-		"SNYK":             "https://api.snyk.io/rest/self?version=2024-10-15",
 		"NETLIFY":          "https://api.netlify.com/api/v1/user",
-		"RAMP":             "https://api.ramp.com/developer/v1/business",
 		"CLICKUP":          "https://api.clickup.com/api/v2/user",
 		"VERCEL":           "https://api.vercel.com/v2/user",
 		// Monday's primary API is GraphQL POST, but the probe handler
 		// is GET-only. Use the OIDC userinfo endpoint as a GET probe
 		// that returns 200/401 with the same Bearer token.
 		"MONDAY": "https://auth.monday.com/oauth2/userinfo",
-		"LEVER":  "https://api.lever.co/v1/users?limit=1",
-		"DEEL":   "https://api.letsdeel.com/rest/v2/people?limit=1",
 	}
 )
 

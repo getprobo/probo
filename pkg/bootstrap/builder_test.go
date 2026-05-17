@@ -442,8 +442,7 @@ func TestBuilder_Build_AccessReviewConnectors(t *testing.T) {
 	// CONNECTOR_VERCEL_INTEGRATION_SLUG env var.
 	providers := []string{
 		"GITLAB", "BITBUCKET", "HEROKU", "PAGERDUTY",
-		"ASANA", "SNYK", "NETLIFY", "RAMP", "CLICKUP",
-		"MONDAY", "LEVER", "DEEL",
+		"ASANA", "NETLIFY", "CLICKUP", "MONDAY",
 	}
 
 	env := requiredEnv()

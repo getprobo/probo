@@ -355,13 +355,9 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 		"HEROKU",
 		"PAGERDUTY",
 		"ASANA",
-		"SNYK",
 		"NETLIFY",
-		"RAMP",
 		"CLICKUP",
 		"MONDAY",
-		"LEVER",
-		"DEEL",
 	} {
 		clientID := b.getEnv("CONNECTOR_" + provider + "_CLIENT_ID")
 		if clientID == "" {
@@ -438,6 +434,15 @@ func (b *Builder) validateRequired() error {
 		{"CONNECTOR_BREX", []string{"CLIENT_SECRET"}},
 		{"CONNECTOR_GOOGLE_WORKSPACE", []string{"CLIENT_SECRET"}},
 		{"CONNECTOR_MICROSOFT_365", []string{"CLIENT_SECRET"}},
+		{"CONNECTOR_GITLAB", []string{"CLIENT_SECRET"}},
+		{"CONNECTOR_BITBUCKET", []string{"CLIENT_SECRET"}},
+		{"CONNECTOR_HEROKU", []string{"CLIENT_SECRET"}},
+		{"CONNECTOR_PAGERDUTY", []string{"CLIENT_SECRET"}},
+		{"CONNECTOR_ASANA", []string{"CLIENT_SECRET"}},
+		{"CONNECTOR_NETLIFY", []string{"CLIENT_SECRET"}},
+		{"CONNECTOR_CLICKUP", []string{"CLIENT_SECRET"}},
+		{"CONNECTOR_MONDAY", []string{"CLIENT_SECRET"}},
+		{"CONNECTOR_VERCEL", []string{"CLIENT_SECRET", "INTEGRATION_SLUG"}},
 	}
 
 	for _, p := range oauthProviders {

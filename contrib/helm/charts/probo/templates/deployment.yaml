@@ -283,7 +283,7 @@ spec:
             {{- end }}
             # Connectors (access-review OAuth2 providers added 2026)
             {{- range .Values.probo.connectors }}
-            {{- $accessReviewProviders := list "gitlab" "bitbucket" "heroku" "pagerduty" "asana" "snyk" "netlify" "ramp" "clickup" "vercel" "monday" "lever" "deel" }}
+            {{- $accessReviewProviders := list "gitlab" "bitbucket" "heroku" "pagerduty" "asana" "netlify" "clickup" "vercel" "monday" }}
             {{- if has .name $accessReviewProviders }}
             {{- $envPrefix := printf "CONNECTOR_%s" (.name | upper) }}
             {{- $secretPrefix := printf "connector-%s" .name }}

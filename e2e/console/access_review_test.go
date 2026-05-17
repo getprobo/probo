@@ -27,13 +27,12 @@ import (
 const testCsvData = "email,full_name,role,job_title,is_admin,mfa_status,auth_method,last_login,account_created_at,external_id\njane@example.com,Jane Smith,admin,CTO,true,ENABLED,SSO,2026-01-15T00:00:00Z,2024-06-01T00:00:00Z,ext-jane"
 
 // TODO(access-review-connectors): add e2e tests for the new GitLab,
-// Bitbucket, Heroku, PagerDuty, Asana, Snyk, Netlify, Ramp, ClickUp,
-// Vercel, Monday.com, Lever, and Deel access-source connectors once the
-// e2e factory grows OAuth2-connector seed support for arbitrary
-// providers. For now the per-driver VCR tests under
-// pkg/accessreview/drivers cover the fetch path; this e2e suite still
-// exercises CSV + Slack which were the providers wired before these
-// sprints.
+// Bitbucket, Heroku, PagerDuty, Asana, Netlify, ClickUp, Vercel, and
+// Monday.com access-source connectors once the e2e factory grows
+// OAuth2-connector seed support for arbitrary providers. For now the
+// per-driver VCR tests under pkg/accessreview/drivers cover the fetch
+// path; this e2e suite still exercises CSV + Slack which were the
+// providers wired before these sprints.
 func TestAccessSource_Create(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)

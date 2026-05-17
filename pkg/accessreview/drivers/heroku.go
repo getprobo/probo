@@ -96,6 +96,11 @@ func (d *HerokuDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 
 			isAdmin := m.Role == "admin" || m.Role == "owner"
 
+			externalID := m.User.ID
+			if externalID == "" {
+				externalID = m.ID
+			}
+
 			record := AccountRecord{
 				Email:       email,
 				FullName:    fullName,
@@ -104,7 +109,7 @@ func (d *HerokuDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 				MFAStatus:   mfaStatus,
 				AuthMethod:  coredata.AccessEntryAuthMethodUnknown,
 				AccountType: coredata.AccessEntryAccountTypeUser,
-				ExternalID:  email,
+				ExternalID:  externalID,
 			}
 
 			if m.CreatedAt != "" {

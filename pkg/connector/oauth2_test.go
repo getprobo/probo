@@ -882,12 +882,12 @@ func TestGeneratePKCEVerifier(t *testing.T) {
 }
 
 // TestApplyProviderDefaults_PKCEDefaults asserts that the registered
-// PAGERDUTY and SNYK provider defaults flip RequiresPKCE on so the
-// downstream Initiate/Complete flow generates a verifier and replays it.
+// PAGERDUTY provider defaults flip RequiresPKCE on so the downstream
+// Initiate/Complete flow generates a verifier and replays it.
 func TestApplyProviderDefaults_PKCEDefaults(t *testing.T) {
 	t.Parallel()
 
-	for _, provider := range []string{"PAGERDUTY", "SNYK"} {
+	for _, provider := range []string{"PAGERDUTY"} {
 		t.Run(provider, func(t *testing.T) {
 			t.Parallel()
 
@@ -897,31 +897,6 @@ func TestApplyProviderDefaults_PKCEDefaults(t *testing.T) {
 				"provider %s must enable PKCE so Initiate generates a verifier", provider)
 		})
 	}
-}
-
-// TestApplyProviderDefaults_TokenExtraParamsDeepCopy guards against the
-// shared-map aliasing bug class. Two connectors using the same provider
-// (LEVER carries a non-empty TokenExtraParams) must not share the
-// underlying map; mutating one must not be observable on the other or
-// in the package-level providerDefinitions.
-func TestApplyProviderDefaults_TokenExtraParamsDeepCopy(t *testing.T) {
-	t.Parallel()
-
-	c1 := &OAuth2Connector{ClientID: "id1", ClientSecret: "s1"}
-	c2 := &OAuth2Connector{ClientID: "id2", ClientSecret: "s2"}
-
-	ApplyProviderDefaults("LEVER", "https://example.com/cb", c1)
-	ApplyProviderDefaults("LEVER", "https://example.com/cb", c2)
-
-	require.NotNil(t, c1.TokenExtraParams)
-	require.NotNil(t, c2.TokenExtraParams)
-	require.Equal(t, "https://api.lever.co/v1/", c1.TokenExtraParams["audience"])
-
-	c1.TokenExtraParams["sentinel"] = "mutated"
-	assert.NotContains(t, c2.TokenExtraParams, "sentinel",
-		"second connector must not see mutations on the first")
-	assert.NotContains(t, providerDefinitions["LEVER"].TokenExtraParams, "sentinel",
-		"shared providerDefinitions map must remain pristine")
 }
 
 // TestCompleteWithState_PKCEMismatch confirms that a token endpoint

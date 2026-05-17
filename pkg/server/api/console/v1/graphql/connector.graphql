@@ -38,16 +38,12 @@ enum ConnectorProvider
     PAGERDUTY
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderPagerDuty")
     ASANA @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderAsana")
-    SNYK @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderSnyk")
     NETLIFY
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderNetlify")
-    RAMP @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderRamp")
     CLICKUP
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderClickUp")
     VERCEL @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderVercel")
     MONDAY @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderMonday")
-    LEVER @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderLever")
-    DEEL @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderDeel")
 }
 
 type ConnectorProviderInfo {

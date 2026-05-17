@@ -185,7 +185,7 @@ probo:
   # Supported providers (set name to one of):
   #   slack, hubspot, docusign, notion, github, sentry, intercom, brex,
   #   google_workspace, gitlab, bitbucket, heroku, pagerduty, asana,
-  #   snyk, netlify, ramp, clickup, vercel, monday, lever, deel
+  #   netlify, clickup, vercel, monday
   #
   # Vercel additionally requires "integration-slug" so the templated
   # AuthURL ("https://vercel.com/integrations/{integration_slug}/new")

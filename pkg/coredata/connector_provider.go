@@ -45,14 +45,10 @@ const (
 	ConnectorProviderHeroku       ConnectorProvider = "HEROKU"
 	ConnectorProviderPagerDuty    ConnectorProvider = "PAGERDUTY"
 	ConnectorProviderAsana        ConnectorProvider = "ASANA"
-	ConnectorProviderSnyk         ConnectorProvider = "SNYK"
 	ConnectorProviderNetlify      ConnectorProvider = "NETLIFY"
-	ConnectorProviderRamp         ConnectorProvider = "RAMP"
 	ConnectorProviderClickUp      ConnectorProvider = "CLICKUP"
 	ConnectorProviderVercel       ConnectorProvider = "VERCEL"
 	ConnectorProviderMonday       ConnectorProvider = "MONDAY"
-	ConnectorProviderLever        ConnectorProvider = "LEVER"
-	ConnectorProviderDeel         ConnectorProvider = "DEEL"
 )
 
 func ConnectorProviders() []ConnectorProvider {
@@ -79,14 +75,10 @@ func ConnectorProviders() []ConnectorProvider {
 		ConnectorProviderHeroku,
 		ConnectorProviderPagerDuty,
 		ConnectorProviderAsana,
-		ConnectorProviderSnyk,
 		ConnectorProviderNetlify,
-		ConnectorProviderRamp,
 		ConnectorProviderClickUp,
 		ConnectorProviderVercel,
 		ConnectorProviderMonday,
-		ConnectorProviderLever,
-		ConnectorProviderDeel,
 	}
 }
 
@@ -150,22 +142,14 @@ func (cp *ConnectorProvider) Scan(value any) error {
 		*cp = ConnectorProviderPagerDuty
 	case "ASANA":
 		*cp = ConnectorProviderAsana
-	case "SNYK":
-		*cp = ConnectorProviderSnyk
 	case "NETLIFY":
 		*cp = ConnectorProviderNetlify
-	case "RAMP":
-		*cp = ConnectorProviderRamp
 	case "CLICKUP":
 		*cp = ConnectorProviderClickUp
 	case "VERCEL":
 		*cp = ConnectorProviderVercel
 	case "MONDAY":
 		*cp = ConnectorProviderMonday
-	case "LEVER":
-		*cp = ConnectorProviderLever
-	case "DEEL":
-		*cp = ConnectorProviderDeel
 	default:
 		return fmt.Errorf("invalid ConnectorProvider value: %q", s)
 	}

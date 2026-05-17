@@ -92,14 +92,6 @@ var providerOrgConfigs = map[coredata.ConnectorProvider]providerOrgConfig{
 		},
 		NeedsPicker: true,
 	},
-	coredata.ConnectorProviderSnyk: {
-		ListOrgs: drivers.ListSnykOrganizations,
-		SelectedSlug: func(c *coredata.Connector) string {
-			s, _ := coredata.ConnectorSettings[coredata.SnykConnectorSettings](c)
-			return s.OrgID
-		},
-		NeedsPicker: true,
-	},
 	coredata.ConnectorProviderNetlify: {
 		ListOrgs: drivers.ListNetlifyOrganizations,
 		SelectedSlug: func(c *coredata.Connector) string {
