@@ -87,11 +87,15 @@ export class ConsentManager {
   }
 }
 
-let instance: ConsentManager | null = null;
+const GLOBAL_KEY = "__proboConsentManager";
 
 export function getConsent(): ConsentManager {
-  if (!instance) {
-    instance = new ConsentManager();
+  const g = typeof globalThis !== "undefined"
+    ? (globalThis as unknown as Record<string, unknown>)
+    : (window as unknown as Record<string, unknown>);
+
+  if (!g[GLOBAL_KEY]) {
+    g[GLOBAL_KEY] = new ConsentManager();
   }
-  return instance;
+  return g[GLOBAL_KEY] as ConsentManager;
 }
