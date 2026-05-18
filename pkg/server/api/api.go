@@ -34,6 +34,7 @@ import (
 	"go.probo.inc/probo/pkg/filesign"
 	"go.probo.inc/probo/pkg/geoloc"
 	"go.probo.inc/probo/pkg/iam"
+	"go.probo.inc/probo/pkg/itam"
 	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/riskmanagement"
@@ -67,6 +68,7 @@ type (
 		Geoloc            *geoloc.Service
 		ThirdParty        *thirdparty.Service
 		RiskManagement    *riskmanagement.Service
+		ITAM              *itam.Service
 		Cookie            securecookie.Config
 		TokenSecret       string
 		ConnectorRegistry *connector.ConnectorRegistry
@@ -209,6 +211,7 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.CustomDomainCname,
 			cfg.ThirdParty,
 			cfg.RiskManagement,
+			cfg.ITAM,
 		),
 		cookieBannerHandler: cookiebanner_v1.NewMux(
 			cfg.Logger.Named("cookiebanner.v1"),
@@ -256,7 +259,7 @@ func NewServer(cfg Config) (*Server, error) {
 		),
 		agentHandler: agent_v1.NewMux(
 			cfg.Logger.Named("agent.v1"),
-			cfg.Probo,
+			cfg.ITAM,
 			cfg.BaseURL.String(),
 		),
 	}, nil

@@ -123,7 +123,6 @@ type (
 		Files                                 *FileService
 		CustomDomains                         *CustomDomainService
 		SlackMessages                         *slack.Service
-		Devices                               *DeviceService
 	}
 )
 
@@ -265,7 +264,6 @@ func NewService(
 		logger:        logger.Named("custom_domains"),
 	}
 	svc.SlackMessages = slackService
-	svc.Devices = &DeviceService{svc: svc}
 
 	return svc, nil
 }

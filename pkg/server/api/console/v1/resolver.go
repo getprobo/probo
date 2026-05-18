@@ -35,6 +35,7 @@ import (
 	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
+	"go.probo.inc/probo/pkg/itam"
 	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/riskmanagement"
@@ -61,6 +62,7 @@ type (
 		providerRegistry  *provider.Registry
 		riskManagement    *riskmanagement.Service
 		thirdParty        *thirdparty.Service
+		itam              *itam.Service
 		logger            *log.Logger
 		customDomainCname string
 	}
@@ -82,6 +84,7 @@ func NewMux(
 	customDomainCname string,
 	thirdPartySvc *thirdparty.Service,
 	riskManagementSvc *riskmanagement.Service,
+	itamSvc *itam.Service,
 ) *chi.Mux {
 	r := chi.NewMux()
 
@@ -100,6 +103,7 @@ func NewMux(
 		logger,
 		thirdPartySvc,
 		riskManagementSvc,
+		itamSvc,
 	)
 
 	r.Group(func(r chi.Router) {

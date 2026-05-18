@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package probo
+package itam
 
 import (
 	"context"
@@ -24,20 +24,13 @@ import (
 	"fmt"
 	"time"
 
+	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/page"
 )
-
-// DeviceService exposes admin (tenant-scoped) operations on devices and
-// enrollment tokens. Operations driven by the agent itself (Enroll,
-// Heartbeat, RecordPostures, Unenroll) live on the parent Service since
-// the agent does not know which tenant it belongs to until enrolment
-// resolves it.
-type DeviceService struct {
-	svc *Service
-}
 
 var (
 	// ErrEnrollmentTokenInvalid is returned when an /enroll request is
@@ -51,17 +44,27 @@ var (
 )
 
 const (
-	// DeviceEnrollmentTokenRawLength is the number of random bytes used
-	// for an enrollment token secret. base64url-encoded that's 43 chars.
-	DeviceEnrollmentTokenRawLength = 32
+	// EnrollmentTokenRawLength is the number of random bytes used for an
+	// enrollment token secret. base64url-encoded that's 43 chars.
+	EnrollmentTokenRawLength = 32
 
-	// DeviceAPIKeyRawLength is the number of random bytes for a device
-	// API key secret. base64url-encoded that's 64 chars.
-	DeviceAPIKeyRawLength = 48
+	// APIKeyRawLength is the number of random bytes for a device API
+	// key secret. base64url-encoded that's 64 chars.
+	APIKeyRawLength = 48
 )
 
 type (
-	CreateDeviceEnrollmentTokenRequest struct {
+	// Service is the IT Asset Management service. Tenant-scoped admin
+	// operations take a scope parameter from the caller; agent-facing
+	// operations (enroll, authenticate, heartbeat, postures, unenroll)
+	// resolve their own scope internally because the agent does not know
+	// which tenant it belongs to until enrolment resolves it.
+	Service struct {
+		pg     *pg.Client
+		logger *log.Logger
+	}
+
+	CreateEnrollmentTokenRequest struct {
 		OrganizationID      gid.GID
 		Name                string
 		Validity            time.Duration
@@ -69,10 +72,10 @@ type (
 		CreatedByIdentityID *gid.GID
 	}
 
-	// CreateDeviceEnrollmentTokenResult is returned to the caller once,
-	// at creation time. The plain token is never persisted; only its hash
+	// CreateEnrollmentTokenResult is returned to the caller once, at
+	// creation time. The plain token is never persisted; only its hash
 	// is stored.
-	CreateDeviceEnrollmentTokenResult struct {
+	CreateEnrollmentTokenResult struct {
 		Token *coredata.DeviceEnrollmentToken
 		// Secret is the unhashed token value the admin needs to give the
 		// agent installer. Shown once.
@@ -104,16 +107,25 @@ type (
 	}
 )
 
-// hashDeviceSecret hashes a token/api-key value the same way for storage
-// and lookup. SHA-256 is sufficient: the secret is high-entropy random.
-func hashDeviceSecret(secret string) []byte {
+func NewService(pgClient *pg.Client, iamSvc *iam.Service, logger *log.Logger) *Service {
+	iamSvc.Authorizer.RegisterPolicySet(ITAMPolicySet())
+
+	return &Service{
+		pg:     pgClient,
+		logger: logger,
+	}
+}
+
+// hashSecret hashes a token/api-key value the same way for storage and
+// lookup. SHA-256 is sufficient: the secret is high-entropy random.
+func hashSecret(secret string) []byte {
 	sum := sha256.Sum256([]byte(secret))
 	return sum[:]
 }
 
-// generateDeviceSecret returns a base64url-encoded random secret of the
-// given raw byte length.
-func generateDeviceSecret(rawLen int) (string, error) {
+// generateSecret returns a base64url-encoded random secret of the given
+// raw byte length.
+func generateSecret(rawLen int) (string, error) {
 	buf := make([]byte, rawLen)
 	if _, err := rand.Read(buf); err != nil {
 		return "", fmt.Errorf("cannot generate random secret: %w", err)
@@ -122,14 +134,14 @@ func generateDeviceSecret(rawLen int) (string, error) {
 }
 
 // ------------------------------------------------------------------
-// Admin-facing operations (tenant-scoped)
+// Admin-facing operations (tenant-scoped via caller-provided scope)
 // ------------------------------------------------------------------
 
-func (s DeviceService) CreateEnrollmentToken(
+func (s *Service) CreateEnrollmentToken(
 	ctx context.Context,
 	scope coredata.Scoper,
-	req CreateDeviceEnrollmentTokenRequest,
-) (*CreateDeviceEnrollmentTokenResult, error) {
+	req CreateEnrollmentTokenRequest,
+) (*CreateEnrollmentTokenResult, error) {
 	if req.OrganizationID == gid.Nil {
 		return nil, fmt.Errorf("organization_id is required")
 	}
@@ -140,7 +152,7 @@ func (s DeviceService) CreateEnrollmentToken(
 		req.Validity = 7 * 24 * time.Hour
 	}
 
-	secret, err := generateDeviceSecret(DeviceEnrollmentTokenRawLength)
+	secret, err := generateSecret(EnrollmentTokenRawLength)
 	if err != nil {
 		return nil, err
 	}
@@ -150,7 +162,7 @@ func (s DeviceService) CreateEnrollmentToken(
 		ID:                  gid.New(req.OrganizationID.TenantID(), coredata.DeviceEnrollmentTokenEntityType),
 		OrganizationID:      req.OrganizationID,
 		Name:                req.Name,
-		TokenHash:           hashDeviceSecret(secret),
+		TokenHash:           hashSecret(secret),
 		CreatedByIdentityID: req.CreatedByIdentityID,
 		ExpiresAt:           now.Add(req.Validity),
 		MaxUses:             req.MaxUses,
@@ -159,168 +171,231 @@ func (s DeviceService) CreateEnrollmentToken(
 		UpdatedAt:           now,
 	}
 
-	err = s.svc.pg.WithTx(ctx, func(ctx context.Context, conn pg.Tx) error {
-		organization := &coredata.Organization{}
-		if err := organization.LoadByID(ctx, conn, scope, req.OrganizationID); err != nil {
-			return fmt.Errorf("cannot load organization: %w", err)
-		}
-		if err := token.Insert(ctx, conn, scope); err != nil {
-			return fmt.Errorf("cannot insert device enrollment token: %w", err)
-		}
-		return nil
-	})
+	err = s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, conn pg.Tx) error {
+			organization := &coredata.Organization{}
+			if err := organization.LoadByID(ctx, conn, scope, req.OrganizationID); err != nil {
+				return fmt.Errorf("cannot load organization: %w", err)
+			}
+
+			if err := token.Insert(ctx, conn, scope); err != nil {
+				return fmt.Errorf("cannot insert device enrollment token: %w", err)
+			}
+
+			return nil
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	return &CreateDeviceEnrollmentTokenResult{Token: token, Secret: secret}, nil
+	return &CreateEnrollmentTokenResult{Token: token, Secret: secret}, nil
 }
 
-func (s DeviceService) RevokeEnrollmentToken(
+func (s *Service) RevokeEnrollmentToken(
 	ctx context.Context,
 	scope coredata.Scoper,
 	tokenID gid.GID,
 ) (*coredata.DeviceEnrollmentToken, error) {
 	token := &coredata.DeviceEnrollmentToken{}
 
-	err := s.svc.pg.WithTx(ctx, func(ctx context.Context, conn pg.Tx) error {
-		if err := token.LoadByID(ctx, conn, scope, tokenID); err != nil {
-			return fmt.Errorf("cannot load device enrollment token: %w", err)
-		}
-		if err := token.Revoke(ctx, conn, scope); err != nil {
-			return fmt.Errorf("cannot revoke device enrollment token: %w", err)
-		}
-		return nil
-	})
+	err := s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, conn pg.Tx) error {
+			if err := token.LoadByID(ctx, conn, scope, tokenID); err != nil {
+				return fmt.Errorf("cannot load device enrollment token: %w", err)
+			}
+
+			if err := token.Revoke(ctx, conn, scope); err != nil {
+				return fmt.Errorf("cannot revoke device enrollment token: %w", err)
+			}
+
+			return nil
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
+
 	return token, nil
 }
 
-func (s DeviceService) ListEnrollmentTokens(
+func (s *Service) ListEnrollmentTokens(
 	ctx context.Context,
 	scope coredata.Scoper,
 	organizationID gid.GID,
 ) (coredata.DeviceEnrollmentTokens, error) {
 	var tokens coredata.DeviceEnrollmentTokens
-	err := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-		return tokens.LoadByOrganizationID(ctx, conn, scope, organizationID)
-	})
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := tokens.LoadByOrganizationID(ctx, conn, scope, organizationID); err != nil {
+				return fmt.Errorf("cannot load device enrollment tokens: %w", err)
+			}
+
+			return nil
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
+
 	return tokens, nil
 }
 
-func (s DeviceService) GetDevice(
+func (s *Service) GetDevice(
 	ctx context.Context,
 	scope coredata.Scoper,
 	deviceID gid.GID,
 ) (*coredata.Device, error) {
 	device := &coredata.Device{}
-	err := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-		return device.LoadByID(ctx, conn, scope, deviceID)
-	})
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := device.LoadByID(ctx, conn, scope, deviceID); err != nil {
+				return fmt.Errorf("cannot load device: %w", err)
+			}
+
+			return nil
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
+
 	return device, nil
 }
 
-func (s DeviceService) ListForOrganizationID(
+func (s *Service) ListForOrganizationID(
 	ctx context.Context,
 	scope coredata.Scoper,
 	organizationID gid.GID,
 	cursor *page.Cursor[coredata.DeviceOrderField],
 ) (*page.Page[*coredata.Device, coredata.DeviceOrderField], error) {
 	var devices coredata.Devices
-	err := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-		return devices.LoadByOrganizationID(ctx, conn, scope, organizationID, cursor)
-	})
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := devices.LoadByOrganizationID(ctx, conn, scope, organizationID, cursor); err != nil {
+				return fmt.Errorf("cannot load devices: %w", err)
+			}
+
+			return nil
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
+
 	return page.NewPage(devices, cursor), nil
 }
 
-func (s DeviceService) CountForOrganizationID(
+func (s *Service) CountForOrganizationID(
 	ctx context.Context,
 	scope coredata.Scoper,
 	organizationID gid.GID,
 ) (int, error) {
 	var count int
-	err := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-		var ds coredata.Devices
-		c, err := ds.CountByOrganizationID(ctx, conn, scope, organizationID)
-		if err != nil {
-			return err
-		}
-		count = c
-		return nil
-	})
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			var ds coredata.Devices
+			c, err := ds.CountByOrganizationID(ctx, conn, scope, organizationID)
+			if err != nil {
+				return err
+			}
+
+			count = c
+
+			return nil
+		},
+	)
+
 	return count, err
 }
 
-func (s DeviceService) RevokeDevice(
+func (s *Service) RevokeDevice(
 	ctx context.Context,
 	scope coredata.Scoper,
 	deviceID gid.GID,
 ) (*coredata.Device, error) {
 	device := &coredata.Device{}
-	err := s.svc.pg.WithTx(ctx, func(ctx context.Context, conn pg.Tx) error {
-		if err := device.LoadByID(ctx, conn, scope, deviceID); err != nil {
-			return fmt.Errorf("cannot load device: %w", err)
-		}
-		if err := device.Revoke(ctx, conn, scope); err != nil {
-			return fmt.Errorf("cannot revoke device: %w", err)
-		}
-		return nil
-	})
+	err := s.pg.WithTx(
+		ctx, func(
+			ctx context.Context, conn pg.Tx) error {
+			if err := device.LoadByID(ctx, conn, scope, deviceID); err != nil {
+				return fmt.Errorf("cannot load device: %w", err)
+			}
+
+			if err := device.Revoke(ctx, conn, scope); err != nil {
+				return fmt.Errorf("cannot revoke device: %w", err)
+			}
+
+			return nil
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
+
 	return device, nil
 }
 
-func (s DeviceService) AssignDeviceToUser(
+func (s *Service) AssignDeviceToUser(
 	ctx context.Context,
 	scope coredata.Scoper,
 	deviceID gid.GID,
 	identityID *gid.GID,
 ) (*coredata.Device, error) {
 	device := &coredata.Device{}
-	err := s.svc.pg.WithTx(ctx, func(ctx context.Context, conn pg.Tx) error {
-		if err := device.LoadByID(ctx, conn, scope, deviceID); err != nil {
-			return fmt.Errorf("cannot load device: %w", err)
-		}
-		if err := device.AssignUser(ctx, conn, scope, identityID); err != nil {
-			return fmt.Errorf("cannot assign device user: %w", err)
-		}
-		return nil
-	})
+
+	err := s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, conn pg.Tx) error {
+			if err := device.LoadByID(ctx, conn, scope, deviceID); err != nil {
+				return fmt.Errorf("cannot load device: %w", err)
+			}
+
+			if err := device.AssignUser(ctx, conn, scope, identityID); err != nil {
+				return fmt.Errorf("cannot assign device user: %w", err)
+			}
+
+			return nil
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
+
 	return device, nil
 }
 
-func (s DeviceService) GetLatestPostures(
+func (s *Service) GetLatestPostures(
 	ctx context.Context,
 	scope coredata.Scoper,
 	deviceID gid.GID,
 ) (coredata.DevicePostures, error) {
 	var postures coredata.DevicePostures
-	err := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-		return postures.LoadLatestByDeviceID(ctx, conn, scope, deviceID)
-	})
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := postures.LoadLatestByDeviceID(ctx, conn, scope, deviceID); err != nil {
+				return fmt.Errorf("cannot load latest device postures: %w", err)
+			}
+
+			return nil
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
+
 	return postures, nil
 }
 
-func (s DeviceService) GetPostureHistory(
+func (s *Service) GetPostureHistory(
 	ctx context.Context,
 	scope coredata.Scoper,
 	deviceID gid.GID,
@@ -328,21 +403,24 @@ func (s DeviceService) GetPostureHistory(
 	limit int,
 ) (coredata.DevicePostures, error) {
 	var postures coredata.DevicePostures
-	err := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-		return postures.LoadHistoryByDeviceIDAndCheckKey(ctx, conn, scope, deviceID, checkKey, limit)
-	})
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := postures.LoadHistoryByDeviceIDAndCheckKey(ctx, conn, scope, deviceID, checkKey, limit); err != nil {
+				return fmt.Errorf("cannot load device posture history: %w", err)
+			}
+
+			return nil
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
+
 	return postures, nil
 }
 
-// ------------------------------------------------------------------
-// Agent-facing operations (cross-tenant; on parent Service)
-// ------------------------------------------------------------------
-
-// EnrollDevice consumes an enrollment token and provisions a new device
-// row, returning the device-API-key the agent should persist.
 func (s *Service) EnrollDevice(
 	ctx context.Context,
 	req EnrollDeviceRequest,
@@ -350,19 +428,22 @@ func (s *Service) EnrollDevice(
 	if req.EnrollmentSecret == "" {
 		return nil, ErrEnrollmentTokenInvalid
 	}
+
 	if req.HardwareUUID == "" {
 		return nil, fmt.Errorf("hardware_uuid is required")
 	}
+
 	if !req.Platform.IsValid() {
 		return nil, fmt.Errorf("invalid platform: %q", req.Platform)
 	}
 
-	tokenHash := hashDeviceSecret(req.EnrollmentSecret)
-	apiKey, err := generateDeviceSecret(DeviceAPIKeyRawLength)
+	tokenHash := hashSecret(req.EnrollmentSecret)
+	apiKey, err := generateSecret(APIKeyRawLength)
 	if err != nil {
 		return nil, err
 	}
-	apiKeyHash := hashDeviceSecret(apiKey)
+
+	apiKeyHash := hashSecret(apiKey)
 
 	var device *coredata.Device
 	now := time.Now()
@@ -446,7 +527,7 @@ func (s *Service) AuthenticateDevice(
 	if apiKey == "" {
 		return nil, coredata.ErrResourceNotFound
 	}
-	hash := hashDeviceSecret(apiKey)
+	hash := hashSecret(apiKey)
 
 	device := &coredata.Device{}
 	err := s.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
@@ -464,12 +545,12 @@ func (s *Service) AuthenticateDevice(
 // RecordHeartbeat updates the device's last-seen / version columns.
 func (s *Service) RecordHeartbeat(
 	ctx context.Context,
+	scope coredata.Scoper,
 	deviceID gid.GID,
 	hostname string,
 	osVersion string,
 	agentVersion string,
 ) error {
-	scope := coredata.NewScope(deviceID.TenantID())
 	return s.pg.WithTx(ctx, func(ctx context.Context, conn pg.Tx) error {
 		device := &coredata.Device{}
 		if err := device.LoadByID(ctx, conn, scope, deviceID); err != nil {
@@ -494,13 +575,13 @@ func (s *Service) RecordHeartbeat(
 // RecordPostures appends posture results for a device.
 func (s *Service) RecordPostures(
 	ctx context.Context,
+	scope coredata.Scoper,
 	deviceID gid.GID,
 	results []RecordPostureResult,
 ) error {
 	if len(results) == 0 {
 		return nil
 	}
-	scope := coredata.NewScope(deviceID.TenantID())
 	now := time.Now()
 
 	return s.pg.WithTx(ctx, func(ctx context.Context, conn pg.Tx) error {
@@ -542,9 +623,9 @@ func (s *Service) RecordPostures(
 // its uninstaller, before the local key is wiped.
 func (s *Service) UnenrollDevice(
 	ctx context.Context,
+	scope coredata.Scoper,
 	deviceID gid.GID,
 ) error {
-	scope := coredata.NewScope(deviceID.TenantID())
 	return s.pg.WithTx(ctx, func(ctx context.Context, conn pg.Tx) error {
 		device := &coredata.Device{}
 		if err := device.LoadByID(ctx, conn, scope, deviceID); err != nil {

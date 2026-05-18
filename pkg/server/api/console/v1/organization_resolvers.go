@@ -15,6 +15,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
+	"go.probo.inc/probo/pkg/itam"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
@@ -1354,7 +1355,7 @@ func (r *organizationResolver) ThirdPartiesDocument(ctx context.Context, obj *ty
 
 // Devices is the resolver for the devices field.
 func (r *organizationResolver) Devices(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DeviceOrderBy) (*types.DeviceConnection, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionDeviceList)
+	scope, err := r.authorize(ctx, obj.ID, itam.ActionDeviceList)
 	if err != nil {
 		return nil, err
 	}
@@ -1372,7 +1373,7 @@ func (r *organizationResolver) Devices(ctx context.Context, obj *types.Organizat
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	devicesPage, err := r.probo.Devices.ListForOrganizationID(ctx, scope, obj.ID, cursor)
+	devicesPage, err := r.itam.ListForOrganizationID(ctx, scope, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list organization devices", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -1383,12 +1384,12 @@ func (r *organizationResolver) Devices(ctx context.Context, obj *types.Organizat
 
 // DeviceEnrollmentTokens is the resolver for the deviceEnrollmentTokens field.
 func (r *organizationResolver) DeviceEnrollmentTokens(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.DeviceEnrollmentTokenConnection, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionDeviceEnrollmentTokenList)
+	scope, err := r.authorize(ctx, obj.ID, itam.ActionDeviceEnrollmentTokenList)
 	if err != nil {
 		return nil, err
 	}
 
-	tokens, err := r.probo.Devices.ListEnrollmentTokens(ctx, scope, obj.ID)
+	tokens, err := r.itam.ListEnrollmentTokens(ctx, scope, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list organization device enrollment tokens", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
