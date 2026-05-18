@@ -349,22 +349,48 @@ func findMergeGroups(
 }
 
 func heuristicTemplate(name string) (string, bool) {
-	tokens, sep := splitTokens(name)
-	if sep == 0 {
+	tokens, seps := splitTokens(name)
+	if len(seps) == 0 {
 		return "", false
 	}
 
-	s := string(sep)
+	// Trim leading empty tokens (e.g. "__Secure-..." yields ["", "", ...]).
+	var prefix string
+	for len(tokens) > 1 && tokens[0] == "" {
+		prefix += string(seps[0])
+		tokens = tokens[1:]
+		seps = seps[1:]
+	}
+
+	// Trim trailing empty tokens.
+	var suffix string
+	for len(tokens) > 1 && tokens[len(tokens)-1] == "" {
+		suffix = string(seps[len(seps)-1]) + suffix
+		tokens = tokens[:len(tokens)-1]
+		seps = seps[:len(seps)-1]
+	}
+
+	if len(seps) == 0 {
+		return "", false
+	}
+
 	changed := false
-	var result []string
-	for _, t := range tokens {
+	var resultTokens []string
+	var resultSeps []byte
+	for i, t := range tokens {
 		if looksVariable(t) {
 			changed = true
-			if len(result) == 0 || result[len(result)-1] != "*" {
-				result = append(result, "*")
+			if len(resultTokens) == 0 || resultTokens[len(resultTokens)-1] != "*" {
+				if i > 0 {
+					resultSeps = append(resultSeps, seps[i-1])
+				}
+				resultTokens = append(resultTokens, "*")
 			}
 		} else {
-			result = append(result, t)
+			if i > 0 {
+				resultSeps = append(resultSeps, seps[i-1])
+			}
+			resultTokens = append(resultTokens, t)
 		}
 	}
 
@@ -372,7 +398,7 @@ func heuristicTemplate(name string) (string, bool) {
 		return "", false
 	}
 
-	return strings.Join(result, s), true
+	return prefix + joinTokens(resultTokens, resultSeps) + suffix, true
 }
 
 func templateCandidates(name string) []string {
@@ -384,11 +410,12 @@ func templateCandidates(name string) []string {
 		}
 	}
 
-	tokens, sep := splitTokens(name)
-	if len(tokens) >= 3 && sep != 0 {
-		s := string(sep)
+	tokens, seps := splitTokens(name)
+	if len(tokens) >= 3 && len(seps) > 0 {
 		for pos := 1; pos < len(tokens)-1; pos++ {
-			tmpl := strings.Join(tokens[:pos], s) + s + "*" + s + strings.Join(tokens[pos+1:], s)
+			left := joinTokens(tokens[:pos], seps[:pos-1])
+			right := joinTokens(tokens[pos+1:], seps[pos+1:])
+			tmpl := left + string(seps[pos-1]) + "*" + string(seps[pos]) + right
 			candidates = append(candidates, tmpl)
 		}
 	}
@@ -462,14 +489,45 @@ func isUUIDShape(s string) bool {
 	return true
 }
 
-func splitTokens(name string) ([]string, byte) {
-	if found := strings.Contains(name, "_"); found {
-		return strings.Split(name, "_"), '_'
+func splitTokens(name string) ([]string, []byte) {
+	underscoreParts := strings.Split(name, "_")
+
+	var tokens []string
+	var seps []byte
+
+	for i, part := range underscoreParts {
+		if i > 0 {
+			seps = append(seps, '_')
+		}
+
+		if isUUIDShape(part) || !strings.Contains(part, "-") {
+			tokens = append(tokens, part)
+		} else {
+			for j, sub := range strings.Split(part, "-") {
+				if j > 0 {
+					seps = append(seps, '-')
+				}
+				tokens = append(tokens, sub)
+			}
+		}
 	}
-	if found := strings.Contains(name, "-"); found {
-		return strings.Split(name, "-"), '-'
+
+	if len(seps) == 0 {
+		return []string{name}, nil
 	}
-	return []string{name}, 0
+
+	return tokens, seps
+}
+
+func joinTokens(tokens []string, seps []byte) string {
+	var b strings.Builder
+	for i, t := range tokens {
+		if i > 0 {
+			b.WriteByte(seps[i-1])
+		}
+		b.WriteString(t)
+	}
+	return b.String()
 }
 
 func globMatch(pattern, name string) bool {

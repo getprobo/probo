@@ -233,6 +233,11 @@ func TestHeuristicTemplate(t *testing.T) {
 			template: "c15t-consent-*",
 			changed:  true,
 		},
+		{
+			name:    "leading underscores with dash not variable",
+			input:   "__Secure-1PSID",
+			changed: false,
+		},
 	}
 
 	for _, tt := range tests {
@@ -456,31 +461,43 @@ func TestSplitTokens(t *testing.T) {
 		name   string
 		input  string
 		tokens []string
-		sep    byte
+		seps   []byte
 	}{
 		{
 			name:   "underscore separator",
 			input:  "ph_phc_abc",
 			tokens: []string{"ph", "phc", "abc"},
-			sep:    '_',
+			seps:   []byte{'_', '_'},
 		},
 		{
 			name:   "dash separator",
 			input:  "c15t-consent-abc",
 			tokens: []string{"c15t", "consent", "abc"},
-			sep:    '-',
+			seps:   []byte{'-', '-'},
 		},
 		{
 			name:   "no separator",
 			input:  "PHPSESSID",
 			tokens: []string{"PHPSESSID"},
-			sep:    0,
+			seps:   nil,
 		},
 		{
-			name:   "underscore takes priority over dash",
+			name:   "mixed separators split both",
 			input:  "foo_bar-baz",
-			tokens: []string{"foo", "bar-baz"},
-			sep:    '_',
+			tokens: []string{"foo", "bar", "baz"},
+			seps:   []byte{'_', '-'},
+		},
+		{
+			name:   "leading underscores with dash",
+			input:  "__Secure-1PSID",
+			tokens: []string{"", "", "Secure", "1PSID"},
+			seps:   []byte{'_', '_', '-'},
+		},
+		{
+			name:   "UUID preserved as single token",
+			input:  "session_550e8400-e29b-41d4-a716-446655440000_data",
+			tokens: []string{"session", "550e8400-e29b-41d4-a716-446655440000", "data"},
+			seps:   []byte{'_', '_'},
 		},
 	}
 
@@ -489,9 +506,9 @@ func TestSplitTokens(t *testing.T) {
 			tt.name,
 			func(t *testing.T) {
 				t.Parallel()
-				tokens, sep := splitTokens(tt.input)
+				tokens, seps := splitTokens(tt.input)
 				assert.Equal(t, tt.tokens, tokens)
-				assert.Equal(t, tt.sep, sep)
+				assert.Equal(t, tt.seps, seps)
 			},
 		)
 	}
@@ -877,6 +894,21 @@ func TestFindMergeGroups(t *testing.T) {
 			statGroup, ok := groups[mergeGroupKey{categoryID: gid.Nil, trackerType: coredata.TrackerTypeCookie, template: "foo_bar_*", durationBucket: durationBucket(&oneYear)}]
 			require.True(t, ok)
 			assert.Len(t, statGroup, 3)
+		},
+	)
+
+	t.Run(
+		"secure prefix cookies do not produce heuristic glob",
+		func(t *testing.T) {
+			t.Parallel()
+
+			patterns := coredata.TrackerPatterns{
+				makePattern("__Secure-1PSID", &oneYear),
+				makePattern("__Secure-1PSIDTS", &oneYear),
+			}
+
+			groups := findMergeGroups(patterns, 3)
+			assert.Empty(t, groups)
 		},
 	)
 }
