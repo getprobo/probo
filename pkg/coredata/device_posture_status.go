@@ -40,6 +40,15 @@ func (s DevicePostureStatus) IsValid() bool {
 	return false
 }
 
+func DevicePostureStatuses() []DevicePostureStatus {
+	return []DevicePostureStatus{
+		DevicePostureStatusPass,
+		DevicePostureStatusFail,
+		DevicePostureStatusUnknown,
+		DevicePostureStatusNotApplicable,
+	}
+}
+
 func (s DevicePostureStatus) MarshalText() ([]byte, error) {
 	if !s.IsValid() {
 		return nil, fmt.Errorf("invalid device posture status: %q", string(s))

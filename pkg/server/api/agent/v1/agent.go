@@ -24,7 +24,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/go-chi/chi/v5"
 	"go.gearno.de/kit/httpserver"
@@ -32,29 +31,16 @@ import (
 	"go.probo.inc/probo/pkg/bearertoken"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/probo"
+	"go.probo.inc/probo/pkg/server/api/agent/v1/types"
 	"go.probo.inc/probo/pkg/server/jsonutil"
 )
 
-const (
-	// DefaultHeartbeatIntervalSeconds is the cadence the server tells the
-	// agent to heartbeat at. Tunable in future via per-org overrides.
-	DefaultHeartbeatIntervalSeconds = 300
-
-	// DefaultPostureIntervalSeconds is how often the agent should run the
-	// posture check set.
-	DefaultPostureIntervalSeconds = 3600
-
-	maxPostureResultsPerRequest = 200
-)
-
-// Handler bundles the dependencies for the /api/agent/v1 router.
 type Handler struct {
 	logger      *log.Logger
 	proboSvc    *probo.Service
 	agentServer string
 }
 
-// NewMux returns a chi router mounted at /api/agent/v1.
 func NewMux(logger *log.Logger, proboSvc *probo.Service, agentServer string) *chi.Mux {
 	h := &Handler{
 		logger:      logger,
@@ -65,103 +51,56 @@ func NewMux(logger *log.Logger, proboSvc *probo.Service, agentServer string) *ch
 	r := chi.NewRouter()
 	r.Post("/enroll", h.handleEnroll)
 
-	r.Group(func(r chi.Router) {
-		r.Use(h.deviceAuthMiddleware)
-		r.Post("/heartbeat", h.handleHeartbeat)
-		r.Post("/postures", h.handlePostures)
-		r.Post("/unenroll", h.handleUnenroll)
-	})
+	r.Group(
+		func(r chi.Router) {
+			r.Use(h.deviceAuthMiddleware)
+			r.Post("/heartbeat", h.handleHeartbeat)
+			r.Post("/postures", h.handlePostures)
+			r.Post("/unenroll", h.handleUnenroll)
+		},
+	)
 
 	return r
 }
 
-type (
-	enrollRequest struct {
-		EnrollmentToken string                  `json:"enrollment_token"`
-		HardwareUUID    string                  `json:"hardware_uuid"`
-		SerialNumber    *string                 `json:"serial_number,omitempty"`
-		Hostname        string                  `json:"hostname"`
-		Platform        coredata.DevicePlatform `json:"platform"`
-		OSVersion       string                  `json:"os_version"`
-		AgentVersion    string                  `json:"agent_version"`
-	}
-
-	enrollResponse struct {
-		DeviceID         string `json:"device_id"`
-		APIKey           string `json:"api_key"`
-		HeartbeatSeconds int    `json:"heartbeat_interval_seconds"`
-		PostureSeconds   int    `json:"posture_interval_seconds"`
-		ServerTime       string `json:"server_time"`
-	}
-
-	heartbeatRequest struct {
-		AgentVersion string `json:"agent_version,omitempty"`
-		Hostname     string `json:"hostname,omitempty"`
-		OSVersion    string `json:"os_version,omitempty"`
-		UptimeSec    int64  `json:"uptime_seconds,omitempty"`
-	}
-
-	heartbeatResponse struct {
-		HeartbeatSeconds int    `json:"heartbeat_interval_seconds"`
-		PostureSeconds   int    `json:"posture_interval_seconds"`
-		ServerTime       string `json:"server_time"`
-	}
-
-	postureResult struct {
-		CheckKey   string                       `json:"check_key"`
-		Status     coredata.DevicePostureStatus `json:"status"`
-		Evidence   json.RawMessage              `json:"evidence,omitempty"`
-		ObservedAt time.Time                    `json:"observed_at"`
-	}
-
-	postureRequest struct {
-		Results []postureResult `json:"results"`
-	}
-)
-
 func (h *Handler) handleEnroll(w http.ResponseWriter, r *http.Request) {
 	defer func() { _ = r.Body.Close() }()
 
-	var req enrollRequest
+	var req types.EnrollRequest
 	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<16)).Decode(&req); err != nil {
-		jsonutil.RenderBadRequest(w, fmt.Errorf("invalid request body"))
-		return
-	}
-	if req.EnrollmentToken == "" || req.HardwareUUID == "" || req.Hostname == "" || req.Platform == "" {
-		jsonutil.RenderBadRequest(w, fmt.Errorf("missing required field"))
-		return
-	}
-	if !req.Platform.IsValid() {
-		jsonutil.RenderBadRequest(w, fmt.Errorf("invalid platform"))
+		jsonutil.RenderBadRequest(w, fmt.Errorf("cannot decode request body: %w", err))
 		return
 	}
 
-	result, err := h.proboSvc.EnrollDevice(r.Context(), probo.EnrollDeviceRequest{
-		EnrollmentSecret: req.EnrollmentToken,
-		HardwareUUID:     req.HardwareUUID,
-		SerialNumber:     req.SerialNumber,
-		Hostname:         req.Hostname,
-		Platform:         req.Platform,
-		OSVersion:        req.OSVersion,
-		AgentVersion:     req.AgentVersion,
-	})
+	if err := req.Validate(); err != nil {
+		jsonutil.RenderBadRequest(w, fmt.Errorf("invalid request body: %w", err))
+		return
+	}
+
+	result, err := h.proboSvc.EnrollDevice(
+		r.Context(),
+		probo.EnrollDeviceRequest{
+			EnrollmentSecret: req.EnrollmentToken,
+			HardwareUUID:     req.HardwareUUID,
+			SerialNumber:     req.SerialNumber,
+			Hostname:         req.Hostname,
+			Platform:         req.Platform,
+			OSVersion:        req.OSVersion,
+			AgentVersion:     req.AgentVersion,
+		},
+	)
 	if err != nil {
 		if errors.Is(err, probo.ErrEnrollmentTokenInvalid) {
-			jsonutil.RenderUnauthorized(w, fmt.Errorf("enrollment token is invalid"))
+			jsonutil.RenderUnauthorized(w, errors.New("enrollment token is invalid"))
 			return
 		}
+
 		h.logger.ErrorCtx(r.Context(), "cannot enroll device", log.Error(err))
 		jsonutil.RenderInternalServerError(w)
 		return
 	}
 
-	httpserver.RenderJSON(w, http.StatusOK, enrollResponse{
-		DeviceID:         result.Device.ID.String(),
-		APIKey:           result.APIKey,
-		HeartbeatSeconds: DefaultHeartbeatIntervalSeconds,
-		PostureSeconds:   DefaultPostureIntervalSeconds,
-		ServerTime:       time.Now().UTC().Format(time.RFC3339),
-	})
+	httpserver.RenderJSON(w, http.StatusOK, types.NewEnrollResponse(result))
 }
 
 func (h *Handler) handleHeartbeat(w http.ResponseWriter, r *http.Request) {
@@ -169,12 +108,20 @@ func (h *Handler) handleHeartbeat(w http.ResponseWriter, r *http.Request) {
 
 	device := deviceFromContext(r.Context())
 	if device == nil {
-		jsonutil.RenderUnauthorized(w, fmt.Errorf("unauthorized"))
+		jsonutil.RenderUnauthorized(w, errors.New("unauthorized"))
 		return
 	}
 
-	var req heartbeatRequest
-	_ = json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<14)).Decode(&req)
+	var req types.HeartbeatRequest
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<14)).Decode(&req); err != nil {
+		jsonutil.RenderBadRequest(w, fmt.Errorf("cannot decode request body: %w", err))
+		return
+	}
+
+	if err := req.Validate(); err != nil {
+		jsonutil.RenderBadRequest(w, fmt.Errorf("invalid request body: %w", err))
+		return
+	}
 
 	if err := h.proboSvc.RecordHeartbeat(
 		r.Context(),
@@ -184,19 +131,16 @@ func (h *Handler) handleHeartbeat(w http.ResponseWriter, r *http.Request) {
 		req.AgentVersion,
 	); err != nil {
 		if errors.Is(err, probo.ErrDeviceRevoked) {
-			jsonutil.RenderUnauthorized(w, fmt.Errorf("device revoked"))
+			jsonutil.RenderUnauthorized(w, errors.New("device revoked"))
 			return
 		}
+
 		h.logger.ErrorCtx(r.Context(), "cannot record heartbeat", log.Error(err))
 		jsonutil.RenderInternalServerError(w)
 		return
 	}
 
-	httpserver.RenderJSON(w, http.StatusOK, heartbeatResponse{
-		HeartbeatSeconds: DefaultHeartbeatIntervalSeconds,
-		PostureSeconds:   DefaultPostureIntervalSeconds,
-		ServerTime:       time.Now().UTC().Format(time.RFC3339),
-	})
+	httpserver.RenderJSON(w, http.StatusOK, types.NewHeartbeatResponse())
 }
 
 func (h *Handler) handlePostures(w http.ResponseWriter, r *http.Request) {
@@ -204,43 +148,45 @@ func (h *Handler) handlePostures(w http.ResponseWriter, r *http.Request) {
 
 	device := deviceFromContext(r.Context())
 	if device == nil {
-		jsonutil.RenderUnauthorized(w, fmt.Errorf("unauthorized"))
+		jsonutil.RenderUnauthorized(w, errors.New("unauthorized"))
 		return
 	}
 
-	var req postureRequest
+	var req types.PostureRequest
 	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20)).Decode(&req); err != nil {
-		jsonutil.RenderBadRequest(w, fmt.Errorf("invalid request body"))
+		jsonutil.RenderBadRequest(w, fmt.Errorf("cannot decode request body: %w", err))
 		return
 	}
+
+	if err := req.Validate(); err != nil {
+		jsonutil.RenderBadRequest(w, fmt.Errorf("invalid request body: %w", err))
+		return
+	}
+
 	if len(req.Results) == 0 {
 		w.WriteHeader(http.StatusNoContent)
-		return
-	}
-	if len(req.Results) > maxPostureResultsPerRequest {
-		jsonutil.RenderBadRequest(w, fmt.Errorf("too many results, maximum is %d", maxPostureResultsPerRequest))
 		return
 	}
 
 	results := make([]probo.RecordPostureResult, 0, len(req.Results))
 	for _, pr := range req.Results {
-		if pr.CheckKey == "" || !pr.Status.IsValid() {
-			jsonutil.RenderBadRequest(w, fmt.Errorf("invalid posture entry"))
-			return
-		}
-		results = append(results, probo.RecordPostureResult{
-			CheckKey:   pr.CheckKey,
-			Status:     pr.Status,
-			Evidence:   pr.Evidence,
-			ObservedAt: pr.ObservedAt,
-		})
+		results = append(
+			results,
+			probo.RecordPostureResult{
+				CheckKey:   pr.CheckKey,
+				Status:     pr.Status,
+				Evidence:   pr.Evidence,
+				ObservedAt: pr.ObservedAt,
+			},
+		)
 	}
 
 	if err := h.proboSvc.RecordPostures(r.Context(), device.ID, results); err != nil {
 		if errors.Is(err, probo.ErrDeviceRevoked) {
-			jsonutil.RenderUnauthorized(w, fmt.Errorf("device revoked"))
+			jsonutil.RenderUnauthorized(w, errors.New("device revoked"))
 			return
 		}
+
 		h.logger.ErrorCtx(r.Context(), "cannot record postures", log.Error(err))
 		jsonutil.RenderInternalServerError(w)
 		return
@@ -254,7 +200,7 @@ func (h *Handler) handleUnenroll(w http.ResponseWriter, r *http.Request) {
 
 	device := deviceFromContext(r.Context())
 	if device == nil {
-		jsonutil.RenderUnauthorized(w, fmt.Errorf("unauthorized"))
+		jsonutil.RenderUnauthorized(w, errors.New("unauthorized"))
 		return
 	}
 
@@ -281,19 +227,19 @@ func (h *Handler) deviceAuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		auth := r.Header.Get("Authorization")
 		if auth == "" {
-			jsonutil.RenderUnauthorized(w, fmt.Errorf("missing authorization"))
+			jsonutil.RenderUnauthorized(w, errors.New("missing authorization"))
 			return
 		}
 		token, err := bearertoken.Parse(auth)
 		if err != nil {
-			jsonutil.RenderUnauthorized(w, fmt.Errorf("invalid bearer token"))
+			jsonutil.RenderUnauthorized(w, errors.New("invalid bearer token"))
 			return
 		}
 
 		device, err := h.proboSvc.AuthenticateDevice(r.Context(), token)
 		if err != nil {
 			if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, probo.ErrDeviceRevoked) {
-				jsonutil.RenderUnauthorized(w, fmt.Errorf("unauthorized"))
+				jsonutil.RenderUnauthorized(w, errors.New("unauthorized"))
 				return
 			}
 			h.logger.ErrorCtx(r.Context(), "cannot authenticate device", log.Error(err))
