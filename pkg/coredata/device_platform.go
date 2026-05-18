@@ -40,6 +40,15 @@ func (p DevicePlatform) IsValid() bool {
 	return false
 }
 
+func DevicePlatforms() []DevicePlatform {
+	return []DevicePlatform{
+		DevicePlatformDarwin,
+		DevicePlatformLinux,
+		DevicePlatformFreeBSD,
+		DevicePlatformWindows,
+	}
+}
+
 func (p DevicePlatform) MarshalText() ([]byte, error) {
 	if !p.IsValid() {
 		return nil, fmt.Errorf("invalid device platform: %q", string(p))
