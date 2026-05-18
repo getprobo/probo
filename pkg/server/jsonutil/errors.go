@@ -36,3 +36,7 @@ func RenderNotFound(w http.ResponseWriter, err error) {
 func RenderBadRequest(w http.ResponseWriter, err error) {
 	httpserver.RenderError(w, http.StatusBadRequest, err)
 }
+
+func RenderUnauthorized(w http.ResponseWriter, err error) {
+	httpserver.RenderError(w, http.StatusUnauthorized, err)
+}
