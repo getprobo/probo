@@ -355,9 +355,9 @@ func heuristicTemplate(name string) (string, bool) {
 	}
 
 	// Trim leading empty tokens (e.g. "__Secure-..." yields ["", "", ...]).
-	var prefix string
+	var prefix strings.Builder
 	for len(tokens) > 1 && tokens[0] == "" {
-		prefix += string(seps[0])
+		prefix.WriteString(string(seps[0]))
 		tokens = tokens[1:]
 		seps = seps[1:]
 	}
@@ -398,7 +398,7 @@ func heuristicTemplate(name string) (string, bool) {
 		return "", false
 	}
 
-	return prefix + joinTokens(resultTokens, resultSeps) + suffix, true
+	return prefix.String() + joinTokens(resultTokens, resultSeps) + suffix, true
 }
 
 func templateCandidates(name string) []string {
