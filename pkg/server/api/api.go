@@ -298,16 +298,22 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// list that applies to console/connect routes.
 	router.Mount("/cookie-banner/v1", http.StripPrefix("/cookie-banner/v1", s.cookieBannerHandler))
 
-	router.Group(func(r chi.Router) {
-		r.Use(cors.Handler(corsOpts))
-		r.Mount("/console/v1", http.StripPrefix("/console/v1", s.consoleHandler))
-		r.Mount("/connect/v1", http.StripPrefix("/connect/v1", s.connectHandler))
-		r.Mount("/files/v1", http.StripPrefix("/files/v1", s.filesHandler))
-		r.Mount("/trust/v1", http.StripPrefix("/trust/v1", s.compliancePageHandler))
-		r.Mount("/mcp/v1", http.StripPrefix("/mcp/v1", s.mcpHandler))
-		r.Mount("/slack/v1", http.StripPrefix("/slack/v1", s.slackHandler))
-		r.Mount("/agent/v1", http.StripPrefix("/agent/v1", s.agentHandler))
-	})
+	// Those API should never be called from a browser; mount them outside
+	// to avoid CORS headers to be set on them.
+	router.Mount("/agent/v1", http.StripPrefix("/agent/v1", s.agentHandler))
+	router.Mount("/slack/v1", http.StripPrefix("/slack/v1", s.slackHandler))
+
+	router.Group(
+		func(r chi.Router) {
+			r.Use(cors.Handler(corsOpts))
+
+			r.Mount("/console/v1", http.StripPrefix("/console/v1", s.consoleHandler))
+			r.Mount("/connect/v1", http.StripPrefix("/connect/v1", s.connectHandler))
+			r.Mount("/files/v1", http.StripPrefix("/files/v1", s.filesHandler))
+			r.Mount("/trust/v1", http.StripPrefix("/trust/v1", s.compliancePageHandler))
+			r.Mount("/mcp/v1", http.StripPrefix("/mcp/v1", s.mcpHandler))
+		},
+	)
 
 	s.csrf.Handler(router).ServeHTTP(w, r)
 }
