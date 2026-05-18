@@ -12,64 +12,88 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { formatDate } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
-import {
-  ActionDropdown,
-  Button,
-  DropdownItem,
-  IconPlusLarge,
-  IconTrashCan,
-  PageHeader,
-  Tbody,
-  Td,
-  Th,
-  Thead,
-  Tr,
-} from "@probo/ui";
+import { PageHeader, Tbody, Th, Thead, Tr } from "@probo/ui";
+import type { ComponentProps } from "react";
 import {
   type PreloadedQuery,
   usePaginationFragment,
   usePreloadedQuery,
 } from "react-relay";
-import { useNavigate } from "react-router";
+import { graphql } from "relay-runtime";
 
-import type { DeviceGraphListQuery } from "#/__generated__/core/DeviceGraphListQuery.graphql";
-import type {
-  DeviceGraphPaginatedFragment$data,
-  DeviceGraphPaginatedFragment$key,
-} from "#/__generated__/core/DeviceGraphPaginatedFragment.graphql";
+import type { DevicesPageFragment$key } from "#/__generated__/core/DevicesPageFragment.graphql";
+import type { DevicesPageFragment_RefetchQuery } from "#/__generated__/core/DevicesPageFragment_RefetchQuery.graphql";
+import type { DevicesPageQuery } from "#/__generated__/core/DevicesPageQuery.graphql";
 import { SortableTable, SortableTh } from "#/components/SortableTable";
-import {
-  devicesQuery,
-  paginatedDevicesFragment,
-  useRevokeDevice,
-} from "#/hooks/graph/DeviceGraph";
-import { useOrganizationId } from "#/hooks/useOrganizationId";
-import type { NodeOf } from "#/types";
 
-type Device = NodeOf<DeviceGraphPaginatedFragment$data["devices"]>;
+import { DeviceRow } from "./_components/DeviceRow";
 
-type Props = {
-  queryRef: PreloadedQuery<DeviceGraphListQuery>;
-};
+export const devicesPageQuery = graphql`
+  query DevicesPageQuery($organizationId: ID!) {
+    organization: node(id: $organizationId) @required(action: THROW) {
+      __typename
+      ... on Organization {
+        id
+        canRevokeDevice: permission(action: "core:device:revoke")
+        ...DevicesPageFragment
+      }
+    }
+  }
+`;
 
-export default function DevicesPage(props: Props) {
+const devicesPageFragment = graphql`
+  fragment DevicesPageFragment on Organization
+  @refetchable(queryName: "DevicesPageFragment_RefetchQuery")
+  @argumentDefinitions(
+    first: { type: "Int", defaultValue: 50 }
+    order: {
+      type: "DeviceOrder"
+      defaultValue: { direction: DESC, field: CREATED_AT }
+    }
+    after: { type: "CursorKey", defaultValue: null }
+    before: { type: "CursorKey", defaultValue: null }
+    last: { type: "Int", defaultValue: null }
+  ) {
+    devices(
+      first: $first
+      after: $after
+      last: $last
+      before: $before
+      orderBy: $order
+    ) @connection(key: "DevicesPage_devices", filters: ["orderBy"]) {
+      __id
+      edges {
+        node {
+          id
+          ...DeviceRowFragment
+        }
+      }
+    }
+  }
+`;
+
+interface DevicesPageProps {
+  queryRef: PreloadedQuery<DevicesPageQuery>;
+}
+
+export function DevicesPage({ queryRef }: DevicesPageProps) {
   const { __ } = useTranslate();
-  const organizationId = useOrganizationId();
-  const navigate = useNavigate();
-
-  const data = usePreloadedQuery(devicesQuery, props.queryRef);
-  // eslint-disable-next-line relay/generated-typescript-types
-  const pagination = usePaginationFragment(
-    paginatedDevicesFragment,
-    data.node as DeviceGraphPaginatedFragment$key,
-  );
-
-  const devices = pagination.data.devices?.edges.map(edge => edge.node);
 
   usePageTitle(__("Devices"));
+
+  const { organization } = usePreloadedQuery(devicesPageQuery, queryRef);
+  if (organization.__typename !== "Organization") {
+    throw new Error("invalid type for organization node");
+  }
+
+  const pagination = usePaginationFragment<
+    DevicesPageFragment_RefetchQuery,
+    DevicesPageFragment$key
+  >(devicesPageFragment, organization);
+
+  const devices = pagination.data.devices.edges.map(edge => edge.node);
 
   return (
     <div className="space-y-6">
@@ -78,101 +102,34 @@ export default function DevicesPage(props: Props) {
         description={__(
           "Computers running the Probo posture agent. The agent runs as a managed OS service and reports configuration evidence such as disk encryption and screen lock.",
         )}
+      />
+
+      <SortableTable
+        {...pagination}
+        refetch={
+          pagination.refetch as ComponentProps<typeof SortableTable>["refetch"]
+        }
       >
-        {data.node?.canCreateEnrollmentToken && (
-          <Button
-            icon={IconPlusLarge}
-            onClick={() => void navigate(
-              `/organizations/${organizationId}/devices/enroll`,
-            )}
-          >
-            {__("Enroll device")}
-          </Button>
-        )}
-      </PageHeader>
-      <SortableTable {...pagination}>
         <Thead>
           <Tr>
             <SortableTh field="HOSTNAME">{__("Hostname")}</SortableTh>
             <Th>{__("Platform")}</Th>
             <Th>{__("OS version")}</Th>
-            <Th>{__("Last seen")}</Th>
+            <SortableTh field="LAST_SEEN_AT">{__("Last seen")}</SortableTh>
             <Th>{__("Posture")}</Th>
             <Th></Th>
           </Tr>
         </Thead>
         <Tbody>
-          {devices?.map(device => (
+          {devices.map(device => (
             <DeviceRow
               key={device.id}
-              device={device}
-              organizationId={organizationId}
+              fKey={device}
+              canRevoke={organization.canRevokeDevice ?? false}
             />
           ))}
         </Tbody>
       </SortableTable>
     </div>
   );
-}
-
-function DeviceRow({
-  device,
-  organizationId,
-}: {
-  device: Device;
-  organizationId: string;
-}) {
-  const { __ } = useTranslate();
-  const revoke = useRevokeDevice(device);
-
-  const url = `/organizations/${organizationId}/devices/${device.id}`;
-  const summary = postureSummary(device.latestPostures);
-
-  return (
-    <Tr to={url}>
-      <Td>{device.hostname}</Td>
-      <Td>{device.platform}</Td>
-      <Td>{device.osVersion}</Td>
-      <Td>
-        {device.lastSeenAt ? formatDate(device.lastSeenAt) : __("Never")}
-      </Td>
-      <Td>
-        <span className="text-green-700">{summary.pass}</span>
-        {" / "}
-        <span className="text-red-700">{summary.fail}</span>
-        {" / "}
-        <span className="text-tertiary">{summary.unknown}</span>
-      </Td>
-      <Td noLink width={50} className="text-end">
-        <ActionDropdown>
-          <DropdownItem
-            onClick={revoke}
-            variant="danger"
-            icon={IconTrashCan}
-          >
-            {__("Revoke")}
-          </DropdownItem>
-        </ActionDropdown>
-      </Td>
-    </Tr>
-  );
-}
-
-function postureSummary(
-  postures?: readonly { status: string }[] | null,
-): { pass: number; fail: number; unknown: number } {
-  const acc = { pass: 0, fail: 0, unknown: 0 };
-  for (const p of postures ?? []) {
-    switch (p.status) {
-      case "PASS":
-        acc.pass += 1;
-        break;
-      case "FAIL":
-        acc.fail += 1;
-        break;
-      default:
-        acc.unknown += 1;
-    }
-  }
-  return acc;
 }
