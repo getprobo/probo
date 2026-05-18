@@ -17,7 +17,7 @@ package itam
 // ITAM Service Actions
 // Format: core:<entity>:<action>
 const (
-	// Device actions (device posture agent)
+	// Device actions
 	ActionDeviceList   = "core:device:list"
 	ActionDeviceGet    = "core:device:get"
 	ActionDeviceRevoke = "core:device:revoke"
